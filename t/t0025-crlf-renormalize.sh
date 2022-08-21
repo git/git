@@ -2,6 +2,7 @@
 
 test_description='CRLF renormalization'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -21,9 +22,18 @@ test_expect_success 'renormalize CRLF in repo' '
 	i/lf w/lf attr/text=auto LF.txt
 	i/lf w/mixed attr/text=auto CRLF_mix_LF.txt
 	EOF
-	git ls-files --eol |
-	sed -e "s/	/ /g" -e "s/  */ /g" |
+	git ls-files --eol >tmp &&
+	sed -e "s/	/ /g" -e "s/  */ /g" tmp |
 	sort >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'ignore-errors not mistaken for renormalize' '
+	git reset --hard &&
+	echo "*.txt text=auto" >.gitattributes &&
+	git ls-files --eol >expect &&
+	git add --ignore-errors "*.txt" &&
+	git ls-files --eol >actual &&
 	test_cmp expect actual
 '
 

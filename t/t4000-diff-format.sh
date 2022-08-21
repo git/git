@@ -6,8 +6,10 @@
 test_description='Test built-in diff output engine.
 
 '
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
-. "$TEST_DIRECTORY"/diff-lib.sh
+. "$TEST_DIRECTORY"/lib-diff.sh
 
 echo >path0 'Line 1
 Line 2
@@ -78,7 +80,7 @@ test_expect_success 'git diff-files --no-patch --patch shows the patch' '
 
 test_expect_success 'git diff-files --no-patch --patch-with-raw shows the patch and raw data' '
 	git diff-files --no-patch --patch-with-raw >actual &&
-	grep -q "^:100644 100755 .* 0000000000000000000000000000000000000000 M	path0\$" actual &&
+	grep -q "^:100644 100755 .* $ZERO_OID M	path0\$" actual &&
 	tail -n +4 actual >actual-patch &&
 	compare_diff_patch expected actual-patch
 '

@@ -3,6 +3,8 @@
 
 struct ref;
 struct transport;
+struct strvec;
+struct transport_ls_refs_options;
 
 struct transport_vtable {
 	/**
@@ -21,7 +23,8 @@ struct transport_vtable {
 	 * the ref without a huge amount of effort, it should store it
 	 * in the ref's old_sha1 field; otherwise it should be all 0.
 	 **/
-	struct ref *(*get_refs_list)(struct transport *transport, int for_push);
+	struct ref *(*get_refs_list)(struct transport *transport, int for_push,
+				     struct transport_ls_refs_options *transport_options);
 
 	/**
 	 * Fetch the objects for the given refs. Note that this gets
@@ -31,7 +34,7 @@ struct transport_vtable {
 	 * get_refs_list(), it should set the old_sha1 fields in the
 	 * provided refs now.
 	 **/
-	int (*fetch)(struct transport *transport, int refs_nr, struct ref **refs);
+	int (*fetch_refs)(struct transport *transport, int refs_nr, struct ref **refs);
 
 	/**
 	 * Push the objects and refs. Send the necessary objects, and

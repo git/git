@@ -2,13 +2,8 @@
 
 test_description='pack-object compression configuration'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
-
-# This should be moved to test-lib.sh together with the
-# copy in t0021 after both topics have graduated to 'master'.
-file_size () {
-	perl -e 'print -s $ARGV[0]' "$1"
-}
 
 test_expect_success setup '
 	printf "%2000000s" X |
@@ -24,7 +19,7 @@ do
 	test_expect_success "pack-objects with $config" '
 		test_when_finished "rm -f pack-*.*" &&
 		git $config pack-objects pack <object-name &&
-		sz=$(file_size pack-*.pack) &&
+		sz=$(test_file_size pack-*.pack) &&
 		case "$expect" in
 		small) test "$sz" -le 100000 ;;
 		large) test "$sz" -ge 100000 ;;

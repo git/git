@@ -10,13 +10,16 @@ test_description='test cherry-pick and revert with renames
 
 '
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success setup '
 
 	for l in a b c d e f g h i j k l m n o
 	do
-		echo $l$l$l$l$l$l$l$l$l
+		echo $l$l$l$l$l$l$l$l$l || return 1
 	done >oops &&
 
 	test_tick &&
@@ -47,7 +50,7 @@ test_expect_success 'cherry-pick --nonsense' '
 	git diff --exit-code HEAD &&
 	test_must_fail git cherry-pick --nonsense 2>msg &&
 	git diff --exit-code HEAD "$pos" &&
-	test_i18ngrep '[Uu]sage:' msg
+	test_i18ngrep "[Uu]sage:" msg
 '
 
 test_expect_success 'revert --nonsense' '
@@ -56,15 +59,14 @@ test_expect_success 'revert --nonsense' '
 	git diff --exit-code HEAD &&
 	test_must_fail git revert --nonsense 2>msg &&
 	git diff --exit-code HEAD "$pos" &&
-	test_i18ngrep '[Uu]sage:' msg
+	test_i18ngrep "[Uu]sage:" msg
 '
 
 test_expect_success 'cherry-pick after renaming branch' '
 
 	git checkout rename2 &&
 	git cherry-pick added &&
-	test $(git rev-parse HEAD^) = $(git rev-parse rename2) &&
-	test -f opos &&
+	test_cmp_rev rename2 HEAD^ &&
 	grep "Add extra line at the end" opos &&
 	git reflog -1 | grep cherry-pick
 
@@ -74,9 +76,9 @@ test_expect_success 'revert after renaming branch' '
 
 	git checkout rename1 &&
 	git revert added &&
-	test $(git rev-parse HEAD^) = $(git rev-parse rename1) &&
-	test -f spoo &&
-	! grep "Add extra line at the end" spoo &&
+	test_cmp_rev rename1 HEAD^ &&
+	test_path_is_file spoo &&
+	test_cmp_rev initial:oops HEAD:spoo &&
 	git reflog -1 | grep revert
 
 '
@@ -106,13 +108,13 @@ test_expect_success 'cherry-pick on unborn branch' '
 	rm -rf * &&
 	git cherry-pick initial &&
 	git diff --quiet initial &&
-	! test_cmp_rev initial HEAD
+	test_cmp_rev ! initial HEAD
 '
 
 test_expect_success 'cherry-pick "-" to pick from previous branch' '
 	git checkout unborn &&
 	test_commit to-pick actual content &&
-	git checkout master &&
+	git checkout main &&
 	git cherry-pick - &&
 	echo content >expect &&
 	test_cmp expect actual
@@ -132,7 +134,7 @@ test_expect_success 'cherry-pick "-" is meaningless without checkout' '
 test_expect_success 'cherry-pick "-" works with arguments' '
 	git checkout -b side-branch &&
 	test_commit change actual change &&
-	git checkout master &&
+	git checkout main &&
 	git cherry-pick -s - &&
 	echo "Signed-off-by: C O Mitter <committer@example.com>" >expect &&
 	git cat-file commit HEAD | grep ^Signed-off-by: >signoff &&
@@ -141,7 +143,7 @@ test_expect_success 'cherry-pick "-" works with arguments' '
 	test_cmp expect actual
 '
 
-test_expect_failure 'cherry-pick works with dirty renamed file' '
+test_expect_success 'cherry-pick works with dirty renamed file' '
 	test_commit to-rename &&
 	git checkout -b unrelated &&
 	test_commit unrelated &&
@@ -150,10 +152,62 @@ test_expect_failure 'cherry-pick works with dirty renamed file' '
 	test_tick &&
 	git commit -m renamed &&
 	echo modified >renamed &&
-	test_must_fail git cherry-pick refs/heads/unrelated >out &&
-	test_i18ngrep "Refusing to lose dirty file at renamed" out &&
-	test $(git rev-parse :0:renamed) = $(git rev-parse HEAD^:to-rename.t) &&
+	git cherry-pick refs/heads/unrelated &&
+	test $(git rev-parse :0:renamed) = $(git rev-parse HEAD~2:to-rename.t) &&
 	grep -q "^modified$" renamed
+'
+
+test_expect_success 'advice from failed revert' '
+	test_when_finished "git reset --hard" &&
+	test_commit --no-tag "add dream" dream dream &&
+	dream_oid=$(git rev-parse --short HEAD) &&
+	cat <<-EOF >expected &&
+	error: could not revert $dream_oid... add dream
+	hint: After resolving the conflicts, mark them with
+	hint: "git add/rm <pathspec>", then run
+	hint: "git revert --continue".
+	hint: You can instead skip this commit with "git revert --skip".
+	hint: To abort and get back to the state before "git revert",
+	hint: run "git revert --abort".
+	EOF
+	test_commit --append --no-tag "double-add dream" dream dream &&
+	test_must_fail git revert HEAD^ 2>actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'identification of reverted commit (default)' '
+	test_commit to-ident &&
+	test_when_finished "git reset --hard to-ident" &&
+	git checkout --detach to-ident &&
+	git revert --no-edit HEAD &&
+	git cat-file commit HEAD >actual.raw &&
+	grep "^This reverts " actual.raw >actual &&
+	echo "This reverts commit $(git rev-parse HEAD^)." >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'identification of reverted commit (--reference)' '
+	git checkout --detach to-ident &&
+	git revert --reference --no-edit HEAD &&
+	git cat-file commit HEAD >actual.raw &&
+	grep "^This reverts " actual.raw >actual &&
+	echo "This reverts commit $(git show -s --pretty=reference HEAD^)." >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'identification of reverted commit (revert.reference)' '
+	git checkout --detach to-ident &&
+	git -c revert.reference=true revert --no-edit HEAD &&
+	git cat-file commit HEAD >actual.raw &&
+	grep "^This reverts " actual.raw >actual &&
+	echo "This reverts commit $(git show -s --pretty=reference HEAD^)." >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'cherry-pick is unaware of --reference (for now)' '
+	test_when_finished "git reset --hard" &&
+	test_must_fail git cherry-pick --reference HEAD 2>actual &&
+	grep "^usage: git cherry-pick" actual
 '
 
 test_done

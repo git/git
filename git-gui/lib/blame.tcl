@@ -24,6 +24,7 @@ field w_cviewer  ; # pane showing commit message
 field finder     ; # find mini-dialog frame
 field gotoline   ; # line goto mini-dialog frame
 field status     ; # status mega-widget instance
+field status_operation ; # operation displayed by status mega-widget
 field old_height ; # last known height of $w.file_pane
 
 
@@ -274,6 +275,7 @@ constructor new {i_commit i_path i_jump} {
 	pack $w_cviewer -expand 1 -fill both
 
 	set status [::status_bar::new $w.status]
+	set status_operation {}
 
 	menu $w.ctxm -tearoff 0
 	$w.ctxm add command \
@@ -326,6 +328,7 @@ constructor new {i_commit i_path i_jump} {
 		bind $i <Any-Motion>  [cb _show_tooltip $i @%x,%y]
 		bind $i <Any-Enter>   [cb _hide_tooltip]
 		bind $i <Any-Leave>   [cb _hide_tooltip]
+		bind $i <Deactivate>  [cb _hide_tooltip]
 		bind_button3 $i "
 			[cb _hide_tooltip]
 			set cursorX %x
@@ -602,16 +605,23 @@ method _exec_blame {cur_w cur_d options cur_s} {
 	} else {
 		lappend options $commit
 	}
+
+	# We may recurse in from another call to _exec_blame and already have
+	# a status operation.
+	if {$status_operation == {}} {
+		set status_operation [$status start \
+			$cur_s \
+			[mc "lines annotated"]]
+	} else {
+		$status_operation restart $cur_s
+	}
+
 	lappend options -- $path
 	set fd [eval git_read --nice blame $options]
 	fconfigure $fd -blocking 0 -translation lf -encoding utf-8
 	fileevent $fd readable [cb _read_blame $fd $cur_w $cur_d]
 	set current_fd $fd
 	set blame_lines 0
-
-	$status start \
-		$cur_s \
-		[mc "lines annotated"]
 }
 
 method _read_blame {fd cur_w cur_d} {
@@ -806,10 +816,11 @@ method _read_blame {fd cur_w cur_d} {
 				[mc "Loading original location annotations..."]
 		} else {
 			set current_fd {}
-			$status stop [mc "Annotation complete."]
+			$status_operation stop [mc "Annotation complete."]
+			set status_operation {}
 		}
 	} else {
-		$status update $blame_lines $total_lines
+		$status_operation update $blame_lines $total_lines
 	}
 } ifdeleted { catch {close $fd} }
 
@@ -1124,7 +1135,7 @@ method _blameparent {} {
 			set diffcmd [list diff-tree --unified=0 $cparent $cmit -- $new_path]
 		}
 		if {[catch {set fd [eval git_read $diffcmd]} err]} {
-			$status stop [mc "Unable to display parent"]
+			$status_operation stop [mc "Unable to display parent"]
 			error_popup [strcat [mc "Error loading diff:"] "\n\n$err"]
 			return
 		}

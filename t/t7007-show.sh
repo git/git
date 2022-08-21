@@ -2,6 +2,7 @@
 
 test_description='git show'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -36,6 +37,45 @@ test_expect_success 'showing two commits' '
 	git show main2 main3 >actual &&
 	grep ^commit actual >actual.filtered &&
 	test_cmp expect actual.filtered
+'
+
+test_expect_success 'showing a tree' '
+	cat >expected <<-EOF &&
+	tree main1:
+
+	main1.t
+	EOF
+	git show main1: >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'showing two trees' '
+	cat >expected <<-EOF &&
+	tree main1^{tree}
+
+	main1.t
+
+	tree main2^{tree}
+
+	main1.t
+	main2.t
+	EOF
+	git show main1^{tree} main2^{tree} >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'showing a trees is not recursive' '
+	git worktree add not-recursive main1 &&
+	mkdir not-recursive/a &&
+	test_commit -C not-recursive a/file &&
+	cat >expected <<-EOF &&
+	tree HEAD^{tree}
+
+	a/
+	main1.t
+	EOF
+	git -C not-recursive show HEAD^{tree} >actual &&
+	test_cmp expected actual
 '
 
 test_expect_success 'showing a range walks (linear)' '

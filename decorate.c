@@ -8,7 +8,7 @@
 
 static unsigned int hash_obj(const struct object *obj, unsigned int n)
 {
-	return sha1hash(obj->oid.hash) % n;
+	return oidhash(&obj->oid) % n;
 }
 
 static void *insert_decoration(struct decoration *n, const struct object *base, void *decoration)
@@ -39,7 +39,7 @@ static void grow_decoration(struct decoration *n)
 	struct decoration_entry *old_entries = n->entries;
 
 	n->size = (old_size + 1000) * 3 / 2;
-	n->entries = xcalloc(n->size, sizeof(struct decoration_entry));
+	CALLOC_ARRAY(n->entries, n->size);
 	n->nr = 0;
 
 	for (i = 0; i < old_size; i++) {

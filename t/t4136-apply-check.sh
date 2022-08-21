@@ -2,6 +2,8 @@
 
 test_description='git apply should exit non-zero with unrecognized input.'
 
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -27,6 +29,18 @@ test_expect_success 'apply exits non-zero with no-op patch' '
 	EOF
 	test_must_fail git apply --stat input &&
 	test_must_fail git apply --check input
+'
+
+test_expect_success '`apply --recount` allows no-op patch' '
+	echo 1 >1 &&
+	git apply --recount --check <<-\EOF
+	diff --get a/1 b/1
+	index 6696ea4..606eddd 100644
+	--- a/1
+	+++ b/1
+	@@ -1,1 +1,1 @@
+	 1
+	EOF
 '
 
 test_expect_success 'invalid combination: create and copy' '

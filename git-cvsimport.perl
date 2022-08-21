@@ -600,7 +600,7 @@ my $cvs = CVSconn->new($opt_d, $cvs_tree);
 sub pdate($) {
 	my ($d) = @_;
 	m#(\d{2,4})/(\d\d)/(\d\d)\s(\d\d):(\d\d)(?::(\d\d))?#
-		or die "Unparseable date: $d\n";
+		or die "Unparsable date: $d\n";
 	my $y=$1;
 	$y+=100 if $y<70;
 	$y+=1900 if $y<1000;
@@ -637,9 +637,9 @@ sub getwd() {
 	return $pwd;
 }
 
-sub is_sha1 {
+sub is_oid {
 	my $s = shift;
-	return $s =~ /^[a-f0-9]{40}$/;
+	return $s =~ /^[a-f0-9]{40}(?:[a-f0-9]{24})?$/;
 }
 
 sub get_headref ($) {
@@ -810,7 +810,7 @@ sub write_tree () {
 	open(my $fh, '-|', qw(git write-tree))
 		or die "unable to open git write-tree: $!";
 	chomp(my $tree = <$fh>);
-	is_sha1($tree)
+	is_oid($tree)
 		or die "Cannot get tree id ($tree): $!";
 	close($fh)
 		or die "Error running git write-tree: $?\n";
@@ -896,7 +896,7 @@ sub commit {
 
 	print "Committed patch $patchset ($branch $commit_date)\n" if $opt_v;
 	chomp(my $cid = <$commit_read>);
-	is_sha1($cid) or die "Cannot get commit id ($cid): $!\n";
+	is_oid($cid) or die "Cannot get commit id ($cid): $!\n";
 	print "Commit ID $cid\n" if $opt_v;
 	close($commit_read);
 

@@ -1,0 +1,48 @@
+user.name::
+user.email::
+author.name::
+author.email::
+committer.name::
+committer.email::
+	The `user.name` and `user.email` variables determine what ends
+	up in the `author` and `committer` field of commit
+	objects.
+	If you need the `author` or `committer` to be different, the
+	`author.name`, `author.email`, `committer.name` or
+	`committer.email` variables can be set.
+	Also, all of these can be overridden by the `GIT_AUTHOR_NAME`,
+	`GIT_AUTHOR_EMAIL`, `GIT_COMMITTER_NAME`,
+	`GIT_COMMITTER_EMAIL` and `EMAIL` environment variables.
++
+Note that the `name` forms of these variables conventionally refer to
+some form of a personal name.  See linkgit:git-commit[1] and the
+environment variables section of linkgit:git[1] for more information on
+these settings and the `credential.username` option if you're looking
+for authentication credentials instead.
+
+user.useConfigOnly::
+	Instruct Git to avoid trying to guess defaults for `user.email`
+	and `user.name`, and instead retrieve the values only from the
+	configuration. For example, if you have multiple email addresses
+	and would like to use a different one for each repository, then
+	with this configuration option set to `true` in the global config
+	along with a name, Git will prompt you to set up an email before
+	making new commits in a newly cloned repository.
+	Defaults to `false`.
+
+user.signingKey::
+	If linkgit:git-tag[1] or linkgit:git-commit[1] is not selecting the
+	key you want it to automatically when creating a signed tag or
+	commit, you can override the default selection with this variable.
+	This option is passed unchanged to gpg's --local-user parameter,
+	so you may specify a key using any method that gpg supports.
+	If gpg.format is set to `ssh` this can contain the path to either
+	your private ssh key or the public key when ssh-agent is used.
+	Alternatively it can contain a public key prefixed with `key::`
+	directly (e.g.: "key::ssh-rsa XXXXXX identifier"). The private key
+	needs to be available via ssh-agent. If not set git will call
+	gpg.ssh.defaultKeyCommand (e.g.: "ssh-add -L") and try to use the
+	first key available. For backward compatibility, a raw key which
+	begins with "ssh-", such as "ssh-rsa XXXXXX identifier", is treated
+	as "key::ssh-rsa XXXXXX identifier", but this form is deprecated;
+	use the `key::` form instead.

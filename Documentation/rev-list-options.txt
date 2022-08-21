@@ -13,8 +13,6 @@ has a line that matches `<pattern>`), unless otherwise noted.
 Note that these are applied before commit
 ordering and formatting options, such as `--reverse`.
 
---
-
 -<number>::
 -n <number>::
 --max-count=<number>::
@@ -26,6 +24,11 @@ ordering and formatting options, such as `--reverse`.
 --since=<date>::
 --after=<date>::
 	Show commits more recent than a specific date.
+
+--since-as-filter=<date>::
+	Show all commits more recent than a specific date. This visits
+	all commits in the range, rather than stopping at the first commit which
+	is older than a specific date.
 
 --until=<date>::
 --before=<date>::
@@ -60,7 +63,7 @@ endif::git-rev-list[]
 	`--all-match`).
 ifndef::git-rev-list[]
 +
-When `--show-notes` is in effect, the message from the notes is
+When `--notes` is in effect, the message from the notes is
 matched as if it were part of the log message.
 endif::git-rev-list[]
 
@@ -124,14 +127,26 @@ again.  Equivalent forms are `--min-parents=0` (any commit has 0 or more
 parents) and `--max-parents=-1` (negative numbers denote no upper limit).
 
 --first-parent::
-	Follow only the first parent commit upon seeing a merge
-	commit.  This option can give a better overview when
-	viewing the evolution of a particular topic branch,
-	because merges into a topic branch tend to be only about
-	adjusting to updated upstream from time to time, and
-	this option allows you to ignore the individual commits
-	brought in to your history by such a merge. Cannot be
-	combined with --bisect.
+	When finding commits to include, follow only the first
+	parent commit upon seeing a merge commit.  This option
+	can give a better overview when viewing the evolution of
+	a particular topic branch, because merges into a topic
+	branch tend to be only about adjusting to updated upstream
+	from time to time, and this option allows you to ignore
+	the individual commits brought in to your history by such
+	a merge.
+ifdef::git-log[]
++
+This option also changes default diff format for merge commits
+to `first-parent`, see `--diff-merges=first-parent` for details.
+endif::git-log[]
+
+--exclude-first-parent-only::
+	When finding commits to exclude (with a '{caret}'), follow only
+	the first parent commit upon seeing a merge commit.
+	This can be used to find the set of changes in a topic branch
+	from the point where it diverged from the remote branch, given
+	that arbitrary merges can be valid topic branch changes.
 
 --not::
 	Reverses the meaning of the '{caret}' prefix (or lack thereof)
@@ -184,6 +199,14 @@ explicitly.
 	Pretend as if all objects mentioned by reflogs are listed on the
 	command line as `<commit>`.
 
+--alternate-refs::
+	Pretend as if all objects mentioned as ref tips of alternate
+	repositories were listed on the command line. An alternate
+	repository is any repository whose object directory is specified
+	in `objects/info/alternates`.  The set of included objects may
+	be modified by `core.alternateRefsCommand`, etc. See
+	linkgit:git-config[1].
+
 --single-worktree::
 	By default, all working trees will be examined by the
 	following options when there are more than one (see
@@ -201,7 +224,7 @@ ifndef::git-rev-list[]
 	Pretend as if the bad bisection ref `refs/bisect/bad`
 	was listed and as if it was followed by `--not` and the good
 	bisection refs `refs/bisect/good-*` on the command
-	line. Cannot be combined with --first-parent.
+	line.
 endif::git-rev-list[]
 
 --stdin::
@@ -217,6 +240,18 @@ ifdef::git-rev-list[]
 	test the exit status to see if a range of objects is fully
 	connected (or not).  It is faster than redirecting stdout
 	to `/dev/null` as the output does not have to be formatted.
+
+--disk-usage::
+--disk-usage=human::
+	Suppress normal output; instead, print the sum of the bytes used
+	for on-disk storage by the selected commits or objects. This is
+	equivalent to piping the output into `git cat-file
+	--batch-check='%(objectsize:disk)'`, except that it runs much
+	faster (especially with `--use-bitmap-index`). See the `CAVEATS`
+	section in linkgit:git-cat-file[1] for the limitations of what
+	"on-disk storage" means.
+	With the optional value `human`, on-disk storage size is shown
+	in human-readable string(e.g. 12.24 Kib, 3.50 Mib).
 endif::git-rev-list[]
 
 --cherry-mark::
@@ -263,7 +298,7 @@ list.
 	exclude (that is, '{caret}commit', 'commit1..commit2',
 	and 'commit1\...commit2' notations cannot be used).
 +
-With `--pretty` format other than `oneline` (for obvious reasons),
+With `--pretty` format other than `oneline` and `reference` (for obvious reasons),
 this causes the output to have two extra lines of information
 taken from the reflog.  The reflog designator in the output may be shown
 as `ref@{Nth}` (where `Nth` is the reverse-chronological index in the
@@ -272,13 +307,13 @@ depending on a few rules:
 +
 --
 1. If the starting point is specified as `ref@{Nth}`, show the index
-format.
+   format.
 +
 2. If the starting point was specified as `ref@{now}`, show the
-timestamp format.
+   timestamp format.
 +
 3. If neither was used, but `--date` was given on the command line, show
-the timestamp in the format requested by `--date`.
+   the timestamp in the format requested by `--date`.
 +
 4. Otherwise, show the index format.
 --
@@ -287,6 +322,8 @@ Under `--pretty=oneline`, the commit message is
 prefixed with this information on the same line.
 This option cannot be combined with `--reverse`.
 See also linkgit:git-reflog[1].
++
+Under `--pretty=reference`, this information will not be shown at all.
 
 --merge::
 	After a failed merge, show refs that touch files having a
@@ -307,8 +344,6 @@ ifdef::git-rev-list[]
 	Show progress reports on stderr as objects are considered. The
 	`<header>` text will be printed with each progress update.
 endif::git-rev-list[]
-
---
 
 History Simplification
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -335,6 +370,12 @@ Default mode::
 	final state of the tree. Simplest because it prunes some side
 	branches if the end result is the same (i.e. merging branches
 	with the same content)
+
+--show-pulls::
+	Include all commits from the default mode, but also any merge
+	commits that are not TREESAME to the first parent but are
+	TREESAME to a later parent. This mode is helpful for showing
+	the merge commits that "first introduced" a change to a branch.
 
 --full-history::
 	Same as the default mode, but does not prune some history.
@@ -528,7 +569,7 @@ Note the major differences in `N`, `P`, and `Q` over `--full-history`:
   parent and is TREESAME.
 --
 
-Finally, there is a fifth simplification mode available:
+There is another simplification mode available:
 
 --ancestry-path::
 	Limit the displayed commits to those directly on the ancestry
@@ -567,6 +608,135 @@ option does. Applied to the 'D..M' range, it results in:
 				L--M
 -----------------------------------------------------------------------
 
+Before discussing another option, `--show-pulls`, we need to
+create a new example history.
+
+A common problem users face when looking at simplified history is that a
+commit they know changed a file somehow does not appear in the file's
+simplified history. Let's demonstrate a new example and show how options
+such as `--full-history` and `--simplify-merges` works in that case:
+
+-----------------------------------------------------------------------
+	  .-A---M-----C--N---O---P
+	 /     / \  \  \/   /   /
+	I     B   \  R-'`-Z'   /
+	 \   /     \/         /
+	  \ /      /\        /
+	   `---X--'  `---Y--'
+-----------------------------------------------------------------------
+
+For this example, suppose `I` created `file.txt` which was modified by
+`A`, `B`, and `X` in different ways. The single-parent commits `C`, `Z`,
+and `Y` do not change `file.txt`. The merge commit `M` was created by
+resolving the merge conflict to include both changes from `A` and `B`
+and hence is not TREESAME to either. The merge commit `R`, however, was
+created by ignoring the contents of `file.txt` at `M` and taking only
+the contents of `file.txt` at `X`. Hence, `R` is TREESAME to `X` but not
+`M`. Finally, the natural merge resolution to create `N` is to take the
+contents of `file.txt` at `R`, so `N` is TREESAME to `R` but not `C`.
+The merge commits `O` and `P` are TREESAME to their first parents, but
+not to their second parents, `Z` and `Y` respectively.
+
+When using the default mode, `N` and `R` both have a TREESAME parent, so
+those edges are walked and the others are ignored. The resulting history
+graph is:
+
+-----------------------------------------------------------------------
+	I---X
+-----------------------------------------------------------------------
+
+When using `--full-history`, Git walks every edge. This will discover
+the commits `A` and `B` and the merge `M`, but also will reveal the
+merge commits `O` and `P`. With parent rewriting, the resulting graph is:
+
+-----------------------------------------------------------------------
+	  .-A---M--------N---O---P
+	 /     / \  \  \/   /   /
+	I     B   \  R-'`--'   /
+	 \   /     \/         /
+	  \ /      /\        /
+	   `---X--'  `------'
+-----------------------------------------------------------------------
+
+Here, the merge commits `O` and `P` contribute extra noise, as they did
+not actually contribute a change to `file.txt`. They only merged a topic
+that was based on an older version of `file.txt`. This is a common
+issue in repositories using a workflow where many contributors work in
+parallel and merge their topic branches along a single trunk: manu
+unrelated merges appear in the `--full-history` results.
+
+When using the `--simplify-merges` option, the commits `O` and `P`
+disappear from the results. This is because the rewritten second parents
+of `O` and `P` are reachable from their first parents. Those edges are
+removed and then the commits look like single-parent commits that are
+TREESAME to their parent. This also happens to the commit `N`, resulting
+in a history view as follows:
+
+-----------------------------------------------------------------------
+	  .-A---M--.
+	 /     /    \
+	I     B      R
+	 \   /      /
+	  \ /      /
+	   `---X--'
+-----------------------------------------------------------------------
+
+In this view, we see all of the important single-parent changes from
+`A`, `B`, and `X`. We also see the carefully-resolved merge `M` and the
+not-so-carefully-resolved merge `R`. This is usually enough information
+to determine why the commits `A` and `B` "disappeared" from history in
+the default view. However, there are a few issues with this approach.
+
+The first issue is performance. Unlike any previous option, the
+`--simplify-merges` option requires walking the entire commit history
+before returning a single result. This can make the option difficult to
+use for very large repositories.
+
+The second issue is one of auditing. When many contributors are working
+on the same repository, it is important which merge commits introduced
+a change into an important branch. The problematic merge `R` above is
+not likely to be the merge commit that was used to merge into an
+important branch. Instead, the merge `N` was used to merge `R` and `X`
+into the important branch. This commit may have information about why
+the change `X` came to override the changes from `A` and `B` in its
+commit message.
+
+--show-pulls::
+	In addition to the commits shown in the default history, show
+	each merge commit that is not TREESAME to its first parent but
+	is TREESAME to a later parent.
++
+When a merge commit is included by `--show-pulls`, the merge is
+treated as if it "pulled" the change from another branch. When using
+`--show-pulls` on this example (and no other options) the resulting
+graph is:
++
+-----------------------------------------------------------------------
+	I---X---R---N
+-----------------------------------------------------------------------
++
+Here, the merge commits `R` and `N` are included because they pulled
+the commits `X` and `R` into the base branch, respectively. These
+merges are the reason the commits `A` and `B` do not appear in the
+default history.
++
+When `--show-pulls` is paired with `--simplify-merges`, the
+graph includes all of the necessary information:
++
+-----------------------------------------------------------------------
+	  .-A---M--.   N
+	 /     /    \ /
+	I     B      R
+	 \   /      /
+	  \ /      /
+	   `---X--'
+-----------------------------------------------------------------------
++
+Notice that since `M` is reachable from `R`, the edge from `N` to `M`
+was simplified away. However, `N` still appears in the history as an
+important commit because it "pulled" the change `R` into the main
+branch.
+
 The `--simplify-by-decoration` option allows you to view only the
 big picture of the topology of the history, by omitting commits
 that are not referenced by tags.  Commits are marked as !TREESAME
@@ -575,6 +745,7 @@ above) if (1) they are referenced by tags, or (2) they change the
 contents of the paths given on the command line.  All other
 commits are marked as TREESAME (subject to be simplified away).
 
+ifndef::git-shortlog[]
 ifdef::git-rev-list[]
 Bisection Helpers
 ~~~~~~~~~~~~~~~~~
@@ -601,7 +772,7 @@ outputs 'midpoint', the output of the two commands
 would be of roughly the same length.  Finding the change which
 introduces a regression is thus reduced to a binary search: repeatedly
 generate and test new 'midpoint's until the commit chain is of length
-one. Cannot be combined with --first-parent.
+one.
 
 --bisect-vars::
 	This calculates the same as `--bisect`, except that refs in
@@ -630,8 +801,9 @@ This option can be used along with `--bisect-vars`, in this case,
 after all the sorted commit objects, there will be the same text as if
 `--bisect-vars` had been used alone.
 endif::git-rev-list[]
+endif::git-shortlog[]
 
-
+ifndef::git-shortlog[]
 Commit Ordering
 ~~~~~~~~~~~~~~~
 
@@ -673,7 +845,9 @@ together.
 	Output the commits chosen to be shown (see Commit Limiting
 	section above) in reverse order. Cannot be combined with
 	`--walk-reflogs`.
+endif::git-shortlog[]
 
+ifndef::git-shortlog[]
 Object Traversal
 ~~~~~~~~~~~~~~~~
 
@@ -712,6 +886,16 @@ ifdef::git-rev-list[]
 	Only useful with `--objects`; print the object IDs that are not
 	in packs.
 
+--object-names::
+	Only useful with `--objects`; print the names of the object IDs
+	that are found. This is the default behavior.
+
+--no-object-names::
+	Only useful with `--objects`; does not print the names of the object
+	IDs that are found. This inverts `--object-names`. This flag allows
+	the output to be more easily parsed by commands such as
+	linkgit:git-cat-file[1].
+
 --filter=<filter-spec>::
 	Only useful with one of the `--objects*`; omits objects (usually
 	blobs) from the list of printed objects.  The '<filter-spec>'
@@ -724,20 +908,55 @@ or units.  n may be zero.  The suffixes k, m, and g can be used to name
 units in KiB, MiB, or GiB.  For example, 'blob:limit=1k' is the same
 as 'blob:limit=1024'.
 +
+The form '--filter=object:type=(tag|commit|tree|blob)' omits all objects
+which are not of the requested type.
++
 The form '--filter=sparse:oid=<blob-ish>' uses a sparse-checkout
 specification contained in the blob (or blob-expression) '<blob-ish>'
-to omit blobs that would not be not required for a sparse checkout on
+to omit blobs that would not be required for a sparse checkout on
 the requested refs.
 +
-The form '--filter=sparse:path=<path>' similarly uses a sparse-checkout
-specification contained in <path>.
+The form '--filter=tree:<depth>' omits all blobs and trees whose depth
+from the root tree is >= <depth> (minimum depth if an object is located
+at multiple depths in the commits traversed). <depth>=0 will not include
+any trees or blobs unless included explicitly in the command-line (or
+standard input when --stdin is used). <depth>=1 will include only the
+tree and blobs which are referenced directly by a commit reachable from
+<commit> or an explicitly-given object. <depth>=2 is like <depth>=1
+while also including trees and blobs one more level removed from an
+explicitly-given commit or tree.
++
+Note that the form '--filter=sparse:path=<path>' that wants to read
+from an arbitrary path on the filesystem has been dropped for security
+reasons.
++
+Multiple '--filter=' flags can be specified to combine filters. Only
+objects which are accepted by every filter are included.
++
+The form '--filter=combine:<filter1>+<filter2>+...<filterN>' can also be
+used to combined several filters, but this is harder than just repeating
+the '--filter' flag and is usually not necessary. Filters are joined by
+'{plus}' and individual filters are %-encoded (i.e. URL-encoded).
+Besides the '{plus}' and '%' characters, the following characters are
+reserved and also must be encoded: `~!@#$^&*()[]{}\;",<>?`+&#39;&#96;+
+as well as all characters with ASCII code &lt;= `0x20`, which includes
+space and newline.
++
+Other arbitrary characters can also be encoded. For instance,
+'combine:tree:3+blob:none' and 'combine:tree%3A3+blob%3Anone' are
+equivalent.
 
 --no-filter::
 	Turn off any previous `--filter=` argument.
 
+--filter-provided-objects::
+	Filter the list of explicitly provided objects, which would otherwise
+	always be printed even if they did not match any of the filters. Only
+	useful with `--filter=`.
+
 --filter-print-omitted::
 	Only useful with `--filter=`; prints a list of the objects omitted
-	by the filter.	Object IDs are prefixed with a ``~'' character.
+	by the filter.  Object IDs are prefixed with a ``~'' character.
 
 --missing=<missing-action>::
 	A debug option to help with future "partial clone" development.
@@ -756,7 +975,6 @@ Unexpected missing objects will raise an error.
 +
 The form '--missing=print' is like 'allow-any', but will also print a
 list of the missing objects.  Object IDs are prefixed with a ``?'' character.
-endif::git-rev-list[]
 
 --exclude-promisor-objects::
 	(For internal use only.)  Prefilter object traversal at
@@ -764,6 +982,7 @@ endif::git-rev-list[]
 	stronger than `--missing=allow-promisor` because it limits the
 	traversal, rather than just silencing errors about missing
 	objects.
+endif::git-rev-list[]
 
 --no-walk[=(sorted|unsorted)]::
 	Only show the given commits, but do not traverse their ancestors.
@@ -776,7 +995,9 @@ endif::git-rev-list[]
 
 --do-walk::
 	Overrides a previous `--no-walk`.
+endif::git-shortlog[]
 
+ifndef::git-shortlog[]
 Commit Formatting
 ~~~~~~~~~~~~~~~~~
 
@@ -799,12 +1020,13 @@ include::pretty-options.txt[]
 	author's). If `-local` is appended to the format (e.g.,
 	`iso-local`), the user's local time zone is used instead.
 +
+--
 `--date=relative` shows dates relative to the current time,
 e.g. ``2 hours ago''. The `-local` option has no effect for
 `--date=relative`.
-+
+
 `--date=local` is an alias for `--date=default-local`.
-+
+
 `--date=iso` (or `--date=iso8601`) shows timestamps in a ISO 8601-like format.
 The differences to the strict ISO 8601 format are:
 
@@ -812,15 +1034,14 @@ The differences to the strict ISO 8601 format are:
 	- a space between time and time zone
 	- no colon between hours and minutes of the time zone
 
-+
 `--date=iso-strict` (or `--date=iso8601-strict`) shows timestamps in strict
 ISO 8601 format.
-+
+
 `--date=rfc` (or `--date=rfc2822`) shows timestamps in RFC 2822
 format, often found in email messages.
-+
+
 `--date=short` shows only the date, but not the time, in `YYYY-MM-DD` format.
-+
+
 `--date=raw` shows the date as seconds since the epoch (1970-01-01
 00:00:00 UTC), followed by a space, and then the timezone as an offset
 from UTC (a `+` or `-` with four digits; the first two are hours, and
@@ -829,21 +1050,28 @@ with `strftime("%s %z")`).
 Note that the `-local` option does not affect the seconds-since-epoch
 value (which is always measured in UTC), but does switch the accompanying
 timezone value.
-+
+
+`--date=human` shows the timezone if the timezone does not match the
+current time-zone, and doesn't print the whole date if that matches
+(ie skip printing year for dates that are "this year", but also skip
+the whole date itself if it's in the last few days and we can just say
+what weekday it was).  For older dates the hour and minute is also
+omitted.
+
 `--date=unix` shows the date as a Unix epoch timestamp (seconds since
 1970).  As with `--raw`, this is always in UTC and therefore `-local`
 has no effect.
-+
+
 `--date=format:...` feeds the format `...` to your system `strftime`,
-except for %z and %Z, which are handled internally.
+except for %s, %z, and %Z, which are handled internally.
 Use `--date=format:%c` to show the date in your system locale's
 preferred format.  See the `strftime` manual for a complete list of
 format placeholders. When using `-local`, the correct syntax is
 `--date=format-local:...`.
-+
+
 `--date=default` is the default format, and is similar to
 `--date=rfc2822`, with a few exceptions:
-
+--
 	- there is no comma after the day-of-week
 
 	- the time zone is omitted when the local time zone is used
@@ -852,6 +1080,14 @@ ifdef::git-rev-list[]
 --header::
 	Print the contents of the commit in raw-format; each record is
 	separated with a NUL character.
+
+--no-commit-header::
+	Suppress the header line containing "commit" and the object ID printed before
+	the specified format.  This has no effect on the built-in formats; only custom
+	formats are affected.
+
+--commit-header::
+	Overrides a previous `--no-commit-header`.
 endif::git-rev-list[]
 
 --parents::
@@ -925,39 +1161,4 @@ ifdef::git-rev-list[]
 	counts and print the count for equivalent commits separated
 	by a tab.
 endif::git-rev-list[]
-
-ifndef::git-rev-list[]
-Diff Formatting
-~~~~~~~~~~~~~~~
-
-Listed below are options that control the formatting of diff output.
-Some of them are specific to linkgit:git-rev-list[1], however other diff
-options may be given. See linkgit:git-diff-files[1] for more options.
-
--c::
-	With this option, diff output for a merge commit
-	shows the differences from each of the parents to the merge result
-	simultaneously instead of showing pairwise diff between a parent
-	and the result one at a time. Furthermore, it lists only files
-	which were modified from all parents.
-
---cc::
-	This flag implies the `-c` option and further compresses the
-	patch output by omitting uninteresting hunks whose contents in
-	the parents have only two variants and the merge result picks
-	one of them without modification.
-
--m::
-	This flag makes the merge commits show the full diff like
-	regular commits; for each merge parent, a separate log entry
-	and diff is generated. An exception is that only diff against
-	the first parent is shown when `--first-parent` option is given;
-	in that case, the output represents the changes the merge
-	brought _into_ the then-current branch.
-
--r::
-	Show recursive diffs.
-
--t::
-	Show the tree objects in the diff output. This implies `-r`.
-endif::git-rev-list[]
+endif::git-shortlog[]

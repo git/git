@@ -59,16 +59,17 @@ This is optional and defaults to the original version 'v1' format.
 --untracked-files[=<mode>]::
 	Show untracked files.
 +
+--
 The mode parameter is used to specify the handling of untracked files.
 It is optional: it defaults to 'all', and if specified, it must be
 stuck to the option (e.g. `-uno`, but not `-u no`).
-+
+
 The possible options are:
-+
+
 	- 'no'     - Show no untracked files.
 	- 'normal' - Shows untracked files and directories.
 	- 'all'    - Also shows individual files in untracked directories.
-+
+
 When `-u` option is not used, untracked files and directories are
 shown (i.e. the same as specifying `normal`), to help you avoid
 forgetting to add newly created files.  Because it takes extra work
@@ -78,9 +79,10 @@ Consider enabling untracked cache and split index if supported (see
 `git update-index --untracked-cache` and `git update-index
 --split-index`), Otherwise you can use `no` to have `git status`
 return more quickly without showing untracked files.
-+
+
 The default can be changed using the status.showUntrackedFiles
 configuration variable documented in linkgit:git-config[1].
+--
 
 --ignore-submodules[=<when>]::
 	Ignore changes to submodules when looking for changes. <when> can be
@@ -100,24 +102,26 @@ configuration variable documented in linkgit:git-config[1].
 --ignored[=<mode>]::
 	Show ignored files as well.
 +
+--
 The mode parameter is used to specify the handling of ignored files.
 It is optional: it defaults to 'traditional'.
-+
+
 The possible options are:
-+
+
 	- 'traditional' - Shows ignored files and directories, unless
-			  --untracked-files=all is specifed, in which case
+			  --untracked-files=all is specified, in which case
 			  individual files in ignored directories are
 			  displayed.
 	- 'no'	        - Show no ignored files.
 	- 'matching'    - Shows ignored files and directories matching an
 			  ignore pattern.
-+
+
 When 'matching' mode is specified, paths that explicitly match an
 ignored pattern are shown. If a directory matches an ignore pattern,
 then it is shown, but not paths contained in the ignored directory. If
 a directory does not match an ignore pattern, but all contents are
 ignored, then the directory is not shown, but all contents are shown.
+--
 
 -z::
 	Terminate entries with NUL, instead of LF.  This implies
@@ -126,7 +130,7 @@ ignored, then the directory is not shown, but all contents are shown.
 --column[=<options>]::
 --no-column::
 	Display untracked files in columns. See configuration variable
-	column.status for option syntax.`--column` and `--no-column`
+	`column.status` for option syntax. `--column` and `--no-column`
 	without options are equivalent to 'always' and 'never'
 	respectively.
 
@@ -134,6 +138,16 @@ ignored, then the directory is not shown, but all contents are shown.
 --no-ahead-behind::
 	Display or do not display detailed ahead/behind counts for the
 	branch relative to its upstream branch.  Defaults to true.
+
+--renames::
+--no-renames::
+	Turn on/off rename detection regardless of user configuration.
+	See also linkgit:git-diff[1] `--no-renames`.
+
+--find-renames[=<n>]::
+	Turn on rename detection, optionally setting the similarity
+	threshold.
+	See also linkgit:git-diff[1] `--find-renames`.
 
 <pathspec>...::
 	See the 'pathspec' entry in linkgit:gitglossary[7].
@@ -170,48 +184,65 @@ characters, that field will be quoted in the manner of a C string
 literal: surrounded by ASCII double quote (34) characters, and with
 interior special characters backslash-escaped.
 
-For paths with merge conflicts, `X` and `Y` show the modification
-states of each side of the merge. For paths that do not have merge
-conflicts, `X` shows the status of the index, and `Y` shows the status
-of the work tree.  For untracked paths, `XY` are `??`.  Other status
-codes can be interpreted as follows:
+There are three different types of states that are shown using this format, and
+each one uses the `XY` syntax differently:
+
+* When a merge is occurring and the merge was successful, or outside of a merge
+	situation, `X` shows the status of the index and `Y` shows the status of the
+	working tree.
+* When a merge conflict has occurred and has not yet been resolved, `X` and `Y`
+	show the state introduced by each head of the merge, relative to the common
+	ancestor. These paths are said to be _unmerged_.
+* When a path is untracked, `X` and `Y` are always the same, since they are
+	unknown to the index. `??` is used for untracked paths. Ignored files are
+	not listed unless `--ignored` is used; if it is, ignored files are indicated
+	by `!!`.
+
+Note that the term _merge_ here also includes rebases using the default
+`--merge` strategy, cherry-picks, and anything else using the merge machinery.
+
+In the following table, these three classes are shown in separate sections, and
+these characters are used for `X` and `Y` fields for the first two sections that
+show tracked paths:
 
 * ' ' = unmodified
 * 'M' = modified
+* 'T' = file type changed (regular file, symbolic link or submodule)
 * 'A' = added
 * 'D' = deleted
 * 'R' = renamed
-* 'C' = copied
+* 'C' = copied (if config option status.renames is set to "copies")
 * 'U' = updated but unmerged
 
-Ignored files are not listed, unless `--ignored` option is in effect,
-in which case `XY` are `!!`.
-
-    X          Y     Meaning
-    -------------------------------------------------
-	     [AMD]   not updated
-    M        [ MD]   updated in index
-    A        [ MD]   added to index
-    D                deleted from index
-    R        [ MD]   renamed in index
-    C        [ MD]   copied in index
-    [MARC]           index and work tree matches
-    [ MARC]     M    work tree changed since index
-    [ MARC]     D    deleted in work tree
-    [ D]        R    renamed in work tree
-    [ D]        C    copied in work tree
-    -------------------------------------------------
-    D           D    unmerged, both deleted
-    A           U    unmerged, added by us
-    U           D    unmerged, deleted by them
-    U           A    unmerged, added by them
-    D           U    unmerged, deleted by us
-    A           A    unmerged, both added
-    U           U    unmerged, both modified
-    -------------------------------------------------
-    ?           ?    untracked
-    !           !    ignored
-    -------------------------------------------------
+....
+X          Y     Meaning
+-------------------------------------------------
+	 [AMD]   not updated
+M        [ MTD]  updated in index
+T        [ MTD]  type changed in index
+A        [ MTD]  added to index
+D                deleted from index
+R        [ MTD]  renamed in index
+C        [ MTD]  copied in index
+[MTARC]          index and work tree matches
+[ MTARC]    M    work tree changed since index
+[ MTARC]    T    type changed in work tree since index
+[ MTARC]    D    deleted in work tree
+	    R    renamed in work tree
+	    C    copied in work tree
+-------------------------------------------------
+D           D    unmerged, both deleted
+A           U    unmerged, added by us
+U           D    unmerged, deleted by them
+U           A    unmerged, added by them
+D           U    unmerged, deleted by us
+A           A    unmerged, both added
+U           U    unmerged, both modified
+-------------------------------------------------
+?           ?    untracked
+!           !    ignored
+-------------------------------------------------
+....
 
 Submodules have more state and instead report
 		M    the submodule has a different HEAD than
@@ -266,21 +297,33 @@ Header lines start with "#" and are added in response to specific
 command line arguments.  Parsers should ignore headers they
 don't recognize.
 
-### Branch Headers
+Branch Headers
+^^^^^^^^^^^^^^
 
 If `--branch` is given, a series of header lines are printed with
 information about the current branch.
 
-    Line                                     Notes
-    ------------------------------------------------------------
-    # branch.oid <commit> | (initial)        Current commit.
-    # branch.head <branch> | (detached)      Current branch.
-    # branch.upstream <upstream_branch>      If upstream is set.
-    # branch.ab +<ahead> -<behind>           If upstream is set and
-					     the commit is present.
-    ------------------------------------------------------------
+....
+Line                                     Notes
+------------------------------------------------------------
+# branch.oid <commit> | (initial)        Current commit.
+# branch.head <branch> | (detached)      Current branch.
+# branch.upstream <upstream_branch>      If upstream is set.
+# branch.ab +<ahead> -<behind>           If upstream is set and
+					 the commit is present.
+------------------------------------------------------------
+....
 
-### Changed Tracked Entries
+Stash Information
+^^^^^^^^^^^^^^^^^
+
+If `--show-stash` is given, one line is printed showing the number of stash
+entries if non-zero:
+
+    # stash <N>
+
+Changed Tracked Entries
+^^^^^^^^^^^^^^^^^^^^^^^
 
 Following the headers, a series of lines are printed for tracked
 entries.  One of three different line formats may be used to describe
@@ -296,58 +339,63 @@ Renamed or copied entries have the following format:
 
     2 <XY> <sub> <mH> <mI> <mW> <hH> <hI> <X><score> <path><sep><origPath>
 
-    Field       Meaning
-    --------------------------------------------------------
-    <XY>        A 2 character field containing the staged and
-		unstaged XY values described in the short format,
-		with unchanged indicated by a "." rather than
-		a space.
-    <sub>       A 4 character field describing the submodule state.
-		"N..." when the entry is not a submodule.
-		"S<c><m><u>" when the entry is a submodule.
-		<c> is "C" if the commit changed; otherwise ".".
-		<m> is "M" if it has tracked changes; otherwise ".".
-		<u> is "U" if there are untracked changes; otherwise ".".
-    <mH>        The octal file mode in HEAD.
-    <mI>        The octal file mode in the index.
-    <mW>        The octal file mode in the worktree.
-    <hH>        The object name in HEAD.
-    <hI>        The object name in the index.
-    <X><score>  The rename or copy score (denoting the percentage
-		of similarity between the source and target of the
-		move or copy). For example "R100" or "C75".
-    <path>      The pathname.  In a renamed/copied entry, this
-		is the target path.
-    <sep>       When the `-z` option is used, the 2 pathnames are separated
-		with a NUL (ASCII 0x00) byte; otherwise, a tab (ASCII 0x09)
-		byte separates them.
-    <origPath>  The pathname in the commit at HEAD or in the index.
-		This is only present in a renamed/copied entry, and
-		tells where the renamed/copied contents came from.
-    --------------------------------------------------------
+....
+Field       Meaning
+--------------------------------------------------------
+<XY>        A 2 character field containing the staged and
+	    unstaged XY values described in the short format,
+	    with unchanged indicated by a "." rather than
+	    a space.
+<sub>       A 4 character field describing the submodule state.
+	    "N..." when the entry is not a submodule.
+	    "S<c><m><u>" when the entry is a submodule.
+	    <c> is "C" if the commit changed; otherwise ".".
+	    <m> is "M" if it has tracked changes; otherwise ".".
+	    <u> is "U" if there are untracked changes; otherwise ".".
+<mH>        The octal file mode in HEAD.
+<mI>        The octal file mode in the index.
+<mW>        The octal file mode in the worktree.
+<hH>        The object name in HEAD.
+<hI>        The object name in the index.
+<X><score>  The rename or copy score (denoting the percentage
+	    of similarity between the source and target of the
+	    move or copy). For example "R100" or "C75".
+<path>      The pathname.  In a renamed/copied entry, this
+	    is the target path.
+<sep>       When the `-z` option is used, the 2 pathnames are separated
+	    with a NUL (ASCII 0x00) byte; otherwise, a tab (ASCII 0x09)
+	    byte separates them.
+<origPath>  The pathname in the commit at HEAD or in the index.
+	    This is only present in a renamed/copied entry, and
+	    tells where the renamed/copied contents came from.
+--------------------------------------------------------
+....
 
 Unmerged entries have the following format; the first character is
 a "u" to distinguish from ordinary changed entries.
 
-    u <xy> <sub> <m1> <m2> <m3> <mW> <h1> <h2> <h3> <path>
+    u <XY> <sub> <m1> <m2> <m3> <mW> <h1> <h2> <h3> <path>
 
-    Field       Meaning
-    --------------------------------------------------------
-    <XY>        A 2 character field describing the conflict type
-		as described in the short format.
-    <sub>       A 4 character field describing the submodule state
-		as described above.
-    <m1>        The octal file mode in stage 1.
-    <m2>        The octal file mode in stage 2.
-    <m3>        The octal file mode in stage 3.
-    <mW>        The octal file mode in the worktree.
-    <h1>        The object name in stage 1.
-    <h2>        The object name in stage 2.
-    <h3>        The object name in stage 3.
-    <path>      The pathname.
-    --------------------------------------------------------
+....
+Field       Meaning
+--------------------------------------------------------
+<XY>        A 2 character field describing the conflict type
+	    as described in the short format.
+<sub>       A 4 character field describing the submodule state
+	    as described above.
+<m1>        The octal file mode in stage 1.
+<m2>        The octal file mode in stage 2.
+<m3>        The octal file mode in stage 3.
+<mW>        The octal file mode in the worktree.
+<h1>        The object name in stage 1.
+<h2>        The object name in stage 2.
+<h3>        The object name in stage 3.
+<path>      The pathname.
+--------------------------------------------------------
+....
 
-### Other Items
+Other Items
+^^^^^^^^^^^
 
 Following the tracked entries (and if requested), a series of
 lines will be printed for untracked and then ignored items
@@ -361,7 +409,8 @@ Ignored items have the following format:
 
     ! <path>
 
-### Pathname Format Notes and -z
+Pathname Format Notes and -z
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 When the `-z` option is given, pathnames are printed as is and
 without any quoting and lines are terminated with a NUL (ASCII 0x00)

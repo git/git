@@ -3,8 +3,8 @@
 use lib '../../perl/build/lib';
 use strict;
 use warnings;
-use JSON;
-use Git;
+use Getopt::Long;
+use Cwd qw(realpath);
 
 sub get_times {
 	my $name = shift;
@@ -12,82 +12,116 @@ sub get_times {
 	my $line = <$fh>;
 	return undef if not defined $line;
 	close $fh or die "cannot close $name: $!";
-	$line =~ /^(?:(\d+):)?(\d+):(\d+(?:\.\d+)?) (\d+(?:\.\d+)?) (\d+(?:\.\d+)?)$/
-		or die "bad input line: $line";
-	my $rt = ((defined $1 ? $1 : 0.0)*60+$2)*60+$3;
-	return ($rt, $4, $5);
+	# times
+	if ($line =~ /^(?:(\d+):)?(\d+):(\d+(?:\.\d+)?) (\d+(?:\.\d+)?) (\d+(?:\.\d+)?)$/) {
+		my $rt = ((defined $1 ? $1 : 0.0)*60+$2)*60+$3;
+		return ($rt, $4, $5);
+	# size
+	} elsif ($line =~ /^\s*(\d+)$/) {
+		return $1;
+	} else {
+		die "bad input line: $line";
+	}
+}
+
+sub relative_change {
+	my ($r, $firstr) = @_;
+	if ($firstr > 0) {
+		return sprintf "%+.1f%%", 100.0*($r-$firstr)/$firstr;
+	} elsif ($r == 0) {
+		return "=";
+	} else {
+		return "+inf";
+	}
 }
 
 sub format_times {
 	my ($r, $u, $s, $firstr) = @_;
+	# no value means we did not finish the test
 	if (!defined $r) {
 		return "<missing>";
 	}
-	my $out = sprintf "%.2f(%.2f+%.2f)", $r, $u, $s;
-	if (defined $firstr) {
-		if ($firstr > 0) {
-			$out .= sprintf " %+.1f%%", 100.0*($r-$firstr)/$firstr;
-		} elsif ($r == 0) {
-			$out .= " =";
-		} else {
-			$out .= " +inf";
-		}
+	# a single value means we have a size, not times
+	if (!defined $u) {
+		return format_size($r, $firstr);
 	}
+	# otherwise, we have real/user/system times
+	my $out = sprintf "%.2f(%.2f+%.2f)", $r, $u, $s;
+	$out .= ' ' . relative_change($r, $firstr) if defined $firstr;
 	return $out;
+}
+
+sub usage {
+	print <<EOT;
+./aggregate.perl [options] [--] [<dir_or_rev>...] [--] [<test_script>...] >
+
+  Options:
+    --codespeed          * Format output for Codespeed
+    --reponame    <str>  * Send given reponame to codespeed
+    --results-dir <str>  * Directory where test results are located
+    --sort-by     <str>  * Sort output (only "regression" criteria is supported)
+    --subsection  <str>  * Use results from given subsection
+
+EOT
+	exit(1);
+}
+
+sub human_size {
+	my $n = shift;
+	my @units = ('', qw(K M G));
+	while ($n > 900 && @units > 1) {
+		$n /= 1000;
+		shift @units;
+	}
+	return $n unless length $units[0];
+	return sprintf '%.1f%s', $n, $units[0];
+}
+
+sub format_size {
+	my ($size, $first) = @_;
+	# match the width of a time: 0.00(0.00+0.00)
+	my $out = sprintf '%15s', human_size($size);
+	$out .= ' ' . relative_change($size, $first) if defined $first;
+	return $out;
+}
+
+sub sane_backticks {
+	open(my $fh, '-|', @_);
+	return <$fh>;
 }
 
 my (@dirs, %dirnames, %dirabbrevs, %prefixes, @tests,
     $codespeed, $sortby, $subsection, $reponame);
+my $resultsdir = "test-results";
+
+Getopt::Long::Configure qw/ require_order /;
+
+my $rc = GetOptions("codespeed"     => \$codespeed,
+		    "reponame=s"    => \$reponame,
+		    "results-dir=s" => \$resultsdir,
+		    "sort-by=s"     => \$sortby,
+		    "subsection=s"  => \$subsection);
+usage() unless $rc;
+
 while (scalar @ARGV) {
 	my $arg = $ARGV[0];
 	my $dir;
-	if ($arg eq "--codespeed") {
-		$codespeed = 1;
-		shift @ARGV;
-		next;
-	}
-	if ($arg =~ /--sort-by(?:=(.*))?/) {
-		shift @ARGV;
-		if (defined $1) {
-			$sortby = $1;
-		} else {
-			$sortby = shift @ARGV;
-			if (! defined $sortby) {
-				die "'--sort-by' requires an argument";
-			}
-		}
-		next;
-	}
-	if ($arg eq "--subsection") {
-		shift @ARGV;
-		$subsection = $ARGV[0];
-		shift @ARGV;
-		if (! $subsection) {
-			die "empty subsection";
-		}
-		next;
-	}
-	if ($arg eq "--reponame") {
-		shift @ARGV;
-		$reponame = $ARGV[0];
-		shift @ARGV;
-		if (! $reponame) {
-			die "empty reponame";
-		}
-		next;
-	}
+	my $prefix = '';
 	last if -f $arg or $arg eq "--";
 	if (! -d $arg) {
-		my $rev = Git::command_oneline(qw(rev-parse --verify), $arg);
+		my $rev = sane_backticks(qw(git rev-parse --verify), $arg);
+		chomp $rev;
 		$dir = "build/".$rev;
+	} elsif ($arg eq '.') {
+		$dir = '.';
 	} else {
-		$arg =~ s{/*$}{};
-		$dir = $arg;
-		$dirabbrevs{$dir} = $dir;
+		$dir = realpath($arg);
+		$dirnames{$dir} = $dir;
+		$prefix .= 'bindir';
 	}
 	push @dirs, $dir;
-	$dirnames{$dir} = $arg;
-	my $prefix = $dir;
+	$dirnames{$dir} ||= $arg;
+	$prefix .= $dir;
 	$prefix =~ tr/^a-zA-Z0-9/_/c;
 	$prefixes{$dir} = $prefix . '.';
 	shift @ARGV;
@@ -105,8 +139,6 @@ shift @ARGV if scalar @ARGV and $ARGV[0] eq "--";
 if (not @tests) {
 	@tests = glob "p????-*.sh";
 }
-
-my $resultsdir = "test-results";
 
 if (! $subsection and
     exists $ENV{GIT_PERF_SUBSECTION} and
@@ -192,7 +224,8 @@ sub print_default_results {
 		my $firstr;
 		for my $i (0..$#dirs) {
 			my $d = $dirs[$i];
-			$times{$prefixes{$d}.$t} = [get_times("$resultsdir/$prefixes{$d}$t.times")];
+			my $base = "$resultsdir/$prefixes{$d}$t";
+			$times{$prefixes{$d}.$t} = [get_times("$base.result")];
 			my ($r,$u,$s) = @{$times{$prefixes{$d}.$t}};
 			my $w = length format_times($r,$u,$s,$firstr);
 			$colwidth[$i] = $w if $w > $colwidth[$i];
@@ -225,7 +258,8 @@ sub print_sorted_results {
 	my ($sortby) = @_;
 
 	if ($sortby ne "regression") {
-		die "only 'regression' is supported as '--sort-by' argument";
+		print "Only 'regression' is supported as '--sort-by' argument\n";
+		usage();
 	}
 
 	my @evolutions;
@@ -233,7 +267,7 @@ sub print_sorted_results {
 		my ($prevr, $prevu, $prevs, $prevrev);
 		for my $i (0..$#dirs) {
 			my $d = $dirs[$i];
-			my ($r, $u, $s) = get_times("$resultsdir/$prefixes{$d}$t.times");
+			my ($r, $u, $s) = get_times("$resultsdir/$prefixes{$d}$t.result");
 			if ($i > 0 and defined $r and defined $prevr and $prevr > 0) {
 				my $percent = 100.0 * ($r - $prevr) / $prevr;
 				push @evolutions, { "percent"  => $percent,
@@ -281,9 +315,6 @@ sub print_codespeed_results {
 		$environment = $reponame;
 	} elsif (exists $ENV{GIT_PERF_REPO_NAME} and $ENV{GIT_PERF_REPO_NAME} ne "") {
 		$environment = $ENV{GIT_PERF_REPO_NAME};
-	} elsif (exists $ENV{GIT_TEST_INSTALLED} and $ENV{GIT_TEST_INSTALLED} ne "") {
-		$environment = $ENV{GIT_TEST_INSTALLED};
-		$environment =~ s|/bin-wrappers$||;
 	} else {
 		$environment = `uname -r`;
 		chomp $environment;
@@ -296,7 +327,7 @@ sub print_codespeed_results {
 			my $commitid = $prefixes{$d};
 			$commitid =~ s/^build_//;
 			$commitid =~ s/\.$//;
-			my ($result_value, $u, $s) = get_times("$resultsdir/$prefixes{$d}$t.times");
+			my ($result_value, $u, $s) = get_times("$resultsdir/$prefixes{$d}$t.result");
 
 			my %vals = (
 				"commitid" => $commitid,
@@ -311,7 +342,8 @@ sub print_codespeed_results {
 		}
 	}
 
-	print to_json(\@data, {utf8 => 1, pretty => 1, canonical => 1}), "\n";
+	require JSON;
+	print JSON::to_json(\@data, {utf8 => 1, pretty => 1, canonical => 1}), "\n";
 }
 
 binmode STDOUT, ":utf8" or die "PANIC on binmode: $!";

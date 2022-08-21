@@ -79,7 +79,7 @@ change its address during its lifetime.
 When the chars burst over a chunk boundary, we allocate a larger
 chunk, and then copy the partly formed object from the end of the old
 chunk to the beginning of the new larger chunk.  We then carry on
-accreting characters to the end of the object as we normally would.
+accrediting characters to the end of the object as we normally would.
 
 A special macro is provided to add a single char at a time to a
 growing object.  This allows the use of register variables, which
@@ -135,8 +135,10 @@ extern "C" {
    alignment relative to 0.  */
 
 #define __PTR_ALIGN(B, P, A)						    \
-  __BPTR_ALIGN (sizeof (PTR_INT_TYPE) < sizeof (void *) ? (B) : (char *) 0, \
-		P, A)
+  (sizeof (PTR_INT_TYPE) < sizeof(void *) ?                                 \
+   __BPTR_ALIGN((B), (P), (A)) :                                            \
+   (void *)__BPTR_ALIGN((PTR_INT_TYPE)(void *)0, (PTR_INT_TYPE)(P), (A))            \
+  )
 
 #include <string.h>
 
@@ -160,11 +162,15 @@ struct obstack		/* control current object in current chunk */
     void *tempptr;
   } temp;			/* Temporary for some macros.  */
   int   alignment_mask;		/* Mask of alignment for each object. */
-  /* These prototypes vary based on `use_extra_arg', and we use
-     casts to the prototypeless function type in all assignments,
-     but having prototypes here quiets -Wstrict-prototypes.  */
-  struct _obstack_chunk *(*chunkfun) (void *, long);
-  void (*freefun) (void *, struct _obstack_chunk *);
+  /* These prototypes vary based on `use_extra_arg'. */
+  union {
+    void *(*plain) (long);
+    struct _obstack_chunk *(*extra) (void *, long);
+  } chunkfun;
+  union {
+    void (*plain) (void *);
+    void (*extra) (void *, struct _obstack_chunk *);
+  } freefun;
   void *extra_arg;		/* first arg for chunk alloc/dealloc funcs */
   unsigned use_extra_arg:1;	/* chunk alloc/dealloc funcs take extra arg */
   unsigned maybe_empty_object:1;/* There is a possibility that the current
@@ -235,10 +241,10 @@ extern void (*obstack_alloc_failed_handler) (void);
 		    (void (*) (void *, void *)) (freefun), (arg))
 
 #define obstack_chunkfun(h, newchunkfun) \
-  ((h) -> chunkfun = (struct _obstack_chunk *(*)(void *, long)) (newchunkfun))
+  ((h)->chunkfun.extra = (struct _obstack_chunk *(*)(void *, long)) (newchunkfun))
 
 #define obstack_freefun(h, newfreefun) \
-  ((h) -> freefun = (void (*)(void *, struct _obstack_chunk *)) (newfreefun))
+  ((h)->freefun.extra = (void (*)(void *, struct _obstack_chunk *)) (newfreefun))
 
 #define obstack_1grow_fast(h,achar) (*((h)->next_free)++ = (achar))
 
@@ -492,7 +498,7 @@ __extension__								\
 ( (h)->temp.tempint = (char *) (obj) - (char *) (h)->chunk,		\
   ((((h)->temp.tempint > 0						\
     && (h)->temp.tempint < (h)->chunk_limit - (char *) (h)->chunk))	\
-   ? (int) ((h)->next_free = (h)->object_base				\
+   ? (ptrdiff_t) ((h)->next_free = (h)->object_base				\
 	    = (h)->temp.tempint + (char *) (h)->chunk)			\
    : (((obstack_free) ((h), (h)->temp.tempint + (char *) (h)->chunk), 0), 0)))
 

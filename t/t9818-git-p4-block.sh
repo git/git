@@ -92,11 +92,11 @@ test_expect_success 'Add some more files' '
 	for i in $(test_seq 0 10)
 	do
 		p4_add_file "included/x$i" &&
-		p4_add_file "excluded/x$i"
+		p4_add_file "excluded/x$i" || return 1
 	done &&
 	for i in $(test_seq 0 10)
 	do
-		p4_add_file "excluded/y$i"
+		p4_add_file "excluded/y$i" || return 1
 	done
 '
 
@@ -123,12 +123,13 @@ test_expect_success 'Create a repo with multiple depot paths' '
 	do
 		for i in $(test_seq 1 10)
 		do
-			p4_add_file "$p/file$p$i"
+			p4_add_file "$p/file$p$i" || return 1
 		done
 	done
 '
 
 test_expect_success 'Clone repo with multiple depot paths' '
+	test_when_finished cleanup_git &&
 	(
 		cd "$git" &&
 		git p4 clone --changes-block-size=4 //depot/pathA@all //depot/pathB@all \
@@ -138,8 +139,11 @@ test_expect_success 'Clone repo with multiple depot paths' '
 	)
 '
 
-test_expect_success 'kill p4d' '
-	kill_p4d
+test_expect_success 'Clone repo with self-sizing block size' '
+	test_when_finished cleanup_git &&
+	git p4 clone --changes-block-size=1000000 //depot@all --destination="$git" &&
+	git -C "$git" log --oneline >log &&
+	test_line_count \> 10 log
 '
 
 test_done

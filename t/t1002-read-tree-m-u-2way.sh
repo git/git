@@ -8,6 +8,8 @@ test_description='Two way merge with read-tree -m -u $H $M
 This is identical to t1001, but uses -u to update the work tree as well.
 
 '
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-read-tree.sh
 
@@ -16,16 +18,17 @@ compare_change () {
 	    -e '1{/^diff --git /d;}' \
 	    -e '2{/^index /d;}' \
 	    -e '/^--- /d; /^+++ /d; /^@@ /d;' \
-	    -e 's/^\(.[0-7][0-7][0-7][0-7][0-7][0-7]\) '"$_x40"' /\1 X /' "$1"
+	    -e 's/^\(.[0-7][0-7][0-7][0-7][0-7][0-7]\) '"$OID_REGEX"' /\1 X /' "$1"
 	test_cmp expected current
 }
 
 check_cache_at () {
-	clean_if_empty=$(git diff-files -- "$1")
+	git diff-files -- "$1" >out &&
+	clean_if_empty=$(cat out) &&
 	case "$clean_if_empty" in
 	'')  echo "$1: clean" ;;
 	?*)  echo "$1: dirty" ;;
-	esac
+	esac &&
 	case "$2,$clean_if_empty" in
 	clean,)		:     ;;
 	clean,?*)	false ;;

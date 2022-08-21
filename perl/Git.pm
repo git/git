@@ -9,10 +9,7 @@ package Git;
 
 use 5.008;
 use strict;
-use warnings;
-
-use File::Temp ();
-use File::Spec ();
+use warnings $ENV{GIT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
 
 BEGIN {
 
@@ -103,12 +100,9 @@ increase notwithstanding).
 =cut
 
 
-use Carp qw(carp croak); # but croak is bad - throw instead
+sub carp { require Carp; goto &Carp::carp }
+sub croak { require Carp; goto &Carp::croak }
 use Git::LoadCPAN::Error qw(:try);
-use Cwd qw(abs_path cwd);
-use IPC::Open2 qw(open2);
-use Fcntl qw(SEEK_SET SEEK_CUR);
-use Time::Local qw(timegm);
 }
 
 
@@ -191,13 +185,15 @@ sub repository {
 			$dir = undef;
 		};
 
+		require Cwd;
 		if ($dir) {
+			require File::Spec;
 			File::Spec->file_name_is_absolute($dir) or $dir = $opts{Directory} . '/' . $dir;
-			$opts{Repository} = abs_path($dir);
+			$opts{Repository} = Cwd::abs_path($dir);
 
 			# If --git-dir went ok, this shouldn't die either.
 			my $prefix = $search->command_oneline('rev-parse', '--show-prefix');
-			$dir = abs_path($opts{Directory}) . '/';
+			$dir = Cwd::abs_path($opts{Directory}) . '/';
 			if ($prefix) {
 				if (substr($dir, -length($prefix)) ne $prefix) {
 					throw Error::Simple("rev-parse confused me - $dir does not have trailing $prefix");
@@ -223,7 +219,7 @@ sub repository {
 				throw Error::Simple("fatal: Not a git repository: $dir");
 			}
 
-			$opts{Repository} = abs_path($dir);
+			$opts{Repository} = Cwd::abs_path($dir);
 		}
 
 		delete $opts{Directory};
@@ -408,10 +404,12 @@ sub command_bidi_pipe {
 	my $cwd_save = undef;
 	if ($self) {
 		shift;
-		$cwd_save = cwd();
+		require Cwd;
+		$cwd_save = Cwd::getcwd();
 		_setup_git_cmd_env($self);
 	}
-	$pid = open2($in, $out, 'git', @_);
+	require IPC::Open2;
+	$pid = IPC::Open2::open2($in, $out, 'git', @_);
 	chdir($cwd_save) if $cwd_save;
 	return ($pid, $in, $out, join(' ', @_));
 }
@@ -538,7 +536,8 @@ sub get_tz_offset {
 	my $t = shift || time;
 	my @t = localtime($t);
 	$t[5] += 1900;
-	my $gm = timegm(@t);
+	require Time::Local;
+	my $gm = Time::Local::timegm(@t);
 	my $sign = qw( + + - )[ $gm <=> $t ];
 	return sprintf("%s%02d%02d", $sign, (gmtime(abs($t - $gm)))[2,1]);
 }
@@ -554,7 +553,7 @@ sub get_record {
 	my ($fh, $rs) = @_;
 	local $/ = $rs;
 	my $rec = <$fh>;
-	chomp $rec if defined $rs;
+	chomp $rec if defined $rec;
 	$rec;
 }
 
@@ -563,7 +562,7 @@ sub get_record {
 Query user C<PROMPT> and return answer from user.
 
 Honours GIT_ASKPASS and SSH_ASKPASS environment variables for querying
-the user. If no *_ASKPASS variable is set or an error occoured,
+the user. If no *_ASKPASS variable is set or an error occurred,
 the terminal is tried as a fallback.
 If C<ISPASSWORD> is set and true, the terminal disables echo.
 
@@ -721,6 +720,32 @@ It would return C<undef> if configuration variable is not defined.
 
 sub config_int {
 	return scalar _config_common({'kind' => '--int'}, @_);
+}
+
+=item config_regexp ( RE )
+
+Retrieve the list of configuration key names matching the regular
+expression C<RE>. The return value is a list of strings matching
+this regex.
+
+=cut
+
+sub config_regexp {
+	my ($self, $regex) = _maybe_self(@_);
+	try {
+		my @cmd = ('config', '--name-only', '--get-regexp', $regex);
+		unshift @cmd, $self if $self;
+		my @matches = command(@cmd);
+		return @matches;
+	} catch Git::Error::Command with {
+		my $E = shift;
+		if ($E->value() == 1) {
+			my @matches = ();
+			return @matches;
+		} else {
+			throw $E;
+		}
+	};
 }
 
 # Common subroutine to implement bulk of what the config* family of methods
@@ -980,7 +1005,7 @@ sub cat_blob {
 		return -1;
 	}
 
-	if ($description !~ /^[0-9a-fA-F]{40} \S+ (\d+)$/) {
+	if ($description !~ /^[0-9a-fA-F]{40}(?:[0-9a-fA-F]{24})? \S+ (\d+)$/) {
 		carp "Unexpected result returned from git cat-file";
 		return -1;
 	}
@@ -1314,6 +1339,7 @@ sub _temp_cache {
 		my $n = $name;
 		$n =~ s/\W/_/g; # no strange chars
 
+		require File::Temp;
 		($$temp_fd, $fname) = File::Temp::tempfile(
 			"Git_${n}_XXXXXX", UNLINK => 1, DIR => $tmpdir,
 			) or throw Error::Simple("couldn't open new temp file");
@@ -1336,9 +1362,9 @@ sub temp_reset {
 
 	truncate $temp_fd, 0
 		or throw Error::Simple("couldn't truncate file");
-	sysseek($temp_fd, 0, SEEK_SET) and seek($temp_fd, 0, SEEK_SET)
+	sysseek($temp_fd, 0, Fcntl::SEEK_SET()) and seek($temp_fd, 0, Fcntl::SEEK_SET())
 		or throw Error::Simple("couldn't seek to beginning of file");
-	sysseek($temp_fd, 0, SEEK_CUR) == 0 and tell($temp_fd) == 0
+	sysseek($temp_fd, 0, Fcntl::SEEK_CUR()) == 0 and tell($temp_fd) == 0
 		or throw Error::Simple("expected file position to be reset");
 }
 
@@ -1660,6 +1686,16 @@ sub _setup_git_cmd_env {
 # by searching for it at proper places.
 sub _execv_git_cmd { exec('git', @_); }
 
+sub _is_sig {
+	my ($v, $n) = @_;
+
+	# We are avoiding a "use POSIX qw(SIGPIPE SIGABRT)" in the hot
+	# Git.pm codepath.
+	require POSIX;
+	no strict 'refs';
+	$v == *{"POSIX::$n"}->();
+}
+
 # Close pipe to a subprocess.
 sub _cmd_close {
 	my $ctx = shift @_;
@@ -1672,9 +1708,16 @@ sub _cmd_close {
 		} elsif ($? >> 8) {
 			# The caller should pepper this.
 			throw Git::Error::Command($ctx, $? >> 8);
+		} elsif ($? & 127 && _is_sig($? & 127, "SIGPIPE")) {
+			# we might e.g. closed a live stream; the command
+			# dying of SIGPIPE would drive us here.
+		} elsif ($? & 127 && _is_sig($? & 127, "SIGABRT")) {
+			die sprintf('BUG?: got SIGABRT ($? = %d, $? & 127 = %d) when closing pipe',
+				    $?, $? & 127);
+		} elsif ($? & 127) {
+			die sprintf('got signal ($? = %d, $? & 127 = %d) when closing pipe',
+				    $?, $? & 127);
 		}
-		# else we might e.g. closed a live stream; the command
-		# dying of SIGPIPE would drive us here.
 	}
 }
 

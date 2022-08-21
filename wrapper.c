@@ -4,11 +4,15 @@
 #include "cache.h"
 #include "config.h"
 
-static void do_nothing(size_t size)
-{
-}
+static intmax_t count_fsync_writeout_only;
+static intmax_t count_fsync_hardware_flush;
 
-static void (*try_to_free_routine)(size_t size) = do_nothing;
+#ifdef HAVE_RTLGENRANDOM
+/* This is required to get access to RtlGenRandom. */
+#define SystemFunction036 NTAPI SystemFunction036
+#include <NTSecAPI.h>
+#undef SystemFunction036
+#endif
 
 static int memory_limit_check(size_t size, int gentle)
 {
@@ -30,24 +34,11 @@ static int memory_limit_check(size_t size, int gentle)
 	return 0;
 }
 
-try_to_free_t set_try_to_free_routine(try_to_free_t routine)
-{
-	try_to_free_t old = try_to_free_routine;
-	if (!routine)
-		routine = do_nothing;
-	try_to_free_routine = routine;
-	return old;
-}
-
 char *xstrdup(const char *str)
 {
 	char *ret = strdup(str);
-	if (!ret) {
-		try_to_free_routine(strlen(str) + 1);
-		ret = strdup(str);
-		if (!ret)
-			die("Out of memory, strdup failed");
-	}
+	if (!ret)
+		die("Out of memory, strdup failed");
 	return ret;
 }
 
@@ -61,19 +52,13 @@ static void *do_xmalloc(size_t size, int gentle)
 	if (!ret && !size)
 		ret = malloc(1);
 	if (!ret) {
-		try_to_free_routine(size);
-		ret = malloc(size);
-		if (!ret && !size)
-			ret = malloc(1);
-		if (!ret) {
-			if (!gentle)
-				die("Out of memory, malloc failed (tried to allocate %lu bytes)",
-				    (unsigned long)size);
-			else {
-				error("Out of memory, malloc failed (tried to allocate %lu bytes)",
-				      (unsigned long)size);
-				return NULL;
-			}
+		if (!gentle)
+			die("Out of memory, malloc failed (tried to allocate %lu bytes)",
+			    (unsigned long)size);
+		else {
+			error("Out of memory, malloc failed (tried to allocate %lu bytes)",
+			      (unsigned long)size);
+			return NULL;
 		}
 	}
 #ifdef XMALLOC_POISON
@@ -130,22 +115,27 @@ char *xstrndup(const char *str, size_t len)
 	return xmemdupz(str, p ? p - str : len);
 }
 
+int xstrncmpz(const char *s, const char *t, size_t len)
+{
+	int res = strncmp(s, t, len);
+	if (res)
+		return res;
+	return s[len] == '\0' ? 0 : 1;
+}
+
 void *xrealloc(void *ptr, size_t size)
 {
 	void *ret;
 
+	if (!size) {
+		free(ptr);
+		return xmalloc(0);
+	}
+
 	memory_limit_check(size, 0);
 	ret = realloc(ptr, size);
-	if (!ret && !size)
-		ret = realloc(ptr, 1);
-	if (!ret) {
-		try_to_free_routine(size);
-		ret = realloc(ptr, size);
-		if (!ret && !size)
-			ret = realloc(ptr, 1);
-		if (!ret)
-			die("Out of memory, realloc failed");
-	}
+	if (!ret)
+		die("Out of memory, realloc failed");
 	return ret;
 }
 
@@ -160,15 +150,15 @@ void *xcalloc(size_t nmemb, size_t size)
 	ret = calloc(nmemb, size);
 	if (!ret && (!nmemb || !size))
 		ret = calloc(1, 1);
-	if (!ret) {
-		try_to_free_routine(nmemb * size);
-		ret = calloc(nmemb, size);
-		if (!ret && (!nmemb || !size))
-			ret = calloc(1, 1);
-		if (!ret)
-			die("Out of memory, calloc failed");
-	}
+	if (!ret)
+		die("Out of memory, calloc failed");
 	return ret;
+}
+
+void xsetenv(const char *name, const char *value, int overwrite)
+{
+	if (setenv(name, value, overwrite))
+		die_errno(_("could not setenv '%s'"), name ? name : "(null)");
 }
 
 /*
@@ -219,7 +209,9 @@ int xopen(const char *path, int oflag, ...)
 		if (errno == EINTR)
 			continue;
 
-		if ((oflag & O_RDWR) == O_RDWR)
+		if ((oflag & (O_CREAT | O_EXCL)) == (O_CREAT | O_EXCL))
+			die_errno(_("unable to create '%s'"), path);
+		else if ((oflag & O_RDWR) == O_RDWR)
 			die_errno(_("could not open '%s' for reading and writing"), path);
 		else if ((oflag & O_WRONLY) == O_WRONLY)
 			die_errno(_("could not open '%s' for writing"), path);
@@ -255,7 +247,7 @@ ssize_t xread(int fd, void *buf, size_t len)
 {
 	ssize_t nr;
 	if (len > MAX_IO_SIZE)
-	    len = MAX_IO_SIZE;
+		len = MAX_IO_SIZE;
 	while (1) {
 		nr = read(fd, buf, len);
 		if (nr < 0) {
@@ -277,7 +269,7 @@ ssize_t xwrite(int fd, const void *buf, size_t len)
 {
 	ssize_t nr;
 	if (len > MAX_IO_SIZE)
-	    len = MAX_IO_SIZE;
+		len = MAX_IO_SIZE;
 	while (1) {
 		nr = write(fd, buf, len);
 		if (nr < 0) {
@@ -401,7 +393,7 @@ FILE *xfopen(const char *path, const char *mode)
 FILE *xfdopen(int fd, const char *mode)
 {
 	FILE *stream = fdopen(fd, mode);
-	if (stream == NULL)
+	if (!stream)
 		die_errno("Out of memory? fdopen failed");
 	return stream;
 }
@@ -478,21 +470,21 @@ int git_mkstemps_mode(char *pattern, int suffix_len, int mode)
 		"abcdefghijklmnopqrstuvwxyz"
 		"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 		"0123456789";
-	static const int num_letters = 62;
-	uint64_t value;
-	struct timeval tv;
+	static const int num_letters = ARRAY_SIZE(letters) - 1;
+	static const char x_pattern[] = "XXXXXX";
+	static const int num_x = ARRAY_SIZE(x_pattern) - 1;
 	char *filename_template;
 	size_t len;
 	int fd, count;
 
 	len = strlen(pattern);
 
-	if (len < 6 + suffix_len) {
+	if (len < num_x + suffix_len) {
 		errno = EINVAL;
 		return -1;
 	}
 
-	if (strncmp(&pattern[len - 6 - suffix_len], "XXXXXX", 6)) {
+	if (strncmp(&pattern[len - num_x - suffix_len], x_pattern, num_x)) {
 		errno = EINVAL;
 		return -1;
 	}
@@ -501,18 +493,18 @@ int git_mkstemps_mode(char *pattern, int suffix_len, int mode)
 	 * Replace pattern's XXXXXX characters with randomness.
 	 * Try TMP_MAX different filenames.
 	 */
-	gettimeofday(&tv, NULL);
-	value = ((size_t)(tv.tv_usec << 16)) ^ tv.tv_sec ^ getpid();
-	filename_template = &pattern[len - 6 - suffix_len];
+	filename_template = &pattern[len - num_x - suffix_len];
 	for (count = 0; count < TMP_MAX; ++count) {
-		uint64_t v = value;
+		int i;
+		uint64_t v;
+		if (csprng_bytes(&v, sizeof(v)) < 0)
+			return error_errno("unable to get random bytes for temporary file");
+
 		/* Fill in the random bits. */
-		filename_template[0] = letters[v % num_letters]; v /= num_letters;
-		filename_template[1] = letters[v % num_letters]; v /= num_letters;
-		filename_template[2] = letters[v % num_letters]; v /= num_letters;
-		filename_template[3] = letters[v % num_letters]; v /= num_letters;
-		filename_template[4] = letters[v % num_letters]; v /= num_letters;
-		filename_template[5] = letters[v % num_letters]; v /= num_letters;
+		for (i = 0; i < num_x; i++) {
+			filename_template[i] = letters[v % num_letters];
+			v /= num_letters;
+		}
 
 		fd = open(pattern, O_CREAT | O_EXCL | O_RDWR, mode);
 		if (fd >= 0)
@@ -523,12 +515,6 @@ int git_mkstemps_mode(char *pattern, int suffix_len, int mode)
 		 */
 		if (errno != EEXIST)
 			break;
-		/*
-		 * This is a random value.  It is only necessary that
-		 * the next TMP_MAX values generated by adding 7777 to
-		 * VALUE are different with (module 2^32).
-		 */
-		value += 7777;
 	}
 	/* We return the null string if we can't find a unique file name.  */
 	pattern[0] = '\0';
@@ -561,6 +547,85 @@ int xmkstemp_mode(char *filename_template, int mode)
 			nonrelative_template);
 	}
 	return fd;
+}
+
+/*
+ * Some platforms return EINTR from fsync. Since fsync is invoked in some
+ * cases by a wrapper that dies on failure, do not expose EINTR to callers.
+ */
+static int fsync_loop(int fd)
+{
+	int err;
+
+	do {
+		err = fsync(fd);
+	} while (err < 0 && errno == EINTR);
+	return err;
+}
+
+int git_fsync(int fd, enum fsync_action action)
+{
+	switch (action) {
+	case FSYNC_WRITEOUT_ONLY:
+		count_fsync_writeout_only += 1;
+
+#ifdef __APPLE__
+		/*
+		 * On macOS, fsync just causes filesystem cache writeback but
+		 * does not flush hardware caches.
+		 */
+		return fsync_loop(fd);
+#endif
+
+#ifdef HAVE_SYNC_FILE_RANGE
+		/*
+		 * On linux 2.6.17 and above, sync_file_range is the way to
+		 * issue a writeback without a hardware flush. An offset of
+		 * 0 and size of 0 indicates writeout of the entire file and the
+		 * wait flags ensure that all dirty data is written to the disk
+		 * (potentially in a disk-side cache) before we continue.
+		 */
+
+		return sync_file_range(fd, 0, 0, SYNC_FILE_RANGE_WAIT_BEFORE |
+						 SYNC_FILE_RANGE_WRITE |
+						 SYNC_FILE_RANGE_WAIT_AFTER);
+#endif
+
+#ifdef fsync_no_flush
+		return fsync_no_flush(fd);
+#endif
+
+		errno = ENOSYS;
+		return -1;
+
+	case FSYNC_HARDWARE_FLUSH:
+		count_fsync_hardware_flush += 1;
+
+		/*
+		 * On macOS, a special fcntl is required to really flush the
+		 * caches within the storage controller. As of this writing,
+		 * this is a very expensive operation on Apple SSDs.
+		 */
+#ifdef __APPLE__
+		return fcntl(fd, F_FULLFSYNC);
+#else
+		return fsync_loop(fd);
+#endif
+	default:
+		BUG("unexpected git_fsync(%d) call", action);
+	}
+}
+
+static void log_trace_fsync_if(const char *key, intmax_t value)
+{
+	if (value)
+		trace2_data_intmax("fsync", the_repository, key, value);
+}
+
+void trace_git_fsync_stats(void)
+{
+	log_trace_fsync_if("fsync/writeout-only", count_fsync_writeout_only);
+	log_trace_fsync_if("fsync/hardware-flush", count_fsync_hardware_flush);
 }
 
 static int warn_if_unremovable(const char *op, const char *file, int rc)
@@ -643,9 +708,9 @@ int xsnprintf(char *dst, size_t max, const char *fmt, ...)
 	va_end(ap);
 
 	if (len < 0)
-		die("BUG: your snprintf is broken");
+		BUG("your snprintf is broken");
 	if (len >= max)
-		die("BUG: attempt to snprintf into too-small buffer");
+		BUG("attempt to snprintf into too-small buffer");
 	return len;
 }
 
@@ -689,4 +754,99 @@ int xgethostname(char *buf, size_t len)
 	if (!ret)
 		buf[len - 1] = 0;
 	return ret;
+}
+
+int is_empty_or_missing_file(const char *filename)
+{
+	struct stat st;
+
+	if (stat(filename, &st) < 0) {
+		if (errno == ENOENT)
+			return 1;
+		die_errno(_("could not stat %s"), filename);
+	}
+
+	return !st.st_size;
+}
+
+int open_nofollow(const char *path, int flags)
+{
+#ifdef O_NOFOLLOW
+	return open(path, flags | O_NOFOLLOW);
+#else
+	struct stat st;
+	if (lstat(path, &st) < 0)
+		return -1;
+	if (S_ISLNK(st.st_mode)) {
+		errno = ELOOP;
+		return -1;
+	}
+	return open(path, flags);
+#endif
+}
+
+int csprng_bytes(void *buf, size_t len)
+{
+#if defined(HAVE_ARC4RANDOM) || defined(HAVE_ARC4RANDOM_LIBBSD)
+	/* This function never returns an error. */
+	arc4random_buf(buf, len);
+	return 0;
+#elif defined(HAVE_GETRANDOM)
+	ssize_t res;
+	char *p = buf;
+	while (len) {
+		res = getrandom(p, len, 0);
+		if (res < 0)
+			return -1;
+		len -= res;
+		p += res;
+	}
+	return 0;
+#elif defined(HAVE_GETENTROPY)
+	int res;
+	char *p = buf;
+	while (len) {
+		/* getentropy has a maximum size of 256 bytes. */
+		size_t chunk = len < 256 ? len : 256;
+		res = getentropy(p, chunk);
+		if (res < 0)
+			return -1;
+		len -= chunk;
+		p += chunk;
+	}
+	return 0;
+#elif defined(HAVE_RTLGENRANDOM)
+	if (!RtlGenRandom(buf, len))
+		return -1;
+	return 0;
+#elif defined(HAVE_OPENSSL_CSPRNG)
+	int res = RAND_bytes(buf, len);
+	if (res == 1)
+		return 0;
+	if (res == -1)
+		errno = ENOTSUP;
+	else
+		errno = EIO;
+	return -1;
+#else
+	ssize_t res;
+	char *p = buf;
+	int fd, err;
+	fd = open("/dev/urandom", O_RDONLY);
+	if (fd < 0)
+		return -1;
+	while (len) {
+		res = xread(fd, p, len);
+		if (res < 0) {
+			err = errno;
+			close(fd);
+			errno = err;
+			return -1;
+		}
+		len -= res;
+		p += res;
+	}
+	close(fd);
+	return 0;
+#endif
 }

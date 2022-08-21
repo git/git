@@ -33,13 +33,93 @@ endif::git-diff[]
 	show the patch by default, or to cancel the effect of `--patch`.
 endif::git-format-patch[]
 
+ifdef::git-log[]
+--diff-merges=(off|none|on|first-parent|1|separate|m|combined|c|dense-combined|cc|remerge|r)::
+--no-diff-merges::
+	Specify diff format to be used for merge commits. Default is
+	{diff-merges-default} unless `--first-parent` is in use, in which case
+	`first-parent` is the default.
++
+--diff-merges=(off|none):::
+--no-diff-merges:::
+	Disable output of diffs for merge commits. Useful to override
+	implied value.
++
+--diff-merges=on:::
+--diff-merges=m:::
+-m:::
+	This option makes diff output for merge commits to be shown in
+	the default format. `-m` will produce the output only if `-p`
+	is given as well. The default format could be changed using
+	`log.diffMerges` configuration parameter, which default value
+	is `separate`.
++
+--diff-merges=first-parent:::
+--diff-merges=1:::
+	This option makes merge commits show the full diff with
+	respect to the first parent only.
++
+--diff-merges=separate:::
+	This makes merge commits show the full diff with respect to
+	each of the parents. Separate log entry and diff is generated
+	for each parent.
++
+--diff-merges=remerge:::
+--diff-merges=r:::
+--remerge-diff:::
+	With this option, two-parent merge commits are remerged to
+	create a temporary tree object -- potentially containing files
+	with conflict markers and such.  A diff is then shown between
+	that temporary tree and the actual merge commit.
++
+The output emitted when this option is used is subject to change, and
+so is its interaction with other options (unless explicitly
+documented).
++
+--diff-merges=combined:::
+--diff-merges=c:::
+-c:::
+	With this option, diff output for a merge commit shows the
+	differences from each of the parents to the merge result
+	simultaneously instead of showing pairwise diff between a
+	parent and the result one at a time. Furthermore, it lists
+	only files which were modified from all parents. `-c` implies
+	`-p`.
++
+--diff-merges=dense-combined:::
+--diff-merges=cc:::
+--cc:::
+	With this option the output produced by
+	`--diff-merges=combined` is further compressed by omitting
+	uninteresting hunks whose contents in the parents have only
+	two variants and the merge result picks one of them without
+	modification.  `--cc` implies `-p`.
+
+--combined-all-paths::
+	This flag causes combined diffs (used for merge commits) to
+	list the name of the file from all parents.  It thus only has
+	effect when `--diff-merges=[dense-]combined` is in use, and
+	is likely only useful if filename changes are detected (i.e.
+	when either rename or copy detection have been requested).
+endif::git-log[]
+
 -U<n>::
 --unified=<n>::
 	Generate diffs with <n> lines of context instead of
 	the usual three.
 ifndef::git-format-patch[]
-	Implies `-p`.
+	Implies `--patch`.
 endif::git-format-patch[]
+
+--output=<file>::
+	Output to a specific file instead of stdout.
+
+--output-indicator-new=<char>::
+--output-indicator-old=<char>::
+--output-indicator-context=<char>::
+	Specify the character used to indicate new, old or context
+	lines in the generated patch. Normally they are '+', '-' and
+	' ' respectively.
 
 ifndef::git-format-patch[]
 --raw::
@@ -63,8 +143,13 @@ ifndef::git-format-patch[]
 	Synonym for `-p --raw`.
 endif::git-format-patch[]
 
+ifdef::git-log[]
+-t::
+	Show the tree objects in the diff output.
+endif::git-log[]
+
 --indent-heuristic::
-	Enable the heuristic that shift diff hunk boundaries to make patches
+	Enable the heuristic that shifts diff hunk boundaries to make patches
 	easier to read. This is the default.
 
 --no-indent-heuristic::
@@ -106,7 +191,7 @@ diff" algorithm internally.
 	low-occurrence common elements".
 --
 +
-For instance, if you configured diff.algorithm variable to a
+For instance, if you configured the `diff.algorithm` variable to a
 non-default value and want to use the default one, then you
 have to use `--diff-algorithm=default` option.
 
@@ -133,7 +218,7 @@ These parameters can also be set individually with `--stat-width=<width>`,
 	as file creations or deletions ("new" or "gone", optionally "+l"
 	if it's a symlink) and mode changes ("+x" or "-x" for adding
 	or removing executable bit respectively) in diffstat. The
-	information is put betwen the filename part and the graph
+	information is put between the filename part and the graph
 	part. Implies `--stat`.
 
 --numstat::
@@ -148,6 +233,7 @@ These parameters can also be set individually with `--stat-width=<width>`,
 	number of modified files, as well as number of added and deleted
 	lines.
 
+-X[<param1,param2,...>]::
 --dirstat[=<param1,param2,...>]::
 	Output the distribution of relative amount of changes for each
 	sub-directory. The behavior of `--dirstat` can be customized by
@@ -192,6 +278,12 @@ directories with less than 10% of the total amount of changed files,
 and accumulating child directory counts in the parent directories:
 `--dirstat=files,10,cumulative`.
 
+--cumulative::
+	Synonym for --dirstat=cumulative
+
+--dirstat-by-file[=<param1,param2>...]::
+	Synonym for --dirstat=files,param1,param2...
+
 --summary::
 	Output a condensed summary of extended header information
 	such as creations, renames and mode changes.
@@ -220,11 +312,14 @@ explained for the configuration variable `core.quotePath` (see
 linkgit:git-config[1]).
 
 --name-only::
-	Show only names of changed files.
+	Show only names of changed files. The file names are often encoded in UTF-8.
+	For more information see the discussion about encoding in the linkgit:git-log[1]
+	manual page.
 
 --name-status::
 	Show only names and status of changed files. See the description
 	of the `--diff-filter` option on what the status letters mean.
+	Just like `--name-only` the file names are often encoded in UTF-8.
 
 --submodule[=<format>]::
 	Specify how differences in submodules are shown.  When specifying
@@ -276,17 +371,58 @@ plain::
 	that are added somewhere else in the diff. This mode picks up any
 	moved line, but it is not very useful in a review to determine
 	if a block of code was moved without permutation.
-zebra::
+blocks::
 	Blocks of moved text of at least 20 alphanumeric characters
 	are detected greedily. The detected blocks are
-	painted using either the 'color.diff.{old,new}Moved' color or
+	painted using either the 'color.diff.{old,new}Moved' color.
+	Adjacent blocks cannot be told apart.
+zebra::
+	Blocks of moved text are detected as in 'blocks' mode. The blocks
+	are painted using either the 'color.diff.{old,new}Moved' color or
 	'color.diff.{old,new}MovedAlternative'. The change between
 	the two colors indicates that a new block was detected.
-dimmed_zebra::
+dimmed-zebra::
 	Similar to 'zebra', but additional dimming of uninteresting parts
 	of moved code is performed. The bordering lines of two adjacent
 	blocks are considered interesting, the rest is uninteresting.
+	`dimmed_zebra` is a deprecated synonym.
 --
+
+--no-color-moved::
+	Turn off move detection. This can be used to override configuration
+	settings. It is the same as `--color-moved=no`.
+
+--color-moved-ws=<modes>::
+	This configures how whitespace is ignored when performing the
+	move detection for `--color-moved`.
+ifdef::git-diff[]
+	It can be set by the `diff.colorMovedWS` configuration setting.
+endif::git-diff[]
+	These modes can be given as a comma separated list:
++
+--
+no::
+	Do not ignore whitespace when performing move detection.
+ignore-space-at-eol::
+	Ignore changes in whitespace at EOL.
+ignore-space-change::
+	Ignore changes in amount of whitespace.  This ignores whitespace
+	at line end, and considers all other sequences of one or
+	more whitespace characters to be equivalent.
+ignore-all-space::
+	Ignore whitespace when comparing lines. This ignores differences
+	even if one line has whitespace where the other line has none.
+allow-indentation-change::
+	Initially ignore any whitespace in the move detection, then
+	group the moved code blocks only into a block if the change in
+	whitespace is the same per line. This is incompatible with the
+	other modes.
+--
+
+--no-color-moved-ws::
+	Do not ignore whitespace when performing move detection. This can be
+	used to override configuration settings. It is the same as
+	`--color-moved-ws=no`.
 
 --word-diff[=<mode>]::
 	Show a word diff, using the <mode> to delimit changed words.
@@ -345,12 +481,15 @@ endif::git-format-patch[]
 	Turn off rename detection, even when the configuration
 	file gives the default to do so.
 
+--[no-]rename-empty::
+	Whether to use empty blobs as rename source.
+
 ifndef::git-format-patch[]
 --check::
 	Warn if changes introduce conflict markers or whitespace errors.
 	What are considered whitespace errors is controlled by `core.whitespace`
 	configuration.  By default, trailing whitespaces (including
-	lines that solely consist of whitespaces) and a space character
+	lines that consist solely of whitespaces) and a space character
 	that is immediately followed by a tab character inside the
 	initial indent of the line are considered whitespace errors.
 	Exits with non-zero status if problems are found. Not compatible
@@ -364,7 +503,7 @@ ifndef::git-format-patch[]
 	this option is not given, and the configuration variable
 	`diff.wsErrorHighlight` is not set, only whitespace errors in
 	`new` lines are highlighted. The whitespace errors are colored
-	whith `color.diff.whitespace`.
+	with `color.diff.whitespace`.
 
 endif::git-format-patch[]
 
@@ -376,14 +515,19 @@ endif::git-format-patch[]
 --binary::
 	In addition to `--full-index`, output a binary diff that
 	can be applied with `git-apply`.
+ifndef::git-format-patch[]
+	Implies `--patch`.
+endif::git-format-patch[]
 
 --abbrev[=<n>]::
 	Instead of showing the full 40-byte hexadecimal object
 	name in diff-raw format output and diff-tree header
-	lines, show only a partial prefix.  This is
-	independent of the `--full-index` option above, which controls
-	the diff-patch output format.  Non default number of
-	digits can be specified with `--abbrev=<n>`.
+	lines, show the shortest prefix that is at least '<n>'
+	hexdigits long that uniquely refers the object.
+	In diff-patch output format, `--full-index` takes higher
+	precedence, i.e. if `--full-index` is specified, full blob
+	names will be shown regardless of `--abbrev`.
+	Non default number of digits can be specified with `--abbrev=<n>`.
 
 -B[<n>][/<m>]::
 --break-rewrites[=[<n>][/<m>]]::
@@ -456,11 +600,17 @@ When used together with `-B`, omit also the preimage in the deletion part
 of a delete/create pair.
 
 -l<num>::
-	The `-M` and `-C` options require O(n^2) processing time where n
-	is the number of potential rename/copy targets.  This
-	option prevents rename/copy detection from running if
-	the number of rename/copy targets exceeds the specified
-	number.
+	The `-M` and `-C` options involve some preliminary steps that
+	can detect subsets of renames/copies cheaply, followed by an
+	exhaustive fallback portion that compares all remaining
+	unpaired destinations to all relevant sources.  (For renames,
+	only remaining unpaired sources are relevant; for copies, all
+	original sources are relevant.)  For N sources and
+	destinations, this exhaustive check is O(N^2).  This option
+	prevents the exhaustive portion of rename/copy detection from
+	running if the number of source/destination files involved
+	exceeds the specified number.  Defaults to diff.renameLimit.
+	Note that a value of 0 is treated as unlimited.
 
 ifndef::git-format-patch[]
 --diff-filter=[(A|C|D|M|R|T|U|X|B)...[*]]::
@@ -478,11 +628,8 @@ ifndef::git-format-patch[]
 Also, these upper-case letters can be downcased to exclude.  E.g.
 `--diff-filter=ad` excludes added and deleted paths.
 +
-Note that not all diffs can feature all types. For instance, diffs
-from the index to the working tree can never have Added entries
-(because the set of paths included in the diff is limited by what is in
-the index).  Similarly, copied and renamed entries cannot appear if
-detection for those types is disabled.
+Note that not all diffs can feature all types. For instance, copied and
+renamed entries cannot appear if detection for those types is disabled.
 
 -S<string>::
 	Look for differences that change the number of occurrences of
@@ -494,6 +641,8 @@ struct), and want to know the history of that block since it first
 came into being: use the feature iteratively to feed the interesting
 block in the preimage back into `-S`, and keep going until you get the
 very first version of the block.
++
+Binary files are searched as well.
 
 -G<regex>::
 	Look for differences whose patch text contains added/removed
@@ -504,14 +653,17 @@ To illustrate the difference between `-S<regex> --pickaxe-regex` and
 file:
 +
 ----
-+    return !regexec(regexp, two->ptr, 1, &regmatch, 0);
++    return frotz(nitfol, two->ptr, 1, 0);
 ...
--    hit = !regexec(regexp, mf2.ptr, 1, &regmatch, 0);
+-    hit = frotz(nitfol, mf2.ptr, 1, 0);
 ----
 +
-While `git log -G"regexec\(regexp"` will show this commit, `git log
--S"regexec\(regexp" --pickaxe-regex` will not (because the number of
+While `git log -G"frotz\(nitfol"` will show this commit, `git log
+-S"frotz\(nitfol" --pickaxe-regex` will not (because the number of
 occurrences of that string did not change).
++
+Unless `--text` is supplied patches of binary files without a textconv
+filter will be ignored.
 +
 See the 'pickaxe' entry in linkgit:gitdiffcore[7] for more
 information.
@@ -573,19 +725,30 @@ matches a pattern if removing any number of the final pathname
 components matches the pattern.  For example, the pattern "`foo*bar`"
 matches "`fooasdfbar`" and "`foo/bar/baz/asdf`" but not "`foobarx`".
 
+--skip-to=<file>::
+--rotate-to=<file>::
+	Discard the files before the named <file> from the output
+	(i.e. 'skip to'), or move them to the end of the output
+	(i.e. 'rotate to').  These were invented primarily for use
+	of the `git difftool` command, and may not be very useful
+	otherwise.
+
 ifndef::git-format-patch[]
 -R::
 	Swap two inputs; that is, show differences from index or
 	on-disk file to tree contents.
+endif::git-format-patch[]
 
 --relative[=<path>]::
+--no-relative::
 	When run from a subdirectory of the project, it can be
 	told to exclude changes outside the directory and show
 	pathnames relative to it with this option.  When you are
 	not in a subdirectory (e.g. in a bare repository), you
 	can name which subdirectory to make the output relative
 	to by giving a <path> as an argument.
-endif::git-format-patch[]
+	`--no-relative` can be used to countermand both `diff.relative` config
+	option and previous `--relative`.
 
 -a::
 --text::
@@ -612,6 +775,11 @@ endif::git-format-patch[]
 --ignore-blank-lines::
 	Ignore changes whose lines are all blank.
 
+-I<regex>::
+--ignore-matching-lines=<regex>::
+	Ignore changes whose all lines match <regex>.  This option may
+	be specified more than once.
+
 --inter-hunk-context=<lines>::
 	Show the context between diff hunks, up to the specified number
 	of lines, thereby fusing hunks that are close to each other.
@@ -620,7 +788,10 @@ endif::git-format-patch[]
 
 -W::
 --function-context::
-	Show whole surrounding functions of changes.
+	Show whole function as context lines for each change.
+	The function names are determined in the same way as
+	`git diff` works out patch hunk headers (see 'Defining a
+	custom hunk-header' in linkgit:gitattributes[5]).
 
 ifndef::git-format-patch[]
 ifndef::git-log[]

@@ -1,0 +1,14 @@
+(
+	(foo && bar) &&
+	(foo && bar) |
+	(foo && bar) >baz &&
+	(foo; ?!AMP?! bar) &&
+	(foo; ?!AMP?! bar) |
+	(foo; ?!AMP?! bar) >baz &&
+	(foo || exit 1) &&
+	(foo || exit 1) |
+	(foo || exit 1) >baz &&
+	(foo && bar) ?!AMP?!
+	(foo && bar; ?!AMP?! baz) ?!AMP?!
+	foobar
+)

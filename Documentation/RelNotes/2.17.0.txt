@@ -216,7 +216,7 @@ Fixes since v2.16
 
  * The http tracing code, often used to debug connection issues,
    learned to redact potentially sensitive information from its output
-   so that it can be more safely sharable.
+   so that it can be more safely shareable.
    (merge 8ba18e6fa4 jt/http-redact-cookies later to maint).
 
  * Crash fix for a corner case where an error codepath tried to unlock
@@ -342,7 +342,7 @@ Fixes since v2.16
    validate the data and connected-ness of objects in the received
    pack; the code to perform this check has been taught about the
    narrow clone's convention that missing objects that are reachable
-   from objects in a pack that came from a promissor remote is OK.
+   from objects in a pack that came from a promisor remote is OK.
 
  * There was an unused file-scope static variable left in http.c when
    building for versions of libCURL that is older than 7.19.4, which

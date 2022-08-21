@@ -2,7 +2,13 @@
 
 test_description='wildmatch tests'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
+
+# Disable expensive chain-lint tests; all of the tests in this script
+# are variants of a few trivial test-tool invocations, and there are a lot of
+# them.
+GIT_TEST_CHAIN_LINT_HARDER_DEFAULT=0
 
 should_create_test_file() {
 	file=$1
@@ -101,8 +107,7 @@ match_with_ls_files() {
 
 	match_stdout_stderr_cmp="
 		tr -d '\0' <actual.raw >actual &&
-		>expect.err &&
-		test_cmp expect.err actual.err &&
+		test_must_be_empty actual.err &&
 		test_cmp expect actual"
 
 	if test "$match_expect" = 'E'
@@ -188,7 +193,7 @@ match() {
 		file=$(cat .git/expected_test_file) &&
 		if should_create_test_file "$file"
 		then
-			dirs=${file%/*}
+			dirs=${file%/*} &&
 			if test "$file" != "$dirs"
 			then
 				mkdir -p -- "$dirs" &&
@@ -238,7 +243,7 @@ match 0 0 0 0 foobar 'foo\*bar'
 match 1 1 1 1 'f\oo' 'f\\oo'
 match 1 1 1 1 ball '*[al]?'
 match 0 0 0 0 ten '[ten]'
-match 0 0 1 1 ten '**[!te]'
+match 1 1 1 1 ten '**[!te]'
 match 0 0 0 0 ten '**[!ten]'
 match 1 1 1 1 ten 't[a-g]n'
 match 0 0 0 0 ten 't[!a-g]n'
@@ -254,7 +259,7 @@ match 1 1 1 1 ']' ']'
 # Extended slash-matching features
 match 0 0 1 1 'foo/baz/bar' 'foo*bar'
 match 0 0 1 1 'foo/baz/bar' 'foo**bar'
-match 0 0 1 1 'foobazbar' 'foo**bar'
+match 1 1 1 1 'foobazbar' 'foo**bar'
 match 1 1 1 1 'foo/baz/bar' 'foo/**/bar'
 match 1 1 0 0 'foo/baz/bar' 'foo/**/**/bar'
 match 1 1 1 1 'foo/b/a/z/bar' 'foo/**/bar'

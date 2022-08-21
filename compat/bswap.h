@@ -1,3 +1,6 @@
+#ifndef COMPAT_BSWAP_H
+#define COMPAT_BSWAP_H
+
 /*
  * Let's make sure we always have a sane definition for ntohl()/htonl().
  * Some libraries define those as a function call, just to perform byte
@@ -71,7 +74,7 @@ static inline uint64_t git_bswap64(uint64_t x)
 }
 #endif
 
-#elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))
+#elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64) || defined(_M_ARM64))
 
 #include <stdlib.h>
 
@@ -142,28 +145,6 @@ static inline uint64_t git_bswap64(uint64_t x)
 
 #endif
 
-/*
- * Performance might be improved if the CPU architecture is OK with
- * unaligned 32-bit loads and a fast ntohl() is available.
- * Otherwise fall back to byte loads and shifts which is portable,
- * and is faster on architectures with memory alignment issues.
- */
-
-#if !defined(NO_UNALIGNED_LOADS) && ( \
-    defined(__i386__) || defined(__x86_64__) || \
-    defined(_M_IX86) || defined(_M_X64) || \
-    defined(__ppc__) || defined(__ppc64__) || \
-    defined(__powerpc__) || defined(__powerpc64__) || \
-    defined(__s390__) || defined(__s390x__))
-
-#define get_be16(p)	ntohs(*(unsigned short *)(p))
-#define get_be32(p)	ntohl(*(unsigned int *)(p))
-#define get_be64(p)	ntohll(*(uint64_t *)(p))
-#define put_be32(p, v)	do { *(unsigned int *)(p) = htonl(v); } while (0)
-#define put_be64(p, v)	do { *(uint64_t *)(p) = htonll(v); } while (0)
-
-#else
-
 static inline uint16_t get_be16(const void *ptr)
 {
 	const unsigned char *p = ptr;
@@ -209,4 +190,4 @@ static inline void put_be64(void *ptr, uint64_t value)
 	p[7] = value >>  0;
 }
 
-#endif
+#endif /* COMPAT_BSWAP_H */

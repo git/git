@@ -1,3 +1,5 @@
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
+#include "test-tool.h"
 #include "cache.h"
 #include "dir.h"
 
@@ -23,7 +25,7 @@ static void dump(struct untracked_cache_dir *ucd, struct strbuf *base)
 	len = base->len;
 	strbuf_addf(base, "%s/", ucd->name);
 	printf("%s %s", base->buf,
-	       sha1_to_hex(ucd->exclude_sha1));
+	       oid_to_hex(&ucd->exclude_oid));
 	if (ucd->recurse)
 		fputs(" recurse", stdout);
 	if (ucd->check_only)
@@ -38,13 +40,15 @@ static void dump(struct untracked_cache_dir *ucd, struct strbuf *base)
 	strbuf_setlen(base, len);
 }
 
-int cmd_main(int ac, const char **av)
+int cmd__dump_untracked_cache(int ac, const char **av)
 {
 	struct untracked_cache *uc;
 	struct strbuf base = STRBUF_INIT;
 
-	/* Hack to avoid modifying the untracked cache when we read it */
-	ignore_untracked_cache_config = 1;
+	/* Set core.untrackedCache=keep before setup_git_directory() */
+	xsetenv("GIT_CONFIG_COUNT", "1", 1);
+	xsetenv("GIT_CONFIG_KEY_0", "core.untrackedCache", 1);
+	xsetenv("GIT_CONFIG_VALUE_0", "keep", 1);
 
 	setup_git_directory();
 	if (read_cache() < 0)

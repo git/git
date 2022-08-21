@@ -15,15 +15,7 @@ test_expect_success 'setup' '
 		git checkout -f preimage^0 &&
 		git read-tree -u --reset HEAD &&
 		git update-index --refresh
-	} &&
-
-	test_when_finished "rm -f \"tab	embedded.txt\"" &&
-	test_when_finished "rm -f '\''\"quoteembedded\".txt'\''" &&
-	if test_have_prereq !MINGW &&
-		touch -- "tab	embedded.txt" '\''"quoteembedded".txt'\''
-	then
-		test_set_prereq FUNNYNAMES
-	fi
+	}
 '
 
 try_filename() {

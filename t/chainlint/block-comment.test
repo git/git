@@ -1,0 +1,8 @@
+(
+	{
+		# show a
+		echo a &&
+		# show b
+		echo b
+	}
+)

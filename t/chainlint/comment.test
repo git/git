@@ -1,0 +1,11 @@
+(
+# LINT: swallow comment lines
+	# comment 1
+	nothing &&
+	# comment 2
+	something
+# LINT: swallow comment lines since final _statement_ before subshell end is
+# LINT: significant to "&&"-check, not final _line_ (which might be comment)
+	# comment 3
+	# comment 4
+)

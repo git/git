@@ -2,6 +2,9 @@
 
 test_description='test cherry-picking with --ff option'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -16,11 +19,15 @@ test_expect_success setup '
 	git add file1 &&
 	test_tick &&
 	git commit -m "second" &&
-	git tag second
+	git tag second &&
+	test_oid_cache <<-EOF
+	cp_ff sha1:1df192cd8bc58a2b275d842cede4d221ad9000d1
+	cp_ff sha256:e70d6b7fc064bddb516b8d512c9057094b96ce6ff08e12080acc4fe7f1d60a1d
+	EOF
 '
 
 test_expect_success 'cherry-pick using --ff fast forwards' '
-	git checkout master &&
+	git checkout main &&
 	git reset --hard first &&
 	test_tick &&
 	git cherry-pick --ff second &&
@@ -28,7 +35,7 @@ test_expect_success 'cherry-pick using --ff fast forwards' '
 '
 
 test_expect_success 'cherry-pick not using --ff does not fast forwards' '
-	git checkout master &&
+	git checkout main &&
 	git reset --hard first &&
 	test_tick &&
 	git cherry-pick second &&
@@ -45,7 +52,7 @@ test_expect_success 'cherry-pick not using --ff does not fast forwards' '
 # (This has been taken from t3502-cherry-pick-merge.sh)
 #
 test_expect_success 'merge setup' '
-	git checkout master &&
+	git checkout main &&
 	git reset --hard first &&
 	echo new line >A &&
 	git add A &&
@@ -58,16 +65,16 @@ test_expect_success 'merge setup' '
 	test_tick &&
 	git commit -m "add line to B" B &&
 	git tag B &&
-	git checkout master &&
+	git checkout main &&
 	git merge side &&
 	git tag C &&
 	git checkout -b new A
 '
 
-test_expect_success 'cherry-pick a non-merge with --ff and -m should fail' '
+test_expect_success 'cherry-pick explicit first parent of a non-merge with --ff' '
 	git reset --hard A -- &&
-	test_must_fail git cherry-pick --ff -m 1 B &&
-	git diff --exit-code A --
+	git cherry-pick --ff -m 1 B &&
+	git diff --exit-code C --
 '
 
 test_expect_success 'cherry pick a merge with --ff but without -m should fail' '
@@ -102,7 +109,7 @@ test_expect_success 'cherry pick a root commit with --ff' '
 	git add file2 &&
 	git commit --amend -m "file2" &&
 	git cherry-pick --ff first &&
-	test "$(git rev-parse --verify HEAD)" = "1df192cd8bc58a2b275d842cede4d221ad9000d1"
+	test "$(git rev-parse --verify HEAD)" = "$(test_oid cp_ff)"
 '
 
 test_expect_success 'cherry-pick --ff on unborn branch' '

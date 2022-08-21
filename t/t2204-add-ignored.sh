@@ -2,6 +2,7 @@
 
 test_description='giving ignored paths to git add'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -31,7 +32,7 @@ do
 		rm -f .git/index &&
 		test_must_fail git add "$i" 2>err &&
 		git ls-files "$i" >out &&
-		! test -s out
+		test_must_be_empty out
 	'
 
 	test_expect_success "complaints for ignored $i output" '
@@ -42,7 +43,7 @@ do
 		rm -f .git/index &&
 		test_must_fail git add "$i" file 2>err &&
 		git ls-files "$i" >out &&
-		! test -s out
+		test_must_be_empty out
 	'
 	test_expect_success "complaints for ignored $i with unignored file output" '
 		test_i18ngrep -e "Use -f if" err
@@ -57,7 +58,7 @@ do
 			cd dir &&
 			test_must_fail git add "$i" 2>err &&
 			git ls-files "$i" >out &&
-			! test -s out
+			test_must_be_empty out
 		)
 	'
 
@@ -77,7 +78,7 @@ do
 			cd sub &&
 			test_must_fail git add "$i" 2>err &&
 			git ls-files "$i" >out &&
-			! test -s out
+			test_must_be_empty out
 		)
 	'
 

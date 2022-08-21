@@ -1,5 +1,7 @@
 #include "cache.h"
+#include "config.h"
 #include "strbuf.h"
+#include "strvec.h"
 #include "run-command.h"
 #include "sigchain.h"
 
@@ -34,18 +36,29 @@ const char *git_editor(void)
 	return editor;
 }
 
-int launch_editor(const char *path, struct strbuf *buffer, const char *const *env)
+const char *git_sequence_editor(void)
 {
-	const char *editor = git_editor();
+	const char *editor = getenv("GIT_SEQUENCE_EDITOR");
 
+	if (!editor)
+		git_config_get_string_tmp("sequence.editor", &editor);
+	if (!editor)
+		editor = git_editor();
+
+	return editor;
+}
+
+static int launch_specified_editor(const char *editor, const char *path,
+				   struct strbuf *buffer, const char *const *env)
+{
 	if (!editor)
 		return error("Terminal is dumb, but EDITOR unset");
 
 	if (strcmp(editor, ":")) {
-		const char *args[] = { editor, real_path(path), NULL };
+		struct strbuf realpath = STRBUF_INIT;
 		struct child_process p = CHILD_PROCESS_INIT;
 		int ret, sig;
-		int print_waiting_for_editor = advice_waiting_for_editor && isatty(2);
+		int print_waiting_for_editor = advice_enabled(ADVICE_WAITING_FOR_EDITOR) && isatty(2);
 
 		if (print_waiting_for_editor) {
 			/*
@@ -63,15 +76,22 @@ int launch_editor(const char *path, struct strbuf *buffer, const char *const *en
 			fflush(stderr);
 		}
 
-		p.argv = args;
-		p.env = env;
+		strbuf_realpath(&realpath, path, 1);
+
+		strvec_pushl(&p.args, editor, realpath.buf, NULL);
+		if (env)
+			strvec_pushv(&p.env, (const char **)env);
 		p.use_shell = 1;
-		if (start_command(&p) < 0)
+		p.trace2_child_class = "editor";
+		if (start_command(&p) < 0) {
+			strbuf_release(&realpath);
 			return error("unable to start editor '%s'", editor);
+		}
 
 		sigchain_push(SIGINT, SIG_IGN);
 		sigchain_push(SIGQUIT, SIG_IGN);
 		ret = finish_command(&p);
+		strbuf_release(&realpath);
 		sig = ret - 128;
 		sigchain_pop(SIGINT);
 		sigchain_pop(SIGQUIT);
@@ -83,10 +103,10 @@ int launch_editor(const char *path, struct strbuf *buffer, const char *const *en
 
 		if (print_waiting_for_editor && !is_terminal_dumb())
 			/*
-			 * Go back to the beginning and erase the entire line to
-			 * avoid wasting the vertical space.
+			 * Erase the entire line to avoid wasting the
+			 * vertical space.
 			 */
-			fputs("\r\033[K", stderr);
+			term_clear_line();
 	}
 
 	if (!buffer)
@@ -94,4 +114,15 @@ int launch_editor(const char *path, struct strbuf *buffer, const char *const *en
 	if (strbuf_read_file(buffer, path, 0) < 0)
 		return error_errno("could not read file '%s'", path);
 	return 0;
+}
+
+int launch_editor(const char *path, struct strbuf *buffer, const char *const *env)
+{
+	return launch_specified_editor(git_editor(), path, buffer, env);
+}
+
+int launch_sequence_editor(const char *path, struct strbuf *buffer,
+			   const char *const *env)
+{
+	return launch_specified_editor(git_sequence_editor(), path, buffer, env);
 }

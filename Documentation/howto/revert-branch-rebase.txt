@@ -15,7 +15,7 @@ One of the changes I pulled into the 'master' branch turns out to
 break building Git with GCC 2.95.  While they were well-intentioned
 portability fixes, keeping things working with gcc-2.95 was also
 important.  Here is what I did to revert the change in the 'master'
-branch and to adjust the 'pu' branch, using core Git tools and
+branch and to adjust the 'seen' branch, using core Git tools and
 barebone Porcelain.
 
 First, prepare a throw-away branch in case I screw things up.
@@ -104,11 +104,11 @@ $ git diff master..revert-c99
 
 says nothing.
 
-Then we rebase the 'pu' branch as usual.
+Then we rebase the 'seen' branch as usual.
 
 ------------------------------------------------
-$ git checkout pu
-$ git tag pu-anchor pu
+$ git checkout seen
+$ git tag seen-anchor seen
 $ git rebase master
 * Applying: Redo "revert" using three-way merge machinery.
 First trying simple merge strategy to cherry-pick.
@@ -127,11 +127,11 @@ First trying simple merge strategy to cherry-pick.
 First trying simple merge strategy to cherry-pick.
 ------------------------------------------------
 
-The temporary tag 'pu-anchor' is me just being careful, in case 'git
+The temporary tag 'seen-anchor' is me just being careful, in case 'git
 rebase' screws up.  After this, I can do these for sanity check:
 
 ------------------------------------------------
-$ git diff pu-anchor..pu ;# make sure we got the master fix.
+$ git diff seen-anchor..seen ;# make sure we got the master fix.
 $ make CC=gcc-2.95 clean test ;# make sure it fixed the breakage.
 $ make clean test ;# make sure it did not cause other breakage.
 ------------------------------------------------
@@ -140,7 +140,7 @@ Everything is in the good order.  I do not need the temporary branch
 or tag anymore, so remove them:
 
 ------------------------------------------------
-$ rm -f .git/refs/tags/pu-anchor
+$ rm -f .git/refs/tags/seen-anchor
 $ git branch -d revert-c99
 ------------------------------------------------
 
@@ -168,18 +168,18 @@ Committed merge 7fb9b7262a1d1e0a47bbfdcbbcf50ce0635d3f8f
 And the final repository status looks like this:
 
 ------------------------------------------------
-$ git show-branch --more=1 master pu rc
+$ git show-branch --more=1 master seen rc
 ! [master] Revert "Replace zero-length array decls with []."
- ! [pu] git-repack: Add option to repack all objects.
+ ! [seen] git-repack: Add option to repack all objects.
   * [rc] Merge refs/heads/master from .
 ---
- +  [pu] git-repack: Add option to repack all objects.
- +  [pu~1] More documentation updates.
- +  [pu~2] Show commits in topo order and name all commits.
- +  [pu~3] mailinfo and applymbox updates
- +  [pu~4] Document "git cherry-pick" and "git revert"
- +  [pu~5] Remove git-apply-patch-script.
- +  [pu~6] Redo "revert" using three-way merge machinery.
+ +  [seen] git-repack: Add option to repack all objects.
+ +  [seen~1] More documentation updates.
+ +  [seen~2] Show commits in topo order and name all commits.
+ +  [seen~3] mailinfo and applymbox updates
+ +  [seen~4] Document "git cherry-pick" and "git revert"
+ +  [seen~5] Remove git-apply-patch-script.
+ +  [seen~6] Redo "revert" using three-way merge machinery.
   - [rc] Merge refs/heads/master from .
 ++* [master] Revert "Replace zero-length array decls with []."
   - [rc~1] Merge refs/heads/master from .

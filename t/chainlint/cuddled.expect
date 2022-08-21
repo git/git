@@ -1,0 +1,17 @@
+(cd foo &&
+	bar
+) &&
+
+(cd foo ?!AMP?!
+	bar
+) &&
+
+(
+	cd foo &&
+	bar) &&
+
+(cd foo &&
+	bar) &&
+
+(cd foo ?!AMP?!
+	bar)

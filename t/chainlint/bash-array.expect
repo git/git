@@ -1,0 +1,10 @@
+(
+	foo &&
+	bar=(gumbo stumbo wumbo) &&
+	baz
+) &&
+(
+	foo &&
+	bar=${#bar[@]} &&
+	baz
+)

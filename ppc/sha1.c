@@ -10,8 +10,8 @@
 #include <string.h>
 #include "sha1.h"
 
-extern void ppc_sha1_core(uint32_t *hash, const unsigned char *p,
-			  unsigned int nblocks);
+void ppc_sha1_core(uint32_t *hash, const unsigned char *p,
+		   unsigned int nblocks);
 
 int ppc_SHA1_Init(ppc_SHA_CTX *c)
 {

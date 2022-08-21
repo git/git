@@ -2,6 +2,7 @@
 
 test_description='CRLF conversion all combinations'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 compare_files () {
@@ -15,8 +16,10 @@ compare_ws_file () {
 	pfx=$1
 	exp=$2.expect
 	act=$pfx.actual.$3
-	tr '\015\000abcdef0123456789' QN00000000000000000 <"$2" >"$exp" &&
-	tr '\015\000abcdef0123456789' QN00000000000000000 <"$3" >"$act" &&
+	tr '\015\000abcdef0123456789' QN00000000000000000 <"$2" |
+		sed -e "s/0000*/$ZERO_OID/" >"$exp" &&
+	tr '\015\000abcdef0123456789' QN00000000000000000 <"$3" |
+		sed -e "s/0000*/$ZERO_OID/" >"$act" &&
 	test_cmp "$exp" "$act" &&
 	rm "$exp" "$act"
 }
@@ -75,13 +78,13 @@ create_NNO_MIX_files () {
 
 check_warning () {
 	case "$1" in
-	LF_CRLF) echo "warning: LF will be replaced by CRLF" >"$2".expect ;;
-	CRLF_LF) echo "warning: CRLF will be replaced by LF" >"$2".expect ;;
-	'')	                                                 >"$2".expect ;;
+	LF_CRLF) echo "LF will be replaced by CRLF" >"$2".expect ;;
+	CRLF_LF) echo "CRLF will be replaced by LF" >"$2".expect ;;
+	'')	                                    >"$2".expect ;;
 	*) echo >&2 "Illegal 1": "$1" ; return false ;;
 	esac
-	grep "will be replaced by" "$2" | sed -e "s/\(.*\) in [^ ]*$/\1/" | uniq  >"$2".actual
-	test_i18ncmp "$2".expect "$2".actual
+	sed -e "s/^.* \([^ ]* will be replaced by [^ ]*\) .*$/\1/" "$2" | uniq  >"$2".actual
+	test_cmp "$2".expect "$2".actual
 }
 
 commit_check_warn () {
@@ -213,7 +216,7 @@ stats_ascii () {
 }
 
 
-# contruct the attr/ returned by git ls-files --eol
+# construct the attr/ returned by git ls-files --eol
 # Take none (=empty), one or two args
 # convert.c: eol=XX overrides text=auto
 attr_ascii () {
@@ -293,9 +296,9 @@ checkout_files () {
 	do
 		rm crlf_false_attr__$f.txt &&
 		if test -z "$ceol"; then
-			git checkout crlf_false_attr__$f.txt
+			git checkout -- crlf_false_attr__$f.txt
 		else
-			git -c core.eol=$ceol checkout crlf_false_attr__$f.txt
+			git -c core.eol=$ceol checkout -- crlf_false_attr__$f.txt
 		fi
 	done
 
@@ -309,8 +312,8 @@ checkout_files () {
 		i/-text w/$(stats_ascii $crlfnul) attr/$(attr_ascii $attr $aeol) crlf_false_attr__CRLF_nul.txt
 		i/-text w/$(stats_ascii $crlfnul) attr/$(attr_ascii $attr $aeol) crlf_false_attr__LF_nul.txt
 		EOF
-		git ls-files --eol crlf_false_attr__* |
-		sed -e "s/	/ /g" -e "s/  */ /g" |
+		git ls-files --eol crlf_false_attr__* >tmp &&
+		sed -e "s/	/ /g" -e "s/  */ /g" tmp |
 		sort >actual &&
 		test_cmp expect actual
 	'
@@ -357,18 +360,18 @@ test_expect_success 'ls-files --eol -o Text/Binary' '
 	i/ w/crlf TeBi_126_CL
 	i/ w/-text TeBi_126_CLC
 	EOF
-	git ls-files --eol -o |
+	git ls-files --eol -o >tmp &&
 	sed -n -e "/TeBi_/{s!attr/[	]*!!g
 	s!	! !g
 	s!  *! !g
 	p
-	}" | sort >actual &&
+	}" tmp | sort >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'setup master' '
+test_expect_success 'setup main' '
 	echo >.gitattributes &&
-	git checkout -b master &&
+	git checkout -b main &&
 	git add .gitattributes &&
 	git commit -m "add .gitattributes" . &&
 	printf "\$Id: 0000000000000000000000000000000000000000 \$\nLINEONE\nLINETWO\nLINETHREE"     >LF &&
@@ -384,7 +387,9 @@ test_expect_success 'setup master' '
 	test_tick
 '
 
-
+# Disable extra chain-linting for the next set of tests. There are many
+# auto-generated ones that are not worth checking over and over.
+GIT_TEST_CHAIN_LINT_HARDER_DEFAULT=0
 
 warn_LF_CRLF="LF will be replaced by CRLF"
 warn_CRLF_LF="CRLF will be replaced by LF"
@@ -593,7 +598,16 @@ do
 	# auto: core.autocrlf=false and core.eol unset(or native) uses native eol
 	checkout_files     auto  "$id" ""     false   ""       $NL   CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
 	checkout_files     auto  "$id" ""     false   native   $NL   CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
+	# core.autocrlf false, .gitattributes sets eol
+	checkout_files     ""    "$id" "lf"   false   ""       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
+	checkout_files     ""    "$id" "crlf" false   ""       CRLF  CRLF  CRLF         CRLF_mix_CR  CRLF_nul
+	# core.autocrlf true, .gitattributes sets eol
+	checkout_files     ""    "$id" "lf"   true    ""       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
+	checkout_files     ""    "$id" "crlf" true    ""       CRLF  CRLF  CRLF         CRLF_mix_CR  CRLF_nul
 done
+
+# The rest of the tests are unique; do the usual linting.
+unset GIT_TEST_CHAIN_LINT_HARDER_DEFAULT
 
 # Should be the last test case: remove some files from the worktree
 test_expect_success 'ls-files --eol -d -z' '
@@ -604,8 +618,8 @@ test_expect_success 'ls-files --eol -d -z' '
 	i/lf w/ crlf_false_attr__LF.txt
 	i/mixed w/ crlf_false_attr__CRLF_mix_LF.txt
 	EOF
-	git ls-files --eol -d |
-	sed -e "s!attr/[^	]*!!g" -e "s/	/ /g" -e "s/  */ /g" |
+	git ls-files --eol -d >tmp &&
+	sed -e "s!attr/[^	]*!!g" -e "s/	/ /g" -e "s/  */ /g" tmp |
 	sort >actual &&
 	test_cmp expect actual
 '

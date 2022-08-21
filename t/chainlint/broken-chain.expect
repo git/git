@@ -1,0 +1,6 @@
+(
+	foo &&
+	bar ?!AMP?!
+	baz &&
+	wop
+)

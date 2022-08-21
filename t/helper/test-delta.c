@@ -20,8 +20,9 @@ int cmd__delta(int argc, const char **argv)
 {
 	int fd;
 	struct stat st;
-	void *from_buf, *data_buf, *out_buf;
+	void *from_buf = NULL, *data_buf = NULL, *out_buf = NULL;
 	unsigned long from_size, data_size, out_size;
+	int ret = 1;
 
 	if (argc != 5 || (strcmp(argv[1], "-d") && strcmp(argv[1], "-p"))) {
 		fprintf(stderr, "usage: %s\n", usage_str);
@@ -34,25 +35,25 @@ int cmd__delta(int argc, const char **argv)
 		return 1;
 	}
 	from_size = st.st_size;
-	from_buf = mmap(NULL, from_size, PROT_READ, MAP_PRIVATE, fd, 0);
-	if (from_buf == MAP_FAILED) {
+	from_buf = xmalloc(from_size);
+	if (read_in_full(fd, from_buf, from_size) < 0) {
 		perror(argv[2]);
 		close(fd);
-		return 1;
+		goto cleanup;
 	}
 	close(fd);
 
 	fd = open(argv[3], O_RDONLY);
 	if (fd < 0 || fstat(fd, &st)) {
 		perror(argv[3]);
-		return 1;
+		goto cleanup;
 	}
 	data_size = st.st_size;
-	data_buf = mmap(NULL, data_size, PROT_READ, MAP_PRIVATE, fd, 0);
-	if (data_buf == MAP_FAILED) {
+	data_buf = xmalloc(data_size);
+	if (read_in_full(fd, data_buf, data_size) < 0) {
 		perror(argv[3]);
 		close(fd);
-		return 1;
+		goto cleanup;
 	}
 	close(fd);
 
@@ -66,14 +67,20 @@ int cmd__delta(int argc, const char **argv)
 				      &out_size);
 	if (!out_buf) {
 		fprintf(stderr, "delta operation failed (returned NULL)\n");
-		return 1;
+		goto cleanup;
 	}
 
 	fd = open (argv[4], O_WRONLY|O_CREAT|O_TRUNC, 0666);
 	if (fd < 0 || write_in_full(fd, out_buf, out_size) < 0) {
 		perror(argv[4]);
-		return 1;
+		goto cleanup;
 	}
 
-	return 0;
+	ret = 0;
+cleanup:
+	free(from_buf);
+	free(data_buf);
+	free(out_buf);
+
+	return ret;
 }

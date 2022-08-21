@@ -8,7 +8,7 @@ test_description='avoid rewriting packed-refs unnecessarily'
 # shouldn't upset readers, and it should be omitted if the file is
 # ever rewritten.
 mark_packed_refs () {
-	sed -e "s/^\(#.*\)/\1 t1409 /" <.git/packed-refs >.git/packed-refs.new &&
+	sed -e "s/^\(#.*\)/\1 t1409 /" .git/packed-refs >.git/packed-refs.new &&
 	mv .git/packed-refs.new .git/packed-refs
 }
 
@@ -27,15 +27,15 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'do not create packed-refs file gratuitously' '
-	test_must_fail test -f .git/packed-refs &&
+	test_path_is_missing .git/packed-refs &&
 	git update-ref refs/heads/foo $A &&
-	test_must_fail test -f .git/packed-refs &&
+	test_path_is_missing .git/packed-refs &&
 	git update-ref refs/heads/foo $B &&
-	test_must_fail test -f .git/packed-refs &&
+	test_path_is_missing .git/packed-refs &&
 	git update-ref refs/heads/foo $C $B &&
-	test_must_fail test -f .git/packed-refs &&
+	test_path_is_missing .git/packed-refs &&
 	git update-ref -d refs/heads/foo &&
-	test_must_fail test -f .git/packed-refs
+	test_path_is_missing .git/packed-refs
 '
 
 test_expect_success 'check that marking the packed-refs file works' '
@@ -46,7 +46,7 @@ test_expect_success 'check that marking the packed-refs file works' '
 	git for-each-ref >actual &&
 	test_cmp expected actual &&
 	git pack-refs --all &&
-	test_must_fail check_packed_refs_marked &&
+	! check_packed_refs_marked &&
 	git for-each-ref >actual2 &&
 	test_cmp expected actual2
 '
@@ -80,7 +80,7 @@ test_expect_success 'touch packed-refs on delete of packed' '
 	git pack-refs --all &&
 	mark_packed_refs &&
 	git update-ref -d refs/heads/packed-delete &&
-	test_must_fail check_packed_refs_marked
+	! check_packed_refs_marked
 '
 
 test_expect_success 'leave packed-refs untouched on update of loose' '

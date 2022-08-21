@@ -1,16 +1,19 @@
 #include "cache.h"
 #include "tmp-objdir.h"
+#include "chdir-notify.h"
 #include "dir.h"
 #include "sigchain.h"
 #include "string-list.h"
 #include "strbuf.h"
-#include "argv-array.h"
+#include "strvec.h"
 #include "quote.h"
 #include "object-store.h"
 
 struct tmp_objdir {
 	struct strbuf path;
-	struct argv_array env;
+	struct strvec env;
+	struct object_directory *prev_odb;
+	int will_destroy;
 };
 
 /*
@@ -24,7 +27,7 @@ static struct tmp_objdir *the_tmp_objdir;
 static void tmp_objdir_free(struct tmp_objdir *t)
 {
 	strbuf_release(&t->path);
-	argv_array_clear(&t->env);
+	strvec_clear(&t->env);
 	free(t);
 }
 
@@ -37,6 +40,9 @@ static int tmp_objdir_destroy_1(struct tmp_objdir *t, int on_signal)
 
 	if (t == the_tmp_objdir)
 		the_tmp_objdir = NULL;
+
+	if (!on_signal && t->prev_odb)
+		restore_primary_odb(t->prev_odb, t->path.buf);
 
 	/*
 	 * This may use malloc via strbuf_grow(), but we should
@@ -52,6 +58,7 @@ static int tmp_objdir_destroy_1(struct tmp_objdir *t, int on_signal)
 	 */
 	if (!on_signal)
 		tmp_objdir_free(t);
+
 	return err;
 }
 
@@ -72,6 +79,11 @@ static void remove_tmp_objdir_on_signal(int signo)
 	raise(signo);
 }
 
+void tmp_objdir_discard_objects(struct tmp_objdir *t)
+{
+	remove_dir_recursively(&t->path, REMOVE_DIR_KEEP_TOPLEVEL);
+}
+
 /*
  * These env_* functions are for setting up the child environment; the
  * "replace" variant overrides the value of any existing variable with that
@@ -79,7 +91,7 @@ static void remove_tmp_objdir_on_signal(int signo)
  * separated by PATH_SEP (which is what separate values in
  * GIT_ALTERNATE_OBJECT_DIRECTORIES).
  */
-static void env_append(struct argv_array *env, const char *key, const char *val)
+static void env_append(struct strvec *env, const char *key, const char *val)
 {
 	struct strbuf quoted = STRBUF_INIT;
 	const char *old;
@@ -97,16 +109,16 @@ static void env_append(struct argv_array *env, const char *key, const char *val)
 
 	old = getenv(key);
 	if (!old)
-		argv_array_pushf(env, "%s=%s", key, val);
+		strvec_pushf(env, "%s=%s", key, val);
 	else
-		argv_array_pushf(env, "%s=%s%c%s", key, old, PATH_SEP, val);
+		strvec_pushf(env, "%s=%s%c%s", key, old, PATH_SEP, val);
 
 	strbuf_release(&quoted);
 }
 
-static void env_replace(struct argv_array *env, const char *key, const char *val)
+static void env_replace(struct strvec *env, const char *key, const char *val)
 {
-	argv_array_pushf(env, "%s=%s", key, val);
+	strvec_pushf(env, "%s=%s", key, val);
 }
 
 static int setup_tmp_objdir(const char *root)
@@ -121,19 +133,24 @@ static int setup_tmp_objdir(const char *root)
 	return ret;
 }
 
-struct tmp_objdir *tmp_objdir_create(void)
+struct tmp_objdir *tmp_objdir_create(const char *prefix)
 {
 	static int installed_handlers;
 	struct tmp_objdir *t;
 
 	if (the_tmp_objdir)
-		die("BUG: only one tmp_objdir can be used at a time");
+		BUG("only one tmp_objdir can be used at a time");
 
-	t = xmalloc(sizeof(*t));
+	t = xcalloc(1, sizeof(*t));
 	strbuf_init(&t->path, 0);
-	argv_array_init(&t->env);
+	strvec_init(&t->env);
 
-	strbuf_addf(&t->path, "%s/incoming-XXXXXX", get_object_directory());
+	/*
+	 * Use a string starting with tmp_ so that the builtin/prune.c code
+	 * can recognize any stale objdirs left behind by a crash and delete
+	 * them.
+	 */
+	strbuf_addf(&t->path, "%s/tmp_objdir-%s-XXXXXX", get_object_directory(), prefix);
 
 	/*
 	 * Grow the strbuf beyond any filename we expect to be placed in it.
@@ -185,9 +202,11 @@ static int pack_copy_priority(const char *name)
 		return 1;
 	if (ends_with(name, ".pack"))
 		return 2;
-	if (ends_with(name, ".idx"))
+	if (ends_with(name, ".rev"))
 		return 3;
-	return 4;
+	if (ends_with(name, ".idx"))
+		return 4;
+	return 5;
 }
 
 static int pack_copy_cmp(const char *a, const char *b)
@@ -267,6 +286,13 @@ int tmp_objdir_migrate(struct tmp_objdir *t)
 	if (!t)
 		return 0;
 
+	if (t->prev_odb) {
+		if (the_repository->objects->odb->will_destroy)
+			BUG("migrating an ODB that was marked for destruction");
+		restore_primary_odb(t->prev_odb, t->path.buf);
+		t->prev_odb = NULL;
+	}
+
 	strbuf_addbuf(&src, &t->path);
 	strbuf_addstr(&dst, get_object_directory());
 
@@ -283,10 +309,40 @@ const char **tmp_objdir_env(const struct tmp_objdir *t)
 {
 	if (!t)
 		return NULL;
-	return t->env.argv;
+	return t->env.v;
 }
 
 void tmp_objdir_add_as_alternate(const struct tmp_objdir *t)
 {
 	add_to_alternates_memory(t->path.buf);
+}
+
+void tmp_objdir_replace_primary_odb(struct tmp_objdir *t, int will_destroy)
+{
+	if (t->prev_odb)
+		BUG("the primary object database is already replaced");
+	t->prev_odb = set_temporary_primary_odb(t->path.buf, will_destroy);
+	t->will_destroy = will_destroy;
+}
+
+struct tmp_objdir *tmp_objdir_unapply_primary_odb(void)
+{
+	if (!the_tmp_objdir || !the_tmp_objdir->prev_odb)
+		return NULL;
+
+	restore_primary_odb(the_tmp_objdir->prev_odb, the_tmp_objdir->path.buf);
+	the_tmp_objdir->prev_odb = NULL;
+	return the_tmp_objdir;
+}
+
+void tmp_objdir_reapply_primary_odb(struct tmp_objdir *t, const char *old_cwd,
+		const char *new_cwd)
+{
+	char *path;
+
+	path = reparent_relative_path(old_cwd, new_cwd, t->path.buf);
+	strbuf_reset(&t->path);
+	strbuf_addstr(&t->path, path);
+	free(path);
+	tmp_objdir_replace_primary_odb(t, t->will_destroy);
 }

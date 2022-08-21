@@ -19,6 +19,8 @@
 #ifndef __EWOK_RLW_H__
 #define __EWOK_RLW_H__
 
+#include "ewok.h"
+
 #define RLW_RUNNING_BITS (sizeof(eword_t) * 4)
 #define RLW_LITERAL_BITS (sizeof(eword_t) * 8 - 1 - RLW_RUNNING_BITS)
 
@@ -29,7 +31,7 @@
 
 #define RLW_RUNNING_LEN_PLUS_BIT (((eword_t)1 << (RLW_RUNNING_BITS + 1)) - 1)
 
-static int rlw_get_run_bit(const eword_t *word)
+static inline int rlw_get_run_bit(const eword_t *word)
 {
 	return *word & (eword_t)1;
 }
@@ -98,7 +100,6 @@ void rlwit_init(struct rlw_iterator *it, struct ewah_bitmap *bitmap);
 void rlwit_discard_first_words(struct rlw_iterator *it, size_t x);
 size_t rlwit_discharge(
 	struct rlw_iterator *it, struct ewah_bitmap *out, size_t max, int negate);
-void rlwit_discharge_empty(struct rlw_iterator *it, struct ewah_bitmap *out);
 
 static inline size_t rlwit_word_size(struct rlw_iterator *it)
 {

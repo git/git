@@ -2,6 +2,7 @@
 
 test_description='Test read_early_config()'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'read early config' '
@@ -29,7 +30,7 @@ test_expect_success 'ceiling' '
 		cd sub &&
 		test-tool config read_early_config early.config
 	) >output &&
-	test -z "$(cat output)"
+	test_must_be_empty output
 '
 
 test_expect_success 'ceiling #2' '
@@ -87,6 +88,16 @@ test_expect_failure 'ignore .git/ with invalid repository version' '
 
 test_expect_failure 'ignore .git/ with invalid config' '
 	test_with_config "["
+'
+
+test_expect_success 'early config and onbranch' '
+	echo "[broken" >broken &&
+	test_with_config "[includeif \"onbranch:topic\"]path=../broken"
+'
+
+test_expect_success 'onbranch config outside of git repo' '
+	test_config_global includeIf.onbranch:topic.path non-existent &&
+	nongit git help
 '
 
 test_done

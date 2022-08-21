@@ -141,7 +141,7 @@ Performance, Internal Implementation, Development Support etc.
  * Some platforms have ulong that is smaller than time_t, and our
    historical use of ulong for timestamp would mean they cannot
    represent some timestamp that the platform allows.  Invent a
-   separate and dedicated timestamp_t (so that we can distingiuish
+   separate and dedicated timestamp_t (so that we can distinguish
    timestamps and a vanilla ulongs, which along is already a good
    move), and then declare uintmax_t is the type to be used as the
    timestamp_t.
@@ -442,7 +442,7 @@ notes for details).
  * The code to pick up and execute command alias definition from the
    configuration used to switch to the top of the working tree and
    then come back when the expanded alias was executed, which was
-   unnecessarilyl complex.  Attempt to simplify the logic by using the
+   unnecessarily complex.  Attempt to simplify the logic by using the
    early-config mechanism that does not chdir around.
 
  * Fix configuration codepath to pay proper attention to commondir

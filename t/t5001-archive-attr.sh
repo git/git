@@ -2,6 +2,7 @@
 
 test_description='git archive attribute tests'
 
+TEST_CREATE_REPO_NO_TEMPLATE=1
 . ./test-lib.sh
 
 SUBSTFORMAT='%H (%h)%n'
@@ -20,6 +21,7 @@ extract_tar_to_dir () {
 
 test_expect_success 'setup' '
 	echo ignored >ignored &&
+	mkdir .git/info &&
 	echo ignored export-ignore >>.git/info/attributes &&
 	git add ignored &&
 
@@ -46,7 +48,8 @@ test_expect_success 'setup' '
 
 	git commit -m. &&
 
-	git clone --bare . bare &&
+	git clone --template= --bare . bare &&
+	mkdir bare/info &&
 	cp .git/info/attributes bare/info/attributes
 '
 
@@ -126,6 +129,20 @@ test_expect_success 'export-subst' '
 	test_cmp nosubstfile archive/nosubstfile &&
 	test_cmp substfile1.expected archive/substfile1 &&
 	test_cmp substfile2 archive/substfile2
+'
+
+test_expect_success 'export-subst expands %(describe) once' '
+	echo "\$Format:%(describe)\$" >substfile3 &&
+	echo "\$Format:%(describe)\$" >>substfile3 &&
+	echo "\$Format:%(describe)${LF}%(describe)\$" >substfile4 &&
+	git add substfile[34] &&
+	git commit -m export-subst-describe &&
+	git tag -m export-subst-describe export-subst-describe &&
+	git archive HEAD >archive-describe.tar &&
+	extract_tar_to_dir archive-describe &&
+	desc=$(git describe) &&
+	grep -F "$desc" archive-describe/substfile[34] >substituted &&
+	test_line_count = 1 substituted
 '
 
 test_done

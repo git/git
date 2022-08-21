@@ -27,12 +27,10 @@ test_update_rejected () {
 	fi &&
 	printf "create $prefix/%s $C\n" $create >input &&
 	test_must_fail git update-ref --stdin <input 2>output.err &&
-	grep -F "$error" output.err &&
+	test_i18ngrep -F "$error" output.err &&
 	git for-each-ref $prefix >actual &&
 	test_cmp unchanged actual
 }
-
-Q="'"
 
 # Test adding and deleting D/F-conflicting references in a single
 # transaction.
@@ -93,7 +91,7 @@ df_test() {
 		delname="$delref"
 	fi &&
 	cat >expected-err <<-EOF &&
-	fatal: cannot lock ref $Q$addname$Q: $Q$delref$Q exists; cannot create $Q$addref$Q
+	fatal: cannot lock ref $SQ$addname$SQ: $SQ$delref$SQ exists; cannot create $SQ$addref$SQ
 	EOF
 	$pack &&
 	if $add_del
@@ -123,7 +121,7 @@ test_expect_success 'existing loose ref is a simple prefix of new' '
 
 	prefix=refs/1l &&
 	test_update_rejected "a c e" false "b c/x d" \
-		"$Q$prefix/c$Q exists; cannot create $Q$prefix/c/x$Q"
+		"$SQ$prefix/c$SQ exists; cannot create $SQ$prefix/c/x$SQ"
 
 '
 
@@ -131,7 +129,7 @@ test_expect_success 'existing packed ref is a simple prefix of new' '
 
 	prefix=refs/1p &&
 	test_update_rejected "a c e" true "b c/x d" \
-		"$Q$prefix/c$Q exists; cannot create $Q$prefix/c/x$Q"
+		"$SQ$prefix/c$SQ exists; cannot create $SQ$prefix/c/x$SQ"
 
 '
 
@@ -139,7 +137,7 @@ test_expect_success 'existing loose ref is a deeper prefix of new' '
 
 	prefix=refs/2l &&
 	test_update_rejected "a c e" false "b c/x/y d" \
-		"$Q$prefix/c$Q exists; cannot create $Q$prefix/c/x/y$Q"
+		"$SQ$prefix/c$SQ exists; cannot create $SQ$prefix/c/x/y$SQ"
 
 '
 
@@ -147,7 +145,7 @@ test_expect_success 'existing packed ref is a deeper prefix of new' '
 
 	prefix=refs/2p &&
 	test_update_rejected "a c e" true "b c/x/y d" \
-		"$Q$prefix/c$Q exists; cannot create $Q$prefix/c/x/y$Q"
+		"$SQ$prefix/c$SQ exists; cannot create $SQ$prefix/c/x/y$SQ"
 
 '
 
@@ -155,7 +153,7 @@ test_expect_success 'new ref is a simple prefix of existing loose' '
 
 	prefix=refs/3l &&
 	test_update_rejected "a c/x e" false "b c d" \
-		"$Q$prefix/c/x$Q exists; cannot create $Q$prefix/c$Q"
+		"$SQ$prefix/c/x$SQ exists; cannot create $SQ$prefix/c$SQ"
 
 '
 
@@ -163,7 +161,7 @@ test_expect_success 'new ref is a simple prefix of existing packed' '
 
 	prefix=refs/3p &&
 	test_update_rejected "a c/x e" true "b c d" \
-		"$Q$prefix/c/x$Q exists; cannot create $Q$prefix/c$Q"
+		"$SQ$prefix/c/x$SQ exists; cannot create $SQ$prefix/c$SQ"
 
 '
 
@@ -171,7 +169,7 @@ test_expect_success 'new ref is a deeper prefix of existing loose' '
 
 	prefix=refs/4l &&
 	test_update_rejected "a c/x/y e" false "b c d" \
-		"$Q$prefix/c/x/y$Q exists; cannot create $Q$prefix/c$Q"
+		"$SQ$prefix/c/x/y$SQ exists; cannot create $SQ$prefix/c$SQ"
 
 '
 
@@ -179,7 +177,7 @@ test_expect_success 'new ref is a deeper prefix of existing packed' '
 
 	prefix=refs/4p &&
 	test_update_rejected "a c/x/y e" true "b c d" \
-		"$Q$prefix/c/x/y$Q exists; cannot create $Q$prefix/c$Q"
+		"$SQ$prefix/c/x/y$SQ exists; cannot create $SQ$prefix/c$SQ"
 
 '
 
@@ -187,11 +185,11 @@ test_expect_success 'one new ref is a simple prefix of another' '
 
 	prefix=refs/5 &&
 	test_update_rejected "a e" false "b c c/x d" \
-		"cannot process $Q$prefix/c$Q and $Q$prefix/c/x$Q at the same time"
+		"cannot process $SQ$prefix/c$SQ and $SQ$prefix/c/x$SQ at the same time"
 
 '
 
-test_expect_success 'empty directory should not fool rev-parse' '
+test_expect_success REFFILES 'empty directory should not fool rev-parse' '
 	prefix=refs/e-rev-parse &&
 	git update-ref $prefix/foo $C &&
 	git pack-refs --all &&
@@ -201,7 +199,7 @@ test_expect_success 'empty directory should not fool rev-parse' '
 	test_cmp expected actual
 '
 
-test_expect_success 'empty directory should not fool for-each-ref' '
+test_expect_success REFFILES 'empty directory should not fool for-each-ref' '
 	prefix=refs/e-for-each-ref &&
 	git update-ref $prefix/foo $C &&
 	git for-each-ref $prefix >expected &&
@@ -211,14 +209,14 @@ test_expect_success 'empty directory should not fool for-each-ref' '
 	test_cmp expected actual
 '
 
-test_expect_success 'empty directory should not fool create' '
+test_expect_success REFFILES 'empty directory should not fool create' '
 	prefix=refs/e-create &&
 	mkdir -p .git/$prefix/foo/bar/baz &&
 	printf "create %s $C\n" $prefix/foo |
 	git update-ref --stdin
 '
 
-test_expect_success 'empty directory should not fool verify' '
+test_expect_success REFFILES 'empty directory should not fool verify' '
 	prefix=refs/e-verify &&
 	git update-ref $prefix/foo $C &&
 	git pack-refs --all &&
@@ -227,7 +225,7 @@ test_expect_success 'empty directory should not fool verify' '
 	git update-ref --stdin
 '
 
-test_expect_success 'empty directory should not fool 1-arg update' '
+test_expect_success REFFILES 'empty directory should not fool 1-arg update' '
 	prefix=refs/e-update-1 &&
 	git update-ref $prefix/foo $C &&
 	git pack-refs --all &&
@@ -236,7 +234,7 @@ test_expect_success 'empty directory should not fool 1-arg update' '
 	git update-ref --stdin
 '
 
-test_expect_success 'empty directory should not fool 2-arg update' '
+test_expect_success REFFILES 'empty directory should not fool 2-arg update' '
 	prefix=refs/e-update-2 &&
 	git update-ref $prefix/foo $C &&
 	git pack-refs --all &&
@@ -245,7 +243,7 @@ test_expect_success 'empty directory should not fool 2-arg update' '
 	git update-ref --stdin
 '
 
-test_expect_success 'empty directory should not fool 0-arg delete' '
+test_expect_success REFFILES 'empty directory should not fool 0-arg delete' '
 	prefix=refs/e-delete-0 &&
 	git update-ref $prefix/foo $C &&
 	git pack-refs --all &&
@@ -254,7 +252,7 @@ test_expect_success 'empty directory should not fool 0-arg delete' '
 	git update-ref --stdin
 '
 
-test_expect_success 'empty directory should not fool 1-arg delete' '
+test_expect_success REFFILES 'empty directory should not fool 1-arg delete' '
 	prefix=refs/e-delete-1 &&
 	git update-ref $prefix/foo $C &&
 	git pack-refs --all &&
@@ -263,69 +261,69 @@ test_expect_success 'empty directory should not fool 1-arg delete' '
 	git update-ref --stdin
 '
 
-test_expect_success 'D/F conflict prevents add long + delete short' '
+test_expect_success REFFILES 'D/F conflict prevents add long + delete short' '
 	df_test refs/df-al-ds --add-del foo/bar foo
 '
 
-test_expect_success 'D/F conflict prevents add short + delete long' '
+test_expect_success REFFILES 'D/F conflict prevents add short + delete long' '
 	df_test refs/df-as-dl --add-del foo foo/bar
 '
 
-test_expect_success 'D/F conflict prevents delete long + add short' '
+test_expect_success REFFILES 'D/F conflict prevents delete long + add short' '
 	df_test refs/df-dl-as --del-add foo/bar foo
 '
 
-test_expect_success 'D/F conflict prevents delete short + add long' '
+test_expect_success REFFILES 'D/F conflict prevents delete short + add long' '
 	df_test refs/df-ds-al --del-add foo foo/bar
 '
 
-test_expect_success 'D/F conflict prevents add long + delete short packed' '
+test_expect_success REFFILES 'D/F conflict prevents add long + delete short packed' '
 	df_test refs/df-al-dsp --pack --add-del foo/bar foo
 '
 
-test_expect_success 'D/F conflict prevents add short + delete long packed' '
+test_expect_success REFFILES 'D/F conflict prevents add short + delete long packed' '
 	df_test refs/df-as-dlp --pack --add-del foo foo/bar
 '
 
-test_expect_success 'D/F conflict prevents delete long packed + add short' '
+test_expect_success REFFILES 'D/F conflict prevents delete long packed + add short' '
 	df_test refs/df-dlp-as --pack --del-add foo/bar foo
 '
 
-test_expect_success 'D/F conflict prevents delete short packed + add long' '
+test_expect_success REFFILES 'D/F conflict prevents delete short packed + add long' '
 	df_test refs/df-dsp-al --pack --del-add foo foo/bar
 '
 
 # Try some combinations involving symbolic refs...
 
-test_expect_success 'D/F conflict prevents indirect add long + delete short' '
+test_expect_success REFFILES 'D/F conflict prevents indirect add long + delete short' '
 	df_test refs/df-ial-ds --sym-add --add-del foo/bar foo
 '
 
-test_expect_success 'D/F conflict prevents indirect add long + indirect delete short' '
+test_expect_success REFFILES 'D/F conflict prevents indirect add long + indirect delete short' '
 	df_test refs/df-ial-ids --sym-add --sym-del --add-del foo/bar foo
 '
 
-test_expect_success 'D/F conflict prevents indirect add short + indirect delete long' '
+test_expect_success REFFILES 'D/F conflict prevents indirect add short + indirect delete long' '
 	df_test refs/df-ias-idl --sym-add --sym-del --add-del foo foo/bar
 '
 
-test_expect_success 'D/F conflict prevents indirect delete long + indirect add short' '
+test_expect_success REFFILES 'D/F conflict prevents indirect delete long + indirect add short' '
 	df_test refs/df-idl-ias --sym-add --sym-del --del-add foo/bar foo
 '
 
-test_expect_success 'D/F conflict prevents indirect add long + delete short packed' '
+test_expect_success REFFILES 'D/F conflict prevents indirect add long + delete short packed' '
 	df_test refs/df-ial-dsp --sym-add --pack --add-del foo/bar foo
 '
 
-test_expect_success 'D/F conflict prevents indirect add long + indirect delete short packed' '
+test_expect_success REFFILES 'D/F conflict prevents indirect add long + indirect delete short packed' '
 	df_test refs/df-ial-idsp --sym-add --sym-del --pack --add-del foo/bar foo
 '
 
-test_expect_success 'D/F conflict prevents add long + indirect delete short packed' '
+test_expect_success REFFILES 'D/F conflict prevents add long + indirect delete short packed' '
 	df_test refs/df-al-idsp --sym-del --pack --add-del foo/bar foo
 '
 
-test_expect_success 'D/F conflict prevents indirect delete long packed + indirect add short' '
+test_expect_success REFFILES 'D/F conflict prevents indirect delete long packed + indirect add short' '
 	df_test refs/df-idlp-ias --sym-add --sym-del --pack --del-add foo/bar foo
 '
 
@@ -334,7 +332,7 @@ test_expect_success 'D/F conflict prevents indirect delete long packed + indirec
 test_expect_success 'missing old value blocks update' '
 	prefix=refs/missing-update &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $Q$prefix/foo$Q: unable to resolve reference $Q$prefix/foo$Q
+	fatal: cannot lock ref $SQ$prefix/foo$SQ: unable to resolve reference $SQ$prefix/foo$SQ
 	EOF
 	printf "%s\n" "update $prefix/foo $E $D" |
 	test_must_fail git update-ref --stdin 2>output.err &&
@@ -345,7 +343,7 @@ test_expect_success 'incorrect old value blocks update' '
 	prefix=refs/incorrect-update &&
 	git update-ref $prefix/foo $C &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $Q$prefix/foo$Q: is at $C but expected $D
+	fatal: cannot lock ref $SQ$prefix/foo$SQ: is at $C but expected $D
 	EOF
 	printf "%s\n" "update $prefix/foo $E $D" |
 	test_must_fail git update-ref --stdin 2>output.err &&
@@ -356,7 +354,7 @@ test_expect_success 'existing old value blocks create' '
 	prefix=refs/existing-create &&
 	git update-ref $prefix/foo $C &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $Q$prefix/foo$Q: reference already exists
+	fatal: cannot lock ref $SQ$prefix/foo$SQ: reference already exists
 	EOF
 	printf "%s\n" "create $prefix/foo $E" |
 	test_must_fail git update-ref --stdin 2>output.err &&
@@ -367,7 +365,7 @@ test_expect_success 'incorrect old value blocks delete' '
 	prefix=refs/incorrect-delete &&
 	git update-ref $prefix/foo $C &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $Q$prefix/foo$Q: is at $C but expected $D
+	fatal: cannot lock ref $SQ$prefix/foo$SQ: is at $C but expected $D
 	EOF
 	printf "%s\n" "delete $prefix/foo $D" |
 	test_must_fail git update-ref --stdin 2>output.err &&
@@ -378,7 +376,7 @@ test_expect_success 'missing old value blocks indirect update' '
 	prefix=refs/missing-indirect-update &&
 	git symbolic-ref $prefix/symref $prefix/foo &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $Q$prefix/symref$Q: unable to resolve reference $Q$prefix/foo$Q
+	fatal: cannot lock ref $SQ$prefix/symref$SQ: unable to resolve reference $SQ$prefix/foo$SQ
 	EOF
 	printf "%s\n" "update $prefix/symref $E $D" |
 	test_must_fail git update-ref --stdin 2>output.err &&
@@ -390,7 +388,7 @@ test_expect_success 'incorrect old value blocks indirect update' '
 	git symbolic-ref $prefix/symref $prefix/foo &&
 	git update-ref $prefix/foo $C &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $Q$prefix/symref$Q: is at $C but expected $D
+	fatal: cannot lock ref $SQ$prefix/symref$SQ: is at $C but expected $D
 	EOF
 	printf "%s\n" "update $prefix/symref $E $D" |
 	test_must_fail git update-ref --stdin 2>output.err &&
@@ -402,7 +400,7 @@ test_expect_success 'existing old value blocks indirect create' '
 	git symbolic-ref $prefix/symref $prefix/foo &&
 	git update-ref $prefix/foo $C &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $Q$prefix/symref$Q: reference already exists
+	fatal: cannot lock ref $SQ$prefix/symref$SQ: reference already exists
 	EOF
 	printf "%s\n" "create $prefix/symref $E" |
 	test_must_fail git update-ref --stdin 2>output.err &&
@@ -414,7 +412,7 @@ test_expect_success 'incorrect old value blocks indirect delete' '
 	git symbolic-ref $prefix/symref $prefix/foo &&
 	git update-ref $prefix/foo $C &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $Q$prefix/symref$Q: is at $C but expected $D
+	fatal: cannot lock ref $SQ$prefix/symref$SQ: is at $C but expected $D
 	EOF
 	printf "%s\n" "delete $prefix/symref $D" |
 	test_must_fail git update-ref --stdin 2>output.err &&
@@ -425,7 +423,7 @@ test_expect_success 'missing old value blocks indirect no-deref update' '
 	prefix=refs/missing-noderef-update &&
 	git symbolic-ref $prefix/symref $prefix/foo &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $Q$prefix/symref$Q: reference is missing but expected $D
+	fatal: cannot lock ref $SQ$prefix/symref$SQ: reference is missing but expected $D
 	EOF
 	printf "%s\n" "option no-deref" "update $prefix/symref $E $D" |
 	test_must_fail git update-ref --stdin 2>output.err &&
@@ -437,7 +435,7 @@ test_expect_success 'incorrect old value blocks indirect no-deref update' '
 	git symbolic-ref $prefix/symref $prefix/foo &&
 	git update-ref $prefix/foo $C &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $Q$prefix/symref$Q: is at $C but expected $D
+	fatal: cannot lock ref $SQ$prefix/symref$SQ: is at $C but expected $D
 	EOF
 	printf "%s\n" "option no-deref" "update $prefix/symref $E $D" |
 	test_must_fail git update-ref --stdin 2>output.err &&
@@ -449,7 +447,7 @@ test_expect_success 'existing old value blocks indirect no-deref create' '
 	git symbolic-ref $prefix/symref $prefix/foo &&
 	git update-ref $prefix/foo $C &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $Q$prefix/symref$Q: reference already exists
+	fatal: cannot lock ref $SQ$prefix/symref$SQ: reference already exists
 	EOF
 	printf "%s\n" "option no-deref" "create $prefix/symref $E" |
 	test_must_fail git update-ref --stdin 2>output.err &&
@@ -461,91 +459,91 @@ test_expect_success 'incorrect old value blocks indirect no-deref delete' '
 	git symbolic-ref $prefix/symref $prefix/foo &&
 	git update-ref $prefix/foo $C &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $Q$prefix/symref$Q: is at $C but expected $D
+	fatal: cannot lock ref $SQ$prefix/symref$SQ: is at $C but expected $D
 	EOF
 	printf "%s\n" "option no-deref" "delete $prefix/symref $D" |
 	test_must_fail git update-ref --stdin 2>output.err &&
 	test_cmp expected output.err
 '
 
-test_expect_success 'non-empty directory blocks create' '
+test_expect_success REFFILES 'non-empty directory blocks create' '
 	prefix=refs/ne-create &&
 	mkdir -p .git/$prefix/foo/bar &&
 	: >.git/$prefix/foo/bar/baz.lock &&
 	test_when_finished "rm -f .git/$prefix/foo/bar/baz.lock" &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $Q$prefix/foo$Q: there is a non-empty directory $Q.git/$prefix/foo$Q blocking reference $Q$prefix/foo$Q
+	fatal: cannot lock ref $SQ$prefix/foo$SQ: there is a non-empty directory $SQ.git/$prefix/foo$SQ blocking reference $SQ$prefix/foo$SQ
 	EOF
 	printf "%s\n" "update $prefix/foo $C" |
 	test_must_fail git update-ref --stdin 2>output.err &&
 	test_cmp expected output.err &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $Q$prefix/foo$Q: unable to resolve reference $Q$prefix/foo$Q
+	fatal: cannot lock ref $SQ$prefix/foo$SQ: unable to resolve reference $SQ$prefix/foo$SQ
 	EOF
 	printf "%s\n" "update $prefix/foo $D $C" |
 	test_must_fail git update-ref --stdin 2>output.err &&
 	test_cmp expected output.err
 '
 
-test_expect_success 'broken reference blocks create' '
+test_expect_success REFFILES 'broken reference blocks create' '
 	prefix=refs/broken-create &&
 	mkdir -p .git/$prefix &&
 	echo "gobbledigook" >.git/$prefix/foo &&
 	test_when_finished "rm -f .git/$prefix/foo" &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $Q$prefix/foo$Q: unable to resolve reference $Q$prefix/foo$Q: reference broken
+	fatal: cannot lock ref $SQ$prefix/foo$SQ: unable to resolve reference $SQ$prefix/foo$SQ: reference broken
 	EOF
 	printf "%s\n" "update $prefix/foo $C" |
 	test_must_fail git update-ref --stdin 2>output.err &&
 	test_cmp expected output.err &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $Q$prefix/foo$Q: unable to resolve reference $Q$prefix/foo$Q: reference broken
+	fatal: cannot lock ref $SQ$prefix/foo$SQ: unable to resolve reference $SQ$prefix/foo$SQ: reference broken
 	EOF
 	printf "%s\n" "update $prefix/foo $D $C" |
 	test_must_fail git update-ref --stdin 2>output.err &&
 	test_cmp expected output.err
 '
 
-test_expect_success 'non-empty directory blocks indirect create' '
+test_expect_success REFFILES 'non-empty directory blocks indirect create' '
 	prefix=refs/ne-indirect-create &&
 	git symbolic-ref $prefix/symref $prefix/foo &&
 	mkdir -p .git/$prefix/foo/bar &&
 	: >.git/$prefix/foo/bar/baz.lock &&
 	test_when_finished "rm -f .git/$prefix/foo/bar/baz.lock" &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $Q$prefix/symref$Q: there is a non-empty directory $Q.git/$prefix/foo$Q blocking reference $Q$prefix/foo$Q
+	fatal: cannot lock ref $SQ$prefix/symref$SQ: there is a non-empty directory $SQ.git/$prefix/foo$SQ blocking reference $SQ$prefix/foo$SQ
 	EOF
 	printf "%s\n" "update $prefix/symref $C" |
 	test_must_fail git update-ref --stdin 2>output.err &&
 	test_cmp expected output.err &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $Q$prefix/symref$Q: unable to resolve reference $Q$prefix/foo$Q
+	fatal: cannot lock ref $SQ$prefix/symref$SQ: unable to resolve reference $SQ$prefix/foo$SQ
 	EOF
 	printf "%s\n" "update $prefix/symref $D $C" |
 	test_must_fail git update-ref --stdin 2>output.err &&
 	test_cmp expected output.err
 '
 
-test_expect_success 'broken reference blocks indirect create' '
+test_expect_success REFFILES 'broken reference blocks indirect create' '
 	prefix=refs/broken-indirect-create &&
 	git symbolic-ref $prefix/symref $prefix/foo &&
 	echo "gobbledigook" >.git/$prefix/foo &&
 	test_when_finished "rm -f .git/$prefix/foo" &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $Q$prefix/symref$Q: unable to resolve reference $Q$prefix/foo$Q: reference broken
+	fatal: cannot lock ref $SQ$prefix/symref$SQ: unable to resolve reference $SQ$prefix/foo$SQ: reference broken
 	EOF
 	printf "%s\n" "update $prefix/symref $C" |
 	test_must_fail git update-ref --stdin 2>output.err &&
 	test_cmp expected output.err &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $Q$prefix/symref$Q: unable to resolve reference $Q$prefix/foo$Q: reference broken
+	fatal: cannot lock ref $SQ$prefix/symref$SQ: unable to resolve reference $SQ$prefix/foo$SQ: reference broken
 	EOF
 	printf "%s\n" "update $prefix/symref $D $C" |
 	test_must_fail git update-ref --stdin 2>output.err &&
 	test_cmp expected output.err
 '
 
-test_expect_success 'no bogus intermediate values during delete' '
+test_expect_success REFFILES 'no bogus intermediate values during delete' '
 	prefix=refs/slow-transaction &&
 	# Set up a reference with differing loose and packed versions:
 	git update-ref $prefix/foo $C &&
@@ -559,9 +557,9 @@ test_expect_success 'no bogus intermediate values during delete' '
 	{
 		# Note: the following command is intentionally run in the
 		# background. We increase the timeout so that `update-ref`
-		# attempts to acquire the `packed-refs` lock for longer than
-		# it takes for us to do the check then delete it:
-		git -c core.packedrefstimeout=3000 update-ref -d $prefix/foo &
+		# attempts to acquire the `packed-refs` lock for much longer
+		# than it takes for us to do the check then delete it:
+		git -c core.packedrefstimeout=30000 update-ref -d $prefix/foo &
 	} &&
 	pid2=$! &&
 	# Give update-ref plenty of time to get to the point where it tries
@@ -602,7 +600,7 @@ test_expect_success 'no bogus intermediate values during delete' '
 	test_must_fail git rev-parse --verify --quiet $prefix/foo
 '
 
-test_expect_success 'delete fails cleanly if packed-refs file is locked' '
+test_expect_success REFFILES 'delete fails cleanly if packed-refs file is locked' '
 	prefix=refs/locked-packed-refs &&
 	# Set up a reference with differing loose and packed versions:
 	git update-ref $prefix/foo $C &&
@@ -614,7 +612,23 @@ test_expect_success 'delete fails cleanly if packed-refs file is locked' '
 	test_when_finished "rm -f .git/packed-refs.lock" &&
 	test_must_fail git update-ref -d $prefix/foo >out 2>err &&
 	git for-each-ref $prefix >actual &&
-	test_i18ngrep "Unable to create $Q.*packed-refs.lock$Q: File exists" err &&
+	test_i18ngrep "Unable to create $SQ.*packed-refs.lock$SQ: " err &&
+	test_cmp unchanged actual
+'
+
+test_expect_success REFFILES 'delete fails cleanly if packed-refs.new write fails' '
+	# Setup and expectations are similar to the test above.
+	prefix=refs/failed-packed-refs &&
+	git update-ref $prefix/foo $C &&
+	git pack-refs --all &&
+	git update-ref $prefix/foo $D &&
+	git for-each-ref $prefix >unchanged &&
+	# This should not happen in practice, but it is an easy way to get a
+	# reliable error (we open with create_tempfile(), which uses O_EXCL).
+	: >.git/packed-refs.new &&
+	test_when_finished "rm -f .git/packed-refs.new" &&
+	test_must_fail git update-ref -d $prefix/foo &&
+	git for-each-ref $prefix >actual &&
 	test_cmp unchanged actual
 '
 

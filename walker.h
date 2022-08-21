@@ -9,10 +9,8 @@ struct walker {
 	void (*prefetch)(struct walker *, unsigned char *sha1);
 	int (*fetch)(struct walker *, unsigned char *sha1);
 	void (*cleanup)(struct walker *);
-	int get_tree;
-	int get_history;
-	int get_all;
 	int get_verbosely;
+	int get_progress;
 	int get_recover;
 
 	int corrupt_object_found;

@@ -1,24 +1,20 @@
 #!/bin/sh
 
 test_description='git blame corner cases'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 pick_fc='s/^[0-9a-f^]* *\([^ ]*\) *(\([^ ]*\) .*/\1-\2/'
 
 test_expect_success setup '
-
 	echo A A A A A >one &&
 	echo B B B B B >two &&
 	echo C C C C C >tres &&
 	echo ABC >mouse &&
-	for i in 1 2 3 4 5 6 7 8 9
-	do
-		echo $i
-	done >nine_lines &&
-	for i in 1 2 3 4 5 6 7 8 9 a
-	do
-		echo $i
-	done >ten_lines &&
+	test_write_lines 1 2 3 4 5 6 7 8 9 >nine_lines &&
+	test_write_lines 1 2 3 4 5 6 7 8 9 a >ten_lines &&
 	git add one two tres mouse nine_lines ten_lines &&
 	test_tick &&
 	GIT_AUTHOR_NAME=Initial git commit -m Initial &&
@@ -162,18 +158,17 @@ test_expect_success 'blame wholesale copy and more in the index' '
 
 test_expect_success 'blame during cherry-pick with file rename conflict' '
 
-	test_when_finished "git reset --hard && git checkout master" &&
+	test_when_finished "git reset --hard && git checkout main" &&
 	git checkout HEAD~3 &&
 	echo MOUSE >> mouse &&
 	git mv mouse rodent &&
 	git add rodent &&
 	GIT_AUTHOR_NAME=Rodent git commit -m "rodent" &&
-	git checkout --detach master &&
+	git checkout --detach main &&
 	(git cherry-pick HEAD@{1} || test $? -eq 1) &&
 	git show HEAD@{1}:rodent > rodent &&
 	git add rodent &&
 	git blame -f -C -C1 rodent | sed -e "$pick_fc" >current &&
-	cat current &&
 	cat >expected <<-\EOF &&
 	mouse-Initial
 	mouse-Second
@@ -216,14 +211,18 @@ test_expect_success 'blame -L with invalid start' '
 '
 
 test_expect_success 'blame -L with invalid end' '
-	test_must_fail git blame -L1,5 tres 2>errors &&
-	test_i18ngrep "has only 2 lines" errors
+	git blame -L1,5 tres >out &&
+	test_line_count = 2 out
 '
 
 test_expect_success 'blame parses <end> part of -L' '
 	git blame -L1,1 tres >out &&
-	cat out &&
-	test $(wc -l < out) -eq 1
+	test_line_count = 1 out
+'
+
+test_expect_success 'blame -Ln,-(n+1)' '
+	git blame -L3,-4 nine_lines >out &&
+	test_line_count = 3 out
 '
 
 test_expect_success 'indent of line numbers, nine lines' '
@@ -269,6 +268,52 @@ test_expect_success 'blame file with CRLF core.autocrlf=true' '
 	rm tmp &&
 	git blame crlfinrepo >actual &&
 	grep "A U Thor" actual
+'
+
+test_expect_success 'setup coalesce tests' '
+	cat >giraffe <<-\EOF &&
+	ABC
+	DEF
+	EOF
+	git add giraffe &&
+	git commit -m "original file" &&
+	orig=$(git rev-parse HEAD) &&
+
+	cat >giraffe <<-\EOF &&
+	ABC
+	SPLIT
+	DEF
+	EOF
+	git add giraffe &&
+	git commit -m "interior SPLIT line" &&
+	split=$(git rev-parse HEAD) &&
+
+	cat >giraffe <<-\EOF &&
+	ABC
+	DEF
+	EOF
+	git add giraffe &&
+	git commit -m "same contents as original" &&
+	final=$(git rev-parse HEAD)
+'
+
+test_expect_success 'blame coalesce' '
+	cat >expect <<-EOF &&
+	$orig 1 1 2
+	$orig 2 2
+	EOF
+	git blame --porcelain $final giraffe >actual.raw &&
+	grep "^$orig" actual.raw >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'blame does not coalesce non-adjacent result lines' '
+	cat >expect <<-EOF &&
+	$orig 1) ABC
+	$orig 3) DEF
+	EOF
+	git blame --no-abbrev -s -L1,1 -L3,3 $split giraffe >actual &&
+	test_cmp expect actual
 '
 
 test_done

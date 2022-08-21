@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='overly long paths'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -29,7 +31,7 @@ test_expect_success 'overly-long path does not replace another by mistake' '
 	printf "$pat" "$blob_a" "$path_a" "$blob_z" "$path_z" |
 	git update-index --add --index-info &&
 	(
-		echo "$path_a"
+		echo "$path_a" &&
 		echo "$path_z"
 	) >expect &&
 	git ls-files >actual &&

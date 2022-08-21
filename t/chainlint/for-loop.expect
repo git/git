@@ -1,0 +1,11 @@
+(
+	for i in a b c
+	do
+		echo $i ?!AMP?!
+		cat <<-EOF
+	done ?!AMP?!
+	for i in a b c; do
+		echo $i &&
+		cat $i
+	done
+)

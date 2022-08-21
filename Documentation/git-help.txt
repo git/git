@@ -8,26 +8,34 @@ git-help - Display help information about Git
 SYNOPSIS
 --------
 [verse]
-'git help' [-a|--all] [-g|--guide]
-	   [-i|--info|-m|--man|-w|--web] [COMMAND|GUIDE]
+'git help' [-a|--all] [--[no-]verbose] [--[no-]external-commands] [--[no-]aliases]
+'git help' [[-i|--info] [-m|--man] [-w|--web]] [<command>|<doc>]
+'git help' [-g|--guides]
+'git help' [-c|--config]
+'git help' [--user-interfaces]
+'git help' [--developer-interfaces]
 
 DESCRIPTION
 -----------
 
-With no options and no COMMAND or GUIDE given, the synopsis of the 'git'
+With no options and no '<command>' or '<doc>' given, the synopsis of the 'git'
 command and a list of the most commonly used Git commands are printed
 on the standard output.
 
 If the option `--all` or `-a` is given, all available commands are
 printed on the standard output.
 
-If the option `--guide` or `-g` is given, a list of the useful
-Git guides is also printed on the standard output.
+If the option `--guides` or `-g` is given, a list of the
+Git concept guides is also printed on the standard output.
 
-If a command, or a guide, is given, a manual page for that command or
-guide is brought up. The 'man' program is used by default for this
+If a command or other documentation is given, the relevant manual page
+will be brought up. The 'man' program is used by default for this
 purpose, but this can be overridden by other options or configuration
 variables.
+
+If an alias is given, git shows the definition of the alias on
+standard output. To get the manual page for the aliased command, use
+`git <command> --help`.
 
 Note that `git --help ...` is identical to `git help ...` because the
 former is internally converted into the latter.
@@ -40,13 +48,45 @@ OPTIONS
 -------
 -a::
 --all::
-	Prints all the available commands on the standard output. This
-	option overrides any given command or guide name.
+	Prints all the available commands on the standard output.
+
+--no-external-commands::
+	When used with `--all`, exclude the listing of external "git-*"
+	commands found in the `$PATH`.
+
+--no-aliases::
+	When used with `--all`, exclude the listing of configured
+	aliases.
+
+--verbose::
+	When used with `--all` print description for all recognized
+	commands. This is the default.
+
+-c::
+--config::
+	List all available configuration variables. This is a short
+	summary of the list in linkgit:git-config[1].
 
 -g::
 --guides::
-	Prints a list of useful guides on the standard output. This
-	option overrides any given command or guide name.
+	Prints a list of the Git concept guides on the standard output.
+
+--user-interfaces::
+	Prints a list of the repository, command and file interfaces
+	documentation on the standard output.
++
+In-repository file interfaces such as `.git/info/exclude` are
+documented here (see linkgit:gitrepository-layout[5]), as well as
+in-tree configuration such as `.mailmap` (see linkgit:gitmailmap[5]).
++
+This section of the documentation also covers general or widespread
+user-interface conventions (e.g. linkgit:gitcli[7]), and
+pseudo-configuration such as the file-based `.git/hooks/*` interface
+described in linkgit:githooks[5].
+
+--developer-interfaces::
+	Print list of file formats, protocols and other developer
+	interfaces documentation on the standard output.
 
 -i::
 --info::
@@ -105,9 +145,9 @@ format is chosen. The following values are currently supported:
 
 * "man": use the 'man' program as usual,
 * "woman": use 'emacsclient' to launch the "woman" mode in emacs
-(this only works starting with emacsclient versions 22),
+  (this only works starting with emacsclient versions 22),
 * "konqueror": use 'kfmclient' to open the man page in a new konqueror
-tab (see 'Note about konqueror' below).
+  tab (see 'Note about konqueror' below).
 
 Values for other tools can be used if there is a corresponding
 `man.<tool>.cmd` configuration entry (see below).
@@ -158,8 +198,8 @@ variable, we launch 'kfmclient' to try to open the man page on an
 already opened konqueror in a new tab if possible.
 
 For consistency, we also try such a trick if 'man.konqueror.path' is
-set to something like 'A_PATH_TO/konqueror'. That means we will try to
-launch 'A_PATH_TO/kfmclient' instead.
+set to something like `A_PATH_TO/konqueror`. That means we will try to
+launch `A_PATH_TO/kfmclient` instead.
 
 If you really want to use 'konqueror', then you can use something like
 the following:

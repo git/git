@@ -1,0 +1,19 @@
+(
+	cat foo ; ?!AMP?! echo bar ?!AMP?!
+	cat foo ; ?!AMP?! echo bar
+) &&
+(
+	cat foo ; ?!AMP?! echo bar &&
+	cat foo ; ?!AMP?! echo bar
+) &&
+(
+	echo "foo; bar" &&
+	cat foo; ?!AMP?! echo bar
+) &&
+(
+	foo;
+) &&
+(cd foo &&
+	for i in a b c; do
+		echo;
+	done)

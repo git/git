@@ -2,6 +2,9 @@
 
 test_description='git p4 label tests'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./lib-git-p4.sh
 
 test_expect_success 'start p4d' '
@@ -133,7 +136,7 @@ test_expect_success 'export git tags to p4' '
 		p4 labels ... | grep LIGHTWEIGHT_TAG &&
 		p4 label -o GIT_TAG_1 | grep "tag created in git:xyzzy" &&
 		p4 sync ...@GIT_TAG_1 &&
-		! test -f main/f10
+		! test -f main/f10 &&
 		p4 sync ...@GIT_TAG_2 &&
 		test -f main/f10
 	)
@@ -185,13 +188,13 @@ test_expect_success 'tag that cannot be exported' '
 		git add main/f12 &&
 		git commit -m "adding f12" &&
 		git tag -m "tag on a_branch" GIT_TAG_ON_A_BRANCH &&
-		git checkout master &&
+		git checkout main &&
 		git p4 submit --export-labels
 	) &&
 	(
 		cd "$cli" &&
 		p4 sync ... &&
-		!(p4 labels | grep GIT_TAG_ON_A_BRANCH)
+		! p4 labels | grep GIT_TAG_ON_A_BRANCH
 	)
 '
 
@@ -257,11 +260,6 @@ test_expect_success 'importing labels with missing revisions' '
 			! git rev-parse TAG_S0
 		)
 	)
-'
-
-
-test_expect_success 'kill p4d' '
-	kill_p4d
 '
 
 test_done

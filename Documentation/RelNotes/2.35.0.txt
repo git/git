@@ -1,0 +1,412 @@
+Git 2.35 Release Notes
+======================
+
+Updates since Git 2.34
+----------------------
+
+Backward compatibility warts
+
+ * "_" is now treated as any other URL-valid characters in an URL when
+   matching the per-URL configuration variable names.
+
+ * The color palette used by "git grep" has been updated to match that
+   of GNU grep.
+
+
+Note to those who build from the source
+
+ * You may need to define NO_UNCOMPRESS2 Makefile macro if you build
+   with zlib older than 1.2.9.
+
+ * If your compiler cannot grok C99, the build will fail.  See the
+   instruction at the beginning of git-compat-util.h if this happens
+   to you.
+
+
+UI, Workflows & Features
+
+ * "git status --porcelain=v2" now show the number of stash entries
+   with --show-stash like the normal output does.
+
+ * "git stash" learned the "--staged" option to stash away what has
+   been added to the index (and nothing else).
+
+ * "git var GIT_DEFAULT_BRANCH" is a way to see what name is used for
+   the newly created branch if "git init" is run.
+
+ * Various operating modes of "git reset" have been made to work
+   better with the sparse index.
+
+ * "git submodule deinit" for a submodule whose .git metadata
+   directory is embedded in its working tree refused to work, until
+   the submodule gets converted to use the "absorbed" form where the
+   metadata directory is stored in superproject, and a gitfile at the
+   top-level of the working tree of the submodule points at it.  The
+   command is taught to convert such submodules to the absorbed form
+   as needed.
+
+ * The completion script (in contrib/) learns that the "--date"
+   option of commands from the "git log" family takes "human" and
+   "auto" as valid values.
+
+ * "Zealous diff3" style of merge conflict presentation has been added.
+
+ * The "git log --format=%(describe)" placeholder has been extended to
+   allow passing selected command-line options to the underlying "git
+   describe" command.
+
+ * "default" and "reset" have been added to our color palette.
+
+ * The cryptographic signing using ssh keys can specify literal keys
+   for keytypes whose name do not begin with the "ssh-" prefix by
+   using the "key::" prefix mechanism (e.g. "key::ecdsa-sha2-nistp256").
+
+ * "git fetch" without the "--update-head-ok" option ought to protect
+   a checked out branch from getting updated, to prevent the working
+   tree that checks it out to go out of sync.  The code was written
+   before the use of "git worktree" got widespread, and only checked
+   the branch that was checked out in the current worktree, which has
+   been updated.
+
+ * "git name-rev" has been tweaked to give output that is shorter and
+   easier to understand.
+
+ * "git apply" has been taught to ignore a message without a patch
+   with the "--allow-empty" option.  It also learned to honor the
+   "--quiet" option given from the command line.
+
+ * The "init" and "set" subcommands in "git sparse-checkout" have been
+   unified for a better user experience and performance.
+
+ * Many git commands that deal with working tree files try to remove a
+   directory that becomes empty (i.e. "git switch" from a branch that
+   has the directory to another branch that does not would attempt
+   remove all files in the directory and the directory itself).  This
+   drops users into an unfamiliar situation if the command was run in
+   a subdirectory that becomes subject to removal due to the command.
+   The commands have been taught to keep an empty directory if it is
+   the directory they were started in to avoid surprising users.
+
+ * "git am" learns "--empty=(stop|drop|keep)" option to tweak what is
+   done to a piece of e-mail without a patch in it.
+
+ * The default merge message prepared by "git merge" records the name
+   of the current branch; the name can be overridden with a new option
+   to allow users to pretend a merge is made on a different branch.
+
+ * The way "git p4" shows file sizes in its output has been updated to
+   use human-readable units.
+
+ * "git -c branch.autosetupmerge=inherit branch new old" makes "new"
+   to have the same upstream as the "old" branch, instead of marking
+   "old" itself as its upstream.
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * The use of errno as a means to carry the nature of error in the ref
+   API implementation has been reworked and reduced.
+
+ * Teach and encourage first-time contributors to this project to
+   state the base commit when they submit their topic.
+
+ * The command line completion for "git send-email" options have been
+   tweaked to make it easier to keep it in sync with the command itself.
+
+ * Ensure that the sparseness of the in-core index matches the
+   index.sparse configuration specified by the repository immediately
+   after the on-disk index file is read.
+
+ * Code clean-up to eventually allow information on remotes defined
+   for an arbitrary repository to be read.
+
+ * Build optimization.
+
+ * Tighten code for testing pack-bitmap.
+
+ * Weather balloon to break people with compilers that do not support
+   C99.
+
+ * The "reftable" backend for the refs API, without integrating into
+   the refs subsystem, has been added.
+
+ * More tests are marked as leak-free.
+
+ * The test framework learns to list unsatisfied test prerequisites,
+   and optionally error out when prerequisites that are expected to be
+   satisfied are not.
+
+ * The default setting for trace2 event nesting was too low to cause
+   test failures, which is worked around by bumping it up in the test
+   framework.
+
+ * Drop support for TravisCI and update test workflows at GitHub.
+
+ * Many tests that used to need GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+   mechanism to force "git" to use 'master' as the default name for
+   the initial branch no longer need it; the use of the mechanism from
+   them have been removed.
+
+ * Allow running our tests while disabling fsync.
+
+ * Document the parameters given to the reflog entry iterator callback
+   functions.
+   (merge e6e94f34b2 jc/reflog-iterator-callback-doc later to maint).
+
+ * The test helper for refs subsystem learned to write bogus and/or
+   nonexistent object name to refs to simulate error situations we
+   want to test Git in.
+
+ * "diff --histogram" optimization.
+
+ * Weather balloon to find compilers that do not grok variable
+   declaration in the for() loop.
+
+ * diff and blame commands have been taught to work better with sparse
+   index.
+
+ * The chainlint test script linter in the test suite has been updated.
+
+ * The DEVELOPER=yes build uses -std=gnu99 now.
+
+ * "git format-patch" uses a single rev_info instance and then exits.
+   Mark the structure with UNLEAK() macro to squelch leak sanitizer.
+
+ * New interface into the tmp-objdir API to help in-core use of the
+   quarantine feature.
+
+ * Broken &&-chains in the test scripts have been corrected.
+
+ * The RCS keyword substitution in "git p4" used to be done assuming
+   that the contents are UTF-8 text, which can trigger decoding
+   errors.  We now treat the contents as a bytestring for robustness
+   and correctness.
+
+ * The conditions to choose different definitions of the FLEX_ARRAY
+   macro for vendor compilers has been simplified to make it easier to
+   maintain.
+
+ * Correctness and performance update to "diff --color-moved" feature.
+
+ * "git upload-pack" (the other side of "git fetch") used a 8kB buffer
+   but most of its payload came on 64kB "packets".  The buffer size
+   has been enlarged so that such a packet fits.
+
+ * "git fetch" and "git pull" are now declared sparse-index clean.
+   Also "git ls-files" learns the "--sparse" option to help debugging.
+
+ * Similar message templates have been consolidated so that
+   translators need to work on fewer number of messages.
+
+
+Fixes since v2.34
+-----------------
+
+ * "git grep" looking in a blob that has non-UTF8 payload was
+   completely broken when linked with certain versions of PCREv2
+   library in the latest release.
+
+ * Other code cleanup, docfix, build fix, etc.
+
+ * "git pull" with any strategy when the other side is behind us
+   should succeed as it is a no-op, but doesn't.
+
+ * An earlier change in 2.34.0 caused JGit application (that abused
+   GIT_EDITOR mechanism when invoking "git config") to get stuck with
+   a SIGTTOU signal; it has been reverted.
+
+ * An earlier change that broke .gitignore matching has been reverted.
+
+ * Things like "git -c branch.sort=bogus branch new HEAD", i.e. the
+   operation modes of the "git branch" command that do not need the
+   sort key information, no longer errors out by seeing a bogus sort
+   key.
+   (merge 98e7ab6d42 jc/fix-ref-sorting-parse later to maint).
+
+ * The compatibility implementation for unsetenv(3) were written to
+   mimic ancient, non-POSIX, variant seen in an old glibc; it has been
+   changed to return an integer to match the more modern era.
+   (merge a38989bd5b jc/unsetenv-returns-an-int later to maint).
+
+ * The clean/smudge conversion code path has been prepared to better
+   work on platforms where ulong is narrower than size_t.
+   (merge 596b5e77c9 mc/clean-smudge-with-llp64 later to maint).
+
+ * Redact the path part of packfile URI that appears in the trace output.
+   (merge 0ba558ffb1 if/redact-packfile-uri later to maint).
+
+ * CI has been taught to catch some Unicode directional formatting
+   sequence that can be used in certain mischief.
+   (merge 0e7696c64d js/ci-no-directional-formatting later to maint).
+
+ * The "--date=format:<strftime>" gained a workaround for the lack of
+   system support for a non-local timezone to handle "%s" placeholder.
+   (merge 9b591b9403 jk/strbuf-addftime-seconds-since-epoch later to maint).
+
+ * The "merge" subcommand of "git jump" (in contrib/) silently ignored
+   pathspec and other parameters.
+   (merge 67ba13e5a4 jk/jump-merge-with-pathspec later to maint).
+
+ * The code to decode the length of packed object size has been
+   corrected.
+   (merge 34de5b8eac jt/pack-header-lshift-overflow later to maint).
+
+ * The advice message given by "git pull" when the user hasn't made a
+   choice between merge and rebase still said that the merge is the
+   default, which no longer is the case.  This has been corrected.
+   (merge 71076d0edd ah/advice-pull-has-no-preference-between-rebase-and-merge later to maint).
+
+ * "git fetch", when received a bad packfile, can fail with SIGPIPE.
+   This wasn't wrong per-se, but we now detect the situation and fail
+   in a more predictable way.
+   (merge 2a4aed42ec jk/fetch-pack-avoid-sigpipe-to-index-pack later to maint).
+
+ * The function to cull a child process and determine the exit status
+   had two separate code paths for normal callers and callers in a
+   signal handler, and the latter did not yield correct value when the
+   child has caught a signal.  The handling of the exit status has
+   been unified for these two code paths.  An existing test with
+   flakiness has also been corrected.
+   (merge 5263e22cba jk/t7006-sigpipe-tests-fix later to maint).
+
+ * When a non-existent program is given as the pager, we tried to
+   reuse an uninitialized child_process structure and crashed, which
+   has been fixed.
+   (merge f917f57f40 em/missing-pager later to maint).
+
+ * The single-key-input mode in "git add -p" had some code to handle
+   keys that generate a sequence of input via ReadKey(), which did not
+   handle end-of-file correctly, which has been fixed.
+   (merge fc8a8126df cb/add-p-single-key-fix later to maint).
+
+ * "git rebase -x" added an unnecessary 'exec' instructions before
+   'noop', which has been corrected.
+   (merge cc9dcdee61 en/rebase-x-fix later to maint).
+
+ * When the "git push" command is killed while the receiving end is
+   trying to report what happened to the ref update proposals, the
+   latter used to die, due to SIGPIPE.  The code now ignores SIGPIPE
+   to increase our chances to run the post-receive hook after it
+   happens.
+   (merge d34182b9e3 rj/receive-pack-avoid-sigpipe-during-status-reporting later to maint).
+
+ * "git worktree add" showed "Preparing worktree" message to the
+   standard output stream, but when it failed, the message from die()
+   went to the standard error stream.  Depending on the order the
+   stdio streams are flushed at the program end, this resulted in
+   confusing output.  It has been corrected by sending all the chatty
+   messages to the standard error stream.
+   (merge b50252484f es/worktree-chatty-to-stderr later to maint).
+
+ * Coding guideline document has been updated to clarify what goes to
+   standard error in our system.
+   (merge e258eb4800 es/doc-stdout-vs-stderr later to maint).
+
+ * The sparse-index/sparse-checkout feature had a bug in its use of
+   the matching code to determine which path is in or outside the
+   sparse checkout patterns.
+   (merge 8c5de0d265 ds/sparse-deep-pattern-checkout-fix later to maint).
+
+ * "git rebase -x" by mistake started exporting the GIT_DIR and
+   GIT_WORK_TREE environment variables when the command was rewritten
+   in C, which has been corrected.
+   (merge 434e0636db en/rebase-x-wo-git-dir-env later to maint).
+
+ * When "git log" implicitly enabled the "decoration" processing
+   without being explicitly asked with "--decorate" option, it failed
+   to read and honor the settings given by the "--decorate-refs"
+   option.
+
+ * "git fetch --set-upstream" did not check if there is a current
+   branch, leading to a segfault when it is run on a detached HEAD,
+   which has been corrected.
+   (merge 17baeaf82d ab/fetch-set-upstream-while-detached later to maint).
+
+ * Among some code paths that ask an yes/no question, only one place
+   gave a prompt that looked different from the others, which has been
+   updated to match what the others create.
+   (merge 0fc8ed154c km/help-prompt-fix later to maint).
+
+ * "git log --invert-grep --author=<name>" used to exclude commits
+   written by the given author, but now "--invert-grep" only affects
+   the matches made by the "--grep=<pattern>" option.
+   (merge 794c000267 rs/log-invert-grep-with-headers later to maint).
+
+ * "git grep --perl-regexp" failed to match UTF-8 characters with
+   wildcard when the pattern consists only of ASCII letters, which has
+   been corrected.
+   (merge 32e3e8bc55 rs/pcre2-utf later to maint).
+
+ * Certain sparse-checkout patterns that are valid in non-cone mode
+   led to segfault in cone mode, which has been corrected.
+
+ * Use of certain "git rev-list" options with "git fast-export"
+   created nonsense results (the worst two of which being "--reverse"
+   and "--invert-grep --grep=<foo>").  The use of "--first-parent" is
+   made to behave a bit more sensible than before.
+   (merge 726a228dfb ws/fast-export-with-revision-options later to maint).
+
+ * Perf tests were run with end-user's shell, but it has been
+   corrected to use the shell specified by $TEST_SHELL_PATH.
+   (merge 9ccab75608 ja/perf-use-specified-shell later to maint).
+
+ * Fix dependency rules to generate hook-list.h header file.
+   (merge d3fd1a6667 ab/makefile-hook-list-dependency-fix later to maint).
+
+ * "git stash" by default triggers its "push" action, but its
+   implementation also made "git stash -h" to show short help only for
+   "git stash push", which has been corrected.
+   (merge ca7990cea5 ab/do-not-limit-stash-help-to-push later to maint).
+
+ * "git apply --3way" bypasses the attempt to do a three-way
+   application in more cases to address the regression caused by the
+   recent change to use direct application as a fallback.
+   (merge 34d607032c jz/apply-3-corner-cases later to maint).
+
+ * Fix performance-releated bug in "git subtree" (in contrib/).
+   (merge 3ce8888fb4 jl/subtree-check-parents-argument-passing-fix later to maint).
+
+ * Extend the guidance to choose the base commit to build your work
+   on, and hint/nudge contributors to read others' changes.
+   (merge fdfae830f8 jc/doc-submitting-patches-choice-of-base later to maint).
+
+ * A corner case bug in the ort merge strategy has been corrected.
+   (merge d30126c20d en/merge-ort-renorm-with-rename-delete-conflict-fix later to maint).
+
+ * "git stash apply" forgot to attempt restoring untracked files when
+   it failed to restore changes to tracked ones.
+   (merge 71cade5a0b en/stash-df-fix later to maint).
+
+ * Calling dynamically loaded functions on Windows has been corrected.
+   (merge 4a9b204920 ma/windows-dynload-fix later to maint).
+
+ * Some lockfile code called free() in signal-death code path, which
+   has been corrected.
+   (merge 58d4d7f1c5 ps/lockfile-cleanup-fix later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge 74db416c9c cw/protocol-v2-doc-fix later to maint).
+   (merge f9b2b6684d ja/doc-cleanup later to maint).
+   (merge 7d1b866778 jc/fix-first-object-walk later to maint).
+   (merge 538ac74604 js/trace2-avoid-recursive-errors later to maint).
+   (merge 152923b132 jk/t5319-midx-corruption-test-deflake later to maint).
+   (merge 9081a421a6 ab/checkout-branch-info-leakfix later to maint).
+   (merge 42c456ff81 rs/mergesort later to maint).
+   (merge ad506e6780 tl/midx-docfix later to maint).
+   (merge bf5b83fd8a hk/ci-checkwhitespace-commentfix later to maint).
+   (merge 49f1eb3b34 jk/refs-g11-workaround later to maint).
+   (merge 7d3fc7df70 jt/midx-doc-fix later to maint).
+   (merge 7b089120d9 hn/create-reflog-simplify later to maint).
+   (merge 9e12400da8 cb/mingw-gmtime-r later to maint).
+   (merge 0bf0de6cc7 tb/pack-revindex-on-disk-cleanup later to maint).
+   (merge 2c68f577fc ew/cbtree-remove-unused-and-broken-cb-unlink later to maint).
+   (merge eafd6e7e55 ab/die-with-bug later to maint).
+   (merge 91028f7659 jc/grep-patterntype-default-doc later to maint).
+   (merge 47ca93d071 ds/repack-fixlets later to maint).
+   (merge e6a9bc0c60 rs/t4202-invert-grep-test-fix later to maint).
+   (merge deb5407a42 gh/gpg-doc-markup-fix later to maint).
+   (merge 999bba3e0b rs/daemon-plug-leak later to maint).
+   (merge 786eb1ba39 js/l10n-mention-ngettext-early-in-readme later to maint).
+   (merge 2f12b31b74 ab/makefile-msgfmt-wo-stats later to maint).
+   (merge 0517f591ca fs/gpg-unknown-key-test-fix later to maint).
+   (merge 97d6fb5a1f ma/header-dup-cleanup later to maint).

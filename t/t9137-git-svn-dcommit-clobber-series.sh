@@ -7,7 +7,7 @@ test_description='git svn dcommit clobber series'
 test_expect_success 'initialize repo' '
 	mkdir import &&
 	(cd import &&
-	awk "BEGIN { for (i = 1; i < 64; i++) { print i } }" > file
+	awk "BEGIN { for (i = 1; i < 64; i++) { print i } }" > file &&
 	svn_cmd import -m "initial" . "$svnrepo"
 	) &&
 	git svn init "$svnrepo" &&

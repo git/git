@@ -10,8 +10,9 @@ SYNOPSIS
 [verse]
 'git blame' [-c] [-b] [-l] [--root] [-t] [-f] [-n] [-s] [-e] [-p] [-w] [--incremental]
 	    [-L <range>] [-S <revs-file>] [-M] [-C] [-C] [-C] [--since=<date>]
-	    [--progress] [--abbrev=<n>] [<rev> | --contents <file> | --reverse <rev>..<rev>]
-	    [--] <file>
+	    [--ignore-rev <rev>] [--ignore-revs-file <file>]
+	    [--color-lines] [--color-by-age] [--progress] [--abbrev=<n>]
+	    [<rev> | --contents <file> | --reverse <rev>..<rev>] [--] <file>
 
 DESCRIPTION
 -----------
@@ -86,9 +87,24 @@ include::blame-options.txt[]
 
 --abbrev=<n>::
 	Instead of using the default 7+1 hexadecimal digits as the
-	abbreviated object name, use <n>+1 digits. Note that 1 column
+	abbreviated object name, use <m>+1 digits, where <m> is at
+	least <n> but ensures the commit object names are unique.
+	Note that 1 column
 	is used for a caret to mark the boundary commit.
 
+
+THE DEFAULT FORMAT
+------------------
+
+When neither `--porcelain` nor `--incremental` option is specified,
+`git blame` will output annotation for each line with:
+
+- abbreviated object name for the commit the line came from;
+- author ident (by default author name and date, unless `-s` or `-e`
+  is specified); and
+- line number
+
+before the line contents.
 
 THE PORCELAIN FORMAT
 --------------------
@@ -223,7 +239,7 @@ commit commentary), a blame viewer will not care.
 MAPPING AUTHORS
 ---------------
 
-include::mailmap.txt[]
+See linkgit:gitmailmap[5].
 
 
 SEE ALSO

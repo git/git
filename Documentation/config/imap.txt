@@ -1,0 +1,44 @@
+imap.folder::
+	The folder to drop the mails into, which is typically the Drafts
+	folder. For example: "INBOX.Drafts", "INBOX/Drafts" or
+	"[Gmail]/Drafts". Required.
+
+imap.tunnel::
+	Command used to setup a tunnel to the IMAP server through which
+	commands will be piped instead of using a direct network connection
+	to the server. Required when imap.host is not set.
+
+imap.host::
+	A URL identifying the server. Use an `imap://` prefix for non-secure
+	connections and an `imaps://` prefix for secure connections.
+	Ignored when imap.tunnel is set, but required otherwise.
+
+imap.user::
+	The username to use when logging in to the server.
+
+imap.pass::
+	The password to use when logging in to the server.
+
+imap.port::
+	An integer port number to connect to on the server.
+	Defaults to 143 for imap:// hosts and 993 for imaps:// hosts.
+	Ignored when imap.tunnel is set.
+
+imap.sslverify::
+	A boolean to enable/disable verification of the server certificate
+	used by the SSL/TLS connection. Default is `true`. Ignored when
+	imap.tunnel is set.
+
+imap.preformattedHTML::
+	A boolean to enable/disable the use of html encoding when sending
+	a patch.  An html encoded patch will be bracketed with <pre>
+	and have a content type of text/html.  Ironically, enabling this
+	option causes Thunderbird to send the patch as a plain/text,
+	format=fixed email.  Default is `false`.
+
+imap.authMethod::
+	Specify authenticate method for authentication with IMAP server.
+	If Git was built with the NO_CURL option, or if your curl version is older
+	than 7.34.0, or if you're running git-imap-send with the `--no-curl`
+	option, the only supported method is 'CRAM-MD5'. If this is not set
+	then 'git imap-send' uses the basic IMAP plaintext LOGIN command.

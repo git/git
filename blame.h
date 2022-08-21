@@ -16,6 +16,8 @@
 #define BLAME_DEFAULT_MOVE_SCORE	20
 #define BLAME_DEFAULT_COPY_SCORE	40
 
+struct fingerprint;
+
 /*
  * One blob in a commit that is being suspected
  */
@@ -51,8 +53,10 @@ struct blame_origin {
 	 */
 	struct blame_entry *suspects;
 	mmfile_t file;
+	int num_lines;
+	struct fingerprint *fingerprints;
 	struct object_id blob_oid;
-	unsigned mode;
+	unsigned short mode;
 	/* guilty gets set when shipping any suspects to the final
 	 * blame list instead of other commits
 	 */
@@ -92,7 +96,11 @@ struct blame_entry {
 	 * scanning the lines over and over.
 	 */
 	unsigned score;
+	int ignored;
+	int unblamable;
 };
+
+struct blame_bloom_data;
 
 /*
  * The current state of the blame assignment.
@@ -102,6 +110,7 @@ struct blame_scoreboard {
 	struct commit *final;
 	/* Priority queue for commits with unassigned blame records */
 	struct prio_queue commits;
+	struct repository *repo;
 	struct rev_info *revs;
 	const char *path;
 
@@ -115,6 +124,8 @@ struct blame_scoreboard {
 
 	/* linked list of blames */
 	struct blame_entry *ent;
+
+	struct oidset ignore_list;
 
 	/* look-up a line in the final buffer */
 	int num_lines;
@@ -147,6 +158,7 @@ struct blame_scoreboard {
 	void(*found_guilty_entry)(struct blame_entry *, void *);
 
 	void *found_guilty_entry_data;
+	struct blame_bloom_data *bloom_data;
 };
 
 /*
@@ -159,17 +171,24 @@ static inline struct blame_origin *blame_origin_incref(struct blame_origin *o)
 		o->refcnt++;
 	return o;
 }
-extern void blame_origin_decref(struct blame_origin *o);
+void blame_origin_decref(struct blame_origin *o);
 
-extern void blame_coalesce(struct blame_scoreboard *sb);
-extern void blame_sort_final(struct blame_scoreboard *sb);
-extern unsigned blame_entry_score(struct blame_scoreboard *sb, struct blame_entry *e);
-extern void assign_blame(struct blame_scoreboard *sb, int opt);
-extern const char *blame_nth_line(struct blame_scoreboard *sb, long lno);
+void blame_coalesce(struct blame_scoreboard *sb);
+void blame_sort_final(struct blame_scoreboard *sb);
+unsigned blame_entry_score(struct blame_scoreboard *sb, struct blame_entry *e);
+void assign_blame(struct blame_scoreboard *sb, int opt);
+const char *blame_nth_line(struct blame_scoreboard *sb, long lno);
 
-extern void init_scoreboard(struct blame_scoreboard *sb);
-extern void setup_scoreboard(struct blame_scoreboard *sb, const char *path, struct blame_origin **orig);
+void init_scoreboard(struct blame_scoreboard *sb);
+void setup_scoreboard(struct blame_scoreboard *sb,
+		      struct blame_origin **orig);
+void setup_blame_bloom_data(struct blame_scoreboard *sb);
+void cleanup_scoreboard(struct blame_scoreboard *sb);
 
-extern struct blame_entry *blame_entry_prepend(struct blame_entry *head, long start, long end, struct blame_origin *o);
+struct blame_entry *blame_entry_prepend(struct blame_entry *head,
+					long start, long end,
+					struct blame_origin *o);
+
+struct blame_origin *get_blame_suspects(struct commit *commit);
 
 #endif /* BLAME_H */

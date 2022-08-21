@@ -2,6 +2,9 @@
 
 test_description='git svn fetch deleted tag 2'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./lib-git-svn.sh
 
 test_expect_success 'setup svn repo' '
@@ -36,9 +39,9 @@ test_expect_success 'fetch deleted tags from same revision with no checksum erro
 	cd git_project &&
 	git svn fetch &&
 
-	git diff --exit-code master:subdir3/file origin/tags/mytag:file &&
-	git diff --exit-code master:subdir2/file origin/tags/mytag^:file &&
-	git diff --exit-code master:subdir1/file origin/tags/mytag^^:file
+	git diff --exit-code main:subdir3/file origin/tags/mytag:file &&
+	git diff --exit-code main:subdir2/file origin/tags/mytag^:file &&
+	git diff --exit-code main:subdir1/file origin/tags/mytag^^:file
 '
 
 test_done

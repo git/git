@@ -10,10 +10,7 @@ test_expect_success setup '
 	git add file &&
 
 	# file-0 is full of whitespace breakages
-	for l in a bb c d eeee f ggg h
-	do
-		echo "$l "
-	done >file-0 &&
+	printf "%s \n" a bb c d eeee f ggg h >file-0 &&
 
 	# patch-0 creates a whitespace broken file
 	cat file-0 >file &&

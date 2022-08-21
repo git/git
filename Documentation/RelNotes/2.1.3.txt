@@ -13,7 +13,7 @@ Git v2.1.3 Release Notes
    they are new enough to support the `--output` option.
 
  * "git pack-objects" forgot to disable the codepath to generate
-   object recheability bitmap when it needs to split the resulting
+   object reachability bitmap when it needs to split the resulting
    pack.
 
  * "gitweb" used deprecated CGI::startfrom, which was removed from

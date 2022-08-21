@@ -9,11 +9,11 @@ git - the stupid content tracker
 SYNOPSIS
 --------
 [verse]
-'git' [--version] [--help] [-C <path>] [-c <name>=<value>]
+'git' [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]
     [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]
-    [-p|--paginate|--no-pager] [--no-replace-objects] [--bare]
+    [-p|--paginate|-P|--no-pager] [--no-replace-objects] [--bare]
     [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]
-    [--super-prefix=<path>]
+    [--super-prefix=<path>] [--config-env=<name>=<envvar>]
     <command> [<args>]
 
 DESCRIPTION
@@ -33,14 +33,21 @@ individual Git commands with "git help command".  linkgit:gitcli[7]
 manual page gives you an overview of the command-line command syntax.
 
 A formatted and hyperlinked copy of the latest Git documentation
-can be viewed at `https://git.github.io/htmldocs/git.html`.
+can be viewed at https://git.github.io/htmldocs/git.html
+or https://git-scm.com/docs.
 
 
 OPTIONS
 -------
+-v::
 --version::
 	Prints the Git suite version that the 'git' program came from.
++
+This option is internally converted to `git version ...` and accepts
+the same options as the linkgit:git-version[1] command. If `--help` is
+also given, it takes precedence over `--version`.
 
+-h::
 --help::
 	Prints the synopsis and a list of the most commonly used
 	commands. If the option `--all` or `-a` is given then all
@@ -56,7 +63,8 @@ help ...`.
 	Run as if git was started in '<path>' instead of the current working
 	directory.  When multiple `-C` options are given, each subsequent
 	non-absolute `-C <path>` is interpreted relative to the preceding `-C
-	<path>`.
+	<path>`.  If '<path>' is present but empty, e.g. `-C ""`, then the
+	current working directory is left unchanged.
 +
 This option affects options that expect path name like `--git-dir` and
 `--work-tree` in that their interpretations of the path names would be
@@ -76,7 +84,29 @@ Note that omitting the `=` in `git -c foo.bar ...` is allowed and sets
 `foo.bar` to the boolean true value (just like `[foo]bar` would in a
 config file). Including the equals but with an empty value (like `git -c
 foo.bar= ...`) sets `foo.bar` to the empty string which `git config
---bool` will convert to `false`.
+--type=bool` will convert to `false`.
+
+--config-env=<name>=<envvar>::
+	Like `-c <name>=<value>`, give configuration variable
+	'<name>' a value, where <envvar> is the name of an
+	environment variable from which to retrieve the value. Unlike
+	`-c` there is no shortcut for directly setting the value to an
+	empty string, instead the environment variable itself must be
+	set to the empty string.  It is an error if the `<envvar>` does not exist
+	in the environment. `<envvar>` may not contain an equals sign
+	to avoid ambiguity with `<name>` containing one.
++
+This is useful for cases where you want to pass transitory
+configuration options to git, but are doing so on OS's where
+other processes might be able to read your cmdline
+(e.g. `/proc/self/cmdline`), but not your environ
+(e.g. `/proc/self/environ`). That behavior is the default on
+Linux, but may not be on your system.
++
+Note that this might add security for variables such as
+`http.extraHeader` where the sensitive information is part of
+the value, but not e.g. `url.<base>.insteadOf` where the
+sensitive information can be part of the key.
 
 --exec-path[=<path>]::
 	Path to wherever your core Git programs are installed.
@@ -103,13 +133,28 @@ foo.bar= ...`) sets `foo.bar` to the empty string which `git config
 	configuration options (see the "Configuration Mechanism" section
 	below).
 
+-P::
 --no-pager::
 	Do not pipe Git output into a pager.
 
 --git-dir=<path>::
-	Set the path to the repository. This can also be controlled by
-	setting the `GIT_DIR` environment variable. It can be an absolute
-	path or relative path to current working directory.
+	Set the path to the repository (".git" directory). This can also be
+	controlled by setting the `GIT_DIR` environment variable. It can be
+	an absolute path or relative path to current working directory.
++
+Specifying the location of the ".git" directory using this
+option (or `GIT_DIR` environment variable) turns off the
+repository discovery that tries to find a directory with
+".git" subdirectory (which is how the repository and the
+top-level of the working tree are discovered), and tells Git
+that you are at the top level of the working tree.  If you
+are not at the top-level directory of the working tree, you
+should tell Git where the top-level of the working tree is,
+with the `--work-tree=<path>` option (or `GIT_WORK_TREE`
+environment variable)
++
+If you just want to run git as if it was started in `<path>` then use
+`git -C <path>`.
 
 --work-tree=<path>::
 	Set the path to the working tree. It can be an absolute path
@@ -163,6 +208,16 @@ foo.bar= ...`) sets `foo.bar` to the empty string which `git config
 	Do not perform optional operations that require locks. This is
 	equivalent to setting the `GIT_OPTIONAL_LOCKS` to `0`.
 
+--list-cmds=group[,group...]::
+	List commands by group. This is an internal/experimental
+	option and may change or be removed in the future. Supported
+	groups are: builtins, parseopt (builtin commands that use
+	parse-options), main (all commands in libexec directory),
+	others (all other commands in `$PATH` that have git- prefix),
+	list-<category> (see categories in command-list.txt),
+	nohelpers (exclude helper commands), alias and config
+	(retrieve command list from config variable completion.commands)
+
 GIT COMMANDS
 ------------
 
@@ -198,6 +253,26 @@ These commands are to interact with foreign SCM and with other
 people via patch over e-mail.
 
 include::cmds-foreignscminterface.txt[]
+
+Reset, restore and revert
+~~~~~~~~~~~~~~~~~~~~~~~~~
+There are three commands with similar names: `git reset`,
+`git restore` and `git revert`.
+
+* linkgit:git-revert[1] is about making a new commit that reverts the
+  changes made by other commits.
+
+* linkgit:git-restore[1] is about restoring files in the working tree
+  from either the index or another commit. This command does not
+  update your branch. The command can also be used to restore files in
+  the index from another commit.
+
+* linkgit:git-reset[1] is about updating your branch, moving the tip
+  in order to add or remove commits from the branch. This operation
+  changes the commit history.
++
+`git reset` can also be used to restore the index, overlapping with
+`git restore`.
 
 
 Low-level commands (plumbing)
@@ -238,8 +313,8 @@ In general, the interrogate commands do not touch the files in
 the working tree.
 
 
-Synching repositories
-~~~~~~~~~~~~~~~~~~~~~
+Syncing repositories
+~~~~~~~~~~~~~~~~~~~~
 
 include::cmds-synchingrepositories.txt[]
 
@@ -257,6 +332,30 @@ users typically do not use them directly.
 
 include::cmds-purehelpers.txt[]
 
+Guides
+------
+
+The following documentation pages are guides about Git concepts.
+
+include::cmds-guide.txt[]
+
+Repository, command and file interfaces
+---------------------------------------
+
+This documentation discusses repository and command interfaces which
+users are expected to interact with directly. See `--user-formats` in
+linkgit:git-help[1] for more details on the critera.
+
+include::cmds-userinterfaces.txt[]
+
+File formats, protocols and other developer interfaces
+------------------------------------------------------
+
+This documentation discusses file formats, over-the-wire protocols and
+other git developer interfaces. See `--developer-interfaces` in
+linkgit:git-help[1].
+
+include::cmds-developerinterfaces.txt[]
 
 Configuration Mechanism
 -----------------------
@@ -391,11 +490,11 @@ Git so take care if using a foreign front-end.
 	of Git object directories which can be used to search for Git
 	objects. New objects will not be written to these directories.
 +
-	Entries that begin with `"` (double-quote) will be interpreted
-	as C-style quoted paths, removing leading and trailing
-	double-quotes and respecting backslash escapes. E.g., the value
-	`"path-with-\"-and-:-in-it":vanilla-path` has two paths:
-	`path-with-"-and-:-in-it` and `vanilla-path`.
+Entries that begin with `"` (double-quote) will be interpreted
+as C-style quoted paths, removing leading and trailing
+double-quotes and respecting backslash escapes. E.g., the value
+`"path-with-\"-and-:-in-it":vanilla-path` has two paths:
+`path-with-"-and-:-in-it` and `vanilla-path`.
 
 `GIT_DIR`::
 	If the `GIT_DIR` environment variable is set then it
@@ -446,16 +545,46 @@ Git so take care if using a foreign front-end.
 	details. This variable has lower precedence than other path
 	variables such as GIT_INDEX_FILE, GIT_OBJECT_DIRECTORY...
 
+`GIT_DEFAULT_HASH`::
+	If this variable is set, the default hash algorithm for new
+	repositories will be set to this value. This value is currently
+	ignored when cloning; the setting of the remote repository
+	is used instead. The default is "sha1". THIS VARIABLE IS
+	EXPERIMENTAL! See `--object-format` in linkgit:git-init[1].
+
 Git Commits
 ~~~~~~~~~~~
 `GIT_AUTHOR_NAME`::
+	The human-readable name used in the author identity when creating commit or
+	tag objects, or when writing reflogs. Overrides the `user.name` and
+	`author.name` configuration settings.
+
 `GIT_AUTHOR_EMAIL`::
+	The email address used in the author identity when creating commit or
+	tag objects, or when writing reflogs. Overrides the `user.email` and
+	`author.email` configuration settings.
+
 `GIT_AUTHOR_DATE`::
+	The date used for the author identity when creating commit or tag objects, or
+	when writing reflogs. See linkgit:git-commit[1] for valid formats.
+
 `GIT_COMMITTER_NAME`::
+	The human-readable name used in the committer identity when creating commit or
+	tag objects, or when writing reflogs. Overrides the `user.name` and
+	`committer.name` configuration settings.
+
 `GIT_COMMITTER_EMAIL`::
+	The email address used in the author identity when creating commit or
+	tag objects, or when writing reflogs. Overrides the `user.email` and
+	`committer.email` configuration settings.
+
 `GIT_COMMITTER_DATE`::
-'EMAIL'::
-	see linkgit:git-commit-tree[1]
+	The date used for the committer identity when creating commit or tag objects, or
+	when writing reflogs. See linkgit:git-commit[1] for valid formats.
+
+`EMAIL`::
+	The email address used in the author and committer identities if no other
+	relevant environment variable or configuration setting has been set.
 
 Git Diffs
 ~~~~~~~~~
@@ -467,8 +596,9 @@ Git Diffs
 
 `GIT_EXTERNAL_DIFF`::
 	When the environment variable `GIT_EXTERNAL_DIFF` is set, the
-	program named by it is called, instead of the diff invocation
-	described above.  For a path that is added, removed, or modified,
+	program named by it is called to generate diffs, and Git
+	does not use its builtin diff machinery.
+	For a path that is added, removed, or modified,
 	`GIT_EXTERNAL_DIFF` is called with 7 parameters:
 
 	path old-file old-hex old-mode new-file new-hex new-mode
@@ -511,11 +641,21 @@ other
 	a pager.  See also the `core.pager` option in
 	linkgit:git-config[1].
 
+`GIT_PROGRESS_DELAY`::
+	A number controlling how many seconds to delay before showing
+	optional progress indicators. Defaults to 2.
+
 `GIT_EDITOR`::
 	This environment variable overrides `$EDITOR` and `$VISUAL`.
 	It is used by several Git commands when, on interactive mode,
 	an editor is to be launched. See also linkgit:git-var[1]
 	and the `core.editor` option in linkgit:git-config[1].
+
+`GIT_SEQUENCE_EDITOR`::
+	This environment variable overrides the configured Git editor
+	when editing the todo list of an interactive rebase. See also
+	linkgit:git-rebase[1] and the `sequence.editor` option in
+	linkgit:git-config[1].
 
 `GIT_SSH`::
 `GIT_SSH_COMMAND`::
@@ -525,7 +665,6 @@ other
 	The command-line parameters passed to the configured command are
 	determined by the ssh variant.  See `ssh.variant` option in
 	linkgit:git-config[1] for details.
-
 +
 `$GIT_SSH_COMMAND` takes precedence over `$GIT_SSH`, and is interpreted
 by the shell, which allows additional arguments to be included.
@@ -553,6 +692,16 @@ for further details.
 `GIT_TERMINAL_PROMPT`::
 	If this environment variable is set to `0`, git will not prompt
 	on the terminal (e.g., when asking for HTTP authentication).
+
+`GIT_CONFIG_GLOBAL`::
+`GIT_CONFIG_SYSTEM`::
+	Take the configuration from the given files instead from global or
+	system-level configuration files. If `GIT_CONFIG_SYSTEM` is set, the
+	system config file defined at build time (usually `/etc/gitconfig`)
+	will not be read. Likewise, if `GIT_CONFIG_GLOBAL` is set, neither
+	`$HOME/.gitconfig` nor `$XDG_CONFIG_HOME/git/config` will be read. Can
+	be set to `/dev/null` to skip reading configuration files of the
+	respective level.
 
 `GIT_CONFIG_NOSYSTEM`::
 	Whether to skip reading settings from the system-wide
@@ -588,8 +737,8 @@ trace messages into this file descriptor.
 +
 Alternatively, if the variable is set to an absolute path
 (starting with a '/' character), Git will interpret this
-as a file path and will try to write the trace messages
-into it.
+as a file path and will try to append the trace messages
+to it.
 +
 Unsetting the variable, or setting it to empty, "0" or
 "false" (case insensitive) disables trace messages.
@@ -628,6 +777,10 @@ of clones and fetches.
 	time of each Git command.
 	See `GIT_TRACE` for available trace output options.
 
+`GIT_TRACE_REFS`::
+	Enables trace messages for operations on the ref database.
+	See `GIT_TRACE` for available trace output options.
+
 `GIT_TRACE_SETUP`::
 	Enables trace messages printing the .git, working tree and current
 	working directory after Git has completed its setup phase.
@@ -642,19 +795,65 @@ of clones and fetches.
 	Enables a curl full trace dump of all incoming and outgoing data,
 	including descriptive information, of the git transport protocol.
 	This is similar to doing curl `--trace-ascii` on the command line.
-	This option overrides setting the `GIT_CURL_VERBOSE` environment
-	variable.
 	See `GIT_TRACE` for available trace output options.
 
 `GIT_TRACE_CURL_NO_DATA`::
 	When a curl trace is enabled (see `GIT_TRACE_CURL` above), do not dump
 	data (that is, only dump info lines and headers).
 
-`GIT_REDACT_COOKIES`::
-	This can be set to a comma-separated list of strings. When a curl trace
-	is enabled (see `GIT_TRACE_CURL` above), whenever a "Cookies:" header
-	sent by the client is dumped, values of cookies whose key is in that
-	list (case-sensitive) are redacted.
+`GIT_TRACE2`::
+	Enables more detailed trace messages from the "trace2" library.
+	Output from `GIT_TRACE2` is a simple text-based format for human
+	readability.
++
+If this variable is set to "1", "2" or "true" (comparison
+is case insensitive), trace messages will be printed to
+stderr.
++
+If the variable is set to an integer value greater than 2
+and lower than 10 (strictly) then Git will interpret this
+value as an open file descriptor and will try to write the
+trace messages into this file descriptor.
++
+Alternatively, if the variable is set to an absolute path
+(starting with a '/' character), Git will interpret this
+as a file path and will try to append the trace messages
+to it.  If the path already exists and is a directory, the
+trace messages will be written to files (one per process)
+in that directory, named according to the last component
+of the SID and an optional counter (to avoid filename
+collisions).
++
+In addition, if the variable is set to
+`af_unix:[<socket_type>:]<absolute-pathname>`, Git will try
+to open the path as a Unix Domain Socket.  The socket type
+can be either `stream` or `dgram`.
++
+Unsetting the variable, or setting it to empty, "0" or
+"false" (case insensitive) disables trace messages.
++
+See link:technical/api-trace2.html[Trace2 documentation]
+for full details.
+
+
+`GIT_TRACE2_EVENT`::
+	This setting writes a JSON-based format that is suited for machine
+	interpretation.
+	See `GIT_TRACE2` for available trace output options and
+	link:technical/api-trace2.html[Trace2 documentation] for full details.
+
+`GIT_TRACE2_PERF`::
+	In addition to the text-based messages available in `GIT_TRACE2`, this
+	setting writes a column-based format for understanding nesting
+	regions.
+	See `GIT_TRACE2` for available trace output options and
+	link:technical/api-trace2.html[Trace2 documentation] for full details.
+
+`GIT_TRACE_REDACT`::
+	By default, when tracing is activated, Git redacts the values of
+	cookies, the "Authorization:" header, the "Proxy-Authorization:"
+	header and packfile URIs. Set this variable to `0` to prevent this
+	redaction.
 
 `GIT_LITERAL_PATHSPECS`::
 	Setting this variable to `1` will cause Git to treat all
@@ -688,23 +887,22 @@ of clones and fetches.
 	end user, to be recorded in the body of the reflog.
 
 `GIT_REF_PARANOIA`::
-	If set to `1`, include broken or badly named refs when iterating
-	over lists of refs. In a normal, non-corrupted repository, this
-	does nothing. However, enabling it may help git to detect and
-	abort some operations in the presence of broken refs. Git sets
-	this variable automatically when performing destructive
-	operations like linkgit:git-prune[1]. You should not need to set
-	it yourself unless you want to be paranoid about making sure
-	an operation has touched every ref (e.g., because you are
-	cloning a repository to make a backup).
+	If set to `0`, ignore broken or badly named refs when iterating
+	over lists of refs. Normally Git will try to include any such
+	refs, which may cause some operations to fail. This is usually
+	preferable, as potentially destructive operations (e.g.,
+	linkgit:git-prune[1]) are better off aborting rather than
+	ignoring broken refs (and thus considering the history they
+	point to as not worth saving). The default value is `1` (i.e.,
+	be paranoid about detecting and aborting all operations). You
+	should not normally need to set this to `0`, but it may be
+	useful when trying to salvage data from a corrupted repository.
 
 `GIT_ALLOW_PROTOCOL`::
 	If set to a colon-separated list of protocols, behave as if
 	`protocol.allow` is set to `never`, and each of the listed
 	protocols has `protocol.<name>.allow` set to `always`
-	(overriding any existing configuration). In other words, any
-	protocol not mentioned will be disallowed (i.e., this is a
-	whitelist, not a blacklist). See the description of
+	(overriding any existing configuration). See the description of
 	`protocol.allow` in linkgit:git-config[1] for more details.
 
 `GIT_PROTOCOL_FROM_USER`::
@@ -719,6 +917,21 @@ of clones and fetches.
 	Contains a colon ':' separated list of keys with optional values
 	'key[=value]'.  Presence of unknown keys and values must be
 	ignored.
++
+Note that servers may need to be configured to allow this variable to
+pass over some transports. It will be propagated automatically when
+accessing local repositories (i.e., `file://` or a filesystem path), as
+well as over the `git://` protocol. For git-over-http, it should work
+automatically in most configurations, but see the discussion in
+linkgit:git-http-backend[1]. For git-over-ssh, the ssh server may need
+to be configured to allow clients to pass this variable (e.g., by using
+`AcceptEnv GIT_PROTOCOL` with OpenSSH).
++
+This configuration is optional. If the variable is not propagated, then
+clients will fall back to the original "v0" protocol (but may miss out
+on some performance improvements or features). This variable currently
+only affects clones and fetches; it is not yet used for pushes (but may
+be in the future).
 
 `GIT_OPTIONAL_LOCKS`::
 	If set to `0`, Git will complete any requested operation without
@@ -847,7 +1060,9 @@ Reporting Bugs
 
 Report bugs to the Git mailing list <git@vger.kernel.org> where the
 development and maintenance is primarily done.  You do not have to be
-subscribed to the list to send a message there.
+subscribed to the list to send a message there.  See the list archive
+at https://lore.kernel.org/git for previous bug reports and other
+discussions.
 
 Issues which are security relevant should be disclosed privately to
 the Git Security mailing list <git-security@googlegroups.com>.

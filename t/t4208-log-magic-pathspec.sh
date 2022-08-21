@@ -2,6 +2,9 @@
 
 test_description='magic pathspec tests using git-log'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -25,8 +28,33 @@ test_expect_success '"git log :/a -- " should not be ambiguous' '
 	git log :/a --
 '
 
+test_expect_success '"git log :/detached -- " should find a commit only in HEAD' '
+	test_when_finished "git checkout main" &&
+	git checkout --detach &&
+	test_commit --no-tag detached &&
+	test_commit --no-tag something-else &&
+	git log :/detached --
+'
+
+test_expect_success '"git log :/detached -- " should not find an orphaned commit' '
+	test_must_fail git log :/detached --
+'
+
+test_expect_success '"git log :/detached -- " should find HEAD only of own worktree' '
+	git worktree add other-tree HEAD &&
+	git -C other-tree checkout --detach &&
+	test_tick &&
+	git -C other-tree commit --allow-empty -m other-detached &&
+	git -C other-tree log :/other-detached -- &&
+	test_must_fail git log :/other-detached --
+'
+
 test_expect_success '"git log -- :/a" should not be ambiguous' '
 	git log -- :/a
+'
+
+test_expect_success '"git log :/any/path/" should not segfault' '
+	test_must_fail git log :/any/path/
 '
 
 # This differs from the ":/a" check above in that :/in looks like a pathspec,
@@ -45,8 +73,9 @@ test_expect_success 'git log -- :' '
 '
 
 test_expect_success 'git log HEAD -- :/' '
+	initial=$(git rev-parse --short HEAD^) &&
 	cat >expected <<-EOF &&
-	24b24cf initial
+	$initial initial
 	EOF
 	(cd sub && git log --oneline HEAD -- :/ >../actual) &&
 	test_cmp expected actual
@@ -88,7 +117,7 @@ test_expect_success 'command line pathspec parsing for "git log"' '
 	git checkout HEAD^ &&
 	echo 2 >a &&
 	git commit -a -m "update a to 2" &&
-	test_must_fail git merge master &&
+	test_must_fail git merge main &&
 	git add a &&
 	git log --merge -- a
 '

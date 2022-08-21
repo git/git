@@ -7,6 +7,9 @@ test_description='git tag
 
 Tests for operations with tags.'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-gpg.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
@@ -16,6 +19,13 @@ Tests for operations with tags.'
 tag_exists () {
 	git show-ref --quiet --verify refs/tags/"$1"
 }
+
+test_expect_success 'setup' '
+	test_oid_cache <<-EOM
+	othersigheader sha1:gpgsig-sha256
+	othersigheader sha256:gpgsig
+	EOM
+'
 
 test_expect_success 'listing all tags in an empty tree should succeed' '
 	git tag -l &&
@@ -84,22 +94,22 @@ test_expect_success 'creating a tag with --create-reflog should create reflog' '
 	git log -1 \
 		--format="format:tag: tagging %h (%s, %cd)%n" \
 		--date=format:%Y-%m-%d >expected &&
-	test_when_finished "git tag -d tag_with_reflog" &&
-	git tag --create-reflog tag_with_reflog &&
-	git reflog exists refs/tags/tag_with_reflog &&
-	sed -e "s/^.*	//" .git/logs/refs/tags/tag_with_reflog >actual &&
-	test_i18ncmp expected actual
+	test_when_finished "git tag -d tag_with_reflog1" &&
+	git tag --create-reflog tag_with_reflog1 &&
+	git reflog exists refs/tags/tag_with_reflog1 &&
+	test-tool ref-store main for-each-reflog-ent refs/tags/tag_with_reflog1 | sed -e "s/^.*	//" >actual &&
+	test_cmp expected actual
 '
 
 test_expect_success 'annotated tag with --create-reflog has correct message' '
 	git log -1 \
 		--format="format:tag: tagging %h (%s, %cd)%n" \
 		--date=format:%Y-%m-%d >expected &&
-	test_when_finished "git tag -d tag_with_reflog" &&
-	git tag -m "annotated tag" --create-reflog tag_with_reflog &&
-	git reflog exists refs/tags/tag_with_reflog &&
-	sed -e "s/^.*	//" .git/logs/refs/tags/tag_with_reflog >actual &&
-	test_i18ncmp expected actual
+	test_when_finished "git tag -d tag_with_reflog2" &&
+	git tag -m "annotated tag" --create-reflog tag_with_reflog2 &&
+	git reflog exists refs/tags/tag_with_reflog2 &&
+	test-tool ref-store main for-each-reflog-ent refs/tags/tag_with_reflog2 | sed -e "s/^.*	//" >actual &&
+	test_cmp expected actual
 '
 
 test_expect_success '--create-reflog does not create reflog on failure' '
@@ -108,10 +118,10 @@ test_expect_success '--create-reflog does not create reflog on failure' '
 '
 
 test_expect_success 'option core.logAllRefUpdates=always creates reflog' '
-	test_when_finished "git tag -d tag_with_reflog" &&
+	test_when_finished "git tag -d tag_with_reflog3" &&
 	test_config core.logAllRefUpdates always &&
-	git tag tag_with_reflog &&
-	git reflog exists refs/tags/tag_with_reflog
+	git tag tag_with_reflog3 &&
+	git reflog exists refs/tags/tag_with_reflog3
 '
 
 test_expect_success 'listing all tags if one exists should succeed' '
@@ -227,10 +237,10 @@ test_expect_success \
 test_expect_success \
 	'trying to delete two tags, existing and not, should fail in the 2nd' '
 	tag_exists mytag &&
-	! tag_exists myhead &&
-	test_must_fail git tag -d mytag anothertag &&
+	! tag_exists nonexistingtag &&
+	test_must_fail git tag -d mytag nonexistingtag &&
 	! tag_exists mytag &&
-	! tag_exists myhead
+	! tag_exists nonexistingtag
 '
 
 test_expect_success 'trying to delete an already deleted tag should fail' \
@@ -325,11 +335,10 @@ test_expect_success \
 	test_cmp expect actual
 '
 
->expect
 test_expect_success \
 	'listing tags using v.* should print nothing because none have v.' '
 	git tag -l "v.*" > actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 cat >expect <<EOF
@@ -363,7 +372,7 @@ test_expect_success 'tag -l <pattern> -l <pattern> works, as our buggy documenta
 '
 
 test_expect_success 'listing tags in column' '
-	COLUMNS=40 git tag -l --column=row >actual &&
+	COLUMNS=41 git tag -l --column=row >actual &&
 	cat >expected <<\EOF &&
 a1      aa1     cba     t210    t211
 v0.2.1  v1.0    v1.0.1  v1.1.3
@@ -518,7 +527,6 @@ test_expect_success \
 test_expect_success \
 	'trying to create tags giving both -m or -F options should fail' '
 	echo "message file 1" >msgfile1 &&
-	echo "message file 2" >msgfile2 &&
 	! tag_exists msgtag &&
 	test_must_fail git tag -m "message 1" -F msgfile1 msgtag &&
 	! tag_exists msgtag &&
@@ -693,9 +701,8 @@ test_expect_success \
 '
 
 test_expect_success 'The -n 100 invocation means -n --list 100, not -n100' '
-	>expect &&
 	git tag -n 100 >actual &&
-	test_cmp expect actual &&
+	test_must_be_empty actual &&
 
 	git tag -m "A msg" 100 &&
 	echo "100             A msg" >expect &&
@@ -934,6 +941,27 @@ test_expect_success GPG \
 	test_cmp expect actual
 '
 
+get_tag_header gpgsign-enabled $commit commit $time >expect
+echo "A message" >>expect
+echo '-----BEGIN PGP SIGNATURE-----' >>expect
+test_expect_success GPG \
+	'git tag configured tag.gpgsign enables GPG sign' \
+	'test_config tag.gpgsign true &&
+	git tag -m "A message" gpgsign-enabled &&
+	get_tag_msg gpgsign-enabled>actual &&
+	test_cmp expect actual
+'
+
+get_tag_header no-sign $commit commit $time >expect
+echo "A message" >>expect
+test_expect_success GPG \
+	'git tag --no-sign configured tag.gpgsign skip GPG sign' \
+	'test_config tag.gpgsign true &&
+	git tag -a --no-sign -m "A message" no-sign &&
+	get_tag_msg no-sign>actual &&
+	test_cmp expect actual
+'
+
 test_expect_success GPG \
 	'trying to create a signed tag with non-existing -F file should fail' '
 	! test -f nonexistingfile &&
@@ -974,9 +1002,8 @@ test_expect_success GPG 'verifying a proper tag with --format pass and format ac
 '
 
 test_expect_success GPG 'verifying a forged tag with --format should fail silently' '
-	>expect &&
 	test_must_fail git tag -v --format="tagname : %(tag)" "forged-tag" >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 # blank and empty messages for signed tags:
@@ -1056,7 +1083,18 @@ test_expect_success GPG \
 	git tag -s -F sigblanknonlfile blanknonlfile-signed-tag &&
 	get_tag_msg blanknonlfile-signed-tag >actual &&
 	test_cmp expect actual &&
-	git tag -v signed-tag
+	git tag -v blanknonlfile-signed-tag
+'
+
+test_expect_success GPG 'signed tag with embedded PGP message' '
+	cat >msg <<-\EOF &&
+	-----BEGIN PGP MESSAGE-----
+
+	this is not a real PGP message
+	-----END PGP MESSAGE-----
+	EOF
+	git tag -s -F msg confusing-pgp-message &&
+	git tag -v confusing-pgp-message
 '
 
 # messages with commented lines for signed tags:
@@ -1343,6 +1381,37 @@ test_expect_success GPG \
 	'test_config gpg.program echo &&
 	 test_must_fail git tag -s -m tail tag-gpg-failure'
 
+# try to produce invalid signature
+test_expect_success GPG 'git verifies tag is valid with double signature' '
+	git tag -s -m tail tag-gpg-double-sig &&
+	git cat-file tag tag-gpg-double-sig >tag &&
+	othersigheader=$(test_oid othersigheader) &&
+	sed -ne "/^\$/q;p" tag >new-tag &&
+	cat <<-EOM >>new-tag &&
+	$othersigheader -----BEGIN PGP SIGNATURE-----
+	 someinvaliddata
+	 -----END PGP SIGNATURE-----
+	EOM
+	sed -e "1,/^tagger/d" tag >>new-tag &&
+	new_tag=$(git hash-object -t tag -w new-tag) &&
+	git update-ref refs/tags/tag-gpg-double-sig $new_tag &&
+	git verify-tag tag-gpg-double-sig &&
+	git fsck
+'
+
+# try to sign with bad user.signingkey
+test_expect_success GPGSM \
+	'git tag -s fails if gpgsm is misconfigured (bad key)' \
+	'test_config user.signingkey BobTheMouse &&
+	 test_config gpg.format x509 &&
+	 test_must_fail git tag -s -m tail tag-gpg-failure'
+
+# try to produce invalid signature
+test_expect_success GPGSM \
+	'git tag -s fails if gpgsm is misconfigured (bad signature format)' \
+	'test_config gpg.x509.program echo &&
+	 test_config gpg.format x509 &&
+	 test_must_fail git tag -s -m tail tag-gpg-failure'
 
 # try to verify without gpg:
 
@@ -1365,21 +1434,20 @@ test_expect_success 'message in editor has initial comment: first line' '
 	# check the first line --- should be empty
 	echo >first.expect &&
 	sed -e 1q <actual >first.actual &&
-	test_i18ncmp first.expect first.actual
+	test_cmp first.expect first.actual
 '
 
 test_expect_success \
 	'message in editor has initial comment: remainder' '
 	# remove commented lines from the remainder -- should be empty
-	>rest.expect &&
 	sed -e 1d -e "/^#/d" <actual >rest.actual &&
-	test_cmp rest.expect rest.actual
+	test_must_be_empty rest.actual
 '
 
 get_tag_header reuse $commit commit $time >expect
 echo "An annotation to be reused" >> expect
 test_expect_success \
-	'overwriting an annoted tag should use its previous body' '
+	'overwriting an annotated tag should use its previous body' '
 	git tag -a -m "An annotation to be reused" reuse &&
 	GIT_EDITOR=true git tag -f -a reuse &&
 	get_tag_msg reuse >actual &&
@@ -1455,19 +1523,18 @@ test_expect_success 'checking that first commit is in all tags (relative)' "
 
 # All the --contains tests above, but with --no-contains
 test_expect_success 'checking that first commit is not listed in any tag with --no-contains  (hash)' "
-	>expected &&
 	git tag -l --no-contains $hash1 v* >actual &&
-	test_cmp expected actual
+	test_must_be_empty actual
 "
 
 test_expect_success 'checking that first commit is in all tags (tag)' "
 	git tag -l --no-contains v1.0 v* >actual &&
-	test_cmp expected actual
+	test_must_be_empty actual
 "
 
 test_expect_success 'checking that first commit is in all tags (relative)' "
 	git tag -l --no-contains HEAD~2 v* >actual &&
-	test_cmp expected actual
+	test_must_be_empty actual
 "
 
 cat > expected <<EOF
@@ -1491,12 +1558,9 @@ test_expect_success 'inverse of the last test, with --no-contains' "
 	test_cmp expected actual
 "
 
-cat > expected <<EOF
-EOF
-
 test_expect_success 'checking that third commit has no tags' "
 	git tag -l --contains $hash3 v* >actual &&
-	test_cmp expected actual
+	test_must_be_empty actual
 "
 
 cat > expected <<EOF
@@ -1547,7 +1611,7 @@ test_expect_success 'checking that branch head with --no-contains lists all but 
 "
 
 test_expect_success 'merging original branch into this branch' '
-	git merge --strategy=ours master &&
+	git merge --strategy=ours main &&
         git tag v4.0
 '
 
@@ -1595,9 +1659,8 @@ test_expect_success 'checking that --contains can be used in non-list mode' '
 '
 
 test_expect_success 'checking that initial commit is in all tags with --no-contains' "
-	>expected &&
 	git tag -l --no-contains $hash1 v* >actual &&
-	test_cmp expected actual
+	test_must_be_empty actual
 "
 
 # mixing modes and options:
@@ -1682,6 +1745,18 @@ test_expect_success '--points-at finds annotated tags of tags' '
 	annotated-v4.0
 	EOF
 	git tag --points-at=annotated-v4.0 >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'recursive tagging should give advice' '
+	sed -e "s/|$//" <<-EOF >expect &&
+	hint: You have created a nested tag. The object referred to by your new tag is
+	hint: already a tag. If you meant to tag the object that it points to, use:
+	hint: |
+	hint: 	git tag -f nested annotated-v4.0^{}
+	hint: Disable this message with "git config advice.nestedTag false"
+	EOF
+	git tag -m nested nested annotated-v4.0 2>actual &&
 	test_cmp expect actual
 '
 
@@ -1894,22 +1969,24 @@ test_expect_success 'version sort with very long prerelease suffix' '
 '
 
 test_expect_success ULIMIT_STACK_SIZE '--contains and --no-contains work in a deep repo' '
-	>expect &&
 	i=1 &&
 	while test $i -lt 8000
 	do
-		echo "commit refs/heads/master
+		echo "commit refs/heads/main
 committer A U Thor <author@example.com> $((1000000000 + $i * 100)) +0200
 data <<EOF
 commit #$i
-EOF"
-		test $i = 1 && echo "from refs/heads/master^0"
-		i=$(($i + 1))
+EOF" &&
+		if test $i = 1
+		then
+			echo "from refs/heads/main^0"
+		fi &&
+		i=$(($i + 1)) || return 1
 	done | git fast-import &&
-	git checkout master &&
+	git checkout main &&
 	git tag far-far-away HEAD^ &&
 	run_with_limited_stack git tag --contains HEAD >actual &&
-	test_cmp expect actual &&
+	test_must_be_empty actual &&
 	run_with_limited_stack git tag --no-contains HEAD >actual &&
 	test_line_count "-gt" 10 actual
 '
@@ -1922,6 +1999,10 @@ test_expect_success '--format should list tags as per format given' '
 	EOF
 	git tag -l --format="refname : %(refname)" "v1*" >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'git tag -l with --format="%(rest)" must fail' '
+	test_must_fail git tag -l --format="%(rest)" "v1*"
 '
 
 test_expect_success "set up color tests" '
@@ -1969,8 +2050,8 @@ test_expect_success '--merged can be used in non-list mode' '
 	test_cmp expect actual
 '
 
-test_expect_success '--merged is incompatible with --no-merged' '
-	test_must_fail git tag --merged HEAD --no-merged HEAD
+test_expect_success '--merged is compatible with --no-merged' '
+	git tag --merged HEAD --no-merged HEAD
 '
 
 test_expect_success '--merged shows merged tags' '

@@ -5,7 +5,7 @@
 #define URL_DIGIT "0123456789"
 #define URL_ALPHADIGIT URL_ALPHA URL_DIGIT
 #define URL_SCHEME_CHARS URL_ALPHADIGIT "+.-"
-#define URL_HOST_CHARS URL_ALPHADIGIT ".-[:]" /* IPv6 literals need [:] */
+#define URL_HOST_CHARS URL_ALPHADIGIT ".-_[:]" /* IPv6 literals need [:] */
 #define URL_UNSAFE_CHARS " <>\"%{}|\\^`" /* plus 0x00-0x1F,0x7F-0xFF */
 #define URL_GEN_RESERVED ":/?#[]@"
 #define URL_SUB_RESERVED "!$&'()*+,;="
@@ -557,6 +557,8 @@ int urlmatch_config_entry(const char *var, const char *value, void *cb)
 	const char *key, *dot;
 	struct strbuf synthkey = STRBUF_INIT;
 	int retval;
+	int (*select_fn)(const struct urlmatch_item *a, const struct urlmatch_item *b) =
+		collect->select_fn ? collect->select_fn : cmp_matches;
 
 	if (!skip_prefix(var, collect->section, &key) || *(key++) != '.') {
 		if (collect->cascade_fn)
@@ -570,10 +572,14 @@ int urlmatch_config_entry(const char *var, const char *value, void *cb)
 
 		config_url = xmemdupz(key, dot - key);
 		norm_url = url_normalize_1(config_url, &norm_info, 1);
+		if (norm_url)
+			retval = match_urls(url, &norm_info, &matched);
+		else if (collect->fallback_match_fn)
+			retval = collect->fallback_match_fn(config_url,
+							    collect->cb);
+		else
+			retval = 0;
 		free(config_url);
-		if (!norm_url)
-			return 0;
-		retval = match_urls(url, &norm_info, &matched);
 		free(norm_url);
 		if (!retval)
 			return 0;
@@ -587,7 +593,7 @@ int urlmatch_config_entry(const char *var, const char *value, void *cb)
 	if (!item->util) {
 		item->util = xcalloc(1, sizeof(matched));
 	} else {
-		if (cmp_matches(&matched, item->util) < 0)
+		if (select_fn(&matched, item->util) < 0)
 			 /*
 			  * Our match is worse than the old one,
 			  * we cannot use it.
@@ -604,4 +610,9 @@ int urlmatch_config_entry(const char *var, const char *value, void *cb)
 
 	strbuf_release(&synthkey);
 	return retval;
+}
+
+void urlmatch_config_release(struct urlmatch_config *config)
+{
+	string_list_clear(&config->vars, 1);
 }

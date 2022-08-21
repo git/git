@@ -6,18 +6,17 @@ This test runs git ls-files with various unusual or malformed
 command-line arguments.
 '
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
-
->empty
 
 test_expect_success 'ls-files in empty repository' '
 	git ls-files >actual &&
-	test_cmp empty actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'ls-files with nonexistent path' '
 	git ls-files doesnotexist >actual &&
-	test_cmp empty actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'ls-files with nonsense option' '

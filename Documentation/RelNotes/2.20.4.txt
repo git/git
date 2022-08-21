@@ -1,0 +1,5 @@
+Git v2.20.4 Release Notes
+=========================
+
+This release merges the security fix that appears in v2.17.5; see
+the release notes for that version for details.

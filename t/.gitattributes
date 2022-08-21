@@ -1,11 +1,12 @@
 t[0-9][0-9][0-9][0-9]/* -whitespace
-/diff-lib/* eol=lf
+/chainlint/*.expect eol=lf
 /t0110/url-* binary
+/t3206/* eol=lf
 /t3900/*.txt eol=lf
 /t3901/*.txt eol=lf
-/t4034/*/* eol=lf
 /t4013/* eol=lf
 /t4018/* eol=lf
+/t4034/*/* eol=lf
 /t4051/* eol=lf
 /t4100/* eol=lf
 /t4101/* eol=lf
@@ -14,6 +15,7 @@ t[0-9][0-9][0-9][0-9]/* -whitespace
 /t4135/* eol=lf
 /t4211/* eol=lf
 /t4252/* eol=lf
+/t4256/1/* eol=lf
 /t5100/* eol=lf
 /t5515/* eol=lf
 /t556x_common eol=lf

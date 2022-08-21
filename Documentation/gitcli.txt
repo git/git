@@ -19,6 +19,15 @@ Many commands take revisions (most often "commits", but sometimes
 "tree-ish", depending on the context and command) and paths as their
 arguments.  Here are the rules:
 
+ * Options come first and then args.
+    A subcommand may take dashed options (which may take their own
+    arguments, e.g. "--max-parents 2") and arguments.  You SHOULD
+    give dashed options first and then arguments.  Some commands may
+    accept dashed options after you have already gave non-option
+    arguments (which may make the command ambiguous), but you should
+    not rely on it (because eventually we may find a way to fix
+    these ambiguity by enforcing the "options then args" rule).
+
  * Revisions come first and then paths.
    E.g. in `git diff v1.0 v2.0 arch/x86 include/asm-x86`,
    `v1.0` and `v2.0` are revisions and `arch/x86` and `include/asm-x86`
@@ -37,6 +46,12 @@ arguments.  Here are the rules:
    file called HEAD in your work tree, `git diff HEAD` is ambiguous, and
    you have to say either `git diff HEAD --` or `git diff -- HEAD` to
    disambiguate.
+
+ * Because `--` disambiguates revisions and paths in some commands, it
+   cannot be used for those commands to separate options and revisions.
+   You can use `--end-of-options` for this (it also works for commands
+   that do not distinguish between revisions in paths, in which case it
+   is simply an alias for `--`).
 +
 When writing a script that is expected to handle random user-input, it is
 a good practice to make it explicit which arguments are which by placing
@@ -47,8 +62,8 @@ disambiguating `--` at appropriate places.
    things:
 +
 --------------------------------
-$ git checkout -- *.c
-$ git checkout -- \*.c
+$ git restore *.c
+$ git restore \*.c
 --------------------------------
 +
 The former lets your shell expand the fileglob, and you are asking
@@ -66,24 +81,24 @@ you will.
 Here are the rules regarding the "flags" that you should follow when you are
 scripting Git:
 
- * it's preferred to use the non-dashed form of Git commands, which means that
+ * It's preferred to use the non-dashed form of Git commands, which means that
    you should prefer `git foo` to `git-foo`.
 
- * splitting short options to separate words (prefer `git foo -a -b`
+ * Splitting short options to separate words (prefer `git foo -a -b`
    to `git foo -ab`, the latter may not even work).
 
- * when a command-line option takes an argument, use the 'stuck' form.  In
+ * When a command-line option takes an argument, use the 'stuck' form.  In
    other words, write `git foo -oArg` instead of `git foo -o Arg` for short
    options, and `git foo --long-opt=Arg` instead of `git foo --long-opt Arg`
    for long options.  An option that takes optional option-argument must be
    written in the 'stuck' form.
 
- * when you give a revision parameter to a command, make sure the parameter is
+ * When you give a revision parameter to a command, make sure the parameter is
    not ambiguous with a name of a file in the work tree.  E.g. do not write
    `git log -1 HEAD` but write `git log -1 HEAD --`; the former will not work
    if you happen to have a file called `HEAD` in the work tree.
 
- * many commands allow a long option `--option` to be abbreviated
+ * Many commands allow a long option `--option` to be abbreviated
    only to their unique prefix (e.g. if there is no other option
    whose name begins with `opt`, you may be able to spell `--opt` to
    invoke the `--option` flag), but you should fully spell them out
@@ -110,8 +125,8 @@ couple of magic command-line options:
 +
 ---------------------------------------------
 $ git describe -h
-usage: git describe [options] <commit-ish>*
-   or: git describe [options] --dirty
+usage: git describe [<options>] <commit-ish>*
+   or: git describe [<options>] --dirty
 
     --contains            find the tag that comes after the commit
     --debug               debug search strategy on stderr
@@ -120,6 +135,11 @@ usage: git describe [options] <commit-ish>*
     --long                always use long format
     --abbrev[=<n>]        use <n> digits to display SHA-1s
 ---------------------------------------------
++
+Note that some subcommand (e.g. `git grep`) may behave differently
+when there are things on the command line other than `-h`, but `git
+subcmd -h` without anything else on the command line is meant to
+consistently give the usage.
 
 --help-all::
 	Some Git commands take options that are only used for plumbing or that
@@ -205,9 +225,21 @@ only affects the files in the working tree, but with
 entries, and with `--cached`, it modifies only the index
 entries.
 
-See also http://marc.info/?l=git&m=116563135620359 and
-http://marc.info/?l=git&m=119150393620273 for further
+See also https://lore.kernel.org/git/7v64clg5u9.fsf@assigned-by-dhcp.cox.net/ and
+https://lore.kernel.org/git/7vy7ej9g38.fsf@gitster.siamese.dyndns.org/ for further
 information.
+
+Some other commands that also work on files in the working tree and/or
+in the index can take `--staged` and/or `--worktree`.
+
+* `--staged` is exactly like `--cached`, which is used to ask a
+  command to only work on the index, not the working tree.
+
+* `--worktree` is the opposite, to ask a command to work on the
+  working tree only, not the index.
+
+* The two options can be specified together to ask a command to work
+  on both the index and the working tree.
 
 GIT
 ---

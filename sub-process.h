@@ -24,7 +24,7 @@
 
 /* Members should not be accessed directly. */
 struct subprocess_entry {
-	struct hashmap_entry ent; /* must be the first member! */
+	struct hashmap_entry ent;
 	const char *cmd;
 	struct child_process process;
 };
@@ -42,10 +42,10 @@ struct subprocess_capability {
 /* subprocess functions */
 
 /* Function to test two subprocess hashmap entries for equality. */
-extern int cmd2process_cmp(const void *unused_cmp_data,
-			   const void *e1,
-			   const void *e2,
-			   const void *unused_keydata);
+int cmd2process_cmp(const void *unused_cmp_data,
+		    const struct hashmap_entry *e,
+		    const struct hashmap_entry *entry_or_key,
+		    const void *unused_keydata);
 
 /*
  * User-supplied function to initialize the sub-process.  This is

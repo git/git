@@ -1,15 +1,12 @@
+#include "cache.h"
 #include "builtin.h"
 #include "config.h"
+#include "diff.h"
 
 static void flush_current_id(int patchlen, struct object_id *id, struct object_id *result)
 {
-	char name[50];
-
-	if (!patchlen)
-		return;
-
-	memcpy(name, oid_to_hex(id), GIT_SHA1_HEXSZ + 1);
-	printf("%s %s\n", oid_to_hex(result), name);
+	if (patchlen)
+		printf("%s %s\n", oid_to_hex(result), oid_to_hex(id));
 }
 
 static int remove_space(char *line)
@@ -35,8 +32,12 @@ static int scan_hunk_header(const char *p, int *p_before, int *p_after)
 	n = strspn(q, digits);
 	if (q[n] == ',') {
 		q += n + 1;
+		*p_before = atoi(q);
 		n = strspn(q, digits);
+	} else {
+		*p_before = 1;
 	}
+
 	if (n == 0 || q[n] != ' ' || q[n+1] != '+')
 		return 0;
 
@@ -44,30 +45,15 @@ static int scan_hunk_header(const char *p, int *p_before, int *p_after)
 	n = strspn(r, digits);
 	if (r[n] == ',') {
 		r += n + 1;
+		*p_after = atoi(r);
 		n = strspn(r, digits);
+	} else {
+		*p_after = 1;
 	}
 	if (n == 0)
 		return 0;
 
-	*p_before = atoi(q);
-	*p_after = atoi(r);
 	return 1;
-}
-
-static void flush_one_hunk(struct object_id *result, git_SHA_CTX *ctx)
-{
-	unsigned char hash[GIT_MAX_RAWSZ];
-	unsigned short carry = 0;
-	int i;
-
-	git_SHA1_Final(hash, ctx);
-	git_SHA1_Init(ctx);
-	/* 20-byte sum, with carry */
-	for (i = 0; i < GIT_SHA1_RAWSZ; ++i) {
-		carry += result->hash[i] + hash[i];
-		result->hash[i] = carry;
-		carry >>= 8;
-	}
 }
 
 static int get_one_patchid(struct object_id *next_oid, struct object_id *result,
@@ -75,9 +61,9 @@ static int get_one_patchid(struct object_id *next_oid, struct object_id *result,
 {
 	int patchlen = 0, found_next = 0;
 	int before = -1, after = -1;
-	git_SHA_CTX ctx;
+	git_hash_ctx ctx;
 
-	git_SHA1_Init(&ctx);
+	the_hash_algo->init_fn(&ctx);
 	oidclr(result);
 
 	while (strbuf_getwholeline(line_buf, stdin, '\n') != EOF) {
@@ -137,7 +123,7 @@ static int get_one_patchid(struct object_id *next_oid, struct object_id *result,
 		/* Compute the sha without whitespace */
 		len = remove_space(line);
 		patchlen += len;
-		git_SHA1_Update(&ctx, line, len);
+		the_hash_algo->update_fn(&ctx, line, len);
 	}
 
 	if (!found_next)

@@ -62,8 +62,8 @@ permissions.
 If a `no-interactive-login` command exists, then it is run and the
 interactive shell is aborted.
 
-EXAMPLE
--------
+EXAMPLES
+--------
 
 To disable interactive logins, displaying a greeting instead:
 

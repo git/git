@@ -4,6 +4,8 @@ test_description='git p4 rcs keywords'
 
 . ./lib-git-p4.sh
 
+CP1252="\223\224"
+
 test_expect_success 'start p4d' '
 	start_p4d
 '
@@ -32,6 +34,9 @@ test_expect_success 'init depot' '
 		p4 submit -d "filek" &&
 		p4 add -t text+ko fileko &&
 		p4 submit -d "fileko" &&
+		printf "$CP1252" >fileko_cp1252 &&
+		p4 add -t text+ko fileko_cp1252 &&
+		p4 submit -d "fileko_cp1252" &&
 		p4 add -t text file_text &&
 		p4 submit -d "file_text"
 	)
@@ -161,7 +166,7 @@ test_expect_success 'cleanup after failure' '
 test_expect_success 'ktext expansion should not expand multi-line $File::' '
 	(
 		cd "$cli" &&
-		cat >lv.pm <<-\EOF
+		cat >lv.pm <<-\EOF &&
 		my $wanted = sub { my $f = $File::Find::name;
 				    if ( -f && $f =~ /foo/ ) {
 		EOF
@@ -294,7 +299,6 @@ test_expect_success 'cope with rcs keyword file deletion' '
 		echo "\$Revision\$" >kwdelfile.c &&
 		p4 add -t ktext kwdelfile.c &&
 		p4 submit -d "Add file to be deleted" &&
-		cat kwdelfile.c &&
 		grep 1 kwdelfile.c
 	) &&
 	git p4 clone --dest="$git" //depot &&
@@ -360,8 +364,14 @@ test_expect_failure 'Add keywords in git which do not match the default p4 value
 	)
 '
 
-test_expect_success 'kill p4d' '
-	kill_p4d
+test_expect_success 'check cp1252 smart quote are preserved through RCS keyword processing' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$git" &&
+		printf "$CP1252" >expect &&
+		test_cmp_bin expect fileko_cp1252
+	)
 '
 
 test_done

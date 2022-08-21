@@ -75,9 +75,7 @@ static int split_one(FILE *mbox, const char *name, int allow_bare)
 		fprintf(stderr, "corrupt mailbox\n");
 		exit(1);
 	}
-	fd = open(name, O_WRONLY | O_CREAT | O_EXCL, 0666);
-	if (fd < 0)
-		die_errno("cannot open output file '%s'", name);
+	fd = xopen(name, O_WRONLY | O_CREAT | O_EXCL, 0666);
 	output = xfdopen(fd, "w");
 
 	/* Copy it out, while searching for a line that begins with
@@ -122,7 +120,7 @@ static int populate_maildir_list(struct string_list *list, const char *path)
 	for (sub = subs; *sub; ++sub) {
 		free(name);
 		name = xstrfmt("%s/%s", path, *sub);
-		if ((dir = opendir(name)) == NULL) {
+		if (!(dir = opendir(name))) {
 			if (errno == ENOENT)
 				continue;
 			error_errno("cannot opendir %s", name);
@@ -224,6 +222,9 @@ static int split_mbox(const char *file, const char *dir, int allow_bare,
 
 	FILE *f = !strcmp(file, "-") ? stdin : fopen(file, "r");
 	int file_done = 0;
+
+	if (isatty(fileno(f)))
+		warning(_("reading patches from stdin/tty..."));
 
 	if (!f) {
 		error_errno("cannot open mbox %s", file);

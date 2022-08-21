@@ -23,10 +23,10 @@ my ($version, $time) = @ARGV;
 
 if ($version == 1) {
 	# convert nanoseconds to seconds
-	$time = int $time / 1000000000;
+	# subtract one second to make sure watchman will return all changes
+	$time = int ($time / 1000000000) - 1;
 } else {
-	die "Unsupported query-fsmonitor hook version '$version'.\n" .
-	    "Falling back to scanning...\n";
+	exit 1;
 }
 
 my $git_work_tree;
@@ -54,18 +54,12 @@ sub launch_watchman {
 	#
 	# To accomplish this, we're using the "since" generator to use the
 	# recency index to select candidate nodes and "fields" to limit the
-	# output to file names only. Then we're using the "expression" term to
-	# further constrain the results.
-	#
-	# The category of transient files that we want to ignore will have a
-	# creation clock (cclock) newer than $time_t value and will also not
-	# currently exist.
+	# output to file names only.
 
 	my $query = <<"	END";
 		["query", "$git_work_tree", {
 			"since": $time,
-			"fields": ["name"],
-			"expression": ["not", ["allof", ["since", $time, "cclock"], ["not", "exists"]]]
+			"fields": ["name"]
 		}]
 	END
 	

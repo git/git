@@ -4,9 +4,7 @@ test_description='basic git merge-index / git-merge-one-file tests'
 . ./test-lib.sh
 
 test_expect_success 'setup diverging branches' '
-	for i in 1 2 3 4 5 6 7 8 9 10; do
-		echo $i
-	done >file &&
+	test_write_lines 1 2 3 4 5 6 7 8 9 10 >file &&
 	git add file &&
 	git commit -m base &&
 	git tag base &&
@@ -44,8 +42,7 @@ test_expect_success 'read-tree does not resolve content merge' '
 test_expect_success 'git merge-index git-merge-one-file resolves' '
 	git merge-index git-merge-one-file -a &&
 	git diff-files --name-only --diff-filter=U >unmerged &&
-	>expect &&
-	test_cmp expect unmerged &&
+	test_must_be_empty unmerged &&
 	test_cmp expect-merged file &&
 	git cat-file blob :file >file-index &&
 	test_cmp expect-merged file-index

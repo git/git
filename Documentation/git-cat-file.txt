@@ -9,8 +9,14 @@ git-cat-file - Provide content or type and size information for repository objec
 SYNOPSIS
 --------
 [verse]
-'git cat-file' (-t [--allow-unknown-type]| -s [--allow-unknown-type]| -e | -p | <type> | --textconv | --filters ) [--path=<path>] <object>
-'git cat-file' (--batch | --batch-check) [ --textconv | --filters ] [--follow-symlinks]
+'git cat-file' <type> <object>
+'git cat-file' (-e | -p) <object>
+'git cat-file' (-t | -s) [--allow-unknown-type] <object>
+'git cat-file' (--batch | --batch-check | --batch-command) [--batch-all-objects]
+	     [--buffer] [--follow-symlinks] [--unordered]
+	     [--textconv | --filters] [-z]
+'git cat-file' (--textconv | --filters)
+	     [<rev>:<path|tree-ish> | --path=<path|tree-ish> <rev>]
 
 DESCRIPTION
 -----------
@@ -23,8 +29,8 @@ In the second form, a list of objects (separated by linefeeds) is provided on
 stdin, and the SHA-1, type, and size of each object is printed on stdout. The
 output format can be overridden using the optional `<format>` argument. If
 either `--textconv` or `--filters` was specified, the input is expected to
-list the object names followed by the path name, separated by a single white
-space, so that the appropriate drivers can be determined.
+list the object names followed by the path name, separated by a single
+whitespace, so that the appropriate drivers can be determined.
 
 OPTIONS
 -------
@@ -35,42 +41,48 @@ OPTIONS
 
 -t::
 	Instead of the content, show the object type identified by
-	<object>.
+	`<object>`.
 
 -s::
 	Instead of the content, show the object size identified by
-	<object>.
+	`<object>`.
 
 -e::
-	Exit with zero status if <object> exists and is a valid
-	object. If <object> is of an invalid format exit with non-zero and
+	Exit with zero status if `<object>` exists and is a valid
+	object. If `<object>` is of an invalid format exit with non-zero and
 	emits an error on stderr.
 
 -p::
-	Pretty-print the contents of <object> based on its type.
+	Pretty-print the contents of `<object>` based on its type.
 
 <type>::
-	Typically this matches the real type of <object> but asking
+	Typically this matches the real type of `<object>` but asking
 	for a type that can trivially be dereferenced from the given
-	<object> is also permitted.  An example is to ask for a
-	"tree" with <object> being a commit object that contains it,
-	or to ask for a "blob" with <object> being a tag object that
+	`<object>` is also permitted.  An example is to ask for a
+	"tree" with `<object>` being a commit object that contains it,
+	or to ask for a "blob" with `<object>` being a tag object that
 	points at it.
+
+--[no-]mailmap::
+--[no-]use-mailmap::
+       Use mailmap file to map author, committer and tagger names
+       and email addresses to canonical real names and email addresses.
+       See linkgit:git-shortlog[1].
 
 --textconv::
 	Show the content as transformed by a textconv filter. In this case,
-	<object> has to be of the form <tree-ish>:<path>, or :<path> in
+	`<object>` has to be of the form `<tree-ish>:<path>`, or `:<path>` in
 	order to apply the filter to the content recorded in the index at
-	<path>.
+	`<path>`.
 
 --filters::
 	Show the content as converted by the filters configured in
-	the current working tree for the given <path> (i.e. smudge filters,
-	end-of-line conversion, etc). In this case, <object> has to be of
-	the form <tree-ish>:<path>, or :<path>.
+	the current working tree for the given `<path>` (i.e. smudge filters,
+	end-of-line conversion, etc). In this case, `<object>` has to be of
+	the form `<tree-ish>:<path>`, or `:<path>`.
 
 --path=<path>::
-	For use with --textconv or --filters, to allow specifying an object
+	For use with `--textconv` or `--filters`, to allow specifying an object
 	name and a path separately, e.g. when it is difficult to figure out
 	the revision from which the blob came.
 
@@ -79,7 +91,7 @@ OPTIONS
 	Print object information and contents for each object provided
 	on stdin.  May not be combined with any other options or arguments
 	except `--textconv` or `--filters`, in which case the input lines
-	also need to specify the path, separated by white space.  See the
+	also need to specify the path, separated by whitespace.  See the
 	section `BATCH OUTPUT` below for details.
 
 --batch-check::
@@ -87,33 +99,72 @@ OPTIONS
 	Print object information for each object provided on stdin.  May
 	not be combined with any other options or arguments except
 	`--textconv` or `--filters`, in which case the input lines also
-	need to specify the path, separated by white space.  See the
+	need to specify the path, separated by whitespace.  See the
 	section `BATCH OUTPUT` below for details.
+
+--batch-command::
+--batch-command=<format>::
+	Enter a command mode that reads commands and arguments from stdin. May
+	only be combined with `--buffer`, `--textconv` or `--filters`. In the
+	case of `--textconv` or `--filters`, the input lines also need to specify
+	the path, separated by whitespace. See the section `BATCH OUTPUT` below
+	for details.
++
+`--batch-command` recognizes the following commands:
++
+--
+contents <object>::
+	Print object contents for object reference `<object>`. This corresponds to
+	the output of `--batch`.
+
+info <object>::
+	Print object info for object reference `<object>`. This corresponds to the
+	output of `--batch-check`.
+
+flush::
+	Used with `--buffer` to execute all preceding commands that were issued
+	since the beginning or since the last flush was issued. When `--buffer`
+	is used, no output will come until a `flush` is issued. When `--buffer`
+	is not used, commands are flushed each time without issuing `flush`.
+--
++
 
 --batch-all-objects::
 	Instead of reading a list of objects on stdin, perform the
 	requested batch operation on all objects in the repository and
 	any alternate object stores (not just reachable objects).
-	Requires `--batch` or `--batch-check` be specified. Note that
-	the objects are visited in order sorted by their hashes.
+	Requires `--batch` or `--batch-check` be specified. By default,
+	the objects are visited in order sorted by their hashes; see
+	also `--unordered` below. Objects are presented as-is, without
+	respecting the "replace" mechanism of linkgit:git-replace[1].
 
 --buffer::
 	Normally batch output is flushed after each object is output, so
 	that a process can interactively read and write from
 	`cat-file`. With this option, the output uses normal stdio
 	buffering; this is much more efficient when invoking
-	`--batch-check` on a large number of objects.
+	`--batch-check` or `--batch-command` on a large number of objects.
+
+--unordered::
+	When `--batch-all-objects` is in use, visit objects in an
+	order which may be more efficient for accessing the object
+	contents than hash order. The exact details of the order are
+	unspecified, but if you do not require a specific order, this
+	should generally result in faster output, especially with
+	`--batch`.  Note that `cat-file` will still show each object
+	only once, even if it is stored multiple times in the
+	repository.
 
 --allow-unknown-type::
-	Allow -s or -t to query broken/corrupt objects of unknown type.
+	Allow `-s` or `-t` to query broken/corrupt objects of unknown type.
 
 --follow-symlinks::
-	With --batch or --batch-check, follow symlinks inside the
+	With `--batch` or `--batch-check`, follow symlinks inside the
 	repository when requesting objects with extended SHA-1
 	expressions of the form tree-ish:path-in-tree.  Instead of
 	providing output about the link itself, provide output about
 	the linked-to object.  If a symlink points outside the
-	tree-ish (e.g. a link to /foo or a root-level link to ../foo),
+	tree-ish (e.g. a link to `/foo` or a root-level link to `../foo`),
 	the portion of the link which is outside the tree will be
 	printed.
 +
@@ -162,18 +213,23 @@ respectively print:
 	/etc/passwd
 --
 
+-z::
+	Only meaningful with `--batch`, `--batch-check`, or
+	`--batch-command`; input is NUL-delimited instead of
+	newline-delimited.
+
 
 OUTPUT
 ------
-If `-t` is specified, one of the <type>.
+If `-t` is specified, one of the `<type>`.
 
-If `-s` is specified, the size of the <object> in bytes.
+If `-s` is specified, the size of the `<object>` in bytes.
 
-If `-e` is specified, no output, unless the <object> is malformed.
+If `-e` is specified, no output, unless the `<object>` is malformed.
 
-If `-p` is specified, the contents of <object> are pretty-printed.
+If `-p` is specified, the contents of `<object>` are pretty-printed.
 
-If <type> is specified, the raw (though uncompressed) contents of the <object>
+If `<type>` is specified, the raw (though uncompressed) contents of the `<object>`
 will be returned.
 
 BATCH OUTPUT
@@ -184,13 +240,20 @@ from stdin, one per line, and print information about them. By default,
 the whole line is considered as an object, as if it were fed to
 linkgit:git-rev-parse[1].
 
+When `--batch-command` is given, `cat-file` will read commands from stdin,
+one per line, and print information based on the command given. With
+`--batch-command`, the `info` command followed by an object will print
+information about the object the same way `--batch-check` would, and the
+`contents` command followed by an object prints contents in the same way
+`--batch` would.
+
 You can specify the information shown for each object by using a custom
 `<format>`. The `<format>` is copied literally to stdout for each
 object, with placeholders of the form `%(atom)` expanded, followed by a
 newline. The available atoms are:
 
 `objectname`::
-	The 40-hex object name of the object.
+	The full hex representation of the object name.
 
 `objecttype`::
 	The type of the object (the same as `cat-file -t` reports).
@@ -205,8 +268,9 @@ newline. The available atoms are:
 
 `deltabase`::
 	If the object is stored as a delta on-disk, this expands to the
-	40-hex sha1 of the delta base object. Otherwise, expands to the
-	null sha1 (40 zeroes). See `CAVEATS` below.
+	full hex representation of the delta base object name.
+	Otherwise, expands to the null OID (all zeroes). See `CAVEATS`
+	below.
 
 `rest`::
 	If this atom is used in the output string, input lines are split
@@ -218,21 +282,21 @@ newline. The available atoms are:
 If no format is specified, the default format is `%(objectname)
 %(objecttype) %(objectsize)`.
 
-If `--batch` is specified, the object information is followed by the
-object contents (consisting of `%(objectsize)` bytes), followed by a
-newline.
+If `--batch` is specified, or if `--batch-command` is used with the `contents`
+command, the object information is followed by the object contents (consisting
+of `%(objectsize)` bytes), followed by a newline.
 
 For example, `--batch` without a custom format would produce:
 
 ------------
-<sha1> SP <type> SP <size> LF
+<oid> SP <type> SP <size> LF
 <contents> LF
 ------------
 
 Whereas `--batch-check='%(objectname) %(objecttype)'` would produce:
 
 ------------
-<sha1> SP <type> LF
+<oid> SP <type> LF
 ------------
 
 If a name is specified on stdin that cannot be resolved to an object in
@@ -242,7 +306,13 @@ the repository, then `cat-file` will ignore any custom format and print:
 <object> SP missing LF
 ------------
 
-If --follow-symlinks is used, and a symlink in the repository points
+If a name is specified that might refer to more than one object (an ambiguous short sha), then `cat-file` will ignore any custom format and print:
+
+------------
+<object> SP ambiguous LF
+------------
+
+If `--follow-symlinks` is used, and a symlink in the repository points
 outside the repository, then `cat-file` will ignore any custom format
 and print:
 
@@ -251,11 +321,11 @@ symlink SP <size> LF
 <symlink> LF
 ------------
 
-The symlink will either be absolute (beginning with a /), or relative
-to the tree root.  For instance, if dir/link points to ../../foo, then
-<symlink> will be ../foo.  <size> is the size of the symlink in bytes.
+The symlink will either be absolute (beginning with a `/`), or relative
+to the tree root.  For instance, if dir/link points to `../../foo`, then
+`<symlink>` will be `../foo`.  `<size>` is the size of the symlink in bytes.
 
-If --follow-symlinks is used, the following error messages will be
+If `--follow-symlinks` is used, the following error messages will be
 displayed:
 
 ------------

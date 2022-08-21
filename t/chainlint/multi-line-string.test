@@ -1,0 +1,15 @@
+(
+	x="line 1
+		line 2
+		line 3" &&
+# LINT: missing "&&" on assignment
+	y="line 1
+		line2"
+	foobar
+) &&
+(
+	echo "xyz" "abc
+		def
+		ghi" &&
+	barfoo
+)

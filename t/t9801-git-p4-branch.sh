@@ -2,6 +2,9 @@
 
 test_description='git p4 tests for p4 branches'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./lib-git-p4.sh
 
 test_expect_success 'start p4d' '
@@ -67,7 +70,7 @@ test_expect_success 'import main, no branch detection' '
 	(
 		cd "$git" &&
 		git log --oneline --graph --decorate --all &&
-		git rev-list master >wc &&
+		git rev-list main -- >wc &&
 		test_line_count = 4 wc
 	)
 '
@@ -78,7 +81,7 @@ test_expect_success 'import branch1, no branch detection' '
 	(
 		cd "$git" &&
 		git log --oneline --graph --decorate --all &&
-		git rev-list master >wc &&
+		git rev-list main -- >wc &&
 		test_line_count = 2 wc
 	)
 '
@@ -89,7 +92,7 @@ test_expect_success 'import branch2, no branch detection' '
 	(
 		cd "$git" &&
 		git log --oneline --graph --decorate --all &&
-		git rev-list master >wc &&
+		git rev-list main -- >wc &&
 		test_line_count = 2 wc
 	)
 '
@@ -100,7 +103,7 @@ test_expect_success 'import depot, no branch detection' '
 	(
 		cd "$git" &&
 		git log --oneline --graph --decorate --all &&
-		git rev-list master >wc &&
+		git rev-list main -- >wc &&
 		test_line_count = 8 wc
 	)
 '
@@ -114,7 +117,7 @@ test_expect_success 'import depot, branch detection' '
 		git log --oneline --graph --decorate --all &&
 
 		# 4 main commits
-		git rev-list master >wc &&
+		git rev-list main -- >wc &&
 		test_line_count = 4 wc &&
 
 		# 3 main, 1 integrate, 1 on branch2
@@ -123,6 +126,16 @@ test_expect_success 'import depot, branch detection' '
 
 		# no branch1, since no p4 branch created for it
 		test_must_fail git show-ref p4/depot/branch1
+	)
+'
+
+test_expect_success 'sync specific detected branch' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" --detect-branches //depot@all &&
+	(
+		cd "$git" &&
+		git p4 sync --branch=depot/branch2 >out &&
+		test_i18ngrep "No changes to import!" out
 	)
 '
 
@@ -137,7 +150,7 @@ test_expect_success 'import depot, branch detection, branchList branch definitio
 		git log --oneline --graph --decorate --all &&
 
 		# 4 main commits
-		git rev-list master >wc &&
+		git rev-list main -- >wc &&
 		test_line_count = 4 wc &&
 
 		# 3 main, 1 integrate, 1 on branch2
@@ -151,7 +164,7 @@ test_expect_success 'import depot, branch detection, branchList branch definitio
 '
 
 test_expect_success 'restart p4d' '
-	kill_p4d &&
+	stop_and_cleanup_p4d &&
 	start_p4d
 '
 
@@ -200,19 +213,19 @@ test_expect_success 'git p4 clone simple branches' '
 		git p4 clone --dest=. --detect-branches //depot@all &&
 		git log --all --graph --decorate --stat &&
 		git reset --hard p4/depot/branch1 &&
-		test -f file1 &&
-		test -f file2 &&
-		test -f file3 &&
+		test_path_is_file file1 &&
+		test_path_is_file file2 &&
+		test_path_is_file file3 &&
 		grep update file2 &&
 		git reset --hard p4/depot/branch2 &&
-		test -f file1 &&
-		test -f file2 &&
+		test_path_is_file file1 &&
+		test_path_is_file file2 &&
 		test ! -f file3 &&
 		! grep update file2 &&
 		git reset --hard p4/depot/branch3 &&
-		test -f file1 &&
-		test -f file2 &&
-		test -f file3 &&
+		test_path_is_file file1 &&
+		test_path_is_file file2 &&
+		test_path_is_file file3 &&
 		grep update file2 &&
 		cd "$cli" &&
 		cd branch1 &&
@@ -291,11 +304,13 @@ test_expect_success 'git p4 clone complex branches' '
 		test_path_is_file file3 &&
 		grep update file2 &&
 		git reset --hard p4/depot/branch4 &&
+		git diff-tree --quiet HEAD &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_missing file3 &&
 		! grep update file2 &&
 		git reset --hard p4/depot/branch5 &&
+		git diff-tree --quiet HEAD &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_file file3 &&
@@ -411,6 +426,46 @@ test_expect_failure 'git p4 clone file subset branch' '
 	)
 '
 
+# Check that excluded files are omitted during import
+test_expect_success 'git p4 clone complex branches with excluded files' '
+	test_when_finished cleanup_git &&
+	test_create_repo "$git" &&
+	(
+		cd "$git" &&
+		git config git-p4.branchList branch1:branch2 &&
+		git config --add git-p4.branchList branch1:branch3 &&
+		git config --add git-p4.branchList branch1:branch4 &&
+		git config --add git-p4.branchList branch1:branch5 &&
+		git config --add git-p4.branchList branch1:branch6 &&
+		git p4 clone --dest=. --detect-branches -//depot/branch1/file2 -//depot/branch2/file2 -//depot/branch3/file2 -//depot/branch4/file2 -//depot/branch5/file2 -//depot/branch6/file2 //depot@all &&
+		git log --all --graph --decorate --stat &&
+		git reset --hard p4/depot/branch1 &&
+		test_path_is_file file1 &&
+		test_path_is_missing file2 &&
+		test_path_is_file file3 &&
+		git reset --hard p4/depot/branch2 &&
+		test_path_is_file file1 &&
+		test_path_is_missing file2 &&
+		test_path_is_missing file3 &&
+		git reset --hard p4/depot/branch3 &&
+		test_path_is_file file1 &&
+		test_path_is_missing file2 &&
+		test_path_is_missing file3 &&
+		git reset --hard p4/depot/branch4 &&
+		test_path_is_file file1 &&
+		test_path_is_missing file2 &&
+		test_path_is_file file3 &&
+		git reset --hard p4/depot/branch5 &&
+		test_path_is_file file1 &&
+		test_path_is_missing file2 &&
+		test_path_is_file file3 &&
+		git reset --hard p4/depot/branch6 &&
+		test_path_is_file file1 &&
+		test_path_is_missing file2 &&
+		test_path_is_missing file3
+	)
+'
+
 # From a report in http://stackoverflow.com/questions/11893688
 # where --use-client-spec caused branch prefixes not to be removed;
 # every file in git appeared into a subdirectory of the branch name.
@@ -444,7 +499,7 @@ test_expect_success 'use-client-spec detect-branches files in top-level' '
 	(
 		cd "$git" &&
 		git p4 sync --detect-branches --use-client-spec //depot/usecs@all &&
-		git checkout -b master p4/usecs/b1 &&
+		git checkout -b main p4/usecs/b1 &&
 		test_path_is_file b1-file1 &&
 		test_path_is_missing b2-file2 &&
 		test_path_is_missing b1 &&
@@ -497,7 +552,7 @@ test_expect_success 'use-client-spec detect-branches skips files in branches' '
 	(
 		cd "$git" &&
 		git p4 sync --detect-branches --use-client-spec //depot/usecs@all &&
-		git checkout -b master p4/usecs/b3 &&
+		git checkout -b main p4/usecs/b3 &&
 		test_path_is_file b1-file1 &&
 		test_path_is_file b3-file3_2 &&
 		test_path_is_missing b3-file3_1
@@ -505,7 +560,7 @@ test_expect_success 'use-client-spec detect-branches skips files in branches' '
 '
 
 test_expect_success 'restart p4d' '
-	kill_p4d &&
+	stop_and_cleanup_p4d &&
 	start_p4d
 '
 
@@ -563,22 +618,22 @@ test_expect_success 'git p4 clone simple branches with base folder on server sid
 		git p4 clone --dest=. --use-client-spec  --detect-branches //depot@all &&
 		git log --all --graph --decorate --stat &&
 		git reset --hard p4/depot/branch1 &&
-		test -f file1 &&
-		test -f file2 &&
-		test -f file3 &&
-		test -f sub_file1 &&
+		test_path_is_file file1 &&
+		test_path_is_file file2 &&
+		test_path_is_file file3 &&
+		test_path_is_file sub_file1 &&
 		grep update file2 &&
 		git reset --hard p4/depot/branch2 &&
-		test -f file1 &&
-		test -f file2 &&
+		test_path_is_file file1 &&
+		test_path_is_file file2 &&
 		test ! -f file3 &&
-		test -f sub_file1 &&
+		test_path_is_file sub_file1 &&
 		! grep update file2 &&
 		git reset --hard p4/depot/branch3 &&
-		test -f file1 &&
-		test -f file2 &&
-		test -f file3 &&
-		test -f sub_file1 &&
+		test_path_is_file file1 &&
+		test_path_is_file file2 &&
+		test_path_is_file file3 &&
+		test_path_is_file sub_file1 &&
 		grep update file2 &&
 		cd "$cli" &&
 		cd branch1 &&
@@ -610,8 +665,96 @@ test_expect_success 'Update a file in git side and submit to P4 using client vie
 	)
 '
 
-test_expect_success 'kill p4d' '
-	kill_p4d
+test_expect_success 'restart p4d (case folding enabled)' '
+	stop_and_cleanup_p4d &&
+	start_p4d -C1
+'
+
+#
+# 1: //depot/main/mf1
+# 2: integrate //depot/main/... -> //depot/branch1/...
+# 3: //depot/main/mf2
+# 4: //depot/BRANCH1/B1f3
+# 5: //depot/branch1/b1f4
+#
+test_expect_success !CASE_INSENSITIVE_FS 'basic p4 branches for case folding' '
+	(
+		cd "$cli" &&
+		mkdir -p main &&
+
+		echo mf1 >main/mf1 &&
+		p4 add main/mf1 &&
+		p4 submit -d "main/mf1" &&
+
+		p4 integrate //depot/main/... //depot/branch1/... &&
+		p4 submit -d "integrate main to branch1" &&
+
+		echo mf2 >main/mf2 &&
+		p4 add main/mf2 &&
+		p4 submit -d "main/mf2" &&
+
+		mkdir BRANCH1 &&
+		echo B1f3 >BRANCH1/B1f3 &&
+		p4 add BRANCH1/B1f3 &&
+		p4 submit -d "BRANCH1/B1f3" &&
+
+		echo b1f4 >branch1/b1f4 &&
+		p4 add branch1/b1f4 &&
+		p4 submit -d "branch1/b1f4"
+	)
+'
+
+# Check that files are properly split across branches when ignorecase is set
+test_expect_success !CASE_INSENSITIVE_FS 'git p4 clone, branchList branch definition, ignorecase' '
+	test_when_finished cleanup_git &&
+	test_create_repo "$git" &&
+	(
+		cd "$git" &&
+		git config git-p4.branchList main:branch1 &&
+		git config --type=bool core.ignoreCase true &&
+		git p4 clone --dest=. --detect-branches //depot@all &&
+
+		git log --all --graph --decorate --stat &&
+
+		git reset --hard p4/master &&
+		test_path_is_file mf1 &&
+		test_path_is_file mf2 &&
+		test_path_is_missing B1f3 &&
+		test_path_is_missing b1f4 &&
+
+		git reset --hard p4/depot/branch1 &&
+		test_path_is_file mf1 &&
+		test_path_is_missing mf2 &&
+		test_path_is_file B1f3 &&
+		test_path_is_file b1f4
+	)
+'
+
+# Check that files are properly split across branches when ignorecase is set, use-client-spec case
+test_expect_success !CASE_INSENSITIVE_FS 'git p4 clone with client-spec, branchList branch definition, ignorecase' '
+	client_view "//depot/... //client/..." &&
+	test_when_finished cleanup_git &&
+	test_create_repo "$git" &&
+	(
+		cd "$git" &&
+		git config git-p4.branchList main:branch1 &&
+		git config --type=bool core.ignoreCase true &&
+		git p4 clone --dest=. --use-client-spec --detect-branches //depot@all &&
+
+		git log --all --graph --decorate --stat &&
+
+		git reset --hard p4/master &&
+		test_path_is_file mf1 &&
+		test_path_is_file mf2 &&
+		test_path_is_missing B1f3 &&
+		test_path_is_missing b1f4 &&
+
+		git reset --hard p4/depot/branch1 &&
+		test_path_is_file mf1 &&
+		test_path_is_missing mf2 &&
+		test_path_is_file B1f3 &&
+		test_path_is_file b1f4
+	)
 '
 
 test_done

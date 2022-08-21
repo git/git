@@ -3,6 +3,10 @@ diff_cmd () {
 	return 0
 }
 
+diff_cmd_help () {
+	echo "Use WinMerge (requires a graphical session)"
+}
+
 merge_cmd () {
 	# mergetool.winmerge.trustExitCode is implicitly false.
 	# touch $BACKUP so that we can check_unchanged.
@@ -12,4 +16,8 @@ merge_cmd () {
 
 translate_merge_tool_path() {
 	mergetool_find_win32_cmd "WinMergeU.exe" "WinMerge"
+}
+
+merge_cmd_help () {
+	echo "Use WinMerge (requires a graphical session)"
 }

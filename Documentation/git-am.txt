@@ -15,8 +15,10 @@ SYNOPSIS
 	 [--whitespace=<option>] [-C<n>] [-p<n>] [--directory=<dir>]
 	 [--exclude=<path>] [--include=<path>] [--reject] [-q | --quiet]
 	 [--[no-]scissors] [-S[<keyid>]] [--patch-format=<format>]
+	 [--quoted-cr=<action>]
+	 [--empty=(stop|drop|keep)]
 	 [(<mbox> | <Maildir>)...]
-'git am' (--continue | --skip | --abort | --quit | --show-current-patch)
+'git am' (--continue | --skip | --abort | --quit | --show-current-patch[=(diff|raw)] | --allow-empty)
 
 DESCRIPTION
 -----------
@@ -33,7 +35,7 @@ OPTIONS
 
 -s::
 --signoff::
-	Add a `Signed-off-by:` line to the commit message, using
+	Add a `Signed-off-by` trailer to the commit message, using
 	the committer identity of yourself.
 	See the signoff option in linkgit:git-commit[1] for more information.
 
@@ -59,6 +61,17 @@ OPTIONS
 --no-scissors::
 	Ignore scissors lines (see linkgit:git-mailinfo[1]).
 
+--quoted-cr=<action>::
+	This flag will be passed down to 'git mailinfo' (see linkgit:git-mailinfo[1]).
+
+--empty=(stop|drop|keep)::
+	By default, or when the option is set to 'stop', the command
+	errors out on an input e-mail message lacking a patch
+	and stops into the middle of the current am session. When this
+	option is set to 'drop', skip such an e-mail message instead.
+	When this option is set to 'keep', create an empty commit,
+	recording the contents of the e-mail message as its log.
+
 -m::
 --message-id::
 	Pass the `-m` flag to 'git mailinfo' (see linkgit:git-mailinfo[1]),
@@ -79,7 +92,7 @@ OPTIONS
 	Pass `-u` flag to 'git mailinfo' (see linkgit:git-mailinfo[1]).
 	The proposed commit log message taken from the e-mail
 	is re-coded into UTF-8 encoding (configuration variable
-	`i18n.commitencoding` can be used to specify project's
+	`i18n.commitEncoding` can be used to specify project's
 	preferred encoding if it is not UTF-8).
 +
 This was optional in prior versions of git, but now it is the
@@ -98,6 +111,8 @@ default.   You can use `--no-utf8` to override this.
 	available locally. `--no-3way` can be used to override
 	am.threeWay configuration variable. For more information,
 	see am.threeWay in linkgit:git-config[1].
+
+include::rerere-options.txt[]
 
 --ignore-space-change::
 --ignore-whitespace::
@@ -143,9 +158,12 @@ default.   You can use `--no-utf8` to override this.
 
 -S[<keyid>]::
 --gpg-sign[=<keyid>]::
+--no-gpg-sign::
 	GPG-sign commits. The `keyid` argument is optional and
 	defaults to the committer identity; if specified, it must be
-	stuck to the option without a space.
+	stuck to the option without a space. `--no-gpg-sign` is useful to
+	countermand both `commit.gpgSign` configuration variable, and
+	earlier `--gpg-sign`.
 
 --continue::
 -r::
@@ -166,14 +184,23 @@ default.   You can use `--no-utf8` to override this.
 
 --abort::
 	Restore the original branch and abort the patching operation.
+	Revert contents of files involved in the am operation to their
+	pre-am state.
 
 --quit::
 	Abort the patching operation but keep HEAD and the index
 	untouched.
 
---show-current-patch::
-	Show the patch being applied when "git am" is stopped because
-	of conflicts.
+--show-current-patch[=(diff|raw)]::
+	Show the message at which `git am` has stopped due to
+	conflicts.  If `raw` is specified, show the raw contents of
+	the e-mail message; if `diff`, show the diff portion only.
+	Defaults to `raw`.
+
+--allow-empty::
+	After a patch failure on an input e-mail message lacking a patch,
+	create an empty commit with the contents of the e-mail message
+	as its log message.
 
 DISCUSSION
 ----------
@@ -185,8 +212,8 @@ the commit, after stripping common prefix "[PATCH <anything>]".
 The "Subject: " line is supposed to concisely describe what the
 commit is about in one line of text.
 
-"From: " and "Subject: " lines starting the body override the respective
-commit author name and title values taken from the headers.
+"From: ", "Date: ", and "Subject: " lines starting the body override the
+respective commit author name and title values taken from the headers.
 
 The commit message is formed by the title taken from the
 "Subject: ", a blank line and the body of the message up to

@@ -22,7 +22,7 @@ test_expect_success 'setup repository' '
 	 : >objects/info/http-alternates
 	) &&
 	git remote add public "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
-	git push public master:master &&
+	git push public main:main &&
 
 	(cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
 	 git repack -a -d
@@ -31,7 +31,7 @@ test_expect_success 'setup repository' '
 	echo other >file &&
 	git add file &&
 	git commit -m two &&
-	git push public master:master &&
+	git push public main:main &&
 
 	LOOSE_URL=$(find_file objects/??) &&
 	PACK_URL=$(find_file objects/pack/*.pack) &&
@@ -51,8 +51,8 @@ get_static_files() {
 
 SMART=smart
 GIT_HTTP_EXPORT_ALL=1 && export GIT_HTTP_EXPORT_ALL
-test_expect_success 'direct refs/heads/master not found' '
-	GET refs/heads/master "404 Not Found"
+test_expect_success 'direct refs/heads/main not found' '
+	GET refs/heads/main "404 Not Found"
 '
 test_expect_success 'static file is ok' '
 	get_static_files "200 OK"

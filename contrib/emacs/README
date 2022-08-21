@@ -1,30 +1,24 @@
-This directory contains various modules for Emacs support.
+This directory used to contain various modules for Emacs support.
 
-To make the modules available to Emacs, you should add this directory
-to your load-path, and then require the modules you want. This can be
-done by adding to your .emacs something like this:
+These were added shortly after Git was first released. Since then
+Emacs's own support for Git got better than what was offered by these
+modes. There are also popular 3rd-party Git modes such as Magit which
+offer replacements for these.
 
-  (add-to-list 'load-path ".../git/contrib/emacs")
-  (require 'git)
-  (require 'git-blame)
-
-
-The following modules are available:
+The following modules were available, and can be dug up from the Git
+history:
 
 * git.el:
 
-  Status manager that displays the state of all the files of the
-  project, and provides easy access to the most frequently used git
-  commands. The user interface is as far as possible compatible with
-  the pcl-cvs mode. It can be started with `M-x git-status'.
+  Wrapper for "git status" that provided access to other git commands.
+
+  Modern alternatives to this include Magit, and VC mode that ships
+  with Emacs.
 
 * git-blame.el:
 
-  Emacs implementation of incremental git-blame.  When you turn it on
-  while viewing a file, the editor buffer will be updated by setting
-  the background of individual lines to a color that reflects which
-  commit it comes from.  And when you move around the buffer, a
-  one-line summary will be shown in the echo area.
+  A wrapper for "git blame" written before Emacs's own vc-annotate
+  mode learned to invoke git-blame, which can be done via C-x v g.
 
 * vc-git.el:
 

@@ -13,35 +13,38 @@ test_expect_success 'repack' '
 	export PACK
 '
 
-test_expect_success 'create target repositories' '
-	for repo in t1 t2 t3 t4 t5 t6
+# Rather than counting up and doubling each time, count down from the endpoint,
+# halving each time. That ensures that our final test uses as many threads as
+# CPUs, even if it isn't a power of 2.
+test_expect_success 'set up thread-counting tests' '
+	t=$(test-tool online-cpus) &&
+	threads= &&
+	while test $t -gt 0
 	do
-		git init --bare $repo
+		threads="$t $threads" &&
+		t=$((t / 2)) || return 1
 	done
 '
 
-test_perf 'index-pack 0 threads' '
-	GIT_DIR=t1 git index-pack --threads=1 --stdin < $PACK
+test_perf 'index-pack 0 threads' --prereq PERF_EXTRA \
+	--setup 'rm -rf repo.git && git init --bare repo.git' '
+	GIT_DIR=repo.git git index-pack --threads=1 --stdin < $PACK
 '
 
-test_perf 'index-pack 1 thread ' '
-	GIT_DIR=t2 GIT_FORCE_THREADS=1 git index-pack --threads=1 --stdin < $PACK
-'
+for t in $threads
+do
+	THREADS=$t
+	export THREADS
+	test_perf "index-pack $t threads" --prereq PERF_EXTRA \
+		--setup 'rm -rf repo.git && git init --bare repo.git' '
+		GIT_DIR=repo.git GIT_FORCE_THREADS=1 \
+		git index-pack --threads=$THREADS --stdin <$PACK
+	'
+done
 
-test_perf 'index-pack 2 threads' '
-	GIT_DIR=t3 git index-pack --threads=2 --stdin < $PACK
-'
-
-test_perf 'index-pack 4 threads' '
-	GIT_DIR=t4 git index-pack --threads=4 --stdin < $PACK
-'
-
-test_perf 'index-pack 8 threads' '
-	GIT_DIR=t5 git index-pack --threads=8 --stdin < $PACK
-'
-
-test_perf 'index-pack default number of threads' '
-	GIT_DIR=t6 git index-pack --stdin < $PACK
+test_perf 'index-pack default number of threads' \
+	--setup 'rm -rf repo.git && git init --bare repo.git' '
+	GIT_DIR=repo.git git index-pack --stdin < $PACK
 '
 
 test_done

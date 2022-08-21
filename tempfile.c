@@ -56,6 +56,20 @@
 
 static VOLATILE_LIST_HEAD(tempfile_list);
 
+static void remove_template_directory(struct tempfile *tempfile,
+				      int in_signal_handler)
+{
+	if (tempfile->directorylen > 0 &&
+	    tempfile->directorylen < tempfile->filename.len &&
+	    tempfile->filename.buf[tempfile->directorylen] == '/') {
+		strbuf_setlen(&tempfile->filename, tempfile->directorylen);
+		if (in_signal_handler)
+			rmdir(tempfile->filename.buf);
+		else
+			rmdir_or_warn(tempfile->filename.buf);
+	}
+}
+
 static void remove_tempfiles(int in_signal_handler)
 {
 	pid_t me = getpid();
@@ -74,6 +88,7 @@ static void remove_tempfiles(int in_signal_handler)
 			unlink(p->filename.buf);
 		else
 			unlink_or_warn(p->filename.buf);
+		remove_template_directory(p, in_signal_handler);
 
 		p->active = 0;
 	}
@@ -100,6 +115,7 @@ static struct tempfile *new_tempfile(void)
 	tempfile->owner = 0;
 	INIT_LIST_HEAD(&tempfile->list);
 	strbuf_init(&tempfile->filename, 0);
+	tempfile->directorylen = 0;
 	return tempfile;
 }
 
@@ -130,17 +146,17 @@ static void deactivate_tempfile(struct tempfile *tempfile)
 }
 
 /* Make sure errno contains a meaningful value on error */
-struct tempfile *create_tempfile(const char *path)
+struct tempfile *create_tempfile_mode(const char *path, int mode)
 {
 	struct tempfile *tempfile = new_tempfile();
 
 	strbuf_add_absolute_path(&tempfile->filename, path);
 	tempfile->fd = open(tempfile->filename.buf,
-			    O_RDWR | O_CREAT | O_EXCL | O_CLOEXEC, 0666);
+			    O_RDWR | O_CREAT | O_EXCL | O_CLOEXEC, mode);
 	if (O_CLOEXEC && tempfile->fd < 0 && errno == EINVAL)
 		/* Try again w/o O_CLOEXEC: the kernel might not support it */
 		tempfile->fd = open(tempfile->filename.buf,
-				    O_RDWR | O_CREAT | O_EXCL, 0666);
+				    O_RDWR | O_CREAT | O_EXCL, mode);
 	if (tempfile->fd < 0) {
 		deactivate_tempfile(tempfile);
 		return NULL;
@@ -194,6 +210,52 @@ struct tempfile *mks_tempfile_tsm(const char *filename_template, int suffixlen, 
 		deactivate_tempfile(tempfile);
 		return NULL;
 	}
+	activate_tempfile(tempfile);
+	return tempfile;
+}
+
+struct tempfile *mks_tempfile_dt(const char *directory_template,
+				 const char *filename)
+{
+	struct tempfile *tempfile;
+	const char *tmpdir;
+	struct strbuf sb = STRBUF_INIT;
+	int fd;
+	size_t directorylen;
+
+	if (!ends_with(directory_template, "XXXXXX")) {
+		errno = EINVAL;
+		return NULL;
+	}
+
+	tmpdir = getenv("TMPDIR");
+	if (!tmpdir)
+		tmpdir = "/tmp";
+
+	strbuf_addf(&sb, "%s/%s", tmpdir, directory_template);
+	directorylen = sb.len;
+	if (!mkdtemp(sb.buf)) {
+		int orig_errno = errno;
+		strbuf_release(&sb);
+		errno = orig_errno;
+		return NULL;
+	}
+
+	strbuf_addf(&sb, "/%s", filename);
+	fd = open(sb.buf, O_CREAT | O_EXCL | O_RDWR, 0600);
+	if (fd < 0) {
+		int orig_errno = errno;
+		strbuf_setlen(&sb, directorylen);
+		rmdir(sb.buf);
+		strbuf_release(&sb);
+		errno = orig_errno;
+		return NULL;
+	}
+
+	tempfile = new_tempfile();
+	strbuf_swap(&tempfile->filename, &sb);
+	tempfile->directorylen = directorylen;
+	tempfile->fd = fd;
 	activate_tempfile(tempfile);
 	return tempfile;
 }
@@ -279,7 +341,7 @@ int reopen_tempfile(struct tempfile *tempfile)
 		BUG("reopen_tempfile called for an inactive object");
 	if (0 <= tempfile->fd)
 		BUG("reopen_tempfile called for an open object");
-	tempfile->fd = open(tempfile->filename.buf, O_WRONLY);
+	tempfile->fd = open(tempfile->filename.buf, O_WRONLY|O_TRUNC);
 	return tempfile->fd;
 }
 
@@ -316,6 +378,7 @@ void delete_tempfile(struct tempfile **tempfile_p)
 
 	close_tempfile_gently(tempfile);
 	unlink_or_warn(tempfile->filename.buf);
+	remove_template_directory(tempfile, 0);
 	deactivate_tempfile(tempfile);
 	*tempfile_p = NULL;
 }

@@ -51,7 +51,7 @@ oldtime=$(echo "$oldtime" | sed -e 's/^\([0-9]\+\.[0-9]\+\).*$/\1/')
 newtime=$(echo "$newtime" | sed -e 's/^\([0-9]\+\.[0-9]\+\).*$/\1/')
 
 test $(echo "$newtime" "$oldtime" | awk '{ print ($1 > $2) }') = 1 ||
-	die "New time '$newtime' shoud be greater than old time '$oldtime'"
+	die "New time '$newtime' should be greater than old time '$oldtime'"
 
 tmpdir=$(mktemp -d -t bisect_regression_XXXXXX) || die "Failed to create temp directory"
 echo "$oldtime" >"$tmpdir/oldtime" || die "Failed to write to '$tmpdir/oldtime'"

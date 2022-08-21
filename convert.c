@@ -1,12 +1,14 @@
-#define NO_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "config.h"
+#include "object-store.h"
 #include "attr.h"
 #include "run-command.h"
 #include "quote.h"
 #include "sigchain.h"
 #include "pkt-line.h"
 #include "sub-process.h"
+#include "utf8.h"
+#include "ll-merge.h"
 
 /*
  * convert.c - convert a file when checking it out and checking it in.
@@ -21,17 +23,6 @@
 #define CONVERT_STAT_BITS_TXT_LF    0x1
 #define CONVERT_STAT_BITS_TXT_CRLF  0x2
 #define CONVERT_STAT_BITS_BIN       0x4
-
-enum crlf_action {
-	CRLF_UNDEFINED,
-	CRLF_BINARY,
-	CRLF_TEXT,
-	CRLF_TEXT_INPUT,
-	CRLF_TEXT_CRLF,
-	CRLF_AUTO,
-	CRLF_AUTO_INPUT,
-	CRLF_AUTO_CRLF
-};
 
 struct text_stat {
 	/* NUL, CR, LF and CRLF counts */
@@ -90,7 +81,7 @@ static void gather_stats(const char *buf, unsigned long size, struct text_stat *
  * The same heuristics as diff.c::mmfile_is_binary()
  * We treat files with bare CR as binary
  */
-static int convert_is_binary(unsigned long size, const struct text_stat *stats)
+static int convert_is_binary(const struct text_stat *stats)
 {
 	if (stats->lonecr)
 		return 1;
@@ -108,7 +99,7 @@ static unsigned int gather_convert_stats(const char *data, unsigned long size)
 	if (!data || !size)
 		return 0;
 	gather_stats(data, size, &stats);
-	if (convert_is_binary(size, &stats))
+	if (convert_is_binary(&stats))
 		ret |= CONVERT_STAT_BITS_BIN;
 	if (stats.crlf)
 		ret |= CONVERT_STAT_BITS_TXT_CRLF;
@@ -136,7 +127,7 @@ static const char *gather_convert_stats_ascii(const char *data, unsigned long si
 	}
 }
 
-const char *get_cached_convert_stats_ascii(const struct index_state *istate,
+const char *get_cached_convert_stats_ascii(struct index_state *istate,
 					   const char *path)
 {
 	const char *ret;
@@ -170,7 +161,7 @@ static int text_eol_is_crlf(void)
 	return 0;
 }
 
-static enum eol output_eol(enum crlf_action crlf_action)
+static enum eol output_eol(enum convert_crlf_action crlf_action)
 {
 	switch (crlf_action) {
 	case CRLF_BINARY:
@@ -189,11 +180,11 @@ static enum eol output_eol(enum crlf_action crlf_action)
 		/* fall through */
 		return text_eol_is_crlf() ? EOL_CRLF : EOL_LF;
 	}
-	warning("Illegal crlf_action %d\n", (int)crlf_action);
+	warning(_("illegal crlf_action %d"), (int)crlf_action);
 	return core_eol;
 }
 
-static void check_global_conv_flags_eol(const char *path, enum crlf_action crlf_action,
+static void check_global_conv_flags_eol(const char *path,
 			    struct text_stat *old_stats, struct text_stat *new_stats,
 			    int conv_flags)
 {
@@ -202,11 +193,11 @@ static void check_global_conv_flags_eol(const char *path, enum crlf_action crlf_
 		 * CRLFs would not be restored by checkout
 		 */
 		if (conv_flags & CONV_EOL_RNDTRP_DIE)
-			die(_("CRLF would be replaced by LF in %s."), path);
+			die(_("CRLF would be replaced by LF in %s"), path);
 		else if (conv_flags & CONV_EOL_RNDTRP_WARN)
-			warning(_("CRLF will be replaced by LF in %s.\n"
-				  "The file will have its original line"
-				  " endings in your working directory."), path);
+			warning(_("in the working copy of '%s', CRLF will be"
+				  " replaced by LF the next time Git touches"
+				  " it"), path);
 	} else if (old_stats->lonelf && !new_stats->lonelf ) {
 		/*
 		 * CRLFs would be added by checkout
@@ -214,13 +205,13 @@ static void check_global_conv_flags_eol(const char *path, enum crlf_action crlf_
 		if (conv_flags & CONV_EOL_RNDTRP_DIE)
 			die(_("LF would be replaced by CRLF in %s"), path);
 		else if (conv_flags & CONV_EOL_RNDTRP_WARN)
-			warning(_("LF will be replaced by CRLF in %s.\n"
-				  "The file will have its original line"
-				  " endings in your working directory."), path);
+			warning(_("in the working copy of '%s', LF will be"
+				  " replaced by CRLF the next time Git touches"
+				  " it"), path);
 	}
 }
 
-static int has_crlf_in_index(const struct index_state *istate, const char *path)
+static int has_crlf_in_index(struct index_state *istate, const char *path)
 {
 	unsigned long sz;
 	void *data;
@@ -243,8 +234,8 @@ static int has_crlf_in_index(const struct index_state *istate, const char *path)
 	return has_crlf;
 }
 
-static int will_convert_lf_to_crlf(size_t len, struct text_stat *stats,
-				   enum crlf_action crlf_action)
+static int will_convert_lf_to_crlf(struct text_stat *stats,
+				   enum convert_crlf_action crlf_action)
 {
 	if (output_eol(crlf_action) != EOL_CRLF)
 		return 0;
@@ -258,17 +249,246 @@ static int will_convert_lf_to_crlf(size_t len, struct text_stat *stats,
 		if (stats->lonecr || stats->crlf)
 			return 0;
 
-		if (convert_is_binary(len, stats))
+		if (convert_is_binary(stats))
 			return 0;
 	}
 	return 1;
 
 }
 
-static int crlf_to_git(const struct index_state *istate,
+static int validate_encoding(const char *path, const char *enc,
+		      const char *data, size_t len, int die_on_error)
+{
+	const char *stripped;
+
+	/* We only check for UTF here as UTF?? can be an alias for UTF-?? */
+	if (skip_iprefix(enc, "UTF", &stripped)) {
+		skip_prefix(stripped, "-", &stripped);
+
+		/*
+		 * Check for detectable errors in UTF encodings
+		 */
+		if (has_prohibited_utf_bom(enc, data, len)) {
+			const char *error_msg = _(
+				"BOM is prohibited in '%s' if encoded as %s");
+			/*
+			 * This advice is shown for UTF-??BE and UTF-??LE encodings.
+			 * We cut off the last two characters of the encoding name
+			 * to generate the encoding name suitable for BOMs.
+			 */
+			const char *advise_msg = _(
+				"The file '%s' contains a byte order "
+				"mark (BOM). Please use UTF-%.*s as "
+				"working-tree-encoding.");
+			int stripped_len = strlen(stripped) - strlen("BE");
+			advise(advise_msg, path, stripped_len, stripped);
+			if (die_on_error)
+				die(error_msg, path, enc);
+			else {
+				return error(error_msg, path, enc);
+			}
+
+		} else if (is_missing_required_utf_bom(enc, data, len)) {
+			const char *error_msg = _(
+				"BOM is required in '%s' if encoded as %s");
+			const char *advise_msg = _(
+				"The file '%s' is missing a byte order "
+				"mark (BOM). Please use UTF-%sBE or UTF-%sLE "
+				"(depending on the byte order) as "
+				"working-tree-encoding.");
+			advise(advise_msg, path, stripped, stripped);
+			if (die_on_error)
+				die(error_msg, path, enc);
+			else {
+				return error(error_msg, path, enc);
+			}
+		}
+
+	}
+	return 0;
+}
+
+static void trace_encoding(const char *context, const char *path,
+			   const char *encoding, const char *buf, size_t len)
+{
+	static struct trace_key coe = TRACE_KEY_INIT(WORKING_TREE_ENCODING);
+	struct strbuf trace = STRBUF_INIT;
+	int i;
+
+	strbuf_addf(&trace, "%s (%s, considered %s):\n", context, path, encoding);
+	for (i = 0; i < len && buf; ++i) {
+		strbuf_addf(
+			&trace, "| \033[2m%2i:\033[0m %2x \033[2m%c\033[0m%c",
+			i,
+			(unsigned char) buf[i],
+			(buf[i] > 32 && buf[i] < 127 ? buf[i] : ' '),
+			((i+1) % 8 && (i+1) < len ? ' ' : '\n')
+		);
+	}
+	strbuf_addchars(&trace, '\n', 1);
+
+	trace_strbuf(&coe, &trace);
+	strbuf_release(&trace);
+}
+
+static int check_roundtrip(const char *enc_name)
+{
+	/*
+	 * check_roundtrip_encoding contains a string of comma and/or
+	 * space separated encodings (eg. "UTF-16, ASCII, CP1125").
+	 * Search for the given encoding in that string.
+	 */
+	const char *found = strcasestr(check_roundtrip_encoding, enc_name);
+	const char *next;
+	int len;
+	if (!found)
+		return 0;
+	next = found + strlen(enc_name);
+	len = strlen(check_roundtrip_encoding);
+	return (found && (
+			/*
+			 * check that the found encoding is at the
+			 * beginning of check_roundtrip_encoding or
+			 * that it is prefixed with a space or comma
+			 */
+			found == check_roundtrip_encoding || (
+				(isspace(found[-1]) || found[-1] == ',')
+			)
+		) && (
+			/*
+			 * check that the found encoding is at the
+			 * end of check_roundtrip_encoding or
+			 * that it is suffixed with a space or comma
+			 */
+			next == check_roundtrip_encoding + len || (
+				next < check_roundtrip_encoding + len &&
+				(isspace(next[0]) || next[0] == ',')
+			)
+		));
+}
+
+static const char *default_encoding = "UTF-8";
+
+static int encode_to_git(const char *path, const char *src, size_t src_len,
+			 struct strbuf *buf, const char *enc, int conv_flags)
+{
+	char *dst;
+	size_t dst_len;
+	int die_on_error = conv_flags & CONV_WRITE_OBJECT;
+
+	/*
+	 * No encoding is specified or there is nothing to encode.
+	 * Tell the caller that the content was not modified.
+	 */
+	if (!enc || (src && !src_len))
+		return 0;
+
+	/*
+	 * Looks like we got called from "would_convert_to_git()".
+	 * This means Git wants to know if it would encode (= modify!)
+	 * the content. Let's answer with "yes", since an encoding was
+	 * specified.
+	 */
+	if (!buf && !src)
+		return 1;
+
+	if (validate_encoding(path, enc, src, src_len, die_on_error))
+		return 0;
+
+	trace_encoding("source", path, enc, src, src_len);
+	dst = reencode_string_len(src, src_len, default_encoding, enc,
+				  &dst_len);
+	if (!dst) {
+		/*
+		 * We could add the blob "as-is" to Git. However, on checkout
+		 * we would try to re-encode to the original encoding. This
+		 * would fail and we would leave the user with a messed-up
+		 * working tree. Let's try to avoid this by screaming loud.
+		 */
+		const char* msg = _("failed to encode '%s' from %s to %s");
+		if (die_on_error)
+			die(msg, path, enc, default_encoding);
+		else {
+			error(msg, path, enc, default_encoding);
+			return 0;
+		}
+	}
+	trace_encoding("destination", path, default_encoding, dst, dst_len);
+
+	/*
+	 * UTF supports lossless conversion round tripping [1] and conversions
+	 * between UTF and other encodings are mostly round trip safe as
+	 * Unicode aims to be a superset of all other character encodings.
+	 * However, certain encodings (e.g. SHIFT-JIS) are known to have round
+	 * trip issues [2]. Check the round trip conversion for all encodings
+	 * listed in core.checkRoundtripEncoding.
+	 *
+	 * The round trip check is only performed if content is written to Git.
+	 * This ensures that no information is lost during conversion to/from
+	 * the internal UTF-8 representation.
+	 *
+	 * Please note, the code below is not tested because I was not able to
+	 * generate a faulty round trip without an iconv error. Iconv errors
+	 * are already caught above.
+	 *
+	 * [1] http://unicode.org/faq/utf_bom.html#gen2
+	 * [2] https://support.microsoft.com/en-us/help/170559/prb-conversion-problem-between-shift-jis-and-unicode
+	 */
+	if (die_on_error && check_roundtrip(enc)) {
+		char *re_src;
+		size_t re_src_len;
+
+		re_src = reencode_string_len(dst, dst_len,
+					     enc, default_encoding,
+					     &re_src_len);
+
+		trace_printf("Checking roundtrip encoding for %s...\n", enc);
+		trace_encoding("reencoded source", path, enc,
+			       re_src, re_src_len);
+
+		if (!re_src || src_len != re_src_len ||
+		    memcmp(src, re_src, src_len)) {
+			const char* msg = _("encoding '%s' from %s to %s and "
+					    "back is not the same");
+			die(msg, path, enc, default_encoding);
+		}
+
+		free(re_src);
+	}
+
+	strbuf_attach(buf, dst, dst_len, dst_len + 1);
+	return 1;
+}
+
+static int encode_to_worktree(const char *path, const char *src, size_t src_len,
+			      struct strbuf *buf, const char *enc)
+{
+	char *dst;
+	size_t dst_len;
+
+	/*
+	 * No encoding is specified or there is nothing to encode.
+	 * Tell the caller that the content was not modified.
+	 */
+	if (!enc || (src && !src_len))
+		return 0;
+
+	dst = reencode_string_len(src, src_len, enc, default_encoding,
+				  &dst_len);
+	if (!dst) {
+		error(_("failed to encode '%s' from %s to %s"),
+		      path, default_encoding, enc);
+		return 0;
+	}
+
+	strbuf_attach(buf, dst, dst_len, dst_len + 1);
+	return 1;
+}
+
+static int crlf_to_git(struct index_state *istate,
 		       const char *path, const char *src, size_t len,
 		       struct strbuf *buf,
-		       enum crlf_action crlf_action, int conv_flags)
+		       enum convert_crlf_action crlf_action, int conv_flags)
 {
 	struct text_stat stats;
 	char *dst;
@@ -290,7 +510,7 @@ static int crlf_to_git(const struct index_state *istate,
 	convert_crlf_into_lf = !!stats.crlf;
 
 	if (crlf_action == CRLF_AUTO || crlf_action == CRLF_AUTO_INPUT || crlf_action == CRLF_AUTO_CRLF) {
-		if (convert_is_binary(len, &stats))
+		if (convert_is_binary(&stats))
 			return 0;
 		/*
 		 * If the file in the index has any CR in it, do not
@@ -312,11 +532,11 @@ static int crlf_to_git(const struct index_state *istate,
 			new_stats.crlf = 0;
 		}
 		/* simulate "git checkout" */
-		if (will_convert_lf_to_crlf(len, &new_stats, crlf_action)) {
+		if (will_convert_lf_to_crlf(&new_stats, crlf_action)) {
 			new_stats.crlf += new_stats.lonelf;
 			new_stats.lonelf = 0;
 		}
-		check_global_conv_flags_eol(path, crlf_action, &stats, &new_stats, conv_flags);
+		check_global_conv_flags_eol(path, &stats, &new_stats, conv_flags);
 	}
 	if (!convert_crlf_into_lf)
 		return 0;
@@ -354,8 +574,8 @@ static int crlf_to_git(const struct index_state *istate,
 	return 1;
 }
 
-static int crlf_to_worktree(const char *path, const char *src, size_t len,
-			    struct strbuf *buf, enum crlf_action crlf_action)
+static int crlf_to_worktree(const char *src, size_t len, struct strbuf *buf,
+			    enum convert_crlf_action crlf_action)
 {
 	char *to_free = NULL;
 	struct text_stat stats;
@@ -364,7 +584,7 @@ static int crlf_to_worktree(const char *path, const char *src, size_t len,
 		return 0;
 
 	gather_stats(src, len, &stats);
-	if (!will_convert_lf_to_crlf(len, &stats, crlf_action))
+	if (!will_convert_lf_to_crlf(&stats, crlf_action))
 		return 0;
 
 	/* are we "faking" in place editing ? */
@@ -393,7 +613,7 @@ static int crlf_to_worktree(const char *path, const char *src, size_t len,
 
 struct filter_params {
 	const char *src;
-	unsigned long size;
+	size_t size;
 	int fd;
 	const char *cmd;
 	const char *path;
@@ -407,7 +627,6 @@ static int filter_buffer_or_fd(int in, int out, void *data)
 	struct child_process child_process = CHILD_PROCESS_INIT;
 	struct filter_params *params = (struct filter_params *)data;
 	int write_err, status;
-	const char *argv[] = { NULL, NULL };
 
 	/* apply % substitution to cmd */
 	struct strbuf cmd = STRBUF_INIT;
@@ -425,16 +644,15 @@ static int filter_buffer_or_fd(int in, int out, void *data)
 	strbuf_expand(&cmd, params->cmd, strbuf_expand_dict_cb, &dict);
 	strbuf_release(&path);
 
-	argv[0] = cmd.buf;
-
-	child_process.argv = argv;
+	strvec_push(&child_process.args, cmd.buf);
 	child_process.use_shell = 1;
 	child_process.in = -1;
 	child_process.out = out;
 
 	if (start_command(&child_process)) {
 		strbuf_release(&cmd);
-		return error("cannot fork to run external filter '%s'", params->cmd);
+		return error(_("cannot fork to run external filter '%s'"),
+			     params->cmd);
 	}
 
 	sigchain_push(SIGPIPE, SIG_IGN);
@@ -453,20 +671,21 @@ static int filter_buffer_or_fd(int in, int out, void *data)
 	if (close(child_process.in))
 		write_err = 1;
 	if (write_err)
-		error("cannot feed the input to external filter '%s'", params->cmd);
+		error(_("cannot feed the input to external filter '%s'"),
+		      params->cmd);
 
 	sigchain_pop(SIGPIPE);
 
 	status = finish_command(&child_process);
 	if (status)
-		error("external filter '%s' failed %d", params->cmd, status);
+		error(_("external filter '%s' failed %d"), params->cmd, status);
 
 	strbuf_release(&cmd);
 	return (write_err || status);
 }
 
 static int apply_single_file_filter(const char *path, const char *src, size_t len, int fd,
-                        struct strbuf *dst, const char *cmd)
+				    struct strbuf *dst, const char *cmd)
 {
 	/*
 	 * Create a pipeline to have the command filter the buffer's
@@ -493,14 +712,14 @@ static int apply_single_file_filter(const char *path, const char *src, size_t le
 	if (start_async(&async))
 		return 0;	/* error was already reported */
 
-	if (strbuf_read(&nbuf, async.out, len) < 0) {
-		err = error("read from external filter '%s' failed", cmd);
+	if (strbuf_read(&nbuf, async.out, 0) < 0) {
+		err = error(_("read from external filter '%s' failed"), cmd);
 	}
 	if (close(async.out)) {
-		err = error("read from external filter '%s' failed", cmd);
+		err = error(_("read from external filter '%s' failed"), cmd);
 	}
 	if (finish_async(&async)) {
-		err = error("external filter '%s' failed", cmd);
+		err = error(_("external filter '%s' failed"), cmd);
 	}
 
 	if (!err) {
@@ -539,7 +758,8 @@ static int start_multi_file_filter_fn(struct subprocess_entry *subprocess)
 
 static void handle_filter_error(const struct strbuf *filter_status,
 				struct cmd2process *entry,
-				const unsigned int wanted_capability) {
+				const unsigned int wanted_capability)
+{
 	if (!strcmp(filter_status->buf, "error"))
 		; /* The filter signaled a problem with the file. */
 	else if (!strcmp(filter_status->buf, "abort") && wanted_capability) {
@@ -554,7 +774,7 @@ static void handle_filter_error(const struct strbuf *filter_status,
 		 * Something went wrong with the protocol filter.
 		 * Force shutdown and restart if another blob requires filtering.
 		 */
-		error("external filter '%s' failed", entry->subprocess.cmd);
+		error(_("external filter '%s' failed"), entry->subprocess.cmd);
 		subprocess_stop(&subprocess_map, &entry->subprocess);
 		free(entry);
 	}
@@ -563,6 +783,7 @@ static void handle_filter_error(const struct strbuf *filter_status,
 static int apply_multi_file_filter(const char *path, const char *src, size_t len,
 				   int fd, struct strbuf *dst, const char *cmd,
 				   const unsigned int wanted_capability,
+				   const struct checkout_metadata *meta,
 				   struct delayed_checkout *dco)
 {
 	int err;
@@ -602,7 +823,7 @@ static int apply_multi_file_filter(const char *path, const char *src, size_t len
 	else if (wanted_capability & CAP_SMUDGE)
 		filter_type = "smudge";
 	else
-		die("unexpected filter type");
+		die(_("unexpected filter type"));
 
 	sigchain_push(SIGPIPE, SIG_IGN);
 
@@ -613,13 +834,31 @@ static int apply_multi_file_filter(const char *path, const char *src, size_t len
 
 	err = strlen(path) > LARGE_PACKET_DATA_MAX - strlen("pathname=\n");
 	if (err) {
-		error("path name too long for external filter");
+		error(_("path name too long for external filter"));
 		goto done;
 	}
 
 	err = packet_write_fmt_gently(process->in, "pathname=%s\n", path);
 	if (err)
 		goto done;
+
+	if (meta && meta->refname) {
+		err = packet_write_fmt_gently(process->in, "ref=%s\n", meta->refname);
+		if (err)
+			goto done;
+	}
+
+	if (meta && !is_null_oid(&meta->treeish)) {
+		err = packet_write_fmt_gently(process->in, "treeish=%s\n", oid_to_hex(&meta->treeish));
+		if (err)
+			goto done;
+	}
+
+	if (meta && !is_null_oid(&meta->blob)) {
+		err = packet_write_fmt_gently(process->in, "blob=%s\n", oid_to_hex(&meta->blob));
+		if (err)
+			goto done;
+	}
 
 	if ((entry->supported_capabilities & CAP_DELAY) &&
 	    dco && dco->state == CE_CAN_DELAY) {
@@ -634,9 +873,13 @@ static int apply_multi_file_filter(const char *path, const char *src, size_t len
 		goto done;
 
 	if (fd >= 0)
-		err = write_packetized_from_fd(fd, process->in);
+		err = write_packetized_from_fd_no_flush(fd, process->in);
 	else
-		err = write_packetized_from_buf(src, len, process->in);
+		err = write_packetized_from_buf_no_flush(src, len, process->in);
+	if (err)
+		goto done;
+
+	err = packet_flush_gently(process->in);
 	if (err)
 		goto done;
 
@@ -653,7 +896,8 @@ static int apply_multi_file_filter(const char *path, const char *src, size_t len
 		if (err)
 			goto done;
 
-		err = read_packetized_to_strbuf(process->out, &nbuf) < 0;
+		err = read_packetized_to_strbuf(process->out, &nbuf,
+						PACKET_READ_GENTLE_ON_EOF) < 0;
 		if (err)
 			goto done;
 
@@ -672,6 +916,7 @@ done:
 	else
 		strbuf_swap(dst, &nbuf);
 	strbuf_release(&nbuf);
+	strbuf_release(&filter_status);
 	return !err;
 }
 
@@ -687,8 +932,8 @@ int async_query_available_blobs(const char *cmd, struct string_list *available_p
 	assert(subprocess_map_initialized);
 	entry = (struct cmd2process *)subprocess_find_entry(&subprocess_map, cmd);
 	if (!entry) {
-		error("external filter '%s' is not available anymore although "
-		      "not all paths have been filtered", cmd);
+		error(_("external filter '%s' is not available anymore although "
+			"not all paths have been filtered"), cmd);
 		return 0;
 	}
 	process = &entry->subprocess.process;
@@ -722,6 +967,7 @@ done:
 
 	if (err)
 		handle_filter_error(&filter_status, entry, 0);
+	strbuf_release(&filter_status);
 	return !err;
 }
 
@@ -737,6 +983,7 @@ static struct convert_driver {
 static int apply_filter(const char *path, const char *src, size_t len,
 			int fd, struct strbuf *dst, struct convert_driver *drv,
 			const unsigned int wanted_capability,
+			const struct checkout_metadata *meta,
 			struct delayed_checkout *dco)
 {
 	const char *cmd = NULL;
@@ -756,7 +1003,7 @@ static int apply_filter(const char *path, const char *src, size_t len,
 		return apply_single_file_filter(path, src, len, fd, dst, cmd);
 	else if (drv->process && *drv->process)
 		return apply_multi_file_filter(path, src, len, fd, dst,
-			drv->process, wanted_capability, dco);
+			drv->process, wanted_capability, meta, dco);
 
 	return 0;
 }
@@ -764,7 +1011,7 @@ static int apply_filter(const char *path, const char *src, size_t len,
 static int read_convert_config(const char *var, const char *value, void *cb)
 {
 	const char *key, *name;
-	int namelen;
+	size_t namelen;
 	struct convert_driver *drv;
 
 	/*
@@ -777,7 +1024,7 @@ static int read_convert_config(const char *var, const char *value, void *cb)
 		if (!strncmp(drv->name, name, namelen) && !drv->name[namelen])
 			break;
 	if (!drv) {
-		drv = xcalloc(1, sizeof(struct convert_driver));
+		CALLOC_ARRAY(drv, 1);
 		drv->name = xmemdupz(name, namelen);
 		*user_convert_tail = drv;
 		user_convert_tail = &(drv->next);
@@ -851,8 +1098,8 @@ static int count_ident(const char *cp, unsigned long size)
 	return cnt;
 }
 
-static int ident_to_git(const char *path, const char *src, size_t len,
-                        struct strbuf *buf, int ident)
+static int ident_to_git(const char *src, size_t len,
+			struct strbuf *buf, int ident)
 {
 	char *dst, *dollar;
 
@@ -895,8 +1142,8 @@ static int ident_to_git(const char *path, const char *src, size_t len,
 	return 1;
 }
 
-static int ident_to_worktree(const char *path, const char *src, size_t len,
-                             struct strbuf *buf, int ident)
+static int ident_to_worktree(const char *src, size_t len,
+			     struct strbuf *buf, int ident)
 {
 	struct object_id oid;
 	char *to_free = NULL, *dollar, *spc;
@@ -912,7 +1159,7 @@ static int ident_to_worktree(const char *path, const char *src, size_t len,
 	/* are we "faking" in place editing ? */
 	if (src == buf->buf)
 		to_free = strbuf_detach(buf, NULL);
-	hash_object_file(src, len, "blob", &oid);
+	hash_object_file(the_hash_algo, src, len, OBJ_BLOB, &oid);
 
 	strbuf_grow(buf, len + cnt * (the_hash_algo->hexsz + 3));
 	for (;;) {
@@ -978,7 +1225,25 @@ static int ident_to_worktree(const char *path, const char *src, size_t len,
 	return 1;
 }
 
-static enum crlf_action git_path_check_crlf(struct attr_check_item *check)
+static const char *git_path_check_encoding(struct attr_check_item *check)
+{
+	const char *value = check->value;
+
+	if (ATTR_UNSET(value) || !strlen(value))
+		return NULL;
+
+	if (ATTR_TRUE(value) || ATTR_FALSE(value)) {
+		die(_("true/false are no valid working-tree-encodings"));
+	}
+
+	/* Don't encode to the default encoding */
+	if (same_encoding(value, default_encoding))
+		return NULL;
+
+	return value;
+}
+
+static enum convert_crlf_action git_path_check_crlf(struct attr_check_item *check)
 {
 	const char *value = check->value;
 
@@ -1028,47 +1293,40 @@ static int git_path_check_ident(struct attr_check_item *check)
 	return !!ATTR_TRUE(value);
 }
 
-struct conv_attrs {
-	struct convert_driver *drv;
-	enum crlf_action attr_action; /* What attr says */
-	enum crlf_action crlf_action; /* When no attr is set, use core.autocrlf */
-	int ident;
-};
+static struct attr_check *check;
 
-static void convert_attrs(struct conv_attrs *ca, const char *path)
+void convert_attrs(struct index_state *istate,
+		   struct conv_attrs *ca, const char *path)
 {
-	static struct attr_check *check;
+	struct attr_check_item *ccheck = NULL;
 
 	if (!check) {
 		check = attr_check_initl("crlf", "ident", "filter",
-					 "eol", "text", NULL);
+					 "eol", "text", "working-tree-encoding",
+					 NULL);
 		user_convert_tail = &user_convert;
 		git_config(read_convert_config, NULL);
 	}
 
-	if (!git_check_attr(path, check)) {
-		struct attr_check_item *ccheck = check->items;
-		ca->crlf_action = git_path_check_crlf(ccheck + 4);
-		if (ca->crlf_action == CRLF_UNDEFINED)
-			ca->crlf_action = git_path_check_crlf(ccheck + 0);
-		ca->ident = git_path_check_ident(ccheck + 1);
-		ca->drv = git_path_check_convert(ccheck + 2);
-		if (ca->crlf_action != CRLF_BINARY) {
-			enum eol eol_attr = git_path_check_eol(ccheck + 3);
-			if (ca->crlf_action == CRLF_AUTO && eol_attr == EOL_LF)
-				ca->crlf_action = CRLF_AUTO_INPUT;
-			else if (ca->crlf_action == CRLF_AUTO && eol_attr == EOL_CRLF)
-				ca->crlf_action = CRLF_AUTO_CRLF;
-			else if (eol_attr == EOL_LF)
-				ca->crlf_action = CRLF_TEXT_INPUT;
-			else if (eol_attr == EOL_CRLF)
-				ca->crlf_action = CRLF_TEXT_CRLF;
-		}
-	} else {
-		ca->drv = NULL;
-		ca->crlf_action = CRLF_UNDEFINED;
-		ca->ident = 0;
+	git_check_attr(istate, path, check);
+	ccheck = check->items;
+	ca->crlf_action = git_path_check_crlf(ccheck + 4);
+	if (ca->crlf_action == CRLF_UNDEFINED)
+		ca->crlf_action = git_path_check_crlf(ccheck + 0);
+	ca->ident = git_path_check_ident(ccheck + 1);
+	ca->drv = git_path_check_convert(ccheck + 2);
+	if (ca->crlf_action != CRLF_BINARY) {
+		enum eol eol_attr = git_path_check_eol(ccheck + 3);
+		if (ca->crlf_action == CRLF_AUTO && eol_attr == EOL_LF)
+			ca->crlf_action = CRLF_AUTO_INPUT;
+		else if (ca->crlf_action == CRLF_AUTO && eol_attr == EOL_CRLF)
+			ca->crlf_action = CRLF_AUTO_CRLF;
+		else if (eol_attr == EOL_LF)
+			ca->crlf_action = CRLF_TEXT_INPUT;
+		else if (eol_attr == EOL_CRLF)
+			ca->crlf_action = CRLF_TEXT_CRLF;
 	}
+	ca->working_tree_encoding = git_path_check_encoding(ccheck + 5);
 
 	/* Save attr and make a decision for action */
 	ca->attr_action = ca->crlf_action;
@@ -1082,11 +1340,28 @@ static void convert_attrs(struct conv_attrs *ca, const char *path)
 		ca->crlf_action = CRLF_AUTO_INPUT;
 }
 
-int would_convert_to_git_filter_fd(const char *path)
+void reset_parsed_attributes(void)
+{
+	struct convert_driver *drv, *next;
+
+	attr_check_free(check);
+	check = NULL;
+	reset_merge_attributes();
+
+	for (drv = user_convert; drv; drv = next) {
+		next = drv->next;
+		free((void *)drv->name);
+		free(drv);
+	}
+	user_convert = NULL;
+	user_convert_tail = NULL;
+}
+
+int would_convert_to_git_filter_fd(struct index_state *istate, const char *path)
 {
 	struct conv_attrs ca;
 
-	convert_attrs(&ca, path);
+	convert_attrs(istate, &ca, path);
 	if (!ca.drv)
 		return 0;
 
@@ -1098,14 +1373,14 @@ int would_convert_to_git_filter_fd(const char *path)
 	if (!ca.drv->required)
 		return 0;
 
-	return apply_filter(path, NULL, 0, -1, NULL, ca.drv, CAP_CLEAN, NULL);
+	return apply_filter(path, NULL, 0, -1, NULL, ca.drv, CAP_CLEAN, NULL, NULL);
 }
 
-const char *get_convert_attr_ascii(const char *path)
+const char *get_convert_attr_ascii(struct index_state *istate, const char *path)
 {
 	struct conv_attrs ca;
 
-	convert_attrs(&ca, path);
+	convert_attrs(istate, &ca, path);
 	switch (ca.attr_action) {
 	case CRLF_UNDEFINED:
 		return "";
@@ -1127,23 +1402,30 @@ const char *get_convert_attr_ascii(const char *path)
 	return "";
 }
 
-int convert_to_git(const struct index_state *istate,
+int convert_to_git(struct index_state *istate,
 		   const char *path, const char *src, size_t len,
 		   struct strbuf *dst, int conv_flags)
 {
 	int ret = 0;
 	struct conv_attrs ca;
 
-	convert_attrs(&ca, path);
+	convert_attrs(istate, &ca, path);
 
-	ret |= apply_filter(path, src, len, -1, dst, ca.drv, CAP_CLEAN, NULL);
+	ret |= apply_filter(path, src, len, -1, dst, ca.drv, CAP_CLEAN, NULL, NULL);
 	if (!ret && ca.drv && ca.drv->required)
-		die("%s: clean filter '%s' failed", path, ca.drv->name);
+		die(_("%s: clean filter '%s' failed"), path, ca.drv->name);
 
 	if (ret && dst) {
 		src = dst->buf;
 		len = dst->len;
 	}
+
+	ret |= encode_to_git(path, src, len, dst, ca.working_tree_encoding, conv_flags);
+	if (ret && dst) {
+		src = dst->buf;
+		len = dst->len;
+	}
+
 	if (!(conv_flags & CONV_EOL_KEEP_CRLF)) {
 		ret |= crlf_to_git(istate, path, src, len, dst, ca.crlf_action, conv_flags);
 		if (ret && dst) {
@@ -1151,36 +1433,36 @@ int convert_to_git(const struct index_state *istate,
 			len = dst->len;
 		}
 	}
-	return ret | ident_to_git(path, src, len, dst, ca.ident);
+	return ret | ident_to_git(src, len, dst, ca.ident);
 }
 
-void convert_to_git_filter_fd(const struct index_state *istate,
+void convert_to_git_filter_fd(struct index_state *istate,
 			      const char *path, int fd, struct strbuf *dst,
 			      int conv_flags)
 {
 	struct conv_attrs ca;
-	convert_attrs(&ca, path);
+	convert_attrs(istate, &ca, path);
 
 	assert(ca.drv);
-	assert(ca.drv->clean || ca.drv->process);
 
-	if (!apply_filter(path, NULL, 0, fd, dst, ca.drv, CAP_CLEAN, NULL))
-		die("%s: clean filter '%s' failed", path, ca.drv->name);
+	if (!apply_filter(path, NULL, 0, fd, dst, ca.drv, CAP_CLEAN, NULL, NULL))
+		die(_("%s: clean filter '%s' failed"), path, ca.drv->name);
 
+	encode_to_git(path, dst->buf, dst->len, dst, ca.working_tree_encoding, conv_flags);
 	crlf_to_git(istate, path, dst->buf, dst->len, dst, ca.crlf_action, conv_flags);
-	ident_to_git(path, dst->buf, dst->len, dst, ca.ident);
+	ident_to_git(dst->buf, dst->len, dst, ca.ident);
 }
 
-static int convert_to_working_tree_internal(const char *path, const char *src,
-					    size_t len, struct strbuf *dst,
-					    int normalizing, struct delayed_checkout *dco)
+static int convert_to_working_tree_ca_internal(const struct conv_attrs *ca,
+					       const char *path, const char *src,
+					       size_t len, struct strbuf *dst,
+					       int normalizing,
+					       const struct checkout_metadata *meta,
+					       struct delayed_checkout *dco)
 {
 	int ret = 0, ret_filter = 0;
-	struct conv_attrs ca;
 
-	convert_attrs(&ca, path);
-
-	ret |= ident_to_worktree(path, src, len, dst, ca.ident);
+	ret |= ident_to_worktree(src, len, dst, ca->ident);
 	if (ret) {
 		src = dst->buf;
 		len = dst->len;
@@ -1190,38 +1472,56 @@ static int convert_to_working_tree_internal(const char *path, const char *src,
 	 * is a smudge or process filter (even if the process filter doesn't
 	 * support smudge).  The filters might expect CRLFs.
 	 */
-	if ((ca.drv && (ca.drv->smudge || ca.drv->process)) || !normalizing) {
-		ret |= crlf_to_worktree(path, src, len, dst, ca.crlf_action);
+	if ((ca->drv && (ca->drv->smudge || ca->drv->process)) || !normalizing) {
+		ret |= crlf_to_worktree(src, len, dst, ca->crlf_action);
 		if (ret) {
 			src = dst->buf;
 			len = dst->len;
 		}
 	}
 
+	ret |= encode_to_worktree(path, src, len, dst, ca->working_tree_encoding);
+	if (ret) {
+		src = dst->buf;
+		len = dst->len;
+	}
+
 	ret_filter = apply_filter(
-		path, src, len, -1, dst, ca.drv, CAP_SMUDGE, dco);
-	if (!ret_filter && ca.drv && ca.drv->required)
-		die("%s: smudge filter %s failed", path, ca.drv->name);
+		path, src, len, -1, dst, ca->drv, CAP_SMUDGE, meta, dco);
+	if (!ret_filter && ca->drv && ca->drv->required)
+		die(_("%s: smudge filter %s failed"), path, ca->drv->name);
 
 	return ret | ret_filter;
 }
 
-int async_convert_to_working_tree(const char *path, const char *src,
-				  size_t len, struct strbuf *dst,
-				  void *dco)
+int async_convert_to_working_tree_ca(const struct conv_attrs *ca,
+				     const char *path, const char *src,
+				     size_t len, struct strbuf *dst,
+				     const struct checkout_metadata *meta,
+				     void *dco)
 {
-	return convert_to_working_tree_internal(path, src, len, dst, 0, dco);
+	return convert_to_working_tree_ca_internal(ca, path, src, len, dst, 0,
+						   meta, dco);
 }
 
-int convert_to_working_tree(const char *path, const char *src, size_t len, struct strbuf *dst)
+int convert_to_working_tree_ca(const struct conv_attrs *ca,
+			       const char *path, const char *src,
+			       size_t len, struct strbuf *dst,
+			       const struct checkout_metadata *meta)
 {
-	return convert_to_working_tree_internal(path, src, len, dst, 0, NULL);
+	return convert_to_working_tree_ca_internal(ca, path, src, len, dst, 0,
+						   meta, NULL);
 }
 
-int renormalize_buffer(const struct index_state *istate, const char *path,
+int renormalize_buffer(struct index_state *istate, const char *path,
 		       const char *src, size_t len, struct strbuf *dst)
 {
-	int ret = convert_to_working_tree_internal(path, src, len, dst, 1, NULL);
+	struct conv_attrs ca;
+	int ret;
+
+	convert_attrs(istate, &ca, path);
+	ret = convert_to_working_tree_ca_internal(&ca, path, src, len, dst, 1,
+						  NULL, NULL);
 	if (ret) {
 		src = dst->buf;
 		len = dst->len;
@@ -1274,12 +1574,12 @@ static void null_free_fn(struct stream_filter *filter)
 }
 
 static struct stream_filter_vtbl null_vtbl = {
-	null_filter_fn,
-	null_free_fn,
+	.filter = null_filter_fn,
+	.free = null_free_fn,
 };
 
 static struct stream_filter null_filter_singleton = {
-	&null_vtbl,
+	.vtbl = &null_vtbl,
 };
 
 int is_null_stream_filter(struct stream_filter *filter)
@@ -1383,8 +1683,8 @@ static void lf_to_crlf_free_fn(struct stream_filter *filter)
 }
 
 static struct stream_filter_vtbl lf_to_crlf_vtbl = {
-	lf_to_crlf_filter_fn,
-	lf_to_crlf_free_fn,
+	.filter = lf_to_crlf_filter_fn,
+	.free = lf_to_crlf_free_fn,
 };
 
 static struct stream_filter *lf_to_crlf_filter(void)
@@ -1479,8 +1779,8 @@ static void cascade_free_fn(struct stream_filter *filter)
 }
 
 static struct stream_filter_vtbl cascade_vtbl = {
-	cascade_filter_fn,
-	cascade_free_fn,
+	.filter = cascade_filter_fn,
+	.free = cascade_free_fn,
 };
 
 static struct stream_filter *cascade_filter(struct stream_filter *one,
@@ -1631,8 +1931,8 @@ static void ident_free_fn(struct stream_filter *filter)
 }
 
 static struct stream_filter_vtbl ident_vtbl = {
-	ident_filter_fn,
-	ident_free_fn,
+	.filter = ident_filter_fn,
+	.free = ident_free_fn,
 };
 
 static struct stream_filter *ident_filter(const struct object_id *oid)
@@ -1648,34 +1948,39 @@ static struct stream_filter *ident_filter(const struct object_id *oid)
 }
 
 /*
- * Return an appropriately constructed filter for the path, or NULL if
+ * Return an appropriately constructed filter for the given ca, or NULL if
  * the contents cannot be filtered without reading the whole thing
  * in-core.
  *
- * Note that you would be crazy to set CRLF, smuge/clean or ident to a
+ * Note that you would be crazy to set CRLF, smudge/clean or ident to a
  * large binary blob you would want us not to slurp into the memory!
  */
-struct stream_filter *get_stream_filter(const char *path, const struct object_id *oid)
+struct stream_filter *get_stream_filter_ca(const struct conv_attrs *ca,
+					   const struct object_id *oid)
 {
-	struct conv_attrs ca;
 	struct stream_filter *filter = NULL;
 
-	convert_attrs(&ca, path);
-	if (ca.drv && (ca.drv->process || ca.drv->smudge || ca.drv->clean))
+	if (classify_conv_attrs(ca) != CA_CLASS_STREAMABLE)
 		return NULL;
 
-	if (ca.crlf_action == CRLF_AUTO || ca.crlf_action == CRLF_AUTO_CRLF)
-		return NULL;
-
-	if (ca.ident)
+	if (ca->ident)
 		filter = ident_filter(oid);
 
-	if (output_eol(ca.crlf_action) == EOL_CRLF)
+	if (output_eol(ca->crlf_action) == EOL_CRLF)
 		filter = cascade_filter(filter, lf_to_crlf_filter());
 	else
 		filter = cascade_filter(filter, &null_filter_singleton);
 
 	return filter;
+}
+
+struct stream_filter *get_stream_filter(struct index_state *istate,
+					const char *path,
+					const struct object_id *oid)
+{
+	struct conv_attrs ca;
+	convert_attrs(istate, &ca, path);
+	return get_stream_filter_ca(&ca, oid);
 }
 
 void free_stream_filter(struct stream_filter *filter)
@@ -1688,4 +1993,44 @@ int stream_filter(struct stream_filter *filter,
 		  char *output, size_t *osize_p)
 {
 	return filter->vtbl->filter(filter, input, isize_p, output, osize_p);
+}
+
+void init_checkout_metadata(struct checkout_metadata *meta, const char *refname,
+			    const struct object_id *treeish,
+			    const struct object_id *blob)
+{
+	memset(meta, 0, sizeof(*meta));
+	if (refname)
+		meta->refname = refname;
+	if (treeish)
+		oidcpy(&meta->treeish, treeish);
+	if (blob)
+		oidcpy(&meta->blob, blob);
+}
+
+void clone_checkout_metadata(struct checkout_metadata *dst,
+			     const struct checkout_metadata *src,
+			     const struct object_id *blob)
+{
+	memcpy(dst, src, sizeof(*dst));
+	if (blob)
+		oidcpy(&dst->blob, blob);
+}
+
+enum conv_attrs_classification classify_conv_attrs(const struct conv_attrs *ca)
+{
+	if (ca->drv) {
+		if (ca->drv->process)
+			return CA_CLASS_INCORE_PROCESS;
+		if (ca->drv->smudge || ca->drv->clean)
+			return CA_CLASS_INCORE_FILTER;
+	}
+
+	if (ca->working_tree_encoding)
+		return CA_CLASS_INCORE;
+
+	if (ca->crlf_action == CRLF_AUTO || ca->crlf_action == CRLF_AUTO_CRLF)
+		return CA_CLASS_INCORE;
+
+	return CA_CLASS_STREAMABLE;
 }

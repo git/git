@@ -7,6 +7,9 @@
 
 test_description='git status advice'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 . "$TEST_DIRECTORY"/lib-rebase.sh
@@ -17,14 +20,14 @@ test_expect_success 'prepare for conflicts' '
 	git config --global advice.statusuoption false &&
 	test_commit init main.txt init &&
 	git branch conflicts &&
-	test_commit on_master main.txt on_master &&
+	test_commit on_main main.txt on_main &&
 	git checkout conflicts &&
 	test_commit on_conflicts main.txt on_conflicts
 '
 
 
 test_expect_success 'status when conflicts unresolved' '
-	test_must_fail git merge master &&
+	test_must_fail git merge main &&
 	cat >expected <<\EOF &&
 On branch conflicts
 You have unmerged paths.
@@ -33,19 +36,18 @@ You have unmerged paths.
 
 Unmerged paths:
   (use "git add <file>..." to mark resolution)
-
 	both modified:   main.txt
 
 no changes added to commit (use "git add" and/or "git commit -a")
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 
 test_expect_success 'status when conflicts resolved before commit' '
 	git reset --hard conflicts &&
-	test_must_fail git merge master &&
+	test_must_fail git merge main &&
 	echo one >main.txt &&
 	git add main.txt &&
 	cat >expected <<\EOF &&
@@ -54,18 +56,17 @@ All conflicts fixed but you are still merging.
   (use "git commit" to conclude merge)
 
 Changes to be committed:
-
 	modified:   main.txt
 
 Untracked files not listed (use -u option to show untracked files)
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 
 test_expect_success 'prepare for rebase conflicts' '
-	git reset --hard master &&
+	git reset --hard main &&
 	git checkout -b rebase_conflicts &&
 	test_commit one_rebase main.txt one &&
 	test_commit two_rebase main.txt two &&
@@ -73,10 +74,10 @@ test_expect_success 'prepare for rebase conflicts' '
 '
 
 
-test_expect_success 'status when rebase in progress before resolving conflicts' '
+test_expect_success 'status when rebase --apply in progress before resolving conflicts' '
 	test_when_finished "git rebase --abort" &&
 	ONTO=$(git rev-parse --short HEAD^^) &&
-	test_must_fail git rebase HEAD^ --onto HEAD^^ &&
+	test_must_fail git rebase --apply HEAD^ --onto HEAD^^ &&
 	cat >expected <<EOF &&
 rebase in progress; onto $ONTO
 You are currently rebasing branch '\''rebase_conflicts'\'' on '\''$ONTO'\''.
@@ -85,23 +86,22 @@ You are currently rebasing branch '\''rebase_conflicts'\'' on '\''$ONTO'\''.
   (use "git rebase --abort" to check out the original branch)
 
 Unmerged paths:
-  (use "git reset HEAD <file>..." to unstage)
+  (use "git restore --staged <file>..." to unstage)
   (use "git add <file>..." to mark resolution)
-
 	both modified:   main.txt
 
 no changes added to commit (use "git add" and/or "git commit -a")
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 
-test_expect_success 'status when rebase in progress before rebase --continue' '
+test_expect_success 'status when rebase --apply in progress before rebase --continue' '
 	git reset --hard rebase_conflicts &&
 	test_when_finished "git rebase --abort" &&
 	ONTO=$(git rev-parse --short HEAD^^) &&
-	test_must_fail git rebase HEAD^ --onto HEAD^^ &&
+	test_must_fail git rebase --apply HEAD^ --onto HEAD^^ &&
 	echo three >main.txt &&
 	git add main.txt &&
 	cat >expected <<EOF &&
@@ -110,23 +110,22 @@ You are currently rebasing branch '\''rebase_conflicts'\'' on '\''$ONTO'\''.
   (all conflicts fixed: run "git rebase --continue")
 
 Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
-
+  (use "git restore --staged <file>..." to unstage)
 	modified:   main.txt
 
 Untracked files not listed (use -u option to show untracked files)
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 
 test_expect_success 'prepare for rebase_i_conflicts' '
-	git reset --hard master &&
+	git reset --hard main &&
 	git checkout -b rebase_i_conflicts &&
 	test_commit one_unmerge main.txt one_unmerge &&
 	git branch rebase_i_conflicts_second &&
-	test_commit one_master main.txt one_master &&
+	test_commit one_main main.txt one_main &&
 	git checkout rebase_i_conflicts_second &&
 	test_commit one_second main.txt one_second
 '
@@ -148,15 +147,14 @@ You are currently rebasing branch '\''rebase_i_conflicts_second'\'' on '\''$ONTO
   (use "git rebase --abort" to check out the original branch)
 
 Unmerged paths:
-  (use "git reset HEAD <file>..." to unstage)
+  (use "git restore --staged <file>..." to unstage)
   (use "git add <file>..." to mark resolution)
-
 	both modified:   main.txt
 
 no changes added to commit (use "git add" and/or "git commit -a")
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 
@@ -176,19 +174,18 @@ You are currently rebasing branch '\''rebase_i_conflicts_second'\'' on '\''$ONTO
   (all conflicts fixed: run "git rebase --continue")
 
 Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
-
+  (use "git restore --staged <file>..." to unstage)
 	modified:   main.txt
 
 Untracked files not listed (use -u option to show untracked files)
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 
 test_expect_success 'status when rebasing -i in edit mode' '
-	git reset --hard master &&
+	git reset --hard main &&
 	git checkout -b rebase_i_edit &&
 	test_commit one_rebase_i main.txt one &&
 	test_commit two_rebase_i main.txt two &&
@@ -213,12 +210,12 @@ You are currently editing a commit while rebasing branch '\''rebase_i_edit'\'' o
 nothing to commit (use -u to show untracked files)
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 
 test_expect_success 'status when splitting a commit' '
-	git reset --hard master &&
+	git reset --hard main &&
 	git checkout -b split_commit &&
 	test_commit one_split main.txt one &&
 	test_commit two_split main.txt two &&
@@ -246,19 +243,18 @@ You are currently splitting a commit while rebasing branch '\''split_commit'\'' 
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   main.txt
 
 no changes added to commit (use "git add" and/or "git commit -a")
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 
 test_expect_success 'status after editing the last commit with --amend during a rebase -i' '
-	git reset --hard master &&
+	git reset --hard main &&
 	git checkout -b amend_last &&
 	test_commit one_amend main.txt one &&
 	test_commit two_amend main.txt two &&
@@ -286,12 +282,12 @@ You are currently editing a commit while rebasing branch '\''amend_last'\'' on '
 nothing to commit (use -u to show untracked files)
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 
 test_expect_success 'prepare for several edits' '
-	git reset --hard master &&
+	git reset --hard main &&
 	git checkout -b several_edits &&
 	test_commit one_edits main.txt one &&
 	test_commit two_edits main.txt two &&
@@ -325,7 +321,7 @@ You are currently editing a commit while rebasing branch '\''several_edits'\'' o
 nothing to commit (use -u to show untracked files)
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 
@@ -354,14 +350,13 @@ You are currently splitting a commit while rebasing branch '\''several_edits'\''
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   main.txt
 
 no changes added to commit (use "git add" and/or "git commit -a")
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 
@@ -392,7 +387,7 @@ You are currently editing a commit while rebasing branch '\''several_edits'\'' o
 nothing to commit (use -u to show untracked files)
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 
@@ -423,7 +418,7 @@ You are currently editing a commit while rebasing branch '\''several_edits'\'' o
 nothing to commit (use -u to show untracked files)
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 
@@ -453,14 +448,13 @@ You are currently splitting a commit while rebasing branch '\''several_edits'\''
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   main.txt
 
 no changes added to commit (use "git add" and/or "git commit -a")
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 
@@ -492,7 +486,7 @@ You are currently editing a commit while rebasing branch '\''several_edits'\'' o
 nothing to commit (use -u to show untracked files)
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 
@@ -525,7 +519,7 @@ You are currently editing a commit while rebasing branch '\''several_edits'\'' o
 nothing to commit (use -u to show untracked files)
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 
@@ -557,14 +551,13 @@ You are currently splitting a commit while rebasing branch '\''several_edits'\''
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   main.txt
 
 no changes added to commit (use "git add" and/or "git commit -a")
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 
@@ -598,12 +591,12 @@ You are currently editing a commit while rebasing branch '\''several_edits'\'' o
 nothing to commit (use -u to show untracked files)
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 
 test_expect_success 'prepare am_session' '
-	git reset --hard master &&
+	git reset --hard main &&
 	git checkout -b am_session &&
 	test_commit one_am one.txt "one" &&
 	test_commit two_am two.txt "two" &&
@@ -626,7 +619,7 @@ You are in the middle of an am session.
 nothing to commit (use -u to show untracked files)
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 
@@ -648,7 +641,7 @@ You are in the middle of an am session.
 nothing to commit (use -u to show untracked files)
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 
@@ -666,17 +659,18 @@ On branch am_empty
 You are in the middle of an am session.
 The current patch is empty.
   (use "git am --skip" to skip this patch)
+  (use "git am --allow-empty" to record this patch as an empty commit)
   (use "git am --abort" to restore the original branch)
 
 nothing to commit (use -u to show untracked files)
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 
 test_expect_success 'status when bisecting' '
-	git reset --hard master &&
+	git reset --hard main &&
 	git checkout -b bisect &&
 	test_commit one_bisect main.txt one &&
 	test_commit two_bisect main.txt two &&
@@ -694,12 +688,12 @@ You are currently bisecting, started from branch '\''bisect'\''.
 nothing to commit (use -u to show untracked files)
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 
-test_expect_success 'status when rebase conflicts with statushints disabled' '
-	git reset --hard master &&
+test_expect_success 'status when rebase --apply conflicts with statushints disabled' '
+	git reset --hard main &&
 	git checkout -b statushints_disabled &&
 	test_when_finished "git config --local advice.statushints true" &&
 	git config --local advice.statushints false &&
@@ -708,7 +702,7 @@ test_expect_success 'status when rebase conflicts with statushints disabled' '
 	test_commit three_statushints main.txt three &&
 	test_when_finished "git rebase --abort" &&
 	ONTO=$(git rev-parse --short HEAD^^) &&
-	test_must_fail git rebase HEAD^ --onto HEAD^^ &&
+	test_must_fail git rebase --apply HEAD^ --onto HEAD^^ &&
 	cat >expected <<EOF &&
 rebase in progress; onto $ONTO
 You are currently rebasing branch '\''statushints_disabled'\'' on '\''$ONTO'\''.
@@ -719,12 +713,12 @@ Unmerged paths:
 no changes added to commit
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 
 test_expect_success 'prepare for cherry-pick conflicts' '
-	git reset --hard master &&
+	git reset --hard main &&
 	git checkout -b cherry_branch &&
 	test_commit one_cherry main.txt one &&
 	test_commit two_cherries main.txt two &&
@@ -743,17 +737,17 @@ test_expect_success 'status when cherry-picking before resolving conflicts' '
 On branch cherry_branch
 You are currently cherry-picking commit $TO_CHERRY_PICK.
   (fix conflicts and run "git cherry-pick --continue")
+  (use "git cherry-pick --skip" to skip this patch)
   (use "git cherry-pick --abort" to cancel the cherry-pick operation)
 
 Unmerged paths:
   (use "git add <file>..." to mark resolution)
-
 	both modified:   main.txt
 
 no changes added to commit (use "git add" and/or "git commit -a")
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 
@@ -768,16 +762,51 @@ test_expect_success 'status when cherry-picking after resolving conflicts' '
 On branch cherry_branch
 You are currently cherry-picking commit $TO_CHERRY_PICK.
   (all conflicts fixed: run "git cherry-pick --continue")
+  (use "git cherry-pick --skip" to skip this patch)
   (use "git cherry-pick --abort" to cancel the cherry-pick operation)
 
 Changes to be committed:
-
 	modified:   main.txt
 
 Untracked files not listed (use -u option to show untracked files)
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
+'
+
+test_expect_success 'status when cherry-picking after committing conflict resolution' '
+	git reset --hard cherry_branch &&
+	test_when_finished "git cherry-pick --abort" &&
+	test_must_fail git cherry-pick cherry_branch_second one_cherry &&
+	echo end >main.txt &&
+	git commit -a &&
+	cat >expected <<EOF &&
+On branch cherry_branch
+Cherry-pick currently in progress.
+  (run "git cherry-pick --continue" to continue)
+  (use "git cherry-pick --skip" to skip this patch)
+  (use "git cherry-pick --abort" to cancel the cherry-pick operation)
+
+nothing to commit (use -u to show untracked files)
+EOF
+	git status --untracked-files=no >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'status shows cherry-pick with invalid oid' '
+	mkdir .git/sequencer &&
+	test_write_lines "pick invalid-oid" >.git/sequencer/todo &&
+	git status --untracked-files=no >actual 2>err &&
+	git cherry-pick --quit &&
+	test_must_be_empty err &&
+	test_cmp expected actual
+'
+
+test_expect_success 'status does not show error if .git/sequencer is a file' '
+	test_when_finished "rm .git/sequencer" &&
+	test_write_lines hello >.git/sequencer &&
+	git status --untracked-files=no 2>err &&
+	test_must_be_empty err
 '
 
 test_expect_success 'status showing detached at and from a tag' '
@@ -788,7 +817,7 @@ HEAD detached at atag
 nothing to commit (use -u to show untracked files)
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual &&
+	test_cmp expected actual &&
 
 	git reset --hard HEAD^ &&
 	cat >expected <<\EOF &&
@@ -796,11 +825,11 @@ HEAD detached from atag
 nothing to commit (use -u to show untracked files)
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 test_expect_success 'status while reverting commit (conflicts)' '
-	git checkout master &&
+	git checkout main &&
 	echo before >to-revert.txt &&
 	test_commit before to-revert.txt &&
 	echo old >to-revert.txt &&
@@ -810,55 +839,74 @@ test_expect_success 'status while reverting commit (conflicts)' '
 	TO_REVERT=$(git rev-parse --short HEAD^) &&
 	test_must_fail git revert $TO_REVERT &&
 	cat >expected <<EOF &&
-On branch master
+On branch main
 You are currently reverting commit $TO_REVERT.
   (fix conflicts and run "git revert --continue")
+  (use "git revert --skip" to skip this patch)
   (use "git revert --abort" to cancel the revert operation)
 
 Unmerged paths:
-  (use "git reset HEAD <file>..." to unstage)
+  (use "git restore --staged <file>..." to unstage)
   (use "git add <file>..." to mark resolution)
-
 	both modified:   to-revert.txt
 
 no changes added to commit (use "git add" and/or "git commit -a")
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 test_expect_success 'status while reverting commit (conflicts resolved)' '
 	echo reverted >to-revert.txt &&
 	git add to-revert.txt &&
 	cat >expected <<EOF &&
-On branch master
+On branch main
 You are currently reverting commit $TO_REVERT.
   (all conflicts fixed: run "git revert --continue")
+  (use "git revert --skip" to skip this patch)
   (use "git revert --abort" to cancel the revert operation)
 
 Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
-
+  (use "git restore --staged <file>..." to unstage)
 	modified:   to-revert.txt
 
 Untracked files not listed (use -u option to show untracked files)
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 test_expect_success 'status after reverting commit' '
 	git revert --continue &&
 	cat >expected <<\EOF &&
-On branch master
+On branch main
 nothing to commit (use -u to show untracked files)
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
+'
+
+test_expect_success 'status while reverting after committing conflict resolution' '
+	test_when_finished "git revert --abort" &&
+	git reset --hard new &&
+	test_must_fail git revert old new &&
+	echo reverted >to-revert.txt &&
+	git commit -a &&
+	cat >expected <<EOF &&
+On branch main
+Revert currently in progress.
+  (run "git revert --continue" to continue)
+  (use "git revert --skip" to skip this patch)
+  (use "git revert --abort" to cancel the revert operation)
+
+nothing to commit (use -u to show untracked files)
+EOF
+	git status --untracked-files=no >actual &&
+	test_cmp expected actual
 '
 
 test_expect_success 'prepare for different number of commits rebased' '
-	git reset --hard master &&
+	git reset --hard main &&
 	git checkout -b several_commits &&
 	test_commit one_commit main.txt one &&
 	test_commit two_commit main.txt two &&
@@ -884,7 +932,7 @@ You are currently editing a commit while rebasing branch '\''several_commits'\''
 nothing to commit (use -u to show untracked files)
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 test_expect_success 'status: two commands done with some white lines in done file' '
@@ -912,7 +960,7 @@ You are currently editing a commit while rebasing branch '\''several_commits'\''
 nothing to commit (use -u to show untracked files)
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 test_expect_success 'status: two remaining commands with some white lines in todo file' '
@@ -941,7 +989,7 @@ You are currently editing a commit while rebasing branch '\''several_commits'\''
 nothing to commit (use -u to show untracked files)
 EOF
 	git status --untracked-files=no >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 test_expect_success 'status: handle not-yet-started rebase -i gracefully' '
@@ -960,7 +1008,7 @@ You are currently editing a commit while rebasing branch '\''several_commits'\''
 
 nothing to commit (use -u to show untracked files)
 EOF
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 test_done

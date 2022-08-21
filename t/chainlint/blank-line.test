@@ -1,0 +1,10 @@
+(
+
+	nothing &&
+
+	something
+# LINT: ignore blank lines since final _statement_ before subshell end is
+# LINT: significant to "&&"-check, not final _line_ (which might be blank)
+
+
+)

@@ -1,0 +1,9 @@
+class MyExample {
+    public <T extends Bar & Foo<T>, R> Map<T, R[]> foo(String[] RIGHT) {
+        someMethodCall();
+        someOtherMethod()
+            .doThat();
+        // Whatever...
+        return (List<T>) Arrays.asList("ChangeMe");
+    }
+}

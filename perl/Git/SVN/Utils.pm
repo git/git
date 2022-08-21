@@ -1,7 +1,7 @@
 package Git::SVN::Utils;
 
 use strict;
-use warnings;
+use warnings $ENV{GIT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
 
 use SVN::Core;
 

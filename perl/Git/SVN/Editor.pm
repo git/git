@@ -1,7 +1,7 @@
 package Git::SVN::Editor;
 use vars qw/@ISA $_rmdir $_cp_similarity $_find_copies_harder $_rename_limit/;
 use strict;
-use warnings;
+use warnings $ENV{GIT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
 use SVN::Core;
 use SVN::Delta;
 use Carp qw/croak/;
@@ -63,7 +63,7 @@ sub generate_diff {
 	my @mods;
 	while (defined($_ = get_record($diff_fh, "\0"))) {
 		if ($state eq 'meta' && /^:(\d{6})\s(\d{6})\s
-					($::sha1)\s($::sha1)\s
+					($::oid)\s($::oid)\s
 					([MTCRAD])\d*$/xo) {
 			push @mods, {	mode_a => $1, mode_b => $2,
 					sha1_a => $3, sha1_b => $4,
@@ -400,12 +400,12 @@ sub T {
 	    ($m->{mode_b} !~ /^120/ && $m->{mode_a} =~ /^120/)) {
 		$self->D({
 			mode_a => $m->{mode_a}, mode_b => '000000',
-			sha1_a => $m->{sha1_a}, sha1_b => '0' x 40,
+			sha1_a => $m->{sha1_a}, sha1_b => '0' x $::oid_length,
 			chg => 'D', file_b => $m->{file_b}
 		}, $deletions);
 		$self->A({
 			mode_a => '000000', mode_b => $m->{mode_b},
-			sha1_a => '0' x 40, sha1_b => $m->{sha1_b},
+			sha1_a => '0' x $::oid_length, sha1_b => $m->{sha1_b},
 			chg => 'A', file_b => $m->{file_b}
 		}, $deletions);
 		return;
@@ -434,7 +434,7 @@ sub _chg_file_get_blob ($$$$) {
 		$self->change_file_prop($fbat,'svn:special',undef);
 	}
 	my $blob = $m->{"sha1_$which"};
-	return ($fh,) if ($blob =~ /^0{40}$/);
+	return ($fh,) if ($blob =~ /^0+$/);
 	my $size = $::_repository->cat_blob($blob, $fh);
 	croak "Failed to read object $blob" if ($size < 0);
 	$fh->flush == 0 or croak $!;

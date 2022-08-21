@@ -8,3 +8,9 @@
 # in practice it (hopefully!) doesn't matter.
 race:^want_color$
 race:^transfer_debug$
+
+# A boolean value, which tells whether the replace_map has been initialized or
+# not, is read racily with an update. As this variable is written to only once,
+# and it's OK if the value change right after reading it, this shouldn't be a
+# problem.
+race:^lookup_replace_object$

@@ -10,25 +10,16 @@ test_description='git apply with rejects
 . ./test-lib.sh
 
 test_expect_success setup '
-	for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21
-	do
-		echo $i
-	done >file1 &&
+	test_write_lines 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 >file1 &&
 	cat file1 >saved.file1 &&
 	git update-index --add file1 &&
 	git commit -m initial &&
 
-	for i in 1 2 A B 4 5 6 7 8 9 10 11 12 C 13 14 15 16 17 18 19 20 D 21
-	do
-		echo $i
-	done >file1 &&
+	test_write_lines 1 2 A B 4 5 6 7 8 9 10 11 12 C 13 14 15 16 17 18 19 20 D 21 >file1 &&
 	git diff >patch.1 &&
 	cat file1 >clean &&
 
-	for i in 1 E 2 3 4 5 6 7 8 9 10 11 12 C 13 14 15 16 17 18 19 20 F 21
-	do
-		echo $i
-	done >expected &&
+	test_write_lines 1 E 2 3 4 5 6 7 8 9 10 11 12 C 13 14 15 16 17 18 19 20 F 21 >expected &&
 
 	mv file1 file2 &&
 	git update-index --add --remove file1 file2 &&
@@ -38,10 +29,7 @@ test_expect_success setup '
 	mv saved.file1 file1 &&
 	git update-index --add --remove file1 file2 &&
 
-	for i in 1 E 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 F 21
-	do
-		echo $i
-	done >file1 &&
+	test_write_lines 1 E 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 F 21 >file1 &&
 
 	cat file1 >saved.file1
 '
@@ -72,9 +60,9 @@ test_expect_success 'apply with --reject should fail but update the file' '
 	rm -f file1.rej file2.rej &&
 
 	test_must_fail git apply --reject patch.1 &&
-	test_cmp file1 expected &&
+	test_cmp expected file1 &&
 
-	cat file1.rej &&
+	test_path_is_file file1.rej &&
 	test_path_is_missing file2.rej
 '
 
@@ -85,9 +73,9 @@ test_expect_success 'apply with --reject should fail but update the file' '
 
 	test_must_fail git apply --reject patch.2 >rejects &&
 	test_path_is_missing file1 &&
-	test_cmp file2 expected &&
+	test_cmp expected file2 &&
 
-	cat file2.rej &&
+	test_path_is_file file2.rej &&
 	test_path_is_missing file1.rej
 
 '
@@ -99,9 +87,9 @@ test_expect_success 'the same test with --verbose' '
 
 	test_must_fail git apply --reject --verbose patch.2 >rejects &&
 	test_path_is_missing file1 &&
-	test_cmp file2 expected &&
+	test_cmp expected file2 &&
 
-	cat file2.rej &&
+	test_path_is_file file2.rej &&
 	test_path_is_missing file1.rej
 
 '

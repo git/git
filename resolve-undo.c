@@ -15,7 +15,7 @@ void record_resolve_undo(struct index_state *istate, struct cache_entry *ce)
 		return;
 
 	if (!istate->resolve_undo) {
-		resolve_undo = xcalloc(1, sizeof(*resolve_undo));
+		CALLOC_ARRAY(resolve_undo, 1);
 		resolve_undo->strdup_strings = 1;
 		istate->resolve_undo = resolve_undo;
 	}
@@ -57,7 +57,7 @@ struct string_list *resolve_undo_read(const char *data, unsigned long size)
 	int i;
 	const unsigned rawsz = the_hash_algo->rawsz;
 
-	resolve_undo = xcalloc(1, sizeof(*resolve_undo));
+	CALLOC_ARRAY(resolve_undo, 1);
 	resolve_undo->strdup_strings = 1;
 
 	while (size) {
@@ -90,7 +90,7 @@ struct string_list *resolve_undo_read(const char *data, unsigned long size)
 				continue;
 			if (size < rawsz)
 				goto error;
-			memcpy(ui->oid[i].hash, (const unsigned char *)data, rawsz);
+			oidread(&ui->oid[i], (const unsigned char *)data);
 			size -= rawsz;
 			data += rawsz;
 		}
@@ -146,7 +146,9 @@ int unmerge_index_entry_at(struct index_state *istate, int pos)
 		struct cache_entry *nce;
 		if (!ru->mode[i])
 			continue;
-		nce = make_cache_entry(ru->mode[i], ru->oid[i].hash,
+		nce = make_cache_entry(istate,
+				       ru->mode[i],
+				       &ru->oid[i],
 				       name, i + 1, 0);
 		if (matched)
 			nce->ce_flags |= CE_MATCHED;
@@ -170,6 +172,8 @@ void unmerge_marked_index(struct index_state *istate)
 	if (!istate->resolve_undo)
 		return;
 
+	/* TODO: audit for interaction with sparse-index. */
+	ensure_full_index(istate);
 	for (i = 0; i < istate->cache_nr; i++) {
 		const struct cache_entry *ce = istate->cache[i];
 		if (ce->ce_flags & CE_MATCHED)
@@ -184,9 +188,11 @@ void unmerge_index(struct index_state *istate, const struct pathspec *pathspec)
 	if (!istate->resolve_undo)
 		return;
 
+	/* TODO: audit for interaction with sparse-index. */
+	ensure_full_index(istate);
 	for (i = 0; i < istate->cache_nr; i++) {
 		const struct cache_entry *ce = istate->cache[i];
-		if (!ce_path_match(ce, pathspec, NULL))
+		if (!ce_path_match(istate, ce, pathspec, NULL))
 			continue;
 		i = unmerge_index_entry_at(istate, i);
 	}

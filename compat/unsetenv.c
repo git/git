@@ -1,6 +1,6 @@
 #include "../git-compat-util.h"
 
-void gitunsetenv (const char *name)
+int gitunsetenv(const char *name)
 {
 #if !defined(__MINGW32__)
      extern char **environ;
@@ -24,4 +24,6 @@ void gitunsetenv (const char *name)
 	  ++dst;
      }
      environ[dst] = NULL;
+
+     return 0;
 }

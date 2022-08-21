@@ -12,7 +12,7 @@ test_expect_success 'creating page w/ >500 revisions' '
 	for i in $(test_seq 501)
 	do
 		echo "creating revision $i" &&
-		wiki_editpage foo "revision $i<br/>" true
+		wiki_editpage foo "revision $i<br/>" true || return 1
 	done
 '
 

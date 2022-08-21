@@ -2,10 +2,11 @@
 # Copyright (C) 2006, Eric Wong <normalperson@yhbt.net>
 # License: GPL v2 or later
 use 5.008;
-use warnings;
+use warnings $ENV{GIT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
 use strict;
 use vars qw/	$AUTHOR $VERSION
-		$sha1 $sha1_short $_revision $_repository
+		$oid $oid_short $oid_length
+		$_revision $_repository
 		$_q $_authors $_authors_prog %users/;
 $AUTHOR = 'Eric Wong <normalperson@yhbt.net>';
 $VERSION = '@@GIT_VERSION@@';
@@ -103,14 +104,15 @@ sub _req_svn {
 	}
 }
 
-$sha1 = qr/[a-f\d]{40}/;
-$sha1_short = qr/[a-f\d]{4,40}/;
+$oid = qr/(?:[a-f\d]{40}(?:[a-f\d]{24})?)/;
+$oid_short = qr/[a-f\d]{4,64}/;
+$oid_length = 40;
 my ($_stdin, $_help, $_edit,
 	$_message, $_file, $_branch_dest,
 	$_template, $_shared,
 	$_version, $_fetch_all, $_no_rebase, $_fetch_parent,
 	$_before, $_after,
-	$_merge, $_strategy, $_preserve_merges, $_dry_run, $_parents, $_local,
+	$_merge, $_strategy, $_rebase_merges, $_dry_run, $_parents, $_local,
 	$_prefix, $_no_checkout, $_url, $_verbose,
 	$_commit_url, $_tag, $_merge_info, $_interactive, $_set_svn_props);
 
@@ -270,7 +272,7 @@ my %cmd = (
 			  'local|l' => \$_local,
 			  'fetch-all|all' => \$_fetch_all,
 			  'dry-run|n' => \$_dry_run,
-			  'preserve-merges|p' => \$_preserve_merges,
+			  'rebase-merges|p' => \$_rebase_merges,
 			  %fc_opts } ],
 	'commit-diff' => [ \&cmd_commit_diff,
 	                   'Commit a diff between two trees',
@@ -497,6 +499,7 @@ sub do_git_init_db {
 		command_noisy('config', "$pfx.preserve-empty-dirs", 'true');
 		command_noisy('config', "$pfx.placeholder-filename", $$fname);
 	}
+	load_object_format();
 }
 
 sub init_subdir {
@@ -581,7 +584,7 @@ sub cmd_set_tree {
 		print "Reading from stdin...\n";
 		@commits = ();
 		while (<STDIN>) {
-			if (/\b($sha1_short)\b/o) {
+			if (/\b($oid_short)\b/o) {
 				unshift @commits, $1;
 			}
 		}
@@ -1054,7 +1057,7 @@ sub cmd_dcommit {
 					  'If you are attempting to commit ',
 					  "merges, try running:\n\t",
 					  'git rebase --interactive',
-					  '--preserve-merges ',
+					  '--rebase-merges ',
 					  $gs->refname,
 					  "\nBefore dcommitting";
 				}
@@ -1717,7 +1720,7 @@ sub rebase_cmd {
 	push @cmd, '-v' if $_verbose;
 	push @cmd, qw/--merge/ if $_merge;
 	push @cmd, "--strategy=$_strategy" if $_strategy;
-	push @cmd, "--preserve-merges" if $_preserve_merges;
+	push @cmd, "--rebase-merges" if $_rebase_merges;
 	@cmd;
 }
 
@@ -1830,7 +1833,7 @@ sub get_tree_from_treeish {
 	if ($type eq 'commit') {
 		$expected = (grep /^tree /, command(qw/cat-file commit/,
 		                                    $treeish))[0];
-		($expected) = ($expected =~ /^tree ($sha1)$/o);
+		($expected) = ($expected =~ /^tree ($oid)$/o);
 		die "Unable to get tree from $treeish\n" unless $expected;
 	} elsif ($type eq 'tree') {
 		$expected = $treeish;
@@ -1974,7 +1977,13 @@ sub read_git_config {
 			}
 		}
 	}
+	load_object_format();
 	delete @$opts{@config_only} if @config_only;
+}
+
+sub load_object_format {
+	chomp(my $hash = `git config --get extensions.objectformat`);
+	$::oid_length = 64 if $hash eq 'sha256';
 }
 
 sub extract_metadata {
@@ -2005,10 +2014,10 @@ sub cmt_sha2rev_batch {
 		print $out $sha, "\n";
 
 		while (my $line = <$in>) {
-			if ($first && $line =~ /^[[:xdigit:]]{40}\smissing$/) {
+			if ($first && $line =~ /^$::oid\smissing$/) {
 				last;
 			} elsif ($first &&
-			       $line =~ /^[[:xdigit:]]{40}\scommit\s(\d+)$/) {
+			       $line =~ /^$::oid\scommit\s(\d+)$/) {
 				$first = 0;
 				$size = $1;
 				next;
@@ -2035,7 +2044,7 @@ sub working_head_info {
 	my $hash;
 	my %max;
 	while (<$fh>) {
-		if ( m{^commit ($::sha1)$} ) {
+		if ( m{^commit ($::oid)$} ) {
 			unshift @$refs, $hash if $hash and $refs;
 			$hash = $1;
 			next;

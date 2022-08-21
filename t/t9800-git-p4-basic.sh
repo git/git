@@ -2,6 +2,9 @@
 
 test_description='git p4 tests'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./lib-git-p4.sh
 
 test_expect_success 'start p4d' '
@@ -68,6 +71,91 @@ test_expect_success 'git p4 sync new branch' '
 		git p4 sync --branch=refs/remotes/p4/depot //depot@all &&
 		git log --oneline p4/depot >lines &&
 		test_line_count = 2 lines
+	)
+'
+
+#
+# Setup as before, and then explicitly sync imported branch, using a
+# different ref format.
+#
+test_expect_success 'git p4 sync existing branch without changes' '
+	test_create_repo "$git" &&
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		test_commit head &&
+		git p4 sync --branch=depot //depot@all &&
+		git p4 sync --branch=refs/remotes/p4/depot >out &&
+		test_i18ngrep "No changes to import!" out
+	)
+'
+
+#
+# Same as before, relative branch name.
+#
+test_expect_success 'git p4 sync existing branch with relative name' '
+	test_create_repo "$git" &&
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		test_commit head &&
+		git p4 sync --branch=branch1 //depot@all &&
+		git p4 sync --branch=p4/branch1 >out &&
+		test_i18ngrep "No changes to import!" out
+	)
+'
+
+#
+# Same as before, with a nested branch path, referenced different ways.
+#
+test_expect_success 'git p4 sync existing branch with nested path' '
+	test_create_repo "$git" &&
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		test_commit head &&
+		git p4 sync --branch=p4/some/path //depot@all &&
+		git p4 sync --branch=some/path >out &&
+		test_i18ngrep "No changes to import!" out
+	)
+'
+
+#
+# Same as before, with a full ref path outside the p4/* namespace.
+#
+test_expect_success 'git p4 sync branch explicit ref without p4 in path' '
+	test_create_repo "$git" &&
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		test_commit head &&
+		git p4 sync --branch=refs/remotes/someremote/depot //depot@all &&
+		git p4 sync --branch=refs/remotes/someremote/depot >out &&
+		test_i18ngrep "No changes to import!" out
+	)
+'
+
+test_expect_success 'git p4 sync nonexistent ref' '
+	test_create_repo "$git" &&
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		test_commit head &&
+		git p4 sync --branch=depot //depot@all &&
+		test_must_fail git p4 sync --branch=depot2 2>errs &&
+		test_i18ngrep "Perhaps you never did" errs
+	)
+'
+
+test_expect_success 'git p4 sync existing non-p4-imported ref' '
+	test_create_repo "$git" &&
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		test_commit head &&
+		git p4 sync --branch=depot //depot@all &&
+		test_must_fail git p4 sync --branch=refs/heads/master 2>errs &&
+		test_i18ngrep "Perhaps you never did" errs
 	)
 '
 
@@ -168,7 +256,7 @@ test_expect_success 'clone using non-numeric revision ranges' '
 			cd "$git" &&
 			git ls-files >lines &&
 			test_line_count = 8 lines
-		)
+		) || return 1
 	done
 '
 
@@ -202,7 +290,6 @@ test_expect_success 'exit when p4 fails to produce marshaled output' '
 		export PATH &&
 		test_expect_code 1 git p4 clone --dest="$git" //depot >errs 2>&1
 	) &&
-	cat errs &&
 	test_i18ngrep ! Traceback errs
 '
 
@@ -227,7 +314,7 @@ test_expect_success 'clone --bare should make a bare repository' '
 		git config --get --bool core.bare true &&
 		git rev-parse --verify refs/remotes/p4/master &&
 		git rev-parse --verify refs/remotes/p4/HEAD &&
-		git rev-parse --verify refs/heads/master &&
+		git rev-parse --verify refs/heads/main &&
 		git rev-parse --verify HEAD
 	)
 '
@@ -258,6 +345,40 @@ test_expect_success 'unresolvable host in P4PORT should display error' '
 		export P4PORT &&
 		test_expect_code 1 git p4 sync >out 2>err &&
 		grep "connect to nosuchhost" err
+	)
+'
+
+# Test following scenarios:
+#   - Without ".git/hooks/p4-pre-submit" , submit should continue
+#   - With the hook returning 0, submit should continue
+#   - With the hook returning 1, submit should abort
+test_expect_success 'run hook p4-pre-submit before submit' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$git" &&
+		echo "hello world" >hello.txt &&
+		git add hello.txt &&
+		git commit -m "add hello.txt" &&
+		git config git-p4.skipSubmitEdit true &&
+		git p4 submit --dry-run >out &&
+		grep "Would apply" out
+	) &&
+	test_hook -C "$git" p4-pre-submit <<-\EOF &&
+	exit 0
+	EOF
+	(
+		cd "$git" &&
+		git p4 submit --dry-run >out &&
+		grep "Would apply" out
+	) &&
+	test_hook -C "$git" --clobber p4-pre-submit <<-\EOF &&
+	exit 1
+	EOF
+	(
+		cd "$git" &&
+		test_must_fail git p4 submit --dry-run >errs 2>&1 &&
+		! grep "Would apply" errs
 	)
 '
 
@@ -295,10 +416,6 @@ test_expect_success 'submit from worktree' '
 		p4 sync &&
 		test_path_is_file worktree-commit.t
 	)
-'
-
-test_expect_success 'kill p4d' '
-	kill_p4d
 '
 
 test_done

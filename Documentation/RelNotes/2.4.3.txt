@@ -66,7 +66,7 @@ Fixes since v2.4.3
  * Some time ago, "git blame" (incorrectly) lost the convert_to_git()
    call when synthesizing a fake "tip" commit that represents the
    state in the working tree, which broke folks who record the history
-   with LF line ending to make their project portabile across
+   with LF line ending to make their project portable across
    platforms while terminating lines in their working tree files with
    CRLF for their platform.
 

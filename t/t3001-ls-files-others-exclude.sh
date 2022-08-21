@@ -8,6 +8,7 @@ test_description='git ls-files --others --exclude
 This test runs git ls-files --others and tests --exclude patterns.
 '
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 rm -fr one three
@@ -66,26 +67,26 @@ echo '!*.2
 
 allignores='.gitignore one/.gitignore one/two/.gitignore'
 
-test_expect_success \
-    'git ls-files --others with various exclude options.' \
-    'git ls-files --others \
+test_expect_success 'git ls-files --others with various exclude options.' '
+	git ls-files --others \
        --exclude=\*.6 \
        --exclude-per-directory=.gitignore \
        --exclude-from=.git/ignore \
-       >output &&
-     test_cmp expect output'
+	>output &&
+	test_cmp expect output
+'
 
 # Test \r\n (MSDOS-like systems)
 printf '*.1\r\n/*.3\r\n!*.6\r\n' >.gitignore
 
-test_expect_success \
-    'git ls-files --others with \r\n line endings.' \
-    'git ls-files --others \
+test_expect_success 'git ls-files --others with \r\n line endings.' '
+	git ls-files --others \
        --exclude=\*.6 \
        --exclude-per-directory=.gitignore \
        --exclude-from=.git/ignore \
-       >output &&
-     test_cmp expect output'
+	>output &&
+	test_cmp expect output
+'
 
 test_expect_success 'setup skip-worktree gitignore' '
 	git add $allignores &&
@@ -93,14 +94,14 @@ test_expect_success 'setup skip-worktree gitignore' '
 	rm $allignores
 '
 
-test_expect_success \
-    'git ls-files --others with various exclude options.' \
-    'git ls-files --others \
+test_expect_success 'git ls-files --others with various exclude options.' '
+	git ls-files --others \
        --exclude=\*.6 \
        --exclude-per-directory=.gitignore \
        --exclude-from=.git/ignore \
-       >output &&
-     test_cmp expect output'
+	>output &&
+	test_cmp expect output
+'
 
 test_expect_success 'restore gitignore' '
 	git checkout --ignore-skip-worktree-bits $allignores &&
@@ -210,8 +211,7 @@ test_expect_success 'subdirectory ignore (toplevel)' '
 		cd top &&
 		git ls-files -o --exclude-standard
 	) >actual &&
-	>expect &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'subdirectory ignore (l1/l2)' '
@@ -219,8 +219,7 @@ test_expect_success 'subdirectory ignore (l1/l2)' '
 		cd top/l1/l2 &&
 		git ls-files -o --exclude-standard
 	) >actual &&
-	>expect &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'subdirectory ignore (l1)' '
@@ -228,8 +227,7 @@ test_expect_success 'subdirectory ignore (l1)' '
 		cd top/l1 &&
 		git ls-files -o --exclude-standard
 	) >actual &&
-	>expect &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'show/hide empty ignored directory (setup)' '
@@ -251,8 +249,7 @@ test_expect_success 'hide empty ignored directory with --no-empty-directory' '
 		cd top &&
 		git ls-files -o -i --exclude l1 --directory --no-empty-directory
 	) >actual &&
-	>expect &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'show/hide empty ignored sub-directory (setup)' '
@@ -277,32 +274,34 @@ test_expect_success 'hide empty ignored sub-directory with --no-empty-directory'
 		cd top &&
 		git ls-files -o -i --exclude l1 --directory --no-empty-directory
 	) >actual &&
-	>expect &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'pattern matches prefix completely' '
-	: >expect &&
 	git ls-files -i -o --exclude "/three/a.3[abc]" >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'ls-files with "**" patterns' '
-	cat <<\EOF >expect &&
-a.1
-one/a.1
-one/two/a.1
-three/a.1
-EOF
+	cat <<-\EOF >expect &&
+	a.1
+	one/a.1
+	one/two/a.1
+	three/a.1
+	EOF
 	git ls-files -o -i --exclude "**/a.1" >actual &&
 	test_cmp expect actual
 '
 
+test_expect_success 'ls-files with "**" patterns and --directory' '
+	# Expectation same as previous test
+	git ls-files --directory -o -i --exclude "**/a.1" >actual &&
+	test_cmp expect actual
+'
 
 test_expect_success 'ls-files with "**" patterns and no slashes' '
-	: >expect &&
 	git ls-files -o -i --exclude "one**a.1" >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_done

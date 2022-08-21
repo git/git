@@ -51,6 +51,69 @@ test_expect_success 'setup' '
 	EOF
 '
 
+test_expect_success 'with cmd' '
+	test_when_finished "git config --remove-section trailer.bug" &&
+	git config trailer.bug.key "Bug-maker: " &&
+	git config trailer.bug.ifExists "add" &&
+	git config trailer.bug.cmd "echo \"maybe is\"" &&
+	cat >expected2 <<-EOF &&
+
+	Bug-maker: maybe is him
+	Bug-maker: maybe is me
+	EOF
+	git interpret-trailers --trailer "bug: him" --trailer "bug:me" \
+		>actual2 &&
+	test_cmp expected2 actual2
+'
+
+test_expect_success 'with cmd and $1' '
+	test_when_finished "git config --remove-section trailer.bug" &&
+	git config trailer.bug.key "Bug-maker: " &&
+	git config trailer.bug.ifExists "add" &&
+	git config trailer.bug.cmd "echo \"\$1\" is" &&
+	cat >expected2 <<-EOF &&
+
+	Bug-maker: him is him
+	Bug-maker: me is me
+	EOF
+	git interpret-trailers --trailer "bug: him" --trailer "bug:me" \
+		>actual2 &&
+	test_cmp expected2 actual2
+'
+
+test_expect_success 'with cmd and $1 with sh -c' '
+	test_when_finished "git config --remove-section trailer.bug" &&
+	git config trailer.bug.key "Bug-maker: " &&
+	git config trailer.bug.ifExists "replace" &&
+	git config trailer.bug.cmd "sh -c \"echo who is \"\$1\"\"" &&
+	cat >expected2 <<-EOF &&
+
+	Bug-maker: who is me
+	EOF
+	git interpret-trailers --trailer "bug: him" --trailer "bug:me" \
+		>actual2 &&
+	test_cmp expected2 actual2
+'
+
+test_expect_success 'with cmd and $1 with shell script' '
+	test_when_finished "git config --remove-section trailer.bug" &&
+	git config trailer.bug.key "Bug-maker: " &&
+	git config trailer.bug.ifExists "replace" &&
+	git config trailer.bug.cmd "./echoscript" &&
+	cat >expected2 <<-EOF &&
+
+	Bug-maker: who is me
+	EOF
+	cat >echoscript <<-EOF &&
+	#!/bin/sh
+	echo who is "\$1"
+	EOF
+	chmod +x echoscript &&
+	git interpret-trailers --trailer "bug: him" --trailer "bug:me" \
+		>actual2 &&
+	test_cmp expected2 actual2
+'
+
 test_expect_success 'without config' '
 	sed -e "s/ Z\$/ /" >expected <<-\EOF &&
 
@@ -93,7 +156,7 @@ test_expect_success 'with config option on the command line' '
 		Acked-by: Johan
 		Reviewed-by: Peff
 	EOF
-	{ echo; echo "Acked-by: Johan"; } |
+	{ echo && echo "Acked-by: Johan"; } |
 	git -c "trailer.Acked-by.ifexists=addifdifferent" interpret-trailers \
 		--trailer "Reviewed-by: Peff" --trailer "Acked-by: Johan" >actual &&
 	test_cmp expected actual
@@ -538,33 +601,50 @@ test_expect_success 'with 2 files arguments' '
 	test_cmp expected actual
 '
 
-test_expect_success 'with message that has comments' '
-	cat basic_message >message_with_comments &&
-	sed -e "s/ Z\$/ /" >>message_with_comments <<-\EOF &&
-		# comment
+# Cover multiple comment characters with the same test input.
+for char in "#" ";"
+do
+	case "$char" in
+	"#")
+		# This is the default, so let's explicitly _not_
+		# set any config to make sure it behaves as we expect.
+		;;
+	*)
+		config="-c core.commentChar=$char"
+		;;
+	esac
 
-		# other comment
-		Cc: Z
-		# yet another comment
-		Reviewed-by: Johan
-		Reviewed-by: Z
-		# last comment
+	test_expect_success "with message that has comments ($char)" '
+		cat basic_message >message_with_comments &&
+		sed -e "s/ Z\$/ /" \
+		    -e "s/#/$char/g" >>message_with_comments <<-EOF &&
+			# comment
 
-	EOF
-	cat basic_patch >>message_with_comments &&
-	cat basic_message >expected &&
-	cat >>expected <<-\EOF &&
-		# comment
+			# other comment
+			Cc: Z
+			# yet another comment
+			Reviewed-by: Johan
+			Reviewed-by: Z
+			# last comment
 
-		Reviewed-by: Johan
-		Cc: Peff
-		# last comment
+		EOF
+		cat basic_patch >>message_with_comments &&
+		cat basic_message >expected &&
+		sed -e "s/#/$char/g" >>expected <<-\EOF &&
+			# comment
 
-	EOF
-	cat basic_patch >>expected &&
-	git interpret-trailers --trim-empty --trailer "Cc: Peff" message_with_comments >actual &&
-	test_cmp expected actual
-'
+			Reviewed-by: Johan
+			Cc: Peff
+			# last comment
+
+		EOF
+		cat basic_patch >>expected &&
+		git $config interpret-trailers \
+			--trim-empty --trailer "Cc: Peff" \
+			message_with_comments >actual &&
+		test_cmp expected actual
+	'
+done
 
 test_expect_success 'with message that has an old style conflict block' '
 	cat basic_message >message_with_comments &&
@@ -1217,7 +1297,7 @@ test_expect_success 'with simple command' '
 	test_cmp expected actual
 '
 
-test_expect_success 'with command using commiter information' '
+test_expect_success 'with command using committer information' '
 	git config trailer.sign.ifExists "addIfDifferent" &&
 	git config trailer.sign.command "echo \"\$GIT_COMMITTER_NAME <\$GIT_COMMITTER_EMAIL>\"" &&
 	cat complex_message_body >expected &&
@@ -1255,6 +1335,27 @@ test_expect_success 'setup a commit' '
 	echo "Content of the first commit." > a.txt &&
 	git add a.txt &&
 	git commit -m "Add file a.txt"
+'
+
+test_expect_success 'cmd takes precedence over command' '
+	test_when_finished "git config --unset trailer.fix.cmd" &&
+	git config trailer.fix.ifExists "replace" &&
+	git config trailer.fix.cmd "test -n \"\$1\" && git log -1 --oneline --format=\"%h (%aN)\" \
+	--abbrev-commit --abbrev=14 \"\$1\" || true" &&
+	git config trailer.fix.command "git log -1 --oneline --format=\"%h (%s)\" \
+		--abbrev-commit --abbrev=14 \$ARG" &&
+	FIXED=$(git log -1 --oneline --format="%h (%aN)" --abbrev-commit --abbrev=14 HEAD) &&
+	cat complex_message_body >expected2 &&
+	sed -e "s/ Z\$/ /" >>expected2 <<-EOF &&
+		Fixes: $FIXED
+		Acked-by= Z
+		Reviewed-by:
+		Signed-off-by: Z
+		Signed-off-by: A U Thor <author@example.com>
+	EOF
+	git interpret-trailers --trailer "review:" --trailer "fix=HEAD" \
+		<complex_message >actual2 &&
+	test_cmp expected2 actual2
 '
 
 test_expect_success 'with command using $ARG' '
@@ -1414,6 +1515,48 @@ test_expect_success 'unfold' '
 		___
 	EOF
 	git interpret-trailers --only-trailers --only-input --unfold >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'handling of --- lines in input' '
+	echo "real-trailer: just right" >expected &&
+
+	git interpret-trailers --parse >actual <<-\EOF &&
+	subject
+
+	body
+
+	not-a-trailer: too soon
+	------ this is just a line in the commit message with a bunch of
+	------ dashes; it does not have any syntactic meaning.
+
+	real-trailer: just right
+	---
+	below the dashed line may be a patch, etc.
+
+	not-a-trailer: too late
+	EOF
+
+	test_cmp expected actual
+'
+
+test_expect_success 'suppress --- handling' '
+	echo "real-trailer: just right" >expected &&
+
+	git interpret-trailers --parse --no-divider >actual <<-\EOF &&
+	subject
+
+	This commit message has a "---" in it, but because we tell
+	interpret-trailers not to respect that, it has no effect.
+
+	not-a-trailer: too soon
+	---
+
+	This is still the commit message body.
+
+	real-trailer: just right
+	EOF
+
 	test_cmp expected actual
 '
 

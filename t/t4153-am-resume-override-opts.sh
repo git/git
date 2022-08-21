@@ -61,7 +61,7 @@ test_expect_success '--no-quiet overrides --quiet' '
 	# Applying side2 will be quiet.
 	git am --no-quiet --continue >out &&
 	echo "Applying: side1" >expected &&
-	test_i18ncmp expected out
+	test_cmp expected out
 '
 
 test_expect_success '--signoff overrides --no-signoff' '

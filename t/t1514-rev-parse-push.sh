@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='test <branch>@{push} syntax'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 resolve () {
@@ -16,24 +19,24 @@ test_expect_success 'setup' '
 	git remote add other other.git &&
 	test_commit base &&
 	git push origin HEAD &&
-	git branch --set-upstream-to=origin/master master &&
-	git branch --track topic origin/master &&
+	git branch --set-upstream-to=origin/main main &&
+	git branch --track topic origin/main &&
 	git push origin topic &&
 	git push other topic
 '
 
 test_expect_success '@{push} with default=nothing' '
 	test_config push.default nothing &&
-	test_must_fail git rev-parse master@{push} &&
-	test_must_fail git rev-parse master@{PUSH} &&
-	test_must_fail git rev-parse master@{PuSH}
+	test_must_fail git rev-parse main@{push} &&
+	test_must_fail git rev-parse main@{PUSH} &&
+	test_must_fail git rev-parse main@{PuSH}
 '
 
 test_expect_success '@{push} with default=simple' '
 	test_config push.default simple &&
-	resolve master@{push} refs/remotes/origin/master &&
-	resolve master@{PUSH} refs/remotes/origin/master &&
-	resolve master@{pUSh} refs/remotes/origin/master
+	resolve main@{push} refs/remotes/origin/main &&
+	resolve main@{PUSH} refs/remotes/origin/main &&
+	resolve main@{pUSh} refs/remotes/origin/main
 '
 
 test_expect_success 'triangular @{push} fails with default=simple' '

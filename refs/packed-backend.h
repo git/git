@@ -1,6 +1,9 @@
 #ifndef REFS_PACKED_BACKEND_H
 #define REFS_PACKED_BACKEND_H
 
+struct repository;
+struct ref_transaction;
+
 /*
  * Support for storing references in a `packed-refs` file.
  *
@@ -10,7 +13,8 @@
  * even among packed refs.
  */
 
-struct ref_store *packed_ref_store_create(const char *path,
+struct ref_store *packed_ref_store_create(struct repository *repo,
+					  const char *gitdir,
 					  unsigned int store_flags);
 
 /*

@@ -1,12 +1,14 @@
 #!/bin/sh
 
 test_description='test index-pack handling of delta cycles in packfiles'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-pack.sh
 
 # Two similar-ish objects that we have computed deltas between.
-A=01d7713666f4de822776c7622c10f1b07de280dc
-B=e68fe8129b546b101aee9510c5328e7f21ca1d18
+A=$(test_oid packlib_7_0)
+B=$(test_oid packlib_7_76)
 
 # double-check our hand-constucted packs
 test_expect_success 'index-pack works with a single delta (A->B)' '
@@ -56,13 +58,13 @@ test_expect_success 'index-pack detects REF_DELTA cycles' '
 	test_must_fail git index-pack --fix-thin --stdin <cycle.pack
 '
 
-test_expect_failure 'failover to an object in another pack' '
+test_expect_success 'failover to an object in another pack' '
 	clear_packs &&
 	git index-pack --stdin <ab.pack &&
-	git index-pack --stdin --fix-thin <cycle.pack
+	test_must_fail git index-pack --stdin --fix-thin <cycle.pack
 '
 
-test_expect_failure 'failover to a duplicate object in the same pack' '
+test_expect_success 'failover to a duplicate object in the same pack' '
 	clear_packs &&
 	{
 		pack_header 3 &&
@@ -71,7 +73,7 @@ test_expect_failure 'failover to a duplicate object in the same pack' '
 		pack_obj $A
 	} >recoverable.pack &&
 	pack_trailer recoverable.pack &&
-	git index-pack --fix-thin --stdin <recoverable.pack
+	test_must_fail git index-pack --fix-thin --stdin <recoverable.pack
 '
 
 test_done

@@ -7,7 +7,7 @@ test_description='Test rename detection in diff engine.
 
 '
 . ./test-lib.sh
-. "$TEST_DIRECTORY"/diff-lib.sh
+. "$TEST_DIRECTORY"/lib-diff.sh
 
 test_expect_success 'setup' '
 	cat >path0 <<-\EOF &&
@@ -138,6 +138,18 @@ test_expect_success 'favour same basenames over different ones' '
 	test_i18ngrep "renamed: .*path1 -> subdir/path1" out
 '
 
+test_expect_success 'test diff.renames=true for git status' '
+	git -c diff.renames=true status >out &&
+	test_i18ngrep "renamed: .*path1 -> subdir/path1" out
+'
+
+test_expect_success 'test diff.renames=false for git status' '
+	git -c diff.renames=false status >out &&
+	test_i18ngrep ! "renamed: .*path1 -> subdir/path1" out &&
+	test_i18ngrep "new file: .*subdir/path1" out &&
+	test_i18ngrep "deleted: .*[^/]path1" out
+'
+
 test_expect_success 'favour same basenames even with minor differences' '
 	git show HEAD:path1 | sed "s/15/16/" > subdir/path1 &&
 	git status >out &&
@@ -162,13 +174,13 @@ test_expect_success 'setup for many rename source candidates' '
 	do
 		for j in 0 1 2 3 4 5 6 7 8 9;
 		do
-			echo "$i$j" >"path$i$j"
+			echo "$i$j" >"path$i$j" || return 1
 		done
 	done &&
 	git add "path??" &&
 	test_tick &&
 	git commit -m "hundred" &&
-	(cat path1; echo new) >new-path &&
+	(cat path1 && echo new) >new-path &&
 	echo old >>path1 &&
 	git add new-path path1 &&
 	git diff -l 4 -C -C --cached --name-status >actual 2>actual.err &&
@@ -248,6 +260,30 @@ test_expect_success 'diff-tree -l0 defaults to a big rename limit, not zero' '
 	git diff-tree -M -l0 HEAD HEAD^ >actual &&
 	# Verify that a rename from myotherfile to myfile was detected
 	grep "myotherfile.*myfile" actual
+'
+
+test_expect_success 'basename similarity vs best similarity' '
+	mkdir subdir &&
+	test_write_lines line1 line2 line3 line4 line5 \
+			 line6 line7 line8 line9 line10 >subdir/file.txt &&
+	git add subdir/file.txt &&
+	git commit -m "base txt" &&
+
+	git rm subdir/file.txt &&
+	test_write_lines line1 line2 line3 line4 line5 \
+			  line6 line7 line8 >file.txt &&
+	test_write_lines line1 line2 line3 line4 line5 \
+			  line6 line7 line8 line9 >file.md &&
+	git add file.txt file.md &&
+	git commit -a -m "rename" &&
+	git diff-tree -r -M --name-status HEAD^ HEAD >actual &&
+	# subdir/file.txt is 88% similar to file.md, 78% similar to file.txt,
+	# but since same basenames are checked first...
+	cat >expected <<-\EOF &&
+	A	file.md
+	R078	subdir/file.txt	file.txt
+	EOF
+	test_cmp expected actual
 '
 
 test_done

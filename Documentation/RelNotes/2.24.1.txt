@@ -1,0 +1,8 @@
+Git v2.24.1 Release Notes
+=========================
+
+This release merges up the fixes that appear in v2.14.6, v2.15.4,
+v2.17.3, v2.20.2 and in v2.21.1, addressing the security issues
+CVE-2019-1348, CVE-2019-1349, CVE-2019-1350, CVE-2019-1351,
+CVE-2019-1352, CVE-2019-1353, CVE-2019-1354, CVE-2019-1387, and
+CVE-2019-19604; see the release notes for those versions for details.

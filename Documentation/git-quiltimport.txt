@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git quiltimport' [--dry-run | -n] [--author <author>] [--patches <dir>]
-		[--series <file>]
+		[--series <file>] [--keep-non-patch]
 
 
 DESCRIPTION
@@ -55,6 +55,9 @@ variable.
 The default for the series file is <patches>/series
 or the value of the `$QUILT_SERIES` environment
 variable.
+
+--keep-non-patch::
+	Pass `-b` flag to 'git mailinfo' (see linkgit:git-mailinfo[1]).
 
 GIT
 ---

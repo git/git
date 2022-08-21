@@ -394,7 +394,7 @@ test_expect_success 'cleanup rename after submit cancel' '
 	(
 		cd "$cli" &&
 		test_path_is_missing text2 &&
-		p4 fstat -T action text2 2>&1 | grep "no such file"
+		p4 fstat -T action text2 2>&1 | grep "no such file" &&
 		test_path_is_file text &&
 		! p4 fstat -T action text
 	)
@@ -420,10 +420,6 @@ test_expect_success 'cleanup chmod after submit cancel' '
 		ls -l text | egrep ^-r-- &&
 		ls -l text+x | egrep ^-r-x
 	)
-'
-
-test_expect_success 'kill p4d' '
-	kill_p4d
 '
 
 test_done

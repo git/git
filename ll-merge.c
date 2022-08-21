@@ -14,7 +14,7 @@
 
 struct ll_merge_driver;
 
-typedef int (*ll_merge_fn)(const struct ll_merge_driver *,
+typedef enum ll_merge_result (*ll_merge_fn)(const struct ll_merge_driver *,
 			   mmbuffer_t *result,
 			   const char *path,
 			   mmfile_t *orig, const char *orig_name,
@@ -32,10 +32,24 @@ struct ll_merge_driver {
 	char *cmdline;
 };
 
+static struct attr_check *merge_attributes;
+static struct attr_check *load_merge_attributes(void)
+{
+	if (!merge_attributes)
+		merge_attributes = attr_check_initl("merge", "conflict-marker-size", NULL);
+	return merge_attributes;
+}
+
+void reset_merge_attributes(void)
+{
+	attr_check_free(merge_attributes);
+	merge_attributes = NULL;
+}
+
 /*
  * Built-in low-levels
  */
-static int ll_binary_merge(const struct ll_merge_driver *drv_unused,
+static enum ll_merge_result ll_binary_merge(const struct ll_merge_driver *drv_unused,
 			   mmbuffer_t *result,
 			   const char *path,
 			   mmfile_t *orig, const char *orig_name,
@@ -44,6 +58,7 @@ static int ll_binary_merge(const struct ll_merge_driver *drv_unused,
 			   const struct ll_merge_options *opts,
 			   int marker_size)
 {
+	enum ll_merge_result ret;
 	mmfile_t *stolen;
 	assert(opts);
 
@@ -54,16 +69,19 @@ static int ll_binary_merge(const struct ll_merge_driver *drv_unused,
 	 */
 	if (opts->virtual_ancestor) {
 		stolen = orig;
+		ret = LL_MERGE_OK;
 	} else {
 		switch (opts->variant) {
 		default:
-			warning("Cannot merge binary files: %s (%s vs. %s)",
-				path, name1, name2);
-			/* fallthru */
+			ret = LL_MERGE_BINARY_CONFLICT;
+			stolen = src1;
+			break;
 		case XDL_MERGE_FAVOR_OURS:
+			ret = LL_MERGE_OK;
 			stolen = src1;
 			break;
 		case XDL_MERGE_FAVOR_THEIRS:
+			ret = LL_MERGE_OK;
 			stolen = src2;
 			break;
 		}
@@ -73,14 +91,10 @@ static int ll_binary_merge(const struct ll_merge_driver *drv_unused,
 	result->size = stolen->size;
 	stolen->ptr = NULL;
 
-	/*
-	 * With -Xtheirs or -Xours, we have cleanly merged;
-	 * otherwise we got a conflict.
-	 */
-	return (opts->variant ? 0 : 1);
+	return ret;
 }
 
-static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
+static enum ll_merge_result ll_xdl_merge(const struct ll_merge_driver *drv_unused,
 			mmbuffer_t *result,
 			const char *path,
 			mmfile_t *orig, const char *orig_name,
@@ -89,7 +103,9 @@ static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
 			const struct ll_merge_options *opts,
 			int marker_size)
 {
+	enum ll_merge_result ret;
 	xmparam_t xmp;
+	int status;
 	assert(opts);
 
 	if (orig->size > MAX_XDIFF_SIZE ||
@@ -117,12 +133,14 @@ static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
 	xmp.ancestor = orig_name;
 	xmp.file1 = name1;
 	xmp.file2 = name2;
-	return xdl_merge(orig, src1, src2, &xmp, result);
+	status = xdl_merge(orig, src1, src2, &xmp, result);
+	ret = (status > 0) ? LL_MERGE_CONFLICT : status;
+	return ret;
 }
 
-static int ll_union_merge(const struct ll_merge_driver *drv_unused,
+static enum ll_merge_result ll_union_merge(const struct ll_merge_driver *drv_unused,
 			  mmbuffer_t *result,
-			  const char *path_unused,
+			  const char *path,
 			  mmfile_t *orig, const char *orig_name,
 			  mmfile_t *src1, const char *name1,
 			  mmfile_t *src2, const char *name2,
@@ -134,8 +152,8 @@ static int ll_union_merge(const struct ll_merge_driver *drv_unused,
 	assert(opts);
 	o = *opts;
 	o.variant = XDL_MERGE_FAVOR_UNION;
-	return ll_xdl_merge(drv_unused, result, path_unused,
-			    orig, NULL, src1, NULL, src2, NULL,
+	return ll_xdl_merge(drv_unused, result, path,
+			    orig, orig_name, src1, name1, src2, name2,
 			    &o, marker_size);
 }
 
@@ -162,7 +180,7 @@ static void create_temp(mmfile_t *src, char *path, size_t len)
 /*
  * User defined low-level merge driver support.
  */
-static int ll_ext_merge(const struct ll_merge_driver *fn,
+static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
 			mmbuffer_t *result,
 			const char *path,
 			mmfile_t *orig, const char *orig_name,
@@ -178,6 +196,7 @@ static int ll_ext_merge(const struct ll_merge_driver *fn,
 	const char *args[] = { NULL, NULL };
 	int status, fd, i;
 	struct stat st;
+	enum ll_merge_result ret;
 	assert(opts);
 
 	sq_quote_buf(&path_sq, path);
@@ -188,7 +207,7 @@ static int ll_ext_merge(const struct ll_merge_driver *fn,
 	dict[4].placeholder = "P"; dict[4].value = path_sq.buf;
 	dict[5].placeholder = NULL; dict[5].value = NULL;
 
-	if (fn->cmdline == NULL)
+	if (!fn->cmdline)
 		die("custom merge driver %s lacks command line.", fn->name);
 
 	result->ptr = NULL;
@@ -220,7 +239,8 @@ static int ll_ext_merge(const struct ll_merge_driver *fn,
 		unlink_or_warn(temp[i]);
 	strbuf_release(&cmd);
 	strbuf_release(&path_sq);
-	return status;
+	ret = (status > 0) ? LL_MERGE_CONFLICT : status;
+	return ret;
 }
 
 /*
@@ -233,7 +253,7 @@ static int read_merge_config(const char *var, const char *value, void *cb)
 {
 	struct ll_merge_driver *fn;
 	const char *key, *name;
-	int namelen;
+	size_t namelen;
 
 	if (!strcmp(var, "merge.default"))
 		return git_config_string(&default_ll_merge, var, value);
@@ -254,7 +274,7 @@ static int read_merge_config(const char *var, const char *value, void *cb)
 		if (!strncmp(fn->name, name, namelen) && !fn->name[namelen])
 			break;
 	if (!fn) {
-		fn = xcalloc(1, sizeof(struct ll_merge_driver));
+		CALLOC_ARRAY(fn, 1);
 		fn->name = xmemdupz(name, namelen);
 		fn->fn = ll_ext_merge;
 		*ll_user_merge_tail = fn;
@@ -336,24 +356,25 @@ static const struct ll_merge_driver *find_ll_merge_driver(const char *merge_attr
 	return &ll_merge_drv[LL_TEXT_MERGE];
 }
 
-static void normalize_file(mmfile_t *mm, const char *path)
+static void normalize_file(mmfile_t *mm, const char *path, struct index_state *istate)
 {
 	struct strbuf strbuf = STRBUF_INIT;
-	if (renormalize_buffer(&the_index, path, mm->ptr, mm->size, &strbuf)) {
+	if (renormalize_buffer(istate, path, mm->ptr, mm->size, &strbuf)) {
 		free(mm->ptr);
 		mm->size = strbuf.len;
 		mm->ptr = strbuf_detach(&strbuf, NULL);
 	}
 }
 
-int ll_merge(mmbuffer_t *result_buf,
+enum ll_merge_result ll_merge(mmbuffer_t *result_buf,
 	     const char *path,
 	     mmfile_t *ancestor, const char *ancestor_label,
 	     mmfile_t *ours, const char *our_label,
 	     mmfile_t *theirs, const char *their_label,
+	     struct index_state *istate,
 	     const struct ll_merge_options *opts)
 {
-	static struct attr_check *check;
+	struct attr_check *check = load_merge_attributes();
 	static const struct ll_merge_options default_opts;
 	const char *ll_driver_name = NULL;
 	int marker_size = DEFAULT_CONFLICT_MARKER_SIZE;
@@ -363,42 +384,41 @@ int ll_merge(mmbuffer_t *result_buf,
 		opts = &default_opts;
 
 	if (opts->renormalize) {
-		normalize_file(ancestor, path);
-		normalize_file(ours, path);
-		normalize_file(theirs, path);
+		normalize_file(ancestor, path, istate);
+		normalize_file(ours, path, istate);
+		normalize_file(theirs, path, istate);
 	}
 
-	if (!check)
-		check = attr_check_initl("merge", "conflict-marker-size", NULL);
-
-	if (!git_check_attr(path, check)) {
-		ll_driver_name = check->items[0].value;
-		if (check->items[1].value) {
-			marker_size = atoi(check->items[1].value);
-			if (marker_size <= 0)
-				marker_size = DEFAULT_CONFLICT_MARKER_SIZE;
-		}
+	git_check_attr(istate, path, check);
+	ll_driver_name = check->items[0].value;
+	if (check->items[1].value) {
+		marker_size = atoi(check->items[1].value);
+		if (marker_size <= 0)
+			marker_size = DEFAULT_CONFLICT_MARKER_SIZE;
 	}
 	driver = find_ll_merge_driver(ll_driver_name);
 
 	if (opts->virtual_ancestor) {
 		if (driver->recursive)
 			driver = find_ll_merge_driver(driver->recursive);
-		marker_size += 2;
+	}
+	if (opts->extra_marker_size) {
+		marker_size += opts->extra_marker_size;
 	}
 	return driver->fn(driver, result_buf, path, ancestor, ancestor_label,
 			  ours, our_label, theirs, their_label,
 			  opts, marker_size);
 }
 
-int ll_merge_marker_size(const char *path)
+int ll_merge_marker_size(struct index_state *istate, const char *path)
 {
 	static struct attr_check *check;
 	int marker_size = DEFAULT_CONFLICT_MARKER_SIZE;
 
 	if (!check)
 		check = attr_check_initl("conflict-marker-size", NULL);
-	if (!git_check_attr(path, check) && check->items[0].value) {
+	git_check_attr(istate, path, check);
+	if (check->items[0].value) {
 		marker_size = atoi(check->items[0].value);
 		if (marker_size <= 0)
 			marker_size = DEFAULT_CONFLICT_MARKER_SIZE;

@@ -1,0 +1,18 @@
+(
+	foo &&
+	x=$(
+		echo bar |
+		cat
+	) &&
+	echo ok
+) |
+sort &&
+(
+	bar &&
+	x=$(echo bar |
+		cat
+	) &&
+	y=$(echo baz |
+		fip) &&
+	echo fail
+)

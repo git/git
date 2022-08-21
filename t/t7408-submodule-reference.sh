@@ -59,6 +59,16 @@ test_expect_success 'submodule add --reference uses alternates' '
 	test_alternate_is_used super/.git/modules/sub/objects/info/alternates super/sub
 '
 
+test_expect_success 'submodule add --reference with --dissociate does not use alternates' '
+	(
+		cd super &&
+		git submodule add --reference ../B --dissociate "file://$base_dir/A" sub-dissociate &&
+		git commit -m B-super-added &&
+		git repack -ad
+	) &&
+	test_path_is_missing super/.git/modules/sub-dissociate/objects/info/alternates
+'
+
 test_expect_success 'that reference gets used with add' '
 	(
 		cd super/sub &&
@@ -80,6 +90,13 @@ test_expect_success 'updating superproject keeps alternates' '
 	git clone super super-clone &&
 	git -C super-clone submodule update --init --reference ../B &&
 	test_alternate_is_used super-clone/.git/modules/sub/objects/info/alternates super-clone/sub
+'
+
+test_expect_success 'updating superproject with --dissociate does not keep alternates' '
+	test_when_finished "rm -rf super-clone" &&
+	git clone super super-clone &&
+	git -C super-clone submodule update --init --reference ../B --dissociate &&
+	test_path_is_missing super-clone/.git/modules/sub/objects/info/alternates
 '
 
 test_expect_success 'submodules use alternates when cloning a superproject' '
@@ -105,8 +122,8 @@ test_expect_success 'missing submodule alternate fails clone and submodule updat
 		# update of the submodule succeeds
 		test_must_fail git submodule update --init &&
 		# and we have no alternates:
-		test_must_fail test_alternate_is_used .git/modules/sub/objects/info/alternates sub &&
-		test_must_fail test_path_is_file sub/file1
+		test_path_is_missing .git/modules/sub/objects/info/alternates &&
+		test_path_is_missing sub/file1
 	)
 '
 
@@ -120,7 +137,7 @@ test_expect_success 'ignoring missing submodule alternates passes clone and subm
 		# update of the submodule succeeds
 		git submodule update --init &&
 		# and we have no alternates:
-		test_must_fail test_alternate_is_used .git/modules/sub/objects/info/alternates sub &&
+		test_path_is_missing .git/modules/sub/objects/info/alternates &&
 		test_path_is_file sub/file1
 	)
 '
@@ -131,7 +148,7 @@ test_expect_success 'preparing second superproject with a nested submodule plus 
 		cd supersuper &&
 		echo "I am super super." >file &&
 		git add file &&
-		git commit -m B-super-super-initial
+		git commit -m B-super-super-initial &&
 		git submodule add "file://$base_dir/super" subwithsub &&
 		git commit -m B-super-super-added &&
 		git submodule update --init --recursive &&
@@ -165,7 +182,7 @@ check_that_two_of_three_alternates_are_used() {
 	# immediate submodule has alternate:
 	test_alternate_is_used .git/modules/subwithsub/objects/info/alternates subwithsub &&
 	# but nested submodule has no alternate:
-	test_must_fail test_alternate_is_used .git/modules/subwithsub/modules/sub/objects/info/alternates subwithsub/sub
+	test_path_is_missing .git/modules/subwithsub/modules/sub/objects/info/alternates
 }
 
 
@@ -176,7 +193,19 @@ test_expect_success 'missing nested submodule alternate fails clone and submodul
 		cd supersuper-clone &&
 		check_that_two_of_three_alternates_are_used &&
 		# update of the submodule fails
-		test_must_fail git submodule update --init --recursive
+		cat >expect <<-\EOF &&
+		fatal: submodule '\''sub'\'' cannot add alternate: path ... does not exist
+		Failed to clone '\''sub'\''. Retry scheduled
+		fatal: submodule '\''sub-dissociate'\'' cannot add alternate: path ... does not exist
+		Failed to clone '\''sub-dissociate'\''. Retry scheduled
+		fatal: submodule '\''sub'\'' cannot add alternate: path ... does not exist
+		Failed to clone '\''sub'\'' a second time, aborting
+		fatal: Failed to recurse into submodule path ...
+		EOF
+		test_must_fail git submodule update --init --recursive 2>err &&
+		grep -e fatal: -e ^Failed err >actual.raw &&
+		sed -e "s/path $SQ[^$SQ]*$SQ/path .../" <actual.raw >actual &&
+		test_cmp expect actual
 	)
 '
 

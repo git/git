@@ -4,17 +4,12 @@
 #
 
 test_description='perl interface (Git.pm)'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-perl.sh
 
-if ! test_have_prereq PERL; then
-	skip_all='skipping perl interface tests, perl not available'
-	test_done
-fi
-
-perl -MTest::More -e 0 2>/dev/null || {
-	skip_all="Perl Test::More unavailable, skipping test"
-	test_done
-}
+skip_all_if_no_Test_More
 
 # set up test repository
 
@@ -50,11 +45,9 @@ test_expect_success \
      git config --add test.pathmulti bar
      '
 
-# The external test will outputs its own plan
-test_external_has_tap=1
-
-test_external_without_stderr \
-    'Perl API' \
-    perl "$TEST_DIRECTORY"/t9700/test.pl
+test_expect_success 'use t9700/test.pl to test Git.pm' '
+	"$PERL_PATH" "$TEST_DIRECTORY"/t9700/test.pl 2>stderr &&
+	test_must_be_empty stderr
+'
 
 test_done

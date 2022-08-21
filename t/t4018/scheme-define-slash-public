@@ -1,0 +1,7 @@
+(define bar-class%
+  (class object%
+    (field (info 5))
+    (define/public (foo) RIGHT
+      (+ info 42)
+      (* info ChangeMe))
+    (super-new)))

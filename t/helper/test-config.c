@@ -37,21 +37,6 @@
  *
  */
 
-static const char *scope_name(enum config_scope scope)
-{
-	switch (scope) {
-	case CONFIG_SCOPE_SYSTEM:
-		return "system";
-	case CONFIG_SCOPE_GLOBAL:
-		return "global";
-	case CONFIG_SCOPE_REPO:
-		return "repo";
-	case CONFIG_SCOPE_CMDLINE:
-		return "cmdline";
-	default:
-		return "unknown";
-	}
-}
 static int iterate_cb(const char *var, const char *value, void *data)
 {
 	static int nr;
@@ -63,7 +48,8 @@ static int iterate_cb(const char *var, const char *value, void *data)
 	printf("value=%s\n", value ? value : "(null)");
 	printf("origin=%s\n", current_config_origin_type());
 	printf("name=%s\n", current_config_name());
-	printf("scope=%s\n", scope_name(current_config_scope()));
+	printf("lno=%d\n", current_config_line());
+	printf("scope=%s\n", config_scope_name(current_config_scope()));
 
 	return 0;
 }
@@ -140,7 +126,7 @@ int cmd__config(int argc, const char **argv)
 			goto exit1;
 		}
 	} else if (argc == 3 && !strcmp(argv[1], "get_string")) {
-		if (!git_config_get_string_const(argv[2], &v)) {
+		if (!git_config_get_string_tmp(argv[2], &v)) {
 			printf("%s\n", v);
 			goto exit0;
 		} else {

@@ -1,0 +1,9 @@
+(
+	foo &&
+	(
+		bar &&
+		baz &&
+		snaff
+	) ?!AMP?!
+	fuzzy
+)

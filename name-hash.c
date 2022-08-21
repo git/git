@@ -5,8 +5,10 @@
  *
  * Copyright (C) 2008 Linus Torvalds
  */
-#define NO_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
+#include "thread-utils.h"
+#include "trace2.h"
+#include "sparse-index.h"
 
 struct dir_entry {
 	struct hashmap_entry ent;
@@ -17,13 +19,15 @@ struct dir_entry {
 };
 
 static int dir_entry_cmp(const void *unused_cmp_data,
-			 const void *entry,
-			 const void *entry_or_key,
+			 const struct hashmap_entry *eptr,
+			 const struct hashmap_entry *entry_or_key,
 			 const void *keydata)
 {
-	const struct dir_entry *e1 = entry;
-	const struct dir_entry *e2 = entry_or_key;
+	const struct dir_entry *e1, *e2;
 	const char *name = keydata;
+
+	e1 = container_of(eptr, const struct dir_entry, ent);
+	e2 = container_of(entry_or_key, const struct dir_entry, ent);
 
 	return e1->namelen != e2->namelen || strncasecmp(e1->name,
 			name ? name : e2->name, e1->namelen);
@@ -33,9 +37,9 @@ static struct dir_entry *find_dir_entry__hash(struct index_state *istate,
 		const char *name, unsigned int namelen, unsigned int hash)
 {
 	struct dir_entry key;
-	hashmap_entry_init(&key, hash);
+	hashmap_entry_init(&key.ent, hash);
 	key.namelen = namelen;
-	return hashmap_get(&istate->dir_hash, &key, name);
+	return hashmap_get_entry(&istate->dir_hash, &key, ent, name);
 }
 
 static struct dir_entry *find_dir_entry(struct index_state *istate,
@@ -68,9 +72,9 @@ static struct dir_entry *hash_dir_entry(struct index_state *istate,
 	if (!dir) {
 		/* not found, create it and add to hash table */
 		FLEX_ALLOC_MEM(dir, name, ce->name, namelen);
-		hashmap_entry_init(dir, memihash(ce->name, namelen));
+		hashmap_entry_init(&dir->ent, memihash(ce->name, namelen));
 		dir->namelen = namelen;
-		hashmap_add(&istate->dir_hash, dir);
+		hashmap_add(&istate->dir_hash, &dir->ent);
 
 		/* recursively add missing parent directories */
 		dir->parent = hash_dir_entry(istate, ce, namelen);
@@ -95,7 +99,7 @@ static void remove_dir_entry(struct index_state *istate, struct cache_entry *ce)
 	struct dir_entry *dir = hash_dir_entry(istate, ce, ce_namelen(ce));
 	while (dir && !(--dir->nr)) {
 		struct dir_entry *parent = dir->parent;
-		hashmap_remove(&istate->dir_hash, dir, NULL);
+		hashmap_remove(&istate->dir_hash, &dir->ent, NULL);
 		free(dir);
 		dir = parent;
 	}
@@ -106,20 +110,26 @@ static void hash_index_entry(struct index_state *istate, struct cache_entry *ce)
 	if (ce->ce_flags & CE_HASHED)
 		return;
 	ce->ce_flags |= CE_HASHED;
-	hashmap_entry_init(ce, memihash(ce->name, ce_namelen(ce)));
-	hashmap_add(&istate->name_hash, ce);
+
+	if (!S_ISSPARSEDIR(ce->ce_mode)) {
+		hashmap_entry_init(&ce->ent, memihash(ce->name, ce_namelen(ce)));
+		hashmap_add(&istate->name_hash, &ce->ent);
+	}
 
 	if (ignore_case)
 		add_dir_entry(istate, ce);
 }
 
 static int cache_entry_cmp(const void *unused_cmp_data,
-			   const void *entry,
-			   const void *entry_or_key,
+			   const struct hashmap_entry *eptr,
+			   const struct hashmap_entry *entry_or_key,
 			   const void *remove)
 {
-	const struct cache_entry *ce1 = entry;
-	const struct cache_entry *ce2 = entry_or_key;
+	const struct cache_entry *ce1, *ce2;
+
+	ce1 = container_of(eptr, const struct cache_entry, ent);
+	ce2 = container_of(entry_or_key, const struct cache_entry, ent);
+
 	/*
 	 * For remove_name_hash, find the exact entry (pointer equality); for
 	 * index_file_exists, find all entries with matching hash code and
@@ -131,25 +141,9 @@ static int cache_entry_cmp(const void *unused_cmp_data,
 static int lazy_try_threaded = 1;
 static int lazy_nr_dir_threads;
 
-#ifdef NO_PTHREADS
-
-static inline int lookup_lazy_params(struct index_state *istate)
-{
-	return 0;
-}
-
-static inline void threaded_lazy_init_name_hash(
-	struct index_state *istate)
-{
-}
-
-#else
-
-#include "thread-utils.h"
-
 /*
  * Set a minimum number of cache_entries that we will handle per
- * thread and use that to decide how many threads to run (upto
+ * thread and use that to decide how many threads to run (up to
  * the number on the system).
  *
  * For guidance setting the lower per-thread bound, see:
@@ -229,13 +223,13 @@ static int lookup_lazy_params(struct index_state *istate)
  * However, the hashmap is going to put items into bucket
  * chains based on their hash values.  Use that to create n
  * mutexes and lock on mutex[bucket(hash) % n].  This will
- * decrease the collision rate by (hopefully) by a factor of n.
+ * decrease the collision rate by (hopefully) a factor of n.
  */
 static void init_dir_mutex(void)
 {
 	int j;
 
-	lazy_dir_mutex_array = xcalloc(LAZY_MAX_MUTEX, sizeof(pthread_mutex_t));
+	CALLOC_ARRAY(lazy_dir_mutex_array, LAZY_MAX_MUTEX);
 
 	for (j = 0; j < LAZY_MAX_MUTEX; j++)
 		init_recursive_mutex(&lazy_dir_mutex_array[j]);
@@ -296,10 +290,10 @@ static struct dir_entry *hash_dir_entry_with_parent_and_prefix(
 	dir = find_dir_entry__hash(istate, prefix->buf, prefix->len, hash);
 	if (!dir) {
 		FLEX_ALLOC_MEM(dir, name, prefix->buf, prefix->len);
-		hashmap_entry_init(dir, hash);
+		hashmap_entry_init(&dir->ent, hash);
 		dir->namelen = prefix->len;
 		dir->parent = parent;
-		hashmap_add(&istate->dir_hash, dir);
+		hashmap_add(&istate->dir_hash, &dir->ent);
 
 		if (parent) {
 			unlock_dir_mutex(lock_nr);
@@ -361,8 +355,9 @@ static int handle_range_dir(
 	else {
 		int begin = k_start;
 		int end = k_end;
+		assert(begin >= 0);
 		while (begin < end) {
-			int mid = (begin + end) >> 1;
+			int mid = begin + ((end - begin) >> 1);
 			int cmp = strncmp(istate->cache[mid]->name, prefix->buf, prefix->len);
 			if (cmp == 0) /* mid has same prefix; look in second part */
 				begin = mid + 1;
@@ -487,8 +482,8 @@ static void *lazy_name_thread_proc(void *_data)
 	for (k = 0; k < d->istate->cache_nr; k++) {
 		struct cache_entry *ce_k = d->istate->cache[k];
 		ce_k->ce_flags |= CE_HASHED;
-		hashmap_entry_init(ce_k, d->lazy_entries[k].hash_name);
-		hashmap_add(&d->istate->name_hash, ce_k);
+		hashmap_entry_init(&ce_k->ent, d->lazy_entries[k].hash_name);
+		hashmap_add(&d->istate->name_hash, &ce_k->ent);
 	}
 
 	return NULL;
@@ -509,6 +504,7 @@ static inline void lazy_update_dir_ref_counts(
 static void threaded_lazy_init_name_hash(
 	struct index_state *istate)
 {
+	int err;
 	int nr_each;
 	int k_start;
 	int t;
@@ -516,12 +512,15 @@ static void threaded_lazy_init_name_hash(
 	struct lazy_dir_thread_data *td_dir;
 	struct lazy_name_thread_data *td_name;
 
+	if (!HAVE_THREADS)
+		return;
+
 	k_start = 0;
 	nr_each = DIV_ROUND_UP(istate->cache_nr, lazy_nr_dir_threads);
 
-	lazy_entries = xcalloc(istate->cache_nr, sizeof(struct lazy_entry));
-	td_dir = xcalloc(lazy_nr_dir_threads, sizeof(struct lazy_dir_thread_data));
-	td_name = xcalloc(1, sizeof(struct lazy_name_thread_data));
+	CALLOC_ARRAY(lazy_entries, istate->cache_nr);
+	CALLOC_ARRAY(td_dir, lazy_nr_dir_threads);
+	CALLOC_ARRAY(td_name, 1);
 
 	init_dir_mutex();
 
@@ -538,8 +537,9 @@ static void threaded_lazy_init_name_hash(
 		if (k_start > istate->cache_nr)
 			k_start = istate->cache_nr;
 		td_dir_t->k_end = k_start;
-		if (pthread_create(&td_dir_t->pthread, NULL, lazy_dir_thread_proc, td_dir_t))
-			die("unable to create lazy_dir_thread");
+		err = pthread_create(&td_dir_t->pthread, NULL, lazy_dir_thread_proc, td_dir_t);
+		if (err)
+			die(_("unable to create lazy_dir thread: %s"), strerror(err));
 	}
 	for (t = 0; t < lazy_nr_dir_threads; t++) {
 		struct lazy_dir_thread_data *td_dir_t = td_dir + t;
@@ -559,13 +559,15 @@ static void threaded_lazy_init_name_hash(
 	 */
 	td_name->istate = istate;
 	td_name->lazy_entries = lazy_entries;
-	if (pthread_create(&td_name->pthread, NULL, lazy_name_thread_proc, td_name))
-		die("unable to create lazy_name_thread");
+	err = pthread_create(&td_name->pthread, NULL, lazy_name_thread_proc, td_name);
+	if (err)
+		die(_("unable to create lazy_name thread: %s"), strerror(err));
 
 	lazy_update_dir_ref_counts(istate, lazy_entries);
 
-	if (pthread_join(td_name->pthread, NULL))
-		die("unable to join lazy_name_thread");
+	err = pthread_join(td_name->pthread, NULL);
+	if (err)
+		die(_("unable to join lazy_name thread: %s"), strerror(err));
 
 	cleanup_dir_mutex();
 
@@ -574,14 +576,13 @@ static void threaded_lazy_init_name_hash(
 	free(lazy_entries);
 }
 
-#endif
-
 static void lazy_init_name_hash(struct index_state *istate)
 {
-	uint64_t start = getnanotime();
 
 	if (istate->name_hash_initialized)
 		return;
+	trace_performance_enter();
+	trace2_region_enter("index", "name-hash-init", istate->repo);
 	hashmap_init(&istate->name_hash, cache_entry_cmp, NULL, istate->cache_nr);
 	hashmap_init(&istate->dir_hash, dir_entry_cmp, NULL, istate->cache_nr);
 
@@ -602,7 +603,8 @@ static void lazy_init_name_hash(struct index_state *istate)
 	}
 
 	istate->name_hash_initialized = 1;
-	trace_performance_since(start, "initialize name hash");
+	trace2_region_leave("index", "name-hash-init", istate->repo);
+	trace_performance_leave("initialize name hash");
 }
 
 /*
@@ -635,7 +637,7 @@ void remove_name_hash(struct index_state *istate, struct cache_entry *ce)
 	if (!istate->name_hash_initialized || !(ce->ce_flags & CE_HASHED))
 		return;
 	ce->ce_flags &= ~CE_HASHED;
-	hashmap_remove(&istate->name_hash, ce, ce);
+	hashmap_remove(&istate->name_hash, &ce->ent, ce);
 
 	if (ignore_case)
 		remove_dir_entry(istate, ce);
@@ -682,6 +684,7 @@ int index_dir_exists(struct index_state *istate, const char *name, int namelen)
 	struct dir_entry *dir;
 
 	lazy_init_name_hash(istate);
+	expand_to_path(istate, name, namelen, 0);
 	dir = find_dir_entry(istate, name, namelen);
 	return dir && dir->nr;
 }
@@ -692,6 +695,7 @@ void adjust_dirname_case(struct index_state *istate, char *name)
 	const char *ptr = startPtr;
 
 	lazy_init_name_hash(istate);
+	expand_to_path(istate, name, strlen(name), 0);
 	while (*ptr) {
 		while (*ptr && *ptr != '/')
 			ptr++;
@@ -712,15 +716,16 @@ void adjust_dirname_case(struct index_state *istate, char *name)
 struct cache_entry *index_file_exists(struct index_state *istate, const char *name, int namelen, int icase)
 {
 	struct cache_entry *ce;
+	unsigned int hash = memihash(name, namelen);
 
 	lazy_init_name_hash(istate);
+	expand_to_path(istate, name, namelen, icase);
 
-	ce = hashmap_get_from_hash(&istate->name_hash,
-				   memihash(name, namelen), NULL);
-	while (ce) {
+	ce = hashmap_get_entry_from_hash(&istate->name_hash, hash, NULL,
+					 struct cache_entry, ent);
+	hashmap_for_each_entry_from(&istate->name_hash, ce, ent) {
 		if (same_name(ce, name, namelen, icase))
 			return ce;
-		ce = hashmap_get_next(&istate->name_hash, ce);
 	}
 	return NULL;
 }
@@ -731,6 +736,6 @@ void free_name_hash(struct index_state *istate)
 		return;
 	istate->name_hash_initialized = 0;
 
-	hashmap_free(&istate->name_hash, 0);
-	hashmap_free(&istate->dir_hash, 1);
+	hashmap_clear(&istate->name_hash);
+	hashmap_clear_and_free(&istate->dir_hash, struct dir_entry, ent);
 }

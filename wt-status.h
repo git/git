@@ -1,12 +1,12 @@
 #ifndef STATUS_H
 #define STATUS_H
 
-#include <stdio.h>
 #include "string-list.h"
 #include "color.h"
 #include "pathspec.h"
 #include "remote.h"
 
+struct repository;
 struct worktree;
 
 enum color_wt_status {
@@ -38,8 +38,21 @@ enum show_ignored_type {
 enum commit_whence {
 	FROM_COMMIT,     /* normal */
 	FROM_MERGE,      /* commit came from merge */
-	FROM_CHERRY_PICK /* commit came from cherry-pick */
+	FROM_CHERRY_PICK_SINGLE, /* commit came from cherry-pick */
+	FROM_CHERRY_PICK_MULTI, /* commit came from a sequence of cherry-picks */
+	FROM_REBASE_PICK /* commit came from a pick/reword/edit */
 };
+
+static inline int is_from_cherry_pick(enum commit_whence whence)
+{
+	return whence == FROM_CHERRY_PICK_SINGLE ||
+		whence == FROM_CHERRY_PICK_MULTI;
+}
+
+static inline int is_from_rebase(enum commit_whence whence)
+{
+	return whence == FROM_REBASE_PICK;
+}
 
 struct wt_status_change_data {
 	int worktree_status;
@@ -64,7 +77,30 @@ enum wt_status_format {
 	STATUS_FORMAT_UNSPECIFIED
 };
 
+#define SPARSE_CHECKOUT_DISABLED -1
+#define SPARSE_CHECKOUT_SPARSE_INDEX -2
+
+struct wt_status_state {
+	int merge_in_progress;
+	int am_in_progress;
+	int am_empty_patch;
+	int rebase_in_progress;
+	int rebase_interactive_in_progress;
+	int cherry_pick_in_progress;
+	int bisect_in_progress;
+	int revert_in_progress;
+	int detached_at;
+	int sparse_checkout_percentage; /* SPARSE_CHECKOUT_DISABLED if not sparse */
+	char *branch;
+	char *onto;
+	char *detached_from;
+	struct object_id detached_oid;
+	struct object_id revert_head_oid;
+	struct object_id cherry_pick_head_oid;
+};
+
 struct wt_status {
+	struct repository *repo;
 	int is_initial;
 	char *branch;
 	const char *reference;
@@ -89,12 +125,15 @@ struct wt_status {
 	int show_stash;
 	int hints;
 	enum ahead_behind_flags ahead_behind_flags;
-
+	int detect_rename;
+	int rename_score;
+	int rename_limit;
 	enum wt_status_format status_format;
-	unsigned char sha1_commit[GIT_MAX_RAWSZ]; /* when not Initial */
+	struct wt_status_state state;
+	struct object_id oid_commit; /* when not Initial */
 
 	/* These are computed during processing of the individual sections */
-	int commitable;
+	int committable;
 	int workdir_dirty;
 	const char *index_file;
 	FILE *fp;
@@ -105,30 +144,23 @@ struct wt_status {
 	uint32_t untracked_in_ms;
 };
 
-struct wt_status_state {
-	int merge_in_progress;
-	int am_in_progress;
-	int am_empty_patch;
-	int rebase_in_progress;
-	int rebase_interactive_in_progress;
-	int cherry_pick_in_progress;
-	int bisect_in_progress;
-	int revert_in_progress;
-	int detached_at;
-	char *branch;
-	char *onto;
-	char *detached_from;
-	struct object_id detached_oid;
-	struct object_id revert_head_oid;
-	struct object_id cherry_pick_head_oid;
-};
-
 size_t wt_status_locate_end(const char *s, size_t len);
+void wt_status_append_cut_line(struct strbuf *buf);
 void wt_status_add_cut_line(FILE *fp);
-void wt_status_prepare(struct wt_status *s);
+void wt_status_prepare(struct repository *r, struct wt_status *s);
 void wt_status_print(struct wt_status *s);
 void wt_status_collect(struct wt_status *s);
-void wt_status_get_state(struct wt_status_state *state, int get_detached_from);
+/*
+ * Frees the buffers allocated by wt_status_collect.
+ */
+void wt_status_collect_free_buffers(struct wt_status *s);
+/*
+ * Frees the buffers of the wt_status_state.
+ */
+void wt_status_state_free_buffers(struct wt_status_state *s);
+void wt_status_get_state(struct repository *repo,
+			 struct wt_status_state *state,
+			 int get_detached_from);
 int wt_status_check_rebase(const struct worktree *wt,
 			   struct wt_status_state *state);
 int wt_status_check_bisect(const struct worktree *wt,
@@ -140,9 +172,14 @@ __attribute__((format (printf, 3, 4)))
 void status_printf(struct wt_status *s, const char *color, const char *fmt, ...);
 
 /* The following functions expect that the caller took care of reading the index. */
-int has_unstaged_changes(int ignore_submodules);
-int has_uncommitted_changes(int ignore_submodules);
-int require_clean_work_tree(const char *action, const char *hint,
-	int ignore_submodules, int gently);
+int has_unstaged_changes(struct repository *repo,
+			 int ignore_submodules);
+int has_uncommitted_changes(struct repository *repo,
+			    int ignore_submodules);
+int require_clean_work_tree(struct repository *repo,
+			    const char *action,
+			    const char *hint,
+			    int ignore_submodules,
+			    int gently);
 
 #endif /* STATUS_H */

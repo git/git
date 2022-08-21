@@ -2,6 +2,7 @@
 
 test_description='read-tree D/F conflict corner cases'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-read-tree.sh
 
@@ -32,7 +33,7 @@ settree () {
 
 checkindex () {
 	git ls-files -s |
-	sed "s|^[0-7][0-7]* $_x40 \([0-3]\)	|\1 |" >current &&
+	sed "s|^[0-7][0-7]* $OID_REGEX \([0-3]\)	|\1 |" >current &&
 	cat >expect &&
 	test_cmp expect current
 }

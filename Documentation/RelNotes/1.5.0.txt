@@ -251,7 +251,7 @@ Updates in v1.5.0 since v1.4.4 series
    the repository when that happens.
 
 
-* Crufts removal
+* Cruft removal
 
  - We used to say "old commits are retrievable using reflog and
    'master@{yesterday}' syntax as long as you haven't run
@@ -379,7 +379,7 @@ Updates in v1.5.0 since v1.4.4 series
  - The value of i18n.commitencoding in the originating
    repository is recorded in the commit object on the "encoding"
    header, if it is not UTF-8.  git-log and friends notice this,
-   and reencodes the message to the log output encoding when
+   and re-encodes the message to the log output encoding when
    displaying, if they are different.  The log output encoding
    is determined by "git log --encoding=<encoding>",
    i18n.logoutputencoding configuration, or i18n.commitencoding

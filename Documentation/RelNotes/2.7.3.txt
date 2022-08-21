@@ -20,7 +20,7 @@ Fixes since v2.7.2
    tests.
 
  * "git show 'HEAD:Foo[BAR]Baz'" did not interpret the argument as a
-   rev, i.e. the object named by the the pathname with wildcard
+   rev, i.e. the object named by the pathname with wildcard
    characters in a tree object.
 
  * "git rev-parse --git-common-dir" used in the worktree feature

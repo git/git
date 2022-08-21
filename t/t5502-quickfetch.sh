@@ -2,6 +2,9 @@
 
 test_description='test quickfetch from local'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -108,14 +111,14 @@ test_expect_success 'quickfetch should not copy from alternate' '
 				q
 			}"
 	) ) &&
-	origin_master=$( (
+	origin_main=$( (
 		cd quickclone &&
-		git rev-parse origin/master
+		git rev-parse origin/main
 	) ) &&
 	echo "loose objects: $obj_cnt, packfiles: $pck_cnt" &&
 	test $obj_cnt -eq 0 &&
 	test $pck_cnt -eq 0 &&
-	test z$origin_master = z$(git rev-parse master)
+	test z$origin_main = z$(git rev-parse main)
 
 '
 
@@ -127,7 +130,7 @@ test_expect_success 'quickfetch should handle ~1000 refs (on Windows)' '
 	for i in 0 1 2 3 4 5 6 7 8 9; do
 		for j in 0 1 2 3 4 5 6 7 8 9; do
 			for k in 0 1 2 3 4 5 6 7 8 9; do
-				echo "$branchprefix$i$j$k" >> .git/packed-refs
+				echo "$branchprefix$i$j$k" >> .git/packed-refs || return 1
 			done
 		done
 	done &&

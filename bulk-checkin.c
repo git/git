@@ -3,15 +3,21 @@
  */
 #include "cache.h"
 #include "bulk-checkin.h"
+#include "lockfile.h"
 #include "repository.h"
 #include "csum-file.h"
 #include "pack.h"
 #include "strbuf.h"
+#include "string-list.h"
+#include "tmp-objdir.h"
 #include "packfile.h"
+#include "object-store.h"
 
-static struct bulk_checkin_state {
-	unsigned plugged:1;
+static int odb_transaction_nesting;
 
+static struct tmp_objdir *bulk_fsync_objdir;
+
+static struct bulk_checkin_packfile {
 	char *pack_tmp_name;
 	struct hashfile *f;
 	off_t offset;
@@ -20,11 +26,27 @@ static struct bulk_checkin_state {
 	struct pack_idx_entry **written;
 	uint32_t alloc_written;
 	uint32_t nr_written;
-} state;
+} bulk_checkin_packfile;
 
-static void finish_bulk_checkin(struct bulk_checkin_state *state)
+static void finish_tmp_packfile(struct strbuf *basename,
+				const char *pack_tmp_name,
+				struct pack_idx_entry **written_list,
+				uint32_t nr_written,
+				struct pack_idx_option *pack_idx_opts,
+				unsigned char hash[])
 {
-	struct object_id oid;
+	char *idx_tmp_name = NULL;
+
+	stage_tmp_packfiles(basename, pack_tmp_name, written_list, nr_written,
+			    NULL, pack_idx_opts, hash, &idx_tmp_name);
+	rename_tmp_packfile_idx(basename, &idx_tmp_name);
+
+	free(idx_tmp_name);
+}
+
+static void flush_bulk_checkin_packfile(struct bulk_checkin_packfile *state)
+{
+	unsigned char hash[GIT_MAX_RAWSZ];
 	struct strbuf packname = STRBUF_INIT;
 	int i;
 
@@ -36,19 +58,21 @@ static void finish_bulk_checkin(struct bulk_checkin_state *state)
 		unlink(state->pack_tmp_name);
 		goto clear_exit;
 	} else if (state->nr_written == 1) {
-		hashclose(state->f, oid.hash, CSUM_FSYNC);
+		finalize_hashfile(state->f, hash, FSYNC_COMPONENT_PACK,
+				  CSUM_HASH_IN_STREAM | CSUM_FSYNC | CSUM_CLOSE);
 	} else {
-		int fd = hashclose(state->f, oid.hash, 0);
-		fixup_pack_header_footer(fd, oid.hash, state->pack_tmp_name,
-					 state->nr_written, oid.hash,
+		int fd = finalize_hashfile(state->f, hash, FSYNC_COMPONENT_PACK, 0);
+		fixup_pack_header_footer(fd, hash, state->pack_tmp_name,
+					 state->nr_written, hash,
 					 state->offset);
 		close(fd);
 	}
 
-	strbuf_addf(&packname, "%s/pack/pack-", get_object_directory());
+	strbuf_addf(&packname, "%s/pack/pack-%s.", get_object_directory(),
+		    hash_to_hex(hash));
 	finish_tmp_packfile(&packname, state->pack_tmp_name,
 			    state->written, state->nr_written,
-			    &state->pack_idx_opts, oid.hash);
+			    &state->pack_idx_opts, hash);
 	for (i = 0; i < state->nr_written; i++)
 		free(state->written[i]);
 
@@ -61,17 +85,51 @@ clear_exit:
 	reprepare_packed_git(the_repository);
 }
 
-static int already_written(struct bulk_checkin_state *state, struct object_id *oid)
+/*
+ * Cleanup after batch-mode fsync_object_files.
+ */
+static void flush_batch_fsync(void)
+{
+	struct strbuf temp_path = STRBUF_INIT;
+	struct tempfile *temp;
+
+	if (!bulk_fsync_objdir)
+		return;
+
+	/*
+	 * Issue a full hardware flush against a temporary file to ensure
+	 * that all objects are durable before any renames occur. The code in
+	 * fsync_loose_object_bulk_checkin has already issued a writeout
+	 * request, but it has not flushed any writeback cache in the storage
+	 * hardware or any filesystem logs. This fsync call acts as a barrier
+	 * to ensure that the data in each new object file is durable before
+	 * the final name is visible.
+	 */
+	strbuf_addf(&temp_path, "%s/bulk_fsync_XXXXXX", get_object_directory());
+	temp = xmks_tempfile(temp_path.buf);
+	fsync_or_die(get_tempfile_fd(temp), get_tempfile_path(temp));
+	delete_tempfile(&temp);
+	strbuf_release(&temp_path);
+
+	/*
+	 * Make the object files visible in the primary ODB after their data is
+	 * fully durable.
+	 */
+	tmp_objdir_migrate(bulk_fsync_objdir);
+	bulk_fsync_objdir = NULL;
+}
+
+static int already_written(struct bulk_checkin_packfile *state, struct object_id *oid)
 {
 	int i;
 
 	/* The object may already exist in the repository */
-	if (has_sha1_file(oid->hash))
+	if (has_object_file(oid))
 		return 1;
 
 	/* Might want to keep the list sorted */
 	for (i = 0; i < state->nr_written; i++)
-		if (!oidcmp(&state->written[i]->oid, oid))
+		if (oideq(&state->written[i]->oid, oid))
 			return 1;
 
 	/* This is a new object we need to keep */
@@ -93,12 +151,13 @@ static int already_written(struct bulk_checkin_state *state, struct object_id *o
  * status before calling us just in case we ask it to call us again
  * with a new pack.
  */
-static int stream_to_pack(struct bulk_checkin_state *state,
+static int stream_to_pack(struct bulk_checkin_packfile *state,
 			  git_hash_ctx *ctx, off_t *already_hashed_to,
 			  int fd, size_t size, enum object_type type,
 			  const char *path, unsigned flags)
 {
 	git_zstream s;
+	unsigned char ibuf[16384];
 	unsigned char obuf[16384];
 	unsigned hdrlen;
 	int status = Z_OK;
@@ -112,8 +171,6 @@ static int stream_to_pack(struct bulk_checkin_state *state,
 	s.avail_out = sizeof(obuf) - hdrlen;
 
 	while (status != Z_STREAM_END) {
-		unsigned char ibuf[16384];
-
 		if (size && !s.avail_in) {
 			ssize_t rsize = size < sizeof(ibuf) ? size : sizeof(ibuf);
 			ssize_t read_result = read_in_full(fd, ibuf, rsize);
@@ -171,7 +228,7 @@ static int stream_to_pack(struct bulk_checkin_state *state,
 }
 
 /* Lazily create backing packfile for the state */
-static void prepare_to_stream(struct bulk_checkin_state *state,
+static void prepare_to_stream(struct bulk_checkin_packfile *state,
 			      unsigned flags)
 {
 	if (!(flags & HASH_WRITE_OBJECT) || state->f)
@@ -186,7 +243,7 @@ static void prepare_to_stream(struct bulk_checkin_state *state,
 		die_errno("unable to write pack header");
 }
 
-static int deflate_to_pack(struct bulk_checkin_state *state,
+static int deflate_to_pack(struct bulk_checkin_packfile *state,
 			   struct object_id *result_oid,
 			   int fd, size_t size,
 			   enum object_type type, const char *path,
@@ -196,21 +253,21 @@ static int deflate_to_pack(struct bulk_checkin_state *state,
 	git_hash_ctx ctx;
 	unsigned char obuf[16384];
 	unsigned header_len;
-	struct hashfile_checkpoint checkpoint;
+	struct hashfile_checkpoint checkpoint = {0};
 	struct pack_idx_entry *idx = NULL;
 
 	seekback = lseek(fd, 0, SEEK_CUR);
 	if (seekback == (off_t) -1)
 		return error("cannot find the current offset");
 
-	header_len = xsnprintf((char *)obuf, sizeof(obuf), "%s %" PRIuMAX,
-			       type_name(type), (uintmax_t)size) + 1;
+	header_len = format_object_header((char *)obuf, sizeof(obuf),
+					  type, size);
 	the_hash_algo->init_fn(&ctx);
 	the_hash_algo->update_fn(&ctx, obuf, header_len);
 
 	/* Note: idx is non-NULL when we are writing */
 	if ((flags & HASH_WRITE_OBJECT) != 0)
-		idx = xcalloc(1, sizeof(*idx));
+		CALLOC_ARRAY(idx, 1);
 
 	already_hashed_to = 0;
 
@@ -230,14 +287,14 @@ static int deflate_to_pack(struct bulk_checkin_state *state,
 		 * pack, and write into it.
 		 */
 		if (!idx)
-			die("BUG: should not happen");
+			BUG("should not happen");
 		hashfile_truncate(state->f, &checkpoint);
 		state->offset = checkpoint.offset;
-		finish_bulk_checkin(state);
+		flush_bulk_checkin_packfile(state);
 		if (lseek(fd, seekback, SEEK_SET) == (off_t) -1)
 			return error("cannot seek back");
 	}
-	the_hash_algo->final_fn(result_oid->hash, &ctx);
+	the_hash_algo->final_oid_fn(result_oid, &ctx);
 	if (!idx)
 		return 0;
 
@@ -256,25 +313,69 @@ static int deflate_to_pack(struct bulk_checkin_state *state,
 	return 0;
 }
 
+void prepare_loose_object_bulk_checkin(void)
+{
+	/*
+	 * We lazily create the temporary object directory
+	 * the first time an object might be added, since
+	 * callers may not know whether any objects will be
+	 * added at the time they call begin_odb_transaction.
+	 */
+	if (!odb_transaction_nesting || bulk_fsync_objdir)
+		return;
+
+	bulk_fsync_objdir = tmp_objdir_create("bulk-fsync");
+	if (bulk_fsync_objdir)
+		tmp_objdir_replace_primary_odb(bulk_fsync_objdir, 0);
+}
+
+void fsync_loose_object_bulk_checkin(int fd, const char *filename)
+{
+	/*
+	 * If we have an active ODB transaction, we issue a call that
+	 * cleans the filesystem page cache but avoids a hardware flush
+	 * command. Later on we will issue a single hardware flush
+	 * before renaming the objects to their final names as part of
+	 * flush_batch_fsync.
+	 */
+	if (!bulk_fsync_objdir ||
+	    git_fsync(fd, FSYNC_WRITEOUT_ONLY) < 0) {
+		if (errno == ENOSYS)
+			warning(_("core.fsyncMethod = batch is unsupported on this platform"));
+		fsync_or_die(fd, filename);
+	}
+}
+
 int index_bulk_checkin(struct object_id *oid,
 		       int fd, size_t size, enum object_type type,
 		       const char *path, unsigned flags)
 {
-	int status = deflate_to_pack(&state, oid, fd, size, type,
+	int status = deflate_to_pack(&bulk_checkin_packfile, oid, fd, size, type,
 				     path, flags);
-	if (!state.plugged)
-		finish_bulk_checkin(&state);
+	if (!odb_transaction_nesting)
+		flush_bulk_checkin_packfile(&bulk_checkin_packfile);
 	return status;
 }
 
-void plug_bulk_checkin(void)
+void begin_odb_transaction(void)
 {
-	state.plugged = 1;
+	odb_transaction_nesting += 1;
 }
 
-void unplug_bulk_checkin(void)
+void flush_odb_transaction(void)
 {
-	state.plugged = 0;
-	if (state.f)
-		finish_bulk_checkin(&state);
+	flush_batch_fsync();
+	flush_bulk_checkin_packfile(&bulk_checkin_packfile);
+}
+
+void end_odb_transaction(void)
+{
+	odb_transaction_nesting -= 1;
+	if (odb_transaction_nesting < 0)
+		BUG("Unbalanced ODB transaction nesting");
+
+	if (odb_transaction_nesting)
+		return;
+
+	flush_odb_transaction();
 }

@@ -1,4 +1,6 @@
 #ifndef URL_MATCH_H
+#define URL_MATCH_H
+
 #include "string-list.h"
 
 struct url_info {
@@ -31,7 +33,7 @@ struct url_info {
 				 * '?...' and '#...' portion; will always be >= 1 */
 };
 
-extern char *url_normalize(const char *, struct url_info *);
+char *url_normalize(const char *, struct url_info *);
 
 struct urlmatch_item {
 	size_t hostmatch_len;
@@ -48,8 +50,27 @@ struct urlmatch_config {
 	void *cb;
 	int (*collect_fn)(const char *var, const char *value, void *cb);
 	int (*cascade_fn)(const char *var, const char *value, void *cb);
+	/*
+	 * Compare the two matches, the one just discovered and the existing
+	 * best match and return a negative value if the found item is to be
+	 * rejected or a non-negative value if it is to be accepted.  If this
+	 * field is set to NULL, use the default comparison technique, which
+	 * checks to ses if found is better (according to the urlmatch
+	 * specificity rules) than existing.
+	 */
+	int (*select_fn)(const struct urlmatch_item *found, const struct urlmatch_item *existing);
+	/*
+	 * An optional callback to allow e.g. for partial URLs; it shall
+	 * return 1 or 0 depending whether `url` matches or not.
+	 */
+	int (*fallback_match_fn)(const char *url, void *cb);
 };
 
-extern int urlmatch_config_entry(const char *var, const char *value, void *cb);
+#define URLMATCH_CONFIG_INIT { \
+	.vars = STRING_LIST_INIT_DUP, \
+}
+
+int urlmatch_config_entry(const char *var, const char *value, void *cb);
+void urlmatch_config_release(struct urlmatch_config *config);
 
 #endif /* URL_MATCH_H */

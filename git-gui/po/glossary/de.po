@@ -6,10 +6,11 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: git-gui glossary\n"
-"POT-Creation-Date: 2008-01-07 21:20+0100\n"
-"PO-Revision-Date: 2008-02-16 21:48+0100\n"
+"POT-Creation-Date: 2020-01-26 22:26+0100\n"
+"PO-Revision-Date: 2020-02-09 21:22+0100\n"
 "Last-Translator: Christian Stimming <stimming@tuhh.de>\n"
 "Language-Team: German \n"
+"Language: de_DE\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -19,6 +20,9 @@ msgid ""
 "English Term (Dear translator: This file will never be visible to the user!)"
 msgstr ""
 "Deutsche Übersetzung.\n"
+"Git-core glossary:\n"
+"  https://github.com/ruester/git-po-de/wiki/Translation-Guidelines\n"
+"\n"
 "Andere deutsche SCM:\n"
 "  http://tortoisesvn.net/docs/release/TortoiseSVN_de/index.html und http://"
 "tortoisesvn.tigris.org/svn/tortoisesvn/trunk/Languages/Tortoise_de.po "
@@ -32,33 +36,77 @@ msgstr ""
 "  http://rapidsvn.tigris.org/svn/rapidsvn/trunk/src/locale/de/rapidsvn.po "
 "(username=guest, password empty, schlecht)"
 
+#. "prematurely stop and abandon an operation"
+msgid "abort"
+msgstr "abbrechen"
+
 #. ""
 msgid "amend"
 msgstr "nachbessern (ergänzen)"
+
+#. "a commit that succeeds the current one in git's graph of commits (not necessarily directly)"
+msgid "ancestor"
+msgstr "Vorgänger-Commit"
 
 #. ""
 msgid "annotate"
 msgstr "annotieren"
 
+#. "The person who initially created (authored) a commit"
+msgid "author"
+msgstr "Autor"
+
+#. "a repository with only .git directory, without working directory"
+msgid "bare repository"
+msgstr "bloßes Projektarchiv"
+
+#. "a parent version of the current file"
+msgid "base"
+msgstr "Ursprung"
+
+#. ""
+msgid "bisect"
+msgstr "binäre Suche [noun], binäre Suche benutzen [verb]"
+
+#. "get the authors responsible for each line in a file"
+msgid "blame"
+msgstr "annotieren"
+
+#.      ""
+msgid "blob"
+msgstr "Blob"
+
 #. "A 'branch' is an active line of development."
 msgid "branch [noun]"
-msgstr "Zweig"
+msgstr "Branch"
 
 #. ""
 msgid "branch [verb]"
-msgstr "verzweigen"
+msgstr "branchen"
 
 #. ""
 msgid "checkout [noun]"
 msgstr ""
-"Arbeitskopie (Erstellung einer Arbeitskopie; Auscheck? Ausspielung? Abruf? "
-"Source Safe: Auscheckvorgang)"
+"Arbeitskopie (Checkout; Erstellung einer Arbeitskopie; Auscheck? Source "
+"Safe: Auscheckvorgang)"
 
 #. "The action of updating the working tree to a revision which was stored in the object database."
 msgid "checkout [verb]"
 msgstr ""
-"Arbeitskopie erstellen; Zweig umstellen [checkout a branch] (auschecken? "
-"ausspielen? abrufen? Source Safe: auschecken)"
+"Arbeitskopie erstellen; Branch auschecken [checkout a branch] (umstellen? "
+"Source Safe: auschecken)"
+
+#. "to select and apply a single commit to the current HEAD without merging"
+msgid "cherry-pick"
+msgstr "cherry-pick (pflücken?)"
+
+#. "a commit that directly succeeds the current one in git's graph of commits"
+msgid "child commit"
+msgstr "Kind-Commit"
+
+#. "clean the state of the git repository, often after manually stopped operation"
+msgid "cleanup"
+msgstr "aufräumen"
 
 #. ""
 msgid "clone [verb]"
@@ -66,39 +114,98 @@ msgstr "klonen"
 
 #. "A single point in the git history."
 msgid "commit [noun]"
-msgstr ""
-"Version; Eintragung; Änderung (Buchung?, Eintragung?, Übertragung?, "
-"Sendung?, Übergabe?, Einspielung?, Ablagevorgang?)"
+msgstr "Commit (Version?)"
 
 #. "The action of storing a new snapshot of the project's state in the git history."
 msgid "commit [verb]"
 msgstr ""
-"eintragen (TortoiseSVN: übertragen; Source Safe: einchecken; senden?, "
-"übergeben?, einspielen?, einpflegen?, ablegen?)"
+"committen (eintragen?, TortoiseSVN: übertragen; Source Safe: einchecken)"
+
+#. "a message that gets attached with any commit"
+msgid "commit message"
+msgstr "Commit-Beschreibung (Meldung?, Nachricht?; Source Safe: Kommentar)"
+
+#.   "The person who committed a commit (to the current branch), which might be different than the author."
+msgid "committer"
+msgstr "Committer"
+
+#. "a commit that precedes the current one in git's graph of commits (not necessarily directly)"
+msgid "descendant"
+msgstr "Nachfolger-Commit"
+
+#.       "checkout of a revision rather than some head"
+msgid "detached HEAD"
+msgstr "losgelöster HEAD / Branchspitze"
+
+#. "checkout of a revision rather than some head"
+msgid "detached checkout"
+msgstr "losgelöster Commit (von Branch losgelöster Commit?)"
 
 #. ""
 msgid "diff [noun]"
-msgstr "Vergleich (Source Safe: Unterschiede)"
+msgstr "Vergleich (Diff? Source Safe: Unterschiede)"
 
 #. ""
 msgid "diff [verb]"
 msgstr "vergleichen"
 
-#. "A fast-forward is a special type of merge where you have a revision and you are merging another branch's changes that happen to be a descendant of what you have."
-msgid "fast forward merge"
-msgstr "Schnellzusammenführung"
+#.   ""
+msgid "directory"
+msgstr "Verzeichnis"
+
+#. "A fast-forward merge is a special type of merge where you have a revision and you are merging another branch's changes that happen to be a descendant of what you have."
+msgid "fast-forward"
+msgstr "vorspulen"
 
 #. "Fetching a branch means to get the branch's head from a remote repository, to find out which objects are missing from the local object database, and to get them, too."
 msgid "fetch"
 msgstr "anfordern (holen?)"
 
+#. "any merge strategy that works on a file by file basis"
+msgid "file level merging"
+msgstr "Datei-basiertes zusammenführen"
+
+#.      ""
+msgid "file"
+msgstr "Datei"
+
+#. "the last revision in a branch"
+msgid "head"
+msgstr "HEAD / Branchspitze"
+
+#. "script that gets executed automatically on some event"
+msgid "hook"
+msgstr "Hook (in der dt. Informatik wohl als Einschubmethode bezeichnet)"
+
 #. "One context of consecutive lines in a whole patch, which consists of many such hunks"
 msgid "hunk"
-msgstr "Kontext"
+msgstr "Patch-Block (Kontext?)"
 
 #. "A collection of files. The index is a stored version of your working tree."
 msgid "index (in git-gui: staging area)"
-msgstr "Bereitstellung"
+msgstr ""
+"Bereitstellung (sofern der git index gemeint ist. In git-gui sowieso: "
+"staging area)"
+
+#. "the first checkout during a clone operation"
+msgid "initial checkout"
+msgstr "Erstellen der Arbeitskopie, auschecken"
+
+#. "The very first commit in a repository"
+msgid "initial commit"
+msgstr "Allererster Commit"
+
+#. "a branch that resides in the local git repository"
+msgid "local branch"
+msgstr "Lokaler Branch"
+
+#. "a Git object that is not part of any pack"
+msgid "loose object"
+msgstr "loses Objekt"
+
+#. "a branch called by convention 'master' that exists in a newly created git repository"
+msgid "master branch"
+msgstr "Master-Branch"
 
 #. "A successful merge results in the creation of a new commit representing the result of the merge."
 msgid "merge [noun]"
@@ -112,78 +219,212 @@ msgstr "zusammenführen"
 msgid "message"
 msgstr "Beschreibung (Meldung?, Nachricht?; Source Safe: Kommentar)"
 
-#. "Deletes all stale tracking branches under <name>. These stale branches have already been removed from the remote repository referenced by <name>, but are still locally available in 'remotes/<name>'."
+#. "a remote called by convention 'origin' that the current git repository has been cloned from"
+msgid "origin"
+msgstr "origin"
+
+#.       ""
+msgid "orphan commit"
+msgstr "verwaister Commit"
+
+#.  ""
+msgid "orphan reference"
+msgstr "verwaiste Referenz"
+
+#. "a file containing many git objects packed together"
+msgid "pack [noun]"
+msgstr "Pack-Datei"
+
+#.     "the process of creating a pack file"
+msgid "pack [verb]"
+msgstr "Pack-Datei erstellen"
+
+#. "a Git object part of some pack"
+msgid "packed object"
+msgstr "gepacktes Objekt"
+
+#. "a commit that directly precedes the current one in git's graph of commits"
+msgid "parent commit"
+msgstr "Eltern-Commit"
+
+msgid "patch"
+msgstr "Patch"
+
+#. "The path to a file"
+msgid "path"
+msgstr "Pfad"
+
+#. "Delete all stale tracking branches under <name>. These stale branches have already been removed from the remote repository referenced by <name>, but are still locally available in 'remotes/<name>'."
 msgid "prune"
-msgstr "aufräumen (entfernen?)"
+msgstr "veraltete Branches entfernen (aufräumen?, entfernen?)"
 
 #. "Pulling a branch means to fetch it and merge it."
 msgid "pull"
-msgstr "übernehmen (ziehen?)"
+msgstr ""
+"übernehmen (pull? ziehen? Vorsicht: zusammenführen = merge, aber pull kann "
+"auch rebase bewirken)"
 
 #. "Pushing a branch means to get the branch's head ref from a remote repository, and ... (well, can someone please explain it for mere mortals?)"
 msgid "push"
 msgstr "versenden (ausliefern? hochladen? verschicken? schieben?)"
 
+#. "The process of rebasing one set of commits on top of another branch's head"
+msgid "rebase [noun]"
+msgstr "der Rebase (das Umpflanzen)"
+
+#. "Re-apply one set of commits on top of another branch's head. Contrary to merge."
+msgid "rebase [verb]"
+msgstr "rebase (umpflanzen)"
+
 #. ""
 msgid "redo"
 msgstr "wiederholen"
 
-#. "An other repository ('remote'). One might have a set of remotes whose branches one tracks."
-msgid "remote"
-msgstr "Andere Archive (Gegenseite?, Entfernte?, Server?)"
+#.   ""
+msgid "reference"
+msgstr "Referenz"
+
+#. "the log file containing all states of the HEAD reference (in other words past pristine states of the working copy)"
+msgid "reflog"
+msgstr "Commit-Log, »reflog«"
+
+msgid "refmap"
+msgstr "Refmap"
+
+#. ""
+msgid "refspec"
+msgstr "Refspec"
+
+#. "The adjective for anything which is outside of the current (local) repository"
+msgid "remote [adj]"
+msgstr "Extern (Andere?, Gegenseite?, Entfernte?, Server?)"
+
+#.       "A branch in any other ('remote') repository"
+msgid "remote branch"
+msgstr "Externer branch"
+
+#.   "An other repository ('remote'). One might have a set of remotes whose branches one tracks."
+msgid "remote repository"
+msgstr "Externes Repository"
 
 #. "A collection of refs (?) together with an object database containing all objects which are reachable from the refs... (oops, you've lost me here. Again, please an explanation for mere mortals?)"
 msgid "repository"
-msgstr "Projektarchiv"
+msgstr "Repository"
 
 #. ""
 msgid "reset"
-msgstr "zurücksetzen (zurückkehren?)"
+msgstr "umsetzen (reset to commit), Änderungen verwerfen (reset to HEAD)"
+
+#. "decide which changes from alternative versions of a file should persist in Git"
+msgid "resolve (a conflict)"
+msgstr "auflösen (einen Konflikt)"
+
+#. "abandon changes and go to pristine version"
+msgid "revert changes"
+msgstr ""
+"verwerfen (bei git-reset bzw. checkout), zurücknehmen (bei git-revert, also "
+"mit neuem commit; umkehren?)"
 
 #. ""
 msgid "revert"
-msgstr "verwerfen (bei git-reset), revidieren (bei git-revert, also mit neuem commit)"
+msgstr ""
+"verwerfen (bei git-reset bzw. checkout), zurücknehmen (bei git-revert, also "
+"mit neuem commit; umkehren?)"
+
+#. "expression that signifies a revision in git"
+msgid "revision expression"
+msgstr "Version Regexp-Ausdruck"
 
 #. "A particular state of files and directories which was stored in the object database."
 msgid "revision"
-msgstr "Version (TortoiseSVN: Revision; Source Safe: Version)"
+msgstr ""
+"Version (aber was macht das Wort revision hier im Git?? TortoiseSVN: "
+"Revision; Source Safe: Version)"
 
 #. ""
 msgid "sign off"
-msgstr "abzeichnen (gegenzeichnen?, freizeichnen?, absegnen?)"
+msgstr "abzeichnen (signieren? gegenzeichnen?, freizeichnen?)"
 
-#. ""
+#.     "see: staging area. In some areas of git this is called 'index'."
+msgid "stage [noun], index"
+msgstr "Bereitstellung"
+
+#. "add some content of files and directories to the staging area in preparation for a commit"
+msgid "stage [verb]"
+msgstr "bereitstellen"
+
+#. "The place where changes from files are marked to be included for the next commit. In some areas of git this is called 'index'."
 msgid "staging area"
 msgstr "Bereitstellung"
+
+#. "The place (stack) where changes can be temporarily saved without committing"
+msgid "stash [noun]"
+msgstr "der Stash"
+
+#. "temporarily save changes in a stack without committing"
+msgid "stash [verb]"
+msgstr "in Stash speichern; \"stash\" benutzen"
 
 #. ""
 msgid "status"
 msgstr "Status"
 
-#. "A ref pointing to a tag or commit object"
-msgid "tag [noun]"
-msgstr "Markierung"
-
 #. ""
+msgid "submodule"
+msgstr "Submodul (Untermodul?)"
+
+#. "A ref pointing to some commit object. In other words: A label on a specific commit."
+msgid "tag [noun]"
+msgstr "Tag (Markierung?)"
+
+#. "The process of creating a tag at a specific commit object"
 msgid "tag [verb]"
-msgstr "markieren"
+msgstr "taggen (markieren?)"
+
+#. "The person who created a tag"
+msgid "tagger"
+msgstr "Tag-Ersteller (Markierungs-Ersteller?)"
+
+#. "file whose content is tracked/not tracked by git"
+msgid "tracked/untracked"
+msgstr "versioniert/unversioniert"
 
 #. "A regular git branch that is used to follow changes from another repository."
 msgid "tracking branch"
-msgstr "Übernahmezweig"
+msgstr "Tracking-Branch (Verfolgungsbranch? Übernahmebranch?)"
+
+#. ""
+msgid "trailer"
+msgstr "Anhang"
+
+#. "1. tree object, 2. directory tree"
+msgid "tree"
+msgstr "1. Baum-Objekt, 2. Verzeichnisbaum"
 
 #. ""
 msgid "undo"
 msgstr "rückgängig"
+
+#. "Remove content of files from the staging area again so that it will not be part of the next commit"
+msgid "unstage"
+msgstr "aus Bereitstellung herausnehmen"
+
+#. "Retrieving the temporarily saved changes back again from the stash"
+msgid "unstash [verb]"
+msgstr "aus Stash zurückladen"
 
 #. ""
 msgid "update"
 msgstr "aktualisieren"
 
 #. ""
+msgid "upstream branch"
+msgstr "Upstream-Branch"
+
+#. ""
 msgid "verify"
 msgstr "überprüfen"
 
 #. "The tree of actual checked out files."
-msgid "working copy, working tree"
+msgid "working directory, working copy, working tree"
 msgstr "Arbeitskopie"

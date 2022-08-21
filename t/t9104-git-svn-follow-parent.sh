@@ -4,6 +4,7 @@
 #
 
 test_description='git svn fetching'
+
 . ./lib-git-svn.sh
 
 test_expect_success 'initialize repo' '
@@ -117,7 +118,7 @@ test_expect_success 'follow-parent avoids deleting relevant info' '
 	mkdir -p import/trunk/subversion/bindings/swig/perl/t &&
 	for i in a b c ; do \
 	  echo $i > import/trunk/subversion/bindings/swig/perl/$i.pm &&
-	  echo _$i > import/trunk/subversion/bindings/swig/perl/t/$i.t; \
+	  echo _$i > import/trunk/subversion/bindings/swig/perl/t/$i.t || return 1
 	done &&
 	  echo "bad delete test" > \
 	   import/trunk/subversion/bindings/swig/perl/t/larger-parent &&
@@ -134,7 +135,7 @@ test_expect_success 'follow-parent avoids deleting relevant info' '
 		svn mv t native/t &&
 		for i in a b c
 		do
-			svn mv $i.pm native/$i.pm
+			svn mv $i.pm native/$i.pm || return 1
 		done &&
 		echo z >>native/t/c.t &&
 		poke native/t/c.t &&
@@ -161,6 +162,7 @@ test_expect_success "track initial change if it was only made to parent" '
 	'
 
 test_expect_success "follow-parent is atomic" '
+	record_size=$(($(test_oid rawsz) + 4)) &&
 	(
 		cd wc &&
 		svn_cmd up &&
@@ -186,7 +188,7 @@ test_expect_success "follow-parent is atomic" '
 	mkdir -p "$GIT_DIR"/svn/refs/remotes/flunk@18 &&
 	rev_map=$(cd "$GIT_DIR"/svn/refs/remotes/stunk && ls .rev_map*) &&
 	dd if="$GIT_DIR"/svn/refs/remotes/stunk/$rev_map \
-	   of="$GIT_DIR"/svn/refs/remotes/flunk@18/$rev_map bs=24 count=1 &&
+	   of="$GIT_DIR"/svn/refs/remotes/flunk@18/$rev_map bs=$record_size count=1 &&
 	rm -rf "$GIT_DIR"/svn/refs/remotes/stunk &&
 	git svn init --minimize-url -i flunk "$svnrepo"/flunk &&
 	git svn fetch -i flunk &&
@@ -215,7 +217,10 @@ test_expect_success "multi-fetch continues to work" "
 	"
 
 test_expect_success "multi-fetch works off a 'clean' repository" '
-	rm -r "$GIT_DIR/svn" "$GIT_DIR/refs/remotes" "$GIT_DIR/logs" &&
+	rm -rf "$GIT_DIR/svn" &&
+	git for-each-ref --format="option no-deref%0adelete %(refname)" refs/remotes |
+	git update-ref --stdin &&
+	git reflog expire --all --expire=all &&
 	mkdir "$GIT_DIR/svn" &&
 	git svn multi-fetch
 	'

@@ -1,0 +1,14 @@
+stash.showIncludeUntracked::
+	If this is set to true, the `git stash show` command will show
+	the untracked files of a stash entry.  Defaults to false. See
+	description of 'show' command in linkgit:git-stash[1].
+
+stash.showPatch::
+	If this is set to true, the `git stash show` command without an
+	option will show the stash entry in patch form.  Defaults to false.
+	See description of 'show' command in linkgit:git-stash[1].
+
+stash.showStat::
+	If this is set to true, the `git stash show` command without an
+	option will show diffstat of the stash entry.  Defaults to true.
+	See description of 'show' command in linkgit:git-stash[1].

@@ -1,0 +1,4 @@
+(define (higher-order)
+  (define local-function RIGHT
+    (lambda (x)
+     (car "this is" "ChangeMe"))))

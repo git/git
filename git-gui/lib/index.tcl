@@ -7,67 +7,74 @@ proc _delete_indexlock {} {
 	}
 }
 
-proc _close_updateindex {fd after} {
-	global use_ttk NS
-	fconfigure $fd -blocking 1
-	if {[catch {close $fd} err]} {
-		set w .indexfried
-		Dialog $w
-		wm withdraw $w
-		wm title $w [strcat "[appname] ([reponame]): " [mc "Index Error"]]
-		wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
-		set s [mc "Updating the Git index failed.  A rescan will be automatically started to resynchronize git-gui."]
-		text $w.msg -yscrollcommand [list $w.vs set] \
-			-width [string length $s] -relief flat \
-			-borderwidth 0 -highlightthickness 0 \
-			-background [get_bg_color $w]
-		$w.msg tag configure bold -font font_uibold -justify center
-		${NS}::scrollbar $w.vs -command [list $w.msg yview]
-		$w.msg insert end $s bold \n\n$err {}
-		$w.msg configure -state disabled
-
-		${NS}::button $w.continue \
-			-text [mc "Continue"] \
-			-command [list destroy $w]
-		${NS}::button $w.unlock \
-			-text [mc "Unlock Index"] \
-			-command "destroy $w; _delete_indexlock"
-		grid $w.msg - $w.vs -sticky news
-		grid $w.unlock $w.continue - -sticky se -padx 2 -pady 2
-		grid columnconfigure $w 0 -weight 1
-		grid rowconfigure $w 0 -weight 1
-
-		wm protocol $w WM_DELETE_WINDOW update
-		bind $w.continue <Visibility> "
-			grab $w
-			focus %W
-		"
-		wm deiconify $w
-		tkwait window $w
-
-		$::main_status stop
+proc close_and_unlock_index {fd after} {
+	if {![catch {_close_updateindex $fd} err]} {
 		unlock_index
-		rescan $after 0
-		return
+		uplevel #0 $after
+	} else {
+		rescan_on_error $err $after
 	}
-
-	$::main_status stop
-	unlock_index
-	uplevel #0 $after
 }
 
-proc update_indexinfo {msg pathList after} {
+proc _close_updateindex {fd} {
+	fconfigure $fd -blocking 1
+	close $fd
+}
+
+proc rescan_on_error {err {after {}}} {
+	global use_ttk NS
+
+	set w .indexfried
+	Dialog $w
+	wm withdraw $w
+	wm title $w [strcat "[appname] ([reponame]): " [mc "Index Error"]]
+	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
+	set s [mc "Updating the Git index failed.  A rescan will be automatically started to resynchronize git-gui."]
+	text $w.msg -yscrollcommand [list $w.vs set] \
+		-width [string length $s] -relief flat \
+		-borderwidth 0 -highlightthickness 0 \
+		-background [get_bg_color $w]
+	$w.msg tag configure bold -font font_uibold -justify center
+	${NS}::scrollbar $w.vs -command [list $w.msg yview]
+	$w.msg insert end $s bold \n\n$err {}
+	$w.msg configure -state disabled
+
+	${NS}::button $w.continue \
+		-text [mc "Continue"] \
+		-command [list destroy $w]
+	${NS}::button $w.unlock \
+		-text [mc "Unlock Index"] \
+		-command "destroy $w; _delete_indexlock"
+	grid $w.msg - $w.vs -sticky news
+	grid $w.unlock $w.continue - -sticky se -padx 2 -pady 2
+	grid columnconfigure $w 0 -weight 1
+	grid rowconfigure $w 0 -weight 1
+
+	wm protocol $w WM_DELETE_WINDOW update
+	bind $w.continue <Visibility> "
+		grab $w
+		focus %W
+	"
+	wm deiconify $w
+	tkwait window $w
+
+	$::main_status stop_all
+	unlock_index
+	rescan [concat $after {ui_ready;}] 0
+}
+
+proc update_indexinfo {msg path_list after} {
 	global update_index_cp
 
 	if {![lock_index update]} return
 
 	set update_index_cp 0
-	set pathList [lsort $pathList]
-	set totalCnt [llength $pathList]
-	set batch [expr {int($totalCnt * .01) + 1}]
+	set path_list [lsort $path_list]
+	set total_cnt [llength $path_list]
+	set batch [expr {int($total_cnt * .01) + 1}]
 	if {$batch > 25} {set batch 25}
 
-	$::main_status start $msg [mc "files"]
+	set status_bar_operation [$::main_status start $msg [mc "files"]]
 	set fd [git_write update-index -z --index-info]
 	fconfigure $fd \
 		-blocking 0 \
@@ -78,26 +85,29 @@ proc update_indexinfo {msg pathList after} {
 	fileevent $fd writable [list \
 		write_update_indexinfo \
 		$fd \
-		$pathList \
-		$totalCnt \
+		$path_list \
+		$total_cnt \
 		$batch \
+		$status_bar_operation \
 		$after \
 		]
 }
 
-proc write_update_indexinfo {fd pathList totalCnt batch after} {
+proc write_update_indexinfo {fd path_list total_cnt batch status_bar_operation \
+	after} {
 	global update_index_cp
 	global file_states current_diff_path
 
-	if {$update_index_cp >= $totalCnt} {
-		_close_updateindex $fd $after
+	if {$update_index_cp >= $total_cnt} {
+		$status_bar_operation stop
+		close_and_unlock_index $fd $after
 		return
 	}
 
 	for {set i $batch} \
-		{$update_index_cp < $totalCnt && $i > 0} \
+		{$update_index_cp < $total_cnt && $i > 0} \
 		{incr i -1} {
-		set path [lindex $pathList $update_index_cp]
+		set path [lindex $path_list $update_index_cp]
 		incr update_index_cp
 
 		set s $file_states($path)
@@ -119,21 +129,21 @@ proc write_update_indexinfo {fd pathList totalCnt batch after} {
 		display_file $path $new
 	}
 
-	$::main_status update $update_index_cp $totalCnt
+	$status_bar_operation update $update_index_cp $total_cnt
 }
 
-proc update_index {msg pathList after} {
+proc update_index {msg path_list after} {
 	global update_index_cp
 
 	if {![lock_index update]} return
 
 	set update_index_cp 0
-	set pathList [lsort $pathList]
-	set totalCnt [llength $pathList]
-	set batch [expr {int($totalCnt * .01) + 1}]
+	set path_list [lsort $path_list]
+	set total_cnt [llength $path_list]
+	set batch [expr {int($total_cnt * .01) + 1}]
 	if {$batch > 25} {set batch 25}
 
-	$::main_status start $msg [mc "files"]
+	set status_bar_operation [$::main_status start $msg [mc "files"]]
 	set fd [git_write update-index --add --remove -z --stdin]
 	fconfigure $fd \
 		-blocking 0 \
@@ -144,26 +154,29 @@ proc update_index {msg pathList after} {
 	fileevent $fd writable [list \
 		write_update_index \
 		$fd \
-		$pathList \
-		$totalCnt \
+		$path_list \
+		$total_cnt \
 		$batch \
+		$status_bar_operation \
 		$after \
 		]
 }
 
-proc write_update_index {fd pathList totalCnt batch after} {
+proc write_update_index {fd path_list total_cnt batch status_bar_operation \
+	after} {
 	global update_index_cp
 	global file_states current_diff_path
 
-	if {$update_index_cp >= $totalCnt} {
-		_close_updateindex $fd $after
+	if {$update_index_cp >= $total_cnt} {
+		$status_bar_operation stop
+		close_and_unlock_index $fd $after
 		return
 	}
 
 	for {set i $batch} \
-		{$update_index_cp < $totalCnt && $i > 0} \
+		{$update_index_cp < $total_cnt && $i > 0} \
 		{incr i -1} {
-		set path [lindex $pathList $update_index_cp]
+		set path [lindex $path_list $update_index_cp]
 		incr update_index_cp
 
 		switch -glob -- [lindex $file_states($path) 0] {
@@ -190,21 +203,21 @@ proc write_update_index {fd pathList totalCnt batch after} {
 		display_file $path $new
 	}
 
-	$::main_status update $update_index_cp $totalCnt
+	$status_bar_operation update $update_index_cp $total_cnt
 }
 
-proc checkout_index {msg pathList after} {
+proc checkout_index {msg path_list after capture_error} {
 	global update_index_cp
 
 	if {![lock_index update]} return
 
 	set update_index_cp 0
-	set pathList [lsort $pathList]
-	set totalCnt [llength $pathList]
-	set batch [expr {int($totalCnt * .01) + 1}]
+	set path_list [lsort $path_list]
+	set total_cnt [llength $path_list]
+	set batch [expr {int($total_cnt * .01) + 1}]
 	if {$batch > 25} {set batch 25}
 
-	$::main_status start $msg [mc "files"]
+	set status_bar_operation [$::main_status start $msg [mc "files"]]
 	set fd [git_write checkout-index \
 		--index \
 		--quiet \
@@ -221,26 +234,45 @@ proc checkout_index {msg pathList after} {
 	fileevent $fd writable [list \
 		write_checkout_index \
 		$fd \
-		$pathList \
-		$totalCnt \
+		$path_list \
+		$total_cnt \
 		$batch \
+		$status_bar_operation \
 		$after \
+		$capture_error \
 		]
 }
 
-proc write_checkout_index {fd pathList totalCnt batch after} {
+proc write_checkout_index {fd path_list total_cnt batch status_bar_operation \
+	after capture_error} {
 	global update_index_cp
 	global file_states current_diff_path
 
-	if {$update_index_cp >= $totalCnt} {
-		_close_updateindex $fd $after
+	if {$update_index_cp >= $total_cnt} {
+		$status_bar_operation stop
+
+		# We do not unlock the index directly here because this
+		# operation expects to potentially run in parallel with file
+		# deletions scheduled by revert_helper. We're done with the
+		# update index, so we close it, but actually unlocking the index
+		# and dealing with potential errors is deferred to the chord
+		# body that runs when all async operations are completed.
+		#
+		# (See after_chord in revert_helper.)
+
+		if {[catch {_close_updateindex $fd} err]} {
+			uplevel #0 $capture_error [list $err]
+		}
+
+		uplevel #0 $after
+
 		return
 	}
 
 	for {set i $batch} \
-		{$update_index_cp < $totalCnt && $i > 0} \
+		{$update_index_cp < $total_cnt && $i > 0} \
 		{incr i -1} {
-		set path [lindex $pathList $update_index_cp]
+		set path [lindex $path_list $update_index_cp]
 		incr update_index_cp
 		switch -glob -- [lindex $file_states($path) 0] {
 		U? {continue}
@@ -253,7 +285,7 @@ proc write_checkout_index {fd pathList totalCnt batch after} {
 		}
 	}
 
-	$::main_status update $update_index_cp $totalCnt
+	$status_bar_operation update $update_index_cp $total_cnt
 }
 
 proc unstage_helper {txt paths} {
@@ -261,7 +293,7 @@ proc unstage_helper {txt paths} {
 
 	if {![lock_index begin-update]} return
 
-	set pathList [list]
+	set path_list [list]
 	set after {}
 	foreach path $paths {
 		switch -glob -- [lindex $file_states($path) 0] {
@@ -269,20 +301,20 @@ proc unstage_helper {txt paths} {
 		M? -
 		T? -
 		D? {
-			lappend pathList $path
+			lappend path_list $path
 			if {$path eq $current_diff_path} {
 				set after {reshow_diff;}
 			}
 		}
 		}
 	}
-	if {$pathList eq {}} {
+	if {$path_list eq {}} {
 		unlock_index
 	} else {
 		update_indexinfo \
 			$txt \
-			$pathList \
-			[concat $after [list ui_ready]]
+			$path_list \
+			[concat $after {ui_ready;}]
 	}
 }
 
@@ -305,7 +337,7 @@ proc add_helper {txt paths} {
 
 	if {![lock_index begin-update]} return
 
-	set pathList [list]
+	set path_list [list]
 	set after {}
 	foreach path $paths {
 		switch -glob -- [lindex $file_states($path) 0] {
@@ -321,20 +353,20 @@ proc add_helper {txt paths} {
 		?M -
 		?D -
 		?T {
-			lappend pathList $path
+			lappend path_list $path
 			if {$path eq $current_diff_path} {
 				set after {reshow_diff;}
 			}
 		}
 		}
 	}
-	if {$pathList eq {}} {
+	if {$path_list eq {}} {
 		unlock_index
 	} else {
 		update_index \
 			$txt \
-			$pathList \
-			[concat $after {ui_status [mc "Ready to commit."]}]
+			$path_list \
+			[concat $after {ui_status [mc "Ready to commit."];}]
 	}
 }
 
@@ -388,66 +420,303 @@ proc do_add_all {} {
 	add_helper [mc "Adding all changed files"] $paths
 }
 
+# Copied from TclLib package "lambda".
+proc lambda {arguments body args} {
+	return [list ::apply [list $arguments $body] {*}$args]
+}
+
 proc revert_helper {txt paths} {
 	global file_states current_diff_path
 
 	if {![lock_index begin-update]} return
 
-	set pathList [list]
-	set after {}
+	# Common "after" functionality that waits until multiple asynchronous
+	# operations are complete (by waiting for them to activate their notes
+	# on the chord).
+	#
+	# The asynchronous operations are each indicated below by a comment
+	# before the code block that starts the async operation.
+	set after_chord [SimpleChord::new {
+		if {[string trim $err] != ""} {
+			rescan_on_error $err
+		} else {
+			unlock_index
+			if {$should_reshow_diff} { reshow_diff }
+			ui_ready
+		}
+	}]
+
+	$after_chord eval { set should_reshow_diff 0 }
+
+	# This function captures an error for processing when after_chord is
+	# completed. (The chord is curried into the lambda function.)
+	set capture_error [lambda \
+		{chord error} \
+		{ $chord eval [list set err $error] } \
+		$after_chord]
+
+	# We don't know how many notes we're going to create (it's dynamic based
+	# on conditional paths below), so create a common note that will delay
+	# the chord's completion until we activate it, and then activate it
+	# after all the other notes have been created.
+	set after_common_note [$after_chord add_note]
+
+	set path_list [list]
+	set untracked_list [list]
+
 	foreach path $paths {
 		switch -glob -- [lindex $file_states($path) 0] {
 		U? {continue}
+		?O {
+			lappend untracked_list $path
+		}
 		?M -
 		?T -
 		?D {
-			lappend pathList $path
+			lappend path_list $path
 			if {$path eq $current_diff_path} {
-				set after {reshow_diff;}
+				$after_chord eval { set should_reshow_diff 1 }
 			}
 		}
 		}
 	}
 
+	set path_cnt [llength $path_list]
+	set untracked_cnt [llength $untracked_list]
 
-	# Split question between singular and plural cases, because
-	# such distinction is needed in some languages. Previously, the
-	# code used "Revert changes in" for both, but that can't work
-	# in languages where 'in' must be combined with word from
-	# rest of string (in different way for both cases of course).
-	#
-	# FIXME: Unfortunately, even that isn't enough in some languages
-	# as they have quite complex plural-form rules. Unfortunately,
-	# msgcat doesn't seem to support that kind of string translation.
-	#
-	set n [llength $pathList]
-	if {$n == 0} {
-		unlock_index
-		return
-	} elseif {$n == 1} {
-		set query [mc "Revert changes in file %s?" [short_path [lindex $pathList]]]
-	} else {
-		set query [mc "Revert changes in these %i files?" $n]
-	}
+	# Asynchronous operation: revert changes by checking them out afresh
+	# from the index.
+	if {$path_cnt > 0} {
+		# Split question between singular and plural cases, because
+		# such distinction is needed in some languages. Previously, the
+		# code used "Revert changes in" for both, but that can't work
+		# in languages where 'in' must be combined with word from
+		# rest of string (in different way for both cases of course).
+		#
+		# FIXME: Unfortunately, even that isn't enough in some languages
+		# as they have quite complex plural-form rules. Unfortunately,
+		# msgcat doesn't seem to support that kind of string
+		# translation.
+		#
+		if {$path_cnt == 1} {
+			set query [mc \
+				"Revert changes in file %s?" \
+				[short_path [lindex $path_list]] \
+				]
+		} else {
+			set query [mc \
+				"Revert changes in these %i files?" \
+				$path_cnt]
+		}
 
-	set reply [tk_dialog \
-		.confirm_revert \
-		"[appname] ([reponame])" \
-		"$query
+		set reply [tk_dialog \
+			.confirm_revert \
+			"[appname] ([reponame])" \
+			"$query
 
 [mc "Any unstaged changes will be permanently lost by the revert."]" \
-		question \
-		1 \
-		[mc "Do Nothing"] \
-		[mc "Revert Changes"] \
-		]
-	if {$reply == 1} {
-		checkout_index \
-			$txt \
-			$pathList \
-			[concat $after [list ui_ready]]
+			question \
+			1 \
+			[mc "Do Nothing"] \
+			[mc "Revert Changes"] \
+			]
+
+		if {$reply == 1} {
+			set note [$after_chord add_note]
+			checkout_index \
+				$txt \
+				$path_list \
+				[list $note activate] \
+				$capture_error
+		}
+	}
+
+	# Asynchronous operation: Deletion of untracked files.
+	if {$untracked_cnt > 0} {
+		# Split question between singular and plural cases, because
+		# such distinction is needed in some languages.
+		#
+		# FIXME: Unfortunately, even that isn't enough in some languages
+		# as they have quite complex plural-form rules. Unfortunately,
+		# msgcat doesn't seem to support that kind of string
+		# translation.
+		#
+		if {$untracked_cnt == 1} {
+			set query [mc \
+				"Delete untracked file %s?" \
+				[short_path [lindex $untracked_list]] \
+				]
+		} else {
+			set query [mc \
+				"Delete these %i untracked files?" \
+				$untracked_cnt \
+				]
+		}
+
+		set reply [tk_dialog \
+			.confirm_revert \
+			"[appname] ([reponame])" \
+			"$query
+
+[mc "Files will be permanently deleted."]" \
+			question \
+			1 \
+			[mc "Do Nothing"] \
+			[mc "Delete Files"] \
+			]
+
+		if {$reply == 1} {
+			$after_chord eval { set should_reshow_diff 1 }
+
+			set note [$after_chord add_note]
+			delete_files $untracked_list [list $note activate]
+		}
+	}
+
+	# Activate the common note. If no other notes were created, this
+	# completes the chord. If other notes were created, then this common
+	# note prevents a race condition where the chord might complete early.
+	$after_common_note activate
+}
+
+# Delete all of the specified files, performing deletion in batches to allow the
+# UI to remain responsive and updated.
+proc delete_files {path_list after} {
+	# Enable progress bar status updates
+	set status_bar_operation [$::main_status \
+		start \
+		[mc "Deleting"] \
+		[mc "files"]]
+
+	set path_index 0
+	set deletion_errors [list]
+	set batch_size 50
+
+	delete_helper \
+		$path_list \
+		$path_index \
+		$deletion_errors \
+		$batch_size \
+		$status_bar_operation \
+		$after
+}
+
+# Helper function to delete a list of files in batches. Each call deletes one
+# batch of files, and then schedules a call for the next batch after any UI
+# messages have been processed.
+proc delete_helper {path_list path_index deletion_errors batch_size \
+	status_bar_operation after} {
+	global file_states
+
+	set path_cnt [llength $path_list]
+
+	set batch_remaining $batch_size
+
+	while {$batch_remaining > 0} {
+		if {$path_index >= $path_cnt} { break }
+
+		set path [lindex $path_list $path_index]
+
+		set deletion_failed [catch {file delete -- $path} deletion_error]
+
+		if {$deletion_failed} {
+			lappend deletion_errors [list "$deletion_error"]
+		} else {
+			remove_empty_directories [file dirname $path]
+
+			# Don't assume the deletion worked. Remove the file from
+			# the UI, but only if it no longer exists.
+			if {![path_exists $path]} {
+				unset file_states($path)
+				display_file $path __
+			}
+		}
+
+		incr path_index 1
+		incr batch_remaining -1
+	}
+
+	# Update the progress bar to indicate that this batch has been
+	# completed. The update will be visible when this procedure returns
+	# and allows the UI thread to process messages.
+	$status_bar_operation update $path_index $path_cnt
+
+	if {$path_index < $path_cnt} {
+		# The Tcler's Wiki lists this as the best practice for keeping
+		# a UI active and processing messages during a long-running
+		# operation.
+
+		after idle [list after 0 [list \
+			delete_helper \
+			$path_list \
+			$path_index \
+			$deletion_errors \
+			$batch_size \
+			$status_bar_operation \
+			$after
+			]]
 	} else {
-		unlock_index
+		# Finish the status bar operation.
+		$status_bar_operation stop
+
+		# Report error, if any, based on how many deletions failed.
+		set deletion_error_cnt [llength $deletion_errors]
+
+		if {($deletion_error_cnt > 0)
+		 && ($deletion_error_cnt <= [MAX_VERBOSE_FILES_IN_DELETION_ERROR])} {
+			set error_text [mc "Encountered errors deleting files:\n"]
+
+			foreach deletion_error $deletion_errors {
+				append error_text "* [lindex $deletion_error 0]\n"
+			}
+
+			error_popup $error_text
+		} elseif {$deletion_error_cnt == $path_cnt} {
+			error_popup [mc \
+				"None of the %d selected files could be deleted." \
+				$path_cnt \
+				]
+		} elseif {$deletion_error_cnt > 1} {
+			error_popup [mc \
+				"%d of the %d selected files could not be deleted." \
+				$deletion_error_cnt \
+				$path_cnt \
+				]
+		}
+
+		uplevel #0 $after
+	}
+}
+
+proc MAX_VERBOSE_FILES_IN_DELETION_ERROR {} { return 10; }
+
+# This function is from the TCL documentation:
+#
+#   https://wiki.tcl-lang.org/page/file+exists
+#
+# [file exists] returns false if the path does exist but is a symlink to a path
+# that doesn't exist. This proc returns true if the path exists, regardless of
+# whether it is a symlink and whether it is broken.
+proc path_exists {name} {
+	expr {![catch {file lstat $name finfo}]}
+}
+
+# Remove as many empty directories as we can starting at the specified path,
+# walking up the directory tree. If we encounter a directory that is not
+# empty, or if a directory deletion fails, then we stop the operation and
+# return to the caller. Even if this procedure fails to delete any
+# directories at all, it does not report failure.
+proc remove_empty_directories {directory_path} {
+	set parent_path [file dirname $directory_path]
+
+	while {$parent_path != $directory_path} {
+		set contents [glob -nocomplain -dir $directory_path *]
+
+		if {[llength $contents] > 0} { break }
+		if {[catch {file delete -- $directory_path}]} { break }
+
+		set directory_path $parent_path
+		set parent_path [file dirname $directory_path]
 	}
 }
 
@@ -466,19 +735,19 @@ proc do_revert_selection {} {
 }
 
 proc do_select_commit_type {} {
-	global commit_type selected_commit_type
+	global commit_type commit_type_is_amend
 
-	if {$selected_commit_type eq {new}
+	if {$commit_type_is_amend == 0
 		&& [string match amend* $commit_type]} {
 		create_new_commit
-	} elseif {$selected_commit_type eq {amend}
+	} elseif {$commit_type_is_amend == 1
 		&& ![string match amend* $commit_type]} {
 		load_last_commit
 
 		# The amend request was rejected...
 		#
 		if {![string match amend* $commit_type]} {
-			set selected_commit_type new
+			set commit_type_is_amend 0
 		}
 	}
 }

@@ -1,6 +1,13 @@
 #ifndef APPLY_H
 #define APPLY_H
 
+#include "hash.h"
+#include "lockfile.h"
+#include "string-list.h"
+#include "strmap.h"
+
+struct repository;
+
 enum apply_ws_error_action {
 	nowarn_ws_error,
 	warn_on_ws_error,
@@ -19,20 +26,6 @@ enum apply_verbosity {
 	verbosity_verbose = 1
 };
 
-/*
- * We need to keep track of how symlinks in the preimage are
- * manipulated by the patches.  A patch to add a/b/c where a/b
- * is a symlink should not be allowed to affect the directory
- * the symlink points at, but if the same patch removes a/b,
- * it is perfectly fine, as the patch removes a/b to make room
- * to create a directory a/b so that a/b/c can be created.
- *
- * See also "struct string_list symlink_changes" in "struct
- * apply_state".
- */
-#define APPLY_SYMLINK_GOES_AWAY 01
-#define APPLY_SYMLINK_IN_RESULT 02
-
 struct apply_state {
 	const char *prefix;
 
@@ -45,6 +38,7 @@ struct apply_state {
 	int check; /* preimage must match working tree, don't actually apply */
 	int check_index; /* preimage must match the indexed version */
 	int update_index; /* check_index && apply */
+	int ita_only;	  /* add intent-to-add entries to the index */
 
 	/* These control cosmetic aspect of the output */
 	int diffstat; /* just show a diffstat, and don't actually apply */
@@ -59,8 +53,10 @@ struct apply_state {
 	int threeway;
 	int unidiff_zero;
 	int unsafe_paths;
+	int allow_empty;
 
 	/* Other non boolean parameters */
+	struct repository *repo;
 	const char *index_file;
 	enum apply_verbosity apply_verbosity;
 	const char *fake_ancestor;
@@ -77,7 +73,16 @@ struct apply_state {
 
 	/* Various "current state" */
 	int linenr; /* current line number */
-	struct string_list symlink_changes; /* we have to track symlinks */
+	/*
+	 * We need to keep track of how symlinks in the preimage are
+	 * manipulated by the patches.  A patch to add a/b/c where a/b
+	 * is a symlink should not be allowed to affect the directory
+	 * the symlink points at, but if the same patch removes a/b,
+	 * it is perfectly fine, as the patch removes a/b to make room
+	 * to create a directory a/b so that a/b/c can be created.
+	 */
+	struct strset removed_symlinks;
+	struct strset kept_symlinks;
 
 	/*
 	 * For "diff-stat" like behaviour, we keep track of the biggest change
@@ -110,14 +115,65 @@ struct apply_state {
 	int applied_after_fixing_ws;
 };
 
-extern int apply_parse_options(int argc, const char **argv,
-			       struct apply_state *state,
-			       int *force_apply, int *options,
-			       const char * const *apply_usage);
-extern int init_apply_state(struct apply_state *state,
-			    const char *prefix);
-extern void clear_apply_state(struct apply_state *state);
-extern int check_apply_state(struct apply_state *state, int force_apply);
+/*
+ * This represents a "patch" to a file, both metainfo changes
+ * such as creation/deletion, filemode and content changes represented
+ * as a series of fragments.
+ */
+struct patch {
+	char *new_name, *old_name, *def_name;
+	unsigned int old_mode, new_mode;
+	int is_new, is_delete;	/* -1 = unknown, 0 = false, 1 = true */
+	int rejected;
+	unsigned ws_rule;
+	int lines_added, lines_deleted;
+	int score;
+	int extension_linenr; /* first line specifying delete/new/rename/copy */
+	unsigned int is_toplevel_relative:1;
+	unsigned int inaccurate_eof:1;
+	unsigned int is_binary:1;
+	unsigned int is_copy:1;
+	unsigned int is_rename:1;
+	unsigned int recount:1;
+	unsigned int conflicted_threeway:1;
+	unsigned int direct_to_threeway:1;
+	unsigned int crlf_in_old:1;
+	struct fragment *fragments;
+	char *result;
+	size_t resultsize;
+	char old_oid_prefix[GIT_MAX_HEXSZ + 1];
+	char new_oid_prefix[GIT_MAX_HEXSZ + 1];
+	struct patch *next;
+
+	/* three-way fallback result */
+	struct object_id threeway_stage[3];
+};
+
+int apply_parse_options(int argc, const char **argv,
+			struct apply_state *state,
+			int *force_apply, int *options,
+			const char * const *apply_usage);
+int init_apply_state(struct apply_state *state,
+		     struct repository *repo,
+		     const char *prefix);
+void clear_apply_state(struct apply_state *state);
+int check_apply_state(struct apply_state *state, int force_apply);
+
+/*
+ * Parse a git diff header, starting at line.  Fills the relevant
+ * metadata information in 'struct patch'.
+ *
+ * Returns -1 on failure, the length of the parsed header otherwise.
+ */
+int parse_git_diff_header(struct strbuf *root,
+			  int *linenr,
+			  int p_value,
+			  const char *line,
+			  int len,
+			  unsigned int size,
+			  struct patch *patch);
+
+void release_patch(struct patch *patch);
 
 /*
  * Some aspects of the apply behavior are controlled by the following
@@ -126,9 +182,8 @@ extern int check_apply_state(struct apply_state *state, int force_apply);
 #define APPLY_OPT_INACCURATE_EOF	(1<<0) /* accept inaccurate eof */
 #define APPLY_OPT_RECOUNT		(1<<1) /* accept inaccurate line count */
 
-extern int apply_all_patches(struct apply_state *state,
-			     int argc,
-			     const char **argv,
-			     int options);
+int apply_all_patches(struct apply_state *state,
+		      int argc, const char **argv,
+		      int options);
 
 #endif

@@ -5,6 +5,9 @@
 
 test_description='Testing multi_ack pack fetching'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # Test fetch-pack/upload-pack pair.
@@ -30,7 +33,7 @@ add () {
 	test_tick &&
 	commit=$(echo "$text" | git commit-tree $tree $parents) &&
 	eval "$name=$commit; export $name" &&
-	echo $commit > .git/refs/heads/$branch &&
+	git update-ref "refs/heads/$branch" "$commit" &&
 	eval ${branch}TIP=$commit
 }
 
@@ -45,13 +48,16 @@ pull_to_client () {
 
 			case "$heads" in
 			    *A*)
-				    echo $ATIP > .git/refs/heads/A;;
+				    git update-ref refs/heads/A "$ATIP";;
 			esac &&
 			case "$heads" in *B*)
-			    echo $BTIP > .git/refs/heads/B;;
+			    git update-ref refs/heads/B "$BTIP";;
 			esac &&
-			git symbolic-ref HEAD refs/heads/$(echo $heads \
-				| sed -e "s/^\(.\).*$/\1/") &&
+
+			git symbolic-ref HEAD refs/heads/$(
+				echo $heads |
+				sed -e "s/^\(.\).*$/\1/"
+			) &&
 
 			git fsck --full &&
 
@@ -89,11 +95,11 @@ test_expect_success 'setup' '
 	while [ $cur -le 10 ]; do
 		add A$cur $(eval echo \$A$prev) &&
 		prev=$cur &&
-		cur=$(($cur+1))
+		cur=$(($cur+1)) || return 1
 	done &&
 	add B1 $A1 &&
-	echo $ATIP > .git/refs/heads/A &&
-	echo $BTIP > .git/refs/heads/B &&
+	git update-ref refs/heads/A "$ATIP" &&
+	git update-ref refs/heads/B "$BTIP" &&
 	git symbolic-ref HEAD refs/heads/B
 '
 
@@ -106,7 +112,7 @@ test_expect_success 'post 1st pull setup' '
 	while [ $cur -le 65 ]; do
 		add B$cur $(eval echo \$B$prev) &&
 		prev=$cur &&
-		cur=$(($cur+1))
+		cur=$(($cur+1)) || return 1
 	done
 '
 
@@ -161,7 +167,7 @@ test_expect_success 'clone shallow object count' '
 test_expect_success 'clone shallow object count (part 2)' '
 	sed -e "/^in-pack:/d" -e "/^packs:/d" -e "/^size-pack:/d" \
 	    -e "/: 0$/d" count.shallow > count_output &&
-	! test -s count_output
+	test_must_be_empty count_output
 '
 
 test_expect_success 'fsck in shallow repo' '
@@ -259,7 +265,7 @@ test_expect_success 'clone shallow object count' '
 test_expect_success 'pull in shallow repo with missing merge base' '
 	(
 		cd shallow &&
-		git fetch --depth 4 .. A
+		git fetch --depth 4 .. A &&
 		test_must_fail git merge --allow-unrelated-histories FETCH_HEAD
 	)
 '
@@ -382,6 +388,54 @@ test_expect_success 'clone shallow with packed refs' '
 	test_cmp count8.expected count8.actual
 '
 
+test_expect_success 'in_vain not triggered before first ACK' '
+	rm -rf myserver myclient &&
+	git init myserver &&
+	test_commit -C myserver foo &&
+	git clone "file://$(pwd)/myserver" myclient &&
+
+	# MAX_IN_VAIN is 256. Because of batching, the client will send 496
+	# (16+32+64+128+256) commits, not 256, before giving up. So create 496
+	# irrelevant commits.
+	test_commit_bulk -C myclient 496 &&
+
+	# The new commit that the client wants to fetch.
+	test_commit -C myserver bar &&
+
+	git -C myclient fetch --progress origin 2>log &&
+	test_i18ngrep "remote: Total 3 " log
+'
+
+test_expect_success 'in_vain resetted upon ACK' '
+	rm -rf myserver myclient &&
+	git init myserver &&
+
+	# Linked list of commits on main. The first is common; the rest are
+	# not.
+	test_commit -C myserver first_main_commit &&
+	git clone "file://$(pwd)/myserver" myclient &&
+	test_commit_bulk -C myclient 255 &&
+
+	# Another linked list of commits on anotherbranch with no connection to
+	# main. The first is common; the rest are not.
+	git -C myserver checkout --orphan anotherbranch &&
+	test_commit -C myserver first_anotherbranch_commit &&
+	git -C myclient fetch origin anotherbranch:refs/heads/anotherbranch &&
+	git -C myclient checkout anotherbranch &&
+	test_commit_bulk -C myclient 255 &&
+
+	# The new commit that the client wants to fetch.
+	git -C myserver checkout main &&
+	test_commit -C myserver to_fetch &&
+
+	# The client will send (as "have"s) all 256 commits in anotherbranch
+	# first. The 256th commit is common between the client and the server,
+	# and should reset in_vain. This allows negotiation to continue until
+	# the client reports that first_anotherbranch_commit is common.
+	git -C myclient fetch --progress origin main 2>log &&
+	test_i18ngrep "Total 3 " log
+'
+
 test_expect_success 'fetch in shallow repo unreachable shallow objects' '
 	(
 		git clone --bare --branch B --single-branch "file://$(pwd)/." no-reflog &&
@@ -403,18 +457,18 @@ test_expect_success 'fetch creating new shallow root' '
 		git fetch --depth=1 --progress 2>actual &&
 		# This should fetch only the empty commit, no tree or
 		# blob objects
-		grep "remote: Total 1" actual
+		test_i18ngrep "remote: Total 1" actual
 	)
 '
 
 test_expect_success 'setup tests for the --stdin parameter' '
 	for head in C D E F
 	do
-		add $head
+		add $head || return 1
 	done &&
 	for head in A B C D E F
 	do
-		git tag $head $head
+		git tag $head $head || return 1
 	done &&
 	cat >input <<-\EOF &&
 	refs/heads/C
@@ -436,14 +490,23 @@ test_expect_success 'setup tests for the --stdin parameter' '
 	) >input.dup
 '
 
-test_expect_success 'fetch refs from cmdline' '
-	(
-		cd client &&
-		git fetch-pack --no-progress .. $(cat ../input)
-	) >output &&
-	cut -d " " -f 2 <output | sort >actual &&
-	test_cmp expect actual
+test_expect_success 'setup fetch refs from cmdline v[12]' '
+	cp -r client client0 &&
+	cp -r client client1 &&
+	cp -r client client2
 '
+
+for version in '' 0 1 2
+do
+	test_expect_success "protocol.version=$version fetch refs from cmdline" "
+		(
+			cd client$version &&
+			GIT_TEST_PROTOCOL_VERSION=$version git fetch-pack --no-progress .. \$(cat ../input)
+		) >output &&
+		cut -d ' ' -f 2 <output | sort >actual &&
+		test_cmp expect actual
+	"
+done
 
 test_expect_success 'fetch refs from stdin' '
 	(
@@ -484,7 +547,7 @@ test_expect_success 'test lonely missing ref' '
 		cd client &&
 		test_must_fail git fetch-pack --no-progress .. refs/heads/xyzzy 2>../error-m
 	) &&
-	test_i18ncmp expect-error error-m
+	test_cmp expect-error error-m
 '
 
 test_expect_success 'test missing ref after existing' '
@@ -492,7 +555,7 @@ test_expect_success 'test missing ref after existing' '
 		cd client &&
 		test_must_fail git fetch-pack --no-progress .. refs/heads/A refs/heads/xyzzy 2>../error-em
 	) &&
-	test_i18ncmp expect-error error-em
+	test_cmp expect-error error-em
 '
 
 test_expect_success 'test missing ref before existing' '
@@ -500,7 +563,7 @@ test_expect_success 'test missing ref before existing' '
 		cd client &&
 		test_must_fail git fetch-pack --no-progress .. refs/heads/xyzzy refs/heads/A 2>../error-me
 	) &&
-	test_i18ncmp expect-error error-me
+	test_cmp expect-error error-me
 '
 
 test_expect_success 'test --all, --depth, and explicit head' '
@@ -518,6 +581,54 @@ test_expect_success 'test --all, --depth, and explicit tag' '
 	) >out-adt 2>error-adt
 '
 
+test_expect_success 'test --all with tag to non-tip' '
+	git commit --allow-empty -m non-tip &&
+	git commit --allow-empty -m tip &&
+	git tag -m "annotated" non-tip HEAD^ &&
+	(
+		cd client &&
+		git fetch-pack --all ..
+	)
+'
+
+test_expect_success 'test --all wrt tag to non-commits' '
+	# create tag-to-{blob,tree,commit,tag}, making sure all tagged objects
+	# are reachable only via created tag references.
+	blob=$(echo "hello blob" | git hash-object -t blob -w --stdin) &&
+	git tag -a -m "tag -> blob" tag-to-blob $blob &&
+
+	tree=$(printf "100644 blob $blob\tfile" | git mktree) &&
+	git tag -a -m "tag -> tree" tag-to-tree $tree &&
+
+	tree2=$(printf "100644 blob $blob\tfile2" | git mktree) &&
+	commit=$(git commit-tree -m "hello commit" $tree) &&
+	git tag -a -m "tag -> commit" tag-to-commit $commit &&
+
+	blob2=$(echo "hello blob2" | git hash-object -t blob -w --stdin) &&
+	tag=$(git mktag <<-EOF
+		object $blob2
+		type blob
+		tag tag-to-blob2
+		tagger author A U Thor <author@example.com> 0 +0000
+
+		hello tag
+	EOF
+	) &&
+	git tag -a -m "tag -> tag" tag-to-tag $tag &&
+
+	# `fetch-pack --all` should succeed fetching all those objects.
+	mkdir fetchall &&
+	(
+		cd fetchall &&
+		git init &&
+		git fetch-pack --all .. &&
+		git cat-file blob $blob >/dev/null &&
+		git cat-file tree $tree >/dev/null &&
+		git cat-file commit $commit >/dev/null &&
+		git cat-file tag $tag >/dev/null
+	)
+'
+
 test_expect_success 'shallow fetch with tags does not break the repository' '
 	mkdir repo1 &&
 	(
@@ -529,7 +640,7 @@ test_expect_success 'shallow fetch with tags does not break the repository' '
 		mkdir repo2 &&
 		cd repo2 &&
 		git init &&
-		git fetch --depth=2 ../.git master:branch &&
+		git fetch --depth=2 ../.git main:branch &&
 		git fsck
 	)
 '
@@ -554,7 +665,7 @@ test_expect_success 'fetch-pack can fetch a raw sha1 that is advertised as a ref
 
 	git init client &&
 	git -C client fetch-pack ../server \
-		$(git -C server rev-parse refs/heads/master)
+		$(git -C server rev-parse refs/heads/main)
 '
 
 test_expect_success 'fetch-pack can fetch a raw sha1 overlapping a named ref' '
@@ -577,8 +688,10 @@ test_expect_success 'fetch-pack cannot fetch a raw sha1 that is not advertised a
 	test_commit -C server 6 &&
 
 	git init client &&
-	test_must_fail git -C client fetch-pack ../server \
-		$(git -C server rev-parse refs/heads/master^) 2>err &&
+	# Some protocol versions (e.g. 2) support fetching
+	# unadvertised objects, so restrict this test to v0.
+	test_must_fail env GIT_TEST_PROTOCOL_VERSION=0 git -C client fetch-pack ../server \
+		$(git -C server rev-parse refs/heads/main^) 2>err &&
 	test_i18ngrep "Server does not allow request for unadvertised object" err
 '
 
@@ -647,12 +760,21 @@ do
 	# file with scheme
 	for p in file
 	do
-		test_expect_success "fetch-pack --diag-url $p://$h/$r" '
+		test_expect_success !MINGW "fetch-pack --diag-url $p://$h/$r" '
 			check_prot_path $p://$h/$r $p "/$r"
 		'
+		test_expect_success MINGW "fetch-pack --diag-url $p://$h/$r" '
+			check_prot_path $p://$h/$r $p "//$h/$r"
+		'
+		test_expect_success MINGW "fetch-pack --diag-url $p:///$r" '
+			check_prot_path $p:///$r $p "/$r"
+		'
 		# No "/~" -> "~" conversion for file
-		test_expect_success "fetch-pack --diag-url $p://$h/~$r" '
+		test_expect_success !MINGW "fetch-pack --diag-url $p://$h/~$r" '
 			check_prot_path $p://$h/~$r $p "/~$r"
+		'
+		test_expect_success MINGW "fetch-pack --diag-url $p://$h/~$r" '
+			check_prot_path $p://$h/~$r $p "//$h/~$r"
 		'
 	done
 	# file without scheme
@@ -703,12 +825,62 @@ test_expect_success 'clone shallow since ...' '
 
 test_expect_success 'fetch shallow since ...' '
 	git -C shallow11 fetch --shallow-since "200000000 +0700" origin &&
-	git -C shallow11 log --pretty=tformat:%s origin/master >actual &&
+	git -C shallow11 log --pretty=tformat:%s origin/main >actual &&
 	cat >expected <<-\EOF &&
 	three
 	two
 	EOF
 	test_cmp expected actual
+'
+
+test_expect_success 'clone shallow since selects no commits' '
+	test_create_repo shallow-since-the-future &&
+	(
+	cd shallow-since-the-future &&
+	GIT_COMMITTER_DATE="100000000 +0700" git commit --allow-empty -m one &&
+	GIT_COMMITTER_DATE="200000000 +0700" git commit --allow-empty -m two &&
+	GIT_COMMITTER_DATE="300000000 +0700" git commit --allow-empty -m three &&
+	test_must_fail git clone --shallow-since "900000000 +0700" "file://$(pwd)/." ../shallow111
+	)
+'
+
+# A few subtle things about the request in this test:
+#
+#  - the server must have commit-graphs present and enabled
+#
+#  - the history is such that our want/have share a common ancestor ("base"
+#    here)
+#
+#  - we send only a single have, which is fewer than a normal client would
+#    send. This ensures that we don't parse "base" up front with
+#    parse_object(), but rather traverse to it as a parent while deciding if we
+#    can stop the "have" negotiation, and call parse_commit(). The former
+#    sees the actual object data and so always loads the three oid, whereas the
+#    latter will try to load it lazily.
+#
+#  - we must use protocol v2, because it handles the "have" negotiation before
+#    processing the shallow directives
+#
+test_expect_success 'shallow since with commit graph and already-seen commit' '
+	test_create_repo shallow-since-graph &&
+	(
+	cd shallow-since-graph &&
+	test_commit base &&
+	test_commit main &&
+	git checkout -b other HEAD^ &&
+	test_commit other &&
+	git commit-graph write --reachable &&
+	git config core.commitGraph true &&
+
+	GIT_PROTOCOL=version=2 git upload-pack . <<-EOF >/dev/null
+	0012command=fetch
+	$(echo "object-format=$(test_oid algo)" | packetize)
+	00010013deepen-since 1
+	$(echo "want $(git rev-parse other)" | packetize)
+	$(echo "have $(git rev-parse main)" | packetize)
+	0000
+	EOF
+	)
 '
 
 test_expect_success 'shallow clone exclude tag two' '
@@ -727,7 +899,7 @@ test_expect_success 'shallow clone exclude tag two' '
 
 test_expect_success 'fetch exclude tag one' '
 	git -C shallow12 fetch --shallow-exclude one origin &&
-	git -C shallow12 log --pretty=tformat:%s origin/master >actual &&
+	git -C shallow12 log --pretty=tformat:%s origin/main >actual &&
 	test_write_lines three two >expected &&
 	test_cmp expected actual
 '
@@ -741,11 +913,11 @@ test_expect_success 'fetching deepen' '
 	test_commit three &&
 	git clone --depth 1 "file://$(pwd)/." deepen &&
 	test_commit four &&
-	git -C deepen log --pretty=tformat:%s master >actual &&
+	git -C deepen log --pretty=tformat:%s main >actual &&
 	echo three >expected &&
 	test_cmp expected actual &&
 	git -C deepen fetch --deepen=1 &&
-	git -C deepen log --pretty=tformat:%s origin/master >actual &&
+	git -C deepen log --pretty=tformat:%s origin/main >actual &&
 	cat >expected <<-\EOF &&
 	four
 	three
@@ -753,6 +925,57 @@ test_expect_success 'fetching deepen' '
 	EOF
 	test_cmp expected actual
 	)
+'
+
+test_negotiation_algorithm_default () {
+	test_when_finished rm -rf clientv0 clientv2 &&
+	rm -rf server client &&
+	git init server &&
+	test_commit -C server both_have_1 &&
+	git -C server tag -d both_have_1 &&
+	test_commit -C server both_have_2 &&
+
+	git clone server client &&
+	test_commit -C server server_has &&
+	test_commit -C client client_has &&
+
+	# In both protocol v0 and v2, ensure that the parent of both_have_2 is
+	# not sent as a "have" line. The client should know that the server has
+	# both_have_2, so it only needs to inform the server that it has
+	# both_have_2, and the server can infer the rest.
+
+	rm -f trace &&
+	cp -r client clientv0 &&
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C clientv0 \
+		"$@" fetch origin server_has both_have_2 &&
+	grep "have $(git -C client rev-parse client_has)" trace &&
+	grep "have $(git -C client rev-parse both_have_2)" trace &&
+	! grep "have $(git -C client rev-parse both_have_2^)" trace &&
+
+	rm -f trace &&
+	cp -r client clientv2 &&
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C clientv2 -c protocol.version=2 \
+		"$@" fetch origin server_has both_have_2 &&
+	grep "have $(git -C client rev-parse client_has)" trace &&
+	grep "have $(git -C client rev-parse both_have_2)" trace &&
+	! grep "have $(git -C client rev-parse both_have_2^)" trace
+}
+
+test_expect_success 'use ref advertisement to prune "have" lines sent' '
+	test_negotiation_algorithm_default
+'
+
+test_expect_success 'same as last but with config overrides' '
+	test_negotiation_algorithm_default \
+		-c feature.experimental=true \
+		-c fetch.negotiationAlgorithm=consecutive
+'
+
+test_expect_success 'ensure bogus fetch.negotiationAlgorithm yields error' '
+	test_when_finished rm -rf clientv0 &&
+	cp -r client clientv0 &&
+	test_must_fail git -C clientv0 --fetch.negotiationAlgorithm=bogus \
+		       fetch origin server_has both_have_2
 '
 
 test_expect_success 'filtering by size' '
@@ -765,7 +988,10 @@ test_expect_success 'filtering by size' '
 	git -C client fetch-pack --filter=blob:limit=0 ../server HEAD &&
 
 	# Ensure that object is not inadvertently fetched
-	test_must_fail git -C client cat-file -e $(git hash-object server/one.t)
+	commit=$(git -C server rev-parse HEAD) &&
+	blob=$(git hash-object server/one.t) &&
+	git -C client rev-list --objects --missing=allow-any "$commit" >oids &&
+	! grep "$blob" oids
 '
 
 test_expect_success 'filtering by size has no effect if support for it is not advertised' '
@@ -777,7 +1003,10 @@ test_expect_success 'filtering by size has no effect if support for it is not ad
 	git -C client fetch-pack --filter=blob:limit=0 ../server HEAD 2> err &&
 
 	# Ensure that object is fetched
-	git -C client cat-file -e $(git hash-object server/one.t) &&
+	commit=$(git -C server rev-parse HEAD) &&
+	blob=$(git hash-object server/one.t) &&
+	git -C client rev-list --objects --missing=allow-any "$commit" >oids &&
+	grep "$blob" oids &&
 
 	test_i18ngrep "filtering not recognized by server" err
 '
@@ -792,16 +1021,17 @@ fetch_filter_blob_limit_zero () {
 	test_config -C "$SERVER" uploadpack.allowfilter 1 &&
 
 	git clone "$URL" client &&
-	test_config -C client extensions.partialclone origin &&
 
 	test_commit -C "$SERVER" two &&
 
 	git -C client fetch --filter=blob:limit=0 origin HEAD:somewhere &&
 
 	# Ensure that commit is fetched, but blob is not
-	test_config -C client extensions.partialclone "arbitrary string" &&
-	git -C client cat-file -e $(git -C "$SERVER" rev-parse two) &&
-	test_must_fail git -C client cat-file -e $(git hash-object "$SERVER/two.t")
+	commit=$(git -C "$SERVER" rev-parse two) &&
+	blob=$(git hash-object server/two.t) &&
+	git -C client rev-list --objects --missing=allow-any "$commit" >oids &&
+	grep "$commit" oids &&
+	! grep "$blob" oids
 }
 
 test_expect_success 'fetch with --filter=blob:limit=0' '
@@ -815,7 +1045,7 @@ test_expect_success 'fetch with --filter=blob:limit=0 and HTTP' '
 	fetch_filter_blob_limit_zero "$HTTPD_DOCUMENT_ROOT_PATH/server" "$HTTPD_URL/smart/server"
 '
 
-stop_httpd
-
+# DO NOT add non-httpd-specific tests here, because the last part of this
+# test script is only executed when httpd is available and enabled.
 
 test_done

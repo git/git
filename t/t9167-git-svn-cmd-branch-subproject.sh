@@ -4,6 +4,7 @@
 #
 
 test_description='git svn branch for subproject clones'
+
 . ./lib-git-svn.sh
 
 test_expect_success 'initialize svnrepo' '

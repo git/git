@@ -2,6 +2,9 @@
 
 test_description=clone
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 X=
@@ -37,7 +40,7 @@ test_expect_success 'clone with excess parameters (2)' '
 
 '
 
-test_expect_success C_LOCALE_OUTPUT 'output from clone' '
+test_expect_success 'output from clone' '
 	rm -fr dst &&
 	git clone -n "file://$(pwd)/src" dst >output 2>&1 &&
 	test $(grep Clon output | wc -l) = 1
@@ -68,6 +71,29 @@ test_expect_success 'clone respects GIT_WORK_TREE' '
 
 '
 
+test_expect_success LIBCURL 'clone warns or fails when using username:password' '
+	message="URL '\''https://username:<redacted>@localhost/'\'' uses plaintext credentials" &&
+	test_must_fail git -c transfer.credentialsInUrl=allow clone https://username:password@localhost attempt1 2>err &&
+	! grep "$message" err &&
+
+	test_must_fail git -c transfer.credentialsInUrl=warn clone https://username:password@localhost attempt2 2>err &&
+	grep "warning: $message" err >warnings &&
+	test_line_count = 2 warnings &&
+
+	test_must_fail git -c transfer.credentialsInUrl=die clone https://username:password@localhost attempt3 2>err &&
+	grep "fatal: $message" err >warnings &&
+	test_line_count = 1 warnings &&
+
+	test_must_fail git -c transfer.credentialsInUrl=die clone https://username:@localhost attempt3 2>err &&
+	grep "fatal: $message" err >warnings &&
+	test_line_count = 1 warnings
+'
+
+test_expect_success LIBCURL 'clone does not detect username:password when it is https://username@domain:port/' '
+	test_must_fail git -c transfer.credentialsInUrl=warn clone https://username@localhost:8080 attempt3 2>err &&
+	! grep "uses plaintext credentials" err
+'
+
 test_expect_success 'clone from hooks' '
 
 	test_create_repo r0 &&
@@ -76,12 +102,10 @@ test_expect_success 'clone from hooks' '
 	cd .. &&
 	git init r1 &&
 	cd r1 &&
-	cat >.git/hooks/pre-commit <<-\EOF &&
-	#!/bin/sh
+	test_hook pre-commit <<-\EOF &&
 	git clone ../r0 ../r2
 	exit 1
 	EOF
-	chmod u+x .git/hooks/pre-commit &&
 	: >file &&
 	git add file &&
 	test_must_fail git commit -m invoke-hook &&
@@ -217,7 +241,7 @@ test_expect_success 'clone respects global branch.autosetuprebase' '
 		rm -fr dst &&
 		git clone src dst &&
 		cd dst &&
-		actual="z$(git config branch.master.rebase)" &&
+		actual="z$(git config branch.main.rebase)" &&
 		test ztrue = $actual
 	)
 '
@@ -271,7 +295,9 @@ test_expect_success 'fetch from gitfile parent' '
 
 test_expect_success 'clone separate gitdir where target already exists' '
 	rm -rf dst &&
-	test_must_fail git clone --separate-git-dir realgitdir src dst
+	echo foo=bar >>realgitdir/config &&
+	test_must_fail git clone --separate-git-dir realgitdir src dst &&
+	grep foo=bar realgitdir/config
 '
 
 test_expect_success 'clone --reference from original' '
@@ -300,7 +326,8 @@ test_expect_success 'clone from original with relative alternate' '
 test_expect_success 'clone checking out a tag' '
 	git clone --branch=some-tag src dst.tag &&
 	GIT_DIR=src/.git git rev-parse some-tag >expected &&
-	test_cmp expected dst.tag/.git/HEAD &&
+	GIT_DIR=dst.tag/.git git rev-parse HEAD >actual &&
+	test_cmp expected actual &&
 	GIT_DIR=dst.tag/.git git config remote.origin.fetch >fetch.actual &&
 	echo "+refs/heads/*:refs/remotes/origin/*" >fetch.expected &&
 	test_cmp fetch.expected fetch.actual
@@ -345,7 +372,7 @@ expect_ssh () {
 }
 
 test_expect_success 'clone myhost:src uses ssh' '
-	git clone myhost:src ssh-clone &&
+	GIT_TEST_PROTOCOL_VERSION=0 git clone myhost:src ssh-clone &&
 	expect_ssh myhost src
 '
 
@@ -356,12 +383,12 @@ test_expect_success !MINGW,!CYGWIN 'clone local path foo:bar' '
 '
 
 test_expect_success 'bracketed hostnames are still ssh' '
-	git clone "[myhost:123]:src" ssh-bracket-clone &&
+	GIT_TEST_PROTOCOL_VERSION=0 git clone "[myhost:123]:src" ssh-bracket-clone &&
 	expect_ssh "-p 123" myhost src
 '
 
 test_expect_success 'OpenSSH variant passes -4' '
-	git clone -4 "[myhost:123]:src" ssh-ipv4-clone &&
+	GIT_TEST_PROTOCOL_VERSION=0 git clone -4 "[myhost:123]:src" ssh-ipv4-clone &&
 	expect_ssh "-4 -p 123" myhost src
 '
 
@@ -405,7 +432,7 @@ test_expect_success 'OpenSSH-like uplink is treated as ssh' '
 	test_when_finished "rm -f \"\$TRASH_DIRECTORY/uplink\"" &&
 	GIT_SSH="$TRASH_DIRECTORY/uplink" &&
 	test_when_finished "GIT_SSH=\"\$TRASH_DIRECTORY/ssh\$X\"" &&
-	git clone "[myhost:123]:src" ssh-bracket-clone-sshlike-uplink &&
+	GIT_TEST_PROTOCOL_VERSION=0 git clone "[myhost:123]:src" ssh-bracket-clone-sshlike-uplink &&
 	expect_ssh "-p 123" myhost src
 '
 
@@ -434,7 +461,6 @@ test_expect_success 'double quoted plink.exe in GIT_SSH_COMMAND' '
 	expect_ssh "-v -P 123" myhost src
 '
 
-SQ="'"
 test_expect_success 'single quoted plink.exe in GIT_SSH_COMMAND' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink.exe" &&
 	GIT_SSH_COMMAND="$SQ$TRASH_DIRECTORY/plink.exe$SQ -v" \
@@ -444,14 +470,14 @@ test_expect_success 'single quoted plink.exe in GIT_SSH_COMMAND' '
 
 test_expect_success 'GIT_SSH_VARIANT overrides plink detection' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink" &&
-	GIT_SSH_VARIANT=ssh \
-	git clone "[myhost:123]:src" ssh-bracket-clone-variant-1 &&
+	GIT_TEST_PROTOCOL_VERSION=0 GIT_SSH_VARIANT=ssh \
+		git clone "[myhost:123]:src" ssh-bracket-clone-variant-1 &&
 	expect_ssh "-p 123" myhost src
 '
 
 test_expect_success 'ssh.variant overrides plink detection' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink" &&
-	git -c ssh.variant=ssh \
+	GIT_TEST_PROTOCOL_VERSION=0 git -c ssh.variant=ssh \
 		clone "[myhost:123]:src" ssh-bracket-clone-variant-2 &&
 	expect_ssh "-p 123" myhost src
 '
@@ -482,12 +508,12 @@ counter=0
 # $3 path
 test_clone_url () {
 	counter=$(($counter + 1))
-	test_might_fail git clone "$1" tmp$counter &&
+	test_might_fail env GIT_TEST_PROTOCOL_VERSION=0 git clone "$1" tmp$counter &&
 	shift &&
 	expect_ssh "$@"
 }
 
-test_expect_success !MINGW 'clone c:temp is ssl' '
+test_expect_success !MINGW,!CYGWIN 'clone c:temp is ssl' '
 	test_clone_url c:temp c temp
 '
 
@@ -590,7 +616,7 @@ test_expect_success 'clone from a repository with two identical branches' '
 
 	(
 		cd src &&
-		git checkout -b another master
+		git checkout -b another main
 	) &&
 	git clone src target-11 &&
 	test "z$( cd target-11 && git symbolic-ref HEAD )" = zrefs/heads/another
@@ -611,43 +637,65 @@ test_expect_success 'GIT_TRACE_PACKFILE produces a usable pack' '
 	git -C replay.git index-pack -v --stdin <tmp.pack
 '
 
-hex2oct () {
-	perl -ne 'printf "\\%03o", hex for /../g'
-}
-
 test_expect_success 'clone on case-insensitive fs' '
 	git init icasefs &&
 	(
-		cd icasefs
+		cd icasefs &&
 		o=$(git hash-object -w --stdin </dev/null | hex2oct) &&
 		t=$(printf "100644 X\0${o}100644 x\0${o}" |
 			git hash-object -w -t tree --stdin) &&
 		c=$(git commit-tree -m bogus $t) &&
 		git update-ref refs/heads/bogus $c &&
-		git clone -b bogus . bogus
+		git clone -b bogus . bogus 2>warning
 	)
 '
+
+test_expect_success CASE_INSENSITIVE_FS 'colliding file detection' '
+	grep X icasefs/warning &&
+	grep x icasefs/warning &&
+	test_i18ngrep "the following paths have collided" icasefs/warning
+'
+
+test_expect_success 'clone with GIT_DEFAULT_HASH' '
+	(
+		sane_unset GIT_DEFAULT_HASH &&
+		git init --object-format=sha1 test-sha1 &&
+		git init --object-format=sha256 test-sha256
+	) &&
+	test_commit -C test-sha1 foo &&
+	test_commit -C test-sha256 foo &&
+	GIT_DEFAULT_HASH=sha1 git clone test-sha256 test-clone-sha256 &&
+	GIT_DEFAULT_HASH=sha256 git clone test-sha1 test-clone-sha1 &&
+	git -C test-clone-sha1 status &&
+	git -C test-clone-sha256 status
+'
+
+partial_clone_server () {
+	       SERVER="$1" &&
+
+	rm -rf "$SERVER" client &&
+	test_create_repo "$SERVER" &&
+	test_commit -C "$SERVER" one &&
+	HASH1=$(git -C "$SERVER" hash-object one.t) &&
+	git -C "$SERVER" revert HEAD &&
+	test_commit -C "$SERVER" two &&
+	HASH2=$(git -C "$SERVER" hash-object two.t) &&
+	test_config -C "$SERVER" uploadpack.allowfilter 1 &&
+	test_config -C "$SERVER" uploadpack.allowanysha1inwant 1
+}
 
 partial_clone () {
 	       SERVER="$1" &&
 	       URL="$2" &&
 
-	rm -rf "$SERVER" client &&
-	test_create_repo "$SERVER" &&
-	test_commit -C "$SERVER" one &&
-	HASH1=$(git hash-object "$SERVER/one.t") &&
-	git -C "$SERVER" revert HEAD &&
-	test_commit -C "$SERVER" two &&
-	HASH2=$(git hash-object "$SERVER/two.t") &&
-	test_config -C "$SERVER" uploadpack.allowfilter 1 &&
-	test_config -C "$SERVER" uploadpack.allowanysha1inwant 1 &&
-
+	partial_clone_server "${SERVER}" &&
 	git clone --filter=blob:limit=0 "$URL" client &&
 
 	git -C client fsck &&
 
 	# Ensure that unneeded blobs are not inadvertently fetched.
-	test_config -C client extensions.partialclone "not a remote" &&
+	test_config -C client remote.origin.promisor "false" &&
+	git -C client config --unset remote.origin.partialclonefilter &&
 	test_must_fail git -C client cat-file -e "$HASH1" &&
 
 	# But this blob was fetched, because clone performs an initial checkout
@@ -656,6 +704,12 @@ partial_clone () {
 
 test_expect_success 'partial clone' '
 	partial_clone server "file://$(pwd)/server"
+'
+
+test_expect_success 'partial clone with -o' '
+	partial_clone_server server &&
+	git clone -o blah --filter=blob:limit=0 "file://$(pwd)/server" client &&
+	test_cmp_config -C client "blob:limit=0" --get-all remote.blah.partialclonefilter
 '
 
 test_expect_success 'partial clone: warn if server does not support object filtering' '
@@ -690,7 +744,7 @@ test_expect_success 'batch missing blob request during checkout' '
 	# Ensure that there is only one negotiation by checking that there is
 	# only "done" line sent. ("done" marks the end of negotiation.)
 	GIT_TRACE_PACKET="$(pwd)/trace" git -C client checkout HEAD^ &&
-	grep "git> done" trace >done_lines &&
+	grep "fetch> done" trace >done_lines &&
 	test_line_count = 1 done_lines
 '
 
@@ -727,6 +781,16 @@ test_expect_success 'partial clone using HTTP' '
 	partial_clone "$HTTPD_DOCUMENT_ROOT_PATH/server" "$HTTPD_URL/smart/server"
 '
 
-stop_httpd
+test_expect_success 'reject cloning shallow repository using HTTP' '
+	test_when_finished "rm -rf repo" &&
+	git clone --bare --no-local --depth=1 src "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
+	test_must_fail git -c protocol.version=2 clone --reject-shallow $HTTPD_URL/smart/repo.git repo 2>err &&
+	test_i18ngrep -e "source repository is shallow, reject to clone." err &&
+
+	git clone --no-reject-shallow $HTTPD_URL/smart/repo.git repo
+'
+
+# DO NOT add non-httpd-specific tests here, because the last part of this
+# test script is only executed when httpd is available and enabled.
 
 test_done

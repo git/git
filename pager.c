@@ -2,37 +2,38 @@
 #include "config.h"
 #include "run-command.h"
 #include "sigchain.h"
+#include "alias.h"
 
 #ifndef DEFAULT_PAGER
 #define DEFAULT_PAGER "less"
 #endif
 
-static struct child_process pager_process = CHILD_PROCESS_INIT;
+static struct child_process pager_process;
 static const char *pager_program;
 
-static void wait_for_pager(int in_signal)
+/* Is the value coming back from term_columns() just a guess? */
+static int term_columns_guessed;
+
+
+static void close_pager_fds(void)
 {
-	if (!in_signal) {
-		fflush(stdout);
-		fflush(stderr);
-	}
 	/* signal EOF to pager */
 	close(1);
 	close(2);
-	if (in_signal)
-		finish_command_in_signal(&pager_process);
-	else
-		finish_command(&pager_process);
 }
 
 static void wait_for_pager_atexit(void)
 {
-	wait_for_pager(0);
+	fflush(stdout);
+	fflush(stderr);
+	close_pager_fds();
+	finish_command(&pager_process);
 }
 
 static void wait_for_pager_signal(int signo)
 {
-	wait_for_pager(1);
+	close_pager_fds();
+	finish_command_in_signal(&pager_process);
 	sigchain_pop(signo);
 	raise(signo);
 }
@@ -67,7 +68,7 @@ const char *git_pager(int stdout_is_tty)
 	return pager;
 }
 
-static void setup_pager_env(struct argv_array *env)
+static void setup_pager_env(struct strvec *env)
 {
 	const char **argv;
 	int i;
@@ -87,7 +88,7 @@ static void setup_pager_env(struct argv_array *env)
 		*cp = '\0';
 		if (!getenv(argv[i])) {
 			*cp = '=';
-			argv_array_push(env, argv[i]);
+			strvec_push(env, argv[i]);
 		}
 	}
 	free(pager_env);
@@ -96,9 +97,10 @@ static void setup_pager_env(struct argv_array *env)
 
 void prepare_pager_args(struct child_process *pager_process, const char *pager)
 {
-	argv_array_push(&pager_process->args, pager);
+	strvec_push(&pager_process->args, pager);
 	pager_process->use_shell = 1;
-	setup_pager_env(&pager_process->env_array);
+	setup_pager_env(&pager_process->env);
+	pager_process->trace2_child_class = "pager";
 }
 
 void setup_pager(void)
@@ -109,17 +111,25 @@ void setup_pager(void)
 		return;
 
 	/*
-	 * force computing the width of the terminal before we redirect
-	 * the standard output to the pager.
+	 * After we redirect standard output, we won't be able to use an ioctl
+	 * to get the terminal size. Let's grab it now, and then set $COLUMNS
+	 * to communicate it to any sub-processes.
 	 */
-	(void) term_columns();
+	{
+		char buf[64];
+		xsnprintf(buf, sizeof(buf), "%d", term_columns());
+		if (!term_columns_guessed)
+			setenv("COLUMNS", buf, 0);
+	}
 
 	setenv("GIT_PAGER_IN_USE", "true", 1);
+
+	child_process_init(&pager_process);
 
 	/* spawn the pager */
 	prepare_pager_args(&pager_process, pager);
 	pager_process.in = -1;
-	argv_array_push(&pager_process.env_array, "GIT_PAGER_IN_USE");
+	strvec_push(&pager_process.env, "GIT_PAGER_IN_USE");
 	if (start_command(&pager_process))
 		return;
 
@@ -155,19 +165,44 @@ int term_columns(void)
 		return term_columns_at_startup;
 
 	term_columns_at_startup = 80;
+	term_columns_guessed = 1;
 
 	col_string = getenv("COLUMNS");
-	if (col_string && (n_cols = atoi(col_string)) > 0)
+	if (col_string && (n_cols = atoi(col_string)) > 0) {
 		term_columns_at_startup = n_cols;
+		term_columns_guessed = 0;
+	}
 #ifdef TIOCGWINSZ
 	else {
 		struct winsize ws;
-		if (!ioctl(1, TIOCGWINSZ, &ws) && ws.ws_col)
+		if (!ioctl(1, TIOCGWINSZ, &ws) && ws.ws_col) {
 			term_columns_at_startup = ws.ws_col;
+			term_columns_guessed = 0;
+		}
 	}
 #endif
 
 	return term_columns_at_startup;
+}
+
+/*
+ * Clear the entire line, leave cursor in first column.
+ */
+void term_clear_line(void)
+{
+	if (is_terminal_dumb())
+		/*
+		 * Fall back to print a terminal width worth of space
+		 * characters (hoping that the terminal is still as wide
+		 * as it was upon the first call to term_columns()).
+		 */
+		fprintf(stderr, "\r%*s\r", term_columns(), "");
+	else
+		/*
+		 * On non-dumb terminals use an escape sequence to clear
+		 * the whole line, no matter how wide the terminal.
+		 */
+		fputs("\r\033[K", stderr);
 }
 
 /*

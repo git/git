@@ -1,14 +1,15 @@
 #!/bin/sh
 
 test_description='git svn authorship'
+
 . ./lib-git-svn.sh
 
 test_expect_success 'setup svn repository' '
 	svn_cmd checkout "$svnrepo" work.svn &&
 	(
 		cd work.svn &&
-		echo >file
-		svn_cmd add file
+		echo >file &&
+		svn_cmd add file &&
 		svn_cmd commit -m "first commit" file
 	)
 '
@@ -17,7 +18,7 @@ test_expect_success 'interact with it via git svn' '
 	mkdir work.git &&
 	(
 		cd work.git &&
-		git svn init "$svnrepo"
+		git svn init "$svnrepo" &&
 		git svn fetch &&
 
 		echo modification >file &&

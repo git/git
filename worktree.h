@@ -1,6 +1,7 @@
 #ifndef WORKTREE_H
 #define WORKTREE_H
 
+#include "cache.h"
 #include "refs.h"
 
 struct strbuf;
@@ -9,57 +10,91 @@ struct worktree {
 	char *path;
 	char *id;
 	char *head_ref;		/* NULL if HEAD is broken or detached */
-	char *lock_reason;	/* internal use */
+	char *lock_reason;	/* private - use worktree_lock_reason */
+	char *prune_reason;     /* private - use worktree_prune_reason */
 	struct object_id head_oid;
 	int is_detached;
 	int is_bare;
 	int is_current;
-	int lock_reason_valid;
+	int lock_reason_valid; /* private */
+	int prune_reason_valid; /* private */
 };
-
-/* Functions for acting on the information about worktrees. */
-
-#define GWT_SORT_LINKED (1 << 0) /* keeps linked worktrees sorted */
 
 /*
  * Get the worktrees.  The primary worktree will always be the first returned,
- * and linked worktrees will be pointed to by 'next' in each subsequent
- * worktree.  No specific ordering is done on the linked worktrees.
+ * and linked worktrees will follow in no particular order.
  *
  * The caller is responsible for freeing the memory from the returned
- * worktree(s).
+ * worktrees by calling free_worktrees().
  */
-extern struct worktree **get_worktrees(unsigned flags);
+struct worktree **get_worktrees(void);
 
 /*
  * Returns 1 if linked worktrees exist, 0 otherwise.
  */
-extern int submodule_uses_worktrees(const char *path);
+int submodule_uses_worktrees(const char *path);
 
 /*
  * Return git dir of the worktree. Note that the path may be relative.
  * If wt is NULL, git dir of current worktree is returned.
  */
-extern const char *get_worktree_git_dir(const struct worktree *wt);
+const char *get_worktree_git_dir(const struct worktree *wt);
 
 /*
- * Search a worktree that can be unambiguously identified by
- * "arg". "prefix" must not be NULL.
+ * Search for the worktree identified unambiguously by `arg` -- typically
+ * supplied by the user via the command-line -- which may be a pathname or some
+ * shorthand uniquely identifying a worktree, thus making it convenient for the
+ * user to specify a worktree with minimal typing. For instance, if the last
+ * component (say, "foo") of a worktree's pathname is unique among worktrees
+ * (say, "work/foo" and "work/bar"), it can be used to identify the worktree
+ * unambiguously.
+ *
+ * `prefix` should be the `prefix` handed to top-level Git commands along with
+ * `argc` and `argv`.
+ *
+ * Return the worktree identified by `arg`, or NULL if not found.
  */
-extern struct worktree *find_worktree(struct worktree **list,
-				      const char *prefix,
-				      const char *arg);
+struct worktree *find_worktree(struct worktree **list,
+			       const char *prefix,
+			       const char *arg);
+
+/*
+ * Return the worktree corresponding to `path`, or NULL if no such worktree
+ * exists.
+ */
+struct worktree *find_worktree_by_path(struct worktree **, const char *path);
 
 /*
  * Return true if the given worktree is the main one.
  */
-extern int is_main_worktree(const struct worktree *wt);
+int is_main_worktree(const struct worktree *wt);
 
 /*
  * Return the reason string if the given worktree is locked or NULL
  * otherwise.
  */
-extern const char *is_worktree_locked(struct worktree *wt);
+const char *worktree_lock_reason(struct worktree *wt);
+
+/*
+ * Return the reason string if the given worktree should be pruned, otherwise
+ * NULL if it should not be pruned. `expire` defines a grace period to prune
+ * the worktree when its path does not exist.
+ */
+const char *worktree_prune_reason(struct worktree *wt, timestamp_t expire);
+
+/*
+ * Return true if worktree entry should be pruned, along with the reason for
+ * pruning. Otherwise, return false and the worktree's path in `wtpath`, or
+ * NULL if it cannot be determined. Caller is responsible for freeing
+ * returned path.
+ *
+ * `expire` defines a grace period to prune the worktree when its path
+ * does not exist.
+ */
+int should_prune_worktree(const char *id,
+			  struct strbuf *reason,
+			  char **wtpath,
+			  timestamp_t expire);
 
 #define WT_VALIDATE_WORKTREE_MISSING_OK (1 << 0)
 
@@ -67,28 +102,52 @@ extern const char *is_worktree_locked(struct worktree *wt);
  * Return zero if the worktree is in good condition. Error message is
  * returned if "errmsg" is not NULL.
  */
-extern int validate_worktree(const struct worktree *wt,
-			     struct strbuf *errmsg,
-			     unsigned flags);
+int validate_worktree(const struct worktree *wt,
+		      struct strbuf *errmsg,
+		      unsigned flags);
 
 /*
  * Update worktrees/xxx/gitdir with the new path.
  */
-extern void update_worktree_location(struct worktree *wt,
-				     const char *path_);
+void update_worktree_location(struct worktree *wt,
+			      const char *path_);
+
+typedef void (* worktree_repair_fn)(int iserr, const char *path,
+				    const char *msg, void *cb_data);
+
+/*
+ * Visit each registered linked worktree and repair corruptions. For each
+ * repair made or error encountered while attempting a repair, the callback
+ * function, if non-NULL, is called with the path of the worktree and a
+ * description of the repair or error, along with the callback user-data.
+ */
+void repair_worktrees(worktree_repair_fn, void *cb_data);
+
+/*
+ * Repair administrative files corresponding to the worktree at the given path.
+ * The worktree's .git file pointing at the repository must be intact for the
+ * repair to succeed. Useful for re-associating an orphaned worktree with the
+ * repository if the worktree has been moved manually (without using "git
+ * worktree move"). For each repair made or error encountered while attempting
+ * a repair, the callback function, if non-NULL, is called with the path of the
+ * worktree and a description of the repair or error, along with the callback
+ * user-data.
+ */
+void repair_worktree_at_path(const char *, worktree_repair_fn, void *cb_data);
 
 /*
  * Free up the memory for worktree(s)
  */
-extern void free_worktrees(struct worktree **);
+void free_worktrees(struct worktree **);
 
 /*
  * Check if a per-worktree symref points to a ref in the main worktree
  * or any linked worktree, and return the worktree that holds the ref,
- * or NULL otherwise. The result may be destroyed by the next call.
+ * or NULL otherwise.
  */
-extern const struct worktree *find_shared_symref(const char *symref,
-						 const char *target);
+const struct worktree *find_shared_symref(struct worktree **worktrees,
+					  const char *symref,
+					  const char *target);
 
 /*
  * Similar to head_ref() for all HEADs _except_ one from the current
@@ -103,8 +162,46 @@ int is_worktree_being_bisected(const struct worktree *wt, const char *target);
  * Similar to git_path() but can produce paths for a specified
  * worktree instead of current one
  */
-extern const char *worktree_git_path(const struct worktree *wt,
-				     const char *fmt, ...)
+const char *worktree_git_path(const struct worktree *wt,
+			      const char *fmt, ...)
 	__attribute__((format (printf, 2, 3)));
+
+/*
+ * Parse a worktree ref (i.e. with prefix main-worktree/ or
+ * worktrees/) and return the position of the worktree's name and
+ * length (or NULL and zero if it's main worktree), and ref.
+ *
+ * All name, name_length and ref arguments could be NULL.
+ */
+int parse_worktree_ref(const char *worktree_ref, const char **name,
+		       int *name_length, const char **ref);
+
+/*
+ * Return a refname suitable for access from the current ref store.
+ */
+void strbuf_worktree_ref(const struct worktree *wt,
+			 struct strbuf *sb,
+			 const char *refname);
+
+/**
+ * Enable worktree config for the first time. This will make the following
+ * adjustments:
+ *
+ * 1. Add extensions.worktreeConfig=true in the common config file.
+ *
+ * 2. If the common config file has a core.worktree value, then that value
+ *    is moved to the main worktree's config.worktree file.
+ *
+ * 3. If the common config file has a core.bare enabled, then that value
+ *    is moved to the main worktree's config.worktree file.
+ *
+ * If extensions.worktreeConfig is already true, then this method
+ * terminates early without any of the above steps. The existing config
+ * arrangement is assumed to be intentional.
+ *
+ * Returns 0 on success. Reports an error message and returns non-zero
+ * if any of these steps fail.
+ */
+int init_worktree_config(struct repository *r);
 
 #endif

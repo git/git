@@ -4,6 +4,9 @@
 #
 
 test_description='git rebase --autostash tests'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -21,22 +24,22 @@ test_expect_success setup '
 	git add . &&
 	test_tick &&
 	git commit -m "third commit" &&
-	git checkout -b unrelated-onto-branch master &&
+	git checkout -b unrelated-onto-branch main &&
 	echo unrelated >file4 &&
 	git add . &&
 	test_tick &&
 	git commit -m "unrelated commit" &&
-	git checkout -b related-onto-branch master &&
+	git checkout -b related-onto-branch main &&
 	echo conflicting-change >file2 &&
 	git add . &&
 	test_tick &&
-	git commit -m "related commit"
+	git commit -m "related commit" &&
+	remove_progress_re="$(printf "s/.*\\r//")"
 '
 
-create_expected_success_am () {
+create_expected_success_apply () {
 	cat >expected <<-EOF
 	$(grep "^Created autostash: [0-9a-f][0-9a-f]*\$" actual)
-	HEAD is now at $(git rev-parse --short feature-branch) third commit
 	First, rewinding head to replay your work on top of it...
 	Applying: second commit
 	Applying: third commit
@@ -44,108 +47,33 @@ create_expected_success_am () {
 	EOF
 }
 
-create_expected_success_interactive () {
+create_expected_success_merge () {
 	q_to_cr >expected <<-EOF
 	$(grep "^Created autostash: [0-9a-f][0-9a-f]*\$" actual)
-	HEAD is now at $(git rev-parse --short feature-branch) third commit
-	Rebasing (1/2)QRebasing (2/2)QApplied autostash.
+	Applied autostash.
 	Successfully rebased and updated refs/heads/rebased-feature-branch.
 	EOF
 }
 
-create_expected_success_merge () {
+create_expected_failure_apply () {
 	cat >expected <<-EOF
 	$(grep "^Created autostash: [0-9a-f][0-9a-f]*\$" actual)
-	HEAD is now at $(git rev-parse --short feature-branch) third commit
-	First, rewinding head to replay your work on top of it...
-	Merging unrelated-onto-branch with HEAD~1
-	Merging:
-	$(git rev-parse --short unrelated-onto-branch) unrelated commit
-	$(git rev-parse --short feature-branch^) second commit
-	found 1 common ancestor:
-	$(git rev-parse --short feature-branch~2) initial commit
-	[detached HEAD $(git rev-parse --short rebased-feature-branch~1)] second commit
-	 Author: A U Thor <author@example.com>
-	 Date: Thu Apr 7 15:14:13 2005 -0700
-	 2 files changed, 2 insertions(+)
-	 create mode 100644 file1
-	 create mode 100644 file2
-	Committed: 0001 second commit
-	Merging unrelated-onto-branch with HEAD~0
-	Merging:
-	$(git rev-parse --short rebased-feature-branch~1) second commit
-	$(git rev-parse --short feature-branch) third commit
-	found 1 common ancestor:
-	$(git rev-parse --short feature-branch~1) second commit
-	[detached HEAD $(git rev-parse --short rebased-feature-branch)] third commit
-	 Author: A U Thor <author@example.com>
-	 Date: Thu Apr 7 15:15:13 2005 -0700
-	 1 file changed, 1 insertion(+)
-	 create mode 100644 file3
-	Committed: 0002 third commit
-	All done.
-	Applied autostash.
-	EOF
-}
-
-create_expected_failure_am () {
-	cat >expected <<-EOF
-	$(grep "^Created autostash: [0-9a-f][0-9a-f]*\$" actual)
-	HEAD is now at $(git rev-parse --short feature-branch) third commit
 	First, rewinding head to replay your work on top of it...
 	Applying: second commit
 	Applying: third commit
 	Applying autostash resulted in conflicts.
 	Your changes are safe in the stash.
 	You can run "git stash pop" or "git stash drop" at any time.
-	EOF
-}
-
-create_expected_failure_interactive () {
-	q_to_cr >expected <<-EOF
-	$(grep "^Created autostash: [0-9a-f][0-9a-f]*\$" actual)
-	HEAD is now at $(git rev-parse --short feature-branch) third commit
-	Rebasing (1/2)QRebasing (2/2)QApplying autostash resulted in conflicts.
-	Your changes are safe in the stash.
-	You can run "git stash pop" or "git stash drop" at any time.
-	Successfully rebased and updated refs/heads/rebased-feature-branch.
 	EOF
 }
 
 create_expected_failure_merge () {
 	cat >expected <<-EOF
 	$(grep "^Created autostash: [0-9a-f][0-9a-f]*\$" actual)
-	HEAD is now at $(git rev-parse --short feature-branch) third commit
-	First, rewinding head to replay your work on top of it...
-	Merging unrelated-onto-branch with HEAD~1
-	Merging:
-	$(git rev-parse --short unrelated-onto-branch) unrelated commit
-	$(git rev-parse --short feature-branch^) second commit
-	found 1 common ancestor:
-	$(git rev-parse --short feature-branch~2) initial commit
-	[detached HEAD $(git rev-parse --short rebased-feature-branch~1)] second commit
-	 Author: A U Thor <author@example.com>
-	 Date: Thu Apr 7 15:14:13 2005 -0700
-	 2 files changed, 2 insertions(+)
-	 create mode 100644 file1
-	 create mode 100644 file2
-	Committed: 0001 second commit
-	Merging unrelated-onto-branch with HEAD~0
-	Merging:
-	$(git rev-parse --short rebased-feature-branch~1) second commit
-	$(git rev-parse --short feature-branch) third commit
-	found 1 common ancestor:
-	$(git rev-parse --short feature-branch~1) second commit
-	[detached HEAD $(git rev-parse --short rebased-feature-branch)] third commit
-	 Author: A U Thor <author@example.com>
-	 Date: Thu Apr 7 15:15:13 2005 -0700
-	 1 file changed, 1 insertion(+)
-	 create mode 100644 file3
-	Committed: 0002 third commit
-	All done.
 	Applying autostash resulted in conflicts.
 	Your changes are safe in the stash.
 	You can run "git stash pop" or "git stash drop" at any time.
+	Successfully rebased and updated refs/heads/rebased-feature-branch.
 	EOF
 }
 
@@ -176,9 +104,13 @@ testrebase () {
 
 	test_expect_success "rebase$type --autostash: check output" '
 		test_when_finished git branch -D rebased-feature-branch &&
-		suffix=${type#\ --} && suffix=${suffix:-am} &&
+		suffix=${type#\ --} && suffix=${suffix:-apply} &&
+		if test ${suffix} = "interactive"; then
+			suffix=merge
+		fi &&
 		create_expected_success_$suffix &&
-		test_i18ncmp expected actual
+		sed "$remove_progress_re" <actual >actual2 &&
+		test_cmp expected actual2
 	'
 
 	test_expect_success "rebase$type: dirty index, non-conflicting rebase" '
@@ -202,7 +134,7 @@ testrebase () {
 		echo dirty >>file3 &&
 		test_must_fail git rebase$type related-onto-branch &&
 		test_path_is_file $dotest/autostash &&
-		! grep dirty file3 &&
+		test_path_is_missing file3 &&
 		rm -rf $dotest &&
 		git reset --hard &&
 		git checkout feature-branch
@@ -216,7 +148,7 @@ testrebase () {
 		echo dirty >>file3 &&
 		test_must_fail git rebase$type related-onto-branch &&
 		test_path_is_file $dotest/autostash &&
-		! grep dirty file3 &&
+		test_path_is_missing file3 &&
 		echo "conflicting-plus-goodbye" >file2 &&
 		git add file2 &&
 		git rebase --continue &&
@@ -233,7 +165,7 @@ testrebase () {
 		echo dirty >>file3 &&
 		test_must_fail git rebase$type related-onto-branch &&
 		test_path_is_file $dotest/autostash &&
-		! grep dirty file3 &&
+		test_path_is_missing file3 &&
 		git rebase --skip &&
 		test_path_is_missing $dotest/autostash &&
 		grep dirty file3 &&
@@ -248,10 +180,30 @@ testrebase () {
 		echo dirty >>file3 &&
 		test_must_fail git rebase$type related-onto-branch &&
 		test_path_is_file $dotest/autostash &&
-		! grep dirty file3 &&
+		test_path_is_missing file3 &&
 		git rebase --abort &&
 		test_path_is_missing $dotest/autostash &&
 		grep dirty file3 &&
+		git checkout feature-branch
+	'
+
+	test_expect_success "rebase$type: --quit" '
+		test_config rebase.autostash true &&
+		git reset --hard &&
+		git checkout -b rebased-feature-branch feature-branch &&
+		test_when_finished git branch -D rebased-feature-branch &&
+		echo dirty >>file3 &&
+		git diff >expect &&
+		test_must_fail git rebase$type related-onto-branch &&
+		test_path_is_file $dotest/autostash &&
+		test_path_is_missing file3 &&
+		git rebase --quit &&
+		test_when_finished git stash drop &&
+		test_path_is_missing $dotest/autostash &&
+		! grep dirty file3 &&
+		git stash show -p >actual &&
+		test_cmp expect actual &&
+		git reset --hard &&
 		git checkout feature-branch
 	'
 
@@ -273,9 +225,13 @@ testrebase () {
 
 	test_expect_success "rebase$type: check output with conflicting stash" '
 		test_when_finished git branch -D rebased-feature-branch &&
-		suffix=${type#\ --} && suffix=${suffix:-am} &&
+		suffix=${type#\ --} && suffix=${suffix:-apply} &&
+		if test ${suffix} = "interactive"; then
+			suffix=merge
+		fi &&
 		create_expected_failure_$suffix &&
-		test_i18ncmp expected actual
+		sed "$remove_progress_re" <actual >actual2 &&
+		test_cmp expected actual2
 	'
 }
 
@@ -301,7 +257,7 @@ test_expect_success "rebase: noop rebase" '
 	git checkout feature-branch
 '
 
-testrebase "" .git/rebase-apply
+testrebase " --apply" .git/rebase-apply
 testrebase " --merge" .git/rebase-merge
 testrebase " --interactive" .git/rebase-merge
 
@@ -349,6 +305,32 @@ test_expect_success 'autostash is saved on editor failure with conflict' '
 	git stash pop &&
 	echo uncommitted-content >expected &&
 	test_cmp expected file0
+'
+
+test_expect_success 'autostash with dirty submodules' '
+	test_when_finished "git reset --hard && git checkout main" &&
+	git checkout -b with-submodule &&
+	git submodule add ./ sub &&
+	test_tick &&
+	git commit -m add-submodule &&
+	echo changed >sub/file0 &&
+	git rebase -i --autostash HEAD
+'
+
+test_expect_success 'branch is left alone when possible' '
+	git checkout -b unchanged-branch &&
+	echo changed >file0 &&
+	git rebase --autostash unchanged-branch &&
+	test changed = "$(cat file0)" &&
+	test unchanged-branch = "$(git rev-parse --abbrev-ref HEAD)"
+'
+
+test_expect_success 'never change active branch' '
+	git checkout -b not-the-feature-branch unrelated-onto-branch &&
+	test_when_finished "git reset --hard && git checkout main" &&
+	echo changed >file0 &&
+	git rebase --autostash not-the-feature-branch feature-branch &&
+	test_cmp_rev not-the-feature-branch unrelated-onto-branch
 '
 
 test_done

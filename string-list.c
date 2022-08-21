@@ -1,10 +1,16 @@
 #include "cache.h"
 #include "string-list.h"
 
-void string_list_init(struct string_list *list, int strdup_strings)
+void string_list_init_nodup(struct string_list *list)
 {
-	memset(list, 0, sizeof(*list));
-	list->strdup_strings = strdup_strings;
+	struct string_list blank = STRING_LIST_INIT_NODUP;
+	memcpy(list, &blank, sizeof(*list));
+}
+
+void string_list_init_dup(struct string_list *list)
+{
+	struct string_list blank = STRING_LIST_INIT_DUP;
+	memcpy(list, &blank, sizeof(*list));
 }
 
 /* if there is no exact match, point to the index where the entry could be
@@ -155,7 +161,8 @@ static int item_is_not_empty(struct string_list_item *item, void *unused)
 	return *item->string != '\0';
 }
 
-void string_list_remove_empty_items(struct string_list *list, int free_util) {
+void string_list_remove_empty_items(struct string_list *list, int free_util)
+{
 	filter_string_list(list, free_util, item_is_not_empty, NULL);
 }
 
@@ -195,16 +202,6 @@ void string_list_clear_func(struct string_list *list, string_list_clear_func_t c
 	list->nr = list->alloc = 0;
 }
 
-
-void print_string_list(const struct string_list *p, const char *text)
-{
-	int i;
-	if ( text )
-		printf("%s\n", text);
-	for (i = 0; i < p->nr; i++)
-		printf("%s:%p\n", p->items[i].string, p->items[i].util);
-}
-
 struct string_list_item *string_list_append_nodup(struct string_list *list,
 						  char *string)
 {
@@ -224,18 +221,28 @@ struct string_list_item *string_list_append(struct string_list *list,
 			list->strdup_strings ? xstrdup(string) : (char *)string);
 }
 
+/*
+ * Encapsulate the compare function pointer because ISO C99 forbids
+ * casting from void * to a function pointer and vice versa.
+ */
+struct string_list_sort_ctx
+{
+	compare_strings_fn cmp;
+};
+
 static int cmp_items(const void *a, const void *b, void *ctx)
 {
-	compare_strings_fn cmp = ctx;
+	struct string_list_sort_ctx *sort_ctx = ctx;
 	const struct string_list_item *one = a;
 	const struct string_list_item *two = b;
-	return cmp(one->string, two->string);
+	return sort_ctx->cmp(one->string, two->string);
 }
 
 void string_list_sort(struct string_list *list)
 {
-	QSORT_S(list->items, list->nr, cmp_items,
-		list->cmp ? list->cmp : strcmp);
+	struct string_list_sort_ctx sort_ctx = {list->cmp ? list->cmp : strcmp};
+
+	QSORT_S(list->items, list->nr, cmp_items, &sort_ctx);
 }
 
 struct string_list_item *unsorted_string_list_lookup(struct string_list *list,

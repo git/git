@@ -1,11 +1,27 @@
 #ifndef REVISION_H
 #define REVISION_H
 
+#include "commit.h"
 #include "parse-options.h"
 #include "grep.h"
 #include "notes.h"
 #include "pretty.h"
 #include "diff.h"
+#include "commit-slab-decl.h"
+#include "list-objects-filter-options.h"
+
+/**
+ * The revision walking API offers functions to build a list of revisions
+ * and then iterate over that list.
+ *
+ * Calling sequence
+ * ----------------
+ *
+ * The walking API has a given calling sequence: first you need to initialize
+ * a rev_info structure, then add revisions to control what kind of revision
+ * list do you want to get, finally you can iterate over the revision list.
+ *
+ */
 
 /* Remember to update object flag allocation in object.h */
 #define SEEN		(1u<<0)
@@ -19,16 +35,32 @@
 #define SYMMETRIC_LEFT	(1u<<8)
 #define PATCHSAME	(1u<<9)
 #define BOTTOM		(1u<<10)
+
+/* WARNING: This is also used as REACHABLE in commit-graph.c. */
+#define PULL_MERGE	(1u<<15)
+
+#define TOPO_WALK_EXPLORED	(1u<<23)
+#define TOPO_WALK_INDEGREE	(1u<<24)
+
+/*
+ * Indicates object was reached by traversal. i.e. not given by user on
+ * command-line or stdin.
+ */
+#define NOT_USER_GIVEN	(1u<<25)
 #define TRACK_LINEAR	(1u<<26)
-#define ALL_REV_FLAGS	(((1u<<11)-1) | TRACK_LINEAR)
+#define ALL_REV_FLAGS	(((1u<<11)-1) | NOT_USER_GIVEN | TRACK_LINEAR | PULL_MERGE)
 
 #define DECORATE_SHORT_REFS	1
 #define DECORATE_FULL_REFS	2
 
-struct rev_info;
 struct log_info;
+struct repository;
+struct rev_info;
 struct string_list;
 struct saved_parents;
+struct bloom_key;
+struct bloom_filter_settings;
+define_shared_commit_slab(revision_sources, char *);
 
 struct rev_cmdline_info {
 	unsigned int nr;
@@ -48,20 +80,26 @@ struct rev_cmdline_info {
 	} *rev;
 };
 
-#define REVISION_WALK_WALK 0
-#define REVISION_WALK_NO_WALK_SORTED 1
-#define REVISION_WALK_NO_WALK_UNSORTED 2
+struct oidset;
+struct topo_walk_info;
 
 struct rev_info {
 	/* Starting list */
 	struct commit_list *commits;
 	struct object_array pending;
+	struct repository *repo;
 
 	/* Parents of shown commits */
 	struct object_array boundary_commits;
 
 	/* The end-points specified by the end user */
 	struct rev_cmdline_info cmdline;
+
+	/*
+	 * Object filter options. No filtering is specified
+	 * if and only if filter.choice is zero.
+	 */
+	struct list_objects_filter_options filter;
 
 	/* excluding from --branches, --refs, etc. expansion */
 	struct string_list *ref_excludes;
@@ -78,6 +116,11 @@ struct rev_info {
 	 */
 	int rev_input_given;
 
+	/*
+	 * Whether we read from stdin due to the --stdin option.
+	 */
+	int read_from_stdin;
+
 	/* topo-sort */
 	enum rev_sort_order sort_order;
 
@@ -89,9 +132,11 @@ struct rev_info {
 	/* Traversal flags */
 	unsigned int	dense:1,
 			prune:1,
-			no_walk:2,
+			no_walk:1,
+			unsorted_input:1,
 			remove_empty_trees:1,
 			simplify_history:1,
+			show_pulls:1,
 			topo_order:1,
 			simplify_merges:1,
 			simplify_by_decoration:1,
@@ -104,6 +149,7 @@ struct rev_info {
 			edge_hint_aggressive:1,
 			limited:1,
 			unpacked:1,
+			no_kept_objects:1,
 			boundary:2,
 			count:1,
 			left_right:1,
@@ -111,7 +157,6 @@ struct rev_info {
 			right_only:1,
 			rewrite_parents:1,
 			print_parents:1,
-			show_source:1,
 			show_decorations:1,
 			reverse:1,
 			reverse_output_stage:1,
@@ -120,8 +165,24 @@ struct rev_info {
 			bisect:1,
 			ancestry_path:1,
 			first_parent_only:1,
+			exclude_first_parent_only:1,
 			line_level_traverse:1,
 			tree_blobs_in_commit_order:1,
+
+			/*
+			 * Blobs are shown without regard for their existence.
+			 * But not so for trees: unless exclude_promisor_objects
+			 * is set and the tree in question is a promisor object;
+			 * OR ignore_missing_links is set, the revision walker
+			 * dies with a "bad tree object HASH" message when
+			 * encountering a missing tree. For callers that can
+			 * handle missing trees and want them to be filterable
+			 * and showable, set this to true. The revision walker
+			 * will filter and show such a missing tree as usual,
+			 * but will not attempt to recurse into this tree
+			 * object.
+			 */
+			do_not_die_on_missing_tree:1,
 
 			/* for internal use only */
 			exclude_promisor_objects:1;
@@ -130,18 +191,26 @@ struct rev_info {
 	unsigned int	diff:1,
 			full_diff:1,
 			show_root_diff:1,
+			match_missing:1,
 			no_commit_id:1,
 			verbose_header:1,
-			ignore_merges:1,
+			always_show_header:1,
+			/* Diff-merge flags */
+			explicit_diff_merges: 1,
+			merges_need_diff: 1,
+			merges_imply_patch:1,
+			separate_merges: 1,
 			combine_merges:1,
+			combined_all_paths:1,
 			dense_combined_merges:1,
-			always_show_header:1;
+			first_parent_merges:1,
+			remerge_diff:1;
 
 	/* Format info */
+	int		show_notes;
 	unsigned int	shown_one:1,
 			shown_dashes:1,
 			show_merge:1,
-			show_notes:1,
 			show_notes_given:1,
 			show_signature:1,
 			pretty_given:1,
@@ -151,7 +220,9 @@ struct rev_info {
 			use_terminator:1,
 			missing_newline:1,
 			date_mode_explicit:1,
-			preserve_subject:1;
+			preserve_subject:1,
+			encode_email_headers:1,
+			include_header:1;
 	unsigned int	disable_stdin:1;
 	/* --show-linear-break */
 	unsigned int	track_linear:1,
@@ -169,7 +240,7 @@ struct rev_info {
 	const char	*mime_boundary;
 	const char	*patch_suffix;
 	int		numbered_files;
-	int		reroll_count;
+	const char	*reroll_count;
 	char		*message_id;
 	struct ident_split from_ident;
 	struct string_list *ref_message_ids;
@@ -177,14 +248,13 @@ struct rev_info {
 	const char	*extra_headers;
 	const char	*log_reencode;
 	const char	*subject_prefix;
+	int		patch_name_max;
 	int		no_inline;
 	int		show_log_size;
 	struct string_list *mailmap;
 
 	/* Filter by commit log message */
 	struct grep_opt	grep_filter;
-	/* Negate the match of grep_filter */
-	int invert_grep;
 
 	/* Display history graph */
 	struct git_graph *graph;
@@ -193,10 +263,12 @@ struct rev_info {
 	int skip_count;
 	int max_count;
 	timestamp_t max_age;
+	timestamp_t max_age_as_filter;
 	timestamp_t min_age;
 	int min_parents;
 	int max_parents;
 	int (*include_check)(struct commit *, void *);
+	int (*include_check_obj)(struct object *obj, void *);
 	void *include_check_data;
 
 	/* diff info for patches and for paths limiting */
@@ -211,6 +283,17 @@ struct rev_info {
 	/* notes-specific options: which refs to show */
 	struct display_notes_opt notes_opt;
 
+	/* interdiff */
+	const struct object_id *idiff_oid1;
+	const struct object_id *idiff_oid2;
+	const char *idiff_title;
+
+	/* range-diff */
+	const char *rdiff1;
+	const char *rdiff2;
+	int creation_factor;
+	const char *rdiff_title;
+
 	/* commit counts */
 	int count_left;
 	int count_right;
@@ -224,63 +307,155 @@ struct rev_info {
 
 	struct commit_list *previous_parents;
 	const char *break_bar;
+
+	struct revision_sources *sources;
+
+	struct topo_walk_info *topo_walk_info;
+
+	/* Commit graph bloom filter fields */
+	/* The bloom filter key(s) for the pathspec */
+	struct bloom_key *bloom_keys;
+	int bloom_keys_nr;
+
+	/*
+	 * The bloom filter settings used to generate the key.
+	 * This is loaded from the commit-graph being used.
+	 */
+	struct bloom_filter_settings *bloom_filter_settings;
+
+	/* misc. flags related to '--no-kept-objects' */
+	unsigned keep_pack_cache_flags;
+
+	/* Location where temporary objects for remerge-diff are written. */
+	struct tmp_objdir *remerge_objdir;
 };
 
-extern int ref_excluded(struct string_list *, const char *path);
-void clear_ref_exclusion(struct string_list **);
-void add_ref_exclusion(struct string_list **, const char *exclude);
+/**
+ * Initialize the "struct rev_info" structure with a macro.
+ *
+ * This will not fully initialize a "struct rev_info", the
+ * repo_init_revisions() function needs to be called before
+ * setup_revisions() and any revision walking takes place.
+ *
+ * Use REV_INFO_INIT to make the "struct rev_info" safe for passing to
+ * release_revisions() when it's inconvenient (e.g. due to a "goto
+ * cleanup" pattern) to arrange for repo_init_revisions() to be called
+ * before release_revisions() is called.
+ *
+ * Initializing with this REV_INFO_INIT is redundant to invoking
+ * repo_init_revisions(). If repo_init_revisions() is guaranteed to be
+ * called before release_revisions() the "struct rev_info" can be left
+ * uninitialized.
+ */
+#define REV_INFO_INIT { 0 }
 
+/**
+ * Initialize a rev_info structure with default values. The third parameter may
+ * be NULL or can be prefix path, and then the `.prefix` variable will be set
+ * to it. This is typically the first function you want to call when you want
+ * to deal with a revision list. After calling this function, you are free to
+ * customize options, like set `.ignore_merges` to 0 if you don't want to
+ * ignore merges, and so on.
+ */
+void repo_init_revisions(struct repository *r,
+			 struct rev_info *revs,
+			 const char *prefix);
+#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
+#define init_revisions(revs, prefix) repo_init_revisions(the_repository, revs, prefix)
+#endif
 
-#define REV_TREE_SAME		0
-#define REV_TREE_NEW		1	/* Only new files */
-#define REV_TREE_OLD		2	/* Only files removed */
-#define REV_TREE_DIFFERENT	3	/* Mixed changes */
-
-/* revision.c */
-typedef void (*show_early_output_fn_t)(struct rev_info *, struct commit_list *);
-extern volatile show_early_output_fn_t show_early_output;
-
+/**
+ * Parse revision information, filling in the `rev_info` structure, and
+ * removing the used arguments from the argument list. Returns the number
+ * of arguments left that weren't recognized, which are also moved to the
+ * head of the argument list. The last parameter is used in case no
+ * parameter given by the first two arguments.
+ */
 struct setup_revision_opt {
 	const char *def;
 	void (*tweak)(struct rev_info *, struct setup_revision_opt *);
-	const char *submodule;
-	int assume_dashdash;
+	unsigned int	assume_dashdash:1,
+			allow_exclude_promisor_objects:1,
+			free_removed_argv_elements:1;
 	unsigned revarg_opt;
 };
+int setup_revisions(int argc, const char **argv, struct rev_info *revs,
+		    struct setup_revision_opt *);
 
-extern void init_revisions(struct rev_info *revs, const char *prefix);
-extern int setup_revisions(int argc, const char **argv, struct rev_info *revs,
-			   struct setup_revision_opt *);
-extern void parse_revision_opt(struct rev_info *revs, struct parse_opt_ctx_t *ctx,
-			       const struct option *options,
-			       const char * const usagestr[]);
+/**
+ * Free data allocated in a "struct rev_info" after it's been
+ * initialized with repo_init_revisions() or REV_INFO_INIT.
+ */
+void release_revisions(struct rev_info *revs);
+
+void parse_revision_opt(struct rev_info *revs, struct parse_opt_ctx_t *ctx,
+			const struct option *options,
+			const char * const usagestr[]);
 #define REVARG_CANNOT_BE_FILENAME 01
 #define REVARG_COMMITTISH 02
-extern int handle_revision_arg(const char *arg, struct rev_info *revs,
-			       int flags, unsigned revarg_opt);
+int handle_revision_arg(const char *arg, struct rev_info *revs,
+			int flags, unsigned revarg_opt);
+void revision_opts_finish(struct rev_info *revs);
 
-extern void reset_revision_walk(void);
-extern int prepare_revision_walk(struct rev_info *revs);
-extern struct commit *get_revision(struct rev_info *revs);
-extern char *get_revision_mark(const struct rev_info *revs,
-			       const struct commit *commit);
-extern void put_revision_mark(const struct rev_info *revs,
+/**
+ * Reset the flags used by the revision walking api. You can use this to do
+ * multiple sequential revision walks.
+ */
+void reset_revision_walk(void);
+
+/**
+ * Prepares the rev_info structure for a walk. You should check if it returns
+ * any error (non-zero return code) and if it does not, you can start using
+ * get_revision() to do the iteration.
+ */
+int prepare_revision_walk(struct rev_info *revs);
+
+/**
+ * Takes a pointer to a `rev_info` structure and iterates over it, returning a
+ * `struct commit *` each time you call it. The end of the revision list is
+ * indicated by returning a NULL pointer.
+ */
+struct commit *get_revision(struct rev_info *revs);
+
+const char *get_revision_mark(const struct rev_info *revs,
 			      const struct commit *commit);
+void put_revision_mark(const struct rev_info *revs,
+		       const struct commit *commit);
 
-extern void mark_parents_uninteresting(struct commit *commit);
-extern void mark_tree_uninteresting(struct tree *tree);
+void mark_parents_uninteresting(struct rev_info *revs, struct commit *commit);
+void mark_tree_uninteresting(struct repository *r, struct tree *tree);
+void mark_trees_uninteresting_sparse(struct repository *r, struct oidset *trees);
 
-extern void show_object_with_name(FILE *, struct object *, const char *);
+void show_object_with_name(FILE *, struct object *, const char *);
 
-extern void add_pending_object(struct rev_info *revs,
-			       struct object *obj, const char *name);
-extern void add_pending_oid(struct rev_info *revs,
-			    const char *name, const struct object_id *oid,
-			    unsigned int flags);
+/**
+ * Helpers to check if a "struct string_list" item matches with
+ * wildmatch().
+ */
+int ref_excluded(struct string_list *, const char *path);
+void clear_ref_exclusion(struct string_list **);
+void add_ref_exclusion(struct string_list **, const char *exclude);
 
-extern void add_head_to_pending(struct rev_info *);
-extern void add_reflogs_to_pending(struct rev_info *, unsigned int flags);
-extern void add_index_objects_to_pending(struct rev_info *, unsigned int flags);
+/**
+ * This function can be used if you want to add commit objects as revision
+ * information. You can use the `UNINTERESTING` object flag to indicate if
+ * you want to include or exclude the given commit (and commits reachable
+ * from the given commit) from the revision list.
+ *
+ * NOTE: If you have the commits as a string list then you probably want to
+ * use setup_revisions(), instead of parsing each string and using this
+ * function.
+ */
+void add_pending_object(struct rev_info *revs,
+			struct object *obj, const char *name);
+
+void add_pending_oid(struct rev_info *revs,
+		     const char *name, const struct object_id *oid,
+		     unsigned int flags);
+
+void add_head_to_pending(struct rev_info *);
+void add_reflogs_to_pending(struct rev_info *, unsigned int flags);
+void add_index_objects_to_pending(struct rev_info *, unsigned int flags);
 
 enum commit_action {
 	commit_ignore,
@@ -288,10 +463,10 @@ enum commit_action {
 	commit_error
 };
 
-extern enum commit_action get_commit_action(struct rev_info *revs,
-					    struct commit *commit);
-extern enum commit_action simplify_commit(struct rev_info *revs,
-					  struct commit *commit);
+enum commit_action get_commit_action(struct rev_info *revs,
+				     struct commit *commit);
+enum commit_action simplify_commit(struct rev_info *revs,
+				   struct commit *commit);
 
 enum rewrite_result {
 	rewrite_one_ok,
@@ -301,8 +476,9 @@ enum rewrite_result {
 
 typedef enum rewrite_result (*rewrite_parent_fn_t)(struct rev_info *revs, struct commit **pp);
 
-extern int rewrite_parents(struct rev_info *revs, struct commit *commit,
-	rewrite_parent_fn_t rewrite_parent);
+int rewrite_parents(struct rev_info *revs,
+		    struct commit *commit,
+		    rewrite_parent_fn_t rewrite_parent);
 
 /*
  * The log machinery saves the original parent list so that
@@ -313,6 +489,12 @@ extern int rewrite_parents(struct rev_info *revs, struct commit *commit,
  * get_saved_parents() will transparently return commit->parents if
  * history simplification is off.
  */
-extern struct commit_list *get_saved_parents(struct rev_info *revs, const struct commit *commit);
+struct commit_list *get_saved_parents(struct rev_info *revs, const struct commit *commit);
+
+/**
+ * Global for the (undocumented) "--early-output" flag for "git log".
+ */
+typedef void (*show_early_output_fn_t)(struct rev_info *, struct commit_list *);
+extern volatile show_early_output_fn_t show_early_output;
 
 #endif

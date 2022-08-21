@@ -18,7 +18,7 @@
 	Untyped <<def_object,object>>, e.g. the contents of a file.
 
 [[def_branch]]branch::
-	A "branch" is an active line of development.  The most recent
+	A "branch" is a line of development.  The most recent
 	<<def_commit,commit>> on a branch is referred to as the tip of
 	that branch.  The tip of the branch is referenced by a branch
 	<<def_head,head>>, which moves forward as additional development
@@ -146,8 +146,8 @@ current branch integrates with) obviously do not work, as there is no
 	<<def_revision,revision>> and you are "merging" another
 	<<def_branch,branch>>'s changes that happen to be a descendant of what
 	you have. In such a case, you do not make a new <<def_merge,merge>>
-	<<def_commit,commit>> but instead just update to his
-	revision. This will happen frequently on a
+	<<def_commit,commit>> but instead just update your branch to point at the same
+	revision as the branch you are merging. This will happen frequently on a
 	<<def_remote_tracking_branch,remote-tracking branch>> of a remote
 	<<def_repository,repository>>.
 
@@ -255,7 +255,7 @@ This commit is referred to as a "merge commit", or sometimes just a
 [[def_object]]object::
 	The unit of storage in Git. It is uniquely identified by the
 	<<def_SHA1,SHA-1>> of its contents. Consequently, an
-	object can not be changed.
+	object cannot be changed.
 
 [[def_object_database]]object database::
 	Stores a set of "objects", and an individual <<def_object,object>> is
@@ -287,6 +287,15 @@ This commit is referred to as a "merge commit", or sometimes just a
 	origin/name-of-upstream-branch, which you can see using
 	`git branch -r`.
 
+[[def_overlay]]overlay::
+	Only update and add files to the working directory, but don't
+	delete them, similar to how 'cp -R' would update the contents
+	in the destination directory.  This is the default mode in a
+	<<def_checkout,checkout>> when checking out files from the
+	<<def_index,index>> or a <<def_tree-ish,tree-ish>>.  In
+	contrast, no-overlay mode also deletes tracked files not
+	present in the source, similar to 'rsync --delete'.
+
 [[def_pack]]pack::
 	A set of objects which have been compressed into one file (to save space
 	or to transmit them efficiently).
@@ -303,7 +312,7 @@ Pathspecs are used on the command line of "git ls-files", "git
 ls-tree", "git add", "git grep", "git diff", "git checkout",
 and many other commands to
 limit the scope of operations to some subset of the tree or
-worktree.  See the documentation of each command for whether
+working tree.  See the documentation of each command for whether
 paths are relative to the current directory or toplevel.  The
 pathspec syntax is as follows:
 +
@@ -334,7 +343,7 @@ The optional colon that terminates the "magic signature" can be
 omitted if the pattern begins with a character that does not belong to
 "magic signature" symbol set and is not a colon.
 +
-In the long form, the leading colon `:` is followed by a open
+In the long form, the leading colon `:` is followed by an open
 parenthesis `(`, a comma-separated list of zero or more "magic words",
 and a close parentheses `)`, and the remainder is the pattern to match
 against the path.
@@ -404,6 +413,8 @@ these forms:
 - "`!ATTR`" requires that the attribute `ATTR` be
   unspecified.
 +
+Note that when matching against a tree object, attributes are still
+obtained from working tree, not from the given tree object.
 
 exclude;;
 	After a path matches any non-exclude pathspec, it will be run
@@ -435,7 +446,7 @@ exclude;;
 	interface than the <<def_plumbing,plumbing>>.
 
 [[def_per_worktree_ref]]per-worktree ref::
-	Refs that are per-<<def_working_tree,worktree>>, rather than
+	Refs that are per-<<def_worktree,worktree>>, rather than
 	global.  This is presently only <<def_HEAD,HEAD>> and any refs
 	that start with `refs/bisect/`, but might later include other
 	unusual refs.
@@ -463,7 +474,7 @@ exclude;;
 [[def_push]]push::
 	Pushing a <<def_branch,branch>> means to get the branch's
 	<<def_head_ref,head ref>> from a remote <<def_repository,repository>>,
-	find out if it is a direct ancestor to the branch's local
+	find out if it is an ancestor to the branch's local
 	head ref, and in that case, putting all
 	objects, which are <<def_reachable,reachable>> from the local
 	head ref, and which are missing from the remote
@@ -658,3 +669,12 @@ The most notable example is `HEAD`.
 	The tree of actual checked out files.  The working tree normally
 	contains the contents of the <<def_HEAD,HEAD>> commit's tree,
 	plus any local changes that you have made but not yet committed.
+
+[[def_worktree]]worktree::
+	A repository can have zero (i.e. bare repository) or one or
+	more worktrees attached to it. One "worktree" consists of a
+	"working tree" and repository metadata, most of which are
+	shared among other worktrees of a single repository, and
+	some of which are maintained separately per worktree
+	(e.g. the index, HEAD and pseudorefs like MERGE_HEAD,
+	per-worktree refs and per-worktree configuration file).

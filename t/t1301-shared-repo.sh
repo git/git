@@ -5,6 +5,9 @@
 
 test_description='Test shared repository initialization'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # Remove a default ACL from the test dir if possible.
@@ -45,7 +48,7 @@ done
 test_expect_success 'shared=all' '
 	mkdir sub &&
 	cd sub &&
-	git init --shared=all &&
+	git init --template= --shared=all &&
 	test 2 = $(git config core.sharedrepository)
 '
 
@@ -54,6 +57,7 @@ test_expect_success POSIXPERM 'update-server-info honors core.sharedRepository' 
 	git add a1 &&
 	test_tick &&
 	git commit -m a1 &&
+	mkdir .git/info &&
 	umask 0277 &&
 	git update-server-info &&
 	actual="$(ls -l .git/info/refs)" &&
@@ -115,13 +119,13 @@ test_expect_success POSIXPERM 'git reflog expire honors core.sharedRepository' '
 	umask 077 &&
 	git config core.sharedRepository group &&
 	git reflog expire --all &&
-	actual="$(ls -l .git/logs/refs/heads/master)" &&
+	actual="$(ls -l .git/logs/refs/heads/main)" &&
 	case "$actual" in
 	-rw-rw-*)
 		: happy
 		;;
 	*)
-		echo Ooops, .git/logs/refs/heads/master is not 0662 [$actual]
+		echo Ooops, .git/logs/refs/heads/main is not 066x [$actual]
 		false
 		;;
 	esac
@@ -136,7 +140,7 @@ test_expect_success POSIXPERM 'forced modes' '
 	(
 		cd new &&
 		umask 002 &&
-		git init --shared=0660 --template=../templates &&
+		git init --shared=0660 --template=templates &&
 		>frotz &&
 		git add frotz &&
 		git commit -a -m initial &&
@@ -192,7 +196,7 @@ test_expect_success POSIXPERM 're-init respects core.sharedrepository (remote)' 
 	umask 0022 &&
 	git init --bare --shared=0666 child.git &&
 	test_path_is_missing child.git/foo &&
-	git init --bare --template=../templates child.git &&
+	git init --bare --template=templates child.git &&
 	echo "-rw-rw-rw-" >expect &&
 	test_modebits child.git/foo >actual &&
 	test_cmp expect actual
@@ -203,7 +207,7 @@ test_expect_success POSIXPERM 'template can set core.sharedrepository' '
 	umask 0022 &&
 	git config core.sharedrepository 0666 &&
 	cp .git/config templates/config &&
-	git init --bare --template=../templates child.git &&
+	git init --bare --template=templates child.git &&
 	echo "-rw-rw-rw-" >expect &&
 	test_modebits child.git/HEAD >actual &&
 	test_cmp expect actual

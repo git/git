@@ -1,0 +1,138 @@
+Git 2.33.1 Release Notes
+========================
+
+This primarily is to backport various fixes accumulated during the
+development towards Git 2.34, the next feature release.
+
+
+Fixes since v2.33
+-----------------
+
+ * The unicode character width table (used for output alignment) has
+   been updated.
+
+ * Input validation of "git pack-objects --stdin-packs" has been
+   corrected.
+
+ * Bugfix for common ancestor negotiation recently introduced in "git
+   push" codepath.
+
+ * "git pull" had various corner cases that were not well thought out
+   around its --rebase backend, e.g. "git pull --ff-only" did not stop
+   but went ahead and rebased when the history on other side is not a
+   descendant of our history.  The series tries to fix them up.
+
+ * "git apply" miscounted the bytes and failed to read to the end of
+   binary hunks.
+
+ * "git range-diff" code clean-up.
+
+ * "git commit --fixup" now works with "--edit" again, after it was
+   broken in v2.32.
+
+ * Use upload-artifacts v1 (instead of v2) for 32-bit linux, as the
+   new version has a blocker bug for that architecture.
+
+ * Checking out all the paths from HEAD during the last conflicted
+   step in "git rebase" and continuing would cause the step to be
+   skipped (which is expected), but leaves MERGE_MSG file behind in
+   $GIT_DIR and confuses the next "git commit", which has been
+   corrected.
+
+ * Various bugs in "git rebase -r" have been fixed.
+
+ * mmap() imitation used to call xmalloc() that dies upon malloc()
+   failure, which has been corrected to just return an error to the
+   caller to be handled.
+
+ * "git diff --relative" segfaulted and/or produced incorrect result
+   when there are unmerged paths.
+
+ * The delayed checkout code path in "git checkout" etc. were chatty
+   even when --quiet and/or --no-progress options were given.
+
+ * "git branch -D <branch>" used to refuse to remove a broken branch
+   ref that points at a missing commit, which has been corrected.
+
+ * Build update for Apple clang.
+
+ * The parser for the "--nl" option of "git column" has been
+   corrected.
+
+ * "git upload-pack" which runs on the other side of "git fetch"
+   forgot to take the ref namespaces into account when handling
+   want-ref requests.
+
+ * The sparse-index support can corrupt the index structure by storing
+   a stale and/or uninitialized data, which has been corrected.
+
+ * Buggy tests could damage repositories outside the throw-away test
+   area we created.  We now by default export GIT_CEILING_DIRECTORIES
+   to limit the damage from such a stray test.
+
+ * Even when running "git send-email" without its own threaded
+   discussion support, a threading related header in one message is
+   carried over to the subsequent message to result in an unwanted
+   threading, which has been corrected.
+
+ * The output from "git fast-export", when its anonymization feature
+   is in use, showed an annotated tag incorrectly.
+
+ * Recent "diff -m" changes broke "gitk", which has been corrected.
+
+ * "git maintenance" scheduler fix for macOS.
+
+ * A pathname in an advice message has been made cut-and-paste ready.
+
+ * The "git apply -3" code path learned not to bother the lower level
+   merge machinery when the three-way merge can be trivially resolved
+   without the content level merge.
+
+ * The code that optionally creates the *.rev reverse index file has
+   been optimized to avoid needless computation when it is not writing
+   the file out.
+
+ * "git range-diff -I... <range> <range>" segfaulted, which has been
+   corrected.
+
+ * The order in which various files that make up a single (conceptual)
+   packfile has been reevaluated and straightened up.  This matters in
+   correctness, as an incomplete set of files must not be shown to a
+   running Git.
+
+ * The "mode" word is useless in a call to open(2) that does not
+   create a new file.  Such a call in the files backend of the ref
+   subsystem has been cleaned up.
+
+ * "git update-ref --stdin" failed to flush its output as needed,
+   which potentially led the conversation to a deadlock.
+
+ * When "git am --abort" fails to abort correctly, it still exited
+   with exit status of 0, which has been corrected.
+
+ * Correct nr and alloc members of strvec struct to be of type size_t.
+
+ * "git stash", where the tentative change involves changing a
+   directory to a file (or vice versa), was confused, which has been
+   corrected.
+
+ * "git clone" from a repository whose HEAD is unborn into a bare
+   repository didn't follow the branch name the other side used, which
+   is corrected.
+
+ * "git cvsserver" had a long-standing bug in its authentication code,
+   which has finally been corrected (it is unclear and is a separate
+   question if anybody is seriously using it, though).
+
+ * "git difftool --dir-diff" mishandled symbolic links.
+
+ * Sensitive data in the HTTP trace were supposed to be redacted, but
+   we failed to do so in HTTP/2 requests.
+
+ * "make clean" has been updated to remove leftover .depend/
+   directories, even when it is not told to use them to compute header
+   dependencies.
+
+ * Protocol v0 clients can get stuck parsing a malformed feature line.
+
+Also contains various documentation updates and code clean-ups.

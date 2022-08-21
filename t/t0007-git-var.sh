@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='basic sanity checks for git var'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'get GIT_AUTHOR_IDENT' '
@@ -17,11 +19,31 @@ test_expect_success 'get GIT_COMMITTER_IDENT' '
 	test_cmp expect actual
 '
 
-test_expect_success !AUTOIDENT 'requested identites are strict' '
+test_expect_success !FAIL_PREREQS,!AUTOIDENT 'requested identities are strict' '
 	(
 		sane_unset GIT_COMMITTER_NAME &&
 		sane_unset GIT_COMMITTER_EMAIL &&
 		test_must_fail git var GIT_COMMITTER_IDENT
+	)
+'
+
+test_expect_success 'get GIT_DEFAULT_BRANCH without configuration' '
+	(
+		sane_unset GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME &&
+		git init defbranch &&
+		git -C defbranch symbolic-ref --short HEAD >expect &&
+		git var GIT_DEFAULT_BRANCH >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'get GIT_DEFAULT_BRANCH with configuration' '
+	test_config init.defaultbranch foo &&
+	(
+		sane_unset GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME &&
+		echo foo >expect &&
+		git var GIT_DEFAULT_BRANCH >actual &&
+		test_cmp expect actual
 	)
 '
 

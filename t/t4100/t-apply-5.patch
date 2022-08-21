@@ -185,8 +185,8 @@ diff a/Documentation/git.txt b/Documentation/git.txt
 +link:git-ssh-pull.html[git-ssh-pull]::
  	Pulls from a remote repository over ssh connection
  
- Interogators:
-@@ -156,8 +156,8 @@ Interogators:
+ Interrogators:
+@@ -156,8 +156,8 @@ Interrogators:
  link:git-diff-helper.html[git-diff-helper]::
  	Generates patch format output for git-diff-*
  

@@ -1,0 +1,4 @@
+( while read x
+  do foobar bop || exit 1
+  done <file ) &&
+outside subshell

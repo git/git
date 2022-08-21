@@ -121,21 +121,22 @@ static int spanhash_cmp(const void *a_, const void *b_)
 		a->hashval > b->hashval ? 1 : 0;
 }
 
-static struct spanhash_top *hash_chars(struct diff_filespec *one)
+static struct spanhash_top *hash_chars(struct repository *r,
+				       struct diff_filespec *one)
 {
 	int i, n;
 	unsigned int accum1, accum2, hashval;
 	struct spanhash_top *hash;
 	unsigned char *buf = one->data;
 	unsigned int sz = one->size;
-	int is_text = !diff_filespec_is_binary(one);
+	int is_text = !diff_filespec_is_binary(r, one);
 
 	i = INITIAL_HASH_SIZE;
 	hash = xmalloc(st_add(sizeof(*hash),
-			      st_mult(sizeof(struct spanhash), 1<<i)));
+			      st_mult(sizeof(struct spanhash), (size_t)1 << i)));
 	hash->alloc_log2 = i;
 	hash->free = INITIAL_FREE(i);
-	memset(hash->data, 0, sizeof(struct spanhash) * (1<<i));
+	memset(hash->data, 0, sizeof(struct spanhash) * ((size_t)1 << i));
 
 	n = 0;
 	accum1 = accum2 = 0;
@@ -158,11 +159,12 @@ static struct spanhash_top *hash_chars(struct diff_filespec *one)
 		n = 0;
 		accum1 = accum2 = 0;
 	}
-	QSORT(hash->data, 1ul << hash->alloc_log2, spanhash_cmp);
+	QSORT(hash->data, (size_t)1ul << hash->alloc_log2, spanhash_cmp);
 	return hash;
 }
 
-int diffcore_count_changes(struct diff_filespec *src,
+int diffcore_count_changes(struct repository *r,
+			   struct diff_filespec *src,
 			   struct diff_filespec *dst,
 			   void **src_count_p,
 			   void **dst_count_p,
@@ -177,14 +179,14 @@ int diffcore_count_changes(struct diff_filespec *src,
 	if (src_count_p)
 		src_count = *src_count_p;
 	if (!src_count) {
-		src_count = hash_chars(src);
+		src_count = hash_chars(r, src);
 		if (src_count_p)
 			*src_count_p = src_count;
 	}
 	if (dst_count_p)
 		dst_count = *dst_count_p;
 	if (!dst_count) {
-		dst_count = hash_chars(dst);
+		dst_count = hash_chars(r, dst);
 		if (dst_count_p)
 			*dst_count_p = dst_count;
 	}

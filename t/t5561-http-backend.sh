@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='test git-http-backend'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-httpd.sh
 
@@ -39,9 +42,9 @@ POST() {
 
 grep '^[^#]' >exp <<EOF
 
-###  refs/heads/master
+###  refs/heads/main
 ###
-GET  /smart/repo.git/refs/heads/master HTTP/1.1 404 -
+GET  /smart/repo.git/refs/heads/main HTTP/1.1 404 -
 
 ###  getanyfile default
 ###
@@ -129,14 +132,7 @@ GET  /smart/repo.git/info/refs?service=git-receive-pack HTTP/1.1 403 -
 POST /smart/repo.git/git-receive-pack HTTP/1.1 403 -
 EOF
 test_expect_success 'server request log matches test results' '
-	sed -e "
-		s/^.* \"//
-		s/\"//
-		s/ [1-9][0-9]*\$//
-		s/^GET /GET  /
-	" >act <"$HTTPD_ROOT_PATH"/access.log &&
-	test_cmp exp act
+	check_access_log exp
 '
 
-stop_httpd
 test_done

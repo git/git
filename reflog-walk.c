@@ -8,7 +8,7 @@
 
 struct complete_reflogs {
 	char *ref;
-	const char *short_ref;
+	char *short_ref;
 	struct reflog_info {
 		struct object_id ooid, noid;
 		char *email;
@@ -51,7 +51,14 @@ static void free_complete_reflog(struct complete_reflogs *array)
 	}
 	free(array->items);
 	free(array->ref);
+	free(array->short_ref);
 	free(array);
+}
+
+static void complete_reflogs_clear(void *util, const char *str)
+{
+	struct complete_reflogs *array = util;
+	free_complete_reflog(array);
 }
 
 static struct complete_reflogs *read_complete_reflog(const char *ref)
@@ -112,8 +119,23 @@ struct reflog_walk_info {
 
 void init_reflog_walk(struct reflog_walk_info **info)
 {
-	*info = xcalloc(1, sizeof(struct reflog_walk_info));
+	CALLOC_ARRAY(*info, 1);
 	(*info)->complete_reflogs.strdup_strings = 1;
+}
+
+void reflog_walk_info_release(struct reflog_walk_info *info)
+{
+	size_t i;
+
+	if (!info)
+		return;
+
+	for (i = 0; i < info->nr; i++)
+		free(info->logs[i]);
+	string_list_clear_func(&info->complete_reflogs,
+			       complete_reflogs_clear);
+	free(info->logs);
+	free(info);
 }
 
 int add_reflog_for_walk(struct reflog_walk_info *info,
@@ -128,7 +150,7 @@ int add_reflog_for_walk(struct reflog_walk_info *info,
 	enum selector_type selector = SELECTOR_NONE;
 
 	if (commit->object.flags & UNINTERESTING)
-		die ("Cannot walk reflogs for %s", name);
+		die("cannot walk reflogs for %s", name);
 
 	branch = xstrdup(name);
 	if (at && at[1] == '{') {
@@ -153,15 +175,14 @@ int add_reflog_for_walk(struct reflog_walk_info *info,
 			free(branch);
 			branch = resolve_refdup("HEAD", 0, NULL, NULL);
 			if (!branch)
-				die ("No current branch");
+				die("no current branch");
 
 		}
 		reflogs = read_complete_reflog(branch);
 		if (!reflogs || reflogs->nr == 0) {
-			struct object_id oid;
 			char *b;
 			int ret = dwim_log(branch, strlen(branch),
-					   &oid, &b);
+					   NULL, &b);
 			if (ret > 1)
 				free(b);
 			else if (ret == 1) {
@@ -181,7 +202,7 @@ int add_reflog_for_walk(struct reflog_walk_info *info,
 	}
 	free(branch);
 
-	commit_reflog = xcalloc(1, sizeof(struct commit_reflog));
+	CALLOC_ARRAY(commit_reflog, 1);
 	if (recno < 0) {
 		commit_reflog->recno = get_reflog_recno_by_time(reflogs, timestamp);
 		if (commit_reflog->recno < 0) {
@@ -305,7 +326,8 @@ static struct commit *next_reflog_commit(struct commit_reflog *log)
 {
 	for (; log->recno >= 0; log->recno--) {
 		struct reflog_info *entry = &log->reflogs->items[log->recno];
-		struct object *obj = parse_object(&entry->noid);
+		struct object *obj = parse_object(the_repository,
+						  &entry->noid);
 
 		if (obj && obj->type == OBJ_COMMIT)
 			return (struct commit *)obj;

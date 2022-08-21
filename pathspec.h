@@ -1,6 +1,8 @@
 #ifndef PATHSPEC_H
 #define PATHSPEC_H
 
+struct index_state;
+
 /* Pathspec magic */
 #define PATHSPEC_FROMTOP	(1<<0)
 #define PATHSPEC_MAXDEPTH	(1<<1)
@@ -20,6 +22,11 @@
 
 #define PATHSPEC_ONESTAR 1	/* the pathspec pattern satisfies GFNM_ONESTAR */
 
+/**
+ * See glossary-context.txt for the syntax of pathspec.
+ * In memory, a pathspec set is represented by "struct pathspec" and is
+ * prepared by parse_pathspec().
+ */
 struct pathspec {
 	int nr;
 	unsigned int has_wildcard:1;
@@ -51,8 +58,7 @@ struct pathspec {
 #define GUARD_PATHSPEC(ps, mask) \
 	do { \
 		if ((ps)->magic & ~(mask))	       \
-			die("BUG:%s:%d: unsupported magic %x",	\
-			    __FILE__, __LINE__, (ps)->magic & ~(mask)); \
+			BUG("unsupported magic %x", (ps)->magic & ~(mask)); \
 	} while (0)
 
 /* parse_pathspec flags */
@@ -71,20 +77,58 @@ struct pathspec {
  */
 #define PATHSPEC_LITERAL_PATH (1<<6)
 
-/*
+/**
  * Given command line arguments and a prefix, convert the input to
  * pathspec. die() if any magic in magic_mask is used.
  *
  * Any arguments used are copied. It is safe for the caller to modify
  * or free 'prefix' and 'args' after calling this function.
+ *
+ * - magic_mask specifies what features that are NOT supported by the following
+ * code. If a user attempts to use such a feature, parse_pathspec() can reject
+ * it early.
+ *
+ * - flags specifies other things that the caller wants parse_pathspec to
+ * perform.
+ *
+ * - prefix and args come from cmd_* functions
+ *
+ * parse_pathspec() helps catch unsupported features and reject them politely.
+ * At a lower level, different pathspec-related functions may not support the
+ * same set of features. Such pathspec-sensitive functions are guarded with
+ * GUARD_PATHSPEC(), which will die in an unfriendly way when an unsupported
+ * feature is requested.
+ *
+ * The command designers are supposed to make sure that GUARD_PATHSPEC() never
+ * dies. They have to make sure all unsupported features are caught by
+ * parse_pathspec(), not by GUARD_PATHSPEC. grepping GUARD_PATHSPEC() should
+ * give the designers all pathspec-sensitive codepaths and what features they
+ * support.
+ *
+ * A similar process is applied when a new pathspec magic is added. The designer
+ * lifts the GUARD_PATHSPEC restriction in the functions that support the new
+ * magic while at the same time making sure this new feature will be
+ * caught at parse_pathspec() in commands that cannot handle the new magic in
+ * some cases. grepping parse_pathspec() should help.
  */
-extern void parse_pathspec(struct pathspec *pathspec,
-			   unsigned magic_mask,
-			   unsigned flags,
-			   const char *prefix,
-			   const char **args);
-extern void copy_pathspec(struct pathspec *dst, const struct pathspec *src);
-extern void clear_pathspec(struct pathspec *);
+void parse_pathspec(struct pathspec *pathspec,
+		    unsigned magic_mask,
+		    unsigned flags,
+		    const char *prefix,
+		    const char **args);
+/*
+ * Same as parse_pathspec() but uses file as input.
+ * When 'file' is exactly "-" it uses 'stdin' instead.
+ */
+void parse_pathspec_file(struct pathspec *pathspec,
+			 unsigned magic_mask,
+			 unsigned flags,
+			 const char *prefix,
+			 const char *file,
+			 int nul_term_line);
+
+void copy_pathspec(struct pathspec *dst, const struct pathspec *src);
+void clear_pathspec(struct pathspec *);
 
 static inline int ps_strncmp(const struct pathspec_item *item,
 			     const char *s1, const char *s2, size_t n)
@@ -104,10 +148,39 @@ static inline int ps_strcmp(const struct pathspec_item *item,
 		return strcmp(s1, s2);
 }
 
-extern void add_pathspec_matches_against_index(const struct pathspec *pathspec,
-					       const struct index_state *istate,
-					       char *seen);
-extern char *find_pathspecs_matching_against_index(const struct pathspec *pathspec,
-						   const struct index_state *istate);
+enum ps_skip_worktree_action {
+  PS_HEED_SKIP_WORKTREE = 0,
+  PS_IGNORE_SKIP_WORKTREE = 1
+};
+void add_pathspec_matches_against_index(const struct pathspec *pathspec,
+					struct index_state *istate,
+					char *seen,
+					enum ps_skip_worktree_action sw_action);
+char *find_pathspecs_matching_against_index(const struct pathspec *pathspec,
+					    struct index_state *istate,
+					    enum ps_skip_worktree_action sw_action);
+char *find_pathspecs_matching_skip_worktree(const struct pathspec *pathspec);
+static inline int matches_skip_worktree(const struct pathspec *pathspec,
+					int item, char **seen_ptr)
+{
+	if (!*seen_ptr)
+		*seen_ptr = find_pathspecs_matching_skip_worktree(pathspec);
+	return (*seen_ptr)[item];
+}
+int match_pathspec_attrs(struct index_state *istate,
+			 const char *name, int namelen,
+			 const struct pathspec_item *item);
+
+/*
+ * Determine whether a pathspec will match only entire index entries (non-sparse
+ * files and/or entire sparse directories). If the pathspec has the potential to
+ * match partial contents of a sparse directory, return 1 to indicate the index
+ * should be expanded to match the  appropriate index entries.
+ *
+ * For the sake of simplicity, always return 1 if using a more complex "magic"
+ * pathspec.
+ */
+int pathspec_needs_expanded_index(struct index_state *istate,
+				  const struct pathspec *pathspec);
 
 #endif /* PATHSPEC_H */

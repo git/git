@@ -2,6 +2,7 @@
 
 test_description='common tail optimization'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 z=zzzzzzzz ;# 8
@@ -127,17 +128,17 @@ test_expect_success setup '
 
 	for n in $sample
 	do
-		( zs $n ; echo a ) >file-a$n &&
-		( echo b; zs $n; echo ) >file-b$n &&
-		( printf c; zs $n ) >file-c$n &&
-		( echo d; zs $n ) >file-d$n &&
+		( zs $n && echo a ) >file-a$n &&
+		( echo b && zs $n && echo ) >file-b$n &&
+		( printf c && zs $n ) >file-c$n &&
+		( echo d && zs $n ) >file-d$n &&
 
 		git add file-a$n file-b$n file-c$n file-d$n &&
 
-		( zs $n ; echo A ) >file-a$n &&
-		( echo B; zs $n; echo ) >file-b$n &&
-		( printf C; zs $n ) >file-c$n &&
-		( echo D; zs $n ) >file-d$n &&
+		( zs $n && echo A ) >file-a$n &&
+		( echo B && zs $n && echo ) >file-b$n &&
+		( printf C && zs $n ) >file-c$n &&
+		( echo D && zs $n ) >file-d$n &&
 
 		expect_pattern $n || return 1
 
@@ -148,7 +149,7 @@ test_expect_success 'diff -U0' '
 
 	for n in $sample
 	do
-		git diff -U0 file-?$n
+		git diff -U0 file-?$n || return 1
 	done | zc >actual &&
 	test_cmp expect actual
 

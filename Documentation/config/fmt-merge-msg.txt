@@ -1,0 +1,22 @@
+merge.branchdesc::
+	In addition to branch names, populate the log message with
+	the branch description text associated with them.  Defaults
+	to false.
+
+merge.log::
+	In addition to branch names, populate the log message with at
+	most the specified number of one-line descriptions from the
+	actual commits that are being merged.  Defaults to false, and
+	true is a synonym for 20.
+
+merge.suppressDest::
+	By adding a glob that matches the names of integration
+	branches to this multi-valued configuration variable, the
+	default merge message computed for merges into these
+	integration branches will omit "into <branch name>" from
+	its title.
++
+An element with an empty value can be used to clear the list
+of globs accumulated from previous configuration entries.
+When there is no `merge.suppressDest` variable defined, the
+default value of `master` is used for backward compatibility.

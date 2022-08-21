@@ -10,7 +10,10 @@ commandline, and checks that it produces the correct output, either
 in the HTTP header or the actual script output.'
 
 
-. ./gitweb-lib.sh
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
+. ./lib-gitweb.sh
 
 # ----------------------------------------------------------------------
 # snapshot file name and prefix
@@ -31,7 +34,7 @@ EOF
 #
 # This will check that gitweb HTTP header contains proposed filename
 # as <basename> with '.tar' suffix added, and that generated tarfile
-# (gitweb message body) has <prefix> as prefix for al files in tarfile
+# (gitweb message body) has <prefix> as prefix for all files in tarfile
 #
 # <prefix> default to <basename>
 check_snapshot () {
@@ -79,10 +82,10 @@ test_expect_success 'snapshot: HEAD' '
 '
 test_debug 'cat gitweb.headers && cat file_list'
 
-test_expect_success 'snapshot: short branch name (master)' '
-	gitweb_run "p=.git;a=snapshot;h=master;sf=tar" &&
-	ID=$(git rev-parse --verify --short=7 master) &&
-	check_snapshot ".git-master-$ID"
+test_expect_success 'snapshot: short branch name (main)' '
+	gitweb_run "p=.git;a=snapshot;h=main;sf=tar" &&
+	ID=$(git rev-parse --verify --short=7 main) &&
+	check_snapshot ".git-main-$ID"
 '
 test_debug 'cat gitweb.headers && cat file_list'
 
@@ -93,10 +96,10 @@ test_expect_success 'snapshot: short tag name (first)' '
 '
 test_debug 'cat gitweb.headers && cat file_list'
 
-test_expect_success 'snapshot: full branch name (refs/heads/master)' '
-	gitweb_run "p=.git;a=snapshot;h=refs/heads/master;sf=tar" &&
-	ID=$(git rev-parse --verify --short=7 master) &&
-	check_snapshot ".git-master-$ID"
+test_expect_success 'snapshot: full branch name (refs/heads/main)' '
+	gitweb_run "p=.git;a=snapshot;h=refs/heads/main;sf=tar" &&
+	ID=$(git rev-parse --verify --short=7 main) &&
+	check_snapshot ".git-main-$ID"
 '
 test_debug 'cat gitweb.headers && cat file_list'
 
@@ -188,8 +191,8 @@ test_expect_success 'forks: project_index lists all projects (incl. forks)' '
 '
 
 xss() {
-	echo >&2 "Checking $1..." &&
-	gitweb_run "$1" &&
+	echo >&2 "Checking $*..." &&
+	gitweb_run "$@" &&
 	if grep "$TAG" gitweb.body; then
 		echo >&2 "xss: $TAG should have been quoted in output"
 		return 1
@@ -200,7 +203,35 @@ xss() {
 test_expect_success 'xss checks' '
 	TAG="<magic-xss-tag>" &&
 	xss "a=rss&p=$TAG" &&
-	xss "a=rss&p=foo.git&f=$TAG"
+	xss "a=rss&p=foo.git&f=$TAG" &&
+	xss "" "$TAG+"
+'
+
+no_http_equiv_content_type() {
+	gitweb_run "$@" &&
+	! grep -E "http-equiv=['\"]?content-type" gitweb.body
+}
+
+# See: <https://html.spec.whatwg.org/dev/semantics.html#attr-meta-http-equiv-content-type>
+test_expect_success 'no http-equiv="content-type" in XHTML' '
+	no_http_equiv_content_type &&
+	no_http_equiv_content_type "p=.git" &&
+	no_http_equiv_content_type "p=.git;a=log" &&
+	no_http_equiv_content_type "p=.git;a=tree"
+'
+
+proper_doctype() {
+	gitweb_run "$@" &&
+	grep -F "<!DOCTYPE html [" gitweb.body &&
+	grep "<!ENTITY nbsp" gitweb.body &&
+	grep "<!ENTITY sdot" gitweb.body
+}
+
+test_expect_success 'Proper DOCTYPE with entity declarations' '
+	proper_doctype &&
+	proper_doctype "p=.git" &&
+	proper_doctype "p=.git;a=log" &&
+	proper_doctype "p=.git;a=tree"
 '
 
 test_done

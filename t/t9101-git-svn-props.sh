@@ -4,6 +4,7 @@
 #
 
 test_description='git svn property tests'
+
 . ./lib-git-svn.sh
 
 mkdir import
@@ -149,7 +150,7 @@ test_expect_success 'test show-ignore' "
 		svn_cmd up &&
 		svn_cmd propset -R svn:ignore '
 no-such-file*
-' .
+' . &&
 		svn_cmd commit -m 'propset svn:ignore'
 	) &&
 	git svn show-ignore > show-ignore.got &&
@@ -160,11 +161,13 @@ cat >create-ignore.expect <<\EOF
 /no-such-file*
 EOF
 
-cat >create-ignore-index.expect <<\EOF
-100644 8c52e5dfcd0a8b6b6bcfe6b41b89bcbf493718a5 0	.gitignore
-100644 8c52e5dfcd0a8b6b6bcfe6b41b89bcbf493718a5 0	deeply/.gitignore
-100644 8c52e5dfcd0a8b6b6bcfe6b41b89bcbf493718a5 0	deeply/nested/.gitignore
-100644 8c52e5dfcd0a8b6b6bcfe6b41b89bcbf493718a5 0	deeply/nested/directory/.gitignore
+expectoid=$(git hash-object create-ignore.expect)
+
+cat >create-ignore-index.expect <<EOF
+100644 $expectoid 0	.gitignore
+100644 $expectoid 0	deeply/.gitignore
+100644 $expectoid 0	deeply/nested/.gitignore
+100644 $expectoid 0	deeply/nested/directory/.gitignore
 EOF
 
 test_expect_success 'test create-ignore' "
@@ -174,7 +177,8 @@ test_expect_success 'test create-ignore' "
 	cmp ./deeply/.gitignore create-ignore.expect &&
 	cmp ./deeply/nested/.gitignore create-ignore.expect &&
 	cmp ./deeply/nested/directory/.gitignore create-ignore.expect &&
-	git ls-files -s | grep gitignore | cmp - create-ignore-index.expect
+	git ls-files -s >ls_files_result &&
+	grep gitignore ls_files_result | cmp - create-ignore-index.expect
 	"
 
 cat >prop.expect <<\EOF
@@ -189,17 +193,21 @@ EOF
 # This test can be improved: since all the svn:ignore contain the same
 # pattern, it can pass even though the propget did not execute on the
 # right directory.
-test_expect_success 'test propget' "
-	git svn propget svn:ignore . | cmp - prop.expect &&
+test_expect_success 'test propget' '
+	test_propget () {
+		git svn propget $1 $2 >actual &&
+		cmp $3 actual
+	} &&
+	test_propget svn:ignore . prop.expect &&
 	cd deeply &&
-	git svn propget svn:ignore . | cmp - ../prop.expect &&
-	git svn propget svn:entry:committed-rev nested/directory/.keep \
-	  | cmp - ../prop2.expect &&
-	git svn propget svn:ignore .. | cmp - ../prop.expect &&
-	git svn propget svn:ignore nested/ | cmp - ../prop.expect &&
-	git svn propget svn:ignore ./nested | cmp - ../prop.expect &&
-	git svn propget svn:ignore .././deeply/nested | cmp - ../prop.expect
-	"
+	test_propget svn:ignore . ../prop.expect &&
+	test_propget svn:entry:committed-rev nested/directory/.keep \
+		../prop2.expect &&
+	test_propget svn:ignore .. ../prop.expect &&
+	test_propget svn:ignore nested/ ../prop.expect &&
+	test_propget svn:ignore ./nested ../prop.expect &&
+	test_propget svn:ignore .././deeply/nested ../prop.expect
+	'
 
 cat >prop.expect <<\EOF
 Properties on '.':
@@ -218,8 +226,11 @@ Properties on 'nested/directory/.keep':
 EOF
 
 test_expect_success 'test proplist' "
-	git svn proplist . | cmp - prop.expect &&
-	git svn proplist nested/directory/.keep | cmp - prop2.expect
+	git svn proplist . >actual &&
+	cmp prop.expect actual &&
+
+	git svn proplist nested/directory/.keep >actual &&
+	cmp prop2.expect actual
 	"
 
 test_done

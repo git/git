@@ -2,6 +2,8 @@
 # Copyright (c) 2011, Google Inc.
 
 test_description='diff --stat-count'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -25,7 +27,7 @@ test_expect_success 'mode-only change show as a 0-line change' '
 	 4 files changed, 2 insertions(+)
 	EOF
 	git diff --stat --stat-count=2 HEAD >actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'binary changes do not count in lines' '
@@ -40,7 +42,7 @@ test_expect_success 'binary changes do not count in lines' '
 	 3 files changed, 2 insertions(+)
 	EOF
 	git diff --stat --stat-count=2 >actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'exclude unmerged entries from total file count' '
@@ -51,7 +53,7 @@ test_expect_success 'exclude unmerged entries from total file count' '
 	git rm -f d &&
 	for stage in 1 2 3
 	do
-		sed -e "s/ 0	a/ $stage	d/" x
+		sed -e "s/ 0	a/ $stage	d/" x || return 1
 	done |
 	git update-index --index-info &&
 	echo d >d &&
@@ -62,7 +64,7 @@ test_expect_success 'exclude unmerged entries from total file count' '
 	 3 files changed, 3 insertions(+)
 	EOF
 	git diff --stat --stat-count=2 >actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_done

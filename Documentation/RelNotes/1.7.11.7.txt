@@ -25,7 +25,7 @@ Fixes since v1.7.11.6
    references" nor "Reload" did not update what is shown as the
    contents of it, when the user overwrote the tag with "git tag -f".
 
- * "git for-each-ref" did not currectly support more than one --sort
+ * "git for-each-ref" did not correctly support more than one --sort
    option.
 
  * "git log .." errored out saying it is both rev range and a path

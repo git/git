@@ -4,6 +4,8 @@
 #
 
 test_description='concurrent git svn dcommit'
+
+TEST_FAILS_SANITIZE_LEAK=true
 . ./lib-git-svn.sh
 
 
@@ -12,7 +14,7 @@ test_expect_success 'setup svn repository' '
 	svn_cmd checkout "$svnrepo" work.svn &&
 	(
 		cd work.svn &&
-		echo >file && echo > auto_updated_file
+		echo >file && echo > auto_updated_file &&
 		svn_cmd add file auto_updated_file &&
 		svn_cmd commit -m "initial commit"
 	) &&
@@ -92,7 +94,7 @@ test_expect_success 'check if post-commit hook creates a concurrent commit' '
 		echo 1 >> file &&
 		svn_cmd commit -m "changing file" &&
 		svn_cmd up &&
-		test_must_fail test_cmp auto_updated_file au_file_saved
+		! test_cmp auto_updated_file au_file_saved
 	)
 '
 
@@ -103,7 +105,7 @@ test_expect_success 'check if pre-commit hook fails' '
 		echo 2 >> file &&
 		svn_cmd commit -m "changing file once again" &&
 		echo 3 >> file &&
-		test_must_fail svn_cmd commit -m "this commit should fail" &&
+		! svn_cmd commit -m "this commit should fail" &&
 		svn_cmd revert file
 	)
 '

@@ -30,6 +30,31 @@ test_expect_success 'same with gitignore starting with BOM' '
 	test_cmp expected actual
 '
 
+test_expect_success 'status untracked files --ignored with pathspec (no match)' '
+	git status --porcelain --ignored -- untracked/i >actual &&
+	test_must_be_empty actual &&
+	git status --porcelain --ignored -- untracked/u >actual &&
+	test_must_be_empty actual
+'
+
+test_expect_success 'status untracked files --ignored with pathspec (literal match)' '
+	git status --porcelain --ignored -- untracked/ignored >actual &&
+	echo "!! untracked/ignored" >expected &&
+	test_cmp expected actual &&
+	git status --porcelain --ignored -- untracked/uncommitted >actual &&
+	echo "?? untracked/uncommitted" >expected &&
+	test_cmp expected actual
+'
+
+test_expect_success 'status untracked files --ignored with pathspec (glob match)' '
+	git status --porcelain --ignored -- untracked/i\* >actual &&
+	echo "!! untracked/ignored" >expected &&
+	test_cmp expected actual &&
+	git status --porcelain --ignored -- untracked/u\* >actual &&
+	echo "?? untracked/uncommitted" >expected &&
+	test_cmp expected actual
+'
+
 cat >expected <<\EOF
 ?? .gitignore
 ?? actual
@@ -43,11 +68,16 @@ test_expect_success 'status untracked directory with --ignored -u' '
 	test_cmp expected actual
 '
 cat >expected <<\EOF
-?? untracked/uncommitted
+?? untracked/
 !! untracked/ignored
 EOF
 
-test_expect_success 'status prefixed untracked directory with --ignored' '
+test_expect_success 'status of untracked directory with --ignored works with or without prefix' '
+	git status --porcelain --ignored >tmp &&
+	grep untracked/ tmp >actual &&
+	rm tmp &&
+	test_cmp expected actual &&
+
 	git status --porcelain --ignored untracked/ >actual &&
 	test_cmp expected actual
 '

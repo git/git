@@ -104,8 +104,8 @@ static int dowild(const uchar *p, const uchar *text, unsigned int flags)
 					    dowild(p + 1, text, flags) == WM_MATCH)
 						return WM_MATCH;
 					match_slash = 1;
-				} else
-					return WM_ABORT_MALFORMED;
+				} else /* WM_PATHNAME is set */
+					match_slash = 0;
 			} else
 				/* without WM_PATHNAME, '*' == '**' */
 				match_slash = flags & WM_PATHNAME ? 0 : 1;
@@ -113,7 +113,7 @@ static int dowild(const uchar *p, const uchar *text, unsigned int flags)
 				/* Trailing "**" matches everything.  Trailing "*" matches
 				 * only if there are no more slash characters. */
 				if (!match_slash) {
-					if (strchr((char*)text, '/') != NULL)
+					if (strchr((char *)text, '/'))
 						return WM_NOMATCH;
 				}
 				return WM_MATCH;

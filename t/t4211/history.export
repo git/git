@@ -316,7 +316,7 @@ long f(long x)
 	return s;
 }
 
-commit refs/heads/master
+commit refs/heads/main
 mark :19
 author Thomas Rast <trast@student.ethz.ch> 1362045024 +0100
 committer Thomas Rast <trast@student.ethz.ch> 1362045024 +0100

@@ -1,3 +1,7 @@
+if test -z "$TEST_FAILS_SANITIZE_LEAK"
+then
+	TEST_PASSES_SANITIZE_LEAK=true
+fi
 . ./test-lib.sh
 
 if test -n "$NO_SVN_TESTS"
@@ -13,6 +17,7 @@ fi
 GIT_DIR=$PWD/.git
 GIT_SVN_DIR=$GIT_DIR/svn/refs/remotes/git-svn
 SVN_TREE=$GIT_SVN_DIR/svn-tree
+test_set_port SVNSERVE_PORT
 
 svn >/dev/null 2>&1
 if test $? -ne 1
@@ -68,37 +73,33 @@ svn_cmd () {
 maybe_start_httpd () {
 	loc=${1-svn}
 
-	test_tristate GIT_SVN_TEST_HTTPD
-	case $GIT_SVN_TEST_HTTPD in
-	true)
+	if test_bool_env GIT_TEST_SVN_HTTPD false
+	then
 		. "$TEST_DIRECTORY"/lib-httpd.sh
 		LIB_HTTPD_SVN="$loc"
 		start_httpd
-		;;
-	*)
-		stop_httpd () {
-			: noop
-		}
-		;;
-	esac
+	fi
 }
 
 convert_to_rev_db () {
-	perl -w -- - "$@" <<\EOF
+	perl -w -- - "$(test_oid rawsz)" "$@" <<\EOF
 use strict;
+my $oidlen = shift;
 @ARGV == 2 or die "usage: convert_to_rev_db <input> <output>";
+my $record_size = $oidlen + 4;
+my $hexlen = $oidlen * 2;
 open my $wr, '+>', $ARGV[1] or die "$!: couldn't open: $ARGV[1]";
 open my $rd, '<', $ARGV[0] or die "$!: couldn't open: $ARGV[0]";
 my $size = (stat($rd))[7];
-($size % 24) == 0 or die "Inconsistent size: $size";
-while (sysread($rd, my $buf, 24) == 24) {
-	my ($r, $c) = unpack('NH40', $buf);
-	my $offset = $r * 41;
+($size % $record_size) == 0 or die "Inconsistent size: $size";
+while (sysread($rd, my $buf, $record_size) == $record_size) {
+	my ($r, $c) = unpack("NH$hexlen", $buf);
+	my $offset = $r * ($hexlen + 1);
 	seek $wr, 0, 2 or die $!;
 	my $pos = tell $wr;
 	if ($pos < $offset) {
-		for (1 .. (($offset - $pos) / 41)) {
-			print $wr (('0' x 40),"\n") or die $!;
+		for (1 .. (($offset - $pos) / ($hexlen + 1))) {
+			print $wr (('0' x $hexlen),"\n") or die $!;
 		}
 	}
 	seek $wr, $offset, 0 or die $!;
@@ -110,8 +111,7 @@ EOF
 }
 
 require_svnserve () {
-	test_tristate GIT_TEST_SVNSERVE
-	if ! test "$GIT_TEST_SVNSERVE" = true
+	if ! test_bool_env GIT_TEST_SVNSERVE false
 	then
 		skip_all='skipping svnserve test. (set $GIT_TEST_SVNSERVE to enable)'
 		test_done
@@ -119,19 +119,28 @@ require_svnserve () {
 }
 
 start_svnserve () {
-	SVNSERVE_PORT=${SVNSERVE_PORT-${this_test#t}}
 	svnserve --listen-port $SVNSERVE_PORT \
 		 --root "$rawsvnrepo" \
 		 --listen-once \
 		 --listen-host 127.0.0.1 &
 }
 
-prepare_a_utf8_locale () {
-	a_utf8_locale=$(locale -a | sed -n '/\.[uU][tT][fF]-*8$/{
-	p
-	q
-}')
-	if test -n "$a_utf8_locale"
+prepare_utf8_locale () {
+	if test -z "$GIT_TEST_UTF8_LOCALE"
+	then
+		case "${LC_ALL:-$LANG}" in
+		*.[Uu][Tt][Ff]8 | *.[Uu][Tt][Ff]-8)
+			GIT_TEST_UTF8_LOCALE="${LC_ALL:-$LANG}"
+			;;
+		*)
+			GIT_TEST_UTF8_LOCALE=$(locale -a | sed -n '/\.[uU][tT][fF]-*8$/{
+				p
+				q
+			}')
+			;;
+		esac
+	fi
+	if test -n "$GIT_TEST_UTF8_LOCALE"
 	then
 		test_set_prereq UTF8
 	else

@@ -1,0 +1,22 @@
+(
+	chks="sub1
+sub2
+sub3
+sub4" &&
+	chks_sub=$(cat <<TXT | sed "s,^,sub dir/,"
+$chks
+TXT
+) &&
+	chkms="main-sub1
+main-sub2
+main-sub3
+main-sub4" &&
+	chkms_sub=$(cat <<TXT | sed "s,^,sub dir/,"
+$chkms
+TXT
+) &&
+
+	subfiles=$(git ls-files) &&
+	check_equal "$subfiles" "$chkms
+$chks"
+)

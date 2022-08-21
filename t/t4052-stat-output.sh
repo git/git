@@ -5,6 +5,9 @@
 
 test_description='test --stat output of various commands'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
@@ -44,42 +47,50 @@ show --stat
 log -1 --stat
 EOF
 
-while read cmd args
+cat >expect.60 <<-'EOF'
+ ...aaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1 +
+EOF
+cat >expect.6030 <<-'EOF'
+ ...aaaaaaaaaaaaaaaaaaaaaaaaaaa | 1 +
+EOF
+cat >expect2.60 <<-'EOF'
+ ...aaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1 +
+ ...aaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1 +
+EOF
+cat >expect2.6030 <<-'EOF'
+ ...aaaaaaaaaaaaaaaaaaaaaaaaaaa | 1 +
+ ...aaaaaaaaaaaaaaaaaaaaaaaaaaa | 1 +
+EOF
+while read expect cmd args
 do
-	cat >expect <<-'EOF'
-	 ...aaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1 +
-	EOF
 	test_expect_success "$cmd --stat=width: a long name is given more room when the bar is short" '
 		git $cmd $args --stat=40 >output &&
 		grep " | " output >actual &&
-		test_cmp expect actual
+		test_cmp $expect.60 actual
 	'
 
 	test_expect_success "$cmd --stat-width=width with long name" '
 		git $cmd $args --stat-width=40 >output &&
 		grep " | " output >actual &&
-		test_cmp expect actual
+		test_cmp $expect.60 actual
 	'
 
-	cat >expect <<-'EOF'
-	 ...aaaaaaaaaaaaaaaaaaaaaaaaaaa | 1 +
-	EOF
 	test_expect_success "$cmd --stat=...,name-width with long name" '
 		git $cmd $args --stat=60,30 >output &&
 		grep " | " output >actual &&
-		test_cmp expect actual
+		test_cmp $expect.6030 actual
 	'
 
 	test_expect_success "$cmd --stat-name-width with long name" '
 		git $cmd $args --stat-name-width=30 >output &&
 		grep " | " output >actual &&
-		test_cmp expect actual
+		test_cmp $expect.6030 actual
 	'
 done <<\EOF
-format-patch -1 --stdout
-diff HEAD^ HEAD --stat
-show --stat
-log -1 --stat
+expect2 format-patch --cover-letter -1 --stdout
+expect diff HEAD^ HEAD --stat
+expect show --stat
+expect log -1 --stat
 EOF
 
 
@@ -90,9 +101,19 @@ test_expect_success 'preparation for big change tests' '
 	i=0 &&
 	while test $i -lt 1000
 	do
-		echo $i && i=$(($i + 1))
+		echo $i && i=$(($i + 1)) || return 1
 	done >abcd &&
 	git commit -m message abcd
+'
+
+cat >expect72 <<'EOF'
+ abcd | 1000 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ abcd | 1000 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+EOF
+test_expect_success "format-patch --cover-letter ignores COLUMNS (big change)" '
+	COLUMNS=200 git format-patch -1 --stdout --cover-letter >output &&
+	grep " | " output >actual &&
+	test_cmp expect72 actual
 '
 
 cat >expect72 <<'EOF'
@@ -335,7 +356,7 @@ cat >expect <<'EOF'
 EOF
 test_expect_success 'merge --stat respects COLUMNS (big change)' '
 	git checkout -b branch HEAD^^ &&
-	COLUMNS=100 git merge --stat --no-ff master^ >output &&
+	COLUMNS=100 git merge --stat --no-ff main^ >output &&
 	grep " | " output >actual &&
 	test_cmp expect actual
 '
@@ -344,7 +365,7 @@ cat >expect <<'EOF'
  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1000 +++++++++++++++++++++++++++++++++++++++
 EOF
 test_expect_success 'merge --stat respects COLUMNS (long filename)' '
-	COLUMNS=100 git merge --stat --no-ff master >output &&
+	COLUMNS=100 git merge --stat --no-ff main >output &&
 	grep " | " output >actual &&
 	test_cmp expect actual
 '

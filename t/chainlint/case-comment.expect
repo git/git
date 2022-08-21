@@ -1,0 +1,8 @@
+(
+	case "$x" in
+	x) foo ;;
+	*)
+		bar
+		;;
+	esac
+)

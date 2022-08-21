@@ -9,6 +9,9 @@ test_description='git pack-refs should not change the branch semantic
 This test runs git pack-refs and git show-ref and checks that the branch
 semantic is still the same.
 '
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'enable reflogs' '
@@ -127,7 +130,7 @@ test_expect_success 'explicit pack-refs with dangling packed reference' '
 	git reflog expire --expire=all --all &&
 	git prune --expire=all &&
 	git pack-refs --all 2>result &&
-	test_cmp /dev/null result
+	test_must_be_empty result
 '
 
 test_expect_success 'delete ref with dangling packed version' '
@@ -135,11 +138,11 @@ test_expect_success 'delete ref with dangling packed version' '
 	git commit --allow-empty -m "future garbage" &&
 	git pack-refs --all &&
 	git reset --hard HEAD^ &&
-	git checkout master &&
+	git checkout main &&
 	git reflog expire --expire=all --all &&
 	git prune --expire=all &&
 	git branch -d lamb 2>result &&
-	test_cmp /dev/null result
+	test_must_be_empty result
 '
 
 test_expect_success 'delete ref while another dangling packed ref' '
@@ -150,7 +153,7 @@ test_expect_success 'delete ref while another dangling packed ref' '
 	git reflog expire --expire=all --all &&
 	git prune --expire=all &&
 	git branch -d lamb 2>result &&
-	test_cmp /dev/null result
+	test_must_be_empty result
 '
 
 test_expect_success 'pack ref directly below refs/' '
@@ -186,7 +189,7 @@ test_expect_success 'notice d/f conflict with existing directory' '
 
 test_expect_success 'existing directory reports concrete ref' '
 	test_must_fail git branch foo 2>stderr &&
-	grep refs/heads/foo/bar/baz stderr
+	test_i18ngrep refs/heads/foo/bar/baz stderr
 '
 
 test_expect_success 'notice d/f conflict with existing ref' '
@@ -231,16 +234,16 @@ test_expect_success 'timeout if packed-refs.lock exists' '
 test_expect_success 'retry acquiring packed-refs.lock' '
 	LOCK=.git/packed-refs.lock &&
 	>"$LOCK" &&
-	test_when_finished "wait; rm -f $LOCK" &&
+	test_when_finished "wait && rm -f $LOCK" &&
 	{
-		( sleep 1 ; rm -f $LOCK ) &
+		( sleep 1 && rm -f $LOCK ) &
 	} &&
 	git -c core.packedrefstimeout=3000 pack-refs --all --prune
 '
 
 test_expect_success SYMLINKS 'pack symlinked packed-refs' '
 	# First make sure that symlinking works when reading:
-	git update-ref refs/heads/loosy refs/heads/master &&
+	git update-ref refs/heads/lossy refs/heads/main &&
 	git for-each-ref >all-refs-before &&
 	mv .git/packed-refs .git/my-deviant-packed-refs &&
 	ln -s my-deviant-packed-refs .git/packed-refs &&
@@ -250,7 +253,7 @@ test_expect_success SYMLINKS 'pack symlinked packed-refs' '
 	git for-each-ref >all-refs-packed &&
 	test_cmp all-refs-before all-refs-packed &&
 	test -h .git/packed-refs &&
-	test "$(readlink .git/packed-refs)" = "my-deviant-packed-refs"
+	test "$(test_readlink .git/packed-refs)" = "my-deviant-packed-refs"
 '
 
 test_done

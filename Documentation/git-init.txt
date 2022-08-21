@@ -9,9 +9,10 @@ git-init - Create an empty Git repository or reinitialize an existing one
 SYNOPSIS
 --------
 [verse]
-'git init' [-q | --quiet] [--bare] [--template=<template_directory>]
-	  [--separate-git-dir <git dir>]
-	  [--shared[=<permissions>]] [directory]
+'git init' [-q | --quiet] [--bare] [--template=<template-directory>]
+	  [--separate-git-dir <git-dir>] [--object-format=<format>]
+	  [-b <branch-name> | --initial-branch=<branch-name>]
+	  [--shared[=<permissions>]] [<directory>]
 
 
 DESCRIPTION
@@ -19,8 +20,9 @@ DESCRIPTION
 
 This command creates an empty Git repository - basically a `.git`
 directory with subdirectories for `objects`, `refs/heads`,
-`refs/tags`, and template files.  An initial `HEAD` file that
-references the HEAD of the master branch is also created.
+`refs/tags`, and template files.  An initial branch without any
+commits will be created (see the `--initial-branch` option below
+for its name).
 
 If the `$GIT_DIR` environment variable is set then it specifies a path
 to use instead of `./.git` for the base of the repository.
@@ -38,8 +40,6 @@ the repository to another place if --separate-git-dir is given).
 OPTIONS
 -------
 
---
-
 -q::
 --quiet::
 
@@ -50,12 +50,19 @@ Only print error and warning messages; all other output will be suppressed.
 Create a bare repository. If `GIT_DIR` environment is not set, it is set to the
 current working directory.
 
---template=<template_directory>::
+--object-format=<format>::
+
+Specify the given object format (hash algorithm) for the repository.  The valid
+values are 'sha1' and (if enabled) 'sha256'.  'sha1' is the default.
++
+include::object-format-disclaimer.txt[]
+
+--template=<template-directory>::
 
 Specify the directory from which templates will be used.  (See the "TEMPLATE
 DIRECTORY" section below.)
 
---separate-git-dir=<git dir>::
+--separate-git-dir=<git-dir>::
 
 Instead of initializing the repository as a directory to either `$GIT_DIR` or
 `./.git/`, create a text file there containing the path to the actual
@@ -64,7 +71,15 @@ repository.
 +
 If this is reinitialization, the repository will be moved to the specified path.
 
---shared[=(false|true|umask|group|all|world|everybody|0xxx)]::
+-b <branch-name>::
+--initial-branch=<branch-name>::
+
+Use the specified name for the initial branch in the newly created
+repository.  If not specified, fall back to the default name (currently
+`master`, but this is subject to change in the future; the name can be
+customized via the `init.defaultBranch` configuration variable).
+
+--shared[=(false|true|umask|group|all|world|everybody|<perm>)]::
 
 Specify that the Git repository is to be shared amongst several users.  This
 allows users belonging to the same group to push into that
@@ -95,13 +110,16 @@ the repository permissions.
 
 Same as 'group', but make the repository readable by all users.
 
-'0xxx'::
+'<perm>'::
 
-'0xxx' is an octal number and each file will have mode '0xxx'. '0xxx' will
-override users' umask(2) value (and not only loosen permissions as 'group' and
-'all' does). '0640' will create a repository which is group-readable, but not
-group-writable or accessible to others. '0660' will create a repo that is
-readable and writable to the current user and group, but inaccessible to others.
+'<perm>' is a 3-digit octal number prefixed with `0` and each file
+will have mode '<perm>'. '<perm>' will override users' umask(2)
+value (and not only loosen permissions as 'group' and 'all'
+does). '0640' will create a repository which is group-readable, but
+not group-writable or accessible to others. '0660' will create a repo
+that is readable and writable to the current user and group, but
+inaccessible to others (directories and executable files get their
+`x` bit from the `r` bit for corresponding classes of users).
 --
 
 By default, the configuration flag `receive.denyNonFastForwards` is enabled
@@ -110,8 +128,6 @@ into it.
 
 If you provide a 'directory', the command is run inside it. If this directory
 does not exist, it will be created.
-
---
 
 TEMPLATE DIRECTORY
 ------------------
@@ -132,7 +148,7 @@ The template directory will be one of the following (in order):
 The default template directory includes some directory structure, suggested
 "exclude patterns" (see linkgit:gitignore[5]), and sample hook files.
 
-The sample hooks are all disabled by default, To enable one of the
+The sample hooks are all disabled by default. To enable one of the
 sample hooks rename it by removing its `.sample` suffix.
 
 See linkgit:githooks[5] for more general info on hook execution.

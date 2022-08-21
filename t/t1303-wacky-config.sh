@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='Test wacky input to git config'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # Leaving off the newline is intentional!
@@ -14,7 +16,7 @@ setup() {
 check() {
 	echo "$2" >expected
 	git config --get "$1" >actual 2>&1
-	test_cmp actual expected
+	test_cmp expected actual
 }
 
 # 'check section.key regex value' verifies that the entry for
@@ -22,7 +24,7 @@ check() {
 check_regex() {
 	echo "$3" >expected
 	git config --get "$1" "$2" >actual 2>&1
-	test_cmp actual expected
+	test_cmp expected actual
 }
 
 test_expect_success 'modify same key' '

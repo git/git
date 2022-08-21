@@ -43,5 +43,8 @@ Fixes since v2.15.1
  * Clarify and enhance documentation for "merge-base --fork-point", as
    it was clear what it computed but not why/what for.
 
+ * This release also contains the fixes made in the v2.13.7 version of
+   Git.  See its release notes for details.
+
 
 Also contains various documentation updates and code clean-ups.

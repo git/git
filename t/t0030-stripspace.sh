@@ -5,12 +5,17 @@
 
 test_description='git stripspace'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 t40='A quick brown fox jumps over the lazy do'
 s40='                                        '
 sss="$s40$s40$s40$s40$s40$s40$s40$s40$s40$s40" # 400
 ttt="$t40$t40$t40$t40$t40$t40$t40$t40$t40$t40" # 400
+
+printf_git_stripspace () {
+    printf "$1" | git stripspace
+}
 
 test_expect_success \
     'long lines without spaces should be unchanged' '
@@ -110,31 +115,30 @@ test_expect_success \
 
 test_expect_success \
     'only consecutive blank lines should be completely removed' '
-    > expect &&
 
     printf "\n" | git stripspace >actual &&
-    test_cmp expect actual &&
+    test_must_be_empty actual &&
 
     printf "\n\n\n" | git stripspace >actual &&
-    test_cmp expect actual &&
+    test_must_be_empty actual &&
 
     printf "$sss\n$sss\n$sss\n" | git stripspace >actual &&
-    test_cmp expect actual &&
+    test_must_be_empty actual &&
 
     printf "$sss$sss\n$sss\n\n" | git stripspace >actual &&
-    test_cmp expect actual &&
+    test_must_be_empty actual &&
 
     printf "\n$sss\n$sss$sss\n" | git stripspace >actual &&
-    test_cmp expect actual &&
+    test_must_be_empty actual &&
 
     printf "$sss$sss$sss$sss\n\n\n" | git stripspace >actual &&
-    test_cmp expect actual &&
+    test_must_be_empty actual &&
 
     printf "\n$sss$sss$sss$sss\n\n" | git stripspace >actual &&
-    test_cmp expect actual &&
+    test_must_be_empty actual &&
 
     printf "\n\n$sss$sss$sss$sss\n" | git stripspace >actual &&
-    test_cmp expect actual
+    test_must_be_empty actual
 '
 
 test_expect_success \
@@ -225,32 +229,38 @@ test_expect_success \
 
 test_expect_success \
     'text without newline at end should end with newline' '
-    test $(printf "$ttt" | git stripspace | wc -l) -gt 0 &&
-    test $(printf "$ttt$ttt" | git stripspace | wc -l) -gt 0 &&
-    test $(printf "$ttt$ttt$ttt" | git stripspace | wc -l) -gt 0 &&
-    test $(printf "$ttt$ttt$ttt$ttt" | git stripspace | wc -l) -gt 0
+    test_stdout_line_count -gt 0 printf_git_stripspace "$ttt" &&
+    test_stdout_line_count -gt 0 printf_git_stripspace "$ttt$ttt" &&
+    test_stdout_line_count -gt 0 printf_git_stripspace "$ttt$ttt$ttt" &&
+    test_stdout_line_count -gt 0 printf_git_stripspace "$ttt$ttt$ttt$ttt"
 '
 
 # text plus spaces at the end:
 
 test_expect_success \
     'text plus spaces without newline at end should end with newline' '
-    test $(printf "$ttt$sss" | git stripspace | wc -l) -gt 0 &&
-    test $(printf "$ttt$ttt$sss" | git stripspace | wc -l) -gt 0 &&
-    test $(printf "$ttt$ttt$ttt$sss" | git stripspace | wc -l) -gt 0 &&
-    test $(printf "$ttt$sss$sss" | git stripspace | wc -l) -gt 0 &&
-    test $(printf "$ttt$ttt$sss$sss" | git stripspace | wc -l) -gt 0 &&
-    test $(printf "$ttt$sss$sss$sss" | git stripspace | wc -l) -gt 0
+    test_stdout_line_count -gt 0 printf_git_stripspace "$ttt$sss" &&
+    test_stdout_line_count -gt 0 printf_git_stripspace "$ttt$ttt$sss" &&
+    test_stdout_line_count -gt 0 printf_git_stripspace "$ttt$ttt$ttt$sss" &&
+    test_stdout_line_count -gt 0 printf_git_stripspace "$ttt$sss$sss" &&
+    test_stdout_line_count -gt 0 printf_git_stripspace "$ttt$ttt$sss$sss" &&
+    test_stdout_line_count -gt 0 printf_git_stripspace "$ttt$sss$sss$sss"
 '
 
 test_expect_success \
     'text plus spaces without newline at end should not show spaces' '
-    ! (printf "$ttt$sss" | git stripspace | grep "  " >/dev/null) &&
-    ! (printf "$ttt$ttt$sss" | git stripspace | grep "  " >/dev/null) &&
-    ! (printf "$ttt$ttt$ttt$sss" | git stripspace | grep "  " >/dev/null) &&
-    ! (printf "$ttt$sss$sss" | git stripspace | grep "  " >/dev/null) &&
-    ! (printf "$ttt$ttt$sss$sss" | git stripspace | grep "  " >/dev/null) &&
-    ! (printf "$ttt$sss$sss$sss" | git stripspace | grep "  " >/dev/null)
+    printf "$ttt$sss" | git stripspace >tmp &&
+    ! grep "  " tmp >/dev/null &&
+    printf "$ttt$ttt$sss" | git stripspace >tmp &&
+    ! grep "  " tmp >/dev/null &&
+    printf "$ttt$ttt$ttt$sss" | git stripspace >tmp &&
+    ! grep "  " tmp >/dev/null &&
+    printf "$ttt$sss$sss" | git stripspace >tmp &&
+    ! grep "  " tmp >/dev/null &&
+    printf "$ttt$ttt$sss$sss" | git stripspace >tmp &&
+    ! grep "  " tmp >/dev/null &&
+    printf "$ttt$sss$sss$sss" | git stripspace >tmp &&
+    ! grep "  " tmp >/dev/null
 '
 
 test_expect_success \
@@ -282,12 +292,18 @@ test_expect_success \
 
 test_expect_success \
     'text plus spaces at end should not show spaces' '
-    ! (echo "$ttt$sss" | git stripspace | grep "  " >/dev/null) &&
-    ! (echo "$ttt$ttt$sss" | git stripspace | grep "  " >/dev/null) &&
-    ! (echo "$ttt$ttt$ttt$sss" | git stripspace | grep "  " >/dev/null) &&
-    ! (echo "$ttt$sss$sss" | git stripspace | grep "  " >/dev/null) &&
-    ! (echo "$ttt$ttt$sss$sss" | git stripspace | grep "  " >/dev/null) &&
-    ! (echo "$ttt$sss$sss$sss" | git stripspace | grep "  " >/dev/null)
+    echo "$ttt$sss" | git stripspace >tmp &&
+    ! grep "  " tmp >/dev/null &&
+    echo "$ttt$ttt$sss" | git stripspace >tmp &&
+    ! grep "  " tmp >/dev/null &&
+    echo "$ttt$ttt$ttt$sss" | git stripspace >tmp &&
+    ! grep "  " tmp >/dev/null &&
+    echo "$ttt$sss$sss" | git stripspace >tmp &&
+    ! grep "  " tmp >/dev/null &&
+    echo "$ttt$ttt$sss$sss" | git stripspace >tmp &&
+    ! grep "  " tmp >/dev/null &&
+    echo "$ttt$sss$sss$sss" | git stripspace >tmp &&
+    ! grep "  " tmp >/dev/null
 '
 
 test_expect_success \
@@ -321,48 +337,49 @@ test_expect_success \
 
 test_expect_success \
     'spaces with newline at end should be replaced with empty string' '
-    printf "" >expect &&
-
     echo | git stripspace >actual &&
-    test_cmp expect actual &&
+    test_must_be_empty actual &&
 
     echo "$sss" | git stripspace >actual &&
-    test_cmp expect actual &&
+    test_must_be_empty actual &&
 
     echo "$sss$sss" | git stripspace >actual &&
-    test_cmp expect actual &&
+    test_must_be_empty actual &&
 
     echo "$sss$sss$sss" | git stripspace >actual &&
-    test_cmp expect actual &&
+    test_must_be_empty actual &&
 
     echo "$sss$sss$sss$sss" | git stripspace >actual &&
-    test_cmp expect actual
+    test_must_be_empty actual
 '
 
 test_expect_success \
     'spaces without newline at end should not show spaces' '
-    ! (printf "" | git stripspace | grep " " >/dev/null) &&
-    ! (printf "$sss" | git stripspace | grep " " >/dev/null) &&
-    ! (printf "$sss$sss" | git stripspace | grep " " >/dev/null) &&
-    ! (printf "$sss$sss$sss" | git stripspace | grep " " >/dev/null) &&
-    ! (printf "$sss$sss$sss$sss" | git stripspace | grep " " >/dev/null)
+    printf "" | git stripspace >tmp &&
+    ! grep " " tmp >/dev/null &&
+    printf "$sss" | git stripspace >tmp &&
+    ! grep " " tmp >/dev/null &&
+    printf "$sss$sss" | git stripspace >tmp &&
+    ! grep " " tmp >/dev/null &&
+    printf "$sss$sss$sss" | git stripspace >tmp &&
+    ! grep " " tmp >/dev/null &&
+    printf "$sss$sss$sss$sss" | git stripspace >tmp &&
+    ! grep " " tmp >/dev/null
 '
 
 test_expect_success \
     'spaces without newline at end should be replaced with empty string' '
-    printf "" >expect &&
-
     printf "" | git stripspace >actual &&
-    test_cmp expect actual &&
+    test_must_be_empty actual &&
 
     printf "$sss$sss" | git stripspace >actual &&
-    test_cmp expect actual &&
+    test_must_be_empty actual &&
 
     printf "$sss$sss$sss" | git stripspace >actual &&
-    test_cmp expect actual &&
+    test_must_be_empty actual &&
 
     printf "$sss$sss$sss$sss" | git stripspace >actual &&
-    test_cmp expect actual
+    test_must_be_empty actual
 '
 
 test_expect_success \
@@ -435,9 +452,15 @@ test_expect_success '-c with changed comment char' '
 test_expect_success '-c with comment char defined in .git/config' '
 	test_config core.commentchar = &&
 	printf "= foo\n" >expect &&
-	printf "foo" | (
-		mkdir sub && cd sub && git stripspace -c
-	) >actual &&
+	rm -fr sub &&
+	mkdir sub &&
+	printf "foo" | git -C sub stripspace -c >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '-c outside git repository' '
+	printf "# foo\n" >expect &&
+	printf "foo" | nongit git stripspace -c >actual &&
 	test_cmp expect actual
 '
 

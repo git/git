@@ -90,6 +90,15 @@
  * functions. In particular, the state diagram and the cleanup
  * machinery are all implemented in the tempfile module.
  *
+ * Permission bits
+ * ---------------
+ *
+ * If you call either `hold_lock_file_for_update_mode` or
+ * `hold_lock_file_for_update_timeout_mode`, you can specify a suggested
+ * mode for the underlying temporary file. Note that the file isn't
+ * guaranteed to have this exact mode, since it may be limited by either
+ * the umask, 'core.sharedRepository', or both. See `adjust_shared_perm`
+ * for more.
  *
  * Error handling
  * --------------
@@ -112,7 +121,7 @@ struct lock_file {
 	struct tempfile *tempfile;
 };
 
-#define LOCK_INIT { NULL }
+#define LOCK_INIT { 0 }
 
 /* String appended to a filename to derive the lockfile name: */
 #define LOCK_SUFFIX ".lock"
@@ -156,12 +165,20 @@ struct lock_file {
  * file descriptor for writing to it, or -1 on error. If the file is
  * currently locked, retry with quadratic backoff for at least
  * timeout_ms milliseconds. If timeout_ms is 0, try exactly once; if
- * timeout_ms is -1, retry indefinitely. The flags argument and error
- * handling are described above.
+ * timeout_ms is -1, retry indefinitely. The flags argument, error
+ * handling, and mode are described above.
  */
-extern int hold_lock_file_for_update_timeout(
+int hold_lock_file_for_update_timeout_mode(
 		struct lock_file *lk, const char *path,
-		int flags, long timeout_ms);
+		int flags, long timeout_ms, int mode);
+
+static inline int hold_lock_file_for_update_timeout(
+		struct lock_file *lk, const char *path,
+		int flags, long timeout_ms)
+{
+	return hold_lock_file_for_update_timeout_mode(lk, path, flags,
+						      timeout_ms, 0666);
+}
 
 /*
  * Attempt to create a lockfile for the file at `path` and return a
@@ -173,6 +190,13 @@ static inline int hold_lock_file_for_update(
 		int flags)
 {
 	return hold_lock_file_for_update_timeout(lk, path, flags, 0);
+}
+
+static inline int hold_lock_file_for_update_mode(
+		struct lock_file *lk, const char *path,
+		int flags, int mode)
+{
+	return hold_lock_file_for_update_timeout_mode(lk, path, flags, 0, mode);
 }
 
 /*
@@ -188,8 +212,8 @@ static inline int is_lock_file_locked(struct lock_file *lk)
  * of `hold_lock_file_for_update()` to lock `path`. `err` should be the
  * `errno` set by the failing call.
  */
-extern void unable_to_lock_message(const char *path, int err,
-				   struct strbuf *buf);
+void unable_to_lock_message(const char *path, int err,
+			    struct strbuf *buf);
 
 /*
  * Emit an appropriate error message and `die()` following the failure
@@ -197,7 +221,7 @@ extern void unable_to_lock_message(const char *path, int err,
  * `errno` set by the failing
  * call.
  */
-extern NORETURN void unable_to_lock_die(const char *path, int err);
+NORETURN void unable_to_lock_die(const char *path, int err);
 
 /*
  * Associate a stdio stream with the lockfile (which must still be
@@ -234,7 +258,7 @@ static inline FILE *get_lock_file_fp(struct lock_file *lk)
  * Return the path of the file that is locked by the specified
  * lock_file object. The caller must free the memory.
  */
-extern char *get_locked_file_path(struct lock_file *lk);
+char *get_locked_file_path(struct lock_file *lk);
 
 /*
  * If the lockfile is still open, close it (and the file pointer if it
@@ -263,8 +287,8 @@ static inline int close_lock_file_gently(struct lock_file *lk)
  *   nobody else) to inspect the contents you wrote, while still
  *   holding the lock yourself.
  *
- * * `reopen_lock_file()` to reopen the lockfile. Make further updates
- *   to the contents.
+ * * `reopen_lock_file()` to reopen the lockfile, truncating the existing
+ *   contents. Write out the new contents.
  *
  * * `commit_lock_file()` to make the final version permanent.
  */
@@ -282,7 +306,7 @@ static inline int reopen_lock_file(struct lock_file *lk)
  * call `commit_lock_file()` for a `lock_file` object that is not
  * currently locked.
  */
-extern int commit_lock_file(struct lock_file *lk);
+int commit_lock_file(struct lock_file *lk);
 
 /*
  * Like `commit_lock_file()`, but rename the lockfile to the provided

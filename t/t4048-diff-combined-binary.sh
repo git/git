@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='combined and merge diff handle binary files and textconv'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'setup binary merge conflict' '
@@ -9,24 +12,27 @@ test_expect_success 'setup binary merge conflict' '
 	git commit -m one &&
 	echo twoQ2 | q_to_nul >binary &&
 	git commit -a -m two &&
+	two=$(git rev-parse --short HEAD:binary) &&
 	git checkout -b branch-binary HEAD^ &&
 	echo threeQ3 | q_to_nul >binary &&
 	git commit -a -m three &&
-	test_must_fail git merge master &&
+	three=$(git rev-parse --short HEAD:binary) &&
+	test_must_fail git merge main &&
 	echo resolvedQhooray | q_to_nul >binary &&
-	git commit -a -m resolved
+	git commit -a -m resolved &&
+	res=$(git rev-parse --short HEAD:binary)
 '
 
-cat >expect <<'EOF'
+cat >expect <<EOF
 resolved
 
 diff --git a/binary b/binary
-index 7ea6ded..9563691 100644
+index $three..$res 100644
 Binary files a/binary and b/binary differ
 resolved
 
 diff --git a/binary b/binary
-index 6197570..9563691 100644
+index $two..$res 100644
 Binary files a/binary and b/binary differ
 EOF
 test_expect_success 'diff -m indicates binary-ness' '
@@ -34,11 +40,11 @@ test_expect_success 'diff -m indicates binary-ness' '
 	test_cmp expect actual
 '
 
-cat >expect <<'EOF'
+cat >expect <<EOF
 resolved
 
 diff --combined binary
-index 7ea6ded,6197570..9563691
+index $three,$two..$res
 Binary files differ
 EOF
 test_expect_success 'diff -c indicates binary-ness' '
@@ -46,11 +52,11 @@ test_expect_success 'diff -c indicates binary-ness' '
 	test_cmp expect actual
 '
 
-cat >expect <<'EOF'
+cat >expect <<EOF
 resolved
 
 diff --cc binary
-index 7ea6ded,6197570..9563691
+index $three,$two..$res
 Binary files differ
 EOF
 test_expect_success 'diff --cc indicates binary-ness' '
@@ -59,26 +65,29 @@ test_expect_success 'diff --cc indicates binary-ness' '
 '
 
 test_expect_success 'setup non-binary with binary attribute' '
-	git checkout master &&
+	git checkout main &&
 	test_commit one text &&
 	test_commit two text &&
+	two=$(git rev-parse --short HEAD:text) &&
 	git checkout -b branch-text HEAD^ &&
 	test_commit three text &&
-	test_must_fail git merge master &&
+	three=$(git rev-parse --short HEAD:text) &&
+	test_must_fail git merge main &&
 	test_commit resolved text &&
+	res=$(git rev-parse --short HEAD:text) &&
 	echo text -diff >.gitattributes
 '
 
-cat >expect <<'EOF'
+cat >expect <<EOF
 resolved
 
 diff --git a/text b/text
-index 2bdf67a..2ab19ae 100644
+index $three..$res 100644
 Binary files a/text and b/text differ
 resolved
 
 diff --git a/text b/text
-index f719efd..2ab19ae 100644
+index $two..$res 100644
 Binary files a/text and b/text differ
 EOF
 test_expect_success 'diff -m respects binary attribute' '
@@ -86,11 +95,11 @@ test_expect_success 'diff -m respects binary attribute' '
 	test_cmp expect actual
 '
 
-cat >expect <<'EOF'
+cat >expect <<EOF
 resolved
 
 diff --combined text
-index 2bdf67a,f719efd..2ab19ae
+index $three,$two..$res
 Binary files differ
 EOF
 test_expect_success 'diff -c respects binary attribute' '
@@ -98,11 +107,11 @@ test_expect_success 'diff -c respects binary attribute' '
 	test_cmp expect actual
 '
 
-cat >expect <<'EOF'
+cat >expect <<EOF
 resolved
 
 diff --cc text
-index 2bdf67a,f719efd..2ab19ae
+index $three,$two..$res
 Binary files differ
 EOF
 test_expect_success 'diff --cc respects binary attribute' '
@@ -115,11 +124,11 @@ test_expect_success 'setup textconv attribute' '
 	git config diff.upcase.textconv "tr a-z A-Z <"
 '
 
-cat >expect <<'EOF'
+cat >expect <<EOF
 resolved
 
 diff --git a/text b/text
-index 2bdf67a..2ab19ae 100644
+index $three..$res 100644
 --- a/text
 +++ b/text
 @@ -1 +1 @@
@@ -128,7 +137,7 @@ index 2bdf67a..2ab19ae 100644
 resolved
 
 diff --git a/text b/text
-index f719efd..2ab19ae 100644
+index $two..$res 100644
 --- a/text
 +++ b/text
 @@ -1 +1 @@
@@ -140,11 +149,11 @@ test_expect_success 'diff -m respects textconv attribute' '
 	test_cmp expect actual
 '
 
-cat >expect <<'EOF'
+cat >expect <<EOF
 resolved
 
 diff --combined text
-index 2bdf67a,f719efd..2ab19ae
+index $three,$two..$res
 --- a/text
 +++ b/text
 @@@ -1,1 -1,1 +1,1 @@@
@@ -157,11 +166,11 @@ test_expect_success 'diff -c respects textconv attribute' '
 	test_cmp expect actual
 '
 
-cat >expect <<'EOF'
+cat >expect <<EOF
 resolved
 
 diff --cc text
-index 2bdf67a,f719efd..2ab19ae
+index $three,$two..$res
 --- a/text
 +++ b/text
 @@@ -1,1 -1,1 +1,1 @@@
@@ -174,9 +183,9 @@ test_expect_success 'diff --cc respects textconv attribute' '
 	test_cmp expect actual
 '
 
-cat >expect <<'EOF'
+cat >expect <<EOF
 diff --combined text
-index 2bdf67a,f719efd..2ab19ae
+index $three,$two..$res
 --- a/text
 +++ b/text
 @@@ -1,1 -1,1 +1,1 @@@
@@ -190,9 +199,9 @@ test_expect_success 'diff-tree plumbing does not respect textconv' '
 	test_cmp expect actual
 '
 
-cat >expect <<'EOF'
+cat >expect <<EOF
 diff --cc text
-index 2bdf67a,f719efd..0000000
+index $three,$two..0000000
 --- a/text
 +++ b/text
 @@@ -1,1 -1,1 +1,5 @@@
@@ -200,11 +209,11 @@ index 2bdf67a,f719efd..0000000
  +THREE
 ++=======
 + TWO
-++>>>>>>> MASTER
+++>>>>>>> MAIN
 EOF
 test_expect_success 'diff --cc respects textconv on worktree file' '
 	git reset --hard HEAD^ &&
-	test_must_fail git merge master &&
+	test_must_fail git merge main &&
 	git diff >actual &&
 	test_cmp expect actual
 '

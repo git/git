@@ -1,7 +1,13 @@
 #ifndef PRETTY_H
 #define PRETTY_H
 
+#include "cache.h"
+#include "date.h"
+#include "string-list.h"
+
 struct commit;
+struct strbuf;
+struct process_trailer_options;
 
 /* Commit formats */
 enum cmit_fmt {
@@ -17,6 +23,10 @@ enum cmit_fmt {
 	CMIT_FMT_USERFORMAT,
 
 	CMIT_FMT_UNSPECIFIED
+};
+
+struct pretty_print_describe_status {
+	unsigned int max_invocations;
 };
 
 struct pretty_print_context {
@@ -39,6 +49,8 @@ struct pretty_print_context {
 	struct string_list *mailmap;
 	int color;
 	struct ident_split *from_ident;
+	unsigned encode_email_headers:1;
+	struct pretty_print_describe_status *describe_status;
 
 	/*
 	 * Fields below here are manipulated internally by pp_* functions and
@@ -54,11 +66,16 @@ static inline int cmit_fmt_is_mail(enum cmit_fmt fmt)
 	return (fmt == CMIT_FMT_EMAIL || fmt == CMIT_FMT_MBOXRD);
 }
 
+/*
+ * Examine the user-specified format given by "fmt" (or if NULL, the global one
+ * previously saved by get_commit_format()), and set flags based on which items
+ * the format will need when it is expanded.
+ */
 struct userformat_want {
 	unsigned notes:1;
+	unsigned source:1;
+	unsigned decorate:1;
 };
-
-/* Set the flag "w->notes" if there is placeholder %N in "fmt". */
 void userformat_find_requirements(const char *fmt, struct userformat_want *w);
 
 /*
@@ -99,9 +116,14 @@ void pp_remainder(struct pretty_print_context *pp, const char **msg_p,
  * Put the result to "sb".
  * Please use this function for custom formats.
  */
-void format_commit_message(const struct commit *commit,
+void repo_format_commit_message(struct repository *r,
+			const struct commit *commit,
 			const char *format, struct strbuf *sb,
 			const struct pretty_print_context *context);
+#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
+#define format_commit_message(c, f, s, con) \
+	repo_format_commit_message(the_repository, c, f, s, con)
+#endif
 
 /*
  * Parse given arguments from "arg", check it for correctness and
@@ -127,5 +149,28 @@ const char *format_subject(struct strbuf *sb, const char *msg,
 
 /* Check if "cmit_fmt" will produce an empty output. */
 int commit_format_is_empty(enum cmit_fmt);
+
+/* Make subject of commit message suitable for filename */
+void format_sanitized_subject(struct strbuf *sb, const char *msg, size_t len);
+
+/*
+ * Set values of fields in "struct process_trailer_options"
+ * according to trailers arguments.
+ */
+int format_set_trailers_options(struct process_trailer_options *opts,
+			struct string_list *filter_list,
+			struct strbuf *sepbuf,
+			struct strbuf *kvsepbuf,
+			const char **arg,
+			char **invalid_arg);
+
+/*
+ * Like show_date, but pull the timestamp and tz parameters from
+ * the ident_split. It will also sanity-check the values and produce
+ * a well-known sentinel date if they appear bogus.
+ */
+const char *show_ident_date(const struct ident_split *id,
+			    const struct date_mode *mode);
+
 
 #endif /* PRETTY_H */

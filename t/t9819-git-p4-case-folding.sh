@@ -30,7 +30,7 @@ test_expect_success 'Check p4 is in case-folding mode' '
 		cd "$cli" &&
 		>lc/FILE.TXT &&
 		p4 add lc/FILE.TXT &&
-		test_must_fail p4 submit -d "Cannot add file differing only in case" lc/FILE.TXT
+		! p4 submit -d "Cannot add file differing only in case" lc/FILE.TXT
 	)
 '
 
@@ -51,10 +51,6 @@ test_expect_failure 'Clone lc repo using uc name' '
 
 test_expect_failure 'Clone UC repo with lc name' '
 	test_must_fail git p4 clone //depot/uc/...
-'
-
-test_expect_success 'kill p4d' '
-	kill_p4d
 '
 
 test_done

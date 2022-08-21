@@ -1,7 +1,17 @@
 #!/bin/sh
 
 test_description='test dumb fetching over http via static file'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
+
+if test_have_prereq !REFFILES
+then
+	skip_all='skipping test; dumb HTTP protocol not supported with reftable.'
+	test_done
+fi
+
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 
@@ -15,18 +25,19 @@ test_expect_success 'setup repository' '
 	git commit -m two
 '
 
+setup_post_update_server_info_hook () {
+	test_hook --setup -C "$1" post-update <<-\EOF &&
+	exec git update-server-info
+	EOF
+	git -C "$1" update-server-info
+}
+
 test_expect_success 'create http-accessible bare repository with loose objects' '
 	cp -R .git "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
-	(cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
-	 git config core.bare true &&
-	 mkdir -p hooks &&
-	 write_script "hooks/post-update" <<-\EOF &&
-	 exec git update-server-info
-	EOF
-	 hooks/post-update
-	) &&
+	git -C "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" config core.bare true &&
+	setup_post_update_server_info_hook "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
 	git remote add public "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
-	git push public master:master
+	git push public main:main
 '
 
 test_expect_success 'clone http repository' '
@@ -37,8 +48,8 @@ test_expect_success 'clone http repository' '
 
 test_expect_success 'list refs from outside any repository' '
 	cat >expect <<-EOF &&
-	$(git rev-parse master)	HEAD
-	$(git rev-parse master)	refs/heads/master
+	$(git rev-parse main)	HEAD
+	$(git rev-parse main)	refs/heads/main
 	EOF
 	nongit git ls-remote "$HTTPD_URL/dumb/repo.git" >actual &&
 	test_cmp expect actual
@@ -48,6 +59,18 @@ test_expect_success 'create password-protected repository' '
 	mkdir -p "$HTTPD_DOCUMENT_ROOT_PATH/auth/dumb/" &&
 	cp -Rf "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" \
 	       "$HTTPD_DOCUMENT_ROOT_PATH/auth/dumb/repo.git"
+'
+
+test_expect_success 'create empty remote repository' '
+	git init --bare "$HTTPD_DOCUMENT_ROOT_PATH/empty.git" &&
+	setup_post_update_server_info_hook "$HTTPD_DOCUMENT_ROOT_PATH/empty.git"
+'
+
+test_expect_success 'empty dumb HTTP repository has default hash algorithm' '
+	test_when_finished "rm -fr clone-empty" &&
+	git clone $HTTPD_URL/dumb/empty.git clone-empty &&
+	git -C clone-empty rev-parse --show-object-format >empty-format &&
+	test "$(cat empty-format)" = "$(test_oid algo)"
 '
 
 setup_askpass_helper
@@ -163,19 +186,30 @@ test_expect_success 'fetch changes via manual http-fetch' '
 
 	HEAD=$(git rev-parse --verify HEAD) &&
 	(cd clone2 &&
-	 git http-fetch -a -w heads/master-new $HEAD $(git config remote.origin.url) &&
-	 git checkout master-new &&
+	 git http-fetch -a -w heads/main-new $HEAD $(git config remote.origin.url) &&
+	 git checkout main-new &&
 	 test $HEAD = $(git rev-parse --verify HEAD)) &&
 	test_cmp file clone2/file
 '
 
+test_expect_success 'manual http-fetch without -a works just as well' '
+	cp -R clone-tmpl clone3 &&
+
+	HEAD=$(git rev-parse --verify HEAD) &&
+	(cd clone3 &&
+	 git http-fetch -w heads/main-new $HEAD $(git config remote.origin.url) &&
+	 git checkout main-new &&
+	 test $HEAD = $(git rev-parse --verify HEAD)) &&
+	test_cmp file clone3/file
+'
+
 test_expect_success 'http remote detects correct HEAD' '
-	git push public master:other &&
+	git push public main:other &&
 	(cd clone &&
 	 git remote set-head origin -d &&
 	 git remote set-head origin -a &&
 	 git symbolic-ref refs/remotes/origin/HEAD > output &&
-	 echo refs/remotes/origin/master > expect &&
+	 echo refs/remotes/origin/main > expect &&
 	 test_cmp expect output
 	)
 '
@@ -186,6 +220,31 @@ test_expect_success 'fetch packed objects' '
 	 git --bare repack -a -d
 	) &&
 	git clone $HTTPD_URL/dumb/repo_pack.git
+'
+
+test_expect_success 'http-fetch --packfile' '
+	# Arbitrary hash. Use rev-parse so that we get one of the correct
+	# length.
+	ARBITRARY=$(git -C "$HTTPD_DOCUMENT_ROOT_PATH"/repo_pack.git rev-parse HEAD) &&
+
+	git init packfileclient &&
+	p=$(cd "$HTTPD_DOCUMENT_ROOT_PATH"/repo_pack.git && ls objects/pack/pack-*.pack) &&
+	git -C packfileclient http-fetch --packfile=$ARBITRARY \
+		--index-pack-arg=index-pack --index-pack-arg=--stdin \
+		--index-pack-arg=--keep \
+		"$HTTPD_URL"/dumb/repo_pack.git/$p >out &&
+
+	grep "^keep.[0-9a-f]\{16,\}$" out &&
+	cut -c6- out >packhash &&
+
+	# Ensure that the expected files are generated
+	test -e "packfileclient/.git/objects/pack/pack-$(cat packhash).pack" &&
+	test -e "packfileclient/.git/objects/pack/pack-$(cat packhash).idx" &&
+	test -e "packfileclient/.git/objects/pack/pack-$(cat packhash).keep" &&
+
+	# Ensure that it has the HEAD of repo_pack, at least
+	HASH=$(git -C "$HTTPD_DOCUMENT_ROOT_PATH"/repo_pack.git rev-parse HEAD) &&
+	git -C packfileclient cat-file -e "$HASH"
 '
 
 test_expect_success 'fetch notices corrupt pack' '
@@ -201,6 +260,14 @@ test_expect_success 'fetch notices corrupt pack' '
 	 test_must_fail git --bare fetch $HTTPD_URL/dumb/repo_bad1.git &&
 	 test 0 = $(ls objects/pack/pack-*.pack | wc -l)
 	)
+'
+
+test_expect_success 'http-fetch --packfile with corrupt pack' '
+	rm -rf packfileclient &&
+	git init packfileclient &&
+	p=$(cd "$HTTPD_DOCUMENT_ROOT_PATH"/repo_bad1.git && ls objects/pack/pack-*.pack) &&
+	test_must_fail git -C packfileclient http-fetch --packfile \
+		"$HTTPD_URL"/dumb/repo_bad1.git/$p
 '
 
 test_expect_success 'fetch notices corrupt idx' '
@@ -237,9 +304,7 @@ test_expect_success 'fetch can handle previously-fetched .idx files' '
 '
 
 test_expect_success 'did not use upload-pack service' '
-	test_might_fail grep '/git-upload-pack' <"$HTTPD_ROOT_PATH"/access.log >act &&
-	: >exp &&
-	test_cmp exp act
+	! grep "/git-upload-pack" "$HTTPD_ROOT_PATH/access.log"
 '
 
 test_expect_success 'git client shows text/plain errors' '
@@ -304,17 +369,23 @@ ja;q=0.95, zh;q=0.94, sv;q=0.93, pt;q=0.92, nb;q=0.91, *;q=0.90" \
 		ko_KR.EUC-KR:en_US.UTF-8:fr_CA:de.UTF-8@euro:sr@latin:ja:zh:sv:pt:nb
 '
 
-test_expect_success 'git client does not send an empty Accept-Language' '
+test_expect_success 'git client send an empty Accept-Language' '
 	GIT_TRACE_CURL=true LANGUAGE= git ls-remote "$HTTPD_URL/dumb/repo.git" 2>stderr &&
 	! grep "^=> Send header: Accept-Language:" stderr
 '
 
 test_expect_success 'remote-http complains cleanly about malformed urls' '
-	# do not actually issue "list" or other commands, as we do not
-	# want to rely on what curl would actually do with such a broken
-	# URL. This is just about making sure we do not segfault during
-	# initialization.
-	test_must_fail git remote-http http::/example.com/repo.git
+	test_must_fail git remote-http http::/example.com/repo.git 2>stderr &&
+	test_i18ngrep "url has no scheme" stderr
+'
+
+# NEEDSWORK: Writing commands to git-remote-curl can race against the latter
+# erroring out, producing SIGPIPE. Remove "ok=sigpipe" once transport-helper has
+# learned to handle early remote helper failures more cleanly.
+test_expect_success 'remote-http complains cleanly about empty scheme' '
+	test_must_fail ok=sigpipe git ls-remote \
+		http::${HTTPD_URL#http}/dumb/repo.git 2>stderr &&
+	test_i18ngrep "url has no scheme" stderr
 '
 
 test_expect_success 'redirects can be forbidden/allowed' '
@@ -351,9 +422,10 @@ test_expect_success 'set up evil alternates scheme' '
 	sha1=$(git -C "$victim" rev-parse HEAD) &&
 
 	evil=$HTTPD_DOCUMENT_ROOT_PATH/evil.git &&
-	git init --bare "$evil" &&
+	git init --template= --bare "$evil" &&
+	mkdir "$evil/info" &&
 	# do this by hand to avoid object existence check
-	printf "%s\\t%s\\n" $sha1 refs/heads/master >"$evil/info/refs"
+	printf "%s\\t%s\\n" $sha1 refs/heads/main >"$evil/info/refs"
 '
 
 # Here we'll just redirect via HTTP. In a real-world attack these would be on
@@ -397,5 +469,20 @@ test_expect_success 'print HTTP error when any intermediate redirect throws erro
 	test_i18ngrep "unable to access.*/redir-to/502" stderr
 '
 
-stop_httpd
+test_expect_success 'fetching via http alternates works' '
+	parent=$HTTPD_DOCUMENT_ROOT_PATH/alt-parent.git &&
+	git init --bare "$parent" &&
+	git -C "$parent" --work-tree=. commit --allow-empty -m foo &&
+	git -C "$parent" update-server-info &&
+	commit=$(git -C "$parent" rev-parse HEAD) &&
+
+	child=$HTTPD_DOCUMENT_ROOT_PATH/alt-child.git &&
+	git init --bare "$child" &&
+	echo "../../alt-parent.git/objects" >"$child/objects/info/alternates" &&
+	git -C "$child" update-ref HEAD $commit &&
+	git -C "$child" update-server-info &&
+
+	git -c http.followredirects=true clone "$HTTPD_URL/dumb/alt-child.git"
+'
+
 test_done

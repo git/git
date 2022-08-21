@@ -2,6 +2,7 @@
 
 test_description='diff -r -t shows directory additions and deletions'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '

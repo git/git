@@ -1,0 +1,9 @@
+(
+	foo &&
+	bar=$(gobble) &&
+	baz
+) &&
+(
+	bar=$(gobble blocks) ?!AMP?!
+	baz
+)

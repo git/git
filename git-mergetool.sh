@@ -9,7 +9,7 @@
 # at the discretion of Junio C Hamano.
 #
 
-USAGE='[--tool=tool] [--tool-help] [-y|--no-prompt|--prompt] [-O<orderfile>] [file to merge] ...'
+USAGE='[--tool=tool] [--tool-help] [-y|--no-prompt|--prompt] [-g|--gui|--no-gui] [-O<orderfile>] [file to merge] ...'
 SUBDIRECTORY_OK=Yes
 NONGIT_OK=Yes
 OPTIONS_SPEC=
@@ -228,9 +228,8 @@ stage_submodule () {
 }
 
 checkout_staged_file () {
-	tmpfile=$(expr \
-		"$(git checkout-index --temp --stage="$1" "$2" 2>/dev/null)" \
-		: '\([^	]*\)	')
+	tmpfile="$(git checkout-index --temp --stage="$1" "$2" 2>/dev/null)" &&
+	tmpfile=${tmpfile%%'	'*}
 
 	if test $? -eq 0 && test -n "$tmpfile"
 	then
@@ -238,6 +237,13 @@ checkout_staged_file () {
 	else
 		>"$3"
 	fi
+}
+
+hide_resolved () {
+	git merge-file --ours -q -p "$LOCAL" "$BASE" "$REMOTE" >"$LCONFL"
+	git merge-file --theirs -q -p "$LOCAL" "$BASE" "$REMOTE" >"$RCONFL"
+	mv -- "$LCONFL" "$LOCAL"
+	mv -- "$RCONFL" "$REMOTE"
 }
 
 merge_file () {
@@ -255,13 +261,18 @@ merge_file () {
 		return 1
 	fi
 
-	if BASE=$(expr "$MERGED" : '\(.*\)\.[^/]*$')
-	then
-		ext=$(expr "$MERGED" : '.*\(\.[^/]*\)$')
-	else
+	# extract file extension from the last path component
+	case "${MERGED##*/}" in
+	*.*)
+		ext=.${MERGED##*.}
+		BASE=${MERGED%"$ext"}
+		;;
+	*)
 		BASE=$MERGED
 		ext=
-	fi
+	esac
+
+	initialize_merge_tool "$merge_tool" || return
 
 	mergetool_tmpdir_init
 
@@ -274,18 +285,35 @@ merge_file () {
 
 	BACKUP="$MERGETOOL_TMPDIR/${BASE}_BACKUP_$$$ext"
 	LOCAL="$MERGETOOL_TMPDIR/${BASE}_LOCAL_$$$ext"
+	LCONFL="$MERGETOOL_TMPDIR/${BASE}_LOCAL_LCONFL_$$$ext"
 	REMOTE="$MERGETOOL_TMPDIR/${BASE}_REMOTE_$$$ext"
+	RCONFL="$MERGETOOL_TMPDIR/${BASE}_REMOTE_RCONFL_$$$ext"
 	BASE="$MERGETOOL_TMPDIR/${BASE}_BASE_$$$ext"
 
-	base_mode=$(git ls-files -u -- "$MERGED" | awk '{if ($3==1) print $1;}')
-	local_mode=$(git ls-files -u -- "$MERGED" | awk '{if ($3==2) print $1;}')
-	remote_mode=$(git ls-files -u -- "$MERGED" | awk '{if ($3==3) print $1;}')
+	base_mode= local_mode= remote_mode=
+
+	# here, $IFS is just a LF
+	for line in $f
+	do
+		mode=${line%% *}		# 1st word
+		sha1=${line#"$mode "}
+		sha1=${sha1%% *}		# 2nd word
+		case "${line#$mode $sha1 }" in	# remainder
+		'1	'*)
+			base_mode=$mode
+			;;
+		'2	'*)
+			local_mode=$mode local_sha1=$sha1
+			;;
+		'3	'*)
+			remote_mode=$mode remote_sha1=$sha1
+			;;
+		esac
+	done
 
 	if is_submodule "$local_mode" || is_submodule "$remote_mode"
 	then
 		echo "Submodule merge conflict for '$MERGED':"
-		local_sha1=$(git ls-files -u -- "$MERGED" | awk '{if ($3==2) print $2;}')
-		remote_sha1=$(git ls-files -u -- "$MERGED" | awk '{if ($3==3) print $2;}')
 		describe_file "$local_mode" "local" "$local_sha1"
 		describe_file "$remote_mode" "remote" "$remote_sha1"
 		resolve_submodule_merge
@@ -304,6 +332,40 @@ merge_file () {
 	checkout_staged_file 1 "$MERGED" "$BASE"
 	checkout_staged_file 2 "$MERGED" "$LOCAL"
 	checkout_staged_file 3 "$MERGED" "$REMOTE"
+
+	# hideResolved preferences hierarchy.
+	global_config="mergetool.hideResolved"
+	tool_config="mergetool.${merge_tool}.hideResolved"
+
+	if enabled=$(git config --type=bool "$tool_config")
+	then
+		# The user has a specific preference for a specific tool and no
+		# other preferences should override that.
+		: ;
+	elif enabled=$(git config --type=bool "$global_config")
+	then
+		# The user has a general preference for all tools.
+		#
+		# 'true' means the user likes the feature so we should use it
+		# where possible but tool authors can still override.
+		#
+		# 'false' means the user doesn't like the feature so we should
+		# not use it anywhere.
+		if test "$enabled" = true && hide_resolved_enabled
+		then
+		    enabled=true
+		else
+		    enabled=false
+		fi
+	else
+		# The user does not have a preference. Default to disabled.
+		enabled=false
+	fi
+
+	if test "$enabled" = true
+	then
+		hide_resolved
+	fi
 
 	if test -z "$local_mode" || test -z "$remote_mode"
 	then
@@ -389,6 +451,7 @@ print_noop_and_exit () {
 
 main () {
 	prompt=$(git config --bool mergetool.prompt)
+	GIT_MERGETOOL_GUI=false
 	guessed_merge_tool=false
 	orderfile=
 
@@ -405,7 +468,7 @@ main () {
 		-t|--tool*)
 			case "$#,$1" in
 			*,*=*)
-				merge_tool=$(expr "z$1" : 'z-[^=]*=\(.*\)')
+				merge_tool=${1#*=}
 				;;
 			1,*)
 				usage ;;
@@ -413,6 +476,12 @@ main () {
 				merge_tool="$2"
 				shift ;;
 			esac
+			;;
+		--no-gui)
+			GIT_MERGETOOL_GUI=false
+			;;
+		-g|--gui)
+			GIT_MERGETOOL_GUI=true
 			;;
 		-y|--no-prompt)
 			prompt=false
@@ -442,12 +511,8 @@ main () {
 
 	if test -z "$merge_tool"
 	then
-		# Check if a merge tool has been configured
-		merge_tool=$(get_configured_merge_tool)
-		# Try to guess an appropriate merge tool if no tool has been set.
-		if test -z "$merge_tool"
+		if ! merge_tool=$(get_merge_tool)
 		then
-			merge_tool=$(guess_merge_tool) || exit
 			guessed_merge_tool=true
 		fi
 	fi
@@ -491,14 +556,16 @@ main () {
 	printf "%s\n" "$files"
 
 	rc=0
-	for i in $files
+	set -- $files
+	while test $# -ne 0
 	do
 		printf "\n"
-		if ! merge_file "$i"
+		if ! merge_file "$1"
 		then
 			rc=1
-			prompt_after_failed_merge || exit 1
+			test $# -ne 1 && prompt_after_failed_merge || exit 1
 		fi
+		shift
 	done
 
 	exit $rc

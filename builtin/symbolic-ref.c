@@ -24,9 +24,11 @@ static int check_symref(const char *HEAD, int quiet, int shorten, int print)
 			return 1;
 	}
 	if (print) {
+		char *to_free = NULL;
 		if (shorten)
-			refname = shorten_unambiguous_ref(refname, 0);
+			refname = to_free = shorten_unambiguous_ref(refname, 0);
 		puts(refname);
+		free(to_free);
 	}
 	return 0;
 }
@@ -69,6 +71,8 @@ int cmd_symbolic_ref(int argc, const char **argv, const char *prefix)
 		if (!strcmp(argv[0], "HEAD") &&
 		    !starts_with(argv[1], "refs/"))
 			die("Refusing to point HEAD outside of refs/");
+		if (check_refname_format(argv[1], REFNAME_ALLOW_ONELEVEL) < 0)
+			die("Refusing to set '%s' to invalid ref '%s'", argv[0], argv[1]);
 		ret = !!create_symref(argv[0], argv[1], msg);
 		break;
 	default:

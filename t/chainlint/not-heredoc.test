@@ -1,0 +1,16 @@
+# LINT: "<< ours" inside string is not here-doc
+echo "<<<<<<< ours" &&
+echo ourside &&
+echo "=======" &&
+echo theirside &&
+echo ">>>>>>> theirs" &&
+
+(
+# LINT: "<< ours" inside string is not here-doc
+	echo "<<<<<<< ours" &&
+	echo ourside &&
+	echo "=======" &&
+	echo theirside &&
+	echo ">>>>>>> theirs"
+	poodle
+) >merged

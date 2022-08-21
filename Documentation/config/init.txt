@@ -1,0 +1,7 @@
+init.templateDir::
+	Specify the directory from which templates will be copied.
+	(See the "TEMPLATE DIRECTORY" section of linkgit:git-init[1].)
+
+init.defaultBranch::
+	Allows overriding the default branch name e.g. when initializing
+	a new repository.

@@ -87,6 +87,4 @@ test_expect_success 'test dcommit to trailing_dotlock branch' '
 	)
 	'
 
-stop_httpd
-
 test_done

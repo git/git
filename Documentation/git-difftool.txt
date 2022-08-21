@@ -34,6 +34,14 @@ OPTIONS
 	This is the default behaviour; the option is provided to
 	override any configuration settings.
 
+--rotate-to=<file>::
+	Start showing the diff for the given path,
+	the paths before it will move to end and output.
+
+--skip-to=<file>::
+	Start showing the diff for the given path, skipping all
+	the paths before it.
+
 -t <tool>::
 --tool=<tool>::
 	Use the diff tool specified by <tool>.  Valid values include
@@ -90,7 +98,9 @@ instead.  `--no-symlinks` is the default on Windows.
 	When 'git-difftool' is invoked with the `-g` or `--gui` option
 	the default diff tool will be read from the configured
 	`diff.guitool` variable instead of `diff.tool`. The `--no-gui`
-	option can be used to override this setting.
+	option can be used to override this setting. If `diff.guitool`
+	is not set, we will fallback in the order of `merge.guitool`,
+	`diff.tool`, `merge.tool` until a tool is found.
 
 --[no-]trust-exit-code::
 	'git-difftool' invokes a diff tool individually on each file.

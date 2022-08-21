@@ -3,6 +3,8 @@
 #include "exec-cmd.h"
 #include "strbuf.h"
 #include "run-command.h"
+#include "alias.h"
+#include "prompt.h"
 
 #define COMMAND_DIR "git-shell-commands"
 #define HELP_COMMAND COMMAND_DIR "/help"
@@ -15,10 +17,10 @@ static int do_generic_cmd(const char *me, char *arg)
 	setup_path();
 	if (!arg || !(arg = sq_dequote(arg)) || *arg == '-')
 		die("bad argument");
-	if (!starts_with(me, "git-"))
+	if (!skip_prefix(me, "git-", &me))
 		die("bad command");
 
-	my_argv[0] = me + 4;
+	my_argv[0] = me;
 	my_argv[1] = arg;
 	my_argv[2] = NULL;
 
@@ -75,12 +77,11 @@ static void run_shell(void)
 		int count;
 
 		fprintf(stderr, "git> ");
-		if (strbuf_getline_lf(&line, stdin) == EOF) {
+		if (git_read_line_interactively(&line) == EOF) {
 			fprintf(stderr, "\n");
 			strbuf_release(&line);
 			break;
 		}
-		strbuf_trim(&line);
 		rawargs = strbuf_detach(&line, NULL);
 		split_args = xstrdup(rawargs);
 		count = split_cmdline(split_args, &argv);
@@ -176,7 +177,7 @@ int cmd_main(int argc, const char **argv)
 		default:
 			continue;
 		}
-		exit(cmd->exec(cmd->name, arg));
+		return cmd->exec(cmd->name, arg);
 	}
 
 	cd_to_homedir();

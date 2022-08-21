@@ -64,7 +64,7 @@ users will fare this time.
    Please refer to:
 
    http://git.or.cz/gitwiki/GitFaq#non-bare
-   http://thread.gmane.org/gmane.comp.version-control.git/107758/focus=108007
+   https://lore.kernel.org/git/7vbptlsuyv.fsf@gitster.siamese.dyndns.org/
 
    for more details on the reason why this change is needed and the
    transition process that already took place so far.

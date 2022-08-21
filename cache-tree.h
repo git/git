@@ -27,15 +27,16 @@ void cache_tree_free(struct cache_tree **);
 void cache_tree_invalidate_path(struct index_state *, const char *);
 struct cache_tree_sub *cache_tree_sub(struct cache_tree *, const char *);
 
+int cache_tree_subtree_pos(struct cache_tree *it, const char *path, int pathlen);
+
 void cache_tree_write(struct strbuf *, struct cache_tree *root);
 struct cache_tree *cache_tree_read(const char *buffer, unsigned long size);
 
 int cache_tree_fully_valid(struct cache_tree *);
 int cache_tree_update(struct index_state *, int);
+void cache_tree_verify(struct repository *, struct index_state *);
 
-int update_main_cache_tree(int);
-
-/* bitmasks to write_cache_as_tree flags */
+/* bitmasks to write_index_as_tree flags */
 #define WRITE_TREE_MISSING_OK 1
 #define WRITE_TREE_IGNORE_CACHE_TREE 2
 #define WRITE_TREE_DRY_RUN 4
@@ -47,10 +48,24 @@ int update_main_cache_tree(int);
 #define WRITE_TREE_UNMERGED_INDEX (-2)
 #define WRITE_TREE_PREFIX_ERROR (-3)
 
+struct tree* write_in_core_index_as_tree(struct repository *repo);
 int write_index_as_tree(struct object_id *oid, struct index_state *index_state, const char *index_path, int flags, const char *prefix);
-int write_cache_as_tree(struct object_id *oid, int flags, const char *prefix);
-void prime_cache_tree(struct index_state *, struct tree *);
+void prime_cache_tree(struct repository *, struct index_state *, struct tree *);
 
-extern int cache_tree_matches_traversal(struct cache_tree *, struct name_entry *ent, struct traverse_info *info);
+int cache_tree_matches_traversal(struct cache_tree *, struct name_entry *ent, struct traverse_info *info);
+
+#ifdef USE_THE_INDEX_COMPATIBILITY_MACROS
+static inline int write_cache_as_tree(struct object_id *oid, int flags, const char *prefix)
+{
+	return write_index_as_tree(oid, &the_index, get_index_file(), flags, prefix);
+}
+
+static inline int update_main_cache_tree(int flags)
+{
+	if (!the_index.cache_tree)
+		the_index.cache_tree = cache_tree();
+	return cache_tree_update(&the_index, flags);
+}
+#endif
 
 #endif

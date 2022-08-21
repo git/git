@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='basic tests for priority queue implementation'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 cat >expect <<'EOF'
@@ -44,6 +46,20 @@ NULL
 EOF
 test_expect_success 'notice empty queue' '
 	test-tool prio-queue 1 2 get get get 1 2 get get get >actual &&
+	test_cmp expect actual
+'
+
+cat >expect <<'EOF'
+3
+2
+6
+4
+5
+1
+8
+EOF
+test_expect_success 'stack order' '
+	test-tool prio-queue stack 8 1 5 4 6 2 3 dump >actual &&
 	test_cmp expect actual
 '
 

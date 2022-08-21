@@ -9,6 +9,7 @@
 
 #include "cache.h"
 #include "config.h"
+#include "object-store.h"
 #include "blob.h"
 #include "delta.h"
 #include "diff.h"
@@ -20,12 +21,19 @@
 #include "quote.h"
 #include "rerere.h"
 #include "apply.h"
+#include "entry.h"
+
+struct gitdiff_data {
+	struct strbuf *root;
+	int linenr;
+	int p_value;
+};
 
 static void git_apply_config(void)
 {
-	git_config_get_string_const("apply.whitespace", &apply_default_whitespace);
-	git_config_get_string_const("apply.ignorewhitespace", &apply_default_ignorewhitespace);
-	git_config(git_default_config, NULL);
+	git_config_get_string("apply.whitespace", &apply_default_whitespace);
+	git_config_get_string("apply.ignorewhitespace", &apply_default_ignorewhitespace);
+	git_config(git_xmerge_config, NULL);
 }
 
 static int parse_whitespace_option(struct apply_state *state, const char *option)
@@ -55,6 +63,10 @@ static int parse_whitespace_option(struct apply_state *state, const char *option
 		state->ws_error_action = correct_ws_error;
 		return 0;
 	}
+	/*
+	 * Please update $__git_whitespacelist in git-completion.bash
+	 * when you add new options.
+	 */
 	return error(_("unrecognized whitespace option '%s'"), option);
 }
 
@@ -75,10 +87,12 @@ static int parse_ignorewhitespace_option(struct apply_state *state,
 }
 
 int init_apply_state(struct apply_state *state,
+		     struct repository *repo,
 		     const char *prefix)
 {
 	memset(state, 0, sizeof(*state));
 	state->prefix = prefix;
+	state->repo = repo;
 	state->apply = 1;
 	state->line_termination = '\n';
 	state->p_value = 1;
@@ -87,9 +101,10 @@ int init_apply_state(struct apply_state *state,
 	state->ws_error_action = warn_on_ws_error;
 	state->ws_ignore_action = ignore_ws_none;
 	state->linenr = 1;
-	string_list_init(&state->fn_table, 0);
-	string_list_init(&state->limit_by_name, 0);
-	string_list_init(&state->symlink_changes, 0);
+	string_list_init_nodup(&state->fn_table);
+	string_list_init_nodup(&state->limit_by_name);
+	strset_init(&state->removed_symlinks);
+	strset_init(&state->kept_symlinks);
 	strbuf_init(&state->root, 0);
 
 	git_apply_config();
@@ -103,7 +118,8 @@ int init_apply_state(struct apply_state *state,
 void clear_apply_state(struct apply_state *state)
 {
 	string_list_clear(&state->limit_by_name, 0);
-	string_list_clear(&state->symlink_changes, 0);
+	strset_clear(&state->removed_symlinks);
+	strset_clear(&state->kept_symlinks);
 	strbuf_release(&state->root);
 
 	/* &state->fn_table is cleared at the end of apply_patch() */
@@ -119,12 +135,10 @@ int check_apply_state(struct apply_state *state, int force_apply)
 	int is_not_gitdir = !startup_info->have_repository;
 
 	if (state->apply_with_reject && state->threeway)
-		return error(_("--reject and --3way cannot be used together."));
-	if (state->cached && state->threeway)
-		return error(_("--cached and --3way cannot be used together."));
+		return error(_("options '%s' and '%s' cannot be used together"), "--reject", "--3way");
 	if (state->threeway) {
 		if (is_not_gitdir)
-			return error(_("--3way outside a repository"));
+			return error(_("'%s' outside a repository"), "--3way");
 		state->check_index = 1;
 	}
 	if (state->apply_with_reject) {
@@ -135,12 +149,14 @@ int check_apply_state(struct apply_state *state, int force_apply)
 	if (!force_apply && (state->diffstat || state->numstat || state->summary || state->check || state->fake_ancestor))
 		state->apply = 0;
 	if (state->check_index && is_not_gitdir)
-		return error(_("--index outside a repository"));
+		return error(_("'%s' outside a repository"), "--index");
 	if (state->cached) {
 		if (is_not_gitdir)
-			return error(_("--cached outside a repository"));
+			return error(_("'%s' outside a repository"), "--cached");
 		state->check_index = 1;
 	}
+	if (state->ita_only && (state->check_index || is_not_gitdir))
+		state->ita_only = 0;
 	if (state->check_index)
 		state->unsafe_paths = 0;
 
@@ -192,40 +208,6 @@ struct fragment {
 #define BINARY_DELTA_DEFLATED	1
 #define BINARY_LITERAL_DEFLATED 2
 
-/*
- * This represents a "patch" to a file, both metainfo changes
- * such as creation/deletion, filemode and content changes represented
- * as a series of fragments.
- */
-struct patch {
-	char *new_name, *old_name, *def_name;
-	unsigned int old_mode, new_mode;
-	int is_new, is_delete;	/* -1 = unknown, 0 = false, 1 = true */
-	int rejected;
-	unsigned ws_rule;
-	int lines_added, lines_deleted;
-	int score;
-	int extension_linenr; /* first line specifying delete/new/rename/copy */
-	unsigned int is_toplevel_relative:1;
-	unsigned int inaccurate_eof:1;
-	unsigned int is_binary:1;
-	unsigned int is_copy:1;
-	unsigned int is_rename:1;
-	unsigned int recount:1;
-	unsigned int conflicted_threeway:1;
-	unsigned int direct_to_threeway:1;
-	unsigned int crlf_in_old:1;
-	struct fragment *fragments;
-	char *result;
-	size_t resultsize;
-	char old_sha1_prefix[41];
-	char new_sha1_prefix[41];
-	struct patch *next;
-
-	/* three-way fallback result */
-	struct object_id threeway_stage[3];
-};
-
 static void free_fragment_list(struct fragment *list)
 {
 	while (list) {
@@ -237,13 +219,18 @@ static void free_fragment_list(struct fragment *list)
 	}
 }
 
-static void free_patch(struct patch *patch)
+void release_patch(struct patch *patch)
 {
 	free_fragment_list(patch->fragments);
 	free(patch->def_name);
 	free(patch->old_name);
 	free(patch->new_name);
 	free(patch->result);
+}
+
+static void free_patch(struct patch *patch)
+{
+	release_patch(patch);
 	free(patch);
 }
 
@@ -460,9 +447,8 @@ static char *squash_slash(char *name)
 	return name;
 }
 
-static char *find_name_gnu(struct apply_state *state,
+static char *find_name_gnu(struct strbuf *root,
 			   const char *line,
-			   const char *def,
 			   int p_value)
 {
 	struct strbuf name = STRBUF_INIT;
@@ -470,7 +456,7 @@ static char *find_name_gnu(struct apply_state *state,
 
 	/*
 	 * Proposed "new-style" GNU patch/diff format; see
-	 * http://marc.info/?l=git&m=112927316408690&w=2
+	 * https://lore.kernel.org/git/7vll0wvb2a.fsf@assigned-by-dhcp.cox.net/
 	 */
 	if (unquote_c_style(&name, line, NULL)) {
 		strbuf_release(&name);
@@ -487,8 +473,8 @@ static char *find_name_gnu(struct apply_state *state,
 	}
 
 	strbuf_remove(&name, 0, cp - name.buf);
-	if (state->root.len)
-		strbuf_insert(&name, 0, state->root.buf, state->root.len);
+	if (root->len)
+		strbuf_insert(&name, 0, root->buf, root->len);
 	return squash_slash(strbuf_detach(&name, NULL));
 }
 
@@ -651,7 +637,7 @@ static size_t diff_timestamp_len(const char *line, size_t len)
 	return line + len - end;
 }
 
-static char *find_name_common(struct apply_state *state,
+static char *find_name_common(struct strbuf *root,
 			      const char *line,
 			      const char *def,
 			      int p_value,
@@ -694,30 +680,30 @@ static char *find_name_common(struct apply_state *state,
 			return squash_slash(xstrdup(def));
 	}
 
-	if (state->root.len) {
-		char *ret = xstrfmt("%s%.*s", state->root.buf, len, start);
+	if (root->len) {
+		char *ret = xstrfmt("%s%.*s", root->buf, len, start);
 		return squash_slash(ret);
 	}
 
 	return squash_slash(xmemdupz(start, len));
 }
 
-static char *find_name(struct apply_state *state,
+static char *find_name(struct strbuf *root,
 		       const char *line,
 		       char *def,
 		       int p_value,
 		       int terminate)
 {
 	if (*line == '"') {
-		char *name = find_name_gnu(state, line, def, p_value);
+		char *name = find_name_gnu(root, line, p_value);
 		if (name)
 			return name;
 	}
 
-	return find_name_common(state, line, def, p_value, NULL, terminate);
+	return find_name_common(root, line, def, p_value, NULL, terminate);
 }
 
-static char *find_name_traditional(struct apply_state *state,
+static char *find_name_traditional(struct strbuf *root,
 				   const char *line,
 				   char *def,
 				   int p_value)
@@ -726,7 +712,7 @@ static char *find_name_traditional(struct apply_state *state,
 	size_t date_len;
 
 	if (*line == '"') {
-		char *name = find_name_gnu(state, line, def, p_value);
+		char *name = find_name_gnu(root, line, p_value);
 		if (name)
 			return name;
 	}
@@ -734,10 +720,10 @@ static char *find_name_traditional(struct apply_state *state,
 	len = strchrnul(line, '\n') - line;
 	date_len = diff_timestamp_len(line, len);
 	if (!date_len)
-		return find_name_common(state, line, def, p_value, NULL, TERM_TAB);
+		return find_name_common(root, line, def, p_value, NULL, TERM_TAB);
 	len -= date_len;
 
-	return find_name_common(state, line, def, p_value, line + len, 0);
+	return find_name_common(root, line, def, p_value, line + len, 0);
 }
 
 /*
@@ -751,7 +737,7 @@ static int guess_p_value(struct apply_state *state, const char *nameline)
 
 	if (is_dev_null(nameline))
 		return -1;
-	name = find_name_traditional(state, nameline, NULL, 0);
+	name = find_name_traditional(&state->root, nameline, NULL, 0);
 	if (!name)
 		return -1;
 	cp = strchr(name, '/');
@@ -875,17 +861,17 @@ static int parse_traditional_patch(struct apply_state *state,
 	if (is_dev_null(first)) {
 		patch->is_new = 1;
 		patch->is_delete = 0;
-		name = find_name_traditional(state, second, NULL, state->p_value);
+		name = find_name_traditional(&state->root, second, NULL, state->p_value);
 		patch->new_name = name;
 	} else if (is_dev_null(second)) {
 		patch->is_new = 0;
 		patch->is_delete = 1;
-		name = find_name_traditional(state, first, NULL, state->p_value);
+		name = find_name_traditional(&state->root, first, NULL, state->p_value);
 		patch->old_name = name;
 	} else {
 		char *first_name;
-		first_name = find_name_traditional(state, first, NULL, state->p_value);
-		name = find_name_traditional(state, second, first_name, state->p_value);
+		first_name = find_name_traditional(&state->root, first, NULL, state->p_value);
+		name = find_name_traditional(&state->root, second, first_name, state->p_value);
 		free(first_name);
 		if (has_epoch_timestamp(first)) {
 			patch->is_new = 1;
@@ -906,7 +892,7 @@ static int parse_traditional_patch(struct apply_state *state,
 	return 0;
 }
 
-static int gitdiff_hdrend(struct apply_state *state,
+static int gitdiff_hdrend(struct gitdiff_data *state,
 			  const char *line,
 			  struct patch *patch)
 {
@@ -925,14 +911,14 @@ static int gitdiff_hdrend(struct apply_state *state,
 #define DIFF_OLD_NAME 0
 #define DIFF_NEW_NAME 1
 
-static int gitdiff_verify_name(struct apply_state *state,
+static int gitdiff_verify_name(struct gitdiff_data *state,
 			       const char *line,
 			       int isnull,
 			       char **name,
 			       int side)
 {
 	if (!*name && !isnull) {
-		*name = find_name(state, line, NULL, state->p_value, TERM_TAB);
+		*name = find_name(state->root, line, NULL, state->p_value, TERM_TAB);
 		return 0;
 	}
 
@@ -941,7 +927,7 @@ static int gitdiff_verify_name(struct apply_state *state,
 		if (isnull)
 			return error(_("git apply: bad git-diff - expected /dev/null, got %s on line %d"),
 				     *name, state->linenr);
-		another = find_name(state, line, NULL, state->p_value, TERM_TAB);
+		another = find_name(state->root, line, NULL, state->p_value, TERM_TAB);
 		if (!another || strcmp(another, *name)) {
 			free(another);
 			return error((side == DIFF_NEW_NAME) ?
@@ -957,7 +943,7 @@ static int gitdiff_verify_name(struct apply_state *state,
 	return 0;
 }
 
-static int gitdiff_oldname(struct apply_state *state,
+static int gitdiff_oldname(struct gitdiff_data *state,
 			   const char *line,
 			   struct patch *patch)
 {
@@ -966,7 +952,7 @@ static int gitdiff_oldname(struct apply_state *state,
 				   DIFF_OLD_NAME);
 }
 
-static int gitdiff_newname(struct apply_state *state,
+static int gitdiff_newname(struct gitdiff_data *state,
 			   const char *line,
 			   struct patch *patch)
 {
@@ -984,21 +970,21 @@ static int parse_mode_line(const char *line, int linenr, unsigned int *mode)
 	return 0;
 }
 
-static int gitdiff_oldmode(struct apply_state *state,
+static int gitdiff_oldmode(struct gitdiff_data *state,
 			   const char *line,
 			   struct patch *patch)
 {
 	return parse_mode_line(line, state->linenr, &patch->old_mode);
 }
 
-static int gitdiff_newmode(struct apply_state *state,
+static int gitdiff_newmode(struct gitdiff_data *state,
 			   const char *line,
 			   struct patch *patch)
 {
 	return parse_mode_line(line, state->linenr, &patch->new_mode);
 }
 
-static int gitdiff_delete(struct apply_state *state,
+static int gitdiff_delete(struct gitdiff_data *state,
 			  const char *line,
 			  struct patch *patch)
 {
@@ -1008,7 +994,7 @@ static int gitdiff_delete(struct apply_state *state,
 	return gitdiff_oldmode(state, line, patch);
 }
 
-static int gitdiff_newfile(struct apply_state *state,
+static int gitdiff_newfile(struct gitdiff_data *state,
 			   const char *line,
 			   struct patch *patch)
 {
@@ -1018,47 +1004,47 @@ static int gitdiff_newfile(struct apply_state *state,
 	return gitdiff_newmode(state, line, patch);
 }
 
-static int gitdiff_copysrc(struct apply_state *state,
+static int gitdiff_copysrc(struct gitdiff_data *state,
 			   const char *line,
 			   struct patch *patch)
 {
 	patch->is_copy = 1;
 	free(patch->old_name);
-	patch->old_name = find_name(state, line, NULL, state->p_value ? state->p_value - 1 : 0, 0);
+	patch->old_name = find_name(state->root, line, NULL, state->p_value ? state->p_value - 1 : 0, 0);
 	return 0;
 }
 
-static int gitdiff_copydst(struct apply_state *state,
+static int gitdiff_copydst(struct gitdiff_data *state,
 			   const char *line,
 			   struct patch *patch)
 {
 	patch->is_copy = 1;
 	free(patch->new_name);
-	patch->new_name = find_name(state, line, NULL, state->p_value ? state->p_value - 1 : 0, 0);
+	patch->new_name = find_name(state->root, line, NULL, state->p_value ? state->p_value - 1 : 0, 0);
 	return 0;
 }
 
-static int gitdiff_renamesrc(struct apply_state *state,
+static int gitdiff_renamesrc(struct gitdiff_data *state,
 			     const char *line,
 			     struct patch *patch)
 {
 	patch->is_rename = 1;
 	free(patch->old_name);
-	patch->old_name = find_name(state, line, NULL, state->p_value ? state->p_value - 1 : 0, 0);
+	patch->old_name = find_name(state->root, line, NULL, state->p_value ? state->p_value - 1 : 0, 0);
 	return 0;
 }
 
-static int gitdiff_renamedst(struct apply_state *state,
+static int gitdiff_renamedst(struct gitdiff_data *state,
 			     const char *line,
 			     struct patch *patch)
 {
 	patch->is_rename = 1;
 	free(patch->new_name);
-	patch->new_name = find_name(state, line, NULL, state->p_value ? state->p_value - 1 : 0, 0);
+	patch->new_name = find_name(state->root, line, NULL, state->p_value ? state->p_value - 1 : 0, 0);
 	return 0;
 }
 
-static int gitdiff_similarity(struct apply_state *state,
+static int gitdiff_similarity(struct gitdiff_data *state,
 			      const char *line,
 			      struct patch *patch)
 {
@@ -1068,7 +1054,7 @@ static int gitdiff_similarity(struct apply_state *state,
 	return 0;
 }
 
-static int gitdiff_dissimilarity(struct apply_state *state,
+static int gitdiff_dissimilarity(struct gitdiff_data *state,
 				 const char *line,
 				 struct patch *patch)
 {
@@ -1078,7 +1064,7 @@ static int gitdiff_dissimilarity(struct apply_state *state,
 	return 0;
 }
 
-static int gitdiff_index(struct apply_state *state,
+static int gitdiff_index(struct gitdiff_data *state,
 			 const char *line,
 			 struct patch *patch)
 {
@@ -1088,13 +1074,14 @@ static int gitdiff_index(struct apply_state *state,
 	 */
 	const char *ptr, *eol;
 	int len;
+	const unsigned hexsz = the_hash_algo->hexsz;
 
 	ptr = strchr(line, '.');
-	if (!ptr || ptr[1] != '.' || 40 < ptr - line)
+	if (!ptr || ptr[1] != '.' || hexsz < ptr - line)
 		return 0;
 	len = ptr - line;
-	memcpy(patch->old_sha1_prefix, line, len);
-	patch->old_sha1_prefix[len] = 0;
+	memcpy(patch->old_oid_prefix, line, len);
+	patch->old_oid_prefix[len] = 0;
 
 	line = ptr + 2;
 	ptr = strchr(line, ' ');
@@ -1104,10 +1091,10 @@ static int gitdiff_index(struct apply_state *state,
 		ptr = eol;
 	len = ptr - line;
 
-	if (40 < len)
+	if (hexsz < len)
 		return 0;
-	memcpy(patch->new_sha1_prefix, line, len);
-	patch->new_sha1_prefix[len] = 0;
+	memcpy(patch->new_oid_prefix, line, len);
+	patch->new_oid_prefix[len] = 0;
 	if (*ptr == ' ')
 		return gitdiff_oldmode(state, ptr + 1, patch);
 	return 0;
@@ -1117,7 +1104,7 @@ static int gitdiff_index(struct apply_state *state,
  * This is normal for a diff that doesn't change anything: we'll fall through
  * into the next diff. Tell the parser to break out.
  */
-static int gitdiff_unrecognized(struct apply_state *state,
+static int gitdiff_unrecognized(struct gitdiff_data *state,
 				const char *line,
 				struct patch *patch)
 {
@@ -1128,17 +1115,17 @@ static int gitdiff_unrecognized(struct apply_state *state,
  * Skip p_value leading components from "line"; as we do not accept
  * absolute paths, return NULL in that case.
  */
-static const char *skip_tree_prefix(struct apply_state *state,
+static const char *skip_tree_prefix(int p_value,
 				    const char *line,
 				    int llen)
 {
 	int nslash;
 	int i;
 
-	if (!state->p_value)
+	if (!p_value)
 		return (llen && line[0] == '/') ? NULL : line;
 
-	nslash = state->p_value;
+	nslash = p_value;
 	for (i = 0; i < llen; i++) {
 		int ch = line[i];
 		if (ch == '/' && --nslash <= 0)
@@ -1155,7 +1142,7 @@ static const char *skip_tree_prefix(struct apply_state *state,
  * creation or deletion of an empty file.  In any of these cases,
  * both sides are the same name under a/ and b/ respectively.
  */
-static char *git_header_name(struct apply_state *state,
+static char *git_header_name(int p_value,
 			     const char *line,
 			     int llen)
 {
@@ -1175,7 +1162,7 @@ static char *git_header_name(struct apply_state *state,
 			goto free_and_fail1;
 
 		/* strip the a/b prefix including trailing slash */
-		cp = skip_tree_prefix(state, first.buf, first.len);
+		cp = skip_tree_prefix(p_value, first.buf, first.len);
 		if (!cp)
 			goto free_and_fail1;
 		strbuf_remove(&first, 0, cp - first.buf);
@@ -1192,7 +1179,7 @@ static char *git_header_name(struct apply_state *state,
 		if (*second == '"') {
 			if (unquote_c_style(&sp, second, NULL))
 				goto free_and_fail1;
-			cp = skip_tree_prefix(state, sp.buf, sp.len);
+			cp = skip_tree_prefix(p_value, sp.buf, sp.len);
 			if (!cp)
 				goto free_and_fail1;
 			/* They must match, otherwise ignore */
@@ -1203,7 +1190,7 @@ static char *git_header_name(struct apply_state *state,
 		}
 
 		/* unquoted second */
-		cp = skip_tree_prefix(state, second, line + llen - second);
+		cp = skip_tree_prefix(p_value, second, line + llen - second);
 		if (!cp)
 			goto free_and_fail1;
 		if (line + llen - cp != first.len ||
@@ -1218,7 +1205,7 @@ static char *git_header_name(struct apply_state *state,
 	}
 
 	/* unquoted first name */
-	name = skip_tree_prefix(state, line, llen);
+	name = skip_tree_prefix(p_value, line, llen);
 	if (!name)
 		return NULL;
 
@@ -1234,7 +1221,7 @@ static char *git_header_name(struct apply_state *state,
 			if (unquote_c_style(&sp, second, NULL))
 				goto free_and_fail2;
 
-			np = skip_tree_prefix(state, sp.buf, sp.len);
+			np = skip_tree_prefix(p_value, sp.buf, sp.len);
 			if (!np)
 				goto free_and_fail2;
 
@@ -1278,7 +1265,7 @@ static char *git_header_name(struct apply_state *state,
 			 */
 			if (!name[len + 1])
 				return NULL; /* no postimage name */
-			second = skip_tree_prefix(state, name + len + 1,
+			second = skip_tree_prefix(p_value, name + len + 1,
 						  line_len - (len + 1));
 			if (!second)
 				return NULL;
@@ -1293,26 +1280,28 @@ static char *git_header_name(struct apply_state *state,
 	}
 }
 
-static int check_header_line(struct apply_state *state, struct patch *patch)
+static int check_header_line(int linenr, struct patch *patch)
 {
 	int extensions = (patch->is_delete == 1) + (patch->is_new == 1) +
 			 (patch->is_rename == 1) + (patch->is_copy == 1);
 	if (extensions > 1)
 		return error(_("inconsistent header lines %d and %d"),
-			     patch->extension_linenr, state->linenr);
+			     patch->extension_linenr, linenr);
 	if (extensions && !patch->extension_linenr)
-		patch->extension_linenr = state->linenr;
+		patch->extension_linenr = linenr;
 	return 0;
 }
 
-/* Verify that we recognize the lines following a git header */
-static int parse_git_header(struct apply_state *state,
-			    const char *line,
-			    int len,
-			    unsigned int size,
-			    struct patch *patch)
+int parse_git_diff_header(struct strbuf *root,
+			  int *linenr,
+			  int p_value,
+			  const char *line,
+			  int len,
+			  unsigned int size,
+			  struct patch *patch)
 {
 	unsigned long offset;
+	struct gitdiff_data parse_hdr_state;
 
 	/* A git diff has explicit new/delete information, so we don't guess */
 	patch->is_new = 0;
@@ -1324,20 +1313,24 @@ static int parse_git_header(struct apply_state *state,
 	 * or removing or adding empty files), so we get
 	 * the default name from the header.
 	 */
-	patch->def_name = git_header_name(state, line, len);
-	if (patch->def_name && state->root.len) {
-		char *s = xstrfmt("%s%s", state->root.buf, patch->def_name);
+	patch->def_name = git_header_name(p_value, line, len);
+	if (patch->def_name && root->len) {
+		char *s = xstrfmt("%s%s", root->buf, patch->def_name);
 		free(patch->def_name);
 		patch->def_name = s;
 	}
 
 	line += len;
 	size -= len;
-	state->linenr++;
-	for (offset = len ; size > 0 ; offset += len, size -= len, line += len, state->linenr++) {
+	(*linenr)++;
+	parse_hdr_state.root = root;
+	parse_hdr_state.linenr = *linenr;
+	parse_hdr_state.p_value = p_value;
+
+	for (offset = len ; size > 0 ; offset += len, size -= len, line += len, (*linenr)++) {
 		static const struct opentry {
 			const char *str;
-			int (*fn)(struct apply_state *, const char *, struct patch *);
+			int (*fn)(struct gitdiff_data *, const char *, struct patch *);
 		} optable[] = {
 			{ "@@ -", gitdiff_hdrend },
 			{ "--- ", gitdiff_oldname },
@@ -1368,17 +1361,38 @@ static int parse_git_header(struct apply_state *state,
 			int res;
 			if (len < oplen || memcmp(p->str, line, oplen))
 				continue;
-			res = p->fn(state, line + oplen, patch);
+			res = p->fn(&parse_hdr_state, line + oplen, patch);
 			if (res < 0)
 				return -1;
-			if (check_header_line(state, patch))
+			if (check_header_line(*linenr, patch))
 				return -1;
 			if (res > 0)
-				return offset;
+				goto done;
 			break;
 		}
 	}
 
+done:
+	if (!patch->old_name && !patch->new_name) {
+		if (!patch->def_name) {
+			error(Q_("git diff header lacks filename information when removing "
+				 "%d leading pathname component (line %d)",
+				 "git diff header lacks filename information when removing "
+				 "%d leading pathname components (line %d)",
+				 parse_hdr_state.p_value),
+			      parse_hdr_state.p_value, *linenr);
+			return -128;
+		}
+		patch->old_name = xstrdup(patch->def_name);
+		patch->new_name = xstrdup(patch->def_name);
+	}
+	if ((!patch->new_name && !patch->is_delete) ||
+	    (!patch->old_name && !patch->is_new)) {
+		error(_("git diff header lacks filename information "
+			"(line %d)"), *linenr);
+		return -128;
+	}
+	patch->is_toplevel_relative = 1;
 	return offset;
 }
 
@@ -1552,31 +1566,13 @@ static int find_header(struct apply_state *state,
 		 * or mode change, so we handle that specially
 		 */
 		if (!memcmp("diff --git ", line, 11)) {
-			int git_hdr_len = parse_git_header(state, line, len, size, patch);
+			int git_hdr_len = parse_git_diff_header(&state->root, &state->linenr,
+								state->p_value, line, len,
+								size, patch);
 			if (git_hdr_len < 0)
 				return -128;
 			if (git_hdr_len <= len)
 				continue;
-			if (!patch->old_name && !patch->new_name) {
-				if (!patch->def_name) {
-					error(Q_("git diff header lacks filename information when removing "
-							"%d leading pathname component (line %d)",
-							"git diff header lacks filename information when removing "
-							"%d leading pathname components (line %d)",
-							state->p_value),
-						     state->p_value, state->linenr);
-					return -128;
-				}
-				patch->old_name = xstrdup(patch->def_name);
-				patch->new_name = xstrdup(patch->def_name);
-			}
-			if ((!patch->new_name && !patch->is_delete) ||
-			    (!patch->old_name && !patch->is_new)) {
-				error(_("git diff header lacks filename information "
-					     "(line %d)"), state->linenr);
-				return -128;
-			}
-			patch->is_toplevel_relative = 1;
 			*hdrsize = git_hdr_len;
 			return offset;
 		}
@@ -1742,7 +1738,7 @@ static int parse_fragment(struct apply_state *state,
 	}
 	if (oldlines || newlines)
 		return -1;
-	if (!deleted && !added)
+	if (!patch->recount && !deleted && !added)
 		return -1;
 
 	fragment->leading = leading;
@@ -1791,7 +1787,7 @@ static int parse_single_patch(struct apply_state *state,
 		struct fragment *fragment;
 		int len;
 
-		fragment = xcalloc(1, sizeof(*fragment));
+		CALLOC_ARRAY(fragment, 1);
 		fragment->linenr = state->linenr;
 		len = parse_fragment(state, line, size, patch, fragment);
 		if (len <= 0) {
@@ -1928,6 +1924,7 @@ static struct fragment *parse_binary_hunk(struct apply_state *state,
 
 	state->linenr++;
 	buffer += llen;
+	size -= llen;
 	while (1) {
 		int byte_length, max_byte_length, newsize;
 		llen = linelen(buffer, size);
@@ -1969,7 +1966,7 @@ static struct fragment *parse_binary_hunk(struct apply_state *state,
 		size -= llen;
 	}
 
-	frag = xcalloc(1, sizeof(*frag));
+	CALLOC_ARRAY(frag, 1);
 	frag->patch = inflate_it(data, hunk_size, origlen);
 	frag->free_patch = 1;
 	if (!frag->patch)
@@ -2126,10 +2123,12 @@ static int parse_chunk(struct apply_state *state, char *buffer, unsigned long si
 
 	if (!use_patch(state, patch))
 		patch->ws_rule = 0;
+	else if (patch->new_name)
+		patch->ws_rule = whitespace_rule(state->repo->index,
+						 patch->new_name);
 	else
-		patch->ws_rule = whitespace_rule(patch->new_name
-						 ? patch->new_name
-						 : patch->old_name);
+		patch->ws_rule = whitespace_rule(state->repo->index,
+						 patch->old_name);
 
 	patchsize = parse_single_patch(state,
 				       buffer + offset + hdrsize,
@@ -2199,7 +2198,7 @@ static void reverse_patches(struct patch *p)
 		SWAP(p->new_mode, p->old_mode);
 		SWAP(p->is_new, p->is_delete);
 		SWAP(p->lines_added, p->lines_deleted);
-		SWAP(p->old_sha1_prefix, p->new_sha1_prefix);
+		SWAP(p->old_oid_prefix, p->new_oid_prefix);
 
 		for (; frag; frag = frag->next) {
 			SWAP(frag->newpos, frag->oldpos);
@@ -2375,7 +2374,7 @@ static void update_pre_post_images(struct image *preimage,
 	if (postlen
 	    ? postlen < new_buf - postimage->buf
 	    : postimage->len < new_buf - postimage->buf)
-		die("BUG: caller miscounted postlen: asked %d, orig = %d, used = %d",
+		BUG("caller miscounted postlen: asked %d, orig = %d, used = %d",
 		    (int)postlen, (int) postimage->len, (int)(new_buf - postimage->buf));
 
 	/* Fix the length of the whole thing */
@@ -2668,6 +2667,16 @@ static int find_pos(struct apply_state *state,
 	int i;
 	unsigned long backwards, forwards, current;
 	int backwards_lno, forwards_lno, current_lno;
+
+	/*
+	 * When running with --allow-overlap, it is possible that a hunk is
+	 * seen that pretends to start at the beginning (but no longer does),
+	 * and that *still* needs to match the end. So trust `match_end` more
+	 * than `match_beginning`.
+	 */
+	if (state->allow_overlap && match_beginning && match_end &&
+	    img->nr - preimage->nr != 0)
+		match_beginning = 0;
 
 	/*
 	 * If match_beginning or match_end is specified, there is no
@@ -3137,15 +3146,16 @@ static int apply_binary(struct apply_state *state,
 {
 	const char *name = patch->old_name ? patch->old_name : patch->new_name;
 	struct object_id oid;
+	const unsigned hexsz = the_hash_algo->hexsz;
 
 	/*
 	 * For safety, we require patch index line to contain
-	 * full 40-byte textual SHA1 for old and new, at least for now.
+	 * full hex textual object ID for old and new, at least for now.
 	 */
-	if (strlen(patch->old_sha1_prefix) != 40 ||
-	    strlen(patch->new_sha1_prefix) != 40 ||
-	    get_oid_hex(patch->old_sha1_prefix, &oid) ||
-	    get_oid_hex(patch->new_sha1_prefix, &oid))
+	if (strlen(patch->old_oid_prefix) != hexsz ||
+	    strlen(patch->new_oid_prefix) != hexsz ||
+	    get_oid_hex(patch->old_oid_prefix, &oid) ||
+	    get_oid_hex(patch->new_oid_prefix, &oid))
 		return error(_("cannot apply binary patch to '%s' "
 			       "without full index line"), name);
 
@@ -3154,8 +3164,9 @@ static int apply_binary(struct apply_state *state,
 		 * See if the old one matches what the patch
 		 * applies to.
 		 */
-		hash_object_file(img->buf, img->len, blob_type, &oid);
-		if (strcmp(oid_to_hex(&oid), patch->old_sha1_prefix))
+		hash_object_file(the_hash_algo, img->buf, img->len, OBJ_BLOB,
+				 &oid);
+		if (strcmp(oid_to_hex(&oid), patch->old_oid_prefix))
 			return error(_("the patch applies to '%s' (%s), "
 				       "which does not match the "
 				       "current contents."),
@@ -3168,13 +3179,13 @@ static int apply_binary(struct apply_state *state,
 				       "'%s' but it is not empty"), name);
 	}
 
-	get_oid_hex(patch->new_sha1_prefix, &oid);
+	get_oid_hex(patch->new_oid_prefix, &oid);
 	if (is_null_oid(&oid)) {
 		clear_image(img);
 		return 0; /* deletion patch */
 	}
 
-	if (has_sha1_file(oid.hash)) {
+	if (has_object(the_repository, &oid, 0)) {
 		/* We already have the postimage */
 		enum object_type type;
 		unsigned long size;
@@ -3184,7 +3195,7 @@ static int apply_binary(struct apply_state *state,
 		if (!result)
 			return error(_("the necessary postimage %s for "
 				       "'%s' cannot be read"),
-				     patch->new_sha1_prefix, name);
+				     patch->new_oid_prefix, name);
 		clear_image(img);
 		img->buf = result;
 		img->len = size;
@@ -3199,10 +3210,11 @@ static int apply_binary(struct apply_state *state,
 				     name);
 
 		/* verify that the result matches */
-		hash_object_file(img->buf, img->len, blob_type, &oid);
-		if (strcmp(oid_to_hex(&oid), patch->new_sha1_prefix))
+		hash_object_file(the_hash_algo, img->buf, img->len, OBJ_BLOB,
+				 &oid);
+		if (strcmp(oid_to_hex(&oid), patch->new_oid_prefix))
 			return error(_("binary patch to '%s' creates incorrect result (expecting %s, got %s)"),
-				name, patch->new_sha1_prefix, oid_to_hex(&oid));
+				name, patch->new_oid_prefix, oid_to_hex(&oid));
 	}
 
 	return 0;
@@ -3262,11 +3274,11 @@ static struct patch *in_fn_table(struct apply_state *state, const char *name)
 {
 	struct string_list_item *item;
 
-	if (name == NULL)
+	if (!name)
 		return NULL;
 
 	item = string_list_lookup(&state->fn_table, name);
-	if (item != NULL)
+	if (item)
 		return (struct patch *)item->util;
 
 	return NULL;
@@ -3306,7 +3318,7 @@ static void add_to_fn_table(struct apply_state *state, struct patch *patch)
 	 * This should cover the cases for normal diffs,
 	 * file creations and copies
 	 */
-	if (patch->new_name != NULL) {
+	if (patch->new_name) {
 		item = string_list_insert(&state->fn_table, patch->new_name);
 		item->util = patch;
 	}
@@ -3343,7 +3355,8 @@ static int checkout_target(struct index_state *istate,
 
 	costate.refresh_cache = 1;
 	costate.istate = istate;
-	if (checkout_entry(ce, &costate, NULL) || lstat(ce->name, st))
+	if (checkout_entry(ce, &costate, NULL, NULL) ||
+	    lstat(ce->name, st))
 		return error(_("cannot checkout %s"), ce->name);
 	return 0;
 }
@@ -3371,14 +3384,17 @@ static struct patch *previous_patch(struct apply_state *state,
 	return previous;
 }
 
-static int verify_index_match(const struct cache_entry *ce, struct stat *st)
+static int verify_index_match(struct apply_state *state,
+			      const struct cache_entry *ce,
+			      struct stat *st)
 {
 	if (S_ISGITLINK(ce->ce_mode)) {
 		if (!S_ISDIR(st->st_mode))
 			return -1;
 		return 0;
 	}
-	return ce_match_stat(ce, st, CE_MATCH_IGNORE_VALID|CE_MATCH_IGNORE_SKIP_WORKTREE);
+	return ie_match_stat(state->repo->index, ce, st,
+			     CE_MATCH_IGNORE_VALID | CE_MATCH_IGNORE_SKIP_WORKTREE);
 }
 
 #define SUBMODULE_PATCH_WITHOUT_INDEX 1
@@ -3459,7 +3475,23 @@ static int load_preimage(struct apply_state *state,
 	return 0;
 }
 
-static int three_way_merge(struct image *image,
+static int resolve_to(struct image *image, const struct object_id *result_id)
+{
+	unsigned long size;
+	enum object_type type;
+
+	clear_image(image);
+
+	image->buf = read_object_file(result_id, &type, &size);
+	if (!image->buf || type != OBJ_BLOB)
+		die("unable to read blob object %s", oid_to_hex(result_id));
+	image->len = size;
+
+	return 0;
+}
+
+static int three_way_merge(struct apply_state *state,
+			   struct image *image,
 			   char *path,
 			   const struct object_id *base,
 			   const struct object_id *ours,
@@ -3467,7 +3499,13 @@ static int three_way_merge(struct image *image,
 {
 	mmfile_t base_file, our_file, their_file;
 	mmbuffer_t result = { NULL };
-	int status;
+	enum ll_merge_result status;
+
+	/* resolve trivial cases first */
+	if (oideq(base, ours))
+		return resolve_to(image, theirs);
+	else if (oideq(base, theirs) || oideq(ours, theirs))
+		return resolve_to(image, ours);
 
 	read_mmblob(&base_file, base);
 	read_mmblob(&our_file, ours);
@@ -3475,7 +3513,12 @@ static int three_way_merge(struct image *image,
 	status = ll_merge(&result, path,
 			  &base_file, "base",
 			  &our_file, "ours",
-			  &their_file, "theirs", NULL);
+			  &their_file, "theirs",
+			  state->repo->index,
+			  NULL);
+	if (status == LL_MERGE_BINARY_CONFLICT)
+		warning("Cannot merge binary files: %s (%s vs. %s)",
+			path, "ours", "theirs");
 	free(base_file.ptr);
 	free(our_file.ptr);
 	free(their_file.ptr);
@@ -3509,19 +3552,19 @@ static int load_current(struct apply_state *state,
 	unsigned mode = patch->new_mode;
 
 	if (!patch->is_new)
-		die("BUG: patch to %s is not a creation", patch->old_name);
+		BUG("patch to %s is not a creation", patch->old_name);
 
-	pos = cache_name_pos(name, strlen(name));
+	pos = index_name_pos(state->repo->index, name, strlen(name));
 	if (pos < 0)
 		return error(_("%s: does not exist in index"), name);
-	ce = active_cache[pos];
+	ce = state->repo->index->cache[pos];
 	if (lstat(name, &st)) {
 		if (errno != ENOENT)
 			return error_errno("%s", name);
-		if (checkout_target(&the_index, ce, &st))
+		if (checkout_target(state->repo->index, ce, &st))
 			return -1;
 	}
-	if (verify_index_match(ce, &st))
+	if (verify_index_match(state, ce, &st))
 		return error(_("%s: does not match index"), name);
 
 	status = load_patch_target(state, &buf, ce, &st, patch, name, mode);
@@ -3549,18 +3592,20 @@ static int try_threeway(struct apply_state *state,
 
 	/* No point falling back to 3-way merge in these cases */
 	if (patch->is_delete ||
-	    S_ISGITLINK(patch->old_mode) || S_ISGITLINK(patch->new_mode))
+	    S_ISGITLINK(patch->old_mode) || S_ISGITLINK(patch->new_mode) ||
+	    (patch->is_new && !patch->direct_to_threeway) ||
+	    (patch->is_rename && !patch->lines_added && !patch->lines_deleted))
 		return -1;
 
 	/* Preimage the patch was prepared for */
 	if (patch->is_new)
-		write_object_file("", 0, blob_type, &pre_oid);
-	else if (get_oid(patch->old_sha1_prefix, &pre_oid) ||
+		write_object_file("", 0, OBJ_BLOB, &pre_oid);
+	else if (get_oid(patch->old_oid_prefix, &pre_oid) ||
 		 read_blob_object(&buf, &pre_oid, patch->old_mode))
-		return error(_("repository lacks the necessary blob to fall back on 3-way merge."));
+		return error(_("repository lacks the necessary blob to perform 3-way merge."));
 
-	if (state->apply_verbosity > verbosity_silent)
-		fprintf(stderr, _("Falling back to three-way merge...\n"));
+	if (state->apply_verbosity > verbosity_silent && patch->direct_to_threeway)
+		fprintf(stderr, _("Performing three-way merge...\n"));
 
 	img = strbuf_detach(&buf, &len);
 	prepare_image(&tmp_image, img, len, 1);
@@ -3570,7 +3615,7 @@ static int try_threeway(struct apply_state *state,
 		return -1;
 	}
 	/* post_oid is theirs */
-	write_object_file(tmp_image.buf, tmp_image.len, blob_type, &post_oid);
+	write_object_file(tmp_image.buf, tmp_image.len, OBJ_BLOB, &post_oid);
 	clear_image(&tmp_image);
 
 	/* our_oid is ours */
@@ -3583,16 +3628,16 @@ static int try_threeway(struct apply_state *state,
 			return error(_("cannot read the current contents of '%s'"),
 				     patch->old_name);
 	}
-	write_object_file(tmp_image.buf, tmp_image.len, blob_type, &our_oid);
+	write_object_file(tmp_image.buf, tmp_image.len, OBJ_BLOB, &our_oid);
 	clear_image(&tmp_image);
 
 	/* in-core three-way merge between post and our using pre as base */
-	status = three_way_merge(image, patch->new_name,
+	status = three_way_merge(state, image, patch->new_name,
 				 &pre_oid, &our_oid, &post_oid);
 	if (status < 0) {
 		if (state->apply_verbosity > verbosity_silent)
 			fprintf(stderr,
-				_("Failed to fall back on three-way merge...\n"));
+				_("Failed to perform three-way merge...\n"));
 		return status;
 	}
 
@@ -3625,10 +3670,13 @@ static int apply_data(struct apply_state *state, struct patch *patch,
 	if (load_preimage(state, &image, patch, st, ce) < 0)
 		return -1;
 
-	if (patch->direct_to_threeway ||
-	    apply_fragments(state, &image, patch) < 0) {
+	if (!state->threeway || try_threeway(state, &image, patch, st, ce) < 0) {
+		if (state->apply_verbosity > verbosity_silent &&
+		    state->threeway && !patch->direct_to_threeway)
+			fprintf(stderr, _("Falling back to direct application...\n"));
+
 		/* Note: with --reject, apply_fragments() returns 0 */
-		if (!state->threeway || try_threeway(state, &image, patch, st, ce) < 0)
+		if (patch->direct_to_threeway || apply_fragments(state, &image, patch) < 0)
 			return -1;
 	}
 	patch->result = image.buf;
@@ -3680,18 +3728,19 @@ static int check_preimage(struct apply_state *state,
 	}
 
 	if (state->check_index && !previous) {
-		int pos = cache_name_pos(old_name, strlen(old_name));
+		int pos = index_name_pos(state->repo->index, old_name,
+					 strlen(old_name));
 		if (pos < 0) {
 			if (patch->is_new < 0)
 				goto is_new;
 			return error(_("%s: does not exist in index"), old_name);
 		}
-		*ce = active_cache[pos];
+		*ce = state->repo->index->cache[pos];
 		if (stat_ret < 0) {
-			if (checkout_target(&the_index, *ce, st))
+			if (checkout_target(state->repo->index, *ce, st))
 				return -1;
 		}
-		if (!state->cached && verify_index_match(*ce, st))
+		if (!state->cached && verify_index_match(state, *ce, st))
 			return error(_("%s: does not match index"), old_name);
 		if (state->cached)
 			st_mode = (*ce)->ce_mode;
@@ -3727,6 +3776,7 @@ static int check_preimage(struct apply_state *state,
 
 #define EXISTS_IN_INDEX 1
 #define EXISTS_IN_WORKTREE 2
+#define EXISTS_IN_INDEX_AS_ITA 3
 
 static int check_to_create(struct apply_state *state,
 			   const char *new_name,
@@ -3734,10 +3784,23 @@ static int check_to_create(struct apply_state *state,
 {
 	struct stat nst;
 
-	if (state->check_index &&
-	    cache_name_pos(new_name, strlen(new_name)) >= 0 &&
-	    !ok_if_exists)
-		return EXISTS_IN_INDEX;
+	if (state->check_index && (!ok_if_exists || !state->cached)) {
+		int pos;
+
+		pos = index_name_pos(state->repo->index, new_name, strlen(new_name));
+		if (pos >= 0) {
+			struct cache_entry *ce = state->repo->index->cache[pos];
+
+			/* allow ITA, as they do not yet exist in the index */
+			if (!ok_if_exists && !(ce->ce_flags & CE_INTENT_TO_ADD))
+				return EXISTS_IN_INDEX;
+
+			/* ITA entries can never match working tree files */
+			if (!state->cached && (ce->ce_flags & CE_INTENT_TO_ADD))
+				return EXISTS_IN_INDEX_AS_ITA;
+		}
+	}
+
 	if (state->cached)
 		return 0;
 
@@ -3761,59 +3824,31 @@ static int check_to_create(struct apply_state *state,
 	return 0;
 }
 
-static uintptr_t register_symlink_changes(struct apply_state *state,
-					  const char *path,
-					  uintptr_t what)
-{
-	struct string_list_item *ent;
-
-	ent = string_list_lookup(&state->symlink_changes, path);
-	if (!ent) {
-		ent = string_list_insert(&state->symlink_changes, path);
-		ent->util = (void *)0;
-	}
-	ent->util = (void *)(what | ((uintptr_t)ent->util));
-	return (uintptr_t)ent->util;
-}
-
-static uintptr_t check_symlink_changes(struct apply_state *state, const char *path)
-{
-	struct string_list_item *ent;
-
-	ent = string_list_lookup(&state->symlink_changes, path);
-	if (!ent)
-		return 0;
-	return (uintptr_t)ent->util;
-}
-
 static void prepare_symlink_changes(struct apply_state *state, struct patch *patch)
 {
 	for ( ; patch; patch = patch->next) {
 		if ((patch->old_name && S_ISLNK(patch->old_mode)) &&
 		    (patch->is_rename || patch->is_delete))
 			/* the symlink at patch->old_name is removed */
-			register_symlink_changes(state, patch->old_name, APPLY_SYMLINK_GOES_AWAY);
+			strset_add(&state->removed_symlinks, patch->old_name);
 
 		if (patch->new_name && S_ISLNK(patch->new_mode))
 			/* the symlink at patch->new_name is created or remains */
-			register_symlink_changes(state, patch->new_name, APPLY_SYMLINK_IN_RESULT);
+			strset_add(&state->kept_symlinks, patch->new_name);
 	}
 }
 
 static int path_is_beyond_symlink_1(struct apply_state *state, struct strbuf *name)
 {
 	do {
-		unsigned int change;
-
 		while (--name->len && name->buf[name->len] != '/')
 			; /* scan backwards */
 		if (!name->len)
 			break;
 		name->buf[name->len] = '\0';
-		change = check_symlink_changes(state, name->buf);
-		if (change & APPLY_SYMLINK_IN_RESULT)
+		if (strset_contains(&state->kept_symlinks, name->buf))
 			return 1;
-		if (change & APPLY_SYMLINK_GOES_AWAY)
+		if (strset_contains(&state->removed_symlinks, name->buf))
 			/*
 			 * This cannot be "return 0", because we may
 			 * see a new one created at a higher level.
@@ -3824,7 +3859,8 @@ static int path_is_beyond_symlink_1(struct apply_state *state, struct strbuf *na
 		if (state->check_index) {
 			struct cache_entry *ce;
 
-			ce = cache_file_exists(name->buf, name->len, ignore_case);
+			ce = index_file_exists(state->repo->index, name->buf,
+					       name->len, ignore_case);
 			if (ce && S_ISLNK(ce->ce_mode))
 				return 1;
 		} else {
@@ -3860,9 +3896,9 @@ static int check_unsafe_path(struct patch *patch)
 	if (!patch->is_delete)
 		new_name = patch->new_name;
 
-	if (old_name && !verify_path(old_name))
+	if (old_name && !verify_path(old_name, patch->old_mode))
 		return error(_("invalid path '%s'"), old_name);
-	if (new_name && !verify_path(new_name))
+	if (new_name && !verify_path(new_name, patch->new_mode))
 		return error(_("invalid path '%s'"), new_name);
 	return 0;
 }
@@ -3920,7 +3956,8 @@ static int check_patch(struct apply_state *state, struct patch *patch)
 			break; /* happy */
 		case EXISTS_IN_INDEX:
 			return error(_("%s: already exists in index"), new_name);
-			break;
+		case EXISTS_IN_INDEX_AS_ITA:
+			return error(_("%s: does not match index"), new_name);
 		case EXISTS_IN_WORKTREE:
 			return error(_("%s: already exists in working directory"),
 				     new_name);
@@ -3999,9 +4036,10 @@ static int check_patch_list(struct apply_state *state, struct patch *patch)
 static int read_apply_cache(struct apply_state *state)
 {
 	if (state->index_file)
-		return read_cache_from(state->index_file);
+		return read_index_from(state->repo->index, state->index_file,
+				       get_git_dir());
 	else
-		return read_cache();
+		return repo_read_index(state->repo);
 }
 
 /* This function tries to read the object name from the current index */
@@ -4012,10 +4050,10 @@ static int get_current_oid(struct apply_state *state, const char *path,
 
 	if (read_apply_cache(state) < 0)
 		return -1;
-	pos = cache_name_pos(path, strlen(path));
+	pos = index_name_pos(state->repo->index, path, strlen(path));
 	if (pos < 0)
 		return -1;
-	oidcpy(oid, &active_cache[pos]->oid);
+	oidcpy(oid, &state->repo->index->cache[pos]->oid);
 	return 0;
 }
 
@@ -4044,21 +4082,21 @@ static int preimage_oid_in_gitlink_patch(struct patch *p, struct object_id *oid)
 	    starts_with(++preimage, heading) &&
 	    /* does it record full SHA-1? */
 	    !get_oid_hex(preimage + sizeof(heading) - 1, oid) &&
-	    preimage[sizeof(heading) + GIT_SHA1_HEXSZ - 1] == '\n' &&
+	    preimage[sizeof(heading) + the_hash_algo->hexsz - 1] == '\n' &&
 	    /* does the abbreviated name on the index line agree with it? */
-	    starts_with(preimage + sizeof(heading) - 1, p->old_sha1_prefix))
+	    starts_with(preimage + sizeof(heading) - 1, p->old_oid_prefix))
 		return 0; /* it all looks fine */
 
 	/* we may have full object name on the index line */
-	return get_oid_hex(p->old_sha1_prefix, oid);
+	return get_oid_hex(p->old_oid_prefix, oid);
 }
 
-/* Build an index that contains the just the files needed for a 3way merge */
+/* Build an index that contains just the files needed for a 3way merge */
 static int build_fake_ancestor(struct apply_state *state, struct patch *list)
 {
 	struct patch *patch;
 	struct index_state result = { NULL };
-	static struct lock_file lock;
+	struct lock_file lock = LOCK_INIT;
 	int res;
 
 	/* Once we start supporting the reverse patch, it may be
@@ -4079,7 +4117,7 @@ static int build_fake_ancestor(struct apply_state *state, struct patch *list)
 			else
 				return error(_("sha1 information is lacking or "
 					       "useless for submodule %s"), name);
-		} else if (!get_oid_blob(patch->old_sha1_prefix, &oid)) {
+		} else if (!get_oid_blob(patch->old_oid_prefix, &oid)) {
 			; /* ok */
 		} else if (!patch->lines_added && !patch->lines_deleted) {
 			/* mode-only change: update the current */
@@ -4090,12 +4128,12 @@ static int build_fake_ancestor(struct apply_state *state, struct patch *list)
 			return error(_("sha1 information is lacking or useless "
 				       "(%s)."), name);
 
-		ce = make_cache_entry(patch->old_mode, oid.hash, name, 0, 0);
+		ce = make_cache_entry(&result, patch->old_mode, &oid, name, 0, 0);
 		if (!ce)
 			return error(_("make_cache_entry failed for path '%s'"),
 				     name);
 		if (add_index_entry(&result, ce, ADD_CACHE_OK_TO_ADD)) {
-			free(ce);
+			discard_cache_entry(ce);
 			return error(_("could not add %s to temporary index"),
 				     name);
 		}
@@ -4180,8 +4218,8 @@ static void show_rename_copy(struct patch *p)
 		old_name = slash_old + 1;
 		new_name = slash_new + 1;
 	}
-	/* p->old_name thru old_name is the common prefix, and old_name and new_name
-	 * through the end of names are renames
+	/* p->old_name through old_name is the common prefix, and old_name and
+	 * new_name through the end of names are renames
 	 */
 	if (old_name != p->old_name)
 		printf(" %s %.*s{%s => %s} (%d%%)\n", renamecopy,
@@ -4242,8 +4280,8 @@ static void patch_stats(struct apply_state *state, struct patch *patch)
 
 static int remove_file(struct apply_state *state, struct patch *patch, int rmdir_empty)
 {
-	if (state->update_index) {
-		if (remove_file_from_cache(patch->old_name) < 0)
+	if (state->update_index && !state->ita_only) {
+		if (remove_file_from_index(state->repo->index, patch->old_name) < 0)
 			return error(_("unable to remove %s from index"), patch->old_name);
 	}
 	if (!state->cached) {
@@ -4263,42 +4301,41 @@ static int add_index_file(struct apply_state *state,
 	struct stat st;
 	struct cache_entry *ce;
 	int namelen = strlen(path);
-	unsigned ce_size = cache_entry_size(namelen);
 
-	if (!state->update_index)
-		return 0;
-
-	ce = xcalloc(1, ce_size);
+	ce = make_empty_cache_entry(state->repo->index, namelen);
 	memcpy(ce->name, path, namelen);
 	ce->ce_mode = create_ce_mode(mode);
 	ce->ce_flags = create_ce_flags(0);
 	ce->ce_namelen = namelen;
-	if (S_ISGITLINK(mode)) {
+	if (state->ita_only) {
+		ce->ce_flags |= CE_INTENT_TO_ADD;
+		set_object_name_for_intent_to_add_entry(ce);
+	} else if (S_ISGITLINK(mode)) {
 		const char *s;
 
 		if (!skip_prefix(buf, "Subproject commit ", &s) ||
 		    get_oid_hex(s, &ce->oid)) {
-			free(ce);
-		       return error(_("corrupt patch for submodule %s"), path);
+			discard_cache_entry(ce);
+			return error(_("corrupt patch for submodule %s"), path);
 		}
 	} else {
 		if (!state->cached) {
 			if (lstat(path, &st) < 0) {
-				free(ce);
+				discard_cache_entry(ce);
 				return error_errno(_("unable to stat newly "
 						     "created file '%s'"),
 						   path);
 			}
-			fill_stat_cache_info(ce, &st);
+			fill_stat_cache_info(state->repo->index, ce, &st);
 		}
-		if (write_object_file(buf, size, blob_type, &ce->oid) < 0) {
-			free(ce);
+		if (write_object_file(buf, size, OBJ_BLOB, &ce->oid) < 0) {
+			discard_cache_entry(ce);
 			return error(_("unable to create backing store "
 				       "for newly created file %s"), path);
 		}
 	}
-	if (add_cache_entry(ce, ADD_CACHE_OK_TO_ADD) < 0) {
-		free(ce);
+	if (add_index_entry(state->repo->index, ce, ADD_CACHE_OK_TO_ADD) < 0) {
+		discard_cache_entry(ce);
 		return error(_("unable to add cache entry for %s"), path);
 	}
 
@@ -4311,7 +4348,9 @@ static int add_index_file(struct apply_state *state,
  *   0 if everything went well
  *   1 if a recoverable error happened
  */
-static int try_create_file(const char *path, unsigned int mode, const char *buf, unsigned long size)
+static int try_create_file(struct apply_state *state, const char *path,
+			   unsigned int mode, const char *buf,
+			   unsigned long size)
 {
 	int fd, res;
 	struct strbuf nbuf = STRBUF_INIT;
@@ -4333,7 +4372,7 @@ static int try_create_file(const char *path, unsigned int mode, const char *buf,
 	if (fd < 0)
 		return 1;
 
-	if (convert_to_working_tree(path, buf, size, &nbuf)) {
+	if (convert_to_working_tree(state->repo->index, path, buf, size, &nbuf, NULL)) {
 		size = nbuf.len;
 		buf  = nbuf.buf;
 	}
@@ -4369,16 +4408,16 @@ static int create_one_file(struct apply_state *state,
 	if (state->cached)
 		return 0;
 
-	res = try_create_file(path, mode, buf, size);
+	res = try_create_file(state, path, mode, buf, size);
 	if (res < 0)
 		return -1;
 	if (!res)
 		return 0;
 
 	if (errno == ENOENT) {
-		if (safe_create_leading_directories(path))
+		if (safe_create_leading_directories_no_share(path))
 			return 0;
-		res = try_create_file(path, mode, buf, size);
+		res = try_create_file(state, path, mode, buf, size);
 		if (res < 0)
 			return -1;
 		if (!res)
@@ -4400,7 +4439,7 @@ static int create_one_file(struct apply_state *state,
 		for (;;) {
 			char newpath[PATH_MAX];
 			mksnpath(newpath, sizeof(newpath), "%s~%u", path, nr);
-			res = try_create_file(newpath, mode, buf, size);
+			res = try_create_file(state, newpath, mode, buf, size);
 			if (res < 0)
 				return -1;
 			if (!res) {
@@ -4422,27 +4461,26 @@ static int add_conflicted_stages_file(struct apply_state *state,
 				       struct patch *patch)
 {
 	int stage, namelen;
-	unsigned ce_size, mode;
+	unsigned mode;
 	struct cache_entry *ce;
 
 	if (!state->update_index)
 		return 0;
 	namelen = strlen(patch->new_name);
-	ce_size = cache_entry_size(namelen);
 	mode = patch->new_mode ? patch->new_mode : (S_IFREG | 0644);
 
-	remove_file_from_cache(patch->new_name);
+	remove_file_from_index(state->repo->index, patch->new_name);
 	for (stage = 1; stage < 4; stage++) {
 		if (is_null_oid(&patch->threeway_stage[stage - 1]))
 			continue;
-		ce = xcalloc(1, ce_size);
+		ce = make_empty_cache_entry(state->repo->index, namelen);
 		memcpy(ce->name, patch->new_name, namelen);
 		ce->ce_mode = create_ce_mode(mode);
 		ce->ce_flags = create_ce_flags(stage);
 		ce->ce_namelen = namelen;
 		oidcpy(&ce->oid, &patch->threeway_stage[stage - 1]);
-		if (add_cache_entry(ce, ADD_CACHE_OK_TO_ADD) < 0) {
-			free(ce);
+		if (add_index_entry(state->repo->index, ce, ADD_CACHE_OK_TO_ADD) < 0) {
+			discard_cache_entry(ce);
 			return error(_("unable to add cache entry for %s"),
 				     patch->new_name);
 		}
@@ -4465,8 +4503,9 @@ static int create_file(struct apply_state *state, struct patch *patch)
 
 	if (patch->conflicted_threeway)
 		return add_conflicted_stages_file(state, patch);
-	else
+	else if (state->update_index)
 		return add_index_file(state, path, mode, buf, size);
+	return 0;
 }
 
 /* phase zero is to remove, phase one is to create */
@@ -4615,7 +4654,12 @@ static int write_out_results(struct apply_state *state, struct patch *list)
 		}
 		string_list_clear(&cpath, 0);
 
-		rerere(0);
+		/*
+		 * rerere relies on the partially merged result being in the working
+		 * tree with conflict markers, but that isn't written with --cached.
+		 */
+		if (!state->cached)
+			repo_rerere(state->repo, 0);
 	}
 
 	return errs;
@@ -4640,6 +4684,7 @@ static int apply_patch(struct apply_state *state,
 	struct patch *list = NULL, **listp = &list;
 	int skipped_patch = 0;
 	int res = 0;
+	int flush_attributes = 0;
 
 	state->patch_input_file = filename;
 	if (read_patch_file(&buf, fd) < 0)
@@ -4649,7 +4694,7 @@ static int apply_patch(struct apply_state *state,
 		struct patch *patch;
 		int nr;
 
-		patch = xcalloc(1, sizeof(*patch));
+		CALLOC_ARRAY(patch, 1);
 		patch->inaccurate_eof = !!(options & APPLY_OPT_INACCURATE_EOF);
 		patch->recount =  !!(options & APPLY_OPT_RECOUNT);
 		nr = parse_chunk(state, buf.buf + offset, buf.len - offset, patch);
@@ -4665,8 +4710,21 @@ static int apply_patch(struct apply_state *state,
 			reverse_patches(patch);
 		if (use_patch(state, patch)) {
 			patch_stats(state, patch);
-			*listp = patch;
-			listp = &patch->next;
+			if (!list || !state->apply_in_reverse) {
+				*listp = patch;
+				listp = &patch->next;
+			} else {
+				patch->next = list;
+				list = patch;
+			}
+
+			if ((patch->new_name &&
+			     ends_with_path_components(patch->new_name,
+						       GITATTRIBUTES_FILE)) ||
+			    (patch->old_name &&
+			     ends_with_path_components(patch->old_name,
+						       GITATTRIBUTES_FILE)))
+				flush_attributes = 1;
 		}
 		else {
 			if (state->apply_verbosity > verbosity_normal)
@@ -4678,22 +4736,25 @@ static int apply_patch(struct apply_state *state,
 	}
 
 	if (!list && !skipped_patch) {
-		error(_("unrecognized input"));
-		res = -128;
+		if (!state->allow_empty) {
+			error(_("No valid patches in input (allow with \"--allow-empty\")"));
+			res = -128;
+		}
 		goto end;
 	}
 
 	if (state->whitespace_error && (state->ws_error_action == die_on_ws_error))
 		state->apply = 0;
 
-	state->update_index = state->check_index && state->apply;
+	state->update_index = (state->check_index || state->ita_only) && state->apply;
 	if (state->update_index && !is_lock_file_locked(&state->lock_file)) {
 		if (state->index_file)
 			hold_lock_file_for_update(&state->lock_file,
 						  state->index_file,
 						  LOCK_DIE_ON_ERROR);
 		else
-			hold_locked_index(&state->lock_file, LOCK_DIE_ON_ERROR);
+			repo_hold_locked_index(state->repo, &state->lock_file,
+					       LOCK_DIE_ON_ERROR);
 	}
 
 	if (state->check_index && read_apply_cache(state) < 0) {
@@ -4742,6 +4803,8 @@ static int apply_patch(struct apply_state *state,
 	if (state->summary && state->apply_verbosity > verbosity_silent)
 		summary_patch_list(list);
 
+	if (flush_attributes)
+		reset_parsed_attributes();
 end:
 	free_patch_list(list);
 	strbuf_release(&buf);
@@ -4753,6 +4816,9 @@ static int apply_option_parse_exclude(const struct option *opt,
 				      const char *arg, int unset)
 {
 	struct apply_state *state = opt->value;
+
+	BUG_ON_OPT_NEG(unset);
+
 	add_name_limit(state, arg, 1);
 	return 0;
 }
@@ -4761,6 +4827,9 @@ static int apply_option_parse_include(const struct option *opt,
 				      const char *arg, int unset)
 {
 	struct apply_state *state = opt->value;
+
+	BUG_ON_OPT_NEG(unset);
+
 	add_name_limit(state, arg, 0);
 	state->has_include = 1;
 	return 0;
@@ -4771,6 +4840,9 @@ static int apply_option_parse_p(const struct option *opt,
 				int unset)
 {
 	struct apply_state *state = opt->value;
+
+	BUG_ON_OPT_NEG(unset);
+
 	state->p_value = atoi(arg);
 	state->p_value_known = 1;
 	return 0;
@@ -4780,6 +4852,9 @@ static int apply_option_parse_space_change(const struct option *opt,
 					   const char *arg, int unset)
 {
 	struct apply_state *state = opt->value;
+
+	BUG_ON_OPT_ARG(arg);
+
 	if (unset)
 		state->ws_ignore_action = ignore_ws_none;
 	else
@@ -4791,9 +4866,12 @@ static int apply_option_parse_whitespace(const struct option *opt,
 					 const char *arg, int unset)
 {
 	struct apply_state *state = opt->value;
+
+	BUG_ON_OPT_NEG(unset);
+
 	state->whitespace_option = arg;
 	if (parse_whitespace_option(state, arg))
-		exit(1);
+		return -1;
 	return 0;
 }
 
@@ -4801,6 +4879,9 @@ static int apply_option_parse_directory(const struct option *opt,
 					const char *arg, int unset)
 {
 	struct apply_state *state = opt->value;
+
+	BUG_ON_OPT_NEG(unset);
+
 	strbuf_reset(&state->root);
 	strbuf_addstr(&state->root, arg);
 	strbuf_complete(&state->root, '/');
@@ -4889,7 +4970,7 @@ int apply_all_patches(struct apply_state *state,
 	}
 
 	if (state->update_index) {
-		res = write_locked_index(&the_index, &state->lock_file, COMMIT_LOCK);
+		res = write_locked_index(state->repo->index, &state->lock_file, COMMIT_LOCK);
 		if (res) {
 			error(_("Unable to write new index file"));
 			res = -128;
@@ -4918,15 +4999,15 @@ int apply_parse_options(int argc, const char **argv,
 			const char * const *apply_usage)
 {
 	struct option builtin_apply_options[] = {
-		{ OPTION_CALLBACK, 0, "exclude", state, N_("path"),
+		OPT_CALLBACK_F(0, "exclude", state, N_("path"),
 			N_("don't apply changes matching the given path"),
-			0, apply_option_parse_exclude },
-		{ OPTION_CALLBACK, 0, "include", state, N_("path"),
+			PARSE_OPT_NONEG, apply_option_parse_exclude),
+		OPT_CALLBACK_F(0, "include", state, N_("path"),
 			N_("apply changes matching the given path"),
-			0, apply_option_parse_include },
-		{ OPTION_CALLBACK, 'p', NULL, state, N_("num"),
+			PARSE_OPT_NONEG, apply_option_parse_include),
+		OPT_CALLBACK('p', NULL, state, N_("num"),
 			N_("remove <num> leading slashes from traditional diff paths"),
-			0, apply_option_parse_p },
+			apply_option_parse_p),
 		OPT_BOOL(0, "no-add", &state->no_add,
 			N_("ignore additions made by the patch")),
 		OPT_BOOL(0, "stat", &state->diffstat,
@@ -4941,6 +5022,8 @@ int apply_parse_options(int argc, const char **argv,
 			N_("instead of applying the patch, see if the patch is applicable")),
 		OPT_BOOL(0, "index", &state->check_index,
 			N_("make sure the patch is applicable to the current index")),
+		OPT_BOOL('N', "intent-to-add", &state->ita_only,
+			N_("mark new files with `git add --intent-to-add`")),
 		OPT_BOOL(0, "cached", &state->cached,
 			N_("apply a patch without touching the working tree")),
 		OPT_BOOL_F(0, "unsafe-paths", &state->unsafe_paths,
@@ -4949,7 +5032,7 @@ int apply_parse_options(int argc, const char **argv,
 		OPT_BOOL(0, "apply", force_apply,
 			N_("also apply the patch (use with --stat/--summary/--check)")),
 		OPT_BOOL('3', "3way", &state->threeway,
-			 N_( "attempt three-way merge if a patch does not apply")),
+			 N_( "attempt three-way merge, fall back on normal patch if that fails")),
 		OPT_FILENAME(0, "build-fake-ancestor", &state->fake_ancestor,
 			N_("build a temporary index based on embedded index information")),
 		/* Think twice before adding "--nul" synonym to this */
@@ -4957,15 +5040,15 @@ int apply_parse_options(int argc, const char **argv,
 			N_("paths are separated with NUL character"), '\0'),
 		OPT_INTEGER('C', NULL, &state->p_context,
 				N_("ensure at least <n> lines of context match")),
-		{ OPTION_CALLBACK, 0, "whitespace", state, N_("action"),
+		OPT_CALLBACK(0, "whitespace", state, N_("action"),
 			N_("detect new or modified lines that have whitespace errors"),
-			0, apply_option_parse_whitespace },
-		{ OPTION_CALLBACK, 0, "ignore-space-change", state, NULL,
+			apply_option_parse_whitespace),
+		OPT_CALLBACK_F(0, "ignore-space-change", state, NULL,
 			N_("ignore changes in whitespace when finding context"),
-			PARSE_OPT_NOARG, apply_option_parse_space_change },
-		{ OPTION_CALLBACK, 0, "ignore-whitespace", state, NULL,
+			PARSE_OPT_NOARG, apply_option_parse_space_change),
+		OPT_CALLBACK_F(0, "ignore-whitespace", state, NULL,
 			N_("ignore changes in whitespace when finding context"),
-			PARSE_OPT_NOARG, apply_option_parse_space_change },
+			PARSE_OPT_NOARG, apply_option_parse_space_change),
 		OPT_BOOL('R', "reverse", &state->apply_in_reverse,
 			N_("apply the patch in reverse")),
 		OPT_BOOL(0, "unidiff-zero", &state->unidiff_zero,
@@ -4974,16 +5057,18 @@ int apply_parse_options(int argc, const char **argv,
 			N_("leave the rejected hunks in corresponding *.rej files")),
 		OPT_BOOL(0, "allow-overlap", &state->allow_overlap,
 			N_("allow overlapping hunks")),
-		OPT__VERBOSE(&state->apply_verbosity, N_("be verbose")),
+		OPT__VERBOSITY(&state->apply_verbosity),
 		OPT_BIT(0, "inaccurate-eof", options,
 			N_("tolerate incorrectly detected missing new-line at the end of file"),
 			APPLY_OPT_INACCURATE_EOF),
 		OPT_BIT(0, "recount", options,
 			N_("do not trust the line counts in the hunk headers"),
 			APPLY_OPT_RECOUNT),
-		{ OPTION_CALLBACK, 0, "directory", state, N_("root"),
+		OPT_CALLBACK(0, "directory", state, N_("root"),
 			N_("prepend <root> to all filenames"),
-			0, apply_option_parse_directory },
+			apply_option_parse_directory),
+		OPT_BOOL(0, "allow-empty", &state->allow_empty,
+			N_("don't return error for empty patches")),
 		OPT_END()
 	};
 

@@ -28,7 +28,7 @@ test_expect_success 'Git clone creates the expected git log with one file' '
 		git log --format=%s HEAD^..HEAD >log.tmp
 	) &&
 	echo "this must be the same" >msg.tmp &&
-	diff -b mw_dir_1/log.tmp msg.tmp
+	test_cmp msg.tmp mw_dir_1/log.tmp
 '
 
 
@@ -50,8 +50,8 @@ test_expect_success 'Git clone creates the expected git log with multiple files'
 	echo "this must be the same" >>msgDaddy.tmp &&
 	echo "identical too" >msgDj.tmp &&
 	echo "identical" >>msgDj.tmp &&
-	diff -b mw_dir_2/logDaddy.tmp msgDaddy.tmp &&
-	diff -b mw_dir_2/logDj.tmp msgDj.tmp
+	test_cmp msgDaddy.tmp mw_dir_2/logDaddy.tmp &&
+	test_cmp msgDj.tmp mw_dir_2/logDj.tmp
 '
 
 
@@ -86,7 +86,7 @@ test_expect_success 'Git clone works with page added' '
 test_expect_success 'Git clone works with an edited page ' '
 	wiki_reset &&
 	wiki_editpage foo "this page will be edited" \
-		false -s "first edition of page foo"&&
+		false -s "first edition of page foo" &&
 	wiki_editpage foo "this page has been edited and must be on the clone " true &&
 	git clone mediawiki::'"$WIKI_URL"' mw_dir_6 &&
 	test_path_is_file mw_dir_6/Foo.mw &&
@@ -135,7 +135,7 @@ test_expect_success 'Git clone works with one specific page cloned ' '
 		cd mw_dir_8 &&
 		echo "this log must stay" >msg.tmp &&
 		git log --format=%s >log.tmp &&
-		diff -b msg.tmp log.tmp
+		test_cmp msg.tmp log.tmp
 	) &&
 	wiki_check_content mw_dir_8/Namnam.mw Namnam
 '
@@ -143,7 +143,7 @@ test_expect_success 'Git clone works with one specific page cloned ' '
 test_expect_success 'Git clone works with multiple specific page cloned ' '
 	wiki_reset &&
 	wiki_editpage foo "I will be there" false &&
-	wiki_editpage bar "I will not disapear" false &&
+	wiki_editpage bar "I will not disappear" false &&
 	wiki_editpage namnam "I be erased" false &&
 	wiki_editpage nyancat "nyan nyan nyan you will not erase me" false &&
 	wiki_delete_page namnam &&
@@ -247,7 +247,7 @@ test_expect_success 'Test of resistance to modification of category on wiki for 
 	wiki_editpage Notconsidered "this page will not appear on local" false &&
 	wiki_editpage Othercategory "this page will not appear on local" false -c=Cattwo &&
 	wiki_editpage Tobeedited "this page have been modified" true -c=Catone &&
-	wiki_delete_page Tobedeleted
+	wiki_delete_page Tobedeleted &&
 	git clone -c remote.origin.categories="Catone" \
 		mediawiki::'"$WIKI_URL"' mw_dir_14 &&
 	wiki_getallpage ref_page_14 Catone &&

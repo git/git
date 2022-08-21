@@ -2,6 +2,7 @@
 
 test_description='cd_to_toplevel'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 EXEC_PATH="$(git --exec-path)"

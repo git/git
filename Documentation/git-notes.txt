@@ -10,7 +10,7 @@ SYNOPSIS
 [verse]
 'git notes' [list [<object>]]
 'git notes' add [-f] [--allow-empty] [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
-'git notes' copy [-f] ( --stdin | <from-object> <to-object> )
+'git notes' copy [-f] ( --stdin | <from-object> [<to-object>] )
 'git notes' append [--allow-empty] [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
 'git notes' edit [--allow-empty] [<object>]
 'git notes' show [<object>]
@@ -68,8 +68,8 @@ add::
 	subcommand).
 
 copy::
-	Copy the notes for the first object onto the second object.
-	Abort if the second object already has notes, or if the first
+	Copy the notes for the first object onto the second object (defaults to
+	HEAD). Abort if the second object already has notes, or if the first
 	object has none (use -f to overwrite existing notes to the
 	second object). This subcommand is equivalent to:
 	`git notes add [-f] -C $(git notes list <from-object>) <to-object>`
@@ -146,7 +146,7 @@ OPTIONS
 
 -C <object>::
 --reuse-message=<object>::
-	Take the given blob object (for	example, another note) as the
+	Take the given blob object (for example, another note) as the
 	note message. (Use `git notes copy <object>` instead to
 	copy notes between objects.)
 
@@ -199,7 +199,7 @@ OPTIONS
 	.git/NOTES_MERGE_REF symref is updated to the resulting commit.
 
 --abort::
-	Abort/reset a in-progress 'git notes merge', i.e. a notes merge
+	Abort/reset an in-progress 'git notes merge', i.e. a notes merge
 	with conflicts. This simply removes all files related to the
 	notes merge.
 
@@ -223,7 +223,7 @@ are taken from notes refs.  A notes ref is usually a branch which
 contains "files" whose paths are the object names for the objects
 they describe, with some directory separators included for performance
 reasons footnote:[Permitted pathnames have the form
-'ab'`/`'cd'`/`'ef'`/`'...'`/`'abcdef...': a sequence of directory
+'bf'`/`'fe'`/`'30'`/`'...'`/`'680d5a...': a sequence of directory
 names of two hexadecimal digits each followed by a filename with the
 rest of the object ID.].
 

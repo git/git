@@ -1,0 +1,77 @@
+ifndef COMPILER_FEATURES
+COMPILER_FEATURES := $(shell ./detect-compiler $(CC))
+endif
+
+ifeq ($(filter no-error,$(DEVOPTS)),)
+DEVELOPER_CFLAGS += -Werror
+SPARSE_FLAGS += -Wsparse-error
+endif
+
+DEVELOPER_CFLAGS += -Wall
+ifeq ($(filter no-pedantic,$(DEVOPTS)),)
+DEVELOPER_CFLAGS += -pedantic
+ifneq (($or $(filter gcc5,$(COMPILER_FEATURES)),$(filter clang4,$(COMPILER_FEATURES))),)
+DEVELOPER_CFLAGS += -Wpedantic
+ifneq ($(filter gcc10,$(COMPILER_FEATURES)),)
+ifeq ($(uname_S),MINGW)
+DEVELOPER_CFLAGS += -Wno-pedantic-ms-format
+endif
+endif
+endif
+endif
+
+ifneq ($(uname_S),FreeBSD)
+ifneq ($(or $(filter gcc6,$(COMPILER_FEATURES)),$(filter clang7,$(COMPILER_FEATURES))),)
+DEVELOPER_CFLAGS += -std=gnu99
+endif
+else
+# FreeBSD cannot limit to C99 because its system headers unconditionally
+# rely on C11 features.
+endif
+
+DEVELOPER_CFLAGS += -Wdeclaration-after-statement
+DEVELOPER_CFLAGS += -Wformat-security
+DEVELOPER_CFLAGS += -Wold-style-definition
+DEVELOPER_CFLAGS += -Woverflow
+DEVELOPER_CFLAGS += -Wpointer-arith
+DEVELOPER_CFLAGS += -Wstrict-prototypes
+DEVELOPER_CFLAGS += -Wunused
+DEVELOPER_CFLAGS += -Wvla
+DEVELOPER_CFLAGS += -fno-common
+
+ifneq ($(filter clang4,$(COMPILER_FEATURES)),)
+DEVELOPER_CFLAGS += -Wtautological-constant-out-of-range-compare
+endif
+
+ifneq ($(or $(filter gcc6,$(COMPILER_FEATURES)),$(filter clang4,$(COMPILER_FEATURES))),)
+DEVELOPER_CFLAGS += -Wextra
+# if a function is public, there should be a prototype and the right
+# header file should be included. If not, it should be static.
+DEVELOPER_CFLAGS += -Wmissing-prototypes
+ifeq ($(filter extra-all,$(DEVOPTS)),)
+# These are disabled because we have these all over the place.
+DEVELOPER_CFLAGS += -Wno-empty-body
+DEVELOPER_CFLAGS += -Wno-missing-field-initializers
+DEVELOPER_CFLAGS += -Wno-sign-compare
+DEVELOPER_CFLAGS += -Wno-unused-parameter
+endif
+endif
+
+# uninitialized warnings on gcc 4.9.2 in xdiff/xdiffi.c and config.c
+# not worth fixing since newer compilers correctly stop complaining
+#
+# Likewise, gcc older than 4.9 complains about initializing a
+# struct-within-a-struct using just "{ 0 }"
+ifneq ($(filter gcc4,$(COMPILER_FEATURES)),)
+ifeq ($(filter gcc5,$(COMPILER_FEATURES)),)
+DEVELOPER_CFLAGS += -Wno-uninitialized
+DEVELOPER_CFLAGS += -Wno-missing-braces
+endif
+endif
+
+# https://bugzilla.redhat.com/show_bug.cgi?id=2075786
+ifneq ($(filter gcc12,$(COMPILER_FEATURES)),)
+DEVELOPER_CFLAGS += -Wno-error=stringop-overread
+endif
+
+GIT_TEST_PERL_FATAL_WARNINGS = YesPlease

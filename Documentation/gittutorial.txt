@@ -110,7 +110,7 @@ $ git status
 On branch master
 Changes to be committed:
 Your branch is up to date with 'origin/master'.
-  (use "git reset HEAD <file>..." to unstage)
+  (use "git restore --staged <file>..." to unstage)
 
 	modified:   file1
 	modified:   file2
@@ -207,7 +207,7 @@ automatically.  The asterisk marks the branch you are currently on;
 type
 
 ------------------------------------------------
-$ git checkout experimental
+$ git switch experimental
 ------------------------------------------------
 
 to switch to the experimental branch.  Now edit a file, commit the
@@ -216,7 +216,7 @@ change, and switch back to the master branch:
 ------------------------------------------------
 (edit file)
 $ git commit -a
-$ git checkout master
+$ git switch master
 ------------------------------------------------
 
 Check that the change you made is no longer visible, since it was
@@ -322,7 +322,7 @@ initiating this "pull".  If Bob's work conflicts with what Alice did since
 their histories forked, Alice will use her working tree and the index to
 resolve conflicts, and existing local changes will interfere with the
 conflict resolution process (Git will still perform the fetch but will
-refuse to merge --- Alice will have to get rid of her local changes in
+refuse to merge -- Alice will have to get rid of her local changes in
 some way and pull again when this happens).
 
 Alice can peek at what Bob did without merging first, using the "fetch"

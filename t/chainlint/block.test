@@ -1,0 +1,14 @@
+(
+# LINT: missing "&&" after first "echo"
+	foo &&
+	{
+		echo a
+		echo b
+	} &&
+	bar &&
+# LINT: missing "&&" at closing "}"
+	{
+		echo c
+	}
+	baz
+)

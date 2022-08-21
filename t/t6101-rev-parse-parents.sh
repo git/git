@@ -5,6 +5,11 @@
 
 test_description='Test git rev-parse with different parent options'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
+TEST_PASSES_SANITIZE_LEAK=true
+TEST_CREATE_REPO_NO_TEMPLATE=1
 . ./test-lib.sh
 
 test_cmp_rev_output () {
@@ -18,10 +23,11 @@ test_expect_success 'setup' '
 	test_commit second &&
 	git checkout --orphan tmp &&
 	test_commit start2 &&
-	git checkout master &&
+	git checkout main &&
 	git merge -m next --allow-unrelated-histories start2 &&
 	test_commit final &&
 
+	mkdir .git/info &&
 	test_seq 40 |
 	while read i
 	do
@@ -29,12 +35,12 @@ test_expect_success 'setup' '
 		test_tick &&
 		git commit --allow-empty -m "$i" &&
 		commit=$(git rev-parse --verify HEAD) &&
-		printf "$commit " >>.git/info/grafts
+		printf "$commit " >>.git/info/grafts || return 1
 	done
 '
 
 test_expect_success 'start is valid' '
-	git rev-parse start | grep "^[0-9a-f]\{40\}$"
+	git rev-parse start | grep "^$OID_REGEX$"
 '
 
 test_expect_success 'start^0' '
@@ -212,6 +218,14 @@ test_expect_success 'rev-list merge^-^ (garbage after ^-)' '
 
 test_expect_success 'rev-list merge^-1x (garbage after ^-1)' '
 	test_must_fail git rev-list merge^-1x
+'
+
+test_expect_success 'rev-parse $garbage^@ does not segfault' '
+	test_must_fail git rev-parse $EMPTY_TREE^@
+'
+
+test_expect_success 'rev-parse $garbage...$garbage does not segfault' '
+	test_must_fail git rev-parse $EMPTY_TREE...$EMPTY_BLOB
 '
 
 test_done

@@ -9,6 +9,7 @@ This test uses git to clone a Subversion repository that contains empty
 directories, and checks that corresponding directories are created in the
 local Git repository with placeholder files.'
 
+TEST_FAILS_SANITIZE_LEAK=true
 . ./lib-git-svn.sh
 
 GIT_REPO=git-svn-repo
@@ -86,8 +87,8 @@ test_expect_success 'remove non-last entry from directory' '
 		cd "$GIT_REPO" &&
 		git checkout HEAD~2
 	) &&
-	test_must_fail test -f "$GIT_REPO"/2/.gitignore &&
-	test_must_fail test -f "$GIT_REPO"/3/.gitignore
+	test_path_is_missing "$GIT_REPO"/2/.gitignore &&
+	test_path_is_missing "$GIT_REPO"/3/.gitignore
 '
 
 # After re-cloning the repository with --placeholder-file specified, there

@@ -1,17 +1,19 @@
 #!/bin/sh
 
 test_description='test date parsing and printing'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # arbitrary reference time: 2009-08-30 19:20:00
-TEST_DATE_NOW=1251660000; export TEST_DATE_NOW
+GIT_TEST_DATE_NOW=1251660000; export GIT_TEST_DATE_NOW
 
 check_relative() {
-	t=$(($TEST_DATE_NOW - $1))
+	t=$(($GIT_TEST_DATE_NOW - $1))
 	echo "$t -> $2" >expect
 	test_expect_${3:-success} "relative date ($2)" "
 	test-tool date relative $t >actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 	"
 }
 
@@ -63,6 +65,10 @@ check_show 'format-local:%%z' "$TIME" '%z'
 check_show 'format:%Y-%m-%d %H:%M:%S' "$TIME" '2016-06-15 16:13:20'
 check_show 'format-local:%Y-%m-%d %H:%M:%S' "$TIME" '2016-06-15 09:13:20' '' EST5
 
+check_show 'format:%s' '123456789 +1234' 123456789
+check_show 'format:%s' '123456789 -1234' 123456789
+check_show 'format-local:%s' '123456789 -1234' 123456789
+
 # arbitrary time absurdly far in the future
 FUTURE="5758122296 -0400"
 check_show iso       "$FUTURE" "2152-06-19 18:24:56 -0400" TIME_IS_64BIT,TIME_T_IS_64BIT
@@ -81,6 +87,11 @@ check_parse 2008-02 bad
 check_parse 2008-02-14 bad
 check_parse '2008-02-14 20:30:45' '2008-02-14 20:30:45 +0000'
 check_parse '2008-02-14 20:30:45 -0500' '2008-02-14 20:30:45 -0500'
+check_parse '2008.02.14 20:30:45 -0500' '2008-02-14 20:30:45 -0500'
+check_parse '20080214T203045-04:00' '2008-02-14 20:30:45 -0400'
+check_parse '20080214T203045 -04:00' '2008-02-14 20:30:45 -0400'
+check_parse '20080214T203045.019-04:00' '2008-02-14 20:30:45 -0400'
+check_parse '2008-02-14 20:30:45.019-04:00' '2008-02-14 20:30:45 -0400'
 check_parse '2008-02-14 20:30:45 -0015' '2008-02-14 20:30:45 -0015'
 check_parse '2008-02-14 20:30:45 -5' '2008-02-14 20:30:45 +0000'
 check_parse '2008-02-14 20:30:45 -5:' '2008-02-14 20:30:45 +0000'
@@ -103,6 +114,7 @@ check_approxidate 5.seconds.ago '2009-08-30 19:19:55'
 check_approxidate 10.minutes.ago '2009-08-30 19:10:00'
 check_approxidate yesterday '2009-08-29 19:20:00'
 check_approxidate 3.days.ago '2009-08-27 19:20:00'
+check_approxidate '12:34:56.3.days.ago' '2009-08-27 12:34:56'
 check_approxidate 3.weeks.ago '2009-08-09 19:20:00'
 check_approxidate 3.months.ago '2009-05-30 19:20:00'
 check_approxidate 2.years.3.months.ago '2007-05-30 19:20:00'
@@ -113,6 +125,8 @@ check_approxidate '3:00' '2009-08-30 03:00:00'
 check_approxidate '15:00' '2009-08-30 15:00:00'
 check_approxidate 'noon today' '2009-08-30 12:00:00'
 check_approxidate 'noon yesterday' '2009-08-29 12:00:00'
+check_approxidate 'January 5th noon pm' '2009-01-05 12:00:00'
+check_approxidate '10am noon' '2009-08-29 12:00:00'
 
 check_approxidate 'last tuesday' '2009-08-25 19:20:00'
 check_approxidate 'July 5th' '2009-07-05 19:20:00'
@@ -125,5 +139,23 @@ check_approxidate '6AM, June 7, 2009' '2009-06-07 06:00:00'
 
 check_approxidate '2008-12-01' '2008-12-01 19:20:00'
 check_approxidate '2009-12-01' '2009-12-01 19:20:00'
+
+check_date_format_human() {
+	t=$(($GIT_TEST_DATE_NOW - $1))
+	echo "$t -> $2" >expect
+	test_expect_success "human date $t" '
+		test-tool date human $t >actual &&
+		test_cmp expect actual
+'
+}
+
+check_date_format_human 18000 "5 hours ago" # 5 hours ago
+check_date_format_human 432000 "Tue Aug 25 19:20" # 5 days ago
+check_date_format_human 1728000 "Mon Aug 10 19:20" # 3 weeks ago
+check_date_format_human 13000000 "Thu Apr 2 08:13" # 5 months ago
+check_date_format_human 31449600 "Aug 31 2008" # 12 months ago
+check_date_format_human 37500000 "Jun 22 2008" # 1 year, 2 months ago
+check_date_format_human 55188000 "Dec 1 2007" # 1 year, 9 months ago
+check_date_format_human 630000000 "Sep 13 1989" # 20 years ago
 
 test_done

@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='checkout must not overwrite an untracked objects'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -48,7 +50,20 @@ test_expect_success 'checkout commit with dir must not remove untracked a/b' '
 
 test_expect_success SYMLINKS 'the symlink remained' '
 
+	test_when_finished "rm a/b" &&
 	test -h a/b
+'
+
+test_expect_success SYMLINKS 'checkout -f must not follow symlinks when removing entries' '
+	git checkout -f start &&
+	mkdir dir &&
+	>dir/f &&
+	git add dir/f &&
+	git commit -m "add dir/f" &&
+	mv dir untracked &&
+	ln -s untracked dir &&
+	git checkout -f HEAD~ &&
+	test_path_is_file untracked/f
 '
 
 test_done

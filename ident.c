@@ -7,10 +7,16 @@
  */
 #include "cache.h"
 #include "config.h"
+#include "date.h"
+#include "mailmap.h"
 
 static struct strbuf git_default_name = STRBUF_INIT;
 static struct strbuf git_default_email = STRBUF_INIT;
 static struct strbuf git_default_date = STRBUF_INIT;
+static struct strbuf git_author_name = STRBUF_INIT;
+static struct strbuf git_author_email = STRBUF_INIT;
+static struct strbuf git_committer_name = STRBUF_INIT;
+static struct strbuf git_committer_email = STRBUF_INIT;
 static int default_email_is_bogus;
 static int default_name_is_bogus;
 
@@ -168,6 +174,9 @@ const char *ident_default_email(void)
 			strbuf_addstr(&git_default_email, email);
 			committer_ident_explicitly_given |= IDENT_MAIL_GIVEN;
 			author_ident_explicitly_given |= IDENT_MAIL_GIVEN;
+		} else if ((email = query_user_email()) && email[0]) {
+			strbuf_addstr(&git_default_email, email);
+			free((char *)email);
 		} else
 			copy_email(xgetpwuid_self(&default_email_is_bogus),
 				   &git_default_email, &default_email_is_bogus);
@@ -338,36 +347,133 @@ person_only:
 	return 0;
 }
 
-static const char *env_hint =
-N_("\n"
-   "*** Please tell me who you are.\n"
-   "\n"
-   "Run\n"
-   "\n"
-   "  git config --global user.email \"you@example.com\"\n"
-   "  git config --global user.name \"Your Name\"\n"
-   "\n"
-   "to set your account\'s default identity.\n"
-   "Omit --global to set the identity only in this repository.\n"
-   "\n");
+/*
+ * Returns the difference between the new and old length of the ident line.
+ */
+static ssize_t rewrite_ident_line(const char *person, size_t len,
+				   struct strbuf *buf,
+				   struct string_list *mailmap)
+{
+	size_t namelen, maillen;
+	const char *name;
+	const char *mail;
+	struct ident_split ident;
+
+	if (split_ident_line(&ident, person, len))
+		return 0;
+
+	mail = ident.mail_begin;
+	maillen = ident.mail_end - ident.mail_begin;
+	name = ident.name_begin;
+	namelen = ident.name_end - ident.name_begin;
+
+	if (map_user(mailmap, &mail, &maillen, &name, &namelen)) {
+		struct strbuf namemail = STRBUF_INIT;
+		size_t newlen;
+
+		strbuf_addf(&namemail, "%.*s <%.*s>",
+			    (int)namelen, name, (int)maillen, mail);
+
+		strbuf_splice(buf, ident.name_begin - buf->buf,
+			      ident.mail_end - ident.name_begin + 1,
+			      namemail.buf, namemail.len);
+		newlen = namemail.len;
+
+		strbuf_release(&namemail);
+
+		return newlen - (ident.mail_end - ident.name_begin);
+	}
+
+	return 0;
+}
+
+void apply_mailmap_to_header(struct strbuf *buf, const char **header,
+			       struct string_list *mailmap)
+{
+	size_t buf_offset = 0;
+
+	if (!mailmap)
+		return;
+
+	for (;;) {
+		const char *person, *line;
+		size_t i;
+		int found_header = 0;
+
+		line = buf->buf + buf_offset;
+		if (!*line || *line == '\n')
+			return; /* End of headers */
+
+		for (i = 0; header[i]; i++)
+			if (skip_prefix(line, header[i], &person)) {
+				const char *endp = strchrnul(person, '\n');
+				found_header = 1;
+				buf_offset += endp - line;
+				buf_offset += rewrite_ident_line(person, endp - person, buf, mailmap);
+				break;
+			}
+
+		if (!found_header) {
+			buf_offset = strchrnul(line, '\n') - buf->buf;
+			if (buf->buf[buf_offset] == '\n')
+				buf_offset++;
+		}
+	}
+}
+
+static void ident_env_hint(enum want_ident whose_ident)
+{
+	switch (whose_ident) {
+	case WANT_AUTHOR_IDENT:
+		fputs(_("Author identity unknown\n"), stderr);
+		break;
+	case WANT_COMMITTER_IDENT:
+		fputs(_("Committer identity unknown\n"), stderr);
+		break;
+	default:
+		break;
+	}
+
+	fputs(_("\n"
+		"*** Please tell me who you are.\n"
+		"\n"
+		"Run\n"
+		"\n"
+		"  git config --global user.email \"you@example.com\"\n"
+		"  git config --global user.name \"Your Name\"\n"
+		"\n"
+		"to set your account\'s default identity.\n"
+		"Omit --global to set the identity only in this repository.\n"
+		"\n"), stderr);
+}
 
 const char *fmt_ident(const char *name, const char *email,
-		      const char *date_str, int flag)
+		      enum want_ident whose_ident, const char *date_str, int flag)
 {
-	static struct strbuf ident = STRBUF_INIT;
+	static int index;
+	static struct strbuf ident_pool[2] = { STRBUF_INIT, STRBUF_INIT };
 	int strict = (flag & IDENT_STRICT);
 	int want_date = !(flag & IDENT_NO_DATE);
 	int want_name = !(flag & IDENT_NO_NAME);
 
+	struct strbuf *ident = &ident_pool[index];
+	index = (index + 1) % ARRAY_SIZE(ident_pool);
+
+	if (!email) {
+		if (whose_ident == WANT_AUTHOR_IDENT && git_author_email.len)
+			email = git_author_email.buf;
+		else if (whose_ident == WANT_COMMITTER_IDENT && git_committer_email.len)
+			email = git_committer_email.buf;
+	}
 	if (!email) {
 		if (strict && ident_use_config_only
 		    && !(ident_config_given & IDENT_MAIL_GIVEN)) {
-			fputs(_(env_hint), stderr);
+			ident_env_hint(whose_ident);
 			die(_("no email was given and auto-detection is disabled"));
 		}
 		email = ident_default_email();
 		if (strict && default_email_is_bogus) {
-			fputs(_(env_hint), stderr);
+			ident_env_hint(whose_ident);
 			die(_("unable to auto-detect email address (got '%s')"), email);
 		}
 	}
@@ -375,15 +481,22 @@ const char *fmt_ident(const char *name, const char *email,
 	if (want_name) {
 		int using_default = 0;
 		if (!name) {
+			if (whose_ident == WANT_AUTHOR_IDENT && git_author_name.len)
+				name = git_author_name.buf;
+			else if (whose_ident == WANT_COMMITTER_IDENT &&
+					git_committer_name.len)
+				name = git_committer_name.buf;
+		}
+		if (!name) {
 			if (strict && ident_use_config_only
 			    && !(ident_config_given & IDENT_NAME_GIVEN)) {
-				fputs(_(env_hint), stderr);
+				ident_env_hint(whose_ident);
 				die(_("no name was given and auto-detection is disabled"));
 			}
 			name = ident_default_name();
 			using_default = 1;
 			if (strict && default_name_is_bogus) {
-				fputs(_(env_hint), stderr);
+				ident_env_hint(whose_ident);
 				die(_("unable to auto-detect name (got '%s')"), name);
 			}
 		}
@@ -391,7 +504,7 @@ const char *fmt_ident(const char *name, const char *email,
 			struct passwd *pw;
 			if (strict) {
 				if (using_default)
-					fputs(_(env_hint), stderr);
+					ident_env_hint(whose_ident);
 				die(_("empty ident name (for <%s>) not allowed"), email);
 			}
 			pw = xgetpwuid_self(NULL);
@@ -401,30 +514,46 @@ const char *fmt_ident(const char *name, const char *email,
 			die(_("name consists only of disallowed characters: %s"), name);
 	}
 
-	strbuf_reset(&ident);
+	strbuf_reset(ident);
 	if (want_name) {
-		strbuf_addstr_without_crud(&ident, name);
-		strbuf_addstr(&ident, " <");
+		strbuf_addstr_without_crud(ident, name);
+		strbuf_addstr(ident, " <");
 	}
-	strbuf_addstr_without_crud(&ident, email);
+	strbuf_addstr_without_crud(ident, email);
 	if (want_name)
-			strbuf_addch(&ident, '>');
+		strbuf_addch(ident, '>');
 	if (want_date) {
-		strbuf_addch(&ident, ' ');
+		strbuf_addch(ident, ' ');
 		if (date_str && date_str[0]) {
-			if (parse_date(date_str, &ident) < 0)
+			if (parse_date(date_str, ident) < 0)
 				die(_("invalid date format: %s"), date_str);
 		}
 		else
-			strbuf_addstr(&ident, ident_default_date());
+			strbuf_addstr(ident, ident_default_date());
 	}
 
-	return ident.buf;
+	return ident->buf;
 }
 
-const char *fmt_name(const char *name, const char *email)
+const char *fmt_name(enum want_ident whose_ident)
 {
-	return fmt_ident(name, email, NULL, IDENT_STRICT | IDENT_NO_DATE);
+	char *name = NULL;
+	char *email = NULL;
+
+	switch (whose_ident) {
+	case WANT_BLANK_IDENT:
+		break;
+	case WANT_AUTHOR_IDENT:
+		name = getenv("GIT_AUTHOR_NAME");
+		email = getenv("GIT_AUTHOR_EMAIL");
+		break;
+	case WANT_COMMITTER_IDENT:
+		name = getenv("GIT_COMMITTER_NAME");
+		email = getenv("GIT_COMMITTER_EMAIL");
+		break;
+	}
+	return fmt_ident(name, email, whose_ident, NULL,
+			IDENT_STRICT | IDENT_NO_DATE);
 }
 
 const char *git_author_info(int flag)
@@ -435,6 +564,7 @@ const char *git_author_info(int flag)
 		author_ident_explicitly_given |= IDENT_MAIL_GIVEN;
 	return fmt_ident(getenv("GIT_AUTHOR_NAME"),
 			 getenv("GIT_AUTHOR_EMAIL"),
+			 WANT_AUTHOR_IDENT,
 			 getenv("GIT_AUTHOR_DATE"),
 			 flag);
 }
@@ -447,6 +577,7 @@ const char *git_committer_info(int flag)
 		committer_ident_explicitly_given |= IDENT_MAIL_GIVEN;
 	return fmt_ident(getenv("GIT_COMMITTER_NAME"),
 			 getenv("GIT_COMMITTER_EMAIL"),
+			 WANT_COMMITTER_IDENT,
 			 getenv("GIT_COMMITTER_DATE"),
 			 flag);
 }
@@ -470,10 +601,45 @@ int author_ident_sufficiently_given(void)
 	return ident_is_sufficient(author_ident_explicitly_given);
 }
 
-int git_ident_config(const char *var, const char *value, void *data)
+static int set_ident(const char *var, const char *value)
 {
-	if (!strcmp(var, "user.useconfigonly")) {
-		ident_use_config_only = git_config_bool(var, value);
+	if (!strcmp(var, "author.name")) {
+		if (!value)
+			return config_error_nonbool(var);
+		strbuf_reset(&git_author_name);
+		strbuf_addstr(&git_author_name, value);
+		author_ident_explicitly_given |= IDENT_NAME_GIVEN;
+		ident_config_given |= IDENT_NAME_GIVEN;
+		return 0;
+	}
+
+	if (!strcmp(var, "author.email")) {
+		if (!value)
+			return config_error_nonbool(var);
+		strbuf_reset(&git_author_email);
+		strbuf_addstr(&git_author_email, value);
+		author_ident_explicitly_given |= IDENT_MAIL_GIVEN;
+		ident_config_given |= IDENT_MAIL_GIVEN;
+		return 0;
+	}
+
+	if (!strcmp(var, "committer.name")) {
+		if (!value)
+			return config_error_nonbool(var);
+		strbuf_reset(&git_committer_name);
+		strbuf_addstr(&git_committer_name, value);
+		committer_ident_explicitly_given |= IDENT_NAME_GIVEN;
+		ident_config_given |= IDENT_NAME_GIVEN;
+		return 0;
+	}
+
+	if (!strcmp(var, "committer.email")) {
+		if (!value)
+			return config_error_nonbool(var);
+		strbuf_reset(&git_committer_email);
+		strbuf_addstr(&git_committer_email, value);
+		committer_ident_explicitly_given |= IDENT_MAIL_GIVEN;
+		ident_config_given |= IDENT_MAIL_GIVEN;
 		return 0;
 	}
 
@@ -500,6 +666,36 @@ int git_ident_config(const char *var, const char *value, void *data)
 	}
 
 	return 0;
+}
+
+int git_ident_config(const char *var, const char *value, void *data)
+{
+	if (!strcmp(var, "user.useconfigonly")) {
+		ident_use_config_only = git_config_bool(var, value);
+		return 0;
+	}
+
+	return set_ident(var, value);
+}
+
+static void set_env_if(const char *key, const char *value, int *given, int bit)
+{
+	if ((*given & bit) || getenv(key))
+		return; /* nothing to do */
+	setenv(key, value, 0);
+	*given |= bit;
+}
+
+void prepare_fallback_ident(const char *name, const char *email)
+{
+	set_env_if("GIT_AUTHOR_NAME", name,
+		   &author_ident_explicitly_given, IDENT_NAME_GIVEN);
+	set_env_if("GIT_AUTHOR_EMAIL", email,
+		   &author_ident_explicitly_given, IDENT_MAIL_GIVEN);
+	set_env_if("GIT_COMMITTER_NAME", name,
+		   &committer_ident_explicitly_given, IDENT_NAME_GIVEN);
+	set_env_if("GIT_COMMITTER_EMAIL", email,
+		   &committer_ident_explicitly_given, IDENT_MAIL_GIVEN);
 }
 
 static int buf_cmp(const char *a_begin, const char *a_end,

@@ -4,8 +4,10 @@
 #include "cache.h"
 #include "diff.h"
 #include "diffcore.h"
+#include "promisor-remote.h"
 
-static int should_break(struct diff_filespec *src,
+static int should_break(struct repository *r,
+			struct diff_filespec *src,
 			struct diff_filespec *dst,
 			int break_score,
 			int *merge_score_p)
@@ -48,6 +50,8 @@ static int should_break(struct diff_filespec *src,
 	unsigned long delta_size, max_size;
 	unsigned long src_copied, literal_added, src_removed;
 
+	struct diff_populate_filespec_options options = { 0 };
+
 	*merge_score_p = 0; /* assume no deletion --- "do not break"
 			     * is the default.
 			     */
@@ -58,10 +62,16 @@ static int should_break(struct diff_filespec *src,
 	}
 
 	if (src->oid_valid && dst->oid_valid &&
-	    !oidcmp(&src->oid, &dst->oid))
+	    oideq(&src->oid, &dst->oid))
 		return 0; /* they are the same */
 
-	if (diff_populate_filespec(src, 0) || diff_populate_filespec(dst, 0))
+	if (r == the_repository && has_promisor_remote()) {
+		options.missing_object_cb = diff_queued_diff_prefetch;
+		options.missing_object_data = r;
+	}
+
+	if (diff_populate_filespec(r, src, &options) ||
+	    diff_populate_filespec(r, dst, &options))
 		return 0; /* error but caught downstream */
 
 	max_size = ((src->size > dst->size) ? src->size : dst->size);
@@ -71,7 +81,7 @@ static int should_break(struct diff_filespec *src,
 	if (!src->size)
 		return 0; /* we do not let empty files get renamed */
 
-	if (diffcore_count_changes(src, dst,
+	if (diffcore_count_changes(r, src, dst,
 				   &src->cnt_data, &dst->cnt_data,
 				   &src_copied, &literal_added))
 		return 0;
@@ -114,7 +124,7 @@ static int should_break(struct diff_filespec *src,
 	return 1;
 }
 
-void diffcore_break(int break_score)
+void diffcore_break(struct repository *r, int break_score)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
 	struct diff_queue_struct outq;
@@ -178,7 +188,7 @@ void diffcore_break(int break_score)
 		    object_type(p->one->mode) == OBJ_BLOB &&
 		    object_type(p->two->mode) == OBJ_BLOB &&
 		    !strcmp(p->one->path, p->two->path)) {
-			if (should_break(p->one, p->two,
+			if (should_break(r, p->one, p->two,
 					 break_score, &score)) {
 				/* Split this into delete and create */
 				struct diff_filespec *null_one, *null_two;
@@ -284,17 +294,17 @@ void diffcore_merge_broken(void)
 					/* Peer survived.  Merge them */
 					merge_broken(p, pp, &outq);
 					q->queue[j] = NULL;
-					break;
+					goto next;
 				}
 			}
-			if (q->nr <= j)
-				/* The peer did not survive, so we keep
-				 * it in the output.
-				 */
-				diff_q(&outq, p);
+			/* The peer did not survive, so we keep
+			 * it in the output.
+			 */
+			diff_q(&outq, p);
 		}
 		else
 			diff_q(&outq, p);
+next:;
 	}
 	free(q->queue);
 	*q = outq;

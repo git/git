@@ -7,7 +7,7 @@
 #include "pkt-line.h"
 #include "sideband.h"
 #include "run-command.h"
-#include "argv-array.h"
+#include "strvec.h"
 
 static const char upload_archive_usage[] =
 	"git upload-archive <repo>";
@@ -19,7 +19,7 @@ static const char deadchild[] =
 
 int cmd_upload_archive_writer(int argc, const char **argv, const char *prefix)
 {
-	struct argv_array sent_argv = ARGV_ARRAY_INIT;
+	struct strvec sent_argv = STRVEC_INIT;
 	const char *arg_cmd = "argument ";
 
 	if (argc != 2 || !strcmp(argv[1], "-h"))
@@ -28,22 +28,25 @@ int cmd_upload_archive_writer(int argc, const char **argv, const char *prefix)
 	if (!enter_repo(argv[1], 0))
 		die("'%s' does not appear to be a git repository", argv[1]);
 
+	init_archivers();
+
 	/* put received options in sent_argv[] */
-	argv_array_push(&sent_argv, "git-upload-archive");
+	strvec_push(&sent_argv, "git-upload-archive");
 	for (;;) {
 		char *buf = packet_read_line(0, NULL);
 		if (!buf)
 			break;	/* got a flush */
-		if (sent_argv.argc > MAX_ARGS)
+		if (sent_argv.nr > MAX_ARGS)
 			die("Too many options (>%d)", MAX_ARGS - 1);
 
 		if (!starts_with(buf, arg_cmd))
 			die("'argument' token or flush expected");
-		argv_array_push(&sent_argv, buf + strlen(arg_cmd));
+		strvec_push(&sent_argv, buf + strlen(arg_cmd));
 	}
 
 	/* parse all options sent by the client */
-	return write_archive(sent_argv.argc, sent_argv.argv, prefix, NULL, 1);
+	return write_archive(sent_argv.nr, sent_argv.v, prefix,
+			     the_repository, NULL, 1);
 }
 
 __attribute__((format (printf, 1, 2)))
@@ -74,7 +77,7 @@ static ssize_t process_input(int child_fd, int band)
 
 int cmd_upload_archive(int argc, const char **argv, const char *prefix)
 {
-	struct child_process writer = { argv };
+	struct child_process writer = CHILD_PROCESS_INIT;
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage(upload_archive_usage);
@@ -86,9 +89,10 @@ int cmd_upload_archive(int argc, const char **argv, const char *prefix)
 	 * multiplexed out to our fd#1.  If the child dies, we tell the other
 	 * end over channel #3.
 	 */
-	argv[0] = "upload-archive--writer";
 	writer.out = writer.err = -1;
 	writer.git_cmd = 1;
+	strvec_push(&writer.args, "upload-archive--writer");
+	strvec_pushv(&writer.args, argv + 1);
 	if (start_command(&writer)) {
 		int err = errno;
 		packet_write_fmt(1, "NACK unable to spawn subprocess\n");

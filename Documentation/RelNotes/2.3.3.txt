@@ -12,7 +12,7 @@ Fixes since v2.3.2
  * Description given by "grep -h" for its --exclude-standard option
    was phrased poorly.
 
- * Documentaton for "git remote add" mentioned "--tags" and
+ * Documentation for "git remote add" mentioned "--tags" and
    "--no-tags" and it was not clear that fetch from the remote in
    the future will use the default behaviour when neither is given
    to override it.

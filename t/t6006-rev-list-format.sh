@@ -5,6 +5,9 @@
 
 test_description='git rev-list --pretty=format test'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
@@ -38,22 +41,59 @@ test_expect_success 'setup' '
 	echo "$added_iso88591" | git commit -F - &&
 	head1=$(git rev-parse --verify HEAD) &&
 	head1_short=$(git rev-parse --verify --short $head1) &&
+	head1_short4=$(git rev-parse --verify --short=4 $head1) &&
 	tree1=$(git rev-parse --verify HEAD:) &&
 	tree1_short=$(git rev-parse --verify --short $tree1) &&
 	echo "$changed" > foo &&
 	echo "$changed_iso88591" | git commit -a -F - &&
 	head2=$(git rev-parse --verify HEAD) &&
 	head2_short=$(git rev-parse --verify --short $head2) &&
+	head2_short4=$(git rev-parse --verify --short=4 $head2) &&
 	tree2=$(git rev-parse --verify HEAD:) &&
 	tree2_short=$(git rev-parse --verify --short $tree2) &&
 	git config --unset i18n.commitEncoding
 '
 
-# usage: test_format name format_string [failure] <expected_output
+# usage: test_format [argument...] name format_string [failure] <expected_output
 test_format () {
+	local args=
+	while true
+	do
+		case "$1" in
+		--*)
+			args="$args $1"
+			shift;;
+		*)
+			break;;
+		esac
+	done
 	cat >expect.$1
 	test_expect_${3:-success} "format $1" "
-		git rev-list --pretty=format:'$2' master >output.$1 &&
+		git rev-list $args --pretty=format:'$2' main >output.$1 &&
+		test_cmp expect.$1 output.$1
+	"
+}
+
+# usage: test_pretty [argument...] name format_name [failure] <expected_output
+test_pretty () {
+	local args=
+	while true
+	do
+		case "$1" in
+		--*)
+			args="$args $1"
+			shift;;
+		*)
+			break;;
+		esac
+	done
+	cat >expect.$1
+	test_expect_${3:-success} "pretty $1 (without --no-commit-header)" "
+		git rev-list $args --pretty='$2' main >output.$1 &&
+		test_cmp expect.$1 output.$1
+	"
+	test_expect_${3:-success} "pretty $1 (with --no-commit-header)" "
+		git rev-list $args --no-commit-header --pretty='$2' main >output.$1 &&
 		test_cmp expect.$1 output.$1
 	"
 }
@@ -90,6 +130,20 @@ $head1
 $head1_short
 EOF
 
+test_format --no-commit-header hash-no-header %H%n%h <<EOF
+$head2
+$head2_short
+$head1
+$head1_short
+EOF
+
+test_format --abbrev-commit --abbrev=0 --no-commit-header hash-no-header-abbrev %H%n%h <<EOF
+$head2
+$head2_short4
+$head1
+$head1_short4
+EOF
+
 test_format tree %T%n%t <<EOF
 commit $head2
 $tree2
@@ -109,31 +163,35 @@ commit $head1
 EOF
 
 # we don't test relative here
-test_format author %an%n%ae%n%ad%n%aD%n%at <<EOF
+test_format author %an%n%ae%n%al%n%ad%n%aD%n%at <<EOF
 commit $head2
-A U Thor
-author@example.com
+$GIT_AUTHOR_NAME
+$GIT_AUTHOR_EMAIL
+$TEST_AUTHOR_LOCALNAME
 Thu Apr 7 15:13:13 2005 -0700
 Thu, 7 Apr 2005 15:13:13 -0700
 1112911993
 commit $head1
-A U Thor
-author@example.com
+$GIT_AUTHOR_NAME
+$GIT_AUTHOR_EMAIL
+$TEST_AUTHOR_LOCALNAME
 Thu Apr 7 15:13:13 2005 -0700
 Thu, 7 Apr 2005 15:13:13 -0700
 1112911993
 EOF
 
-test_format committer %cn%n%ce%n%cd%n%cD%n%ct <<EOF
+test_format committer %cn%n%ce%n%cl%n%cd%n%cD%n%ct <<EOF
 commit $head2
-C O Mitter
-committer@example.com
+$GIT_COMMITTER_NAME
+$GIT_COMMITTER_EMAIL
+$TEST_COMMITTER_LOCALNAME
 Thu Apr 7 15:13:13 2005 -0700
 Thu, 7 Apr 2005 15:13:13 -0700
 1112911993
 commit $head1
-C O Mitter
-committer@example.com
+$GIT_COMMITTER_NAME
+$GIT_COMMITTER_EMAIL
+$TEST_COMMITTER_LOCALNAME
 Thu Apr 7 15:13:13 2005 -0700
 Thu, 7 Apr 2005 15:13:13 -0700
 1112911993
@@ -174,15 +232,44 @@ $added
 
 EOF
 
+test_format --no-commit-header raw-body-no-header %B <<EOF
+$changed
+
+$added
+
+EOF
+
+test_pretty oneline oneline <<EOF
+$head2 $changed
+$head1 $added
+EOF
+
+test_pretty short short <<EOF
+commit $head2
+Author: $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
+
+    $changed
+
+commit $head1
+Author: $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
+
+    $added
+
+EOF
+
 test_expect_success 'basic colors' '
 	cat >expect <<-EOF &&
 	commit $head2
 	<RED>foo<GREEN>bar<BLUE>baz<RESET>xyzzy
 	EOF
 	format="%Credfoo%Cgreenbar%Cbluebaz%Cresetxyzzy" &&
-	git rev-list --color --format="$format" -1 master >actual.raw &&
+	git rev-list --color --format="$format" -1 main >actual.raw &&
 	test_decode_color <actual.raw >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success '%S is not a placeholder for rev-list yet' '
+	git rev-list --format="%S" -1 main | grep "%S"
 '
 
 test_expect_success 'advanced colors' '
@@ -191,7 +278,7 @@ test_expect_success 'advanced colors' '
 	<BOLD;RED;BYELLOW>foo<RESET>
 	EOF
 	format="%C(red yellow bold)foo%C(reset)" &&
-	git rev-list --color --format="$format" -1 master >actual.raw &&
+	git rev-list --color --format="$format" -1 main >actual.raw &&
 	test_decode_color <actual.raw >actual &&
 	test_cmp expect actual
 '
@@ -331,7 +418,7 @@ commit $head1
 .. (hinzugef${added_utf8_part_iso88591}gt) foo
 EOF
 
-test_expect_success 'prepare expected messages (for test %b)' '
+test_expect_success 'setup expected messages (for test %b)' '
 	cat <<-EOF >expected.utf-8 &&
 	commit $head3
 	This commit message is much longer than the others,
@@ -398,7 +485,7 @@ test_expect_success '%x00 shows NUL' '
 
 test_expect_success '%ad respects --date=' '
 	echo 2005-04-07 >expect.ad-short &&
-	git log -1 --date=short --pretty=tformat:%ad >output.ad-short master &&
+	git log -1 --date=short --pretty=tformat:%ad >output.ad-short main &&
 	test_cmp expect.ad-short output.ad-short
 '
 
@@ -406,7 +493,7 @@ test_expect_success 'empty email' '
 	test_tick &&
 	C=$(GIT_AUTHOR_EMAIL= git commit-tree HEAD^{tree} </dev/null) &&
 	A=$(git show --pretty=format:%an,%ae,%ad%n -s $C) &&
-	verbose test "$A" = "A U Thor,,Thu Apr 7 15:14:13 2005 -0700"
+	verbose test "$A" = "$GIT_AUTHOR_NAME,,Thu Apr 7 15:14:13 2005 -0700"
 '
 
 test_expect_success 'del LF before empty (1)' '
@@ -447,17 +534,18 @@ test_expect_success '--abbrev' '
 	git log -1 --format="%h %h %h" HEAD >actual1 &&
 	git log -1 --abbrev=5 --format="%h %h %h" HEAD >actual2 &&
 	git log -1 --abbrev=5 --format="%H %H %H" HEAD >actual3 &&
-	sed -e "s/$_x40/LONG/g" -e "s/$_x05/SHORT/g" <actual2 >fuzzy2 &&
-	sed -e "s/$_x40/LONG/g" -e "s/$_x05/SHORT/g" <actual3 >fuzzy3 &&
+	sed -e "s/$OID_REGEX/LONG/g" -e "s/$_x05/SHORT/g" <actual2 >fuzzy2 &&
+	sed -e "s/$OID_REGEX/LONG/g" -e "s/$_x05/SHORT/g" <actual3 >fuzzy3 &&
 	test_cmp expect2 fuzzy2 &&
 	test_cmp expect3 fuzzy3 &&
 	! test_cmp actual1 actual2
 '
 
 test_expect_success '%H is not affected by --abbrev-commit' '
+	expected=$(($(test_oid hexsz) + 1)) &&
 	git log -1 --format=%H --abbrev-commit --abbrev=20 HEAD >actual &&
 	len=$(wc -c <actual) &&
-	test $len = 41
+	test $len = $expected
 '
 
 test_expect_success '%h is not affected by --abbrev-commit' '
@@ -485,21 +573,20 @@ test_expect_success '"%h %gD: %gs" is same as git-reflog (with --abbrev)' '
 '
 
 test_expect_success '%gd shortens ref name' '
-	echo "master@{0}" >expect.gd-short &&
-	git log -g -1 --format=%gd refs/heads/master >actual.gd-short &&
+	echo "main@{0}" >expect.gd-short &&
+	git log -g -1 --format=%gd refs/heads/main >actual.gd-short &&
 	test_cmp expect.gd-short actual.gd-short
 '
 
 test_expect_success 'reflog identity' '
-	echo "C O Mitter:committer@example.com" >expect &&
+	echo "$GIT_COMMITTER_NAME:$GIT_COMMITTER_EMAIL" >expect &&
 	git log -g -1 --format="%gn:%ge" >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'oneline with empty message' '
-	git commit -m "dummy" --allow-empty &&
-	git commit -m "dummy" --allow-empty &&
-	git filter-branch --msg-filter "sed -e s/dummy//" HEAD^^.. &&
+	git commit --allow-empty --cleanup=verbatim -m "$LF" &&
+	git commit --allow-empty --allow-empty-message &&
 	git rev-list --oneline HEAD >test.txt &&
 	test_line_count = 5 test.txt &&
 	git rev-list --oneline --graph HEAD >testg.txt &&

@@ -8,7 +8,7 @@ test_description='git rerere
 ! [fifth] version1
  ! [first] first
   ! [fourth] version1
-   ! [master] initial
+   ! [main] initial
     ! [second] prefer first over second
      ! [third] version2
 ------
@@ -19,8 +19,11 @@ test_description='git rerere
     -  [second] prefer first over second
  +  +  [first] first
     +  [second^] second
-++++++ [master] initial
+++++++ [main] initial
 '
+
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -57,7 +60,7 @@ test_expect_success 'setup' '
 	test_tick &&
 	git commit -q -a -m first &&
 
-	git checkout -b second master &&
+	git checkout -b second main &&
 	git show first:a1 |
 	sed -e "s/To die, t/To die! T/" -e "s/Some title/Some Title/" >a1 &&
 	echo "* END *" >>a1 &&
@@ -168,7 +171,7 @@ test_expect_success 'first postimage wins' '
 
 	oldmtimepost=$(test-tool chmtime --get -60 $rr/postimage) &&
 
-	git checkout -b third master &&
+	git checkout -b third main &&
 	git show second^:a1 | sed "s/To die: t/To die! T/" >a1 &&
 	git commit -q -a -m third &&
 
@@ -210,7 +213,7 @@ test_expect_success 'set up for garbage collection tests' '
 	echo Hello >$rr/preimage &&
 	echo World >$rr/postimage &&
 
-	sha2=4000000000000000000000000000000000000000 &&
+	sha2=$(test_oid deadbeef) &&
 	rr2=.git/rr-cache/$sha2 &&
 	mkdir $rr2 &&
 	echo Hello >$rr2/preimage &&
@@ -243,7 +246,7 @@ rerere_gc_custom_expiry_test () {
 	five_days="$1" right_now="$2"
 	test_expect_success "rerere gc with custom expiry ($five_days, $right_now)" '
 		rm -fr .git/rr-cache &&
-		rr=.git/rr-cache/$_z40 &&
+		rr=.git/rr-cache/$ZERO_OID &&
 		mkdir -p "$rr" &&
 		>"$rr/preimage" &&
 		>"$rr/postimage" &&
@@ -267,8 +270,7 @@ rerere_gc_custom_expiry_test () {
 		git -c "gc.rerereresolved=$right_now" \
 		    -c "gc.rerereunresolved=$right_now" rerere gc &&
 		find .git/rr-cache -type f | sort >actual &&
-		>expect &&
-		test_cmp expect actual
+		test_must_be_empty actual
 	'
 }
 
@@ -363,9 +365,6 @@ test_expect_success 'set up an unresolved merge' '
 	test_might_fail git config --unset rerere.autoupdate &&
 	git reset --hard &&
 	git checkout version2 &&
-	fifth=$(git rev-parse fifth) &&
-	echo "$fifth		branch 'fifth' of ." |
-	git fmt-merge-msg >msg &&
 	ancestor=$(git merge-base version2 fifth) &&
 	test_must_fail git merge-recursive "$ancestor" -- HEAD fifth &&
 
@@ -536,9 +535,8 @@ test_expect_success 'multiple identical conflicts' '
 
 	# We resolved file1 and file2
 	git rerere &&
-	>expect &&
 	git rerere remaining >actual &&
-	test_cmp expect actual &&
+	test_must_be_empty actual &&
 
 	# We must have recorded both of them
 	count_pre_post 2 2 &&
@@ -548,9 +546,8 @@ test_expect_success 'multiple identical conflicts' '
 	test_must_fail git merge six.1 &&
 	git rerere &&
 
-	>expect &&
 	git rerere remaining >actual &&
-	test_cmp expect actual &&
+	test_must_be_empty actual &&
 
 	concat_insert short 6.1 6.2 >file1.expect &&
 	concat_insert long 6.1 6.2 >file2.expect &&
@@ -578,6 +575,100 @@ test_expect_success 'multiple identical conflicts' '
 	# Resolved entries have expired
 	git -c gc.rerereresolved=1 -c gc.rerereunresolved=5 rerere gc &&
 	count_pre_post 0 0
+'
+
+test_expect_success 'rerere with unexpected conflict markers does not crash' '
+	git reset --hard &&
+
+	git checkout -b branch-1 main &&
+	echo "bar" >test &&
+	git add test &&
+	git commit -q -m two &&
+
+	git reset --hard &&
+	git checkout -b branch-2 main &&
+	echo "foo" >test &&
+	git add test &&
+	git commit -q -a -m one &&
+
+	test_must_fail git merge branch-1 &&
+	echo "<<<<<<< a" >test &&
+	git rerere &&
+
+	git rerere clear
+'
+
+test_expect_success 'rerere with inner conflict markers' '
+	git reset --hard &&
+
+	git checkout -b A main &&
+	echo "bar" >test &&
+	git add test &&
+	git commit -q -m two &&
+	echo "baz" >test &&
+	git add test &&
+	git commit -q -m three &&
+
+	git reset --hard &&
+	git checkout -b B main &&
+	echo "foo" >test &&
+	git add test &&
+	git commit -q -a -m one &&
+
+	test_must_fail git merge A~ &&
+	git add test &&
+	git commit -q -m "will solve conflicts later" &&
+	test_must_fail git merge A &&
+
+	echo "resolved" >test &&
+	git add test &&
+	git commit -q -m "solved conflict" &&
+
+	echo "resolved" >expect &&
+
+	git reset --hard HEAD~~ &&
+	test_must_fail git merge A~ &&
+	git add test &&
+	git commit -q -m "will solve conflicts later" &&
+	test_must_fail git merge A &&
+	cat test >actual &&
+	test_cmp expect actual &&
+
+	git add test &&
+	git commit -m "rerere solved conflict" &&
+	git reset --hard HEAD~ &&
+	test_must_fail git merge A &&
+	cat test >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'setup simple stage 1 handling' '
+	test_create_repo stage_1_handling &&
+	(
+		cd stage_1_handling &&
+
+		test_seq 1 10 >original &&
+		git add original &&
+		git commit -m original &&
+
+		git checkout -b A main &&
+		git mv original A &&
+		git commit -m "rename to A" &&
+
+		git checkout -b B main &&
+		git mv original B &&
+		git commit -m "rename to B"
+	)
+'
+
+test_expect_success 'test simple stage 1 handling' '
+	(
+		cd stage_1_handling &&
+
+		git config rerere.enabled true &&
+		git checkout A^0 &&
+		test_must_fail git merge B^0
+	)
 '
 
 test_done

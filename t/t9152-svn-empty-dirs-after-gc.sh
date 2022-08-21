@@ -8,7 +8,7 @@ test_description='git svn creates empty directories, calls git gc, makes sure th
 test_expect_success 'initialize repo' '
 	for i in a b c d d/e d/e/f "weird file name"
 	do
-		svn_cmd mkdir -m "mkdir $i" "$svnrepo"/"$i"
+		svn_cmd mkdir -m "mkdir $i" "$svnrepo"/"$i" || return 1
 	done
 '
 
@@ -30,7 +30,7 @@ test_expect_success 'git svn mkdirs recreates empty directories after git svn gc
 		do
 			if ! test -d "$i"
 			then
-				echo >&2 "$i does not exist"
+				echo >&2 "$i does not exist" &&
 				exit 1
 			fi
 		done

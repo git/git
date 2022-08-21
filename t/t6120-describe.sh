@@ -1,117 +1,100 @@
 #!/bin/sh
 
-test_description='test describe
+test_description='test describe'
 
-                       B
-        .--------------o----o----o----x
-       /                   /    /
- o----o----o----o----o----.    /
-       \        A    c        /
-        .------------o---o---o
-                   D,R   e
-'
+#  o---o-----o----o----o-------o----x
+#       \   D,R   e           /
+#        \---o-------------o-'
+#         \  B            /
+#          `-o----o----o-'
+#                 A    c
+#
+# First parent of a merge commit is on the same line, second parent below.
+
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 check_describe () {
+	indir= &&
+	while test $# != 0
+	do
+		case "$1" in
+		-C)
+			indir="$2"
+			shift
+			;;
+		*)
+			break
+			;;
+		esac
+		shift
+	done &&
+	indir=${indir:+"$indir"/} &&
 	expect="$1"
 	shift
-	R=$(git describe "$@" 2>err.actual)
-	S=$?
-	cat err.actual >&3
-	test_expect_success "describe $*" '
-	test $S = 0 &&
-	case "$R" in
-	$expect)	echo happy ;;
-	*)	echo "Oops - $R is not $expect";
-		false ;;
-	esac
+	describe_opts="$@"
+	test_expect_success "describe $describe_opts" '
+		git ${indir:+ -C "$indir"} describe $describe_opts >raw &&
+		sed -e "s/-g[0-9a-f]*\$/-gHASH/" <raw >actual &&
+		echo "$expect" >expect &&
+		test_cmp expect actual
 	'
 }
 
 test_expect_success setup '
+	test_commit initial file one &&
+	test_commit second file two &&
+	test_commit third file three &&
+	test_commit --annotate A file A &&
+	test_commit c file c &&
 
-	test_tick &&
-	echo one >file && git add file && git commit -m initial &&
-	one=$(git rev-parse HEAD) &&
-
-	git describe --always HEAD &&
-
-	test_tick &&
-	echo two >file && git add file && git commit -m second &&
-	two=$(git rev-parse HEAD) &&
-
-	test_tick &&
-	echo three >file && git add file && git commit -m third &&
-
-	test_tick &&
-	echo A >file && git add file && git commit -m A &&
-	test_tick &&
-	git tag -a -m A A &&
-
-	test_tick &&
-	echo c >file && git add file && git commit -m c &&
-	test_tick &&
-	git tag c &&
-
-	git reset --hard $two &&
-	test_tick &&
-	echo B >side && git add side && git commit -m B &&
-	test_tick &&
-	git tag -a -m B B &&
+	git reset --hard second &&
+	test_commit --annotate B side B &&
 
 	test_tick &&
 	git merge -m Merged c &&
 	merged=$(git rev-parse HEAD) &&
 
-	git reset --hard $two &&
-	test_tick &&
-	echo D >another && git add another && git commit -m D &&
-	test_tick &&
-	git tag -a -m D D &&
+	git reset --hard second &&
+	test_commit --no-tag D another D &&
+
 	test_tick &&
 	git tag -a -m R R &&
 
-	test_tick &&
-	echo DD >another && git commit -a -m another &&
-
-	test_tick &&
-	git tag e &&
-
-	test_tick &&
-	echo DDD >another && git commit -a -m "yet another" &&
+	test_commit e another DD &&
+	test_commit --no-tag "yet another" another DDD &&
 
 	test_tick &&
 	git merge -m Merged $merged &&
 
-	test_tick &&
-	echo X >file && echo X >side && git add file side &&
-	git commit -m x
-
+	test_commit --no-tag x file
 '
 
-check_describe A-* HEAD
-check_describe A-* HEAD^
-check_describe R-* HEAD^^
-check_describe A-* HEAD^^2
+check_describe A-8-gHASH HEAD
+check_describe A-7-gHASH HEAD^
+check_describe R-2-gHASH HEAD^^
+check_describe A-3-gHASH HEAD^^2
 check_describe B HEAD^^2^
-check_describe R-* HEAD^^^
+check_describe R-1-gHASH HEAD^^^
 
-check_describe c-* --tags HEAD
-check_describe c-* --tags HEAD^
-check_describe e-* --tags HEAD^^
-check_describe c-* --tags HEAD^^2
+check_describe c-7-gHASH --tags HEAD
+check_describe c-6-gHASH --tags HEAD^
+check_describe e-1-gHASH --tags HEAD^^
+check_describe c-2-gHASH --tags HEAD^^2
 check_describe B --tags HEAD^^2^
 check_describe e --tags HEAD^^^
 
-check_describe heads/master --all HEAD
-check_describe tags/c-* --all HEAD^
+check_describe heads/main --all HEAD
+check_describe tags/c-6-gHASH --all HEAD^
 check_describe tags/e --all HEAD^^^
 
-check_describe B-0-* --long HEAD^^2^
-check_describe A-3-* --long HEAD^^2
+check_describe B-0-gHASH --long HEAD^^2^
+check_describe A-3-gHASH --long HEAD^^2
 
-check_describe c-7-* --tags
-check_describe e-3-* --first-parent --tags
+check_describe c-7-gHASH --tags
+check_describe e-3-gHASH --first-parent --tags
 
 test_expect_success 'describe --contains defaults to HEAD without commit-ish' '
 	echo "A^0" >expect &&
@@ -121,38 +104,84 @@ test_expect_success 'describe --contains defaults to HEAD without commit-ish' '
 	test_cmp expect actual
 '
 
-: >err.expect
 check_describe tags/A --all A^0
-test_expect_success 'no warning was displayed for A' '
-	test_cmp err.expect err.actual
+
+test_expect_success 'renaming tag A to Q locally produces a warning' "
+	git update-ref refs/tags/Q $(git rev-parse refs/tags/A) &&
+	git update-ref -d refs/tags/A &&
+	git describe HEAD 2>err >out &&
+	cat >expected <<-\EOF &&
+	warning: tag 'Q' is externally known as 'A'
+	EOF
+	test_cmp expected err &&
+	grep -E '^A-8-g[0-9a-f]+$' out
+"
+
+test_expect_success 'misnamed annotated tag forces long output' '
+	description=$(git describe --no-long Q^0) &&
+	expr "$description" : "A-0-g[0-9a-f]*$" &&
+	git rev-parse --verify "$description" >actual &&
+	git rev-parse --verify Q^0 >expect &&
+	test_cmp expect actual
 '
 
-test_expect_success 'rename tag A to Q locally' '
-	mv .git/refs/tags/A .git/refs/tags/Q
+test_expect_success 'abbrev=0 will not break misplaced tag (1)' '
+	description=$(git describe --abbrev=0 Q^0) &&
+	expr "$description" : "A-0-g[0-9a-f]*$"
 '
-cat - >err.expect <<EOF
-warning: tag 'A' is really 'Q' here
-EOF
-check_describe A-* HEAD
-test_expect_success 'warning was displayed for Q' '
-	test_i18ncmp err.expect err.actual
+
+test_expect_success 'abbrev=0 will not break misplaced tag (2)' '
+	description=$(git describe --abbrev=0 c^0) &&
+	expr "$description" : "A-1-g[0-9a-f]*$"
 '
+
 test_expect_success 'rename tag Q back to A' '
-	mv .git/refs/tags/Q .git/refs/tags/A
+	git update-ref refs/tags/A $(git rev-parse refs/tags/Q) &&
+	git update-ref -d refs/tags/Q
 '
 
 test_expect_success 'pack tag refs' 'git pack-refs'
-check_describe A-* HEAD
+check_describe A-8-gHASH HEAD
 
-check_describe "A-*[0-9a-f]" --dirty
+test_expect_success 'describe works from outside repo using --git-dir' '
+	git clone --bare "$TRASH_DIRECTORY" "$TRASH_DIRECTORY/bare" &&
+	git --git-dir "$TRASH_DIRECTORY/bare" describe >out &&
+	grep -E "^A-8-g[0-9a-f]+$" out
+'
+
+check_describe "A-8-gHASH" --dirty
+
+test_expect_success 'describe --dirty with --work-tree' '
+	(
+		cd "$TEST_DIRECTORY" &&
+		git --git-dir "$TRASH_DIRECTORY/.git" --work-tree "$TRASH_DIRECTORY" describe --dirty >"$TRASH_DIRECTORY/out"
+	) &&
+	grep -E "^A-8-g[0-9a-f]+$" out
+'
 
 test_expect_success 'set-up dirty work tree' '
 	echo >>file
 '
 
-check_describe "A-*[0-9a-f]-dirty" --dirty
+test_expect_success 'describe --dirty with --work-tree (dirty)' '
+	git describe --dirty >expected &&
+	(
+		cd "$TEST_DIRECTORY" &&
+		git --git-dir "$TRASH_DIRECTORY/.git" --work-tree "$TRASH_DIRECTORY" describe --dirty >"$TRASH_DIRECTORY/out"
+	) &&
+	grep -E "^A-8-g[0-9a-f]+-dirty$" out &&
+	test_cmp expected out
+'
 
-check_describe "A-*[0-9a-f].mod" --dirty=.mod
+test_expect_success 'describe --dirty=.mod with --work-tree (dirty)' '
+	git describe --dirty=.mod >expected &&
+	(
+		cd "$TEST_DIRECTORY" &&
+		git --git-dir "$TRASH_DIRECTORY/.git" --work-tree "$TRASH_DIRECTORY" describe --dirty=.mod >"$TRASH_DIRECTORY/out"
+	) &&
+	grep -E "^A-8-g[0-9a-f]+.mod$" out &&
+	test_cmp expected out
+'
 
 test_expect_success 'describe --dirty HEAD' '
 	test_must_fail git describe --dirty HEAD
@@ -174,21 +203,21 @@ test_expect_success 'set-up matching pattern tests' '
 
 '
 
-check_describe "test-annotated-*" --match="test-*"
+check_describe "test-annotated-3-gHASH" --match="test-*"
 
-check_describe "test1-lightweight-*" --tags --match="test1-*"
+check_describe "test1-lightweight-2-gHASH" --tags --match="test1-*"
 
-check_describe "test2-lightweight-*" --tags --match="test2-*"
+check_describe "test2-lightweight-1-gHASH" --tags --match="test2-*"
 
-check_describe "test2-lightweight-*" --long --tags --match="test2-*" HEAD^
+check_describe "test2-lightweight-0-gHASH" --long --tags --match="test2-*" HEAD^
 
-check_describe "test2-lightweight-*" --long --tags --match="test1-*" --match="test2-*" HEAD^
+check_describe "test2-lightweight-0-gHASH" --long --tags --match="test1-*" --match="test2-*" HEAD^
 
-check_describe "test2-lightweight-*" --long --tags --match="test1-*" --no-match --match="test2-*" HEAD^
+check_describe "test2-lightweight-0-gHASH" --long --tags --match="test1-*" --no-match --match="test2-*" HEAD^
 
-check_describe "test1-lightweight-*" --long --tags --match="test1-*" --match="test3-*" HEAD
+check_describe "test1-lightweight-2-gHASH" --long --tags --match="test1-*" --match="test3-*" HEAD
 
-check_describe "test1-lightweight-*" --long --tags --match="test3-*" --match="test1-*" HEAD
+check_describe "test1-lightweight-2-gHASH" --long --tags --match="test3-*" --match="test1-*" HEAD
 
 test_expect_success 'set-up branches' '
 	git branch branch_A A &&
@@ -198,11 +227,11 @@ test_expect_success 'set-up branches' '
 	git update-ref refs/original/original_branch_A test-annotated~2
 '
 
-check_describe "heads/branch_A*" --all --match="branch_*" --exclude="branch_C" HEAD
+check_describe "heads/branch_A-11-gHASH" --all --match="branch_*" --exclude="branch_C" HEAD
 
-check_describe "remotes/origin/remote_branch_A*" --all --match="origin/remote_branch_*" --exclude="origin/remote_branch_C" HEAD
+check_describe "remotes/origin/remote_branch_A-11-gHASH" --all --match="origin/remote_branch_*" --exclude="origin/remote_branch_C" HEAD
 
-check_describe "original/original_branch_A*" --all test-annotated~1
+check_describe "original/original_branch_A-6-gHASH" --all test-annotated~1
 
 test_expect_success '--match does not work for other types' '
 	test_must_fail git describe --all --match="*original_branch_*" test-annotated~1
@@ -233,7 +262,7 @@ test_expect_success 'name-rev --all' '
 	>expect.unsorted &&
 	for rev in $(git rev-list --all)
 	do
-		git name-rev $rev >>expect.unsorted
+		git name-rev $rev >>expect.unsorted || return 1
 	done &&
 	sort <expect.unsorted >expect &&
 	git name-rev --all >actual.unsorted &&
@@ -241,18 +270,23 @@ test_expect_success 'name-rev --all' '
 	test_cmp expect actual
 '
 
-test_expect_success 'name-rev --stdin' '
+test_expect_success 'name-rev --annotate-stdin' '
 	>expect.unsorted &&
 	for rev in $(git rev-list --all)
 	do
 		name=$(git name-rev --name-only $rev) &&
-		echo "$rev ($name)" >>expect.unsorted
+		echo "$rev ($name)" >>expect.unsorted || return 1
 	done &&
 	sort <expect.unsorted >expect &&
-	git rev-list --all | git name-rev --stdin >actual.unsorted &&
+	git rev-list --all | git name-rev --annotate-stdin >actual.unsorted &&
 	sort <actual.unsorted >actual &&
 	test_cmp expect actual
 '
+
+test_expect_success 'name-rev --stdin deprecated' "
+	git rev-list --all | git name-rev --stdin 2>actual &&
+	grep -E 'warning: --stdin is deprecated' actual
+"
 
 test_expect_success 'describe --contains with the exact tags' '
 	echo "A^0" >expect &&
@@ -304,8 +338,17 @@ test_expect_success 'describe chokes on severely broken submodules' '
 	mv .git/modules/sub1/ .git/modules/sub_moved &&
 	test_must_fail git describe --dirty
 '
+
 test_expect_success 'describe ignoring a broken submodule' '
 	git describe --broken >out &&
+	grep broken out
+'
+
+test_expect_success 'describe with --work-tree ignoring a broken submodule' '
+	(
+		cd "$TEST_DIRECTORY" &&
+		git --git-dir "$TRASH_DIRECTORY/.git" --work-tree "$TRASH_DIRECTORY" describe --broken >"$TRASH_DIRECTORY/out"
+	) &&
 	test_when_finished "mv .git/modules/sub_moved .git/modules/sub1" &&
 	grep broken out
 '
@@ -344,19 +387,22 @@ test_expect_success 'describe tag object' '
 	test_i18ngrep "fatal: test-blob-1 is neither a commit nor blob" actual
 '
 
-test_expect_failure ULIMIT_STACK_SIZE 'name-rev works in a deep repo' '
+test_expect_success ULIMIT_STACK_SIZE 'name-rev works in a deep repo' '
 	i=1 &&
 	while test $i -lt 8000
 	do
-		echo "commit refs/heads/master
+		echo "commit refs/heads/main
 committer A U Thor <author@example.com> $((1000000000 + $i * 100)) +0200
 data <<EOF
 commit #$i
-EOF"
-		test $i = 1 && echo "from refs/heads/master^0"
-		i=$(($i + 1))
+EOF" &&
+		if test $i = 1
+		then
+			echo "from refs/heads/main^0"
+		fi &&
+		i=$(($i + 1)) || return 1
 	done | git fast-import &&
-	git checkout master &&
+	git checkout main &&
 	git tag far-far-away HEAD^ &&
 	echo "HEAD~4000 tags/far-far-away~3999" >expect &&
 	git name-rev HEAD~4000 >actual &&
@@ -383,7 +429,232 @@ test_expect_success 'describe complains about tree object' '
 '
 
 test_expect_success 'describe complains about missing object' '
-	test_must_fail git describe $_z40
+	test_must_fail git describe $ZERO_OID
 '
+
+test_expect_success 'name-rev a rev shortly after epoch' '
+	test_when_finished "git checkout main" &&
+
+	git checkout --orphan no-timestamp-underflow &&
+	# Any date closer to epoch than the CUTOFF_DATE_SLOP constant
+	# in builtin/name-rev.c.
+	GIT_COMMITTER_DATE="@1234 +0000" \
+	git commit -m "committer date shortly after epoch" &&
+	old_commit_oid=$(git rev-parse HEAD) &&
+
+	echo "$old_commit_oid no-timestamp-underflow" >expect &&
+	git name-rev $old_commit_oid >actual &&
+	test_cmp expect actual
+'
+
+# A--------------main
+#  \            /
+#   \----------M2
+#    \        /
+#     \---M1-C
+#      \ /
+#       B
+test_expect_success 'name-rev covers all conditions while looking at parents' '
+	git init repo &&
+	(
+		cd repo &&
+
+		echo A >file &&
+		git add file &&
+		git commit -m A &&
+		A=$(git rev-parse HEAD) &&
+
+		git checkout --detach &&
+		echo B >file &&
+		git commit -m B file &&
+		B=$(git rev-parse HEAD) &&
+
+		git checkout $A &&
+		git merge --no-ff $B &&  # M1
+
+		echo C >file &&
+		git commit -m C file &&
+
+		git checkout $A &&
+		git merge --no-ff HEAD@{1} && # M2
+
+		git checkout main &&
+		git merge --no-ff HEAD@{1} &&
+
+		echo "$B main^2^2~1^2" >expect &&
+		git name-rev $B >actual &&
+
+		test_cmp expect actual
+	)
+'
+
+# A-B-C-D-E-main
+#
+# Where C has a non-monotonically increasing commit timestamp w.r.t. other
+# commits
+test_expect_success 'non-monotonic commit dates setup' '
+	UNIX_EPOCH_ZERO="@0 +0000" &&
+	git init non-monotonic &&
+	test_commit -C non-monotonic A &&
+	test_commit -C non-monotonic --no-tag B &&
+	test_commit -C non-monotonic --no-tag --date "$UNIX_EPOCH_ZERO" C &&
+	test_commit -C non-monotonic D &&
+	test_commit -C non-monotonic E
+'
+
+test_expect_success 'name-rev with commitGraph handles non-monotonic timestamps' '
+	test_config -C non-monotonic core.commitGraph true &&
+	(
+		cd non-monotonic &&
+
+		git commit-graph write --reachable &&
+
+		echo "main~3 tags/D~2" >expect &&
+		git name-rev --tags main~3 >actual &&
+
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'name-rev --all works with non-monotonic timestamps' '
+	test_config -C non-monotonic core.commitGraph false &&
+	(
+		cd non-monotonic &&
+
+		rm -rf .git/info/commit-graph* &&
+
+		cat >tags <<-\EOF &&
+		tags/E
+		tags/D
+		tags/D~1
+		tags/D~2
+		tags/A
+		EOF
+
+		git log --pretty=%H >revs &&
+
+		paste -d" " revs tags | sort >expect &&
+
+		git name-rev --tags --all | sort >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'name-rev --annotate-stdin works with non-monotonic timestamps' '
+	test_config -C non-monotonic core.commitGraph false &&
+	(
+		cd non-monotonic &&
+
+		rm -rf .git/info/commit-graph* &&
+
+		cat >expect <<-\EOF &&
+		E
+		D
+		D~1
+		D~2
+		A
+		EOF
+
+		git log --pretty=%H >revs &&
+		git name-rev --tags --annotate-stdin --name-only <revs >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'name-rev --all works with commitGraph' '
+	test_config -C non-monotonic core.commitGraph true &&
+	(
+		cd non-monotonic &&
+
+		git commit-graph write --reachable &&
+
+		cat >tags <<-\EOF &&
+		tags/E
+		tags/D
+		tags/D~1
+		tags/D~2
+		tags/A
+		EOF
+
+		git log --pretty=%H >revs &&
+
+		paste -d" " revs tags | sort >expect &&
+
+		git name-rev --tags --all | sort >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'name-rev --annotate-stdin works with commitGraph' '
+	test_config -C non-monotonic core.commitGraph true &&
+	(
+		cd non-monotonic &&
+
+		git commit-graph write --reachable &&
+
+		cat >expect <<-\EOF &&
+		E
+		D
+		D~1
+		D~2
+		A
+		EOF
+
+		git log --pretty=%H >revs &&
+		git name-rev --tags --annotate-stdin --name-only <revs >actual &&
+		test_cmp expect actual
+	)
+'
+
+#               B
+#               o
+#                \
+#  o-----o---o----x
+#        A
+#
+test_expect_success 'setup: describe commits with disjoint bases' '
+	git init disjoint1 &&
+	(
+		cd disjoint1 &&
+
+		echo o >> file && git add file && git commit -m o &&
+		echo A >> file && git add file && git commit -m A &&
+		git tag A -a -m A &&
+		echo o >> file && git add file && git commit -m o &&
+
+		git checkout --orphan branch && rm file &&
+		echo B > file2 && git add file2 && git commit -m B &&
+		git tag B -a -m B &&
+		git merge --no-ff --allow-unrelated-histories main -m x
+	)
+'
+
+check_describe -C disjoint1 "A-3-gHASH" HEAD
+
+#           B
+#   o---o---o------------.
+#                         \
+#                  o---o---x
+#                  A
+#
+test_expect_success 'setup: describe commits with disjoint bases 2' '
+	git init disjoint2 &&
+	(
+		cd disjoint2 &&
+
+		echo A >> file && git add file && GIT_COMMITTER_DATE="2020-01-01 18:00" git commit -m A &&
+		git tag A -a -m A &&
+		echo o >> file && git add file && GIT_COMMITTER_DATE="2020-01-01 18:01" git commit -m o &&
+
+		git checkout --orphan branch &&
+		echo o >> file2 && git add file2 && GIT_COMMITTER_DATE="2020-01-01 15:00" git commit -m o &&
+		echo o >> file2 && git add file2 && GIT_COMMITTER_DATE="2020-01-01 15:01" git commit -m o &&
+		echo B >> file2 && git add file2 && GIT_COMMITTER_DATE="2020-01-01 15:02" git commit -m B &&
+		git tag B -a -m B &&
+		git merge --no-ff --allow-unrelated-histories main -m x
+	)
+'
+
+check_describe -C disjoint2 "B-3-gHASH" HEAD
 
 test_done

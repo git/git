@@ -2,6 +2,7 @@
 
 test_description='diff whitespace error detection'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -260,7 +261,7 @@ test_expect_success 'trailing empty lines (2)' '
 
 	echo "F -whitespace" >.gitattributes &&
 	git diff --check >output &&
-	! test -s output
+	test_must_be_empty output
 
 '
 
@@ -286,9 +287,9 @@ test_expect_success 'do not color trailing cr in context' '
 '
 
 test_expect_success 'color new trailing blank lines' '
-	{ echo a; echo b; echo; echo; } >x &&
+	test_write_lines a b "" "" >x &&
 	git add x &&
-	{ echo a; echo; echo; echo; echo c; echo; echo; echo; echo; } >x &&
+	test_write_lines a "" "" "" c "" "" "" "" >x &&
 	git diff --color x >output &&
 	cnt=$($grep_a "${blue_grep}" output | wc -l) &&
 	test $cnt = 2

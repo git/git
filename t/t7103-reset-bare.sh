@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='git reset in a bare repository'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup non-bare' '
@@ -61,9 +63,12 @@ test_expect_success '"mixed" reset is not allowed in bare' '
 	test_must_fail git reset --mixed HEAD^
 '
 
-test_expect_success '"soft" reset is allowed in bare' '
+test_expect_success !SANITIZE_LEAK '"soft" reset is allowed in bare' '
 	git reset --soft HEAD^ &&
-	test "$(git show --pretty=format:%s | head -n 1)" = "one"
+	git show --pretty=format:%s >out &&
+	echo one >expect &&
+	head -n 1 out >actual &&
+	test_cmp expect actual
 '
 
 test_done

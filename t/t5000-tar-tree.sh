@@ -24,6 +24,7 @@ commit id embedding:
 
 '
 
+TEST_CREATE_REPO_NO_TEMPLATE=1
 . ./test-lib.sh
 
 SUBSTFORMAT=%H%n
@@ -77,7 +78,7 @@ check_tar() {
 					path=$(get_pax_header $header path) &&
 					if test -n "$path"
 					then
-						mv "$data" "$path"
+						mv "$data" "$path" || exit 1
 					fi
 				fi
 			done
@@ -94,29 +95,56 @@ check_tar() {
 	'
 }
 
-test_expect_success \
-    'populate workdir' \
-    'mkdir a &&
-     echo simple textfile >a/a &&
-     ten=0123456789 && hundred=$ten$ten$ten$ten$ten$ten$ten$ten$ten$ten &&
-     echo long filename >a/four$hundred &&
-     mkdir a/bin &&
-     test-tool genrandom "frotz" 500000 >a/bin/sh &&
-     printf "A\$Format:%s\$O" "$SUBSTFORMAT" >a/substfile1 &&
-     printf "A not substituted O" >a/substfile2 &&
-     if test_have_prereq SYMLINKS; then
-	ln -s a a/l1
-     else
-	printf %s a > a/l1
-     fi &&
-     (p=long_path_to_a_file && cd a &&
-      for depth in 1 2 3 4 5; do mkdir $p && cd $p; done &&
-      echo text >file_with_long_path) &&
-     (cd a && find .) | sort >a.lst'
+check_added() {
+	dir=$1
+	path_in_fs=$2
+	path_in_archive=$3
+
+	test_expect_success " validate extra file $path_in_archive" '
+		diff -r $path_in_fs $dir/$path_in_archive
+	'
+}
+
+test_expect_success 'setup' '
+	test_oid_cache <<-EOF
+	obj sha1:19f9c8273ec45a8938e6999cb59b3ff66739902a
+	obj sha256:3c666f798798601571f5cec0adb57ce4aba8546875e7693177e0535f34d2c49b
+	EOF
+'
+
+test_expect_success 'populate workdir' '
+	mkdir a &&
+	echo simple textfile >a/a &&
+	ten=0123456789 &&
+	hundred="$ten$ten$ten$ten$ten$ten$ten$ten$ten$ten" &&
+	echo long filename >"a/four$hundred" &&
+	mkdir a/bin &&
+	test-tool genrandom "frotz" 500000 >a/bin/sh &&
+	printf "A\$Format:%s\$O" "$SUBSTFORMAT" >a/substfile1 &&
+	printf "A not substituted O" >a/substfile2 &&
+	if test_have_prereq SYMLINKS
+	then
+		ln -s a a/l1
+	else
+		printf %s a >a/l1
+	fi &&
+	(
+		p=long_path_to_a_file &&
+		cd a &&
+		for depth in 1 2 3 4 5
+		do
+			mkdir $p &&
+			cd $p || exit 1
+		done &&
+		echo text >file_with_long_path
+	) &&
+	(cd a && find .) | sort >a.lst
+'
 
 test_expect_success \
     'add ignored file' \
     'echo ignore me >a/ignored &&
+     mkdir .git/info &&
      echo ignored export-ignore >.git/info/attributes'
 
 test_expect_success 'add files to repository' '
@@ -130,18 +158,19 @@ test_expect_success 'setup export-subst' '
 		>a/substfile1
 '
 
-test_expect_success \
-    'create bare clone' \
-    'git clone --bare . bare.git &&
-     cp .git/info/attributes bare.git/info/attributes'
+test_expect_success 'create bare clone' '
+	git clone --template= --bare . bare.git &&
+	mkdir bare.git/info &&
+	cp .git/info/attributes bare.git/info/attributes
+'
 
-test_expect_success \
-    'remove ignored file' \
-    'rm a/ignored'
+test_expect_success 'remove ignored file' '
+	rm a/ignored
+'
 
-test_expect_success \
-    'git archive' \
-    'git archive HEAD >b.tar'
+test_expect_success 'git archive' '
+	git archive HEAD >b.tar
+'
 
 check_tar b
 
@@ -157,27 +186,48 @@ test_expect_success 'git-archive --prefix=olde-' '
 
 check_tar with_olde-prefix olde-
 
-test_expect_success 'git archive on large files' '
-    test_config core.bigfilethreshold 1 &&
-    git archive HEAD >b3.tar &&
-    test_cmp_bin b.tar b3.tar
+test_expect_success 'git archive --add-file' '
+	echo untracked >untracked &&
+	git archive --add-file=untracked HEAD >with_untracked.tar
 '
 
-test_expect_success \
-    'git archive in a bare repo' \
-    '(cd bare.git && git archive HEAD) >b3.tar'
+check_tar with_untracked
+check_added with_untracked untracked untracked
 
-test_expect_success \
-    'git archive vs. the same in a bare repo' \
-    'test_cmp_bin b.tar b3.tar'
+test_expect_success 'git archive --add-file twice' '
+	echo untracked >untracked &&
+	git archive --prefix=one/ --add-file=untracked \
+		--prefix=two/ --add-file=untracked \
+		--prefix= HEAD >with_untracked2.tar
+'
 
-test_expect_success 'git archive with --output' \
-    'git archive --output=b4.tar HEAD &&
-    test_cmp_bin b.tar b4.tar'
+check_tar with_untracked2
+check_added with_untracked2 untracked one/untracked
+check_added with_untracked2 untracked two/untracked
 
-test_expect_success 'git archive --remote' \
-    'git archive --remote=. HEAD >b5.tar &&
-    test_cmp_bin b.tar b5.tar'
+test_expect_success 'git archive on large files' '
+	test_config core.bigfilethreshold 1 &&
+	git archive HEAD >b3.tar &&
+	test_cmp_bin b.tar b3.tar
+'
+
+test_expect_success 'git archive in a bare repo' '
+	git --git-dir bare.git archive HEAD >b3.tar
+'
+
+test_expect_success 'git archive vs. the same in a bare repo' '
+	test_cmp_bin b.tar b3.tar
+'
+
+test_expect_success 'git archive with --output' '
+	git archive --output=b4.tar HEAD &&
+	test_cmp_bin b.tar b4.tar
+'
+
+test_expect_success 'git archive --remote' '
+	git archive --remote=. HEAD >b5.tar &&
+	test_cmp_bin b.tar b5.tar
+'
 
 test_expect_success 'git archive --remote with configured remote' '
 	git config remote.foo.url . &&
@@ -188,22 +238,29 @@ test_expect_success 'git archive --remote with configured remote' '
 	test_cmp_bin b.tar b5-nick.tar
 '
 
-test_expect_success \
-    'validate file modification time' \
-    'mkdir extract &&
-     "$TAR" xf b.tar -C extract a/a &&
-     test-tool chmtime --get extract/a/a >b.mtime &&
-     echo "1117231200" >expected.mtime &&
-     test_cmp expected.mtime b.mtime'
+test_expect_success 'validate file modification time' '
+	mkdir extract &&
+	"$TAR" xf b.tar -C extract a/a &&
+	test-tool chmtime --get extract/a/a >b.mtime &&
+	echo "1117231200" >expected.mtime &&
+	test_cmp expected.mtime b.mtime
+'
 
-test_expect_success \
-    'git get-tar-commit-id' \
-    'git get-tar-commit-id <b.tar >b.commitid &&
-     test_cmp .git/$(git symbolic-ref HEAD) b.commitid'
+test_expect_success 'git get-tar-commit-id' '
+	git get-tar-commit-id <b.tar >actual &&
+	git rev-parse HEAD >expect &&
+	test_cmp expect actual
+'
 
 test_expect_success 'git archive with --output, override inferred format' '
 	git archive --format=tar --output=d4.zip HEAD &&
 	test_cmp_bin b.tar d4.zip
+'
+
+test_expect_success GZIP 'git archive with --output and --remote creates .tgz' '
+	git archive --output=d5.tgz --remote=. HEAD &&
+	gzip -d -c <d5.tgz >d5.tar &&
+	test_cmp_bin b.tar d5.tar
 '
 
 test_expect_success 'git archive --list outside of a git repo' '
@@ -285,21 +342,21 @@ test_expect_success 'only enabled filters are available remotely' '
 	test_cmp_bin remote.bar config.bar
 '
 
-test_expect_success GZIP 'git archive --format=tgz' '
+test_expect_success 'git archive --format=tgz' '
 	git archive --format=tgz HEAD >j.tgz
 '
 
-test_expect_success GZIP 'git archive --format=tar.gz' '
+test_expect_success 'git archive --format=tar.gz' '
 	git archive --format=tar.gz HEAD >j1.tar.gz &&
 	test_cmp_bin j.tgz j1.tar.gz
 '
 
-test_expect_success GZIP 'infer tgz from .tgz filename' '
+test_expect_success 'infer tgz from .tgz filename' '
 	git archive --output=j2.tgz HEAD &&
 	test_cmp_bin j.tgz j2.tgz
 '
 
-test_expect_success GZIP 'infer tgz from .tar.gz filename' '
+test_expect_success 'infer tgz from .tar.gz filename' '
 	git archive --output=j3.tar.gz HEAD &&
 	test_cmp_bin j.tgz j3.tar.gz
 '
@@ -309,15 +366,31 @@ test_expect_success GZIP 'extract tgz file' '
 	test_cmp_bin b.tar j.tar
 '
 
-test_expect_success GZIP 'remote tar.gz is allowed by default' '
+test_expect_success 'remote tar.gz is allowed by default' '
 	git archive --remote=. --format=tar.gz HEAD >remote.tar.gz &&
 	test_cmp_bin j.tgz remote.tar.gz
 '
 
-test_expect_success GZIP 'remote tar.gz can be disabled' '
+test_expect_success 'remote tar.gz can be disabled' '
 	git config tar.tar.gz.remote false &&
 	test_must_fail git archive --remote=. --format=tar.gz HEAD \
 		>remote.tar.gz
+'
+
+test_expect_success GZIP 'git archive --format=tgz (external gzip)' '
+	test_config tar.tgz.command "gzip -cn" &&
+	git archive --format=tgz HEAD >external_gzip.tgz
+'
+
+test_expect_success GZIP 'git archive --format=tar.gz (external gzip)' '
+	test_config tar.tar.gz.command "gzip -cn" &&
+	git archive --format=tar.gz HEAD >external_gzip.tar.gz &&
+	test_cmp_bin external_gzip.tgz external_gzip.tar.gz
+'
+
+test_expect_success GZIP 'extract tgz file (external gzip)' '
+	gzip -d -c <external_gzip.tgz >external_gzip.tar &&
+	test_cmp_bin b.tar external_gzip.tar
 '
 
 test_expect_success 'archive and :(glob)' '
@@ -363,11 +436,10 @@ test_lazy_prereq TAR_HUGE '
 '
 
 test_expect_success LONG_IS_64BIT 'set up repository with huge blob' '
-	obj_d=19 &&
-	obj_f=f9c8273ec45a8938e6999cb59b3ff66739902a &&
-	obj=${obj_d}${obj_f} &&
-	mkdir -p .git/objects/$obj_d &&
-	cp "$TEST_DIRECTORY"/t5000/$obj .git/objects/$obj_d/$obj_f &&
+	obj=$(test_oid obj) &&
+	path=$(test_oid_to_path $obj) &&
+	mkdir -p .git/objects/$(dirname $path) &&
+	cp "$TEST_DIRECTORY"/t5000/huge-object .git/objects/$path &&
 	rm -f .git/index &&
 	git update-index --add --cacheinfo 100644,$obj,huge &&
 	git commit -m huge
@@ -390,15 +462,33 @@ test_expect_success TAR_HUGE,LONG_IS_64BIT 'system tar can read our huge size' '
 	test_cmp expect actual
 '
 
-test_expect_success TIME_IS_64BIT 'set up repository with far-future commit' '
+test_expect_success TIME_IS_64BIT 'set up repository with far-future (2^34 - 1) commit' '
 	rm -f .git/index &&
-	echo content >file &&
+	echo foo >file &&
 	git add file &&
-	GIT_COMMITTER_DATE="@68719476737 +0000" \
+	GIT_COMMITTER_DATE="@17179869183 +0000" \
 		git commit -m "tempori parendum"
 '
 
-test_expect_success TIME_IS_64BIT 'generate tar with future mtime' '
+test_expect_success TIME_IS_64BIT 'generate tar with far-future mtime' '
+	git archive HEAD >future.tar
+'
+
+test_expect_success TAR_HUGE,TIME_IS_64BIT,TIME_T_IS_64BIT 'system tar can read our future mtime' '
+	echo 2514 >expect &&
+	tar_info future.tar | cut -d" " -f2 >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success TIME_IS_64BIT 'set up repository with far-far-future (2^36 + 1) commit' '
+	rm -f .git/index &&
+	echo content >file &&
+	git add file &&
+	GIT_TEST_COMMIT_GRAPH=0 GIT_COMMITTER_DATE="@68719476737 +0000" \
+		git commit -m "tempori parendum"
+'
+
+test_expect_success TIME_IS_64BIT 'generate tar with far-far-future mtime' '
 	git archive HEAD >future.tar
 '
 

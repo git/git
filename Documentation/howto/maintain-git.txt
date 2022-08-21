@@ -66,7 +66,7 @@ this mailing list after each feature release is made.
    demonstrated to be regression free.  New changes are tested
    in 'next' before merged to 'master'.
 
- - 'pu' branch is used to publish other proposed changes that do
+ - 'seen' branch is used to publish other proposed changes that do
    not yet pass the criteria set for 'next'.
 
  - The tips of 'master' and 'maint' branches will not be rewound to
@@ -76,7 +76,7 @@ this mailing list after each feature release is made.
    of the cycle.
 
  - Usually 'master' contains all of 'maint' and 'next' contains all
-   of 'master'.  'pu' contains all the topics merged to 'next', but
+   of 'master'.  'seen' contains all the topics merged to 'next', but
    is rebuilt directly on 'master'.
 
  - The tip of 'master' is meant to be more stable than any
@@ -154,15 +154,17 @@ by doing the following:
    - Anything unobvious that is applicable to 'master' (in other
      words, does not depend on anything that is still in 'next'
      and not in 'master') is applied to a new topic branch that
-     is forked from the tip of 'master'.  This includes both
+     is forked from the tip of 'master' (or the last feature release,
+     which is a bit older than 'master').  This includes both
      enhancements and unobvious fixes to 'master'.  A topic
      branch is named as ai/topic where "ai" is two-letter string
      named after author's initial and "topic" is a descriptive name
      of the topic (in other words, "what's the series is about").
 
    - An unobvious fix meant for 'maint' is applied to a new
-     topic branch that is forked from the tip of 'maint'.  The
-     topic is named as ai/maint-topic.
+     topic branch that is forked from the tip of 'maint' (or the
+     oldest and still relevant maintenance branch).  The
+     topic may be named as ai/maint-topic.
 
    - Changes that pertain to an existing topic are applied to
      the branch, but:
@@ -174,24 +176,40 @@ by doing the following:
    - Replacement patches to an existing topic are accepted only
      for commits not in 'next'.
 
-   The above except the "replacement" are all done with:
+   The initial round is done with:
 
      $ git checkout ai/topic ;# or "git checkout -b ai/topic master"
      $ git am -sc3 mailbox
 
-   while patch replacement is often done by:
+   and replacing an existing topic with subsequent round is done with:
 
-     $ git format-patch ai/topic~$n..ai/topic ;# export existing
+     $ git checkout master...ai/topic ;# try to reapply to the same base
+     $ git am -sc3 mailbox
 
-   then replace some parts with the new patch, and reapplying:
+   to prepare the new round on a detached HEAD, and then
 
-     $ git checkout ai/topic
-     $ git reset --hard ai/topic~$n
-     $ git am -sc3 -s 000*.txt
+     $ git range-diff @{-1}...
+     $ git diff @{-1}
 
-   The full test suite is always run for 'maint' and 'master'
-   after patch application; for topic branches the tests are run
-   as time permits.
+   to double check what changed since the last round, and finally
+
+     $ git checkout -B @{-1}
+
+   to conclude (the last step is why a topic already in 'next' is
+   not replaced but updated incrementally).
+
+   Whether it is the initial round or a subsequent round, the topic
+   may not build even in isolation, or may break the build when
+   merged to integration branches due to bugs.  There may already
+   be obvious and trivial improvements suggested on the list.  The
+   maintainer often adds an extra commit, with "SQUASH???" in its
+   title, to fix things up, before publishing the integration
+   branches to make it usable by other developers for testing.
+   These changes are what the maintainer is not 100% committed to
+   (trivial typofixes etc. are often squashed directly into the
+   patches that need fixing, without being applied as a separate
+   "SQUASH???" commit), so that they can be removed easily as needed.
+
 
  - Merge maint to master as needed:
 
@@ -211,12 +229,12 @@ by doing the following:
    series?)
 
  - Prepare 'jch' branch, which is used to represent somewhere
-   between 'master' and 'pu' and often is slightly ahead of 'next'.
+   between 'master' and 'seen' and often is slightly ahead of 'next'.
 
-     $ Meta/Reintegrate master..pu >Meta/redo-jch.sh
+     $ Meta/Reintegrate master..seen >Meta/redo-jch.sh
 
    The result is a script that lists topics to be merged in order to
-   rebuild 'pu' as the input to Meta/Reintegrate script.  Remove
+   rebuild 'seen' as the input to Meta/Reintegrate script.  Remove
    later topics that should not be in 'jch' yet.  Add a line that
    consists of '### match next' before the name of the first topic
    in the output that should be in 'jch' but not in 'next' yet.
@@ -273,29 +291,29 @@ by doing the following:
    merged to 'master'.  This may lose '### match next' marker;
    add it again to the appropriate place when it happens.
 
- - Rebuild 'pu'.
+ - Rebuild 'seen'.
 
-     $ Meta/Reintegrate master..pu >Meta/redo-pu.sh
+     $ Meta/Reintegrate master..seen >Meta/redo-seen.sh
 
-   Edit the result by adding new topics that are not still in 'pu'
+   Edit the result by adding new topics that are not still in 'seen'
    in the script.  Then
 
-     $ git checkout -B pu jch
-     $ sh Meta/redo-pu.sh
+     $ git checkout -B seen jch
+     $ sh Meta/redo-seen.sh
 
-   When all is well, clean up the redo-pu.sh script with
+   When all is well, clean up the redo-seen.sh script with
 
-     $ sh Meta/redo-pu.sh -u
+     $ sh Meta/redo-seen.sh -u
 
    Double check by running
 
-     $ git branch --no-merged pu
+     $ git branch --no-merged seen
 
    to see there is no unexpected leftover topics.
 
    At this point, build-test the result for semantic conflicts, and
    if there are, prepare an appropriate merge-fix first (see
-   appendix), and rebuild the 'pu' branch from scratch, starting at
+   appendix), and rebuild the 'seen' branch from scratch, starting at
    the tip of 'jch'.
 
  - Update "What's cooking" message to review the updates to
@@ -305,14 +323,14 @@ by doing the following:
 
      $ Meta/cook
 
-   This script inspects the history between master..pu, finds tips
+   This script inspects the history between master..seen, finds tips
    of topic branches, compares what it found with the current
    contents in Meta/whats-cooking.txt, and updates that file.
-   Topics not listed in the file but are found in master..pu are
+   Topics not listed in the file but are found in master..seen are
    added to the "New topics" section, topics listed in the file that
-   are no longer found in master..pu are moved to the "Graduated to
+   are no longer found in master..seen are moved to the "Graduated to
    master" section, and topics whose commits changed their states
-   (e.g. used to be only in 'pu', now merged to 'next') are updated
+   (e.g. used to be only in 'seen', now merged to 'next') are updated
    with change markers "<<" and ">>".
 
    Look for lines enclosed in "<<" and ">>"; they hold contents from
@@ -342,7 +360,7 @@ Observations
 Some observations to be made.
 
  * Each topic is tested individually, and also together with other
-   topics cooking first in 'pu', then in 'jch' and then in 'next'.
+   topics cooking first in 'seen', then in 'jch' and then in 'next'.
    Until it matures, no part of it is merged to 'master'.
 
  * A topic already in 'next' can get fixes while still in
@@ -371,6 +389,14 @@ Some observations to be made.
    be included in the next feature release.  Being in the
    'master' branch typically is.
 
+ * Due to the nature of "SQUASH???" fix-ups, if the original author
+   agrees with the suggested changes, it is OK to squash them to
+   appropriate patches in the next round (when the suggested change
+   is small enough, the author should not even bother with
+   "Helped-by").  It is also OK to drop them from the next round
+   when the original author does not agree with the suggestion, but
+   the author is expected to say why somewhere in the discussion.
+
 
 Appendix
 --------
@@ -385,7 +411,7 @@ new use of the variable under its old name. When these two topics
 are merged together, the reference to the variable newly added by
 the latter topic will still use the old name in the result.
 
-The Meta/Reintegrate script that is used by redo-jch and redo-pu
+The Meta/Reintegrate script that is used by redo-jch and redo-seen
 scripts implements a crude but usable way to work this issue around.
 When the script merges branch $X, it checks if "refs/merge-fix/$X"
 exists, and if so, the effect of it is squashed into the result of
@@ -405,14 +431,14 @@ commit that can be squashed into a result of mechanical merge to
 correct semantic conflicts.
 
 After finding that the result of merging branch "ai/topic" to an
-integration branch had such a semantic conflict, say pu~4, check the
+integration branch had such a semantic conflict, say seen~4, check the
 problematic merge out on a detached HEAD, edit the working tree to
 fix the semantic conflict, and make a separate commit to record the
 fix-up:
 
-     $ git checkout pu~4
+     $ git checkout seen~4
      $ git show -s --pretty=%s ;# double check
-     Merge branch 'ai/topic' to pu
+     Merge branch 'ai/topic' to seen
      $ edit
      $ git commit -m 'merge-fix/ai/topic' -a
 
@@ -424,9 +450,9 @@ result:
 Then double check the result by asking Meta/Reintegrate to redo the
 merge:
 
-     $ git checkout pu~5 ;# the parent of the problem merge
+     $ git checkout seen~5 ;# the parent of the problem merge
      $ echo ai/topic | Meta/Reintegrate
-     $ git diff pu~4
+     $ git diff seen~4
 
 This time, because you prepared refs/merge-fix/ai/topic, the
 resulting merge should have been tweaked to include the fix for the
@@ -438,7 +464,7 @@ branch needs this merge-fix is because another branch merged earlier
 to the integration branch changed the underlying assumption ai/topic
 branch made (e.g. ai/topic branch added a site to refer to a
 variable, while the other branch renamed that variable and adjusted
-existing use sites), and if you changed redo-jch (or redo-pu) script
+existing use sites), and if you changed redo-jch (or redo-seen) script
 to merge ai/topic branch before the other branch, then the above
 merge-fix should not be applied while merging ai/topic, but should
 instead be applied while merging the other branch.  You would need

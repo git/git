@@ -1,0 +1,6 @@
+(define-test-suite record\ case-tests RIGHT
+  (record-case-1 (lambda (fail)
+                   (let ((a (make-foo 1 2)))
+                     (record-case a
+                       ((bar x) (ChangeMe))
+                       ((foo a b) (+ a b)))))))

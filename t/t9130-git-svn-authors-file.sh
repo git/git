@@ -15,7 +15,7 @@ EOF
 test_expect_success 'setup svnrepo' '
 	for i in aa bb cc dd
 	do
-		svn_cmd mkdir -m $i --username $i "$svnrepo"/$i
+		svn_cmd mkdir -m $i --username $i "$svnrepo"/$i || return 1
 	done
 	'
 
@@ -25,7 +25,7 @@ test_expect_success 'start import with incomplete authors file' '
 
 test_expect_success 'imported 2 revisions successfully' '
 	(
-		cd x
+		cd x &&
 		git rev-list refs/remotes/git-svn >actual &&
 		test_line_count = 2 actual &&
 		git rev-list -1 --pretty=raw refs/remotes/git-svn >actual &&
@@ -42,7 +42,7 @@ EOF
 
 test_expect_success 'continues to import once authors have been added' '
 	(
-		cd x
+		cd x &&
 		git svn fetch --authors-file=../svn-authors &&
 		git rev-list refs/remotes/git-svn >actual &&
 		test_line_count = 4 actual &&
@@ -59,8 +59,8 @@ test_expect_success 'authors-file against globs' '
 	git svn clone --authors-file=svn-authors -s "$svnrepo"/aa aa-work &&
 	for i in bb ee cc
 	do
-		branch="aa/branches/$i"
-		svn_cmd mkdir -m "$branch" --username $i "$svnrepo/$branch"
+		branch="aa/branches/$i" &&
+		svn_cmd mkdir -m "$branch" --username $i "$svnrepo/$branch" || return 1
 	done
 	'
 

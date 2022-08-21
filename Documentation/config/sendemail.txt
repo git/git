@@ -1,0 +1,65 @@
+sendemail.identity::
+	A configuration identity. When given, causes values in the
+	'sendemail.<identity>' subsection to take precedence over
+	values in the 'sendemail' section. The default identity is
+	the value of `sendemail.identity`.
+
+sendemail.smtpEncryption::
+	See linkgit:git-send-email[1] for description.  Note that this
+	setting is not subject to the 'identity' mechanism.
+
+sendemail.smtpsslcertpath::
+	Path to ca-certificates (either a directory or a single file).
+	Set it to an empty string to disable certificate verification.
+
+sendemail.<identity>.*::
+	Identity-specific versions of the 'sendemail.*' parameters
+	found below, taking precedence over those when this
+	identity is selected, through either the command-line or
+	`sendemail.identity`.
+
+sendemail.aliasesFile::
+sendemail.aliasFileType::
+sendemail.annotate::
+sendemail.bcc::
+sendemail.cc::
+sendemail.ccCmd::
+sendemail.chainReplyTo::
+sendemail.confirm::
+sendemail.envelopeSender::
+sendemail.from::
+sendemail.multiEdit::
+sendemail.signedoffbycc::
+sendemail.smtpPass::
+sendemail.suppresscc::
+sendemail.suppressFrom::
+sendemail.to::
+sendemail.tocmd::
+sendemail.smtpDomain::
+sendemail.smtpServer::
+sendemail.smtpServerPort::
+sendemail.smtpServerOption::
+sendemail.smtpUser::
+sendemail.thread::
+sendemail.transferEncoding::
+sendemail.validate::
+sendemail.xmailer::
+	See linkgit:git-send-email[1] for description.
+
+sendemail.signedoffcc (deprecated)::
+	Deprecated alias for `sendemail.signedoffbycc`.
+
+sendemail.smtpBatchSize::
+	Number of messages to be sent per connection, after that a relogin
+	will happen.  If the value is 0 or undefined, send all messages in
+	one connection.
+	See also the `--batch-size` option of linkgit:git-send-email[1].
+
+sendemail.smtpReloginDelay::
+	Seconds wait before reconnecting to smtp server.
+	See also the `--relogin-delay` option of linkgit:git-send-email[1].
+
+sendemail.forbidSendmailVariables::
+	To avoid common misconfiguration mistakes, linkgit:git-send-email[1]
+	will abort with a warning if any configuration options for "sendmail"
+	exist. Set this variable to bypass the check.

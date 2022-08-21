@@ -15,6 +15,8 @@ static int label_cb(const struct option *opt, const char *arg, int unset)
 	static int label_count = 0;
 	const char **names = (const char **)opt->value;
 
+	BUG_ON_OPT_NEG(unset);
+
 	if (label_count >= 3)
 		return error("too many labels on the command line");
 	names[label_count++] = arg;
@@ -23,15 +25,17 @@ static int label_cb(const struct option *opt, const char *arg, int unset)
 
 int cmd_merge_file(int argc, const char **argv, const char *prefix)
 {
-	const char *names[3] = { NULL, NULL, NULL };
-	mmfile_t mmfs[3];
-	mmbuffer_t result = {NULL, 0};
-	xmparam_t xmp = {{0}};
+	const char *names[3] = { 0 };
+	mmfile_t mmfs[3] = { 0 };
+	mmbuffer_t result = { 0 };
+	xmparam_t xmp = { 0 };
 	int ret = 0, i = 0, to_stdout = 0;
 	int quiet = 0;
 	struct option options[] = {
 		OPT_BOOL('p', "stdout", &to_stdout, N_("send results to standard output")),
 		OPT_SET_INT(0, "diff3", &xmp.style, N_("use a diff3 based merge"), XDL_MERGE_DIFF3),
+		OPT_SET_INT(0, "zdiff3", &xmp.style, N_("use a zealous diff3 based merge"),
+				XDL_MERGE_ZEALOUS_DIFF3),
 		OPT_SET_INT(0, "ours", &xmp.favor, N_("for conflicts, use our version"),
 			    XDL_MERGE_FAVOR_OURS),
 		OPT_SET_INT(0, "theirs", &xmp.favor, N_("for conflicts, use their version"),
@@ -67,30 +71,30 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
 
 	for (i = 0; i < 3; i++) {
 		char *fname;
-		int ret;
+		mmfile_t *mmf = mmfs + i;
 
 		if (!names[i])
 			names[i] = argv[i];
 
 		fname = prefix_filename(prefix, argv[i]);
-		ret = read_mmfile(mmfs + i, fname);
+
+		if (read_mmfile(mmf, fname))
+			ret = -1;
+		else if (mmf->size > MAX_XDIFF_SIZE ||
+			 buffer_is_binary(mmf->ptr, mmf->size))
+			ret = error("Cannot merge binary files: %s",
+				    argv[i]);
+
 		free(fname);
 		if (ret)
-			return -1;
+			goto cleanup;
 
-		if (mmfs[i].size > MAX_XDIFF_SIZE ||
-		    buffer_is_binary(mmfs[i].ptr, mmfs[i].size))
-			return error("Cannot merge binary files: %s",
-					argv[i]);
 	}
 
 	xmp.ancestor = names[1];
 	xmp.file1 = names[0];
 	xmp.file2 = names[2];
 	ret = xdl_merge(mmfs + 1, mmfs + 0, mmfs + 2, &xmp, &result);
-
-	for (i = 0; i < 3; i++)
-		free(mmfs[i].ptr);
 
 	if (ret >= 0) {
 		const char *filename = argv[0];
@@ -111,6 +115,10 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
 
 	if (ret > 127)
 		ret = 127;
+
+cleanup:
+	for (i = 0; i < 3; i++)
+		free(mmfs[i].ptr);
 
 	return ret;
 }

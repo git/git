@@ -3,8 +3,12 @@
 test_description='test corner cases of git-archive'
 . ./test-lib.sh
 
-test_expect_success 'create commit with empty tree' '
-	git commit --allow-empty -m foo
+# the 10knuls.tar file is used to test for an empty git generated tar
+# without having to invoke tar because an otherwise valid empty GNU tar
+# will be considered broken by {Open,Net}BSD tar
+test_expect_success 'create commit with empty tree and fake empty tar' '
+	git commit --allow-empty -m foo &&
+	perl -e "print \"\\0\" x 10240" >10knuls.tar
 '
 
 # Make a dir and clean it up afterwards
@@ -47,7 +51,6 @@ test_expect_success HEADER_ONLY_TAR_OK 'tar archive of commit with empty tree' '
 
 test_expect_success 'tar archive of empty tree is empty' '
 	git archive --format=tar HEAD: >empty.tar &&
-	perl -e "print \"\\0\" x 10240" >10knuls.tar &&
 	test_cmp_bin 10knuls.tar empty.tar
 '
 
@@ -106,16 +109,12 @@ test_expect_success 'create a commit with an empty subtree' '
 
 test_expect_success 'archive empty subtree with no pathspec' '
 	git archive --format=tar $root_tree >subtree-all.tar &&
-	make_dir extract &&
-	"$TAR" xf subtree-all.tar -C extract &&
-	check_dir extract
+	test_cmp_bin 10knuls.tar subtree-all.tar
 '
 
 test_expect_success 'archive empty subtree by direct pathspec' '
 	git archive --format=tar $root_tree -- sub >subtree-path.tar &&
-	make_dir extract &&
-	"$TAR" xf subtree-path.tar -C extract &&
-	check_dir extract
+	test_cmp_bin 10knuls.tar subtree-path.tar
 '
 
 ZIPINFO=zipinfo
@@ -132,7 +131,7 @@ test_expect_success ZIPINFO 'zip archive with many entries' '
 	do
 		for b in 0 1 2 3 4 5 6 7 8 9 a b c d e f
 		do
-			: >00/$a$b
+			: >00/$a$b || return 1
 		done
 	done &&
 	git add 00 &&
@@ -144,7 +143,7 @@ test_expect_success ZIPINFO 'zip archive with many entries' '
 	do
 		for d in 0 1 2 3 4 5 6 7 8 9 a b c d e f
 		do
-			echo "040000 tree $subtree	$c$d"
+			echo "040000 tree $subtree	$c$d" || return 1
 		done
 	done >tree &&
 	tree=$(git mktree <tree) &&
@@ -154,7 +153,8 @@ test_expect_success ZIPINFO 'zip archive with many entries' '
 
 	# check the number of entries in the ZIP file directory
 	expr 65536 + 256 >expect &&
-	"$ZIPINFO" many.zip | head -2 | sed -n "2s/.* //p" >actual &&
+	"$ZIPINFO" -h many.zip >zipinfo &&
+	sed -n "2s/.* //p" <zipinfo >actual &&
 	test_cmp expect actual
 '
 
@@ -171,7 +171,7 @@ test_expect_success EXPENSIVE,UNZIP,UNZIP_ZIP64_SUPPORT \
 	# create tree containing 65500 entries of that blob
 	for i in $(test_seq 1 65500)
 	do
-		echo "100644 blob $blob	$i"
+		echo "100644 blob $blob	$i" || return 1
 	done >tree &&
 	tree=$(git mktree <tree) &&
 
@@ -203,6 +203,25 @@ test_expect_success EXPENSIVE,LONG_IS_64BIT,UNZIP,UNZIP_ZIP64_SUPPORT,ZIPINFO \
 	"$GIT_UNZIP" -t big.zip &&
 	"$ZIPINFO" big.zip >big.lst &&
 	grep $size big.lst
+'
+
+build_tree() {
+	perl -e '
+		my $hash = $ARGV[0];
+		foreach my $order (2..6) {
+			$first = 10 ** $order;
+			foreach my $i (-13..-9) {
+				my $name = "a" x ($first + $i);
+				print "100644 blob $hash\t$name\n"
+			}
+		}
+	' "$1"
+}
+
+test_expect_success 'tar archive with long paths' '
+	blob=$(echo foo | git hash-object -w --stdin) &&
+	tree=$(build_tree $blob | git mktree) &&
+	git archive -o long_paths.tar $tree
 '
 
 test_done

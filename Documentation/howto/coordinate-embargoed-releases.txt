@@ -1,0 +1,131 @@
+Content-type: text/asciidoc
+Abstract: When a critical vulnerability is discovered and fixed, we follow this
+ script to coordinate a public release.
+
+How we coordinate embargoed releases
+====================================
+
+To protect Git users from critical vulnerabilities, we do not just release
+fixed versions like regular maintenance releases. Instead, we coordinate
+releases with packagers, keeping the fixes under an embargo until the release
+date. That way, users will have a chance to upgrade on that date, no matter
+what Operating System or distribution they run.
+
+Open a Security Advisory draft
+------------------------------
+
+The first step is to https://github.com/git/git/security/advisories/new[open an
+advisory]. Technically, it is not necessary, but it is convenient and saves a
+bit of hassle. This advisory can also be used to obtain the CVE number and it
+will give us a private fork associated with it that can be used to collaborate
+on a fix.
+
+Release date of the embargoed version
+-------------------------------------
+
+If the vulnerability affects Windows users, we want to have our friends over at
+Visual Studio on board. This means we need to target a "Patch Tuesday" (i.e. a
+second Tuesday of the month), at the minimum three weeks from heads-up to
+coordinated release.
+
+If the vulnerability affects the server side, or can benefit from scans on the
+server side (i.e. if `git fsck` can detect an attack), it is important to give
+all involved Git repository hosting sites enough time to scan all of those
+repositories.
+
+Notifying the Linux distributions
+---------------------------------
+
+At most two weeks before release date, we need to send a notification to
+distros@vs.openwall.org, preferably less than 7 days before the release date.
+This will reach most (all?) Linux distributions. See an example below, and the
+guidelines for this mailing list at
+https://oss-security.openwall.org/wiki/mailing-lists/distros#how-to-use-the-lists[here].
+
+Once the version has been published, we send a note about that to oss-security.
+As an example, see https://www.openwall.com/lists/oss-security/2019/12/13/1[the
+v2.24.1 mail];
+https://oss-security.openwall.org/wiki/mailing-lists/oss-security[Here] are
+their guidelines.
+
+The mail to oss-security should also describe the exploit, and give credit to
+the reporter(s): security researchers still receive too little respect for the
+invaluable service they provide, and public credit goes a long way to keep them
+paid by their respective organizations.
+
+Technically, describing any exploit can be delayed up to 7 days, but we usually
+refrain from doing that, including it right away.
+
+As a courtesy we typically attach a Git bundle (as `.tar.xz` because the list
+will drop `.bundle` attachments) in the mail to distros@ so that the involved
+parties can take care of integrating/backporting them. This bundle is typically
+created using a command like this:
+
+	git bundle create cve-xxx.bundle ^origin/master vA.B.C vD.E.F
+	tar cJvf cve-xxx.bundle.tar.xz cve-xxx.bundle
+
+Example mail to distros@vs.openwall.org
+---------------------------------------
+
+....
+To: distros@vs.openwall.org
+Cc: git-security@googlegroups.com, <other people involved in the report/fix>
+Subject: [vs] Upcoming Git security fix release
+
+Team,
+
+The Git project will release new versions on <date> at 10am Pacific Time or
+soon thereafter. I have attached a Git bundle (embedded in a `.tar.xz` to avoid
+it being dropped) which you can fetch into a clone of
+https://github.com/git/git via `git fetch --tags /path/to/cve-xxx.bundle`,
+containing the tags for versions <versions>.
+
+You can verify with `git tag -v <tag>` that the versions were signed by
+the Git maintainer, using the same GPG key as e.g. v2.24.0.
+
+Please use these tags to prepare `git` packages for your various
+distributions, using the appropriate tagged versions. The added test cases
+help verify the correctness.
+
+The addressed issues are:
+
+<list of CVEs with a short description, typically copy/pasted from Git's
+release notes, usually demo exploit(s), too>
+
+Credit for finding the vulnerability goes to <reporter>, credit for fixing
+it goes to <developer>.
+
+Thanks,
+<name>
+
+....
+
+Example mail to oss-security@lists.openwall.com
+-----------------------------------------------
+
+....
+To: oss-security@lists.openwall.com
+Cc: git-security@googlegroups.com, <other people involved in the report/fix>
+Subject: git: <copy from security advisory>
+
+Team,
+
+The Git project released new versions on <date>, addressing <CVE>.
+
+All supported platforms are affected in one way or another, and all Git
+versions all the way back to <version> are affected. The fixed versions are:
+<versions>.
+
+Link to the announcement: <link to lore.kernel.org/git>
+
+We highly recommend to upgrade.
+
+The addressed issues are:
+* <list of CVEs and their explanations, along with demo exploits>
+
+Credit for finding the vulnerability goes to <reporter>, credit for fixing
+it goes to <developer>.
+
+Thanks,
+<name>
+....

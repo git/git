@@ -1,0 +1,5 @@
+! (foo && bar) &&
+! (foo && bar) >baz &&
+
+! (foo; ?!AMP?! bar) &&
+! (foo; ?!AMP?! bar) >baz

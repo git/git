@@ -9,20 +9,22 @@ git-clone - Clone a repository into a new directory
 SYNOPSIS
 --------
 [verse]
-'git clone' [--template=<template_directory>]
+'git clone' [--template=<template-directory>]
 	  [-l] [-s] [--no-hardlinks] [-q] [-n] [--bare] [--mirror]
 	  [-o <name>] [-b <name>] [-u <upload-pack>] [--reference <repository>]
-	  [--dissociate] [--separate-git-dir <git dir>]
+	  [--dissociate] [--separate-git-dir <git-dir>]
 	  [--depth <depth>] [--[no-]single-branch] [--no-tags]
 	  [--recurse-submodules[=<pathspec>]] [--[no-]shallow-submodules]
-	  [--jobs <n>] [--] <repository> [<directory>]
+	  [--[no-]remote-submodules] [--jobs <n>] [--sparse] [--[no-]reject-shallow]
+	  [--filter=<filter> [--also-filter-submodules]] [--] <repository>
+	  [<directory>]
 
 DESCRIPTION
 -----------
 
 Clones a repository into a newly created directory, creates
 remote-tracking branches for each branch in the cloned repository
-(visible using `git branch -r`), and creates and checks out an
+(visible using `git branch --remotes`), and creates and checks out an
 initial branch that is forked from the cloned repository's
 currently active branch.
 
@@ -40,8 +42,8 @@ configuration variables.
 
 OPTIONS
 -------
---local::
 -l::
+--local::
 	When the repository to clone from is on a local machine,
 	this flag bypasses the normal "Git aware" transport
 	mechanism and clones the repository by making a copy of
@@ -55,6 +57,10 @@ repository is specified as a URL, then this flag is ignored (and we
 never use the local optimizations).  Specifying `--no-local` will
 override the default when `/path/to/repo` is given, using the regular
 Git transport instead.
++
+*NOTE*: this operation can race with concurrent modification to the
+source repository, similar to running `cp -r src dst` while modifying
+`src`.
 
 --no-hardlinks::
 	Force the cloning process from a repository on a local
@@ -62,8 +68,8 @@ Git transport instead.
 	directory instead of using hardlinks. This may be desirable
 	if you are trying to make a back-up of your repository.
 
---shared::
 -s::
+--shared::
 	When the repository to clone is on the local machine,
 	instead of using hard links, automatically setup
 	`.git/objects/info/alternates` to share the objects
@@ -76,17 +82,17 @@ repository using this option and then delete branches (or use any
 other Git command that makes any existing commit unreferenced) in the
 source repository, some objects may become unreferenced (or dangling).
 These objects may be removed by normal Git operations (such as `git commit`)
-which automatically call `git gc --auto`. (See linkgit:git-gc[1].)
-If these objects are removed and were referenced by the cloned repository,
-then the cloned repository will become corrupt.
+which automatically call `git maintenance run --auto`. (See
+linkgit:git-maintenance[1].) If these objects are removed and were referenced
+by the cloned repository, then the cloned repository will become corrupt.
 +
-Note that running `git repack` without the `-l` option in a repository
-cloned with `-s` will copy objects from the source repository into a pack
-in the cloned repository, removing the disk space savings of `clone -s`.
-It is safe, however, to run `git gc`, which uses the `-l` option by
+Note that running `git repack` without the `--local` option in a repository
+cloned with `--shared` will copy objects from the source repository into a pack
+in the cloned repository, removing the disk space savings of `clone --shared`.
+It is safe, however, to run `git gc`, which uses the `--local` option by
 default.
 +
-If you want to break the dependency of a repository cloned with `-s` on
+If you want to break the dependency of a repository cloned with `--shared` on
 its source repository, you can simply run `git repack -a` to copy all
 objects from the source repository into a pack in the cloned repository.
 
@@ -115,37 +121,71 @@ objects from the source repository into a pack in the cloned repository.
 	same repository, and this option can be used to stop the
 	borrowing.
 
---quiet::
 -q::
+--quiet::
 	Operate quietly.  Progress is not reported to the standard
 	error stream.
 
---verbose::
 -v::
+--verbose::
 	Run verbosely. Does not affect the reporting of progress status
 	to the standard error stream.
 
 --progress::
 	Progress status is reported on the standard error stream
-	by default when it is attached to a terminal, unless -q
+	by default when it is attached to a terminal, unless `--quiet`
 	is specified. This flag forces progress status even if the
 	standard error stream is not directed to a terminal.
 
---no-checkout::
+--server-option=<option>::
+	Transmit the given string to the server when communicating using
+	protocol version 2.  The given string must not contain a NUL or LF
+	character.  The server's handling of server options, including
+	unknown ones, is server-specific.
+	When multiple `--server-option=<option>` are given, they are all
+	sent to the other side in the order listed on the command line.
+
 -n::
+--no-checkout::
 	No checkout of HEAD is performed after the clone is complete.
+
+--[no-]reject-shallow::
+	Fail if the source repository is a shallow repository.
+	The 'clone.rejectShallow' configuration variable can be used to
+	specify the default.
 
 --bare::
 	Make a 'bare' Git repository.  That is, instead of
 	creating `<directory>` and placing the administrative
 	files in `<directory>/.git`, make the `<directory>`
-	itself the `$GIT_DIR`. This obviously implies the `-n`
+	itself the `$GIT_DIR`. This obviously implies the `--no-checkout`
 	because there is nowhere to check out the working tree.
 	Also the branch heads at the remote are copied directly
 	to corresponding local branch heads, without mapping
 	them to `refs/remotes/origin/`.  When this option is
 	used, neither remote-tracking branches nor the related
 	configuration variables are created.
+
+--sparse::
+	Employ a sparse-checkout, with only files in the toplevel
+	directory initially being present.  The
+	linkgit:git-sparse-checkout[1] command can be used to grow the
+	working directory as needed.
+
+--filter=<filter-spec>::
+	Use the partial clone feature and request that the server sends
+	a subset of reachable objects according to a given object filter.
+	When using `--filter`, the supplied `<filter-spec>` is used for
+	the partial clone filter. For example, `--filter=blob:none` will
+	filter out all blobs (file contents) until needed by Git. Also,
+	`--filter=blob:limit=<size>` will filter out all blobs of size
+	at least `<size>`. For more details on filter specifications, see
+	the `--filter` option in linkgit:git-rev-list[1].
+
+--also-filter-submodules::
+	Also apply the partial clone filter to any submodules in the repository.
+	Requires `--filter` and `--recurse-submodules`. This can be turned on by
+	default by setting the `clone.filterSubmodules` config option.
 
 --mirror::
 	Set up a mirror of the source repository.  This implies `--bare`.
@@ -155,13 +195,14 @@ objects from the source repository into a pack in the cloned repository.
 	that all these refs are overwritten by a `git remote update` in the
 	target repository.
 
---origin <name>::
 -o <name>::
-	Instead of using the remote name `origin` to keep track
-	of the upstream repository, use `<name>`.
+--origin <name>::
+	Instead of using the remote name `origin` to keep track of the upstream
+	repository, use `<name>`.  Overrides `clone.defaultRemoteName` from the
+	config.
 
---branch <name>::
 -b <name>::
+--branch <name>::
 	Instead of pointing the newly created HEAD to the branch pointed
 	to by the cloned repository's HEAD, point to `<name>` branch
 	instead. In a non-bare repository, this is the branch that will
@@ -169,18 +210,18 @@ objects from the source repository into a pack in the cloned repository.
 	`--branch` can also take tags and detaches the HEAD at that commit
 	in the resulting repository.
 
---upload-pack <upload-pack>::
 -u <upload-pack>::
+--upload-pack <upload-pack>::
 	When given, and the repository to clone from is accessed
 	via ssh, this specifies a non-default path for the command
 	run on the other end.
 
---template=<template_directory>::
+--template=<template-directory>::
 	Specify the directory from which templates will be used;
 	(See the "TEMPLATE DIRECTORY" section of linkgit:git-init[1].)
 
---config <key>=<value>::
 -c <key>=<value>::
+--config <key>=<value>::
 	Set a configuration variable in the newly-created repository;
 	this takes effect immediately after the repository is
 	initialized, but before the remote history is fetched or any
@@ -189,6 +230,12 @@ objects from the source repository into a pack in the cloned repository.
 	values are given for the same key, each value will be written to
 	the config file. This makes it safe, for example, to add
 	additional fetch refspecs to the origin remote.
++
+Due to limitations of the current implementation, some configuration
+variables do not take effect until after the initial fetch and checkout.
+Configuration variables known to not take effect are:
+`remote.<name>.mirror` and `remote.<name>.tagOpt`.  Use the
+corresponding `--mirror` and `--no-tags` options instead.
 
 --depth <depth>::
 	Create a 'shallow' clone with a history truncated to the
@@ -227,7 +274,7 @@ maintain a branch with no references other than a single cloned
 branch. This is useful e.g. to maintain minimal clones of the default
 branch of some repository for search indexing.
 
---recurse-submodules[=<pathspec]::
+--recurse-submodules[=<pathspec>]::
 	After the clone is created, initialize and clone submodules
 	within based on the provided pathspec.  If no pathspec is
 	provided, all submodules are initialized and cloned.
@@ -246,7 +293,13 @@ or `--mirror` is given)
 --[no-]shallow-submodules::
 	All submodules which are cloned will be shallow with a depth of 1.
 
---separate-git-dir=<git dir>::
+--[no-]remote-submodules::
+	All submodules which are cloned will use the status of the submodule's
+	remote-tracking branch to update the submodule, rather than the
+	superproject's recorded SHA-1. Equivalent to passing `--remote` to
+	`git submodule update`.
+
+--separate-git-dir=<git-dir>::
 	Instead of placing the cloned repository where it is supposed
 	to be, place the cloned repository at the specified directory,
 	then make a filesystem-agnostic Git symbolic link to there.
@@ -260,7 +313,7 @@ or `--mirror` is given)
 
 <repository>::
 	The (possibly remote) repository to clone from.  See the
-	<<URLS,URLS>> section below for more information on specifying
+	<<URLS,GIT URLS>> section below for more information on specifying
 	repositories.
 
 <directory>::
@@ -273,7 +326,7 @@ or `--mirror` is given)
 :git-clone: 1
 include::urls.txt[]
 
-Examples
+EXAMPLES
 --------
 
 * Clone from upstream:

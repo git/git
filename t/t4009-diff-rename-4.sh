@@ -6,14 +6,17 @@
 test_description='Same rename detection as t4003 but testing diff-raw -z.
 
 '
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
-. "$TEST_DIRECTORY"/diff-lib.sh ;# test-lib chdir's into trash
+. "$TEST_DIRECTORY"/lib-diff.sh ;# test-lib chdir's into trash
 
 test_expect_success \
     'prepare reference tree' \
-    'cat "$TEST_DIRECTORY"/diff-lib/COPYING >COPYING &&
+    'COPYING_test_data >COPYING &&
      echo frotz >rezrov &&
     git update-index --add COPYING rezrov &&
+    orig=$(git hash-object COPYING) &&
     tree=$(git write-tree) &&
     echo $tree'
 
@@ -22,6 +25,8 @@ test_expect_success \
     'sed -e 's/HOWEVER/However/' <COPYING >COPYING.1 &&
     sed -e 's/GPL/G.P.L/g' <COPYING >COPYING.2 &&
     rm -f COPYING &&
+    c1=$(git hash-object COPYING.1) &&
+    c2=$(git hash-object COPYING.2) &&
     git update-index --add --remove COPYING COPYING.?'
 
 # tree has COPYING and rezrov.  work tree has COPYING.1 and COPYING.2,
@@ -31,11 +36,11 @@ test_expect_success \
 
 git diff-index -z -C $tree >current
 
-cat >expected <<\EOF
-:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 0603b3238a076dc6c8022aedc6648fa523a17178 C1234
+cat >expected <<EOF
+:100644 100644 $orig $c1 C1234
 COPYING
 COPYING.1
-:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 06c67961bbaed34a127f76d261f4c0bf73eda471 R1234
+:100644 100644 $orig $c2 R1234
 COPYING
 COPYING.2
 EOF
@@ -57,10 +62,10 @@ test_expect_success \
 # about rezrov.
 
 git diff-index -z -C $tree >current
-cat >expected <<\EOF
-:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 06c67961bbaed34a127f76d261f4c0bf73eda471 M
+cat >expected <<EOF
+:100644 100644 $orig $c2 M
 COPYING
-:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 0603b3238a076dc6c8022aedc6648fa523a17178 C1234
+:100644 100644 $orig $c1 C1234
 COPYING
 COPYING.1
 EOF
@@ -78,12 +83,12 @@ test_expect_success \
 
 test_expect_success \
     'prepare work tree once again' \
-    'cat "$TEST_DIRECTORY"/diff-lib/COPYING >COPYING &&
+    'COPYING_test_data >COPYING &&
      git update-index --add --remove COPYING COPYING.1'
 
 git diff-index -z -C --find-copies-harder $tree >current
-cat >expected <<\EOF
-:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 0603b3238a076dc6c8022aedc6648fa523a17178 C1234
+cat >expected <<EOF
+:100644 100644 $orig $c1 C1234
 COPYING
 COPYING.1
 EOF

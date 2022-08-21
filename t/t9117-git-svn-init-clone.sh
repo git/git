@@ -7,12 +7,6 @@ test_description='git svn init/clone tests'
 
 . ./lib-git-svn.sh
 
-# setup, run inside tmp so we don't have any conflicts with $svnrepo
-set -e
-rm -r .git
-mkdir tmp
-cd tmp
-
 test_expect_success 'setup svnrepo' '
 	mkdir project project/trunk project/branches project/tags &&
 	echo foo > project/trunk/foo &&

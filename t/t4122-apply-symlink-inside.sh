@@ -1,6 +1,10 @@
 #!/bin/sh
 
 test_description='apply to deeper directory without getting fooled with symlink'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -35,11 +39,11 @@ test_expect_success apply '
 
 test_expect_success 'check result' '
 
-	git diff --exit-code master &&
-	git diff --exit-code --cached master &&
+	git diff --exit-code main &&
+	git diff --exit-code --cached main &&
 	test_tick &&
 	git commit -m replay &&
-	T1=$(git rev-parse "master^{tree}") &&
+	T1=$(git rev-parse "main^{tree}") &&
 	T2=$(git rev-parse "HEAD^{tree}") &&
 	test "z$T1" = "z$T2"
 

@@ -1,3 +1,4 @@
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "builtin.h"
 #include "cache.h"
 #include "config.h"
@@ -31,19 +32,19 @@ static const struct option check_ignore_options[] = {
 	OPT_END()
 };
 
-static void output_exclude(const char *path, struct exclude *exclude)
+static void output_pattern(const char *path, struct path_pattern *pattern)
 {
-	char *bang  = (exclude && exclude->flags & EXC_FLAG_NEGATIVE)  ? "!" : "";
-	char *slash = (exclude && exclude->flags & EXC_FLAG_MUSTBEDIR) ? "/" : "";
+	char *bang  = (pattern && pattern->flags & PATTERN_FLAG_NEGATIVE)  ? "!" : "";
+	char *slash = (pattern && pattern->flags & PATTERN_FLAG_MUSTBEDIR) ? "/" : "";
 	if (!nul_term_line) {
 		if (!verbose) {
 			write_name_quoted(path, stdout, '\n');
 		} else {
-			if (exclude) {
-				quote_c_style(exclude->el->src, NULL, stdout, 0);
+			if (pattern) {
+				quote_c_style(pattern->pl->src, NULL, stdout, 0);
 				printf(":%d:%s%s%s\t",
-				       exclude->srcpos,
-				       bang, exclude->pattern, slash);
+				       pattern->srcpos,
+				       bang, pattern->pattern, slash);
 			}
 			else {
 				printf("::\t");
@@ -55,11 +56,11 @@ static void output_exclude(const char *path, struct exclude *exclude)
 		if (!verbose) {
 			printf("%s%c", path, '\0');
 		} else {
-			if (exclude)
+			if (pattern)
 				printf("%s%c%d%c%s%s%s%c%s%c",
-				       exclude->el->src, '\0',
-				       exclude->srcpos, '\0',
-				       bang, exclude->pattern, slash, '\0',
+				       pattern->pl->src, '\0',
+				       pattern->srcpos, '\0',
+				       bang, pattern->pattern, slash, '\0',
 				       path, '\0');
 			else
 				printf("%c%c%c%s%c", '\0', '\0', '\0', path, '\0');
@@ -73,7 +74,7 @@ static int check_ignore(struct dir_struct *dir,
 	const char *full_path;
 	char *seen;
 	int num_ignored = 0, i;
-	struct exclude *exclude;
+	struct path_pattern *pattern;
 	struct pathspec pathspec;
 
 	if (!argc) {
@@ -99,21 +100,26 @@ static int check_ignore(struct dir_struct *dir,
 	 * should not be ignored, in order to be consistent with
 	 * 'git status', 'git add' etc.
 	 */
-	seen = find_pathspecs_matching_against_index(&pathspec, &the_index);
+	seen = find_pathspecs_matching_against_index(&pathspec, &the_index,
+						     PS_HEED_SKIP_WORKTREE);
 	for (i = 0; i < pathspec.nr; i++) {
 		full_path = pathspec.items[i].match;
-		exclude = NULL;
+		pattern = NULL;
 		if (!seen[i]) {
 			int dtype = DT_UNKNOWN;
-			exclude = last_exclude_matching(dir, &the_index,
+			pattern = last_matching_pattern(dir, &the_index,
 							full_path, &dtype);
+			if (!verbose && pattern &&
+			    pattern->flags & PATTERN_FLAG_NEGATIVE)
+				pattern = NULL;
 		}
-		if (!quiet && (exclude || show_non_matching))
-			output_exclude(pathspec.items[i].original, exclude);
-		if (exclude)
+		if (!quiet && (pattern || show_non_matching))
+			output_pattern(pathspec.items[i].original, pattern);
+		if (pattern)
 			num_ignored++;
 	}
 	free(seen);
+	clear_pathspec(&pathspec);
 
 	return num_ignored;
 }
@@ -147,7 +153,7 @@ static int check_ignore_stdin_paths(struct dir_struct *dir, const char *prefix)
 int cmd_check_ignore(int argc, const char **argv, const char *prefix)
 {
 	int num_ignored;
-	struct dir_struct dir;
+	struct dir_struct dir = DIR_INIT;
 
 	git_config(git_default_config, NULL);
 
@@ -176,7 +182,6 @@ int cmd_check_ignore(int argc, const char **argv, const char *prefix)
 	if (!no_index && read_cache() < 0)
 		die(_("index file corrupt"));
 
-	memset(&dir, 0, sizeof(dir));
 	setup_standard_excludes(&dir);
 
 	if (stdin_paths) {
@@ -186,7 +191,7 @@ int cmd_check_ignore(int argc, const char **argv, const char *prefix)
 		maybe_flush_or_die(stdout, "ignore to stdout");
 	}
 
-	clear_directory(&dir);
+	dir_clear(&dir);
 
 	return !num_ignored;
 }

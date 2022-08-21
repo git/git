@@ -4,6 +4,11 @@ use 5.008;
 use warnings FATAL => 'all';
 use strict;
 
+# Use the correct value for both UNIX and Windows (/dev/null vs nul)
+use File::Spec;
+
+my $NULL = File::Spec->devnull();
+
 # Highlight by reversing foreground and background. You could do
 # other things like bold or underline if you prefer.
 my @OLD_HIGHLIGHT = (
@@ -67,7 +72,7 @@ sub handle_line {
 	      (?:$COLOR?\|$COLOR?[ ])* # zero or more trailing "|"
 	                         [ ]*  # trailing whitespace for merges
 	    /x) {
-	        my $graph_prefix = $&;
+		my $graph_prefix = $&;
 
 		# We must flush before setting graph indent, since the
 		# new commit may be indented differently from what we
@@ -107,7 +112,7 @@ sub handle_line {
 	# Since we can receive arbitrary input, there's no optimal
 	# place to flush. Flushing on a blank line is a heuristic that
 	# happens to match git-log output.
-	if (!length) {
+	if (/^$/) {
 		$flush_cb->();
 	}
 }
@@ -134,7 +139,7 @@ sub highlight_stdin {
 # fallback, which means we will work even if git can't be run.
 sub color_config {
 	my ($key, $default) = @_;
-	my $s = `git config --get-color $key 2>/dev/null`;
+	my $s = `git config --get-color $key 2>$NULL`;
 	return length($s) ? $s : $default;
 }
 

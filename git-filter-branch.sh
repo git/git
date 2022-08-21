@@ -11,6 +11,8 @@
 # The following functions will also be available in the commit filter:
 
 functions=$(cat << \EOF
+EMPTY_TREE=$(git hash-object -t tree /dev/null)
+
 warn () {
 	echo "$*" >&2
 }
@@ -46,7 +48,7 @@ git_commit_non_empty_tree()
 {
 	if test $# = 3 && test "$1" = $(git rev-parse "$3^{tree}"); then
 		map "$3"
-	elif test $# = 1 && test "$1" = 4b825dc642cb6eb9a060e54bf8d69288fbee4904; then
+	elif test $# = 1 && test "$1" = $EMPTY_TREE; then
 		:
 	else
 		git commit-tree "$@"
@@ -80,6 +82,20 @@ set_ident () {
 	finish_ident AUTHOR
 	finish_ident COMMITTER
 }
+
+if test -z "$FILTER_BRANCH_SQUELCH_WARNING$GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS"
+then
+	cat <<EOF
+WARNING: git-filter-branch has a glut of gotchas generating mangled history
+	 rewrites.  Hit Ctrl-C before proceeding to abort, then use an
+	 alternative filtering tool such as 'git filter-repo'
+	 (https://github.com/newren/git-filter-repo/) instead.  See the
+	 filter-branch manual page for more details; to squelch this warning,
+	 set FILTER_BRANCH_SQUELCH_WARNING=1.
+EOF
+	sleep 10
+	printf "Proceeding with filter-branch...\n\n"
+fi
 
 USAGE="[--setup <command>] [--subdirectory-filter <directory>] [--env-filter <command>]
 	[--tree-filter <command>] [--index-filter <command>]
@@ -370,6 +386,7 @@ while read commit parents; do
 	git_filter_branch__commit_count=$(($git_filter_branch__commit_count+1))
 
 	report_progress
+	test -f "$workdir"/../map/$commit && continue
 
 	case "$filter_subdir" in
 	"")
@@ -475,14 +492,12 @@ then
 		sha1=$(git rev-parse "$ref"^0)
 		test -f "$workdir"/../map/$sha1 && continue
 		ancestor=$(git rev-list --simplify-merges -1 "$ref" "$@")
-		test "$ancestor" && echo $(map $ancestor) >> "$workdir"/../map/$sha1
+		test "$ancestor" && echo $(map $ancestor) >"$workdir"/../map/$sha1
 	done < "$tempdir"/heads
 fi
 
 # Finally update the refs
 
-_x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
-_x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
 echo
 while read ref
 do
@@ -502,7 +517,7 @@ do
 		git update-ref -m "filter-branch: delete" -d "$ref" $sha1 ||
 			die "Could not delete $ref"
 	;;
-	$_x40)
+	*)
 		echo "Ref '$ref' was rewritten"
 		if ! git update-ref -m "filter-branch: rewrite" \
 					"$ref" $rewritten $sha1 2>/dev/null; then
@@ -515,16 +530,6 @@ do
 				die "Could not rewrite $ref"
 			fi
 		fi
-	;;
-	*)
-		# NEEDSWORK: possibly add -Werror, making this an error
-		warn "WARNING: '$ref' was rewritten into multiple commits:"
-		warn "$rewritten"
-		warn "WARNING: Ref '$ref' points to the first one now."
-		rewritten=$(echo "$rewritten" | head -n 1)
-		git update-ref -m "filter-branch: rewrite to first" \
-				"$ref" $rewritten $sha1 ||
-			die "Could not rewrite $ref"
 	;;
 	esac
 	git update-ref -m "filter-branch: backup" "$orig_namespace$ref" $sha1 ||
@@ -574,7 +579,7 @@ if [ "$filter_tag_name" ]; then
 				git hash-object -t tag -w --stdin) ||
 				die "Could not create new tag object for $ref"
 			if git cat-file tag "$ref" | \
-			   sane_grep '^-----BEGIN PGP SIGNATURE-----' >/dev/null 2>&1
+			   grep '^-----BEGIN PGP SIGNATURE-----' >/dev/null 2>&1
 			then
 				warn "gpg signature stripped from tag object $sha1t"
 			fi

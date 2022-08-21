@@ -11,6 +11,7 @@
 
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
 
+__attribute__((format (printf, 1, 2)))
 static void die(const char *err, ...)
 {
 	char msg[4096];
@@ -75,7 +76,8 @@ static CredDeleteWT CredDeleteW;
 static void load_cred_funcs(void)
 {
 	/* load DLLs */
-	advapi = LoadLibrary("advapi32.dll");
+	advapi = LoadLibraryExA("advapi32.dll", NULL,
+				LOAD_LIBRARY_SEARCH_SYSTEM32);
 	if (!advapi)
 		die("failed to load advapi32.dll");
 

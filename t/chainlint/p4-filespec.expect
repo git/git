@@ -1,0 +1,4 @@
+(
+	p4 print -1 //depot/fiddle#42 >file &&
+	foobar
+)

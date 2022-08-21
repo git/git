@@ -29,7 +29,8 @@ OPTIONS
 	The HTTP daemon command-line that will be executed.
 	Command-line options may be specified here, and the
 	configuration file will be added at the end of the command-line.
-	Currently apache2, lighttpd, mongoose, plackup and webrick are supported.
+	Currently apache2, lighttpd, mongoose, plackup, python and
+	webrick are supported.
 	(Default: lighttpd)
 
 -m::
