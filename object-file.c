@@ -2522,7 +2522,7 @@ int index_path(struct index_state *istate, struct object_id *oid,
 		strbuf_release(&sb);
 		break;
 	case S_IFDIR:
-		return resolve_gitlink_ref(path, "HEAD", oid);
+		return resolve_gitlink_ref(path, "HEAD", oid, NULL);
 	default:
 		return error(_("%s: unsupported file type"), path);
 	}
