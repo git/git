@@ -593,6 +593,31 @@ static void midx_fanout_sort(struct midx_fanout *fanout)
 	QSORT(fanout->entries, fanout->nr, midx_oid_compare);
 }
 
+static void midx_fanout_add_midx_fanout(struct midx_fanout *fanout,
+					struct multi_pack_index *m,
+					int preferred_pack,
+					uint32_t cur_fanout)
+{
+	uint32_t start = 0, end;
+	uint32_t cur_object;
+
+	if (cur_fanout)
+		start = ntohl(m->chunk_oid_fanout[cur_fanout - 1]);
+	end = ntohl(m->chunk_oid_fanout[cur_fanout]);
+
+	for (cur_object = start; cur_object < end; cur_object++) {
+		midx_fanout_grow(fanout, fanout->nr + 1);
+		nth_midxed_pack_midx_entry(m,
+					   &fanout->entries[fanout->nr],
+					   cur_object);
+		if (nth_midxed_pack_int_id(m, cur_object) == preferred_pack)
+			fanout->entries[fanout->nr].preferred = 1;
+		else
+			fanout->entries[fanout->nr].preferred = 0;
+		fanout->nr++;
+	}
+}
+
 /*
  * It is possible to artificially get into a state where there are many
  * duplicate copies of objects. That can create high memory pressure if
@@ -633,25 +658,9 @@ static struct pack_midx_entry *get_sorted_entries(struct multi_pack_index *m,
 	for (cur_fanout = 0; cur_fanout < 256; cur_fanout++) {
 		fanout.nr = 0;
 
-		if (m) {
-			uint32_t start = 0, end;
-
-			if (cur_fanout)
-				start = ntohl(m->chunk_oid_fanout[cur_fanout - 1]);
-			end = ntohl(m->chunk_oid_fanout[cur_fanout]);
-
-			for (cur_object = start; cur_object < end; cur_object++) {
-				midx_fanout_grow(&fanout, fanout.nr + 1);
-				nth_midxed_pack_midx_entry(m,
-							   &fanout.entries[fanout.nr],
-							   cur_object);
-				if (nth_midxed_pack_int_id(m, cur_object) == preferred_pack)
-					fanout.entries[fanout.nr].preferred = 1;
-				else
-					fanout.entries[fanout.nr].preferred = 0;
-				fanout.nr++;
-			}
-		}
+		if (m)
+			midx_fanout_add_midx_fanout(&fanout, m, preferred_pack,
+						    cur_fanout);
 
 		for (cur_pack = start_pack; cur_pack < nr_packs; cur_pack++) {
 			uint32_t start = 0, end;
