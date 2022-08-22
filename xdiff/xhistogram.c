@@ -362,8 +362,7 @@ out:
 	return result;
 }
 
-int xdl_do_histogram_diff(mmfile_t *file1, mmfile_t *file2,
-	xpparam_t const *xpp, xdfenv_t *env)
+int xdl_do_histogram_diff(xpparam_t const *xpp, xdfenv_t *env)
 {
 	return histogram_diff(xpp, env,
 		env->xdf1.dstart + 1, env->xdf1.dend - env->xdf1.dstart + 1,

@@ -1023,7 +1023,7 @@ static int path_matches(const char *pathname, int pathlen,
 	}
 	return match_pathname(pathname, pathlen - isdir,
 			      base, baselen,
-			      pattern, prefix, pat->patternlen, pat->flags);
+			      pattern, prefix, pat->patternlen);
 }
 
 static int macroexpand_one(struct all_attrs_item *all_attrs, int nr, int rem);
