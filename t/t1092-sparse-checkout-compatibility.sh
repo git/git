@@ -567,7 +567,7 @@ test_expect_success 'blame with pathspec outside sparse definition' '
 	init_repos &&
 	test_sparse_match git sparse-checkout set &&
 
-	for file in a \
+	for file in \
 			deep/a \
 			deep/deeper1/a \
 			deep/deeper1/deepest/a
@@ -579,7 +579,7 @@ test_expect_success 'blame with pathspec outside sparse definition' '
 		# We compare sparse-checkout-err and sparse-index-err in
 		# `test_sparse_match`. Given we know they are the same, we
 		# only check the content of sparse-index-err here.
-		test_cmp expect sparse-index-err
+		test_cmp expect sparse-index-err || return 1
 	done
 '
 
