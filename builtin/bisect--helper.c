@@ -1324,7 +1324,7 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix, options,
 			     git_bisect_helper_usage,
-			     PARSE_OPT_KEEP_DASHDASH | PARSE_OPT_KEEP_UNKNOWN);
+			     PARSE_OPT_KEEP_DASHDASH | PARSE_OPT_KEEP_UNKNOWN_OPT);
 
 	if (!cmdmode)
 		usage_with_options(git_bisect_helper_usage, options);

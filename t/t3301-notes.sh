@@ -505,6 +505,11 @@ test_expect_success 'list notes with "git notes"' '
 	test_cmp expect actual
 '
 
+test_expect_success '"git notes" without subcommand does not take arguments' '
+	test_expect_code 129 git notes HEAD^^ 2>err &&
+	grep "^error: unknown subcommand" err
+'
+
 test_expect_success 'list specific note with "git notes list <object>"' '
 	git rev-parse refs/notes/commits:$commit_3 >expect &&
 	git notes list HEAD^^ >actual &&

@@ -192,3 +192,130 @@ int cmd__parse_options(int argc, const char **argv)
 
 	return ret;
 }
+
+static void print_args(int argc, const char **argv)
+{
+	for (int i = 0; i < argc; i++)
+		printf("arg %02d: %s\n", i, argv[i]);
+}
+
+static int parse_options_flags__cmd(int argc, const char **argv,
+				    enum parse_opt_flags test_flags)
+{
+	const char *usage[] = {
+		"<...> cmd [options]",
+		NULL
+	};
+	int opt = 0;
+	const struct option options[] = {
+		OPT_INTEGER('o', "opt", &opt, "an integer option"),
+		OPT_END()
+	};
+
+	argc = parse_options(argc, argv, NULL, options, usage, test_flags);
+
+	printf("opt: %d\n", opt);
+	print_args(argc, argv);
+
+	return 0;
+}
+
+static enum parse_opt_flags test_flags = 0;
+static const struct option test_flag_options[] = {
+	OPT_GROUP("flag-options:"),
+	OPT_BIT(0, "keep-dashdash", &test_flags,
+		"pass PARSE_OPT_KEEP_DASHDASH to parse_options()",
+		PARSE_OPT_KEEP_DASHDASH),
+	OPT_BIT(0, "stop-at-non-option", &test_flags,
+		"pass PARSE_OPT_STOP_AT_NON_OPTION to parse_options()",
+		PARSE_OPT_STOP_AT_NON_OPTION),
+	OPT_BIT(0, "keep-argv0", &test_flags,
+		"pass PARSE_OPT_KEEP_ARGV0 to parse_options()",
+		PARSE_OPT_KEEP_ARGV0),
+	OPT_BIT(0, "keep-unknown-opt", &test_flags,
+		"pass PARSE_OPT_KEEP_UNKNOWN_OPT to parse_options()",
+		PARSE_OPT_KEEP_UNKNOWN_OPT),
+	OPT_BIT(0, "no-internal-help", &test_flags,
+		"pass PARSE_OPT_NO_INTERNAL_HELP to parse_options()",
+		PARSE_OPT_NO_INTERNAL_HELP),
+	OPT_BIT(0, "subcommand-optional", &test_flags,
+		"pass PARSE_OPT_SUBCOMMAND_OPTIONAL to parse_options()",
+		PARSE_OPT_SUBCOMMAND_OPTIONAL),
+	OPT_END()
+};
+
+int cmd__parse_options_flags(int argc, const char **argv)
+{
+	const char *usage[] = {
+		"test-tool parse-options-flags [flag-options] cmd [options]",
+		NULL
+	};
+
+	argc = parse_options(argc, argv, NULL, test_flag_options, usage,
+			     PARSE_OPT_STOP_AT_NON_OPTION);
+
+	if (argc == 0 || strcmp(argv[0], "cmd")) {
+		error("'cmd' is mandatory");
+		usage_with_options(usage, test_flag_options);
+	}
+
+	return parse_options_flags__cmd(argc, argv, test_flags);
+}
+
+static int subcmd_one(int argc, const char **argv, const char *prefix)
+{
+	printf("fn: subcmd_one\n");
+	print_args(argc, argv);
+	return 0;
+}
+
+static int subcmd_two(int argc, const char **argv, const char *prefix)
+{
+	printf("fn: subcmd_two\n");
+	print_args(argc, argv);
+	return 0;
+}
+
+static int parse_subcommand__cmd(int argc, const char **argv,
+				 enum parse_opt_flags test_flags)
+{
+	const char *usage[] = {
+		"<...> cmd subcmd-one",
+		"<...> cmd subcmd-two",
+		NULL
+	};
+	parse_opt_subcommand_fn *fn = NULL;
+	int opt = 0;
+	struct option options[] = {
+		OPT_SUBCOMMAND("subcmd-one", &fn, subcmd_one),
+		OPT_SUBCOMMAND("subcmd-two", &fn, subcmd_two),
+		OPT_INTEGER('o', "opt", &opt, "an integer option"),
+		OPT_END()
+	};
+
+	if (test_flags & PARSE_OPT_SUBCOMMAND_OPTIONAL)
+		fn = subcmd_one;
+	argc = parse_options(argc, argv, NULL, options, usage, test_flags);
+
+	printf("opt: %d\n", opt);
+
+	return fn(argc, argv, NULL);
+}
+
+int cmd__parse_subcommand(int argc, const char **argv)
+{
+	const char *usage[] = {
+		"test-tool parse-subcommand [flag-options] cmd <subcommand>",
+		NULL
+	};
+
+	argc = parse_options(argc, argv, NULL, test_flag_options, usage,
+			     PARSE_OPT_STOP_AT_NON_OPTION);
+
+	if (argc == 0 || strcmp(argv[0], "cmd")) {
+		error("'cmd' is mandatory");
+		usage_with_options(usage, test_flag_options);
+	}
+
+	return parse_subcommand__cmd(argc, argv, test_flags);
+}

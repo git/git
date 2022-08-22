@@ -8,7 +8,8 @@ Basics
 ------
 
 The argument vector `argv[]` may usually contain mandatory or optional
-'non-option arguments', e.g. a filename or a branch, and 'options'.
+'non-option arguments', e.g. a filename or a branch, 'options', and
+'subcommands'.
 Options are optional arguments that start with a dash and
 that allow to change the behavior of a command.
 
@@ -47,6 +48,33 @@ The parse-options API allows:
 * Options and non-option arguments can clearly be separated using the `--`
   option, e.g. `-a -b --option -- --this-is-a-file` indicates that
   `--this-is-a-file` must not be processed as an option.
+
+Subcommands are special in a couple of ways:
+
+* Subcommands only have long form, and they have no double dash prefix, no
+  negated form, and no description, and they don't take any arguments, and
+  can't be abbreviated.
+
+* There must be exactly one subcommand among the arguments, or zero if the
+  command has a default operation mode.
+
+* All arguments following the subcommand are considered to be arguments of
+  the subcommand, and, conversely, arguments meant for the subcommand may
+  not preceed the subcommand.
+
+Therefore, if the options array contains at least one subcommand and
+`parse_options()` encounters the first dashless argument, it will either:
+
+* stop and return, if that dashless argument is a known subcommand, setting
+  `value` to the function pointer associated with that subcommand, storing
+  the name of the subcommand in argv[0], and leaving the rest of the
+  arguments unprocessed, or
+
+* stop and return, if it was invoked with the `PARSE_OPT_SUBCOMMAND_OPTIONAL`
+  flag and that dashless argument doesn't match any subcommands, leaving
+  `value` unchanged and the rest of the arguments unprocessed, or
+
+* show error and usage, and abort.
 
 Steps to parse options
 ----------------------
@@ -90,8 +118,8 @@ Flags are the bitwise-or of:
 	Keep the first argument, which contains the program name.  It's
 	removed from argv[] by default.
 
-`PARSE_OPT_KEEP_UNKNOWN`::
-	Keep unknown arguments instead of erroring out.  This doesn't
+`PARSE_OPT_KEEP_UNKNOWN_OPT`::
+	Keep unknown options instead of erroring out.  This doesn't
 	work for all combinations of arguments as users might expect
 	it to do.  E.g. if the first argument in `--unknown --known`
 	takes a value (which we can't know), the second one is
@@ -101,12 +129,21 @@ Flags are the bitwise-or of:
 	non-option, not as a value belonging to the unknown option,
 	the parser early.  That's why parse_options() errors out if
 	both options are set.
+	Note that non-option arguments are always kept, even without
+	this flag.
 
 `PARSE_OPT_NO_INTERNAL_HELP`::
 	By default, parse_options() handles `-h`, `--help` and
 	`--help-all` internally, by showing a help screen.  This option
 	turns it off and allows one to add custom handlers for these
 	options, or to just leave them unknown.
+
+`PARSE_OPT_SUBCOMMAND_OPTIONAL`::
+	Don't error out when no subcommand is specified.
+
+Note that `PARSE_OPT_STOP_AT_NON_OPTION` is incompatible with subcommands;
+while `PARSE_OPT_KEEP_DASHDASH` and `PARSE_OPT_KEEP_UNKNOWN_OPT` can only be
+used with subcommands when combined with `PARSE_OPT_SUBCOMMAND_OPTIONAL`.
 
 Data Structure
 --------------
@@ -236,10 +273,14 @@ There are some macros to easily define options:
 `OPT_CMDMODE(short, long, &int_var, description, enum_val)`::
 	Define an "operation mode" option, only one of which in the same
 	group of "operating mode" options that share the same `int_var`
-	can be given by the user. `enum_val` is set to `int_var` when the
+	can be given by the user. `int_var` is set to `enum_val` when the
 	option is used, but an error is reported if other "operating mode"
 	option has already set its value to the same `int_var`.
+	In new commands consider using subcommands instead.
 
+`OPT_SUBCOMMAND(long, &fn_ptr, subcommand_fn)`::
+	Define a subcommand.  `subcommand_fn` is put into `fn_ptr` when
+	this subcommand is used.
 
 The last element of the array must be `OPT_END()`.
 
