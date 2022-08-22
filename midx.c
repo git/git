@@ -618,6 +618,31 @@ static void midx_fanout_add_midx_fanout(struct midx_fanout *fanout,
 	}
 }
 
+static void midx_fanout_add_pack_fanout(struct midx_fanout *fanout,
+					struct pack_info *info,
+					uint32_t cur_pack,
+					int preferred,
+					uint32_t cur_fanout)
+{
+	struct packed_git *pack = info[cur_pack].p;
+	uint32_t start = 0, end;
+	uint32_t cur_object;
+
+	if (cur_fanout)
+		start = get_pack_fanout(pack, cur_fanout - 1);
+	end = get_pack_fanout(pack, cur_fanout);
+
+	for (cur_object = start; cur_object < end; cur_object++) {
+		midx_fanout_grow(fanout, fanout->nr + 1);
+		fill_pack_entry(cur_pack,
+				info[cur_pack].p,
+				cur_object,
+				&fanout->entries[fanout->nr],
+				preferred);
+		fanout->nr++;
+	}
+}
+
 /*
  * It is possible to artificially get into a state where there are many
  * duplicate copies of objects. That can create high memory pressure if
@@ -663,22 +688,10 @@ static struct pack_midx_entry *get_sorted_entries(struct multi_pack_index *m,
 						    cur_fanout);
 
 		for (cur_pack = start_pack; cur_pack < nr_packs; cur_pack++) {
-			uint32_t start = 0, end;
 			int preferred = cur_pack == preferred_pack;
-
-			if (cur_fanout)
-				start = get_pack_fanout(info[cur_pack].p, cur_fanout - 1);
-			end = get_pack_fanout(info[cur_pack].p, cur_fanout);
-
-			for (cur_object = start; cur_object < end; cur_object++) {
-				midx_fanout_grow(&fanout, fanout.nr + 1);
-				fill_pack_entry(cur_pack,
-						info[cur_pack].p,
-						cur_object,
-						&fanout.entries[fanout.nr],
-						preferred);
-				fanout.nr++;
-			}
+			midx_fanout_add_pack_fanout(&fanout,
+						    info, cur_pack,
+						    preferred, cur_fanout);
 		}
 
 		midx_fanout_sort(&fanout);
