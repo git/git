@@ -338,19 +338,16 @@ test_expect_success 'preferred pack change with existing MIDX bitmap' '
 		git pack-objects --all --unpacked $objdir/pack/pack0 &&
 
 		# Generate a new MIDX which changes the preferred pack
-		# to a pack contained in the existing MIDX, such that
-		# not all objects from p2 that appear in the MIDX had
-		# their copy selected from p2.
+		# to a pack contained in the existing MIDX.
 		git multi-pack-index write --bitmap \
 			--preferred-pack="pack-$p2.pack" &&
 		test_path_is_file $midx &&
 		test_path_is_file $midx-$(midx_checksum $objdir).bitmap &&
 
-		# When the above circumstances are met, an existing bug
-		# in the MIDX machinery will cause the reverse index to
-		# be read incorrectly, resulting in failed clones (among
-		# other things).
-		test_must_fail git clone --no-local . clone2
+		# When the above circumstances are met, the preferred
+		# pack should change appropriately and clones should
+		# (still) succeed.
+		git clone --no-local . clone2
 	)
 '
 
