@@ -29,7 +29,8 @@ basic_cruft_pack_tests () {
 				while read oid
 				do
 					path="$objdir/$(test_oid_to_path "$oid")" &&
-					printf "%s %d\n" "$oid" "$(test-tool chmtime --get "$path")" || exit 1
+					printf "%s %d\n" "$oid" "$(test-tool chmtime --get "$path")" ||
+					echo "object list generation failed for $oid"
 				done |
 				sort -k1
 			) >expect &&
