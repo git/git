@@ -595,7 +595,8 @@ static void midx_fanout_sort(struct midx_fanout *fanout)
 
 static void midx_fanout_add_midx_fanout(struct midx_fanout *fanout,
 					struct multi_pack_index *m,
-					uint32_t cur_fanout)
+					uint32_t cur_fanout,
+					int preferred_pack)
 {
 	uint32_t start = 0, end;
 	uint32_t cur_object;
@@ -605,6 +606,15 @@ static void midx_fanout_add_midx_fanout(struct midx_fanout *fanout,
 	end = ntohl(m->chunk_oid_fanout[cur_fanout]);
 
 	for (cur_object = start; cur_object < end; cur_object++) {
+		if ((preferred_pack > -1) &&
+		    (preferred_pack == nth_midxed_pack_int_id(m, cur_object))) {
+			/*
+			 * Objects from preferred packs are added
+			 * separately.
+			 */
+			continue;
+		}
+
 		midx_fanout_grow(fanout, fanout->nr + 1);
 		nth_midxed_pack_midx_entry(m,
 					   &fanout->entries[fanout->nr],
@@ -680,7 +690,8 @@ static struct pack_midx_entry *get_sorted_entries(struct multi_pack_index *m,
 		fanout.nr = 0;
 
 		if (m)
-			midx_fanout_add_midx_fanout(&fanout, m, cur_fanout);
+			midx_fanout_add_midx_fanout(&fanout, m, cur_fanout,
+						    preferred_pack);
 
 		for (cur_pack = start_pack; cur_pack < nr_packs; cur_pack++) {
 			int preferred = cur_pack == preferred_pack;
