@@ -46,7 +46,7 @@ test_expect_success "setup repo" '
 '
 
 test_perf "read-tree br_base br_ballast ($nr_files)" '
-	git read-tree -m br_base br_ballast -n
+	git read-tree -n -m br_base br_ballast
 '
 
 test_perf "switch between br_base br_ballast ($nr_files)" '
