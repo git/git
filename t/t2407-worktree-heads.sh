@@ -41,10 +41,10 @@ test_expect_success 'setup' '
 test_expect_success 'refuse to overwrite: checked out in worktree' '
 	for i in 1 2 3 4
 	do
-		test_must_fail git branch -f wt-$i HEAD 2>err
+		test_must_fail git branch -f wt-$i HEAD 2>err &&
 		grep "cannot force update the branch" err &&
 
-		test_must_fail git branch -D wt-$i 2>err
+		test_must_fail git branch -D wt-$i 2>err &&
 		grep "Cannot delete branch" err || return 1
 	done
 '
