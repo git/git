@@ -1707,7 +1707,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		 */
 		wt_strategy = use_strategies[i]->name;
 
-		ret = try_merge_strategy(use_strategies[i]->name,
+		ret = try_merge_strategy(wt_strategy,
 					 common, remoteheads,
 					 head_commit);
 		/*
@@ -1722,12 +1722,12 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 				 * another.
 				 */
 				merge_was_ok = 1;
-				best_strategy = use_strategies[i]->name;
+				best_strategy = wt_strategy;
 				break;
 			}
 			cnt = (use_strategies_nr > 1) ? evaluate_result() : 0;
 			if (best_cnt <= 0 || cnt <= best_cnt) {
-				best_strategy = use_strategies[i]->name;
+				best_strategy = wt_strategy;
 				best_cnt = cnt;
 			}
 		}
