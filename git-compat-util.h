@@ -212,6 +212,7 @@
 #endif
 #include <errno.h>
 #include <limits.h>
+#include <locale.h>
 #ifdef NEEDS_SYS_PARAM_H
 #include <sys/param.h>
 #endif
