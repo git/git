@@ -10,6 +10,8 @@
 #include "quote.h"
 #include "help.h"
 
+#include <locale.h>
+
 static int grep_source_load(struct grep_source *gs);
 static int grep_source_is_binary(struct grep_source *gs,
 				 struct index_state *istate);
@@ -707,8 +709,10 @@ static struct grep_expr *grep_splice_or(struct grep_expr *x, struct grep_expr *y
 void compile_grep_patterns(struct grep_opt *opt)
 {
 	struct grep_pat *p;
-	struct grep_expr *header_expr = prep_header_patterns(opt);
+	struct grep_expr *header_expr;
 
+	setlocale(LC_CTYPE, "");
+	header_expr = prep_header_patterns(opt);
 	for (p = opt->pattern_list; p; p = p->next) {
 		switch (p->token) {
 		case GREP_PATTERN: /* atom */

@@ -1,5 +1,6 @@
 #include "test-tool.h"
 #include "gettext.h"
+#include <locale.h>
 
 struct reg_flag {
 	const char *name;
@@ -85,6 +86,7 @@ int cmd__regex(int argc, const char **argv)
 	}
 	git_setup_gettext();
 
+	setlocale(LC_CTYPE, "");
 	ret = regcomp(&r, pat, flags);
 	if (ret) {
 		if (silent)
