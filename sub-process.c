@@ -5,10 +5,10 @@
 #include "sigchain.h"
 #include "pkt-line.h"
 
-int cmd2process_cmp(const void *unused_cmp_data,
+int cmd2process_cmp(const void *UNUSED(cmp_data),
 		    const struct hashmap_entry *eptr,
 		    const struct hashmap_entry *entry_or_key,
-		    const void *unused_keydata)
+		    const void *UNUSED(keydata))
 {
 	const struct subprocess_entry *e1, *e2;
 

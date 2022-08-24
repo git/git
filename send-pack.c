@@ -266,7 +266,7 @@ static int receive_status(struct packet_reader *reader, struct ref *refs)
 	return ret;
 }
 
-static int sideband_demux(int in, int out, void *data)
+static int sideband_demux(int UNUSED(in), int out, void *data)
 {
 	int *fd = data, ret;
 	if (async_with_fork())

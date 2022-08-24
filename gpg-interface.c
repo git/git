@@ -699,7 +699,7 @@ void set_signing_key(const char *key)
 	configured_signing_key = xstrdup(key);
 }
 
-int git_gpg_config(const char *var, const char *value, void *cb)
+int git_gpg_config(const char *var, const char *value, void *UNUSED(cb))
 {
 	struct gpg_format *fmt = NULL;
 	char *fmtname = NULL;

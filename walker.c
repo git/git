@@ -215,8 +215,10 @@ static int interpret_target(struct walker *walker, char *target, struct object_i
 	return -1;
 }
 
-static int mark_complete(const char *path, const struct object_id *oid,
-			 int flag, void *cb_data)
+static int mark_complete(const char *UNUSED(path),
+			 const struct object_id *oid,
+			 int UNUSED(flag),
+			 void *UNUSED(cb_data))
 {
 	struct commit *commit = lookup_commit_reference_gently(the_repository,
 							       oid, 1);

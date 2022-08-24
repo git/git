@@ -366,7 +366,8 @@ static struct archiver *find_tar_filter(const char *name, size_t len)
 	return NULL;
 }
 
-static int tar_filter_config(const char *var, const char *value, void *data)
+static int tar_filter_config(const char *var, const char *value,
+			     void *UNUSED(data))
 {
 	struct archiver *ar;
 	const char *name;
@@ -420,7 +421,7 @@ static int git_tar_config(const char *var, const char *value, void *cb)
 	return tar_filter_config(var, value, cb);
 }
 
-static int write_tar_archive(const struct archiver *ar,
+static int write_tar_archive(const struct archiver *UNUSED(ar),
 			     struct archiver_args *args)
 {
 	int err = 0;

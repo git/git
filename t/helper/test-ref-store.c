@@ -161,7 +161,7 @@ static int cmd_rename_ref(struct ref_store *refs, const char **argv)
 }
 
 static int each_ref(const char *refname, const struct object_id *oid,
-		    int flags, void *cb_data)
+		    int flags, void *UNUSED(cb_data))
 {
 	printf("%s %s 0x%x\n", oid_to_hex(oid), refname, flags);
 	return 0;
@@ -207,7 +207,7 @@ static int cmd_for_each_reflog(struct ref_store *refs, const char **argv)
 
 static int each_reflog(struct object_id *old_oid, struct object_id *new_oid,
 		       const char *committer, timestamp_t timestamp,
-		       int tz, const char *msg, void *cb_data)
+		       int tz, const char *msg, void *UNUSED(cb_data))
 {
 	printf("%s %s %s %" PRItime " %+05d%s%s", oid_to_hex(old_oid),
 	       oid_to_hex(new_oid), committer, timestamp, tz,
