@@ -1,0 +1,46 @@
+Git 2.37.3 Release Notes
+========================
+
+This primarily is to backport various fixes accumulated on the 'master'
+front since 2.37.2.
+
+Fixes since v2.37.2
+-------------------
+
+ * Fix build procedure for Windows that uses CMake so that it can pick
+   up the shell interpreter from local installation location.
+
+ * Conditionally allow building Python interpreter on Windows
+
+ * Fix to lstat() emulation on Windows.
+
+ * Older gcc with -Wall complains about the universal zero initializer
+   "struct s = { 0 };" idiom, which makes developers' lives
+   inconvenient (as -Werror is enabled by DEVELOPER=YesPlease).  The
+   build procedure has been tweaked to help these compilers.
+
+ * Plug memory leaks in the failure code path in the "merge-ort" merge
+   strategy backend.
+
+ * Avoid repeatedly running getconf to ask libc version in the test
+   suite, and instead just as it once per script.
+
+ * Platform-specific code that determines if a directory is OK to use
+   as a repository has been taught to report more details, especially
+   on Windows.
+
+ * "vimdiff3" regression fix.
+
+ * "git fsck" reads mode from tree objects but canonicalizes the mode
+   before passing it to the logic to check object sanity, which has
+   hid broken tree objects from the checking logic.  This has been
+   corrected, but to help exiting projects with broken tree objects
+   that they cannot fix retroactively, the severity of anomalies this
+   code detects has been demoted to "info" for now.
+
+ * Fixes to sparse index compatibility work for "reset" and "checkout"
+   commands.
+
+ * Documentation for "git add --renormalize" has been improved.
+
+Also contains other minor documentation updates and code clean-ups.
