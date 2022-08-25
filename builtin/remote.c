@@ -862,12 +862,14 @@ static int rm(int argc, const char **argv, const char *prefix)
 	cb_data.skipped = &skipped;
 	cb_data.keep = &known_remotes;
 
-	if (argc != 2)
+	argc = parse_options(argc, argv, prefix, options,
+			     builtin_remote_rm_usage, 0);
+	if (argc != 1)
 		usage_with_options(builtin_remote_rm_usage, options);
 
-	remote = remote_get(argv[1]);
+	remote = remote_get(argv[0]);
 	if (!remote_is_configured(remote, 1)) {
-		error(_("No such remote: '%s'"), argv[1]);
+		error(_("No such remote: '%s'"), argv[0]);
 		exit(2);
 	}
 
