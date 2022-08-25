@@ -133,7 +133,7 @@ static int cmd_multi_pack_index_write(int argc, const char **argv,
 
 	if (isatty(2))
 		opts.flags |= MIDX_PROGRESS;
-	argc = parse_options(argc, argv, NULL,
+	argc = parse_options(argc, argv, prefix,
 			     options, builtin_multi_pack_index_write_usage,
 			     0);
 	if (argc)
@@ -176,7 +176,7 @@ static int cmd_multi_pack_index_verify(int argc, const char **argv,
 
 	if (isatty(2))
 		opts.flags |= MIDX_PROGRESS;
-	argc = parse_options(argc, argv, NULL,
+	argc = parse_options(argc, argv, prefix,
 			     options, builtin_multi_pack_index_verify_usage,
 			     0);
 	if (argc)
@@ -203,7 +203,7 @@ static int cmd_multi_pack_index_expire(int argc, const char **argv,
 
 	if (isatty(2))
 		opts.flags |= MIDX_PROGRESS;
-	argc = parse_options(argc, argv, NULL,
+	argc = parse_options(argc, argv, prefix,
 			     options, builtin_multi_pack_index_expire_usage,
 			     0);
 	if (argc)
@@ -233,7 +233,7 @@ static int cmd_multi_pack_index_repack(int argc, const char **argv,
 
 	if (isatty(2))
 		opts.flags |= MIDX_PROGRESS;
-	argc = parse_options(argc, argv, NULL,
+	argc = parse_options(argc, argv, prefix,
 			     options,
 			     builtin_multi_pack_index_repack_usage,
 			     0);

@@ -80,7 +80,7 @@ static int graph_verify(int argc, const char **argv, const char *prefix)
 	trace2_cmd_mode("verify");
 
 	opts.progress = isatty(2);
-	argc = parse_options(argc, argv, NULL,
+	argc = parse_options(argc, argv, prefix,
 			     options,
 			     builtin_commit_graph_verify_usage, 0);
 	if (argc)
@@ -241,7 +241,7 @@ static int graph_write(int argc, const char **argv, const char *prefix)
 
 	git_config(git_commit_graph_write_config, &opts);
 
-	argc = parse_options(argc, argv, NULL,
+	argc = parse_options(argc, argv, prefix,
 			     options,
 			     builtin_commit_graph_write_usage, 0);
 	if (argc)

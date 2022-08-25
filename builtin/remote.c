@@ -177,8 +177,8 @@ static int add(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	argc = parse_options(argc, argv, NULL, options, builtin_remote_add_usage,
-			     0);
+	argc = parse_options(argc, argv, prefix, options,
+			     builtin_remote_add_usage, 0);
 
 	if (argc != 2)
 		usage_with_options(builtin_remote_add_usage, options);
@@ -698,7 +698,7 @@ static int mv(int argc, const char **argv, const char *prefix)
 	int i, refs_renamed_nr = 0, refspec_updated = 0;
 	struct progress *progress = NULL;
 
-	argc = parse_options(argc, argv, NULL, options,
+	argc = parse_options(argc, argv, prefix, options,
 			     builtin_remote_rename_usage, 0);
 
 	if (argc != 2)
@@ -865,12 +865,14 @@ static int rm(int argc, const char **argv, const char *prefix)
 	cb_data.skipped = &skipped;
 	cb_data.keep = &known_remotes;
 
-	if (argc != 2)
+	argc = parse_options(argc, argv, prefix, options,
+			     builtin_remote_rm_usage, 0);
+	if (argc != 1)
 		usage_with_options(builtin_remote_rm_usage, options);
 
-	remote = remote_get(argv[1]);
+	remote = remote_get(argv[0]);
 	if (!remote_is_configured(remote, 1)) {
-		error(_("No such remote: '%s'"), argv[1]);
+		error(_("No such remote: '%s'"), argv[0]);
 		exit(2);
 	}
 
@@ -1267,7 +1269,8 @@ static int show(int argc, const char **argv, const char *prefix)
 	};
 	struct show_info info = SHOW_INFO_INIT;
 
-	argc = parse_options(argc, argv, NULL, options, builtin_remote_show_usage,
+	argc = parse_options(argc, argv, prefix, options,
+			     builtin_remote_show_usage,
 			     0);
 
 	if (argc < 1)
@@ -1374,8 +1377,8 @@ static int set_head(int argc, const char **argv, const char *prefix)
 			 N_("delete refs/remotes/<name>/HEAD")),
 		OPT_END()
 	};
-	argc = parse_options(argc, argv, NULL, options, builtin_remote_sethead_usage,
-			     0);
+	argc = parse_options(argc, argv, prefix, options,
+			     builtin_remote_sethead_usage, 0);
 	if (argc)
 		strbuf_addf(&buf, "refs/remotes/%s/HEAD", argv[0]);
 
@@ -1474,8 +1477,8 @@ static int prune(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	argc = parse_options(argc, argv, NULL, options, builtin_remote_prune_usage,
-			     0);
+	argc = parse_options(argc, argv, prefix, options,
+			     builtin_remote_prune_usage, 0);
 
 	if (argc < 1)
 		usage_with_options(builtin_remote_prune_usage, options);
@@ -1507,7 +1510,8 @@ static int update(int argc, const char **argv, const char *prefix)
 	int default_defined = 0;
 	int retval;
 
-	argc = parse_options(argc, argv, NULL, options, builtin_remote_update_usage,
+	argc = parse_options(argc, argv, prefix, options,
+			     builtin_remote_update_usage,
 			     PARSE_OPT_KEEP_ARGV0);
 
 	strvec_push(&fetch_argv, "fetch");
@@ -1586,7 +1590,7 @@ static int set_branches(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	argc = parse_options(argc, argv, NULL, options,
+	argc = parse_options(argc, argv, prefix, options,
 			     builtin_remote_setbranches_usage, 0);
 	if (argc == 0) {
 		error(_("no remote specified"));
@@ -1611,7 +1615,8 @@ static int get_url(int argc, const char **argv, const char *prefix)
 			 N_("return all URLs")),
 		OPT_END()
 	};
-	argc = parse_options(argc, argv, NULL, options, builtin_remote_geturl_usage, 0);
+	argc = parse_options(argc, argv, prefix, options,
+			     builtin_remote_geturl_usage, 0);
 
 	if (argc != 1)
 		usage_with_options(builtin_remote_geturl_usage, options);
@@ -1671,7 +1676,8 @@ static int set_url(int argc, const char **argv, const char *prefix)
 			    N_("delete URLs")),
 		OPT_END()
 	};
-	argc = parse_options(argc, argv, NULL, options, builtin_remote_seturl_usage,
+	argc = parse_options(argc, argv, prefix, options,
+			     builtin_remote_seturl_usage,
 			     PARSE_OPT_KEEP_ARGV0);
 
 	if (add_mode && delete_mode)
