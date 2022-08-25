@@ -2,7 +2,6 @@
 
 test_description='git merge-tree --write-tree'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # This test is ort-specific
@@ -136,6 +135,579 @@ test_expect_success 'test conflict notices and such' '
 	EOF
 
 	test_cmp expect actual
+'
+
+# directory rename + content conflict
+#   Commit O: foo, olddir/{a,b,c}
+#   Commit A: modify foo, newdir/{a,b,c}
+#   Commit B: modify foo differently & rename foo -> olddir/bar
+#   Expected: CONFLICT(content) for for newdir/bar (not olddir/bar or foo)
+
+test_expect_success 'directory rename + content conflict' '
+	# Setup
+	git init dir-rename-and-content &&
+	(
+		cd dir-rename-and-content &&
+		test_write_lines 1 2 3 4 5 >foo &&
+		mkdir olddir &&
+		for i in a b c; do echo $i >olddir/$i; done
+		git add foo olddir &&
+		git commit -m "original" &&
+
+		git branch O &&
+		git branch A &&
+		git branch B &&
+
+		git checkout A &&
+		test_write_lines 1 2 3 4 5 6 >foo &&
+		git add foo &&
+		git mv olddir newdir &&
+		git commit -m "Modify foo, rename olddir to newdir" &&
+
+		git checkout B &&
+		test_write_lines 1 2 3 4 5 six >foo &&
+		git add foo &&
+		git mv foo olddir/bar &&
+		git commit -m "Modify foo & rename foo -> olddir/bar"
+	) &&
+	# Testing
+	(
+		cd dir-rename-and-content &&
+
+		test_expect_code 1 \
+			git merge-tree -z A^0 B^0 >out &&
+		printf "\\n" >>out &&
+		anonymize_hash out >actual &&
+		q_to_tab <<-\EOF | lf_to_nul >expect &&
+		HASH
+		100644 HASH 1Qnewdir/bar
+		100644 HASH 2Qnewdir/bar
+		100644 HASH 3Qnewdir/bar
+		EOF
+
+		q_to_nul <<-EOF >>expect &&
+		Q2Qnewdir/barQolddir/barQCONFLICT (directory rename suggested)QCONFLICT (file location): foo renamed to olddir/bar in B^0, inside a directory that was renamed in A^0, suggesting it should perhaps be moved to newdir/bar.
+		Q1Qnewdir/barQAuto-mergingQAuto-merging newdir/bar
+		Q1Qnewdir/barQCONFLICT (contents)QCONFLICT (content): Merge conflict in newdir/bar
+		Q
+		EOF
+		test_cmp expect actual
+	)
+'
+
+# rename/delete + modify/delete handling
+#   Commit O: foo
+#   Commit A: modify foo + rename to bar
+#   Commit B: delete foo
+#   Expected: CONFLICT(rename/delete) + CONFLICT(modify/delete)
+
+test_expect_success 'rename/delete handling' '
+	# Setup
+	git init rename-delete &&
+	(
+		cd rename-delete &&
+		test_write_lines 1 2 3 4 5 >foo &&
+		git add foo &&
+		git commit -m "original" &&
+
+		git branch O &&
+		git branch A &&
+		git branch B &&
+
+		git checkout A &&
+		test_write_lines 1 2 3 4 5 6 >foo &&
+		git add foo &&
+		git mv foo bar &&
+		git commit -m "Modify foo, rename to bar" &&
+
+		git checkout B &&
+		git rm foo &&
+		git commit -m "remove foo"
+	) &&
+	# Testing
+	(
+		cd rename-delete &&
+
+		test_expect_code 1 \
+			git merge-tree -z A^0 B^0 >out &&
+		printf "\\n" >>out &&
+		anonymize_hash out >actual &&
+		q_to_tab <<-\EOF | lf_to_nul >expect &&
+		HASH
+		100644 HASH 1Qbar
+		100644 HASH 2Qbar
+		EOF
+
+		q_to_nul <<-EOF >>expect &&
+		Q2QbarQfooQCONFLICT (rename/delete)QCONFLICT (rename/delete): foo renamed to bar in A^0, but deleted in B^0.
+		Q1QbarQCONFLICT (modify/delete)QCONFLICT (modify/delete): bar deleted in B^0 and modified in A^0.  Version A^0 of bar left in tree.
+		Q
+		EOF
+		test_cmp expect actual
+	)
+'
+
+# rename/add handling
+#   Commit O: foo
+#   Commit A: modify foo, add different bar
+#   Commit B: modify & rename foo->bar
+#   Expected: CONFLICT(add/add) [via rename collide] for bar
+
+test_expect_success 'rename/add handling' '
+	# Setup
+	git init rename-add &&
+	(
+		cd rename-add &&
+		test_write_lines original 1 2 3 4 5 >foo &&
+		git add foo &&
+		git commit -m "original" &&
+
+		git branch O &&
+		git branch A &&
+		git branch B &&
+
+		git checkout A &&
+		test_write_lines 1 2 3 4 5 >foo &&
+		echo "different file" >bar &&
+		git add foo bar &&
+		git commit -m "Modify foo, add bar" &&
+
+		git checkout B &&
+		test_write_lines original 1 2 3 4 5 6 >foo &&
+		git add foo &&
+		git mv foo bar &&
+		git commit -m "rename foo to bar"
+	) &&
+	# Testing
+	(
+		cd rename-add &&
+
+		test_expect_code 1 \
+			git merge-tree -z A^0 B^0 >out &&
+		printf "\\n" >>out &&
+
+		#
+		# First, check that the bar that appears at stage 3 does not
+		# correspond to an individual blob anywhere in history
+		#
+		hash=$(cat out | tr "\0" "\n" | head -n 3 | grep 3.bar | cut -f 2 -d " ") &&
+		git rev-list --objects --all >all_blobs &&
+		! grep $hash all_blobs &&
+
+		#
+		# Second, check anonymized hash output against expectation
+		#
+		anonymize_hash out >actual &&
+		q_to_tab <<-\EOF | lf_to_nul >expect &&
+		HASH
+		100644 HASH 2Qbar
+		100644 HASH 3Qbar
+		EOF
+
+		q_to_nul <<-EOF >>expect &&
+		Q1QbarQAuto-mergingQAuto-merging bar
+		Q1QbarQCONFLICT (contents)QCONFLICT (add/add): Merge conflict in bar
+		Q1QfooQAuto-mergingQAuto-merging foo
+		Q
+		EOF
+		test_cmp expect actual
+	)
+'
+
+# rename/add, where add is a mode conflict
+#   Commit O: foo
+#   Commit A: modify foo, add symlink bar
+#   Commit B: modify & rename foo->bar
+#   Expected: CONFLICT(distinct modes) for bar
+
+test_expect_success SYMLINKS 'rename/add, where add is a mode conflict' '
+	# Setup
+	git init rename-add-symlink &&
+	(
+		cd rename-add-symlink &&
+		test_write_lines original 1 2 3 4 5 >foo &&
+		git add foo &&
+		git commit -m "original" &&
+
+		git branch O &&
+		git branch A &&
+		git branch B &&
+
+		git checkout A &&
+		test_write_lines 1 2 3 4 5 >foo &&
+		ln -s foo bar &&
+		git add foo bar &&
+		git commit -m "Modify foo, add symlink bar" &&
+
+		git checkout B &&
+		test_write_lines original 1 2 3 4 5 6 >foo &&
+		git add foo &&
+		git mv foo bar &&
+		git commit -m "rename foo to bar"
+	) &&
+	# Testing
+	(
+		cd rename-add-symlink &&
+
+		test_expect_code 1 \
+			git merge-tree -z A^0 B^0 >out &&
+		printf "\\n" >>out &&
+
+		#
+		# First, check that the bar that appears at stage 3 does not
+		# correspond to an individual blob anywhere in history
+		#
+		hash=$(cat out | tr "\0" "\n" | head -n 3 | grep 3.bar | cut -f 2 -d " ") &&
+		git rev-list --objects --all >all_blobs &&
+		! grep $hash all_blobs &&
+
+		#
+		# Second, check anonymized hash output against expectation
+		#
+		anonymize_hash out >actual &&
+		q_to_tab <<-\EOF | lf_to_nul >expect &&
+		HASH
+		120000 HASH 2Qbar
+		100644 HASH 3Qbar~B^0
+		EOF
+
+		q_to_nul <<-EOF >>expect &&
+		Q2QbarQbar~B^0QCONFLICT (distinct modes)QCONFLICT (distinct types): bar had different types on each side; renamed one of them so each can be recorded somewhere.
+		Q1QfooQAuto-mergingQAuto-merging foo
+		Q
+		EOF
+		test_cmp expect actual
+	)
+'
+
+# rename/rename(1to2) + content conflict handling
+#   Commit O: foo
+#   Commit A: modify foo & rename to bar
+#   Commit B: modify foo & rename to baz
+#   Expected: CONFLICT(rename/rename)
+
+test_expect_success 'rename/rename + content conflict' '
+	# Setup
+	git init rr-plus-content &&
+	(
+		cd rr-plus-content &&
+		test_write_lines 1 2 3 4 5 >foo &&
+		git add foo &&
+		git commit -m "original" &&
+
+		git branch O &&
+		git branch A &&
+		git branch B &&
+
+		git checkout A &&
+		test_write_lines 1 2 3 4 5 six >foo &&
+		git add foo &&
+		git mv foo bar &&
+		git commit -m "Modify foo + rename to bar" &&
+
+		git checkout B &&
+		test_write_lines 1 2 3 4 5 6 >foo &&
+		git add foo &&
+		git mv foo baz &&
+		git commit -m "Modify foo + rename to baz"
+	) &&
+	# Testing
+	(
+		cd rr-plus-content &&
+
+		test_expect_code 1 \
+			git merge-tree -z A^0 B^0 >out &&
+		printf "\\n" >>out &&
+		anonymize_hash out >actual &&
+		q_to_tab <<-\EOF | lf_to_nul >expect &&
+		HASH
+		100644 HASH 2Qbar
+		100644 HASH 3Qbaz
+		100644 HASH 1Qfoo
+		EOF
+
+		q_to_nul <<-EOF >>expect &&
+		Q1QfooQAuto-mergingQAuto-merging foo
+		Q3QfooQbarQbazQCONFLICT (rename/rename)QCONFLICT (rename/rename): foo renamed to bar in A^0 and to baz in B^0.
+		Q
+		EOF
+		test_cmp expect actual
+	)
+'
+
+# rename/add/delete
+#   Commit O: foo
+#   Commit A: rm foo, add different bar
+#   Commit B: rename foo->bar
+#   Expected: CONFLICT (rename/delete), CONFLICT(add/add) [via rename collide]
+#             for bar
+
+test_expect_success 'rename/add/delete conflict' '
+	# Setup
+	git init rad &&
+	(
+		cd rad &&
+		echo "original file" >foo &&
+		git add foo &&
+		git commit -m "original" &&
+
+		git branch O &&
+		git branch A &&
+		git branch B &&
+
+		git checkout A &&
+		git rm foo &&
+		echo "different file" >bar &&
+		git add bar &&
+		git commit -m "Remove foo, add bar" &&
+
+		git checkout B &&
+		git mv foo bar &&
+		git commit -m "rename foo to bar"
+	) &&
+	# Testing
+	(
+		cd rad &&
+
+		test_expect_code 1 \
+			git merge-tree -z B^0 A^0 >out &&
+		printf "\\n" >>out &&
+		anonymize_hash out >actual &&
+
+		q_to_tab <<-\EOF | lf_to_nul >expect &&
+		HASH
+		100644 HASH 2Qbar
+		100644 HASH 3Qbar
+
+		EOF
+
+		q_to_nul <<-EOF >>expect &&
+		2QbarQfooQCONFLICT (rename/delete)QCONFLICT (rename/delete): foo renamed to bar in B^0, but deleted in A^0.
+		Q1QbarQAuto-mergingQAuto-merging bar
+		Q1QbarQCONFLICT (contents)QCONFLICT (add/add): Merge conflict in bar
+		Q
+		EOF
+		test_cmp expect actual
+	)
+'
+
+# rename/rename(2to1)/delete/delete
+#   Commit O: foo, bar
+#   Commit A: rename foo->baz, rm bar
+#   Commit B: rename bar->baz, rm foo
+#   Expected: 2x CONFLICT (rename/delete), CONFLICT (add/add) via colliding
+#             renames for baz
+
+test_expect_success 'rename/rename(2to1)/delete/delete conflict' '
+	# Setup
+	git init rrdd &&
+	(
+		cd rrdd &&
+		echo foo >foo &&
+		echo bar >bar &&
+		git add foo bar &&
+		git commit -m O &&
+
+		git branch O &&
+		git branch A &&
+		git branch B &&
+
+		git checkout A &&
+		git mv foo baz &&
+		git rm bar &&
+		git commit -m "Rename foo, remove bar" &&
+
+		git checkout B &&
+		git mv bar baz &&
+		git rm foo &&
+		git commit -m "Rename bar, remove foo"
+	) &&
+	# Testing
+	(
+		cd rrdd &&
+
+		test_expect_code 1 \
+			git merge-tree -z A^0 B^0 >out &&
+		printf "\\n" >>out &&
+		anonymize_hash out >actual &&
+
+		q_to_tab <<-\EOF | lf_to_nul >expect &&
+		HASH
+		100644 HASH 2Qbaz
+		100644 HASH 3Qbaz
+
+		EOF
+
+		q_to_nul <<-EOF >>expect &&
+		2QbazQbarQCONFLICT (rename/delete)QCONFLICT (rename/delete): bar renamed to baz in B^0, but deleted in A^0.
+		Q2QbazQfooQCONFLICT (rename/delete)QCONFLICT (rename/delete): foo renamed to baz in A^0, but deleted in B^0.
+		Q1QbazQAuto-mergingQAuto-merging baz
+		Q1QbazQCONFLICT (contents)QCONFLICT (add/add): Merge conflict in baz
+		Q
+		EOF
+		test_cmp expect actual
+	)
+'
+
+# mod6: chains of rename/rename(1to2) + add/add via colliding renames
+#   Commit O: one,      three,       five
+#   Commit A: one->two, three->four, five->six
+#   Commit B: one->six, three->two,  five->four
+#   Expected: three CONFLICT(rename/rename) messages + three CONFLICT(add/add)
+#             messages; each path in two of the multi-way merged contents
+#             found in two, four, six
+
+test_expect_success 'mod6: chains of rename/rename(1to2) and add/add via colliding renames' '
+	# Setup
+	git init mod6 &&
+	(
+		cd mod6 &&
+		test_seq 11 19 >one &&
+		test_seq 31 39 >three &&
+		test_seq 51 59 >five &&
+		git add . &&
+		test_tick &&
+		git commit -m "O" &&
+
+		git branch O &&
+		git branch A &&
+		git branch B &&
+
+		git checkout A &&
+		test_seq 10 19 >one &&
+		echo 40        >>three &&
+		git add one three &&
+		git mv  one   two  &&
+		git mv  three four &&
+		git mv  five  six  &&
+		test_tick &&
+		git commit -m "A" &&
+
+		git checkout B &&
+		echo 20    >>one       &&
+		echo forty >>three     &&
+		echo 60    >>five      &&
+		git add one three five &&
+		git mv  one   six  &&
+		git mv  three two  &&
+		git mv  five  four &&
+		test_tick &&
+		git commit -m "B"
+	) &&
+	# Testing
+	(
+		cd mod6 &&
+
+		test_expect_code 1 \
+			git merge-tree -z A^0 B^0 >out &&
+		printf "\\n" >>out &&
+
+		#
+		# First, check that some of the hashes that appear as stage
+		# conflict entries do not appear as individual blobs anywhere
+		# in history.
+		#
+		hash1=$(cat out | tr "\0" "\n" | head | grep 2.four | cut -f 2 -d " ") &&
+		hash2=$(cat out | tr "\0" "\n" | head | grep 3.two | cut -f 2 -d " ") &&
+		git rev-list --objects --all >all_blobs &&
+		! grep $hash1 all_blobs &&
+		! grep $hash2 all_blobs &&
+
+		#
+		# Now compare anonymized hash output with expectation
+		#
+		anonymize_hash out >actual &&
+		q_to_tab <<-\EOF | lf_to_nul >expect &&
+		HASH
+		100644 HASH 1Qfive
+		100644 HASH 2Qfour
+		100644 HASH 3Qfour
+		100644 HASH 1Qone
+		100644 HASH 2Qsix
+		100644 HASH 3Qsix
+		100644 HASH 1Qthree
+		100644 HASH 2Qtwo
+		100644 HASH 3Qtwo
+
+		EOF
+
+		q_to_nul <<-EOF >>expect &&
+		3QfiveQsixQfourQCONFLICT (rename/rename)QCONFLICT (rename/rename): five renamed to six in A^0 and to four in B^0.
+		Q1QfourQAuto-mergingQAuto-merging four
+		Q1QfourQCONFLICT (contents)QCONFLICT (add/add): Merge conflict in four
+		Q1QoneQAuto-mergingQAuto-merging one
+		Q3QoneQtwoQsixQCONFLICT (rename/rename)QCONFLICT (rename/rename): one renamed to two in A^0 and to six in B^0.
+		Q1QsixQAuto-mergingQAuto-merging six
+		Q1QsixQCONFLICT (contents)QCONFLICT (add/add): Merge conflict in six
+		Q1QthreeQAuto-mergingQAuto-merging three
+		Q3QthreeQfourQtwoQCONFLICT (rename/rename)QCONFLICT (rename/rename): three renamed to four in A^0 and to two in B^0.
+		Q1QtwoQAuto-mergingQAuto-merging two
+		Q1QtwoQCONFLICT (contents)QCONFLICT (add/add): Merge conflict in two
+		Q
+		EOF
+		test_cmp expect actual
+	)
+'
+
+# directory rename + rename/delete + modify/delete + directory/file conflict
+#   Commit O: foo, olddir/{a,b,c}
+#   Commit A: delete foo, rename olddir/ -> newdir/, add newdir/bar/file
+#   Commit B: modify foo & rename foo -> olddir/bar
+#   Expected: CONFLICT(content) for for newdir/bar (not olddir/bar or foo)
+
+test_expect_success 'directory rename + rename/delete + modify/delete + directory/file conflict' '
+	# Setup
+	git init 4-stacked-conflict &&
+	(
+		cd 4-stacked-conflict &&
+		test_write_lines 1 2 3 4 5 >foo &&
+		mkdir olddir &&
+		for i in a b c; do echo $i >olddir/$i; done
+		git add foo olddir &&
+		git commit -m "original" &&
+
+		git branch O &&
+		git branch A &&
+		git branch B &&
+
+		git checkout A &&
+		git rm foo &&
+		git mv olddir newdir &&
+		mkdir newdir/bar &&
+		>newdir/bar/file &&
+		git add newdir/bar/file &&
+		git commit -m "rm foo, olddir/ -> newdir/, + newdir/bar/file" &&
+
+		git checkout B &&
+		test_write_lines 1 2 3 4 5 6 >foo &&
+		git add foo &&
+		git mv foo olddir/bar &&
+		git commit -m "Modify foo & rename foo -> olddir/bar"
+	) &&
+	# Testing
+	(
+		cd 4-stacked-conflict &&
+
+		test_expect_code 1 \
+			git merge-tree -z A^0 B^0 >out &&
+		printf "\\n" >>out &&
+		anonymize_hash out >actual &&
+
+		q_to_tab <<-\EOF | lf_to_nul >expect &&
+		HASH
+		100644 HASH 1Qnewdir/bar~B^0
+		100644 HASH 3Qnewdir/bar~B^0
+		EOF
+
+		q_to_nul <<-EOF >>expect &&
+		Q2Qnewdir/barQolddir/barQCONFLICT (directory rename suggested)QCONFLICT (file location): foo renamed to olddir/bar in B^0, inside a directory that was renamed in A^0, suggesting it should perhaps be moved to newdir/bar.
+		Q2Qnewdir/barQfooQCONFLICT (rename/delete)QCONFLICT (rename/delete): foo renamed to newdir/bar in B^0, but deleted in A^0.
+		Q2Qnewdir/bar~B^0Qnewdir/barQCONFLICT (file/directory)QCONFLICT (file/directory): directory in the way of newdir/bar from B^0; moving it to newdir/bar~B^0 instead.
+		Q1Qnewdir/bar~B^0QCONFLICT (modify/delete)QCONFLICT (modify/delete): newdir/bar~B^0 deleted in A^0 and modified in B^0.  Version B^0 of newdir/bar~B^0 left in tree.
+		Q
+		EOF
+		test_cmp expect actual
+	)
 '
 
 for opt in $(git merge-tree --git-completion-helper-all)
