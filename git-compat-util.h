@@ -190,7 +190,8 @@ struct strbuf;
 #define _SGI_SOURCE 1
 
 #if defined(__GNUC__)
-#define UNUSED __attribute__((unused))
+#define UNUSED __attribute__((unused)) \
+	__attribute__((deprecated ("parameter declared as UNUSED")))
 #else
 #define UNUSED
 #endif
