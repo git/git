@@ -1465,13 +1465,27 @@ static char *get_maintpath(void)
 	return strbuf_detach(&sb, NULL);
 }
 
+static char const * const builtin_maintenance_register_usage[] = {
+	N_("git maintenance register"),
+	NULL
+};
+
 static int maintenance_register(int argc, const char **argv, const char *prefix)
 {
+	struct option options[] = {
+		OPT_END(),
+	};
 	int rc;
 	char *config_value;
 	struct child_process config_set = CHILD_PROCESS_INIT;
 	struct child_process config_get = CHILD_PROCESS_INIT;
 	char *maintpath = get_maintpath();
+
+	argc = parse_options(argc, argv, prefix, options,
+			     builtin_maintenance_register_usage, 0);
+	if (argc)
+		usage_with_options(builtin_maintenance_register_usage,
+				   options);
 
 	/* Disable foreground maintenance */
 	git_config_set("maintenance.auto", "false");
@@ -1509,11 +1523,25 @@ done:
 	return rc;
 }
 
+static char const * const builtin_maintenance_unregister_usage[] = {
+	N_("git maintenance unregister"),
+	NULL
+};
+
 static int maintenance_unregister(int argc, const char **argv, const char *prefix)
 {
+	struct option options[] = {
+		OPT_END(),
+	};
 	int rc;
 	struct child_process config_unset = CHILD_PROCESS_INIT;
 	char *maintpath = get_maintpath();
+
+	argc = parse_options(argc, argv, prefix, options,
+			     builtin_maintenance_unregister_usage, 0);
+	if (argc)
+		usage_with_options(builtin_maintenance_unregister_usage,
+				   options);
 
 	config_unset.git_cmd = 1;
 	strvec_pushl(&config_unset.args, "config", "--global", "--unset",
@@ -2496,6 +2524,7 @@ static int maintenance_start(int argc, const char **argv, const char *prefix)
 			PARSE_OPT_NONEG, maintenance_opt_scheduler),
 		OPT_END()
 	};
+	const char *register_args[] = { "register", NULL };
 
 	argc = parse_options(argc, argv, prefix, options,
 			     builtin_maintenance_start_usage, 0);
@@ -2505,13 +2534,25 @@ static int maintenance_start(int argc, const char **argv, const char *prefix)
 	opts.scheduler = resolve_scheduler(opts.scheduler);
 	validate_scheduler(opts.scheduler);
 
-	if (maintenance_register(0, NULL, NULL)) /* It doesn't take any args */
+	if (maintenance_register(ARRAY_SIZE(register_args)-1, register_args, NULL))
 		warning(_("failed to add repo to global config"));
 	return update_background_schedule(&opts, 1);
 }
 
+static const char *const builtin_maintenance_stop_usage[] = {
+	N_("git maintenance stop"),
+	NULL
+};
+
 static int maintenance_stop(int argc, const char **argv, const char *prefix)
 {
+	struct option options[] = {
+		OPT_END()
+	};
+	argc = parse_options(argc, argv, prefix, options,
+			     builtin_maintenance_stop_usage, 0);
+	if (argc)
+		usage_with_options(builtin_maintenance_stop_usage, options);
 	return update_background_schedule(NULL, 0);
 }
 
