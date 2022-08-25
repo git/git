@@ -323,6 +323,7 @@ static int find_common(struct fetch_negotiator *negotiator,
 {
 	int fetching;
 	int count = 0, flushes = 0, flush_at = INITIAL_FLUSH, retval;
+	int negotiation_round = 0, haves = 0;
 	const struct object_id *oid;
 	unsigned in_vain = 0;
 	int got_continue = 0;
@@ -461,9 +462,19 @@ static int find_common(struct fetch_negotiator *negotiator,
 		packet_buf_write(&req_buf, "have %s\n", oid_to_hex(oid));
 		print_verbose(args, "have %s", oid_to_hex(oid));
 		in_vain++;
+		haves++;
 		if (flush_at <= ++count) {
 			int ack;
 
+			negotiation_round++;
+			trace2_region_enter_printf("negotiation_v0_v1", "round",
+						   the_repository, "%d",
+						   negotiation_round);
+			trace2_data_intmax("negotiation_v0_v1", the_repository,
+					   "haves_added", haves);
+			trace2_data_intmax("negotiation_v0_v1", the_repository,
+					   "in_vain", in_vain);
+			haves = 0;
 			packet_buf_flush(&req_buf);
 			send_request(args, fd[1], &req_buf);
 			strbuf_setlen(&req_buf, state_len);
@@ -485,6 +496,9 @@ static int find_common(struct fetch_negotiator *negotiator,
 						      ack, oid_to_hex(result_oid));
 				switch (ack) {
 				case ACK:
+					trace2_region_leave_printf("negotiation_v0_v1", "round",
+								   the_repository, "%d",
+								   negotiation_round);
 					flushes = 0;
 					multi_ack = 0;
 					retval = 0;
@@ -510,6 +524,7 @@ static int find_common(struct fetch_negotiator *negotiator,
 						const char *hex = oid_to_hex(result_oid);
 						packet_buf_write(&req_buf, "have %s\n", hex);
 						state_len = req_buf.len;
+						haves++;
 						/*
 						 * Reset in_vain because an ack
 						 * for this commit has not been
@@ -528,6 +543,9 @@ static int find_common(struct fetch_negotiator *negotiator,
 				}
 			} while (ack);
 			flushes--;
+			trace2_region_leave_printf("negotiation_v0_v1", "round",
+						   the_repository, "%d",
+						   negotiation_round);
 			if (got_continue && MAX_IN_VAIN < in_vain) {
 				print_verbose(args, _("giving up"));
 				break; /* give up */
@@ -538,6 +556,8 @@ static int find_common(struct fetch_negotiator *negotiator,
 	}
 done:
 	trace2_region_leave("fetch-pack", "negotiation_v0_v1", the_repository);
+	trace2_data_intmax("negotiation_v0_v1", the_repository, "total_rounds",
+			   negotiation_round);
 	if (!got_ready || !no_done) {
 		packet_buf_write(&req_buf, "done\n");
 		send_request(args, fd[1], &req_buf);
@@ -1381,6 +1401,8 @@ static int send_fetch_request(struct fetch_negotiator *negotiator, int fd_out,
 
 	haves_added = add_haves(negotiator, &req_buf, haves_to_send);
 	*in_vain += haves_added;
+	trace2_data_intmax("negotiation_v2", the_repository, "haves_added", haves_added);
+	trace2_data_intmax("negotiation_v2", the_repository, "in_vain", *in_vain);
 	if (!haves_added || (seen_ack && *in_vain >= MAX_IN_VAIN)) {
 		/* Send Done */
 		packet_buf_write(&req_buf, "done\n");
@@ -1623,6 +1645,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 	struct oidset common = OIDSET_INIT;
 	struct packet_reader reader;
 	int in_vain = 0, negotiation_started = 0;
+	int negotiation_round = 0;
 	int haves_to_send = INITIAL_FLUSH;
 	struct fetch_negotiator negotiator_alloc;
 	struct fetch_negotiator *negotiator;
@@ -1679,12 +1702,20 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 						    "negotiation_v2",
 						    the_repository);
 			}
+			negotiation_round++;
+			trace2_region_enter_printf("negotiation_v2", "round",
+						   the_repository, "%d",
+						   negotiation_round);
 			if (send_fetch_request(negotiator, fd[1], args, ref,
 					       &common,
 					       &haves_to_send, &in_vain,
 					       reader.use_sideband,
-					       seen_ack))
+					       seen_ack)) {
+				trace2_region_leave_printf("negotiation_v2", "round",
+							   the_repository, "%d",
+							   negotiation_round);
 				state = FETCH_GET_PACK;
+			}
 			else
 				state = FETCH_PROCESS_ACKS;
 			break;
@@ -1697,6 +1728,9 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 				seen_ack = 1;
 				oidset_insert(&common, &common_oid);
 			}
+			trace2_region_leave_printf("negotiation_v2", "round",
+						   the_repository, "%d",
+						   negotiation_round);
 			if (received_ready) {
 				/*
 				 * Don't check for response delimiter; get_pack() will
@@ -1712,6 +1746,8 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 			trace2_region_leave("fetch-pack",
 					    "negotiation_v2",
 					    the_repository);
+			trace2_data_intmax("negotiation_v2", the_repository,
+					   "total_rounds", negotiation_round);
 			/* Check for shallow-info section */
 			if (process_section_header(&reader, "shallow-info", 1))
 				receive_shallow_info(args, &reader, shallows, si);
@@ -2091,6 +2127,7 @@ void negotiate_using_fetch(const struct oid_array *negotiation_tips,
 	int in_vain = 0;
 	int seen_ack = 0;
 	int last_iteration = 0;
+	int negotiation_round = 0;
 	timestamp_t min_generation = GENERATION_NUMBER_INFINITY;
 
 	fetch_negotiator_init(the_repository, &negotiator);
@@ -2104,11 +2141,17 @@ void negotiate_using_fetch(const struct oid_array *negotiation_tips,
 			   add_to_object_array,
 			   &nt_object_array);
 
+	trace2_region_enter("fetch-pack", "negotiate_using_fetch", the_repository);
 	while (!last_iteration) {
 		int haves_added;
 		struct object_id common_oid;
 		int received_ready = 0;
 
+		negotiation_round++;
+
+		trace2_region_enter_printf("negotiate_using_fetch", "round",
+					   the_repository, "%d",
+					   negotiation_round);
 		strbuf_reset(&req_buf);
 		write_fetch_command_and_capabilities(&req_buf, server_options);
 
@@ -2118,6 +2161,11 @@ void negotiate_using_fetch(const struct oid_array *negotiation_tips,
 		in_vain += haves_added;
 		if (!haves_added || (seen_ack && in_vain >= MAX_IN_VAIN))
 			last_iteration = 1;
+
+		trace2_data_intmax("negotiate_using_fetch", the_repository,
+				   "haves_added", haves_added);
+		trace2_data_intmax("negotiate_using_fetch", the_repository,
+				   "in_vain", in_vain);
 
 		/* Send request */
 		packet_buf_flush(&req_buf);
@@ -2151,7 +2199,13 @@ void negotiate_using_fetch(const struct oid_array *negotiation_tips,
 						 REACH_SCRATCH, 0,
 						 min_generation))
 			last_iteration = 1;
+		trace2_region_leave_printf("negotiation", "round",
+					   the_repository, "%d",
+					   negotiation_round);
 	}
+	trace2_region_enter("fetch-pack", "negotiate_using_fetch", the_repository);
+	trace2_data_intmax("negotiate_using_fetch", the_repository,
+			   "total_rounds", negotiation_round);
 	clear_common_flag(acked_commits);
 	strbuf_release(&req_buf);
 }
