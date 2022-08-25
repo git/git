@@ -60,7 +60,7 @@ static int sparse_checkout_list(int argc, const char **argv, const char *prefix)
 	if (!core_apply_sparse_checkout)
 		die(_("this worktree is not sparse"));
 
-	argc = parse_options(argc, argv, NULL,
+	argc = parse_options(argc, argv, prefix,
 			     builtin_sparse_checkout_list_options,
 			     builtin_sparse_checkout_list_usage, 0);
 
@@ -452,7 +452,7 @@ static int sparse_checkout_init(int argc, const char **argv, const char *prefix)
 	init_opts.cone_mode = -1;
 	init_opts.sparse_index = -1;
 
-	argc = parse_options(argc, argv, NULL,
+	argc = parse_options(argc, argv, prefix,
 			     builtin_sparse_checkout_init_options,
 			     builtin_sparse_checkout_init_usage, 0);
 
@@ -860,7 +860,7 @@ static int sparse_checkout_reapply(int argc, const char **argv,
 	reapply_opts.cone_mode = -1;
 	reapply_opts.sparse_index = -1;
 
-	argc = parse_options(argc, argv, NULL,
+	argc = parse_options(argc, argv, prefix,
 			     builtin_sparse_checkout_reapply_options,
 			     builtin_sparse_checkout_reapply_usage, 0);
 
@@ -897,7 +897,7 @@ static int sparse_checkout_disable(int argc, const char **argv,
 	 * forcibly return to a dense checkout regardless of initial state.
 	 */
 
-	argc = parse_options(argc, argv, NULL,
+	argc = parse_options(argc, argv, prefix,
 			     builtin_sparse_checkout_disable_options,
 			     builtin_sparse_checkout_disable_usage, 0);
 
