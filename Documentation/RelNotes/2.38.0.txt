@@ -54,6 +54,10 @@ UI, Workflows & Features
    "human" to show the reported value in human-readable format, like
    "3.40MiB".
 
+ * The "diagnose" feature to create a zip archive for diagnostic
+   material has been lifted from "scalar" and made into a feature of
+   "git bugreport".
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -114,6 +118,9 @@ Performance, Internal Implementation, Development Support etc.
    output.
 
  * The "bundle URI" design gets documented.
+
+ * The common ancestor negotiation exchange during a "git fetch"
+   session now leaves trace log.
 
 
 Fixes since v2.37
@@ -262,6 +269,15 @@ Fixes since v2.37
  * Fixes to sparse index compatibility work for "reset" and "checkout"
    commands.
    (merge b15207b8cf vd/sparse-reset-checkout-fixes later to maint).
+
+ * An earlier optimization discarded a tree-object buffer that is
+   still in use, which has been corrected.
+   (merge 1490d7d82d jk/is-promisor-object-keep-tree-in-use later to maint).
+
+ * Fix deadlocks between main Git process and subprocess spawned via
+   the pipe_command() API, that can kill "git add -p" that was
+   reimplemented in C recently.
+   (merge 716c1f649e jk/pipe-command-nonblock later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 94955d576b gc/git-reflog-doc-markup later to maint).
