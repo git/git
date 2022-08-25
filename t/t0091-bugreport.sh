@@ -78,4 +78,52 @@ test_expect_success 'indicates populated hooks' '
 	test_cmp expect actual
 '
 
+test_expect_success UNZIP '--diagnose creates diagnostics zip archive' '
+	test_when_finished rm -rf report &&
+
+	git bugreport --diagnose -o report -s test >out &&
+
+	zip_path=report/git-diagnostics-test.zip &&
+	grep "Available space" out &&
+	test_path_is_file "$zip_path" &&
+
+	# Check zipped archive content
+	"$GIT_UNZIP" -p "$zip_path" diagnostics.log >out &&
+	test_file_not_empty out &&
+
+	"$GIT_UNZIP" -p "$zip_path" packs-local.txt >out &&
+	grep ".git/objects" out &&
+
+	"$GIT_UNZIP" -p "$zip_path" objects-local.txt >out &&
+	grep "^Total: [0-9][0-9]*" out &&
+
+	# Should not include .git directory contents by default
+	! "$GIT_UNZIP" -l "$zip_path" | grep ".git/"
+'
+
+test_expect_success UNZIP '--diagnose=stats excludes .git dir contents' '
+	test_when_finished rm -rf report &&
+
+	git bugreport --diagnose=stats -o report -s test >out &&
+
+	# Includes pack quantity/size info
+	"$GIT_UNZIP" -p "$zip_path" packs-local.txt >out &&
+	grep ".git/objects" out &&
+
+	# Does not include .git directory contents
+	! "$GIT_UNZIP" -l "$zip_path" | grep ".git/"
+'
+
+test_expect_success UNZIP '--diagnose=all includes .git dir contents' '
+	test_when_finished rm -rf report &&
+
+	git bugreport --diagnose=all -o report -s test >out &&
+
+	# Includes .git directory contents
+	"$GIT_UNZIP" -l "$zip_path" | grep ".git/" &&
+
+	"$GIT_UNZIP" -p "$zip_path" .git/HEAD >out &&
+	test_file_not_empty out
+'
+
 test_done
