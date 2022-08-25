@@ -1245,8 +1245,9 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	 */
 	if (bundle_uri) {
 		/* At this point, we need the_repository to match the cloned repo. */
-		repo_init(the_repository, git_dir, work_tree);
-		if (fetch_bundle_uri(the_repository, bundle_uri))
+		if (repo_init(the_repository, git_dir, work_tree))
+			warning(_("failed to initialize the repo, skipping bundle URI"));
+		else if (fetch_bundle_uri(the_repository, bundle_uri))
 			warning(_("failed to fetch objects from bundle URI '%s'"),
 				bundle_uri);
 	}
