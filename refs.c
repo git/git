@@ -359,7 +359,7 @@ struct warn_if_dangling_data {
 };
 
 static int warn_if_dangling_symref(const char *refname,
-				   const struct object_id *UNUSED(oid),
+				   const struct object_id *oid UNUSED,
 				   int flags, void *cb_data)
 {
 	struct warn_if_dangling_data *d = cb_data;
@@ -894,7 +894,7 @@ static void set_read_ref_cutoffs(struct read_ref_at_cb *cb,
 }
 
 static int read_ref_at_ent(struct object_id *ooid, struct object_id *noid,
-			   const char *UNUSED(email),
+			   const char *email UNUSED,
 			   timestamp_t timestamp, int tz,
 			   const char *message, void *cb_data)
 {
@@ -936,9 +936,9 @@ static int read_ref_at_ent(struct object_id *ooid, struct object_id *noid,
 	return cb->found_it;
 }
 
-static int read_ref_at_ent_newest(struct object_id *UNUSED(ooid),
+static int read_ref_at_ent_newest(struct object_id *ooid UNUSED,
 				  struct object_id *noid,
-				  const char *UNUSED(email),
+				  const char *email UNUSED,
 				  timestamp_t timestamp, int tz,
 				  const char *message, void *cb_data)
 {
@@ -951,7 +951,7 @@ static int read_ref_at_ent_newest(struct object_id *UNUSED(ooid),
 }
 
 static int read_ref_at_ent_oldest(struct object_id *ooid, struct object_id *noid,
-				  const char *UNUSED(email),
+				  const char *email UNUSED,
 				  timestamp_t timestamp, int tz,
 				  const char *message, void *cb_data)
 {
@@ -1815,7 +1815,7 @@ struct ref_store_hash_entry
 	char name[FLEX_ARRAY];
 };
 
-static int ref_store_hash_cmp(const void *UNUSED(cmp_data),
+static int ref_store_hash_cmp(const void *cmp_data UNUSED,
 			      const struct hashmap_entry *eptr,
 			      const struct hashmap_entry *entry_or_key,
 			      const void *keydata)

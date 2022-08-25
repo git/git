@@ -925,8 +925,8 @@ out:
 }
 
 static int string_list_add_one_ref(const char *refname,
-				   const struct object_id *UNUSED(oid),
-				   int UNUSED(flag), void *cb)
+				   const struct object_id *oid UNUSED,
+				   int flag UNUSED, void *cb)
 {
 	struct string_list *refs = cb;
 	if (!unsorted_string_list_has_string(refs, refname))

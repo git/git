@@ -759,8 +759,8 @@ static enum write_one_status write_one(struct hashfile *f,
 	return WRITE_ONE_WRITTEN;
 }
 
-static int mark_tagged(const char *UNUSED(path), const struct object_id *oid,
-		       int UNUSED(flag), void *UNUSED(cb_data))
+static int mark_tagged(const char *path UNUSED, const struct object_id *oid,
+		       int flag UNUSED, void *cb_data UNUSED)
 {
 	struct object_id peeled;
 	struct object_entry *entry = packlist_find(&to_pack, oid);
@@ -3035,8 +3035,8 @@ static void add_tag_chain(const struct object_id *oid)
 	}
 }
 
-static int add_ref_tag(const char *UNUSED(tag), const struct object_id *oid,
-		       int UNUSED(flag), void *UNUSED(cb_data))
+static int add_ref_tag(const char *tag UNUSED, const struct object_id *oid,
+		       int flag UNUSED, void *cb_data UNUSED)
 {
 	struct object_id peeled;
 
@@ -3952,8 +3952,8 @@ static void record_recent_commit(struct commit *commit, void *data)
 
 static int mark_bitmap_preferred_tip(const char *refname,
 				     const struct object_id *oid,
-				     int UNUSED(flags),
-				     void *UNUSED(data))
+				     int flags UNUSED,
+				     void *data UNUSED)
 {
 	struct object_id peeled;
 	struct object *object;

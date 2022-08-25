@@ -125,10 +125,10 @@ struct working_tree_entry {
 	char path[FLEX_ARRAY];
 };
 
-static int working_tree_entry_cmp(const void *UNUSED(cmp_data),
+static int working_tree_entry_cmp(const void *cmp_data UNUSED,
 				  const struct hashmap_entry *eptr,
 				  const struct hashmap_entry *entry_or_key,
-				  const void *UNUSED(keydata))
+				  const void *keydata UNUSED)
 {
 	const struct working_tree_entry *a, *b;
 
@@ -148,10 +148,10 @@ struct pair_entry {
 	const char path[FLEX_ARRAY];
 };
 
-static int pair_cmp(const void *UNUSED(cmp_data),
+static int pair_cmp(const void *cmp_data UNUSED,
 		    const struct hashmap_entry *eptr,
 		    const struct hashmap_entry *entry_or_key,
-		    const void *UNUSED(keydata))
+		    const void *keydata UNUSED)
 {
 	const struct pair_entry *a, *b;
 
@@ -184,7 +184,7 @@ struct path_entry {
 	char path[FLEX_ARRAY];
 };
 
-static int path_entry_cmp(const void *UNUSED(cmp_data),
+static int path_entry_cmp(const void *cmp_data UNUSED,
 			  const struct hashmap_entry *eptr,
 			  const struct hashmap_entry *entry_or_key,
 			  const void *key)

@@ -613,12 +613,12 @@ static void dos_time(timestamp_t *timestamp, int *dos_date, int *dos_time)
 }
 
 static int archive_zip_config(const char *var, const char *value,
-			      void *UNUSED(data))
+			      void *data UNUSED)
 {
 	return userdiff_config(var, value);
 }
 
-static int write_zip_archive(const struct archiver *UNUSED(ar),
+static int write_zip_archive(const struct archiver *ar UNUSED,
 			     struct archiver_args *args)
 {
 	int err;

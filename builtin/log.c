@@ -645,8 +645,8 @@ static int show_tag_object(const struct object_id *oid, struct rev_info *rev)
 	return 0;
 }
 
-static int show_tree_object(const struct object_id *UNUSED(oid),
-			    struct strbuf *UNUSED(base),
+static int show_tree_object(const struct object_id *oid UNUSED,
+			    struct strbuf *base UNUSED,
 			    const char *pathname, unsigned mode,
 			    void *context)
 {

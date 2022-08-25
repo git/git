@@ -362,8 +362,8 @@ static void populate_remote_urls(struct config_include_data *inc)
 	current_parsing_scope = store_scope;
 }
 
-static int forbid_remote_url(const char *var, const char *UNUSED(value),
-			     void *UNUSED(data))
+static int forbid_remote_url(const char *var, const char *value UNUSED,
+			     void *data UNUSED)
 {
 	const char *remote_name;
 	size_t remote_name_len;
@@ -2338,10 +2338,10 @@ static int configset_add_value(struct config_set *cs, const char *key, const cha
 	return 0;
 }
 
-static int config_set_element_cmp(const void *UNUSED(cmp_data),
+static int config_set_element_cmp(const void *cmp_data UNUSED,
 				  const struct hashmap_entry *eptr,
 				  const struct hashmap_entry *entry_or_key,
-				  const void *UNUSED(keydata))
+				  const void *keydata UNUSED)
 {
 	const struct config_set_element *e1, *e2;
 

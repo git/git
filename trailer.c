@@ -479,7 +479,7 @@ static struct {
 };
 
 static int git_trailer_default_config(const char *conf_key, const char *value,
-				      void *UNUSED(cb))
+				      void *cb UNUSED)
 {
 	const char *trailer_item, *variable_name;
 
@@ -511,7 +511,7 @@ static int git_trailer_default_config(const char *conf_key, const char *value,
 }
 
 static int git_trailer_config(const char *conf_key, const char *value,
-			      void *UNUSED(cb))
+			      void *cb UNUSED)
 {
 	const char *trailer_item, *variable_name;
 	struct arg_item *item;

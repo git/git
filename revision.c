@@ -119,10 +119,10 @@ struct path_and_oids_entry {
 	struct oidset trees;
 };
 
-static int path_and_oids_cmp(const void *UNUSED(hashmap_cmp_fn_data),
+static int path_and_oids_cmp(const void *hashmap_cmp_fn_data UNUSED,
 			     const struct hashmap_entry *eptr,
 			     const struct hashmap_entry *entry_or_key,
-			     const void *UNUSED(keydata))
+			     const void *keydata UNUSED)
 {
 	const struct path_and_oids_entry *e1, *e2;
 
@@ -1543,7 +1543,7 @@ int ref_excluded(struct string_list *ref_excludes, const char *path)
 }
 
 static int handle_one_ref(const char *path, const struct object_id *oid,
-			  int UNUSED(flag),
+			  int flag UNUSED,
 			  void *cb_data)
 {
 	struct all_refs_cb *cb = cb_data;
@@ -1619,10 +1619,10 @@ static void handle_one_reflog_commit(struct object_id *oid, void *cb_data)
 }
 
 static int handle_one_reflog_ent(struct object_id *ooid, struct object_id *noid,
-				 const char *UNUSED(email),
-				 timestamp_t UNUSED(timestamp),
-				 int UNUSED(tz),
-				 const char *UNUSED(message),
+				 const char *email UNUSED,
+				 timestamp_t timestamp UNUSED,
+				 int tz UNUSED,
+				 const char *message UNUSED,
 				 void *cb_data)
 {
 	handle_one_reflog_commit(ooid, cb_data);
@@ -1631,8 +1631,8 @@ static int handle_one_reflog_ent(struct object_id *ooid, struct object_id *noid,
 }
 
 static int handle_one_reflog(const char *refname_in_wt,
-			     const struct object_id *UNUSED(oid),
-			     int UNUSED(flag), void *cb_data)
+			     const struct object_id *oid UNUSED,
+			     int flag UNUSED, void *cb_data)
 {
 	struct all_refs_cb *cb = cb_data;
 	struct strbuf refname = STRBUF_INIT;

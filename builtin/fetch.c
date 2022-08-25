@@ -301,7 +301,7 @@ struct refname_hash_entry {
 	char refname[FLEX_ARRAY];
 };
 
-static int refname_hash_entry_cmp(const void *UNUSED(hashmap_cmp_fn_data),
+static int refname_hash_entry_cmp(const void *hashmap_cmp_fn_data UNUSED,
 				  const struct hashmap_entry *eptr,
 				  const struct hashmap_entry *entry_or_key,
 				  const void *keydata)
@@ -329,7 +329,7 @@ static struct refname_hash_entry *refname_hash_add(struct hashmap *map,
 
 static int add_one_refname(const char *refname,
 			   const struct object_id *oid,
-			   int UNUSED(flag), void *cbdata)
+			   int flag UNUSED, void *cbdata)
 {
 	struct hashmap *refname_map = cbdata;
 
@@ -1462,9 +1462,9 @@ static void set_option(struct transport *transport, const char *name, const char
 }
 
 
-static int add_oid(const char *UNUSED(refname),
+static int add_oid(const char *refname UNUSED,
 		   const struct object_id *oid,
-		   int UNUSED(flags), void *cb_data)
+		   int flags UNUSED, void *cb_data)
 {
 	struct oid_array *oids = cb_data;
 

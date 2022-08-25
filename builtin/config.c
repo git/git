@@ -208,7 +208,7 @@ static void show_config_scope(struct strbuf *buf)
 }
 
 static int show_all_config(const char *key_, const char *value_,
-			   void *UNUSED(cb))
+			   void *cb UNUSED)
 {
 	if (show_origin || show_scope) {
 		struct strbuf buf = STRBUF_INIT;
@@ -460,7 +460,7 @@ static const char *get_colorbool_slot;
 static char parsed_color[COLOR_MAXLEN];
 
 static int git_get_color_config(const char *var, const char *value,
-				void *UNUSED(cb))
+				void *cb UNUSED)
 {
 	if (!strcmp(var, get_color_slot)) {
 		if (!value)
@@ -492,7 +492,7 @@ static int get_colorbool_found;
 static int get_diff_color_found;
 static int get_color_ui_found;
 static int git_get_colorbool_config(const char *var, const char *value,
-				    void *UNUSED(data))
+				    void *data UNUSED)
 {
 	if (!strcmp(var, get_colorbool_slot))
 		get_colorbool_found = git_config_colorbool(var, value);

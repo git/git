@@ -638,12 +638,12 @@ cleanup:
 	return ret;
 }
 
-static int reject_reflog_ent(struct object_id *UNUSED(ooid),
-			     struct object_id *UNUSED(noid),
-			     const char *UNUSED(email),
-			     timestamp_t UNUSED(timestamp),
-			     int UNUSED(tz), const char *UNUSED(message),
-			     void *UNUSED(cb_data))
+static int reject_reflog_ent(struct object_id *ooid UNUSED,
+			     struct object_id *noid UNUSED,
+			     const char *email UNUSED,
+			     timestamp_t timestamp UNUSED,
+			     int tz UNUSED, const char *message UNUSED,
+			     void *cb_data UNUSED)
 {
 	return 1;
 }

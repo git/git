@@ -147,7 +147,7 @@ out:
 }
 
 static int add_info_ref(const char *path, const struct object_id *oid,
-			int UNUSED(flag),
+			int flag UNUSED,
 			void *cb_data)
 {
 	struct update_info_ctx *uic = cb_data;

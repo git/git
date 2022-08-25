@@ -224,7 +224,7 @@ cleanup:
 	return ret;
 }
 
-static int patch_util_cmp(const void *UNUSED(cmp_data),
+static int patch_util_cmp(const void *cmp_data UNUSED,
 			  const struct patch_util *a,
 			  const struct patch_util *b,
 			  const char *keydata)
