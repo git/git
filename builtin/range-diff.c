@@ -55,7 +55,10 @@ int cmd_range_diff(int argc, const char **argv, const char *prefix)
 	if (!simple_color)
 		diffopt.use_color = 1;
 
-	if (argc == 2) {
+	if (argc == 3) {
+		strbuf_addf(&range1, "%s..%s", argv[0], argv[1]);
+		strbuf_addf(&range2, "%s..%s", argv[0], argv[2]);
+	} else if (argc == 2) {
 		if (!is_range_diff_range(argv[0]))
 			die(_("not a commit range: '%s'"), argv[0]);
 		strbuf_addstr(&range1, argv[0]);
@@ -63,9 +66,6 @@ int cmd_range_diff(int argc, const char **argv, const char *prefix)
 		if (!is_range_diff_range(argv[1]))
 			die(_("not a commit range: '%s'"), argv[1]);
 		strbuf_addstr(&range2, argv[1]);
-	} else if (argc == 3) {
-		strbuf_addf(&range1, "%s..%s", argv[0], argv[1]);
-		strbuf_addf(&range2, "%s..%s", argv[0], argv[2]);
 	} else if (argc == 1) {
 		const char *b = strstr(argv[0], "..."), *a = argv[0];
 		int a_len;
