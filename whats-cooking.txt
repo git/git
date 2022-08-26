@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2022, #08; Wed, 24)
-X-master-at: 795ea8776befc95ea2becd8020c7a284677b4161
-X-next-at: 1cad371f1c4a4d3e2f0d7a9bbce5708e2a9d2902
+Subject: What's cooking in git.git (Aug 2022, #09; Fri, 26)
+X-master-at: 07ee72db0e97b5c233f8ada0abb412248c2f1c6f
+X-next-at: 80e7f50712d6a2d04807d40616c5c20b9e37eab9
 
-What's cooking in git.git (Aug 2022, #08; Wed, 24)
+What's cooking in git.git (Aug 2022, #09; Fri, 26)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -13,8 +13,9 @@ release).  Commits prefixed with '-' are only in 'seen', and aren't
 considered "accepted" at all.  A topic without enough support may be
 discarded after a long period of no activity.
 
-We are in the middle of the week #7 of a 12-week cycle
-(cf. https://tinyurl.com/gitCal).
+We are at the end of week #7 in a 12-week cycle toward Git 2.38
+(tinyurl.com/gitCal).  As we have accumulated enough material on
+the 'maint' branch, we may want to tag 2.37.3 early next week.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -47,6 +48,94 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
+* ds/use-platform-regex-on-macos (2022-08-26) 1 commit
+ - grep: fix multibyte regex handling under macOS
+
+ With a bit of header twiddling, use the native regexp library on
+ macOS instead of the compat/ one.
+
+ Needs review.
+ source: <20220826085815.2771102-1-dds@aueb.gr>
+
+--------------------------------------------------
+[Graduated to 'master']
+
+* cw/submodule-merge-messages (2022-08-04) 1 commit
+  (merged to 'next' on 2022-08-12 at ede0890319)
+ + submodule merge: update conflict error message
+ (this branch is used by en/submodule-merge-messages-fixes.)
+
+ Update the message given when "git merge" sees conflicts at a path
+ with a submodule while merging a superproject.
+ source: <20220804195105.1303455-1-calvinwan@google.com>
+
+
+* en/submodule-merge-messages-fixes (2022-08-18) 3 commits
+  (merged to 'next' on 2022-08-18 at eb89a1e70f)
+ + merge-ort: provide helpful submodule update message when possible
+ + merge-ort: avoid surprise with new sub_flag variable
+ + merge-ort: remove translator lego in new "submodule conflict suggestion"
+ (this branch uses cw/submodule-merge-messages.)
+
+ Further update the help messages given while merging submodules.
+ source: <pull.1325.v3.git.1660806927.gitgitgadget@gmail.com>
+
+
+* jk/is-promisor-object-keep-tree-in-use (2022-08-14) 1 commit
+  (merged to 'next' on 2022-08-17 at 96033ff88d)
+ + is_promisor_object(): fix use-after-free of tree buffer
+
+ An earlier optimization discarded a tree-object buffer that is
+ still in use, which has been corrected.
+ source: <YviWO9Bhz5PU1HaL@coredump.intra.peff.net>
+
+
+* jk/pipe-command-nonblock (2022-08-17) 6 commits
+  (merged to 'next' on 2022-08-17 at 91fe8e6354)
+ + pipe_command(): mark stdin descriptor as non-blocking
+ + pipe_command(): handle ENOSPC when writing to a pipe
+ + pipe_command(): avoid xwrite() for writing to pipe
+ + git-compat-util: make MAX_IO_SIZE define globally available
+ + nonblock: support Windows
+ + compat: add function to enable nonblocking pipes
+
+ Fix deadlocks between main Git process and subprocess spawned via
+ the pipe_command() API, that can kill "git add -p" that was
+ reimplemented in C recently.
+ source: <YvyE1RDFVAg4uQo1@coredump.intra.peff.net>
+
+
+* js/fetch-negotiation-trace (2022-08-15) 1 commit
+  (merged to 'next' on 2022-08-17 at 2c9e07b617)
+ + fetch-pack: add tracing for negotiation rounds
+
+ The common ancestor negotiation exchange during a "git fetch"
+ session now leaves trace log.
+ source: <4390677ec75d51487142adf7c2ab821cbd24a53e.1659477669.git.steadmon@google.com>
+
+
+* vd/scalar-generalize-diagnose (2022-08-12) 11 commits
+  (merged to 'next' on 2022-08-18 at bd8e574713)
+ + scalar: update technical doc roadmap
+ + scalar-diagnose: use 'git diagnose --mode=all'
+ + builtin/bugreport.c: create '--diagnose' option
+ + builtin/diagnose.c: add '--mode' option
+ + builtin/diagnose.c: create 'git diagnose' builtin
+ + diagnose.c: add option to configure archive contents
+ + scalar-diagnose: move functionality to common location
+ + scalar-diagnose: move 'get_disk_info()' to 'compat/'
+ + scalar-diagnose: add directory to archiver more gently
+ + scalar-diagnose: avoid 32-bit overflow of size_t
+ + scalar-diagnose: use "$GIT_UNZIP" in test
+
+ The "diagnose" feature to create a zip archive for diagnostic
+ material has been lifted from "scalar" and made into a feature of
+ "git bugreport".
+ source: <pull.1310.v4.git.1660335019.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
 * ds/bundle-uri-3 (2022-08-24) 8 commits
  - bundle-uri: fetch a list of bundles
  - bundle-uri: limit recursion depth for bundle lists
@@ -67,13 +156,14 @@ Release tarballs are available at:
 
 
 * en/merge-unstash-only-on-clean-merge (2022-08-24) 1 commit
- - merge: only apply autostash when appropriate
+  (merged to 'next' on 2022-08-25 at a144bdf6cb)
+ + merge: only apply autostash when appropriate
 
  The auto-stashed local changes created by "git merge --autostash"
  was mixed into a conflicted state left in the working tree, which
  has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <610b8d089db97bf1a37dbf230f51ecafe3086254.1661222541.git.gitgitgadget@gmail.com>
 
 
@@ -126,23 +216,25 @@ Release tarballs are available at:
 
 
 * en/merge-multi-strategies (2022-08-24) 2 commits
- - merge: small code readability improvement
- - merge: cleanup confusing logic for handling successful merges
+  (merged to 'next' on 2022-08-25 at 420e2eae66)
+ + merge: small code readability improvement
+ + merge: cleanup confusing logic for handling successful merges
 
  The code that implements multi-strategy support in "git merge" has
  been clean-up a bit.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1331.v2.git.1661222541.gitgitgadget@gmail.com>
 
 
 * en/t4301-more-merge-tree-tests (2022-08-24) 1 commit
- - t4301: add more interesting merge-tree testcases
+  (merged to 'next' on 2022-08-25 at c7abf60ff4)
+ + t4301: add more interesting merge-tree testcases
 
  More tests to protect the current behaviour of "merge-tree" before
  it gets further updated.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1332.git.1661237316150.gitgitgadget@gmail.com>
 
 
@@ -172,17 +264,16 @@ Release tarballs are available at:
  source: <pull.1320.v2.git.1661243463.gitgitgadget@gmail.com>
 
 
-* js/range-diff-with-pathspec (2022-08-24) 2 commits
- - range-diff: optionally accept a pathspec
+* js/range-diff-with-pathspec (2022-08-26) 3 commits
+ - range-diff: optionally accept pathspecs
+ - range-diff: consistently validate the arguments
  - range-diff: reorder argument handling
 
  Allow passing a pathspec to "git range-diff".
 
- Needs review.
- source: <pull.1335.git.1661258122.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.1335.v2.git.1661506770.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * en/ort-unused-code-removal (2022-08-19) 1 commit
   (merged to 'next' on 2022-08-22 at f09dbeeca3)
@@ -258,19 +349,19 @@ Release tarballs are available at:
 
 
 * tb/midx-with-changing-preferred-pack-fix (2022-08-22) 7 commits
- - midx.c: avoid adding preferred objects twice
- - midx.c: include preferred pack correctly with existing MIDX
- - midx.c: extract `midx_fanout_add_pack_fanout()`
- - midx.c: extract `midx_fanout_add_midx_fanout()`
- - midx.c: extract `struct midx_fanout`
- - t/lib-bitmap.sh: avoid silencing stderr
- - t5326: demonstrate potential bitmap corruption
+  (merged to 'next' on 2022-08-26 at 305a9d3323)
+ + midx.c: avoid adding preferred objects twice
+ + midx.c: include preferred pack correctly with existing MIDX
+ + midx.c: extract `midx_fanout_add_pack_fanout()`
+ + midx.c: extract `midx_fanout_add_midx_fanout()`
+ + midx.c: extract `struct midx_fanout`
+ + t/lib-bitmap.sh: avoid silencing stderr
+ + t5326: demonstrate potential bitmap corruption
 
  Multi-pack index got corrupted when preferred pack changed from one
  pack to another in a certain way, which has been corrected.
 
- Will merge to 'next'?
- cf. <be9c7c72-ba24-3e1a-8428-58a2e2afa09a@github.com>
+ Will merge to 'master'.
  source: <cover.1661197803.git.me@ttaylorr.com>
 
 
@@ -318,19 +409,6 @@ Release tarballs are available at:
  source: <pull.1303.v3.git.1660883290.gitgitgadget@gmail.com>
 
 
-* en/submodule-merge-messages-fixes (2022-08-18) 3 commits
-  (merged to 'next' on 2022-08-18 at eb89a1e70f)
- + merge-ort: provide helpful submodule update message when possible
- + merge-ort: avoid surprise with new sub_flag variable
- + merge-ort: remove translator lego in new "submodule conflict suggestion"
- (this branch uses cw/submodule-merge-messages.)
-
- Further update the help messages given while merging submodules.
-
- Will merge to 'master'.
- source: <pull.1325.v3.git.1660806927.gitgitgadget@gmail.com>
-
-
 * ed/fsmonitor-on-network-disk (2022-08-24) 3 commits
  - Check working directory and Unix domain socket file for compatability
  - fsmonitor: macOS: allow fsmonitor to run against network-mounted repos
@@ -344,28 +422,6 @@ Release tarballs are available at:
  Needs review.
  source: <pull.1317.v3.git.1660242752495.gitgitgadget@gmail.com>
  source: <pull.1326.v3.git.1661280941.gitgitgadget@gmail.com>
-
-
-* jk/is-promisor-object-keep-tree-in-use (2022-08-14) 1 commit
-  (merged to 'next' on 2022-08-17 at 96033ff88d)
- + is_promisor_object(): fix use-after-free of tree buffer
-
- An earlier optimization discarded a tree-object buffer that is
- still in use, which has been corrected.
-
- Will merge to 'master'.
- source: <YviWO9Bhz5PU1HaL@coredump.intra.peff.net>
-
-
-* js/fetch-negotiation-trace (2022-08-15) 1 commit
-  (merged to 'next' on 2022-08-17 at 2c9e07b617)
- + fetch-pack: add tracing for negotiation rounds
-
- The common ancestor negotiation exchange during a "git fetch"
- session now leaves trace log.
-
- Will merge to 'master'.
- source: <4390677ec75d51487142adf7c2ab821cbd24a53e.1659477669.git.steadmon@google.com>
 
 
 * pw/rebase-keep-base-fixes (2022-08-18) 5 commits
@@ -427,47 +483,9 @@ Release tarballs are available at:
  move a path from a directory that is "in cone" to another directory
  that is "out of cone".  Handling of such a case has been improved.
 
- Will merge to 'master'.
+ An oob read access makes sanitizer build segfault.
+ cf.<YwdJRRuST2SP8ZT7@coredump.intra.peff.net>
  source: <20220809120910.2021413-1-shaoxuan.yuan02@gmail.com>
-
-
-* vd/scalar-generalize-diagnose (2022-08-12) 11 commits
-  (merged to 'next' on 2022-08-18 at bd8e574713)
- + scalar: update technical doc roadmap
- + scalar-diagnose: use 'git diagnose --mode=all'
- + builtin/bugreport.c: create '--diagnose' option
- + builtin/diagnose.c: add '--mode' option
- + builtin/diagnose.c: create 'git diagnose' builtin
- + diagnose.c: add option to configure archive contents
- + scalar-diagnose: move functionality to common location
- + scalar-diagnose: move 'get_disk_info()' to 'compat/'
- + scalar-diagnose: add directory to archiver more gently
- + scalar-diagnose: avoid 32-bit overflow of size_t
- + scalar-diagnose: use "$GIT_UNZIP" in test
-
- The "diagnose" feature to create a zip archive for diagnostic
- material has been lifted from "scalar" and made into a feature of
- "git bugreport".
-
- Will merge to 'master'.
- source: <pull.1310.v4.git.1660335019.gitgitgadget@gmail.com>
-
-
-* jk/pipe-command-nonblock (2022-08-17) 6 commits
-  (merged to 'next' on 2022-08-17 at 91fe8e6354)
- + pipe_command(): mark stdin descriptor as non-blocking
- + pipe_command(): handle ENOSPC when writing to a pipe
- + pipe_command(): avoid xwrite() for writing to pipe
- + git-compat-util: make MAX_IO_SIZE define globally available
- + nonblock: support Windows
- + compat: add function to enable nonblocking pipes
-
- Fix deadlocks between main Git process and subprocess spawned via
- the pipe_command() API, that can kill "git add -p" that was
- reimplemented in C recently.
-
- Will merge to 'master'.
- source: <YvyE1RDFVAg4uQo1@coredump.intra.peff.net>
 
 
 * es/mark-gc-cruft-as-experimental (2022-08-03) 2 commits
@@ -483,7 +501,11 @@ Release tarballs are available at:
  source: <20220803205721.3686361-1-emilyshaffer@google.com>
 
 
-* sg/parse-options-subcommand (2022-08-19) 20 commits
+* sg/parse-options-subcommand (2022-08-25) 23 commits
+  (merged to 'next' on 2022-08-25 at dab6bf1439)
+ + remote: run "remote rm" argv through parse_options()
+ + maintenance: add parse-options boilerplate for subcommands
+ + pass subcommand "prefix" arguments to parse_options()
   (merged to 'next' on 2022-08-22 at 09d07c2271)
  + builtin/worktree.c: let parse-options parse subcommands
  + builtin/stash.c: let parse-options parse subcommands
@@ -511,10 +533,12 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <20220819160411.1791200-1-szeder.dev@gmail.com>
+ source: <YwdSzrF3xaHvLsI+@coredump.intra.peff.net>
 
 
 * ds/bundle-uri-clone (2022-08-24) 6 commits
- - clone: warn on failure to repo_init()
+  (merged to 'next' on 2022-08-25 at 14754922fa)
+ + clone: warn on failure to repo_init()
   (merged to 'next' on 2022-08-18 at 5e8a3ec71e)
  + clone: --bundle-uri cannot be combined with --depth
  + bundle-uri: add support for http(s):// and file://
@@ -689,18 +713,6 @@ Release tarballs are available at:
  source: <cover-v6-00.17-00000000000-20220821T130415Z-avarab@gmail.com>
 
 
-* cw/submodule-merge-messages (2022-08-04) 1 commit
-  (merged to 'next' on 2022-08-12 at ede0890319)
- + submodule merge: update conflict error message
- (this branch is used by en/submodule-merge-messages-fixes.)
-
- Update the message given when "git merge" sees conflicts at a path
- with a submodule while merging a superproject.
-
- Will wait for en/submodule-merge-messages-fixes to mature.
- source: <20220804195105.1303455-1-calvinwan@google.com>
-
-
 * po/glossary-around-traversal (2022-07-09) 3 commits
  - glossary: add reachability bitmap description
  - glossary: add commit graph description
@@ -714,32 +726,21 @@ Release tarballs are available at:
  source: <pull.1282.git.1657385781.gitgitgadget@gmail.com>
 
 
-* ac/bitmap-lookup-table (2022-08-14) 6 commits
- - bitmap-lookup-table: add performance tests for lookup table
- - pack-bitmap: prepare to read lookup table extension
- - pack-bitmap-write: learn pack.writeBitmapLookupTable and add tests
- - pack-bitmap-write.c: write lookup table extension
- - bitmap: move `get commit positions` code to `bitmap_writer_finish`
- - Documentation/technical: describe bitmap lookup table extension
+* ac/bitmap-lookup-table (2022-08-26) 6 commits
+  (merged to 'next' on 2022-08-26 at 7914c141eb)
+ + bitmap-lookup-table: add performance tests for lookup table
+ + pack-bitmap: prepare to read lookup table extension
+ + pack-bitmap-write: learn pack.writeBitmapLookupTable and add tests
+ + pack-bitmap-write.c: write lookup table extension
+ + bitmap: move `get commit positions` code to `bitmap_writer_finish`
+ + Documentation/technical: describe bitmap lookup table extension
 
  The pack bitmap file gained a bitmap-lookup table to speed up
  locating the necessary bitmap for a given commit.
 
- Needs review.
- cf. <YwOXIE8K0GJRLuDT@nand.local>
+ Will merge to 'next'?
+ cf. <Ywf01YqJKNsGfffx@nand.local>
  source: <pull.1266.v6.git.1660496112.gitgitgadget@gmail.com>
-
-
-* tb/show-ref-count (2022-06-06) 2 commits
- - builtin/show-ref.c: limit output with `--count`
- - builtin/show-ref.c: rename `found_match` to `matches_nr`
-
- "git show-ref" learned to stop after emitting N refs with the new
- "--count=N" option.
-
- Expecting a reroll.
- cf. <xmqqczfl4ce1.fsf@gitster.g>
- source: <cover.1654552560.git.me@ttaylorr.com>
 
 
 * js/bisect-in-c (2022-06-27) 16 commits
@@ -794,3 +795,15 @@ Release tarballs are available at:
  Retracted for now.
  cf. <9p08998o-n88r-2nno-8703-s99o5qpn9o35@tzk.qr>
  source: <pull.1327.git.1660892256.gitgitgadget@gmail.com>
+
+
+* tb/show-ref-count (2022-06-06) 2 commits
+ . builtin/show-ref.c: limit output with `--count`
+ . builtin/show-ref.c: rename `found_match` to `matches_nr`
+
+ "git show-ref" learned to stop after emitting N refs with the new
+ "--count=N" option.
+
+ Retracted for now.
+ cf. <Ywf1zngpKknCmGYl@nand.local>
+ source: <cover.1654552560.git.me@ttaylorr.com>
