@@ -336,7 +336,7 @@ test_expect_success 'recursive merge with submodule' '
 #   Expected: path/ is submodule and file contents for B's path are somewhere
 
 test_expect_success 'setup file/submodule conflict' '
-	test_create_repo file-submodule &&
+	git init file-submodule &&
 	(
 		cd file-submodule &&
 
@@ -351,7 +351,7 @@ test_expect_success 'setup file/submodule conflict' '
 		git commit -m B &&
 
 		git checkout A &&
-		test_create_repo path &&
+		git init path &&
 		test_commit -C path world &&
 		git submodule add ./path &&
 		git commit -m A
@@ -411,7 +411,7 @@ test_expect_success 'file/submodule conflict; merge --abort works afterward' '
 #     under the submodule to be treated as untracked or in the way.
 
 test_expect_success 'setup directory/submodule conflict' '
-	test_create_repo directory-submodule &&
+	git init directory-submodule &&
 	(
 		cd directory-submodule &&
 
@@ -434,7 +434,7 @@ test_expect_success 'setup directory/submodule conflict' '
 		git commit -m B2 &&
 
 		git checkout A &&
-		test_create_repo path &&
+		git init path &&
 		test_commit -C path hello world &&
 		git submodule add ./path &&
 		git commit -m A

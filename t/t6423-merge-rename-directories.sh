@@ -40,7 +40,7 @@ test_description="recursive merge with directory renames"
 #   Expected: y/{b,c,d,e/f}
 
 test_setup_1a () {
-	test_create_repo 1a &&
+	git init 1a &&
 	(
 		cd 1a &&
 
@@ -106,7 +106,7 @@ test_expect_success '1a: Simple directory rename detection' '
 #   Expected: y/{b,c,d,e}
 
 test_setup_1b () {
-	test_create_repo 1b &&
+	git init 1b &&
 	(
 		cd 1b &&
 
@@ -169,7 +169,7 @@ test_expect_success '1b: Merge a directory with another' '
 #   Expected: y/{b,c,d}  (because x/d -> z/d -> y/d)
 
 test_setup_1c () {
-	test_create_repo 1c &&
+	git init 1c &&
 	(
 		cd 1c &&
 
@@ -232,7 +232,7 @@ test_expect_success '1c: Transitive renaming' '
 #         y/wham_1 & z/wham_2 should too...giving us a conflict.
 
 test_setup_1d () {
-	test_create_repo 1d &&
+	git init 1d &&
 	(
 		cd 1d &&
 
@@ -328,7 +328,7 @@ test_expect_success '1d: Directory renames cause a rename/rename(2to1) conflict'
 #   Expected: y/{newb,newc,d}
 
 test_setup_1e () {
-	test_create_repo 1e &&
+	git init 1e &&
 	(
 		cd 1e &&
 
@@ -387,7 +387,7 @@ test_expect_success '1e: Renamed directory, with all files being renamed too' '
 #   Expected: y/{b,c}, x/{d,e,f,g}
 
 test_setup_1f () {
-	test_create_repo 1f &&
+	git init 1f &&
 	(
 		cd 1f &&
 
@@ -476,7 +476,7 @@ test_expect_success '1f: Split a directory into two other directories' '
 #   Commit B: z/{b,c,d}
 #   Expected: y/b, w/c, z/d, with warning about z/ -> (y/ vs. w/) conflict
 test_setup_2a () {
-	test_create_repo 2a &&
+	git init 2a &&
 	(
 		cd 2a &&
 
@@ -538,7 +538,7 @@ test_expect_success '2a: Directory split into two on one side, with equal number
 #   Commit B: z/{b,c}, x/d
 #   Expected: y/b, w/c, x/d; No warning about z/ -> (y/ vs. w/) conflict
 test_setup_2b () {
-	test_create_repo 2b &&
+	git init 2b &&
 	(
 		cd 2b &&
 
@@ -620,7 +620,7 @@ test_expect_success '2b: Directory split into two on one side, with equal number
 #   Commit B: y/{b,c}, x/d
 #   Expected: y/{b,c}, x/d
 test_setup_3a () {
-	test_create_repo 3a &&
+	git init 3a &&
 	(
 		cd 3a &&
 
@@ -684,7 +684,7 @@ test_expect_success '3a: Avoid implicit rename if involved as source on other si
 #         end up with CONFLICT:(z/d -> y/d vs. x/d vs. w/d), i.e. a
 #         rename/rename/rename(1to3) conflict, which is just weird.
 test_setup_3b () {
-	test_create_repo 3b &&
+	git init 3b &&
 	(
 		cd 3b &&
 
@@ -807,7 +807,7 @@ test_expect_success '3b: Avoid implicit rename if involved as source on current 
 #   NOTE: Even though most files from z moved to y, we don't want f to follow.
 
 test_setup_4a () {
-	test_create_repo 4a &&
+	git init 4a &&
 	(
 		cd 4a &&
 
@@ -896,7 +896,7 @@ test_expect_success '4a: Directory split, with original directory still present'
 #         index.
 
 test_setup_5a () {
-	test_create_repo 5a &&
+	git init 5a &&
 	(
 		cd 5a &&
 
@@ -971,7 +971,7 @@ test_expect_success '5a: Merge directories, other side adds files to original an
 #         back to git behavior without the directory rename detection.
 
 test_setup_5b () {
-	test_create_repo 5b &&
+	git init 5b &&
 	(
 		cd 5b &&
 
@@ -1048,7 +1048,7 @@ test_expect_success '5b: Rename/delete in order to get add/add/add conflict' '
 #             though, because it doesn't have anything in the way.
 
 test_setup_5c () {
-	test_create_repo 5c &&
+	git init 5c &&
 	(
 		cd 5c &&
 
@@ -1138,7 +1138,7 @@ test_expect_success '5c: Transitive rename would cause rename/rename/rename/add/
 #         directory rename detection for z/f -> y/f.
 
 test_setup_5d () {
-	test_create_repo 5d &&
+	git init 5d &&
 	(
 		cd 5d &&
 
@@ -1239,7 +1239,7 @@ test_expect_success '5d: Directory/file/file conflict due to directory rename' '
 #         it is also involved in a rename/delete conflict.
 
 test_setup_6a () {
-	test_create_repo 6a &&
+	git init 6a &&
 	(
 		cd 6a &&
 
@@ -1337,7 +1337,7 @@ test_expect_success '6a: Tricky rename/delete' '
 #         the behavior on testcases 6b2 and 8e, and introduced this 6b1 testcase.
 
 test_setup_6b1 () {
-	test_create_repo 6b1 &&
+	git init 6b1 &&
 	(
 		cd 6b1 &&
 
@@ -1415,7 +1415,7 @@ test_expect_merge_algorithm failure success '6b1: Same renames done on both side
 #         the z/ -> y/ rename.
 
 test_setup_6b2 () {
-	test_create_repo 6b2 &&
+	git init 6b2 &&
 	(
 		cd 6b2 &&
 
@@ -1479,7 +1479,7 @@ test_expect_merge_algorithm failure success '6b2: Same rename done on both sides
 #         "accidentally detect a rename" and give us y/{b,c,d}.
 
 test_setup_6c () {
-	test_create_repo 6c &&
+	git init 6c &&
 	(
 		cd 6c &&
 
@@ -1542,7 +1542,7 @@ test_expect_success '6c: Rename only done on same side' '
 #         doesn't "accidentally detect a rename" and give us y/{b,c,d}.
 
 test_setup_6d () {
-	test_create_repo 6d &&
+	git init 6d &&
 	(
 		cd 6d &&
 
@@ -1605,7 +1605,7 @@ test_expect_success '6d: We do not always want transitive renaming' '
 #         add/add conflict on y/d_1 vs y/d_2.
 
 test_setup_6e () {
-	test_create_repo 6e &&
+	git init 6e &&
 	(
 		cd 6e &&
 
@@ -1700,7 +1700,7 @@ test_expect_success '6e: Add/add from one side' '
 #   NOTE: There's a rename of z/ here, y/ has more renames, so z/d -> y/d.
 
 test_setup_7a () {
-	test_create_repo 7a &&
+	git init 7a &&
 	(
 		cd 7a &&
 
@@ -1772,7 +1772,7 @@ test_expect_success '7a: rename-dir vs. rename-dir (NOT split evenly) PLUS add-o
 #   Expected: y/{b,c}, CONFLICT(rename/rename(2to1): x/d_1, w/d_2 -> y_d)
 
 test_setup_7b () {
-	test_create_repo 7b &&
+	git init 7b &&
 	(
 		cd 7b &&
 
@@ -1861,7 +1861,7 @@ test_expect_success '7b: rename/rename(2to1), but only due to transitive rename'
 #         nor CONFLiCT x/d -> w/d vs. y/d vs. z/d)
 
 test_setup_7c () {
-	test_create_repo 7c &&
+	git init 7c &&
 	(
 		cd 7c &&
 
@@ -1926,7 +1926,7 @@ test_expect_success '7c: rename/rename(1to...2or3); transitive rename may add co
 #   NOTE: z->y so NOT CONFLICT(delete x/d vs rename to z/d)
 
 test_setup_7d () {
-	test_create_repo 7d &&
+	git init 7d &&
 	(
 		cd 7d &&
 
@@ -2027,7 +2027,7 @@ test_expect_success '7d: transitive rename involved in rename/delete; how is it 
 #         how it's resolved.
 
 test_setup_7e () {
-	test_create_repo 7e &&
+	git init 7e &&
 	(
 		cd 7e &&
 
@@ -2137,7 +2137,7 @@ test_expect_success '7e: transitive rename in rename/delete AND dirs in the way'
 # we potentially could.
 
 test_setup_8a () {
-	test_create_repo 8a &&
+	git init 8a &&
 	(
 		cd 8a &&
 
@@ -2216,7 +2216,7 @@ test_expect_success '8a: Dual-directory rename, one into the others way' '
 # e_1 and e_2.
 
 test_setup_8b () {
-	test_create_repo 8b &&
+	git init 8b &&
 	(
 		cd 8b &&
 
@@ -2290,7 +2290,7 @@ test_expect_success '8b: Dual-directory rename, one into the others way, with co
 #         notes in 8d.
 
 test_setup_8c () {
-	test_create_repo 8c &&
+	git init 8c &&
 	(
 		cd 8c &&
 
@@ -2370,7 +2370,7 @@ test_expect_success '8c: modify/delete or rename+modify/delete' '
 #   differently.
 
 test_setup_8d () {
-	test_create_repo 8d &&
+	git init 8d &&
 	(
 		cd 8d &&
 
@@ -2453,7 +2453,7 @@ test_expect_success '8d: rename/delete...or not?' '
 #        the behavior, and predict it without computing as many details.
 
 test_setup_8e () {
-	test_create_repo 8e &&
+	git init 8e &&
 	(
 		cd 8e &&
 
@@ -2537,7 +2537,7 @@ test_expect_success '8e: Both sides rename, one side adds to original directory'
 #         of that could take the new file in commit B at z/i to x/w/i or x/i.
 
 test_setup_9a () {
-	test_create_repo 9a &&
+	git init 9a &&
 	(
 		cd 9a &&
 
@@ -2609,7 +2609,7 @@ test_expect_success '9a: Inner renamed directory within outer renamed directory'
 #   Expected: y/{b,c,d_merged}
 
 test_setup_9b () {
-	test_create_repo 9b &&
+	git init 9b &&
 	(
 		cd 9b &&
 
@@ -2697,7 +2697,7 @@ test_expect_success '9b: Transitive rename with content merge' '
 #         history for any implicit directory renames.
 
 test_setup_9c () {
-	test_create_repo 9c &&
+	git init 9c &&
 	(
 		cd 9c &&
 
@@ -2786,7 +2786,7 @@ test_expect_success '9c: Doubly transitive rename?' '
 #   testcases and simplifies things for the user.
 
 test_setup_9d () {
-	test_create_repo 9d &&
+	git init 9d &&
 	(
 		cd 9d &&
 
@@ -2861,7 +2861,7 @@ test_expect_success '9d: N-way transitive rename?' '
 #             dir1/yo, dir2/yo, dir3/yo, dirN/yo
 
 test_setup_9e () {
-	test_create_repo 9e &&
+	git init 9e &&
 	(
 		cd 9e &&
 
@@ -2954,7 +2954,7 @@ test_expect_success '9e: N-to-1 whammo' '
 #   Expected: priority/{a,b}/$more_files, priority/c
 
 test_setup_9f () {
-	test_create_repo 9f &&
+	git init 9f &&
 	(
 		cd 9f &&
 
@@ -3027,7 +3027,7 @@ test_expect_success '9f: Renamed directory that only contained immediate subdirs
 # viewpoint...
 
 test_setup_9g () {
-	test_create_repo 9g &&
+	git init 9g &&
 	(
 		cd 9g &&
 
@@ -3096,7 +3096,7 @@ test_expect_failure '9g: Renamed directory that only contained immediate subdirs
 #   NOTE: If we applied the z/ -> y/ rename to z/d, then we'd end up with
 #         a rename/rename(1to2) conflict (z/d -> y/d vs. x/d)
 test_setup_9h () {
-	test_create_repo 9h &&
+	git init 9h &&
 	(
 		cd 9h &&
 
@@ -3177,7 +3177,7 @@ test_expect_success '9h: Avoid dir rename on merely modified path' '
 #       ERROR_MSG(untracked working tree files would be overwritten by merge)
 
 test_setup_10a () {
-	test_create_repo 10a &&
+	git init 10a &&
 	(
 		cd 10a &&
 
@@ -3243,7 +3243,7 @@ test_expect_success '10a: Overwrite untracked with normal rename/delete' '
 #       ERROR_MSG(refusing to lose untracked file at 'y/d')
 
 test_setup_10b () {
-	test_create_repo 10b &&
+	git init 10b &&
 	(
 		cd 10b &&
 
@@ -3334,7 +3334,7 @@ test_expect_success '10b: Overwrite untracked with dir rename + delete' '
 #             ERROR_MSG(Refusing to lose untracked file at y/c)
 
 test_setup_10c () {
-	test_create_repo 10c_$1 &&
+	git init 10c_$1 &&
 	(
 		cd 10c_$1 &&
 
@@ -3472,7 +3472,7 @@ test_expect_success '10c2: Overwrite untracked with dir rename/rename(1to2), oth
 #             ERROR_MSG(Refusing to lose untracked file at y/wham)
 
 test_setup_10d () {
-	test_create_repo 10d &&
+	git init 10d &&
 	(
 		cd 10d &&
 
@@ -3568,7 +3568,7 @@ test_expect_success '10d: Delete untracked with dir rename/rename(2to1)' '
 #   Expected: y/{a,b,c} + untracked z/c
 
 test_setup_10e () {
-	test_create_repo 10e &&
+	git init 10e &&
 	(
 		cd 10e &&
 
@@ -3650,7 +3650,7 @@ test_expect_merge_algorithm failure success '10e: Does git complain about untrac
 #             z/c with uncommitted mods on top of A:z/c_v1
 
 test_setup_11a () {
-	test_create_repo 11a &&
+	git init 11a &&
 	(
 		cd 11a &&
 
@@ -3728,7 +3728,7 @@ test_expect_success '11a: Avoid losing dirty contents with simple rename' '
 
 
 test_setup_11b () {
-	test_create_repo 11b &&
+	git init 11b &&
 	(
 		cd 11b &&
 
@@ -3810,7 +3810,7 @@ test_expect_success '11b: Avoid losing dirty file involved in directory rename' 
 #             y/c left untouched (still has uncommitted mods)
 
 test_setup_11c () {
-	test_create_repo 11c &&
+	git init 11c &&
 	(
 		cd 11c &&
 
@@ -3883,7 +3883,7 @@ test_expect_success '11c: Avoid losing not-uptodate with rename + D/F conflict' 
 #             y/{a,c~HEAD,c/d}, x/b, now-untracked z/c_v1 with uncommitted mods
 
 test_setup_11d () {
-	test_create_repo 11d &&
+	git init 11d &&
 	(
 		cd 11d &&
 
@@ -3968,7 +3968,7 @@ test_expect_success '11d: Avoid losing not-uptodate with rename + D/F conflict' 
 #             y/c has dirty file from before merge
 
 test_setup_11e () {
-	test_create_repo 11e &&
+	git init 11e &&
 	(
 		cd 11e &&
 
@@ -4060,7 +4060,7 @@ test_expect_success '11e: Avoid deleting not-uptodate with dir rename/rename(1to
 #             ERROR_MSG(Refusing to lose dirty file at y/wham)
 
 test_setup_11f () {
-	test_create_repo 11f &&
+	git init 11f &&
 	(
 		cd 11f &&
 
@@ -4155,7 +4155,7 @@ test_expect_success '11f: Avoid deleting not-uptodate with dir rename/rename(2to
 #   Expected: node1/{leaf1,leaf2,leaf5,node2/{leaf3,leaf4,leaf6}}
 
 test_setup_12a () {
-	test_create_repo 12a &&
+	git init 12a &&
 	(
 		cd 12a &&
 
@@ -4238,7 +4238,7 @@ test_expect_success '12a: Moving one directory hierarchy into another' '
 #             node2/node1/{leaf1, leaf2}
 
 test_setup_12b1 () {
-	test_create_repo 12b1 &&
+	git init 12b1 &&
 	(
 		cd 12b1 &&
 
@@ -4327,7 +4327,7 @@ test_expect_merge_algorithm failure success '12b1: Moving two directory hierarch
 #         even simple rules give weird results when given weird inputs.
 
 test_setup_12b2 () {
-	test_create_repo 12b2 &&
+	git init 12b2 &&
 	(
 		cd 12b2 &&
 
@@ -4402,7 +4402,7 @@ test_expect_success '12b2: Moving two directory hierarchies into each other' '
 #         each side of the merge.
 
 test_setup_12c1 () {
-	test_create_repo 12c1 &&
+	git init 12c1 &&
 	(
 		cd 12c1 &&
 
@@ -4492,7 +4492,7 @@ test_expect_merge_algorithm failure success '12c1: Moving one directory hierarch
 #         on each side of the merge.
 
 test_setup_12c2 () {
-	test_create_repo 12c2 &&
+	git init 12c2 &&
 	(
 		cd 12c2 &&
 
@@ -4584,7 +4584,7 @@ test_expect_success '12c2: Moving one directory hierarchy into another w/ conten
 #   Expected: subdir/foo, bar
 
 test_setup_12d () {
-	test_create_repo 12d &&
+	git init 12d &&
 	(
 		cd 12d &&
 
@@ -4642,7 +4642,7 @@ test_expect_success '12d: Rename/merge subdir into the root, variant 1' '
 #   Expected: foo, bar
 
 test_setup_12e () {
-	test_create_repo 12e &&
+	git init 12e &&
 	(
 		cd 12e &&
 
@@ -4743,7 +4743,7 @@ test_expect_success '12e: Rename/merge subdir into the root, variant 2' '
 #      pick and re-applying them in the subsequent one.
 
 test_setup_12f () {
-	test_create_repo 12f &&
+	git init 12f &&
 	(
 		cd 12f &&
 
@@ -4902,7 +4902,7 @@ test_expect_merge_algorithm failure success '12f: Trivial directory resolve, cac
 #   Expected: newfile_{merged}, newdir/{a_B,b_B,c_A}
 
 test_setup_12g () {
-	test_create_repo 12g &&
+	git init 12g &&
 	(
 		cd 12g &&
 
@@ -4973,7 +4973,7 @@ test_expect_success '12g: Testcase with two kinds of "relevant" renames' '
 #   Expected: newdir/{alpha_2, b}
 
 test_setup_12h () {
-	test_create_repo 12h &&
+	git init 12h &&
 	(
 		cd 12h &&
 
@@ -5032,7 +5032,7 @@ test_expect_failure '12h: renaming a file within a renamed directory' '
 #                source/bar vs. source/subdir/bar
 
 test_setup_12i () {
-	test_create_repo 12i &&
+	git init 12i &&
 	(
 		cd 12i &&
 
@@ -5090,7 +5090,7 @@ test_expect_success '12i: Directory rename causes rename-to-self' '
 #   Expected: {foo, bar, baz_2}, with conflicts on bar vs. subdir/bar
 
 test_setup_12j () {
-	test_create_repo 12j &&
+	git init 12j &&
 	(
 		cd 12j &&
 
@@ -5148,7 +5148,7 @@ test_expect_success '12j: Directory rename to root causes rename-to-self' '
 #   Expected: dirA/{foo, bar, baz_2}, with conflicts on dirA/bar vs. dirB/bar
 
 test_setup_12k () {
-	test_create_repo 12k &&
+	git init 12k &&
 	(
 		cd 12k &&
 
@@ -5218,7 +5218,7 @@ test_expect_success '12k: Directory rename with sibling causes rename-to-self' '
 #   is needed for there to be a sub1/ -> sub3/ rename.
 
 test_setup_12l () {
-	test_create_repo 12l_$1 &&
+	git init 12l_$1 &&
 	(
 		cd 12l_$1 &&
 
@@ -5322,7 +5322,7 @@ test_expect_merge_algorithm failure success '12l (A into B): Rename into each ot
 #   Expected: y/{b,c,d,e/f}, with notices/conflicts for both y/d and y/e/f
 
 test_setup_13a () {
-	test_create_repo 13a_$1 &&
+	git init 13a_$1 &&
 	(
 		cd 13a_$1 &&
 
@@ -5409,7 +5409,7 @@ test_expect_success '13a(info): messages for newly added files' '
 #             one about content, and one about file location
 
 test_setup_13b () {
-	test_create_repo 13b_$1 &&
+	git init 13b_$1 &&
 	(
 		cd 13b_$1 &&
 
@@ -5496,7 +5496,7 @@ test_expect_success '13b(info): messages for transitive rename with conflicted c
 #             shown in testcase 13d.
 
 test_setup_13c () {
-	test_create_repo 13c_$1 &&
+	git init 13c_$1 &&
 	(
 		cd 13c_$1 &&
 
@@ -5584,7 +5584,7 @@ test_expect_success '13c(info): messages for rename/rename(1to1) via transitive 
 #               No conflict in where a/y ends up, so put it in d/y.
 
 test_setup_13d () {
-	test_create_repo 13d_$1 &&
+	git init 13d_$1 &&
 	(
 		cd 13d_$1 &&
 
@@ -5710,7 +5710,7 @@ test_expect_success '13d(info): messages for rename/rename(1to1) via dual transi
 #          least avoids hitting a BUG().
 #
 test_setup_13e () {
-	test_create_repo 13e &&
+	git init 13e &&
 	(
 		cd 13e &&
 
