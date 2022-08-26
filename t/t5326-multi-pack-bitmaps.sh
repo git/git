@@ -307,4 +307,48 @@ test_expect_success 'graceful fallback when missing reverse index' '
 	)
 '
 
+test_expect_success 'preferred pack change with existing MIDX bitmap' '
+	git init preferred-pack-with-existing &&
+	(
+		cd preferred-pack-with-existing &&
+
+		test_commit base &&
+		test_commit other &&
+
+		git rev-list --objects --no-object-names base >p1.objects &&
+		git rev-list --objects --no-object-names other >p2.objects &&
+
+		p1="$(git pack-objects "$objdir/pack/pack" \
+			--delta-base-offset <p1.objects)" &&
+		p2="$(git pack-objects "$objdir/pack/pack" \
+			--delta-base-offset <p2.objects)" &&
+
+		# Generate a MIDX containing the first two packs,
+		# marking p1 as preferred, and ensure that it can be
+		# successfully cloned.
+		git multi-pack-index write --bitmap \
+			--preferred-pack="pack-$p1.pack" &&
+		test_path_is_file $midx &&
+		test_path_is_file $midx-$(midx_checksum $objdir).bitmap &&
+		git clone --no-local . clone1 &&
+
+		# Then generate a new pack which sorts ahead of any
+		# existing pack (by tweaking the pack prefix).
+		test_commit foo &&
+		git pack-objects --all --unpacked $objdir/pack/pack0 &&
+
+		# Generate a new MIDX which changes the preferred pack
+		# to a pack contained in the existing MIDX.
+		git multi-pack-index write --bitmap \
+			--preferred-pack="pack-$p2.pack" &&
+		test_path_is_file $midx &&
+		test_path_is_file $midx-$(midx_checksum $objdir).bitmap &&
+
+		# When the above circumstances are met, the preferred
+		# pack should change appropriately and clones should
+		# (still) succeed.
+		git clone --no-local . clone2
+	)
+'
+
 test_done
