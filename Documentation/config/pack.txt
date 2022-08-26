@@ -164,6 +164,13 @@ When writing a multi-pack reachability bitmap, no new namehashes are
 computed; instead, any namehashes stored in an existing bitmap are
 permuted into their appropriate location when writing a new bitmap.
 
+pack.writeBitmapLookupTable::
+	When true, Git will include a "lookup table" section in the
+	bitmap index (if one is written). This table is used to defer
+	loading individual bitmaps as late as possible. This can be
+	beneficial in repositories that have relatively large bitmap
+	indexes. Defaults to false.
+
 pack.writeReverseIndex::
 	When true, git will write a corresponding .rev file (see:
 	linkgit:gitformat-pack[5])

@@ -72,6 +72,17 @@ MIDXs, both the bit-cache and rev-cache extensions are required.
 	    pack/MIDX. The format and meaning of the name-hash is
 	    described below.
 
+		** {empty}
+		BITMAP_OPT_LOOKUP_TABLE (0x10): :::
+		If present, the end of the bitmap file contains a table
+		containing a list of `N` <commit_pos, offset, xor_row>
+		triplets. The format and meaning of the table is described
+		below.
++
+NOTE: Unlike the xor_offset used to compress an individual bitmap,
+`xor_row` stores an *absolute* index into the lookup table, not a location
+relative to the current entry.
+
 	4-byte entry count (network byte order): ::
 	    The total count of entries (bitmapped commits) in this bitmap index.
 
@@ -216,3 +227,31 @@ Note that this hashing scheme is tied to the BITMAP_OPT_HASH_CACHE flag.
 If implementations want to choose a different hashing scheme, they are
 free to do so, but MUST allocate a new header flag (because comparing
 hashes made under two different schemes would be pointless).
+
+Commit lookup table
+-------------------
+
+If the BITMAP_OPT_LOOKUP_TABLE flag is set, the last `N * (4 + 8 + 4)`
+bytes (preceding the name-hash cache and trailing hash) of the `.bitmap`
+file contains a lookup table specifying the information needed to get
+the desired bitmap from the entries without parsing previous unnecessary
+bitmaps.
+
+For a `.bitmap` containing `nr_entries` reachability bitmaps, the table
+contains a list of `nr_entries` <commit_pos, offset, xor_row> triplets
+(sorted in the ascending order of `commit_pos`). The content of i'th
+triplet is -
+
+	* {empty}
+	commit_pos (4 byte integer, network byte order): ::
+	It stores the object position of a commit (in the midx or pack
+	index).
+
+	* {empty}
+	offset (8 byte integer, network byte order): ::
+	The offset from which that commit's bitmap can be read.
+
+	* {empty}
+	xor_row (4 byte integer, network byte order): ::
+	The position of the triplet whose bitmap is used to compress
+	this one, or `0xffffffff` if no such bitmap exists.

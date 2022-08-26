@@ -84,6 +84,12 @@ struct bitmap_index {
 	const unsigned char *checksum;
 
 	/*
+	 * If not NULL, this point into the commit table extension
+	 * (within the memory mapped region `map`).
+	 */
+	unsigned char *table_lookup;
+
+	/*
 	 * Extended index.
 	 *
 	 * When trying to perform bitmap operations with objects that are not
@@ -186,6 +192,16 @@ static int load_bitmap_header(struct bitmap_index *index)
 			index->hashes = (void *)(index_end - cache_size);
 			index_end -= cache_size;
 		}
+
+		if (flags & BITMAP_OPT_LOOKUP_TABLE) {
+			size_t table_size = st_mult(ntohl(header->entry_count),
+						    BITMAP_LOOKUP_TABLE_TRIPLET_WIDTH);
+			if (table_size > index_end - index->map - header_size)
+				return error(_("corrupted bitmap index file (too short to fit lookup table)"));
+			if (git_env_bool("GIT_TEST_READ_COMMIT_TABLE", 1))
+				index->table_lookup = (void *)(index_end - table_size);
+			index_end -= table_size;
+		}
 	}
 
 	index->entry_count = ntohl(header->entry_count);
@@ -212,9 +228,11 @@ static struct stored_bitmap *store_bitmap(struct bitmap_index *index,
 
 	hash_pos = kh_put_oid_map(index->bitmaps, stored->oid, &ret);
 
-	/* a 0 return code means the insertion succeeded with no changes,
-	 * because the SHA1 already existed on the map. this is bad, there
-	 * shouldn't be duplicated commits in the index */
+	/*
+	 * A 0 return code means the insertion succeeded with no changes,
+	 * because the SHA1 already existed on the map. This is bad, there
+	 * shouldn't be duplicated commits in the index.
+	 */
 	if (ret == 0) {
 		error(_("duplicate entry in bitmap index: '%s'"), oid_to_hex(oid));
 		return NULL;
@@ -482,7 +500,7 @@ static int load_bitmap(struct bitmap_index *bitmap_git)
 		!(bitmap_git->tags = read_bitmap_1(bitmap_git)))
 		goto failed;
 
-	if (load_bitmap_entries_v1(bitmap_git) < 0)
+	if (!bitmap_git->table_lookup && load_bitmap_entries_v1(bitmap_git) < 0)
 		goto failed;
 
 	return 0;
@@ -570,13 +588,256 @@ struct include_data {
 	struct bitmap *seen;
 };
 
+struct bitmap_lookup_table_triplet {
+	uint32_t commit_pos;
+	uint64_t offset;
+	uint32_t xor_row;
+};
+
+struct bitmap_lookup_table_xor_item {
+	struct object_id oid;
+	uint64_t offset;
+};
+
+/*
+ * Given a `triplet` struct pointer and pointer `p`, this
+ * function reads the triplet beginning at `p` into the struct.
+ * Note that this function assumes that there is enough memory
+ * left for filling the `triplet` struct from `p`.
+ */
+static int bitmap_lookup_table_get_triplet_by_pointer(struct bitmap_lookup_table_triplet *triplet,
+						      const unsigned char *p)
+{
+	if (!triplet)
+		return -1;
+
+	triplet->commit_pos = get_be32(p);
+	p += sizeof(uint32_t);
+	triplet->offset = get_be64(p);
+	p += sizeof(uint64_t);
+	triplet->xor_row = get_be32(p);
+	return 0;
+}
+
+/*
+ * This function gets the raw triplet from `row`'th row in the
+ * lookup table and fills that data to the `triplet`.
+ */
+static int bitmap_lookup_table_get_triplet(struct bitmap_index *bitmap_git,
+					   uint32_t pos,
+					   struct bitmap_lookup_table_triplet *triplet)
+{
+	unsigned char *p = NULL;
+	if (pos >= bitmap_git->entry_count)
+		return error(_("corrupt bitmap lookup table: triplet position out of index"));
+
+	p = bitmap_git->table_lookup + st_mult(pos, BITMAP_LOOKUP_TABLE_TRIPLET_WIDTH);
+
+	return bitmap_lookup_table_get_triplet_by_pointer(triplet, p);
+}
+
+/*
+ * Searches for a matching triplet. `commit_pos` is a pointer
+ * to the wanted commit position value. `table_entry` points to
+ * a triplet in lookup table. The first 4 bytes of each
+ * triplet (pointed by `table_entry`) are compared with `*commit_pos`.
+ */
+static int triplet_cmp(const void *commit_pos, const void *table_entry)
+{
+
+	uint32_t a = *(uint32_t *)commit_pos;
+	uint32_t b = get_be32(table_entry);
+	if (a > b)
+		return 1;
+	else if (a < b)
+		return -1;
+
+	return 0;
+}
+
+static uint32_t bitmap_bsearch_pos(struct bitmap_index *bitmap_git,
+			    struct object_id *oid,
+			    uint32_t *result)
+{
+	int found;
+
+	if (bitmap_is_midx(bitmap_git))
+		found = bsearch_midx(oid, bitmap_git->midx, result);
+	else
+		found = bsearch_pack(oid, bitmap_git->pack, result);
+
+	return found;
+}
+
+/*
+ * `bsearch_triplet_by_pos` function searches for the raw triplet
+ * having commit position same as `commit_pos` and fills `triplet`
+ * object from the raw triplet. Returns 1 on success and 0 on
+ * failure.
+ */
+static int bitmap_bsearch_triplet_by_pos(uint32_t commit_pos,
+				  struct bitmap_index *bitmap_git,
+				  struct bitmap_lookup_table_triplet *triplet)
+{
+	unsigned char *p = bsearch(&commit_pos, bitmap_git->table_lookup, bitmap_git->entry_count,
+				   BITMAP_LOOKUP_TABLE_TRIPLET_WIDTH, triplet_cmp);
+
+	if (!p)
+		return -1;
+
+	return bitmap_lookup_table_get_triplet_by_pointer(triplet, p);
+}
+
+static struct stored_bitmap *lazy_bitmap_for_commit(struct bitmap_index *bitmap_git,
+						    struct commit *commit)
+{
+	uint32_t commit_pos, xor_row;
+	uint64_t offset;
+	int flags;
+	struct bitmap_lookup_table_triplet triplet;
+	struct object_id *oid = &commit->object.oid;
+	struct ewah_bitmap *bitmap;
+	struct stored_bitmap *xor_bitmap = NULL;
+	const int bitmap_header_size = 6;
+	static struct bitmap_lookup_table_xor_item *xor_items = NULL;
+	static size_t xor_items_nr = 0, xor_items_alloc = 0;
+	static int is_corrupt = 0;
+	int xor_flags;
+	khiter_t hash_pos;
+	struct bitmap_lookup_table_xor_item *xor_item;
+
+	if (is_corrupt)
+		return NULL;
+
+	if (!bitmap_bsearch_pos(bitmap_git, oid, &commit_pos))
+		return NULL;
+
+	if (bitmap_bsearch_triplet_by_pos(commit_pos, bitmap_git, &triplet) < 0)
+		return NULL;
+
+	xor_items_nr = 0;
+	offset = triplet.offset;
+	xor_row = triplet.xor_row;
+
+	while (xor_row != 0xffffffff) {
+		ALLOC_GROW(xor_items, xor_items_nr + 1, xor_items_alloc);
+
+		if (xor_items_nr + 1 >= bitmap_git->entry_count) {
+			error(_("corrupt bitmap lookup table: xor chain exceed entry count"));
+			goto corrupt;
+		}
+
+		if (bitmap_lookup_table_get_triplet(bitmap_git, xor_row, &triplet) < 0)
+			goto corrupt;
+
+		xor_item = &xor_items[xor_items_nr];
+		xor_item->offset = triplet.offset;
+
+		if (nth_bitmap_object_oid(bitmap_git, &xor_item->oid, triplet.commit_pos) < 0) {
+			error(_("corrupt bitmap lookup table: commit index %u out of range"),
+				triplet.commit_pos);
+			goto corrupt;
+		}
+
+		hash_pos = kh_get_oid_map(bitmap_git->bitmaps, xor_item->oid);
+
+		/*
+		 * If desired bitmap is already stored, we don't need
+		 * to iterate further. Because we know that bitmaps
+		 * that are needed to be parsed to parse this bitmap
+		 * has already been stored. So, assign this stored bitmap
+		 * to the xor_bitmap.
+		 */
+		if (hash_pos < kh_end(bitmap_git->bitmaps) &&
+			(xor_bitmap = kh_value(bitmap_git->bitmaps, hash_pos)))
+			break;
+		xor_items_nr++;
+		xor_row = triplet.xor_row;
+	}
+
+	while (xor_items_nr) {
+		xor_item = &xor_items[xor_items_nr - 1];
+		bitmap_git->map_pos = xor_item->offset;
+		if (bitmap_git->map_size - bitmap_git->map_pos < bitmap_header_size) {
+			error(_("corrupt ewah bitmap: truncated header for bitmap of commit \"%s\""),
+				oid_to_hex(&xor_item->oid));
+			goto corrupt;
+		}
+
+		bitmap_git->map_pos += sizeof(uint32_t) + sizeof(uint8_t);
+		xor_flags = read_u8(bitmap_git->map, &bitmap_git->map_pos);
+		bitmap = read_bitmap_1(bitmap_git);
+
+		if (!bitmap)
+			goto corrupt;
+
+		xor_bitmap = store_bitmap(bitmap_git, bitmap, &xor_item->oid, xor_bitmap, xor_flags);
+		xor_items_nr--;
+	}
+
+	bitmap_git->map_pos = offset;
+	if (bitmap_git->map_size - bitmap_git->map_pos < bitmap_header_size) {
+		error(_("corrupt ewah bitmap: truncated header for bitmap of commit \"%s\""),
+			oid_to_hex(oid));
+		goto corrupt;
+	}
+
+	/*
+	 * Don't bother reading the commit's index position or its xor
+	 * offset:
+	 *
+	 *   - The commit's index position is irrelevant to us, since
+	 *     load_bitmap_entries_v1 only uses it to learn the object
+	 *     id which is used to compute the hashmap's key. We already
+	 *     have an object id, so no need to look it up again.
+	 *
+	 *   - The xor_offset is unusable for us, since it specifies how
+	 *     many entries previous to ours we should look at. This
+	 *     makes sense when reading the bitmaps sequentially (as in
+	 *     load_bitmap_entries_v1()), since we can keep track of
+	 *     each bitmap as we read them.
+	 *
+	 *     But it can't work for us, since the bitmap's don't have a
+	 *     fixed size. So we learn the position of the xor'd bitmap
+	 *     from the commit table (and resolve it to a bitmap in the
+	 *     above if-statement).
+	 *
+	 * Instead, we can skip ahead and immediately read the flags and
+	 * ewah bitmap.
+	 */
+	bitmap_git->map_pos += sizeof(uint32_t) + sizeof(uint8_t);
+	flags = read_u8(bitmap_git->map, &bitmap_git->map_pos);
+	bitmap = read_bitmap_1(bitmap_git);
+
+	if (!bitmap)
+		goto corrupt;
+
+	return store_bitmap(bitmap_git, bitmap, oid, xor_bitmap, flags);
+
+corrupt:
+	free(xor_items);
+	is_corrupt = 1;
+	return NULL;
+}
+
 struct ewah_bitmap *bitmap_for_commit(struct bitmap_index *bitmap_git,
 				      struct commit *commit)
 {
 	khiter_t hash_pos = kh_get_oid_map(bitmap_git->bitmaps,
 					   commit->object.oid);
-	if (hash_pos >= kh_end(bitmap_git->bitmaps))
-		return NULL;
+	if (hash_pos >= kh_end(bitmap_git->bitmaps)) {
+		struct stored_bitmap *bitmap = NULL;
+		if (!bitmap_git->table_lookup)
+			return NULL;
+
+		trace2_region_enter("pack-bitmap", "reading_lookup_table", the_repository);
+		/* NEEDSWORK: cache misses aren't recorded */
+		bitmap = lazy_bitmap_for_commit(bitmap_git, commit);
+		trace2_region_leave("pack-bitmap", "reading_lookup_table", the_repository);
+		if (!bitmap)
+			return NULL;
+		return lookup_stored_bitmap(bitmap);
+	}
 	return lookup_stored_bitmap(kh_value(bitmap_git->bitmaps, hash_pos));
 }
 
@@ -1712,8 +1973,10 @@ void test_bitmap_walk(struct rev_info *revs)
 	if (revs->pending.nr != 1)
 		die(_("you must specify exactly one commit to test"));
 
-	fprintf_ln(stderr, "Bitmap v%d test (%d entries loaded)",
-		bitmap_git->version, bitmap_git->entry_count);
+	fprintf_ln(stderr, "Bitmap v%d test (%d entries%s)",
+		bitmap_git->version,
+		bitmap_git->entry_count,
+		bitmap_git->table_lookup ? "" : " loaded");
 
 	root = revs->pending.objects[0].item;
 	bm = bitmap_for_commit(bitmap_git, (struct commit *)root);
@@ -1766,12 +2029,21 @@ void test_bitmap_walk(struct rev_info *revs)
 
 int test_bitmap_commits(struct repository *r)
 {
-	struct bitmap_index *bitmap_git = prepare_bitmap_git(r);
 	struct object_id oid;
 	MAYBE_UNUSED void *value;
+	struct bitmap_index *bitmap_git = prepare_bitmap_git(r);
 
 	if (!bitmap_git)
 		die(_("failed to load bitmap indexes"));
+
+	/*
+	 * As this function is only used to print bitmap selected
+	 * commits, we don't have to read the commit table.
+	 */
+	if (bitmap_git->table_lookup) {
+		if (load_bitmap_entries_v1(bitmap_git) < 0)
+			die(_("failed to load bitmap indexes"));
+	}
 
 	kh_foreach(bitmap_git->bitmaps, oid, value, {
 		printf_ln("%s", oid_to_hex(&oid));

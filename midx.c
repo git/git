@@ -1119,6 +1119,9 @@ static int write_midx_bitmap(const char *midx_name,
 	if (flags & MIDX_WRITE_BITMAP_HASH_CACHE)
 		options |= BITMAP_OPT_HASH_CACHE;
 
+	if (flags & MIDX_WRITE_BITMAP_LOOKUP_TABLE)
+		options |= BITMAP_OPT_LOOKUP_TABLE;
+
 	/*
 	 * Build the MIDX-order index based on pdata.objects (which is already
 	 * in MIDX order; c.f., 'midx_pack_order_cmp()' for the definition of
