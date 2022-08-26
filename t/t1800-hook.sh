@@ -151,4 +151,30 @@ test_expect_success TTY 'git commit: stdout and stderr are connected to a TTY' '
 	test_hook_tty commit -m"B.new"
 '
 
+test_expect_success 'git hook run a hook with a bad shebang' '
+	test_when_finished "rm -rf bad-hooks" &&
+	mkdir bad-hooks &&
+	write_script bad-hooks/test-hook "/bad/path/no/spaces" </dev/null &&
+
+	# TODO: We should emit the same (or at least a more similar)
+	# error on Windows and !Windows. See the OS-specific code in
+	# start_command()
+	if test_have_prereq !WINDOWS
+	then
+		cat >expect <<-\EOF
+		fatal: cannot run bad-hooks/test-hook: ...
+		EOF
+	else
+		cat >expect <<-\EOF
+		error: cannot spawn bad-hooks/test-hook: ...
+		EOF
+	fi &&
+	test_expect_code 1 git \
+		-c core.hooksPath=bad-hooks \
+		hook run test-hook >out 2>err &&
+	test_must_be_empty out &&
+	sed -e "s/test-hook: .*/test-hook: .../" <err >actual &&
+	test_cmp expect actual
+'
+
 test_done
