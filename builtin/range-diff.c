@@ -40,6 +40,7 @@ int cmd_range_diff(int argc, const char **argv, const char *prefix)
 	struct option *options;
 	int res = 0;
 	struct strbuf range1 = STRBUF_INIT, range2 = STRBUF_INIT;
+	struct object_id oid;
 
 	git_config(git_diff_ui_config, NULL);
 
@@ -56,24 +57,41 @@ int cmd_range_diff(int argc, const char **argv, const char *prefix)
 		diffopt.use_color = 1;
 
 	if (argc == 3) {
+		if (get_oid_committish(argv[0], &oid))
+			usage_msg_optf(_("not a revision: '%s'"),
+				       builtin_range_diff_usage, options,
+				       argv[0]);
+		else if (get_oid_committish(argv[1], &oid))
+			usage_msg_optf(_("not a revision: '%s'"),
+				       builtin_range_diff_usage, options,
+				       argv[1]);
+		else if (get_oid_committish(argv[2], &oid))
+			usage_msg_optf(_("not a revision: '%s'"),
+				       builtin_range_diff_usage, options,
+				       argv[2]);
+
 		strbuf_addf(&range1, "%s..%s", argv[0], argv[1]);
 		strbuf_addf(&range2, "%s..%s", argv[0], argv[2]);
 	} else if (argc == 2) {
 		if (!is_range_diff_range(argv[0]))
-			die(_("not a commit range: '%s'"), argv[0]);
-		strbuf_addstr(&range1, argv[0]);
+			usage_msg_optf(_("not a commit range: '%s'"),
+				       builtin_range_diff_usage, options,
+				       argv[0]);
+		else if (!is_range_diff_range(argv[1]))
+			usage_msg_optf(_("not a commit range: '%s'"),
+				       builtin_range_diff_usage, options,
+				       argv[1]);
 
-		if (!is_range_diff_range(argv[1]))
-			die(_("not a commit range: '%s'"), argv[1]);
+		strbuf_addstr(&range1, argv[0]);
 		strbuf_addstr(&range2, argv[1]);
 	} else if (argc == 1) {
 		const char *b = strstr(argv[0], "..."), *a = argv[0];
 		int a_len;
 
-		if (!b) {
-			error(_("single arg format must be symmetric range"));
-			usage_with_options(builtin_range_diff_usage, options);
-		}
+		if (!b)
+			usage_msg_optf(_("not a symmetric range: '%s'"),
+				       builtin_range_diff_usage, options,
+				       argv[0]);
 
 		a_len = (int)(b - a);
 		if (!a_len) {
@@ -85,10 +103,9 @@ int cmd_range_diff(int argc, const char **argv, const char *prefix)
 			b = "HEAD";
 		strbuf_addf(&range1, "%s..%.*s", b, a_len, a);
 		strbuf_addf(&range2, "%.*s..%s", a_len, a, b);
-	} else {
-		error(_("need two commit ranges"));
-		usage_with_options(builtin_range_diff_usage, options);
-	}
+	} else
+		usage_msg_opt(_("need two commit ranges"),
+			      builtin_range_diff_usage, options);
 	FREE_AND_NULL(options);
 
 	range_diff_opts.dual_color = simple_color < 1;
