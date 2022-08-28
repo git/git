@@ -649,8 +649,6 @@ static const struct object_id *oid_access(size_t pos, const void *table)
 }
 
 static void write_selected_commits_v1(struct hashfile *f,
-				      struct pack_idx_entry **index,
-				      uint32_t index_nr,
 				      uint32_t *commit_positions,
 				      off_t *offsets)
 {
@@ -685,8 +683,6 @@ static int table_cmp(const void *_va, const void *_vb, void *_data)
 }
 
 static void write_lookup_table(struct hashfile *f,
-			       struct pack_idx_entry **index,
-			       uint32_t index_nr,
 			       uint32_t *commit_positions,
 			       off_t *offsets)
 {
@@ -808,10 +804,10 @@ void bitmap_writer_finish(struct pack_idx_entry **index,
 		commit_positions[i] = commit_pos;
 	}
 
-	write_selected_commits_v1(f, index, index_nr, commit_positions, offsets);
+	write_selected_commits_v1(f, commit_positions, offsets);
 
 	if (options & BITMAP_OPT_LOOKUP_TABLE)
-		write_lookup_table(f, index, index_nr, commit_positions, offsets);
+		write_lookup_table(f, commit_positions, offsets);
 
 	if (options & BITMAP_OPT_HASH_CACHE)
 		write_hash_cache(f, index, index_nr);
