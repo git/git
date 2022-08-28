@@ -487,6 +487,9 @@ sub parse_loop_body {
 	my @tokens = $self->SUPER::parse_loop_body(@_);
 	# did loop signal failure via "|| return" or "|| exit"?
 	return @tokens if !@tokens || grep(/^(?:return|exit|\$\?)$/, @tokens);
+	# did loop upstream of a pipe signal failure via "|| echo 'impossible
+	# text'" as the final command in the loop body?
+	return @tokens if ends_with(\@tokens, [qr/^\|\|$/, "\n", qr/^echo$/, qr/^.+$/]);
 	# flag missing "return/exit" handling explicit failure in loop body
 	my $n = find_non_nl(\@tokens);
 	splice(@tokens, $n + 1, 0, '?!LOOP?!');

@@ -1,0 +1,11 @@
+(
+	git rev-list --objects --no-object-names base..loose |
+	while read oid
+	do
+# LINT: "|| echo" signals failure in loop upstream of a pipe
+		path="$objdir/$(test_oid_to_path "$oid")" &&
+		printf "%s %d\n" "$oid" "$(test-tool chmtime --get "$path")" ||
+		echo "object list generation failed for $oid"
+	done |
+	sort -k1
+) >expect &&
