@@ -25,6 +25,7 @@ static int sort_stdin(void)
 	struct line *lines;
 	struct line **tail = &lines;
 	struct strbuf sb = STRBUF_INIT;
+	struct mem_pool lines_pool;
 	char *p;
 
 	strbuf_read(&sb, 0, 0);
@@ -36,10 +37,11 @@ static int sort_stdin(void)
 	if (sb.len && sb.buf[sb.len - 1] == '\n')
 		strbuf_setlen(&sb, sb.len - 1);
 
+	mem_pool_init(&lines_pool, 0);
 	p = sb.buf;
 	for (;;) {
 		char *eol = strchr(p, '\n');
-		struct line *line = xmalloc(sizeof(*line));
+		struct line *line = mem_pool_alloc(&lines_pool, sizeof(*line));
 		line->text = p;
 		*tail = line;
 		tail = &line->next;
