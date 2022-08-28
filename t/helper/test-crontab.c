@@ -17,8 +17,8 @@ int cmd__crontab(int argc, const char **argv)
 		if (!from)
 			return 0;
 		to = stdout;
-	} else if (argc == 2) {
-		from = stdin;
+	} else if (argc == 3) {
+		from = fopen(argv[2], "r");
 		to = fopen(argv[1], "w");
 	} else
 		return error("unknown arguments");
