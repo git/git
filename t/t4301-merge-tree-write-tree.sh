@@ -150,7 +150,7 @@ test_expect_success 'directory rename + content conflict' '
 		cd dir-rename-and-content &&
 		test_write_lines 1 2 3 4 5 >foo &&
 		mkdir olddir &&
-		for i in a b c; do echo $i >olddir/$i; done
+		for i in a b c; do echo $i >olddir/$i || exit 1; done &&
 		git add foo olddir &&
 		git commit -m "original" &&
 
@@ -662,7 +662,7 @@ test_expect_success 'directory rename + rename/delete + modify/delete + director
 		cd 4-stacked-conflict &&
 		test_write_lines 1 2 3 4 5 >foo &&
 		mkdir olddir &&
-		for i in a b c; do echo $i >olddir/$i; done
+		for i in a b c; do echo $i >olddir/$i || exit 1; done &&
 		git add foo olddir &&
 		git commit -m "original" &&
 
