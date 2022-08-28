@@ -176,7 +176,7 @@ test_expect_success 'directory rename + content conflict' '
 
 		test_expect_code 1 \
 			git merge-tree -z A^0 B^0 >out &&
-		printf "\\n" >>out &&
+		echo >>out &&
 		anonymize_hash out >actual &&
 		q_to_tab <<-\EOF | lf_to_nul >expect &&
 		HASH
@@ -230,7 +230,7 @@ test_expect_success 'rename/delete handling' '
 
 		test_expect_code 1 \
 			git merge-tree -z A^0 B^0 >out &&
-		printf "\\n" >>out &&
+		echo >>out &&
 		anonymize_hash out >actual &&
 		q_to_tab <<-\EOF | lf_to_nul >expect &&
 		HASH
@@ -284,7 +284,7 @@ test_expect_success 'rename/add handling' '
 
 		test_expect_code 1 \
 			git merge-tree -z A^0 B^0 >out &&
-		printf "\\n" >>out &&
+		echo >>out &&
 
 		#
 		# First, check that the bar that appears at stage 3 does not
@@ -351,7 +351,7 @@ test_expect_success SYMLINKS 'rename/add, where add is a mode conflict' '
 
 		test_expect_code 1 \
 			git merge-tree -z A^0 B^0 >out &&
-		printf "\\n" >>out &&
+		echo >>out &&
 
 		#
 		# First, check that the bar that appears at stage 3 does not
@@ -417,7 +417,7 @@ test_expect_success 'rename/rename + content conflict' '
 
 		test_expect_code 1 \
 			git merge-tree -z A^0 B^0 >out &&
-		printf "\\n" >>out &&
+		echo >>out &&
 		anonymize_hash out >actual &&
 		q_to_tab <<-\EOF | lf_to_nul >expect &&
 		HASH
@@ -471,7 +471,7 @@ test_expect_success 'rename/add/delete conflict' '
 
 		test_expect_code 1 \
 			git merge-tree -z B^0 A^0 >out &&
-		printf "\\n" >>out &&
+		echo >>out &&
 		anonymize_hash out >actual &&
 
 		q_to_tab <<-\EOF | lf_to_nul >expect &&
@@ -528,7 +528,7 @@ test_expect_success 'rename/rename(2to1)/delete/delete conflict' '
 
 		test_expect_code 1 \
 			git merge-tree -z A^0 B^0 >out &&
-		printf "\\n" >>out &&
+		echo >>out &&
 		anonymize_hash out >actual &&
 
 		q_to_tab <<-\EOF | lf_to_nul >expect &&
@@ -600,7 +600,7 @@ test_expect_success 'mod6: chains of rename/rename(1to2) and add/add via collidi
 
 		test_expect_code 1 \
 			git merge-tree -z A^0 B^0 >out &&
-		printf "\\n" >>out &&
+		echo >>out &&
 
 		#
 		# First, check that some of the hashes that appear as stage
@@ -690,7 +690,7 @@ test_expect_success 'directory rename + rename/delete + modify/delete + director
 
 		test_expect_code 1 \
 			git merge-tree -z A^0 B^0 >out &&
-		printf "\\n" >>out &&
+		echo >>out &&
 		anonymize_hash out >actual &&
 
 		q_to_tab <<-\EOF | lf_to_nul >expect &&
@@ -760,7 +760,7 @@ test_expect_success 'NUL terminated conflicted file "lines"' '
 	git commit -m "Renamed numbers" &&
 
 	test_expect_code 1 git merge-tree --write-tree -z tweak1 side2 >out &&
-	printf "\\n" >>out &&
+	echo >>out &&
 	anonymize_hash out >actual &&
 
 	# Expected results:
