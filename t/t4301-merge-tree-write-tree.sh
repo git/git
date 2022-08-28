@@ -760,8 +760,8 @@ test_expect_success 'NUL terminated conflicted file "lines"' '
 	git commit -m "Renamed numbers" &&
 
 	test_expect_code 1 git merge-tree --write-tree -z tweak1 side2 >out &&
+	printf "\\n" >>out &&
 	anonymize_hash out >actual &&
-	printf "\\n" >>actual &&
 
 	# Expected results:
 	#   "greeting" should merge with conflicts
