@@ -58,6 +58,20 @@ UI, Workflows & Features
    material has been lifted from "scalar" and made into a feature of
    "git bugreport".
 
+ * The namespaces used by "log --decorate" from "refs/" hierarchy by
+   default has been tightened.
+
+ * "git rev-list --ancestry-path=C A..B" is a natural extension of
+   "git rev-list A..B"; instead of choosing a subset of A..B to those
+   that have ancestry relationship with A, it lets a subset with
+   ancestry relationship with C.
+
+ * "scalar" now enables built-in fsmonitor on enlisted repositories,
+   when able.
+
+ * The bash prompt (in contrib/) learned to optionally indicate when
+   the index is unmerged.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -122,6 +136,9 @@ Performance, Internal Implementation, Development Support etc.
  * The common ancestor negotiation exchange during a "git fetch"
    session now leaves trace log.
 
+ * Test portability improvements.
+   (merge 4d1d843be7 mt/rot13-in-c later to maint).
+
 
 Fixes since v2.37
 -----------------
@@ -155,11 +172,8 @@ Fixes since v2.37
  * Recent update to vimdiff layout code has been made more robust
    against different end-user vim settings.
 
- * Plug various memory leaks.
-   (merge ece3974ba6 ab/leakfix later to maint).
-
- * Plug various memory leaks in test-tool commands.
-   (merge f40a693450 ab/test-tool-leakfix later to maint).
+ * Plug various memory leaks, both in the main code and in test-tool
+   commands.
 
  * Fixes a long-standing corner case bug around directory renames in
    the merge-ort strategy.
@@ -218,45 +232,34 @@ Fixes since v2.37
  * Gitweb had legacy URL shortener that is specific to the way
    projects hosted on kernel.org used to (but no longer) work, which
    has been removed.
-   (merge 75707da4fa jr/gitweb-title-shortening later to maint).
 
  * Fix build procedure for Windows that uses CMake so that it can pick
    up the shell interpreter from local installation location.
-   (merge 476e54b1c6 ca/unignore-local-installation-on-windows later to maint).
 
  * Conditionally allow building Python interpreter on Windows
-   (merge 2f0623aaa7 js/mingw-with-python later to maint).
 
  * Fix to lstat() emulation on Windows.
-   (merge 82ba1191ff js/lstat-mingw-enotdir-fix later to maint).
 
  * Older gcc with -Wall complains about the universal zero initializer
    "struct s = { 0 };" idiom, which makes developers' lives
    inconvenient (as -Werror is enabled by DEVELOPER=YesPlease).  The
    build procedure has been tweaked to help these compilers.
-   (merge b53a5f2416 jk/struct-zero-init-with-older-gcc later to maint).
 
  * Plug memory leaks in the failure code path in the "merge-ort" merge
    strategy backend.
-   (merge 1250dff32b js/ort-clean-up-after-failed-merge later to maint).
 
  * "git symbolic-ref symref non..sen..se" is now diagnosed as an error.
-   (merge 04ede97211 lt/symbolic-ref-sanity later to maint).
 
- * A follow-up fix to a fix for a regression in 2.36.
-   (merge 99ddc24672 ab/hooks-regression-fix later to maint).
+ * A follow-up fix to a fix for a regression in 2.36 around hooks.
 
  * Avoid repeatedly running getconf to ask libc version in the test
    suite, and instead just as it once per script.
-   (merge a6a58f7801 pw/use-glibc-tunable-for-malloc-optim later to maint).
 
  * Platform-specific code that determines if a directory is OK to use
    as a repository has been taught to report more details, especially
    on Windows.
-   (merge 3f7207e2ea js/safe-directory-plus later to maint).
 
  * "vimdiff3" regression fix.
-   (merge 34133d9658 fc/vimdiff-layout-vimdiff3-fix later to maint).
 
  * "git fsck" reads mode from tree objects but canonicalizes the mode
    before passing it to the logic to check object sanity, which has
@@ -264,11 +267,9 @@ Fixes since v2.37
    corrected, but to help exiting projects with broken tree objects
    that they cannot fix retroactively, the severity of anomalies this
    code detects has been demoted to "info" for now.
-   (merge 4dd3b045f5 jk/fsck-tree-mode-bits-fix later to maint).
 
  * Fixes to sparse index compatibility work for "reset" and "checkout"
    commands.
-   (merge b15207b8cf vd/sparse-reset-checkout-fixes later to maint).
 
  * An earlier optimization discarded a tree-object buffer that is
    still in use, which has been corrected.
@@ -279,6 +280,21 @@ Fixes since v2.37
    reimplemented in C recently.
    (merge 716c1f649e jk/pipe-command-nonblock later to maint).
 
+ * The sequencer machinery translated messages left in the reflog by
+   mistake, which has been corrected.
+
+ * xcalloc(), imitating calloc(), takes "number of elements of the
+   array", and "size of a single element", in this order.  A call that
+   does not follow this ordering has been corrected.
+   (merge c4bbd9bb8f sg/xcalloc-cocci-fix later to maint).
+
+ * The preload-index codepath made copies of pathspec to give to
+   multiple threads, which were left leaked.
+   (merge 23578904da ad/preload-plug-memleak later to maint).
+
+ * Update the version of Ubuntu used for GitHub Actions CI from 18.04
+   to 22.04.
+   (merge ef46584831 ds/github-actions-use-newer-ubuntu later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
-   (merge 94955d576b gc/git-reflog-doc-markup later to maint).
-   (merge efae7ce692 po/doc-add-renormalize later to maint).
+   (merge 77b9e85c0f vd/fix-perf-tests later to maint).
