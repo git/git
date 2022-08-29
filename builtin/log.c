@@ -52,6 +52,7 @@ static int default_encode_email_headers = 1;
 static int decoration_style;
 static int decoration_given;
 static int use_mailmap_config = 1;
+static unsigned int force_in_body_from;
 static const char *fmt_patch_subject_prefix = "PATCH";
 static int fmt_patch_name_max = FORMAT_PATCH_NAME_MAX_DEFAULT;
 static const char *fmt_pretty;
@@ -1897,6 +1898,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			   N_("show changes against <refspec> in cover letter or single patch")),
 		OPT_INTEGER(0, "creation-factor", &creation_factor,
 			    N_("percentage by which creation is weighted")),
+		OPT_BOOL(0, "force-in-body-from", &force_in_body_from,
+			 N_("show in-body From: even if identical to the e-mail header")),
 		OPT_END()
 	};
 
@@ -1939,6 +1942,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			     builtin_format_patch_usage,
 			     PARSE_OPT_KEEP_ARGV0 | PARSE_OPT_KEEP_UNKNOWN |
 			     PARSE_OPT_KEEP_DASHDASH);
+
+	rev.force_in_body_from = force_in_body_from;
 
 	/* Make sure "0000-$sub.patch" gives non-negative length for $sub */
 	if (fmt_patch_name_max <= strlen("0000-") + strlen(fmt_patch_suffix))

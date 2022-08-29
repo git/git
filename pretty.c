@@ -480,6 +480,8 @@ end:
 static int use_in_body_from(const struct pretty_print_context *pp,
 			    const struct ident_split *ident)
 {
+	if (pp->rev && pp->rev->force_in_body_from)
+		return 1;
 	if (ident_cmp(pp->from_ident, ident))
 		return 1;
 	return 0;
