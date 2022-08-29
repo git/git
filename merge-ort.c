@@ -507,7 +507,6 @@ enum conflict_and_info_types {
 	CONFLICT_FILE_DIRECTORY,
 	CONFLICT_DISTINCT_MODES,
 	CONFLICT_MODIFY_DELETE,
-	CONFLICT_PRESENT_DESPITE_SKIPPED,
 
 	/* Regular rename */
 	CONFLICT_RENAME_RENAME,   /* same file renamed differently */
@@ -553,8 +552,6 @@ static const char *type_short_descriptions[] = {
 	[CONFLICT_FILE_DIRECTORY] = "CONFLICT (file/directory)",
 	[CONFLICT_DISTINCT_MODES] = "CONFLICT (distinct modes)",
 	[CONFLICT_MODIFY_DELETE] = "CONFLICT (modify/delete)",
-	[CONFLICT_PRESENT_DESPITE_SKIPPED] =
-		"CONFLICT (upgrade your version of git)",
 
 	/*** Regular rename ***/
 	[CONFLICT_RENAME_RENAME] = "CONFLICT (rename/rename)",
@@ -770,8 +767,7 @@ static void path_msg(struct merge_options *opt,
 	/* Sanity checks */
 	assert(omittable_hint ==
 	       !starts_with(type_short_descriptions[type], "CONFLICT") ||
-	       type == CONFLICT_DIR_RENAME_SUGGESTED ||
-	       type == CONFLICT_PRESENT_DESPITE_SKIPPED);
+	       type == CONFLICT_DIR_RENAME_SUGGESTED);
 	if (opt->record_conflict_msgs_as_headers && omittable_hint)
 		return; /* Do not record mere hints in headers */
 	if (opt->priv->call_depth && opt->verbosity < 5)
@@ -4424,22 +4420,8 @@ static int record_conflicted_index_entries(struct merge_options *opt)
 			 * the CE_SKIP_WORKTREE bit and manually write those
 			 * files to the working disk here.
 			 */
-			if (ce_skip_worktree(ce)) {
-				struct stat st;
-
-				if (!lstat(path, &st)) {
-					char *new_name = unique_path(opt,
-								     path,
-								     "cruft");
-
-					path_msg(opt, CONFLICT_PRESENT_DESPITE_SKIPPED, 1,
-						 path, NULL, NULL, NULL,
-						 _("Note: %s not up to date and in way of checking out conflicted version; old copy renamed to %s"),
-						 path, new_name);
-					errs |= rename(path, new_name);
-				}
+			if (ce_skip_worktree(ce))
 				errs |= checkout_entry(ce, &state, NULL, NULL);
-			}
 
 			/*
 			 * Mark this cache entry for removal and instead add
