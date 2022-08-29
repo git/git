@@ -283,6 +283,8 @@ feeding the result to `git send-email`.
 	the in-body "From:" is added even when the sender and the
 	author have the same name and address, which may help if the
 	mailing list software mangles the sender's identity.
+	Defaults to the value of the `format.forceInBodyFrom`
+	configuration variable.
 
 --add-header=<header>::
 	Add an arbitrary header to the email headers.  This is in addition

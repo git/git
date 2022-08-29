@@ -1007,6 +1007,10 @@ static int git_format_config(const char *var, const char *value, void *cb)
 			from = NULL;
 		return 0;
 	}
+	if (!strcmp(var, "format.forceinbodyfrom")) {
+		force_in_body_from = git_config_bool(var, value);
+		return 0;
+	}
 	if (!strcmp(var, "format.notes")) {
 		int b = git_parse_maybe_bool(value);
 		if (b < 0)
