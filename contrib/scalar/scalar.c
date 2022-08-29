@@ -7,25 +7,13 @@
 #include "parse-options.h"
 #include "config.h"
 #include "run-command.h"
+#include "simple-ipc.h"
+#include "fsmonitor-ipc.h"
+#include "fsmonitor-settings.h"
 #include "refs.h"
 #include "dir.h"
 #include "packfile.h"
 #include "help.h"
-
-/*
- * Remove the deepest subdirectory in the provided path string. Path must not
- * include a trailing path separator. Returns 1 if parent directory found,
- * otherwise 0.
- */
-static int strbuf_parent_directory(struct strbuf *buf)
-{
-	size_t len = buf->len;
-	size_t offset = offset_1st_component(buf->buf);
-	char *path_sep = find_last_dir_sep(buf->buf + offset);
-	strbuf_setlen(buf, path_sep ? path_sep - buf->buf : offset);
-
-	return buf->len < len;
-}
 
 static void setup_enlistment_directory(int argc, const char **argv,
 				       const char * const *usagestr,
@@ -33,8 +21,8 @@ static void setup_enlistment_directory(int argc, const char **argv,
 				       struct strbuf *enlistment_root)
 {
 	struct strbuf path = STRBUF_INIT;
-	char *root;
-	int enlistment_found = 0;
+	int enlistment_is_repo_parent = 0;
+	size_t len;
 
 	if (startup_info->have_repository)
 		BUG("gitdir already set up?!?");
@@ -47,51 +35,36 @@ static void setup_enlistment_directory(int argc, const char **argv,
 		strbuf_add_absolute_path(&path, argv[0]);
 		if (!is_directory(path.buf))
 			die(_("'%s' does not exist"), path.buf);
+		if (chdir(path.buf) < 0)
+			die_errno(_("could not switch to '%s'"), path.buf);
 	} else if (strbuf_getcwd(&path) < 0)
 		die(_("need a working directory"));
 
 	strbuf_trim_trailing_dir_sep(&path);
-	do {
-		const size_t len = path.len;
 
-		/* check if currently in enlistment root with src/ workdir */
-		strbuf_addstr(&path, "/src");
-		if (is_nonbare_repository_dir(&path)) {
-			if (enlistment_root)
-				strbuf_add(enlistment_root, path.buf, len);
+	/* check if currently in enlistment root with src/ workdir */
+	len = path.len;
+	strbuf_addstr(&path, "/src");
+	if (is_nonbare_repository_dir(&path)) {
+		enlistment_is_repo_parent = 1;
+		if (chdir(path.buf) < 0)
+			die_errno(_("could not switch to '%s'"), path.buf);
+	}
+	strbuf_setlen(&path, len);
 
-			enlistment_found = 1;
-			break;
-		}
+	setup_git_directory();
 
-		/* reset to original path */
-		strbuf_setlen(&path, len);
+	if (!the_repository->worktree)
+		die(_("Scalar enlistments require a worktree"));
 
-		/* check if currently in workdir */
-		if (is_nonbare_repository_dir(&path)) {
-			if (enlistment_root) {
-				/*
-				 * If the worktree's directory's name is `src`, the enlistment is the
-				 * parent directory, otherwise it is identical to the worktree.
-				 */
-				root = strip_path_suffix(path.buf, "src");
-				strbuf_addstr(enlistment_root, root ? root : path.buf);
-				free(root);
-			}
-
-			enlistment_found = 1;
-			break;
-		}
-	} while (strbuf_parent_directory(&path));
-
-	if (!enlistment_found)
-		die(_("could not find enlistment root"));
-
-	if (chdir(path.buf) < 0)
-		die_errno(_("could not switch to '%s'"), path.buf);
+	if (enlistment_root) {
+		if (enlistment_is_repo_parent)
+			strbuf_addbuf(enlistment_root, &path);
+		else
+			strbuf_addstr(enlistment_root, the_repository->worktree);
+	}
 
 	strbuf_release(&path);
-	setup_git_directory();
 }
 
 static int run_git(const char *arg, ...)
@@ -113,13 +86,39 @@ static int run_git(const char *arg, ...)
 	return res;
 }
 
+struct scalar_config {
+	const char *key;
+	const char *value;
+	int overwrite_on_reconfigure;
+};
+
+static int set_scalar_config(const struct scalar_config *config, int reconfigure)
+{
+	char *value = NULL;
+	int res;
+
+	if ((reconfigure && config->overwrite_on_reconfigure) ||
+	    git_config_get_string(config->key, &value)) {
+		trace2_data_string("scalar", the_repository, config->key, "created");
+		res = git_config_set_gently(config->key, config->value);
+	} else {
+		trace2_data_string("scalar", the_repository, config->key, "exists");
+		res = 0;
+	}
+
+	free(value);
+	return res;
+}
+
+static int have_fsmonitor_support(void)
+{
+	return fsmonitor_ipc__is_supported() &&
+	       fsm_settings__get_reason(the_repository) == FSMONITOR_REASON_OK;
+}
+
 static int set_recommended_config(int reconfigure)
 {
-	struct {
-		const char *key;
-		const char *value;
-		int overwrite_on_reconfigure;
-	} config[] = {
+	struct scalar_config config[] = {
 		/* Required */
 		{ "am.keepCR", "true", 1 },
 		{ "core.FSCache", "true", 1 },
@@ -173,17 +172,16 @@ static int set_recommended_config(int reconfigure)
 	char *value;
 
 	for (i = 0; config[i].key; i++) {
-		if ((reconfigure && config[i].overwrite_on_reconfigure) ||
-		    git_config_get_string(config[i].key, &value)) {
-			trace2_data_string("scalar", the_repository, config[i].key, "created");
-			if (git_config_set_gently(config[i].key,
-						  config[i].value) < 0)
-				return error(_("could not configure %s=%s"),
-					     config[i].key, config[i].value);
-		} else {
-			trace2_data_string("scalar", the_repository, config[i].key, "exists");
-			free(value);
-		}
+		if (set_scalar_config(config + i, reconfigure))
+			return error(_("could not configure %s=%s"),
+				     config[i].key, config[i].value);
+	}
+
+	if (have_fsmonitor_support()) {
+		struct scalar_config fsmonitor = { "core.fsmonitor", "true" };
+		if (set_scalar_config(&fsmonitor, reconfigure))
+			return error(_("could not configure %s=%s"),
+				     fsmonitor.key, fsmonitor.value);
 	}
 
 	/*
@@ -234,28 +232,53 @@ static int add_or_remove_enlistment(int add)
 		       "scalar.repo", the_repository->worktree, NULL);
 }
 
+static int start_fsmonitor_daemon(void)
+{
+	assert(have_fsmonitor_support());
+
+	if (fsmonitor_ipc__get_state() != IPC_STATE__LISTENING)
+		return run_git("fsmonitor--daemon", "start", NULL);
+
+	return 0;
+}
+
+static int stop_fsmonitor_daemon(void)
+{
+	assert(have_fsmonitor_support());
+
+	if (fsmonitor_ipc__get_state() == IPC_STATE__LISTENING)
+		return run_git("fsmonitor--daemon", "stop", NULL);
+
+	return 0;
+}
+
 static int register_dir(void)
 {
-	int res = add_or_remove_enlistment(1);
+	if (add_or_remove_enlistment(1))
+		return error(_("could not add enlistment"));
 
-	if (!res)
-		res = set_recommended_config(0);
+	if (set_recommended_config(0))
+		return error(_("could not set recommended config"));
 
-	if (!res)
-		res = toggle_maintenance(1);
+	if (toggle_maintenance(1))
+		return error(_("could not turn on maintenance"));
 
-	return res;
+	if (have_fsmonitor_support() && start_fsmonitor_daemon()) {
+		return error(_("could not start the FSMonitor daemon"));
+	}
+
+	return 0;
 }
 
 static int unregister_dir(void)
 {
 	int res = 0;
 
-	if (toggle_maintenance(0) < 0)
-		res = -1;
+	if (toggle_maintenance(0))
+		res = error(_("could not turn off maintenance"));
 
-	if (add_or_remove_enlistment(0) < 0)
-		res = -1;
+	if (add_or_remove_enlistment(0))
+		res = error(_("could not remove enlistment"));
 
 	return res;
 }
@@ -336,25 +359,35 @@ static int delete_enlistment(struct strbuf *enlistment)
 {
 #ifdef WIN32
 	struct strbuf parent = STRBUF_INIT;
+	size_t offset;
+	char *path_sep;
 #endif
 
 	if (unregister_dir())
-		die(_("failed to unregister repository"));
+		return error(_("failed to unregister repository"));
 
 #ifdef WIN32
 	/*
 	 * Change the current directory to one outside of the enlistment so
 	 * that we may delete everything underneath it.
 	 */
-	strbuf_addbuf(&parent, enlistment);
-	strbuf_parent_directory(&parent);
-	if (chdir(parent.buf) < 0)
-		die_errno(_("could not switch to '%s'"), parent.buf);
+	offset = offset_1st_component(enlistment->buf);
+	path_sep = find_last_dir_sep(enlistment->buf + offset);
+	strbuf_add(&parent, enlistment->buf,
+		   path_sep ? path_sep - enlistment->buf : offset);
+	if (chdir(parent.buf) < 0) {
+		int res = error_errno(_("could not switch to '%s'"), parent.buf);
+		strbuf_release(&parent);
+		return res;
+	}
 	strbuf_release(&parent);
 #endif
 
+	if (have_fsmonitor_support() && stop_fsmonitor_daemon())
+		return error(_("failed to stop the FSMonitor daemon"));
+
 	if (remove_dir_recursively(enlistment, 0))
-		die(_("failed to delete enlistment directory"));
+		return error(_("failed to delete enlistment directory"));
 
 	return 0;
 }
