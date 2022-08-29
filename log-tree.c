@@ -963,8 +963,7 @@ static void cleanup_additional_headers(struct diff_options *o)
 
 static int do_remerge_diff(struct rev_info *opt,
 			   struct commit_list *parents,
-			   struct object_id *oid,
-			   struct commit *commit)
+			   struct object_id *oid)
 {
 	struct merge_options o;
 	struct commit_list *bases;
@@ -1059,7 +1058,7 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 					"for octopus merges.\n");
 				return 1;
 			}
-			return do_remerge_diff(opt, parents, oid, commit);
+			return do_remerge_diff(opt, parents, oid);
 		}
 		if (opt->combine_merges)
 			return do_diff_combined(opt, commit);

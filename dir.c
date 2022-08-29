@@ -1244,8 +1244,7 @@ int match_basename(const char *basename, int basenamelen,
 
 int match_pathname(const char *pathname, int pathlen,
 		   const char *base, int baselen,
-		   const char *pattern, int prefix, int patternlen,
-		   unsigned flags)
+		   const char *pattern, int prefix, int patternlen)
 {
 	const char *name;
 	int namelen;
@@ -1347,8 +1346,7 @@ static struct path_pattern *last_matching_pattern_from_list(const char *pathname
 		if (match_pathname(pathname, pathlen,
 				   pattern->base,
 				   pattern->baselen ? pattern->baselen - 1 : 0,
-				   exclude, prefix, pattern->patternlen,
-				   pattern->flags)) {
+				   exclude, prefix, pattern->patternlen)) {
 			res = pattern;
 			break;
 		}
