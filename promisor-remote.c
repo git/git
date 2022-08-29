@@ -146,7 +146,7 @@ static void promisor_remote_init(struct repository *r)
 	if (r->promisor_remote_config)
 		return;
 	config = r->promisor_remote_config =
-		xcalloc(sizeof(*r->promisor_remote_config), 1);
+		xcalloc(1, sizeof(*r->promisor_remote_config));
 	config->promisors_tail = &config->promisors;
 
 	repo_config(r, promisor_remote_config, config);
