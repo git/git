@@ -1,11 +1,11 @@
-$ git log --decorate=full --all
-commit b7e0bc69303b488b47deca799a7d723971dfa6cd (refs/heads/mode)
+$ git log --decorate --clear-decorations --all
+commit b7e0bc69303b488b47deca799a7d723971dfa6cd (mode)
 Author: A U Thor <author@example.com>
 Date:   Mon Jun 26 00:06:00 2006 +0000
 
     update mode
 
-commit a6f364368ca320bc5a92e18912e16fa6b3dff598 (refs/heads/note)
+commit a6f364368ca320bc5a92e18912e16fa6b3dff598 (note)
 Author: A U Thor <author@example.com>
 Date:   Mon Jun 26 00:06:00 2006 +0000
 
@@ -14,26 +14,26 @@ Date:   Mon Jun 26 00:06:00 2006 +0000
 Notes:
     note
 
-commit cd4e72fd96faed3f0ba949dc42967430374e2290 (refs/heads/rearrange)
+commit cd4e72fd96faed3f0ba949dc42967430374e2290 (rearrange)
 Author: A U Thor <author@example.com>
 Date:   Mon Jun 26 00:06:00 2006 +0000
 
     Rearranged lines in dir/sub
 
-commit cbacedd14cb8b89255a2c02b59e77a2e9a8021a0
+commit cbacedd14cb8b89255a2c02b59e77a2e9a8021a0 (refs/notes/commits)
 Author: A U Thor <author@example.com>
 Date:   Mon Jun 26 00:06:00 2006 +0000
 
     Notes added by 'git notes add'
 
-commit 59d314ad6f356dd08601a4cd5e530381da3e3c64 (HEAD -> refs/heads/master)
+commit 59d314ad6f356dd08601a4cd5e530381da3e3c64 (HEAD -> master)
 Merge: 9a6d494 c7a2ab9
 Author: A U Thor <author@example.com>
 Date:   Mon Jun 26 00:04:00 2006 +0000
 
     Merge branch 'side'
 
-commit c7a2ab9e8eac7b117442a607d5a9b3950ae34d5a (refs/heads/side)
+commit c7a2ab9e8eac7b117442a607d5a9b3950ae34d5a (side)
 Author: A U Thor <author@example.com>
 Date:   Mon Jun 26 00:03:00 2006 +0000
 
@@ -53,7 +53,7 @@ Date:   Mon Jun 26 00:01:00 2006 +0000
     
     This is the second commit.
 
-commit 444ac553ac7612cc88969031b02b3767fb8a353a (refs/heads/initial)
+commit 444ac553ac7612cc88969031b02b3767fb8a353a (initial)
 Author: A U Thor <author@example.com>
 Date:   Mon Jun 26 00:00:00 2006 +0000
 
