@@ -392,12 +392,14 @@ Default mode::
 	merges from the resulting history, as there are no selected
 	commits contributing to this merge.
 
---ancestry-path::
+--ancestry-path[=<commit>]::
 	When given a range of commits to display (e.g. 'commit1..commit2'
-	or 'commit2 {caret}commit1'), only display commits that exist
-	directly on the ancestry chain between the 'commit1' and
-	'commit2', i.e. commits that are both descendants of 'commit1',
-	and ancestors of 'commit2'.
+	or 'commit2 {caret}commit1'), only display commits in that range
+	that are ancestors of <commit>, descendants of <commit>, or
+	<commit> itself.  If no commit is specified, use 'commit1' (the
+	excluded part of the range) as <commit>.  Can be passed multiple
+	times; if so, a commit is included if it is any of the commits
+	given or if it is an ancestor or descendant of one of them.
 
 A more detailed explanation follows.
 
@@ -571,11 +573,10 @@ Note the major differences in `N`, `P`, and `Q` over `--full-history`:
 
 There is another simplification mode available:
 
---ancestry-path::
-	Limit the displayed commits to those directly on the ancestry
-	chain between the ``from'' and ``to'' commits in the given commit
-	range. I.e. only display commits that are ancestor of the ``to''
-	commit and descendants of the ``from'' commit.
+--ancestry-path[=<commit>]::
+	Limit the displayed commits to those which are an ancestor of
+	<commit>, or which are a descendant of <commit>, or are <commit>
+	itself.
 +
 As an example use case, consider the following commit history:
 +
@@ -606,6 +607,29 @@ option does. Applied to the 'D..M' range, it results in:
 		  G---H---I---J
 			       \
 				L--M
+-----------------------------------------------------------------------
++
+We can also use `--ancestry-path=D` instead of `--ancestry-path` which
+means the same thing when applied to the 'D..M' range but is just more
+explicit.
++
+If we instead are interested in a given topic within this range, and all
+commits affected by that topic, we may only want to view the subset of
+`D..M` which contain that topic in their ancestry path.  So, using
+`--ancestry-path=H D..M` for example would result in:
++
+-----------------------------------------------------------------------
+		E
+		 \
+		  G---H---I---J
+			       \
+				L--M
+-----------------------------------------------------------------------
++
+Whereas `--ancestry-path=K D..M` would result in
++
+-----------------------------------------------------------------------
+		K---------------L--M
 -----------------------------------------------------------------------
 
 Before discussing another option, `--show-pulls`, we need to
@@ -662,7 +686,7 @@ Here, the merge commits `O` and `P` contribute extra noise, as they did
 not actually contribute a change to `file.txt`. They only merged a topic
 that was based on an older version of `file.txt`. This is a common
 issue in repositories using a workflow where many contributors work in
-parallel and merge their topic branches along a single trunk: manu
+parallel and merge their topic branches along a single trunk: many
 unrelated merges appear in the `--full-history` results.
 
 When using the `--simplify-merges` option, the commits `O` and `P`
