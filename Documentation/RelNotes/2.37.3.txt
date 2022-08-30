@@ -7,8 +7,8 @@ front since 2.37.2.
 Fixes since v2.37.2
 -------------------
 
- * Fix build procedure for Windows that uses CMake so that it can pick
-   up the shell interpreter from local installation location.
+ * The build procedure for Windows that uses CMake has been updated to
+   pick up the shell interpreter from local installation location.
 
  * Conditionally allow building Python interpreter on Windows
 
@@ -29,7 +29,7 @@ Fixes since v2.37.2
    as a repository has been taught to report more details, especially
    on Windows.
 
- * "vimdiff3" regression fix.
+ * "vimdiff3" regression has been corrected.
 
  * "git fsck" reads mode from tree objects but canonicalizes the mode
    before passing it to the logic to check object sanity, which has
