@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2022, #09; Fri, 26)
-X-master-at: 07ee72db0e97b5c233f8ada0abb412248c2f1c6f
-X-next-at: 80e7f50712d6a2d04807d40616c5c20b9e37eab9
+Subject: What's cooking in git.git (Aug 2022, #10; Tue, 30)
+X-master-at: d42b38dfb5edf1a7fddd9542d722f91038407819
+X-next-at: 179cf4a1993382e88ddca40c073b2b2f5899be0d
 
-What's cooking in git.git (Aug 2022, #09; Fri, 26)
+What's cooking in git.git (Aug 2022, #10; Tue, 30)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -13,9 +13,9 @@ release).  Commits prefixed with '-' are only in 'seen', and aren't
 considered "accepted" at all.  A topic without enough support may be
 discarded after a long period of no activity.
 
-We are at the end of week #7 in a 12-week cycle toward Git 2.38
+We are in the middle of week #8 in a 12-week cycle toward Git 2.38
 (tinyurl.com/gitCal).  As we have accumulated enough material on
-the 'maint' branch, we may want to tag 2.37.3 early next week.
+the 'maint' branch, Git 2.37.3 has been tagged.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -46,7 +46,287 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* ad/preload-plug-memleak (2022-08-22) 1 commit
+  (merged to 'next' on 2022-08-24 at 1cad371f1c)
+ + preload-index: fix memleak
+
+ The preload-index codepath made copies of pathspec to give to
+ multiple threads, which were left leaked.
+ source: <20220822211507.8693-2-anthony.2lannoy@gmail.com>
+
+
+* ds/decorate-filter-tweak (2022-08-05) 11 commits
+  (merged to 'next' on 2022-08-19 at 064b9daa85)
+ + fetch: use ref_namespaces during prefetch
+ + maintenance: stop writing log.excludeDecoration
+ + log: create log.initialDecorationSet=all
+ + log: add --clear-decorations option
+ + log: add default decoration filter
+ + log-tree: use ref_namespaces instead of if/else-if
+ + refs: use ref_namespaces for replace refs base
+ + refs: add array of ref namespaces
+ + t4207: test coloring of grafted decorations
+ + t4207: modernize test
+ + refs: allow "HEAD" as decoration filter
+
+ The namespaces used by "log --decorate" from "refs/" hierarchy by
+ default has been tightened.
+ source: <pull.1301.v3.git.1659722323.gitgitgadget@gmail.com>
+
+
+* ds/github-actions-use-newer-ubuntu (2022-08-24) 1 commit
+  (merged to 'next' on 2022-08-24 at 55a76348b2)
+ + ci: update 'static-analysis' to Ubuntu 22.04
+
+ Update the version of Ubuntu used for GitHub Actions CI from 18.04
+ to 22.04.
+ source: <pull.1334.git.1661275691795.gitgitgadget@gmail.com>
+
+
+* en/ancestry-path-in-a-range (2022-08-19) 3 commits
+  (merged to 'next' on 2022-08-19 at 4fce3015b3)
+ + revision: allow --ancestry-path to take an argument
+ + t6019: modernize tests with helper
+ + rev-list-options.txt: fix simple typo
+
+ "git rev-list --ancestry-path=C A..B" is a natural extension of
+ "git rev-list A..B"; instead of choosing a subset of A..B to those
+ that have ancestry relationship with A, it lets a subset with
+ ancestry relationship with C.
+ source: <pull.1303.v3.git.1660883290.gitgitgadget@gmail.com>
+
+
+* en/ort-unused-code-removal (2022-08-19) 1 commit
+  (merged to 'next' on 2022-08-22 at f09dbeeca3)
+ + merge-ort: remove code obsoleted by other changes
+
+ Code clean-up.
+ source: <pull.1302.git.git.1660884355643.gitgitgadget@gmail.com>
+
+
+* es/fix-chained-tests (2022-08-24) 4 commits
+  (merged to 'next' on 2022-08-24 at 6266835a6e)
+ + t5329: notice a failure within a loop
+  (merged to 'next' on 2022-08-22 at 3774cfdaf4)
+ + t: detect and signal failure within loop
+ + t1092: fix buggy sparse "blame" test
+ + t2407: fix broken &&-chains in compound statement
+
+ Fix broken "&&-" chains and failures in early iterations of a loop.
+ source: <pull.1312.git.git.1661192802.gitgitgadget@gmail.com>
+
+
+* jd/prompt-show-conflict (2022-08-19) 1 commit
+  (merged to 'next' on 2022-08-19 at 83af487823)
+ + git-prompt: show presence of unresolved conflicts at command prompt
+
+ The bash prompt (in contrib/) learned to optionally indicate when
+ the index is unmerged.
+ source: <pull.1302.v3.git.1660695492382.gitgitgadget@gmail.com>
+
+
+* jk/unused-fixes (2022-08-20) 7 commits
+  (merged to 'next' on 2022-08-22 at 2fe4de2aed)
+ + xdiff: drop unused mmfile parameters from xdl_do_patience_diff()
+ + reflog: assert PARSE_OPT_NONEG in parse-options callbacks
+ + reftable: drop unused parameter from reader_seek_linear()
+ + verify_one_sparse(): drop unused parameters
+ + match_pathname(): drop unused "flags" parameter
+ + log-tree: drop unused commit param in remerge_diff()
+ + xdiff: drop unused mmfile parameters from xdl_do_histogram_diff()
+
+ Code clean-up to remove unused function parameters.
+ source: <Yv9Oay+tNqhLDqVl@coredump.intra.peff.net>
+ source: <YwCjOETsh1o8u0Og@coredump.intra.peff.net>
+
+
+* mg/sequencer-untranslate-reflog (2022-08-19) 3 commits
+  (merged to 'next' on 2022-08-22 at 75aadeb865)
+ + sequencer: do not translate command names
+ + sequencer: do not translate parameters to error_resolve_conflict()
+ + sequencer: do not translate reflog messages
+
+ The sequencer machinery translated messages left in the reflog by
+ mistake, which has been corrected.
+ source: <cover.1660828108.git.git@grubix.eu>
+
+
+* mt/rot13-in-c (2022-08-14) 4 commits
+  (merged to 'next' on 2022-08-19 at 22152a150c)
+ + tests: use the new C rot13-filter helper to avoid PERL prereq
+ + t0021: implementation the rot13-filter.pl script in C
+ + t0021: avoid grepping for a Perl-specific string at filter output
+ + Merge branch 'mt/checkout-count-fix' into mt/rot13-in-c
+
+ Test portability improvements.
+ source: <cover.1660522524.git.matheus.bernardino@usp.br>
+
+
+* sg/xcalloc-cocci-fix (2022-08-24) 1 commit
+  (merged to 'next' on 2022-08-24 at 84c05819d3)
+ + promisor-remote: fix xcalloc() argument order
+
+ xcalloc(), imitating calloc(), takes "number of elements of the
+ array", and "size of a single element", in this order.  A call that
+ does not follow this ordering has been corrected.
+ source: <20220823095733.58685-1-szeder.dev@gmail.com>
+
+
+* tl/trace2-config-scope (2022-08-11) 2 commits
+  (merged to 'next' on 2022-08-22 at 75a09c7a34)
+ + tr2: shows scope unconditionally in addition to key-value pair
+ + api-trace2.txt: print config key-value pair
+
+ Tweak trace2 output about configuration variables.
+ source: <cover.1660272404.git.dyroneteng@gmail.com>
+
+
+* vd/fix-perf-tests (2022-08-19) 2 commits
+  (merged to 'next' on 2022-08-22 at e68356e624)
+ + p0006: fix 'read-tree' argument ordering
+ + p0004: fix prereq declaration
+
+ Rather trivial perf-test code fixes.
+ source: <pull.1330.git.1660942149.gitgitgadget@gmail.com>
+
+
+* vd/scalar-enables-fsmonitor (2022-08-18) 8 commits
+  (merged to 'next' on 2022-08-19 at 1e172e5647)
+ + scalar: update technical doc roadmap with FSMonitor support
+ + scalar unregister: stop FSMonitor daemon
+ + scalar: enable built-in FSMonitor on `register`
+ + scalar: move config setting logic into its own function
+ + scalar-delete: do not 'die()' in 'delete_enlistment()'
+ + scalar-[un]register: clearly indicate source of error
+ + scalar-unregister: handle error codes greater than 0
+ + scalar: constrain enlistment search
+
+ "scalar" now enables built-in fsmonitor on enlisted repositories,
+ when able.
+ source: <pull.1324.v3.git.1660858853.gitgitgadget@gmail.com>
+
+--------------------------------------------------
 [New Topics]
+
+* rs/tempfile-cleanup-race-fix (2022-08-27) 1 commit
+  (merged to 'next' on 2022-08-30 at 158dd1c910)
+ + tempfile: avoid directory cleanup race
+
+ The clean-up of temporary files created via mks_tempfile_dt() was
+ racy and attempted to unlink() the leading directory when signals
+ are involved, which has been corrected.
+
+ Will merge to 'master'.
+ source: <526a174e-b179-c284-a21c-7afe0a0b4df2@web.de>
+
+
+* tb/diffstat-with-utf8-strwidth (2022-08-27) 1 commit
+ - diff.c: use utf8_strwidth() when appropriate
+
+ "git diff --stat" etc. were invented back when everything was ASCII
+ and strlen() was a way to measure the display width of a string;
+ adjust them to compute the display width assuming UTF-8 pathnames.
+ source: <20220827085007.20030-1-tboegi@web.de>
+
+
+* bc/gc-crontab-fix (2022-08-28) 1 commit
+  (merged to 'next' on 2022-08-30 at a7a240a4da)
+ + gc: use temporary file for editing crontab
+
+ FreeBSD portability fix for "git maintenance" that spawns "crontab"
+ to schedule tasks.
+
+ Will merge to 'master'.
+ source: <20220828214143.754759-1-sandals@crustytoothpaste.net>
+
+
+* en/test-without-test-create-repo (2022-08-26) 1 commit
+  (merged to 'next' on 2022-08-30 at 4f80f48e27)
+ + t64xx: convert 'test_create_repo' to 'git init'
+
+ Test clean-up.
+
+ Will merge to 'master'.
+ source: <pull.1303.v2.git.git.1661485759789.gitgitgadget@gmail.com>
+
+
+* es/t4301-sed-portability-fix (2022-08-29) 4 commits
+  (merged to 'next' on 2022-08-30 at eec0ceef0a)
+ + t4301: emit blank line in more idiomatic fashion
+ + t4301: fix broken &&-chains and add missing loop termination
+ + t4301: account for behavior differences between sed implementations
+ + Merge branch 'en/t4301-more-merge-tree-tests' into es/t4301-sed-portability-fix
+ (this branch uses en/t4301-more-merge-tree-tests.)
+
+ Test clean-up.
+
+ Will merge to 'master'.
+ source: <pull.1339.git.1661663879.gitgitgadget@gmail.com>
+
+
+* gc/submodule-propagate-branches (2022-08-29) 6 commits
+ - clone, submodule update: check out branches
+ - submodule--helper: refactor up-to-date criterion
+ - submodule: return target of submodule symref
+ - t5617: drop references to remote-tracking branches
+ - repo-settings: add submodule_propagate_branches
+ - clone: teach --detach option
+
+ "git clone --recurse-submodules" and "git submodule update" learns
+ to honor the "propagete branches" option.
+
+ Needs review.
+ source: <pull.1321.git.git.1661806456.gitgitgadget@gmail.com>
+
+
+* rs/test-mergesort (2022-08-28) 2 commits
+  (merged to 'next' on 2022-08-30 at 4905149886)
+ + test-mergesort: use mem_pool for sort input
+ + test-mergesort: read sort input all at once
+
+ Optimization of a test-helper command.
+
+ Will merge to 'master'.
+ source: <128f0fb8-d29b-8622-0cfe-2ecadc999db5@web.de>
+
+
+* jc/format-patch-force-in-body-from (2022-08-29) 3 commits
+ - format-patch: learn format.forceInBodyFrom configuration variable
+ - format-patch: allow forcing the use of in-body From: header
+ - pretty: separate out the logic to decide the use of in-body from
+
+ "git format-patch --from=<ident>" can be told to add an in-body
+ "From:" line even for commits that are authored by the given
+ <ident> with "--force-in-body-from"option.
+
+ Will merge to 'next'?
+ source: <20220829213837.13849-1-gitster@pobox.com>
+
+
+* sy/sparse-grep (2022-08-29) 2 commits
+ - builtin/grep.c: integrate with sparse index
+ - builtin/grep.c: add --sparse option
+
+ source: <20220829232843.183711-1-shaoxuan.yuan02@gmail.com>
+
+
+* cc/doc-trailer-whitespace-rules (2022-08-30) 1 commit
+ - Documentation: clarify whitespace rules for trailers
+
+ source: <20220830105046.324041-1-christian.couder@gmail.com>
+
+
+* js/builtin-add-p-portability-fix (2022-08-30) 3 commits
+ - t6132(NO_PERL): do not run the scripted `add -p`
+ - t3701: test the built-in `add -i` regardless of NO_PERL
+ - add -p: avoid ambiguous signed/unsigned comparison
+
+ source: <pull.1340.git.1661867664.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
 
 * ds/use-platform-regex-on-macos (2022-08-26) 1 commit
  - grep: fix multibyte regex handling under macOS
@@ -57,84 +337,6 @@ Release tarballs are available at:
  Needs review.
  source: <20220826085815.2771102-1-dds@aueb.gr>
 
---------------------------------------------------
-[Graduated to 'master']
-
-* cw/submodule-merge-messages (2022-08-04) 1 commit
-  (merged to 'next' on 2022-08-12 at ede0890319)
- + submodule merge: update conflict error message
- (this branch is used by en/submodule-merge-messages-fixes.)
-
- Update the message given when "git merge" sees conflicts at a path
- with a submodule while merging a superproject.
- source: <20220804195105.1303455-1-calvinwan@google.com>
-
-
-* en/submodule-merge-messages-fixes (2022-08-18) 3 commits
-  (merged to 'next' on 2022-08-18 at eb89a1e70f)
- + merge-ort: provide helpful submodule update message when possible
- + merge-ort: avoid surprise with new sub_flag variable
- + merge-ort: remove translator lego in new "submodule conflict suggestion"
- (this branch uses cw/submodule-merge-messages.)
-
- Further update the help messages given while merging submodules.
- source: <pull.1325.v3.git.1660806927.gitgitgadget@gmail.com>
-
-
-* jk/is-promisor-object-keep-tree-in-use (2022-08-14) 1 commit
-  (merged to 'next' on 2022-08-17 at 96033ff88d)
- + is_promisor_object(): fix use-after-free of tree buffer
-
- An earlier optimization discarded a tree-object buffer that is
- still in use, which has been corrected.
- source: <YviWO9Bhz5PU1HaL@coredump.intra.peff.net>
-
-
-* jk/pipe-command-nonblock (2022-08-17) 6 commits
-  (merged to 'next' on 2022-08-17 at 91fe8e6354)
- + pipe_command(): mark stdin descriptor as non-blocking
- + pipe_command(): handle ENOSPC when writing to a pipe
- + pipe_command(): avoid xwrite() for writing to pipe
- + git-compat-util: make MAX_IO_SIZE define globally available
- + nonblock: support Windows
- + compat: add function to enable nonblocking pipes
-
- Fix deadlocks between main Git process and subprocess spawned via
- the pipe_command() API, that can kill "git add -p" that was
- reimplemented in C recently.
- source: <YvyE1RDFVAg4uQo1@coredump.intra.peff.net>
-
-
-* js/fetch-negotiation-trace (2022-08-15) 1 commit
-  (merged to 'next' on 2022-08-17 at 2c9e07b617)
- + fetch-pack: add tracing for negotiation rounds
-
- The common ancestor negotiation exchange during a "git fetch"
- session now leaves trace log.
- source: <4390677ec75d51487142adf7c2ab821cbd24a53e.1659477669.git.steadmon@google.com>
-
-
-* vd/scalar-generalize-diagnose (2022-08-12) 11 commits
-  (merged to 'next' on 2022-08-18 at bd8e574713)
- + scalar: update technical doc roadmap
- + scalar-diagnose: use 'git diagnose --mode=all'
- + builtin/bugreport.c: create '--diagnose' option
- + builtin/diagnose.c: add '--mode' option
- + builtin/diagnose.c: create 'git diagnose' builtin
- + diagnose.c: add option to configure archive contents
- + scalar-diagnose: move functionality to common location
- + scalar-diagnose: move 'get_disk_info()' to 'compat/'
- + scalar-diagnose: add directory to archiver more gently
- + scalar-diagnose: avoid 32-bit overflow of size_t
- + scalar-diagnose: use "$GIT_UNZIP" in test
-
- The "diagnose" feature to create a zip archive for diagnostic
- material has been lifted from "scalar" and made into a feature of
- "git bugreport".
- source: <pull.1310.v4.git.1660335019.gitgitgadget@gmail.com>
-
---------------------------------------------------
-[Cooking]
 
 * ds/bundle-uri-3 (2022-08-24) 8 commits
  - bundle-uri: fetch a list of bundles
@@ -167,54 +369,6 @@ Release tarballs are available at:
  source: <610b8d089db97bf1a37dbf230f51ecafe3086254.1661222541.git.gitgitgadget@gmail.com>
 
 
-* es/fix-chained-tests (2022-08-24) 4 commits
-  (merged to 'next' on 2022-08-24 at 6266835a6e)
- + t5329: notice a failure within a loop
-  (merged to 'next' on 2022-08-22 at 3774cfdaf4)
- + t: detect and signal failure within loop
- + t1092: fix buggy sparse "blame" test
- + t2407: fix broken &&-chains in compound statement
-
- Fix broken "&&-" chains and failures in early iterations of a loop.
-
- Will merge to 'master'.
- source: <pull.1312.git.git.1661192802.gitgitgadget@gmail.com>
-
-
-* ad/preload-plug-memleak (2022-08-22) 1 commit
-  (merged to 'next' on 2022-08-24 at 1cad371f1c)
- + preload-index: fix memleak
-
- The preload-index codepath made copies of pathspec to give to
- multiple threads, which were left leaked.
-
- Will merge to 'master'.
- source: <20220822211507.8693-2-anthony.2lannoy@gmail.com>
-
-
-* sg/xcalloc-cocci-fix (2022-08-24) 1 commit
-  (merged to 'next' on 2022-08-24 at 84c05819d3)
- + promisor-remote: fix xcalloc() argument order
-
- xcalloc(), imitating calloc(), takes "number of elements of the
- array", and "size of a single element", in this order.  A call that
- does not follow this ordering has been corrected.
-
- Will merge to 'master'.
- source: <20220823095733.58685-1-szeder.dev@gmail.com>
-
-
-* ds/github-actions-use-newer-ubuntu (2022-08-24) 1 commit
-  (merged to 'next' on 2022-08-24 at 55a76348b2)
- + ci: update 'static-analysis' to Ubuntu 22.04
-
- Update the version of Ubuntu used for GitHub Actions CI from 18.04
- to 22.04.
-
- Will merge to 'master'.
- source: <pull.1334.git.1661275691795.gitgitgadget@gmail.com>
-
-
 * en/merge-multi-strategies (2022-08-24) 2 commits
   (merged to 'next' on 2022-08-25 at 420e2eae66)
  + merge: small code readability improvement
@@ -230,6 +384,7 @@ Release tarballs are available at:
 * en/t4301-more-merge-tree-tests (2022-08-24) 1 commit
   (merged to 'next' on 2022-08-25 at c7abf60ff4)
  + t4301: add more interesting merge-tree testcases
+ (this branch is used by es/t4301-sed-portability-fix.)
 
  More tests to protect the current behaviour of "merge-tree" before
  it gets further updated.
@@ -238,17 +393,18 @@ Release tarballs are available at:
  source: <pull.1332.git.1661237316150.gitgitgadget@gmail.com>
 
 
-* js/add-p-diff-parsing-fix (2022-08-24) 4 commits
+* js/add-p-diff-parsing-fix (2022-08-29) 5 commits
  - add -p: ignore dirty submodules
  - add -p: handle `diff-so-fancy`'s hunk headers better
+ - add -p: insert space in colored hunk header as needed
  - add -p: gracefully ignore unparseable hunk headers in colored diffs
  - t3701: redefine what is "bogus" output of a diff filter
 
  Those who use diff-so-fancy as the diff-filter noticed a regression
  or two in the reimplemented "add -p", which has been corrected.
 
- Needs review.
- source: <pull.1336.v2.git.1661376112.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.1336.v3.git.1661785916.gitgitgadget@gmail.com>
 
 
 * js/cmake-updates (2022-08-24) 5 commits
@@ -275,27 +431,6 @@ Release tarballs are available at:
  source: <pull.1335.v2.git.1661506770.gitgitgadget@gmail.com>
 
 
-* en/ort-unused-code-removal (2022-08-19) 1 commit
-  (merged to 'next' on 2022-08-22 at f09dbeeca3)
- + merge-ort: remove code obsoleted by other changes
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <pull.1302.git.git.1660884355643.gitgitgadget@gmail.com>
-
-
-* jd/prompt-show-conflict (2022-08-19) 1 commit
-  (merged to 'next' on 2022-08-19 at 83af487823)
- + git-prompt: show presence of unresolved conflicts at command prompt
-
- The bash prompt (in contrib/) learned to optionally indicate when
- the index is unmerged.
-
- Will merge to 'master'.
- source: <pull.1302.v3.git.1660695492382.gitgitgadget@gmail.com>
-
-
 * jk/unused-annotation (2022-08-19) 11 commits
   (merged to 'next' on 2022-08-24 at 2174b8c75d)
  + is_path_owned_by_current_uid(): mark "report" parameter as unused
@@ -314,38 +449,10 @@ Release tarballs are available at:
  removed for structural reasons), to prepare us to later compile
  with -Wunused warning turned on.
 
- Will merge to 'master'.
+ Will revert; coccinelle cannot even parse the annotation correctly.
+ cf. <Ywh7ppVFk6VK1Ybs@coredump.intra.peff.net>
+ cf. <xmqqy1v7r3so.fsf@gitster.g>
  source: <Yv9gxqH6nK2KYnNj@coredump.intra.peff.net>
-
-
-* jk/unused-fixes (2022-08-20) 7 commits
-  (merged to 'next' on 2022-08-22 at 2fe4de2aed)
- + xdiff: drop unused mmfile parameters from xdl_do_patience_diff()
- + reflog: assert PARSE_OPT_NONEG in parse-options callbacks
- + reftable: drop unused parameter from reader_seek_linear()
- + verify_one_sparse(): drop unused parameters
- + match_pathname(): drop unused "flags" parameter
- + log-tree: drop unused commit param in remerge_diff()
- + xdiff: drop unused mmfile parameters from xdl_do_histogram_diff()
-
- Code clean-up to remove unused function parameters.
-
- Will merge to 'master'.
- source: <Yv9Oay+tNqhLDqVl@coredump.intra.peff.net>
- source: <YwCjOETsh1o8u0Og@coredump.intra.peff.net>
-
-
-* mg/sequencer-untranslate-reflog (2022-08-19) 3 commits
-  (merged to 'next' on 2022-08-22 at 75aadeb865)
- + sequencer: do not translate command names
- + sequencer: do not translate parameters to error_resolve_conflict()
- + sequencer: do not translate reflog messages
-
- The sequencer machinery translated messages left in the reflog by
- mistake, which has been corrected.
-
- Will merge to 'master'.
- source: <cover.1660828108.git.git@grubix.eu>
 
 
 * tb/midx-with-changing-preferred-pack-fix (2022-08-22) 7 commits
@@ -363,50 +470,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <cover.1661197803.git.me@ttaylorr.com>
-
-
-* vd/fix-perf-tests (2022-08-19) 2 commits
-  (merged to 'next' on 2022-08-22 at e68356e624)
- + p0006: fix 'read-tree' argument ordering
- + p0004: fix prereq declaration
-
- Rather trivial perf-test code fixes.
-
- Will merge to 'master'.
- source: <pull.1330.git.1660942149.gitgitgadget@gmail.com>
-
-
-* vd/scalar-enables-fsmonitor (2022-08-18) 8 commits
-  (merged to 'next' on 2022-08-19 at 1e172e5647)
- + scalar: update technical doc roadmap with FSMonitor support
- + scalar unregister: stop FSMonitor daemon
- + scalar: enable built-in FSMonitor on `register`
- + scalar: move config setting logic into its own function
- + scalar-delete: do not 'die()' in 'delete_enlistment()'
- + scalar-[un]register: clearly indicate source of error
- + scalar-unregister: handle error codes greater than 0
- + scalar: constrain enlistment search
-
- "scalar" now enables built-in fsmonitor on enlisted repositories,
- when able.
-
- Will merge to 'master'.
- source: <pull.1324.v3.git.1660858853.gitgitgadget@gmail.com>
-
-
-* en/ancestry-path-in-a-range (2022-08-19) 3 commits
-  (merged to 'next' on 2022-08-19 at 4fce3015b3)
- + revision: allow --ancestry-path to take an argument
- + t6019: modernize tests with helper
- + rev-list-options.txt: fix simple typo
-
- "git rev-list --ancestry-path=C A..B" is a natural extension of
- "git rev-list A..B"; instead of choosing a subset of A..B to those
- that have ancestry relationship with A, it lets a subset with
- ancestry relationship with C.
-
- Will merge to 'master'.
- source: <pull.1303.v3.git.1660883290.gitgitgadget@gmail.com>
 
 
 * ed/fsmonitor-on-network-disk (2022-08-24) 3 commits
@@ -527,6 +590,7 @@ Release tarballs are available at:
  + t5505-remote.sh: check the behavior without a subcommand
  + t3301-notes.sh: check that default operation mode doesn't take arguments
  + git.c: update NO_PARSEOPT markings
+ (this branch is used by js/bisect-in-c.)
 
  Introduce the "subcommand" mode to parse-options API and update the
  command line parser of Git commands with subcommands.
@@ -554,32 +618,12 @@ Release tarballs are available at:
  source: <5229519b-3af2-a023-8996-43343b130722@github.com>
 
 
-* ds/decorate-filter-tweak (2022-08-05) 11 commits
-  (merged to 'next' on 2022-08-19 at 064b9daa85)
- + fetch: use ref_namespaces during prefetch
- + maintenance: stop writing log.excludeDecoration
- + log: create log.initialDecorationSet=all
- + log: add --clear-decorations option
- + log: add default decoration filter
- + log-tree: use ref_namespaces instead of if/else-if
- + refs: use ref_namespaces for replace refs base
- + refs: add array of ref namespaces
- + t4207: test coloring of grafted decorations
- + t4207: modernize test
- + refs: allow "HEAD" as decoration filter
-
- The namespaces used by "log --decorate" from "refs/" hierarchy by
- default has been tightened.
-
- Will merge to 'master'.
- source: <pull.1301.v3.git.1659722323.gitgitgadget@gmail.com>
-
-
 * es/doc-creation-factor-fix (2022-07-28) 2 commits
  - range-diff: clarify --creation-factor=<factor>
  - format-patch: clarify --creation-factor=<factor>
 
- Expecting a reroll.
+ Expecting a reroll by somebody more familiar with the logic
+ cf. <xmqqo7wfix7p.fsf@gitster.g>
  source: <7229p500-p2r4-on87-6802-8o90s36rr3s4@tzk.qr>
 
 
@@ -662,30 +706,6 @@ Release tarballs are available at:
  source: <20220728230210.2952731-1-calvinwan@google.com>
 
 
-* mt/rot13-in-c (2022-08-14) 4 commits
-  (merged to 'next' on 2022-08-19 at 22152a150c)
- + tests: use the new C rot13-filter helper to avoid PERL prereq
- + t0021: implementation the rot13-filter.pl script in C
- + t0021: avoid grepping for a Perl-specific string at filter output
- + Merge branch 'mt/checkout-count-fix' into mt/rot13-in-c
-
- Test portability improvements.
-
- Will merge to 'master'.
- source: <cover.1660522524.git.matheus.bernardino@usp.br>
-
-
-* tl/trace2-config-scope (2022-08-11) 2 commits
-  (merged to 'next' on 2022-08-22 at 75a09c7a34)
- + tr2: shows scope unconditionally in addition to key-value pair
- + api-trace2.txt: print config key-value pair
-
- Tweak trace2 output about configuration variables.
-
- Will merge to 'master'.
- source: <cover.1660272404.git.dyroneteng@gmail.com>
-
-
 * ab/submodule-helper-leakfix (2022-08-22) 18 commits
  - submodule--helper: fix a configure_added_submodule() leak
  - submodule--helper: free rest of "displaypath" in "struct update_data"
@@ -726,7 +746,9 @@ Release tarballs are available at:
  source: <pull.1282.git.1657385781.gitgitgadget@gmail.com>
 
 
-* ac/bitmap-lookup-table (2022-08-26) 6 commits
+* ac/bitmap-lookup-table (2022-08-28) 7 commits
+  (merged to 'next' on 2022-08-29 at 05d2d2c8bd)
+ + pack-bitmap-write: drop unused pack_idx_entry parameters
   (merged to 'next' on 2022-08-26 at 7914c141eb)
  + bitmap-lookup-table: add performance tests for lookup table
  + pack-bitmap: prepare to read lookup table extension
@@ -738,34 +760,35 @@ Release tarballs are available at:
  The pack bitmap file gained a bitmap-lookup table to speed up
  locating the necessary bitmap for a given commit.
 
- Will merge to 'next'?
- cf. <Ywf01YqJKNsGfffx@nand.local>
+ Will merge to 'master'.
  source: <pull.1266.v6.git.1660496112.gitgitgadget@gmail.com>
 
 
-* js/bisect-in-c (2022-06-27) 16 commits
+* js/bisect-in-c (2022-08-27) 17 commits
  - bisect: no longer try to clean up left-over `.git/head-name` files
  - bisect: remove Cogito-related code
  - Turn `git bisect` into a full built-in
  - bisect: move even the command-line parsing to `bisect--helper`
- - bisect: teach the `bisect--helper` command to show the correct usage strings
- - bisect--helper: return only correct exit codes in `cmd_*()`
- - bisect--helper: move the `BISECT_STATE` case to the end
- - bisect--helper: make `--bisect-state` optional
- - bisect--helper: align the sub-command order with git-bisect.sh
- - bisect--helper: using `--bisect-state` without an argument is a bug
- - bisect--helper: really retire `--bisect-autostart`
- - bisect--helper: really retire --bisect-next-check
- - bisect--helper: retire the --no-log option
+ - bisect--helper: make `state` optional
+ - bisect--helper: calling `bisect_state()` without an argument is a bug
  - bisect: avoid double-quoting when printing the failed command
  - bisect run: fix the error message
  - bisect: verify that a bogus option won't try to start a bisection
+ - bisect--helper: migrate to OPT_SUBCOMMAND()
+ - bisect--helper: make the order consistently `argc, argv`
+ - bisect--helper: make `terms` an explicit singleton
+ - bisect--helper: simplify exit code computation
+ - bisect--helper: really retire `--bisect-autostart`
+ - bisect--helper: really retire --bisect-next-check
+ - bisect--helper: retire the --no-log option
+ - Merge branch 'sg/parse-options-subcommand' into js/bisect-in-c
+ (this branch uses sg/parse-options-subcommand.)
 
  Final bits of "git bisect.sh" have been rewritten in C.
 
  Expecting a (hopefully final) reroll.
  cf. <20627.86ilolhnnn.gmgdl@evledraar.gmail.com>
- source: <pull.1132.v4.git.1656354677.gitgitgadget@gmail.com>
+ source: <pull.1132.v5.git.1661604264.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Discarded]
