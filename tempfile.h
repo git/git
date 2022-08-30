@@ -82,7 +82,7 @@ struct tempfile {
 	FILE *volatile fp;
 	volatile pid_t owner;
 	struct strbuf filename;
-	size_t directorylen;
+	char *directory;
 };
 
 /*
