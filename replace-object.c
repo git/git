@@ -9,8 +9,7 @@
 static int register_replace_ref(struct repository *r,
 				const char *refname,
 				const struct object_id *oid,
-				int UNUSED(flag),
-				void *UNUSED(cb_data))
+				int flag, void *cb_data)
 {
 	/* Get sha1 from refname */
 	const char *slash = strrchr(refname, '/');

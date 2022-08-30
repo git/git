@@ -47,7 +47,7 @@ static void show_one(const char *refname, const struct object_id *oid)
 }
 
 static int show_ref(const char *refname, const struct object_id *oid,
-		    int UNUSED(flag), void *UNUSED(cbdata))
+		    int flag, void *cbdata)
 {
 	if (show_head && !strcmp(refname, "HEAD"))
 		goto match;
@@ -77,9 +77,8 @@ match:
 	return 0;
 }
 
-static int add_existing(const char *refname,
-			const struct object_id *UNUSED(oid),
-			int UNUSED(flag), void *cbdata)
+static int add_existing(const char *refname, const struct object_id *oid,
+			int flag, void *cbdata)
 {
 	struct string_list *list = (struct string_list *)cbdata;
 	string_list_insert(list, refname);

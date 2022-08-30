@@ -189,12 +189,6 @@ struct strbuf;
 #define _NETBSD_SOURCE 1
 #define _SGI_SOURCE 1
 
-#if defined(__GNUC__)
-#define UNUSED(var) UNUSED_##var __attribute__((unused))
-#else
-#define UNUSED(var) UNUSED_##var
-#endif
-
 #if defined(WIN32) && !defined(__CYGWIN__) /* Both MinGW and MSVC */
 # if !defined(_WIN32_WINNT)
 #  define _WIN32_WINNT 0x0600
@@ -404,9 +398,7 @@ typedef uintmax_t timestamp_t;
 #endif
 
 #ifndef platform_core_config
-static inline int noop_core_config(const char *UNUSED(var),
-				   const char *UNUSED(value),
-				   void *UNUSED(cb))
+static inline int noop_core_config(const char *var, const char *value, void *cb)
 {
 	return 0;
 }
@@ -499,8 +491,7 @@ static inline void extract_id_from_env(const char *env, uid_t *id)
 	}
 }
 
-static inline int is_path_owned_by_current_uid(const char *path,
-					       struct strbuf *UNUSED(report))
+static inline int is_path_owned_by_current_uid(const char *path, struct strbuf *report)
 {
 	struct stat st;
 	uid_t euid;

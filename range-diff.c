@@ -224,10 +224,8 @@ cleanup:
 	return ret;
 }
 
-static int patch_util_cmp(const void *UNUSED(cmp_data),
-			  const struct patch_util *a,
-			  const struct patch_util *b,
-			  const char *keydata)
+static int patch_util_cmp(const void *dummy, const struct patch_util *a,
+			  const struct patch_util *b, const char *keydata)
 {
 	return strcmp(a->diff, keydata ? keydata : b->diff);
 }
