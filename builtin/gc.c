@@ -2087,6 +2087,7 @@ static int crontab_update_schedule(int run_maintenance, int fd)
 	struct child_process crontab_edit = CHILD_PROCESS_INIT;
 	FILE *cron_list, *cron_in;
 	struct strbuf line = STRBUF_INIT;
+	struct tempfile *tmpedit = NULL;
 
 	get_schedule_cmd(&cmd, NULL);
 	strvec_split(&crontab_list.args, cmd);
@@ -2101,25 +2102,23 @@ static int crontab_update_schedule(int run_maintenance, int fd)
 	/* Ignore exit code, as an empty crontab will return error. */
 	finish_command(&crontab_list);
 
+	tmpedit = mks_tempfile_t(".git_cron_edit_tmpXXXXXX");
+	if (!tmpedit) {
+		result = error(_("failed to create crontab temporary file"));
+		goto out;
+	}
+	cron_in = fdopen_tempfile(tmpedit, "w");
+	if (!cron_in) {
+		result = error(_("failed to open temporary file"));
+		goto out;
+	}
+
 	/*
 	 * Read from the .lock file, filtering out the old
 	 * schedule while appending the new schedule.
 	 */
 	cron_list = fdopen(fd, "r");
 	rewind(cron_list);
-
-	strvec_split(&crontab_edit.args, cmd);
-	crontab_edit.in = -1;
-	crontab_edit.git_cmd = 0;
-
-	if (start_command(&crontab_edit))
-		return error(_("failed to run 'crontab'; your system might not support 'cron'"));
-
-	cron_in = fdopen(crontab_edit.in, "w");
-	if (!cron_in) {
-		result = error(_("failed to open stdin of 'crontab'"));
-		goto done_editing;
-	}
 
 	while (!strbuf_getline_lf(&line, cron_list)) {
 		if (!in_old_region && !strcmp(line.buf, BEGIN_LINE))
@@ -2154,14 +2153,22 @@ static int crontab_update_schedule(int run_maintenance, int fd)
 	}
 
 	fflush(cron_in);
-	fclose(cron_in);
-	close(crontab_edit.in);
 
-done_editing:
+	strvec_split(&crontab_edit.args, cmd);
+	strvec_push(&crontab_edit.args, get_tempfile_path(tmpedit));
+	crontab_edit.git_cmd = 0;
+
+	if (start_command(&crontab_edit)) {
+		result = error(_("failed to run 'crontab'; your system might not support 'cron'"));
+		goto out;
+	}
+
 	if (finish_command(&crontab_edit))
 		result = error(_("'crontab' died"));
 	else
 		fclose(cron_list);
+out:
+	delete_tempfile(&tmpedit);
 	return result;
 }
 
