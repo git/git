@@ -86,8 +86,6 @@ static void remove_tempfiles(int in_signal_handler)
 		else
 			unlink_or_warn(p->filename.buf);
 		remove_template_directory(p, in_signal_handler);
-
-		p->active = 0;
 	}
 }
 
@@ -108,7 +106,6 @@ static struct tempfile *new_tempfile(void)
 	struct tempfile *tempfile = xmalloc(sizeof(*tempfile));
 	tempfile->fd = -1;
 	tempfile->fp = NULL;
-	tempfile->active = 0;
 	tempfile->owner = 0;
 	INIT_LIST_HEAD(&tempfile->list);
 	strbuf_init(&tempfile->filename, 0);
@@ -120,9 +117,6 @@ static void activate_tempfile(struct tempfile *tempfile)
 {
 	static int initialized;
 
-	if (is_tempfile_active(tempfile))
-		BUG("activate_tempfile called for active object");
-
 	if (!initialized) {
 		sigchain_push_common(remove_tempfiles_on_signal);
 		atexit(remove_tempfiles_on_exit);
@@ -131,15 +125,13 @@ static void activate_tempfile(struct tempfile *tempfile)
 
 	volatile_list_add(&tempfile->list, &tempfile_list);
 	tempfile->owner = getpid();
-	tempfile->active = 1;
 }
 
 static void deactivate_tempfile(struct tempfile *tempfile)
 {
-	tempfile->active = 0;
+	volatile_list_del(&tempfile->list);
 	strbuf_release(&tempfile->filename);
 	free(tempfile->directory);
-	volatile_list_del(&tempfile->list);
 	free(tempfile);
 }
 
