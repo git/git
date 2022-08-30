@@ -2,33 +2,34 @@
 #include "cache.h"
 
 /*
- * Usage: test-tool cron <file> [-l]
+ * Usage: test-tool crontab <file> -l|<input>
  *
  * If -l is specified, then write the contents of <file> to stdout.
- * Otherwise, write from stdin into <file>.
+ * Otherwise, copy the contents of <input> into <file>.
  */
 int cmd__crontab(int argc, const char **argv)
 {
 	int a;
 	FILE *from, *to;
 
-	if (argc == 3 && !strcmp(argv[2], "-l")) {
+	if (argc != 3)
+		usage("test-tool crontab <file> -l|<input>");
+
+	if (!strcmp(argv[2], "-l")) {
 		from = fopen(argv[1], "r");
 		if (!from)
 			return 0;
 		to = stdout;
-	} else if (argc == 3) {
-		from = fopen(argv[2], "r");
-		to = fopen(argv[1], "w");
-	} else
-		return error("unknown arguments");
+	} else {
+		from = xfopen(argv[2], "r");
+		to = xfopen(argv[1], "w");
+	}
 
 	while ((a = fgetc(from)) != EOF)
 		fputc(a, to);
 
-	if (argc == 3)
-		fclose(from);
-	else
+	fclose(from);
+	if (to != stdout)
 		fclose(to);
 
 	return 0;
