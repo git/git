@@ -22,21 +22,35 @@ static int compare_strings(const struct line *x, const struct line *y)
 
 static int sort_stdin(void)
 {
-	struct line *line, *p = NULL, *lines = NULL;
+	struct line *lines;
+	struct line **tail = &lines;
 	struct strbuf sb = STRBUF_INIT;
+	struct mem_pool lines_pool;
+	char *p;
 
-	while (!strbuf_getline(&sb, stdin)) {
-		line = xmalloc(sizeof(struct line));
-		line->text = strbuf_detach(&sb, NULL);
-		if (p) {
-			line->next = p->next;
-			p->next = line;
-		} else {
-			line->next = NULL;
-			lines = line;
-		}
-		p = line;
+	strbuf_read(&sb, 0, 0);
+
+	/*
+	 * Split by newline, but don't create an item
+	 * for the empty string after the last separator.
+	 */
+	if (sb.len && sb.buf[sb.len - 1] == '\n')
+		strbuf_setlen(&sb, sb.len - 1);
+
+	mem_pool_init(&lines_pool, 0);
+	p = sb.buf;
+	for (;;) {
+		char *eol = strchr(p, '\n');
+		struct line *line = mem_pool_alloc(&lines_pool, sizeof(*line));
+		line->text = p;
+		*tail = line;
+		tail = &line->next;
+		if (!eol)
+			break;
+		*eol = '\0';
+		p = eol + 1;
 	}
+	*tail = NULL;
 
 	sort_lines(&lines, compare_strings);
 
