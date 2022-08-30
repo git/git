@@ -59,14 +59,11 @@ static VOLATILE_LIST_HEAD(tempfile_list);
 static void remove_template_directory(struct tempfile *tempfile,
 				      int in_signal_handler)
 {
-	if (tempfile->directorylen > 0 &&
-	    tempfile->directorylen < tempfile->filename.len &&
-	    tempfile->filename.buf[tempfile->directorylen] == '/') {
-		strbuf_setlen(&tempfile->filename, tempfile->directorylen);
+	if (tempfile->directory) {
 		if (in_signal_handler)
-			rmdir(tempfile->filename.buf);
+			rmdir(tempfile->directory);
 		else
-			rmdir_or_warn(tempfile->filename.buf);
+			rmdir_or_warn(tempfile->directory);
 	}
 }
 
@@ -115,7 +112,7 @@ static struct tempfile *new_tempfile(void)
 	tempfile->owner = 0;
 	INIT_LIST_HEAD(&tempfile->list);
 	strbuf_init(&tempfile->filename, 0);
-	tempfile->directorylen = 0;
+	tempfile->directory = NULL;
 	return tempfile;
 }
 
@@ -141,6 +138,7 @@ static void deactivate_tempfile(struct tempfile *tempfile)
 {
 	tempfile->active = 0;
 	strbuf_release(&tempfile->filename);
+	free(tempfile->directory);
 	volatile_list_del(&tempfile->list);
 	free(tempfile);
 }
@@ -254,7 +252,7 @@ struct tempfile *mks_tempfile_dt(const char *directory_template,
 
 	tempfile = new_tempfile();
 	strbuf_swap(&tempfile->filename, &sb);
-	tempfile->directorylen = directorylen;
+	tempfile->directory = xmemdupz(tempfile->filename.buf, directorylen);
 	tempfile->fd = fd;
 	activate_tempfile(tempfile);
 	return tempfile;
