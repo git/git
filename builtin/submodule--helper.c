@@ -63,7 +63,10 @@ static char *get_default_remote_submodule(const char *module_path)
 {
 	struct repository subrepo;
 
-	repo_submodule_init(&subrepo, the_repository, module_path, null_oid());
+	if (repo_submodule_init(&subrepo, the_repository, module_path,
+				null_oid()) < 0)
+		die(_("could not get a repository handle for submodule '%s'"),
+		    module_path);
 	return repo_get_default_remote(&subrepo);
 }
 
@@ -1480,7 +1483,9 @@ static int add_possible_reference_from_superproject(
 		struct strbuf err = STRBUF_INIT;
 		strbuf_add(&sb, odb->path, len);
 
-		repo_init(&alternate, sb.buf, NULL);
+		if (repo_init(&alternate, sb.buf, NULL) < 0)
+			die(_("could not get a repository handle for gitdir '%s'"),
+			    sb.buf);
 
 		/*
 		 * We need to end the new path with '/' to mark it as a dir,
