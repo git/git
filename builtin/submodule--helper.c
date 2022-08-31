@@ -31,48 +31,57 @@
 typedef void (*each_submodule_fn)(const struct cache_entry *list_item,
 				  void *cb_data);
 
-static char *repo_get_default_remote(struct repository *repo)
+static int repo_get_default_remote(struct repository *repo, char **default_remote)
 {
-	char *dest = NULL, *ret;
+	char *dest = NULL;
 	struct strbuf sb = STRBUF_INIT;
 	struct ref_store *store = get_main_ref_store(repo);
 	const char *refname = refs_resolve_ref_unsafe(store, "HEAD", 0, NULL,
 						      NULL);
 
 	if (!refname)
-		die(_("No such ref: %s"), "HEAD");
+		return die_message(_("No such ref: %s"), "HEAD");
 
 	/* detached HEAD */
-	if (!strcmp(refname, "HEAD"))
-		return xstrdup("origin");
+	if (!strcmp(refname, "HEAD")) {
+		*default_remote = xstrdup("origin");
+		return 0;
+	}
 
 	if (!skip_prefix(refname, "refs/heads/", &refname))
-		die(_("Expecting a full ref name, got %s"), refname);
+		return die_message(_("Expecting a full ref name, got %s"),
+				   refname);
 
 	strbuf_addf(&sb, "branch.%s.remote", refname);
 	if (repo_config_get_string(repo, sb.buf, &dest))
-		ret = xstrdup("origin");
+		*default_remote = xstrdup("origin");
 	else
-		ret = dest;
+		*default_remote = dest;
 
 	strbuf_release(&sb);
-	return ret;
+	return 0;
 }
 
-static char *get_default_remote_submodule(const char *module_path)
+static int get_default_remote_submodule(const char *module_path, char **default_remote)
 {
 	struct repository subrepo;
 
 	if (repo_submodule_init(&subrepo, the_repository, module_path,
 				null_oid()) < 0)
-		die(_("could not get a repository handle for submodule '%s'"),
-		    module_path);
-	return repo_get_default_remote(&subrepo);
+		return die_message(_("could not get a repository handle for submodule '%s'"),
+				   module_path);
+	return repo_get_default_remote(&subrepo, default_remote);
 }
 
 static char *get_default_remote(void)
 {
-	return repo_get_default_remote(the_repository);
+	char *default_remote;
+	int code = repo_get_default_remote(the_repository, &default_remote);
+
+	if (code)
+		exit(code);
+
+	return default_remote;
 }
 
 static char *resolve_relative_url(const char *rel_url, const char *up_path, int quiet)
@@ -1156,6 +1165,7 @@ static void sync_submodule(const char *path, const char *prefix,
 	char *sub_origin_url, *super_config_url, *displaypath, *default_remote;
 	struct strbuf sb = STRBUF_INIT;
 	char *sub_config_path = NULL;
+	int code;
 
 	if (!is_submodule_active(the_repository, path))
 		return;
@@ -1195,10 +1205,9 @@ static void sync_submodule(const char *path, const char *prefix,
 		goto cleanup;
 
 	strbuf_reset(&sb);
-	default_remote = get_default_remote_submodule(path);
-	if (!default_remote)
-		die(_("failed to get the default remote for submodule '%s'"),
-		      path);
+	code = get_default_remote_submodule(path, &default_remote);
+	if (code)
+		exit(code);
 
 	remote_key = xstrfmt("remote.%s.url", default_remote);
 	free(default_remote);
@@ -2419,9 +2428,16 @@ static int update_submodule(struct update_data *update_data)
 				   update_data->displaypath);
 
 	if (update_data->remote) {
-		char *remote_name = get_default_remote_submodule(update_data->sm_path);
-		const char *branch = remote_submodule_branch(update_data->sm_path);
-		char *remote_ref = xstrfmt("refs/remotes/%s/%s", remote_name, branch);
+		char *remote_name;
+		const char *branch;
+		char *remote_ref;
+		int code;
+
+		code = get_default_remote_submodule(update_data->sm_path, &remote_name);
+		if (code)
+			return code;
+		branch = remote_submodule_branch(update_data->sm_path);
+		remote_ref = xstrfmt("refs/remotes/%s/%s", remote_name, branch);
 
 		if (!update_data->nofetch) {
 			if (fetch_in_submodule(update_data->sm_path, update_data->depth,
