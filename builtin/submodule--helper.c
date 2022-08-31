@@ -2156,8 +2156,8 @@ static int run_update_command(const struct update_data *ud, int subforce)
 		must_die_on_failure = 1;
 		break;
 	default:
-		BUG("unexpected update strategy type: %s",
-		    submodule_strategy_to_string(&ud->update_strategy));
+		BUG("unexpected update strategy type: %d",
+		    ud->update_strategy.type);
 	}
 	strvec_push(&cp.args, oid);
 
@@ -2182,8 +2182,8 @@ static int run_update_command(const struct update_data *ud, int subforce)
 			    ud->update_strategy.command, oid, ud->displaypath);
 			break;
 		default:
-			BUG("unexpected update strategy type: %s",
-			    submodule_strategy_to_string(&ud->update_strategy));
+			BUG("unexpected update strategy type: %d",
+			    ud->update_strategy.type);
 		}
 		if (must_die_on_failure)
 			exit(128);
@@ -2213,8 +2213,8 @@ static int run_update_command(const struct update_data *ud, int subforce)
 		       ud->displaypath, ud->update_strategy.command, oid);
 		break;
 	default:
-		BUG("unexpected update strategy type: %s",
-		    submodule_strategy_to_string(&ud->update_strategy));
+		BUG("unexpected update strategy type: %d",
+		    ud->update_strategy.type);
 	}
 
 	return 0;
