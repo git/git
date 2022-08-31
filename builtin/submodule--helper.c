@@ -1730,24 +1730,27 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
-static void determine_submodule_update_strategy(struct repository *r,
-						int just_cloned,
-						const char *path,
-						enum submodule_update_type update,
-						struct submodule_update_strategy *out)
+static int determine_submodule_update_strategy(struct repository *r,
+					       int just_cloned,
+					       const char *path,
+					       enum submodule_update_type update,
+					       struct submodule_update_strategy *out)
 {
 	const struct submodule *sub = submodule_from_path(r, null_oid(), path);
 	char *key;
 	const char *val;
+	int ret;
 
 	key = xstrfmt("submodule.%s.update", sub->name);
 
 	if (update) {
 		out->type = update;
 	} else if (!repo_config_get_string_tmp(r, key, &val)) {
-		if (parse_submodule_update_strategy(val, out) < 0)
-			die(_("Invalid update mode '%s' configured for submodule path '%s'"),
-				val, path);
+		if (parse_submodule_update_strategy(val, out) < 0) {
+			ret = die_message(_("Invalid update mode '%s' configured for submodule path '%s'"),
+					  val, path);
+			goto cleanup;
+		}
 	} else if (sub->update_strategy.type != SM_UPDATE_UNSPECIFIED) {
 		if (sub->update_strategy.type == SM_UPDATE_COMMAND)
 			BUG("how did we read update = !command from .gitmodules?");
@@ -1762,7 +1765,10 @@ static void determine_submodule_update_strategy(struct repository *r,
 	     out->type == SM_UPDATE_NONE))
 		out->type = SM_UPDATE_CHECKOUT;
 
+	ret = 0;
+cleanup:
 	free(key);
+	return ret;
 }
 
 struct update_clone_data {
@@ -2388,14 +2394,22 @@ static void update_data_to_args(const struct update_data *update_data,
 static int update_submodule(struct update_data *update_data,
 			    int *must_die_on_failure)
 {
+	int ret;
+
 	ensure_core_worktree(update_data->sm_path);
 
 	update_data->displaypath = get_submodule_displaypath(
 		update_data->sm_path, update_data->prefix);
 
-	determine_submodule_update_strategy(the_repository, update_data->just_cloned,
-					    update_data->sm_path, update_data->update_default,
-					    &update_data->update_strategy);
+	ret = determine_submodule_update_strategy(the_repository,
+						  update_data->just_cloned,
+						  update_data->sm_path,
+						  update_data->update_default,
+						  &update_data->update_strategy);
+	if (ret) {
+		*must_die_on_failure = 1;
+		return ret;
+	}
 
 	if (update_data->just_cloned)
 		oidcpy(&update_data->suboid, null_oid());
@@ -2423,8 +2437,6 @@ static int update_submodule(struct update_data *update_data,
 	}
 
 	if (!oideq(&update_data->oid, &update_data->suboid) || update_data->force) {
-		int ret;
-
 		ret = run_update_procedure(update_data, must_die_on_failure);
 		if (*must_die_on_failure)
 			return ret;
@@ -2435,7 +2447,6 @@ static int update_submodule(struct update_data *update_data,
 	if (update_data->recursive) {
 		struct child_process cp = CHILD_PROCESS_INIT;
 		struct update_data next = *update_data;
-		int ret;
 
 		next.prefix = NULL;
 		oidcpy(&next.oid, null_oid());
