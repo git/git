@@ -2265,42 +2265,49 @@ static int run_update_procedure(const struct update_data *ud)
 	return run_update_command(ud, subforce);
 }
 
-static const char *remote_submodule_branch(const char *path)
+static int remote_submodule_branch(const char *path, const char **branch)
 {
 	const struct submodule *sub;
-	const char *branch = NULL;
 	char *key;
+	*branch = NULL;
 
 	sub = submodule_from_path(the_repository, null_oid(), path);
 	if (!sub)
-		return NULL;
+		return die_message(_("could not initialize submodule at path '%s'"),
+				   path);
 
 	key = xstrfmt("submodule.%s.branch", sub->name);
-	if (repo_config_get_string_tmp(the_repository, key, &branch))
-		branch = sub->branch;
+	if (repo_config_get_string_tmp(the_repository, key, branch))
+		*branch = sub->branch;
 	free(key);
 
-	if (!branch)
-		return "HEAD";
+	if (!*branch) {
+		*branch = "HEAD";
+		return 0;
+	}
 
-	if (!strcmp(branch, ".")) {
+	if (!strcmp(*branch, ".")) {
 		const char *refname = resolve_ref_unsafe("HEAD", 0, NULL, NULL);
 
 		if (!refname)
-			die(_("No such ref: %s"), "HEAD");
+			return die_message(_("No such ref: %s"), "HEAD");
 
 		/* detached HEAD */
 		if (!strcmp(refname, "HEAD"))
-			die(_("Submodule (%s) branch configured to inherit "
-			      "branch from superproject, but the superproject "
-			      "is not on any branch"), sub->name);
+			return die_message(_("Submodule (%s) branch configured to inherit "
+					     "branch from superproject, but the superproject "
+					     "is not on any branch"), sub->name);
 
 		if (!skip_prefix(refname, "refs/heads/", &refname))
-			die(_("Expecting a full ref name, got %s"), refname);
-		return refname;
+			return die_message(_("Expecting a full ref name, got %s"),
+					   refname);
+
+		*branch = refname;
+		return 0;
 	}
 
-	return branch;
+	/* Our "branch" is coming from repo_config_get_string_tmp() */
+	return 0;
 }
 
 static int ensure_core_worktree(const char *path)
@@ -2436,7 +2443,9 @@ static int update_submodule(struct update_data *update_data)
 		code = get_default_remote_submodule(update_data->sm_path, &remote_name);
 		if (code)
 			return code;
-		branch = remote_submodule_branch(update_data->sm_path);
+		code = remote_submodule_branch(update_data->sm_path, &branch);
+		if (code)
+			return code;
 		remote_ref = xstrfmt("refs/remotes/%s/%s", remote_name, branch);
 
 		if (!update_data->nofetch) {
