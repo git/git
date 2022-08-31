@@ -2127,7 +2127,6 @@ static int run_update_command(const struct update_data *ud, int subforce)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 	char *oid = oid_to_hex(&ud->oid);
-	int must_die_on_failure = 0;
 
 	switch (ud->update_strategy.type) {
 	case SM_UPDATE_CHECKOUT:
@@ -2141,19 +2140,16 @@ static int run_update_command(const struct update_data *ud, int subforce)
 		strvec_push(&cp.args, "rebase");
 		if (ud->quiet)
 			strvec_push(&cp.args, "--quiet");
-		must_die_on_failure = 1;
 		break;
 	case SM_UPDATE_MERGE:
 		cp.git_cmd = 1;
 		strvec_push(&cp.args, "merge");
 		if (ud->quiet)
 			strvec_push(&cp.args, "--quiet");
-		must_die_on_failure = 1;
 		break;
 	case SM_UPDATE_COMMAND:
 		cp.use_shell = 1;
 		strvec_push(&cp.args, ud->update_strategy.command);
-		must_die_on_failure = 1;
 		break;
 	default:
 		BUG("unexpected update strategy type: %d",
@@ -2164,32 +2160,35 @@ static int run_update_command(const struct update_data *ud, int subforce)
 	cp.dir = xstrdup(ud->sm_path);
 	prepare_submodule_repo_env(&cp.env);
 	if (run_command(&cp)) {
+		int ret;
+
 		switch (ud->update_strategy.type) {
 		case SM_UPDATE_CHECKOUT:
 			die_message(_("Unable to checkout '%s' in submodule path '%s'"),
 				    oid, ud->displaypath);
+			/* the command failed, but update must continue */
+			ret = 1;
 			break;
 		case SM_UPDATE_REBASE:
-			die_message(_("Unable to rebase '%s' in submodule path '%s'"),
-			    oid, ud->displaypath);
+			ret = die_message(_("Unable to rebase '%s' in submodule path '%s'"),
+					  oid, ud->displaypath);
 			break;
 		case SM_UPDATE_MERGE:
-			die_message(_("Unable to merge '%s' in submodule path '%s'"),
-			    oid, ud->displaypath);
+			ret = die_message(_("Unable to merge '%s' in submodule path '%s'"),
+					  oid, ud->displaypath);
 			break;
 		case SM_UPDATE_COMMAND:
-			die_message(_("Execution of '%s %s' failed in submodule path '%s'"),
-			    ud->update_strategy.command, oid, ud->displaypath);
+			ret = die_message(_("Execution of '%s %s' failed in submodule path '%s'"),
+					  ud->update_strategy.command, oid, ud->displaypath);
 			break;
 		default:
 			BUG("unexpected update strategy type: %d",
 			    ud->update_strategy.type);
 		}
-		if (must_die_on_failure)
-			exit(128);
 
-		/* the command failed, but update must continue */
-		return 1;
+		if (ret == 128)
+			exit(ret);
+		return ret;
 	}
 
 	if (ud->quiet)
