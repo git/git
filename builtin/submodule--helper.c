@@ -2426,7 +2426,7 @@ static int update_submodule(struct update_data *update_data)
 	if (update_data->recursive) {
 		struct child_process cp = CHILD_PROCESS_INIT;
 		struct update_data next = *update_data;
-		int res;
+		int ret;
 
 		next.prefix = NULL;
 		oidcpy(&next.oid, null_oid());
@@ -2438,13 +2438,13 @@ static int update_submodule(struct update_data *update_data)
 		update_data_to_args(&next, &cp.args);
 
 		/* die() if child process die()'d */
-		res = run_command(&cp);
-		if (!res)
+		ret = run_command(&cp);
+		if (!ret)
 			return 0;
 		die_message(_("Failed to recurse into submodule path '%s'"),
 			    update_data->displaypath);
-		if (res == 128)
-			exit(res);
+		if (ret == 128)
+			exit(ret);
 		return 1;
 	}
 
@@ -2453,7 +2453,7 @@ static int update_submodule(struct update_data *update_data)
 
 static int update_submodules(struct update_data *update_data)
 {
-	int i, res = 0;
+	int i, ret = 0;
 	struct submodule_update_clone suc = SUBMODULE_UPDATE_CLONE_INIT;
 
 	suc.update_data = update_data;
@@ -2471,7 +2471,7 @@ static int update_submodules(struct update_data *update_data)
 	 * - the listener can avoid doing any work if fetching failed.
 	 */
 	if (suc.quickstop) {
-		res = 1;
+		ret = 1;
 		goto cleanup;
 	}
 
@@ -2483,12 +2483,12 @@ static int update_submodules(struct update_data *update_data)
 		update_data->sm_path = ucd.sub->path;
 
 		if (update_submodule(update_data))
-			res = 1;
+			ret = 1;
 	}
 
 cleanup:
 	string_list_clear(&update_data->references, 0);
-	return res;
+	return ret;
 }
 
 static int module_update(int argc, const char **argv, const char *prefix)
