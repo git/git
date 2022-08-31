@@ -135,8 +135,7 @@ Issues of note:
 
 	  By default, git uses OpenSSL for SHA1 but it will use its own
 	  library (inspired by Mozilla's) with either NO_OPENSSL or
-	  BLK_SHA1.  Also included is a version optimized for PowerPC
-	  (PPC_SHA1).
+	  BLK_SHA1.
 
 	- "libcurl" library is used for fetching and pushing
 	  repositories over http:// or https://, as well as by

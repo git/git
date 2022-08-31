@@ -28,10 +28,6 @@
  * try to do the silly "optimize away loads" part because it won't
  * see what the value will be).
  *
- * Ben Herrenschmidt reports that on PPC, the C version comes close
- * to the optimized asm with this (ie on PPC you don't want that
- * 'volatile', since there are lots of registers).
- *
  * On ARM we get the best code generation by forcing a full memory barrier
  * between each SHA_ROUND, otherwise gcc happily get wild with spilling and
  * the stack frame size simply explode and performance goes down the drain.
