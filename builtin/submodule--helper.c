@@ -1587,13 +1587,12 @@ static int clone_submodule(const struct module_clone_data *clone_data,
 	char *sm_gitdir = clone_submodule_sm_gitdir(clone_data->name);
 	char *sm_alternate = NULL, *error_strategy = NULL;
 	struct child_process cp = CHILD_PROCESS_INIT;
-	const char *clone_data_path;
+	const char *clone_data_path = clone_data->path;
+	char *to_free = NULL;
 
 	if (!is_absolute_path(clone_data->path))
-		clone_data_path = xstrfmt("%s/%s", get_git_work_tree(),
-					  clone_data->path);
-	else
-		clone_data_path = xstrdup(clone_data->path);
+		clone_data_path = to_free = xstrfmt("%s/%s", get_git_work_tree(),
+						    clone_data->path);
 
 	if (validate_submodule_git_dir(sm_gitdir, clone_data->name) < 0)
 		die(_("refusing to create/use '%s' in another submodule's "
@@ -1678,6 +1677,7 @@ static int clone_submodule(const struct module_clone_data *clone_data,
 
 	free(sm_gitdir);
 	free(p);
+	free(to_free);
 	return 0;
 }
 
