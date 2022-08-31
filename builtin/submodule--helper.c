@@ -2080,7 +2080,7 @@ static int git_update_clone_config(const char *var, const char *value,
 	return 0;
 }
 
-static int is_tip_reachable(const char *path, struct object_id *oid)
+static int is_tip_reachable(const char *path, const struct object_id *oid)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 	struct strbuf rev = STRBUF_INIT;
@@ -2099,7 +2099,8 @@ static int is_tip_reachable(const char *path, struct object_id *oid)
 	return 1;
 }
 
-static int fetch_in_submodule(const char *module_path, int depth, int quiet, struct object_id *oid)
+static int fetch_in_submodule(const char *module_path, int depth, int quiet,
+			      const struct object_id *oid)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 
@@ -2123,7 +2124,7 @@ static int fetch_in_submodule(const char *module_path, int depth, int quiet, str
 	return run_command(&cp);
 }
 
-static int run_update_command(struct update_data *ud, int subforce)
+static int run_update_command(const struct update_data *ud, int subforce)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 	char *oid = oid_to_hex(&ud->oid);
@@ -2220,7 +2221,7 @@ static int run_update_command(struct update_data *ud, int subforce)
 	return 0;
 }
 
-static int run_update_procedure(struct update_data *ud)
+static int run_update_procedure(const struct update_data *ud)
 {
 	int subforce = is_null_oid(&ud->suboid) || ud->force;
 
@@ -2331,7 +2332,8 @@ static const char *submodule_update_type_to_label(enum submodule_update_type typ
 	BUG("unreachable with type %d", type);
 }
 
-static void update_data_to_args(struct update_data *update_data, struct strvec *args)
+static void update_data_to_args(const struct update_data *update_data,
+				struct strvec *args)
 {
 	enum submodule_update_type update_type = update_data->update_default;
 
