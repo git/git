@@ -2397,6 +2397,7 @@ static int ensure_core_worktree(const char *path)
 		strbuf_release(&sb);
 	}
 
+	repo_clear(&subrepo);
 	return 0;
 }
 
