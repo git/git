@@ -2133,6 +2133,7 @@ static int run_update_command(const struct update_data *ud, int subforce)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 	char *oid = oid_to_hex(&ud->oid);
+	int ret;
 
 	switch (ud->update_strategy.type) {
 	case SM_UPDATE_CHECKOUT:
@@ -2165,15 +2166,12 @@ static int run_update_command(const struct update_data *ud, int subforce)
 
 	cp.dir = xstrdup(ud->sm_path);
 	prepare_submodule_repo_env(&cp.env);
-	if (run_command(&cp)) {
-		int ret;
-
+	if ((ret = run_command(&cp))) {
 		switch (ud->update_strategy.type) {
 		case SM_UPDATE_CHECKOUT:
 			die_message(_("Unable to checkout '%s' in submodule path '%s'"),
 				    oid, ud->displaypath);
-			/* the command failed, but update must continue */
-			ret = 1;
+			/* No "ret" assignment, use "git checkout"'s */
 			break;
 		case SM_UPDATE_REBASE:
 			ret = die_message(_("Unable to rebase '%s' in submodule path '%s'"),
@@ -2496,7 +2494,6 @@ static int update_submodules(struct update_data *update_data)
 		ret = code;
 		if (ret == 128)
 			goto cleanup;
-		ret = 1;
 	}
 
 cleanup:
