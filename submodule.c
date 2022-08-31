@@ -415,10 +415,9 @@ int parse_submodule_update_strategy(const char *value,
 	return 0;
 }
 
-const char *submodule_strategy_to_string(const struct submodule_update_strategy *s)
+const char *submodule_update_type_to_string(enum submodule_update_type type)
 {
-	struct strbuf sb = STRBUF_INIT;
-	switch (s->type) {
+	switch (type) {
 	case SM_UPDATE_CHECKOUT:
 		return "checkout";
 	case SM_UPDATE_MERGE:
@@ -428,12 +427,11 @@ const char *submodule_strategy_to_string(const struct submodule_update_strategy 
 	case SM_UPDATE_NONE:
 		return "none";
 	case SM_UPDATE_UNSPECIFIED:
-		return NULL;
 	case SM_UPDATE_COMMAND:
-		strbuf_addf(&sb, "!%s", s->command);
-		return strbuf_detach(&sb, NULL);
+		BUG("init_submodule() should handle type %d", type);
+	default:
+		BUG("unexpected update strategy type: %d", type);
 	}
-	return NULL;
 }
 
 void handle_ignore_submodules_arg(struct diff_options *diffopt,
