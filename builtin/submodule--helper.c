@@ -480,8 +480,9 @@ static void init_submodule(const char *path, const char *prefix,
 			fprintf(stderr, _("warning: command update mode suggested for submodule '%s'\n"),
 				sub->name);
 			upd = xstrdup("none");
-		} else
+		} else {
 			upd = xstrdup(submodule_strategy_to_string(&sub->update_strategy));
+		}
 
 		if (git_config_set_gently(sb.buf, upd))
 			die(_("Failed to register update mode for submodule path '%s'"), displaypath);
