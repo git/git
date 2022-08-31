@@ -65,12 +65,16 @@ static int repo_get_default_remote(struct repository *repo, char **default_remot
 static int get_default_remote_submodule(const char *module_path, char **default_remote)
 {
 	struct repository subrepo;
+	int ret;
 
 	if (repo_submodule_init(&subrepo, the_repository, module_path,
 				null_oid()) < 0)
 		return die_message(_("could not get a repository handle for submodule '%s'"),
 				   module_path);
-	return repo_get_default_remote(&subrepo, default_remote);
+	ret = repo_get_default_remote(&subrepo, default_remote);
+	repo_clear(&subrepo);
+
+	return ret;
 }
 
 static char *get_default_remote(void)
