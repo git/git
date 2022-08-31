@@ -2,6 +2,7 @@
 #include "test-tool-utils.h"
 #include "cache.h"
 #include "parse-options.h"
+#include "remote.h"
 #include "submodule-config.h"
 #include "submodule.h"
 
@@ -19,9 +20,17 @@ static const char *submodule_is_active_usage[] = {
 	NULL
 };
 
+#define TEST_TOOL_RESOLVE_RELATIVE_URL_USAGE \
+	"test-tool submodule resolve-relative-url <up_path> <remoteurl> <url>"
+static const char *submodule_resolve_relative_url_usage[] = {
+	TEST_TOOL_RESOLVE_RELATIVE_URL_USAGE,
+	NULL,
+};
+
 static const char *submodule_usage[] = {
 	TEST_TOOL_CHECK_NAME_USAGE,
 	TEST_TOOL_IS_ACTIVE_USAGE,
+	TEST_TOOL_RESOLVE_RELATIVE_URL_USAGE,
 	NULL
 };
 
@@ -76,9 +85,42 @@ static int cmd__submodule_is_active(int argc, const char **argv)
 	return !is_submodule_active(the_repository, argv[0]);
 }
 
+static int resolve_relative_url(int argc, const char **argv)
+{
+	char *remoteurl, *res;
+	const char *up_path, *url;
+
+	up_path = argv[0];
+	remoteurl = xstrdup(argv[1]);
+	url = argv[2];
+
+	if (!strcmp(up_path, "(null)"))
+		up_path = NULL;
+
+	res = relative_url(remoteurl, url, up_path);
+	puts(res);
+	free(res);
+	free(remoteurl);
+	return 0;
+}
+
+static int cmd__submodule_resolve_relative_url(int argc, const char **argv)
+{
+	struct option options[] = {
+		OPT_END()
+	};
+	argc = parse_options(argc, argv, "test-tools", options,
+			     submodule_resolve_relative_url_usage, 0);
+	if (argc != 3)
+		usage_with_options(submodule_resolve_relative_url_usage, options);
+
+	return resolve_relative_url(argc, argv);
+}
+
 static struct test_cmd cmds[] = {
 	{ "check-name", cmd__submodule_check_name },
 	{ "is-active", cmd__submodule_is_active },
+	{ "resolve-relative-url", cmd__submodule_resolve_relative_url},
 };
 
 int cmd__submodule(int argc, const char **argv)

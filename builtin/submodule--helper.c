@@ -96,28 +96,6 @@ static char *resolve_relative_url(const char *rel_url, const char *up_path, int 
 	return resolved_url;
 }
 
-static int resolve_relative_url_test(int argc, const char **argv, const char *prefix)
-{
-	char *remoteurl, *res;
-	const char *up_path, *url;
-
-	if (argc != 4)
-		die("resolve-relative-url-test only accepts three arguments: <up_path> <remoteurl> <url>");
-
-	up_path = argv[1];
-	remoteurl = xstrdup(argv[2]);
-	url = argv[3];
-
-	if (!strcmp(up_path, "(null)"))
-		up_path = NULL;
-
-	res = relative_url(remoteurl, url, up_path);
-	puts(res);
-	free(res);
-	free(remoteurl);
-	return 0;
-}
-
 /* the result should be freed by the caller. */
 static char *get_submodule_displaypath(const char *path, const char *prefix)
 {
@@ -3273,7 +3251,6 @@ static struct cmd_struct commands[] = {
 	{"clone", module_clone, SUPPORT_SUPER_PREFIX},
 	{"add", module_add, 0},
 	{"update", module_update, SUPPORT_SUPER_PREFIX},
-	{"resolve-relative-url-test", resolve_relative_url_test, 0},
 	{"foreach", module_foreach, SUPPORT_SUPER_PREFIX},
 	{"init", module_init, 0},
 	{"status", module_status, SUPPORT_SUPER_PREFIX},
