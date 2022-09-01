@@ -1,0 +1,11 @@
+# LINT: start of block chained to preceding command
+echo nobody home && {
+	test the doohicky
+	right now
+} &&
+
+# LINT: preceding command pipes to block on same line
+GIT_EXTERNAL_DIFF=echo git diff | {
+	read path oldfile oldhex oldmode newfile newhex newmode &&
+	test "z$oh" = "z$oldhex"
+}
