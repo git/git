@@ -1,7 +1,7 @@
 (
 	foo &&
 	{
-		echo a
+		echo a ?!AMP?!
 		echo b
 	} &&
 	bar &&

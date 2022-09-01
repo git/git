@@ -38,7 +38,7 @@ T = $(sort $(wildcard t[0-9][0-9][0-9][0-9]-*.sh))
 THELPERS = $(sort $(filter-out $(T),$(wildcard *.sh)))
 TPERF = $(sort $(wildcard perf/p[0-9][0-9][0-9][0-9]-*.sh))
 CHAINLINTTESTS = $(sort $(patsubst chainlint/%.test,%,$(wildcard chainlint/*.test)))
-CHAINLINT = sed -f chainlint.sed
+CHAINLINT = '$(PERL_PATH_SQ)' chainlint.pl
 
 all: $(DEFAULT_TEST_TARGET)
 
@@ -73,10 +73,29 @@ clean-chainlint:
 
 check-chainlint:
 	@mkdir -p '$(CHAINLINTTMP_SQ)' && \
-	sed -e '/^# LINT: /d' $(patsubst %,chainlint/%.test,$(CHAINLINTTESTS)) >'$(CHAINLINTTMP_SQ)'/tests && \
-	sed -e '/^[ 	]*$$/d' $(patsubst %,chainlint/%.expect,$(CHAINLINTTESTS)) >'$(CHAINLINTTMP_SQ)'/expect && \
-	$(CHAINLINT) '$(CHAINLINTTMP_SQ)'/tests | grep -v '^[	]*$$' >'$(CHAINLINTTMP_SQ)'/actual && \
-	diff -u '$(CHAINLINTTMP_SQ)'/expect '$(CHAINLINTTMP_SQ)'/actual
+	for i in $(CHAINLINTTESTS); do \
+		echo "test_expect_success '$$i' '" && \
+		sed -e '/^# LINT: /d' chainlint/$$i.test && \
+		echo "'"; \
+	done >'$(CHAINLINTTMP_SQ)'/tests && \
+	{ \
+		echo "# chainlint: $(CHAINLINTTMP_SQ)/tests" && \
+		for i in $(CHAINLINTTESTS); do \
+			echo "# chainlint: $$i" && \
+			sed -e '/^[ 	]*$$/d' chainlint/$$i.expect; \
+		done \
+	} >'$(CHAINLINTTMP_SQ)'/expect && \
+	$(CHAINLINT) --emit-all '$(CHAINLINTTMP_SQ)'/tests | \
+		grep -v '^[ 	]*$$' >'$(CHAINLINTTMP_SQ)'/actual && \
+	if test -f ../GIT-BUILD-OPTIONS; then \
+		. ../GIT-BUILD-OPTIONS; \
+	fi && \
+	if test -x ../git$$X; then \
+		DIFFW="../git$$X --no-pager diff -w --no-index"; \
+	else \
+		DIFFW="diff -w -u"; \
+	fi && \
+	$$DIFFW '$(CHAINLINTTMP_SQ)'/expect '$(CHAINLINTTMP_SQ)'/actual
 
 test-lint: test-lint-duplicates test-lint-executable test-lint-shell-syntax \
 	test-lint-filenames
