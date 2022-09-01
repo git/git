@@ -483,7 +483,7 @@ sub match_ending {
 }
 
 my @safe_endings = (
-	[qr/^(?:&&|\|\||\|)$/],
+	[qr/^(?:&&|\|\||\||&)$/],
 	[qr/^(?:exit|return)$/, qr/^(?:\d+|\$\?)$/],
 	[qr/^(?:exit|return)$/, qr/^(?:\d+|\$\?)$/, qr/^;$/],
 	[qr/^(?:exit|return|continue)$/],
