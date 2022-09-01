@@ -1,0 +1,13 @@
+git ls-tree --name-only -r refs/notes/many_notes |
+while read path
+do
+# LINT: broken &&-chain okay if explicit "continue"
+	test "$path" = "foobar/non-note.txt" && continue
+	test "$path" = "deadbeef" && continue
+	test "$path" = "de/adbeef" && continue
+
+	if test $(expr length "$path") -ne $hexsz
+	then
+		return 1
+	fi
+done

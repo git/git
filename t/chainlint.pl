@@ -473,13 +473,29 @@ sub ends_with {
 	return 1;
 }
 
+sub match_ending {
+	my ($tokens, $endings) = @_;
+	for my $needles (@$endings) {
+		next if @$tokens < scalar(grep {$_ ne "\n"} @$needles);
+		return 1 if ends_with($tokens, $needles);
+	}
+	return undef;
+}
+
+my @safe_endings = (
+	[qr/^(?:&&|\|\||\|)$/],
+	[qr/^(?:exit|return)$/, qr/^(?:\d+|\$\?)$/],
+	[qr/^(?:exit|return)$/, qr/^(?:\d+|\$\?)$/, qr/^;$/],
+	[qr/^(?:exit|return|continue)$/],
+	[qr/^(?:exit|return|continue)$/, qr/^;$/]);
+
 sub accumulate {
 	my ($self, $tokens, $cmd) = @_;
 	goto DONE unless @$tokens;
 	goto DONE if @$cmd == 1 && $$cmd[0] eq "\n";
 
-	# did previous command end with "&&", "||", "|"?
-	goto DONE if ends_with($tokens, [qr/^(?:&&|\|\||\|)$/]);
+	# did previous command end with "&&", "|", "|| return" or similar?
+	goto DONE if match_ending($tokens, \@safe_endings);
 
 	# flag missing "&&" at end of previous command
 	my $n = find_non_nl($tokens);
