@@ -24,7 +24,7 @@ int cmd__serve_v2(int argc, const char **argv)
 	/* ignore all unknown cmdline switches for now */
 	argc = parse_options(argc, argv, prefix, options, serve_usage,
 			     PARSE_OPT_KEEP_DASHDASH |
-			     PARSE_OPT_KEEP_UNKNOWN);
+			     PARSE_OPT_KEEP_UNKNOWN_OPT);
 
 	if (advertise_capabilities)
 		protocol_v2_advertise_capabilities();

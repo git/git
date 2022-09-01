@@ -456,4 +456,259 @@ test_expect_success '--end-of-options treats remainder as args' '
 	    --end-of-options --verbose
 '
 
+test_expect_success 'KEEP_DASHDASH works' '
+	test-tool parse-options-flags --keep-dashdash cmd --opt=1 -- --opt=2 --unknown >actual &&
+	cat >expect <<-\EOF &&
+	opt: 1
+	arg 00: --
+	arg 01: --opt=2
+	arg 02: --unknown
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'KEEP_ARGV0 works' '
+	test-tool parse-options-flags --keep-argv0 cmd arg0 --opt=3 >actual &&
+	cat >expect <<-\EOF &&
+	opt: 3
+	arg 00: cmd
+	arg 01: arg0
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'STOP_AT_NON_OPTION works' '
+	test-tool parse-options-flags --stop-at-non-option cmd --opt=4 arg0 --opt=5 --unknown >actual &&
+	cat >expect <<-\EOF &&
+	opt: 4
+	arg 00: arg0
+	arg 01: --opt=5
+	arg 02: --unknown
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'KEEP_UNKNOWN_OPT works' '
+	test-tool parse-options-flags --keep-unknown-opt cmd --unknown=1 --opt=6 -u2 >actual &&
+	cat >expect <<-\EOF &&
+	opt: 6
+	arg 00: --unknown=1
+	arg 01: -u2
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'NO_INTERNAL_HELP works for -h' '
+	test_expect_code 129 test-tool parse-options-flags --no-internal-help cmd -h 2>err &&
+	cat err &&
+	grep "^error: unknown switch \`h$SQ" err &&
+	grep "^usage: " err
+'
+
+for help_opt in help help-all
+do
+	test_expect_success "NO_INTERNAL_HELP works for --$help_opt" "
+		test_expect_code 129 test-tool parse-options-flags --no-internal-help cmd --$help_opt 2>err &&
+		cat err &&
+		grep '^error: unknown option \`'$help_opt\' err &&
+		grep '^usage: ' err
+	"
+done
+
+test_expect_success 'KEEP_UNKNOWN_OPT | NO_INTERNAL_HELP works' '
+	test-tool parse-options-flags --keep-unknown-opt --no-internal-help cmd -h --help --help-all >actual &&
+	cat >expect <<-\EOF &&
+	opt: 0
+	arg 00: -h
+	arg 01: --help
+	arg 02: --help-all
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'subcommand - no subcommand shows error and usage' '
+	test_expect_code 129 test-tool parse-subcommand cmd 2>err &&
+	grep "^error: need a subcommand" err &&
+	grep ^usage: err
+'
+
+test_expect_success 'subcommand - subcommand after -- shows error and usage' '
+	test_expect_code 129 test-tool parse-subcommand cmd -- subcmd-one 2>err &&
+	grep "^error: need a subcommand" err &&
+	grep ^usage: err
+'
+
+test_expect_success 'subcommand - subcommand after --end-of-options shows error and usage' '
+	test_expect_code 129 test-tool parse-subcommand cmd --end-of-options subcmd-one 2>err &&
+	grep "^error: need a subcommand" err &&
+	grep ^usage: err
+'
+
+test_expect_success 'subcommand - unknown subcommand shows error and usage' '
+	test_expect_code 129 test-tool parse-subcommand cmd nope 2>err &&
+	grep "^error: unknown subcommand: \`nope$SQ" err &&
+	grep ^usage: err
+'
+
+test_expect_success 'subcommand - subcommands cannot be abbreviated' '
+	test_expect_code 129 test-tool parse-subcommand cmd subcmd-o 2>err &&
+	grep "^error: unknown subcommand: \`subcmd-o$SQ$" err &&
+	grep ^usage: err
+'
+
+test_expect_success 'subcommand - no negated subcommands' '
+	test_expect_code 129 test-tool parse-subcommand cmd no-subcmd-one 2>err &&
+	grep "^error: unknown subcommand: \`no-subcmd-one$SQ" err &&
+	grep ^usage: err
+'
+
+test_expect_success 'subcommand - simple' '
+	test-tool parse-subcommand cmd subcmd-two >actual &&
+	cat >expect <<-\EOF &&
+	opt: 0
+	fn: subcmd_two
+	arg 00: subcmd-two
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'subcommand - stop parsing at the first subcommand' '
+	test-tool parse-subcommand cmd --opt=1 subcmd-two subcmd-one --opt=2 >actual &&
+	cat >expect <<-\EOF &&
+	opt: 1
+	fn: subcmd_two
+	arg 00: subcmd-two
+	arg 01: subcmd-one
+	arg 02: --opt=2
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'subcommand - KEEP_ARGV0' '
+	test-tool parse-subcommand --keep-argv0 cmd subcmd-two >actual &&
+	cat >expect <<-\EOF &&
+	opt: 0
+	fn: subcmd_two
+	arg 00: cmd
+	arg 01: subcmd-two
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'subcommand - SUBCOMMAND_OPTIONAL + subcommand not given' '
+	test-tool parse-subcommand --subcommand-optional cmd >actual &&
+	cat >expect <<-\EOF &&
+	opt: 0
+	fn: subcmd_one
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'subcommand - SUBCOMMAND_OPTIONAL + given subcommand' '
+	test-tool parse-subcommand --subcommand-optional cmd subcmd-two branch file >actual &&
+	cat >expect <<-\EOF &&
+	opt: 0
+	fn: subcmd_two
+	arg 00: subcmd-two
+	arg 01: branch
+	arg 02: file
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'subcommand - SUBCOMMAND_OPTIONAL + subcommand not given + unknown dashless args' '
+	test-tool parse-subcommand --subcommand-optional cmd branch file >actual &&
+	cat >expect <<-\EOF &&
+	opt: 0
+	fn: subcmd_one
+	arg 00: branch
+	arg 01: file
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'subcommand - SUBCOMMAND_OPTIONAL + subcommand not given + unknown option' '
+	test_expect_code 129 test-tool parse-subcommand --subcommand-optional cmd --subcommand-opt 2>err &&
+	grep "^error: unknown option" err &&
+	grep ^usage: err
+'
+
+test_expect_success 'subcommand - SUBCOMMAND_OPTIONAL | KEEP_UNKNOWN_OPT + subcommand not given + unknown option' '
+	test-tool parse-subcommand --subcommand-optional --keep-unknown-opt cmd --subcommand-opt >actual &&
+	cat >expect <<-\EOF &&
+	opt: 0
+	fn: subcmd_one
+	arg 00: --subcommand-opt
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'subcommand - SUBCOMMAND_OPTIONAL | KEEP_UNKNOWN_OPT + subcommand ignored after unknown option' '
+	test-tool parse-subcommand --subcommand-optional --keep-unknown-opt cmd --subcommand-opt subcmd-two >actual &&
+	cat >expect <<-\EOF &&
+	opt: 0
+	fn: subcmd_one
+	arg 00: --subcommand-opt
+	arg 01: subcmd-two
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'subcommand - SUBCOMMAND_OPTIONAL | KEEP_UNKNOWN_OPT + command and subcommand options cannot be mixed' '
+	test-tool parse-subcommand --subcommand-optional --keep-unknown-opt cmd --subcommand-opt branch --opt=1 >actual &&
+	cat >expect <<-\EOF &&
+	opt: 0
+	fn: subcmd_one
+	arg 00: --subcommand-opt
+	arg 01: branch
+	arg 02: --opt=1
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'subcommand - SUBCOMMAND_OPTIONAL | KEEP_UNKNOWN_OPT | KEEP_ARGV0' '
+	test-tool parse-subcommand --subcommand-optional --keep-unknown-opt --keep-argv0 cmd --subcommand-opt branch >actual &&
+	cat >expect <<-\EOF &&
+	opt: 0
+	fn: subcmd_one
+	arg 00: cmd
+	arg 01: --subcommand-opt
+	arg 02: branch
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'subcommand - SUBCOMMAND_OPTIONAL | KEEP_UNKNOWN_OPT | KEEP_DASHDASH' '
+	test-tool parse-subcommand --subcommand-optional --keep-unknown-opt --keep-dashdash cmd -- --subcommand-opt file >actual &&
+	cat >expect <<-\EOF &&
+	opt: 0
+	fn: subcmd_one
+	arg 00: --
+	arg 01: --subcommand-opt
+	arg 02: file
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'subcommand - completion helper' '
+	test-tool parse-subcommand cmd --git-completion-helper >actual &&
+	echo "subcmd-one subcmd-two --opt= --no-opt" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'subcommands are incompatible with STOP_AT_NON_OPTION' '
+	test_must_fail test-tool parse-subcommand --stop-at-non-option cmd subcmd-one 2>err &&
+	grep ^BUG err
+'
+
+test_expect_success 'subcommands are incompatible with KEEP_UNKNOWN_OPT unless in combination with SUBCOMMAND_OPTIONAL' '
+	test_must_fail test-tool parse-subcommand --keep-unknown-opt cmd subcmd-two 2>err &&
+	grep ^BUG err
+'
+
+test_expect_success 'subcommands are incompatible with KEEP_DASHDASH unless in combination with SUBCOMMAND_OPTIONAL' '
+	test_must_fail test-tool parse-subcommand --keep-dashdash cmd subcmd-two 2>err &&
+	grep ^BUG err
+'
+
 test_done

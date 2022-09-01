@@ -227,7 +227,7 @@ static int cmd_reflog_show(int argc, const char **argv, const char *prefix)
 
 	parse_options(argc, argv, prefix, options, reflog_show_usage,
 		      PARSE_OPT_KEEP_DASHDASH | PARSE_OPT_KEEP_ARGV0 |
-		      PARSE_OPT_KEEP_UNKNOWN);
+		      PARSE_OPT_KEEP_UNKNOWN_OPT);
 
 	return cmd_log_reflog(argc, argv, prefix);
 }
@@ -408,40 +408,21 @@ static int cmd_reflog_exists(int argc, const char **argv, const char *prefix)
 
 int cmd_reflog(int argc, const char **argv, const char *prefix)
 {
+	parse_opt_subcommand_fn *fn = NULL;
 	struct option options[] = {
+		OPT_SUBCOMMAND("show", &fn, cmd_reflog_show),
+		OPT_SUBCOMMAND("expire", &fn, cmd_reflog_expire),
+		OPT_SUBCOMMAND("delete", &fn, cmd_reflog_delete),
+		OPT_SUBCOMMAND("exists", &fn, cmd_reflog_exists),
 		OPT_END()
 	};
 
 	argc = parse_options(argc, argv, prefix, options, reflog_usage,
+			     PARSE_OPT_SUBCOMMAND_OPTIONAL |
 			     PARSE_OPT_KEEP_DASHDASH | PARSE_OPT_KEEP_ARGV0 |
-			     PARSE_OPT_KEEP_UNKNOWN |
-			     PARSE_OPT_NO_INTERNAL_HELP);
-
-	/*
-	 * With "git reflog" we default to showing it. !argc is
-	 * impossible with PARSE_OPT_KEEP_ARGV0.
-	 */
-	if (argc == 1)
-		goto log_reflog;
-
-	if (!strcmp(argv[1], "-h"))
-		usage_with_options(reflog_usage, options);
-	else if (*argv[1] == '-')
-		goto log_reflog;
-
-	if (!strcmp(argv[1], "show"))
-		return cmd_reflog_show(argc - 1, argv + 1, prefix);
-	else if (!strcmp(argv[1], "expire"))
-		return cmd_reflog_expire(argc - 1, argv + 1, prefix);
-	else if (!strcmp(argv[1], "delete"))
-		return cmd_reflog_delete(argc - 1, argv + 1, prefix);
-	else if (!strcmp(argv[1], "exists"))
-		return cmd_reflog_exists(argc - 1, argv + 1, prefix);
-
-	/*
-	 * Fall-through for e.g. "git reflog -1", "git reflog master",
-	 * as well as the plain "git reflog" above goto above.
-	 */
-log_reflog:
-	return cmd_log_reflog(argc, argv, prefix);
+			     PARSE_OPT_KEEP_UNKNOWN_OPT);
+	if (fn)
+		return fn(argc - 1, argv + 1, prefix);
+	else
+		return cmd_log_reflog(argc, argv, prefix);
 }

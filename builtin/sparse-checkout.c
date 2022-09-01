@@ -48,7 +48,7 @@ static char const * const builtin_sparse_checkout_list_usage[] = {
 	NULL
 };
 
-static int sparse_checkout_list(int argc, const char **argv)
+static int sparse_checkout_list(int argc, const char **argv, const char *prefix)
 {
 	static struct option builtin_sparse_checkout_list_options[] = {
 		OPT_END(),
@@ -60,7 +60,7 @@ static int sparse_checkout_list(int argc, const char **argv)
 	if (!core_apply_sparse_checkout)
 		die(_("this worktree is not sparse"));
 
-	argc = parse_options(argc, argv, NULL,
+	argc = parse_options(argc, argv, prefix,
 			     builtin_sparse_checkout_list_options,
 			     builtin_sparse_checkout_list_usage, 0);
 
@@ -431,7 +431,7 @@ static struct sparse_checkout_init_opts {
 	int sparse_index;
 } init_opts;
 
-static int sparse_checkout_init(int argc, const char **argv)
+static int sparse_checkout_init(int argc, const char **argv, const char *prefix)
 {
 	struct pattern_list pl;
 	char *sparse_filename;
@@ -452,7 +452,7 @@ static int sparse_checkout_init(int argc, const char **argv)
 	init_opts.cone_mode = -1;
 	init_opts.sparse_index = -1;
 
-	argc = parse_options(argc, argv, NULL,
+	argc = parse_options(argc, argv, prefix,
 			     builtin_sparse_checkout_init_options,
 			     builtin_sparse_checkout_init_usage, 0);
 
@@ -767,7 +767,7 @@ static int sparse_checkout_add(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix,
 			     builtin_sparse_checkout_add_options,
 			     builtin_sparse_checkout_add_usage,
-			     PARSE_OPT_KEEP_UNKNOWN);
+			     PARSE_OPT_KEEP_UNKNOWN_OPT);
 
 	sanitize_paths(argc, argv, prefix, add_opts.skip_checks);
 
@@ -813,7 +813,7 @@ static int sparse_checkout_set(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix,
 			     builtin_sparse_checkout_set_options,
 			     builtin_sparse_checkout_set_usage,
-			     PARSE_OPT_KEEP_UNKNOWN);
+			     PARSE_OPT_KEEP_UNKNOWN_OPT);
 
 	if (update_modes(&set_opts.cone_mode, &set_opts.sparse_index))
 		return 1;
@@ -843,7 +843,8 @@ static struct sparse_checkout_reapply_opts {
 	int sparse_index;
 } reapply_opts;
 
-static int sparse_checkout_reapply(int argc, const char **argv)
+static int sparse_checkout_reapply(int argc, const char **argv,
+				   const char *prefix)
 {
 	static struct option builtin_sparse_checkout_reapply_options[] = {
 		OPT_BOOL(0, "cone", &reapply_opts.cone_mode,
@@ -859,7 +860,7 @@ static int sparse_checkout_reapply(int argc, const char **argv)
 	reapply_opts.cone_mode = -1;
 	reapply_opts.sparse_index = -1;
 
-	argc = parse_options(argc, argv, NULL,
+	argc = parse_options(argc, argv, prefix,
 			     builtin_sparse_checkout_reapply_options,
 			     builtin_sparse_checkout_reapply_usage, 0);
 
@@ -876,7 +877,8 @@ static char const * const builtin_sparse_checkout_disable_usage[] = {
 	NULL
 };
 
-static int sparse_checkout_disable(int argc, const char **argv)
+static int sparse_checkout_disable(int argc, const char **argv,
+				   const char *prefix)
 {
 	static struct option builtin_sparse_checkout_disable_options[] = {
 		OPT_END(),
@@ -895,7 +897,7 @@ static int sparse_checkout_disable(int argc, const char **argv)
 	 * forcibly return to a dense checkout regardless of initial state.
 	 */
 
-	argc = parse_options(argc, argv, NULL,
+	argc = parse_options(argc, argv, prefix,
 			     builtin_sparse_checkout_disable_options,
 			     builtin_sparse_checkout_disable_usage, 0);
 
@@ -922,39 +924,25 @@ static int sparse_checkout_disable(int argc, const char **argv)
 
 int cmd_sparse_checkout(int argc, const char **argv, const char *prefix)
 {
-	static struct option builtin_sparse_checkout_options[] = {
+	parse_opt_subcommand_fn *fn = NULL;
+	struct option builtin_sparse_checkout_options[] = {
+		OPT_SUBCOMMAND("list", &fn, sparse_checkout_list),
+		OPT_SUBCOMMAND("init", &fn, sparse_checkout_init),
+		OPT_SUBCOMMAND("set", &fn, sparse_checkout_set),
+		OPT_SUBCOMMAND("add", &fn, sparse_checkout_add),
+		OPT_SUBCOMMAND("reapply", &fn, sparse_checkout_reapply),
+		OPT_SUBCOMMAND("disable", &fn, sparse_checkout_disable),
 		OPT_END(),
 	};
 
-	if (argc == 2 && !strcmp(argv[1], "-h"))
-		usage_with_options(builtin_sparse_checkout_usage,
-				   builtin_sparse_checkout_options);
-
 	argc = parse_options(argc, argv, prefix,
 			     builtin_sparse_checkout_options,
-			     builtin_sparse_checkout_usage,
-			     PARSE_OPT_STOP_AT_NON_OPTION);
+			     builtin_sparse_checkout_usage, 0);
 
 	git_config(git_default_config, NULL);
 
 	prepare_repo_settings(the_repository);
 	the_repository->settings.command_requires_full_index = 0;
 
-	if (argc > 0) {
-		if (!strcmp(argv[0], "list"))
-			return sparse_checkout_list(argc, argv);
-		if (!strcmp(argv[0], "init"))
-			return sparse_checkout_init(argc, argv);
-		if (!strcmp(argv[0], "set"))
-			return sparse_checkout_set(argc, argv, prefix);
-		if (!strcmp(argv[0], "add"))
-			return sparse_checkout_add(argc, argv, prefix);
-		if (!strcmp(argv[0], "reapply"))
-			return sparse_checkout_reapply(argc, argv);
-		if (!strcmp(argv[0], "disable"))
-			return sparse_checkout_disable(argc, argv);
-	}
-
-	usage_with_options(builtin_sparse_checkout_usage,
-			   builtin_sparse_checkout_options);
+	return fn(argc, argv, prefix);
 }

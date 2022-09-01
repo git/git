@@ -58,7 +58,7 @@ static struct option *add_common_options(struct option *to)
 	return parse_options_concat(common_opts, to);
 }
 
-static int graph_verify(int argc, const char **argv)
+static int graph_verify(int argc, const char **argv, const char *prefix)
 {
 	struct commit_graph *graph = NULL;
 	struct object_directory *odb = NULL;
@@ -80,7 +80,7 @@ static int graph_verify(int argc, const char **argv)
 	trace2_cmd_mode("verify");
 
 	opts.progress = isatty(2);
-	argc = parse_options(argc, argv, NULL,
+	argc = parse_options(argc, argv, prefix,
 			     options,
 			     builtin_commit_graph_verify_usage, 0);
 	if (argc)
@@ -190,7 +190,7 @@ static int git_commit_graph_write_config(const char *var, const char *value,
 	return 0;
 }
 
-static int graph_write(int argc, const char **argv)
+static int graph_write(int argc, const char **argv, const char *prefix)
 {
 	struct string_list pack_indexes = STRING_LIST_INIT_DUP;
 	struct strbuf buf = STRBUF_INIT;
@@ -241,7 +241,7 @@ static int graph_write(int argc, const char **argv)
 
 	git_config(git_commit_graph_write_config, &opts);
 
-	argc = parse_options(argc, argv, NULL,
+	argc = parse_options(argc, argv, prefix,
 			     options,
 			     builtin_commit_graph_write_usage, 0);
 	if (argc)
@@ -307,26 +307,22 @@ cleanup:
 
 int cmd_commit_graph(int argc, const char **argv, const char *prefix)
 {
-	struct option *builtin_commit_graph_options = common_opts;
+	parse_opt_subcommand_fn *fn = NULL;
+	struct option builtin_commit_graph_options[] = {
+		OPT_SUBCOMMAND("verify", &fn, graph_verify),
+		OPT_SUBCOMMAND("write", &fn, graph_write),
+		OPT_END(),
+	};
+	struct option *options = parse_options_concat(builtin_commit_graph_options, common_opts);
 
 	git_config(git_default_config, NULL);
-	argc = parse_options(argc, argv, prefix,
-			     builtin_commit_graph_options,
-			     builtin_commit_graph_usage,
-			     PARSE_OPT_STOP_AT_NON_OPTION);
-	if (!argc)
-		goto usage;
 
 	read_replace_refs = 0;
 	save_commit_buffer = 0;
 
-	if (!strcmp(argv[0], "verify"))
-		return graph_verify(argc, argv);
-	else if (argc && !strcmp(argv[0], "write"))
-		return graph_write(argc, argv);
+	argc = parse_options(argc, argv, prefix, options,
+			     builtin_commit_graph_usage, 0);
+	FREE_AND_NULL(options);
 
-	error(_("unrecognized subcommand: %s"), argv[0]);
-usage:
-	usage_with_options(builtin_commit_graph_usage,
-			   builtin_commit_graph_options);
+	return fn(argc, argv, prefix);
 }

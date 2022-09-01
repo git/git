@@ -782,7 +782,7 @@ static int list_stash(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix, options,
 			     git_stash_list_usage,
-			     PARSE_OPT_KEEP_UNKNOWN);
+			     PARSE_OPT_KEEP_UNKNOWN_OPT);
 
 	if (!ref_exists(ref_stash))
 		return 0;
@@ -873,7 +873,7 @@ static int show_stash(int argc, const char **argv, const char *prefix)
 	init_revisions(&rev, prefix);
 
 	argc = parse_options(argc, argv, prefix, options, git_stash_show_usage,
-			     PARSE_OPT_KEEP_ARGV0 | PARSE_OPT_KEEP_UNKNOWN |
+			     PARSE_OPT_KEEP_ARGV0 | PARSE_OPT_KEEP_UNKNOWN_OPT |
 			     PARSE_OPT_KEEP_DASHDASH);
 
 	strvec_push(&revision_args, argv[0]);
@@ -979,7 +979,7 @@ static int store_stash(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix, options,
 			     git_stash_store_usage,
-			     PARSE_OPT_KEEP_UNKNOWN);
+			     PARSE_OPT_KEEP_UNKNOWN_OPT);
 
 	if (argc != 1) {
 		if (!quiet)
@@ -1739,6 +1739,11 @@ static int push_stash(int argc, const char **argv, const char *prefix,
 			     include_untracked, only_staged);
 }
 
+static int push_stash_unassumed(int argc, const char **argv, const char *prefix)
+{
+	return push_stash(argc, argv, prefix, 0);
+}
+
 static int save_stash(int argc, const char **argv, const char *prefix)
 {
 	int keep_index = -1;
@@ -1787,15 +1792,28 @@ int cmd_stash(int argc, const char **argv, const char *prefix)
 	pid_t pid = getpid();
 	const char *index_file;
 	struct strvec args = STRVEC_INIT;
-
+	parse_opt_subcommand_fn *fn = NULL;
 	struct option options[] = {
+		OPT_SUBCOMMAND("apply", &fn, apply_stash),
+		OPT_SUBCOMMAND("clear", &fn, clear_stash),
+		OPT_SUBCOMMAND("drop", &fn, drop_stash),
+		OPT_SUBCOMMAND("pop", &fn, pop_stash),
+		OPT_SUBCOMMAND("branch", &fn, branch_stash),
+		OPT_SUBCOMMAND("list", &fn, list_stash),
+		OPT_SUBCOMMAND("show", &fn, show_stash),
+		OPT_SUBCOMMAND("store", &fn, store_stash),
+		OPT_SUBCOMMAND("create", &fn, create_stash),
+		OPT_SUBCOMMAND("push", &fn, push_stash_unassumed),
+		OPT_SUBCOMMAND_F("save", &fn, save_stash, PARSE_OPT_NOCOMPLETE),
 		OPT_END()
 	};
 
 	git_config(git_stash_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, options, git_stash_usage,
-			     PARSE_OPT_KEEP_UNKNOWN | PARSE_OPT_KEEP_DASHDASH);
+			     PARSE_OPT_SUBCOMMAND_OPTIONAL |
+			     PARSE_OPT_KEEP_UNKNOWN_OPT |
+			     PARSE_OPT_KEEP_DASHDASH);
 
 	prepare_repo_settings(the_repository);
 	the_repository->settings.command_requires_full_index = 0;
@@ -1804,33 +1822,10 @@ int cmd_stash(int argc, const char **argv, const char *prefix)
 	strbuf_addf(&stash_index_path, "%s.stash.%" PRIuMAX, index_file,
 		    (uintmax_t)pid);
 
-	if (!argc)
-		return !!push_stash(0, NULL, prefix, 0);
-	else if (!strcmp(argv[0], "apply"))
-		return !!apply_stash(argc, argv, prefix);
-	else if (!strcmp(argv[0], "clear"))
-		return !!clear_stash(argc, argv, prefix);
-	else if (!strcmp(argv[0], "drop"))
-		return !!drop_stash(argc, argv, prefix);
-	else if (!strcmp(argv[0], "pop"))
-		return !!pop_stash(argc, argv, prefix);
-	else if (!strcmp(argv[0], "branch"))
-		return !!branch_stash(argc, argv, prefix);
-	else if (!strcmp(argv[0], "list"))
-		return !!list_stash(argc, argv, prefix);
-	else if (!strcmp(argv[0], "show"))
-		return !!show_stash(argc, argv, prefix);
-	else if (!strcmp(argv[0], "store"))
-		return !!store_stash(argc, argv, prefix);
-	else if (!strcmp(argv[0], "create"))
-		return !!create_stash(argc, argv, prefix);
-	else if (!strcmp(argv[0], "push"))
-		return !!push_stash(argc, argv, prefix, 0);
-	else if (!strcmp(argv[0], "save"))
-		return !!save_stash(argc, argv, prefix);
-	else if (*argv[0] != '-')
-		usage_msg_optf(_("unknown subcommand: %s"),
-			       git_stash_usage, options, argv[0]);
+	if (fn)
+		return !!fn(argc, argv, prefix);
+	else if (!argc)
+		return !!push_stash_unassumed(0, NULL, prefix);
 
 	/* Assume 'stash push' */
 	strvec_push(&args, "push");

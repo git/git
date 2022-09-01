@@ -920,6 +920,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 			break;
 		case PARSE_OPT_HELP:
 		case PARSE_OPT_ERROR:
+		case PARSE_OPT_SUBCOMMAND:
 			exit(129);
 		case PARSE_OPT_COMPLETE:
 			exit(0);

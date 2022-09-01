@@ -1459,13 +1459,27 @@ static char *get_maintpath(void)
 	return strbuf_detach(&sb, NULL);
 }
 
-static int maintenance_register(void)
+static char const * const builtin_maintenance_register_usage[] = {
+	N_("git maintenance register"),
+	NULL
+};
+
+static int maintenance_register(int argc, const char **argv, const char *prefix)
 {
+	struct option options[] = {
+		OPT_END(),
+	};
 	int rc;
 	char *config_value;
 	struct child_process config_set = CHILD_PROCESS_INIT;
 	struct child_process config_get = CHILD_PROCESS_INIT;
 	char *maintpath = get_maintpath();
+
+	argc = parse_options(argc, argv, prefix, options,
+			     builtin_maintenance_register_usage, 0);
+	if (argc)
+		usage_with_options(builtin_maintenance_register_usage,
+				   options);
 
 	/* Disable foreground maintenance */
 	git_config_set("maintenance.auto", "false");
@@ -1503,11 +1517,25 @@ done:
 	return rc;
 }
 
-static int maintenance_unregister(void)
+static char const * const builtin_maintenance_unregister_usage[] = {
+	N_("git maintenance unregister"),
+	NULL
+};
+
+static int maintenance_unregister(int argc, const char **argv, const char *prefix)
 {
+	struct option options[] = {
+		OPT_END(),
+	};
 	int rc;
 	struct child_process config_unset = CHILD_PROCESS_INIT;
 	char *maintpath = get_maintpath();
+
+	argc = parse_options(argc, argv, prefix, options,
+			     builtin_maintenance_unregister_usage, 0);
+	if (argc)
+		usage_with_options(builtin_maintenance_unregister_usage,
+				   options);
 
 	config_unset.git_cmd = 1;
 	strvec_pushl(&config_unset.args, "config", "--global", "--unset",
@@ -2490,6 +2518,7 @@ static int maintenance_start(int argc, const char **argv, const char *prefix)
 			PARSE_OPT_NONEG, maintenance_opt_scheduler),
 		OPT_END()
 	};
+	const char *register_args[] = { "register", NULL };
 
 	argc = parse_options(argc, argv, prefix, options,
 			     builtin_maintenance_start_usage, 0);
@@ -2499,34 +2528,46 @@ static int maintenance_start(int argc, const char **argv, const char *prefix)
 	opts.scheduler = resolve_scheduler(opts.scheduler);
 	validate_scheduler(opts.scheduler);
 
-	if (maintenance_register())
+	if (maintenance_register(ARRAY_SIZE(register_args)-1, register_args, NULL))
 		warning(_("failed to add repo to global config"));
 	return update_background_schedule(&opts, 1);
 }
 
-static int maintenance_stop(void)
+static const char *const builtin_maintenance_stop_usage[] = {
+	N_("git maintenance stop"),
+	NULL
+};
+
+static int maintenance_stop(int argc, const char **argv, const char *prefix)
 {
+	struct option options[] = {
+		OPT_END()
+	};
+	argc = parse_options(argc, argv, prefix, options,
+			     builtin_maintenance_stop_usage, 0);
+	if (argc)
+		usage_with_options(builtin_maintenance_stop_usage, options);
 	return update_background_schedule(NULL, 0);
 }
 
-static const char builtin_maintenance_usage[] =	N_("git maintenance <subcommand> [<options>]");
+static const char * const builtin_maintenance_usage[] = {
+	N_("git maintenance <subcommand> [<options>]"),
+	NULL,
+};
 
 int cmd_maintenance(int argc, const char **argv, const char *prefix)
 {
-	if (argc < 2 ||
-	    (argc == 2 && !strcmp(argv[1], "-h")))
-		usage(builtin_maintenance_usage);
+	parse_opt_subcommand_fn *fn = NULL;
+	struct option builtin_maintenance_options[] = {
+		OPT_SUBCOMMAND("run", &fn, maintenance_run),
+		OPT_SUBCOMMAND("start", &fn, maintenance_start),
+		OPT_SUBCOMMAND("stop", &fn, maintenance_stop),
+		OPT_SUBCOMMAND("register", &fn, maintenance_register),
+		OPT_SUBCOMMAND("unregister", &fn, maintenance_unregister),
+		OPT_END(),
+	};
 
-	if (!strcmp(argv[1], "run"))
-		return maintenance_run(argc - 1, argv + 1, prefix);
-	if (!strcmp(argv[1], "start"))
-		return maintenance_start(argc - 1, argv + 1, prefix);
-	if (!strcmp(argv[1], "stop"))
-		return maintenance_stop();
-	if (!strcmp(argv[1], "register"))
-		return maintenance_register();
-	if (!strcmp(argv[1], "unregister"))
-		return maintenance_unregister();
-
-	die(_("invalid subcommand: %s"), argv[1]);
+	argc = parse_options(argc, argv, prefix, builtin_maintenance_options,
+			     builtin_maintenance_usage, 0);
+	return fn(argc, argv, prefix);
 }

@@ -241,6 +241,26 @@ test_expect_success 'add invalid foreign_vcs remote' '
 	test_cmp expect actual
 '
 
+test_expect_success 'without subcommand' '
+	echo origin >expect &&
+	git -C test remote >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'without subcommand accepts -v' '
+	cat >expect <<-EOF &&
+	origin	$(pwd)/one (fetch)
+	origin	$(pwd)/one (push)
+	EOF
+	git -C test remote -v >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'without subcommand does not take arguments' '
+	test_expect_code 129 git -C test remote origin 2>err &&
+	grep "^error: unknown subcommand:" err
+'
+
 cat >test/expect <<EOF
 * remote origin
   Fetch URL: $(pwd)/one

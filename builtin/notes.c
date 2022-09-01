@@ -994,17 +994,31 @@ static int get_ref(int argc, const char **argv, const char *prefix)
 
 int cmd_notes(int argc, const char **argv, const char *prefix)
 {
-	int result;
 	const char *override_notes_ref = NULL;
+	parse_opt_subcommand_fn *fn = list;
 	struct option options[] = {
 		OPT_STRING(0, "ref", &override_notes_ref, N_("notes-ref"),
 			   N_("use notes from <notes-ref>")),
+		OPT_SUBCOMMAND("list", &fn, list),
+		OPT_SUBCOMMAND("add", &fn, add),
+		OPT_SUBCOMMAND("copy", &fn, copy),
+		OPT_SUBCOMMAND("append", &fn, append_edit),
+		OPT_SUBCOMMAND("edit", &fn, append_edit),
+		OPT_SUBCOMMAND("show", &fn, show),
+		OPT_SUBCOMMAND("merge", &fn, merge),
+		OPT_SUBCOMMAND("remove", &fn, remove_cmd),
+		OPT_SUBCOMMAND("prune", &fn, prune),
+		OPT_SUBCOMMAND("get-ref", &fn, get_ref),
 		OPT_END()
 	};
 
 	git_config(git_default_config, NULL);
 	argc = parse_options(argc, argv, prefix, options, git_notes_usage,
-			     PARSE_OPT_STOP_AT_NON_OPTION);
+			     PARSE_OPT_SUBCOMMAND_OPTIONAL);
+	if (fn == list && argc && strcmp(argv[0], "list")) {
+		error(_("unknown subcommand: %s"), argv[0]);
+		usage_with_options(git_notes_usage, options);
+	}
 
 	if (override_notes_ref) {
 		struct strbuf sb = STRBUF_INIT;
@@ -1014,28 +1028,5 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 		strbuf_release(&sb);
 	}
 
-	if (argc < 1 || !strcmp(argv[0], "list"))
-		result = list(argc, argv, prefix);
-	else if (!strcmp(argv[0], "add"))
-		result = add(argc, argv, prefix);
-	else if (!strcmp(argv[0], "copy"))
-		result = copy(argc, argv, prefix);
-	else if (!strcmp(argv[0], "append") || !strcmp(argv[0], "edit"))
-		result = append_edit(argc, argv, prefix);
-	else if (!strcmp(argv[0], "show"))
-		result = show(argc, argv, prefix);
-	else if (!strcmp(argv[0], "merge"))
-		result = merge(argc, argv, prefix);
-	else if (!strcmp(argv[0], "remove"))
-		result = remove_cmd(argc, argv, prefix);
-	else if (!strcmp(argv[0], "prune"))
-		result = prune(argc, argv, prefix);
-	else if (!strcmp(argv[0], "get-ref"))
-		result = get_ref(argc, argv, prefix);
-	else {
-		result = error(_("unknown subcommand: %s"), argv[0]);
-		usage_with_options(git_notes_usage, options);
-	}
-
-	return result ? 1 : 0;
+	return !!fn(argc, argv, prefix);
 }
