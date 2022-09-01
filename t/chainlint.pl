@@ -482,6 +482,17 @@ sub match_ending {
 	return undef;
 }
 
+sub parse_loop_body {
+	my $self = shift @_;
+	my @tokens = $self->SUPER::parse_loop_body(@_);
+	# did loop signal failure via "|| return" or "|| exit"?
+	return @tokens if !@tokens || grep(/^(?:return|exit|\$\?)$/, @tokens);
+	# flag missing "return/exit" handling explicit failure in loop body
+	my $n = find_non_nl(\@tokens);
+	splice(@tokens, $n + 1, 0, '?!LOOP?!');
+	return @tokens;
+}
+
 my @safe_endings = (
 	[qr/^(?:&&|\|\||\||&)$/],
 	[qr/^(?:exit|return)$/, qr/^(?:\d+|\$\?)$/],
