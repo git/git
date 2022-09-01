@@ -441,6 +441,52 @@ DONE:
 	return @tokens;
 }
 
+# TestParser is a subclass of ShellParser which, beyond parsing shell script
+# code, is also imbued with semantic knowledge of test construction, and checks
+# tests for common problems (such as broken &&-chains) which might hide bugs in
+# the tests themselves or in behaviors being exercised by the tests. As such,
+# TestParser is only called upon to parse test bodies, not the top-level
+# scripts in which the tests are defined.
+package TestParser;
+
+use base 'ShellParser';
+
+sub find_non_nl {
+	my $tokens = shift @_;
+	my $n = shift @_;
+	$n = $#$tokens if !defined($n);
+	$n-- while $n >= 0 && $$tokens[$n] eq "\n";
+	return $n;
+}
+
+sub ends_with {
+	my ($tokens, $needles) = @_;
+	my $n = find_non_nl($tokens);
+	for my $needle (reverse(@$needles)) {
+		return undef if $n < 0;
+		$n = find_non_nl($tokens, $n), next if $needle eq "\n";
+		return undef if $$tokens[$n] !~ $needle;
+		$n--;
+	}
+	return 1;
+}
+
+sub accumulate {
+	my ($self, $tokens, $cmd) = @_;
+	goto DONE unless @$tokens;
+	goto DONE if @$cmd == 1 && $$cmd[0] eq "\n";
+
+	# did previous command end with "&&", "||", "|"?
+	goto DONE if ends_with($tokens, [qr/^(?:&&|\|\||\|)$/]);
+
+	# flag missing "&&" at end of previous command
+	my $n = find_non_nl($tokens);
+	splice(@$tokens, $n + 1, 0, '?!AMP?!') unless $n < 0;
+
+DONE:
+	$self->SUPER::accumulate($tokens, $cmd);
+}
+
 package ScriptParser;
 
 sub new {
