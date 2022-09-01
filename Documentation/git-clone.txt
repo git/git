@@ -323,6 +323,13 @@ or `--mirror` is given)
 	for `host.xz:foo/.git`).  Cloning into an existing directory
 	is only allowed if the directory is empty.
 
+--bundle-uri=<uri>::
+	Before fetching from the remote, fetch a bundle from the given
+	`<uri>` and unbundle the data into the local repository. The refs
+	in the bundle will be stored under the hidden `refs/bundle/*`
+	namespace. This option is incompatible with `--depth`,
+	`--shallow-since`, and `--shallow-exclude`.
+
 :git-clone: 1
 include::urls.txt[]
 
