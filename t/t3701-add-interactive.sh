@@ -767,6 +767,16 @@ test_expect_success 'detect bogus diffFilter output' '
 	grep "mismatched output" output
 '
 
+test_expect_success 'handle iffy colored hunk headers' '
+	git reset --hard &&
+
+	echo content >test &&
+	printf n >n &&
+	force_color git -c interactive.diffFilter="sed s/.*@@.*/XX/" \
+		add -p >output 2>&1 <n &&
+	grep "^XX$" output
+'
+
 test_expect_success 'diff.algorithm is passed to `git diff-files`' '
 	git reset --hard &&
 
