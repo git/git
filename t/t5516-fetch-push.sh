@@ -200,7 +200,10 @@ test_expect_success 'push with negotiation' '
 	test_commit -C testrepo unrelated_commit &&
 	git -C testrepo config receive.hideRefs refs/remotes/origin/first_commit &&
 	test_when_finished "rm event" &&
-	GIT_TRACE2_EVENT="$(pwd)/event" git -c protocol.version=2 -c push.negotiate=1 push testrepo refs/heads/main:refs/remotes/origin/main &&
+	GIT_TRACE2_EVENT="$(pwd)/event" \
+		git -c protocol.version=2 -c push.negotiate=1 \
+		push testrepo refs/heads/main:refs/remotes/origin/main &&
+	grep \"key\":\"total_rounds\",\"value\":\"1\" event &&
 	grep_wrote 2 event # 1 commit, 1 tree
 '
 
@@ -224,7 +227,10 @@ test_expect_success 'push with negotiation does not attempt to fetch submodules'
 	git push testrepo $the_first_commit:refs/remotes/origin/first_commit &&
 	test_commit -C testrepo unrelated_commit &&
 	git -C testrepo config receive.hideRefs refs/remotes/origin/first_commit &&
-	git -c submodule.recurse=true -c protocol.version=2 -c push.negotiate=1 push testrepo refs/heads/main:refs/remotes/origin/main 2>err &&
+	GIT_TRACE2_EVENT="$(pwd)/event"  git -c submodule.recurse=true \
+		-c protocol.version=2 -c push.negotiate=1 \
+		push testrepo refs/heads/main:refs/remotes/origin/main 2>err &&
+	grep \"key\":\"total_rounds\",\"value\":\"1\" event &&
 	! grep "Fetching submodule" err
 '
 

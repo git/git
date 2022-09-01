@@ -69,7 +69,6 @@ struct hashmap {
 	} *entries, *first, *last;
 	/* were common records found? */
 	unsigned long has_matches;
-	mmfile_t *file1, *file2;
 	xdfenv_t *env;
 	xpparam_t const *xpp;
 };
@@ -139,13 +138,10 @@ static void insert_record(xpparam_t const *xpp, int line, struct hashmap *map,
  *
  * It is assumed that env has been prepared using xdl_prepare().
  */
-static int fill_hashmap(mmfile_t *file1, mmfile_t *file2,
-		xpparam_t const *xpp, xdfenv_t *env,
+static int fill_hashmap(xpparam_t const *xpp, xdfenv_t *env,
 		struct hashmap *result,
 		int line1, int count1, int line2, int count2)
 {
-	result->file1 = file1;
-	result->file2 = file2;
 	result->xpp = xpp;
 	result->env = env;
 
@@ -254,8 +250,7 @@ static int match(struct hashmap *map, int line1, int line2)
 	return record1->ha == record2->ha;
 }
 
-static int patience_diff(mmfile_t *file1, mmfile_t *file2,
-		xpparam_t const *xpp, xdfenv_t *env,
+static int patience_diff(xpparam_t const *xpp, xdfenv_t *env,
 		int line1, int count1, int line2, int count2);
 
 static int walk_common_sequence(struct hashmap *map, struct entry *first,
@@ -286,8 +281,7 @@ static int walk_common_sequence(struct hashmap *map, struct entry *first,
 
 		/* Recurse */
 		if (next1 > line1 || next2 > line2) {
-			if (patience_diff(map->file1, map->file2,
-					map->xpp, map->env,
+			if (patience_diff(map->xpp, map->env,
 					line1, next1 - line1,
 					line2, next2 - line2))
 				return -1;
@@ -326,8 +320,7 @@ static int fall_back_to_classic_diff(struct hashmap *map,
  *
  * This function assumes that env was prepared with xdl_prepare_env().
  */
-static int patience_diff(mmfile_t *file1, mmfile_t *file2,
-		xpparam_t const *xpp, xdfenv_t *env,
+static int patience_diff(xpparam_t const *xpp, xdfenv_t *env,
 		int line1, int count1, int line2, int count2)
 {
 	struct hashmap map;
@@ -346,7 +339,7 @@ static int patience_diff(mmfile_t *file1, mmfile_t *file2,
 	}
 
 	memset(&map, 0, sizeof(map));
-	if (fill_hashmap(file1, file2, xpp, env, &map,
+	if (fill_hashmap(xpp, env, &map,
 			line1, count1, line2, count2))
 		return -1;
 
@@ -374,9 +367,7 @@ static int patience_diff(mmfile_t *file1, mmfile_t *file2,
 	return result;
 }
 
-int xdl_do_patience_diff(mmfile_t *file1, mmfile_t *file2,
-		xpparam_t const *xpp, xdfenv_t *env)
+int xdl_do_patience_diff(xpparam_t const *xpp, xdfenv_t *env)
 {
-	return patience_diff(file1, file2, xpp, env,
-			1, env->xdf1.nrec, 1, env->xdf2.nrec);
+	return patience_diff(xpp, env, 1, env->xdf1.nrec, 1, env->xdf2.nrec);
 }

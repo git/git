@@ -387,7 +387,23 @@ struct merge_options_internal {
 
 	/* call_depth: recursion level counter for merging merge bases */
 	int call_depth;
+
+	/* field that holds submodule conflict information */
+	struct string_list conflicted_submodules;
 };
+
+struct conflicted_submodule_item {
+	char *abbrev;
+	int flag;
+};
+
+static void conflicted_submodule_item_free(void *util, const char *str)
+{
+	struct conflicted_submodule_item *item = util;
+
+	free(item->abbrev);
+	free(item);
+}
 
 struct version_info {
 	struct object_id oid;
@@ -491,7 +507,6 @@ enum conflict_and_info_types {
 	CONFLICT_FILE_DIRECTORY,
 	CONFLICT_DISTINCT_MODES,
 	CONFLICT_MODIFY_DELETE,
-	CONFLICT_PRESENT_DESPITE_SKIPPED,
 
 	/* Regular rename */
 	CONFLICT_RENAME_RENAME,   /* same file renamed differently */
@@ -517,6 +532,7 @@ enum conflict_and_info_types {
 	CONFLICT_SUBMODULE_NOT_INITIALIZED,
 	CONFLICT_SUBMODULE_HISTORY_NOT_AVAILABLE,
 	CONFLICT_SUBMODULE_MAY_HAVE_REWINDS,
+	CONFLICT_SUBMODULE_NULL_MERGE_BASE,
 
 	/* Keep this entry _last_ in the list */
 	NB_CONFLICT_TYPES,
@@ -536,8 +552,6 @@ static const char *type_short_descriptions[] = {
 	[CONFLICT_FILE_DIRECTORY] = "CONFLICT (file/directory)",
 	[CONFLICT_DISTINCT_MODES] = "CONFLICT (distinct modes)",
 	[CONFLICT_MODIFY_DELETE] = "CONFLICT (modify/delete)",
-	[CONFLICT_PRESENT_DESPITE_SKIPPED] =
-		"CONFLICT (upgrade your version of git)",
 
 	/*** Regular rename ***/
 	[CONFLICT_RENAME_RENAME] = "CONFLICT (rename/rename)",
@@ -570,6 +584,8 @@ static const char *type_short_descriptions[] = {
 		"CONFLICT (submodule history not available)",
 	[CONFLICT_SUBMODULE_MAY_HAVE_REWINDS] =
 		"CONFLICT (submodule may have rewinds)",
+	[CONFLICT_SUBMODULE_NULL_MERGE_BASE] =
+		"CONFLICT (submodule lacks merge base)"
 };
 
 struct logical_conflict_info {
@@ -686,6 +702,9 @@ static void clear_or_reinit_internal_opts(struct merge_options_internal *opti,
 
 	mem_pool_discard(&opti->pool, 0);
 
+	string_list_clear_func(&opti->conflicted_submodules,
+					conflicted_submodule_item_free);
+
 	/* Clean out callback_data as well. */
 	FREE_AND_NULL(renames->callback_data);
 	renames->callback_data_nr = renames->callback_data_alloc = 0;
@@ -748,8 +767,7 @@ static void path_msg(struct merge_options *opt,
 	/* Sanity checks */
 	assert(omittable_hint ==
 	       !starts_with(type_short_descriptions[type], "CONFLICT") ||
-	       type == CONFLICT_DIR_RENAME_SUGGESTED ||
-	       type == CONFLICT_PRESENT_DESPITE_SKIPPED);
+	       type == CONFLICT_DIR_RENAME_SUGGESTED);
 	if (opt->record_conflict_msgs_as_headers && omittable_hint)
 		return; /* Do not record mere hints in headers */
 	if (opt->priv->call_depth && opt->verbosity < 5)
@@ -1744,24 +1762,32 @@ static int merge_submodule(struct merge_options *opt,
 
 	int i;
 	int search = !opt->priv->call_depth;
+	int sub_not_initialized = 1;
+	int sub_flag = CONFLICT_SUBMODULE_FAILED_TO_MERGE;
 
 	/* store fallback answer in result in case we fail */
 	oidcpy(result, opt->priv->call_depth ? o : a);
 
 	/* we can not handle deletion conflicts */
-	if (is_null_oid(o))
-		return 0;
-	if (is_null_oid(a))
-		return 0;
-	if (is_null_oid(b))
-		return 0;
+	if (is_null_oid(a) || is_null_oid(b))
+		BUG("submodule deleted on one side; this should be handled outside of merge_submodule()");
 
-	if (repo_submodule_init(&subrepo, opt->repo, path, null_oid())) {
+	if ((sub_not_initialized = repo_submodule_init(&subrepo,
+		opt->repo, path, null_oid()))) {
 		path_msg(opt, CONFLICT_SUBMODULE_NOT_INITIALIZED, 0,
 			 path, NULL, NULL, NULL,
 			 _("Failed to merge submodule %s (not checked out)"),
 			 path);
-		return 0;
+		sub_flag = CONFLICT_SUBMODULE_NOT_INITIALIZED;
+		goto cleanup;
+	}
+
+	if (is_null_oid(o)) {
+		path_msg(opt, CONFLICT_SUBMODULE_NULL_MERGE_BASE, 0,
+			 path, NULL, NULL, NULL,
+			 _("Failed to merge submodule %s (no merge base)"),
+			 path);
+		goto cleanup;
 	}
 
 	if (!(commit_o = lookup_commit_reference(&subrepo, o)) ||
@@ -1771,6 +1797,7 @@ static int merge_submodule(struct merge_options *opt,
 			 path, NULL, NULL, NULL,
 			 _("Failed to merge submodule %s (commits not present)"),
 			 path);
+		sub_flag = CONFLICT_SUBMODULE_HISTORY_NOT_AVAILABLE;
 		goto cleanup;
 	}
 
@@ -1849,7 +1876,23 @@ static int merge_submodule(struct merge_options *opt,
 
 	object_array_clear(&merges);
 cleanup:
-	repo_clear(&subrepo);
+	if (!opt->priv->call_depth && !ret) {
+		struct string_list *csub = &opt->priv->conflicted_submodules;
+		struct conflicted_submodule_item *util;
+		const char *abbrev;
+
+		util = xmalloc(sizeof(*util));
+		util->flag = sub_flag;
+		util->abbrev = NULL;
+		if (!sub_not_initialized) {
+			abbrev = repo_find_unique_abbrev(&subrepo, b, DEFAULT_ABBREV);
+			util->abbrev = xstrdup(abbrev);
+		}
+		string_list_append(csub, path)->util = util;
+	}
+
+	if (!sub_not_initialized)
+		repo_clear(&subrepo);
 	return ret;
 }
 
@@ -4377,22 +4420,8 @@ static int record_conflicted_index_entries(struct merge_options *opt)
 			 * the CE_SKIP_WORKTREE bit and manually write those
 			 * files to the working disk here.
 			 */
-			if (ce_skip_worktree(ce)) {
-				struct stat st;
-
-				if (!lstat(path, &st)) {
-					char *new_name = unique_path(opt,
-								     path,
-								     "cruft");
-
-					path_msg(opt, CONFLICT_PRESENT_DESPITE_SKIPPED, 1,
-						 path, NULL, NULL, NULL,
-						 _("Note: %s not up to date and in way of checking out conflicted version; old copy renamed to %s"),
-						 path, new_name);
-					errs |= rename(path, new_name);
-				}
+			if (ce_skip_worktree(ce))
 				errs |= checkout_entry(ce, &state, NULL, NULL);
-			}
 
 			/*
 			 * Mark this cache entry for removal and instead add
@@ -4432,6 +4461,63 @@ static int record_conflicted_index_entries(struct merge_options *opt)
 	QSORT(index->cache, index->cache_nr, cmp_cache_name_compare);
 
 	return errs;
+}
+
+static void print_submodule_conflict_suggestion(struct string_list *csub) {
+	struct string_list_item *item;
+	struct strbuf msg = STRBUF_INIT;
+	struct strbuf tmp = STRBUF_INIT;
+	struct strbuf subs = STRBUF_INIT;
+
+	if (!csub->nr)
+		return;
+
+	strbuf_add_separated_string_list(&subs, " ", csub);
+	for_each_string_list_item(item, csub) {
+		struct conflicted_submodule_item *util = item->util;
+
+		/*
+		 * NEEDSWORK: The steps to resolve these errors deserve a more
+		 * detailed explanation than what is currently printed below.
+		 */
+		if (util->flag == CONFLICT_SUBMODULE_NOT_INITIALIZED ||
+		    util->flag == CONFLICT_SUBMODULE_HISTORY_NOT_AVAILABLE)
+			continue;
+
+		/*
+		 * TRANSLATORS: This is a line of advice to resolve a merge
+		 * conflict in a submodule. The first argument is the submodule
+		 * name, and the second argument is the abbreviated id of the
+		 * commit that needs to be merged.  For example:
+		 *  - go to submodule (mysubmodule), and either merge commit abc1234"
+		 */
+		strbuf_addf(&tmp, _(" - go to submodule (%s), and either merge commit %s\n"
+				    "   or update to an existing commit which has merged those changes\n"),
+			    item->string, util->abbrev);
+	}
+
+	/*
+	 * TRANSLATORS: This is a detailed message for resolving submodule
+	 * conflicts.  The first argument is string containing one step per
+	 * submodule.  The second is a space-separated list of submodule names.
+	 */
+	strbuf_addf(&msg,
+		    _("Recursive merging with submodules currently only supports trivial cases.\n"
+		      "Please manually handle the merging of each conflicted submodule.\n"
+		      "This can be accomplished with the following steps:\n"
+		      "%s"
+		      " - come back to superproject and run:\n\n"
+		      "      git add %s\n\n"
+		      "   to record the above merge or update\n"
+		      " - resolve any other conflicts in the superproject\n"
+		      " - commit the resulting index in the superproject\n"),
+		    tmp.buf, subs.buf);
+
+	printf("%s", msg.buf);
+
+	strbuf_release(&subs);
+	strbuf_release(&tmp);
+	strbuf_release(&msg);
 }
 
 void merge_display_update_messages(struct merge_options *opt,
@@ -4482,6 +4568,8 @@ void merge_display_update_messages(struct merge_options *opt,
 		}
 	}
 	string_list_clear(&olist, 0);
+
+	print_submodule_conflict_suggestion(&opti->conflicted_submodules);
 
 	/* Also include needed rename limit adjustment now */
 	diff_warn_rename_limit("merge.renamelimit",
@@ -4684,6 +4772,7 @@ static void merge_start(struct merge_options *opt, struct merge_result *result)
 	trace2_region_enter("merge", "allocate/init", opt->repo);
 	if (opt->priv) {
 		clear_or_reinit_internal_opts(opt->priv, 1);
+		string_list_init_nodup(&opt->priv->conflicted_submodules);
 		trace2_region_leave("merge", "allocate/init", opt->repo);
 		return;
 	}

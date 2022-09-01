@@ -17,6 +17,99 @@ test_expect_success 'scalar shows a usage' '
 	test_expect_code 129 scalar -h
 '
 
+test_expect_success 'scalar invoked on enlistment root' '
+	test_when_finished rm -rf test src deeper &&
+
+	for enlistment_root in test src deeper/test
+	do
+		git init ${enlistment_root}/src &&
+
+		# Register
+		scalar register ${enlistment_root} &&
+		scalar list >out &&
+		grep "$(pwd)/${enlistment_root}/src\$" out &&
+
+		# Delete (including enlistment root)
+		scalar delete $enlistment_root &&
+		test_path_is_missing $enlistment_root &&
+		scalar list >out &&
+		! grep "^$(pwd)/${enlistment_root}/src\$" out || return 1
+	done
+'
+
+test_expect_success 'scalar invoked on enlistment src repo' '
+	test_when_finished rm -rf test src deeper &&
+
+	for enlistment_root in test src deeper/test
+	do
+		git init ${enlistment_root}/src &&
+
+		# Register
+		scalar register ${enlistment_root}/src &&
+		scalar list >out &&
+		grep "$(pwd)/${enlistment_root}/src\$" out &&
+
+		# Delete (will not include enlistment root)
+		scalar delete ${enlistment_root}/src &&
+		test_path_is_dir $enlistment_root &&
+		scalar list >out &&
+		! grep "^$(pwd)/${enlistment_root}/src\$" out || return 1
+	done
+'
+
+test_expect_success 'scalar invoked when enlistment root and repo are the same' '
+	test_when_finished rm -rf test src deeper &&
+
+	for enlistment_root in test src deeper/test
+	do
+		git init ${enlistment_root} &&
+
+		# Register
+		scalar register ${enlistment_root} &&
+		scalar list >out &&
+		grep "$(pwd)/${enlistment_root}\$" out &&
+
+		# Delete (will not include enlistment root)
+		scalar delete ${enlistment_root} &&
+		test_path_is_missing $enlistment_root &&
+		scalar list >out &&
+		! grep "^$(pwd)/${enlistment_root}\$" out &&
+
+		# Make sure we did not accidentally delete the trash dir
+		test_path_is_dir "$TRASH_DIRECTORY" || return 1
+	done
+'
+
+test_expect_success 'scalar repo search respects GIT_CEILING_DIRECTORIES' '
+	test_when_finished rm -rf test &&
+
+	git init test/src &&
+	mkdir -p test/src/deep &&
+	GIT_CEILING_DIRECTORIES="$(pwd)/test/src" &&
+	! scalar register test/src/deep 2>err &&
+	grep "not a git repository" err
+'
+
+test_expect_success 'scalar enlistments need a worktree' '
+	test_when_finished rm -rf bare test &&
+
+	git init --bare bare/src &&
+	! scalar register bare/src 2>err &&
+	grep "Scalar enlistments require a worktree" err &&
+
+	git init test/src &&
+	! scalar register test/src/.git 2>err &&
+	grep "Scalar enlistments require a worktree" err
+'
+
+test_expect_success FSMONITOR_DAEMON 'scalar register starts fsmon daemon' '
+	git init test/src &&
+	test_must_fail git -C test/src fsmonitor--daemon status &&
+	scalar register test/src &&
+	git -C test/src fsmonitor--daemon status &&
+	test_cmp_config -C test/src true core.fsmonitor
+'
+
 test_expect_success 'scalar unregister' '
 	git init vanish/src &&
 	scalar register vanish/src &&
@@ -109,14 +202,14 @@ test_expect_success UNZIP 'scalar diagnose' '
 	sed -n "s/.*$SQ\\(.*\\.zip\\)$SQ.*/\\1/p" <err >zip_path &&
 	zip_path=$(cat zip_path) &&
 	test -n "$zip_path" &&
-	unzip -v "$zip_path" &&
+	"$GIT_UNZIP" -v "$zip_path" &&
 	folder=${zip_path%.zip} &&
 	test_path_is_missing "$folder" &&
-	unzip -p "$zip_path" diagnostics.log >out &&
+	"$GIT_UNZIP" -p "$zip_path" diagnostics.log >out &&
 	test_file_not_empty out &&
-	unzip -p "$zip_path" packs-local.txt >out &&
+	"$GIT_UNZIP" -p "$zip_path" packs-local.txt >out &&
 	grep "$(pwd)/.git/objects" out &&
-	unzip -p "$zip_path" objects-local.txt >out &&
+	"$GIT_UNZIP" -p "$zip_path" objects-local.txt >out &&
 	grep "^Total: [1-9]" out
 '
 

@@ -53,6 +53,7 @@
 /git-cvsimport
 /git-cvsserver
 /git-daemon
+/git-diagnose
 /git-diff
 /git-diff-files
 /git-diff-index

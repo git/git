@@ -29,7 +29,8 @@ basic_cruft_pack_tests () {
 				while read oid
 				do
 					path="$objdir/$(test_oid_to_path "$oid")" &&
-					printf "%s %d\n" "$oid" "$(test-tool chmtime --get "$path")"
+					printf "%s %d\n" "$oid" "$(test-tool chmtime --get "$path")" ||
+					echo "object list generation failed for $oid"
 				done |
 				sort -k1
 			) >expect &&
@@ -232,7 +233,7 @@ test_expect_success 'cruft tags rescue tagged objects' '
 		while read oid
 		do
 			test-tool chmtime -1000 \
-				"$objdir/$(test_oid_to_path $oid)"
+				"$objdir/$(test_oid_to_path $oid)" || exit 1
 		done <objects &&
 
 		test-tool chmtime -500 \
@@ -272,7 +273,7 @@ test_expect_success 'cruft commits rescue parents, trees' '
 		while read object
 		do
 			test-tool chmtime -1000 \
-				"$objdir/$(test_oid_to_path $object)"
+				"$objdir/$(test_oid_to_path $object)" || exit 1
 		done <objects &&
 		test-tool chmtime +500 "$objdir/$(test_oid_to_path \
 			$(git rev-parse HEAD))" &&
@@ -345,7 +346,7 @@ test_expect_success 'expired objects are pruned' '
 		while read object
 		do
 			test-tool chmtime -1000 \
-				"$objdir/$(test_oid_to_path $object)"
+				"$objdir/$(test_oid_to_path $object)" || exit 1
 		done <objects &&
 
 		keep="$(basename "$(ls $packdir/pack-*.pack)")" &&

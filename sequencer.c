@@ -537,7 +537,7 @@ static struct tree *empty_tree(struct repository *r)
 static int error_dirty_index(struct repository *repo, struct replay_opts *opts)
 {
 	if (repo_read_index_unmerged(repo))
-		return error_resolve_conflict(_(action_name(opts)));
+		return error_resolve_conflict(action_name(opts));
 
 	error(_("your local changes would be overwritten by %s."),
 		_(action_name(opts)));
@@ -575,7 +575,7 @@ static int fast_forward_to(struct repository *r,
 	if (checkout_fast_forward(r, from, to, 1))
 		return -1; /* the callee should have complained already */
 
-	strbuf_addf(&sb, _("%s: fast-forward"), _(action_name(opts)));
+	strbuf_addf(&sb, "%s: fast-forward", action_name(opts));
 
 	transaction = ref_transaction_begin(&err);
 	if (!transaction ||
@@ -2422,7 +2422,7 @@ static int read_and_refresh_cache(struct repository *r,
 	if (repo_read_index(r) < 0) {
 		rollback_lock_file(&index_lock);
 		return error(_("git %s: failed to read the index"),
-			_(action_name(opts)));
+			action_name(opts));
 	}
 	refresh_index(r->index, REFRESH_QUIET|REFRESH_UNMERGED, NULL, NULL, NULL);
 
@@ -2430,7 +2430,7 @@ static int read_and_refresh_cache(struct repository *r,
 		if (write_locked_index(r->index, &index_lock,
 				       COMMIT_LOCK | SKIP_IF_UNCHANGED)) {
 			return error(_("git %s: failed to refresh the index"),
-				_(action_name(opts)));
+				action_name(opts));
 		}
 	}
 
@@ -3753,7 +3753,7 @@ static int do_reset(struct repository *r,
 	init_checkout_metadata(&unpack_tree_opts.meta, name, &oid, NULL);
 
 	if (repo_read_index_unmerged(r)) {
-		ret = error_resolve_conflict(_(action_name(opts)));
+		ret = error_resolve_conflict(action_name(opts));
 		goto cleanup;
 	}
 

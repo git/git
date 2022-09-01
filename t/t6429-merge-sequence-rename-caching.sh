@@ -725,7 +725,7 @@ test_expect_success 'avoid assuming we detected renames' '
 		mkdir unrelated &&
 		for i in $(test_seq 1 10)
 		do
-			>unrelated/$i
+			>unrelated/$i || exit 1
 		done &&
 		test_seq  2 10 >numbers &&
 		test_seq 12 20 >values &&

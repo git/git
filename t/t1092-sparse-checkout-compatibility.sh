@@ -556,7 +556,7 @@ test_expect_success 'blame with pathspec inside sparse definition' '
 			deep/deeper1/a \
 			deep/deeper1/deepest/a
 	do
-		test_all_match git blame $file
+		test_all_match git blame $file || return 1
 	done
 '
 
@@ -567,7 +567,7 @@ test_expect_success 'blame with pathspec outside sparse definition' '
 	init_repos &&
 	test_sparse_match git sparse-checkout set &&
 
-	for file in a \
+	for file in \
 			deep/a \
 			deep/deeper1/a \
 			deep/deeper1/deepest/a
@@ -579,7 +579,7 @@ test_expect_success 'blame with pathspec outside sparse definition' '
 		# We compare sparse-checkout-err and sparse-index-err in
 		# `test_sparse_match`. Given we know they are the same, we
 		# only check the content of sparse-index-err here.
-		test_cmp expect sparse-index-err
+		test_cmp expect sparse-index-err || return 1
 	done
 '
 
@@ -1571,7 +1571,7 @@ test_expect_success 'sparse index is not expanded: blame' '
 			deep/deeper1/a \
 			deep/deeper1/deepest/a
 	do
-		ensure_not_expanded blame $file
+		ensure_not_expanded blame $file || return 1
 	done
 '
 
@@ -1907,7 +1907,7 @@ test_expect_success 'rm pathspec outside sparse definition' '
 		test_sparse_match test_must_fail git rm $file &&
 		test_sparse_match test_must_fail git rm --cached $file &&
 		test_sparse_match git rm --sparse $file &&
-		test_sparse_match git status --porcelain=v2
+		test_sparse_match git status --porcelain=v2 || return 1
 	done &&
 
 	cat >folder1-full <<-EOF &&

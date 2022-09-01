@@ -7,27 +7,13 @@
 #include "parse-options.h"
 #include "config.h"
 #include "run-command.h"
+#include "simple-ipc.h"
+#include "fsmonitor-ipc.h"
+#include "fsmonitor-settings.h"
 #include "refs.h"
 #include "dir.h"
 #include "packfile.h"
 #include "help.h"
-#include "archive.h"
-#include "object-store.h"
-
-/*
- * Remove the deepest subdirectory in the provided path string. Path must not
- * include a trailing path separator. Returns 1 if parent directory found,
- * otherwise 0.
- */
-static int strbuf_parent_directory(struct strbuf *buf)
-{
-	size_t len = buf->len;
-	size_t offset = offset_1st_component(buf->buf);
-	char *path_sep = find_last_dir_sep(buf->buf + offset);
-	strbuf_setlen(buf, path_sep ? path_sep - buf->buf : offset);
-
-	return buf->len < len;
-}
 
 static void setup_enlistment_directory(int argc, const char **argv,
 				       const char * const *usagestr,
@@ -35,8 +21,8 @@ static void setup_enlistment_directory(int argc, const char **argv,
 				       struct strbuf *enlistment_root)
 {
 	struct strbuf path = STRBUF_INIT;
-	char *root;
-	int enlistment_found = 0;
+	int enlistment_is_repo_parent = 0;
+	size_t len;
 
 	if (startup_info->have_repository)
 		BUG("gitdir already set up?!?");
@@ -49,51 +35,36 @@ static void setup_enlistment_directory(int argc, const char **argv,
 		strbuf_add_absolute_path(&path, argv[0]);
 		if (!is_directory(path.buf))
 			die(_("'%s' does not exist"), path.buf);
+		if (chdir(path.buf) < 0)
+			die_errno(_("could not switch to '%s'"), path.buf);
 	} else if (strbuf_getcwd(&path) < 0)
 		die(_("need a working directory"));
 
 	strbuf_trim_trailing_dir_sep(&path);
-	do {
-		const size_t len = path.len;
 
-		/* check if currently in enlistment root with src/ workdir */
-		strbuf_addstr(&path, "/src");
-		if (is_nonbare_repository_dir(&path)) {
-			if (enlistment_root)
-				strbuf_add(enlistment_root, path.buf, len);
+	/* check if currently in enlistment root with src/ workdir */
+	len = path.len;
+	strbuf_addstr(&path, "/src");
+	if (is_nonbare_repository_dir(&path)) {
+		enlistment_is_repo_parent = 1;
+		if (chdir(path.buf) < 0)
+			die_errno(_("could not switch to '%s'"), path.buf);
+	}
+	strbuf_setlen(&path, len);
 
-			enlistment_found = 1;
-			break;
-		}
+	setup_git_directory();
 
-		/* reset to original path */
-		strbuf_setlen(&path, len);
+	if (!the_repository->worktree)
+		die(_("Scalar enlistments require a worktree"));
 
-		/* check if currently in workdir */
-		if (is_nonbare_repository_dir(&path)) {
-			if (enlistment_root) {
-				/*
-				 * If the worktree's directory's name is `src`, the enlistment is the
-				 * parent directory, otherwise it is identical to the worktree.
-				 */
-				root = strip_path_suffix(path.buf, "src");
-				strbuf_addstr(enlistment_root, root ? root : path.buf);
-				free(root);
-			}
-
-			enlistment_found = 1;
-			break;
-		}
-	} while (strbuf_parent_directory(&path));
-
-	if (!enlistment_found)
-		die(_("could not find enlistment root"));
-
-	if (chdir(path.buf) < 0)
-		die_errno(_("could not switch to '%s'"), path.buf);
+	if (enlistment_root) {
+		if (enlistment_is_repo_parent)
+			strbuf_addbuf(enlistment_root, &path);
+		else
+			strbuf_addstr(enlistment_root, the_repository->worktree);
+	}
 
 	strbuf_release(&path);
-	setup_git_directory();
 }
 
 static int run_git(const char *arg, ...)
@@ -115,13 +86,39 @@ static int run_git(const char *arg, ...)
 	return res;
 }
 
+struct scalar_config {
+	const char *key;
+	const char *value;
+	int overwrite_on_reconfigure;
+};
+
+static int set_scalar_config(const struct scalar_config *config, int reconfigure)
+{
+	char *value = NULL;
+	int res;
+
+	if ((reconfigure && config->overwrite_on_reconfigure) ||
+	    git_config_get_string(config->key, &value)) {
+		trace2_data_string("scalar", the_repository, config->key, "created");
+		res = git_config_set_gently(config->key, config->value);
+	} else {
+		trace2_data_string("scalar", the_repository, config->key, "exists");
+		res = 0;
+	}
+
+	free(value);
+	return res;
+}
+
+static int have_fsmonitor_support(void)
+{
+	return fsmonitor_ipc__is_supported() &&
+	       fsm_settings__get_reason(the_repository) == FSMONITOR_REASON_OK;
+}
+
 static int set_recommended_config(int reconfigure)
 {
-	struct {
-		const char *key;
-		const char *value;
-		int overwrite_on_reconfigure;
-	} config[] = {
+	struct scalar_config config[] = {
 		/* Required */
 		{ "am.keepCR", "true", 1 },
 		{ "core.FSCache", "true", 1 },
@@ -175,17 +172,16 @@ static int set_recommended_config(int reconfigure)
 	char *value;
 
 	for (i = 0; config[i].key; i++) {
-		if ((reconfigure && config[i].overwrite_on_reconfigure) ||
-		    git_config_get_string(config[i].key, &value)) {
-			trace2_data_string("scalar", the_repository, config[i].key, "created");
-			if (git_config_set_gently(config[i].key,
-						  config[i].value) < 0)
-				return error(_("could not configure %s=%s"),
-					     config[i].key, config[i].value);
-		} else {
-			trace2_data_string("scalar", the_repository, config[i].key, "exists");
-			free(value);
-		}
+		if (set_scalar_config(config + i, reconfigure))
+			return error(_("could not configure %s=%s"),
+				     config[i].key, config[i].value);
+	}
+
+	if (have_fsmonitor_support()) {
+		struct scalar_config fsmonitor = { "core.fsmonitor", "true" };
+		if (set_scalar_config(&fsmonitor, reconfigure))
+			return error(_("could not configure %s=%s"),
+				     fsmonitor.key, fsmonitor.value);
 	}
 
 	/*
@@ -236,123 +232,55 @@ static int add_or_remove_enlistment(int add)
 		       "scalar.repo", the_repository->worktree, NULL);
 }
 
+static int start_fsmonitor_daemon(void)
+{
+	assert(have_fsmonitor_support());
+
+	if (fsmonitor_ipc__get_state() != IPC_STATE__LISTENING)
+		return run_git("fsmonitor--daemon", "start", NULL);
+
+	return 0;
+}
+
+static int stop_fsmonitor_daemon(void)
+{
+	assert(have_fsmonitor_support());
+
+	if (fsmonitor_ipc__get_state() == IPC_STATE__LISTENING)
+		return run_git("fsmonitor--daemon", "stop", NULL);
+
+	return 0;
+}
+
 static int register_dir(void)
 {
-	int res = add_or_remove_enlistment(1);
+	if (add_or_remove_enlistment(1))
+		return error(_("could not add enlistment"));
 
-	if (!res)
-		res = set_recommended_config(0);
+	if (set_recommended_config(0))
+		return error(_("could not set recommended config"));
 
-	if (!res)
-		res = toggle_maintenance(1);
+	if (toggle_maintenance(1))
+		return error(_("could not turn on maintenance"));
 
-	return res;
+	if (have_fsmonitor_support() && start_fsmonitor_daemon()) {
+		return error(_("could not start the FSMonitor daemon"));
+	}
+
+	return 0;
 }
 
 static int unregister_dir(void)
 {
 	int res = 0;
 
-	if (toggle_maintenance(0) < 0)
-		res = -1;
+	if (toggle_maintenance(0))
+		res = error(_("could not turn off maintenance"));
 
-	if (add_or_remove_enlistment(0) < 0)
-		res = -1;
+	if (add_or_remove_enlistment(0))
+		res = error(_("could not remove enlistment"));
 
 	return res;
-}
-
-static int add_directory_to_archiver(struct strvec *archiver_args,
-					  const char *path, int recurse)
-{
-	int at_root = !*path;
-	DIR *dir = opendir(at_root ? "." : path);
-	struct dirent *e;
-	struct strbuf buf = STRBUF_INIT;
-	size_t len;
-	int res = 0;
-
-	if (!dir)
-		return error_errno(_("could not open directory '%s'"), path);
-
-	if (!at_root)
-		strbuf_addf(&buf, "%s/", path);
-	len = buf.len;
-	strvec_pushf(archiver_args, "--prefix=%s", buf.buf);
-
-	while (!res && (e = readdir(dir))) {
-		if (!strcmp(".", e->d_name) || !strcmp("..", e->d_name))
-			continue;
-
-		strbuf_setlen(&buf, len);
-		strbuf_addstr(&buf, e->d_name);
-
-		if (e->d_type == DT_REG)
-			strvec_pushf(archiver_args, "--add-file=%s", buf.buf);
-		else if (e->d_type != DT_DIR)
-			warning(_("skipping '%s', which is neither file nor "
-				  "directory"), buf.buf);
-		else if (recurse &&
-			 add_directory_to_archiver(archiver_args,
-						   buf.buf, recurse) < 0)
-			res = -1;
-	}
-
-	closedir(dir);
-	strbuf_release(&buf);
-	return res;
-}
-
-#ifndef WIN32
-#include <sys/statvfs.h>
-#endif
-
-static int get_disk_info(struct strbuf *out)
-{
-#ifdef WIN32
-	struct strbuf buf = STRBUF_INIT;
-	char volume_name[MAX_PATH], fs_name[MAX_PATH];
-	DWORD serial_number, component_length, flags;
-	ULARGE_INTEGER avail2caller, total, avail;
-
-	strbuf_realpath(&buf, ".", 1);
-	if (!GetDiskFreeSpaceExA(buf.buf, &avail2caller, &total, &avail)) {
-		error(_("could not determine free disk size for '%s'"),
-		      buf.buf);
-		strbuf_release(&buf);
-		return -1;
-	}
-
-	strbuf_setlen(&buf, offset_1st_component(buf.buf));
-	if (!GetVolumeInformationA(buf.buf, volume_name, sizeof(volume_name),
-				   &serial_number, &component_length, &flags,
-				   fs_name, sizeof(fs_name))) {
-		error(_("could not get info for '%s'"), buf.buf);
-		strbuf_release(&buf);
-		return -1;
-	}
-	strbuf_addf(out, "Available space on '%s': ", buf.buf);
-	strbuf_humanise_bytes(out, avail2caller.QuadPart);
-	strbuf_addch(out, '\n');
-	strbuf_release(&buf);
-#else
-	struct strbuf buf = STRBUF_INIT;
-	struct statvfs stat;
-
-	strbuf_realpath(&buf, ".", 1);
-	if (statvfs(buf.buf, &stat) < 0) {
-		error_errno(_("could not determine free disk size for '%s'"),
-			    buf.buf);
-		strbuf_release(&buf);
-		return -1;
-	}
-
-	strbuf_addf(out, "Available space on '%s': ", buf.buf);
-	strbuf_humanise_bytes(out, st_mult(stat.f_bsize, stat.f_bavail));
-	strbuf_addf(out, " (mount flags 0x%lx)\n", stat.f_flag);
-	strbuf_release(&buf);
-#endif
-	return 0;
 }
 
 /* printf-style interface, expects `<key>=<value>` argument */
@@ -431,25 +359,35 @@ static int delete_enlistment(struct strbuf *enlistment)
 {
 #ifdef WIN32
 	struct strbuf parent = STRBUF_INIT;
+	size_t offset;
+	char *path_sep;
 #endif
 
 	if (unregister_dir())
-		die(_("failed to unregister repository"));
+		return error(_("failed to unregister repository"));
 
 #ifdef WIN32
 	/*
 	 * Change the current directory to one outside of the enlistment so
 	 * that we may delete everything underneath it.
 	 */
-	strbuf_addbuf(&parent, enlistment);
-	strbuf_parent_directory(&parent);
-	if (chdir(parent.buf) < 0)
-		die_errno(_("could not switch to '%s'"), parent.buf);
+	offset = offset_1st_component(enlistment->buf);
+	path_sep = find_last_dir_sep(enlistment->buf + offset);
+	strbuf_add(&parent, enlistment->buf,
+		   path_sep ? path_sep - enlistment->buf : offset);
+	if (chdir(parent.buf) < 0) {
+		int res = error_errno(_("could not switch to '%s'"), parent.buf);
+		strbuf_release(&parent);
+		return res;
+	}
 	strbuf_release(&parent);
 #endif
 
+	if (have_fsmonitor_support() && stop_fsmonitor_daemon())
+		return error(_("failed to stop the FSMonitor daemon"));
+
 	if (remove_dir_recursively(enlistment, 0))
-		die(_("failed to delete enlistment directory"));
+		return error(_("failed to delete enlistment directory"));
 
 	return 0;
 }
@@ -595,83 +533,6 @@ cleanup:
 	return res;
 }
 
-static void dir_file_stats_objects(const char *full_path, size_t full_path_len,
-				   const char *file_name, void *data)
-{
-	struct strbuf *buf = data;
-	struct stat st;
-
-	if (!stat(full_path, &st))
-		strbuf_addf(buf, "%-70s %16" PRIuMAX "\n", file_name,
-			    (uintmax_t)st.st_size);
-}
-
-static int dir_file_stats(struct object_directory *object_dir, void *data)
-{
-	struct strbuf *buf = data;
-
-	strbuf_addf(buf, "Contents of %s:\n", object_dir->path);
-
-	for_each_file_in_pack_dir(object_dir->path, dir_file_stats_objects,
-				  data);
-
-	return 0;
-}
-
-static int count_files(char *path)
-{
-	DIR *dir = opendir(path);
-	struct dirent *e;
-	int count = 0;
-
-	if (!dir)
-		return 0;
-
-	while ((e = readdir(dir)) != NULL)
-		if (!is_dot_or_dotdot(e->d_name) && e->d_type == DT_REG)
-			count++;
-
-	closedir(dir);
-	return count;
-}
-
-static void loose_objs_stats(struct strbuf *buf, const char *path)
-{
-	DIR *dir = opendir(path);
-	struct dirent *e;
-	int count;
-	int total = 0;
-	unsigned char c;
-	struct strbuf count_path = STRBUF_INIT;
-	size_t base_path_len;
-
-	if (!dir)
-		return;
-
-	strbuf_addstr(buf, "Object directory stats for ");
-	strbuf_add_absolute_path(buf, path);
-	strbuf_addstr(buf, ":\n");
-
-	strbuf_add_absolute_path(&count_path, path);
-	strbuf_addch(&count_path, '/');
-	base_path_len = count_path.len;
-
-	while ((e = readdir(dir)) != NULL)
-		if (!is_dot_or_dotdot(e->d_name) &&
-		    e->d_type == DT_DIR && strlen(e->d_name) == 2 &&
-		    !hex_to_bytes(&c, e->d_name, 1)) {
-			strbuf_setlen(&count_path, base_path_len);
-			strbuf_addstr(&count_path, e->d_name);
-			total += (count = count_files(count_path.buf));
-			strbuf_addf(buf, "%s : %7d files\n", e->d_name, count);
-		}
-
-	strbuf_addf(buf, "Total: %d loose objects", total);
-
-	strbuf_release(&count_path);
-	closedir(dir);
-}
-
 static int cmd_diagnose(int argc, const char **argv)
 {
 	struct option options[] = {
@@ -681,106 +542,19 @@ static int cmd_diagnose(int argc, const char **argv)
 		N_("scalar diagnose [<enlistment>]"),
 		NULL
 	};
-	struct strbuf zip_path = STRBUF_INIT;
-	struct strvec archiver_args = STRVEC_INIT;
-	char **argv_copy = NULL;
-	int stdout_fd = -1, archiver_fd = -1;
-	time_t now = time(NULL);
-	struct tm tm;
-	struct strbuf buf = STRBUF_INIT;
+	struct strbuf diagnostics_root = STRBUF_INIT;
 	int res = 0;
 
 	argc = parse_options(argc, argv, NULL, options,
 			     usage, 0);
 
-	setup_enlistment_directory(argc, argv, usage, options, &zip_path);
+	setup_enlistment_directory(argc, argv, usage, options, &diagnostics_root);
+	strbuf_addstr(&diagnostics_root, "/.scalarDiagnostics");
 
-	strbuf_addstr(&zip_path, "/.scalarDiagnostics/scalar_");
-	strbuf_addftime(&zip_path,
-			"%Y%m%d_%H%M%S", localtime_r(&now, &tm), 0, 0);
-	strbuf_addstr(&zip_path, ".zip");
-	switch (safe_create_leading_directories(zip_path.buf)) {
-	case SCLD_EXISTS:
-	case SCLD_OK:
-		break;
-	default:
-		error_errno(_("could not create directory for '%s'"),
-			    zip_path.buf);
-		goto diagnose_cleanup;
-	}
-	stdout_fd = dup(1);
-	if (stdout_fd < 0) {
-		res = error_errno(_("could not duplicate stdout"));
-		goto diagnose_cleanup;
-	}
+	res = run_git("diagnose", "--mode=all", "-s", "%Y%m%d_%H%M%S",
+		      "-o", diagnostics_root.buf, NULL);
 
-	archiver_fd = xopen(zip_path.buf, O_CREAT | O_WRONLY | O_TRUNC, 0666);
-	if (archiver_fd < 0 || dup2(archiver_fd, 1) < 0) {
-		res = error_errno(_("could not redirect output"));
-		goto diagnose_cleanup;
-	}
-
-	init_zip_archiver();
-	strvec_pushl(&archiver_args, "scalar-diagnose", "--format=zip", NULL);
-
-	strbuf_reset(&buf);
-	strbuf_addstr(&buf, "Collecting diagnostic info\n\n");
-	get_version_info(&buf, 1);
-
-	strbuf_addf(&buf, "Enlistment root: %s\n", the_repository->worktree);
-	get_disk_info(&buf);
-	write_or_die(stdout_fd, buf.buf, buf.len);
-	strvec_pushf(&archiver_args,
-		     "--add-virtual-file=diagnostics.log:%.*s",
-		     (int)buf.len, buf.buf);
-
-	strbuf_reset(&buf);
-	strbuf_addstr(&buf, "--add-virtual-file=packs-local.txt:");
-	dir_file_stats(the_repository->objects->odb, &buf);
-	foreach_alt_odb(dir_file_stats, &buf);
-	strvec_push(&archiver_args, buf.buf);
-
-	strbuf_reset(&buf);
-	strbuf_addstr(&buf, "--add-virtual-file=objects-local.txt:");
-	loose_objs_stats(&buf, ".git/objects");
-	strvec_push(&archiver_args, buf.buf);
-
-	if ((res = add_directory_to_archiver(&archiver_args, ".git", 0)) ||
-	    (res = add_directory_to_archiver(&archiver_args, ".git/hooks", 0)) ||
-	    (res = add_directory_to_archiver(&archiver_args, ".git/info", 0)) ||
-	    (res = add_directory_to_archiver(&archiver_args, ".git/logs", 1)) ||
-	    (res = add_directory_to_archiver(&archiver_args, ".git/objects/info", 0)))
-		goto diagnose_cleanup;
-
-	strvec_pushl(&archiver_args, "--prefix=",
-		     oid_to_hex(the_hash_algo->empty_tree), "--", NULL);
-
-	/* `write_archive()` modifies the `argv` passed to it. Let it. */
-	argv_copy = xmemdupz(archiver_args.v,
-			     sizeof(char *) * archiver_args.nr);
-	res = write_archive(archiver_args.nr, (const char **)argv_copy, NULL,
-			    the_repository, NULL, 0);
-	if (res) {
-		error(_("failed to write archive"));
-		goto diagnose_cleanup;
-	}
-
-	if (!res)
-		fprintf(stderr, "\n"
-		       "Diagnostics complete.\n"
-		       "All of the gathered info is captured in '%s'\n",
-		       zip_path.buf);
-
-diagnose_cleanup:
-	if (archiver_fd >= 0) {
-		close(1);
-		dup2(stdout_fd, 1);
-	}
-	free(argv_copy);
-	strvec_clear(&archiver_args);
-	strbuf_release(&zip_path);
-	strbuf_release(&buf);
-
+	strbuf_release(&diagnostics_root);
 	return res;
 }
 

@@ -490,7 +490,9 @@ static void filter_prefetch_refspec(struct refspec *rs)
 			continue;
 		if (!rs->items[i].dst ||
 		    (rs->items[i].src &&
-		     !strncmp(rs->items[i].src, "refs/tags/", 10))) {
+		     !strncmp(rs->items[i].src,
+			      ref_namespace[NAMESPACE_TAGS].ref,
+			      strlen(ref_namespace[NAMESPACE_TAGS].ref)))) {
 			int j;
 
 			free(rs->items[i].src);
@@ -506,7 +508,7 @@ static void filter_prefetch_refspec(struct refspec *rs)
 		}
 
 		old_dst = rs->items[i].dst;
-		strbuf_addstr(&new_dst, "refs/prefetch/");
+		strbuf_addstr(&new_dst, ref_namespace[NAMESPACE_PREFETCH].ref);
 
 		/*
 		 * If old_dst starts with "refs/", then place
