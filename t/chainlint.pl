@@ -497,6 +497,12 @@ sub accumulate {
 	# did previous command end with "&&", "|", "|| return" or similar?
 	goto DONE if match_ending($tokens, \@safe_endings);
 
+	# if this command handles "$?" specially, then okay for previous
+	# command to be missing "&&"
+	for my $token (@$cmd) {
+		goto DONE if $token =~ /\$\?/;
+	}
+
 	# flag missing "&&" at end of previous command
 	my $n = find_non_nl($tokens);
 	splice(@$tokens, $n + 1, 0, '?!AMP?!') unless $n < 0;
