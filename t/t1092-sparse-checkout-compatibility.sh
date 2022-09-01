@@ -380,6 +380,15 @@ test_expect_success 'checkout with modified sparse directory' '
 	test_all_match git checkout base
 '
 
+test_expect_success 'checkout orphan then non-orphan' '
+	init_repos &&
+
+	test_all_match git checkout --orphan test-orphan &&
+	test_all_match git status --porcelain=v2 &&
+	test_all_match git checkout base &&
+	test_all_match git status --porcelain=v2
+'
+
 test_expect_success 'add outside sparse cone' '
 	init_repos &&
 
