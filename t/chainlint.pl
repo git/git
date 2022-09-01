@@ -15,9 +15,11 @@
 
 use warnings;
 use strict;
+use Config;
 use File::Glob;
 use Getopt::Long;
 
+my $jobs = -1;
 my $show_stats;
 my $emit_all;
 
@@ -569,6 +571,16 @@ if (eval {require Time::HiRes; Time::HiRes->import(); 1;}) {
 	$interval = sub { return Time::HiRes::tv_interval(shift); };
 }
 
+sub ncores {
+	# Windows
+	return $ENV{NUMBER_OF_PROCESSORS} if exists($ENV{NUMBER_OF_PROCESSORS});
+	# Linux / MSYS2 / Cygwin / WSL
+	do { local @ARGV='/proc/cpuinfo'; return scalar(grep(/^processor\s*:/, <>)); } if -r '/proc/cpuinfo';
+	# macOS & BSD
+	return qx/sysctl -n hw.ncpu/ if $^O =~ /(?:^darwin$|bsd)/;
+	return 1;
+}
+
 sub show_stats {
 	my ($start_time, $stats) = @_;
 	my $walltime = $interval->($start_time);
@@ -621,7 +633,9 @@ sub exit_code {
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
 	"emit-all!" => \$emit_all,
+	"jobs|j=i" => \$jobs,
 	"stats|show-stats!" => \$show_stats) or die("option error\n");
+$jobs = ncores() if $jobs < 1;
 
 my $start_time = $getnow->();
 my @stats;
@@ -633,6 +647,40 @@ unless (@scripts) {
 	exit;
 }
 
-push(@stats, check_script(1, sub { shift(@scripts); }, sub { print(@_); }));
+unless ($Config{useithreads} && eval {
+	require threads; threads->import();
+	require Thread::Queue; Thread::Queue->import();
+	1;
+	}) {
+	push(@stats, check_script(1, sub { shift(@scripts); }, sub { print(@_); }));
+	show_stats($start_time, \@stats) if $show_stats;
+	exit(exit_code(\@stats));
+}
+
+my $script_queue = Thread::Queue->new();
+my $output_queue = Thread::Queue->new();
+
+sub next_script { return $script_queue->dequeue(); }
+sub emit { $output_queue->enqueue(@_); }
+
+sub monitor {
+	while (my $s = $output_queue->dequeue()) {
+		print($s);
+	}
+}
+
+my $mon = threads->create({'context' => 'void'}, \&monitor);
+threads->create({'context' => 'list'}, \&check_script, $_, \&next_script, \&emit) for 1..$jobs;
+
+$script_queue->enqueue(@scripts);
+$script_queue->end();
+
+for (threads->list()) {
+	push(@stats, $_->join()) unless $_ == $mon;
+}
+
+$output_queue->end();
+$mon->join();
+
 show_stats($start_time, \@stats) if $show_stats;
 exit(exit_code(\@stats));
