@@ -503,6 +503,14 @@ sub accumulate {
 		goto DONE if $token =~ /\$\?/;
 	}
 
+	# if this command is "false", "return 1", or "exit 1" (which signal
+	# failure explicitly), then okay for all preceding commands to be
+	# missing "&&"
+	if ($$cmd[0] =~ /^(?:false|return|exit)$/) {
+		@$tokens = grep(!/^\?!AMP\?!$/, @$tokens);
+		goto DONE;
+	}
+
 	# flag missing "&&" at end of previous command
 	my $n = find_non_nl($tokens);
 	splice(@$tokens, $n + 1, 0, '?!AMP?!') unless $n < 0;
