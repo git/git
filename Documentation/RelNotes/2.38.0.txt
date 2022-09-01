@@ -72,6 +72,9 @@ UI, Workflows & Features
  * The bash prompt (in contrib/) learned to optionally indicate when
    the index is unmerged.
 
+ * "git clone" command learned the "--bundle-uri" option to coordinate
+   with hosting sites the use of pre-prepared bundle files.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -138,6 +141,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * Test portability improvements.
    (merge 4d1d843be7 mt/rot13-in-c later to maint).
+
+ * The "subcommand" mode is introduced to parse-options API and update
+   the command line parser of Git commands with subcommands.
 
 
 Fixes since v2.37
@@ -295,6 +301,11 @@ Fixes since v2.37
  * Update the version of Ubuntu used for GitHub Actions CI from 18.04
    to 22.04.
    (merge ef46584831 ds/github-actions-use-newer-ubuntu later to maint).
+
+ * The auto-stashed local changes created by "git merge --autostash"
+   was mixed into a conflicted state left in the working tree, which
+   has been corrected.
+   (merge d3a9295ada en/merge-unstash-only-on-clean-merge later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 77b9e85c0f vd/fix-perf-tests later to maint).
