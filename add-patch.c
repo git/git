@@ -592,7 +592,10 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 			if (colored_eol)
 				colored_p = colored_eol + 1;
 			else if (p != pend)
-				/* colored shorter than non-colored? */
+				/* non-colored has more lines? */
+				goto mismatched_output;
+			else if (colored_p == colored_pend)
+				/* last line has no matching colored one? */
 				goto mismatched_output;
 			else
 				colored_p = colored_pend;
