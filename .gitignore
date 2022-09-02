@@ -185,6 +185,7 @@
 /git-whatchanged
 /git-worktree
 /git-write-tree
+/scalar
 /git-core-*/?*
 /git.res
 /gitweb/GITWEB-BUILD-OPTIONS
