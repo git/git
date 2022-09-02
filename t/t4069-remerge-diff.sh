@@ -56,6 +56,11 @@ test_expect_success 'remerge-diff on a clean merge' '
 	test_cmp expect actual
 '
 
+test_expect_success 'remerge-diff on a clean merge with a filter' '
+	git show --oneline --remerge-diff --diff-filter=U bc_resolution >actual &&
+	test_must_be_empty actual
+'
+
 test_expect_success 'remerge-diff with both a resolved conflict and an unrelated change' '
 	git log -1 --oneline ab_resolution >tmp &&
 	cat <<-EOF >>tmp &&
