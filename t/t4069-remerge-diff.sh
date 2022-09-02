@@ -2,7 +2,6 @@
 
 test_description='remerge-diff handling'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # This test is ort-specific
@@ -88,6 +87,22 @@ test_expect_success 'remerge-diff with both a resolved conflict and an unrelated
 	git show --oneline --remerge-diff ab_resolution >tmp &&
 	sed -e "s/[0-9a-f]\{7,\}/HASH/g" tmp >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'pickaxe still includes additional headers for relevant changes' '
+	# reuses "expect" from the previous testcase
+
+	git log --oneline --remerge-diff -Sacht ab_resolution >tmp &&
+	sed -e "s/[0-9a-f]\{7,\}/HASH/g" tmp >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'can filter out additional headers with pickaxe' '
+	git show --remerge-diff --submodule=log --find-object=HEAD ab_resolution >actual &&
+	test_must_be_empty actual &&
+
+	git show --remerge-diff -S"not present" --all >actual &&
+	test_must_be_empty actual
 '
 
 test_expect_success 'setup non-content conflicts' '
