@@ -1,9 +1,12 @@
 #!/bin/sh
 
-test_description='Test submodule--helper is-active
+test_description='Test with test-tool submodule is-active
 
-This test verifies that `git submodue--helper is-active` correctly identifies
+This test verifies that `test-tool submodule is-active` correctly identifies
 submodules which are "active" and interesting to the user.
+
+This is a unit test of the submodule.c is_submodule_active() function,
+which is also indirectly tested elsewhere.
 '
 
 . ./test-lib.sh
@@ -25,13 +28,13 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'is-active works with urls' '
-	git -C super submodule--helper is-active sub1 &&
-	git -C super submodule--helper is-active sub2 &&
+	test-tool -C super submodule is-active sub1 &&
+	test-tool -C super submodule is-active sub2 &&
 
 	git -C super config --unset submodule.sub1.URL &&
-	test_must_fail git -C super submodule--helper is-active sub1 &&
+	test_must_fail test-tool -C super submodule is-active sub1 &&
 	git -C super config submodule.sub1.URL ../sub &&
-	git -C super submodule--helper is-active sub1
+	test-tool -C super submodule is-active sub1
 '
 
 test_expect_success 'is-active works with submodule.<name>.active config' '
@@ -39,11 +42,11 @@ test_expect_success 'is-active works with submodule.<name>.active config' '
 	test_when_finished "git -C super config submodule.sub1.URL ../sub" &&
 
 	git -C super config --bool submodule.sub1.active "false" &&
-	test_must_fail git -C super submodule--helper is-active sub1 &&
+	test_must_fail test-tool -C super submodule is-active sub1 &&
 
 	git -C super config --bool submodule.sub1.active "true" &&
 	git -C super config --unset submodule.sub1.URL &&
-	git -C super submodule--helper is-active sub1
+	test-tool -C super submodule is-active sub1
 '
 
 test_expect_success 'is-active works with basic submodule.active config' '
@@ -53,17 +56,17 @@ test_expect_success 'is-active works with basic submodule.active config' '
 	git -C super config --add submodule.active "." &&
 	git -C super config --unset submodule.sub1.URL &&
 
-	git -C super submodule--helper is-active sub1 &&
-	git -C super submodule--helper is-active sub2
+	test-tool -C super submodule is-active sub1 &&
+	test-tool -C super submodule is-active sub2
 '
 
 test_expect_success 'is-active correctly works with paths that are not submodules' '
 	test_when_finished "git -C super config --unset-all submodule.active" &&
 
-	test_must_fail git -C super submodule--helper is-active not-a-submodule &&
+	test_must_fail test-tool -C super submodule is-active not-a-submodule &&
 
 	git -C super config --add submodule.active "." &&
-	test_must_fail git -C super submodule--helper is-active not-a-submodule
+	test_must_fail test-tool -C super submodule is-active not-a-submodule
 '
 
 test_expect_success 'is-active works with exclusions in submodule.active config' '
@@ -72,8 +75,8 @@ test_expect_success 'is-active works with exclusions in submodule.active config'
 	git -C super config --add submodule.active "." &&
 	git -C super config --add submodule.active ":(exclude)sub1" &&
 
-	test_must_fail git -C super submodule--helper is-active sub1 &&
-	git -C super submodule--helper is-active sub2
+	test_must_fail test-tool -C super submodule is-active sub1 &&
+	test-tool -C super submodule is-active sub2
 '
 
 test_expect_success 'is-active with submodule.active and submodule.<name>.active' '
@@ -85,8 +88,8 @@ test_expect_success 'is-active with submodule.active and submodule.<name>.active
 	git -C super config --bool submodule.sub1.active "false" &&
 	git -C super config --bool submodule.sub2.active "true" &&
 
-	test_must_fail git -C super submodule--helper is-active sub1 &&
-	git -C super submodule--helper is-active sub2
+	test_must_fail test-tool -C super submodule is-active sub1 &&
+	test-tool -C super submodule is-active sub2
 '
 
 test_expect_success 'is-active, submodule.active and submodule add' '
