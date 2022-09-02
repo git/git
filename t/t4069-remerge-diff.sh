@@ -185,6 +185,14 @@ test_expect_success 'remerge-diff w/ diff-filter=U: all conflict headers, no dif
 	test_cmp expect actual
 '
 
+test_expect_success 'submodule formatting ignores additional headers' '
+	# Reuses "expect" from last testcase
+
+	git show --oneline --remerge-diff --diff-filter=U --submodule=log >tmp &&
+	sed -e "s/[0-9a-f]\{7,\}/HASH/g" tmp >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'remerge-diff w/ diff-filter=R: relevant file + conflict header' '
 	git log -1 --oneline resolution >tmp &&
 	cat <<-EOF >>tmp &&
