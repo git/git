@@ -1017,7 +1017,7 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 			     PARSE_OPT_SUBCOMMAND_OPTIONAL);
 	if (!fn) {
 		if (argc) {
-			error(_("unknown subcommand: %s"), argv[0]);
+			error(_("unknown subcommand: `%s'"), argv[0]);
 			usage_with_options(git_notes_usage, options);
 		}
 		fn = list;
