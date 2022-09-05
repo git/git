@@ -145,6 +145,9 @@ Performance, Internal Implementation, Development Support etc.
  * The "subcommand" mode is introduced to parse-options API and update
    the command line parser of Git commands with subcommands.
 
+ * The pack bitmap file gained a bitmap-lookup table to speed up
+   locating the necessary bitmap for a given commit.
+
 
 Fixes since v2.37
 -----------------
@@ -307,5 +310,19 @@ Fixes since v2.37
    has been corrected.
    (merge d3a9295ada en/merge-unstash-only-on-clean-merge later to maint).
 
+ * Multi-pack index got corrupted when preferred pack changed from one
+   pack to another in a certain way, which has been corrected.
+   (merge 99e4d084ff tb/midx-with-changing-preferred-pack-fix later to maint).
+
+ * The clean-up of temporary files created via mks_tempfile_dt() was
+   racy and attempted to unlink() the leading directory when signals
+   are involved, which has been corrected.
+   (merge babe2e0559 rs/tempfile-cleanup-race-fix later to maint).
+
+ * FreeBSD portability fix for "git maintenance" that spawns "crontab"
+   to schedule tasks.
+   (merge ee69e7884e bc/gc-crontab-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 77b9e85c0f vd/fix-perf-tests later to maint).
+   (merge 0682bc43f5 jk/test-crontab-fixes later to maint).
