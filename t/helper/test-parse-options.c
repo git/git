@@ -195,7 +195,8 @@ int cmd__parse_options(int argc, const char **argv)
 
 static void print_args(int argc, const char **argv)
 {
-	for (int i = 0; i < argc; i++)
+	int i;
+	for (i = 0; i < argc; i++)
 		printf("arg %02d: %s\n", i, argv[i]);
 }
 
