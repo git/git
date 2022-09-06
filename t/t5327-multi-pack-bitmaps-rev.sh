@@ -17,7 +17,27 @@ GIT_TEST_MIDX_READ_RIDX=0
 export GIT_TEST_MIDX_WRITE_REV
 export GIT_TEST_MIDX_READ_RIDX
 
-midx_bitmap_core rev
-midx_bitmap_partial_tests rev
+test_midx_bitmap_rev () {
+	writeLookupTable=false
+
+	for i in "$@"
+	do
+		case $i in
+		"pack.writeBitmapLookupTable") writeLookupTable=true;;
+		esac
+	done
+
+	test_expect_success 'setup bitmap config' '
+		rm -rf * .git &&
+		git init &&
+		git config pack.writeBitmapLookupTable '"$writeLookupTable"'
+	'
+
+	midx_bitmap_core rev
+	midx_bitmap_partial_tests rev
+}
+
+test_midx_bitmap_rev
+test_midx_bitmap_rev "pack.writeBitmapLookupTable"
 
 test_done
