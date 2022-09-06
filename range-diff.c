@@ -57,9 +57,9 @@ static int read_patches(const char *range, struct string_list *list,
 		     "--pretty=medium",
 		     "--notes",
 		     NULL);
+	strvec_push(&cp.args, range);
 	if (other_arg)
 		strvec_pushv(&cp.args, other_arg->v);
-	strvec_push(&cp.args, range);
 	cp.out = -1;
 	cp.no_stdin = 1;
 	cp.git_cmd = 1;
