@@ -477,6 +477,16 @@ end:
 	}
 }
 
+static int use_in_body_from(const struct pretty_print_context *pp,
+			    const struct ident_split *ident)
+{
+	if (pp->rev && pp->rev->force_in_body_from)
+		return 1;
+	if (ident_cmp(pp->from_ident, ident))
+		return 1;
+	return 0;
+}
+
 void pp_user_info(struct pretty_print_context *pp,
 		  const char *what, struct strbuf *sb,
 		  const char *line, const char *encoding)
@@ -503,7 +513,7 @@ void pp_user_info(struct pretty_print_context *pp,
 		map_user(pp->mailmap, &mailbuf, &maillen, &namebuf, &namelen);
 
 	if (cmit_fmt_is_mail(pp->fmt)) {
-		if (pp->from_ident && ident_cmp(pp->from_ident, &ident)) {
+		if (pp->from_ident && use_in_body_from(pp, &ident)) {
 			struct strbuf buf = STRBUF_INIT;
 
 			strbuf_addstr(&buf, "From: ");
