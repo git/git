@@ -14,16 +14,14 @@
  *
  * The possible states of a `tempfile` object are as follows:
  *
- * - Uninitialized. In this state the object's `on_list` field must be
- *   zero but the rest of its contents need not be initialized. As
- *   soon as the object is used in any way, it is irrevocably
- *   registered in `tempfile_list`, and `on_list` is set.
+ * - Inactive/unallocated. The only way to get a tempfile is via a creation
+ *   function like create_tempfile(). Once allocated, the tempfile is on the
+ *   global tempfile_list and considered active.
  *
  * - Active, file open (after `create_tempfile()` or
  *   `reopen_tempfile()`). In this state:
  *
  *   - the temporary file exists
- *   - `active` is set
  *   - `filename` holds the filename of the temporary file
  *   - `fd` holds a file descriptor open for writing to it
  *   - `fp` holds a pointer to an open `FILE` object if and only if
@@ -35,14 +33,8 @@
  *   `fd` is -1, and `fp` is `NULL`.
  *
  * - Inactive (after `delete_tempfile()`, `rename_tempfile()`, or a
- *   failed attempt to create a temporary file). In this state:
- *
- *   - `active` is unset
- *   - `filename` is empty (usually, though there are transitory
- *     states in which this condition doesn't hold). Client code should
- *     *not* rely on the filename being empty in this state.
- *   - `fd` is -1 and `fp` is `NULL`
- *   - the object is removed from `tempfile_list` (but could be used again)
+ *   failed attempt to create a temporary file). The struct is removed from
+ *   the global tempfile_list and deallocated.
  *
  * A temporary file is owned by the process that created it. The
  * `tempfile` has an `owner` field that records the owner's PID. This
@@ -86,8 +78,6 @@ static void remove_tempfiles(int in_signal_handler)
 		else
 			unlink_or_warn(p->filename.buf);
 		remove_template_directory(p, in_signal_handler);
-
-		p->active = 0;
 	}
 }
 
@@ -108,7 +98,6 @@ static struct tempfile *new_tempfile(void)
 	struct tempfile *tempfile = xmalloc(sizeof(*tempfile));
 	tempfile->fd = -1;
 	tempfile->fp = NULL;
-	tempfile->active = 0;
 	tempfile->owner = 0;
 	INIT_LIST_HEAD(&tempfile->list);
 	strbuf_init(&tempfile->filename, 0);
@@ -120,9 +109,6 @@ static void activate_tempfile(struct tempfile *tempfile)
 {
 	static int initialized;
 
-	if (is_tempfile_active(tempfile))
-		BUG("activate_tempfile called for active object");
-
 	if (!initialized) {
 		sigchain_push_common(remove_tempfiles_on_signal);
 		atexit(remove_tempfiles_on_exit);
@@ -131,15 +117,13 @@ static void activate_tempfile(struct tempfile *tempfile)
 
 	volatile_list_add(&tempfile->list, &tempfile_list);
 	tempfile->owner = getpid();
-	tempfile->active = 1;
 }
 
 static void deactivate_tempfile(struct tempfile *tempfile)
 {
-	tempfile->active = 0;
+	volatile_list_del(&tempfile->list);
 	strbuf_release(&tempfile->filename);
 	free(tempfile->directory);
-	volatile_list_del(&tempfile->list);
 	free(tempfile);
 }
 
