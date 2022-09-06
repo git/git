@@ -279,6 +279,12 @@ struct object *parse_object_with_flags(struct repository *r,
 	if (obj && obj->parsed)
 		return obj;
 
+	if (skip_hash) {
+		struct commit *commit = lookup_commit_in_graph(r, repl);
+		if (commit)
+			return &commit->object;
+	}
+
 	if ((obj && obj->type == OBJ_BLOB && repo_has_object_file(r, oid)) ||
 	    (!obj && repo_has_object_file(r, oid) &&
 	     oid_object_info(r, oid, NULL) == OBJ_BLOB)) {
