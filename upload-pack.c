@@ -1420,7 +1420,8 @@ static int parse_want(struct packet_writer *writer, const char *line,
 		if (commit)
 			o = &commit->object;
 		else
-			o = parse_object(the_repository, &oid);
+			o = parse_object_with_flags(the_repository, &oid,
+						    PARSE_OBJECT_SKIP_HASH_CHECK);
 
 		if (!o) {
 			packet_writer_error(writer,
