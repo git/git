@@ -1423,7 +1423,7 @@ static void debug_unpack_callback(int n,
  * from the tree walk at the given traverse_info.
  */
 static int is_sparse_directory_entry(struct cache_entry *ce,
-				     struct name_entry *name,
+				     const struct name_entry *name,
 				     struct traverse_info *info)
 {
 	if (!ce || !name || !S_ISSPARSEDIR(ce->ce_mode))
@@ -1562,7 +1562,7 @@ static int unpack_callback(int n, unsigned long mask, unsigned long dirmask, str
 			}
 		}
 
-		if (!is_sparse_directory_entry(src[0], names, info) &&
+		if (!is_sparse_directory_entry(src[0], p, info) &&
 		    !is_new_sparse_dir &&
 		    traverse_trees_recursive(n, dirmask, mask & ~dirmask,
 						    names, info) < 0) {
