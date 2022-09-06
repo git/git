@@ -577,6 +577,78 @@ static void fill_pack_entry(uint32_t pack_int_id,
 	entry->preferred = !!preferred;
 }
 
+struct midx_fanout {
+	struct pack_midx_entry *entries;
+	uint32_t nr;
+	uint32_t alloc;
+};
+
+static void midx_fanout_grow(struct midx_fanout *fanout, uint32_t nr)
+{
+	ALLOC_GROW(fanout->entries, nr, fanout->alloc);
+}
+
+static void midx_fanout_sort(struct midx_fanout *fanout)
+{
+	QSORT(fanout->entries, fanout->nr, midx_oid_compare);
+}
+
+static void midx_fanout_add_midx_fanout(struct midx_fanout *fanout,
+					struct multi_pack_index *m,
+					uint32_t cur_fanout,
+					int preferred_pack)
+{
+	uint32_t start = 0, end;
+	uint32_t cur_object;
+
+	if (cur_fanout)
+		start = ntohl(m->chunk_oid_fanout[cur_fanout - 1]);
+	end = ntohl(m->chunk_oid_fanout[cur_fanout]);
+
+	for (cur_object = start; cur_object < end; cur_object++) {
+		if ((preferred_pack > -1) &&
+		    (preferred_pack == nth_midxed_pack_int_id(m, cur_object))) {
+			/*
+			 * Objects from preferred packs are added
+			 * separately.
+			 */
+			continue;
+		}
+
+		midx_fanout_grow(fanout, fanout->nr + 1);
+		nth_midxed_pack_midx_entry(m,
+					   &fanout->entries[fanout->nr],
+					   cur_object);
+		fanout->entries[fanout->nr].preferred = 0;
+		fanout->nr++;
+	}
+}
+
+static void midx_fanout_add_pack_fanout(struct midx_fanout *fanout,
+					struct pack_info *info,
+					uint32_t cur_pack,
+					int preferred,
+					uint32_t cur_fanout)
+{
+	struct packed_git *pack = info[cur_pack].p;
+	uint32_t start = 0, end;
+	uint32_t cur_object;
+
+	if (cur_fanout)
+		start = get_pack_fanout(pack, cur_fanout - 1);
+	end = get_pack_fanout(pack, cur_fanout);
+
+	for (cur_object = start; cur_object < end; cur_object++) {
+		midx_fanout_grow(fanout, fanout->nr + 1);
+		fill_pack_entry(cur_pack,
+				info[cur_pack].p,
+				cur_object,
+				&fanout->entries[fanout->nr],
+				preferred);
+		fanout->nr++;
+	}
+}
+
 /*
  * It is possible to artificially get into a state where there are many
  * duplicate copies of objects. That can create high memory pressure if
@@ -595,8 +667,8 @@ static struct pack_midx_entry *get_sorted_entries(struct multi_pack_index *m,
 						  int preferred_pack)
 {
 	uint32_t cur_fanout, cur_pack, cur_object;
-	uint32_t alloc_fanout, alloc_objects, total_objects = 0;
-	struct pack_midx_entry *entries_by_fanout = NULL;
+	uint32_t alloc_objects, total_objects = 0;
+	struct midx_fanout fanout = { 0 };
 	struct pack_midx_entry *deduplicated_entries = NULL;
 	uint32_t start_pack = m ? m->num_packs : 0;
 
@@ -608,74 +680,51 @@ static struct pack_midx_entry *get_sorted_entries(struct multi_pack_index *m,
 	 * slices to be evenly distributed, with some noise. Hence,
 	 * allocate slightly more than one 256th.
 	 */
-	alloc_objects = alloc_fanout = total_objects > 3200 ? total_objects / 200 : 16;
+	alloc_objects = fanout.alloc = total_objects > 3200 ? total_objects / 200 : 16;
 
-	ALLOC_ARRAY(entries_by_fanout, alloc_fanout);
+	ALLOC_ARRAY(fanout.entries, fanout.alloc);
 	ALLOC_ARRAY(deduplicated_entries, alloc_objects);
 	*nr_objects = 0;
 
 	for (cur_fanout = 0; cur_fanout < 256; cur_fanout++) {
-		uint32_t nr_fanout = 0;
+		fanout.nr = 0;
 
-		if (m) {
-			uint32_t start = 0, end;
-
-			if (cur_fanout)
-				start = ntohl(m->chunk_oid_fanout[cur_fanout - 1]);
-			end = ntohl(m->chunk_oid_fanout[cur_fanout]);
-
-			for (cur_object = start; cur_object < end; cur_object++) {
-				ALLOC_GROW(entries_by_fanout, nr_fanout + 1, alloc_fanout);
-				nth_midxed_pack_midx_entry(m,
-							   &entries_by_fanout[nr_fanout],
-							   cur_object);
-				if (nth_midxed_pack_int_id(m, cur_object) == preferred_pack)
-					entries_by_fanout[nr_fanout].preferred = 1;
-				else
-					entries_by_fanout[nr_fanout].preferred = 0;
-				nr_fanout++;
-			}
-		}
+		if (m)
+			midx_fanout_add_midx_fanout(&fanout, m, cur_fanout,
+						    preferred_pack);
 
 		for (cur_pack = start_pack; cur_pack < nr_packs; cur_pack++) {
-			uint32_t start = 0, end;
 			int preferred = cur_pack == preferred_pack;
-
-			if (cur_fanout)
-				start = get_pack_fanout(info[cur_pack].p, cur_fanout - 1);
-			end = get_pack_fanout(info[cur_pack].p, cur_fanout);
-
-			for (cur_object = start; cur_object < end; cur_object++) {
-				ALLOC_GROW(entries_by_fanout, nr_fanout + 1, alloc_fanout);
-				fill_pack_entry(cur_pack,
-						info[cur_pack].p,
-						cur_object,
-						&entries_by_fanout[nr_fanout],
-						preferred);
-				nr_fanout++;
-			}
+			midx_fanout_add_pack_fanout(&fanout,
+						    info, cur_pack,
+						    preferred, cur_fanout);
 		}
 
-		QSORT(entries_by_fanout, nr_fanout, midx_oid_compare);
+		if (-1 < preferred_pack && preferred_pack < start_pack)
+			midx_fanout_add_pack_fanout(&fanout, info,
+						    preferred_pack, 1,
+						    cur_fanout);
+
+		midx_fanout_sort(&fanout);
 
 		/*
 		 * The batch is now sorted by OID and then mtime (descending).
 		 * Take only the first duplicate.
 		 */
-		for (cur_object = 0; cur_object < nr_fanout; cur_object++) {
-			if (cur_object && oideq(&entries_by_fanout[cur_object - 1].oid,
-						&entries_by_fanout[cur_object].oid))
+		for (cur_object = 0; cur_object < fanout.nr; cur_object++) {
+			if (cur_object && oideq(&fanout.entries[cur_object - 1].oid,
+						&fanout.entries[cur_object].oid))
 				continue;
 
 			ALLOC_GROW(deduplicated_entries, *nr_objects + 1, alloc_objects);
 			memcpy(&deduplicated_entries[*nr_objects],
-			       &entries_by_fanout[cur_object],
+			       &fanout.entries[cur_object],
 			       sizeof(struct pack_midx_entry));
 			(*nr_objects)++;
 		}
 	}
 
-	free(entries_by_fanout);
+	free(fanout.entries);
 	return deduplicated_entries;
 }
 

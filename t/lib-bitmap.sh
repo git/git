@@ -440,7 +440,7 @@ midx_bitmap_partial_tests () {
 		test_commit packed &&
 		git repack &&
 		test_commit loose &&
-		git multi-pack-index write --bitmap 2>err &&
+		git multi-pack-index write --bitmap &&
 		test_path_is_file $midx &&
 		test_path_is_file $midx-$(midx_checksum $objdir).bitmap
 	'
