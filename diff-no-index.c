@@ -243,6 +243,7 @@ int diff_no_index(struct rev_info *revs,
 		  int argc, const char **argv)
 {
 	int i, no_index;
+	int ret = 1;
 	const char *paths[2];
 	struct strbuf replacement = STRBUF_INIT;
 	const char *prefix = revs->prefix;
@@ -295,16 +296,18 @@ int diff_no_index(struct rev_info *revs,
 	revs->diffopt.flags.exit_with_status = 1;
 
 	if (queue_diff(&revs->diffopt, paths[0], paths[1]))
-		return 1;
+		goto out;
 	diff_set_mnemonic_prefix(&revs->diffopt, "1/", "2/");
 	diffcore_std(&revs->diffopt);
 	diff_flush(&revs->diffopt);
-
-	strbuf_release(&replacement);
 
 	/*
 	 * The return code for --no-index imitates diff(1):
 	 * 0 = no changes, 1 = changes, else error
 	 */
-	return diff_result_code(&revs->diffopt, 0);
+	ret = diff_result_code(&revs->diffopt, 0);
+
+out:
+	strbuf_release(&replacement);
+	return ret;
 }
