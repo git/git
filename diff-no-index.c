@@ -245,6 +245,7 @@ int diff_no_index(struct rev_info *revs,
 	int i, no_index;
 	int ret = 1;
 	const char *paths[2];
+	char *to_free[ARRAY_SIZE(paths)] = { 0 };
 	struct strbuf replacement = STRBUF_INIT;
 	const char *prefix = revs->prefix;
 	struct option no_index_options[] = {
@@ -274,7 +275,7 @@ int diff_no_index(struct rev_info *revs,
 			 */
 			p = file_from_standard_input;
 		else if (prefix)
-			p = prefix_filename(prefix, p);
+			p = to_free[i] = prefix_filename(prefix, p);
 		paths[i] = p;
 	}
 
@@ -308,6 +309,8 @@ int diff_no_index(struct rev_info *revs,
 	ret = diff_result_code(&revs->diffopt, 0);
 
 out:
+	for (i = 0; i < ARRAY_SIZE(to_free); i++)
+		free(to_free[i]);
 	strbuf_release(&replacement);
 	return ret;
 }
