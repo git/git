@@ -368,6 +368,8 @@ CONFIGURATION
 
 include::includes/cmd-config-section-all.txt[]
 
+include::config/init.txt[]
+
 include::config/clone.txt[]
 
 
