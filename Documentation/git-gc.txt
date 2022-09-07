@@ -110,8 +110,7 @@ users and their repositories.
 CONFIGURATION
 -------------
 
-The below documentation is the same as what's found in
-linkgit:git-config[1]:
+include::includes/cmd-config-section-all.txt[]
 
 include::config/gc.txt[]
 

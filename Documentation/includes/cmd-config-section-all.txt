@@ -1,0 +1,3 @@
+Everything below this line in this section is selectively included
+from the linkgit:git-config[1] documentation. The content is the same
+as what's found there:
