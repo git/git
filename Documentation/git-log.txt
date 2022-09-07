@@ -227,19 +227,9 @@ log.showSignature::
 mailmap.*::
 	See linkgit:git-shortlog[1].
 
-notes.displayRef::
-	Which refs, in addition to the default set by `core.notesRef`
-	or `GIT_NOTES_REF`, to read notes from when showing commit
-	messages with the `log` family of commands.  See
-	linkgit:git-notes[1].
-+
-May be an unabbreviated ref name or a glob and may be specified
-multiple times.  A warning will be issued for refs that do not exist,
-but a glob that does not match any refs is silently ignored.
-+
-This setting can be disabled by the `--no-notes` option,
-overridden by the `GIT_NOTES_DISPLAY_REF` environment variable,
-and overridden by the `--notes=<ref>` option.
+include::includes/cmd-config-section-rest.txt[]
+
+include::config/notes.txt[]
 
 GIT
 ---
