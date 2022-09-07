@@ -1409,18 +1409,14 @@ static int parse_want(struct packet_writer *writer, const char *line,
 	const char *arg;
 	if (skip_prefix(line, "want ", &arg)) {
 		struct object_id oid;
-		struct commit *commit;
 		struct object *o;
 
 		if (get_oid_hex(arg, &oid))
 			die("git upload-pack: protocol error, "
 			    "expected to get oid, not '%s'", line);
 
-		commit = lookup_commit_in_graph(the_repository, &oid);
-		if (commit)
-			o = &commit->object;
-		else
-			o = parse_object(the_repository, &oid);
+		o = parse_object_with_flags(the_repository, &oid,
+					    PARSE_OBJECT_SKIP_HASH_CHECK);
 
 		if (!o) {
 			packet_writer_error(writer,
