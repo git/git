@@ -901,7 +901,7 @@ struct commit *lookup_commit_in_graph(struct repository *repo, const struct obje
 	struct commit *commit;
 	uint32_t pos;
 
-	if (!repo->objects->commit_graph)
+	if (!prepare_commit_graph(repo))
 		return NULL;
 	if (!search_commit_pos_in_graph(id, repo->objects->commit_graph, &pos))
 		return NULL;
