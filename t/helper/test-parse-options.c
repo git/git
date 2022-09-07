@@ -195,7 +195,8 @@ int cmd__parse_options(int argc, const char **argv)
 
 static void print_args(int argc, const char **argv)
 {
-	for (int i = 0; i < argc; i++)
+	int i;
+	for (i = 0; i < argc; i++)
 		printf("arg %02d: %s\n", i, argv[i]);
 }
 
@@ -254,7 +255,7 @@ int cmd__parse_options_flags(int argc, const char **argv)
 	argc = parse_options(argc, argv, NULL, test_flag_options, usage,
 			     PARSE_OPT_STOP_AT_NON_OPTION);
 
-	if (argc == 0 || strcmp(argv[0], "cmd")) {
+	if (!argc || strcmp(argv[0], "cmd")) {
 		error("'cmd' is mandatory");
 		usage_with_options(usage, test_flag_options);
 	}
@@ -312,7 +313,7 @@ int cmd__parse_subcommand(int argc, const char **argv)
 	argc = parse_options(argc, argv, NULL, test_flag_options, usage,
 			     PARSE_OPT_STOP_AT_NON_OPTION);
 
-	if (argc == 0 || strcmp(argv[0], "cmd")) {
+	if (!argc || strcmp(argv[0], "cmd")) {
 		error("'cmd' is mandatory");
 		usage_with_options(usage, test_flag_options);
 	}

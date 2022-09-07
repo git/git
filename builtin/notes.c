@@ -995,7 +995,7 @@ static int get_ref(int argc, const char **argv, const char *prefix)
 int cmd_notes(int argc, const char **argv, const char *prefix)
 {
 	const char *override_notes_ref = NULL;
-	parse_opt_subcommand_fn *fn = list;
+	parse_opt_subcommand_fn *fn = NULL;
 	struct option options[] = {
 		OPT_STRING(0, "ref", &override_notes_ref, N_("notes-ref"),
 			   N_("use notes from <notes-ref>")),
@@ -1015,9 +1015,12 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 	git_config(git_default_config, NULL);
 	argc = parse_options(argc, argv, prefix, options, git_notes_usage,
 			     PARSE_OPT_SUBCOMMAND_OPTIONAL);
-	if (fn == list && argc && strcmp(argv[0], "list")) {
-		error(_("unknown subcommand: %s"), argv[0]);
-		usage_with_options(git_notes_usage, options);
+	if (!fn) {
+		if (argc) {
+			error(_("unknown subcommand: `%s'"), argv[0]);
+			usage_with_options(git_notes_usage, options);
+		}
+		fn = list;
 	}
 
 	if (override_notes_ref) {
