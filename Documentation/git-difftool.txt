@@ -113,33 +113,14 @@ instead.  `--no-symlinks` is the default on Windows.
 
 See linkgit:git-diff[1] for the full list of supported options.
 
-CONFIG VARIABLES
-----------------
+CONFIGURATION
+-------------
 'git difftool' falls back to 'git mergetool' config variables when the
 difftool equivalents have not been defined.
 
-diff.tool::
-	The default diff tool to use.
+include::includes/cmd-config-section-rest.txt[]
 
-diff.guitool::
-	The default diff tool to use when `--gui` is specified.
-
-difftool.<tool>.path::
-	Override the path for the given tool.  This is useful in case
-	your tool is not in the PATH.
-
-difftool.<tool>.cmd::
-	Specify the command to invoke the specified diff tool.
-+
-See the `--tool=<tool>` option above for more details.
-
-difftool.prompt::
-	Prompt before each invocation of the diff tool.
-
-difftool.trustExitCode::
-	Exit difftool if the invoked diff tool returns a non-zero exit status.
-+
-See the `--trust-exit-code` option above for more details.
+include::config/difftool.txt[]
 
 SEE ALSO
 --------
