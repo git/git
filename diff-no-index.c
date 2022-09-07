@@ -267,7 +267,7 @@ int diff_no_index(struct rev_info *revs,
 	}
 	FREE_AND_NULL(options);
 	for (i = 0; i < 2; i++) {
-		const char *p = argv[argc - 2 + i];
+		const char *p = argv[i];
 		if (!strcmp(p, "-"))
 			/*
 			 * stdin should be spelled as "-"; if you have
