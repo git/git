@@ -431,6 +431,13 @@ they will make the patch impossible to apply:
 * deleting context or removal lines
 * modifying the contents of context or removal lines
 
+CONFIGURATION
+-------------
+
+include::includes/cmd-config-section-all.txt[]
+
+include::config/add.txt[]
+
 SEE ALSO
 --------
 linkgit:git-status[1]

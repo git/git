@@ -261,6 +261,13 @@ This command can run `applypatch-msg`, `pre-applypatch`,
 and `post-applypatch` hooks.  See linkgit:githooks[5] for more
 information.
 
+CONFIGURATION
+-------------
+
+include::includes/cmd-config-section-all.txt[]
+
+include::config/am.txt[]
+
 SEE ALSO
 --------
 linkgit:git-apply[1].
