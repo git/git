@@ -1659,6 +1659,25 @@ int ref_is_hidden(const char *refname, const char *refname_full)
  */
 #define HIDDEN_REF_FORCE	(1u << 20)
 
+/* Use this variable to record existing object hidden flags */
+static unsigned int objects_hidden_flags;
+
+/* Return non-zero if need to batch check hidden refs, otherwise 0 */
+int need_check_hidden_refs(void)
+{
+	if (!objects_hidden_flags)
+		return 1;
+	return 0;
+}
+
+/* Return non-zero if some ref is force hidden, otherwise 0 */
+int has_force_hidden_refs(void)
+{
+	if (objects_hidden_flags & HIDDEN_REF_FORCE)
+		return 1;
+	return 0;
+}
+
 static unsigned int ref_hidden_flag(const char *refname, const char *refname_full)
 {
 	if (ref_hidden_check(refname, refname_full, 1))
@@ -1681,6 +1700,7 @@ int mark_our_ref(const char *refname, const char *refname_full,
 	o = lookup_unknown_object(the_repository, oid);
 	flag = ref_hidden_flag(refname, refname_full);
 	o->flags |= flag;
+	objects_hidden_flags |= flag;
 
 	if (flag & OUR_REF)
 		return 0;

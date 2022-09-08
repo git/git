@@ -39,8 +39,8 @@
 #define CLIENT_SHALLOW	(1u << 18)
 #define HIDDEN_REF	(1u << 19)
 
-#define ALL_FLAGS (THEY_HAVE | OUR_REF | WANTED | COMMON_KNOWN | SHALLOW | \
-		NOT_SHALLOW | CLIENT_SHALLOW | HIDDEN_REF)
+#define ALL_FLAGS (THEY_HAVE |WANTED | COMMON_KNOWN | SHALLOW | \
+		NOT_SHALLOW | CLIENT_SHALLOW)
 
 /* Enum for allowed unadvertised object request (UOR) */
 enum allow_uor {
@@ -1726,6 +1726,13 @@ int upload_pack_v2(struct repository *r, struct packet_reader *request)
 				state = FETCH_DONE;
 			break;
 		case FETCH_SEND_PACK:
+			if (need_check_hidden_refs()) {
+				head_ref_namespaced(check_ref, NULL);
+				for_each_namespaced_ref(check_ref, NULL);
+			}
+			if (has_force_hidden_refs())
+				check_non_tip(&data);
+
 			send_wanted_ref_info(&data);
 			send_shallow_info(&data);
 

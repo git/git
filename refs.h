@@ -822,6 +822,10 @@ int ref_is_hidden(const char *, const char *);
 /* return non-zero if the ref is hidden, otherwise 0 */
 int mark_our_ref(const char *refname, const char *refname_full,
 		 const struct object_id *oid);
+/* return non-zero if need to batch check hidden refs, otherwise 0 */
+int need_check_hidden_refs(void);
+/* return non-zero if some ref is force hidden, otherwise 0 */
+int has_force_hidden_refs(void);
 
 enum ref_type {
 	REF_TYPE_PER_WORKTREE,	  /* refs inside refs/ but not shared       */
