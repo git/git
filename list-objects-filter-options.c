@@ -418,6 +418,7 @@ void list_objects_filter_copy(
 	string_list_init_dup(&dest->filter_spec);
 	for_each_string_list_item(item, &src->filter_spec)
 		string_list_append(&dest->filter_spec, item->string);
+	dest->sparse_oid_name = xstrdup_or_null(src->sparse_oid_name);
 
 	ALLOC_ARRAY(dest->sub, dest->sub_alloc);
 	for (i = 0; i < src->sub_nr; i++)
