@@ -142,7 +142,7 @@ static void get_refs_from_bundle_inner(struct transport *transport)
 
 static struct ref *get_refs_from_bundle(struct transport *transport,
 					int for_push,
-					struct transport_ls_refs_options *transport_options)
+					struct transport_ls_refs_options *UNUSED(transport_options))
 {
 	struct bundle_transport_data *data = transport->data;
 	struct ref *result = NULL;

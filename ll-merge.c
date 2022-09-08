@@ -249,7 +249,8 @@ static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
 static struct ll_merge_driver *ll_user_merge, **ll_user_merge_tail;
 static const char *default_ll_merge;
 
-static int read_merge_config(const char *var, const char *value, void *cb)
+static int read_merge_config(const char *var, const char *value,
+			     void *UNUSED(cb))
 {
 	struct ll_merge_driver *fn;
 	const char *key, *name;

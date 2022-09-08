@@ -2301,7 +2301,7 @@ static int parse_opt_show_current_patch(const struct option *opt, const char *ar
 	return 0;
 }
 
-static int git_am_config(const char *k, const char *v, void *cb)
+static int git_am_config(const char *k, const char *v, void *UNUSED(cb))
 {
 	int status;
 

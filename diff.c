@@ -264,7 +264,8 @@ void init_diff_ui_defaults(void)
 	diff_detect_rename_default = DIFF_DETECT_RENAME;
 }
 
-int git_diff_heuristic_config(const char *var, const char *value, void *cb)
+int git_diff_heuristic_config(const char *var, const char *value,
+			      void *UNUSED(cb))
 {
 	if (!strcmp(var, "diff.indentheuristic"))
 		diff_indent_heuristic = git_config_bool(var, value);
@@ -916,7 +917,7 @@ struct interned_diff_symbol {
 static int interned_diff_symbol_cmp(const void *hashmap_cmp_fn_data,
 				    const struct hashmap_entry *eptr,
 				    const struct hashmap_entry *entry_or_key,
-				    const void *keydata)
+				    const void *UNUSED(keydata))
 {
 	const struct diff_options *diffopt = hashmap_cmp_fn_data;
 	const struct emitted_diff_symbol *a, *b;
