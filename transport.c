@@ -895,6 +895,7 @@ static int disconnect_git(struct transport *transport)
 		finish_connect(data->conn);
 	}
 
+	list_objects_filter_release(&data->options.filter_options);
 	free(data);
 	return 0;
 }
