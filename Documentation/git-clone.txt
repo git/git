@@ -370,6 +370,15 @@ $ cd my-linux
 $ git clone --bare -l /home/proj/.git /pub/scm/proj.git
 ------------
 
+CONFIGURATION
+-------------
+
+include::includes/cmd-config-section-all.txt[]
+
+include::config/init.txt[]
+
+include::config/clone.txt[]
+
 
 GIT
 ---

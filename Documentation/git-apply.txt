@@ -263,13 +263,9 @@ has no effect when `--index` or `--cached` is in use.
 CONFIGURATION
 -------------
 
-apply.ignoreWhitespace::
-	Set to 'change' if you want changes in whitespace to be ignored by default.
-	Set to one of: no, none, never, false if you want changes in
-	whitespace to be significant.
-apply.whitespace::
-	When no `--whitespace` flag is given from the command
-	line, this configuration item is used as the default.
+include::includes/cmd-config-section-all.txt[]
+
+include::config/apply.txt[]
 
 SUBMODULES
 ----------

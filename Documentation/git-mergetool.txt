@@ -102,6 +102,9 @@ success of the resolution after the custom tool has exited.
 CONFIGURATION
 -------------
 :git-mergetool: 1
+
+include::includes/cmd-config-section-all.txt[]
+
 include::config/mergetool.txt[]
 
 TEMPORARY FILES

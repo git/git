@@ -142,6 +142,13 @@ EXAMPLES
 	changes. The revert only modifies the working tree and the
 	index.
 
+CONFIGURATION
+-------------
+
+include::includes/cmd-config-section-all.txt[]
+
+include::config/revert.txt[]
+
 SEE ALSO
 --------
 linkgit:git-cherry-pick[1]
