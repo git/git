@@ -1626,7 +1626,7 @@ static int do_fetch(struct transport *transport,
 				break;
 			}
 		}
-	} else if (transport->remote && transport->remote->fetch.nr)
+	} else if (transport->remote->fetch.nr)
 		refspec_ref_prefixes(&transport->remote->fetch,
 				     &transport_ls_refs_options.ref_prefixes);
 
