@@ -9,6 +9,7 @@ This test verifies that the set-branch subcommand of git-submodule is working
 as expected.
 '
 
+TEST_PASSES_SANITIZE_LEAK=true
 TEST_NO_CREATE_REPO=1
 . ./test-lib.sh
 
