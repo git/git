@@ -39,7 +39,7 @@ static void wait_for_pager_signal(int signo)
 }
 
 static int core_pager_config(const char *var, const char *value,
-			     void *UNUSED(data))
+			     void *data UNUSED)
 {
 	if (!strcmp(var, "core.pager"))
 		return git_config_string(&pager_program, var, value);

@@ -176,9 +176,9 @@ static int rev_list_insert_ref(struct fetch_negotiator *negotiator,
 	return 0;
 }
 
-static int rev_list_insert_ref_oid(const char *UNUSED(refname),
+static int rev_list_insert_ref_oid(const char *refname UNUSED,
 				   const struct object_id *oid,
-				   int UNUSED(flag),
+				   int flag UNUSED,
 				   void *cb_data)
 {
 	return rev_list_insert_ref(cb_data, oid);
@@ -602,10 +602,10 @@ static int mark_complete(const struct object_id *oid)
 	return 0;
 }
 
-static int mark_complete_oid(const char *UNUSED(refname),
+static int mark_complete_oid(const char *refname UNUSED,
 			     const struct object_id *oid,
-			     int UNUSED(flag),
-			     void *UNUSED(cb_data))
+			     int flag UNUSED,
+			     void *cb_data UNUSED)
 {
 	return mark_complete(oid);
 }
@@ -843,7 +843,7 @@ static int everything_local(struct fetch_pack_args *args,
 	return retval;
 }
 
-static int sideband_demux(int UNUSED(in), int out, void *data)
+static int sideband_demux(int in UNUSED, int out, void *data)
 {
 	int *xd = data;
 	int ret;

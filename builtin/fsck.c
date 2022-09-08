@@ -488,9 +488,9 @@ static void fsck_handle_reflog_oid(const char *refname, struct object_id *oid,
 }
 
 static int fsck_handle_reflog_ent(struct object_id *ooid, struct object_id *noid,
-				  const char *UNUSED(email),
-				  timestamp_t timestamp, int UNUSED(tz),
-				  const char *UNUSED(message), void *cb_data)
+				  const char *email UNUSED,
+				  timestamp_t timestamp, int tz UNUSED,
+				  const char *message UNUSED, void *cb_data)
 {
 	const char *refname = cb_data;
 
@@ -504,8 +504,8 @@ static int fsck_handle_reflog_ent(struct object_id *ooid, struct object_id *noid
 }
 
 static int fsck_handle_reflog(const char *logname,
-			      const struct object_id *UNUSED(oid),
-			      int UNUSED(flag), void *cb_data)
+			      const struct object_id *oid UNUSED,
+			      int flag UNUSED, void *cb_data)
 {
 	struct strbuf refname = STRBUF_INIT;
 
@@ -516,7 +516,7 @@ static int fsck_handle_reflog(const char *logname,
 }
 
 static int fsck_handle_ref(const char *refname, const struct object_id *oid,
-			   int UNUSED(flag), void *UNUSED(cb_data))
+			   int flag UNUSED, void *cb_data UNUSED)
 {
 	struct object *obj;
 

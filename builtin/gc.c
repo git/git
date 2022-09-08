@@ -782,9 +782,9 @@ struct cg_auto_data {
 	int limit;
 };
 
-static int dfs_on_ref(const char *UNUSED(refname),
+static int dfs_on_ref(const char *refname UNUSED,
 		      const struct object_id *oid,
-		      int UNUSED(flags),
+		      int flags UNUSED,
 		      void *cb_data)
 {
 	struct cg_auto_data *data = (struct cg_auto_data *)cb_data;

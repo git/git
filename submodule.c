@@ -214,7 +214,7 @@ void set_diffopt_flags_from_submodule_config(struct diff_options *diffopt,
 
 /* Cheap function that only determines if we're interested in submodules at all */
 int git_default_submodule_config(const char *var, const char *value,
-				 void *UNUSED(cb))
+				 void *cb UNUSED)
 {
 	if (!strcmp(var, "submodule.recurse")) {
 		int v = git_config_bool(var, value) ?
@@ -939,9 +939,9 @@ static void free_submodules_data(struct string_list *submodules)
 	string_list_clear(submodules, 1);
 }
 
-static int has_remote(const char *UNUSED(refname),
-		      const struct object_id *UNUSED(oid),
-		      int UNUSED(flags), void *UNUSED(cb_data))
+static int has_remote(const char *refname UNUSED,
+		      const struct object_id *oid UNUSED,
+		      int flags UNUSED, void *cb_data UNUSED)
 {
 	return 1;
 }
@@ -1243,9 +1243,9 @@ int push_unpushed_submodules(struct repository *r,
 	return ret;
 }
 
-static int append_oid_to_array(const char *UNUSED(ref),
+static int append_oid_to_array(const char *ref UNUSED,
 			       const struct object_id *oid,
-			       int UNUSED(flags), void *data)
+			       int flags UNUSED, void *data)
 {
 	struct oid_array *array = data;
 	oid_array_append(array, oid);
