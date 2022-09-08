@@ -1648,6 +1648,45 @@ int ref_is_hidden(const char *refname, const char *refname_full)
 	return 0;
 }
 
+#define OUR_REF		(1u << 12)
+#define HIDDEN_REF	(1u << 19)
+/*
+ * Use this flag to mark a ref that is hidden by the hide-refs hook, its private
+ * commits (tip or non-tip commits, not reachable by the refs not hidden by the
+ * hide-refs hook) will be forced hidden to the client, which means a client can
+ * not fetch such kind of commits even uploadpack.allowTipSHA1InWant or
+ * uploadpack.allowReachableSHA1InWant are set to true
+ */
+#define HIDDEN_REF_FORCE	(1u << 20)
+
+static unsigned int ref_hidden_flag(const char *refname, const char *refname_full)
+{
+	if (ref_hidden_check(refname, refname_full, 1))
+		return HIDDEN_REF_FORCE;
+	else if (ref_hidden_check(refname, refname_full, 0))
+		return HIDDEN_REF;
+	return OUR_REF;
+}
+
+int mark_our_ref(const char *refname, const char *refname_full,
+		 const struct object_id *oid)
+{
+	struct object *o;
+	unsigned int flag;
+
+	if (!oid || is_null_oid(oid)) {
+		return 0;
+	}
+
+	o = lookup_unknown_object(the_repository, oid);
+	flag = ref_hidden_flag(refname, refname_full);
+	o->flags |= flag;
+
+	if (flag & OUR_REF)
+		return 0;
+	return 1;
+}
+
 const char *find_descendant_ref(const char *dirname,
 				const struct string_list *extras,
 				const struct string_list *skip)

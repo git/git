@@ -819,6 +819,9 @@ int parse_hide_refs_config(const char *var, const char *value, const char *);
  * parameter always points to the full ref name.
  */
 int ref_is_hidden(const char *, const char *);
+/* return non-zero if the ref is hidden, otherwise 0 */
+int mark_our_ref(const char *refname, const char *refname_full,
+		 const struct object_id *oid);
 
 enum ref_type {
 	REF_TYPE_PER_WORKTREE,	  /* refs inside refs/ but not shared       */
