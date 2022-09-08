@@ -207,7 +207,7 @@ static void filter_spec_append_urlencode(
 	struct strbuf buf = STRBUF_INIT;
 	strbuf_addstr_urlencode(&buf, raw, allow_unencoded);
 	trace_printf("Add to combine filter-spec: %s\n", buf.buf);
-	string_list_append(&filter->filter_spec, strbuf_detach(&buf, NULL));
+	string_list_append_nodup(&filter->filter_spec, strbuf_detach(&buf, NULL));
 }
 
 /*
@@ -226,12 +226,13 @@ static void transform_to_combine_type(
 			xcalloc(initial_sub_alloc, sizeof(*sub_array));
 		sub_array[0] = *filter_options;
 		memset(filter_options, 0, sizeof(*filter_options));
+		string_list_init_dup(&filter_options->filter_spec);
 		filter_options->sub = sub_array;
 		filter_options->sub_alloc = initial_sub_alloc;
 	}
 	filter_options->sub_nr = 1;
 	filter_options->choice = LOFC_COMBINE;
-	string_list_append(&filter_options->filter_spec, xstrdup("combine:"));
+	string_list_append(&filter_options->filter_spec, "combine:");
 	filter_spec_append_urlencode(
 		filter_options,
 		list_objects_filter_spec(&filter_options->sub[0]));
@@ -256,8 +257,14 @@ void parse_list_objects_filter(
 	struct strbuf errbuf = STRBUF_INIT;
 	int parse_error;
 
+	if (!filter_options->filter_spec.strdup_strings) {
+		if (filter_options->filter_spec.nr)
+			BUG("unexpected non-allocated string in filter_spec");
+		filter_options->filter_spec.strdup_strings = 1;
+	}
+
 	if (!filter_options->choice) {
-		string_list_append(&filter_options->filter_spec, xstrdup(arg));
+		string_list_append(&filter_options->filter_spec, arg);
 
 		parse_error = gently_parse_list_objects_filter(
 			filter_options, arg, &errbuf);
@@ -268,7 +275,7 @@ void parse_list_objects_filter(
 		 */
 		transform_to_combine_type(filter_options);
 
-		string_list_append(&filter_options->filter_spec, xstrdup("+"));
+		string_list_append(&filter_options->filter_spec, "+");
 		filter_spec_append_urlencode(filter_options, arg);
 		ALLOC_GROW_BY(filter_options->sub, filter_options->sub_nr, 1,
 			      filter_options->sub_alloc);
@@ -306,7 +313,7 @@ const char *list_objects_filter_spec(struct list_objects_filter_options *filter)
 		strbuf_add_separated_string_list(
 			&concatted, "", &filter->filter_spec);
 		string_list_clear(&filter->filter_spec, /*free_util=*/0);
-		string_list_append(
+		string_list_append_nodup(
 			&filter->filter_spec, strbuf_detach(&concatted, NULL));
 	}
 
@@ -321,7 +328,7 @@ const char *expand_list_objects_filter_spec(
 		strbuf_addf(&expanded_spec, "blob:limit=%lu",
 			    filter->blob_limit_value);
 		string_list_clear(&filter->filter_spec, /*free_util=*/0);
-		string_list_append(
+		string_list_append_nodup(
 			&filter->filter_spec,
 			strbuf_detach(&expanded_spec, NULL));
 	}
@@ -418,6 +425,7 @@ void list_objects_filter_copy(
 	string_list_init_dup(&dest->filter_spec);
 	for_each_string_list_item(item, &src->filter_spec)
 		string_list_append(&dest->filter_spec, item->string);
+	dest->sparse_oid_name = xstrdup_or_null(src->sparse_oid_name);
 
 	ALLOC_ARRAY(dest->sub, dest->sub_alloc);
 	for (i = 0; i < src->sub_nr; i++)
