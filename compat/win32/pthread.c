@@ -21,7 +21,7 @@ static unsigned __stdcall win32_start_routine(void *arg)
 	return 0;
 }
 
-int pthread_create(pthread_t *thread, const void *unused,
+int win32_pthread_create(pthread_t *thread, const void *unused,
 		   void *(*start_routine)(void*), void *arg)
 {
 	thread->arg = arg;
@@ -50,7 +50,7 @@ int win32_pthread_join(pthread_t *thread, void **value_ptr)
 	}
 }
 
-pthread_t pthread_self(void)
+pthread_t win32_pthread_self(void)
 {
 	pthread_t t = { NULL };
 	t.tid = GetCurrentThreadId();
