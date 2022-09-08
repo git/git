@@ -3,7 +3,7 @@
 	do
 		if false
 		then
-# LINT: missing "&&" on "echo"
+# LINT: missing "&&" on "echo" okay since "exit 1" signals error explicitly
 			echo "err"
 			exit 1
 # LINT: missing "&&" on "fi"

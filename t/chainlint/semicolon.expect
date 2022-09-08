@@ -15,5 +15,5 @@
 ) &&
 (cd foo &&
 	for i in a b c; do
-		echo;
+		echo; ?!LOOP?!
 	done)

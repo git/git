@@ -1,0 +1,3 @@
+git ls-tree $tree path > current &&
+cat > expected <<EOF &&
+test_output
