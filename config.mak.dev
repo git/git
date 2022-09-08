@@ -22,7 +22,9 @@ endif
 
 ifneq ($(uname_S),FreeBSD)
 ifneq ($(or $(filter gcc6,$(COMPILER_FEATURES)),$(filter clang7,$(COMPILER_FEATURES))),)
+ifndef USE_MIMALLOC
 DEVELOPER_CFLAGS += -std=gnu99
+endif
 endif
 else
 # FreeBSD cannot limit to C99 because its system headers unconditionally
