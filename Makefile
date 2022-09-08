@@ -1332,6 +1332,7 @@ BUILTIN_OBJS += builtin/write-tree.o
 # upstream unnecessarily (making merging in future changes easier).
 THIRD_PARTY_SOURCES += compat/inet_ntop.c
 THIRD_PARTY_SOURCES += compat/inet_pton.c
+THIRD_PARTY_SOURCES += compat/mimalloc/%
 THIRD_PARTY_SOURCES += compat/nedmalloc/%
 THIRD_PARTY_SOURCES += compat/obstack.%
 THIRD_PARTY_SOURCES += compat/poll/%
@@ -2114,6 +2115,43 @@ ifdef USE_NED_ALLOCATOR
 	COMPAT_CFLAGS += -Icompat/nedmalloc
 	COMPAT_OBJS += compat/nedmalloc/nedmalloc.o
 	OVERRIDE_STRDUP = YesPlease
+endif
+
+ifdef USE_MIMALLOC
+	MIMALLOC_OBJS = \
+		compat/mimalloc/alloc-aligned.o \
+		compat/mimalloc/alloc.o \
+		compat/mimalloc/arena.o \
+		compat/mimalloc/bitmap.o \
+		compat/mimalloc/heap.o \
+		compat/mimalloc/init.o \
+		compat/mimalloc/options.o \
+		compat/mimalloc/os.o \
+		compat/mimalloc/page.o \
+		compat/mimalloc/random.o \
+		compat/mimalloc/prim/windows/prim.o \
+		compat/mimalloc/segment.o \
+		compat/mimalloc/segment-cache.o \
+		compat/mimalloc/segment-map.o \
+		compat/mimalloc/stats.o
+
+	COMPAT_CFLAGS += -Icompat/mimalloc -DMI_DEBUG=0 -DUSE_MIMALLOC --std=gnu11
+	COMPAT_OBJS += $(MIMALLOC_OBJS)
+
+$(MIMALLOC_OBJS): COMPAT_CFLAGS += -DBANNED_H
+
+$(MIMALLOC_OBJS): COMPAT_CFLAGS += \
+	-Wno-attributes \
+	-Wno-unknown-pragmas \
+	-Wno-array-bounds
+
+ifdef DEVELOPER
+$(MIMALLOC_OBJS): COMPAT_CFLAGS += \
+	-Wno-pedantic \
+	-Wno-declaration-after-statement \
+	-Wno-old-style-definition \
+	-Wno-missing-prototypes
+endif
 endif
 
 ifdef OVERRIDE_STRDUP
