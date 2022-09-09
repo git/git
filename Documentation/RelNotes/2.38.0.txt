@@ -75,6 +75,12 @@ UI, Workflows & Features
  * "git clone" command learned the "--bundle-uri" option to coordinate
    with hosting sites the use of pre-prepared bundle files.
 
+ * "git range-diff" learned to honor pathspec argument if given.
+
+ * "git format-patch --from=<ident>" can be told to add an in-body
+   "From:" line even for commits that are authored by the given
+   <ident> with "--force-in-body-from"option.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -147,6 +153,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * The pack bitmap file gained a bitmap-lookup table to speed up
    locating the necessary bitmap for a given commit.
+
+ * The assembly version of SHA-1 implementation for PPC has been
+   removed.
 
 
 Fixes since v2.37
@@ -323,6 +332,16 @@ Fixes since v2.37
    to schedule tasks.
    (merge ee69e7884e bc/gc-crontab-fix later to maint).
 
+ * Those who use diff-so-fancy as the diff-filter noticed a regression
+   or two in the code that parses the diff output in the built-in
+   version of "add -p", which has been corrected.
+   (merge 0a101676e5 js/add-p-diff-parsing-fix later to maint).
+
+ * Segfault fix-up to an earlier fix to the topic to teach "git reset"
+   and "git checkout" work better in a sparse checkout.
+   (merge 037f8ea6d9 vd/sparse-reset-checkout-fixes later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 77b9e85c0f vd/fix-perf-tests later to maint).
    (merge 0682bc43f5 jk/test-crontab-fixes later to maint).
+   (merge b46dd1726c cc/doc-trailer-whitespace-rules later to maint).
