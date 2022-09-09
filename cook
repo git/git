@@ -158,7 +158,7 @@ sub get_source {
 	map {
 		" source: <$_>";
 	}
-	(keys %source);
+	(sort keys %source);
 }
 
 sub reduce_sources {
@@ -381,15 +381,10 @@ sub blurb_text {
 	$text ||= <<'EOF';
 Here are the topics that have been cooking in my tree.  Commits
 prefixed with '+' are in 'next' (being in 'next' is a sign that a
-topic is stable enough to be used and are candidate to be in a
-future release).  Commits prefixed with '-' are only in 'seen',
-which means nothing more than that I have found them of interest for
-some reason (like "it may have hard-to-resolve conflicts with
-another topic already in flight" or "this may turn out to be
-useful").  Do not read too much into a topic being in (or not in)
-'seen'.  The ones marked with '.' do not appear in any of the
-integration branches, but I am still holding onto them.
-
+topic is stable enough to be used and are candidate to be in a future
+release).  Commits prefixed with '-' are only in 'seen', and aren't
+considered "accepted" at all.  A topic without enough support may be
+discarded after a long period of no activity.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
