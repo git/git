@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2022, #01; Mon, 5)
-X-master-at: 79f2338b3746d23454308648b2491e5beba4beff
-X-next-at: 6a6ce2da067c0f93245427725e5f14352452ea04
+Subject: What's cooking in git.git (Sep 2022, #02; Fri, 9)
+X-master-at: dd3f6c4cae7e3b15ce984dce8593ff7569650e24
+X-next-at: 50f0e44ec40b5fab5d618dd26ebd776c47e9af13
 
-What's cooking in git.git (Sep 2022, #01; Mon, 5)
+What's cooking in git.git (Sep 2022, #02; Fri, 9)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -13,10 +13,11 @@ release).  Commits prefixed with '-' are only in 'seen', and aren't
 considered "accepted" at all.  A topic without enough support may be
 discarded after a long period of no activity.
 
-We just started week #9 in a 12-week cycle toward Git 2.38
-(tinyurl.com/gitCal), but since Monday was a holiday in US, we may
-see only four days worth of new patches, which is less work for our
-reviewers pool ;-)
+We are at the end of week #9 in a 12-week cycle toward Git 2.38
+(tinyurl.com/gitCal).  I plan to tag -rc0 (i.e. preview) on the 15th
+or so, but I expect that many folks are busy in Chicago for Git Merge
+so let's not make a big fuss about it and instead treat it as just one
+of the regular updates to the 'master' branch.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -49,175 +50,216 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ac/bitmap-lookup-table (2022-08-28) 7 commits
-  (merged to 'next' on 2022-08-29 at 05d2d2c8bd)
- + pack-bitmap-write: drop unused pack_idx_entry parameters
-  (merged to 'next' on 2022-08-26 at 7914c141eb)
- + bitmap-lookup-table: add performance tests for lookup table
- + pack-bitmap: prepare to read lookup table extension
- + pack-bitmap-write: learn pack.writeBitmapLookupTable and add tests
- + pack-bitmap-write.c: write lookup table extension
- + bitmap: move `get commit positions` code to `bitmap_writer_finish`
- + Documentation/technical: describe bitmap lookup table extension
+* ab/retire-ppc-sha1 (2022-08-31) 2 commits
+  (merged to 'next' on 2022-09-05 at 480da6ef06)
+ + Makefile: use $(OBJECTS) instead of $(C_OBJ)
+ + Makefile + hash.h: remove PPC_SHA1 implementation
 
- The pack bitmap file gained a bitmap-lookup table to speed up
- locating the necessary bitmap for a given commit.
- source: <pull.1266.v6.git.1660496112.gitgitgadget@gmail.com>
+ Remove the assembly version of SHA-1 implementation for PPC.
+ source: <cover-v3-0.2-00000000000-20220831T090744Z-avarab@gmail.com>
 
 
-* bc/gc-crontab-fix (2022-08-28) 1 commit
-  (merged to 'next' on 2022-08-30 at a7a240a4da)
- + gc: use temporary file for editing crontab
- (this branch is used by jk/test-crontab-fixes.)
+* cc/doc-trailer-whitespace-rules (2022-08-30) 1 commit
+  (merged to 'next' on 2022-09-05 at 4c018a3ab7)
+ + Documentation: clarify whitespace rules for trailers
 
- FreeBSD portability fix for "git maintenance" that spawns "crontab"
- to schedule tasks.
- source: <20220828214143.754759-1-sandals@crustytoothpaste.net>
+ Doc update.
+ source: <20220830105046.324041-1-christian.couder@gmail.com>
 
 
-* ds/bundle-uri-clone (2022-08-24) 6 commits
-  (merged to 'next' on 2022-08-25 at 14754922fa)
- + clone: warn on failure to repo_init()
-  (merged to 'next' on 2022-08-18 at 5e8a3ec71e)
- + clone: --bundle-uri cannot be combined with --depth
- + bundle-uri: add support for http(s):// and file://
- + clone: add --bundle-uri option
- + bundle-uri: create basic file-copy logic
- + remote-curl: add 'get' capability
- (this branch is used by ds/bundle-uri-3.)
+* jc/format-patch-force-in-body-from (2022-08-29) 3 commits
+  (merged to 'next' on 2022-09-05 at cecaaad60e)
+ + format-patch: learn format.forceInBodyFrom configuration variable
+ + format-patch: allow forcing the use of in-body From: header
+ + pretty: separate out the logic to decide the use of in-body from
 
- Implement "git clone --bundle-uri".
- source: <pull.1300.v3.git.1660050703.gitgitgadget@gmail.com>
- source: <5229519b-3af2-a023-8996-43343b130722@github.com>
+ "git format-patch --from=<ident>" can be told to add an in-body
+ "From:" line even for commits that are authored by the given
+ <ident> with "--force-in-body-from"option.
+ source: <20220829213837.13849-1-gitster@pobox.com>
 
 
-* en/merge-multi-strategies (2022-08-24) 2 commits
-  (merged to 'next' on 2022-08-25 at 420e2eae66)
- + merge: small code readability improvement
- + merge: cleanup confusing logic for handling successful merges
+* jk/tempfile-active-flag-cleanup (2022-08-30) 3 commits
+  (merged to 'next' on 2022-09-05 at 43ed4656b3)
+ + tempfile: update comment describing state transitions
+ + tempfile: drop active flag
+ + Merge branch 'rs/tempfile-cleanup-race-fix' into jk/tempfile-active-flag-cleanup
 
- The code that implements multi-strategy support in "git merge" has
- been clean-up a bit.
- source: <pull.1331.v2.git.1661222541.gitgitgadget@gmail.com>
-
-
-* en/merge-unstash-only-on-clean-merge (2022-08-24) 1 commit
-  (merged to 'next' on 2022-08-25 at a144bdf6cb)
- + merge: only apply autostash when appropriate
-
- The auto-stashed local changes created by "git merge --autostash"
- was mixed into a conflicted state left in the working tree, which
- has been corrected.
- source: <610b8d089db97bf1a37dbf230f51ecafe3086254.1661222541.git.gitgitgadget@gmail.com>
+ Code clean-up.
+ source: <Yw5nmNJSm9uzLOKL@coredump.intra.peff.net>
 
 
-* en/t4301-more-merge-tree-tests (2022-08-24) 1 commit
-  (merged to 'next' on 2022-08-25 at c7abf60ff4)
- + t4301: add more interesting merge-tree testcases
- (this branch is used by es/t4301-sed-portability-fix.)
+* js/add-p-diff-parsing-fix (2022-09-01) 3 commits
+  (merged to 'next' on 2022-09-02 at 1545e0898d)
+ + add -p: ignore dirty submodules
+ + add -p: gracefully handle unparseable hunk headers in colored diffs
+ + add -p: detect more mismatches between plain vs colored diffs
 
- More tests to protect the current behaviour of "merge-tree" before
- it gets further updated.
- source: <pull.1332.git.1661237316150.gitgitgadget@gmail.com>
-
-
-* en/test-without-test-create-repo (2022-08-26) 1 commit
-  (merged to 'next' on 2022-08-30 at 4f80f48e27)
- + t64xx: convert 'test_create_repo' to 'git init'
-
- Test clean-up.
- source: <pull.1303.v2.git.git.1661485759789.gitgitgadget@gmail.com>
+ Those who use diff-so-fancy as the diff-filter noticed a regression
+ or two in the code that parses the diff output in the built-in
+ version of "add -p", which has been corrected.
+ source: <pull.1336.v5.git.1662046939.gitgitgadget@gmail.com>
 
 
-* es/t4301-sed-portability-fix (2022-08-29) 4 commits
-  (merged to 'next' on 2022-08-30 at eec0ceef0a)
- + t4301: emit blank line in more idiomatic fashion
- + t4301: fix broken &&-chains and add missing loop termination
- + t4301: account for behavior differences between sed implementations
- + Merge branch 'en/t4301-more-merge-tree-tests' into es/t4301-sed-portability-fix
+* js/range-diff-with-pathspec (2022-08-26) 3 commits
+  (merged to 'next' on 2022-09-05 at c027222552)
+ + range-diff: optionally accept pathspecs
+ + range-diff: consistently validate the arguments
+ + range-diff: reorder argument handling
 
- Test clean-up.
- source: <pull.1339.git.1661663879.gitgitgadget@gmail.com>
-
-
-* jk/test-crontab-fixes (2022-08-30) 1 commit
-  (merged to 'next' on 2022-09-02 at d5113b5be3)
- + test-crontab: minor memory and error handling fixes
- (this branch uses bc/gc-crontab-fix.)
-
- Test helper fix.
- source: <20220823010120.25388-1-sandals@crustytoothpaste.net>
+ Allow passing a pathspec to "git range-diff".
+ source: <pull.1335.v2.git.1661506770.gitgitgadget@gmail.com>
 
 
-* rs/tempfile-cleanup-race-fix (2022-08-27) 1 commit
-  (merged to 'next' on 2022-08-30 at 158dd1c910)
- + tempfile: avoid directory cleanup race
- (this branch is used by jk/tempfile-active-flag-cleanup.)
+* vd/sparse-reset-checkout-fixes (2022-09-02) 1 commit
+  (merged to 'next' on 2022-09-05 at 8c59ace003)
+ + unpack-trees: fix sparse directory recursion check
 
- The clean-up of temporary files created via mks_tempfile_dt() was
- racy and attempted to unlink() the leading directory when signals
- are involved, which has been corrected.
- source: <526a174e-b179-c284-a21c-7afe0a0b4df2@web.de>
+ Segfault fix-up to an earlier fix to the topic to teach "git reset"
+ and "git checkout" work better in a sparse checkout.
+ source: <pull.1344.git.1662066153644.gitgitgadget@gmail.com>
 
+--------------------------------------------------
+[New Topics]
 
-* rs/test-mergesort (2022-08-28) 2 commits
-  (merged to 'next' on 2022-08-30 at 4905149886)
- + test-mergesort: use mem_pool for sort input
- + test-mergesort: read sort input all at once
+* ab/doc-synopsis-and-cmd-usage (2022-09-07) 34 commits
+ - tests: start asserting that *.txt SYNOPSIS matches -h output
+ - doc txt & -h consistency: make "worktree" consistent
+ - worktree: define subcommand -h in terms of command -h
+ - reflog doc: list real subcommands up-front
+ - doc txt & -h consistency: make "commit" consistent
+ - doc txt & -h consistency: make "diff-tree" consistent
+ - doc txt & -h consistency: use "[<label>...]" for "zero or more"
+ - doc txt & -h consistency: make "annotate" consistent
+ - doc txt & -h consistency: make "stash" consistent
+ - doc txt & -h consistency: add missing options
+ - doc txt & -h consistency: use "git foo" form, not "git-foo"
+ - doc txt & -h consistency: make "bundle" consistent
+ - doc txt & -h consistency: make "read-tree" consistent
+ - doc txt & -h consistency: make "rerere" consistent
+ - doc txt & -h consistency: add missing options and labels
+ - doc txt & -h consistency: make output order consistent
+ - doc txt & -h consistency: add or fix optional "--" syntax
+ - doc txt & -h consistency: fix mismatching labels
+ - t/helper/test-proc-receive.c: use "<options>", not "<options>..."
+ - doc txt & -h consistency: use "<options>", not "<options>..."
+ - stash doc SYNOPSIS & -h: correct padding around "[]()"
+ - doc txt & -h consistency: correct padding around "[]()"
+ - doc txt & -h consistency: add missing "]" to bugreport "-h"
+ - doc txt & -h consistency: add "-z" to cat-file "-h"
+ - doc txt & -h consistency: fix incorrect alternates syntax
+ - doc txt & -h consistency: word-wrap
+ - built-ins: consistently add "\n" between "usage" and options
+ - doc SYNOPSIS & -h: fix incorrect alternates syntax
+ - doc SYNOPSIS: consistently use ' for commands
+ - doc SYNOPSIS: don't use ' for subcommands
+ - blame: use a more detailed usage_msg_optf() error on bad -L
+ - bundle: define subcommand -h in terms of command -h
+ - builtin/bundle.c: use \t, not fix indentation 2-SP indentation
+ - CodingGuidelines: update and clarify command-line conventions
 
- Optimization of a test-helper command.
- source: <128f0fb8-d29b-8622-0cfe-2ecadc999db5@web.de>
+ The short-help text shown by "git cmd -h" and the synopsis text
+ shown at the beginning of "git help cmd" have been made more
+ consistent.
 
-
-* sg/parse-options-subcommand (2022-08-25) 23 commits
-  (merged to 'next' on 2022-08-25 at dab6bf1439)
- + remote: run "remote rm" argv through parse_options()
- + maintenance: add parse-options boilerplate for subcommands
- + pass subcommand "prefix" arguments to parse_options()
-  (merged to 'next' on 2022-08-22 at 09d07c2271)
- + builtin/worktree.c: let parse-options parse subcommands
- + builtin/stash.c: let parse-options parse subcommands
- + builtin/sparse-checkout.c: let parse-options parse subcommands
- + builtin/remote.c: let parse-options parse subcommands
- + builtin/reflog.c: let parse-options parse subcommands
- + builtin/notes.c: let parse-options parse subcommands
- + builtin/multi-pack-index.c: let parse-options parse subcommands
- + builtin/hook.c: let parse-options parse subcommands
- + builtin/gc.c: let parse-options parse 'git maintenance's subcommands
- + builtin/commit-graph.c: let parse-options parse subcommands
- + builtin/bundle.c: let parse-options parse subcommands
- + parse-options: add support for parsing subcommands
- + parse-options: drop leading space from '--git-completion-helper' output
- + parse-options: clarify the limitations of PARSE_OPT_NODASH
- + parse-options: PARSE_OPT_KEEP_UNKNOWN only applies to --options
- + api-parse-options.txt: fix description of OPT_CMDMODE
- + t0040-parse-options: test parse_options() with various 'parse_opt_flags'
- + t5505-remote.sh: check the behavior without a subcommand
- + t3301-notes.sh: check that default operation mode doesn't take arguments
- + git.c: update NO_PARSEOPT markings
- (this branch is used by js/bisect-in-c.)
-
- Introduce the "subcommand" mode to parse-options API and update the
- command line parser of Git commands with subcommands.
- source: <20220819160411.1791200-1-szeder.dev@gmail.com>
- source: <YwdSzrF3xaHvLsI+@coredump.intra.peff.net>
-
-
-* tb/midx-with-changing-preferred-pack-fix (2022-08-22) 7 commits
-  (merged to 'next' on 2022-08-26 at 305a9d3323)
- + midx.c: avoid adding preferred objects twice
- + midx.c: include preferred pack correctly with existing MIDX
- + midx.c: extract `midx_fanout_add_pack_fanout()`
- + midx.c: extract `midx_fanout_add_midx_fanout()`
- + midx.c: extract `struct midx_fanout`
- + t/lib-bitmap.sh: avoid silencing stderr
- + t5326: demonstrate potential bitmap corruption
-
- Multi-pack index got corrupted when preferred pack changed from one
- pack to another in a certain way, which has been corrected.
- source: <cover.1661197803.git.me@ttaylorr.com>
+ Needs review.
+ source: <cover-00.34-00000000000-20220902T092734Z-avarab@gmail.com>
 
 
+* jk/rev-list-verify-objects-fix (2022-09-07) 2 commits
+  (merged to 'next' on 2022-09-07 at 5da58e2145)
+ + rev-list: disable commit graph with --verify-objects
+ + lookup_commit_in_graph(): use prepare_commit_graph() to check for graph
+
+ "git rev-list --verify-objects" ought to inspect the contents of
+ objects and notice corrupted ones, but it didn't when the commit
+ graph is in use, which has been corrected.
+
+ Will merge to 'master'.
+ source: <Yxe0k++LA/UfFLF/@coredump.intra.peff.net>
+
+
+* jk/upload-pack-skip-hash-check (2022-09-07) 4 commits
+  (merged to 'next' on 2022-09-07 at f638a5a7c9)
+ + t1060: check partial clone of misnamed blob
+ + parse_object(): check commit-graph when skip_hash set
+ + upload-pack: skip parse-object re-hashing of "want" objects
+ + parse_object(): allow skipping hash check
+
+ The server side that responds to "git fetch" and "git clone"
+ request has been optimized by allowing it to send objects in its
+ object store without recomputing and validating the object names.
+
+ Will merge to 'master'.
+ source: <YxfQi4qg8uJHs7Gp@coredump.intra.peff.net>
+ source: <YxkAxutS+B8//0WF@coredump.intra.peff.net>
+
+
+* rs/diff-no-index-cleanup (2022-09-07) 3 commits
+  (merged to 'next' on 2022-09-07 at a305340e6f)
+ + diff-no-index: simplify argv index calculation
+ + diff-no-index: release prefixed filenames
+ + diff-no-index: release strbuf on queue error
+ (this branch is used by jc/diff-no-index-two-stdin.)
+
+ "git diff --no-index A B" managed its the pathnames of its two
+ input files rather haphazardly, sometimes leaking them.  The
+ command line argument processing has been straightened out to clean
+ it up.
+
+ Will merge to 'master'.
+ source: <xmqq8rmx1saz.fsf@gitster.g>
+
+
+* sg/parse-options-subcommand (2022-09-07) 5 commits
+  (merged to 'next' on 2022-09-07 at e71f9b1de6)
+ + notes, remote: show unknown subcommands between `'
+ + notes: simplify default operation mode arguments check
+ + test-parse-options.c: fix style of comparison with zero
+ + test-parse-options.c: don't use for loop initial declaration
+ + t0040-parse-options: remove leftover debugging
+
+ The codepath for the OPT_SUBCOMMAND facility has been cleaned up.
+
+ Will merge to 'master'.
+ source: <20220905185007.9042-1-szeder.dev@gmail.com>
+
+
+* jk/plug-list-object-filter-leaks (2022-09-08) 5 commits
+  (merged to 'next' on 2022-09-08 at a6b4b080e4)
+ + prepare_repo_settings(): plug leak of config values
+ + list_objects_filter_options: plug leak of filter_spec strings
+ + transport: free filter options in disconnect_git()
+ + transport: deep-copy object-filter struct for fetch-pack
+ + list_objects_filter_copy(): deep-copy sparse_oid_name field
+
+ The code that manages list-object-filter structure, used in partial
+ clones, leaked the instances, which has been plugged.
+
+ Will merge to 'master'.
+ source: <Yxl1BNQoy6Drf0Oe@coredump.intra.peff.net>
+
+
+* jk/proto-v2-ref-prefix-fix (2022-09-08) 2 commits
+ - fetch: add branch.*.merge to default ref-prefix extension
+ - fetch: stop checking for NULL transport->remote in do_fetch()
+
+ "git fetch" over protocol v2 sent an incorrect ref prefix request
+ to the server and made "git pull" with configured fetch refspec
+ that does not cover the remote branch to merge with fail, which has
+ been corrected.
+
+ Will merge to 'next'.
+ source: <YxpBMaIckimFJYEi@coredump.intra.peff.net>
+
+
+* vd/doc-reviewing-guidelines (2022-09-09) 1 commit
+ - Documentation: add ReviewingGuidelines
+
+ Just like we have coding guidelines, we now have guidelines for
+ reviewers.
+
+ source: <pull.1348.git.1662747205235.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -260,21 +302,19 @@ Release tarballs are available at:
  cf. <CAFySSZDvgwbbHCHfyuaqX3tKsr-GjJ9iihygg6rNNe46Ys7_EA@mail.gmail.com>
  source: <20220728230210.2952731-1-calvinwan@google.com>
 
-
-
-
 --------------------------------------------------
-[New Topics]
+[Cooking]
 
 * ab/unused-annotation (2022-09-01) 2 commits
- - git-compat-util.h: use "deprecated" for UNUSED variables
- - git-compat-util.h: use "UNUSED", not "UNUSED(var)"
+  (merged to 'next' on 2022-09-08 at dfc6123c6b)
+ + git-compat-util.h: use "deprecated" for UNUSED variables
+ + git-compat-util.h: use "UNUSED", not "UNUSED(var)"
  (this branch uses jk/unused-annotation.)
 
  Undoes 'jk/unused-annotation' topic and redoes it to work around
  Coccinelle rules misfiring false positives in unrelated codepaths.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <cover-0.2-00000000000-20220825T170709Z-avarab@gmail.com>
 
 
@@ -289,18 +329,11 @@ Release tarballs are available at:
  - Makefile: add ability to TAB-complete cocci *.patch rules
  - cocci rules: remove unused "F" metavariable from pending rule
 
+ "make coccicheck" is time consuming. It has been made to run more
+ incrementally.
+
+ Needs review.
  source: <cover-v2-0.9-00000000000-20220831T205130Z-avarab@gmail.com>
-
-
-* ab/retire-ppc-sha1 (2022-08-31) 2 commits
-  (merged to 'next' on 2022-09-05 at 480da6ef06)
- + Makefile: use $(OBJECTS) instead of $(C_OBJ)
- + Makefile + hash.h: remove PPC_SHA1 implementation
-
- Remove the assembly version of SHA-1 implementation for PPC.
-
- Will merge to 'master'.
- source: <cover-v3-0.2-00000000000-20220831T090744Z-avarab@gmail.com>
 
 
 * en/remerge-diff-fixes (2022-09-02) 3 commits
@@ -315,39 +348,30 @@ Release tarballs are available at:
 
 
 * es/chainlint (2022-09-01) 18 commits
- - t: retire unused chainlint.sed
- - t/Makefile: teach `make test` and `make prove` to run chainlint.pl
- - test-lib: replace chainlint.sed with chainlint.pl
- - test-lib: retire "lint harder" optimization hack
- - t/chainlint: add more chainlint.pl self-tests
- - chainlint.pl: allow `|| echo` to signal failure upstream of a pipe
- - chainlint.pl: complain about loops lacking explicit failure handling
- - chainlint.pl: don't flag broken &&-chain if failure indicated explicitly
- - chainlint.pl: don't flag broken &&-chain if `$?` handled explicitly
- - chainlint.pl: don't require `&` background command to end with `&&`
- - t/Makefile: apply chainlint.pl to existing self-tests
- - chainlint.pl: don't require `return|exit|continue` to end with `&&`
- - chainlint.pl: validate test scripts in parallel
- - chainlint.pl: add parser to identify test definitions
- - chainlint.pl: add parser to validate tests
- - chainlint.pl: add POSIX shell parser
- - chainlint.pl: add POSIX shell lexical analyzer
- - t: add skeleton chainlint.pl
+  (merged to 'next' on 2022-09-08 at eab3357b05)
+ + t: retire unused chainlint.sed
+ + t/Makefile: teach `make test` and `make prove` to run chainlint.pl
+ + test-lib: replace chainlint.sed with chainlint.pl
+ + test-lib: retire "lint harder" optimization hack
+ + t/chainlint: add more chainlint.pl self-tests
+ + chainlint.pl: allow `|| echo` to signal failure upstream of a pipe
+ + chainlint.pl: complain about loops lacking explicit failure handling
+ + chainlint.pl: don't flag broken &&-chain if failure indicated explicitly
+ + chainlint.pl: don't flag broken &&-chain if `$?` handled explicitly
+ + chainlint.pl: don't require `&` background command to end with `&&`
+ + t/Makefile: apply chainlint.pl to existing self-tests
+ + chainlint.pl: don't require `return|exit|continue` to end with `&&`
+ + chainlint.pl: validate test scripts in parallel
+ + chainlint.pl: add parser to identify test definitions
+ + chainlint.pl: add parser to validate tests
+ + chainlint.pl: add POSIX shell parser
+ + chainlint.pl: add POSIX shell lexical analyzer
+ + t: add skeleton chainlint.pl
 
  Revamp chainlint script for our tests.
- source: <pull.1322.git.git.1661992197.gitgitgadget@gmail.com>
-
-
-* jk/tempfile-active-flag-cleanup (2022-08-30) 3 commits
-  (merged to 'next' on 2022-09-05 at 43ed4656b3)
- + tempfile: update comment describing state transitions
- + tempfile: drop active flag
- + Merge branch 'rs/tempfile-cleanup-race-fix' into jk/tempfile-active-flag-cleanup
-
- Code clean-up.
 
  Will merge to 'master'.
- source: <Yw5nmNJSm9uzLOKL@coredump.intra.peff.net>
+ source: <pull.1322.git.git.1661992197.gitgitgadget@gmail.com>
 
 
 * vd/scalar-to-main (2022-09-02) 9 commits
@@ -363,6 +387,8 @@ Release tarballs are available at:
 
  Hoist the remainder of "scalar" out of contrib/ to the main part of
  the codebase.
+
+ Needs review.
  source: <pull.1341.v2.git.1662134210.gitgitgadget@gmail.com>
 
 
@@ -376,35 +402,16 @@ Release tarballs are available at:
  source: <20220901173942.abolcr4aa5gixncm@lucy.dinwoodie.org>
 
 
-* jc/diff-no-index-unleak (2022-09-02) 1 commit
- - diff --no-index: unleak paths[] elements
-
- Plug a leak or two in "git diff --no-index".
- source: <xmqqilm579hc.fsf@gitster.g>
-
-
-* ow/rev-parse-parseopt-fix (2022-09-02) 1 commit
- - rev-parse --parseopt: detect missing opt-spec
+* ow/rev-parse-parseopt-fix (2022-09-08) 1 commit
+  (merged to 'next' on 2022-09-08 at a15efb3478)
+ + rev-parse --parseopt: detect missing opt-spec
 
  The parser in the script interface to parse-options in "git
  rev-parse" has been updated to diagnose a bogus input correctly.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <20220902175902.22346-1-oystwa@gmail.com>
 
-
-* vd/sparse-reset-checkout-fixes (2022-09-02) 1 commit
-  (merged to 'next' on 2022-09-05 at 8c59ace003)
- + unpack-trees: fix sparse directory recursion check
-
- Segfault fix-up to an earlier fix to the topic to teach "git reset"
- and "git checkout" work better in a sparse checkout.
-
- Will merge to 'master'.
- source: <pull.1344.git.1662066153644.gitgitgadget@gmail.com>
-
---------------------------------------------------
-[Cooking]
 
 * tb/diffstat-with-utf8-strwidth (2022-08-27) 1 commit
  - diff.c: use utf8_strwidth() when appropriate
@@ -415,7 +422,7 @@ Release tarballs are available at:
  source: <20220827085007.20030-1-tboegi@web.de>
 
 
-* gc/submodule-propagate-branches (2022-08-29) 6 commits
+* gc/submodule-clone-update-with-branches (2022-08-29) 6 commits
  - clone, submodule update: check out branches
  - submodule--helper: refactor up-to-date criterion
  - submodule: return target of submodule symref
@@ -430,46 +437,26 @@ Release tarballs are available at:
  source: <pull.1321.git.git.1661806456.gitgitgadget@gmail.com>
 
 
-* jc/format-patch-force-in-body-from (2022-08-29) 3 commits
-  (merged to 'next' on 2022-09-05 at cecaaad60e)
- + format-patch: learn format.forceInBodyFrom configuration variable
- + format-patch: allow forcing the use of in-body From: header
- + pretty: separate out the logic to decide the use of in-body from
-
- "git format-patch --from=<ident>" can be told to add an in-body
- "From:" line even for commits that are authored by the given
- <ident> with "--force-in-body-from"option.
-
- Will merge to 'master'.
- source: <20220829213837.13849-1-gitster@pobox.com>
-
-
-* sy/sparse-grep (2022-09-02) 3 commits
+* sy/sparse-grep (2022-09-08) 3 commits
  - builtin/grep.c: walking tree instead of expanding index with --sparse
  - builtin/grep.c: integrate with sparse index
  - builtin/grep.c: add --sparse option
 
- source: <20220903003623.64750-1-shaoxuan.yuan02@gmail.com>
+ "git grep" learned to work better in a sparse checkout.
 
-
-* cc/doc-trailer-whitespace-rules (2022-08-30) 1 commit
-  (merged to 'next' on 2022-09-05 at 4c018a3ab7)
- + Documentation: clarify whitespace rules for trailers
-
- Doc update.
-
- Will merge to 'master'.
- source: <20220830105046.324041-1-christian.couder@gmail.com>
+ Needs review.
+ source: <20220908001854.206789-1-shaoxuan.yuan02@gmail.com>
 
 
 * js/builtin-add-p-portability-fix (2022-08-30) 3 commits
- - t6132(NO_PERL): do not run the scripted `add -p`
- - t3701: test the built-in `add -i` regardless of NO_PERL
- - add -p: avoid ambiguous signed/unsigned comparison
+  (merged to 'next' on 2022-09-08 at 8d3e72e890)
+ + t6132(NO_PERL): do not run the scripted `add -p`
+ + t3701: test the built-in `add -i` regardless of NO_PERL
+ + add -p: avoid ambiguous signed/unsigned comparison
 
  More fixes to "add -p"
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <pull.1340.git.1661867664.gitgitgadget@gmail.com>
 
 
@@ -483,7 +470,7 @@ Release tarballs are available at:
  source: <20220826085815.2771102-1-dds@aueb.gr>
 
 
-* ds/bundle-uri-3 (2022-08-24) 8 commits
+* ds/bundle-uri-3 (2022-09-09) 10 commits
  - bundle-uri: fetch a list of bundles
  - bundle-uri: limit recursion depth for bundle lists
  - bundle-uri: parse bundle list in config format
@@ -491,6 +478,8 @@ Release tarballs are available at:
  - bundle-uri: create "key=value" line parsing
  - bundle-uri: create base key-value pair parsing
  - bundle-uri: create bundle_list struct and helpers
+ - bundle-uri: use plain string in find_temp_filename()
+ - bundle-uri: short-circuit capability parsing
  - Merge branch 'ds/bundle-uri-clone' into ds/bundle-uri-3
 
  Define the logical elements of a "bundle list", data structure to
@@ -498,21 +487,7 @@ Release tarballs are available at:
  them.
 
  Needs review.
- source: <pull.1333.git.1661181174.gitgitgadget@gmail.com>
-
-
-* js/add-p-diff-parsing-fix (2022-09-01) 3 commits
-  (merged to 'next' on 2022-09-02 at 1545e0898d)
- + add -p: ignore dirty submodules
- + add -p: gracefully handle unparseable hunk headers in colored diffs
- + add -p: detect more mismatches between plain vs colored diffs
-
- Those who use diff-so-fancy as the diff-filter noticed a regression
- or two in the code that parses the diff output in the built-in
- version of "add -p", which has been corrected.
-
- Will merge to 'master'.
- source: <pull.1336.v5.git.1662046939.gitgitgadget@gmail.com>
+ source: <pull.1333.v2.git.1662734015.gitgitgadget@gmail.com>
 
 
 * js/cmake-updates (2022-08-24) 5 commits
@@ -525,19 +500,8 @@ Release tarballs are available at:
  Update to build procedure with VS using CMake/CTest.
 
  Needs review.
+ cf. <3df77ffd-85a2-3a54-9005-34a24ec6e82d@github.com>
  source: <pull.1320.v2.git.1661243463.gitgitgadget@gmail.com>
-
-
-* js/range-diff-with-pathspec (2022-08-26) 3 commits
-  (merged to 'next' on 2022-09-05 at c027222552)
- + range-diff: optionally accept pathspecs
- + range-diff: consistently validate the arguments
- + range-diff: reorder argument handling
-
- Allow passing a pathspec to "git range-diff".
-
- Will merge to 'master'.
- source: <pull.1335.v2.git.1661506770.gitgitgadget@gmail.com>
 
 
 * jk/unused-annotation (2022-08-19) 11 commits
@@ -559,7 +523,7 @@ Release tarballs are available at:
  removed for structural reasons), to prepare us to later compile
  with -Wunused warning turned on.
 
- Will keep but 'ab/unused-annotation' will undo/redo the whole thing.
+ Will merge to 'master' along with 'ab/unused-annotation' that undoes the whole thing.
  cf. <Ywh7ppVFk6VK1Ybs@coredump.intra.peff.net>
  cf. <xmqqy1v7r3so.fsf@gitster.g>
  source: <Yv9gxqH6nK2KYnNj@coredump.intra.peff.net>
@@ -582,12 +546,14 @@ Release tarballs are available at:
  source: <pull.1326.v4.git.1661962145.gitgitgadget@gmail.com>
 
 
-* pw/rebase-keep-base-fixes (2022-08-18) 5 commits
+* pw/rebase-keep-base-fixes (2022-09-07) 7 commits
  - rebase --keep-base: imply --no-fork-point
  - rebase --keep-base: imply --reapply-cherry-picks
- - rebase: factor out merge_base calculation
+ - rebase: factor out branch_base calculation
+ - rebase: rename merge_base to branch_base
  - rebase: store orig_head as a commit
  - t3416: set $EDITOR in subshell
+ - t3416: tighten two tests
 
  "git rebase --keep-base" used to discard the commits that are
  already cherry-picked to the upstream, even when "keep-base" meant
@@ -596,9 +562,9 @@ Release tarballs are available at:
  option now implies --reapply-cherry-picks and --no-fork-point
  options.
 
- Expecting a reroll.
- cf. <eab55cef-62bd-af2b-c295-1e76beca032f@gmail.com>
- source: <pull.1323.git.1660576283.gitgitgadget@gmail.com>
+ Overall looking good, with some iffy bits.
+ cf. <xmqqzgfbuk95.fsf@gitster.g>
+ source: <pull.1323.v2.git.1662561470.gitgitgadget@gmail.com>
 
 
 * ag/merge-strategies-in-c (2022-08-10) 14 commits
@@ -625,7 +591,8 @@ Release tarballs are available at:
  source: <20220809185429.20098-1-alban.gruin@gmail.com>
 
 
-* sy/mv-out-of-cone (2022-08-10) 9 commits
+* sy/mv-out-of-cone (2022-09-08) 10 commits
+ - builtin/mv.c: fix possible segfault in add_slash()
   (merged to 'next' on 2022-08-17 at 2316d9ce4d)
  + mv: check overwrite for in-to-out move
  + advice.h: add advise_on_moving_dirty_path()
@@ -641,9 +608,9 @@ Release tarballs are available at:
  move a path from a directory that is "in cone" to another directory
  that is "out of cone".  Handling of such a case has been improved.
 
- An oob read access makes sanitizer build segfault.
- cf.<YwdJRRuST2SP8ZT7@coredump.intra.peff.net>
+ Will merge to 'next'.
  source: <20220809120910.2021413-1-shaoxuan.yuan02@gmail.com>
+ source: <20220908230223.239970-1-shaoxuan.yuan02@gmail.com>
 
 
 * ab/submodule-helper-prep (2022-09-02) 33 commits
@@ -689,46 +656,51 @@ Release tarballs are available at:
  source: <cover-v4-00.33-00000000000-20220831T230519Z-avarab@gmail.com>
 
 
-* ab/dedup-config-and-command-docs (2022-08-31) 9 commits
- - docs: add CONFIGURATION sections that fuzzy map to built-ins
- - docs: add CONFIGURATION sections that map to a built-in
- - log docs: de-duplicate configuration sections
- - difftool docs: de-duplicate configuration sections
- - notes docs: de-duplicate and combine configuration sections
- - apply docs: de-duplicate configuration sections
- - send-email docs: de-duplicate configuration sections
- - grep docs: de-duplicate configuration sections
- - docs: add and use include template for config/* includes
+* ab/dedup-config-and-command-docs (2022-09-07) 9 commits
+  (merged to 'next' on 2022-09-08 at cd5b217110)
+ + docs: add CONFIGURATION sections that fuzzy map to built-ins
+ + docs: add CONFIGURATION sections that map to a built-in
+ + log docs: de-duplicate configuration sections
+ + difftool docs: de-duplicate configuration sections
+ + notes docs: de-duplicate and combine configuration sections
+ + apply docs: de-duplicate configuration sections
+ + send-email docs: de-duplicate configuration sections
+ + grep docs: de-duplicate configuration sections
+ + docs: add and use include template for config/* includes
 
  Share the text used to explain configuration variables used by "git
  <subcmd>" in "git help <subcmd>" with the text from "git help config".
- source: <cover-v3-0.9-00000000000-20220831T083759Z-avarab@gmail.com>
+
+ Will merge to 'master'.
+ cf. <CAHd-oW71qvhG16YtMweA26SDCLKn+LHZe13njn18CD==9Ewbnw@mail.gmail.com>
+ source: <cover-v4-0.9-00000000000-20220907T082419Z-avarab@gmail.com>
 
 
 * ab/submodule-helper-leakfix (2022-09-02) 18 commits
- - submodule--helper: fix a configure_added_submodule() leak
- - submodule--helper: free rest of "displaypath" in "struct update_data"
- - submodule--helper: free some "displaypath" in "struct update_data"
- - submodule--helper: fix a memory leak in print_status()
- - submodule--helper: fix a leak in module_add()
- - submodule--helper: fix obscure leak in module_add()
- - submodule--helper: fix "reference" leak
- - submodule--helper: fix a memory leak in get_default_remote_submodule()
- - submodule--helper: fix a leak with repo_clear()
- - submodule--helper: fix "sm_path" and other "module_cb_list" leaks
- - submodule--helper: fix "errmsg_str" memory leak
- - submodule--helper: add and use *_release() functions
- - submodule--helper: don't leak {run,capture}_command() cp.dir argument
- - submodule--helper: "struct pathspec" memory leak in module_update()
- - submodule--helper: fix most "struct pathspec" memory leaks
- - submodule--helper: fix trivial get_default_remote_submodule() leak
- - submodule--helper: fix a leak in "clone_submodule"
- - Merge branch 'ab/submodule-helper-prep' into ab/submodule-helper-leakfix
+  (merged to 'next' on 2022-09-08 at bf21cfed4b)
+ + submodule--helper: fix a configure_added_submodule() leak
+ + submodule--helper: free rest of "displaypath" in "struct update_data"
+ + submodule--helper: free some "displaypath" in "struct update_data"
+ + submodule--helper: fix a memory leak in print_status()
+ + submodule--helper: fix a leak in module_add()
+ + submodule--helper: fix obscure leak in module_add()
+ + submodule--helper: fix "reference" leak
+ + submodule--helper: fix a memory leak in get_default_remote_submodule()
+ + submodule--helper: fix a leak with repo_clear()
+ + submodule--helper: fix "sm_path" and other "module_cb_list" leaks
+ + submodule--helper: fix "errmsg_str" memory leak
+ + submodule--helper: add and use *_release() functions
+ + submodule--helper: don't leak {run,capture}_command() cp.dir argument
+ + submodule--helper: "struct pathspec" memory leak in module_update()
+ + submodule--helper: fix most "struct pathspec" memory leaks
+ + submodule--helper: fix trivial get_default_remote_submodule() leak
+ + submodule--helper: fix a leak in "clone_submodule"
+ + Merge branch 'ab/submodule-helper-prep' into ab/submodule-helper-leakfix
  (this branch uses ab/submodule-helper-prep.)
 
  Plugging leaks in submodule--helper.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <cover-v7-00.17-00000000000-20220831T231003Z-avarab@gmail.com>
 
 
@@ -766,3 +738,23 @@ Release tarballs are available at:
 
  Final bits of "git bisect.sh" have been rewritten in C.
  source: <pull.1132.v6.git.1661885419.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Discarded]
+
+* jc/diff-no-index-unleak (2022-09-02) 1 commit
+ . diff --no-index: unleak paths[] elements
+
+ Plug a leak or two in "git diff --no-index".
+
+ Superseded by the rs/diff-no-index-cleanup topic.
+ source: <xmqqilm579hc.fsf@gitster.g>
+
+
+* jc/diff-no-index-two-stdin (2022-09-07) 1 commit
+ . diff: "--no-index - -" compares the same standard input
+ (this branch uses rs/diff-no-index-cleanup.)
+
+ "git diff --no-index - -" learned to optimize the comparison of the
+ same thing obtained from the standard input.
+ source: <xmqqlequsvt4.fsf_-_@gitster.g>
