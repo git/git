@@ -14,7 +14,7 @@ inst_prefix=$(
 	echo $HOME
 )
 
-for v in maint master next seen jch
+for v in maint master next jch seen
 do
 	installed=$(
 		test -f "$inst_prefix/git-$v/bin/git" &&
@@ -41,7 +41,12 @@ do
 	if test "z$version" = "z$revision"
 	then
 		in= out=
-		installed=$dirty
+		if test -z "$dirty"
+		then
+			installed=
+		else
+			installed="	$installed$dirty"
+		fi
 	elif test -z "$version"
 	then
 		in="[41;37m" out="[m"
@@ -56,5 +61,5 @@ do
 		esac
 		in="[41;37m" out="[m" installed="	$installed"
 	fi
-	echo "$in$v$out	$(git describe refs/heads/$v)$installed"
+	echo "$in$v$out$installed	$(git describe refs/heads/$v)"
 done
