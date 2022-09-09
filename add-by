@@ -46,22 +46,32 @@ sub accumulate {
 	push @more, [@_];
 }
 
+my $mine;
+
+sub compute_bylines {
+	my %names = map { $_->[1] => 1 } @more;
+	my %map = ();
+	my @append;
+	find_author(\%map, keys (%names));
+	for (@more) {
+		my ($tag, $name) = @$_;
+		if ($tag eq 'mine') {
+			$mine = $map{$name};
+			next;
+		}
+		$tag = ucfirst($tag);
+		push @append, "$tag: $map{$name}";
+	}
+	if (@append) {
+		$append = join("\n", @append) . "\n";
+	} else {
+		$append = "";
+	}
+}
+
 sub add_more_bylines {
 	if (!defined $append) {
-		my %names = map { $_->[1] => 1 } @more;
-		my %map = ();
-		my @append;
-		find_author(\%map, keys (%names));
-		for (@more) {
-			my ($tag, $name) = @$_;
-			$tag = ucfirst($tag);
-			push @append, "$tag: $map{$name}";
-		}
-		if (@append) {
-			$append = join("\n", @append) . "\n";
-		} else {
-			$append = "";
-		}
+		compute_bylines();
 	}
 	print $append;
 }
@@ -74,25 +84,36 @@ exit 1 unless (GetOptions("signed-off-by=s" => \&accumulate,
 			  "tested-by=s" => \&accumulate,
 			  "helped-by=s" => \&accumulate,
 			  "check-only!" => \$check_only,
+			  "mine=s" => \&accumulate,
 			  "debug!" => \$debug,
 	       ));
+
+compute_bylines();
 
 if ($check_only) {
 	add_more_bylines();
 	exit 0;
 }
 
+my $seen_mine = 0;
 while (<>) {
 	if ($state == parsing) {
 		if (/^[-A-Za-z]+-by: /i || /^Cc: /i) {
 			$state = waiting;
 		}
 	} elsif ($state == waiting) {
-		if (/^[-A-Za-z]+-by: /i || /^Cc: /i) {
+		if (defined $mine && /^Signed-off-by: \Q$mine\E/) {
+			$seen_mine = 1;
+			next;
+		} elsif (/^[-A-Za-z]+-by: /i || /^Cc: /i) {
 			$state = waiting;
 		} else {
 			add_more_bylines();
+			if ($seen_mine) {
+				print "Signed-off-by: $mine\n";
+			}
 			$state = parsing;
+			$seen_mine = 0;
 		}
 	}
 	print;
