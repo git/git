@@ -287,7 +287,9 @@ ${make-make} \
      $jobs \
      ETC_GITCONFIG=$prefix/etc/gitconfig \
      ${DEVELOPER:+"DEVELOPER=YesPlease"} \
-     CFLAGS="-g -Wall -Wdeclaration-after-statement -std=gnu99${O:+ $O}" \
+     SPATCH_FLAGS="--all-includes --recursive-includes --patch ." \
+     SPATCH_BATCH_SIZE=16 \
+     CFLAGS="-g -Wall -Wunused -Wdeclaration-after-statement -std=gnu99${O:+ $O}" \
      ${tests:+"T=$tests"} \
      "$@"
 status=$?
