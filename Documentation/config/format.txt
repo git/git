@@ -15,6 +15,10 @@ format.from::
 	different.  If set to a non-boolean value, format-patch uses that
 	value instead of your committer identity.  Defaults to false.
 
+format.forceInBodyFrom::
+	Provides the default value for the `--[no-]force-in-body-from`
+	option to format-patch.  Defaults to false.
+
 format.numbered::
 	A boolean which can enable or disable sequence numbers in patch
 	subjects.  It defaults to "auto" which enables it only if there
