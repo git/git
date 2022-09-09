@@ -1,0 +1,52 @@
+#!/bin/sh
+
+# Give names of targets to use on the command line
+default="sparse hdr-check coccicheck test leaks address check-docs doc"
+skip=" "
+more=" "
+
+if test $# -eq 0
+then
+	set -- $default
+else
+	for t
+	do
+		case "$t" in
+		-*) skip="$skip${t#-} " ;;
+		?*) more="$more$t " ;;
+		esac
+	done
+	case "$more" in
+	" ")	set -- $default ;;
+	*)	set -- $more ;;
+	esac
+fi
+
+for t
+do
+	case "$skip" in
+	*" $t "*)
+		echo "Skipping $t" >&2
+		continue ;;
+	esac
+
+	case "$t" in
+	address)
+		Meta/Make -j16 distclean >/dev/null 2>&1 &&
+		SANITIZE=address \
+		Meta/Make -j16 test
+		;;
+	leaks)
+		Meta/Make -j16 distclean >/dev/null 2>&1 &&
+		SANITIZE=leak \
+		GIT_TEST_PASSING_SANITIZE_LEAK=true Meta/Make -j16 test
+		;;
+	coccicheck)
+		SPATCH_FLAGS=--recursive-includes Meta/Make -j16 "$t"
+		;;
+	*)
+		SPATCH_FLAGS=--recursive-includes Meta/Make -j16 "$t"
+		;;
+	esac || return 1
+done &&
+Meta/Make -j16 distclean
