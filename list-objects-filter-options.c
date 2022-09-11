@@ -399,7 +399,7 @@ void partial_clone_get_default_filter_spec(
 	/*
 	 * Parse default value, but silently ignore it if it is invalid.
 	 */
-	if (!promisor)
+	if (!promisor || !promisor->partial_clone_filter)
 		return;
 
 	string_list_append(&filter_options->filter_spec,
