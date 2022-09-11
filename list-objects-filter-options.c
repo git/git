@@ -108,7 +108,7 @@ int gently_parse_list_objects_filter(
 
 	strbuf_addf(errbuf, _("invalid filter-spec '%s'"), arg);
 
-	memset(filter_options, 0, sizeof(*filter_options));
+	list_objects_filter_init(filter_options);
 	return 1;
 }
 
@@ -223,8 +223,7 @@ static void transform_to_combine_type(
 		struct list_objects_filter_options *sub_array =
 			xcalloc(initial_sub_alloc, sizeof(*sub_array));
 		sub_array[0] = *filter_options;
-		memset(filter_options, 0, sizeof(*filter_options));
-		string_list_init_dup(&filter_options->filter_spec);
+		list_objects_filter_init(filter_options);
 		filter_options->sub = sub_array;
 		filter_options->sub_alloc = initial_sub_alloc;
 	}
@@ -255,11 +254,8 @@ void parse_list_objects_filter(
 	struct strbuf errbuf = STRBUF_INIT;
 	int parse_error;
 
-	if (!filter_options->filter_spec.strdup_strings) {
-		if (filter_options->filter_spec.nr)
-			BUG("unexpected non-allocated string in filter_spec");
-		filter_options->filter_spec.strdup_strings = 1;
-	}
+	if (!filter_options->filter_spec.strdup_strings)
+		BUG("filter_options not properly initialized");
 
 	if (!filter_options->choice) {
 		string_list_append(&filter_options->filter_spec, arg);
@@ -346,7 +342,7 @@ void list_objects_filter_release(
 	for (sub = 0; sub < filter_options->sub_nr; sub++)
 		list_objects_filter_release(&filter_options->sub[sub]);
 	free(filter_options->sub);
-	memset(filter_options, 0, sizeof(*filter_options));
+	list_objects_filter_init(filter_options);
 }
 
 void partial_clone_register(
@@ -428,4 +424,10 @@ void list_objects_filter_copy(
 	ALLOC_ARRAY(dest->sub, dest->sub_alloc);
 	for (i = 0; i < src->sub_nr; i++)
 		list_objects_filter_copy(&dest->sub[i], &src->sub[i]);
+}
+
+void list_objects_filter_init(struct list_objects_filter_options *filter_options)
+{
+	struct list_objects_filter_options blank = LIST_OBJECTS_FILTER_INIT;
+	memcpy(filter_options, &blank, sizeof(*filter_options));
 }

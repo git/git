@@ -69,6 +69,9 @@ struct list_objects_filter_options {
 	 */
 };
 
+#define LIST_OBJECTS_FILTER_INIT { .filter_spec = STRING_LIST_INIT_DUP }
+void list_objects_filter_init(struct list_objects_filter_options *filter_options);
+
 /*
  * Parse value of the argument to the "filter" keyword.
  * On the command line this looks like:
