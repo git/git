@@ -187,10 +187,8 @@ static int parse_combine_filter(
 
 cleanup:
 	strbuf_list_free(subspecs);
-	if (result) {
+	if (result)
 		list_objects_filter_release(filter_options);
-		memset(filter_options, 0, sizeof(*filter_options));
-	}
 	return result;
 }
 
