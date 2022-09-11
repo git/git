@@ -585,12 +585,14 @@ sub check_test {
 	my $parser = TestParser->new(\$body);
 	my @tokens = $parser->parse();
 	return unless $emit_all || grep(/\?![^?]+\?!/, @tokens);
+	my $c = main::fd_colors(1);
 	my $checked = join(' ', @tokens);
 	$checked =~ s/^\n//;
 	$checked =~ s/^ //mg;
 	$checked =~ s/ $//mg;
+	$checked =~ s/(\?![^?]+\?!)/$c->{rev}$c->{red}$1$c->{reset}/mg;
 	$checked .= "\n" unless $checked =~ /\n$/;
-	push(@{$self->{output}}, "# chainlint: $title\n$checked");
+	push(@{$self->{output}}, "$c->{blue}# chainlint: $title$c->{reset}\n$checked");
 }
 
 sub parse_cmd {
@@ -615,6 +617,41 @@ if (eval {require Time::HiRes; Time::HiRes->import(); 1;}) {
 	$interval = sub { return Time::HiRes::tv_interval(shift); };
 }
 
+# Restore TERM if test framework set it to "dumb" so 'tput' will work; do this
+# outside of get_colors() since under 'ithreads' all threads use %ENV of main
+# thread and ignore %ENV changes in subthreads.
+$ENV{TERM} = $ENV{USER_TERM} if $ENV{USER_TERM};
+
+my @NOCOLORS = (bold => '', rev => '', reset => '', blue => '', green => '', red => '');
+my %COLORS = ();
+sub get_colors {
+	return \%COLORS if %COLORS;
+	if (exists($ENV{NO_COLOR}) ||
+	    system("tput sgr0 >/dev/null 2>&1") != 0 ||
+	    system("tput bold >/dev/null 2>&1") != 0 ||
+	    system("tput rev  >/dev/null 2>&1") != 0 ||
+	    system("tput setaf 1 >/dev/null 2>&1") != 0) {
+		%COLORS = @NOCOLORS;
+		return \%COLORS;
+	}
+	%COLORS = (bold  => `tput bold`,
+		   rev   => `tput rev`,
+		   reset => `tput sgr0`,
+		   blue  => `tput setaf 4`,
+		   green => `tput setaf 2`,
+		   red   => `tput setaf 1`);
+	chomp(%COLORS);
+	return \%COLORS;
+}
+
+my %FD_COLORS = ();
+sub fd_colors {
+	my $fd = shift;
+	return $FD_COLORS{$fd} if exists($FD_COLORS{$fd});
+	$FD_COLORS{$fd} = -t $fd ? get_colors() : {@NOCOLORS};
+	return $FD_COLORS{$fd};
+}
+
 sub ncores {
 	# Windows
 	return $ENV{NUMBER_OF_PROCESSORS} if exists($ENV{NUMBER_OF_PROCESSORS});
@@ -630,6 +667,8 @@ sub show_stats {
 	my $walltime = $interval->($start_time);
 	my ($usertime) = times();
 	my ($total_workers, $total_scripts, $total_tests, $total_errs) = (0, 0, 0, 0);
+	my $c = fd_colors(2);
+	print(STDERR $c->{green});
 	for (@$stats) {
 		my ($worker, $nscripts, $ntests, $nerrs) = @$_;
 		print(STDERR "worker $worker: $nscripts scripts, $ntests tests, $nerrs errors\n");
@@ -638,7 +677,7 @@ sub show_stats {
 		$total_tests += $ntests;
 		$total_errs += $nerrs;
 	}
-	printf(STDERR "total: %d workers, %d scripts, %d tests, %d errors, %.2fs/%.2fs (wall/user)\n", $total_workers, $total_scripts, $total_tests, $total_errs, $walltime, $usertime);
+	printf(STDERR "total: %d workers, %d scripts, %d tests, %d errors, %.2fs/%.2fs (wall/user)$c->{reset}\n", $total_workers, $total_scripts, $total_tests, $total_errs, $walltime, $usertime);
 }
 
 sub check_script {
@@ -656,8 +695,9 @@ sub check_script {
 		my $parser = ScriptParser->new(\$s);
 		1 while $parser->parse_cmd();
 		if (@{$parser->{output}}) {
+			my $c = fd_colors(1);
 			my $s = join('', @{$parser->{output}});
-			$emit->("# chainlint: $path\n" . $s);
+			$emit->("$c->{bold}$c->{blue}# chainlint: $path$c->{reset}\n" . $s);
 			$nerrs += () = $s =~ /\?![^?]+\?!/g;
 		}
 		$ntests += $parser->{ntests};
