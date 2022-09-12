@@ -141,6 +141,7 @@ static void upload_pack_data_init(struct upload_pack_data *data)
 	data->allow_filter_fallback = 1;
 	data->tree_filter_max_depth = ULONG_MAX;
 	packet_writer_init(&data->writer, 1);
+	list_objects_filter_init(&data->filter_options);
 
 	data->keepalive = 5;
 	data->advertise_sid = 0;
