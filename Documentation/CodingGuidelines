@@ -606,7 +606,7 @@ Writing Documentation:
     avoidance of gendered pronouns.
 
   - When it becomes awkward to stick to this style, prefer "you" when
-    addressing the the hypothetical user, and possibly "we" when
+    addressing the hypothetical user, and possibly "we" when
     discussing how the program might react to the user.  E.g.
 
       You can use this option instead of --xyz, but we might remove
