@@ -1,0 +1,31 @@
+Git 2.37.4 Release Notes
+========================
+
+This primarily is to backport various fixes accumulated on the 'master'
+front since 2.37.3.
+
+Fixes since v2.37.3
+-------------------
+
+ * An earlier optimization discarded a tree-object buffer that is
+   still in use, which has been corrected.
+
+ * Fix deadlocks between main Git process and subprocess spawned via
+   the pipe_command() API, that can kill "git add -p" that was
+   reimplemented in C recently.
+
+ * xcalloc(), imitating calloc(), takes "number of elements of the
+   array", and "size of a single element", in this order.  A call that
+   does not follow this ordering has been corrected.
+
+ * The preload-index codepath made copies of pathspec to give to
+   multiple threads, which were left leaked.
+
+ * Update the version of Ubuntu used for GitHub Actions CI from 18.04
+   to 22.04.
+
+ * The auto-stashed local changes created by "git merge --autostash"
+   was mixed into a conflicted state left in the working tree, which
+   has been corrected.
+
+Also contains other minor documentation updates and code clean-ups.
