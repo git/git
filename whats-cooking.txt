@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2022, #02; Fri, 9)
-X-master-at: dd3f6c4cae7e3b15ce984dce8593ff7569650e24
-X-next-at: 50f0e44ec40b5fab5d618dd26ebd776c47e9af13
+Subject: What's cooking in git.git (Sep 2022, #03; Tue, 13)
+X-master-at: e188ec3a735ae52a0d0d3c22f9df6b29fa613b1e
+X-next-at: b38f19008aff4c52573f00da5d2d3bfd3877fcfc
 
-What's cooking in git.git (Sep 2022, #02; Fri, 9)
+What's cooking in git.git (Sep 2022, #03; Tue, 13)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -13,11 +13,12 @@ release).  Commits prefixed with '-' are only in 'seen', and aren't
 considered "accepted" at all.  A topic without enough support may be
 discarded after a long period of no activity.
 
-We are at the end of week #9 in a 12-week cycle toward Git 2.38
-(tinyurl.com/gitCal).  I plan to tag -rc0 (i.e. preview) on the 15th
-or so, but I expect that many folks are busy in Chicago for Git Merge
-so let's not make a big fuss about it and instead treat it as just one
-of the regular updates to the 'master' branch.
+It is expected to be a bit slower week than usual, as many of our
+contributors are flying to Chicago and back, with a bit of fun in
+the conference in between.  We'll tag the first release candidate
+next week (cf. https://tinyurl.com/gitCal), and it will hopefully
+start to become even quieter after that, with only regression fixes
+and nothing else.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -50,120 +51,55 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ab/retire-ppc-sha1 (2022-08-31) 2 commits
-  (merged to 'next' on 2022-09-05 at 480da6ef06)
- + Makefile: use $(OBJECTS) instead of $(C_OBJ)
- + Makefile + hash.h: remove PPC_SHA1 implementation
+* ab/submodule-helper-prep (2022-09-02) 33 commits
+  (merged to 'next' on 2022-09-05 at b0d1b6ada7)
+ + submodule--helper: fix bad config API usage
+ + submodule--helper: libify even more "die" paths for module_update()
+ + submodule--helper: libify more "die" paths for module_update()
+ + submodule--helper: check repo{_submodule,}_init() return values
+ + submodule--helper: libify "must_die_on_failure" code paths (for die)
+ + submodule--helper update: don't override 'checkout' exit code
+ + submodule--helper: libify "must_die_on_failure" code paths
+ + submodule--helper: libify determine_submodule_update_strategy()
+ + submodule--helper: don't exit() on failure, return
+ + submodule--helper: use "code" in run_update_command()
+ + submodule API: don't handle SM_..{UNSPECIFIED,COMMAND} in to_string()
+ + submodule--helper: don't call submodule_strategy_to_string() in BUG()
+ + submodule--helper: add missing braces to "else" arm
+ + submodule--helper: return "ret", not "1" from update_submodule()
+ + submodule--helper: rename "int res" to "int ret"
+ + submodule--helper: don't redundantly check "else if (res)"
+ + submodule--helper: refactor "errmsg_str" to be a "struct strbuf"
+ + submodule--helper: add "const" to passed "struct update_data"
+ + submodule--helper: add "const" to copy of "update_data"
+ + submodule--helper: add "const" to passed "module_clone_data"
+ + submodule--helper: move "sb" in clone_submodule() to its own scope
+ + submodule--helper: use xstrfmt() in clone_submodule()
+ + submodule--helper: replace memset() with { 0 }-initialization
+ + submodule--helper style: add \n\n after variable declarations
+ + submodule--helper style: don't separate declared variables with \n\n
+ + submodule--helper: move "resolve-relative-url-test" to a test-tool
+ + submodule--helper: move "check-name" to a test-tool
+ + submodule--helper: move "is-active" to a test-tool
+ + test-tool submodule-config: remove unused "--url" handling
+ + submodule--helper: remove unused "list" helper
+ + submodule--helper: remove unused "name" helper
+ + submodule tests: test for "add <repository> <abs-path>"
+ + submodule tests: test usage behavior
+ (this branch is used by ab/submodule-helper-leakfix.)
 
- Remove the assembly version of SHA-1 implementation for PPC.
- source: <cover-v3-0.2-00000000000-20220831T090744Z-avarab@gmail.com>
-
-
-* cc/doc-trailer-whitespace-rules (2022-08-30) 1 commit
-  (merged to 'next' on 2022-09-05 at 4c018a3ab7)
- + Documentation: clarify whitespace rules for trailers
-
- Doc update.
- source: <20220830105046.324041-1-christian.couder@gmail.com>
-
-
-* jc/format-patch-force-in-body-from (2022-08-29) 3 commits
-  (merged to 'next' on 2022-09-05 at cecaaad60e)
- + format-patch: learn format.forceInBodyFrom configuration variable
- + format-patch: allow forcing the use of in-body From: header
- + pretty: separate out the logic to decide the use of in-body from
-
- "git format-patch --from=<ident>" can be told to add an in-body
- "From:" line even for commits that are authored by the given
- <ident> with "--force-in-body-from"option.
- source: <20220829213837.13849-1-gitster@pobox.com>
-
-
-* jk/tempfile-active-flag-cleanup (2022-08-30) 3 commits
-  (merged to 'next' on 2022-09-05 at 43ed4656b3)
- + tempfile: update comment describing state transitions
- + tempfile: drop active flag
- + Merge branch 'rs/tempfile-cleanup-race-fix' into jk/tempfile-active-flag-cleanup
-
- Code clean-up.
- source: <Yw5nmNJSm9uzLOKL@coredump.intra.peff.net>
-
-
-* js/add-p-diff-parsing-fix (2022-09-01) 3 commits
-  (merged to 'next' on 2022-09-02 at 1545e0898d)
- + add -p: ignore dirty submodules
- + add -p: gracefully handle unparseable hunk headers in colored diffs
- + add -p: detect more mismatches between plain vs colored diffs
-
- Those who use diff-so-fancy as the diff-filter noticed a regression
- or two in the code that parses the diff output in the built-in
- version of "add -p", which has been corrected.
- source: <pull.1336.v5.git.1662046939.gitgitgadget@gmail.com>
+ Code clean-up of "git submodule--helper".
+ source: <cover-v4-00.33-00000000000-20220831T230519Z-avarab@gmail.com>
 
 
-* js/range-diff-with-pathspec (2022-08-26) 3 commits
-  (merged to 'next' on 2022-09-05 at c027222552)
- + range-diff: optionally accept pathspecs
- + range-diff: consistently validate the arguments
- + range-diff: reorder argument handling
+* ed/fsmonitor-on-network-disk (2022-08-11) 1 commit
+  (merged to 'next' on 2022-08-14 at 637d458d9c)
+ + fsmonitor: option to allow fsmonitor to run against network-mounted repos
 
- Allow passing a pathspec to "git range-diff".
- source: <pull.1335.v2.git.1661506770.gitgitgadget@gmail.com>
-
-
-* vd/sparse-reset-checkout-fixes (2022-09-02) 1 commit
-  (merged to 'next' on 2022-09-05 at 8c59ace003)
- + unpack-trees: fix sparse directory recursion check
-
- Segfault fix-up to an earlier fix to the topic to teach "git reset"
- and "git checkout" work better in a sparse checkout.
- source: <pull.1344.git.1662066153644.gitgitgadget@gmail.com>
-
---------------------------------------------------
-[New Topics]
-
-* ab/doc-synopsis-and-cmd-usage (2022-09-07) 34 commits
- - tests: start asserting that *.txt SYNOPSIS matches -h output
- - doc txt & -h consistency: make "worktree" consistent
- - worktree: define subcommand -h in terms of command -h
- - reflog doc: list real subcommands up-front
- - doc txt & -h consistency: make "commit" consistent
- - doc txt & -h consistency: make "diff-tree" consistent
- - doc txt & -h consistency: use "[<label>...]" for "zero or more"
- - doc txt & -h consistency: make "annotate" consistent
- - doc txt & -h consistency: make "stash" consistent
- - doc txt & -h consistency: add missing options
- - doc txt & -h consistency: use "git foo" form, not "git-foo"
- - doc txt & -h consistency: make "bundle" consistent
- - doc txt & -h consistency: make "read-tree" consistent
- - doc txt & -h consistency: make "rerere" consistent
- - doc txt & -h consistency: add missing options and labels
- - doc txt & -h consistency: make output order consistent
- - doc txt & -h consistency: add or fix optional "--" syntax
- - doc txt & -h consistency: fix mismatching labels
- - t/helper/test-proc-receive.c: use "<options>", not "<options>..."
- - doc txt & -h consistency: use "<options>", not "<options>..."
- - stash doc SYNOPSIS & -h: correct padding around "[]()"
- - doc txt & -h consistency: correct padding around "[]()"
- - doc txt & -h consistency: add missing "]" to bugreport "-h"
- - doc txt & -h consistency: add "-z" to cat-file "-h"
- - doc txt & -h consistency: fix incorrect alternates syntax
- - doc txt & -h consistency: word-wrap
- - built-ins: consistently add "\n" between "usage" and options
- - doc SYNOPSIS & -h: fix incorrect alternates syntax
- - doc SYNOPSIS: consistently use ' for commands
- - doc SYNOPSIS: don't use ' for subcommands
- - blame: use a more detailed usage_msg_optf() error on bad -L
- - bundle: define subcommand -h in terms of command -h
- - builtin/bundle.c: use \t, not fix indentation 2-SP indentation
- - CodingGuidelines: update and clarify command-line conventions
-
- The short-help text shown by "git cmd -h" and the synopsis text
- shown at the beginning of "git help cmd" have been made more
- consistent.
-
- Needs review.
- source: <cover-00.34-00000000000-20220902T092734Z-avarab@gmail.com>
+ The built-in fsmonitor refuses to work on a network mounted
+ repositories; a configuration knob for users to override this has
+ been introduced.
+ source: <pull.1317.v4.git.1660262231357.gitgitgadget@gmail.com>
 
 
 * jk/rev-list-verify-objects-fix (2022-09-07) 2 commits
@@ -174,8 +110,6 @@ Release tarballs are available at:
  "git rev-list --verify-objects" ought to inspect the contents of
  objects and notice corrupted ones, but it didn't when the commit
  graph is in use, which has been corrected.
-
- Will merge to 'master'.
  source: <Yxe0k++LA/UfFLF/@coredump.intra.peff.net>
 
 
@@ -189,10 +123,27 @@ Release tarballs are available at:
  The server side that responds to "git fetch" and "git clone"
  request has been optimized by allowing it to send objects in its
  object store without recomputing and validating the object names.
-
- Will merge to 'master'.
  source: <YxfQi4qg8uJHs7Gp@coredump.intra.peff.net>
  source: <YxkAxutS+B8//0WF@coredump.intra.peff.net>
+
+
+* js/builtin-add-p-portability-fix (2022-08-30) 3 commits
+  (merged to 'next' on 2022-09-08 at 8d3e72e890)
+ + t6132(NO_PERL): do not run the scripted `add -p`
+ + t3701: test the built-in `add -i` regardless of NO_PERL
+ + add -p: avoid ambiguous signed/unsigned comparison
+
+ More fixes to "add -p"
+ source: <pull.1340.git.1661867664.gitgitgadget@gmail.com>
+
+
+* ow/rev-parse-parseopt-fix (2022-09-08) 1 commit
+  (merged to 'next' on 2022-09-08 at a15efb3478)
+ + rev-parse --parseopt: detect missing opt-spec
+
+ The parser in the script interface to parse-options in "git
+ rev-parse" has been updated to diagnose a bogus input correctly.
+ source: <20220902175902.22346-1-oystwa@gmail.com>
 
 
 * rs/diff-no-index-cleanup (2022-09-07) 3 commits
@@ -206,8 +157,6 @@ Release tarballs are available at:
  input files rather haphazardly, sometimes leaking them.  The
  command line argument processing has been straightened out to clean
  it up.
-
- Will merge to 'master'.
  source: <xmqq8rmx1saz.fsf@gitster.g>
 
 
@@ -220,46 +169,44 @@ Release tarballs are available at:
  + t0040-parse-options: remove leftover debugging
 
  The codepath for the OPT_SUBCOMMAND facility has been cleaned up.
-
- Will merge to 'master'.
  source: <20220905185007.9042-1-szeder.dev@gmail.com>
 
+--------------------------------------------------
+[New Topics]
 
-* jk/plug-list-object-filter-leaks (2022-09-08) 5 commits
-  (merged to 'next' on 2022-09-08 at a6b4b080e4)
- + prepare_repo_settings(): plug leak of config values
- + list_objects_filter_options: plug leak of filter_spec strings
- + transport: free filter options in disconnect_git()
- + transport: deep-copy object-filter struct for fetch-pack
- + list_objects_filter_copy(): deep-copy sparse_oid_name field
+* jk/list-objects-filter-cleanup (2022-09-12) 5 commits
+  (merged to 'next' on 2022-09-12 at 33cb79c924)
+ + list-objects-filter: convert filter_spec to a strbuf
+ + list-objects-filter: add and use initializers
+ + list-objects-filter: handle null default filter spec
+ + list-objects-filter: don't memset after releasing filter struct
+ + Merge branch 'jk/plug-list-object-filter-leaks' into jk/list-objects-filter-cleanup
+ (this branch uses jk/plug-list-object-filter-leaks.)
 
- The code that manages list-object-filter structure, used in partial
- clones, leaked the instances, which has been plugged.
+ A couple of bugfixes with code clean-up.
 
  Will merge to 'master'.
- source: <Yxl1BNQoy6Drf0Oe@coredump.intra.peff.net>
+ source: <Yx1qwlpNbxGEiUgc@coredump.intra.peff.net>
 
 
-* jk/proto-v2-ref-prefix-fix (2022-09-08) 2 commits
- - fetch: add branch.*.merge to default ref-prefix extension
- - fetch: stop checking for NULL transport->remote in do_fetch()
+* zh/ls-files-format (2022-09-12) 1 commit
+  (merged to 'next' on 2022-09-12 at 91dda58387)
+ + ls-files: fix black space in error message
 
- "git fetch" over protocol v2 sent an incorrect ref prefix request
- to the server and made "git pull" with configured fetch refspec
- that does not cover the remote branch to merge with fail, which has
- been corrected.
+ Typofix in the UI of a topic that has graduated to 'master'.
 
- Will merge to 'next'.
- source: <YxpBMaIckimFJYEi@coredump.intra.peff.net>
+ Will merge to 'master'.
+ source: <pull.1350.git.1662904997760.gitgitgadget@gmail.com>
 
 
-* vd/doc-reviewing-guidelines (2022-09-09) 1 commit
- - Documentation: add ReviewingGuidelines
+* js/typofix (2022-09-12) 1 commit
+  (merged to 'next' on 2022-09-12 at 76d57e004b)
+ + Documentation: fix various repeat word typos
 
- Just like we have coding guidelines, we now have guidelines for
- reviewers.
+ Typofix.
 
- source: <pull.1348.git.1662747205235.gitgitgadget@gmail.com>
+ Will merge to 'master'.
+ source: <20220911102320.39954-2-jacob@initialcommit.io>
 
 --------------------------------------------------
 [Stalled]
@@ -305,6 +252,90 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* ab/doc-synopsis-and-cmd-usage (2022-09-07) 34 commits
+ - tests: start asserting that *.txt SYNOPSIS matches -h output
+ - doc txt & -h consistency: make "worktree" consistent
+ - worktree: define subcommand -h in terms of command -h
+ - reflog doc: list real subcommands up-front
+ - doc txt & -h consistency: make "commit" consistent
+ - doc txt & -h consistency: make "diff-tree" consistent
+ - doc txt & -h consistency: use "[<label>...]" for "zero or more"
+ - doc txt & -h consistency: make "annotate" consistent
+ - doc txt & -h consistency: make "stash" consistent
+ - doc txt & -h consistency: add missing options
+ - doc txt & -h consistency: use "git foo" form, not "git-foo"
+ - doc txt & -h consistency: make "bundle" consistent
+ - doc txt & -h consistency: make "read-tree" consistent
+ - doc txt & -h consistency: make "rerere" consistent
+ - doc txt & -h consistency: add missing options and labels
+ - doc txt & -h consistency: make output order consistent
+ - doc txt & -h consistency: add or fix optional "--" syntax
+ - doc txt & -h consistency: fix mismatching labels
+ - t/helper/test-proc-receive.c: use "<options>", not "<options>..."
+ - doc txt & -h consistency: use "<options>", not "<options>..."
+ - stash doc SYNOPSIS & -h: correct padding around "[]()"
+ - doc txt & -h consistency: correct padding around "[]()"
+ - doc txt & -h consistency: add missing "]" to bugreport "-h"
+ - doc txt & -h consistency: add "-z" to cat-file "-h"
+ - doc txt & -h consistency: fix incorrect alternates syntax
+ - doc txt & -h consistency: word-wrap
+ - built-ins: consistently add "\n" between "usage" and options
+ - doc SYNOPSIS & -h: fix incorrect alternates syntax
+ - doc SYNOPSIS: consistently use ' for commands
+ - doc SYNOPSIS: don't use ' for subcommands
+ - blame: use a more detailed usage_msg_optf() error on bad -L
+ - bundle: define subcommand -h in terms of command -h
+ - builtin/bundle.c: use \t, not fix indentation 2-SP indentation
+ - CodingGuidelines: update and clarify command-line conventions
+
+ The short-help text shown by "git cmd -h" and the synopsis text
+ shown at the beginning of "git help cmd" have been made more
+ consistent.
+
+ Needs review.
+ source: <cover-00.34-00000000000-20220902T092734Z-avarab@gmail.com>
+
+
+* jk/plug-list-object-filter-leaks (2022-09-08) 5 commits
+  (merged to 'next' on 2022-09-08 at a6b4b080e4)
+ + prepare_repo_settings(): plug leak of config values
+ + list_objects_filter_options: plug leak of filter_spec strings
+ + transport: free filter options in disconnect_git()
+ + transport: deep-copy object-filter struct for fetch-pack
+ + list_objects_filter_copy(): deep-copy sparse_oid_name field
+ (this branch is used by jk/list-objects-filter-cleanup.)
+
+ The code that manages list-object-filter structure, used in partial
+ clones, leaked the instances, which has been plugged.
+
+ Will merge to 'master'.
+ source: <Yxl1BNQoy6Drf0Oe@coredump.intra.peff.net>
+
+
+* jk/proto-v2-ref-prefix-fix (2022-09-08) 2 commits
+  (merged to 'next' on 2022-09-12 at 70c5528b86)
+ + fetch: add branch.*.merge to default ref-prefix extension
+ + fetch: stop checking for NULL transport->remote in do_fetch()
+
+ "git fetch" over protocol v2 sent an incorrect ref prefix request
+ to the server and made "git pull" with configured fetch refspec
+ that does not cover the remote branch to merge with fail, which has
+ been corrected.
+
+ Will merge to 'master'.
+ source: <YxpBMaIckimFJYEi@coredump.intra.peff.net>
+
+
+* vd/doc-reviewing-guidelines (2022-09-09) 1 commit
+ - Documentation: add ReviewingGuidelines
+
+ Just like we have coding guidelines, we now have guidelines for
+ reviewers.
+
+ Needs review.
+ source: <pull.1348.git.1662747205235.gitgitgadget@gmail.com>
+
+
 * ab/unused-annotation (2022-09-01) 2 commits
   (merged to 'next' on 2022-09-08 at dfc6123c6b)
  + git-compat-util.h: use "deprecated" for UNUSED variables
@@ -337,17 +368,20 @@ Release tarballs are available at:
 
 
 * en/remerge-diff-fixes (2022-09-02) 3 commits
- - diff: fix filtering of merge commits under --remerge-diff
- - diff: fix filtering of additional headers under --remerge-diff
- - diff: have submodule_format logic avoid additional diff headers
+  (merged to 'next' on 2022-09-12 at 9879cec049)
+ + diff: fix filtering of merge commits under --remerge-diff
+ + diff: fix filtering of additional headers under --remerge-diff
+ + diff: have submodule_format logic avoid additional diff headers
 
  Fix a few "git log --remerge-diff" bugs.
 
- Will probably need to rebase to make it mergeable to 'maint'.
+ Will merge to 'master'.
  source: <pull.1342.v3.git.1662090810.gitgitgadget@gmail.com>
 
 
-* es/chainlint (2022-09-01) 18 commits
+* es/chainlint (2022-09-12) 19 commits
+  (merged to 'next' on 2022-09-12 at 577e59143f)
+ + chainlint: colorize problem annotations and test delimiters
   (merged to 'next' on 2022-09-08 at eab3357b05)
  + t: retire unused chainlint.sed
  + t/Makefile: teach `make test` and `make prove` to run chainlint.pl
@@ -372,6 +406,7 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <pull.1322.git.git.1661992197.gitgitgadget@gmail.com>
+ source: <pull.1324.git.git.1663023888412.gitgitgadget@gmail.com>
 
 
 * vd/scalar-to-main (2022-09-02) 9 commits
@@ -388,7 +423,7 @@ Release tarballs are available at:
  Hoist the remainder of "scalar" out of contrib/ to the main part of
  the codebase.
 
- Needs review.
+ Will merge to 'next'.
  source: <pull.1341.v2.git.1662134210.gitgitgadget@gmail.com>
 
 
@@ -402,24 +437,17 @@ Release tarballs are available at:
  source: <20220901173942.abolcr4aa5gixncm@lucy.dinwoodie.org>
 
 
-* ow/rev-parse-parseopt-fix (2022-09-08) 1 commit
-  (merged to 'next' on 2022-09-08 at a15efb3478)
- + rev-parse --parseopt: detect missing opt-spec
-
- The parser in the script interface to parse-options in "git
- rev-parse" has been updated to diagnose a bogus input correctly.
-
- Will merge to 'master'.
- source: <20220902175902.22346-1-oystwa@gmail.com>
-
-
-* tb/diffstat-with-utf8-strwidth (2022-08-27) 1 commit
- - diff.c: use utf8_strwidth() when appropriate
+* tb/diffstat-with-utf8-strwidth (2022-09-13) 2 commits
+ - diff.c: More changes and tests around utf8_strwidth()
+ - diff.c: When appropriate, use utf8_strwidth(), part1
 
  "git diff --stat" etc. were invented back when everything was ASCII
  and strlen() was a way to measure the display width of a string;
  adjust them to compute the display width assuming UTF-8 pathnames.
- source: <20220827085007.20030-1-tboegi@web.de>
+
+ Expecting a reroll.
+ cf. <20220907043040.idqqivi3jt35jyst@tb-raspi4>
+ source: <CA+VDVVVmi99i6ZY64tg8RkVXDc5gOzQP_SH12zhDKRkUnhWFgw@mail.gmail.com>
 
 
 * gc/submodule-clone-update-with-branches (2022-08-29) 6 commits
@@ -433,7 +461,8 @@ Release tarballs are available at:
  "git clone --recurse-submodules" and "git submodule update" learns
  to honor the "propagete branches" option.
 
- Needs review.
+ Expecting a reroll.
+ cf. <20220901200047.515294-1-jonathantanmy@google.com> and others
  source: <pull.1321.git.git.1661806456.gitgitgadget@gmail.com>
 
 
@@ -444,20 +473,9 @@ Release tarballs are available at:
 
  "git grep" learned to work better in a sparse checkout.
 
- Needs review.
+ Will merge to 'next'? Or expecting a final reroll?
+ cf. <093827ae-41ef-5f7c-7829-647536ce1305@github.com>
  source: <20220908001854.206789-1-shaoxuan.yuan02@gmail.com>
-
-
-* js/builtin-add-p-portability-fix (2022-08-30) 3 commits
-  (merged to 'next' on 2022-09-08 at 8d3e72e890)
- + t6132(NO_PERL): do not run the scripted `add -p`
- + t3701: test the built-in `add -i` regardless of NO_PERL
- + add -p: avoid ambiguous signed/unsigned comparison
-
- More fixes to "add -p"
-
- Will merge to 'master'.
- source: <pull.1340.git.1661867664.gitgitgadget@gmail.com>
 
 
 * ds/use-platform-regex-on-macos (2022-08-26) 1 commit
@@ -466,7 +484,8 @@ Release tarballs are available at:
  With a bit of header twiddling, use the native regexp library on
  macOS instead of the compat/ one.
 
- Needs review.
+ Will merge to and cook in 'next'.
+ cf. <xmqqzgf389k9.fsf@gitster.g>
  source: <20220826085815.2771102-1-dds@aueb.gr>
 
 
@@ -499,8 +518,9 @@ Release tarballs are available at:
 
  Update to build procedure with VS using CMake/CTest.
 
- Needs review.
+ Expecting a reroll.
  cf. <3df77ffd-85a2-3a54-9005-34a24ec6e82d@github.com>
+ cf. <531620e1-de4c-74aa-c840-c12ce81f8740@github.com> and others
  source: <pull.1320.v2.git.1661243463.gitgitgadget@gmail.com>
 
 
@@ -529,23 +549,6 @@ Release tarballs are available at:
  source: <Yv9gxqH6nK2KYnNj@coredump.intra.peff.net>
 
 
-* ed/fsmonitor-on-network-disk (2022-08-31) 5 commits
- - fsmonitor: normalize FSEvents event paths to the real path
- - fsmonitor: ensure filesystem and unix socket filesystem are compatible
- - fsmonitor: generate unique Unix socket file name in the desired location
- - fsmonitor: add two new config options, allowRemote and socketDir
-  (merged to 'next' on 2022-08-14 at 637d458d9c)
- + fsmonitor: option to allow fsmonitor to run against network-mounted repos
-
- The built-in fsmonitor refuses to work on a network mounted
- repositories; a configuration knob for users to override this has
- been introduced.
-
- Needs review.
- source: <pull.1317.v3.git.1660242752495.gitgitgadget@gmail.com>
- source: <pull.1326.v4.git.1661962145.gitgitgadget@gmail.com>
-
-
 * pw/rebase-keep-base-fixes (2022-09-07) 7 commits
  - rebase --keep-base: imply --no-fork-point
  - rebase --keep-base: imply --reapply-cherry-picks
@@ -562,8 +565,8 @@ Release tarballs are available at:
  option now implies --reapply-cherry-picks and --no-fork-point
  options.
 
- Overall looking good, with some iffy bits.
- cf. <xmqqzgfbuk95.fsf@gitster.g>
+ Expecting a reroll.
+ cf. <e25127f3-6135-b716-a12f-5dbe4f40dc42@gmail.com>
  source: <pull.1323.v2.git.1662561470.gitgitgadget@gmail.com>
 
 
@@ -591,8 +594,9 @@ Release tarballs are available at:
  source: <20220809185429.20098-1-alban.gruin@gmail.com>
 
 
-* sy/mv-out-of-cone (2022-09-08) 10 commits
- - builtin/mv.c: fix possible segfault in add_slash()
+* sy/mv-out-of-cone (2022-09-09) 10 commits
+  (merged to 'next' on 2022-09-12 at 7cb7b41779)
+ + builtin/mv.c: fix possible segfault in add_slash()
   (merged to 'next' on 2022-08-17 at 2316d9ce4d)
  + mv: check overwrite for in-to-out move
  + advice.h: add advise_on_moving_dirty_path()
@@ -608,52 +612,9 @@ Release tarballs are available at:
  move a path from a directory that is "in cone" to another directory
  that is "out of cone".  Handling of such a case has been improved.
 
- Will merge to 'next'.
- source: <20220809120910.2021413-1-shaoxuan.yuan02@gmail.com>
- source: <20220908230223.239970-1-shaoxuan.yuan02@gmail.com>
-
-
-* ab/submodule-helper-prep (2022-09-02) 33 commits
-  (merged to 'next' on 2022-09-05 at b0d1b6ada7)
- + submodule--helper: fix bad config API usage
- + submodule--helper: libify even more "die" paths for module_update()
- + submodule--helper: libify more "die" paths for module_update()
- + submodule--helper: check repo{_submodule,}_init() return values
- + submodule--helper: libify "must_die_on_failure" code paths (for die)
- + submodule--helper update: don't override 'checkout' exit code
- + submodule--helper: libify "must_die_on_failure" code paths
- + submodule--helper: libify determine_submodule_update_strategy()
- + submodule--helper: don't exit() on failure, return
- + submodule--helper: use "code" in run_update_command()
- + submodule API: don't handle SM_..{UNSPECIFIED,COMMAND} in to_string()
- + submodule--helper: don't call submodule_strategy_to_string() in BUG()
- + submodule--helper: add missing braces to "else" arm
- + submodule--helper: return "ret", not "1" from update_submodule()
- + submodule--helper: rename "int res" to "int ret"
- + submodule--helper: don't redundantly check "else if (res)"
- + submodule--helper: refactor "errmsg_str" to be a "struct strbuf"
- + submodule--helper: add "const" to passed "struct update_data"
- + submodule--helper: add "const" to copy of "update_data"
- + submodule--helper: add "const" to passed "module_clone_data"
- + submodule--helper: move "sb" in clone_submodule() to its own scope
- + submodule--helper: use xstrfmt() in clone_submodule()
- + submodule--helper: replace memset() with { 0 }-initialization
- + submodule--helper style: add \n\n after variable declarations
- + submodule--helper style: don't separate declared variables with \n\n
- + submodule--helper: move "resolve-relative-url-test" to a test-tool
- + submodule--helper: move "check-name" to a test-tool
- + submodule--helper: move "is-active" to a test-tool
- + test-tool submodule-config: remove unused "--url" handling
- + submodule--helper: remove unused "list" helper
- + submodule--helper: remove unused "name" helper
- + submodule tests: test for "add <repository> <abs-path>"
- + submodule tests: test usage behavior
- (this branch is used by ab/submodule-helper-leakfix.)
-
- Code clean-up of "git submodule--helper".
-
  Will merge to 'master'.
- source: <cover-v4-00.33-00000000000-20220831T230519Z-avarab@gmail.com>
+ source: <20220809120910.2021413-1-shaoxuan.yuan02@gmail.com>
+ source: <20220909222736.279362-1-shaoxuan.yuan02@gmail.com>
 
 
 * ab/dedup-config-and-command-docs (2022-09-07) 9 commits
@@ -696,7 +657,6 @@ Release tarballs are available at:
  + submodule--helper: fix trivial get_default_remote_submodule() leak
  + submodule--helper: fix a leak in "clone_submodule"
  + Merge branch 'ab/submodule-helper-prep' into ab/submodule-helper-leakfix
- (this branch uses ab/submodule-helper-prep.)
 
  Plugging leaks in submodule--helper.
 
@@ -737,6 +697,9 @@ Release tarballs are available at:
  - Merge branch 'sg/parse-options-subcommand' into js/bisect-in-c
 
  Final bits of "git bisect.sh" have been rewritten in C.
+
+ Needs review.
+ cf. <xmqqv8pr8903.fsf@gitster.g>
  source: <pull.1132.v6.git.1661885419.gitgitgadget@gmail.com>
 
 --------------------------------------------------
@@ -753,7 +716,6 @@ Release tarballs are available at:
 
 * jc/diff-no-index-two-stdin (2022-09-07) 1 commit
  . diff: "--no-index - -" compares the same standard input
- (this branch uses rs/diff-no-index-cleanup.)
 
  "git diff --no-index - -" learned to optimize the comparison of the
  same thing obtained from the standard input.
