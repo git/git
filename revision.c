@@ -373,18 +373,10 @@ static struct object *get_reference(struct rev_info *revs, const char *name,
 				    unsigned int flags)
 {
 	struct object *object;
-	struct commit *commit;
 
-	/*
-	 * If the repository has commit graphs, we try to opportunistically
-	 * look up the object ID in those graphs. Like this, we can avoid
-	 * parsing commit data from disk.
-	 */
-	commit = lookup_commit_in_graph(revs->repo, oid);
-	if (commit)
-		object = &commit->object;
-	else
-		object = parse_object(revs->repo, oid);
+	object = parse_object_with_flags(revs->repo, oid,
+					 revs->verify_objects ? 0 :
+					 PARSE_OBJECT_SKIP_HASH_CHECK);
 
 	if (!object) {
 		if (revs->ignore_missing)
