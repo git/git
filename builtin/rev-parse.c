@@ -479,6 +479,9 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 		if (!s)
 			s = help;
 
+		if (s == sb.buf)
+			die(_("missing opt-spec before option flags"));
+
 		if (s - sb.buf == 1) /* short option only */
 			o->short_name = *sb.buf;
 		else if (sb.buf[1] != ',') /* long option only */
