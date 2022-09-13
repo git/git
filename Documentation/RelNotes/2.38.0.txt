@@ -81,6 +81,10 @@ UI, Workflows & Features
    "From:" line even for commits that are authored by the given
    <ident> with "--force-in-body-from"option.
 
+ * The built-in fsmonitor refuses to work on a network mounted
+   repositories; a configuration knob for users to override this has
+   been introduced.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -156,6 +160,10 @@ Performance, Internal Implementation, Development Support etc.
 
  * The assembly version of SHA-1 implementation for PPC has been
    removed.
+
+ * The server side that responds to "git fetch" and "git clone"
+   request has been optimized by allowing it to send objects in its
+   object store without recomputing and validating the object names.
 
 
 Fixes since v2.37
@@ -340,6 +348,24 @@ Fixes since v2.37
  * Segfault fix-up to an earlier fix to the topic to teach "git reset"
    and "git checkout" work better in a sparse checkout.
    (merge 037f8ea6d9 vd/sparse-reset-checkout-fixes later to maint).
+
+ * "git diff --no-index A B" managed its the pathnames of its two
+   input files rather haphazardly, sometimes leaking them.  The
+   command line argument processing has been straightened out to clean
+   it up.
+   (merge 2b43dd0eb5 rs/diff-no-index-cleanup later to maint).
+
+ * "git rev-list --verify-objects" ought to inspect the contents of
+   objects and notice corrupted ones, but it didn't when the commit
+   graph is in use, which has been corrected.
+   (merge b27ccae34b jk/rev-list-verify-objects-fix later to maint).
+
+ * More fixes to "add -p"
+   (merge 64ec8efb83 js/builtin-add-p-portability-fix later to maint).
+
+ * The parser in the script interface to parse-options in "git
+   rev-parse" has been updated to diagnose a bogus input correctly.
+   (merge f20b9c36d0 ow/rev-parse-parseopt-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 77b9e85c0f vd/fix-perf-tests later to maint).
