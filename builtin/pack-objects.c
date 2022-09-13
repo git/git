@@ -202,6 +202,7 @@ static int have_non_local_packs;
 static int incremental;
 static int ignore_packed_keep_on_disk;
 static int ignore_packed_keep_in_core;
+static int verify_excluded_objects;
 static int allow_ofs_delta;
 static struct pack_idx_option pack_idx_opts;
 static const char *base_name;
@@ -4049,9 +4050,21 @@ static void get_object_list(struct rev_info *revs, int ac, const char **av)
 
 	if (!fn_show_object)
 		fn_show_object = show_object;
-	traverse_commit_list(revs,
-			     show_commit, fn_show_object,
-			     NULL);
+
+	if (revs->verify_excluded_objects){
+		struct oidset omitted = OIDSET_INIT;
+
+		traverse_commit_list_filtered(revs,
+		     show_commit, fn_show_object,
+		     NULL, &omitted);
+
+		if (promisor_remote_verify(the_repository, &omitted))
+			die(_("excluded objects not found on promisor remotes"));
+	} else {
+		traverse_commit_list(revs,
+		     show_commit, fn_show_object,
+		     NULL);
+	}
 
 	if (unpack_unreachable_expiration) {
 		revs->ignore_missing_links = 1;
@@ -4248,6 +4261,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			 N_("create packs suitable for shallow fetches")),
 		OPT_BOOL(0, "honor-pack-keep", &ignore_packed_keep_on_disk,
 			 N_("ignore packs that have companion .keep file")),
+		OPT_BOOL(0, "verify-excluded-objects", &verify_excluded_objects,
+			 N_("verify that excluded objects can be reached from a remote")),
 		OPT_STRING_LIST(0, "keep-pack", &keep_pack_list, N_("name"),
 				N_("ignore this pack")),
 		OPT_INTEGER(0, "compression", &pack_compression_level,
@@ -4263,6 +4278,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			      &write_bitmap_index,
 			      N_("write a bitmap index if possible"),
 			      WRITE_BITMAP_QUIET, PARSE_OPT_HIDDEN),
+		OPT_BOOL(0, "verify-excluded-objects", &verify_excluded_objects,
+			 N_("verify that excluded objects can be reached from a remote")),	
 		OPT_PARSE_LIST_OBJECTS_FILTER_INIT(&pfd, po_filter_revs_init),
 		OPT_CALLBACK_F(0, "missing", NULL, N_("action"),
 		  N_("handling for missing objects"), PARSE_OPT_NONEG,
@@ -4354,6 +4371,9 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	if (unpack_unreachable || keep_unreachable || pack_loose_unreachable)
 		use_internal_rev_list = 1;
 
+	if (verify_excluded_objects)
+		strvec_push(&rp, "--verify-excluded-objects");
+
 	if (!reuse_object)
 		reuse_delta = 0;
 	if (pack_compression_level == -1)
@@ -4384,8 +4404,6 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		unpack_unreachable_expiration = 0;
 
 	if (pfd.have_revs && pfd.revs.filter.choice) {
-		if (!pack_to_stdout)
-			die(_("cannot use --filter without --stdout"));
 		if (stdin_packs)
 			die(_("cannot use --filter with --stdin-packs"));
 	}

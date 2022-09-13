@@ -2,6 +2,9 @@
 
 test_description='git cat-file'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_cmdmode_usage () {
@@ -1133,6 +1136,351 @@ test_expect_success 'batch-command flush without --buffer' '
 	echo "flush" >cmd &&
 	test_expect_code 128 git cat-file --batch-command <cmd 2>err &&
 	grep "^fatal:.*flush is only for --buffer mode.*" err
+'
+
+# This section tests --batch-command with remote-object-info command
+# If a filter is not set, the filter defaults to "%(objectname) %(objectsize) %(objecttype)"
+# Since "%(objecttype)" is currently not supported by the command request, object-info,
+# the filters are set to "%(objectname) %(objectsize)".
+# Tests with the default filter are used to test the fallback to 'fetch' command
+
+set_transport_variables () {
+    tree_sha1=$(git -C "$1" write-tree)
+	commit_sha1=$(echo_without_newline "$commit_message" | git -C "$1" commit-tree $tree_sha1)
+	tag_sha1=$(echo_without_newline "$tag_content" | git -C "$1" hash-object -t tag --stdin -w)
+	tag_size=$(strlen "$tag_content")
+}
+
+# Test --batch-command remote-object-info with 'git://' transport
+
+. "$TEST_DIRECTORY"/lib-git-daemon.sh
+start_git_daemon --export-all --enable=receive-pack
+daemon_parent=$GIT_DAEMON_DOCUMENT_ROOT_PATH/parent
+
+test_expect_success 'create repo to be served by git-daemon' '
+	git init "$daemon_parent" &&
+	echo_without_newline "$hello_content" > $daemon_parent/hello &&
+	git -C "$daemon_parent" update-index --add hello
+'
+
+set_transport_variables "$daemon_parent"
+
+test_expect_success 'batch-command remote-object-info git://' '
+	(
+		cd "$daemon_parent" &&
+
+		echo "$hello_sha1 $hello_size" >expect &&
+		echo "$tree_sha1 $tree_size" >>expect &&
+		echo "$commit_sha1 $commit_size" >>expect &&
+		echo "$tag_sha1 $tag_size" >>expect &&
+		git cat-file --batch-command="%(objectname) %(objectsize)" >actual <<-EOF &&
+		remote-object-info "$GIT_DAEMON_URL/parent" $hello_sha1
+		remote-object-info "$GIT_DAEMON_URL/parent" $tree_sha1
+		remote-object-info "$GIT_DAEMON_URL/parent" $commit_sha1
+		remote-object-info "$GIT_DAEMON_URL/parent" $tag_sha1
+		EOF
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'batch-command remote-object-info git:// multiple sha1 per line' '
+	(
+		cd "$daemon_parent" &&
+
+		echo "$hello_sha1 $hello_size" >expect &&
+		echo "$tree_sha1 $tree_size" >>expect &&
+		echo "$commit_sha1 $commit_size" >>expect &&
+		echo "$tag_sha1 $tag_size" >>expect &&
+		git cat-file --batch-command="%(objectname) %(objectsize)" >actual <<-EOF &&
+		remote-object-info "$GIT_DAEMON_URL/parent" $hello_sha1 $tree_sha1 $commit_sha1 $tag_sha1
+		EOF
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'batch-command remote-object-info http:// default filter' '
+	(
+		cd "$daemon_parent" &&
+
+		echo "$hello_sha1 blob $hello_size" >expect &&
+		echo "$tree_sha1 tree $tree_size" >>expect &&
+		echo "$commit_sha1 commit $commit_size" >>expect &&
+		echo "$tag_sha1 tag $tag_size" >>expect &&
+		GIT_TRACE_PACKET=1 git cat-file --batch-command >actual <<-EOF &&
+		remote-object-info "$GIT_DAEMON_URL/parent" $hello_sha1 $tree_sha1
+		remote-object-info "$GIT_DAEMON_URL/parent" $commit_sha1 $tag_sha1
+		EOF
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'batch-command --buffer remote-object-info git://' '
+	(
+		cd "$daemon_parent" &&
+
+		echo "$hello_sha1 $hello_size" >expect &&
+		echo "$tree_sha1 $tree_size" >>expect &&
+		echo "$commit_sha1 $commit_size" >>expect &&
+		echo "$tag_sha1 $tag_size" >>expect &&
+		git cat-file --batch-command="%(objectname) %(objectsize)" --buffer >actual <<-EOF &&
+		remote-object-info "$GIT_DAEMON_URL/parent" $hello_sha1 $tree_sha1
+		remote-object-info "$GIT_DAEMON_URL/parent" $commit_sha1 $tag_sha1
+		flush
+		EOF
+		test_cmp expect actual
+	)
+'
+
+stop_git_daemon
+
+# Test --batch-command remote-object-info with 'http://' transport
+
+. "$TEST_DIRECTORY"/lib-httpd.sh
+start_httpd
+
+test_expect_success 'create repo to be served by http:// transport' '
+	git init "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" &&
+	git -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" config http.receivepack true &&
+	echo_without_newline "$hello_content" > $HTTPD_DOCUMENT_ROOT_PATH/http_parent/hello &&
+	git -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" update-index --add hello
+'
+set_transport_variables "$HTTPD_DOCUMENT_ROOT_PATH/http_parent"
+
+test_expect_success 'batch-command remote-object-info http://' '
+	(
+		cd "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" &&
+
+		echo "$hello_sha1 $hello_size" >expect &&
+		echo "$tree_sha1 $tree_size" >>expect &&
+		echo "$commit_sha1 $commit_size" >>expect &&
+		echo "$tag_sha1 $tag_size" >>expect &&
+		git cat-file --batch-command="%(objectname) %(objectsize)" >actual <<-EOF &&
+		remote-object-info "$HTTPD_URL/smart/http_parent" $hello_sha1
+		remote-object-info "$HTTPD_URL/smart/http_parent" $tree_sha1
+		remote-object-info "$HTTPD_URL/smart/http_parent" $commit_sha1
+		remote-object-info "$HTTPD_URL/smart/http_parent" $tag_sha1
+		EOF
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'batch-command remote-object-info http:// one line' '
+	(
+		cd "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" &&
+
+		echo "$hello_sha1 $hello_size" >expect &&
+		echo "$tree_sha1 $tree_size" >>expect &&
+		echo "$commit_sha1 $commit_size" >>expect &&
+		echo "$tag_sha1 $tag_size" >>expect &&
+		git cat-file --batch-command="%(objectname) %(objectsize)" >actual <<-EOF &&
+		remote-object-info "$HTTPD_URL/smart/http_parent" $hello_sha1 $tree_sha1 $commit_sha1 $tag_sha1
+		EOF
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'batch-command --buffer remote-object-info http://' '
+	(
+		cd "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" &&
+
+		echo "$hello_sha1 $hello_size" >expect &&
+		echo "$tree_sha1 $tree_size" >>expect &&
+		echo "$commit_sha1 $commit_size" >>expect &&
+		echo "$tag_sha1 $tag_size" >>expect &&
+
+		git cat-file --batch-command="%(objectname) %(objectsize)" --buffer >actual <<-EOF &&
+		remote-object-info "$HTTPD_URL/smart/http_parent" $hello_sha1 $tree_sha1
+		remote-object-info "$HTTPD_URL/smart/http_parent" $commit_sha1 $tag_sha1
+		flush
+		EOF
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'batch-command remote-object-info http:// default filter' '
+	(
+		cd "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" &&
+
+		echo "$hello_sha1 blob $hello_size" >expect &&
+		echo "$tree_sha1 tree $tree_size" >>expect &&
+		echo "$commit_sha1 commit $commit_size" >>expect &&
+		echo "$tag_sha1 tag $tag_size" >>expect &&
+
+		git cat-file --batch-command >actual <<-EOF &&
+		remote-object-info "$HTTPD_URL/smart/http_parent" $hello_sha1 $tree_sha1
+		remote-object-info "$HTTPD_URL/smart/http_parent" $commit_sha1 $tag_sha1
+		EOF
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'remote-object-info fails on unspported filter option (objectsize:disk)' '
+	(
+		cd "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" &&
+
+		test_must_fail git cat-file --batch-command="%(objectsize:disk)" 2>err <<-EOF &&
+		remote-object-info "$HTTPD_URL/smart/http_parent" $hello_sha1
+		EOF
+		test_i18ngrep "objectsize:disk is currently not supported with remote-object-info" err
+	)
+'
+
+test_expect_success 'remote-object-info fails on unspported filter option (deltabase)' '
+	(
+		cd "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" &&
+
+		test_must_fail git cat-file --batch-command="%(deltabase)" 2>err <<-EOF &&
+		remote-object-info "$HTTPD_URL/smart/http_parent" $hello_sha1
+		EOF
+		test_i18ngrep "deltabase is currently not supported with remote-object-info" err
+	)
+'
+
+test_expect_success 'remote-object-info fails on server with legacy protocol' '
+	(
+		cd "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" &&
+
+		test_must_fail git -c protocol.version=0 cat-file --batch-command="%(objectname) %(objectsize)" 2>err <<-EOF &&
+		remote-object-info "$HTTPD_URL/smart/http_parent" $hello_sha1
+		EOF
+		test_i18ngrep "object-info requires protocol v2" err
+	)
+'
+
+test_expect_success 'remote-object-info fails on server with legacy protocol fallback' '
+	(
+		cd "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" &&
+
+		test_must_fail git -c protocol.version=0 cat-file --batch-command 2>err <<-EOF &&
+		remote-object-info "$HTTPD_URL/smart/http_parent" $hello_sha1
+		EOF
+		test_i18ngrep "object-info requires protocol v2" err
+	)
+'
+
+test_expect_success 'remote-object-info fails on malformed OID' '
+	(
+		cd "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" &&
+		malformed_object_id="this_id_is_not_valid" &&
+
+		test_must_fail git cat-file --batch-command="%(objectname) %(objectsize)" 2>err <<-EOF &&
+		remote-object-info "$HTTPD_URL/smart/http_parent" $malformed_object_id
+		EOF
+		test_i18ngrep "malformed object id '$malformed_object_id'" err
+	)
+'
+
+test_expect_success 'remote-object-info fails on malformed OID fallback' '
+	(
+		cd "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" &&
+		malformed_object_id="this_id_is_not_valid" &&
+
+		test_must_fail git cat-file --batch-command 2>err <<-EOF &&
+		remote-object-info "$HTTPD_URL/smart/http_parent" $malformed_object_id
+		EOF
+		test_i18ngrep "malformed object id '$malformed_object_id'" err
+	)
+'
+
+test_expect_success 'remote-object-info fails on missing OID' '
+	git clone "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" missing_oid_repo &&
+	test_commit -C missing_oid_repo message1 c.txt &&
+	(
+		cd missing_oid_repo &&
+		object_id=$(git rev-parse message1:c.txt) &&
+		test_must_fail git cat-file --batch-command="%(objectname) %(objectsize)" 2>err <<-EOF &&
+		remote-object-info "$HTTPD_URL/smart/http_parent" $object_id
+		EOF
+		test_i18ngrep "object-info: not our ref $object_id" err
+	)
+'
+
+test_expect_success 'remote-object-info fails on missing OID fallback' '
+	(
+		cd missing_oid_repo &&
+		object_id=$(git rev-parse message1:c.txt) &&
+		test_must_fail git cat-file --batch-command 2>err <<-EOF &&
+		remote-object-info "$HTTPD_URL/smart/http_parent" $object_id
+		EOF
+		test_i18ngrep "fatal: remote error: upload-pack: not our ref $object_id" err
+	)
+'
+
+# Test --batch-command remote-object-info with 'file://' transport
+
+test_expect_success 'create repo to be served by file:// transport' '
+	git init server &&
+	git -C server config protocol.version 2 &&
+	echo_without_newline "$hello_content" > server/hello &&
+	git -C server update-index --add hello
+'
+
+set_transport_variables "server"
+
+test_expect_success 'batch-command remote-object-info file://' '
+	(
+		cd server &&
+
+		echo "$hello_sha1 $hello_size" >expect &&
+		echo "$tree_sha1 $tree_size" >>expect &&
+		echo "$commit_sha1 $commit_size" >>expect &&
+		echo "$tag_sha1 $tag_size" >>expect &&
+		git cat-file --batch-command="%(objectname) %(objectsize)" >actual <<-EOF &&
+		remote-object-info "file://$(pwd)" $hello_sha1
+		remote-object-info "file://$(pwd)" $tree_sha1
+		remote-object-info "file://$(pwd)" $commit_sha1
+		remote-object-info "file://$(pwd)" $tag_sha1
+		EOF
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'batch-command remote-object-info file:// multiple sha1 per line' '
+	(
+		cd server &&
+
+		echo "$hello_sha1 $hello_size" >expect &&
+		echo "$tree_sha1 $tree_size" >>expect &&
+		echo "$commit_sha1 $commit_size" >>expect &&
+		echo "$tag_sha1 $tag_size" >>expect &&
+		git cat-file --batch-command="%(objectname) %(objectsize)" >actual <<-EOF &&
+		remote-object-info "file://$(pwd)" $hello_sha1 $tree_sha1 $commit_sha1 $tag_sha1
+		EOF
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'batch-command --buffer remote-object-info file://' '
+	(
+		cd server &&
+
+		echo "$hello_sha1 $hello_size" >expect &&
+		echo "$tree_sha1 $tree_size" >>expect &&
+		echo "$commit_sha1 $commit_size" >>expect &&
+		echo "$tag_sha1 $tag_size" >>expect &&
+		git cat-file --batch-command="%(objectname) %(objectsize)" --buffer >actual <<-EOF &&
+		remote-object-info "file://$(pwd)" $hello_sha1 $tree_sha1
+		remote-object-info "file://$(pwd)" $commit_sha1 $tag_sha1
+		flush
+		EOF
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'batch-command remote-object-info file:// default filter' '
+	(
+		cd server &&
+
+		echo "$hello_sha1 blob $hello_size" >expect &&
+		echo "$tree_sha1 tree $tree_size" >>expect &&
+		echo "$commit_sha1 commit $commit_size" >>expect &&
+		echo "$tag_sha1 tag $tag_size" >>expect &&
+		git cat-file --batch-command >actual <<-EOF &&
+		remote-object-info "file://$(pwd)" $hello_sha1 $tree_sha1
+		remote-object-info "file://$(pwd)" $commit_sha1 $tag_sha1
+		EOF
+		test_cmp expect actual
+	)
 '
 
 test_done

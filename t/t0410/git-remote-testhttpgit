@@ -1,0 +1,170 @@
+#!/bin/sh
+# Copyright (c) 2012 Felipe Contreras
+# Copyright (c) 2020 Christian Couder
+
+# This is a git remote helper that can be used to store blobs on an http server
+
+# The first argument can be a url when the fetch/push command was a url
+# instead of a configured remote. In this case, use a generic alias.
+if test "$1" = "testhttpgit::$2"; then
+	alias=_
+else
+	alias=$1
+fi
+url=$2
+
+unset GIT_DIR
+
+h_refspec="refs/heads/*:refs/testhttpgit/$alias/heads/*"
+t_refspec="refs/tags/*:refs/testhttpgit/$alias/tags/*"
+
+if test -n "$GIT_REMOTE_TESTHTTPGIT_NOREFSPEC"
+then
+	h_refspec=""
+	t_refspec=""
+fi
+
+die () {
+	echo >&2 "fatal: $*"
+	echo "fatal: $*" >>/tmp/t0430.txt
+	echo >>/tmp/t0430.txt
+	exit 1
+}
+
+force=
+
+mark_count_tmp=$(mktemp -t git-remote-http-mark-count_XXXXXX) || die "Failed to create temp file"
+echo "1" >"$mark_count_tmp"
+
+get_mark_count() {
+	mark=$(cat "$mark_count_tmp")
+	echo "$mark"
+	mark=$((mark+1))
+	echo "$mark" >"$mark_count_tmp"	
+}
+
+export_blob_from_file() {
+	file="$1"
+	echo "blob"
+	echo "mark :$(get_mark_count)"
+	size=$(wc -c <"$file") || return
+	echo "data $size"
+	cat "$file" || return
+	echo
+}
+
+while read line
+do
+	case $line in
+	capabilities)
+		echo 'import'
+		echo 'export'
+		test -n "$h_refspec" && echo "refspec $h_refspec"
+		test -n "$t_refspec" && echo "refspec $t_refspec"
+		test -n "$GIT_REMOTE_TESTHTTPGIT_SIGNED_TAGS" && echo "signed-tags"
+		test -n "$GIT_REMOTE_TESTHTTPGIT_NO_PRIVATE_UPDATE" && echo "no-private-update"
+		echo 'option'
+		echo
+		;;
+	list)
+		git -C "$url" for-each-ref --format='? %(refname)' 'refs/heads/' 'refs/tags/'
+		head=$(git -C "$url" symbolic-ref HEAD)
+		echo "@$head HEAD"
+		echo
+		;;
+	import*)
+		# read all import lines
+		while true
+		do
+			ref="${line#* }"
+			refs="$refs $ref"
+			read line
+			test "${line%% *}" != "import" && break
+		done
+
+		echo "refs: $refs" >>/tmp/t0430.txt
+
+		if test -n "$GIT_REMOTE_TESTHTTPGIT_FAILURE"
+		then
+			echo "feature done"
+			exit 1
+		fi
+
+		echo "feature done"
+
+		tmpdir=$(mktemp -d -t git-remote-http-import_XXXXXX) || die "Failed to create temp directory"
+
+		for ref in $refs
+		do
+			get_url="$HTTPD_URL/list/?sha1=$ref"
+			echo "curl url: $get_url" >>/tmp/t0430.txt
+			echo "curl output: $tmpdir/$ref" >>/tmp/t0430.txt
+			curl -s -o "$tmpdir/$ref" "$get_url" ||
+				die "curl '$get_url' failed"
+			echo "exporting from: $tmpdir/$ref" >>/tmp/t0430.txt
+			export_blob_from_file "$tmpdir/$ref" ||
+				die "failed to export blob from '$tmpdir/$ref'"
+			echo "done exporting" >>/tmp/t0430.txt
+		done
+
+		echo "done"
+		;;
+	export)
+		if test -n "$GIT_REMOTE_TESTHTTPGIT_FAILURE"
+		then
+			# consume input so fast-export doesn't get SIGPIPE;
+			# git would also notice that case, but we want
+			# to make sure we are exercising the later
+			# error checks
+			while read line; do
+				test "done" = "$line" && break
+			done
+			exit 1
+		fi
+
+		before=$(git -C "$url" for-each-ref --format=' %(refname) %(objectname) ')
+
+		git -C "$url" fast-import \
+			${force:+--force} \
+			${testhttpgitmarks:+"--import-marks=$testhttpgitmarks"} \
+			${testhttpgitmarks:+"--export-marks=$testhttpgitmarks"} \
+			--quiet
+
+		# figure out which refs were updated
+		git -C "$url" for-each-ref --format='%(refname) %(objectname)' |
+		while read ref a
+		do
+			case "$before" in
+			*" $ref $a "*)
+				continue ;;	# unchanged
+			esac
+			if test -z "$GIT_REMOTE_TESTHTTPGIT_PUSH_ERROR"
+			then
+				echo "ok $ref"
+			else
+				echo "error $ref $GIT_REMOTE_TESTHTTPGIT_PUSH_ERROR"
+			fi
+		done
+
+		echo
+		;;
+	option\ *)
+		read cmd opt val <<-EOF
+		$line
+		EOF
+		case $opt in
+		force)
+			test $val = "true" && force="true" || force=
+			echo "ok"
+			;;
+		*)
+			echo "unsupported"
+			;;
+		esac
+		;;
+	'')
+		exit
+		;;
+	esac
+done
+

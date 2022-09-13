@@ -20,7 +20,7 @@ test_expect_success 'test capability advertisement' '
 	fetch=shallow wait-for-done
 	server-option
 	object-format=$(test_oid algo)
-	object-info
+	object-info=size
 	0000
 	EOF
 

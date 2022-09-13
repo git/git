@@ -59,14 +59,18 @@ static void send_info(struct repository *r, struct packet_writer *writer,
 			continue;
 		}
 
-		strbuf_addstr(&send_buffer, oid_str);
 
 		if (info->size) {
 			if (oid_object_info(r, &oid, &object_size) < 0) {
-				strbuf_addstr(&send_buffer, " ");
+				strbuf_addf(&send_buffer, "?%s ", oid_str);
 			} else {
-				strbuf_addf(&send_buffer, " %lu", object_size);
+				strbuf_addf(&send_buffer, "%s %lu", oid_str, object_size);
 			}
+		} else {
+			if (has_object(r, &oid, 0))
+				strbuf_addf(&send_buffer, "%s", oid_str);
+			else
+				strbuf_addf(&send_buffer, "?%s", oid_str);
 		}
 
 		packet_writer_write(writer, "%s", send_buffer.buf);
@@ -77,7 +81,7 @@ static void send_info(struct repository *r, struct packet_writer *writer,
 
 int cap_object_info(struct repository *r, struct packet_reader *request)
 {
-	struct requested_info info;
+	struct requested_info info = { 0 };
 	struct packet_writer writer;
 	struct string_list oid_str_list = STRING_LIST_INIT_DUP;
 

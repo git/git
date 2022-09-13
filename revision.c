@@ -2597,6 +2597,8 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		if (fetch_if_missing)
 			BUG("exclude_promisor_objects can only be used when fetch_if_missing is 0");
 		revs->exclude_promisor_objects = 1;
+	} else if (!strcmp(arg, "--verify-excluded-objects")) {
+		revs->verify_excluded_objects = 1;
 	} else {
 		int opts = diff_opt_parse(&revs->diffopt, argv, argc, revs->prefix);
 		if (!opts)

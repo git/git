@@ -237,6 +237,22 @@ test_expect_success 'auto-bitmaps do not complain if unavailable' '
 	test_must_be_empty actual
 '
 
+test_expect_success 'repack with filter removes objects' '
+	rm -rf server client &&
+	test_create_repo server &&
+	git -C server config uploadpack.allowFilter true &&
+	git -C server config uploadpack.allowAnySHA1InWant true &&
+	echo content1 >server/file1 &&
+	git -C server add file1 &&
+	git -C server commit -m initial_commit &&
+	expected="?$(git -C server rev-parse :file1)" &&
+	git clone --bare --no-local server client &&
+	git -C client config remote.origin.promisor true &&
+	git -C client -c repack.writebitmaps=false repack -a -d --filter=blob:none &&
+	git -C client rev-list --objects --all --missing=print >objects &&
+	grep "$expected" objects
+'
+
 objdir=.git/objects
 midx=$objdir/pack/multi-pack-index
 
