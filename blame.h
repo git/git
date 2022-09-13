@@ -61,6 +61,7 @@ struct blame_origin {
 	 * blame list instead of other commits
 	 */
 	char guilty;
+	int is_tree;
 	char path[FLEX_ARRAY];
 };
 
@@ -152,7 +153,8 @@ struct blame_scoreboard {
 	int xdl_opts;
 	int no_whole_file_rename;
 	int debug;
-
+	int is_tree;
+	
 	/* callbacks */
 	void(*on_sanity_fail)(struct blame_scoreboard *, int);
 	void(*found_guilty_entry)(struct blame_entry *, void *);

@@ -1,4 +1,6 @@
 #include "cache.h"
+
+#include "pathspec.h"
 #include "refs.h"
 #include "object-store.h"
 #include "cache-tree.h"
@@ -14,9 +16,11 @@
 
 define_commit_slab(blame_suspects, struct blame_origin *);
 static struct blame_suspects blame_suspects;
+static struct pathspec pathspec;
 
 struct blame_origin *get_blame_suspects(struct commit *commit)
 {
+	trace_printf("get blame suspect %s", oid_to_hex(&commit->object.oid));
 	struct blame_origin **result;
 
 	result = blame_suspects_peek(&blame_suspects, commit);
@@ -26,6 +30,7 @@ struct blame_origin *get_blame_suspects(struct commit *commit)
 
 static void set_blame_suspects(struct commit *commit, struct blame_origin *origin)
 {
+	trace_printf("set blame suspect %s", oid_to_hex(&commit->object.oid));
 	*blame_suspects_at(&blame_suspects, commit) = origin;
 }
 
@@ -59,12 +64,14 @@ void blame_origin_decref(struct blame_origin *o)
  */
 static struct blame_origin *make_origin(struct commit *commit, const char *path)
 {
+	trace_printf("Make origin");
 	struct blame_origin *o;
 	FLEX_ALLOC_STR(o, path, path);
 	o->commit = commit;
 	o->refcnt = 1;
 	o->next = get_blame_suspects(commit);
 	set_blame_suspects(commit, o);
+
 	return o;
 }
 
@@ -76,6 +83,7 @@ static struct blame_origin *get_origin(struct commit *commit, const char *path)
 {
 	struct blame_origin *o, *l;
 
+	trace_printf("get origin");
 	for (o = get_blame_suspects(commit), l = NULL; o; l = o, o = o->next) {
 		if (!strcmp(o->path, path)) {
 			/* bump to front */
@@ -102,10 +110,14 @@ static void verify_working_tree_path(struct repository *r,
 		const struct object_id *commit_oid = &parents->item->object.oid;
 		struct object_id blob_oid;
 		unsigned short mode;
+		int obj_type;
 
-		if (!get_tree_entry(r, commit_oid, path, &blob_oid, &mode) &&
-		    oid_object_info(r, &blob_oid, NULL) == OBJ_BLOB)
-			return;
+		if (!get_tree_entry(r, commit_oid, path, &blob_oid, &mode)) {
+			obj_type = oid_object_info(r, &blob_oid, NULL);
+			if (obj_type == OBJ_BLOB || obj_type == OBJ_TREE) {
+				return;
+			}
+		}
 	}
 
 	pos = index_name_pos(r->index, path, strlen(path));
@@ -169,6 +181,36 @@ static void set_commit_buffer_from_strbuf(struct repository *r,
 	set_commit_buffer(r, c, buf, len);
 }
 
+int show_tree_file(const struct object_id *oid, struct strbuf *base,
+			     const char *pathname, unsigned mode,
+			     void *context)
+{
+	int early;
+	int recurse;
+	struct show_tree_data data = { 0 };
+	struct strbuf *buf = context;
+	int ls_options = LS_TREE_ONLY || LS_SHOW_TREES;
+
+	early = show_tree_common(
+			&data,
+			&recurse,
+			oid, base,
+			pathname,
+			mode,
+			pathspec,
+			ls_options);
+	if (early >= 0)
+		return early;
+
+	strbuf_addf(buf,
+		    "%06o %s %s\n",
+		    data.mode,
+		    type_name(data.type),
+		    pathname);
+
+	return recurse;
+}
+
 /*
  * Prepare a dummy commit that represents the work tree (or staged) item.
  * Note that annotating work tree item never works in the reverse.
@@ -226,6 +268,8 @@ static struct commit *fake_working_tree_commit(struct repository *r,
 		const char *read_from;
 		char *buf_ptr;
 		unsigned long buf_len;
+		struct tree *tree;
+		struct object_id oid;
 
 		if (contents_from) {
 			if (stat(contents_from, &st) < 0)
@@ -251,6 +295,15 @@ static struct commit *fake_working_tree_commit(struct repository *r,
 			if (strbuf_readlink(&buf, read_from, st.st_size) < 0)
 				die_errno("cannot readlink '%s'", read_from);
 			break;
+		case S_IFDIR:
+			if (get_oid("HEAD", &oid))
+				die("not a valid object %s", "HEAD");
+
+			tree = lookup_tree_by_path(the_repository, &oid, &pathspec, path);
+			read_tree(the_repository, tree, &pathspec, show_tree_file, &buf);
+			origin->blob_oid = tree->object.oid;
+			origin->is_tree = 1;
+			break;
 		default:
 			die("unsupported file type %s", read_from);
 		}
@@ -264,7 +317,9 @@ static struct commit *fake_working_tree_commit(struct repository *r,
 	convert_to_git(r->index, path, buf.buf, buf.len, &buf, 0);
 	origin->file.ptr = buf.buf;
 	origin->file.size = buf.len;
-	pretend_object_file(buf.buf, buf.len, OBJ_BLOB, &origin->blob_oid);
+
+	if (is_null_oid(&origin->blob_oid))
+		pretend_object_file(buf.buf, buf.len, OBJ_BLOB, &origin->blob_oid);
 
 	/*
 	 * Read the current index, replace the path entry with
@@ -1314,6 +1369,7 @@ static struct blame_origin *find_origin(struct repository *r,
 	const char *paths[2];
 
 	/* First check any existing origins */
+	trace_printf("find_origin %s", oid_to_hex(&parent->object.oid));
 	for (porigin = get_blame_suspects(parent); porigin; porigin = porigin->next)
 		if (!strcmp(porigin->path, origin->path)) {
 			/*
@@ -1339,22 +1395,25 @@ static struct blame_origin *find_origin(struct repository *r,
 		       PATHSPEC_LITERAL_PATH, "", paths);
 	diff_setup_done(&diff_opts);
 
-	if (is_null_oid(&origin->commit->object.oid))
+	if (is_null_oid(&origin->commit->object.oid)) {
 		do_diff_cache(get_commit_tree_oid(parent), &diff_opts);
-	else {
+	} else {
 		int compute_diff = 1;
 		if (origin->commit->parents &&
 		    oideq(&parent->object.oid,
 			  &origin->commit->parents->item->object.oid))
 			compute_diff = maybe_changed_path(r, origin, bd);
 
-		if (compute_diff)
+		if (compute_diff) {
 			diff_tree_oid(get_commit_tree_oid(parent),
 				      get_commit_tree_oid(origin->commit),
 				      "", &diff_opts);
+		}
 	}
 	diffcore_std(&diff_opts);
 
+	
+	//if (!diff_queued_diff.nr || origin->is_tree) {
 	if (!diff_queued_diff.nr) {
 		/* The path is the same as parent */
 		porigin = get_origin(parent, origin->path);
@@ -2573,6 +2632,7 @@ void assign_blame(struct blame_scoreboard *sb, int opt)
 	struct commit *commit = prio_queue_get(&sb->commits);
 
 	while (commit) {
+		trace_printf("assign_blame loop: %s", oid_to_hex(&commit->object.oid));
 		struct blame_entry *ent;
 		struct blame_origin *suspect = get_blame_suspects(commit);
 
@@ -2591,13 +2651,16 @@ void assign_blame(struct blame_scoreboard *sb, int opt)
 		 * We will use this suspect later in the loop,
 		 * so hold onto it in the meantime.
 		 */
+		trace_printf("blame origin incref");
 		blame_origin_incref(suspect);
+		trace_printf("blame origin incref end");
 		parse_commit(commit);
 		if (sb->reverse ||
 		    (!(commit->object.flags & UNINTERESTING) &&
-		     !(revs->max_age != -1 && commit->date < revs->max_age)))
+		     !(revs->max_age != -1 && commit->date < revs->max_age))) {
+			trace_printf("pass blame");
 			pass_blame(sb, suspect, opt);
-		else {
+		} else {
 			commit->object.flags |= UNINTERESTING;
 			if (commit->object.parsed)
 				mark_parents_uninteresting(sb->revs, commit);
@@ -2849,8 +2912,11 @@ void setup_scoreboard(struct blame_scoreboard *sb,
 	sb->num_read_blob++;
 	prepare_lines(sb);
 
-	if (orig)
+	if (orig) {
 		*orig = o;
+		sb->is_tree = o->is_tree;
+	}
+
 
 	free((char *)final_commit_name);
 }

@@ -13,24 +13,16 @@
 #include "builtin.h"
 #include "parse-options.h"
 #include "pathspec.h"
+#include "xdiff/xdiff.h"
 
 static int line_termination = '\n';
-#define LS_RECURSIVE 1
-#define LS_TREE_ONLY (1 << 1)
-#define LS_SHOW_TREES (1 << 2)
 static int abbrev;
 static int ls_options;
 static struct pathspec pathspec;
 static int chomp_prefix;
 static const char *ls_tree_prefix;
 static const char *format;
-struct show_tree_data {
-	unsigned mode;
-	enum object_type type;
-	const struct object_id *oid;
-	const char *pathname;
-	struct strbuf *base;
-};
+
 
 static const  char * const ls_tree_usage[] = {
 	N_("git ls-tree [<options>] <tree-ish> [<path>...]"),
@@ -173,32 +165,6 @@ static int show_tree_fmt(const struct object_id *oid, struct strbuf *base,
 	return recurse;
 }
 
-static int show_tree_common(struct show_tree_data *data, int *recurse,
-			    const struct object_id *oid, struct strbuf *base,
-			    const char *pathname, unsigned mode)
-{
-	enum object_type type = object_type(mode);
-	int ret = -1;
-
-	*recurse = 0;
-	data->mode = mode;
-	data->type = type;
-	data->oid = oid;
-	data->pathname = pathname;
-	data->base = base;
-
-	if (type == OBJ_BLOB) {
-		if (ls_options & LS_TREE_ONLY)
-			ret = 0;
-	} else if (type == OBJ_TREE &&
-		   show_recursive(base->buf, base->len, pathname)) {
-		*recurse = READ_TREE_RECURSIVE;
-		if (!(ls_options & LS_SHOW_TREES))
-			ret = *recurse;
-	}
-
-	return ret;
-}
 
 static void show_tree_common_default_long(struct strbuf *base,
 					  const char *pathname,
@@ -219,7 +185,7 @@ static int show_tree_default(const struct object_id *oid, struct strbuf *base,
 	int recurse;
 	struct show_tree_data data = { 0 };
 
-	early = show_tree_common(&data, &recurse, oid, base, pathname, mode);
+	early = show_tree_common(&data, &recurse, oid, base, pathname, mode, pathspec, ls_options);
 	if (early >= 0)
 		return early;
 
@@ -237,7 +203,7 @@ static int show_tree_long(const struct object_id *oid, struct strbuf *base,
 	struct show_tree_data data = { 0 };
 	char size_text[24];
 
-	early = show_tree_common(&data, &recurse, oid, base, pathname, mode);
+	early = show_tree_common(&data, &recurse, oid, base, pathname, mode, pathspec, ls_options);
 	if (early >= 0)
 		return early;
 
@@ -258,7 +224,7 @@ static int show_tree_long(const struct object_id *oid, struct strbuf *base,
 	return recurse;
 }
 
-static int show_tree_name_only(const struct object_id *oid, struct strbuf *base,
+int show_tree_name_only(const struct object_id *oid, struct strbuf *base,
 			       const char *pathname, unsigned mode, void *context)
 {
 	int early;
@@ -266,7 +232,7 @@ static int show_tree_name_only(const struct object_id *oid, struct strbuf *base,
 	const size_t baselen = base->len;
 	struct show_tree_data data = { 0 };
 
-	early = show_tree_common(&data, &recurse, oid, base, pathname, mode);
+	early = show_tree_common(&data, &recurse, oid, base, pathname, mode, pathspec, ls_options);
 	if (early >= 0)
 		return early;
 
@@ -285,7 +251,7 @@ static int show_tree_object(const struct object_id *oid, struct strbuf *base,
 	int recurse;
 	struct show_tree_data data = { 0 };
 
-	early = show_tree_common(&data, &recurse, oid, base, pathname, mode);
+	early = show_tree_common(&data, &recurse, oid, base, pathname, mode, pathspec, ls_options);
 	if (early >= 0)
 		return early;
 
@@ -392,6 +358,7 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 			ls_tree_usage, ls_tree_options);
 	if (argc < 1)
 		usage_with_options(ls_tree_usage, ls_tree_options);
+
 	if (get_oid(argv[0], &oid))
 		die("Not a valid object name %s", argv[0]);
 
