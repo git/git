@@ -1790,12 +1790,46 @@ done:
 	return result;
 }
 
+static int is_special_ref(const char *refname)
+{
+	static const char *pseudo_refs[] = {
+		"MERGE_HEAD",
+		"FETCH_HEAD",
+		"MERGE_AUTOSTASH",
+		"CHERRY_PICK_HEAD",
+	/* HEAD looks like a pseudoref but must be stored in the ref
+	 * backend, as it partakes in transactions
+	 */
+	};
+	int i = 0;
+
+	/*
+	 * Various tests assume that "ALL_CAPS" is not pseudoref and can contain
+	 * symrefs.
+	 */
+	for (i = 0; i < ARRAY_SIZE(pseudo_refs); i++) {
+		if (!strcmp(pseudo_refs[i], refname))
+			return 1;
+	}
+
+	/* rebase-apply/rebase-merge functionality stores lots of info
+	   besides a object ID in the file system, and expects that it
+	   can clean up by deleting the rebase-{apply,merge}/
+	   directory
+	*/
+	if (starts_with(refname, "rebase-apply/") ||
+	    starts_with(refname, "rebase-merge/"))
+		return 1;
+
+	return 0;
+}
+
 int refs_read_raw_ref(struct ref_store *ref_store, const char *refname,
 		      struct object_id *oid, struct strbuf *referent,
 		      unsigned int *type, int *failure_errno)
 {
 	assert(failure_errno);
-	if (!strcmp(refname, "FETCH_HEAD") || !strcmp(refname, "MERGE_HEAD")) {
+	if (is_special_ref(refname)) {
 		return refs_read_special_head(ref_store, refname, oid, referent,
 					      type, failure_errno);
 	}
