@@ -7,9 +7,9 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
-if ! test_have_prereq PERL
+if test_have_prereq !ADD_I_USE_BUILTIN,!PERL
 then
-	skip_all='skipping add -i tests, perl not available'
+	skip_all='skipping add -i (scripted) tests, perl not available'
 	test_done
 fi
 
