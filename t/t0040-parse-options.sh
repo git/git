@@ -500,7 +500,6 @@ test_expect_success 'KEEP_UNKNOWN_OPT works' '
 
 test_expect_success 'NO_INTERNAL_HELP works for -h' '
 	test_expect_code 129 test-tool parse-options-flags --no-internal-help cmd -h 2>err &&
-	cat err &&
 	grep "^error: unknown switch \`h$SQ" err &&
 	grep "^usage: " err
 '
@@ -509,7 +508,6 @@ for help_opt in help help-all
 do
 	test_expect_success "NO_INTERNAL_HELP works for --$help_opt" "
 		test_expect_code 129 test-tool parse-options-flags --no-internal-help cmd --$help_opt 2>err &&
-		cat err &&
 		grep '^error: unknown option \`'$help_opt\' err &&
 		grep '^usage: ' err
 	"

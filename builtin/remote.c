@@ -1768,7 +1768,7 @@ int cmd_remote(int argc, const char **argv, const char *prefix)
 		return !!fn(argc, argv, prefix);
 	} else {
 		if (argc) {
-			error(_("unknown subcommand: %s"), argv[0]);
+			error(_("unknown subcommand: `%s'"), argv[0]);
 			usage_with_options(builtin_remote_usage, options);
 		}
 		return !!show_all();
