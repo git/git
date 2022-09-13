@@ -2418,6 +2418,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->tree_objects = 1;
 		revs->blob_objects = 1;
 		revs->verify_objects = 1;
+		disable_commit_graph(revs->repo);
 	} else if (!strcmp(arg, "--unpacked")) {
 		revs->unpacked = 1;
 	} else if (starts_with(arg, "--unpacked=")) {

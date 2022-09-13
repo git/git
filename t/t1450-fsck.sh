@@ -527,6 +527,34 @@ test_expect_success 'rev-list --verify-objects notices swapped commits' '
 	)
 '
 
+test_expect_success 'set up repository with commit-graph' '
+	git init corrupt-graph &&
+	(
+		cd corrupt-graph &&
+		test_commit one &&
+		test_commit two &&
+		git commit-graph write --reachable
+	)
+'
+
+corrupt_graph_obj () {
+	oid=$(git -C corrupt-graph rev-parse "$1") &&
+	obj=corrupt-graph/.git/objects/$(test_oid_to_path $oid) &&
+	test_when_finished 'mv backup $obj' &&
+	mv $obj backup &&
+	echo garbage >$obj
+}
+
+test_expect_success 'rev-list --verify-objects with commit graph (tip)' '
+	corrupt_graph_obj HEAD &&
+	test_must_fail git -C corrupt-graph rev-list --verify-objects HEAD
+'
+
+test_expect_success 'rev-list --verify-objects with commit graph (parent)' '
+	corrupt_graph_obj HEAD^ &&
+	test_must_fail git -C corrupt-graph rev-list --verify-objects HEAD
+'
+
 test_expect_success 'force fsck to ignore double author' '
 	git cat-file commit HEAD >basis &&
 	sed "s/^author .*/&,&/" <basis | tr , \\n >multiple-authors &&
