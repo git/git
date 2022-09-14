@@ -60,15 +60,15 @@ static diff_merges_setup_func_t func_by_opt(const char *optarg)
 		return suppress;
 	if (!strcmp(optarg, "1") || !strcmp(optarg, "first-parent"))
 		return set_first_parent;
-	else if (!strcmp(optarg, "separate"))
+	if (!strcmp(optarg, "separate"))
 		return set_separate;
-	else if (!strcmp(optarg, "c") || !strcmp(optarg, "combined"))
+	if (!strcmp(optarg, "c") || !strcmp(optarg, "combined"))
 		return set_combined;
-	else if (!strcmp(optarg, "cc") || !strcmp(optarg, "dense-combined"))
+	if (!strcmp(optarg, "cc") || !strcmp(optarg, "dense-combined"))
 		return set_dense_combined;
-	else if (!strcmp(optarg, "r") || !strcmp(optarg, "remerge"))
+	if (!strcmp(optarg, "r") || !strcmp(optarg, "remerge"))
 		return set_remerge_diff;
-	else if (!strcmp(optarg, "m") || !strcmp(optarg, "on"))
+	if (!strcmp(optarg, "m") || !strcmp(optarg, "on"))
 		return set_to_default;
 	return NULL;
 }
