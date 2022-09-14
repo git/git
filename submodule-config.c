@@ -38,10 +38,10 @@ enum lookup_type {
 	lookup_path
 };
 
-static int config_path_cmp(const void *unused_cmp_data,
+static int config_path_cmp(const void *UNUSED(cmp_data),
 			   const struct hashmap_entry *eptr,
 			   const struct hashmap_entry *entry_or_key,
-			   const void *unused_keydata)
+			   const void *UNUSED(keydata))
 {
 	const struct submodule_entry *a, *b;
 
@@ -52,10 +52,10 @@ static int config_path_cmp(const void *unused_cmp_data,
 	       !oideq(&a->config->gitmodules_oid, &b->config->gitmodules_oid);
 }
 
-static int config_name_cmp(const void *unused_cmp_data,
+static int config_name_cmp(const void *UNUSED(cmp_data),
 			   const struct hashmap_entry *eptr,
 			   const struct hashmap_entry *entry_or_key,
-			   const void *unused_keydata)
+			   const void *UNUSED(keydata))
 {
 	const struct submodule_entry *a, *b;
 

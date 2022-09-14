@@ -316,7 +316,7 @@ static regex_t *island_regexes;
 static unsigned int island_regexes_alloc, island_regexes_nr;
 static const char *core_island_name;
 
-static int island_config_callback(const char *k, const char *v, void *cb)
+static int island_config_callback(const char *k, const char *v, void *UNUSED(cb))
 {
 	if (!strcmp(k, "pack.island")) {
 		struct strbuf re = STRBUF_INIT;
@@ -365,7 +365,7 @@ static void add_ref_to_island(const char *island_name, const struct object_id *o
 }
 
 static int find_island_for_ref(const char *refname, const struct object_id *oid,
-			       int flags, void *data)
+			       int UNUSED(flags), void *UNUSED(data))
 {
 	/*
 	 * We should advertise 'ARRAY_SIZE(matches) - 2' as the max,

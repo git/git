@@ -781,8 +781,9 @@ struct similar_ref_cb {
 	struct string_list *similar_refs;
 };
 
-static int append_similar_ref(const char *refname, const struct object_id *oid,
-			      int flags, void *cb_data)
+static int append_similar_ref(const char *refname,
+			      const struct object_id *UNUSED(oid),
+			      int UNUSED(flags), void *cb_data)
 {
 	struct similar_ref_cb *cb = (struct similar_ref_cb *)(cb_data);
 	char *branch = strrchr(refname, '/') + 1;

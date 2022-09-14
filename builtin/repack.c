@@ -514,9 +514,9 @@ struct midx_snapshot_ref_data {
 	int preferred;
 };
 
-static int midx_snapshot_ref_one(const char *refname,
+static int midx_snapshot_ref_one(const char *UNUSED(refname),
 				 const struct object_id *oid,
-				 int flag, void *_data)
+				 int UNUSED(flag), void *_data)
 {
 	struct midx_snapshot_ref_data *data = _data;
 	struct object_id peeled;

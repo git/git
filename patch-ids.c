@@ -38,7 +38,7 @@ int commit_patch_id(struct commit *commit, struct diff_options *options,
 static int patch_id_neq(const void *cmpfn_data,
 			const struct hashmap_entry *eptr,
 			const struct hashmap_entry *entry_or_key,
-			const void *unused_keydata)
+			const void *UNUSED(keydata))
 {
 	/* NEEDSWORK: const correctness? */
 	struct diff_options *opt = (void *)cmpfn_data;

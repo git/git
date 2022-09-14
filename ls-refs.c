@@ -136,7 +136,8 @@ static void send_possibly_unborn_head(struct ls_refs_data *data)
 	strbuf_release(&namespaced);
 }
 
-static int ls_refs_config(const char *var, const char *value, void *data)
+static int ls_refs_config(const char *var, const char *value,
+			  void *UNUSED(data))
 {
 	/*
 	 * We only serve fetches over v2 for now, so respect only "uploadpack"

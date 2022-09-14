@@ -135,7 +135,8 @@ static int ref_filter_match(const char *refname,
 }
 
 static int add_ref_decoration(const char *refname, const struct object_id *oid,
-			      int flags, void *cb_data)
+			      int UNUSED(flags),
+			      void *cb_data)
 {
 	int i;
 	struct object *obj;
