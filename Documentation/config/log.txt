@@ -34,9 +34,9 @@ log.excludeDecoration::
 	option.
 
 log.diffMerges::
-	Set default diff format to be used for merge commits. See
-	`--diff-merges` in linkgit:git-log[1] for details.
-	Defaults to `separate`.
+	Set diff format to be used when `--diff-merges=on` is
+	specified, see `--diff-merges` in linkgit:git-log[1] for
+	details. Defaults to `separate`.
 
 log.follow::
 	If `true`, `git log` will act as if the `--follow` option was used when
