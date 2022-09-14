@@ -2622,7 +2622,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 			continue;
 		}
 		fill_print_name(file);
-		len = strlen(file->print_name);
+		len = utf8_strwidth(file->print_name);
 		if (max_len < len)
 			max_len = len;
 
@@ -2736,7 +2736,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 		char *name = file->print_name;
 		uintmax_t added = file->added;
 		uintmax_t deleted = file->deleted;
-		int name_len;
+		int name_len, padding;
 
 		if (!file->is_interesting && (added + deleted == 0))
 			continue;
@@ -2745,7 +2745,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 		 * "scale" the filename
 		 */
 		len = name_width;
-		name_len = strlen(name);
+		name_len = utf8_strwidth(name);
 		if (name_width < name_len) {
 			char *slash;
 			prefix = "...";
@@ -2755,10 +2755,14 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 			if (slash)
 				name = slash;
 		}
+		padding = len - utf8_strwidth(name);
+		if (padding < 0)
+			padding = 0;
 
 		if (file->is_binary) {
-			strbuf_addf(&out, " %s%-*s |", prefix, len, name);
-			strbuf_addf(&out, " %*s", number_width, "Bin");
+			strbuf_addf(&out, " %s%s%*s | %*s",
+				    prefix, name, padding, "",
+				    number_width, "Bin");
 			if (!added && !deleted) {
 				strbuf_addch(&out, '\n');
 				emit_diff_symbol(options, DIFF_SYMBOL_STATS_LINE,
@@ -2778,8 +2782,9 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 			continue;
 		}
 		else if (file->is_unmerged) {
-			strbuf_addf(&out, " %s%-*s |", prefix, len, name);
-			strbuf_addstr(&out, " Unmerged\n");
+			strbuf_addf(&out, " %s%s%*s | %*s",
+				    prefix, name, padding, "",
+				    number_width, "Unmerged");
 			emit_diff_symbol(options, DIFF_SYMBOL_STATS_LINE,
 					 out.buf, out.len, 0);
 			strbuf_reset(&out);
@@ -2805,10 +2810,10 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 				add = total - del;
 			}
 		}
-		strbuf_addf(&out, " %s%-*s |", prefix, len, name);
-		strbuf_addf(&out, " %*"PRIuMAX"%s",
-			number_width, added + deleted,
-			added + deleted ? " " : "");
+		strbuf_addf(&out, " %s%s%*s | %*"PRIuMAX"%s",
+			    prefix, name, padding, "",
+			    number_width, added + deleted,
+			    added + deleted ? " " : "");
 		show_graph(&out, '+', add, add_c, reset);
 		show_graph(&out, '-', del, del_c, reset);
 		strbuf_addch(&out, '\n');
