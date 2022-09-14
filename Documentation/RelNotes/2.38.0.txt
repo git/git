@@ -165,6 +165,13 @@ Performance, Internal Implementation, Development Support etc.
    request has been optimized by allowing it to send objects in its
    object store without recomputing and validating the object names.
 
+ * Annotate function parameters that are not used (but cannot be
+   removed for structural reasons), to prepare us to later compile
+   with -Wunused warning turned on.
+
+ * Share the text used to explain configuration variables used by "git
+   <subcmd>" in "git help <subcmd>" with the text from "git help config".
+
 
 Fixes since v2.37
 -----------------
@@ -366,6 +373,10 @@ Fixes since v2.37
  * The parser in the script interface to parse-options in "git
    rev-parse" has been updated to diagnose a bogus input correctly.
    (merge f20b9c36d0 ow/rev-parse-parseopt-fix later to maint).
+
+ * The code that manages list-object-filter structure, used in partial
+   clones, leaked the instances, which has been plugged.
+   (merge 66eede4a37 jk/plug-list-object-filter-leaks later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 77b9e85c0f vd/fix-perf-tests later to maint).
