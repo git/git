@@ -142,10 +142,10 @@ static inline struct hashmap_entry **find_entry_ptr(const struct hashmap *map,
 	return e;
 }
 
-static int always_equal(const void *UNUSED(cmp_data),
-			const struct hashmap_entry *UNUSED(entry1),
-			const struct hashmap_entry *UNUSED(entry2),
-			const void *UNUSED(keydata))
+static int always_equal(const void *cmp_data UNUSED,
+			const struct hashmap_entry *entry1 UNUSED,
+			const struct hashmap_entry *entry2 UNUSED,
+			const void *keydata UNUSED)
 {
 	return 0;
 }
@@ -313,7 +313,7 @@ struct pool_entry {
 	unsigned char data[FLEX_ARRAY];
 };
 
-static int pool_entry_cmp(const void *UNUSED(cmp_data),
+static int pool_entry_cmp(const void *cmp_data UNUSED,
 			  const struct hashmap_entry *eptr,
 			  const struct hashmap_entry *entry_or_key,
 			  const void *keydata)

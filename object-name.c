@@ -1306,7 +1306,7 @@ struct handle_one_ref_cb {
 };
 
 static int handle_one_ref(const char *path, const struct object_id *oid,
-			  int UNUSED(flag),
+			  int flag UNUSED,
 			  void *cb_data)
 {
 	struct handle_one_ref_cb *cb = cb_data;
@@ -1385,11 +1385,11 @@ struct grab_nth_branch_switch_cbdata {
 	struct strbuf *sb;
 };
 
-static int grab_nth_branch_switch(struct object_id *UNUSED(ooid),
-				  struct object_id *UNUSED(noid),
-				  const char *UNUSED(email),
-				  timestamp_t UNUSED(timestamp),
-				  int UNUSED(tz),
+static int grab_nth_branch_switch(struct object_id *ooid UNUSED,
+				  struct object_id *noid UNUSED,
+				  const char *email UNUSED,
+				  timestamp_t timestamp UNUSED,
+				  int tz UNUSED,
 				  const char *message, void *cb_data)
 {
 	struct grab_nth_branch_switch_cbdata *cb = cb_data;

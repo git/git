@@ -436,7 +436,7 @@ void strbuf_expand(struct strbuf *sb, const char *format, expand_fn_t fn,
 
 size_t strbuf_expand_literal_cb(struct strbuf *sb,
 				const char *placeholder,
-				void *context)
+				void *context UNUSED)
 {
 	int ch;
 

@@ -951,9 +951,9 @@ static void add_one_commit(struct object_id *oid, struct rev_collect *revs)
 }
 
 static int collect_one_reflog_ent(struct object_id *ooid, struct object_id *noid,
-				  const char *UNUSED(ident),
-				  timestamp_t UNUSED(timestamp), int UNUSED(tz),
-				  const char *UNUSED(message), void *cbdata)
+				  const char *ident UNUSED,
+				  timestamp_t timestamp UNUSED, int tz UNUSED,
+				  const char *message UNUSED, void *cbdata)
 {
 	struct rev_collect *revs = cbdata;
 

@@ -1639,9 +1639,9 @@ struct refs_cb_data {
 	struct progress *progress;
 };
 
-static int add_ref_to_set(const char *UNUSED(refname),
+static int add_ref_to_set(const char *refname UNUSED,
 			  const struct object_id *oid,
-			  int UNUSED(flags), void *cb_data)
+			  int flags UNUSED, void *cb_data)
 {
 	struct object_id peeled;
 	struct refs_cb_data *data = (struct refs_cb_data *)cb_data;

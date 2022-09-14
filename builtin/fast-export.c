@@ -119,7 +119,7 @@ struct anonymized_entry_key {
 	size_t orig_len;
 };
 
-static int anonymized_entry_cmp(const void *UNUSED(cmp_data),
+static int anonymized_entry_cmp(const void *cmp_data UNUSED,
 				const struct hashmap_entry *eptr,
 				const struct hashmap_entry *entry_or_key,
 				const void *keydata)
