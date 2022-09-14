@@ -1259,6 +1259,8 @@ merge cmake
 CONFIGURATION
 -------------
 
+include::includes/cmd-config-section-all.txt[]
+
 include::config/rebase.txt[]
 include::config/sequencer.txt[]
 

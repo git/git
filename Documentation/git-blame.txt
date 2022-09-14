@@ -241,6 +241,12 @@ MAPPING AUTHORS
 
 See linkgit:gitmailmap[5].
 
+CONFIGURATION
+-------------
+
+include::includes/cmd-config-section-all.txt[]
+
+include::config/blame.txt[]
 
 SEE ALSO
 --------

@@ -336,6 +336,10 @@ CONFIGURATION
 `--list` is used or implied. The default is to use a pager.
 See linkgit:git-config[1].
 
+include::includes/cmd-config-section-rest.txt[]
+
+include::config/branch.txt[]
+
 EXAMPLES
 --------
 

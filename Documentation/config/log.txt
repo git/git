@@ -7,6 +7,10 @@ log.date::
 	Set the default date-time mode for the 'log' command.
 	Setting a value for log.date is similar to using 'git log''s
 	`--date` option.  See linkgit:git-log[1] for details.
++
+If the format is set to "auto:foo" and the pager is in use, format
+"foo" will be the used for the date format. Otherwise "default" will
+be used.
 
 log.decorate::
 	Print out the ref names of any commits that are shown by the log
