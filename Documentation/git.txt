@@ -460,8 +460,8 @@ Git so take care if using a foreign front-end.
 	is used.
 
 `GIT_INDEX_VERSION`::
-	This environment variable allows the specification of an index
-	version for new repositories.  It won't affect existing index
+	This environment variable specifies what index version is used
+	when writing the index file out.  It won't affect existing index
 	files.  By default index file version 2 or 3 is used. See
 	linkgit:git-update-index[1] for more information.
 
