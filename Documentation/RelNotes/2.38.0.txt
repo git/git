@@ -378,6 +378,15 @@ Fixes since v2.37
    clones, leaked the instances, which has been plugged.
    (merge 66eede4a37 jk/plug-list-object-filter-leaks later to maint).
 
+ * Fix another UI regression in the reimplemented "add -p".
+   (merge f6f0ee247f rs/add-p-worktree-mode-prompt-fix later to maint).
+
+ * "git fetch" over protocol v2 sent an incorrect ref prefix request
+   to the server and made "git pull" with configured fetch refspec
+   that does not cover the remote branch to merge with fail, which has
+   been corrected.
+   (merge 49ca2fba39 jk/proto-v2-ref-prefix-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 77b9e85c0f vd/fix-perf-tests later to maint).
    (merge 0682bc43f5 jk/test-crontab-fixes later to maint).
