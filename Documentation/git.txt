@@ -665,6 +665,11 @@ for further details.
 	plink or tortoiseplink. This variable overrides the config setting
 	`ssh.variant` that serves the same purpose.
 
+`GIT_SSL_NO_VERIFY`::
+	Setting and exporting this environment variable to any value
+	tells Git not to verify the SSL certificate when fetching or
+	pushing over HTTPS.
+
 `GIT_ASKPASS`::
 	If this environment variable is set, then Git commands which need to
 	acquire passwords or passphrases (e.g. for HTTP or IMAP authentication)
