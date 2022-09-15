@@ -1617,9 +1617,21 @@ static int do_fetch(struct transport *transport,
 				break;
 			}
 		}
-	} else if (transport->remote && transport->remote->fetch.nr)
-		refspec_ref_prefixes(&transport->remote->fetch,
-				     &transport_ls_refs_options.ref_prefixes);
+	} else {
+		struct branch *branch = branch_get(NULL);
+
+		if (transport->remote->fetch.nr)
+			refspec_ref_prefixes(&transport->remote->fetch,
+					     &transport_ls_refs_options.ref_prefixes);
+		if (branch_has_merge_config(branch) &&
+		    !strcmp(branch->remote_name, transport->remote->name)) {
+			int i;
+			for (i = 0; i < branch->merge_nr; i++) {
+				strvec_push(&transport_ls_refs_options.ref_prefixes,
+					    branch->merge[i]->src);
+			}
+		}
+	}
 
 	if (tags == TAGS_SET || tags == TAGS_DEFAULT) {
 		must_list_refs = 1;

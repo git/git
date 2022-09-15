@@ -218,6 +218,23 @@ test_expect_success 'fail if upstream branch does not exist' '
 	test_cmp expect file
 '
 
+test_expect_success 'fetch upstream branch even if refspec excludes it' '
+	# the branch names are not important here except that
+	# the first one must not be a prefix of the second,
+	# since otherwise the ref-prefix protocol extension
+	# would match both
+	git branch in-refspec HEAD^ &&
+	git branch not-in-refspec HEAD &&
+	git init -b in-refspec downstream &&
+	git -C downstream remote add -t in-refspec origin "file://$(pwd)/.git" &&
+	git -C downstream config branch.in-refspec.remote origin &&
+	git -C downstream config branch.in-refspec.merge refs/heads/not-in-refspec &&
+	git -C downstream pull &&
+	git rev-parse --verify not-in-refspec >expect &&
+	git -C downstream rev-parse --verify HEAD >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'fail if the index has unresolved entries' '
 	git checkout -b third second^ &&
 	test_when_finished "git checkout -f copy && git branch -D third" &&
