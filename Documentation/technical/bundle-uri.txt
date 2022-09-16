@@ -3,8 +3,7 @@ Bundle URIs
 
 Git bundles are files that store a pack-file along with some extra metadata,
 including a set of refs and a (possibly empty) set of necessary commits. See
-linkgit:git-bundle[1] and link:bundle-format.txt[the bundle format] for more
-information.
+linkgit:git-bundle[1] and linkgit:gitformat-bundle[5] for more information.
 
 Bundle URIs are locations where Git can download one or more bundles in
 order to bootstrap the object database in advance of fetching the remaining
