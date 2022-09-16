@@ -231,7 +231,7 @@ test_expect_success "'git help -a' section spacing" '
 
 	User-facing repository, command and file interfaces
 
-	Developer-facing file file formats, protocols and interfaces
+	Developer-facing file formats, protocols and other interfaces
 	EOF
 	test_cmp expect actual
 '
