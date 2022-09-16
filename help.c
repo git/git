@@ -39,7 +39,7 @@ static struct category_description main_categories[] = {
 	{ CAT_synchingrepositories, N_("Low-level Commands / Syncing Repositories") },
 	{ CAT_purehelpers, N_("Low-level Commands / Internal Helpers") },
 	{ CAT_userinterfaces, N_("User-facing repository, command and file interfaces") },
-	{ CAT_developerinterfaces, N_("Developer-facing file file formats, protocols and interfaces") },
+	{ CAT_developerinterfaces, N_("Developer-facing file formats, protocols and other interfaces") },
 	{ 0, NULL }
 };
 
