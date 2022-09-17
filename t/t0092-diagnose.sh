@@ -28,12 +28,23 @@ test_expect_success UNZIP 'creates diagnostics zip archive' '
 	! "$GIT_UNZIP" -l "$zip_path" | grep ".git/"
 '
 
+test_expect_success UNZIP 'counts loose objects' '
+	test_commit A &&
+
+	# After committing, should have non-zero loose objects
+	git diagnose -o test-count -s 1 >out &&
+	zip_path=test-count/git-diagnostics-1.zip &&
+	"$GIT_UNZIP" -p "$zip_path" objects-local.txt >out &&
+	grep "^Total: [1-9][0-9]* loose objects" out
+'
+
 test_expect_success UNZIP '--mode=stats excludes .git dir contents' '
 	test_when_finished rm -rf report &&
 
 	git diagnose -o report -s test --mode=stats >out &&
 
 	# Includes pack quantity/size info
+	zip_path=report/git-diagnostics-test.zip &&
 	"$GIT_UNZIP" -p "$zip_path" packs-local.txt >out &&
 	grep ".git/objects" out &&
 
@@ -47,6 +58,7 @@ test_expect_success UNZIP '--mode=all includes .git dir contents' '
 	git diagnose -o report -s test --mode=all >out &&
 
 	# Includes pack quantity/size info
+	zip_path=report/git-diagnostics-test.zip &&
 	"$GIT_UNZIP" -p "$zip_path" packs-local.txt >out &&
 	grep ".git/objects" out &&
 
