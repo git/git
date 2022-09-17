@@ -264,7 +264,27 @@ static int core_restrict_inherited_handles = -1;
 static enum hide_dotfiles_type hide_dotfiles = HIDE_DOTFILES_DOTGITONLY;
 static char *unset_environment_variables;
 int core_fscache;
-int core_long_paths;
+
+int are_long_paths_enabled(void)
+{
+	/* default to `false` during initialization */
+	static const int fallback = 0;
+
+	static int enabled = -1;
+
+	if (enabled < 0) {
+		/* avoid infinite recursion */
+		if (!the_repository)
+			return fallback;
+
+		if (the_repository->config &&
+		    the_repository->config->hash_initialized &&
+		    git_config_get_bool("core.longpaths", &enabled) < 0)
+			enabled = 0;
+	}
+
+	return enabled < 0 ? fallback : enabled;
+}
 
 int mingw_core_config(const char *var, const char *value, void *cb)
 {
@@ -278,11 +298,6 @@ int mingw_core_config(const char *var, const char *value, void *cb)
 
 	if (!strcmp(var, "core.fscache")) {
 		core_fscache = git_config_bool(var, value);
-		return 0;
-	}
-
-	if (!strcmp(var, "core.longpaths")) {
-		core_long_paths = git_config_bool(var, value);
 		return 0;
 	}
 
@@ -659,7 +674,7 @@ int mingw_mkdir(const char *path, int mode)
 
 	/* CreateDirectoryW path limit is 248 (MAX_PATH - 8.3 file name) */
 	if (xutftowcs_path_ex(wpath, path, MAX_LONG_PATH, -1, 248,
-			core_long_paths) < 0)
+			      are_long_paths_enabled()) < 0)
 		return -1;
 
 	ret = _wmkdir(wpath);

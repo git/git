@@ -76,7 +76,8 @@ DIR *dirent_opendir(const char *name)
 
 	/* convert name to UTF-16 and check length */
 	if ((len = xutftowcs_path_ex(pattern, name, MAX_LONG_PATH, -1,
-			MAX_PATH - 2, core_long_paths)) < 0)
+				     MAX_PATH - 2,
+				     are_long_paths_enabled())) < 0)
 		return NULL;
 
 	/*
