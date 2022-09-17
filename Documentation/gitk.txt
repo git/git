@@ -26,7 +26,7 @@ changes each commit introduces are shown.  Finally, it supports some
 gitk-specific options.
 
 gitk generally only understands options with arguments in the
-'sticked' form (see linkgit:gitcli[7]) due to limitations in the
+'stuck' form (see linkgit:gitcli[7]) due to limitations in the
 command-line parser.
 
 rev-list options and arguments
