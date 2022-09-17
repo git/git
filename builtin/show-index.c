@@ -2,7 +2,6 @@
 #include "cache.h"
 #include "pack.h"
 #include "parse-options.h"
-#include "config.h"
 
 static const char *const show_index_usage[] = {
 	"git show-index [--object-format=<hash-algorithm>]",
@@ -24,7 +23,6 @@ int cmd_show_index(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	git_config(git_default_config, NULL);
 	argc = parse_options(argc, argv, prefix, show_index_options, show_index_usage, 0);
 
 	if (hash_name) {
