@@ -11,4 +11,17 @@
 		echo c
 	}
 	baz
-)
+) &&
+
+# LINT: ";" not allowed in place of "&&"
+{
+	echo a; echo b
+} &&
+{ echo a; echo b; } &&
+
+# LINT: "}" inside string not mistaken as end of block
+{
+	echo "${var}9" &&
+	echo "done"
+} &&
+finis

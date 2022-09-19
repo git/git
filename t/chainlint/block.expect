@@ -1,7 +1,7 @@
 (
 	foo &&
 	{
-		echo a
+		echo a ?!AMP?!
 		echo b
 	} &&
 	bar &&
@@ -9,4 +9,15 @@
 		echo c
 	} ?!AMP?!
 	baz
-)
+) &&
+
+{
+	echo a ; ?!AMP?! echo b
+} &&
+{ echo a ; ?!AMP?! echo b ; } &&
+
+{
+	echo "${var}9" &&
+	echo "done"
+} &&
+finis

@@ -4,6 +4,6 @@
      :
    else
      echo >file
-   fi
+   fi ?!LOOP?!
  done) &&
 test ! -f file

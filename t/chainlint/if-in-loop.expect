@@ -3,7 +3,7 @@
 	do
 		if false
 		then
-			echo "err" ?!AMP?!
+			echo "err"
 			exit 1
 		fi ?!AMP?!
 		foo

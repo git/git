@@ -1,0 +1,5 @@
+cat > expect <<-EOF &&
+
+cat > expect <<-EOF ?!AMP?!
+
+cleanup
