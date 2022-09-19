@@ -257,7 +257,7 @@ static size_t expand_show_index(struct strbuf *sb, const char *start,
 
 	end = strchr(start + 1, ')');
 	if (!end)
-		die(_("bad ls-files format: element '%s'"
+		die(_("bad ls-files format: element '%s' "
 		      "does not end in ')'"), start);
 
 	len = end - start + 1;
