@@ -49,6 +49,9 @@ export TEST_DIRECTORY TRASH_DIRECTORY GIT_BUILD_DIR GIT_TEST_CMP
 MODERN_GIT=$GIT_BUILD_DIR/bin-wrappers/git
 export MODERN_GIT
 
+MODERN_SCALAR=$GIT_BUILD_DIR/bin-wrappers/scalar
+export MODERN_SCALAR
+
 perf_results_dir=$TEST_RESULTS_DIR
 test -n "$GIT_PERF_SUBSECTION" && perf_results_dir="$perf_results_dir/$GIT_PERF_SUBSECTION"
 mkdir -p "$perf_results_dir"
@@ -120,6 +123,10 @@ test_perf_create_repo_from () {
 			# status" due to a locked index. Since we have
 			# a copy it's fine to remove the lock.
 			rm .git/index.lock
+		fi &&
+		if test_bool_env GIT_PERF_USE_SCALAR false
+		then
+			"$MODERN_SCALAR" register
 		fi
 	) || error "failed to copy repository '$source' to '$repo'"
 }
@@ -130,7 +137,11 @@ test_perf_fresh_repo () {
 	"$MODERN_GIT" init -q "$repo" &&
 	(
 		cd "$repo" &&
-		test_perf_do_repo_symlink_config_
+		test_perf_do_repo_symlink_config_ &&
+		if test_bool_env GIT_PERF_USE_SCALAR false
+		then
+			"$MODERN_SCALAR" register
+		fi
 	)
 }
 

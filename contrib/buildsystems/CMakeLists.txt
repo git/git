@@ -610,7 +610,7 @@ unset(CMAKE_REQUIRED_INCLUDES)
 #programs
 set(PROGRAMS_BUILT
 	git git-daemon git-http-backend git-sh-i18n--envsubst
-	git-shell)
+	git-shell scalar)
 
 if(NOT CURL_FOUND)
 	list(APPEND excluded_progs git-http-fetch git-http-push)
@@ -756,6 +756,9 @@ target_link_libraries(git-sh-i18n--envsubst common-main)
 
 add_executable(git-shell ${CMAKE_SOURCE_DIR}/shell.c)
 target_link_libraries(git-shell common-main)
+
+add_executable(scalar ${CMAKE_SOURCE_DIR}/scalar.c)
+target_link_libraries(scalar common-main)
 
 if(CURL_FOUND)
 	add_library(http_obj OBJECT ${CMAKE_SOURCE_DIR}/http.c)
@@ -903,7 +906,7 @@ list(TRANSFORM git_perl_scripts PREPEND "${CMAKE_BINARY_DIR}/")
 
 #install
 foreach(program ${PROGRAMS_BUILT})
-if(program STREQUAL "git" OR program STREQUAL "git-shell")
+if(program MATCHES "^(git|git-shell|scalar)$")
 install(TARGETS ${program}
 	RUNTIME DESTINATION bin)
 else()
@@ -977,7 +980,7 @@ endif()
 
 #wrapper scripts
 set(wrapper_scripts
-	git git-upload-pack git-receive-pack git-upload-archive git-shell git-remote-ext)
+	git git-upload-pack git-receive-pack git-upload-archive git-shell git-remote-ext scalar)
 
 set(wrapper_test_scripts
 	test-fake-ssh test-tool)

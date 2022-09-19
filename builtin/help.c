@@ -440,6 +440,8 @@ static const char *cmd_to_page(const char *git_cmd)
 		return git_cmd;
 	else if (is_git_command(git_cmd))
 		return xstrfmt("git-%s", git_cmd);
+	else if (!strcmp("scalar", git_cmd))
+		return xstrdup(git_cmd);
 	else
 		return xstrfmt("git%s", git_cmd);
 }

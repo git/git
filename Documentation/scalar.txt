@@ -161,6 +161,6 @@ SEE ALSO
 --------
 linkgit:git-clone[1], linkgit:git-maintenance[1].
 
-Scalar
+GIT
 ---
-Associated with the linkgit:git[1] suite
+Part of the linkgit:git[1] suite

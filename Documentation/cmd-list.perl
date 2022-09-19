@@ -10,7 +10,7 @@ sub format_one {
 	$state = 0;
 	open I, '<', "$name.txt" or die "No such file $name.txt";
 	while (<I>) {
-		if (/^git[a-z0-9-]*\(([0-9])\)$/) {
+		if (/^(git|scalar)[a-z0-9-]*\(([0-9])\)$/) {
 			$mansection = $1;
 			next;
 		}

@@ -171,6 +171,9 @@ run_subsection () {
 	get_var_from_env_or_config "GIT_PERF_MAKE_COMMAND" "perf" "makeCommand"
 	get_var_from_env_or_config "GIT_PERF_MAKE_OPTS" "perf" "makeOpts"
 
+	get_var_from_env_or_config "GIT_PERF_USE_SCALAR" "perf" "useScalar" "--bool"
+	export GIT_PERF_USE_SCALAR
+
 	get_var_from_env_or_config "GIT_PERF_REPO_NAME" "perf" "repoName"
 	export GIT_PERF_REPO_NAME
 

@@ -235,3 +235,4 @@ gittutorial                             guide
 gittutorial-2                           guide
 gitweb                                  ancillaryinterrogators
 gitworkflows                            guide
+scalar                                  mainporcelain
