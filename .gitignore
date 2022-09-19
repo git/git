@@ -1,7 +1,4 @@
-/fuzz-commit-graph
 /fuzz_corpora
-/fuzz-pack-headers
-/fuzz-pack-idx
 /GIT-BUILD-OPTIONS
 /GIT-CFLAGS
 /GIT-LDFLAGS
