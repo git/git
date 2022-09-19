@@ -312,16 +312,9 @@ static int push_tip_to_list(const char *refname UNUSED,
 
 static int is_head(const char *refname)
 {
-	switch (ref_type(refname)) {
-	case REF_TYPE_OTHER_PSEUDOREF:
-	case REF_TYPE_MAIN_PSEUDOREF:
-		if (parse_worktree_ref(refname, NULL, NULL, &refname))
-			BUG("not a worktree ref: %s", refname);
-		break;
-	default:
-		break;
-	}
-	return !strcmp(refname, "HEAD");
+	const char *stripped_refname;
+	parse_worktree_ref(refname, NULL, NULL, &stripped_refname);
+	return !strcmp(stripped_refname, "HEAD");
 }
 
 void reflog_expiry_prepare(const char *refname,

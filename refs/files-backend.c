@@ -138,44 +138,30 @@ static struct files_ref_store *files_downcast(struct ref_store *ref_store,
 	return refs;
 }
 
-static void files_reflog_path_other_worktrees(struct files_ref_store *refs,
-					      struct strbuf *sb,
-					      const char *refname)
-{
-	const char *real_ref;
-	const char *worktree_name;
-	int length;
-
-	if (parse_worktree_ref(refname, &worktree_name, &length, &real_ref))
-		BUG("refname %s is not a other-worktree ref", refname);
-
-	if (worktree_name)
-		strbuf_addf(sb, "%s/worktrees/%.*s/logs/%s", refs->gitcommondir,
-			    length, worktree_name, real_ref);
-	else
-		strbuf_addf(sb, "%s/logs/%s", refs->gitcommondir,
-			    real_ref);
-}
-
 static void files_reflog_path(struct files_ref_store *refs,
 			      struct strbuf *sb,
 			      const char *refname)
 {
-	switch (ref_type(refname)) {
-	case REF_TYPE_PER_WORKTREE:
-	case REF_TYPE_PSEUDOREF:
+	const char *bare_refname;
+	const char *wtname;
+	int wtname_len;
+	enum ref_worktree_type wt_type = parse_worktree_ref(
+		refname, &wtname, &wtname_len, &bare_refname);
+
+	switch (wt_type) {
+	case REF_WORKTREE_CURRENT:
 		strbuf_addf(sb, "%s/logs/%s", refs->base.gitdir, refname);
 		break;
-	case REF_TYPE_OTHER_PSEUDOREF:
-	case REF_TYPE_MAIN_PSEUDOREF:
-		files_reflog_path_other_worktrees(refs, sb, refname);
+	case REF_WORKTREE_SHARED:
+	case REF_WORKTREE_MAIN:
+		strbuf_addf(sb, "%s/logs/%s", refs->gitcommondir, bare_refname);
 		break;
-	case REF_TYPE_NORMAL:
-		strbuf_addf(sb, "%s/logs/%s", refs->gitcommondir, refname);
+	case REF_WORKTREE_OTHER:
+		strbuf_addf(sb, "%s/worktrees/%.*s/logs/%s", refs->gitcommondir,
+			    wtname_len, wtname, bare_refname);
 		break;
 	default:
-		BUG("unknown ref type %d of ref %s",
-		    ref_type(refname), refname);
+		BUG("unknown ref type %d of ref %s", wt_type, refname);
 	}
 }
 
@@ -183,22 +169,25 @@ static void files_ref_path(struct files_ref_store *refs,
 			   struct strbuf *sb,
 			   const char *refname)
 {
-	switch (ref_type(refname)) {
-	case REF_TYPE_PER_WORKTREE:
-	case REF_TYPE_PSEUDOREF:
+	const char *bare_refname;
+	const char *wtname;
+	int wtname_len;
+	enum ref_worktree_type wt_type = parse_worktree_ref(
+		refname, &wtname, &wtname_len, &bare_refname);
+	switch (wt_type) {
+	case REF_WORKTREE_CURRENT:
 		strbuf_addf(sb, "%s/%s", refs->base.gitdir, refname);
 		break;
-	case REF_TYPE_MAIN_PSEUDOREF:
-		if (!skip_prefix(refname, "main-worktree/", &refname))
-			BUG("ref %s is not a main pseudoref", refname);
-		/* fallthrough */
-	case REF_TYPE_OTHER_PSEUDOREF:
-	case REF_TYPE_NORMAL:
-		strbuf_addf(sb, "%s/%s", refs->gitcommondir, refname);
+	case REF_WORKTREE_OTHER:
+		strbuf_addf(sb, "%s/worktrees/%.*s/%s", refs->gitcommondir,
+			    wtname_len, wtname, bare_refname);
+		break;
+	case REF_WORKTREE_SHARED:
+	case REF_WORKTREE_MAIN:
+		strbuf_addf(sb, "%s/%s", refs->gitcommondir, bare_refname);
 		break;
 	default:
-		BUG("unknown ref type %d of ref %s",
-		    ref_type(refname), refname);
+		BUG("unknown ref type %d of ref %s", wt_type, refname);
 	}
 }
 
@@ -771,7 +760,8 @@ static int files_ref_iterator_advance(struct ref_iterator *ref_iterator)
 
 	while ((ok = ref_iterator_advance(iter->iter0)) == ITER_OK) {
 		if (iter->flags & DO_FOR_EACH_PER_WORKTREE_ONLY &&
-		    ref_type(iter->iter0->refname) != REF_TYPE_PER_WORKTREE)
+		    parse_worktree_ref(iter->iter0->refname, NULL, NULL,
+				       NULL) != REF_WORKTREE_CURRENT)
 			continue;
 
 		if ((iter->flags & DO_FOR_EACH_OMIT_DANGLING_SYMREFS) &&
@@ -1178,7 +1168,8 @@ static int should_pack_ref(const char *refname,
 			   unsigned int pack_flags)
 {
 	/* Do not pack per-worktree refs: */
-	if (ref_type(refname) != REF_TYPE_NORMAL)
+	if (parse_worktree_ref(refname, NULL, NULL, NULL) !=
+	    REF_WORKTREE_SHARED)
 		return 0;
 
 	/* Do not pack non-tags unless PACK_REFS_ALL is set: */
@@ -2267,7 +2258,8 @@ static enum iterator_selection reflog_iterator_select(
 		 */
 		return ITER_SELECT_0;
 	} else if (iter_common) {
-		if (ref_type(iter_common->refname) == REF_TYPE_NORMAL)
+		if (parse_worktree_ref(iter_common->refname, NULL, NULL,
+				       NULL) == REF_WORKTREE_SHARED)
 			return ITER_SELECT_1;
 
 		/*

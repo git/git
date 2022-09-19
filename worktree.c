@@ -489,62 +489,17 @@ int submodule_uses_worktrees(const char *path)
 	return ret;
 }
 
-int parse_worktree_ref(const char *worktree_ref, const char **name,
-		       int *name_length, const char **ref)
-{
-	if (skip_prefix(worktree_ref, "main-worktree/", &worktree_ref)) {
-		if (!*worktree_ref)
-			return -1;
-		if (name)
-			*name = NULL;
-		if (name_length)
-			*name_length = 0;
-		if (ref)
-			*ref = worktree_ref;
-		return 0;
-	}
-	if (skip_prefix(worktree_ref, "worktrees/", &worktree_ref)) {
-		const char *slash = strchr(worktree_ref, '/');
-
-		if (!slash || slash == worktree_ref || !slash[1])
-			return -1;
-		if (name)
-			*name = worktree_ref;
-		if (name_length)
-			*name_length = slash - worktree_ref;
-		if (ref)
-			*ref = slash + 1;
-		return 0;
-	}
-	return -1;
-}
-
 void strbuf_worktree_ref(const struct worktree *wt,
 			 struct strbuf *sb,
 			 const char *refname)
 {
-	switch (ref_type(refname)) {
-	case REF_TYPE_PSEUDOREF:
-	case REF_TYPE_PER_WORKTREE:
-		if (wt && !wt->is_current) {
-			if (is_main_worktree(wt))
-				strbuf_addstr(sb, "main-worktree/");
-			else
-				strbuf_addf(sb, "worktrees/%s/", wt->id);
-		}
-		break;
-
-	case REF_TYPE_MAIN_PSEUDOREF:
-	case REF_TYPE_OTHER_PSEUDOREF:
-		break;
-
-	case REF_TYPE_NORMAL:
-		/*
-		 * For shared refs, don't prefix worktrees/ or
-		 * main-worktree/. It's not necessary and
-		 * files-backend.c can't handle it anyway.
-		 */
-		break;
+	if (parse_worktree_ref(refname, NULL, NULL, NULL) ==
+		    REF_WORKTREE_CURRENT &&
+	    wt && !wt->is_current) {
+		if (is_main_worktree(wt))
+			strbuf_addstr(sb, "main-worktree/");
+		else
+			strbuf_addf(sb, "worktrees/%s/", wt->id);
 	}
 	strbuf_addstr(sb, refname);
 }
