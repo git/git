@@ -1746,8 +1746,10 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 {
 	int dissociate = 0, quiet = 0, progress = 0, require_init = 0;
 	struct module_clone_data clone_data = MODULE_CLONE_DATA_INIT;
-	struct list_objects_filter_options filter_options = { 0 };
 	struct string_list reference = STRING_LIST_INIT_NODUP;
+	struct list_objects_filter_options filter_options =
+		LIST_OBJECTS_FILTER_INIT;
+
 	struct option module_clone_options[] = {
 		OPT_STRING(0, "prefix", &clone_data.prefix,
 			   N_("path"),
@@ -2620,7 +2622,8 @@ static int module_update(int argc, const char **argv, const char *prefix)
 	struct pathspec pathspec = { 0 };
 	struct pathspec pathspec2 = { 0 };
 	struct update_data opt = UPDATE_DATA_INIT;
-	struct list_objects_filter_options filter_options = { 0 };
+	struct list_objects_filter_options filter_options =
+		LIST_OBJECTS_FILTER_INIT;
 	int ret;
 	struct option module_update_options[] = {
 		OPT__FORCE(&opt.force, N_("force checkout updates"), 0),

@@ -1907,6 +1907,7 @@ void repo_init_revisions(struct repository *r,
 	}
 
 	init_display_notes(&revs->notes_opt);
+	list_objects_filter_init(&revs->filter);
 }
 
 static void add_pending_commit_list(struct rev_info *revs,
