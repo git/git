@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2022, #04; Thu, 15)
-X-master-at: d3fa443f97e3a8d75b51341e2d5bac380b7422df
-X-next-at: 21cbab75150d71ca294e09180c59ee529ca53957
+Subject: What's cooking in git.git (Sep 2022, #05; Mon, 19)
+X-master-at: dda7228a83e2e9ff584bf6adbf55910565b41e14
+X-next-at: 39d753a26bd0c11658343a9e4366f68cd11f7781
 
-What's cooking in git.git (Sep 2022, #04; Thu, 15)
+What's cooking in git.git (Sep 2022, #05; Mon, 19)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -13,11 +13,12 @@ release).  Commits prefixed with '-' are only in 'seen', and aren't
 considered "accepted" at all.  A topic without enough support may be
 discarded after a long period of no activity.
 
-I tagged the tip of the 'master' branch as 2.38-rc0, aka "preview",
-but since many folks are away attending Git Merge, expect not much
-activity on the release.  The first "release candidate" that signals
-the start of pre-release feature freeze is scheduled to happen mid
-next week (cf. http://tinyurl.com/gitCal).
+A few more topics have been merged to the 'master' branch.  We plan
+to tag -rc1 in a few days (but expect no movement on 'master' or
+'next' tomorrow).  There are a few topics that are marked with the
+"Merge to 'next'?"  marker, which can use your help ;-)  After -rc1
+gets tagged, the 'master' branch will go in the "regression fixes
+only" mode (cf. https://tinyurl.com/gitCal).
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -50,212 +51,175 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ab/dedup-config-and-command-docs (2022-09-07) 9 commits
-  (merged to 'next' on 2022-09-08 at cd5b217110)
- + docs: add CONFIGURATION sections that fuzzy map to built-ins
- + docs: add CONFIGURATION sections that map to a built-in
- + log docs: de-duplicate configuration sections
- + difftool docs: de-duplicate configuration sections
- + notes docs: de-duplicate and combine configuration sections
- + apply docs: de-duplicate configuration sections
- + send-email docs: de-duplicate configuration sections
- + grep docs: de-duplicate configuration sections
- + docs: add and use include template for config/* includes
+* ad/t1800-cygwin (2022-09-15) 1 commit
+  (merged to 'next' on 2022-09-15 at 9667abb48c)
+ + t1800: correct test to handle Cygwin
 
- Share the text used to explain configuration variables used by "git
- <subcmd>" in "git help <subcmd>" with the text from "git help config".
- cf. <CAHd-oW71qvhG16YtMweA26SDCLKn+LHZe13njn18CD==9Ewbnw@mail.gmail.com>
- source: <cover-v4-0.9-00000000000-20220907T082419Z-avarab@gmail.com>
+ Test fix.
+ source: <20220915075717.425673-1-adam@dinwoodie.org>
 
 
-* ab/submodule-helper-leakfix (2022-09-02) 18 commits
-  (merged to 'next' on 2022-09-08 at bf21cfed4b)
- + submodule--helper: fix a configure_added_submodule() leak
- + submodule--helper: free rest of "displaypath" in "struct update_data"
- + submodule--helper: free some "displaypath" in "struct update_data"
- + submodule--helper: fix a memory leak in print_status()
- + submodule--helper: fix a leak in module_add()
- + submodule--helper: fix obscure leak in module_add()
- + submodule--helper: fix "reference" leak
- + submodule--helper: fix a memory leak in get_default_remote_submodule()
- + submodule--helper: fix a leak with repo_clear()
- + submodule--helper: fix "sm_path" and other "module_cb_list" leaks
- + submodule--helper: fix "errmsg_str" memory leak
- + submodule--helper: add and use *_release() functions
- + submodule--helper: don't leak {run,capture}_command() cp.dir argument
- + submodule--helper: "struct pathspec" memory leak in module_update()
- + submodule--helper: fix most "struct pathspec" memory leaks
- + submodule--helper: fix trivial get_default_remote_submodule() leak
- + submodule--helper: fix a leak in "clone_submodule"
- + Merge branch 'ab/submodule-helper-prep' into ab/submodule-helper-leakfix
+* es/chainlint (2022-09-12) 19 commits
+  (merged to 'next' on 2022-09-12 at 577e59143f)
+ + chainlint: colorize problem annotations and test delimiters
+  (merged to 'next' on 2022-09-08 at eab3357b05)
+ + t: retire unused chainlint.sed
+ + t/Makefile: teach `make test` and `make prove` to run chainlint.pl
+ + test-lib: replace chainlint.sed with chainlint.pl
+ + test-lib: retire "lint harder" optimization hack
+ + t/chainlint: add more chainlint.pl self-tests
+ + chainlint.pl: allow `|| echo` to signal failure upstream of a pipe
+ + chainlint.pl: complain about loops lacking explicit failure handling
+ + chainlint.pl: don't flag broken &&-chain if failure indicated explicitly
+ + chainlint.pl: don't flag broken &&-chain if `$?` handled explicitly
+ + chainlint.pl: don't require `&` background command to end with `&&`
+ + t/Makefile: apply chainlint.pl to existing self-tests
+ + chainlint.pl: don't require `return|exit|continue` to end with `&&`
+ + chainlint.pl: validate test scripts in parallel
+ + chainlint.pl: add parser to identify test definitions
+ + chainlint.pl: add parser to validate tests
+ + chainlint.pl: add POSIX shell parser
+ + chainlint.pl: add POSIX shell lexical analyzer
+ + t: add skeleton chainlint.pl
 
- Plugging leaks in submodule--helper.
- source: <cover-v7-00.17-00000000000-20220831T231003Z-avarab@gmail.com>
-
-
-* ab/unused-annotation (2022-09-01) 2 commits
-  (merged to 'next' on 2022-09-08 at dfc6123c6b)
- + git-compat-util.h: use "deprecated" for UNUSED variables
- + git-compat-util.h: use "UNUSED", not "UNUSED(var)"
- (this branch uses jk/unused-annotation.)
-
- Undoes 'jk/unused-annotation' topic and redoes it to work around
- Coccinelle rules misfiring false positives in unrelated codepaths.
- source: <cover-0.2-00000000000-20220825T170709Z-avarab@gmail.com>
+ Revamp chainlint script for our tests.
+ source: <pull.1322.git.git.1661992197.gitgitgadget@gmail.com>
+ source: <pull.1324.git.git.1663023888412.gitgitgadget@gmail.com>
 
 
-* en/remerge-diff-fixes (2022-09-02) 3 commits
-  (merged to 'next' on 2022-09-12 at 9879cec049)
- + diff: fix filtering of merge commits under --remerge-diff
- + diff: fix filtering of additional headers under --remerge-diff
- + diff: have submodule_format logic avoid additional diff headers
+* jk/list-objects-filter-cleanup (2022-09-12) 5 commits
+  (merged to 'next' on 2022-09-12 at 33cb79c924)
+ + list-objects-filter: convert filter_spec to a strbuf
+ + list-objects-filter: add and use initializers
+ + list-objects-filter: handle null default filter spec
+ + list-objects-filter: don't memset after releasing filter struct
+ + Merge branch 'jk/plug-list-object-filter-leaks' into jk/list-objects-filter-cleanup
 
- Fix a few "git log --remerge-diff" bugs.
- source: <pull.1342.v3.git.1662090810.gitgitgadget@gmail.com>
-
-
-* jk/plug-list-object-filter-leaks (2022-09-08) 5 commits
-  (merged to 'next' on 2022-09-08 at a6b4b080e4)
- + prepare_repo_settings(): plug leak of config values
- + list_objects_filter_options: plug leak of filter_spec strings
- + transport: free filter options in disconnect_git()
- + transport: deep-copy object-filter struct for fetch-pack
- + list_objects_filter_copy(): deep-copy sparse_oid_name field
- (this branch is used by jk/list-objects-filter-cleanup.)
-
- The code that manages list-object-filter structure, used in partial
- clones, leaked the instances, which has been plugged.
- source: <Yxl1BNQoy6Drf0Oe@coredump.intra.peff.net>
+ A couple of bugfixes with code clean-up.
+ source: <Yx1qwlpNbxGEiUgc@coredump.intra.peff.net>
 
 
-* jk/proto-v2-ref-prefix-fix (2022-09-08) 2 commits
-  (merged to 'next' on 2022-09-12 at 70c5528b86)
- + fetch: add branch.*.merge to default ref-prefix extension
- + fetch: stop checking for NULL transport->remote in do_fetch()
+* sy/mv-out-of-cone (2022-09-09) 10 commits
+  (merged to 'next' on 2022-09-12 at 7cb7b41779)
+ + builtin/mv.c: fix possible segfault in add_slash()
+  (merged to 'next' on 2022-08-17 at 2316d9ce4d)
+ + mv: check overwrite for in-to-out move
+ + advice.h: add advise_on_moving_dirty_path()
+ + mv: cleanup empty WORKING_DIRECTORY
+ + mv: from in-cone to out-of-cone
+ + mv: remove BOTH from enum update_mode
+ + mv: check if <destination> is a SKIP_WORKTREE_DIR
+ + mv: free the with_slash in check_dir_in_index()
+ + mv: rename check_dir_in_index() to empty_dir_has_sparse_contents()
+ + t7002: add tests for moving from in-cone to out-of-cone
 
- "git fetch" over protocol v2 sent an incorrect ref prefix request
- to the server and made "git pull" with configured fetch refspec
- that does not cover the remote branch to merge with fail, which has
- been corrected.
- source: <YxpBMaIckimFJYEi@coredump.intra.peff.net>
-
-
-* jk/unused-annotation (2022-08-19) 11 commits
-  (merged to 'next' on 2022-08-24 at 2174b8c75d)
- + is_path_owned_by_current_uid(): mark "report" parameter as unused
- + run-command: mark unused async callback parameters
- + mark unused read_tree_recursive() callback parameters
- + hashmap: mark unused callback parameters
- + config: mark unused callback parameters
- + streaming: mark unused virtual method parameters
- + transport: mark bundle transport_options as unused
- + refs: mark unused virtual method parameters
- + refs: mark unused reflog callback parameters
- + refs: mark unused each_ref_fn parameters
- + git-compat-util: add UNUSED macro
- (this branch is used by ab/unused-annotation.)
-
- Annotate function parameters that are not used (but cannot be
- removed for structural reasons), to prepare us to later compile
- with -Wunused warning turned on.
- source: <Yv9gxqH6nK2KYnNj@coredump.intra.peff.net>
+ "git mv A B" in a sparsely populated working tree can be asked to
+ move a path from a directory that is "in cone" to another directory
+ that is "out of cone".  Handling of such a case has been improved.
+ source: <20220809120910.2021413-1-shaoxuan.yuan02@gmail.com>
+ source: <20220909222736.279362-1-shaoxuan.yuan02@gmail.com>
 
 
-* js/typofix (2022-09-12) 1 commit
-  (merged to 'next' on 2022-09-12 at 76d57e004b)
- + Documentation: fix various repeat word typos
+* vd/scalar-to-main (2022-09-02) 9 commits
+  (merged to 'next' on 2022-09-14 at 230bf89c01)
+ + Documentation/technical: include Scalar technical doc
+ + t/perf: add 'GIT_PERF_USE_SCALAR' run option
+ + t/perf: add Scalar performance tests
+ + scalar-clone: add test coverage
+ + scalar: add to 'git help -a' command list
+ + scalar: implement the `help` subcommand
+ + git help: special-case `scalar`
+ + scalar: include in standard Git build & installation
+ + scalar: fix command documentation section header
 
- Typofix.
- source: <20220911102320.39954-2-jacob@initialcommit.io>
+ Hoist the remainder of "scalar" out of contrib/ to the main part of
+ the codebase.
+ source: <pull.1341.v2.git.1662134210.gitgitgadget@gmail.com>
 
 
-* rs/add-p-worktree-mode-prompt-fix (2022-09-14) 1 commit
-  (merged to 'next' on 2022-09-14 at 5f29a569d4)
- + add -p: fix worktree patch mode prompts
+* zh/ls-files-format (2022-09-12) 1 commit
+  (merged to 'next' on 2022-09-12 at 91dda58387)
+ + ls-files: fix black space in error message
 
- Fix another UI regression in the reimplemented "add -p".
- source: <2463c4b9-313b-032f-9313-d1421f71f111@web.de>
+ Typofix in the UI of a topic that has graduated to 'master'.
+ source: <pull.1350.git.1662904997760.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [New Topics]
 
-* ed/fsmonitor-on-networked-macos (2022-09-13) 5 commits
- - fsmonitor: add documentation for allowRemote and socketDir options
- - fsmonitor: deal with synthetic firmlinks on macOS
- - fsmonitor: avoid socket location check if using hook
- - fsmonitor: relocate socket file if .git directory is remote
- - fsmonitor: refactor filesystem checks to common interface
+* fz/help-doublofix (2022-09-16) 1 commit
+  (merged to 'next' on 2022-09-19 at 3ec5906f4e)
+ + help: fix doubled words in explanation for developer interfaces
 
- By default, use of fsmonitor on a repository on networked
- filesystem is disabled. Add knobs to make it workable on macOS.
-
- Needs review.
- source: <pull.1326.v6.git.1663100858.gitgitgadget@gmail.com>
-
-
-* rj/branch-edit-description-with-nth-checkout (2022-09-12) 2 commits
- - branch: support for shortcuts like @{-1} completed
- - branch: refactor "edit_description" code path
-
- "git branch --edit-description @{-1}" is now a way to edit branch
- description of the branch you were on before switching to the
- current branch.
-
- Needs review.
- source: <7abdb5a9-5707-7897-4196-8d2892beeb81@gmail.com>
-
-
-* mj/credential-helper-auth-headers (2022-09-13) 8 commits
- - http: set specific auth scheme depending on credential
- - http: move proactive auth to first slot creation
- - http: store all request headers on active_request_slot
- - credential: add WWW-Authenticate header to cred requests
- - http: read HTTP WWW-Authenticate response headers
- - osxkeychain: clarify that we ignore unknown lines
- - netrc: ignore unknown lines (do not die)
- - wincred: ignore unknown lines (do not die)
-
- RFC
- source: <pull.1352.git.1663097156.gitgitgadget@gmail.com>
-
-
-* ec/reftable-pass-pq-entry-by-reference (2022-09-15) 1 commit
-  (merged to 'next' on 2022-09-15 at 928e75c7d1)
- + reftable: use a pointer for pq_entry param
-
- Small code clean-up in reftable implementation.
+ Typofix for topic already in -rc0.
 
  Will merge to 'master'.
- source: <1833f3928cb.acf3c97d869879.7909589521159235166@elijahpepe.com>
+ source: <pull.1330.git.git.1663333529294.gitgitgadget@gmail.com>
 
 
-* jc/environ-docs (2022-09-15) 5 commits
- - environ: GIT_INDEX_VERSION affects not just a new repository
- - environ: simplify description of GIT_INDEX_FILE
- - environ: GIT_FLUSH should be made a usual Boolean
- - environ: explain Boolean environment variables
- - environ: document GIT_SSL_NO_VERIFY
+* so/diff-merges-cleanup (2022-09-16) 3 commits
+ - diff-merges: clarify log.diffMerges documentation
+ - diff-merges: cleanup set_diff_merges()
+ - diff-merges: cleanup func_by_opt()
 
- Documentation on various Boolean GIT_* environment variables have
- been clarified.
+ Code clean-up.
 
- Needs review.
- source: <20220915160659.126441-1-gitster@pobox.com>
+ Will merge to 'next'?
+ source: <20220914193102.5275-1-sorganov@gmail.com>
 
 
-* rs/diff-caret-bang-with-parents (2022-09-15) 6 commits
- - revision: add parents after child for ^!
- - revision: rename add_parents_only() to add_nth_parent()
- - revision: factor out add_parents()
- - revision: factor out add_parent()
- - revision: factor out get_commit()
- - revision: use strtol_i() for exclude_parent
+* tz/tech-docs-to-help-fix (2022-09-16) 2 commits
+  (merged to 'next' on 2022-09-19 at 4a13143da1)
+ + api docs: link to html version of api-trace2
+ + docs: fix a few recently broken links
 
- "git diff rev^!" did not show combined diff to go to the rev from
- its parents.
+ Docfix for topic already in -rc0.
 
- Needs review.
- source: <ba6eea28-fb3a-b376-2529-351727c02f1a@web.de>
+ Will merge to 'master'.
+ source: <20220916062303.3736166-2-tmz@pobox.com>
+
+
+* ja/rebase-i-avoid-amending-self (2022-09-19) 1 commit
+ - sequencer: avoid dropping fixup commit that targets self via commit-ish
+
+ "git rebase -i" can mistakenly attempt to apply a fixup to a commit
+ itself, which has been corrected.
+
+ Will merge to 'next'?
+ source: <20220918121053.880225-1-aclopte@gmail.com>
+
+
+* ml/commit-graph-expire-dir-leak-fix (2022-09-19) 1 commit
+  (merged to 'next' on 2022-09-19 at e3211e888e)
+ + commit-graph: Fix missing closedir in expire_commit_graphs
+
+ A result from opendir() was leaking in the commit-graph expiration
+ codepath, which has been plugged.
+
+ Will merge to 'master'.
+ source: <20220919141441.5644-1-linmq006@gmail.com>
+
+
+* vd/scalar-generalize-diagnose (2022-09-19) 1 commit
+  (merged to 'next' on 2022-09-19 at e03e8a6e4a)
+ + diagnose.c: refactor to safely use 'd_type'
+
+ Portability fix.
+
+ Will merge to 'master'.
+ source: <pull.1354.git.1663438615413.gitgitgadget@gmail.com>
+
+
+* ac/fuzzers (2022-09-19) 1 commit
+ - fuzz: reorganise the path for existing oss-fuzz fuzzers
+
+ source: <pull.1353.v4.git.1663598215154.gitgitgadget@gmail.com>
+
+
+* hn/parse-worktree-ref (2022-09-19) 1 commit
+ - refs: unify parse_worktree_ref() and ref_type()
+
+ source: <pull.1325.v2.git.git.1663605291172.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -301,28 +265,83 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
-* jk/list-objects-filter-cleanup (2022-09-12) 5 commits
-  (merged to 'next' on 2022-09-12 at 33cb79c924)
- + list-objects-filter: convert filter_spec to a strbuf
- + list-objects-filter: add and use initializers
- + list-objects-filter: handle null default filter spec
- + list-objects-filter: don't memset after releasing filter struct
- + Merge branch 'jk/plug-list-object-filter-leaks' into jk/list-objects-filter-cleanup
+* ed/fsmonitor-on-networked-macos (2022-09-19) 5 commits
+ - fsmonitor: add documentation for allowRemote and socketDir options
+ - fsmonitor: deal with synthetic firmlinks on macOS
+ - fsmonitor: avoid socket location check if using hook
+ - fsmonitor: relocate socket file if .git directory is remote
+ - fsmonitor: refactor filesystem checks to common interface
 
- A couple of bugfixes with code clean-up.
+ By default, use of fsmonitor on a repository on networked
+ filesystem is disabled. Add knobs to make it workable on macOS.
+
+ Will merge to 'next'?
+ source: <pull.1326.v8.git.1663377141.gitgitgadget@gmail.com>
+
+
+* rj/branch-edit-description-with-nth-checkout (2022-09-12) 2 commits
+ - branch: support for shortcuts like @{-1} completed
+ - branch: refactor "edit_description" code path
+
+ "git branch --edit-description @{-1}" is now a way to edit branch
+ description of the branch you were on before switching to the
+ current branch.
+
+ Needs review.
+ source: <7abdb5a9-5707-7897-4196-8d2892beeb81@gmail.com>
+
+
+* mj/credential-helper-auth-headers (2022-09-13) 8 commits
+ - http: set specific auth scheme depending on credential
+ - http: move proactive auth to first slot creation
+ - http: store all request headers on active_request_slot
+ - credential: add WWW-Authenticate header to cred requests
+ - http: read HTTP WWW-Authenticate response headers
+ - osxkeychain: clarify that we ignore unknown lines
+ - netrc: ignore unknown lines (do not die)
+ - wincred: ignore unknown lines (do not die)
+
+ RFC
+ source: <pull.1352.git.1663097156.gitgitgadget@gmail.com>
+
+
+* ec/reftable-pass-pq-entry-by-reference (2022-09-15) 1 commit
+  (merged to 'next' on 2022-09-15 at 928e75c7d1)
+ + reftable: use a pointer for pq_entry param
+
+ Small code clean-up in reftable implementation.
 
  Will merge to 'master'.
- source: <Yx1qwlpNbxGEiUgc@coredump.intra.peff.net>
+ source: <1833f3928cb.acf3c97d869879.7909589521159235166@elijahpepe.com>
 
 
-* zh/ls-files-format (2022-09-12) 1 commit
-  (merged to 'next' on 2022-09-12 at 91dda58387)
- + ls-files: fix black space in error message
+* jc/environ-docs (2022-09-16) 5 commits
+ - environ: GIT_INDEX_VERSION affects not just a new repository
+ - environ: simplify description of GIT_INDEX_FILE
+ - environ: GIT_FLUSH should be made a usual Boolean
+ - environ: explain Boolean environment variables
+ - environ: document GIT_SSL_NO_VERIFY
 
- Typofix in the UI of a topic that has graduated to 'master'.
+ Documentation on various Boolean GIT_* environment variables have
+ been clarified.
 
- Will merge to 'master'.
- source: <pull.1350.git.1662904997760.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <20220915160659.126441-1-gitster@pobox.com>
+
+
+* rs/diff-caret-bang-with-parents (2022-09-15) 6 commits
+ - revision: add parents after child for ^!
+ - revision: rename add_parents_only() to add_nth_parent()
+ - revision: factor out add_parents()
+ - revision: factor out add_parent()
+ - revision: factor out get_commit()
+ - revision: use strtol_i() for exclude_parent
+
+ "git diff rev^!" did not show combined diff to go to the rev from
+ its parents.
+
+ Needs review.
+ source: <ba6eea28-fb3a-b376-2529-351727c02f1a@web.de>
 
 
 * ab/doc-synopsis-and-cmd-usage (2022-09-07) 34 commits
@@ -369,14 +388,14 @@ Release tarballs are available at:
  source: <cover-00.34-00000000000-20220902T092734Z-avarab@gmail.com>
 
 
-* vd/doc-reviewing-guidelines (2022-09-09) 1 commit
+* vd/doc-reviewing-guidelines (2022-09-19) 1 commit
  - Documentation: add ReviewingGuidelines
 
  Just like we have coding guidelines, we now have guidelines for
  reviewers.
 
- Needs review.
- source: <pull.1348.git.1662747205235.gitgitgadget@gmail.com>
+ Will merge to 'next' and then to 'master'.
+ source: <pull.1348.v2.git.1663614767058.gitgitgadget@gmail.com>
 
 
 * ab/coccicheck-incremental (2022-08-31) 9 commits
@@ -395,65 +414,6 @@ Release tarballs are available at:
 
  Needs review.
  source: <cover-v2-0.9-00000000000-20220831T205130Z-avarab@gmail.com>
-
-
-* es/chainlint (2022-09-12) 19 commits
-  (merged to 'next' on 2022-09-12 at 577e59143f)
- + chainlint: colorize problem annotations and test delimiters
-  (merged to 'next' on 2022-09-08 at eab3357b05)
- + t: retire unused chainlint.sed
- + t/Makefile: teach `make test` and `make prove` to run chainlint.pl
- + test-lib: replace chainlint.sed with chainlint.pl
- + test-lib: retire "lint harder" optimization hack
- + t/chainlint: add more chainlint.pl self-tests
- + chainlint.pl: allow `|| echo` to signal failure upstream of a pipe
- + chainlint.pl: complain about loops lacking explicit failure handling
- + chainlint.pl: don't flag broken &&-chain if failure indicated explicitly
- + chainlint.pl: don't flag broken &&-chain if `$?` handled explicitly
- + chainlint.pl: don't require `&` background command to end with `&&`
- + t/Makefile: apply chainlint.pl to existing self-tests
- + chainlint.pl: don't require `return|exit|continue` to end with `&&`
- + chainlint.pl: validate test scripts in parallel
- + chainlint.pl: add parser to identify test definitions
- + chainlint.pl: add parser to validate tests
- + chainlint.pl: add POSIX shell parser
- + chainlint.pl: add POSIX shell lexical analyzer
- + t: add skeleton chainlint.pl
-
- Revamp chainlint script for our tests.
-
- Will merge to 'master'.
- source: <pull.1322.git.git.1661992197.gitgitgadget@gmail.com>
- source: <pull.1324.git.git.1663023888412.gitgitgadget@gmail.com>
-
-
-* vd/scalar-to-main (2022-09-02) 9 commits
-  (merged to 'next' on 2022-09-14 at 230bf89c01)
- + Documentation/technical: include Scalar technical doc
- + t/perf: add 'GIT_PERF_USE_SCALAR' run option
- + t/perf: add Scalar performance tests
- + scalar-clone: add test coverage
- + scalar: add to 'git help -a' command list
- + scalar: implement the `help` subcommand
- + git help: special-case `scalar`
- + scalar: include in standard Git build & installation
- + scalar: fix command documentation section header
-
- Hoist the remainder of "scalar" out of contrib/ to the main part of
- the codebase.
-
- Will merge to 'master'.
- source: <pull.1341.v2.git.1662134210.gitgitgadget@gmail.com>
-
-
-* ad/t1800-cygwin (2022-09-15) 1 commit
-  (merged to 'next' on 2022-09-15 at 9667abb48c)
- + t1800: correct test to handle Cygwin
-
- Test fix.
-
- Will merge to 'master'.
- source: <20220915075717.425673-1-adam@dinwoodie.org>
 
 
 * tb/diffstat-with-utf8-strwidth (2022-09-14) 1 commit
@@ -588,29 +548,6 @@ Release tarballs are available at:
  source: <20220809185429.20098-1-alban.gruin@gmail.com>
 
 
-* sy/mv-out-of-cone (2022-09-09) 10 commits
-  (merged to 'next' on 2022-09-12 at 7cb7b41779)
- + builtin/mv.c: fix possible segfault in add_slash()
-  (merged to 'next' on 2022-08-17 at 2316d9ce4d)
- + mv: check overwrite for in-to-out move
- + advice.h: add advise_on_moving_dirty_path()
- + mv: cleanup empty WORKING_DIRECTORY
- + mv: from in-cone to out-of-cone
- + mv: remove BOTH from enum update_mode
- + mv: check if <destination> is a SKIP_WORKTREE_DIR
- + mv: free the with_slash in check_dir_in_index()
- + mv: rename check_dir_in_index() to empty_dir_has_sparse_contents()
- + t7002: add tests for moving from in-cone to out-of-cone
-
- "git mv A B" in a sparsely populated working tree can be asked to
- move a path from a directory that is "in cone" to another directory
- that is "out of cone".  Handling of such a case has been improved.
-
- Will merge to 'master'.
- source: <20220809120910.2021413-1-shaoxuan.yuan02@gmail.com>
- source: <20220909222736.279362-1-shaoxuan.yuan02@gmail.com>
-
-
 * po/glossary-around-traversal (2022-07-09) 3 commits
  - glossary: add reachability bitmap description
  - glossary: add commit graph description
@@ -648,22 +585,3 @@ Release tarballs are available at:
  Needs review.
  cf. <xmqqv8pr8903.fsf@gitster.g>
  source: <pull.1132.v6.git.1661885419.gitgitgadget@gmail.com>
-
---------------------------------------------------
-[Discarded]
-
-* jc/diff-no-index-unleak (2022-09-02) 1 commit
- . diff --no-index: unleak paths[] elements
-
- Plug a leak or two in "git diff --no-index".
-
- Superseded by the rs/diff-no-index-cleanup topic.
- source: <xmqqilm579hc.fsf@gitster.g>
-
-
-* jc/diff-no-index-two-stdin (2022-09-07) 1 commit
- . diff: "--no-index - -" compares the same standard input
-
- "git diff --no-index - -" learned to optimize the comparison of the
- same thing obtained from the standard input.
- source: <xmqqlequsvt4.fsf_-_@gitster.g>
