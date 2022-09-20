@@ -60,7 +60,7 @@ Subcommands are special in a couple of ways:
 
 * All arguments following the subcommand are considered to be arguments of
   the subcommand, and, conversely, arguments meant for the subcommand may
-  not preceed the subcommand.
+  not precede the subcommand.
 
 Therefore, if the options array contains at least one subcommand and
 `parse_options()` encounters the first dashless argument, it will either:
