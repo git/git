@@ -1946,6 +1946,8 @@ static int fill_included_packs_batch(struct repository *r,
 			continue;
 		if (!pack_kept_objects && p->pack_keep)
 			continue;
+		if (p->is_cruft)
+			continue;
 		if (open_pack_index(p) || !p->num_objects)
 			continue;
 

@@ -807,6 +807,47 @@ test_expect_success 'repack (all) ignores cruft pack' '
 	)
 '
 
+test_expect_success 'repack (--batch-size) ignores cruft pack' '
+	git init repo &&
+	test_when_finished "rm -fr repo" &&
+	(
+		cd repo &&
+
+		test_commit_bulk 5 &&
+		test_commit --no-tag unreachable &&
+
+		git reset --hard HEAD^ &&
+		git reflog expire --all --expire=all &&
+		git repack --cruft -d &&
+
+		test_commit four &&
+
+		find $objdir/pack -type f -name "*.pack" | sort >before &&
+		git repack -d &&
+		find $objdir/pack -type f -name "*.pack" | sort >after &&
+
+		pack="$(comm -13 before after)" &&
+		test_file_size "$pack" >sz &&
+		# Set --batch-size to twice the size of the pack created
+		# in the previous step, since this is enough to
+		# accommodate it and the cruft pack.
+		#
+		# This means that the MIDX machinery *could* combine the
+		# new and cruft packs together.
+		#
+		# We ensure that it does not below.
+		batch="$((($(cat sz) * 2)))" &&
+
+		git multi-pack-index write &&
+
+		find $objdir/pack | sort >before &&
+		git multi-pack-index repack --batch-size=$batch &&
+		find $objdir/pack | sort >after &&
+
+		test_cmp before after
+	)
+'
+
 test_expect_success 'expire removes repacked packs' '
 	(
 		cd dup &&
