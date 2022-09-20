@@ -344,7 +344,7 @@ Repository, command and file interfaces
 
 This documentation discusses repository and command interfaces which
 users are expected to interact with directly. See `--user-formats` in
-linkgit:git-help[1] for more details on the critera.
+linkgit:git-help[1] for more details on the criteria.
 
 include::cmds-userinterfaces.txt[]
 
