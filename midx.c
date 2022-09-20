@@ -1839,7 +1839,7 @@ int expire_midx_packs(struct repository *r, const char *object_dir, unsigned fla
 		if (prepare_midx_pack(r, m, i))
 			continue;
 
-		if (m->packs[i]->pack_keep)
+		if (m->packs[i]->pack_keep || m->packs[i]->is_cruft)
 			continue;
 
 		pack_name = xstrdup(m->packs[i]->pack_name);

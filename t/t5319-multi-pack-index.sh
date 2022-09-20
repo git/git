@@ -847,6 +847,36 @@ test_expect_success 'expire respects .keep files' '
 	)
 '
 
+test_expect_success 'expiring unreferenced cruft pack retains pack' '
+	git init repo &&
+	test_when_finished "rm -fr repo" &&
+	(
+		cd repo &&
+
+		test_commit base &&
+		test_commit --no-tag unreachable &&
+		unreachable=$(git rev-parse HEAD) &&
+
+		git reset --hard base &&
+		git reflog expire --all --expire=all &&
+		git repack --cruft -d &&
+		mtimes="$(ls $objdir/pack/pack-*.mtimes)" &&
+
+		echo "base..$unreachable" >in &&
+		pack="$(git pack-objects --revs --delta-base-offset \
+			$objdir/pack/pack <in)" &&
+
+		# Preferring the contents of "$pack" will leave the
+		# cruft pack unreferenced (ie., none of the objects
+		# contained in the cruft pack will have their MIDX copy
+		# selected from the cruft pack).
+		git multi-pack-index write --preferred-pack="pack-$pack.pack" &&
+		git multi-pack-index expire &&
+
+		test_path_is_file "$mtimes"
+	)
+'
+
 test_expect_success 'repack --batch-size=0 repacks everything' '
 	cp -r dup dup2 &&
 	(
