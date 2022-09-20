@@ -1912,8 +1912,10 @@ static int fill_included_packs_batch(struct repository *r,
 {
 	uint32_t i, packs_to_repack;
 	size_t total_size;
-	struct repack_info *pack_info = xcalloc(m->num_packs, sizeof(struct repack_info));
+	struct repack_info *pack_info;
 	int pack_kept_objects = 0;
+
+	CALLOC_ARRAY(pack_info, m->num_packs);
 
 	repo_config_get_bool(r, "repack.packkeptobjects", &pack_kept_objects);
 
