@@ -1895,6 +1895,8 @@ static int fill_included_packs_all(struct repository *r,
 			continue;
 		if (!pack_kept_objects && m->packs[i]->pack_keep)
 			continue;
+		if (m->packs[i]->is_cruft)
+			continue;
 
 		include_pack[i] = 1;
 		count++;

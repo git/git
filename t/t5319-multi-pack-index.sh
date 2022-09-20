@@ -784,6 +784,29 @@ test_expect_success 'repack creates a new pack' '
 	)
 '
 
+test_expect_success 'repack (all) ignores cruft pack' '
+	git init repo &&
+	test_when_finished "rm -fr repo" &&
+	(
+		cd repo &&
+
+		test_commit base &&
+		test_commit --no-tag unreachable &&
+
+		git reset --hard base &&
+		git reflog expire --all --expire=all &&
+		git repack --cruft -d &&
+
+		git multi-pack-index write &&
+
+		find $objdir/pack | sort >before &&
+		git multi-pack-index repack --batch-size=0 &&
+		find $objdir/pack | sort >after &&
+
+		test_cmp before after
+	)
+'
+
 test_expect_success 'expire removes repacked packs' '
 	(
 		cd dup &&
