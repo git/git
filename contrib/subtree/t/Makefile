@@ -51,6 +51,7 @@ clean-except-prove-cache:
 	$(RM) -r valgrind/bin
 
 clean: clean-except-prove-cache
+	$(RM) -r '$(TEST_RESULTS_DIRECTORY_SQ)'
 	$(RM) .prove
 
 test-lint: test-lint-duplicates test-lint-executable test-lint-shell-syntax
