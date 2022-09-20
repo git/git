@@ -22,7 +22,7 @@ int cmd_diagnose(int argc, const char **argv, const char *prefix)
 			   N_("specify a destination for the diagnostics archive")),
 		OPT_STRING('s', "suffix", &option_suffix, N_("format"),
 			   N_("specify a strftime format suffix for the filename")),
-		OPT_CALLBACK_F(0, "mode", &mode, N_("(stats|all)"),
+		OPT_CALLBACK_F(0, "mode", &mode, "(stats|all)",
 			       N_("specify the content of the diagnostic archive"),
 			       PARSE_OPT_NONEG, option_parse_diagnose),
 		OPT_END()
