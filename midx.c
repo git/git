@@ -1928,7 +1928,7 @@ static int fill_included_packs_batch(struct repository *r,
 		pack_info[i].mtime = m->packs[i]->mtime;
 	}
 
-	for (i = 0; batch_size && i < m->num_objects; i++) {
+	for (i = 0; i < m->num_objects; i++) {
 		uint32_t pack_int_id = nth_midxed_pack_int_id(m, i);
 		pack_info[pack_int_id].referenced_objects++;
 	}
