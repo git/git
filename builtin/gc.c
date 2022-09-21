@@ -1461,7 +1461,7 @@ static char *get_maintpath(void)
 }
 
 static char const * const builtin_maintenance_register_usage[] = {
-	N_("git maintenance register"),
+	"git maintenance register",
 	NULL
 };
 
@@ -1519,7 +1519,7 @@ done:
 }
 
 static char const * const builtin_maintenance_unregister_usage[] = {
-	N_("git maintenance unregister"),
+	"git maintenance unregister",
 	NULL
 };
 
@@ -2542,7 +2542,7 @@ static int maintenance_start(int argc, const char **argv, const char *prefix)
 }
 
 static const char *const builtin_maintenance_stop_usage[] = {
-	N_("git maintenance stop"),
+	"git maintenance stop",
 	NULL
 };
 
