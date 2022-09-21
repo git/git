@@ -181,6 +181,7 @@
 /git-verify-commit
 /git-verify-pack
 /git-verify-tag
+/git-version
 /git-web--browse
 /git-whatchanged
 /git-worktree
