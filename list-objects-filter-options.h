@@ -35,7 +35,7 @@ struct list_objects_filter_options {
 	 * To get the raw filter spec given by the user, use the result of
 	 * list_objects_filter_spec().
 	 */
-	struct string_list filter_spec;
+	struct strbuf filter_spec;
 
 	/*
 	 * 'choice' is determined by parsing the filter-spec.  This indicates
@@ -68,6 +68,9 @@ struct list_objects_filter_options {
 	 * END choice-specific parsed values.
 	 */
 };
+
+#define LIST_OBJECTS_FILTER_INIT { .filter_spec = STRBUF_INIT }
+void list_objects_filter_init(struct list_objects_filter_options *filter_options);
 
 /*
  * Parse value of the argument to the "filter" keyword.

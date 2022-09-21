@@ -6,7 +6,7 @@
 	) >file &&
 	cd foo &&
 	(
-		echo a
+		echo a ?!AMP?!
 		echo b
 	) >file
 )

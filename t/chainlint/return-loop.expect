@@ -1,0 +1,5 @@
+while test $i -lt $((num - 5))
+do
+	git notes add -m "notes for commit$i" HEAD~$i || return 1
+	i=$((i + 1))
+done
