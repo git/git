@@ -5,8 +5,14 @@ on: [push, pull_request]
 env:
   DEVELOPER: 1
 
+permissions:
+  contents: read
+
 jobs:
   ci-config:
+    permissions:
+      contents: read
+      actions: read # for github.actions.getWorkflowRun
     name: config
     runs-on: ubuntu-latest
     outputs:
