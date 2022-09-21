@@ -289,7 +289,7 @@ expect that the process will end when all prerequisite commit OIDs in a
 thin bundle are already in the object database.
 
 When using the `creationToken` heuristic, the client can avoid downloading
-any bundles if their creation tokenss are not larger than the stored
+any bundles if their creation tokens are not larger than the stored
 creation token. After fetching new bundles, Git updates this local
 creation token.
 
@@ -318,7 +318,7 @@ Here are a few example error conditions:
   Git's other HTTP protocols in terms of handling specific 400-level
   errors.
 
-* The server reports any other failure reponse.
+* The server reports any other failure response.
 
 * The client receives data that is not parsable as a bundle or bundle list.
 
@@ -446,7 +446,7 @@ created every hour, and then once a day those "hourly" bundles could be
 merged into a "daily" bundle. The daily bundles are merged into the
 oldest bundle after 30 days.
 
-It is recommened that this bundle strategy is repeated with the `blob:none`
+It is recommended that this bundle strategy is repeated with the `blob:none`
 filter if clients of this repository are expecting to use blobless partial
 clones. This list of blobless bundles stays in the same list as the full
 bundles, but uses the `bundle.<id>.filter` key to separate the two groups.
