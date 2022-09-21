@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2022, #05; Mon, 19)
-X-master-at: dda7228a83e2e9ff584bf6adbf55910565b41e14
-X-next-at: 39d753a26bd0c11658343a9e4366f68cd11f7781
+Subject: What's cooking in git.git (Sep 2022, #06; Wed, 21)
+X-master-at: 1b3d6e17fe83eb6f79ffbac2f2c61bbf1eaef5f8
+X-next-at: 413fe02c70ffea5b779d4f98dfa4a502e54bc4ab
 
-What's cooking in git.git (Sep 2022, #05; Mon, 19)
+What's cooking in git.git (Sep 2022, #06; Wed, 21)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -13,12 +13,10 @@ release).  Commits prefixed with '-' are only in 'seen', and aren't
 considered "accepted" at all.  A topic without enough support may be
 discarded after a long period of no activity.
 
-A few more topics have been merged to the 'master' branch.  We plan
-to tag -rc1 in a few days (but expect no movement on 'master' or
-'next' tomorrow).  There are a few topics that are marked with the
-"Merge to 'next'?"  marker, which can use your help ;-)  After -rc1
-gets tagged, the 'master' branch will go in the "regression fixes
-only" mode (cf. https://tinyurl.com/gitCal).
+Git 2.38-rc1 has been tagged.  Now the 'master' branch is in the
+"regression fixes only" mode (cf. https://tinyurl.com/gitCal) until
+the final release.  I may start dropping patches on a completely new
+topics that has no relevance on the upcoming release.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -51,142 +49,29 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ad/t1800-cygwin (2022-09-15) 1 commit
-  (merged to 'next' on 2022-09-15 at 9667abb48c)
- + t1800: correct test to handle Cygwin
+* ec/reftable-pass-pq-entry-by-reference (2022-09-15) 1 commit
+  (merged to 'next' on 2022-09-15 at 928e75c7d1)
+ + reftable: use a pointer for pq_entry param
 
- Test fix.
- source: <20220915075717.425673-1-adam@dinwoodie.org>
+ Small code clean-up in reftable implementation.
+ source: <1833f3928cb.acf3c97d869879.7909589521159235166@elijahpepe.com>
 
-
-* es/chainlint (2022-09-12) 19 commits
-  (merged to 'next' on 2022-09-12 at 577e59143f)
- + chainlint: colorize problem annotations and test delimiters
-  (merged to 'next' on 2022-09-08 at eab3357b05)
- + t: retire unused chainlint.sed
- + t/Makefile: teach `make test` and `make prove` to run chainlint.pl
- + test-lib: replace chainlint.sed with chainlint.pl
- + test-lib: retire "lint harder" optimization hack
- + t/chainlint: add more chainlint.pl self-tests
- + chainlint.pl: allow `|| echo` to signal failure upstream of a pipe
- + chainlint.pl: complain about loops lacking explicit failure handling
- + chainlint.pl: don't flag broken &&-chain if failure indicated explicitly
- + chainlint.pl: don't flag broken &&-chain if `$?` handled explicitly
- + chainlint.pl: don't require `&` background command to end with `&&`
- + t/Makefile: apply chainlint.pl to existing self-tests
- + chainlint.pl: don't require `return|exit|continue` to end with `&&`
- + chainlint.pl: validate test scripts in parallel
- + chainlint.pl: add parser to identify test definitions
- + chainlint.pl: add parser to validate tests
- + chainlint.pl: add POSIX shell parser
- + chainlint.pl: add POSIX shell lexical analyzer
- + t: add skeleton chainlint.pl
-
- Revamp chainlint script for our tests.
- source: <pull.1322.git.git.1661992197.gitgitgadget@gmail.com>
- source: <pull.1324.git.git.1663023888412.gitgitgadget@gmail.com>
-
-
-* jk/list-objects-filter-cleanup (2022-09-12) 5 commits
-  (merged to 'next' on 2022-09-12 at 33cb79c924)
- + list-objects-filter: convert filter_spec to a strbuf
- + list-objects-filter: add and use initializers
- + list-objects-filter: handle null default filter spec
- + list-objects-filter: don't memset after releasing filter struct
- + Merge branch 'jk/plug-list-object-filter-leaks' into jk/list-objects-filter-cleanup
-
- A couple of bugfixes with code clean-up.
- source: <Yx1qwlpNbxGEiUgc@coredump.intra.peff.net>
-
-
-* sy/mv-out-of-cone (2022-09-09) 10 commits
-  (merged to 'next' on 2022-09-12 at 7cb7b41779)
- + builtin/mv.c: fix possible segfault in add_slash()
-  (merged to 'next' on 2022-08-17 at 2316d9ce4d)
- + mv: check overwrite for in-to-out move
- + advice.h: add advise_on_moving_dirty_path()
- + mv: cleanup empty WORKING_DIRECTORY
- + mv: from in-cone to out-of-cone
- + mv: remove BOTH from enum update_mode
- + mv: check if <destination> is a SKIP_WORKTREE_DIR
- + mv: free the with_slash in check_dir_in_index()
- + mv: rename check_dir_in_index() to empty_dir_has_sparse_contents()
- + t7002: add tests for moving from in-cone to out-of-cone
-
- "git mv A B" in a sparsely populated working tree can be asked to
- move a path from a directory that is "in cone" to another directory
- that is "out of cone".  Handling of such a case has been improved.
- source: <20220809120910.2021413-1-shaoxuan.yuan02@gmail.com>
- source: <20220909222736.279362-1-shaoxuan.yuan02@gmail.com>
-
-
-* vd/scalar-to-main (2022-09-02) 9 commits
-  (merged to 'next' on 2022-09-14 at 230bf89c01)
- + Documentation/technical: include Scalar technical doc
- + t/perf: add 'GIT_PERF_USE_SCALAR' run option
- + t/perf: add Scalar performance tests
- + scalar-clone: add test coverage
- + scalar: add to 'git help -a' command list
- + scalar: implement the `help` subcommand
- + git help: special-case `scalar`
- + scalar: include in standard Git build & installation
- + scalar: fix command documentation section header
-
- Hoist the remainder of "scalar" out of contrib/ to the main part of
- the codebase.
- source: <pull.1341.v2.git.1662134210.gitgitgadget@gmail.com>
-
-
-* zh/ls-files-format (2022-09-12) 1 commit
-  (merged to 'next' on 2022-09-12 at 91dda58387)
- + ls-files: fix black space in error message
-
- Typofix in the UI of a topic that has graduated to 'master'.
- source: <pull.1350.git.1662904997760.gitgitgadget@gmail.com>
-
---------------------------------------------------
-[New Topics]
 
 * fz/help-doublofix (2022-09-16) 1 commit
   (merged to 'next' on 2022-09-19 at 3ec5906f4e)
  + help: fix doubled words in explanation for developer interfaces
 
  Typofix for topic already in -rc0.
-
- Will merge to 'master'.
  source: <pull.1330.git.git.1663333529294.gitgitgadget@gmail.com>
 
 
-* so/diff-merges-cleanup (2022-09-16) 3 commits
- - diff-merges: clarify log.diffMerges documentation
- - diff-merges: cleanup set_diff_merges()
- - diff-merges: cleanup func_by_opt()
-
- Code clean-up.
-
- Will merge to 'next'?
- source: <20220914193102.5275-1-sorganov@gmail.com>
-
-
-* tz/tech-docs-to-help-fix (2022-09-16) 2 commits
-  (merged to 'next' on 2022-09-19 at 4a13143da1)
- + api docs: link to html version of api-trace2
- + docs: fix a few recently broken links
-
- Docfix for topic already in -rc0.
+* js/typofix (2022-09-21) 2 commits
+  (merged to 'next' on 2022-09-21 at bb2082c5ef)
+ + Documentation: clean up various typos in technical docs
+ + Documentation: clean up a few misspelled word typos
 
  Will merge to 'master'.
- source: <20220916062303.3736166-2-tmz@pobox.com>
-
-
-* ja/rebase-i-avoid-amending-self (2022-09-19) 1 commit
- - sequencer: avoid dropping fixup commit that targets self via commit-ish
-
- "git rebase -i" can mistakenly attempt to apply a fixup to a commit
- itself, which has been corrected.
-
- Will merge to 'next'?
- source: <20220918121053.880225-1-aclopte@gmail.com>
+ source: <20220920024557.22889-1-jacob@initialcommit.io>
 
 
 * ml/commit-graph-expire-dir-leak-fix (2022-09-19) 1 commit
@@ -195,31 +80,122 @@ Release tarballs are available at:
 
  A result from opendir() was leaking in the commit-graph expiration
  codepath, which has been plugged.
-
- Will merge to 'master'.
  source: <20220919141441.5644-1-linmq006@gmail.com>
 
 
-* vd/scalar-generalize-diagnose (2022-09-19) 1 commit
+* sg/clean-test-results (2022-09-21) 1 commit
+  (merged to 'next' on 2022-09-21 at 15e66ceb37)
+ + t/Makefile: remove 'test-results' on 'make clean'
+
+ "make clean" stopped cleaning the test results directory as a side
+ effect of a topic that has nothing to do with "make clean", which
+ has been corrected.
+ source: <20220920201619.40972-1-szeder.dev@gmail.com>
+
+
+* sg/parse-options-subcommand (2022-09-21) 1 commit
+  (merged to 'next' on 2022-09-21 at 42650aa5f1)
+ + gc: don't translate literal commands
+
+ Fix messages incorrectly marked for translation.
+ source: <20220920050725.326383-1-alexhenrie24@gmail.com>
+
+
+* tz/tech-docs-to-help-fix (2022-09-16) 2 commits
+  (merged to 'next' on 2022-09-19 at 4a13143da1)
+ + api docs: link to html version of api-trace2
+ + docs: fix a few recently broken links
+
+ Docfix for topic already in -rc0.
+ source: <20220916062303.3736166-2-tmz@pobox.com>
+
+
+* vd/check-docs-fixes (2022-09-19) 2 commits
+  (merged to 'next' on 2022-09-21 at 549e699018)
+ + version: fix builtin linking & documentation
+ + diagnose: add to command-list.txt
+
+ Build fix.
+ source: <pull.1360.git.1663633195.gitgitgadget@gmail.com>
+
+
+* vd/doc-reviewing-guidelines (2022-09-19) 1 commit
+  (merged to 'next' on 2022-09-21 at c30f77dbe6)
+ + Documentation: add ReviewingGuidelines
+
+ Just like we have coding guidelines, we now have guidelines for
+ reviewers.
+ source: <pull.1348.v2.git.1663614767058.gitgitgadget@gmail.com>
+
+
+* vd/scalar-generalize-diagnose (2022-09-21) 2 commits
+  (merged to 'next' on 2022-09-21 at 1102451ebd)
+ + builtin/diagnose.c: don't translate the two mode values
   (merged to 'next' on 2022-09-19 at e03e8a6e4a)
  + diagnose.c: refactor to safely use 'd_type'
 
  Portability fix.
-
- Will merge to 'master'.
  source: <pull.1354.git.1663438615413.gitgitgadget@gmail.com>
+ source: <20220920050632.326307-1-alexhenrie24@gmail.com>
+
+--------------------------------------------------
+[New Topics]
+
+* dd/retire-efgrep (2022-09-21) 4 commits
+  (merged to 'next' on 2022-09-21 at 22bc339be1)
+ + t: convert fgrep usage to "grep -F"
+ + t: convert egrep usage to "grep -E"
+ + t: remove \{m,n\} from BRE grep usage
+ + CodingGuidelines: allow grep -E
+
+ Prepare for GNU [ef]grep that throw warning of their uses.
+
+ Will cook in 'next'.
+ source: <cover.1663765176.git.congdanhqx@gmail.com>
 
 
-* ac/fuzzers (2022-09-19) 1 commit
- - fuzz: reorganise the path for existing oss-fuzz fuzzers
+* ds/maintenance-unregsiter-ignore-missing (2022-09-21) 1 commit
+ - maintenance: make unregister idempotent
 
- source: <pull.1353.v4.git.1663598215154.gitgitgadget@gmail.com>
+ "git maintenance unregister" in a repository that is already been
+ unregistered reported an error.
+
+ Somewhat dubious?
+ cf. <xmqqpmfo4pc7.fsf@gitster.g>
+ source: <pull.1358.git.1663635732095.gitgitgadget@gmail.com>
 
 
-* hn/parse-worktree-ref (2022-09-19) 1 commit
- - refs: unify parse_worktree_ref() and ref_type()
+* tb/midx-repack-ignore-cruft-packs (2022-09-21) 7 commits
+ - midx.c: avoid cruft packs with non-zero `repack --batch-size`
+ - midx.c: remove unnecessary loop condition
+ - midx.c: replace `xcalloc()` with `CALLOC_ARRAY()`
+ - midx.c: avoid cruft packs with `repack --batch-size=0`
+ - midx.c: prevent `expire` from removing the cruft pack
+ - Documentation/git-multi-pack-index.txt: clarify expire behavior
+ - Documentation/git-multi-pack-index.txt: fix typo
 
- source: <pull.1325.v2.git.git.1663605291172.gitgitgadget@gmail.com>
+ source: <cover.1663638929.git.me@ttaylorr.com>
+
+
+* ah/fsmonitor-daemon-usage-non-l10n (2022-09-21) 1 commit
+  (merged to 'next' on 2022-09-21 at bc69a73c6c)
+ + fsmonitor--daemon: don't translate literal commands
+
+ Fix messages incorrectly marked for translation.
+
+ Will cook in 'next'.
+ source: <20220920050709.326359-1-alexhenrie24@gmail.com>
+
+
+* js/merge-tree-in-read-only-repo (2022-09-21) 1 commit
+ - merge-tree: fix segmentation fault in read-only repositories
+
+ In read-only repositories, "git merge-tree" tried to come up with a
+ merge result tree object, which it failed (which is not wrong) and
+ led to a segfault (which is bad), which has been corrected.
+
+ Will merge to 'next'.
+ source: <pull.1362.v2.git.1663798083240.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -265,8 +241,43 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
-* ed/fsmonitor-on-networked-macos (2022-09-19) 5 commits
+* so/diff-merges-cleanup (2022-09-16) 3 commits
+ - diff-merges: clarify log.diffMerges documentation
+ - diff-merges: cleanup set_diff_merges()
+ - diff-merges: cleanup func_by_opt()
+
+ Code clean-up.
+
+ Will merge to 'next'?
+ source: <20220914193102.5275-1-sorganov@gmail.com>
+
+
+* ja/rebase-i-avoid-amending-self (2022-09-21) 2 commits
+ - SQUASH??? resurrect previous version of the tests
+ - sequencer: avoid dropping fixup commit that targets self via commit-ish
+
+ "git rebase -i" can mistakenly attempt to apply a fixup to a commit
+ itself, which has been corrected.
+
+ Does not seem to pass its own test.
+ source: <20220920031140.1220220-1-aclopte@gmail.com>
+
+
+* ac/fuzzers (2022-09-19) 1 commit
+ - fuzz: reorganise the path for existing oss-fuzz fuzzers
+
+ source: <pull.1353.v4.git.1663598215154.gitgitgadget@gmail.com>
+
+
+* hn/parse-worktree-ref (2022-09-19) 1 commit
+ - refs: unify parse_worktree_ref() and ref_type()
+
+ source: <pull.1325.v2.git.git.1663605291172.gitgitgadget@gmail.com>
+
+
+* ed/fsmonitor-on-networked-macos (2022-09-21) 6 commits
  - fsmonitor: add documentation for allowRemote and socketDir options
+ - fsmonitor: check for compatability before communicating with fsmonitor
  - fsmonitor: deal with synthetic firmlinks on macOS
  - fsmonitor: avoid socket location check if using hook
  - fsmonitor: relocate socket file if .git directory is remote
@@ -276,7 +287,7 @@ Release tarballs are available at:
  filesystem is disabled. Add knobs to make it workable on macOS.
 
  Will merge to 'next'?
- source: <pull.1326.v8.git.1663377141.gitgitgadget@gmail.com>
+ source: <pull.1326.v10.git.1663705986.gitgitgadget@gmail.com>
 
 
 * rj/branch-edit-description-with-nth-checkout (2022-09-12) 2 commits
@@ -303,16 +314,6 @@ Release tarballs are available at:
 
  RFC
  source: <pull.1352.git.1663097156.gitgitgadget@gmail.com>
-
-
-* ec/reftable-pass-pq-entry-by-reference (2022-09-15) 1 commit
-  (merged to 'next' on 2022-09-15 at 928e75c7d1)
- + reftable: use a pointer for pq_entry param
-
- Small code clean-up in reftable implementation.
-
- Will merge to 'master'.
- source: <1833f3928cb.acf3c97d869879.7909589521159235166@elijahpepe.com>
 
 
 * jc/environ-docs (2022-09-16) 5 commits
@@ -386,16 +387,6 @@ Release tarballs are available at:
 
  Needs review.
  source: <cover-00.34-00000000000-20220902T092734Z-avarab@gmail.com>
-
-
-* vd/doc-reviewing-guidelines (2022-09-19) 1 commit
- - Documentation: add ReviewingGuidelines
-
- Just like we have coding guidelines, we now have guidelines for
- reviewers.
-
- Will merge to 'next' and then to 'master'.
- source: <pull.1348.v2.git.1663614767058.gitgitgadget@gmail.com>
 
 
 * ab/coccicheck-incremental (2022-08-31) 9 commits
