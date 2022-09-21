@@ -1244,9 +1244,9 @@ test_expect_success 'short commit ID collide' '
 		test $colliding_id = "$(git rev-parse HEAD | cut -c 1-4)" &&
 		grep "^pick $colliding_id " \
 			.git/rebase-merge/git-rebase-todo.tmp &&
-		grep "^pick [0-9a-f]\{$hexsz\}" \
+		grep -E "^pick [0-9a-f]{$hexsz}" \
 			.git/rebase-merge/git-rebase-todo &&
-		grep "^pick [0-9a-f]\{$hexsz\}" \
+		grep -E "^pick [0-9a-f]{$hexsz}" \
 			.git/rebase-merge/git-rebase-todo.backup &&
 		git rebase --continue
 	) &&
@@ -1261,7 +1261,7 @@ test_expect_success 'respect core.abbrev' '
 		set_cat_todo_editor &&
 		test_must_fail git rebase -i HEAD~4 >todo-list
 	) &&
-	test 4 = $(grep -c "pick [0-9a-f]\{12,\}" todo-list)
+	test 4 = $(grep -c -E "pick [0-9a-f]{12,}" todo-list)
 '
 
 test_expect_success 'todo count' '
