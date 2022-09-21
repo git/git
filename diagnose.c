@@ -66,17 +66,53 @@ static int dir_file_stats(struct object_directory *object_dir, void *data)
 	return 0;
 }
 
-static int count_files(char *path)
+/*
+ * Get the d_type of a dirent. If the d_type is unknown, derive it from
+ * stat.st_mode.
+ *
+ * Note that 'path' is assumed to have a trailing slash. It is also modified
+ * in-place during the execution of the function, but is then reverted to its
+ * original value before returning.
+ */
+static unsigned char get_dtype(struct dirent *e, struct strbuf *path)
 {
-	DIR *dir = opendir(path);
+	struct stat st;
+	unsigned char dtype = DTYPE(e);
+	size_t base_path_len;
+
+	if (dtype != DT_UNKNOWN)
+		return dtype;
+
+	/* d_type unknown in dirent, try to fall back on lstat results */
+	base_path_len = path->len;
+	strbuf_addstr(path, e->d_name);
+	if (lstat(path->buf, &st))
+		goto cleanup;
+
+	/* determine d_type from st_mode */
+	if (S_ISREG(st.st_mode))
+		dtype = DT_REG;
+	else if (S_ISDIR(st.st_mode))
+		dtype = DT_DIR;
+	else if (S_ISLNK(st.st_mode))
+		dtype = DT_LNK;
+
+cleanup:
+	strbuf_setlen(path, base_path_len);
+	return dtype;
+}
+
+static int count_files(struct strbuf *path)
+{
+	DIR *dir = opendir(path->buf);
 	struct dirent *e;
 	int count = 0;
 
 	if (!dir)
 		return 0;
 
-	while ((e = readdir(dir)) != NULL)
-		if (!is_dot_or_dotdot(e->d_name) && e->d_type == DT_REG)
+	while ((e = readdir_skip_dot_and_dotdot(dir)) != NULL)
+		if (get_dtype(e, path) == DT_REG)
 			count++;
 
 	closedir(dir);
@@ -104,13 +140,13 @@ static void loose_objs_stats(struct strbuf *buf, const char *path)
 	strbuf_addch(&count_path, '/');
 	base_path_len = count_path.len;
 
-	while ((e = readdir(dir)) != NULL)
-		if (!is_dot_or_dotdot(e->d_name) &&
-		    e->d_type == DT_DIR && strlen(e->d_name) == 2 &&
+	while ((e = readdir_skip_dot_and_dotdot(dir)) != NULL)
+		if (get_dtype(e, &count_path) == DT_DIR &&
+		    strlen(e->d_name) == 2 &&
 		    !hex_to_bytes(&c, e->d_name, 1)) {
 			strbuf_setlen(&count_path, base_path_len);
-			strbuf_addstr(&count_path, e->d_name);
-			total += (count = count_files(count_path.buf));
+			strbuf_addf(&count_path, "%s/", e->d_name);
+			total += (count = count_files(&count_path));
 			strbuf_addf(buf, "%s : %7d files\n", e->d_name, count);
 		}
 
@@ -144,22 +180,28 @@ static int add_directory_to_archiver(struct strvec *archiver_args,
 	len = buf.len;
 	strvec_pushf(archiver_args, "--prefix=%s", buf.buf);
 
-	while (!res && (e = readdir(dir))) {
-		if (!strcmp(".", e->d_name) || !strcmp("..", e->d_name))
-			continue;
+	while (!res && (e = readdir_skip_dot_and_dotdot(dir))) {
+		struct strbuf abspath = STRBUF_INIT;
+		unsigned char dtype;
+
+		strbuf_add_absolute_path(&abspath, at_root ? "." : path);
+		strbuf_addch(&abspath, '/');
+		dtype = get_dtype(e, &abspath);
 
 		strbuf_setlen(&buf, len);
 		strbuf_addstr(&buf, e->d_name);
 
-		if (e->d_type == DT_REG)
+		if (dtype == DT_REG)
 			strvec_pushf(archiver_args, "--add-file=%s", buf.buf);
-		else if (e->d_type != DT_DIR)
+		else if (dtype != DT_DIR)
 			warning(_("skipping '%s', which is neither file nor "
 				  "directory"), buf.buf);
 		else if (recurse &&
 			 add_directory_to_archiver(archiver_args,
 						   buf.buf, recurse) < 0)
 			res = -1;
+
+		strbuf_release(&abspath);
 	}
 
 	closedir(dir);
