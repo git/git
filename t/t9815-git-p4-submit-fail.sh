@@ -417,8 +417,8 @@ test_expect_success 'cleanup chmod after submit cancel' '
 		! p4 fstat -T action text &&
 		test_path_is_file text+x &&
 		! p4 fstat -T action text+x &&
-		ls -l text | egrep ^-r-- &&
-		ls -l text+x | egrep ^-r-x
+		ls -l text | grep -E ^-r-- &&
+		ls -l text+x | grep -E ^-r-x
 	)
 '
 

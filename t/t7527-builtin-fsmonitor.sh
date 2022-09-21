@@ -939,9 +939,9 @@ test_expect_success CASE_INSENSITIVE_FS 'case insensitive+preserving' '
 	# directories and files that we touched.  We may or may not get a
 	# trailing slash on modified directories.
 	#
-	egrep "^event: abc/?$"       ./insensitive.trace &&
-	egrep "^event: abc/def/?$"   ./insensitive.trace &&
-	egrep "^event: abc/def/xyz$" ./insensitive.trace
+	grep -E "^event: abc/?$"       ./insensitive.trace &&
+	grep -E "^event: abc/def/?$"   ./insensitive.trace &&
+	grep -E "^event: abc/def/xyz$" ./insensitive.trace
 '
 
 # The variable "unicode_debug" is defined in the following library
@@ -983,20 +983,20 @@ test_expect_success !UNICODE_COMPOSITION_SENSITIVE 'Unicode nfc/nfd' '
 	then
 		# We should have seen NFC event from OS.
 		# We should not have synthesized an NFD event.
-		egrep    "^event: nfc/c_${utf8_nfc}/?$" ./unicode.trace &&
-		egrep -v "^event: nfc/c_${utf8_nfd}/?$" ./unicode.trace
+		grep -E    "^event: nfc/c_${utf8_nfc}/?$" ./unicode.trace &&
+		grep -E -v "^event: nfc/c_${utf8_nfd}/?$" ./unicode.trace
 	else
 		# We should have seen NFD event from OS.
 		# We should have synthesized an NFC event.
-		egrep "^event: nfc/c_${utf8_nfd}/?$" ./unicode.trace &&
-		egrep "^event: nfc/c_${utf8_nfc}/?$" ./unicode.trace
+		grep -E "^event: nfc/c_${utf8_nfd}/?$" ./unicode.trace &&
+		grep -E "^event: nfc/c_${utf8_nfc}/?$" ./unicode.trace
 	fi &&
 
 	# We assume UNICODE_NFD_PRESERVED.
 	# We should have seen explicit NFD from OS.
 	# We should have synthesized an NFC event.
-	egrep "^event: nfd/d_${utf8_nfd}/?$" ./unicode.trace &&
-	egrep "^event: nfd/d_${utf8_nfc}/?$" ./unicode.trace
+	grep -E "^event: nfd/d_${utf8_nfd}/?$" ./unicode.trace &&
+	grep -E "^event: nfd/d_${utf8_nfc}/?$" ./unicode.trace
 '
 
 test_done
