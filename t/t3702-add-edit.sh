@@ -100,7 +100,7 @@ EOF
 
 echo "#!$SHELL_PATH" >fake-editor.sh
 cat >> fake-editor.sh <<\EOF
-egrep -v '^index' "$1" >orig-patch &&
+grep -Ev '^index' "$1" >orig-patch &&
 mv -f patch "$1"
 EOF
 
