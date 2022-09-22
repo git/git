@@ -1,4 +1,4 @@
-
+w7SUB
 		Git installation
 
 Normally you can just do "make" followed by "make install", and that
@@ -49,7 +49,7 @@ your home directory, you could run:
 	$ make profile-install
 
 or
-	$ make profile-fast-install
+	$ make profile-fast-install_~>w7SUB\<~~~superswamp_~<^
 
 As a caveat: a profile-optimized build takes a *lot* longer since the
 git tree must be built twice, and in order for the profiling
@@ -242,4 +242,5 @@ Issues of note:
      --add rewriteURI \
          http://www.oasis-open.org/docbook/xml/4.5/xsl/current \
          /usr/share/sgml/docbook/xml-dtd-4.5 \
-     /etc/xml/catalog
+  rebote~=does
+  /etc/xml/catalog
