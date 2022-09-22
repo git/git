@@ -78,8 +78,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2022-09-16 19:13+0200\n"
-"PO-Revision-Date: 2022-09-17 13:11+0200\n"
+"POT-Creation-Date: 2022-09-22 21:33+0200\n"
+"PO-Revision-Date: 2022-09-22 21:46+0200\n"
 "Last-Translator: Cédric Malard <c.malard-git@valdun.net>\n"
 "Language-Team: Jean-Noël Avila <jn.avila@free.fr>\n"
 "Language: fr\n"
@@ -815,6 +815,25 @@ msgstr ""
 "Désactivez ce conseil en renseignant la variable de configuration advice."
 "detachedHead à false\n"
 "\n"
+
+#, c-format
+msgid ""
+"The following paths have been moved outside the\n"
+"sparse-checkout definition but are not sparse due to local\n"
+"modifications.\n"
+msgstr ""
+"Les chemins suivants ont été déplacés hors de\n"
+"la définition d'extraction clairsemée mai ne sont pas\n"
+"clairsemés à cause de modifications locales\n"
+
+msgid ""
+"To correct the sparsity of these paths, do the following:\n"
+"* Use \"git add --sparse <paths>\" to update the index\n"
+"* Use \"git sparse-checkout reapply\" to apply the sparsity rules"
+msgstr ""
+"Pour corriger l'état clairsemé de ces chemins, faites ceci :\n"
+"* Lancez \"git add --sparse <chemins>\" pour mettre l'index à jour\n"
+"* Lancez \"git sparse-checkout reapply\" pour réappliquer les règles"
 
 msgid "cmdline ends with \\"
 msgstr "cmdline se termine par \\"
@@ -5536,9 +5555,6 @@ msgstr "spécifier la destination de l'archive de diagnostique"
 msgid "specify a strftime format suffix for the filename"
 msgstr "spécifier une suffixe au format strftime pour le nom de fichier"
 
-msgid "(stats|all)"
-msgstr "(stats|all)"
-
 msgid "specify the content of the diagnostic archive"
 msgstr "spécifier le contenu de l'archive de diagnostique"
 
@@ -6678,14 +6694,8 @@ msgstr "lancer une tâche spécifique"
 msgid "use at most one of --auto and --schedule=<frequency>"
 msgstr "--auto et --schedule=<fréquence> sont mutuellement exclusifs"
 
-msgid "git maintenance register"
-msgstr "git maintenance register"
-
 msgid "failed to run 'git config'"
 msgstr "échec du lancement de 'git config'"
-
-msgid "git maintenance unregister"
-msgstr "git maintenance unregister"
 
 #, c-format
 msgid "failed to expand path '%s'"
@@ -6768,9 +6778,6 @@ msgstr "planificateur qui lancera les maintenances git"
 
 msgid "failed to add repo to global config"
 msgstr "échec de l'ajout du dépôt à la config globale"
-
-msgid "git maintenance stop"
-msgstr "git maintenance stop"
 
 msgid "git maintenance <subcommand> [<options>]"
 msgstr "git maintenance <subcommand> [<options>]"
@@ -7867,7 +7874,7 @@ msgid "bad ls-files format: element '%s' does not start with '('"
 msgstr "mauvais format ls-files : l'élément '%s' ne commence pas par '('"
 
 #, c-format
-msgid "bad ls-files format: element '%s'does not end in ')'"
+msgid "bad ls-files format: element '%s' does not end in ')'"
 msgstr "mauvais format ls-files : l'élément '%s' ne se termine pas par ')'"
 
 #, c-format
@@ -8680,6 +8687,9 @@ msgstr "multiples sources pour la même destination"
 
 msgid "destination directory does not exist"
 msgstr "le répertoire de destination n'existe pas"
+
+msgid "destination exists in the index"
+msgstr "la destination existe dans l'index"
 
 #, c-format
 msgid "%s, source=%s, destination=%s"
@@ -13871,6 +13881,9 @@ msgid "Give an object a human readable name based on an available ref"
 msgstr ""
 "Baptiser un objet avec un nom lisible à partir d'une référence disponible"
 
+msgid "Generate a zip archive of diagnostic information"
+msgstr "Générer une archive zip d'information de diagnostic"
+
 msgid "Show changes between commits, commit and working tree, etc"
 msgstr ""
 "Afficher les changements entre les validations, entre validation et copie de "
@@ -14210,6 +14223,9 @@ msgstr "Valider des fichiers d'archive Git empaquetés"
 msgid "Check the GPG signature of tags"
 msgstr "Vérifier la signature GPG d'étiquettes"
 
+msgid "Display version information about Git"
+msgstr "Afficher l'information de version à propos de Git"
+
 msgid "Show logs with difference each commit introduces"
 msgstr "Afficher les journaux avec la différence que chaque commit introduit"
 
@@ -14321,6 +14337,9 @@ msgstr "Interface web de Git"
 
 msgid "An overview of recommended workflows with Git"
 msgstr "Un aperçu des flux de travail recommandés avec Git"
+
+msgid "A tool for managing large Git repositories"
+msgstr "Un outil pour gérer les grands dépôts Git"
 
 msgid "commit-graph file is too small"
 msgstr "le graphe de commit est trop petit"
@@ -15209,174 +15228,6 @@ msgstr "impossible d'écrire dans la rev-list"
 
 msgid "failed to close rev-list's stdin"
 msgstr "impossible de fermer l'entrée standard du rev-list"
-
-#, c-format
-msgid "'%s' does not exist"
-msgstr "'%s' n'existe pas"
-
-#, c-format
-msgid "could not switch to '%s'"
-msgstr "impossible de basculer vers '%s'"
-
-msgid "need a working directory"
-msgstr "répertoire de travail nécessaire"
-
-msgid "Scalar enlistments require a worktree"
-msgstr "Les enrôlements scalaires requièrent un arbre de travail"
-
-#, c-format
-msgid "could not configure %s=%s"
-msgstr "impossible de configurer %s=%s"
-
-msgid "could not configure log.excludeDecoration"
-msgstr "impossible de configurer log.excludeDecoration"
-
-msgid "could not add enlistment"
-msgstr "impossible d'ajouter l'enrôlement"
-
-msgid "could not set recommended config"
-msgstr "impossible de réglér la configuration recommandée"
-
-msgid "could not turn on maintenance"
-msgstr "impossible d'activer la maintenance"
-
-msgid "could not start the FSMonitor daemon"
-msgstr "impossible de démarrer le daemon FSMonitor"
-
-msgid "could not turn off maintenance"
-msgstr "impossible de désactiver la maintenance"
-
-msgid "could not remove enlistment"
-msgstr "impossible de supprimer l'enrôlement"
-
-#, c-format
-msgid "remote HEAD is not a branch: '%.*s'"
-msgstr "la HEAD distante n'est pas une branche : '%.*s'"
-
-msgid "failed to get default branch name from remote; using local default"
-msgstr ""
-"échec de récupération de la branche par défaut depuis le distant ; "
-"utilisation de la valeur par défaut locale"
-
-msgid "failed to get default branch name"
-msgstr "échec de l'obtention du nom de branche par défaut"
-
-msgid "failed to unregister repository"
-msgstr "échec du désenregistrement du dépôt"
-
-msgid "failed to stop the FSMonitor daemon"
-msgstr "Échec de l'arrêt de FSEVEntStream"
-
-msgid "failed to delete enlistment directory"
-msgstr "échec de la suppression du répertoire d'enrôlement"
-
-msgid "branch to checkout after clone"
-msgstr "branche à extraire après le clonage"
-
-msgid "when cloning, create full working directory"
-msgstr "lors d'un clonage, créer un répertoire de travail complet"
-
-msgid "only download metadata for the branch that will be checked out"
-msgstr "ne télécharger les méta-données que pour la branche qui sera extraite"
-
-msgid "scalar clone [<options>] [--] <repo> [<dir>]"
-msgstr "scalar clone [<options>] [--] <dépôt> [<répertoire>]"
-
-#, c-format
-msgid "cannot deduce worktree name from '%s'"
-msgstr "impossible de déduire le nom de l'arbre de travail depuis '%s'"
-
-#, c-format
-msgid "directory '%s' exists already"
-msgstr "le répertoire '%s' existe déjà"
-
-#, c-format
-msgid "failed to get default branch for '%s'"
-msgstr "échec d'obtention de la branche par défaut pour '%s'"
-
-#, c-format
-msgid "could not configure remote in '%s'"
-msgstr "impossible de paramétrer le distant dans '%s'"
-
-#, c-format
-msgid "could not configure '%s'"
-msgstr "impossible de configurer '%s'"
-
-msgid "partial clone failed; attempting full clone"
-msgstr "échec du clonage partiel ; tentative de clonage complet"
-
-msgid "could not configure for full clone"
-msgstr "impossible de configurer pour le clonage complet"
-
-msgid "scalar diagnose [<enlistment>]"
-msgstr "scalar diagnose [<enrôlement>]"
-
-msgid "`scalar list` does not take arguments"
-msgstr "`scalar list` n'accepte pas d'argument"
-
-msgid "scalar register [<enlistment>]"
-msgstr "scalar register [<enrôlement>]"
-
-msgid "reconfigure all registered enlistments"
-msgstr "reconfigurer tous les enrôlements enregistrés"
-
-msgid "scalar reconfigure [--all | <enlistment>]"
-msgstr "scala reconfigure [--all|<enrôlement>]"
-
-msgid "--all or <enlistment>, but not both"
-msgstr "--all ou <enrôlement>, mais pas les deux"
-
-#, c-format
-msgid "git repository gone in '%s'"
-msgstr "dépôt git parti dans '%s'"
-
-msgid ""
-"scalar run <task> [<enlistment>]\n"
-"Tasks:\n"
-msgstr ""
-"scalar run <tâche> [<enrôlement>]\n"
-"Tâches :\n"
-
-#, c-format
-msgid "no such task: '%s'"
-msgstr "pas de tâche : '%s'"
-
-msgid "scalar unregister [<enlistment>]"
-msgstr "scalar unregister [<enrôlement>]"
-
-msgid "scalar delete <enlistment>"
-msgstr "scalar delete <enrôlement>"
-
-msgid "refusing to delete current working directory"
-msgstr "refus de la suppression du répertoire de travail actuel"
-
-msgid "include Git version"
-msgstr "inclure la version Git"
-
-msgid "include Git's build options"
-msgstr "inclure les options de construction de Git"
-
-msgid "scalar verbose [-v | --verbose] [--build-options]"
-msgstr "scalar verbose [-v | --verbose] [--build-options]"
-
-msgid "-C requires a <directory>"
-msgstr "-C requiert un <répertoire>"
-
-#, c-format
-msgid "could not change to '%s'"
-msgstr "échec de modification en '%s'"
-
-msgid "-c requires a <key>=<value> argument"
-msgstr "-c exige un argument <clé>=<valeur>"
-
-msgid ""
-"scalar [-C <directory>] [-c <key>=<value>] <command> [<options>]\n"
-"\n"
-"Commands:\n"
-msgstr ""
-"scalar [-C <répertoire>] [-c <clé>=<valeur>] <commande> [<options>]\n"
-"\n"
-"Commandes :\n"
 
 #, c-format
 msgid "illegal crlf_action %d"
@@ -16720,8 +16571,8 @@ msgstr "Commandes bas niveau / Assistants internes"
 msgid "User-facing repository, command and file interfaces"
 msgstr "dépôts publics, commandes et interfaces de fichier"
 
-msgid "Developer-facing file file formats, protocols and interfaces"
-msgstr "formats, protocoles et interfaces de niveau développeur"
+msgid "Developer-facing file formats, protocols and other interfaces"
+msgstr "Formats de fichier, protocoles et interfaces de niveau développeur"
 
 #, c-format
 msgid "available git commands in '%s'"
@@ -19695,6 +19546,174 @@ msgstr "-L ne supporte pas encore les formats de diff autres que -p et -s"
 #, c-format
 msgid "cannot create async thread: %s"
 msgstr "impossible de créer un fil asynchrone : %s"
+
+#, c-format
+msgid "'%s' does not exist"
+msgstr "'%s' n'existe pas"
+
+#, c-format
+msgid "could not switch to '%s'"
+msgstr "impossible de basculer vers '%s'"
+
+msgid "need a working directory"
+msgstr "répertoire de travail nécessaire"
+
+msgid "Scalar enlistments require a worktree"
+msgstr "Les enrôlements scalaires requièrent un arbre de travail"
+
+#, c-format
+msgid "could not configure %s=%s"
+msgstr "impossible de configurer %s=%s"
+
+msgid "could not configure log.excludeDecoration"
+msgstr "impossible de configurer log.excludeDecoration"
+
+msgid "could not add enlistment"
+msgstr "impossible d'ajouter l'enrôlement"
+
+msgid "could not set recommended config"
+msgstr "impossible de réglér la configuration recommandée"
+
+msgid "could not turn on maintenance"
+msgstr "impossible d'activer la maintenance"
+
+msgid "could not start the FSMonitor daemon"
+msgstr "impossible de démarrer le daemon FSMonitor"
+
+msgid "could not turn off maintenance"
+msgstr "impossible de désactiver la maintenance"
+
+msgid "could not remove enlistment"
+msgstr "impossible de supprimer l'enrôlement"
+
+#, c-format
+msgid "remote HEAD is not a branch: '%.*s'"
+msgstr "la HEAD distante n'est pas une branche : '%.*s'"
+
+msgid "failed to get default branch name from remote; using local default"
+msgstr ""
+"échec de récupération de la branche par défaut depuis le distant ; "
+"utilisation de la valeur par défaut locale"
+
+msgid "failed to get default branch name"
+msgstr "échec de l'obtention du nom de branche par défaut"
+
+msgid "failed to unregister repository"
+msgstr "échec du désenregistrement du dépôt"
+
+msgid "failed to stop the FSMonitor daemon"
+msgstr "Échec de l'arrêt de FSEVEntStream"
+
+msgid "failed to delete enlistment directory"
+msgstr "échec de la suppression du répertoire d'enrôlement"
+
+msgid "branch to checkout after clone"
+msgstr "branche à extraire après le clonage"
+
+msgid "when cloning, create full working directory"
+msgstr "lors d'un clonage, créer un répertoire de travail complet"
+
+msgid "only download metadata for the branch that will be checked out"
+msgstr "ne télécharger les méta-données que pour la branche qui sera extraite"
+
+msgid "scalar clone [<options>] [--] <repo> [<dir>]"
+msgstr "scalar clone [<options>] [--] <dépôt> [<répertoire>]"
+
+#, c-format
+msgid "cannot deduce worktree name from '%s'"
+msgstr "impossible de déduire le nom de l'arbre de travail depuis '%s'"
+
+#, c-format
+msgid "directory '%s' exists already"
+msgstr "le répertoire '%s' existe déjà"
+
+#, c-format
+msgid "failed to get default branch for '%s'"
+msgstr "échec d'obtention de la branche par défaut pour '%s'"
+
+#, c-format
+msgid "could not configure remote in '%s'"
+msgstr "impossible de paramétrer le distant dans '%s'"
+
+#, c-format
+msgid "could not configure '%s'"
+msgstr "impossible de configurer '%s'"
+
+msgid "partial clone failed; attempting full clone"
+msgstr "échec du clonage partiel ; tentative de clonage complet"
+
+msgid "could not configure for full clone"
+msgstr "impossible de configurer pour le clonage complet"
+
+msgid "scalar diagnose [<enlistment>]"
+msgstr "scalar diagnose [<enrôlement>]"
+
+msgid "`scalar list` does not take arguments"
+msgstr "`scalar list` n'accepte pas d'argument"
+
+msgid "scalar register [<enlistment>]"
+msgstr "scalar register [<enrôlement>]"
+
+msgid "reconfigure all registered enlistments"
+msgstr "reconfigurer tous les enrôlements enregistrés"
+
+msgid "scalar reconfigure [--all | <enlistment>]"
+msgstr "scala reconfigure [--all|<enrôlement>]"
+
+msgid "--all or <enlistment>, but not both"
+msgstr "--all ou <enrôlement>, mais pas les deux"
+
+#, c-format
+msgid "git repository gone in '%s'"
+msgstr "dépôt git parti dans '%s'"
+
+msgid ""
+"scalar run <task> [<enlistment>]\n"
+"Tasks:\n"
+msgstr ""
+"scalar run <tâche> [<enrôlement>]\n"
+"Tâches :\n"
+
+#, c-format
+msgid "no such task: '%s'"
+msgstr "pas de tâche : '%s'"
+
+msgid "scalar unregister [<enlistment>]"
+msgstr "scalar unregister [<enrôlement>]"
+
+msgid "scalar delete <enlistment>"
+msgstr "scalar delete <enrôlement>"
+
+msgid "refusing to delete current working directory"
+msgstr "refus de la suppression du répertoire de travail actuel"
+
+msgid "include Git version"
+msgstr "inclure la version Git"
+
+msgid "include Git's build options"
+msgstr "inclure les options de construction de Git"
+
+msgid "scalar verbose [-v | --verbose] [--build-options]"
+msgstr "scalar verbose [-v | --verbose] [--build-options]"
+
+msgid "-C requires a <directory>"
+msgstr "-C requiert un <répertoire>"
+
+#, c-format
+msgid "could not change to '%s'"
+msgstr "échec de modification en '%s'"
+
+msgid "-c requires a <key>=<value> argument"
+msgstr "-c exige un argument <clé>=<valeur>"
+
+msgid ""
+"scalar [-C <directory>] [-c <key>=<value>] <command> [<options>]\n"
+"\n"
+"Commands:\n"
+msgstr ""
+"scalar [-C <répertoire>] [-c <clé>=<valeur>] <commande> [<options>]\n"
+"\n"
+"Commandes :\n"
 
 msgid "unexpected flush packet while reading remote unpack status"
 msgstr ""
@@ -22748,6 +22767,18 @@ msgstr "%s sauté avec un suffix de sauvegarde '%s'.\n"
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "Souhaitez-vous réellement envoyer %s ?[y|N] : "
+
+#~ msgid "(stats|all)"
+#~ msgstr "(stats|all)"
+
+#~ msgid "git maintenance register"
+#~ msgstr "git maintenance register"
+
+#~ msgid "git maintenance unregister"
+#~ msgstr "git maintenance unregister"
+
+#~ msgid "git maintenance stop"
+#~ msgstr "git maintenance stop"
 
 #, c-format
 #~ msgid "could not parse colored hunk header '%.*s'"
