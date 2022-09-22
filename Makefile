@@ -1,5 +1,8 @@
 # The default target of this Makefile is...
-all::
+all:: abspath.h
+
+abspath.h: abspath.c
+	makeheaders abspath.c
 
 # Import tree-wide shared Makefile behavior and libraries
 include shared.mak
@@ -3450,6 +3453,7 @@ cocciclean:
 	$(RM) contrib/coccinelle/*.cocci.patch*
 
 clean: profile-clean coverage-clean cocciclean
+	$(RM) -r abspath.h
 	$(RM) -r .build
 	$(RM) po/git.pot po/git-core.pot
 	$(RM) git.res

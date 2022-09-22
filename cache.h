@@ -646,18 +646,6 @@ const char *setup_git_directory(void);
 char *prefix_path(const char *prefix, int len, const char *path);
 char *prefix_path_gently(const char *prefix, int len, int *remaining, const char *path);
 
-/*
- * Concatenate "prefix" (if len is non-zero) and "path", with no
- * connecting characters (so "prefix" should end with a "/").
- * Unlike prefix_path, this should be used if the named file does
- * not have to interact with index entry; i.e. name of a random file
- * on the filesystem.
- *
- * The return value is always a newly allocated string (even if the
- * prefix was empty).
- */
-char *prefix_filename(const char *prefix, const char *path);
-
 int check_filename(const char *prefix, const char *name);
 void verify_filename(const char *prefix,
 		     const char *name,
@@ -1299,14 +1287,7 @@ static inline int is_absolute_path(const char *path)
 {
 	return is_dir_sep(path[0]) || has_dos_drive_prefix(path);
 }
-int is_directory(const char *);
-char *strbuf_realpath(struct strbuf *resolved, const char *path,
-		      int die_on_error);
-char *strbuf_realpath_forgiving(struct strbuf *resolved, const char *path,
-				int die_on_error);
-char *real_pathdup(const char *path, int die_on_error);
-const char *absolute_path(const char *path);
-char *absolute_pathdup(const char *path);
+#include "abspath.h"
 const char *remove_leading_path(const char *in, const char *prefix);
 const char *relative_path(const char *in, const char *prefix, struct strbuf *sb);
 int normalize_path_copy_len(char *dst, const char *src, int *prefix_len);
