@@ -233,7 +233,8 @@ struct object *parse_object_buffer(struct repository *r, const struct object_id 
 		if (commit) {
 			if (parse_commit_buffer(r, commit, buffer, size, 1))
 				return NULL;
-			if (!get_cached_commit_buffer(r, commit, NULL)) {
+			if (save_commit_buffer &&
+			    !get_cached_commit_buffer(r, commit, NULL)) {
 				set_commit_buffer(r, commit, buffer, size);
 				*eaten_p = 1;
 			}
