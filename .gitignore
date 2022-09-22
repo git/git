@@ -250,3 +250,4 @@ Release/
 *.dSYM
 /contrib/buildsystems/out
 /abspath.h
+/zlib.c.h

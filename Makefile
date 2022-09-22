@@ -1,8 +1,11 @@
 # The default target of this Makefile is...
-all:: abspath.h
+all:: abspath.h zlib.c.h
 
 abspath.h: abspath.c
 	makeheaders abspath.c
+
+zlib.c.h: zlib.c
+	makeheaders zlib.c.h:zlib.c
 
 # Import tree-wide shared Makefile behavior and libraries
 include shared.mak
@@ -3454,6 +3457,7 @@ cocciclean:
 
 clean: profile-clean coverage-clean cocciclean
 	$(RM) -r abspath.h
+	$(RM) -r zlib.c.h
 	$(RM) -r .build
 	$(RM) po/git.pot po/git-core.pot
 	$(RM) git.res
