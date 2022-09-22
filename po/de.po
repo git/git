@@ -8,16 +8,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2022-06-21 19:57+0000\n"
-"PO-Revision-Date: 2022-06-20 21:17+0200\n"
-"Last-Translator: Matthias Rüster <matthias.ruester@gmail.com>\n"
-"Language-Team: Matthias Rüster <matthias.ruester@gmail.com>\n"
+"POT-Creation-Date: 2022-09-22 16:49+0200\n"
+"PO-Revision-Date: 2022-09-22 17:00+0200\n"
+"Last-Translator: Ralf Thielow <ralf.thielow@gmail.com>\n"
+"Language-Team: German\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n!=1);\n"
-"X-Generator: Poedit 3.1\n"
+"X-Generator: Poedit 3.1.1\n"
 
 #, c-format
 msgid "Huh (%s)?"
@@ -379,8 +379,8 @@ msgstr "Ergänzung im Index und Arbeitsverzeichnis verwerfen [y,n,q,a,d%s,?]? "
 #, c-format, perl-format
 msgid "Discard this hunk from index and worktree [y,n,q,a,d%s,?]? "
 msgstr ""
-"Diesen Patch-Block vom Index und Arbeitsverzeichnis verwerfen [y,n,q,a,"
-"d%s,?]? "
+"Diesen Patch-Block vom Index und Arbeitsverzeichnis verwerfen [y,n,q,a,d"
+"%s,?]? "
 
 msgid ""
 "y - discard this hunk from index and worktree\n"
@@ -411,8 +411,8 @@ msgstr "Ergänzung auf Index und Arbeitsverzeichnis anwenden [y,n,q,a,d%s,?]? "
 #, c-format, perl-format
 msgid "Apply this hunk to index and worktree [y,n,q,a,d%s,?]? "
 msgstr ""
-"Diesen Patch-Block auf Index und Arbeitsverzeichnis anwenden [y,n,q,a,"
-"d%s,?]? "
+"Diesen Patch-Block auf Index und Arbeitsverzeichnis anwenden [y,n,q,a,d"
+"%s,?]? "
 
 msgid ""
 "y - apply this hunk to index and worktree\n"
@@ -427,6 +427,23 @@ msgstr ""
 "q - Beenden; diesen oder alle verbleibenden Patch-Blöcke nicht anwenden\n"
 "a - diesen und alle weiteren Patch-Blöcke in der Datei anwenden\n"
 "d - diesen oder alle weiteren Patch-Blöcke in der Datei nicht anwenden\n"
+
+#, c-format, perl-format
+msgid "Apply mode change to worktree [y,n,q,a,d%s,?]? "
+msgstr "Modusänderung auf Arbeitsverzeichnis anwenden [y,n,q,a,d%s,?]? "
+
+#, c-format, perl-format
+msgid "Apply deletion to worktree [y,n,q,a,d%s,?]? "
+msgstr "Löschung auf Arbeitsverzeichnis anwenden [y,n,q,a,d%s,?]? "
+
+#, c-format, perl-format
+msgid "Apply addition to worktree [y,n,q,a,d%s,?]? "
+msgstr "Ergänzung auf Arbeitsverzeichnis anwenden [y,n,q,a,d%s,?]? "
+
+#, c-format, perl-format
+msgid "Apply this hunk to worktree [y,n,q,a,d%s,?]? "
+msgstr ""
+"Diesen Patch-Block auf das Arbeitsverzeichnis anwenden [y,n,q,a,d%s,?]? "
 
 msgid ""
 "y - apply this hunk to worktree\n"
@@ -444,10 +461,6 @@ msgstr ""
 #, c-format
 msgid "could not parse hunk header '%.*s'"
 msgstr "Konnte Block-Header '%.*s' nicht parsen."
-
-#, c-format
-msgid "could not parse colored hunk header '%.*s'"
-msgstr "Konnte farbigen Block-Header '%.*s' nicht parsen."
 
 msgid "could not parse diff"
 msgstr "konnte Diff nicht parsen"
@@ -506,7 +519,6 @@ msgstr ""
 "Um '%c' Zeilen zu entfernen, löschen Sie diese.\n"
 "Zeilen, die mit %c beginnen, werden entfernt.\n"
 
-#. #-#-#-#-#  git-add--interactive.perl.po  #-#-#-#-#
 #. TRANSLATORS: 'it' refers to the patch mentioned in the previous messages.
 msgid ""
 "If it does not apply cleanly, you will be given an opportunity to\n"
@@ -524,14 +536,12 @@ msgstr "konnte Block-Header nicht parsen"
 msgid "'git apply --cached' failed"
 msgstr "'git apply --cached' schlug fehl"
 
-#. #-#-#-#-#  add-patch.c.po  #-#-#-#-#
 #. TRANSLATORS: do not translate [y/n]
 #. The program will only accept that input at this point.
 #. Consider translating (saying "no" discards!) as
 #. (saying "n" for "no" discards!) if the translation
 #. of the word "no" does not start with n.
 #.
-#. #-#-#-#-#  git-add--interactive.perl.po  #-#-#-#-#
 #. TRANSLATORS: do not translate [y/n]
 #. The program will only accept that input
 #. at this point.
@@ -749,6 +759,26 @@ msgstr ""
 "Sie können diesen Hinweis ausschalten, indem Sie die Konfigurationsvariable\n"
 "'advice.detachedHead' auf 'false' setzen.\n"
 "\n"
+
+#, c-format
+msgid ""
+"The following paths have been moved outside the\n"
+"sparse-checkout definition but are not sparse due to local\n"
+"modifications.\n"
+msgstr ""
+"Die folgenden Pfade wurden aus der partiellen Checkout-Definition\n"
+"verschoben, sind aber aufgrund lokaler Änderungen nicht partiell.\n"
+
+msgid ""
+"To correct the sparsity of these paths, do the following:\n"
+"* Use \"git add --sparse <paths>\" to update the index\n"
+"* Use \"git sparse-checkout reapply\" to apply the sparsity rules"
+msgstr ""
+"Um den partiellen Checkout dieser Pfade zu korrigieren, gehen Sie wie folgt "
+"vor:\n"
+"* Verwenden Sie \"git add --sparse <Pfade>\", um den Index zu aktualisieren\n"
+"* Verwenden Sie \"git sparse-checkout reapply\", um die Regeln für partielle "
+"Checkouts anzuwenden"
 
 msgid "cmdline ends with \\"
 msgstr "Befehlszeile endet mit \\"
@@ -1272,6 +1302,10 @@ msgid "unsupported file mode: 0%o (SHA1: %s)"
 msgstr "Nicht unterstützter Dateimodus: 0%o (SHA1: %s)"
 
 #, c-format
+msgid "deflate error (%d)"
+msgstr "Fehler beim Komprimieren (%d)"
+
+#, c-format
 msgid "unable to start '%s' filter"
 msgstr "konnte '%s' Filter nicht starten"
 
@@ -1289,10 +1323,6 @@ msgstr "Pfad ist kein gültiges UTF-8: %s"
 #, c-format
 msgid "path too long (%d chars, SHA1: %s): %s"
 msgstr "Pfad zu lang (%d Zeichen, SHA1: %s): %s"
-
-#, c-format
-msgid "deflate error (%d)"
-msgstr "Fehler beim Komprimieren (%d)"
 
 #, c-format
 msgid "timestamp too large for this system: %<PRIuMAX>"
@@ -1618,12 +1648,10 @@ msgstr ""
 msgid "not tracking: ambiguous information for ref '%s'"
 msgstr "kein Tracking: mehrdeutige Informationen für Referenz '%s'"
 
-#. #-#-#-#-#  branch.c.po  #-#-#-#-#
 #. TRANSLATORS: This is a line listing a remote with duplicate
 #. refspecs in the advice message below. For RTL languages you'll
 #. probably want to swap the "%s" and leading "  " space around.
 #.
-#. #-#-#-#-#  object-name.c.po  #-#-#-#-#
 #. TRANSLATORS: This is line item of ambiguous object output
 #. from describe_ambiguous_object() above. For RTL languages
 #. you'll probably want to swap the "%s" and leading " " space
@@ -1990,8 +2018,8 @@ msgstr ""
 #, c-format
 msgid "If you prefer to skip this patch, run \"%s --skip\" instead."
 msgstr ""
-"Falls Sie diesen Patch auslassen möchten, führen Sie stattdessen \"%s --"
-"skip\" aus."
+"Falls Sie diesen Patch auslassen möchten, führen Sie stattdessen \"%s --skip"
+"\" aus."
 
 #, c-format
 msgid "To record the empty patch as an empty commit, run \"%s --allow-empty\"."
@@ -3108,8 +3136,12 @@ msgstr "libc Info: "
 msgid "not run from a git repository - no hooks to show\n"
 msgstr "nicht in einem Git-Repository ausgeführt - keine Hooks zum Anzeigen\n"
 
-msgid "git bugreport [-o|--output-directory <file>] [-s|--suffix <format>]"
-msgstr "git bugreport [-o|--output-directory <Datei>] [-s|--suffix <Format>]"
+msgid ""
+"git bugreport [-o|--output-directory <file>] [-s|--suffix <format>] [--"
+"diagnose[=<mode>]"
+msgstr ""
+"git bugreport [-o|--output-directory <Datei>] [-s|--suffix <Format>] [--"
+"diagnose[=<Modus>]"
 
 msgid ""
 "Thank you for filling out a Git bug report!\n"
@@ -3147,15 +3179,28 @@ msgstr ""
 "Bitte überprüfen Sie den restlichen Teil des Fehlerberichts unten.\n"
 "Sie können jede Zeile löschen, die Sie nicht mitteilen möchten.\n"
 
-msgid "specify a destination for the bugreport file"
-msgstr "Speicherort für die Datei des Fehlerberichts angeben"
+msgid "mode"
+msgstr "Modus"
 
-msgid "specify a strftime format suffix for the filename"
-msgstr "Dateiendung im strftime-Format für den Dateinamen angeben"
+msgid ""
+"create an additional zip archive of detailed diagnostics (default 'stats')"
+msgstr ""
+"ein zusätzliches Zip-Archiv mit detaillierten Diagnosen erstellen (Standard "
+"'stats')"
+
+msgid "specify a destination for the bugreport file(s)"
+msgstr "einen Zielort für die Fehlerberichtsdatei(en) angeben"
+
+msgid "specify a strftime format suffix for the filename(s)"
+msgstr "ein Suffix im strftime-Format für den/die Dateinamen angeben"
 
 #, c-format
 msgid "could not create leading directories for '%s'"
 msgstr "konnte vorangehende Verzeichnisse für '%s' nicht erstellen"
+
+#, c-format
+msgid "unable to create diagnostics archive %s"
+msgstr "Diagnosearchiv %s kann nicht erstellt werden"
 
 msgid "System Info"
 msgstr "System Info"
@@ -3213,10 +3258,6 @@ msgstr "Zum Entpacken wird ein Repository benötigt."
 
 msgid "Unbundling objects"
 msgstr "Entpacken von Objekten"
-
-#, c-format
-msgid "Unknown subcommand: %s"
-msgstr "Unbekannter Unterbefehl: %s"
 
 #, c-format
 msgid "cannot read object %s '%s'"
@@ -3296,6 +3337,9 @@ msgstr "Objektgröße anzeigen"
 msgid "allow -s and -t to work with broken/corrupt objects"
 msgstr "-s und -t mit beschädigten Objekten erlauben"
 
+msgid "use mail map file"
+msgstr "\"mailmap\"-Datei verwenden"
+
 msgid "Batch objects requested on stdin (or --batch-all-objects)"
 msgstr ""
 "Batch-Objekte von Standard-Eingabe (oder --batch-all-objects) angefordert"
@@ -3305,6 +3349,9 @@ msgstr "vollständige Inhalte von <Objekt> oder <Commit> anzeigen"
 
 msgid "like --batch, but don't emit <contents>"
 msgstr "wie --batch, aber keine Ausgabe von <Inhalten>"
+
+msgid "stdin is NUL-terminated"
+msgstr "stdin endet mit NUL"
 
 msgid "read commands from stdin"
 msgstr "Befehle von der Standard-Eingabe lesen"
@@ -4198,6 +4245,14 @@ msgstr ""
 "Initialisiere Datei für partiellen Checkout, um nur Dateien im\n"
 "Root-Verzeichnis einzubeziehen"
 
+msgid "uri"
+msgstr "uri"
+
+msgid "a URI for downloading bundles before fetching from origin remote"
+msgstr ""
+"eine URI für das Herunterladen von Bundles vor dem Abruf\n"
+"aus dem ursprünglichen Remote-Repository"
+
 #, c-format
 msgid "info: Could not add alternate for '%s': %s\n"
 msgstr "info: Konnte Alternative für '%s' nicht hinzufügen: %s\n"
@@ -4257,10 +4312,10 @@ msgstr "kann %s nicht aktualisieren"
 msgid "failed to initialize sparse-checkout"
 msgstr "Fehler beim Initialisieren vom partiellen Checkout."
 
-msgid "remote HEAD refers to nonexistent ref, unable to checkout.\n"
+msgid "remote HEAD refers to nonexistent ref, unable to checkout"
 msgstr ""
-"Externer HEAD bezieht sich auf eine nicht existierende Referenz und kann "
-"nicht ausgecheckt werden.\n"
+"HEAD des Remote-Repositories verweist auf nicht existierende Referenz, kann "
+"nicht ausgecheckt werden"
 
 msgid "unable to checkout working tree"
 msgstr "Arbeitsverzeichnis konnte nicht ausgecheckt werden"
@@ -4283,6 +4338,13 @@ msgstr "Sie müssen ein Repository zum Klonen angeben."
 #, c-format
 msgid "options '%s' and '%s %s' cannot be used together"
 msgstr "die Optionen '%s' und '%s %s' können nicht gemeinsam verwendet werden"
+
+msgid ""
+"--bundle-uri is incompatible with --depth, --shallow-since, and --shallow-"
+"exclude"
+msgstr ""
+"--bundle-uri ist inkompatibel mit --depth, --shallow-since und --shallow-"
+"exclude"
 
 #, c-format
 msgid "repository '%s' does not exist"
@@ -4367,6 +4429,13 @@ msgstr "--local wird ignoriert"
 
 msgid "cannot clone from filtered bundle"
 msgstr "kann nicht von gefiltertem Bundle klonen"
+
+msgid "failed to initialize the repo, skipping bundle URI"
+msgstr "konnte das Repository nicht initialisieren, überspringe Bundle-URI"
+
+#, c-format
+msgid "failed to fetch objects from bundle URI '%s'"
+msgstr "Objekte aus Bundle-URI '%s' konnten nicht abgerufen werden"
 
 msgid "remote transport reported error"
 msgstr "Remoteübertragung meldete Fehler"
@@ -4488,10 +4557,6 @@ msgstr ""
 
 msgid "Collecting commits from input"
 msgstr "Sammle Commits von der Standard-Eingabe"
-
-#, c-format
-msgid "unrecognized subcommand: %s"
-msgstr "Nicht erkannter Unterbefehl: %s"
 
 msgid ""
 "git commit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...] [(-F "
@@ -4855,9 +4920,6 @@ msgstr "Status im Langformat anzeigen (Standard)"
 
 msgid "terminate entries with NUL"
 msgstr "Einträge mit NUL-Zeichen abschließen"
-
-msgid "mode"
-msgstr "Modus"
 
 msgid "show untracked files, optional modes: all, normal, no. (Default: all)"
 msgstr ""
@@ -5449,8 +5511,8 @@ msgstr "Markierung"
 
 msgid "append <mark> on dirty working tree (default: \"-dirty\")"
 msgstr ""
-"<Markierung> bei geändertem Arbeitsverzeichnis anhängen (Standard: \"-"
-"dirty\")"
+"<Markierung> bei geändertem Arbeitsverzeichnis anhängen (Standard: \"-dirty"
+"\")"
 
 msgid "append <mark> on broken working tree (default: \"-broken\")"
 msgstr ""
@@ -5462,6 +5524,22 @@ msgstr "Keine Namen gefunden, kann nichts beschreiben."
 #, c-format
 msgid "option '%s' and commit-ishes cannot be used together"
 msgstr "Option '%s' und Commit-Angaben können nicht gemeinsam verwendet werden"
+
+msgid ""
+"git diagnose [-o|--output-directory <path>] [-s|--suffix <format>] [--"
+"mode=<mode>]"
+msgstr ""
+"git diagnose [-o|--output-directory <Pfad>] [-s|--suffix <Format>] [--"
+"mode=<Modus>]"
+
+msgid "specify a destination for the diagnostics archive"
+msgstr "einen Zielort für das Diagnosearchiv angeben"
+
+msgid "specify a strftime format suffix for the filename"
+msgstr "Dateiendung im strftime-Format für den Dateinamen angeben"
+
+msgid "specify the content of the diagnostic archive"
+msgstr "den Inhalt des Diagnosearchivs angeben"
 
 msgid "--merge-base only works with two commits"
 msgstr "--merge-base funktioniert nur mit zwei Commits"
@@ -5597,13 +5675,13 @@ msgstr "Ausgaben unterdrücken; nur git_env_*() Werte als Exit-Code verwenden"
 #, c-format
 msgid "option `--default' expects a boolean value with `--type=bool`, not `%s`"
 msgstr ""
-"Option `--default' erwartet einen booleschen Wert bei `--type=bool`, nicht "
-"`%s`"
+"Option `--default' erwartet einen booleschen Wert bei `--type=bool`, nicht `"
+"%s`"
 
 #, c-format
 msgid ""
-"option `--default' expects an unsigned long value with `--type=ulong`, not "
-"`%s`"
+"option `--default' expects an unsigned long value with `--type=ulong`, not `"
+"%s`"
 msgstr ""
 "Option `--default' erwartet einen vorzeichenlosen Long-Wert bei `--"
 "type=ulong`, nicht `%s`"
@@ -5851,11 +5929,8 @@ msgstr "[aktuell]"
 msgid "[rejected]"
 msgstr "[zurückgewiesen]"
 
-msgid "can't fetch in current branch"
-msgstr "kann \"fetch\" im aktuellen Branch nicht ausführen"
-
-msgid "checked out in another worktree"
-msgstr "in einem anderen Arbeitsverzeichnis ausgecheckt"
+msgid "can't fetch into checked-out branch"
+msgstr "fetch kann in den ausgecheckten Branch nicht durchgeführt werden"
 
 msgid "[tag update]"
 msgstr "[Tag Aktualisierung]"
@@ -6299,6 +6374,10 @@ msgstr "%s: Ungültiger SHA1-Zeiger in Cache-Verzeichnis"
 msgid "non-tree in cache-tree"
 msgstr "non-tree in Cache-Verzeichnis"
 
+#, c-format
+msgid "%s: invalid sha1 pointer in resolve-undo"
+msgstr "%s: Ungültiger sha1-Zeiger in resolve-undo"
+
 msgid "git fsck [<options>] [<object>...]"
 msgstr "git fsck [<Optionen>] [<Objekt>...]"
 
@@ -6639,13 +6718,16 @@ msgstr ""
 "Fehler beim Ausführen von 'crontab -l'; Ihr System unterstützt eventuell "
 "'cron' nicht"
 
+msgid "failed to create crontab temporary file"
+msgstr "temporäre crontab Datei konnte nicht erstellt werden"
+
+msgid "failed to open temporary file"
+msgstr "temporäre Datei kann nicht geöffnet werden"
+
 msgid "failed to run 'crontab'; your system might not support 'cron'"
 msgstr ""
 "Fehler beim Ausführen von 'crontab'; Ihr System unterstützt eventuell 'cron' "
 "nicht"
-
-msgid "failed to open stdin of 'crontab'"
-msgstr "Fehler beim Öffnen der Standard-Eingabe von 'crontab'"
 
 msgid "'crontab' died"
 msgstr "'crontab' abgebrochen"
@@ -6693,10 +6775,6 @@ msgstr "Repository konnte nicht zur globalen Konfiguration hinzugefügt werden"
 msgid "git maintenance <subcommand> [<options>]"
 msgstr "git maintenance <Unterbefehl> [<Optionen>]"
 
-#, c-format
-msgid "invalid subcommand: %s"
-msgstr "ungültiger Unterbefehl: %s"
-
 msgid "git grep [<options>] [-e] <pattern> [<rev>...] [[--] <path>...]"
 msgstr "git grep [<Optionen>] [-e] <Muster> [<Commit>...] [[--] <Pfad>...]"
 
@@ -6708,7 +6786,6 @@ msgstr "grep: Fehler beim Erzeugen eines Thread: %s"
 msgid "invalid number of threads specified (%d) for %s"
 msgstr "ungültige Anzahl von Threads (%d) für %s angegeben"
 
-#. #-#-#-#-#  grep.c.po  #-#-#-#-#
 #. TRANSLATORS: %s is the configuration
 #. variable for tweaking threads, currently
 #. grep.threads
@@ -6871,6 +6948,9 @@ msgstr "Dateien mit Übereinstimmungen im Anzeigeprogramm anzeigen"
 msgid "allow calling of grep(1) (ignored by this build)"
 msgstr "den Aufruf von grep(1) erlauben (von dieser Programmversion ignoriert)"
 
+msgid "maximum number of results per file"
+msgstr "maximale Anzahl von Ergebnissen pro Datei"
+
 msgid "no pattern given"
 msgstr "Kein Muster angegeben."
 
@@ -6962,11 +7042,21 @@ msgstr "Beschreibung des Befehls ausgeben"
 msgid "print list of useful guides"
 msgstr "Liste von allgemein verwendeten Anleitungen anzeigen"
 
+msgid "print list of user-facing repository, command and file interfaces"
+msgstr ""
+"Liste der benutzerseitigen Repository-, Befehls- und Dateischnittstellen "
+"ausgeben"
+
+msgid "print list of file formats, protocols and other developer interfaces"
+msgstr ""
+"Liste von Dateiformaten, Protokollen und anderen Entwicklerschnittstellen "
+"ausgeben"
+
 msgid "print all configuration variable names"
 msgstr "alle Namen der Konfigurationsvariablen ausgeben"
 
-msgid "git help [[-i|--info] [-m|--man] [-w|--web]] [<command>]"
-msgstr "git help [[-i|--info] [-m|--man] [-w|--web]] [<Befehl>]"
+msgid "git help [[-i|--info] [-m|--man] [-w|--web]] [<command>|<doc>]"
+msgstr "git help [[-i|--info] [-m|--man] [-w|--web]] [<Befehl>|<Dokument>]"
 
 #, c-format
 msgid "unrecognized help format '%s'"
@@ -7438,8 +7528,8 @@ msgstr "Ausgabe der Unterschiede unterdrücken"
 msgid "show source"
 msgstr "Quelle anzeigen"
 
-msgid "use mail map file"
-msgstr "\"mailmap\"-Datei verwenden"
+msgid "clear all previously-defined decoration filters"
+msgstr "alle zuvor definierten Dekorationsfilter löschen"
 
 msgid "only decorate refs that match <pattern>"
 msgstr "\"decorate\" nur bei Referenzen anwenden, die <Muster> entsprechen"
@@ -7698,6 +7788,11 @@ msgstr ""
 msgid "percentage by which creation is weighted"
 msgstr "Prozentsatz mit welchem Erzeugung gewichtet wird"
 
+msgid "show in-body From: even if identical to the e-mail header"
+msgstr ""
+"From: aus E-Mail Text anzeigen, auch wenn es mit der Kopfzeile der E-Mail "
+"identisch ist"
+
 #, c-format
 msgid "invalid ident line: %s"
 msgstr "Ungültige Identifikationszeile: %s"
@@ -7757,6 +7852,18 @@ msgid ""
 msgstr ""
 "Konnte gefolgten Remote-Branch nicht finden, bitte geben Sie <Upstream> "
 "manuell an.\n"
+
+#, c-format
+msgid "bad ls-files format: element '%s' does not start with '('"
+msgstr "ungültiges ls-files-Format: Element '%s' fängt nicht mit '(' an"
+
+#, c-format
+msgid "bad ls-files format: element '%s' does not end in ')'"
+msgstr "ungültiges ls-files-Format: Element '%s' endet nicht auf ')'"
+
+#, c-format
+msgid "bad ls-files format: %%%.*s"
+msgstr "ungültiges ls-files-Format: %%%.*s"
 
 msgid "git ls-files [<options>] [<file>...]"
 msgstr "git ls-files [<Optionen>] [<Datei>...]"
@@ -7846,6 +7953,13 @@ msgstr "doppelte Einträge unterdrücken"
 
 msgid "show sparse directories in the presence of a sparse index"
 msgstr "zeige partielle Verzeichnisse, wenn ein partieller Index vorhanden ist"
+
+msgid ""
+"--format cannot be used with -s, -o, -k, -t, --resolve-undo, --deduplicate, "
+"--eol"
+msgstr ""
+"--format kann nicht mit -s, -o, -k, -t, --resolve-undo, --deduplicate, --eol "
+"verwendet werden"
 
 msgid ""
 "git ls-remote [--heads] [--tags] [--refs] [--upload-pack=<exec>]\n"
@@ -8070,6 +8184,40 @@ msgstr "Konnte Referenz '%s' nicht auflösen"
 msgid "Merging %s with %s\n"
 msgstr "Führe %s mit %s zusammen\n"
 
+msgid "not something we can merge"
+msgstr "nichts was wir zusammenführen können"
+
+msgid "refusing to merge unrelated histories"
+msgstr "verweigere den Merge von nicht zusammenhängenden Historien"
+
+msgid "failure to merge"
+msgstr "Fehler beim Merge"
+
+msgid "git merge-tree [--write-tree] [<options>] <branch1> <branch2>"
+msgstr "git merge-tree [--write-tree] [<Optionen>] <Branch1> <Branch2>"
+
+msgid "git merge-tree [--trivial-merge] <base-tree> <branch1> <branch2>"
+msgstr ""
+"git merge-tree [--trivial-merge] <Basis-Tree-Objekt> <Branch1> <Branch2>"
+
+msgid "do a real merge instead of a trivial merge"
+msgstr "einen echten Merge anstelle eines trivialen Merge durchführen"
+
+msgid "do a trivial merge only"
+msgstr "nur einen trivialen Merge durchführen"
+
+msgid "also show informational/conflict messages"
+msgstr "auch Informations-/Konfliktmeldungen anzeigen"
+
+msgid "list filenames without modes/oids/stages"
+msgstr "Dateinamen ohne Modi/Oids/Stufen auflisten"
+
+msgid "allow merging unrelated histories"
+msgstr "erlaube das Zusammenführen von nicht zusammenhängenden Historien"
+
+msgid "--trivial-merge is incompatible with all other options"
+msgstr "--trivial-merge ist mit allen anderen Optionen inkompatibel"
+
 msgid "git merge [<options>] [<commit>...]"
 msgstr "git merge [<Optionen>] [<Commit>...]"
 
@@ -8151,9 +8299,6 @@ msgstr "--abort, aber Index und Arbeitsverzeichnis unverändert lassen"
 
 msgid "continue the current in-progress merge"
 msgstr "den sich im Gange befindlichen Merge fortsetzen"
-
-msgid "allow merging unrelated histories"
-msgstr "erlaube das Zusammenführen von nicht zusammenhängenden Historien"
 
 msgid "bypass pre-merge-commit and commit-msg hooks"
 msgstr "Hooks pre-merge-commit und commit-msg umgehen"
@@ -8277,9 +8422,6 @@ msgstr "Konnte '%s' nicht schließen."
 msgid "not something we can merge in %s: %s"
 msgstr "nichts was wir in %s zusammenführen können: %s"
 
-msgid "not something we can merge"
-msgstr "nichts was wir zusammenführen können"
-
 msgid "--abort expects no arguments"
 msgstr "--abort akzeptiert keine Argumente"
 
@@ -8331,12 +8473,18 @@ msgstr "%s - nichts was wir zusammenführen können"
 msgid "Can merge only exactly one commit into empty head"
 msgstr "Kann nur exakt einen Commit in einem leeren Branch zusammenführen"
 
-msgid "refusing to merge unrelated histories"
-msgstr "verweigere den Merge von nicht zusammenhängenden Historien"
-
 #, c-format
 msgid "Updating %s..%s\n"
 msgstr "Aktualisiere %s..%s\n"
+
+#, c-format
+msgid ""
+"Your local changes to the following files would be overwritten by merge:\n"
+"  %s"
+msgstr ""
+"Ihre lokalen Änderungen in den folgenden Dateien würden durch den Merge\n"
+"überschrieben werden:\n"
+"  %s"
 
 #, c-format
 msgid "Trying really trivial in-index merge...\n"
@@ -8370,6 +8518,12 @@ msgstr "Benutze die Strategie %s, um die Auflösung per Hand vorzubereiten.\n"
 msgid "Automatic merge went well; stopped before committing as requested\n"
 msgstr ""
 "Automatischer Merge abgeschlossen; halte, wie gewünscht, vor dem Commit an\n"
+
+#, c-format
+msgid "When finished, apply stashed changes with `git stash pop`\n"
+msgstr ""
+"Wenn Sie fertig sind, wenden Sie die Änderungen aus dem Stash mit `git stash "
+"pop` an\n"
 
 #, c-format
 msgid "warning: tag input does not pass fsck: %s"
@@ -8493,6 +8647,9 @@ msgstr "Prüfe Umbenennung von '%s' nach '%s'\n"
 msgid "bad source"
 msgstr "ungültige Quelle"
 
+msgid "destination exists"
+msgstr "Ziel existiert bereits"
+
 msgid "can not move directory into itself"
 msgstr "kann Verzeichnis nicht in sich selbst verschieben"
 
@@ -8508,9 +8665,6 @@ msgstr "nicht unter Versionskontrolle"
 msgid "conflicted"
 msgstr "in Konflikt"
 
-msgid "destination exists"
-msgstr "Ziel existiert bereits"
-
 #, c-format
 msgid "overwriting '%s'"
 msgstr "überschreibe '%s'"
@@ -8523,6 +8677,9 @@ msgstr "mehrere Quellen für dasselbe Ziel"
 
 msgid "destination directory does not exist"
 msgstr "Zielverzeichnis existiert nicht"
+
+msgid "destination exists in the index"
+msgstr "Ziel existiert im Index"
 
 #, c-format
 msgid "%s, source=%s, destination=%s"
@@ -8889,8 +9046,8 @@ msgid "use notes from <notes-ref>"
 msgstr "Notizen von <Notiz-Referenz> verwenden"
 
 #, c-format
-msgid "unknown subcommand: %s"
-msgstr "Unbekannter Unterbefehl: %s"
+msgid "unknown subcommand: `%s'"
+msgstr "unbekannter Unterbefehl: `%s'"
 
 msgid ""
 "git pack-objects --stdout [<options>...] [< <ref-list> | < <object-list>]"
@@ -9826,11 +9983,16 @@ msgid "only emit output related to the second range"
 msgstr "nur Ausgaben anzeigen, die sich auf den zweiten Bereich beziehen"
 
 #, c-format
+msgid "not a revision: '%s'"
+msgstr "kein Commit: '%s'"
+
+#, c-format
 msgid "not a commit range: '%s'"
 msgstr "kein Commit-Bereich: '%s'"
 
-msgid "single arg format must be symmetric range"
-msgstr "Format mit einfachem Argument muss symmetrischer Bereich sein."
+#, c-format
+msgid "not a symmetric range: '%s'"
+msgstr "kein symmetrischer Bereich: '%s'"
 
 msgid "need two commit ranges"
 msgstr "Benötige zwei Commit-Bereiche."
@@ -9988,8 +10150,8 @@ msgstr "Konnte nicht zu %s wechseln."
 
 #, c-format
 msgid ""
-"unrecognized empty type '%s'; valid values are \"drop\", \"keep\", and "
-"\"ask\"."
+"unrecognized empty type '%s'; valid values are \"drop\", \"keep\", and \"ask"
+"\"."
 msgstr ""
 "nicht erkannter leerer Typ '%s'; gültige Werte sind \"drop\", \"keep\", und "
 "\"ask\"."
@@ -10111,6 +10273,10 @@ msgstr "behalte Commits, die leer beginnen"
 
 msgid "move commits that begin with squash!/fixup! under -i"
 msgstr "bei -i Commits verschieben, die mit squash!/fixup! beginnen"
+
+msgid "update branches that point to commits that are being rebased"
+msgstr ""
+"Branches aktualisieren, die auf Commits verweisen, die gerade rebased werden"
 
 msgid "add exec lines after each commit of the editable list"
 msgstr "exec-Zeilen nach jedem Commit der editierbaren Liste hinzufügen"
@@ -10653,6 +10819,9 @@ msgstr " neu (wird bei nächstem \"fetch\" in remotes/%s gespeichert)"
 
 msgid " tracked"
 msgstr " gefolgt"
+
+msgid " skipped"
+msgstr " übersprungen"
 
 msgid " stale (use 'git remote prune' to remove)"
 msgstr " veraltet (benutzen Sie 'git remote prune' zum Löschen)"
@@ -11335,6 +11504,10 @@ msgstr "Konnte neue Index-Datei nicht schreiben."
 msgid "unable to get disk usage of %s"
 msgstr "konnte Festplattennutzung von %s nicht bekommen"
 
+#, c-format
+msgid "invalid value for '%s': '%s', the only allowed format is '%s'"
+msgstr "ungültiger Wert für '%s': '%s', das einzig zulässige Format ist '%s'"
+
 msgid "rev-list does not support display of notes"
 msgstr "rev-list unterstützt keine Anzeige von Notizen"
 
@@ -11360,6 +11533,9 @@ msgstr "frühzeitiges Ende der Eingabe"
 
 msgid "no usage string given before the `--' separator"
 msgstr "kein Verwendungstext vor dem `--' Separator angegeben"
+
+msgid "missing opt-spec before option flags"
+msgstr "fehlende opt-spec vor Optionsflags"
 
 msgid "Needed a single revision"
 msgstr "Benötigte einen einzelnen Commit"
@@ -12148,18 +12324,16 @@ msgid "Expecting a full ref name, got %s"
 msgstr "Vollständiger Referenzname erwartet, %s erhalten"
 
 #, c-format
+msgid "could not get a repository handle for submodule '%s'"
+msgstr "Konnte kein Repository-Handle für Submodul '%s' erhalten."
+
+#, c-format
 msgid ""
 "could not look up configuration '%s'. Assuming this repository is its own "
 "authoritative upstream."
 msgstr ""
 "Konnte Konfiguration '%s' nicht nachschlagen. Nehme an, dass dieses\n"
 "Repository sein eigenes verbindliches Upstream-Repository ist."
-
-msgid "alternative anchor for relative paths"
-msgstr "Alternativer Anker für relative Pfade"
-
-msgid "git submodule--helper list [--prefix=<path>] [<path>...]"
-msgstr "git submodule--helper list [--prefix=<Pfad>] [<Pfad>...]"
 
 #, c-format
 msgid "No url found for submodule path '%s' in .gitmodules"
@@ -12194,8 +12368,8 @@ msgstr "Ausgaben beim Betreten eines Submodul-Befehls unterdrücken"
 msgid "recurse into nested submodules"
 msgstr "Rekursion in verschachtelte Submodule durchführen"
 
-msgid "git submodule--helper foreach [--quiet] [--recursive] [--] <command>"
-msgstr "git submodule--helper foreach [--quiet] [--recursive] [--] <Befehl>"
+msgid "git submodule foreach [--quiet] [--recursive] [--] <command>"
+msgstr "git submodule foreach [--quiet] [--recursive] [--] <Befehl>"
 
 #, c-format
 msgid "Failed to register url for submodule path '%s'"
@@ -12219,8 +12393,8 @@ msgstr ""
 msgid "suppress output for initializing a submodule"
 msgstr "Ausgaben bei Initialisierung eines Submoduls unterdrücken"
 
-msgid "git submodule--helper init [<options>] [<path>]"
-msgstr "git submodule--helper init [<Optionen>] [<Pfad>]"
+msgid "git submodule init [<options>] [<path>]"
+msgstr "git submodule init [<Optionen>] [<Pfad>]"
 
 #, c-format
 msgid "no submodule mapping found in .gitmodules for path '%s'"
@@ -12245,9 +12419,6 @@ msgstr ""
 
 msgid "git submodule status [--quiet] [--cached] [--recursive] [<path>...]"
 msgstr "git submodule status [--quiet] [--cached] [--recursive] [<Pfad>...]"
-
-msgid "git submodule--helper name <path>"
-msgstr "git submodule--helper name <Pfad>"
 
 #, c-format
 msgid "* %s %s(blob)->%s(submodule)"
@@ -12283,8 +12454,8 @@ msgstr ""
 msgid "limit the summary size"
 msgstr "Größe der Zusammenfassung begrenzen"
 
-msgid "git submodule--helper summary [<options>] [<commit>] [--] [<path>]"
-msgstr "git submodule--helper summary [<Optionen>] [<Commit>] [--] [<Pfad>]"
+msgid "git submodule summary [<options>] [<commit>] [--] [<path>]"
+msgstr "git submodule summary [<Optionen>] [<Commit>] [--] [<Pfad>]"
 
 msgid "could not fetch a revision for HEAD"
 msgstr "konnte keinen Commit für HEAD holen"
@@ -12298,18 +12469,14 @@ msgid "failed to register url for submodule path '%s'"
 msgstr "Fehler beim Registrieren der URL für Submodul-Pfad '%s'"
 
 #, c-format
-msgid "failed to get the default remote for submodule '%s'"
-msgstr "Fehler beim Lesen des Standard-Remote-Repositories für Submodul '%s'"
-
-#, c-format
 msgid "failed to update remote for submodule '%s'"
 msgstr "Fehler beim Aktualisieren des Remote-Repositories für Submodul '%s'"
 
 msgid "suppress output of synchronizing submodule url"
 msgstr "Ausgaben bei der Synchronisierung der Submodul-URLs unterdrücken"
 
-msgid "git submodule--helper sync [--quiet] [--recursive] [<path>]"
-msgstr "git submodule--helper sync [--quiet] [--recursive] [<Pfad>]"
+msgid "git submodule sync [--quiet] [--recursive] [<path>]"
+msgstr "git submodule sync [--quiet] [--recursive] [<Pfad>]"
 
 #, c-format
 msgid ""
@@ -12374,6 +12541,10 @@ msgstr ""
 "'--reference-if-able' statt '--reference'."
 
 #, c-format
+msgid "could not get a repository handle for gitdir '%s'"
+msgstr "konnte kein Repository-Handle für gitdir '%s' erhalten"
+
+#, c-format
 msgid "submodule '%s' cannot add alternate: %s"
 msgstr "Submodul '%s' kann Alternative nicht hinzufügen: %s"
 
@@ -12403,6 +12574,9 @@ msgstr "Verzeichnis ist nicht leer: '%s'"
 msgid "could not get submodule directory for '%s'"
 msgstr "Konnte Submodul-Verzeichnis '%s' nicht finden."
 
+msgid "alternative anchor for relative paths"
+msgstr "Alternativer Anker für relative Pfade"
+
 msgid "where the new submodule will be cloned to"
 msgstr "Pfad für neues Submodul"
 
@@ -12429,10 +12603,6 @@ msgstr ""
 "git submodule--helper clone [--prefix=<Pfad>] [--quiet] [--reference "
 "<Repository>] [--name <Name>] [--depth <Tiefe>] [--single-branch] [--filter "
 "<filter-spec>] --url <URL> --path <Pfad>"
-
-#, c-format
-msgid "Invalid update mode '%s' for submodule path '%s'"
-msgstr "Ungültiger Aktualisierungsmodus '%s' für Submodul-Pfad '%s'."
 
 #, c-format
 msgid "Invalid update mode '%s' configured for submodule path '%s'"
@@ -12509,16 +12679,16 @@ msgstr ""
 "Anfordern dieses Commits ist fehlgeschlagen."
 
 #, c-format
+msgid "could not initialize submodule at path '%s'"
+msgstr "konnte das Submodul unter dem Pfad '%s' nicht initialisieren"
+
+#, c-format
 msgid ""
 "Submodule (%s) branch configured to inherit branch from superproject, but "
 "the superproject is not on any branch"
 msgstr ""
 "Branch von Submodul (%s) ist konfiguriert, den Branch des Hauptprojektes\n"
 "zu erben, aber das Hauptprojekt befindet sich auf keinem Branch."
-
-#, c-format
-msgid "could not get a repository handle for submodule '%s'"
-msgstr "Konnte kein Repository-Handle für Submodul '%s' erhalten."
 
 #, c-format
 msgid "Unable to find current revision in submodule path '%s'"
@@ -12554,12 +12724,14 @@ msgstr "keine neuen Objekte von Remote abrufen"
 msgid "path into the working tree"
 msgstr "Pfad zum Arbeitsverzeichnis"
 
-msgid "path into the working tree, across nested submodule boundaries"
-msgstr ""
-"Pfad zum Arbeitsverzeichnis, über verschachtelte Submodul-Grenzen hinweg"
+msgid "use the 'checkout' update strategy (default)"
+msgstr "die Aktualisierungsstrategie \"checkout\" verwenden (Standard)"
 
-msgid "rebase, merge, checkout or none"
-msgstr "rebase, merge, checkout oder none"
+msgid "use the 'merge' update strategy"
+msgstr "die Aktualisierungsstrategie 'merge' verwenden"
+
+msgid "use the 'rebase' update strategy"
+msgstr "die Aktualisierungsstrategie 'rebase' verwenden"
 
 msgid "create a shallow clone truncated to the specified number of revisions"
 msgstr ""
@@ -12577,6 +12749,10 @@ msgstr ""
 msgid "don't print cloning progress"
 msgstr "keine Fortschrittsanzeige beim Klonen"
 
+msgid "disallow cloning into non-empty directory, implies --init"
+msgstr ""
+"klonen in ein nicht leeres Verzeichnis nicht zulassen, impliziert --init"
+
 msgid ""
 "git submodule [--quiet] update [--init [--filter=<filter-spec>]] [--remote] "
 "[-N|--no-fetch] [-f|--force] [--checkout|--merge|--rebase] [--[no-]recommend-"
@@ -12588,14 +12764,11 @@ msgstr ""
 "shallow] [--reference <Repository>] [--recursive] [--[no-]single-branch] "
 "[--] [<Pfad>...]"
 
-msgid "bad value for update parameter"
-msgstr "Fehlerhafter Wert für update Parameter"
-
 msgid "recurse into submodules"
 msgstr "Rekursion in Submodule durchführen"
 
-msgid "git submodule--helper absorb-git-dirs [<options>] [<path>...]"
-msgstr "git submodule--helper absorb-git-dirs [<Optionen>] [<Pfad>...]"
+msgid "git submodule absorbgitdirs [<options>] [<path>...]"
+msgstr "git submodule absorbgitdirs [<Optionen>] [<Pfad>...]"
 
 msgid "check if it is safe to write to the .gitmodules file"
 msgstr "prüfen, ob es sicher ist, in die Datei .gitmodules zu schreiben"
@@ -12617,8 +12790,8 @@ msgstr ""
 msgid "suppress output for setting url of a submodule"
 msgstr "Ausgaben beim Setzen der URL eines Submoduls unterdrücken"
 
-msgid "git submodule--helper set-url [--quiet] <path> <newurl>"
-msgstr "git submodule--helper set-url [--quiet] <Pfad> <neue URL>"
+msgid "git submodule set-url [--quiet] <path> <newurl>"
+msgstr "git submodule set-url [--quiet] <Pfad> <neue URL>"
 
 msgid "set the default tracking branch to master"
 msgstr "Standard-Tracking-Branch auf master setzen"
@@ -12626,13 +12799,11 @@ msgstr "Standard-Tracking-Branch auf master setzen"
 msgid "set the default tracking branch"
 msgstr "Standard-Tracking-Branch setzen"
 
-msgid "git submodule--helper set-branch [-q|--quiet] (-d|--default) <path>"
-msgstr "git submodule--helper set-branch [-q|--quiet] (-d|--default) [<Pfad>]"
+msgid "git submodule set-branch [-q|--quiet] (-d|--default) <path>"
+msgstr "git submodule set-branch [-q|--quiet] (-d|--default) <Pfad>"
 
-msgid ""
-"git submodule--helper set-branch [-q|--quiet] (-b|--branch) <branch> <path>"
-msgstr ""
-"git submodule--helper set-branch [-q|--quiet] (-b|--branch) <Branch> <Pfad>"
+msgid "git submodule set-branch [-q|--quiet] (-b|--branch) <branch> <path>"
+msgstr "git submodule set-branch [-q|--quiet] (-b|--branch) <Branch> <Pfad>"
 
 msgid "--branch or --default required"
 msgstr "Option --branch oder --default erforderlich"
@@ -12732,8 +12903,8 @@ msgstr ""
 "setzt den Namen des Submoduls auf die angegebene Zeichenkette fest, statt "
 "standardmäßig dessen Pfad zu nehmen"
 
-msgid "git submodule--helper add [<options>] [--] <repository> [<path>]"
-msgstr "git submodule--helper add [<Optionen>] [--] <Repository> [<Pfad>]"
+msgid "git submodule add [<options>] [--] <repository> [<path>]"
+msgstr "git submodule add [<Optionen>] [--] <Repository> [<Pfad>]"
 
 msgid "Relative path can only be used from the toplevel of the working tree"
 msgstr ""
@@ -12941,6 +13112,16 @@ msgstr "Tag '%s' aktualisiert (war %s)\n"
 
 msgid "pack exceeds maximum allowed size"
 msgstr "Paket überschreitet die maximal erlaubte Größe"
+
+msgid "failed to write object in stream"
+msgstr "Objekt kann nicht in Stream geschrieben werden"
+
+#, c-format
+msgid "inflate returned (%d)"
+msgstr "Dekomprimierung gab (%d) zurück"
+
+msgid "invalid blob object from stream"
+msgstr "ungültiges Blob-Objekt aus Stream"
 
 msgid "Unpacking objects"
 msgstr "Entpacke Objekte"
@@ -13497,6 +13678,27 @@ msgstr "das Tree-Objekt für ein Unterverzeichnis <Präfix> schreiben"
 msgid "only useful for debugging"
 msgstr "nur nützlich für Fehlersuche"
 
+msgid "core.fsyncMethod = batch is unsupported on this platform"
+msgstr "core.fsyncMethod = batch wird auf dieser Plattform nicht unterstützt"
+
+msgid "failed to create temporary file"
+msgstr "temporäre Datei kann nicht erstellt werden"
+
+msgid "insufficient capabilities"
+msgstr "unzureichende Fähigkeiten"
+
+#, c-format
+msgid "failed to download bundle from URI '%s'"
+msgstr "Download des Bundles von URI '%s' fehlgeschlagen"
+
+#, c-format
+msgid "file at URI '%s' is not a bundle"
+msgstr "Datei unter URI '%s' ist kein Bundle"
+
+#, c-format
+msgid "failed to unbundle bundle from URI '%s'"
+msgstr "Bundle von URI '%s' konnte nicht entpackt werden"
+
 #, c-format
 msgid "unrecognized bundle hash algorithm: %s"
 msgstr "unbekannter Paket-Hash-Algorithmus: %s"
@@ -13709,6 +13911,9 @@ msgstr ""
 "einem Objekt einen für Menschen lesbaren Namen basierend auf\n"
 "einer verfügbaren Referenz geben"
 
+msgid "Generate a zip archive of diagnostic information"
+msgstr "Erzeugen eines Zip-Archivs mit Diagnoseinformationen"
+
 msgid "Show changes between commits, commit and working tree, etc"
 msgstr ""
 "Änderungen zwischen Commits, Commit und Arbeitsverzeichnis, etc. anzeigen"
@@ -13846,8 +14051,8 @@ msgstr "einen Merge für zusammenzuführende Dateien ausführen"
 msgid "The standard helper program to use with git-merge-index"
 msgstr "das Standard-Hilfsprogramm für die Verwendung mit git-merge-index"
 
-msgid "Show three-way merge without touching index"
-msgstr "3-Wege-Merge anzeigen ohne den Index zu verändern"
+msgid "Perform merge without touching index or working tree"
+msgstr "Merge ohne Berührung von Index oder Arbeitsverzeichnis durchführen"
 
 msgid "Run merge conflict resolution tools to resolve merge conflicts"
 msgstr ""
@@ -14053,6 +14258,9 @@ msgstr "gepackte Git-Archivdateien validieren"
 msgid "Check the GPG signature of tags"
 msgstr "die GPG-Signatur von Tags prüfen"
 
+msgid "Display version information about Git"
+msgstr "Versionsinformationen über Git anzeigen"
+
 msgid "Show logs with difference each commit introduces"
 msgstr "Logs mit dem Unterschied, den jeder Commit einführt, anzeigen"
 
@@ -14087,6 +14295,24 @@ msgstr ""
 msgid "Frequently asked questions about using Git"
 msgstr "Häufig gestellte Fragen über die Nutzung von Git"
 
+msgid "The bundle file format"
+msgstr "Das Bundle-Dateiformat"
+
+msgid "Chunk-based file formats"
+msgstr "Chunk-basierte Dateiformate"
+
+msgid "Git commit graph format"
+msgstr "Git Commit Graph Format"
+
+msgid "Git index format"
+msgstr "Git-Index-Format"
+
+msgid "Git pack format"
+msgstr "Git-Pack-Format"
+
+msgid "Git cryptographic signature formats"
+msgstr "Git kryptographische Signaturformate"
+
 msgid "A Git Glossary"
 msgstr "ein Git-Glossar"
 
@@ -14107,6 +14333,21 @@ msgstr "Definition von Submodul-Eigenschaften"
 
 msgid "Git namespaces"
 msgstr "Git Namensbereiche"
+
+msgid "Protocol v0 and v1 capabilities"
+msgstr "Fähigkeiten des Protokolls v0 und v1"
+
+msgid "Things common to various protocols"
+msgstr "Gemeinsamkeiten zwischen verschiedenen Protokollen"
+
+msgid "Git HTTP-based protocols"
+msgstr "Git HTTP-basierte Protokolle"
+
+msgid "How packs are transferred over-the-wire"
+msgstr "Wie Pakete über die Leitung übertragen werden"
+
+msgid "Git Wire Protocol, Version 2"
+msgstr "Git Wire Protokoll, Version 2"
 
 msgid "Helper programs to interact with remote repositories"
 msgstr "Hilfsprogramme zur Interaktion mit Remote-Repositories"
@@ -14131,6 +14372,9 @@ msgstr "Git Web Interface (Web-Frontend für Git-Repositories)"
 
 msgid "An overview of recommended workflows with Git"
 msgstr "Eine Übersicht über empfohlene Arbeitsabläufe mit Git"
+
+msgid "A tool for managing large Git repositories"
+msgstr "Ein Werkzeug zur Verwaltung großer Git-Repositories"
 
 msgid "commit-graph file is too small"
 msgstr "Commit-Graph-Datei ist zu klein"
@@ -14378,6 +14622,14 @@ msgid "no libc information available\n"
 msgstr "keine libc Informationen verfügbar\n"
 
 #, c-format
+msgid "could not determine free disk size for '%s'"
+msgstr "konnte freien Speicherplatz für '%s' nicht bestimmen"
+
+#, c-format
+msgid "could not get info for '%s'"
+msgstr "konnte keine Info für '%s' bekommen"
+
+#, c-format
 msgid "[GLE %ld] health thread could not open '%ls'"
 msgstr "[GLE %ld] health Thread konnte '%ls' nicht öffnen"
 
@@ -14430,6 +14682,14 @@ msgstr "GetOverlappedResult fehlgeschlagen auf '%s' [GLE %ld]"
 #, c-format
 msgid "could not read directory changes [GLE %ld]"
 msgstr "konnte Verzeichnisveränderungen nicht lesen [GLE %ld]"
+
+#, c-format
+msgid "[GLE %ld] unable to open for read '%ls'"
+msgstr "[GLE %ld] '%ls' kann nicht zum Lesen geöffnet werden"
+
+#, c-format
+msgid "[GLE %ld] unable to get protocol information for '%ls'"
+msgstr "[GLE %ld] kann keine Protokollinformationen für '%ls' erhalten"
 
 #, c-format
 msgid "failed to copy SID (%ld)"
@@ -14990,182 +15250,6 @@ msgid "failed to close rev-list's stdin"
 msgstr "Fehler beim Schließen von rev-lists Standard-Eingabe"
 
 #, c-format
-msgid "'%s' does not exist"
-msgstr "'%s' existiert nicht."
-
-msgid "need a working directory"
-msgstr "Arbeitsverzeichnis benötigt"
-
-msgid "could not find enlistment root"
-msgstr "konnte Root-Verzeichnis für Eintragungen nicht finden"
-
-#, c-format
-msgid "could not switch to '%s'"
-msgstr "konnte nicht zu '%s' wechseln"
-
-#, c-format
-msgid "could not configure %s=%s"
-msgstr "konnte %s=%s nicht konfigurieren"
-
-msgid "could not configure log.excludeDecoration"
-msgstr "konnte log.excludeDecoration nicht konfigurieren"
-
-msgid "Scalar enlistments require a worktree"
-msgstr "Skalare Eintragungen erfordern ein Arbeitsverzeichnis"
-
-#, c-format
-msgid "could not open directory '%s'"
-msgstr "konnte Verzeichnis '%s' nicht öffnen"
-
-#, c-format
-msgid "skipping '%s', which is neither file nor directory"
-msgstr "überspringe '%s', das weder Datei noch Verzeichnis ist"
-
-#, c-format
-msgid "could not determine free disk size for '%s'"
-msgstr "konnte freien Speicherplatz für '%s' nicht bestimmen"
-
-#, c-format
-msgid "could not get info for '%s'"
-msgstr "konnte keine Info für '%s' bekommen"
-
-#, c-format
-msgid "remote HEAD is not a branch: '%.*s'"
-msgstr "externer HEAD ist kein Branch: '%.*s'"
-
-msgid "failed to get default branch name from remote; using local default"
-msgstr ""
-"Fehler beim Abfragen des Standard-Branchnamens vom Remote-Repository; nutze "
-"lokalen Standardwert"
-
-msgid "failed to get default branch name"
-msgstr "Fehler beim Abfragen des Standard-Branchnamens"
-
-msgid "failed to unregister repository"
-msgstr "Fehler beim Austragen des Repositories"
-
-msgid "failed to delete enlistment directory"
-msgstr "Fehler beim Löschen des Eintragungs-Verzeichnisses"
-
-msgid "branch to checkout after clone"
-msgstr "Branch, der nach dem Klonen ausgecheckt werden soll"
-
-msgid "when cloning, create full working directory"
-msgstr "vollständiges Arbeitsverzeichnis beim Klonen erstellen"
-
-msgid "only download metadata for the branch that will be checked out"
-msgstr "lade nur Metadaten des Branches herunter, der ausgecheckt wird"
-
-msgid "scalar clone [<options>] [--] <repo> [<dir>]"
-msgstr "scalar clone [<Optionen>] [--] <Repository> [<Verzeichnis>]"
-
-#, c-format
-msgid "cannot deduce worktree name from '%s'"
-msgstr "konnte Name für Arbeitsverzeichnis nicht von '%s' ableiten"
-
-#, c-format
-msgid "directory '%s' exists already"
-msgstr "Verzeichnis '%s' existiert bereits"
-
-#, c-format
-msgid "failed to get default branch for '%s'"
-msgstr "Fehler beim Abfragen des Default-Branches für '%s'"
-
-#, c-format
-msgid "could not configure remote in '%s'"
-msgstr "konnte Remote-Repository in '%s' nicht konfigurieren"
-
-#, c-format
-msgid "could not configure '%s'"
-msgstr "konnte '%s' nicht konfigurieren"
-
-msgid "partial clone failed; attempting full clone"
-msgstr "partielles Klonen fehlgeschlagen; versuche vollständiges Klonen"
-
-msgid "could not configure for full clone"
-msgstr "konnte nicht für vollständiges Klonen konfigurieren"
-
-msgid "scalar diagnose [<enlistment>]"
-msgstr "scalar diagnose [<Eintragung>]"
-
-#, c-format
-msgid "could not create directory for '%s'"
-msgstr "konnte Verzeichnis für '%s' nicht erstellen"
-
-msgid "could not duplicate stdout"
-msgstr "konnte Standard-Ausgabe nicht duplizieren"
-
-msgid "failed to write archive"
-msgstr "Schreiben des Archivs fehlgeschlagen"
-
-msgid "`scalar list` does not take arguments"
-msgstr "`scalar list` akzeptiert keine Argumente"
-
-msgid "scalar register [<enlistment>]"
-msgstr "scalar register [<Eintragung>]"
-
-msgid "reconfigure all registered enlistments"
-msgstr "alle registrierten Eintragungen neu konfigurieren"
-
-msgid "scalar reconfigure [--all | <enlistment>]"
-msgstr "scalar reconfigure [--all | <Eintragung>]"
-
-msgid "--all or <enlistment>, but not both"
-msgstr "--all oder <Eintragung>, aber nicht beides"
-
-#, c-format
-msgid "git repository gone in '%s'"
-msgstr "Git-Repository entfernt in '%s'"
-
-msgid ""
-"scalar run <task> [<enlistment>]\n"
-"Tasks:\n"
-msgstr ""
-"scalar run <Aufgabe> [<Eintragung>]\n"
-"Aufgaben:\n"
-
-#, c-format
-msgid "no such task: '%s'"
-msgstr "Aufgabe nicht gefunden: '%s'"
-
-msgid "scalar unregister [<enlistment>]"
-msgstr "scalar unregister [<Eintragung>]"
-
-msgid "scalar delete <enlistment>"
-msgstr "scalar delete <Eintragung>"
-
-msgid "refusing to delete current working directory"
-msgstr "Löschen des aktuellen Arbeitsverzeichnisses wurde verweigert"
-
-msgid "include Git version"
-msgstr "Git-Version einbeziehen"
-
-msgid "include Git's build options"
-msgstr "Build-Optionen von Git einbeziehen"
-
-msgid "scalar verbose [-v | --verbose] [--build-options]"
-msgstr "scalar verbose [-v | --verbose] [--build-options]"
-
-msgid "-C requires a <directory>"
-msgstr "-C erfordert ein <Verzeichnis>"
-
-#, c-format
-msgid "could not change to '%s'"
-msgstr "konnte nicht zu '%s' wechseln"
-
-msgid "-c requires a <key>=<value> argument"
-msgstr "-c benötigt ein <Schlüssel>=<Wert> Argument"
-
-msgid ""
-"scalar [-C <directory>] [-c <key>=<value>] <command> [<options>]\n"
-"\n"
-"Commands:\n"
-msgstr ""
-"scalar [-C <Verzeichnis>] [-c <Schlüssel>=<Wert>] <Befehl> [<Optionen>]\n"
-"\n"
-"Befehle:\n"
-
-#, c-format
 msgid "illegal crlf_action %d"
 msgstr "Unerlaubte crlf_action %d"
 
@@ -15372,6 +15456,32 @@ msgstr ""
 #, c-format
 msgid "Marked %d islands, done.\n"
 msgstr "%d Delta-Islands markiert, fertig.\n"
+
+#, c-format
+msgid "invalid --%s value '%s'"
+msgstr "ungültiger --%s Wert '%s'"
+
+#, c-format
+msgid "could not archive missing directory '%s'"
+msgstr "fehlendes Verzeichnis '%s' konnte nicht archiviert werden"
+
+#, c-format
+msgid "could not open directory '%s'"
+msgstr "konnte Verzeichnis '%s' nicht öffnen"
+
+#, c-format
+msgid "skipping '%s', which is neither file nor directory"
+msgstr "überspringe '%s', das weder Datei noch Verzeichnis ist"
+
+msgid "could not duplicate stdout"
+msgstr "konnte Standard-Ausgabe nicht duplizieren"
+
+#, c-format
+msgid "could not add directory '%s' to archiver"
+msgstr "konnte das Verzeichnis '%s' nicht zum Archivierungssystem hinzufügen"
+
+msgid "failed to write archive"
+msgstr "Schreiben des Archivs fehlgeschlagen"
 
 msgid "--merge-base does not work with ranges"
 msgstr "--merge-base funktioniert nicht mit Bereichen"
@@ -16004,6 +16114,9 @@ msgstr "git fetch-pack: ACK/NAK erwartet, '%s' bekommen"
 msgid "unable to write to remote"
 msgstr "konnte nicht zum Remote schreiben"
 
+msgid "Server supports filter"
+msgstr "Server unterstützt Filter"
+
 #, c-format
 msgid "invalid shallow line: %s"
 msgstr "ungültige shallow-Zeile: %s"
@@ -16113,9 +16226,6 @@ msgstr "der Server unterstützt Algorithmus '%s' nicht"
 
 msgid "Server does not support shallow requests"
 msgstr "Server unterstützt keine shallow-Anfragen"
-
-msgid "Server supports filter"
-msgstr "Server unterstützt Filter"
 
 msgid "unable to write request to remote"
 msgstr "konnte Anfrage nicht zum Remote schreiben"
@@ -16462,6 +16572,12 @@ msgstr "Systembefehle / Repositories synchronisieren"
 msgid "Low-level Commands / Internal Helpers"
 msgstr "Systembefehle / Interne Hilfsbefehle"
 
+msgid "User-facing repository, command and file interfaces"
+msgstr "Benutzerseitige Repository-, Befehls- und Dateischnittstellen"
+
+msgid "Developer-facing file formats, protocols and other interfaces"
+msgstr "Dateiformate, Protokolle und andere Schnittstellen für Entwickler"
+
 #, c-format
 msgid "available git commands in '%s'"
 msgstr "Vorhandene Git-Befehle in '%s'"
@@ -16474,6 +16590,12 @@ msgstr "Allgemeine Git-Befehle, verwendet in verschiedenen Situationen:"
 
 msgid "The Git concept guides are:"
 msgstr "Die Git-Konzeptanleitungen sind:"
+
+msgid "User-facing repository, command and file interfaces:"
+msgstr "Benutzerseitige Repository-, Befehls- und Dateischnittstellen:"
+
+msgid "File formats, protocols and other developer interfaces:"
+msgstr "Dateiformate, Protokolle und andere Entwicklerschnittstellen:"
 
 msgid "External commands"
 msgstr "Externe Befehle"
@@ -16559,10 +16681,6 @@ msgstr ""
 "Der '%s' Hook wurde ignoriert, weil er nicht als ausführbar markiert ist.\n"
 "Sie können diese Warnung mit `git config advice.ignoredHook false` "
 "deaktivieren."
-
-#, c-format
-msgid "Couldn't start hook '%s'\n"
-msgstr "Konnte Hook '%s' nicht starten\n"
 
 #, c-format
 msgid "argument to --packfile must be a valid hash (got '%s')"
@@ -16752,17 +16870,12 @@ msgid "quoted CRLF detected"
 msgstr "angeführtes CRLF entdeckt"
 
 #, c-format
-msgid ""
-"Your local changes to the following files would be overwritten by merge:\n"
-"  %s"
-msgstr ""
-"Ihre lokalen Änderungen in den folgenden Dateien würden durch den Merge\n"
-"überschrieben werden:\n"
-"  %s"
-
-#, c-format
 msgid "Failed to merge submodule %s (not checked out)"
 msgstr "Fehler beim Merge von Submodul %s (nicht ausgecheckt)."
+
+#, c-format
+msgid "Failed to merge submodule %s (no merge base)"
+msgstr "Merge von Submodul %s fehlgeschlagen (keine Merge-Basis)"
 
 #, c-format
 msgid "Failed to merge submodule %s (commits not present)"
@@ -16782,28 +16895,10 @@ msgstr "Fehler beim Zusammenführen von Submodul %s"
 
 #, c-format
 msgid ""
-"Failed to merge submodule %s, but a possible merge resolution exists:\n"
-"%s\n"
+"Failed to merge submodule %s, but a possible merge resolution exists: %s"
 msgstr ""
-"Fehler beim Zusammenführen von Submodul %s, aber es ist eine mögliche "
-"Auflösung des Merges vorhanden:\n"
-"%s\n"
-
-#, c-format
-msgid ""
-"If this is correct simply add it to the index for example\n"
-"by using:\n"
-"\n"
-"  git update-index --cacheinfo 160000 %s \"%s\"\n"
-"\n"
-"which will accept this suggestion.\n"
-msgstr ""
-"Falls das korrekt ist, fügen Sie es einfach der Staging-Area, zum Beispiel "
-"mit:\n"
-"\n"
-"  git update-index --cacheinfo 160000 %s \"%s\"\n"
-"\n"
-"hinzu, um diesen Vorschlag zu akzeptieren.\n"
+"Der Merge von Submodul %s ist fehlgeschlagen, aber es gibt eine mögliche "
+"Auflösung des Merges: %s"
 
 #, c-format
 msgid ""
@@ -16971,13 +17066,46 @@ msgstr ""
 "KONFLIKT (ändern/löschen): %s gelöscht in %s und geändert in %s. Stand %s "
 "von %s wurde im Arbeitsbereich gelassen."
 
+#. TRANSLATORS: This is a line of advice to resolve a merge
+#. conflict in a submodule. The first argument is the submodule
+#. name, and the second argument is the abbreviated id of the
+#. commit that needs to be merged.  For example:
+#. - go to submodule (mysubmodule), and either merge commit abc1234"
+#.
 #, c-format
 msgid ""
-"Note: %s not up to date and in way of checking out conflicted version; old "
-"copy renamed to %s"
+" - go to submodule (%s), and either merge commit %s\n"
+"   or update to an existing commit which has merged those changes\n"
 msgstr ""
-"Hinweis: %s nicht aktuell und konfliktbehaftete Version während des "
-"Auscheckens; alte Kopie zu %s umbenannt"
+" - gehen Sie zu Submodul (%s) und mergen Sie entweder Commit %s\n"
+"   oder aktualisieren Sie zu einem bestehenden Commit, der diese Änderungen "
+"zusammengeführt hat\n"
+
+#, c-format
+msgid ""
+"Recursive merging with submodules currently only supports trivial cases.\n"
+"Please manually handle the merging of each conflicted submodule.\n"
+"This can be accomplished with the following steps:\n"
+"%s - come back to superproject and run:\n"
+"\n"
+"      git add %s\n"
+"\n"
+"   to record the above merge or update\n"
+" - resolve any other conflicts in the superproject\n"
+" - commit the resulting index in the superproject\n"
+msgstr ""
+"Das rekursive Zusammenführen mit Submodulen unterstützt derzeit nur triviale "
+"Fälle.\n"
+"Bitte führen Sie die Zusammenführung der einzelnen konfliktbehafteten "
+"Submodule manuell durch.\n"
+"Dies kann mit den folgenden Schritten erreicht werden:\n"
+"%s - zurück zum Hauptprojekt und dann ausführen:\n"
+"\n"
+"      git add %s\n"
+"\n"
+"   um die obige Zusammenführung oder Aktualisierung aufzuzeichnen\n"
+" - lösen Sie alle anderen Konflikte im Hauptprojekt\n"
+" - committen Sie den resultierenden Index in das Hauptprojekt\n"
 
 #. TRANSLATORS: The %s arguments are: 1) tree hash of a merge
 #. base, and 2-3) the trees for the two trees we're merging.
@@ -17051,6 +17179,22 @@ msgstr "Fehler beim Merge von Submodul %s (kein Vorspulen)"
 
 msgid "Found a possible merge resolution for the submodule:\n"
 msgstr "Mögliche Auflösung des Merges für Submodul gefunden:\n"
+
+#, c-format
+msgid ""
+"If this is correct simply add it to the index for example\n"
+"by using:\n"
+"\n"
+"  git update-index --cacheinfo 160000 %s \"%s\"\n"
+"\n"
+"which will accept this suggestion.\n"
+msgstr ""
+"Falls das korrekt ist, fügen Sie es einfach der Staging-Area, zum Beispiel "
+"mit:\n"
+"\n"
+"  git update-index --cacheinfo 160000 %s \"%s\"\n"
+"\n"
+"hinzu, um diesen Vorschlag zu akzeptieren.\n"
 
 #, c-format
 msgid "Failed to merge submodule %s (multiple merges found)"
@@ -17128,8 +17272,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"CONFLICT (rename/rename): Rename \"%s\"->\"%s\" in branch \"%s\" rename "
-"\"%s\"->\"%s\" in \"%s\"%s"
+"CONFLICT (rename/rename): Rename \"%s\"->\"%s\" in branch \"%s\" rename \"%s"
+"\"->\"%s\" in \"%s\"%s"
 msgstr ""
 "KONFLIKT (umbenennen/umbenennen): Benenne um \"%s\"->\"%s\" in Branch \"%s\" "
 "und \"%s\"->\"%s\" in Branch \"%s\"%s"
@@ -17593,6 +17737,22 @@ msgid "confused by unstable object source data for %s"
 msgstr "Fehler wegen instabilen Objektquelldaten für %s"
 
 #, c-format
+msgid "write stream object %ld != %<PRIuMAX>"
+msgstr "stream-Objekt schreiben %ld!= %<PRIuMAX>"
+
+#, c-format
+msgid "unable to stream deflate new object (%d)"
+msgstr "neues Objekt kann nicht aus Stream entpackt werden (%d)"
+
+#, c-format
+msgid "deflateEnd on stream object failed (%d)"
+msgstr "deflateEnd auf Stream-Objekt fehlgeschlagen (%d)"
+
+#, c-format
+msgid "unable to create directory %s"
+msgstr "Verzeichnis %s kann nicht erstellt werden"
+
+#, c-format
 msgid "cannot read object for %s"
 msgstr "Kann Objekt für %s nicht lesen."
 
@@ -17657,7 +17817,7 @@ msgstr "%s [ungültiges Objekt]"
 #. TRANSLATORS: This is a line of ambiguous commit
 #. object output. E.g.:
 #. *
-#.    "deadbeef commit 2021-01-01 - Some Commit Message"
+#. "deadbeef commit 2021-01-01 - Some Commit Message"
 #.
 #, c-format
 msgid "%s commit %s - %s"
@@ -17666,7 +17826,7 @@ msgstr "%s Commit %s - %s"
 #. TRANSLATORS: This is a line of ambiguous
 #. tag object output. E.g.:
 #. *
-#.    "deadbeef tag 2022-01-01 - Some Tag Message"
+#. "deadbeef tag 2022-01-01 - Some Tag Message"
 #. *
 #. The second argument is the YYYY-MM-DD found
 #. in the tag.
@@ -17682,7 +17842,7 @@ msgstr "%s Tag %s - %s"
 #. tag object output where we couldn't parse
 #. the tag itself. E.g.:
 #. *
-#.    "deadbeef [bad tag, could not parse it]"
+#. "deadbeef [bad tag, could not parse it]"
 #.
 #, c-format
 msgid "%s [bad tag, could not parse it]"
@@ -17823,6 +17983,58 @@ msgstr "Konnte Objekt '%s' nicht parsen."
 msgid "hash mismatch %s"
 msgstr "Hash stimmt nicht mit %s überein."
 
+msgid "trying to write commit not in index"
+msgstr "Versuch, einen Commit zu schreiben, der nicht im Index steht"
+
+msgid "failed to load bitmap index (corrupted?)"
+msgstr "bitmap-Index kann nicht geladen werden (beschädigt?)"
+
+msgid "corrupted bitmap index (too small)"
+msgstr "beschädigter Bitmap-Index (zu klein)"
+
+msgid "corrupted bitmap index file (wrong header)"
+msgstr "beschädigte Bitmap-Indexdatei (falscher Header)"
+
+#, c-format
+msgid "unsupported version '%d' for bitmap index file"
+msgstr "nicht unterstützte Version '%d' für Bitmap-Indexdatei"
+
+msgid "corrupted bitmap index file (too short to fit hash cache)"
+msgstr ""
+"beschädigte Bitmap-Indexdatei (zu kurz, um in den Hash-Cache zu passen)"
+
+msgid "corrupted bitmap index file (too short to fit lookup table)"
+msgstr ""
+"beschädigte Bitmap-Indexdatei (zu kurz, um in die Lookup-Tabelle zu passen)"
+
+#, c-format
+msgid "duplicate entry in bitmap index: '%s'"
+msgstr "duplizierter Eintrag im Bitmap-Index: '%s'"
+
+#, c-format
+msgid "corrupt ewah bitmap: truncated header for entry %d"
+msgstr "fehlerhafte ewah-Bitmap: abgeschnittener Header für Eintrag %d"
+
+#, c-format
+msgid "corrupt ewah bitmap: commit index %u out of range"
+msgstr "fehlerhafte ewah-Bitmap: Commit-Index %u außerhalb des Bereichs"
+
+msgid "corrupted bitmap pack index"
+msgstr "beschädigter Bitmap-Pack-Index"
+
+msgid "invalid XOR offset in bitmap pack index"
+msgstr "ungültiger XOR-Offset im Bitmap-Pack-Index"
+
+msgid "cannot fstat bitmap file"
+msgstr "kann Bitmap-Datei nicht lesen"
+
+#, c-format
+msgid "ignoring extra bitmap file: '%s'"
+msgstr "ignoriere zusätzliche Bitmap-Datei: '%s'"
+
+msgid "checksum doesn't match in MIDX and bitmap"
+msgstr "Prüfsumme stimmt in MIDX und Bitmap nicht überein"
+
 msgid "multi-pack bitmap is missing required reverse index"
 msgstr "Multi-Pack-Bitmap fehlt erforderlicher Reverse-Index"
 
@@ -17834,9 +18046,60 @@ msgstr "konnte Paket '%s' nicht öffnen"
 msgid "preferred pack (%s) is invalid"
 msgstr "bevorzugtes Paket (%s) ist ungültig"
 
+msgid "corrupt bitmap lookup table: triplet position out of index"
+msgstr "Bitmap-Lookup-Tabelle beschädigt: Triplet-Position außerhalb des Index"
+
+msgid "corrupt bitmap lookup table: xor chain exceed entry count"
+msgstr ""
+"fehlerhafte Bitmap-Lookup-Tabelle: Xor-Kette überschreitet die Anzahl der "
+"Einträge"
+
 #, c-format
-msgid "could not find %s in pack %s at offset %<PRIuMAX>"
-msgstr "konnte %s nicht in Paket %s bei Offset %<PRIuMAX> finden"
+msgid "corrupt bitmap lookup table: commit index %u out of range"
+msgstr ""
+"Bitmap-Lookup-Tabelle beschädigt: Commit-Index %u außerhalb des Bereichs"
+
+#, c-format
+msgid "corrupt ewah bitmap: truncated header for bitmap of commit \"%s\""
+msgstr ""
+"fehlerhafte ewah-Bitmap: abgeschnittener Header für Bitmap des Commits \"%s\""
+
+#, c-format
+msgid "object '%s' not found in type bitmaps"
+msgstr "Objekt '%s' nicht im Typ Bitmaps gefunden"
+
+#, c-format
+msgid "object '%s' does not have a unique type"
+msgstr "das Objekt '%s' hat keinen eindeutigen Typ"
+
+#, c-format
+msgid "object '%s': real type '%s', expected: '%s'"
+msgstr "Objekt '%s': reeller Typ '%s', erwartet: '%s'"
+
+#, c-format
+msgid "object not in bitmap: '%s'"
+msgstr "Objekt nicht in Bitmap: '%s'"
+
+msgid "failed to load bitmap indexes"
+msgstr "Bitmap-Indizes konnten nicht geladen werden"
+
+msgid "you must specify exactly one commit to test"
+msgstr "Sie müssen genau einen Commit zum Testen angeben"
+
+#, c-format
+msgid "commit '%s' doesn't have an indexed bitmap"
+msgstr "Commit '%s' hat keine indizierte Bitmap"
+
+msgid "mismatch in bitmap results"
+msgstr "Unstimmigkeiten bei Bitmap-Ergebnissen"
+
+#, c-format
+msgid "could not find '%s' in pack '%s' at offset %<PRIuMAX>"
+msgstr "konnte '%s' in Paket '%s' bei Offset %<PRIuMAX> nicht finden"
+
+#, c-format
+msgid "unable to get disk usage of '%s'"
+msgstr "Festplattennutzung von '%s' kann nicht abgerufen werden"
 
 #, c-format
 msgid "mtimes file %s is too small"
@@ -17962,6 +18225,9 @@ msgstr "Meinten Sie `--%s` (mit zwei Strichen)?"
 #, c-format
 msgid "alias of --%s"
 msgstr "Alias für --%s"
+
+msgid "need a subcommand"
+msgstr "benötige einen Unterbefehl"
 
 #, c-format
 msgid "unknown option `%s'"
@@ -18405,9 +18671,12 @@ msgid ""
 "l, label <label> = label current HEAD with a name\n"
 "t, reset <label> = reset HEAD to a label\n"
 "m, merge [-C <commit> | -c <commit>] <label> [# <oneline>]\n"
-".       create a merge commit using the original merge commit's\n"
-".       message (or the oneline, if no original merge commit was\n"
-".       specified); use -c <commit> to reword the commit message\n"
+"        create a merge commit using the original merge commit's\n"
+"        message (or the oneline, if no original merge commit was\n"
+"        specified); use -c <commit> to reword the commit message\n"
+"u, update-ref <ref> = track a placeholder for the <ref> to be updated\n"
+"                      to this position in the new commits. The <ref> is\n"
+"                      updated at the end of the rebase\n"
 "\n"
 "These lines can be re-ordered; they are executed from top to bottom.\n"
 msgstr ""
@@ -18429,11 +18698,16 @@ msgstr ""
 "l, label <Label> = aktuellen HEAD mit Label versehen\n"
 "t, reset <Label> = HEAD zu einem Label umsetzen\n"
 "m, merge [-C <Commit> | -c <Commit>] <Label> [# <eineZeile>]\n"
-".       Merge-Commit mit der originalen Merge-Commit-Beschreibung erstellen\n"
-".       (oder die eine Zeile, wenn keine originale Merge-Commit-"
+"        Merge-Commit mit der originalen Merge-Commit-Beschreibung erstellen\n"
+"        (oder die eine Zeile, wenn keine originale Merge-Commit-"
 "Beschreibung\n"
-".       spezifiziert ist). Benutzen Sie -c <Commit> zum Bearbeiten der\n"
-".       Commit-Beschreibung.\n"
+"        spezifiziert ist). Benutzen Sie -c <Commit> zum Bearbeiten der\n"
+"        Commit-Beschreibung.\n"
+"u, update-ref <Referenz>= einen Platzhalter für die zu aktualisierende "
+"<Referenz>\n"
+"                      zu dieser Position in den neuen Commits erstellen. Die "
+"<Referenz>wird\n"
+"                      am Ende des Rebase aktualisiert\n"
 "\n"
 "Diese Zeilen können umsortiert werden; sie werden von oben nach unten\n"
 "ausgeführt.\n"
@@ -18908,6 +19182,13 @@ msgstr "Protokollfehler: SHA-1/Referenz erwartet, '%s' bekommen"
 msgid "http transport does not support %s"
 msgstr "HTTP-Transport unterstützt nicht %s"
 
+msgid "protocol error: expected '<url> <path>', missing space"
+msgstr "Protokollfehler: erwartet '<url> <path>', fehlendes Leerzeichen"
+
+#, c-format
+msgid "failed to download file at URL '%s'"
+msgstr "Datei unter URL '%s' konnte nicht heruntergeladen werden"
+
 msgid "git-http-push failed"
 msgstr "\"git-http-push\" fehlgeschlagen"
 
@@ -19258,6 +19539,14 @@ msgstr "Konnte HEAD-Commit nicht bestimmen."
 msgid "failed to find tree of %s"
 msgstr "Fehler beim Finden des \"Tree\"-Objektes von %s."
 
+#, c-format
+msgid "resolve-undo records `%s` which is missing"
+msgstr "resolve-undo zeichnet `%s` auf, das fehlt"
+
+#, c-format
+msgid "could not get commit for ancestry-path argument %s"
+msgstr "konnte kein Commit für das Argument ancestry-path %s erhalten"
+
 msgid "--unpacked=<packfile> no longer supported"
 msgstr "--unpacked=<Pack-Datei> wird nicht länger unterstützt"
 
@@ -19277,6 +19566,174 @@ msgstr "-L unterstützt noch keine anderen Diff-Formate außer -p und -s"
 #, c-format
 msgid "cannot create async thread: %s"
 msgstr "Konnte Thread für async nicht erzeugen: %s"
+
+#, c-format
+msgid "'%s' does not exist"
+msgstr "'%s' existiert nicht."
+
+#, c-format
+msgid "could not switch to '%s'"
+msgstr "konnte nicht zu '%s' wechseln"
+
+msgid "need a working directory"
+msgstr "Arbeitsverzeichnis benötigt"
+
+msgid "Scalar enlistments require a worktree"
+msgstr "Skalare Eintragungen erfordern ein Arbeitsverzeichnis"
+
+#, c-format
+msgid "could not configure %s=%s"
+msgstr "konnte %s=%s nicht konfigurieren"
+
+msgid "could not configure log.excludeDecoration"
+msgstr "konnte log.excludeDecoration nicht konfigurieren"
+
+msgid "could not add enlistment"
+msgstr "konnte keine Eintragung hinzufügen"
+
+msgid "could not set recommended config"
+msgstr "konnte die empfohlene Konfiguration nicht setzen"
+
+msgid "could not turn on maintenance"
+msgstr "konnte die Wartung nicht einschalten"
+
+msgid "could not start the FSMonitor daemon"
+msgstr "konnte den FSMonitor-Daemon nicht starten"
+
+msgid "could not turn off maintenance"
+msgstr "konnte die Wartung nicht abschalten"
+
+msgid "could not remove enlistment"
+msgstr "konnte die Eintragung nicht aufheben"
+
+#, c-format
+msgid "remote HEAD is not a branch: '%.*s'"
+msgstr "externer HEAD ist kein Branch: '%.*s'"
+
+msgid "failed to get default branch name from remote; using local default"
+msgstr ""
+"Fehler beim Abfragen des Standard-Branchnamens vom Remote-Repository; nutze "
+"lokalen Standardwert"
+
+msgid "failed to get default branch name"
+msgstr "Fehler beim Abfragen des Standard-Branchnamens"
+
+msgid "failed to unregister repository"
+msgstr "Fehler beim Austragen des Repositories"
+
+msgid "failed to stop the FSMonitor daemon"
+msgstr "der FSMonitor-Daemon konnte nicht gestoppt werden"
+
+msgid "failed to delete enlistment directory"
+msgstr "Fehler beim Löschen des Eintragungs-Verzeichnisses"
+
+msgid "branch to checkout after clone"
+msgstr "Branch, der nach dem Klonen ausgecheckt werden soll"
+
+msgid "when cloning, create full working directory"
+msgstr "vollständiges Arbeitsverzeichnis beim Klonen erstellen"
+
+msgid "only download metadata for the branch that will be checked out"
+msgstr "lade nur Metadaten des Branches herunter, der ausgecheckt wird"
+
+msgid "scalar clone [<options>] [--] <repo> [<dir>]"
+msgstr "scalar clone [<Optionen>] [--] <Repository> [<Verzeichnis>]"
+
+#, c-format
+msgid "cannot deduce worktree name from '%s'"
+msgstr "konnte Name für Arbeitsverzeichnis nicht von '%s' ableiten"
+
+#, c-format
+msgid "directory '%s' exists already"
+msgstr "Verzeichnis '%s' existiert bereits"
+
+#, c-format
+msgid "failed to get default branch for '%s'"
+msgstr "Fehler beim Abfragen des Default-Branches für '%s'"
+
+#, c-format
+msgid "could not configure remote in '%s'"
+msgstr "konnte Remote-Repository in '%s' nicht konfigurieren"
+
+#, c-format
+msgid "could not configure '%s'"
+msgstr "konnte '%s' nicht konfigurieren"
+
+msgid "partial clone failed; attempting full clone"
+msgstr "partielles Klonen fehlgeschlagen; versuche vollständiges Klonen"
+
+msgid "could not configure for full clone"
+msgstr "konnte nicht für vollständiges Klonen konfigurieren"
+
+msgid "scalar diagnose [<enlistment>]"
+msgstr "scalar diagnose [<Eintragung>]"
+
+msgid "`scalar list` does not take arguments"
+msgstr "`scalar list` akzeptiert keine Argumente"
+
+msgid "scalar register [<enlistment>]"
+msgstr "scalar register [<Eintragung>]"
+
+msgid "reconfigure all registered enlistments"
+msgstr "alle registrierten Eintragungen neu konfigurieren"
+
+msgid "scalar reconfigure [--all | <enlistment>]"
+msgstr "scalar reconfigure [--all | <Eintragung>]"
+
+msgid "--all or <enlistment>, but not both"
+msgstr "--all oder <Eintragung>, aber nicht beides"
+
+#, c-format
+msgid "git repository gone in '%s'"
+msgstr "Git-Repository entfernt in '%s'"
+
+msgid ""
+"scalar run <task> [<enlistment>]\n"
+"Tasks:\n"
+msgstr ""
+"scalar run <Aufgabe> [<Eintragung>]\n"
+"Aufgaben:\n"
+
+#, c-format
+msgid "no such task: '%s'"
+msgstr "Aufgabe nicht gefunden: '%s'"
+
+msgid "scalar unregister [<enlistment>]"
+msgstr "scalar unregister [<Eintragung>]"
+
+msgid "scalar delete <enlistment>"
+msgstr "scalar delete <Eintragung>"
+
+msgid "refusing to delete current working directory"
+msgstr "Löschen des aktuellen Arbeitsverzeichnisses wurde verweigert"
+
+msgid "include Git version"
+msgstr "Git-Version einbeziehen"
+
+msgid "include Git's build options"
+msgstr "Build-Optionen von Git einbeziehen"
+
+msgid "scalar verbose [-v | --verbose] [--build-options]"
+msgstr "scalar verbose [-v | --verbose] [--build-options]"
+
+msgid "-C requires a <directory>"
+msgstr "-C erfordert ein <Verzeichnis>"
+
+#, c-format
+msgid "could not change to '%s'"
+msgstr "konnte nicht zu '%s' wechseln"
+
+msgid "-c requires a <key>=<value> argument"
+msgstr "-c benötigt ein <Schlüssel>=<Wert> Argument"
+
+msgid ""
+"scalar [-C <directory>] [-c <key>=<value>] <command> [<options>]\n"
+"\n"
+"Commands:\n"
+msgstr ""
+"scalar [-C <Verzeichnis>] [-c <Schlüssel>=<Wert>] <Befehl> [<Optionen>]\n"
+"\n"
+"Befehle:\n"
 
 msgid "unexpected flush packet while reading remote unpack status"
 msgstr "Unerwartetes Flush-Paket beim Lesen des Remote-Unpack-Status."
@@ -19402,10 +19859,6 @@ msgstr "Ihre lokalen Änderungen würden durch den %s überschrieben werden."
 msgid "commit your changes or stash them to proceed."
 msgstr ""
 "Committen Sie Ihre Änderungen oder benutzen Sie \"stash\", um fortzufahren."
-
-#, c-format
-msgid "%s: fast-forward"
-msgstr "%s: Vorspulen"
 
 #. TRANSLATORS: %s will be "revert", "cherry-pick" or
 #. "rebase".
@@ -19900,6 +20353,28 @@ msgstr "konnte nicht einmal versuchen '%.*s' zu mergen"
 msgid "merge: Unable to write new index file"
 msgstr "merge: Konnte neue Index-Datei nicht schreiben."
 
+#, c-format
+msgid ""
+"another 'rebase' process appears to be running; '%s.lock' already exists"
+msgstr ""
+"ein weiterer 'rebase'-Prozess scheint zu laufen; '%s.lock' existiert bereits"
+
+#, c-format
+msgid ""
+"Updated the following refs with %s:\n"
+"%s"
+msgstr ""
+"Die folgenden Referenzen wurden mit %s aktualisiert:\n"
+"%s"
+
+#, c-format
+msgid ""
+"Failed to update the following refs with %s:\n"
+"%s"
+msgstr ""
+"Die Aktualisierung der folgenden Referenzen mit %s ist fehlgeschlagen:\n"
+"%s"
+
 msgid "Cannot autostash"
 msgstr "Kann automatischen Stash nicht erzeugen"
 
@@ -20071,6 +20546,10 @@ msgid "the script was already rearranged."
 msgstr "Das Script wurde bereits umgeordnet."
 
 #, c-format
+msgid "update-refs file at '%s' is invalid"
+msgstr "update-refs-Datei bei '%s' ist ungültig"
+
+#, c-format
 msgid "'%s' is outside repository at '%s'"
 msgstr "'%s' liegt außerhalb des Repositories von '%s'"
 
@@ -20192,15 +20671,20 @@ msgstr ""
 
 #, c-format
 msgid ""
-"unsafe repository ('%s' is owned by someone else)\n"
-"To add an exception for this directory, call:\n"
+"detected dubious ownership in repository at '%s'\n"
+"%sTo add an exception for this directory, call:\n"
 "\n"
 "\tgit config --global --add safe.directory %s"
 msgstr ""
-"unsicheres Repository ('%s' gehört jemand anderem)\n"
-"Um eine Ausnahme für dieses Repository hinzuzufügen, führen Sie aus:\n"
+"dubiose Besitzverhältnisse im Repository bei '%s' entdeckt\n"
+"%sUm eine Ausnahme für dieses Verzeichnis hinzuzufügen, rufen Sie auf:\n"
 "\n"
 "\tgit config --global --add safe.directory %s"
+
+#, c-format
+msgid "cannot use bare repository '%s' (safe.bareRepository is '%s')"
+msgstr ""
+"kann Bare-Repository '%s' nicht verwenden (safe.bareRepository ist '%s')"
 
 #, c-format
 msgid ""
@@ -21091,6 +21575,18 @@ msgstr "ungültige Portnummer"
 msgid "invalid '..' path segment"
 msgstr "ungültiges '..' Pfadsegment"
 
+msgid "usage: "
+msgstr "Verwendung: "
+
+msgid "fatal: "
+msgstr "Schwerwiegend: "
+
+msgid "error: "
+msgstr "Fehler: "
+
+msgid "warning: "
+msgstr "Warnung: "
+
 msgid "Fetching objects"
 msgstr "Anfordern der Objekte"
 
@@ -21474,8 +21970,8 @@ msgstr "Sie führen gerade \"cherry-pick\" von Commit %s aus."
 
 msgid "  (fix conflicts and run \"git cherry-pick --continue\")"
 msgstr ""
-"  (beheben Sie die Konflikte und führen Sie dann \"git cherry-pick --"
-"continue\" aus)"
+"  (beheben Sie die Konflikte und führen Sie dann \"git cherry-pick --continue"
+"\" aus)"
 
 msgid "  (run \"git cherry-pick --continue\" to continue)"
 msgstr "  (Führen Sie \"git cherry-pick --continue\" aus, um weiterzumachen)"
@@ -21947,23 +22443,6 @@ msgstr ""
 #, perl-format
 msgid "ignoring unmerged: %s\n"
 msgstr "ignoriere nicht zusammengeführte Datei: %s\n"
-
-#, perl-format
-msgid "Apply mode change to worktree [y,n,q,a,d%s,?]? "
-msgstr "Modusänderung auf Arbeitsverzeichnis anwenden [y,n,q,a,d%s,?]? "
-
-#, perl-format
-msgid "Apply deletion to worktree [y,n,q,a,d%s,?]? "
-msgstr "Löschung auf Arbeitsverzeichnis anwenden [y,n,q,a,d%s,?]? "
-
-#, perl-format
-msgid "Apply addition to worktree [y,n,q,a,d%s,?]? "
-msgstr "Ergänzung auf Arbeitsverzeichnis anwenden [y,n,q,a,d%s,?]? "
-
-#, perl-format
-msgid "Apply this hunk to worktree [y,n,q,a,d%s,?]? "
-msgstr ""
-"Diesen Patch-Block auf das Arbeitsverzeichnis anwenden [y,n,q,a,d%s,?]? "
 
 msgid "No other hunks to goto\n"
 msgstr "Keine anderen Patch-Blöcke verbleibend\n"
