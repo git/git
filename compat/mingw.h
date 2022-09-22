@@ -12,7 +12,9 @@ typedef _sigset_t sigset_t;
 #endif
 
 extern int core_fscache;
-extern int core_long_paths;
+
+struct repository;
+int are_long_paths_enabled(void);
 
 int mingw_core_config(const char *var, const char *value, void *cb);
 #define platform_core_config mingw_core_config
@@ -647,7 +649,7 @@ static inline int xutftowcs_path(wchar_t *wcs, const char *utf)
 static inline int xutftowcs_long_path(wchar_t *wcs, const char *utf)
 {
 	return xutftowcs_path_ex(wcs, utf, MAX_LONG_PATH, -1, MAX_PATH,
-			core_long_paths);
+				 are_long_paths_enabled());
 }
 
 /**

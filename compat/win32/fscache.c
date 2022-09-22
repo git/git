@@ -261,7 +261,7 @@ static struct fsentry *fsentry_create_list(struct fscache *cache, const struct f
 	/* convert name to UTF-16 and check length */
 	if ((wlen = xutftowcs_path_ex(pattern, dir->dirent.d_name,
 				      MAX_LONG_PATH, dir->len, MAX_PATH - 2,
-				      core_long_paths)) < 0)
+				      are_long_paths_enabled())) < 0)
 		return NULL;
 
 	/* handle CWD */

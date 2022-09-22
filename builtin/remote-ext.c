@@ -2,7 +2,6 @@
 #include "transport.h"
 #include "run-command.h"
 #include "pkt-line.h"
-#include "config.h"
 
 static const char usage_msg[] =
 	"git remote-ext <remote> <url>";
@@ -199,6 +198,5 @@ int cmd_remote_ext(int argc, const char **argv, const char *prefix)
 	if (argc != 3)
 		usage(usage_msg);
 
-	git_config(git_default_config, NULL);
 	return command_loop(argv[2]);
 }
