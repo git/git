@@ -228,6 +228,8 @@ static void mark_unreachable_referents(const struct object_id *oid)
 
 	options.walk = mark_used;
 	fsck_walk(obj, NULL, &options);
+	if (obj->type == OBJ_TREE)
+		free_tree_buffer((struct tree *)obj);
 }
 
 static int mark_loose_unreachable_referents(const struct object_id *oid,
