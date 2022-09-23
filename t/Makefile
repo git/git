@@ -73,6 +73,7 @@ clean-except-prove-cache: clean-chainlint
 	$(RM) -r valgrind/bin
 
 clean: clean-except-prove-cache
+	$(RM) -r '$(TEST_RESULTS_DIRECTORY_SQ)'
 	$(RM) .prove
 
 clean-chainlint:

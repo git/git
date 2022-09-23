@@ -40,7 +40,7 @@ Values 1-4 satisfy the requirements of parse_commit_gently().
 
 There are two definitions of generation number:
 1. Corrected committer dates (generation number v2)
-2. Topological levels (generation nummber v1)
+2. Topological levels (generation number v1)
 
 Define "corrected committer date" of a commit recursively as follows:
 
@@ -48,7 +48,7 @@ Define "corrected committer date" of a commit recursively as follows:
     equal to its committer date.
 
  * A commit with at least one parent has corrected committer date equal to
-    the maximum of its commiter date and one more than the largest corrected
+    the maximum of its committer date and one more than the largest corrected
     committer date among its parents.
 
  * As a special case, a root commit with timestamp zero has corrected commit

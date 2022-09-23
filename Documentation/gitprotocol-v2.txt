@@ -544,8 +544,8 @@ the server as well.
 Session IDs should be unique to a given process. They must fit within a
 packet-line, and must not contain non-printable or whitespace characters. The
 current implementation uses trace2 session IDs (see
-link:api-trace2.html[api-trace2] for details), but this may change and users of
-the session ID should not rely on this fact.
+link:technical/api-trace2.html[api-trace2] for details), but this may change
+and users of the session ID should not rely on this fact.
 
 object-info
 ~~~~~~~~~~~

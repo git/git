@@ -390,6 +390,14 @@ Fixes since v2.37
    been corrected.
    (merge 49ca2fba39 jk/proto-v2-ref-prefix-fix later to maint).
 
+ * A result from opendir() was leaking in the commit-graph expiration
+   codepath, which has been plugged.
+   (merge 12f1ae5324 ml/commit-graph-expire-dir-leak-fix later to maint).
+
+ * Just like we have coding guidelines, we now have guidelines for
+   reviewers.
+   (merge e01b851923 vd/doc-reviewing-guidelines later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 77b9e85c0f vd/fix-perf-tests later to maint).
    (merge 0682bc43f5 jk/test-crontab-fixes later to maint).

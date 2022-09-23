@@ -407,7 +407,7 @@ considered to be "irrelevant".  See for example the following commits:
 		no longer relevant", 2021-03-13)
 
 Relevance is always determined by what the _other_ side of history has
-done, in terms of modifing a file that our side renamed, or adding a
+done, in terms of modifying a file that our side renamed, or adding a
 file to a directory which our side renamed.  This means that a path
 that is "irrelevant" when picking the first commit of a series in a
 rebase or cherry-pick, may suddenly become "relevant" when picking the

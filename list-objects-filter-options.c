@@ -143,6 +143,7 @@ static int parse_combine_subfilter(
 
 	ALLOC_GROW_BY(filter_options->sub, filter_options->sub_nr, 1,
 		      filter_options->sub_alloc);
+	list_objects_filter_init(&filter_options->sub[new_index]);
 
 	decoded = url_percent_decode(subspec->buf);
 
@@ -263,6 +264,8 @@ void parse_list_objects_filter(
 		parse_error = gently_parse_list_objects_filter(
 			filter_options, arg, &errbuf);
 	} else {
+		struct list_objects_filter_options *sub;
+
 		/*
 		 * Make filter_options an LOFC_COMBINE spec so we can trivially
 		 * add subspecs to it.
@@ -273,10 +276,11 @@ void parse_list_objects_filter(
 		filter_spec_append_urlencode(filter_options, arg);
 		ALLOC_GROW_BY(filter_options->sub, filter_options->sub_nr, 1,
 			      filter_options->sub_alloc);
+		sub = &filter_options->sub[filter_options->sub_nr - 1];
 
-		parse_error = gently_parse_list_objects_filter(
-			&filter_options->sub[filter_options->sub_nr - 1], arg,
-			&errbuf);
+		list_objects_filter_init(sub);
+		parse_error = gently_parse_list_objects_filter(sub, arg,
+							       &errbuf);
 	}
 	if (parse_error)
 		die("%s", errbuf.buf);
