@@ -1,5 +1,6 @@
 # The default target of this Makefile is...
-all::
+all:: makeheaders
+all:: abspath.h
 
 # Import tree-wide shared Makefile behavior and libraries
 include shared.mak
@@ -3450,6 +3451,8 @@ cocciclean:
 	$(RM) contrib/coccinelle/*.cocci.patch*
 
 clean: profile-clean coverage-clean cocciclean
+	$(RM) -r makeheaders
+	$(RM) -r abspath.h
 	$(RM) -r .build
 	$(RM) po/git.pot po/git-core.pot
 	$(RM) git.res
@@ -3634,3 +3637,9 @@ $(FUZZ_PROGRAMS): all
 		$(XDIFF_OBJS) $(EXTLIBS) git.o $@.o $(LIB_FUZZING_ENGINE) -o $@
 
 fuzz-all: $(FUZZ_PROGRAMS)
+
+makeheaders: tools/makeheaders.c
+	$(QUIET_CC)$(CC) -Os -o $@ $<
+
+abspath.h: abspath.c
+	./makeheaders $<
