@@ -723,7 +723,7 @@ static struct stored_bitmap *lazy_bitmap_for_commit(struct bitmap_index *bitmap_
 		ALLOC_GROW(xor_items, xor_items_nr + 1, xor_items_alloc);
 
 		if (xor_items_nr + 1 >= bitmap_git->entry_count) {
-			error(_("corrupt bitmap lookup table: xor chain exceed entry count"));
+			error(_("corrupt bitmap lookup table: xor chain exceeds entry count"));
 			goto corrupt;
 		}
 
