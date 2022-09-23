@@ -134,7 +134,7 @@ test_expect_success 'island core places core objects first' '
 	    repack -adfi &&
 	git verify-pack -v .git/objects/pack/*.pack |
 	cut -d" " -f1 |
-	egrep "$root|$two" >actual &&
+	grep -E "$root|$two" >actual &&
 	test_cmp expect actual
 '
 

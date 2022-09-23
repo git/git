@@ -162,8 +162,6 @@ For shell scripts specifically (not exhaustive):
 
    - We do not use \{m,n\};
 
-   - We do not use -E;
-
    - We do not use ? or + (which are \{0,1\} and \{1,\}
      respectively in BRE) but that goes without saying as these
      are ERE elements not BRE (note that \? and \+ are not even part
