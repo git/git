@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2022, #06; Wed, 21)
-X-master-at: 1b3d6e17fe83eb6f79ffbac2f2c61bbf1eaef5f8
-X-next-at: 413fe02c70ffea5b779d4f98dfa4a502e54bc4ab
+Subject: What's cooking in git.git (Sep 2022, #07; Fri, 23)
+X-master-at: 4fd6c5e44459e6444c2cd93383660134c95aabd1
+X-next-at: ed0d419d3c1a574b86ddc99554cdd663ffe0f5be
 
-What's cooking in git.git (Sep 2022, #06; Wed, 21)
+What's cooking in git.git (Sep 2022, #07; Fri, 23)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -13,10 +13,16 @@ release).  Commits prefixed with '-' are only in 'seen', and aren't
 considered "accepted" at all.  A topic without enough support may be
 discarded after a long period of no activity.
 
-Git 2.38-rc1 has been tagged.  Now the 'master' branch is in the
-"regression fixes only" mode (cf. https://tinyurl.com/gitCal) until
-the final release.  I may start dropping patches on a completely new
-topics that has no relevance on the upcoming release.
+The -rc1 has been tagged for this cycle.  People are free to discuss
+topics that has no relevance to the upcoming release, but we would
+appreciate if they instead concentrated on finding and fixing recent
+regressions in the upcoming release.  Even though I may be replacing
+topics in 'seen' with their new iterations, I may not be picking up
+patches on new topics to 'seen', until the final around the
+beginning of the next month (cf. https://tinyurl.com/gitCal).  These
+patches are welcome to come back in a more polished form after that
+happens (read: discussions on them are not forbidden. just allow me
+to leave my tree less distracted by new topics).
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -49,153 +55,146 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ec/reftable-pass-pq-entry-by-reference (2022-09-15) 1 commit
-  (merged to 'next' on 2022-09-15 at 928e75c7d1)
- + reftable: use a pointer for pq_entry param
+* ac/bitmap-lookup-table (2022-09-23) 1 commit
+  (merged to 'next' on 2022-09-23 at 8374b2bb46)
+ + pack-bitmap: improve grammar of "xor chain" error message
 
- Small code clean-up in reftable implementation.
- source: <1833f3928cb.acf3c97d869879.7909589521159235166@elijahpepe.com>
-
-
-* fz/help-doublofix (2022-09-16) 1 commit
-  (merged to 'next' on 2022-09-19 at 3ec5906f4e)
- + help: fix doubled words in explanation for developer interfaces
-
- Typofix for topic already in -rc0.
- source: <pull.1330.git.git.1663333529294.gitgitgadget@gmail.com>
+ Grammofix.
+ source: <20220922025158.415969-1-alexhenrie24@gmail.com>
 
 
-* js/typofix (2022-09-21) 2 commits
-  (merged to 'next' on 2022-09-21 at bb2082c5ef)
- + Documentation: clean up various typos in technical docs
- + Documentation: clean up a few misspelled word typos
+* jk/list-objects-filter-cleanup (2022-09-22) 1 commit
+  (merged to 'next' on 2022-09-22 at 60e9c427db)
+ + list-objects-filter: initialize sub-filter structs
 
- Will merge to 'master'.
- source: <20220920024557.22889-1-jacob@initialcommit.io>
-
-
-* ml/commit-graph-expire-dir-leak-fix (2022-09-19) 1 commit
-  (merged to 'next' on 2022-09-19 at e3211e888e)
- + commit-graph: Fix missing closedir in expire_commit_graphs
-
- A result from opendir() was leaking in the commit-graph expiration
- codepath, which has been plugged.
- source: <20220919141441.5644-1-linmq006@gmail.com>
+ Fix uninitialized memory access in a recent fix-up that is already
+ in -rc1.
+ source: <YywsZU9UUoC08UcN@coredump.intra.peff.net>
 
 
-* sg/clean-test-results (2022-09-21) 1 commit
-  (merged to 'next' on 2022-09-21 at 15e66ceb37)
- + t/Makefile: remove 'test-results' on 'make clean'
+* ma/scalar-to-main-fix (2022-09-23) 1 commit
+  (merged to 'next' on 2022-09-23 at 5229e60838)
+ + cmd-list.perl: fix identifying man sections
 
- "make clean" stopped cleaning the test results directory as a side
- effect of a topic that has nothing to do with "make clean", which
- has been corrected.
- source: <20220920201619.40972-1-szeder.dev@gmail.com>
-
-
-* sg/parse-options-subcommand (2022-09-21) 1 commit
-  (merged to 'next' on 2022-09-21 at 42650aa5f1)
- + gc: don't translate literal commands
-
- Fix messages incorrectly marked for translation.
- source: <20220920050725.326383-1-alexhenrie24@gmail.com>
-
-
-* tz/tech-docs-to-help-fix (2022-09-16) 2 commits
-  (merged to 'next' on 2022-09-19 at 4a13143da1)
- + api docs: link to html version of api-trace2
- + docs: fix a few recently broken links
-
- Docfix for topic already in -rc0.
- source: <20220916062303.3736166-2-tmz@pobox.com>
-
-
-* vd/check-docs-fixes (2022-09-19) 2 commits
-  (merged to 'next' on 2022-09-21 at 549e699018)
- + version: fix builtin linking & documentation
- + diagnose: add to command-list.txt
-
- Build fix.
- source: <pull.1360.git.1663633195.gitgitgadget@gmail.com>
-
-
-* vd/doc-reviewing-guidelines (2022-09-19) 1 commit
-  (merged to 'next' on 2022-09-21 at c30f77dbe6)
- + Documentation: add ReviewingGuidelines
-
- Just like we have coding guidelines, we now have guidelines for
- reviewers.
- source: <pull.1348.v2.git.1663614767058.gitgitgadget@gmail.com>
-
-
-* vd/scalar-generalize-diagnose (2022-09-21) 2 commits
-  (merged to 'next' on 2022-09-21 at 1102451ebd)
- + builtin/diagnose.c: don't translate the two mode values
-  (merged to 'next' on 2022-09-19 at e03e8a6e4a)
- + diagnose.c: refactor to safely use 'd_type'
-
- Portability fix.
- source: <pull.1354.git.1663438615413.gitgitgadget@gmail.com>
- source: <20220920050632.326307-1-alexhenrie24@gmail.com>
+ Fix manpage generation.
+ source: <20220923080733.1995862-1-martin.agren@gmail.com>
 
 --------------------------------------------------
 [New Topics]
 
-* dd/retire-efgrep (2022-09-21) 4 commits
-  (merged to 'next' on 2022-09-21 at 22bc339be1)
- + t: convert fgrep usage to "grep -F"
- + t: convert egrep usage to "grep -E"
- + t: remove \{m,n\} from BRE grep usage
- + CodingGuidelines: allow grep -E
-
- Prepare for GNU [ef]grep that throw warning of their uses.
-
- Will cook in 'next'.
- source: <cover.1663765176.git.congdanhqx@gmail.com>
-
-
-* ds/maintenance-unregsiter-ignore-missing (2022-09-21) 1 commit
- - maintenance: make unregister idempotent
+* ds/scalar-unregister-idempotent (2022-09-22) 2 commits
+ - scalar: make 'unregister' idempotent
+ - maintenance: add 'unregister --force'
 
  "git maintenance unregister" in a repository that is already been
  unregistered reported an error.
 
- Somewhat dubious?
- cf. <xmqqpmfo4pc7.fsf@gitster.g>
- source: <pull.1358.git.1663635732095.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.1358.v2.git.1663853837.gitgitgadget@gmail.com>
 
 
-* tb/midx-repack-ignore-cruft-packs (2022-09-21) 7 commits
- - midx.c: avoid cruft packs with non-zero `repack --batch-size`
- - midx.c: remove unnecessary loop condition
- - midx.c: replace `xcalloc()` with `CALLOC_ARRAY()`
- - midx.c: avoid cruft packs with `repack --batch-size=0`
- - midx.c: prevent `expire` from removing the cruft pack
- - Documentation/git-multi-pack-index.txt: clarify expire behavior
- - Documentation/git-multi-pack-index.txt: fix typo
+* jk/clone-allow-bare-and-o-together (2022-09-22) 1 commit
+ - clone: allow "--bare" with "-o"
 
- source: <cover.1663638929.git.me@ttaylorr.com>
+ "git clone" did not like to see the "--bare" and the "--origin"
+ options used together without a good reason.
+
+ Will merge to 'next'.
+ source: <YyvzVdfQVdysvMp2@coredump.intra.peff.net>
 
 
-* ah/fsmonitor-daemon-usage-non-l10n (2022-09-21) 1 commit
-  (merged to 'next' on 2022-09-21 at bc69a73c6c)
- + fsmonitor--daemon: don't translate literal commands
+* jk/fsck-on-diet (2022-09-22) 3 commits
+ - parse_object_buffer(): respect save_commit_buffer
+ - fsck: turn off save_commit_buffer
+ - fsck: free tree buffers after walking unreachable objects
 
- Fix messages incorrectly marked for translation.
+ "git fsck" failed to release contents of tree objects already used
+ from the memory, which has been fixed.
 
- Will cook in 'next'.
- source: <20220920050709.326359-1-alexhenrie24@gmail.com>
+ Will merge to 'next'.
+ source: <Yyw0PSVe3YTQGgRS@coredump.intra.peff.net>
 
 
-* js/merge-tree-in-read-only-repo (2022-09-21) 1 commit
- - merge-tree: fix segmentation fault in read-only repositories
+* jk/remote-rename-without-fetch-refspec (2022-09-22) 1 commit
+ - remote: handle rename of remote without fetch refspec
+
+ "git remote rename" failed to rename a remote without fetch
+ refspec, which has been corrected.
+
+ Will merge to 'next'.
+ source: <YyvzqZ5tmI0UdRAW@coredump.intra.peff.net>
+
+
+* js/merge-ort-in-read-only-repo (2022-09-22) 1 commit
+ - merge-ort: fix segmentation fault in read-only repositories
 
  In read-only repositories, "git merge-tree" tried to come up with a
  merge result tree object, which it failed (which is not wrong) and
  led to a segfault (which is bad), which has been corrected.
 
+ Expecting a reroll.
+ cf. <916o55op-qpqo-5o41-931s-8q54p7301sr2@tzk.qr>
+ source: <pull.1362.v3.git.1663875999939.gitgitgadget@gmail.com>
+
+
+* mc/cred-helper-ignore-unknown (2022-09-22) 3 commits
+ - osxkeychain: clarify that we ignore unknown lines
+ - netrc: ignore unknown lines (do not die)
+ - wincred: ignore unknown lines (do not die)
+
+ Most credential helpers ignored unknown entries in a credential
+ description, but a few died upon seeing them.  The latter were
+ taught to ignore them, too
+
+ Will merge to 'next'?
+ source: <pull.1363.git.1663865974.gitgitgadget@gmail.com>
+
+
+* ds/bitmap-lookup-remove-tracing (2022-09-23) 2 commits
+ - SQUASH???
+ - pack-bitmap: remove trace2 region from hot path
+
+ Perf-fix?
+
+ Expecting a reroll.
+ cf. <edf25c5d-06f4-0b91-6773-f4fe7705c2f8@github.com>
+ source: <pull.1365.git.1663938034607.gitgitgadget@gmail.com>
+
+
+* es/retire-efgrep (2022-09-23) 2 commits
+ - check-non-portable-shell: detect obsolescent egrep/fgrep
+ - Merge branch 'dd/retire-efgrep' into es/retire-efgrep
+ (this branch uses dd/retire-efgrep.)
+
+ Prepare for GNU [ef]grep that throw warning of their uses.
+
  Will merge to 'next'.
- source: <pull.1362.v2.git.1663798083240.gitgitgadget@gmail.com>
+ source: <pull.1338.git.git.1663805905554.gitgitgadget@gmail.com>
+
+
+* cw/submodule-status-in-parallel (2022-09-23) 4 commits
+ . diff-lib: parallelize run_diff_files for submodules
+ . diff-lib: refactor functions
+ . submodule: move status parsing into function
+ . run-command: add pipe_output to run_processes_parallel
+
+ Allow the internal "diff-files" engine to run "how has this
+ submodule changed?" in parallel to speed up "git status".
+
+ Needs review.
+ cf. https://github.com/git/git/actions/runs/3115673002/jobs/5052804463
+ source: <20220922232947.631309-1-calvinwan@google.com>
+
+
+* vd/fix-unaligned-read-index-v4 (2022-09-23) 1 commit
+ - read-cache: avoid misaligned reads in index v4
+
+ The codepath that reads from the index v4 had unaligned memory
+ accesses, which has been corrected.
+
+ Expecting a reroll?
+ cf. <Yy4nkEnhuzt2iH+R@coredump.intra.peff.net>
+ source: <pull.1366.git.1663962236069.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -241,14 +240,56 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* dd/retire-efgrep (2022-09-21) 4 commits
+  (merged to 'next' on 2022-09-21 at 22bc339be1)
+ + t: convert fgrep usage to "grep -F"
+ + t: convert egrep usage to "grep -E"
+ + t: remove \{m,n\} from BRE grep usage
+ + CodingGuidelines: allow grep -E
+ (this branch is used by es/retire-efgrep.)
+
+ Prepare for GNU [ef]grep that throw warning of their uses.
+
+ Will cook in 'next'.
+ source: <cover.1663765176.git.congdanhqx@gmail.com>
+
+
+* tb/midx-repack-ignore-cruft-packs (2022-09-21) 7 commits
+ - midx.c: avoid cruft packs with non-zero `repack --batch-size`
+ - midx.c: remove unnecessary loop condition
+ - midx.c: replace `xcalloc()` with `CALLOC_ARRAY()`
+ - midx.c: avoid cruft packs with `repack --batch-size=0`
+ - midx.c: prevent `expire` from removing the cruft pack
+ - Documentation/git-multi-pack-index.txt: clarify expire behavior
+ - Documentation/git-multi-pack-index.txt: fix typo
+
+ "git multi-pack-index repack/expire" used to repack unreachable
+ cruft into a new pack, which have been corrected.
+
+ Will merge to 'next'?
+ cf. <63a1c3d4-eff3-af10-4263-058c88e74594@github.com>
+ source: <cover.1663638929.git.me@ttaylorr.com>
+
+
+* ah/fsmonitor-daemon-usage-non-l10n (2022-09-21) 1 commit
+  (merged to 'next' on 2022-09-21 at bc69a73c6c)
+ + fsmonitor--daemon: don't translate literal commands
+
+ Fix messages incorrectly marked for translation.
+
+ Will cook in 'next'.
+ source: <20220920050709.326359-1-alexhenrie24@gmail.com>
+
+
 * so/diff-merges-cleanup (2022-09-16) 3 commits
- - diff-merges: clarify log.diffMerges documentation
- - diff-merges: cleanup set_diff_merges()
- - diff-merges: cleanup func_by_opt()
+  (merged to 'next' on 2022-09-22 at 57694bbed7)
+ + diff-merges: clarify log.diffMerges documentation
+ + diff-merges: cleanup set_diff_merges()
+ + diff-merges: cleanup func_by_opt()
 
  Code clean-up.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <20220914193102.5275-1-sorganov@gmail.com>
 
 
@@ -434,17 +475,12 @@ Release tarballs are available at:
  source: <pull.1321.git.git.1661806456.gitgitgadget@gmail.com>
 
 
-* sy/sparse-grep (2022-09-08) 3 commits
- - builtin/grep.c: walking tree instead of expanding index with --sparse
+* sy/sparse-grep (2022-09-23) 1 commit
  - builtin/grep.c: integrate with sparse index
- - builtin/grep.c: add --sparse option
 
- "git grep" learned to work better in a sparse checkout.
-
- The design of "--sparse" feels iffy.
- cf. <093827ae-41ef-5f7c-7829-647536ce1305@github.com>
- cf. <CABPp-BF-z72=hY_Jf8h3g95s+wwZOsV_S=+dDNs_AVskQxoaTw@mail.gmail.com>
- source: <20220908001854.206789-1-shaoxuan.yuan02@gmail.com>
+ "git grep" learned to expand the sparse-index more lazily and on
+ demand in a sparse checkout.
+ source: <20220923041842.27817-2-shaoxuan.yuan02@gmail.com>
 
 
 * ds/use-platform-regex-on-macos (2022-08-26) 1 commit
