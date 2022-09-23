@@ -213,8 +213,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git 2.38\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2022-09-16 22:21+0200\n"
-"PO-Revision-Date: 2022-09-18 20:48+0200\n"
+"POT-Creation-Date: 2022-09-23 10:54+0200\n"
+"PO-Revision-Date: 2022-09-23 11:15+0200\n"
 "Last-Translator: Alexander Shopov <ash@kambanaria.org>\n"
 "Language-Team: Bulgarian <dict@fsa-bg.org>\n"
 "Language: bg\n"
@@ -958,6 +958,29 @@ msgstr ""
 "Може да спрете това съобщение със задаване на настройката „advice."
 "detachedHead“\n"
 "да е „false“ (лъжа̀).\n"
+
+#, c-format
+msgid ""
+"The following paths have been moved outside the\n"
+"sparse-checkout definition but are not sparse due to local\n"
+"modifications.\n"
+msgstr ""
+"Следните пътища са преместени извън дефинициите за частично\n"
+"изтегляне, но вече не са частични заради локални промени.\n"
+
+msgid ""
+"To correct the sparsity of these paths, do the following:\n"
+"* Use \"git add --sparse <paths>\" to update the index\n"
+"* Use \"git sparse-checkout reapply\" to apply the sparsity rules"
+msgstr ""
+"Ако искате да ги обновите, пробвайте едно от следните:\n"
+"  ⁃ обновете индекса с командата:\n"
+"\n"
+"    git add --sparse ПЪТ…\n"
+"\n"
+"  ⁃ приложете правилата за частичност с командата:\n"
+"\n"
+"    git sparse-checkout reapply"
 
 msgid "cmdline ends with \\"
 msgstr "командният ред завършва с „/“"
@@ -5758,9 +5781,6 @@ msgstr "укажете местоположение на архива с диа�
 msgid "specify a strftime format suffix for the filename"
 msgstr "укажете суфикса на файла във формат за „strftime“"
 
-msgid "(stats|all)"
-msgstr "„stats“/„all“ (статистика/всичко)"
-
 msgid "specify the content of the diagnostic archive"
 msgstr "указване на съдържанието на диагностичния архив"
 
@@ -6907,14 +6927,8 @@ msgstr "изпълнение на определена задача"
 msgid "use at most one of --auto and --schedule=<frequency>"
 msgstr "опциите „--auto“ и „--schedule=ЧЕСТОТА“ са несъвместими"
 
-msgid "git maintenance register"
-msgstr "git maintenance register"
-
 msgid "failed to run 'git config'"
 msgstr "неуспешно изпълнение на „git config“"
-
-msgid "git maintenance unregister"
-msgstr "git maintenance unregister"
 
 #, c-format
 msgid "failed to expand path '%s'"
@@ -6994,9 +7008,6 @@ msgstr "ПЛАНИРАЩият_МОДУЛ, който да изпълнява з
 
 msgid "failed to add repo to global config"
 msgstr "неуспешно добавяне на хранилище към файла с глобални настройки"
-
-msgid "git maintenance stop"
-msgstr "git maintenance stop"
 
 msgid "git maintenance <subcommand> [<options>]"
 msgstr "git maintenance ПОДКОМАНДА [ОПЦИЯ…]"
@@ -8103,7 +8114,7 @@ msgid "bad ls-files format: element '%s' does not start with '('"
 msgstr "неправилен формат за „ls-tree“: елементът „%s“ не започва с „(“"
 
 #, c-format
-msgid "bad ls-files format: element '%s'does not end in ')'"
+msgid "bad ls-files format: element '%s' does not end in ')'"
 msgstr "неправилен формат за „ls-tree“: елементът „%s“ не завършва с „)“"
 
 #, c-format
@@ -8924,6 +8935,9 @@ msgstr "множество източници за една цел"
 
 msgid "destination directory does not exist"
 msgstr "целевата директория не съществува"
+
+msgid "destination exists in the index"
+msgstr "целта съществува в индекса"
 
 #, c-format
 msgid "%s, source=%s, destination=%s"
@@ -14139,6 +14153,9 @@ msgstr ""
 "Задаване на име удобно за потребителите на обект въз основа на наличен "
 "указател"
 
+msgid "Generate a zip archive of diagnostic information"
+msgstr "Създаване на архив във формат zip с диагностична информация"
+
 msgid "Show changes between commits, commit and working tree, etc"
 msgstr "Извеждане на разликите между подаванията, версиите, работното дърво"
 
@@ -14466,6 +14483,9 @@ msgstr "Проверка на пакетираните архивни файло
 msgid "Check the GPG signature of tags"
 msgstr "Проверка на подписите GPG върху етикетите"
 
+msgid "Display version information about Git"
+msgstr "Извеждане на версията на Git"
+
 msgid "Show logs with difference each commit introduces"
 msgstr "Извеждане на журнал с разликите, въведени с всяко подаване"
 
@@ -14576,6 +14596,9 @@ msgstr "Уеб интерфейс на Git"
 
 msgid "An overview of recommended workflows with Git"
 msgstr "Общ преглед на препоръчваните начини за работа с Git"
+
+msgid "A tool for managing large Git repositories"
+msgstr "Инструмент за управление на големи хранилища на Git "
 
 msgid "commit-graph file is too small"
 msgstr "файлът за гра̀фа с подаванията е твърде малък"
@@ -15476,174 +15499,6 @@ msgstr "неуспешен запис на списъка с версиите"
 
 msgid "failed to close rev-list's stdin"
 msgstr "стандартният вход на списъка с версиите не може да бъде затворен"
-
-#, c-format
-msgid "'%s' does not exist"
-msgstr "„%s“ не съществува."
-
-#, c-format
-msgid "could not switch to '%s'"
-msgstr "не може да се премине към „%s“"
-
-msgid "need a working directory"
-msgstr "необходима е работна директория"
-
-msgid "Scalar enlistments require a worktree"
-msgstr "Зачисляването на директории чрез „scalar“ изисква работно дърво"
-
-#, c-format
-msgid "could not configure %s=%s"
-msgstr "настройката „%s=%s“ не може да се зададе"
-
-msgid "could not configure log.excludeDecoration"
-msgstr "„log.excludeDecoration“ не може да се настрои"
-
-msgid "could not add enlistment"
-msgstr "директория не може да се зачисли"
-
-msgid "could not set recommended config"
-msgstr "препоръчаните настройки не може да се зададат"
-
-msgid "could not turn on maintenance"
-msgstr "задачите по поддръжка не може да се включат"
-
-msgid "could not start the FSMonitor daemon"
-msgstr "фоновият процес на FSMonitor не може да бъде спрян"
-
-msgid "could not turn off maintenance"
-msgstr "задачите по поддръжка не може да се изключат"
-
-msgid "could not remove enlistment"
-msgstr "директорията не може да се отчисли"
-
-#, c-format
-msgid "remote HEAD is not a branch: '%.*s'"
-msgstr "отдалеченият указател „HEAD“ не сочи към клон: „%.*s“"
-
-msgid "failed to get default branch name from remote; using local default"
-msgstr ""
-"името на стандартния клон на отдалеченото хранилище не може да се получи, "
-"затова ще се ползва локално настроеното име на стандартния клон"
-
-msgid "failed to get default branch name"
-msgstr "неуспешно получаване на името на стандартния клон"
-
-msgid "failed to unregister repository"
-msgstr "хранилището не може да бъде отчислено"
-
-msgid "failed to stop the FSMonitor daemon"
-msgstr "фоновият процес FSMonitor не може да бъде спрян"
-
-msgid "failed to delete enlistment directory"
-msgstr "зачислената директория не може да бъде изтрита"
-
-msgid "branch to checkout after clone"
-msgstr "към кой клон да се премине след клониране"
-
-msgid "when cloning, create full working directory"
-msgstr "при клониране да се създава пълна работна директория"
-
-msgid "only download metadata for the branch that will be checked out"
-msgstr "да се свалят метаданните само за изтегляния клон"
-
-msgid "scalar clone [<options>] [--] <repo> [<dir>]"
-msgstr "scalar clone [ОПЦИЯ…] [--] ХРАНИЛИЩЕ [ДИРЕКТОРИЯ]"
-
-#, c-format
-msgid "cannot deduce worktree name from '%s'"
-msgstr "името на работното дърво не може да се извлече от „%s“"
-
-#, c-format
-msgid "directory '%s' exists already"
-msgstr "директорията „%s“ вече съществува"
-
-#, c-format
-msgid "failed to get default branch for '%s'"
-msgstr "основният клон на „%s“ не може да бъде получен"
-
-#, c-format
-msgid "could not configure remote in '%s'"
-msgstr "отдалеченото хранилище в „%s“ не може да се настрои"
-
-#, c-format
-msgid "could not configure '%s'"
-msgstr "„%s“ не може да се настрои"
-
-msgid "partial clone failed; attempting full clone"
-msgstr "неуспешно създаване на непълно хранилище, ще се опита пълно хранилище"
-
-msgid "could not configure for full clone"
-msgstr "не може да се настрои пълно клониране"
-
-msgid "scalar diagnose [<enlistment>]"
-msgstr "scalar diagnose [ЗАЧИСЛЕНА_ДИРЕКТОРИЯ]"
-
-msgid "`scalar list` does not take arguments"
-msgstr "„scalar list“ не приема аргументи"
-
-msgid "scalar register [<enlistment>]"
-msgstr "scalar register [ЗАЧИСЛЕНА_ДИРЕКТОРИЯ]"
-
-msgid "reconfigure all registered enlistments"
-msgstr "пренастройване на всички зачислени директории"
-
-msgid "scalar reconfigure [--all | <enlistment>]"
-msgstr "scalar reconfigure [--all | ЗАЧИСЛЕНА_ДИРЕКТОРИЯ]"
-
-msgid "--all or <enlistment>, but not both"
-msgstr "опцията „--all“ и указването на зачислена директория не са съвместими"
-
-#, c-format
-msgid "git repository gone in '%s'"
-msgstr "вече няма хранилище на git в „%s“"
-
-msgid ""
-"scalar run <task> [<enlistment>]\n"
-"Tasks:\n"
-msgstr ""
-"scalar run ЗАДАЧА [ЗАЧИСЛЕНА_ДИРЕКТОРИЯ]\n"
-"Задачи:\n"
-
-#, c-format
-msgid "no such task: '%s'"
-msgstr "няма задача с име „%s“"
-
-msgid "scalar unregister [<enlistment>]"
-msgstr "scalar unregister [ЗАЧИСЛЕНА_ДИРЕКТОРИЯ]"
-
-msgid "scalar delete <enlistment>"
-msgstr "scalar delete ЗАЧИСЛЕНА_ДИРЕКТОРИЯ"
-
-msgid "refusing to delete current working directory"
-msgstr "текущата работна директория няма да бъде изтрита"
-
-msgid "include Git version"
-msgstr "включване и на версията на git"
-
-msgid "include Git's build options"
-msgstr "включване и на опциите за компилиране на git"
-
-msgid "scalar verbose [-v | --verbose] [--build-options]"
-msgstr "scalar verbose [-v | --verbose] [--build-options]"
-
-msgid "-C requires a <directory>"
-msgstr "„-C“ изисква ДИРЕКТОРИЯ"
-
-#, c-format
-msgid "could not change to '%s'"
-msgstr "не може да се влезе в директорията „%s“"
-
-msgid "-c requires a <key>=<value> argument"
-msgstr "опцията „-c“ изисква аргумент във вид КЛЮЧ=СТОЙНОСТ"
-
-msgid ""
-"scalar [-C <directory>] [-c <key>=<value>] <command> [<options>]\n"
-"\n"
-"Commands:\n"
-msgstr ""
-"scalar [-C ДИРЕКТОРИЯ] [-c КЛЮЧ=СТОЙНОСТ] КОМАНДА [ОПЦИЯ…]<\n"
-"\n"
-"Команди:\n"
 
 #, c-format
 msgid "illegal crlf_action %d"
@@ -16982,10 +16837,10 @@ msgid "Low-level Commands / Internal Helpers"
 msgstr "Команди от ниско ниво / Допълнителни инструменти"
 
 msgid "User-facing repository, command and file interfaces"
-msgstr "Команди за хранилища, файлове и др. за потребители:"
+msgstr "Команди за хранилища, файлове и др. интерфейси за потребители:"
 
-msgid "Developer-facing file file formats, protocols and interfaces"
-msgstr "Файлови формати, протоколи и др. за програмисти:"
+msgid "Developer-facing file formats, protocols and other interfaces"
+msgstr "Файлови формати, протоколи и др. интерфейси за програмисти:"
 
 #, c-format
 msgid "available git commands in '%s'"
@@ -20017,6 +19872,174 @@ msgstr ""
 #, c-format
 msgid "cannot create async thread: %s"
 msgstr "не може да се създаде асинхронна нишка: %s"
+
+#, c-format
+msgid "'%s' does not exist"
+msgstr "„%s“ не съществува."
+
+#, c-format
+msgid "could not switch to '%s'"
+msgstr "не може да се премине към „%s“"
+
+msgid "need a working directory"
+msgstr "необходима е работна директория"
+
+msgid "Scalar enlistments require a worktree"
+msgstr "Зачисляването на директории чрез „scalar“ изисква работно дърво"
+
+#, c-format
+msgid "could not configure %s=%s"
+msgstr "настройката „%s=%s“ не може да се зададе"
+
+msgid "could not configure log.excludeDecoration"
+msgstr "„log.excludeDecoration“ не може да се настрои"
+
+msgid "could not add enlistment"
+msgstr "директория не може да се зачисли"
+
+msgid "could not set recommended config"
+msgstr "препоръчаните настройки не може да се зададат"
+
+msgid "could not turn on maintenance"
+msgstr "задачите по поддръжка не може да се включат"
+
+msgid "could not start the FSMonitor daemon"
+msgstr "фоновият процес на FSMonitor не може да бъде спрян"
+
+msgid "could not turn off maintenance"
+msgstr "задачите по поддръжка не може да се изключат"
+
+msgid "could not remove enlistment"
+msgstr "директорията не може да се отчисли"
+
+#, c-format
+msgid "remote HEAD is not a branch: '%.*s'"
+msgstr "отдалеченият указател „HEAD“ не сочи към клон: „%.*s“"
+
+msgid "failed to get default branch name from remote; using local default"
+msgstr ""
+"името на стандартния клон на отдалеченото хранилище не може да се получи, "
+"затова ще се ползва локално настроеното име на стандартния клон"
+
+msgid "failed to get default branch name"
+msgstr "неуспешно получаване на името на стандартния клон"
+
+msgid "failed to unregister repository"
+msgstr "хранилището не може да бъде отчислено"
+
+msgid "failed to stop the FSMonitor daemon"
+msgstr "фоновият процес FSMonitor не може да бъде спрян"
+
+msgid "failed to delete enlistment directory"
+msgstr "зачислената директория не може да бъде изтрита"
+
+msgid "branch to checkout after clone"
+msgstr "към кой клон да се премине след клониране"
+
+msgid "when cloning, create full working directory"
+msgstr "при клониране да се създава пълна работна директория"
+
+msgid "only download metadata for the branch that will be checked out"
+msgstr "да се свалят метаданните само за изтегляния клон"
+
+msgid "scalar clone [<options>] [--] <repo> [<dir>]"
+msgstr "scalar clone [ОПЦИЯ…] [--] ХРАНИЛИЩЕ [ДИРЕКТОРИЯ]"
+
+#, c-format
+msgid "cannot deduce worktree name from '%s'"
+msgstr "името на работното дърво не може да се извлече от „%s“"
+
+#, c-format
+msgid "directory '%s' exists already"
+msgstr "директорията „%s“ вече съществува"
+
+#, c-format
+msgid "failed to get default branch for '%s'"
+msgstr "основният клон на „%s“ не може да бъде получен"
+
+#, c-format
+msgid "could not configure remote in '%s'"
+msgstr "отдалеченото хранилище в „%s“ не може да се настрои"
+
+#, c-format
+msgid "could not configure '%s'"
+msgstr "„%s“ не може да се настрои"
+
+msgid "partial clone failed; attempting full clone"
+msgstr "неуспешно създаване на непълно хранилище, ще се опита пълно хранилище"
+
+msgid "could not configure for full clone"
+msgstr "не може да се настрои пълно клониране"
+
+msgid "scalar diagnose [<enlistment>]"
+msgstr "scalar diagnose [ЗАЧИСЛЕНА_ДИРЕКТОРИЯ]"
+
+msgid "`scalar list` does not take arguments"
+msgstr "„scalar list“ не приема аргументи"
+
+msgid "scalar register [<enlistment>]"
+msgstr "scalar register [ЗАЧИСЛЕНА_ДИРЕКТОРИЯ]"
+
+msgid "reconfigure all registered enlistments"
+msgstr "пренастройване на всички зачислени директории"
+
+msgid "scalar reconfigure [--all | <enlistment>]"
+msgstr "scalar reconfigure [--all | ЗАЧИСЛЕНА_ДИРЕКТОРИЯ]"
+
+msgid "--all or <enlistment>, but not both"
+msgstr "опцията „--all“ и указването на зачислена директория не са съвместими"
+
+#, c-format
+msgid "git repository gone in '%s'"
+msgstr "вече няма хранилище на git в „%s“"
+
+msgid ""
+"scalar run <task> [<enlistment>]\n"
+"Tasks:\n"
+msgstr ""
+"scalar run ЗАДАЧА [ЗАЧИСЛЕНА_ДИРЕКТОРИЯ]\n"
+"Задачи:\n"
+
+#, c-format
+msgid "no such task: '%s'"
+msgstr "няма задача с име „%s“"
+
+msgid "scalar unregister [<enlistment>]"
+msgstr "scalar unregister [ЗАЧИСЛЕНА_ДИРЕКТОРИЯ]"
+
+msgid "scalar delete <enlistment>"
+msgstr "scalar delete ЗАЧИСЛЕНА_ДИРЕКТОРИЯ"
+
+msgid "refusing to delete current working directory"
+msgstr "текущата работна директория няма да бъде изтрита"
+
+msgid "include Git version"
+msgstr "включване и на версията на git"
+
+msgid "include Git's build options"
+msgstr "включване и на опциите за компилиране на git"
+
+msgid "scalar verbose [-v | --verbose] [--build-options]"
+msgstr "scalar verbose [-v | --verbose] [--build-options]"
+
+msgid "-C requires a <directory>"
+msgstr "„-C“ изисква ДИРЕКТОРИЯ"
+
+#, c-format
+msgid "could not change to '%s'"
+msgstr "не може да се влезе в директорията „%s“"
+
+msgid "-c requires a <key>=<value> argument"
+msgstr "опцията „-c“ изисква аргумент във вид КЛЮЧ=СТОЙНОСТ"
+
+msgid ""
+"scalar [-C <directory>] [-c <key>=<value>] <command> [<options>]\n"
+"\n"
+"Commands:\n"
+msgstr ""
+"scalar [-C ДИРЕКТОРИЯ] [-c КЛЮЧ=СТОЙНОСТ] КОМАНДА [ОПЦИЯ…]<\n"
+"\n"
+"Команди:\n"
 
 msgid "unexpected flush packet while reading remote unpack status"
 msgstr ""
@@ -23131,6 +23154,18 @@ msgstr "„%s“ се пропуска, защото е с разширение 
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "Наистина ли искате да изпратите „%s“? [y|N]: "
+
+#~ msgid "(stats|all)"
+#~ msgstr "„stats“/„all“ (статистика/всичко)"
+
+#~ msgid "git maintenance register"
+#~ msgstr "git maintenance register"
+
+#~ msgid "git maintenance unregister"
+#~ msgstr "git maintenance unregister"
+
+#~ msgid "git maintenance stop"
+#~ msgstr "git maintenance stop"
 
 #, c-format
 #~ msgid "could not parse colored hunk header '%.*s'"
