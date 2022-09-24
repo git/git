@@ -1571,6 +1571,8 @@ char *get_head_description(void)
 	} else
 		strbuf_addstr(&desc, _("(no branch)"));
 
+	wt_status_state_free_buffers(&state);
+
 	return strbuf_detach(&desc, NULL);
 }
 
