@@ -92,8 +92,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git Turkish Localization Project\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2022-09-16 17:47+0300\n"
-"PO-Revision-Date: 2022-09-16 23:00+0300\n"
+"POT-Creation-Date: 2022-09-23 13:01+0300\n"
+"PO-Revision-Date: 2022-09-23 14:00+0300\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish (https://github.com/bitigchi/git-po/)\n"
 "Language: tr\n"
@@ -813,6 +813,26 @@ msgstr ""
 "Bu öğüdü advice.detachedHead yapılandırma değişkenini false yaparak\n"
 "kapatabilirsiniz.\n"
 "\n"
+
+#, c-format
+msgid ""
+"The following paths have been moved outside the\n"
+"sparse-checkout definition but are not sparse due to local\n"
+"modifications.\n"
+msgstr ""
+"Aşağıdaki yollar, aralıklı çıkış tanımının dışına\n"
+"taşındı; ancak yerel değişikliklerden dolayı\n"
+"aralıklı değiller.\n"
+
+msgid ""
+"To correct the sparsity of these paths, do the following:\n"
+"* Use \"git add --sparse <paths>\" to update the index\n"
+"* Use \"git sparse-checkout reapply\" to apply the sparsity rules"
+msgstr ""
+"Bu yollardaki aralıklılığı düzeltmek için aşağıdakini yapın:\n"
+"* İndeksi güncellemek için \"git add --sparse <yollar>\" kullanın\n"
+"* Aralıklılık kurallarını uygulamak için \"git sparse-checkout reapply\" "
+"yapın"
 
 msgid "cmdline ends with \\"
 msgstr "komut satırı \\ ile bitiyor"
@@ -5434,9 +5454,6 @@ msgstr "tanı arşivi için bir hedef konum belirtin"
 msgid "specify a strftime format suffix for the filename"
 msgstr "dosya adı için bir strftime biçimli ek belirtin"
 
-msgid "(stats|all)"
-msgstr "(stats|all)"
-
 msgid "specify the content of the diagnostic archive"
 msgstr "tanı arşivinin içeriğini belirtin"
 
@@ -6557,14 +6574,8 @@ msgstr "belirli bir görevi çalıştır"
 msgid "use at most one of --auto and --schedule=<frequency>"
 msgstr "tek kezde --auto ve --schedule=<sıklık>'tan birini kullan"
 
-msgid "git maintenance register"
-msgstr "git maintenance register"
-
 msgid "failed to run 'git config'"
 msgstr "'git config' çalıştırılamadı"
-
-msgid "git maintenance unregister"
-msgstr "git maintenance unregister"
 
 #, c-format
 msgid "failed to expand path '%s'"
@@ -6641,9 +6652,6 @@ msgstr "git bakımını tetikleyecek görev planlayıcı"
 
 msgid "failed to add repo to global config"
 msgstr "depo, global yapılandırmaya eklenemedi"
-
-msgid "git maintenance stop"
-msgstr "git maintenance stop"
 
 msgid "git maintenance <subcommand> [<options>]"
 msgstr "git maintenance <altkomut> [<seçenekler>]"
@@ -6910,11 +6918,13 @@ msgid "print list of useful guides"
 msgstr "kullanışlı kılavuzların listesini çıkar"
 
 msgid "print list of user-facing repository, command and file interfaces"
-msgstr "kullanıcıya görünür depolar, komutlar ve dosya arayüzlerinin bir "
-"listesini yazdır"
+msgstr ""
+"kullanıcıya görünür depolar, komutlar ve dosya arayüzlerinin bir listesini "
+"yazdır"
 
 msgid "print list of file formats, protocols and other developer interfaces"
-msgstr "dosya biçimleri, protokoller ve diğer geliştirici arayüzlerinin bir "
+msgstr ""
+"dosya biçimleri, protokoller ve diğer geliştirici arayüzlerinin bir "
 "listesini yazdır"
 
 msgid "print all configuration variable names"
@@ -7712,7 +7722,7 @@ msgid "bad ls-files format: element '%s' does not start with '('"
 msgstr "hatalı ls-files biçimi: '%s' ögesi, '(' ile başlamıyor"
 
 #, c-format
-msgid "bad ls-files format: element '%s'does not end in ')'"
+msgid "bad ls-files format: element '%s' does not end in ')'"
 msgstr "hatalı ls-files biçimi: '%s' ögesi, ')' ile sonlanmıyor"
 
 #, c-format
@@ -8504,6 +8514,9 @@ msgstr "aynı hedef için birden çok kaynak"
 
 msgid "destination directory does not exist"
 msgstr "hedef dizin yok"
+
+msgid "destination exists in the index"
+msgstr "hedef konum indekste var"
 
 #, c-format
 msgid "%s, source=%s, destination=%s"
@@ -13540,6 +13553,9 @@ msgstr "Git depoları için gerçekten yalın bir sunucu"
 msgid "Give an object a human readable name based on an available ref"
 msgstr "Uygun bir başvuruyu temel alıp nesneye okunabilir ad ver"
 
+msgid "Generate a zip archive of diagnostic information"
+msgstr "Tanı bilgisinin bir zip arşivini oluştur"
+
 msgid "Show changes between commits, commit and working tree, etc"
 msgstr "İşlemeler, işleme ve ağaçlar vb. arası değişiklikler"
 
@@ -13862,6 +13878,9 @@ msgstr "Paketlenmiş Git arşiv dosyalarını doğrula"
 msgid "Check the GPG signature of tags"
 msgstr "Etiketlerin GPG imzasını doğrula"
 
+msgid "Display version information about Git"
+msgstr "Git sürüm bilgisini görüntüle"
+
 msgid "Show logs with difference each commit introduces"
 msgstr "Günlükleri her işlemenin sunduğu değişikliklerle göster"
 
@@ -13972,6 +13991,9 @@ msgstr "Git web arabirimi (Git depoları için web ön ucu)"
 
 msgid "An overview of recommended workflows with Git"
 msgstr "Önerilen Git çalışma akışlarına genel bakış"
+
+msgid "A tool for managing large Git repositories"
+msgstr "Büyük Git depolarını yönetmek için bir araç"
 
 msgid "commit-graph file is too small"
 msgstr "commit-graph dosyası pek küçük"
@@ -14827,173 +14849,6 @@ msgstr "rev-list yazılamadı"
 
 msgid "failed to close rev-list's stdin"
 msgstr "rev-list'in stdin'i kapatılamadı"
-
-#, c-format
-msgid "'%s' does not exist"
-msgstr "'%s' yok"
-
-#, c-format
-msgid "could not switch to '%s'"
-msgstr "şuraya geçilemedi: '%s'"
-
-msgid "need a working directory"
-msgstr "bir çalışma dizini gerekiyor"
-
-msgid "Scalar enlistments require a worktree"
-msgstr "Scalar gönüllü kayıtları bir çalışma ağacı gerektiriyor"
-
-#, c-format
-msgid "could not configure %s=%s"
-msgstr "%s=%s yapılandırılamadı"
-
-msgid "could not configure log.excludeDecoration"
-msgstr "log.excludeDecoration yapılandırılamadı"
-
-msgid "could not add enlistment"
-msgstr "gönüllü yazılma eklenemedi"
-
-msgid "could not set recommended config"
-msgstr "önerilen yapılandırma ayarlanamadı"
-
-msgid "could not turn on maintenance"
-msgstr "bakım ayarı açılamadı"
-
-msgid "could not start the FSMonitor daemon"
-msgstr "FSMonitor ardalan süreci başlatılamadı"
-
-msgid "could not turn off maintenance"
-msgstr "bakım ayarı kapatılamadı"
-
-msgid "could not remove enlistment"
-msgstr "gönüllü yazılma kaldırılamadı"
-
-#, c-format
-msgid "remote HEAD is not a branch: '%.*s'"
-msgstr "uzak konum HEAD'i bir dal değil: '%.*s'"
-
-msgid "failed to get default branch name from remote; using local default"
-msgstr ""
-"uzak konumdan öntanımlı dal adı alınamadı; yerel öntanımlı kullanılıyor"
-
-msgid "failed to get default branch name"
-msgstr "öntanımlı dal adı alınamadı"
-
-msgid "failed to unregister repository"
-msgstr "depo kaydı silinemedi"
-
-msgid "failed to stop the FSMonitor daemon"
-msgstr "FSMonitor ardalan süreci durdurulamadı"
-
-msgid "failed to delete enlistment directory"
-msgstr "gönüllü kayıt dizini silinemedi"
-
-msgid "branch to checkout after clone"
-msgstr "klonlama sonrası çıkış yapılacak dal"
-
-msgid "when cloning, create full working directory"
-msgstr "klonlama sırasında tam çalışma dizini oluştur"
-
-msgid "only download metadata for the branch that will be checked out"
-msgstr "yalnızca çıkış yapılacak dalın üstverisini indir"
-
-msgid "scalar clone [<options>] [--] <repo> [<dir>]"
-msgstr "scalar clone [<seçenekler>] [--] <depo> [<dizin>]"
-
-#, c-format
-msgid "cannot deduce worktree name from '%s'"
-msgstr "'%s' ögesinden çalışma ağacı adı ortaya çıkarılamıyor"
-
-#, c-format
-msgid "directory '%s' exists already"
-msgstr "'%s' dizini halihazırda var"
-
-#, c-format
-msgid "failed to get default branch for '%s'"
-msgstr "'%s' için öntanımlı dal alınamadı"
-
-#, c-format
-msgid "could not configure remote in '%s'"
-msgstr "'%s' içindeki uzak konum yapılandırılamadı"
-
-#, c-format
-msgid "could not configure '%s'"
-msgstr "'%s' yapılandırılamadı"
-
-msgid "partial clone failed; attempting full clone"
-msgstr "kısımsal klonlama başarısız; tam klonlama deneniyor"
-
-msgid "could not configure for full clone"
-msgstr "tam klonlama için yapılandırılamadı"
-
-msgid "scalar diagnose [<enlistment>]"
-msgstr "scalar diagnose [<gönüllükayıt>]"
-
-msgid "`scalar list` does not take arguments"
-msgstr "'scalar list' argüman almıyor"
-
-msgid "scalar register [<enlistment>]"
-msgstr "scalar register [<gönüllükayıt>]"
-
-msgid "reconfigure all registered enlistments"
-msgstr "tüm kaydı yapılmış gönüllü kayıtları yeniden yapılandır"
-
-msgid "scalar reconfigure [--all | <enlistment>]"
-msgstr "scalar reconfigure [--all | <gönüllükayıt>]"
-
-msgid "--all or <enlistment>, but not both"
-msgstr "--all veya <gönüllükayıt>; ancak ikisi değil"
-
-#, c-format
-msgid "git repository gone in '%s'"
-msgstr "git deposu '%s' içinde gitti"
-
-msgid ""
-"scalar run <task> [<enlistment>]\n"
-"Tasks:\n"
-msgstr ""
-"scalar run <görev> [<gönüllükayıt>]\n"
-"Görevler:\n"
-
-#, c-format
-msgid "no such task: '%s'"
-msgstr "böyle bir görev yok: '%s'"
-
-msgid "scalar unregister [<enlistment>]"
-msgstr "scalar unregister [<enlistment>]"
-
-msgid "scalar delete <enlistment>"
-msgstr "scalar delete <gönüllükayıt>"
-
-msgid "refusing to delete current working directory"
-msgstr "geçerli çalışma dizinini silme reddediliyor"
-
-msgid "include Git version"
-msgstr "Git sürümünü içer"
-
-msgid "include Git's build options"
-msgstr "Git'in yapı seçeneklerini içer"
-
-msgid "scalar verbose [-v | --verbose] [--build-options]"
-msgstr "scalar verbose [-v | --verbose] [--build-options]"
-
-msgid "-C requires a <directory>"
-msgstr "-C, bir <dizin> gerektiriyor"
-
-#, c-format
-msgid "could not change to '%s'"
-msgstr "'%s' olarak değiştirilemedi"
-
-msgid "-c requires a <key>=<value> argument"
-msgstr "-c, bir <anahtar>=<değer> argümanı gerektiriyor"
-
-msgid ""
-"scalar [-C <directory>] [-c <key>=<value>] <command> [<options>]\n"
-"\n"
-"Commands:\n"
-msgstr ""
-"scalar [-C <dizin>] [-c <anahtar>=<değer>] <komut> [<seçenekler>]\n"
-"\n"
-"Komutlar:\n"
 
 #, c-format
 msgid "illegal crlf_action %d"
@@ -16295,10 +16150,10 @@ msgid "Low-level Commands / Internal Helpers"
 msgstr "Düşük Düzeyli Komutlar / İç Yardımcılar"
 
 msgid "User-facing repository, command and file interfaces"
-msgstr "Kullanıcıya görünür depo, komut ve dosya arayüzleri"
+msgstr "Kullanıcı için depo, komut ve dosya arayüzleri"
 
-msgid "Developer-facing file file formats, protocols and interfaces"
-msgstr "Geliştiriciye görünür dosya biçimleri, protokoller ve arayüzler"
+msgid "Developer-facing file formats, protocols and other interfaces"
+msgstr "Geliştirici için dosya biçimleri, protokoller ve arayüzler"
 
 #, c-format
 msgid "available git commands in '%s'"
@@ -16806,7 +16661,8 @@ msgid ""
 " - resolve any other conflicts in the superproject\n"
 " - commit the resulting index in the superproject\n"
 msgstr ""
-"Altmodülle özyineli birleştirme şu anda yalnızca önemsiz durumları destekler.\n"
+"Altmodülle özyineli birleştirme şu anda yalnızca önemsiz durumları "
+"destekler.\n"
 "Her bir çakışan altmodülün birleştirmesini lütfen elle yapın.\n"
 "Bu, aşağıdaki adımlarla gerçekleştirilebilir:\n"
 "%s - yukarıdaki birleştirmeyi kaydetmek veya güncellemek için\n"
@@ -17685,7 +17541,8 @@ msgstr ""
 "hasarlı biteşlem indeks dosyası (sağlama önbelleğine sığmak için pek küçük)"
 
 msgid "corrupted bitmap index file (too short to fit lookup table)"
-msgstr "hasarlı biteşlem indeks dosyası (arama tablosuna sığmak için pek küçük)"
+msgstr ""
+"hasarlı biteşlem indeks dosyası (arama tablosuna sığmak için pek küçük)"
 
 #, c-format
 msgid "duplicate entry in bitmap index: '%s'"
@@ -18437,7 +18294,8 @@ msgid ""
 msgstr ""
 "Bu iletiden kaçınmak için, bir işlemeyi kaldırırken açıkça \"drop\" "
 "kullanın.\n"
-"Uyarıların düzeyini değiştirmek için 'git config rebase.missingCommitsCheck'\n"
+"Uyarıların düzeyini değiştirmek için 'git config rebase."
+"missingCommitsCheck'\n"
 "kullanın. Kullanılabilir davranışlar: ignore, warn, error.\n"
 "\n"
 
@@ -19207,6 +19065,173 @@ msgstr "-L, -p ve -s dışında başka diff biçimlerini henüz desteklemiyor"
 msgid "cannot create async thread: %s"
 msgstr "async iş parçacığı oluşturulamadı: %s"
 
+#, c-format
+msgid "'%s' does not exist"
+msgstr "'%s' yok"
+
+#, c-format
+msgid "could not switch to '%s'"
+msgstr "şuraya geçilemedi: '%s'"
+
+msgid "need a working directory"
+msgstr "bir çalışma dizini gerekiyor"
+
+msgid "Scalar enlistments require a worktree"
+msgstr "Scalar gönüllü kayıtları bir çalışma ağacı gerektiriyor"
+
+#, c-format
+msgid "could not configure %s=%s"
+msgstr "%s=%s yapılandırılamadı"
+
+msgid "could not configure log.excludeDecoration"
+msgstr "log.excludeDecoration yapılandırılamadı"
+
+msgid "could not add enlistment"
+msgstr "gönüllü yazılma eklenemedi"
+
+msgid "could not set recommended config"
+msgstr "önerilen yapılandırma ayarlanamadı"
+
+msgid "could not turn on maintenance"
+msgstr "bakım ayarı açılamadı"
+
+msgid "could not start the FSMonitor daemon"
+msgstr "FSMonitor ardalan süreci başlatılamadı"
+
+msgid "could not turn off maintenance"
+msgstr "bakım ayarı kapatılamadı"
+
+msgid "could not remove enlistment"
+msgstr "gönüllü yazılma kaldırılamadı"
+
+#, c-format
+msgid "remote HEAD is not a branch: '%.*s'"
+msgstr "uzak konum HEAD'i bir dal değil: '%.*s'"
+
+msgid "failed to get default branch name from remote; using local default"
+msgstr ""
+"uzak konumdan öntanımlı dal adı alınamadı; yerel öntanımlı kullanılıyor"
+
+msgid "failed to get default branch name"
+msgstr "öntanımlı dal adı alınamadı"
+
+msgid "failed to unregister repository"
+msgstr "depo kaydı silinemedi"
+
+msgid "failed to stop the FSMonitor daemon"
+msgstr "FSMonitor ardalan süreci durdurulamadı"
+
+msgid "failed to delete enlistment directory"
+msgstr "gönüllü kayıt dizini silinemedi"
+
+msgid "branch to checkout after clone"
+msgstr "klonlama sonrası çıkış yapılacak dal"
+
+msgid "when cloning, create full working directory"
+msgstr "klonlama sırasında tam çalışma dizini oluştur"
+
+msgid "only download metadata for the branch that will be checked out"
+msgstr "yalnızca çıkış yapılacak dalın üstverisini indir"
+
+msgid "scalar clone [<options>] [--] <repo> [<dir>]"
+msgstr "scalar clone [<seçenekler>] [--] <depo> [<dizin>]"
+
+#, c-format
+msgid "cannot deduce worktree name from '%s'"
+msgstr "'%s' ögesinden çalışma ağacı adı ortaya çıkarılamıyor"
+
+#, c-format
+msgid "directory '%s' exists already"
+msgstr "'%s' dizini halihazırda var"
+
+#, c-format
+msgid "failed to get default branch for '%s'"
+msgstr "'%s' için öntanımlı dal alınamadı"
+
+#, c-format
+msgid "could not configure remote in '%s'"
+msgstr "'%s' içindeki uzak konum yapılandırılamadı"
+
+#, c-format
+msgid "could not configure '%s'"
+msgstr "'%s' yapılandırılamadı"
+
+msgid "partial clone failed; attempting full clone"
+msgstr "kısımsal klonlama başarısız; tam klonlama deneniyor"
+
+msgid "could not configure for full clone"
+msgstr "tam klonlama için yapılandırılamadı"
+
+msgid "scalar diagnose [<enlistment>]"
+msgstr "scalar diagnose [<gönüllükayıt>]"
+
+msgid "`scalar list` does not take arguments"
+msgstr "'scalar list' argüman almıyor"
+
+msgid "scalar register [<enlistment>]"
+msgstr "scalar register [<gönüllükayıt>]"
+
+msgid "reconfigure all registered enlistments"
+msgstr "tüm kaydı yapılmış gönüllü kayıtları yeniden yapılandır"
+
+msgid "scalar reconfigure [--all | <enlistment>]"
+msgstr "scalar reconfigure [--all | <gönüllükayıt>]"
+
+msgid "--all or <enlistment>, but not both"
+msgstr "--all veya <gönüllükayıt>; ancak ikisi değil"
+
+#, c-format
+msgid "git repository gone in '%s'"
+msgstr "git deposu '%s' içinde gitti"
+
+msgid ""
+"scalar run <task> [<enlistment>]\n"
+"Tasks:\n"
+msgstr ""
+"scalar run <görev> [<gönüllükayıt>]\n"
+"Görevler:\n"
+
+#, c-format
+msgid "no such task: '%s'"
+msgstr "böyle bir görev yok: '%s'"
+
+msgid "scalar unregister [<enlistment>]"
+msgstr "scalar unregister [<enlistment>]"
+
+msgid "scalar delete <enlistment>"
+msgstr "scalar delete <gönüllükayıt>"
+
+msgid "refusing to delete current working directory"
+msgstr "geçerli çalışma dizinini silme reddediliyor"
+
+msgid "include Git version"
+msgstr "Git sürümünü içer"
+
+msgid "include Git's build options"
+msgstr "Git'in yapı seçeneklerini içer"
+
+msgid "scalar verbose [-v | --verbose] [--build-options]"
+msgstr "scalar verbose [-v | --verbose] [--build-options]"
+
+msgid "-C requires a <directory>"
+msgstr "-C, bir <dizin> gerektiriyor"
+
+#, c-format
+msgid "could not change to '%s'"
+msgstr "'%s' olarak değiştirilemedi"
+
+msgid "-c requires a <key>=<value> argument"
+msgstr "-c, bir <anahtar>=<değer> argümanı gerektiriyor"
+
+msgid ""
+"scalar [-C <directory>] [-c <key>=<value>] <command> [<options>]\n"
+"\n"
+"Commands:\n"
+msgstr ""
+"scalar [-C <dizin>] [-c <anahtar>=<değer>] <komut> [<seçenekler>]\n"
+"\n"
+"Komutlar:\n"
+
 msgid "unexpected flush packet while reading remote unpack status"
 msgstr "uzak konum açım durumu okunurken beklenmedik floş paketi"
 
@@ -19813,8 +19838,7 @@ msgstr "merge: Yeni indeks dosyası yazılamıyor"
 #, c-format
 msgid ""
 "another 'rebase' process appears to be running; '%s.lock' already exists"
-msgstr ""
-"başka bir 'rebase' süreci çalışıyor gibi; '%s.lock' halihazırda var"
+msgstr "başka bir 'rebase' süreci çalışıyor gibi; '%s.lock' halihazırda var"
 
 #, c-format
 msgid ""
