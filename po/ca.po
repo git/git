@@ -68,8 +68,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2022-09-22 09:45+0200\n"
-"PO-Revision-Date: 2022-09-22 19:00-0600\n"
+"POT-Creation-Date: 2022-09-25 21:02+0200\n"
+"PO-Revision-Date: 2022-09-25 19:00-0600\n"
 "Last-Translator: Jordi Mas i Hernàndez <jmas@softcatala.org>\n"
 "Language-Team: Catalan\n"
 "Language: ca\n"
@@ -587,6 +587,7 @@ msgstr "«git apply --cached» ha fallat"
 #. Consider translating (saying "no" discards!) as
 #. (saying "n" for "no" discards!) if the translation
 #. of the word "no" does not start with n.
+#.
 #. #-#-#-#-#  git-add--interactive.perl.po  #-#-#-#-#
 #. TRANSLATORS: do not translate [y/n]
 #. The program will only accept that input
@@ -1586,6 +1587,7 @@ msgstr[1] "(aproximadament %d passos)"
 
 #. TRANSLATORS: the last %s will be replaced with "(roughly %d
 #. steps)" translation.
+#.
 #, c-format
 msgid "Bisecting: %d revision left to test after this %s\n"
 msgid_plural "Bisecting: %d revisions left to test after this %s\n"
@@ -1674,17 +1676,20 @@ msgstr "no s'està seguint: informació ambigua per a la referència «%s»"
 #. TRANSLATORS: This is a line listing a remote with duplicate
 #. refspecs in the advice message below. For RTL languages you'll
 #. probably want to swap the "%s" and leading "  " space around.
+#.
 #. #-#-#-#-#  object-name.c.po  #-#-#-#-#
 #. TRANSLATORS: This is line item of ambiguous object output
 #. from describe_ambiguous_object() above. For RTL languages
 #. you'll probably want to swap the "%s" and leading " " space
 #. around.
+#.
 #, c-format
 msgid "  %s\n"
 msgstr "  %s\n"
 
 #. TRANSLATORS: The second argument is a \n-delimited list of
 #. duplicate refspecs, composed above.
+#.
 #, c-format
 msgid ""
 "There are multiple remotes whose fetch refspecs map to the remote\n"
@@ -2095,6 +2100,7 @@ msgstr "El cos de la comissió és:"
 #. TRANSLATORS: Make sure to include [y], [n], [e], [v] and [a]
 #. in your translation. The program will only accept English
 #. input at this point.
+#.
 #, c-format
 msgid "Apply? [y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all: "
 msgstr ""
@@ -2445,6 +2451,7 @@ msgstr "bisecant amb només una comissió %s"
 #. TRANSLATORS: Make sure to include [Y] and [n] in your
 #. translation. The program will only accept English input
 #. at this point.
+#.
 msgid "Are you sure [Y/n]? "
 msgstr "N'esteu segur [Y/n]? "
 
@@ -2502,7 +2509,7 @@ msgid "'%s' does not appear to be a valid revision"
 msgstr "«%s» no sembla ser una revisió vàlida"
 
 msgid "bad HEAD - I need a HEAD"
-msgstr "HEAD incorrecte - cal un HEAD"
+msgstr "HEAD incorrecte - cal una HEAD"
 
 #, c-format
 msgid "checking out '%s' failed. Try 'git bisect start <valid-branch>'."
@@ -2525,6 +2532,7 @@ msgstr "Cal començar per «git bisect start»\n"
 #. TRANSLATORS: Make sure to include [Y] and [n] in your
 #. translation. The program will only accept English input
 #. at this point.
+#.
 msgid "Do you want me to do it for you [Y/n]? "
 msgstr "Voleu que ho faci per vostè [Y/n]? "
 
@@ -2771,6 +2779,7 @@ msgstr ""
 #. among various forms of relative timestamps, but
 #. your language may need more or fewer display
 #. columns.
+#.
 msgid "4 years, 11 months ago"
 msgstr "fa 4 anys i 11 mesos"
 
@@ -2940,7 +2949,7 @@ msgid "Generic options"
 msgstr "Opcions genèriques"
 
 msgid "show hash and subject, give twice for upstream branch"
-msgstr "mostra el hash i l'assumpte, doneu dues vegades per a la branca font"
+msgstr "mostra el hash i l'assumpte, useu-lo dues vegades per a la branca font"
 
 msgid "suppress informational messages"
 msgstr "omet els missatges informatius"
@@ -3055,7 +3064,7 @@ msgid "branch name required"
 msgstr "cal el nom de branca"
 
 msgid "Cannot give description to detached HEAD"
-msgstr "No es pot donar descripció a un HEAD separat"
+msgstr "No es pot donar descripció a una HEAD separada"
 
 msgid "cannot edit description of more than one branch"
 msgstr "no es pot editar la descripció de més d'una branca"
@@ -3392,7 +3401,7 @@ msgstr "path|tree-ish"
 
 #, c-format
 msgid "'%s' requires a batch mode"
-msgstr "%s requereix un mode batch"
+msgstr "«%s» requereix un mode batch"
 
 #, c-format
 msgid "'-%c' is incompatible with batch mode"
@@ -4911,7 +4920,7 @@ msgid "Commit message options"
 msgstr "Opcions de missatge de comissió"
 
 msgid "read message from file"
-msgstr "llegiu el missatge des d'un fitxer"
+msgstr "llegeix el missatge des d'un fitxer"
 
 msgid "author"
 msgstr "autor"
@@ -4936,6 +4945,7 @@ msgstr "reusa el missatge de la comissió especificada"
 
 #. TRANSLATORS: Leave "[(amend|reword):]" as-is,
 #. and only translate <commit>.
+#.
 msgid "[(amend|reword):]commit"
 msgstr "[(amend|reword):]commit"
 
@@ -5752,7 +5762,7 @@ msgid "set upstream for git pull/fetch"
 msgstr "estableix la font per a git pull/fetch"
 
 msgid "append to .git/FETCH_HEAD instead of overwriting"
-msgstr "annexa a .git/FETCH_HEAD en lloc de sobreescriure"
+msgstr "annexa a .git/FETCH_HEAD en lloc de sobreescriure'l"
 
 msgid "use atomic transaction to update references"
 msgstr "usa una transacció atòmica per a actualitzar les referències"
@@ -6291,7 +6301,7 @@ msgstr "%s apunta a una cosa estranya (%s)"
 
 #, c-format
 msgid "%s: detached HEAD points at nothing"
-msgstr "%s: el HEAD separat no apunta a res"
+msgstr "%s: la HEAD separada no apunta a res"
 
 #, c-format
 msgid "notice: %s points to an unborn branch (%s)"
@@ -6717,6 +6727,7 @@ msgstr "s'ha especificat un nombre de fils no vàlid (%d) per a %s"
 #. TRANSLATORS: %s is the configuration
 #. variable for tweaking threads, currently
 #. grep.threads
+#.
 #, c-format
 msgid "no threads support, ignoring %s"
 msgstr "no s'admeten fils, s'ignorarà %s"
@@ -6761,7 +6772,7 @@ msgid "process binary files as text"
 msgstr "processa els fitxers binaris com a text"
 
 msgid "don't match patterns in binary files"
-msgstr "no coincideixis amb els patrons en els fitxers binaris"
+msgstr "no cerquis els patrons en els fitxers binaris"
 
 msgid "process binary files with textconv filters"
 msgstr "processa els fitxers binaris amb filtres de textconv"
@@ -7200,8 +7211,8 @@ msgstr "Suma de verificació final no esperada per a %s (corrupció de disc?)"
 #, c-format
 msgid "pack has %d unresolved delta"
 msgid_plural "pack has %d unresolved deltas"
-msgstr[0] "El paquet té %d diferència no resolta"
-msgstr[1] "El paquet té %d diferències no resoltes"
+msgstr[0] "el paquet té %d diferència no resolta"
+msgstr[1] "el paquet té %d diferències no resoltes"
 
 #, c-format
 msgid "unable to deflate appended object (%d)"
@@ -7549,7 +7560,7 @@ msgid ""
 msgstr ""
 "no s'ha pogut obtenir la font, si voleu registrar la comissió base\n"
 "automàticament, useu git branch --set-upstream-to per a seguir una\n"
-"una branca remota. També podeu especificar la comissió base amb --base=<base-"
+"branca remota. També podeu especificar la comissió base amb --base=<base-"
 "commit-id> manualment"
 
 msgid "failed to find exact merge base"
@@ -8374,17 +8385,17 @@ msgstr ""
 "establert."
 
 msgid "Squash commit into empty head not supported yet"
-msgstr "Una comissió «squash» a un HEAD buit encara no es permet"
+msgstr "Una comissió «squash» a una HEAD buida encara no es permet"
 
 msgid "Non-fast-forward commit does not make sense into an empty head"
-msgstr "Una comissió no d'avanç ràpid no té sentit a un HEAD buit"
+msgstr "Una comissió no d'avanç ràpid no té sentit a una HEAD buida"
 
 #, c-format
 msgid "%s - not something we can merge"
 msgstr "%s - no és una cosa que puguem fusionar"
 
 msgid "Can merge only exactly one commit into empty head"
-msgstr "Es pot fusionar només una comissió a un HEAD buit"
+msgstr "Es pot fusionar només una comissió a una HEAD buida"
 
 #, c-format
 msgid "Updating %s..%s\n"
@@ -8770,6 +8781,7 @@ msgstr "s'ha produït un error en copiar les notes de «%s» a «%s»"
 
 #. TRANSLATORS: the first %s will be replaced by a git
 #. notes command: 'add', 'merge', 'remove', etc.
+#.
 #, c-format
 msgid "refusing to %s notes in %s (outside of refs/notes/)"
 msgstr "s'està refusant %s les notes en %s (fora de refs/notes/)"
@@ -9197,10 +9209,10 @@ msgid "use OFS_DELTA objects"
 msgstr "usa objectes OFS_DELTA"
 
 msgid "use threads when searching for best delta matches"
-msgstr "usa fils en cercar les millores coincidències de diferències"
+msgstr "usa fils en cercar les millors coincidències de diferències"
 
 msgid "do not create an empty pack output"
-msgstr "no creïs una emissió de paquet buida"
+msgstr "no creïs una emissió de paquet buit"
 
 msgid "read revision arguments from standard input"
 msgstr "llegeix els arguments de revisió des de l'entrada estàndard"
@@ -9550,7 +9562,7 @@ msgstr ""
 "per a recuperar."
 
 msgid "Cannot merge multiple branches into empty head."
-msgstr "No es poden fusionar múltiples branques a un HEAD buit."
+msgstr "No es poden fusionar múltiples branques a una HEAD buida."
 
 msgid "Cannot rebase onto multiple branches."
 msgstr "No es pot fer «rebase» sobre múltiples branques."
@@ -10772,6 +10784,7 @@ msgstr "(sense URL)"
 #. TRANSLATORS: the colon ':' should align
 #. with the one in " Fetch URL: %s"
 #. translation.
+#.
 #, c-format
 msgid "  Push  URL: %s"
 msgstr "  URL de pujada: %s"
@@ -11287,7 +11300,7 @@ msgid "keep"
 msgstr "reteniment"
 
 msgid "You do not have a valid HEAD."
-msgstr "No teniu un HEAD vàlid."
+msgstr "No teniu una HEAD vàlida."
 
 msgid "Failed to find tree of HEAD."
 msgstr "S'ha produït un error en trobar l'arbre de HEAD."
@@ -16056,12 +16069,14 @@ msgstr "s'ha produït un error en processar els acks: %d"
 
 #. TRANSLATORS: The parameter will be 'ready', a protocol
 #. keyword.
+#.
 #, c-format
 msgid "expected packfile to be sent after '%s'"
 msgstr "s'esperava que el fitxer de paquet s'enviés després de «%s»"
 
 #. TRANSLATORS: The parameter will be 'ready', a protocol
 #. keyword.
+#.
 #, c-format
 msgid "expected no other sections to be sent after no '%s'"
 msgstr "no s'esperava que cap altra secció s'enviés després de «%s»"
@@ -16875,6 +16890,7 @@ msgstr ""
 #. name, and the second argument is the abbreviated id of the
 #. commit that needs to be merged.  For example:
 #.  - go to submodule (mysubmodule), and either merge commit abc1234"
+#.
 #, c-format
 msgid ""
 " - go to submodule (%s), and either merge commit %s\n"
@@ -16909,6 +16925,7 @@ msgstr ""
 
 #. TRANSLATORS: The %s arguments are: 1) tree hash of a merge
 #. base, and 2-3) the trees for the two trees we're merging.
+#.
 #, c-format
 msgid "collecting merge info failed for trees %s, %s, %s"
 msgstr ""
@@ -17382,6 +17399,7 @@ msgstr "S'està refusant reescriure les notes en %s (fora de refs/notes/)"
 #. TRANSLATORS: The first %s is the name of
 #. the environment variable, the second %s is
 #. its value.
+#.
 #, c-format
 msgid "Bad %s value: '%s'"
 msgstr "Valor erroni de %s: «%s»"
@@ -17606,6 +17624,7 @@ msgstr "no s'han pogut desempaquetar els continguts de %s"
 #. TRANSLATORS: This is a line of ambiguous object
 #. output shown when we cannot look up or parse the
 #. object in question. E.g. "deadbeef [bad object]".
+#.
 #, c-format
 msgid "%s [bad object]"
 msgstr "%s [objecte incorrecte]"
@@ -17614,6 +17633,7 @@ msgstr "%s [objecte incorrecte]"
 #. object output. E.g.:
 #. *
 #.    "deadbeef commit 2021-01-01 - Some Commit Message"
+#.
 #, c-format
 msgid "%s commit %s - %s"
 msgstr "%s comissió %s - %s"
@@ -17628,6 +17648,7 @@ msgstr "%s comissió %s - %s"
 #. *
 #. The third argument is the "tag" string
 #. from object.c.
+#.
 #, c-format
 msgid "%s tag %s - %s"
 msgstr "%s etiqueta %s - %s"
@@ -17637,18 +17658,21 @@ msgstr "%s etiqueta %s - %s"
 #. the tag itself. E.g.:
 #. *
 #.    "deadbeef [bad tag, could not parse it]"
+#.
 #, c-format
 msgid "%s [bad tag, could not parse it]"
 msgstr "%s [etiqueta malmesa, no s'ha pogut analitzar]"
 
 #. TRANSLATORS: This is a line of ambiguous <type>
 #. object output. E.g. "deadbeef tree".
+#.
 #, c-format
 msgid "%s tree"
 msgstr "arbre %s"
 
 #. TRANSLATORS: This is a line of ambiguous <type>
 #. object output. E.g. "deadbeef blob".
+#.
 #, c-format
 msgid "%s blob"
 msgstr "blob %s"
@@ -17660,6 +17684,7 @@ msgstr "l'id d'objecte curt %s és ambigu"
 #. TRANSLATORS: The argument is the list of ambiguous
 #. objects composed in show_ambiguous_object(). See
 #. its "TRANSLATORS" comments for details.
+#.
 #, c-format
 msgid ""
 "The candidates are:\n"
@@ -17841,7 +17866,7 @@ msgid "corrupt bitmap lookup table: triplet position out of index"
 msgstr ""
 "taula de cerca de mapa de bits malmesa: posició la tripleta fora de l'índex"
 
-msgid "corrupt bitmap lookup table: xor chain exceed entry count"
+msgid "corrupt bitmap lookup table: xor chain exceeds entry count"
 msgstr ""
 "taula de cerca de mapa de bits malmesa: la cadena xor excedeix el nombre "
 "d'entrades"
@@ -18043,6 +18068,7 @@ msgstr "ús: %s"
 
 #. TRANSLATORS: the colon here should align with the
 #. one in "usage: %s" translation.
+#.
 #, c-format
 msgid "   or: %s"
 msgstr "   o: %s"
@@ -18065,6 +18091,7 @@ msgstr "   o: %s"
 #. function. The "%s" is a line in the (hopefully already
 #. translated) N_() usage string, which contained embedded
 #. newlines before we split it up.
+#.
 #, c-format
 msgid "%*s%s"
 msgstr "%*s%s"
@@ -19051,6 +19078,7 @@ msgstr ""
 #. TRANSLATORS: "matches '%s'%" is the <dst> part of "git push
 #. <remote> <src>:<dst>" push, and "being pushed ('%s')" is
 #. the <src>.
+#.
 #, c-format
 msgid ""
 "The destination you provided is not a full refname (i.e.,\n"
@@ -19395,7 +19423,7 @@ msgstr "no s'ha pogut eliminar l'allistament"
 
 #, c-format
 msgid "remote HEAD is not a branch: '%.*s'"
-msgstr "el HEAD remot no és una branca: «%.*s»"
+msgstr "la HEAD remota no és una branca: «%.*s»"
 
 msgid "failed to get default branch name from remote; using local default"
 msgstr ""
@@ -19648,6 +19676,7 @@ msgstr "cometeu els vostres canvis o feu un «stash» per a procedir."
 
 #. TRANSLATORS: %s will be "revert", "cherry-pick" or
 #. "rebase".
+#.
 #, c-format
 msgid "%s: Unable to write new index file"
 msgstr "%s: No s'ha pogut escriure un fitxer d'índex nou"
