@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git 2.38.0\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2022-09-16 20:53+0100\n"
-"PO-Revision-Date: 2022-09-16 22:02+0100\n"
+"POT-Creation-Date: 2022-09-26 06:34+0100\n"
+"PO-Revision-Date: 2022-09-26 06:35+0100\n"
 "Last-Translator: Peter Krefting <peter@softwolves.pp.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -684,7 +684,7 @@ msgid ""
 "outside of your sparse-checkout definition, so will not be\n"
 "updated in the index:\n"
 msgstr ""
-"Följande sökvägar och/eller ökvägsangivelser motsvarar sökvägar\n"
+"Följande sökvägar och/eller sökvägsangivelser motsvarar sökvägar\n"
 "utanför din \"sparse-checkout\"-definition, så de kommer inte\n"
 "uppdateras i indexet:\n"
 
@@ -738,6 +738,25 @@ msgstr ""
 "Stäng av den här hjälptexten genom att sätta konfigurationsvariabeln\n"
 "advice.detachedHead till false\n"
 "\n"
+
+#, c-format
+msgid ""
+"The following paths have been moved outside the\n"
+"sparse-checkout definition but are not sparse due to local\n"
+"modifications.\n"
+msgstr ""
+"Följande sökvägar har flyttats ut från din\n"
+"\"sparse-checkout\"-definition, men är inte glesa på grund av\n"
+"lokala ändringar.\n"
+
+msgid ""
+"To correct the sparsity of these paths, do the following:\n"
+"* Use \"git add --sparse <paths>\" to update the index\n"
+"* Use \"git sparse-checkout reapply\" to apply the sparsity rules"
+msgstr ""
+"För att korrigera glesheten för dessa sökvägar, gör följande:\n"
+"* Använd \"git add --sparse <sökväg>\" för att uppdatera indexet\n"
+"* Använd \"git sparse-checkout reapply\" för att tillämpa gleshetsreglerna"
 
 msgid "cmdline ends with \\"
 msgstr "kommandorad avslutas med \\"
@@ -5352,9 +5371,6 @@ msgstr "ange mål för diagnostikarkivet"
 msgid "specify a strftime format suffix for the filename"
 msgstr "ange ett filändelse i strftime-format"
 
-msgid "(stats|all)"
-msgstr "(stats|all)"
-
 msgid "specify the content of the diagnostic archive"
 msgstr "ange vilket innehåll diagnostikarkivet ska ha"
 
@@ -6478,14 +6494,8 @@ msgstr "utför en specifik uppgift"
 msgid "use at most one of --auto and --schedule=<frequency>"
 msgstr "använd som mest en av --auto och --schedule=<frekvens>"
 
-msgid "git maintenance register"
-msgstr "git maintenance register"
-
 msgid "failed to run 'git config'"
 msgstr "misslyckades köra \"git config\""
-
-msgid "git maintenance unregister"
-msgstr "git maintenance unregister"
 
 #, c-format
 msgid "failed to expand path '%s'"
@@ -6563,9 +6573,6 @@ msgstr "schemaläggare som utlöser \"git maintenance\"-körning"
 
 msgid "failed to add repo to global config"
 msgstr "misslyckades lägga till arkiv till global konfiguration"
-
-msgid "git maintenance stop"
-msgstr "git maintenance stop"
 
 msgid "git maintenance <subcommand> [<options>]"
 msgstr "git maintenance <underkommando> [<flaggor>]"
@@ -7628,10 +7635,6 @@ msgid "bad ls-files format: element '%s' does not start with '('"
 msgstr "felaktigt ls-files-format: elementet \"%s\" börjar inte med \"(\""
 
 #, c-format
-msgid "bad ls-files format: element '%s'does not end in ')'"
-msgstr "felaktigt ls-files-format: elementet \"%s\" slutar inte med \")\""
-
-#, c-format
 msgid "bad ls-files format: element '%s' does not end in ')'"
 msgstr "felaktigt ls-files-format: elementet \"%s\" slutar inte med \")\""
 
@@ -8426,6 +8429,9 @@ msgstr "flera källor för samma mål"
 
 msgid "destination directory does not exist"
 msgstr "destinationskatalogen finns inte"
+
+msgid "destination exists in the index"
+msgstr "destinationen finns i indexet"
 
 #, c-format
 msgid "%s, source=%s, destination=%s"
@@ -13449,6 +13455,9 @@ msgstr "En riktigt enkel server för Git-arkiv"
 msgid "Give an object a human readable name based on an available ref"
 msgstr "Ge ett objekt användarläsbara namn baserade på en tillgänglig referens"
 
+msgid "Generate a zip archive of diagnostic information"
+msgstr "Skapa ett zip-arkiv med diagnostisk information"
+
 msgid "Show changes between commits, commit and working tree, etc"
 msgstr "Visa ändringar mellan incheckningar, med arbetskatalogen, osv"
 
@@ -13771,6 +13780,9 @@ msgstr "Bekräfta packade Git-arkivfiler"
 msgid "Check the GPG signature of tags"
 msgstr "Kontrollera GPG-signaturer i taggar"
 
+msgid "Display version information about Git"
+msgstr "Visa versionsinformation om Git"
+
 msgid "Show logs with difference each commit introduces"
 msgstr "Visa loggar med differenser varje incheckning introducerar"
 
@@ -13881,6 +13893,9 @@ msgstr "Git-webbgränssnitt (webbframända för Git-arkiv)"
 
 msgid "An overview of recommended workflows with Git"
 msgstr "Översikt över rekommenderade arbetsflöden med Git"
+
+msgid "A tool for managing large Git repositories"
+msgstr "Verktyg för att hantera stora Git-arkiv"
 
 msgid "commit-graph file is too small"
 msgstr "incheckningsgraffilen %s är för liten"
@@ -14740,173 +14755,6 @@ msgstr "kunde inte skriva till rev-list"
 
 msgid "failed to close rev-list's stdin"
 msgstr "kunde inte stänga rev-list:s standard in"
-
-#, c-format
-msgid "'%s' does not exist"
-msgstr "\"%s\" finns inte"
-
-#, c-format
-msgid "could not switch to '%s'"
-msgstr "kunde inte växla till \"%s\""
-
-msgid "need a working directory"
-msgstr "behöver en arbetskatalog"
-
-msgid "Scalar enlistments require a worktree"
-msgstr "Scalar-enrolleringar kräver en arbetskatalog"
-
-#, c-format
-msgid "could not configure %s=%s"
-msgstr "kunde inte ställa in %s=%s"
-
-msgid "could not configure log.excludeDecoration"
-msgstr "kunde inte ställa in log.excludeDecoration"
-
-msgid "could not add enlistment"
-msgstr "kunde inte lägga till enrollering"
-
-msgid "could not set recommended config"
-msgstr "kan inte ange rekommenderad konfiguration"
-
-msgid "could not turn on maintenance"
-msgstr "kunde inte aktivera underhåll"
-
-msgid "could not start the FSMonitor daemon"
-msgstr "kunde inte starta FSMonitor-server"
-
-msgid "could not turn off maintenance"
-msgstr "kunde inte slå av underhåll"
-
-msgid "could not remove enlistment"
-msgstr "kunde inte ta bort enrollering"
-
-#, c-format
-msgid "remote HEAD is not a branch: '%.*s'"
-msgstr "HEAD hos fjärren är inte en gren: \"%.*s\""
-
-msgid "failed to get default branch name from remote; using local default"
-msgstr ""
-"misslyckades hämta namn på standardgren för fjärr; använder lokalt förval"
-
-msgid "failed to get default branch name"
-msgstr "misslyckades hämta namn på standardgren"
-
-msgid "failed to unregister repository"
-msgstr "misslyckades avregistrera arkivet"
-
-msgid "failed to stop the FSMonitor daemon"
-msgstr "misslyckades stoppa FSMonitor-server"
-
-msgid "failed to delete enlistment directory"
-msgstr "misslyckades ta bort enrolleringskatalogen"
-
-msgid "branch to checkout after clone"
-msgstr "gren att checka ut efter kloning"
-
-msgid "when cloning, create full working directory"
-msgstr "skapa komplett arbetskatalog vid kloning"
-
-msgid "only download metadata for the branch that will be checked out"
-msgstr "hämta endast metadata för grenen som skall checkas ut"
-
-msgid "scalar clone [<options>] [--] <repo> [<dir>]"
-msgstr "scalar clone [<flaggor>] [--] <arkiv> [<kat>]"
-
-#, c-format
-msgid "cannot deduce worktree name from '%s'"
-msgstr "Kan inte härleda arbetsträdsnamn från \"%s\""
-
-#, c-format
-msgid "directory '%s' exists already"
-msgstr "katalogen \"%s\" finns redan"
-
-#, c-format
-msgid "failed to get default branch for '%s'"
-msgstr "misslyckades hämta standardgren för \"%s\""
-
-#, c-format
-msgid "could not configure remote in '%s'"
-msgstr "kunde inte ställa in fjärr i \"%s\""
-
-#, c-format
-msgid "could not configure '%s'"
-msgstr "kunde inte ställa in \"%s\""
-
-msgid "partial clone failed; attempting full clone"
-msgstr "delvis klon misslyckades; försöker med fullständig klon"
-
-msgid "could not configure for full clone"
-msgstr "kunde inte ställa in för komplett klon"
-
-msgid "scalar diagnose [<enlistment>]"
-msgstr "scalar diagnose [<enrollering>]"
-
-msgid "`scalar list` does not take arguments"
-msgstr "\"scalar list\" tar inte argument"
-
-msgid "scalar register [<enlistment>]"
-msgstr "scalar register [<enrollering>]"
-
-msgid "reconfigure all registered enlistments"
-msgstr "konfigurera alla registrerade enrolleringar på nytt"
-
-msgid "scalar reconfigure [--all | <enlistment>]"
-msgstr "scalar reconfigure [--all | <enrollering>]"
-
-msgid "--all or <enlistment>, but not both"
-msgstr "--all eller <enrollering>, men inte bägge"
-
-#, c-format
-msgid "git repository gone in '%s'"
-msgstr "git-arkiv försvunnet i \"%s\""
-
-msgid ""
-"scalar run <task> [<enlistment>]\n"
-"Tasks:\n"
-msgstr ""
-"scalar run <uppgift> [<enrollering>]\n"
-"Uppgifter:\n"
-
-#, c-format
-msgid "no such task: '%s'"
-msgstr "okänd uppgift: \"%s\""
-
-msgid "scalar unregister [<enlistment>]"
-msgstr "scalar unregister [<enrollering>]"
-
-msgid "scalar delete <enlistment>"
-msgstr "scalar delete <enrollering>"
-
-msgid "refusing to delete current working directory"
-msgstr "vägrar ta bort aktuell arbetskatalog"
-
-msgid "include Git version"
-msgstr "ta med Git-version"
-
-msgid "include Git's build options"
-msgstr "ta med Gits byggflaggor"
-
-msgid "scalar verbose [-v | --verbose] [--build-options]"
-msgstr "scalar verbose [-v | --verbose] [--build-options]"
-
-msgid "-C requires a <directory>"
-msgstr "-C kräver en <katalog>"
-
-#, c-format
-msgid "could not change to '%s'"
-msgstr "kunde inte byta till \"%s\""
-
-msgid "-c requires a <key>=<value> argument"
-msgstr "-c kräver ett argument på formen <nyckel>=<värde>"
-
-msgid ""
-"scalar [-C <directory>] [-c <key>=<value>] <command> [<options>]\n"
-"\n"
-"Commands:\n"
-msgstr ""
-"scalar [-C <katalog>] [-c <nyckel>=<värde>] <kommando> [<flaggor>]\n"
-"\n"
-"Kommandon:\n"
 
 #, c-format
 msgid "illegal crlf_action %d"
@@ -16204,8 +16052,8 @@ msgstr "Lågnivåkommandon / interna hjälpare"
 msgid "User-facing repository, command and file interfaces"
 msgstr "Arkiv-, kommando- och filgränssnitt tänkta för användare"
 
-msgid "Developer-facing file file formats, protocols and interfaces"
-msgstr "Filformat, protokoll och gränssnitt tänkta för utvecklare"
+msgid "Developer-facing file formats, protocols and other interfaces"
+msgstr "Filformat, protokoll och andra gränssnitt tänkta för utvecklare"
 
 #, c-format
 msgid "available git commands in '%s'"
@@ -16597,7 +16445,7 @@ msgid ""
 "in %s, suggesting it should perhaps be moved to %s."
 msgstr ""
 "KONFLIKT (filplacering): %s lade till %s inuti en katalog som bytte namn i "
-"%s, föreslår att den bör flyttas till%s."
+"%s, föreslår att den bör flyttas till %s."
 
 #, c-format
 msgid ""
@@ -17628,7 +17476,7 @@ msgstr "föredragen paketfil (%s) är ogiltig"
 msgid "corrupt bitmap lookup table: triplet position out of index"
 msgstr "trasig bitkarteuppslagstabell: trippelposition utanför indexet"
 
-msgid "corrupt bitmap lookup table: xor chain exceed entry count"
+msgid "corrupt bitmap lookup table: xor chain exceeds entry count"
 msgstr "trasig bitkarteuppslagstabell: xor-kedja överskrider postantalet"
 
 #, c-format
@@ -19115,6 +18963,173 @@ msgstr "-L stöder ännu inte andra diff-format än -p och -s"
 #, c-format
 msgid "cannot create async thread: %s"
 msgstr "kan inte skapa asynkron tråd: %s"
+
+#, c-format
+msgid "'%s' does not exist"
+msgstr "\"%s\" finns inte"
+
+#, c-format
+msgid "could not switch to '%s'"
+msgstr "kunde inte växla till \"%s\""
+
+msgid "need a working directory"
+msgstr "behöver en arbetskatalog"
+
+msgid "Scalar enlistments require a worktree"
+msgstr "Scalar-enrolleringar kräver en arbetskatalog"
+
+#, c-format
+msgid "could not configure %s=%s"
+msgstr "kunde inte ställa in %s=%s"
+
+msgid "could not configure log.excludeDecoration"
+msgstr "kunde inte ställa in log.excludeDecoration"
+
+msgid "could not add enlistment"
+msgstr "kunde inte lägga till enrollering"
+
+msgid "could not set recommended config"
+msgstr "kan inte ange rekommenderad konfiguration"
+
+msgid "could not turn on maintenance"
+msgstr "kunde inte aktivera underhåll"
+
+msgid "could not start the FSMonitor daemon"
+msgstr "kunde inte starta FSMonitor-server"
+
+msgid "could not turn off maintenance"
+msgstr "kunde inte slå av underhåll"
+
+msgid "could not remove enlistment"
+msgstr "kunde inte ta bort enrollering"
+
+#, c-format
+msgid "remote HEAD is not a branch: '%.*s'"
+msgstr "HEAD hos fjärren är inte en gren: \"%.*s\""
+
+msgid "failed to get default branch name from remote; using local default"
+msgstr ""
+"misslyckades hämta namn på standardgren för fjärr; använder lokalt förval"
+
+msgid "failed to get default branch name"
+msgstr "misslyckades hämta namn på standardgren"
+
+msgid "failed to unregister repository"
+msgstr "misslyckades avregistrera arkivet"
+
+msgid "failed to stop the FSMonitor daemon"
+msgstr "misslyckades stoppa FSMonitor-server"
+
+msgid "failed to delete enlistment directory"
+msgstr "misslyckades ta bort enrolleringskatalogen"
+
+msgid "branch to checkout after clone"
+msgstr "gren att checka ut efter kloning"
+
+msgid "when cloning, create full working directory"
+msgstr "skapa komplett arbetskatalog vid kloning"
+
+msgid "only download metadata for the branch that will be checked out"
+msgstr "hämta endast metadata för grenen som skall checkas ut"
+
+msgid "scalar clone [<options>] [--] <repo> [<dir>]"
+msgstr "scalar clone [<flaggor>] [--] <arkiv> [<kat>]"
+
+#, c-format
+msgid "cannot deduce worktree name from '%s'"
+msgstr "Kan inte härleda arbetsträdsnamn från \"%s\""
+
+#, c-format
+msgid "directory '%s' exists already"
+msgstr "katalogen \"%s\" finns redan"
+
+#, c-format
+msgid "failed to get default branch for '%s'"
+msgstr "misslyckades hämta standardgren för \"%s\""
+
+#, c-format
+msgid "could not configure remote in '%s'"
+msgstr "kunde inte ställa in fjärr i \"%s\""
+
+#, c-format
+msgid "could not configure '%s'"
+msgstr "kunde inte ställa in \"%s\""
+
+msgid "partial clone failed; attempting full clone"
+msgstr "delvis klon misslyckades; försöker med fullständig klon"
+
+msgid "could not configure for full clone"
+msgstr "kunde inte ställa in för komplett klon"
+
+msgid "scalar diagnose [<enlistment>]"
+msgstr "scalar diagnose [<enrollering>]"
+
+msgid "`scalar list` does not take arguments"
+msgstr "\"scalar list\" tar inte argument"
+
+msgid "scalar register [<enlistment>]"
+msgstr "scalar register [<enrollering>]"
+
+msgid "reconfigure all registered enlistments"
+msgstr "konfigurera alla registrerade enrolleringar på nytt"
+
+msgid "scalar reconfigure [--all | <enlistment>]"
+msgstr "scalar reconfigure [--all | <enrollering>]"
+
+msgid "--all or <enlistment>, but not both"
+msgstr "--all eller <enrollering>, men inte bägge"
+
+#, c-format
+msgid "git repository gone in '%s'"
+msgstr "git-arkiv försvunnet i \"%s\""
+
+msgid ""
+"scalar run <task> [<enlistment>]\n"
+"Tasks:\n"
+msgstr ""
+"scalar run <uppgift> [<enrollering>]\n"
+"Uppgifter:\n"
+
+#, c-format
+msgid "no such task: '%s'"
+msgstr "okänd uppgift: \"%s\""
+
+msgid "scalar unregister [<enlistment>]"
+msgstr "scalar unregister [<enrollering>]"
+
+msgid "scalar delete <enlistment>"
+msgstr "scalar delete <enrollering>"
+
+msgid "refusing to delete current working directory"
+msgstr "vägrar ta bort aktuell arbetskatalog"
+
+msgid "include Git version"
+msgstr "ta med Git-version"
+
+msgid "include Git's build options"
+msgstr "ta med Gits byggflaggor"
+
+msgid "scalar verbose [-v | --verbose] [--build-options]"
+msgstr "scalar verbose [-v | --verbose] [--build-options]"
+
+msgid "-C requires a <directory>"
+msgstr "-C kräver en <katalog>"
+
+#, c-format
+msgid "could not change to '%s'"
+msgstr "kunde inte byta till \"%s\""
+
+msgid "-c requires a <key>=<value> argument"
+msgstr "-c kräver ett argument på formen <nyckel>=<värde>"
+
+msgid ""
+"scalar [-C <directory>] [-c <key>=<value>] <command> [<options>]\n"
+"\n"
+"Commands:\n"
+msgstr ""
+"scalar [-C <katalog>] [-c <nyckel>=<värde>] <kommando> [<flaggor>]\n"
+"\n"
+"Kommandon:\n"
 
 msgid "unexpected flush packet while reading remote unpack status"
 msgstr "oväntat flush-paket vid läsning av fjärruppackningsstatus"
