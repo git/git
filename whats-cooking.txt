@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2022, #07; Fri, 23)
-X-master-at: 4fd6c5e44459e6444c2cd93383660134c95aabd1
-X-next-at: ed0d419d3c1a574b86ddc99554cdd663ffe0f5be
+Subject: What's cooking in git.git (Sep 2022, #08; Tue, 27)
+X-master-at: bcd6bc478adc4951d57ec597c44b12ee74bc88fb
+X-next-at: b617e1fe3a04e74d5031ffb5a8390a362c0582ef
 
-What's cooking in git.git (Sep 2022, #07; Fri, 23)
+What's cooking in git.git (Sep 2022, #08; Tue, 27)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -13,7 +13,7 @@ release).  Commits prefixed with '-' are only in 'seen', and aren't
 considered "accepted" at all.  A topic without enough support may be
 discarded after a long period of no activity.
 
-The -rc1 has been tagged for this cycle.  People are free to discuss
+The -rc2 has been tagged for this cycle.  People are free to discuss
 topics that has no relevance to the upcoming release, but we would
 appreciate if they instead concentrated on finding and fixing recent
 regressions in the upcoming release.  Even though I may be replacing
@@ -55,146 +55,23 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ac/bitmap-lookup-table (2022-09-23) 1 commit
-  (merged to 'next' on 2022-09-23 at 8374b2bb46)
- + pack-bitmap: improve grammar of "xor chain" error message
+* ds/bitmap-lookup-remove-tracing (2022-09-26) 1 commit
+  (merged to 'next' on 2022-09-26 at a0d94b95e0)
+ + pack-bitmap: remove trace2 region from hot path
 
- Grammofix.
- source: <20220922025158.415969-1-alexhenrie24@gmail.com>
-
-
-* jk/list-objects-filter-cleanup (2022-09-22) 1 commit
-  (merged to 'next' on 2022-09-22 at 60e9c427db)
- + list-objects-filter: initialize sub-filter structs
-
- Fix uninitialized memory access in a recent fix-up that is already
- in -rc1.
- source: <YywsZU9UUoC08UcN@coredump.intra.peff.net>
-
-
-* ma/scalar-to-main-fix (2022-09-23) 1 commit
-  (merged to 'next' on 2022-09-23 at 5229e60838)
- + cmd-list.perl: fix identifying man sections
-
- Fix manpage generation.
- source: <20220923080733.1995862-1-martin.agren@gmail.com>
+ Perf-fix.
+ source: <pull.1365.v2.git.1664198277250.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [New Topics]
 
-* ds/scalar-unregister-idempotent (2022-09-22) 2 commits
- - scalar: make 'unregister' idempotent
- - maintenance: add 'unregister --force'
+* rj/ref-filter-get-head-description-leakfix (2022-09-26) 1 commit
+ - ref-filter.c: fix a leak in get_head_description
 
- "git maintenance unregister" in a repository that is already been
- unregistered reported an error.
+ Leakfix.
 
  Will merge to 'next'?
- source: <pull.1358.v2.git.1663853837.gitgitgadget@gmail.com>
-
-
-* jk/clone-allow-bare-and-o-together (2022-09-22) 1 commit
- - clone: allow "--bare" with "-o"
-
- "git clone" did not like to see the "--bare" and the "--origin"
- options used together without a good reason.
-
- Will merge to 'next'.
- source: <YyvzVdfQVdysvMp2@coredump.intra.peff.net>
-
-
-* jk/fsck-on-diet (2022-09-22) 3 commits
- - parse_object_buffer(): respect save_commit_buffer
- - fsck: turn off save_commit_buffer
- - fsck: free tree buffers after walking unreachable objects
-
- "git fsck" failed to release contents of tree objects already used
- from the memory, which has been fixed.
-
- Will merge to 'next'.
- source: <Yyw0PSVe3YTQGgRS@coredump.intra.peff.net>
-
-
-* jk/remote-rename-without-fetch-refspec (2022-09-22) 1 commit
- - remote: handle rename of remote without fetch refspec
-
- "git remote rename" failed to rename a remote without fetch
- refspec, which has been corrected.
-
- Will merge to 'next'.
- source: <YyvzqZ5tmI0UdRAW@coredump.intra.peff.net>
-
-
-* js/merge-ort-in-read-only-repo (2022-09-22) 1 commit
- - merge-ort: fix segmentation fault in read-only repositories
-
- In read-only repositories, "git merge-tree" tried to come up with a
- merge result tree object, which it failed (which is not wrong) and
- led to a segfault (which is bad), which has been corrected.
-
- Expecting a reroll.
- cf. <916o55op-qpqo-5o41-931s-8q54p7301sr2@tzk.qr>
- source: <pull.1362.v3.git.1663875999939.gitgitgadget@gmail.com>
-
-
-* mc/cred-helper-ignore-unknown (2022-09-22) 3 commits
- - osxkeychain: clarify that we ignore unknown lines
- - netrc: ignore unknown lines (do not die)
- - wincred: ignore unknown lines (do not die)
-
- Most credential helpers ignored unknown entries in a credential
- description, but a few died upon seeing them.  The latter were
- taught to ignore them, too
-
- Will merge to 'next'?
- source: <pull.1363.git.1663865974.gitgitgadget@gmail.com>
-
-
-* ds/bitmap-lookup-remove-tracing (2022-09-23) 2 commits
- - SQUASH???
- - pack-bitmap: remove trace2 region from hot path
-
- Perf-fix?
-
- Expecting a reroll.
- cf. <edf25c5d-06f4-0b91-6773-f4fe7705c2f8@github.com>
- source: <pull.1365.git.1663938034607.gitgitgadget@gmail.com>
-
-
-* es/retire-efgrep (2022-09-23) 2 commits
- - check-non-portable-shell: detect obsolescent egrep/fgrep
- - Merge branch 'dd/retire-efgrep' into es/retire-efgrep
- (this branch uses dd/retire-efgrep.)
-
- Prepare for GNU [ef]grep that throw warning of their uses.
-
- Will merge to 'next'.
- source: <pull.1338.git.git.1663805905554.gitgitgadget@gmail.com>
-
-
-* cw/submodule-status-in-parallel (2022-09-23) 4 commits
- . diff-lib: parallelize run_diff_files for submodules
- . diff-lib: refactor functions
- . submodule: move status parsing into function
- . run-command: add pipe_output to run_processes_parallel
-
- Allow the internal "diff-files" engine to run "how has this
- submodule changed?" in parallel to speed up "git status".
-
- Needs review.
- cf. https://github.com/git/git/actions/runs/3115673002/jobs/5052804463
- source: <20220922232947.631309-1-calvinwan@google.com>
-
-
-* vd/fix-unaligned-read-index-v4 (2022-09-23) 1 commit
- - read-cache: avoid misaligned reads in index v4
-
- The codepath that reads from the index v4 had unaligned memory
- accesses, which has been corrected.
-
- Expecting a reroll?
- cf. <Yy4nkEnhuzt2iH+R@coredump.intra.peff.net>
- source: <pull.1366.git.1663962236069.gitgitgadget@gmail.com>
+ source: <6ff29e96-7f8d-c354-dced-b1b363e54467@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -239,6 +116,120 @@ Release tarballs are available at:
 
 --------------------------------------------------
 [Cooking]
+
+* ds/scalar-unregister-idempotent (2022-09-27) 4 commits
+ - string-list: document iterator behavior on NULL input
+ - gc: replace config subprocesses with API calls
+ - scalar: make 'unregister' idempotent
+ - maintenance: add 'unregister --force'
+
+ "git maintenance unregister" in a repository that is already been
+ unregistered reported an error.
+
+ Will merge to 'next'.
+ source: <pull.1358.v4.git.1664287021.gitgitgadget@gmail.com>
+
+
+* jk/clone-allow-bare-and-o-together (2022-09-22) 1 commit
+  (merged to 'next' on 2022-09-27 at 1feca721ac)
+ + clone: allow "--bare" with "-o"
+
+ "git clone" did not like to see the "--bare" and the "--origin"
+ options used together without a good reason.
+
+ Will cook in 'next'.
+ source: <YyvzVdfQVdysvMp2@coredump.intra.peff.net>
+
+
+* jk/fsck-on-diet (2022-09-22) 3 commits
+  (merged to 'next' on 2022-09-27 at c2e93082a1)
+ + parse_object_buffer(): respect save_commit_buffer
+ + fsck: turn off save_commit_buffer
+ + fsck: free tree buffers after walking unreachable objects
+
+ "git fsck" failed to release contents of tree objects already used
+ from the memory, which has been fixed.
+
+ Will cook in 'next'.
+ source: <Yyw0PSVe3YTQGgRS@coredump.intra.peff.net>
+
+
+* jk/remote-rename-without-fetch-refspec (2022-09-22) 1 commit
+  (merged to 'next' on 2022-09-27 at 165fe0a832)
+ + remote: handle rename of remote without fetch refspec
+
+ "git remote rename" failed to rename a remote without fetch
+ refspec, which has been corrected.
+
+ Will cook in 'next'.
+ source: <YyvzqZ5tmI0UdRAW@coredump.intra.peff.net>
+
+
+* js/merge-ort-in-read-only-repo (2022-09-26) 2 commits
+ - merge-ort: return early when failing to write a blob
+ - merge-ort: fix segmentation fault in read-only repositories
+
+ In read-only repositories, "git merge-tree" tried to come up with a
+ merge result tree object, which it failed (which is not wrong) and
+ led to a segfault (which is bad), which has been corrected.
+
+ Expecting a reroll.
+ cf. <CABPp-BGJueKtcdvzGWH_ZK6yeA6r3457ue5Uub9_gdU5M-WmvQ@mail.gmail.com>
+ The proposed log message for the second step may need updating.
+ source: <pull.1362.v4.git.1664229348.gitgitgadget@gmail.com>
+
+
+* mc/cred-helper-ignore-unknown (2022-09-22) 3 commits
+  (merged to 'next' on 2022-09-27 at ce6e3616aa)
+ + osxkeychain: clarify that we ignore unknown lines
+ + netrc: ignore unknown lines (do not die)
+ + wincred: ignore unknown lines (do not die)
+
+ Most credential helpers ignored unknown entries in a credential
+ description, but a few died upon seeing them.  The latter were
+ taught to ignore them, too
+
+ Will cook in 'next'.
+ source: <pull.1363.git.1663865974.gitgitgadget@gmail.com>
+
+
+* es/retire-efgrep (2022-09-23) 2 commits
+  (merged to 'next' on 2022-09-27 at 344fdd138e)
+ + check-non-portable-shell: detect obsolescent egrep/fgrep
+ + Merge branch 'dd/retire-efgrep' into es/retire-efgrep
+ (this branch uses dd/retire-efgrep.)
+
+ Prepare for GNU [ef]grep that throw warning of their uses.
+
+ Will cook in 'next'.
+ source: <pull.1338.git.git.1663805905554.gitgitgadget@gmail.com>
+
+
+* cw/submodule-status-in-parallel (2022-09-23) 4 commits
+ - diff-lib: parallelize run_diff_files for submodules
+ - diff-lib: refactor functions
+ - submodule: move status parsing into function
+ - run-command: add pipe_output to run_processes_parallel
+
+ Allow the internal "diff-files" engine to run "how has this
+ submodule changed?" in parallel to speed up "git status".
+
+ Breaks its self check.
+ cf. https://github.com/git/git/actions/runs/3115673002/jobs/5052804463
+ source: <20220922232947.631309-1-calvinwan@google.com>
+
+
+* vd/fix-unaligned-read-index-v4 (2022-09-23) 1 commit
+ - read-cache: avoid misaligned reads in index v4
+
+ The codepath that reads from the index v4 had unaligned memory
+ accesses, which has been corrected.
+
+ Expecting a reroll.
+ cf. <Yy4nkEnhuzt2iH+R@coredump.intra.peff.net>
+ cf. <bb3a2470-7ff5-e4a6-040a-96e0e3833978@gmail.com>
+ source: <pull.1366.git.1663962236069.gitgitgadget@gmail.com>
+
 
 * dd/retire-efgrep (2022-09-21) 4 commits
   (merged to 'next' on 2022-09-21 at 22bc339be1)
@@ -293,30 +284,35 @@ Release tarballs are available at:
  source: <20220914193102.5275-1-sorganov@gmail.com>
 
 
-* ja/rebase-i-avoid-amending-self (2022-09-21) 2 commits
- - SQUASH??? resurrect previous version of the tests
+* ja/rebase-i-avoid-amending-self (2022-09-26) 1 commit
  - sequencer: avoid dropping fixup commit that targets self via commit-ish
 
  "git rebase -i" can mistakenly attempt to apply a fixup to a commit
  itself, which has been corrected.
 
- Does not seem to pass its own test.
- source: <20220920031140.1220220-1-aclopte@gmail.com>
+ Will merge to 'next'?
+ source: <20220924222904.1784975-1-aclopte@gmail.com>
 
 
 * ac/fuzzers (2022-09-19) 1 commit
  - fuzz: reorganise the path for existing oss-fuzz fuzzers
 
+ Source file shuffling.
+
+ Will merge to 'next'?
  source: <pull.1353.v4.git.1663598215154.gitgitgadget@gmail.com>
 
 
 * hn/parse-worktree-ref (2022-09-19) 1 commit
  - refs: unify parse_worktree_ref() and ref_type()
 
+ Code and semantics cleaning.
+
+ Will merge to 'next'?
  source: <pull.1325.v2.git.git.1663605291172.gitgitgadget@gmail.com>
 
 
-* ed/fsmonitor-on-networked-macos (2022-09-21) 6 commits
+* ed/fsmonitor-on-networked-macos (2022-09-25) 6 commits
  - fsmonitor: add documentation for allowRemote and socketDir options
  - fsmonitor: check for compatability before communicating with fsmonitor
  - fsmonitor: deal with synthetic firmlinks on macOS
@@ -328,7 +324,7 @@ Release tarballs are available at:
  filesystem is disabled. Add knobs to make it workable on macOS.
 
  Will merge to 'next'?
- source: <pull.1326.v10.git.1663705986.gitgitgadget@gmail.com>
+ source: <pull.1326.v12.git.1664048782.gitgitgadget@gmail.com>
 
 
 * rj/branch-edit-description-with-nth-checkout (2022-09-12) 2 commits
