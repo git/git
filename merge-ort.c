@@ -2807,6 +2807,8 @@ static int process_renames(struct merge_options *opt,
 							   pathnames,
 							   1 + 2 * opt->priv->call_depth,
 							   &merged);
+			if (clean_merge < 0)
+				return -1;
 			if (!clean_merge &&
 			    merged.mode == side1->stages[1].mode &&
 			    oideq(&merged.oid, &side1->stages[1].oid))
@@ -2916,7 +2918,7 @@ static int process_renames(struct merge_options *opt,
 			struct version_info merged;
 
 			struct conflict_info *base, *side1, *side2;
-			unsigned clean;
+			int clean;
 
 			pathnames[0] = oldpath;
 			pathnames[other_source_index] = oldpath;
@@ -2937,6 +2939,8 @@ static int process_renames(struct merge_options *opt,
 						     pathnames,
 						     1 + 2 * opt->priv->call_depth,
 						     &merged);
+			if (clean < 0)
+				return -1;
 
 			memcpy(&newinfo->stages[target_index], &merged,
 			       sizeof(merged));
@@ -3806,10 +3810,10 @@ static int write_completed_directory(struct merge_options *opt,
 }
 
 /* Per entry merge function */
-static void process_entry(struct merge_options *opt,
-			  const char *path,
-			  struct conflict_info *ci,
-			  struct directory_versions *dir_metadata)
+static int process_entry(struct merge_options *opt,
+			 const char *path,
+			 struct conflict_info *ci,
+			 struct directory_versions *dir_metadata)
 {
 	int df_file_index = 0;
 
@@ -3823,7 +3827,7 @@ static void process_entry(struct merge_options *opt,
 		record_entry_for_tree(dir_metadata, path, &ci->merged);
 		if (ci->filemask == 0)
 			/* nothing else to handle */
-			return;
+			return 0;
 		assert(ci->df_conflict);
 	}
 
@@ -3870,7 +3874,7 @@ static void process_entry(struct merge_options *opt,
 		 */
 		if (ci->filemask == 1) {
 			ci->filemask = 0;
-			return;
+			return 0;
 		}
 
 		/*
@@ -4065,7 +4069,7 @@ static void process_entry(struct merge_options *opt,
 	} else if (ci->filemask >= 6) {
 		/* Need a two-way or three-way content merge */
 		struct version_info merged_file;
-		unsigned clean_merge;
+		int clean_merge;
 		struct version_info *o = &ci->stages[0];
 		struct version_info *a = &ci->stages[1];
 		struct version_info *b = &ci->stages[2];
@@ -4074,6 +4078,8 @@ static void process_entry(struct merge_options *opt,
 						   ci->pathnames,
 						   opt->priv->call_depth * 2,
 						   &merged_file);
+		if (clean_merge < 0)
+			return -1;
 		ci->merged.clean = clean_merge &&
 				   !ci->df_conflict && !ci->path_conflict;
 		ci->merged.result.mode = merged_file.mode;
@@ -4169,6 +4175,7 @@ static void process_entry(struct merge_options *opt,
 
 	/* Record metadata for ci->merged in dir_metadata */
 	record_entry_for_tree(dir_metadata, path, &ci->merged);
+	return 0;
 }
 
 static void prefetch_for_content_merges(struct merge_options *opt,
@@ -4285,7 +4292,10 @@ static int process_entries(struct merge_options *opt,
 			record_entry_for_tree(&dir_metadata, path, mi);
 		else {
 			struct conflict_info *ci = (struct conflict_info *)mi;
-			process_entry(opt, path, ci, &dir_metadata);
+			if (process_entry(opt, path, ci, &dir_metadata) < 0) {
+				ret = -1;
+				goto cleanup;
+			};
 		}
 	}
 	trace2_region_leave("merge", "processing", opt->repo);
