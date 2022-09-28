@@ -2,7 +2,6 @@
 # Copyright (C) 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022 Alexander Shopov <ash@kambanaria.org>.
 # This file is distributed under the same license as the git package.
 # Alexander Shopov <ash@kambanaria.org>, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022.
-#
 # ========================
 # DICTIONARY TO MERGE IN GIT GUI
 # ------------------------
@@ -208,13 +207,12 @@
 # msgcat todo1.po todo2.po > todo.po
 # grep '^#: ' todo.po | sed 's/^#: //' | tr ' ' '\n' | sed 's/:[0-9]*$//' > FILES
 # for i in `sort -u FILES`; do cnt=`grep $i FILES | wc -l`; echo $cnt $i ;done | sort -n
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: git 2.38\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2022-09-23 10:54+0200\n"
-"PO-Revision-Date: 2022-09-23 11:15+0200\n"
+"POT-Creation-Date: 2022-09-28 10:59+0200\n"
+"PO-Revision-Date: 2022-09-28 10:59+0200\n"
 "Last-Translator: Alexander Shopov <ash@kambanaria.org>\n"
 "Language-Team: Bulgarian <dict@fsa-bg.org>\n"
 "Language: bg\n"
@@ -372,7 +370,6 @@ msgstr "път"
 msgid "could not refresh index"
 msgstr "индексът не може да бъде обновен"
 
-#
 #, c-format
 msgid "Bye.\n"
 msgstr "Изход.\n"
@@ -6583,7 +6580,6 @@ msgstr "Проверка на директориите с обекти"
 msgid "Checking %s link"
 msgstr "Проверка на връзките на „%s“"
 
-#
 #, c-format
 msgid "invalid %s"
 msgstr "неправилен указател „%s“"
@@ -18331,7 +18327,7 @@ msgstr ""
 "повредена таблица със съответствия: местоположението на тройката е извън "
 "индекса"
 
-msgid "corrupt bitmap lookup table: xor chain exceed entry count"
+msgid "corrupt bitmap lookup table: xor chain exceeds entry count"
 msgstr ""
 "повредена таблица със съответствия: веригата за XOR е по-дълга от броя на "
 "записите"
@@ -23154,84 +23150,3 @@ msgstr "„%s“ се пропуска, защото е с разширение 
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "Наистина ли искате да изпратите „%s“? [y|N]: "
-
-#~ msgid "(stats|all)"
-#~ msgstr "„stats“/„all“ (статистика/всичко)"
-
-#~ msgid "git maintenance register"
-#~ msgstr "git maintenance register"
-
-#~ msgid "git maintenance unregister"
-#~ msgstr "git maintenance unregister"
-
-#~ msgid "git maintenance stop"
-#~ msgstr "git maintenance stop"
-
-#, c-format
-#~ msgid "could not parse colored hunk header '%.*s'"
-#~ msgstr "заглавната част на оцветеното парче „%.*s“ не може да се анализира"
-
-#, c-format
-#~ msgid "Unknown subcommand: %s"
-#~ msgstr "Непозната подкоманда: %s"
-
-#~ msgid "checked out in another worktree"
-#~ msgstr "изтеглен в друго работно дърво"
-
-#~ msgid "failed to open stdin of 'crontab'"
-#~ msgstr "стандартният вход на „crontab“ не може да се отвори"
-
-#, c-format
-#~ msgid "invalid subcommand: %s"
-#~ msgstr "неправилна подкоманда: „%s“"
-
-#~ msgid "single arg format must be symmetric range"
-#~ msgstr "вариантът с единствен аргумент изисква симетричен диапазон"
-
-#~ msgid "git submodule--helper list [--prefix=<path>] [<path>...]"
-#~ msgstr "git submodule--helper list [--prefix=ПЪТ] [ПЪТ…]"
-
-#~ msgid "git submodule--helper name <path>"
-#~ msgstr "git submodule--helper name ПЪТ"
-
-#, c-format
-#~ msgid "failed to get the default remote for submodule '%s'"
-#~ msgstr "отдалеченият адрес на подмодула „%s“ не може да бъде получен"
-
-#, c-format
-#~ msgid "Invalid update mode '%s' for submodule path '%s'"
-#~ msgstr "Неправилен режим на обновяване „%s“ за пътя към подмодул „%s“"
-
-#~ msgid "path into the working tree, across nested submodule boundaries"
-#~ msgstr "път към работното дърво, през границите на вложените подмодули"
-
-#~ msgid "rebase, merge, checkout or none"
-#~ msgstr ""
-#~ "„rebase“ (пребазиране), „merge“ (сливане), „checkout“ (изтегляне) или "
-#~ "„none“ (нищо да не се прави)"
-
-#~ msgid "bad value for update parameter"
-#~ msgstr "неправилен параметър към опцията „--update“"
-
-#~ msgid "Show three-way merge without touching index"
-#~ msgstr "Извеждане на тройно сливане без промяна на индекса"
-
-#, c-format
-#~ msgid "could not create directory for '%s'"
-#~ msgstr "директорията за „%s“ не може да се създадe"
-
-#, c-format
-#~ msgid "Couldn't start hook '%s'\n"
-#~ msgstr "Куката „%s“ не може да се стартира\n"
-
-#, c-format
-#~ msgid ""
-#~ "Note: %s not up to date and in way of checking out conflicted version; "
-#~ "old copy renamed to %s"
-#~ msgstr ""
-#~ "Бележка: „%s“ не е актуален и пречи за преминаването към версията с "
-#~ "конфликт.  Старият вариант е преименуван на „%s“"
-
-#, c-format
-#~ msgid "%s: fast-forward"
-#~ msgstr "%s: превъртане"
