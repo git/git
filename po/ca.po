@@ -68,8 +68,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2022-09-25 21:02+0200\n"
-"PO-Revision-Date: 2022-09-25 19:00-0600\n"
+"POT-Creation-Date: 2022-09-28 18:55+0200\n"
+"PO-Revision-Date: 2022-09-28 19:00-0600\n"
 "Last-Translator: Jordi Mas i Hernàndez <jmas@softcatala.org>\n"
 "Language-Team: Catalan\n"
 "Language: ca\n"
@@ -801,7 +801,7 @@ msgid ""
 "sparse-checkout definition but are not sparse due to local\n"
 "modifications.\n"
 msgstr ""
-"Els camins següents s'han mogut fora del\n"
+"Els camins següents s'han mogut fora de la\n"
 "definició de sparse-checkout però no són dispersos\n"
 "a causa de modificacions en local.\n"
 
@@ -1253,7 +1253,7 @@ msgid "instead of applying the patch, output a summary for the input"
 msgstr "en lloc d'aplicar el pedaç, emet un resum de l'entrada"
 
 msgid "instead of applying the patch, see if the patch is applicable"
-msgstr "en lloc d'aplicar el pedaç, veges si el pedaç és aplicable"
+msgstr "en lloc d'aplicar el pedaç, determina si el pedaç és aplicable"
 
 msgid "make sure the patch is applicable to the current index"
 msgstr "assegura que el pedaç sigui aplicable a l'índex actual"
@@ -1400,7 +1400,7 @@ msgstr "No és un fitxer normal: %s"
 
 #, c-format
 msgid "unclosed quote: '%s'"
-msgstr "cometes no tancacdes: «%s»"
+msgstr "cometes no tancades: «%s»"
 
 #, c-format
 msgid "missing colon: '%s'"
@@ -2687,7 +2687,7 @@ msgstr ""
 "no tractis les comissions arrel com de frontera (per defecte: desactivat)"
 
 msgid "show work cost statistics"
-msgstr "mostra les estadístiques de preu de treball"
+msgstr "mostra les estadístiques del cost de treball"
 
 msgid "force progress reporting"
 msgstr "força l'informe de progrés"
@@ -3327,7 +3327,7 @@ msgid "pretty-print <object> content"
 msgstr "impressió embellida del contingut de l'<objecte>"
 
 msgid "Emit [broken] object attributes"
-msgstr "Emet els atributs [broken] de l'objecte "
+msgstr "Emet els atributs [broken] de l'objecte"
 
 msgid "show object type (one of 'blob', 'tree', 'commit', 'tag', ...)"
 msgstr ""
@@ -4056,7 +4056,7 @@ msgstr ""
 "ask each            - confirma cada supressió (com «rm -i»)\n"
 "quit                - deixa de netejar\n"
 "help                - aquesta pantalla\n"
-"?                   - ajuda de selecció de l'avís"
+"?                   - ajuda de selecció manual"
 
 msgid "Would remove the following item:"
 msgid_plural "Would remove the following items:"
@@ -4295,7 +4295,7 @@ msgstr "no s'ha pogut inicialitzar «sparse-checkout»"
 msgid "remote HEAD refers to nonexistent ref, unable to checkout"
 msgstr ""
 "la HEAD remot es refereix a una referència que no existeix, no s'ha pogut "
-"agafar."
+"agafar"
 
 msgid "unable to checkout working tree"
 msgstr "no s'ha pogut agafar l'arbre de treball"
@@ -6194,15 +6194,15 @@ msgstr "S'està comprovant la connectivitat"
 
 #, c-format
 msgid "missing %s %s"
-msgstr "manca %s %s"
+msgstr "%s %s manca"
 
 #, c-format
 msgid "unreachable %s %s"
-msgstr "inabastable %s %s"
+msgstr "%s %s inabastable"
 
 #, c-format
 msgid "dangling %s %s"
-msgstr "sense assignació %s %s"
+msgstr "%s %s sense assignació"
 
 msgid "could not create lost-found"
 msgstr "no s'ha pogut crear el trobat-perdut"
@@ -7274,7 +7274,7 @@ msgstr "%s incorrecte"
 
 #, c-format
 msgid "unknown hash algorithm '%s'"
-msgstr "algorisme hash desconegut «%s»"
+msgstr "algorisme de resum desconegut «%s»"
 
 msgid "--stdin requires a git repository"
 msgstr "--stdin requereix un repositori git"
@@ -7330,7 +7330,7 @@ msgid "unable to move %s to %s"
 msgstr "no s'ha pogut moure %s a %s"
 
 msgid "attempt to reinitialize repository with different hash"
-msgstr "s'ha intentat reinicialitzar el repositori amb un hash diferent"
+msgstr "s'ha intentat reinicialitzar el repositori amb un resum diferent"
 
 #, c-format
 msgid "%s already exists"
@@ -7916,7 +7916,7 @@ msgid "limit to tags"
 msgstr "limita a etiquetes"
 
 msgid "limit to heads"
-msgstr "limita a caps"
+msgstr "limita a «heads»"
 
 msgid "do not show peeled tags"
 msgstr "no mostris les etiquetes pelades"
@@ -8226,7 +8226,7 @@ msgid "--abort but leave index and working tree alone"
 msgstr "--abort però deixa l'índex i l'arbre de treball intactes"
 
 msgid "continue the current in-progress merge"
-msgstr "continua la fusió en curs actual"
+msgstr "continua la fusió actual en curs"
 
 msgid "bypass pre-merge-commit and commit-msg hooks"
 msgstr "evita els lligams pre-merge-commit i commit-msg"
@@ -9218,7 +9218,7 @@ msgid "read revision arguments from standard input"
 msgstr "llegeix els arguments de revisió des de l'entrada estàndard"
 
 msgid "limit the objects to those that are not yet packed"
-msgstr "limita els objectes als quals encara no s'hagin empaquetat"
+msgstr "limita els objectes a aquells que encara no estan empaquetats"
 
 msgid "include objects reachable from any reference"
 msgstr "inclou els objectes abastables de qualsevol referència"
@@ -9292,7 +9292,7 @@ msgid "handling for missing objects"
 msgstr "gestió dels objectes absents"
 
 msgid "do not pack objects in promisor packfiles"
-msgstr "empaquetis els objectes als fitxers de paquet «promisor»"
+msgstr "no empaquetis els objectes als fitxers de paquet «promisor»"
 
 msgid "respect islands during delta compression"
 msgstr "respecta les illes durant la compressió delta"
@@ -9522,7 +9522,7 @@ msgstr ""
 "preferència per defecte per a tots els repositoris. Podeu també usar --"
 "rebase,\n"
 "--no-rebase o --ff-only en la línia d'ordres per a sobreescriure el valor\n"
-"per defecte configuració en aquesta execució.\n"
+"per defecte de la configuració en aquesta execució.\n"
 
 msgid "Updating an unborn branch with changes added to the index."
 msgstr ""
@@ -9932,7 +9932,7 @@ msgid "<subdirectory>/"
 msgstr "<subdirectori>/"
 
 msgid "read the tree into the index under <subdirectory>/"
-msgstr "llegiu l'arbre a l'índex sota <subdirectori>/"
+msgstr "llegeix l'arbre a l'índex sota <subdirectori>/"
 
 msgid "update working tree with merge result"
 msgstr "actualitza l'arbre de treball amb el resultat de fusió"
@@ -10111,7 +10111,7 @@ msgid "add a Signed-off-by trailer to each commit"
 msgstr "afegeix un «trailer» tipus «Signed-off-by» a cada comissió"
 
 msgid "make committer date match author date"
-msgstr "fes que la data del «comitter» coincideixi amb la data de l'autor"
+msgstr "fes que la data del «committer» coincideixi amb la data de l'autor"
 
 msgid "ignore author date and use current date"
 msgstr "ignora la data de l'autor i utilitza la data actual"
@@ -10333,7 +10333,7 @@ msgid "Current branch %s is up to date, rebase forced.\n"
 msgstr "La branca actual %s està al dia; «rebase» forçat.\n"
 
 msgid "The pre-rebase hook refused to rebase."
-msgstr "El lligam pre-«rebase» ha refusat a fer «rebase»."
+msgstr "El lligam pre-rebase ha refusat a fer «rebase»."
 
 #, c-format
 msgid "Changes to %s:\n"
@@ -11650,7 +11650,7 @@ msgid "unknown group type: %s"
 msgstr "tipus de grup desconegut: %s"
 
 msgid "group by committer rather than author"
-msgstr "agrupa per «comitter» en comptes de per autor"
+msgstr "agrupa per «committer» en comptes de per autor"
 
 msgid "sort output according to the number of commits per author"
 msgstr "ordena la sortida segons el nombre de comissions per autor"
@@ -13520,7 +13520,7 @@ msgstr "no s'ha pogut baixar el paquet de l'URI «%s»"
 
 #, c-format
 msgid "file at URI '%s' is not a bundle"
-msgstr "el fitxer a l'URI %s no és farcell"
+msgstr "el fitxer a l'URI «%s» no és farcell"
 
 #, c-format
 msgid "failed to unbundle bundle from URI '%s'"
@@ -15488,7 +15488,7 @@ msgid "synonym for '-p --stat'"
 msgstr "sinònim de «-p --stat»"
 
 msgid "machine friendly --stat"
-msgstr "llegible per màquina --stat"
+msgstr "llegible per una màquina --stat"
 
 msgid "output only the last line of --stat"
 msgstr "mostra només l'última línia de --stat"
@@ -15713,7 +15713,7 @@ msgid "equivalent to --word-diff=color --word-diff-regex=<regex>"
 msgstr "equivalent a --word-diff=color --word-diff-regex=<regex>"
 
 msgid "moved lines of code are colored differently"
-msgstr "les línies de codi que s'ha mogut s'acoloreixen diferent"
+msgstr "les línies de codi que s'han mogut s'acoloreixen diferent"
 
 msgid "how white spaces are ignored in --color-moved"
 msgstr "com s'ignoren els espais en blanc a --color-moved"
@@ -17801,7 +17801,7 @@ msgstr "s'està intentant no escriure la publicació a l'índex"
 
 msgid "failed to load bitmap index (corrupted?)"
 msgstr ""
-"s'ha produït un error en carregar l'índex de mapa de bits (està malmés?)"
+"s'ha produït un error en carregar l'índex de mapa de bits (està malmès?)"
 
 msgid "corrupted bitmap index (too small)"
 msgstr "índex de mapa de bits malmès (massa petit)"
@@ -19404,7 +19404,7 @@ msgid "could not configure log.excludeDecoration"
 msgstr "no s'ha pogut configurar log.excludeDecoration"
 
 msgid "could not add enlistment"
-msgstr "no s'ha afegir a l'allistament"
+msgstr "no s'ha afegit a l'allistament"
 
 msgid "could not set recommended config"
 msgstr "no s'ha pogut establir la configuració recomanada"
@@ -19763,7 +19763,7 @@ msgid ""
 "    git commit --amend --reset-author\n"
 msgstr ""
 "S'han configurat el vostre nom i adreça electrònica\n"
-"automàticament basant-se en el vostre nom d'usuari i nom de màquina. \n"
+"automàticament basant-se en el vostre nom d'usuari i nom de màquina.\n"
 "Comproveu que siguin correctes. Podeu suprimir aquest\n"
 "missatge establint-los explícitament. Executeu l'ordre següent i\n"
 "seguiu les instruccions en l'editor per a editar el vostre\n"
@@ -19788,7 +19788,7 @@ msgid ""
 "    git commit --amend --reset-author\n"
 msgstr ""
 "S'han configurat el vostre nom i adreça electrònica\n"
-"automàticament basats en el vostre nom d'usuari i nom de màquina. \n"
+"automàticament basats en el vostre nom d'usuari i nom de màquina.\n"
 "Comproveu que siguin correctes. Podeu suprimir aquest\n"
 "missatge establint-los explícitament:\n"
 "\n"
@@ -20350,7 +20350,7 @@ msgstr "l'script ja estava endreçat."
 
 #, c-format
 msgid "update-refs file at '%s' is invalid"
-msgstr "el fitxer update-refs a (%s) no és vàlid"
+msgstr "el fitxer update-refs a «%s» no és vàlid"
 
 #, c-format
 msgid "'%s' is outside repository at '%s'"
@@ -21408,7 +21408,7 @@ msgid ".git file broken"
 msgstr "fitxer .git malmès"
 
 msgid ".git file incorrect"
-msgstr "fitxer .git malmès"
+msgstr "fitxer .git incorrecte"
 
 msgid "not a valid path"
 msgstr "no és un camí vàlid"
@@ -22110,7 +22110,7 @@ msgid ""
 msgstr ""
 "y - descarta aquest tros de l'arbre de treball\n"
 "n - no descartis aquest tros des de l'arbre de treball\n"
-"q - surt; no apliquis aquest tros ni cap dels pendents\n"
+"q - surt; no descartis aquest tros ni cap dels pendents\n"
 "a - descarta aquest tros i tots els trossos posteriors en el fitxer\n"
 "d - no descartis aquest tros ni cap dels trossos posteriors en el fitxer"
 
@@ -22123,7 +22123,7 @@ msgid ""
 msgstr ""
 "y - descarta aquest tros de l'índex i de l'arbre de treball\n"
 "n - no descartis aquest tros des de l'índex i de l'arbre de treball\n"
-"q - surt; no apliquis aquest tros ni cap dels pendents\n"
+"q - surt; no descartis aquest tros ni cap dels pendents\n"
 "a - descarta aquest tros i tots els trossos posteriors en el fitxer\n"
 "d - no descartis aquest tros ni cap dels trossos posteriors en el fitxer"
 
