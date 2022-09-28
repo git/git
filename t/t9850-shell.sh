@@ -28,4 +28,10 @@ test_expect_success 'shell allows interactive command' '
 	test_cmp expect actual
 '
 
+test_expect_success 'shell complains of overlong commands' '
+	perl -e "print \"a\" x 2**12 for (0..2**19)" |
+	test_must_fail git shell 2>err &&
+	grep "too long" err
+'
+
 test_done
