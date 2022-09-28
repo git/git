@@ -67,8 +67,18 @@ ifeq ($(uname_S),Linux)
 	# centos7/rhel7 provides gcc 4.8.5 and zlib 1.2.7.
         ifneq ($(findstring .el7.,$(uname_R)),)
 		BASIC_CFLAGS += -std=c99
-        endif
-	LINK_FUZZ_PROGRAMS = YesPlease
+	endif
+	ifeq ($(shell test -f /usr/include/linux/magic.h && echo y),y)
+		HAVE_LINUX_MAGIC_H = YesPlease
+	endif
+	# The builtin FSMonitor on Linux builds upon Simple-IPC.  Both require
+	# Unix domain sockets and PThreads.
+	ifndef NO_PTHREADS
+	ifndef NO_UNIX_SOCKETS
+	FSMONITOR_DAEMON_BACKEND = linux
+	FSMONITOR_OS_SETTINGS = linux
+	endif
+	endif
 endif
 ifeq ($(uname_S),GNU/kFreeBSD)
 	HAVE_ALLOCA_H = YesPlease
