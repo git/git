@@ -830,10 +830,9 @@ struct ewah_bitmap *bitmap_for_commit(struct bitmap_index *bitmap_git,
 		if (!bitmap_git->table_lookup)
 			return NULL;
 
-		trace2_region_enter("pack-bitmap", "reading_lookup_table", the_repository);
+		/* this is a fairly hot codepath - no trace2_region please */
 		/* NEEDSWORK: cache misses aren't recorded */
 		bitmap = lazy_bitmap_for_commit(bitmap_git, commit);
-		trace2_region_leave("pack-bitmap", "reading_lookup_table", the_repository);
 		if (!bitmap)
 			return NULL;
 		return lookup_stored_bitmap(bitmap);
