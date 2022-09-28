@@ -144,7 +144,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2022-09-23 14:51+0100\n"
+"POT-Creation-Date: 2022-09-28 15:50+0100\n"
 "PO-Revision-Date: 2022-09-23 14:53+0100\n"
 "Last-Translator: Fangyi Zhou <me@fangyi.io>\n"
 "Language-Team: GitHub <https://github.com/fangyi-zhou/git-po/>\n"
@@ -21711,7 +21711,7 @@ msgid "corrupt bitmap lookup table: triplet position out of index"
 msgstr "损坏的位图查询表：三元组位置超出索引"
 
 #: pack-bitmap.c
-msgid "corrupt bitmap lookup table: xor chain exceed entry count"
+msgid "corrupt bitmap lookup table: xor chain exceeds entry count"
 msgstr "损坏的位图查询表：xor 链超出条目数"
 
 #: pack-bitmap.c
