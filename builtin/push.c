@@ -169,8 +169,8 @@ static NORETURN void die_push_simple(struct branch *branch,
 	if (git_branch_track != BRANCH_TRACK_SIMPLE)
 		advice_automergesimple_maybe = _("\n"
 				 "To avoid automatically configuring "
-				 "upstream branches when their name\n"
-				 "doesn't match the local branch, see option "
+				 "an upstream branch when its name\n"
+				 "won't match the local branch, see option "
 				 "'simple' of branch.autoSetupMerge\n"
 				 "in 'git help config'.\n");
 	die(_("The upstream branch of your current branch does not match\n"
