@@ -191,9 +191,8 @@ def die(msg):
        """
     if verbose:
         raise Exception(msg)
-    else:
-        sys.stderr.write(msg + "\n")
-        sys.exit(1)
+    sys.stderr.write(msg + "\n")
+    sys.exit(1)
 
 
 def prompt(prompt_text):
@@ -305,14 +304,14 @@ def decode_path(path):
     encoding = gitConfig('git-p4.pathEncoding') or 'utf_8'
     if bytes is not str:
         return path.decode(encoding, errors='replace') if isinstance(path, bytes) else path
-    else:
-        try:
-            path.decode('ascii')
-        except:
-            path = path.decode(encoding, errors='replace')
-            if verbose:
-                print('Path with non-ASCII characters detected. Used {} to decode: {}'.format(encoding, path))
-        return path
+    try:
+        path.decode('ascii')
+    except:
+        path = path.decode(encoding, errors='replace')
+        if verbose:
+            print('Path with non-ASCII characters detected. Used {} to decode: {}'.format(encoding, path))
+
+    return path
 
 
 def run_git_hook(cmd, param=[]):
@@ -320,8 +319,7 @@ def run_git_hook(cmd, param=[]):
     args = ['git', 'hook', 'run', '--ignore-missing', cmd]
     if param:
         args.append("--")
-        for p in param:
-            args.append(p)
+        args.extend(iter(param))
     return subprocess.call(args) == 0
 
 
@@ -384,8 +382,7 @@ def read_pipe_text(c, *k, **kw):
     retcode, out, err = read_pipe_full(c, *k, **kw)
     if retcode != 0:
         return None
-    else:
-        return decode_text_stream(out).rstrip()
+    return decode_text_stream(out).rstrip()
 
 
 def p4_read_pipe(c, ignore_error=False, raw=False, *k, **kw):
@@ -507,12 +504,10 @@ def p4_check_access(min_expiration=1):
         data = result.get("data")
         if data:
             die_bad_access("p4 error: {0}".format(data))
-        else:
-            die_bad_access("unknown error")
+        die_bad_access("unknown error")
     elif code == "info":
         return
-    else:
-        die_bad_access("unknown error code {0}".format(code))
+    die_bad_access("unknown error code {0}".format(code))
 
 
 _p4_version_string = None
