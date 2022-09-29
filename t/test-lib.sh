@@ -1799,7 +1799,7 @@ test_lazy_prereq UTF8_NFD_TO_NFC '
 	auml=$(printf "\303\244")
 	aumlcdiar=$(printf "\141\314\210")
 	>"$auml" &&
-	test -f "$aumlcdiar"
+	[[ $(ls -1) == *$aumlcdiar* ]]
 '
 
 test_lazy_prereq AUTOIDENT '
