@@ -1268,6 +1268,9 @@ test_expect_success 'attempt to delete a branch merged to its base' '
 '
 
 test_expect_success 'use --edit-description' '
+	EDITOR=: git branch --edit-description &&
+	test_must_fail git config branch.main.description &&
+
 	write_script editor <<-\EOF &&
 		echo "New contents" >"$1"
 	EOF
