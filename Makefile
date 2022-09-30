@@ -1,6 +1,12 @@
 # The default target of this Makefile is...
 all::
 
+makeheaders: tools/makeheaders.c
+	$(CC) -o $@ $<
+
+abspath.h: abspath.c makeheaders
+	./makeheaders $<
+
 # Import tree-wide shared Makefile behavior and libraries
 include shared.mak
 
@@ -2598,7 +2604,7 @@ missing_compdb_dir =
 compdb_args =
 endif
 
-$(OBJECTS): %.o: %.c GIT-CFLAGS $(missing_dep_dirs) $(missing_compdb_dir)
+$(OBJECTS): %.o: %.c GIT-CFLAGS $(missing_dep_dirs) $(missing_compdb_dir) abspath.h
 	$(QUIET_CC)$(CC) -o $*.o -c $(dep_args) $(compdb_args) $(ALL_CFLAGS) $(EXTRA_CPPFLAGS) $<
 
 %.s: %.c GIT-CFLAGS FORCE
@@ -3115,7 +3121,7 @@ HCC = $(HCO:hco=hcc)
 	@echo '#include "git-compat-util.h"' >$@
 	@echo '#include "$<"' >>$@
 
-$(HCO): %.hco: %.hcc FORCE
+$(HCO): %.hco: %.hcc abspath.h FORCE
 	$(QUIET_HDR)$(CC) $(ALL_CFLAGS) -o /dev/null -c -xc $<
 
 .PHONY: hdr-check $(HCO)
@@ -3450,6 +3456,8 @@ cocciclean:
 	$(RM) contrib/coccinelle/*.cocci.patch*
 
 clean: profile-clean coverage-clean cocciclean
+	$(RM) -r makeheaders
+	$(RM) -r abspath.h
 	$(RM) -r .build
 	$(RM) po/git.pot po/git-core.pot
 	$(RM) git.res

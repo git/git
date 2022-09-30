@@ -52,6 +52,18 @@ cmake_minimum_required(VERSION 3.14)
 #set the source directory to root of git
 set(CMAKE_SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/../..)
 
+
+# makeheaders
+add_executable(makeheaders ${CMAKE_SOURCE_DIR}/tools/makeheaders.c)
+
+add_custom_target(abspath.h
+	DEPENDS
+		"${CMAKE_SOURCE_DIR}/abspath.c" "makeheaders"
+	COMMAND
+		makeheaders ${CMAKE_SOURCE_DIR}/abspath.c
+)
+
+
 option(USE_VCPKG "Whether or not to use vcpkg for obtaining dependencies.  Only applicable to Windows platforms" ON)
 if(NOT WIN32)
 	set(USE_VCPKG OFF CACHE BOOL "" FORCE)
@@ -676,6 +688,7 @@ parse_makefile_for_sources(libgit_SOURCES "LIB_OBJS")
 list(TRANSFORM libgit_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/")
 list(TRANSFORM compat_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/")
 add_library(libgit ${libgit_SOURCES} ${compat_SOURCES})
+add_dependencies(libgit abspath.h)
 
 #libxdiff
 parse_makefile_for_sources(libxdiff_SOURCES "XDIFF_OBJS")
@@ -688,6 +701,7 @@ parse_makefile_for_sources(reftable_SOURCES "REFTABLE_OBJS")
 
 list(TRANSFORM reftable_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/")
 add_library(reftable STATIC ${reftable_SOURCES})
+add_dependencies(reftable abspath.h)
 
 if(WIN32)
 	if(NOT MSVC)#use windres when compiling with gcc and clang
@@ -762,6 +776,7 @@ target_link_libraries(scalar common-main)
 
 if(CURL_FOUND)
 	add_library(http_obj OBJECT ${CMAKE_SOURCE_DIR}/http.c)
+	add_dependencies(http_obj abspath.h)
 
 	add_executable(git-imap-send ${CMAKE_SOURCE_DIR}/imap-send.c)
 	target_link_libraries(git-imap-send http_obj common-main ${CURL_LIBRARIES})
