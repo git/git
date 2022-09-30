@@ -546,6 +546,7 @@ test_expect_failure 'grep saves textconv cache in the appropriate repository' '
 
 test_expect_success 'grep partially-cloned submodule' '
 	# Set up clean superproject and submodule for partial cloning.
+	test_config_global protocol.file.allow always &&
 	git init super &&
 	git init super/sub &&
 	(
