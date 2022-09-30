@@ -813,6 +813,10 @@ my_match_and_clean () {
 	git -C super/dir_1/dir_2/sub clean -d -f
 }
 
+test_expect_success 'submodule setup' '
+	git config --global protocol.file.allow always
+'
+
 test_expect_success 'submodule always visited' '
 	test_when_finished "git -C super fsmonitor--daemon stop; \
 			    rm -rf super; \
