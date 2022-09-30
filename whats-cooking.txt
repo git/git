@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2022, #08; Tue, 27)
+Subject: What's cooking in git.git (Sep 2022, #09; Fri, 30)
 X-master-at: bcd6bc478adc4951d57ec597c44b12ee74bc88fb
-X-next-at: b617e1fe3a04e74d5031ffb5a8390a362c0582ef
+X-next-at: 84df46c1b469daf986023931247b98d22e07f24d
 
-What's cooking in git.git (Sep 2022, #08; Tue, 27)
+What's cooking in git.git (Sep 2022, #09; Fri, 30)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -53,28 +53,76 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* ds/bitmap-lookup-remove-tracing (2022-09-26) 1 commit
-  (merged to 'next' on 2022-09-26 at a0d94b95e0)
- + pack-bitmap: remove trace2 region from hot path
-
- Perf-fix.
- source: <pull.1365.v2.git.1664198277250.gitgitgadget@gmail.com>
-
---------------------------------------------------
 [New Topics]
 
-* rj/ref-filter-get-head-description-leakfix (2022-09-26) 1 commit
- - ref-filter.c: fix a leak in get_head_description
+* jc/branch-description-unset (2022-09-30) 1 commit
+ - branch: do not fail a no-op --edit-desc
 
- Leakfix.
+ "GIT_EDITOR=: git branch --edit-description" resulted in failure,
+ which has been corrected.
 
- Will merge to 'next'?
- source: <6ff29e96-7f8d-c354-dced-b1b363e54467@gmail.com>
+ Needs review.
+ source: <xmqqmtagka8x.fsf@gitster.g>
+
+
+* rj/branch-edit-desc-unborn (2022-09-27) 1 commit
+ - branch: description for non-existent branch errors
+
+ "git branch --edit-description" on an unborh branch misleadingly
+ said that no such branch exists, which has been corrected.
+
+ Expecting a reroll to update proposed log message and add tests.
+ cf. <xmqqleq6ovh4.fsf@gitster.g>
+ source: <858edf12-67b1-5e2c-dd2e-3eb476530803@gmail.com>
+
+
+* ab/test-malloc-with-sanitize-leak (2022-09-29) 1 commit
+  (merged to 'next' on 2022-09-29 at b6fef2dd1f)
+ + test-lib: have SANITIZE=leak imply TEST_NO_MALLOC_CHECK
+
+ Test fix.
+
+ Will cook in 'next'.
+ source: <patch-1.1-e31681731b7-20220928T095041Z-avarab@gmail.com>
+
+
+* ah/branch-autosetupmerge-grammofix (2022-09-28) 1 commit
+  (merged to 'next' on 2022-09-29 at 622b75f0da)
+ + push: improve grammar of branch.autoSetupMerge advice
+
+ Fix grammar of a message introduced in previous round.
+
+ Will cook in 'next'.
+ source: <20220928055811.777227-1-alexhenrie24@gmail.com>
+
+
+* jt/promisor-remote-fetch-tweak (2022-09-29) 2 commits
+ - promisor-remote: die upon failing fetch
+ - promisor-remote: remove a return value
+
+ Remove error detection from a function that fetches from promisor
+ remotes, and make it die when such a fetch fails to bring all the
+ requested objects, to give an early failure to various operations.
+
+ Needs review.
+ source: <cover.1664316642.git.jonathantanmy@google.com>
 
 --------------------------------------------------
 [Stalled]
+
+* cw/submodule-status-in-parallel (2022-09-23) 4 commits
+ . diff-lib: parallelize run_diff_files for submodules
+ . diff-lib: refactor functions
+ . submodule: move status parsing into function
+ . run-command: add pipe_output to run_processes_parallel
+
+ Allow the internal "diff-files" engine to run "how has this
+ submodule changed?" in parallel to speed up "git status".
+
+ Breaks its self check.
+ cf. https://github.com/git/git/actions/runs/3115673002/jobs/5052804463
+ source: <20220922232947.631309-1-calvinwan@google.com>
+
 
 * es/mark-gc-cruft-as-experimental (2022-08-03) 2 commits
  - config: let feature.experimental imply gc.cruftPacks=true
@@ -117,16 +165,27 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* rj/ref-filter-get-head-description-leakfix (2022-09-26) 1 commit
+  (merged to 'next' on 2022-09-29 at d05d052eb1)
+ + ref-filter.c: fix a leak in get_head_description
+
+ Leakfix.
+
+ Will cook in 'next'.
+ source: <6ff29e96-7f8d-c354-dced-b1b363e54467@gmail.com>
+
+
 * ds/scalar-unregister-idempotent (2022-09-27) 4 commits
- - string-list: document iterator behavior on NULL input
- - gc: replace config subprocesses with API calls
- - scalar: make 'unregister' idempotent
- - maintenance: add 'unregister --force'
+  (merged to 'next' on 2022-09-28 at a09a78d861)
+ + string-list: document iterator behavior on NULL input
+ + gc: replace config subprocesses with API calls
+ + scalar: make 'unregister' idempotent
+ + maintenance: add 'unregister --force'
 
  "git maintenance unregister" in a repository that is already been
  unregistered reported an error.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <pull.1358.v4.git.1664287021.gitgitgadget@gmail.com>
 
 
@@ -165,18 +224,17 @@ Release tarballs are available at:
  source: <YyvzqZ5tmI0UdRAW@coredump.intra.peff.net>
 
 
-* js/merge-ort-in-read-only-repo (2022-09-26) 2 commits
- - merge-ort: return early when failing to write a blob
- - merge-ort: fix segmentation fault in read-only repositories
+* js/merge-ort-in-read-only-repo (2022-09-28) 2 commits
+  (merged to 'next' on 2022-09-29 at 84df46c1b4)
+ + merge-ort: return early when failing to write a blob
+ + merge-ort: fix segmentation fault in read-only repositories
 
  In read-only repositories, "git merge-tree" tried to come up with a
  merge result tree object, which it failed (which is not wrong) and
  led to a segfault (which is bad), which has been corrected.
 
- Expecting a reroll.
- cf. <CABPp-BGJueKtcdvzGWH_ZK6yeA6r3457ue5Uub9_gdU5M-WmvQ@mail.gmail.com>
- The proposed log message for the second step may need updating.
- source: <pull.1362.v4.git.1664229348.gitgitgadget@gmail.com>
+ Will cook in 'next'.
+ source: <pull.1362.v5.git.1664350162.gitgitgadget@gmail.com>
 
 
 * mc/cred-helper-ignore-unknown (2022-09-22) 3 commits
@@ -205,30 +263,15 @@ Release tarballs are available at:
  source: <pull.1338.git.git.1663805905554.gitgitgadget@gmail.com>
 
 
-* cw/submodule-status-in-parallel (2022-09-23) 4 commits
- - diff-lib: parallelize run_diff_files for submodules
- - diff-lib: refactor functions
- - submodule: move status parsing into function
- - run-command: add pipe_output to run_processes_parallel
-
- Allow the internal "diff-files" engine to run "how has this
- submodule changed?" in parallel to speed up "git status".
-
- Breaks its self check.
- cf. https://github.com/git/git/actions/runs/3115673002/jobs/5052804463
- source: <20220922232947.631309-1-calvinwan@google.com>
-
-
-* vd/fix-unaligned-read-index-v4 (2022-09-23) 1 commit
- - read-cache: avoid misaligned reads in index v4
+* vd/fix-unaligned-read-index-v4 (2022-09-28) 1 commit
+  (merged to 'next' on 2022-09-28 at 5b3425fd58)
+ + read-cache: avoid misaligned reads in index v4
 
  The codepath that reads from the index v4 had unaligned memory
  accesses, which has been corrected.
 
- Expecting a reroll.
- cf. <Yy4nkEnhuzt2iH+R@coredump.intra.peff.net>
- cf. <bb3a2470-7ff5-e4a6-040a-96e0e3833978@gmail.com>
- source: <pull.1366.git.1663962236069.gitgitgadget@gmail.com>
+ Will cook in 'next'.
+ source: <pull.1366.v2.git.1664385541084.gitgitgadget@gmail.com>
 
 
 * dd/retire-efgrep (2022-09-21) 4 commits
@@ -246,18 +289,19 @@ Release tarballs are available at:
 
 
 * tb/midx-repack-ignore-cruft-packs (2022-09-21) 7 commits
- - midx.c: avoid cruft packs with non-zero `repack --batch-size`
- - midx.c: remove unnecessary loop condition
- - midx.c: replace `xcalloc()` with `CALLOC_ARRAY()`
- - midx.c: avoid cruft packs with `repack --batch-size=0`
- - midx.c: prevent `expire` from removing the cruft pack
- - Documentation/git-multi-pack-index.txt: clarify expire behavior
- - Documentation/git-multi-pack-index.txt: fix typo
+  (merged to 'next' on 2022-09-29 at 55474c6ecc)
+ + midx.c: avoid cruft packs with non-zero `repack --batch-size`
+ + midx.c: remove unnecessary loop condition
+ + midx.c: replace `xcalloc()` with `CALLOC_ARRAY()`
+ + midx.c: avoid cruft packs with `repack --batch-size=0`
+ + midx.c: prevent `expire` from removing the cruft pack
+ + Documentation/git-multi-pack-index.txt: clarify expire behavior
+ + Documentation/git-multi-pack-index.txt: fix typo
 
  "git multi-pack-index repack/expire" used to repack unreachable
  cruft into a new pack, which have been corrected.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  cf. <63a1c3d4-eff3-af10-4263-058c88e74594@github.com>
  source: <cover.1663638929.git.me@ttaylorr.com>
 
@@ -285,34 +329,37 @@ Release tarballs are available at:
 
 
 * ja/rebase-i-avoid-amending-self (2022-09-26) 1 commit
- - sequencer: avoid dropping fixup commit that targets self via commit-ish
+  (merged to 'next' on 2022-09-29 at 2635f37dae)
+ + sequencer: avoid dropping fixup commit that targets self via commit-ish
 
  "git rebase -i" can mistakenly attempt to apply a fixup to a commit
  itself, which has been corrected.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <20220924222904.1784975-1-aclopte@gmail.com>
 
 
 * ac/fuzzers (2022-09-19) 1 commit
- - fuzz: reorganise the path for existing oss-fuzz fuzzers
+  (merged to 'next' on 2022-09-29 at 600f45a53b)
+ + fuzz: reorganise the path for existing oss-fuzz fuzzers
 
  Source file shuffling.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <pull.1353.v4.git.1663598215154.gitgitgadget@gmail.com>
 
 
 * hn/parse-worktree-ref (2022-09-19) 1 commit
- - refs: unify parse_worktree_ref() and ref_type()
+  (merged to 'next' on 2022-09-29 at 1f4453eb83)
+ + refs: unify parse_worktree_ref() and ref_type()
 
  Code and semantics cleaning.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <pull.1325.v2.git.git.1663605291172.gitgitgadget@gmail.com>
 
 
-* ed/fsmonitor-on-networked-macos (2022-09-25) 6 commits
+* ed/fsmonitor-on-networked-macos (2022-09-28) 6 commits
  - fsmonitor: add documentation for allowRemote and socketDir options
  - fsmonitor: check for compatability before communicating with fsmonitor
  - fsmonitor: deal with synthetic firmlinks on macOS
@@ -324,7 +371,7 @@ Release tarballs are available at:
  filesystem is disabled. Add knobs to make it workable on macOS.
 
  Will merge to 'next'?
- source: <pull.1326.v12.git.1664048782.gitgitgadget@gmail.com>
+ source: <pull.1326.v14.git.1664395931.gitgitgadget@gmail.com>
 
 
 * rj/branch-edit-description-with-nth-checkout (2022-09-12) 2 commits
@@ -349,21 +396,26 @@ Release tarballs are available at:
  - netrc: ignore unknown lines (do not die)
  - wincred: ignore unknown lines (do not die)
 
- RFC
+ Extending credential helper protocol.
+
+ Expecting a reroll.
+ A separate non-RFC submission of the first three is expected.
+ cf. <AS8PR03MB86897FAC3E1E4F03D4420644C04F9@AS8PR03MB8689.eurprd03.prod.outlook.com>
  source: <pull.1352.git.1663097156.gitgitgadget@gmail.com>
 
 
 * jc/environ-docs (2022-09-16) 5 commits
- - environ: GIT_INDEX_VERSION affects not just a new repository
- - environ: simplify description of GIT_INDEX_FILE
- - environ: GIT_FLUSH should be made a usual Boolean
- - environ: explain Boolean environment variables
- - environ: document GIT_SSL_NO_VERIFY
+  (merged to 'next' on 2022-09-29 at a0a43b8de5)
+ + environ: GIT_INDEX_VERSION affects not just a new repository
+ + environ: simplify description of GIT_INDEX_FILE
+ + environ: GIT_FLUSH should be made a usual Boolean
+ + environ: explain Boolean environment variables
+ + environ: document GIT_SSL_NO_VERIFY
 
  Documentation on various Boolean GIT_* environment variables have
  been clarified.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <20220915160659.126441-1-gitster@pobox.com>
 
 
@@ -382,7 +434,8 @@ Release tarballs are available at:
  source: <ba6eea28-fb3a-b376-2529-351727c02f1a@web.de>
 
 
-* ab/doc-synopsis-and-cmd-usage (2022-09-07) 34 commits
+* ab/doc-synopsis-and-cmd-usage (2022-09-28) 35 commits
+ - tests: assert consistent whitespace in -h output
  - tests: start asserting that *.txt SYNOPSIS matches -h output
  - doc txt & -h consistency: make "worktree" consistent
  - worktree: define subcommand -h in terms of command -h
@@ -423,7 +476,7 @@ Release tarballs are available at:
  consistent.
 
  Needs review.
- source: <cover-00.34-00000000000-20220902T092734Z-avarab@gmail.com>
+ source: <cover-v2-00.35-00000000000-20220928T082458Z-avarab@gmail.com>
 
 
 * ab/coccicheck-incremental (2022-08-31) 9 commits
@@ -472,10 +525,13 @@ Release tarballs are available at:
 
 
 * sy/sparse-grep (2022-09-23) 1 commit
- - builtin/grep.c: integrate with sparse index
+  (merged to 'next' on 2022-09-29 at a5bc34b9c5)
+ + builtin/grep.c: integrate with sparse index
 
  "git grep" learned to expand the sparse-index more lazily and on
  demand in a sparse checkout.
+
+ Will cook in 'next'.
  source: <20220923041842.27817-2-shaoxuan.yuan02@gmail.com>
 
 
