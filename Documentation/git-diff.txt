@@ -79,10 +79,10 @@ If --merge-base is given, use the merge base of the two commits for the
 
 	This form is to view the results of a merge commit.  The first
 	listed <commit> must be the merge itself; the remaining two or
-	more commits should be its parents.  A convenient way to produce
-	the desired set of revisions is to use the `^@` suffix.
-	For instance, if `master` names a merge commit, `git diff master
-	master^@` gives the same combined diff as `git show master`.
+	more commits should be its parents.  Convenient ways to produce
+	the desired set of revisions are to use the suffixes `^@` and
+	`^!`.  If A is a merge commit, then `git diff A A^@`,
+	`git diff A^!` and `git show A` all give the same combined diff.
 
 'git diff' [<options>] <commit>..<commit> [--] [<path>...]::
 
