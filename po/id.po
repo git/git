@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2022-09-23 19:57+0700\n"
-"PO-Revision-Date: 2022-06-18 16:30+0700\n"
+"POT-Creation-Date: 2022-09-28 14:31+0700\n"
+"PO-Revision-Date: 2022-09-28 14:50+0700\n"
 "Last-Translator: Bagas Sanjaya <bagasdotme@gmail.com>\n"
 "Language-Team: Indonesian\n"
 "Language: id\n"
@@ -17883,231 +17883,233 @@ msgstr ""
 
 #: compat/compiler.h
 msgid "no compiler information available\n"
-msgstr ""
+msgstr "informasi pengompilasi tidak tersedia\n"
 
 #: compat/compiler.h
 msgid "no libc information available\n"
-msgstr ""
+msgstr "informasi libc tidak tersedia\n"
 
 #: compat/disk.h
 #, c-format
 msgid "could not determine free disk size for '%s'"
-msgstr ""
+msgstr "tidak dapat menentukan ukuran disk kosong untuk '%s'"
 
 #: compat/disk.h
 #, c-format
 msgid "could not get info for '%s'"
-msgstr ""
+msgstr "tidak dapat mendapatkan informasi untuk '%s'"
 
 #: compat/fsmonitor/fsm-health-win32.c
 #, c-format
 msgid "[GLE %ld] health thread could not open '%ls'"
-msgstr ""
+msgstr "[GLE %ld] utas kesehatan tidak dapat membuka '%ls'"
 
 #: compat/fsmonitor/fsm-health-win32.c
 #, c-format
 msgid "[GLE %ld] health thread getting BHFI for '%ls'"
-msgstr ""
+msgstr "[GLE %ld] utas kesehatan mendapatkan BHFI untuk '%ls'"
 
 #: compat/fsmonitor/fsm-health-win32.c compat/fsmonitor/fsm-listen-win32.c
 #, c-format
 msgid "could not convert to wide characters: '%s'"
-msgstr ""
+msgstr "tidak dapat mengkonversi ke karakter lebar: '%s'"
 
 #: compat/fsmonitor/fsm-health-win32.c
 #, c-format
 msgid "BHFI changed '%ls'"
-msgstr ""
+msgstr "BHFI mengubah '%ls'"
 
 #: compat/fsmonitor/fsm-health-win32.c
 #, c-format
 msgid "unhandled case in 'has_worktree_moved': %d"
-msgstr ""
+msgstr "kasus tak tertangani di 'has_worktree_moved': %d"
 
 #: compat/fsmonitor/fsm-health-win32.c
 #, c-format
 msgid "health thread wait failed [GLE %ld]"
-msgstr ""
+msgstr "antri utas kesehatan gagal [GLE %ld]"
 
 #: compat/fsmonitor/fsm-listen-darwin.c
 msgid "Unable to create FSEventStream."
-msgstr ""
+msgstr "tidak dapat membuat FSEventStream."
 
 #: compat/fsmonitor/fsm-listen-darwin.c
 msgid "Failed to start the FSEventStream"
-msgstr ""
+msgstr "Gagal memulai FSEventStream"
 
 #: compat/fsmonitor/fsm-listen-win32.c
 #, c-format
 msgid "[GLE %ld] could not convert path to UTF-8: '%.*ls'"
-msgstr ""
+msgstr "[GLE %ld] tidak dapat mengkonversi jalur ke UTF-8: '%.*ls'"
 
 #: compat/fsmonitor/fsm-listen-win32.c
 #, c-format
 msgid "[GLE %ld] could not watch '%s'"
-msgstr ""
+msgstr "[GLE %ld] tidak dapat menonton '%s'"
 
 #: compat/fsmonitor/fsm-listen-win32.c
 #, c-format
 msgid "[GLE %ld] could not get longname of '%s'"
-msgstr ""
+msgstr "[GLE %ld] tidak dapat mendapatkan nama panjang dari '%s'"
 
 #: compat/fsmonitor/fsm-listen-win32.c
 #, c-format
 msgid "ReadDirectoryChangedW failed on '%s' [GLE %ld]"
-msgstr ""
+msgstr "ReadDirectoryChangedW gagal pada '%s' [GLE %ld]"
 
 #: compat/fsmonitor/fsm-listen-win32.c
 #, c-format
 msgid "GetOverlappedResult failed on '%s' [GLE %ld]"
-msgstr ""
+msgstr "GetOverlappedResult gagal pada '%s' [GLE %ld]"
 
 #: compat/fsmonitor/fsm-listen-win32.c
 #, c-format
 msgid "could not read directory changes [GLE %ld]"
-msgstr ""
+msgstr "tidak dapat membaca perubahan direktori [GLE %ld]"
 
 #: compat/fsmonitor/fsm-settings-win32.c
 #, c-format
 msgid "[GLE %ld] unable to open for read '%ls'"
-msgstr ""
+msgstr "[GLE %ld] tidak dapat membuka untuk dibaca '%ls'"
 
 #: compat/fsmonitor/fsm-settings-win32.c
 #, c-format
 msgid "[GLE %ld] unable to get protocol information for '%ls'"
-msgstr ""
+msgstr "[GLE %ld] tidak dapat mendapatkan informasi protokol untuk '%ls'"
 
 #: compat/mingw.c
 #, c-format
 msgid "failed to copy SID (%ld)"
-msgstr ""
+msgstr "gagal menyalin SID (%ld)"
 
 #: compat/mingw.c
 #, c-format
 msgid "failed to get owner for '%s' (%ld)"
-msgstr ""
+msgstr "gagal mendapatkan pemilik untuk '%s' (%ld)"
 
 #: compat/obstack.c
 msgid "memory exhausted"
-msgstr ""
+msgstr "memory habis"
 
 #: compat/regex/regcomp.c
 msgid "Success"
-msgstr ""
+msgstr "Success"
 
 #: compat/regex/regcomp.c
 msgid "No match"
-msgstr ""
+msgstr "Tidak ada yang cocok"
 
 #: compat/regex/regcomp.c
 msgid "Invalid regular expression"
-msgstr ""
+msgstr "Ekspresi reguler tidak valid"
 
 #: compat/regex/regcomp.c
 msgid "Invalid collation character"
-msgstr ""
+msgstr "Karakter kolase tidak valid"
 
 #: compat/regex/regcomp.c
 msgid "Invalid character class name"
-msgstr ""
+msgstr "Nama kelas karakter tidak valid"
 
 #: compat/regex/regcomp.c
 msgid "Trailing backslash"
-msgstr ""
+msgstr "Garis miring terbalik tertinggal"
 
 #: compat/regex/regcomp.c
 msgid "Invalid back reference"
-msgstr ""
+msgstr "Referensi balik tidak valid"
 
 #: compat/regex/regcomp.c
 msgid "Unmatched [ or [^"
-msgstr ""
+msgstr "[ atau [^ tak tercocok"
 
 #: compat/regex/regcomp.c
 msgid "Unmatched ( or \\("
-msgstr ""
+msgstr "( atau \\( tak tercocok"
 
 #: compat/regex/regcomp.c
 msgid "Unmatched \\{"
-msgstr ""
+msgstr "\\{ tak tercocok"
 
 #: compat/regex/regcomp.c
 msgid "Invalid content of \\{\\}"
-msgstr ""
+msgstr "Isi \\{\\} tidak valid"
 
 #: compat/regex/regcomp.c
 msgid "Invalid range end"
-msgstr ""
+msgstr "Ujung rentang tidak valid"
 
 #: compat/regex/regcomp.c
 msgid "Memory exhausted"
-msgstr ""
+msgstr "Memori habis"
 
 #: compat/regex/regcomp.c
 msgid "Invalid preceding regular expression"
-msgstr ""
+msgstr "Ekspresi reguler sebelumnya tidak valid"
 
 #: compat/regex/regcomp.c
 msgid "Premature end of regular expression"
-msgstr ""
+msgstr "Akhir ekspresi reguler prematur"
 
 #: compat/regex/regcomp.c
 msgid "Regular expression too big"
-msgstr ""
+msgstr "Ekspresi reguler terlalu besar"
 
 #: compat/regex/regcomp.c
 msgid "Unmatched ) or \\)"
-msgstr ""
+msgstr ") atau \\) tak tercocok"
 
 #: compat/regex/regcomp.c
 msgid "No previous regular expression"
-msgstr ""
+msgstr "Tidak ada ekspresi reguler sebelumnya"
 
 #: compat/simple-ipc/ipc-unix-socket.c compat/simple-ipc/ipc-win32.c
 msgid "could not send IPC command"
-msgstr ""
+msgstr "tidak dapat mengirimkan perintah IPC"
 
 #: compat/simple-ipc/ipc-unix-socket.c compat/simple-ipc/ipc-win32.c
 msgid "could not read IPC response"
-msgstr ""
+msgstr "tidak dapat membaca jawaban IPC"
 
 #: compat/simple-ipc/ipc-unix-socket.c
 #, c-format
 msgid "could not start accept_thread '%s'"
-msgstr ""
+msgstr "tidak dapat memulai accept_thread '%s'"
 
 #: compat/simple-ipc/ipc-unix-socket.c
 #, c-format
 msgid "could not start worker[0] for '%s'"
-msgstr ""
+msgstr "tidak dapat memulai worker[0] untuk '%s'"
 
 #: compat/simple-ipc/ipc-win32.c
 #, c-format
 msgid "ConnectNamedPipe failed for '%s' (%lu)"
-msgstr ""
+msgstr "ConnectNamedPipe gagal untuk '%s' (%lu)"
 
 #: compat/simple-ipc/ipc-win32.c
 #, c-format
 msgid "could not create fd from pipe for '%s'"
-msgstr ""
+msgstr "tidak dapat membuat penjelas berkas dari pipa untuk '%s'"
 
 #: compat/simple-ipc/ipc-win32.c
 #, c-format
 msgid "could not start thread[0] for '%s'"
-msgstr ""
+msgstr "tidak dapat memulai thread[0] untuk '%s'"
 
 #: compat/simple-ipc/ipc-win32.c
 #, c-format
 msgid "wait for hEvent failed for '%s'"
-msgstr ""
+msgstr "antri untuk hEvent gagal untuk '%s'"
 
 #: compat/terminal.c
 msgid "cannot resume in the background, please use 'fg' to resume"
 msgstr ""
+"tidak dapat melanjutkan di belakang layar, mohon gunakan 'fg' untuk "
+"melanjutkan"
 
 #: compat/terminal.c
 msgid "cannot restore terminal settings"
-msgstr ""
+msgstr "tidak dapat mengembalikan setelan terminal"
 
 #: config.c
 #, c-format
@@ -18658,12 +18660,12 @@ msgstr "gagal menutup masukan standar rev-list"
 #: convert.c
 #, c-format
 msgid "illegal crlf_action %d"
-msgstr ""
+msgstr "crlf_action %d ilegal"
 
 #: convert.c
 #, c-format
 msgid "CRLF would be replaced by LF in %s"
-msgstr ""
+msgstr "CRLF akan digantikan oleh LF di %s"
 
 #: convert.c
 #, c-format
@@ -18671,11 +18673,13 @@ msgid ""
 "in the working copy of '%s', CRLF will be replaced by LF the next time Git "
 "touches it"
 msgstr ""
+"di dalam salinan kerja '%s', CRLF akan digantikan oleh LF pada saat Git "
+"menyentuhnya lain kali"
 
 #: convert.c
 #, c-format
 msgid "LF would be replaced by CRLF in %s"
-msgstr ""
+msgstr "LF akan digantikan oleh CRLF di %s"
 
 #: convert.c
 #, c-format
@@ -18683,11 +18687,13 @@ msgid ""
 "in the working copy of '%s', LF will be replaced by CRLF the next time Git "
 "touches it"
 msgstr ""
+"di dalam salinan kerja '%s', LF akan digantikan oleh LF pada saat Git "
+"menyentuhnya lain kali"
 
 #: convert.c
 #, c-format
 msgid "BOM is prohibited in '%s' if encoded as %s"
-msgstr ""
+msgstr "BOM tidak diperbolehkan di '%s' jika dikodekan sebagai %s"
 
 #: convert.c
 #, c-format
@@ -18695,11 +18701,13 @@ msgid ""
 "The file '%s' contains a byte order mark (BOM). Please use UTF-%.*s as "
 "working-tree-encoding."
 msgstr ""
+"Berkas '%s' berisi tanda urutan bita (BOM). Mohon gunakan UTF-%.*s sebagai "
+"pengkodean pohon kerja."
 
 #: convert.c
 #, c-format
 msgid "BOM is required in '%s' if encoded as %s"
-msgstr ""
+msgstr "BOM diperlukan di '%s' jika dikodekan sebagai %s"
 
 #: convert.c
 #, c-format
@@ -18707,49 +18715,51 @@ msgid ""
 "The file '%s' is missing a byte order mark (BOM). Please use UTF-%sBE or UTF-"
 "%sLE (depending on the byte order) as working-tree-encoding."
 msgstr ""
+"Berkas '%s' kehilangan tanda urutan bita (BOM). Mohon gunakan UTF-%sBE atau "
+"UTF-%sLE (tergantung pada urutan bita) sebagai pengkodean pohon kerja."
 
 #: convert.c
 #, c-format
 msgid "failed to encode '%s' from %s to %s"
-msgstr ""
+msgstr "gagal mengkodekan '%s' dari %s ke %s"
 
 #: convert.c
 #, c-format
 msgid "encoding '%s' from %s to %s and back is not the same"
-msgstr ""
+msgstr "pengkodean '%s' dari %s ke %s dan sebaliknya berbeda"
 
 #: convert.c
 #, c-format
 msgid "cannot fork to run external filter '%s'"
-msgstr ""
+msgstr "tidak dapat menggarpu untuk menjalankan penyaring eksternal '%s'"
 
 #: convert.c
 #, c-format
 msgid "cannot feed the input to external filter '%s'"
-msgstr ""
+msgstr "tidak dapat mengumpan masukan ke penyaring eksternal '%s'"
 
 #: convert.c
 #, c-format
 msgid "external filter '%s' failed %d"
-msgstr ""
+msgstr "penyaring eksternal '%s' gagal %d"
 
 #: convert.c
 #, c-format
 msgid "read from external filter '%s' failed"
-msgstr ""
+msgstr "gagal membaca dari penyaring eksternal '%s'"
 
 #: convert.c
 #, c-format
 msgid "external filter '%s' failed"
-msgstr ""
+msgstr "penyaring eksternal '%s' gagal"
 
 #: convert.c
 msgid "unexpected filter type"
-msgstr ""
+msgstr "tipe penyaring tidak diharapkan"
 
 #: convert.c
 msgid "path name too long for external filter"
-msgstr ""
+msgstr "nama jalur terlalu panjang untuk penyaring eksternal"
 
 #: convert.c
 #, c-format
@@ -18757,20 +18767,22 @@ msgid ""
 "external filter '%s' is not available anymore although not all paths have "
 "been filtered"
 msgstr ""
+"penyaring eksternal '%s' tidak tersedia lagi walaupun tidak semua jalur "
+"sudah disaring"
 
 #: convert.c
 msgid "true/false are no valid working-tree-encodings"
-msgstr ""
+msgstr "true/false bukanlah pengkodean pohon kerja valid"
 
 #: convert.c
 #, c-format
 msgid "%s: clean filter '%s' failed"
-msgstr ""
+msgstr "%s: penyaring bersih '%s' gagal"
 
 #: convert.c
 #, c-format
 msgid "%s: smudge filter %s failed"
-msgstr ""
+msgstr "%s: penyaring noda %s gagal"
 
 #: credential.c
 #, c-format
@@ -19663,22 +19675,22 @@ msgstr "petunjuk: Menunggu penyunting Anda untuk menutup berkas...%c"
 
 #: entry.c
 msgid "Filtering content"
-msgstr ""
+msgstr "Menyaring isi"
 
 #: entry.c
 #, c-format
 msgid "could not stat file '%s'"
-msgstr ""
+msgstr "tidak dapat men-stat berkas '%s'"
 
 #: environment.c
 #, c-format
 msgid "bad git namespace path \"%s\""
-msgstr ""
+msgstr "jalur ruang nama git jelek \"%s\""
 
 #: exec-cmd.c
 #, c-format
 msgid "too many args to run %s"
-msgstr ""
+msgstr "terlalu banyak argumen untuk menjalankan %s"
 
 #: fetch-pack.c
 msgid "git fetch-pack: expected shallow list"
@@ -20518,71 +20530,72 @@ msgstr "nama hanya terdiri dari karakter yang tidak diperbolehkan: %s"
 
 #: list-objects-filter-options.c
 msgid "expected 'tree:<depth>'"
-msgstr ""
+msgstr "'tree:<kedalaman> diharapkan'"
 
 #: list-objects-filter-options.c
 msgid "sparse:path filters support has been dropped"
-msgstr ""
+msgstr "dukungan penyaring sparse:path sudah ditiadakan"
 
 #: list-objects-filter-options.c
 #, c-format
 msgid "'%s' for 'object:type=<type>' is not a valid object type"
-msgstr ""
+msgstr "'%s' untuk 'object:type=<tipe>' bukan tipe objek valid"
 
 #: list-objects-filter-options.c
 #, c-format
 msgid "invalid filter-spec '%s'"
-msgstr ""
+msgstr "spek penyaring tidak valid '%s'"
 
 #: list-objects-filter-options.c
 #, c-format
 msgid "must escape char in sub-filter-spec: '%c'"
-msgstr ""
+msgstr "harus melarikan karakter pada spek subpenyaring: '%c'"
 
 #: list-objects-filter-options.c
 msgid "expected something after combine:"
-msgstr ""
+msgstr "sesuatu setelah pencampuran diharapkan:"
 
 #: list-objects-filter-options.c
 msgid "multiple filter-specs cannot be combined"
-msgstr ""
+msgstr "spek penyaring lebih dari satu tidak dapat dicampurkan"
 
 #: list-objects-filter-options.c
 msgid "unable to upgrade repository format to support partial clone"
 msgstr ""
+"tidak dapat meningkatkan format repositori untuk mendukung klon parsial"
 
 #: list-objects-filter-options.h
 msgid "args"
-msgstr ""
+msgstr "argumen"
 
 #: list-objects-filter-options.h
 msgid "object filtering"
-msgstr ""
+msgstr "penyaringan objek"
 
 #: list-objects-filter.c
 #, c-format
 msgid "unable to access sparse blob in '%s'"
-msgstr ""
+msgstr "tidak dapat mengakses blob tipis di '%s'"
 
 #: list-objects-filter.c
 #, c-format
 msgid "unable to parse sparse filter data in %s"
-msgstr ""
+msgstr "tidak dapat menyaring data penyaring tipis di %s"
 
 #: list-objects.c
 #, c-format
 msgid "entry '%s' in tree %s has tree mode, but is not a tree"
-msgstr ""
+msgstr "entri '%s' di dalam pohon %s punya mode pohon, tetapi bukan pohon"
 
 #: list-objects.c
 #, c-format
 msgid "entry '%s' in tree %s has blob mode, but is not a blob"
-msgstr ""
+msgstr "entri '%s' di dalam pohon %s punya mode blob, tetapi bukan blob"
 
 #: list-objects.c
 #, c-format
 msgid "unable to load root tree for commit %s"
-msgstr ""
+msgstr "tidak dapat memuat pohon akar untuk komit %s"
 
 #: lockfile.c
 #, c-format
@@ -20595,24 +20608,30 @@ msgid ""
 "may have crashed in this repository earlier:\n"
 "remove the file manually to continue."
 msgstr ""
+"Tidak dapat membuat '%s.lock': %s.\n"
+"\n"
+"Sepertinya proses git lainnya berjalan pada repositori ini, seperti\n"
+"penyunting yang dibuka oleh 'git commit'. Mohon pastikan semua proses\n"
+"berhenti dan coba lagi. Jika masih gagal, mungkin sebuah proses git hancur\n"
+"pada repositori ini sebelumnya: hapus berkas secara manual untuk melanjutkan."
 
 #: lockfile.c
 #, c-format
 msgid "Unable to create '%s.lock': %s"
-msgstr ""
+msgstr "Tidak dapat membuat '%s.lock': %s"
 
 #: ls-refs.c
 #, c-format
 msgid "unexpected line: '%s'"
-msgstr ""
+msgstr "baris tak diharapkan: '%s'"
 
 #: ls-refs.c
 msgid "expected flush after ls-refs arguments"
-msgstr ""
+msgstr "bilasan diharapkan setelah argumen ls-refs"
 
 #: mailinfo.c
 msgid "quoted CRLF detected"
-msgstr ""
+msgstr "CRLF terkutip terdeteksi"
 
 #: merge-ort.c merge-recursive.c
 #, c-format
@@ -21406,17 +21425,17 @@ msgstr "tidak dapat menyelesaikan pack-objects"
 #: name-hash.c
 #, c-format
 msgid "unable to create lazy_dir thread: %s"
-msgstr ""
+msgstr "tidak dapat membuat utas lazy_dir: %s"
 
 #: name-hash.c
 #, c-format
 msgid "unable to create lazy_name thread: %s"
-msgstr ""
+msgstr "tidak dapat membuat utas lazy_name: %s"
 
 #: name-hash.c
 #, c-format
 msgid "unable to join lazy_name thread: %s"
-msgstr ""
+msgstr "tidak dapat menggabungkan utas lazy_name: %s"
 
 #: notes-merge.c
 #, c-format
@@ -21425,25 +21444,29 @@ msgid ""
 "Please, use 'git notes merge --commit' or 'git notes merge --abort' to "
 "commit/abort the previous merge before you start a new notes merge."
 msgstr ""
+"Anda belum menyelesaikan penggabungan catatan Anda sebelumnya (%s ada).\n"
+"Mohon gunakan 'git notes merge --commit' atau 'git notes merge --abort' "
+"untuk mengkomit/membatalkan penggabungan sebelumnya sebelum Anda memulai "
+"penggabungan catatan baru."
 
 #: notes-merge.c
 #, c-format
 msgid "You have not concluded your notes merge (%s exists)."
-msgstr ""
+msgstr "Anda belum menyelesaikan penggabungan catatan Anda (%s ada)."
 
 #: notes-utils.c
 msgid "Cannot commit uninitialized/unreferenced notes tree"
-msgstr ""
+msgstr "Tidak dapat mengkomit pohon catatan tak dinisialisasi/tak dirujuk"
 
 #: notes-utils.c
 #, c-format
 msgid "Bad notes.rewriteMode value: '%s'"
-msgstr ""
+msgstr "Nilai notes.rewriteMode jelek: '%s'"
 
 #: notes-utils.c
 #, c-format
 msgid "Refusing to rewrite notes in %s (outside of refs/notes/)"
-msgstr ""
+msgstr "Menolak menulis ulang catatan di %s (di luar refs/notes/)"
 
 #. TRANSLATORS: The first %s is the name of
 #. the environment variable, the second %s is
@@ -21452,7 +21475,7 @@ msgstr ""
 #: notes-utils.c
 #, c-format
 msgid "Bad %s value: '%s'"
-msgstr ""
+msgstr "Nilai %s jelek: '%s'"
 
 #: object-file.c
 #, c-format
@@ -22007,7 +22030,7 @@ msgid "corrupt bitmap lookup table: triplet position out of index"
 msgstr "tabel pencarian bitmap rusak: posisi kembar tiga di luar indeks"
 
 #: pack-bitmap.c
-msgid "corrupt bitmap lookup table: xor chain exceed entry count"
+msgid "corrupt bitmap lookup table: xor chain exceeds entry count"
 msgstr "tabel pencarian bitmap rusak: rantai xor melebihi hitungan entri"
 
 #: pack-bitmap.c
@@ -22412,93 +22435,94 @@ msgstr "baris dikutip jelek: %s"
 
 #: pkt-line.c
 msgid "unable to write flush packet"
-msgstr ""
+msgstr "tidak dapat menulis paket bilas"
 
 #: pkt-line.c
 msgid "unable to write delim packet"
-msgstr ""
+msgstr "tidak dapat menulis paket pembatas"
 
 #: pkt-line.c
 msgid "unable to write response end packet"
-msgstr ""
+msgstr "tidak dapat menulis paket ujung jawaban"
 
 #: pkt-line.c
 msgid "flush packet write failed"
-msgstr ""
+msgstr "gagal membilas penulisan paket"
 
 #: pkt-line.c
 msgid "protocol error: impossibly long line"
-msgstr ""
+msgstr "kesalahan protokol: baris panjang tidak mungkin"
 
 #: pkt-line.c
 msgid "packet write with format failed"
-msgstr ""
+msgstr "gagal menulis paket dengan format"
 
 #: pkt-line.c
 msgid "packet write failed - data exceeds max packet size"
-msgstr ""
+msgstr "gagal menulis paket - data melebihi ukuran paket maksimum"
 
 #: pkt-line.c
 #, c-format
 msgid "packet write failed: %s"
-msgstr ""
+msgstr "gagal menulis paket: %s"
 
 #: pkt-line.c
 msgid "read error"
-msgstr ""
+msgstr "kesalahan membaca"
 
 #: pkt-line.c
 msgid "the remote end hung up unexpectedly"
-msgstr ""
+msgstr "ujung remote menggantung secara tidak terduga"
 
 #: pkt-line.c
 #, c-format
 msgid "protocol error: bad line length character: %.4s"
-msgstr ""
+msgstr "kesalahan protokol: karakter panjang baris jelek: %.4s"
 
 #: pkt-line.c
 #, c-format
 msgid "protocol error: bad line length %d"
-msgstr ""
+msgstr "kesalahan protokol: panjang baris %d jelek"
 
 #: pkt-line.c sideband.c
 #, c-format
 msgid "remote error: %s"
-msgstr ""
+msgstr "kesalahan remote: %s"
 
 #: preload-index.c
 msgid "Refreshing index"
-msgstr ""
+msgstr "Menyegarkan indeks"
 
 #: preload-index.c
 #, c-format
 msgid "unable to create threaded lstat: %s"
-msgstr ""
+msgstr "tidak dapat membuat lstat terutas: %s"
 
 #: pretty.c
 msgid "unable to parse --pretty format"
-msgstr ""
+msgstr "tidak dapat menguraikan format --pretty"
 
 #: promisor-remote.c
 msgid "promisor-remote: unable to fork off fetch subprocess"
-msgstr ""
+msgstr "promisor-remote: tidak dapat menggarpu subproses pengambilan"
 
 #: promisor-remote.c
 msgid "promisor-remote: could not write to fetch subprocess"
-msgstr ""
+msgstr "promisor-remote: tidak dapat menulis ke subproses pengambilan"
 
 #: promisor-remote.c
 msgid "promisor-remote: could not close stdin to fetch subprocess"
 msgstr ""
+"promisor-remote: tidak dapat menutup masukan standar ke subproses pengambilan"
 
 #: promisor-remote.c
 #, c-format
 msgid "promisor remote name cannot begin with '/': %s"
-msgstr ""
+msgstr "nama remote penjanji tidak dapat diawali dengan '/': %s"
 
 #: protocol-caps.c
 msgid "object-info: expected flush after arguments"
-msgstr ""
+msgstr "object-info: bilasan diharapkan setelah argumen"
 
 #: prune-packed.c
 msgid "Removing duplicate objects"
@@ -22544,39 +22568,42 @@ msgstr "tidak dapat menguraikan log untuk '%s'"
 #, c-format
 msgid "will not add file alias '%s' ('%s' already exists in index)"
 msgstr ""
+"tidak akan menambahkan alias berkas '%s' ('%s' sudah ada di dalam indeks)"
 
 #: read-cache.c
 msgid "cannot create an empty blob in the object database"
-msgstr ""
+msgstr "tidak dapat membuat sebuah blob kosong di dalam basis data objek"
 
 #: read-cache.c
 #, c-format
 msgid "%s: can only add regular files, symbolic links or git-directories"
 msgstr ""
+"%s: hanya dapat menambahkan berkas reguler, tautan simbolik, atau direktori "
+"git"
 
 #: read-cache.c
 #, c-format
 msgid "unable to index file '%s'"
-msgstr ""
+msgstr "tidak dapat menulis berkas indeks '%s'"
 
 #: read-cache.c
 #, c-format
 msgid "unable to add '%s' to index"
-msgstr ""
+msgstr "tidak dapat menambahkan '%s' ke indeks"
 
 #: read-cache.c
 #, c-format
 msgid "unable to stat '%s'"
-msgstr ""
+msgstr "tidak dapat men-stat '%s'"
 
 #: read-cache.c
 #, c-format
 msgid "'%s' appears as both a file and as a directory"
-msgstr ""
+msgstr "'%s' muncul baik sebagai sebuah berkas dan sebagai sebuah direktori"
 
 #: read-cache.c
 msgid "Refresh index"
-msgstr ""
+msgstr "Segarkan indeks indeks"
 
 #: read-cache.c
 #, c-format
@@ -22584,6 +22611,8 @@ msgid ""
 "index.version set, but the value is invalid.\n"
 "Using version %i"
 msgstr ""
+"index.version disetel, tetapi nilainya tidak valid.\n"
+"Menggunakan versi %i"
 
 #: read-cache.c
 #, c-format
@@ -22591,137 +22620,139 @@ msgid ""
 "GIT_INDEX_VERSION set, but the value is invalid.\n"
 "Using version %i"
 msgstr ""
+"GIT_INDEX_VERSION disetel, tetapi nilainya tidak valid.\n"
+"Menggunakan versi %i"
 
 #: read-cache.c
 #, c-format
 msgid "bad signature 0x%08x"
-msgstr ""
+msgstr "tandatangan 0x%08x jelek"
 
 #: read-cache.c
 #, c-format
 msgid "bad index version %d"
-msgstr ""
+msgstr "versi indeks %d jelek"
 
 #: read-cache.c
 msgid "bad index file sha1 signature"
-msgstr ""
+msgstr "tandatangan sha1 berkas indeks jelek"
 
 #: read-cache.c
 #, c-format
 msgid "index uses %.4s extension, which we do not understand"
-msgstr ""
+msgstr "indeks menggunakan ekstensi %s, yang kami tidak mengerti"
 
 #: read-cache.c
 #, c-format
 msgid "ignoring %.4s extension"
-msgstr ""
+msgstr "mengabaikan ekstensi %.4s"
 
 #: read-cache.c
 #, c-format
 msgid "unknown index entry format 0x%08x"
-msgstr ""
+msgstr "format entri indeks 0x%08x tidak dikenal"
 
 #: read-cache.c
 #, c-format
 msgid "malformed name field in the index, near path '%s'"
-msgstr ""
+msgstr "bidang nama di dalam indeks rusak, di dekat jalur '%s'"
 
 #: read-cache.c
 msgid "unordered stage entries in index"
-msgstr ""
+msgstr "entri gelaran tidak terurut di dalam indeks"
 
 #: read-cache.c
 #, c-format
 msgid "multiple stage entries for merged file '%s'"
-msgstr ""
+msgstr "banyak entri gelaran untuk berkas tergabung '%s'"
 
 #: read-cache.c
 #, c-format
 msgid "unordered stage entries for '%s'"
-msgstr ""
+msgstr "entri gelaran tidak terurut untuk '%s'"
 
 #: read-cache.c
 #, c-format
 msgid "unable to create load_cache_entries thread: %s"
-msgstr ""
+msgstr "tidak dapat membuat utas load_cache_entries: %s"
 
 #: read-cache.c
 #, c-format
 msgid "unable to join load_cache_entries thread: %s"
-msgstr ""
+msgstr "tidak dapat menggabungkan utas load_cache_entries: %s"
 
 #: read-cache.c
 #, c-format
 msgid "%s: index file open failed"
-msgstr ""
+msgstr "%s: gagal membuka berkas indeks"
 
 #: read-cache.c
 #, c-format
 msgid "%s: cannot stat the open index"
-msgstr ""
+msgstr "%s: tidak dapat men-stat indeks terbuka"
 
 #: read-cache.c
 #, c-format
 msgid "%s: index file smaller than expected"
-msgstr ""
+msgstr "%s: berkas indeks lebih kecil dari yang diharapkan"
 
 #: read-cache.c
 #, c-format
 msgid "%s: unable to map index file%s"
-msgstr ""
+msgstr "%s: tidak dapat memetakan berkas indeks%s"
 
 #: read-cache.c
 #, c-format
 msgid "unable to create load_index_extensions thread: %s"
-msgstr ""
+msgstr "tidak dapat membuat utas load_index_extensions: %s"
 
 #: read-cache.c
 #, c-format
 msgid "unable to join load_index_extensions thread: %s"
-msgstr ""
+msgstr "tidak dapat menggabungkan utas load_index_extensions: %s"
 
 #: read-cache.c
 #, c-format
 msgid "could not freshen shared index '%s'"
-msgstr ""
+msgstr "tidak dapat menyegarkan indeks berbagi '%s'"
 
 #: read-cache.c
 #, c-format
 msgid "broken index, expect %s in %s, got %s"
-msgstr ""
+msgstr "indeks rusak, mengharapkan %s di %s, dapat %s"
 
 #: read-cache.c
 msgid "cannot write split index for a sparse index"
-msgstr ""
+msgstr "tidak dapat membuat indeks terpisah untuk indeks jarang"
 
 #: read-cache.c
 msgid "failed to convert to a sparse-index"
-msgstr ""
+msgstr "gagal mengubah ke indeks jarang"
 
 #: read-cache.c
 #, c-format
 msgid "could not stat '%s'"
-msgstr ""
+msgstr "tidak dapat men-stat '%s'"
 
 #: read-cache.c
 #, c-format
 msgid "unable to open git dir: %s"
-msgstr ""
+msgstr "tidak dapat membuka direktori git: %s"
 
 #: read-cache.c
 #, c-format
 msgid "unable to unlink: %s"
-msgstr ""
+msgstr "tidak dapat membatal tautan: %s"
 
 #: read-cache.c
 #, c-format
 msgid "cannot fix permission bits on '%s'"
-msgstr ""
+msgstr "tidak dapat memperbaiki bit perizinan pada '%s'"
 
 #: read-cache.c
 #, c-format
 msgid "%s: cannot drop to stage #0"
-msgstr ""
+msgstr "%s: tidak dapat menurunkan ke tahap #0"
 
 #: rebase-interactive.c
 msgid ""
@@ -23832,199 +23863,202 @@ msgstr "'%s' tidak ada"
 #: scalar.c
 #, c-format
 msgid "could not switch to '%s'"
-msgstr ""
+msgstr "tidak dapat berganti ke '%s'"
 
 #: scalar.c
 msgid "need a working directory"
-msgstr ""
+msgstr "butuh sebuah direktori kerja"
 
 #: scalar.c
 msgid "Scalar enlistments require a worktree"
-msgstr ""
+msgstr "Pendaftaran scalar membutuhkan pohon kerja"
 
 #: scalar.c
 #, c-format
 msgid "could not configure %s=%s"
-msgstr ""
+msgstr "tidak dapat menyetel %s=%s"
 
 #: scalar.c
 msgid "could not configure log.excludeDecoration"
-msgstr ""
+msgstr "tidak dapat menyetel log.excludeDecoration"
 
 #: scalar.c
 msgid "could not add enlistment"
-msgstr ""
+msgstr "tidak dapat menambah pendaftaran"
 
 #: scalar.c
 msgid "could not set recommended config"
-msgstr ""
+msgstr "tidak dapat menyetel konfigurasi yang direkomendasikan"
 
 #: scalar.c
 msgid "could not turn on maintenance"
-msgstr ""
+msgstr "tidak dapat mengaktifkan pemeliharaan"
 
 #: scalar.c
 msgid "could not start the FSMonitor daemon"
-msgstr ""
+msgstr "tidak dapat menjalankan daemon FSMonitor"
 
 #: scalar.c
 msgid "could not turn off maintenance"
-msgstr ""
+msgstr "tidak dapat menonaktifkan pemeliharaan"
 
 #: scalar.c
 msgid "could not remove enlistment"
-msgstr ""
+msgstr "tidak dapat menghapus pendaftaran"
 
 #: scalar.c
 #, c-format
 msgid "remote HEAD is not a branch: '%.*s'"
-msgstr ""
+msgstr "HEAD remote bukan sebuah cabang: '%.*s'"
 
 #: scalar.c
 msgid "failed to get default branch name from remote; using local default"
 msgstr ""
+"gagal mendapatkan nama cabang asali dari remote; menggunakan asali lokal"
 
 #: scalar.c
 msgid "failed to get default branch name"
-msgstr ""
+msgstr "gagal mendapatkan nama cabang asali"
 
 #: scalar.c
 msgid "failed to unregister repository"
-msgstr ""
+msgstr "gagal menghapus pendaftaran repositori"
 
 #: scalar.c
 msgid "failed to stop the FSMonitor daemon"
-msgstr ""
+msgstr "gagal menghentikan daemon FSMonitor"
 
 #: scalar.c
 msgid "failed to delete enlistment directory"
-msgstr ""
+msgstr "gagal menghapus direktori pendaftaran"
 
 #: scalar.c
 msgid "branch to checkout after clone"
-msgstr ""
+msgstr "cabang untuk dicheckout setelah kloning"
 
 #: scalar.c
 msgid "when cloning, create full working directory"
-msgstr ""
+msgstr "ketika kloning, buat direktori kerja penuh"
 
 #: scalar.c
 msgid "only download metadata for the branch that will be checked out"
-msgstr ""
+msgstr "hanya unduh metadata untuk cabang yang akan dicheckout"
 
 #: scalar.c
 msgid "scalar clone [<options>] [--] <repo> [<dir>]"
-msgstr ""
+msgstr "scalar clone [<options>] [--] <repositori> [<direktori>]"
 
 #: scalar.c
 #, c-format
 msgid "cannot deduce worktree name from '%s'"
-msgstr ""
+msgstr "tidak dapat menyimpulkan nama pohon kerja dari '%s'"
 
 #: scalar.c
 #, c-format
 msgid "directory '%s' exists already"
-msgstr ""
+msgstr "direktori '%s' sudah ada"
 
 #: scalar.c
 #, c-format
 msgid "failed to get default branch for '%s'"
-msgstr ""
+msgstr "gagal mendapatkan cabang asali untuk '%s'"
 
 #: scalar.c
 #, c-format
 msgid "could not configure remote in '%s'"
-msgstr ""
+msgstr "tidak dapat menyetel remote di '%s'"
 
 #: scalar.c
 #, c-format
 msgid "could not configure '%s'"
-msgstr ""
+msgstr "tidak dapat menyetel '%s'"
 
 #: scalar.c
 msgid "partial clone failed; attempting full clone"
-msgstr ""
+msgstr "kloning parsial gagal; mencoba kloning penuh"
 
 #: scalar.c
 msgid "could not configure for full clone"
-msgstr ""
+msgstr "tidak dapat menyetel untuk kloning penuh"
 
 #: scalar.c
 msgid "scalar diagnose [<enlistment>]"
-msgstr ""
+msgstr "scalar diagnose [<pendaftaran>]"
 
 #: scalar.c
 msgid "`scalar list` does not take arguments"
-msgstr ""
+msgstr "`scalar list` tidak mengambil argumen"
 
 #: scalar.c
 msgid "scalar register [<enlistment>]"
-msgstr ""
+msgstr "scalar register [<pendaftaran>]"
 
 #: scalar.c
 msgid "reconfigure all registered enlistments"
-msgstr ""
+msgstr "konfigurasi ulang semua pendaftaran yang terdaftar"
 
 #: scalar.c
 msgid "scalar reconfigure [--all | <enlistment>]"
-msgstr ""
+msgstr "scalar reconfigure [--all | <pendaftaran>]"
 
 #: scalar.c
 msgid "--all or <enlistment>, but not both"
-msgstr ""
+msgstr "--all atau <pendaftaran>, tetapi bukan kedua-duanya"
 
 #: scalar.c
 #, c-format
 msgid "git repository gone in '%s'"
-msgstr ""
+msgstr "repositori git pergi di '%s'"
 
 #: scalar.c
 msgid ""
 "scalar run <task> [<enlistment>]\n"
 "Tasks:\n"
 msgstr ""
+"scalar run <tugas> [<pendaftaran>]\n"
+"Tugas:\n"
 
 #: scalar.c
 #, c-format
 msgid "no such task: '%s'"
-msgstr ""
+msgstr "tidak ada tugas: '%s'"
 
 #: scalar.c
 msgid "scalar unregister [<enlistment>]"
-msgstr ""
+msgstr "scalar unregister [<pendaftaran>]"
 
 #: scalar.c
 msgid "scalar delete <enlistment>"
-msgstr ""
+msgstr "scalar delete <pendaftaran>"
 
 #: scalar.c
 msgid "refusing to delete current working directory"
-msgstr ""
+msgstr "menolak menghapus direktori kerja saat ini"
 
 #: scalar.c
 msgid "include Git version"
-msgstr ""
+msgstr "masukkan versi Git"
 
 #: scalar.c
 msgid "include Git's build options"
-msgstr ""
+msgstr "masukkan opsi bangun Git"
 
 #: scalar.c
 msgid "scalar verbose [-v | --verbose] [--build-options]"
-msgstr ""
+msgstr "scalar verbose [-v | --verbose] [--build-options]"
 
 #: scalar.c
 msgid "-C requires a <directory>"
-msgstr ""
+msgstr "-C butuh sebuah <direktori>"
 
 #: scalar.c
 #, c-format
 msgid "could not change to '%s'"
-msgstr ""
+msgstr "tidak dapat berganti ke '%s'"
 
 #: scalar.c
 msgid "-c requires a <key>=<value> argument"
-msgstr ""
+msgstr "-c butuh argumen <kunci>=<nilai>"
 
 #: scalar.c
 msgid ""
@@ -24032,6 +24066,9 @@ msgid ""
 "\n"
 "Commands:\n"
 msgstr ""
+"scalar [-C <direktori>] [-c <kunci>=<nilai>] perintah [<opsi>]\n"
+"\n"
+"Perintah:\n"
 
 #: send-pack.c
 msgid "unexpected flush packet while reading remote unpack status"
@@ -24774,7 +24811,7 @@ msgstr "merge: Tidak dapat menulis berkas indeks baru"
 #, c-format
 msgid ""
 "another 'rebase' process appears to be running; '%s.lock' already exists"
-msgstr ""
+msgstr "sepertinya proses 'rebase' lainnya berjalan; '%s.lock' sudah ada"
 
 #: sequencer.c
 #, c-format
@@ -25606,16 +25643,16 @@ msgstr "tidak dapat menamai ulang berkas sementara ke %s"
 
 #: transport-helper.c
 msgid "full write to remote helper failed"
-msgstr ""
+msgstr "gagal menulis penuh ke pembantu remote"
 
 #: transport-helper.c
 #, c-format
 msgid "unable to find remote helper for '%s'"
-msgstr ""
+msgstr "tidak dapat menemukan pembantu remote untuk '%s'"
 
 #: transport-helper.c
 msgid "can't dup helper output fd"
-msgstr ""
+msgstr "tidak dapat menipu penjelas berkas keluaran pembantu"
 
 #: transport-helper.c
 #, c-format
@@ -25623,120 +25660,122 @@ msgid ""
 "unknown mandatory capability %s; this remote helper probably needs newer "
 "version of Git"
 msgstr ""
+"kemampuan wajib %s tidak dikenal; pembantu remote ini sepertinya butuh versi "
+"Git baru"
 
 #: transport-helper.c
 msgid "this remote helper should implement refspec capability"
-msgstr ""
+msgstr "pembantu remote ini seharusnya menerapkan kemampuan spek referensi"
 
 #: transport-helper.c
 #, c-format
 msgid "%s unexpectedly said: '%s'"
-msgstr ""
+msgstr "%s tiba-tiba berkata: '%s'"
 
 #: transport-helper.c
 #, c-format
 msgid "%s also locked %s"
-msgstr ""
+msgstr "%s juga mengunci %s"
 
 #: transport-helper.c
 msgid "couldn't run fast-import"
-msgstr ""
+msgstr "tidak dapat menjalankan fast-import"
 
 #: transport-helper.c
 msgid "error while running fast-import"
-msgstr ""
+msgstr "kesalahan ketika menjalankan fast-import"
 
 #: transport-helper.c
 #, c-format
 msgid "could not read ref %s"
-msgstr ""
+msgstr "tidak dapat membaca referensi %s"
 
 #: transport-helper.c
 #, c-format
 msgid "unknown response to connect: %s"
-msgstr ""
+msgstr "tanggapan terhadap hubungan tidak dikenal: %s"
 
 #: transport-helper.c
 msgid "setting remote service path not supported by protocol"
-msgstr ""
+msgstr "menyetel jalur layanan remote tidak didukung oleh protokol"
 
 #: transport-helper.c
 msgid "invalid remote service path"
-msgstr ""
+msgstr "jalur layanan remote tidak valid"
 
 #: transport-helper.c transport.c
 msgid "operation not supported by protocol"
-msgstr ""
+msgstr "operasi tidak didukung oleh protokol"
 
 #: transport-helper.c
 #, c-format
 msgid "can't connect to subservice %s"
-msgstr ""
+msgstr "tidak dapat menghubungkan ke sublayanan %s"
 
 #: transport-helper.c transport.c
 msgid "--negotiate-only requires protocol v2"
-msgstr ""
+msgstr "--negotiate-only butuh protokol v2"
 
 #: transport-helper.c
 msgid "'option' without a matching 'ok/error' directive"
-msgstr ""
+msgstr "'option' tanpa pengarah 'ok/error' yang bersesuaian"
 
 #: transport-helper.c
 #, c-format
 msgid "expected ok/error, helper said '%s'"
-msgstr ""
+msgstr "ok/error diharapkan, pembantu berkata '%s'"
 
 #: transport-helper.c
 #, c-format
 msgid "helper reported unexpected status of %s"
-msgstr ""
+msgstr "pembantu melaporkan status %s yang tak diharapkan"
 
 #: transport-helper.c
 #, c-format
 msgid "helper %s does not support dry-run"
-msgstr ""
+msgstr "pembantu %s tidak mendukung latihan"
 
 #: transport-helper.c
 #, c-format
 msgid "helper %s does not support --signed"
-msgstr ""
+msgstr "pembantu %s tidak mendukung --signed"
 
 #: transport-helper.c
 #, c-format
 msgid "helper %s does not support --signed=if-asked"
-msgstr ""
+msgstr "pembantu %s tidak mendukung --signed=if-asked"
 
 #: transport-helper.c
 #, c-format
 msgid "helper %s does not support --atomic"
-msgstr ""
+msgstr "pembantu %s tidak mendukung --atomic"
 
 #: transport-helper.c
 #, c-format
 msgid "helper %s does not support --%s"
-msgstr ""
+msgstr "pembantu %s tidak mendukung --%s"
 
 #: transport-helper.c
 #, c-format
 msgid "helper %s does not support 'push-option'"
-msgstr ""
+msgstr "pembantu %s tidak mendukung 'push-option'"
 
 #: transport-helper.c
 msgid "remote-helper doesn't support push; refspec needed"
-msgstr ""
+msgstr "pembantu tidak mendukung pendorongan; spek referensi diperlukan"
 
 #: transport-helper.c
 #, c-format
 msgid "helper %s does not support 'force'"
-msgstr ""
+msgstr "pembantu %s tidak mendukung 'force'"
 
 #: transport-helper.c
 msgid "couldn't run fast-export"
-msgstr ""
+msgstr "tidak dapat menjalankan fast-export"
 
 #: transport-helper.c
 msgid "error while running fast-export"
-msgstr ""
+msgstr "kesalahan ketika menjalankan fast-export"
 
 #: transport-helper.c
 #, c-format
@@ -25744,104 +25783,106 @@ msgid ""
 "No refs in common and none specified; doing nothing.\n"
 "Perhaps you should specify a branch.\n"
 msgstr ""
+"Tidak ada kesamaan referensi dan tidak ada yang disebutkan; tidak melakuan\n"
+"apa-apa. Mungkin Anda perlu menyebutkan sebuah cabang.\n"
 
 #: transport-helper.c
 #, c-format
 msgid "unsupported object format '%s'"
-msgstr ""
+msgstr "format objek tidak didukung '%s'"
 
 #: transport-helper.c
 #, c-format
 msgid "malformed response in ref list: %s"
-msgstr ""
+msgstr "jawaban rusak di daftar referensi: %s"
 
 #: transport-helper.c
 #, c-format
 msgid "read(%s) failed"
-msgstr ""
+msgstr "read(%s) gagal"
 
 #: transport-helper.c
 #, c-format
 msgid "write(%s) failed"
-msgstr ""
+msgstr "write(%s) gagal"
 
 #: transport-helper.c
 #, c-format
 msgid "%s thread failed"
-msgstr ""
+msgstr "utas %s gagal"
 
 #: transport-helper.c
 #, c-format
 msgid "%s thread failed to join: %s"
-msgstr ""
+msgstr "utas %s gagal bergabung: %s"
 
 #: transport-helper.c
 #, c-format
 msgid "can't start thread for copying data: %s"
-msgstr ""
+msgstr "tidak dapat memulai utas untuk menyalin data: %s"
 
 #: transport-helper.c
 #, c-format
 msgid "%s process failed to wait"
-msgstr ""
+msgstr "proses %s gagal menunggu"
 
 #: transport-helper.c
 #, c-format
 msgid "%s process failed"
-msgstr ""
+msgstr "proses %s gagal"
 
 #: transport-helper.c
 msgid "can't start thread for copying data"
-msgstr ""
+msgstr "tidak dapat memulai utas untuk menyalin data"
 
 #: transport.c
 #, c-format
 msgid "Would set upstream of '%s' to '%s' of '%s'\n"
-msgstr ""
+msgstr "Akan menyetel hulu '%s' ke '%s' dari '%s'\n"
 
 #: transport.c
 #, c-format
 msgid "could not read bundle '%s'"
-msgstr ""
+msgstr "tidak dapat membaca bundel '%s'"
 
 #: transport.c
 #, c-format
 msgid "transport: invalid depth option '%s'"
-msgstr ""
+msgstr "transport: opsi kedalaman '%s' tidak valid"
 
 #: transport.c
 msgid "see protocol.version in 'git help config' for more details"
-msgstr ""
+msgstr "lihat protocol.version di 'git help config' untuk lebih lengkapnya"
 
 #: transport.c
 msgid "server options require protocol version 2 or later"
-msgstr ""
+msgstr "opsi peladen butuh protokol versi 2 atau lebih baru"
 
 #: transport.c
 msgid "server does not support wait-for-done"
-msgstr ""
+msgstr "peladen tidak mendukung wait-for-done"
 
 #: transport.c
 msgid "could not parse transport.color.* config"
-msgstr ""
+msgstr "tidak dapat menguraikan konfigurasi transport.color.*"
 
 #: transport.c
 msgid "support for protocol v2 not implemented yet"
-msgstr ""
+msgstr "dukungan untuk protokol v2 belum diterapkan"
 
 #: transport.c
 #, c-format
 msgid "unknown value for config '%s': %s"
-msgstr ""
+msgstr "nilai tidak dikenal untuk konfigurasi '%s': %s"
 
 #: transport.c
 #, c-format
 msgid "transport '%s' not allowed"
-msgstr ""
+msgstr "transportasi '%s' tidak diperbolehkan"
 
 #: transport.c
 msgid "git-over-rsync is no longer supported"
-msgstr ""
+msgstr "git-over-rsync tidak lagi didukung"
 
 #: transport.c
 #, c-format
@@ -25849,6 +25890,8 @@ msgid ""
 "The following submodule paths contain changes that can\n"
 "not be found on any remote:\n"
 msgstr ""
+"Jalur submodul berikut berisi perubahan yang tidak dapat ditemukan\n"
+"pada remote apapun:\n"
 
 #: transport.c
 #, c-format
@@ -25865,30 +25908,40 @@ msgid ""
 "to push them to a remote.\n"
 "\n"
 msgstr ""
+"\n"
+"Mohon coba\n"
+"\n"
+"\tgit push --recurse-submodules=on-demand\n"
+"\n"
+"atau berganti direktori ke jalur dan gunakan\n"
+"\n"
+"\tgit push\n"
+"untuk mendorong ke remote.\n"
+"\n"
 
 #: transport.c
 msgid "Aborting."
-msgstr ""
+msgstr "Membatalkan."
 
 #: transport.c
 msgid "failed to push all needed submodules"
-msgstr ""
+msgstr "gagal mendorong semua submodul yang dibutuhkan"
 
 #: tree-walk.c
 msgid "too-short tree object"
-msgstr ""
+msgstr "objek pohon terlalu pendek"
 
 #: tree-walk.c
 msgid "malformed mode in tree entry"
-msgstr ""
+msgstr "mode salah di entri pohon"
 
 #: tree-walk.c
 msgid "empty filename in tree entry"
-msgstr ""
+msgstr "nama berkas kosong di entri pohon"
 
 #: tree-walk.c
 msgid "too-short tree file"
-msgstr ""
+msgstr "berkas pohon terlalu pendek"
 
 #: unpack-trees.c
 #, c-format
@@ -26162,32 +26215,32 @@ msgstr "bilasan diharapkan setelah argumen pengambilan"
 
 #: urlmatch.c
 msgid "invalid URL scheme name or missing '://' suffix"
-msgstr ""
+msgstr "skema URL tidak valid atau kehilangan akhiran '://'"
 
 #: urlmatch.c
 #, c-format
 msgid "invalid %XX escape sequence"
-msgstr ""
+msgstr "urutan pelarian %XX tidak valid"
 
 #: urlmatch.c
 msgid "missing host and scheme is not 'file:'"
-msgstr ""
+msgstr "kehilangan host dan skema bukan 'file:'"
 
 #: urlmatch.c
 msgid "a 'file:' URL may not have a port number"
-msgstr ""
+msgstr "sebuah URL 'file:' tidak boleh punya nomor port"
 
 #: urlmatch.c
 msgid "invalid characters in host name"
-msgstr ""
+msgstr "karakter tidak valid pada nama host"
 
 #: urlmatch.c
 msgid "invalid port number"
-msgstr ""
+msgstr "nomor port tidak valid"
 
 #: urlmatch.c
 msgid "invalid '..' path segment"
-msgstr ""
+msgstr "segmen jalur '..' tidak valid"
 
 #: usage.c
 msgid "usage: "
@@ -26207,7 +26260,7 @@ msgstr "peringatan: "
 
 #: walker.c
 msgid "Fetching objects"
-msgstr ""
+msgstr "Mengambil objek"
 
 #: worktree.c
 #, c-format
@@ -26313,7 +26366,7 @@ msgstr "gagal menyetel setelan extensions.worktreeConfig"
 #: wrapper.c
 #, c-format
 msgid "could not setenv '%s'"
-msgstr ""
+msgstr "tidak dapat menyetel lingkungan (setenv) '%s'"
 
 #: wrapper.c
 #, c-format
@@ -26323,16 +26376,16 @@ msgstr "tidak dapat membuat '%s'"
 #: wrapper.c
 #, c-format
 msgid "could not open '%s' for reading and writing"
-msgstr ""
+msgstr "tidak dapat membuka '%s' untuk membaca dan menulis"
 
 #: wrapper.c
 #, c-format
 msgid "unable to access '%s'"
-msgstr ""
+msgstr "tidak dapat mengakses '%s'"
 
 #: wrapper.c
 msgid "unable to get current working directory"
-msgstr ""
+msgstr "tidak dapat mendapatkan direktori kerja saat ini"
 
 #: wt-status.c
 msgid "Unmerged paths:"
@@ -26749,11 +26802,11 @@ msgstr "sedang mendasarkan ulang; ke "
 
 #: wt-status.c
 msgid "HEAD detached at "
-msgstr ""
+msgstr "HEAD terlepas pada "
 
 #: wt-status.c
 msgid "HEAD detached from "
-msgstr ""
+msgstr "HEAD terlepas dari "
 
 #: wt-status.c
 msgid "Not currently on any branch."
@@ -26887,79 +26940,81 @@ msgid ""
 "Error: Your local changes to the following files would be overwritten by "
 "merge"
 msgstr ""
+"Kesalahan: Perubahan lokal Anda terhadap berkas berikut akan ditimpa oleh "
+"penggabungan"
 
 #: git-merge-octopus.sh
 msgid "Automated merge did not work."
-msgstr ""
+msgstr "Penggabungan otomatis tidak bekerja."
 
 #: git-merge-octopus.sh
 msgid "Should not be doing an octopus."
-msgstr ""
+msgstr "Seharusnya tidak melakukan gurita."
 
 #: git-merge-octopus.sh
 #, sh-format
 msgid "Unable to find common commit with $pretty_name"
-msgstr ""
+msgstr "Tidak dapat menemukan komit umum dengan $pretty_name"
 
 #: git-merge-octopus.sh
 #, sh-format
 msgid "Already up to date with $pretty_name"
-msgstr ""
+msgstr "Sudah terbaru dengan $pretty_name"
 
 #: git-merge-octopus.sh
 #, sh-format
 msgid "Fast-forwarding to: $pretty_name"
-msgstr ""
+msgstr "Memaju-cepat ke: $pretty_name"
 
 #: git-merge-octopus.sh
 #, sh-format
 msgid "Trying simple merge with $pretty_name"
-msgstr ""
+msgstr "Mencoba penggabungan sederhana dengan $pretty_name"
 
 #: git-merge-octopus.sh
 msgid "Simple merge did not work, trying automatic merge."
-msgstr ""
+msgstr "Penggabungan sederhana tidak berkerja, mencoba penggabungan otomatis."
 
 #: git-sh-setup.sh
 #, sh-format
 msgid "usage: $dashless $USAGE"
-msgstr ""
+msgstr "penggunaan: $dashless $USAGE"
 
 #: git-sh-setup.sh
 #, sh-format
 msgid "Cannot chdir to $cdup, the toplevel of the working tree"
-msgstr ""
+msgstr "tidak dapat berganti direktori ke $cdup, level atas dari pohon kerja"
 
 #: git-sh-setup.sh
 #, sh-format
 msgid "fatal: $program_name cannot be used without a working tree."
-msgstr ""
+msgstr "fatal: $program_name tidak dapat digunakan tanpa pohon kerja."
 
 #: git-sh-setup.sh
 msgid "Cannot rewrite branches: You have unstaged changes."
-msgstr ""
+msgstr "Tidak dapat menulis ulang cabang: Anda punya perubahan tak tergelar."
 
 #: git-sh-setup.sh
 #, sh-format
 msgid "Cannot $action: You have unstaged changes."
-msgstr ""
+msgstr "Tidak dapat $action: Anda punya perubahan tak tergelar."
 
 #: git-sh-setup.sh
 #, sh-format
 msgid "Cannot $action: Your index contains uncommitted changes."
-msgstr ""
+msgstr "Tidak dapat $action: Indeks Anda berisi perubahan tak terkomit."
 
 #: git-sh-setup.sh
 msgid "Additionally, your index contains uncommitted changes."
-msgstr ""
+msgstr "Selain itu, indeks Anda berisi perubahan tak terkomit."
 
 #: git-sh-setup.sh
 msgid "You need to run this command from the toplevel of the working tree."
-msgstr ""
+msgstr "Anda perlu menjalankan perintah ini dari level atas dari pohon kerja."
 
 #: git-sh-setup.sh
 msgid "Unable to determine absolute path of git directory"
-msgstr ""
+msgstr "Tidak dapat menentukan jalur absolut direktori git"
 
 #. TRANSLATORS: you can adjust this to align "git add -i" status menu
 #: git-add--interactive.perl
