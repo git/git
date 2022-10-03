@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2022, #09; Fri, 30)
-X-master-at: bcd6bc478adc4951d57ec597c44b12ee74bc88fb
-X-next-at: 84df46c1b469daf986023931247b98d22e07f24d
+Subject: What's cooking in git.git (Oct 2022, #01; Sun, 2)
+X-master-at: 3dcec76d9df911ed8321007b1d197c1a206dc164
+X-next-at: 74048e4d9e2b6a27a4fab355a907e0c38d172bfd
 
-What's cooking in git.git (Sep 2022, #09; Fri, 30)
+What's cooking in git.git (Oct 2022, #01; Sun, 2)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -13,16 +13,19 @@ release).  Commits prefixed with '-' are only in 'seen', and aren't
 considered "accepted" at all.  A topic without enough support may be
 discarded after a long period of no activity.
 
-The -rc2 has been tagged for this cycle.  People are free to discuss
-topics that has no relevance to the upcoming release, but we would
-appreciate if they instead concentrated on finding and fixing recent
-regressions in the upcoming release.  Even though I may be replacing
-topics in 'seen' with their new iterations, I may not be picking up
-patches on new topics to 'seen', until the final around the
-beginning of the next month (cf. https://tinyurl.com/gitCal).  These
-patches are welcome to come back in a more polished form after that
-happens (read: discussions on them are not forbidden. just allow me
-to leave my tree less distracted by new topics).
+Git 2.38 has been tagged.  There are many topics that have been
+cooking in 'next' and should be ready to graduate, but let's first
+see if any brown paper bag regressions are reported, which may
+require a quick maintenance track update, before merging them down.
+
+The cycle toward 2.39 will start after that for real.  With holidays
+near the end of November in some parts of the world and of December
+in many parts of the world, traditionally cycles in Q4 have been
+short ones.  The 2.39 cycle is planned to last 9 weeks, and I will
+go offline at around week #4 for a few weeks, during which an
+interim maintainer will take over the daily operation of the
+project, until I come back and receive the baton again.  Consider it
+a bus-factor preparedness exercise.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -55,57 +58,15 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
-* jc/branch-description-unset (2022-09-30) 1 commit
- - branch: do not fail a no-op --edit-desc
+* jc/tmp-objdir (2022-09-30) 1 commit
+ - tmp-objdir: skip clean up when handling a signal
 
- "GIT_EDITOR=: git branch --edit-description" resulted in failure,
- which has been corrected.
+ The code to clean temporary object directories (used for
+ quarantine) tried to remove them inside its signal handler, which
+ was a no-no.
 
- Needs review.
- source: <xmqqmtagka8x.fsf@gitster.g>
-
-
-* rj/branch-edit-desc-unborn (2022-09-27) 1 commit
- - branch: description for non-existent branch errors
-
- "git branch --edit-description" on an unborh branch misleadingly
- said that no such branch exists, which has been corrected.
-
- Expecting a reroll to update proposed log message and add tests.
- cf. <xmqqleq6ovh4.fsf@gitster.g>
- source: <858edf12-67b1-5e2c-dd2e-3eb476530803@gmail.com>
-
-
-* ab/test-malloc-with-sanitize-leak (2022-09-29) 1 commit
-  (merged to 'next' on 2022-09-29 at b6fef2dd1f)
- + test-lib: have SANITIZE=leak imply TEST_NO_MALLOC_CHECK
-
- Test fix.
-
- Will cook in 'next'.
- source: <patch-1.1-e31681731b7-20220928T095041Z-avarab@gmail.com>
-
-
-* ah/branch-autosetupmerge-grammofix (2022-09-28) 1 commit
-  (merged to 'next' on 2022-09-29 at 622b75f0da)
- + push: improve grammar of branch.autoSetupMerge advice
-
- Fix grammar of a message introduced in previous round.
-
- Will cook in 'next'.
- source: <20220928055811.777227-1-alexhenrie24@gmail.com>
-
-
-* jt/promisor-remote-fetch-tweak (2022-09-29) 2 commits
- - promisor-remote: die upon failing fetch
- - promisor-remote: remove a return value
-
- Remove error detection from a function that fetches from promisor
- remotes, and make it die when such a fetch fails to bring all the
- requested objects, to give an early failure to various operations.
-
- Needs review.
- source: <cover.1664316642.git.jonathantanmy@google.com>
+ Will merge to 'next'?
+ source: <pull.1348.v4.git.git.1664570831583.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -147,23 +108,76 @@ Release tarballs are available at:
 
 
 * cw/remote-object-info (2022-08-13) 7 commits
- - SQUASH???
- - cat-file: add remote-object-info to batch-command
- - transport: add client support for object-info
- - serve: advertise object-info feature
- - protocol-caps: initialization bug fix
- - fetch-pack: move fetch initialization
- - fetch-pack: refactor packet writing
+ . SQUASH???
+ . cat-file: add remote-object-info to batch-command
+ . transport: add client support for object-info
+ . serve: advertise object-info feature
+ . protocol-caps: initialization bug fix
+ . fetch-pack: move fetch initialization
+ . fetch-pack: refactor packet writing
 
  A client component to talk with the object-info endpoint.
 
  Expecting a reroll.
+ Under SANITIZE=address, t1006-cat-file.sh finds a breakage.
  cf. <20220728230210.2952731-1-calvinwan@google.com>
  cf. <CAFySSZDvgwbbHCHfyuaqX3tKsr-GjJ9iihygg6rNNe46Ys7_EA@mail.gmail.com>
  source: <20220728230210.2952731-1-calvinwan@google.com>
 
 --------------------------------------------------
 [Cooking]
+
+* jc/branch-description-unset (2022-09-30) 1 commit
+ - branch: do not fail a no-op --edit-desc
+
+ "GIT_EDITOR=: git branch --edit-description" resulted in failure,
+ which has been corrected.
+
+ Will merge to 'next'?
+ source: <xmqqmtagka8x.fsf@gitster.g>
+
+
+* rj/branch-edit-desc-unborn (2022-09-30) 1 commit
+ - branch: description for non-existent branch errors
+
+ "git branch --edit-description" on an unborh branch misleadingly
+ said that no such branch exists, which has been corrected.
+
+ Will merge to 'next'?
+ source: <930ff836-a5c4-0e85-517d-39645f00cd31@gmail.com>
+
+
+* ab/test-malloc-with-sanitize-leak (2022-09-29) 1 commit
+  (merged to 'next' on 2022-09-29 at b6fef2dd1f)
+ + test-lib: have SANITIZE=leak imply TEST_NO_MALLOC_CHECK
+
+ Test fix.
+
+ Will cook in 'next'.
+ source: <patch-1.1-e31681731b7-20220928T095041Z-avarab@gmail.com>
+
+
+* ah/branch-autosetupmerge-grammofix (2022-09-28) 1 commit
+  (merged to 'next' on 2022-09-29 at 622b75f0da)
+ + push: improve grammar of branch.autoSetupMerge advice
+
+ Fix grammar of a message introduced in previous round.
+
+ Will cook in 'next'.
+ source: <20220928055811.777227-1-alexhenrie24@gmail.com>
+
+
+* jt/promisor-remote-fetch-tweak (2022-09-29) 2 commits
+ - promisor-remote: die upon failing fetch
+ - promisor-remote: remove a return value
+
+ Remove error detection from a function that fetches from promisor
+ remotes, and make it die when such a fetch fails to bring all the
+ requested objects, to give an early failure to various operations.
+
+ Needs review.
+ source: <cover.1664316642.git.jonathantanmy@google.com>
+
 
 * rj/ref-filter-get-head-description-leakfix (2022-09-26) 1 commit
   (merged to 'next' on 2022-09-29 at d05d052eb1)
@@ -419,22 +433,19 @@ Release tarballs are available at:
  source: <20220915160659.126441-1-gitster@pobox.com>
 
 
-* rs/diff-caret-bang-with-parents (2022-09-15) 6 commits
- - revision: add parents after child for ^!
- - revision: rename add_parents_only() to add_nth_parent()
- - revision: factor out add_parents()
- - revision: factor out add_parent()
- - revision: factor out get_commit()
+* rs/diff-caret-bang-with-parents (2022-10-01) 3 commits
+ - diff: support ^! for merges
+ - revisions.txt: unspecify order of resolved parts of ^!
  - revision: use strtol_i() for exclude_parent
 
  "git diff rev^!" did not show combined diff to go to the rev from
  its parents.
 
  Needs review.
- source: <ba6eea28-fb3a-b376-2529-351727c02f1a@web.de>
+ source: <16c49d20-cafc-4b48-3c6b-e11c74c29abb@web.de>
 
 
-* ab/doc-synopsis-and-cmd-usage (2022-09-28) 35 commits
+* ab/doc-synopsis-and-cmd-usage (2022-09-30) 36 commits
  - tests: assert consistent whitespace in -h output
  - tests: start asserting that *.txt SYNOPSIS matches -h output
  - doc txt & -h consistency: make "worktree" consistent
@@ -458,17 +469,18 @@ Release tarballs are available at:
  - doc txt & -h consistency: use "<options>", not "<options>..."
  - stash doc SYNOPSIS & -h: correct padding around "[]()"
  - doc txt & -h consistency: correct padding around "[]()"
- - doc txt & -h consistency: add missing "]" to bugreport "-h"
+ - doc txt & -h consistency: balance unbalanced "[" and "]"
  - doc txt & -h consistency: add "-z" to cat-file "-h"
  - doc txt & -h consistency: fix incorrect alternates syntax
  - doc txt & -h consistency: word-wrap
+ - doc SYNOPSIS & -h: word-wrap
  - built-ins: consistently add "\n" between "usage" and options
  - doc SYNOPSIS & -h: fix incorrect alternates syntax
  - doc SYNOPSIS: consistently use ' for commands
  - doc SYNOPSIS: don't use ' for subcommands
  - blame: use a more detailed usage_msg_optf() error on bad -L
  - bundle: define subcommand -h in terms of command -h
- - builtin/bundle.c: use \t, not fix indentation 2-SP indentation
+ - builtin/bundle.c: indent with tabs
  - CodingGuidelines: update and clarify command-line conventions
 
  The short-help text shown by "git cmd -h" and the synopsis text
@@ -476,7 +488,7 @@ Release tarballs are available at:
  consistent.
 
  Needs review.
- source: <cover-v2-00.35-00000000000-20220928T082458Z-avarab@gmail.com>
+ source: <cover-v3-00.36-00000000000-20220930T180414Z-avarab@gmail.com>
 
 
 * ab/coccicheck-incremental (2022-08-31) 9 commits
