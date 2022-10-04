@@ -35,7 +35,19 @@ static inline uint64_t default_bswap64(uint64_t val)
 #undef bswap32
 #undef bswap64
 
-#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
+/**
+ * __has_builtin is available since Clang 10 and GCC 10.
+ * Below is a fallback for older compilers.
+ */
+#ifndef __has_builtin
+	#define __has_builtin(x) 0
+#endif
+
+#if __has_builtin(__builtin_bswap32) && __has_builtin(__builtin_bswap64)
+#define bswap32(x) __builtin_bswap32((x))
+#define bswap64(x) __builtin_bswap64((x))
+
+#elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
 
 #define bswap32 git_bswap32
 static inline uint32_t git_bswap32(uint32_t x)
