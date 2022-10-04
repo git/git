@@ -723,6 +723,10 @@ ifeq ($(uname_S),MINGW)
 		prefix = /mingw64
 		HOST_CPU = x86_64
 		BASIC_LDFLAGS += -Wl,--pic-executable,-e,mainCRTStartup
+        else ifeq (CLANGARM64,$(MSYSTEM))
+		prefix = /clangarm64
+		HOST_CPU = aarch64
+		BASIC_LDFLAGS += -Wl,--pic-executable,-e,mainCRTStartup
         else
 		COMPAT_CFLAGS += -D_USE_32BIT_TIME_T
 		BASIC_LDFLAGS += -Wl,--large-address-aware
