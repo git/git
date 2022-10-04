@@ -39,6 +39,10 @@ jobs:
             aggregate: true
           - label: openssh
             feed: https://github.com/openssh/openssh-portable/tags.atom
+          - label: libfido2
+            feed: https://github.com/Yubico/libfido2/tags.atom
+          - label: libcbor
+            feed: https://github.com/PJK/libcbor/tags.atom
           - label: openssl
             feed: https://github.com/openssl/openssl/tags.atom
             title-pattern: ^(?!.*alpha)
