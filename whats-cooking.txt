@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2022, #01; Sun, 2)
+Subject: What's cooking in git.git (Oct 2022, #02; Thu, 6)
 X-master-at: 3dcec76d9df911ed8321007b1d197c1a206dc164
 X-next-at: 74048e4d9e2b6a27a4fab355a907e0c38d172bfd
 
-What's cooking in git.git (Oct 2022, #01; Sun, 2)
+What's cooking in git.git (Oct 2022, #02; Thu, 6)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -13,19 +13,10 @@ release).  Commits prefixed with '-' are only in 'seen', and aren't
 considered "accepted" at all.  A topic without enough support may be
 discarded after a long period of no activity.
 
-Git 2.38 has been tagged.  There are many topics that have been
-cooking in 'next' and should be ready to graduate, but let's first
-see if any brown paper bag regressions are reported, which may
-require a quick maintenance track update, before merging them down.
-
-The cycle toward 2.39 will start after that for real.  With holidays
-near the end of November in some parts of the world and of December
-in many parts of the world, traditionally cycles in Q4 have been
-short ones.  The 2.39 cycle is planned to last 9 weeks, and I will
-go offline at around week #4 for a few weeks, during which an
-interim maintainer will take over the daily operation of the
-project, until I come back and receive the baton again.  Consider it
-a bus-factor preparedness exercise.
+It seems that there aren't many regressions we need to fix
+immediately in the most recent release, so let's start merging some
+topics that have already been cooking in 'next' down to 'master' and
+also some topics that were kept in 'seen' down to 'next' soonish.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -58,15 +49,130 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
-* jc/tmp-objdir (2022-09-30) 1 commit
- - tmp-objdir: skip clean up when handling a signal
+* jk/sequencer-missing-author-name-check (2022-10-03) 1 commit
+ - sequencer: detect author name errors in read_author_script()
 
- The code to clean temporary object directories (used for
- quarantine) tried to remove them inside its signal handler, which
- was a no-no.
+ Typofix in code.
 
- Will merge to 'next'?
- source: <pull.1348.v4.git.git.1664570831583.gitgitgadget@gmail.com>
+ Will merge to 'next'.
+ source: <YzqhEcTDwMwa8dQX@coredump.intra.peff.net>
+
+
+* pw/mailinfo-b-fix (2022-10-03) 1 commit
+ - mailinfo -b: fix an out of bounds access
+
+ Fix a logic in "mailinfo -b" that miscomputed the length of a
+ substring, which lead to an out-of-bounds access.
+
+ Will merge to 'next'.
+
+
+* pw/ssh-sign-report-errors (2022-10-05) 1 commit
+ - ssh signing: return an error when signature cannot be read
+
+ The codepath to sign learned to report errors when it fails to read
+ from "ssh-keygen".
+
+ Will merge to 'next'.
+ source: <pull.1371.v2.git.1664877694430.gitgitgadget@gmail.com>
+
+
+* ab/run-hook-api-cleanup (2022-10-05) 15 commits
+ - run-command.c: don't copy "ungroup" to "struct parallel_processes"
+ - run-command.c: don't copy *_fn to "struct parallel_processes"
+ - run-command API: move *_tr2() users to "run_processes_parallel()"
+ - run-command API: have run_process_parallel() take an "opts" struct
+ - run-command API: make run_process_parallel{,_tr2}() thin wrappers
+ - run-command API: add nascent "struct run_process_parallel_opts"
+ - run-command.c: add an initializer for "struct parallel_processes"
+ - run-command API: don't fall back on online_cpus()
+ - run-command API: make "jobs" parameter an "unsigned int"
+ - run-command API: have "run_processes_parallel{,_tr2}()" return void
+ - run-command tests: use "return", not "exit"
+ - run-command test helper: use "else if" pattern
+ - run-command tests: test stdout of run_command_parallel()
+ - submodule tests: reset "trace.out" between "grep" invocations
+ - hook tests: fix redirection logic error in 96e7225b310
+
+ Move a global variable added as a hack during regression fixes to
+ its proper place in the API.
+
+ Needs review.
+ source: <cover-00.15-00000000000-20220930T111343Z-avarab@gmail.com>
+
+
+* nb/doc-mergetool-typofix (2022-10-05) 1 commit
+ - mergetool.txt: typofix 'overwriten' -> 'overwritten'
+
+ Typofix.
+
+ Will merge to 'next'.
+ source: <pull.1350.git.git.1664844924663.gitgitgadget@gmail.com>
+
+
+* rs/bisect-start-leakfix (2022-10-05) 1 commit
+ - bisect--helper: plug strvec leak in bisect_start()
+
+ Code clean-up that results in plugging a leak.
+
+ Expecting a reroll.
+ cf. <04d393cc-d8c7-ddf7-b235-12082f81c560@web.de>
+ source: <5c6a4c30-d454-51b6-ec57-9af036b9c4e0@web.de>
+
+
+* rs/gc-pack-refs-simplify (2022-10-05) 1 commit
+ - gc: simplify maintenance_task_pack_refs()
+
+ Code clean-up.
+
+ Will merge to 'next'.
+ source: <ab33f72e-d552-7bd7-bf04-3c476d32b5b6@web.de>
+
+
+* rs/test-httpd-in-C-locale (2022-10-06) 1 commit
+ - t/lib-httpd: pass LANG and LC_ALL to Apache
+
+ Force C locale while running tests around httpd to make sure we can
+ find expected error messages in the log.
+
+ Will merge to 'next'.
+ source: <a1699375-c660-13ab-42fb-26a8afe4c376@web.de>
+
+
+* ab/unused-annotation (2022-10-05) 1 commit
+ - git-compat-util.h: GCC deprecated message arg only in GCC 4.5+
+
+ source: <20221005221928.703750-1-asedeno@google.com>
+
+
+* dd/document-runtime-prefix-better (2022-10-05) 1 commit
+ - Makefile: clarify runtime relative gitexecdir
+
+ source: <20221006013205.15015-1-congdanhqx@gmail.com>
+
+
+* jk/cleanup-callback-parameters (2022-10-06) 4 commits
+ - attr: drop DEBUG_ATTR code
+ - commit: avoid writing to global in option callback
+ - multi-pack-index: avoid writing to global in option callback
+ - test-submodule: inline resolve_relative_url() function
+
+ Code clean-up.
+
+ Will merge to 'next'.
+ source: <Yz7Tjy7Rh8cXVxYQ@coredump.intra.peff.net>
+ source: <Yz7UhYXvNl6+1GbZ@coredump.intra.peff.net>
+
+
+* pw/test-todo (2022-10-06) 3 commits
+ - test_todo: allow [verbose] test as the command
+ - test_todo: allow [!] grep as the command
+ - tests: add test_todo() to mark known breakages
+
+ RFC for test framework improvement.
+
+ Needs review.
+ source: <pull.1374.git.1665068476.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -127,6 +233,17 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* jc/tmp-objdir (2022-09-30) 1 commit
+ - tmp-objdir: skip clean up when handling a signal
+
+ The code to clean temporary object directories (used for
+ quarantine) tried to remove them inside its signal handler, which
+ was a no-no.
+
+ Will merge to 'next'?
+ source: <pull.1348.v4.git.git.1664570831583.gitgitgadget@gmail.com>
+
+
 * jc/branch-description-unset (2022-09-30) 1 commit
  - branch: do not fail a no-op --edit-desc
 
@@ -153,7 +270,7 @@ Release tarballs are available at:
 
  Test fix.
 
- Will cook in 'next'.
+ Will merge to 'master'?
  source: <patch-1.1-e31681731b7-20220928T095041Z-avarab@gmail.com>
 
 
@@ -163,11 +280,11 @@ Release tarballs are available at:
 
  Fix grammar of a message introduced in previous round.
 
- Will cook in 'next'.
+ Will merge to 'master'?
  source: <20220928055811.777227-1-alexhenrie24@gmail.com>
 
 
-* jt/promisor-remote-fetch-tweak (2022-09-29) 2 commits
+* jt/promisor-remote-fetch-tweak (2022-10-05) 2 commits
  - promisor-remote: die upon failing fetch
  - promisor-remote: remove a return value
 
@@ -175,8 +292,9 @@ Release tarballs are available at:
  remotes, and make it die when such a fetch fails to bring all the
  requested objects, to give an early failure to various operations.
 
- Needs review.
- source: <cover.1664316642.git.jonathantanmy@google.com>
+ Will merge to 'next'?
+ Can somebody give a quick read on the test part of the patch?
+ source: <cover.1664917853.git.jonathantanmy@google.com>
 
 
 * rj/ref-filter-get-head-description-leakfix (2022-09-26) 1 commit
@@ -185,7 +303,7 @@ Release tarballs are available at:
 
  Leakfix.
 
- Will cook in 'next'.
+ Will merge to 'master'?
  source: <6ff29e96-7f8d-c354-dced-b1b363e54467@gmail.com>
 
 
@@ -199,7 +317,7 @@ Release tarballs are available at:
  "git maintenance unregister" in a repository that is already been
  unregistered reported an error.
 
- Will cook in 'next'.
+ Will merge to 'master'?
  source: <pull.1358.v4.git.1664287021.gitgitgadget@gmail.com>
 
 
@@ -210,7 +328,7 @@ Release tarballs are available at:
  "git clone" did not like to see the "--bare" and the "--origin"
  options used together without a good reason.
 
- Will cook in 'next'.
+ Will merge to 'master'?
  source: <YyvzVdfQVdysvMp2@coredump.intra.peff.net>
 
 
@@ -223,7 +341,7 @@ Release tarballs are available at:
  "git fsck" failed to release contents of tree objects already used
  from the memory, which has been fixed.
 
- Will cook in 'next'.
+ Will merge to 'master'?
  source: <Yyw0PSVe3YTQGgRS@coredump.intra.peff.net>
 
 
@@ -234,7 +352,7 @@ Release tarballs are available at:
  "git remote rename" failed to rename a remote without fetch
  refspec, which has been corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'?
  source: <YyvzqZ5tmI0UdRAW@coredump.intra.peff.net>
 
 
@@ -247,7 +365,7 @@ Release tarballs are available at:
  merge result tree object, which it failed (which is not wrong) and
  led to a segfault (which is bad), which has been corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'?
  source: <pull.1362.v5.git.1664350162.gitgitgadget@gmail.com>
 
 
@@ -261,7 +379,7 @@ Release tarballs are available at:
  description, but a few died upon seeing them.  The latter were
  taught to ignore them, too
 
- Will cook in 'next'.
+ Will merge to 'master'?
  source: <pull.1363.git.1663865974.gitgitgadget@gmail.com>
 
 
@@ -273,7 +391,7 @@ Release tarballs are available at:
 
  Prepare for GNU [ef]grep that throw warning of their uses.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <pull.1338.git.git.1663805905554.gitgitgadget@gmail.com>
 
 
@@ -284,7 +402,7 @@ Release tarballs are available at:
  The codepath that reads from the index v4 had unaligned memory
  accesses, which has been corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <pull.1366.v2.git.1664385541084.gitgitgadget@gmail.com>
 
 
@@ -298,7 +416,7 @@ Release tarballs are available at:
 
  Prepare for GNU [ef]grep that throw warning of their uses.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <cover.1663765176.git.congdanhqx@gmail.com>
 
 
@@ -315,7 +433,7 @@ Release tarballs are available at:
  "git multi-pack-index repack/expire" used to repack unreachable
  cruft into a new pack, which have been corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'?
  cf. <63a1c3d4-eff3-af10-4263-058c88e74594@github.com>
  source: <cover.1663638929.git.me@ttaylorr.com>
 
@@ -326,7 +444,7 @@ Release tarballs are available at:
 
  Fix messages incorrectly marked for translation.
 
- Will cook in 'next'.
+ Will merge to 'master'?
  source: <20220920050709.326359-1-alexhenrie24@gmail.com>
 
 
@@ -338,7 +456,7 @@ Release tarballs are available at:
 
  Code clean-up.
 
- Will cook in 'next'.
+ Will merge to 'master'?
  source: <20220914193102.5275-1-sorganov@gmail.com>
 
 
@@ -349,7 +467,7 @@ Release tarballs are available at:
  "git rebase -i" can mistakenly attempt to apply a fixup to a commit
  itself, which has been corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'?
  source: <20220924222904.1784975-1-aclopte@gmail.com>
 
 
@@ -359,7 +477,7 @@ Release tarballs are available at:
 
  Source file shuffling.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <pull.1353.v4.git.1663598215154.gitgitgadget@gmail.com>
 
 
@@ -369,11 +487,11 @@ Release tarballs are available at:
 
  Code and semantics cleaning.
 
- Will cook in 'next'.
+ Will merge to 'master'?
  source: <pull.1325.v2.git.git.1663605291172.gitgitgadget@gmail.com>
 
 
-* ed/fsmonitor-on-networked-macos (2022-09-28) 6 commits
+* ed/fsmonitor-on-networked-macos (2022-10-05) 6 commits
  - fsmonitor: add documentation for allowRemote and socketDir options
  - fsmonitor: check for compatability before communicating with fsmonitor
  - fsmonitor: deal with synthetic firmlinks on macOS
@@ -384,8 +502,8 @@ Release tarballs are available at:
  By default, use of fsmonitor on a repository on networked
  filesystem is disabled. Add knobs to make it workable on macOS.
 
- Will merge to 'next'?
- source: <pull.1326.v14.git.1664395931.gitgitgadget@gmail.com>
+ Will merge to 'next'.
+ source: <pull.1326.v15.git.1664904751.gitgitgadget@gmail.com>
 
 
 * rj/branch-edit-description-with-nth-checkout (2022-09-12) 2 commits
@@ -429,7 +547,7 @@ Release tarballs are available at:
  Documentation on various Boolean GIT_* environment variables have
  been clarified.
 
- Will cook in 'next'.
+ Will merge to 'master'?
  source: <20220915160659.126441-1-gitster@pobox.com>
 
 
@@ -445,7 +563,7 @@ Release tarballs are available at:
  source: <16c49d20-cafc-4b48-3c6b-e11c74c29abb@web.de>
 
 
-* ab/doc-synopsis-and-cmd-usage (2022-09-30) 36 commits
+* ab/doc-synopsis-and-cmd-usage (2022-10-05) 34 commits
  - tests: assert consistent whitespace in -h output
  - tests: start asserting that *.txt SYNOPSIS matches -h output
  - doc txt & -h consistency: make "worktree" consistent
@@ -465,7 +583,7 @@ Release tarballs are available at:
  - doc txt & -h consistency: make output order consistent
  - doc txt & -h consistency: add or fix optional "--" syntax
  - doc txt & -h consistency: fix mismatching labels
- - t/helper/test-proc-receive.c: use "<options>", not "<options>..."
+ - doc SYNOPSIS & -h: use "-" to separate words in labels, not "_"
  - doc txt & -h consistency: use "<options>", not "<options>..."
  - stash doc SYNOPSIS & -h: correct padding around "[]()"
  - doc txt & -h consistency: correct padding around "[]()"
@@ -473,22 +591,20 @@ Release tarballs are available at:
  - doc txt & -h consistency: add "-z" to cat-file "-h"
  - doc txt & -h consistency: fix incorrect alternates syntax
  - doc txt & -h consistency: word-wrap
- - doc SYNOPSIS & -h: word-wrap
  - built-ins: consistently add "\n" between "usage" and options
- - doc SYNOPSIS & -h: fix incorrect alternates syntax
  - doc SYNOPSIS: consistently use ' for commands
  - doc SYNOPSIS: don't use ' for subcommands
- - blame: use a more detailed usage_msg_optf() error on bad -L
  - bundle: define subcommand -h in terms of command -h
  - builtin/bundle.c: indent with tabs
  - CodingGuidelines: update and clarify command-line conventions
+ - tests: assert *.txt SYNOPSIS and -h output
 
  The short-help text shown by "git cmd -h" and the synopsis text
  shown at the beginning of "git help cmd" have been made more
  consistent.
 
  Needs review.
- source: <cover-v3-00.36-00000000000-20220930T180414Z-avarab@gmail.com>
+ source: <cover-v4-00.34-00000000000-20221004T132211Z-avarab@gmail.com>
 
 
 * ab/coccicheck-incremental (2022-08-31) 9 commits
@@ -543,7 +659,7 @@ Release tarballs are available at:
  "git grep" learned to expand the sparse-index more lazily and on
  demand in a sparse checkout.
 
- Will cook in 'next'.
+ Will merge to 'master'?
  source: <20220923041842.27817-2-shaoxuan.yuan02@gmail.com>
 
 
@@ -554,12 +670,12 @@ Release tarballs are available at:
  With a bit of header twiddling, use the native regexp library on
  macOS instead of the compat/ one.
 
- Will cook in 'next'.
- cf. <xmqqzgf389k9.fsf@gitster.g>
+ Will merge to 'master'.
  source: <20220826085815.2771102-1-dds@aueb.gr>
 
 
-* ds/bundle-uri-3 (2022-09-09) 10 commits
+* ds/bundle-uri-3 (2022-10-05) 10 commits
+ - bundle-uri: suppress stderr from remote-https
  - bundle-uri: fetch a list of bundles
  - bundle-uri: limit recursion depth for bundle lists
  - bundle-uri: parse bundle list in config format
@@ -568,7 +684,6 @@ Release tarballs are available at:
  - bundle-uri: create base key-value pair parsing
  - bundle-uri: create bundle_list struct and helpers
  - bundle-uri: use plain string in find_temp_filename()
- - bundle-uri: short-circuit capability parsing
  - Merge branch 'ds/bundle-uri-clone' into ds/bundle-uri-3
 
  Define the logical elements of a "bundle list", data structure to
@@ -576,7 +691,7 @@ Release tarballs are available at:
  them.
 
  Needs review.
- source: <pull.1333.v2.git.1662734015.gitgitgadget@gmail.com>
+ source: <pull.1333.v3.git.1664886860.gitgitgadget@gmail.com>
 
 
 * js/cmake-updates (2022-08-24) 5 commits
