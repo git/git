@@ -8,6 +8,10 @@ real-world setup that confirms we catch this in practice.
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-pack.sh
 
+test_expect_success 'setup' '
+	git config --global protocol.file.allow always
+'
+
 test_expect_success 'check names' '
 	cat >expect <<-\EOF &&
 	valid

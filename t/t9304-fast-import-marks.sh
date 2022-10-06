@@ -25,6 +25,7 @@ test_expect_success 'import with large marks file' '
 '
 
 test_expect_success 'setup dump with submodule' '
+	test_config_global protocol.file.allow always &&
 	git submodule add "$PWD" sub &&
 	git commit -m "add submodule" &&
 	git fast-export HEAD >dump
