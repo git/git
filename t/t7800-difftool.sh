@@ -636,6 +636,7 @@ test_expect_success 'difftool --no-symlinks detects conflict ' '
 
 test_expect_success 'difftool properly honors gitlink and core.worktree' '
 	test_when_finished rm -rf submod/ule &&
+	test_config_global protocol.file.allow always &&
 	git submodule add ./. submod/ule &&
 	test_config -C submod/ule diff.tool checktrees &&
 	test_config -C submod/ule difftool.checktrees.cmd '\''

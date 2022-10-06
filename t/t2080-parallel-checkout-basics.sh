@@ -41,6 +41,8 @@ TEST_NO_CREATE_REPO=1
 #  -                  m/m (file)
 #
 test_expect_success 'setup repo for checkout with various types of changes' '
+	test_config_global protocol.file.allow always &&
+
 	git init sub &&
 	(
 		cd sub &&
@@ -140,6 +142,7 @@ do
 	esac
 
 	test_expect_success "$mode checkout on clone" '
+		test_config_global protocol.file.allow always &&
 		repo=various_${mode}_clone &&
 		set_checkout_config $workers $threshold &&
 		test_checkout_workers $expected_workers \

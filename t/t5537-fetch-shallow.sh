@@ -162,6 +162,8 @@ test_expect_success 'fetch --update-shallow' '
 '
 
 test_expect_success 'fetch --update-shallow into a repo with submodules' '
+	test_config_global protocol.file.allow always &&
+
 	git init a-submodule &&
 	test_commit -C a-submodule foo &&
 
