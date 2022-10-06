@@ -14,6 +14,10 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
+test_expect_success 'setup - enable local submodules' '
+	git config --global protocol.file.allow always
+'
+
 test_expect_success 'submodule deinit works on empty repository' '
 	git submodule deinit --all
 '

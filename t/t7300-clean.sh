@@ -480,6 +480,7 @@ test_expect_success 'should not clean submodules' '
 		git init &&
 		test_commit msg hello.world
 	) &&
+	test_config_global protocol.file.allow always &&
 	git submodule add ./repo/.git sub1 &&
 	git commit -m "sub1" &&
 	git branch before_sub2 &&
