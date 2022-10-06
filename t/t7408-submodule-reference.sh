@@ -17,6 +17,10 @@ test_alternate_is_used () {
 	test_cmp expect actual
 }
 
+test_expect_success 'setup' '
+	git config --global protocol.file.allow always
+'
+
 test_expect_success 'preparing first repository' '
 	test_create_repo A &&
 	(

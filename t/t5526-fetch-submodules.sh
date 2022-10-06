@@ -41,6 +41,7 @@ add_upstream_commit() {
 }
 
 test_expect_success setup '
+	git config --global protocol.file.allow always &&
 	mkdir deepsubmodule &&
 	(
 		cd deepsubmodule &&
