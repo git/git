@@ -52,6 +52,10 @@ then
 fi
 test_submodule_switch_func "git_pull_noff"
 
+test_expect_success 'setup' '
+	git config --global protocol.file.allow always
+'
+
 test_expect_success 'pull --recurse-submodule setup' '
 	test_create_repo child &&
 	test_commit -C child bar &&
