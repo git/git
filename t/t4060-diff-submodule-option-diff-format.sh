@@ -759,9 +759,9 @@ test_expect_success 'diff --submodule=diff with .git file' '
 '
 
 test_expect_success 'setup nested submodule' '
-	git submodule add -f ./sm2 &&
+	git -c protocol.file.allow=always submodule add -f ./sm2 &&
 	git commit -a -m "add sm2" &&
-	git -C sm2 submodule add ../sm2 nested &&
+	git -c protocol.file.allow=always -C sm2 submodule add ../sm2 nested &&
 	git -C sm2 commit -a -m "nested sub" &&
 	head10=$(git -C sm2 rev-parse --short --verify HEAD)
 '

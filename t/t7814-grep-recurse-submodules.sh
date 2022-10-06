@@ -193,6 +193,7 @@ test_expect_success !MINGW 'grep recurse submodule colon in name' '
 	git -C "su:b" commit -m "add fi:le" &&
 	test_tick &&
 
+	test_config_global protocol.file.allow always &&
 	git -C parent submodule add "../su:b" "su:b" &&
 	git -C parent commit -m "add submodule" &&
 	test_tick &&
@@ -227,6 +228,7 @@ test_expect_success 'grep history with moved submoules' '
 	git -C sub commit -m "add file" &&
 	test_tick &&
 
+	test_config_global protocol.file.allow always &&
 	git -C parent submodule add ../sub dir/sub &&
 	git -C parent commit -m "add submodule" &&
 	test_tick &&
@@ -271,6 +273,7 @@ test_expect_success 'grep using relative path' '
 	mkdir parent/src &&
 	echo "(1|2)d(3|4)" >parent/src/file2 &&
 	git -C parent add src/file2 &&
+	test_config_global protocol.file.allow always &&
 	git -C parent submodule add ../sub &&
 	git -C parent commit -m "add files and submodule" &&
 	test_tick &&
@@ -313,6 +316,7 @@ test_expect_success 'grep from a subdir' '
 	mkdir parent/src &&
 	echo "(1|2)d(3|4)" >parent/src/file &&
 	git -C parent add src/file &&
+	test_config_global protocol.file.allow always &&
 	git -C parent submodule add ../sub src/sub &&
 	git -C parent submodule add ../sub sub &&
 	git -C parent commit -m "add files and submodules" &&
