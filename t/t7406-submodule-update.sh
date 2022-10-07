@@ -25,6 +25,7 @@ compare_head()
 
 
 test_expect_success 'setup a submodule tree' '
+	git config --global protocol.file.allow always &&
 	echo file > file &&
 	git add file &&
 	test_tick &&

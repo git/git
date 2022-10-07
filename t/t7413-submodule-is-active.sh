@@ -13,6 +13,7 @@ TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '
+	git config --global protocol.file.allow always &&
 	git init sub &&
 	test_commit -C sub initial &&
 	git init super &&

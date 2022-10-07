@@ -560,7 +560,8 @@ test_expect_success 'interaction with submodules' '
 	(
 		cd super &&
 		mkdir modules &&
-		git submodule add ../repo modules/child &&
+		git -c protocol.file.allow=always \
+			submodule add ../repo modules/child &&
 		git add . &&
 		git commit -m "add submodule" &&
 		git sparse-checkout init --cone &&

@@ -793,7 +793,7 @@ test_expect_success 'submodule changes are shown irrespective of diff.submodule'
 	sub_oid3=$(git -C sub-repo rev-parse HEAD) &&
 
 	git checkout -b main-sub topic &&
-	git submodule add ./sub-repo sub &&
+	git -c protocol.file.allow=always submodule add ./sub-repo sub &&
 	git -C sub checkout --detach sub-first &&
 	git commit -m "add sub" sub &&
 	sup_oid1=$(git rev-parse --short HEAD) &&

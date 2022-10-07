@@ -1,10 +1,10 @@
 protocol.allow::
 	If set, provide a user defined default policy for all protocols which
 	don't explicitly have a policy (`protocol.<name>.allow`).  By default,
-	if unset, known-safe protocols (http, https, git, ssh, file) have a
+	if unset, known-safe protocols (http, https, git, ssh) have a
 	default policy of `always`, known-dangerous protocols (ext) have a
-	default policy of `never`, and all other protocols have a default
-	policy of `user`.  Supported policies:
+	default policy of `never`, and all other protocols (including file)
+	have a default policy of `user`.  Supported policies:
 +
 --
 

@@ -10,7 +10,7 @@ test_expect_success 'setup a submodule' '
 	: >pretzel/a &&
 	git -C pretzel add a &&
 	git -C pretzel commit -m "add a file" -- a &&
-	git submodule add ./pretzel sub &&
+	git -c protocol.file.allow=always submodule add ./pretzel sub &&
 	git commit -a -m "add submodule" &&
 	git submodule deinit --all
 '

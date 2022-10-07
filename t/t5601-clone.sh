@@ -767,6 +767,7 @@ test_expect_success 'batch missing blob request does not inadvertently try to fe
 	echo aa >server/a &&
 	echo bb >server/b &&
 	# Also add a gitlink pointing to an arbitrary repository
+	test_config_global protocol.file.allow always &&
 	git -C server submodule add "$(pwd)/repo_for_submodule" c &&
 	git -C server add a b c &&
 	git -C server commit -m x &&
