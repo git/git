@@ -153,8 +153,8 @@ bundle.<id>.filter::
 
 bundle.<id>.creationToken::
 	This value is a nonnegative 64-bit integer used for sorting the bundles
-	the list. This is used to download a subset of bundles during a fetch
-	when `bundle.heuristic=creationToken`.
+	list. This is used to download a subset of bundles during a fetch when
+	`bundle.heuristic=creationToken`.
 
 bundle.<id>.location::
 	This string value advertises a real-world location from where the bundle
@@ -234,8 +234,8 @@ will interact with bundle URIs according to the following flow:
    making those OIDs present. When all required OIDs are present, the
    client unbundles that data using a refspec. The default refspec is
    `+refs/heads/*:refs/bundles/*`, but this can be configured. These refs
-   are stored so that later `git fetch` negotiations can communicate the
-   bundled refs as `have`s, reducing the size of the fetch over the Git
+   are stored so that later `git fetch` negotiations can communicate each
+   bundled ref as a `have`, reducing the size of the fetch over the Git
    protocol. To allow pruning refs from this ref namespace, Git may
    introduce a numbered namespace (such as `refs/bundles/<i>/*`) such that
    stale bundle refs can be deleted.
