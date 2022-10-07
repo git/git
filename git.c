@@ -697,24 +697,18 @@ static void handle_builtin(int argc, const char **argv)
 	struct cmd_struct *builtin;
 
 	strip_extension(argv);
-	cmd = argv[0];
 
 	/* Turn "git cmd --help" into "git help --exclude-guides cmd" */
 	if (argc > 1 && !strcmp(argv[1], "--help")) {
-		int i;
+		strvec_push(&args, "help");
+		strvec_push(&args, "--exclude-guides");
+		strvec_push(&args, argv[0]);
 
-		argv[1] = argv[0];
-		argv[0] = cmd = "help";
-
-		for (i = 0; i < argc; i++) {
-			strvec_push(&args, argv[i]);
-			if (!i)
-				strvec_push(&args, "--exclude-guides");
-		}
-
-		argc++;
 		argv = args.v;
+		argc = 3;
 	}
+
+	cmd = argv[0];
 
 	builtin = get_builtin(cmd);
 	if (builtin)
