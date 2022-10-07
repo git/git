@@ -25,6 +25,7 @@ pwdlen=$(echo "$pwd" | wc -c)
 longpath=$(echo $longpath180 | cut -c 1-$((170-$pwdlen)))
 
 test_expect_success 'submodule with a long path' '
+	git config --global protocol.file.allow always &&
 	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= \
 	git -c init.defaultBranch=long init --bare remote &&
 	test_create_repo bundle1 &&
