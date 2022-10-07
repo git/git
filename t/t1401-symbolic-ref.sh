@@ -163,4 +163,18 @@ test_expect_success 'symbolic-ref can resolve d/f name (ENOTDIR)' '
 	test_cmp expect actual
 '
 
+test_expect_success 'symbolic-ref pointing at another' '
+	git update-ref refs/heads/maint-2.37 HEAD &&
+	git symbolic-ref refs/heads/maint refs/heads/maint-2.37 &&
+	git checkout maint &&
+
+	git symbolic-ref HEAD >actual &&
+	echo refs/heads/maint-2.37 >expect &&
+	test_cmp expect actual &&
+
+	git symbolic-ref --no-recurse HEAD >actual &&
+	echo refs/heads/maint >expect &&
+	test_cmp expect actual
+'
+
 test_done
