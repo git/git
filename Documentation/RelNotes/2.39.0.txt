@@ -1,0 +1,22 @@
+Git v2.39 Release Notes
+=======================
+
+Performance, Internal Implementation, Development Support etc.
+
+ * With a bit of header twiddling, use the native regexp library on
+   macOS instead of the compat/ one.
+
+ * Prepare for GNU [ef]grep that throw warning of their uses.
+
+ * Sources related to fuzz testing have been moved down to their own
+   directory.
+
+
+Fixes since v2.38
+-----------------
+
+ * The codepath that reads from the index v4 had unaligned memory
+   accesses, which has been corrected.
+   (merge 4a6ed30f96 vd/fix-unaligned-read-index-v4 later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
