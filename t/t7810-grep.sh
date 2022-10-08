@@ -18,6 +18,9 @@ test_invalid_grep_expression() {
 	'
 }
 
+LC_ALL=en_US.UTF-8 test-tool regex '^.$' '¿' &&
+  test_set_prereq MB_REGEX
+
 cat >hello.c <<EOF
 #include <assert.h>
 #include <stdio.h>
@@ -87,6 +90,10 @@ test_expect_success setup '
 	then
 		echo unusual >"\"unusual\" pathname" &&
 		echo unusual >"t/nested \"unusual\" pathname"
+	fi &&
+	if test_have_prereq MB_REGEX
+	then
+		echo "¿" >reverse-question-mark
 	fi &&
 	git add . &&
 	test_tick &&
@@ -568,6 +575,14 @@ do
 		test_cmp expected actual-replace-null
 	'
 done
+
+test_expect_success MB_REGEX 'grep exactly one char in single-char multibyte file' '
+	LC_ALL=en_US.UTF-8 git grep "^.$" reverse-question-mark
+'
+
+test_expect_success MB_REGEX 'grep two chars in single-char multibyte file' '
+	LC_ALL=en_US.UTF-8 test_expect_code 1 git grep ".." reverse-question-mark
+'
 
 cat >expected <<EOF
 file
