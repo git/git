@@ -201,8 +201,8 @@ test_expect_success 'git branch -M baz bam should succeed when baz is checked ou
 
 test_expect_success 'git branch -M baz bam should add entries to .git/logs/HEAD' '
 	msg="Branch: renamed refs/heads/baz to refs/heads/bam" &&
-	grep " 0\{40\}.*$msg$" .git/logs/HEAD &&
-	grep "^0\{40\}.*$msg$" .git/logs/HEAD
+	grep " $ZERO_OID.*$msg$" .git/logs/HEAD &&
+	grep "^$ZERO_OID.*$msg$" .git/logs/HEAD
 '
 
 test_expect_success 'git branch -M should leave orphaned HEAD alone' '

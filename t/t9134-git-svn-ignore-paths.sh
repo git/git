@@ -43,7 +43,7 @@ test_expect_success 'init+fetch an SVN repository with ignored www directory' '
 test_expect_success 'verify ignore-paths config saved by clone' '
 	(
 	    cd g &&
-	    git config --get svn-remote.svn.ignore-paths | fgrep "www"
+	    git config --get svn-remote.svn.ignore-paths | grep www
 	)
 '
 
@@ -53,7 +53,7 @@ test_expect_success 'SVN-side change outside of www' '
 		echo b >> qqq/test_qqq.txt &&
 		svn_cmd commit -m "SVN-side change outside of www" &&
 		svn_cmd up &&
-		svn_cmd log -v | fgrep "SVN-side change outside of www"
+		svn_cmd log -v | grep "SVN-side change outside of www"
 	)
 '
 
@@ -85,7 +85,7 @@ test_expect_success 'SVN-side change inside of ignored www' '
 		echo zaq >> www/test_www.txt &&
 		svn_cmd commit -m "SVN-side change inside of www/test_www.txt" &&
 		svn_cmd up &&
-		svn_cmd log -v | fgrep "SVN-side change inside of www/test_www.txt"
+		svn_cmd log -v | grep -F "SVN-side change inside of www/test_www.txt"
 	)
 '
 
@@ -118,7 +118,7 @@ test_expect_success 'SVN-side change in and out of ignored www' '
 		echo ygg >> qqq/test_qqq.txt &&
 		svn_cmd commit -m "SVN-side change in and out of ignored www" &&
 		svn_cmd up &&
-		svn_cmd log -v | fgrep "SVN-side change in and out of ignored www"
+		svn_cmd log -v | grep "SVN-side change in and out of ignored www"
 	)
 '
 

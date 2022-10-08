@@ -1001,7 +1001,7 @@ test_expect_success 'part of packfile response provided as URI' '
 	do
 		git verify-pack --object-format=$(test_oid algo) --verbose $idx >out &&
 		{
-			grep "^[0-9a-f]\{16,\} " out || :
+			grep -E "^[0-9a-f]{16,} " out || :
 		} >out.objectlist &&
 		if test_line_count = 1 out.objectlist
 		then

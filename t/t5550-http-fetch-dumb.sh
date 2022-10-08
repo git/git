@@ -234,7 +234,7 @@ test_expect_success 'http-fetch --packfile' '
 		--index-pack-arg=--keep \
 		"$HTTPD_URL"/dumb/repo_pack.git/$p >out &&
 
-	grep "^keep.[0-9a-f]\{16,\}$" out &&
+	grep -E "^keep.[0-9a-f]{16,}$" out &&
 	cut -c6- out >packhash &&
 
 	# Ensure that the expected files are generated

@@ -45,7 +45,7 @@ test_expect_success 'init+fetch an SVN repository with included qqq directory' '
 test_expect_success 'verify include-paths config saved by clone' '
 	(
 	    cd g &&
-	    git config --get svn-remote.svn.include-paths | fgrep "qqq"
+	    git config --get svn-remote.svn.include-paths | grep qqq
 	)
 '
 
@@ -55,7 +55,7 @@ test_expect_success 'SVN-side change outside of www' '
 		echo b >> qqq/test_qqq.txt &&
 		svn_cmd commit -m "SVN-side change outside of www" &&
 		svn_cmd up &&
-		svn_cmd log -v | fgrep "SVN-side change outside of www"
+		svn_cmd log -v | grep "SVN-side change outside of www"
 	)
 '
 
@@ -87,7 +87,7 @@ test_expect_success 'SVN-side change inside of ignored www' '
 		echo zaq >> www/test_www.txt &&
 		svn_cmd commit -m "SVN-side change inside of www/test_www.txt" &&
 		svn_cmd up &&
-		svn_cmd log -v | fgrep "SVN-side change inside of www/test_www.txt"
+		svn_cmd log -v | grep "SVN-side change inside of www/test_www.txt"
 	)
 '
 
@@ -120,7 +120,7 @@ test_expect_success 'SVN-side change in and out of included qqq' '
 		echo ygg >> qqq/test_qqq.txt &&
 		svn_cmd commit -m "SVN-side change in and out of ignored www" &&
 		svn_cmd up &&
-		svn_cmd log -v | fgrep "SVN-side change in and out of ignored www"
+		svn_cmd log -v | grep "SVN-side change in and out of ignored www"
 	)
 '
 
