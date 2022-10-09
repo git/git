@@ -1,4 +1,7 @@
 [![Build status](https://github.com/git/git/workflows/CI/badge.svg)](https://github.com/git/git/actions?query=branch%3Amaster+event%3Apush)
+[![GitHub Contribution](https://img.shields.io/github/contributors/git/git)](https://github.com/git/git/graphs/contributors)
+[![GitHub pull requests](https://img.shields.io/github/issues-pr/git/git?color=0088ff)](https://github.com/git/git/pulls)
+
 
 Git - fast, scalable, distributed revision control system
 =========================================================
