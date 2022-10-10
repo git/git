@@ -78,7 +78,8 @@ SunOS)
 esac
 
 determine_branch () {
-	expr "$($GIT symbolic-ref HEAD 2>/dev/null)" : 'refs/heads/\(.*\)' ||
+	expr "$($GIT symbolic-ref --no-recurse HEAD 2>/dev/null ||
+		$GIT symbolic-ref HEAD 2>/dev/null)" : 'refs/heads/\(.*\)' ||
 	echo detached
 }
 
