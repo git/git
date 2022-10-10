@@ -204,10 +204,14 @@ For C programs:
    by e.g. "echo DEVELOPER=1 >>config.mak".
 
  - We try to support a wide range of C compilers to compile Git with,
-   including old ones.  You should not use features from newer C
+   including old ones.  As of Git v2.35.0 Git requires C99 (we check
+   "__STDC_VERSION__"). You should not use features from a newer C
    standard, even if your compiler groks them.
 
-   There are a few exceptions to this guideline:
+   New C99 features have been phased in gradually, if something's new
+   in C99 but not used yet don't assume that it's safe to use, some
+   compilers we target have only partial support for it. These are
+   considered safe to use:
 
    . since early 2012 with e1327023ea, we have been using an enum
      definition whose last element is followed by a comma.  This, like
