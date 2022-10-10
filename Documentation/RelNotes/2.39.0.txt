@@ -1,7 +1,15 @@
 Git v2.39 Release Notes
 =======================
 
+UI, Workflows & Features
+------------------------
+
+ * "git grep" learned to expand the sparse-index more lazily and on
+   demand in a sparse checkout.
+
+
 Performance, Internal Implementation, Development Support etc.
+--------------------------------------------------------------
 
  * With a bit of header twiddling, use the native regexp library on
    macOS instead of the compat/ one.
@@ -11,6 +19,13 @@ Performance, Internal Implementation, Development Support etc.
  * Sources related to fuzz testing have been moved down to their own
    directory.
 
+ * Most credential helpers ignored unknown entries in a credential
+   description, but a few died upon seeing them.  The latter were
+   taught to ignore them, too
+
+ * "scalar unregister" in a repository that is already been
+   unregistered reported an error.
+
 
 Fixes since v2.38
 -----------------
@@ -19,4 +34,41 @@ Fixes since v2.38
    accesses, which has been corrected.
    (merge 4a6ed30f96 vd/fix-unaligned-read-index-v4 later to maint).
 
+ * Fix messages incorrectly marked for translation.
+   (merge 02cb8b9ee3 ah/fsmonitor-daemon-usage-non-l10n later to maint).
+
+ * "git fsck" failed to release contents of tree objects already used
+   from the memory, which has been fixed.
+   (merge 51b27747e5 jk/fsck-on-diet later to maint).
+
+ * "git clone" did not like to see the "--bare" and the "--origin"
+   options used together without a good reason.
+   (merge 3b910d6e29 jk/clone-allow-bare-and-o-together later to maint).
+
+ * "git remote rename" failed to rename a remote without fetch
+   refspec, which has been corrected.
+   (merge 5a97b38109 jk/remote-rename-without-fetch-refspec later to maint).
+
+ * Documentation on various Boolean GIT_* environment variables have
+   been clarified.
+   (merge 819fb68222 jc/environ-docs later to maint).
+
+ * "git rebase -i" can mistakenly attempt to apply a fixup to a commit
+   itself, which has been corrected.
+   (merge 3e367a5f2f ja/rebase-i-avoid-amending-self later to maint).
+
+ * "git multi-pack-index repack/expire" used to repack unreachable
+   cruft into a new pack, which have been corrected.
+   (merge b62ad5681f tb/midx-repack-ignore-cruft-packs later to maint).
+
+ * In read-only repositories, "git merge-tree" tried to come up with a
+   merge result tree object, which it failed (which is not wrong) and
+   led to a segfault (which is bad), which has been corrected.
+   (merge 92481d1b26 js/merge-ort-in-read-only-repo later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
+   (merge c34a6bd291 so/diff-merges-cleanup later to maint).
+   (merge 5e7c8b75e7 ab/test-malloc-with-sanitize-leak later to maint).
+   (merge 2a905f8fa8 ah/branch-autosetupmerge-grammofix later to maint).
+   (merge abcac2e19f rj/ref-filter-get-head-description-leakfix later to maint).
+   (merge 71e5473493 hn/parse-worktree-ref later to maint).
