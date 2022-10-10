@@ -13,8 +13,8 @@
 static const char * const builtin_fsmonitor__daemon_usage[] = {
 	N_("git fsmonitor--daemon start [<options>]"),
 	N_("git fsmonitor--daemon run [<options>]"),
-	N_("git fsmonitor--daemon stop"),
-	N_("git fsmonitor--daemon status"),
+	"git fsmonitor--daemon stop",
+	"git fsmonitor--daemon status",
 	NULL
 };
 
