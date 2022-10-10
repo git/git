@@ -167,16 +167,6 @@ const char *worktree_git_path(const struct worktree *wt,
 	__attribute__((format (printf, 2, 3)));
 
 /*
- * Parse a worktree ref (i.e. with prefix main-worktree/ or
- * worktrees/) and return the position of the worktree's name and
- * length (or NULL and zero if it's main worktree), and ref.
- *
- * All name, name_length and ref arguments could be NULL.
- */
-int parse_worktree_ref(const char *worktree_ref, const char **name,
-		       int *name_length, const char **ref);
-
-/*
  * Return a refname suitable for access from the current ref store.
  */
 void strbuf_worktree_ref(const struct worktree *wt,

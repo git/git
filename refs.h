@@ -820,15 +820,34 @@ int parse_hide_refs_config(const char *var, const char *value, const char *);
  */
 int ref_is_hidden(const char *, const char *);
 
-enum ref_type {
-	REF_TYPE_PER_WORKTREE,	  /* refs inside refs/ but not shared       */
-	REF_TYPE_PSEUDOREF,	  /* refs outside refs/ in current worktree */
-	REF_TYPE_MAIN_PSEUDOREF,  /* pseudo refs from the main worktree     */
-	REF_TYPE_OTHER_PSEUDOREF, /* pseudo refs from other worktrees       */
-	REF_TYPE_NORMAL,	  /* normal/shared refs inside refs/        */
+/* Is this a per-worktree ref living in the refs/ namespace? */
+int is_per_worktree_ref(const char *refname);
+
+/* Describes how a refname relates to worktrees */
+enum ref_worktree_type {
+	REF_WORKTREE_CURRENT, /* implicitly per worktree, eg. HEAD or
+				 refs/bisect/SOMETHING */
+	REF_WORKTREE_MAIN, /* explicitly in main worktree, eg.
+			      main-worktree/HEAD */
+	REF_WORKTREE_OTHER, /* explicitly in named worktree, eg.
+			       worktrees/bla/HEAD */
+	REF_WORKTREE_SHARED, /* the default, eg. refs/heads/main */
 };
 
-enum ref_type ref_type(const char *refname);
+/*
+ * Parse a `maybe_worktree_ref` as a ref that possibly refers to a worktree ref
+ * (ie. either REFNAME, main-worktree/REFNAME or worktree/WORKTREE/REFNAME). It
+ * returns what kind of ref was found, and in case of REF_WORKTREE_OTHER, the
+ * worktree name is returned in `worktree_name` (pointing into
+ * `maybe_worktree_ref`) and `worktree_name_length`. The bare refname (the
+ * refname stripped of prefixes) is returned in `bare_refname`. The
+ * `worktree_name`, `worktree_name_length` and `bare_refname` arguments may be
+ * NULL.
+ */
+enum ref_worktree_type parse_worktree_ref(const char *maybe_worktree_ref,
+					  const char **worktree_name,
+					  int *worktree_name_length,
+					  const char **bare_refname);
 
 enum expire_reflog_flags {
 	EXPIRE_REFLOGS_DRY_RUN = 1 << 0,

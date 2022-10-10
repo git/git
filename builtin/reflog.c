@@ -67,7 +67,8 @@ static int collect_reflog(const char *ref, const struct object_id *oid UNUSED,
 	 * Avoid collecting the same shared ref multiple times because
 	 * they are available via all worktrees.
 	 */
-	if (!worktree->is_current && ref_type(ref) == REF_TYPE_NORMAL)
+	if (!worktree->is_current &&
+	    parse_worktree_ref(ref, NULL, NULL, NULL) == REF_WORKTREE_SHARED)
 		return 0;
 
 	strbuf_worktree_ref(worktree, &newref, ref);
