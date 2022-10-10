@@ -458,7 +458,12 @@ Please see linkgit:gitglossary[7].
 
 Environment Variables
 ---------------------
-Various Git commands use the following environment variables:
+Various Git commands pay attention to environment variables and change
+their behavior.  The environment variables marked as "Boolean" take
+their values the same way as Boolean valued configuration variables, e.g.
+"true", "yes", "on" and positive numbers are taken as "yes".
+
+Here are the variables:
 
 The Git Repository
 ~~~~~~~~~~~~~~~~~~
@@ -467,13 +472,13 @@ is worth noting that they may be used/overridden by SCMS sitting above
 Git so take care if using a foreign front-end.
 
 `GIT_INDEX_FILE`::
-	This environment allows the specification of an alternate
+	This environment variable specifies an alternate
 	index file. If not specified, the default of `$GIT_DIR/index`
 	is used.
 
 `GIT_INDEX_VERSION`::
-	This environment variable allows the specification of an index
-	version for new repositories.  It won't affect existing index
+	This environment variable specifies what index version is used
+	when writing the index file out.  It won't affect existing index
 	files.  By default index file version 2 or 3 is used. See
 	linkgit:git-update-index[1] for more information.
 
@@ -530,7 +535,7 @@ double-quotes and respecting backslash escapes. E.g., the value
 	When run in a directory that does not have ".git" repository
 	directory, Git tries to find such a directory in the parent
 	directories to find the top of the working tree, but by default it
-	does not cross filesystem boundaries.  This environment variable
+	does not cross filesystem boundaries.  This Boolean environment variable
 	can be set to true to tell Git not to stop at filesystem
 	boundaries.  Like `GIT_CEILING_DIRECTORIES`, this will not affect
 	an explicit repository directory set via `GIT_DIR` or on the
@@ -682,6 +687,11 @@ for further details.
 	plink or tortoiseplink. This variable overrides the config setting
 	`ssh.variant` that serves the same purpose.
 
+`GIT_SSL_NO_VERIFY`::
+	Setting and exporting this environment variable to any value
+	tells Git not to verify the SSL certificate when fetching or
+	pushing over HTTPS.
+
 `GIT_ASKPASS`::
 	If this environment variable is set, then Git commands which need to
 	acquire passwords or passphrases (e.g. for HTTP or IMAP authentication)
@@ -690,7 +700,7 @@ for further details.
 	option in linkgit:git-config[1].
 
 `GIT_TERMINAL_PROMPT`::
-	If this environment variable is set to `0`, git will not prompt
+	If this Boolean environment variable is set to false, git will not prompt
 	on the terminal (e.g., when asking for HTTP authentication).
 
 `GIT_CONFIG_GLOBAL`::
@@ -705,13 +715,14 @@ for further details.
 
 `GIT_CONFIG_NOSYSTEM`::
 	Whether to skip reading settings from the system-wide
-	`$(prefix)/etc/gitconfig` file.  This environment variable can
+	`$(prefix)/etc/gitconfig` file.  This Boolean environment variable can
 	be used along with `$HOME` and `$XDG_CONFIG_HOME` to create a
 	predictable environment for a picky script, or you can set it
-	temporarily to avoid using a buggy `/etc/gitconfig` file while
+	to true to temporarily avoid using a buggy `/etc/gitconfig` file while
 	waiting for someone with sufficient permissions to fix it.
 
 `GIT_FLUSH`::
+// NEEDSWORK: make it into a usual Boolean environment variable
 	If this environment variable is set to "1", then commands such
 	as 'git blame' (in incremental mode), 'git rev-list', 'git log',
 	'git check-attr' and 'git check-ignore' will
@@ -852,11 +863,11 @@ for full details.
 `GIT_TRACE_REDACT`::
 	By default, when tracing is activated, Git redacts the values of
 	cookies, the "Authorization:" header, the "Proxy-Authorization:"
-	header and packfile URIs. Set this variable to `0` to prevent this
+	header and packfile URIs. Set this Boolean environment variable to false to prevent this
 	redaction.
 
 `GIT_LITERAL_PATHSPECS`::
-	Setting this variable to `1` will cause Git to treat all
+	Setting this Boolean environment variable to true will cause Git to treat all
 	pathspecs literally, rather than as glob patterns. For example,
 	running `GIT_LITERAL_PATHSPECS=1 git log -- '*.c'` will search
 	for commits that touch the path `*.c`, not any paths that the
@@ -865,15 +876,15 @@ for full details.
 	`git ls-tree`, `--raw` diff output, etc).
 
 `GIT_GLOB_PATHSPECS`::
-	Setting this variable to `1` will cause Git to treat all
+	Setting this Boolean environment variable to true will cause Git to treat all
 	pathspecs as glob patterns (aka "glob" magic).
 
 `GIT_NOGLOB_PATHSPECS`::
-	Setting this variable to `1` will cause Git to treat all
+	Setting this Boolean environment variable to true will cause Git to treat all
 	pathspecs as literal (aka "literal" magic).
 
 `GIT_ICASE_PATHSPECS`::
-	Setting this variable to `1` will cause Git to treat all
+	Setting this Boolean environment variable to true will cause Git to treat all
 	pathspecs as case-insensitive.
 
 `GIT_REFLOG_ACTION`::
@@ -887,7 +898,7 @@ for full details.
 	end user, to be recorded in the body of the reflog.
 
 `GIT_REF_PARANOIA`::
-	If set to `0`, ignore broken or badly named refs when iterating
+	If this Boolean environment variable is set to false, ignore broken or badly named refs when iterating
 	over lists of refs. Normally Git will try to include any such
 	refs, which may cause some operations to fail. This is usually
 	preferable, as potentially destructive operations (e.g.,
@@ -906,7 +917,7 @@ for full details.
 	`protocol.allow` in linkgit:git-config[1] for more details.
 
 `GIT_PROTOCOL_FROM_USER`::
-	Set to 0 to prevent protocols used by fetch/push/clone which are
+	Set this Boolean environment variable to false to prevent protocols used by fetch/push/clone which are
 	configured to the `user` state.  This is useful to restrict recursive
 	submodule initialization from an untrusted repository or for programs
 	which feed potentially-untrusted URLS to git commands.  See
@@ -934,7 +945,7 @@ only affects clones and fetches; it is not yet used for pushes (but may
 be in the future).
 
 `GIT_OPTIONAL_LOCKS`::
-	If set to `0`, Git will complete any requested operation without
+	If this Boolean environment variable is set to false, Git will complete any requested operation without
 	performing any optional sub-operations that require taking a lock.
 	For example, this will prevent `git status` from refreshing the
 	index as a side effect. This is useful for processes running in
