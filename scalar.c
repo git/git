@@ -207,7 +207,10 @@ static int set_recommended_config(int reconfigure)
 
 static int toggle_maintenance(int enable)
 {
-	return run_git("maintenance", enable ? "start" : "unregister", NULL);
+	return run_git("maintenance",
+		       enable ? "start" : "unregister",
+		       enable ? NULL : "--force",
+		       NULL);
 }
 
 static int add_or_remove_enlistment(int add)

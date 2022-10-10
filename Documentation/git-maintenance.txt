@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'git maintenance' run [<options>]
 'git maintenance' start [--scheduler=<scheduler>]
-'git maintenance' (stop|register|unregister)
+'git maintenance' (stop|register|unregister) [<options>]
 
 
 DESCRIPTION
@@ -79,6 +79,10 @@ unregister::
 	Remove the current repository from background maintenance. This
 	only removes the repository from the configured list. It does not
 	stop the background maintenance processes from running.
++
+The `unregister` subcommand will report an error if the current repository
+is not already registered. Use the `--force` option to return success even
+when the current repository is not registered.
 
 TASKS
 -----

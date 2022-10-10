@@ -480,6 +480,11 @@ test_expect_success 'maintenance.strategy inheritance' '
 
 test_expect_success 'register and unregister' '
 	test_when_finished git config --global --unset-all maintenance.repo &&
+
+	test_must_fail git maintenance unregister 2>err &&
+	grep "is not registered" err &&
+	git maintenance unregister --force &&
+
 	git config --global --add maintenance.repo /existing1 &&
 	git config --global --add maintenance.repo /existing2 &&
 	git config --global --get-all maintenance.repo >before &&
@@ -493,7 +498,11 @@ test_expect_success 'register and unregister' '
 
 	git maintenance unregister &&
 	git config --global --get-all maintenance.repo >actual &&
-	test_cmp before actual
+	test_cmp before actual &&
+
+	test_must_fail git maintenance unregister 2>err &&
+	grep "is not registered" err &&
+	git maintenance unregister --force
 '
 
 test_expect_success !MINGW 'register and unregister with regex metacharacters' '

@@ -1470,11 +1470,12 @@ static int maintenance_register(int argc, const char **argv, const char *prefix)
 	struct option options[] = {
 		OPT_END(),
 	};
-	int rc;
+	int found = 0;
+	const char *key = "maintenance.repo";
 	char *config_value;
-	struct child_process config_set = CHILD_PROCESS_INIT;
-	struct child_process config_get = CHILD_PROCESS_INIT;
 	char *maintpath = get_maintpath();
+	struct string_list_item *item;
+	const struct string_list *list;
 
 	argc = parse_options(argc, argv, prefix, options,
 			     builtin_maintenance_register_usage, 0);
@@ -1491,46 +1492,56 @@ static int maintenance_register(int argc, const char **argv, const char *prefix)
 	else
 		git_config_set("maintenance.strategy", "incremental");
 
-	config_get.git_cmd = 1;
-	strvec_pushl(&config_get.args, "config", "--global", "--get",
-		     "--fixed-value", "maintenance.repo", maintpath, NULL);
-	config_get.out = -1;
-
-	if (start_command(&config_get)) {
-		rc = error(_("failed to run 'git config'"));
-		goto done;
+	list = git_config_get_value_multi(key);
+	if (list) {
+		for_each_string_list_item(item, list) {
+			if (!strcmp(maintpath, item->string)) {
+				found = 1;
+				break;
+			}
+		}
 	}
 
-	/* We already have this value in our config! */
-	if (!finish_command(&config_get)) {
-		rc = 0;
-		goto done;
+	if (!found) {
+		int rc;
+		char *user_config, *xdg_config;
+		git_global_config(&user_config, &xdg_config);
+		if (!user_config)
+			die(_("$HOME not set"));
+		rc = git_config_set_multivar_in_file_gently(
+			user_config, "maintenance.repo", maintpath,
+			CONFIG_REGEX_NONE, 0);
+		free(user_config);
+		free(xdg_config);
+
+		if (rc)
+			die(_("unable to add '%s' value of '%s'"),
+			    key, maintpath);
 	}
 
-	config_set.git_cmd = 1;
-	strvec_pushl(&config_set.args, "config", "--add", "--global", "maintenance.repo",
-		     maintpath, NULL);
-
-	rc = run_command(&config_set);
-
-done:
 	free(maintpath);
-	return rc;
+	return 0;
 }
 
 static char const * const builtin_maintenance_unregister_usage[] = {
-	"git maintenance unregister",
+	"git maintenance unregister [--force]",
 	NULL
 };
 
 static int maintenance_unregister(int argc, const char **argv, const char *prefix)
 {
+	int force = 0;
 	struct option options[] = {
+		OPT__FORCE(&force,
+			   N_("return success even if repository was not registered"),
+			   PARSE_OPT_NOCOMPLETE),
 		OPT_END(),
 	};
-	int rc;
-	struct child_process config_unset = CHILD_PROCESS_INIT;
+	const char *key = "maintenance.repo";
 	char *maintpath = get_maintpath();
+	int found = 0;
+	struct string_list_item *item;
+	const struct string_list *list;
 
 	argc = parse_options(argc, argv, prefix, options,
 			     builtin_maintenance_unregister_usage, 0);
@@ -1538,13 +1549,38 @@ static int maintenance_unregister(int argc, const char **argv, const char *prefi
 		usage_with_options(builtin_maintenance_unregister_usage,
 				   options);
 
-	config_unset.git_cmd = 1;
-	strvec_pushl(&config_unset.args, "config", "--global", "--unset",
-		     "--fixed-value", "maintenance.repo", maintpath, NULL);
+	list = git_config_get_value_multi(key);
+	if (list) {
+		for_each_string_list_item(item, list) {
+			if (!strcmp(maintpath, item->string)) {
+				found = 1;
+				break;
+			}
+		}
+	}
 
-	rc = run_command(&config_unset);
+	if (found) {
+		int rc;
+		char *user_config, *xdg_config;
+		git_global_config(&user_config, &xdg_config);
+		if (!user_config)
+			die(_("$HOME not set"));
+		rc = git_config_set_multivar_in_file_gently(
+			user_config, key, NULL, maintpath,
+			CONFIG_FLAGS_MULTI_REPLACE | CONFIG_FLAGS_FIXED_VALUE);
+		free(user_config);
+		free(xdg_config);
+
+		if (rc &&
+		    (!force || rc == CONFIG_NOTHING_SET))
+			die(_("unable to unset '%s' value of '%s'"),
+			    key, maintpath);
+	} else if (!force) {
+		die(_("repository '%s' is not registered"), maintpath);
+	}
+
 	free(maintpath);
-	return rc;
+	return 0;
 }
 
 static const char *get_frequency(enum schedule_priority schedule)
