@@ -1839,7 +1839,7 @@ int expire_midx_packs(struct repository *r, const char *object_dir, unsigned fla
 		if (prepare_midx_pack(r, m, i))
 			continue;
 
-		if (m->packs[i]->pack_keep)
+		if (m->packs[i]->pack_keep || m->packs[i]->is_cruft)
 			continue;
 
 		pack_name = xstrdup(m->packs[i]->pack_name);
@@ -1895,6 +1895,8 @@ static int fill_included_packs_all(struct repository *r,
 			continue;
 		if (!pack_kept_objects && m->packs[i]->pack_keep)
 			continue;
+		if (m->packs[i]->is_cruft)
+			continue;
 
 		include_pack[i] = 1;
 		count++;
@@ -1910,8 +1912,10 @@ static int fill_included_packs_batch(struct repository *r,
 {
 	uint32_t i, packs_to_repack;
 	size_t total_size;
-	struct repack_info *pack_info = xcalloc(m->num_packs, sizeof(struct repack_info));
+	struct repack_info *pack_info;
 	int pack_kept_objects = 0;
+
+	CALLOC_ARRAY(pack_info, m->num_packs);
 
 	repo_config_get_bool(r, "repack.packkeptobjects", &pack_kept_objects);
 
@@ -1924,7 +1928,7 @@ static int fill_included_packs_batch(struct repository *r,
 		pack_info[i].mtime = m->packs[i]->mtime;
 	}
 
-	for (i = 0; batch_size && i < m->num_objects; i++) {
+	for (i = 0; i < m->num_objects; i++) {
 		uint32_t pack_int_id = nth_midxed_pack_int_id(m, i);
 		pack_info[pack_int_id].referenced_objects++;
 	}
@@ -1941,6 +1945,8 @@ static int fill_included_packs_batch(struct repository *r,
 		if (!p)
 			continue;
 		if (!pack_kept_objects && p->pack_keep)
+			continue;
+		if (p->is_cruft)
 			continue;
 		if (open_pack_index(p) || !p->num_objects)
 			continue;
