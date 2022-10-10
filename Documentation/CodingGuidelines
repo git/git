@@ -242,6 +242,11 @@ For C programs:
      printf("%"PRIuMAX, (uintmax_t)v).  These days the MSVC version we
      rely on supports %z, but the C library used by MinGW does not.
 
+   . Shorthand like ".a.b = *c" in struct initializations is known to
+     trip up an older IBM XLC version, use ".a = { .b = *c }" instead.
+     See the 33665d98 (reftable: make assignments portable to AIX xlc
+     v12.01, 2022-03-28).
+
  - Variables have to be declared at the beginning of the block, before
    the first statement (i.e. -Wdeclaration-after-statement).
 
