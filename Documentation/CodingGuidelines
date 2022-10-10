@@ -213,6 +213,11 @@ For C programs:
    compilers we target have only partial support for it. These are
    considered safe to use:
 
+   . since around 2007 with 2b6854c863a, we have been using
+     initializer elements which are not computable at load time. E.g.:
+
+	const char *args[] = {"constant", variable, NULL};
+
    . since early 2012 with e1327023ea, we have been using an enum
      definition whose last element is followed by a comma.  This, like
      an array initializer that ends with a trailing comma, can be used
