@@ -63,6 +63,7 @@ annotate_merge () {
 				}
 				next unless ($in_section && $in_desc);
 				next if (/Originally merged to '\''next'\'' on ([-0-9]+)/);
+				next if (/^source: /);
 				last if (wildo_match($_));
 				push @msg, "$_\n";
 			}
