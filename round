@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Give names of targets to use on the command line
-default="sparse hdr-check coccicheck test leaks address check-docs doc"
+default="sparse hdr-check leaks address undefined coccicheck check-docs doc"
 skip=" "
 more=" "
 
@@ -31,9 +31,9 @@ do
 	esac
 
 	case "$t" in
-	address)
+	address | undefined)
 		Meta/Make -j16 distclean >/dev/null 2>&1 &&
-		SANITIZE=address \
+		SANITIZE=$t \
 		Meta/Make -j16 test
 		;;
 	leaks)
@@ -45,7 +45,7 @@ do
 		SPATCH_FLAGS=--recursive-includes Meta/Make -j16 "$t"
 		;;
 	*)
-		SPATCH_FLAGS=--recursive-includes Meta/Make -j16 "$t"
+		Meta/Make -j16 "$t"
 		;;
 	esac || return 1
 done &&
