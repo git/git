@@ -47,13 +47,6 @@ static inline int want_ancestry(const struct rev_info *revs);
 void show_object_with_name(FILE *out, struct object *obj, const char *name)
 {
 	fprintf(out, "%s ", oid_to_hex(&obj->oid));
-	/*
-	 * This "for (const char *p = ..." is made as a first step towards
-	 * making use of such declarations elsewhere in our codebase.  If
-	 * it causes compilation problems on your platform, please report
-	 * it to the Git mailing list at git@vger.kernel.org. In the meantime,
-	 * adding -std=gnu99 to CFLAGS may help if you are with older GCC.
-	 */
 	for (const char *p = name; *p && *p != '\n'; p++)
 		fputc(*p, out);
 	fputc('\n', out);

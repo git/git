@@ -232,17 +232,11 @@ For C programs:
    . since early 2021 with 765dc168882, we have been using variadic
      macros, mostly for printf-like trace and debug macros.
 
-   These used to be forbidden, but we have not heard any breakage
-   report, and they are assumed to be safe.
+   . since late 2021 with 44ba10d6, we have had variables declared in
+     the for loop "for (int i = 0; i < 10; i++)".
 
  - Variables have to be declared at the beginning of the block, before
    the first statement (i.e. -Wdeclaration-after-statement).
-
- - Declaring a variable in the for loop "for (int i = 0; i < 10; i++)"
-   is still not allowed in this codebase.  We are in the process of
-   allowing it by waiting to see that 44ba10d6 (revision: use C99
-   declaration of variable in for() loop, 2021-11-14) does not get
-   complaints.  Let's revisit this around November 2022.
 
  - NULL pointers shall be written as NULL, not as 0.
 
