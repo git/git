@@ -235,6 +235,13 @@ For C programs:
    . since late 2021 with 44ba10d6, we have had variables declared in
      the for loop "for (int i = 0; i < 10; i++)".
 
+   New C99 features that we cannot use yet:
+
+   . %z and %zu as a printf() argument for a size_t (the %z being for
+     the POSIX-specific ssize_t). Instead you should use
+     printf("%"PRIuMAX, (uintmax_t)v).  These days the MSVC version we
+     rely on supports %z, but the C library used by MinGW does not.
+
  - Variables have to be declared at the beginning of the block, before
    the first statement (i.e. -Wdeclaration-after-statement).
 
