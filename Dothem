@@ -18,7 +18,7 @@ inst_prefix=$(
 )
 
 force= with_dash= test_long= M= install= nodoc= notest= bootstrap= branches= jobs=
-scratch= noprove= memtrash=--memtrash with_cocci=
+scratch= noprove= memtrash=--memtrash with_cocci= san=
 while	case "$1" in
 	--pedantic | --locale=* | --loose) M="$M $1" ;;
 	--force) force=$1 ;;
@@ -37,6 +37,7 @@ while	case "$1" in
 	--base=*) BUILDBASE=${1#*=} ;;
 	--branches=*) branches=${1#*=} ;;
 	--noprove) noprove=$1 ;;
+	--san) san=t ;;
 	-j*) jobs=$1 ;;
 	--) shift; break ;;
 	-*) echo >&2 "Unknown option: $1"; exit 1 ;;
@@ -210,6 +211,17 @@ do
 		Meta/Make $M $jobs -- SPARSE_FLAGS=-Wsparse-error sparse &&
 
 		Meta/Make $M $jobs -- hdr-check &&
+
+		case "$san" in
+		'')	;;
+		?*)
+			SANITIZE=address Meta/Make $M $jobs test &&
+			SANITIZE=undefined Meta/Make $M $jobs test &&
+			SANITIZE=leak \
+			GIT_TEST_PASSING_SANITIZE_LEAK=true Meta/Make $M $jobs test &&
+			Meta/Make distclean >/dev/null 2>&1
+			;;
+		esac &&
 
 		Meta/Make $M $noprove ${test+"$test"} $jobs $test_long $memtrash \
 		    -- ${with_dash:+SHELL_PATH=/bin/dash} "$@" $dotest &&
