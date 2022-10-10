@@ -929,9 +929,6 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		option_bare = 1;
 
 	if (option_bare) {
-		if (option_origin)
-			die(_("options '%s' and '%s %s' cannot be used together"),
-			    "--bare", "--origin", option_origin);
 		if (real_git_dir)
 			die(_("options '%s' and '%s' cannot be used together"), "--bare", "--separate-git-dir");
 		option_no_checkout = 1;

@@ -42,11 +42,12 @@ test_expect_success 'rejects invalid -o/--origin' '
 
 '
 
-test_expect_success 'disallows --bare with --origin' '
+test_expect_success 'clone --bare -o' '
 
-	test_must_fail git clone -o foo --bare parent clone-bare-o 2>err &&
-	test_debug "cat err" &&
-	test_i18ngrep -e "options .--bare. and .--origin foo. cannot be used together" err
+	git clone -o foo --bare parent clone-bare-o &&
+	(cd parent && pwd) >expect &&
+	git -C clone-bare-o config remote.foo.url >actual &&
+	test_cmp expect actual
 
 '
 
