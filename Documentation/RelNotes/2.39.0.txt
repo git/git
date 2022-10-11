@@ -66,9 +66,25 @@ Fixes since v2.38
    led to a segfault (which is bad), which has been corrected.
    (merge 92481d1b26 js/merge-ort-in-read-only-repo later to maint).
 
+ * Force C locale while running tests around httpd to make sure we can
+   find expected error messages in the log.
+   (merge 7a2d8ea47e rs/test-httpd-in-C-locale later to maint).
+
+ * Fix a logic in "mailinfo -b" that miscomputed the length of a
+   substring, which lead to an out-of-bounds access.
+   (merge 3ef1494685 pw/mailinfo-b-fix later to maint).
+
+ * The codepath to sign learned to report errors when it fails to read
+   from "ssh-keygen".
+   (merge 36fb0d07d8 pw/ssh-sign-report-errors later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge c34a6bd291 so/diff-merges-cleanup later to maint).
    (merge 5e7c8b75e7 ab/test-malloc-with-sanitize-leak later to maint).
    (merge 2a905f8fa8 ah/branch-autosetupmerge-grammofix later to maint).
    (merge abcac2e19f rj/ref-filter-get-head-description-leakfix later to maint).
    (merge 71e5473493 hn/parse-worktree-ref later to maint).
+   (merge 7190b7ebf9 ds/bundle-uri-docfix later to maint).
+   (merge 45350aeb11 jk/sequencer-missing-author-name-check later to maint).
+   (merge edbf9a2e20 nb/doc-mergetool-typofix later to maint).
+   (merge b004c90282 rs/gc-pack-refs-simplify later to maint).
