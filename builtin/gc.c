@@ -167,16 +167,9 @@ static void gc_config(void)
 struct maintenance_run_opts;
 static int maintenance_task_pack_refs(MAYBE_UNUSED struct maintenance_run_opts *opts)
 {
-	struct strvec pack_refs_cmd = STRVEC_INIT;
-	int ret;
+	const char *argv[] = { "pack-refs", "--all", "--prune", NULL };
 
-	strvec_pushl(&pack_refs_cmd, "pack-refs", "--all", "--prune", NULL);
-
-	ret = run_command_v_opt(pack_refs_cmd.v, RUN_GIT_CMD);
-
-	strvec_clear(&pack_refs_cmd);
-
-	return ret;
+	return run_command_v_opt(argv, RUN_GIT_CMD);
 }
 
 static int too_many_loose_objects(void)
