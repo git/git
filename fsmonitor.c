@@ -309,8 +309,10 @@ void refresh_fsmonitor(struct index_state *istate)
 	enum fsmonitor_reason reason = fsm_settings__get_reason(r);
 
 	if (!warn_once && reason > FSMONITOR_REASON_OK) {
+		char *msg = fsm_settings__get_incompatible_msg(r, reason);
 		warn_once = 1;
-		warning("%s", fsm_settings__get_incompatible_msg(r, reason));
+		warning("%s", msg);
+		free(msg);
 	}
 
 	if (fsm_mode <= FSMONITOR_MODE_DISABLED ||
