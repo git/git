@@ -669,9 +669,7 @@ int pl_hashmap_cmp(const void *cmp_data UNUSED,
 			 ? ee1->patternlen
 			 : ee2->patternlen;
 
-	if (ignore_case)
-		return strncasecmp(ee1->pattern, ee2->pattern, min_len);
-	return strncmp(ee1->pattern, ee2->pattern, min_len);
+	return fspathncmp(ee1->pattern, ee2->pattern, min_len);
 }
 
 static char *dup_and_filter_pattern(const char *pattern)
