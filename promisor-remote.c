@@ -12,12 +12,13 @@ struct promisor_remote_config {
 
 static int fetch_objects(struct repository *repo,
 			 const char *remote_name,
-			 const struct object_id *oids,
-			 int oid_nr)
+			 struct oidset *oids)
 {
 	struct child_process child = CHILD_PROCESS_INIT;
-	int i;
 	FILE *child_in;
+	struct oidset_iter iter;
+	const struct object_id *oid;
+	oidset_iter_init(oids, &iter);
 
 	child.git_cmd = 1;
 	child.in = -1;
@@ -31,10 +32,10 @@ static int fetch_objects(struct repository *repo,
 		die(_("promisor-remote: unable to fork off fetch subprocess"));
 	child_in = xfdopen(child.in, "w");
 
-	trace2_data_intmax("promisor", repo, "fetch_count", oid_nr);
+	trace2_data_intmax("promisor", repo, "fetch_count", oidset_size(oids));
 
-	for (i = 0; i < oid_nr; i++) {
-		if (fputs(oid_to_hex(&oids[i]), child_in) < 0)
+	while((oid = oidset_iter_next(&iter))) {
+		if (fputs(oid_to_hex(oid), child_in) < 0)
 			die_errno(_("promisor-remote: could not write to fetch subprocess"));
 		if (fputc('\n', child_in) < 0)
 			die_errno(_("promisor-remote: could not write to fetch subprocess"));
@@ -198,70 +199,43 @@ int repo_has_promisor_remote(struct repository *r)
 	return !!repo_promisor_remote_find(r, NULL);
 }
 
-static int remove_fetched_oids(struct repository *repo,
-			       struct object_id **oids,
-			       int oid_nr, int to_free)
+static void remove_fetched_oids(struct repository *repo,
+			       struct oidset *oids)
 {
-	int i, remaining_nr = 0;
-	int *remaining = xcalloc(oid_nr, sizeof(*remaining));
-	struct object_id *old_oids = *oids;
-	struct object_id *new_oids;
+	struct oidset_iter iter;
+	const struct object_id *oid;
 
-	for (i = 0; i < oid_nr; i++)
-		if (oid_object_info_extended(repo, &old_oids[i], NULL,
-					     OBJECT_INFO_SKIP_FETCH_OBJECT)) {
-			remaining[i] = 1;
-			remaining_nr++;
+	oidset_iter_init(oids, &iter);
+
+	while((oid = oidset_iter_next(&iter)))
+		if (oid_object_info_extended(repo, oid, NULL,
+					     OBJECT_INFO_SKIP_FETCH_OBJECT)){
+			oidset_remove(oids, oid);
 		}
-
-	if (remaining_nr) {
-		int j = 0;
-		CALLOC_ARRAY(new_oids, remaining_nr);
-		for (i = 0; i < oid_nr; i++)
-			if (remaining[i])
-				oidcpy(&new_oids[j++], &old_oids[i]);
-		*oids = new_oids;
-		if (to_free)
-			free(old_oids);
-	}
-
-	free(remaining);
-
-	return remaining_nr;
 }
 
 int promisor_remote_get_direct(struct repository *repo,
-			       const struct object_id *oids,
-			       int oid_nr)
+				       struct oidset *oids)
 {
 	struct promisor_remote *r;
-	struct object_id *remaining_oids = (struct object_id *)oids;
-	int remaining_nr = oid_nr;
-	int to_free = 0;
 	int res = -1;
 
-	if (oid_nr == 0)
+	if (oidset_size(oids) == 0)
 		return 0;
 
 	promisor_remote_init(repo);
 
 	for (r = repo->promisor_remote_config->promisors; r; r = r->next) {
-		if (fetch_objects(repo, r->name, remaining_oids, remaining_nr) < 0) {
-			if (remaining_nr == 1)
+		if (fetch_objects(repo, r->name, oids) < 0) {
+			if (oidset_size(oids) == 1)
 				continue;
-			remaining_nr = remove_fetched_oids(repo, &remaining_oids,
-							 remaining_nr, to_free);
-			if (remaining_nr) {
-				to_free = 1;
+			remove_fetched_oids(repo, oids);
+			if (oidset_size(oids))
 				continue;
-			}
 		}
 		res = 0;
 		break;
 	}
-
-	if (to_free)
-		free(remaining_oids);
 
 	return res;
 }

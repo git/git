@@ -95,7 +95,7 @@ static void inexact_prefetch(void *prefetch_options)
 {
 	struct inexact_prefetch_options *options = prefetch_options;
 	int i;
-	struct oid_array to_fetch = OID_ARRAY_INIT;
+	struct oidset to_fetch = OIDSET_INIT;
 
 	for (i = 0; i < rename_dst_nr; i++) {
 		if (rename_dst[i].p->renamed_pair)
@@ -118,8 +118,8 @@ static void inexact_prefetch(void *prefetch_options)
 		diff_add_if_missing(options->repo, &to_fetch,
 				    rename_src[i].p->one);
 	}
-	promisor_remote_get_direct(options->repo, to_fetch.oid, to_fetch.nr);
-	oid_array_clear(&to_fetch);
+	promisor_remote_get_direct(options->repo, &to_fetch);
+	oidset_clear(&to_fetch);
 }
 
 static int estimate_similarity(struct repository *r,
@@ -837,7 +837,7 @@ static void basename_prefetch(void *prefetch_options)
 	struct strintmap *dests = options->dests;
 	struct dir_rename_info *info = options->info;
 	int i;
-	struct oid_array to_fetch = OID_ARRAY_INIT;
+	struct oidset to_fetch = OIDSET_INIT;
 
 	/*
 	 * TODO: The following loops mirror the code/logic from
@@ -890,8 +890,8 @@ static void basename_prefetch(void *prefetch_options)
 		}
 	}
 
-	promisor_remote_get_direct(options->repo, to_fetch.oid, to_fetch.nr);
-	oid_array_clear(&to_fetch);
+	promisor_remote_get_direct(options->repo, &to_fetch);
+	oidset_clear(&to_fetch);
 }
 
 static int find_basename_matches(struct diff_options *options,

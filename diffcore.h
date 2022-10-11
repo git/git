@@ -11,6 +11,7 @@ struct repository;
 struct strintmap;
 struct strmap;
 struct userdiff_driver;
+struct oidset;
 
 /* This header file is internal between diff.c and its diff transformers
  * (e.g. diffcore-rename, diffcore-pickaxe).  Never include this header
@@ -229,7 +230,7 @@ int diffcore_count_changes(struct repository *r,
  * repository, add that OID to to_fetch.
  */
 void diff_add_if_missing(struct repository *r,
-			 struct oid_array *to_fetch,
+			 struct oidset *to_fetch,
 			 const struct diff_filespec *filespec);
 
 #endif

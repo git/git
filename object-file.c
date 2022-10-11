@@ -1535,6 +1535,7 @@ static int do_oid_object_info_extended(struct repository *r,
 	struct cached_object *co;
 	struct pack_entry e;
 	int rtype;
+	struct oidset to_fetch = OIDSET_INIT;
 	const struct object_id *real = oid;
 	int already_retried = 0;
 
@@ -1603,13 +1604,16 @@ static int do_oid_object_info_extended(struct repository *r,
 			 * TODO Investigate checking promisor_remote_get_direct()
 			 * TODO return value and stopping on error here.
 			 */
-			promisor_remote_get_direct(r, real, 1);
+			oidset_insert(&to_fetch, real);
+			promisor_remote_get_direct(r, &to_fetch);
 			already_retried = 1;
+			oidset_remove(&to_fetch, real);
 			continue;
 		}
 
 		return -1;
 	}
+	oidset_clear(&to_fetch);
 
 	if (oi == &blank_oi)
 		/*
