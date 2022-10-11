@@ -56,11 +56,12 @@ static struct opts_multi_pack_index {
 static int parse_object_dir(const struct option *opt, const char *arg,
 			    int unset)
 {
-	free(opts.object_dir);
+	char **value = opt->value;
+	free(*value);
 	if (unset)
-		opts.object_dir = xstrdup(get_object_directory());
+		*value = xstrdup(get_object_directory());
 	else
-		opts.object_dir = real_pathdup(arg, 1);
+		*value = real_pathdup(arg, 1);
 	return 0;
 }
 
