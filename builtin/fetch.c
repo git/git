@@ -1953,15 +1953,14 @@ static int fetch_multiple(struct string_list *list, int max_children)
 		struct parallel_fetch_state state = { argv.v, list, 0, 0 };
 
 		strvec_push(&argv, "--end-of-options");
-		result = run_processes_parallel_tr2(max_children,
-						    &fetch_next_remote,
-						    &fetch_failed_to_start,
-						    &fetch_finished,
-						    &state,
-						    "fetch", "parallel/fetch");
+		run_processes_parallel_tr2(max_children,
+					   &fetch_next_remote,
+					   &fetch_failed_to_start,
+					   &fetch_finished,
+					   &state,
+					   "fetch", "parallel/fetch");
 
-		if (!result)
-			result = state.result;
+		result = state.result;
 	} else
 		for (i = 0; i < list->nr; i++) {
 			const char *name = list->items[i].string;

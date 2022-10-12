@@ -485,14 +485,14 @@ typedef int (*task_finished_fn)(int result,
  * API reads that setting.
  */
 extern int run_processes_parallel_ungroup;
-int run_processes_parallel(int n,
-			   get_next_task_fn,
-			   start_failure_fn,
-			   task_finished_fn,
-			   void *pp_cb);
-int run_processes_parallel_tr2(int n, get_next_task_fn, start_failure_fn,
-			       task_finished_fn, void *pp_cb,
-			       const char *tr2_category, const char *tr2_label);
+void run_processes_parallel(int n,
+			    get_next_task_fn,
+			    start_failure_fn,
+			    task_finished_fn,
+			    void *pp_cb);
+void run_processes_parallel_tr2(int n, get_next_task_fn, start_failure_fn,
+				task_finished_fn, void *pp_cb,
+				const char *tr2_category, const char *tr2_label);
 
 /**
  * Convenience function which prepares env for a command to be run in a

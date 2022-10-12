@@ -192,8 +192,8 @@ static int testsuite(int argc, const char **argv)
 	fprintf(stderr, "Running %"PRIuMAX" tests (%d at a time)\n",
 		(uintmax_t)suite.tests.nr, max_jobs);
 
-	ret = run_processes_parallel(max_jobs, next_test, test_failed,
-				     test_finished, &suite);
+	run_processes_parallel(max_jobs, next_test, test_failed,
+			       test_finished, &suite);
 
 	if (suite.failed.nr > 0) {
 		ret = 1;
@@ -428,16 +428,16 @@ int cmd__run_command(int argc, const char **argv)
 	strvec_pushv(&proc.args, (const char **)argv + 3);
 
 	if (!strcmp(argv[1], "run-command-parallel")) {
-		exit(run_processes_parallel(jobs, parallel_next,
-					    NULL, NULL, &proc));
+		run_processes_parallel(jobs, parallel_next, NULL, NULL, &proc);
 	} else if (!strcmp(argv[1], "run-command-abort")) {
-		exit(run_processes_parallel(jobs, parallel_next,
-					    NULL, task_finished, &proc));
+		run_processes_parallel(jobs, parallel_next, NULL,
+				       task_finished, &proc);
 	} else if (!strcmp(argv[1], "run-command-no-jobs")) {
-		exit(run_processes_parallel(jobs, no_job,
-					    NULL, task_finished, &proc));
+		run_processes_parallel(jobs, no_job, NULL, task_finished,
+				       &proc);
 	} else {
 		fprintf(stderr, "check usage\n");
 		return 1;
 	}
+	exit(0);
 }
