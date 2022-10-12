@@ -17,6 +17,7 @@ test_expect_success 'setup' '
 
 	git checkout -b conflicts O &&
 	test_commit P &&
+	test_commit conflict-X fileX &&
 	test_commit Q &&
 
 	git checkout -b topic O &&
@@ -107,13 +108,17 @@ test_reflog () {
 			GIT_REFLOG_ACTION="$reflog_action" &&
 			export GIT_REFLOG_ACTION
 		fi &&
-		git rebase $mode main
+		test_must_fail git rebase $mode main &&
+		echo resolved >fileX &&
+		git add fileX &&
+		git rebase --continue
 	) &&
 
-	git log -g --format=%gs -4 >actual &&
+	git log -g --format=%gs -5 >actual &&
 	write_reflog_expect <<-EOF &&
 	${reflog_action:-rebase} (finish): returning to refs/heads/conflicts
 	${reflog_action:-rebase} (pick): Q
+	${reflog_action:-rebase} (continue): conflict-X
 	${reflog_action:-rebase} (pick): P
 	${reflog_action:-rebase} (start): checkout main
 	EOF
