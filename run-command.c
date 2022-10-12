@@ -1827,24 +1827,6 @@ void run_processes_parallel(const struct run_process_parallel_opts *opts)
 		trace2_region_leave(tr2_category, tr2_label, NULL);
 }
 
-void run_processes_parallel_tr2(size_t processes, get_next_task_fn get_next_task,
-				start_failure_fn start_failure,
-				task_finished_fn task_finished, void *pp_cb,
-				const char *tr2_category, const char *tr2_label)
-{
-	const struct run_process_parallel_opts opts = {
-		.tr2_category = tr2_category,
-		.tr2_label = tr2_label,
-		.processes = processes,
-
-		.get_next_task = get_next_task,
-		.start_failure = start_failure,
-		.task_finished = task_finished,
-	};
-
-	run_processes_parallel(&opts);
-}
-
 int run_auto_maintenance(int quiet)
 {
 	int enabled;

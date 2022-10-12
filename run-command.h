@@ -528,9 +528,6 @@ struct run_process_parallel_opts
  * conditions due to writing in parallel to stdout and stderr.
  */
 void run_processes_parallel(const struct run_process_parallel_opts *opts);
-void run_processes_parallel_tr2(size_t processes, get_next_task_fn,
-				start_failure_fn, task_finished_fn, void *pp_cb,
-				const char *tr2_category, const char *tr2_label);
 
 /**
  * Convenience function which prepares env for a command to be run in a
