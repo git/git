@@ -51,4 +51,13 @@ test_expect_success 'safe.bareRepository on the command line' '
 		-c safe.bareRepository=all
 '
 
+test_expect_success 'safe.bareRepository in included file' '
+	cat >gitconfig-include <<-\EOF &&
+	[safe]
+		bareRepository = explicit
+	EOF
+	git config --global --add include.path "$(pwd)/gitconfig-include" &&
+	expect_rejected -C outer-repo/bare-repo
+'
+
 test_done
