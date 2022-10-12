@@ -5,22 +5,23 @@
 #include "refs.h"
 #include "run-command.h"
 
-static int find_temp_filename(struct strbuf *name)
+static char *find_temp_filename(void)
 {
 	int fd;
+	struct strbuf name = STRBUF_INIT;
 	/*
 	 * Find a temporary filename that is available. This is briefly
 	 * racy, but unlikely to collide.
 	 */
-	fd = odb_mkstemp(name, "bundles/tmp_uri_XXXXXX");
+	fd = odb_mkstemp(&name, "bundles/tmp_uri_XXXXXX");
 	if (fd < 0) {
 		warning(_("failed to create temporary file"));
-		return -1;
+		return NULL;
 	}
 
 	close(fd);
-	unlink(name->buf);
-	return 0;
+	unlink(name.buf);
+	return strbuf_detach(&name, NULL);
 }
 
 static int download_https_uri_to_file(const char *file, const char *uri)
@@ -141,28 +142,31 @@ static int unbundle_from_file(struct repository *r, const char *file)
 int fetch_bundle_uri(struct repository *r, const char *uri)
 {
 	int result = 0;
-	struct strbuf filename = STRBUF_INIT;
+	char *filename;
 
-	if ((result = find_temp_filename(&filename)))
+	if (!(filename = find_temp_filename())) {
+		result = -1;
 		goto cleanup;
+	}
 
-	if ((result = copy_uri_to_file(filename.buf, uri))) {
+	if ((result = copy_uri_to_file(filename, uri))) {
 		warning(_("failed to download bundle from URI '%s'"), uri);
 		goto cleanup;
 	}
 
-	if ((result = !is_bundle(filename.buf, 0))) {
+	if ((result = !is_bundle(filename, 0))) {
 		warning(_("file at URI '%s' is not a bundle"), uri);
 		goto cleanup;
 	}
 
-	if ((result = unbundle_from_file(r, filename.buf))) {
+	if ((result = unbundle_from_file(r, filename))) {
 		warning(_("failed to unbundle bundle from URI '%s'"), uri);
 		goto cleanup;
 	}
 
 cleanup:
-	unlink(filename.buf);
-	strbuf_release(&filename);
+	if (filename)
+		unlink(filename);
+	free(filename);
 	return result;
 }
