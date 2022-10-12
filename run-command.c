@@ -1497,8 +1497,6 @@ enum child_state {
 };
 
 struct parallel_processes {
-	void *const data;
-
 	const size_t max_processes;
 	size_t nr_processes;
 
@@ -1609,7 +1607,7 @@ static int pp_start_one(struct parallel_processes *pp,
 
 	code = opts->get_next_task(&pp->children[i].process,
 				   opts->ungroup ? NULL : &pp->children[i].err,
-				   pp->data,
+				   opts->data,
 				   &pp->children[i].data);
 	if (!code) {
 		if (!opts->ungroup) {
@@ -1628,7 +1626,7 @@ static int pp_start_one(struct parallel_processes *pp,
 		if (opts->start_failure)
 			code = opts->start_failure(opts->ungroup ? NULL :
 						   &pp->children[i].err,
-						   pp->data,
+						   opts->data,
 						   pp->children[i].data);
 		else
 			code = 0;
@@ -1705,7 +1703,7 @@ static int pp_collect_finished(struct parallel_processes *pp,
 
 		if (opts->task_finished)
 			code = opts->task_finished(code, opts->ungroup ? NULL :
-						   &pp->children[i].err, pp->data,
+						   &pp->children[i].err, opts->data,
 						   pp->children[i].data);
 		else
 			code = 0;
@@ -1758,7 +1756,6 @@ void run_processes_parallel(const struct run_process_parallel_opts *opts)
 	int spawn_cap = 4;
 	struct parallel_processes pp = {
 		.max_processes = opts->processes,
-		.data = opts->data,
 		.buffered_output = STRBUF_INIT,
 	};
 	/* options */
