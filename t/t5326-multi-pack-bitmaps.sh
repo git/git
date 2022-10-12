@@ -410,4 +410,28 @@ test_expect_success 'preferred pack change with existing MIDX bitmap' '
 	)
 '
 
+test_expect_success 'tagged commits are selected for bitmapping' '
+	rm -fr repo &&
+	git init repo &&
+	test_when_finished "rm -fr repo" &&
+	(
+		cd repo &&
+
+		test_commit --annotate base &&
+		git repack -d &&
+
+		# Remove refs/heads/main which points at the commit directly,
+		# leaving only a reference to the annotated tag.
+		git branch -M main &&
+		git checkout base &&
+		git branch -d main &&
+
+		git multi-pack-index write --bitmap &&
+
+		git rev-parse HEAD >want &&
+		test-tool bitmap list-commits >actual &&
+		grep $(cat want) actual
+	)
+'
+
 test_done

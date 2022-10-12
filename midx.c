@@ -980,12 +980,16 @@ static int add_ref_to_pending(const char *refname,
 			      int flag, void *cb_data)
 {
 	struct rev_info *revs = (struct rev_info*)cb_data;
+	struct object_id peeled;
 	struct object *object;
 
 	if ((flag & REF_ISSYMREF) && (flag & REF_ISBROKEN)) {
 		warning("symbolic ref is dangling: %s", refname);
 		return 0;
 	}
+
+	if (!peel_iterated_oid(oid, &peeled))
+		oid = &peeled;
 
 	object = parse_object_or_die(oid, refname);
 	if (object->type != OBJ_COMMIT)
