@@ -136,7 +136,7 @@ static const char * const testsuite_usage[] = {
 static int testsuite(int argc, const char **argv)
 {
 	struct testsuite suite = TESTSUITE_INIT;
-	int max_jobs = 1, i, ret;
+	int max_jobs = 1, i, ret = 0;
 	DIR *dir;
 	struct dirent *d;
 	struct option options[] = {
@@ -151,6 +151,12 @@ static int testsuite(int argc, const char **argv)
 		OPT_BOOL(0, "write-junit-xml", &suite.write_junit_xml,
 			 "write JUnit-style XML files"),
 		OPT_END()
+	};
+	struct run_process_parallel_opts opts = {
+		.get_next_task = next_test,
+		.start_failure = test_failed,
+		.task_finished = test_finished,
+		.data = &suite,
 	};
 
 	argc = parse_options(argc, argv, NULL, options,
@@ -192,8 +198,8 @@ static int testsuite(int argc, const char **argv)
 	fprintf(stderr, "Running %"PRIuMAX" tests (%d at a time)\n",
 		(uintmax_t)suite.tests.nr, max_jobs);
 
-	run_processes_parallel(max_jobs, next_test, test_failed,
-			       test_finished, &suite);
+	opts.processes = max_jobs;
+	run_processes_parallel(&opts);
 
 	if (suite.failed.nr > 0) {
 		ret = 1;
@@ -206,7 +212,7 @@ static int testsuite(int argc, const char **argv)
 	string_list_clear(&suite.tests, 0);
 	string_list_clear(&suite.failed, 0);
 
-	return !!ret;
+	return ret;
 }
 
 static uint64_t my_random_next = 1234;
@@ -382,6 +388,9 @@ int cmd__run_command(int argc, const char **argv)
 	struct child_process proc = CHILD_PROCESS_INIT;
 	int jobs;
 	int ret;
+	struct run_process_parallel_opts opts = {
+		.data = &proc,
+	};
 
 	if (argc > 1 && !strcmp(argv[1], "testsuite"))
 		return testsuite(argc - 1, argv + 1);
@@ -427,7 +436,7 @@ int cmd__run_command(int argc, const char **argv)
 	if (!strcmp(argv[1], "--ungroup")) {
 		argv += 1;
 		argc -= 1;
-		run_processes_parallel_ungroup = 1;
+		opts.ungroup = 1;
 	}
 
 	jobs = atoi(argv[2]);
@@ -435,18 +444,20 @@ int cmd__run_command(int argc, const char **argv)
 	strvec_pushv(&proc.args, (const char **)argv + 3);
 
 	if (!strcmp(argv[1], "run-command-parallel")) {
-		run_processes_parallel(jobs, parallel_next, NULL, NULL, &proc);
+		opts.get_next_task = parallel_next;
 	} else if (!strcmp(argv[1], "run-command-abort")) {
-		run_processes_parallel(jobs, parallel_next, NULL,
-				       task_finished, &proc);
+		opts.get_next_task = parallel_next;
+		opts.task_finished = task_finished;
 	} else if (!strcmp(argv[1], "run-command-no-jobs")) {
-		run_processes_parallel(jobs, no_job, NULL, task_finished,
-				       &proc);
+		opts.get_next_task = no_job;
+		opts.task_finished = task_finished;
 	} else {
 		ret = 1;
 		fprintf(stderr, "check usage\n");
 		goto cleanup;
 	}
+	opts.processes = jobs;
+	run_processes_parallel(&opts);
 	ret = 0;
 cleanup:
 	child_process_clear(&proc);

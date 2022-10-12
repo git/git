@@ -1496,7 +1496,6 @@ enum child_state {
 	GIT_CP_WAIT_CLEANUP,
 };
 
-int run_processes_parallel_ungroup;
 struct parallel_processes {
 	void *const data;
 
@@ -1558,11 +1557,12 @@ static void handle_children_on_signal(int signo)
 }
 
 static void pp_init(struct parallel_processes *pp,
-		    get_next_task_fn get_next_task,
-		    start_failure_fn start_failure,
-		    task_finished_fn task_finished)
+		    const struct run_process_parallel_opts *opts)
 {
-	const size_t n = pp->max_processes;
+	const size_t n = opts->processes;
+	get_next_task_fn get_next_task = opts->get_next_task;
+	start_failure_fn start_failure = opts->start_failure;
+	task_finished_fn task_finished = opts->task_finished;
 
 	if (!n)
 		BUG("you must provide a non-zero number of processes!");
@@ -1769,27 +1769,27 @@ static int pp_collect_finished(struct parallel_processes *pp)
 	return result;
 }
 
-void run_processes_parallel(size_t n,
-			    get_next_task_fn get_next_task,
-			    start_failure_fn start_failure,
-			    task_finished_fn task_finished,
-			    void *pp_cb)
+void run_processes_parallel(const struct run_process_parallel_opts *opts)
 {
 	int i, code;
 	int output_timeout = 100;
 	int spawn_cap = 4;
-	int ungroup = run_processes_parallel_ungroup;
 	struct parallel_processes pp = {
-		.max_processes = n,
-		.data = pp_cb,
+		.max_processes = opts->processes,
+		.data = opts->data,
 		.buffered_output = STRBUF_INIT,
-		.ungroup = ungroup,
+		.ungroup = opts->ungroup,
 	};
+	/* options */
+	const char *tr2_category = opts->tr2_category;
+	const char *tr2_label = opts->tr2_label;
+	const int do_trace2 = tr2_category && tr2_label;
 
-	/* unset for the next API user */
-	run_processes_parallel_ungroup = 0;
+	if (do_trace2)
+		trace2_region_enter_printf(tr2_category, tr2_label, NULL,
+					   "max:%d", opts->processes);
 
-	pp_init(&pp, get_next_task, start_failure, task_finished);
+	pp_init(&pp, opts);
 	while (1) {
 		for (i = 0;
 		    i < spawn_cap && !pp.shutdown &&
@@ -1806,7 +1806,7 @@ void run_processes_parallel(size_t n,
 		}
 		if (!pp.nr_processes)
 			break;
-		if (ungroup) {
+		if (opts->ungroup) {
 			for (size_t i = 0; i < pp.max_processes; i++)
 				pp.children[i].state = GIT_CP_WAIT_CLEANUP;
 		} else {
@@ -1822,19 +1822,27 @@ void run_processes_parallel(size_t n,
 	}
 
 	pp_cleanup(&pp);
+
+	if (do_trace2)
+		trace2_region_leave(tr2_category, tr2_label, NULL);
 }
 
-void run_processes_parallel_tr2(size_t n, get_next_task_fn get_next_task,
+void run_processes_parallel_tr2(size_t processes, get_next_task_fn get_next_task,
 				start_failure_fn start_failure,
 				task_finished_fn task_finished, void *pp_cb,
 				const char *tr2_category, const char *tr2_label)
 {
-	trace2_region_enter_printf(tr2_category, tr2_label, NULL, "max:%d", n);
+	const struct run_process_parallel_opts opts = {
+		.tr2_category = tr2_category,
+		.tr2_label = tr2_label,
+		.processes = processes,
 
-	run_processes_parallel(n, get_next_task, start_failure,
-			       task_finished, pp_cb);
+		.get_next_task = get_next_task,
+		.start_failure = start_failure,
+		.task_finished = task_finished,
+	};
 
-	trace2_region_leave(tr2_category, tr2_label, NULL);
+	run_processes_parallel(&opts);
 }
 
 int run_auto_maintenance(int quiet)
