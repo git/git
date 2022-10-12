@@ -427,18 +427,17 @@ int cmd__run_command(int argc, const char **argv)
 	strvec_clear(&proc.args);
 	strvec_pushv(&proc.args, (const char **)argv + 3);
 
-	if (!strcmp(argv[1], "run-command-parallel"))
+	if (!strcmp(argv[1], "run-command-parallel")) {
 		exit(run_processes_parallel(jobs, parallel_next,
 					    NULL, NULL, &proc));
-
-	if (!strcmp(argv[1], "run-command-abort"))
+	} else if (!strcmp(argv[1], "run-command-abort")) {
 		exit(run_processes_parallel(jobs, parallel_next,
 					    NULL, task_finished, &proc));
-
-	if (!strcmp(argv[1], "run-command-no-jobs"))
+	} else if (!strcmp(argv[1], "run-command-no-jobs")) {
 		exit(run_processes_parallel(jobs, no_job,
 					    NULL, task_finished, &proc));
-
-	fprintf(stderr, "check usage\n");
-	return 1;
+	} else {
+		fprintf(stderr, "check usage\n");
+		return 1;
+	}
 }
