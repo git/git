@@ -1497,7 +1497,6 @@ enum child_state {
 };
 
 struct parallel_processes {
-	const size_t max_processes;
 	size_t nr_processes;
 
 	struct {
@@ -1518,24 +1517,38 @@ struct parallel_processes {
 	struct strbuf buffered_output; /* of finished children */
 };
 
-static void kill_children(const struct parallel_processes *pp, int signo)
+struct parallel_processes_for_signal {
+	const struct run_process_parallel_opts *opts;
+	const struct parallel_processes *pp;
+};
+
+static void kill_children(const struct parallel_processes *pp,
+			  const struct run_process_parallel_opts *opts,
+			  int signo)
 {
-	for (size_t i = 0; i < pp->max_processes; i++)
+	for (size_t i = 0; i < opts->processes; i++)
 		if (pp->children[i].state == GIT_CP_WORKING)
 			kill(pp->children[i].process.pid, signo);
 }
 
-static struct parallel_processes *pp_for_signal;
+static void kill_children_signal(const struct parallel_processes_for_signal *pp_sig,
+				 int signo)
+{
+	kill_children(pp_sig->pp, pp_sig->opts, signo);
+}
+
+static struct parallel_processes_for_signal *pp_for_signal;
 
 static void handle_children_on_signal(int signo)
 {
-	kill_children(pp_for_signal, signo);
+	kill_children_signal(pp_for_signal, signo);
 	sigchain_pop(signo);
 	raise(signo);
 }
 
 static void pp_init(struct parallel_processes *pp,
-		    const struct run_process_parallel_opts *opts)
+		    const struct run_process_parallel_opts *opts,
+		    struct parallel_processes_for_signal *pp_sig)
 {
 	const size_t n = opts->processes;
 
@@ -1561,7 +1574,9 @@ static void pp_init(struct parallel_processes *pp,
 		}
 	}
 
-	pp_for_signal = pp;
+	pp_sig->pp = pp;
+	pp_sig->opts = opts;
+	pp_for_signal = pp_sig;
 	sigchain_push_common(handle_children_on_signal);
 }
 
@@ -1759,8 +1774,8 @@ void run_processes_parallel(const struct run_process_parallel_opts *opts)
 	int i, code;
 	int output_timeout = 100;
 	int spawn_cap = 4;
+	struct parallel_processes_for_signal pp_sig;
 	struct parallel_processes pp = {
-		.max_processes = opts->processes,
 		.buffered_output = STRBUF_INIT,
 	};
 	/* options */
@@ -1772,7 +1787,7 @@ void run_processes_parallel(const struct run_process_parallel_opts *opts)
 		trace2_region_enter_printf(tr2_category, tr2_label, NULL,
 					   "max:%d", opts->processes);
 
-	pp_init(&pp, opts);
+	pp_init(&pp, opts, &pp_sig);
 	while (1) {
 		for (i = 0;
 		    i < spawn_cap && !pp.shutdown &&
@@ -1783,7 +1798,7 @@ void run_processes_parallel(const struct run_process_parallel_opts *opts)
 				continue;
 			if (code < 0) {
 				pp.shutdown = 1;
-				kill_children(&pp, -code);
+				kill_children(&pp, opts, -code);
 			}
 			break;
 		}
@@ -1800,7 +1815,7 @@ void run_processes_parallel(const struct run_process_parallel_opts *opts)
 		if (code) {
 			pp.shutdown = 1;
 			if (code < 0)
-				kill_children(&pp, -code);
+				kill_children(&pp, opts,-code);
 		}
 	}
 
