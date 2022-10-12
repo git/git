@@ -1498,9 +1498,9 @@ enum child_state {
 
 int run_processes_parallel_ungroup;
 struct parallel_processes {
-	void *data;
+	void *const data;
 
-	size_t max_processes;
+	const size_t max_processes;
 	size_t nr_processes;
 
 	get_next_task_fn get_next_task;
@@ -1520,7 +1520,7 @@ struct parallel_processes {
 	struct pollfd *pfd;
 
 	unsigned shutdown : 1;
-	unsigned ungroup : 1;
+	const unsigned ungroup : 1;
 
 	size_t output_owner;
 	struct strbuf buffered_output; /* of finished children */
@@ -1558,21 +1558,18 @@ static void handle_children_on_signal(int signo)
 }
 
 static void pp_init(struct parallel_processes *pp,
-		    size_t n,
 		    get_next_task_fn get_next_task,
 		    start_failure_fn start_failure,
-		    task_finished_fn task_finished,
-		    void *data, int ungroup)
+		    task_finished_fn task_finished)
 {
+	const size_t n = pp->max_processes;
+
 	if (!n)
 		BUG("you must provide a non-zero number of processes!");
-
-	pp->max_processes = n;
 
 	trace_printf("run_processes_parallel: preparing to run up to %"PRIuMAX" tasks",
 		     (uintmax_t)n);
 
-	pp->data = data;
 	if (!get_next_task)
 		BUG("you need to specify a get_next_task function");
 	pp->get_next_task = get_next_task;
@@ -1580,16 +1577,9 @@ static void pp_init(struct parallel_processes *pp,
 	pp->start_failure = start_failure ? start_failure : default_start_failure;
 	pp->task_finished = task_finished ? task_finished : default_task_finished;
 
-	pp->nr_processes = 0;
-	pp->output_owner = 0;
-	pp->shutdown = 0;
-	pp->ungroup = ungroup;
 	CALLOC_ARRAY(pp->children, n);
-	if (pp->ungroup)
-		pp->pfd = NULL;
-	else
+	if (!pp->ungroup)
 		CALLOC_ARRAY(pp->pfd, n);
-	strbuf_init(&pp->buffered_output, 0);
 
 	for (size_t i = 0; i < n; i++) {
 		strbuf_init(&pp->children[i].err, 0);
@@ -1789,13 +1779,17 @@ void run_processes_parallel(size_t n,
 	int output_timeout = 100;
 	int spawn_cap = 4;
 	int ungroup = run_processes_parallel_ungroup;
-	struct parallel_processes pp;
+	struct parallel_processes pp = {
+		.max_processes = n,
+		.data = pp_cb,
+		.buffered_output = STRBUF_INIT,
+		.ungroup = ungroup,
+	};
 
 	/* unset for the next API user */
 	run_processes_parallel_ungroup = 0;
 
-	pp_init(&pp, n, get_next_task, start_failure, task_finished, pp_cb,
-		ungroup);
+	pp_init(&pp, get_next_task, start_failure, task_finished);
 	while (1) {
 		for (i = 0;
 		    i < spawn_cap && !pp.shutdown &&
