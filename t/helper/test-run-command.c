@@ -381,13 +381,14 @@ int cmd__run_command(int argc, const char **argv)
 {
 	struct child_process proc = CHILD_PROCESS_INIT;
 	int jobs;
+	int ret;
 
 	if (argc > 1 && !strcmp(argv[1], "testsuite"))
-		exit(testsuite(argc - 1, argv + 1));
+		return testsuite(argc - 1, argv + 1);
 	if (!strcmp(argv[1], "inherited-handle"))
-		exit(inherit_handle(argv[0]));
+		return inherit_handle(argv[0]);
 	if (!strcmp(argv[1], "inherited-handle-child"))
-		exit(inherit_handle_child());
+		return inherit_handle_child();
 
 	if (argc >= 2 && !strcmp(argv[1], "quote-stress-test"))
 		return !!quote_stress_test(argc - 1, argv + 1);
@@ -404,18 +405,24 @@ int cmd__run_command(int argc, const char **argv)
 		argv += 2;
 		argc -= 2;
 	}
-	if (argc < 3)
-		return 1;
+	if (argc < 3) {
+		ret = 1;
+		goto cleanup;
+	}
 	strvec_pushv(&proc.args, (const char **)argv + 2);
 
 	if (!strcmp(argv[1], "start-command-ENOENT")) {
-		if (start_command(&proc) < 0 && errno == ENOENT)
-			return 0;
+		if (start_command(&proc) < 0 && errno == ENOENT) {
+			ret = 0;
+			goto cleanup;
+		}
 		fprintf(stderr, "FAIL %s\n", argv[1]);
 		return 1;
 	}
-	if (!strcmp(argv[1], "run-command"))
-		exit(run_command(&proc));
+	if (!strcmp(argv[1], "run-command")) {
+		ret = run_command(&proc);
+		goto cleanup;
+	}
 
 	if (!strcmp(argv[1], "--ungroup")) {
 		argv += 1;
@@ -436,8 +443,12 @@ int cmd__run_command(int argc, const char **argv)
 		run_processes_parallel(jobs, no_job, NULL, task_finished,
 				       &proc);
 	} else {
+		ret = 1;
 		fprintf(stderr, "check usage\n");
-		return 1;
+		goto cleanup;
 	}
-	exit(0);
+	ret = 0;
+cleanup:
+	child_process_clear(&proc);
+	return ret;
 }
