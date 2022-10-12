@@ -1540,7 +1540,7 @@ static int default_task_finished(int result,
 	return 0;
 }
 
-static void kill_children(struct parallel_processes *pp, int signo)
+static void kill_children(const struct parallel_processes *pp, int signo)
 {
 	for (size_t i = 0; i < pp->max_processes; i++)
 		if (pp->children[i].state == GIT_CP_WORKING)
@@ -1698,7 +1698,7 @@ static void pp_buffer_stderr(struct parallel_processes *pp, int output_timeout)
 	}
 }
 
-static void pp_output(struct parallel_processes *pp)
+static void pp_output(const struct parallel_processes *pp)
 {
 	size_t i = pp->output_owner;
 
