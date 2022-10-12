@@ -28,6 +28,19 @@ struct remote_bundle_info {
 	 * if there was no table of contents.
 	 */
 	char *uri;
+
+	/**
+	 * If the bundle has been downloaded, then 'file' is a
+	 * filename storing its contents. Otherwise, 'file' is
+	 * NULL.
+	 */
+	char *file;
+
+	/**
+	 * If the bundle has been unbundled successfully, then
+	 * this boolean is true.
+	 */
+	unsigned unbundled:1;
 };
 
 #define REMOTE_BUNDLE_INFO_INIT { 0 }
