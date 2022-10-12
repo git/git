@@ -1599,10 +1599,10 @@ static int pp_start_one(struct parallel_processes *pp,
 	size_t i;
 	int code;
 
-	for (i = 0; i < pp->max_processes; i++)
+	for (i = 0; i < opts->processes; i++)
 		if (pp->children[i].state == GIT_CP_FREE)
 			break;
-	if (i == pp->max_processes)
+	if (i == opts->processes)
 		BUG("bookkeeping is hard");
 
 	code = opts->get_next_task(&pp->children[i].process,
@@ -1689,14 +1689,14 @@ static int pp_collect_finished(struct parallel_processes *pp,
 			       const struct run_process_parallel_opts *opts)
 {
 	int code;
-	size_t i, n = pp->max_processes;
+	size_t i;
 	int result = 0;
 
 	while (pp->nr_processes > 0) {
-		for (i = 0; i < pp->max_processes; i++)
+		for (i = 0; i < opts->processes; i++)
 			if (pp->children[i].state == GIT_CP_WAIT_CLEANUP)
 				break;
-		if (i == pp->max_processes)
+		if (i == opts->processes)
 			break;
 
 		code = finish_command(&pp->children[i].process);
@@ -1725,6 +1725,8 @@ static int pp_collect_finished(struct parallel_processes *pp,
 			strbuf_addbuf(&pp->buffered_output, &pp->children[i].err);
 			strbuf_reset(&pp->children[i].err);
 		} else {
+			const size_t n = opts->processes;
+
 			strbuf_write(&pp->children[i].err, stderr);
 			strbuf_reset(&pp->children[i].err);
 
@@ -1771,7 +1773,7 @@ void run_processes_parallel(const struct run_process_parallel_opts *opts)
 	while (1) {
 		for (i = 0;
 		    i < spawn_cap && !pp.shutdown &&
-		    pp.nr_processes < pp.max_processes;
+		    pp.nr_processes < opts->processes;
 		    i++) {
 			code = pp_start_one(&pp, opts);
 			if (!code)
@@ -1785,7 +1787,7 @@ void run_processes_parallel(const struct run_process_parallel_opts *opts)
 		if (!pp.nr_processes)
 			break;
 		if (opts->ungroup) {
-			for (size_t i = 0; i < pp.max_processes; i++)
+			for (size_t i = 0; i < opts->processes; i++)
 				pp.children[i].state = GIT_CP_WAIT_CLEANUP;
 		} else {
 			pp_buffer_stderr(&pp, output_timeout);
