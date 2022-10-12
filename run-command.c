@@ -1564,8 +1564,8 @@ static void pp_init(struct parallel_processes *pp,
 		    task_finished_fn task_finished,
 		    void *data, int ungroup)
 {
-	if (n < 1)
-		n = online_cpus();
+	if (!n)
+		BUG("you must provide a non-zero number of processes!");
 
 	pp->max_processes = n;
 
@@ -1835,8 +1835,7 @@ void run_processes_parallel_tr2(size_t n, get_next_task_fn get_next_task,
 				task_finished_fn task_finished, void *pp_cb,
 				const char *tr2_category, const char *tr2_label)
 {
-	trace2_region_enter_printf(tr2_category, tr2_label, NULL, "max:%d",
-				   ((n < 1) ? online_cpus() : n));
+	trace2_region_enter_printf(tr2_category, tr2_label, NULL, "max:%d", n);
 
 	run_processes_parallel(n, get_next_task, start_failure,
 			       task_finished, pp_cb);
