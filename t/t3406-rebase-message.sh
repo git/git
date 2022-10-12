@@ -88,7 +88,7 @@ test_expect_success 'error out early upon -C<n> or --whitespace=<bad>' '
 write_reflog_expect () {
 	if test $mode = --apply
 	then
-		sed 's/(finish)/finished/; s/ ([^)]*)//'
+		sed 's/(continue)/(pick)/'
 	else
 		cat
 	fi >expect

@@ -582,10 +582,10 @@ static int move_to_original_branch(struct rebase_options *opts)
 	if (!opts->onto)
 		BUG("move_to_original_branch without onto");
 
-	strbuf_addf(&branch_reflog, "%s finished: %s onto %s",
+	strbuf_addf(&branch_reflog, "%s (finish): %s onto %s",
 		    getenv(GIT_REFLOG_ACTION_ENVIRONMENT),
 		    opts->head_name, oid_to_hex(&opts->onto->object.oid));
-	strbuf_addf(&head_reflog, "%s finished: returning to %s",
+	strbuf_addf(&head_reflog, "%s (finish): returning to %s",
 		    getenv(GIT_REFLOG_ACTION_ENVIRONMENT), opts->head_name);
 	ropts.branch = opts->head_name;
 	ropts.flags = RESET_HEAD_REFS_ONLY;
@@ -615,7 +615,8 @@ static int run_am(struct rebase_options *opts)
 
 	am.git_cmd = 1;
 	strvec_push(&am.args, "am");
-
+	strvec_pushf(&am.env, GIT_REFLOG_ACTION_ENVIRONMENT "=%s (pick)",
+		     getenv(GIT_REFLOG_ACTION_ENVIRONMENT));
 	if (opts->action && !strcmp("continue", opts->action)) {
 		strvec_push(&am.args, "--resolved");
 		strvec_pushf(&am.args, "--resolvemsg=%s", resolvemsg);
@@ -1792,7 +1793,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		printf(_("First, rewinding head to replay your work on top of "
 			 "it...\n"));
 
-	strbuf_addf(&msg, "%s: checkout %s",
+	strbuf_addf(&msg, "%s (start): checkout %s",
 		    getenv(GIT_REFLOG_ACTION_ENVIRONMENT), options.onto_name);
 	ropts.oid = &options.onto->object.oid;
 	ropts.orig_head = &options.orig_head->object.oid,
