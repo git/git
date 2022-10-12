@@ -1565,10 +1565,11 @@ static void pp_init(struct parallel_processes *pp,
 	sigchain_push_common(handle_children_on_signal);
 }
 
-static void pp_cleanup(struct parallel_processes *pp)
+static void pp_cleanup(struct parallel_processes *pp,
+		       const struct run_process_parallel_opts *opts)
 {
 	trace_printf("run_processes_parallel: done");
-	for (size_t i = 0; i < pp->max_processes; i++) {
+	for (size_t i = 0; i < opts->processes; i++) {
 		strbuf_release(&pp->children[i].err);
 		child_process_clear(&pp->children[i].process);
 	}
@@ -1647,19 +1648,21 @@ static int pp_start_one(struct parallel_processes *pp,
 	return 0;
 }
 
-static void pp_buffer_stderr(struct parallel_processes *pp, int output_timeout)
+static void pp_buffer_stderr(struct parallel_processes *pp,
+			     const struct run_process_parallel_opts *opts,
+			     int output_timeout)
 {
 	int i;
 
-	while ((i = poll(pp->pfd, pp->max_processes, output_timeout)) < 0) {
+	while ((i = poll(pp->pfd, opts->processes, output_timeout) < 0)) {
 		if (errno == EINTR)
 			continue;
-		pp_cleanup(pp);
+		pp_cleanup(pp, opts);
 		die_errno("poll");
 	}
 
 	/* Buffer output from all pipes. */
-	for (size_t i = 0; i < pp->max_processes; i++) {
+	for (size_t i = 0; i < opts->processes; i++) {
 		if (pp->children[i].state == GIT_CP_WORKING &&
 		    pp->pfd[i].revents & (POLLIN | POLLHUP)) {
 			int n = strbuf_read_once(&pp->children[i].err,
@@ -1790,7 +1793,7 @@ void run_processes_parallel(const struct run_process_parallel_opts *opts)
 			for (size_t i = 0; i < opts->processes; i++)
 				pp.children[i].state = GIT_CP_WAIT_CLEANUP;
 		} else {
-			pp_buffer_stderr(&pp, output_timeout);
+			pp_buffer_stderr(&pp, opts, output_timeout);
 			pp_output(&pp);
 		}
 		code = pp_collect_finished(&pp, opts);
@@ -1801,7 +1804,7 @@ void run_processes_parallel(const struct run_process_parallel_opts *opts)
 		}
 	}
 
-	pp_cleanup(&pp);
+	pp_cleanup(&pp, opts);
 
 	if (do_trace2)
 		trace2_region_leave(tr2_category, tr2_label, NULL);
