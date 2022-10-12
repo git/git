@@ -187,6 +187,57 @@ test_reflog () {
 	EOF
 	test_cmp expect actual
 	'
+
+	test_expect_success "rebase $mode --abort reflog${reflog_action:+ GIT_REFLOG_ACTION=$reflog_action}" '
+	git checkout conflicts &&
+	test_when_finished "git reset --hard Q" &&
+
+	git log -g -1 conflicts >branch-expect &&
+	(
+		if test -n "$reflog_action"
+		then
+			GIT_REFLOG_ACTION="$reflog_action" &&
+			export GIT_REFLOG_ACTION
+		fi &&
+		test_must_fail git rebase $mode main &&
+		git rebase --abort
+	) &&
+
+	git log -g --format=%gs -3 >actual &&
+	write_reflog_expect <<-EOF &&
+	${reflog_action:-rebase} (abort): returning to refs/heads/conflicts
+	${reflog_action:-rebase} (pick): P
+	${reflog_action:-rebase} (start): checkout main
+	EOF
+	test_cmp expect actual &&
+
+	# check branch reflog is unchanged
+	git log -g -1 conflicts >branch-actual &&
+	test_cmp branch-expect branch-actual
+	'
+
+	test_expect_success "rebase $mode --abort detached HEAD reflog${reflog_action:+ GIT_REFLOG_ACTION=$reflog_action}" '
+	git checkout Q &&
+	test_when_finished "git reset --hard Q" &&
+
+	(
+		if test -n "$reflog_action"
+		then
+			GIT_REFLOG_ACTION="$reflog_action" &&
+			export GIT_REFLOG_ACTION
+		fi &&
+		test_must_fail git rebase $mode main &&
+		git rebase --abort
+	) &&
+
+	git log -g --format=%gs -3 >actual &&
+	write_reflog_expect <<-EOF &&
+	${reflog_action:-rebase} (abort): returning to $(git rev-parse Q)
+	${reflog_action:-rebase} (pick): P
+	${reflog_action:-rebase} (start): checkout main
+	EOF
+	test_cmp expect actual
+	'
 }
 
 test_reflog --merge
