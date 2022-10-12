@@ -202,10 +202,8 @@ int verify_bundle(struct repository *r,
 	int i, ret = 0, req_nr;
 	const char *message = _("Repository lacks these prerequisite commits:");
 
-	if (!r || !r->objects || !r->objects->odb) {
-		ret = error(_("need a repository to verify a bundle"));
-		goto cleanup;
-	}
+	if (!r || !r->objects || !r->objects->odb)
+		return error(_("need a repository to verify a bundle"));
 
 	repo_init_revisions(r, &revs, NULL);
 	for (i = 0; i < p->nr; i++) {
@@ -250,15 +248,6 @@ int verify_bundle(struct repository *r,
 		error("%s %s", oid_to_hex(oid), name);
 	}
 
-	/* Clean up objects used, as they will be reused. */
-	for (i = 0; i < p->nr; i++) {
-		struct string_list_item *e = p->items + i;
-		struct object_id *oid = e->util;
-		commit = lookup_commit_reference_gently(r, oid, 1);
-		if (commit)
-			clear_commit_marks(commit, ALL_REV_FLAGS);
-	}
-
 	if (verbose) {
 		struct string_list *r;
 
@@ -287,6 +276,14 @@ int verify_bundle(struct repository *r,
 				  list_objects_filter_spec(&header->filter));
 	}
 cleanup:
+	/* Clean up objects used, as they will be reused. */
+	for (i = 0; i < p->nr; i++) {
+		struct string_list_item *e = p->items + i;
+		struct object_id *oid = e->util;
+		commit = lookup_commit_reference_gently(r, oid, 1);
+		if (commit)
+			clear_commit_marks(commit, ALL_REV_FLAGS | PREREQ_MARK);
+	}
 	release_revisions(&revs);
 	return ret;
 }
