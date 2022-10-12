@@ -120,7 +120,7 @@ static int cmd_bundle_verify(int argc, const char **argv, const char *prefix) {
 	}
 	close(bundle_fd);
 	if (verify_bundle(the_repository, &header,
-			  quiet ? 0 : VERIFY_BUNDLE_VERBOSE)) {
+			  quiet ? VERIFY_BUNDLE_QUIET : VERIFY_BUNDLE_VERBOSE)) {
 		ret = 1;
 		goto cleanup;
 	}

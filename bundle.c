@@ -216,7 +216,10 @@ int verify_bundle(struct repository *r,
 			add_pending_object(&revs, o, name);
 			continue;
 		}
-		if (++ret == 1)
+		ret++;
+		if (flags & VERIFY_BUNDLE_QUIET)
+			continue;
+		if (ret == 1)
 			error("%s", message);
 		error("%s %s", oid_to_hex(oid), name);
 	}
@@ -243,7 +246,10 @@ int verify_bundle(struct repository *r,
 		assert(o); /* otherwise we'd have returned early */
 		if (o->flags & SHOWN)
 			continue;
-		if (++ret == 1)
+		ret++;
+		if (flags & VERIFY_BUNDLE_QUIET)
+			continue;
+		if (ret == 1)
 			error("%s", message);
 		error("%s %s", oid_to_hex(oid), name);
 	}

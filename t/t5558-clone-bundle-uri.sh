@@ -99,7 +99,10 @@ test_expect_success 'clone bundle list (file, no heuristic)' '
 		uri = file://$(pwd)/clone-from/bundle-4.bundle
 	EOF
 
-	git clone --bundle-uri="file://$(pwd)/bundle-list" clone-from clone-list-file &&
+	git clone --bundle-uri="file://$(pwd)/bundle-list" \
+		clone-from clone-list-file 2>err &&
+	! grep "Repository lacks these prerequisite commits" err &&
+
 	git -C clone-from for-each-ref --format="%(objectname)" >oids &&
 	git -C clone-list-file cat-file --batch-check <oids &&
 
@@ -141,7 +144,10 @@ test_expect_success 'clone bundle list (file, all mode, some failures)' '
 	EOF
 
 	GIT_TRACE2_PERF=1 \
-	git clone --bundle-uri="file://$(pwd)/bundle-list" clone-from clone-all-some &&
+	git clone --bundle-uri="file://$(pwd)/bundle-list" \
+		clone-from clone-all-some 2>err &&
+	! grep "Repository lacks these prerequisite commits" err &&
+
 	git -C clone-from for-each-ref --format="%(objectname)" >oids &&
 	git -C clone-all-some cat-file --batch-check <oids &&
 
@@ -169,7 +175,10 @@ test_expect_success 'clone bundle list (file, all mode, all failures)' '
 		uri = file://$(pwd)/clone-from/bundle-5.bundle
 	EOF
 
-	git clone --bundle-uri="file://$(pwd)/bundle-list" clone-from clone-all-fail &&
+	git clone --bundle-uri="file://$(pwd)/bundle-list" \
+		clone-from clone-all-fail 2>err &&
+	! grep "Repository lacks these prerequisite commits" err &&
+
 	git -C clone-from for-each-ref --format="%(objectname)" >oids &&
 	git -C clone-all-fail cat-file --batch-check <oids &&
 
@@ -195,7 +204,10 @@ test_expect_success 'clone bundle list (file, any mode)' '
 		uri = file://$(pwd)/clone-from/bundle-5.bundle
 	EOF
 
-	git clone --bundle-uri="file://$(pwd)/bundle-list" clone-from clone-any-file &&
+	git clone --bundle-uri="file://$(pwd)/bundle-list" \
+		clone-from clone-any-file 2>err &&
+	! grep "Repository lacks these prerequisite commits" err &&
+
 	git -C clone-from for-each-ref --format="%(objectname)" >oids &&
 	git -C clone-any-file cat-file --batch-check <oids &&
 
@@ -284,7 +296,10 @@ test_expect_success 'clone bundle list (HTTP, no heuristic)' '
 		uri = $HTTPD_URL/bundle-4.bundle
 	EOF
 
-	git clone --bundle-uri="$HTTPD_URL/bundle-list" clone-from clone-list-http &&
+	git clone --bundle-uri="$HTTPD_URL/bundle-list" \
+		clone-from clone-list-http  2>err &&
+	! grep "Repository lacks these prerequisite commits" err &&
+
 	git -C clone-from for-each-ref --format="%(objectname)" >oids &&
 	git -C clone-list-http cat-file --batch-check <oids
 '

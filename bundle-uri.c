@@ -308,7 +308,8 @@ static int unbundle_from_file(struct repository *r, const char *file)
 	 * a reachable ref pointing to the new tips, which will reach
 	 * the prerequisite commits.
 	 */
-	if ((result = unbundle(r, &header, bundle_fd, NULL, 0)))
+	if ((result = unbundle(r, &header, bundle_fd, NULL,
+			       VERIFY_BUNDLE_QUIET)))
 		return 1;
 
 	/*
