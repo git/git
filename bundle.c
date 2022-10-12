@@ -189,7 +189,7 @@ static int list_refs(struct string_list *r, int argc, const char **argv)
 
 int verify_bundle(struct repository *r,
 		  struct bundle_header *header,
-		  int verbose)
+		  enum verify_bundle_flags flags)
 {
 	/*
 	 * Do fast check, then if any prereqs are missing then go line by line
@@ -248,7 +248,7 @@ int verify_bundle(struct repository *r,
 		error("%s %s", oid_to_hex(oid), name);
 	}
 
-	if (verbose) {
+	if (flags & VERIFY_BUNDLE_VERBOSE) {
 		struct string_list *r;
 
 		r = &header->references;
@@ -617,7 +617,8 @@ err:
 }
 
 int unbundle(struct repository *r, struct bundle_header *header,
-	     int bundle_fd, struct strvec *extra_index_pack_args)
+	     int bundle_fd, struct strvec *extra_index_pack_args,
+	     enum verify_bundle_flags flags)
 {
 	struct child_process ip = CHILD_PROCESS_INIT;
 	strvec_pushl(&ip.args, "index-pack", "--fix-thin", "--stdin", NULL);
@@ -631,7 +632,7 @@ int unbundle(struct repository *r, struct bundle_header *header,
 		strvec_clear(extra_index_pack_args);
 	}
 
-	if (verify_bundle(r, header, 0))
+	if (verify_bundle(r, header, flags))
 		return -1;
 	ip.in = bundle_fd;
 	ip.no_stdout = 1;
