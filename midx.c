@@ -278,7 +278,7 @@ uint32_t nth_midxed_pack_int_id(struct multi_pack_index *m, uint32_t pos)
 			(off_t)pos * MIDX_CHUNK_OFFSET_WIDTH);
 }
 
-int fill_midx_entry(struct repository * r,
+int fill_midx_entry(struct repository *r,
 		    const struct object_id *oid,
 		    struct pack_entry *e,
 		    struct multi_pack_index *m)
