@@ -147,6 +147,8 @@ test_expect_success 'clone bundle list (file, all mode, some failures)' '
 	git clone --bundle-uri="file://$(pwd)/bundle-list" \
 		clone-from clone-all-some 2>err &&
 	! grep "Repository lacks these prerequisite commits" err &&
+	! grep "fatal" err &&
+	grep "warning: failed to download bundle from URI" err &&
 
 	git -C clone-from for-each-ref --format="%(objectname)" >oids &&
 	git -C clone-all-some cat-file --batch-check <oids &&
@@ -178,6 +180,8 @@ test_expect_success 'clone bundle list (file, all mode, all failures)' '
 	git clone --bundle-uri="file://$(pwd)/bundle-list" \
 		clone-from clone-all-fail 2>err &&
 	! grep "Repository lacks these prerequisite commits" err &&
+	! grep "fatal" err &&
+	grep "warning: failed to download bundle from URI" err &&
 
 	git -C clone-from for-each-ref --format="%(objectname)" >oids &&
 	git -C clone-all-fail cat-file --batch-check <oids &&
@@ -234,7 +238,11 @@ test_expect_success 'clone bundle list (file, any mode, all failures)' '
 		uri = $HTTPD_URL/bundle-5.bundle
 	EOF
 
-	git clone --bundle-uri="file://$(pwd)/bundle-list" clone-from clone-any-fail &&
+	git clone --bundle-uri="file://$(pwd)/bundle-list" \
+		clone-from clone-any-fail 2>err &&
+	! grep "fatal" err &&
+	grep "warning: failed to download bundle from URI" err &&
+
 	git -C clone-from for-each-ref --format="%(objectname)" >oids &&
 	git -C clone-any-fail cat-file --batch-check <oids &&
 
@@ -323,7 +331,11 @@ test_expect_success 'clone bundle list (HTTP, any mode)' '
 		uri = $HTTPD_URL/bundle-5.bundle
 	EOF
 
-	git clone --bundle-uri="$HTTPD_URL/bundle-list" clone-from clone-any-http &&
+	git clone --bundle-uri="$HTTPD_URL/bundle-list" \
+		clone-from clone-any-http 2>err &&
+	! grep "fatal" err &&
+	grep "warning: failed to download bundle from URI" err &&
+
 	git -C clone-from for-each-ref --format="%(objectname)" >oids &&
 	git -C clone-any-http cat-file --batch-check <oids &&
 

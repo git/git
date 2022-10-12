@@ -230,6 +230,7 @@ static int download_https_uri_to_file(const char *file, const char *uri)
 	int found_get = 0;
 
 	strvec_pushl(&cp.args, "git-remote-https", uri, NULL);
+	cp.err = -1;
 	cp.in = -1;
 	cp.out = -1;
 
