@@ -1500,8 +1500,8 @@ int run_processes_parallel_ungroup;
 struct parallel_processes {
 	void *data;
 
-	int max_processes;
-	int nr_processes;
+	size_t max_processes;
+	size_t nr_processes;
 
 	get_next_task_fn get_next_task;
 	start_failure_fn start_failure;
@@ -1522,7 +1522,7 @@ struct parallel_processes {
 	unsigned shutdown : 1;
 	unsigned ungroup : 1;
 
-	int output_owner;
+	size_t output_owner;
 	struct strbuf buffered_output; /* of finished children */
 };
 
@@ -1543,9 +1543,7 @@ static int default_task_finished(int result,
 
 static void kill_children(struct parallel_processes *pp, int signo)
 {
-	int i, n = pp->max_processes;
-
-	for (i = 0; i < n; i++)
+	for (size_t i = 0; i < pp->max_processes; i++)
 		if (pp->children[i].state == GIT_CP_WORKING)
 			kill(pp->children[i].process.pid, signo);
 }
@@ -1560,20 +1558,19 @@ static void handle_children_on_signal(int signo)
 }
 
 static void pp_init(struct parallel_processes *pp,
-		    int n,
+		    size_t n,
 		    get_next_task_fn get_next_task,
 		    start_failure_fn start_failure,
 		    task_finished_fn task_finished,
 		    void *data, int ungroup)
 {
-	int i;
-
 	if (n < 1)
 		n = online_cpus();
 
 	pp->max_processes = n;
 
-	trace_printf("run_processes_parallel: preparing to run up to %d tasks", n);
+	trace_printf("run_processes_parallel: preparing to run up to %"PRIuMAX" tasks",
+		     (uintmax_t)n);
 
 	pp->data = data;
 	if (!get_next_task)
@@ -1594,7 +1591,7 @@ static void pp_init(struct parallel_processes *pp,
 		CALLOC_ARRAY(pp->pfd, n);
 	strbuf_init(&pp->buffered_output, 0);
 
-	for (i = 0; i < n; i++) {
+	for (size_t i = 0; i < n; i++) {
 		strbuf_init(&pp->children[i].err, 0);
 		child_process_init(&pp->children[i].process);
 		if (pp->pfd) {
@@ -1609,10 +1606,8 @@ static void pp_init(struct parallel_processes *pp,
 
 static void pp_cleanup(struct parallel_processes *pp)
 {
-	int i;
-
 	trace_printf("run_processes_parallel: done");
-	for (i = 0; i < pp->max_processes; i++) {
+	for (size_t i = 0; i < pp->max_processes; i++) {
 		strbuf_release(&pp->children[i].err);
 		child_process_clear(&pp->children[i].process);
 	}
@@ -1639,7 +1634,8 @@ static void pp_cleanup(struct parallel_processes *pp)
  */
 static int pp_start_one(struct parallel_processes *pp)
 {
-	int i, code;
+	size_t i;
+	int code;
 
 	for (i = 0; i < pp->max_processes; i++)
 		if (pp->children[i].state == GIT_CP_FREE)
@@ -1697,7 +1693,7 @@ static void pp_buffer_stderr(struct parallel_processes *pp, int output_timeout)
 	}
 
 	/* Buffer output from all pipes. */
-	for (i = 0; i < pp->max_processes; i++) {
+	for (size_t i = 0; i < pp->max_processes; i++) {
 		if (pp->children[i].state == GIT_CP_WORKING &&
 		    pp->pfd[i].revents & (POLLIN | POLLHUP)) {
 			int n = strbuf_read_once(&pp->children[i].err,
@@ -1714,7 +1710,7 @@ static void pp_buffer_stderr(struct parallel_processes *pp, int output_timeout)
 
 static void pp_output(struct parallel_processes *pp)
 {
-	int i = pp->output_owner;
+	size_t i = pp->output_owner;
 
 	if (pp->children[i].state == GIT_CP_WORKING &&
 	    pp->children[i].err.len) {
@@ -1725,8 +1721,8 @@ static void pp_output(struct parallel_processes *pp)
 
 static int pp_collect_finished(struct parallel_processes *pp)
 {
-	int i, code;
-	int n = pp->max_processes;
+	int code;
+	size_t i, n = pp->max_processes;
 	int result = 0;
 
 	while (pp->nr_processes > 0) {
@@ -1783,7 +1779,7 @@ static int pp_collect_finished(struct parallel_processes *pp)
 	return result;
 }
 
-void run_processes_parallel(int n,
+void run_processes_parallel(size_t n,
 			    get_next_task_fn get_next_task,
 			    start_failure_fn start_failure,
 			    task_finished_fn task_finished,
@@ -1817,9 +1813,7 @@ void run_processes_parallel(int n,
 		if (!pp.nr_processes)
 			break;
 		if (ungroup) {
-			int i;
-
-			for (i = 0; i < pp.max_processes; i++)
+			for (size_t i = 0; i < pp.max_processes; i++)
 				pp.children[i].state = GIT_CP_WAIT_CLEANUP;
 		} else {
 			pp_buffer_stderr(&pp, output_timeout);
@@ -1836,7 +1830,7 @@ void run_processes_parallel(int n,
 	pp_cleanup(&pp);
 }
 
-void run_processes_parallel_tr2(int n, get_next_task_fn get_next_task,
+void run_processes_parallel_tr2(size_t n, get_next_task_fn get_next_task,
 				start_failure_fn start_failure,
 				task_finished_fn task_finished, void *pp_cb,
 				const char *tr2_category, const char *tr2_label)
