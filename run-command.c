@@ -1515,7 +1515,6 @@ struct parallel_processes {
 	struct pollfd *pfd;
 
 	unsigned shutdown : 1;
-	const unsigned ungroup : 1;
 
 	size_t output_owner;
 	struct strbuf buffered_output; /* of finished children */
@@ -1552,7 +1551,7 @@ static void pp_init(struct parallel_processes *pp,
 		BUG("you need to specify a get_next_task function");
 
 	CALLOC_ARRAY(pp->children, n);
-	if (!pp->ungroup)
+	if (!opts->ungroup)
 		CALLOC_ARRAY(pp->pfd, n);
 
 	for (size_t i = 0; i < n; i++) {
@@ -1609,17 +1608,17 @@ static int pp_start_one(struct parallel_processes *pp,
 		BUG("bookkeeping is hard");
 
 	code = opts->get_next_task(&pp->children[i].process,
-				   pp->ungroup ? NULL : &pp->children[i].err,
+				   opts->ungroup ? NULL : &pp->children[i].err,
 				   pp->data,
 				   &pp->children[i].data);
 	if (!code) {
-		if (!pp->ungroup) {
+		if (!opts->ungroup) {
 			strbuf_addbuf(&pp->buffered_output, &pp->children[i].err);
 			strbuf_reset(&pp->children[i].err);
 		}
 		return 1;
 	}
-	if (!pp->ungroup) {
+	if (!opts->ungroup) {
 		pp->children[i].process.err = -1;
 		pp->children[i].process.stdout_to_stderr = 1;
 	}
@@ -1627,14 +1626,14 @@ static int pp_start_one(struct parallel_processes *pp,
 
 	if (start_command(&pp->children[i].process)) {
 		if (opts->start_failure)
-			code = opts->start_failure(pp->ungroup ? NULL :
+			code = opts->start_failure(opts->ungroup ? NULL :
 						   &pp->children[i].err,
 						   pp->data,
 						   pp->children[i].data);
 		else
 			code = 0;
 
-		if (!pp->ungroup) {
+		if (!opts->ungroup) {
 			strbuf_addbuf(&pp->buffered_output, &pp->children[i].err);
 			strbuf_reset(&pp->children[i].err);
 		}
@@ -1705,7 +1704,7 @@ static int pp_collect_finished(struct parallel_processes *pp,
 		code = finish_command(&pp->children[i].process);
 
 		if (opts->task_finished)
-			code = opts->task_finished(code, pp->ungroup ? NULL :
+			code = opts->task_finished(code, opts->ungroup ? NULL :
 						   &pp->children[i].err, pp->data,
 						   pp->children[i].data);
 		else
@@ -1722,7 +1721,7 @@ static int pp_collect_finished(struct parallel_processes *pp,
 			pp->pfd[i].fd = -1;
 		child_process_init(&pp->children[i].process);
 
-		if (pp->ungroup) {
+		if (opts->ungroup) {
 			; /* no strbuf_*() work to do here */
 		} else if (i != pp->output_owner) {
 			strbuf_addbuf(&pp->buffered_output, &pp->children[i].err);
@@ -1761,7 +1760,6 @@ void run_processes_parallel(const struct run_process_parallel_opts *opts)
 		.max_processes = opts->processes,
 		.data = opts->data,
 		.buffered_output = STRBUF_INIT,
-		.ungroup = opts->ungroup,
 	};
 	/* options */
 	const char *tr2_category = opts->tr2_category;
