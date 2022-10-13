@@ -708,6 +708,7 @@ void compile_grep_patterns(struct grep_opt *opt)
 {
 	struct grep_pat *p;
 	struct grep_expr *header_expr = prep_header_patterns(opt);
+	int extended = 0;
 
 	for (p = opt->pattern_list; p; p = p->next) {
 		switch (p->token) {
@@ -717,14 +718,14 @@ void compile_grep_patterns(struct grep_opt *opt)
 			compile_regexp(p, opt);
 			break;
 		default:
-			opt->extended = 1;
+			extended = 1;
 			break;
 		}
 	}
 
 	if (opt->all_match || opt->no_body_match || header_expr)
-		opt->extended = 1;
-	else if (!opt->extended)
+		extended = 1;
+	else if (!extended)
 		return;
 
 	p = opt->pattern_list;
@@ -790,7 +791,7 @@ void free_grep_patterns(struct grep_opt *opt)
 		free(p);
 	}
 
-	if (!opt->extended)
+	if (!opt->pattern_expression)
 		return;
 	free_pattern_expr(opt->pattern_expression);
 }
@@ -971,8 +972,6 @@ static int match_expr_eval(struct grep_opt *opt, struct grep_expr *x,
 {
 	int h = 0;
 
-	if (!x)
-		die("Not a valid grep expression");
 	switch (x->node) {
 	case GREP_NODE_TRUE:
 		h = 1;
@@ -1052,7 +1051,7 @@ static int match_line(struct grep_opt *opt,
 	struct grep_pat *p;
 	int hit = 0;
 
-	if (opt->extended)
+	if (opt->pattern_expression)
 		return match_expr(opt, bol, eol, ctx, col, icol,
 				  collect_hits);
 
@@ -1370,7 +1369,7 @@ static int should_lookahead(struct grep_opt *opt)
 {
 	struct grep_pat *p;
 
-	if (opt->extended)
+	if (opt->pattern_expression)
 		return 0; /* punt for too complex stuff */
 	if (opt->invert)
 		return 0;

@@ -249,6 +249,15 @@ test_expect_success 'log --grep' '
 	test_cmp expect actual
 '
 
+for noop_opt in --invert-grep --all-match
+do
+	test_expect_success "log $noop_opt without --grep is a NOOP" '
+		git log >expect &&
+		git log $noop_opt >actual &&
+		test_cmp expect actual
+	'
+done
+
 cat > expect << EOF
 second
 initial
