@@ -14,7 +14,7 @@
 
 #define BUILTIN_COMMIT_GRAPH_WRITE_USAGE \
 	N_("git commit-graph write [--object-dir <objdir>] [--append]\n" \
-	   "                       [--split[=<strategy>]] [--reachable|--stdin-packs|--stdin-commits]\n" \
+	   "                       [--split[=<strategy>]] [--reachable | --stdin-packs | --stdin-commits]\n" \
 	   "                       [--changed-paths] [--[no-]max-new-filters <n>] [--[no-]progress]\n" \
 	   "                       <split options>")
 

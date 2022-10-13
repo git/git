@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'git send-pack' [--dry-run] [--force] [--receive-pack=<git-receive-pack>]
 		[--verbose] [--thin] [--atomic]
-		[--[no-]signed|--signed=(true|false|if-asked)]
+		[--[no-]signed | --signed=(true|false|if-asked)]
 		[<host>:]<directory> (--all | <ref>...)
 
 DESCRIPTION
