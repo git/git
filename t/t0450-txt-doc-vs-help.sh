@@ -30,6 +30,35 @@ help_to_synopsis () {
 	echo "$out"
 }
 
+builtin_to_txt () {
+       echo "$GIT_BUILD_DIR/Documentation/git-$1.txt"
+}
+
+txt_to_synopsis () {
+	builtin="$1" &&
+	out_dir="out/$builtin" &&
+	out="$out_dir/txt.synopsis" &&
+	if test -f "$out"
+	then
+		echo "$out" &&
+		return 0
+	fi &&
+	b2t="$(builtin_to_txt "$builtin")" &&
+	sed -n \
+		-e '/^\[verse\]$/,/^$/ {
+			/^$/d;
+			/^\[verse\]$/d;
+
+			p;
+		}' \
+		<"$b2t" >"$out" &&
+	echo "$out"
+}
+
+check_dashed_labels () {
+	! grep -E "<[^>_-]+_" "$1"
+}
+
 HT="	"
 
 while read builtin
@@ -38,6 +67,23 @@ do
 	test_expect_success "$builtin -h output has no \t" '
 		h2s="$(help_to_synopsis "$builtin")" &&
 		! grep "$HT" "$h2s"
+	'
+
+	test_expect_success "$builtin -h output has dashed labels" '
+		check_dashed_labels "$(help_to_synopsis "$builtin")"
+	'
+
+	txt="$(builtin_to_txt "$builtin")" &&
+	preq="$(echo BUILTIN_TXT_$builtin | tr '[:lower:]-' '[:upper:]_')" &&
+
+	if test -f "$txt"
+	then
+		test_set_prereq "$preq"
+	fi &&
+
+	# *.txt output assertions
+	test_expect_success "$preq" "$builtin *.txt SYNOPSIS has dashed labels" '
+		check_dashed_labels "$(txt_to_synopsis "$builtin")"
 	'
 done <builtins
 
