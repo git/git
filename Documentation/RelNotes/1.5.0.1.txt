@@ -37,6 +37,6 @@ Fixes since v1.5.0
 
 * Tweaks
 
-  - sliding mmap() inefficiently mmaped the same region of a
+  - Sliding mmap() inefficiently mmaped the same region of a
     packfile with an access pattern that used objects in the
     reverse order.  This has been made more efficient.
