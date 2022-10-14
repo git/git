@@ -894,12 +894,8 @@ int cmd_main(int argc, const char **argv)
 	argv++;
 	argc--;
 	handle_options(&argv, &argc, NULL);
-	if (argc > 0) {
-		if (!strcmp("--version", argv[0]) || !strcmp("-v", argv[0]))
-			argv[0] = "version";
-		else if (!strcmp("--help", argv[0]) || !strcmp("-h", argv[0]))
-			argv[0] = "help";
-	} else {
+
+	if (!argc) {
 		/* The user didn't specify a command; give them help */
 		commit_pager_choice();
 		printf(_("usage: %s\n\n"), git_usage_string);
@@ -907,6 +903,12 @@ int cmd_main(int argc, const char **argv)
 		printf("\n%s\n", _(git_more_info_string));
 		exit(1);
 	}
+
+	if (!strcmp("--version", argv[0]) || !strcmp("-v", argv[0]))
+		argv[0] = "version";
+	else if (!strcmp("--help", argv[0]) || !strcmp("-h", argv[0]))
+		argv[0] = "help";
+
 	cmd = argv[0];
 
 	/*
