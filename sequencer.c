@@ -685,9 +685,9 @@ static int do_recursive_merge(struct repository *r,
 		o.buffer_output = 2;
 	o.show_rename_progress = 1;
 
-	head_tree = parse_tree_indirect(head);
-	next_tree = next ? get_commit_tree(next) : empty_tree(r);
-	base_tree = base ? get_commit_tree(base) : empty_tree(r);
+	head_tree = repo_parse_tree_indirect(r, head);
+	next_tree = next ? repo_get_commit_tree(r, next) : empty_tree(r);
+	base_tree = base ? repo_get_commit_tree(r, base) : empty_tree(r);
 
 	for (i = 0; i < opts->xopts_nr; i++)
 		parse_merge_opt(&o, opts->xopts[i]);
