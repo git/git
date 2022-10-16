@@ -134,7 +134,9 @@ static int check_attr_export_subst(const struct attr_check *check)
 	return check && ATTR_TRUE(check->items[1].value);
 }
 
-static int write_archive_entry(const struct object_id *oid, const char *base,
+static int write_archive_entry(
+		struct repository *repo,
+		const struct object_id *oid, const char *base,
 		int baselen, const char *filename, unsigned mode,
 		void *context)
 {
@@ -160,7 +162,7 @@ static int write_archive_entry(const struct object_id *oid, const char *base,
 
 	if (!S_ISDIR(mode)) {
 		const struct attr_check *check;
-		check = get_archive_attrs(args->repo->index, path_without_prefix);
+		check = get_archive_attrs(repo->index, path_without_prefix);
 		if (check_attr_export_ignore(check))
 			return 0;
 		args->convert = check_attr_export_subst(check);
@@ -169,7 +171,7 @@ static int write_archive_entry(const struct object_id *oid, const char *base,
 	if (S_ISDIR(mode) || S_ISGITLINK(mode)) {
 		if (args->verbose)
 			fprintf(stderr, "%.*s\n", (int)path.len, path.buf);
-		err = write_entry(args, oid, path.buf, path.len, mode, NULL, 0);
+		err = write_entry(repo, args, oid, path.buf, path.len, mode, NULL, 0);
 		if (err)
 			return err;
 		return (S_ISDIR(mode) ? READ_TREE_RECURSIVE : 0);
@@ -180,14 +182,14 @@ static int write_archive_entry(const struct object_id *oid, const char *base,
 
 	/* Stream it? */
 	if (S_ISREG(mode) && !args->convert &&
-	    oid_object_info(args->repo, oid, &size) == OBJ_BLOB &&
+	    oid_object_info(repo, oid, &size) == OBJ_BLOB &&
 	    size > big_file_threshold)
-		return write_entry(args, oid, path.buf, path.len, mode, NULL, size);
+		return write_entry(repo, args, oid, path.buf, path.len, mode, NULL, size);
 
 	buffer = object_file_to_archive(args, path.buf, oid, mode, &type, &size);
 	if (!buffer)
 		return error(_("cannot read '%s'"), oid_to_hex(oid));
-	err = write_entry(args, oid, path.buf, path.len, mode, buffer, size);
+	err = write_entry(repo, args, oid, path.buf, path.len, mode, buffer, size);
 	free(buffer);
 	return err;
 }
@@ -207,7 +209,9 @@ static void queue_directory(const struct object_id *oid,
 	oidcpy(&d->oid, oid);
 }
 
-static int write_directory(struct archiver_context *c)
+static int write_directory(
+		struct repository *repo,
+		struct archiver_context *c)
 {
 	struct directory *d = c->bottom;
 	int ret;
@@ -217,8 +221,8 @@ static int write_directory(struct archiver_context *c)
 	c->bottom = d->up;
 	d->path[d->len - 1] = '\0'; /* no trailing slash */
 	ret =
-		write_directory(c) ||
-		write_archive_entry(&d->oid, d->path, d->baselen,
+		write_directory(repo, c) ||
+		write_archive_entry(repo, &d->oid, d->path, d->baselen,
 				    d->path + d->baselen, d->mode,
 				    c) != READ_TREE_RECURSIVE;
 	free(d);
@@ -257,9 +261,9 @@ static int queue_or_write_archive_entry(
 		return READ_TREE_RECURSIVE;
 	}
 
-	if (write_directory(c))
+	if (write_directory(r, c))
 		return -1;
-	return write_archive_entry(oid, base->buf, base->len, filename, mode,
+	return write_archive_entry(r, oid, base->buf, base->len, filename, mode,
 				   context);
 }
 
@@ -269,7 +273,9 @@ struct extra_file_info {
 	void *content;
 };
 
-int write_archive_entries(struct archiver_args *args,
+int write_archive_entries(
+		struct repository *repo,
+		struct archiver_args *args,
 		write_archive_entry_fn_t write_entry)
 {
 	struct archiver_context context;
@@ -290,7 +296,7 @@ int write_archive_entries(struct archiver_args *args,
 			len--;
 		if (args->verbose)
 			fprintf(stderr, "%.*s\n", (int)len, args->base);
-		err = write_entry(args, &args->tree->object.oid, args->base,
+		err = write_entry(repo, args, &args->tree->object.oid, args->base,
 				  len, 040777, NULL, 0);
 		if (err)
 			return err;
@@ -345,12 +351,12 @@ int write_archive_entries(struct archiver_args *args,
 			if (strbuf_read_file(&content, path, info->stat.st_size) < 0)
 				err = error_errno(_("cannot read '%s'"), path);
 			else
-				err = write_entry(args, &fake_oid, path_in_archive.buf,
+				err = write_entry(repo, args, &fake_oid, path_in_archive.buf,
 						  path_in_archive.len,
 						  canon_mode(info->stat.st_mode),
 						  content.buf, content.len);
 		} else {
-			err = write_entry(args, &fake_oid,
+			err = write_entry(repo, args, &fake_oid,
 					  path, strlen(path),
 					  canon_mode(info->stat.st_mode),
 					  info->content, info->stat.st_size);
@@ -711,7 +717,7 @@ int write_archive(int argc, const char **argv, const char *prefix,
 	parse_treeish_arg(argv, &args, prefix, remote);
 	parse_pathspec_arg(argv + 1, &args);
 
-	rc = ar->write_archive(ar, &args);
+	rc = ar->write_archive(ar, repo, &args);
 
 	string_list_clear_func(&args.extra_files, extra_file_info_clear);
 	free(args.refname);
