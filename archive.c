@@ -179,7 +179,7 @@ static int write_archive_entry(
 		err = write_entry(repo, args, oid, path.buf, path.len, mode, NULL, 0);
 		if (err)
 			return err;
-		return (S_ISDIR(mode) ? READ_TREE_RECURSIVE : 0);
+		return READ_TREE_RECURSIVE;
 	}
 
 	if (args->verbose)
