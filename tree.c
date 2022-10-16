@@ -38,7 +38,7 @@ int read_tree_at(struct repository *r,
 				continue;
 		}
 
-		switch (fn(&entry.oid, base,
+		switch (fn(r, &entry.oid, base,
 			   entry.path, entry.mode, context)) {
 		case 0:
 			continue;

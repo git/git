@@ -225,7 +225,9 @@ static int write_directory(struct archiver_context *c)
 	return ret ? -1 : 0;
 }
 
-static int queue_or_write_archive_entry(const struct object_id *oid,
+static int queue_or_write_archive_entry(
+		struct repository *r,
+		const struct object_id *oid,
 		struct strbuf *base, const char *filename,
 		unsigned mode, void *context)
 {
@@ -246,7 +248,7 @@ static int queue_or_write_archive_entry(const struct object_id *oid,
 		/* Borrow base, but restore its original value when done. */
 		strbuf_addstr(base, filename);
 		strbuf_addch(base, '/');
-		check = get_archive_attrs(c->args->repo->index, base->buf);
+		check = get_archive_attrs(r->index, base->buf);
 		strbuf_setlen(base, baselen);
 
 		if (check_attr_export_ignore(check))
@@ -382,7 +384,8 @@ struct path_exists_context {
 	struct archiver_args *args;
 };
 
-static int reject_entry(const struct object_id *oid UNUSED,
+static int reject_entry(
+			struct repository *r, const struct object_id *oid UNUSED,
 			struct strbuf *base,
 			const char *filename, unsigned mode,
 			void *context)
@@ -394,7 +397,7 @@ static int reject_entry(const struct object_id *oid UNUSED,
 		struct strbuf sb = STRBUF_INIT;
 		strbuf_addbuf(&sb, base);
 		strbuf_addstr(&sb, filename);
-		if (!match_pathspec(ctx->args->repo->index,
+		if (!match_pathspec(r->index,
 				    &ctx->pathspec,
 				    sb.buf, sb.len, 0, NULL, 1))
 			ret = READ_TREE_RECURSIVE;

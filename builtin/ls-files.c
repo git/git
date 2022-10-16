@@ -533,7 +533,9 @@ static int read_one_entry_opt(struct index_state *istate,
 	return add_index_entry(istate, ce, opt);
 }
 
-static int read_one_entry(const struct object_id *oid, struct strbuf *base,
+static int read_one_entry(
+			  struct repository *r UNUSED,
+			  const struct object_id *oid, struct strbuf *base,
 			  const char *pathname, unsigned mode,
 			  void *context)
 {
@@ -547,7 +549,9 @@ static int read_one_entry(const struct object_id *oid, struct strbuf *base,
  * This is used when the caller knows there is no existing entries at
  * the stage that will conflict with the entry being added.
  */
-static int read_one_entry_quick(const struct object_id *oid, struct strbuf *base,
+static int read_one_entry_quick(
+				struct repository *r UNUSED,
+				const struct object_id *oid, struct strbuf *base,
 				const char *pathname, unsigned mode,
 				void *context)
 {

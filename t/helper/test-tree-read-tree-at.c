@@ -6,7 +6,8 @@ We call it tree-read-tree-at to disambiguate with the read-tree tool.
 #include "test-tool.h"
 #include "tree.h"
 
-static int test_handle_entry(const struct object_id *oid,
+static int test_handle_entry(
+		struct repository *r UNUSED, const struct object_id *oid,
 		struct strbuf *base, const char *filename,
 		unsigned mode, void *context UNUSED) {
 	printf("%i %s %s%s\n", mode, oid_to_hex(oid), base->buf, filename);
