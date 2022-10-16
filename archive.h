@@ -8,7 +8,6 @@ struct repository;
 struct pretty_print_context;
 
 struct archiver_args {
-	struct repository *repo;
 	char *refname;
 	const char *prefix;
 	const char *base;
