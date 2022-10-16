@@ -18,6 +18,7 @@ struct archiver_args {
 	timestamp_t time;
 	struct pathspec pathspec;
 	unsigned int verbose : 1;
+	unsigned int recurse_submodules : 1;
 	unsigned int worktree_attributes : 1;
 	unsigned int convert : 1;
 	int compression_level;

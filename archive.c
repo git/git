@@ -10,6 +10,7 @@
 #include "unpack-trees.h"
 #include "dir.h"
 #include "quote.h"
+#include "submodule.h"
 
 static char const * const archive_usage[] = {
 	N_("git archive [<options>] <tree-ish> [<path>...]"),
@@ -213,6 +214,25 @@ static void queue_directory(const struct object_id *oid,
 	oidcpy(&d->oid, oid);
 }
 
+static void queue_submodule(
+		struct repository *superproject,
+		const struct object_id *oid,
+		struct strbuf *base, const char *filename,
+		unsigned mode, struct archiver_context *c)
+{
+	struct repository subrepo;
+
+	if (repo_submodule_init(&subrepo, superproject, filename, null_oid()))
+		return;
+
+	if (repo_read_index(&subrepo) < 0)
+		die("index file corrupt");
+
+    queue_directory(oid, base, filename, mode, c);
+
+	repo_clear(&subrepo);
+}
+
 static int write_directory(
 		struct repository *repo,
 		struct archiver_context *c)
@@ -228,9 +248,11 @@ static int write_directory(
 		write_directory(repo, c) ||
 		write_archive_entry(repo, &d->oid, d->path, d->baselen,
 				    d->path + d->baselen, d->mode,
-				    c) != READ_TREE_RECURSIVE;
+				    c);
 	free(d);
-	return ret ? -1 : 0;
+	if (ret == READ_TREE_RECURSIVE)
+		return 0;
+	return ret;
 }
 
 static int queue_or_write_archive_entry(
@@ -263,6 +285,11 @@ static int queue_or_write_archive_entry(
 			return 0;
 		queue_directory(oid, base, filename, mode, c);
 		return READ_TREE_RECURSIVE;
+	} else if (c->args->recurse_submodules && S_ISGITLINK(mode)) {
+		if (is_submodule_active(r, filename)) {
+			queue_submodule(r, oid, base, filename, mode, c);
+			return READ_TREE_RECURSIVE;
+		}
 	}
 
 	if (write_directory(r, c))
@@ -446,6 +473,7 @@ static void parse_pathspec_arg(
 		       PATHSPEC_PREFER_FULL,
 		       "", pathspec);
 	ar_args->pathspec.recursive = 1;
+	ar_args->pathspec.recurse_submodules = ar_args->recurse_submodules;
 	if (pathspec) {
 		while (*pathspec) {
 			if (**pathspec && !path_exists(repo, ar_args, *pathspec))
@@ -609,6 +637,7 @@ static int parse_archive_args(int argc, const char **argv,
 	int verbose = 0;
 	int i;
 	int list = 0;
+	int recurse_submodules = 0;
 	int worktree_attributes = 0;
 	struct option opts[] = {
 		OPT_GROUP(""),
@@ -623,6 +652,8 @@ static int parse_archive_args(int argc, const char **argv,
 		  add_file_cb, (intptr_t)&base },
 		OPT_STRING('o', "output", &output, N_("file"),
 			N_("write the archive to this file")),
+		OPT_BOOL(0, "recurse-submodules", &recurse_submodules,
+			N_("include submodules in archive")),
 		OPT_BOOL(0, "worktree-attributes", &worktree_attributes,
 			N_("read .gitattributes in working directory")),
 		OPT__VERBOSE(&verbose, N_("report archived files on stderr")),
@@ -686,6 +717,7 @@ static int parse_archive_args(int argc, const char **argv,
 	args->verbose = verbose;
 	args->base = base;
 	args->baselen = strlen(base);
+	args->recurse_submodules = recurse_submodules;
 	args->worktree_attributes = worktree_attributes;
 
 	return argc;
