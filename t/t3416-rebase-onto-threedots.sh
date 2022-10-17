@@ -199,6 +199,27 @@ test_expect_success 'rebase --keep-base requires a single merge base' '
 	grep "need exactly one merge base with branch" err
 '
 
+test_expect_success 'rebase --keep-base keeps cherry picks' '
+	git checkout -f -B main E &&
+	git cherry-pick F &&
+	(
+		set_fake_editor &&
+		EXPECT_COUNT=2 git rebase -i --keep-base HEAD G
+	) &&
+	test_cmp_rev HEAD G
+'
+
+test_expect_success 'rebase --keep-base --no-reapply-cherry-picks' '
+	git checkout -f -B main E &&
+	git cherry-pick F &&
+	(
+		set_fake_editor &&
+		EXPECT_COUNT=1 git rebase -i --keep-base \
+					--no-reapply-cherry-picks HEAD G
+	) &&
+	test_cmp_rev HEAD^ C
+'
+
 # This must be the last test in this file
 test_expect_success '$EDITOR and friends are unchanged' '
 	test_editor_unchanged
