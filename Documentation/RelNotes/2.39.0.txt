@@ -7,6 +7,9 @@ UI, Workflows & Features
  * "git grep" learned to expand the sparse-index more lazily and on
    demand in a sparse checkout.
 
+ * By default, use of fsmonitor on a repository on networked
+   filesystem is disabled. Add knobs to make it workable on macOS.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -25,6 +28,10 @@ Performance, Internal Implementation, Development Support etc.
 
  * "scalar unregister" in a repository that is already been
    unregistered reported an error.
+
+ * Remove error detection from a function that fetches from promisor
+   remotes, and make it die when such a fetch fails to bring all the
+   requested objects, to give an early failure to various operations.
 
 
 Fixes since v2.38
@@ -78,6 +85,29 @@ Fixes since v2.38
    from "ssh-keygen".
    (merge 36fb0d07d8 pw/ssh-sign-report-errors later to maint).
 
+ * Code clean-up that results in plugging a leak.
+   (merge 246526d019 rs/bisect-start-leakfix later to maint).
+
+ * "GIT_EDITOR=: git branch --edit-description" resulted in failure,
+   which has been corrected.
+   (merge e288b3de35 jc/branch-description-unset later to maint).
+
+ * The code to clean temporary object directories (used for
+   quarantine) tried to remove them inside its signal handler, which
+   was a no-no.
+   (merge 22613b25ec jc/tmp-objdir later to maint).
+
+ * Update comment in the Makefile about the RUNTIME_PREFIX config knob.
+   (merge ebb6c16607 dd/document-runtime-prefix-better later to maint).
+
+ * Clarify that "the sentence after <area>: prefix does not begin with
+   a capital letter" rule applies only to the commit title.
+   (merge 3991bb73dd jc/use-of-uc-in-log-messages later to maint).
+
+ * "git branch --edit-description" on an unborh branch misleadingly
+   said that no such branch exists, which has been corrected.
+   (merge bcfc82bd48 rj/branch-edit-desc-unborn later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge c34a6bd291 so/diff-merges-cleanup later to maint).
    (merge 5e7c8b75e7 ab/test-malloc-with-sanitize-leak later to maint).
@@ -88,3 +118,7 @@ Fixes since v2.38
    (merge 45350aeb11 jk/sequencer-missing-author-name-check later to maint).
    (merge edbf9a2e20 nb/doc-mergetool-typofix later to maint).
    (merge b004c90282 rs/gc-pack-refs-simplify later to maint).
+   (merge 69c5f17f11 jk/cleanup-callback-parameters later to maint).
+   (merge 7c07f36ad2 ab/unused-annotation later to maint).
+   (merge f7669676d0 rs/use-fspathncmp later to maint).
+   (merge a677d3c416 pw/remove-rebase-p-test later to maint).
