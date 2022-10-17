@@ -222,6 +222,7 @@ test_expect_success 'push with negotiation proceeds anyway even if negotiation f
 test_expect_success 'push with negotiation does not attempt to fetch submodules' '
 	mk_empty submodule_upstream &&
 	test_commit -C submodule_upstream submodule_commit &&
+	test_config_global protocol.file.allow always &&
 	git submodule add ./submodule_upstream submodule &&
 	mk_empty testrepo &&
 	git push testrepo $the_first_commit:refs/remotes/origin/first_commit &&

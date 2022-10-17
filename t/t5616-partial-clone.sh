@@ -260,6 +260,8 @@ test_expect_success 'partial clone with transfer.fsckobjects=1 works with submod
 	test_config -C src_with_sub uploadpack.allowfilter 1 &&
 	test_config -C src_with_sub uploadpack.allowanysha1inwant 1 &&
 
+	test_config_global protocol.file.allow always &&
+
 	git -C src_with_sub submodule add "file://$(pwd)/submodule" mysub &&
 	git -C src_with_sub commit -m "commit with submodule" &&
 

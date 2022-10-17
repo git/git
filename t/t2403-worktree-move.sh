@@ -139,7 +139,8 @@ test_expect_success 'move a repo with uninitialized submodule' '
 	(
 		cd withsub &&
 		test_commit initial &&
-		git submodule add "$PWD"/.git sub &&
+		git -c protocol.file.allow=always \
+			submodule add "$PWD"/.git sub &&
 		git commit -m withsub &&
 		git worktree add second HEAD &&
 		git worktree move second third
@@ -149,7 +150,7 @@ test_expect_success 'move a repo with uninitialized submodule' '
 test_expect_success 'not move a repo with initialized submodule' '
 	(
 		cd withsub &&
-		git -C third submodule update &&
+		git -c protocol.file.allow=always -C third submodule update &&
 		test_must_fail git worktree move third forth
 	)
 '
@@ -228,6 +229,7 @@ test_expect_success 'remove cleans up .git/worktrees when empty' '
 '
 
 test_expect_success 'remove a repo with uninitialized submodule' '
+	test_config_global protocol.file.allow always &&
 	(
 		cd withsub &&
 		git worktree add to-remove HEAD &&
@@ -236,6 +238,7 @@ test_expect_success 'remove a repo with uninitialized submodule' '
 '
 
 test_expect_success 'not remove a repo with initialized submodule' '
+	test_config_global protocol.file.allow always &&
 	(
 		cd withsub &&
 		git worktree add to-remove HEAD &&

@@ -790,6 +790,7 @@ test_expect_success 'fetch.writeCommitGraph' '
 '
 
 test_expect_success 'fetch.writeCommitGraph with submodules' '
+	test_config_global protocol.file.allow always &&
 	git clone dups super &&
 	(
 		cd super &&

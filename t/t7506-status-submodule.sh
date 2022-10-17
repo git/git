@@ -252,6 +252,7 @@ test_expect_success 'status with merge conflict in .gitmodules' '
 	test_create_repo_with_commit sub1 &&
 	test_tick &&
 	test_create_repo_with_commit sub2 &&
+	test_config_global protocol.file.allow always &&
 	(
 		cd super &&
 		prev=$(git rev-parse HEAD) &&
@@ -327,6 +328,7 @@ test_expect_success 'diff --submodule with merge conflict in .gitmodules' '
 # sub2 will have an untracked file
 # sub3 will have an untracked repository
 test_expect_success 'setup superproject with untracked file in nested submodule' '
+	test_config_global protocol.file.allow always &&
 	(
 		cd super &&
 		git clean -dfx &&

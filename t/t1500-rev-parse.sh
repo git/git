@@ -226,7 +226,8 @@ test_expect_success 'showing the superproject correctly' '
 	test_commit -C super test_commit &&
 	test_create_repo sub &&
 	test_commit -C sub test_commit &&
-	git -C super submodule add ../sub dir/sub &&
+	git -c protocol.file.allow=always \
+		-C super submodule add ../sub dir/sub &&
 	echo $(pwd)/super >expect  &&
 	git -C super/dir/sub rev-parse --show-superproject-working-tree >out &&
 	test_cmp expect out &&
