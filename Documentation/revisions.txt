@@ -363,7 +363,7 @@ Revision Range Summary
 
 '<rev>{caret}!', e.g. 'HEAD{caret}!'::
   A suffix '{caret}' followed by an exclamation mark is the same
-  as giving commit '<rev>' and then all its parents prefixed with
+  as giving commit '<rev>' and all its parents prefixed with
   '{caret}' to exclude them (and their ancestors).
 
 '<rev>{caret}-<n>', e.g. 'HEAD{caret}-, HEAD{caret}-2'::

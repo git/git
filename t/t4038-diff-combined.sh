@@ -80,8 +80,18 @@ test_expect_success 'check combined output (1)' '
 	verify_helper sidewithone
 '
 
+test_expect_success 'check combined output (1) with git diff <rev>^!' '
+	git diff sidewithone^! -- >sidewithone &&
+	verify_helper sidewithone
+'
+
 test_expect_success 'check combined output (2)' '
 	git show sidesansone -- >sidesansone &&
+	verify_helper sidesansone
+'
+
+test_expect_success 'check combined output (2) with git diff <rev>^!' '
+	git diff sidesansone^! -- >sidesansone &&
 	verify_helper sidesansone
 '
 

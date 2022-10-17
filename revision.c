@@ -2113,9 +2113,8 @@ static int handle_revision_arg_1(const char *arg_, struct rev_info *revs, int fl
 		int exclude_parent = 1;
 
 		if (mark[2]) {
-			char *end;
-			exclude_parent = strtoul(mark + 2, &end, 10);
-			if (*end != '\0' || !exclude_parent)
+			if (strtol_i(mark + 2, 10, &exclude_parent) ||
+			    exclude_parent < 1)
 				return -1;
 		}
 
