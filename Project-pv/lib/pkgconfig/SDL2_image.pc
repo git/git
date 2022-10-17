@@ -1,0 +1,12 @@
+prefix=/opt/local/i686-w64-mingw32
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: SDL2_image
+Description: image loading library for Simple DirectMedia Layer
+Version: 2.0.5
+Requires: sdl2 >= 2.0.8
+Libs: -L${libdir} -lSDL2_image
+Cflags: -I${includedir}/SDL2
+

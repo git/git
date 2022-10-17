@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "render_nembers.h": "c",
+        "order.h": "c"
+    }
+}
