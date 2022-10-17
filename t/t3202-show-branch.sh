@@ -7,6 +7,28 @@ test_description='test show-branch'
 # arbitrary reference time: 2009-08-30 19:20:00
 GIT_TEST_DATE_NOW=1251660000; export GIT_TEST_DATE_NOW
 
+test_expect_success 'error descriptions on empty repository' '
+	current=$(git branch --show-current) &&
+	cat >expect <<-EOF &&
+	error: No commit on branch '\''$current'\'' yet.
+	EOF
+	test_must_fail git branch --edit-description 2>actual &&
+	test_cmp expect actual &&
+	test_must_fail git branch --edit-description $current 2>actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'fatal descriptions on empty repository' '
+	current=$(git branch --show-current) &&
+	cat >expect <<-EOF &&
+	fatal: No commit on branch '\''$current'\'' yet.
+	EOF
+	test_must_fail git branch --set-upstream-to=non-existent 2>actual &&
+	test_cmp expect actual &&
+	test_must_fail git branch -c new-branch 2>actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'setup' '
 	test_commit initial &&
 	for i in $(test_seq 1 10)
@@ -174,5 +196,29 @@ done <<\EOF
 --list --merge-base
 --reflog --current
 EOF
+
+test_expect_success 'error descriptions on non-existent branch' '
+	cat >expect <<-EOF &&
+	error: No branch named '\''non-existent'\'.'
+	EOF
+	test_must_fail git branch --edit-description non-existent 2>actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'fatal descriptions on non-existent branch' '
+	cat >expect <<-EOF &&
+	fatal: branch '\''non-existent'\'' does not exist
+	EOF
+	test_must_fail git branch --set-upstream-to=non-existent non-existent 2>actual &&
+	test_cmp expect actual &&
+
+	cat >expect <<-EOF &&
+	fatal: No branch named '\''non-existent'\''.
+	EOF
+	test_must_fail git branch -c non-existent new-branch 2>actual &&
+	test_cmp expect actual &&
+	test_must_fail git branch -m non-existent new-branch 2>actual &&
+	test_cmp expect actual
+'
 
 test_done
