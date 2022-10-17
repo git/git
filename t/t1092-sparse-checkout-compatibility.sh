@@ -1315,6 +1315,8 @@ test_expect_success 'submodule handling' '
 	test_all_match git add modules &&
 	test_all_match git commit -m "add modules directory" &&
 
+	test_config_global protocol.file.allow always &&
+
 	run_on_all git submodule add "$(pwd)/initial-repo" modules/sub &&
 	test_all_match git commit -m "add submodule" &&
 

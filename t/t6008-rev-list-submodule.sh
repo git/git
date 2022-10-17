@@ -27,7 +27,7 @@ test_expect_success 'setup' '
 
 	: > super-file &&
 	git add super-file &&
-	git submodule add "$(pwd)" sub &&
+	git -c protocol.file.allow=always submodule add "$(pwd)" sub &&
 	git symbolic-ref HEAD refs/heads/super &&
 	test_tick &&
 	git commit -m super-initial &&

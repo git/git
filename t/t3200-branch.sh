@@ -306,6 +306,7 @@ test_expect_success 'deleting checked-out branch from repo that is a submodule' 
 	git init repo1 &&
 	git init repo1/sub &&
 	test_commit -C repo1/sub x &&
+	test_config_global protocol.file.allow always &&
 	git -C repo1 submodule add ./sub &&
 	git -C repo1 commit -m "adding sub" &&
 
