@@ -860,22 +860,22 @@ static int is_linear_history(struct commit *from, struct commit *to)
 
 static int can_fast_forward(struct commit *onto, struct commit *upstream,
 			    struct commit *restrict_revision,
-			    struct commit *head, struct object_id *merge_base)
+			    struct commit *head, struct object_id *branch_base)
 {
 	struct commit_list *merge_bases = NULL;
 	int res = 0;
 
 	merge_bases = get_merge_bases(onto, head);
 	if (!merge_bases || merge_bases->next) {
-		oidcpy(merge_base, null_oid());
+		oidcpy(branch_base, null_oid());
 		goto done;
 	}
 
-	oidcpy(merge_base, &merge_bases->item->object.oid);
-	if (!oideq(merge_base, &onto->object.oid))
+	oidcpy(branch_base, &merge_bases->item->object.oid);
+	if (!oideq(branch_base, &onto->object.oid))
 		goto done;
 
-	if (restrict_revision && !oideq(&restrict_revision->object.oid, merge_base))
+	if (restrict_revision && !oideq(&restrict_revision->object.oid, branch_base))
 		goto done;
 
 	if (!upstream)
@@ -1029,7 +1029,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	struct strbuf msg = STRBUF_INIT;
 	struct strbuf revisions = STRBUF_INIT;
 	struct strbuf buf = STRBUF_INIT;
-	struct object_id merge_base;
+	struct object_id branch_base;
 	int ignore_whitespace = 0;
 	enum action action = ACTION_NONE;
 	const char *gpg_sign = NULL;
@@ -1644,7 +1644,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	} else if (!options.onto_name)
 		options.onto_name = options.upstream_name;
 	if (strstr(options.onto_name, "...")) {
-		if (get_oid_mb(options.onto_name, &merge_base) < 0) {
+		if (get_oid_mb(options.onto_name, &branch_base) < 0) {
 			if (keep_base)
 				die(_("'%s': need exactly one merge base with branch"),
 				    options.upstream_name);
@@ -1652,7 +1652,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 				die(_("'%s': need exactly one merge base"),
 				    options.onto_name);
 		}
-		options.onto = lookup_commit_or_die(&merge_base,
+		options.onto = lookup_commit_or_die(&branch_base,
 						    options.onto_name);
 	} else {
 		options.onto =
@@ -1690,11 +1690,11 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	 * in which case we could fast-forward without replacing the commits
 	 * with new commits recreated by replaying their changes.
 	 *
-	 * Note that can_fast_forward() initializes merge_base, so we have to
+	 * Note that can_fast_forward() initializes branch_base, so we have to
 	 * call it before checking allow_preemptive_ff.
 	 */
 	if (can_fast_forward(options.onto, options.upstream, options.restrict_revision,
-		    options.orig_head, &merge_base) &&
+		    options.orig_head, &branch_base) &&
 	    allow_preemptive_ff) {
 		int flag;
 
@@ -1736,12 +1736,12 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		struct diff_options opts;
 
 		if (options.flags & REBASE_VERBOSE) {
-			if (is_null_oid(&merge_base))
+			if (is_null_oid(&branch_base))
 				printf(_("Changes to %s:\n"),
 				       oid_to_hex(&options.onto->object.oid));
 			else
 				printf(_("Changes from %s to %s:\n"),
-				       oid_to_hex(&merge_base),
+				       oid_to_hex(&branch_base),
 				       oid_to_hex(&options.onto->object.oid));
 		}
 
@@ -1753,8 +1753,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			DIFF_FORMAT_SUMMARY | DIFF_FORMAT_DIFFSTAT;
 		opts.detect_rename = DIFF_DETECT_RENAME;
 		diff_setup_done(&opts);
-		diff_tree_oid(is_null_oid(&merge_base) ?
-			      the_hash_algo->empty_tree : &merge_base,
+		diff_tree_oid(is_null_oid(&branch_base) ?
+			      the_hash_algo->empty_tree : &branch_base,
 			      &options.onto->object.oid, "", &opts);
 		diffcore_std(&opts);
 		diff_flush(&opts);
@@ -1785,7 +1785,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	 * we just fast-forwarded.
 	 */
 	strbuf_reset(&msg);
-	if (oideq(&merge_base, &options.orig_head->object.oid)) {
+	if (oideq(&branch_base, &options.orig_head->object.oid)) {
 		printf(_("Fast-forwarded %s to %s.\n"),
 			branch_name, options.onto_name);
 		strbuf_addf(&msg, "rebase finished: %s onto %s",
