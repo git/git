@@ -2392,11 +2392,6 @@ int git_configset_add_file(struct config_set *cs, const char *filename)
 	return git_config_from_file(config_set_callback, filename, cs);
 }
 
-int git_configset_add_parameters(struct config_set *cs)
-{
-	return git_config_from_parameters(config_set_callback, cs);
-}
-
 int git_configset_get_value(struct config_set *cs, const char *key, const char **value)
 {
 	const struct string_list *values = NULL;
@@ -2641,24 +2636,15 @@ int repo_config_get_pathname(struct repository *repo,
 /* Read values into protected_config. */
 static void read_protected_config(void)
 {
-	char *xdg_config = NULL, *user_config = NULL, *system_config = NULL;
-
+	struct config_options opts = {
+		.respect_includes = 1,
+		.ignore_repo = 1,
+		.ignore_worktree = 1,
+		.system_gently = 1,
+	};
 	git_configset_init(&protected_config);
-
-	system_config = git_system_config();
-	git_global_config(&user_config, &xdg_config);
-
-	if (system_config)
-		git_configset_add_file(&protected_config, system_config);
-	if (xdg_config)
-		git_configset_add_file(&protected_config, xdg_config);
-	if (user_config)
-		git_configset_add_file(&protected_config, user_config);
-	git_configset_add_parameters(&protected_config);
-
-	free(system_config);
-	free(xdg_config);
-	free(user_config);
+	config_with_options(config_set_callback, &protected_config,
+			    NULL, &opts);
 }
 
 void git_protected_config(config_fn_t fn, void *data)
