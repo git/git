@@ -97,13 +97,14 @@ test_expect_success 'rebase -i --onto main...' '
 	test_cmp expect actual
 '
 
-test_expect_success 'rebase -i --onto main...side' '
+test_expect_success 'rebase --onto main...side requires a single merge-base' '
 	git reset --hard &&
 	git checkout side &&
 	git reset --hard K &&
 
 	set_fake_editor &&
-	test_must_fail git rebase -i --onto main...side J
+	test_must_fail git rebase -i --onto main...side J 2>err &&
+	grep "need exactly one merge base" err
 '
 
 test_expect_success 'rebase --keep-base --onto incompatible' '
@@ -182,13 +183,14 @@ test_expect_success 'rebase -i --keep-base main topic from main' '
 	test_cmp expect actual
 '
 
-test_expect_success 'rebase -i --keep-base main from side' '
+test_expect_success 'rebase --keep-base requires a single merge base' '
 	git reset --hard &&
 	git checkout side &&
 	git reset --hard K &&
 
 	set_fake_editor &&
-	test_must_fail git rebase -i --keep-base main
+	test_must_fail git rebase -i --keep-base main 2>err &&
+	grep "need exactly one merge base with branch" err
 '
 
 test_done
