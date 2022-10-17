@@ -218,7 +218,7 @@ leave out at most one of A and B, in which case it defaults to HEAD.
 	merge base of `<upstream>` and `<branch>`. Running
 	`git rebase --keep-base <upstream> <branch>` is equivalent to
 	running
-	`git rebase --reapply-cherry-picks --onto <upstream>...<branch> <upstream> <branch>`.
+	`git rebase --reapply-cherry-picks --no-fork-point --onto <upstream>...<branch> <upstream> <branch>`.
 +
 This option is useful in the case where one is developing a feature on
 top of an upstream branch. While the feature is being worked on, the
@@ -452,9 +452,9 @@ When `--fork-point` is active, 'fork_point' will be used instead of
 <branch>` command (see linkgit:git-merge-base[1]).  If 'fork_point'
 ends up being empty, the `<upstream>` will be used as a fallback.
 +
-If `<upstream>` is given on the command line, then the default is
-`--no-fork-point`, otherwise the default is `--fork-point`. See also
-`rebase.forkpoint` in linkgit:git-config[1].
+If `<upstream>` or `--keep-base` is given on the command line, then
+the default is `--no-fork-point`, otherwise the default is
+`--fork-point`. See also `rebase.forkpoint` in linkgit:git-config[1].
 +
 If your branch was based on `<upstream>` but `<upstream>` was rewound and
 your branch contains commits which were dropped, this option can be used
