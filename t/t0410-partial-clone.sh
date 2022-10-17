@@ -215,6 +215,20 @@ test_expect_success 'fetching of missing objects' '
 	grep "$HASH" out
 '
 
+test_expect_success 'fetching of a promised object that promisor remote no longer has' '
+	rm -f err &&
+	test_create_repo unreliable-server &&
+	git -C unreliable-server config uploadpack.allowanysha1inwant 1 &&
+	git -C unreliable-server config uploadpack.allowfilter 1 &&
+	test_commit -C unreliable-server foo &&
+
+	git clone --filter=blob:none --no-checkout "file://$(pwd)/unreliable-server" unreliable-client &&
+
+	rm -rf unreliable-server/.git/objects/* &&
+	test_must_fail git -C unreliable-client checkout HEAD 2>err &&
+	grep "could not fetch.*from promisor remote" err
+'
+
 test_expect_success 'fetching of missing objects works with ref-in-want enabled' '
 	# ref-in-want requires protocol version 2
 	git -C server config protocol.version 2 &&
