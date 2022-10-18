@@ -8,6 +8,7 @@
 #include "alloc.h"
 #include "tree-walk.h"
 #include "repository.h"
+#include "pathspec.h"
 
 const char *tree_type = "tree";
 
@@ -22,7 +23,7 @@ int read_tree_at(struct repository *r,
 	int len, oldlen = base->len;
 	enum interesting retval = entry_not_interesting;
 
-	if (parse_tree(tree))
+	if (repo_parse_tree(r, tree))
 		return -1;
 
 	init_tree_desc(&desc, tree->buffer, tree->size);
@@ -37,7 +38,7 @@ int read_tree_at(struct repository *r,
 				continue;
 		}
 
-		switch (fn(&entry.oid, base,
+		switch (fn(r, &entry.oid, base,
 			   entry.path, entry.mode, context)) {
 		case 0:
 			continue;
@@ -47,36 +48,73 @@ int read_tree_at(struct repository *r,
 			return -1;
 		}
 
-		if (S_ISDIR(entry.mode))
+		if (S_ISDIR(entry.mode)) {
 			oidcpy(&oid, &entry.oid);
-		else if (S_ISGITLINK(entry.mode)) {
+
+			len = tree_entry_len(&entry);
+			strbuf_add(base, entry.path, len);
+			strbuf_addch(base, '/');
+			retval = read_tree_at(r, lookup_tree(r, &oid),
+						base, pathspec,
+						fn, context);
+			strbuf_setlen(base, oldlen);
+			if (retval)
+				return -1;
+		} else if (pathspec->recurse_submodules && S_ISGITLINK(entry.mode)) {
 			struct commit *commit;
+			struct repository subrepo;
+			struct repository* subrepo_p = &subrepo;
+			struct tree* submodule_tree;
+			char *submodule_rel_path;
+			int name_base_len = 0;
 
-			commit = lookup_commit(r, &entry.oid);
+			len = tree_entry_len(&entry);
+			strbuf_add(base, entry.path, len);
+			submodule_rel_path = base->buf;
+			// repo_submodule_init expects a path relative to submodule_prefix
+			if (r->submodule_prefix) {
+				name_base_len = strlen(r->submodule_prefix);
+				// we should always expect to start with submodule_prefix
+				assert(!strncmp(submodule_rel_path, r->submodule_prefix, name_base_len));
+				// strip the prefix
+				submodule_rel_path += name_base_len;
+				// if submodule_prefix doesn't end with a /, we want to get rid of that too
+				if (is_dir_sep(submodule_rel_path[0])) {
+					submodule_rel_path++;
+				}
+			}
+
+			if (repo_submodule_init(subrepo_p, r, submodule_rel_path, null_oid()))
+				die("couldn't init submodule %s", base->buf);
+
+			if (repo_read_index(subrepo_p) < 0)
+				die("index file corrupt");
+
+			commit = lookup_commit(subrepo_p, &entry.oid);
 			if (!commit)
-				die("Commit %s in submodule path %s%s not found",
+				die("Commit %s in submodule path %s not found",
 				    oid_to_hex(&entry.oid),
-				    base->buf, entry.path);
+				    base->buf);
 
-			if (parse_commit(commit))
-				die("Invalid commit %s in submodule path %s%s",
+			if (repo_parse_commit(subrepo_p, commit))
+				die("Invalid commit %s in submodule path %s",
 				    oid_to_hex(&entry.oid),
-				    base->buf, entry.path);
+				    base->buf);
 
-			oidcpy(&oid, get_commit_tree_oid(commit));
+			submodule_tree = repo_get_commit_tree(subrepo_p, commit);
+			oidcpy(&oid, submodule_tree ? &submodule_tree->object.oid : NULL);
+
+			strbuf_addch(base, '/');
+
+			retval = read_tree_at(subrepo_p, lookup_tree(subrepo_p, &oid),
+						base, pathspec,
+						fn, context);
+			if (retval)
+			    die("failed to read tree for %s", base->buf);
+			strbuf_setlen(base, oldlen);
+			repo_clear(subrepo_p);
 		}
-		else
-			continue;
-
-		len = tree_entry_len(&entry);
-		strbuf_add(base, entry.path, len);
-		strbuf_addch(base, '/');
-		retval = read_tree_at(r, lookup_tree(r, &oid),
-				      base, pathspec,
-				      fn, context);
-		strbuf_setlen(base, oldlen);
-		if (retval)
-			return -1;
+		// else, this is a file (or a submodule, but no pathspec->recurse_submodules)
 	}
 	return 0;
 }
@@ -121,7 +159,7 @@ int parse_tree_buffer(struct tree *item, void *buffer, unsigned long size)
 	return 0;
 }
 
-int parse_tree_gently(struct tree *item, int quiet_on_missing)
+int repo_parse_tree_gently(struct repository *r, struct tree *item, int quiet_on_missing)
 {
 	 enum object_type type;
 	 void *buffer;
@@ -129,7 +167,7 @@ int parse_tree_gently(struct tree *item, int quiet_on_missing)
 
 	if (item->object.parsed)
 		return 0;
-	buffer = read_object_file(&item->object.oid, &type, &size);
+	buffer = repo_read_object_file(r, &item->object.oid, &type, &size);
 	if (!buffer)
 		return quiet_on_missing ? -1 :
 			error("Could not read %s",
@@ -149,9 +187,8 @@ void free_tree_buffer(struct tree *tree)
 	tree->object.parsed = 0;
 }
 
-struct tree *parse_tree_indirect(const struct object_id *oid)
+struct tree *repo_parse_tree_indirect(struct repository *r, const struct object_id *oid)
 {
-	struct repository *r = the_repository;
 	struct object *obj = parse_object(r, oid);
 	return (struct tree *)repo_peel_to_type(r, NULL, 0, obj, OBJ_TREE);
 }

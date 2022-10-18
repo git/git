@@ -18,6 +18,7 @@ static unsigned long offset;
 static int tar_umask = 002;
 
 static int write_tar_filter_archive(const struct archiver *ar,
+					struct repository *repo,
 				    struct archiver_args *args);
 
 /*
@@ -246,7 +247,9 @@ static void write_extended_header(struct archiver_args *args,
 	write_blocked(buffer, size);
 }
 
-static int write_tar_entry(struct archiver_args *args,
+static int write_tar_entry(
+			   struct repository *repo,
+			   struct archiver_args *args,
 			   const struct object_id *oid,
 			   const char *path, size_t pathlen,
 			   unsigned int mode,
@@ -316,7 +319,7 @@ static int write_tar_entry(struct archiver_args *args,
 		if (buffer)
 			write_blocked(buffer, size);
 		else
-			err = stream_blocked(args->repo, oid);
+			err = stream_blocked(repo, oid);
 	}
 	return err;
 }
@@ -422,12 +425,13 @@ static int git_tar_config(const char *var, const char *value, void *cb)
 }
 
 static int write_tar_archive(const struct archiver *ar UNUSED,
+			     struct repository *repo,
 			     struct archiver_args *args)
 {
 	int err = 0;
 
 	write_global_extended_header(args);
-	err = write_archive_entries(args, write_tar_entry);
+	err = write_archive_entries(repo, args, write_tar_entry);
 	if (!err)
 		write_trailer();
 	return err;
@@ -462,6 +466,7 @@ static void tgz_write_block(const void *data)
 static const char internal_gzip_command[] = "git archive gzip";
 
 static int write_tar_filter_archive(const struct archiver *ar,
+					struct repository *repo,
 				    struct archiver_args *args)
 {
 #if ZLIB_VERNUM >= 0x1221
@@ -484,7 +489,7 @@ static int write_tar_filter_archive(const struct archiver *ar,
 		gzstream.next_out = outbuf;
 		gzstream.avail_out = sizeof(outbuf);
 
-		r = write_tar_archive(ar, args);
+		r = write_tar_archive(ar, repo, args);
 
 		tgz_deflate(Z_FINISH);
 		git_deflate_end(&gzstream);
@@ -506,7 +511,7 @@ static int write_tar_filter_archive(const struct archiver *ar,
 		die_errno(_("unable to redirect descriptor"));
 	close(filter.in);
 
-	r = write_tar_archive(ar, args);
+	r = write_tar_archive(ar, repo, args);
 
 	close(1);
 	if (finish_command(&filter) != 0)

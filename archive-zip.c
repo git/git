@@ -283,7 +283,9 @@ static int entry_is_binary(struct index_state *istate, const char *path,
 
 #define STREAM_BUFFER_SIZE (1024 * 16)
 
-static int write_zip_entry(struct archiver_args *args,
+static int write_zip_entry(
+			   struct repository *repo,
+			   struct archiver_args *args,
 			   const struct object_id *oid,
 			   const char *path, size_t pathlen,
 			   unsigned int mode,
@@ -340,7 +342,7 @@ static int write_zip_entry(struct archiver_args *args,
 
 		if (!buffer) {
 			enum object_type type;
-			stream = open_istream(args->repo, oid, &type, &size,
+			stream = open_istream(repo, oid, &type, &size,
 					      NULL);
 			if (!stream)
 				return error(_("cannot stream blob %s"),
@@ -349,7 +351,7 @@ static int write_zip_entry(struct archiver_args *args,
 			out = NULL;
 		} else {
 			crc = crc32(crc, buffer, size);
-			is_binary = entry_is_binary(args->repo->index,
+			is_binary = entry_is_binary(repo->index,
 						    path_without_prefix,
 						    buffer, size);
 			out = buffer;
@@ -426,7 +428,7 @@ static int write_zip_entry(struct archiver_args *args,
 				break;
 			crc = crc32(crc, buf, readlen);
 			if (is_binary == -1)
-				is_binary = entry_is_binary(args->repo->index,
+				is_binary = entry_is_binary(repo->index,
 							    path_without_prefix,
 							    buf, readlen);
 			write_or_die(1, buf, readlen);
@@ -459,7 +461,7 @@ static int write_zip_entry(struct archiver_args *args,
 				break;
 			crc = crc32(crc, buf, readlen);
 			if (is_binary == -1)
-				is_binary = entry_is_binary(args->repo->index,
+				is_binary = entry_is_binary(repo->index,
 							    path_without_prefix,
 							    buf, readlen);
 
@@ -619,6 +621,7 @@ static int archive_zip_config(const char *var, const char *value,
 }
 
 static int write_zip_archive(const struct archiver *ar UNUSED,
+				 struct repository *repo,
 			     struct archiver_args *args)
 {
 	int err;
@@ -629,7 +632,7 @@ static int write_zip_archive(const struct archiver *ar UNUSED,
 
 	strbuf_init(&zip_dir, 0);
 
-	err = write_archive_entries(args, write_zip_entry);
+	err = write_archive_entries(repo, args, write_zip_entry);
 	if (!err)
 		write_zip_trailer(args->commit_oid);
 

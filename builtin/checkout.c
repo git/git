@@ -124,7 +124,9 @@ static int post_checkout_hook(struct commit *old_commit, struct commit *new_comm
 
 }
 
-static int update_some(const struct object_id *oid, struct strbuf *base,
+static int update_some(
+		       struct repository *r UNUSED,
+			   const struct object_id *oid, struct strbuf *base,
 		       const char *pathname, unsigned mode, void *context UNUSED)
 {
 	int len;

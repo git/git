@@ -8,7 +8,6 @@ struct repository;
 struct pretty_print_context;
 
 struct archiver_args {
-	struct repository *repo;
 	char *refname;
 	const char *prefix;
 	const char *base;
@@ -19,6 +18,7 @@ struct archiver_args {
 	timestamp_t time;
 	struct pathspec pathspec;
 	unsigned int verbose : 1;
+	unsigned int recurse_submodules : 1;
 	unsigned int worktree_attributes : 1;
 	unsigned int convert : 1;
 	int compression_level;
@@ -41,7 +41,10 @@ const char *archive_format_from_filename(const char *filename);
 #define ARCHIVER_HIGH_COMPRESSION_LEVELS 4
 struct archiver {
 	const char *name;
-	int (*write_archive)(const struct archiver *, struct archiver_args *);
+	int (*write_archive)(
+		const struct archiver *,
+		struct repository *,
+		struct archiver_args *);
 	unsigned flags;
 	char *filter_command;
 };
@@ -51,12 +54,17 @@ void init_tar_archiver(void);
 void init_zip_archiver(void);
 void init_archivers(void);
 
-typedef int (*write_archive_entry_fn_t)(struct archiver_args *args,
+typedef int (*write_archive_entry_fn_t)(
+					struct repository *repo,
+					struct archiver_args *args,
 					const struct object_id *oid,
 					const char *path, size_t pathlen,
 					unsigned int mode,
 					void *buffer, unsigned long size);
 
-int write_archive_entries(struct archiver_args *args, write_archive_entry_fn_t write_entry);
+int write_archive_entries(
+	struct repository *repo,
+	struct archiver_args *args,
+	write_archive_entry_fn_t write_entry);
 
 #endif	/* ARCHIVE_H */

@@ -665,7 +665,9 @@ static void wt_status_collect_changes_index(struct wt_status *s)
 	release_revisions(&rev);
 }
 
-static int add_file_to_list(const struct object_id *oid,
+static int add_file_to_list(
+			    struct repository *r UNUSED,
+			    const struct object_id *oid,
 			    struct strbuf *base, const char *path,
 			    unsigned int mode, void *context)
 {

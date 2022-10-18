@@ -232,7 +232,9 @@ static void set_index_entry(struct index_state *istate, int nr, struct cache_ent
 	add_name_hash(istate, ce);
 }
 
-static int add_path_to_index(const struct object_id *oid,
+static int add_path_to_index(
+			     struct repository *r UNUSED,
+			     const struct object_id *oid,
 			     struct strbuf *base, const char *path,
 			     unsigned int mode, void *context)
 {
