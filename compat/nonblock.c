@@ -41,7 +41,7 @@ int enable_pipe_nonblock(int fd)
 
 #else
 
-int enable_pipe_nonblock(int fd)
+int enable_pipe_nonblock(int fd UNUSED)
 {
 	errno = ENOSYS;
 	return -1;
