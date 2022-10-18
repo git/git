@@ -1089,6 +1089,11 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 				strbuf_addstr(&buf, pack_basename(p));
 				strbuf_strip_suffix(&buf, ".pack");
 
+				if ((p->pack_keep) ||
+				    (string_list_has_string(&existing_kept_packs,
+							    buf.buf)))
+					continue;
+
 				remove_redundant_pack(packdir, buf.buf);
 			}
 			strbuf_release(&buf);

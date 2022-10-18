@@ -176,8 +176,12 @@ test_expect_success '--geometric ignores kept packs' '
 		# be repacked, too.
 		git repack --geometric 2 -d --pack-kept-objects &&
 
+		# After repacking, two packs remain: one new one (containing the
+		# objects in both the .keep and non-kept pack), and the .keep
+		# pack (since `--pack-kept-objects -d` does not actually delete
+		# the kept pack).
 		find $objdir/pack -name "*.pack" >after &&
-		test_line_count = 1 after
+		test_line_count = 2 after
 	)
 '
 
