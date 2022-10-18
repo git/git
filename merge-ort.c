@@ -397,7 +397,7 @@ struct conflicted_submodule_item {
 	int flag;
 };
 
-static void conflicted_submodule_item_free(void *util, const char *str)
+static void conflicted_submodule_item_free(void *util, const char *str UNUSED)
 {
 	struct conflicted_submodule_item *item = util;
 
