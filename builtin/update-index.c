@@ -732,7 +732,7 @@ static int do_unresolve(int ac, const char **av,
 	return err;
 }
 
-static int do_reupdate(int ac, const char **av,
+static int do_reupdate(const char **paths,
 		       const char *prefix)
 {
 	/* Read HEAD and run update-index on paths that are
@@ -744,7 +744,7 @@ static int do_reupdate(int ac, const char **av,
 
 	parse_pathspec(&pathspec, 0,
 		       PATHSPEC_PREFER_CWD,
-		       prefix, av + 1);
+		       prefix, paths);
 
 	if (read_ref("HEAD", &head_oid))
 		/* If there is no HEAD, that means it is an initial
@@ -970,7 +970,7 @@ static enum parse_opt_result reupdate_callback(
 
 	/* consume remaining arguments. */
 	setup_work_tree();
-	*has_errors = do_reupdate(ctx->argc, ctx->argv, prefix);
+	*has_errors = do_reupdate(ctx->argv + 1, prefix);
 	if (*has_errors)
 		active_cache_changed = 0;
 
