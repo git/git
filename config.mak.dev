@@ -69,6 +69,31 @@ DEVELOPER_CFLAGS += -Wno-missing-braces
 endif
 endif
 
+# Old versions of clang complain about initializaing a
+# struct-within-a-struct using just "{0}" rather than "{{0}}".  This
+# error is considered a false-positive and not worth fixing, because
+# new clang versions do not, so just disable it.
+#
+# The "bug" was fixed in upstream clang 9.
+#
+# Complicating this is that versions of clang released by Apple have
+# their own version numbers (associated with the corresponding version
+# of XCode) unrelated to the official clang version numbers.
+#
+# The bug was fixed in Apple clang 12.
+#
+ifneq ($(filter clang1,$(COMPILER_FEATURES)),)     # if we are using clang
+ifeq ($(uname_S),Darwin)                           # if we are on darwin
+ifeq ($(filter clang12,$(COMPILER_FEATURES)),)     # if version < 12
+DEVELOPER_CFLAGS += -Wno-missing-braces
+endif
+else                                               # not darwin
+ifeq ($(filter clang9,$(COMPILER_FEATURES)),)      # if version < 9
+DEVELOPER_CFLAGS += -Wno-missing-braces
+endif
+endif
+endif
+
 # https://bugzilla.redhat.com/show_bug.cgi?id=2075786
 ifneq ($(filter gcc12,$(COMPILER_FEATURES)),)
 DEVELOPER_CFLAGS += -Wno-error=stringop-overread
