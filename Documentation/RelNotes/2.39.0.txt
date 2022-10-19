@@ -33,6 +33,10 @@ Performance, Internal Implementation, Development Support etc.
    remotes, and make it die when such a fetch fails to bring all the
    requested objects, to give an early failure to various operations.
 
+ * Update CodingGuidelines to clarify what features to use and avoid
+   in C99.
+   (merge 438c2f859b ab/coding-guidelines-c99 later to maint).
+
 
 Fixes since v2.38
 -----------------
@@ -108,6 +112,10 @@ Fixes since v2.38
    said that no such branch exists, which has been corrected.
    (merge bcfc82bd48 rj/branch-edit-desc-unborn later to maint).
 
+ * Work around older clang that warns against C99 zero initialization
+   syntax for struct.
+   (merge 54795d37d9 jh/struct-zero-init-with-older-clang later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge c34a6bd291 so/diff-merges-cleanup later to maint).
    (merge 5e7c8b75e7 ab/test-malloc-with-sanitize-leak later to maint).
@@ -122,3 +130,4 @@ Fixes since v2.38
    (merge 7c07f36ad2 ab/unused-annotation later to maint).
    (merge f7669676d0 rs/use-fspathncmp later to maint).
    (merge a677d3c416 pw/remove-rebase-p-test later to maint).
+   (merge e3733b646d rs/archive-dedup-printf later to maint).
