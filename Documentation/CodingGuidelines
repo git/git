@@ -202,10 +202,19 @@ For C programs:
    by e.g. "echo DEVELOPER=1 >>config.mak".
 
  - We try to support a wide range of C compilers to compile Git with,
-   including old ones.  You should not use features from newer C
+   including old ones.  As of Git v2.35.0 Git requires C99 (we check
+   "__STDC_VERSION__"). You should not use features from a newer C
    standard, even if your compiler groks them.
 
-   There are a few exceptions to this guideline:
+   New C99 features have been phased in gradually, if something's new
+   in C99 but not used yet don't assume that it's safe to use, some
+   compilers we target have only partial support for it. These are
+   considered safe to use:
+
+   . since around 2007 with 2b6854c863a, we have been using
+     initializer elements which are not computable at load time. E.g.:
+
+	const char *args[] = {"constant", variable, NULL};
 
    . since early 2012 with e1327023ea, we have been using an enum
      definition whose last element is followed by a comma.  This, like
@@ -221,17 +230,23 @@ For C programs:
    . since early 2021 with 765dc168882, we have been using variadic
      macros, mostly for printf-like trace and debug macros.
 
-   These used to be forbidden, but we have not heard any breakage
-   report, and they are assumed to be safe.
+   . since late 2021 with 44ba10d6, we have had variables declared in
+     the for loop "for (int i = 0; i < 10; i++)".
+
+   New C99 features that we cannot use yet:
+
+   . %z and %zu as a printf() argument for a size_t (the %z being for
+     the POSIX-specific ssize_t). Instead you should use
+     printf("%"PRIuMAX, (uintmax_t)v).  These days the MSVC version we
+     rely on supports %z, but the C library used by MinGW does not.
+
+   . Shorthand like ".a.b = *c" in struct initializations is known to
+     trip up an older IBM XLC version, use ".a = { .b = *c }" instead.
+     See the 33665d98 (reftable: make assignments portable to AIX xlc
+     v12.01, 2022-03-28).
 
  - Variables have to be declared at the beginning of the block, before
    the first statement (i.e. -Wdeclaration-after-statement).
-
- - Declaring a variable in the for loop "for (int i = 0; i < 10; i++)"
-   is still not allowed in this codebase.  We are in the process of
-   allowing it by waiting to see that 44ba10d6 (revision: use C99
-   declaration of variable in for() loop, 2021-11-14) does not get
-   complaints.  Let's revisit this around November 2022.
 
  - NULL pointers shall be written as NULL, not as 0.
 
