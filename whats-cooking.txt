@@ -1,10 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2022, #05; Mon, 17)
-Bcc: lwn@lwn.net
-X-master-at: 4732897cf0a255a23dca9e97b65cea40cd06c5a8
-X-next-at: dd413c855b302a56aeac19873e6e9185f4eb5395
+Subject: What's cooking in git.git (Oct 2022, #06; Wed, 19)
+X-master-at: 45c9f05c44b1cb6bd2d6cb95a22cf5e3d21d5b63
+X-next-at: 067f57bc4a4a1e57327341b80f3d3545eba4dbd2
 
-What's cooking in git.git (Oct 2022, #05; Mon, 17)
+What's cooking in git.git (Oct 2022, #06; Wed, 19)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -13,6 +12,10 @@ topic is stable enough to be used and are candidate to be in a future
 release).  Commits prefixed with '-' are only in 'seen', and aren't
 considered "accepted" at all.  A topic without enough support may be
 discarded after a long period of no activity.
+
+Git 2.38.1 and friends that address a couple of CVE on maintenance
+tracks have been released and they are all merged up to the
+development branches.
 
 Some topics outside 'next' have been expecting updates for too long
 and we may want to discard them, unless they see some activities.
@@ -48,201 +51,107 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ab/unused-annotation (2022-10-05) 1 commit
-  (merged to 'next' on 2022-10-11 at c3099ad3ab)
- + git-compat-util.h: GCC deprecated message arg only in GCC 4.5+
+* ab/coding-guidelines-c99 (2022-10-11) 5 commits
+  (merged to 'next' on 2022-10-13 at c6b2b74dfb)
+ + CodingGuidelines: recommend against unportable C99 struct syntax
+ + CodingGuidelines: mention C99 features we can't use
+ + CodingGuidelines: allow declaring variables in for loops
+ + CodingGuidelines: mention dynamic C99 initializer elements
+ + CodingGuidelines: update for C99
 
- Compilation fix for ancient compilers.
- source: <20221005221928.703750-1-asedeno@google.com>
-
-
-* dd/document-runtime-prefix-better (2022-10-05) 1 commit
-  (merged to 'next' on 2022-10-11 at 9f4a3bb7bd)
- + Makefile: clarify runtime relative gitexecdir
-
- Update comment in the Makefile about the RUNTIME_PREFIX config knob.
- source: <20221006013205.15015-1-congdanhqx@gmail.com>
+ Update CodingGuidelines to clarify what features to use and avoid
+ in C99.
+ source: <20221010203800.2154698-1-gitster@pobox.com>
 
 
-* ed/fsmonitor-on-networked-macos (2022-10-10) 7 commits
-  (merged to 'next' on 2022-10-11 at 32076d13b7)
- + fsmonitor: fix leak of warning message
- + fsmonitor: add documentation for allowRemote and socketDir options
- + fsmonitor: check for compatability before communicating with fsmonitor
- + fsmonitor: deal with synthetic firmlinks on macOS
- + fsmonitor: avoid socket location check if using hook
- + fsmonitor: relocate socket file if .git directory is remote
- + fsmonitor: refactor filesystem checks to common interface
- (this branch is used by ed/fsmonitor-inotify.)
+* jh/struct-zero-init-with-older-clang (2022-10-10) 1 commit
+  (merged to 'next' on 2022-10-13 at 393abc3019)
+ + config.mak.dev: disable suggest braces error on old clang versions
 
- By default, use of fsmonitor on a repository on networked
- filesystem is disabled. Add knobs to make it workable on macOS.
- source: <pull.1326.v15.git.1664904751.gitgitgadget@gmail.com>
+ Work around older clang that warns against C99 zero initialization
+ syntax for struct.
+ source: <pull.1375.v2.git.1665416340806.gitgitgadget@gmail.com>
 
 
-* jc/branch-description-unset (2022-09-30) 1 commit
-  (merged to 'next' on 2022-10-11 at 3f81ee978b)
- + branch: do not fail a no-op --edit-desc
+* rs/archive-dedup-printf (2022-10-11) 1 commit
+  (merged to 'next' on 2022-10-13 at af770cf00f)
+ + archive: deduplicate verbose printing
 
- "GIT_EDITOR=: git branch --edit-description" resulted in failure,
- which has been corrected.
- source: <xmqqmtagka8x.fsf@gitster.g>
-
-
-* jc/tmp-objdir (2022-09-30) 1 commit
-  (merged to 'next' on 2022-10-11 at 17d0843c43)
- + tmp-objdir: skip clean up when handling a signal
-
- The code to clean temporary object directories (used for
- quarantine) tried to remove them inside its signal handler, which
- was a no-no.
- source: <pull.1348.v4.git.git.1664570831583.gitgitgadget@gmail.com>
-
-
-* jc/use-of-uc-in-log-messages (2022-10-07) 1 commit
-  (merged to 'next' on 2022-10-11 at 0b8c91d7e2)
- + SubmittingPatches: use usual capitalization in the log message body
-
- Clarify that "the sentence after <area>: prefix does not begin with
- a capital letter" rule applies only to the commit title.
- source: <xmqqedvjfqx1.fsf@gitster.g>
-
-
-* jk/cleanup-callback-parameters (2022-10-06) 4 commits
-  (merged to 'next' on 2022-10-11 at a3350d66b6)
- + attr: drop DEBUG_ATTR code
- + commit: avoid writing to global in option callback
- + multi-pack-index: avoid writing to global in option callback
- + test-submodule: inline resolve_relative_url() function
-
- Code clean-up.
- source: <Yz7Tjy7Rh8cXVxYQ@coredump.intra.peff.net>
- source: <Yz7UhYXvNl6+1GbZ@coredump.intra.peff.net>
-
-
-* jt/promisor-remote-fetch-tweak (2022-10-05) 2 commits
-  (merged to 'next' on 2022-10-11 at e93567bc8f)
- + promisor-remote: die upon failing fetch
- + promisor-remote: remove a return value
-
- Remove error detection from a function that fetches from promisor
- remotes, and make it die when such a fetch fails to bring all the
- requested objects, to give an early failure to various operations.
- source: <cover.1664917853.git.jonathantanmy@google.com>
-
-
-* pw/remove-rebase-p-test (2022-10-10) 1 commit
-  (merged to 'next' on 2022-10-11 at 000bd34796)
- + t3435: remove redundant test case
-
- Remove outdated test.
- source: <pull.1379.git.1665395106351.gitgitgadget@gmail.com>
-
-
-* rj/branch-edit-desc-unborn (2022-10-07) 1 commit
-  (merged to 'next' on 2022-10-11 at de3eccde7c)
- + branch: description for non-existent branch errors
-
- "git branch --edit-description" on an unborh branch misleadingly
- said that no such branch exists, which has been corrected.
- source: <8d627a2c-923f-181f-a03b-15f370c4dd0f@gmail.com>
-
-
-* rs/bisect-start-leakfix (2022-10-07) 1 commit
-  (merged to 'next' on 2022-10-11 at 07f87534c1)
- + bisect--helper: plug strvec leak
-
- Code clean-up that results in plugging a leak.
- source: <1965b54b-122a-c965-f886-1a7dd6afbfb4@web.de>
-
-
-* rs/use-fspathncmp (2022-10-08) 1 commit
-  (merged to 'next' on 2022-10-11 at 11cbd1ce81)
- + dir: use fspathncmp() in pl_hashmap_cmp()
-
- Code clean-up.
- source: <cb6ffcdb-d719-7928-96b8-e46482dd141f@web.de>
+ Code simplification.
+ source: <af5611aa-8662-7508-4f00-7fcf4e9cbcc6@web.de>
 
 --------------------------------------------------
 [New Topics]
 
-* gc/bare-repo-discovery (2022-10-13) 1 commit
-  (merged to 'next' on 2022-10-17 at 3de2be7c14)
- + config: respect includes in protected config
+* jk/unused-anno-more (2022-10-17) 12 commits
+ - ll-merge: mark unused parameters in callbacks
+ - diffcore-pickaxe: mark unused parameters in pickaxe functions
+ - convert: mark unused parameter in null stream filter
+ - apply: mark unused parameters in noop error/warning routine
+ - apply: mark unused parameters in handlers
+ - date: mark unused parameters in handler functions
+ - string-list: mark unused callback parameters
+ - object-file: mark unused parameters in hash_unknown functions
+ - mark unused parameters in trivial compat functions
+ - update-index: drop unused argc from do_reupdate()
+ - submodule--helper: drop unused argc from module_list_compute()
+ - diffstat_consume(): assert non-zero length
 
- Allow configuration files in "protected" scopes to include other
- configuration files.
-
- Will merge to 'master'.
- source: <pull.1360.v2.git.git.1665683027912.gitgitgadget@gmail.com>
-
-
-* jh/trace2-timers-and-counters (2022-10-13) 7 commits
- - trace2: add global counter mechanism
- - trace2: add stopwatch timers
- - trace2: convert ctx.thread_name from strbuf to pointer
- - trace2: rename the thread_name argument to trace2_thread_start
- - api-trace2.txt: elminate section describing the public trace2 API
- - tr2tls: clarify TLS terminology
- - trace2: use size_t alloc,nr_open_regions in tr2tls_thread_ctx
-
- Two new facilities, "timer" and "counter", are introduced to the
- trace2 API.
- source: <pull.1373.v2.git.1665600750.gitgitgadget@gmail.com>
-
-
-* tb/midx-bitmap-selection-fix (2022-10-13) 4 commits
- - pack-bitmap-write.c: instrument number of reused bitmaps
- - midx.c: instrument MIDX and bitmap generation with trace2 regions
- - midx.c: consider annotated tags during bitmap selection
- - midx.c: fix whitespace typo
-
- A bugfix with tracing support in midx codepath
+ More UNUSED annotation to help using -Wunused option with the
+ compiler.
 
  Will merge to 'next'.
- source: <cover.1665612094.git.me@ttaylorr.com>
+ source: <Y036whEorZV0rOgB@coredump.intra.peff.net>
 
 
-* tb/remove-unused-pack-bitmap (2022-10-13) 1 commit
- - builtin/repack.c: remove redundant pack-based bitmaps
+* tb/save-keep-pack-during-geometric-repack (2022-10-17) 1 commit
+ - repack: don't remove .keep packs with `--pack-kept-objects`
 
- When creating a multi-pack bitmap, remove per-pack bitmap files
- unconditionally as they will never be consulted.
+ When geometric repacking feature is in use together with the
+ --pack-kept-objects option, we lost packs marked with .keep files.
+
+ Will merge to 'next'.
+ source: <6a012cd625c1d197ede91c85299cbfb37adf356b.1666059872.git.me@ttaylorr.com>
+
+
+* mm/git-pm-try-catch-syntax-fix (2022-10-17) 1 commit
+ - Git.pm: add semicolon after catch statement
+
+ Fix a longstanding syntax error in Git.pm error codepath.
+
+ Will merge to 'next'??
+ source: <20221016212236.12453-2-michael@mcclimon.org>
+
+
+* ab/macos-build-fix-with-sha1dc (2022-10-19) 1 commit
+  (merged to 'next' on 2022-10-19 at 408ce79f33)
+ + fsmonitor OSX: compile with DC_SHA1=YesPlease
+
+ Enable macOS build with sha1dc hash function.
+
+ Will merge to 'master'.
+ source: <patch-v2-1.4-392fabdb456-20221019T010222Z-avarab@gmail.com>
+
+
+* jk/use-o0-in-leak-sanitizer (2022-10-19) 1 commit
+  (merged to 'next' on 2022-10-19 at 27c2546b98)
+ + Makefile: force -O0 when compiling with SANITIZE=leak
+
+ Avoid false-positive from LSan whose assumption may be broken with
+ higher optimization levels.
+
+ Will merge to 'master'.
+ source: <Y08JZVDgJpJvrBiz@coredump.intra.peff.net>
+
+
+* jr/embargoed-releases-doc (2022-10-19) 1 commit
+ - embargoed releases: also describe the git-security list and the process
+
+ The role the security mailing list plays in an embargoed release
+ has been documented.
 
  Will merge to 'next'?
- source: <393fd4c6db78cd694e6d4dfcf24f17e2850ccd99.1665601403.git.me@ttaylorr.com>
-
-
-* nw/t1002-cleanup (2022-10-14) 1 commit
- - t1002: modernize outdated conditional
-
- source: <pull.1362.v3.git.git.1665734502591.gitgitgadget@gmail.com>
-
-
-* zh/patch-id (2022-10-14) 7 commits
- - documentation: format-patch: clarify requirements for patch-ids to match
- - builtin: patch-id: remove unused diff-tree prefix
- - builtin: patch-id: add --include-whitespace as a command mode
- - patch-id: fix patch-id for mode changes
- - builtin: patch-id: fix patch-id with binary diffs
- - patch-id: use stable patch-id for rebases
- - patch-id: fix stable patch id for binary / header-only
-
- source: <pull.1359.v3.git.1665737804.gitgitgadget@gmail.com>
-
-
-* hl/archive-recursive (2022-10-16) 9 commits
- - archive: add tests for git archive --recurse-submodules
- - archive: add --recurse-submodules to git-archive command
- - archive: remove global repository from archive_args
- - archive: pass repo objects to write_archive handlers
- - tree: add repository parameter to read_tree_fn_t
- - tree: handle submodule case for read_tree_at properly
- - tree: increase test coverage for tree.c
- - tree: update cases to use repo_ tree methods
- - tree: do not use the_repository for tree traversal methods.
-
- source: <pull.1359.v3.git.git.1665973401.gitgitgadget@gmail.com>
+ source: <pull.1345.v2.git.1666142160427.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -282,21 +191,6 @@ Release tarballs are available at:
  Expecting a reroll.
  cf. <dfe0c1ab-33f8-f13e-71ce-1829bb0d2d7f@iee.email>
  source: <pull.1282.git.1657385781.gitgitgadget@gmail.com>
-
-
-* js/cmake-updates (2022-08-24) 5 commits
- - cmake: increase time-out for a long-running test
- - cmake: avoid editing t/test-lib.sh
- - add -p: avoid ambiguous signed/unsigned comparison
- - cmake: copy the merge tools for testing
- - cmake: make it easier to diagnose regressions in CTest runs
-
- Update to build procedure with VS using CMake/CTest.
-
- Expecting a reroll.
- cf. <3df77ffd-85a2-3a54-9005-34a24ec6e82d@github.com>
- cf. <531620e1-de4c-74aa-c840-c12ce81f8740@github.com> and others
- source: <pull.1320.v2.git.1661243463.gitgitgadget@gmail.com>
 
 
 * gc/submodule-clone-update-with-branches (2022-08-29) 6 commits
@@ -400,6 +294,111 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* js/cmake-updates (2022-10-19) 5 commits
+ - cmake: increase time-out for a long-running test
+ - cmake: avoid editing t/test-lib.sh
+ - add -p: avoid ambiguous signed/unsigned comparison
+ - cmake: copy the merge tools for testing
+ - cmake: make it easier to diagnose regressions in CTest runs
+
+ Update to build procedure with VS using CMake/CTest.
+
+ Will merge to 'next'?
+ source: <pull.1320.v3.git.1666090745.gitgitgadget@gmail.com>
+
+
+* gc/bare-repo-discovery (2022-10-13) 1 commit
+  (merged to 'next' on 2022-10-17 at 3de2be7c14)
+ + config: respect includes in protected config
+
+ Allow configuration files in "protected" scopes to include other
+ configuration files.
+
+ Will merge to 'master'.
+ source: <pull.1360.v2.git.git.1665683027912.gitgitgadget@gmail.com>
+
+
+* jh/trace2-timers-and-counters (2022-10-13) 7 commits
+ - trace2: add global counter mechanism
+ - trace2: add stopwatch timers
+ - trace2: convert ctx.thread_name from strbuf to pointer
+ - trace2: rename the thread_name argument to trace2_thread_start
+ - api-trace2.txt: elminate section describing the public trace2 API
+ - tr2tls: clarify TLS terminology
+ - trace2: use size_t alloc,nr_open_regions in tr2tls_thread_ctx
+
+ Two new facilities, "timer" and "counter", are introduced to the
+ trace2 API.
+ source: <pull.1373.v2.git.1665600750.gitgitgadget@gmail.com>
+
+
+* tb/midx-bitmap-selection-fix (2022-10-13) 4 commits
+ - pack-bitmap-write.c: instrument number of reused bitmaps
+ - midx.c: instrument MIDX and bitmap generation with trace2 regions
+ - midx.c: consider annotated tags during bitmap selection
+ - midx.c: fix whitespace typo
+
+ A bugfix with tracing support in midx codepath
+
+ Will merge to 'next'.
+ source: <cover.1665612094.git.me@ttaylorr.com>
+
+
+* tb/remove-unused-pack-bitmap (2022-10-17) 1 commit
+ - builtin/repack.c: remove redundant pack-based bitmaps
+
+ When creating a multi-pack bitmap, remove per-pack bitmap files
+ unconditionally as they will never be consulted.
+
+ Will merge to 'next'?
+ source: <1e0ef7ee7ff5feb323c77e594cd65433fb1d99f7.1666061096.git.me@ttaylorr.com>
+
+
+* nw/t1002-cleanup (2022-10-14) 1 commit
+ - t1002: modernize outdated conditional
+
+ Code clean-up in test.
+
+ Will merge to 'next'.
+ source: <pull.1362.v3.git.git.1665734502591.gitgitgadget@gmail.com>
+
+
+* zh/patch-id (2022-10-14) 7 commits
+ - documentation: format-patch: clarify requirements for patch-ids to match
+ - builtin: patch-id: remove unused diff-tree prefix
+ - builtin: patch-id: add --include-whitespace as a command mode
+ - patch-id: fix patch-id for mode changes
+ - builtin: patch-id: fix patch-id with binary diffs
+ - patch-id: use stable patch-id for rebases
+ - patch-id: fix stable patch id for binary / header-only
+
+ A new "--include-whitespace" option is added to "git patch-id", and
+ existing bugs in the internal patch-id logic that did not match
+ what "git patch-id" produces have been corrected.
+
+ Will merge to 'next'?
+ source: <pull.1359.v3.git.1665737804.gitgitgadget@gmail.com>
+
+
+* hl/archive-recursive (2022-10-19) 10 commits
+ - fixup! archive: add tests for git archive --recurse-submodules
+ - archive: add tests for git archive --recurse-submodules
+ - archive: add --recurse-submodules to git-archive command
+ - archive: remove global repository from archive_args
+ - archive: pass repo objects to write_archive handlers
+ - tree: add repository parameter to read_tree_fn_t
+ - tree: handle submodule case for read_tree_at properly
+ - tree: increase test coverage for tree.c
+ - tree: update cases to use repo_ tree methods
+ - tree: do not use the_repository for tree traversal methods.
+
+ "git archive" has been taught "--recurse-submodules" option to
+ create a tarball that includes contents from submodules.
+
+ Expecting a reroll.
+ source: <pull.1359.v3.git.git.1665973401.gitgitgadget@gmail.com>
+
+
 * pw/rebase-keep-base-fixes (2022-10-17) 8 commits
  - rebase --keep-base: imply --no-fork-point
  - rebase --keep-base: imply --reapply-cherry-picks
@@ -435,16 +434,6 @@ Release tarballs are available at:
  source: <patch-v2-1.1-6ad7627706f-20221011T094715Z-avarab@gmail.com>
 
 
-* rs/archive-dedup-printf (2022-10-11) 1 commit
-  (merged to 'next' on 2022-10-13 at af770cf00f)
- + archive: deduplicate verbose printing
-
- Code simplification.
-
- Will merge to 'master'.
- source: <af5611aa-8662-7508-4f00-7fcf4e9cbcc6@web.de>
-
-
 * pw/rebase-reflog-fixes (2022-10-17) 9 commits
  - rebase: cleanup action handling
  - rebase --abort: improve reflog message
@@ -473,21 +462,6 @@ Release tarballs are available at:
  source: <20221012150619.12877-1-sndanailov@wired4ever.net>
 
 
-* ab/coding-guidelines-c99 (2022-10-11) 5 commits
-  (merged to 'next' on 2022-10-13 at c6b2b74dfb)
- + CodingGuidelines: recommend against unportable C99 struct syntax
- + CodingGuidelines: mention C99 features we can't use
- + CodingGuidelines: allow declaring variables in for loops
- + CodingGuidelines: mention dynamic C99 initializer elements
- + CodingGuidelines: update for C99
-
- Update CodingGuidelines to clarify what features to use and avoid
- in C99.
-
- Will merge to 'master'.
- source: <20221010203800.2154698-1-gitster@pobox.com>
-
-
 * jc/symbolic-ref-no-recurse (2022-10-09) 1 commit
   (merged to 'next' on 2022-10-13 at 532a3f6a5f)
  + symbolic-ref: teach "--[no-]recurse" option
@@ -513,13 +487,13 @@ Release tarballs are available at:
 
 
 * ed/fsmonitor-inotify (2022-10-14) 7 commits
- - fsmonitor: update doc for Linux
- - fsmonitor: test updates
- - fsmonitor: enable fsmonitor for Linux
- - fsmonitor: implement filesystem change listener for Linux
- - fsmonitor: determine if filesystem is local or remote
- - fsmonitor: prepare to share code between Mac OS and Linux
- - Merge branch 'ed/fsmonitor-on-networked-macos' into ed/fsmonitor-inotify
+ . fsmonitor: update doc for Linux
+ . fsmonitor: test updates
+ . fsmonitor: enable fsmonitor for Linux
+ . fsmonitor: implement filesystem change listener for Linux
+ . fsmonitor: determine if filesystem is local or remote
+ . fsmonitor: prepare to share code between Mac OS and Linux
+ . Merge branch 'ed/fsmonitor-on-networked-macos' into ed/fsmonitor-inotify
 
  Bundled fsmonitor for Linux using inotify API.
 
@@ -539,23 +513,12 @@ Release tarballs are available at:
 
 
 * jc/more-sanitizer-at-ci (2022-10-11) 1 commit
- - ci: add address and undefined sanitizer tasks
+ . ci: add address and undefined sanitizer tasks
 
  Enable address and undefined sanitizer tasks at GitHub Actions CI.
 
  With this p4 tests seem to die with the server side going away.
  source: <xmqqpmezxl9p.fsf@gitster.g>
-
-
-* jh/struct-zero-init-with-older-clang (2022-10-10) 1 commit
-  (merged to 'next' on 2022-10-13 at 393abc3019)
- + config.mak.dev: disable suggest braces error on old clang versions
-
- Work around older clang that warns against C99 zero initialization
- syntax for struct.
-
- Will merge to 'master'.
- source: <pull.1375.v2.git.1665416340806.gitgitgadget@gmail.com>
 
 
 * od/ci-use-checkout-v3-when-applicable (2022-10-10) 2 commits
@@ -688,6 +651,8 @@ Release tarballs are available at:
 
  "make coccicheck" is time consuming. It has been made to run more
  incrementally.
+
+ Will merge to 'next'?
  source: <cover-v3-00.11-00000000000-20221014T152552Z-avarab@gmail.com>
 
 
