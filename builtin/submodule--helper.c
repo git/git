@@ -3396,8 +3396,6 @@ cleanup:
 	return ret;
 }
 
-#define SUPPORT_SUPER_PREFIX (1<<0)
-
 struct cmd_struct {
 	const char *cmd;
 	int (*fn)(int, const char **, const char *);
@@ -3405,21 +3403,21 @@ struct cmd_struct {
 };
 
 static struct cmd_struct commands[] = {
-	{"clone", module_clone, SUPPORT_SUPER_PREFIX},
-	{"add", module_add, 0},
-	{"update", module_update, SUPPORT_SUPER_PREFIX},
-	{"foreach", module_foreach, SUPPORT_SUPER_PREFIX},
-	{"init", module_init, 0},
-	{"status", module_status, SUPPORT_SUPER_PREFIX},
-	{"sync", module_sync, SUPPORT_SUPER_PREFIX},
-	{"deinit", module_deinit, 0},
-	{"summary", module_summary, 0},
-	{"push-check", push_check, 0},
-	{"absorbgitdirs", absorb_git_dirs, SUPPORT_SUPER_PREFIX},
-	{"config", module_config, 0},
-	{"set-url", module_set_url, 0},
-	{"set-branch", module_set_branch, 0},
-	{"create-branch", module_create_branch, 0},
+	{"clone", module_clone},
+	{"add", module_add},
+	{"update", module_update},
+	{"foreach", module_foreach},
+	{"init", module_init},
+	{"status", module_status},
+	{"sync", module_sync},
+	{"deinit", module_deinit},
+	{"summary", module_summary},
+	{"push-check", push_check},
+	{"absorbgitdirs", absorb_git_dirs},
+	{"config", module_config},
+	{"set-url", module_set_url},
+	{"set-branch", module_set_branch},
+	{"create-branch", module_create_branch},
 };
 
 int cmd_submodule__helper(int argc, const char **argv, const char *prefix)
@@ -3430,10 +3428,6 @@ int cmd_submodule__helper(int argc, const char **argv, const char *prefix)
 
 	for (i = 0; i < ARRAY_SIZE(commands); i++) {
 		if (!strcmp(argv[1], commands[i].cmd)) {
-			if (get_super_prefix() &&
-			    !(commands[i].option & SUPPORT_SUPER_PREFIX))
-				die(_("%s doesn't support --super-prefix"),
-				    commands[i].cmd);
 			return commands[i].fn(argc - 1, argv + 1, prefix);
 		}
 	}
