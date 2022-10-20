@@ -1101,7 +1101,7 @@ static void date_tea(struct tm *tm, struct tm *now, int *num)
 	date_time(tm, now, 17);
 }
 
-static void date_pm(struct tm *tm, struct tm *now, int *num)
+static void date_pm(struct tm *tm, struct tm *now UNUSED, int *num)
 {
 	int hour, n = *num;
 	*num = 0;
@@ -1115,7 +1115,7 @@ static void date_pm(struct tm *tm, struct tm *now, int *num)
 	tm->tm_hour = (hour % 12) + 12;
 }
 
-static void date_am(struct tm *tm, struct tm *now, int *num)
+static void date_am(struct tm *tm, struct tm *now UNUSED, int *num)
 {
 	int hour, n = *num;
 	*num = 0;
@@ -1129,7 +1129,7 @@ static void date_am(struct tm *tm, struct tm *now, int *num)
 	tm->tm_hour = (hour % 12);
 }
 
-static void date_never(struct tm *tm, struct tm *now, int *num)
+static void date_never(struct tm *tm, struct tm *now UNUSED, int *num)
 {
 	time_t n = 0;
 	localtime_r(&n, tm);
