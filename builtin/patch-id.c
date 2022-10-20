@@ -74,8 +74,8 @@ static int get_one_patchid(struct object_id *next_oid, struct object_id *result,
 		const char *p = line;
 		int len;
 
-		if (!skip_prefix(line, "diff-tree ", &p) &&
-		    !skip_prefix(line, "commit ", &p) &&
+		/* Possibly skip over the prefix added by "log" or "format-patch" */
+		if (!skip_prefix(line, "commit ", &p) &&
 		    !skip_prefix(line, "From ", &p) &&
 		    starts_with(line, "\\ ") && 12 < strlen(line)) {
 			if (verbatim)
