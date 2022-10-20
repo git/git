@@ -48,7 +48,17 @@ test_expect_success 'setup: 500 lines' '
 	git branch -f squashed main &&
 	git checkout -q -f squashed &&
 	git reset -q --soft HEAD~2 &&
-	git commit -q -m squashed
+	git commit -q -m squashed &&
+
+	git branch -f mode main &&
+	git checkout -q -f mode &&
+	test_chmod +x file &&
+	git commit -q -a --amend &&
+
+	git branch -f modeother other &&
+	git checkout -q -f modeother &&
+	test_chmod +x file &&
+	git commit -q -a --amend
 '
 
 test_expect_success 'detect upstream patch' '
@@ -71,6 +81,13 @@ test_expect_success 'detect upstream patch binary' '
 	test_when_finished "rm .gitattributes"
 '
 
+test_expect_success 'detect upstream patch modechange' '
+	git checkout -q modeother^{} &&
+	git rebase mode &&
+	git rev-list mode...HEAD~ >revs &&
+	test_must_be_empty revs
+'
+
 test_expect_success 'do not drop patch' '
 	git checkout -q other^{} &&
 	test_must_fail git rebase squashed &&
@@ -83,6 +100,18 @@ test_expect_success 'do not drop patch binary' '
 	test_must_fail git rebase squashed &&
 	test_when_finished "git rebase --abort" &&
 	test_when_finished "rm .gitattributes"
+'
+
+test_expect_success 'do not drop patch modechange' '
+	git checkout -q modeother^{} &&
+	git rebase other &&
+	cat >expected <<-\EOF &&
+	diff --git a/file b/file
+	old mode 100644
+	new mode 100755
+	EOF
+	git diff HEAD~ >modediff &&
+	test_cmp expected modediff
 '
 
 test_done
