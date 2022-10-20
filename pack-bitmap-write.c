@@ -384,6 +384,8 @@ static int fill_bitmap_tree(struct bitmap *bitmap,
 	return 0;
 }
 
+static int reused_bitmaps_nr;
+
 static int fill_bitmap_commit(struct bb_commit *ent,
 			      struct commit *commit,
 			      struct prio_queue *queue,
@@ -409,8 +411,10 @@ static int fill_bitmap_commit(struct bb_commit *ent,
 			 * bitmap and add its bits to this one. No need to walk
 			 * parents or the tree for this commit.
 			 */
-			if (old && !rebuild_bitmap(mapping, old, ent->bitmap))
+			if (old && !rebuild_bitmap(mapping, old, ent->bitmap)) {
+				reused_bitmaps_nr++;
 				continue;
+			}
 		}
 
 		/*
@@ -526,6 +530,8 @@ int bitmap_writer_build(struct packing_data *to_pack)
 
 	trace2_region_leave("pack-bitmap-write", "building_bitmaps_total",
 			    the_repository);
+	trace2_data_intmax("pack-bitmap-write", the_repository,
+			   "building_bitmaps_reused", reused_bitmaps_nr);
 
 	stop_progress(&writer.progress);
 

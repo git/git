@@ -278,7 +278,7 @@ uint32_t nth_midxed_pack_int_id(struct multi_pack_index *m, uint32_t pos)
 			(off_t)pos * MIDX_CHUNK_OFFSET_WIDTH);
 }
 
-int fill_midx_entry(struct repository * r,
+int fill_midx_entry(struct repository *r,
 		    const struct object_id *oid,
 		    struct pack_entry *e,
 		    struct multi_pack_index *m)
@@ -913,6 +913,8 @@ static uint32_t *midx_pack_order(struct write_midx_context *ctx)
 	uint32_t *pack_order;
 	uint32_t i;
 
+	trace2_region_enter("midx", "midx_pack_order", the_repository);
+
 	ALLOC_ARRAY(data, ctx->entries_nr);
 	for (i = 0; i < ctx->entries_nr; i++) {
 		struct pack_midx_entry *e = &ctx->entries[i];
@@ -930,6 +932,8 @@ static uint32_t *midx_pack_order(struct write_midx_context *ctx)
 		pack_order[i] = data[i].nr;
 	free(data);
 
+	trace2_region_leave("midx", "midx_pack_order", the_repository);
+
 	return pack_order;
 }
 
@@ -938,6 +942,8 @@ static void write_midx_reverse_index(char *midx_name, unsigned char *midx_hash,
 {
 	struct strbuf buf = STRBUF_INIT;
 	const char *tmp_file;
+
+	trace2_region_enter("midx", "write_midx_reverse_index", the_repository);
 
 	strbuf_addf(&buf, "%s-%s.rev", midx_name, hash_to_hex(midx_hash));
 
@@ -948,6 +954,8 @@ static void write_midx_reverse_index(char *midx_name, unsigned char *midx_hash,
 		die(_("cannot store reverse index file"));
 
 	strbuf_release(&buf);
+
+	trace2_region_leave("midx", "write_midx_reverse_index", the_repository);
 }
 
 static void clear_midx_files_ext(const char *object_dir, const char *ext,
@@ -963,6 +971,8 @@ static void prepare_midx_packing_data(struct packing_data *pdata,
 {
 	uint32_t i;
 
+	trace2_region_enter("midx", "prepare_midx_packing_data", the_repository);
+
 	memset(pdata, 0, sizeof(struct packing_data));
 	prepare_packing_data(the_repository, pdata);
 
@@ -973,6 +983,8 @@ static void prepare_midx_packing_data(struct packing_data *pdata,
 		oe_set_in_pack(pdata, to,
 			       ctx->info[ctx->pack_perm[from->pack_int_id]].p);
 	}
+
+	trace2_region_leave("midx", "prepare_midx_packing_data", the_repository);
 }
 
 static int add_ref_to_pending(const char *refname,
@@ -980,12 +992,16 @@ static int add_ref_to_pending(const char *refname,
 			      int flag, void *cb_data)
 {
 	struct rev_info *revs = (struct rev_info*)cb_data;
+	struct object_id peeled;
 	struct object *object;
 
 	if ((flag & REF_ISSYMREF) && (flag & REF_ISBROKEN)) {
 		warning("symbolic ref is dangling: %s", refname);
 		return 0;
 	}
+
+	if (!peel_iterated_oid(oid, &peeled))
+		oid = &peeled;
 
 	object = parse_object_or_die(oid, refname);
 	if (object->type != OBJ_COMMIT)
@@ -1066,6 +1082,9 @@ static struct commit **find_commits_for_midx_bitmap(uint32_t *indexed_commits_nr
 	struct rev_info revs;
 	struct bitmap_commit_cb cb = {0};
 
+	trace2_region_enter("midx", "find_commits_for_midx_bitmap",
+			    the_repository);
+
 	cb.ctx = ctx;
 
 	repo_init_revisions(the_repository, &revs, NULL);
@@ -1099,6 +1118,10 @@ static struct commit **find_commits_for_midx_bitmap(uint32_t *indexed_commits_nr
 		*indexed_commits_nr_p = cb.commits_nr;
 
 	release_revisions(&revs);
+
+	trace2_region_leave("midx", "find_commits_for_midx_bitmap",
+			    the_repository);
+
 	return cb.commits;
 }
 
@@ -1115,6 +1138,8 @@ static int write_midx_bitmap(const char *midx_name,
 	struct pack_idx_entry **index;
 	char *bitmap_name = xstrfmt("%s-%s.bitmap", midx_name,
 					hash_to_hex(midx_hash));
+
+	trace2_region_enter("midx", "write_midx_bitmap", the_repository);
 
 	if (flags & MIDX_WRITE_BITMAP_HASH_CACHE)
 		options |= BITMAP_OPT_HASH_CACHE;
@@ -1161,6 +1186,9 @@ static int write_midx_bitmap(const char *midx_name,
 cleanup:
 	free(index);
 	free(bitmap_name);
+
+	trace2_region_leave("midx", "write_midx_bitmap", the_repository);
+
 	return ret;
 }
 
@@ -1206,6 +1234,8 @@ static int write_midx_internal(const char *object_dir,
 	int dropped_packs = 0;
 	int result = 0;
 	struct chunkfile *cf;
+
+	trace2_region_enter("midx", "write_midx_internal", the_repository);
 
 	get_midx_filename(&midx_name, object_dir);
 	if (safe_create_leading_directories(midx_name.buf))
@@ -1547,6 +1577,8 @@ cleanup:
 	free(ctx.pack_perm);
 	free(ctx.pack_order);
 	strbuf_release(&midx_name);
+
+	trace2_region_leave("midx", "write_midx_internal", the_repository);
 
 	return result;
 }
