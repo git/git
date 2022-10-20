@@ -6174,7 +6174,7 @@ static void patch_id_add_mode(git_hash_ctx *ctx, unsigned mode)
 }
 
 /* returns 0 upon success, and writes result into oid */
-static int diff_get_patch_id(struct diff_options *options, struct object_id *oid, int diff_header_only, int stable)
+static int diff_get_patch_id(struct diff_options *options, struct object_id *oid, int diff_header_only)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
 	int i;
@@ -6261,21 +6261,17 @@ static int diff_get_patch_id(struct diff_options *options, struct object_id *oid
 				return error("unable to generate patch-id diff for %s",
 					     p->one->path);
 		}
-		if (stable)
-			flush_one_hunk(oid, &ctx);
+		flush_one_hunk(oid, &ctx);
 	}
-
-	if (!stable)
-		the_hash_algo->final_oid_fn(oid, &ctx);
 
 	return 0;
 }
 
-int diff_flush_patch_id(struct diff_options *options, struct object_id *oid, int diff_header_only, int stable)
+int diff_flush_patch_id(struct diff_options *options, struct object_id *oid, int diff_header_only)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
 	int i;
-	int result = diff_get_patch_id(options, oid, diff_header_only, stable);
+	int result = diff_get_patch_id(options, oid, diff_header_only);
 
 	for (i = 0; i < q->nr; i++)
 		diff_free_filepair(q->queue[i]);
