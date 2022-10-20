@@ -259,6 +259,8 @@ macos-latest)
 		MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=$(which python3)"
 	else
 		MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=$(which python2)"
+		MAKEFLAGS="$MAKEFLAGS NO_APPLE_COMMON_CRYPTO=NoThanks"
+		MAKEFLAGS="$MAKEFLAGS DC_SHA1=YesPlease NO_OPENSSL=NoThanks"
 	fi
 	;;
 esac
