@@ -61,6 +61,8 @@ static int get_one_patchid(struct object_id *next_oid, struct object_id *result,
 {
 	int patchlen = 0, found_next = 0;
 	int before = -1, after = -1;
+	int diff_is_binary = 0;
+	char pre_oid_str[GIT_MAX_HEXSZ + 1], post_oid_str[GIT_MAX_HEXSZ + 1];
 	git_hash_ctx ctx;
 
 	the_hash_algo->init_fn(&ctx);
@@ -88,12 +90,42 @@ static int get_one_patchid(struct object_id *next_oid, struct object_id *result,
 
 		/* Parsing diff header?  */
 		if (before == -1) {
-			if (starts_with(line, "index "))
+			if (starts_with(line, "GIT binary patch") ||
+			    starts_with(line, "Binary files")) {
+				diff_is_binary = 1;
+				before = 0;
+				the_hash_algo->update_fn(&ctx, pre_oid_str,
+							 strlen(pre_oid_str));
+				the_hash_algo->update_fn(&ctx, post_oid_str,
+							 strlen(post_oid_str));
+				if (stable)
+					flush_one_hunk(result, &ctx);
 				continue;
-			else if (starts_with(line, "--- "))
+			} else if (skip_prefix(line, "index ", &p)) {
+				char *oid1_end = strstr(line, "..");
+				char *oid2_end = NULL;
+				if (oid1_end)
+					oid2_end = strstr(oid1_end, " ");
+				if (!oid2_end)
+					oid2_end = line + strlen(line) - 1;
+				if (oid1_end != NULL && oid2_end != NULL) {
+					*oid1_end = *oid2_end = '\0';
+					strlcpy(pre_oid_str, p, GIT_MAX_HEXSZ + 1);
+					strlcpy(post_oid_str, oid1_end + 2, GIT_MAX_HEXSZ + 1);
+				}
+				continue;
+			} else if (starts_with(line, "--- "))
 				before = after = 1;
 			else if (!isalpha(line[0]))
 				break;
+		}
+
+		if (diff_is_binary) {
+			if (starts_with(line, "diff ")) {
+				diff_is_binary = 0;
+				before = -1;
+			}
+			continue;
 		}
 
 		/* Looking for a valid hunk header?  */
