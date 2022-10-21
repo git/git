@@ -102,6 +102,14 @@ assert () {
 	fi
 }
 
+# Usage: die_incompatible_opt OPTION COMMAND
+die_incompatible_opt () {
+	assert test "$#" = 2
+	opt="$1"
+	arg_command="$2"
+	die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+}
+
 main () {
 	if test $# -eq 0
 	then
@@ -176,16 +184,16 @@ main () {
 			arg_debug=1
 			;;
 		--annotate)
-			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_split" || die_incompatible_opt "$opt" "$arg_command"
 			arg_split_annotate="$1"
 			shift
 			;;
 		--no-annotate)
-			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_split" || die_incompatible_opt "$opt" "$arg_command"
 			arg_split_annotate=
 			;;
 		-b)
-			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_split" || die_incompatible_opt "$opt" "$arg_command"
 			arg_split_branch="$1"
 			shift
 			;;
@@ -194,7 +202,7 @@ main () {
 			shift
 			;;
 		-m)
-			test -n "$allow_addmerge" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_addmerge" || die_incompatible_opt "$opt" "$arg_command"
 			arg_addmerge_message="$1"
 			shift
 			;;
@@ -202,34 +210,34 @@ main () {
 			arg_prefix=
 			;;
 		--onto)
-			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_split" || die_incompatible_opt "$opt" "$arg_command"
 			arg_split_onto="$1"
 			shift
 			;;
 		--no-onto)
-			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_split" || die_incompatible_opt "$opt" "$arg_command"
 			arg_split_onto=
 			;;
 		--rejoin)
-			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_split" || die_incompatible_opt "$opt" "$arg_command"
 			;;
 		--no-rejoin)
-			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_split" || die_incompatible_opt "$opt" "$arg_command"
 			;;
 		--ignore-joins)
-			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_split" || die_incompatible_opt "$opt" "$arg_command"
 			arg_split_ignore_joins=1
 			;;
 		--no-ignore-joins)
-			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_split" || die_incompatible_opt "$opt" "$arg_command"
 			arg_split_ignore_joins=
 			;;
 		--squash)
-			test -n "$allow_addmerge" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_addmerge" || die_incompatible_opt "$opt" "$arg_command"
 			arg_addmerge_squash=1
 			;;
 		--no-squash)
-			test -n "$allow_addmerge" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_addmerge" || die_incompatible_opt "$opt" "$arg_command"
 			arg_addmerge_squash=
 			;;
 		--)
