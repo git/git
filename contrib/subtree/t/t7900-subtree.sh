@@ -43,6 +43,30 @@ last_commit_subject () {
 	git log --pretty=format:%s -1
 }
 
+# Upon 'git subtree add|merge --squash' of an annotated tag,
+# pre-2.32.0 versions of 'git subtree' would write the hash of the tag
+# (sub1 below), instead of the commit (sub1^{commit}) in the
+# "git-subtree-split" trailer.
+# We immitate this behaviour below using a replace ref.
+# This function creates 3 repositories:
+# - $1
+# - $1-sub (added as subtree "sub" in $1)
+# - $1-clone (clone of $1)
+test_create_pre2_32_repo () {
+	subtree_test_create_repo "$1" &&
+	subtree_test_create_repo "$1-sub" &&
+	test_commit -C "$1" main1 &&
+	test_commit -C "$1-sub" --annotate sub1 &&
+	git -C "$1" subtree add --prefix="sub" --squash "../$1-sub" sub1 &&
+	tag=$(git -C "$1" rev-parse FETCH_HEAD) &&
+	commit=$(git -C "$1" rev-parse FETCH_HEAD^{commit}) &&
+	git -C "$1" log -1 --format=%B HEAD^2 >msg &&
+	test_commit -C "$1-sub" --annotate sub2 &&
+	git clone --no-local "$1" "$1-clone" &&
+	new_commit=$(cat msg | sed -e "s/$commit/$tag/" | git -C "$1-clone" commit-tree HEAD^2^{tree}) &&
+	git -C "$1-clone" replace HEAD^2 $new_commit
+}
+
 test_expect_success 'shows short help text for -h' '
 	test_expect_code 129 git subtree -h >out 2>err &&
 	test_must_be_empty err &&
@@ -262,6 +286,13 @@ test_expect_success 'merge new subproj history into subdir/ with a slash appende
 		git subtree merge --prefix=subdir/ FETCH_HEAD &&
 		test "$(last_commit_subject)" = "Merge commit '\''$(git rev-parse FETCH_HEAD)'\''"
 	)
+'
+
+test_expect_success 'merge with --squash after annotated tag was added/merged with --squash pre-v2.32.0 ' '
+	test_create_pre2_32_repo "$test_count" &&
+	git -C "$test_count-clone" fetch "../$test_count-sub" sub2  &&
+	test_must_fail git -C "$test_count-clone" subtree merge --prefix="sub" --squash FETCH_HEAD &&
+	git -C "$test_count-clone" subtree merge --prefix="sub" --squash FETCH_HEAD  "../$test_count-sub"
 '
 
 #
@@ -628,6 +659,11 @@ test_expect_success 'pull rejects flags for split' '
 		test_must_fail git subtree pull --prefix="sub dir" --onto=foo ./"sub proj" HEAD &&
 		test_must_fail git subtree pull --prefix="sub dir" --rejoin ./"sub proj" HEAD
 	)
+'
+
+test_expect_success 'pull with --squash after annotated tag was added/merged with --squash pre-v2.32.0 ' '
+	test_create_pre2_32_repo "$test_count" &&
+	git -C "$test_count-clone" subtree -d pull --prefix="sub" --squash "../$test_count-sub" sub2
 '
 
 #

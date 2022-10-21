@@ -371,20 +371,45 @@ try_remove_previous () {
 	fi
 }
 
-# Usage: process_subtree_split_trailer SPLIT_HASH MAIN_HASH
+# Usage: process_subtree_split_trailer SPLIT_HASH MAIN_HASH [REPOSITORY]
 process_subtree_split_trailer () {
-	assert test $# = 2
+	assert test $# = 2 -o $# = 3
 	b="$1"
 	sq="$2"
-	sub="$(git rev-parse --verify --quiet "$b^{commit}")" ||
-	die "fatal: could not rev-parse split hash $b from commit $sq"
+	repository=""
+	if test "$#" = 3
+	then
+		repository="$3"
+	fi
+	fail_msg="fatal: could not rev-parse split hash $b from commit $sq"
+	if ! sub="$(git rev-parse --verify --quiet "$b^{commit}")"
+	then
+		# if 'repository' was given, try to fetch the 'git-subtree-split' hash
+		# before 'rev-parse'-ing it again, as it might be a tag that we do not have locally
+		if test -n "${repository}"
+		then
+			git fetch "$repository" "$b"
+			sub="$(git rev-parse --verify --quiet "$b^{commit}")" ||
+				die "$fail_msg"
+		else
+			hint1=$(printf "hint: hash might be a tag, try fetching it from the subtree repository:")
+			hint2=$(printf "hint:    git fetch <subtree-repository> $b")
+			fail_msg=$(printf "$fail_msg\n$hint1\n$hint2")
+			die "$fail_msg"
+		fi
+	fi
 }
 
-# Usage: find_latest_squash DIR
+# Usage: find_latest_squash DIR [REPOSITORY]
 find_latest_squash () {
-	assert test $# = 1
+	assert test $# = 1 -o $# = 2
 	dir="$1"
-	debug "Looking for latest squash ($dir)..."
+	repository=""
+	if test "$#" = 2
+	then
+		repository="$2"
+	fi
+	debug "Looking for latest squash (dir=$dir, repository=$repository)..."
 	local indent=$(($indent + 1))
 
 	sq=
@@ -404,7 +429,7 @@ find_latest_squash () {
 			main="$b"
 			;;
 		git-subtree-split:)
-			process_subtree_split_trailer "$b" "$sq"
+			process_subtree_split_trailer "$b" "$sq" "$repository"
 			;;
 		END)
 			if test -n "$sub"
@@ -969,17 +994,22 @@ cmd_split () {
 	exit 0
 }
 
-# Usage: cmd_merge REV
+# Usage: cmd_merge REV [REPOSITORY]
 cmd_merge () {
-	test $# -eq 1 ||
-		die "fatal: you must provide exactly one revision.  Got: '$*'"
+	test $# -eq 1 -o $# -eq 2 ||
+		die "fatal: you must provide exactly one revision, and optionally a repository. Got: '$*'"
 	rev=$(git rev-parse -q --verify "$1^{commit}") ||
 		die "fatal: '$1' does not refer to a commit"
+	repository=""
+	if test "$#" = 2
+	then
+		repository="$2"
+	fi
 	ensure_clean
 
 	if test -n "$arg_addmerge_squash"
 	then
-		first_split="$(find_latest_squash "$dir")" || exit $?
+		first_split="$(find_latest_squash "$dir" "$repository")" || exit $?
 		if test -z "$first_split"
 		then
 			die "fatal: can't squash-merge: '$dir' was never added."
@@ -1017,7 +1047,7 @@ cmd_pull () {
 	ensure_clean
 	ensure_valid_ref_format "$ref"
 	git fetch "$repository" "$ref" || exit $?
-	cmd_merge FETCH_HEAD
+	cmd_merge FETCH_HEAD "$repository"
 }
 
 # Usage: cmd_push REPOSITORY [+][LOCALREV:]REMOTEREF
