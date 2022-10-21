@@ -10,10 +10,10 @@ static GIT_PATH_FUNC(fsmonitor_ipc__get_default_path, "fsmonitor--daemon.ipc")
 const char *fsmonitor_ipc__get_path(struct repository *r)
 {
 	static const char *ipc_path = NULL;
-	SHA_CTX sha1ctx;
+	git_SHA_CTX sha1ctx;
 	char *sock_dir = NULL;
 	struct strbuf ipc_file = STRBUF_INIT;
-	unsigned char hash[SHA_DIGEST_LENGTH];
+	unsigned char hash[GIT_MAX_RAWSZ];
 
 	if (!r)
 		BUG("No repository passed into fsmonitor_ipc__get_path");
@@ -28,9 +28,9 @@ const char *fsmonitor_ipc__get_path(struct repository *r)
 		return ipc_path;
 	}
 
-	SHA1_Init(&sha1ctx);
-	SHA1_Update(&sha1ctx, r->worktree, strlen(r->worktree));
-	SHA1_Final(hash, &sha1ctx);
+	git_SHA1_Init(&sha1ctx);
+	git_SHA1_Update(&sha1ctx, r->worktree, strlen(r->worktree));
+	git_SHA1_Final(hash, &sha1ctx);
 
 	repo_config_get_string(r, "fsmonitor.socketdir", &sock_dir);
 
