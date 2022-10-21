@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git symbolic-ref' [-m <reason>] <name> <ref>
-'git symbolic-ref' [-q] [--short] <name>
+'git symbolic-ref' [-q] [--short] [--no-recurse] <name>
 'git symbolic-ref' --delete [-q] <name>
 
 DESCRIPTION
@@ -45,6 +45,15 @@ OPTIONS
 --short::
 	When showing the value of <name> as a symbolic ref, try to shorten the
 	value, e.g. from `refs/heads/master` to `master`.
+
+--recurse::
+--no-recurse::
+	When showing the value of <name> as a symbolic ref, if
+	<name> refers to another symbolic ref, follow such a chain
+	of symbolic refs until the result no longer points at a
+	symbolic ref (`--recurse`, which is the default).
+	`--no-recurse` stops after dereferencing only a single level
+	of symbolic ref.
 
 -m::
 	Update the reflog for <name> with <reason>.  This is valid only
