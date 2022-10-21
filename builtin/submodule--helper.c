@@ -2567,12 +2567,20 @@ static int update_submodules(struct update_data *update_data)
 {
 	int i, ret = 0;
 	struct submodule_update_clone suc = SUBMODULE_UPDATE_CLONE_INIT;
+	const struct run_process_parallel_opts opts = {
+		.tr2_category = "submodule",
+		.tr2_label = "parallel/update",
+
+		.processes = update_data->max_jobs,
+
+		.get_next_task = update_clone_get_next_task,
+		.start_failure = update_clone_start_failure,
+		.task_finished = update_clone_task_finished,
+		.data = &suc,
+	};
 
 	suc.update_data = update_data;
-	run_processes_parallel_tr2(suc.update_data->max_jobs, update_clone_get_next_task,
-				   update_clone_start_failure,
-				   update_clone_task_finished, &suc, "submodule",
-				   "parallel/update");
+	run_processes_parallel(&opts);
 
 	/*
 	 * We saved the output and put it out all at once now.

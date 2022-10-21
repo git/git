@@ -715,7 +715,13 @@ test_expect_success 'fetching submodules respects parallel settings' '
 		GIT_TRACE=$(pwd)/trace.out git fetch &&
 		grep "8 tasks" trace.out &&
 		GIT_TRACE=$(pwd)/trace.out git fetch --jobs 9 &&
-		grep "9 tasks" trace.out
+		grep "9 tasks" trace.out &&
+		>trace.out &&
+
+		GIT_TRACE=$(pwd)/trace.out git -c submodule.fetchJobs=0 fetch &&
+		grep "preparing to run up to [0-9]* tasks" trace.out &&
+		! grep "up to 0 tasks" trace.out &&
+		>trace.out
 	)
 '
 
