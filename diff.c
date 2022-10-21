@@ -2675,6 +2675,11 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 	 * making the line longer than the maximum width.
 	 */
 
+	/*
+	 * NEEDSWORK: line_prefix is often used for "log --graph" output
+	 * and contains ANSI-colored string.  utf8_strnwidth() should be
+	 * used to correctly count the display width instead of strlen().
+	 */
 	if (options->stat_width == -1)
 		width = term_columns() - strlen(line_prefix);
 	else
@@ -2750,6 +2755,16 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 			char *slash;
 			prefix = "...";
 			len -= 3;
+			/*
+			 * NEEDSWORK: (name_len - len) counts the display
+			 * width, which would be shorter than the byte
+			 * length of the corresponding substring.
+			 * Advancing "name" by that number of bytes does
+			 * *NOT* skip over that many columns, so it is
+			 * very likely that chomping the pathname at the
+			 * slash we will find starting from "name" will
+			 * leave the resulting string still too long.
+			 */
 			name += name_len - len;
 			slash = strchr(name, '/');
 			if (slash)
