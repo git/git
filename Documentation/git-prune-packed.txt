@@ -9,7 +9,7 @@ git-prune-packed - Remove extra objects that are already in pack files
 SYNOPSIS
 --------
 [verse]
-'git prune-packed' [-n|--dry-run] [-q|--quiet]
+'git prune-packed' [-n | --dry-run] [-q | --quiet]
 
 
 DESCRIPTION
