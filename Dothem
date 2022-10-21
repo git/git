@@ -212,19 +212,18 @@ do
 
 		Meta/Make $M $jobs -- hdr-check &&
 
-		case "$san" in
-		'')	;;
-		?*)
-			SANITIZE=address Meta/Make $M $jobs test &&
-			SANITIZE=undefined Meta/Make $M $jobs test &&
-			SANITIZE=leak \
-			GIT_TEST_PASSING_SANITIZE_LEAK=true Meta/Make $M $jobs test &&
-			Meta/Make distclean >/dev/null 2>&1
+		case "$dotest,$san" in
+		'')
+			;;
+		test,)
+			Meta/Make $M $noprove ${test+"$test"} $jobs $test_long $memtrash \
+			    -- ${with_dash:+SHELL_PATH=/bin/dash} "$@" $dotest
+			;;
+		*,t)
+			SANITIZE=address,undefined Meta/Make $M $jobs test &&
+			Meta/Make >/dev/null distclean
 			;;
 		esac &&
-
-		Meta/Make $M $noprove ${test+"$test"} $jobs $test_long $memtrash \
-		    -- ${with_dash:+SHELL_PATH=/bin/dash} "$@" $dotest &&
 
 		{
 			test -n "$skip_doc" ||
