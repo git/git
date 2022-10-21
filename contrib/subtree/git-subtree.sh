@@ -374,10 +374,10 @@ try_remove_previous () {
 # Usage: find_latest_squash DIR
 find_latest_squash () {
 	assert test $# = 1
+	dir="$1"
 	debug "Looking for latest squash ($dir)..."
 	local indent=$(($indent + 1))
 
-	dir="$1"
 	sq=
 	main=
 	sub=
