@@ -217,7 +217,7 @@ sub repository {
 			} catch Git::Error::Command with {
 				# Mimic git-rev-parse --git-dir error message:
 				throw Error::Simple("fatal: Not a git repository: $dir");
-			}
+			};
 
 			$opts{Repository} = Cwd::abs_path($dir);
 		}
