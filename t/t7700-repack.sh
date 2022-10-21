@@ -426,6 +426,27 @@ test_expect_success '--write-midx -b packs non-kept objects' '
 	)
 '
 
+test_expect_success '--write-midx removes stale pack-based bitmaps' '
+       rm -fr repo &&
+       git init repo &&
+       test_when_finished "rm -fr repo" &&
+       (
+		cd repo &&
+		test_commit base &&
+		GIT_TEST_MULTI_PACK_INDEX=0 git repack -Ab &&
+
+		pack_bitmap=$(ls $objdir/pack/pack-*.bitmap) &&
+		test_path_is_file "$pack_bitmap" &&
+
+		test_commit tip &&
+		GIT_TEST_MULTI_PACK_INDEX=0 git repack -bm &&
+
+		test_path_is_file $midx &&
+		test_path_is_file $midx-$(midx_checksum $objdir).bitmap &&
+		test_path_is_missing $pack_bitmap
+       )
+'
+
 test_expect_success '--write-midx with --pack-kept-objects' '
 	git init repo &&
 	test_when_finished "rm -fr repo" &&
