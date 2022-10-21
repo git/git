@@ -453,14 +453,19 @@ find_latest_squash () {
 	done || exit $?
 }
 
-# Usage: find_existing_splits DIR REV
+# Usage: find_existing_splits DIR REV [REPOSITORY]
 find_existing_splits () {
-	assert test $# = 2
+	assert test $# = 2 -o $# = 3
 	debug "Looking for prior splits..."
 	local indent=$(($indent + 1))
 
 	dir="$1"
 	rev="$2"
+	repository=""
+	if test "$#" = 3
+	then
+		repository="$3"
+	fi
 	main=
 	sub=
 	local grep_format="^git-subtree-dir: $dir/*\$"
@@ -480,7 +485,7 @@ find_existing_splits () {
 			main="$b"
 			;;
 		git-subtree-split:)
-			process_subtree_split_trailer "$b" "$sq"
+			process_subtree_split_trailer "$b" "$sq" "$repository"
 			;;
 		END)
 			debug "Main is: '$main'"
@@ -906,17 +911,22 @@ cmd_add_commit () {
 	say >&2 "Added dir '$dir'"
 }
 
-# Usage: cmd_split [REV]
+# Usage: cmd_split [REV] [REPOSITORY]
 cmd_split () {
 	if test $# -eq 0
 	then
 		rev=$(git rev-parse HEAD)
-	elif test $# -eq 1
+	elif test $# -eq 1 -o $# -eq 2
 	then
 		rev=$(git rev-parse -q --verify "$1^{commit}") ||
 			die "fatal: '$1' does not refer to a commit"
 	else
-		die "fatal: you must provide exactly one revision.  Got: '$*'"
+		die "fatal: you must provide exactly one revision, and optionnally a repository.  Got: '$*'"
+	fi
+	repository=""
+	if test "$#" = 2
+	then
+		repository="$2"
 	fi
 
 	if test -n "$arg_split_rejoin"
@@ -940,7 +950,7 @@ cmd_split () {
 		done || exit $?
 	fi
 
-	unrevs="$(find_existing_splits "$dir" "$rev")" || exit $?
+	unrevs="$(find_existing_splits "$dir" "$rev" "$repository")" || exit $?
 
 	# We can't restrict rev-list to only $dir here, because some of our
 	# parents have the $dir contents the root, and those won't match.
@@ -1072,7 +1082,7 @@ cmd_push () {
 			die "fatal: '$localrevname_presplit' does not refer to a commit"
 
 		echo "git push using: " "$repository" "$refspec"
-		localrev=$(cmd_split "$localrev_presplit") || die
+		localrev=$(cmd_split "$localrev_presplit" "$repository") || die
 		git push "$repository" "$localrev":"refs/heads/$remoteref"
 	else
 		die "fatal: '$dir' must already exist. Try 'git subtree add'."

@@ -582,6 +582,12 @@ test_expect_success 'split "sub dir"/ with --branch for an incompatible branch' 
 	)
 '
 
+test_expect_success 'split after annotated tag was added/merged with --squash pre-v2.32.0' '
+	test_create_pre2_32_repo "$test_count" &&
+	test_must_fail git -C "$test_count-clone" subtree split --prefix="sub" HEAD &&
+	git -C "$test_count-clone" subtree split --prefix="sub" HEAD "../$test_count-sub"
+'
+
 #
 # Tests for 'git subtree pull'
 #
@@ -987,6 +993,12 @@ test_expect_success 'push "sub dir"/ with a local rev' '
 		split_tree=$(git -C "sub proj" rev-parse --verify refs/heads/from-mainline:) &&
 		test "$split_tree" = "$good_tree"
 	)
+'
+
+test_expect_success 'push after annotated tag was added/merged with --squash pre-v2.32.0' '
+	test_create_pre2_32_repo "$test_count" &&
+	test_create_commit "$test_count-clone" sub/main-sub1 &&
+	git -C "$test_count-clone" subtree push --prefix="sub" "../$test_count-sub" from-mainline
 '
 
 #

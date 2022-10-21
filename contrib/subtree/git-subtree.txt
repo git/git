@@ -94,7 +94,7 @@ annotated tag of the subtree repository, that tag needs to be available locally.
 If <repository> is given, a missing tag will automatically be fetched from that
 repository.
 
-split [<local-commit>]::
+split [<local-commit>] [<repository>]::
 	Extract a new, synthetic project history from the
 	history of the <prefix> subtree of <local-commit>, or of
 	HEAD if no <local-commit> is given.  The new history
@@ -114,6 +114,11 @@ settings passed to 'split' (such as '--annotate') are the same.
 Because of this, if you add new commits and then re-split, the new
 commits will be attached as commits on top of the history you
 generated last time, so 'git merge' and friends will work as expected.
++
+When a previous merge with '--squash' merged an annotated tag of the
+subtree repository, that tag needs to be available locally.
+If <repository> is given, a missing tag will automatically be fetched from that
+repository.
 
 pull <repository> <remote-ref>::
 	Exactly like 'merge', but parallels 'git pull' in that
