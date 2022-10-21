@@ -387,7 +387,7 @@ find_latest_squash () {
 			main="$b"
 			;;
 		git-subtree-split:)
-			sub="$(git rev-parse "$b^{commit}")" ||
+			sub="$(git rev-parse --verify --quiet "$b^{commit}")" ||
 			die "could not rev-parse split hash $b from commit $sq"
 			;;
 		END)
@@ -439,7 +439,7 @@ find_existing_splits () {
 			main="$b"
 			;;
 		git-subtree-split:)
-			sub="$(git rev-parse "$b^{commit}")" ||
+			sub="$(git rev-parse --verify --quiet "$b^{commit}")" ||
 			die "could not rev-parse split hash $b from commit $sq"
 			;;
 		END)
@@ -843,7 +843,7 @@ cmd_add_commit () {
 	git checkout -- "$dir" || exit $?
 	tree=$(git write-tree) || exit $?
 
-	headrev=$(git rev-parse HEAD) || exit $?
+	headrev=$(git rev-parse --verify HEAD) || exit $?
 	if test -n "$headrev" && test "$headrev" != "$rev"
 	then
 		headp="-p $headrev"
