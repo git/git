@@ -10,6 +10,16 @@ UI, Workflows & Features
  * By default, use of fsmonitor on a repository on networked
    filesystem is disabled. Add knobs to make it workable on macOS.
 
+ * After checking out a "branch" that is a symbolic-ref that points at
+   another branch, "git symbolic-ref HEAD" reports the underlying
+   branch, not the symbolic-ref the user gave checkout as argument.
+   The command learned the "--no-recurse" option to stop after
+   dereferencing a symbolic-ref only once.
+
+ * "git branch --edit-description @{-1}" is now a way to edit branch
+   description of the branch you were on before switching to the
+   current branch.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -36,6 +46,9 @@ Performance, Internal Implementation, Development Support etc.
  * Update CodingGuidelines to clarify what features to use and avoid
    in C99.
    (merge 438c2f859b ab/coding-guidelines-c99 later to maint).
+
+ * Avoid false-positive from LSan whose assumption may be broken with
+   higher optimization levels.
 
 
 Fixes since v2.38
@@ -116,6 +129,12 @@ Fixes since v2.38
    syntax for struct.
    (merge 54795d37d9 jh/struct-zero-init-with-older-clang later to maint).
 
+ * Giving "--invert-grep" and "--all-match" without "--grep" to the
+   "git log" command resulted in an attempt to access grep pattern
+   expression structure that has not been allocated, which has been
+   corrected.
+   (merge db84376f98 ab/grep-simplify-extended-expression later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge c34a6bd291 so/diff-merges-cleanup later to maint).
    (merge 5e7c8b75e7 ab/test-malloc-with-sanitize-leak later to maint).
@@ -131,3 +150,4 @@ Fixes since v2.38
    (merge f7669676d0 rs/use-fspathncmp later to maint).
    (merge a677d3c416 pw/remove-rebase-p-test later to maint).
    (merge e3733b646d rs/archive-dedup-printf later to maint).
+   (merge 413bc6d20a ds/cmd-main-reorder later to maint).
