@@ -371,6 +371,15 @@ try_remove_previous () {
 	fi
 }
 
+# Usage: process_subtree_split_trailer SPLIT_HASH MAIN_HASH
+process_subtree_split_trailer () {
+	assert test $# = 2
+	b="$1"
+	sq="$2"
+	sub="$(git rev-parse --verify --quiet "$b^{commit}")" ||
+	die "fatal: could not rev-parse split hash $b from commit $sq"
+}
+
 # Usage: find_latest_squash DIR
 find_latest_squash () {
 	assert test $# = 1
@@ -395,8 +404,7 @@ find_latest_squash () {
 			main="$b"
 			;;
 		git-subtree-split:)
-			sub="$(git rev-parse --verify --quiet "$b^{commit}")" ||
-			die "fatal: could not rev-parse split hash $b from commit $sq"
+			process_subtree_split_trailer "$b" "$sq"
 			;;
 		END)
 			if test -n "$sub"
@@ -447,8 +455,7 @@ find_existing_splits () {
 			main="$b"
 			;;
 		git-subtree-split:)
-			sub="$(git rev-parse --verify --quiet "$b^{commit}")" ||
-			die "fatal: could not rev-parse split hash $b from commit $sq"
+			process_subtree_split_trailer "$b" "$sq"
 			;;
 		END)
 			debug "Main is: '$main'"
