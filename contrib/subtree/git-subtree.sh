@@ -1005,9 +1005,11 @@ cmd_pull () {
 	then
 		die "fatal: you must provide <repository> <ref>"
 	fi
+	repository="$1"
+	ref="$2"
 	ensure_clean
-	ensure_valid_ref_format "$2"
-	git fetch "$@" || exit $?
+	ensure_valid_ref_format "$ref"
+	git fetch "$repository" "$ref" || exit $?
 	cmd_merge FETCH_HEAD
 }
 
