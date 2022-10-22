@@ -714,10 +714,14 @@ static int write_cruft_pack(const struct pack_objects_args *args,
 
 	out = xfdopen(cmd.out, "r");
 	while (strbuf_getline_lf(&line, out) != EOF) {
+		struct string_list_item *item;
+
 		if (line.len != the_hash_algo->hexsz)
 			die(_("repack: Expecting full hex object ID lines only "
 			      "from pack-objects."));
-		string_list_append(names, line.buf);
+
+		item = string_list_append(names, line.buf);
+		item->util = populate_pack_exts(line.buf);
 	}
 	fclose(out);
 
@@ -956,9 +960,12 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 
 	out = xfdopen(cmd.out, "r");
 	while (strbuf_getline_lf(&line, out) != EOF) {
+		struct string_list_item *item;
+
 		if (line.len != the_hash_algo->hexsz)
 			die(_("repack: Expecting full hex object ID lines only from pack-objects."));
-		string_list_append(&names, line.buf);
+		item = string_list_append(&names, line.buf);
+		item->util = populate_pack_exts(item->string);
 	}
 	fclose(out);
 	ret = finish_command(&cmd);
@@ -996,10 +1003,6 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	}
 
 	string_list_sort(&names);
-
-	for_each_string_list_item(item, &names) {
-		item->util = populate_pack_exts(item->string);
-	}
 
 	close_object_store(the_repository->objects);
 
