@@ -1030,7 +1030,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 				if (rename(fname_old, fname))
 					die_errno(_("renaming '%s' failed"), fname_old);
 			} else if (!exts[ext].optional)
-				die(_("missing required file: %s"), fname_old);
+				die(_("pack-objects did not write a '%s' file for pack %s-%s"),
+				    exts[ext].name, packtmp, item->string);
 			else if (unlink(fname) < 0 && errno != ENOENT)
 				die_errno(_("could not unlink: %s"), fname);
 
