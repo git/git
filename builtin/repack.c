@@ -247,11 +247,15 @@ static struct {
 	{".idx"},
 };
 
-static unsigned populate_pack_exts(char *name)
+struct generated_pack_data {
+	char exts[ARRAY_SIZE(exts)];
+};
+
+static struct generated_pack_data *populate_pack_exts(const char *name)
 {
 	struct stat statbuf;
 	struct strbuf path = STRBUF_INIT;
-	unsigned ret = 0;
+	struct generated_pack_data *data = xcalloc(1, sizeof(*data));
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(exts); i++) {
@@ -261,11 +265,11 @@ static unsigned populate_pack_exts(char *name)
 		if (stat(path.buf, &statbuf))
 			continue;
 
-		ret |= (1 << i);
+		data->exts[i] = 1;
 	}
 
 	strbuf_release(&path);
-	return ret;
+	return data;
 }
 
 static void repack_promisor_objects(const struct pack_objects_args *args,
@@ -320,7 +324,7 @@ static void repack_promisor_objects(const struct pack_objects_args *args,
 					  line.buf);
 		write_promisor_file(promisor_name, NULL, 0);
 
-		item->util = (void *)(uintptr_t)populate_pack_exts(item->string);
+		item->util = populate_pack_exts(item->string);
 
 		free(promisor_name);
 	}
@@ -994,7 +998,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	string_list_sort(&names);
 
 	for_each_string_list_item(item, &names) {
-		item->util = (void *)(uintptr_t)populate_pack_exts(item->string);
+		item->util = populate_pack_exts(item->string);
 	}
 
 	close_object_store(the_repository->objects);
@@ -1003,6 +1007,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	 * Ok we have prepared all new packfiles.
 	 */
 	for_each_string_list_item(item, &names) {
+		struct generated_pack_data *data = item->util;
+
 		for (ext = 0; ext < ARRAY_SIZE(exts); ext++) {
 			char *fname, *fname_old;
 
@@ -1011,7 +1017,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 			fname_old = mkpathdup("%s-%s%s",
 					packtmp, item->string, exts[ext].name);
 
-			if (((uintptr_t)item->util) & ((uintptr_t)1 << ext)) {
+			if (data->exts[ext]) {
 				struct stat statbuffer;
 				if (!stat(fname_old, &statbuffer)) {
 					statbuffer.st_mode &= ~(S_IWUSR | S_IWGRP | S_IWOTH);
@@ -1115,7 +1121,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		write_midx_file(get_object_directory(), NULL, NULL, flags);
 	}
 
-	string_list_clear(&names, 0);
+	string_list_clear(&names, 1);
 	string_list_clear(&existing_nonkept_packs, 0);
 	string_list_clear(&existing_kept_packs, 0);
 	clear_pack_geometry(geometry);
