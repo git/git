@@ -432,6 +432,14 @@ test_expect_success TTY '--quiet disables progress' '
 	test_must_be_empty stderr
 '
 
+test_expect_success 'clean up .tmp-* packs on error' '
+	test_must_fail git \
+		-c repack.cruftwindow=bogus \
+		repack -ad --cruft &&
+	find $objdir/pack -name '.tmp-*' >tmpfiles &&
+	test_must_be_empty tmpfiles
+'
+
 test_expect_success 'setup for update-server-info' '
 	git init update-server-info &&
 	test_commit -C update-server-info message

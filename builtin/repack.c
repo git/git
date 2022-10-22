@@ -122,13 +122,6 @@ static void remove_temporary_files(void)
 	strbuf_release(&buf);
 }
 
-static void remove_pack_on_signal(int signo)
-{
-	remove_temporary_files();
-	sigchain_pop(signo);
-	raise(signo);
-}
-
 /*
  * Adds all packs hex strings to either fname_nonkept_list or
  * fname_kept_list based on whether each pack has a corresponding
@@ -248,7 +241,7 @@ static struct {
 };
 
 struct generated_pack_data {
-	char exts[ARRAY_SIZE(exts)];
+	struct tempfile *tempfiles[ARRAY_SIZE(exts)];
 };
 
 static struct generated_pack_data *populate_pack_exts(const char *name)
@@ -265,7 +258,7 @@ static struct generated_pack_data *populate_pack_exts(const char *name)
 		if (stat(path.buf, &statbuf))
 			continue;
 
-		data->exts[i] = 1;
+		data->tempfiles[i] = register_tempfile(path.buf);
 	}
 
 	strbuf_release(&path);
@@ -867,8 +860,6 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		split_pack_geometry(geometry, geometric_factor);
 	}
 
-	sigchain_push_common(remove_pack_on_signal);
-
 	prepare_pack_objects(&cmd, &po_args);
 
 	show_progress = !po_args.quiet && isatty(2);
@@ -1013,22 +1004,22 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		struct generated_pack_data *data = item->util;
 
 		for (ext = 0; ext < ARRAY_SIZE(exts); ext++) {
-			char *fname, *fname_old;
+			char *fname;
 
 			fname = mkpathdup("%s/pack-%s%s",
 					packdir, item->string, exts[ext].name);
-			fname_old = mkpathdup("%s-%s%s",
-					packtmp, item->string, exts[ext].name);
 
-			if (data->exts[ext]) {
+			if (data->tempfiles[ext]) {
+				const char *fname_old = get_tempfile_path(data->tempfiles[ext]);
 				struct stat statbuffer;
+
 				if (!stat(fname_old, &statbuffer)) {
 					statbuffer.st_mode &= ~(S_IWUSR | S_IWGRP | S_IWOTH);
 					chmod(fname_old, statbuffer.st_mode);
 				}
 
-				if (rename(fname_old, fname))
-					die_errno(_("renaming '%s' failed"), fname_old);
+				if (rename_tempfile(&data->tempfiles[ext], fname))
+					die_errno(_("renaming pack to '%s' failed"), fname);
 			} else if (!exts[ext].optional)
 				die(_("pack-objects did not write a '%s' file for pack %s-%s"),
 				    exts[ext].name, packtmp, item->string);
@@ -1036,7 +1027,6 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 				die_errno(_("could not unlink: %s"), fname);
 
 			free(fname);
-			free(fname_old);
 		}
 	}
 	/* End of pack replacement. */
