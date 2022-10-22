@@ -440,6 +440,14 @@ test_expect_success 'clean up .tmp-* packs on error' '
 	test_must_be_empty tmpfiles
 '
 
+test_expect_success 'repack -ad cleans up old .tmp-* packs' '
+	git rev-parse HEAD >input &&
+	git pack-objects $objdir/pack/.tmp-1234 <input &&
+	git repack -ad &&
+	find $objdir/pack -name '.tmp-*' >tmpfiles &&
+	test_must_be_empty tmpfiles
+'
+
 test_expect_success 'setup for update-server-info' '
 	git init update-server-info &&
 	test_commit -C update-server-info message

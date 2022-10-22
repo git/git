@@ -92,37 +92,6 @@ static int repack_config(const char *var, const char *value, void *cb)
 }
 
 /*
- * Remove temporary $GIT_OBJECT_DIRECTORY/pack/.tmp-$$-pack-* files.
- */
-static void remove_temporary_files(void)
-{
-	struct strbuf buf = STRBUF_INIT;
-	size_t dirlen, prefixlen;
-	DIR *dir;
-	struct dirent *e;
-
-	dir = opendir(packdir);
-	if (!dir)
-		return;
-
-	/* Point at the slash at the end of ".../objects/pack/" */
-	dirlen = strlen(packdir) + 1;
-	strbuf_addstr(&buf, packtmp);
-	/* Hold the length of  ".tmp-%d-pack-" */
-	prefixlen = buf.len - dirlen;
-
-	while ((e = readdir(dir))) {
-		if (strncmp(e->d_name, buf.buf + dirlen, prefixlen))
-			continue;
-		strbuf_setlen(&buf, dirlen);
-		strbuf_addstr(&buf, e->d_name);
-		unlink(buf.buf);
-	}
-	closedir(dir);
-	strbuf_release(&buf);
-}
-
-/*
  * Adds all packs hex strings to either fname_nonkept_list or
  * fname_kept_list based on whether each pack has a corresponding
  * .keep file or not.  Packs without a .keep file are not to be kept
@@ -1106,7 +1075,6 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 
 	if (run_update_server_info)
 		update_server_info(0);
-	remove_temporary_files();
 
 	if (git_env_bool(GIT_TEST_MULTI_PACK_INDEX, 0)) {
 		unsigned flags = 0;
