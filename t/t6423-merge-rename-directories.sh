@@ -5304,6 +5304,62 @@ test_expect_merge_algorithm failure success '12l (A into B): Rename into each ot
 	)
 '
 
+# Testcase 12m, Directory rename, plus change of parent dir to symlink
+#   Commit O:  dir/subdir/file
+#   Commit A:  renamed-dir/subdir/file
+#   Commit B:  dir/subdir
+#   In words:
+#     A: dir/subdir/ -> renamed-dir/subdir
+#     B: delete dir/subdir/file, add dir/subdir as symlink
+#
+#   Expected: CONFLICT (rename/delete): renamed-dir/subdir/file,
+#             CONFLICT (file location): renamed-dir/subdir vs. dir/subdir
+#             CONFLICT (directory/file): renamed-dir/subdir symlink has
+#                                        renamed-dir/subdir in the way
+
+test_setup_12m () {
+	git init 12m &&
+	(
+		cd 12m &&
+
+		mkdir -p dir/subdir &&
+		echo 1 >dir/subdir/file &&
+		git add . &&
+		git commit -m "O" &&
+
+		git branch O &&
+		git branch A &&
+		git branch B &&
+
+		git switch A &&
+		git mv dir/ renamed-dir/ &&
+		git add . &&
+		git commit -m "A" &&
+
+		git switch B &&
+		git rm dir/subdir/file &&
+		mkdir dir &&
+		ln -s /dev/null dir/subdir &&
+		git add . &&
+		git commit -m "B"
+	)
+}
+
+test_expect_merge_algorithm failure success '12m: Change parent of renamed-dir to symlink on other side' '
+	test_setup_12m &&
+	(
+		cd 12m &&
+
+		git checkout -q A^0 &&
+
+		test_must_fail git -c merge.directoryRenames=conflict merge -s recursive B^0 &&
+
+		test_stdout_line_count = 3 git ls-files -s &&
+		test_stdout_line_count = 2 ls -1 renamed-dir &&
+		test_path_is_missing dir
+	)
+'
+
 ###########################################################################
 # SECTION 13: Checking informational and conflict messages
 #
