@@ -45,6 +45,10 @@ test_expect_success \
      git config --add test.pathmulti bar
      '
 
+test_expect_success 'set up bare repository' '
+	git init --bare bare.git
+'
+
 test_expect_success 'use t9700/test.pl to test Git.pm' '
 	"$PERL_PATH" "$TEST_DIRECTORY"/t9700/test.pl 2>stderr &&
 	test_must_be_empty stderr
