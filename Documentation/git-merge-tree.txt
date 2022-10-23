@@ -81,6 +81,31 @@ Whereas for a conflicted merge, the output is by default of the form:
 
 These are discussed individually below.
 
+However, there is an exception.  If `--stdin` is passed, then there is
+an extra section at the beginning, a NUL character at the end, and then
+all the sections repeat for each line of input.  Thus, if the first merge
+is conflicted and the second is clean, the output would be of the form:
+
+	<Merge status>
+	<OID of toplevel tree>
+	<Conflicted file info>
+	<Informational messages>
+	NUL
+	<Merge status>
+	<OID of toplevel tree>
+	NUL
+
+[[MS]]
+Merge status
+~~~~~~~~~~~~
+
+This is an integer status followed by a NUL character.  The integer status is:
+
+     0: merge had conflicts
+     1: merge was clean
+     &lt;0: something prevented the merge from running (e.g. access to repository
+	 objects denied by filesystem)
+
 [[OIDTLT]]
 OID of toplevel tree
 ~~~~~~~~~~~~~~~~~~~~
@@ -159,7 +184,10 @@ EXIT STATUS
 For a successful, non-conflicted merge, the exit status is 0.  When the
 merge has conflicts, the exit status is 1.  If the merge is not able to
 complete (or start) due to some kind of error, the exit status is
-something other than 0 or 1 (and the output is unspecified).
+something other than 0 or 1 (and the output is unspecified).  When
+--stdin is passed, the return status is 0 for both successful and
+conflicted merges, and something other than 0 or 1 if it cannot complete
+all the requested merges.
 
 USAGE NOTES
 -----------
