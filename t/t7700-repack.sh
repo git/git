@@ -433,7 +433,7 @@ test_expect_success TTY '--quiet disables progress' '
 '
 
 test_expect_success 'clean up .tmp-* packs on error' '
-	test_must_fail git \
+	test_must_fail ok=sigpipe git \
 		-c repack.cruftwindow=bogus \
 		repack -ad --cruft &&
 	find $objdir/pack -name '.tmp-*' >tmpfiles &&
