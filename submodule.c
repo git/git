@@ -2361,26 +2361,20 @@ void absorb_git_dir_into_superproject(const char *path,
 
 	if (flags & ABSORB_GITDIR_RECURSE_SUBMODULES) {
 		struct child_process cp = CHILD_PROCESS_INIT;
-		struct strbuf sb = STRBUF_INIT;
 
 		if (flags & ~ABSORB_GITDIR_RECURSE_SUBMODULES)
 			BUG("we don't know how to pass the flags down?");
 
-		strbuf_addstr(&sb, get_super_prefix_or_empty());
-		strbuf_addstr(&sb, path);
-		strbuf_addch(&sb, '/');
-
 		cp.dir = path;
 		cp.git_cmd = 1;
 		cp.no_stdin = 1;
-		strvec_pushl(&cp.args, "--super-prefix", sb.buf,
-			     "submodule--helper",
+		strvec_pushf(&cp.args, "--super-prefix=%s%s/",
+			     get_super_prefix_or_empty(), path);
+		strvec_pushl(&cp.args, "submodule--helper",
 			     "absorbgitdirs", NULL);
 		prepare_submodule_repo_env(&cp.env);
 		if (run_command(&cp))
 			die(_("could not recurse into submodule '%s'"), path);
-
-		strbuf_release(&sb);
 	}
 }
 
