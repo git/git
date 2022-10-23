@@ -108,18 +108,50 @@ character instead of a newline character.
 Informational messages
 ~~~~~~~~~~~~~~~~~~~~~~
 
-This always starts with a blank line (or NUL if `-z` is passed) to
-separate it from the previous sections, and then has free-form
-messages about the merge, such as:
+This section provides informational messages, typically about
+conflicts.  The format of the section varies significantly depending
+on whether `-z` is passed.
+
+If `-z` is passed:
+
+The output format is zero or more conflict informational records, each
+of the form:
+
+	<list-of-paths><conflict-type>NUL<conflict-message>NUL
+
+where <list-of-paths> is of the form
+
+	<number-of-paths>NUL<path1>NUL<path2>NUL...<pathN>NUL
+
+and includes paths (or branch names) affected by the conflict or
+informational message in <conflict-message>.  Also, <conflict-type> is a
+stable string explaining the type of conflict, such as
+
+  * "Auto-merging"
+  * "CONFLICT (rename/delete)"
+  * "CONFLICT (submodule lacks merge base)"
+  * "CONFLICT (binary)"
+
+and <conflict-message> is a more detailed message about the conflict which often
+(but not always) embeds the <stable-short-type-description> within it.  These
+strings may change in future Git versions.  Some examples:
 
   * "Auto-merging <file>"
   * "CONFLICT (rename/delete): <oldfile> renamed...but deleted in..."
-  * "Failed to merge submodule <submodule> (<reason>)"
+  * "Failed to merge submodule <submodule> (no merge base)"
   * "Warning: cannot merge binary files: <filename>"
 
-Note that these free-form messages will never have a NUL character
-in or between them, even if -z is passed.  It is simply a large block
-of text taking up the remainder of the output.
+If `-z` is NOT passed:
+
+This section starts with a blank line to separate it from the previous
+sections, and then only contains the <conflict-message> information
+from the previous section (separated by newlines).  These are
+non-stable strings that should not be parsed by scripts, and are just
+meant for human consumption.  Also, note that while <conflict-message>
+strings usually do not contain embedded newlines, they sometimes do.
+(However, the free-form messages will never have an embedded NUL
+character).  So, the entire block of information is meant for human
+readers as an agglomeration of all conflict messages.
 
 EXIT STATUS
 -----------
