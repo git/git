@@ -132,7 +132,7 @@ static void read_from_stdin(struct shortlog *log)
 		match = committer_match;
 		break;
 	case SHORTLOG_GROUP_TRAILER:
-		die(_("using --group=trailer with stdin is not supported"));
+		die(_("using %s with stdin is not supported"), "--group=trailer");
 	default:
 		BUG("unhandled shortlog group");
 	}
