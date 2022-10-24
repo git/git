@@ -47,6 +47,11 @@ OPTIONS
 
 	Each pretty-printed commit will be rewrapped before it is shown.
 
+--date=<format>::
+	Show dates formatted according to the given date string. (See
+	the `--date` option in the "Commit Formatting" section of
+	linkgit:git-log[1]).
+
 --group=<type>::
 	Group commits based on `<type>`. If no `--group` option is
 	specified, the default is `author`. `<type>` is one of:

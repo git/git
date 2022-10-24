@@ -83,6 +83,13 @@ test_expect_success 'pretty format' '
 	test_cmp expect log.predictable
 '
 
+test_expect_success 'pretty format (with --date)' '
+	sed "s/SUBJECT/2005-04-07 OBJECT_NAME/" expect.template >expect &&
+	git shortlog --format="%ad %H" --date=short HEAD >log &&
+	fuzz log >log.predictable &&
+	test_cmp expect log.predictable
+'
+
 test_expect_success '--abbrev' '
 	sed s/SUBJECT/OBJID/ expect.template >expect &&
 	git shortlog --format="%h" --abbrev=35 HEAD >log &&
