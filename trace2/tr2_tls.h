@@ -25,12 +25,15 @@ struct tr2tls_thread_ctx {
 /*
  * Create thread-local storage for the current thread.
  *
- * We assume the first thread is "main".  Other threads are given
- * non-zero thread-ids to help distinguish messages from concurrent
- * threads.
- *
- * Truncate the thread name if necessary to help with column alignment
- * in printf-style messages.
+ * The first thread in the process will have:
+ *     { .thread_id=0, .thread_name="main" }
+ * Subsequent threads are given a non-zero thread_id and a thread_name
+ * constructed from the id and a thread base name (which is usually just
+ * the name of the thread-proc function).  For example:
+ *     { .thread_id=10, .thread_name="th10:fsm-listen" }
+ * This helps to identify and distinguish messages from concurrent threads.
+ * The ctx.thread_name field is truncated if necessary to help with column
+ * alignment in printf-style messages.
  *
  * In this and all following functions the term "self" refers to the
  * current thread.
