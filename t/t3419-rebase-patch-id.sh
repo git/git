@@ -43,15 +43,16 @@ test_expect_success 'setup: 500 lines' '
 	git add newfile &&
 	git commit -q -m "add small file" &&
 
-	git cherry-pick main >/dev/null 2>&1
-'
+	git cherry-pick main >/dev/null 2>&1 &&
 
-test_expect_success 'setup attributes' '
-	echo "file binary" >.gitattributes
+	git branch -f squashed main &&
+	git checkout -q -f squashed &&
+	git reset -q --soft HEAD~2 &&
+	git commit -q -m squashed
 '
 
 test_expect_success 'detect upstream patch' '
-	git checkout -q main &&
+	git checkout -q main^{} &&
 	scramble file &&
 	git add file &&
 	git commit -q -m "change big file again" &&
@@ -61,14 +62,27 @@ test_expect_success 'detect upstream patch' '
 	test_must_be_empty revs
 '
 
+test_expect_success 'detect upstream patch binary' '
+	echo "file binary" >.gitattributes &&
+	git checkout -q other^{} &&
+	git rebase main &&
+	git rev-list main...HEAD~ >revs &&
+	test_must_be_empty revs &&
+	test_when_finished "rm .gitattributes"
+'
+
 test_expect_success 'do not drop patch' '
-	git branch -f squashed main &&
-	git checkout -q -f squashed &&
-	git reset -q --soft HEAD~2 &&
-	git commit -q -m squashed &&
 	git checkout -q other^{} &&
 	test_must_fail git rebase squashed &&
-	git rebase --quit
+	test_when_finished "git rebase --abort"
+'
+
+test_expect_success 'do not drop patch binary' '
+	echo "file binary" >.gitattributes &&
+	git checkout -q other^{} &&
+	test_must_fail git rebase squashed &&
+	test_when_finished "git rebase --abort" &&
+	test_when_finished "rm .gitattributes"
 '
 
 test_done
