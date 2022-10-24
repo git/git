@@ -170,6 +170,9 @@ static void insert_records_from_trailers(struct shortlog *log,
 	const char *commit_buffer, *body;
 	struct strbuf ident = STRBUF_INIT;
 
+	if (!log->trailers.nr)
+		return;
+
 	/*
 	 * Using format_commit_message("%B") would be simpler here, but
 	 * this saves us copying the message.
@@ -240,9 +243,7 @@ void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 		    strset_add(&dups, ident.buf))
 			insert_one_record(log, ident.buf, oneline_str);
 	}
-	if (log->groups & SHORTLOG_GROUP_TRAILER) {
-		insert_records_from_trailers(log, &dups, commit, &ctx, oneline_str);
-	}
+	insert_records_from_trailers(log, &dups, commit, &ctx, oneline_str);
 
 	strset_clear(&dups);
 	strbuf_release(&ident);
