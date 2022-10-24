@@ -42,7 +42,7 @@ calc_patch_id () {
 }
 
 get_top_diff () {
-	git log -p -1 "$@" -O bar-then-foo --
+	git log -p -1 "$@" -O bar-then-foo --full-index --
 }
 
 get_patch_id () {
@@ -60,6 +60,33 @@ test_expect_success 'patch-id detects inequality' '
 	get_patch_id main &&
 	get_patch_id notsame &&
 	! test_cmp patch-id_main patch-id_notsame
+'
+test_expect_success 'patch-id detects equality binary' '
+	cat >.gitattributes <<-\EOF &&
+	foo binary
+	bar binary
+	EOF
+	get_patch_id main &&
+	get_patch_id same &&
+	git log -p -1 --binary main >top-diff.output &&
+	calc_patch_id <top-diff.output main_binpatch &&
+	git log -p -1 --binary same >top-diff.output &&
+	calc_patch_id <top-diff.output same_binpatch &&
+	test_cmp patch-id_main patch-id_main_binpatch &&
+	test_cmp patch-id_same patch-id_same_binpatch &&
+	test_cmp patch-id_main patch-id_same &&
+	test_when_finished "rm .gitattributes"
+'
+
+test_expect_success 'patch-id detects inequality binary' '
+	cat >.gitattributes <<-\EOF &&
+	foo binary
+	bar binary
+	EOF
+	get_patch_id main &&
+	get_patch_id notsame &&
+	! test_cmp patch-id_main patch-id_notsame &&
+	test_when_finished "rm .gitattributes"
 '
 
 test_expect_success 'patch-id supports git-format-patch output' '
