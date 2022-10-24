@@ -420,6 +420,7 @@ To: git\@vger.kernel.org
 Subject: What's cooking in git.git ($mon $year, #$issue; $dow, $date)
 X-$MASTER-at: $master_at
 X-next-at: $next_at
+Bcc: lwn\@lwn.net, gitster\@pobox.com
 
 What's cooking in git.git ($mon $year, #$issue; $dow, $date)
 --------------------------------------------------
@@ -431,9 +432,9 @@ EOF
 }
 
 my $blurb_match = <<'EOF';
-(?:(?i:\s*[a-z]+: .*|\s.*)\n)*?Subject: What's cooking in \S+ \((\w+) (\d+), #(\d+); (\w+), (\d+)\)
+(?:(?i:\s*[a-z]+: .*|\s.*)\n)*Subject: What's cooking in \S+ \((\w+) (\d+), #(\d+); (\w+), (\d+)\)
 X-[a-z]*-at: ([0-9a-f]{40})
-X-next-at: ([0-9a-f]{40})
+X-next-at: ([0-9a-f]{40})(?:\n(?i:\s*[a-z]+: .*|\s.*))*
 
 What's cooking in \S+ \(\1 \2, #\3; \4, \5\)
 -{30,}
