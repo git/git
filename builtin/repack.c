@@ -188,7 +188,8 @@ static void remove_redundant_pack(const char *dir_name, const char *base_name)
 }
 
 static void prepare_pack_objects(struct child_process *cmd,
-				 const struct pack_objects_args *args)
+				 const struct pack_objects_args *args,
+				 const char *out)
 {
 	strvec_push(&cmd->args, "pack-objects");
 	if (args->window)
@@ -211,7 +212,7 @@ static void prepare_pack_objects(struct child_process *cmd,
 		strvec_push(&cmd->args,  "--quiet");
 	if (delta_base_offset)
 		strvec_push(&cmd->args,  "--delta-base-offset");
-	strvec_push(&cmd->args, packtmp);
+	strvec_push(&cmd->args, out);
 	cmd->git_cmd = 1;
 	cmd->out = -1;
 }
@@ -275,7 +276,7 @@ static void repack_promisor_objects(const struct pack_objects_args *args,
 	FILE *out;
 	struct strbuf line = STRBUF_INIT;
 
-	prepare_pack_objects(&cmd, args);
+	prepare_pack_objects(&cmd, args, packtmp);
 	cmd.in = -1;
 
 	/*
@@ -673,7 +674,7 @@ static int write_cruft_pack(const struct pack_objects_args *args,
 	FILE *in, *out;
 	int ret;
 
-	prepare_pack_objects(&cmd, args);
+	prepare_pack_objects(&cmd, args, packtmp);
 
 	strvec_push(&cmd.args, "--cruft");
 	if (cruft_expiration)
@@ -861,7 +862,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 
 	sigchain_push_common(remove_pack_on_signal);
 
-	prepare_pack_objects(&cmd, &po_args);
+	prepare_pack_objects(&cmd, &po_args, packtmp);
 
 	show_progress = !po_args.quiet && isatty(2);
 
