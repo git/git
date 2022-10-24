@@ -133,6 +133,8 @@ static void read_from_stdin(struct shortlog *log)
 		break;
 	case SHORTLOG_GROUP_TRAILER:
 		die(_("using %s with stdin is not supported"), "--group=trailer");
+	case SHORTLOG_GROUP_FORMAT:
+		die(_("using %s with stdin is not supported"), "--group=format");
 	default:
 		BUG("unhandled shortlog group");
 	}
@@ -203,6 +205,32 @@ static void insert_records_from_trailers(struct shortlog *log,
 	unuse_commit_buffer(commit, commit_buffer);
 }
 
+static int shortlog_needs_dedup(const struct shortlog *log)
+{
+	return HAS_MULTI_BITS(log->groups) || log->format.nr > 1 || log->trailers.nr;
+}
+
+static void insert_records_from_format(struct shortlog *log,
+				       struct strset *dups,
+				       struct commit *commit,
+				       struct pretty_print_context *ctx,
+				       const char *oneline)
+{
+	struct strbuf buf = STRBUF_INIT;
+	struct string_list_item *item;
+
+	for_each_string_list_item(item, &log->format) {
+		strbuf_reset(&buf);
+
+		format_commit_message(commit, item->string, &buf, ctx);
+
+		if (!shortlog_needs_dedup(log) || strset_add(dups, buf.buf))
+			insert_one_record(log, buf.buf, oneline);
+	}
+
+	strbuf_release(&buf);
+}
+
 void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 {
 	struct strbuf ident = STRBUF_INIT;
@@ -244,6 +272,7 @@ void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 			insert_one_record(log, ident.buf, oneline_str);
 	}
 	insert_records_from_trailers(log, &dups, commit, &ctx, oneline_str);
+	insert_records_from_format(log, &dups, commit, &ctx, oneline_str);
 
 	strset_clear(&dups);
 	strbuf_release(&ident);
@@ -315,6 +344,7 @@ static int parse_group_option(const struct option *opt, const char *arg, int uns
 	if (unset) {
 		log->groups = 0;
 		string_list_clear(&log->trailers, 0);
+		string_list_clear(&log->format, 0);
 	} else if (!strcasecmp(arg, "author"))
 		log->groups |= SHORTLOG_GROUP_AUTHOR;
 	else if (!strcasecmp(arg, "committer"))
@@ -322,8 +352,15 @@ static int parse_group_option(const struct option *opt, const char *arg, int uns
 	else if (skip_prefix(arg, "trailer:", &field)) {
 		log->groups |= SHORTLOG_GROUP_TRAILER;
 		string_list_append(&log->trailers, field);
-	} else
+	} else if (skip_prefix(arg, "format:", &field)) {
+		log->groups |= SHORTLOG_GROUP_FORMAT;
+		string_list_append(&log->format, field);
+	} else if (strchr(arg, '%')) {
+		log->groups |= SHORTLOG_GROUP_FORMAT;
+		string_list_append(&log->format, arg);
+	} else {
 		return error(_("unknown group type: %s"), arg);
+	}
 
 	return 0;
 }
@@ -341,6 +378,7 @@ void shortlog_init(struct shortlog *log)
 	log->in2 = DEFAULT_INDENT2;
 	log->trailers.strdup_strings = 1;
 	log->trailers.cmp = strcasecmp;
+	log->format.strdup_strings = 1;
 }
 
 int cmd_shortlog(int argc, const char **argv, const char *prefix)
@@ -481,4 +519,5 @@ void shortlog_output(struct shortlog *log)
 	log->list.strdup_strings = 1;
 	string_list_clear(&log->list, 1);
 	clear_mailmap(&log->mailmap);
+	string_list_clear(&log->format, 0);
 }

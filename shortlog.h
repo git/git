@@ -22,8 +22,10 @@ struct shortlog {
 		SHORTLOG_GROUP_AUTHOR = (1 << 0),
 		SHORTLOG_GROUP_COMMITTER = (1 << 1),
 		SHORTLOG_GROUP_TRAILER = (1 << 2),
+		SHORTLOG_GROUP_FORMAT = (1 << 3),
 	} groups;
 	struct string_list trailers;
+	struct string_list format;
 
 	int email;
 	struct string_list mailmap;
