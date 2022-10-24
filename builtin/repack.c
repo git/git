@@ -662,6 +662,7 @@ static int write_midx_included_packs(struct string_list *include,
 }
 
 static int write_cruft_pack(const struct pack_objects_args *args,
+			    const char *destination,
 			    const char *pack_prefix,
 			    const char *cruft_expiration,
 			    struct string_list *names,
@@ -673,8 +674,10 @@ static int write_cruft_pack(const struct pack_objects_args *args,
 	struct string_list_item *item;
 	FILE *in, *out;
 	int ret;
+	const char *scratch;
+	int local = skip_prefix(destination, packdir, &scratch);
 
-	prepare_pack_objects(&cmd, args, packtmp);
+	prepare_pack_objects(&cmd, args, destination);
 
 	strvec_push(&cmd.args, "--cruft");
 	if (cruft_expiration)
@@ -714,7 +717,12 @@ static int write_cruft_pack(const struct pack_objects_args *args,
 		if (line.len != the_hash_algo->hexsz)
 			die(_("repack: Expecting full hex object ID lines only "
 			      "from pack-objects."));
-		string_list_append(names, line.buf);
+		/*
+		 * avoid putting packs written outside of the repository in the
+		 * list of names
+		 */
+		if (local)
+			string_list_append(names, line.buf);
 	}
 	fclose(out);
 
@@ -986,7 +994,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		cruft_po_args.local = po_args.local;
 		cruft_po_args.quiet = po_args.quiet;
 
-		ret = write_cruft_pack(&cruft_po_args, pack_prefix,
+		ret = write_cruft_pack(&cruft_po_args, packtmp, pack_prefix,
 				       cruft_expiration, &names,
 				       &existing_nonkept_packs,
 				       &existing_kept_packs);
