@@ -253,15 +253,6 @@ void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 	}
 	oneline_str = oneline.len ? oneline.buf : "<none>";
 
-	if (log->groups & SHORTLOG_GROUP_AUTHOR) {
-		strbuf_reset(&ident);
-		format_commit_message(commit,
-				      log->email ? "%aN <%aE>" : "%aN",
-				      &ident, &ctx);
-		if (!HAS_MULTI_BITS(log->groups) ||
-		    strset_add(&dups, ident.buf))
-			insert_one_record(log, ident.buf, oneline_str);
-	}
 	if (log->groups & SHORTLOG_GROUP_COMMITTER) {
 		strbuf_reset(&ident);
 		format_commit_message(commit,
@@ -383,6 +374,10 @@ void shortlog_init(struct shortlog *log)
 
 void shortlog_finish_setup(struct shortlog *log)
 {
+	if (log->groups & SHORTLOG_GROUP_AUTHOR)
+		string_list_append(&log->format,
+				   log->email ? "%aN <%aE>" : "%aN");
+
 	string_list_sort(&log->trailers);
 }
 
