@@ -32,7 +32,6 @@ static int write_bitmaps = -1;
 static int use_delta_islands;
 static int run_update_server_info = 1;
 static char *packdir, *packtmp_name, *packtmp;
-static char *cruft_expiration;
 
 static const char *const git_repack_usage[] = {
 	N_("git repack [<options>]"),
@@ -664,6 +663,7 @@ static int write_midx_included_packs(struct string_list *include,
 
 static int write_cruft_pack(const struct pack_objects_args *args,
 			    const char *pack_prefix,
+			    const char *cruft_expiration,
 			    struct string_list *names,
 			    struct string_list *existing_packs,
 			    struct string_list *existing_kept_packs)
@@ -746,6 +746,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	struct pack_objects_args cruft_po_args = {NULL};
 	int geometric_factor = 0;
 	int write_midx = 0;
+	const char *cruft_expiration = NULL;
 
 	struct option builtin_repack_options[] = {
 		OPT_BIT('a', NULL, &pack_everything,
@@ -985,7 +986,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		cruft_po_args.local = po_args.local;
 		cruft_po_args.quiet = po_args.quiet;
 
-		ret = write_cruft_pack(&cruft_po_args, pack_prefix, &names,
+		ret = write_cruft_pack(&cruft_po_args, pack_prefix,
+				       cruft_expiration, &names,
 				       &existing_nonkept_packs,
 				       &existing_kept_packs);
 		if (ret)
