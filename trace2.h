@@ -73,8 +73,7 @@ void trace2_initialize_clock(void);
 /*
  * Initialize TRACE2 tracing facility if any of the builtin TRACE2
  * targets are enabled in the system config or the environment.
- * This includes setting up the Trace2 thread local storage (TLS).
- * Emits a 'version' message containing the version of git
+ * This emits a 'version' message containing the version of git
  * and the Trace2 protocol.
  *
  * This function should be called from `main()` as early as possible in
@@ -302,7 +301,8 @@ void trace2_exec_result_fl(const char *file, int line, int exec_id, int code);
 
 /*
  * Emit a 'thread_start' event.  This must be called from inside the
- * thread-proc to set up the trace2 TLS data for the thread.
+ * thread-proc to allow the thread to create its own thread-local
+ * storage.
  *
  * Thread names should be descriptive, like "preload_index".
  * Thread names will be decorated with an instance number automatically.
@@ -315,8 +315,8 @@ void trace2_thread_start_fl(const char *file, int line,
 
 /*
  * Emit a 'thread_exit' event.  This must be called from inside the
- * thread-proc to report thread-specific data and cleanup TLS data
- * for the thread.
+ * thread-proc so that the thread can access and clean up its
+ * thread-local storage.
  */
 void trace2_thread_exit_fl(const char *file, int line);
 

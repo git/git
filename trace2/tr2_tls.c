@@ -69,9 +69,9 @@ struct tr2tls_thread_ctx *tr2tls_get_self(void)
 	ctx = pthread_getspecific(tr2tls_key);
 
 	/*
-	 * If the thread-proc did not call trace2_thread_start(), we won't
-	 * have any TLS data associated with the current thread.  Fix it
-	 * here and silently continue.
+	 * If the current thread's thread-proc did not call
+	 * trace2_thread_start(), then the thread will not have any
+	 * thread-local storage.  Create it now and silently continue.
 	 */
 	if (!ctx)
 		ctx = tr2tls_create_self("unknown", getnanotime() / 1000);

@@ -4,6 +4,12 @@
 #include "strbuf.h"
 
 /*
+ * Notice: the term "TLS" refers to "thread-local storage" in the
+ * Trace2 source files.  This usage is borrowed from GCC and Windows.
+ * There is NO relation to "transport layer security".
+ */
+
+/*
  * Arbitry limit for thread names for column alignment.
  */
 #define TR2_MAX_THREAD_NAME (24)
@@ -17,9 +23,7 @@ struct tr2tls_thread_ctx {
 };
 
 /*
- * Create TLS data for the current thread.  This gives us a place to
- * put per-thread data, such as thread start time, function nesting
- * and a per-thread label for our messages.
+ * Create thread-local storage for the current thread.
  *
  * We assume the first thread is "main".  Other threads are given
  * non-zero thread-ids to help distinguish messages from concurrent
@@ -35,7 +39,7 @@ struct tr2tls_thread_ctx *tr2tls_create_self(const char *thread_name,
 					     uint64_t us_thread_start);
 
 /*
- * Get our TLS data.
+ * Get the thread-local storage pointer of the current thread.
  */
 struct tr2tls_thread_ctx *tr2tls_get_self(void);
 
@@ -45,7 +49,7 @@ struct tr2tls_thread_ctx *tr2tls_get_self(void);
 int tr2tls_is_main_thread(void);
 
 /*
- * Free our TLS data.
+ * Free the current thread's thread-local storage.
  */
 void tr2tls_unset_self(void);
 
@@ -81,12 +85,12 @@ uint64_t tr2tls_region_elasped_self(uint64_t us);
 uint64_t tr2tls_absolute_elapsed(uint64_t us);
 
 /*
- * Initialize the tr2 TLS system.
+ * Initialize thread-local storage for Trace2.
  */
 void tr2tls_init(void);
 
 /*
- * Free all tr2 TLS resources.
+ * Free all Trace2 thread-local storage resources.
  */
 void tr2tls_release(void);
 

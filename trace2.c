@@ -52,7 +52,7 @@ static struct tr2_tgt *tr2_tgt_builtins[] =
  * Force (rather than lazily) initialize any of the requested
  * builtin TRACE2 targets at startup (and before we've seen an
  * actual TRACE2 event call) so we can see if we need to setup
- * the TR2 and TLS machinery.
+ * private data structures and thread-local storage.
  *
  * Return the number of builtin targets enabled.
  */
