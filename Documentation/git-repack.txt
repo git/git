@@ -74,6 +74,12 @@ to the new separate pack will be written.
 	immediately instead of waiting for the next `git gc` invocation.
 	Only useful with `--cruft -d`.
 
+--expire-to=<dir>::
+	Write a cruft pack containing pruned objects (if any) to the
+	directory `<dir>`. This option is useful for keeping a copy of
+	any pruned objects in a separate directory as a backup. Only
+	useful with `--cruft -d`.
+
 -l::
 	Pass the `--local` option to 'git pack-objects'. See
 	linkgit:git-pack-objects[1].
