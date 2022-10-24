@@ -173,4 +173,53 @@ test_expect_success 'using global config, perf stream, return code 0' '
 	test_cmp expect actual
 '
 
+# Exercise the stopwatch timers in a loop and confirm that we have
+# as many start/stop intervals as expected.  We cannot really test the
+# actual (total, min, max) timer values, so we have to assume that they
+# are good, but we can verify the interval count.
+#
+# The timer "test/test1" should only emit a global summary "timer" event.
+# The timer "test/test2" should emit per-thread "th_timer" events and a
+# global summary "timer" event.
+
+have_timer_event () {
+	thread=$1 event=$2 category=$3 name=$4 intervals=$5 file=$6 &&
+
+	pattern="d0|${thread}|${event}||||${category}|name:${name} intervals:${intervals}" &&
+
+	grep "${pattern}" ${file}
+}
+
+test_expect_success 'stopwatch timer test/test1' '
+	test_when_finished "rm trace.perf actual" &&
+	test_config_global trace2.perfBrief 1 &&
+	test_config_global trace2.perfTarget "$(pwd)/trace.perf" &&
+
+	# Use the timer "test1" 5 times from "main".
+	test-tool trace2 100timer 5 10 &&
+
+	perl "$TEST_DIRECTORY/t0211/scrub_perf.perl" <trace.perf >actual &&
+
+	have_timer_event "main" "timer" "test" "test1" 5 actual
+'
+
+test_expect_success 'stopwatch timer test/test2' '
+	test_when_finished "rm trace.perf actual" &&
+	test_config_global trace2.perfBrief 1 &&
+	test_config_global trace2.perfTarget "$(pwd)/trace.perf" &&
+
+	# Use the timer "test2" 5 times each in 3 threads.
+	test-tool trace2 101timer 5 10 3 &&
+
+	perl "$TEST_DIRECTORY/t0211/scrub_perf.perl" <trace.perf >actual &&
+
+	# So we should have 3 per-thread events of 5 each.
+	have_timer_event "th01:ut_101" "th_timer" "test" "test2" 5 actual &&
+	have_timer_event "th02:ut_101" "th_timer" "test" "test2" 5 actual &&
+	have_timer_event "th03:ut_101" "th_timer" "test" "test2" 5 actual &&
+
+	# And we should have 15 total uses.
+	have_timer_event "main" "timer" "test" "test2" 15 actual
+'
+
 test_done

@@ -769,6 +769,42 @@ The "value" field may be an integer or a string.
 }
 ------------
 
+`"th_timer"`::
+	This event logs the amount of time that a stopwatch timer was
+	running in the thread.  This event is generated when a thread
+	exits for timers that requested per-thread events.
++
+------------
+{
+	"event":"th_timer",
+	...
+	"category":"my_category",
+	"name":"my_timer",
+	"intervals":5,         # number of time it was started/stopped
+	"t_total":0.052741,    # total time in seconds it was running
+	"t_min":0.010061,      # shortest interval
+	"t_max":0.011648       # longest interval
+}
+------------
+
+`"timer"`::
+	This event logs the amount of time that a stopwatch timer was
+	running aggregated across all threads.  This event is generated
+	when the process exits.
++
+------------
+{
+	"event":"timer",
+	...
+	"category":"my_category",
+	"name":"my_timer",
+	"intervals":5,         # number of time it was started/stopped
+	"t_total":0.052741,    # total time in seconds it was running
+	"t_min":0.010061,      # shortest interval
+	"t_max":0.011648       # longest interval
+}
+------------
+
 == Example Trace2 API Usage
 
 Here is a hypothetical usage of the Trace2 API showing the intended
@@ -1200,6 +1236,60 @@ d0 | main                     | data         | r0  |  0.002126 |  0.002126 | fsy
 d0 | main                     | exit         |     |  0.000470 |           |              | code:0
 d0 | main                     | atexit       |     |  0.000477 |           |              | code:0
 ----------------
+
+Stopwatch Timer Events::
+
+	Measure the time spent in a function call or span of code
+	that might be called from many places within the code
+	throughout the life of the process.
++
+----------------
+static void expensive_function(void)
+{
+	trace2_timer_start(TRACE2_TIMER_ID_TEST1);
+	...
+	sleep_millisec(1000); // Do something expensive
+	...
+	trace2_timer_stop(TRACE2_TIMER_ID_TEST1);
+}
+
+static int ut_100timer(int argc, const char **argv)
+{
+	...
+
+	expensive_function();
+
+	// Do something else 1...
+
+	expensive_function();
+
+	// Do something else 2...
+
+	expensive_function();
+
+	return 0;
+}
+----------------
++
+In this example, we measure the total time spent in
+`expensive_function()` regardless of when it is called
+in the overall flow of the program.
++
+----------------
+$ export GIT_TRACE2_PERF_BRIEF=1
+$ export GIT_TRACE2_PERF=~/log.perf
+$ t/helper/test-tool trace2 100timer 3 1000
+...
+$ cat ~/log.perf
+d0 | main                     | version      |     |           |           |              | ...
+d0 | main                     | start        |     |  0.001453 |           |              | t/helper/test-tool trace2 100timer 3 1000
+d0 | main                     | cmd_name     |     |           |           |              | trace2 (trace2)
+d0 | main                     | exit         |     |  3.003667 |           |              | code:0
+d0 | main                     | timer        |     |           |           | test         | name:test1 intervals:3 total:3.001686 min:1.000254 max:1.000929
+d0 | main                     | atexit       |     |  3.003796 |           |              | code:0
+----------------
+
+
 == Future Work
 
 === Relationship to the Existing Trace Api (api-trace.txt)

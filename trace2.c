@@ -13,6 +13,7 @@
 #include "trace2/tr2_sysenv.h"
 #include "trace2/tr2_tgt.h"
 #include "trace2/tr2_tls.h"
+#include "trace2/tr2_tmr.h"
 
 static int trace2_enabled;
 
@@ -83,6 +84,23 @@ static void tr2_tgt_disable_builtins(void)
 		tgt_j->pfn_term();
 }
 
+/*
+ * The signature of this function must match the pfn_timer
+ * method in the targets.  (Think of this is an apply operation
+ * across the set of active targets.)
+ */
+static void tr2_tgt_emit_a_timer(const struct tr2_timer_metadata *meta,
+				 const struct tr2_timer *timer,
+				 int is_final_data)
+{
+	struct tr2_tgt *tgt_j;
+	int j;
+
+	for_each_wanted_builtin (j, tgt_j)
+		if (tgt_j->pfn_timer)
+			tgt_j->pfn_timer(meta, timer, is_final_data);
+}
+
 static int tr2main_exit_code;
 
 /*
@@ -109,6 +127,26 @@ static void tr2main_atexit_handler(void)
 	 * the trace output if someone calls die(), for example.
 	 */
 	tr2tls_pop_unwind_self();
+
+	/*
+	 * Some timers want per-thread details.  If the main thread
+	 * used one of those timers, emit the details now (before
+	 * we emit the aggregate timer values).
+	 */
+	tr2_emit_per_thread_timers(tr2_tgt_emit_a_timer);
+
+	/*
+	 * Add stopwatch timer data for the main thread to the final
+	 * totals.  And then emit the final timer values.
+	 *
+	 * Technically, we shouldn't need to hold the lock to update
+	 * and output the final_timer_block (since all other threads
+	 * should be dead by now), but it doesn't hurt anything.
+	 */
+	tr2tls_lock();
+	tr2_update_final_timers();
+	tr2_emit_final_timers(tr2_tgt_emit_a_timer);
+	tr2tls_unlock();
 
 	for_each_wanted_builtin (j, tgt_j)
 		if (tgt_j->pfn_atexit)
@@ -541,6 +579,21 @@ void trace2_thread_exit_fl(const char *file, int line)
 	tr2tls_pop_unwind_self();
 	us_elapsed_thread = tr2tls_region_elasped_self(us_now);
 
+	/*
+	 * Some timers want per-thread details.  If this thread used
+	 * one of those timers, emit the details now.
+	 */
+	tr2_emit_per_thread_timers(tr2_tgt_emit_a_timer);
+
+	/*
+	 * Add stopwatch timer data from the current (non-main) thread
+	 * to the final totals.  (We'll accumulate data for the main
+	 * thread later during "atexit".)
+	 */
+	tr2tls_lock();
+	tr2_update_final_timers();
+	tr2tls_unlock();
+
 	for_each_wanted_builtin (j, tgt_j)
 		if (tgt_j->pfn_thread_exit_fl)
 			tgt_j->pfn_thread_exit_fl(file, line,
@@ -793,6 +846,28 @@ void trace2_printf_fl(const char *file, int line, const char *fmt, ...)
 	va_start(ap, fmt);
 	trace2_printf_va_fl(file, line, fmt, ap);
 	va_end(ap);
+}
+
+void trace2_timer_start(enum trace2_timer_id tid)
+{
+	if (!trace2_enabled)
+		return;
+
+	if (tid < 0 || tid >= TRACE2_NUMBER_OF_TIMERS)
+		BUG("trace2_timer_start: invalid timer id: %d", tid);
+
+	tr2_start_timer(tid);
+}
+
+void trace2_timer_stop(enum trace2_timer_id tid)
+{
+	if (!trace2_enabled)
+		return;
+
+	if (tid < 0 || tid >= TRACE2_NUMBER_OF_TIMERS)
+		BUG("trace2_timer_stop: invalid timer id: %d", tid);
+
+	tr2_stop_timer(tid);
 }
 
 const char *trace2_session_id(void)

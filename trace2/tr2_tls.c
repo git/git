@@ -181,3 +181,13 @@ int tr2tls_locked_increment(int *p)
 
 	return current_value;
 }
+
+void tr2tls_lock(void)
+{
+	pthread_mutex_lock(&tr2tls_mutex);
+}
+
+void tr2tls_unlock(void)
+{
+	pthread_mutex_unlock(&tr2tls_mutex);
+}

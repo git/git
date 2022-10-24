@@ -51,6 +51,7 @@ struct json_writer;
  * [] trace2_region*    -- emit region nesting messages.
  * [] trace2_data*      -- emit region/thread/repo data messages.
  * [] trace2_printf*    -- legacy trace[1] messages.
+ * [] trace2_timer*     -- stopwatch timers (messages are deferred).
  */
 
 /*
@@ -484,6 +485,48 @@ void trace2_printf_va_fl(const char *file, int line, const char *fmt,
 void trace2_printf_fl(const char *file, int line, const char *fmt, ...);
 
 #define trace2_printf(...) trace2_printf_fl(__FILE__, __LINE__, __VA_ARGS__)
+
+/*
+ * Define the set of stopwatch timers.
+ *
+ * We can add more at any time, but they must be defined at compile
+ * time (to avoid the need to dynamically allocate and synchronize
+ * them between different threads).
+ *
+ * These must start at 0 and be contiguous (because we use them
+ * elsewhere as array indexes).
+ *
+ * Any values added to this enum must also be added to the
+ * `tr2_timer_metadata[]` in `trace2/tr2_tmr.c`.
+ */
+enum trace2_timer_id {
+	/*
+	 * Define two timers for testing.  See `t/helper/test-trace2.c`.
+	 * These can be used for ad hoc testing, but should not be used
+	 * for permanent analysis code.
+	 */
+	TRACE2_TIMER_ID_TEST1 = 0, /* emits summary event only */
+	TRACE2_TIMER_ID_TEST2,     /* emits summary and thread events */
+
+	/* Add additional timer definitions before here. */
+	TRACE2_NUMBER_OF_TIMERS
+};
+
+/*
+ * Start/Stop the indicated stopwatch timer in the current thread.
+ *
+ * The time spent by the current thread between the _start and _stop
+ * calls will be added to the thread's partial sum for this timer.
+ *
+ * Timer events are emitted at thread and program exit.
+ *
+ * Note: Since the stopwatch API routines do not generate individual
+ * events, they do not take (file, line) arguments.  Similarly, the
+ * category and timer name values are defined at compile-time in the
+ * timer definitions array, so they are not needed here in the API.
+ */
+void trace2_timer_start(enum trace2_timer_id tid);
+void trace2_timer_stop(enum trace2_timer_id tid);
 
 /*
  * Optional platform-specific code to dump information about the
