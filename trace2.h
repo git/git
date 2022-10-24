@@ -304,14 +304,15 @@ void trace2_exec_result_fl(const char *file, int line, int exec_id, int code);
  * thread-proc to allow the thread to create its own thread-local
  * storage.
  *
- * Thread names should be descriptive, like "preload_index".
- * Thread names will be decorated with an instance number automatically.
+ * The thread base name should be descriptive, like "preload_index" or
+ * taken from the thread-proc function.  A unique thread name will be
+ * created from the given base name and the thread id automatically.
  */
 void trace2_thread_start_fl(const char *file, int line,
-			    const char *thread_name);
+			    const char *thread_base_name);
 
-#define trace2_thread_start(thread_name) \
-	trace2_thread_start_fl(__FILE__, __LINE__, (thread_name))
+#define trace2_thread_start(thread_base_name) \
+	trace2_thread_start_fl(__FILE__, __LINE__, (thread_base_name))
 
 /*
  * Emit a 'thread_exit' event.  This must be called from inside the
