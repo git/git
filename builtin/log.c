@@ -1334,6 +1334,7 @@ static void make_cover_letter(struct rev_info *rev, int use_separate_file,
 	log.in2 = 4;
 	log.file = rev->diffopt.file;
 	log.groups = SHORTLOG_GROUP_AUTHOR;
+	shortlog_finish_setup(&log);
 	for (i = 0; i < nr; i++)
 		shortlog_add_commit(&log, list[i]);
 

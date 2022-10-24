@@ -33,6 +33,7 @@ struct shortlog {
 };
 
 void shortlog_init(struct shortlog *log);
+void shortlog_finish_setup(struct shortlog *log);
 
 void shortlog_add_commit(struct shortlog *log, struct commit *commit);
 

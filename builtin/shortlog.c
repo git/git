@@ -381,6 +381,11 @@ void shortlog_init(struct shortlog *log)
 	log->format.strdup_strings = 1;
 }
 
+void shortlog_finish_setup(struct shortlog *log)
+{
+	string_list_sort(&log->trailers);
+}
+
 int cmd_shortlog(int argc, const char **argv, const char *prefix)
 {
 	struct shortlog log = { STRING_LIST_INIT_NODUP };
@@ -450,7 +455,7 @@ parse_done:
 
 	if (!log.groups)
 		log.groups = SHORTLOG_GROUP_AUTHOR;
-	string_list_sort(&log.trailers);
+	shortlog_finish_setup(&log);
 
 	/* assume HEAD if from a tty */
 	if (!nongit && !rev.pending.nr && isatty(0))
