@@ -222,4 +222,50 @@ test_expect_success 'stopwatch timer test/test2' '
 	have_timer_event "main" "timer" "test" "test2" 15 actual
 '
 
+# Exercise the global counters and confirm that we get the expected values.
+#
+# The counter "test/test1" should only emit a global summary "counter" event.
+# The counter "test/test2" could emit per-thread "th_counter" events and a
+# global summary "counter" event.
+
+have_counter_event () {
+	thread=$1 event=$2 category=$3 name=$4 value=$5 file=$6 &&
+
+	pattern="d0|${thread}|${event}||||${category}|name:${name} value:${value}" &&
+
+	grep "${patern}" ${file}
+}
+
+test_expect_success 'global counter test/test1' '
+	test_when_finished "rm trace.perf actual" &&
+	test_config_global trace2.perfBrief 1 &&
+	test_config_global trace2.perfTarget "$(pwd)/trace.perf" &&
+
+	# Use the counter "test1" and add n integers.
+	test-tool trace2 200counter 1 2 3 4 5 &&
+
+	perl "$TEST_DIRECTORY/t0211/scrub_perf.perl" <trace.perf >actual &&
+
+	have_counter_event "main" "counter" "test" "test1" 15 actual
+'
+
+test_expect_success 'global counter test/test2' '
+	test_when_finished "rm trace.perf actual" &&
+	test_config_global trace2.perfBrief 1 &&
+	test_config_global trace2.perfTarget "$(pwd)/trace.perf" &&
+
+	# Add 2 integers to the counter "test2" in each of 3 threads.
+	test-tool trace2 201counter 7 13 3 &&
+
+	perl "$TEST_DIRECTORY/t0211/scrub_perf.perl" <trace.perf >actual &&
+
+	# So we should have 3 per-thread events of 5 each.
+	have_counter_event "th01:ut_201" "th_counter" "test" "test2" 20 actual &&
+	have_counter_event "th02:ut_201" "th_counter" "test" "test2" 20 actual &&
+	have_counter_event "th03:ut_201" "th_counter" "test" "test2" 20 actual &&
+
+	# And we should have a single event with the total across all threads.
+	have_counter_event "main" "counter" "test" "test2" 60 actual
+'
+
 test_done

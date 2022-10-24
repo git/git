@@ -351,6 +351,21 @@ static void fn_timer(const struct tr2_timer_metadata *meta,
 	strbuf_release(&buf_payload);
 }
 
+static void fn_counter(const struct tr2_counter_metadata *meta,
+		       const struct tr2_counter *counter,
+		       int is_final_data)
+{
+	const char *event_name = is_final_data ? "counter" : "th_counter";
+	struct strbuf buf_payload = STRBUF_INIT;
+
+	strbuf_addf(&buf_payload, "%s %s/%s value:%"PRIu64,
+		    event_name, meta->category, meta->name,
+		    counter->value);
+
+	normal_io_write_fl(__FILE__, __LINE__, &buf_payload);
+	strbuf_release(&buf_payload);
+}
+
 struct tr2_tgt tr2_tgt_normal = {
 	.pdst = &tr2dst_normal,
 
@@ -383,4 +398,5 @@ struct tr2_tgt tr2_tgt_normal = {
 	.pfn_data_json_fl = NULL,
 	.pfn_printf_va_fl = fn_printf_va_fl,
 	.pfn_timer = fn_timer,
+	.pfn_counter = fn_counter,
 };

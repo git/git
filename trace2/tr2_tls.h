@@ -2,6 +2,7 @@
 #define TR2_TLS_H
 
 #include "strbuf.h"
+#include "trace2/tr2_ctr.h"
 #include "trace2/tr2_tmr.h"
 
 /*
@@ -22,8 +23,11 @@ struct tr2tls_thread_ctx {
 	size_t nr_open_regions; /* plays role of "nr" in ALLOC_GROW */
 	int thread_id;
 	struct tr2_timer_block timer_block;
+	struct tr2_counter_block counter_block;
 	unsigned int used_any_timer:1;
 	unsigned int used_any_per_thread_timer:1;
+	unsigned int used_any_counter:1;
+	unsigned int used_any_per_thread_counter:1;
 };
 
 /*

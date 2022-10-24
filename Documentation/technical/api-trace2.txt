@@ -805,6 +805,37 @@ The "value" field may be an integer or a string.
 }
 ------------
 
+`"th_counter"`::
+	This event logs the value of a counter variable in a thread.
+	This event is generated when a thread exits for counters that
+	requested per-thread events.
++
+------------
+{
+	"event":"th_counter",
+	...
+	"category":"my_category",
+	"name":"my_counter",
+	"count":23
+}
+------------
+
+`"counter"`::
+	This event logs the value of a counter variable across all threads.
+	This event is generated when the process exits.  The total value
+	reported here is the sum across all threads.
++
+------------
+{
+	"event":"counter",
+	...
+	"category":"my_category",
+	"name":"my_counter",
+	"count":23
+}
+------------
+
+
 == Example Trace2 API Usage
 
 Here is a hypothetical usage of the Trace2 API showing the intended

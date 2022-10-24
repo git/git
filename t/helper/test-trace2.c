@@ -324,6 +324,92 @@ static int ut_101timer(int argc, const char **argv)
 }
 
 /*
+ * Single-threaded counter test.  Add several values to the TEST1 counter.
+ * The test script can verify that the final sum is reported in the "counter"
+ * event.
+ */
+static int ut_200counter(int argc, const char **argv)
+{
+	const char *usage_error =
+		"expect <v1> [<v2> [...]]";
+	int value;
+	int k;
+
+	if (argc < 1)
+		die("%s", usage_error);
+
+	for (k = 0; k < argc; k++) {
+		if (get_i(&value, argv[k]))
+			die("invalid value[%s] -- %s",
+			    argv[k], usage_error);
+		trace2_counter_add(TRACE2_COUNTER_ID_TEST1, value);
+	}
+
+	return 0;
+}
+
+/*
+ * Multi-threaded counter test.  Create seveal threads that each increment
+ * the TEST2 global counter.  The test script can verify that an individual
+ * "th_counter" event is generated with a partial sum for each thread and
+ * that a final aggregate "counter" event is generated.
+ */
+
+struct ut_201_data {
+	int v1;
+	int v2;
+};
+
+static void *ut_201counter_thread_proc(void *_ut_201_data)
+{
+	struct ut_201_data *data = _ut_201_data;
+
+	trace2_thread_start("ut_201");
+
+	trace2_counter_add(TRACE2_COUNTER_ID_TEST2, data->v1);
+	trace2_counter_add(TRACE2_COUNTER_ID_TEST2, data->v2);
+
+	trace2_thread_exit();
+	return NULL;
+}
+
+static int ut_201counter(int argc, const char **argv)
+{
+	const char *usage_error =
+		"expect <v1> <v2> <threads>";
+
+	struct ut_201_data data = { 0, 0 };
+	int nr_threads = 0;
+	int k;
+	pthread_t *pids = NULL;
+
+	if (argc != 3)
+		die("%s", usage_error);
+	if (get_i(&data.v1, argv[0]))
+		die("%s", usage_error);
+	if (get_i(&data.v2, argv[1]))
+		die("%s", usage_error);
+	if (get_i(&nr_threads, argv[2]))
+		die("%s", usage_error);
+
+	CALLOC_ARRAY(pids, nr_threads);
+
+	for (k = 0; k < nr_threads; k++) {
+		if (pthread_create(&pids[k], NULL, ut_201counter_thread_proc, &data))
+			die("failed to create thread[%d]", k);
+	}
+
+	for (k = 0; k < nr_threads; k++) {
+		if (pthread_join(pids[k], NULL))
+			die("failed to join thread[%d]", k);
+	}
+
+	free(pids);
+
+	return 0;
+}
+
+/*
  * Usage:
  *     test-tool trace2 <ut_name_1> <ut_usage_1>
  *     test-tool trace2 <ut_name_2> <ut_usage_2>
@@ -346,6 +432,9 @@ static struct unit_test ut_table[] = {
 
 	{ ut_100timer,    "100timer",  "<count> <ms_delay>" },
 	{ ut_101timer,    "101timer",  "<count> <ms_delay> <threads>" },
+
+	{ ut_200counter,  "200counter", "<v1> [<v2> [<v3> [...]]]" },
+	{ ut_201counter,  "201counter", "<v1> <v2> <threads>" },
 };
 /* clang-format on */
 

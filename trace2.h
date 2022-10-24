@@ -52,6 +52,7 @@ struct json_writer;
  * [] trace2_data*      -- emit region/thread/repo data messages.
  * [] trace2_printf*    -- legacy trace[1] messages.
  * [] trace2_timer*     -- stopwatch timers (messages are deferred).
+ * [] trace2_counter*   -- global counters (messages are deferred).
  */
 
 /*
@@ -527,6 +528,42 @@ enum trace2_timer_id {
  */
 void trace2_timer_start(enum trace2_timer_id tid);
 void trace2_timer_stop(enum trace2_timer_id tid);
+
+/*
+ * Define the set of global counters.
+ *
+ * We can add more at any time, but they must be defined at compile
+ * time (to avoid the need to dynamically allocate and synchronize
+ * them between different threads).
+ *
+ * These must start at 0 and be contiguous (because we use them
+ * elsewhere as array indexes).
+ *
+ * Any values added to this enum be also be added to the
+ * `tr2_counter_metadata[]` in `trace2/tr2_tr2_ctr.c`.
+ */
+enum trace2_counter_id {
+	/*
+	 * Define two counters for testing.  See `t/helper/test-trace2.c`.
+	 * These can be used for ad hoc testing, but should not be used
+	 * for permanent analysis code.
+	 */
+	TRACE2_COUNTER_ID_TEST1 = 0, /* emits summary event only */
+	TRACE2_COUNTER_ID_TEST2,     /* emits summary and thread events */
+
+	/* Add additional counter definitions before here. */
+	TRACE2_NUMBER_OF_COUNTERS
+};
+
+/*
+ * Increase the named global counter by value.
+ *
+ * Note that this adds `value` to the current thread's partial sum for
+ * this counter (without locking) and that the complete sum is not
+ * available until all threads have exited, so it does not return the
+ * new value of the counter.
+ */
+void trace2_counter_add(enum trace2_counter_id cid, uint64_t value);
 
 /*
  * Optional platform-specific code to dump information about the
