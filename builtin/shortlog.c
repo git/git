@@ -233,7 +233,6 @@ static void insert_records_from_format(struct shortlog *log,
 
 void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 {
-	struct strbuf ident = STRBUF_INIT;
 	struct strbuf oneline = STRBUF_INIT;
 	struct strset dups = STRSET_INIT;
 	struct pretty_print_context ctx = {0};
@@ -253,20 +252,10 @@ void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 	}
 	oneline_str = oneline.len ? oneline.buf : "<none>";
 
-	if (log->groups & SHORTLOG_GROUP_COMMITTER) {
-		strbuf_reset(&ident);
-		format_commit_message(commit,
-				      log->email ? "%cN <%cE>" : "%cN",
-				      &ident, &ctx);
-		if (!HAS_MULTI_BITS(log->groups) ||
-		    strset_add(&dups, ident.buf))
-			insert_one_record(log, ident.buf, oneline_str);
-	}
 	insert_records_from_trailers(log, &dups, commit, &ctx, oneline_str);
 	insert_records_from_format(log, &dups, commit, &ctx, oneline_str);
 
 	strset_clear(&dups);
-	strbuf_release(&ident);
 	strbuf_release(&oneline);
 }
 
@@ -377,6 +366,9 @@ void shortlog_finish_setup(struct shortlog *log)
 	if (log->groups & SHORTLOG_GROUP_AUTHOR)
 		string_list_append(&log->format,
 				   log->email ? "%aN <%aE>" : "%aN");
+	if (log->groups & SHORTLOG_GROUP_COMMITTER)
+		string_list_append(&log->format,
+				   log->email ? "%cN <%cE>" : "%cN");
 
 	string_list_sort(&log->trailers);
 }
