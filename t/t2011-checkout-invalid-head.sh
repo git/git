@@ -23,7 +23,7 @@ test_expect_success 'checkout main from invalid HEAD' '
 	git checkout main --
 '
 
-test_expect_success 'checkout notices failure to lock HEAD' '
+test_expect_success REFFILES 'checkout notices failure to lock HEAD' '
 	test_when_finished "rm -f .git/HEAD.lock" &&
 	>.git/HEAD.lock &&
 	test_must_fail git checkout -b other
