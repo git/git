@@ -50,6 +50,8 @@ Performance, Internal Implementation, Development Support etc.
  * Avoid false-positive from LSan whose assumption may be broken with
    higher optimization levels.
 
+ * Enable address and undefined sanitizer tasks at GitHub Actions CI.
+
 
 Fixes since v2.38
 -----------------
@@ -134,6 +136,18 @@ Fixes since v2.38
    expression structure that has not been allocated, which has been
    corrected.
    (merge db84376f98 ab/grep-simplify-extended-expression later to maint).
+
+ * "git diff rev^!" did not show combined diff to go to the rev from
+   its parents.
+   (merge a79c6b6081 rs/diff-caret-bang-with-parents later to maint).
+
+ * Allow configuration files in "protected" scopes to include other
+   configuration files.
+   (merge ecec57b3c9 gc/bare-repo-discovery later to maint).
+
+ * Give a bit more diversity to macOS CI by using sha1dc in one of the
+   jobs (the other one tests Apple Common Crypto).
+   (merge 1ad5c3df35 jc/ci-osx-with-sha1dc later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge c34a6bd291 so/diff-merges-cleanup later to maint).
