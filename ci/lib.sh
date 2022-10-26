@@ -280,6 +280,12 @@ linux-leaks)
 	export GIT_TEST_PASSING_SANITIZE_LEAK=true
 	export GIT_TEST_SANITIZE_LEAK_LOG=true
 	;;
+linux-asan)
+	export SANITIZE=address
+	;;
+linux-ubsan)
+	export SANITIZE=undefined
+	;;
 esac
 
 MAKEFLAGS="$MAKEFLAGS CC=${CC:-cc}"
