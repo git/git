@@ -60,7 +60,7 @@ test_expect_success 'checking the commit' '
 
 test_expect_success 'mv --dry-run does not move file' '
 	git mv -n path0/COPYING MOVED &&
-	test_path_is_file path0/COPYING &&
+	! test_path_is_file path0/COPYING &&
 	test_path_is_file MOVED
 '
 
