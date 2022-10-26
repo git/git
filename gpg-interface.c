@@ -1059,12 +1059,11 @@ static int sign_buffer_ssh(struct strbuf *buffer, struct strbuf *signature,
 	strbuf_addbuf(&ssh_signature_filename, &buffer_file->filename);
 	strbuf_addstr(&ssh_signature_filename, ".sig");
 	if (strbuf_read_file(signature, ssh_signature_filename.buf, 0) < 0) {
-		error_errno(
+		ret = error_errno(
 			_("failed reading ssh signing data buffer from '%s'"),
 			ssh_signature_filename.buf);
+		goto out;
 	}
-	unlink_or_warn(ssh_signature_filename.buf);
-
 	/* Strip CR from the line endings, in case we are on Windows. */
 	remove_cr_after(signature, bottom);
 
@@ -1073,6 +1072,8 @@ out:
 		delete_tempfile(&key_file);
 	if (buffer_file)
 		delete_tempfile(&buffer_file);
+	if (ssh_signature_filename.len)
+		unlink_or_warn(ssh_signature_filename.buf);
 	strbuf_release(&signer_stderr);
 	strbuf_release(&ssh_signature_filename);
 	FREE_AND_NULL(ssh_signing_key_file);
