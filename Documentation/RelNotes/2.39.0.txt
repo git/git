@@ -45,7 +45,6 @@ Performance, Internal Implementation, Development Support etc.
 
  * Update CodingGuidelines to clarify what features to use and avoid
    in C99.
-   (merge 438c2f859b ab/coding-guidelines-c99 later to maint).
 
  * Avoid false-positive from LSan whose assumption may be broken with
    higher optimization levels.
@@ -58,22 +57,17 @@ Fixes since v2.38
 
  * The codepath that reads from the index v4 had unaligned memory
    accesses, which has been corrected.
-   (merge 4a6ed30f96 vd/fix-unaligned-read-index-v4 later to maint).
 
  * Fix messages incorrectly marked for translation.
-   (merge 02cb8b9ee3 ah/fsmonitor-daemon-usage-non-l10n later to maint).
 
  * "git fsck" failed to release contents of tree objects already used
    from the memory, which has been fixed.
-   (merge 51b27747e5 jk/fsck-on-diet later to maint).
 
  * "git clone" did not like to see the "--bare" and the "--origin"
    options used together without a good reason.
-   (merge 3b910d6e29 jk/clone-allow-bare-and-o-together later to maint).
 
  * "git remote rename" failed to rename a remote without fetch
    refspec, which has been corrected.
-   (merge 5a97b38109 jk/remote-rename-without-fetch-refspec later to maint).
 
  * Documentation on various Boolean GIT_* environment variables have
    been clarified.
@@ -81,7 +75,6 @@ Fixes since v2.38
 
  * "git rebase -i" can mistakenly attempt to apply a fixup to a commit
    itself, which has been corrected.
-   (merge 3e367a5f2f ja/rebase-i-avoid-amending-self later to maint).
 
  * "git multi-pack-index repack/expire" used to repack unreachable
    cruft into a new pack, which have been corrected.
@@ -90,26 +83,20 @@ Fixes since v2.38
  * In read-only repositories, "git merge-tree" tried to come up with a
    merge result tree object, which it failed (which is not wrong) and
    led to a segfault (which is bad), which has been corrected.
-   (merge 92481d1b26 js/merge-ort-in-read-only-repo later to maint).
 
  * Force C locale while running tests around httpd to make sure we can
    find expected error messages in the log.
-   (merge 7a2d8ea47e rs/test-httpd-in-C-locale later to maint).
 
  * Fix a logic in "mailinfo -b" that miscomputed the length of a
    substring, which lead to an out-of-bounds access.
-   (merge 3ef1494685 pw/mailinfo-b-fix later to maint).
 
  * The codepath to sign learned to report errors when it fails to read
    from "ssh-keygen".
-   (merge 36fb0d07d8 pw/ssh-sign-report-errors later to maint).
 
  * Code clean-up that results in plugging a leak.
-   (merge 246526d019 rs/bisect-start-leakfix later to maint).
 
  * "GIT_EDITOR=: git branch --edit-description" resulted in failure,
    which has been corrected.
-   (merge e288b3de35 jc/branch-description-unset later to maint).
 
  * The code to clean temporary object directories (used for
    quarantine) tried to remove them inside its signal handler, which
@@ -151,15 +138,9 @@ Fixes since v2.38
 
  * Other code cleanup, docfix, build fix, etc.
    (merge c34a6bd291 so/diff-merges-cleanup later to maint).
-   (merge 5e7c8b75e7 ab/test-malloc-with-sanitize-leak later to maint).
    (merge 2a905f8fa8 ah/branch-autosetupmerge-grammofix later to maint).
    (merge abcac2e19f rj/ref-filter-get-head-description-leakfix later to maint).
    (merge 71e5473493 hn/parse-worktree-ref later to maint).
-   (merge 7190b7ebf9 ds/bundle-uri-docfix later to maint).
-   (merge 45350aeb11 jk/sequencer-missing-author-name-check later to maint).
-   (merge edbf9a2e20 nb/doc-mergetool-typofix later to maint).
-   (merge b004c90282 rs/gc-pack-refs-simplify later to maint).
-   (merge 69c5f17f11 jk/cleanup-callback-parameters later to maint).
    (merge 7c07f36ad2 ab/unused-annotation later to maint).
    (merge f7669676d0 rs/use-fspathncmp later to maint).
    (merge a677d3c416 pw/remove-rebase-p-test later to maint).
