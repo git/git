@@ -209,7 +209,7 @@ static int builtin_diff_tree(struct rev_info *revs,
 static int builtin_diff_combined(struct rev_info *revs,
 				 int argc, const char **argv,
 				 struct object_array_entry *ent,
-				 int ents)
+				 int ents, int first_non_parent)
 {
 	struct oid_array parents = OID_ARRAY_INIT;
 	int i;
@@ -217,11 +217,18 @@ static int builtin_diff_combined(struct rev_info *revs,
 	if (argc > 1)
 		usage(builtin_diff_usage);
 
+	if (first_non_parent < 0)
+		die(_("no merge given, only parents."));
+	if (first_non_parent >= ents)
+		BUG("first_non_parent out of range: %d", first_non_parent);
+
 	diff_merges_set_dense_combined_if_unset(revs);
 
-	for (i = 1; i < ents; i++)
-		oid_array_append(&parents, &ent[i].item->oid);
-	diff_tree_combined(&ent[0].item->oid, &parents, revs);
+	for (i = 0; i < ents; i++) {
+		if (i != first_non_parent)
+			oid_array_append(&parents, &ent[i].item->oid);
+	}
+	diff_tree_combined(&ent[first_non_parent].item->oid, &parents, revs);
 	oid_array_clear(&parents);
 	return 0;
 }
@@ -385,6 +392,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	int i;
 	struct rev_info rev;
 	struct object_array ent = OBJECT_ARRAY_INIT;
+	int first_non_parent = -1;
 	int blobs = 0, paths = 0;
 	struct object_array_entry *blob[2];
 	int nongit = 0, no_index = 0;
@@ -543,6 +551,10 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 				continue;
 			obj->flags |= flags;
 			add_object_array(obj, name, &ent);
+			if (first_non_parent < 0 &&
+			    (i >= rev.cmdline.nr || /* HEAD by hand. */
+			     rev.cmdline.rev[i].whence != REV_CMD_PARENTS_ONLY))
+				first_non_parent = ent.nr - 1;
 		} else if (obj->type == OBJ_BLOB) {
 			if (2 <= blobs)
 				die(_("more than two blobs given: '%s'"), name);
@@ -590,7 +602,8 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 					   &ent.objects[0], &ent.objects[1]);
 	} else
 		result = builtin_diff_combined(&rev, argc, argv,
-					       ent.objects, ent.nr);
+					       ent.objects, ent.nr,
+					       first_non_parent);
 	result = diff_result_code(&rev.diffopt, result);
 	if (1 < rev.diffopt.skip_stat_unmatch)
 		refresh_index_quietly();
