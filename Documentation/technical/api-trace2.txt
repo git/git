@@ -148,20 +148,18 @@ filename collisions).
 
 == Trace2 API
 
-All public Trace2 functions and macros are defined in `trace2.h` and
-`trace2.c`.  All public symbols are prefixed with `trace2_`.
+The Trace2 public API is defined and documented in `trace2.h`; refer to it for
+more information.  All public functions and macros are prefixed
+with `trace2_` and are implemented in `trace2.c`.
 
 There are no public Trace2 data structures.
 
 The Trace2 code also defines a set of private functions and data types
 in the `trace2/` directory.  These symbols are prefixed with `tr2_`
-and should only be used by functions in `trace2.c`.
+and should only be used by functions in `trace2.c` (or other private
+source files in `trace2/`).
 
-== Conventions for Public Functions and Macros
-
-The functions defined by the Trace2 API are declared and documented
-in `trace2.h`.  It defines the API functions and wrapper macros for
-Trace2.
+=== Conventions for Public Functions and Macros
 
 Some functions have a `_fl()` suffix to indicate that they take `file`
 and `line-number` arguments.
@@ -172,52 +170,7 @@ take a `va_list` argument.
 Some functions have a `_printf_fl()` suffix to indicate that they also
 take a `printf()` style format with a variable number of arguments.
 
-There are CPP wrapper macros and `#ifdef`s to hide most of these details.
-See `trace2.h` for more details.  The following discussion will only
-describe the simplified forms.
-
-== Public API
-
-All Trace2 API functions send a message to all of the active
-Trace2 Targets.  This section describes the set of available
-messages.
-
-It helps to divide these functions into groups for discussion
-purposes.
-
-=== Basic Command Messages
-
-These are concerned with the lifetime of the overall git process.
-e.g: `void trace2_initialize_clock()`, `void trace2_initialize()`,
-`int trace2_is_enabled()`, `void trace2_cmd_start(int argc, const char **argv)`.
-
-=== Command Detail Messages
-
-These are concerned with describing the specific Git command
-after the command line, config, and environment are inspected.
-e.g: `void trace2_cmd_name(const char *name)`,
-`void trace2_cmd_mode(const char *mode)`.
-
-=== Child Process Messages
-
-These are concerned with the various spawned child processes,
-including shell scripts, git commands, editors, pagers, and hooks.
-
-e.g: `void trace2_child_start(struct child_process *cmd)`.
-
-=== Git Thread Messages
-
-These messages are concerned with Git thread usage.
-
-e.g: `void trace2_thread_start(const char *thread_name)`.
-
-=== Region and Data Messages
-
-These are concerned with recording performance data
-over regions or spans of code. e.g:
-`void trace2_region_enter(const char *category, const char *label, const struct repository *repo)`.
-
-Refer to trace2.h for details about all trace2 functions.
+CPP wrapper macros are defined to hide most of these details.
 
 == Trace2 Target Formats
 
@@ -685,8 +638,8 @@ The "exec_id" field is a command-unique id and is only useful if the
 
 `"thread_start"`::
 	This event is generated when a thread is started.  It is
-	generated from *within* the new thread's thread-proc (for TLS
-	reasons).
+	generated from *within* the new thread's thread-proc (because
+	it needs to access data in the thread's thread-local storage).
 +
 ------------
 {
@@ -698,7 +651,7 @@ The "exec_id" field is a command-unique id and is only useful if the
 
 `"thread_exit"`::
 	This event is generated when a thread exits.  It is generated
-	from *within* the thread's thread-proc (for TLS reasons).
+	from *within* the thread's thread-proc.
 +
 ------------
 {
@@ -815,6 +768,73 @@ The "value" field may be an integer or a string.
 	"value":["bash.exe","bash.exe"]
 }
 ------------
+
+`"th_timer"`::
+	This event logs the amount of time that a stopwatch timer was
+	running in the thread.  This event is generated when a thread
+	exits for timers that requested per-thread events.
++
+------------
+{
+	"event":"th_timer",
+	...
+	"category":"my_category",
+	"name":"my_timer",
+	"intervals":5,         # number of time it was started/stopped
+	"t_total":0.052741,    # total time in seconds it was running
+	"t_min":0.010061,      # shortest interval
+	"t_max":0.011648       # longest interval
+}
+------------
+
+`"timer"`::
+	This event logs the amount of time that a stopwatch timer was
+	running aggregated across all threads.  This event is generated
+	when the process exits.
++
+------------
+{
+	"event":"timer",
+	...
+	"category":"my_category",
+	"name":"my_timer",
+	"intervals":5,         # number of time it was started/stopped
+	"t_total":0.052741,    # total time in seconds it was running
+	"t_min":0.010061,      # shortest interval
+	"t_max":0.011648       # longest interval
+}
+------------
+
+`"th_counter"`::
+	This event logs the value of a counter variable in a thread.
+	This event is generated when a thread exits for counters that
+	requested per-thread events.
++
+------------
+{
+	"event":"th_counter",
+	...
+	"category":"my_category",
+	"name":"my_counter",
+	"count":23
+}
+------------
+
+`"counter"`::
+	This event logs the value of a counter variable across all threads.
+	This event is generated when the process exits.  The total value
+	reported here is the sum across all threads.
++
+------------
+{
+	"event":"counter",
+	...
+	"category":"my_category",
+	"name":"my_counter",
+	"count":23
+}
+------------
+
 
 == Example Trace2 API Usage
 
@@ -1206,7 +1226,7 @@ worked on 508 items at offset 2032.  Thread "th04" worked on 508 items
 at offset 508.
 +
 This example also shows that thread names are assigned in a racy manner
-as each thread starts and allocates TLS storage.
+as each thread starts.
 
 Config (def param) Events::
 
@@ -1247,6 +1267,60 @@ d0 | main                     | data         | r0  |  0.002126 |  0.002126 | fsy
 d0 | main                     | exit         |     |  0.000470 |           |              | code:0
 d0 | main                     | atexit       |     |  0.000477 |           |              | code:0
 ----------------
+
+Stopwatch Timer Events::
+
+	Measure the time spent in a function call or span of code
+	that might be called from many places within the code
+	throughout the life of the process.
++
+----------------
+static void expensive_function(void)
+{
+	trace2_timer_start(TRACE2_TIMER_ID_TEST1);
+	...
+	sleep_millisec(1000); // Do something expensive
+	...
+	trace2_timer_stop(TRACE2_TIMER_ID_TEST1);
+}
+
+static int ut_100timer(int argc, const char **argv)
+{
+	...
+
+	expensive_function();
+
+	// Do something else 1...
+
+	expensive_function();
+
+	// Do something else 2...
+
+	expensive_function();
+
+	return 0;
+}
+----------------
++
+In this example, we measure the total time spent in
+`expensive_function()` regardless of when it is called
+in the overall flow of the program.
++
+----------------
+$ export GIT_TRACE2_PERF_BRIEF=1
+$ export GIT_TRACE2_PERF=~/log.perf
+$ t/helper/test-tool trace2 100timer 3 1000
+...
+$ cat ~/log.perf
+d0 | main                     | version      |     |           |           |              | ...
+d0 | main                     | start        |     |  0.001453 |           |              | t/helper/test-tool trace2 100timer 3 1000
+d0 | main                     | cmd_name     |     |           |           |              | trace2 (trace2)
+d0 | main                     | exit         |     |  3.003667 |           |              | code:0
+d0 | main                     | timer        |     |           |           | test         | name:test1 intervals:3 total:3.001686 min:1.000254 max:1.000929
+d0 | main                     | atexit       |     |  3.003796 |           |              | code:0
+----------------
+
+
 == Future Work
 
 === Relationship to the Existing Trace Api (api-trace.txt)
