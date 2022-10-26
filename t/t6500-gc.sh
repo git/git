@@ -202,6 +202,49 @@ test_expect_success 'one of gc.reflogExpire{Unreachable,}=never does not skip "e
 	grep -E "^trace: (built-in|exec|run_command): git reflog expire --" trace.out
 '
 
+prepare_cruft_history () {
+	test_commit base &&
+
+	test_commit --no-tag foo &&
+	test_commit --no-tag bar &&
+	git reset HEAD^^
+}
+
+assert_cruft_packs () {
+	find .git/objects/pack -name "*.mtimes" >mtimes &&
+	sed -e 's/\.mtimes$/\.pack/g' mtimes >packs &&
+
+	test_file_not_empty packs &&
+	while read pack
+	do
+		test_path_is_file "$pack" || return 1
+	done <packs
+}
+
+test_expect_success 'gc --cruft generates a cruft pack' '
+	test_when_finished "rm -fr crufts" &&
+	git init crufts &&
+	(
+		cd crufts &&
+
+		prepare_cruft_history &&
+		git gc --cruft &&
+		assert_cruft_packs
+	)
+'
+
+test_expect_success 'gc.cruftPacks=true generates a cruft pack' '
+	test_when_finished "rm -fr crufts" &&
+	git init crufts &&
+	(
+		cd crufts &&
+
+		prepare_cruft_history &&
+		git -c gc.cruftPacks=true gc &&
+		assert_cruft_packs
+	)
+'
+
 run_and_wait_for_auto_gc () {
 	# We read stdout from gc for the side effect of waiting until the
 	# background gc process exits, closing its fd 9.  Furthermore, the
