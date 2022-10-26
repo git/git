@@ -215,7 +215,7 @@ test_expect_success 'absolute pathname' '
 		git add sub/file &&
 
 		git mv sub "$(pwd)/in" &&
-		test_path_is_dir sub &&
+		! test_path_is_dir sub &&
 		test_path_is_dir in &&
 		git ls-files --error-unmatch in/file
 	)
@@ -235,7 +235,7 @@ test_expect_success 'absolute pathname outside should fail' '
 
 		test_must_fail git mv sub "$out/out" &&
 		test_path_is_dir sub &&
-		test_path_is_dir ../in &&
+		! test_path_is_dir ../in &&
 		git ls-files --error-unmatch sub/file
 	)
 '
@@ -295,7 +295,7 @@ test_expect_success 'git mv should overwrite symlink to a file' '
 	git add moved &&
 	test_must_fail git mv moved symlink &&
 	git mv -f moved symlink &&
-	test_path_exists moved &&
+	! test_path_exists moved &&
 	test_path_is_file symlink &&
 	test "$(cat symlink)" = 1 &&
 	git update-index --refresh &&
@@ -312,7 +312,7 @@ test_expect_success 'git mv should overwrite file with a symlink' '
 	git add moved &&
 	test_must_fail git mv symlink moved &&
 	git mv -f symlink moved &&
-	test_path_exists symlink &&
+	! test_path_exists symlink &&
 	git update-index --refresh &&
 	git diff-files --quiet
 '
@@ -352,7 +352,7 @@ test_expect_success 'git mv moves a submodule with a .git directory and no .gitm
 	) &&
 	mkdir mod &&
 	git mv sub mod/sub &&
-	test_path_exists sub &&
+	! test_path_exists sub &&
 	test "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" &&
 	git -C mod/sub status &&
 	git update-index --refresh &&
@@ -372,7 +372,7 @@ test_expect_success 'git mv moves a submodule with a .git directory and .gitmodu
 	) &&
 	mkdir mod &&
 	git mv sub mod/sub &&
-	test_path_exists sub &&
+	! test_path_exists sub &&
 	test "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" &&
 	git -C mod/sub status &&
 	echo mod/sub >expected &&
@@ -389,7 +389,7 @@ test_expect_success 'git mv moves a submodule with gitfile' '
 	entry="$(git ls-files --stage sub | cut -f 1)" &&
 	mkdir mod &&
 	git -C mod mv ../sub/ . &&
-	test_path_exists sub &&
+	! test_path_exists sub &&
 	test "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" &&
 	git -C mod/sub status &&
 	echo mod/sub >expected &&
@@ -408,7 +408,7 @@ test_expect_success 'mv does not complain when no .gitmodules file is found' '
 	mkdir mod &&
 	git mv sub mod/sub 2>actual.err &&
 	test_must_be_empty actual.err &&
-	test_path_exists sub &&
+	! test_path_exists sub &&
 	test "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" &&
 	git -C mod/sub status &&
 	git update-index --refresh &&
@@ -447,7 +447,7 @@ test_expect_success 'mv issues a warning when section is not found in .gitmodule
 	mkdir mod &&
 	git mv sub mod/sub 2>actual.err &&
 	test_cmp expect.err actual.err &&
-	test_path_exists sub &&
+	! test_path_exists sub &&
 	test "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" &&
 	git -C mod/sub status &&
 	git update-index --refresh &&
@@ -474,7 +474,7 @@ test_expect_success 'checking out a commit before submodule moved needs manual u
 	git status -s sub2 >actual &&
 	echo "?? sub2/" >expected &&
 	test_cmp expected actual &&
-	test_path_is_file sub/.git &&
+	! test_path_is_file sub/.git &&
 	test_path_is_file sub2/.git &&
 	git submodule update &&
 	test_path_is_file sub/.git &&
