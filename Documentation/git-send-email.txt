@@ -178,9 +178,18 @@ Sending
 	for `sendmail` in `/usr/sbin`, `/usr/lib` and $PATH.
 
 --smtp-encryption=<encryption>::
-	Specify the encryption to use, either 'ssl' or 'tls'.  Any other
-	value reverts to plain SMTP.  Default is the value of
-	`sendemail.smtpEncryption`.
+	Specify in what way encrypting begins for the SMTP connection.
+	Valid values are 'ssl' and 'tls'. Any other value reverts to plain
+	(unencrypted) SMTP, which defaults to port 25.
+	Despite the names, both values will use the same newer version of TLS,
+	but for historic reasons have these names. 'ssl' refers to "implicit"
+	encryption (sometimes called SMTPS), that uses port 465 by default.
+	'tls' refers to "explicit" encryption (often known as STARTTLS),
+	that uses port 25 by default. Other ports might be used by the SMTP
+	server, which are not the default. Commonly found alternative port for
+	'tls' and unencrypted is 587. You need to check your provider's
+	documentation or your server configuration to make sure
+	for your own case. Default is the value of `sendemail.smtpEncryption`.
 
 --smtp-domain=<FQDN>::
 	Specifies the Fully Qualified Domain Name (FQDN) used in the
