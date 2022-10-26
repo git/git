@@ -1,11 +1,10 @@
-#!/bin/sh
+#!/bin/dash
 
 MASTER=master
 
 for range in $(
-	prev_branch=
 	{
-		git for-each-ref --format='%(refname)' refs/heads/maint-* |
+		git for-each-ref --format='%(refname)' refs/heads/maint-\* |
 		perl -e '
 			sub compare_dotted_version {
 				my (@ours) = split(/\./, $_[0]);
@@ -32,21 +31,24 @@ for range in $(
 			     @maint) {
 				print "$_\n";
 			}
-		'
+		' &&
 		cat <<-EOF
 		maint
 		$MASTER
 		next
 		EOF
 	} |
-	while read branch
-	do
-		if test -n "$prev_branch"
-		then
-			echo "$branch..$prev_branch"
-		fi
-		prev_branch=$branch
-	done
+	{
+		prev_branch=
+		while read branch
+		do
+			if test -n "$prev_branch"
+			then
+				echo "$branch..$prev_branch"
+			fi
+			prev_branch=$branch
+		done
+	}
 ) seen..jch
 do
 	lg=$(git log --oneline "$range")
