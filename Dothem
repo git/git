@@ -17,7 +17,7 @@ inst_prefix=$(
 	echo $HOME
 )
 
-force= with_dash= test_long= M= install= nodoc= notest= bootstrap= branches= jobs=
+force= with_dash= test_long= M= install= doc= notest= bootstrap= branches= jobs=
 scratch= noprove= memtrash=--memtrash with_cocci= san=
 while	case "$1" in
 	--pedantic | --locale=* | --loose) M="$M $1" ;;
@@ -27,7 +27,9 @@ while	case "$1" in
 	--no-cocci) with_cocci= ;;
 	--long) test_long=--long ;;
 	--noinstall) install=noinstall ;;
-	--nodoc) nodoc=y ;;
+	--nodoc) doc=no ;;
+	--asciidoc) doc=asciidoc ;;
+	--asciidoctor) doc=ascidoctor ;;
 	--notest) notest=y ;;
 	--nomemtrash) memtrash= ;;
 	--memtrash) memtrash=--memtrash ;;
@@ -47,7 +49,25 @@ do
 	shift
 done
 
-sh -c 'asciidoc --version >/dev/null 2>&1' || nodoc=y
+if test -n "$doc"
+then
+	: ;# happy with whatever specified
+elif sh -c 'asciidoc --version >/dev/null 2>&1'
+then
+	doc=asciidoc
+elif sh -c 'asciidoctor --version >/dev/null 2>&1'
+then
+	doc=asciidoctor
+else
+	doc=no
+fi
+
+if test "$doc" = asciidoctor
+then
+	USE_ASCIIDOCTOR=YesPlease
+else
+	USE_ASCIIDOCTOR=
+fi
 
 GIT_TEST_CHAIN_LINT=1
 export GIT_TEST_CHAIN_LINT
@@ -136,7 +156,8 @@ do
 	vtree=$(git rev-parse --verify "$version^{tree}")
 	rtree=$(git rev-parse --verify "$revision^{tree}")
 	(
-		skip_test=$notest skip_doc=$nodoc
+		skip_test=$notest
+		case "$doc" in no) skip_doc=1 ;; *) skip_doc= ;; esac
 		case "$force" in
 		?*)
 			;;
@@ -231,7 +252,7 @@ do
 			if test "$save" = "$(git rev-parse HEAD)"
 			then
 				Meta/Make $M $jobs -- check-docs &&
-				Meta/Make $M $jobs -- doc &&
+				Meta/Make $M $jobs -- $USE_ASCIIDOCTOR doc &&
 				Meta/Make $M -- install-man install-html
 			else
 				echo >&2 "Head moved--not installing docs"
