@@ -43,6 +43,7 @@ void prepare_repo_settings(struct repository *r)
 	/* Defaults modified by feature.* */
 	if (experimental) {
 		r->settings.fetch_negotiation_algorithm = FETCH_NEGOTIATION_SKIPPING;
+		r->settings.gc_cruft_packs = 1;
 	}
 	if (manyfiles) {
 		r->settings.index_version = 4;
