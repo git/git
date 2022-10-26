@@ -208,7 +208,8 @@ do
 			Meta/Make $M $jobs -- coccicheck
 		fi &&
 
-		Meta/Make $M $jobs -- SPARSE_FLAGS=-Wsparse-error sparse &&
+		Meta/Make $M $jobs -- NO_REGEX=NoThanks \
+			SPARSE_FLAGS=-Wsparse-error sparse &&
 
 		Meta/Make $M $jobs -- hdr-check &&
 
