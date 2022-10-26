@@ -733,29 +733,31 @@ static int mv(int argc, const char **argv, const char *prefix)
 		return error(_("Could not rename config section '%s' to '%s'"),
 				buf.buf, buf2.buf);
 
-	strbuf_reset(&buf);
-	strbuf_addf(&buf, "remote.%s.fetch", rename.new_name);
-	git_config_set_multivar(buf.buf, NULL, NULL, CONFIG_FLAGS_MULTI_REPLACE);
-	strbuf_addf(&old_remote_context, ":refs/remotes/%s/", rename.old_name);
-	for (i = 0; i < oldremote->fetch.raw_nr; i++) {
-		char *ptr;
+	if (oldremote->fetch.raw_nr) {
+		strbuf_reset(&buf);
+		strbuf_addf(&buf, "remote.%s.fetch", rename.new_name);
+		git_config_set_multivar(buf.buf, NULL, NULL, CONFIG_FLAGS_MULTI_REPLACE);
+		strbuf_addf(&old_remote_context, ":refs/remotes/%s/", rename.old_name);
+		for (i = 0; i < oldremote->fetch.raw_nr; i++) {
+			char *ptr;
 
-		strbuf_reset(&buf2);
-		strbuf_addstr(&buf2, oldremote->fetch.raw[i]);
-		ptr = strstr(buf2.buf, old_remote_context.buf);
-		if (ptr) {
-			refspec_updated = 1;
-			strbuf_splice(&buf2,
-				      ptr-buf2.buf + strlen(":refs/remotes/"),
-				      strlen(rename.old_name), rename.new_name,
-				      strlen(rename.new_name));
-		} else
-			warning(_("Not updating non-default fetch refspec\n"
-				  "\t%s\n"
-				  "\tPlease update the configuration manually if necessary."),
-				buf2.buf);
+			strbuf_reset(&buf2);
+			strbuf_addstr(&buf2, oldremote->fetch.raw[i]);
+			ptr = strstr(buf2.buf, old_remote_context.buf);
+			if (ptr) {
+				refspec_updated = 1;
+				strbuf_splice(&buf2,
+					      ptr-buf2.buf + strlen(":refs/remotes/"),
+					      strlen(rename.old_name), rename.new_name,
+					      strlen(rename.new_name));
+			} else
+				warning(_("Not updating non-default fetch refspec\n"
+					  "\t%s\n"
+					  "\tPlease update the configuration manually if necessary."),
+					buf2.buf);
 
-		git_config_set_multivar(buf.buf, buf2.buf, "^$", 0);
+			git_config_set_multivar(buf.buf, buf2.buf, "^$", 0);
+		}
 	}
 
 	read_branches();

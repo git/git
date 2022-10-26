@@ -902,6 +902,17 @@ test_expect_success 'rename a remote renames repo remote.pushDefault but keeps g
 	)
 '
 
+test_expect_success 'rename handles remote without fetch refspec' '
+	git clone --bare one no-refspec.git &&
+	# confirm assumption that bare clone does not create refspec
+	test_expect_code 5 \
+		git -C no-refspec.git config --unset-all remote.origin.fetch &&
+	git -C no-refspec.git config remote.origin.url >expect &&
+	git -C no-refspec.git remote rename origin foo &&
+	git -C no-refspec.git config remote.foo.url >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'rename does not update a non-default fetch refspec' '
 	git clone one four.one &&
 	(
