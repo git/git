@@ -23,10 +23,6 @@ static const char git_attr__unknown[] = "(builtin)unknown";
 #define ATTR__UNSET NULL
 #define ATTR__UNKNOWN git_attr__unknown
 
-#ifndef DEBUG_ATTR
-#define DEBUG_ATTR 0
-#endif
-
 struct git_attr {
 	int attr_nr; /* unique attribute number */
 	char name[FLEX_ARRAY]; /* attribute name */
@@ -807,33 +803,6 @@ static struct attr_stack *read_attr(struct index_state *istate,
 	return res;
 }
 
-#if DEBUG_ATTR
-static void debug_info(const char *what, struct attr_stack *elem)
-{
-	fprintf(stderr, "%s: %s\n", what, elem->origin ? elem->origin : "()");
-}
-static void debug_set(const char *what, const char *match, struct git_attr *attr, const void *v)
-{
-	const char *value = v;
-
-	if (ATTR_TRUE(value))
-		value = "set";
-	else if (ATTR_FALSE(value))
-		value = "unset";
-	else if (ATTR_UNSET(value))
-		value = "unspecified";
-
-	fprintf(stderr, "%s: %s => %s (%s)\n",
-		what, attr->name, (char *) value, match);
-}
-#define debug_push(a) debug_info("push", (a))
-#define debug_pop(a) debug_info("pop", (a))
-#else
-#define debug_push(a) do { ; } while (0)
-#define debug_pop(a) do { ; } while (0)
-#define debug_set(a,b,c,d) do { ; } while (0)
-#endif /* DEBUG_ATTR */
-
 static const char *git_etc_gitattributes(void)
 {
 	static const char *system_wide;
@@ -954,7 +923,6 @@ static void prepare_attr_stack(struct index_state *istate,
 		    (!namelen || path[namelen] == '/'))
 			break;
 
-		debug_pop(elem);
 		*stack = elem->prev;
 		attr_stack_free(elem);
 	}
@@ -1028,7 +996,7 @@ static int path_matches(const char *pathname, int pathlen,
 
 static int macroexpand_one(struct all_attrs_item *all_attrs, int nr, int rem);
 
-static int fill_one(const char *what, struct all_attrs_item *all_attrs,
+static int fill_one(struct all_attrs_item *all_attrs,
 		    const struct match_attr *a, int rem)
 {
 	int i;
@@ -1039,9 +1007,6 @@ static int fill_one(const char *what, struct all_attrs_item *all_attrs,
 		const char *v = a->state[i].setto;
 
 		if (*n == ATTR__UNKNOWN) {
-			debug_set(what,
-				  a->is_macro ? a->u.attr->name : a->u.pat.pattern,
-				  attr, v);
 			*n = v;
 			rem--;
 			rem = macroexpand_one(all_attrs, attr->attr_nr, rem);
@@ -1064,7 +1029,7 @@ static int fill(const char *path, int pathlen, int basename_offset,
 				continue;
 			if (path_matches(path, pathlen, basename_offset,
 					 &a->u.pat, base, stack->originlen))
-				rem = fill_one("fill", all_attrs, a, rem);
+				rem = fill_one(all_attrs, a, rem);
 		}
 	}
 
@@ -1076,7 +1041,7 @@ static int macroexpand_one(struct all_attrs_item *all_attrs, int nr, int rem)
 	const struct all_attrs_item *item = &all_attrs[nr];
 
 	if (item->macro && item->value == ATTR__TRUE)
-		return fill_one("expand", all_attrs, item->macro, rem);
+		return fill_one(all_attrs, item->macro, rem);
 	else
 		return rem;
 }

@@ -85,10 +85,17 @@ static int cmd__submodule_is_active(int argc, const char **argv)
 	return !is_submodule_active(the_repository, argv[0]);
 }
 
-static int resolve_relative_url(int argc, const char **argv)
+static int cmd__submodule_resolve_relative_url(int argc, const char **argv)
 {
 	char *remoteurl, *res;
 	const char *up_path, *url;
+	struct option options[] = {
+		OPT_END()
+	};
+	argc = parse_options(argc, argv, "test-tools", options,
+			     submodule_resolve_relative_url_usage, 0);
+	if (argc != 3)
+		usage_with_options(submodule_resolve_relative_url_usage, options);
 
 	up_path = argv[0];
 	remoteurl = xstrdup(argv[1]);
@@ -102,19 +109,6 @@ static int resolve_relative_url(int argc, const char **argv)
 	free(res);
 	free(remoteurl);
 	return 0;
-}
-
-static int cmd__submodule_resolve_relative_url(int argc, const char **argv)
-{
-	struct option options[] = {
-		OPT_END()
-	};
-	argc = parse_options(argc, argv, "test-tools", options,
-			     submodule_resolve_relative_url_usage, 0);
-	if (argc != 3)
-		usage_with_options(submodule_resolve_relative_url_usage, options);
-
-	return resolve_relative_url(argc, argv);
 }
 
 static struct test_cmd cmds[] = {
