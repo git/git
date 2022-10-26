@@ -60,8 +60,8 @@ test_expect_success 'checking the commit' '
 
 test_expect_success 'mv --dry-run does not move file' '
 	git mv -n path0/COPYING MOVED &&
-	! test_path_is_file path0/COPYING &&
-	test_path_is_file MOVED
+	test_path_is_file path0/COPYING &&
+	! test_path_is_file MOVED
 '
 
 test_expect_success 'checking -k on non-existing file' '
@@ -72,7 +72,7 @@ test_expect_success 'checking -k on untracked file' '
 	>untracked1 &&
 	git mv -k untracked1 path0 &&
 	test_path_is_file untracked1 &&
-	test_path_is_file path0/untracked1
+	! test_path_is_file path0/untracked1
 '
 
 test_expect_success 'checking -k on multiple untracked files' '
@@ -80,14 +80,14 @@ test_expect_success 'checking -k on multiple untracked files' '
 	git mv -k untracked1 untracked2 path0 &&
 	test_path_is_file untracked1 &&
 	test_path_is_file untracked2 &&
-	test_path_is_file path0/untracked1 &&
-	test_path_is_file path0/untracked2
+	! test_path_is_file path0/untracked1 &&
+	! test_path_is_file path0/untracked2
 '
 
 test_expect_success 'checking -f on untracked file with existing target' '
 	>path0/untracked1 &&
 	test_must_fail git mv -f untracked1 path0 &&
-	test_path_is_file .git/index.lock &&
+	! test_path_is_file .git/index.lock &&
 	test_path_is_file untracked1 &&
 	test_path_is_file path0/untracked1
 '
