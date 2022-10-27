@@ -166,17 +166,15 @@ static int write_archive_entry(const struct object_id *oid, const char *base,
 		args->convert = check_attr_export_subst(check);
 	}
 
+	if (args->verbose)
+		fprintf(stderr, "%.*s\n", (int)path.len, path.buf);
+
 	if (S_ISDIR(mode) || S_ISGITLINK(mode)) {
-		if (args->verbose)
-			fprintf(stderr, "%.*s\n", (int)path.len, path.buf);
 		err = write_entry(args, oid, path.buf, path.len, mode, NULL, 0);
 		if (err)
 			return err;
 		return (S_ISDIR(mode) ? READ_TREE_RECURSIVE : 0);
 	}
-
-	if (args->verbose)
-		fprintf(stderr, "%.*s\n", (int)path.len, path.buf);
 
 	/* Stream it? */
 	if (S_ISREG(mode) && !args->convert &&
