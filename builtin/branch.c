@@ -520,13 +520,6 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 	const char *interpreted_newname = NULL;
 	int recovery = 0;
 
-	if (!oldname) {
-		if (copy)
-			die(_("cannot copy the current branch while not on any."));
-		else
-			die(_("cannot rename the current branch while not on any."));
-	}
-
 	if (strbuf_check_branch_ref(&oldref, oldname)) {
 		/*
 		 * Bad name --- this could be an attempt to rename a
@@ -827,24 +820,19 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		strbuf_release(&buf);
 
 		return ret;
-	} else if (copy) {
+	} else if (copy || rename) {
 		if (!argc)
 			die(_("branch name required"));
+		else if ((argc == 1) && filter.detached)
+			die(copy? _("cannot copy the current branch while not on any.")
+				: _("cannot rename the current branch while not on any."));
 		else if (argc == 1)
-			copy_or_rename_branch(head, argv[0], 1, copy > 1);
+			copy_or_rename_branch(head, argv[0], copy, copy + rename > 1);
 		else if (argc == 2)
-			copy_or_rename_branch(argv[0], argv[1], 1, copy > 1);
+			copy_or_rename_branch(argv[0], argv[1], copy, copy + rename > 1);
 		else
-			die(_("too many branches for a copy operation"));
-	} else if (rename) {
-		if (!argc)
-			die(_("branch name required"));
-		else if (argc == 1)
-			copy_or_rename_branch(head, argv[0], 0, rename > 1);
-		else if (argc == 2)
-			copy_or_rename_branch(argv[0], argv[1], 0, rename > 1);
-		else
-			die(_("too many arguments for a rename operation"));
+			die(copy? _("too many branches for a copy operation")
+				: _("too many arguments for a rename operation"));
 	} else if (new_upstream) {
 		struct branch *branch;
 		struct strbuf buf = STRBUF_INIT;

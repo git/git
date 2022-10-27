@@ -268,6 +268,17 @@ test_expect_success 'git branch -M topic topic should work when main is checked 
 	git branch -M topic topic
 '
 
+test_expect_success 'git branch -M and -C fail on detached HEAD' '
+	git checkout HEAD^{} &&
+	test_when_finished git checkout - &&
+	echo "fatal: cannot rename the current branch while not on any." >expect &&
+	test_must_fail git branch -M must-fail 2>err &&
+	test_cmp expect err &&
+	echo "fatal: cannot copy the current branch while not on any." >expect &&
+	test_must_fail git branch -C must-fail 2>err &&
+	test_cmp expect err
+'
+
 test_expect_success 'git branch -v -d t should work' '
 	git branch t &&
 	git rev-parse --verify refs/heads/t &&
