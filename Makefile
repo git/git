@@ -529,8 +529,9 @@ GIT-VERSION-FILE: FORCE
 #   template_dir
 #   sysconfdir
 # can be specified as a relative path some/where/else;
-# this is interpreted as relative to $(prefix) and "git" at
-# runtime figures out where they are based on the path to the executable.
+# this is interpreted as relative to $(prefix) and "git" built with
+# RUNTIME_PREFIX flag will figure out (at runtime) where they are
+# based on the path to the executable.
 # Additionally, the following will be treated as relative by "git" if they
 # begin with "$(prefix)/":
 #   mandir
