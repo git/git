@@ -70,9 +70,10 @@ verify::
 	Verify the contents of the MIDX file.
 
 expire::
-	Delete the pack-files that are tracked 	by the MIDX file, but
-	have no objects referenced by the MIDX. Rewrite the MIDX file
-	afterward to remove all references to these pack-files.
+	Delete the pack-files that are tracked by the MIDX file, but
+	have no objects referenced by the MIDX (with the exception of
+	`.keep` packs and cruft packs). Rewrite the MIDX file afterward
+	to remove all references to these pack-files.
 
 repack::
 	Create a new pack-file containing objects in small pack-files
