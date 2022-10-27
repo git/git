@@ -1394,7 +1394,7 @@ test_expect_success 'branch --delete --force removes dangling branch' '
 
 test_expect_success 'use --edit-description' '
 	EDITOR=: git branch --edit-description &&
-	test_must_fail git config branch.main.description &&
+	test_expect_code 1 git config branch.main.description &&
 
 	write_script editor <<-\EOF &&
 		echo "New contents" >"$1"
