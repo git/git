@@ -64,6 +64,19 @@ enum decoration_type {
 void add_name_decoration(enum decoration_type type, const char *name, struct object *obj);
 const struct name_decoration *get_name_decoration(const struct object *obj);
 
+/*
+ * Look up commit named by "oid" respecting replacement objects.
+ * Returns NULL if "oid" is not a commit or does not exist.
+ */
+struct commit *lookup_commit_object(struct repository *r, const struct object_id *oid);
+
+/*
+ * Look up commit named by "oid" without replacement objects or
+ * checking for object existence. Returns the requested commit if it
+ * is found in the object cache, NULL if "oid" is in the object cache
+ * but is not a commit and a newly allocated unparsed commit object if
+ * "oid" is not in the object cache.
+ */
 struct commit *lookup_commit(struct repository *r, const struct object_id *oid);
 struct commit *lookup_commit_reference(struct repository *r,
 				       const struct object_id *oid);
