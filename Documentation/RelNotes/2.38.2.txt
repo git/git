@@ -44,4 +44,17 @@ Fixes since v2.38.1
  * "GIT_EDITOR=: git branch --edit-description" resulted in failure,
    which has been corrected.
 
+ * Documentation on various Boolean GIT_* environment variables have
+   been clarified.
+
+ * "git multi-pack-index repack/expire" used to repack unreachable
+   cruft into a new pack, which have been corrected.
+
+ * The code to clean temporary object directories (used for
+   quarantine) tried to remove them inside its signal handler, which
+   was a no-no.
+
+ * "git branch --edit-description" on an unborh branch misleadingly
+   said that no such branch exists, which has been corrected.
+
 Also contains various documentation updates and code clean-ups.

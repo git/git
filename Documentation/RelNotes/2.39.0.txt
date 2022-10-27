@@ -51,6 +51,10 @@ Performance, Internal Implementation, Development Support etc.
 
  * Enable address and undefined sanitizer tasks at GitHub Actions CI.
 
+ * More UNUSED annotation to help using -Wunused option with the
+   compiler.
+   (merge 4b992f0a24 jk/unused-anno-more later to maint).
+
 
 Fixes since v2.38
 -----------------
@@ -136,6 +140,20 @@ Fixes since v2.38
    jobs (the other one tests Apple Common Crypto).
    (merge 1ad5c3df35 jc/ci-osx-with-sha1dc later to maint).
 
+ * A bugfix with tracing support in midx codepath
+   (merge e9c3839944 tb/midx-bitmap-selection-fix later to maint).
+
+ * When geometric repacking feature is in use together with the
+   --pack-kept-objects option, we lost packs marked with .keep files.
+   (merge 197443e80a tb/save-keep-pack-during-geometric-repack later to maint).
+
+ * Move a global variable added as a hack during regression fixes to
+   its proper place in the API.
+   (merge 0b0ab95f17 ab/run-hook-api-cleanup later to maint).
+
+ * Update to build procedure with VS using CMake/CTest.
+   (merge c858750b41 js/cmake-updates later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge c34a6bd291 so/diff-merges-cleanup later to maint).
    (merge 2a905f8fa8 ah/branch-autosetupmerge-grammofix later to maint).
@@ -146,3 +164,4 @@ Fixes since v2.38
    (merge a677d3c416 pw/remove-rebase-p-test later to maint).
    (merge e3733b646d rs/archive-dedup-printf later to maint).
    (merge 413bc6d20a ds/cmd-main-reorder later to maint).
+   (merge 8d2863e4ed nw/t1002-cleanup later to maint).
