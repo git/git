@@ -314,7 +314,9 @@ typedef unsigned long uintptr_t;
 #ifdef PRECOMPOSE_UNICODE
 #include "compat/precompose_utf8.h"
 #else
-static inline const char *precompose_argv_prefix(int argc, const char **argv, const char *prefix)
+static inline const char *precompose_argv_prefix(int argc UNUSED,
+						 const char **argv UNUSED,
+						 const char *prefix)
 {
 	return prefix;
 }
@@ -339,7 +341,9 @@ struct itimerval {
 #endif
 
 #ifdef NO_SETITIMER
-static inline int setitimer(int which, const struct itimerval *value, struct itimerval *newvalue) {
+static inline int setitimer(int which UNUSED,
+			    const struct itimerval *value UNUSED,
+			    struct itimerval *newvalue UNUSED) {
 	return 0; /* pretend success */
 }
 #endif
@@ -424,7 +428,7 @@ int lstat_cache_aware_rmdir(const char *path);
 #endif
 
 #ifndef has_dos_drive_prefix
-static inline int git_has_dos_drive_prefix(const char *path)
+static inline int git_has_dos_drive_prefix(const char *path UNUSED)
 {
 	return 0;
 }
@@ -432,7 +436,7 @@ static inline int git_has_dos_drive_prefix(const char *path)
 #endif
 
 #ifndef skip_dos_drive_prefix
-static inline int git_skip_dos_drive_prefix(char **path)
+static inline int git_skip_dos_drive_prefix(char **path UNUSED)
 {
 	return 0;
 }
@@ -1467,11 +1471,11 @@ int open_nofollow(const char *path, int flags);
 #endif
 
 #ifndef _POSIX_THREAD_SAFE_FUNCTIONS
-static inline void flockfile(FILE *fh)
+static inline void flockfile(FILE *fh UNUSED)
 {
 	; /* nothing */
 }
-static inline void funlockfile(FILE *fh)
+static inline void funlockfile(FILE *fh UNUSED)
 {
 	; /* nothing */
 }

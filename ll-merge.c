@@ -49,14 +49,14 @@ void reset_merge_attributes(void)
 /*
  * Built-in low-levels
  */
-static enum ll_merge_result ll_binary_merge(const struct ll_merge_driver *drv_unused,
+static enum ll_merge_result ll_binary_merge(const struct ll_merge_driver *drv UNUSED,
 			   mmbuffer_t *result,
-			   const char *path,
-			   mmfile_t *orig, const char *orig_name,
-			   mmfile_t *src1, const char *name1,
-			   mmfile_t *src2, const char *name2,
+			   const char *path UNUSED,
+			   mmfile_t *orig, const char *orig_name UNUSED,
+			   mmfile_t *src1, const char *name1 UNUSED,
+			   mmfile_t *src2, const char *name2 UNUSED,
 			   const struct ll_merge_options *opts,
-			   int marker_size)
+			   int marker_size UNUSED)
 {
 	enum ll_merge_result ret;
 	mmfile_t *stolen;
@@ -183,9 +183,9 @@ static void create_temp(mmfile_t *src, char *path, size_t len)
 static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
 			mmbuffer_t *result,
 			const char *path,
-			mmfile_t *orig, const char *orig_name,
-			mmfile_t *src1, const char *name1,
-			mmfile_t *src2, const char *name2,
+			mmfile_t *orig, const char *orig_name UNUSED,
+			mmfile_t *src1, const char *name1 UNUSED,
+			mmfile_t *src2, const char *name2 UNUSED,
 			const struct ll_merge_options *opts,
 			int marker_size)
 {
