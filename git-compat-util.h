@@ -189,9 +189,12 @@ struct strbuf;
 #define _NETBSD_SOURCE 1
 #define _SGI_SOURCE 1
 
-#if defined(__GNUC__)
+#if GIT_GNUC_PREREQ(4, 5)
 #define UNUSED __attribute__((unused)) \
 	__attribute__((deprecated ("parameter declared as UNUSED")))
+#elif defined(__GNUC__)
+#define UNUSED __attribute__((unused)) \
+	__attribute__((deprecated))
 #else
 #define UNUSED
 #endif
