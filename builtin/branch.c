@@ -538,6 +538,13 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 			die(_("Invalid branch name: '%s'"), oldname);
 	}
 
+	if ((copy || strcmp(head, oldname)) && !ref_exists(oldref.buf)) {
+		if (copy && !strcmp(head, oldname))
+			die(_("No commit on branch '%s' yet."), oldname);
+		else
+			die(_("No branch named '%s'."), oldname);
+	}
+
 	/*
 	 * A command like "git branch -M currentbranch currentbranch" cannot
 	 * cause the worktree to become inconsistent with HEAD, so allow it.
@@ -807,7 +814,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		if (!ref_exists(branch_ref.buf)) {
 			strbuf_release(&branch_ref);
 
-			if (!argc)
+			if (!argc || !strcmp(head, branch_name))
 				return error(_("No commit on branch '%s' yet."),
 					     branch_name);
 			else
@@ -850,8 +857,11 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 			die(_("no such branch '%s'"), argv[0]);
 		}
 
-		if (!ref_exists(branch->refname))
+		if (!ref_exists(branch->refname)) {
+			if (!argc || !strcmp(head, branch->name))
+				die(_("No commit on branch '%s' yet."), branch->name);
 			die(_("branch '%s' does not exist"), branch->name);
+		}
 
 		dwim_and_setup_tracking(the_repository, branch->name,
 					new_upstream, BRANCH_TRACK_OVERRIDE,
