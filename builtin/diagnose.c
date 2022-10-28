@@ -3,7 +3,8 @@
 #include "diagnose.h"
 
 static const char * const diagnose_usage[] = {
-	N_("git diagnose [-o|--output-directory <path>] [-s|--suffix <format>] [--mode=<mode>]"),
+	N_("git diagnose [(-o | --output-directory) <path>] [(-s | --suffix) <format>]\n"
+	   "             [--mode=<mode>]"),
 	NULL
 };
 
