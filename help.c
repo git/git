@@ -563,7 +563,7 @@ static int git_unknown_cmd_config(const char *var, const char *value, void *cb)
 	if (skip_prefix(var, "alias.", &p))
 		add_cmdname(&aliases, p, strlen(p));
 
-	return git_default_config(var, value, cb);
+	return 0;
 }
 
 static int levenshtein_compare(const void *p1, const void *p2)
