@@ -16,7 +16,7 @@ SYNOPSIS
 	  [--depth <depth>] [--[no-]single-branch] [--no-tags]
 	  [--recurse-submodules[=<pathspec>]] [--[no-]shallow-submodules]
 	  [--[no-]remote-submodules] [--jobs <n>] [--sparse] [--[no-]reject-shallow]
-	  [--filter=<filter> [--also-filter-submodules]] [--] <repository>
+	  [--filter=<filter> [--also-filter-submodules] [--detach]] [--] <repository>
 	  [<directory>]
 
 DESCRIPTION
@@ -209,6 +209,12 @@ objects from the source repository into a pack in the cloned repository.
 	be checked out.
 	`--branch` can also take tags and detaches the HEAD at that commit
 	in the resulting repository.
+
+--detach::
+	If the cloned repository's HEAD points to a branch, point the newly
+	created HEAD to the branch's commit instead of the branch itself.
+	Additionally, in a non-bare repository, the corresponding local branch
+	will not be created.
 
 -u <upload-pack>::
 --upload-pack <upload-pack>::
