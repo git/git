@@ -285,7 +285,7 @@ static int ce_compare_gitlink(const struct cache_entry *ce)
 	 *
 	 * If so, we consider it always to match.
 	 */
-	if (resolve_gitlink_ref(ce->name, "HEAD", &oid) < 0)
+	if (resolve_gitlink_ref(ce->name, "HEAD", &oid, NULL) < 0)
 		return 0;
 	return !oideq(&oid, &ce->oid);
 }
@@ -781,7 +781,7 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 
 	namelen = strlen(path);
 	if (S_ISDIR(st_mode)) {
-		if (resolve_gitlink_ref(path, "HEAD", &oid) < 0)
+		if (resolve_gitlink_ref(path, "HEAD", &oid, NULL) < 0)
 			return error(_("'%s' does not have a commit checked out"), path);
 		while (namelen && path[namelen-1] == '/')
 			namelen--;
