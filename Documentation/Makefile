@@ -476,8 +476,19 @@ $(LINT_DOCS_MAN_SECTION_ORDER): .build/lint-docs/man-section-order/%.ok: %.txt
 .PHONY: lint-docs-man-section-order
 lint-docs-man-section-order: $(LINT_DOCS_MAN_SECTION_ORDER)
 
+.PHONY: lint-docs-fsck-msgids
+LINT_DOCS_FSCK_MSGIDS = .build/lint-docs/fsck-msgids.ok
+$(LINT_DOCS_FSCK_MSGIDS): lint-fsck-msgids.perl
+$(LINT_DOCS_FSCK_MSGIDS): ../fsck.h fsck-msgids.txt
+	$(call mkdir_p_parent_template)
+	$(QUIET_GEN)$(PERL_PATH) lint-fsck-msgids.perl \
+		../fsck.h fsck-msgids.txt $@
+
+lint-docs-fsck-msgids: $(LINT_DOCS_FSCK_MSGIDS)
+
 ## Lint: list of targets above
 .PHONY: lint-docs
+lint-docs: lint-docs-fsck-msgids
 lint-docs: lint-docs-gitlink
 lint-docs: lint-docs-man-end-blurb
 lint-docs: lint-docs-man-section-order
