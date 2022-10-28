@@ -75,14 +75,12 @@ Fixes since v2.38
 
  * Documentation on various Boolean GIT_* environment variables have
    been clarified.
-   (merge 819fb68222 jc/environ-docs later to maint).
 
  * "git rebase -i" can mistakenly attempt to apply a fixup to a commit
    itself, which has been corrected.
 
  * "git multi-pack-index repack/expire" used to repack unreachable
    cruft into a new pack, which have been corrected.
-   (merge b62ad5681f tb/midx-repack-ignore-cruft-packs later to maint).
 
  * In read-only repositories, "git merge-tree" tried to come up with a
    merge result tree object, which it failed (which is not wrong) and
@@ -105,22 +103,17 @@ Fixes since v2.38
  * The code to clean temporary object directories (used for
    quarantine) tried to remove them inside its signal handler, which
    was a no-no.
-   (merge 22613b25ec jc/tmp-objdir later to maint).
 
  * Update comment in the Makefile about the RUNTIME_PREFIX config knob.
-   (merge ebb6c16607 dd/document-runtime-prefix-better later to maint).
 
  * Clarify that "the sentence after <area>: prefix does not begin with
    a capital letter" rule applies only to the commit title.
-   (merge 3991bb73dd jc/use-of-uc-in-log-messages later to maint).
 
  * "git branch --edit-description" on an unborh branch misleadingly
    said that no such branch exists, which has been corrected.
-   (merge bcfc82bd48 rj/branch-edit-desc-unborn later to maint).
 
  * Work around older clang that warns against C99 zero initialization
    syntax for struct.
-   (merge 54795d37d9 jh/struct-zero-init-with-older-clang later to maint).
 
  * Giving "--invert-grep" and "--all-match" without "--grep" to the
    "git log" command resulted in an attempt to access grep pattern
@@ -154,14 +147,21 @@ Fixes since v2.38
  * Update to build procedure with VS using CMake/CTest.
    (merge c858750b41 js/cmake-updates later to maint).
 
+ * The short-help text shown by "git cmd -h" and the synopsis text
+   shown at the beginning of "git help cmd" have been made more
+   consistent.
+
+ * When creating a multi-pack bitmap, remove per-pack bitmap files
+   unconditionally as they will never be consulted.
+   (merge 55d902cd61 tb/remove-unused-pack-bitmap later to maint).
+
+ * Fix a longstanding syntax error in Git.pm error codepath.
+
+ * "git diff --stat" etc. were invented back when everything was ASCII
+   and strlen() was a way to measure the display width of a string;
+   adjust them to compute the display width assuming UTF-8 pathnames.
+   (merge ce8529b2bb tb/diffstat-with-utf8-strwidth later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
-   (merge c34a6bd291 so/diff-merges-cleanup later to maint).
-   (merge 2a905f8fa8 ah/branch-autosetupmerge-grammofix later to maint).
-   (merge abcac2e19f rj/ref-filter-get-head-description-leakfix later to maint).
-   (merge 71e5473493 hn/parse-worktree-ref later to maint).
-   (merge 7c07f36ad2 ab/unused-annotation later to maint).
-   (merge f7669676d0 rs/use-fspathncmp later to maint).
-   (merge a677d3c416 pw/remove-rebase-p-test later to maint).
-   (merge e3733b646d rs/archive-dedup-printf later to maint).
    (merge 413bc6d20a ds/cmd-main-reorder later to maint).
    (merge 8d2863e4ed nw/t1002-cleanup later to maint).
