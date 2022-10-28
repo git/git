@@ -432,7 +432,11 @@ ifeq ($(uname_S),Windows)
         ifeq (MINGW32,$(MSYSTEM))
 		prefix = /mingw32
         else
-		prefix = /mingw64
+		ifeq (CLANGARM64,$(MSYSTEM))
+			prefix = /clangarm64
+		else
+			prefix = /mingw64
+		endif
         endif
 	# Prepend MSVC 64-bit tool-chain to PATH.
 	#
@@ -485,7 +489,7 @@ ifeq ($(uname_S),Windows)
 	NO_POSIX_GOODIES = UnfortunatelyYes
 	NATIVE_CRLF = YesPlease
 	DEFAULT_HELP_FORMAT = html
-ifeq (/mingw64,$(subst 32,64,$(prefix)))
+ifeq (/mingw64,$(subst 32,64,$(subst clangarm,mingw,$(prefix))))
 	# Move system config into top-level /etc/
 	ETC_GITCONFIG = ../etc/gitconfig
 	ETC_GITATTRIBUTES = ../etc/gitattributes
@@ -721,10 +725,13 @@ ifeq ($(uname_S),MINGW)
 		prefix = /mingw32
 		HOST_CPU = i686
 		BASIC_LDFLAGS += -Wl,--pic-executable,-e,_mainCRTStartup
-        endif
-        ifeq (MINGW64,$(MSYSTEM))
+        else ifeq (MINGW64,$(MSYSTEM))
 		prefix = /mingw64
 		HOST_CPU = x86_64
+		BASIC_LDFLAGS += -Wl,--pic-executable,-e,mainCRTStartup
+        else ifeq (CLANGARM64,$(MSYSTEM))
+		prefix = /clangarm64
+		HOST_CPU = aarch64
 		BASIC_LDFLAGS += -Wl,--pic-executable,-e,mainCRTStartup
         else
 		COMPAT_CFLAGS += -D_USE_32BIT_TIME_T
@@ -742,7 +749,7 @@ ifeq ($(uname_S),MINGW)
 	USE_LIBPCRE = YesPlease
 	USE_MIMALLOC = YesPlease
 	NO_PYTHON =
-        ifeq (/mingw64,$(subst 32,64,$(prefix)))
+        ifeq (/mingw64,$(subst 32,64,$(subst clangarm,mingw,$(prefix))))
 		# Move system config into top-level /etc/
 		ETC_GITCONFIG = ../etc/gitconfig
 		ETC_GITATTRIBUTES = ../etc/gitattributes
