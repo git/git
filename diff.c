@@ -2624,7 +2624,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 			continue;
 		}
 		fill_print_name(file);
-		len = strlen(file->print_name);
+		len = utf8_strwidth(file->print_name);
 		if (max_len < len)
 			max_len = len;
 
@@ -2677,6 +2677,11 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 	 * making the line longer than the maximum width.
 	 */
 
+	/*
+	 * NEEDSWORK: line_prefix is often used for "log --graph" output
+	 * and contains ANSI-colored string.  utf8_strnwidth() should be
+	 * used to correctly count the display width instead of strlen().
+	 */
 	if (options->stat_width == -1)
 		width = term_columns() - strlen(line_prefix);
 	else
@@ -2738,7 +2743,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 		char *name = file->print_name;
 		uintmax_t added = file->added;
 		uintmax_t deleted = file->deleted;
-		int name_len;
+		int name_len, padding;
 
 		if (!file->is_interesting && (added + deleted == 0))
 			continue;
@@ -2747,20 +2752,34 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 		 * "scale" the filename
 		 */
 		len = name_width;
-		name_len = strlen(name);
+		name_len = utf8_strwidth(name);
 		if (name_width < name_len) {
 			char *slash;
 			prefix = "...";
 			len -= 3;
+			/*
+			 * NEEDSWORK: (name_len - len) counts the display
+			 * width, which would be shorter than the byte
+			 * length of the corresponding substring.
+			 * Advancing "name" by that number of bytes does
+			 * *NOT* skip over that many columns, so it is
+			 * very likely that chomping the pathname at the
+			 * slash we will find starting from "name" will
+			 * leave the resulting string still too long.
+			 */
 			name += name_len - len;
 			slash = strchr(name, '/');
 			if (slash)
 				name = slash;
 		}
+		padding = len - utf8_strwidth(name);
+		if (padding < 0)
+			padding = 0;
 
 		if (file->is_binary) {
-			strbuf_addf(&out, " %s%-*s |", prefix, len, name);
-			strbuf_addf(&out, " %*s", number_width, "Bin");
+			strbuf_addf(&out, " %s%s%*s | %*s",
+				    prefix, name, padding, "",
+				    number_width, "Bin");
 			if (!added && !deleted) {
 				strbuf_addch(&out, '\n');
 				emit_diff_symbol(options, DIFF_SYMBOL_STATS_LINE,
@@ -2780,8 +2799,9 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 			continue;
 		}
 		else if (file->is_unmerged) {
-			strbuf_addf(&out, " %s%-*s |", prefix, len, name);
-			strbuf_addstr(&out, " Unmerged\n");
+			strbuf_addf(&out, " %s%s%*s | %*s",
+				    prefix, name, padding, "",
+				    number_width, "Unmerged");
 			emit_diff_symbol(options, DIFF_SYMBOL_STATS_LINE,
 					 out.buf, out.len, 0);
 			strbuf_reset(&out);
@@ -2807,10 +2827,10 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 				add = total - del;
 			}
 		}
-		strbuf_addf(&out, " %s%-*s |", prefix, len, name);
-		strbuf_addf(&out, " %*"PRIuMAX"%s",
-			number_width, added + deleted,
-			added + deleted ? " " : "");
+		strbuf_addf(&out, " %s%s%*s | %*"PRIuMAX"%s",
+			    prefix, name, padding, "",
+			    number_width, added + deleted,
+			    added + deleted ? " " : "");
 		show_graph(&out, '+', add, add_c, reset);
 		show_graph(&out, '-', del, del_c, reset);
 		strbuf_addch(&out, '\n');
