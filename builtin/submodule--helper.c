@@ -1503,6 +1503,8 @@ struct module_clone_data {
 	const char *name;
 	const char *url;
 	const char *depth;
+	const char *branch;
+	const char *branch_oid;
 	struct list_objects_filter_options *filter_options;
 	unsigned int quiet: 1;
 	unsigned int progress: 1;
@@ -1692,6 +1694,8 @@ static int clone_submodule(const struct module_clone_data *clone_data,
 			strvec_push(&cp.args, clone_data->single_branch ?
 				    "--single-branch" :
 				    "--no-single-branch");
+		if (the_repository->settings.submodule_propagate_branches)
+			strvec_push(&cp.args, "--detach");
 
 		strvec_push(&cp.args, "--");
 		strvec_push(&cp.args, clone_data->url);
@@ -1704,6 +1708,21 @@ static int clone_submodule(const struct module_clone_data *clone_data,
 		if(run_command(&cp))
 			die(_("clone of '%s' into submodule path '%s' failed"),
 			    clone_data->url, clone_data_path);
+
+		if (clone_data->branch) {
+			struct child_process branch_cp = CHILD_PROCESS_INIT;
+
+			branch_cp.git_cmd = 1;
+			prepare_other_repo_env(&branch_cp.env, sm_gitdir);
+
+			strvec_pushl(&branch_cp.args, "branch",
+				     clone_data->branch, clone_data->branch_oid,
+				     NULL);
+
+			if (run_command(&branch_cp))
+				die(_("could not create branch '%s' in submodule path '%s'"),
+				    clone_data->branch, clone_data_path);
+		}
 	} else {
 		char *path;
 
@@ -1778,6 +1797,12 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 			   N_("disallow cloning into non-empty directory")),
 		OPT_BOOL(0, "single-branch", &clone_data.single_branch,
 			 N_("clone only one branch, HEAD or --branch")),
+		OPT_STRING(0, "branch", &clone_data.branch,
+			   N_("string"),
+			   N_("name of branch to be created")),
+		OPT_STRING(0, "branch-oid", &clone_data.branch_oid,
+			   N_("object-id"),
+			   N_("commit id for new branch")),
 		OPT_PARSE_LIST_OBJECTS_FILTER(&filter_options),
 		OPT_END()
 	};
@@ -1785,12 +1810,14 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 		N_("git submodule--helper clone [--prefix=<path>] [--quiet] "
 		   "[--reference <repository>] [--name <name>] [--depth <depth>] "
 		   "[--single-branch] [--filter <filter-spec>] "
+		   "[--branch <branch> --branch-oid <oid>]"
 		   "--url <url> --path <path>"),
 		NULL
 	};
 
 	argc = parse_options(argc, argv, prefix, module_clone_options,
 			     git_submodule_helper_usage, 0);
+	prepare_repo_settings(the_repository);
 
 	clone_data.dissociate = !!dissociate;
 	clone_data.quiet = !!quiet;
@@ -1801,6 +1828,12 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 	if (argc || !clone_data.url || !clone_data.path || !*(clone_data.path))
 		usage_with_options(git_submodule_helper_usage,
 				   module_clone_options);
+
+	if (!!clone_data.branch != !!clone_data.branch_oid)
+		BUG("--branch and --branch-oid must be set/unset together");
+	if ((clone_data.branch &&
+	     !the_repository->settings.submodule_propagate_branches))
+		BUG("--branch is only expected with submodule.propagateBranches");
 
 	clone_submodule(&clone_data, &reference);
 	list_objects_filter_release(&filter_options);
