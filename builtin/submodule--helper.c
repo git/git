@@ -2255,7 +2255,7 @@ static int fetch_in_submodule(const char *module_path, int depth, int quiet,
 static int run_update_command(const struct update_data *ud, int subforce)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
-	char *oid = oid_to_hex(&ud->oid);
+	const char *update_target = oid_to_hex(&ud->oid);;
 	int ret;
 
 	switch (ud->update_strategy.type) {
@@ -2285,7 +2285,7 @@ static int run_update_command(const struct update_data *ud, int subforce)
 		BUG("unexpected update strategy type: %d",
 		    ud->update_strategy.type);
 	}
-	strvec_push(&cp.args, oid);
+	strvec_push(&cp.args, update_target);
 
 	cp.dir = ud->sm_path;
 	prepare_submodule_repo_env(&cp.env);
@@ -2293,20 +2293,20 @@ static int run_update_command(const struct update_data *ud, int subforce)
 		switch (ud->update_strategy.type) {
 		case SM_UPDATE_CHECKOUT:
 			die_message(_("Unable to checkout '%s' in submodule path '%s'"),
-				    oid, ud->displaypath);
+				    update_target, ud->displaypath);
 			/* No "ret" assignment, use "git checkout"'s */
 			break;
 		case SM_UPDATE_REBASE:
 			ret = die_message(_("Unable to rebase '%s' in submodule path '%s'"),
-					  oid, ud->displaypath);
+					  update_target, ud->displaypath);
 			break;
 		case SM_UPDATE_MERGE:
 			ret = die_message(_("Unable to merge '%s' in submodule path '%s'"),
-					  oid, ud->displaypath);
+					  update_target, ud->displaypath);
 			break;
 		case SM_UPDATE_COMMAND:
 			ret = die_message(_("Execution of '%s %s' failed in submodule path '%s'"),
-					  ud->update_strategy.command, oid, ud->displaypath);
+					  ud->update_strategy.command, update_target, ud->displaypath);
 			break;
 		default:
 			BUG("unexpected update strategy type: %d",
@@ -2322,19 +2322,19 @@ static int run_update_command(const struct update_data *ud, int subforce)
 	switch (ud->update_strategy.type) {
 	case SM_UPDATE_CHECKOUT:
 		printf(_("Submodule path '%s': checked out '%s'\n"),
-		       ud->displaypath, oid);
+		       ud->displaypath, update_target);
 		break;
 	case SM_UPDATE_REBASE:
 		printf(_("Submodule path '%s': rebased into '%s'\n"),
-		       ud->displaypath, oid);
+		       ud->displaypath, update_target);
 		break;
 	case SM_UPDATE_MERGE:
 		printf(_("Submodule path '%s': merged in '%s'\n"),
-		       ud->displaypath, oid);
+		       ud->displaypath, update_target);
 		break;
 	case SM_UPDATE_COMMAND:
 		printf(_("Submodule path '%s': '%s %s'\n"),
-		       ud->displaypath, ud->update_strategy.command, oid);
+		       ud->displaypath, ud->update_strategy.command, update_target);
 		break;
 	default:
 		BUG("unexpected update strategy type: %d",
@@ -2521,6 +2521,7 @@ static void update_data_to_args(const struct update_data *update_data,
 
 static int update_submodule(struct update_data *update_data)
 {
+	int submodule_up_to_date;
 	int ret;
 
 	ret = determine_submodule_update_strategy(the_repository,
@@ -2569,7 +2570,8 @@ static int update_submodule(struct update_data *update_data)
 		free(remote_ref);
 	}
 
-	if (!oideq(&update_data->oid, &update_data->suboid) || update_data->force) {
+	submodule_up_to_date = oideq(&update_data->oid, &update_data->suboid);
+	if (!submodule_up_to_date || update_data->force) {
 		ret = run_update_procedure(update_data);
 		if (ret)
 			return ret;
