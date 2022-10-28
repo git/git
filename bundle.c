@@ -189,7 +189,7 @@ static int list_refs(struct string_list *r, int argc, const char **argv)
 
 int verify_bundle(struct repository *r,
 		  struct bundle_header *header,
-		  int verbose)
+		  enum verify_bundle_flags flags)
 {
 	/*
 	 * Do fast check, then if any prereqs are missing then go line by line
@@ -202,10 +202,8 @@ int verify_bundle(struct repository *r,
 	int i, ret = 0, req_nr;
 	const char *message = _("Repository lacks these prerequisite commits:");
 
-	if (!r || !r->objects || !r->objects->odb) {
-		ret = error(_("need a repository to verify a bundle"));
-		goto cleanup;
-	}
+	if (!r || !r->objects || !r->objects->odb)
+		return error(_("need a repository to verify a bundle"));
 
 	repo_init_revisions(r, &revs, NULL);
 	for (i = 0; i < p->nr; i++) {
@@ -218,7 +216,10 @@ int verify_bundle(struct repository *r,
 			add_pending_object(&revs, o, name);
 			continue;
 		}
-		if (++ret == 1)
+		ret++;
+		if (flags & VERIFY_BUNDLE_QUIET)
+			continue;
+		if (ret == 1)
 			error("%s", message);
 		error("%s %s", oid_to_hex(oid), name);
 	}
@@ -245,21 +246,15 @@ int verify_bundle(struct repository *r,
 		assert(o); /* otherwise we'd have returned early */
 		if (o->flags & SHOWN)
 			continue;
-		if (++ret == 1)
+		ret++;
+		if (flags & VERIFY_BUNDLE_QUIET)
+			continue;
+		if (ret == 1)
 			error("%s", message);
 		error("%s %s", oid_to_hex(oid), name);
 	}
 
-	/* Clean up objects used, as they will be reused. */
-	for (i = 0; i < p->nr; i++) {
-		struct string_list_item *e = p->items + i;
-		struct object_id *oid = e->util;
-		commit = lookup_commit_reference_gently(r, oid, 1);
-		if (commit)
-			clear_commit_marks(commit, ALL_REV_FLAGS);
-	}
-
-	if (verbose) {
+	if (flags & VERIFY_BUNDLE_VERBOSE) {
 		struct string_list *r;
 
 		r = &header->references;
@@ -287,6 +282,14 @@ int verify_bundle(struct repository *r,
 				  list_objects_filter_spec(&header->filter));
 	}
 cleanup:
+	/* Clean up objects used, as they will be reused. */
+	for (i = 0; i < p->nr; i++) {
+		struct string_list_item *e = p->items + i;
+		struct object_id *oid = e->util;
+		commit = lookup_commit_reference_gently(r, oid, 1);
+		if (commit)
+			clear_commit_marks(commit, ALL_REV_FLAGS | PREREQ_MARK);
+	}
 	release_revisions(&revs);
 	return ret;
 }
@@ -620,7 +623,8 @@ err:
 }
 
 int unbundle(struct repository *r, struct bundle_header *header,
-	     int bundle_fd, struct strvec *extra_index_pack_args)
+	     int bundle_fd, struct strvec *extra_index_pack_args,
+	     enum verify_bundle_flags flags)
 {
 	struct child_process ip = CHILD_PROCESS_INIT;
 	strvec_pushl(&ip.args, "index-pack", "--fix-thin", "--stdin", NULL);
@@ -634,7 +638,7 @@ int unbundle(struct repository *r, struct bundle_header *header,
 		strvec_clear(extra_index_pack_args);
 	}
 
-	if (verify_bundle(r, header, 0))
+	if (verify_bundle(r, header, flags))
 		return -1;
 	ip.in = bundle_fd;
 	ip.no_stdout = 1;
