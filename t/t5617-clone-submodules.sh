@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='Test cloning repos with submodules using remote-tracking branches'
+test_description='Test cloning repos with submodules'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
