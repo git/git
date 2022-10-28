@@ -41,7 +41,7 @@ search_topics () {
 		) &&
 		test -n "$fp" &&
 		ago=$(
-		    git show -s --format='%ar' $fp
+		    git show -s --format='%ad' --date=short $fp
 		) &&
 		lg=$(git log --oneline $target..$tip | wc -l)
 		if test $lg != 0
