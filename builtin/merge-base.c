@@ -29,11 +29,11 @@ static int show_merge_base(struct commit **rev, int rev_nr, int show_all)
 }
 
 static const char * const merge_base_usage[] = {
-	N_("git merge-base [-a | --all] <commit> <commit>..."),
-	N_("git merge-base [-a | --all] --octopus <commit>..."),
-	N_("git merge-base --independent <commit>..."),
-	N_("git merge-base --is-ancestor <commit> <commit>"),
-	N_("git merge-base --fork-point <ref> [<commit>]"),
+	N_("git merge-base [-a | --all] <rev> <rev>..."),
+	N_("git merge-base [-a | --all] --octopus <rev>..."),
+	N_("git merge-base --independent <rev>..."),
+	N_("git merge-base --is-ancestor <rev> <rev>"),
+	N_("git merge-base --fork-point <ref> [<rev>]"),
 	NULL
 };
 
@@ -149,7 +149,7 @@ int cmd_merge_base(int argc, const char **argv, const char *prefix)
 		OPT_CMDMODE(0, "is-ancestor", &cmdmode,
 			    N_("is the first one ancestor of the other?"), 'a'),
 		OPT_CMDMODE(0, "fork-point", &cmdmode,
-			    N_("find where <commit> forked from reflog of <ref>"), 'f'),
+			    N_("find where <rev> forked from reflog of <ref>"), 'f'),
 		OPT_END()
 	};
 
