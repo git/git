@@ -2,6 +2,7 @@
 /fuzz_corpora
 /fuzz-pack-headers
 /fuzz-pack-idx
+/GIT-BUILD-DIR
 /GIT-BUILD-OPTIONS
 /GIT-CFLAGS
 /GIT-LDFLAGS
