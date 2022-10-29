@@ -20,7 +20,7 @@
 [[def_branch]]branch::
 	A "branch" is a line of development.  The most recent
 	<<def_commit,commit>> on a branch is referred to as the tip of
-	that branch.  The tip of the branch is referenced by a branch
+	that branch.  The tip of the branch is <<def_ref,referenced>> by a branch
 	<<def_head,head>>, which moves forward as additional development
 	is done on the branch.  A single Git
 	<<def_repository,repository>> can track an arbitrary number of
@@ -74,6 +74,21 @@ As a verb: The action of storing a new snapshot of the project's
 state in the Git history, by creating a new commit representing the current
 state of the <<def_index,index>> and advancing <<def_HEAD,HEAD>>
 to point at the new commit.
+
+[[def_commit_graph_general]]commit graph concept, representations and usage::
+	A synonym for the <<def_DAG,DAG>> structure formed by the commits
+	in the object database, <<def_ref,referenced>> by branch tips,
+	using their <<def_chain,chain>> of linked commits.
+	This structure is the definitive commit graph. The
+	graph can be represented in other ways, e.g. the
+	<<def_commit_graph_file,"commit-graph" file>>.
+
+[[def_commit_graph_file]]commit-graph file::
+	The "commit-graph" (normally hyphenated) file is a supplemental
+	representation of the <<def_commit_graph_general,commit graph>>
+	which accelerates commit graph walks. The "commit-graph" file is
+	stored either in the .git/objects/info directory or in the info
+	directory of an alternate object database.
 
 [[def_commit_object]]commit object::
 	An <<def_object,object>> which contains the information about a
