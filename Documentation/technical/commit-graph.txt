@@ -1,4 +1,4 @@
-Git Commit Graph Design Notes
+Git Commit-Graph Design Notes
 =============================
 
 Git walks the commit graph for many reasons, including:
@@ -95,7 +95,7 @@ with default order), but is not used when the topological order is
 required (such as merge base calculations, "git log --graph").
 
 In practice, we expect some commits to be created recently and not stored
-in the commit graph. We can treat these commits as having "infinite"
+in the commit-graph. We can treat these commits as having "infinite"
 generation number and walk until reaching commits with known generation
 number.
 
@@ -149,7 +149,7 @@ Design Details
   helpful for these clones, anyway. The commit-graph will not be read or
   written when shallow commits are present.
 
-Commit Graphs Chains
+Commit-Graphs Chains
 --------------------
 
 Typically, repos grow with near-constant velocity (commits per day). Over time,
