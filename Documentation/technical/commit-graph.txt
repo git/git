@@ -17,7 +17,7 @@ There are two main costs here:
 
 The commit-graph file is a supplemental data structure that accelerates
 commit graph walks. If a user downgrades or disables the 'core.commitGraph'
-config setting, then the existing ODB is sufficient. The file is stored
+config setting, then the existing object database is sufficient. The file is stored
 as "commit-graph" either in the .git/objects/info directory or in the info
 directory of an alternate.
 

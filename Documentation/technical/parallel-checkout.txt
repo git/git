@@ -56,7 +56,7 @@ Rejected Multi-Threaded Solution
 
 The most "straightforward" implementation would be to spread the set of
 to-be-updated cache entries across multiple threads. But due to the
-thread-unsafe functions in the ODB code, we would have to use locks to
+thread-unsafe functions in the object database code, we would have to use locks to
 coordinate the parallel operation. An early prototype of this solution
 showed that the multi-threaded checkout would bring performance
 improvements over the sequential code, but there was still too much lock
