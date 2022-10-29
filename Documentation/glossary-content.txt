@@ -508,6 +508,14 @@ exclude;;
 	<<def_tree_object,trees>> to the trees or <<def_blob_object,blobs>>
 	that they contain.
 
+[[def_reachability_bitmap]]reachability bitmaps::
+	Reachability bitmaps store information about the
+	<<def_reachable,reachability>> of a selected set of commits in
+	a packfile, or a multi-pack index (MIDX), to speed up object search.
+	The bitmaps are stored in a ".bitmap" file. A repository may have at
+	most one bitmap file in use. The bitmap file may belong to either one
+	pack, or the repository's multi-pack index (if it exists).
+
 [[def_rebase]]rebase::
 	To reapply a series of changes from a <<def_branch,branch>> to a
 	different base, and reset the <<def_head,head>> of that branch
