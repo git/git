@@ -498,6 +498,7 @@ static int write_tar_filter_archive(const struct archiver *ar,
 	strvec_push(&filter.args, cmd.buf);
 	filter.use_shell = 1;
 	filter.in = -1;
+	filter.silent_exec_failure = 1;
 
 	if (start_command(&filter) < 0)
 		die_errno(_("unable to start '%s' filter"), cmd.buf);
