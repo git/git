@@ -345,14 +345,12 @@ out:
 	return rc;
 }
 
-static void read_empty(const struct object_id *oid, int verbose)
+static void read_empty(const struct object_id *oid)
 {
 	int i = 0;
 	const char *args[7];
 
 	args[i++] = "read-tree";
-	if (verbose)
-		args[i++] = "-v";
 	args[i++] = "-m";
 	args[i++] = "-u";
 	args[i++] = empty_tree_oid_hex();
@@ -363,14 +361,13 @@ static void read_empty(const struct object_id *oid, int verbose)
 		die(_("read-tree failed"));
 }
 
-static void reset_hard(const struct object_id *oid, int verbose)
+static void reset_hard(const struct object_id *oid)
 {
 	int i = 0;
 	const char *args[6];
 
 	args[i++] = "read-tree";
-	if (verbose)
-		args[i++] = "-v";
+	args[i++] = "-v";
 	args[i++] = "--reset";
 	args[i++] = "-u";
 	args[i++] = oid_to_hex(oid);
@@ -385,7 +382,7 @@ static void restore_state(const struct object_id *head,
 {
 	struct strvec args = STRVEC_INIT;
 
-	reset_hard(head, 1);
+	reset_hard(head);
 
 	if (is_null_oid(stash))
 		goto refresh_cache;
@@ -1470,7 +1467,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 					       check_trust_level);
 
 		remote_head_oid = &remoteheads->item->object.oid;
-		read_empty(remote_head_oid, 0);
+		read_empty(remote_head_oid);
 		update_ref("initial pull", "HEAD", remote_head_oid, NULL, 0,
 			   UPDATE_REFS_DIE_ON_ERR);
 		goto done;
