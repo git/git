@@ -372,22 +372,22 @@ static void reset_hard(const struct object_id *oid)
 static void restore_state(const struct object_id *head,
 			  const struct object_id *stash)
 {
-	struct strvec args = STRVEC_INIT;
+	struct child_process cmd = CHILD_PROCESS_INIT;
 
 	reset_hard(head);
 
 	if (is_null_oid(stash))
 		goto refresh_cache;
 
-	strvec_pushl(&args, "stash", "apply", "--index", "--quiet", NULL);
-	strvec_push(&args, oid_to_hex(stash));
+	strvec_pushl(&cmd.args, "stash", "apply", "--index", "--quiet", NULL);
+	strvec_push(&cmd.args, oid_to_hex(stash));
 
 	/*
 	 * It is OK to ignore error here, for example when there was
 	 * nothing to restore.
 	 */
-	run_command_v_opt(args.v, RUN_GIT_CMD);
-	strvec_clear(&args);
+	cmd.git_cmd = 1;
+	run_command(&cmd);
 
 refresh_cache:
 	if (discard_cache() < 0 || read_cache() < 0)

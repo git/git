@@ -653,9 +653,9 @@ static void update_head(const struct ref *our, const struct ref *remote,
 
 static int git_sparse_checkout_init(const char *repo)
 {
-	struct strvec argv = STRVEC_INIT;
+	struct child_process cmd = CHILD_PROCESS_INIT;
 	int result = 0;
-	strvec_pushl(&argv, "-C", repo, "sparse-checkout", "set", NULL);
+	strvec_pushl(&cmd.args, "-C", repo, "sparse-checkout", "set", NULL);
 
 	/*
 	 * We must apply the setting in the current process
@@ -663,12 +663,12 @@ static int git_sparse_checkout_init(const char *repo)
 	 */
 	core_apply_sparse_checkout = 1;
 
-	if (run_command_v_opt(argv.v, RUN_GIT_CMD)) {
+	cmd.git_cmd = 1;
+	if (run_command(&cmd)) {
 		error(_("failed to initialize sparse-checkout"));
 		result = 1;
 	}
 
-	strvec_clear(&argv);
 	return result;
 }
 
@@ -733,37 +733,38 @@ static int checkout(int submodule_progress, int filter_submodules)
 			   oid_to_hex(&oid), "1", NULL);
 
 	if (!err && (option_recurse_submodules.nr > 0)) {
-		struct strvec args = STRVEC_INIT;
-		strvec_pushl(&args, "submodule", "update", "--require-init", "--recursive", NULL);
+		struct child_process cmd = CHILD_PROCESS_INIT;
+		strvec_pushl(&cmd.args, "submodule", "update", "--require-init",
+			     "--recursive", NULL);
 
 		if (option_shallow_submodules == 1)
-			strvec_push(&args, "--depth=1");
+			strvec_push(&cmd.args, "--depth=1");
 
 		if (max_jobs != -1)
-			strvec_pushf(&args, "--jobs=%d", max_jobs);
+			strvec_pushf(&cmd.args, "--jobs=%d", max_jobs);
 
 		if (submodule_progress)
-			strvec_push(&args, "--progress");
+			strvec_push(&cmd.args, "--progress");
 
 		if (option_verbosity < 0)
-			strvec_push(&args, "--quiet");
+			strvec_push(&cmd.args, "--quiet");
 
 		if (option_remote_submodules) {
-			strvec_push(&args, "--remote");
-			strvec_push(&args, "--no-fetch");
+			strvec_push(&cmd.args, "--remote");
+			strvec_push(&cmd.args, "--no-fetch");
 		}
 
 		if (filter_submodules && filter_options.choice)
-			strvec_pushf(&args, "--filter=%s",
+			strvec_pushf(&cmd.args, "--filter=%s",
 				     expand_list_objects_filter_spec(&filter_options));
 
 		if (option_single_branch >= 0)
-			strvec_push(&args, option_single_branch ?
+			strvec_push(&cmd.args, option_single_branch ?
 					       "--single-branch" :
 					       "--no-single-branch");
 
-		err = run_command_v_opt(args.v, RUN_GIT_CMD);
-		strvec_clear(&args);
+		cmd.git_cmd = 1;
+		err = run_command(&cmd);
 	}
 
 	return err;

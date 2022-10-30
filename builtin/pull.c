@@ -515,76 +515,75 @@ static void parse_repo_refspecs(int argc, const char **argv, const char **repo,
  */
 static int run_fetch(const char *repo, const char **refspecs)
 {
-	struct strvec args = STRVEC_INIT;
-	int ret;
+	struct child_process cmd = CHILD_PROCESS_INIT;
 
-	strvec_pushl(&args, "fetch", "--update-head-ok", NULL);
+	strvec_pushl(&cmd.args, "fetch", "--update-head-ok", NULL);
 
 	/* Shared options */
-	argv_push_verbosity(&args);
+	argv_push_verbosity(&cmd.args);
 	if (opt_progress)
-		strvec_push(&args, opt_progress);
+		strvec_push(&cmd.args, opt_progress);
 
 	/* Options passed to git-fetch */
 	if (opt_all)
-		strvec_push(&args, opt_all);
+		strvec_push(&cmd.args, opt_all);
 	if (opt_append)
-		strvec_push(&args, opt_append);
+		strvec_push(&cmd.args, opt_append);
 	if (opt_upload_pack)
-		strvec_push(&args, opt_upload_pack);
-	argv_push_force(&args);
+		strvec_push(&cmd.args, opt_upload_pack);
+	argv_push_force(&cmd.args);
 	if (opt_tags)
-		strvec_push(&args, opt_tags);
+		strvec_push(&cmd.args, opt_tags);
 	if (opt_prune)
-		strvec_push(&args, opt_prune);
+		strvec_push(&cmd.args, opt_prune);
 	if (recurse_submodules_cli != RECURSE_SUBMODULES_DEFAULT)
 		switch (recurse_submodules_cli) {
 		case RECURSE_SUBMODULES_ON:
-			strvec_push(&args, "--recurse-submodules=on");
+			strvec_push(&cmd.args, "--recurse-submodules=on");
 			break;
 		case RECURSE_SUBMODULES_OFF:
-			strvec_push(&args, "--recurse-submodules=no");
+			strvec_push(&cmd.args, "--recurse-submodules=no");
 			break;
 		case RECURSE_SUBMODULES_ON_DEMAND:
-			strvec_push(&args, "--recurse-submodules=on-demand");
+			strvec_push(&cmd.args, "--recurse-submodules=on-demand");
 			break;
 		default:
 			BUG("submodule recursion option not understood");
 		}
 	if (max_children)
-		strvec_push(&args, max_children);
+		strvec_push(&cmd.args, max_children);
 	if (opt_dry_run)
-		strvec_push(&args, "--dry-run");
+		strvec_push(&cmd.args, "--dry-run");
 	if (opt_keep)
-		strvec_push(&args, opt_keep);
+		strvec_push(&cmd.args, opt_keep);
 	if (opt_depth)
-		strvec_push(&args, opt_depth);
+		strvec_push(&cmd.args, opt_depth);
 	if (opt_unshallow)
-		strvec_push(&args, opt_unshallow);
+		strvec_push(&cmd.args, opt_unshallow);
 	if (opt_update_shallow)
-		strvec_push(&args, opt_update_shallow);
+		strvec_push(&cmd.args, opt_update_shallow);
 	if (opt_refmap)
-		strvec_push(&args, opt_refmap);
+		strvec_push(&cmd.args, opt_refmap);
 	if (opt_ipv4)
-		strvec_push(&args, opt_ipv4);
+		strvec_push(&cmd.args, opt_ipv4);
 	if (opt_ipv6)
-		strvec_push(&args, opt_ipv6);
+		strvec_push(&cmd.args, opt_ipv6);
 	if (opt_show_forced_updates > 0)
-		strvec_push(&args, "--show-forced-updates");
+		strvec_push(&cmd.args, "--show-forced-updates");
 	else if (opt_show_forced_updates == 0)
-		strvec_push(&args, "--no-show-forced-updates");
+		strvec_push(&cmd.args, "--no-show-forced-updates");
 	if (set_upstream)
-		strvec_push(&args, set_upstream);
-	strvec_pushv(&args, opt_fetch.v);
+		strvec_push(&cmd.args, set_upstream);
+	strvec_pushv(&cmd.args, opt_fetch.v);
 
 	if (repo) {
-		strvec_push(&args, repo);
-		strvec_pushv(&args, refspecs);
+		strvec_push(&cmd.args, repo);
+		strvec_pushv(&cmd.args, refspecs);
 	} else if (*refspecs)
 		BUG("refspecs without repo?");
-	ret = run_command_v_opt(args.v, RUN_GIT_CMD | RUN_CLOSE_OBJECT_STORE);
-	strvec_clear(&args);
-	return ret;
+	cmd.git_cmd = 1;
+	cmd.close_object_store = 1;
+	return run_command(&cmd);
 }
 
 /**
@@ -653,52 +652,50 @@ static int update_submodules(void)
  */
 static int run_merge(void)
 {
-	int ret;
-	struct strvec args = STRVEC_INIT;
+	struct child_process cmd = CHILD_PROCESS_INIT;
 
-	strvec_pushl(&args, "merge", NULL);
+	strvec_pushl(&cmd.args, "merge", NULL);
 
 	/* Shared options */
-	argv_push_verbosity(&args);
+	argv_push_verbosity(&cmd.args);
 	if (opt_progress)
-		strvec_push(&args, opt_progress);
+		strvec_push(&cmd.args, opt_progress);
 
 	/* Options passed to git-merge */
 	if (opt_diffstat)
-		strvec_push(&args, opt_diffstat);
+		strvec_push(&cmd.args, opt_diffstat);
 	if (opt_log)
-		strvec_push(&args, opt_log);
+		strvec_push(&cmd.args, opt_log);
 	if (opt_signoff)
-		strvec_push(&args, opt_signoff);
+		strvec_push(&cmd.args, opt_signoff);
 	if (opt_squash)
-		strvec_push(&args, opt_squash);
+		strvec_push(&cmd.args, opt_squash);
 	if (opt_commit)
-		strvec_push(&args, opt_commit);
+		strvec_push(&cmd.args, opt_commit);
 	if (opt_edit)
-		strvec_push(&args, opt_edit);
+		strvec_push(&cmd.args, opt_edit);
 	if (cleanup_arg)
-		strvec_pushf(&args, "--cleanup=%s", cleanup_arg);
+		strvec_pushf(&cmd.args, "--cleanup=%s", cleanup_arg);
 	if (opt_ff)
-		strvec_push(&args, opt_ff);
+		strvec_push(&cmd.args, opt_ff);
 	if (opt_verify)
-		strvec_push(&args, opt_verify);
+		strvec_push(&cmd.args, opt_verify);
 	if (opt_verify_signatures)
-		strvec_push(&args, opt_verify_signatures);
-	strvec_pushv(&args, opt_strategies.v);
-	strvec_pushv(&args, opt_strategy_opts.v);
+		strvec_push(&cmd.args, opt_verify_signatures);
+	strvec_pushv(&cmd.args, opt_strategies.v);
+	strvec_pushv(&cmd.args, opt_strategy_opts.v);
 	if (opt_gpg_sign)
-		strvec_push(&args, opt_gpg_sign);
+		strvec_push(&cmd.args, opt_gpg_sign);
 	if (opt_autostash == 0)
-		strvec_push(&args, "--no-autostash");
+		strvec_push(&cmd.args, "--no-autostash");
 	else if (opt_autostash == 1)
-		strvec_push(&args, "--autostash");
+		strvec_push(&cmd.args, "--autostash");
 	if (opt_allow_unrelated_histories > 0)
-		strvec_push(&args, "--allow-unrelated-histories");
+		strvec_push(&cmd.args, "--allow-unrelated-histories");
 
-	strvec_push(&args, "FETCH_HEAD");
-	ret = run_command_v_opt(args.v, RUN_GIT_CMD);
-	strvec_clear(&args);
-	return ret;
+	strvec_push(&cmd.args, "FETCH_HEAD");
+	cmd.git_cmd = 1;
+	return run_command(&cmd);
 }
 
 /**
@@ -879,43 +876,41 @@ static int get_rebase_newbase_and_upstream(struct object_id *newbase,
 static int run_rebase(const struct object_id *newbase,
 		const struct object_id *upstream)
 {
-	int ret;
-	struct strvec args = STRVEC_INIT;
+	struct child_process cmd = CHILD_PROCESS_INIT;
 
-	strvec_push(&args, "rebase");
+	strvec_push(&cmd.args, "rebase");
 
 	/* Shared options */
-	argv_push_verbosity(&args);
+	argv_push_verbosity(&cmd.args);
 
 	/* Options passed to git-rebase */
 	if (opt_rebase == REBASE_MERGES)
-		strvec_push(&args, "--rebase-merges");
+		strvec_push(&cmd.args, "--rebase-merges");
 	else if (opt_rebase == REBASE_INTERACTIVE)
-		strvec_push(&args, "--interactive");
+		strvec_push(&cmd.args, "--interactive");
 	if (opt_diffstat)
-		strvec_push(&args, opt_diffstat);
-	strvec_pushv(&args, opt_strategies.v);
-	strvec_pushv(&args, opt_strategy_opts.v);
+		strvec_push(&cmd.args, opt_diffstat);
+	strvec_pushv(&cmd.args, opt_strategies.v);
+	strvec_pushv(&cmd.args, opt_strategy_opts.v);
 	if (opt_gpg_sign)
-		strvec_push(&args, opt_gpg_sign);
+		strvec_push(&cmd.args, opt_gpg_sign);
 	if (opt_signoff)
-		strvec_push(&args, opt_signoff);
+		strvec_push(&cmd.args, opt_signoff);
 	if (opt_autostash == 0)
-		strvec_push(&args, "--no-autostash");
+		strvec_push(&cmd.args, "--no-autostash");
 	else if (opt_autostash == 1)
-		strvec_push(&args, "--autostash");
+		strvec_push(&cmd.args, "--autostash");
 	if (opt_verify_signatures &&
 	    !strcmp(opt_verify_signatures, "--verify-signatures"))
 		warning(_("ignoring --verify-signatures for rebase"));
 
-	strvec_push(&args, "--onto");
-	strvec_push(&args, oid_to_hex(newbase));
+	strvec_push(&cmd.args, "--onto");
+	strvec_push(&cmd.args, oid_to_hex(newbase));
 
-	strvec_push(&args, oid_to_hex(upstream));
+	strvec_push(&cmd.args, oid_to_hex(upstream));
 
-	ret = run_command_v_opt(args.v, RUN_GIT_CMD);
-	strvec_clear(&args);
-	return ret;
+	cmd.git_cmd = 1;
+	return run_command(&cmd);
 }
 
 static int get_can_ff(struct object_id *orig_head,

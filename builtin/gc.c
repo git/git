@@ -1910,20 +1910,16 @@ static char *schtasks_task_name(const char *frequency)
 static int schtasks_remove_task(enum schedule_priority schedule)
 {
 	const char *cmd = "schtasks";
-	int result;
-	struct strvec args = STRVEC_INIT;
+	struct child_process child = CHILD_PROCESS_INIT;
 	const char *frequency = get_frequency(schedule);
 	char *name = schtasks_task_name(frequency);
 
 	get_schedule_cmd(&cmd, NULL);
-	strvec_split(&args, cmd);
-	strvec_pushl(&args, "/delete", "/tn", name, "/f", NULL);
-
-	result = run_command_v_opt(args.v, 0);
-
-	strvec_clear(&args);
+	strvec_split(&child.args, cmd);
+	strvec_pushl(&child.args, "/delete", "/tn", name, "/f", NULL);
 	free(name);
-	return result;
+
+	return run_command(&child);
 }
 
 static int schtasks_remove_tasks(void)

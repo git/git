@@ -240,8 +240,8 @@ static int refresh(int verbose, const struct pathspec *pathspec)
 int run_add_interactive(const char *revision, const char *patch_mode,
 			const struct pathspec *pathspec)
 {
-	int status, i;
-	struct strvec argv = STRVEC_INIT;
+	int i;
+	struct child_process cmd = CHILD_PROCESS_INIT;
 	int use_builtin_add_i =
 		git_env_bool("GIT_TEST_ADD_I_USE_BUILTIN", -1);
 
@@ -272,19 +272,18 @@ int run_add_interactive(const char *revision, const char *patch_mode,
 		return !!run_add_p(the_repository, mode, revision, pathspec);
 	}
 
-	strvec_push(&argv, "add--interactive");
+	strvec_push(&cmd.args, "add--interactive");
 	if (patch_mode)
-		strvec_push(&argv, patch_mode);
+		strvec_push(&cmd.args, patch_mode);
 	if (revision)
-		strvec_push(&argv, revision);
-	strvec_push(&argv, "--");
+		strvec_push(&cmd.args, revision);
+	strvec_push(&cmd.args, "--");
 	for (i = 0; i < pathspec->nr; i++)
 		/* pass original pathspec, to be re-parsed */
-		strvec_push(&argv, pathspec->items[i].original);
+		strvec_push(&cmd.args, pathspec->items[i].original);
 
-	status = run_command_v_opt(argv.v, RUN_GIT_CMD);
-	strvec_clear(&argv);
-	return status;
+	cmd.git_cmd = 1;
+	return run_command(&cmd);
 }
 
 int interactive_add(const char **argv, const char *prefix, int patch)
