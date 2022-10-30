@@ -764,10 +764,12 @@ static enum bisect_error bisect_start(struct bisect_terms *terms, const char **a
 		strbuf_read_file(&start_head, git_path_bisect_start(), 0);
 		strbuf_trim(&start_head);
 		if (!no_checkout) {
-			const char *argv[] = { "checkout", start_head.buf,
-					       "--", NULL };
+			struct child_process cmd = CHILD_PROCESS_INIT;
 
-			if (run_command_v_opt(argv, RUN_GIT_CMD)) {
+			cmd.git_cmd = 1;
+			strvec_pushl(&cmd.args, "checkout", start_head.buf,
+				     "--", NULL);
+			if (run_command(&cmd)) {
 				res = error(_("checking out '%s' failed."
 						 " Try 'git bisect start "
 						 "<valid-branch>'."),
@@ -1141,9 +1143,12 @@ static int get_first_good(const char *refname UNUSED,
 
 static int do_bisect_run(const char *command)
 {
-	const char *argv[] = { command, NULL };
+	struct child_process cmd = CHILD_PROCESS_INIT;
+
 	printf(_("running %s\n"), command);
-	return run_command_v_opt(argv, RUN_USING_SHELL);
+	cmd.use_shell = 1;
+	strvec_push(&cmd.args, command);
+	return run_command(&cmd);
 }
 
 static int verify_good(const struct bisect_terms *terms, const char *command)

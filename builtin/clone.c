@@ -865,11 +865,15 @@ static void write_refspec_config(const char *src_ref_prefix,
 
 static void dissociate_from_references(void)
 {
-	static const char* argv[] = { "repack", "-a", "-d", NULL };
 	char *alternates = git_pathdup("objects/info/alternates");
 
 	if (!access(alternates, F_OK)) {
-		if (run_command_v_opt(argv, RUN_GIT_CMD|RUN_COMMAND_NO_STDIN))
+		struct child_process cmd = CHILD_PROCESS_INIT;
+
+		cmd.git_cmd = 1;
+		cmd.no_stdin = 1;
+		strvec_pushl(&cmd.args, "repack", "-a", "-d", NULL);
+		if (run_command(&cmd))
 			die(_("cannot repack to clean up"));
 		if (unlink(alternates) && errno != ENOENT)
 			die_errno(_("cannot unlink temporary alternates file"));

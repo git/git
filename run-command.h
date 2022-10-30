@@ -150,8 +150,7 @@ struct child_process {
 }
 
 /**
- * The functions: start_command, finish_command, run_command,
- * run_command_v_opt do the following:
+ * The functions: start_command, finish_command, run_command do the following:
  *
  * - If a system call failed, errno is set and -1 is returned. A diagnostic
  *   is printed.
@@ -222,26 +221,6 @@ int run_command(struct child_process *);
  * Trigger an auto-gc
  */
 int run_auto_maintenance(int quiet);
-
-#define RUN_COMMAND_NO_STDIN		(1<<0)
-#define RUN_GIT_CMD			(1<<1)
-#define RUN_COMMAND_STDOUT_TO_STDERR	(1<<2)
-#define RUN_SILENT_EXEC_FAILURE		(1<<3)
-#define RUN_USING_SHELL			(1<<4)
-#define RUN_CLEAN_ON_EXIT		(1<<5)
-#define RUN_WAIT_AFTER_CLEAN		(1<<6)
-#define RUN_CLOSE_OBJECT_STORE		(1<<7)
-
-/**
- * Convenience function that encapsulates a sequence of
- * start_command() followed by finish_command(). The argument argv
- * specifies the program and its arguments. The argument opt is zero
- * or more of the flags `RUN_COMMAND_NO_STDIN`, `RUN_GIT_CMD`,
- * `RUN_COMMAND_STDOUT_TO_STDERR`, or `RUN_SILENT_EXEC_FAILURE`
- * that correspond to the members .no_stdin, .git_cmd,
- * .stdout_to_stderr, .silent_exec_failure of `struct child_process`.
- */
-int run_command_v_opt(const char **argv, int opt);
 
 /**
  * Execute the given command, sending "in" to its stdin, and capturing its

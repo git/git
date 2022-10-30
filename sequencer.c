@@ -3555,11 +3555,13 @@ static int error_failed_squash(struct repository *r,
 
 static int do_exec(struct repository *r, const char *command_line)
 {
-	const char *child_argv[] = { command_line, NULL };
+	struct child_process cmd = CHILD_PROCESS_INIT;
 	int dirty, status;
 
 	fprintf(stderr, _("Executing: %s\n"), command_line);
-	status = run_command_v_opt(child_argv, RUN_USING_SHELL);
+	cmd.use_shell = 1;
+	strvec_push(&cmd.args, command_line);
+	status = run_command(&cmd);
 
 	/* force re-reading of the cache */
 	if (discard_index(r->index) < 0 || repo_read_index(r) < 0)

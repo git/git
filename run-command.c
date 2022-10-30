@@ -1004,21 +1004,6 @@ int run_command(struct child_process *cmd)
 	return finish_command(cmd);
 }
 
-int run_command_v_opt(const char **argv, int opt)
-{
-	struct child_process cmd = CHILD_PROCESS_INIT;
-	strvec_pushv(&cmd.args, argv);
-	cmd.no_stdin = opt & RUN_COMMAND_NO_STDIN ? 1 : 0;
-	cmd.git_cmd = opt & RUN_GIT_CMD ? 1 : 0;
-	cmd.stdout_to_stderr = opt & RUN_COMMAND_STDOUT_TO_STDERR ? 1 : 0;
-	cmd.silent_exec_failure = opt & RUN_SILENT_EXEC_FAILURE ? 1 : 0;
-	cmd.use_shell = opt & RUN_USING_SHELL ? 1 : 0;
-	cmd.clean_on_exit = opt & RUN_CLEAN_ON_EXIT ? 1 : 0;
-	cmd.wait_after_clean = opt & RUN_WAIT_AFTER_CLEAN ? 1 : 0;
-	cmd.close_object_store = opt & RUN_CLOSE_OBJECT_STORE ? 1 : 0;
-	return run_command(&cmd);
-}
-
 #ifndef NO_PTHREADS
 static pthread_t main_thread;
 static int main_thread_set;

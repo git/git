@@ -737,11 +737,12 @@ enum bisect_error bisect_checkout(const struct object_id *bisect_rev,
 		update_ref(NULL, "BISECT_HEAD", bisect_rev, NULL, 0,
 			   UPDATE_REFS_DIE_ON_ERR);
 	} else {
-		const char *argv_checkout[] = {
-			"checkout", "-q", oid_to_hex(bisect_rev), "--", NULL
-		};
+		struct child_process cmd = CHILD_PROCESS_INIT;
 
-		if (run_command_v_opt(argv_checkout, RUN_GIT_CMD))
+		cmd.git_cmd = 1;
+		strvec_pushl(&cmd.args, "checkout", "-q",
+			     oid_to_hex(bisect_rev), "--", NULL);
+		if (run_command(&cmd))
 			/*
 			 * Errors in `run_command()` itself, signaled by res < 0,
 			 * and errors in the child process, signaled by res > 0

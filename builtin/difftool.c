@@ -44,8 +44,11 @@ static int difftool_config(const char *var, const char *value, void *cb)
 
 static int print_tool_help(void)
 {
-	const char *argv[] = { "mergetool", "--tool-help=diff", NULL };
-	return run_command_v_opt(argv, RUN_GIT_CMD);
+	struct child_process cmd = CHILD_PROCESS_INIT;
+
+	cmd.git_cmd = 1;
+	strvec_pushl(&cmd.args, "mergetool", "--tool-help=diff", NULL);
+	return run_command(&cmd);
 }
 
 static int parse_index_info(char *p, int *mode1, int *mode2,
