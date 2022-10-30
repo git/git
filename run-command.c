@@ -1009,11 +1009,6 @@ int run_command_v_opt(const char **argv, int opt)
 	return run_command_v_opt_cd_env_tr2(argv, opt, NULL, NULL, NULL);
 }
 
-int run_command_v_opt_tr2(const char **argv, int opt, const char *tr2_class)
-{
-	return run_command_v_opt_cd_env_tr2(argv, opt, NULL, NULL, tr2_class);
-}
-
 int run_command_v_opt_cd_env_tr2(const char **argv, int opt, const char *dir,
 				 const char *const *env, const char *tr2_class)
 {

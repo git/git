@@ -244,7 +244,6 @@ int run_auto_maintenance(int quiet);
  * corresponds to the member .env.
  */
 int run_command_v_opt(const char **argv, int opt);
-int run_command_v_opt_tr2(const char **argv, int opt, const char *tr2_class);
 /*
  * env (the environment) is to be formatted like environ: "VAR=VALUE".
  * To unset an environment variable use just "VAR".
