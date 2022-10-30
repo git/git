@@ -1006,17 +1006,12 @@ int run_command(struct child_process *cmd)
 
 int run_command_v_opt(const char **argv, int opt)
 {
-	return run_command_v_opt_cd_env(argv, opt, NULL, NULL);
+	return run_command_v_opt_cd_env_tr2(argv, opt, NULL, NULL, NULL);
 }
 
 int run_command_v_opt_tr2(const char **argv, int opt, const char *tr2_class)
 {
 	return run_command_v_opt_cd_env_tr2(argv, opt, NULL, NULL, tr2_class);
-}
-
-int run_command_v_opt_cd_env(const char **argv, int opt, const char *dir, const char *const *env)
-{
-	return run_command_v_opt_cd_env_tr2(argv, opt, dir, env, NULL);
 }
 
 int run_command_v_opt_cd_env_tr2(const char **argv, int opt, const char *dir,
