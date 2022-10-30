@@ -1006,12 +1006,6 @@ int run_command(struct child_process *cmd)
 
 int run_command_v_opt(const char **argv, int opt)
 {
-	return run_command_v_opt_cd_env_tr2(argv, opt, NULL, NULL, NULL);
-}
-
-int run_command_v_opt_cd_env_tr2(const char **argv, int opt, const char *dir,
-				 const char *const *env, const char *tr2_class)
-{
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	strvec_pushv(&cmd.args, argv);
 	cmd.no_stdin = opt & RUN_COMMAND_NO_STDIN ? 1 : 0;
@@ -1022,10 +1016,6 @@ int run_command_v_opt_cd_env_tr2(const char **argv, int opt, const char *dir,
 	cmd.clean_on_exit = opt & RUN_CLEAN_ON_EXIT ? 1 : 0;
 	cmd.wait_after_clean = opt & RUN_WAIT_AFTER_CLEAN ? 1 : 0;
 	cmd.close_object_store = opt & RUN_CLOSE_OBJECT_STORE ? 1 : 0;
-	cmd.dir = dir;
-	if (env)
-		strvec_pushv(&cmd.env, (const char **)env);
-	cmd.trace2_child_class = tr2_class;
 	return run_command(&cmd);
 }
 

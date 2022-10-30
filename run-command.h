@@ -233,23 +233,15 @@ int run_auto_maintenance(int quiet);
 #define RUN_CLOSE_OBJECT_STORE		(1<<7)
 
 /**
- * Convenience functions that encapsulate a sequence of
+ * Convenience function that encapsulates a sequence of
  * start_command() followed by finish_command(). The argument argv
  * specifies the program and its arguments. The argument opt is zero
  * or more of the flags `RUN_COMMAND_NO_STDIN`, `RUN_GIT_CMD`,
  * `RUN_COMMAND_STDOUT_TO_STDERR`, or `RUN_SILENT_EXEC_FAILURE`
  * that correspond to the members .no_stdin, .git_cmd,
  * .stdout_to_stderr, .silent_exec_failure of `struct child_process`.
- * The argument dir corresponds the member .dir. The argument env
- * corresponds to the member .env.
  */
 int run_command_v_opt(const char **argv, int opt);
-/*
- * env (the environment) is to be formatted like environ: "VAR=VALUE".
- * To unset an environment variable use just "VAR".
- */
-int run_command_v_opt_cd_env_tr2(const char **argv, int opt, const char *dir,
-				 const char *const *env, const char *tr2_class);
 
 /**
  * Execute the given command, sending "in" to its stdin, and capturing its
