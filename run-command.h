@@ -150,9 +150,8 @@ struct child_process {
 }
 
 /**
- * The functions: child_process_init, start_command, finish_command,
- * run_command, run_command_v_opt, run_command_v_opt_cd_env, child_process_clear
- * do the following:
+ * The functions: start_command, finish_command, run_command,
+ * run_command_v_opt, run_command_v_opt_cd_env do the following:
  *
  * - If a system call failed, errno is set and -1 is returned. A diagnostic
  *   is printed.
