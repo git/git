@@ -347,33 +347,25 @@ out:
 
 static void read_empty(const struct object_id *oid)
 {
-	int i = 0;
-	const char *args[7];
+	struct child_process cmd = CHILD_PROCESS_INIT;
 
-	args[i++] = "read-tree";
-	args[i++] = "-m";
-	args[i++] = "-u";
-	args[i++] = empty_tree_oid_hex();
-	args[i++] = oid_to_hex(oid);
-	args[i] = NULL;
+	strvec_pushl(&cmd.args, "read-tree", "-m", "-u", empty_tree_oid_hex(),
+		     oid_to_hex(oid), NULL);
+	cmd.git_cmd = 1;
 
-	if (run_command_v_opt(args, RUN_GIT_CMD))
+	if (run_command(&cmd))
 		die(_("read-tree failed"));
 }
 
 static void reset_hard(const struct object_id *oid)
 {
-	int i = 0;
-	const char *args[6];
+	struct child_process cmd = CHILD_PROCESS_INIT;
 
-	args[i++] = "read-tree";
-	args[i++] = "-v";
-	args[i++] = "--reset";
-	args[i++] = "-u";
-	args[i++] = oid_to_hex(oid);
-	args[i] = NULL;
+	strvec_pushl(&cmd.args, "read-tree", "-v", "--reset", "-u",
+		     oid_to_hex(oid), NULL);
+	cmd.git_cmd = 1;
 
-	if (run_command_v_opt(args, RUN_GIT_CMD))
+	if (run_command(&cmd))
 		die(_("read-tree failed"));
 }
 

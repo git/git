@@ -92,13 +92,15 @@ static int verbose;
 
 static int fetch_remote(const char *name)
 {
-	const char *argv[] = { "fetch", name, NULL, NULL };
-	if (verbose) {
-		argv[1] = "-v";
-		argv[2] = name;
-	}
+	struct child_process cmd = CHILD_PROCESS_INIT;
+
+	strvec_push(&cmd.args, "fetch");
+	if (verbose)
+		strvec_push(&cmd.args, "-v");
+	strvec_push(&cmd.args, name);
+	cmd.git_cmd = 1;
 	printf_ln(_("Updating %s"), name);
-	if (run_command_v_opt(argv, RUN_GIT_CMD))
+	if (run_command(&cmd))
 		return error(_("Could not fetch %s"), name);
 	return 0;
 }

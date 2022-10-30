@@ -8,7 +8,7 @@ int cmd_main(int argc, const char **argv)
 	struct strbuf buf = STRBUF_INIT;
 	FILE *f;
 	int i;
-	const char *child_argv[] = { NULL, NULL };
+	struct child_process cmd = CHILD_PROCESS_INIT;
 
 	/* First, print all parameters into $TRASH_DIRECTORY/ssh-output */
 	if (!trash_directory)
@@ -25,6 +25,7 @@ int cmd_main(int argc, const char **argv)
 	/* Now, evaluate the *last* parameter */
 	if (argc < 2)
 		return 0;
-	child_argv[0] = argv[argc - 1];
-	return run_command_v_opt(child_argv, RUN_USING_SHELL);
+	cmd.use_shell = 1;
+	strvec_push(&cmd.args, argv[argc - 1]);
+	return run_command(&cmd);
 }
