@@ -1142,8 +1142,14 @@ static int get_first_good(const char *refname UNUSED,
 	return 1;
 }
 
-static int verify_good(const struct bisect_terms *terms,
-		       const char **quoted_argv)
+static int do_bisect_run(const char *command)
+{
+	const char *argv[] = { command, NULL };
+	printf(_("running %s\n"), command);
+	return run_command_v_opt(argv, RUN_USING_SHELL);
+}
+
+static int verify_good(const struct bisect_terms *terms, const char *command)
 {
 	int rc;
 	enum bisect_error res;
@@ -1163,8 +1169,7 @@ static int verify_good(const struct bisect_terms *terms,
 	if (res != BISECT_OK)
 		return -1;
 
-	printf(_("running %s\n"), quoted_argv[0]);
-	rc = run_command_v_opt(quoted_argv, RUN_USING_SHELL);
+	rc = do_bisect_run(command);
 
 	res = bisect_checkout(&current_rev, no_checkout);
 	if (res != BISECT_OK)
@@ -1177,7 +1182,6 @@ static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
 {
 	int res = BISECT_OK;
 	struct strbuf command = STRBUF_INIT;
-	struct strvec run_args = STRVEC_INIT;
 	const char *new_state;
 	int temporary_stdout_fd, saved_stdout;
 	int is_first_run = 1;
@@ -1192,11 +1196,8 @@ static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
 		return BISECT_FAILED;
 	}
 
-	strvec_push(&run_args, command.buf);
-
 	while (1) {
-		printf(_("running %s\n"), command.buf);
-		res = run_command_v_opt(run_args.v, RUN_USING_SHELL);
+		res = do_bisect_run(command.buf);
 
 		/*
 		 * Exit code 126 and 127 can either come from the shell
@@ -1206,7 +1207,7 @@ static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
 		 * missing or non-executable script.
 		 */
 		if (is_first_run && (res == 126 || res == 127)) {
-			int rc = verify_good(terms, run_args.v);
+			int rc = verify_good(terms, command.buf);
 			is_first_run = 0;
 			if (rc < 0) {
 				error(_("unable to verify '%s' on good"
@@ -1273,7 +1274,6 @@ static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
 	}
 
 	strbuf_release(&command);
-	strvec_clear(&run_args);
 	return res;
 }
 
