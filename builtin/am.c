@@ -2187,14 +2187,11 @@ static int show_patch(struct am_state *state, enum show_patch_type sub_mode)
 	int len;
 
 	if (!is_null_oid(&state->orig_commit)) {
-		const char *av[4] = { "show", NULL, "--", NULL };
-		char *new_oid_str;
-		int ret;
+		const char *av[] = {
+			"show", oid_to_hex(&state->orig_commit), "--", NULL
+		};
 
-		av[1] = new_oid_str = xstrdup(oid_to_hex(&state->orig_commit));
-		ret = run_command_v_opt(av, RUN_GIT_CMD);
-		free(new_oid_str);
-		return ret;
+		return run_command_v_opt(av, RUN_GIT_CMD);
 	}
 
 	switch (sub_mode) {
