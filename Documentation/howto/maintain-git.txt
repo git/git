@@ -298,7 +298,7 @@ by doing the following:
 
  - Rebuild 'seen'.
 
-     $ Meta/Reintegrate master..seen >Meta/redo-seen.sh
+     $ Meta/Reintegrate jch..seen >Meta/redo-seen.sh
 
    Edit the result by adding new topics that are not still in 'seen'
    in the script.  Then
