@@ -386,9 +386,19 @@ static void say_patch_name(FILE *output, const char *fmt, struct patch *patch)
 
 #define SLOP (16)
 
+/*
+ * apply.c isn't equipped to handle arbitrarily large patches, because
+ * it intermingles `unsigned long` with `int` for the type used to store
+ * buffer lengths.
+ *
+ * Only process patches that are just shy of 1 GiB large in order to
+ * avoid any truncation or overflow issues.
+ */
+#define MAX_APPLY_SIZE (1024UL * 1024 * 1023)
+
 static int read_patch_file(struct strbuf *sb, int fd)
 {
-	if (strbuf_read(sb, fd, 0) < 0)
+	if (strbuf_read(sb, fd, 0) < 0 || sb->len >= MAX_APPLY_SIZE)
 		return error_errno("git apply: failed to read");
 
 	/*
