@@ -43,6 +43,30 @@ last_commit_subject () {
 	git log --pretty=format:%s -1
 }
 
+# Upon 'git subtree add|merge --squash' of an annotated tag,
+# pre-2.32.0 versions of 'git subtree' would write the hash of the tag
+# (sub1 below), instead of the commit (sub1^{commit}) in the
+# "git-subtree-split" trailer.
+# We immitate this behaviour below using a replace ref.
+# This function creates 3 repositories:
+# - $1
+# - $1-sub (added as subtree "sub" in $1)
+# - $1-clone (clone of $1)
+test_create_pre2_32_repo () {
+	subtree_test_create_repo "$1" &&
+	subtree_test_create_repo "$1-sub" &&
+	test_commit -C "$1" main1 &&
+	test_commit -C "$1-sub" --annotate sub1 &&
+	git -C "$1" subtree add --prefix="sub" --squash "../$1-sub" sub1 &&
+	tag=$(git -C "$1" rev-parse FETCH_HEAD) &&
+	commit=$(git -C "$1" rev-parse FETCH_HEAD^{commit}) &&
+	git -C "$1" log -1 --format=%B HEAD^2 >msg &&
+	test_commit -C "$1-sub" --annotate sub2 &&
+	git clone --no-local "$1" "$1-clone" &&
+	new_commit=$(cat msg | sed -e "s/$commit/$tag/" | git -C "$1-clone" commit-tree HEAD^2^{tree}) &&
+	git -C "$1-clone" replace HEAD^2 $new_commit
+}
+
 test_expect_success 'shows short help text for -h' '
 	test_expect_code 129 git subtree -h >out 2>err &&
 	test_must_be_empty err &&
@@ -264,6 +288,13 @@ test_expect_success 'merge new subproj history into subdir/ with a slash appende
 	)
 '
 
+test_expect_success 'merge with --squash after annotated tag was added/merged with --squash pre-v2.32.0 ' '
+	test_create_pre2_32_repo "$test_count" &&
+	git -C "$test_count-clone" fetch "../$test_count-sub" sub2  &&
+	test_must_fail git -C "$test_count-clone" subtree merge --prefix="sub" --squash FETCH_HEAD &&
+	git -C "$test_count-clone" subtree merge --prefix="sub" --squash FETCH_HEAD  "../$test_count-sub"
+'
+
 #
 # Tests for 'git subtree split'
 #
@@ -277,7 +308,7 @@ test_expect_success 'split requires option --prefix' '
 		cd "$test_count" &&
 		git fetch ./"sub proj" HEAD &&
 		git subtree add --prefix="sub dir" FETCH_HEAD &&
-		echo "You must provide the --prefix option." >expected &&
+		echo "fatal: you must provide the --prefix option." >expected &&
 		test_must_fail git subtree split >actual 2>&1 &&
 		test_debug "printf '"expected: "'" &&
 		test_debug "cat expected" &&
@@ -296,7 +327,7 @@ test_expect_success 'split requires path given by option --prefix must exist' '
 		cd "$test_count" &&
 		git fetch ./"sub proj" HEAD &&
 		git subtree add --prefix="sub dir" FETCH_HEAD &&
-		echo "'\''non-existent-directory'\'' does not exist; use '\''git subtree add'\''" >expected &&
+		echo "fatal: '\''non-existent-directory'\'' does not exist; use '\''git subtree add'\''" >expected &&
 		test_must_fail git subtree split --prefix=non-existent-directory >actual 2>&1 &&
 		test_debug "printf '"expected: "'" &&
 		test_debug "cat expected" &&
@@ -551,6 +582,12 @@ test_expect_success 'split "sub dir"/ with --branch for an incompatible branch' 
 	)
 '
 
+test_expect_success 'split after annotated tag was added/merged with --squash pre-v2.32.0' '
+	test_create_pre2_32_repo "$test_count" &&
+	test_must_fail git -C "$test_count-clone" subtree split --prefix="sub" HEAD &&
+	git -C "$test_count-clone" subtree split --prefix="sub" HEAD "../$test_count-sub"
+'
+
 #
 # Tests for 'git subtree pull'
 #
@@ -570,7 +607,7 @@ test_expect_success 'pull requires option --prefix' '
 		cd "$test_count" &&
 		test_must_fail git subtree pull ./"sub proj" HEAD >out 2>err &&
 
-		echo "You must provide the --prefix option." >expected &&
+		echo "fatal: you must provide the --prefix option." >expected &&
 		test_must_be_empty out &&
 		test_cmp expected err
 	)
@@ -584,7 +621,7 @@ test_expect_success 'pull requires path given by option --prefix must exist' '
 	(
 		test_must_fail git subtree pull --prefix="sub dir" ./"sub proj" HEAD >out 2>err &&
 
-		echo "'\''sub dir'\'' does not exist; use '\''git subtree add'\''" >expected &&
+		echo "fatal: '\''sub dir'\'' does not exist; use '\''git subtree add'\''" >expected &&
 		test_must_be_empty out &&
 		test_cmp expected err
 	)
@@ -630,6 +667,11 @@ test_expect_success 'pull rejects flags for split' '
 	)
 '
 
+test_expect_success 'pull with --squash after annotated tag was added/merged with --squash pre-v2.32.0 ' '
+	test_create_pre2_32_repo "$test_count" &&
+	git -C "$test_count-clone" subtree -d pull --prefix="sub" --squash "../$test_count-sub" sub2
+'
+
 #
 # Tests for 'git subtree push'
 #
@@ -643,7 +685,7 @@ test_expect_success 'push requires option --prefix' '
 		cd "$test_count" &&
 		git fetch ./"sub proj" HEAD &&
 		git subtree add --prefix="sub dir" FETCH_HEAD &&
-		echo "You must provide the --prefix option." >expected &&
+		echo "fatal: you must provide the --prefix option." >expected &&
 		test_must_fail git subtree push "./sub proj" from-mainline >actual 2>&1 &&
 		test_debug "printf '"expected: "'" &&
 		test_debug "cat expected" &&
@@ -662,7 +704,7 @@ test_expect_success 'push requires path given by option --prefix must exist' '
 		cd "$test_count" &&
 		git fetch ./"sub proj" HEAD &&
 		git subtree add --prefix="sub dir" FETCH_HEAD &&
-		echo "'\''non-existent-directory'\'' does not exist; use '\''git subtree add'\''" >expected &&
+		echo "fatal: '\''non-existent-directory'\'' does not exist; use '\''git subtree add'\''" >expected &&
 		test_must_fail git subtree push --prefix=non-existent-directory "./sub proj" from-mainline >actual 2>&1 &&
 		test_debug "printf '"expected: "'" &&
 		test_debug "cat expected" &&
@@ -951,6 +993,12 @@ test_expect_success 'push "sub dir"/ with a local rev' '
 		split_tree=$(git -C "sub proj" rev-parse --verify refs/heads/from-mainline:) &&
 		test "$split_tree" = "$good_tree"
 	)
+'
+
+test_expect_success 'push after annotated tag was added/merged with --squash pre-v2.32.0' '
+	test_create_pre2_32_repo "$test_count" &&
+	test_create_commit "$test_count-clone" sub/main-sub1 &&
+	git -C "$test_count-clone" subtree push --prefix="sub" "../$test_count-sub" from-mainline
 '
 
 #

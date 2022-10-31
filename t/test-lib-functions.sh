@@ -273,13 +273,13 @@ debug () {
 # <file>, <contents>, and <tag> all default to <message>.
 
 test_commit () {
-	notick= &&
-	echo=echo &&
-	append= &&
-	author= &&
-	signoff= &&
-	indir= &&
-	tag=light &&
+	local notick= &&
+	local echo=echo &&
+	local append= &&
+	local author= &&
+	local signoff= &&
+	local indir= &&
+	local tag=light &&
 	while test $# != 0
 	do
 		case "$1" in
@@ -322,7 +322,7 @@ test_commit () {
 		shift
 	done &&
 	indir=${indir:+"$indir"/} &&
-	file=${2:-"$1.t"} &&
+	local file=${2:-"$1.t"} &&
 	if test -n "$append"
 	then
 		$echo "${3-$1}" >>"$indir$file"
