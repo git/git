@@ -20,6 +20,14 @@ UI, Workflows & Features
    description of the branch you were on before switching to the
    current branch.
 
+ * "git merge-tree --stdin" is a new way to request a series of merges
+   and report the merge results.
+
+ * "git shortlog" learned to group by the "format" string.
+
+ * A new "--include-whitespace" option is added to "git patch-id", and
+   existing bugs in the internal patch-id logic that did not match
+   what "git patch-id" produces have been corrected.
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -55,6 +63,26 @@ Performance, Internal Implementation, Development Support etc.
    compiler.
    (merge 4b992f0a24 jk/unused-anno-more later to maint).
 
+ * Rewrite a deep recursion in the skipping negotiator to use a loop
+   with on-heap prio queue to avoid stack wastage.
+
+ * Add documentation for message IDs in fsck error messages.
+
+ * Define the logical elements of a "bundle list", data structure to
+   store them in-core, format to transfer them, and code to parse
+   them.
+
+ * The role the security mailing list plays in an embargoed release
+   has been documented.
+
+ * Two new facilities, "timer" and "counter", are introduced to the
+   trace2 API.
+
+ * Code simplification by using strvec_pushf() instead of building an
+   argument in a separate strbuf.
+
+ * Make sure generated dependency file is stably sorted to help
+   developers debugging their build issues.
 
 Fixes since v2.38
 -----------------
@@ -161,6 +189,31 @@ Fixes since v2.38
    and strlen() was a way to measure the display width of a string;
    adjust them to compute the display width assuming UTF-8 pathnames.
    (merge ce8529b2bb tb/diffstat-with-utf8-strwidth later to maint).
+
+ * "git branch --edit-description" can exit with status -1 which is
+   not a good practice; it learned to use 1 as everybody else instead.
+
+ * "git apply" limits its input to a bit less than 1 GiB.
+
+ * Merging a branch with directory renames into a branch that changes
+   the directory to a symlink was mishandled by the ort merge
+   strategy, which has been corrected.
+
+ * A bugfix to "git subtree" in its split and merge features.
+
+ * Fix some bugs in the reflog messages when rebasing and changes the
+   reflog messages of "rebase --apply" to match "rebase --merge" with
+   the aim of making the reflog easier to parse.
+
+ * "git rebase --keep-base" used to discard the commits that are
+   already cherry-picked to the upstream, even when "keep-base" meant
+   that the base, on top of which the history is being rebuilt, does
+   not yet include these cherry-picked commits.  The --keep-base
+   option now implies --reapply-cherry-picks and --no-fork-point
+   options.
+
+ * The way "git repack" creared temporary files when it received a
+   signal was prone to deadlocking, which has been corrected.
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 413bc6d20a ds/cmd-main-reorder later to maint).
