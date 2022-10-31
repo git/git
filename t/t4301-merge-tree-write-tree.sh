@@ -819,4 +819,45 @@ test_expect_success SANITY 'merge-ort fails gracefully in a read-only repository
 	test_must_fail git -C read-only merge-tree side1 side2
 '
 
+test_expect_success '--stdin with both a successful and a conflicted merge' '
+	printf "side1 side3\nside1 side2" | git merge-tree --stdin >actual &&
+
+	git checkout side1^0 &&
+	git merge side3 &&
+
+	printf "1\0" >expect &&
+	git rev-parse HEAD^{tree} | lf_to_nul >>expect &&
+	printf "\0" >>expect &&
+
+	git checkout side1^0 &&
+	test_must_fail git merge side2 &&
+	sed s/HEAD/side1/ greeting >tmp &&
+	mv tmp greeting &&
+	git add -u &&
+	git mv whatever~HEAD whatever~side1 &&
+
+	printf "0\0" >>expect &&
+	git write-tree | lf_to_nul >>expect &&
+
+	cat <<-EOF | q_to_tab | lf_to_nul >>expect &&
+	100644 $(git rev-parse side1~1:greeting) 1Qgreeting
+	100644 $(git rev-parse side1:greeting) 2Qgreeting
+	100644 $(git rev-parse side2:greeting) 3Qgreeting
+	100644 $(git rev-parse side1~1:whatever) 1Qwhatever~side1
+	100644 $(git rev-parse side1:whatever) 2Qwhatever~side1
+	EOF
+
+	q_to_nul <<-EOF >>expect &&
+	Q1QgreetingQAuto-mergingQAuto-merging greeting
+	Q1QgreetingQCONFLICT (contents)QCONFLICT (content): Merge conflict in greeting
+	Q1QnumbersQAuto-mergingQAuto-merging numbers
+	Q2Qwhatever~side1QwhateverQCONFLICT (file/directory)QCONFLICT (file/directory): directory in the way of whatever from side1; moving it to whatever~side1 instead.
+	Q1Qwhatever~side1QCONFLICT (modify/delete)QCONFLICT (modify/delete): whatever~side1 deleted in side2 and modified in side1.  Version side1 of whatever~side1 left in tree.
+	EOF
+
+	printf "\0\0" >>expect &&
+
+	test_cmp expect actual
+'
+
 test_done
