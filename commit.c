@@ -59,6 +59,14 @@ struct commit *lookup_commit_or_die(const struct object_id *oid, const char *ref
 	return c;
 }
 
+struct commit *lookup_commit_object(struct repository *r,
+				    const struct object_id *oid)
+{
+	struct object *obj = parse_object(r, oid);
+	return obj ? object_as_type(obj, OBJ_COMMIT, 0) : NULL;
+
+}
+
 struct commit *lookup_commit(struct repository *r, const struct object_id *oid)
 {
 	struct object *obj = lookup_object(r, oid);

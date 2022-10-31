@@ -218,12 +218,14 @@ leave out at most one of A and B, in which case it defaults to HEAD.
 	merge base of `<upstream>` and `<branch>`. Running
 	`git rebase --keep-base <upstream> <branch>` is equivalent to
 	running
-	`git rebase --onto <upstream>...<branch> <upstream> <branch>`.
+	`git rebase --reapply-cherry-picks --no-fork-point --onto <upstream>...<branch> <upstream> <branch>`.
 +
 This option is useful in the case where one is developing a feature on
 top of an upstream branch. While the feature is being worked on, the
 upstream branch may advance and it may not be the best idea to keep
-rebasing on top of the upstream but to keep the base commit as-is.
+rebasing on top of the upstream but to keep the base commit as-is. As
+the base commit is unchanged this option implies `--reapply-cherry-picks`
+to avoid losing commits.
 +
 Although both this option and `--fork-point` find the merge base between
 `<upstream>` and `<branch>`, this option uses the merge base as the _starting
@@ -278,7 +280,8 @@ See also INCOMPATIBLE OPTIONS below.
 Note that commits which start empty are kept (unless `--no-keep-empty`
 is specified), and commits which are clean cherry-picks (as determined
 by `git log --cherry-mark ...`) are detected and dropped as a
-preliminary step (unless `--reapply-cherry-picks` is passed).
+preliminary step (unless `--reapply-cherry-picks` or `--keep-base` is
+passed).
 +
 See also INCOMPATIBLE OPTIONS below.
 
@@ -311,13 +314,16 @@ See also INCOMPATIBLE OPTIONS below.
 	upstream changes, the behavior towards them is controlled by
 	the `--empty` flag.)
 +
-By default (or if `--no-reapply-cherry-picks` is given), these commits
-will be automatically dropped.  Because this necessitates reading all
-upstream commits, this can be expensive in repos with a large number
-of upstream commits that need to be read.  When using the 'merge'
-backend, warnings will be issued for each dropped commit (unless
-`--quiet` is given). Advice will also be issued unless
-`advice.skippedCherryPicks` is set to false (see linkgit:git-config[1]).
+
+In the absence of `--keep-base` (or if `--no-reapply-cherry-picks` is
+given), these commits will be automatically dropped.  Because this
+necessitates reading all upstream commits, this can be expensive in
+repositories with a large number of upstream commits that need to be
+read. When using the 'merge' backend, warnings will be issued for each
+dropped commit (unless `--quiet` is given). Advice will also be issued
+unless `advice.skippedCherryPicks` is set to false (see
+linkgit:git-config[1]).
+
 +
 `--reapply-cherry-picks` allows rebase to forgo reading all upstream
 commits, potentially improving performance.
@@ -443,9 +449,9 @@ When `--fork-point` is active, 'fork_point' will be used instead of
 <branch>` command (see linkgit:git-merge-base[1]).  If 'fork_point'
 ends up being empty, the `<upstream>` will be used as a fallback.
 +
-If `<upstream>` is given on the command line, then the default is
-`--no-fork-point`, otherwise the default is `--fork-point`. See also
-`rebase.forkpoint` in linkgit:git-config[1].
+If `<upstream>` or `--keep-base` is given on the command line, then
+the default is `--no-fork-point`, otherwise the default is
+`--fork-point`. See also `rebase.forkpoint` in linkgit:git-config[1].
 +
 If your branch was based on `<upstream>` but `<upstream>` was rewound and
 your branch contains commits which were dropped, this option can be used
