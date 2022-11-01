@@ -1295,7 +1295,8 @@ SANITIZE_LEAK =
 SANITIZE_ADDRESS =
 
 # For the 'coccicheck' target
-SPATCH_FLAGS = --all-includes
+SPATCH_INCLUDE_FLAGS = --all-includes
+SPATCH_FLAGS =
 SPATCH_TEST_FLAGS =
 # Setting SPATCH_BATCH_SIZE higher will
 # usually result in less CPU usage at the cost of higher peak memory.
@@ -1305,6 +1306,7 @@ SPATCH_BATCH_SIZE = 1
 # Rebuild 'coccicheck' if $(SPATCH), its flags etc. change
 TRACK_SPATCH_DEFINES =
 TRACK_SPATCH_DEFINES += $(SPATCH)
+TRACK_SPATCH_DEFINES += $(SPATCH_INCLUDE_FLAGS)
 TRACK_SPATCH_DEFINES += $(SPATCH_FLAGS)
 TRACK_SPATCH_DEFINES += $(SPATCH_TEST_FLAGS)
 TRACK_SPATCH_DEFINES += $(SPATCH_BATCH_SIZE)
@@ -3177,6 +3179,7 @@ $(COCCI_PATCHES): %.patch: %
 	fi; \
 	if ! echo $(COCCI_SOURCES) | xargs $$limit \
 		$(SPATCH) $(SPATCH_FLAGS) \
+		$(SPATCH_INCLUDE_FLAGS) \
 		--sp-file $< --patch . \
 		>$@+ 2>$@.log; \
 	then \
