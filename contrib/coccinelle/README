@@ -57,3 +57,16 @@ Git-specific tips & things to know about how we run "spatch":
 
    To disable this behavior use the "SPATCH_USE_O_DEPENDENCIES=NoThanks"
    flag.
+
+ * To speed up our rules the "make coccicheck" target will by default
+   concatenate all of the *.cocci files here into an "ALL.cocci", and
+   apply it to each source file.
+
+   This makes the run faster, as we don't need to run each rule
+   against each source file. See the Makefile for further discussion,
+   this behavior can be disabled with "SPATCH_CONCAT_COCCI=".
+
+   But since they're concatenated any <id> in the <rulname> (e.g. "@
+   my_name", v.s. anonymous "@@") needs to be unique across all our
+   *.cocci files. You should only need to name rules if other rules
+   depend on them (currently only one rule is named).
