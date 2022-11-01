@@ -1,4 +1,4 @@
-@ hashmap_entry_init_usage @
+@@
 expression E;
 struct hashmap_entry HME;
 @@
