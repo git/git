@@ -41,3 +41,19 @@ There are two types of semantic patches:
 
    This allows to expose plans of pending large scale refactorings without
    impacting the bad pattern checks.
+
+Git-specific tips & things to know about how we run "spatch":
+
+ * The "make coccicheck" will piggy-back on
+   "COMPUTE_HEADER_DEPENDENCIES". If you've built a given object file
+   the "coccicheck" target will consider its depednency to decide if
+   it needs to re-run on the corresponding source file.
+
+   This means that a "make coccicheck" will re-compile object files
+   before running. This might be unexpected, but speeds up the run in
+   the common case, as e.g. a change to "column.h" won't require all
+   coccinelle rules to be re-run against "grep.c" (or another file
+   that happens not to use "column.h").
+
+   To disable this behavior use the "SPATCH_USE_O_DEPENDENCIES=NoThanks"
+   flag.
