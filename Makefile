@@ -3159,14 +3159,20 @@ check: $(GENERATED_H)
 	fi
 
 COCCI_GLOB = $(wildcard contrib/coccinelle/*.cocci)
-COCCI_RULES = $(COCCI_GLOB)
-COCCI_NAMES = $(COCCI_RULES:contrib/coccinelle/%.cocci=%)
+COCCI_RULES_TRACKED = $(COCCI_GLOB:%=.build/%)
+COCCI_RULES =
+COCCI_RULES += $(COCCI_RULES_TRACKED)
+COCCI_NAMES =
+COCCI_NAMES += $(COCCI_RULES:.build/contrib/coccinelle/%.cocci=%)
 
 COCCICHECK_PENDING = $(filter %.pending.cocci,$(COCCI_RULES))
 COCCICHECK = $(filter-out $(COCCICHECK_PENDING),$(COCCI_RULES))
 
 COCCICHECK_PATCHES = $(COCCICHECK:%=%.patch)
 COCCICHECK_PATCHES_PENDING = $(COCCICHECK_PENDING:%=%.patch)
+
+COCCICHECK_PATCHES_INTREE = $(COCCICHECK_PATCHES:.build/%=%)
+COCCICHECK_PATCHES_PENDING_INTREE = $(COCCICHECK_PATCHES_PENDING:.build/%=%)
 
 # It's expensive to compute the many=many rules below, only eval them
 # on $(MAKECMDGOALS) that match these $(COCCI_RULES)
@@ -3175,9 +3181,15 @@ COCCI_RULES_GLOB += cocci%
 COCCI_RULES_GLOB += .build/contrib/coccinelle/%
 COCCI_RULES_GLOB += $(COCCICHECK_PATCHES)
 COCCI_RULES_GLOB += $(COCCICHEC_PATCHES_PENDING)
+COCCI_RULES_GLOB += $(COCCICHECK_PATCHES_INTREE)
+COCCI_RULES_GLOB += $(COCCICHECK_PATCHES_PENDING_INTREE)
 COCCI_GOALS = $(filter $(COCCI_RULES_GLOB),$(MAKECMDGOALS))
 
 COCCI_TEST_RES = $(wildcard contrib/coccinelle/tests/*.res)
+
+$(COCCI_RULES_TRACKED): .build/% : %
+	$(call mkdir_p_parent_template)
+	$(QUIET_CP)cp $< $@
 
 .build/contrib/coccinelle/FOUND_H_SOURCES: $(FOUND_H_SOURCES)
 	$(call mkdir_p_parent_template)
@@ -3192,7 +3204,7 @@ define cocci-rule
 # $(1) = e.g. "free.cocci"
 # $(2) = e.g. "grep.c"
 # $(3) = e.g. "grep.o"
-COCCI_$(1:contrib/coccinelle/%.cocci=%) += .build/$(1).patch/$(2)
+COCCI_$(1:.build/contrib/coccinelle/%.cocci=%) += .build/$(1).patch/$(2)
 .build/$(1).patch/$(2): GIT-SPATCH-DEFINES
 .build/$(1).patch/$(2): $(if $(and $(SPATCH_USE_O_DEPENDENCIES),$(wildcard $(3))),$(3),.build/contrib/coccinelle/FOUND_H_SOURCES)
 .build/$(1).patch/$(2): $(1)
@@ -3220,12 +3232,15 @@ endif
 
 define spatch-rule
 
-contrib/coccinelle/$(1).cocci.patch: $$(COCCI_$(1))
+.build/contrib/coccinelle/$(1).cocci.patch: $$(COCCI_$(1))
 	$$(QUIET_SPATCH_CAT)cat $$^ >$$@ && \
 	if test -s $$@; \
 	then \
 		echo '    ' SPATCH result: $$@; \
 	fi
+contrib/coccinelle/$(1).cocci.patch: .build/contrib/coccinelle/$(1).cocci.patch
+	$$(QUIET_CP)cp $$< $$@
+
 endef
 
 ifdef COCCI_GOALS
@@ -3249,11 +3264,11 @@ $(COCCI_TEST_RES_GEN): .build/contrib/coccinelle/tests/%.res : contrib/coccinell
 coccicheck-test: $(COCCI_TEST_RES_GEN)
 
 coccicheck: coccicheck-test
-coccicheck: $(COCCICHECK_PATCHES)
+coccicheck: $(COCCICHECK_PATCHES_INTREE)
 
 # See contrib/coccinelle/README
 coccicheck-pending: coccicheck-test
-coccicheck-pending: $(COCCICHECK_PATCHES_PENDING)
+coccicheck-pending: $(COCCICHECK_PATCHES_PENDING_INTREE)
 
 .PHONY: coccicheck coccicheck-pending
 
