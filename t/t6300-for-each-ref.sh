@@ -1406,4 +1406,19 @@ test_expect_success 'for-each-ref reports broken tags' '
 		refs/tags/broken-tag-*
 '
 
+test_expect_success 'set up tag with signature and no blank lines' '
+	git tag -F - fake-sig-no-blanks <<-\EOF
+	this is the subject
+	-----BEGIN PGP SIGNATURE-----
+	not a real signature, but we just care about the
+	subject/body parsing. It is important here that
+	there are no blank lines in the signature.
+	-----END PGP SIGNATURE-----
+	EOF
+'
+
+test_atom refs/tags/fake-sig-no-blanks contents:subject 'this is the subject'
+test_atom refs/tags/fake-sig-no-blanks contents:body ''
+test_atom refs/tags/fake-sig-no-blanks contents:signature "$sig"
+
 test_done

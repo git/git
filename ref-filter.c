@@ -1380,7 +1380,7 @@ static void find_subpos(const char *buf,
 	/* check if message uses CRLF */
 	} else if (! (eol = strstr(*sub, "\r\n\r\n"))) {
 		/* treat whole message as subject */
-		eol = strrchr(*sub, '\0');
+		eol = sigstart;
 	}
 	buf = eol;
 	*sublen = buf - *sub;
