@@ -12,6 +12,7 @@ BEGIN
       VALUE "OriginalFilename", "git.exe\0"
       VALUE "ProductName", "Git\0"
       VALUE "ProductVersion", GIT_VERSION "\0"
+      VALUE "FileVersion", GIT_VERSION "\0"
     END
   END
 
