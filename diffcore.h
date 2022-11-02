@@ -162,6 +162,7 @@ struct diff_filepair *diff_queue(struct diff_queue_struct *,
 				 struct diff_filespec *,
 				 struct diff_filespec *);
 void diff_q(struct diff_queue_struct *, struct diff_filepair *);
+void diff_free_queue(struct diff_queue_struct *q);
 
 /* dir_rename_relevance: the reason we want rename information for a dir */
 enum dir_rename_relevance {

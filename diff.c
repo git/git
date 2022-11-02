@@ -5773,6 +5773,13 @@ void diff_free_filepair(struct diff_filepair *p)
 	free(p);
 }
 
+void diff_free_queue(struct diff_queue_struct *q)
+{
+	for (int i = 0; i < q->nr; i++)
+		diff_free_filepair(q->queue[i]);
+	free(q->queue);
+}
+
 const char *diff_aligned_abbrev(const struct object_id *oid, int len)
 {
 	int abblen;

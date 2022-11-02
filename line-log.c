@@ -1195,6 +1195,7 @@ static int process_ranges_ordinary_commit(struct rev_info *rev, struct commit *c
 	if (parent)
 		add_line_range(rev, parent, parent_range);
 	free_line_log_data(parent_range);
+	diff_free_queue(&queue);
 	return changed;
 }
 
