@@ -510,6 +510,8 @@ restart:
 			path_count[restarted]++;
 			if (path_found(ce->name, &last_dirname, &dir_len, &dir_found)) {
 				if (S_ISSPARSEDIR(ce->ce_mode)) {
+					if (restarted)
+						BUG("ensure-full-index did not fully flatten?");
 					ensure_full_index(istate);
 					restarted = 1;
 					goto restart;
