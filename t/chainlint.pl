@@ -505,7 +505,11 @@ my @safe_endings = (
 
 sub accumulate {
 	my ($self, $tokens, $cmd) = @_;
+
+	# no previous command to check for missing "&&"
 	goto DONE unless @$tokens;
+
+	# new command is empty line; can't yet check if previous is missing "&&"
 	goto DONE if @$cmd == 1 && $$cmd[0] eq "\n";
 
 	# did previous command end with "&&", "|", "|| return" or similar?
