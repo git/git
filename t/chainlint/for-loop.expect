@@ -2,7 +2,9 @@
 	for i in a b c
 	do
 		echo $i ?!AMP?!
-		cat <<-EOF ?!LOOP?!
+		cat <<-\EOF ?!LOOP?!
+		bar
+		EOF
 	done ?!AMP?!
 	for i in a b c; do
 		echo $i &&

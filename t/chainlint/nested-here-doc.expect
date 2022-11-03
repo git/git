@@ -1,7 +1,30 @@
 cat <<ARBITRARY >foop &&
+naddle
+fub <<EOF
+	nozzle
+	noodle
+EOF
+formp
+ARBITRARY
 
 (
-	cat <<-INPUT_END &&
-	cat <<-EOT ?!AMP?!
+	cat <<-\INPUT_END &&
+	fish are mice
+	but geese go slow
+	data <<EOF
+		perl is lerp
+		and nothing else
+	EOF
+	toink
+	INPUT_END
+
+	cat <<-\EOT ?!AMP?!
+	text goes here
+	data <<EOF
+		data goes here
+	EOF
+	more test here
+	EOT
+
 	foobar
 )
