@@ -166,9 +166,11 @@ typedef struct MI_PROCESSOR_NUMBER_S { WORD Group; BYTE Number; BYTE Reserved; }
 typedef VOID (__stdcall *PGetCurrentProcessorNumberEx)(MI_PROCESSOR_NUMBER* ProcNumber);
 typedef BOOL (__stdcall *PGetNumaProcessorNodeEx)(MI_PROCESSOR_NUMBER* Processor, PUSHORT NodeNumber);
 typedef BOOL (__stdcall* PGetNumaNodeProcessorMaskEx)(USHORT Node, PGROUP_AFFINITY ProcessorMask);
+typedef BOOL (__stdcall *PGetNumaProcessorNode)(UCHAR Processor, PUCHAR NodeNumber);
 static PGetCurrentProcessorNumberEx pGetCurrentProcessorNumberEx = NULL;
 static PGetNumaProcessorNodeEx      pGetNumaProcessorNodeEx = NULL;
 static PGetNumaNodeProcessorMaskEx  pGetNumaNodeProcessorMaskEx = NULL;
+static PGetNumaProcessorNode        pGetNumaProcessorNode = NULL;
 
 static bool mi_win_enable_large_os_pages(void)
 {
@@ -234,6 +236,7 @@ void _mi_os_init(void)
     pGetCurrentProcessorNumberEx = (PGetCurrentProcessorNumberEx)(void (*)(void))GetProcAddress(hDll, "GetCurrentProcessorNumberEx");
     pGetNumaProcessorNodeEx = (PGetNumaProcessorNodeEx)(void (*)(void))GetProcAddress(hDll, "GetNumaProcessorNodeEx");
     pGetNumaNodeProcessorMaskEx = (PGetNumaNodeProcessorMaskEx)(void (*)(void))GetProcAddress(hDll, "GetNumaNodeProcessorMaskEx");
+    pGetNumaProcessorNode = (PGetNumaProcessorNode)(void (*)(void))GetProcAddress(hDll, "GetNumaProcessorNode");
     FreeLibrary(hDll);
   }
   if (mi_option_is_enabled(mi_option_large_os_pages) || mi_option_is_enabled(mi_option_reserve_huge_os_pages)) {
@@ -1316,11 +1319,11 @@ static size_t mi_os_numa_nodex(void) {
     BOOL ok = (*pGetNumaProcessorNodeEx)(&pnum, &nnode);
     if (ok) numa_node = nnode;
   }
-  else {
+  else if (pGetNumaProcessorNode != NULL) {
     // Vista or earlier, use older API that is limited to 64 processors. Issue #277
     DWORD pnum = GetCurrentProcessorNumber();
     UCHAR nnode = 0;
-    BOOL ok = GetNumaProcessorNode((UCHAR)pnum, &nnode);
+    BOOL ok = pGetNumaProcessorNode((UCHAR)pnum, &nnode);
     if (ok) numa_node = nnode;
   }
   return numa_node;
