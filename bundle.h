@@ -18,6 +18,7 @@ struct bundle_header {
 { \
 	.prerequisites = STRING_LIST_INIT_DUP, \
 	.references = STRING_LIST_INIT_DUP, \
+	.filter = LIST_OBJECTS_FILTER_INIT, \
 }
 void bundle_header_init(struct bundle_header *header);
 void bundle_header_release(struct bundle_header *header);
@@ -29,7 +30,14 @@ int read_bundle_header_fd(int fd, struct bundle_header *header,
 int create_bundle(struct repository *r, const char *path,
 		  int argc, const char **argv, struct strvec *pack_options,
 		  int version);
-int verify_bundle(struct repository *r, struct bundle_header *header, int verbose);
+
+enum verify_bundle_flags {
+	VERIFY_BUNDLE_VERBOSE = (1 << 0),
+	VERIFY_BUNDLE_QUIET = (1 << 1),
+};
+
+int verify_bundle(struct repository *r, struct bundle_header *header,
+		  enum verify_bundle_flags flags);
 
 /**
  * Unbundle after reading the header with read_bundle_header().
@@ -40,9 +48,13 @@ int verify_bundle(struct repository *r, struct bundle_header *header, int verbos
  * Provide "extra_index_pack_args" to pass any extra arguments
  * (e.g. "-v" for verbose/progress), NULL otherwise. The provided
  * "extra_index_pack_args" (if any) will be strvec_clear()'d for you.
+ *
+ * Before unbundling, this method will call verify_bundle() with the
+ * given 'flags'.
  */
 int unbundle(struct repository *r, struct bundle_header *header,
-	     int bundle_fd, struct strvec *extra_index_pack_args);
+	     int bundle_fd, struct strvec *extra_index_pack_args,
+	     enum verify_bundle_flags flags);
 int list_bundle_refs(struct bundle_header *header,
 		int argc, const char **argv);
 

@@ -503,7 +503,8 @@ static void finish(struct commit *head_commit,
 	/* Run a post-merge hook */
 	run_hooks_l("post-merge", squash ? "1" : "0", NULL);
 
-	apply_autostash(git_path_merge_autostash(the_repository));
+	if (new_head)
+		apply_autostash(git_path_merge_autostash(the_repository));
 	strbuf_release(&reflog_message);
 }
 
@@ -1692,7 +1693,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	if (save_state(&stash))
 		oidclr(&stash);
 
-	for (i = 0; !merge_was_ok && i < use_strategies_nr; i++) {
+	for (i = 0; i < use_strategies_nr; i++) {
 		int ret, cnt;
 		if (i) {
 			printf(_("Rewinding the tree to pristine...\n"));
@@ -1707,7 +1708,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		 */
 		wt_strategy = use_strategies[i]->name;
 
-		ret = try_merge_strategy(use_strategies[i]->name,
+		ret = try_merge_strategy(wt_strategy,
 					 common, remoteheads,
 					 head_commit);
 		/*
@@ -1717,16 +1718,17 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		 */
 		if (ret < 2) {
 			if (!ret) {
-				if (option_commit) {
-					/* Automerge succeeded. */
-					automerge_was_ok = 1;
-					break;
-				}
+				/*
+				 * This strategy worked; no point in trying
+				 * another.
+				 */
 				merge_was_ok = 1;
+				best_strategy = wt_strategy;
+				break;
 			}
 			cnt = (use_strategies_nr > 1) ? evaluate_result() : 0;
 			if (best_cnt <= 0 || cnt <= best_cnt) {
-				best_strategy = use_strategies[i]->name;
+				best_strategy = wt_strategy;
 				best_cnt = cnt;
 			}
 		}
@@ -1736,7 +1738,8 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	 * If we have a resulting tree, that means the strategy module
 	 * auto resolved the merge cleanly.
 	 */
-	if (automerge_was_ok) {
+	if (merge_was_ok && option_commit) {
+		automerge_was_ok = 1;
 		ret = finish_automerge(head_commit, head_subsumed,
 				       common, remoteheads,
 				       &result_tree, wt_strategy);
@@ -1781,6 +1784,8 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			"stopped before committing as requested\n"));
 	else
 		ret = suggest_conflicts();
+	if (autostash)
+		printf(_("When finished, apply stashed changes with `git stash pop`\n"));
 
 done:
 	if (!automerge_was_ok) {

@@ -125,7 +125,7 @@ void clear_apply_state(struct apply_state *state)
 	/* &state->fn_table is cleared at the end of apply_patch() */
 }
 
-static void mute_routine(const char *msg, va_list params)
+static void mute_routine(const char *msg UNUSED, va_list params UNUSED)
 {
 	/* do nothing */
 }
@@ -386,9 +386,19 @@ static void say_patch_name(FILE *output, const char *fmt, struct patch *patch)
 
 #define SLOP (16)
 
+/*
+ * apply.c isn't equipped to handle arbitrarily large patches, because
+ * it intermingles `unsigned long` with `int` for the type used to store
+ * buffer lengths.
+ *
+ * Only process patches that are just shy of 1 GiB large in order to
+ * avoid any truncation or overflow issues.
+ */
+#define MAX_APPLY_SIZE (1024UL * 1024 * 1023)
+
 static int read_patch_file(struct strbuf *sb, int fd)
 {
-	if (strbuf_read(sb, fd, 0) < 0)
+	if (strbuf_read(sb, fd, 0) < 0 || sb->len >= MAX_APPLY_SIZE)
 		return error_errno("git apply: failed to read");
 
 	/*
@@ -892,9 +902,9 @@ static int parse_traditional_patch(struct apply_state *state,
 	return 0;
 }
 
-static int gitdiff_hdrend(struct gitdiff_data *state,
-			  const char *line,
-			  struct patch *patch)
+static int gitdiff_hdrend(struct gitdiff_data *state UNUSED,
+			  const char *line UNUSED,
+			  struct patch *patch UNUSED)
 {
 	return 1;
 }
@@ -1044,7 +1054,7 @@ static int gitdiff_renamedst(struct gitdiff_data *state,
 	return 0;
 }
 
-static int gitdiff_similarity(struct gitdiff_data *state,
+static int gitdiff_similarity(struct gitdiff_data *state UNUSED,
 			      const char *line,
 			      struct patch *patch)
 {
@@ -1054,7 +1064,7 @@ static int gitdiff_similarity(struct gitdiff_data *state,
 	return 0;
 }
 
-static int gitdiff_dissimilarity(struct gitdiff_data *state,
+static int gitdiff_dissimilarity(struct gitdiff_data *state UNUSED,
 				 const char *line,
 				 struct patch *patch)
 {
@@ -1104,9 +1114,9 @@ static int gitdiff_index(struct gitdiff_data *state,
  * This is normal for a diff that doesn't change anything: we'll fall through
  * into the next diff. Tell the parser to break out.
  */
-static int gitdiff_unrecognized(struct gitdiff_data *state,
-				const char *line,
-				struct patch *patch)
+static int gitdiff_unrecognized(struct gitdiff_data *state UNUSED,
+				const char *line UNUSED,
+				struct patch *patch UNUSED)
 {
 	return 1;
 }

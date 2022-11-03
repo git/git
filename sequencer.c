@@ -537,7 +537,7 @@ static struct tree *empty_tree(struct repository *r)
 static int error_dirty_index(struct repository *repo, struct replay_opts *opts)
 {
 	if (repo_read_index_unmerged(repo))
-		return error_resolve_conflict(_(action_name(opts)));
+		return error_resolve_conflict(action_name(opts));
 
 	error(_("your local changes would be overwritten by %s."),
 		_(action_name(opts)));
@@ -575,7 +575,7 @@ static int fast_forward_to(struct repository *r,
 	if (checkout_fast_forward(r, from, to, 1))
 		return -1; /* the callee should have complained already */
 
-	strbuf_addf(&sb, _("%s: fast-forward"), _(action_name(opts)));
+	strbuf_addf(&sb, "%s: fast-forward", action_name(opts));
 
 	transaction = ref_transaction_begin(&err);
 	if (!transaction ||
@@ -915,7 +915,7 @@ int read_author_script(const char *path, char **name, char **email, char **date,
 		error(_("missing 'GIT_AUTHOR_EMAIL'"));
 	if (date_i == -2)
 		error(_("missing 'GIT_AUTHOR_DATE'"));
-	if (date_i < 0 || email_i < 0 || date_i < 0 || err)
+	if (name_i < 0 || email_i < 0 || date_i < 0 || err)
 		goto finish;
 	*name = kv.items[name_i].util;
 	*email = kv.items[email_i].util;
@@ -2422,7 +2422,7 @@ static int read_and_refresh_cache(struct repository *r,
 	if (repo_read_index(r) < 0) {
 		rollback_lock_file(&index_lock);
 		return error(_("git %s: failed to read the index"),
-			_(action_name(opts)));
+			action_name(opts));
 	}
 	refresh_index(r->index, REFRESH_QUIET|REFRESH_UNMERGED, NULL, NULL, NULL);
 
@@ -2430,7 +2430,7 @@ static int read_and_refresh_cache(struct repository *r,
 		if (write_locked_index(r->index, &index_lock,
 				       COMMIT_LOCK | SKIP_IF_UNCHANGED)) {
 			return error(_("git %s: failed to refresh the index"),
-				_(action_name(opts)));
+				action_name(opts));
 		}
 	}
 
@@ -3753,7 +3753,7 @@ static int do_reset(struct repository *r,
 	init_checkout_metadata(&unpack_tree_opts.meta, name, &oid, NULL);
 
 	if (repo_read_index_unmerged(r)) {
-		ret = error_resolve_conflict(_(action_name(opts)));
+		ret = error_resolve_conflict(action_name(opts));
 		goto cleanup;
 	}
 
@@ -5050,6 +5050,8 @@ int sequencer_continue(struct repository *r, struct replay_opts *opts)
 	if (read_populate_opts(opts))
 		return -1;
 	if (is_rebase_i(opts)) {
+		char *previous_reflog_action;
+
 		if ((res = read_populate_todo(r, &todo_list, opts)))
 			goto release_todo_list;
 
@@ -5060,10 +5062,13 @@ int sequencer_continue(struct repository *r, struct replay_opts *opts)
 			unlink(rebase_path_dropped());
 		}
 
+		previous_reflog_action = xstrdup(getenv(GIT_REFLOG_ACTION));
+		setenv(GIT_REFLOG_ACTION, reflog_message(opts, "continue", NULL), 1);
 		if (commit_staged_changes(r, opts, &todo_list)) {
 			res = -1;
 			goto release_todo_list;
 		}
+		setenv(GIT_REFLOG_ACTION, previous_reflog_action, 1);
 	} else if (!file_exists(get_todo_path(opts)))
 		return continue_single_pick(r, opts);
 	else if ((res = read_populate_todo(r, &todo_list, opts)))
@@ -5254,7 +5259,8 @@ struct labels_entry {
 	char label[FLEX_ARRAY];
 };
 
-static int labels_cmp(const void *fndata, const struct hashmap_entry *eptr,
+static int labels_cmp(const void *fndata UNUSED,
+		      const struct hashmap_entry *eptr,
 		      const struct hashmap_entry *entry_or_key, const void *key)
 {
 	const struct labels_entry *a, *b;
@@ -6131,7 +6137,7 @@ struct subject2item_entry {
 	char subject[FLEX_ARRAY];
 };
 
-static int subject2item_cmp(const void *fndata,
+static int subject2item_cmp(const void *fndata UNUSED,
 			    const struct hashmap_entry *eptr,
 			    const struct hashmap_entry *entry_or_key,
 			    const void *key)
@@ -6202,8 +6208,6 @@ int todo_list_rearrange_squash(struct todo_list *todo_list)
 			return error(_("the script was already rearranged."));
 		}
 
-		*commit_todo_item_at(&commit_todo, item->commit) = item;
-
 		parse_commit(item->commit);
 		commit_buffer = logmsg_reencode(item->commit, NULL, "UTF-8");
 		find_commit_subject(commit_buffer, &subject);
@@ -6270,6 +6274,8 @@ int todo_list_rearrange_squash(struct todo_list *todo_list)
 					strhash(entry->subject));
 			hashmap_put(&subject2item, &entry->entry);
 		}
+
+		*commit_todo_item_at(&commit_todo, item->commit) = item;
 	}
 
 	if (rearranged) {

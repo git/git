@@ -213,7 +213,8 @@ void set_diffopt_flags_from_submodule_config(struct diff_options *diffopt,
 }
 
 /* Cheap function that only determines if we're interested in submodules at all */
-int git_default_submodule_config(const char *var, const char *value, void *cb)
+int git_default_submodule_config(const char *var, const char *value,
+				 void *cb UNUSED)
 {
 	if (!strcmp(var, "submodule.recurse")) {
 		int v = git_config_bool(var, value) ?
@@ -415,10 +416,9 @@ int parse_submodule_update_strategy(const char *value,
 	return 0;
 }
 
-const char *submodule_strategy_to_string(const struct submodule_update_strategy *s)
+const char *submodule_update_type_to_string(enum submodule_update_type type)
 {
-	struct strbuf sb = STRBUF_INIT;
-	switch (s->type) {
+	switch (type) {
 	case SM_UPDATE_CHECKOUT:
 		return "checkout";
 	case SM_UPDATE_MERGE:
@@ -428,12 +428,11 @@ const char *submodule_strategy_to_string(const struct submodule_update_strategy 
 	case SM_UPDATE_NONE:
 		return "none";
 	case SM_UPDATE_UNSPECIFIED:
-		return NULL;
 	case SM_UPDATE_COMMAND:
-		strbuf_addf(&sb, "!%s", s->command);
-		return strbuf_detach(&sb, NULL);
+		BUG("init_submodule() should handle type %d", type);
+	default:
+		BUG("unexpected update strategy type: %d", type);
 	}
-	return NULL;
 }
 
 void handle_ignore_submodules_arg(struct diff_options *diffopt,
@@ -940,8 +939,9 @@ static void free_submodules_data(struct string_list *submodules)
 	string_list_clear(submodules, 1);
 }
 
-static int has_remote(const char *refname, const struct object_id *oid,
-		      int flags, void *cb_data)
+static int has_remote(const char *refname UNUSED,
+		      const struct object_id *oid UNUSED,
+		      int flags UNUSED, void *cb_data UNUSED)
 {
 	return 1;
 }
@@ -1243,8 +1243,9 @@ int push_unpushed_submodules(struct repository *r,
 	return ret;
 }
 
-static int append_oid_to_array(const char *ref, const struct object_id *oid,
-			       int flags, void *data)
+static int append_oid_to_array(const char *ref UNUSED,
+			       const struct object_id *oid,
+			       int flags UNUSED, void *data)
 {
 	struct oid_array *array = data;
 	oid_array_append(array, oid);
@@ -1818,6 +1819,17 @@ int fetch_submodules(struct repository *r,
 {
 	int i;
 	struct submodule_parallel_fetch spf = SPF_INIT;
+	const struct run_process_parallel_opts opts = {
+		.tr2_category = "submodule",
+		.tr2_label = "parallel/fetch",
+
+		.processes = max_parallel_jobs,
+
+		.get_next_task = get_next_submodule,
+		.start_failure = fetch_start_failure,
+		.task_finished = fetch_finish,
+		.data = &spf,
+	};
 
 	spf.r = r;
 	spf.command_line_option = command_line_option;
@@ -1839,12 +1851,7 @@ int fetch_submodules(struct repository *r,
 
 	calculate_changed_submodule_paths(r, &spf.changed_submodule_names);
 	string_list_sort(&spf.changed_submodule_names);
-	run_processes_parallel_tr2(max_parallel_jobs,
-				   get_next_submodule,
-				   fetch_start_failure,
-				   fetch_finish,
-				   &spf,
-				   "submodule", "parallel/fetch");
+	run_processes_parallel(&opts);
 
 	if (spf.submodules_with_errors.len > 0)
 		fprintf(stderr, _("Errors during submodule fetch:\n%s"),
@@ -2360,26 +2367,20 @@ void absorb_git_dir_into_superproject(const char *path,
 
 	if (flags & ABSORB_GITDIR_RECURSE_SUBMODULES) {
 		struct child_process cp = CHILD_PROCESS_INIT;
-		struct strbuf sb = STRBUF_INIT;
 
 		if (flags & ~ABSORB_GITDIR_RECURSE_SUBMODULES)
 			BUG("we don't know how to pass the flags down?");
 
-		strbuf_addstr(&sb, get_super_prefix_or_empty());
-		strbuf_addstr(&sb, path);
-		strbuf_addch(&sb, '/');
-
 		cp.dir = path;
 		cp.git_cmd = 1;
 		cp.no_stdin = 1;
-		strvec_pushl(&cp.args, "--super-prefix", sb.buf,
-			     "submodule--helper",
+		strvec_pushf(&cp.args, "--super-prefix=%s%s/",
+			     get_super_prefix_or_empty(), path);
+		strvec_pushl(&cp.args, "submodule--helper",
 			     "absorbgitdirs", NULL);
 		prepare_submodule_repo_env(&cp.env);
 		if (run_command(&cp))
 			die(_("could not recurse into submodule '%s'"), path);
-
-		strbuf_release(&sb);
 	}
 }
 

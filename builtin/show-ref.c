@@ -9,7 +9,9 @@
 #include "parse-options.h"
 
 static const char * const show_ref_usage[] = {
-	N_("git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference] [-s | --hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [<pattern>...]"),
+	N_("git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference]\n"
+	   "             [-s | --hash[=<n>]] [--abbrev[=<n>]] [--tags]\n"
+	   "             [--heads] [--] [<pattern>...]"),
 	N_("git show-ref --exclude-existing[=<pattern>]"),
 	NULL
 };
@@ -47,7 +49,7 @@ static void show_one(const char *refname, const struct object_id *oid)
 }
 
 static int show_ref(const char *refname, const struct object_id *oid,
-		    int flag, void *cbdata)
+		    int flag UNUSED, void *cbdata UNUSED)
 {
 	if (show_head && !strcmp(refname, "HEAD"))
 		goto match;
@@ -77,8 +79,9 @@ match:
 	return 0;
 }
 
-static int add_existing(const char *refname, const struct object_id *oid,
-			int flag, void *cbdata)
+static int add_existing(const char *refname,
+			const struct object_id *oid UNUSED,
+			int flag UNUSED, void *cbdata)
 {
 	struct string_list *list = (struct string_list *)cbdata;
 	string_list_insert(list, refname);

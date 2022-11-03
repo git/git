@@ -249,7 +249,7 @@ test_expect_success "Cleanup temp and matrix branches" "
 	do
 		for fsm_val in $fsm_values
 		do
-			cleanup $uc_val $fsm_val
+			cleanup $uc_val $fsm_val || return 1
 		done
 	done
 "

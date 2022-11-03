@@ -18,7 +18,7 @@ struct tmp_objdir {
 
 /*
  * Allow only one tmp_objdir at a time in a running process, which simplifies
- * our signal/atexit cleanup routines.  It's doubtful callers will ever need
+ * our atexit cleanup routines.  It's doubtful callers will ever need
  * more than one, and we can expand later if so.  You can have many such
  * tmp_objdirs simultaneously in many processes, of course.
  */
@@ -31,7 +31,7 @@ static void tmp_objdir_free(struct tmp_objdir *t)
 	free(t);
 }
 
-static int tmp_objdir_destroy_1(struct tmp_objdir *t, int on_signal)
+int tmp_objdir_destroy(struct tmp_objdir *t)
 {
 	int err;
 
@@ -41,42 +41,19 @@ static int tmp_objdir_destroy_1(struct tmp_objdir *t, int on_signal)
 	if (t == the_tmp_objdir)
 		the_tmp_objdir = NULL;
 
-	if (!on_signal && t->prev_odb)
+	if (t->prev_odb)
 		restore_primary_odb(t->prev_odb, t->path.buf);
 
-	/*
-	 * This may use malloc via strbuf_grow(), but we should
-	 * have pre-grown t->path sufficiently so that this
-	 * doesn't happen in practice.
-	 */
 	err = remove_dir_recursively(&t->path, 0);
 
-	/*
-	 * When we are cleaning up due to a signal, we won't bother
-	 * freeing memory; it may cause a deadlock if the signal
-	 * arrived while libc's allocator lock is held.
-	 */
-	if (!on_signal)
-		tmp_objdir_free(t);
+	tmp_objdir_free(t);
 
 	return err;
-}
-
-int tmp_objdir_destroy(struct tmp_objdir *t)
-{
-	return tmp_objdir_destroy_1(t, 0);
 }
 
 static void remove_tmp_objdir(void)
 {
 	tmp_objdir_destroy(the_tmp_objdir);
-}
-
-static void remove_tmp_objdir_on_signal(int signo)
-{
-	tmp_objdir_destroy_1(the_tmp_objdir, 1);
-	sigchain_pop(signo);
-	raise(signo);
 }
 
 void tmp_objdir_discard_objects(struct tmp_objdir *t)
@@ -152,14 +129,6 @@ struct tmp_objdir *tmp_objdir_create(const char *prefix)
 	 */
 	strbuf_addf(&t->path, "%s/tmp_objdir-%s-XXXXXX", get_object_directory(), prefix);
 
-	/*
-	 * Grow the strbuf beyond any filename we expect to be placed in it.
-	 * If tmp_objdir_destroy() is called by a signal handler, then
-	 * we should be able to use the strbuf to remove files without
-	 * having to call malloc.
-	 */
-	strbuf_grow(&t->path, 1024);
-
 	if (!mkdtemp(t->path.buf)) {
 		/* free, not destroy, as we never touched the filesystem */
 		tmp_objdir_free(t);
@@ -169,7 +138,6 @@ struct tmp_objdir *tmp_objdir_create(const char *prefix)
 	the_tmp_objdir = t;
 	if (!installed_handlers) {
 		atexit(remove_tmp_objdir);
-		sigchain_push_common(remove_tmp_objdir_on_signal);
 		installed_handlers++;
 	}
 

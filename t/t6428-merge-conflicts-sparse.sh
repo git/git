@@ -29,7 +29,7 @@ test_description="merge cases"
 # Testcase basic, conflicting changes in 'numerals'
 
 test_setup_numerals () {
-	test_create_repo numerals_$1 &&
+	git init numerals_$1 &&
 	(
 		cd numerals_$1 &&
 

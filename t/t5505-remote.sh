@@ -241,6 +241,26 @@ test_expect_success 'add invalid foreign_vcs remote' '
 	test_cmp expect actual
 '
 
+test_expect_success 'without subcommand' '
+	echo origin >expect &&
+	git -C test remote >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'without subcommand accepts -v' '
+	cat >expect <<-EOF &&
+	origin	$(pwd)/one (fetch)
+	origin	$(pwd)/one (push)
+	EOF
+	git -C test remote -v >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'without subcommand does not take arguments' '
+	test_expect_code 129 git -C test remote origin 2>err &&
+	grep "^error: unknown subcommand:" err
+'
+
 cat >test/expect <<EOF
 * remote origin
   Fetch URL: $(pwd)/one
@@ -880,6 +900,17 @@ test_expect_success 'rename a remote renames repo remote.pushDefault but keeps g
 		test "$(git config --global remote.pushDefault)" = "origin" &&
 		test "$(git config --local remote.pushDefault)" = "upstream"
 	)
+'
+
+test_expect_success 'rename handles remote without fetch refspec' '
+	git clone --bare one no-refspec.git &&
+	# confirm assumption that bare clone does not create refspec
+	test_expect_code 5 \
+		git -C no-refspec.git config --unset-all remote.origin.fetch &&
+	git -C no-refspec.git config remote.origin.url >expect &&
+	git -C no-refspec.git remote rename origin foo &&
+	git -C no-refspec.git config remote.foo.url >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'rename does not update a non-default fetch refspec' '

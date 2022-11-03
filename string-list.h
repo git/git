@@ -141,7 +141,12 @@ void string_list_clear_func(struct string_list *list, string_list_clear_func_t c
 int for_each_string_list(struct string_list *list,
 			 string_list_each_func_t func, void *cb_data);
 
-/** Iterate over each item, as a macro. */
+/**
+ * Iterate over each item, as a macro.
+ *
+ * Be sure that 'list' is non-NULL. The macro cannot perform NULL
+ * checks due to -Werror=address errors.
+ */
 #define for_each_string_list_item(item,list)            \
 	for (item = (list)->items;                      \
 	     item && item < (list)->items + (list)->nr; \

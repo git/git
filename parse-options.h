@@ -11,6 +11,7 @@ enum parse_opt_type {
 	OPTION_GROUP,
 	OPTION_NUMBER,
 	OPTION_ALIAS,
+	OPTION_SUBCOMMAND,
 	/* options with no arguments */
 	OPTION_BIT,
 	OPTION_NEGBIT,
@@ -30,10 +31,11 @@ enum parse_opt_flags {
 	PARSE_OPT_KEEP_DASHDASH = 1 << 0,
 	PARSE_OPT_STOP_AT_NON_OPTION = 1 << 1,
 	PARSE_OPT_KEEP_ARGV0 = 1 << 2,
-	PARSE_OPT_KEEP_UNKNOWN = 1 << 3,
+	PARSE_OPT_KEEP_UNKNOWN_OPT = 1 << 3,
 	PARSE_OPT_NO_INTERNAL_HELP = 1 << 4,
 	PARSE_OPT_ONE_SHOT = 1 << 5,
 	PARSE_OPT_SHELL_EVAL = 1 << 6,
+	PARSE_OPT_SUBCOMMAND_OPTIONAL = 1 << 7,
 };
 
 enum parse_opt_option_flags {
@@ -56,6 +58,7 @@ enum parse_opt_result {
 	PARSE_OPT_ERROR = -1,	/* must be the same as error() */
 	PARSE_OPT_DONE = 0,	/* fixed so that "return 0" works */
 	PARSE_OPT_NON_OPTION,
+	PARSE_OPT_SUBCOMMAND,
 	PARSE_OPT_UNKNOWN
 };
 
@@ -67,6 +70,9 @@ typedef enum parse_opt_result parse_opt_ll_cb(struct parse_opt_ctx_t *ctx,
 					      const struct option *opt,
 					      const char *arg, int unset);
 
+typedef int parse_opt_subcommand_fn(int argc, const char **argv,
+				    const char *prefix);
+
 /*
  * `type`::
  *   holds the type of the option, you must have an OPTION_END last in your
@@ -76,7 +82,8 @@ typedef enum parse_opt_result parse_opt_ll_cb(struct parse_opt_ctx_t *ctx,
  *   the character to use as a short option name, '\0' if none.
  *
  * `long_name`::
- *   the long option name, without the leading dashes, NULL if none.
+ *   the long option (without the leading dashes) or subcommand name,
+ *   NULL if none.
  *
  * `value`::
  *   stores pointers to the values to be filled.
@@ -93,7 +100,7 @@ typedef enum parse_opt_result parse_opt_ll_cb(struct parse_opt_ctx_t *ctx,
  *
  * `help`::
  *   the short help associated to what the option does.
- *   Must never be NULL (except for OPTION_END).
+ *   Must never be NULL (except for OPTION_END and OPTION_SUBCOMMAND).
  *   OPTION_GROUP uses this pointer to store the group header.
  *   Should be wrapped by N_() for translation.
  *
@@ -109,7 +116,8 @@ typedef enum parse_opt_result parse_opt_ll_cb(struct parse_opt_ctx_t *ctx,
  *				is last on the command line. If the option is
  *				not last it will require an argument.
  *				Should not be used with PARSE_OPT_OPTARG.
- *   PARSE_OPT_NODASH: this option doesn't start with a dash.
+ *   PARSE_OPT_NODASH: this option doesn't start with a dash; can only be a
+ *		       short option and can't accept arguments.
  *   PARSE_OPT_LITERAL_ARGHELP: says that argh shouldn't be enclosed in brackets
  *				(i.e. '<argh>') in the help message.
  *				Useful for options with multiple parameters.
@@ -130,6 +138,9 @@ typedef enum parse_opt_result parse_opt_ll_cb(struct parse_opt_ctx_t *ctx,
  * `ll_callback`::
  *   pointer to the callback to use for OPTION_LOWLEVEL_CALLBACK
  *
+ * `subcommand_fn`::
+ *   pointer to a function to use for OPTION_SUBCOMMAND.
+ *   It will be put in value when the subcommand is given on the command line.
  */
 struct option {
 	enum parse_opt_type type;
@@ -144,6 +155,7 @@ struct option {
 	intptr_t defval;
 	parse_opt_ll_cb *ll_callback;
 	intptr_t extra;
+	parse_opt_subcommand_fn *subcommand_fn;
 };
 
 #define OPT_BIT_F(s, l, v, h, b, f) { OPTION_BIT, (s), (l), (v), NULL, (h), \
@@ -204,6 +216,14 @@ struct option {
 
 #define OPT_ALIAS(s, l, source_long_name) \
 	{ OPTION_ALIAS, (s), (l), (source_long_name) }
+
+#define OPT_SUBCOMMAND_F(l, v, fn, f) { \
+	.type = OPTION_SUBCOMMAND, \
+	.long_name = (l), \
+	.value = (v), \
+	.flags = (f), \
+	.subcommand_fn = (fn) }
+#define OPT_SUBCOMMAND(l, v, fn)    OPT_SUBCOMMAND_F((l), (v), (fn), 0)
 
 /*
  * parse_options() will filter out the processed options and leave the
@@ -294,6 +314,7 @@ struct parse_opt_ctx_t {
 	int argc, cpidx, total;
 	const char *opt;
 	enum parse_opt_flags flags;
+	unsigned has_subcommands;
 	const char *prefix;
 	const char **alias_groups; /* must be in groups of 3 elements! */
 	struct option *updated_options;

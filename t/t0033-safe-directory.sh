@@ -71,4 +71,13 @@ test_expect_success 'safe.directory=*, but is reset' '
 	expect_rejected_dir
 '
 
+test_expect_success 'safe.directory in included file' '
+	cat >gitconfig-include <<-EOF &&
+	[safe]
+		directory = "$(pwd)"
+	EOF
+	git config --global --add include.path "$(pwd)/gitconfig-include" &&
+	git status
+'
+
 test_done

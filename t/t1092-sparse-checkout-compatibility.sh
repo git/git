@@ -162,6 +162,19 @@ init_repos () {
 	git -C sparse-index sparse-checkout set deep
 }
 
+init_repos_as_submodules () {
+	git reset --hard &&
+	init_repos &&
+	git submodule add ./full-checkout &&
+	git submodule add ./sparse-checkout &&
+	git submodule add ./sparse-index &&
+
+	git submodule status >actual &&
+	grep full-checkout actual &&
+	grep sparse-checkout actual &&
+	grep sparse-index actual
+}
+
 run_on_sparse () {
 	(
 		cd sparse-checkout &&
@@ -380,6 +393,15 @@ test_expect_success 'checkout with modified sparse directory' '
 	test_all_match git checkout base
 '
 
+test_expect_success 'checkout orphan then non-orphan' '
+	init_repos &&
+
+	test_all_match git checkout --orphan test-orphan &&
+	test_all_match git status --porcelain=v2 &&
+	test_all_match git checkout base &&
+	test_all_match git status --porcelain=v2
+'
+
 test_expect_success 'add outside sparse cone' '
 	init_repos &&
 
@@ -556,7 +578,7 @@ test_expect_success 'blame with pathspec inside sparse definition' '
 			deep/deeper1/a \
 			deep/deeper1/deepest/a
 	do
-		test_all_match git blame $file
+		test_all_match git blame $file || return 1
 	done
 '
 
@@ -567,7 +589,7 @@ test_expect_success 'blame with pathspec outside sparse definition' '
 	init_repos &&
 	test_sparse_match git sparse-checkout set &&
 
-	for file in a \
+	for file in \
 			deep/a \
 			deep/deeper1/a \
 			deep/deeper1/deepest/a
@@ -579,7 +601,7 @@ test_expect_success 'blame with pathspec outside sparse definition' '
 		# We compare sparse-checkout-err and sparse-index-err in
 		# `test_sparse_match`. Given we know they are the same, we
 		# only check the content of sparse-index-err here.
-		test_cmp expect sparse-index-err
+		test_cmp expect sparse-index-err || return 1
 	done
 '
 
@@ -1293,6 +1315,8 @@ test_expect_success 'submodule handling' '
 	test_all_match git add modules &&
 	test_all_match git commit -m "add modules directory" &&
 
+	test_config_global protocol.file.allow always &&
+
 	run_on_all git submodule add "$(pwd)/initial-repo" modules/sub &&
 	test_all_match git commit -m "add submodule" &&
 
@@ -1571,7 +1595,7 @@ test_expect_success 'sparse index is not expanded: blame' '
 			deep/deeper1/a \
 			deep/deeper1/deepest/a
 	do
-		ensure_not_expanded blame $file
+		ensure_not_expanded blame $file || return 1
 	done
 '
 
@@ -1907,7 +1931,7 @@ test_expect_success 'rm pathspec outside sparse definition' '
 		test_sparse_match test_must_fail git rm $file &&
 		test_sparse_match test_must_fail git rm --cached $file &&
 		test_sparse_match git rm --sparse $file &&
-		test_sparse_match git status --porcelain=v2
+		test_sparse_match git status --porcelain=v2 || return 1
 	done &&
 
 	cat >folder1-full <<-EOF &&
@@ -1970,6 +1994,65 @@ test_expect_success 'sparse index is not expanded: rm' '
 	# test recursive rm
 	git -C sparse-index reset --hard &&
 	ensure_not_expanded rm -r deep
+'
+
+test_expect_success 'grep with and --cached' '
+	init_repos &&
+
+	test_all_match git grep --cached a &&
+	test_all_match git grep --cached a -- "folder1/*"
+'
+
+test_expect_success 'grep is not expanded' '
+	init_repos &&
+
+	ensure_not_expanded grep a &&
+	ensure_not_expanded grep a -- deep/* &&
+
+	# All files within the folder1/* pathspec are sparse,
+	# so this command does not find any matches
+	ensure_not_expanded ! grep a -- folder1/* &&
+
+	# test out-of-cone pathspec with or without wildcard
+	ensure_not_expanded grep --cached a -- "folder1/a" &&
+	ensure_not_expanded grep --cached a -- "folder1/*" &&
+
+	# test in-cone pathspec with or without wildcard
+	ensure_not_expanded grep --cached a -- "deep/a" &&
+	ensure_not_expanded grep --cached a -- "deep/*"
+'
+
+# NEEDSWORK: when running `grep` in the superproject with --recurse-submodules,
+# Git expands the index of the submodules unexpectedly. Even though `grep`
+# builtin is marked as "command_requires_full_index = 0", this config is only
+# useful for the superproject. Namely, the submodules have their own configs,
+# which are _not_ populated by the one-time sparse-index feature switch.
+test_expect_failure 'grep within submodules is not expanded' '
+	init_repos_as_submodules &&
+
+	# do not use ensure_not_expanded() here, becasue `grep` should be
+	# run in the superproject, not in "./sparse-index"
+	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
+	git grep --cached --recurse-submodules a -- "*/folder1/*" &&
+	test_region ! index ensure_full_index trace2.txt
+'
+
+# NEEDSWORK: this test is not actually testing the code. The design purpose
+# of this test is to verify the grep result when the submodules are using a
+# sparse-index. Namely, we want "folder1/" as a tree (a sparse directory); but
+# because of the index expansion, we are now grepping the "folder1/a" blob.
+# Because of the problem stated above 'grep within submodules is not expanded',
+# we don't have the ideal test environment yet.
+test_expect_success 'grep sparse directory within submodules' '
+	init_repos_as_submodules &&
+
+	cat >expect <<-\EOF &&
+	full-checkout/folder1/a:a
+	sparse-checkout/folder1/a:a
+	sparse-index/folder1/a:a
+	EOF
+	git grep --cached --recurse-submodules a -- "*/folder1/*" >actual &&
+	test_cmp actual expect
 '
 
 test_done

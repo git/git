@@ -89,7 +89,7 @@ struct ref_to_worktree_entry {
 	struct worktree *wt; /* key is wt->head_ref */
 };
 
-static int ref_to_worktree_map_cmpfnc(const void *unused_lookupdata,
+static int ref_to_worktree_map_cmpfnc(const void *lookupdata UNUSED,
 				      const struct hashmap_entry *eptr,
 				      const struct hashmap_entry *kptr,
 				      const void *keydata_aka_refname)
@@ -1721,6 +1721,8 @@ char *get_head_description(void)
 				state.detached_from);
 	} else
 		strbuf_addstr(&desc, _("(no branch)"));
+
+	wt_status_state_free_buffers(&state);
 
 	return strbuf_detach(&desc, NULL);
 }

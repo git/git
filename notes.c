@@ -924,8 +924,9 @@ out:
 	return ret;
 }
 
-static int string_list_add_one_ref(const char *refname, const struct object_id *oid,
-				   int flag, void *cb)
+static int string_list_add_one_ref(const char *refname,
+				   const struct object_id *oid UNUSED,
+				   int flag UNUSED, void *cb)
 {
 	struct string_list *refs = cb;
 	if (!unsorted_string_list_has_string(refs, refname))
@@ -1005,6 +1006,7 @@ void init_notes(struct notes_tree *t, const char *notes_ref,
 
 	if (!notes_ref)
 		notes_ref = default_notes_ref();
+	update_ref_namespace(NAMESPACE_NOTES, xstrdup(notes_ref));
 
 	if (!combine_notes)
 		combine_notes = combine_notes_concatenate;

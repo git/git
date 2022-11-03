@@ -56,7 +56,8 @@ struct worktree_reflogs {
 	struct string_list reflogs;
 };
 
-static int collect_reflog(const char *ref, const struct object_id *oid, int unused, void *cb_data)
+static int collect_reflog(const char *ref, const struct object_id *oid UNUSED,
+			  int flags UNUSED, void *cb_data)
 {
 	struct worktree_reflogs *cb = cb_data;
 	struct worktree *worktree = cb->worktree;
@@ -66,7 +67,8 @@ static int collect_reflog(const char *ref, const struct object_id *oid, int unus
 	 * Avoid collecting the same shared ref multiple times because
 	 * they are available via all worktrees.
 	 */
-	if (!worktree->is_current && ref_type(ref) == REF_TYPE_NORMAL)
+	if (!worktree->is_current &&
+	    parse_worktree_ref(ref, NULL, NULL, NULL) == REF_WORKTREE_SHARED)
 		return 0;
 
 	strbuf_worktree_ref(worktree, &newref, ref);
@@ -193,6 +195,8 @@ static int expire_unreachable_callback(const struct option *opt,
 {
 	struct cmd_reflog_expire_cb *cmd = opt->value;
 
+	BUG_ON_OPT_NEG(unset);
+
 	if (parse_expiry_date(arg, &cmd->expire_unreachable))
 		die(_("invalid timestamp '%s' given to '--%s'"),
 		    arg, opt->long_name);
@@ -206,6 +210,8 @@ static int expire_total_callback(const struct option *opt,
 				 int unset)
 {
 	struct cmd_reflog_expire_cb *cmd = opt->value;
+
+	BUG_ON_OPT_NEG(unset);
 
 	if (parse_expiry_date(arg, &cmd->expire_total))
 		die(_("invalid timestamp '%s' given to '--%s'"),
@@ -223,7 +229,7 @@ static int cmd_reflog_show(int argc, const char **argv, const char *prefix)
 
 	parse_options(argc, argv, prefix, options, reflog_show_usage,
 		      PARSE_OPT_KEEP_DASHDASH | PARSE_OPT_KEEP_ARGV0 |
-		      PARSE_OPT_KEEP_UNKNOWN);
+		      PARSE_OPT_KEEP_UNKNOWN_OPT);
 
 	return cmd_log_reflog(argc, argv, prefix);
 }
@@ -404,40 +410,21 @@ static int cmd_reflog_exists(int argc, const char **argv, const char *prefix)
 
 int cmd_reflog(int argc, const char **argv, const char *prefix)
 {
+	parse_opt_subcommand_fn *fn = NULL;
 	struct option options[] = {
+		OPT_SUBCOMMAND("show", &fn, cmd_reflog_show),
+		OPT_SUBCOMMAND("expire", &fn, cmd_reflog_expire),
+		OPT_SUBCOMMAND("delete", &fn, cmd_reflog_delete),
+		OPT_SUBCOMMAND("exists", &fn, cmd_reflog_exists),
 		OPT_END()
 	};
 
 	argc = parse_options(argc, argv, prefix, options, reflog_usage,
+			     PARSE_OPT_SUBCOMMAND_OPTIONAL |
 			     PARSE_OPT_KEEP_DASHDASH | PARSE_OPT_KEEP_ARGV0 |
-			     PARSE_OPT_KEEP_UNKNOWN |
-			     PARSE_OPT_NO_INTERNAL_HELP);
-
-	/*
-	 * With "git reflog" we default to showing it. !argc is
-	 * impossible with PARSE_OPT_KEEP_ARGV0.
-	 */
-	if (argc == 1)
-		goto log_reflog;
-
-	if (!strcmp(argv[1], "-h"))
-		usage_with_options(reflog_usage, options);
-	else if (*argv[1] == '-')
-		goto log_reflog;
-
-	if (!strcmp(argv[1], "show"))
-		return cmd_reflog_show(argc - 1, argv + 1, prefix);
-	else if (!strcmp(argv[1], "expire"))
-		return cmd_reflog_expire(argc - 1, argv + 1, prefix);
-	else if (!strcmp(argv[1], "delete"))
-		return cmd_reflog_delete(argc - 1, argv + 1, prefix);
-	else if (!strcmp(argv[1], "exists"))
-		return cmd_reflog_exists(argc - 1, argv + 1, prefix);
-
-	/*
-	 * Fall-through for e.g. "git reflog -1", "git reflog master",
-	 * as well as the plain "git reflog" above goto above.
-	 */
-log_reflog:
-	return cmd_log_reflog(argc, argv, prefix);
+			     PARSE_OPT_KEEP_UNKNOWN_OPT);
+	if (fn)
+		return fn(argc - 1, argv + 1, prefix);
+	else
+		return cmd_log_reflog(argc, argv, prefix);
 }

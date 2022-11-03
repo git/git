@@ -141,6 +141,7 @@ static void upload_pack_data_init(struct upload_pack_data *data)
 	data->allow_filter_fallback = 1;
 	data->tree_filter_max_depth = ULONG_MAX;
 	packet_writer_init(&data->writer, 1);
+	list_objects_filter_init(&data->filter_options);
 
 	data->keepalive = 5;
 	data->advertise_sid = 0;
@@ -1170,7 +1171,7 @@ static int mark_our_ref(const char *refname, const char *refname_full,
 }
 
 static int check_ref(const char *refname_full, const struct object_id *oid,
-		     int flag, void *cb_data)
+		     int flag UNUSED, void *cb_data UNUSED)
 {
 	const char *refname = strip_namespace(refname_full);
 
@@ -1194,7 +1195,7 @@ static void format_session_id(struct strbuf *buf, struct upload_pack_data *d) {
 }
 
 static int send_ref(const char *refname, const struct object_id *oid,
-		    int flag, void *cb_data)
+		    int flag UNUSED, void *cb_data)
 {
 	static const char *capabilities = "multi_ack thin-pack side-band"
 		" side-band-64k ofs-delta shallow deepen-since deepen-not"
@@ -1236,7 +1237,8 @@ static int send_ref(const char *refname, const struct object_id *oid,
 	return 0;
 }
 
-static int find_symref(const char *refname, const struct object_id *oid,
+static int find_symref(const char *refname,
+		       const struct object_id *oid UNUSED,
 		       int flag, void *cb_data)
 {
 	const char *symref_target;
@@ -1409,18 +1411,14 @@ static int parse_want(struct packet_writer *writer, const char *line,
 	const char *arg;
 	if (skip_prefix(line, "want ", &arg)) {
 		struct object_id oid;
-		struct commit *commit;
 		struct object *o;
 
 		if (get_oid_hex(arg, &oid))
 			die("git upload-pack: protocol error, "
 			    "expected to get oid, not '%s'", line);
 
-		commit = lookup_commit_in_graph(the_repository, &oid);
-		if (commit)
-			o = &commit->object;
-		else
-			o = parse_object(the_repository, &oid);
+		o = parse_object_with_flags(the_repository, &oid,
+					    PARSE_OBJECT_SKIP_HASH_CHECK);
 
 		if (!o) {
 			packet_writer_error(writer,

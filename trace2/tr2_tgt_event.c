@@ -9,6 +9,7 @@
 #include "trace2/tr2_sysenv.h"
 #include "trace2/tr2_tgt.h"
 #include "trace2/tr2_tls.h"
+#include "trace2/tr2_tmr.h"
 
 static struct tr2_dst tr2dst_event = {
 	.sysenv_var = TR2_SYSENV_EVENT,
@@ -90,7 +91,7 @@ static void event_fmt_prepare(const char *event_name, const char *file,
 
 	jw_object_string(jw, "event", event_name);
 	jw_object_string(jw, "sid", tr2_sid_get());
-	jw_object_string(jw, "thread", ctx->thread_name.buf);
+	jw_object_string(jw, "thread", ctx->thread_name);
 
 	/*
 	 * In brief mode, only emit <time> on these 2 event types.
@@ -479,9 +480,12 @@ static void fn_param_fl(const char *file, int line, const char *param,
 {
 	const char *event_name = "def_param";
 	struct json_writer jw = JSON_WRITER_INIT;
+	enum config_scope scope = current_config_scope();
+	const char *scope_name = config_scope_name(scope);
 
 	jw_object_begin(&jw, 0);
 	event_fmt_prepare(event_name, file, line, NULL, &jw);
+	jw_object_string(&jw, "scope", scope_name);
 	jw_object_string(&jw, "param", param);
 	jw_object_string(&jw, "value", value);
 	jw_end(&jw);
@@ -614,6 +618,48 @@ static void fn_data_json_fl(const char *file, int line,
 	}
 }
 
+static void fn_timer(const struct tr2_timer_metadata *meta,
+		     const struct tr2_timer *timer,
+		     int is_final_data)
+{
+	const char *event_name = is_final_data ? "timer" : "th_timer";
+	struct json_writer jw = JSON_WRITER_INIT;
+	double t_total = NS_TO_SEC(timer->total_ns);
+	double t_min = NS_TO_SEC(timer->min_ns);
+	double t_max = NS_TO_SEC(timer->max_ns);
+
+	jw_object_begin(&jw, 0);
+	event_fmt_prepare(event_name, __FILE__, __LINE__, NULL, &jw);
+	jw_object_string(&jw, "category", meta->category);
+	jw_object_string(&jw, "name", meta->name);
+	jw_object_intmax(&jw, "intervals", timer->interval_count);
+	jw_object_double(&jw, "t_total", 6, t_total);
+	jw_object_double(&jw, "t_min", 6, t_min);
+	jw_object_double(&jw, "t_max", 6, t_max);
+	jw_end(&jw);
+
+	tr2_dst_write_line(&tr2dst_event, &jw.json);
+	jw_release(&jw);
+}
+
+static void fn_counter(const struct tr2_counter_metadata *meta,
+		       const struct tr2_counter *counter,
+		       int is_final_data)
+{
+	const char *event_name = is_final_data ? "counter" : "th_counter";
+	struct json_writer jw = JSON_WRITER_INIT;
+
+	jw_object_begin(&jw, 0);
+	event_fmt_prepare(event_name, __FILE__, __LINE__, NULL, &jw);
+	jw_object_string(&jw, "category", meta->category);
+	jw_object_string(&jw, "name", meta->name);
+	jw_object_intmax(&jw, "count", counter->value);
+	jw_end(&jw);
+
+	tr2_dst_write_line(&tr2dst_event, &jw.json);
+	jw_release(&jw);
+}
+
 struct tr2_tgt tr2_tgt_event = {
 	.pdst = &tr2dst_event,
 
@@ -645,4 +691,6 @@ struct tr2_tgt tr2_tgt_event = {
 	.pfn_data_fl = fn_data_fl,
 	.pfn_data_json_fl = fn_data_json_fl,
 	.pfn_printf_va_fl = NULL,
+	.pfn_timer = fn_timer,
+	.pfn_counter = fn_counter,
 };

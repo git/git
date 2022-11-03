@@ -328,9 +328,9 @@ static int close_istream_pack_non_delta(struct git_istream *st)
 }
 
 static int open_istream_pack_non_delta(struct git_istream *st,
-				       struct repository *r,
-				       const struct object_id *oid,
-				       enum object_type *type)
+				       struct repository *r UNUSED,
+				       const struct object_id *oid UNUSED,
+				       enum object_type *type UNUSED)
 {
 	struct pack_window *window;
 	enum object_type in_pack_type;

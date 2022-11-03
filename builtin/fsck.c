@@ -228,6 +228,8 @@ static void mark_unreachable_referents(const struct object_id *oid)
 
 	options.walk = mark_used;
 	fsck_walk(obj, NULL, &options);
+	if (obj->type == OBJ_TREE)
+		free_tree_buffer((struct tree *)obj);
 }
 
 static int mark_loose_unreachable_referents(const struct object_id *oid,
@@ -437,9 +439,6 @@ static int fsck_obj(struct object *obj, void *buffer, unsigned long size)
 out:
 	if (obj->type == OBJ_TREE)
 		free_tree_buffer((struct tree *)obj);
-	if (obj->type == OBJ_COMMIT)
-		free_commit_buffer(the_repository->parsed_objects,
-				   (struct commit *)obj);
 	return err;
 }
 
@@ -488,8 +487,9 @@ static void fsck_handle_reflog_oid(const char *refname, struct object_id *oid,
 }
 
 static int fsck_handle_reflog_ent(struct object_id *ooid, struct object_id *noid,
-		const char *email, timestamp_t timestamp, int tz,
-		const char *message, void *cb_data)
+				  const char *email UNUSED,
+				  timestamp_t timestamp, int tz UNUSED,
+				  const char *message UNUSED, void *cb_data)
 {
 	const char *refname = cb_data;
 
@@ -502,8 +502,9 @@ static int fsck_handle_reflog_ent(struct object_id *ooid, struct object_id *noid
 	return 0;
 }
 
-static int fsck_handle_reflog(const char *logname, const struct object_id *oid,
-			      int flag, void *cb_data)
+static int fsck_handle_reflog(const char *logname,
+			      const struct object_id *oid UNUSED,
+			      int flag UNUSED, void *cb_data)
 {
 	struct strbuf refname = STRBUF_INIT;
 
@@ -514,7 +515,7 @@ static int fsck_handle_reflog(const char *logname, const struct object_id *oid,
 }
 
 static int fsck_handle_ref(const char *refname, const struct object_id *oid,
-			   int flag, void *cb_data)
+			   int flag UNUSED, void *cb_data UNUSED)
 {
 	struct object *obj;
 
@@ -819,7 +820,10 @@ static int mark_packed_for_connectivity(const struct object_id *oid,
 }
 
 static char const * const fsck_usage[] = {
-	N_("git fsck [<options>] [<object>...]"),
+	N_("git fsck [--tags] [--root] [--unreachable] [--cache] [--no-reflogs]\n"
+	   "         [--[no-]full] [--strict] [--verbose] [--lost-found]\n"
+	   "         [--[no-]dangling] [--[no-]progress] [--connectivity-only]\n"
+	   "         [--[no-]name-objects] [<object>...]"),
 	NULL
 };
 
@@ -851,6 +855,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 
 	errors_found = 0;
 	read_replace_refs = 0;
+	save_commit_buffer = 0;
 
 	argc = parse_options(argc, argv, prefix, fsck_opts, fsck_usage, 0);
 

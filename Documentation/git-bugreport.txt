@@ -9,6 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git bugreport' [(-o | --output-directory) <path>] [(-s | --suffix) <format>]
+		[--diagnose[=<mode>]]
 
 DESCRIPTION
 -----------
@@ -31,6 +32,10 @@ The following information is captured automatically:
  - A list of enabled hooks
  - $SHELL
 
+Additional information may be gathered into a separate zip archive using the
+`--diagnose` option, and can be attached alongside the bugreport document to
+provide additional context to readers.
+
 This tool is invoked via the typical Git setup process, which means that in some
 cases, it might not be able to launch - for example, if a relevant config file
 is unreadable. In this kind of scenario, it may be helpful to manually gather
@@ -48,6 +53,19 @@ OPTIONS
 	Specify an alternate suffix for the bugreport name, to create a file
 	named 'git-bugreport-<formatted suffix>'. This should take the form of a
 	strftime(3) format string; the current local time will be used.
+
+--no-diagnose::
+--diagnose[=<mode>]::
+	Create a zip archive of supplemental information about the user's
+	machine, Git client, and repository state. The archive is written to the
+	same output directory as the bug report and is named
+	'git-diagnostics-<formatted suffix>'.
++
+Without `mode` specified, the diagnostic archive will contain the default set of
+statistics reported by `git diagnose`. An optional `mode` value may be specified
+to change which information is included in the archive. See
+linkgit:git-diagnose[1] for the list of valid values for `mode` and details
+about their usage.
 
 GIT
 ---

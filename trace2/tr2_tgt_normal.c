@@ -8,6 +8,7 @@
 #include "trace2/tr2_tbuf.h"
 #include "trace2/tr2_tgt.h"
 #include "trace2/tr2_tls.h"
+#include "trace2/tr2_tmr.h"
 
 static struct tr2_dst tr2dst_normal = {
 	.sysenv_var = TR2_SYSENV_NORMAL,
@@ -298,8 +299,11 @@ static void fn_param_fl(const char *file, int line, const char *param,
 			const char *value)
 {
 	struct strbuf buf_payload = STRBUF_INIT;
+	enum config_scope scope = current_config_scope();
+	const char *scope_name = config_scope_name(scope);
 
-	strbuf_addf(&buf_payload, "def_param %s=%s", param, value);
+	strbuf_addf(&buf_payload, "def_param scope:%s %s=%s", scope_name, param,
+		    value);
 	normal_io_write_fl(file, line, &buf_payload);
 	strbuf_release(&buf_payload);
 }
@@ -323,6 +327,42 @@ static void fn_printf_va_fl(const char *file, int line,
 
 	maybe_append_string_va(&buf_payload, fmt, ap);
 	normal_io_write_fl(file, line, &buf_payload);
+	strbuf_release(&buf_payload);
+}
+
+static void fn_timer(const struct tr2_timer_metadata *meta,
+		     const struct tr2_timer *timer,
+		     int is_final_data)
+{
+	const char *event_name = is_final_data ? "timer" : "th_timer";
+	struct strbuf buf_payload = STRBUF_INIT;
+	double t_total = NS_TO_SEC(timer->total_ns);
+	double t_min = NS_TO_SEC(timer->min_ns);
+	double t_max = NS_TO_SEC(timer->max_ns);
+
+	strbuf_addf(&buf_payload, ("%s %s/%s"
+				   " intervals:%"PRIu64
+				   " total:%8.6f min:%8.6f max:%8.6f"),
+		    event_name, meta->category, meta->name,
+		    timer->interval_count,
+		    t_total, t_min, t_max);
+
+	normal_io_write_fl(__FILE__, __LINE__, &buf_payload);
+	strbuf_release(&buf_payload);
+}
+
+static void fn_counter(const struct tr2_counter_metadata *meta,
+		       const struct tr2_counter *counter,
+		       int is_final_data)
+{
+	const char *event_name = is_final_data ? "counter" : "th_counter";
+	struct strbuf buf_payload = STRBUF_INIT;
+
+	strbuf_addf(&buf_payload, "%s %s/%s value:%"PRIu64,
+		    event_name, meta->category, meta->name,
+		    counter->value);
+
+	normal_io_write_fl(__FILE__, __LINE__, &buf_payload);
 	strbuf_release(&buf_payload);
 }
 
@@ -357,4 +397,6 @@ struct tr2_tgt tr2_tgt_normal = {
 	.pfn_data_fl = NULL,
 	.pfn_data_json_fl = NULL,
 	.pfn_printf_va_fl = fn_printf_va_fl,
+	.pfn_timer = fn_timer,
+	.pfn_counter = fn_counter,
 };

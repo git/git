@@ -195,7 +195,8 @@ static int show_default(void)
 	return 0;
 }
 
-static int show_reference(const char *refname, const struct object_id *oid, int flag, void *cb_data)
+static int show_reference(const char *refname, const struct object_id *oid,
+			  int flag UNUSED, void *cb_data UNUSED)
 {
 	if (ref_excluded(ref_excludes, refname))
 		return 0;
@@ -203,7 +204,8 @@ static int show_reference(const char *refname, const struct object_id *oid, int 
 	return 0;
 }
 
-static int anti_reference(const char *refname, const struct object_id *oid, int flag, void *cb_data)
+static int anti_reference(const char *refname, const struct object_id *oid,
+			  int flag UNUSED, void *cb_data UNUSED)
 {
 	show_rev(REVERSED, oid, refname);
 	return 0;
@@ -478,6 +480,9 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 		s = strpbrk(sb.buf, flag_chars);
 		if (!s)
 			s = help;
+
+		if (s == sb.buf)
+			die(_("missing opt-spec before option flags"));
 
 		if (s - sb.buf == 1) /* short option only */
 			o->short_name = *sb.buf;

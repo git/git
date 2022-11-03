@@ -275,6 +275,17 @@ header). Note also that `git send-email` already handles this
 transformation for you, and this option should not be used if you are
 feeding the result to `git send-email`.
 
+--[no-]force-in-body-from::
+	With the e-mail sender specified via the `--from` option, by
+	default, an in-body "From:" to identify the real author of
+	the commit is added at the top of the commit log message if
+	the sender is different from the author.  With this option,
+	the in-body "From:" is added even when the sender and the
+	author have the same name and address, which may help if the
+	mailing list software mangles the sender's identity.
+	Defaults to the value of the `format.forceInBodyFrom`
+	configuration variable.
+
 --add-header=<header>::
 	Add an arbitrary header to the email headers.  This is in addition
 	to any configured headers, and may be used multiple times.

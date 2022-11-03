@@ -141,7 +141,7 @@ struct packed_git {
 
 struct multi_pack_index;
 
-static inline int pack_map_entry_cmp(const void *unused_cmp_data,
+static inline int pack_map_entry_cmp(const void *cmp_data UNUSED,
 				     const struct hashmap_entry *entry,
 				     const struct hashmap_entry *entry2,
 				     const void *keydata)

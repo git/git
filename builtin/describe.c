@@ -23,8 +23,9 @@
 define_commit_slab(commit_names, struct commit_name *);
 
 static const char * const describe_usage[] = {
-	N_("git describe [<options>] [<commit-ish>...]"),
-	N_("git describe [<options>] --dirty"),
+	N_("git describe [--all] [--tags] [--contains] [--abbrev=<n>] [<commit-ish>...]"),
+	N_("git describe [--all] [--tags] [--contains] [--abbrev=<n>] --dirty[=<mark>]"),
+	N_("git describe <blob>"),
 	NULL
 };
 
@@ -63,7 +64,7 @@ static const char *prio_names[] = {
 	N_("head"), N_("lightweight"), N_("annotated"),
 };
 
-static int commit_name_neq(const void *unused_cmp_data,
+static int commit_name_neq(const void *cmp_data UNUSED,
 			   const struct hashmap_entry *eptr,
 			   const struct hashmap_entry *entry_or_key,
 			   const void *peeled)
@@ -140,7 +141,8 @@ static void add_to_known_names(const char *path,
 	}
 }
 
-static int get_name(const char *path, const struct object_id *oid, int flag, void *cb_data)
+static int get_name(const char *path, const struct object_id *oid,
+		    int flag UNUSED, void *cb_data UNUSED)
 {
 	int is_tag = 0;
 	struct object_id peeled;

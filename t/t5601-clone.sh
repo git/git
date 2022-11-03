@@ -743,7 +743,11 @@ test_expect_success 'batch missing blob request during checkout' '
 
 	# Ensure that there is only one negotiation by checking that there is
 	# only "done" line sent. ("done" marks the end of negotiation.)
-	GIT_TRACE_PACKET="$(pwd)/trace" git -C client checkout HEAD^ &&
+	GIT_TRACE_PACKET="$(pwd)/trace" \
+		GIT_TRACE2_EVENT="$(pwd)/trace2_event" \
+		git -C client -c trace2.eventNesting=5 checkout HEAD^ &&
+	grep \"key\":\"total_rounds\",\"value\":\"1\" trace2_event >trace_lines &&
+	test_line_count = 1 trace_lines &&
 	grep "fetch> done" trace >done_lines &&
 	test_line_count = 1 done_lines
 '
@@ -763,6 +767,7 @@ test_expect_success 'batch missing blob request does not inadvertently try to fe
 	echo aa >server/a &&
 	echo bb >server/b &&
 	# Also add a gitlink pointing to an arbitrary repository
+	test_config_global protocol.file.allow always &&
 	git -C server submodule add "$(pwd)/repo_for_submodule" c &&
 	git -C server add a b c &&
 	git -C server commit -m x &&

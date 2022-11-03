@@ -34,6 +34,7 @@
 #include "list-objects-filter-options.h"
 #include "hook.h"
 #include "bundle.h"
+#include "bundle-uri.h"
 
 /*
  * Overall FIXMEs:
@@ -72,11 +73,12 @@ static struct string_list option_optional_reference = STRING_LIST_INIT_NODUP;
 static int option_dissociate;
 static int max_jobs = -1;
 static struct string_list option_recurse_submodules = STRING_LIST_INIT_NODUP;
-static struct list_objects_filter_options filter_options;
+static struct list_objects_filter_options filter_options = LIST_OBJECTS_FILTER_INIT;
 static int option_filter_submodules = -1;    /* unspecified */
 static int config_filter_submodules = -1;    /* unspecified */
 static struct string_list server_options = STRING_LIST_INIT_NODUP;
 static int option_remote_submodules;
+static const char *bundle_uri;
 
 static int recurse_submodules_cb(const struct option *opt,
 				 const char *arg, int unset)
@@ -160,6 +162,8 @@ static struct option builtin_clone_options[] = {
 		    N_("any cloned submodules will use their remote-tracking branch")),
 	OPT_BOOL(0, "sparse", &option_sparse_checkout,
 		    N_("initialize sparse-checkout file to include only files at root")),
+	OPT_STRING(0, "bundle-uri", &bundle_uri,
+		   N_("uri"), N_("a URI for downloading bundles before fetching from origin remote")),
 	OPT_END()
 };
 
@@ -316,13 +320,11 @@ static void copy_or_link_directory(struct strbuf *src, struct strbuf *dest,
 	int src_len, dest_len;
 	struct dir_iterator *iter;
 	int iter_status;
-	unsigned int flags;
 	struct strbuf realpath = STRBUF_INIT;
 
 	mkdir_if_missing(dest->buf, 0777);
 
-	flags = DIR_ITERATOR_PEDANTIC | DIR_ITERATOR_FOLLOW_SYMLINKS;
-	iter = dir_iterator_begin(src->buf, flags);
+	iter = dir_iterator_begin(src->buf, DIR_ITERATOR_PEDANTIC);
 
 	if (!iter)
 		die_errno(_("failed to start iterator over '%s'"), src->buf);
@@ -337,6 +339,10 @@ static void copy_or_link_directory(struct strbuf *src, struct strbuf *dest,
 		strbuf_addstr(src, iter->relative_path);
 		strbuf_setlen(dest, dest_len);
 		strbuf_addstr(dest, iter->relative_path);
+
+		if (S_ISLNK(iter->st.st_mode))
+			die(_("symlink '%s' exists, refusing to clone with --local"),
+			    iter->relative_path);
 
 		if (S_ISDIR(iter->st.st_mode)) {
 			mkdir_if_missing(dest->buf, 0777);
@@ -925,13 +931,13 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		option_bare = 1;
 
 	if (option_bare) {
-		if (option_origin)
-			die(_("options '%s' and '%s %s' cannot be used together"),
-			    "--bare", "--origin", option_origin);
 		if (real_git_dir)
 			die(_("options '%s' and '%s' cannot be used together"), "--bare", "--separate-git-dir");
 		option_no_checkout = 1;
 	}
+
+	if (bundle_uri && deepen)
+		die(_("--bundle-uri is incompatible with --depth, --shallow-since, and --shallow-exclude"));
 
 	repo_name = argv[0];
 
@@ -1232,6 +1238,18 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	if (transport->smart_options && !deepen && !filter_options.choice)
 		transport->smart_options->check_self_contained_and_connected = 1;
 
+	/*
+	 * Before fetching from the remote, download and install bundle
+	 * data from the --bundle-uri option.
+	 */
+	if (bundle_uri) {
+		/* At this point, we need the_repository to match the cloned repo. */
+		if (repo_init(the_repository, git_dir, work_tree))
+			warning(_("failed to initialize the repo, skipping bundle URI"));
+		else if (fetch_bundle_uri(the_repository, bundle_uri))
+			warning(_("failed to fetch objects from bundle URI '%s'"),
+				bundle_uri);
+	}
 
 	strvec_push(&transport_ls_refs_options.ref_prefixes, "HEAD");
 	refspec_ref_prefixes(&remote->fetch,

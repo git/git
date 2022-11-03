@@ -142,7 +142,7 @@ static void get_refs_from_bundle_inner(struct transport *transport)
 
 static struct ref *get_refs_from_bundle(struct transport *transport,
 					int for_push,
-					struct transport_ls_refs_options *transport_options)
+					struct transport_ls_refs_options *transport_options UNUSED)
 {
 	struct bundle_transport_data *data = transport->data;
 	struct ref *result = NULL;
@@ -178,7 +178,7 @@ static int fetch_refs_from_bundle(struct transport *transport,
 	if (!data->get_refs_from_bundle_called)
 		get_refs_from_bundle_inner(transport);
 	ret = unbundle(the_repository, &data->header, data->fd,
-		       &extra_index_pack_args);
+		       &extra_index_pack_args, 0);
 	transport->hash_algo = data->header.hash_algo;
 	return ret;
 }
@@ -386,7 +386,8 @@ static int fetch_refs_via_pack(struct transport *transport,
 	args.cloning = transport->cloning;
 	args.update_shallow = data->options.update_shallow;
 	args.from_promisor = data->options.from_promisor;
-	args.filter_options = data->options.filter_options;
+	list_objects_filter_copy(&args.filter_options,
+				 &data->options.filter_options);
 	args.refetch = data->options.refetch;
 	args.stateless_rpc = transport->stateless_rpc;
 	args.server_options = transport->server_options;
@@ -453,6 +454,7 @@ cleanup:
 
 	free_refs(refs_tmp);
 	free_refs(refs);
+	list_objects_filter_release(&args.filter_options);
 	return ret;
 }
 
@@ -893,6 +895,7 @@ static int disconnect_git(struct transport *transport)
 		finish_connect(data->conn);
 	}
 
+	list_objects_filter_release(&data->options.filter_options);
 	free(data);
 	return 0;
 }
@@ -1006,8 +1009,7 @@ static enum protocol_allow_config get_protocol_config(const char *type)
 	if (!strcmp(type, "http") ||
 	    !strcmp(type, "https") ||
 	    !strcmp(type, "git") ||
-	    !strcmp(type, "ssh") ||
-	    !strcmp(type, "file"))
+	    !strcmp(type, "ssh"))
 		return PROTOCOL_ALLOW_ALWAYS;
 
 	/* known scary; err on the side of caution */
@@ -1110,6 +1112,7 @@ struct transport *transport_get(struct remote *remote, const char *url)
 		 * will be checked individually in git_connect.
 		 */
 		struct git_transport_data *data = xcalloc(1, sizeof(*data));
+		list_objects_filter_init(&data->options.filter_options);
 		ret->data = data;
 		ret->vtable = &builtin_smart_vtable;
 		ret->smart_options = &(data->options);

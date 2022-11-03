@@ -142,7 +142,7 @@ static int show_recursive(const char *base, size_t baselen, const char *pathname
 }
 
 static int show_tree_fmt(const struct object_id *oid, struct strbuf *base,
-			 const char *pathname, unsigned mode, void *context)
+			 const char *pathname, unsigned mode, void *context UNUSED)
 {
 	size_t baselen;
 	int recurse = 0;
@@ -213,7 +213,7 @@ static void show_tree_common_default_long(struct strbuf *base,
 
 static int show_tree_default(const struct object_id *oid, struct strbuf *base,
 			     const char *pathname, unsigned mode,
-			     void *context)
+			     void *context UNUSED)
 {
 	int early;
 	int recurse;
@@ -230,7 +230,8 @@ static int show_tree_default(const struct object_id *oid, struct strbuf *base,
 }
 
 static int show_tree_long(const struct object_id *oid, struct strbuf *base,
-			  const char *pathname, unsigned mode, void *context)
+			  const char *pathname, unsigned mode,
+			  void *context UNUSED)
 {
 	int early;
 	int recurse;
@@ -259,7 +260,8 @@ static int show_tree_long(const struct object_id *oid, struct strbuf *base,
 }
 
 static int show_tree_name_only(const struct object_id *oid, struct strbuf *base,
-			       const char *pathname, unsigned mode, void *context)
+			       const char *pathname, unsigned mode,
+			       void *context UNUSED)
 {
 	int early;
 	int recurse;
@@ -279,7 +281,8 @@ static int show_tree_name_only(const struct object_id *oid, struct strbuf *base,
 }
 
 static int show_tree_object(const struct object_id *oid, struct strbuf *base,
-			    const char *pathname, unsigned mode, void *context)
+			    const char *pathname, unsigned mode,
+			    void *context UNUSED)
 {
 	int early;
 	int recurse;

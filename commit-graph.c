@@ -901,7 +901,7 @@ struct commit *lookup_commit_in_graph(struct repository *repo, const struct obje
 	struct commit *commit;
 	uint32_t pos;
 
-	if (!repo->objects->commit_graph)
+	if (!prepare_commit_graph(repo))
 		return NULL;
 	if (!search_commit_pos_in_graph(id, repo->objects->commit_graph, &pos))
 		return NULL;
@@ -1639,9 +1639,9 @@ struct refs_cb_data {
 	struct progress *progress;
 };
 
-static int add_ref_to_set(const char *refname,
+static int add_ref_to_set(const char *refname UNUSED,
 			  const struct object_id *oid,
-			  int flags, void *cb_data)
+			  int flags UNUSED, void *cb_data)
 {
 	struct object_id peeled;
 	struct refs_cb_data *data = (struct refs_cb_data *)cb_data;
@@ -2265,6 +2265,8 @@ static void expire_commit_graphs(struct write_commit_graph_context *ctx)
 	}
 
 out:
+	if(dir)
+		closedir(dir);
 	strbuf_release(&path);
 }
 

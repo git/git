@@ -166,17 +166,15 @@ static int write_archive_entry(const struct object_id *oid, const char *base,
 		args->convert = check_attr_export_subst(check);
 	}
 
+	if (args->verbose)
+		fprintf(stderr, "%.*s\n", (int)path.len, path.buf);
+
 	if (S_ISDIR(mode) || S_ISGITLINK(mode)) {
-		if (args->verbose)
-			fprintf(stderr, "%.*s\n", (int)path.len, path.buf);
 		err = write_entry(args, oid, path.buf, path.len, mode, NULL, 0);
 		if (err)
 			return err;
 		return (S_ISDIR(mode) ? READ_TREE_RECURSIVE : 0);
 	}
-
-	if (args->verbose)
-		fprintf(stderr, "%.*s\n", (int)path.len, path.buf);
 
 	/* Stream it? */
 	if (S_ISREG(mode) && !args->convert &&
@@ -382,7 +380,8 @@ struct path_exists_context {
 	struct archiver_args *args;
 };
 
-static int reject_entry(const struct object_id *oid, struct strbuf *base,
+static int reject_entry(const struct object_id *oid UNUSED,
+			struct strbuf *base,
 			const char *filename, unsigned mode,
 			void *context)
 {
@@ -499,7 +498,7 @@ static void parse_treeish_arg(const char **argv,
 	ar_args->time = archive_time;
 }
 
-static void extra_file_info_clear(void *util, const char *str)
+static void extra_file_info_clear(void *util, const char *str UNUSED)
 {
 	struct extra_file_info *info = util;
 	free(info->base);

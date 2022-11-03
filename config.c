@@ -362,7 +362,8 @@ static void populate_remote_urls(struct config_include_data *inc)
 	current_parsing_scope = store_scope;
 }
 
-static int forbid_remote_url(const char *var, const char *value, void *data)
+static int forbid_remote_url(const char *var, const char *value UNUSED,
+			     void *data UNUSED)
 {
 	const char *remote_name;
 	size_t remote_name_len;
@@ -1214,7 +1215,7 @@ static int git_parse_unsigned(const char *value, uintmax_t *ret, uintmax_t max)
 	return 0;
 }
 
-static int git_parse_int(const char *value, int *ret)
+int git_parse_int(const char *value, int *ret)
 {
 	intmax_t tmp;
 	if (!git_parse_signed(value, &tmp, maximum_signed_value_of_type(int)))
@@ -2337,10 +2338,10 @@ static int configset_add_value(struct config_set *cs, const char *key, const cha
 	return 0;
 }
 
-static int config_set_element_cmp(const void *unused_cmp_data,
+static int config_set_element_cmp(const void *cmp_data UNUSED,
 				  const struct hashmap_entry *eptr,
 				  const struct hashmap_entry *entry_or_key,
-				  const void *unused_keydata)
+				  const void *keydata UNUSED)
 {
 	const struct config_set_element *e1, *e2;
 
@@ -2389,11 +2390,6 @@ static int config_set_callback(const char *key, const char *value, void *cb)
 int git_configset_add_file(struct config_set *cs, const char *filename)
 {
 	return git_config_from_file(config_set_callback, filename, cs);
-}
-
-int git_configset_add_parameters(struct config_set *cs)
-{
-	return git_config_from_parameters(config_set_callback, cs);
 }
 
 int git_configset_get_value(struct config_set *cs, const char *key, const char **value)
@@ -2640,24 +2636,15 @@ int repo_config_get_pathname(struct repository *repo,
 /* Read values into protected_config. */
 static void read_protected_config(void)
 {
-	char *xdg_config = NULL, *user_config = NULL, *system_config = NULL;
-
+	struct config_options opts = {
+		.respect_includes = 1,
+		.ignore_repo = 1,
+		.ignore_worktree = 1,
+		.system_gently = 1,
+	};
 	git_configset_init(&protected_config);
-
-	system_config = git_system_config();
-	git_global_config(&user_config, &xdg_config);
-
-	if (system_config)
-		git_configset_add_file(&protected_config, system_config);
-	if (xdg_config)
-		git_configset_add_file(&protected_config, xdg_config);
-	if (user_config)
-		git_configset_add_file(&protected_config, user_config);
-	git_configset_add_parameters(&protected_config);
-
-	free(system_config);
-	free(xdg_config);
-	free(user_config);
+	config_with_options(config_set_callback, &protected_config,
+			    NULL, &opts);
 }
 
 void git_protected_config(config_fn_t fn, void *data)

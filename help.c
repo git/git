@@ -39,7 +39,7 @@ static struct category_description main_categories[] = {
 	{ CAT_synchingrepositories, N_("Low-level Commands / Syncing Repositories") },
 	{ CAT_purehelpers, N_("Low-level Commands / Internal Helpers") },
 	{ CAT_userinterfaces, N_("User-facing repository, command and file interfaces") },
-	{ CAT_developerinterfaces, N_("Developer-facing file file formats, protocols and interfaces") },
+	{ CAT_developerinterfaces, N_("Developer-facing file formats, protocols and other interfaces") },
 	{ 0, NULL }
 };
 
@@ -757,7 +757,7 @@ int cmd_version(int argc, const char **argv, const char *prefix)
 	struct strbuf buf = STRBUF_INIT;
 	int build_options = 0;
 	const char * const usage[] = {
-		N_("git version [<options>]"),
+		N_("git version [--build-options]"),
 		NULL
 	};
 	struct option options[] = {
@@ -781,8 +781,9 @@ struct similar_ref_cb {
 	struct string_list *similar_refs;
 };
 
-static int append_similar_ref(const char *refname, const struct object_id *oid,
-			      int flags, void *cb_data)
+static int append_similar_ref(const char *refname,
+			      const struct object_id *oid UNUSED,
+			      int flags UNUSED, void *cb_data)
 {
 	struct similar_ref_cb *cb = (struct similar_ref_cb *)(cb_data);
 	char *branch = strrchr(refname, '/') + 1;

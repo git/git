@@ -88,7 +88,7 @@ static struct option builtin_help_options[] = {
 };
 
 static const char * const builtin_help_usage[] = {
-	"git help [-a|--all] [--[no-]verbose]] [--[no-]external-commands] [--[no-]aliases]",
+	"git help [-a|--all] [--[no-]verbose] [--[no-]external-commands] [--[no-]aliases]",
 	N_("git help [[-i|--info] [-m|--man] [-w|--web]] [<command>|<doc>]"),
 	"git help [-g|--guides]",
 	"git help [-c|--config]",
@@ -440,6 +440,8 @@ static const char *cmd_to_page(const char *git_cmd)
 		return git_cmd;
 	else if (is_git_command(git_cmd))
 		return xstrfmt("git-%s", git_cmd);
+	else if (!strcmp("scalar", git_cmd))
+		return xstrdup(git_cmd);
 	else
 		return xstrfmt("git%s", git_cmd);
 }

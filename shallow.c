@@ -604,8 +604,10 @@ static void paint_down(struct paint_info *info, const struct object_id *oid,
 	free(tmp);
 }
 
-static int mark_uninteresting(const char *refname, const struct object_id *oid,
-			      int flags, void *cb_data)
+static int mark_uninteresting(const char *refname UNUSED,
+			      const struct object_id *oid,
+			      int flags UNUSED,
+			      void *cb_data UNUSED)
 {
 	struct commit *commit = lookup_commit_reference_gently(the_repository,
 							       oid, 1);
@@ -715,8 +717,10 @@ struct commit_array {
 	int nr, alloc;
 };
 
-static int add_ref(const char *refname, const struct object_id *oid,
-		   int flags, void *cb_data)
+static int add_ref(const char *refname UNUSED,
+		   const struct object_id *oid,
+		   int flags UNUSED,
+		   void *cb_data)
 {
 	struct commit_array *ca = cb_data;
 	ALLOC_GROW(ca->commits, ca->nr + 1, ca->alloc);

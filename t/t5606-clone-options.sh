@@ -42,11 +42,12 @@ test_expect_success 'rejects invalid -o/--origin' '
 
 '
 
-test_expect_success 'disallows --bare with --origin' '
+test_expect_success 'clone --bare -o' '
 
-	test_must_fail git clone -o foo --bare parent clone-bare-o 2>err &&
-	test_debug "cat err" &&
-	test_i18ngrep -e "options .--bare. and .--origin foo. cannot be used together" err
+	git clone -o foo --bare parent clone-bare-o &&
+	(cd parent && pwd) >expect &&
+	git -C clone-bare-o config remote.foo.url >actual &&
+	test_cmp expect actual
 
 '
 
@@ -56,6 +57,14 @@ test_expect_success 'disallows --bare with --separate-git-dir' '
 	test_debug "cat err" &&
 	test_i18ngrep -e "options .--bare. and .--separate-git-dir. cannot be used together" err
 
+'
+
+test_expect_success 'disallows --bundle-uri with shallow options' '
+	for option in --depth=1 --shallow-since=01-01-2000 --shallow-exclude=HEAD
+	do
+		test_must_fail git clone --bundle-uri=bundle $option from to 2>err &&
+		grep "bundle-uri is incompatible" err || return 1
+	done
 '
 
 test_expect_success 'reject cloning shallow repository' '

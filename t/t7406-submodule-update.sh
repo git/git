@@ -25,6 +25,7 @@ compare_head()
 
 
 test_expect_success 'setup a submodule tree' '
+	git config --global protocol.file.allow always &&
 	echo file > file &&
 	git add file &&
 	test_tick &&
@@ -769,7 +770,7 @@ test_expect_success 'submodule update continues after recursive checkout error' 
 	   echo "" > file
 	  )
 	 ) &&
-	 test_must_fail git submodule update --recursive &&
+	 test_expect_code 1 git submodule update --recursive &&
 	 (cd submodule2 &&
 	  git rev-parse --verify HEAD >../actual
 	 ) &&

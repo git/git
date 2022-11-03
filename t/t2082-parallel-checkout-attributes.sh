@@ -138,12 +138,9 @@ test_expect_success 'parallel-checkout and external filter' '
 # The delayed queue is independent from the parallel queue, and they should be
 # able to work together in the same checkout process.
 #
-test_expect_success PERL 'parallel-checkout and delayed checkout' '
-	write_script rot13-filter.pl "$PERL_PATH" \
-		<"$TEST_DIRECTORY"/t0021/rot13-filter.pl &&
-
+test_expect_success 'parallel-checkout and delayed checkout' '
 	test_config_global filter.delay.process \
-		"\"$(pwd)/rot13-filter.pl\" --always-delay \"$(pwd)/delayed.log\" clean smudge delay" &&
+		"test-tool rot13-filter --always-delay --log=\"$(pwd)/delayed.log\" clean smudge delay" &&
 	test_config_global filter.delay.required true &&
 
 	echo "abcd" >original &&

@@ -10,7 +10,6 @@
 #include "config.h"
 
 #ifndef NO_GETTEXT
-#	include <locale.h>
 #	include <libintl.h>
 #	ifdef GIT_WINDOWS_NATIVE
 
@@ -80,7 +79,6 @@ static int test_vsnprintf(const char *fmt, ...)
 
 static void init_gettext_charset(const char *domain)
 {
-	setlocale(LC_CTYPE, "");
 	charset = locale_charset();
 	bind_textdomain_codeset(domain, charset);
 

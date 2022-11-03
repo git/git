@@ -189,6 +189,16 @@ struct strbuf;
 #define _NETBSD_SOURCE 1
 #define _SGI_SOURCE 1
 
+#if GIT_GNUC_PREREQ(4, 5)
+#define UNUSED __attribute__((unused)) \
+	__attribute__((deprecated ("parameter declared as UNUSED")))
+#elif defined(__GNUC__)
+#define UNUSED __attribute__((unused)) \
+	__attribute__((deprecated))
+#else
+#define UNUSED
+#endif
+
 #if defined(WIN32) && !defined(__CYGWIN__) /* Both MinGW and MSVC */
 # if !defined(_WIN32_WINNT)
 #  define _WIN32_WINNT 0x0600
@@ -215,6 +225,7 @@ struct strbuf;
 #endif
 #include <errno.h>
 #include <limits.h>
+#include <locale.h>
 #ifdef NEEDS_SYS_PARAM_H
 #include <sys/param.h>
 #endif
@@ -261,6 +272,7 @@ static inline int is_xplatform_dir_sep(int c)
 #include <sys/resource.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+#include <sys/statvfs.h>
 #include <termios.h>
 #ifndef NO_SYS_SELECT_H
 #include <sys/select.h>
@@ -302,7 +314,9 @@ typedef unsigned long uintptr_t;
 #ifdef PRECOMPOSE_UNICODE
 #include "compat/precompose_utf8.h"
 #else
-static inline const char *precompose_argv_prefix(int argc, const char **argv, const char *prefix)
+static inline const char *precompose_argv_prefix(int argc UNUSED,
+						 const char **argv UNUSED,
+						 const char *prefix)
 {
 	return prefix;
 }
@@ -327,7 +341,9 @@ struct itimerval {
 #endif
 
 #ifdef NO_SETITIMER
-static inline int setitimer(int which, const struct itimerval *value, struct itimerval *newvalue) {
+static inline int setitimer(int which UNUSED,
+			    const struct itimerval *value UNUSED,
+			    struct itimerval *newvalue UNUSED) {
 	return 0; /* pretend success */
 }
 #endif
@@ -397,7 +413,9 @@ typedef uintmax_t timestamp_t;
 #endif
 
 #ifndef platform_core_config
-static inline int noop_core_config(const char *var, const char *value, void *cb)
+static inline int noop_core_config(const char *var UNUSED,
+				   const char *value UNUSED,
+				   void *cb UNUSED)
 {
 	return 0;
 }
@@ -410,7 +428,7 @@ int lstat_cache_aware_rmdir(const char *path);
 #endif
 
 #ifndef has_dos_drive_prefix
-static inline int git_has_dos_drive_prefix(const char *path)
+static inline int git_has_dos_drive_prefix(const char *path UNUSED)
 {
 	return 0;
 }
@@ -418,7 +436,7 @@ static inline int git_has_dos_drive_prefix(const char *path)
 #endif
 
 #ifndef skip_dos_drive_prefix
-static inline int git_skip_dos_drive_prefix(char **path)
+static inline int git_skip_dos_drive_prefix(char **path UNUSED)
 {
 	return 0;
 }
@@ -490,7 +508,8 @@ static inline void extract_id_from_env(const char *env, uid_t *id)
 	}
 }
 
-static inline int is_path_owned_by_current_uid(const char *path, struct strbuf *report)
+static inline int is_path_owned_by_current_uid(const char *path,
+					       struct strbuf *report UNUSED)
 {
 	struct stat st;
 	uid_t euid;
@@ -568,8 +587,11 @@ static inline int git_has_dir_sep(const char *path)
 /* The sentinel attribute is valid from gcc version 4.0 */
 #if defined(__GNUC__) && (__GNUC__ >= 4)
 #define LAST_ARG_MUST_BE_NULL __attribute__((sentinel))
+/* warn_unused_result exists as of gcc 3.4.0, but be lazy and check 4.0 */
+#define RESULT_MUST_BE_USED __attribute__ ((warn_unused_result))
 #else
 #define LAST_ARG_MUST_BE_NULL
+#define RESULT_MUST_BE_USED
 #endif
 
 #define MAYBE_UNUSED __attribute__((__unused__))
@@ -997,6 +1019,28 @@ static inline unsigned long cast_size_t_to_ulong(size_t a)
 		    (uintmax_t)a, (unsigned long)a);
 	return (unsigned long)a;
 }
+
+/*
+ * Limit size of IO chunks, because huge chunks only cause pain.  OS X
+ * 64-bit is buggy, returning EINVAL if len >= INT_MAX; and even in
+ * the absence of bugs, large chunks can result in bad latencies when
+ * you decide to kill the process.
+ *
+ * We pick 8 MiB as our default, but if the platform defines SSIZE_MAX
+ * that is smaller than that, clip it to SSIZE_MAX, as a call to
+ * read(2) or write(2) larger than that is allowed to fail.  As the last
+ * resort, we allow a port to pass via CFLAGS e.g. "-DMAX_IO_SIZE=value"
+ * to override this, if the definition of SSIZE_MAX given by the platform
+ * is broken.
+ */
+#ifndef MAX_IO_SIZE
+# define MAX_IO_SIZE_DEFAULT (8*1024*1024)
+# if defined(SSIZE_MAX) && (SSIZE_MAX < MAX_IO_SIZE_DEFAULT)
+#  define MAX_IO_SIZE SSIZE_MAX
+# else
+#  define MAX_IO_SIZE MAX_IO_SIZE_DEFAULT
+# endif
+#endif
 
 #ifdef HAVE_ALLOCA_H
 # include <alloca.h>
@@ -1427,11 +1471,11 @@ int open_nofollow(const char *path, int flags);
 #endif
 
 #ifndef _POSIX_THREAD_SAFE_FUNCTIONS
-static inline void flockfile(FILE *fh)
+static inline void flockfile(FILE *fh UNUSED)
 {
 	; /* nothing */
 }
-static inline void funlockfile(FILE *fh)
+static inline void funlockfile(FILE *fh UNUSED)
 {
 	; /* nothing */
 }

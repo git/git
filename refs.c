@@ -20,6 +20,7 @@
 #include "repository.h"
 #include "sigchain.h"
 #include "date.h"
+#include "commit.h"
 
 /*
  * List of all available backends
@@ -55,6 +56,88 @@ static unsigned char refname_disposition[256] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 4, 4
 };
+
+struct ref_namespace_info ref_namespace[] = {
+	[NAMESPACE_HEAD] = {
+		.ref = "HEAD",
+		.decoration = DECORATION_REF_HEAD,
+		.exact = 1,
+	},
+	[NAMESPACE_BRANCHES] = {
+		.ref = "refs/heads/",
+		.decoration = DECORATION_REF_LOCAL,
+	},
+	[NAMESPACE_TAGS] = {
+		.ref = "refs/tags/",
+		.decoration = DECORATION_REF_TAG,
+	},
+	[NAMESPACE_REMOTE_REFS] = {
+		/*
+		 * The default refspec for new remotes copies refs from
+		 * refs/heads/ on the remote into refs/remotes/<remote>/.
+		 * As such, "refs/remotes/" has special handling.
+		 */
+		.ref = "refs/remotes/",
+		.decoration = DECORATION_REF_REMOTE,
+	},
+	[NAMESPACE_STASH] = {
+		/*
+		 * The single ref "refs/stash" stores the latest stash.
+		 * Older stashes can be found in the reflog.
+		 */
+		.ref = "refs/stash",
+		.exact = 1,
+		.decoration = DECORATION_REF_STASH,
+	},
+	[NAMESPACE_REPLACE] = {
+		/*
+		 * This namespace allows Git to act as if one object ID
+		 * points to the content of another. Unlike the other
+		 * ref namespaces, this one can be changed by the
+		 * GIT_REPLACE_REF_BASE environment variable. This
+		 * .namespace value will be overwritten in setup_git_env().
+		 */
+		.ref = "refs/replace/",
+		.decoration = DECORATION_GRAFTED,
+	},
+	[NAMESPACE_NOTES] = {
+		/*
+		 * The refs/notes/commit ref points to the tip of a
+		 * parallel commit history that adds metadata to commits
+		 * in the normal history. This ref can be overwritten
+		 * by the core.notesRef config variable or the
+		 * GIT_NOTES_REFS environment variable.
+		 */
+		.ref = "refs/notes/commit",
+		.exact = 1,
+	},
+	[NAMESPACE_PREFETCH] = {
+		/*
+		 * Prefetch refs are written by the background 'fetch'
+		 * maintenance task. It allows faster foreground fetches
+		 * by advertising these previously-downloaded tips without
+		 * updating refs/remotes/ without user intervention.
+		 */
+		.ref = "refs/prefetch/",
+	},
+	[NAMESPACE_REWRITTEN] = {
+		/*
+		 * Rewritten refs are used by the 'label' command in the
+		 * sequencer. These are particularly useful during an
+		 * interactive rebase that uses the 'merge' command.
+		 */
+		.ref = "refs/rewritten/",
+	},
+};
+
+void update_ref_namespace(enum ref_namespace namespace, char *ref)
+{
+	struct ref_namespace_info *info = &ref_namespace[namespace];
+	if (info->ref_updated)
+		free(info->ref);
+	info->ref = ref;
+	info->ref_updated = 1;
+}
 
 /*
  * Try to read one refname component from the front of refname.
@@ -358,7 +441,8 @@ struct warn_if_dangling_data {
 	const char *msg_fmt;
 };
 
-static int warn_if_dangling_symref(const char *refname, const struct object_id *oid,
+static int warn_if_dangling_symref(const char *refname,
+				   const struct object_id *oid UNUSED,
 				   int flags, void *cb_data)
 {
 	struct warn_if_dangling_data *d = cb_data;
@@ -455,11 +539,16 @@ void normalize_glob_ref(struct string_list_item *item, const char *prefix,
 	if (*pattern == '/')
 		BUG("pattern must not start with '/'");
 
-	if (prefix) {
+	if (prefix)
 		strbuf_addstr(&normalized_pattern, prefix);
-	}
-	else if (!starts_with(pattern, "refs/"))
+	else if (!starts_with(pattern, "refs/") &&
+		   strcmp(pattern, "HEAD"))
 		strbuf_addstr(&normalized_pattern, "refs/");
+	/*
+	 * NEEDSWORK: Special case other symrefs such as REBASE_HEAD,
+	 * MERGE_HEAD, etc.
+	 */
+
 	strbuf_addstr(&normalized_pattern, pattern);
 	strbuf_strip_suffix(&normalized_pattern, "/");
 
@@ -722,7 +811,7 @@ int dwim_log(const char *str, int len, struct object_id *oid, char **log)
 	return repo_dwim_log(the_repository, str, len, oid, log);
 }
 
-static int is_per_worktree_ref(const char *refname)
+int is_per_worktree_ref(const char *refname)
 {
 	return starts_with(refname, "refs/worktree/") ||
 	       starts_with(refname, "refs/bisect/") ||
@@ -738,37 +827,63 @@ static int is_pseudoref_syntax(const char *refname)
 			return 0;
 	}
 
+	/*
+	 * HEAD is not a pseudoref, but it certainly uses the
+	 * pseudoref syntax.
+	 */
 	return 1;
 }
 
-static int is_main_pseudoref_syntax(const char *refname)
-{
-	return skip_prefix(refname, "main-worktree/", &refname) &&
-		*refname &&
-		is_pseudoref_syntax(refname);
+static int is_current_worktree_ref(const char *ref) {
+	return is_pseudoref_syntax(ref) || is_per_worktree_ref(ref);
 }
 
-static int is_other_pseudoref_syntax(const char *refname)
+enum ref_worktree_type parse_worktree_ref(const char *maybe_worktree_ref,
+					  const char **worktree_name, int *worktree_name_length,
+					  const char **bare_refname)
 {
-	if (!skip_prefix(refname, "worktrees/", &refname))
-		return 0;
-	refname = strchr(refname, '/');
-	if (!refname || !refname[1])
-		return 0;
-	return is_pseudoref_syntax(refname + 1);
-}
+	const char *name_dummy;
+	int name_length_dummy;
+	const char *ref_dummy;
 
-enum ref_type ref_type(const char *refname)
-{
-	if (is_per_worktree_ref(refname))
-		return REF_TYPE_PER_WORKTREE;
-	if (is_pseudoref_syntax(refname))
-		return REF_TYPE_PSEUDOREF;
-	if (is_main_pseudoref_syntax(refname))
-		return REF_TYPE_MAIN_PSEUDOREF;
-	if (is_other_pseudoref_syntax(refname))
-		return REF_TYPE_OTHER_PSEUDOREF;
-	return REF_TYPE_NORMAL;
+	if (!worktree_name)
+		worktree_name = &name_dummy;
+	if (!worktree_name_length)
+		worktree_name_length = &name_length_dummy;
+	if (!bare_refname)
+		bare_refname = &ref_dummy;
+
+	if (skip_prefix(maybe_worktree_ref, "worktrees/", bare_refname)) {
+		const char *slash = strchr(*bare_refname, '/');
+
+		*worktree_name = *bare_refname;
+		if (!slash) {
+			*worktree_name_length = strlen(*worktree_name);
+
+			/* This is an error condition, and the caller tell because the bare_refname is "" */
+			*bare_refname = *worktree_name + *worktree_name_length;
+			return REF_WORKTREE_OTHER;
+		}
+
+		*worktree_name_length = slash - *bare_refname;
+		*bare_refname = slash + 1;
+
+		if (is_current_worktree_ref(*bare_refname))
+			return REF_WORKTREE_OTHER;
+	}
+
+	*worktree_name = NULL;
+	*worktree_name_length = 0;
+
+	if (skip_prefix(maybe_worktree_ref, "main-worktree/", bare_refname)
+	    && is_current_worktree_ref(*bare_refname))
+		return REF_WORKTREE_MAIN;
+
+	*bare_refname = maybe_worktree_ref;
+	if (is_current_worktree_ref(maybe_worktree_ref))
+		return REF_WORKTREE_CURRENT;
+
+	return REF_WORKTREE_SHARED;
 }
 
 long get_files_ref_lock_timeout_ms(void)
@@ -893,8 +1008,9 @@ static void set_read_ref_cutoffs(struct read_ref_at_cb *cb,
 }
 
 static int read_ref_at_ent(struct object_id *ooid, struct object_id *noid,
-		const char *email, timestamp_t timestamp, int tz,
-		const char *message, void *cb_data)
+			   const char *email UNUSED,
+			   timestamp_t timestamp, int tz,
+			   const char *message, void *cb_data)
 {
 	struct read_ref_at_cb *cb = cb_data;
 	int reached_count;
@@ -934,9 +1050,11 @@ static int read_ref_at_ent(struct object_id *ooid, struct object_id *noid,
 	return cb->found_it;
 }
 
-static int read_ref_at_ent_newest(struct object_id *ooid, struct object_id *noid,
-				  const char *email, timestamp_t timestamp,
-				  int tz, const char *message, void *cb_data)
+static int read_ref_at_ent_newest(struct object_id *ooid UNUSED,
+				  struct object_id *noid,
+				  const char *email UNUSED,
+				  timestamp_t timestamp, int tz,
+				  const char *message, void *cb_data)
 {
 	struct read_ref_at_cb *cb = cb_data;
 
@@ -947,8 +1065,9 @@ static int read_ref_at_ent_newest(struct object_id *ooid, struct object_id *noid
 }
 
 static int read_ref_at_ent_oldest(struct object_id *ooid, struct object_id *noid,
-				  const char *email, timestamp_t timestamp,
-				  int tz, const char *message, void *cb_data)
+				  const char *email UNUSED,
+				  timestamp_t timestamp, int tz,
+				  const char *message, void *cb_data)
 {
 	struct read_ref_at_cb *cb = cb_data;
 
@@ -1524,6 +1643,7 @@ int refs_for_each_fullref_in(struct ref_store *refs, const char *prefix,
 
 int for_each_replace_ref(struct repository *r, each_repo_ref_fn fn, void *cb_data)
 {
+	const char *git_replace_ref_base = ref_namespace[NAMESPACE_REPLACE].ref;
 	return do_for_each_repo_ref(r, git_replace_ref_base, fn,
 				    strlen(git_replace_ref_base),
 				    DO_FOR_EACH_INCLUDE_BROKEN, cb_data);
@@ -1810,7 +1930,7 @@ struct ref_store_hash_entry
 	char name[FLEX_ARRAY];
 };
 
-static int ref_store_hash_cmp(const void *unused_cmp_data,
+static int ref_store_hash_cmp(const void *cmp_data UNUSED,
 			      const struct hashmap_entry *eptr,
 			      const struct hashmap_entry *entry_or_key,
 			      const void *keydata)

@@ -21,6 +21,7 @@ MAN1_TXT += $(filter-out \
 MAN1_TXT += git.txt
 MAN1_TXT += gitk.txt
 MAN1_TXT += gitweb.txt
+MAN1_TXT += scalar.txt
 
 # man5 / man7 guides (note: new guides should also be added to command-list.txt)
 MAN5_TXT += gitattributes.txt
@@ -62,6 +63,7 @@ HOWTO_TXT += $(wildcard howto/*.txt)
 
 DOC_DEP_TXT += $(wildcard *.txt)
 DOC_DEP_TXT += $(wildcard config/*.txt)
+DOC_DEP_TXT += $(wildcard includes/*.txt)
 
 ifdef MAN_FILTER
 MAN_TXT = $(filter $(MAN_FILTER),$(MAN1_TXT) $(MAN5_TXT) $(MAN7_TXT))
@@ -101,6 +103,7 @@ SP_ARTICLES += howto/coordinate-embargoed-releases
 API_DOCS = $(patsubst %.txt,%,$(filter-out technical/api-index-skel.txt technical/api-index.txt, $(wildcard technical/api-*.txt)))
 SP_ARTICLES += $(API_DOCS)
 
+TECH_DOCS += ReviewingGuidelines
 TECH_DOCS += MyFirstContribution
 TECH_DOCS += MyFirstObjectWalk
 TECH_DOCS += SubmittingPatches
@@ -115,6 +118,7 @@ TECH_DOCS += technical/parallel-checkout
 TECH_DOCS += technical/partial-clone
 TECH_DOCS += technical/racy-git
 TECH_DOCS += technical/reftable
+TECH_DOCS += technical/scalar
 TECH_DOCS += technical/send-pack-pipeline
 TECH_DOCS += technical/shallow
 TECH_DOCS += technical/trivial-merge
@@ -472,8 +476,19 @@ $(LINT_DOCS_MAN_SECTION_ORDER): .build/lint-docs/man-section-order/%.ok: %.txt
 .PHONY: lint-docs-man-section-order
 lint-docs-man-section-order: $(LINT_DOCS_MAN_SECTION_ORDER)
 
+.PHONY: lint-docs-fsck-msgids
+LINT_DOCS_FSCK_MSGIDS = .build/lint-docs/fsck-msgids.ok
+$(LINT_DOCS_FSCK_MSGIDS): lint-fsck-msgids.perl
+$(LINT_DOCS_FSCK_MSGIDS): ../fsck.h fsck-msgids.txt
+	$(call mkdir_p_parent_template)
+	$(QUIET_GEN)$(PERL_PATH) lint-fsck-msgids.perl \
+		../fsck.h fsck-msgids.txt $@
+
+lint-docs-fsck-msgids: $(LINT_DOCS_FSCK_MSGIDS)
+
 ## Lint: list of targets above
 .PHONY: lint-docs
+lint-docs: lint-docs-fsck-msgids
 lint-docs: lint-docs-gitlink
 lint-docs: lint-docs-man-end-blurb
 lint-docs: lint-docs-man-section-order

@@ -383,12 +383,15 @@ include::merge-strategies.txt[]
 
 CONFIGURATION
 -------------
-include::config/merge.txt[]
 
 branch.<name>.mergeOptions::
 	Sets default options for merging into branch <name>. The syntax and
 	supported options are the same as those of 'git merge', but option
 	values containing whitespace characters are currently not supported.
+
+include::includes/cmd-config-section-rest.txt[]
+
+include::config/merge.txt[]
 
 SEE ALSO
 --------

@@ -520,13 +520,6 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 	const char *interpreted_newname = NULL;
 	int recovery = 0;
 
-	if (!oldname) {
-		if (copy)
-			die(_("cannot copy the current branch while not on any."));
-		else
-			die(_("cannot rename the current branch while not on any."));
-	}
-
 	if (strbuf_check_branch_ref(&oldref, oldname)) {
 		/*
 		 * Bad name --- this could be an attempt to rename a
@@ -536,6 +529,13 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 			recovery = 1;
 		else
 			die(_("Invalid branch name: '%s'"), oldname);
+	}
+
+	if ((copy || strcmp(head, oldname)) && !ref_exists(oldref.buf)) {
+		if (copy && !strcmp(head, oldname))
+			die(_("No commit on branch '%s' yet."), oldname);
+		else
+			die(_("No branch named '%s'."), oldname);
 	}
 
 	/*
@@ -599,10 +599,11 @@ static GIT_PATH_FUNC(edit_description, "EDIT_DESCRIPTION")
 
 static int edit_branch_description(const char *branch_name)
 {
+	int exists;
 	struct strbuf buf = STRBUF_INIT;
 	struct strbuf name = STRBUF_INIT;
 
-	read_branch_desc(&buf, branch_name);
+	exists = !read_branch_desc(&buf, branch_name);
 	if (!buf.len || buf.buf[buf.len-1] != '\n')
 		strbuf_addch(&buf, '\n');
 	strbuf_commented_addf(&buf,
@@ -619,7 +620,8 @@ static int edit_branch_description(const char *branch_name)
 	strbuf_stripspace(&buf, 1);
 
 	strbuf_addf(&name, "branch.%s.description", branch_name);
-	git_config_set(name.buf, buf.len ? buf.buf : NULL);
+	if (buf.len || exists)
+		git_config_set(name.buf, buf.len ? buf.buf : NULL);
 	strbuf_release(&name);
 	strbuf_release(&buf);
 
@@ -791,53 +793,56 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	} else if (edit_description) {
 		const char *branch_name;
 		struct strbuf branch_ref = STRBUF_INIT;
+		struct strbuf buf = STRBUF_INIT;
+		int ret = 1; /* assume failure */
 
 		if (!argc) {
 			if (filter.detached)
 				die(_("Cannot give description to detached HEAD"));
 			branch_name = head;
-		} else if (argc == 1)
-			branch_name = argv[0];
-		else
+		} else if (argc == 1) {
+			strbuf_branchname(&buf, argv[0], INTERPRET_BRANCH_LOCAL);
+			branch_name = buf.buf;
+		} else {
 			die(_("cannot edit description of more than one branch"));
+		}
 
 		strbuf_addf(&branch_ref, "refs/heads/%s", branch_name);
-		if (!ref_exists(branch_ref.buf)) {
-			strbuf_release(&branch_ref);
+		if (!ref_exists(branch_ref.buf))
+			error((!argc || !strcmp(head, branch_name))
+			      ? _("No commit on branch '%s' yet.")
+			      : _("No branch named '%s'."),
+			      branch_name);
+		else if (!edit_branch_description(branch_name))
+			ret = 0; /* happy */
 
-			if (!argc)
-				return error(_("No commit on branch '%s' yet."),
-					     branch_name);
-			else
-				return error(_("No branch named '%s'."),
-					     branch_name);
-		}
 		strbuf_release(&branch_ref);
+		strbuf_release(&buf);
 
-		if (edit_branch_description(branch_name))
-			return 1;
-	} else if (copy) {
+		return ret;
+	} else if (copy || rename) {
 		if (!argc)
 			die(_("branch name required"));
+		else if ((argc == 1) && filter.detached)
+			die(copy? _("cannot copy the current branch while not on any.")
+				: _("cannot rename the current branch while not on any."));
 		else if (argc == 1)
-			copy_or_rename_branch(head, argv[0], 1, copy > 1);
+			copy_or_rename_branch(head, argv[0], copy, copy + rename > 1);
 		else if (argc == 2)
-			copy_or_rename_branch(argv[0], argv[1], 1, copy > 1);
+			copy_or_rename_branch(argv[0], argv[1], copy, copy + rename > 1);
 		else
-			die(_("too many branches for a copy operation"));
-	} else if (rename) {
-		if (!argc)
-			die(_("branch name required"));
-		else if (argc == 1)
-			copy_or_rename_branch(head, argv[0], 0, rename > 1);
-		else if (argc == 2)
-			copy_or_rename_branch(argv[0], argv[1], 0, rename > 1);
-		else
-			die(_("too many arguments for a rename operation"));
+			die(copy? _("too many branches for a copy operation")
+				: _("too many arguments for a rename operation"));
 	} else if (new_upstream) {
-		struct branch *branch = branch_get(argv[0]);
+		struct branch *branch;
+		struct strbuf buf = STRBUF_INIT;
 
-		if (argc > 1)
+		if (!argc)
+			branch = branch_get(NULL);
+		else if (argc == 1) {
+			strbuf_branchname(&buf, argv[0], INTERPRET_BRANCH_LOCAL);
+			branch = branch_get(buf.buf);
+		} else
 			die(_("too many arguments to set new upstream"));
 
 		if (!branch) {
@@ -848,17 +853,26 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 			die(_("no such branch '%s'"), argv[0]);
 		}
 
-		if (!ref_exists(branch->refname))
+		if (!ref_exists(branch->refname)) {
+			if (!argc || !strcmp(head, branch->name))
+				die(_("No commit on branch '%s' yet."), branch->name);
 			die(_("branch '%s' does not exist"), branch->name);
+		}
 
 		dwim_and_setup_tracking(the_repository, branch->name,
 					new_upstream, BRANCH_TRACK_OVERRIDE,
 					quiet);
+		strbuf_release(&buf);
 	} else if (unset_upstream) {
-		struct branch *branch = branch_get(argv[0]);
+		struct branch *branch;
 		struct strbuf buf = STRBUF_INIT;
 
-		if (argc > 1)
+		if (!argc)
+			branch = branch_get(NULL);
+		else if (argc == 1) {
+			strbuf_branchname(&buf, argv[0], INTERPRET_BRANCH_LOCAL);
+			branch = branch_get(buf.buf);
+		} else
 			die(_("too many arguments to unset upstream"));
 
 		if (!branch) {
@@ -871,6 +885,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		if (!branch_has_merge_config(branch))
 			die(_("Branch '%s' has no upstream information"), branch->name);
 
+		strbuf_reset(&buf);
 		strbuf_addf(&buf, "branch.%s.remote", branch->name);
 		git_config_set_multivar(buf.buf, NULL, NULL, CONFIG_FLAGS_MULTI_REPLACE);
 		strbuf_reset(&buf);

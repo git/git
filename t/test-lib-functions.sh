@@ -273,13 +273,13 @@ debug () {
 # <file>, <contents>, and <tag> all default to <message>.
 
 test_commit () {
-	notick= &&
-	echo=echo &&
-	append= &&
-	author= &&
-	signoff= &&
-	indir= &&
-	tag=light &&
+	local notick= &&
+	local echo=echo &&
+	local append= &&
+	local author= &&
+	local signoff= &&
+	local indir= &&
+	local tag=light &&
 	while test $# != 0
 	do
 		case "$1" in
@@ -322,7 +322,7 @@ test_commit () {
 		shift
 	done &&
 	indir=${indir:+"$indir"/} &&
-	file=${2:-"$1.t"} &&
+	local file=${2:-"$1.t"} &&
 	if test -n "$append"
 	then
 		$echo "${3-$1}" >>"$indir$file"
@@ -897,7 +897,7 @@ test_path_is_symlink () {
 test_dir_is_empty () {
 	test "$#" -ne 1 && BUG "1 param"
 	test_path_is_dir "$1" &&
-	if test -n "$(ls -a1 "$1" | egrep -v '^\.\.?$')"
+	if test -n "$(ls -a1 "$1" | grep -E -v '^\.\.?$')"
 	then
 		echo "Directory '$1' is not empty, it contains:"
 		ls -la "$1"
@@ -1867,4 +1867,15 @@ test_is_magic_mtime () {
 	rm -f .git/test-mtime-expect
 	rm -f .git/test-mtime-actual
 	return $ret
+}
+
+# Given two filenames, parse both using 'git config --list --file'
+# and compare the sorted output of those commands. Useful when
+# wanting to ignore whitespace differences and sorting concerns.
+test_cmp_config_output () {
+	git config --list --file="$1" >config-expect &&
+	git config --list --file="$2" >config-actual &&
+	sort config-expect >sorted-expect &&
+	sort config-actual >sorted-actual &&
+	test_cmp sorted-expect sorted-actual
 }

@@ -38,7 +38,7 @@ static int diffgrep_consume(void *priv, char *line, unsigned long len)
 
 static int diff_grep(mmfile_t *one, mmfile_t *two,
 		     struct diff_options *o,
-		     regex_t *regexp, kwset_t kws)
+		     regex_t *regexp, kwset_t kws UNUSED)
 {
 	struct diffgrep_cb ecbdata;
 	xpparam_t xpp;
@@ -114,7 +114,7 @@ static unsigned int contains(mmfile_t *mf, regex_t *regexp, kwset_t kws,
 }
 
 static int has_changes(mmfile_t *one, mmfile_t *two,
-		       struct diff_options *o,
+		       struct diff_options *o UNUSED,
 		       regex_t *regexp, kwset_t kws)
 {
 	unsigned int c1 = one ? contains(one, regexp, kws, 0) : 0;

@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'git subtree' [<options>] -P <prefix> add <local-commit>
 'git subtree' [<options>] -P <prefix> add <repository> <remote-ref>
-'git subtree' [<options>] -P <prefix> merge <local-commit>
+'git subtree' [<options>] -P <prefix> merge <local-commit> [<repository>]
 'git subtree' [<options>] -P <prefix> split [<local-commit>]
 
 [verse]
@@ -76,7 +76,7 @@ add <repository> <remote-ref>::
 	only a single commit from the subproject, rather than its
 	entire history.
 
-merge <local-commit>::
+merge <local-commit> [<repository>]::
 	Merge recent changes up to <local-commit> into the <prefix>
 	subtree.  As with normal 'git merge', this doesn't
 	remove your own local changes; it just merges those
@@ -88,8 +88,13 @@ If you use '--squash', the merge direction doesn't always have to be
 forward; you can use this command to go back in time from v2.5 to v2.4,
 for example.  If your merge introduces a conflict, you can resolve it in
 the usual ways.
++
+When using '--squash', and the previous merge with '--squash' merged an
+annotated tag of the subtree repository, that tag needs to be available locally.
+If <repository> is given, a missing tag will automatically be fetched from that
+repository.
 
-split [<local-commit>]::
+split [<local-commit>] [<repository>]::
 	Extract a new, synthetic project history from the
 	history of the <prefix> subtree of <local-commit>, or of
 	HEAD if no <local-commit> is given.  The new history
@@ -109,6 +114,11 @@ settings passed to 'split' (such as '--annotate') are the same.
 Because of this, if you add new commits and then re-split, the new
 commits will be attached as commits on top of the history you
 generated last time, so 'git merge' and friends will work as expected.
++
+When a previous merge with '--squash' merged an annotated tag of the
+subtree repository, that tag needs to be available locally.
+If <repository> is given, a missing tag will automatically be fetched from that
+repository.
 
 pull <repository> <remote-ref>::
 	Exactly like 'merge', but parallels 'git pull' in that

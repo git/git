@@ -265,6 +265,13 @@ always create a new name for it (without switching away):
 $ git switch -c good-surprises
 ------------
 
+CONFIGURATION
+-------------
+
+include::includes/cmd-config-section-all.txt[]
+
+include::config/checkout.txt[]
+
 SEE ALSO
 --------
 linkgit:git-checkout[1],

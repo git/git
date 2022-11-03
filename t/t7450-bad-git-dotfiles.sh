@@ -15,13 +15,17 @@ Such as:
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-pack.sh
 
+test_expect_success 'setup' '
+	git config --global protocol.file.allow always
+'
+
 test_expect_success 'check names' '
 	cat >expect <<-\EOF &&
 	valid
 	valid/with/paths
 	EOF
 
-	git submodule--helper check-name >actual <<-\EOF &&
+	test-tool submodule check-name >actual <<-\EOF &&
 	valid
 	valid/with/paths
 

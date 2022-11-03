@@ -191,10 +191,10 @@ static struct patch_mode patch_mode_worktree_head = {
 	.apply_check_args = { "-R", NULL },
 	.is_reverse = 1,
 	.prompt_mode = {
-		N_("Discard mode change from index and worktree [y,n,q,a,d%s,?]? "),
-		N_("Discard deletion from index and worktree [y,n,q,a,d%s,?]? "),
-		N_("Discard addition from index and worktree [y,n,q,a,d%s,?]? "),
-		N_("Discard this hunk from index and worktree [y,n,q,a,d%s,?]? "),
+		N_("Discard mode change from worktree [y,n,q,a,d%s,?]? "),
+		N_("Discard deletion from worktree [y,n,q,a,d%s,?]? "),
+		N_("Discard addition from worktree [y,n,q,a,d%s,?]? "),
+		N_("Discard this hunk from worktree [y,n,q,a,d%s,?]? "),
 	},
 	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
 			     "will immediately be marked for discarding."),
@@ -213,10 +213,10 @@ static struct patch_mode patch_mode_worktree_nothead = {
 	.apply_args = { NULL },
 	.apply_check_args = { NULL },
 	.prompt_mode = {
-		N_("Apply mode change to index and worktree [y,n,q,a,d%s,?]? "),
-		N_("Apply deletion to index and worktree [y,n,q,a,d%s,?]? "),
-		N_("Apply addition to index and worktree [y,n,q,a,d%s,?]? "),
-		N_("Apply this hunk to index and worktree [y,n,q,a,d%s,?]? "),
+		N_("Apply mode change to worktree [y,n,q,a,d%s,?]? "),
+		N_("Apply deletion to worktree [y,n,q,a,d%s,?]? "),
+		N_("Apply addition to worktree [y,n,q,a,d%s,?]? "),
+		N_("Apply this hunk to worktree [y,n,q,a,d%s,?]? "),
 	},
 	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
 			     "will immediately be marked for applying."),
@@ -238,6 +238,7 @@ struct hunk_header {
 	 * include the newline.
 	 */
 	size_t extra_start, extra_end, colored_extra_start, colored_extra_end;
+	unsigned suppress_colored_line_range:1;
 };
 
 struct hunk {
@@ -358,15 +359,14 @@ static int parse_hunk_header(struct add_p_state *s, struct hunk *hunk)
 	if (!eol)
 		eol = s->colored.buf + s->colored.len;
 	p = memmem(line, eol - line, "@@ -", 4);
-	if (!p)
-		return error(_("could not parse colored hunk header '%.*s'"),
-			     (int)(eol - line), line);
-	p = memmem(p + 4, eol - p - 4, " @@", 3);
-	if (!p)
-		return error(_("could not parse colored hunk header '%.*s'"),
-			     (int)(eol - line), line);
+	if (p && (p = memmem(p + 4, eol - p - 4, " @@", 3))) {
+		header->colored_extra_start = p + 3 - s->colored.buf;
+	} else {
+		/* could not parse colored hunk header, leave as-is */
+		header->colored_extra_start = hunk->colored_start;
+		header->suppress_colored_line_range = 1;
+	}
 	hunk->colored_start = eol - s->colored.buf + (*eol == '\n');
-	header->colored_extra_start = p + 3 - s->colored.buf;
 	header->colored_extra_end = hunk->colored_start;
 
 	return 0;
@@ -419,7 +419,8 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 	}
 	color_arg_index = args.nr;
 	/* Use `--no-color` explicitly, just in case `diff.color = always`. */
-	strvec_pushl(&args, "--no-color", "-p", "--", NULL);
+	strvec_pushl(&args, "--no-color", "--ignore-submodules=dirty", "-p",
+		     "--", NULL);
 	for (i = 0; i < ps->nr; i++)
 		strvec_push(&args, ps->items[i].original);
 
@@ -592,7 +593,10 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 			if (colored_eol)
 				colored_p = colored_eol + 1;
 			else if (p != pend)
-				/* colored shorter than non-colored? */
+				/* non-colored has more lines? */
+				goto mismatched_output;
+			else if (colored_p == colored_pend)
+				/* last line has no matching colored one? */
 				goto mismatched_output;
 			else
 				colored_p = colored_pend;
@@ -656,6 +660,15 @@ static void render_hunk(struct add_p_state *s, struct hunk *hunk,
 		if (!colored) {
 			p = s->plain.buf + header->extra_start;
 			len = header->extra_end - header->extra_start;
+		} else if (header->suppress_colored_line_range) {
+			strbuf_add(out,
+				   s->colored.buf + header->colored_extra_start,
+				   header->colored_extra_end -
+				   header->colored_extra_start);
+
+			strbuf_add(out, s->colored.buf + hunk->colored_start,
+				   hunk->colored_end - hunk->colored_start);
+			return;
 		} else {
 			strbuf_addstr(out, s->s.fraginfo_color);
 			p = s->colored.buf + header->colored_extra_start;
@@ -1547,7 +1560,7 @@ soft_increment:
 			strbuf_remove(&s->answer, 0, 1);
 			strbuf_trim(&s->answer);
 			i = hunk_index - DISPLAY_HUNKS_LINES / 2;
-			if (i < file_diff->mode_change)
+			if (i < (int)file_diff->mode_change)
 				i = file_diff->mode_change;
 			while (s->answer.len == 0) {
 				i = display_hunks(s, file_diff, i);

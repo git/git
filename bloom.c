@@ -163,10 +163,10 @@ void init_bloom_filters(void)
 	init_bloom_filter_slab(&bloom_filters);
 }
 
-static int pathmap_cmp(const void *hashmap_cmp_fn_data,
+static int pathmap_cmp(const void *hashmap_cmp_fn_data UNUSED,
 		       const struct hashmap_entry *eptr,
 		       const struct hashmap_entry *entry_or_key,
-		       const void *keydata)
+		       const void *keydata UNUSED)
 {
 	const struct pathmap_hash_entry *e1, *e2;
 

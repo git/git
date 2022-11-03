@@ -80,7 +80,7 @@ static int recurse_submodules_cli = RECURSE_SUBMODULES_DEFAULT;
 static int recurse_submodules_default = RECURSE_SUBMODULES_ON_DEMAND;
 static int shown_url = 0;
 static struct refspec refmap = REFSPEC_INIT_FETCH;
-static struct list_objects_filter_options filter_options;
+static struct list_objects_filter_options filter_options = LIST_OBJECTS_FILTER_INIT;
 static struct string_list server_options = STRING_LIST_INIT_DUP;
 static struct string_list negotiation_tip = STRING_LIST_INIT_NODUP;
 static int fetch_write_commit_graph = -1;
@@ -122,6 +122,8 @@ static int git_fetch_config(const char *k, const char *v, void *cb)
 		fetch_parallel_config = git_config_int(k, v);
 		if (fetch_parallel_config < 0)
 			die(_("fetch.parallel cannot be negative"));
+		if (!fetch_parallel_config)
+			fetch_parallel_config = online_cpus();
 		return 0;
 	}
 
@@ -301,7 +303,7 @@ struct refname_hash_entry {
 	char refname[FLEX_ARRAY];
 };
 
-static int refname_hash_entry_cmp(const void *hashmap_cmp_fn_data,
+static int refname_hash_entry_cmp(const void *hashmap_cmp_fn_data UNUSED,
 				  const struct hashmap_entry *eptr,
 				  const struct hashmap_entry *entry_or_key,
 				  const void *keydata)
@@ -329,7 +331,7 @@ static struct refname_hash_entry *refname_hash_add(struct hashmap *map,
 
 static int add_one_refname(const char *refname,
 			   const struct object_id *oid,
-			   int flag, void *cbdata)
+			   int flag UNUSED, void *cbdata)
 {
 	struct hashmap *refname_map = cbdata;
 
@@ -490,7 +492,9 @@ static void filter_prefetch_refspec(struct refspec *rs)
 			continue;
 		if (!rs->items[i].dst ||
 		    (rs->items[i].src &&
-		     !strncmp(rs->items[i].src, "refs/tags/", 10))) {
+		     !strncmp(rs->items[i].src,
+			      ref_namespace[NAMESPACE_TAGS].ref,
+			      strlen(ref_namespace[NAMESPACE_TAGS].ref)))) {
 			int j;
 
 			free(rs->items[i].src);
@@ -506,7 +510,7 @@ static void filter_prefetch_refspec(struct refspec *rs)
 		}
 
 		old_dst = rs->items[i].dst;
-		strbuf_addstr(&new_dst, "refs/prefetch/");
+		strbuf_addstr(&new_dst, ref_namespace[NAMESPACE_PREFETCH].ref);
 
 		/*
 		 * If old_dst starts with "refs/", then place
@@ -1462,8 +1466,9 @@ static void set_option(struct transport *transport, const char *name, const char
 }
 
 
-static int add_oid(const char *refname, const struct object_id *oid, int flags,
-		   void *cb_data)
+static int add_oid(const char *refname UNUSED,
+		   const struct object_id *oid,
+		   int flags UNUSED, void *cb_data)
 {
 	struct oid_array *oids = cb_data;
 
@@ -1614,9 +1619,21 @@ static int do_fetch(struct transport *transport,
 				break;
 			}
 		}
-	} else if (transport->remote && transport->remote->fetch.nr)
-		refspec_ref_prefixes(&transport->remote->fetch,
-				     &transport_ls_refs_options.ref_prefixes);
+	} else {
+		struct branch *branch = branch_get(NULL);
+
+		if (transport->remote->fetch.nr)
+			refspec_ref_prefixes(&transport->remote->fetch,
+					     &transport_ls_refs_options.ref_prefixes);
+		if (branch_has_merge_config(branch) &&
+		    !strcmp(branch->remote_name, transport->remote->name)) {
+			int i;
+			for (i = 0; i < branch->merge_nr; i++) {
+				strvec_push(&transport_ls_refs_options.ref_prefixes,
+					    branch->merge[i]->src);
+			}
+		}
+	}
 
 	if (tags == TAGS_SET || tags == TAGS_DEFAULT) {
 		must_list_refs = 1;
@@ -1936,17 +1953,22 @@ static int fetch_multiple(struct string_list *list, int max_children)
 
 	if (max_children != 1 && list->nr != 1) {
 		struct parallel_fetch_state state = { argv.v, list, 0, 0 };
+		const struct run_process_parallel_opts opts = {
+			.tr2_category = "fetch",
+			.tr2_label = "parallel/fetch",
+
+			.processes = max_children,
+
+			.get_next_task = &fetch_next_remote,
+			.start_failure = &fetch_failed_to_start,
+			.task_finished = &fetch_finished,
+			.data = &state,
+		};
 
 		strvec_push(&argv, "--end-of-options");
-		result = run_processes_parallel_tr2(max_children,
-						    &fetch_next_remote,
-						    &fetch_failed_to_start,
-						    &fetch_finished,
-						    &state,
-						    "fetch", "parallel/fetch");
 
-		if (!result)
-			result = state.result;
+		run_processes_parallel(&opts);
+		result = state.result;
 	} else
 		for (i = 0; i < list->nr; i++) {
 			const char *name = list->items[i].string;

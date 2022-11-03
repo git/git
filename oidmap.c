@@ -1,7 +1,7 @@
 #include "cache.h"
 #include "oidmap.h"
 
-static int oidmap_neq(const void *hashmap_cmp_fn_data,
+static int oidmap_neq(const void *hashmap_cmp_fn_data UNUSED,
 		      const struct hashmap_entry *e1,
 		      const struct hashmap_entry *e2,
 		      const void *keydata)

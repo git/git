@@ -47,13 +47,6 @@ static inline int want_ancestry(const struct rev_info *revs);
 void show_object_with_name(FILE *out, struct object *obj, const char *name)
 {
 	fprintf(out, "%s ", oid_to_hex(&obj->oid));
-	/*
-	 * This "for (const char *p = ..." is made as a first step towards
-	 * making use of such declarations elsewhere in our codebase.  If
-	 * it causes compilation problems on your platform, please report
-	 * it to the Git mailing list at git@vger.kernel.org. In the meantime,
-	 * adding -std=gnu99 to CFLAGS may help if you are with older GCC.
-	 */
 	for (const char *p = name; *p && *p != '\n'; p++)
 		fputc(*p, out);
 	fputc('\n', out);
@@ -119,10 +112,10 @@ struct path_and_oids_entry {
 	struct oidset trees;
 };
 
-static int path_and_oids_cmp(const void *hashmap_cmp_fn_data,
+static int path_and_oids_cmp(const void *hashmap_cmp_fn_data UNUSED,
 			     const struct hashmap_entry *eptr,
 			     const struct hashmap_entry *entry_or_key,
-			     const void *keydata)
+			     const void *keydata UNUSED)
 {
 	const struct path_and_oids_entry *e1, *e2;
 
@@ -373,18 +366,10 @@ static struct object *get_reference(struct rev_info *revs, const char *name,
 				    unsigned int flags)
 {
 	struct object *object;
-	struct commit *commit;
 
-	/*
-	 * If the repository has commit graphs, we try to opportunistically
-	 * look up the object ID in those graphs. Like this, we can avoid
-	 * parsing commit data from disk.
-	 */
-	commit = lookup_commit_in_graph(revs->repo, oid);
-	if (commit)
-		object = &commit->object;
-	else
-		object = parse_object(revs->repo, oid);
+	object = parse_object_with_flags(revs->repo, oid,
+					 revs->verify_objects ? 0 :
+					 PARSE_OBJECT_SKIP_HASH_CHECK);
 
 	if (!object) {
 		if (revs->ignore_missing)
@@ -1105,7 +1090,7 @@ static int process_parents(struct rev_info *revs, struct commit *commit,
 			   struct commit_list **list, struct prio_queue *queue)
 {
 	struct commit_list *parent = commit->parents;
-	unsigned left_flag;
+	unsigned pass_flags;
 
 	if (commit->object.flags & ADDED)
 		return 0;
@@ -1160,7 +1145,7 @@ static int process_parents(struct rev_info *revs, struct commit *commit,
 	if (revs->no_walk)
 		return 0;
 
-	left_flag = (commit->object.flags & SYMMETRIC_LEFT);
+	pass_flags = (commit->object.flags & (SYMMETRIC_LEFT | ANCESTRY_PATH));
 
 	for (parent = commit->parents; parent; parent = parent->next) {
 		struct commit *p = parent->item;
@@ -1181,7 +1166,7 @@ static int process_parents(struct rev_info *revs, struct commit *commit,
 			if (!*slot)
 				*slot = *revision_sources_at(revs->sources, commit);
 		}
-		p->object.flags |= left_flag;
+		p->object.flags |= pass_flags;
 		if (!(p->object.flags & SEEN)) {
 			p->object.flags |= (SEEN | NOT_USER_GIVEN);
 			if (list)
@@ -1304,13 +1289,24 @@ static int still_interesting(struct commit_list *src, timestamp_t date, int slop
 }
 
 /*
- * "rev-list --ancestry-path A..B" computes commits that are ancestors
- * of B but not ancestors of A but further limits the result to those
- * that are descendants of A.  This takes the list of bottom commits and
- * the result of "A..B" without --ancestry-path, and limits the latter
- * further to the ones that can reach one of the commits in "bottom".
+ * "rev-list --ancestry-path=C_0 [--ancestry-path=C_1 ...] A..B"
+ * computes commits that are ancestors of B but not ancestors of A but
+ * further limits the result to those that have any of C in their
+ * ancestry path (i.e. are either ancestors of any of C, descendants
+ * of any of C, or are any of C). If --ancestry-path is specified with
+ * no commit, we use all bottom commits for C.
+ *
+ * Before this function is called, ancestors of C will have already
+ * been marked with ANCESTRY_PATH previously.
+ *
+ * This takes the list of bottom commits and the result of "A..B"
+ * without --ancestry-path, and limits the latter further to the ones
+ * that have any of C in their ancestry path. Since the ancestors of C
+ * have already been marked (a prerequisite of this function), we just
+ * need to mark the descendants, then exclude any commit that does not
+ * have any of these marks.
  */
-static void limit_to_ancestry(struct commit_list *bottom, struct commit_list *list)
+static void limit_to_ancestry(struct commit_list *bottoms, struct commit_list *list)
 {
 	struct commit_list *p;
 	struct commit_list *rlist = NULL;
@@ -1323,7 +1319,7 @@ static void limit_to_ancestry(struct commit_list *bottom, struct commit_list *li
 	for (p = list; p; p = p->next)
 		commit_list_insert(p->item, &rlist);
 
-	for (p = bottom; p; p = p->next)
+	for (p = bottoms; p; p = p->next)
 		p->item->object.flags |= TMP_MARK;
 
 	/*
@@ -1356,38 +1352,39 @@ static void limit_to_ancestry(struct commit_list *bottom, struct commit_list *li
 	 */
 
 	/*
-	 * The ones that are not marked with TMP_MARK are uninteresting
+	 * The ones that are not marked with either TMP_MARK or
+	 * ANCESTRY_PATH are uninteresting
 	 */
 	for (p = list; p; p = p->next) {
 		struct commit *c = p->item;
-		if (c->object.flags & TMP_MARK)
+		if (c->object.flags & (TMP_MARK | ANCESTRY_PATH))
 			continue;
 		c->object.flags |= UNINTERESTING;
 	}
 
-	/* We are done with the TMP_MARK */
+	/* We are done with TMP_MARK and ANCESTRY_PATH */
 	for (p = list; p; p = p->next)
-		p->item->object.flags &= ~TMP_MARK;
-	for (p = bottom; p; p = p->next)
-		p->item->object.flags &= ~TMP_MARK;
+		p->item->object.flags &= ~(TMP_MARK | ANCESTRY_PATH);
+	for (p = bottoms; p; p = p->next)
+		p->item->object.flags &= ~(TMP_MARK | ANCESTRY_PATH);
 	free_commit_list(rlist);
 }
 
 /*
- * Before walking the history, keep the set of "negative" refs the
- * caller has asked to exclude.
+ * Before walking the history, add the set of "negative" refs the
+ * caller has asked to exclude to the bottom list.
  *
  * This is used to compute "rev-list --ancestry-path A..B", as we need
  * to filter the result of "A..B" further to the ones that can actually
  * reach A.
  */
-static struct commit_list *collect_bottom_commits(struct commit_list *list)
+static void collect_bottom_commits(struct commit_list *list,
+				   struct commit_list **bottom)
 {
-	struct commit_list *elem, *bottom = NULL;
+	struct commit_list *elem;
 	for (elem = list; elem; elem = elem->next)
 		if (elem->item->object.flags & BOTTOM)
-			commit_list_insert(elem->item, &bottom);
-	return bottom;
+			commit_list_insert(elem->item, bottom);
 }
 
 /* Assumes either left_only or right_only is set */
@@ -1414,12 +1411,12 @@ static int limit_list(struct rev_info *revs)
 	struct commit_list *original_list = revs->commits;
 	struct commit_list *newlist = NULL;
 	struct commit_list **p = &newlist;
-	struct commit_list *bottom = NULL;
 	struct commit *interesting_cache = NULL;
 
-	if (revs->ancestry_path) {
-		bottom = collect_bottom_commits(original_list);
-		if (!bottom)
+	if (revs->ancestry_path_implicit_bottoms) {
+		collect_bottom_commits(original_list,
+				       &revs->ancestry_path_bottoms);
+		if (!revs->ancestry_path_bottoms)
 			die("--ancestry-path given but there are no bottom commits");
 	}
 
@@ -1464,9 +1461,8 @@ static int limit_list(struct rev_info *revs)
 	if (revs->left_only || revs->right_only)
 		limit_left_right(newlist, revs);
 
-	if (bottom)
-		limit_to_ancestry(bottom, newlist);
-	free_commit_list(bottom);
+	if (revs->ancestry_path)
+		limit_to_ancestry(revs->ancestry_path_bottoms, newlist);
 
 	/*
 	 * Check if any commits have become TREESAME by some of their parents
@@ -1543,7 +1539,8 @@ int ref_excluded(struct string_list *ref_excludes, const char *path)
 }
 
 static int handle_one_ref(const char *path, const struct object_id *oid,
-			  int flag, void *cb_data)
+			  int flag UNUSED,
+			  void *cb_data)
 {
 	struct all_refs_cb *cb = cb_data;
 	struct object *object;
@@ -1618,8 +1615,11 @@ static void handle_one_reflog_commit(struct object_id *oid, void *cb_data)
 }
 
 static int handle_one_reflog_ent(struct object_id *ooid, struct object_id *noid,
-		const char *email, timestamp_t timestamp, int tz,
-		const char *message, void *cb_data)
+				 const char *email UNUSED,
+				 timestamp_t timestamp UNUSED,
+				 int tz UNUSED,
+				 const char *message UNUSED,
+				 void *cb_data)
 {
 	handle_one_reflog_commit(ooid, cb_data);
 	handle_one_reflog_commit(noid, cb_data);
@@ -1627,8 +1627,8 @@ static int handle_one_reflog_ent(struct object_id *ooid, struct object_id *noid,
 }
 
 static int handle_one_reflog(const char *refname_in_wt,
-			     const struct object_id *oid,
-			     int flag, void *cb_data)
+			     const struct object_id *oid UNUSED,
+			     int flag UNUSED, void *cb_data)
 {
 	struct all_refs_cb *cb = cb_data;
 	struct strbuf refname = STRBUF_INIT;
@@ -1900,6 +1900,7 @@ void repo_init_revisions(struct repository *r,
 	}
 
 	init_display_notes(&revs->notes_opt);
+	list_objects_filter_init(&revs->filter);
 }
 
 static void add_pending_commit_list(struct rev_info *revs,
@@ -2112,9 +2113,8 @@ static int handle_revision_arg_1(const char *arg_, struct rev_info *revs, int fl
 		int exclude_parent = 1;
 
 		if (mark[2]) {
-			char *end;
-			exclude_parent = strtoul(mark + 2, &end, 10);
-			if (*end != '\0' || !exclude_parent)
+			if (strtol_i(mark + 2, 10, &exclude_parent) ||
+			    exclude_parent < 1)
 				return -1;
 		}
 
@@ -2213,7 +2213,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 			       const struct setup_revision_opt* opt)
 {
 	const char *arg = argv[0];
-	const char *optarg;
+	const char *optarg = NULL;
 	int argcount;
 	const unsigned hexsz = the_hash_algo->hexsz;
 
@@ -2284,6 +2284,23 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->ancestry_path = 1;
 		revs->simplify_history = 0;
 		revs->limited = 1;
+		revs->ancestry_path_implicit_bottoms = 1;
+	} else if (skip_prefix(arg, "--ancestry-path=", &optarg)) {
+		struct commit *c;
+		struct object_id oid;
+		const char *msg = _("could not get commit for ancestry-path argument %s");
+
+		revs->ancestry_path = 1;
+		revs->simplify_history = 0;
+		revs->limited = 1;
+
+		if (repo_get_oid_committish(revs->repo, optarg, &oid))
+			return error(msg, optarg);
+		get_reference(revs, optarg, &oid, ANCESTRY_PATH);
+		c = lookup_commit_reference(revs->repo, &oid);
+		if (!c)
+			return error(msg, optarg);
+		commit_list_insert(c, &revs->ancestry_path_bottoms);
 	} else if (!strcmp(arg, "-g") || !strcmp(arg, "--walk-reflogs")) {
 		init_reflog_walk(&revs->reflog_info);
 	} else if (!strcmp(arg, "--default")) {
@@ -2398,6 +2415,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->tree_objects = 1;
 		revs->blob_objects = 1;
 		revs->verify_objects = 1;
+		disable_commit_graph(revs->repo);
 	} else if (!strcmp(arg, "--unpacked")) {
 		revs->unpacked = 1;
 	} else if (starts_with(arg, "--unpacked=")) {
@@ -2993,6 +3011,7 @@ static void release_revisions_topo_walk_info(struct topo_walk_info *info);
 void release_revisions(struct rev_info *revs)
 {
 	free_commit_list(revs->commits);
+	free_commit_list(revs->ancestry_path_bottoms);
 	object_array_clear(&revs->pending);
 	object_array_clear(&revs->boundary_commits);
 	release_revisions_cmdline(&revs->cmdline);

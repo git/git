@@ -261,3 +261,22 @@ void detach_advice(const char *new_name)
 
 	fprintf(stderr, fmt, new_name);
 }
+
+void advise_on_moving_dirty_path(struct string_list *pathspec_list)
+{
+	struct string_list_item *item;
+
+	if (!pathspec_list->nr)
+		return;
+
+	fprintf(stderr, _("The following paths have been moved outside the\n"
+			  "sparse-checkout definition but are not sparse due to local\n"
+			  "modifications.\n"));
+	for_each_string_list_item(item, pathspec_list)
+		fprintf(stderr, "%s\n", item->string);
+
+	advise_if_enabled(ADVICE_UPDATE_SPARSE_PATH,
+			  _("To correct the sparsity of these paths, do the following:\n"
+			    "* Use \"git add --sparse <paths>\" to update the index\n"
+			    "* Use \"git sparse-checkout reapply\" to apply the sparsity rules"));
+}

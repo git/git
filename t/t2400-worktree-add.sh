@@ -669,6 +669,7 @@ test_expect_success '"add" should not fail because of another bad worktree' '
 '
 
 test_expect_success '"add" with uninitialized submodule, with submodule.recurse unset' '
+	test_config_global protocol.file.allow always &&
 	test_create_repo submodule &&
 	test_commit -C submodule first &&
 	test_create_repo project &&
@@ -684,6 +685,7 @@ test_expect_success '"add" with uninitialized submodule, with submodule.recurse 
 '
 
 test_expect_success '"add" with initialized submodule, with submodule.recurse unset' '
+	test_config_global protocol.file.allow always &&
 	git -C project-clone submodule update --init &&
 	git -C project-clone worktree add ../project-4
 '

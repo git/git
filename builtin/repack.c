@@ -92,44 +92,6 @@ static int repack_config(const char *var, const char *value, void *cb)
 }
 
 /*
- * Remove temporary $GIT_OBJECT_DIRECTORY/pack/.tmp-$$-pack-* files.
- */
-static void remove_temporary_files(void)
-{
-	struct strbuf buf = STRBUF_INIT;
-	size_t dirlen, prefixlen;
-	DIR *dir;
-	struct dirent *e;
-
-	dir = opendir(packdir);
-	if (!dir)
-		return;
-
-	/* Point at the slash at the end of ".../objects/pack/" */
-	dirlen = strlen(packdir) + 1;
-	strbuf_addstr(&buf, packtmp);
-	/* Hold the length of  ".tmp-%d-pack-" */
-	prefixlen = buf.len - dirlen;
-
-	while ((e = readdir(dir))) {
-		if (strncmp(e->d_name, buf.buf + dirlen, prefixlen))
-			continue;
-		strbuf_setlen(&buf, dirlen);
-		strbuf_addstr(&buf, e->d_name);
-		unlink(buf.buf);
-	}
-	closedir(dir);
-	strbuf_release(&buf);
-}
-
-static void remove_pack_on_signal(int signo)
-{
-	remove_temporary_files();
-	sigchain_pop(signo);
-	raise(signo);
-}
-
-/*
  * Adds all packs hex strings to either fname_nonkept_list or
  * fname_kept_list based on whether each pack has a corresponding
  * .keep file or not.  Packs without a .keep file are not to be kept
@@ -247,11 +209,15 @@ static struct {
 	{".idx"},
 };
 
-static unsigned populate_pack_exts(char *name)
+struct generated_pack_data {
+	struct tempfile *tempfiles[ARRAY_SIZE(exts)];
+};
+
+static struct generated_pack_data *populate_pack_exts(const char *name)
 {
 	struct stat statbuf;
 	struct strbuf path = STRBUF_INIT;
-	unsigned ret = 0;
+	struct generated_pack_data *data = xcalloc(1, sizeof(*data));
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(exts); i++) {
@@ -261,11 +227,11 @@ static unsigned populate_pack_exts(char *name)
 		if (stat(path.buf, &statbuf))
 			continue;
 
-		ret |= (1 << i);
+		data->tempfiles[i] = register_tempfile(path.buf);
 	}
 
 	strbuf_release(&path);
-	return ret;
+	return data;
 }
 
 static void repack_promisor_objects(const struct pack_objects_args *args,
@@ -320,7 +286,7 @@ static void repack_promisor_objects(const struct pack_objects_args *args,
 					  line.buf);
 		write_promisor_file(promisor_name, NULL, 0);
 
-		item->util = (void *)(uintptr_t)populate_pack_exts(item->string);
+		item->util = populate_pack_exts(item->string);
 
 		free(promisor_name);
 	}
@@ -514,9 +480,9 @@ struct midx_snapshot_ref_data {
 	int preferred;
 };
 
-static int midx_snapshot_ref_one(const char *refname,
+static int midx_snapshot_ref_one(const char *refname UNUSED,
 				 const struct object_id *oid,
-				 int flag, void *_data)
+				 int flag UNUSED, void *_data)
 {
 	struct midx_snapshot_ref_data *data = _data;
 	struct object_id peeled;
@@ -661,6 +627,35 @@ static int write_midx_included_packs(struct string_list *include,
 	return finish_command(&cmd);
 }
 
+static void remove_redundant_bitmaps(struct string_list *include,
+				     const char *packdir)
+{
+	struct strbuf path = STRBUF_INIT;
+	struct string_list_item *item;
+	size_t packdir_len;
+
+	strbuf_addstr(&path, packdir);
+	strbuf_addch(&path, '/');
+	packdir_len = path.len;
+
+	/*
+	 * Remove any pack bitmaps corresponding to packs which are now
+	 * included in the MIDX.
+	 */
+	for_each_string_list_item(item, include) {
+		strbuf_addstr(&path, item->string);
+		strbuf_strip_suffix(&path, ".idx");
+		strbuf_addstr(&path, ".bitmap");
+
+		if (unlink(path.buf) && errno != ENOENT)
+			warning_errno(_("could not remove stale bitmap: %s"),
+				      path.buf);
+
+		strbuf_setlen(&path, packdir_len);
+	}
+	strbuf_release(&path);
+}
+
 static int write_cruft_pack(const struct pack_objects_args *args,
 			    const char *pack_prefix,
 			    struct string_list *names,
@@ -710,10 +705,14 @@ static int write_cruft_pack(const struct pack_objects_args *args,
 
 	out = xfdopen(cmd.out, "r");
 	while (strbuf_getline_lf(&line, out) != EOF) {
+		struct string_list_item *item;
+
 		if (line.len != the_hash_algo->hexsz)
 			die(_("repack: Expecting full hex object ID lines only "
 			      "from pack-objects."));
-		string_list_append(names, line.buf);
+
+		item = string_list_append(names, line.buf);
+		item->util = populate_pack_exts(line.buf);
 	}
 	fclose(out);
 
@@ -859,8 +858,6 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		split_pack_geometry(geometry, geometric_factor);
 	}
 
-	sigchain_push_common(remove_pack_on_signal);
-
 	prepare_pack_objects(&cmd, &po_args);
 
 	show_progress = !po_args.quiet && isatty(2);
@@ -952,9 +949,12 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 
 	out = xfdopen(cmd.out, "r");
 	while (strbuf_getline_lf(&line, out) != EOF) {
+		struct string_list_item *item;
+
 		if (line.len != the_hash_algo->hexsz)
 			die(_("repack: Expecting full hex object ID lines only from pack-objects."));
-		string_list_append(&names, line.buf);
+		item = string_list_append(&names, line.buf);
+		item->util = populate_pack_exts(item->string);
 	}
 	fclose(out);
 	ret = finish_command(&cmd);
@@ -993,40 +993,38 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 
 	string_list_sort(&names);
 
-	for_each_string_list_item(item, &names) {
-		item->util = (void *)(uintptr_t)populate_pack_exts(item->string);
-	}
-
 	close_object_store(the_repository->objects);
 
 	/*
 	 * Ok we have prepared all new packfiles.
 	 */
 	for_each_string_list_item(item, &names) {
+		struct generated_pack_data *data = item->util;
+
 		for (ext = 0; ext < ARRAY_SIZE(exts); ext++) {
-			char *fname, *fname_old;
+			char *fname;
 
 			fname = mkpathdup("%s/pack-%s%s",
 					packdir, item->string, exts[ext].name);
-			fname_old = mkpathdup("%s-%s%s",
-					packtmp, item->string, exts[ext].name);
 
-			if (((uintptr_t)item->util) & ((uintptr_t)1 << ext)) {
+			if (data->tempfiles[ext]) {
+				const char *fname_old = get_tempfile_path(data->tempfiles[ext]);
 				struct stat statbuffer;
+
 				if (!stat(fname_old, &statbuffer)) {
 					statbuffer.st_mode &= ~(S_IWUSR | S_IWGRP | S_IWOTH);
 					chmod(fname_old, statbuffer.st_mode);
 				}
 
-				if (rename(fname_old, fname))
-					die_errno(_("renaming '%s' failed"), fname_old);
+				if (rename_tempfile(&data->tempfiles[ext], fname))
+					die_errno(_("renaming pack to '%s' failed"), fname);
 			} else if (!exts[ext].optional)
-				die(_("missing required file: %s"), fname_old);
+				die(_("pack-objects did not write a '%s' file for pack %s-%s"),
+				    exts[ext].name, packtmp, item->string);
 			else if (unlink(fname) < 0 && errno != ENOENT)
 				die_errno(_("could not unlink: %s"), fname);
 
 			free(fname);
-			free(fname_old);
 		}
 	}
 	/* End of pack replacement. */
@@ -1059,6 +1057,9 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 						refs_snapshot ? get_tempfile_path(refs_snapshot) : NULL,
 						show_progress, write_bitmaps > 0);
 
+		if (!ret && write_bitmaps)
+			remove_redundant_bitmaps(&include, packdir);
+
 		string_list_clear(&include, 0);
 
 		if (ret)
@@ -1089,6 +1090,11 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 				strbuf_addstr(&buf, pack_basename(p));
 				strbuf_strip_suffix(&buf, ".pack");
 
+				if ((p->pack_keep) ||
+				    (string_list_has_string(&existing_kept_packs,
+							    buf.buf)))
+					continue;
+
 				remove_redundant_pack(packdir, buf.buf);
 			}
 			strbuf_release(&buf);
@@ -1106,7 +1112,6 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 
 	if (run_update_server_info)
 		update_server_info(0);
-	remove_temporary_files();
 
 	if (git_env_bool(GIT_TEST_MULTI_PACK_INDEX, 0)) {
 		unsigned flags = 0;
@@ -1115,7 +1120,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		write_midx_file(get_object_directory(), NULL, NULL, flags);
 	}
 
-	string_list_clear(&names, 0);
+	string_list_clear(&names, 1);
 	string_list_clear(&existing_nonkept_packs, 0);
 	string_list_clear(&existing_kept_packs, 0);
 	clear_pack_geometry(geometry);

@@ -41,6 +41,8 @@ TEST_NO_CREATE_REPO=1
 #  -                  m/m (file)
 #
 test_expect_success 'setup repo for checkout with various types of changes' '
+	test_config_global protocol.file.allow always &&
+
 	git init sub &&
 	(
 		cd sub &&
@@ -140,6 +142,7 @@ do
 	esac
 
 	test_expect_success "$mode checkout on clone" '
+		test_config_global protocol.file.allow always &&
 		repo=various_${mode}_clone &&
 		set_checkout_config $workers $threshold &&
 		test_checkout_workers $expected_workers \
@@ -230,12 +233,9 @@ test_expect_success SYMLINKS 'parallel checkout checks for symlinks in leading d
 # check the final report including sequential, parallel, and delayed entries
 # all at the same time. So we must have finer control of the parallel checkout
 # variables.
-test_expect_success PERL '"git checkout ." report should not include failed entries' '
-	write_script rot13-filter.pl "$PERL_PATH" \
-		<"$TEST_DIRECTORY"/t0021/rot13-filter.pl &&
-
+test_expect_success '"git checkout ." report should not include failed entries' '
 	test_config_global filter.delay.process \
-		"\"$(pwd)/rot13-filter.pl\" --always-delay delayed.log clean smudge delay" &&
+		"test-tool rot13-filter --always-delay --log=delayed.log clean smudge delay" &&
 	test_config_global filter.delay.required true &&
 	test_config_global filter.cat.clean cat  &&
 	test_config_global filter.cat.smudge cat  &&

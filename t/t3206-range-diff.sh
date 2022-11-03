@@ -162,7 +162,7 @@ test_expect_success 'A^! and A^-<n> (unmodified)' '
 '
 
 test_expect_success 'A^{/..} is not mistaken for a range' '
-	test_must_fail git range-diff topic^.. topic^{/..} 2>error &&
+	test_must_fail git range-diff topic^.. topic^{/..} -- 2>error &&
 	test_i18ngrep "not a commit range" error
 '
 
@@ -772,6 +772,17 @@ test_expect_success '--left-only/--right-only' '
 	test_cmp expect actual
 '
 
+test_expect_success 'ranges with pathspecs' '
+	git range-diff topic...mode-only-change -- other-file >actual &&
+	test_line_count = 2 actual &&
+	topic_oid=$(git rev-parse --short topic) &&
+	mode_change_oid=$(git rev-parse --short mode-only-change^) &&
+	file_change_oid=$(git rev-parse --short mode-only-change) &&
+	grep "$mode_change_oid" actual &&
+	! grep "$file_change_oid" actual &&
+	! grep "$topic_oid" actual
+'
+
 test_expect_success 'submodule changes are shown irrespective of diff.submodule' '
 	git init sub-repo &&
 	test_commit -C sub-repo sub-first &&
@@ -782,7 +793,7 @@ test_expect_success 'submodule changes are shown irrespective of diff.submodule'
 	sub_oid3=$(git -C sub-repo rev-parse HEAD) &&
 
 	git checkout -b main-sub topic &&
-	git submodule add ./sub-repo sub &&
+	git -c protocol.file.allow=always submodule add ./sub-repo sub &&
 	git -C sub checkout --detach sub-first &&
 	git commit -m "add sub" sub &&
 	sup_oid1=$(git rev-parse --short HEAD) &&

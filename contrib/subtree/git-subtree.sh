@@ -98,8 +98,16 @@ progress () {
 assert () {
 	if ! "$@"
 	then
-		die "assertion failed: $*"
+		die "fatal: assertion failed: $*"
 	fi
+}
+
+# Usage: die_incompatible_opt OPTION COMMAND
+die_incompatible_opt () {
+	assert test "$#" = 2
+	opt="$1"
+	arg_command="$2"
+	die "fatal: the '$opt' flag does not make sense with 'git subtree $arg_command'."
 }
 
 main () {
@@ -147,7 +155,7 @@ main () {
 		allow_addmerge=$arg_split_rejoin
 		;;
 	*)
-		die "Unknown command '$arg_command'"
+		die "fatal: unknown command '$arg_command'"
 		;;
 	esac
 	# Reset the arguments array for "real" flag parsing.
@@ -176,16 +184,16 @@ main () {
 			arg_debug=1
 			;;
 		--annotate)
-			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_split" || die_incompatible_opt "$opt" "$arg_command"
 			arg_split_annotate="$1"
 			shift
 			;;
 		--no-annotate)
-			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_split" || die_incompatible_opt "$opt" "$arg_command"
 			arg_split_annotate=
 			;;
 		-b)
-			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_split" || die_incompatible_opt "$opt" "$arg_command"
 			arg_split_branch="$1"
 			shift
 			;;
@@ -194,7 +202,7 @@ main () {
 			shift
 			;;
 		-m)
-			test -n "$allow_addmerge" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_addmerge" || die_incompatible_opt "$opt" "$arg_command"
 			arg_addmerge_message="$1"
 			shift
 			;;
@@ -202,41 +210,41 @@ main () {
 			arg_prefix=
 			;;
 		--onto)
-			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_split" || die_incompatible_opt "$opt" "$arg_command"
 			arg_split_onto="$1"
 			shift
 			;;
 		--no-onto)
-			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_split" || die_incompatible_opt "$opt" "$arg_command"
 			arg_split_onto=
 			;;
 		--rejoin)
-			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_split" || die_incompatible_opt "$opt" "$arg_command"
 			;;
 		--no-rejoin)
-			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_split" || die_incompatible_opt "$opt" "$arg_command"
 			;;
 		--ignore-joins)
-			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_split" || die_incompatible_opt "$opt" "$arg_command"
 			arg_split_ignore_joins=1
 			;;
 		--no-ignore-joins)
-			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_split" || die_incompatible_opt "$opt" "$arg_command"
 			arg_split_ignore_joins=
 			;;
 		--squash)
-			test -n "$allow_addmerge" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_addmerge" || die_incompatible_opt "$opt" "$arg_command"
 			arg_addmerge_squash=1
 			;;
 		--no-squash)
-			test -n "$allow_addmerge" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_addmerge" || die_incompatible_opt "$opt" "$arg_command"
 			arg_addmerge_squash=
 			;;
 		--)
 			break
 			;;
 		*)
-			die "Unexpected option: $opt"
+			die "fatal: unexpected option: $opt"
 			;;
 		esac
 	done
@@ -244,17 +252,17 @@ main () {
 
 	if test -z "$arg_prefix"
 	then
-		die "You must provide the --prefix option."
+		die "fatal: you must provide the --prefix option."
 	fi
 
 	case "$arg_command" in
 	add)
 		test -e "$arg_prefix" &&
-			die "prefix '$arg_prefix' already exists."
+			die "fatal: prefix '$arg_prefix' already exists."
 		;;
 	*)
 		test -e "$arg_prefix" ||
-			die "'$arg_prefix' does not exist; use 'git subtree add'"
+			die "fatal: '$arg_prefix' does not exist; use 'git subtree add'"
 		;;
 	esac
 
@@ -274,11 +282,11 @@ cache_setup () {
 	assert test $# = 0
 	cachedir="$GIT_DIR/subtree-cache/$$"
 	rm -rf "$cachedir" ||
-		die "Can't delete old cachedir: $cachedir"
+		die "fatal: can't delete old cachedir: $cachedir"
 	mkdir -p "$cachedir" ||
-		die "Can't create new cachedir: $cachedir"
+		die "fatal: can't create new cachedir: $cachedir"
 	mkdir -p "$cachedir/notree" ||
-		die "Can't create new cachedir: $cachedir/notree"
+		die "fatal: can't create new cachedir: $cachedir/notree"
 	debug "Using cachedir: $cachedir" >&2
 }
 
@@ -334,7 +342,7 @@ cache_set () {
 		test "$oldrev" != "latest_new" &&
 		test -e "$cachedir/$oldrev"
 	then
-		die "cache for $oldrev already exists!"
+		die "fatal: cache for $oldrev already exists!"
 	fi
 	echo "$newrev" >"$cachedir/$oldrev"
 }
@@ -363,13 +371,47 @@ try_remove_previous () {
 	fi
 }
 
-# Usage: find_latest_squash DIR
+# Usage: process_subtree_split_trailer SPLIT_HASH MAIN_HASH [REPOSITORY]
+process_subtree_split_trailer () {
+	assert test $# = 2 -o $# = 3
+	b="$1"
+	sq="$2"
+	repository=""
+	if test "$#" = 3
+	then
+		repository="$3"
+	fi
+	fail_msg="fatal: could not rev-parse split hash $b from commit $sq"
+	if ! sub="$(git rev-parse --verify --quiet "$b^{commit}")"
+	then
+		# if 'repository' was given, try to fetch the 'git-subtree-split' hash
+		# before 'rev-parse'-ing it again, as it might be a tag that we do not have locally
+		if test -n "${repository}"
+		then
+			git fetch "$repository" "$b"
+			sub="$(git rev-parse --verify --quiet "$b^{commit}")" ||
+				die "$fail_msg"
+		else
+			hint1=$(printf "hint: hash might be a tag, try fetching it from the subtree repository:")
+			hint2=$(printf "hint:    git fetch <subtree-repository> $b")
+			fail_msg=$(printf "$fail_msg\n$hint1\n$hint2")
+			die "$fail_msg"
+		fi
+	fi
+}
+
+# Usage: find_latest_squash DIR [REPOSITORY]
 find_latest_squash () {
-	assert test $# = 1
-	debug "Looking for latest squash ($dir)..."
+	assert test $# = 1 -o $# = 2
+	dir="$1"
+	repository=""
+	if test "$#" = 2
+	then
+		repository="$2"
+	fi
+	debug "Looking for latest squash (dir=$dir, repository=$repository)..."
 	local indent=$(($indent + 1))
 
-	dir="$1"
 	sq=
 	main=
 	sub=
@@ -387,8 +429,7 @@ find_latest_squash () {
 			main="$b"
 			;;
 		git-subtree-split:)
-			sub="$(git rev-parse "$b^{commit}")" ||
-			die "could not rev-parse split hash $b from commit $sq"
+			process_subtree_split_trailer "$b" "$sq" "$repository"
 			;;
 		END)
 			if test -n "$sub"
@@ -412,14 +453,19 @@ find_latest_squash () {
 	done || exit $?
 }
 
-# Usage: find_existing_splits DIR REV
+# Usage: find_existing_splits DIR REV [REPOSITORY]
 find_existing_splits () {
-	assert test $# = 2
+	assert test $# = 2 -o $# = 3
 	debug "Looking for prior splits..."
 	local indent=$(($indent + 1))
 
 	dir="$1"
 	rev="$2"
+	repository=""
+	if test "$#" = 3
+	then
+		repository="$3"
+	fi
 	main=
 	sub=
 	local grep_format="^git-subtree-dir: $dir/*\$"
@@ -439,8 +485,7 @@ find_existing_splits () {
 			main="$b"
 			;;
 		git-subtree-split:)
-			sub="$(git rev-parse "$b^{commit}")" ||
-			die "could not rev-parse split hash $b from commit $sq"
+			process_subtree_split_trailer "$b" "$sq" "$repository"
 			;;
 		END)
 			debug "Main is: '$main'"
@@ -490,7 +535,7 @@ copy_commit () {
 			cat
 		) |
 		git commit-tree "$2" $3  # reads the rest of stdin
-	) || die "Can't copy commit $1"
+	) || die "fatal: can't copy commit $1"
 }
 
 # Usage: add_msg DIR LATEST_OLD LATEST_NEW
@@ -718,11 +763,11 @@ ensure_clean () {
 	assert test $# = 0
 	if ! git diff-index HEAD --exit-code --quiet 2>&1
 	then
-		die "Working tree has modifications.  Cannot add."
+		die "fatal: working tree has modifications.  Cannot add."
 	fi
 	if ! git diff-index --cached HEAD --exit-code --quiet 2>&1
 	then
-		die "Index has modifications.  Cannot add."
+		die "fatal: index has modifications.  Cannot add."
 	fi
 }
 
@@ -730,7 +775,7 @@ ensure_clean () {
 ensure_valid_ref_format () {
 	assert test $# = 1
 	git check-ref-format "refs/heads/$1" ||
-		die "'$1' does not look like a ref"
+		die "fatal: '$1' does not look like a ref"
 }
 
 # Usage: process_split_commit REV PARENTS
@@ -796,7 +841,7 @@ cmd_add () {
 	if test $# -eq 1
 	then
 		git rev-parse -q --verify "$1^{commit}" >/dev/null ||
-			die "'$1' does not refer to a commit"
+			die "fatal: '$1' does not refer to a commit"
 
 		cmd_add_commit "$@"
 
@@ -811,7 +856,7 @@ cmd_add () {
 
 		cmd_add_repository "$@"
 	else
-		say >&2 "error: parameters were '$*'"
+		say >&2 "fatal: parameters were '$*'"
 		die "Provide either a commit or a repository and commit."
 	fi
 }
@@ -843,7 +888,7 @@ cmd_add_commit () {
 	git checkout -- "$dir" || exit $?
 	tree=$(git write-tree) || exit $?
 
-	headrev=$(git rev-parse HEAD) || exit $?
+	headrev=$(git rev-parse --verify HEAD) || exit $?
 	if test -n "$headrev" && test "$headrev" != "$rev"
 	then
 		headp="-p $headrev"
@@ -866,17 +911,22 @@ cmd_add_commit () {
 	say >&2 "Added dir '$dir'"
 }
 
-# Usage: cmd_split [REV]
+# Usage: cmd_split [REV] [REPOSITORY]
 cmd_split () {
 	if test $# -eq 0
 	then
 		rev=$(git rev-parse HEAD)
-	elif test $# -eq 1
+	elif test $# -eq 1 -o $# -eq 2
 	then
 		rev=$(git rev-parse -q --verify "$1^{commit}") ||
-			die "'$1' does not refer to a commit"
+			die "fatal: '$1' does not refer to a commit"
 	else
-		die "You must provide exactly one revision.  Got: '$*'"
+		die "fatal: you must provide exactly one revision, and optionnally a repository.  Got: '$*'"
+	fi
+	repository=""
+	if test "$#" = 2
+	then
+		repository="$2"
 	fi
 
 	if test -n "$arg_split_rejoin"
@@ -900,7 +950,7 @@ cmd_split () {
 		done || exit $?
 	fi
 
-	unrevs="$(find_existing_splits "$dir" "$rev")" || exit $?
+	unrevs="$(find_existing_splits "$dir" "$rev" "$repository")" || exit $?
 
 	# We can't restrict rev-list to only $dir here, because some of our
 	# parents have the $dir contents the root, and those won't match.
@@ -919,7 +969,7 @@ cmd_split () {
 	latest_new=$(cache_get latest_new) || exit $?
 	if test -z "$latest_new"
 	then
-		die "No new revisions were found"
+		die "fatal: no new revisions were found"
 	fi
 
 	if test -n "$arg_split_rejoin"
@@ -940,7 +990,7 @@ cmd_split () {
 		then
 			if ! git merge-base --is-ancestor "$arg_split_branch" "$latest_new"
 			then
-				die "Branch '$arg_split_branch' is not an ancestor of commit '$latest_new'."
+				die "fatal: branch '$arg_split_branch' is not an ancestor of commit '$latest_new'."
 			fi
 			action='Updated'
 		else
@@ -954,20 +1004,25 @@ cmd_split () {
 	exit 0
 }
 
-# Usage: cmd_merge REV
+# Usage: cmd_merge REV [REPOSITORY]
 cmd_merge () {
-	test $# -eq 1 ||
-		die "You must provide exactly one revision.  Got: '$*'"
+	test $# -eq 1 -o $# -eq 2 ||
+		die "fatal: you must provide exactly one revision, and optionally a repository. Got: '$*'"
 	rev=$(git rev-parse -q --verify "$1^{commit}") ||
-		die "'$1' does not refer to a commit"
+		die "fatal: '$1' does not refer to a commit"
+	repository=""
+	if test "$#" = 2
+	then
+		repository="$2"
+	fi
 	ensure_clean
 
 	if test -n "$arg_addmerge_squash"
 	then
-		first_split="$(find_latest_squash "$dir")" || exit $?
+		first_split="$(find_latest_squash "$dir" "$repository")" || exit $?
 		if test -z "$first_split"
 		then
-			die "Can't squash-merge: '$dir' was never added."
+			die "fatal: can't squash-merge: '$dir' was never added."
 		fi
 		set $first_split
 		old=$1
@@ -995,19 +1050,21 @@ cmd_merge () {
 cmd_pull () {
 	if test $# -ne 2
 	then
-		die "You must provide <repository> <ref>"
+		die "fatal: you must provide <repository> <ref>"
 	fi
+	repository="$1"
+	ref="$2"
 	ensure_clean
-	ensure_valid_ref_format "$2"
-	git fetch "$@" || exit $?
-	cmd_merge FETCH_HEAD
+	ensure_valid_ref_format "$ref"
+	git fetch "$repository" "$ref" || exit $?
+	cmd_merge FETCH_HEAD "$repository"
 }
 
 # Usage: cmd_push REPOSITORY [+][LOCALREV:]REMOTEREF
 cmd_push () {
 	if test $# -ne 2
 	then
-		die "You must provide <repository> <refspec>"
+		die "fatal: you must provide <repository> <refspec>"
 	fi
 	if test -e "$dir"
 	then
@@ -1022,13 +1079,13 @@ cmd_push () {
 		fi
 		ensure_valid_ref_format "$remoteref"
 		localrev_presplit=$(git rev-parse -q --verify "$localrevname_presplit^{commit}") ||
-			die "'$localrevname_presplit' does not refer to a commit"
+			die "fatal: '$localrevname_presplit' does not refer to a commit"
 
 		echo "git push using: " "$repository" "$refspec"
-		localrev=$(cmd_split "$localrev_presplit") || die
+		localrev=$(cmd_split "$localrev_presplit" "$repository") || die
 		git push "$repository" "$localrev":"refs/heads/$remoteref"
 	else
-		die "'$dir' must already exist. Try 'git subtree add'."
+		die "fatal: '$dir' must already exist. Try 'git subtree add'."
 	fi
 }
 

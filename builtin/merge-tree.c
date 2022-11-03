@@ -402,6 +402,7 @@ struct merge_tree_options {
 	int allow_unrelated_histories;
 	int show_messages;
 	int name_only;
+	int use_stdin;
 };
 
 static int real_merge(struct merge_tree_options *o,
@@ -412,6 +413,7 @@ static int real_merge(struct merge_tree_options *o,
 	struct commit_list *merge_bases = NULL;
 	struct merge_options opt;
 	struct merge_result result = { 0 };
+	int show_messages = o->show_messages;
 
 	parent1 = get_merge_parent(branch1);
 	if (!parent1)
@@ -443,9 +445,11 @@ static int real_merge(struct merge_tree_options *o,
 	if (result.clean < 0)
 		die(_("failure to merge"));
 
-	if (o->show_messages == -1)
-		o->show_messages = !result.clean;
+	if (show_messages == -1)
+		show_messages = !result.clean;
 
+	if (o->use_stdin)
+		printf("%d%c", result.clean, line_termination);
 	printf("%s%c", oid_to_hex(&result.tree->object.oid), line_termination);
 	if (!result.clean) {
 		struct string_list conflicted_files = STRING_LIST_INIT_NODUP;
@@ -467,11 +471,13 @@ static int real_merge(struct merge_tree_options *o,
 		}
 		string_list_clear(&conflicted_files, 1);
 	}
-	if (o->show_messages) {
+	if (show_messages) {
 		putchar(line_termination);
 		merge_display_update_messages(&opt, line_termination == '\0',
 					      &result);
 	}
+	if (o->use_stdin)
+		putchar(line_termination);
 	merge_finalize(&opt, &result);
 	return !result.clean; /* result.clean < 0 handled above */
 }
@@ -505,6 +511,10 @@ int cmd_merge_tree(int argc, const char **argv, const char *prefix)
 			   &o.allow_unrelated_histories,
 			   N_("allow merging unrelated histories"),
 			   PARSE_OPT_NONEG),
+		OPT_BOOL_F(0, "stdin",
+			   &o.use_stdin,
+			   N_("perform multiple merges, one per line of input"),
+			   PARSE_OPT_NONEG),
 		OPT_END()
 	};
 
@@ -512,6 +522,32 @@ int cmd_merge_tree(int argc, const char **argv, const char *prefix)
 	original_argc = argc - 1; /* ignoring argv[0] */
 	argc = parse_options(argc, argv, prefix, mt_options,
 			     merge_tree_usage, PARSE_OPT_STOP_AT_NON_OPTION);
+
+	/* Handle --stdin */
+	if (o.use_stdin) {
+		struct strbuf buf = STRBUF_INIT;
+
+		if (o.mode == MODE_TRIVIAL)
+			die(_("--trivial-merge is incompatible with all other options"));
+		line_termination = '\0';
+		while (strbuf_getline_lf(&buf, stdin) != EOF) {
+			struct strbuf **split;
+			int result;
+
+			split = strbuf_split(&buf, ' ');
+			if (!split[0] || !split[1] || split[2])
+				die(_("malformed input line: '%s'."), buf.buf);
+			strbuf_rtrim(split[0]);
+			result = real_merge(&o, split[0]->buf, split[1]->buf, prefix);
+			if (result < 0)
+				die(_("merging cannot continue; got unclean result of %d"), result);
+			strbuf_list_free(split);
+		}
+		strbuf_release(&buf);
+		return 0;
+	}
+
+	/* Figure out which mode to use */
 	switch (o.mode) {
 	default:
 		BUG("unexpected command mode %d", o.mode);

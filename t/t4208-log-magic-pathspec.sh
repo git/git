@@ -124,6 +124,7 @@ test_expect_success 'command line pathspec parsing for "git log"' '
 
 test_expect_success 'tree_entry_interesting does not match past submodule boundaries' '
 	test_when_finished "rm -rf repo submodule" &&
+	test_config_global protocol.file.allow always &&
 	git init submodule &&
 	test_commit -C submodule initial &&
 	git init repo &&
