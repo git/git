@@ -901,7 +901,13 @@ int adjust_shared_perm(const char *path)
 	if (S_ISDIR(old_mode)) {
 		/* Copy read bits to execute bits */
 		new_mode |= (new_mode & 0444) >> 2;
-		new_mode |= FORCE_DIR_SET_GID;
+
+		/*
+		 * g+s matters only if any extra access is granted
+		 * based on group membership.
+		 */
+		if (FORCE_DIR_SET_GID && (new_mode & 060))
+			new_mode |= FORCE_DIR_SET_GID;
 	}
 
 	if (((old_mode ^ new_mode) & ~S_IFMT) &&
