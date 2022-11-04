@@ -229,6 +229,7 @@ int repo_submodule_init(struct repository *subrepo,
 		}
 	}
 
+	subrepo->is_submodule = 1;
 	subrepo->submodule_prefix = xstrfmt("%s%s/",
 					    superproject->submodule_prefix ?
 					    superproject->submodule_prefix :

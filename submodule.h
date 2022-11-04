@@ -55,7 +55,7 @@ struct option;
 int option_parse_recurse_submodules_worktree_updater(const struct option *opt,
 						     const char *arg, int unset);
 int option_parse_toplevel_cwd_prefix(const struct option *opt,
-				   const char *arg, int unset);
+				     const char *arg, int unset);
 /*
  * Return the relative path of the top-level process's cwd to the root of the
  * working tree. When printing paths to submodules in the working tree, this
@@ -63,6 +63,15 @@ int option_parse_toplevel_cwd_prefix(const struct option *opt,
  * top-level process's cwd instead of this process's cwd.
  */
 const char *get_toplevel_cwd_prefix(void);
+int option_parse_submodule_prefix(const struct option *opt,
+				      const char *arg, int unset);
+/*
+ * Return the path from the root of the top-level superproject to root of this
+ * repository. When printing paths to submodules in a tree, this value should be
+ * prepended to the path so that they originate from the top-level
+ * superproject's tree instead of this repository's tree.
+ */
+const char *get_submodule_prefix(void);
 
 int is_tree_submodule_active(struct repository *repo,
 			     const struct object_id *treeish_name,
@@ -100,7 +109,6 @@ const struct submodule *submodule_from_ce(const struct cache_entry *ce);
 void check_for_new_submodule_commits(struct object_id *oid);
 int fetch_submodules(struct repository *r,
 		     const struct strvec *options,
-		     const char *prefix,
 		     int command_line_option,
 		     int default_option,
 		     int quiet, int max_parallel_jobs);

@@ -74,7 +74,6 @@ static struct string_list deepen_not = STRING_LIST_INIT_NODUP;
 static struct strbuf default_rla = STRBUF_INIT;
 static struct transport *gtransport;
 static struct transport *gsecondary;
-static const char *submodule_prefix = "";
 static int recurse_submodules = RECURSE_SUBMODULES_DEFAULT;
 static int recurse_submodules_cli = RECURSE_SUBMODULES_DEFAULT;
 static int recurse_submodules_default = RECURSE_SUBMODULES_ON_DEMAND;
@@ -195,8 +194,9 @@ static struct option builtin_fetch_options[] = {
 	OPT_SET_INT_F(0, "refetch", &refetch,
 		      N_("re-fetch without negotiating common commits"),
 		      1, PARSE_OPT_NONEG),
-	{ OPTION_STRING, 0, "submodule-prefix", &submodule_prefix, N_("dir"),
-		   N_("prepend this to submodule path output"), PARSE_OPT_HIDDEN },
+	OPT_CALLBACK_F(0, "submodule-prefix", NULL, "path",
+			"path from top-level superproject root to current repo root",
+			PARSE_OPT_HIDDEN, option_parse_submodule_prefix),
 	OPT_CALLBACK_F(0, "recurse-submodules-default",
 		   &recurse_submodules_default, N_("on-demand"),
 		   N_("default for recursive fetching of submodules "
@@ -2297,7 +2297,6 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		add_options_to_argv(&options);
 		result = fetch_submodules(the_repository,
 					  &options,
-					  submodule_prefix,
 					  recurse_submodules,
 					  recurse_submodules_default,
 					  verbosity < 0,

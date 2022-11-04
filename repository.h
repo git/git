@@ -120,9 +120,14 @@ struct repository {
 	char *worktree;
 
 	/*
+	 * Whether this struct represents a submodule of this process's main
+	 * repository.
+	 */
+	int is_submodule;
+
+	/*
 	 * Path from the root of the top-level superproject down to this
-	 * repository.  This is only non-NULL if the repository is initialized
-	 * as a submodule of another repository.
+	 * repository.
 	 */
 	char *submodule_prefix;
 

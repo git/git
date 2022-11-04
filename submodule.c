@@ -257,6 +257,21 @@ const char *get_toplevel_cwd_prefix(void)
 	return toplevel_cwd_prefix;
 }
 
+int option_parse_submodule_prefix(const struct option *opt,
+				  const char *arg, int unset)
+{
+	if (arg)
+		the_repository->submodule_prefix = xstrdup(arg);
+	return 0;
+}
+
+const char *get_submodule_prefix(void)
+{
+	if (!the_repository->submodule_prefix)
+		return "";
+	return the_repository->submodule_prefix;
+}
+
 /*
  * Determine if a submodule has been initialized at a given 'path'
  */
@@ -1392,7 +1407,6 @@ struct submodule_parallel_fetch {
 	int changed_count;
 	struct strvec args;
 	struct repository *r;
-	const char *prefix;
 	int command_line_option;
 	int default_option;
 	int quiet;
@@ -1583,7 +1597,7 @@ get_fetch_task_from_index(struct submodule_parallel_fetch *spf,
 		if (task->repo) {
 			if (!spf->quiet)
 				strbuf_addf(err, _("Fetching submodule %s%s\n"),
-					    spf->prefix, ce->name);
+					    get_submodule_prefix(), ce->name);
 
 			spf->index_count++;
 			return task;
@@ -1645,7 +1659,7 @@ get_fetch_task_from_changed(struct submodule_parallel_fetch *spf,
 		if (!spf->quiet)
 			strbuf_addf(err,
 				    _("Fetching submodule %s%s at commit %s\n"),
-				    spf->prefix, task->sub->path,
+				    get_submodule_prefix(), task->sub->path,
 				    find_unique_abbrev(cs_data->super_oid,
 						       DEFAULT_ABBREV));
 
@@ -1692,8 +1706,6 @@ static int get_next_submodule(struct child_process *cp, struct strbuf *err,
 		task = get_fetch_task_from_changed(spf, err);
 
 	if (task) {
-		struct strbuf submodule_prefix = STRBUF_INIT;
-
 		child_process_init(cp);
 		cp->dir = task->repo->gitdir;
 		prepare_submodule_repo_env_in_gitdir(&cp->env);
@@ -1705,13 +1717,11 @@ static int get_next_submodule(struct child_process *cp, struct strbuf *err,
 		strvec_push(&cp->args, task->default_argv);
 		strvec_push(&cp->args, "--submodule-prefix");
 
-		strbuf_addf(&submodule_prefix, "%s%s/",
-						spf->prefix,
-						task->sub->path);
-		strvec_push(&cp->args, submodule_prefix.buf);
+		strvec_pushf(&cp->args, "%s%s/",
+					get_submodule_prefix(),
+					task->sub->path);
 		*task_cb = task;
 
-		strbuf_release(&submodule_prefix);
 		string_list_insert(&spf->seen_submodule_names, task->sub->name);
 		return 1;
 	}
@@ -1723,7 +1733,7 @@ static int get_next_submodule(struct child_process *cp, struct strbuf *err,
 		spf->oid_fetch_tasks_nr--;
 
 		strbuf_addf(&submodule_prefix, "%s%s/",
-			    spf->prefix, task->sub->path);
+			    get_submodule_prefix(), task->sub->path);
 
 		child_process_init(cp);
 		prepare_submodule_repo_env_in_gitdir(&cp->env);
@@ -1829,7 +1839,7 @@ out:
 
 int fetch_submodules(struct repository *r,
 		     const struct strvec *options,
-		     const char *prefix, int command_line_option,
+		     int command_line_option,
 		     int default_option,
 		     int quiet, int max_parallel_jobs)
 {
@@ -1851,7 +1861,6 @@ int fetch_submodules(struct repository *r,
 	spf.command_line_option = command_line_option;
 	spf.default_option = default_option;
 	spf.quiet = quiet;
-	spf.prefix = prefix;
 
 	if (!r->worktree)
 		goto out;

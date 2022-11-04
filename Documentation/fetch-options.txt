@@ -241,11 +241,6 @@ endif::git-pull[]
 	linkgit:git-config[1].
 
 ifndef::git-pull[]
---submodule-prefix=<path>::
-	Prepend <path> to paths printed in informative messages
-	such as "Fetching submodule foo".  This option is used
-	internally when recursing over submodules.
-
 --recurse-submodules-default=[yes|on-demand]::
 	This option is used internally to temporarily provide a
 	non-negative default value for the --recurse-submodules
