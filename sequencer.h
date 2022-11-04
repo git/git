@@ -63,6 +63,9 @@ struct replay_opts {
 	char **xopts;
 	size_t xopts_nr, xopts_alloc;
 
+	/* Reflog */
+	char *reflog_action;
+
 	/* Used by fixup/squash */
 	struct strbuf current_fixups;
 	int current_fixup_count;
@@ -73,6 +76,9 @@ struct replay_opts {
 
 	/* Only used by REPLAY_NONE */
 	struct rev_info *revs;
+
+	/* Private use */
+	const char *reflog_message;
 };
 #define REPLAY_OPTS_INIT { .edit = -1, .action = -1, .current_fixups = STRBUF_INIT }
 
