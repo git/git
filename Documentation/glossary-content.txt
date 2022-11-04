@@ -20,7 +20,7 @@
 [[def_branch]]branch::
 	A "branch" is a line of development.  The most recent
 	<<def_commit,commit>> on a branch is referred to as the tip of
-	that branch.  The tip of the branch is referenced by a branch
+	that branch.  The tip of the branch is <<def_ref,referenced>> by a branch
 	<<def_head,head>>, which moves forward as additional development
 	is done on the branch.  A single Git
 	<<def_repository,repository>> can track an arbitrary number of
@@ -74,6 +74,21 @@ As a verb: The action of storing a new snapshot of the project's
 state in the Git history, by creating a new commit representing the current
 state of the <<def_index,index>> and advancing <<def_HEAD,HEAD>>
 to point at the new commit.
+
+[[def_commit_graph_general]]commit graph concept, representations and usage::
+	A synonym for the <<def_DAG,DAG>> structure formed by the commits
+	in the object database, <<def_ref,referenced>> by branch tips,
+	using their <<def_chain,chain>> of linked commits.
+	This structure is the definitive commit graph. The
+	graph can be represented in other ways, e.g. the
+	<<def_commit_graph_file,"commit-graph" file>>.
+
+[[def_commit_graph_file]]commit-graph file::
+	The "commit-graph" (normally hyphenated) file is a supplemental
+	representation of the <<def_commit_graph_general,commit graph>>
+	which accelerates commit graph walks. The "commit-graph" file is
+	stored either in the .git/objects/info directory or in the info
+	directory of an alternate object database.
 
 [[def_commit_object]]commit object::
 	An <<def_object,object>> which contains the information about a
@@ -262,7 +277,7 @@ This commit is referred to as a "merge commit", or sometimes just a
 	identified by its <<def_object_name,object name>>. The objects usually
 	live in `$GIT_DIR/objects/`.
 
-[[def_object_identifier]]object identifier::
+[[def_object_identifier]]object identifier (oid)::
 	Synonym for <<def_object_name,object name>>.
 
 [[def_object_name]]object name::
@@ -492,6 +507,14 @@ exclude;;
 	<<def_commit_object,commits>> to their parents or trees, and
 	<<def_tree_object,trees>> to the trees or <<def_blob_object,blobs>>
 	that they contain.
+
+[[def_reachability_bitmap]]reachability bitmaps::
+	Reachability bitmaps store information about the
+	<<def_reachable,reachability>> of a selected set of commits in
+	a packfile, or a multi-pack index (MIDX), to speed up object search.
+	The bitmaps are stored in a ".bitmap" file. A repository may have at
+	most one bitmap file in use. The bitmap file may belong to either one
+	pack, or the repository's multi-pack index (if it exists).
 
 [[def_rebase]]rebase::
 	To reapply a series of changes from a <<def_branch,branch>> to a
