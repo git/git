@@ -215,6 +215,10 @@ Fixes since v2.38
  * The way "git repack" creared temporary files when it received a
    signal was prone to deadlocking, which has been corrected.
 
+ * Various tests exercising the transfer.credentialsInUrl
+   configuration are taught to avoid making requests which require
+   resolving localhost to reduce CI-flakiness.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 413bc6d20a ds/cmd-main-reorder later to maint).
    (merge 8d2863e4ed nw/t1002-cleanup later to maint).
