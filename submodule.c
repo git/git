@@ -28,6 +28,7 @@ static int config_update_recurse_submodules = RECURSE_SUBMODULES_OFF;
 static int initialized_fetch_ref_tips;
 static struct oid_array ref_tips_before_fetch;
 static struct oid_array ref_tips_after_fetch;
+static const char *toplevel_cwd_prefix;
 
 /*
  * Check if the .gitmodules file is unmerged. Parsing of the .gitmodules file
@@ -239,6 +240,21 @@ int option_parse_recurse_submodules_worktree_updater(const struct option *opt,
 		config_update_recurse_submodules = RECURSE_SUBMODULES_ON;
 
 	return 0;
+}
+
+int option_parse_toplevel_cwd_prefix(const struct option *opt,
+				     const char *arg, int unset)
+{
+	if (arg)
+		toplevel_cwd_prefix = arg;
+	else
+		toplevel_cwd_prefix = "";
+	return 0;
+}
+
+const char *get_toplevel_cwd_prefix(void)
+{
+	return toplevel_cwd_prefix;
 }
 
 /*
@@ -2298,7 +2314,7 @@ static void relocate_single_git_dir_into_superproject(const char *path)
 	real_new_git_dir = real_pathdup(new_gitdir.buf, 1);
 
 	fprintf(stderr, _("Migrating git directory of '%s%s' from\n'%s' to\n'%s'\n"),
-		get_super_prefix_or_empty(), path,
+		get_toplevel_cwd_prefix(), path,
 		real_old_git_dir, real_new_git_dir);
 
 	relocate_gitdir(path, real_old_git_dir, real_new_git_dir);
@@ -2317,10 +2333,10 @@ static void absorb_git_dir_into_superproject_recurse(const char *path)
 	cp.dir = path;
 	cp.git_cmd = 1;
 	cp.no_stdin = 1;
-	strvec_pushf(&cp.args, "--super-prefix=%s%s/",
-		     get_super_prefix_or_empty(), path);
-	strvec_pushl(&cp.args, "submodule--helper",
-		     "absorbgitdirs", NULL);
+	strvec_push(&cp.args, "submodule--helper");
+	strvec_pushf(&cp.args, "--toplevel-cwd-prefix=%s%s/",
+		     get_toplevel_cwd_prefix(), path);
+	strvec_pushl(&cp.args, "absorbgitdirs", NULL);
 	prepare_submodule_repo_env(&cp.env);
 	if (run_command(&cp))
 		die(_("could not recurse into submodule '%s'"), path);

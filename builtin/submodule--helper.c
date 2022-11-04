@@ -115,18 +115,18 @@ static char *resolve_relative_url(const char *rel_url, const char *up_path, int 
 /* the result should be freed by the caller. */
 static char *get_submodule_displaypath(const char *path, const char *prefix)
 {
-	const char *super_prefix = get_super_prefix();
+	const char *toplevel_cwd_prefix = get_toplevel_cwd_prefix();
 
-	if (prefix && super_prefix) {
-		BUG("cannot have prefix '%s' and superprefix '%s'",
-		    prefix, super_prefix);
+	if (prefix && toplevel_cwd_prefix) {
+		BUG("cannot have prefix '%s' and toplevel_cwd_prefix '%s'",
+		    prefix, toplevel_cwd_prefix);
 	} else if (prefix) {
 		struct strbuf sb = STRBUF_INIT;
 		char *displaypath = xstrdup(relative_path(path, prefix, &sb));
 		strbuf_release(&sb);
 		return displaypath;
-	} else if (super_prefix) {
-		return xstrfmt("%s%s", super_prefix, path);
+	} else if (toplevel_cwd_prefix) {
+		return xstrfmt("%s%s", toplevel_cwd_prefix, path);
 	} else {
 		return xstrdup(path);
 	}
@@ -364,9 +364,10 @@ static void runcommand_in_submodule_cb(const struct cache_entry *list_item,
 		cpr.dir = path;
 		prepare_submodule_repo_env(&cpr.env);
 
-		strvec_pushl(&cpr.args, "--super-prefix", NULL);
+		strvec_pushl(&cpr.args, "submodule--helper",
+			     "--toplevel-cwd-prefix", NULL);
 		strvec_pushf(&cpr.args, "%s/", displaypath);
-		strvec_pushl(&cpr.args, "submodule--helper", "foreach", "--recursive",
+		strvec_pushl(&cpr.args, "foreach", "--recursive",
 			     NULL);
 
 		if (info->quiet)
@@ -681,10 +682,10 @@ static void status_submodule(const char *path, const struct object_id *ce_oid,
 		cpr.dir = path;
 		prepare_submodule_repo_env(&cpr.env);
 
-		strvec_push(&cpr.args, "--super-prefix");
+		strvec_pushl(&cpr.args, "submodule--helper",
+			     "--toplevel-cwd-prefix", NULL);
 		strvec_pushf(&cpr.args, "%s/", displaypath);
-		strvec_pushl(&cpr.args, "submodule--helper", "status",
-			     "--recursive", NULL);
+		strvec_pushl(&cpr.args, "status", "--recursive", NULL);
 
 		if (flags & OPT_CACHED)
 			strvec_push(&cpr.args, "--cached");
@@ -1275,10 +1276,10 @@ static void sync_submodule(const char *path, const char *prefix,
 		cpr.dir = path;
 		prepare_submodule_repo_env(&cpr.env);
 
-		strvec_push(&cpr.args, "--super-prefix");
+		strvec_pushl(&cpr.args, "submodule--helper",
+			     "--toplevel-cwd-prefix", NULL);
 		strvec_pushf(&cpr.args, "%s/", displaypath);
-		strvec_pushl(&cpr.args, "submodule--helper", "sync",
-			     "--recursive", NULL);
+		strvec_pushl(&cpr.args, "sync", "--recursive", NULL);
 
 		if (flags & OPT_QUIET)
 			strvec_push(&cpr.args, "--quiet");
@@ -2437,11 +2438,12 @@ static void update_data_to_args(const struct update_data *update_data,
 {
 	enum submodule_update_type update_type = update_data->update_default;
 
+	strvec_push(args, "submodule--helper");
 	if (update_data->displaypath) {
-		strvec_push(args, "--super-prefix");
+		strvec_push(args, "--toplevel-cwd-prefix");
 		strvec_pushf(args, "%s/", update_data->displaypath);
 	}
-	strvec_pushl(args, "submodule--helper", "update", "--recursive", NULL);
+	strvec_pushl(args, "update", "--recursive", NULL);
 	strvec_pushf(args, "--jobs=%d", update_data->max_jobs);
 	if (update_data->quiet)
 		strvec_push(args, "--quiet");
@@ -3352,14 +3354,15 @@ cleanup:
 
 int cmd_submodule__helper(int argc, const char **argv, const char *prefix)
 {
-	const char *cmd = argv[0];
-	const char *subcmd;
 	parse_opt_subcommand_fn *fn = NULL;
 	const char *const usage[] = {
 		N_("git submodule--helper <command>"),
 		NULL
 	};
 	struct option options[] = {
+		OPT_CALLBACK_F(0, "toplevel-cwd-prefix", NULL, "path",
+			       "path from top level cwd to working tree root",
+			       0, option_parse_toplevel_cwd_prefix),
 		OPT_SUBCOMMAND("clone", &fn, module_clone),
 		OPT_SUBCOMMAND("add", &fn, module_add),
 		OPT_SUBCOMMAND("update", &fn, module_update),
@@ -3374,21 +3377,10 @@ int cmd_submodule__helper(int argc, const char **argv, const char *prefix)
 		OPT_SUBCOMMAND("set-url", &fn, module_set_url),
 		OPT_SUBCOMMAND("set-branch", &fn, module_set_branch),
 		OPT_SUBCOMMAND("create-branch", &fn, module_create_branch),
+
 		OPT_END()
 	};
 	argc = parse_options(argc, argv, prefix, options, usage, 0);
-	subcmd = argv[0];
-
-	if (strcmp(subcmd, "clone") && strcmp(subcmd, "update") &&
-	    strcmp(subcmd, "foreach") && strcmp(subcmd, "status") &&
-	    strcmp(subcmd, "sync") && strcmp(subcmd, "absorbgitdirs") &&
-	    get_super_prefix())
-		/*
-		 * xstrfmt() rather than "%s %s" to keep the translated
-		 * string identical to git.c's.
-		 */
-		die(_("%s doesn't support --super-prefix"),
-		    xstrfmt("'%s %s'", cmd, subcmd));
 
 	return fn(argc, argv, prefix);
 }

@@ -54,6 +54,16 @@ int git_default_submodule_config(const char *var, const char *value, void *cb);
 struct option;
 int option_parse_recurse_submodules_worktree_updater(const struct option *opt,
 						     const char *arg, int unset);
+int option_parse_toplevel_cwd_prefix(const struct option *opt,
+				   const char *arg, int unset);
+/*
+ * Return the relative path of the top-level process's cwd to the root of the
+ * working tree. When printing paths to submodules in the working tree, this
+ * value should be prepended to the path so that they appear relative to the
+ * top-level process's cwd instead of this process's cwd.
+ */
+const char *get_toplevel_cwd_prefix(void);
+
 int is_tree_submodule_active(struct repository *repo,
 			     const struct object_id *treeish_name,
 			     const char *path);
