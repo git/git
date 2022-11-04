@@ -580,4 +580,81 @@ test_expect_success 'passing hostname resolution information works' '
 	git -c "http.curloptResolve=$BOGUS_HOST:$LIB_HTTPD_PORT:127.0.0.1" ls-remote "$BOGUS_HTTPD_URL/smart/repo.git" >/dev/null
 '
 
+# here user%40host is the URL-encoded version of user@host,
+# which is our intentionally-odd username to catch parsing errors
+url_user=$HTTPD_URL_USER/auth/smart/repo.git
+url_userpass=$HTTPD_URL_USER_PASS/auth/smart/repo.git
+url_userblank=$HTTPD_PROTO://user%40host:@$HTTPD_DEST/auth/smart/repo.git
+message="URL .*:<redacted>@.* uses plaintext credentials"
+
+test_expect_success 'clone warns or fails when using username:password' '
+	test_when_finished "rm -rf attempt*" &&
+
+	git -c transfer.credentialsInUrl=allow \
+		clone $url_userpass attempt1 2>err &&
+	! grep "$message" err &&
+
+	git -c transfer.credentialsInUrl=warn \
+		clone $url_userpass attempt2 2>err &&
+	grep "warning: $message" err >warnings &&
+	test_line_count -ge 1 warnings &&
+
+	test_must_fail git -c transfer.credentialsInUrl=die \
+		clone $url_userpass attempt3 2>err &&
+	grep "fatal: $message" err >warnings &&
+	test_line_count -ge 1 warnings &&
+
+	test_must_fail git -c transfer.credentialsInUrl=die \
+		clone $url_userblank attempt4 2>err &&
+	grep "fatal: $message" err >warnings &&
+	test_line_count -ge 1 warnings
+'
+
+test_expect_success 'clone does not detect username:password when it is https://username@domain:port/' '
+	test_when_finished "rm -rf attempt1" &&
+
+	# we are relying on lib-httpd for url construction, so document our
+	# assumptions
+	case "$HTTPD_URL_USER" in
+	*:[0-9]*) : ok ;;
+	*) BUG "httpd url does not have port: $HTTPD_URL_USER"
+	esac &&
+
+	git -c transfer.credentialsInUrl=warn clone $url_user attempt1 2>err &&
+	! grep "uses plaintext credentials" err
+'
+
+test_expect_success 'fetch warns or fails when using username:password' '
+	git -c transfer.credentialsInUrl=allow fetch $url_userpass 2>err &&
+	! grep "$message" err &&
+
+	git -c transfer.credentialsInUrl=warn fetch $url_userpass 2>err &&
+	grep "warning: $message" err >warnings &&
+	test_line_count -ge 1 warnings &&
+
+	test_must_fail git -c transfer.credentialsInUrl=die \
+		fetch $url_userpass 2>err &&
+	grep "fatal: $message" err >warnings &&
+	test_line_count -ge 1 warnings &&
+
+	test_must_fail git -c transfer.credentialsInUrl=die \
+		fetch $url_userblank 2>err &&
+	grep "fatal: $message" err >warnings &&
+	test_line_count -ge 1 warnings
+'
+
+
+test_expect_success 'push warns or fails when using username:password' '
+	git -c transfer.credentialsInUrl=allow push $url_userpass 2>err &&
+	! grep "$message" err &&
+
+	git -c transfer.credentialsInUrl=warn push $url_userpass 2>err &&
+	grep "warning: $message" err >warnings &&
+
+	test_must_fail git -c transfer.credentialsInUrl=die \
+		push $url_userpass 2>err &&
+	grep "fatal: $message" err >warnings &&
+	test_line_count -ge 1 warnings
+'
+
 test_done
