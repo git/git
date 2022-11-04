@@ -193,7 +193,7 @@ static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
 	struct strbuf cmd = STRBUF_INIT;
 	struct strbuf_expand_dict_entry dict[6];
 	struct strbuf path_sq = STRBUF_INIT;
-	const char *args[] = { NULL, NULL };
+	struct child_process child = CHILD_PROCESS_INIT;
 	int status, fd, i;
 	struct stat st;
 	enum ll_merge_result ret;
@@ -219,8 +219,9 @@ static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
 
 	strbuf_expand(&cmd, fn->cmdline, strbuf_expand_dict_cb, &dict);
 
-	args[0] = cmd.buf;
-	status = run_command_v_opt(args, RUN_USING_SHELL);
+	child.use_shell = 1;
+	strvec_push(&child.args, cmd.buf);
+	status = run_command(&child);
 	fd = open(temp[1], O_RDONLY);
 	if (fd < 0)
 		goto bad;

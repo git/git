@@ -19,22 +19,22 @@ int try_merge_command(struct repository *r,
 		      const char **xopts, struct commit_list *common,
 		      const char *head_arg, struct commit_list *remotes)
 {
-	struct strvec args = STRVEC_INIT;
+	struct child_process cmd = CHILD_PROCESS_INIT;
 	int i, ret;
 	struct commit_list *j;
 
-	strvec_pushf(&args, "merge-%s", strategy);
+	strvec_pushf(&cmd.args, "merge-%s", strategy);
 	for (i = 0; i < xopts_nr; i++)
-		strvec_pushf(&args, "--%s", xopts[i]);
+		strvec_pushf(&cmd.args, "--%s", xopts[i]);
 	for (j = common; j; j = j->next)
-		strvec_push(&args, merge_argument(j->item));
-	strvec_push(&args, "--");
-	strvec_push(&args, head_arg);
+		strvec_push(&cmd.args, merge_argument(j->item));
+	strvec_push(&cmd.args, "--");
+	strvec_push(&cmd.args, head_arg);
 	for (j = remotes; j; j = j->next)
-		strvec_push(&args, merge_argument(j->item));
+		strvec_push(&cmd.args, merge_argument(j->item));
 
-	ret = run_command_v_opt(args.v, RUN_GIT_CMD);
-	strvec_clear(&args);
+	cmd.git_cmd = 1;
+	ret = run_command(&cmd);
 
 	discard_index(r->index);
 	if (repo_read_index(r) < 0)

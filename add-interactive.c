@@ -997,18 +997,17 @@ static int run_diff(struct add_i_state *s, const struct pathspec *ps,
 	count = list_and_choose(s, files, opts);
 	opts->flags = 0;
 	if (count > 0) {
-		struct strvec args = STRVEC_INIT;
+		struct child_process cmd = CHILD_PROCESS_INIT;
 
-		strvec_pushl(&args, "git", "diff", "-p", "--cached",
+		strvec_pushl(&cmd.args, "git", "diff", "-p", "--cached",
 			     oid_to_hex(!is_initial ? &oid :
 					s->r->hash_algo->empty_tree),
 			     "--", NULL);
 		for (i = 0; i < files->items.nr; i++)
 			if (files->selected[i])
-				strvec_push(&args,
+				strvec_push(&cmd.args,
 					    files->items.items[i].string);
-		res = run_command_v_opt(args.v, 0);
-		strvec_clear(&args);
+		res = run_command(&cmd);
 	}
 
 	putchar('\n');

@@ -22,8 +22,6 @@ static struct oid_array skipped_revs;
 
 static struct object_id *current_bad_oid;
 
-static const char *argv_checkout[] = {"checkout", "-q", NULL, "--", NULL};
-
 static const char *term_bad;
 static const char *term_good;
 
@@ -729,20 +727,22 @@ static int is_expected_rev(const struct object_id *oid)
 enum bisect_error bisect_checkout(const struct object_id *bisect_rev,
 				  int no_checkout)
 {
-	char bisect_rev_hex[GIT_MAX_HEXSZ + 1];
 	struct commit *commit;
 	struct pretty_print_context pp = {0};
 	struct strbuf commit_msg = STRBUF_INIT;
 
-	oid_to_hex_r(bisect_rev_hex, bisect_rev);
 	update_ref(NULL, "BISECT_EXPECTED_REV", bisect_rev, NULL, 0, UPDATE_REFS_DIE_ON_ERR);
 
-	argv_checkout[2] = bisect_rev_hex;
 	if (no_checkout) {
 		update_ref(NULL, "BISECT_HEAD", bisect_rev, NULL, 0,
 			   UPDATE_REFS_DIE_ON_ERR);
 	} else {
-		if (run_command_v_opt(argv_checkout, RUN_GIT_CMD))
+		struct child_process cmd = CHILD_PROCESS_INIT;
+
+		cmd.git_cmd = 1;
+		strvec_pushl(&cmd.args, "checkout", "-q",
+			     oid_to_hex(bisect_rev), "--", NULL);
+		if (run_command(&cmd))
 			/*
 			 * Errors in `run_command()` itself, signaled by res < 0,
 			 * and errors in the child process, signaled by res > 0
