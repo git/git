@@ -921,10 +921,6 @@ test_path_is_missing () {
 	then
 		echo "Path exists:"
 		ls -ld "$1"
-		if test $# -ge 1
-		then
-			echo "$*"
-		fi
 		false
 	fi
 }
