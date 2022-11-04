@@ -531,7 +531,7 @@ static struct cmd_struct commands[] = {
 	{ "env--helper", cmd_env__helper },
 	{ "fast-export", cmd_fast_export, RUN_SETUP },
 	{ "fast-import", cmd_fast_import, RUN_SETUP | NO_PARSEOPT },
-	{ "fetch", cmd_fetch, RUN_SETUP },
+	{ "fetch", cmd_fetch, RUN_SETUP | SUPPORT_SUPER_PREFIX },
 	{ "fetch-pack", cmd_fetch_pack, RUN_SETUP | NO_PARSEOPT },
 	{ "fmt-merge-msg", cmd_fmt_merge_msg, RUN_SETUP },
 	{ "for-each-ref", cmd_for_each_ref, RUN_SETUP },

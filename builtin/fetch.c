@@ -2114,6 +2114,12 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	int result = 0;
 	int prune_tags_ok = 1;
 
+	/*
+	 * NEEDSWORK: we don't actually use "--super-prefix". Unset it
+	 * so that we don't accidentally use it or pass it down.
+	 */
+	unsetenv(GIT_SUPER_PREFIX_ENVIRONMENT);
+
 	packet_trace_identity("fetch");
 
 	/* Record the command line for the reflog */
