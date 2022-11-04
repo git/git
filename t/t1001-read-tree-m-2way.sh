@@ -366,11 +366,11 @@ test_expect_success 'a/b (untracked) vs a, plus c/d case test.' '
 	test -f a/b
 '
 
-test_expect_success 'read-tree supports the super-prefix' '
+test_expect_success 'read-tree supports --submodule-prefix' '
 	cat <<-EOF >expect &&
 		error: Updating '\''fictional/a'\'' would lose untracked files in it
 	EOF
-	test_must_fail git --super-prefix fictional/ read-tree -u -m "$treeH" "$treeM" 2>actual &&
+	test_must_fail git read-tree --submodule-prefix fictional/ -u -m "$treeH" "$treeM" 2>actual &&
 	test_cmp expect actual
 '
 

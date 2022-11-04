@@ -148,6 +148,10 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 		OPT_CALLBACK_F(0, "recurse-submodules", NULL,
 			    "checkout", "control recursive updating of submodules",
 			    PARSE_OPT_OPTARG, option_parse_recurse_submodules_worktree_updater),
+		OPT_CALLBACK_F(0, "submodule-prefix", NULL, "path",
+			       "internal, path from root of top-level superproject tree to this repo",
+			       PARSE_OPT_HIDDEN, option_parse_submodule_prefix),
+
 		OPT__QUIET(&opts.quiet, N_("suppress feedback messages")),
 		OPT_END()
 	};
