@@ -1390,84 +1390,31 @@ static int cmd_bisect__run(int argc, const char **argv, const char *prefix UNUSE
 
 int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 {
-	enum {
-		BISECT_RESET = 1,
-		BISECT_TERMS,
-		BISECT_START,
-		BISECT_AUTOSTART,
-		BISECT_NEXT,
-		BISECT_STATE,
-		BISECT_LOG,
-		BISECT_REPLAY,
-		BISECT_SKIP,
-		BISECT_VISUALIZE,
-		BISECT_RUN,
-	} cmdmode = 0;
 	int res = 0;
+	parse_opt_subcommand_fn *fn = NULL;
 	struct option options[] = {
-		OPT_CMDMODE(0, "bisect-reset", &cmdmode,
-			 N_("reset the bisection state"), BISECT_RESET),
-		OPT_CMDMODE(0, "bisect-terms", &cmdmode,
-			 N_("print out the bisect terms"), BISECT_TERMS),
-		OPT_CMDMODE(0, "bisect-start", &cmdmode,
-			 N_("start the bisect session"), BISECT_START),
-		OPT_CMDMODE(0, "bisect-next", &cmdmode,
-			 N_("find the next bisection commit"), BISECT_NEXT),
-		OPT_CMDMODE(0, "bisect-state", &cmdmode,
-			 N_("mark the state of ref (or refs)"), BISECT_STATE),
-		OPT_CMDMODE(0, "bisect-log", &cmdmode,
-			 N_("list the bisection steps so far"), BISECT_LOG),
-		OPT_CMDMODE(0, "bisect-replay", &cmdmode,
-			 N_("replay the bisection process from the given file"), BISECT_REPLAY),
-		OPT_CMDMODE(0, "bisect-skip", &cmdmode,
-			 N_("skip some commits for checkout"), BISECT_SKIP),
-		OPT_CMDMODE(0, "bisect-visualize", &cmdmode,
-			 N_("visualize the bisection"), BISECT_VISUALIZE),
-		OPT_CMDMODE(0, "bisect-run", &cmdmode,
-			 N_("use <cmd>... to automatically bisect"), BISECT_RUN),
+		OPT_SUBCOMMAND("reset", &fn, cmd_bisect__reset),
+		OPT_SUBCOMMAND("terms", &fn, cmd_bisect__terms),
+		OPT_SUBCOMMAND("start", &fn, cmd_bisect__start),
+		OPT_SUBCOMMAND("next", &fn, cmd_bisect__next),
+		OPT_SUBCOMMAND("state", &fn, cmd_bisect__state),
+		OPT_SUBCOMMAND("log", &fn, cmd_bisect__log),
+		OPT_SUBCOMMAND("replay", &fn, cmd_bisect__replay),
+		OPT_SUBCOMMAND("skip", &fn, cmd_bisect__skip),
+		OPT_SUBCOMMAND("visualize", &fn, cmd_bisect__visualize),
+		OPT_SUBCOMMAND("view", &fn, cmd_bisect__visualize),
+		OPT_SUBCOMMAND("run", &fn, cmd_bisect__run),
 		OPT_END()
 	};
 	argc = parse_options(argc, argv, prefix, options,
-			     git_bisect_helper_usage,
-			     PARSE_OPT_KEEP_DASHDASH | PARSE_OPT_KEEP_UNKNOWN_OPT);
+			     git_bisect_helper_usage, 0);
 
-	if (!cmdmode)
+	if (!fn)
 		usage_with_options(git_bisect_helper_usage, options);
+	argc--;
+	argv++;
 
-	switch (cmdmode) {
-	case BISECT_RESET:
-		res = cmd_bisect__reset(argc, argv, prefix);
-		break;
-	case BISECT_TERMS:
-		res = cmd_bisect__terms(argc, argv, prefix);
-		break;
-	case BISECT_START:
-		res = cmd_bisect__start(argc, argv, prefix);
-		break;
-	case BISECT_NEXT:
-		res = cmd_bisect__next(argc, argv, prefix);
-		break;
-	case BISECT_STATE:
-		res = cmd_bisect__state(argc, argv, prefix);
-		break;
-	case BISECT_LOG:
-		res = cmd_bisect__log(argc, argv, prefix);
-		break;
-	case BISECT_REPLAY:
-		res = cmd_bisect__replay(argc, argv, prefix);
-		break;
-	case BISECT_SKIP:
-		res = cmd_bisect__skip(argc, argv, prefix);
-		break;
-	case BISECT_VISUALIZE:
-		res = cmd_bisect__visualize(argc, argv, prefix);
-		break;
-	case BISECT_RUN:
-		res = cmd_bisect__run(argc, argv, prefix);
-		break;
-	default:
-		BUG("unknown subcommand %d", cmdmode);
-	}
+	res = fn(argc, argv, prefix);
 
 	/*
 	 * Handle early success
