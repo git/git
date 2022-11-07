@@ -2,6 +2,9 @@
 
 test_description='test across ref formats'
 
+GIT_TEST_PACKED_REFS_VERSION=0
+export GIT_TEST_PACKED_REFS_VERSION
+
 . ./test-lib.sh
 
 test_expect_success 'extensions.refFormat requires core.repositoryFormatVersion=1' '

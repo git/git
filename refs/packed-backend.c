@@ -807,7 +807,8 @@ static int write_with_updates(struct packed_ref_store *refs,
 	}
 	strbuf_release(&sb);
 
-	if (git_config_get_int("refs.packedrefsversion", &version)) {
+	if (!(version = git_env_ulong("GIT_TEST_PACKED_REFS_VERSION", 0)) &&
+	    git_config_get_int("refs.packedrefsversion", &version)) {
 		/*
 		 * Set the default depending on the current extension
 		 * list. Default to version 1 if available, but allow a

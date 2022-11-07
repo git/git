@@ -732,8 +732,11 @@ int read_repository_format(struct repository_format *format, const char *path)
 		clear_repository_format(format);
 
 	/* Set default ref_format if no extensions.refFormat exists. */
-	if (!format->ref_format_count)
+	if (!format->ref_format_count) {
 		format->ref_format = REF_FORMAT_FILES | REF_FORMAT_PACKED;
+		if (git_env_ulong("GIT_TEST_PACKED_REFS_VERSION", 0) == 2)
+			format->ref_format |= REF_FORMAT_PACKED_V2;
+	}
 
 	return format->version;
 }
