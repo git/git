@@ -577,6 +577,11 @@ static enum extension_result handle_extension(const char *var,
 				     "extensions.objectformat", value);
 		data->hash_algo = format;
 		return EXTENSION_OK;
+	} else if (!strcmp(ext, "refformat")) {
+		if (strcmp(value, "files") && strcmp(value, "packed"))
+			return error(_("invalid value for '%s': '%s'"),
+				     "extensions.refFormat", value);
+		return EXTENSION_OK;
 	}
 	return EXTENSION_UNKNOWN;
 }
