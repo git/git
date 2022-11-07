@@ -31,7 +31,14 @@ void add_chunk(struct chunkfile *cf,
 	       uint32_t id,
 	       size_t size,
 	       chunk_write_fn fn);
-int write_chunkfile(struct chunkfile *cf, void *data);
+
+enum chunkfile_flags {
+	CHUNKFILE_TRAILING_TOC = (1 << 0),
+};
+
+int write_chunkfile(struct chunkfile *cf,
+		    enum chunkfile_flags flags,
+		    void *data);
 
 int read_table_of_contents(struct chunkfile *cf,
 			   const unsigned char *mfile,

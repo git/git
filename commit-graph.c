@@ -1932,7 +1932,7 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 			get_num_chunks(cf) * ctx->commits.nr);
 	}
 
-	write_chunkfile(cf, ctx);
+	write_chunkfile(cf, 0, ctx);
 
 	stop_progress(&ctx->progress);
 	strbuf_release(&progress_title);
