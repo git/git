@@ -524,6 +524,11 @@ struct ref_store;
 #define REF_STORE_FORMAT_FILES		(1 << 8) /* can use loose ref files */
 #define REF_STORE_FORMAT_PACKED		(1 << 9) /* can use packed-refs file */
 
+static inline int packed_refs_enabled(int flags)
+{
+	return flags & REF_STORE_FORMAT_PACKED;
+}
+
 /*
  * Initialize the ref_store for the specified gitdir. These functions
  * should call base_ref_store_init() to initialize the shared part of

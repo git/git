@@ -46,6 +46,11 @@ The following combinations are supported by this version of Git:
 	format. Loose references are preferred, and the `packed-refs` file
 	is updated only when deleting a reference that is stored in the
 	`packed-refs` file or during a `git pack-refs` command.
+
+`files`;;
+	When only this value is present, Git will ignore the `packed-refs`
+	file and refuse to write one during `git pack-refs`. All references
+	will be read from and written to loose reference files.
 --
 
 extensions.worktreeConfig::

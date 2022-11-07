@@ -478,6 +478,9 @@ static int load_contents(struct snapshot *snapshot)
 	size_t size;
 	ssize_t bytes_read;
 
+	if (!packed_refs_enabled(snapshot->refs->store_flags))
+		return 0;
+
 	fd = open(snapshot->refs->path, O_RDONLY);
 	if (fd < 0) {
 		if (errno == ENOENT) {

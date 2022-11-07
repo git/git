@@ -36,4 +36,24 @@ test_expect_success 'extensions.refFormat=packed only' '
 	)
 '
 
+test_expect_success 'extensions.refFormat=files only' '
+	test_commit T &&
+	git pack-refs --all &&
+	git init only-loose &&
+	(
+		cd only-loose &&
+		git config core.repositoryFormatVersion 1 &&
+		git config extensions.refFormat files &&
+		test_commit A &&
+		test_commit B &&
+		test_must_fail git pack-refs 2>err &&
+		grep "refusing to create" err &&
+		test_path_is_missing .git/packed-refs &&
+
+		# Refuse to parse a packed-refs file.
+		cp ../.git/packed-refs .git/packed-refs &&
+		test_must_fail git rev-parse refs/tags/T
+	)
+'
+
 test_done

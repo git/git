@@ -1198,6 +1198,12 @@ static int files_pack_refs(struct ref_store *ref_store, unsigned int flags)
 	struct strbuf err = STRBUF_INIT;
 	struct ref_transaction *transaction;
 
+	if (!packed_refs_enabled(refs->store_flags)) {
+		warning(_("refusing to create '%s' file because '%s' is not set"),
+			"packed-refs", "extensions.refFormat=packed");
+		return -1;
+	}
+
 	transaction = ref_store_transaction_begin(refs->packed_ref_store, &err);
 	if (!transaction)
 		return -1;
