@@ -475,6 +475,8 @@ static struct ref_iterator *packed_ref_iterator_begin(
 	iter->version = snapshot->version;
 	iter->row = v2_row;
 
+	init_iterator_prefix_info(prefix, iter);
+
 	iter->pos = start;
 	iter->eof = snapshot->eof;
 	strbuf_init(&iter->refname_buf, 0);

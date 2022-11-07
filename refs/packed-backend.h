@@ -103,9 +103,12 @@ struct snapshot {
 	 * packed-refs v2 values *
 	 *************************/
 	size_t nr;
+	size_t prefixes_nr;
 	size_t buflen;
 	const unsigned char *offset_chunk;
 	const char *refs_chunk;
+	const unsigned char *prefix_offsets_chunk;
+	const char *prefix_chunk;
 
 	/*
 	 * Count of references to this instance, including the pointer
@@ -212,6 +215,9 @@ struct packed_ref_iterator {
 	 ***********************************/
 	size_t nr;
 	size_t row;
+	size_t prefix_row_end;
+	size_t prefix_i;
+	const char *cur_prefix;
 };
 
 typedef int (*write_ref_fn)(const char *refname,
@@ -307,5 +313,8 @@ struct write_packed_refs_v2_context *create_v2_context(struct packed_ref_store *
 						       struct strbuf *err);
 int write_packed_refs_v2(struct write_packed_refs_v2_context *ctx);
 void free_v2_context(struct write_packed_refs_v2_context *ctx);
+
+void init_iterator_prefix_info(const char *prefix,
+			       struct packed_ref_iterator *iter);
 
 #endif /* REFS_PACKED_BACKEND_H */

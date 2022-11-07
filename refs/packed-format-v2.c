@@ -14,6 +14,79 @@
 #define PACKED_REFS_SIGNATURE          0x50524546 /* "PREF" */
 #define CHREFS_CHUNKID_OFFSETS         0x524F4646 /* "ROFF" */
 #define CHREFS_CHUNKID_REFS            0x52454653 /* "REFS" */
+#define CHREFS_CHUNKID_PREFIX_DATA     0x50465844 /* "PFXD" */
+#define CHREFS_CHUNKID_PREFIX_OFFSETS  0x5046584F /* "PFXO" */
+
+static const char *get_nth_prefix(struct snapshot *snapshot,
+				  size_t n, size_t *len)
+{
+	uint64_t offset, next_offset;
+
+	if (n >= snapshot->prefixes_nr)
+		BUG("asking for prefix %"PRIu64" outside of bounds (%"PRIu64")",
+		    (uint64_t)n, (uint64_t)snapshot->prefixes_nr);
+
+	if (n)
+		offset = get_be32(snapshot->prefix_offsets_chunk +
+				  2 * sizeof(uint32_t) * (n - 1));
+	else
+		offset = 0;
+
+	if (len) {
+		next_offset = get_be32(snapshot->prefix_offsets_chunk +
+				       2 * sizeof(uint32_t) * n);
+
+		/* Prefix includes null terminator. */
+		*len = next_offset - offset - 1;
+	}
+
+	return snapshot->prefix_chunk + offset;
+}
+
+/*
+ * Find the place in `snapshot->buf` where the start of the record for
+ * `refname` starts. If `mustexist` is true and the reference doesn't
+ * exist, then return NULL. If `mustexist` is false and the reference
+ * doesn't exist, then return the point where that reference would be
+ * inserted, or `snapshot->eof` (which might be NULL) if it would be
+ * inserted at the end of the file. In the latter mode, `refname`
+ * doesn't have to be a proper reference name; for example, one could
+ * search for "refs/replace/" to find the start of any replace
+ * references.
+ *
+ * The record is sought using a binary search, so `snapshot->buf` must
+ * be sorted.
+ */
+static const char *find_prefix_location(struct snapshot *snapshot,
+					const char *refname, size_t *pos)
+{
+	size_t lo = 0, hi = snapshot->prefixes_nr;
+
+	while (lo != hi) {
+		const char *rec;
+		int cmp;
+		size_t len;
+		size_t mid = lo + (hi - lo) / 2;
+
+		rec = get_nth_prefix(snapshot, mid, &len);
+		cmp = strncmp(rec, refname, len);
+		if (cmp < 0) {
+			lo = mid + 1;
+		} else if (cmp > 0) {
+			hi = mid;
+		} else {
+			/* we have a prefix match! */
+			*pos = mid;
+			return rec;
+		}
+	}
+
+	*pos = lo;
+	if (lo < snapshot->prefixes_nr)
+		return get_nth_prefix(snapshot, lo, NULL);
+	else
+		return NULL;
+}
 
 int detect_packed_format_v2_header(struct packed_ref_store *refs,
 				   struct snapshot *snapshot)
@@ -62,6 +135,46 @@ const char *find_reference_location_v2(struct snapshot *snapshot,
 				       size_t *pos)
 {
 	size_t lo = 0, hi = snapshot->nr;
+
+	if (snapshot->prefix_chunk) {
+		size_t prefix_row;
+		const char *prefix;
+		int found = 1;
+
+		prefix = find_prefix_location(snapshot, refname, &prefix_row);
+
+		if (!prefix || !starts_with(refname, prefix)) {
+			if (mustexist)
+				return NULL;
+			found = 0;
+		}
+
+		/* The second 4-byte column of the prefix offsets */
+		if (prefix_row) {
+			/* if prefix_row == 0, then lo = 0, which is already true. */
+			lo = get_be32(snapshot->prefix_offsets_chunk +
+				2 * sizeof(uint32_t) * (prefix_row - 1) + sizeof(uint32_t));
+		}
+
+		if (!found) {
+			const char *ret;
+			/* Terminate early with this lo position as the insertion point. */
+			if (pos)
+				*pos = lo;
+
+			if (lo >= snapshot->nr)
+				return NULL;
+
+			ret = get_nth_ref(snapshot, lo);
+			return ret;
+		}
+
+		hi = get_be32(snapshot->prefix_offsets_chunk +
+			      2 * sizeof(uint32_t) * prefix_row + sizeof(uint32_t));
+
+		if (prefix)
+			refname += strlen(prefix);
+	}
 
 	while (lo != hi) {
 		const char *rec;
@@ -132,6 +245,16 @@ static int packed_refs_read_offsets(const unsigned char *chunk_start,
 	return 0;
 }
 
+static int packed_refs_read_prefix_offsets(const unsigned char *chunk_start,
+					    size_t chunk_size, void *data)
+{
+	struct snapshot *snapshot = data;
+
+	snapshot->prefix_offsets_chunk = chunk_start;
+	snapshot->prefixes_nr = chunk_size / sizeof(uint64_t);
+	return 0;
+}
+
 void fill_snapshot_v2(struct snapshot *snapshot)
 {
 	uint32_t file_signature, file_version, hash_version;
@@ -163,6 +286,9 @@ void fill_snapshot_v2(struct snapshot *snapshot)
 	read_chunk(cf, CHREFS_CHUNKID_OFFSETS, packed_refs_read_offsets, snapshot);
 	pair_chunk(cf, CHREFS_CHUNKID_REFS, (const unsigned char**)&snapshot->refs_chunk);
 
+	read_chunk(cf, CHREFS_CHUNKID_PREFIX_OFFSETS, packed_refs_read_prefix_offsets, snapshot);
+	pair_chunk(cf, CHREFS_CHUNKID_PREFIX_DATA, (const unsigned char**)&snapshot->prefix_chunk);
+
 	/* TODO: add error checks for invalid chunk combinations. */
 
 cleanup:
@@ -187,6 +313,8 @@ int next_record_v2(struct packed_ref_iterator *iter)
 
 	iter->base.flags = REF_ISPACKED;
 
+	if (iter->cur_prefix)
+		strbuf_addstr(&iter->refname_buf, iter->cur_prefix);
 	strbuf_addstr(&iter->refname_buf, pos);
 	iter->base.refname = iter->refname_buf.buf;
 	pos += strlen(pos) + 1;
@@ -221,7 +349,38 @@ int next_record_v2(struct packed_ref_iterator *iter)
 
 	iter->row++;
 
+	if (iter->row == iter->prefix_row_end && iter->snapshot->prefix_chunk) {
+		size_t prefix_pos = get_be32(iter->snapshot->prefix_offsets_chunk +
+					     2 * sizeof(uint32_t) * iter->prefix_i);
+		iter->cur_prefix = iter->snapshot->prefix_chunk + prefix_pos;
+		iter->prefix_i++;
+		iter->prefix_row_end = get_be32(iter->snapshot->prefix_offsets_chunk +
+						2 * sizeof(uint32_t) * iter->prefix_i + sizeof(uint32_t));
+	}
+
 	return ITER_OK;
+}
+
+void init_iterator_prefix_info(const char *prefix,
+			       struct packed_ref_iterator *iter)
+{
+	struct snapshot *snapshot = iter->snapshot;
+
+	if (snapshot->version != 2 || !snapshot->prefix_chunk) {
+		iter->prefix_row_end = snapshot->nr;
+		return;
+	}
+
+	if (prefix)
+		iter->cur_prefix = find_prefix_location(snapshot, prefix, &iter->prefix_i);
+	else {
+		iter->cur_prefix = snapshot->prefix_chunk;
+		iter->prefix_i = 0;
+	}
+
+	iter->prefix_row_end = get_be32(snapshot->prefix_offsets_chunk +
+					2 * sizeof(uint32_t) * iter->prefix_i +
+					sizeof(uint32_t));
 }
 
 struct write_packed_refs_v2_context {
