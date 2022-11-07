@@ -398,6 +398,18 @@ struct write_packed_refs_v2_context {
 	uint64_t *offsets;
 	size_t nr;
 	size_t offsets_alloc;
+
+	int write_prefixes;
+	const char *cur_prefix;
+	size_t cur_prefix_len;
+
+	char **prefixes;
+	uint32_t *prefix_offsets;
+	uint32_t *prefix_rows;
+	size_t prefix_nr;
+	size_t prefixes_alloc;
+	size_t prefix_offsets_alloc;
+	size_t prefix_rows_alloc;
 };
 
 struct write_packed_refs_v2_context *create_v2_context(struct packed_ref_store *refs,
@@ -433,6 +445,56 @@ static int write_packed_entry_v2(const char *refname,
 	size_t i = ctx->nr;
 
 	ALLOC_GROW(ctx->offsets, i + 1, ctx->offsets_alloc);
+
+	if (ctx->write_prefixes) {
+		if (ctx->cur_prefix && starts_with(refname, ctx->cur_prefix)) {
+			/* skip ahead! */
+			refname += ctx->cur_prefix_len;
+			reflen -= ctx->cur_prefix_len;
+		} else {
+			size_t len;
+			const char *slash, *slashslash = NULL;
+			if (ctx->prefix_nr) {
+				/* close out the old prefix. */
+				ctx->prefix_rows[ctx->prefix_nr - 1] = ctx->nr;
+			}
+
+			/* Find the new prefix. */
+			slash = strchr(refname, '/');
+			if (slash)
+				slashslash = strchr(slash + 1, '/');
+			/* If there are two slashes, use that. */
+			slash = slashslash ? slashslash : slash;
+			/*
+			 * If there is at least one slash, use that,
+			 * and include the slash in the string.
+			 * Otherwise, use the end of the ref.
+			 */
+			slash = slash ? slash + 1 : refname + strlen(refname);
+
+			len = slash - refname;
+			ALLOC_GROW(ctx->prefixes, ctx->prefix_nr + 1, ctx->prefixes_alloc);
+			ALLOC_GROW(ctx->prefix_offsets, ctx->prefix_nr + 1, ctx->prefix_offsets_alloc);
+			ALLOC_GROW(ctx->prefix_rows, ctx->prefix_nr + 1, ctx->prefix_rows_alloc);
+
+			if (ctx->prefix_nr)
+				ctx->prefix_offsets[ctx->prefix_nr] = ctx->prefix_offsets[ctx->prefix_nr - 1] + len + 1;
+			else
+				ctx->prefix_offsets[ctx->prefix_nr] = len + 1;
+
+			ctx->prefixes[ctx->prefix_nr] = xstrndup(refname, len);
+			ctx->cur_prefix = ctx->prefixes[ctx->prefix_nr];
+			ctx->prefix_nr++;
+
+			refname += len;
+			reflen -= len;
+			ctx->cur_prefix_len = len;
+		}
+
+		/* Update the last row continually. */
+		ctx->prefix_rows[ctx->prefix_nr - 1] = i + 1;
+	}
+
 
 	/* Write entire ref, including null terminator. */
 	hashwrite(ctx->f, refname, reflen);
@@ -483,12 +545,53 @@ static int write_refs_chunk_offsets(struct hashfile *f,
 	return 0;
 }
 
+static int write_refs_chunk_prefix_data(struct hashfile *f,
+					void *data)
+{
+	struct write_packed_refs_v2_context *ctx = data;
+	size_t i;
+
+	trace2_region_enter("refs", "prefix-data", the_repository);
+	for (i = 0; i < ctx->prefix_nr; i++) {
+		size_t len = strlen(ctx->prefixes[i]) + 1;
+		hashwrite(f, ctx->prefixes[i], len);
+
+		/* TODO: assert the prefix lengths match the stored offsets? */
+	}
+
+	trace2_region_leave("refs", "prefix-data", the_repository);
+	return 0;
+}
+
+static int write_refs_chunk_prefix_offsets(struct hashfile *f,
+				    void *data)
+{
+	struct write_packed_refs_v2_context *ctx = data;
+	size_t i;
+
+	trace2_region_enter("refs", "prefix-offsets", the_repository);
+	for (i = 0; i < ctx->prefix_nr; i++) {
+		hashwrite_be32(f, ctx->prefix_offsets[i]);
+		hashwrite_be32(f, ctx->prefix_rows[i]);
+	}
+
+	trace2_region_leave("refs", "prefix-offsets", the_repository);
+	return 0;
+}
+
 int write_packed_refs_v2(struct write_packed_refs_v2_context *ctx)
 {
 	unsigned char file_hash[GIT_MAX_RAWSZ];
 
+	ctx->write_prefixes = git_env_bool("GIT_TEST_WRITE_PACKED_REFS_PREFIXES", 1);
+
 	add_chunk(ctx->cf, CHREFS_CHUNKID_REFS, 0, write_refs_chunk_refs);
 	add_chunk(ctx->cf, CHREFS_CHUNKID_OFFSETS, 0, write_refs_chunk_offsets);
+
+	if (ctx->write_prefixes) {
+		add_chunk(ctx->cf, CHREFS_CHUNKID_PREFIX_DATA, 0, write_refs_chunk_prefix_data);
+		add_chunk(ctx->cf, CHREFS_CHUNKID_PREFIX_OFFSETS, 0, write_refs_chunk_prefix_offsets);
+	}
 
 	hashwrite_be32(ctx->f, PACKED_REFS_SIGNATURE);
 	hashwrite_be32(ctx->f, 2);
