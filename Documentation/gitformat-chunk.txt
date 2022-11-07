@@ -24,8 +24,9 @@ how they use the chunks to describe structured data.
 
 A chunk-based file format begins with some header information custom to
 that format. That header should include enough information to identify
-the file type, format version, and number of chunks in the file. From this
-information, that file can determine the start of the chunk-based region.
+the file type, format version, and (optionally) the number of chunks in
+the file. From this information, that file can determine the start of the
+chunk-based region.
 
 The chunk-based region starts with a table of contents describing where
 each chunk starts and ends. This consists of (C+1) rows of 12 bytes each,
