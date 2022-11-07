@@ -46,6 +46,15 @@ int read_table_of_contents(struct chunkfile *cf,
 			   uint64_t toc_offset,
 			   int toc_length);
 
+/**
+ * Read the given chunkfile, but read the table of contents from the
+ * end of the given mfile. The file is expected to be a hashfile with
+ * the_hash_file->rawsz bytes at the end storing the hash.
+ */
+int read_trailing_table_of_contents(struct chunkfile *cf,
+				    const unsigned char *mfile,
+				    size_t mfile_size);
+
 #define CHUNK_NOT_FOUND (-2)
 
 /*

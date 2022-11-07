@@ -173,6 +173,59 @@ int read_table_of_contents(struct chunkfile *cf,
 	return 0;
 }
 
+int read_trailing_table_of_contents(struct chunkfile *cf,
+				    const unsigned char *mfile,
+				    size_t mfile_size)
+{
+	int i;
+	uint32_t chunk_id;
+	const unsigned char *table_of_contents = mfile + mfile_size - the_hash_algo->rawsz;
+
+	while (1) {
+		uint64_t chunk_offset;
+
+		table_of_contents -= CHUNK_TOC_ENTRY_SIZE;
+
+		chunk_id = get_be32(table_of_contents);
+		chunk_offset = get_be64(table_of_contents + 4);
+
+		/* Calculate the previous chunk size, if it exists. */
+		if (cf->chunks_nr) {
+			off_t previous_offset = cf->chunks[cf->chunks_nr - 1].offset;
+
+			if (chunk_offset < previous_offset ||
+			    chunk_offset > table_of_contents - mfile) {
+				error(_("improper chunk offset(s) %"PRIx64" and %"PRIx64""),
+				previous_offset, chunk_offset);
+				return -1;
+			}
+
+			cf->chunks[cf->chunks_nr - 1].size = chunk_offset - previous_offset;
+		}
+
+		/* Stop at the null chunk. We only need it for the last size. */
+		if (!chunk_id)
+			break;
+
+		for (i = 0; i < cf->chunks_nr; i++) {
+			if (cf->chunks[i].id == chunk_id) {
+				error(_("duplicate chunk ID %"PRIx32" found"),
+					chunk_id);
+				return -1;
+			}
+		}
+
+		ALLOC_GROW(cf->chunks, cf->chunks_nr + 1, cf->chunks_alloc);
+
+		cf->chunks[cf->chunks_nr].id = chunk_id;
+		cf->chunks[cf->chunks_nr].start = mfile + chunk_offset;
+		cf->chunks[cf->chunks_nr].offset = chunk_offset;
+		cf->chunks_nr++;
+	}
+
+	return 0;
+}
+
 static int pair_chunk_fn(const unsigned char *chunk_start,
 			 size_t chunk_size,
 			 void *data)
