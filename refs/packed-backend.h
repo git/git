@@ -243,4 +243,11 @@ int write_packed_entry_v1(const char *refname,
 			  const struct object_id *peeled,
 			  void *write_data);
 
+struct write_packed_refs_v2_context;
+struct write_packed_refs_v2_context *create_v2_context(struct packed_ref_store *refs,
+						       struct string_list *updates,
+						       struct strbuf *err);
+int write_packed_refs_v2(struct write_packed_refs_v2_context *ctx);
+void free_v2_context(struct write_packed_refs_v2_context *ctx);
+
 #endif /* REFS_PACKED_BACKEND_H */

@@ -692,6 +692,45 @@ error:
 	return ok;
 }
 
+static int write_with_updates_v1(struct packed_ref_store *refs,
+				 struct string_list *updates,
+				 struct strbuf *err)
+{
+	FILE *out;
+
+	out = fdopen_tempfile(refs->tempfile, "w");
+	if (!out) {
+		strbuf_addf(err, "unable to fdopen packed-refs tempfile: %s",
+			    strerror(errno));
+		goto error;
+	}
+
+	if (write_packed_file_header_v1(out) < 0) {
+		add_write_error(refs, err);
+		goto error;
+	}
+
+	return merge_iterator_and_updates(refs, updates, err,
+					  write_packed_entry_v1, out);
+
+error:
+	return -1;
+}
+
+static int write_with_updates_v2(struct packed_ref_store *refs,
+				 struct string_list *updates,
+				 struct strbuf *err)
+{
+	struct write_packed_refs_v2_context *ctx = create_v2_context(refs, updates, err);
+	int ok = -1;
+
+	if ((ok = write_packed_refs_v2(ctx)) < 0)
+		add_write_error(refs, err);
+
+	free_v2_context(ctx);
+	return ok;
+}
+
 /*
  * Write the packed refs from the current snapshot to the packed-refs
  * tempfile, incorporating any changes from `updates`. `updates` must
@@ -707,9 +746,9 @@ static int write_with_updates(struct packed_ref_store *refs,
 			      struct strbuf *err)
 {
 	int ok;
-	FILE *out;
 	struct strbuf sb = STRBUF_INIT;
 	char *packed_refs_path;
+	int version;
 
 	if (!is_lock_file_locked(&refs->lock))
 		BUG("write_with_updates() called while unlocked");
@@ -731,20 +770,34 @@ static int write_with_updates(struct packed_ref_store *refs,
 	}
 	strbuf_release(&sb);
 
-	out = fdopen_tempfile(refs->tempfile, "w");
-	if (!out) {
-		strbuf_addf(err, "unable to fdopen packed-refs tempfile: %s",
-			    strerror(errno));
-		goto error;
+	if (git_config_get_int("refs.packedrefsversion", &version)) {
+		/*
+		 * Set the default depending on the current extension
+		 * list. Default to version 1 if available, but allow a
+		 * default of 2 if only "packed-v2" exists.
+		 */
+		if (refs->store_flags & REF_STORE_FORMAT_PACKED)
+			version = 1;
+		else if (refs->store_flags & REF_STORE_FORMAT_PACKED_V2)
+			version = 2;
+		else
+			BUG("writing a packed-refs file without an extension");
 	}
 
-	if (write_packed_file_header_v1(out) < 0) {
-		add_write_error(refs, err);
+	switch (version) {
+	case 1:
+		ok = write_with_updates_v1(refs, updates, err);
+		break;
+
+	case 2:
+		ok = write_with_updates_v2(refs, updates, err);
+		break;
+
+	default:
+		strbuf_addf(err, "unknown packed-refs version: %d",
+			    version);
 		goto error;
 	}
-
-	ok = merge_iterator_and_updates(refs, updates, err,
-					write_packed_entry_v1, out);
 
 	if (ok != ITER_DONE) {
 		strbuf_addstr(err, "unable to write packed-refs file: "
