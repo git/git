@@ -481,6 +481,11 @@ include shared.mak
 #
 # === SHA-1 backend ===
 #
+# ==== Default SHA-1 backend ====
+#
+# If no *_SHA1 backend is picked, the first supported one listed in
+# "SHA-1 implementations" will be picked.
+#
 # ==== Options common to all SHA-1 implementations ====
 #
 # Define SHA1_MAX_BLOCK_SIZE to limit the amount of data that will be hashed
@@ -489,14 +494,14 @@ include shared.mak
 #
 # ==== SHA-1 implementations ====
 #
-# Define DC_SHA1 to enable the collision-detecting sha1
-# algorithm. This is slower, but may detect attempted collision attacks.
+# Define OPENSSL_SHA1 to link to the SHA-1 routines from the OpenSSL
+# library.
 #
 # Define BLK_SHA1 to make use of optimized C SHA-1 routines bundled
 # with git (in the block-sha1/ directory).
 #
-# Define OPENSSL_SHA1 to link to the SHA-1 routines from the OpenSSL
-# library.
+# Define DC_SHA1 to enable the collision-detecting sha1
+# algorithm. This is slower, but may detect attempted collision attacks.
 #
 # ==== Options for the sha1collisiondetection library ====
 #
@@ -515,11 +520,11 @@ include shared.mak
 #
 # ==== SHA-256 implementations ====
 #
+# Define OPENSSL_SHA256 to use the SHA-256 routines in OpenSSL.
+#
 # Define NETTLE_SHA256 to use the SHA-256 routines in libnettle.
 #
 # Define GCRYPT_SHA256 to use the SHA-256 routines in libgcrypt.
-#
-# Define OPENSSL_SHA256 to use the SHA-256 routines in OpenSSL.
 #
 # If don't enable any of the *_SHA256 settings in this section, Git
 # will default to its built-in sha256 implementation.
