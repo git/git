@@ -529,6 +529,12 @@ static int packed_init_db(struct ref_store *ref_store UNUSED,
 	return 0;
 }
 
+static void add_write_error(struct packed_ref_store *refs, struct strbuf *err)
+{
+	strbuf_addf(err, "error writing to %s: %s",
+		    get_tempfile_path(refs->tempfile), strerror(errno));
+}
+
 /*
  * Write the packed refs from the current snapshot to the packed-refs
  * tempfile, incorporating any changes from `updates`. `updates` must
@@ -577,8 +583,10 @@ static int write_with_updates(struct packed_ref_store *refs,
 		goto error;
 	}
 
-	if (write_packed_file_header_v1(out) < 0)
-		goto write_error;
+	if (write_packed_file_header_v1(out) < 0) {
+		add_write_error(refs, err);
+		goto error;
+	}
 
 	/*
 	 * We iterate in parallel through the current list of refs and
@@ -673,8 +681,10 @@ static int write_with_updates(struct packed_ref_store *refs,
 
 			if (write_packed_entry_v1(out, iter->refname,
 						  iter->oid,
-						  peel_error ? NULL : &peeled))
-				goto write_error;
+						  peel_error ? NULL : &peeled)) {
+				add_write_error(refs, err);
+				goto error;
+			}
 
 			if ((ok = ref_iterator_advance(iter)) != ITER_OK)
 				iter = NULL;
@@ -694,8 +704,10 @@ static int write_with_updates(struct packed_ref_store *refs,
 
 			if (write_packed_entry_v1(out, update->refname,
 						  &update->new_oid,
-						  peel_error ? NULL : &peeled))
-				goto write_error;
+						  peel_error ? NULL : &peeled)) {
+				add_write_error(refs, err);
+				goto error;
+			}
 
 			i++;
 		}
@@ -718,10 +730,6 @@ static int write_with_updates(struct packed_ref_store *refs,
 	}
 
 	return 0;
-
-write_error:
-	strbuf_addf(err, "error writing to %s: %s",
-		    get_tempfile_path(refs->tempfile), strerror(errno));
 
 error:
 	if (iter)
