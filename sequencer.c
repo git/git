@@ -4130,10 +4130,13 @@ static int write_update_refs_state(struct string_list *refs_to_oids)
 	struct string_list_item *item;
 	char *path;
 
-	if (!refs_to_oids->nr)
-		return 0;
-
 	path = rebase_path_update_refs(the_repository->gitdir);
+
+	if (!refs_to_oids->nr) {
+		if (unlink(path) && errno != ENOENT)
+			result = error_errno(_("could not unlink: %s"), path);
+		goto cleanup;
+	}
 
 	if (safe_create_leading_directories(path)) {
 		result = error(_("unable to create leading directories of %s"),
