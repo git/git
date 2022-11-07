@@ -62,10 +62,15 @@ When enabling `extensions.worktreeConfig`, you must be careful to move
 certain values from the common config file to the main working tree's
 `config.worktree` file, if present:
 +
-* `core.worktree` must be moved from `$GIT_COMMON_DIR/config` to
-  `$GIT_COMMON_DIR/config.worktree`.
-* If `core.bare` is true, then it must be moved from `$GIT_COMMON_DIR/config`
-  to `$GIT_COMMON_DIR/config.worktree`.
+--
+`core.worktree`;;
+	This config value must be moved from `$GIT_COMMON_DIR/config` to
+	`$GIT_COMMON_DIR/config.worktree`.
+
+`core.bare`;;
+	If true, then this value must be moved from
+	`$GIT_COMMON_DIR/config` to `$GIT_COMMON_DIR/config.worktree`.
+--
 +
 It may also be beneficial to adjust the locations of `core.sparseCheckout`
 and `core.sparseCheckoutCone` depending on your desire for customizable
