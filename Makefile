@@ -155,9 +155,8 @@ include shared.mak
 # Define BLK_SHA1 environment variable to make use of the bundled
 # optimized C SHA1 routine.
 #
-# Define DC_SHA1 to unconditionally enable the collision-detecting sha1
+# Define DC_SHA1 to enable the collision-detecting sha1
 # algorithm. This is slower, but may detect attempted collision attacks.
-# Takes priority over other *_SHA1 knobs.
 #
 # Define DC_SHA1_EXTERNAL in addition to DC_SHA1 if you want to build / link
 # git with the external SHA1 collision-detect library.
