@@ -72,6 +72,9 @@ struct snapshot {
 	/* Is the `packed-refs` file currently mmapped? */
 	int mmapped;
 
+	/* which file format version is this file? */
+	int version;
+
 	/*
 	 * The contents of the `packed-refs` file:
 	 *
@@ -96,6 +99,14 @@ struct snapshot {
 	 */
 	enum { PEELED_NONE, PEELED_TAGS, PEELED_FULLY } peeled;
 
+	/*************************
+	 * packed-refs v2 values *
+	 *************************/
+	size_t nr;
+	size_t buflen;
+	const unsigned char *offset_chunk;
+	const char *refs_chunk;
+
 	/*
 	 * Count of references to this instance, including the pointer
 	 * from `packed_ref_store::snapshot`, if any. The instance
@@ -111,6 +122,8 @@ struct snapshot {
 	 */
 	struct stat_validity validity;
 };
+
+int release_snapshot(struct snapshot *snapshot);
 
 /*
  * If the buffer in `snapshot` is active, then either munmap the
@@ -175,21 +188,30 @@ struct packed_ref_store {
  */
 struct packed_ref_iterator {
 	struct ref_iterator base;
-
 	struct snapshot *snapshot;
-
-	/* The current position in the snapshot's buffer: */
-	const char *pos;
-
-	/* The end of the part of the buffer that will be iterated over: */
-	const char *eof;
+	struct repository *repo;
+	unsigned int flags;
+	int version;
 
 	/* Scratch space for current values: */
 	struct object_id oid, peeled;
 	struct strbuf refname_buf;
 
-	struct repository *repo;
-	unsigned int flags;
+	/* The current position in the snapshot's buffer: */
+	const char *pos;
+
+	/***********************************
+	 * packed-refs v1 iterator values. *
+	 ***********************************/
+
+	/* The end of the part of the buffer that will be iterated over: */
+	const char *eof;
+
+	/***********************************
+	 * packed-refs v2 iterator values. *
+	 ***********************************/
+	size_t nr;
+	size_t row;
 };
 
 typedef int (*write_ref_fn)(const char *refname,
@@ -242,6 +264,42 @@ int write_packed_entry_v1(const char *refname,
 			  const struct object_id *oid,
 			  const struct object_id *peeled,
 			  void *write_data);
+
+/**
+ * Parse the buffer at the given snapshot to verify that it is a
+ * packed-refs file in version 1 format. Update the snapshot->peeled
+ * value according to the header information. Update the given
+ * 'sorted' value with whether or not the packed-refs file is sorted.
+ */
+int parse_packed_format_v1_header(struct packed_ref_store *refs,
+				  struct snapshot *snapshot,
+				  int *sorted);
+
+int detect_packed_format_v2_header(struct packed_ref_store *refs,
+				   struct snapshot *snapshot);
+/*
+ * Find the place in `snapshot->buf` where the start of the record for
+ * `refname` starts. If `mustexist` is true and the reference doesn't
+ * exist, then return NULL. If `mustexist` is false and the reference
+ * doesn't exist, then return the point where that reference would be
+ * inserted, or `snapshot->eof` (which might be NULL) if it would be
+ * inserted at the end of the file. In the latter mode, `refname`
+ * doesn't have to be a proper reference name; for example, one could
+ * search for "refs/replace/" to find the start of any replace
+ * references.
+ *
+ * The record is sought using a binary search, so `snapshot->buf` must
+ * be sorted.
+ */
+const char *find_reference_location_v2(struct snapshot *snapshot,
+				       const char *refname, int mustexist,
+				       size_t *pos);
+
+int packed_read_raw_ref_v2(struct packed_ref_store *refs, struct snapshot *snapshot,
+			   const char *refname, struct object_id *oid,
+			   unsigned int *type, int *failure_errno);
+int next_record_v2(struct packed_ref_iterator *iter);
+void fill_snapshot_v2(struct snapshot *snapshot);
 
 struct write_packed_refs_v2_context;
 struct write_packed_refs_v2_context *create_v2_context(struct packed_ref_store *refs,

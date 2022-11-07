@@ -15,6 +15,215 @@
 #define CHREFS_CHUNKID_OFFSETS         0x524F4646 /* "ROFF" */
 #define CHREFS_CHUNKID_REFS            0x52454653 /* "REFS" */
 
+int detect_packed_format_v2_header(struct packed_ref_store *refs,
+				   struct snapshot *snapshot)
+{
+	/*
+	 * packed-refs v1 might not have a header, so check instead
+	 * that the v2 signature is not present.
+	 */
+	return get_be32(snapshot->buf) == PACKED_REFS_SIGNATURE;
+}
+
+static const char *get_nth_ref(struct snapshot *snapshot,
+			       size_t n)
+{
+	uint64_t offset;
+
+	if (n >= snapshot->nr)
+		BUG("asking for position %"PRIu64" outside of bounds (%"PRIu64")",
+		    (uint64_t)n, (uint64_t)snapshot->nr);
+
+	if (n)
+		offset = get_be64(snapshot->offset_chunk + (n-1) * sizeof(uint64_t))
+				  & ~OFFSET_IS_PEELED;
+	else
+		offset = 0;
+
+	return snapshot->refs_chunk + offset;
+}
+
+/*
+ * Find the place in `snapshot->buf` where the start of the record for
+ * `refname` starts. If `mustexist` is true and the reference doesn't
+ * exist, then return NULL. If `mustexist` is false and the reference
+ * doesn't exist, then return the point where that reference would be
+ * inserted, or `snapshot->eof` (which might be NULL) if it would be
+ * inserted at the end of the file. In the latter mode, `refname`
+ * doesn't have to be a proper reference name; for example, one could
+ * search for "refs/replace/" to find the start of any replace
+ * references.
+ *
+ * The record is sought using a binary search, so `snapshot->buf` must
+ * be sorted.
+ */
+const char *find_reference_location_v2(struct snapshot *snapshot,
+				       const char *refname, int mustexist,
+				       size_t *pos)
+{
+	size_t lo = 0, hi = snapshot->nr;
+
+	while (lo != hi) {
+		const char *rec;
+		int cmp;
+		size_t mid = lo + (hi - lo) / 2;
+
+		rec = get_nth_ref(snapshot, mid);
+		cmp = strcmp(rec, refname);
+		if (cmp < 0) {
+			lo = mid + 1;
+		} else if (cmp > 0) {
+			hi = mid;
+		} else {
+			if (pos)
+				*pos = mid;
+			return rec;
+		}
+	}
+
+	if (mustexist) {
+		return NULL;
+	} else {
+		const char *ret;
+		/*
+		 * We are likely doing a prefix match, so use the current
+		 * 'lo' position as the indicator.
+		 */
+		if (pos)
+			*pos = lo;
+		if (lo >= snapshot->nr)
+			return NULL;
+
+		ret = get_nth_ref(snapshot, lo);
+		return ret;
+	}
+}
+
+int packed_read_raw_ref_v2(struct packed_ref_store *refs, struct snapshot *snapshot,
+			   const char *refname, struct object_id *oid,
+			   unsigned int *type, int *failure_errno)
+{
+	const char *rec;
+
+	*type = 0;
+
+	rec = find_reference_location_v2(snapshot, refname, 1, NULL);
+
+	if (!rec) {
+		/* refname is not a packed reference. */
+		*failure_errno = ENOENT;
+		return -1;
+	}
+
+	hashcpy(oid->hash, (const unsigned char *)rec + strlen(rec) + 1);
+	oid->algo = hash_algo_by_ptr(the_hash_algo);
+
+	*type = REF_ISPACKED;
+	return 0;
+}
+
+static int packed_refs_read_offsets(const unsigned char *chunk_start,
+				     size_t chunk_size, void *data)
+{
+	struct snapshot *snapshot = data;
+
+	snapshot->offset_chunk = chunk_start;
+	snapshot->nr = chunk_size / sizeof(uint64_t);
+	return 0;
+}
+
+void fill_snapshot_v2(struct snapshot *snapshot)
+{
+	uint32_t file_signature, file_version, hash_version;
+	struct chunkfile *cf;
+
+	file_signature = get_be32(snapshot->buf);
+	if (file_signature != PACKED_REFS_SIGNATURE)
+		die(_("%s file signature %X does not match signature %X"),
+		    "packed-ref", file_signature, PACKED_REFS_SIGNATURE);
+
+	file_version = get_be32(snapshot->buf + sizeof(uint32_t));
+	if (file_version != 2)
+		die(_("format version %u does not match expected file version %u"),
+		    file_version, 2);
+
+	hash_version = get_be32(snapshot->buf + 2 * sizeof(uint32_t));
+	if (hash_version != the_hash_algo->format_id)
+		die(_("hash version %X does not match expected hash version %X"),
+		    hash_version, the_hash_algo->format_id);
+
+	cf = init_chunkfile(NULL);
+
+	if (read_trailing_table_of_contents(cf, (const unsigned char *)snapshot->buf, snapshot->buflen)) {
+		release_snapshot(snapshot);
+		snapshot = NULL;
+		goto cleanup;
+	}
+
+	read_chunk(cf, CHREFS_CHUNKID_OFFSETS, packed_refs_read_offsets, snapshot);
+	pair_chunk(cf, CHREFS_CHUNKID_REFS, (const unsigned char**)&snapshot->refs_chunk);
+
+	/* TODO: add error checks for invalid chunk combinations. */
+
+cleanup:
+	free_chunkfile(cf);
+}
+
+/*
+ * Move the iterator to the next record in the snapshot, without
+ * respect for whether the record is actually required by the current
+ * iteration. Adjust the fields in `iter` and return `ITER_OK` or
+ * `ITER_DONE`. This function does not free the iterator in the case
+ * of `ITER_DONE`.
+ */
+int next_record_v2(struct packed_ref_iterator *iter)
+{
+	uint64_t offset;
+	const char *pos = iter->pos;
+	strbuf_reset(&iter->refname_buf);
+
+	if (iter->row == iter->snapshot->nr)
+		return ITER_DONE;
+
+	iter->base.flags = REF_ISPACKED;
+
+	strbuf_addstr(&iter->refname_buf, pos);
+	iter->base.refname = iter->refname_buf.buf;
+	pos += strlen(pos) + 1;
+
+	hashcpy(iter->oid.hash, (const unsigned char *)pos);
+	iter->oid.algo = hash_algo_by_ptr(the_hash_algo);
+	pos += the_hash_algo->rawsz;
+
+	if (check_refname_format(iter->base.refname, REFNAME_ALLOW_ONELEVEL)) {
+		if (!refname_is_safe(iter->base.refname))
+			die("packed refname is dangerous: %s",
+			    iter->base.refname);
+		oidclr(&iter->oid);
+		iter->base.flags |= REF_BAD_NAME | REF_ISBROKEN;
+	}
+
+	/* We always know the peeled value! */
+	iter->base.flags |= REF_KNOWS_PEELED;
+
+	offset = get_be64(iter->snapshot->offset_chunk + sizeof(uint64_t) * iter->row);
+	if (offset & OFFSET_IS_PEELED) {
+		hashcpy(iter->peeled.hash, (const unsigned char *)pos);
+		iter->peeled.algo = hash_algo_by_ptr(the_hash_algo);
+	} else {
+		oidclr(&iter->peeled);
+	}
+
+	/* TODO: somehow all tags are getting OFFSET_IS_PEELED even though
+	 * some are not annotated tags.
+	 */
+	iter->pos = iter->snapshot->refs_chunk + (offset & (~OFFSET_IS_PEELED));
+
+	iter->row++;
+
+	return ITER_OK;
+}
+
 struct write_packed_refs_v2_context {
 	struct packed_ref_store *refs;
 	struct string_list *updates;

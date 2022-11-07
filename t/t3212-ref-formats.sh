@@ -73,9 +73,24 @@ test_expect_success 'extensions.refFormat=files,packed-v2' '
 		test_must_fail git rev-parse refs/tags/Q &&
 		rm -f .git/packed-refs &&
 
+		git for-each-ref --format="%(refname) %(objectname)" >expect-all &&
+		git for-each-ref --format="%(refname) %(objectname)" \
+			refs/tags/* >expect-tags &&
+
 		# Create a v2 packed-refs file
 		git pack-refs --all &&
-		test_path_exists .git/packed-refs
+		test_path_exists .git/packed-refs &&
+		for t in A B
+		do
+			test_path_is_missing .git/refs/tags/$t &&
+			git rev-parse refs/tags/$t || return 1
+		done &&
+
+		git for-each-ref --format="%(refname) %(objectname)" >actual-all &&
+		test_cmp expect-all actual-all &&
+		git for-each-ref --format="%(refname) %(objectname)" \
+			refs/tags/* >actual-tags &&
+		test_cmp expect-tags actual-tags
 	)
 '
 

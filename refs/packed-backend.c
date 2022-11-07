@@ -66,7 +66,7 @@ void clear_snapshot_buffer(struct snapshot *snapshot)
  * Decrease the reference count of `*snapshot`. If it goes to zero,
  * free `*snapshot` and return true; otherwise return false.
  */
-static int release_snapshot(struct snapshot *snapshot)
+int release_snapshot(struct snapshot *snapshot)
 {
 	if (!--snapshot->referrers) {
 		stat_validity_clear(&snapshot->validity);
@@ -142,7 +142,6 @@ static int load_contents(struct snapshot *snapshot)
 {
 	int fd;
 	struct stat st;
-	size_t size;
 	ssize_t bytes_read;
 
 	if (!packed_refs_enabled(snapshot->refs->store_flags))
@@ -168,25 +167,25 @@ static int load_contents(struct snapshot *snapshot)
 
 	if (fstat(fd, &st) < 0)
 		die_errno("couldn't stat %s", snapshot->refs->path);
-	size = xsize_t(st.st_size);
+	snapshot->buflen = xsize_t(st.st_size);
 
-	if (!size) {
+	if (!snapshot->buflen) {
 		close(fd);
 		return 0;
-	} else if (mmap_strategy == MMAP_NONE || size <= SMALL_FILE_SIZE) {
-		snapshot->buf = xmalloc(size);
-		bytes_read = read_in_full(fd, snapshot->buf, size);
-		if (bytes_read < 0 || bytes_read != size)
+	} else if (mmap_strategy == MMAP_NONE || snapshot->buflen <= SMALL_FILE_SIZE) {
+		snapshot->buf = xmalloc(snapshot->buflen);
+		bytes_read = read_in_full(fd, snapshot->buf, snapshot->buflen);
+		if (bytes_read < 0 || bytes_read != snapshot->buflen)
 			die_errno("couldn't read %s", snapshot->refs->path);
 		snapshot->mmapped = 0;
 	} else {
-		snapshot->buf = xmmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
+		snapshot->buf = xmmap(NULL, snapshot->buflen, PROT_READ, MAP_PRIVATE, fd, 0);
 		snapshot->mmapped = 1;
 	}
 	close(fd);
 
 	snapshot->start = snapshot->buf;
-	snapshot->eof = snapshot->buf + size;
+	snapshot->eof = snapshot->buf + snapshot->buflen;
 
 	return 1;
 }
@@ -232,46 +231,52 @@ static struct snapshot *create_snapshot(struct packed_ref_store *refs)
 	snapshot->refs = refs;
 	acquire_snapshot(snapshot);
 	snapshot->peeled = PEELED_NONE;
+	snapshot->version = 1;
 
 	if (!load_contents(snapshot))
 		return snapshot;
 
-	/*
-	 * If this is a v1 file format, but we don't have v1 enabled,
-	 * then ignore it the same way we would as if we didn't
-	 * understand it.
-	 */
-	if (parse_packed_format_v1_header(refs, snapshot, &sorted) ||
-	    !(refs->store_flags & REF_STORE_FORMAT_PACKED)) {
-		clear_snapshot(refs);
-		return NULL;
-	}
-
-	verify_buffer_safe_v1(snapshot);
-
-	if (!sorted) {
-		sort_snapshot_v1(snapshot);
-
-		/*
-		 * Reordering the records might have moved a short one
-		 * to the end of the buffer, so verify the buffer's
-		 * safety again:
-		 */
+	if ((refs->store_flags & REF_STORE_FORMAT_PACKED) &&
+	    !detect_packed_format_v2_header(refs, snapshot)) {
+		parse_packed_format_v1_header(refs, snapshot, &sorted);
+		snapshot->version = 1;
 		verify_buffer_safe_v1(snapshot);
+
+		if (!sorted) {
+			sort_snapshot_v1(snapshot);
+
+			/*
+			* Reordering the records might have moved a short one
+			* to the end of the buffer, so verify the buffer's
+			* safety again:
+			*/
+			verify_buffer_safe_v1(snapshot);
+		}
+
+		if (mmap_strategy != MMAP_OK && snapshot->mmapped) {
+			/*
+			* We don't want to leave the file mmapped, so we are
+			* forced to make a copy now:
+			*/
+			char *buf_copy = xmalloc(snapshot->buflen);
+
+			memcpy(buf_copy, snapshot->start, snapshot->buflen);
+			clear_snapshot_buffer(snapshot);
+			snapshot->buf = snapshot->start = buf_copy;
+			snapshot->eof = buf_copy + snapshot->buflen;
+		}
+
+		return snapshot;
 	}
 
-	if (mmap_strategy != MMAP_OK && snapshot->mmapped) {
+	if (refs->store_flags & REF_STORE_FORMAT_PACKED_V2) {
 		/*
-		 * We don't want to leave the file mmapped, so we are
-		 * forced to make a copy now:
+		 * Assume we are in v2 format mode, now.
+		 *
+		 * fill_snapshot_v2() will die() if parsing fails.
 		 */
-		size_t size = snapshot->eof - snapshot->start;
-		char *buf_copy = xmalloc(size);
-
-		memcpy(buf_copy, snapshot->start, size);
-		clear_snapshot_buffer(snapshot);
-		snapshot->buf = snapshot->start = buf_copy;
-		snapshot->eof = buf_copy + size;
+		fill_snapshot_v2(snapshot);
+		snapshot->version = 2;
 	}
 
 	return snapshot;
@@ -322,8 +327,18 @@ static int packed_read_raw_ref(struct ref_store *ref_store, const char *refname,
 		return -1;
 	}
 
-	return packed_read_raw_ref_v1(refs, snapshot, refname,
-				      oid, type, failure_errno);
+	switch (snapshot->version) {
+	case 1:
+		return packed_read_raw_ref_v1(refs, snapshot, refname,
+					      oid, type, failure_errno);
+
+	case 2:
+		return packed_read_raw_ref_v2(refs, snapshot, refname,
+					      oid, type, failure_errno);
+
+	default:
+		return -1;
+	}
 }
 
 /*
@@ -335,7 +350,16 @@ static int packed_read_raw_ref(struct ref_store *ref_store, const char *refname,
  */
 static int next_record(struct packed_ref_iterator *iter)
 {
-	return next_record_v1(iter);
+	switch (iter->version) {
+	case 1:
+		return next_record_v1(iter);
+
+	case 2:
+		return next_record_v2(iter);
+
+	default:
+		return -1;
+	}
 }
 
 static int packed_ref_iterator_advance(struct ref_iterator *ref_iterator)
@@ -410,6 +434,7 @@ static struct ref_iterator *packed_ref_iterator_begin(
 	struct packed_ref_iterator *iter;
 	struct ref_iterator *ref_iterator;
 	unsigned int required_flags = REF_STORE_READ;
+	size_t v2_row = 0;
 
 	if (!(flags & DO_FOR_EACH_INCLUDE_BROKEN))
 		required_flags |= REF_STORE_ODB;
@@ -422,13 +447,21 @@ static struct ref_iterator *packed_ref_iterator_begin(
 	 */
 	snapshot = get_snapshot(refs);
 
-	if (!snapshot)
+	if (!snapshot || snapshot->version < 0 || snapshot->version > 2)
 		return empty_ref_iterator_begin();
 
-	if (prefix && *prefix)
-		start = find_reference_location_v1(snapshot, prefix, 0);
-	else
-		start = snapshot->start;
+	if (prefix && *prefix) {
+		if (snapshot->version == 1)
+			start = find_reference_location_v1(snapshot, prefix, 0);
+		else
+			start = find_reference_location_v2(snapshot, prefix, 0,
+							   &v2_row);
+	} else {
+		if (snapshot->version == 1)
+			start = snapshot->start;
+		else
+			start = snapshot->refs_chunk;
+	}
 
 	if (start == snapshot->eof)
 		return empty_ref_iterator_begin();
@@ -439,6 +472,8 @@ static struct ref_iterator *packed_ref_iterator_begin(
 
 	iter->snapshot = snapshot;
 	acquire_snapshot(snapshot);
+	iter->version = snapshot->version;
+	iter->row = v2_row;
 
 	iter->pos = start;
 	iter->eof = snapshot->eof;
