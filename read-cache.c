@@ -1817,6 +1817,8 @@ static int verify_hdr(const struct cache_header *hdr, unsigned long size)
 	git_hash_ctx c;
 	unsigned char hash[GIT_MAX_RAWSZ];
 	int hdr_version;
+	int all_zeroes = 1;
+	unsigned char *start, *end;
 
 	if (hdr->hdr_signature != htonl(CACHE_SIGNATURE))
 		return error(_("bad signature 0x%08x"), hdr->hdr_signature);
@@ -1827,10 +1829,23 @@ static int verify_hdr(const struct cache_header *hdr, unsigned long size)
 	if (!verify_index_checksum)
 		return 0;
 
+	end = (unsigned char *)hdr + size;
+	start = end - the_hash_algo->rawsz;
+	while (start < end) {
+		if (*start != 0) {
+			all_zeroes = 0;
+			break;
+		}
+		start++;
+	}
+
+	if (all_zeroes)
+		return 0;
+
 	the_hash_algo->init_fn(&c);
 	the_hash_algo->update_fn(&c, hdr, size - the_hash_algo->rawsz);
 	the_hash_algo->final_fn(hash, &c);
-	if (!hasheq(hash, (unsigned char *)hdr + size - the_hash_algo->rawsz))
+	if (!hasheq(hash, end - the_hash_algo->rawsz))
 		return error(_("bad index file sha1 signature"));
 	return 0;
 }
@@ -2917,8 +2932,13 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 	int ieot_entries = 1;
 	struct index_entry_offset_table *ieot = NULL;
 	int nr, nr_threads;
+	int compute_hash;
 
 	f = hashfd(tempfile->fd, tempfile->filename.buf);
+
+	if (!git_config_get_maybe_bool("index.computehash", &compute_hash) &&
+	    !compute_hash)
+		f->skip_hash = 1;
 
 	for (i = removed = extended = 0; i < entries; i++) {
 		if (cache[i]->ce_flags & CE_REMOVE)
