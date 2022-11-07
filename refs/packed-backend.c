@@ -535,58 +535,13 @@ static void add_write_error(struct packed_ref_store *refs, struct strbuf *err)
 		    get_tempfile_path(refs->tempfile), strerror(errno));
 }
 
-/*
- * Write the packed refs from the current snapshot to the packed-refs
- * tempfile, incorporating any changes from `updates`. `updates` must
- * be a sorted string list whose keys are the refnames and whose util
- * values are `struct ref_update *`. On error, rollback the tempfile,
- * write an error message to `err`, and return a nonzero value.
- *
- * The packfile must be locked before calling this function and will
- * remain locked when it is done.
- */
-static int write_with_updates(struct packed_ref_store *refs,
-			      struct string_list *updates,
-			      struct strbuf *err)
+static int merge_iterator_and_updates(struct packed_ref_store *refs,
+				      struct string_list *updates,
+				      struct strbuf *err,
+				      FILE *out)
 {
 	struct ref_iterator *iter = NULL;
-	size_t i;
-	int ok;
-	FILE *out;
-	struct strbuf sb = STRBUF_INIT;
-	char *packed_refs_path;
-
-	if (!is_lock_file_locked(&refs->lock))
-		BUG("write_with_updates() called while unlocked");
-
-	/*
-	 * If packed-refs is a symlink, we want to overwrite the
-	 * symlinked-to file, not the symlink itself. Also, put the
-	 * staging file next to it:
-	 */
-	packed_refs_path = get_locked_file_path(&refs->lock);
-	strbuf_addf(&sb, "%s.new", packed_refs_path);
-	free(packed_refs_path);
-	refs->tempfile = create_tempfile(sb.buf);
-	if (!refs->tempfile) {
-		strbuf_addf(err, "unable to create file %s: %s",
-			    sb.buf, strerror(errno));
-		strbuf_release(&sb);
-		return -1;
-	}
-	strbuf_release(&sb);
-
-	out = fdopen_tempfile(refs->tempfile, "w");
-	if (!out) {
-		strbuf_addf(err, "unable to fdopen packed-refs tempfile: %s",
-			    strerror(errno));
-		goto error;
-	}
-
-	if (write_packed_file_header_v1(out) < 0) {
-		add_write_error(refs, err);
-		goto error;
-	}
+	int ok, i;
 
 	/*
 	 * We iterate in parallel through the current list of refs and
@@ -713,6 +668,65 @@ static int write_with_updates(struct packed_ref_store *refs,
 		}
 	}
 
+error:
+	if (iter)
+		ref_iterator_abort(iter);
+	return ok;
+}
+
+/*
+ * Write the packed refs from the current snapshot to the packed-refs
+ * tempfile, incorporating any changes from `updates`. `updates` must
+ * be a sorted string list whose keys are the refnames and whose util
+ * values are `struct ref_update *`. On error, rollback the tempfile,
+ * write an error message to `err`, and return a nonzero value.
+ *
+ * The packfile must be locked before calling this function and will
+ * remain locked when it is done.
+ */
+static int write_with_updates(struct packed_ref_store *refs,
+			      struct string_list *updates,
+			      struct strbuf *err)
+{
+	int ok;
+	FILE *out;
+	struct strbuf sb = STRBUF_INIT;
+	char *packed_refs_path;
+
+	if (!is_lock_file_locked(&refs->lock))
+		BUG("write_with_updates() called while unlocked");
+
+	/*
+	 * If packed-refs is a symlink, we want to overwrite the
+	 * symlinked-to file, not the symlink itself. Also, put the
+	 * staging file next to it:
+	 */
+	packed_refs_path = get_locked_file_path(&refs->lock);
+	strbuf_addf(&sb, "%s.new", packed_refs_path);
+	free(packed_refs_path);
+	refs->tempfile = create_tempfile(sb.buf);
+	if (!refs->tempfile) {
+		strbuf_addf(err, "unable to create file %s: %s",
+			    sb.buf, strerror(errno));
+		strbuf_release(&sb);
+		return -1;
+	}
+	strbuf_release(&sb);
+
+	out = fdopen_tempfile(refs->tempfile, "w");
+	if (!out) {
+		strbuf_addf(err, "unable to fdopen packed-refs tempfile: %s",
+			    strerror(errno));
+		goto error;
+	}
+
+	if (write_packed_file_header_v1(out) < 0) {
+		add_write_error(refs, err);
+		goto error;
+	}
+
+	ok = merge_iterator_and_updates(refs, updates, err, out);
+
 	if (ok != ITER_DONE) {
 		strbuf_addstr(err, "unable to write packed-refs file: "
 			      "error iterating over old contents");
@@ -732,9 +746,6 @@ static int write_with_updates(struct packed_ref_store *refs,
 	return 0;
 
 error:
-	if (iter)
-		ref_iterator_abort(iter);
-
 	delete_tempfile(&refs->tempfile);
 	return -1;
 }
