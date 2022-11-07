@@ -166,6 +166,17 @@ test_expect_success 'scalar reconfigure' '
 	test true = "$(git -C one/src config core.preloadIndex)"
 '
 
+test_expect_success '`reconfigure -a` removes stale config entries' '
+	git init stale/src &&
+	scalar register stale &&
+	scalar list >scalar.repos &&
+	grep stale scalar.repos &&
+	rm -rf stale &&
+	scalar reconfigure -a &&
+	scalar list >scalar.repos &&
+	! grep stale scalar.repos
+'
+
 test_expect_success 'scalar delete without enlistment shows a usage' '
 	test_expect_code 129 scalar delete
 '

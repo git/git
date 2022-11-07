@@ -599,6 +599,24 @@ static int get_scalar_repos(const char *key, const char *value, void *data)
 	return 0;
 }
 
+static int remove_deleted_enlistment(struct strbuf *path)
+{
+	int res = 0;
+	strbuf_realpath_forgiving(path, path->buf, 1);
+
+	if (run_git("config", "--global",
+		    "--unset", "--fixed-value",
+		    "scalar.repo", path->buf, NULL) < 0)
+		res = -1;
+
+	if (run_git("config", "--global",
+		    "--unset", "--fixed-value",
+		    "maintenance.repo", path->buf, NULL) < 0)
+		res = -1;
+
+	return res;
+}
+
 static int cmd_reconfigure(int argc, const char **argv)
 {
 	int all = 0;
@@ -638,8 +656,22 @@ static int cmd_reconfigure(int argc, const char **argv)
 		strbuf_reset(&gitdir);
 
 		if (chdir(dir) < 0) {
-			warning_errno(_("could not switch to '%s'"), dir);
-			res = -1;
+			struct strbuf buf = STRBUF_INIT;
+
+			if (errno != ENOENT) {
+				warning_errno(_("could not switch to '%s'"), dir);
+				res = -1;
+				continue;
+			}
+
+			strbuf_addstr(&buf, dir);
+			if (remove_deleted_enlistment(&buf))
+				res = error(_("could not remove stale "
+					      "scalar.repo '%s'"), dir);
+			else
+				warning(_("removing stale scalar.repo '%s'"),
+					dir);
+			strbuf_release(&buf);
 		} else if (discover_git_directory(&commondir, &gitdir) < 0) {
 			warning_errno(_("git repository gone in '%s'"), dir);
 			res = -1;
@@ -723,24 +755,6 @@ static int cmd_run(int argc, const char **argv)
 			    "--task", tasks[i].task, NULL))
 			return -1;
 	return 0;
-}
-
-static int remove_deleted_enlistment(struct strbuf *path)
-{
-	int res = 0;
-	strbuf_realpath_forgiving(path, path->buf, 1);
-
-	if (run_git("config", "--global",
-		    "--unset", "--fixed-value",
-		    "scalar.repo", path->buf, NULL) < 0)
-		res = -1;
-
-	if (run_git("config", "--global",
-		    "--unset", "--fixed-value",
-		    "maintenance.repo", path->buf, NULL) < 0)
-		res = -1;
-
-	return res;
 }
 
 static int cmd_unregister(int argc, const char **argv)
