@@ -578,9 +578,14 @@ static enum extension_result handle_extension(const char *var,
 		data->hash_algo = format;
 		return EXTENSION_OK;
 	} else if (!strcmp(ext, "refformat")) {
-		if (strcmp(value, "files") && strcmp(value, "packed"))
+		if (!strcmp(value, "files"))
+			data->ref_format |= REF_FORMAT_FILES;
+		else if (!strcmp(value, "packed"))
+			data->ref_format |= REF_FORMAT_PACKED;
+		else
 			return error(_("invalid value for '%s': '%s'"),
 				     "extensions.refFormat", value);
+		data->ref_format_count++;
 		return EXTENSION_OK;
 	}
 	return EXTENSION_UNKNOWN;
@@ -723,6 +728,11 @@ int read_repository_format(struct repository_format *format, const char *path)
 	git_config_from_file(check_repo_format, path, format);
 	if (format->version == -1)
 		clear_repository_format(format);
+
+	/* Set default ref_format if no extensions.refFormat exists. */
+	if (!format->ref_format_count)
+		format->ref_format = REF_FORMAT_FILES | REF_FORMAT_PACKED;
+
 	return format->version;
 }
 
@@ -1425,6 +1435,9 @@ int discover_git_directory(struct strbuf *commondir,
 		candidate.partial_clone;
 	candidate.partial_clone = NULL;
 
+	/* take ownership of candidate.ref_format */
+	the_repository->ref_format = candidate.ref_format;
+
 	clear_repository_format(&candidate);
 	return 0;
 }
@@ -1561,6 +1574,8 @@ const char *setup_git_directory_gently(int *nongit_ok)
 			the_repository->repository_format_partial_clone =
 				repo_fmt.partial_clone;
 			repo_fmt.partial_clone = NULL;
+
+			the_repository->ref_format = repo_fmt.ref_format;
 		}
 	}
 	/*
@@ -1650,6 +1665,7 @@ void check_repository_format(struct repository_format *fmt)
 	repo_set_hash_algo(the_repository, fmt->hash_algo);
 	the_repository->repository_format_partial_clone =
 		xstrdup_or_null(fmt->partial_clone);
+	the_repository->ref_format = fmt->ref_format;
 	clear_repository_format(&repo_fmt);
 }
 

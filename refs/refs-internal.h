@@ -521,6 +521,9 @@ struct ref_store;
 				 REF_STORE_ODB | \
 				 REF_STORE_MAIN)
 
+#define REF_STORE_FORMAT_FILES		(1 << 8) /* can use loose ref files */
+#define REF_STORE_FORMAT_PACKED		(1 << 9) /* can use packed-refs file */
+
 /*
  * Initialize the ref_store for the specified gitdir. These functions
  * should call base_ref_store_init() to initialize the shared part of

@@ -1982,6 +1982,15 @@ static struct ref_store *lookup_ref_store_map(struct hashmap *map,
 	return entry ? entry->refs : NULL;
 }
 
+static int add_ref_format_flags(enum ref_format_flags flags, int caps) {
+	if (flags & REF_FORMAT_FILES)
+		caps |= REF_STORE_FORMAT_FILES;
+	if (flags & REF_FORMAT_PACKED)
+		caps |= REF_STORE_FORMAT_PACKED;
+
+	return caps;
+}
+
 /*
  * Create, record, and return a ref_store instance for the specified
  * gitdir.
@@ -1991,8 +2000,16 @@ static struct ref_store *ref_store_init(struct repository *repo,
 					unsigned int flags)
 {
 	const char *be_name = "files";
-	struct ref_storage_be *be = find_ref_storage_backend(be_name);
+	struct ref_storage_be *be;
 	struct ref_store *refs;
+
+	flags = add_ref_format_flags(repo->ref_format, flags);
+
+	if (!(flags & REF_STORE_FORMAT_FILES) &&
+	    (flags & REF_STORE_FORMAT_PACKED))
+		be_name = "packed";
+
+	be = find_ref_storage_backend(be_name);
 
 	if (!be)
 		BUG("reference backend %s is unknown", be_name);
@@ -2009,7 +2026,8 @@ struct ref_store *get_main_ref_store(struct repository *r)
 	if (!r->gitdir)
 		BUG("attempting to get main_ref_store outside of repository");
 
-	r->refs_private = ref_store_init(r, r->gitdir, REF_STORE_ALL_CAPS);
+	r->refs_private = ref_store_init(r, r->gitdir,
+					 REF_STORE_ALL_CAPS);
 	r->refs_private = maybe_debug_wrap_ref_store(r->gitdir, r->refs_private);
 	return r->refs_private;
 }

@@ -24,4 +24,16 @@ test_expect_success 'invalid extensions.refFormat' '
 	grep "invalid value for '\''extensions.refFormat'\'': '\''bogus'\''" err
 '
 
+test_expect_success 'extensions.refFormat=packed only' '
+	git init only-packed &&
+	(
+		cd only-packed &&
+		git config core.repositoryFormatVersion 1 &&
+		git config extensions.refFormat packed &&
+		test_commit A &&
+		test_path_exists .git/packed-refs &&
+		test_path_is_missing .git/refs/tags/A
+	)
+'
+
 test_done
