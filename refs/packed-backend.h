@@ -192,6 +192,17 @@ struct packed_ref_iterator {
 	unsigned int flags;
 };
 
+typedef int (*write_ref_fn)(const char *refname,
+			    const struct object_id *oid,
+			    const struct object_id *peeled,
+			    void *write_data);
+
+int merge_iterator_and_updates(struct packed_ref_store *refs,
+			       struct string_list *updates,
+			       struct strbuf *err,
+			       write_ref_fn write_fn,
+			       void *write_data);
+
 /**
  * Parse the buffer at the given snapshot to verify that it is a
  * packed-refs file in version 1 format. Update the snapshot->peeled
@@ -227,8 +238,9 @@ void verify_buffer_safe_v1(struct snapshot *snapshot);
 void sort_snapshot_v1(struct snapshot *snapshot);
 int write_packed_file_header_v1(FILE *out);
 int next_record_v1(struct packed_ref_iterator *iter);
-int write_packed_entry_v1(FILE *fh, const char *refname,
+int write_packed_entry_v1(const char *refname,
 			  const struct object_id *oid,
-			  const struct object_id *peeled);
+			  const struct object_id *peeled,
+			  void *write_data);
 
 #endif /* REFS_PACKED_BACKEND_H */

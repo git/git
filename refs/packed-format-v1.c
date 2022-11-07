@@ -441,10 +441,13 @@ int write_packed_file_header_v1(FILE *out)
  * error, return a nonzero value and leave errno set at the value left
  * by the failing call to `fprintf()`.
  */
-int write_packed_entry_v1(FILE *fh, const char *refname,
+int write_packed_entry_v1(const char *refname,
 			  const struct object_id *oid,
-			  const struct object_id *peeled)
+			  const struct object_id *peeled,
+			  void *write_data)
 {
+	FILE *fh = write_data;
+
 	if (fprintf(fh, "%s %s\n", oid_to_hex(oid), refname) < 0 ||
 	    (peeled && fprintf(fh, "^%s\n", oid_to_hex(peeled)) < 0))
 		return -1;

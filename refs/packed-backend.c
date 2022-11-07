@@ -535,10 +535,11 @@ static void add_write_error(struct packed_ref_store *refs, struct strbuf *err)
 		    get_tempfile_path(refs->tempfile), strerror(errno));
 }
 
-static int merge_iterator_and_updates(struct packed_ref_store *refs,
-				      struct string_list *updates,
-				      struct strbuf *err,
-				      FILE *out)
+int merge_iterator_and_updates(struct packed_ref_store *refs,
+			       struct string_list *updates,
+			       struct strbuf *err,
+			       write_ref_fn write_fn,
+			       void *write_data)
 {
 	struct ref_iterator *iter = NULL;
 	int ok, i;
@@ -634,9 +635,10 @@ static int merge_iterator_and_updates(struct packed_ref_store *refs,
 			struct object_id peeled;
 			int peel_error = ref_iterator_peel(iter, &peeled);
 
-			if (write_packed_entry_v1(out, iter->refname,
-						  iter->oid,
-						  peel_error ? NULL : &peeled)) {
+			if (write_fn(iter->refname,
+				     iter->oid,
+				     peel_error ? NULL : &peeled,
+				     write_data)) {
 				add_write_error(refs, err);
 				goto error;
 			}
@@ -657,9 +659,10 @@ static int merge_iterator_and_updates(struct packed_ref_store *refs,
 			int peel_error = peel_object(&update->new_oid,
 						     &peeled);
 
-			if (write_packed_entry_v1(out, update->refname,
-						  &update->new_oid,
-						  peel_error ? NULL : &peeled)) {
+			if (write_fn(update->refname,
+				     &update->new_oid,
+				     peel_error ? NULL : &peeled,
+				     write_data)) {
 				add_write_error(refs, err);
 				goto error;
 			}
@@ -725,7 +728,8 @@ static int write_with_updates(struct packed_ref_store *refs,
 		goto error;
 	}
 
-	ok = merge_iterator_and_updates(refs, updates, err, out);
+	ok = merge_iterator_and_updates(refs, updates, err,
+					write_packed_entry_v1, out);
 
 	if (ok != ITER_DONE) {
 		strbuf_addstr(err, "unable to write packed-refs file: "
