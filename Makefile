@@ -515,13 +515,14 @@ include shared.mak
 #
 # ==== SHA-256 implementations ====
 #
-# Define BLK_SHA256 to use the built-in SHA-256 routines.
-#
 # Define NETTLE_SHA256 to use the SHA-256 routines in libnettle.
 #
 # Define GCRYPT_SHA256 to use the SHA-256 routines in libgcrypt.
 #
 # Define OPENSSL_SHA256 to use the SHA-256 routines in OpenSSL.
+#
+# If don't enable any of the *_SHA256 settings in this section, Git
+# will default to its built-in sha256 implementation.
 #
 # == DEVELOPER defines ==
 #
