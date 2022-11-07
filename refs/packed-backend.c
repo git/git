@@ -790,7 +790,8 @@ static int write_with_updates(struct packed_ref_store *refs,
 		break;
 
 	case 2:
-		ok = write_with_updates_v2(refs, updates, err);
+		/* Convert the normal error codes to ITER_DONE. */
+		ok = write_with_updates_v2(refs, updates, err) ? -2 : ITER_DONE;
 		break;
 
 	default:

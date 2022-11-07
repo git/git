@@ -71,7 +71,11 @@ test_expect_success 'extensions.refFormat=files,packed-v2' '
 		# Refuse to parse a v1 packed-refs file.
 		cp ../.git/packed-refs .git/packed-refs &&
 		test_must_fail git rev-parse refs/tags/Q &&
-		rm -f .git/packed-refs
+		rm -f .git/packed-refs &&
+
+		# Create a v2 packed-refs file
+		git pack-refs --all &&
+		test_path_exists .git/packed-refs
 	)
 '
 
