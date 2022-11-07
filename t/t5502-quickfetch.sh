@@ -122,7 +122,7 @@ test_expect_success 'quickfetch should not copy from alternate' '
 
 '
 
-test_expect_success 'quickfetch should handle ~1000 refs (on Windows)' '
+test_expect_success PACKED_REFS_V1 'quickfetch should handle ~1000 refs (on Windows)' '
 
 	git gc &&
 	head=$(git rev-parse HEAD) &&
