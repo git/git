@@ -13,6 +13,7 @@ struct chunk_info {
 	chunk_write_fn write_fn;
 
 	const void *start;
+	off_t offset;
 };
 
 struct chunkfile {
@@ -78,16 +79,16 @@ int write_chunkfile(struct chunkfile *cf, void *data)
 	hashwrite_be64(cf->f, cur_offset);
 
 	for (i = 0; i < cf->chunks_nr; i++) {
-		off_t start_offset = hashfile_total(cf->f);
+		cf->chunks[i].offset = hashfile_total(cf->f);
 		result = cf->chunks[i].write_fn(cf->f, data);
 
 		if (result)
 			goto cleanup;
 
-		if (hashfile_total(cf->f) - start_offset != cf->chunks[i].size)
+		if (hashfile_total(cf->f) - cf->chunks[i].offset != cf->chunks[i].size)
 			BUG("expected to write %"PRId64" bytes to chunk %"PRIx32", but wrote %"PRId64" instead",
 			    cf->chunks[i].size, cf->chunks[i].id,
-			    hashfile_total(cf->f) - start_offset);
+			    hashfile_total(cf->f) - cf->chunks[i].offset);
 	}
 
 cleanup:
