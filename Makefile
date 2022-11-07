@@ -481,6 +481,17 @@ include shared.mak
 #
 # === SHA-1 backend ===
 #
+# ==== Security ====
+#
+# Due to the SHAttered (https://shattered.io) attack vector on SHA-1
+# it's strongly recommended to use the sha1collisiondetection
+# counter-cryptanalysis library for SHA-1 hashing.
+#
+# If you know that you can trust the repository contents, or where
+# potential SHA-1 attacks are otherwise mitigated the other backends
+# listed in "SHA-1 implementations" are faster than
+# sha1collisiondetection.
+#
 # ==== Default SHA-1 backend ====
 #
 # If no *_SHA1 backend is picked, the first supported one listed in
@@ -524,6 +535,11 @@ include shared.mak
 # submodule.
 #
 # === SHA-256 backend ===
+#
+# ==== Security ====
+#
+# Unlike SHA-1 the SHA-256 algorithm does not suffer from any known
+# vulnerabilities, so any implementation will do.
 #
 # ==== SHA-256 implementations ====
 #
