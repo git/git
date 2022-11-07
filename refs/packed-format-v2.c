@@ -417,6 +417,7 @@ struct write_packed_refs_v2_context *create_v2_context(struct packed_ref_store *
 						       struct strbuf *err)
 {
 	struct write_packed_refs_v2_context *ctx;
+	int do_skip_hash;
 	CALLOC_ARRAY(ctx, 1);
 
 	ctx->refs = refs;
@@ -430,6 +431,12 @@ struct write_packed_refs_v2_context *create_v2_context(struct packed_ref_store *
 	}
 
 	ctx->f = hashfd(refs->tempfile->fd, refs->tempfile->filename.buf);
+
+	/* Default to true, so skip_hash if not set. */
+	if (git_config_get_maybe_bool("refs.hashpackedrefs", &do_skip_hash) ||
+	    do_skip_hash)
+		ctx->f->skip_hash = 1;
+
 	ctx->cf = init_chunkfile(ctx->f);
 
 	return ctx;

@@ -36,6 +36,11 @@ test_perf 'git pack-refs (v2)' '
 	git pack-refs --all
 '
 
+test_perf 'git pack-refs (v2;hashing)' '
+	git commit --allow-empty -m "change one ref" &&
+	git -c refs.hashPackedRefs=true pack-refs --all
+'
+
 test_perf 'git for-each-ref (v2)' '
 	git for-each-ref --format="%(refname)" >/dev/null
 '
