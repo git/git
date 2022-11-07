@@ -35,17 +35,34 @@ indicate the existence of different layers:
 	`files`, the `packed` format will only be used to group multiple
 	loose object files upon request via the `git pack-refs` command or
 	via the `pack-refs` maintenance task.
+
+`packed-v2`;;
+	When present, references may be stored as a group in a
+	`packed-refs` file in its version 2 format. This file is in the
+	same position and interacts with loose refs the same as when the
+	`packed` value exists. Both `packed` and `packed-v2` must exist to
+	upgrade an existing `packed-refs` file from version 1 to version 2
+	or to downgrade from version 2 to version 1. When both are
+	present, the `refs.packedRefsVersion` config value indicates which
+	file format version is used during writes, but both versions are
+	understood when reading the file.
 --
 +
 The following combinations are supported by this version of Git:
 +
 --
-`files` and `packed`;;
+`files` and (`packed` and/or `packed-v2`);;
 	This set of values indicates that references are stored both as
-	loose reference files and in the `packed-refs` file in its v1
-	format. Loose references are preferred, and the `packed-refs` file
-	is updated only when deleting a reference that is stored in the
-	`packed-refs` file or during a `git pack-refs` command.
+	loose reference files and in the `packed-refs` file. Loose
+	references are preferred, and the `packed-refs` file is updated
+	only when deleting a reference that is stored in the `packed-refs`
+	file or during a `git pack-refs` command.
++
+The presence of `packed` and `packed-v2` specifies whether the `packed-refs`
+file is allowed to be in its v1 or v2 formats, respectively. When only one
+is present, Git will refuse to read the `packed-refs` file that do not
+match the expected format. When both are present, the `refs.packedRefsVersion`
+config option indicates which file format is used during writes.
 
 `files`;;
 	When only this value is present, Git will ignore the `packed-refs`

@@ -1987,6 +1987,8 @@ static int add_ref_format_flags(enum ref_format_flags flags, int caps) {
 		caps |= REF_STORE_FORMAT_FILES;
 	if (flags & REF_FORMAT_PACKED)
 		caps |= REF_STORE_FORMAT_PACKED;
+	if (flags & REF_FORMAT_PACKED_V2)
+		caps |= REF_STORE_FORMAT_PACKED_V2;
 
 	return caps;
 }
@@ -2006,7 +2008,7 @@ static struct ref_store *ref_store_init(struct repository *repo,
 	flags = add_ref_format_flags(repo->ref_format, flags);
 
 	if (!(flags & REF_STORE_FORMAT_FILES) &&
-	    (flags & REF_STORE_FORMAT_PACKED))
+	    packed_refs_enabled(flags))
 		be_name = "packed";
 
 	be = find_ref_storage_backend(be_name);

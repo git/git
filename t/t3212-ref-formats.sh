@@ -56,4 +56,23 @@ test_expect_success 'extensions.refFormat=files only' '
 	)
 '
 
+test_expect_success 'extensions.refFormat=files,packed-v2' '
+	test_commit Q &&
+	git pack-refs --all &&
+	git init no-packed-v1 &&
+	(
+		cd no-packed-v1 &&
+		git config core.repositoryFormatVersion 1 &&
+		git config extensions.refFormat files &&
+		git config --add extensions.refFormat packed-v2 &&
+		test_commit A &&
+		test_commit B &&
+
+		# Refuse to parse a v1 packed-refs file.
+		cp ../.git/packed-refs .git/packed-refs &&
+		test_must_fail git rev-parse refs/tags/Q &&
+		rm -f .git/packed-refs
+	)
+'
+
 test_done

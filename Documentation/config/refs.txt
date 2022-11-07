@@ -1,0 +1,13 @@
+refs.packedRefsVersion::
+	Specifies the file format version to use when writing a `packed-refs`
+	file. Defaults to `1`.
++
+The only other value currently allowed is `2`, which uses a structured file
+format to result in a smaller `packed-refs` file. In order to write this
+file format version, the repository must also have the `packed-v2` extension
+enabled. The most typical setup will include the
+`core.repositoryFormatVersion=1` config value and the `extensions.refFormat`
+key will have three values: `files`, `packed`, and `packed-v2`.
++
+If `extensions.refFormat` has the value `packed-v2` and not `packed`, then
+`refs.packedRefsVersion` defaults to `2`.

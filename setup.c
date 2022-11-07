@@ -582,6 +582,8 @@ static enum extension_result handle_extension(const char *var,
 			data->ref_format |= REF_FORMAT_FILES;
 		else if (!strcmp(value, "packed"))
 			data->ref_format |= REF_FORMAT_PACKED;
+		else if (!strcmp(value, "packed-v2"))
+			data->ref_format |= REF_FORMAT_PACKED_V2;
 		else
 			return error(_("invalid value for '%s': '%s'"),
 				     "extensions.refFormat", value);

@@ -236,7 +236,13 @@ static struct snapshot *create_snapshot(struct packed_ref_store *refs)
 	if (!load_contents(snapshot))
 		return snapshot;
 
-	if (parse_packed_format_v1_header(refs, snapshot, &sorted)) {
+	/*
+	 * If this is a v1 file format, but we don't have v1 enabled,
+	 * then ignore it the same way we would as if we didn't
+	 * understand it.
+	 */
+	if (parse_packed_format_v1_header(refs, snapshot, &sorted) ||
+	    !(refs->store_flags & REF_STORE_FORMAT_PACKED)) {
 		clear_snapshot(refs);
 		return NULL;
 	}
@@ -309,6 +315,12 @@ static int packed_read_raw_ref(struct ref_store *ref_store, const char *refname,
 	struct packed_ref_store *refs =
 		packed_downcast(ref_store, REF_STORE_READ, "read_raw_ref");
 	struct snapshot *snapshot = get_snapshot(refs);
+
+	if (!snapshot) {
+		/* refname is not a packed reference. */
+		*failure_errno = ENOENT;
+		return -1;
+	}
 
 	return packed_read_raw_ref_v1(refs, snapshot, refname,
 				      oid, type, failure_errno);
@@ -409,6 +421,9 @@ static struct ref_iterator *packed_ref_iterator_begin(
 	 * it if not.
 	 */
 	snapshot = get_snapshot(refs);
+
+	if (!snapshot)
+		return empty_ref_iterator_begin();
 
 	if (prefix && *prefix)
 		start = find_reference_location_v1(snapshot, prefix, 0);
