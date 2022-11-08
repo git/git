@@ -1358,6 +1358,7 @@ static void find_subpos(const char *buf,
 
 	/* parse signature first; we might not even have a subject line */
 	parse_signature(buf, end - buf, &payload, &signature);
+	strbuf_release(&payload);
 
 	/* skip past header until we hit empty line */
 	while (*buf && *buf != '\n') {

@@ -2,6 +2,7 @@
 
 test_description='git rebase across mode change'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '

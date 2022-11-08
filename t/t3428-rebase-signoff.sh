@@ -5,6 +5,7 @@ test_description='git rebase --signoff
 This test runs git rebase --signoff and make sure that it works.
 '
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # A simple file to commit

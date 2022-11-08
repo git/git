@@ -17,6 +17,7 @@ int cmd_main(int argc, const char **argv)
 	f = fopen(buf.buf, "w");
 	if (!f)
 		die("Could not write to %s", buf.buf);
+	strbuf_release(&buf);
 	for (i = 0; i < argc; i++)
 		fprintf(f, "%s%s", i > 0 ? " " : "", i > 0 ? argv[i] : "ssh:");
 	fprintf(f, "\n");
