@@ -2,6 +2,7 @@
 
 test_description='Test shallow cloning of repos with submodules'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 pwd=$(pwd)
