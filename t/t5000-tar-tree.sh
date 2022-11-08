@@ -342,6 +342,13 @@ test_expect_success 'only enabled filters are available remotely' '
 	test_cmp_bin remote.bar config.bar
 '
 
+test_expect_success 'invalid filter is reported only once' '
+	test_must_fail git -c tar.invalid.command= archive --format=invalid \
+		HEAD >out 2>err &&
+	test_must_be_empty out &&
+	test_line_count = 1 err
+'
+
 test_expect_success 'git archive --format=tgz' '
 	git archive --format=tgz HEAD >j.tgz
 '
