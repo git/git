@@ -1454,13 +1454,15 @@ static char *get_maintpath(void)
 }
 
 static char const * const builtin_maintenance_register_usage[] = {
-	"git maintenance register",
+	"git maintenance register [--config-file <path>]",
 	NULL
 };
 
 static int maintenance_register(int argc, const char **argv, const char *prefix)
 {
+	char *config_file = NULL;
 	struct option options[] = {
+		OPT_STRING(0, "config-file", &config_file, N_("file"), N_("use given config file")),
 		OPT_END(),
 	};
 	int found = 0;
@@ -1497,12 +1499,16 @@ static int maintenance_register(int argc, const char **argv, const char *prefix)
 
 	if (!found) {
 		int rc;
-		char *user_config, *xdg_config;
-		git_global_config(&user_config, &xdg_config);
-		if (!user_config)
-			die(_("$HOME not set"));
+		char *user_config = NULL, *xdg_config = NULL;
+
+		if (!config_file) {
+			git_global_config(&user_config, &xdg_config);
+			config_file = user_config;
+			if (!user_config)
+				die(_("$HOME not set"));
+		}
 		rc = git_config_set_multivar_in_file_gently(
-			user_config, "maintenance.repo", maintpath,
+			config_file, "maintenance.repo", maintpath,
 			CONFIG_REGEX_NONE, 0);
 		free(user_config);
 		free(xdg_config);
@@ -1517,14 +1523,16 @@ static int maintenance_register(int argc, const char **argv, const char *prefix)
 }
 
 static char const * const builtin_maintenance_unregister_usage[] = {
-	"git maintenance unregister [--force]",
+	"git maintenance unregister [--config-file <path>] [--force]",
 	NULL
 };
 
 static int maintenance_unregister(int argc, const char **argv, const char *prefix)
 {
 	int force = 0;
+	char *config_file = NULL;
 	struct option options[] = {
+		OPT_STRING(0, "config-file", &config_file, N_("file"), N_("use given config file")),
 		OPT__FORCE(&force,
 			   N_("return success even if repository was not registered"),
 			   PARSE_OPT_NOCOMPLETE),
@@ -1542,24 +1550,29 @@ static int maintenance_unregister(int argc, const char **argv, const char *prefi
 		usage_with_options(builtin_maintenance_unregister_usage,
 				   options);
 
-	list = git_config_get_value_multi(key);
-	if (list) {
-		for_each_string_list_item(item, list) {
-			if (!strcmp(maintpath, item->string)) {
-				found = 1;
-				break;
+	if (!config_file) {
+		list = git_config_get_value_multi(key);
+		if (list) {
+			for_each_string_list_item(item, list) {
+				if (!strcmp(maintpath, item->string)) {
+					found = 1;
+					break;
+				}
 			}
 		}
 	}
 
-	if (found) {
+	if (found || config_file) {
 		int rc;
-		char *user_config, *xdg_config;
-		git_global_config(&user_config, &xdg_config);
-		if (!user_config)
-			die(_("$HOME not set"));
+		char *user_config = NULL, *xdg_config = NULL;
+		if (!config_file) {
+			git_global_config(&user_config, &xdg_config);
+			config_file = user_config;
+			if (!user_config)
+				die(_("$HOME not set"));
+		}
 		rc = git_config_set_multivar_in_file_gently(
-			user_config, key, NULL, maintpath,
+			config_file, key, NULL, maintpath,
 			CONFIG_FLAGS_MULTI_REPLACE | CONFIG_FLAGS_FIXED_VALUE);
 		free(user_config);
 		free(xdg_config);
