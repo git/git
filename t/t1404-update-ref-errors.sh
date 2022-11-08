@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='Test git update-ref error handling'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # Create some references, perhaps run pack-refs --all, then try to

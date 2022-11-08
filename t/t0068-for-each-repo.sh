@@ -2,6 +2,7 @@
 
 test_description='git for-each-repo builtin'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'run based on configured value' '
