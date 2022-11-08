@@ -345,60 +345,49 @@ out:
 	return rc;
 }
 
-static void read_empty(const struct object_id *oid, int verbose)
+static void read_empty(const struct object_id *oid)
 {
-	int i = 0;
-	const char *args[7];
+	struct child_process cmd = CHILD_PROCESS_INIT;
 
-	args[i++] = "read-tree";
-	if (verbose)
-		args[i++] = "-v";
-	args[i++] = "-m";
-	args[i++] = "-u";
-	args[i++] = empty_tree_oid_hex();
-	args[i++] = oid_to_hex(oid);
-	args[i] = NULL;
+	strvec_pushl(&cmd.args, "read-tree", "-m", "-u", empty_tree_oid_hex(),
+		     oid_to_hex(oid), NULL);
+	cmd.git_cmd = 1;
 
-	if (run_command_v_opt(args, RUN_GIT_CMD))
+	if (run_command(&cmd))
 		die(_("read-tree failed"));
 }
 
-static void reset_hard(const struct object_id *oid, int verbose)
+static void reset_hard(const struct object_id *oid)
 {
-	int i = 0;
-	const char *args[6];
+	struct child_process cmd = CHILD_PROCESS_INIT;
 
-	args[i++] = "read-tree";
-	if (verbose)
-		args[i++] = "-v";
-	args[i++] = "--reset";
-	args[i++] = "-u";
-	args[i++] = oid_to_hex(oid);
-	args[i] = NULL;
+	strvec_pushl(&cmd.args, "read-tree", "-v", "--reset", "-u",
+		     oid_to_hex(oid), NULL);
+	cmd.git_cmd = 1;
 
-	if (run_command_v_opt(args, RUN_GIT_CMD))
+	if (run_command(&cmd))
 		die(_("read-tree failed"));
 }
 
 static void restore_state(const struct object_id *head,
 			  const struct object_id *stash)
 {
-	struct strvec args = STRVEC_INIT;
+	struct child_process cmd = CHILD_PROCESS_INIT;
 
-	reset_hard(head, 1);
+	reset_hard(head);
 
 	if (is_null_oid(stash))
 		goto refresh_cache;
 
-	strvec_pushl(&args, "stash", "apply", "--index", "--quiet", NULL);
-	strvec_push(&args, oid_to_hex(stash));
+	strvec_pushl(&cmd.args, "stash", "apply", "--index", "--quiet", NULL);
+	strvec_push(&cmd.args, oid_to_hex(stash));
 
 	/*
 	 * It is OK to ignore error here, for example when there was
 	 * nothing to restore.
 	 */
-	run_command_v_opt(args.v, RUN_GIT_CMD);
-	strvec_clear(&args);
+	cmd.git_cmd = 1;
+	run_command(&cmd);
 
 refresh_cache:
 	if (discard_cache() < 0 || read_cache() < 0)
@@ -1470,7 +1459,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 					       check_trust_level);
 
 		remote_head_oid = &remoteheads->item->object.oid;
-		read_empty(remote_head_oid, 0);
+		read_empty(remote_head_oid);
 		update_ref("initial pull", "HEAD", remote_head_oid, NULL, 0,
 			   UPDATE_REFS_DIE_ON_ERR);
 		goto done;

@@ -220,18 +220,17 @@ static int bisect_reset(const char *commit)
 	}
 
 	if (!ref_exists("BISECT_HEAD")) {
-		struct strvec argv = STRVEC_INIT;
+		struct child_process cmd = CHILD_PROCESS_INIT;
 
-		strvec_pushl(&argv, "checkout", branch.buf, "--", NULL);
-		if (run_command_v_opt(argv.v, RUN_GIT_CMD)) {
+		cmd.git_cmd = 1;
+		strvec_pushl(&cmd.args, "checkout", branch.buf, "--", NULL);
+		if (run_command(&cmd)) {
 			error(_("could not check out original"
 				" HEAD '%s'. Try 'git bisect"
 				" reset <commit>'."), branch.buf);
 			strbuf_release(&branch);
-			strvec_clear(&argv);
 			return -1;
 		}
-		strvec_clear(&argv);
 	}
 
 	strbuf_release(&branch);
@@ -765,10 +764,12 @@ static enum bisect_error bisect_start(struct bisect_terms *terms, const char **a
 		strbuf_read_file(&start_head, git_path_bisect_start(), 0);
 		strbuf_trim(&start_head);
 		if (!no_checkout) {
-			const char *argv[] = { "checkout", start_head.buf,
-					       "--", NULL };
+			struct child_process cmd = CHILD_PROCESS_INIT;
 
-			if (run_command_v_opt(argv, RUN_GIT_CMD)) {
+			cmd.git_cmd = 1;
+			strvec_pushl(&cmd.args, "checkout", start_head.buf,
+				     "--", NULL);
+			if (run_command(&cmd)) {
 				res = error(_("checking out '%s' failed."
 						 " Try 'git bisect start "
 						 "<valid-branch>'."),
@@ -1098,40 +1099,38 @@ static enum bisect_error bisect_skip(struct bisect_terms *terms, const char **ar
 
 static int bisect_visualize(struct bisect_terms *terms, const char **argv, int argc)
 {
-	struct strvec args = STRVEC_INIT;
-	int flags = RUN_COMMAND_NO_STDIN, res = 0;
+	struct child_process cmd = CHILD_PROCESS_INIT;
 	struct strbuf sb = STRBUF_INIT;
 
 	if (bisect_next_check(terms, NULL) != 0)
 		return BISECT_FAILED;
 
+	cmd.no_stdin = 1;
 	if (!argc) {
 		if ((getenv("DISPLAY") || getenv("SESSIONNAME") || getenv("MSYSTEM") ||
 		     getenv("SECURITYSESSIONID")) && exists_in_PATH("gitk")) {
-			strvec_push(&args, "gitk");
+			strvec_push(&cmd.args, "gitk");
 		} else {
-			strvec_push(&args, "log");
-			flags |= RUN_GIT_CMD;
+			strvec_push(&cmd.args, "log");
+			cmd.git_cmd = 1;
 		}
 	} else {
 		if (argv[0][0] == '-') {
-			strvec_push(&args, "log");
-			flags |= RUN_GIT_CMD;
+			strvec_push(&cmd.args, "log");
+			cmd.git_cmd = 1;
 		} else if (strcmp(argv[0], "tig") && !starts_with(argv[0], "git"))
-			flags |= RUN_GIT_CMD;
+			cmd.git_cmd = 1;
 
-		strvec_pushv(&args, argv);
+		strvec_pushv(&cmd.args, argv);
 	}
 
-	strvec_pushl(&args, "--bisect", "--", NULL);
+	strvec_pushl(&cmd.args, "--bisect", "--", NULL);
 
 	strbuf_read_file(&sb, git_path_bisect_names(), 0);
-	sq_dequote_to_strvec(sb.buf, &args);
+	sq_dequote_to_strvec(sb.buf, &cmd.args);
 	strbuf_release(&sb);
 
-	res = run_command_v_opt(args.v, flags);
-	strvec_clear(&args);
-	return res;
+	return run_command(&cmd);
 }
 
 static int get_first_good(const char *refname UNUSED,
@@ -1142,8 +1141,17 @@ static int get_first_good(const char *refname UNUSED,
 	return 1;
 }
 
-static int verify_good(const struct bisect_terms *terms,
-		       const char **quoted_argv)
+static int do_bisect_run(const char *command)
+{
+	struct child_process cmd = CHILD_PROCESS_INIT;
+
+	printf(_("running %s\n"), command);
+	cmd.use_shell = 1;
+	strvec_push(&cmd.args, command);
+	return run_command(&cmd);
+}
+
+static int verify_good(const struct bisect_terms *terms, const char *command)
 {
 	int rc;
 	enum bisect_error res;
@@ -1163,8 +1171,7 @@ static int verify_good(const struct bisect_terms *terms,
 	if (res != BISECT_OK)
 		return -1;
 
-	printf(_("running %s\n"), quoted_argv[0]);
-	rc = run_command_v_opt(quoted_argv, RUN_USING_SHELL);
+	rc = do_bisect_run(command);
 
 	res = bisect_checkout(&current_rev, no_checkout);
 	if (res != BISECT_OK)
@@ -1177,7 +1184,6 @@ static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
 {
 	int res = BISECT_OK;
 	struct strbuf command = STRBUF_INIT;
-	struct strvec run_args = STRVEC_INIT;
 	const char *new_state;
 	int temporary_stdout_fd, saved_stdout;
 	int is_first_run = 1;
@@ -1192,11 +1198,8 @@ static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
 		return BISECT_FAILED;
 	}
 
-	strvec_push(&run_args, command.buf);
-
 	while (1) {
-		printf(_("running %s\n"), command.buf);
-		res = run_command_v_opt(run_args.v, RUN_USING_SHELL);
+		res = do_bisect_run(command.buf);
 
 		/*
 		 * Exit code 126 and 127 can either come from the shell
@@ -1206,7 +1209,7 @@ static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
 		 * missing or non-executable script.
 		 */
 		if (is_first_run && (res == 126 || res == 127)) {
-			int rc = verify_good(terms, run_args.v);
+			int rc = verify_good(terms, command.buf);
 			is_first_run = 0;
 			if (rc < 0) {
 				error(_("unable to verify '%s' on good"
@@ -1273,7 +1276,6 @@ static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
 	}
 
 	strbuf_release(&command);
-	strvec_clear(&run_args);
 	return res;
 }
 

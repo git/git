@@ -3183,18 +3183,15 @@ static int rollback_is_safe(void)
 
 static int reset_merge(const struct object_id *oid)
 {
-	int ret;
-	struct strvec argv = STRVEC_INIT;
+	struct child_process cmd = CHILD_PROCESS_INIT;
 
-	strvec_pushl(&argv, "reset", "--merge", NULL);
+	cmd.git_cmd = 1;
+	strvec_pushl(&cmd.args, "reset", "--merge", NULL);
 
 	if (!is_null_oid(oid))
-		strvec_push(&argv, oid_to_hex(oid));
+		strvec_push(&cmd.args, oid_to_hex(oid));
 
-	ret = run_command_v_opt(argv.v, RUN_GIT_CMD);
-	strvec_clear(&argv);
-
-	return ret;
+	return run_command(&cmd);
 }
 
 static int rollback_single_pick(struct repository *r)
@@ -3558,12 +3555,13 @@ static int error_failed_squash(struct repository *r,
 
 static int do_exec(struct repository *r, const char *command_line)
 {
-	const char *child_argv[] = { NULL, NULL };
+	struct child_process cmd = CHILD_PROCESS_INIT;
 	int dirty, status;
 
 	fprintf(stderr, _("Executing: %s\n"), command_line);
-	child_argv[0] = command_line;
-	status = run_command_v_opt(child_argv, RUN_USING_SHELL);
+	cmd.use_shell = 1;
+	strvec_push(&cmd.args, command_line);
+	status = run_command(&cmd);
 
 	/* force re-reading of the cache */
 	if (discard_index(r->index) < 0 || repo_read_index(r) < 0)
@@ -4867,14 +4865,14 @@ cleanup_head_ref:
 
 static int continue_single_pick(struct repository *r, struct replay_opts *opts)
 {
-	struct strvec argv = STRVEC_INIT;
-	int ret;
+	struct child_process cmd = CHILD_PROCESS_INIT;
 
 	if (!refs_ref_exists(get_main_ref_store(r), "CHERRY_PICK_HEAD") &&
 	    !refs_ref_exists(get_main_ref_store(r), "REVERT_HEAD"))
 		return error(_("no cherry-pick or revert in progress"));
 
-	strvec_push(&argv, "commit");
+	cmd.git_cmd = 1;
+	strvec_push(&cmd.args, "commit");
 
 	/*
 	 * continue_single_pick() handles the case of recovering from a
@@ -4887,11 +4885,9 @@ static int continue_single_pick(struct repository *r, struct replay_opts *opts)
 		 * Include --cleanup=strip as well because we don't want the
 		 * "# Conflicts:" messages.
 		 */
-		strvec_pushl(&argv, "--no-edit", "--cleanup=strip", NULL);
+		strvec_pushl(&cmd.args, "--no-edit", "--cleanup=strip", NULL);
 
-	ret = run_command_v_opt(argv.v, RUN_GIT_CMD);
-	strvec_clear(&argv);
-	return ret;
+	return run_command(&cmd);
 }
 
 static int commit_staged_changes(struct repository *r,

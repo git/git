@@ -4301,35 +4301,34 @@ static void run_external_diff(const char *pgm,
 			      const char *xfrm_msg,
 			      struct diff_options *o)
 {
-	struct strvec argv = STRVEC_INIT;
-	struct strvec env = STRVEC_INIT;
+	struct child_process cmd = CHILD_PROCESS_INIT;
 	struct diff_queue_struct *q = &diff_queued_diff;
 
-	strvec_push(&argv, pgm);
-	strvec_push(&argv, name);
+	strvec_push(&cmd.args, pgm);
+	strvec_push(&cmd.args, name);
 
 	if (one && two) {
-		add_external_diff_name(o->repo, &argv, name, one);
+		add_external_diff_name(o->repo, &cmd.args, name, one);
 		if (!other)
-			add_external_diff_name(o->repo, &argv, name, two);
+			add_external_diff_name(o->repo, &cmd.args, name, two);
 		else {
-			add_external_diff_name(o->repo, &argv, other, two);
-			strvec_push(&argv, other);
-			strvec_push(&argv, xfrm_msg);
+			add_external_diff_name(o->repo, &cmd.args, other, two);
+			strvec_push(&cmd.args, other);
+			strvec_push(&cmd.args, xfrm_msg);
 		}
 	}
 
-	strvec_pushf(&env, "GIT_DIFF_PATH_COUNTER=%d", ++o->diff_path_counter);
-	strvec_pushf(&env, "GIT_DIFF_PATH_TOTAL=%d", q->nr);
+	strvec_pushf(&cmd.env, "GIT_DIFF_PATH_COUNTER=%d",
+		     ++o->diff_path_counter);
+	strvec_pushf(&cmd.env, "GIT_DIFF_PATH_TOTAL=%d", q->nr);
 
 	diff_free_filespec_data(one);
 	diff_free_filespec_data(two);
-	if (run_command_v_opt_cd_env(argv.v, RUN_USING_SHELL, NULL, env.v))
+	cmd.use_shell = 1;
+	if (run_command(&cmd))
 		die(_("external diff died, stopping at %s"), name);
 
 	remove_tempfile();
-	strvec_clear(&argv);
-	strvec_clear(&env);
 }
 
 static int similarity_index(struct diff_filepair *p)

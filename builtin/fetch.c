@@ -1972,14 +1972,17 @@ static int fetch_multiple(struct string_list *list, int max_children)
 	} else
 		for (i = 0; i < list->nr; i++) {
 			const char *name = list->items[i].string;
-			strvec_push(&argv, name);
+			struct child_process cmd = CHILD_PROCESS_INIT;
+
+			strvec_pushv(&cmd.args, argv.v);
+			strvec_push(&cmd.args, name);
 			if (verbosity >= 0)
 				printf(_("Fetching %s\n"), name);
-			if (run_command_v_opt(argv.v, RUN_GIT_CMD)) {
+			cmd.git_cmd = 1;
+			if (run_command(&cmd)) {
 				error(_("could not fetch %s"), name);
 				result = 1;
 			}
-			strvec_pop(&argv);
 		}
 
 	strvec_clear(&argv);

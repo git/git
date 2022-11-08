@@ -12,6 +12,7 @@ static int merge_entry(int pos, const char *path)
 	const char *arguments[] = { pgm, "", "", "", path, "", "", "", NULL };
 	char hexbuf[4][GIT_MAX_HEXSZ + 1];
 	char ownbuf[4][60];
+	struct child_process cmd = CHILD_PROCESS_INIT;
 
 	if (pos >= active_nr)
 		die("git merge-index: %s not in the cache", path);
@@ -31,7 +32,8 @@ static int merge_entry(int pos, const char *path)
 	if (!found)
 		die("git merge-index: %s not in the cache", path);
 
-	if (run_command_v_opt(arguments, 0)) {
+	strvec_pushv(&cmd.args, arguments);
+	if (run_command(&cmd)) {
 		if (one_shot)
 			err++;
 		else {

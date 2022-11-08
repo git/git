@@ -167,9 +167,11 @@ static void gc_config(void)
 struct maintenance_run_opts;
 static int maintenance_task_pack_refs(MAYBE_UNUSED struct maintenance_run_opts *opts)
 {
-	const char *argv[] = { "pack-refs", "--all", "--prune", NULL };
+	struct child_process cmd = CHILD_PROCESS_INIT;
 
-	return run_command_v_opt(argv, RUN_GIT_CMD);
+	cmd.git_cmd = 1;
+	strvec_pushl(&cmd.args, "pack-refs", "--all", "--prune", NULL);
+	return run_command(&cmd);
 }
 
 static int too_many_loose_objects(void)
@@ -535,8 +537,14 @@ static void gc_before_repack(void)
 	if (pack_refs && maintenance_task_pack_refs(NULL))
 		die(FAILED_RUN, "pack-refs");
 
-	if (prune_reflogs && run_command_v_opt(reflog.v, RUN_GIT_CMD))
-		die(FAILED_RUN, reflog.v[0]);
+	if (prune_reflogs) {
+		struct child_process cmd = CHILD_PROCESS_INIT;
+
+		cmd.git_cmd = 1;
+		strvec_pushv(&cmd.args, reflog.v);
+		if (run_command(&cmd))
+			die(FAILED_RUN, reflog.v[0]);
+	}
 }
 
 int cmd_gc(int argc, const char **argv, const char *prefix)
@@ -550,6 +558,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	int daemonized = 0;
 	int keep_largest_pack = -1;
 	timestamp_t dummy;
+	struct child_process rerere_cmd = CHILD_PROCESS_INIT;
 
 	struct option builtin_gc_options[] = {
 		OPT__QUIET(&quiet, N_("suppress progress reporting")),
@@ -675,11 +684,17 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	gc_before_repack();
 
 	if (!repository_format_precious_objects) {
-		if (run_command_v_opt(repack.v,
-				      RUN_GIT_CMD | RUN_CLOSE_OBJECT_STORE))
+		struct child_process repack_cmd = CHILD_PROCESS_INIT;
+
+		repack_cmd.git_cmd = 1;
+		repack_cmd.close_object_store = 1;
+		strvec_pushv(&repack_cmd.args, repack.v);
+		if (run_command(&repack_cmd))
 			die(FAILED_RUN, repack.v[0]);
 
 		if (prune_expire) {
+			struct child_process prune_cmd = CHILD_PROCESS_INIT;
+
 			/* run `git prune` even if using cruft packs */
 			strvec_push(&prune, prune_expire);
 			if (quiet)
@@ -687,18 +702,26 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 			if (has_promisor_remote())
 				strvec_push(&prune,
 					    "--exclude-promisor-objects");
-			if (run_command_v_opt(prune.v, RUN_GIT_CMD))
+			prune_cmd.git_cmd = 1;
+			strvec_pushv(&prune_cmd.args, prune.v);
+			if (run_command(&prune_cmd))
 				die(FAILED_RUN, prune.v[0]);
 		}
 	}
 
 	if (prune_worktrees_expire) {
+		struct child_process prune_worktrees_cmd = CHILD_PROCESS_INIT;
+
 		strvec_push(&prune_worktrees, prune_worktrees_expire);
-		if (run_command_v_opt(prune_worktrees.v, RUN_GIT_CMD))
+		prune_worktrees_cmd.git_cmd = 1;
+		strvec_pushv(&prune_worktrees_cmd.args, prune_worktrees.v);
+		if (run_command(&prune_worktrees_cmd))
 			die(FAILED_RUN, prune_worktrees.v[0]);
 	}
 
-	if (run_command_v_opt(rerere.v, RUN_GIT_CMD))
+	rerere_cmd.git_cmd = 1;
+	strvec_pushv(&rerere_cmd.args, rerere.v);
+	if (run_command(&rerere_cmd))
 		die(FAILED_RUN, rerere.v[0]);
 
 	report_garbage = report_pack_garbage;
@@ -1913,20 +1936,16 @@ static char *schtasks_task_name(const char *frequency)
 static int schtasks_remove_task(enum schedule_priority schedule)
 {
 	const char *cmd = "schtasks";
-	int result;
-	struct strvec args = STRVEC_INIT;
+	struct child_process child = CHILD_PROCESS_INIT;
 	const char *frequency = get_frequency(schedule);
 	char *name = schtasks_task_name(frequency);
 
 	get_schedule_cmd(&cmd, NULL);
-	strvec_split(&args, cmd);
-	strvec_pushl(&args, "/delete", "/tn", name, "/f", NULL);
-
-	result = run_command_v_opt(args.v, 0);
-
-	strvec_clear(&args);
+	strvec_split(&child.args, cmd);
+	strvec_pushl(&child.args, "/delete", "/tn", name, "/f", NULL);
 	free(name);
-	return result;
+
+	return run_command(&child);
 }
 
 static int schtasks_remove_tasks(void)

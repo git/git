@@ -69,21 +69,18 @@ static void setup_enlistment_directory(int argc, const char **argv,
 
 static int run_git(const char *arg, ...)
 {
-	struct strvec argv = STRVEC_INIT;
+	struct child_process cmd = CHILD_PROCESS_INIT;
 	va_list args;
 	const char *p;
-	int res;
 
 	va_start(args, arg);
-	strvec_push(&argv, arg);
+	strvec_push(&cmd.args, arg);
 	while ((p = va_arg(args, const char *)))
-		strvec_push(&argv, p);
+		strvec_push(&cmd.args, p);
 	va_end(args);
 
-	res = run_command_v_opt(argv.v, RUN_GIT_CMD);
-
-	strvec_clear(&argv);
-	return res;
+	cmd.git_cmd = 1;
+	return run_command(&cmd);
 }
 
 struct scalar_config {

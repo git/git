@@ -787,7 +787,7 @@ static int run_argv(int *argcp, const char ***argv)
 		if (!done_alias)
 			handle_builtin(*argcp, *argv);
 		else if (get_builtin(**argv)) {
-			struct strvec args = STRVEC_INIT;
+			struct child_process cmd = CHILD_PROCESS_INIT;
 			int i;
 
 			/*
@@ -804,18 +804,21 @@ static int run_argv(int *argcp, const char ***argv)
 
 			commit_pager_choice();
 
-			strvec_push(&args, "git");
+			strvec_push(&cmd.args, "git");
 			for (i = 0; i < *argcp; i++)
-				strvec_push(&args, (*argv)[i]);
+				strvec_push(&cmd.args, (*argv)[i]);
 
-			trace_argv_printf(args.v, "trace: exec:");
+			trace_argv_printf(cmd.args.v, "trace: exec:");
 
 			/*
 			 * if we fail because the command is not found, it is
 			 * OK to return. Otherwise, we just pass along the status code.
 			 */
-			i = run_command_v_opt_tr2(args.v, RUN_SILENT_EXEC_FAILURE |
-						  RUN_CLEAN_ON_EXIT | RUN_WAIT_AFTER_CLEAN, "git_alias");
+			cmd.silent_exec_failure = 1;
+			cmd.clean_on_exit = 1;
+			cmd.wait_after_clean = 1;
+			cmd.trace2_child_class = "git_alias";
+			i = run_command(&cmd);
 			if (i >= 0 || errno != ENOENT)
 				exit(i);
 			die("could not execute builtin %s", **argv);
