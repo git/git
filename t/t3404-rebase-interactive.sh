@@ -1964,6 +1964,113 @@ test_expect_success 'respect user edits to update-ref steps' '
 	test_cmp_rev HEAD refs/heads/no-conflict-branch
 '
 
+test_expect_success '--update-refs: all update-ref lines removed' '
+	git checkout -b test-refs-not-removed no-conflict-branch &&
+	git branch -f base HEAD~4 &&
+	git branch -f first HEAD~3 &&
+	git branch -f second HEAD~3 &&
+	git branch -f third HEAD~1 &&
+	git branch -f tip &&
+
+	test_commit test-refs-not-removed &&
+	git commit --amend --fixup first &&
+
+	git rev-parse first second third tip no-conflict-branch >expect-oids &&
+
+	(
+		set_cat_todo_editor &&
+		test_must_fail git rebase -i --update-refs base >todo.raw &&
+		sed -e "/^update-ref/d" <todo.raw >todo
+	) &&
+	(
+		set_replace_editor todo &&
+		git rebase -i --update-refs base
+	) &&
+
+	# Ensure refs are not deleted and their OIDs have not changed
+	git rev-parse first second third tip no-conflict-branch >actual-oids &&
+	test_cmp expect-oids actual-oids
+'
+
+test_expect_success '--update-refs: all update-ref lines removed, then some re-added' '
+	git checkout -b test-refs-not-removed2 no-conflict-branch &&
+	git branch -f base HEAD~4 &&
+	git branch -f first HEAD~3 &&
+	git branch -f second HEAD~3 &&
+	git branch -f third HEAD~1 &&
+	git branch -f tip &&
+
+	test_commit test-refs-not-removed2 &&
+	git commit --amend --fixup first &&
+
+	git rev-parse first second third >expect-oids &&
+
+	(
+		set_cat_todo_editor &&
+		test_must_fail git rebase -i \
+			--autosquash --update-refs \
+			base >todo.raw &&
+		sed -e "/^update-ref/d" <todo.raw >todo
+	) &&
+
+	# Add a break to the end of the todo so we can edit later
+	echo "break" >>todo &&
+
+	(
+		set_replace_editor todo &&
+		git rebase -i --autosquash --update-refs base &&
+		echo "update-ref refs/heads/tip" >todo &&
+		git rebase --edit-todo &&
+		git rebase --continue
+	) &&
+
+	# Ensure first/second/third are unchanged, but tip is updated
+	git rev-parse first second third >actual-oids &&
+	test_cmp expect-oids actual-oids &&
+	test_cmp_rev HEAD tip
+'
+
+test_expect_success '--update-refs: --edit-todo with no update-ref lines' '
+	git checkout -b test-refs-not-removed3 no-conflict-branch &&
+	git branch -f base HEAD~4 &&
+	git branch -f first HEAD~3 &&
+	git branch -f second HEAD~3 &&
+	git branch -f third HEAD~1 &&
+	git branch -f tip &&
+
+	test_commit test-refs-not-removed3 &&
+	git commit --amend --fixup first &&
+
+	git rev-parse first second third tip no-conflict-branch >expect-oids &&
+
+	(
+		set_cat_todo_editor &&
+		test_must_fail git rebase -i \
+			--autosquash --update-refs \
+			base >todo.raw &&
+		sed -e "/^update-ref/d" <todo.raw >todo
+	) &&
+
+	# Add a break to the beginning of the todo so we can resume with no
+	# update-ref lines
+	echo "break" >todo.new &&
+	cat todo >>todo.new &&
+
+	(
+		set_replace_editor todo.new &&
+		git rebase -i --autosquash --update-refs base &&
+
+		# Make no changes when editing so update-refs is still empty
+		cat todo >todo.new &&
+		git rebase --edit-todo &&
+		git rebase --continue
+	) &&
+
+	# Ensure refs are not deleted and their OIDs have not changed
+	git rev-parse first second third tip no-conflict-branch >actual-oids &&
+	test_cmp expect-oids actual-oids
+'
+
 test_expect_success '--update-refs: check failed ref update' '
 	git checkout -B update-refs-error no-conflict-branch &&
 	git branch -f base HEAD~4 &&
