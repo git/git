@@ -30,8 +30,6 @@
 #include "reset.h"
 #include "hook.h"
 
-#define DEFAULT_REFLOG_ACTION "rebase"
-
 static char const * const builtin_rebase_usage[] = {
 	N_("git rebase [-i] [options] [--exec <cmd>] "
 		"[--onto <newbase> | --keep-base] [<upstream> [<branch>]]"),
@@ -106,6 +104,7 @@ struct rebase_options {
 	} flags;
 	struct strvec git_am_opts;
 	enum action action;
+	char *reflog_action;
 	int signoff;
 	int allow_rerere_autoupdate;
 	int keep_empty;
@@ -159,6 +158,7 @@ static struct replay_opts get_replay_opts(const struct rebase_options *opts)
 					opts->committer_date_is_author_date;
 	replay.ignore_date = opts->ignore_date;
 	replay.gpg_sign = xstrdup_or_null(opts->gpg_sign_opt);
+	replay.reflog_action = xstrdup(opts->reflog_action);
 	if (opts->strategy)
 		replay.strategy = xstrdup_or_null(opts->strategy);
 	else if (!replay.strategy && replay.default_strategy) {
@@ -585,10 +585,10 @@ static int move_to_original_branch(struct rebase_options *opts)
 		BUG("move_to_original_branch without onto");
 
 	strbuf_addf(&branch_reflog, "%s (finish): %s onto %s",
-		    getenv(GIT_REFLOG_ACTION_ENVIRONMENT),
+		    opts->reflog_action,
 		    opts->head_name, oid_to_hex(&opts->onto->object.oid));
 	strbuf_addf(&head_reflog, "%s (finish): returning to %s",
-		    getenv(GIT_REFLOG_ACTION_ENVIRONMENT), opts->head_name);
+		    opts->reflog_action, opts->head_name);
 	ropts.branch = opts->head_name;
 	ropts.flags = RESET_HEAD_REFS_ONLY;
 	ropts.branch_msg = branch_reflog.buf;
@@ -618,7 +618,7 @@ static int run_am(struct rebase_options *opts)
 	am.git_cmd = 1;
 	strvec_push(&am.args, "am");
 	strvec_pushf(&am.env, GIT_REFLOG_ACTION_ENVIRONMENT "=%s (pick)",
-		     getenv(GIT_REFLOG_ACTION_ENVIRONMENT));
+		     opts->reflog_action);
 	if (opts->action == ACTION_CONTINUE) {
 		strvec_push(&am.args, "--resolved");
 		strvec_pushf(&am.args, "--resolvemsg=%s", resolvemsg);
@@ -685,7 +685,7 @@ static int run_am(struct rebase_options *opts)
 
 		ropts.oid = &opts->orig_head->object.oid;
 		ropts.branch = opts->head_name;
-		ropts.default_reflog_action = DEFAULT_REFLOG_ACTION;
+		ropts.default_reflog_action = opts->reflog_action;
 		reset_head(the_repository, &ropts);
 		error(_("\ngit encountered an error while preparing the "
 			"patches to replay\n"
@@ -834,8 +834,7 @@ static int checkout_up_to_date(struct rebase_options *options)
 	int ret = 0;
 
 	strbuf_addf(&buf, "%s: checkout %s",
-		    getenv(GIT_REFLOG_ACTION_ENVIRONMENT),
-		    options->switch_to);
+		    options->reflog_action, options->switch_to);
 	ropts.oid = &options->orig_head->object.oid;
 	ropts.branch = options->head_name;
 	ropts.flags = RESET_HEAD_RUN_POST_CHECKOUT_HOOK;
@@ -1243,7 +1242,6 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	if (options.action != ACTION_NONE && !in_progress)
 		die(_("No rebase in progress?"));
-	setenv(GIT_REFLOG_ACTION_ENVIRONMENT, "rebase", 0);
 
 	if (options.action == ACTION_EDIT_TODO && !is_merge(&options))
 		die(_("The --edit-todo action can only be used during "
@@ -1257,6 +1255,10 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		else
 			trace2_cmd_mode(action_names[options.action]);
 	}
+
+	options.reflog_action = getenv(GIT_REFLOG_ACTION_ENVIRONMENT);
+	options.reflog_action =
+		xstrdup(options.reflog_action ? options.reflog_action : "rebase");
 
 	switch (options.action) {
 	case ACTION_CONTINUE: {
@@ -1310,7 +1312,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			exit(1);
 
 		strbuf_addf(&head_msg, "%s (abort): returning to %s",
-			    getenv(GIT_REFLOG_ACTION_ENVIRONMENT),
+			    options.reflog_action,
 			    options.head_name ? options.head_name
 					      : oid_to_hex(&options.orig_head->object.oid));
 		ropts.oid = &options.orig_head->object.oid;
@@ -1786,13 +1788,13 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			 "it...\n"));
 
 	strbuf_addf(&msg, "%s (start): checkout %s",
-		    getenv(GIT_REFLOG_ACTION_ENVIRONMENT), options.onto_name);
+		    options.reflog_action, options.onto_name);
 	ropts.oid = &options.onto->object.oid;
 	ropts.orig_head = &options.orig_head->object.oid,
 	ropts.flags = RESET_HEAD_DETACH | RESET_ORIG_HEAD |
 			RESET_HEAD_RUN_POST_CHECKOUT_HOOK;
 	ropts.head_msg = msg.buf;
-	ropts.default_reflog_action = DEFAULT_REFLOG_ACTION;
+	ropts.default_reflog_action = options.reflog_action;
 	if (reset_head(the_repository, &ropts))
 		die(_("Could not detach HEAD"));
 	strbuf_release(&msg);
@@ -1824,6 +1826,7 @@ run_rebase:
 cleanup:
 	strbuf_release(&buf);
 	strbuf_release(&revisions);
+	free(options.reflog_action);
 	free(options.head_name);
 	free(options.gpg_sign_opt);
 	free(options.cmd);
