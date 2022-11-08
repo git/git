@@ -19,6 +19,7 @@ static char *create_temp_file(struct object_id *oid)
 	if (write_in_full(fd, buf, size) < 0)
 		die_errno("unable to write temp-file");
 	close(fd);
+	free(buf);
 	return path;
 }
 
