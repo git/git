@@ -2643,9 +2643,6 @@ static int module_update(int argc, const char **argv, const char *prefix)
 			 N_("traverse submodules recursively")),
 		OPT_BOOL('N', "no-fetch", &opt.nofetch,
 			 N_("don't fetch new objects from the remote site")),
-		OPT_STRING(0, "prefix", &opt.prefix,
-			   N_("path"),
-			   N_("path into the working tree")),
 		OPT_SET_INT(0, "checkout", &opt.update_default,
 			N_("use the 'checkout' update strategy (default)"),
 			SM_UPDATE_CHECKOUT),
@@ -2701,6 +2698,7 @@ static int module_update(int argc, const char **argv, const char *prefix)
 	}
 
 	opt.filter_options = &filter_options;
+	opt.prefix = prefix;
 
 	if (opt.update_default)
 		opt.update_strategy.type = opt.update_default;

@@ -343,7 +343,6 @@ cmd_update()
 		${recursive:+--recursive} \
 		${init:+--init} \
 		${nofetch:+--no-fetch} \
-		${wt_prefix:+--prefix "$wt_prefix"} \
 		${rebase:+--rebase} \
 		${merge:+--merge} \
 		${checkout:+--checkout} \
