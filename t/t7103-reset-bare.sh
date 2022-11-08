@@ -63,7 +63,7 @@ test_expect_success '"mixed" reset is not allowed in bare' '
 	test_must_fail git reset --mixed HEAD^
 '
 
-test_expect_success !SANITIZE_LEAK '"soft" reset is allowed in bare' '
+test_expect_success '"soft" reset is allowed in bare' '
 	git reset --soft HEAD^ &&
 	git show --pretty=format:%s >out &&
 	echo one >expect &&
