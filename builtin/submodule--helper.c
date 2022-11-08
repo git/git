@@ -1379,8 +1379,7 @@ static void deinit_submodule(const char *path, const char *prefix,
 					  ".git file by using absorbgitdirs."),
 					displaypath);
 
-			absorb_git_dir_into_superproject(path,
-							 ABSORB_GITDIR_RECURSE_SUBMODULES);
+			absorb_git_dir_into_superproject(path);
 
 		}
 
@@ -2831,13 +2830,10 @@ static int absorb_git_dirs(int argc, const char **argv, const char *prefix)
 	int i;
 	struct pathspec pathspec = { 0 };
 	struct module_list list = MODULE_LIST_INIT;
-	unsigned flags = ABSORB_GITDIR_RECURSE_SUBMODULES;
 	struct option embed_gitdir_options[] = {
 		OPT_STRING(0, "prefix", &prefix,
 			   N_("path"),
 			   N_("path into the working tree")),
-		OPT_BIT(0, "--recursive", &flags, N_("recurse into submodules"),
-			ABSORB_GITDIR_RECURSE_SUBMODULES),
 		OPT_END()
 	};
 	const char *const git_submodule_helper_usage[] = {
@@ -2853,7 +2849,7 @@ static int absorb_git_dirs(int argc, const char **argv, const char *prefix)
 		goto cleanup;
 
 	for (i = 0; i < list.nr; i++)
-		absorb_git_dir_into_superproject(list.entries[i]->name, flags);
+		absorb_git_dir_into_superproject(list.entries[i]->name);
 
 	ret = 0;
 cleanup:
