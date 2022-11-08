@@ -1874,8 +1874,8 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	apply_autostash(git_path_merge_autostash(the_repository));
 
 cleanup:
-	UNLEAK(author_ident);
-	UNLEAK(err);
-	UNLEAK(sb);
+	strbuf_release(&author_ident);
+	strbuf_release(&err);
+	strbuf_release(&sb);
 	return ret;
 }
