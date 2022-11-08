@@ -179,7 +179,7 @@ RESTART:
 		# handle special characters
 		last unless $$b =~ /\G(.)/sgc;
 		my $c = $1;
-		last if $c =~ /^[ \t]$/; # whitespace ends token
+		pos($$b)--, last if $c =~ /^[ \t]$/; # whitespace ends token
 		pos($$b)--, last if length($token) && $c =~ /^[;&|<>(){}\n]$/;
 		$token .= $self->scan_sqstring(), next if $c eq "'";
 		$token .= $self->scan_dqstring(), next if $c eq '"';
