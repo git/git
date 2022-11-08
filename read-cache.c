@@ -2558,6 +2558,11 @@ int discard_index(struct index_state *istate)
 	free_untracked_cache(istate->untracked);
 	istate->untracked = NULL;
 
+	if (istate->sparse_checkout_patterns) {
+		clear_pattern_list(istate->sparse_checkout_patterns);
+		FREE_AND_NULL(istate->sparse_checkout_patterns);
+	}
+
 	if (istate->ce_mem_pool) {
 		mem_pool_discard(istate->ce_mem_pool, should_validate_cache_entries());
 		FREE_AND_NULL(istate->ce_mem_pool);
