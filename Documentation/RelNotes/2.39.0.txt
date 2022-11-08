@@ -29,6 +29,9 @@ UI, Workflows & Features
    existing bugs in the internal patch-id logic that did not match
    what "git patch-id" produces have been corrected.
 
+ * Enable gc.cruftpacks by default for those who opt into
+   feature.experimental setting.
+
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
 
@@ -83,6 +86,17 @@ Performance, Internal Implementation, Development Support etc.
 
  * Make sure generated dependency file is stably sorted to help
    developers debugging their build issues.
+
+ * The glossary entries for "commit-graph file" and "reachability
+   bitmap" have been added.
+
+ * Various tests exercising the transfer.credentialsInUrl
+   configuration are taught to avoid making requests which require
+   resolving localhost to reduce CI-flakiness.
+
+ * A redundant diagnostic message is dropped from test_path_is_missing().
+
+ * Simplify the run-command API.
 
 Fixes since v2.38
 -----------------
@@ -218,6 +232,12 @@ Fixes since v2.38
  * Various tests exercising the transfer.credentialsInUrl
    configuration are taught to avoid making requests which require
    resolving localhost to reduce CI-flakiness.
+
+ * The adjust_shared_perm() helper function learned to refrain from
+   setting the "g+s" bit on directories when it is not necessary.
+
+ * "git archive" mistakenly complained twice about a missing
+   executable, which has been corrected.
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 413bc6d20a ds/cmd-main-reorder later to maint).
