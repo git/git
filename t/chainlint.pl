@@ -459,6 +459,13 @@ package TestParser;
 
 use base 'ShellParser';
 
+sub new {
+	my $class = shift @_;
+	my $self = $class->SUPER::new(@_);
+	$self->{problems} = [];
+	return $self;
+}
+
 sub find_non_nl {
 	my $tokens = shift @_;
 	my $n = shift @_;
@@ -498,7 +505,7 @@ sub parse_loop_body {
 	return @tokens if ends_with(\@tokens, [qr/^\|\|$/, "\n", qr/^echo$/, qr/^.+$/]);
 	# flag missing "return/exit" handling explicit failure in loop body
 	my $n = find_non_nl(\@tokens);
-	splice(@tokens, $n + 1, 0, ['?!LOOP?!', $tokens[$n]->[1], $tokens[$n]->[2]]);
+	push(@{$self->{problems}}, ['LOOP', $tokens[$n]]);
 	return @tokens;
 }
 
@@ -511,6 +518,7 @@ my @safe_endings = (
 
 sub accumulate {
 	my ($self, $tokens, $cmd) = @_;
+	my $problems = $self->{problems};
 
 	# no previous command to check for missing "&&"
 	goto DONE unless @$tokens;
@@ -531,13 +539,13 @@ sub accumulate {
 	# failure explicitly), then okay for all preceding commands to be
 	# missing "&&"
 	if ($$cmd[0]->[0] =~ /^(?:false|return|exit)$/) {
-		@$tokens = grep {$_->[0] !~ /^\?!AMP\?!$/} @$tokens;
+		@$problems = grep {$_->[0] ne 'AMP'} @$problems;
 		goto DONE;
 	}
 
 	# flag missing "&&" at end of previous command
 	my $n = find_non_nl($tokens);
-	splice(@$tokens, $n + 1, 0, ['?!AMP?!', $$tokens[$n]->[1], $$tokens[$n]->[2]]) unless $n < 0;
+	push(@$problems, ['AMP', $tokens->[$n]]) unless $n < 0;
 
 DONE:
 	$self->SUPER::accumulate($tokens, $cmd);
@@ -594,12 +602,21 @@ sub check_test {
 	$self->{ntests}++;
 	my $parser = TestParser->new(\$body);
 	my @tokens = $parser->parse();
-	return unless $emit_all || grep {$_->[0] =~ /\?![^?]+\?!/} @tokens;
+	my $problems = $parser->{problems};
+	return unless $emit_all || @$problems;
 	my $c = main::fd_colors(1);
-	my $checked = join(' ', map {$_->[0]} @tokens);
+	my $start = 0;
+	my $checked = '';
+	for (sort {$a->[1]->[2] <=> $b->[1]->[2]} @$problems) {
+		my ($label, $token) = @$_;
+		my $pos = $token->[2];
+		$checked .= substr($body, $start, $pos - $start) . " ?!$label?! ";
+		$start = $pos;
+	}
+	$checked .= substr($body, $start);
 	$checked =~ s/^\n//;
-	$checked =~ s/^ //mg;
-	$checked =~ s/ $//mg;
+	$checked =~ s/(\s) \?!/$1?!/mg;
+	$checked =~ s/\?! (\s)/?!$1/mg;
 	$checked =~ s/(\?![^?]+\?!)/$c->{rev}$c->{red}$1$c->{reset}/mg;
 	$checked .= "\n" unless $checked =~ /\n$/;
 	push(@{$self->{output}}, "$c->{blue}# chainlint: $title$c->{reset}\n$checked");
