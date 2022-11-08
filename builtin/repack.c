@@ -32,7 +32,6 @@ static int write_bitmaps = -1;
 static int use_delta_islands;
 static int run_update_server_info = 1;
 static char *packdir, *packtmp_name, *packtmp;
-static char *cruft_expiration;
 
 static const char *const git_repack_usage[] = {
 	N_("git repack [<options>]"),
@@ -150,7 +149,8 @@ static void remove_redundant_pack(const char *dir_name, const char *base_name)
 }
 
 static void prepare_pack_objects(struct child_process *cmd,
-				 const struct pack_objects_args *args)
+				 const struct pack_objects_args *args,
+				 const char *out)
 {
 	strvec_push(&cmd->args, "pack-objects");
 	if (args->window)
@@ -173,7 +173,7 @@ static void prepare_pack_objects(struct child_process *cmd,
 		strvec_push(&cmd->args,  "--quiet");
 	if (delta_base_offset)
 		strvec_push(&cmd->args,  "--delta-base-offset");
-	strvec_push(&cmd->args, packtmp);
+	strvec_push(&cmd->args, out);
 	cmd->git_cmd = 1;
 	cmd->out = -1;
 }
@@ -241,7 +241,7 @@ static void repack_promisor_objects(const struct pack_objects_args *args,
 	FILE *out;
 	struct strbuf line = STRBUF_INIT;
 
-	prepare_pack_objects(&cmd, args);
+	prepare_pack_objects(&cmd, args, packtmp);
 	cmd.in = -1;
 
 	/*
@@ -657,7 +657,9 @@ static void remove_redundant_bitmaps(struct string_list *include,
 }
 
 static int write_cruft_pack(const struct pack_objects_args *args,
+			    const char *destination,
 			    const char *pack_prefix,
+			    const char *cruft_expiration,
 			    struct string_list *names,
 			    struct string_list *existing_packs,
 			    struct string_list *existing_kept_packs)
@@ -667,8 +669,10 @@ static int write_cruft_pack(const struct pack_objects_args *args,
 	struct string_list_item *item;
 	FILE *in, *out;
 	int ret;
+	const char *scratch;
+	int local = skip_prefix(destination, packdir, &scratch);
 
-	prepare_pack_objects(&cmd, args);
+	prepare_pack_objects(&cmd, args, destination);
 
 	strvec_push(&cmd.args, "--cruft");
 	if (cruft_expiration)
@@ -693,6 +697,10 @@ static int write_cruft_pack(const struct pack_objects_args *args,
 	 * By the time it is read here, it contains only the pack(s)
 	 * that were just written, which is exactly the set of packs we
 	 * want to consider kept.
+	 *
+	 * If `--expire-to` is given, the double-use served by `names`
+	 * ensures that the pack written to `--expire-to` excludes any
+	 * objects contained in the cruft pack.
 	 */
 	in = xfdopen(cmd.in, "w");
 	for_each_string_list_item(item, names)
@@ -710,9 +718,14 @@ static int write_cruft_pack(const struct pack_objects_args *args,
 		if (line.len != the_hash_algo->hexsz)
 			die(_("repack: Expecting full hex object ID lines only "
 			      "from pack-objects."));
-
-		item = string_list_append(names, line.buf);
-		item->util = populate_pack_exts(line.buf);
+		/*
+		 * avoid putting packs written outside of the repository in the
+		 * list of names
+		 */
+		if (local) {
+			item = string_list_append(names, line.buf);
+			item->util = populate_pack_exts(line.buf);
+		}
 	}
 	fclose(out);
 
@@ -744,6 +757,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	struct pack_objects_args cruft_po_args = {NULL};
 	int geometric_factor = 0;
 	int write_midx = 0;
+	const char *cruft_expiration = NULL;
+	const char *expire_to = NULL;
 
 	struct option builtin_repack_options[] = {
 		OPT_BIT('a', NULL, &pack_everything,
@@ -793,6 +808,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 			    N_("find a geometric progression with factor <N>")),
 		OPT_BOOL('m', "write-midx", &write_midx,
 			   N_("write a multi-pack index of the resulting packs")),
+		OPT_STRING(0, "expire-to", &expire_to, N_("dir"),
+			   N_("pack prefix to store a pack containing pruned objects")),
 		OPT_END()
 	};
 
@@ -858,7 +875,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		split_pack_geometry(geometry, geometric_factor);
 	}
 
-	prepare_pack_objects(&cmd, &po_args);
+	prepare_pack_objects(&cmd, &po_args, packtmp);
 
 	show_progress = !po_args.quiet && isatty(2);
 
@@ -984,11 +1001,45 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		cruft_po_args.local = po_args.local;
 		cruft_po_args.quiet = po_args.quiet;
 
-		ret = write_cruft_pack(&cruft_po_args, pack_prefix, &names,
+		ret = write_cruft_pack(&cruft_po_args, packtmp, pack_prefix,
+				       cruft_expiration, &names,
 				       &existing_nonkept_packs,
 				       &existing_kept_packs);
 		if (ret)
 			return ret;
+
+		if (delete_redundant && expire_to) {
+			/*
+			 * If `--expire-to` is given with `-d`, it's possible
+			 * that we're about to prune some objects. With cruft
+			 * packs, pruning is implicit: any objects from existing
+			 * packs that weren't picked up by new packs are removed
+			 * when their packs are deleted.
+			 *
+			 * Generate an additional cruft pack, with one twist:
+			 * `names` now includes the name of the cruft pack
+			 * written in the previous step. So the contents of
+			 * _this_ cruft pack exclude everything contained in the
+			 * existing cruft pack (that is, all of the unreachable
+			 * objects which are no older than
+			 * `--cruft-expiration`).
+			 *
+			 * To make this work, cruft_expiration must become NULL
+			 * so that this cruft pack doesn't actually prune any
+			 * objects. If it were non-NULL, this call would always
+			 * generate an empty pack (since every object not in the
+			 * cruft pack generated above will have an mtime older
+			 * than the expiration).
+			 */
+			ret = write_cruft_pack(&cruft_po_args, expire_to,
+					       pack_prefix,
+					       NULL,
+					       &names,
+					       &existing_nonkept_packs,
+					       &existing_kept_packs);
+			if (ret)
+				return ret;
+		}
 	}
 
 	string_list_sort(&names);
