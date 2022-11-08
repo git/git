@@ -956,6 +956,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		item = string_list_append(&names, line.buf);
 		item->util = populate_pack_exts(item->string);
 	}
+	strbuf_release(&line);
 	fclose(out);
 	ret = finish_command(&cmd);
 	if (ret)
@@ -1124,7 +1125,6 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	string_list_clear(&existing_nonkept_packs, 0);
 	string_list_clear(&existing_kept_packs, 0);
 	clear_pack_geometry(geometry);
-	strbuf_release(&line);
 
 	return 0;
 }
