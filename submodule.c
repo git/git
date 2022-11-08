@@ -2310,6 +2310,23 @@ static void relocate_single_git_dir_into_superproject(const char *path)
 	strbuf_release(&new_gitdir);
 }
 
+static void absorb_git_dir_into_superproject_recurse(const char *path)
+{
+
+	struct child_process cp = CHILD_PROCESS_INIT;
+
+	cp.dir = path;
+	cp.git_cmd = 1;
+	cp.no_stdin = 1;
+	strvec_pushf(&cp.args, "--super-prefix=%s%s/",
+		     get_super_prefix_or_empty(), path);
+	strvec_pushl(&cp.args, "submodule--helper",
+		     "absorbgitdirs", NULL);
+	prepare_submodule_repo_env(&cp.env);
+	if (run_command(&cp))
+		die(_("could not recurse into submodule '%s'"), path);
+}
+
 /*
  * Migrate the git directory of the submodule given by path from
  * having its git directory within the working tree to the git dir nested
@@ -2366,21 +2383,10 @@ void absorb_git_dir_into_superproject(const char *path,
 	strbuf_release(&gitdir);
 
 	if (flags & ABSORB_GITDIR_RECURSE_SUBMODULES) {
-		struct child_process cp = CHILD_PROCESS_INIT;
-
 		if (flags & ~ABSORB_GITDIR_RECURSE_SUBMODULES)
 			BUG("we don't know how to pass the flags down?");
 
-		cp.dir = path;
-		cp.git_cmd = 1;
-		cp.no_stdin = 1;
-		strvec_pushf(&cp.args, "--super-prefix=%s%s/",
-			     get_super_prefix_or_empty(), path);
-		strvec_pushl(&cp.args, "submodule--helper",
-			     "absorbgitdirs", NULL);
-		prepare_submodule_repo_env(&cp.env);
-		if (run_command(&cp))
-			die(_("could not recurse into submodule '%s'"), path);
+		absorb_git_dir_into_superproject_recurse(path);
 	}
 }
 
