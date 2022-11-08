@@ -106,6 +106,7 @@ int cmd_bugreport(int argc, const char **argv, const char *prefix)
 	const char *user_relative_path = NULL;
 	char *prefixed_filename;
 	size_t output_path_len;
+	int ret;
 
 	const struct option bugreport_options[] = {
 		OPT_CALLBACK_F(0, "diagnose", &diagnose, N_("mode"),
@@ -182,7 +183,9 @@ int cmd_bugreport(int argc, const char **argv, const char *prefix)
 		user_relative_path);
 
 	free(prefixed_filename);
-	UNLEAK(buffer);
-	UNLEAK(report_path);
-	return !!launch_editor(report_path.buf, NULL, NULL);
+	strbuf_release(&buffer);
+
+	ret = !!launch_editor(report_path.buf, NULL, NULL);
+	strbuf_release(&report_path);
+	return ret;
 }
