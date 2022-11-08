@@ -14,12 +14,15 @@ static int run_command_on_repo(const char *path, int argc, const char ** argv)
 {
 	int i;
 	struct child_process child = CHILD_PROCESS_INIT;
+	char *abspath = interpolate_path(path, 0);
 
 	child.git_cmd = 1;
-	strvec_pushl(&child.args, "-C", path, NULL);
+	strvec_pushl(&child.args, "-C", abspath, NULL);
 
 	for (i = 0; i < argc; i++)
 		strvec_push(&child.args, argv[i]);
+
+	free(abspath);
 
 	return run_command(&child);
 }
