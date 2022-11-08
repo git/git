@@ -616,6 +616,9 @@ static void status_submodule(const char *path, const struct object_id *ce_oid,
 	int diff_files_result;
 	struct strbuf buf = STRBUF_INIT;
 	const char *git_dir;
+	struct setup_revision_opt opt = {
+		.free_removed_argv_elements = 1,
+	};
 
 	if (!submodule_from_path(the_repository, null_oid(), path))
 		die(_("no submodule mapping found in .gitmodules for path '%s'"),
@@ -649,9 +652,7 @@ static void status_submodule(const char *path, const struct object_id *ce_oid,
 
 	repo_init_revisions(the_repository, &rev, NULL);
 	rev.abbrev = 0;
-	diff_files_args.nr = setup_revisions(diff_files_args.nr,
-					     diff_files_args.v,
-					     &rev, NULL);
+	setup_revisions(diff_files_args.nr, diff_files_args.v, &rev, &opt);
 	diff_files_result = run_diff_files(&rev, 0);
 
 	if (!diff_result_code(&rev.diffopt, diff_files_result)) {
