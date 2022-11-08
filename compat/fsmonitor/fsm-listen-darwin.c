@@ -336,7 +336,7 @@ static void fsevent_callback(ConstFSEventStreamRef streamRef,
 			 * know how much to invalidate/refresh.
 			 */
 
-			if (event_flags[k] & kFSEventStreamEventFlagItemIsFile) {
+			if (event_flags[k] & (kFSEventStreamEventFlagItemIsFile | kFSEventStreamEventFlagItemIsSymlink)) {
 				const char *rel = path_k +
 					state->path_worktree_watch.len + 1;
 
