@@ -1375,12 +1375,12 @@ static void find_subpos(const char *buf,
 	/* subject is first non-empty line */
 	*sub = buf;
 	/* subject goes to first empty line before signature begins */
-	if ((eol = strstr(*sub, "\n\n"))) {
+	if ((eol = strstr(*sub, "\n\n")) ||
+	    (eol = strstr(*sub, "\r\n\r\n"))) {
 		eol = eol < sigstart ? eol : sigstart;
-	/* check if message uses CRLF */
-	} else if (! (eol = strstr(*sub, "\r\n\r\n"))) {
+	} else {
 		/* treat whole message as subject */
-		eol = strrchr(*sub, '\0');
+		eol = sigstart;
 	}
 	buf = eol;
 	*sublen = buf - *sub;
