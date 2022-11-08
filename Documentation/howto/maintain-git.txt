@@ -256,7 +256,7 @@ by doing the following:
    merged to 'next', add it at the end of the list.  Then:
 
      $ git checkout -B jch master
-     $ Meta/redo-jch.sh -c1
+     $ sh Meta/redo-jch.sh -c1
 
    to rebuild the 'jch' branch from scratch.  "-c1" tells the script
    to stop merging at the first line that begins with '###'
