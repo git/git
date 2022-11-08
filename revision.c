@@ -1865,30 +1865,15 @@ void repo_init_revisions(struct repository *r,
 			 struct rev_info *revs,
 			 const char *prefix)
 {
-	memset(revs, 0, sizeof(*revs));
+	struct rev_info blank = REV_INFO_INIT;
+	memcpy(revs, &blank, sizeof(*revs));
 
 	revs->repo = r;
-	revs->abbrev = DEFAULT_ABBREV;
-	revs->simplify_history = 1;
 	revs->pruning.repo = r;
-	revs->pruning.flags.recursive = 1;
-	revs->pruning.flags.quick = 1;
 	revs->pruning.add_remove = file_add_remove;
 	revs->pruning.change = file_change;
 	revs->pruning.change_fn_data = revs;
-	revs->sort_order = REV_SORT_IN_GRAPH_ORDER;
-	revs->dense = 1;
 	revs->prefix = prefix;
-	revs->max_age = -1;
-	revs->max_age_as_filter = -1;
-	revs->min_age = -1;
-	revs->skip_count = -1;
-	revs->max_count = -1;
-	revs->max_parents = -1;
-	revs->expand_tabs_in_log = -1;
-
-	revs->commit_format = CMIT_FMT_DEFAULT;
-	revs->expand_tabs_in_log_default = 8;
 
 	grep_init(&revs->grep_filter, revs->repo);
 	revs->grep_filter.status_only = 1;
