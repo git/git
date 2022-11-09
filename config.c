@@ -1193,6 +1193,11 @@ static int git_parse_unsigned(const char *value, uintmax_t *ret, uintmax_t max)
 		uintmax_t val;
 		uintmax_t factor;
 
+		/* negative values would be accepted by strtoumax */
+		if (strchr(value, '-')) {
+			errno = EINVAL;
+			return 0;
+		}
 		errno = 0;
 		val = strtoumax(value, &end, 0);
 		if (errno == ERANGE)
