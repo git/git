@@ -562,6 +562,7 @@ out:
 static int append_edit(int argc, const char **argv, const char *prefix)
 {
 	int allow_empty = 0;
+	int blankline = 1;
 	const char *object_ref;
 	struct notes_tree *t;
 	struct object_id object, new_note;
@@ -584,6 +585,8 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 			parse_reuse_arg),
 		OPT_BOOL(0, "allow-empty", &allow_empty,
 			N_("allow storing empty note")),
+		OPT_BOOL(0, "blank-line", &blankline,
+			N_("insert paragraph break before appending to an existing note")),
 		OPT_END()
 	};
 	int edit = !strcmp(argv[0], "edit");
@@ -618,7 +621,7 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 		enum object_type type;
 		char *prev_buf = read_object_file(note, &type, &size);
 
-		if (d.buf.len && prev_buf && size)
+		if (blankline && d.buf.len && prev_buf && size)
 			strbuf_insertstr(&d.buf, 0, "\n");
 		if (prev_buf && size)
 			strbuf_insert(&d.buf, 0, prev_buf, size);

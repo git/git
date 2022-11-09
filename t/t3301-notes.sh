@@ -521,12 +521,25 @@ test_expect_success 'listing non-existing notes fails' '
 	test_must_be_empty actual
 '
 
+test_expect_success 'append to existing note without a beginning blank line' '
+	test_when_finished git notes remove HEAD &&
+	cat >expect <<-\EOF &&
+		Initial set of notes
+		Appended notes
+	EOF
+	git notes add -m "Initial set of notes" &&
+	git notes append --no-blank-line -m "Appended notes" &&
+	git notes show >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'append to existing note with "git notes append"' '
 	cat >expect <<-EOF &&
 		Initial set of notes
 
 		More notes appended with git notes append
 	EOF
+
 	git notes add -m "Initial set of notes" &&
 	git notes append -m "More notes appended with git notes append" &&
 	git notes show >actual &&

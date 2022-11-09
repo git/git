@@ -11,7 +11,7 @@ SYNOPSIS
 'git notes' [list [<object>]]
 'git notes' add [-f] [--allow-empty] [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
 'git notes' copy [-f] ( --stdin | <from-object> [<to-object>] )
-'git notes' append [--allow-empty] [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
+'git notes' append [--allow-empty] [--no-blank-line] [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
 'git notes' edit [--allow-empty] [<object>]
 'git notes' show [<object>]
 'git notes' merge [-v | -q] [-s <strategy> ] <notes-ref>
@@ -86,7 +86,9 @@ the command can read the input given to the `post-rewrite` hook.)
 
 append::
 	Append to the notes of an existing object (defaults to HEAD).
-	Creates a new notes object if needed.
+	Creates a new notes object if needed. If the note of the given
+	object and the note to be appended are not empty, a blank line
+	will be inserted between them.
 
 edit::
 	Edit the notes for a given object (defaults to HEAD).
@@ -158,6 +160,10 @@ OPTIONS
 --allow-empty::
 	Allow an empty note object to be stored. The default behavior is
 	to automatically remove empty notes.
+
+--no-blank-line::
+	Do not insert a blank line before the inserted notes (insert
+	a blank line is the default).
 
 --ref <ref>::
 	Manipulate the notes tree in <ref>.  This overrides
