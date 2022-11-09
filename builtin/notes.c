@@ -631,7 +631,10 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 			BUG("combine_notes_overwrite failed");
 		logmsg = xstrfmt("Notes added by 'git notes %s'", argv[0]);
 		commit_notes(the_repository, t, logmsg);
-	}
+	} else if (!d.buf.len && !note)
+		fprintf(stderr,
+			_("Both original and appended notes are empty in %s, do nothing\n"),
+			oid_to_hex(&object));
 
 	free(logmsg);
 	free_note_data(&d);
