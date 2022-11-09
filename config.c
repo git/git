@@ -1160,8 +1160,10 @@ static int git_parse_signed(const char *value, intmax_t *ret, intmax_t max)
 	if (value && *value) {
 		char *end;
 		intmax_t val;
-		uintmax_t uval;
-		uintmax_t factor;
+		intmax_t factor;
+
+		if (max < 0)
+			BUG("max must be a positive integer");
 
 		errno = 0;
 		val = strtoimax(value, &end, 0);
@@ -1176,9 +1178,8 @@ static int git_parse_signed(const char *value, intmax_t *ret, intmax_t max)
 			errno = EINVAL;
 			return 0;
 		}
-		uval = val < 0 ? -val : val;
-		if (unsigned_mult_overflows(factor, uval) ||
-		    factor * uval > max) {
+		if ((val < 0 && -max / factor > val) ||
+		    (val > 0 && max / factor < val)) {
 			errno = ERANGE;
 			return 0;
 		}
