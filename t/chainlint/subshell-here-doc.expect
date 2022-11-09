@@ -1,10 +1,30 @@
 (
-	echo wobba 	       gorgo snoot 	       wafta snurb <<-EOF &&
+	echo wobba \
+		gorgo snoot \
+		wafta snurb <<-EOF &&
+	quoth the raven,
+	nevermore...
+	EOF
+
 	cat <<EOF >bip ?!AMP?!
-	echo <<-EOF >bop
+	fish fly high
+EOF
+
+	echo <<-\EOF >bop
+	gomez
+	morticia
+	wednesday
+	pugsly
+	EOF
 ) &&
 (
-	cat <<-ARBITRARY >bup &&
-	cat <<-ARBITRARY3 >bup3 &&
+	cat <<-\ARBITRARY >bup &&
+	glink
+	FIZZ
+	ARBITRARY
+	cat <<-"ARBITRARY3" >bup3 &&
+	glink
+	FIZZ
+	ARBITRARY3
 	meep
 )
