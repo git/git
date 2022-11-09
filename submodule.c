@@ -2274,6 +2274,7 @@ static void relocate_single_git_dir_into_superproject(const char *path)
 	char *old_git_dir = NULL, *real_old_git_dir = NULL, *real_new_git_dir = NULL;
 	struct strbuf new_gitdir = STRBUF_INIT;
 	const struct submodule *sub;
+	size_t off = 0;
 
 	if (submodule_uses_worktrees(path))
 		die(_("relocate_gitdir for submodule '%s' with "
@@ -2298,9 +2299,12 @@ static void relocate_single_git_dir_into_superproject(const char *path)
 		die(_("could not create directory '%s'"), new_gitdir.buf);
 	real_new_git_dir = real_pathdup(new_gitdir.buf, 1);
 
-	fprintf(stderr, _("Migrating git directory of '%s%s' from\n'%s' to\n'%s'\n"),
+	while (real_old_git_dir[off] && real_new_git_dir[off] &&
+	       real_old_git_dir[off] == real_new_git_dir[off])
+		off++;
+	fprintf(stderr, _("Migrating git directory of '%s%s' from '%s' to '%s'\n"),
 		get_super_prefix_or_empty(), path,
-		real_old_git_dir, real_new_git_dir);
+		real_old_git_dir + off, real_new_git_dir + off);
 
 	relocate_gitdir(path, real_old_git_dir, real_new_git_dir);
 
