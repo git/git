@@ -714,4 +714,11 @@ test_expect_success 'negative magnitude' '
 	grep "non-negative integer" err &&
 	test_must_be_empty out
 '
+
+test_expect_success 'magnitude with units but no numbers' '
+	test_must_fail test-tool parse-options --magnitude m >out 2>err &&
+	grep "non-negative integer" err &&
+	test_must_be_empty out
+'
+
 test_done

@@ -1167,6 +1167,10 @@ static int git_parse_signed(const char *value, intmax_t *ret, intmax_t max)
 		val = strtoimax(value, &end, 0);
 		if (errno == ERANGE)
 			return 0;
+		if (end == value) {
+			errno = EINVAL;
+			return 0;
+		}
 		factor = get_unit_factor(end);
 		if (!factor) {
 			errno = EINVAL;
@@ -1202,6 +1206,10 @@ static int git_parse_unsigned(const char *value, uintmax_t *ret, uintmax_t max)
 		val = strtoumax(value, &end, 0);
 		if (errno == ERANGE)
 			return 0;
+		if (end == value) {
+			errno = EINVAL;
+			return 0;
+		}
 		factor = get_unit_factor(end);
 		if (!factor) {
 			errno = EINVAL;
