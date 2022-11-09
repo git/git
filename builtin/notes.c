@@ -630,13 +630,8 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 		if (add_note(t, &object, &new_note, combine_notes_overwrite))
 			BUG("combine_notes_overwrite failed");
 		logmsg = xstrfmt("Notes added by 'git notes %s'", argv[0]);
-	} else {
-		fprintf(stderr, _("Removing note for object %s\n"),
-			oid_to_hex(&object));
-		remove_note(t, object.hash);
-		logmsg = xstrfmt("Notes removed by 'git notes %s'", argv[0]);
+		commit_notes(the_repository, t, logmsg);
 	}
-	commit_notes(the_repository, t, logmsg);
 
 	free(logmsg);
 	free_note_data(&d);
