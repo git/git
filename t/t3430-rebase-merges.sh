@@ -138,6 +138,14 @@ test_expect_success '`reset` refuses to overwrite untracked files' '
 	git rebase --abort
 '
 
+test_expect_success '`reset` rejects trees' '
+	test_when_finished "test_might_fail git rebase --abort" &&
+	test_must_fail env GIT_SEQUENCE_EDITOR="echo reset A^{tree} >" \
+		git rebase -i B C >out 2>err &&
+	grep "object .* is a tree" err &&
+	test_must_be_empty out
+'
+
 test_expect_success 'failed `merge -C` writes patch (may be rescheduled, too)' '
 	test_when_finished "test_might_fail git rebase --abort" &&
 	git checkout -b conflicting-merge A &&

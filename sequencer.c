@@ -3694,6 +3694,26 @@ static const char *reflog_message(struct replay_opts *opts,
 	return buf.buf;
 }
 
+static struct commit *lookup_label(const char *label, int len,
+				   struct strbuf *buf)
+{
+	struct commit *commit;
+
+	strbuf_reset(buf);
+	strbuf_addf(buf, "refs/rewritten/%.*s", len, label);
+	commit = lookup_commit_reference_by_name(buf->buf);
+	if (!commit) {
+		/* fall back to non-rewritten ref or commit */
+		strbuf_splice(buf, 0, strlen("refs/rewritten/"), "", 0);
+		commit = lookup_commit_reference_by_name(buf->buf);
+	}
+
+	if (!commit)
+		error(_("could not resolve '%s'"), buf->buf);
+
+	return commit;
+}
+
 static int do_reset(struct repository *r,
 		    const char *name, int len,
 		    struct replay_opts *opts)
@@ -3725,6 +3745,7 @@ static int do_reset(struct repository *r,
 		oidcpy(&oid, &opts->squash_onto);
 	} else {
 		int i;
+		struct commit *commit;
 
 		/* Determine the length of the label */
 		for (i = 0; i < len; i++)
@@ -3732,12 +3753,12 @@ static int do_reset(struct repository *r,
 				break;
 		len = i;
 
-		strbuf_addf(&ref_name, "refs/rewritten/%.*s", len, name);
-		if (get_oid(ref_name.buf, &oid) &&
-		    get_oid(ref_name.buf + strlen("refs/rewritten/"), &oid)) {
-			ret = error(_("could not read '%s'"), ref_name.buf);
+		commit = lookup_label(name, len, &ref_name);
+		if (!commit) {
+			ret = -1;
 			goto cleanup;
 		}
+		oid = commit->object.oid;
 	}
 
 	setup_unpack_trees_porcelain(&unpack_tree_opts, "reset");
@@ -3782,26 +3803,6 @@ cleanup:
 	strbuf_release(&ref_name);
 	clear_unpack_trees_porcelain(&unpack_tree_opts);
 	return ret;
-}
-
-static struct commit *lookup_label(const char *label, int len,
-				   struct strbuf *buf)
-{
-	struct commit *commit;
-
-	strbuf_reset(buf);
-	strbuf_addf(buf, "refs/rewritten/%.*s", len, label);
-	commit = lookup_commit_reference_by_name(buf->buf);
-	if (!commit) {
-		/* fall back to non-rewritten ref or commit */
-		strbuf_splice(buf, 0, strlen("refs/rewritten/"), "", 0);
-		commit = lookup_commit_reference_by_name(buf->buf);
-	}
-
-	if (!commit)
-		error(_("could not resolve '%s'"), buf->buf);
-
-	return commit;
 }
 
 static int do_merge(struct repository *r,
