@@ -3694,15 +3694,17 @@ static const char *reflog_message(struct replay_opts *opts,
 	return buf.buf;
 }
 
-static struct commit *lookup_label(const char *label, int len,
-				   struct strbuf *buf)
+static struct commit *lookup_label(struct repository *r, const char *label,
+				   int len, struct strbuf *buf)
 {
 	struct commit *commit;
+	struct object_id oid;
 
 	strbuf_reset(buf);
 	strbuf_addf(buf, "refs/rewritten/%.*s", len, label);
-	commit = lookup_commit_reference_by_name(buf->buf);
-	if (!commit) {
+	if (!read_ref(buf->buf, &oid)) {
+		commit = lookup_commit_object(r, &oid);
+	} else {
 		/* fall back to non-rewritten ref or commit */
 		strbuf_splice(buf, 0, strlen("refs/rewritten/"), "", 0);
 		commit = lookup_commit_reference_by_name(buf->buf);
@@ -3753,7 +3755,7 @@ static int do_reset(struct repository *r,
 				break;
 		len = i;
 
-		commit = lookup_label(name, len, &ref_name);
+		commit = lookup_label(r, name, len, &ref_name);
 		if (!commit) {
 			ret = -1;
 			goto cleanup;
@@ -3852,7 +3854,7 @@ static int do_merge(struct repository *r,
 		k = strcspn(p, " \t\n");
 		if (!k)
 			continue;
-		merge_commit = lookup_label(p, k, &ref_name);
+		merge_commit = lookup_label(r, p, k, &ref_name);
 		if (!merge_commit) {
 			ret = error(_("unable to parse '%.*s'"), k, p);
 			goto leave_merge;
