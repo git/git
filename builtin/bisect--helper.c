@@ -1347,18 +1347,6 @@ static int cmd_bisect__next(int argc, const char **argv UNUSED, const char *pref
 	return res;
 }
 
-static int cmd_bisect__state(int argc, const char **argv, const char *prefix UNUSED)
-{
-	int res;
-	struct bisect_terms terms = { 0 };
-
-	set_terms(&terms, "bad", "good");
-	get_terms(&terms);
-	res = bisect_state(&terms, argv, argc);
-	free_terms(&terms);
-	return res;
-}
-
 static int cmd_bisect__log(int argc, const char **argv UNUSED, const char *prefix UNUSED)
 {
 	if (argc)
@@ -1424,7 +1412,6 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		OPT_SUBCOMMAND("terms", &fn, cmd_bisect__terms),
 		OPT_SUBCOMMAND("start", &fn, cmd_bisect__start),
 		OPT_SUBCOMMAND("next", &fn, cmd_bisect__next),
-		OPT_SUBCOMMAND("state", &fn, cmd_bisect__state),
 		OPT_SUBCOMMAND("log", &fn, cmd_bisect__log),
 		OPT_SUBCOMMAND("replay", &fn, cmd_bisect__replay),
 		OPT_SUBCOMMAND("skip", &fn, cmd_bisect__skip),
@@ -1433,14 +1420,27 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		OPT_SUBCOMMAND("run", &fn, cmd_bisect__run),
 		OPT_END()
 	};
-	argc = parse_options(argc, argv, prefix, options, git_bisect_usage, 0);
+	argc = parse_options(argc, argv, prefix, options, git_bisect_usage,
+			     PARSE_OPT_SUBCOMMAND_OPTIONAL);
 
-	if (!fn)
-		usage_with_options(git_bisect_usage, options);
-	argc--;
-	argv++;
+	if (!fn) {
+		struct bisect_terms terms = { 0 };
 
-	res = fn(argc, argv, prefix);
+		if (!argc)
+			usage_msg_opt(_("need a command"), git_bisect_usage, options);
+
+		set_terms(&terms, "bad", "good");
+		get_terms(&terms);
+		if (check_and_set_terms(&terms, argv[0]))
+			usage_msg_optf(_("unknown command: '%s'"), git_bisect_usage,
+				       options, argv[0]);
+		res = bisect_state(&terms, argv, argc);
+		free_terms(&terms);
+	} else {
+		argc--;
+		argv++;
+		res = fn(argc, argv, prefix);
+	}
 
 	/*
 	 * Handle early success
