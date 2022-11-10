@@ -73,9 +73,11 @@ static int reset_index(const char *ref, const struct object_id *oid, int reset_t
 	case HARD:
 		opts.update = 1;
 		opts.reset = UNPACK_RESET_OVERWRITE_UNTRACKED;
+		opts.skip_cache_tree_update = 1;
 		break;
 	case MIXED:
 		opts.reset = UNPACK_RESET_PROTECT_UNTRACKED;
+		opts.skip_cache_tree_update = 1;
 		/* but opts.update=0, so working tree not updated */
 		break;
 	default:
