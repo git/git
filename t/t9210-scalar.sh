@@ -171,10 +171,13 @@ test_expect_success '`reconfigure -a` removes stale config entries' '
 	scalar register stale &&
 	scalar list >scalar.repos &&
 	grep stale scalar.repos &&
+
+	grep -v stale scalar.repos >expect &&
+
 	rm -rf stale &&
 	scalar reconfigure -a &&
 	scalar list >scalar.repos &&
-	! grep stale scalar.repos
+	test_cmp expect scalar.repos
 '
 
 test_expect_success 'scalar delete without enlistment shows a usage' '
