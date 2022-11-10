@@ -288,9 +288,9 @@ test_bisect_run_args () {
 test_expect_success 'git bisect run: args, stdout and stderr with no arguments' "
 	test_bisect_run_args <<-'EOF_ARGS' 6<<-EOF_OUT 7<<-'EOF_ERR'
 	EOF_ARGS
-	running ./run.sh
+	running './run.sh'
 	$HASH4 is the first bad commit
-	bisect run success
+	bisect found first bad commit
 	EOF_OUT
 	EOF_ERR
 "
@@ -299,9 +299,9 @@ test_expect_success 'git bisect run: args, stdout and stderr: "--" argument' "
 	test_bisect_run_args -- <<-'EOF_ARGS' 6<<-EOF_OUT 7<<-'EOF_ERR'
 	<-->
 	EOF_ARGS
-	running ./run.sh --
+	running './run.sh' '--'
 	$HASH4 is the first bad commit
-	bisect run success
+	bisect found first bad commit
 	EOF_OUT
 	EOF_ERR
 "
@@ -313,9 +313,9 @@ test_expect_success 'git bisect run: args, stdout and stderr: "--log foo --no-lo
 	<--no-log>
 	<bar>
 	EOF_ARGS
-	running ./run.sh --log foo --no-log bar
+	running './run.sh' '--log' 'foo' '--no-log' 'bar'
 	$HASH4 is the first bad commit
-	bisect run success
+	bisect found first bad commit
 	EOF_OUT
 	EOF_ERR
 "
@@ -324,11 +324,50 @@ test_expect_success 'git bisect run: args, stdout and stderr: "--bisect-start" a
 	test_bisect_run_args --bisect-start <<-'EOF_ARGS' 6<<-EOF_OUT 7<<-'EOF_ERR'
 	<--bisect-start>
 	EOF_ARGS
-	running ./run.sh --bisect-start
+	running './run.sh' '--bisect-start'
 	$HASH4 is the first bad commit
-	bisect run success
+	bisect found first bad commit
 	EOF_OUT
 	EOF_ERR
+"
+
+test_expect_success 'git bisect run: negative exit code' "
+	write_script fail.sh <<-'EOF' &&
+	exit 255
+	EOF
+	cat <<-'EOF' >expect &&
+	bisect run failed: exit code -1 from './fail.sh' is < 0 or >= 128
+	EOF
+	test_when_finished 'git bisect reset' &&
+	git bisect start &&
+	git bisect good $HASH1 &&
+	git bisect bad $HASH4 &&
+	! git bisect run ./fail.sh 2>err &&
+	sed -En 's/.*(bisect.*code) (-?[0-9]+) (from.*)/\1 -1 \3/p' err >actual &&
+	test_cmp expect actual
+"
+
+test_expect_failure 'git bisect run: unable to verify on good' "
+	write_script fail.sh <<-'EOF' &&
+	head=\$(git rev-parse --verify HEAD)
+	good=\$(git rev-parse --verify $HASH1)
+	if test "\$head" = "\$good"
+	then
+		exit 255
+	else
+		exit 127
+	fi
+	EOF
+	cat <<-'EOF' >expect &&
+	unable to verify './fail.sh' on good revision
+	EOF
+	test_when_finished 'git bisect reset' &&
+	git bisect start &&
+	git bisect good $HASH1 &&
+	git bisect bad $HASH4 &&
+	! git bisect run ./fail.sh 2>err &&
+	sed -n 's/.*\(unable to verify.*\)/\1/p' err >actual &&
+	test_cmp expect actual
 "
 
 # We want to automatically find the commit that
