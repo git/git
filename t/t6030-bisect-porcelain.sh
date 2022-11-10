@@ -347,7 +347,7 @@ test_expect_success 'git bisect run: negative exit code' "
 	test_cmp expect actual
 "
 
-test_expect_failure 'git bisect run: unable to verify on good' "
+test_expect_success 'git bisect run: unable to verify on good' "
 	write_script fail.sh <<-'EOF' &&
 	head=\$(git rev-parse --verify HEAD)
 	good=\$(git rev-parse --verify $HASH1)

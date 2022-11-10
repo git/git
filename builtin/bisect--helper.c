@@ -1211,7 +1211,7 @@ static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
 		if (is_first_run && (res == 126 || res == 127)) {
 			int rc = verify_good(terms, command.buf);
 			is_first_run = 0;
-			if (rc < 0) {
+			if (rc < 0 || 128 <= rc) {
 				error(_("unable to verify %s on good"
 					" revision"), command.buf);
 				res = BISECT_FAILED;
