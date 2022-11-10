@@ -34,6 +34,36 @@ HASH2=
 HASH3=
 HASH4=
 
+test_bisect_usage () {
+	local code="$1" &&
+	shift &&
+	cat >expect &&
+	test_expect_code $code "$@" >out 2>actual &&
+	test_must_be_empty out &&
+	test_cmp expect actual
+}
+
+test_expect_success 'bisect usage' "
+	test_bisect_usage 1 git bisect reset extra1 extra2 <<-\EOF &&
+	error: 'git bisect reset' requires either no argument or a commit
+	EOF
+	test_bisect_usage 1 git bisect terms extra1 extra2 <<-\EOF &&
+	error: 'git bisect terms' requires 0 or 1 argument
+	EOF
+	test_bisect_usage 1 git bisect next extra1 <<-\EOF &&
+	error: 'git bisect next' requires 0 arguments
+	EOF
+	test_bisect_usage 1 git bisect log extra1 <<-\EOF &&
+	error: We are not bisecting.
+	EOF
+	test_bisect_usage 1 git bisect replay <<-\EOF &&
+	error: no logfile given
+	EOF
+	test_bisect_usage 1 git bisect run <<-\EOF
+	error: 'git bisect run' failed: no command provided.
+	EOF
+"
+
 test_expect_success 'set up basic repo with 1 file (hello) and 4 commits' '
      add_line_into_file "1: Hello World" hello &&
      HASH1=$(git rev-parse --verify HEAD) &&
