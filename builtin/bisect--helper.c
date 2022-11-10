@@ -20,18 +20,40 @@ static GIT_PATH_FUNC(git_path_bisect_names, "BISECT_NAMES")
 static GIT_PATH_FUNC(git_path_bisect_first_parent, "BISECT_FIRST_PARENT")
 static GIT_PATH_FUNC(git_path_bisect_run, "BISECT_RUN")
 
-static const char * const git_bisect_helper_usage[] = {
-	N_("git bisect--helper --bisect-reset [<commit>]"),
-	"git bisect--helper --bisect-terms [--term-good | --term-old | --term-bad | --term-new]",
-	N_("git bisect--helper --bisect-start [--term-{new,bad}=<term> --term-{old,good}=<term>]"
-					    " [--no-checkout] [--first-parent] [<bad> [<good>...]] [--] [<paths>...]"),
-	"git bisect--helper --bisect-next",
-	N_("git bisect--helper --bisect-state (bad|new) [<rev>]"),
-	N_("git bisect--helper --bisect-state (good|old) [<rev>...]"),
-	N_("git bisect--helper --bisect-replay <filename>"),
-	N_("git bisect--helper --bisect-skip [(<rev>|<range>)...]"),
-	"git bisect--helper --bisect-visualize",
-	N_("git bisect--helper --bisect-run <cmd>..."),
+#define BUILTIN_GIT_BISECT_START_USAGE \
+	N_("git bisect start [--term-{new,bad}=<term> --term-{old,good}=<term>]" \
+	   "    [--no-checkout] [--first-parent] [<bad> [<good>...]] [--]" \
+	   "    [<pathspec>...]")
+#define BUILTIN_GIT_BISECT_STATE_USAGE \
+	N_("git bisect (good|bad) [<rev>...]")
+#define BUILTIN_GIT_BISECT_TERMS_USAGE \
+	"git bisect terms [--term-good | --term-bad]"
+#define BUILTIN_GIT_BISECT_SKIP_USAGE \
+	N_("git bisect skip [(<rev>|<range>)...]")
+#define BUILTIN_GIT_BISECT_NEXT_USAGE \
+	"git bisect next"
+#define BUILTIN_GIT_BISECT_RESET_USAGE \
+	N_("git bisect reset [<commit>]")
+#define BUILTIN_GIT_BISECT_VISUALIZE_USAGE \
+	"git bisect visualize"
+#define BUILTIN_GIT_BISECT_REPLAY_USAGE \
+	N_("git bisect replay <logfile>")
+#define BUILTIN_GIT_BISECT_LOG_USAGE \
+	"git bisect log"
+#define BUILTIN_GIT_BISECT_RUN_USAGE \
+	N_("git bisect run <cmd>...")
+
+static const char * const git_bisect_usage[] = {
+	BUILTIN_GIT_BISECT_START_USAGE,
+	BUILTIN_GIT_BISECT_STATE_USAGE,
+	BUILTIN_GIT_BISECT_TERMS_USAGE,
+	BUILTIN_GIT_BISECT_SKIP_USAGE,
+	BUILTIN_GIT_BISECT_NEXT_USAGE,
+	BUILTIN_GIT_BISECT_RESET_USAGE,
+	BUILTIN_GIT_BISECT_VISUALIZE_USAGE,
+	BUILTIN_GIT_BISECT_REPLAY_USAGE,
+	BUILTIN_GIT_BISECT_LOG_USAGE,
+	BUILTIN_GIT_BISECT_RUN_USAGE,
 	NULL
 };
 
@@ -1411,11 +1433,10 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		OPT_SUBCOMMAND("run", &fn, cmd_bisect__run),
 		OPT_END()
 	};
-	argc = parse_options(argc, argv, prefix, options,
-			     git_bisect_helper_usage, 0);
+	argc = parse_options(argc, argv, prefix, options, git_bisect_usage, 0);
 
 	if (!fn)
-		usage_with_options(git_bisect_helper_usage, options);
+		usage_with_options(git_bisect_usage, options);
 	argc--;
 	argv++;
 
