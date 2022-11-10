@@ -1191,13 +1191,12 @@ static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
 	if (bisect_next_check(terms, NULL))
 		return BISECT_FAILED;
 
-	if (argc)
-		sq_quote_argv(&command, argv);
-	else {
+	if (!argc) {
 		error(_("bisect run failed: no command provided."));
 		return BISECT_FAILED;
 	}
 
+	sq_quote_argv(&command, argv);
 	while (1) {
 		res = do_bisect_run(command.buf);
 
@@ -1268,7 +1267,7 @@ static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
 			res = BISECT_OK;
 		} else if (res) {
 			error(_("bisect run failed: 'git bisect--helper --bisect-state"
-			" %s' exited with error code %d"), new_state, res);
+				" %s' exited with error code %d"), new_state, res);
 		} else {
 			continue;
 		}
