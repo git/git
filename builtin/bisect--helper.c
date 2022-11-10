@@ -1277,6 +1277,117 @@ static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
 	return res;
 }
 
+static int cmd_bisect__reset(int argc, const char **argv, const char *prefix UNUSED)
+{
+	if (argc > 1)
+		return error(_("--bisect-reset requires either no argument or a commit"));
+	return bisect_reset(argc ? argv[0] : NULL);
+}
+
+static int cmd_bisect__terms(int argc, const char **argv, const char *prefix UNUSED)
+{
+	int res;
+	struct bisect_terms terms = { 0 };
+
+	if (argc > 1)
+		return error(_("--bisect-terms requires 0 or 1 argument"));
+	res = bisect_terms(&terms, argc == 1 ? argv[0] : NULL);
+	free_terms(&terms);
+	return res;
+}
+
+static int cmd_bisect__start(int argc, const char **argv, const char *prefix UNUSED)
+{
+	int res;
+	struct bisect_terms terms = { 0 };
+
+	set_terms(&terms, "bad", "good");
+	res = bisect_start(&terms, argv, argc);
+	free_terms(&terms);
+	return res;
+}
+
+static int cmd_bisect__next(int argc, const char **argv UNUSED, const char *prefix)
+{
+	int res;
+	struct bisect_terms terms = { 0 };
+
+	if (argc)
+		return error(_("--bisect-next requires 0 arguments"));
+	get_terms(&terms);
+	res = bisect_next(&terms, prefix);
+	free_terms(&terms);
+	return res;
+}
+
+static int cmd_bisect__state(int argc, const char **argv, const char *prefix UNUSED)
+{
+	int res;
+	struct bisect_terms terms = { 0 };
+
+	set_terms(&terms, "bad", "good");
+	get_terms(&terms);
+	res = bisect_state(&terms, argv, argc);
+	free_terms(&terms);
+	return res;
+}
+
+static int cmd_bisect__log(int argc, const char **argv UNUSED, const char *prefix UNUSED)
+{
+	if (argc)
+		return error(_("--bisect-log requires 0 arguments"));
+	return bisect_log();
+}
+
+static int cmd_bisect__replay(int argc, const char **argv, const char *prefix UNUSED)
+{
+	int res;
+	struct bisect_terms terms = { 0 };
+
+	if (argc != 1)
+		return error(_("no logfile given"));
+	set_terms(&terms, "bad", "good");
+	res = bisect_replay(&terms, argv[0]);
+	free_terms(&terms);
+	return res;
+}
+
+static int cmd_bisect__skip(int argc, const char **argv, const char *prefix UNUSED)
+{
+	int res;
+	struct bisect_terms terms = { 0 };
+
+	set_terms(&terms, "bad", "good");
+	get_terms(&terms);
+	res = bisect_skip(&terms, argv, argc);
+	free_terms(&terms);
+	return res;
+}
+
+static int cmd_bisect__visualize(int argc, const char **argv, const char *prefix UNUSED)
+{
+	int res;
+	struct bisect_terms terms = { 0 };
+
+	get_terms(&terms);
+	res = bisect_visualize(&terms, argv, argc);
+	free_terms(&terms);
+	return res;
+}
+
+static int cmd_bisect__run(int argc, const char **argv, const char *prefix UNUSED)
+{
+	int res;
+	struct bisect_terms terms = { 0 };
+
+	if (!argc)
+		return error(_("bisect run failed: no command provided."));
+	get_terms(&terms);
+	res = bisect_run(&terms, argv, argc);
+	free_terms(&terms);
+	return res;
+}
+
 int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 {
 	enum {
@@ -1316,8 +1427,6 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 			 N_("use <cmd>... to automatically bisect"), BISECT_RUN),
 		OPT_END()
 	};
-	struct bisect_terms terms = { .term_good = NULL, .term_bad = NULL };
-
 	argc = parse_options(argc, argv, prefix, options,
 			     git_bisect_helper_usage,
 			     PARSE_OPT_KEEP_DASHDASH | PARSE_OPT_KEEP_UNKNOWN_OPT);
@@ -1327,60 +1436,38 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 
 	switch (cmdmode) {
 	case BISECT_RESET:
-		if (argc > 1)
-			return error(_("--bisect-reset requires either no argument or a commit"));
-		res = bisect_reset(argc ? argv[0] : NULL);
+		res = cmd_bisect__reset(argc, argv, prefix);
 		break;
 	case BISECT_TERMS:
-		if (argc > 1)
-			return error(_("--bisect-terms requires 0 or 1 argument"));
-		res = bisect_terms(&terms, argc == 1 ? argv[0] : NULL);
+		res = cmd_bisect__terms(argc, argv, prefix);
 		break;
 	case BISECT_START:
-		set_terms(&terms, "bad", "good");
-		res = bisect_start(&terms, argv, argc);
+		res = cmd_bisect__start(argc, argv, prefix);
 		break;
 	case BISECT_NEXT:
-		if (argc)
-			return error(_("--bisect-next requires 0 arguments"));
-		get_terms(&terms);
-		res = bisect_next(&terms, prefix);
+		res = cmd_bisect__next(argc, argv, prefix);
 		break;
 	case BISECT_STATE:
-		set_terms(&terms, "bad", "good");
-		get_terms(&terms);
-		res = bisect_state(&terms, argv, argc);
+		res = cmd_bisect__state(argc, argv, prefix);
 		break;
 	case BISECT_LOG:
-		if (argc)
-			return error(_("--bisect-log requires 0 arguments"));
-		res = bisect_log();
+		res = cmd_bisect__log(argc, argv, prefix);
 		break;
 	case BISECT_REPLAY:
-		if (argc != 1)
-			return error(_("no logfile given"));
-		set_terms(&terms, "bad", "good");
-		res = bisect_replay(&terms, argv[0]);
+		res = cmd_bisect__replay(argc, argv, prefix);
 		break;
 	case BISECT_SKIP:
-		set_terms(&terms, "bad", "good");
-		get_terms(&terms);
-		res = bisect_skip(&terms, argv, argc);
+		res = cmd_bisect__skip(argc, argv, prefix);
 		break;
 	case BISECT_VISUALIZE:
-		get_terms(&terms);
-		res = bisect_visualize(&terms, argv, argc);
+		res = cmd_bisect__visualize(argc, argv, prefix);
 		break;
 	case BISECT_RUN:
-		if (!argc)
-			return error(_("bisect run failed: no command provided."));
-		get_terms(&terms);
-		res = bisect_run(&terms, argv, argc);
+		res = cmd_bisect__run(argc, argv, prefix);
 		break;
 	default:
 		BUG("unknown subcommand %d", cmdmode);
 	}
-	free_terms(&terms);
 
 	/*
 	 * Handle early success
