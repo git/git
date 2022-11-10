@@ -57,8 +57,6 @@ case "$#" in
 	case "$cmd" in
 	help)
 		git bisect -h ;;
-	log)
-		git bisect--helper log || exit ;;
 	*)
 		git bisect--helper "$cmd" "$@" ;;
 	esac

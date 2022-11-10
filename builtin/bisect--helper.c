@@ -1347,10 +1347,8 @@ static int cmd_bisect__next(int argc, const char **argv UNUSED, const char *pref
 	return res;
 }
 
-static int cmd_bisect__log(int argc, const char **argv UNUSED, const char *prefix UNUSED)
+static int cmd_bisect__log(int argc UNUSED, const char **argv UNUSED, const char *prefix UNUSED)
 {
-	if (argc)
-		return error(_("'%s' requires 0 arguments"), "git bisect log");
 	return bisect_log();
 }
 
