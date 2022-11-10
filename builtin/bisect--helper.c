@@ -1282,7 +1282,8 @@ static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
 static int cmd_bisect__reset(int argc, const char **argv, const char *prefix UNUSED)
 {
 	if (argc > 1)
-		return error(_("--bisect-reset requires either no argument or a commit"));
+		return error(_("'%s' requires either no argument or a commit"),
+			     "git bisect reset");
 	return bisect_reset(argc ? argv[0] : NULL);
 }
 
@@ -1292,7 +1293,8 @@ static int cmd_bisect__terms(int argc, const char **argv, const char *prefix UNU
 	struct bisect_terms terms = { 0 };
 
 	if (argc > 1)
-		return error(_("--bisect-terms requires 0 or 1 argument"));
+		return error(_("'%s' requires 0 or 1 argument"),
+			     "git bisect terms");
 	res = bisect_terms(&terms, argc == 1 ? argv[0] : NULL);
 	free_terms(&terms);
 	return res;
@@ -1315,7 +1317,8 @@ static int cmd_bisect__next(int argc, const char **argv UNUSED, const char *pref
 	struct bisect_terms terms = { 0 };
 
 	if (argc)
-		return error(_("--bisect-next requires 0 arguments"));
+		return error(_("'%s' requires 0 arguments"),
+			     "git bisect next");
 	get_terms(&terms);
 	res = bisect_next(&terms, prefix);
 	free_terms(&terms);
@@ -1337,7 +1340,7 @@ static int cmd_bisect__state(int argc, const char **argv, const char *prefix UNU
 static int cmd_bisect__log(int argc, const char **argv UNUSED, const char *prefix UNUSED)
 {
 	if (argc)
-		return error(_("--bisect-log requires 0 arguments"));
+		return error(_("'%s' requires 0 arguments"), "git bisect log");
 	return bisect_log();
 }
 
@@ -1383,7 +1386,7 @@ static int cmd_bisect__run(int argc, const char **argv, const char *prefix UNUSE
 	struct bisect_terms terms = { 0 };
 
 	if (!argc)
-		return error(_("bisect run failed: no command provided."));
+		return error(_("'%s' failed: no command provided."), "git bisect run");
 	get_terms(&terms);
 	res = bisect_run(&terms, argv, argc);
 	free_terms(&terms);
