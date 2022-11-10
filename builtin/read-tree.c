@@ -249,6 +249,10 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 	if (opts.debug_unpack)
 		opts.fn = debug_merge;
 
+	/* If we're going to prime_cache_tree later, skip cache tree update */
+	if (nr_trees == 1 && !opts.prefix)
+		opts.skip_cache_tree_update = 1;
+
 	cache_tree_free(&active_cache_tree);
 	for (i = 0; i < nr_trees; i++) {
 		struct tree *tree = trees[i];
