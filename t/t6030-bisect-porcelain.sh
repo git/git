@@ -285,7 +285,7 @@ test_bisect_run_args () {
 	test_cmp expect.args actual.args
 }
 
-test_expect_failure 'git bisect run: args, stdout and stderr with no arguments' "
+test_expect_success 'git bisect run: args, stdout and stderr with no arguments' "
 	test_bisect_run_args <<-'EOF_ARGS' 6<<-EOF_OUT 7<<-'EOF_ERR'
 	EOF_ARGS
 	running ./run.sh
@@ -295,7 +295,7 @@ test_expect_failure 'git bisect run: args, stdout and stderr with no arguments' 
 	EOF_ERR
 "
 
-test_expect_failure 'git bisect run: args, stdout and stderr: "--" argument' "
+test_expect_success 'git bisect run: args, stdout and stderr: "--" argument' "
 	test_bisect_run_args -- <<-'EOF_ARGS' 6<<-EOF_OUT 7<<-'EOF_ERR'
 	<-->
 	EOF_ARGS
@@ -306,7 +306,7 @@ test_expect_failure 'git bisect run: args, stdout and stderr: "--" argument' "
 	EOF_ERR
 "
 
-test_expect_failure 'git bisect run: args, stdout and stderr: "--log foo --no-log bar" arguments' "
+test_expect_success 'git bisect run: args, stdout and stderr: "--log foo --no-log bar" arguments' "
 	test_bisect_run_args --log foo --no-log bar <<-'EOF_ARGS' 6<<-EOF_OUT 7<<-'EOF_ERR'
 	<--log>
 	<foo>
@@ -320,7 +320,7 @@ test_expect_failure 'git bisect run: args, stdout and stderr: "--log foo --no-lo
 	EOF_ERR
 "
 
-test_expect_failure 'git bisect run: args, stdout and stderr: "--bisect-start" argument' "
+test_expect_success 'git bisect run: args, stdout and stderr: "--bisect-start" argument' "
 	test_bisect_run_args --bisect-start <<-'EOF_ARGS' 6<<-EOF_OUT 7<<-'EOF_ERR'
 	<--bisect-start>
 	EOF_ARGS
