@@ -3231,14 +3231,14 @@ endif
 define cocci-rule
 
 ## Rule for .build/$(1).patch/$(2); Params:
-# $(1) = e.g. "free.cocci"
+# $(1) = e.g. ".build/contrib/coccinelle/free.cocci"
 # $(2) = e.g. "grep.c"
 # $(3) = e.g. "grep.o"
-COCCI_$(1:.build/contrib/coccinelle/%.cocci=%) += .build/$(1).patch/$(2)
-.build/$(1).patch/$(2): GIT-SPATCH-DEFINES
-.build/$(1).patch/$(2): $(if $(and $(SPATCH_USE_O_DEPENDENCIES),$(wildcard $(3))),$(3),.build/contrib/coccinelle/FOUND_H_SOURCES)
-.build/$(1).patch/$(2): $(1)
-.build/$(1).patch/$(2): .build/$(1).patch/% : %
+COCCI_$(1:.build/contrib/coccinelle/%.cocci=%) += $(1).d/$(2).patch
+$(1).d/$(2).patch: GIT-SPATCH-DEFINES
+$(1).d/$(2).patch: $(if $(and $(SPATCH_USE_O_DEPENDENCIES),$(wildcard $(3))),$(3),.build/contrib/coccinelle/FOUND_H_SOURCES)
+$(1).d/$(2).patch: $(1)
+$(1).d/$(2).patch: $(1).d/%.patch : %
 	$$(call mkdir_p_parent_template)
 	$$(QUIET_SPATCH)if ! $$(SPATCH) $$(SPATCH_FLAGS) \
 		$$(SPATCH_INCLUDE_FLAGS) \
