@@ -200,7 +200,7 @@ test_expect_success 'redirects send auth to new location' '
 	expect_askpass both user@host auth/smart/repo.git
 '
 
-test_expect_success !HTTP2 'GIT_TRACE_CURL redacts auth details' '
+test_expect_success 'GIT_TRACE_CURL redacts auth details' '
 	rm -rf redact-auth trace &&
 	set_askpass user@host pass@host &&
 	GIT_TRACE_CURL="$(pwd)/trace" git clone --bare "$HTTPD_URL/auth/smart/repo.git" redact-auth &&
@@ -212,7 +212,7 @@ test_expect_success !HTTP2 'GIT_TRACE_CURL redacts auth details' '
 	grep -i "Authorization: Basic <redacted>" trace
 '
 
-test_expect_success !HTTP2 'GIT_CURL_VERBOSE redacts auth details' '
+test_expect_success 'GIT_CURL_VERBOSE redacts auth details' '
 	rm -rf redact-auth trace &&
 	set_askpass user@host pass@host &&
 	GIT_CURL_VERBOSE=1 git clone --bare "$HTTPD_URL/auth/smart/repo.git" redact-auth 2>trace &&
@@ -482,7 +482,7 @@ test_expect_success 'fetch by SHA-1 without tag following' '
 		--no-tags origin $(cat bar_hash)
 '
 
-test_expect_success !HTTP2 'cookies are redacted by default' '
+test_expect_success 'cookies are redacted by default' '
 	rm -rf clone &&
 	echo "Set-Cookie: Foo=1" >cookies &&
 	echo "Set-Cookie: Bar=2" >>cookies &&
