@@ -66,7 +66,8 @@ OPTIONS
 
 --merge-base=<commit>::
 	Instead of finding the merge-bases for <branch1> and <branch2>,
-	specify a merge-base for the merge.
+	specify a merge-base for the merge. This option is incompatible
+	with `--stdin`.
 
 [[OUTPUT]]
 OUTPUT
@@ -219,6 +220,17 @@ with linkgit:git-merge[1]:
     <<CFI,Conflicted file info>>)
   * any messages that would have been printed to stdout (the
     <<IM,Informational messages>>)
+
+INPUT FORMAT
+------------
+'git merge-tree --stdin' input format is fully text based. Each line
+has this format:
+
+	[<base-commit> -- ]<branch1> <branch2>
+
+If one line is separated by `--`, the string before the separator is
+used for specifying a merge-base for the merge and the string after
+the separator describes the branches to be merged.
 
 MISTAKES TO AVOID
 -----------------
