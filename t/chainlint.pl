@@ -653,21 +653,32 @@ my @NOCOLORS = (bold => '', rev => '', reset => '', blue => '', green => '', red
 my %COLORS = ();
 sub get_colors {
 	return \%COLORS if %COLORS;
-	if (exists($ENV{NO_COLOR}) ||
-	    system("tput sgr0 >/dev/null 2>&1") != 0 ||
-	    system("tput bold >/dev/null 2>&1") != 0 ||
-	    system("tput rev  >/dev/null 2>&1") != 0 ||
-	    system("tput setaf 1 >/dev/null 2>&1") != 0) {
+	if (exists($ENV{NO_COLOR})) {
 		%COLORS = @NOCOLORS;
 		return \%COLORS;
 	}
-	%COLORS = (bold  => `tput bold`,
-		   rev   => `tput rev`,
-		   reset => `tput sgr0`,
-		   blue  => `tput setaf 4`,
-		   green => `tput setaf 2`,
-		   red   => `tput setaf 1`);
-	chomp(%COLORS);
+	if ($ENV{TERM} =~ /xterm|xterm-\d+color|xterm-new|xterm-direct|nsterm|nsterm-\d+color|nsterm-direct/) {
+		%COLORS = (bold  => "\e[1m",
+			   rev   => "\e[7m",
+			   reset => "\e[0m",
+			   blue  => "\e[34m",
+			   green => "\e[32m",
+			   red   => "\e[31m");
+		return \%COLORS;
+	}
+	if (system("tput sgr0 >/dev/null 2>&1") == 0 &&
+	    system("tput bold >/dev/null 2>&1") == 0 &&
+	    system("tput rev  >/dev/null 2>&1") == 0 &&
+	    system("tput setaf 1 >/dev/null 2>&1") == 0) {
+		%COLORS = (bold  => `tput bold`,
+			   rev   => `tput rev`,
+			   reset => `tput sgr0`,
+			   blue  => `tput setaf 4`,
+			   green => `tput setaf 2`,
+			   red   => `tput setaf 1`);
+		return \%COLORS;
+	}
+	%COLORS = @NOCOLORS;
 	return \%COLORS;
 }
 
