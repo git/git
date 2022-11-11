@@ -174,6 +174,11 @@ prepare_httpd() {
 	fi
 }
 
+enable_http2 () {
+	HTTPD_PARA="$HTTPD_PARA -DHTTP2"
+	test_set_prereq HTTP2
+}
+
 start_httpd() {
 	prepare_httpd >&3 2>&4
 
