@@ -860,4 +860,31 @@ test_expect_success '--stdin with both a successful and a conflicted merge' '
 	test_cmp expect actual
 '
 
+# specify merge-base as parent of branch2
+# git merge-tree --write-tree --merge-base=c2 c1 c3
+#   Commit c1: add file1
+#   Commit c2: add file2 after c1
+#   Commit c3: add file3 after c2
+#   Expected: add file3, and file2 does NOT appear
+
+test_expect_success 'specify merge-base as parent of branch2' '
+	# Setup
+	test_when_finished "rm -rf base-b2-p" &&
+	git init base-b2-p &&
+	test_commit -C base-b2-p c1 file1 &&
+	test_commit -C base-b2-p c2 file2 &&
+	test_commit -C base-b2-p c3 file3 &&
+
+	# Testing
+	TREE_OID=$(git -C base-b2-p merge-tree --write-tree --merge-base=c2 c1 c3) &&
+
+	q_to_tab <<-EOF >expect &&
+	100644 blob $(git -C base-b2-p rev-parse c1:file1)Qfile1
+	100644 blob $(git -C base-b2-p rev-parse c3:file3)Qfile3
+	EOF
+
+	git -C base-b2-p ls-tree $TREE_OID >actual &&
+	test_cmp expect actual
+'
+
 test_done
