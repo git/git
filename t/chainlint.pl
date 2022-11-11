@@ -67,6 +67,7 @@ sub new {
 	bless {
 		parser => $parser,
 		buff => $s,
+		lineno => 1,
 		heretags => []
 	} => $class;
 }
@@ -97,7 +98,9 @@ sub scan_op {
 sub scan_sqstring {
 	my $self = shift @_;
 	${$self->{buff}} =~ /\G([^']*'|.*\z)/sgc;
-	return "'" . $1;
+	my $s = $1;
+	$self->{lineno} += () = $s =~ /\n/sg;
+	return "'" . $s;
 }
 
 sub scan_dqstring {
@@ -115,7 +118,7 @@ sub scan_dqstring {
 		if ($c eq '\\') {
 			$s .= '\\', last unless $$b =~ /\G(.)/sgc;
 			$c = $1;
-			next if $c eq "\n"; # line splice
+			$self->{lineno}++, next if $c eq "\n"; # line splice
 			# backslash escapes only $, `, ", \ in dq-string
 			$s .= '\\' unless $c =~ /^[\$`"\\]$/;
 			$s .= $c;
@@ -123,6 +126,7 @@ sub scan_dqstring {
 		}
 		die("internal error scanning dq-string '$c'\n");
 	}
+	$self->{lineno} += () = $s =~ /\n/sg;
 	return $s;
 }
 
@@ -137,6 +141,7 @@ sub scan_balanced {
 		$depth--;
 		last if $depth == 0;
 	}
+	$self->{lineno} += () = $s =~ /\n/sg;
 	return $s;
 }
 
@@ -163,8 +168,11 @@ sub swallow_heredocs {
 	my $b = $self->{buff};
 	my $tags = $self->{heretags};
 	while (my $tag = shift @$tags) {
+		my $start = pos($$b);
 		my $indent = $tag =~ s/^\t// ? '\\s*' : '';
 		$$b =~ /(?:\G|\n)$indent\Q$tag\E(?:\n|\z)/gc;
+		my $body = substr($$b, $start, pos($$b) - $start);
+		$self->{lineno} += () = $body =~ /\n/sg;
 	}
 }
 
@@ -172,11 +180,12 @@ sub scan_token {
 	my $self = shift @_;
 	my $b = $self->{buff};
 	my $token = '';
-	my $start;
+	my ($start, $startln);
 RESTART:
+	$startln = $self->{lineno};
 	$$b =~ /\G[ \t]+/gc; # skip whitespace (but not newline)
 	$start = pos($$b) || 0;
-	return ["\n", $start, pos($$b)] if $$b =~ /\G#[^\n]*(?:\n|\z)/gc; # comment
+	$self->{lineno}++, return ["\n", $start, pos($$b), $startln, $startln] if $$b =~ /\G#[^\n]*(?:\n|\z)/gc; # comment
 	while (1) {
 		# slurp up non-special characters
 		$token .= $1 if $$b =~ /\G([^\\;&|<>(){}'"\$\s]+)/gc;
@@ -188,20 +197,20 @@ RESTART:
 		$token .= $self->scan_sqstring(), next if $c eq "'";
 		$token .= $self->scan_dqstring(), next if $c eq '"';
 		$token .= $c . $self->scan_dollar(), next if $c eq '$';
-		$self->swallow_heredocs(), $token = $c, last if $c eq "\n";
+		$self->{lineno}++, $self->swallow_heredocs(), $token = $c, last if $c eq "\n";
 		$token = $self->scan_op($c), last if $c =~ /^[;&|<>]$/;
 		$token = $c, last if $c =~ /^[(){}]$/;
 		if ($c eq '\\') {
 			$token .= '\\', last unless $$b =~ /\G(.)/sgc;
 			$c = $1;
-			next if $c eq "\n" && length($token); # line splice
-			goto RESTART if $c eq "\n"; # line splice
+			$self->{lineno}++, next if $c eq "\n" && length($token); # line splice
+			$self->{lineno}++, goto RESTART if $c eq "\n"; # line splice
 			$token .= '\\' . $c;
 			next;
 		}
 		die("internal error scanning character '$c'\n");
 	}
-	return length($token) ? [$token, $start, pos($$b)] : undef;
+	return length($token) ? [$token, $start, pos($$b), $startln, $self->{lineno}] : undef;
 }
 
 # ShellParser parses POSIX shell scripts (with minor extensions for Bash). It
