@@ -1,12 +1,18 @@
 #!/bin/sh
 
-test_description='test smart fetching over http via http-backend'
+: ${HTTP_PROTO:=HTTP}
+test_description="test smart fetching over http via http-backend ($HTTP_PROTO)"
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-httpd.sh
+test "$HTTP_PROTO" = "HTTP/2" && enable_http2
 start_httpd
+
+test_expect_success HTTP2 'enable client-side http/2' '
+	git config --global http.version HTTP/2
+'
 
 test_expect_success 'setup repository' '
 	git config push.default matching &&
@@ -194,7 +200,7 @@ test_expect_success 'redirects send auth to new location' '
 	expect_askpass both user@host auth/smart/repo.git
 '
 
-test_expect_success 'GIT_TRACE_CURL redacts auth details' '
+test_expect_success !HTTP2 'GIT_TRACE_CURL redacts auth details' '
 	rm -rf redact-auth trace &&
 	set_askpass user@host pass@host &&
 	GIT_TRACE_CURL="$(pwd)/trace" git clone --bare "$HTTPD_URL/auth/smart/repo.git" redact-auth &&
@@ -206,7 +212,7 @@ test_expect_success 'GIT_TRACE_CURL redacts auth details' '
 	grep -i "Authorization: Basic <redacted>" trace
 '
 
-test_expect_success 'GIT_CURL_VERBOSE redacts auth details' '
+test_expect_success !HTTP2 'GIT_CURL_VERBOSE redacts auth details' '
 	rm -rf redact-auth trace &&
 	set_askpass user@host pass@host &&
 	GIT_CURL_VERBOSE=1 git clone --bare "$HTTPD_URL/auth/smart/repo.git" redact-auth 2>trace &&
@@ -347,7 +353,10 @@ test_expect_success CMDLINE_LIMIT \
 test_expect_success 'large fetch-pack requests can be sent using chunked encoding' '
 	GIT_TRACE_CURL=true git -c http.postbuffer=65536 \
 		clone --bare "$HTTPD_URL/smart/repo.git" split.git 2>err &&
-	grep "^=> Send header: Transfer-Encoding: chunked" err
+	{
+		test_have_prereq HTTP2 ||
+		grep "^=> Send header: Transfer-Encoding: chunked" err
+	}
 '
 
 test_expect_success 'test allowreachablesha1inwant' '
@@ -473,7 +482,7 @@ test_expect_success 'fetch by SHA-1 without tag following' '
 		--no-tags origin $(cat bar_hash)
 '
 
-test_expect_success 'cookies are redacted by default' '
+test_expect_success !HTTP2 'cookies are redacted by default' '
 	rm -rf clone &&
 	echo "Set-Cookie: Foo=1" >cookies &&
 	echo "Set-Cookie: Bar=2" >>cookies &&
