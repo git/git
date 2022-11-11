@@ -614,6 +614,7 @@ sub check_test {
 	my $problems = $parser->{problems};
 	return unless $emit_all || @$problems;
 	my $c = main::fd_colors(1);
+	my $lineno = $_[1]->[3];
 	my $start = 0;
 	my $checked = '';
 	for (sort {$a->[1]->[2] <=> $b->[1]->[2]} @$problems) {
@@ -623,10 +624,12 @@ sub check_test {
 		$start = $pos;
 	}
 	$checked .= substr($body, $start);
-	$checked =~ s/^\n//;
+	$checked =~ s/^/$lineno++ . ' '/mge;
+	$checked =~ s/^\d+ \n//;
 	$checked =~ s/(\s) \?!/$1?!/mg;
 	$checked =~ s/\?! (\s)/?!$1/mg;
 	$checked =~ s/(\?![^?]+\?!)/$c->{rev}$c->{red}$1$c->{reset}/mg;
+	$checked =~ s/^\d+/$c->{dim}$&$c->{reset}/mg;
 	$checked .= "\n" unless $checked =~ /\n$/;
 	push(@{$self->{output}}, "$c->{blue}# chainlint: $title$c->{reset}\n$checked");
 }
@@ -658,7 +661,7 @@ if (eval {require Time::HiRes; Time::HiRes->import(); 1;}) {
 # thread and ignore %ENV changes in subthreads.
 $ENV{TERM} = $ENV{USER_TERM} if $ENV{USER_TERM};
 
-my @NOCOLORS = (bold => '', rev => '', reset => '', blue => '', green => '', red => '');
+my @NOCOLORS = (bold => '', rev => '', dim => '', reset => '', blue => '', green => '', red => '');
 my %COLORS = ();
 sub get_colors {
 	return \%COLORS if %COLORS;
@@ -669,6 +672,7 @@ sub get_colors {
 	if ($ENV{TERM} =~ /xterm|xterm-\d+color|xterm-new|xterm-direct|nsterm|nsterm-\d+color|nsterm-direct/) {
 		%COLORS = (bold  => "\e[1m",
 			   rev   => "\e[7m",
+			   dim   => "\e[2m",
 			   reset => "\e[0m",
 			   blue  => "\e[34m",
 			   green => "\e[32m",
@@ -678,9 +682,11 @@ sub get_colors {
 	if (system("tput sgr0 >/dev/null 2>&1") == 0 &&
 	    system("tput bold >/dev/null 2>&1") == 0 &&
 	    system("tput rev  >/dev/null 2>&1") == 0 &&
+	    system("tput dim  >/dev/null 2>&1") == 0 &&
 	    system("tput setaf 1 >/dev/null 2>&1") == 0) {
 		%COLORS = (bold  => `tput bold`,
 			   rev   => `tput rev`,
+			   dim   => `tput dim`,
 			   reset => `tput sgr0`,
 			   blue  => `tput setaf 4`,
 			   green => `tput setaf 2`,
