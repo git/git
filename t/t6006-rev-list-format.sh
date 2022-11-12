@@ -218,6 +218,13 @@ commit $head1
 added (hinzugef${added_utf8_part}gt..
 EOF
 
+test_format subject-truncated "%<($truncate_count,Trunc)%s" qz_to_tab_space <<EOF
+commit $head2
+changed (ge${changed_utf8_part}ndert) f
+commit $head1
+added (hinzugef${added_utf8_part}gt)Z
+EOF
+
 test_format body %b <<EOF
 commit $head2
 commit $head1
@@ -400,6 +407,15 @@ commit $head1
 added (hinzugef${added_utf8_part_iso88591}gt..
 EOF
 
+test_format complex-subject-Trunc "%<($truncate_count,Trunc)%s" qz_to_tab_space <<EOF
+commit $head3
+Test printing of com
+commit $head2
+changed (ge${changed_utf8_part_iso88591}ndert) f
+commit $head1
+added (hinzugef${added_utf8_part_iso88591}gt)Z
+EOF
+
 test_format complex-subject-mtrunc "%<($truncate_count,mtrunc)%s" <<EOF
 commit $head3
 Test prin..ex bodies
@@ -418,6 +434,14 @@ commit $head1
 .. (hinzugef${added_utf8_part_iso88591}gt) foo
 EOF
 
+test_format complex-subject-Ltrunc "%<($truncate_count,Ltrunc)%s" <<EOF
+commit $head3
+ng of complex bodies
+commit $head2
+anged (ge${changed_utf8_part_iso88591}ndert) foo
+commit $head1
+ed (hinzugef${added_utf8_part_iso88591}gt) foo
+EOF
 test_expect_success 'setup expected messages (for test %b)' '
 	cat <<-EOF >expected.utf-8 &&
 	commit $head3
@@ -455,6 +479,15 @@ commit $head1
 added (hinzugef${added_utf8_part}gt..
 EOF
 
+test_format complex-subject-commitencoding-unset-Trunc "%<($truncate_count,Trunc)%s" qz_to_tab_space <<EOF
+commit $head3
+Test printing of com
+commit $head2
+changed (ge${changed_utf8_part}ndert) f
+commit $head1
+added (hinzugef${added_utf8_part}gt)Z
+EOF
+
 test_format complex-subject-commitencoding-unset-mtrunc "%<($truncate_count,mtrunc)%s" <<EOF
 commit $head3
 Test prin..ex bodies
@@ -471,6 +504,15 @@ commit $head2
 ..ged (ge${changed_utf8_part}ndert) foo
 commit $head1
 .. (hinzugef${added_utf8_part}gt) foo
+EOF
+
+test_format complex-subject-commitencoding-unset-Ltrunc "%<($truncate_count,Ltrunc)%s" <<EOF
+commit $head3
+ng of complex bodies
+commit $head2
+anged (ge${changed_utf8_part}ndert) foo
+commit $head1
+ed (hinzugef${added_utf8_part}gt) foo
 EOF
 
 test_format complex-body-commitencoding-unset %b <expected.utf-8
