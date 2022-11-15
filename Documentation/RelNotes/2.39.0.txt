@@ -98,6 +98,17 @@ Performance, Internal Implementation, Development Support etc.
 
  * Simplify the run-command API.
 
+ * Update the actions/github-script dependency in CI to avoid a
+   deprecation warning.
+
+ * Progress on being able to initialize a rev_info struct with a
+   macro.
+
+ * Add trace2 counters to the region to clear skip worktree bits in a
+   sparse checkout.
+
+ * Modernize test script to avoid "test -f" and friends.
+
 Fixes since v2.38
 -----------------
 
