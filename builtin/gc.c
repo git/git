@@ -1543,6 +1543,7 @@ static int maintenance_unregister(int argc, const char **argv, const char *prefi
 	int found = 0;
 	struct string_list_item *item;
 	const struct string_list *list;
+	struct config_set cs = { { 0 } };
 
 	argc = parse_options(argc, argv, prefix, options,
 			     builtin_maintenance_unregister_usage, 0);
@@ -1551,12 +1552,9 @@ static int maintenance_unregister(int argc, const char **argv, const char *prefi
 				   options);
 
 	if (config_file) {
-		struct config_set cs;
-
 		git_configset_init(&cs);
 		git_configset_add_file(&cs, config_file);
 		list = git_configset_get_value_multi(&cs, key);
-		git_configset_clear(&cs);
 	} else {
 		list = git_config_get_value_multi(key);
 	}
@@ -1592,6 +1590,7 @@ static int maintenance_unregister(int argc, const char **argv, const char *prefi
 		die(_("repository '%s' is not registered"), maintpath);
 	}
 
+	git_configset_clear(&cs);
 	free(maintpath);
 	return 0;
 }
