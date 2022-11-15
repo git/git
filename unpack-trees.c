@@ -2043,7 +2043,8 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		if (!ret) {
 			if (git_env_bool("GIT_TEST_CHECK_CACHE_TREE", 0))
 				cache_tree_verify(the_repository, &o->result);
-			if (!cache_tree_fully_valid(o->result.cache_tree))
+			if (!o->skip_cache_tree_update &&
+			    !cache_tree_fully_valid(o->result.cache_tree))
 				cache_tree_update(&o->result,
 						  WRITE_TREE_SILENT |
 						  WRITE_TREE_REPAIR);
