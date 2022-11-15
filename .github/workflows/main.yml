@@ -37,14 +37,14 @@ jobs:
           echo "::set-output name=enabled::$enabled"
       - name: skip if the commit or tree was already tested
         id: skip-if-redundant
-        uses: actions/github-script@v3
+        uses: actions/github-script@v6
         if: steps.check-ref.outputs.enabled == 'yes'
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
             try {
               // Figure out workflow ID, commit and tree
-              const { data: run } = await github.actions.getWorkflowRun({
+              const { data: run } = await github.rest.actions.getWorkflowRun({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 run_id: context.runId,
@@ -54,7 +54,7 @@ jobs:
               const tree_id = run.head_commit.tree_id;
 
               // See whether there is a successful run for that commit or tree
-              const { data: runs } = await github.actions.listWorkflowRuns({
+              const { data: runs } = await github.rest.actions.listWorkflowRuns({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 per_page: 500,
