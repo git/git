@@ -57,11 +57,28 @@ case "$#" in
 	case "$cmd" in
 	help)
 		git bisect -h ;;
+	start)
+		git bisect--helper --bisect-start "$@" ;;
 	bad|good|new|old|"$TERM_BAD"|"$TERM_GOOD")
-		git bisect--helper state "$cmd" "$@" ;;
+		git bisect--helper --bisect-state "$cmd" "$@" ;;
+	skip)
+		git bisect--helper --bisect-skip "$@" || exit;;
+	next)
+		# Not sure we want "next" at the UI level anymore.
+		git bisect--helper --bisect-next "$@" || exit ;;
+	visualize|view)
+		git bisect--helper --bisect-visualize "$@" || exit;;
+	reset)
+		git bisect--helper --bisect-reset "$@" ;;
+	replay)
+		git bisect--helper --bisect-replay "$@" || exit;;
 	log)
-		git bisect--helper log || exit ;;
+		git bisect--helper --bisect-log || exit ;;
+	run)
+		git bisect--helper --bisect-run "$@" || exit;;
+	terms)
+		git bisect--helper --bisect-terms "$@" || exit;;
 	*)
-		git bisect--helper "$cmd" "$@" ;;
+		usage ;;
 	esac
 esac
