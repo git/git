@@ -266,6 +266,16 @@ test_expect_success '"git bisect run" simple case' '
 	git bisect reset
 '
 
+# We want to make sure no arguments has been eaten
+test_expect_success '"git bisect run" simple case' '
+	git bisect start &&
+	git bisect good $HASH1 &&
+	git bisect bad $HASH4 &&
+	git bisect run printf "%s %s\n" reset --bisect-skip >my_bisect_log.txt &&
+	grep -e "reset --bisect-skip" my_bisect_log.txt &&
+	git bisect reset
+'
+
 # We want to automatically find the commit that
 # added "Ciao" into hello.
 test_expect_success '"git bisect run" with more complex "git bisect start"' '
