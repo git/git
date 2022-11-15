@@ -357,7 +357,23 @@ struct rev_info {
  * called before release_revisions() the "struct rev_info" can be left
  * uninitialized.
  */
-#define REV_INFO_INIT { 0 }
+#define REV_INFO_INIT { \
+	.abbrev = DEFAULT_ABBREV, \
+	.simplify_history = 1, \
+	.pruning.flags.recursive = 1, \
+	.pruning.flags.quick = 1, \
+	.sort_order = REV_SORT_IN_GRAPH_ORDER, \
+	.dense = 1, \
+	.max_age = -1, \
+	.max_age_as_filter = -1, \
+	.min_age = -1, \
+	.skip_count = -1, \
+	.max_count = -1, \
+	.max_parents = -1, \
+	.expand_tabs_in_log = -1, \
+	.commit_format = CMIT_FMT_DEFAULT, \
+	.expand_tabs_in_log_default = 8, \
+}
 
 /**
  * Initialize a rev_info structure with default values. The third parameter may
