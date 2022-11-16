@@ -34,7 +34,9 @@ esac
 test_expect_success "setup protocol v2 $T5730_PROTOCOL:// tests" '
 	git init "$T5730_PARENT" &&
 	test_commit -C "$T5730_PARENT" one &&
-	git -C "$T5730_PARENT" config uploadpack.advertiseBundleURIs true
+	git -C "$T5730_PARENT" config uploadpack.advertiseBundleURIs true &&
+	git -C "$T5730_PARENT" config bundle.version 1 &&
+	git -C "$T5730_PARENT" config bundle.mode all
 '
 
 # Poor man's URI escaping. Good enough for the test suite whose trash
@@ -61,9 +63,8 @@ test_expect_success "connect with $T5730_PROTOCOL:// using protocol v2: no bundl
 	git -C "$T5730_PARENT" config uploadpack.advertiseBundleURIs false &&
 
 	GIT_TRACE_PACKET="$PWD/log" \
-	git \
-		-c protocol.version=2 \
-		ls-remote --symref "$T5730_URI" \
+	test-tool bundle-uri \
+		ls-remote "$T5730_URI" \
 		>actual 2>err &&
 
 	# Server responded using protocol v2
@@ -76,12 +77,11 @@ test_expect_success "connect with $T5730_PROTOCOL:// using protocol v2: have bun
 	test_when_finished "rm -f log" &&
 
 	test_config -C "$T5730_PARENT" \
-		uploadpack.bundleURI "$T5730_BUNDLE_URI_ESCAPED" &&
+		bundle.only.uri "$T5730_BUNDLE_URI_ESCAPED" &&
 
 	GIT_TRACE_PACKET="$PWD/log" \
-	git \
-		-c protocol.version=2 \
-		ls-remote --symref "$T5730_URI" \
+	test-tool bundle-uri \
+		ls-remote "$T5730_URI" \
 		>actual 2>err &&
 
 	# Server responded using protocol v2
@@ -94,8 +94,8 @@ test_expect_success "connect with $T5730_PROTOCOL:// using protocol v2: have bun
 test_expect_success !T5730_HTTP "bad client with $T5730_PROTOCOL:// using protocol v2" '
 	test_when_finished "rm -f log" &&
 
-	test_config -C "$T5730_PARENT" uploadpack.bundleURI \
-		"$T5730_BUNDLE_URI_ESCAPED" &&
+	test_config -C "$T5730_PARENT" \
+		bundle.only.uri "$T5730_BUNDLE_URI_ESCAPED" &&
 
 	cat >err.expect <<-\EOF &&
 	Cloning into '"'"'child'"'"'...
@@ -145,4 +145,47 @@ test_expect_success !T5730_HTTP "bad client with $T5730_PROTOCOL:// using protoc
 
 	grep "clone> test-bad-client$" log >sent-bad-request &&
 	test_file_not_empty sent-bad-request
+'
+
+test_expect_success "ls-remote with $T5730_PROTOCOL:// using protocol v2" '
+	test_when_finished "rm -f log" &&
+
+	test_config -C "$T5730_PARENT" \
+		bundle.only.uri "$T5730_BUNDLE_URI_ESCAPED" &&
+
+	# All data about bundle URIs
+	cat >expect <<-EOF &&
+	[bundle]
+		version = 1
+		mode = all
+	EOF
+	GIT_TRACE_PACKET="$PWD/log" \
+	test-tool bundle-uri \
+		ls-remote \
+		"$T5730_URI" \
+		>actual &&
+	test_cmp_config_output expect actual
+'
+
+test_expect_success "ls-remote with $T5730_PROTOCOL:// using protocol v2 and extra data" '
+	test_when_finished "rm -f log" &&
+
+	test_config -C "$T5730_PARENT" \
+		bundle.only.uri "$T5730_BUNDLE_URI_ESCAPED" &&
+
+	# Extra data should be ignored
+	test_config -C "$T5730_PARENT" bundle.only.extra bogus &&
+
+	# All data about bundle URIs
+	cat >expect <<-EOF &&
+	[bundle]
+		version = 1
+		mode = all
+	EOF
+	GIT_TRACE_PACKET="$PWD/log" \
+	test-tool bundle-uri \
+		ls-remote \
+		"$T5730_URI" \
+		>actual &&
+	test_cmp_config_output expect actual
 '
