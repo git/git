@@ -1,5 +1,8 @@
 # Included from t573*-protocol-v2-bundle-uri-*.sh
 
+GIT_TEST_BUNDLE_URI=1
+export GIT_TEST_BUNDLE_URI
+
 T5730_PARENT=
 T5730_URI=
 T5730_BUNDLE_URI=
