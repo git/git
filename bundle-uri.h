@@ -61,6 +61,15 @@ struct bundle_list {
 	int version;
 	enum bundle_list_mode mode;
 	struct hashmap bundles;
+
+	/**
+	 * The baseURI of a bundle_list is used as the base for any
+	 * relative URIs advertised by the bundle list at that location.
+	 *
+	 * When the list is generated from a Git server, then use that
+	 * server's location.
+	 */
+	char *baseURI;
 };
 
 void init_bundle_list(struct bundle_list *list);
