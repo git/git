@@ -564,6 +564,42 @@ cleanup:
 }
 
 /**
+ * API for serve.c.
+ */
+
+int bundle_uri_advertise(struct repository *r, struct strbuf *value)
+{
+	static int advertise_bundle_uri = -1;
+
+	if (advertise_bundle_uri != -1)
+		goto cached;
+
+	advertise_bundle_uri = 0;
+	git_config_get_maybe_bool("uploadpack.advertisebundleuris", &advertise_bundle_uri);
+
+cached:
+	return advertise_bundle_uri;
+}
+
+int bundle_uri_command(struct repository *r,
+		       struct packet_reader *request)
+{
+	struct packet_writer writer;
+	packet_writer_init(&writer, 1);
+
+	while (packet_reader_read(request) == PACKET_READ_NORMAL)
+		die(_("bundle-uri: unexpected argument: '%s'"), request->line);
+	if (request->status != PACKET_READ_FLUSH)
+		die(_("bundle-uri: expected flush after arguments"));
+
+	/* TODO: Implement the communication */
+
+	packet_writer_flush(&writer);
+
+	return 0;
+}
+
+/**
  * General API for {transport,connect}.c etc.
  */
 int bundle_uri_parse_line(struct bundle_list *list, const char *line)
