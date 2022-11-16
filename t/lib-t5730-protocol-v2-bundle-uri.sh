@@ -158,6 +158,8 @@ test_expect_success "ls-remote with $T5730_PROTOCOL:// using protocol v2" '
 	[bundle]
 		version = 1
 		mode = all
+	[bundle "only"]
+		uri = $T5730_BUNDLE_URI_ESCAPED
 	EOF
 	GIT_TRACE_PACKET="$PWD/log" \
 	test-tool bundle-uri \
@@ -181,6 +183,39 @@ test_expect_success "ls-remote with $T5730_PROTOCOL:// using protocol v2 and ext
 	[bundle]
 		version = 1
 		mode = all
+	[bundle "only"]
+		uri = $T5730_BUNDLE_URI_ESCAPED
+	EOF
+	GIT_TRACE_PACKET="$PWD/log" \
+	test-tool bundle-uri \
+		ls-remote \
+		"$T5730_URI" \
+		>actual &&
+	test_cmp_config_output expect actual
+'
+
+
+test_expect_success "ls-remote with $T5730_PROTOCOL:// using protocol v2 with list" '
+	test_when_finished "rm -f log" &&
+
+	test_config -C "$T5730_PARENT" \
+		bundle.bundle1.uri "$T5730_BUNDLE_URI_ESCAPED-1.bdl" &&
+	test_config -C "$T5730_PARENT" \
+		bundle.bundle2.uri "$T5730_BUNDLE_URI_ESCAPED-2.bdl" &&
+	test_config -C "$T5730_PARENT" \
+		bundle.bundle3.uri "$T5730_BUNDLE_URI_ESCAPED-3.bdl" &&
+
+	# All data about bundle URIs
+	cat >expect <<-EOF &&
+	[bundle]
+		version = 1
+		mode = all
+	[bundle "bundle1"]
+		uri = $T5730_BUNDLE_URI_ESCAPED-1.bdl
+	[bundle "bundle2"]
+		uri = $T5730_BUNDLE_URI_ESCAPED-2.bdl
+	[bundle "bundle3"]
+		uri = $T5730_BUNDLE_URI_ESCAPED-3.bdl
 	EOF
 	GIT_TRACE_PACKET="$PWD/log" \
 	test-tool bundle-uri \
