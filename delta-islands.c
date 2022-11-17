@@ -26,8 +26,6 @@ static kh_oid_map_t *island_marks;
 static unsigned island_counter;
 static unsigned island_counter_core;
 
-static kh_str_t *remote_islands;
-
 struct remote_island {
 	uint64_t hash;
 	struct oid_array oids;
@@ -312,29 +310,55 @@ void resolve_tree_islands(struct repository *r,
 	free(todo);
 }
 
-static regex_t *island_regexes;
-static unsigned int island_regexes_alloc, island_regexes_nr;
+struct island_load_data {
+	kh_str_t *remote_islands;
+	regex_t *rx;
+	size_t nr;
+	size_t alloc;
+};
 static const char *core_island_name;
 
-static int island_config_callback(const char *k, const char *v, void *cb UNUSED)
+static void free_config_regexes(struct island_load_data *ild)
 {
+	for (size_t i = 0; i < ild->nr; i++)
+		regfree(&ild->rx[i]);
+	free(ild->rx);
+}
+
+static void free_remote_islands(kh_str_t *remote_islands)
+{
+	const char *island_name;
+	struct remote_island *rl;
+
+	kh_foreach(remote_islands, island_name, rl, {
+		free((void *)island_name);
+		oid_array_clear(&rl->oids);
+		free(rl);
+	});
+	kh_destroy_str(remote_islands);
+}
+
+static int island_config_callback(const char *k, const char *v, void *cb)
+{
+	struct island_load_data *ild = cb;
+
 	if (!strcmp(k, "pack.island")) {
 		struct strbuf re = STRBUF_INIT;
 
 		if (!v)
 			return config_error_nonbool(k);
 
-		ALLOC_GROW(island_regexes, island_regexes_nr + 1, island_regexes_alloc);
+		ALLOC_GROW(ild->rx, ild->nr + 1, ild->alloc);
 
 		if (*v != '^')
 			strbuf_addch(&re, '^');
 		strbuf_addstr(&re, v);
 
-		if (regcomp(&island_regexes[island_regexes_nr], re.buf, REG_EXTENDED))
+		if (regcomp(&ild->rx[ild->nr], re.buf, REG_EXTENDED))
 			die(_("failed to load island regex for '%s': %s"), k, re.buf);
 
 		strbuf_release(&re);
-		island_regexes_nr++;
+		ild->nr++;
 		return 0;
 	}
 
@@ -344,7 +368,8 @@ static int island_config_callback(const char *k, const char *v, void *cb UNUSED)
 	return 0;
 }
 
-static void add_ref_to_island(const char *island_name, const struct object_id *oid)
+static void add_ref_to_island(kh_str_t *remote_islands, const char *island_name,
+				const struct object_id *oid)
 {
 	uint64_t sha_core;
 	struct remote_island *rl = NULL;
@@ -365,8 +390,10 @@ static void add_ref_to_island(const char *island_name, const struct object_id *o
 }
 
 static int find_island_for_ref(const char *refname, const struct object_id *oid,
-			       int flags UNUSED, void *data UNUSED)
+			       int flags UNUSED, void *cb)
 {
+	struct island_load_data *ild = cb;
+
 	/*
 	 * We should advertise 'ARRAY_SIZE(matches) - 2' as the max,
 	 * so we can diagnose below a config with more capture groups
@@ -377,8 +404,8 @@ static int find_island_for_ref(const char *refname, const struct object_id *oid,
 	struct strbuf island_name = STRBUF_INIT;
 
 	/* walk backwards to get last-one-wins ordering */
-	for (i = island_regexes_nr - 1; i >= 0; i--) {
-		if (!regexec(&island_regexes[i], refname,
+	for (i = ild->nr - 1; i >= 0; i--) {
+		if (!regexec(&ild->rx[i], refname,
 			     ARRAY_SIZE(matches), matches, 0))
 			break;
 	}
@@ -403,12 +430,12 @@ static int find_island_for_ref(const char *refname, const struct object_id *oid,
 		strbuf_add(&island_name, refname + match->rm_so, match->rm_eo - match->rm_so);
 	}
 
-	add_ref_to_island(island_name.buf, oid);
+	add_ref_to_island(ild->remote_islands, island_name.buf, oid);
 	strbuf_release(&island_name);
 	return 0;
 }
 
-static struct remote_island *get_core_island(void)
+static struct remote_island *get_core_island(kh_str_t *remote_islands)
 {
 	if (core_island_name) {
 		khiter_t pos = kh_get_str(remote_islands, core_island_name);
@@ -419,7 +446,7 @@ static struct remote_island *get_core_island(void)
 	return NULL;
 }
 
-static void deduplicate_islands(struct repository *r)
+static void deduplicate_islands(kh_str_t *remote_islands, struct repository *r)
 {
 	struct remote_island *island, *core = NULL, **list;
 	unsigned int island_count, dst, src, ref, i = 0;
@@ -445,7 +472,7 @@ static void deduplicate_islands(struct repository *r)
 	}
 
 	island_bitmap_size = (island_count / 32) + 1;
-	core = get_core_island();
+	core = get_core_island(remote_islands);
 
 	for (i = 0; i < island_count; ++i) {
 		mark_remote_island_1(r, list[i], core && list[i]->hash == core->hash);
@@ -456,12 +483,16 @@ static void deduplicate_islands(struct repository *r)
 
 void load_delta_islands(struct repository *r, int progress)
 {
-	island_marks = kh_init_oid_map();
-	remote_islands = kh_init_str();
+	struct island_load_data ild = { 0 };
 
-	git_config(island_config_callback, NULL);
-	for_each_ref(find_island_for_ref, NULL);
-	deduplicate_islands(r);
+	island_marks = kh_init_oid_map();
+
+	git_config(island_config_callback, &ild);
+	ild.remote_islands = kh_init_str();
+	for_each_ref(find_island_for_ref, &ild);
+	free_config_regexes(&ild);
+	deduplicate_islands(ild.remote_islands, r);
+	free_remote_islands(ild.remote_islands);
 
 	if (progress)
 		fprintf(stderr, _("Marked %d islands, done.\n"), island_counter);
