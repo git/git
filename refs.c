@@ -1435,7 +1435,7 @@ int parse_hide_refs_config(const char *var, const char *value, const char *secti
 			CALLOC_ARRAY(hide_refs, 1);
 			hide_refs->strdup_strings = 1;
 		}
-		string_list_append(hide_refs, ref);
+		string_list_append_nodup(hide_refs, ref);
 	}
 	return 0;
 }
