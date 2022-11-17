@@ -1414,9 +1414,8 @@ char *shorten_unambiguous_ref(const char *refname, int strict)
 					    refname, strict);
 }
 
-static struct string_list *hide_refs;
-
-int parse_hide_refs_config(const char *var, const char *value, const char *section)
+int parse_hide_refs_config(const char *var, const char *value, const char *section,
+			   struct string_list *hide_refs)
 {
 	const char *key;
 	if (!strcmp("transfer.hiderefs", var) ||
@@ -1431,21 +1430,16 @@ int parse_hide_refs_config(const char *var, const char *value, const char *secti
 		len = strlen(ref);
 		while (len && ref[len - 1] == '/')
 			ref[--len] = '\0';
-		if (!hide_refs) {
-			CALLOC_ARRAY(hide_refs, 1);
-			hide_refs->strdup_strings = 1;
-		}
 		string_list_append_nodup(hide_refs, ref);
 	}
 	return 0;
 }
 
-int ref_is_hidden(const char *refname, const char *refname_full)
+int ref_is_hidden(const char *refname, const char *refname_full,
+		  const struct string_list *hide_refs)
 {
 	int i;
 
-	if (!hide_refs)
-		return 0;
 	for (i = hide_refs->nr - 1; i >= 0; i--) {
 		const char *match = hide_refs->items[i].string;
 		const char *subject;
