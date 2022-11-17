@@ -218,6 +218,25 @@ test_expect_success 'git branch -M should leave orphaned HEAD alone' '
 	)
 '
 
+test_expect_success 'git branch -M inherites clean tracking setup' '
+	test_when_finished git branch -D moved &&
+	git branch -t main-tracked main &&
+	git branch non-tracked &&
+	git branch -M main-tracked moved &&
+	git branch --unset-upstream moved &&
+	git branch -M non-tracked moved &&
+	test_must_fail git branch --unset-upstream moved
+'
+
+test_expect_success 'git branch -C inherites clean tracking setup' '
+	test_when_finished git branch -D copiable copied &&
+	git branch -t copiable main &&
+	git branch -C copiable copied &&
+	git branch --unset-upstream copied &&
+	git branch -C copied copiable &&
+	test_must_fail git branch --unset-upstream copiable
+'
+
 test_expect_success 'resulting reflog can be shown by log -g' '
 	oid=$(git rev-parse HEAD) &&
 	cat >expect <<-EOF &&
