@@ -876,10 +876,14 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (opt_with_value(arg, "--branches", &arg)) {
+				if (ref_excludes.hidden_refs_configured)
+					return error(_("--exclude-hidden cannot be used together with --branches"));
 				handle_ref_opt(arg, "refs/heads/");
 				continue;
 			}
 			if (opt_with_value(arg, "--tags", &arg)) {
+				if (ref_excludes.hidden_refs_configured)
+					return error(_("--exclude-hidden cannot be used together with --tags"));
 				handle_ref_opt(arg, "refs/tags/");
 				continue;
 			}
@@ -888,11 +892,17 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (opt_with_value(arg, "--remotes", &arg)) {
+				if (ref_excludes.hidden_refs_configured)
+					return error(_("--exclude-hidden cannot be used together with --remotes"));
 				handle_ref_opt(arg, "refs/remotes/");
 				continue;
 			}
 			if (skip_prefix(arg, "--exclude=", &arg)) {
 				add_ref_exclusion(&ref_excludes, arg);
+				continue;
+			}
+			if (skip_prefix(arg, "--exclude-hidden=", &arg)) {
+				exclude_hidden_refs(&ref_excludes, arg);
 				continue;
 			}
 			if (!strcmp(arg, "--show-toplevel")) {
