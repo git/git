@@ -1517,14 +1517,6 @@ static void add_rev_cmdline_list(struct rev_info *revs,
 	}
 }
 
-struct all_refs_cb {
-	int all_flags;
-	int warned_bad_reflog;
-	struct rev_info *all_revs;
-	const char *name_for_errormsg;
-	struct worktree *wt;
-};
-
 int ref_excluded(struct string_list *ref_excludes, const char *path)
 {
 	struct string_list_item *item;
@@ -1537,6 +1529,32 @@ int ref_excluded(struct string_list *ref_excludes, const char *path)
 	}
 	return 0;
 }
+
+void clear_ref_exclusion(struct string_list **ref_excludes_p)
+{
+	if (*ref_excludes_p) {
+		string_list_clear(*ref_excludes_p, 0);
+		free(*ref_excludes_p);
+	}
+	*ref_excludes_p = NULL;
+}
+
+void add_ref_exclusion(struct string_list **ref_excludes_p, const char *exclude)
+{
+	if (!*ref_excludes_p) {
+		CALLOC_ARRAY(*ref_excludes_p, 1);
+		(*ref_excludes_p)->strdup_strings = 1;
+	}
+	string_list_append(*ref_excludes_p, exclude);
+}
+
+struct all_refs_cb {
+	int all_flags;
+	int warned_bad_reflog;
+	struct rev_info *all_revs;
+	const char *name_for_errormsg;
+	struct worktree *wt;
+};
 
 static int handle_one_ref(const char *path, const struct object_id *oid,
 			  int flag UNUSED,
@@ -1561,24 +1579,6 @@ static void init_all_refs_cb(struct all_refs_cb *cb, struct rev_info *revs,
 	cb->all_flags = flags;
 	revs->rev_input_given = 1;
 	cb->wt = NULL;
-}
-
-void clear_ref_exclusion(struct string_list **ref_excludes_p)
-{
-	if (*ref_excludes_p) {
-		string_list_clear(*ref_excludes_p, 0);
-		free(*ref_excludes_p);
-	}
-	*ref_excludes_p = NULL;
-}
-
-void add_ref_exclusion(struct string_list **ref_excludes_p, const char *exclude)
-{
-	if (!*ref_excludes_p) {
-		CALLOC_ARRAY(*ref_excludes_p, 1);
-		(*ref_excludes_p)->strdup_strings = 1;
-	}
-	string_list_append(*ref_excludes_p, exclude);
 }
 
 static void handle_refs(struct ref_store *refs,
