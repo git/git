@@ -2338,6 +2338,7 @@ static void check_tag(const void *buf, size_t size)
 	memset(&t, 0, sizeof(t));
 	if (parse_tag_buffer(the_repository, &t, buf, size))
 		die(_("corrupt tag"));
+	free(t.tag);
 }
 
 static int index_mem(struct index_state *istate,
