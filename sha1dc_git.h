@@ -17,6 +17,7 @@ void git_SHA1DCInit(SHA1_CTX *);
 void git_SHA1DCFinal(unsigned char [20], SHA1_CTX *);
 void git_SHA1DCUpdate(SHA1_CTX *ctx, const void *data, unsigned long len);
 
+#define platform_SHA_IS_SHA1DC /* used by "test-tool sha1-is-sha1dc" */
 #define platform_SHA_CTX SHA1_CTX
 #define platform_SHA1_Init git_SHA1DCInit
 #define platform_SHA1_Update git_SHA1DCUpdate
