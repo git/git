@@ -231,7 +231,7 @@ test_expect_success 'traverse unexpected non-tag tag (tree seen to blob)' '
 '
 
 
-test_expect_failure 'traverse unexpected objects with for-each-ref' '
+test_expect_success 'traverse unexpected objects with for-each-ref' '
 	cat >expect <<-EOF &&
 	error: bad tag pointer to $tree in $tag_tag_tree
 	fatal: parse_object_buffer failed on $tag_tag_tree for refs/tags/tag_tag_tree
@@ -241,7 +241,7 @@ test_expect_failure 'traverse unexpected objects with for-each-ref' '
 '
 
 >fsck-object-isa
-test_expect_failure 'setup: unexpected objects with fsck' '
+test_expect_success 'setup: unexpected objects with fsck' '
 	test_must_fail git fsck 2>err &&
 	sed -n -e "/^error: object .* is a .*, not a .*$/ {
 		s/^error: object \([0-9a-f]*\) is a \([a-z]*\), not a [a-z]*$/\\1 \\2/;
@@ -251,7 +251,7 @@ test_expect_failure 'setup: unexpected objects with fsck' '
 
 while read oid type
 do
-	test_expect_failure "fsck knows unexpected object $oid is $type" '
+	test_expect_success "fsck knows unexpected object $oid is $type" '
 		git cat-file -t $oid >expect &&
 		echo $type >actual &&
 		test_cmp expect actual
