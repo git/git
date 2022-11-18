@@ -78,6 +78,8 @@ struct commit *lookup_commit_object(struct repository *r, const struct object_id
  * "oid" is not in the object cache.
  */
 struct commit *lookup_commit(struct repository *r, const struct object_id *oid);
+struct commit *lookup_commit_type(struct repository *r, const struct object_id *oid,
+				  enum object_type type);
 struct commit *lookup_commit_reference(struct repository *r,
 				       const struct object_id *oid);
 struct commit *lookup_commit_reference_gently(struct repository *r,

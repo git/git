@@ -122,6 +122,8 @@ struct object *lookup_object(struct repository *r, const struct object_id *oid);
 void *create_object(struct repository *r, const struct object_id *oid, void *obj);
 
 void *object_as_type(struct object *obj, enum object_type type, int quiet);
+void *object_as_type_hint(struct object *obj, enum object_type type,
+			  enum object_type hint);
 
 /*
  * Returns the object, having parsed it to find out what it is.
