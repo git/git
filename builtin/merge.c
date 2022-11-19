@@ -390,7 +390,8 @@ static void restore_state(const struct object_id *head,
 	run_command(&cmd);
 
 refresh_cache:
-	if (discard_cache() < 0 || read_cache() < 0)
+	discard_cache();
+	if (read_cache() < 0)
 		die(_("could not read index"));
 }
 
