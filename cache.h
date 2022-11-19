@@ -446,13 +446,8 @@ extern struct index_state the_index;
 #define read_cache_preload(pathspec) repo_read_index_preload(the_repository, (pathspec), 0)
 #define discard_cache() discard_index(&the_index)
 #define cache_name_pos(name, namelen) index_name_pos(&the_index,(name),(namelen))
-#define add_cache_entry(ce, option) add_index_entry(&the_index, (ce), (option))
-#define remove_file_from_cache(path) remove_file_from_index(&the_index, (path))
 #define refresh_cache(flags) refresh_index(&the_index, (flags), NULL, NULL, NULL)
 #define refresh_and_write_cache(refresh_flags, write_flags, gentle) repo_refresh_and_write_index(the_repository, (refresh_flags), (write_flags), (gentle), NULL, NULL, NULL)
-#define ce_match_stat(ce, st, options) ie_match_stat(&the_index, (ce), (st), (options))
-#define ce_modified(ce, st, options) ie_modified(&the_index, (ce), (st), (options))
-#define resolve_undo_clear() resolve_undo_clear_index(&the_index)
 #define hold_locked_index(lock_file, flags) repo_hold_locked_index(the_repository, (lock_file), (flags))
 #endif
 

@@ -145,7 +145,7 @@ static void update_index_from_diff(struct diff_queue_struct *q,
 		struct cache_entry *ce;
 
 		if (!is_in_reset_tree && !intent_to_add) {
-			remove_file_from_cache(one->path);
+			remove_file_from_index(&the_index, one->path);
 			continue;
 		}
 
@@ -172,7 +172,8 @@ static void update_index_from_diff(struct diff_queue_struct *q,
 			ce->ce_flags |= CE_INTENT_TO_ADD;
 			set_object_name_for_intent_to_add_entry(ce);
 		}
-		add_cache_entry(ce, ADD_CACHE_OK_TO_ADD | ADD_CACHE_OK_TO_REPLACE);
+		add_index_entry(&the_index, ce,
+				ADD_CACHE_OK_TO_ADD | ADD_CACHE_OK_TO_REPLACE);
 	}
 }
 

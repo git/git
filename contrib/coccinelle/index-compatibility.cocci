@@ -39,6 +39,21 @@
 |
 - add_file_to_cache
 + add_file_to_index
+|
+- add_cache_entry
++ add_index_entry
+|
+- remove_file_from_cache
++ remove_file_from_index
+|
+- ce_match_stat
++ ie_match_stat
+|
+- ce_modified
++ ie_modified
+|
+- resolve_undo_clear
++ resolve_undo_clear_index
 )
   (
 + &the_index,

@@ -305,7 +305,7 @@ static void add_remove_files(struct string_list *list)
 			if (add_to_index(&the_index, p->string, &st, 0))
 				die(_("updating files failed"));
 		} else
-			remove_file_from_cache(p->string);
+			remove_file_from_index(&the_index, p->string);
 	}
 }
 

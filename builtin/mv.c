@@ -471,7 +471,9 @@ remove_entry:
 		pos = cache_name_pos(src, strlen(src));
 		assert(pos >= 0);
 		if (!(mode & SPARSE) && !lstat(src, &st))
-			sparse_and_dirty = ce_modified(active_cache[pos], &st, 0);
+			sparse_and_dirty = ie_modified(&the_index,
+						       active_cache[pos], &st,
+						       0);
 		rename_index_entry_at(&the_index, pos, dst);
 
 		if (ignore_sparse &&

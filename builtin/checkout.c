@@ -160,7 +160,8 @@ static int update_some(const struct object_id *oid, struct strbuf *base,
 		}
 	}
 
-	add_cache_entry(ce, ADD_CACHE_OK_TO_ADD | ADD_CACHE_OK_TO_REPLACE);
+	add_index_entry(&the_index, ce,
+			ADD_CACHE_OK_TO_ADD | ADD_CACHE_OK_TO_REPLACE);
 	return 0;
 }
 
@@ -744,7 +745,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 	if (read_cache_preload(NULL) < 0)
 		return error(_("index file corrupt"));
 
-	resolve_undo_clear();
+	resolve_undo_clear_index(&the_index);
 	if (opts->new_orphan_branch && opts->orphan_from_empty_tree) {
 		if (new_branch_info->commit)
 			BUG("'switch --orphan' should never accept a commit as starting point");
