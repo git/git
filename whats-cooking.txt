@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Nov 2022, #03; Mon, 14)
-X-master-at: eea7033409a0ed713c78437fc76486983d211e25
-X-next-at: 34eb0ea05a4e3296eee641767d1ed2edda20609d
+Subject: What's cooking in git.git (Nov 2022, #04; Fri, 18)
+X-master-at: a0789512c5a4ae7da935cd2e419f253cb3cb4ce7
+X-next-at: ad972b3819afa78ac7b9beb7b5c7e8664cd2e75f
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Nov 2022, #03; Mon, 14)
+What's cooking in git.git (Nov 2022, #04; Fri, 18)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -14,10 +14,9 @@ release).  Commits prefixed with '-' are only in 'seen', and aren't
 considered "accepted" at all.  A topic without enough support may be
 discarded after a long period of no activity.
 
-There are still a large-ish number of topics in 'seen' that are
-waiting for review. Otherwise, the remaining topics are graduating at
-a reasonable pace, and the queue for 'next' has returned to a normal
-level.
+Junio appears to be back online, so I expect this will be my last
+push-out as interim maintainer. Thanks, everybody, for all of their
+patience while I juggled all of the merges.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -54,125 +53,40 @@ for convenience (replace "htmldocs" with "manpages" for the manual
 --------------------------------------------------
 [Graduated to 'master']
 
-* ab/rev-info-init (2022-11-08) 1 commit
-  (merged to 'next' on 2022-11-08 at 909ad9ed3a)
- + revisions API: extend the nascent REV_INFO_INIT macro
+* ab/misc-hook-submodule-run-command (2022-10-31) 3 commits
+  (merged to 'next' on 2022-11-03 at 0f01b25561)
+ + run-command tests: test stdout of run_command_parallel()
+ + submodule tests: reset "trace.out" between "grep" invocations
+ + hook tests: fix redirection logic error in 96e7225b310
 
- Progress on being able to initialize a rev_info struct with a macro.
- source: <patch-1.1-c3afcd69ddb-20221108T140134Z-avarab@gmail.com>
-
-
-* al/trace2-clearing-skip-worktree (2022-11-04) 2 commits
-  (merged to 'next' on 2022-11-08 at 567aeb8d83)
- + index: raise a bug if the index is materialised more than once
- + index: add trace2 region for clear skip worktree
-
- Add trace2 counters to the region to clear skip worktree bits in a
- sparse checkout.
- source: <pull.1368.v4.git.git.1667516701.gitgitgadget@gmail.com>
+ Various test updates.
+ source: <cover-0.3-00000000000-20221029T025520Z-avarab@gmail.com>
 
 
-* do/modernize-t7001 (2022-11-04) 1 commit
-  (merged to 'next' on 2022-11-08 at dfc9c80e73)
- + t7001-mv.sh: modernizing test script using functions
+* ab/sha-makefile-doc (2022-11-07) 10 commits
+  (merged to 'next' on 2022-11-08 at 6d3068d7cd)
+ + Makefile: discuss SHAttered in *_SHA{1,256} discussion
+ + Makefile: document default SHA-1 backend on OSX
+ + Makefile & test-tool: replace "DC_SHA1" variable with a "define"
+ + Makefile: document SHA-1 and SHA-256 default and selection order
+ + Makefile: document default SHA-256 backend
+ + Makefile: rephrase the discussion of *_SHA1 knobs
+ + Makefile: create and use sections for "define" flag listing
+ + Makefile: correct DC_SHA1 documentation
+ + INSTALL: remove discussion of SHA-1 backends
+ + Makefile: always (re)set DC_SHA1 on fallback
 
- Modernize test script to avoid "test -f" and friends.
- source: <pull.1372.v3.git.git.1667574352244.gitgitgadget@gmail.com>
-
-
-* js/ci-set-output (2022-11-08) 1 commit
-  (merged to 'next' on 2022-11-08 at 553062428c)
- + ci: use a newer `github-script` version
-
- Update the actions/github-script dependency in CI to avoid a
- deprecation warning.
- source: <pull.1387.git.1667902408921.gitgitgadget@gmail.com>
-
-
-* mh/password-can-be-pat (2022-11-08) 1 commit
-  (merged to 'next' on 2022-11-08 at 3135ade2a6)
- + Documentation/gitcredentials.txt: mention password alternatives
-
- Documentation update to git-credential(1).
- source: <pull.1396.v3.git.1667912487608.gitgitgadget@gmail.com>
-
---------------------------------------------------
-[New Topics]
-
-* ab/remove--super-prefix (2022-11-14) 12 commits
- - fetch: rename "--submodule-prefix" to "--super-prefix"
- - read-tree: add "--super-prefix" option, eliminate global
- - submodule tests: test "git branch -t" output and stderr
- - submodule--helper: convert "{update,clone}" to their own "--super-prefix"
- - submodule--helper: convert "status" to its own "--super-prefix"
- - submodule--helper: convert "sync" to its own "--super-prefix"
- - submodule--helper: convert "foreach" to its own "--super-prefix"
- - submodule--helper: "deinit" has never used "--super-prefix"
- - submodule--helper: don't use global --super-prefix in "absorbgitdirs"
- - read-tree + fetch tests: test failing "--super-prefix" interaction
- - Merge branch 'ab/submodule-no-abspath' into ab/remove--super-prefix
- - Merge branch 'ab/submodule-helper-prep-only' into ab/remove--super-prefix
- (this branch uses ab/submodule-helper-prep-only and ab/submodule-no-abspath.)
-
- Remove the top-level `--super-prefix` option.
-
- Expecting a reroll?
- source: <cover-v2-00.10-00000000000-20221114T100803Z-avarab@gmail.com>
+ Makefile comments updates and reordering to clarify knobs used to
+ choose SHA implementations.
+ source: <cover-v5-00.10-00000000000-20221107T211736Z-avarab@gmail.com>
 
 
-* ab/submodule-no-abspath (2022-11-09) 1 commit
- - submodule--helper absorbgitdirs: no abspaths in "Migrating git..."
- (this branch is used by ab/remove--super-prefix.)
+* en/sparse-checkout-design (2022-11-07) 1 commit
+  (merged to 'next' on 2022-11-08 at 42e164b490)
+ + sparse-checkout.txt: new document with sparse-checkout directions
 
- Remove an absolute path in the "Migrating git directory" message.
-
- Will merge to 'next'.
- source: <patch-1.1-34b54fdd9bb-20221109T020347Z-avarab@gmail.com>
-
-
-* ab/t7610-timeout (2022-11-09) 1 commit
-  (merged to 'next' on 2022-11-14 at 82a4abdb1d)
- + t7610: fix flaky timeout issue, don't clone from example.com
-
- Fix a source of flakiness in CI when compiling with SANITIZE=leak.
-
- Will cook in 'next'.
- source: <patch-1.1-83eca7b5a7c-20221105T115420Z-avarab@gmail.com>
-
-
-* es/chainlint-lineno (2022-11-11) 4 commits
- - chainlint: prefix annotated test definition with line numbers
- - chainlint: latch line numbers at which each token starts and ends
- - chainlint: sidestep impoverished macOS "terminfo"
- - Merge branch 'es/chainlint-output' into es/chainlint-lineno
- (this branch uses es/chainlint-output.)
-
- Teach chainlint.pl to annotate the original test definition instead
- of the token stream.
-
- Will merge to 'next'.
- source: <pull.1413.v2.git.1668152094.gitgitgadget@gmail.com>
-
-
-* ew/format-patch-mboxrd (2022-11-14) 1 commit
- - format-patch: add --mboxrd alias for --pretty=mboxrd
-
- Teach `format-patch` a convenient alias for `--pretty=mboxrd`.
-
- Waiting for discussion to settle.
- source: <20221114094114.18986-1-e@80x24.org>
-
-
-* gc/redact-h2h3-headers (2022-11-14) 2 commits
-  (merged to 'next' on 2022-11-14 at 34157d24e9)
- + http: redact curl h2h3 headers in info
- + t: run t5551 tests with both HTTP and HTTP/2
-
- Redact headers from cURL's h2h3 module in GIT_CURL_VERBOSE and
- others.
-
- Will merge to 'master'.
- source: <pull.1377.v3.git.git.1668206106.gitgitgadget@gmail.com>
+ Design doc.
+ source: <pull.1367.v4.git.1667714666810.gitgitgadget@gmail.com>
 
 
 * jk/branch-delete-detached (2022-11-10) 1 commit
@@ -183,42 +97,12 @@ for convenience (replace "htmldocs" with "manpages" for the manual
  source: <Y2H/1S3G+KeeEN/l@coredump.intra.peff.net>
 
 
-* js/drop-mingw-test-cmp (2022-11-14) 2 commits
- - tests(mingw): avoid very slow `mingw_test_cmp`
- - t0021: use Windows-friendly `pwd`
-
- Use `git diff --no-index` as a test_cmp on Windows.
-
- Expecting a reroll.
- source: <pull.1309.v4.git.1668434812.gitgitgadget@gmail.com>
-
-
-* mc/switch-advice (2022-11-09) 1 commit
- - po: use `switch` over `checkout` in error message
-
- Use 'switch' instead of 'checkout' in an error message.
-
- Waiting for review response.
- source: <pull.1308.git.git.1668018620148.gitgitgadget@gmail.com>
-
-
 * mh/credential-unrecognized-attrs (2022-11-12) 1 commit
   (merged to 'next' on 2022-11-14 at 8170443d0a)
  + docs: clarify that credential discards unrecognised attributes
 
  Docfix.
-
- Will merge to 'master'.
  source: <pull.1393.git.1666598268697.gitgitgadget@gmail.com>
-
-
-* mh/gitcredentials-generate (2022-11-14) 1 commit
- - Docs: describe how a credential-generating helper works
-
- Doc update.
-
- Waiting for review.
- source: <pull.1379.git.git.1668217470500.gitgitgadget@gmail.com>
 
 
 * mh/increase-credential-cache-timeout (2022-11-09) 1 commit
@@ -227,40 +111,19 @@ for convenience (replace "htmldocs" with "manpages" for the manual
 
  Update the credential-cache documentation to provide a more realistic
  example.
-
- Will merge to 'master'.
  source: <pull.1412.v2.git.1668010273573.gitgitgadget@gmail.com>
 
 
-* ms/sendemail-validate-headers (2022-11-11) 1 commit
- - Expose header information to git-send-email's sendemail-validate hook
+* tb/repack-expire-to (2022-10-24) 4 commits
+  (merged to 'next' on 2022-11-08 at 496ce3c62d)
+ + builtin/repack.c: implement `--expire-to` for storing pruned objects
+ + builtin/repack.c: write cruft packs to arbitrary locations
+ + builtin/repack.c: pass "cruft_expiration" to `write_cruft_pack`
+ + builtin/repack.c: pass "out" to `prepare_pack_objects`
 
- Expecting a reroll.
- source: <20221111194223.644845-2-michael.strawbridge@amd.com>
-
-
-* pw/strict-label-lookups (2022-11-10) 2 commits
-  (merged to 'next' on 2022-11-14 at 7db4398d23)
- + sequencer: tighten label lookups
- + sequencer: unify label lookup
-
- Correct an error where `git rebase` would mistakenly use a branch or
- tag named "refs/rewritten/xyz" when missing a rebase label.
-
- Will cook in 'next'.
- source: <pull.1414.git.1668098622.gitgitgadget@gmail.com>
-
-
-* rs/multi-filter-args (2022-11-12) 3 commits
- - list-objects-filter: remove OPT_PARSE_LIST_OBJECTS_FILTER_INIT()
- - pack-object: simplify --filter handling
- - pack-objects: fix handling of multiple --filter options
-
- Fix a bug where `pack-objects` would not respect multiple `--filter`
- arguments when invoked directly.
-
- Expecting a reroll?
- source: <c64e4fa5-62c2-2a93-a4ef-bd84407ea570@web.de>
+ "git repack" learns to send cruft objects out of the way into
+ packfiles outside the repository.
+ source: <cover.1666636974.git.me@ttaylorr.com>
 
 
 * vd/skip-cache-tree-update (2022-11-10) 5 commits
@@ -272,9 +135,143 @@ for convenience (replace "htmldocs" with "manpages" for the manual
  + cache-tree: add perf test comparing update and prime
 
  Avoid calling 'cache_tree_update()' when doing so would be redundant.
+ source: <pull.1411.v3.git.1668107165.gitgitgadget@gmail.com>
+
+
+* vd/update-refs-delete (2022-11-07) 1 commit
+  (merged to 'next' on 2022-11-08 at 2866156953)
+ + rebase --update-refs: avoid unintended ref deletion
+
+ `git rebase --update-refs` would delete references when all
+ `update-ref` commands in the sequencer were removed, which has been
+ corrected.
+ source: <20221107174752.91186-1-vdye@github.com>
+
+--------------------------------------------------
+[New Topics]
+
+* ab/fewer-the-index-macros (2022-11-18) 12 commits
+ - builtin/*: remove or amend "USE_THE_INDEX_COMPATIBILITY_MACROS"
+ - cocci: apply "pending" index-compatibility to some "builtin/*.c"
+ - cache.h & test-tool.h: add & use "USE_THE_INDEX_VARIABLE"
+ - {builtin/*,repository}.c: add & use "USE_THE_INDEX_VARIABLE"
+ - cocci: apply "pending" index-compatibility to "t/helper/*.c"
+ - cocci & cache.h: apply variable section of "pending" index-compatibility
+ - cocci & cache.h: apply a selection of "pending" index-compatibility
+ - cocci: add a index-compatibility.pending.cocci
+ - read-cache API & users: make discard_index() return void
+ - cocci & cache.h: remove rarely used "the_index" compat macros
+ - builtin/{grep,log}.: don't define "USE_THE_INDEX_COMPATIBILITY_MACROS"
+ - cache.h: remove unused "the_index" compat macros
+
+ Progress on removing 'the_index' convenience wrappers.
+
+ Expecting a (small) reroll, then will merge to 'next'.
+ source: <cover-00.12-00000000000-20221118T112205Z-avarab@gmail.com>
+
+
+* ab/tag-object-type-errors (2022-11-18) 4 commits
+ - tag: don't emit potentially incorrect "object is a X, not a Y"
+ - tag: don't misreport type of tagged objects in errors
+ - object tests: add test for unexpected objects in tags
+ - object-file.c: free the "t.tag" in check_tag()
+ (this branch uses jk/parse-object-type-mismatch.)
+
+ Hardening checks around mismatched object types when one of those
+ objects is a tag.
+
+ Needs review.
+ source: <Y3a3qcqNG8W3ueeb@coredump.intra.peff.net>
+ source: <cover-0.4-00000000000-20221118T113442Z-avarab@gmail.com>
+
+
+* ew/delta-islands-free (2022-11-18) 1 commit
+  (merged to 'next' on 2022-11-18 at 7c4899e0cb)
+ + delta-islands: free island-related data after use
+
+ Free structures related to delta islands after use.
 
  Will merge to 'master'.
- source: <pull.1411.v3.git.1668107165.gitgitgadget@gmail.com>
+ source: <20221117230658.M516129@dcvr>
+
+
+* gc/resolve-alternate-symlinks (2022-11-17) 1 commit
+ - object-file: use real paths when adding alternates
+
+ Resolve symbolic links when processing the locations of alternate
+ object stores, since failing to do so can lead to confusing and buggy
+ behavior.
+
+ Expecting a reroll, then will merge to 'next'.
+ source: <pull.1382.git.git.1668706274099.gitgitgadget@gmail.com>
+
+
+* jk/parse-object-type-mismatch (2022-11-18) 2 commits
+  (merged to 'next' on 2022-11-18 at 1ee133a089)
+ + parse_object(): check on-disk type of suspected blob
+ + parse_object(): drop extra "has" check before checking object type
+ (this branch is used by ab/tag-object-type-errors.)
+
+ `parse_object()` hardening when checking for the existence of a
+ suspected blob object.
+
+ Will cook in 'next'.
+ source: <Y3a3qcqNG8W3ueeb@coredump.intra.peff.net>
+
+
+* js/range-diff-mbox (2022-11-15) 1 commit
+ - range-diff: support reading mbox files
+
+ 'git range-diff' gained support for reading either side from an .mbox
+ file instead of a revision range.
+
+ Expecting another round?
+ source: <pull.1420.git.1668536405563.gitgitgadget@gmail.com>
+
+
+* mg/notes-newline (2022-11-16) 1 commit
+  (merged to 'next' on 2022-11-18 at b20234698d)
+ + notes: avoid empty line in template
+
+ Avoid a stray empty newline in the template when creating new notes.
+
+ Will merge to 'master'.
+ source: <347ee7ad6fea7cf96bb1e51772802102082b58cc.1668614158.git.git@grubix.eu>
+
+
+* rj/branch-copy-and-rename (2022-11-17) 2 commits
+ - branch: clear target branch configuration before copying or renaming
+ - branch: force-copy a branch to itself via @{-1} is a no-op
+
+ Fix a pair of bugs in 'git branch'.
+
+ Waiting for review discussion to settle.
+ source: <f0b2d46c-2e9c-2630-2870-8ed550dd1606@gmail.com>
+
+
+* tl/ls-tree--pattern (2022-11-17) 6 commits
+ - ls-tree: introduce '--pattern' option
+ - ls-tree: introduce 'match_pattern()' function
+ - ls-tree: improving cohension in the print code
+ - ls-tree: optimize params of 'show_tree_common_default_long()'
+ - t3104: remove shift code in 'test_ls_tree_format'
+ - ls-tree: cleanup the redundant SPACE
+
+ A synonym for "ls-tree | grep <pattern>", "ls-tree
+ --pattern=<pattern>" was introduced.
+
+ Waiting for review response, but leaning negative.
+ source: <20221117113023.65865-1-tenglong.tl@alibaba-inc.com>
+
+
+* tr/am--no-verify (2022-11-18) 1 commit
+ - am: Allow passing --no-verify flag
+
+ Conditionally skip the pre-applypatch and applypatch-msg hooks when
+ applying patches with 'git am'.
+
+ Expecting another round.
+ source: <20221118132743.3525725-1-thierry.reding@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -315,7 +312,8 @@ for convenience (replace "htmldocs" with "manpages" for the manual
 
  Final bits of "git bisect.sh" have been rewritten in C.
 
- Needs review.
+ Temporarily ejected from 'seen'. Waiting for a response on how this
+ topic interacts with 'dd/git-bisect-builtin'.
  cf. <xmqqv8pr8903.fsf@gitster.g>
  source: <pull.1132.v6.git.1661885419.gitgitgadget@gmail.com>
 
@@ -331,20 +329,19 @@ for convenience (replace "htmldocs" with "manpages" for the manual
  source: <pull.1354.git.git.1665388136.gitgitgadget@gmail.com>
 
 
-* ed/fsmonitor-inotify (2022-10-14) 7 commits
- . fsmonitor: update doc for Linux
- . fsmonitor: test updates
- . fsmonitor: enable fsmonitor for Linux
- . fsmonitor: implement filesystem change listener for Linux
- . fsmonitor: determine if filesystem is local or remote
- . fsmonitor: prepare to share code between Mac OS and Linux
- . Merge branch 'ed/fsmonitor-on-networked-macos' into ed/fsmonitor-inotify
+* ed/fsmonitor-inotify (2022-11-16) 6 commits
+ - fsmonitor: update doc for Linux
+ - fsmonitor: test updates
+ - fsmonitor: enable fsmonitor for Linux
+ - fsmonitor: implement filesystem change listener for Linux
+ - fsmonitor: determine if filesystem is local or remote
+ - fsmonitor: prepare to share code between Mac OS and Linux
 
  Bundled fsmonitor for Linux using inotify API.
 
- Needs review.
- Occasional breakages of t7527.16?
- source: <pull.1352.v2.git.git.1665783944.gitgitgadget@gmail.com>
+ Needs review on the updated round.
+ Occasional breakages of t7527.16??
+ source: <pull.1352.v3.git.git.1668641019.gitgitgadget@gmail.com>
 
 
 * ag/merge-strategies-in-c (2022-08-10) 14 commits
@@ -400,29 +397,172 @@ for convenience (replace "htmldocs" with "manpages" for the manual
 --------------------------------------------------
 [Cooking]
 
+* ab/remove--super-prefix (2022-11-14) 12 commits
+ - fetch: rename "--submodule-prefix" to "--super-prefix"
+ - read-tree: add "--super-prefix" option, eliminate global
+ - submodule tests: test "git branch -t" output and stderr
+ - submodule--helper: convert "{update,clone}" to their own "--super-prefix"
+ - submodule--helper: convert "status" to its own "--super-prefix"
+ - submodule--helper: convert "sync" to its own "--super-prefix"
+ - submodule--helper: convert "foreach" to its own "--super-prefix"
+ - submodule--helper: "deinit" has never used "--super-prefix"
+ - submodule--helper: don't use global --super-prefix in "absorbgitdirs"
+ - read-tree + fetch tests: test failing "--super-prefix" interaction
+ - Merge branch 'ab/submodule-no-abspath' into ab/remove--super-prefix
+ - Merge branch 'ab/submodule-helper-prep-only' into ab/remove--super-prefix
+ (this branch uses ab/submodule-helper-prep-only and ab/submodule-no-abspath.)
+
+ Remove the top-level `--super-prefix` option.
+
+ Expecting a reroll?
+ source: <cover-v2-00.10-00000000000-20221114T100803Z-avarab@gmail.com>
+
+
+* ab/submodule-no-abspath (2022-11-09) 1 commit
+  (merged to 'next' on 2022-11-18 at 34d0accc7b)
+ + submodule--helper absorbgitdirs: no abspaths in "Migrating git..."
+ (this branch is used by ab/remove--super-prefix.)
+
+ Remove an absolute path in the "Migrating git directory" message.
+
+ Will merge to 'master'.
+ source: <patch-1.1-34b54fdd9bb-20221109T020347Z-avarab@gmail.com>
+
+
+* ab/t7610-timeout (2022-11-15) 2 commits
+  (merged to 'next' on 2022-11-15 at 9dadac032a)
+ + t7610: use "file:///dev/null", not "/dev/null", fixes MinGW
+  (merged to 'next' on 2022-11-14 at 82a4abdb1d)
+ + t7610: fix flaky timeout issue, don't clone from example.com
+
+ Fix a source of flakiness in CI when compiling with SANITIZE=leak.
+
+ Will cook in 'next'.
+ source: <Y3PrjMLcEGfoHifZ@nand.local>
+
+
+* es/chainlint-lineno (2022-11-11) 4 commits
+  (merged to 'next' on 2022-11-18 at 20c9692235)
+ + chainlint: prefix annotated test definition with line numbers
+ + chainlint: latch line numbers at which each token starts and ends
+ + chainlint: sidestep impoverished macOS "terminfo"
+ + Merge branch 'es/chainlint-output' into es/chainlint-lineno
+ (this branch uses es/chainlint-output.)
+
+ Teach chainlint.pl to show corresponding line numbers when printing
+ the source of a test.
+
+ Will merge to 'master'.
+ source: <pull.1413.v2.git.1668152094.gitgitgadget@gmail.com>
+
+
+* ew/format-patch-mboxrd (2022-11-14) 1 commit
+ - format-patch: add --mboxrd alias for --pretty=mboxrd
+
+ Teach `format-patch` a convenient alias for `--pretty=mboxrd`.
+
+ Waiting for discussion to settle.
+ source: <20221114094114.18986-1-e@80x24.org>
+
+
+* gc/redact-h2h3-headers (2022-11-14) 2 commits
+  (merged to 'next' on 2022-11-14 at 34157d24e9)
+ + http: redact curl h2h3 headers in info
+ + t: run t5551 tests with both HTTP and HTTP/2
+
+ Redact headers from cURL's h2h3 module in GIT_CURL_VERBOSE and
+ others.
+
+ Will merge to 'master'.
+ source: <pull.1377.v3.git.git.1668206106.gitgitgadget@gmail.com>
+
+
+* js/drop-mingw-test-cmp (2022-11-14) 2 commits
+ - tests(mingw): avoid very slow `mingw_test_cmp`
+ - t0021: use Windows-friendly `pwd`
+
+ Use `git diff --no-index` as a test_cmp on Windows.
+
+ Waiting for review response.
+ source: <pull.1309.v4.git.1668434812.gitgitgadget@gmail.com>
+
+
+* mc/switch-advice (2022-11-09) 1 commit
+ - po: use `switch` over `checkout` in error message
+
+ Use 'switch' instead of 'checkout' in an error message.
+
+ Waiting for review response.
+ source: <pull.1308.git.git.1668018620148.gitgitgadget@gmail.com>
+
+
+* mh/gitcredentials-generate (2022-11-14) 1 commit
+  (merged to 'next' on 2022-11-18 at 99f2365d6b)
+ + Docs: describe how a credential-generating helper works
+
+ Doc update.
+
+ Will cook in 'next'.
+ source: <pull.1379.git.git.1668217470500.gitgitgadget@gmail.com>
+
+
+* ms/sendemail-validate-headers (2022-11-11) 1 commit
+ . Expose header information to git-send-email's sendemail-validate hook
+
+ Expecting a reroll.
+ Appears to break t9001 completely?
+ source: <20221111194223.644845-2-michael.strawbridge@amd.com>
+
+
+* pw/strict-label-lookups (2022-11-10) 2 commits
+  (merged to 'next' on 2022-11-14 at 7db4398d23)
+ + sequencer: tighten label lookups
+ + sequencer: unify label lookup
+
+ Correct an error where `git rebase` would mistakenly use a branch or
+ tag named "refs/rewritten/xyz" when missing a rebase label.
+
+ Will cook in 'next'.
+ source: <pull.1414.git.1668098622.gitgitgadget@gmail.com>
+
+
+* rs/multi-filter-args (2022-11-12) 3 commits
+ - list-objects-filter: remove OPT_PARSE_LIST_OBJECTS_FILTER_INIT()
+ - pack-object: simplify --filter handling
+ - pack-objects: fix handling of multiple --filter options
+
+ Fix a bug where `pack-objects` would not respect multiple `--filter`
+ arguments when invoked directly.
+
+ Expecting a reroll?
+ source: <c64e4fa5-62c2-2a93-a4ef-bd84407ea570@web.de>
+
+
 * ab/various-leak-fixes (2022-11-08) 18 commits
- - built-ins: use free() not UNLEAK() if trivial, rm dead code
- - revert: fix parse_options_concat() leak
- - cherry-pick: free "struct replay_opts" members
- - rebase: don't leak on "--abort"
- - connected.c: free the "struct packed_git"
- - sequencer.c: fix "opts->strategy" leak in read_strategy_opts()
- - ls-files: fix a --with-tree memory leak
- - revision API: call graph_clear() in release_revisions()
- - unpack-file: fix ancient leak in create_temp_file()
- - built-ins & libs & helpers: add/move destructors, fix leaks
- - dir.c: free "ident" and "exclude_per_dir" in "struct untracked_cache"
- - read-cache.c: clear and free "sparse_checkout_patterns"
- - commit: discard partial cache before (re-)reading it
- - {reset,merge}: call discard_index() before returning
- - tests: mark tests as passing with SANITIZE=leak
- - Merge branch 'pw/rebase-no-reflog-action' into ab/various-leak-fixes
- - rebase: stop exporting GIT_REFLOG_ACTION
- - sequencer: stop exporting GIT_REFLOG_ACTION
+  (merged to 'next' on 2022-11-18 at 8828bb7161)
+ + built-ins: use free() not UNLEAK() if trivial, rm dead code
+ + revert: fix parse_options_concat() leak
+ + cherry-pick: free "struct replay_opts" members
+ + rebase: don't leak on "--abort"
+ + connected.c: free the "struct packed_git"
+ + sequencer.c: fix "opts->strategy" leak in read_strategy_opts()
+ + ls-files: fix a --with-tree memory leak
+ + revision API: call graph_clear() in release_revisions()
+ + unpack-file: fix ancient leak in create_temp_file()
+ + built-ins & libs & helpers: add/move destructors, fix leaks
+ + dir.c: free "ident" and "exclude_per_dir" in "struct untracked_cache"
+ + read-cache.c: clear and free "sparse_checkout_patterns"
+ + commit: discard partial cache before (re-)reading it
+ + {reset,merge}: call discard_index() before returning
+ + tests: mark tests as passing with SANITIZE=leak
+ + Merge branch 'pw/rebase-no-reflog-action' into ab/various-leak-fixes
+ + rebase: stop exporting GIT_REFLOG_ACTION
+ + sequencer: stop exporting GIT_REFLOG_ACTION
+ (this branch is used by ab/merge-index-prep.)
 
  Various leak fixes.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover-v2-00.15-00000000000-20221108T172650Z-avarab@gmail.com>
 
 
@@ -451,7 +591,9 @@ for convenience (replace "htmldocs" with "manpages" for the manual
  source: <cover.1668097286.git.congdanhqx@gmail.com>
 
 
-* dd/git-bisect-builtin (2022-11-11) 12 commits
+* dd/git-bisect-builtin (2022-11-15) 13 commits
+  (merged to 'next' on 2022-11-15 at e16e754058)
+ + bisect; remove unused "git-bisect.sh" and ".gitignore" entry
   (merged to 'next' on 2022-11-14 at fc304fb52f)
  + Turn `git bisect` into a full built-in
  + bisect--helper: log: allow arbitrary number of arguments
@@ -520,7 +662,7 @@ for convenience (replace "htmldocs" with "manpages" for the manual
  Teach chainlint.pl to annotate the original test definition instead
  of the token stream.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <pull.1375.git.git.1667934510.gitgitgadget@gmail.com>
 
 
@@ -531,7 +673,7 @@ for convenience (replace "htmldocs" with "manpages" for the manual
  'git worktree add' learned how to create a worktree based on an
  orphaned branch with `--orphan`.
 
- Waiting for review discussion to settle, but leaning negative.
+ Expecting another round?
  source: <20221110233137.10414-1-jacobabel@nullpo.dev>
 
 
@@ -549,12 +691,13 @@ for convenience (replace "htmldocs" with "manpages" for the manual
 
 
 * jt/submodule-on-demand (2022-11-14) 1 commit
- - Doc: document push.recurseSubmodules=only
+  (merged to 'next' on 2022-11-18 at a89ee23abb)
+ + Doc: document push.recurseSubmodules=only
 
  Push all submodules recursively with
  '--recurse-submodules=on-demand'.
 
- Expecting a reroll?
+ Will cook in 'next'.
  source: <20221114213713.2341945-1-jonathantanmy@google.com>
 
 
@@ -562,15 +705,20 @@ for convenience (replace "htmldocs" with "manpages" for the manual
   (merged to 'next' on 2022-11-14 at 790dadc8d3)
  + rebase: stop exporting GIT_REFLOG_ACTION
  + sequencer: stop exporting GIT_REFLOG_ACTION
+ (this branch is used by ab/merge-index-prep.)
 
  Avoid setting GIT_REFLOG_ACTION to improve readability of the
  sequencer internals.
 
- Expecting a (final?) reroll.
+ Will cook in 'next'.
  source: <31df037eafede799c2ef27df66c6da309b719b1b.1668003719.git.gitgitgadget@gmail.com>
 
 
-* rp/maintenance-qol (2022-11-14) 2 commits
+* rp/maintenance-qol (2022-11-15) 4 commits
+  (merged to 'next' on 2022-11-15 at be4379029c)
+ + builtin/gc.c: fix use-after-free in maintenance_unregister()
+  (merged to 'next' on 2022-11-15 at 53dc6c8b0d)
+ + maintenance --unregister: fix uninit'd data use & -Wdeclaration-after-statement
   (merged to 'next' on 2022-11-14 at 17db40bf26)
  + maintenance: add option to register in a specific config
  + for-each-repo: interpolate repo path arguments
@@ -581,27 +729,30 @@ for convenience (replace "htmldocs" with "manpages" for the manual
 
  Will cook in 'next'.
  source: <20221109190708.22725-1-ronan@rjp.ie>
+ source: <patch-1.1-54d405f15f1-20221115T080212Z-avarab@gmail.com>
 
 
 * sa/cat-file-mailmap--batch-check (2022-11-14) 3 commits
- - doc/cat-file: allow --use-mailmap for --batch options
- - cat-file: add mailmap support to --batch-check option
- - cat-file: add mailmap support to -s option
+ . doc/cat-file: allow --use-mailmap for --batch options
+ . cat-file: add mailmap support to --batch-check option
+ . cat-file: add mailmap support to -s option
 
  'cat-file' gains mailmap support for its '--batch-check' and '-s'
  options.
 
- Will merge to 'next'.
+ Expecting another round.
+ Breaks t4203 when run with 'GIT_TEST_DEFAULT_HASH=sha256'.
  source: <20221113212830.92609-1-siddharthasthana31@gmail.com>
 
 
 * sz/macos-fsmonitor-symlinks (2022-11-08) 1 commit
- - fsmonitor--daemon: on macOS support symlink
+  (merged to 'next' on 2022-11-18 at ad972b3819)
+ + fsmonitor--daemon: on macOS support symlink
 
  Fix an issue where core.fsmonitor on macOS would not notice created
  or modified symbolic links.
 
- Waiting for review.
+ Will merge to 'master'.
  source: <pull.1406.git.1667885119570.gitgitgadget@gmail.com>
 
 
@@ -629,14 +780,6 @@ for convenience (replace "htmldocs" with "manpages" for the manual
  source: <cover.1667980450.git.dyroneteng@gmail.com>
 
 
-* vd/update-refs-delete (2022-11-07) 1 commit
-  (merged to 'next' on 2022-11-08 at 2866156953)
- + rebase --update-refs: avoid unintended ref deletion
-
- Will merge to 'master'.
- source: <20221107174752.91186-1-vdye@github.com>
-
-
 * ab/submodule-helper-prep-only (2022-11-08) 9 commits
   (merged to 'next' on 2022-11-08 at c0c4f4d1c3)
  + submodule--helper: use OPT_SUBCOMMAND() API
@@ -656,11 +799,11 @@ for convenience (replace "htmldocs" with "manpages" for the manual
  source: <cover-v2-0.9-00000000000-20221108T140501Z-avarab@gmail.com>
 
 
-* ds/bundle-uri-4 (2022-10-31) 9 commits
+* ds/bundle-uri-4 (2022-11-16) 9 commits
  - clone: unbundle the advertised bundles
  - bundle-uri: download bundles from an advertised list
  - bundle-uri: allow relative URLs in bundle lists
- - strbuf: reintroduce strbuf_parent_directory()
+ - strbuf: introduce strbuf_strip_file_from_path()
  - bundle-uri client: add boolean transfer.bundleURI setting
  - bundle-uri: serve bundle.* keys from config
  - bundle-uri client: add helper for testing server
@@ -670,7 +813,7 @@ for convenience (replace "htmldocs" with "manpages" for the manual
  Bundle URIs part 4.
 
  Waiting for review.
- source: <pull.1400.git.1667264854.gitgitgadget@gmail.com>
+ source: <pull.1400.v2.git.1668628302.gitgitgadget@gmail.com>
 
 
 * sg/plug-line-log-leaks (2022-11-02) 3 commits
@@ -685,12 +828,13 @@ for convenience (replace "htmldocs" with "manpages" for the manual
 
 
 * tb/howto-maintain-git-fixes (2022-10-31) 2 commits
- - Documentation: build redo-seen.sh from jch..seen
- - Documentation: build redo-jch.sh from master..jch
+  (merged to 'next' on 2022-11-18 at e631f9f305)
+ + Documentation: build redo-seen.sh from jch..seen
+ + Documentation: build redo-jch.sh from master..jch
 
  A pair of bugfixes to the Documentation/howto/maintain-git.txt guide.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1667260044.git.me@ttaylorr.com>
 
 
@@ -742,18 +886,6 @@ for convenience (replace "htmldocs" with "manpages" for the manual
  source: <cover-v3-0.4-00000000000-20221031T222249Z-avarab@gmail.com>
 
 
-* ab/misc-hook-submodule-run-command (2022-10-31) 3 commits
-  (merged to 'next' on 2022-11-03 at 0f01b25561)
- + run-command tests: test stdout of run_command_parallel()
- + submodule tests: reset "trace.out" between "grep" invocations
- + hook tests: fix redirection logic error in 96e7225b310
-
- Various test updates.
-
- Will merge to 'master'?
- source: <cover-0.3-00000000000-20221029T025520Z-avarab@gmail.com>
-
-
 * kz/merge-tree-merge-base (2022-11-12) 2 commits
   (merged to 'next' on 2022-11-14 at 76d48ae21f)
  + merge-tree.c: allow specifying the merge-base when --stdin is passed
@@ -774,14 +906,14 @@ for convenience (replace "htmldocs" with "manpages" for the manual
  source: <20221112143616.1429-1-philipoakley@iee.email>
 
 
-* rr/long-status-advice (2022-11-10) 1 commit
+* rr/long-status-advice (2022-11-15) 1 commit
  - status: long status advice adapted to recent capabilities
 
  The advice message emitted by a slow "status" run is amended to
  mention fsmonitor.
 
  Waiting for reviewer feedback on the updated round.
- source: <pull.1384.v5.git.1668110679098.gitgitgadget@gmail.com>
+ source: <pull.1384.v6.git.1668547188070.gitgitgadget@gmail.com>
 
 
 * ab/config-multi-and-nonbool (2022-11-02) 9 commits
@@ -802,47 +934,26 @@ for convenience (replace "htmldocs" with "manpages" for the manual
  source: <cover-v2-0.9-00000000000-20221101T225822Z-avarab@gmail.com>
 
 
-* ab/sha-makefile-doc (2022-11-07) 10 commits
-  (merged to 'next' on 2022-11-08 at 6d3068d7cd)
- + Makefile: discuss SHAttered in *_SHA{1,256} discussion
- + Makefile: document default SHA-1 backend on OSX
- + Makefile & test-tool: replace "DC_SHA1" variable with a "define"
- + Makefile: document SHA-1 and SHA-256 default and selection order
- + Makefile: document default SHA-256 backend
- + Makefile: rephrase the discussion of *_SHA1 knobs
- + Makefile: create and use sections for "define" flag listing
- + Makefile: correct DC_SHA1 documentation
- + INSTALL: remove discussion of SHA-1 backends
- + Makefile: always (re)set DC_SHA1 on fallback
+* ps/receive-use-only-advertised (2022-11-17) 7 commits
+  (merged to 'next' on 2022-11-18 at e4a288a7a5)
+ + receive-pack: only use visible refs for connectivity check
+ + rev-parse: add `--exclude-hidden=` option
+ + revision: add new parameter to exclude hidden refs
+ + revision: introduce struct to handle exclusions
+ + revision: move together exclusion-related functions
+ + refs: get rid of global list of hidden refs
+ + refs: fix memory leak when parsing hideRefs config
 
- Makefile comments updates and reordering to clarify knobs used to
- choose SHA implementations.
+ "git receive-pack" used to use all the local refs as the boundary for
+ checking connectivity of the data "git push" sent, but now it uses
+ only the refs that it advertised to the pusher. In a repository with
+ the .hideRefs configuration, this reduces the resources needed to
+ perform the check.
 
- Will merge to 'master'?
- source: <cover-v5-00.10-00000000000-20221107T211736Z-avarab@gmail.com>
-
-
-* ps/receive-use-only-advertised (2022-11-11) 7 commits
- - receive-pack: only use visible refs for connectivity check
- - rev-parse: add `--exclude-hidden=` option
- - revision: add new parameter to exclude hidden refs
- - revision: introduce struct to handle exclusions
- - revision: move together exclusion-related functions
- - refs: get rid of global list of hidden refs
- - refs: fix memory leak when parsing hideRefs config
-
- "git receive-pack" used to use all the local refs as the boundary
- for checking connectivity of the data "git push" sent, but now it
- uses only the refs that it advertised to the pusher.  In a
- repository with the .hideRefs configuration, this reduces the
- resource needed to perform the check, and also forces the pusher to
- prove they have all objects that are necessary to complete the
- history on top of only the history available to them.
-
- Expecting a (final?) reroll.
+ Will cook in 'next'.
  cf. <221028.86bkpw805n.gmgdl@evledraar.gmail.com>
  cf. <xmqqr0yrizqm.fsf@gitster.g>
- source: <cover.1668149149.git.ps@pks.im>
+ source: <cover.1668663795.git.ps@pks.im>
 
 
 * gc/submodule-clone-update-with-branches (2022-10-30) 8 commits
@@ -872,20 +983,6 @@ for convenience (replace "htmldocs" with "manpages" for the manual
  Will merge to 'next'?
  cf. <Y1L+Qv+cs1bjqjK9@coredump.intra.peff.net>
  source: <pull.1389.v2.git.1668003388.gitgitgadget@gmail.com>
-
-
-* tb/repack-expire-to (2022-10-24) 4 commits
-  (merged to 'next' on 2022-11-08 at 496ce3c62d)
- + builtin/repack.c: implement `--expire-to` for storing pruned objects
- + builtin/repack.c: write cruft packs to arbitrary locations
- + builtin/repack.c: pass "cruft_expiration" to `write_cruft_pack`
- + builtin/repack.c: pass "out" to `prepare_pack_objects`
-
- "git repack" learns to send cruft objects out of the way into
- packfiles outside the repository.
-
- Will merge to 'master'.
- source: <cover.1666636974.git.me@ttaylorr.com>
 
 
 * cc/filtered-repack (2022-10-25) 2 commits
@@ -939,16 +1036,6 @@ for convenience (replace "htmldocs" with "manpages" for the manual
  difference from https://github.com/git/git/actions/runs/3293553109
  is the inclusion of this topic.
  source: <pull.1359.v3.git.git.1665973401.gitgitgadget@gmail.com>
-
-
-* en/sparse-checkout-design (2022-11-07) 1 commit
-  (merged to 'next' on 2022-11-08 at 42e164b490)
- + sparse-checkout.txt: new document with sparse-checkout directions
-
- Design doc.
-
- Needs review.
- source: <pull.1367.v4.git.1667714666810.gitgitgadget@gmail.com>
 
 
 * pw/test-todo (2022-10-06) 3 commits
