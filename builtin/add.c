@@ -694,6 +694,6 @@ finish:
 		die(_("Unable to write new index file"));
 
 	dir_clear(&dir);
-	UNLEAK(pathspec);
+	clear_pathspec(&pathspec);
 	return exit_status;
 }

@@ -4,6 +4,7 @@ test_description='git merge
 
 Testing the resolve strategy.'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '
