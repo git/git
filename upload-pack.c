@@ -39,8 +39,8 @@
 #define CLIENT_SHALLOW	(1u << 18)
 #define HIDDEN_REF	(1u << 19)
 
-#define ALL_FLAGS (THEY_HAVE | OUR_REF | WANTED | COMMON_KNOWN | SHALLOW | \
-		NOT_SHALLOW | CLIENT_SHALLOW | HIDDEN_REF)
+#define ALL_FLAGS (THEY_HAVE |WANTED | COMMON_KNOWN | SHALLOW | \
+		NOT_SHALLOW | CLIENT_SHALLOW)
 
 /* Enum for allowed unadvertised object request (UOR) */
 enum allow_uor {
@@ -1156,20 +1156,6 @@ static void receive_needs(struct upload_pack_data *data,
 		packet_flush(1);
 }
 
-/* return non-zero if the ref is hidden, otherwise 0 */
-static int mark_our_ref(const char *refname, const char *refname_full,
-			const struct object_id *oid)
-{
-	struct object *o = lookup_unknown_object(the_repository, oid);
-
-	if (ref_is_hidden(refname, refname_full)) {
-		o->flags |= HIDDEN_REF;
-		return 1;
-	}
-	o->flags |= OUR_REF;
-	return 0;
-}
-
 static int check_ref(const char *refname_full, const struct object_id *oid,
 		     int flag UNUSED, void *cb_data UNUSED)
 {
@@ -1738,6 +1724,13 @@ int upload_pack_v2(struct repository *r, struct packet_reader *request)
 				state = FETCH_DONE;
 			break;
 		case FETCH_SEND_PACK:
+			if (need_check_hidden_refs()) {
+				head_ref_namespaced(check_ref, NULL);
+				for_each_namespaced_ref(check_ref, NULL);
+			}
+			if (has_force_hidden_refs())
+				check_non_tip(&data);
+
 			send_wanted_ref_info(&data);
 			send_shallow_info(&data);
 

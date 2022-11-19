@@ -84,7 +84,7 @@ static int send_ref(const char *refname, const struct object_id *oid,
 
 	strbuf_reset(&data->buf);
 
-	if (ref_is_hidden(refname_nons, refname))
+	if (mark_our_ref(refname_nons, refname, oid))
 		return 0;
 
 	if (!ref_match(&data->prefixes, refname_nons))

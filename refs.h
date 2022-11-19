@@ -819,6 +819,13 @@ int parse_hide_refs_config(const char *var, const char *value, const char *);
  * parameter always points to the full ref name.
  */
 int ref_is_hidden(const char *, const char *);
+/* return non-zero if the ref is hidden, otherwise 0 */
+int mark_our_ref(const char *refname, const char *refname_full,
+		 const struct object_id *oid);
+/* return non-zero if need to batch check hidden refs, otherwise 0 */
+int need_check_hidden_refs(void);
+/* return non-zero if some ref is force hidden, otherwise 0 */
+int has_force_hidden_refs(void);
 
 /* Is this a per-worktree ref living in the refs/ namespace? */
 int is_per_worktree_ref(const char *refname);
