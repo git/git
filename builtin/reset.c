@@ -84,7 +84,7 @@ static int reset_index(const char *ref, const struct object_id *oid, int reset_t
 		BUG("invalid reset_type passed to reset_index");
 	}
 
-	read_cache_unmerged();
+	repo_read_index_unmerged(the_repository);
 
 	if (reset_type == KEEP) {
 		struct object_id head_oid;
@@ -220,7 +220,7 @@ static void set_reflog_message(struct strbuf *sb, const char *action,
 
 static void die_if_unmerged_cache(int reset_type)
 {
-	if (is_merge() || unmerged_cache())
+	if (is_merge() || unmerged_index(&the_index))
 		die(_("Cannot do a %s reset in the middle of a merge."),
 		    _(reset_type_names[reset_type]));
 

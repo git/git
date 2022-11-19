@@ -343,7 +343,7 @@ dir_check:
 			argc += last - first;
 			goto act_on_entry;
 		}
-		if (!(ce = cache_file_exists(src, length, 0))) {
+		if (!(ce = index_file_exists(&the_index, src, length, 0))) {
 			bad = _("not under version control");
 			goto act_on_entry;
 		}
@@ -472,7 +472,7 @@ remove_entry:
 		assert(pos >= 0);
 		if (!(mode & SPARSE) && !lstat(src, &st))
 			sparse_and_dirty = ce_modified(active_cache[pos], &st, 0);
-		rename_cache_entry_at(pos, dst);
+		rename_index_entry_at(&the_index, pos, dst);
 
 		if (ignore_sparse &&
 		    core_apply_sparse_checkout &&

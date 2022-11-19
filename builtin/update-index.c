@@ -445,7 +445,7 @@ static void chmod_path(char flip, const char *path)
 	if (pos < 0)
 		goto fail;
 	ce = active_cache[pos];
-	if (chmod_cache_entry(ce, flip) < 0)
+	if (chmod_index_entry(&the_index, ce, flip) < 0)
 		goto fail;
 
 	report("chmod %cx '%s'", flip, path);
@@ -641,7 +641,7 @@ static int unresolve_one(const char *path)
 	pos = cache_name_pos(path, namelen);
 	if (0 <= pos) {
 		/* already merged */
-		pos = unmerge_cache_entry_at(pos);
+		pos = unmerge_index_entry_at(&the_index, pos);
 		if (pos < active_nr) {
 			const struct cache_entry *ce = active_cache[pos];
 			if (ce_stage(ce) &&
