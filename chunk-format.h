@@ -31,13 +31,29 @@ void add_chunk(struct chunkfile *cf,
 	       uint32_t id,
 	       size_t size,
 	       chunk_write_fn fn);
-int write_chunkfile(struct chunkfile *cf, void *data);
+
+enum chunkfile_flags {
+	CHUNKFILE_TRAILING_TOC = (1 << 0),
+};
+
+int write_chunkfile(struct chunkfile *cf,
+		    enum chunkfile_flags flags,
+		    void *data);
 
 int read_table_of_contents(struct chunkfile *cf,
 			   const unsigned char *mfile,
 			   size_t mfile_size,
 			   uint64_t toc_offset,
 			   int toc_length);
+
+/**
+ * Read the given chunkfile, but read the table of contents from the
+ * end of the given mfile. The file is expected to be a hashfile with
+ * the_hash_file->rawsz bytes at the end storing the hash.
+ */
+int read_trailing_table_of_contents(struct chunkfile *cf,
+				    const unsigned char *mfile,
+				    size_t mfile_size);
 
 #define CHUNK_NOT_FOUND (-2)
 

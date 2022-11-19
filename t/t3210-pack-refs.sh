@@ -159,7 +159,7 @@ test_expect_success 'delete ref while another dangling packed ref' '
 test_expect_success 'pack ref directly below refs/' '
 	git update-ref refs/top HEAD &&
 	git pack-refs --all --prune &&
-	grep refs/top .git/packed-refs &&
+	git rev-parse refs/top &&
 	test_path_is_missing .git/refs/top
 '
 
@@ -197,7 +197,7 @@ test_expect_success 'notice d/f conflict with existing ref' '
 	test_must_fail git branch foo/bar/baz/lots/of/extra/components
 '
 
-test_expect_success 'reject packed-refs with unterminated line' '
+test_expect_success PACKED_REFS_V1 'reject packed-refs with unterminated line' '
 	cp .git/packed-refs .git/packed-refs.bak &&
 	test_when_finished "mv .git/packed-refs.bak .git/packed-refs" &&
 	printf "%s" "$HEAD refs/zzzzz" >>.git/packed-refs &&
@@ -206,7 +206,7 @@ test_expect_success 'reject packed-refs with unterminated line' '
 	test_cmp expected_err err
 '
 
-test_expect_success 'reject packed-refs containing junk' '
+test_expect_success PACKED_REFS_V1 'reject packed-refs containing junk' '
 	cp .git/packed-refs .git/packed-refs.bak &&
 	test_when_finished "mv .git/packed-refs.bak .git/packed-refs" &&
 	printf "%s\n" "bogus content" >>.git/packed-refs &&
@@ -215,7 +215,7 @@ test_expect_success 'reject packed-refs containing junk' '
 	test_cmp expected_err err
 '
 
-test_expect_success 'reject packed-refs with a short SHA-1' '
+test_expect_success PACKED_REFS_V1 'reject packed-refs with a short SHA-1' '
 	cp .git/packed-refs .git/packed-refs.bak &&
 	test_when_finished "mv .git/packed-refs.bak .git/packed-refs" &&
 	printf "%.7s %s\n" $HEAD refs/zzzzz >>.git/packed-refs &&

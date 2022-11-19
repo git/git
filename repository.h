@@ -62,6 +62,12 @@ struct repo_path_cache {
 	char *shallow;
 };
 
+enum ref_format_flags {
+	REF_FORMAT_FILES = (1 << 0),
+	REF_FORMAT_PACKED = (1 << 1),
+	REF_FORMAT_PACKED_V2 = (1 << 2),
+};
+
 struct repository {
 	/* Environment */
 	/*
@@ -96,6 +102,7 @@ struct repository {
 	 * the ref object.
 	 */
 	struct ref_store *refs_private;
+	enum ref_format_flags ref_format;
 
 	/*
 	 * Contains path to often used file names.

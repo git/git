@@ -13,6 +13,7 @@ struct chunk_info {
 	chunk_write_fn write_fn;
 
 	const void *start;
+	off_t offset;
 };
 
 struct chunkfile {
@@ -56,38 +57,59 @@ void add_chunk(struct chunkfile *cf,
 	cf->chunks_nr++;
 }
 
-int write_chunkfile(struct chunkfile *cf, void *data)
+int write_chunkfile(struct chunkfile *cf,
+		    enum chunkfile_flags flags,
+		    void *data)
 {
 	int i, result = 0;
-	uint64_t cur_offset = hashfile_total(cf->f);
 
 	trace2_region_enter("chunkfile", "write", the_repository);
 
-	/* Add the table of contents to the current offset */
-	cur_offset += (cf->chunks_nr + 1) * CHUNK_TOC_ENTRY_SIZE;
+	if (!(flags & CHUNKFILE_TRAILING_TOC)) {
+		uint64_t cur_offset = hashfile_total(cf->f);
 
-	for (i = 0; i < cf->chunks_nr; i++) {
-		hashwrite_be32(cf->f, cf->chunks[i].id);
+		/* Add the table of contents to the current offset */
+		cur_offset += (cf->chunks_nr + 1) * CHUNK_TOC_ENTRY_SIZE;
+
+		for (i = 0; i < cf->chunks_nr; i++) {
+			hashwrite_be32(cf->f, cf->chunks[i].id);
+			hashwrite_be64(cf->f, cur_offset);
+
+			cur_offset += cf->chunks[i].size;
+		}
+
+		/* Trailing entry marks the end of the chunks */
+		hashwrite_be32(cf->f, 0);
 		hashwrite_be64(cf->f, cur_offset);
-
-		cur_offset += cf->chunks[i].size;
 	}
 
-	/* Trailing entry marks the end of the chunks */
-	hashwrite_be32(cf->f, 0);
-	hashwrite_be64(cf->f, cur_offset);
-
 	for (i = 0; i < cf->chunks_nr; i++) {
-		off_t start_offset = hashfile_total(cf->f);
+		cf->chunks[i].offset = hashfile_total(cf->f);
 		result = cf->chunks[i].write_fn(cf->f, data);
 
 		if (result)
 			goto cleanup;
 
-		if (hashfile_total(cf->f) - start_offset != cf->chunks[i].size)
-			BUG("expected to write %"PRId64" bytes to chunk %"PRIx32", but wrote %"PRId64" instead",
-			    cf->chunks[i].size, cf->chunks[i].id,
-			    hashfile_total(cf->f) - start_offset);
+		if (!(flags & CHUNKFILE_TRAILING_TOC)) {
+			if (hashfile_total(cf->f) - cf->chunks[i].offset != cf->chunks[i].size)
+				BUG("expected to write %"PRId64" bytes to chunk %"PRIx32", but wrote %"PRId64" instead",
+				    cf->chunks[i].size, cf->chunks[i].id,
+				    hashfile_total(cf->f) - cf->chunks[i].offset);
+		}
+
+		cf->chunks[i].size = hashfile_total(cf->f) - cf->chunks[i].offset;
+	}
+
+	if (flags & CHUNKFILE_TRAILING_TOC) {
+		size_t last_chunk_tail = hashfile_total(cf->f);
+		/* First entry marks the end of the chunks */
+		hashwrite_be32(cf->f, 0);
+		hashwrite_be64(cf->f, last_chunk_tail);
+
+		for (i = cf->chunks_nr - 1; i >= 0; i--) {
+			hashwrite_be32(cf->f, cf->chunks[i].id);
+			hashwrite_be64(cf->f, cf->chunks[i].offset);
+		}
 	}
 
 cleanup:
@@ -146,6 +168,59 @@ int read_table_of_contents(struct chunkfile *cf,
 	if (chunk_id) {
 		error(_("final chunk has non-zero id %"PRIx32""), chunk_id);
 		return -1;
+	}
+
+	return 0;
+}
+
+int read_trailing_table_of_contents(struct chunkfile *cf,
+				    const unsigned char *mfile,
+				    size_t mfile_size)
+{
+	int i;
+	uint32_t chunk_id;
+	const unsigned char *table_of_contents = mfile + mfile_size - the_hash_algo->rawsz;
+
+	while (1) {
+		uint64_t chunk_offset;
+
+		table_of_contents -= CHUNK_TOC_ENTRY_SIZE;
+
+		chunk_id = get_be32(table_of_contents);
+		chunk_offset = get_be64(table_of_contents + 4);
+
+		/* Calculate the previous chunk size, if it exists. */
+		if (cf->chunks_nr) {
+			off_t previous_offset = cf->chunks[cf->chunks_nr - 1].offset;
+
+			if (chunk_offset < previous_offset ||
+			    chunk_offset > table_of_contents - mfile) {
+				error(_("improper chunk offset(s) %"PRIx64" and %"PRIx64""),
+				previous_offset, chunk_offset);
+				return -1;
+			}
+
+			cf->chunks[cf->chunks_nr - 1].size = chunk_offset - previous_offset;
+		}
+
+		/* Stop at the null chunk. We only need it for the last size. */
+		if (!chunk_id)
+			break;
+
+		for (i = 0; i < cf->chunks_nr; i++) {
+			if (cf->chunks[i].id == chunk_id) {
+				error(_("duplicate chunk ID %"PRIx32" found"),
+					chunk_id);
+				return -1;
+			}
+		}
+
+		ALLOC_GROW(cf->chunks, cf->chunks_nr + 1, cf->chunks_alloc);
+
+		cf->chunks[cf->chunks_nr].id = chunk_id;
+		cf->chunks[cf->chunks_nr].start = mfile + chunk_offset;
+		cf->chunks[cf->chunks_nr].offset = chunk_offset;
+		cf->chunks_nr++;
 	}
 
 	return 0;

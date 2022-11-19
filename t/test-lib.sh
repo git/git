@@ -1975,3 +1975,7 @@ test_lazy_prereq FSMONITOR_DAEMON '
 	git version --build-options >output &&
 	grep "feature: fsmonitor--daemon" output
 '
+
+test_lazy_prereq PACKED_REFS_V1 '
+	test "$GIT_TEST_PACKED_REFS_VERSION" -ne "2"
+'

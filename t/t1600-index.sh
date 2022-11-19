@@ -103,4 +103,12 @@ test_expect_success 'index version config precedence' '
 	test_index_version 0 true 2 2
 '
 
+test_expect_success 'index.computeHash config option' '
+	(
+		rm -f .git/index &&
+		git -c index.computeHash=false add a &&
+		git fsck
+	)
+'
+
 test_done

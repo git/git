@@ -1155,6 +1155,8 @@ struct repository_format {
 	int hash_algo;
 	int sparse_index;
 	char *work_tree;
+	int ref_format_count;
+	enum ref_format_flags ref_format;
 	struct string_list unknown_extensions;
 	struct string_list v1_only_extensions;
 };

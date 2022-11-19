@@ -30,3 +30,11 @@ index.version::
 	Specify the version with which new index files should be
 	initialized.  This does not affect existing repositories.
 	If `feature.manyFiles` is enabled, then the default is 4.
+
+index.computeHash::
+	When enabled, compute the hash of the index file as it is written
+	and store the hash at the end of the content. This is enabled by
+	default.
++
+If you disable `index.computHash`, then older Git clients may report that
+your index is corrupt during `git fsck`.

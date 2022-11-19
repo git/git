@@ -9,13 +9,29 @@ TEST_PASSES_SANITIZE_LEAK=true
 # shouldn't upset readers, and it should be omitted if the file is
 # ever rewritten.
 mark_packed_refs () {
-	sed -e "s/^\(#.*\)/\1 t1409 /" .git/packed-refs >.git/packed-refs.new &&
-	mv .git/packed-refs.new .git/packed-refs
+	if test "$GIT_TEST_PACKED_REFS_VERSION" = "2"
+	then
+		size=$(wc -c < .git/packed-refs) &&
+		pos=$(expr $size - 4) &&
+		printf "FAKE" | dd of=".git/packed-refs" bs=1 seek="$pos" conv=notrunc
+	else
+		sed -e "s/^\(#.*\)/\1 t1409 /" .git/packed-refs >.git/packed-refs.new &&
+		mv .git/packed-refs.new .git/packed-refs
+	fi
 }
 
 # Verify that the packed-refs file is still marked.
 check_packed_refs_marked () {
-	grep -q '^#.* t1409 ' .git/packed-refs
+	if test "$GIT_TEST_PACKED_REFS_VERSION" = "2"
+	then
+		size=$(wc -c < .git/packed-refs) &&
+		pos=$(expr $size - 4) &&
+		tail -c 4 .git/packed-refs >actual &&
+		printf "FAKE" >expect &&
+		test_cmp expect actual
+	else
+		grep -q '^#.* t1409 ' .git/packed-refs
+	fi
 }
 
 test_expect_success 'setup' '

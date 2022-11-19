@@ -182,6 +182,8 @@ int repo_init(struct repository *repo,
 	repo->repository_format_partial_clone = format.partial_clone;
 	format.partial_clone = NULL;
 
+	repo->ref_format = format.ref_format;
+
 	if (worktree)
 		repo_set_worktree(repo, worktree);
 
