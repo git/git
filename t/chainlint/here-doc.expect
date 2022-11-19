@@ -1,7 +1,25 @@
-boodle wobba        gorgo snoot        wafta snurb <<EOF &&
+boodle wobba \
+	gorgo snoot \
+	wafta snurb <<EOF &&
+quoth the raven,
+nevermore...
+EOF
 
 cat <<-Arbitrary_Tag_42 >foo &&
+snoz
+boz
+woz
+Arbitrary_Tag_42
 
-cat <<zump >boo &&
+cat <<"zump" >boo &&
+snoz
+boz
+woz
+zump
 
-horticulture <<EOF
+horticulture <<\EOF
+gomez
+morticia
+wednesday
+pugsly
+EOF

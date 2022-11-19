@@ -1,4 +1,8 @@
 (
+	# comment 1
 	nothing &&
+	# comment 2
 	something
+	# comment 3
+	# comment 4
 )

@@ -1,3 +1,4 @@
 git ls-tree $tree path > current &&
-cat > expected <<EOF &&
+cat > expected <<\EOF &&
+EOF
 test_output
