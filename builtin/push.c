@@ -466,8 +466,16 @@ static int option_parse_recurse_submodules(const struct option *opt,
 
 	if (unset)
 		*recurse_submodules = RECURSE_SUBMODULES_OFF;
-	else
-		*recurse_submodules = parse_push_recurse_submodules_arg(opt->long_name, arg);
+	else {
+		if (!strcmp(arg, "only-is-on-demand")) {
+			if (*recurse_submodules == RECURSE_SUBMODULES_ONLY) {
+				warning(_("recursing into submodule with push.recurseSubmodules=only; using on-demand instead"));
+				*recurse_submodules = RECURSE_SUBMODULES_ON_DEMAND;
+			}
+		} else {
+			*recurse_submodules = parse_push_recurse_submodules_arg(opt->long_name, arg);
+		}
+	}
 
 	return 0;
 }
