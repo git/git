@@ -80,6 +80,7 @@ static struct object_id push_cert_oid;
 static struct signature_check sigcheck;
 static const char *push_cert_nonce;
 static const char *cert_nonce_seed;
+static struct string_list hidden_refs = STRING_LIST_INIT_DUP;
 
 static const char *NONCE_UNSOLICITED = "UNSOLICITED";
 static const char *NONCE_BAD = "BAD";
@@ -130,7 +131,7 @@ static enum deny_action parse_deny_action(const char *var, const char *value)
 
 static int receive_pack_config(const char *var, const char *value, void *cb)
 {
-	int status = parse_hide_refs_config(var, value, "receive");
+	int status = parse_hide_refs_config(var, value, "receive", &hidden_refs);
 
 	if (status)
 		return status;
@@ -296,7 +297,7 @@ static int show_ref_cb(const char *path_full, const struct object_id *oid,
 	struct oidset *seen = data;
 	const char *path = strip_namespace(path_full);
 
-	if (ref_is_hidden(path, path_full))
+	if (ref_is_hidden(path, path_full, &hidden_refs))
 		return 0;
 
 	/*
@@ -1794,7 +1795,7 @@ static void reject_updates_to_hidden(struct command *commands)
 		strbuf_setlen(&refname_full, prefix_len);
 		strbuf_addstr(&refname_full, cmd->ref_name);
 
-		if (!ref_is_hidden(cmd->ref_name, refname_full.buf))
+		if (!ref_is_hidden(cmd->ref_name, refname_full.buf, &hidden_refs))
 			continue;
 		if (is_null_oid(&cmd->new_oid))
 			cmd->error_string = "deny deleting a hidden ref";
@@ -1928,6 +1929,8 @@ static void execute_commands(struct command *commands,
 	opt.err_fd = err_fd;
 	opt.progress = err_fd && !quiet;
 	opt.env = tmp_objdir_env(tmp_objdir);
+	opt.exclude_hidden_refs_section = "receive";
+
 	if (check_connected(iterate_receive_command_list, &data, &opt))
 		set_connectivity_errors(commands, si);
 
@@ -2591,6 +2594,7 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 		packet_flush(1);
 	oid_array_clear(&shallow);
 	oid_array_clear(&ref);
+	string_list_clear(&hidden_refs, 0);
 	free((void *)push_cert_nonce);
 	return 0;
 }

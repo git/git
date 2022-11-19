@@ -81,6 +81,35 @@ struct rev_cmdline_info {
 	} *rev;
 };
 
+struct ref_exclusions {
+	/*
+	 * Excluded refs is a list of wildmatch patterns. If any of the
+	 * patterns matches, the reference will be excluded.
+	 */
+	struct string_list excluded_refs;
+
+	/*
+	 * Hidden refs is a list of patterns that is to be hidden via
+	 * `ref_is_hidden()`.
+	 */
+	struct string_list hidden_refs;
+
+	/*
+	 * Indicates whether hidden refs have been configured. This is to
+	 * distinguish between no hidden refs existing and hidden refs not
+	 * being parsed.
+	 */
+	char hidden_refs_configured;
+};
+
+/**
+ * Initialize a `struct ref_exclusions` with a macro.
+ */
+#define REF_EXCLUSIONS_INIT { \
+	.excluded_refs = STRING_LIST_INIT_DUP, \
+	.hidden_refs = STRING_LIST_INIT_DUP, \
+}
+
 struct oidset;
 struct topo_walk_info;
 
@@ -103,7 +132,7 @@ struct rev_info {
 	struct list_objects_filter_options filter;
 
 	/* excluding from --branches, --refs, etc. expansion */
-	struct string_list *ref_excludes;
+	struct ref_exclusions ref_excludes;
 
 	/* Basic information */
 	const char *prefix;
@@ -455,12 +484,14 @@ void mark_trees_uninteresting_sparse(struct repository *r, struct oidset *trees)
 void show_object_with_name(FILE *, struct object *, const char *);
 
 /**
- * Helpers to check if a "struct string_list" item matches with
- * wildmatch().
+ * Helpers to check if a reference should be excluded.
  */
-int ref_excluded(struct string_list *, const char *path);
-void clear_ref_exclusion(struct string_list **);
-void add_ref_exclusion(struct string_list **, const char *exclude);
+
+int ref_excluded(const struct ref_exclusions *exclusions, const char *path);
+void init_ref_exclusions(struct ref_exclusions *);
+void clear_ref_exclusions(struct ref_exclusions *);
+void add_ref_exclusion(struct ref_exclusions *, const char *exclude);
+void exclude_hidden_refs(struct ref_exclusions *, const char *section);
 
 /**
  * This function can be used if you want to add commit objects as revision
