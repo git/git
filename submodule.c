@@ -503,6 +503,8 @@ static void print_submodule_diff_summary(struct repository *r, struct rev_info *
 
 void prepare_submodule_repo_env(struct strvec *out)
 {
+	if (the_repository->settings.submodule_propagate_branches)
+		strvec_pushf(out, "%s=1", GIT_SUBMODULE_PROPAGATE_BRANCHES_ENVIRONMENT);
 	prepare_other_repo_env(out, DEFAULT_GIT_DIR_ENVIRONMENT);
 }
 

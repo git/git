@@ -38,6 +38,7 @@ struct repo_settings {
 	int fetch_write_commit_graph;
 	int command_requires_full_index;
 	int sparse_index;
+	int submodule_propagate_branches;
 
 	struct fsmonitor_settings *fsmonitor; /* lazily loaded */
 

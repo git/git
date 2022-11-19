@@ -54,7 +54,7 @@ static int check_removed(const struct index_state *istate, const struct cache_en
 		 * a directory --- the blob was removed!
 		 */
 		if (!S_ISGITLINK(ce->ce_mode) &&
-		    resolve_gitlink_ref(ce->name, "HEAD", &sub))
+		    resolve_gitlink_ref(ce->name, "HEAD", &sub, NULL))
 			return 1;
 	}
 	return 0;

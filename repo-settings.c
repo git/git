@@ -73,6 +73,19 @@ void prepare_repo_settings(struct repository *r)
 		r->settings.core_multi_pack_index = 1;
 
 	/*
+	 * If the environment variable is set, assume that it was set by an
+	 * invocation of git running in a superproject with
+	 * submodule.propagateBranches set and that is recursing into this repo
+	 * as a submodule. Therefore, we should ignore whatever is set in this
+	 * repo's config.
+	 */
+	r->settings.submodule_propagate_branches =
+		git_env_bool(GIT_SUBMODULE_PROPAGATE_BRANCHES_ENVIRONMENT, -1);
+	if (r->settings.submodule_propagate_branches == -1)
+		repo_cfg_bool(r, "submodule.propagateBranches",
+			      &r->settings.submodule_propagate_branches, 0);
+
+	/*
 	 * Non-boolean config
 	 */
 	if (!repo_config_get_int(r, "index.version", &value))
