@@ -41,3 +41,52 @@ There are two types of semantic patches:
 
    This allows to expose plans of pending large scale refactorings without
    impacting the bad pattern checks.
+
+Git-specific tips & things to know about how we run "spatch":
+
+ * The "make coccicheck" will piggy-back on
+   "COMPUTE_HEADER_DEPENDENCIES". If you've built a given object file
+   the "coccicheck" target will consider its depednency to decide if
+   it needs to re-run on the corresponding source file.
+
+   This means that a "make coccicheck" will re-compile object files
+   before running. This might be unexpected, but speeds up the run in
+   the common case, as e.g. a change to "column.h" won't require all
+   coccinelle rules to be re-run against "grep.c" (or another file
+   that happens not to use "column.h").
+
+   To disable this behavior use the "SPATCH_USE_O_DEPENDENCIES=NoThanks"
+   flag.
+
+ * To speed up our rules the "make coccicheck" target will by default
+   concatenate all of the *.cocci files here into an "ALL.cocci", and
+   apply it to each source file.
+
+   This makes the run faster, as we don't need to run each rule
+   against each source file. See the Makefile for further discussion,
+   this behavior can be disabled with "SPATCH_CONCAT_COCCI=".
+
+   But since they're concatenated any <id> in the <rulname> (e.g. "@
+   my_name", v.s. anonymous "@@") needs to be unique across all our
+   *.cocci files. You should only need to name rules if other rules
+   depend on them (currently only one rule is named).
+
+ * To speed up incremental runs even more use the "spatchcache" tool
+   in this directory as your "SPATCH". It aimns to be a "ccache" for
+   coccinelle, and piggy-backs on "COMPUTE_HEADER_DEPENDENCIES".
+
+   It caches in Redis by default, see it source for a how-to.
+
+   In one setup with a primed cache "make coccicheck" followed by a
+   "make clean && make" takes around 10s to run, but 2m30s with the
+   default of "SPATCH_CONCAT_COCCI=Y".
+
+   With "SPATCH_CONCAT_COCCI=" the total runtime is around ~6m, sped
+   up to ~1m with "spatchcache".
+
+   Most of the 10s (or ~1m) being spent on re-running "spatch" on
+   files we couldn't cache, as we didn't compile them (in contrib/*
+   and compat/* mostly).
+
+   The absolute times will differ for you, but the relative speedup
+   from caching should be on that order.

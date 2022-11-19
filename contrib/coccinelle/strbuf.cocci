@@ -1,4 +1,4 @@
-@ strbuf_addf_with_format_only @
+@@
 expression E;
 constant fmt !~ "%";
 @@
