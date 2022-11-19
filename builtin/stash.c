@@ -454,10 +454,10 @@ static void unstage_changes_unless_new(struct object_id *orig_tree)
 		 * path, but left it out of the working tree, then clear the
 		 * SKIP_WORKTREE bit and write it to the working tree.
 		 */
-		if (pos >= 0 && ce_skip_worktree(active_cache[pos])) {
+		if (pos >= 0 && ce_skip_worktree(the_index.cache[pos])) {
 			struct stat st;
 
-			ce = active_cache[pos];
+			ce = the_index.cache[pos];
 			if (!lstat(ce->name, &st)) {
 				/* Conflicting path present; relocate it */
 				struct strbuf new_path = STRBUF_INIT;
@@ -1520,8 +1520,8 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 
 		/* TODO: audit for interaction with sparse-index. */
 		ensure_full_index(&the_index);
-		for (i = 0; i < active_nr; i++)
-			ce_path_match(&the_index, active_cache[i], ps,
+		for (i = 0; i < the_index.cache_nr; i++)
+			ce_path_match(&the_index, the_index.cache[i], ps,
 				      ps_matched);
 
 		if (report_path_error(ps_matched, ps)) {

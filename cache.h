@@ -436,10 +436,7 @@ void prefetch_cache_entries(const struct index_state *istate,
 #ifdef USE_THE_INDEX_COMPATIBILITY_MACROS
 extern struct index_state the_index;
 
-#define active_cache (the_index.cache)
 #define active_nr (the_index.cache_nr)
-#define active_cache_changed (the_index.cache_changed)
-#define active_cache_tree (the_index.cache_tree)
 
 #define read_cache() repo_read_index(the_repository)
 #define read_cache_from(path) read_index_from(&the_index, (path), (get_git_dir()))

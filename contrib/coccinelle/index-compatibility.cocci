@@ -1,3 +1,25 @@
+// the_index.* variables
+@@
+@@
+(
+- active_cache
++ the_index.cache
+|
+- active_cache_changed
++ the_index.cache_changed
+|
+- active_cache_tree
++ the_index.cache_tree
+)
+
+@@
+identifier f != prepare_to_commit;
+@@
+  f(...) {<...
+- active_nr
++ the_index.cache_nr
+  ...>}
+
 // "the_repository" simple cases
 @@
 @@
