@@ -343,7 +343,6 @@ cmd_update()
 		${recursive:+--recursive} \
 		${init:+--init} \
 		${nofetch:+--no-fetch} \
-		${wt_prefix:+--prefix "$wt_prefix"} \
 		${rebase:+--rebase} \
 		${merge:+--merge} \
 		${checkout:+--checkout} \
@@ -557,7 +556,7 @@ cmd_sync()
 
 cmd_absorbgitdirs()
 {
-	git submodule--helper absorbgitdirs --prefix "$wt_prefix" "$@"
+	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper absorbgitdirs "$@"
 }
 
 # This loop parses the command line arguments to find the
