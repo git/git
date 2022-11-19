@@ -560,13 +560,15 @@ static void set_curl_keepalive(CURL *c)
 }
 #endif
 
-static void redact_sensitive_header(struct strbuf *header)
+/* Return 1 if redactions have been made, 0 otherwise. */
+static int redact_sensitive_header(struct strbuf *header, size_t offset)
 {
+	int ret = 0;
 	const char *sensitive_header;
 
 	if (trace_curl_redact &&
-	    (skip_iprefix(header->buf, "Authorization:", &sensitive_header) ||
-	     skip_iprefix(header->buf, "Proxy-Authorization:", &sensitive_header))) {
+	    (skip_iprefix(header->buf + offset, "Authorization:", &sensitive_header) ||
+	     skip_iprefix(header->buf + offset, "Proxy-Authorization:", &sensitive_header))) {
 		/* The first token is the type, which is OK to log */
 		while (isspace(*sensitive_header))
 			sensitive_header++;
@@ -575,8 +577,9 @@ static void redact_sensitive_header(struct strbuf *header)
 		/* Everything else is opaque and possibly sensitive */
 		strbuf_setlen(header,  sensitive_header - header->buf);
 		strbuf_addstr(header, " <redacted>");
+		ret = 1;
 	} else if (trace_curl_redact &&
-		   skip_iprefix(header->buf, "Cookie:", &sensitive_header)) {
+		   skip_iprefix(header->buf + offset, "Cookie:", &sensitive_header)) {
 		struct strbuf redacted_header = STRBUF_INIT;
 		const char *cookie;
 
@@ -612,6 +615,26 @@ static void redact_sensitive_header(struct strbuf *header)
 
 		strbuf_setlen(header, sensitive_header - header->buf);
 		strbuf_addbuf(header, &redacted_header);
+		ret = 1;
+	}
+	return ret;
+}
+
+/* Redact headers in info */
+static void redact_sensitive_info_header(struct strbuf *header)
+{
+	const char *sensitive_header;
+
+	/*
+	 * curl's h2h3 prints headers in info, e.g.:
+	 *   h2h3 [<header-name>: <header-val>]
+	 */
+	if (trace_curl_redact &&
+	    skip_iprefix(header->buf, "h2h3 [", &sensitive_header)) {
+		if (redact_sensitive_header(header, sensitive_header - header->buf)) {
+			/* redaction ate our closing bracket */
+			strbuf_addch(header, ']');
+		}
 	}
 }
 
@@ -629,7 +652,7 @@ static void curl_dump_header(const char *text, unsigned char *ptr, size_t size, 
 
 	for (header = headers; *header; header++) {
 		if (hide_sensitive_header)
-			redact_sensitive_header(*header);
+			redact_sensitive_header(*header, 0);
 		strbuf_insertstr((*header), 0, text);
 		strbuf_insertstr((*header), strlen(text), ": ");
 		strbuf_rtrim((*header));
@@ -668,6 +691,18 @@ static void curl_dump_data(const char *text, unsigned char *ptr, size_t size)
 	strbuf_release(&out);
 }
 
+static void curl_dump_info(char *data, size_t size)
+{
+	struct strbuf buf = STRBUF_INIT;
+
+	strbuf_add(&buf, data, size);
+
+	redact_sensitive_info_header(&buf);
+	trace_printf_key(&trace_curl, "== Info: %s", buf.buf);
+
+	strbuf_release(&buf);
+}
+
 static int curl_trace(CURL *handle, curl_infotype type, char *data, size_t size, void *userp)
 {
 	const char *text;
@@ -675,7 +710,7 @@ static int curl_trace(CURL *handle, curl_infotype type, char *data, size_t size,
 
 	switch (type) {
 	case CURLINFO_TEXT:
-		trace_printf_key(&trace_curl, "== Info: %s", data);
+		curl_dump_info(data, size);
 		break;
 	case CURLINFO_HEADER_OUT:
 		text = "=> Send header";
