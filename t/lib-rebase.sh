@@ -222,3 +222,32 @@ set_replace_editor () {
 	sed -e "s/FILENAME/$1/g" <script | write_script fake-editor.sh &&
 	test_set_editor "$(pwd)/fake-editor.sh"
 }
+
+set_inline_reword_editor () {
+	write_script fake-editor.sh <<-\EOF
+	grep -v '^#' < "$1" > "$1".tmp
+	rm -f "$1"
+	echo 'rebase -i script before editing:'
+	cat "$1".tmp
+	action=\\2
+	hash=\\3
+	subject=\\4
+	for line in $FAKE_LINES; do
+		case $line in
+		pick|p|squash|s|fixup|f|edit|e|reword|r|drop|d|label|l|reset|r|merge|m)
+			subject=\\4
+			action="$line";;
+		reword_*)
+			action=reword
+			subject=$(echo "$line" | sed 's,reword_\(.*\),\1,');;
+		*)
+			sed -n "${line}s,^\(\([a-z][a-z]*\)[[:space:]]*\([a-f0-9][a-f0-9]*\)[[:space:]]*\(.*\)\),${action} ${hash} ${subject},p" < "$1".tmp >> "$1"
+			action=\\2;;
+		esac
+	done
+	echo 'rebase -i script after editing:'
+	cat "$1"
+	EOF
+
+	test_set_editor "$(pwd)/fake-editor.sh"
+}
