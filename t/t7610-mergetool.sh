@@ -33,7 +33,7 @@ test_expect_success 'setup' '
 		git add foo &&
 		git commit -m "Add foo"
 	) &&
-	git submodule add git://example.com/submod submod &&
+	git submodule add file:///dev/null submod &&
 	git add file1 "spaced name" file1[1-4] subdir/file3 .gitmodules submod &&
 	git commit -m "add initial versions" &&
 
@@ -614,7 +614,7 @@ test_expect_success 'submodule in subdirectory' '
 		)
 	) &&
 	test_when_finished "rm -rf subdir/subdir_module" &&
-	git submodule add git://example.com/subsubmodule subdir/subdir_module &&
+	git submodule add file:///dev/null subdir/subdir_module &&
 	git add subdir/subdir_module &&
 	git commit -m "add submodule in subdirectory" &&
 
