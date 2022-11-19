@@ -7,7 +7,6 @@
  *
  * Pretend we resolved the heads, but declare our tree trumps everybody else.
  */
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "git-compat-util.h"
 #include "builtin.h"
 #include "diff.h"
@@ -25,7 +24,7 @@ int cmd_merge_ours(int argc, const char **argv, const char *prefix)
 	 * commit.  The index must match HEAD, or this merge cannot go
 	 * through.
 	 */
-	if (read_cache() < 0)
+	if (repo_read_index(the_repository) < 0)
 		die_errno("read_cache failed");
 	if (index_differs_from(the_repository, "HEAD", NULL, 0))
 		return 2;

@@ -106,7 +106,7 @@ static int index_range_of_same_dir(const char *src, int length,
 	const char *src_w_slash = add_slash(src);
 	int first, last, len_w_slash = length + 1;
 
-	first = cache_name_pos(src_w_slash, len_w_slash);
+	first = index_name_pos(&the_index, src_w_slash, len_w_slash);
 	if (first >= 0)
 		die(_("%.*s is in index"), len_w_slash, src_w_slash);
 
@@ -136,7 +136,7 @@ static int empty_dir_has_sparse_contents(const char *name)
 	const char *with_slash = add_slash(name);
 	int length = strlen(with_slash);
 
-	int pos = cache_name_pos(with_slash, length);
+	int pos = index_name_pos(&the_index, with_slash, length);
 	const struct cache_entry *ce;
 
 	if (pos < 0) {
@@ -189,8 +189,8 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	if (--argc < 1)
 		usage_with_options(builtin_mv_usage, builtin_mv_options);
 
-	hold_locked_index(&lock_file, LOCK_DIE_ON_ERROR);
-	if (read_cache() < 0)
+	repo_hold_locked_index(the_repository, &lock_file, LOCK_DIE_ON_ERROR);
+	if (repo_read_index(the_repository) < 0)
 		die(_("index file corrupt"));
 
 	source = internal_prefix_pathspec(prefix, argv, argc, 0);
@@ -255,7 +255,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 			int pos;
 			const struct cache_entry *ce;
 
-			pos = cache_name_pos(src, length);
+			pos = index_name_pos(&the_index, src, length);
 			if (pos < 0) {
 				const char *src_w_slash = add_slash(src);
 				if (!path_in_sparse_checkout(src_w_slash, &the_index) &&
@@ -278,7 +278,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 				goto act_on_entry;
 			}
 			/* Check if dst exists in index */
-			if (cache_name_pos(dst, strlen(dst)) < 0) {
+			if (index_name_pos(&the_index, dst, strlen(dst)) < 0) {
 				modes[i] |= SPARSE;
 				goto act_on_entry;
 			}
@@ -303,7 +303,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 dir_check:
 		if (S_ISDIR(st.st_mode)) {
 			int j, dst_len, n;
-			int first = cache_name_pos(src, length), last;
+			int first = index_name_pos(&the_index, src, length), last;
 
 			if (first >= 0) {
 				prepare_move_submodule(src, first,
@@ -468,7 +468,7 @@ remove_entry:
 		if (mode & (WORKING_DIRECTORY | SKIP_WORKTREE_DIR))
 			continue;
 
-		pos = cache_name_pos(src, strlen(src));
+		pos = index_name_pos(&the_index, src, strlen(src));
 		assert(pos >= 0);
 		if (!(mode & SPARSE) && !lstat(src, &st))
 			sparse_and_dirty = ie_modified(&the_index,

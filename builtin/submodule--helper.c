@@ -1,4 +1,4 @@
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
+#define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "repository.h"
 #include "cache.h"
@@ -196,7 +196,7 @@ static int module_list_compute(const char **argv,
 	if (pathspec->nr)
 		ps_matched = xcalloc(pathspec->nr, 1);
 
-	if (read_cache() < 0)
+	if (repo_read_index(the_repository) < 0)
 		die(_("index file corrupt"));
 
 	for (i = 0; i < the_index.cache_nr; i++) {
@@ -1109,13 +1109,13 @@ static int compute_summary_module_list(struct object_id *head_oid,
 	if (!info->cached) {
 		if (diff_cmd == DIFF_INDEX)
 			setup_work_tree();
-		if (read_cache_preload(&rev.diffopt.pathspec) < 0) {
-			perror("read_cache_preload");
+		if (repo_read_index_preload(the_repository, &rev.diffopt.pathspec, 0) < 0) {
+			perror("repo_read_index_preload");
 			ret = -1;
 			goto cleanup;
 		}
-	} else if (read_cache() < 0) {
-		perror("read_cache");
+	} else if (repo_read_index(the_repository) < 0) {
+		perror("repo_read_cache");
 		ret = -1;
 		goto cleanup;
 	}
@@ -3240,7 +3240,7 @@ static void die_on_index_match(const char *path, int force)
 	const char *args[] = { path, NULL };
 	parse_pathspec(&ps, 0, PATHSPEC_PREFER_CWD, NULL, args);
 
-	if (read_cache_preload(NULL) < 0)
+	if (repo_read_index_preload(the_repository, NULL, 0) < 0)
 		die(_("index file corrupt"));
 
 	if (ps.nr) {

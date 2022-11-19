@@ -26,10 +26,26 @@ identifier f != prepare_to_commit;
 (
 - read_cache_unmerged
 + repo_read_index_unmerged
+|
+- hold_locked_index
++ repo_hold_locked_index
 )
   (
 + the_repository,
   ...)
+
+// "the_repository" special-cases
+@@
+@@
+(
+- read_cache_preload
++ repo_read_index_preload
+)
+  (
++ the_repository,
+  ...
++ , 0
+  )
 
 // "the_index" simple cases
 @@
@@ -80,3 +96,40 @@ identifier f != prepare_to_commit;
   (
 + &the_index,
   ...)
+
+@@
+@@
+(
+- refresh_and_write_cache
++ repo_refresh_and_write_index
+)
+  (
++ the_repository,
+  ...
++ , NULL, NULL, NULL
+  )
+
+// "the_index" special-cases
+@@
+@@
+(
+- read_cache_from
++ read_index_from
+)
+  (
++ &the_index,
+  ...
++ , get_git_dir()
+  )
+
+@@
+@@
+(
+- refresh_cache
++ refresh_index
+)
+  (
++ &the_index,
+  ...
++ , NULL, NULL, NULL
+  )

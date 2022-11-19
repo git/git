@@ -237,7 +237,7 @@ done:
 static int mark_ce_flags(const char *path, int flag, int mark)
 {
 	int namelen = strlen(path);
-	int pos = cache_name_pos(path, namelen);
+	int pos = index_name_pos(&the_index, path, namelen);
 	if (0 <= pos) {
 		mark_fsmonitor_invalid(&the_index, the_index.cache[pos]);
 		if (mark)
@@ -331,7 +331,7 @@ static int add_one_path(const struct cache_entry *old, const char *path, int len
 static int process_directory(const char *path, int len, struct stat *st)
 {
 	struct object_id oid;
-	int pos = cache_name_pos(path, len);
+	int pos = index_name_pos(&the_index, path, len);
 
 	/* Exact match: file or existing gitlink */
 	if (pos >= 0) {
@@ -441,7 +441,7 @@ static void chmod_path(char flip, const char *path)
 	int pos;
 	struct cache_entry *ce;
 
-	pos = cache_name_pos(path, strlen(path));
+	pos = index_name_pos(&the_index, path, strlen(path));
 	if (pos < 0)
 		goto fail;
 	ce = the_index.cache[pos];
@@ -638,7 +638,7 @@ static int unresolve_one(const char *path)
 	struct cache_entry *ce_2 = NULL, *ce_3 = NULL;
 
 	/* See if there is such entry in the index. */
-	pos = cache_name_pos(path, namelen);
+	pos = index_name_pos(&the_index, path, namelen);
 	if (0 <= pos) {
 		/* already merged */
 		pos = unmerge_index_entry_at(&the_index, pos);
@@ -802,15 +802,16 @@ struct refresh_params {
 static int refresh(struct refresh_params *o, unsigned int flag)
 {
 	setup_work_tree();
-	read_cache();
-	*o->has_errors |= refresh_cache(o->flags | flag);
+	repo_read_index(the_repository);
+	*o->has_errors |= refresh_index(&the_index, o->flags | flag, NULL,
+					NULL, NULL);
 	if (has_racy_timestamp(&the_index)) {
 		/*
 		 * Even if nothing else has changed, updating the file
 		 * increases the chance that racy timestamps become
 		 * non-racy, helping future run-time performance.
 		 * We do that even in case of "errors" returned by
-		 * refresh_cache() as these are no actual errors.
+		 * refresh_index() as these are no actual errors.
 		 * cmd_status() does the same.
 		 */
 		the_index.cache_changed |= SOMETHING_CHANGED;
@@ -1109,11 +1110,11 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 	the_repository->settings.command_requires_full_index = 0;
 
 	/* we will diagnose later if it turns out that we need to update it */
-	newfd = hold_locked_index(&lock_file, 0);
+	newfd = repo_hold_locked_index(the_repository, &lock_file, 0);
 	if (newfd < 0)
 		lock_error = errno;
 
-	entries = read_cache();
+	entries = repo_read_index(the_repository);
 	if (entries < 0)
 		die("cache corrupted");
 

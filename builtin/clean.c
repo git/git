@@ -6,7 +6,7 @@
  * Based on git-clean.sh by Pavel Roskin
  */
 
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
+#define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "cache.h"
 #include "config.h"
@@ -1012,7 +1012,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	prepare_repo_settings(the_repository);
 	the_repository->settings.command_requires_full_index = 0;
 
-	if (read_cache() < 0)
+	if (repo_read_index(the_repository) < 0)
 		die(_("index file corrupt"));
 
 	pl = add_pattern_list(&dir, EXC_CMDL, "--exclude option");

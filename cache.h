@@ -441,13 +441,8 @@ extern struct index_state the_index;
 #define active_nr (the_index.cache_nr)
 
 #define read_cache() repo_read_index(the_repository)
-#define read_cache_from(path) read_index_from(&the_index, (path), (get_git_dir()))
-#define read_cache_preload(pathspec) repo_read_index_preload(the_repository, (pathspec), 0)
 #define discard_cache() discard_index(&the_index)
 #define cache_name_pos(name, namelen) index_name_pos(&the_index,(name),(namelen))
-#define refresh_cache(flags) refresh_index(&the_index, (flags), NULL, NULL, NULL)
-#define refresh_and_write_cache(refresh_flags, write_flags, gentle) repo_refresh_and_write_index(the_repository, (refresh_flags), (write_flags), (gentle), NULL, NULL, NULL)
-#define hold_locked_index(lock_file, flags) repo_hold_locked_index(the_repository, (lock_file), (flags))
 #endif
 #endif
 #endif

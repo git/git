@@ -1,4 +1,4 @@
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
+#define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "cache.h"
 #include "repository.h"
@@ -958,7 +958,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 	if (keep_cache_objects) {
 		verify_index_checksum = 1;
 		verify_ce_order = 1;
-		read_cache();
+		repo_read_index(the_repository);
 		/* TODO: audit for interaction with sparse-index. */
 		ensure_full_index(&the_index);
 		for (i = 0; i < the_index.cache_nr; i++) {

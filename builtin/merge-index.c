@@ -1,4 +1,4 @@
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
+#define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "run-command.h"
 
@@ -47,7 +47,7 @@ static int merge_entry(int pos, const char *path)
 
 static void merge_one_path(const char *path)
 {
-	int pos = cache_name_pos(path, strlen(path));
+	int pos = index_name_pos(&the_index, path, strlen(path));
 
 	/*
 	 * If it already exists in the cache as stage0, it's
@@ -82,7 +82,7 @@ int cmd_merge_index(int argc, const char **argv, const char *prefix)
 	if (argc < 3)
 		usage("git merge-index [-o] [-q] <merge-program> (-a | [--] [<filename>...])");
 
-	read_cache();
+	repo_read_index(the_repository);
 
 	/* TODO: audit for interaction with sparse-index. */
 	ensure_full_index(&the_index);

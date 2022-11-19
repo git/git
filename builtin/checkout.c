@@ -1,4 +1,4 @@
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
+#define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "advice.h"
 #include "blob.h"
@@ -148,7 +148,7 @@ static int update_some(const struct object_id *oid, struct strbuf *base,
 	 * entry in place. Whether it is UPTODATE or not, checkout_entry will
 	 * do the right thing.
 	 */
-	pos = cache_name_pos(ce->name, ce->ce_namelen);
+	pos = index_name_pos(&the_index, ce->name, ce->ce_namelen);
 	if (pos >= 0) {
 		struct cache_entry *old = the_index.cache[pos];
 		if (ce->ce_mode == old->ce_mode &&
@@ -529,7 +529,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 	}
 
 	repo_hold_locked_index(the_repository, &lock_file, LOCK_DIE_ON_ERROR);
-	if (read_cache_preload(&opts->pathspec) < 0)
+	if (repo_read_index_preload(the_repository, &opts->pathspec, 0) < 0)
 		return error(_("index file corrupt"));
 
 	if (opts->source_tree)
@@ -741,8 +741,8 @@ static int merge_working_tree(const struct checkout_opts *opts,
 	struct lock_file lock_file = LOCK_INIT;
 	struct tree *new_tree;
 
-	hold_locked_index(&lock_file, LOCK_DIE_ON_ERROR);
-	if (read_cache_preload(NULL) < 0)
+	repo_hold_locked_index(the_repository, &lock_file, LOCK_DIE_ON_ERROR);
+	if (repo_read_index_preload(the_repository, NULL, 0) < 0)
 		return error(_("index file corrupt"));
 
 	resolve_undo_clear_index(&the_index);
@@ -762,7 +762,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 		struct unpack_trees_options topts;
 		const struct object_id *old_commit_oid;
 
-		refresh_cache(REFRESH_QUIET);
+		refresh_index(&the_index, REFRESH_QUIET, NULL, NULL, NULL);
 
 		if (unmerged_index(&the_index)) {
 			error(_("you need to resolve your current index first"));
