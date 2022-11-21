@@ -609,7 +609,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	if (1 < rev.diffopt.skip_stat_unmatch)
 		refresh_index_quietly();
 	release_revisions(&rev);
-	object_array_clear(&ent);
+	UNLEAK(ent);
 	UNLEAK(blob);
 	return result;
 }

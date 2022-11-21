@@ -987,11 +987,8 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		struct object_id oid;
 		const char *parent = "HEAD";
 
-		if (!active_nr) {
-			discard_cache();
-			if (read_cache() < 0)
-				die(_("Cannot read index"));
-		}
+		if (!active_nr && read_cache() < 0)
+			die(_("Cannot read index"));
 
 		if (amend)
 			parent = "HEAD^1";
@@ -1874,8 +1871,8 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	apply_autostash(git_path_merge_autostash(the_repository));
 
 cleanup:
-	strbuf_release(&author_ident);
-	strbuf_release(&err);
-	strbuf_release(&sb);
+	UNLEAK(author_ident);
+	UNLEAK(err);
+	UNLEAK(sb);
 	return ret;
 }

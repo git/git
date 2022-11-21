@@ -2,7 +2,6 @@
 
 test_description='fetching and pushing project with subproject'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '

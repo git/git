@@ -530,7 +530,6 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 	strbuf_addstr(&parsed, " --");
 	sq_quote_argv(&parsed, argv);
 	puts(parsed.buf);
-	strbuf_release(&parsed);
 	return 0;
 }
 

@@ -8,8 +8,6 @@
 
 
 test_description='Test criss-cross merge'
-
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'prepare repository' '

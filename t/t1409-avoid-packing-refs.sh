@@ -2,7 +2,6 @@
 
 test_description='avoid rewriting packed-refs unnecessarily'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # Add an identifying mark to the packed-refs file header line. This

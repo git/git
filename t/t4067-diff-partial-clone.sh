@@ -2,7 +2,6 @@
 
 test_description='behavior of diff when reading objects in a partial clone'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'git show batches blobs' '
