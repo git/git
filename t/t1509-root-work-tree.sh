@@ -256,4 +256,9 @@ test_expect_success 'go to /foo' 'cd /foo'
 
 test_vars 'auto gitdir, root' "/" "" ""
 
+test_expect_success 'cleanup root' '
+	rm -rf /.git /refs /objects /info /hooks /branches /foo &&
+	rm -f /HEAD /config /description /expected /ls.expected /me /result
+'
+
 test_done
