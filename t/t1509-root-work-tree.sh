@@ -243,7 +243,7 @@ say "auto bare gitdir"
 # DESTROYYYYY!!!!!
 test_expect_success 'setup' '
 	rm -rf /refs /objects /info /hooks &&
-	rm -f /expected /ls.expected /me /result &&
+	rm -f /HEAD /expected /ls.expected /me /result &&
 	cd / &&
 	echo "Initialized empty Git repository in /" > expected &&
 	git init --bare > result &&
