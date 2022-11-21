@@ -1686,8 +1686,10 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 	}
 
 done:
+	strbuf_release(&patch);
 	free_stash_info(&info);
 	strbuf_release(&stash_msg_buf);
+	strbuf_release(&untracked_files);
 	return ret;
 }
 

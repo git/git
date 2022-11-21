@@ -85,6 +85,7 @@ int check_connected(oid_iterate_fn fn, void *cb_data,
 promisor_pack_found:
 			;
 		} while ((oid = fn(cb_data)) != NULL);
+		free(new_pack);
 		return 0;
 	}
 
@@ -121,8 +122,10 @@ no_promisor_pack_found:
 	else
 		rev_list.no_stderr = opt->quiet;
 
-	if (start_command(&rev_list))
+	if (start_command(&rev_list)) {
+		free(new_pack);
 		return error(_("Could not run 'git rev-list'"));
+	}
 
 	sigchain_push(SIGPIPE, SIG_IGN);
 
@@ -154,5 +157,6 @@ no_promisor_pack_found:
 		err = error_errno(_("failed to close rev-list's stdin"));
 
 	sigchain_pop(SIGPIPE);
+	free(new_pack);
 	return finish_command(&rev_list) || err;
 }

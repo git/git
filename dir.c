@@ -3581,8 +3581,12 @@ static void free_untracked(struct untracked_cache_dir *ucd)
 
 void free_untracked_cache(struct untracked_cache *uc)
 {
-	if (uc)
-		free_untracked(uc->root);
+	if (!uc)
+		return;
+
+	free(uc->exclude_per_dir_to_free);
+	strbuf_release(&uc->ident);
+	free_untracked(uc->root);
 	free(uc);
 }
 
@@ -3739,7 +3743,7 @@ struct untracked_cache *read_untracked_extension(const void *data, unsigned long
 		      next + offset + hashsz);
 	uc->dir_flags = get_be32(next + ouc_offset(dir_flags));
 	exclude_per_dir = (const char *)next + exclude_per_dir_offset;
-	uc->exclude_per_dir = xstrdup(exclude_per_dir);
+	uc->exclude_per_dir = uc->exclude_per_dir_to_free = xstrdup(exclude_per_dir);
 	/* NUL after exclude_per_dir is covered by sizeof(*ouc) */
 	next += exclude_per_dir_offset + strlen(exclude_per_dir) + 1;
 	if (next >= end)
