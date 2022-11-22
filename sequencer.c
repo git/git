@@ -3748,6 +3748,7 @@ static int do_reset(struct repository *r,
 	unpack_tree_opts.merge = 1;
 	unpack_tree_opts.update = 1;
 	unpack_tree_opts.preserve_ignored = 0; /* FIXME: !overwrite_ignore */
+	unpack_tree_opts.skip_cache_tree_update = 1;
 	init_checkout_metadata(&unpack_tree_opts.meta, name, &oid, NULL);
 
 	if (repo_read_index_unmerged(r)) {
@@ -4128,10 +4129,13 @@ static int write_update_refs_state(struct string_list *refs_to_oids)
 	struct string_list_item *item;
 	char *path;
 
-	if (!refs_to_oids->nr)
-		return 0;
-
 	path = rebase_path_update_refs(the_repository->gitdir);
+
+	if (!refs_to_oids->nr) {
+		if (unlink(path) && errno != ENOENT)
+			result = error_errno(_("could not unlink: %s"), path);
+		goto cleanup;
+	}
 
 	if (safe_create_leading_directories(path)) {
 		result = error(_("unable to create leading directories of %s"),

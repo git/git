@@ -133,10 +133,6 @@ Issues of note:
 	  you are using libcurl older than 7.34.0.  Otherwise you can use
 	  NO_OPENSSL without losing git-imap-send.
 
-	  By default, git uses OpenSSL for SHA1 but it will use its own
-	  library (inspired by Mozilla's) with either NO_OPENSSL or
-	  BLK_SHA1.
-
 	- "libcurl" library is used for fetching and pushing
 	  repositories over http:// or https://, as well as by
 	  git-imap-send if the curl version is >= 7.34.0. If you do

@@ -150,7 +150,7 @@ static int branch_merged(int kind, const char *name,
 	if (!reference_rev)
 		reference_rev = head_rev;
 
-	merged = in_merge_bases(rev, reference_rev);
+	merged = reference_rev ? in_merge_bases(rev, reference_rev) : 0;
 
 	/*
 	 * After the safety valve is fully redefined to "check with
@@ -160,7 +160,7 @@ static int branch_merged(int kind, const char *name,
 	 * a gentle reminder is in order.
 	 */
 	if ((head_rev != reference_rev) &&
-	    in_merge_bases(rev, head_rev) != merged) {
+	    (head_rev ? in_merge_bases(rev, head_rev) : 0) != merged) {
 		if (merged)
 			warning(_("deleting branch '%s' that has been merged to\n"
 				"         '%s', but not yet merged to HEAD."),
@@ -235,11 +235,8 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 	}
 	branch_name_pos = strcspn(fmt, "%");
 
-	if (!force) {
+	if (!force)
 		head_rev = lookup_commit_reference(the_repository, &head_oid);
-		if (!head_rev)
-			die(_("Couldn't look up commit object for HEAD"));
-	}
 
 	for (i = 0; i < argc; i++, strbuf_reset(&bname)) {
 		char *target = NULL;
