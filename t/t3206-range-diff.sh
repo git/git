@@ -783,6 +783,33 @@ test_expect_success 'ranges with pathspecs' '
 	! grep "$topic_oid" actual
 '
 
+test_expect_success 'compare range vs mbox' '
+	git format-patch --stdout topic..mode-only-change >mbox &&
+	git range-diff topic...mode-only-change >expect &&
+
+	git range-diff mode-only-change..topic mbox:./mbox >actual &&
+	test_cmp expect actual &&
+
+	sed -e "/^From: .*/{
+		h
+		s/.*/From: Bugs Bunny <bugs@bun.ny>/
+		:1
+		N
+		/[ -z]$/b1
+		G
+	}" <mbox >mbox.from &&
+	git range-diff mode-only-change..topic mbox:./mbox.from >actual.from &&
+	test_cmp expect actual.from &&
+
+	append_cr <mbox >mbox.cr &&
+	test_must_fail git range-diff \
+		mode-only-change..topic mbox:./mbox.cr 2>err &&
+	grep CR/LF err &&
+
+	git range-diff mode-only-change..topic mbox:- <mbox >actual.stdin &&
+	test_cmp expect actual.stdin
+'
+
 test_expect_success 'submodule changes are shown irrespective of diff.submodule' '
 	git init sub-repo &&
 	test_commit -C sub-repo sub-first &&
