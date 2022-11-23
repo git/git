@@ -1367,11 +1367,53 @@ SP_EXTRA_FLAGS = -Wno-universal-initializer
 SANITIZE_LEAK =
 SANITIZE_ADDRESS =
 
-# For the 'coccicheck' target; setting SPATCH_BATCH_SIZE higher will
-# usually result in less CPU usage at the cost of higher peak memory.
-# Setting it to 0 will feed all files in a single spatch invocation.
-SPATCH_FLAGS = --all-includes
-SPATCH_BATCH_SIZE = 1
+# For the 'coccicheck' target
+SPATCH_INCLUDE_FLAGS = --all-includes
+SPATCH_FLAGS =
+SPATCH_TEST_FLAGS =
+
+# If *.o files are present, have "coccicheck" depend on them, with
+# COMPUTE_HEADER_DEPENDENCIES this will speed up the common-case of
+# only needing to re-generate coccicheck results for the users of a
+# given API if it's changed, and not all files in the project. If
+# COMPUTE_HEADER_DEPENDENCIES=no this will be unset too.
+SPATCH_USE_O_DEPENDENCIES = YesPlease
+
+# Set SPATCH_CONCAT_COCCI to concatenate the contrib/cocci/*.cocci
+# files into a single contrib/cocci/ALL.cocci before running
+# "coccicheck".
+#
+# Pros:
+#
+# - Speeds up a one-shot run of "make coccicheck", as we won't have to
+#   parse *.[ch] files N times for the N *.cocci rules
+#
+# Cons:
+#
+# - Will make incremental development of *.cocci slower, as
+#   e.g. changing strbuf.cocci will re-run all *.cocci.
+#
+# - Makes error and performance analysis harder, as rules will be
+#   applied from a monolithic ALL.cocci, rather than
+#   e.g. strbuf.cocci. To work around this either undefine this, or
+#   generate a specific patch, e.g. this will always use strbuf.cocci,
+#   not ALL.cocci:
+#
+#	make contrib/coccinelle/strbuf.cocci.patch
+SPATCH_CONCAT_COCCI = YesPlease
+
+# Rebuild 'coccicheck' if $(SPATCH), its flags etc. change
+TRACK_SPATCH_DEFINES =
+TRACK_SPATCH_DEFINES += $(SPATCH)
+TRACK_SPATCH_DEFINES += $(SPATCH_INCLUDE_FLAGS)
+TRACK_SPATCH_DEFINES += $(SPATCH_FLAGS)
+TRACK_SPATCH_DEFINES += $(SPATCH_TEST_FLAGS)
+GIT-SPATCH-DEFINES: FORCE
+	@FLAGS='$(TRACK_SPATCH_DEFINES)'; \
+	    if test x"$$FLAGS" != x"`cat GIT-SPATCH-DEFINES 2>/dev/null`" ; then \
+		echo >&2 "    * new spatch flags"; \
+		echo "$$FLAGS" >GIT-SPATCH-DEFINES; \
+            fi
 
 include config.mak.uname
 -include config.mak.autogen
@@ -3207,35 +3249,113 @@ check: $(GENERATED_H)
 		exit 1; \
 	fi
 
+COCCI_GEN_ALL = .build/contrib/coccinelle/ALL.cocci
+COCCI_GLOB = $(wildcard contrib/coccinelle/*.cocci)
+COCCI_RULES_TRACKED = $(COCCI_GLOB:%=.build/%)
+COCCI_RULES_TRACKED_NO_PENDING = $(filter-out %.pending.cocci,$(COCCI_RULES_TRACKED))
+COCCI_RULES =
+COCCI_RULES += $(COCCI_GEN_ALL)
+COCCI_RULES += $(COCCI_RULES_TRACKED)
+COCCI_NAMES =
+COCCI_NAMES += $(COCCI_RULES:.build/contrib/coccinelle/%.cocci=%)
+
+COCCICHECK_PENDING = $(filter %.pending.cocci,$(COCCI_RULES))
+COCCICHECK = $(filter-out $(COCCICHECK_PENDING),$(COCCI_RULES))
+
+COCCICHECK_PATCHES = $(COCCICHECK:%=%.patch)
+COCCICHECK_PATCHES_PENDING = $(COCCICHECK_PENDING:%=%.patch)
+
+COCCICHECK_PATCHES_INTREE = $(COCCICHECK_PATCHES:.build/%=%)
+COCCICHECK_PATCHES_PENDING_INTREE = $(COCCICHECK_PATCHES_PENDING:.build/%=%)
+
+# It's expensive to compute the many=many rules below, only eval them
+# on $(MAKECMDGOALS) that match these $(COCCI_RULES)
+COCCI_RULES_GLOB =
+COCCI_RULES_GLOB += cocci%
+COCCI_RULES_GLOB += .build/contrib/coccinelle/%
+COCCI_RULES_GLOB += $(COCCICHECK_PATCHES)
+COCCI_RULES_GLOB += $(COCCICHEC_PATCHES_PENDING)
+COCCI_RULES_GLOB += $(COCCICHECK_PATCHES_INTREE)
+COCCI_RULES_GLOB += $(COCCICHECK_PATCHES_PENDING_INTREE)
+COCCI_GOALS = $(filter $(COCCI_RULES_GLOB),$(MAKECMDGOALS))
+
 COCCI_TEST_RES = $(wildcard contrib/coccinelle/tests/*.res)
 
-%.cocci.patch: %.cocci $(COCCI_SOURCES)
-	$(QUIET_SPATCH) \
-	if test $(SPATCH_BATCH_SIZE) = 0; then \
-		limit=; \
-	else \
-		limit='-n $(SPATCH_BATCH_SIZE)'; \
-	fi; \
-	if ! echo $(COCCI_SOURCES) | xargs $$limit \
-		$(SPATCH) $(SPATCH_FLAGS) \
-		--sp-file $< --patch . \
-		>$@+ 2>$@.log; \
+$(COCCI_RULES_TRACKED): .build/% : %
+	$(call mkdir_p_parent_template)
+	$(QUIET_CP)cp $< $@
+
+.build/contrib/coccinelle/FOUND_H_SOURCES: $(FOUND_H_SOURCES)
+	$(call mkdir_p_parent_template)
+	$(QUIET_GEN) >$@
+
+$(COCCI_GEN_ALL): $(COCCI_RULES_TRACKED_NO_PENDING)
+	$(call mkdir_p_parent_template)
+	$(QUIET_SPATCH_CAT)cat $^ >$@
+
+ifeq ($(COMPUTE_HEADER_DEPENDENCIES),no)
+SPATCH_USE_O_DEPENDENCIES =
+endif
+define cocci-rule
+
+## Rule for .build/$(1).patch/$(2); Params:
+# $(1) = e.g. ".build/contrib/coccinelle/free.cocci"
+# $(2) = e.g. "grep.c"
+# $(3) = e.g. "grep.o"
+COCCI_$(1:.build/contrib/coccinelle/%.cocci=%) += $(1).d/$(2).patch
+$(1).d/$(2).patch: GIT-SPATCH-DEFINES
+$(1).d/$(2).patch: $(if $(and $(SPATCH_USE_O_DEPENDENCIES),$(wildcard $(3))),$(3),.build/contrib/coccinelle/FOUND_H_SOURCES)
+$(1).d/$(2).patch: $(1)
+$(1).d/$(2).patch: $(1).d/%.patch : %
+	$$(call mkdir_p_parent_template)
+	$$(QUIET_SPATCH)if ! $$(SPATCH) $$(SPATCH_FLAGS) \
+		$$(SPATCH_INCLUDE_FLAGS) \
+		--sp-file $(1) --patch . $$< \
+		>$$@ 2>$$@.log; \
 	then \
-		cat $@.log; \
+		echo "ERROR when applying '$(1)' to '$$<'; '$$@.log' follows:"; \
+		cat $$@.log; \
 		exit 1; \
-	fi; \
-	mv $@+ $@; \
-	if test -s $@; \
-	then \
-		echo '    ' SPATCH result: $@; \
 	fi
+endef
+
+define cocci-matrix
+
+$(foreach s,$(COCCI_SOURCES),$(call cocci-rule,$(c),$(s),$(s:%.c=%.o)))
+endef
+
+ifdef COCCI_GOALS
+$(eval $(foreach c,$(COCCI_RULES),$(call cocci-matrix,$(c))))
+endif
+
+define spatch-rule
+
+.build/contrib/coccinelle/$(1).cocci.patch: $$(COCCI_$(1))
+	$$(QUIET_SPATCH_CAT)cat $$^ >$$@ && \
+	if test -s $$@; \
+	then \
+		echo '    ' SPATCH result: $$@; \
+	fi
+contrib/coccinelle/$(1).cocci.patch: .build/contrib/coccinelle/$(1).cocci.patch
+	$$(QUIET_CP)cp $$< $$@
+
+endef
+
+ifdef COCCI_GOALS
+$(eval $(foreach n,$(COCCI_NAMES),$(call spatch-rule,$(n))))
+endif
 
 COCCI_TEST_RES_GEN = $(addprefix .build/,$(COCCI_TEST_RES))
+$(COCCI_TEST_RES_GEN): GIT-SPATCH-DEFINES
 $(COCCI_TEST_RES_GEN): .build/%.res : %.c
 $(COCCI_TEST_RES_GEN): .build/%.res : %.res
+ifdef SPATCH_CONCAT_COCCI
+$(COCCI_TEST_RES_GEN): .build/contrib/coccinelle/tests/%.res : $(COCCI_GEN_ALL)
+else
 $(COCCI_TEST_RES_GEN): .build/contrib/coccinelle/tests/%.res : contrib/coccinelle/%.cocci
+endif
 	$(call mkdir_p_parent_template)
-	$(QUIET_SPATCH_T)$(SPATCH) $(SPATCH_FLAGS) \
+	$(QUIET_SPATCH_TEST)$(SPATCH) $(SPATCH_TEST_FLAGS) \
 		--very-quiet --no-show-diff \
 		--sp-file $< -o $@ \
 		$(@:.build/%.res=%.c) && \
@@ -3246,11 +3366,15 @@ $(COCCI_TEST_RES_GEN): .build/contrib/coccinelle/tests/%.res : contrib/coccinell
 coccicheck-test: $(COCCI_TEST_RES_GEN)
 
 coccicheck: coccicheck-test
-coccicheck: $(addsuffix .patch,$(filter-out %.pending.cocci,$(wildcard contrib/coccinelle/*.cocci)))
+ifdef SPATCH_CONCAT_COCCI
+coccicheck: contrib/coccinelle/ALL.cocci.patch
+else
+coccicheck: $(COCCICHECK_PATCHES_INTREE)
+endif
 
 # See contrib/coccinelle/README
 coccicheck-pending: coccicheck-test
-coccicheck-pending: $(addsuffix .patch,$(wildcard contrib/coccinelle/*.pending.cocci))
+coccicheck-pending: $(COCCICHECK_PATCHES_PENDING_INTREE)
 
 .PHONY: coccicheck coccicheck-pending
 
@@ -3517,8 +3641,9 @@ profile-clean:
 	$(RM) $(addsuffix *.gcno,$(addprefix $(PROFILE_DIR)/, $(object_dirs)))
 
 cocciclean:
+	$(RM) GIT-SPATCH-DEFINES
 	$(RM) -r .build/contrib/coccinelle
-	$(RM) contrib/coccinelle/*.cocci.patch*
+	$(RM) contrib/coccinelle/*.cocci.patch
 
 clean: profile-clean coverage-clean cocciclean
 	$(RM) -r .build

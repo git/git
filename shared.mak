@@ -60,6 +60,7 @@ ifndef V
 	QUIET_AR       = @echo '   ' AR $@;
 	QUIET_LINK     = @echo '   ' LINK $@;
 	QUIET_BUILT_IN = @echo '   ' BUILTIN $@;
+	QUIET_CP       = @echo '   ' CP $< $@;
 	QUIET_LNCP     = @echo '   ' LN/CP $@;
 	QUIET_XGETTEXT = @echo '   ' XGETTEXT $@;
 	QUIET_MSGINIT  = @echo '   ' MSGINIT $@;
@@ -69,8 +70,11 @@ ifndef V
 	QUIET_SP       = @echo '   ' SP $<;
 	QUIET_HDR      = @echo '   ' HDR $(<:hcc=h);
 	QUIET_RC       = @echo '   ' RC $@;
-	QUIET_SPATCH   = @echo '   ' SPATCH $<;
-	QUIET_SPATCH_T = @echo '   ' SPATCH TEST $(@:.build/%=%);
+
+## Used in "Makefile": SPATCH
+	QUIET_SPATCH			= @echo '   ' SPATCH $< \>$@;
+	QUIET_SPATCH_TEST		= @echo '   ' SPATCH TEST $(@:.build/%=%);
+	QUIET_SPATCH_CAT		= @echo '   ' SPATCH CAT $(@:%.patch=%.d/)\*\*.patch \>$@;
 
 ## Used in "Documentation/Makefile"
 	QUIET_ASCIIDOC	= @echo '   ' ASCIIDOC $@;
