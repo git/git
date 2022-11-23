@@ -530,8 +530,8 @@ static int get_modified_files(struct repository *r,
 	struct collection_status s = { 0 };
 	int i;
 
-	if (discard_index(r->index) < 0 ||
-	    repo_read_index_preload(r, ps, 0) < 0)
+	discard_index(r->index);
+	if (repo_read_index_preload(r, ps, 0) < 0)
 		return error(_("could not read index"));
 
 	prefix_item_list_clear(files);
@@ -1156,8 +1156,8 @@ int run_add_i(struct repository *r, const struct pathspec *ps)
 		    _("staged"), _("unstaged"), _("path"));
 	opts.list_opts.header = header.buf;
 
-	if (discard_index(r->index) < 0 ||
-	    repo_read_index(r) < 0 ||
+	discard_index(r->index);
+	if (repo_read_index(r) < 0 ||
 	    repo_refresh_and_write_index(r, REFRESH_QUIET, 0, 1,
 					 NULL, NULL, NULL) < 0)
 		warning(_("could not refresh index"));

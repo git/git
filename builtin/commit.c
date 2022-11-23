@@ -272,8 +272,8 @@ static int list_paths(struct string_list *list, const char *with_tree,
 
 	/* TODO: audit for interaction with sparse-index. */
 	ensure_full_index(&the_index);
-	for (i = 0; i < active_nr; i++) {
-		const struct cache_entry *ce = active_cache[i];
+	for (i = 0; i < the_index.cache_nr; i++) {
+		const struct cache_entry *ce = the_index.cache[i];
 		struct string_list_item *item;
 
 		if (ce->ce_flags & CE_UPDATE)
@@ -302,10 +302,10 @@ static void add_remove_files(struct string_list *list)
 			continue;
 
 		if (!lstat(p->string, &st)) {
-			if (add_to_cache(p->string, &st, 0))
+			if (add_to_index(&the_index, p->string, &st, 0))
 				die(_("updating files failed"));
 		} else
-			remove_file_from_cache(p->string);
+			remove_file_from_index(&the_index, p->string);
 	}
 }
 
@@ -316,7 +316,7 @@ static void create_base_index(const struct commit *current_head)
 	struct tree_desc t;
 
 	if (!current_head) {
-		discard_cache();
+		discard_index(&the_index);
 		return;
 	}
 
@@ -343,7 +343,7 @@ static void refresh_cache_or_die(int refresh_flags)
 	 * refresh_flags contains REFRESH_QUIET, so the only errors
 	 * are for unmerged entries.
 	 */
-	if (refresh_cache(refresh_flags | REFRESH_IN_PORCELAIN))
+	if (refresh_index(&the_index, refresh_flags | REFRESH_IN_PORCELAIN, NULL, NULL, NULL))
 		die_resolve_conflict("commit");
 }
 
@@ -382,12 +382,13 @@ static const char *prepare_index(const char **argv, const char *prefix,
 	    (!amend || (fixup_message && strcmp(fixup_prefix, "amend"))))))
 		die(_("No paths with --include/--only does not make sense."));
 
-	if (read_cache_preload(&pathspec) < 0)
+	if (repo_read_index_preload(the_repository, &pathspec, 0) < 0)
 		die(_("index file corrupt"));
 
 	if (interactive) {
 		char *old_index_env = NULL, *old_repo_index_file;
-		hold_locked_index(&index_lock, LOCK_DIE_ON_ERROR);
+		repo_hold_locked_index(the_repository, &index_lock,
+				       LOCK_DIE_ON_ERROR);
 
 		refresh_cache_or_die(refresh_flags);
 
@@ -410,8 +411,9 @@ static const char *prepare_index(const char **argv, const char *prefix,
 			unsetenv(INDEX_ENVIRONMENT);
 		FREE_AND_NULL(old_index_env);
 
-		discard_cache();
-		read_cache_from(get_lock_file_path(&index_lock));
+		discard_index(&the_index);
+		read_index_from(&the_index, get_lock_file_path(&index_lock),
+				get_git_dir());
 		if (update_main_cache_tree(WRITE_TREE_SILENT) == 0) {
 			if (reopen_lock_file(&index_lock) < 0)
 				die(_("unable to write index file"));
@@ -438,7 +440,8 @@ static const char *prepare_index(const char **argv, const char *prefix,
 	 * (B) on failure, rollback the real index.
 	 */
 	if (all || (also && pathspec.nr)) {
-		hold_locked_index(&index_lock, LOCK_DIE_ON_ERROR);
+		repo_hold_locked_index(the_repository, &index_lock,
+				       LOCK_DIE_ON_ERROR);
 		add_files_to_cache(also ? prefix : NULL, &pathspec, 0);
 		refresh_cache_or_die(refresh_flags);
 		update_main_cache_tree(WRITE_TREE_SILENT);
@@ -459,10 +462,11 @@ static const char *prepare_index(const char **argv, const char *prefix,
 	 * We still need to refresh the index here.
 	 */
 	if (!only && !pathspec.nr) {
-		hold_locked_index(&index_lock, LOCK_DIE_ON_ERROR);
+		repo_hold_locked_index(the_repository, &index_lock,
+				       LOCK_DIE_ON_ERROR);
 		refresh_cache_or_die(refresh_flags);
-		if (active_cache_changed
-		    || !cache_tree_fully_valid(active_cache_tree))
+		if (the_index.cache_changed
+		    || !cache_tree_fully_valid(the_index.cache_tree))
 			update_main_cache_tree(WRITE_TREE_SILENT);
 		if (write_locked_index(&the_index, &index_lock,
 				       COMMIT_LOCK | SKIP_IF_UNCHANGED))
@@ -505,13 +509,13 @@ static const char *prepare_index(const char **argv, const char *prefix,
 	if (list_paths(&partial, !current_head ? NULL : "HEAD", &pathspec))
 		exit(1);
 
-	discard_cache();
-	if (read_cache() < 0)
+	discard_index(&the_index);
+	if (repo_read_index(the_repository) < 0)
 		die(_("cannot read the index"));
 
-	hold_locked_index(&index_lock, LOCK_DIE_ON_ERROR);
+	repo_hold_locked_index(the_repository, &index_lock, LOCK_DIE_ON_ERROR);
 	add_remove_files(&partial);
-	refresh_cache(REFRESH_QUIET);
+	refresh_index(&the_index, REFRESH_QUIET, NULL, NULL, NULL);
 	update_main_cache_tree(WRITE_TREE_SILENT);
 	if (write_locked_index(&the_index, &index_lock, 0))
 		die(_("unable to write new_index file"));
@@ -523,14 +527,14 @@ static const char *prepare_index(const char **argv, const char *prefix,
 
 	create_base_index(current_head);
 	add_remove_files(&partial);
-	refresh_cache(REFRESH_QUIET);
+	refresh_index(&the_index, REFRESH_QUIET, NULL, NULL, NULL);
 
 	if (write_locked_index(&the_index, &false_lock, 0))
 		die(_("unable to write temporary index file"));
 
-	discard_cache();
+	discard_index(&the_index);
 	ret = get_lock_file_path(&false_lock);
-	read_cache_from(ret);
+	read_index_from(&the_index, ret, get_git_dir());
 out:
 	string_list_clear(&partial, 0);
 	clear_pathspec(&pathspec);
@@ -1001,10 +1005,10 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 
 			/* TODO: audit for interaction with sparse-index. */
 			ensure_full_index(&the_index);
-			for (i = 0; i < active_nr; i++)
-				if (ce_intent_to_add(active_cache[i]))
+			for (i = 0; i < the_index.cache_nr; i++)
+				if (ce_intent_to_add(the_index.cache[i]))
 					ita_nr++;
-			committable = active_nr - ita_nr > 0;
+			committable = the_index.cache_nr - ita_nr > 0;
 		} else {
 			/*
 			 * Unless the user did explicitly request a submodule
@@ -1071,9 +1075,9 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		 * and could have updated it. We must do this before we invoke
 		 * the editor and after we invoke run_status above.
 		 */
-		discard_cache();
+		discard_index(&the_index);
 	}
-	read_cache_from(index_file);
+	read_index_from(&the_index, index_file, get_git_dir());
 
 	if (update_main_cache_tree(0)) {
 		error(_("Error building trees"));
@@ -1559,7 +1563,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 		      &s.pathspec, NULL, NULL);
 
 	if (use_optional_locks())
-		fd = hold_locked_index(&index_lock, 0);
+		fd = repo_hold_locked_index(the_repository, &index_lock, 0);
 	else
 		fd = -1;
 
@@ -1826,7 +1830,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		append_merge_tag_headers(parents, &tail);
 	}
 
-	if (commit_tree_extended(sb.buf, sb.len, &active_cache_tree->oid,
+	if (commit_tree_extended(sb.buf, sb.len, &the_index.cache_tree->oid,
 				 parents, &oid, author_ident.buf, NULL,
 				 sign_commit, extra)) {
 		rollback_index_files();

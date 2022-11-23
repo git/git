@@ -1,3 +1,4 @@
+#define USE_THE_INDEX_VARIABLE
 #include "test-tool.h"
 #include "cache.h"
 #include "tree.h"
@@ -62,12 +63,12 @@ int cmd__dump_cache_tree(int ac, const char **av)
 	int ret;
 
 	setup_git_directory();
-	if (read_cache() < 0)
+	if (repo_read_index(the_repository) < 0)
 		die("unable to read index file");
 	istate = the_index;
 	istate.cache_tree = another;
 	cache_tree_update(&istate, WRITE_TREE_DRY_RUN);
-	ret = dump_cache_tree(active_cache_tree, another, "");
+	ret = dump_cache_tree(the_index.cache_tree, another, "");
 	cache_tree_free(&another);
 
 	return ret;

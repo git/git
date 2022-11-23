@@ -3568,7 +3568,8 @@ static int do_exec(struct repository *r, const char *command_line)
 	status = run_command(&cmd);
 
 	/* force re-reading of the cache */
-	if (discard_index(r->index) < 0 || repo_read_index(r) < 0)
+	discard_index(r->index);
+	if (repo_read_index(r) < 0)
 		return error(_("could not read index"));
 
 	dirty = require_clean_work_tree(r, "rebase", NULL, 1, 1);
@@ -4047,9 +4048,11 @@ static int do_merge(struct repository *r,
 		ret = run_command(&cmd);
 
 		/* force re-reading of the cache */
-		if (!ret && (discard_index(r->index) < 0 ||
-			     repo_read_index(r) < 0))
-			ret = error(_("could not read index"));
+		if (!ret) {
+			discard_index(r->index);
+			if (repo_read_index(r) < 0)
+				ret = error(_("could not read index"));
+		}
 		goto leave_merge;
 	}
 
@@ -4422,8 +4425,8 @@ void create_autostash(struct repository *r, const char *path)
 		printf(_("Created autostash: %s\n"), buf.buf);
 		if (reset_head(r, &ropts) < 0)
 			die(_("could not reset --hard"));
-		if (discard_index(r->index) < 0 ||
-			repo_read_index(r) < 0)
+		discard_index(r->index);
+		if (repo_read_index(r) < 0)
 			die(_("could not read index"));
 	}
 	strbuf_release(&buf);

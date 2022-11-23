@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2006 Junio C Hamano
  */
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
+#define USE_THE_INDEX_VARIABLE
 #include "cache.h"
 #include "config.h"
 #include "ewah/ewok.h"
@@ -157,12 +157,13 @@ static int builtin_diff_index(struct rev_info *revs,
 		usage(builtin_diff_usage);
 	if (!(option & DIFF_INDEX_CACHED)) {
 		setup_work_tree();
-		if (read_cache_preload(&revs->diffopt.pathspec) < 0) {
-			perror("read_cache_preload");
+		if (repo_read_index_preload(the_repository,
+					    &revs->diffopt.pathspec, 0) < 0) {
+			perror("repo_read_index_preload");
 			return -1;
 		}
-	} else if (read_cache() < 0) {
-		perror("read_cache");
+	} else if (repo_read_index(the_repository) < 0) {
+		perror("repo_read_cache");
 		return -1;
 	}
 	return run_diff_index(revs, option);
@@ -239,12 +240,13 @@ static void refresh_index_quietly(void)
 	struct lock_file lock_file = LOCK_INIT;
 	int fd;
 
-	fd = hold_locked_index(&lock_file, 0);
+	fd = repo_hold_locked_index(the_repository, &lock_file, 0);
 	if (fd < 0)
 		return;
-	discard_cache();
-	read_cache();
-	refresh_cache(REFRESH_QUIET|REFRESH_UNMERGED);
+	discard_index(&the_index);
+	repo_read_index(the_repository);
+	refresh_index(&the_index, REFRESH_QUIET|REFRESH_UNMERGED, NULL, NULL,
+		      NULL);
 	repo_update_index_if_able(the_repository, &lock_file);
 }
 
@@ -279,8 +281,9 @@ static int builtin_diff_files(struct rev_info *revs, int argc, const char **argv
 		diff_merges_set_dense_combined_if_unset(revs);
 
 	setup_work_tree();
-	if (read_cache_preload(&revs->diffopt.pathspec) < 0) {
-		perror("read_cache_preload");
+	if (repo_read_index_preload(the_repository, &revs->diffopt.pathspec,
+				    0) < 0) {
+		perror("repo_read_index_preload");
 		return -1;
 	}
 	return run_diff_files(revs, options);

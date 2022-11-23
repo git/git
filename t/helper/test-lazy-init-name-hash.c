@@ -1,3 +1,4 @@
+#define USE_THE_INDEX_VARIABLE
 #include "test-tool.h"
 #include "cache.h"
 #include "parse-options.h"
@@ -32,7 +33,7 @@ static void dump_run(void)
 	struct dir_entry *dir;
 	struct cache_entry *ce;
 
-	read_cache();
+	repo_read_index(the_repository);
 	if (single) {
 		test_lazy_init_name_hash(&the_index, 0);
 	} else {
@@ -49,7 +50,7 @@ static void dump_run(void)
 				ent /* member name */)
 		printf("name %08x %s\n", ce->ent.hash, ce->name);
 
-	discard_cache();
+	discard_index(&the_index);
 }
 
 /*
@@ -66,7 +67,7 @@ static uint64_t time_runs(int try_threaded)
 
 	for (i = 0; i < count; i++) {
 		t0 = getnanotime();
-		read_cache();
+		repo_read_index(the_repository);
 		t1 = getnanotime();
 		nr_threads_used = test_lazy_init_name_hash(&the_index, try_threaded);
 		t2 = getnanotime();
@@ -89,7 +90,7 @@ static uint64_t time_runs(int try_threaded)
 				   the_index.cache_nr);
 		fflush(stdout);
 
-		discard_cache();
+		discard_index(&the_index);
 	}
 
 	avg = sum / count;
@@ -113,9 +114,9 @@ static void analyze_run(void)
 	int i;
 	int nr;
 
-	read_cache();
+	repo_read_index(the_repository);
 	cache_nr_limit = the_index.cache_nr;
-	discard_cache();
+	discard_index(&the_index);
 
 	nr = analyze;
 	while (1) {
@@ -128,23 +129,23 @@ static void analyze_run(void)
 			nr = cache_nr_limit;
 
 		for (i = 0; i < count; i++) {
-			read_cache();
+			repo_read_index(the_repository);
 			the_index.cache_nr = nr; /* cheap truncate of index */
 			t1s = getnanotime();
 			test_lazy_init_name_hash(&the_index, 0);
 			t2s = getnanotime();
 			sum_single += (t2s - t1s);
 			the_index.cache_nr = cache_nr_limit;
-			discard_cache();
+			discard_index(&the_index);
 
-			read_cache();
+			repo_read_index(the_repository);
 			the_index.cache_nr = nr; /* cheap truncate of index */
 			t1m = getnanotime();
 			nr_threads_used = test_lazy_init_name_hash(&the_index, 1);
 			t2m = getnanotime();
 			sum_multi += (t2m - t1m);
 			the_index.cache_nr = cache_nr_limit;
-			discard_cache();
+			discard_index(&the_index);
 
 			if (!nr_threads_used)
 				printf("    [size %8d] [single %f]   non-threaded code path used\n",

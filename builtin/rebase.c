@@ -4,7 +4,7 @@
  * Copyright (c) 2018 Pratik Karki
  */
 
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
+#define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "run-command.h"
 #include "exec-cmd.h"
@@ -292,7 +292,7 @@ static int do_interactive_rebase(struct rebase_options *opts, unsigned flags)
 	if (ret)
 		error(_("could not generate todo list"));
 	else {
-		discard_cache();
+		discard_index(&the_index);
 		if (todo_list_parse_insn_buffer(the_repository, todo_list.buf.buf,
 						&todo_list))
 			BUG("unusable todo list");
@@ -1270,7 +1270,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		if (get_oid("HEAD", &head))
 			die(_("Cannot read HEAD"));
 
-		fd = hold_locked_index(&lock_file, 0);
+		fd = repo_hold_locked_index(the_repository, &lock_file, 0);
 		if (repo_read_index(the_repository) < 0)
 			die(_("could not read index"));
 		refresh_index(the_repository->index, REFRESH_QUIET, NULL, NULL,

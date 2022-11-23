@@ -3,7 +3,7 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
+#define USE_THE_INDEX_VARIABLE
 #include "cache.h"
 #include "config.h"
 #include "commit.h"
@@ -1008,7 +1008,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (!strcmp(arg, "--shared-index-path")) {
-				if (read_cache() < 0)
+				if (repo_read_index(the_repository) < 0)
 					die(_("Could not read the index"));
 				if (the_index.split_index) {
 					const struct object_id *oid = &the_index.split_index->base_oid;

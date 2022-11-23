@@ -1519,8 +1519,8 @@ static int run_apply(const struct am_state *state, const char *index_file)
 
 	if (index_file) {
 		/* Reload index as apply_all_patches() will have modified it. */
-		discard_cache();
-		read_cache_from(index_file);
+		discard_index(&the_index);
+		read_index_from(&the_index, index_file, get_git_dir());
 	}
 
 	return 0;
@@ -1562,8 +1562,8 @@ static int fall_back_threeway(const struct am_state *state, const char *index_pa
 	if (build_fake_ancestor(state, index_path))
 		return error("could not build fake ancestor");
 
-	discard_cache();
-	read_cache_from(index_path);
+	discard_index(&the_index);
+	read_index_from(&the_index, index_path, get_git_dir());
 
 	if (write_index_as_tree(&orig_tree, &the_index, index_path, 0, NULL))
 		return error(_("Repository lacks necessary blobs to fall back on 3-way merge."));
@@ -1596,8 +1596,8 @@ static int fall_back_threeway(const struct am_state *state, const char *index_pa
 
 	say(state, stdout, _("Falling back to patching base and 3-way merge..."));
 
-	discard_cache();
-	read_cache();
+	discard_index(&the_index);
+	repo_read_index(the_repository);
 
 	/*
 	 * This is not so wrong. Depending on which base we picked, orig_tree
@@ -1781,7 +1781,8 @@ static void am_run(struct am_state *state, int resume)
 
 	unlink(am_path(state, "dirtyindex"));
 
-	if (refresh_and_write_cache(REFRESH_QUIET, 0, 0) < 0)
+	if (repo_refresh_and_write_index(the_repository, REFRESH_QUIET, 0, 0,
+					 NULL, NULL, NULL) < 0)
 		die(_("unable to write index file"));
 
 	if (repo_index_has_changes(the_repository, NULL, &sb)) {
@@ -1930,7 +1931,7 @@ static void am_resolve(struct am_state *state, int allow_empty)
 		}
 	}
 
-	if (unmerged_cache()) {
+	if (unmerged_index(&the_index)) {
 		printf_ln(_("You still have unmerged paths in your index.\n"
 			"You should 'git add' each file with resolved conflicts to mark them as such.\n"
 			"You might run `git rm` on a file to accept \"deleted by them\" for it."));
@@ -1967,9 +1968,9 @@ static int fast_forward_to(struct tree *head, struct tree *remote, int reset)
 	if (parse_tree(head) || parse_tree(remote))
 		return -1;
 
-	hold_locked_index(&lock_file, LOCK_DIE_ON_ERROR);
+	repo_hold_locked_index(the_repository, &lock_file, LOCK_DIE_ON_ERROR);
 
-	refresh_cache(REFRESH_QUIET);
+	refresh_index(&the_index, REFRESH_QUIET, NULL, NULL, NULL);
 
 	memset(&opts, 0, sizeof(opts));
 	opts.head_idx = 1;
@@ -2007,7 +2008,7 @@ static int merge_tree(struct tree *tree)
 	if (parse_tree(tree))
 		return -1;
 
-	hold_locked_index(&lock_file, LOCK_DIE_ON_ERROR);
+	repo_hold_locked_index(the_repository, &lock_file, LOCK_DIE_ON_ERROR);
 
 	memset(&opts, 0, sizeof(opts));
 	opts.head_idx = 1;
@@ -2045,7 +2046,7 @@ static int clean_index(const struct object_id *head, const struct object_id *rem
 	if (!remote_tree)
 		return error(_("Could not parse object '%s'."), oid_to_hex(remote));
 
-	read_cache_unmerged();
+	repo_read_index_unmerged(the_repository);
 
 	if (fast_forward_to(head_tree, head_tree, 1))
 		return -1;

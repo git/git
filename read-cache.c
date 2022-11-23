@@ -2531,7 +2531,7 @@ int is_index_unborn(struct index_state *istate)
 	return (!istate->cache_nr && !istate->timestamp.sec);
 }
 
-int discard_index(struct index_state *istate)
+void discard_index(struct index_state *istate)
 {
 	/*
 	 * Cache entries in istate->cache[] should have been allocated
@@ -2567,8 +2567,6 @@ int discard_index(struct index_state *istate)
 		mem_pool_discard(istate->ce_mem_pool, should_validate_cache_entries());
 		FREE_AND_NULL(istate->ce_mem_pool);
 	}
-
-	return 0;
 }
 
 /*

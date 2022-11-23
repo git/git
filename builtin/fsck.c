@@ -1,4 +1,4 @@
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
+#define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "cache.h"
 #include "repository.h"
@@ -958,29 +958,29 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 	if (keep_cache_objects) {
 		verify_index_checksum = 1;
 		verify_ce_order = 1;
-		read_cache();
+		repo_read_index(the_repository);
 		/* TODO: audit for interaction with sparse-index. */
 		ensure_full_index(&the_index);
-		for (i = 0; i < active_nr; i++) {
+		for (i = 0; i < the_index.cache_nr; i++) {
 			unsigned int mode;
 			struct blob *blob;
 			struct object *obj;
 
-			mode = active_cache[i]->ce_mode;
+			mode = the_index.cache[i]->ce_mode;
 			if (S_ISGITLINK(mode))
 				continue;
 			blob = lookup_blob(the_repository,
-					   &active_cache[i]->oid);
+					   &the_index.cache[i]->oid);
 			if (!blob)
 				continue;
 			obj = &blob->object;
 			obj->flags |= USED;
 			fsck_put_object_name(&fsck_walk_options, &obj->oid,
-					     ":%s", active_cache[i]->name);
+					     ":%s", the_index.cache[i]->name);
 			mark_object_reachable(obj);
 		}
-		if (active_cache_tree)
-			fsck_cache_tree(active_cache_tree);
+		if (the_index.cache_tree)
+			fsck_cache_tree(the_index.cache_tree);
 		fsck_resolve_undo(&the_index);
 	}
 
