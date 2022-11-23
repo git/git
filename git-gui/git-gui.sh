@@ -464,6 +464,9 @@ proc _which {what args} {
 			regsub -all ";" $gitguidir "\\;" gitguidir
 			set env(PATH) "$gitguidir;$env(PATH)"
 			set _search_path [split $env(PATH) {;}]
+			# Skip empty `PATH` elements
+			set _search_path [lsearch -all -inline -not -exact \
+				$_search_path ""]
 			set _search_exe .exe
 		} else {
 			set _search_path [split $env(PATH) :]
