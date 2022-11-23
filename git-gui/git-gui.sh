@@ -121,6 +121,62 @@ proc _which {what args} {
 	return {}
 }
 
+proc sanitize_command_line {command_line from_index} {
+	set i $from_index
+	while {$i < [llength $command_line]} {
+		set cmd [lindex $command_line $i]
+		if {[file pathtype $cmd] ne "absolute"} {
+			set fullpath [_which $cmd]
+			if {$fullpath eq ""} {
+				throw {NOT-FOUND} "$cmd not found in PATH"
+			}
+			lset command_line $i $fullpath
+		}
+
+		# handle piped commands, e.g. `exec A | B`
+		for {incr i} {$i < [llength $command_line]} {incr i} {
+			if {[lindex $command_line $i] eq "|"} {
+				incr i
+				break
+			}
+		}
+	}
+	return $command_line
+}
+
+# Override `exec` to avoid unsafe PATH lookup
+
+rename exec real_exec
+
+proc exec {args} {
+	# skip options
+	for {set i 0} {$i < [llength $args]} {incr i} {
+		set arg [lindex $args $i]
+		if {$arg eq "--"} {
+			incr i
+			break
+		}
+		if {[string range $arg 0 0] ne "-"} {
+			break
+		}
+	}
+	set args [sanitize_command_line $args $i]
+	uplevel 1 real_exec $args
+}
+
+# Override `open` to avoid unsafe PATH lookup
+
+rename open real_open
+
+proc open {args} {
+	set arg0 [lindex $args 0]
+	if {[string range $arg0 0 0] eq "|"} {
+		set command_line [string trim [string range $arg0 1 end]]
+		lset args 0 "| [sanitize_command_line $command_line 0]"
+	}
+	uplevel 1 real_open $args
+}
+
 ######################################################################
 ##
 ## locate our library
