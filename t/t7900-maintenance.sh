@@ -500,9 +500,28 @@ test_expect_success 'register and unregister' '
 	git config --global --get-all maintenance.repo >actual &&
 	test_cmp before actual &&
 
+	git config --file ./other --add maintenance.repo /existing1 &&
+	git config --file ./other --add maintenance.repo /existing2 &&
+	git config --file ./other --get-all maintenance.repo >before &&
+
+	git maintenance register --config-file ./other &&
+	test_cmp_config false maintenance.auto &&
+	git config --file ./other --get-all maintenance.repo >between &&
+	cp before expect &&
+	pwd >>expect &&
+	test_cmp expect between &&
+
+	git maintenance unregister --config-file ./other &&
+	git config --file ./other --get-all maintenance.repo >actual &&
+	test_cmp before actual &&
+
 	test_must_fail git maintenance unregister 2>err &&
 	grep "is not registered" err &&
-	git maintenance unregister --force
+	git maintenance unregister --force &&
+
+	test_must_fail git maintenance unregister --config-file ./other 2>err &&
+	grep "is not registered" err &&
+	git maintenance unregister --config-file ./other --force
 '
 
 test_expect_success !MINGW 'register and unregister with regex metacharacters' '
