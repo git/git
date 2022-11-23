@@ -579,6 +579,16 @@ test_expect_success 'status should be "modified" after submodule commit' '
 	grep "^+$rev2" list
 '
 
+test_expect_success '"submodule --cached" command forms should be identical' '
+	git submodule status --cached >expect &&
+
+	git submodule --cached >actual &&
+	test_cmp expect actual &&
+
+	git submodule --cached status >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'the --cached sha1 should be rev1' '
 	git submodule --cached status >list &&
 	grep "^+$rev1" list
