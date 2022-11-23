@@ -35,6 +35,29 @@ UI, Workflows & Features
  * "git repack" learns to send cruft objects out of the way into
    packfiles outside the repository.
 
+ * 'scalar reconfigure -a' is taught to automatically remove
+   scalar.repo entires which no longer exist.
+
+ * Redact headers from cURL's h2h3 module in GIT_CURL_VERBOSE and
+   others.
+
+ * 'git maintenance register' is taught to write configuration to an
+   arbitrary path, and 'git for-each-repo' is taught to expand tilde
+   characters in paths.
+
+ * When creating new notes, the template used to get a stray empty
+   newline, which has been removed.
+
+ * "git receive-pack" used to use all the local refs as the boundary for
+   checking connectivity of the data "git push" sent, but now it uses
+   only the refs that it advertised to the pusher. In a repository with
+   the .hideRefs configuration, this reduces the resources needed to
+   perform the check.
+
+ * With '--recurse-submodules=on-demand', all submodules are
+   recursively pushed.
+
+
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
 
@@ -123,6 +146,13 @@ Performance, Internal Implementation, Development Support etc.
 
  * A design document for sparse-checkout's future directions has been
    added.
+
+ * Teach chainlint.pl to annotate the original test definition instead
+   of the token stream.
+
+ * "make coccicheck" is time consuming. It has been made to run more
+   incrementally.
+
 
 Fixes since v2.38
 -----------------
@@ -270,6 +300,13 @@ Fixes since v2.38
  * `git rebase --update-refs` would delete references when all
    `update-ref` commands in the sequencer were removed, which has been
    corrected.
+
+ * Fix a regression in the bisect-helper which mistakenly treats
+   arguments to the command given to 'git bisect run' as arguments to
+   the helper.
+
+ * Correct an error where `git rebase` would mistakenly use a branch or
+   tag named "refs/rewritten/xyz" when missing a rebase label.
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 413bc6d20a ds/cmd-main-reorder later to maint).
