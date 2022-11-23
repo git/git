@@ -181,7 +181,7 @@ static void prepare_note_data(const struct object_id *object, struct note_data *
 		strbuf_addch(&buf, '\n');
 		strbuf_add_commented_lines(&buf, "\n", strlen("\n"));
 		strbuf_add_commented_lines(&buf, _(note_template), strlen(_(note_template)));
-		strbuf_addch(&buf, '\n');
+		strbuf_add_commented_lines(&buf, "\n", strlen("\n"));
 		write_or_die(fd, buf.buf, buf.len);
 
 		write_commented_object(fd, object);
