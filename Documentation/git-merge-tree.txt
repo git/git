@@ -66,8 +66,8 @@ OPTIONS
 
 --merge-base=<commit>::
 	Instead of finding the merge-bases for <branch1> and <branch2>,
-	specify a merge-base for the merge. This option is incompatible
-	with `--stdin`.
+	specify a merge-base for the merge, and specifying multiple bases is
+	currently not supported. This option is incompatible with `--stdin`.
 
 [[OUTPUT]]
 OUTPUT
