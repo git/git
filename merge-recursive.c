@@ -2100,7 +2100,7 @@ static char *handle_path_level_conflicts(struct merge_options *opt,
 	if (!new_path) {
 		/* This should only happen when entry->non_unique_new_dir set */
 		if (!entry->non_unique_new_dir)
-			BUG("entry->non_unqiue_dir not set and !new_path");
+			BUG("entry->non_unique_new_dir not set and !new_path");
 		output(opt, 1, _("CONFLICT (directory rename split): "
 			       "Unclear where to place %s because directory "
 			       "%s was renamed to multiple other directories, "
