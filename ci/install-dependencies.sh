@@ -5,7 +5,7 @@
 
 . ${0%/*}/lib.sh
 
-P4WHENCE=http://filehost.perforce.com/perforce/r$LINUX_P4_VERSION
+P4WHENCE=https://cdist2.perforce.com/perforce/r21.2
 LFSWHENCE=https://github.com/github/git-lfs/releases/download/v$LINUX_GIT_LFS_VERSION
 UBUNTU_COMMON_PKGS="make libssl-dev libcurl4-openssl-dev libexpat-dev
  tcl tk gettext zlib1g-dev perl-modules liberror-perl libauthen-sasl-perl
@@ -44,13 +44,15 @@ osx-clang|osx-gcc)
 	test -z "$BREW_INSTALL_PACKAGES" ||
 	brew install $BREW_INSTALL_PACKAGES
 	brew link --force gettext
-	brew install --cask --no-quarantine perforce || {
-		# Update the definitions and try again
-		cask_repo="$(brew --repository)"/Library/Taps/homebrew/homebrew-cask &&
-		git -C "$cask_repo" pull --no-stat --ff-only &&
-		brew install --cask --no-quarantine perforce
-	} ||
-	brew install homebrew/cask/perforce
+	mkdir -p $HOME/bin
+	(
+		cd $HOME/bin
+		wget -q "$P4WHENCE/bin.macosx1015x86_64/helix-core-server.tgz" &&
+		tar -xf helix-core-server.tgz &&
+		sudo xattr -d com.apple.quarantine p4 p4d 2>/dev/null || true
+	)
+	PATH="$PATH:${HOME}/bin"
+	export PATH
 	case "$jobname" in
 	osx-gcc)
 		brew install gcc@9
