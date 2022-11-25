@@ -39,4 +39,10 @@ test_expect_success 'do nothing on empty config' '
 	git for-each-repo --config=bogus.config -- help --no-such-option
 '
 
+test_expect_success 'bad config keys' '
+	git for-each-repo --config=a &&
+	git for-each-repo --config=a.b. &&
+	git for-each-repo --config="'\''.b"
+'
+
 test_done
