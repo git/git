@@ -226,7 +226,7 @@ export GIT_TEST_CLONE_2GB=true
 export SKIP_DASHED_BUILT_INS=YesPlease
 
 case "$runs_on_pool" in
-ubuntu-latest)
+ubuntu-*)
 	if test "$jobname" = "linux-gcc-default"
 	then
 		break
