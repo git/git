@@ -81,9 +81,9 @@ esac
 if type p4d >/dev/null && type p4 >/dev/null
 then
 	echo "$(tput setaf 6)Perforce Server Version$(tput sgr0)"
-	p4d -V | grep Rev.
+	p4d -V
 	echo "$(tput setaf 6)Perforce Client Version$(tput sgr0)"
-	p4 -V | grep Rev.
+	p4 -V
 fi
 if type git-lfs >/dev/null
 then
