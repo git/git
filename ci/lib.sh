@@ -184,13 +184,13 @@ export SKIP_DASHED_BUILT_INS=YesPlease
 
 case "$jobname" in
 linux-clang|linux-gcc)
+	PYTHON_PACKAGE=python2
 	if [ "$jobname" = linux-gcc ]
 	then
 		export CC=gcc-8
-		MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=/usr/bin/python3"
-	else
-		MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=/usr/bin/python2"
+		PYTHON_PACKAGE=python3
 	fi
+	MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=/usr/bin/$PYTHON_PACKAGE"
 
 	export GIT_TEST_HTTPD=true
 
