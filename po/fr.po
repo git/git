@@ -48,7 +48,7 @@
 #   pack             |  paquet
 #   patches          |  patchs
 #   pattern          |  motif
-#   to prune         |  éliminer
+#   to prune         |  élaguer
 #   to push          |  pousser
 #   to rebase        |  rebaser
 #   scheduler        |  planificateur
@@ -78,8 +78,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2022-09-28 21:43+0200\n"
-"PO-Revision-Date: 2022-09-28 21:45+0200\n"
+"POT-Creation-Date: 2022-11-30 19:40+0100\n"
+"PO-Revision-Date: 2022-11-30 19:42+0100\n"
 "Last-Translator: Cédric Malard <c.malard-git@valdun.net>\n"
 "Language-Team: Jean-Noël Avila <jn.avila@free.fr>\n"
 "Language: fr\n"
@@ -840,6 +840,9 @@ msgstr "cmdline se termine par \\"
 
 msgid "unclosed quote"
 msgstr "citation non fermée"
+
+msgid "too many arguments"
+msgstr "trop d'arguments"
 
 #, c-format
 msgid "unrecognized whitespace option '%s'"
@@ -2633,42 +2636,6 @@ msgstr ""
 "la bissection a échoué : 'git bisect--helper --bisect-state %s' a retourné "
 "le code erreur %d"
 
-msgid "reset the bisection state"
-msgstr "réinitialiser l'état de la bissection"
-
-msgid "check whether bad or good terms exist"
-msgstr "vérifier si les termes bons ou mauvais existent"
-
-msgid "print out the bisect terms"
-msgstr "afficher les termes de bissection"
-
-msgid "start the bisect session"
-msgstr "démarrer une session de bissection"
-
-msgid "find the next bisection commit"
-msgstr "trouver le prochain commit de bissection"
-
-msgid "mark the state of ref (or refs)"
-msgstr "marquer l'état d'une références (ou plusieurs)"
-
-msgid "list the bisection steps so far"
-msgstr "lister les étapes de bissection jusqu'ici"
-
-msgid "replay the bisection process from the given file"
-msgstr "rejouer le processus de bissection depuis le fichier fourni"
-
-msgid "skip some commits for checkout"
-msgstr "sauter certains commits pour l'extraction"
-
-msgid "visualize the bisection"
-msgstr "visualiser la bissection"
-
-msgid "use <cmd>... to automatically bisect"
-msgstr "utiliser <cmd>... pour bissecter automatiquement"
-
-msgid "no log for BISECT_WRITE"
-msgstr "pas de journal pour BISECT_WRITE"
-
 msgid "--bisect-reset requires either no argument or a commit"
 msgstr "--bisect-reset supporte soit aucun argument, soit un commit"
 
@@ -2686,6 +2653,9 @@ msgstr "pas de fichier de log donné"
 
 msgid "git blame [<options>] [<rev-opts>] [<rev>] [--] <file>"
 msgstr "git blame [<options>] [<rev-opts>] [<rev>] [--] <fichier>"
+
+msgid "git annotate [<options>] [<rev-opts>] [<rev>] [--] <file>"
+msgstr "git annotate [<options>] [<options-de-rev>] [<rev>] [--] <fichier>"
 
 msgid "<rev-opts> are documented in git-rev-list(1)"
 msgstr "<options-de-révision> sont documentés dans git-rev-list(1)"
@@ -2887,9 +2857,6 @@ msgstr "Échec de la mise à jour du fichier de configuration"
 msgid "cannot use -a with -d"
 msgstr "impossible d'utiliser -a avec -d"
 
-msgid "Couldn't look up commit object for HEAD"
-msgstr "Impossible de rechercher l'objet commit pour HEAD"
-
 #, c-format
 msgid "Cannot delete branch '%s' checked out at '%s'"
 msgstr "Impossible de supprimer la branche '%s' extraite dans '%s'"
@@ -2928,15 +2895,17 @@ msgstr "La branche %s est en cours de rebasage sur %s"
 msgid "Branch %s is being bisected at %s"
 msgstr "La branche %s est en cours de bissection sur %s"
 
-msgid "cannot copy the current branch while not on any."
-msgstr "impossible de copier la branche actuelle, il n'y en a pas."
-
-msgid "cannot rename the current branch while not on any."
-msgstr "impossible de renommer la branche actuelle, il n'y en a pas."
-
 #, c-format
 msgid "Invalid branch name: '%s'"
 msgstr "Nom de branche invalide : '%s'"
+
+#, c-format
+msgid "No commit on branch '%s' yet."
+msgstr "Aucun commit sur la branche '%s'."
+
+#, c-format
+msgid "No branch named '%s'."
+msgstr "Aucune branche nommée '%s'."
 
 msgid "Branch rename failed"
 msgstr "Échec de renommage de la branche"
@@ -3100,13 +3069,11 @@ msgstr "Impossible de décrire une HEAD détachée"
 msgid "cannot edit description of more than one branch"
 msgstr "impossible d'éditer la description de plus d'une branche"
 
-#, c-format
-msgid "No commit on branch '%s' yet."
-msgstr "Aucun commit sur la branche '%s'."
+msgid "cannot copy the current branch while not on any."
+msgstr "impossible de copier la branche actuelle, il n'y en a pas."
 
-#, c-format
-msgid "No branch named '%s'."
-msgstr "Aucune branche nommée '%s'."
+msgid "cannot rename the current branch while not on any."
+msgstr "impossible de renommer la branche actuelle, il n'y en a pas."
 
 msgid "too many branches for a copy operation"
 msgstr "trop de branches pour une opération de copie"
@@ -3176,11 +3143,12 @@ msgid "not run from a git repository - no hooks to show\n"
 msgstr "lancé hors d'un dépôt git - aucun crochet à montrer\n"
 
 msgid ""
-"git bugreport [-o|--output-directory <file>] [-s|--suffix <format>] [--"
-"diagnose[=<mode>]"
+"git bugreport [(-o | --output-directory) <path>] [(-s | --suffix) <format>]\n"
+"              [--diagnose[=<mode>]]"
 msgstr ""
-"git bugreport [-o|--output-directory <fichier>] [-s|--suffix <format>] [--"
-"diagnose[=<mode>]]"
+"git bugreport [(-o | --output-directory) <chemin>] [(-s | --suffix) "
+"<format>]\n"
+"              [--diagnose[=<mode>]]"
 
 msgid ""
 "Thank you for filling out a Git bug report!\n"
@@ -3255,17 +3223,23 @@ msgstr "impossible d'écrire dans %s"
 msgid "Created new report at '%s'.\n"
 msgstr "Nouveau rapport créé à '%s'.\n"
 
-msgid "git bundle create [<options>] <file> <git-rev-list args>"
-msgstr "git bundle create [<options>] <fichier> <args git-rev-list>"
+msgid ""
+"git bundle create [-q | --quiet | --progress | --all-progress] [--all-"
+"progress-implied]\n"
+"                  [--version=<version>] <file> <git-rev-list-args>"
+msgstr ""
+"git bundle create [-q | --quiet | --progress | --all-progress] [--all-"
+"progress-implied]\n"
+"                  [--version=<version>] <file> <args-de-git-rev-list>"
 
-msgid "git bundle verify [<options>] <file>"
-msgstr "git bundle verify [<options>] <fichier>"
+msgid "git bundle verify [-q | --quiet] <file>"
+msgstr "git bundle verify [-q | --quiet] <fichier>"
 
 msgid "git bundle list-heads <file> [<refname>...]"
 msgstr "git bundle list-heads <fichier> [<nom-de-ref>...]"
 
-msgid "git bundle unbundle <file> [<refname>...]"
-msgstr "git bundle unbundle <fichier> [<nom-de-ref>...]"
+msgid "git bundle unbundle [--progress] <file> [<refname>...]"
+msgstr "git bundle unbundle [--progress] <fichier> [<nom-de-ref>...]"
 
 msgid "do not show progress meter"
 msgstr "ne pas afficher la barre de progression"
@@ -3340,12 +3314,12 @@ msgid ""
 "git cat-file (--batch | --batch-check | --batch-command) [--batch-all-"
 "objects]\n"
 "             [--buffer] [--follow-symlinks] [--unordered]\n"
-"             [--textconv | --filters]"
+"             [--textconv | --filters] [-z]"
 msgstr ""
 "git cat-file (--batch | --batch-check | --batch-command) [--batch-all-"
 "objects]\n"
 "             [--buffer] [--follow-symlinks] [--unordered]\n"
-"             [--textconv | --filters]"
+"             [--textconv | --filters] [-z]"
 
 msgid ""
 "git cat-file (--textconv | --filters)\n"
@@ -3455,9 +3429,6 @@ msgstr "<rev> nécessaire avec '%s'"
 #, c-format
 msgid "<object> required with '-%c'"
 msgstr "<objet> nécessaire avec '-%c'"
-
-msgid "too many arguments"
-msgstr "trop d'arguments"
 
 #, c-format
 msgid "only two arguments allowed in <type> <object> mode, not %d"
@@ -4001,9 +3972,11 @@ msgid "use overlay mode"
 msgstr "utiliser le mode de superposition"
 
 msgid ""
-"git clean [-d] [-f] [-i] [-n] [-q] [-e <pattern>] [-x | -X] [--] <paths>..."
+"git clean [-d] [-f] [-i] [-n] [-q] [-e <pattern>] [-x | -X] [--] "
+"[<pathspec>...]"
 msgstr ""
-"git clean [-d] [-f] [-i] [-n] [-q] [-e <motif>] [-x | -X] [--] <chemins>..."
+"git clean [-d] [-f] [-i] [-n] [-q] [-e <motif>] [-x | -X] [--] [<spec-de-"
+"chemins>...]"
 
 #, c-format
 msgid "Removing %s\n"
@@ -4301,6 +4274,10 @@ msgid "failed to start iterator over '%s'"
 msgstr "échec du démarrage un itérateur sur '%s'"
 
 #, c-format
+msgid "symlink '%s' exists, refusing to clone with --local"
+msgstr "le lien symbolique '%s' existe, refus de cloner avec --local"
+
+#, c-format
 msgid "failed to unlink '%s'"
 msgstr "échec pour délier '%s'"
 
@@ -4365,10 +4342,6 @@ msgstr "Trop d'arguments."
 
 msgid "You must specify a repository to clone."
 msgstr "Vous devez spécifier un dépôt à cloner."
-
-#, c-format
-msgid "options '%s' and '%s %s' cannot be used together"
-msgstr "les options '%s' et '%s %s' ne peuvent pas être utilisées ensemble"
 
 msgid ""
 "--bundle-uri is incompatible with --depth, --shallow-since, and --shallow-"
@@ -4496,18 +4469,24 @@ msgid "--command must be the first argument"
 msgstr "--command doit être le premier argument"
 
 msgid ""
-"git commit-graph verify [--object-dir <objdir>] [--shallow] [--[no-]progress]"
+"git commit-graph verify [--object-dir <dir>] [--shallow] [--[no-]progress]"
 msgstr ""
-"git commit-graph verify [--object-dir <objdir>] [--shallow] [--[no-]progress]"
+"git commit-graph verify [--object-dir <rép>] [--shallow] [--[no-]progress]"
 
 msgid ""
-"git commit-graph write [--object-dir <objdir>] [--append] [--"
-"split[=<strategy>]] [--reachable|--stdin-packs|--stdin-commits] [--changed-"
-"paths] [--[no-]max-new-filters <n>] [--[no-]progress] <split options>"
+"git commit-graph write [--object-dir <dir>] [--append]\n"
+"                       [--split[=<strategy>]] [--reachable | --stdin-packs | "
+"--stdin-commits]\n"
+"                       [--changed-paths] [--[no-]max-new-filters <n>] [--"
+"[no-]progress]\n"
+"                       <split options>"
 msgstr ""
-"git commit-graph write [--object-dir <répertoire-d'objet>] [--append] [--"
-"split[=<stratégie>]] [--reachable|--stdin-packs|--stdin-commits] [--changed-"
-"paths] [--[no-]max-new-filters <n>] [--[no-]progress] <options de division>"
+"git commit-graph write [--object-dir <rép>] [--append]\n"
+"                       [--split[=<stratégie>]] [--reachable | --stdin-packs "
+"| --stdin-commits]\n"
+"                       [--changed-paths] [--[no-]max-new-filters <n>] [--"
+"[no-]progress]\n"
+"                       <options de division>"
 
 msgid "dir"
 msgstr "répertoire"
@@ -4577,12 +4556,15 @@ msgstr "utilisez un seul parmi --reachable, --stdin-commits ou --stdin-packs"
 msgid "Collecting commits from input"
 msgstr "Collecte des commits depuis l'entrée"
 
+msgid "git commit-tree <tree> [(-p <parent>)...]"
+msgstr "git commit-tree <arbre> [(-p <parent>)...]"
+
 msgid ""
-"git commit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...] [(-F "
-"<file>)...] <tree>"
+"git commit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...]\n"
+"                [(-F <file>)...] <tree>"
 msgstr ""
-"git commit-tree [(-p <parent>)...] [-S[<idclé>]] [(-m <message>)...] [(-F "
-"<fichier>)...] <arbre>"
+"git commit-tree [(-p <parent>)...] [-S[<idclé>]] [(-m <message>)...]\n"
+"                [(-F <fichier>)...] <arbre>"
 
 #, c-format
 msgid "duplicate parent %s ignored"
@@ -4624,11 +4606,29 @@ msgstr "exactement un arbre obligatoire"
 msgid "git commit-tree: failed to read"
 msgstr "git commit-tree : échec de la lecture"
 
-msgid "git commit [<options>] [--] <pathspec>..."
-msgstr "git commit [<options>] [--] <spécification-de-chemin>..."
+msgid ""
+"git commit [-a | --interactive | --patch] [-s] [-v] [-u<mode>] [--amend]\n"
+"           [--dry-run] [(-c | -C | --squash) <commit> | --fixup [(amend|"
+"reword):]<commit>)]\n"
+"           [-F <file> | -m <msg>] [--reset-author] [--allow-empty]\n"
+"           [--allow-empty-message] [--no-verify] [-e] [--author=<author>]\n"
+"           [--date=<date>] [--cleanup=<mode>] [--[no-]status]\n"
+"           [-i | -o] [--pathspec-from-file=<file> [--pathspec-file-nul]]\n"
+"           [(--trailer <token>[(=|:)<value>])...] [-S[<keyid>]]\n"
+"           [--] [<pathspec>...]"
+msgstr ""
+"git commit [-a | --interactive | --patch] [-s] [-v] [-u<mode>] [--amend]\n"
+"           [--dry-run] [(-c | -C | --squash) <commit> | --fixup [(amend|"
+"reword):]<commit>)]\n"
+"           [-F <file> | -m <msg>] [--reset-author] [--allow-empty]\n"
+"           [--allow-empty-message] [--no-verify] [-e] [--author=<auteur>]\n"
+"           [--date=<date>] [--cleanup=<mode>] [--[no-]status]\n"
+"           [-i | -o] [--pathspec-from-file=<fichier> [--pathspec-file-nul]]\n"
+"           [(--trailer <symbole>[(=|:)<valeur>])...] [-S[<id-clé>]]\n"
+"           [--] [<spéc-de-chemin>...]"
 
-msgid "git status [<options>] [--] <pathspec>..."
-msgstr "git status [<options>] [--] <spécification-de-chemin>..."
+msgid "git status [<options>] [--] [<pathspec>...]"
+msgstr "git status [<options>] [--] [<spécification-de-chemin>...]"
 
 msgid ""
 "You asked to amend the most recent commit, but doing so would make\n"
@@ -5412,11 +5412,18 @@ msgstr "credential-cache non disponible ; pas de gestion des socket unix"
 msgid "unable to get credential storage lock in %d ms"
 msgstr "impossible d'accéder au verrou de stockage d'identification en %d ms"
 
-msgid "git describe [<options>] [<commit-ish>...]"
-msgstr "git describe [<options>] <commit ou apparenté>*"
+msgid ""
+"git describe [--all] [--tags] [--contains] [--abbrev=<n>] [<commit-ish>...]"
+msgstr ""
+"git describe [--all] [--tags] [--contains] [--abbrev=<n>] [<commit-esque>...]"
 
-msgid "git describe [<options>] --dirty"
-msgstr "git describe [<options>] --dirty"
+msgid ""
+"git describe [--all] [--tags] [--contains] [--abbrev=<n>] --dirty[=<mark>]"
+msgstr ""
+"git describe [--all] [--tags] [--contains] [--abbrev=<n>] --dirty[=<marque>]"
+
+msgid "git describe <blob>"
+msgstr "git describe <blob>"
 
 msgid "head"
 msgstr "tête"
@@ -5543,11 +5550,11 @@ msgstr ""
 "l'option '%s' et des commit-esques ne peuvent pas être utilisées ensemble"
 
 msgid ""
-"git diagnose [-o|--output-directory <path>] [-s|--suffix <format>] [--"
-"mode=<mode>]"
+"git diagnose [(-o | --output-directory) <path>] [(-s | --suffix) <format>]\n"
+"             [--mode=<mode>]"
 msgstr ""
-"git diagnose [-o|--output-directory <fichier>] [-s|--suffix <format>] [--"
-"mode=<mode>]"
+"git diagnose [-o | --output-directory <fichier>] [(-s | --suffix) <format>]\n"
+"             [--mode=<mode>]"
 
 msgid "specify a destination for the diagnostics archive"
 msgstr "spécifier la destination de l'archive de diagnostique"
@@ -5564,6 +5571,9 @@ msgstr "--merge-base ne fonctionne qu'avec deux commits"
 #, c-format
 msgid "'%s': not a regular file or symlink"
 msgstr "'%s' : n'est pas un fichier régulier ni un lien symbolique"
+
+msgid "no merge given, only parents."
+msgstr "pas de fusion fournie, seulement des parents."
 
 #, c-format
 msgid "invalid option: %s"
@@ -5858,12 +5868,12 @@ msgstr ""
 
 msgid "prune remote-tracking branches no longer on remote"
 msgstr ""
-"éliminer les branches de suivi distant si la branche n'existe plus dans le "
+"élaguer les branches de suivi distant si la branche n'existe plus dans le "
 "dépôt distant"
 
 msgid "prune local tags no longer on remote and clobber changed tags"
 msgstr ""
-"éliminer les étiquettes locales qui ont disparu du dépôt distant et qui "
+"élaguer les étiquettes locales qui ont disparu du dépôt distant et qui "
 "encombrent les étiquettes modifiées"
 
 msgid "on-demand"
@@ -6214,8 +6224,8 @@ msgstr "afficher seulement les références qui contiennent le commit"
 msgid "print only refs which don't contain the commit"
 msgstr "afficher seulement les références qui ne contiennent pas le commit"
 
-msgid "git for-each-repo --config=<config> <command-args>"
-msgstr "git for-each-repo --config=<config> <arguments-de-commande>"
+msgid "git for-each-repo --config=<config> [--] <arguments>"
+msgstr "git for-each-repo --config=<config> [--] <arguments>"
 
 msgid "config"
 msgstr "config"
@@ -6386,8 +6396,16 @@ msgstr "non-arbre dans l'arbre de cache"
 msgid "%s: invalid sha1 pointer in resolve-undo"
 msgstr "%s : pointeur sha1 invalide dans resolve-undo"
 
-msgid "git fsck [<options>] [<object>...]"
-msgstr "git fsck [<options>] [<objet>...]"
+msgid ""
+"git fsck [--tags] [--root] [--unreachable] [--cache] [--no-reflogs]\n"
+"         [--[no-]full] [--strict] [--verbose] [--lost-found]\n"
+"         [--[no-]dangling] [--[no-]progress] [--connectivity-only]\n"
+"         [--[no-]name-objects] [<object>...]"
+msgstr ""
+"git fsck [--tags] [--root] [--unreachable] [--cache] [--no-reflogs]\n"
+"         [--[no-]full] [--strict] [--verbose] [--lost-found]\n"
+"         [--[no-]dangling] [--[no-]progress] [--connectivity-only]\n"
+"         [--[no-]name-objects] [<objec>...]"
 
 msgid "show unreachable objects"
 msgstr "afficher les objets inaccessibles"
@@ -6442,12 +6460,6 @@ msgstr "git fsmonitor--daemon start [<options>]"
 
 msgid "git fsmonitor--daemon run [<options>]"
 msgstr "git fsmonitor--daemon run [<options>]"
-
-msgid "git fsmonitor--daemon stop"
-msgstr "git fsmonitor--daemon stop"
-
-msgid "git fsmonitor--daemon status"
-msgstr "git fsmonitor--daemon status"
 
 #, c-format
 msgid "value of '%s' out of range: %d"
@@ -6565,7 +6577,7 @@ msgstr ""
 "%s"
 
 msgid "prune unreferenced objects"
-msgstr "éliminer les objets non référencés"
+msgstr "élaguer les objets non référencés"
 
 msgid "pack unreferenced objects separately"
 msgstr "empaqueter les objets non référencés séparément"
@@ -6694,8 +6706,20 @@ msgstr "lancer une tâche spécifique"
 msgid "use at most one of --auto and --schedule=<frequency>"
 msgstr "--auto et --schedule=<fréquence> sont mutuellement exclusifs"
 
-msgid "failed to run 'git config'"
-msgstr "échec du lancement de 'git config'"
+#, c-format
+msgid "unable to add '%s' value of '%s'"
+msgstr "impossible d'ajouter la valeur '%s' de '%s'"
+
+msgid "return success even if repository was not registered"
+msgstr "renvoyer un succès même si le dépôt n'était pas enregistré"
+
+#, c-format
+msgid "unable to unset '%s' value of '%s'"
+msgstr "impossible de retirer la valeur '%s' de '%s'"
+
+#, c-format
+msgid "repository '%s' is not registered"
+msgstr "le dépôt '%s' n'est pas enregistré"
 
 #, c-format
 msgid "failed to expand path '%s'"
@@ -6996,11 +7020,14 @@ msgid "both --cached and trees are given"
 msgstr "--cached et des arbres sont fournis en même temps"
 
 msgid ""
-"git hash-object [-t <type>] [-w] [--path=<file> | --no-filters] [--stdin] "
-"[--] <file>..."
+"git hash-object [-t <type>] [-w] [--path=<file> | --no-filters]\n"
+"                [--stdin [--literally]] [--] <file>..."
 msgstr ""
-"git hash-object [-t <type>] [-w] [--path=<fichier> | --no-filters] [--stdin] "
-"[--] <fichier>..."
+"git hash-object [-t <type>] [-w] [--path=<fichier> | --no-filters]\n"
+"                [--stdin [--literally]] [--] <fichier>..."
+
+msgid "git hash-object [-t <type>] [-w] --stdin-paths [--no-filters]"
+msgstr "git hash-object [-t <type>] [-w] --stdin-paths [--no-filters]"
 
 msgid "object type"
 msgstr "type d'objet"
@@ -7429,11 +7456,15 @@ msgid "Initialized empty Git repository in %s%s\n"
 msgstr "Dépôt Git vide initialisé dans %s%s\n"
 
 msgid ""
-"git init [-q | --quiet] [--bare] [--template=<template-directory>] [--"
-"shared[=<permissions>]] [<directory>]"
+"git init [-q | --quiet] [--bare] [--template=<template-directory>]\n"
+"         [--separate-git-dir <git-dir>] [--object-format=<format>]\n"
+"         [-b <branch-name> | --initial-branch=<branch-name>]\n"
+"         [--shared[=<permissions>]] [<directory>]"
 msgstr ""
-"git init [-q | --quiet] [--bare] [--template=<répertoire-modèle>] [--"
-"shared[=<permissions>]] [<répertoire>]"
+"git init [-q | --quiet] [--bare] [--template=<répertoire-modèle>]\n"
+"         [--separate-git-dir <rép-git>] [--object-format=<format>]\\n\"\n"
+"         [-b <nom-de-branche> | --initial-branch=<nom-de-branche>]\\n\"\n"
+"         [--shared[=<permissions>]] [<répertoire>]"
 
 msgid "permissions"
 msgstr "permissions"
@@ -7474,11 +7505,13 @@ msgid "--separate-git-dir incompatible with bare repository"
 msgstr "--separate-git-dir est incompatible avec un dépôt nu"
 
 msgid ""
-"git interpret-trailers [--in-place] [--trim-empty] [(--trailer "
-"<token>[(=|:)<value>])...] [<file>...]"
+"git interpret-trailers [--in-place] [--trim-empty]\n"
+"                       [(--trailer <token>[(=|:)<value>])...]\n"
+"                       [--parse] [<file>...]"
 msgstr ""
-"git interpret-trailers [--in-place] [--trim-empty] [(--trailer "
-"<symbole>[(=|:)<valeur>])...] [<fichier>...]"
+"git interpret-trailers [--in-place] [--trim-empty]\n"
+"                       [(--trailer <symbole>[(=|:)<valeur>])...]\n"
+"                       [--parse] [<fichier>...]"
 
 msgid "edit files in place"
 msgstr "éditer les fichiers sur place"
@@ -7977,11 +8010,11 @@ msgstr ""
 
 msgid ""
 "git ls-remote [--heads] [--tags] [--refs] [--upload-pack=<exec>]\n"
-"              [-q | --quiet] [--exit-code] [--get-url]\n"
+"              [-q | --quiet] [--exit-code] [--get-url] [--sort=<key>]\n"
 "              [--symref] [<repository> [<refs>...]]"
 msgstr ""
 "git ls-remote [--heads] [--tags] [--refs] [--upload-pack=<exec>]\n"
-"              [-q | --quiet] [--exit-code] [--get-url]\n"
+"              [-q | --quiet] [--exit-code] [--get-url] [--sort=<clé>]\n"
 "              [--symref] [<dépôt> [<réf>...]]"
 
 msgid "do not print remote URL"
@@ -8116,11 +8149,11 @@ msgstr "git merge-base [-a | --all] <commit> <commit>..."
 msgid "git merge-base [-a | --all] --octopus <commit>..."
 msgstr "git merge-base [-a | --all] --octopus <commit>..."
 
-msgid "git merge-base --independent <commit>..."
-msgstr "git merge-base --independent <validation>..."
-
 msgid "git merge-base --is-ancestor <commit> <commit>"
 msgstr "git merge-base --is-ancestor <validation> <validation>"
+
+msgid "git merge-base --independent <commit>..."
+msgstr "git merge-base --independent <validation>..."
 
 msgid "git merge-base --fork-point <ref> [<commit>]"
 msgstr "git merge-base --fork-point <référence> [<validation>]"
@@ -8229,8 +8262,19 @@ msgstr "lister les noms de fichier sans modes/oids/indexation"
 msgid "allow merging unrelated histories"
 msgstr "permettre la fusion d'historiques sans rapport"
 
+msgid "perform multiple merges, one per line of input"
+msgstr "réaliser des fusions multiples, une par ligne d'entrée"
+
 msgid "--trivial-merge is incompatible with all other options"
 msgstr "--trivial-merge est incompatible avec d'autres options"
+
+#, c-format
+msgid "malformed input line: '%s'."
+msgstr "ligne en entrée malformée : '%s'."
+
+#, c-format
+msgid "merging cannot continue; got unclean result of %d"
+msgstr "la fusion ne peut pas continuer ; résultat non propre retourné %d"
 
 msgid "git merge [<options>] [<commit>...]"
 msgstr "git merge [<options>] [<commit>...]"
@@ -8860,10 +8904,6 @@ msgid "cannot read note data from non-blob object '%s'."
 msgstr "impossible de lire les informations de note d'un objet non-blob '%s'."
 
 #, c-format
-msgid "malformed input line: '%s'."
-msgstr "ligne en entrée malformée : '%s'."
-
-#, c-format
 msgid "failed to copy notes from '%s' to '%s'"
 msgstr "impossible de copier les notes de '%s' vers '%s'"
 
@@ -9055,16 +9095,15 @@ msgstr "utiliser les notes depuis <références-notes>"
 msgid "unknown subcommand: `%s'"
 msgstr "sous-commande inconnue : `%s'"
 
-msgid ""
-"git pack-objects --stdout [<options>...] [< <ref-list> | < <object-list>]"
+msgid "git pack-objects --stdout [<options>] [< <ref-list> | < <object-list>]"
 msgstr ""
-"git pack-objects --stdout [options...] [< <liste-références> | < <liste-"
+"git pack-objects --stdout [<options>] [< <liste-références> | < <liste-"
 "objets>]"
 
 msgid ""
-"git pack-objects [<options>...] <base-name> [< <ref-list> | < <object-list>]"
+"git pack-objects [<options>] <base-name> [< <ref-list> | < <object-list>]"
 msgstr ""
-"git pack-objects [options...] base-name [< <liste-références> | < <liste-"
+"git pack-objects [<options>] <nom-de-base> [< <liste-références> | < <liste-"
 "objets>]"
 
 #, c-format
@@ -9453,20 +9492,32 @@ msgstr ""
 "sur la ligne de commande pour nous avertir par\n"
 "un courriel à <git@vger.kernel.org>. Merci.\n"
 
-msgid "git pack-refs [<options>]"
-msgstr "git pack-refs [<options>]"
+msgid "git pack-refs [--all] [--no-prune]"
+msgstr "git pack-refs [--all] [--no-prune]"
 
 msgid "pack everything"
 msgstr "empaqueter tout"
 
 msgid "prune loose refs (default)"
-msgstr "éliminer les références perdues (défaut)"
+msgstr "élaguer les références perdues (défaut)"
+
+msgid "git patch-id [--stable | --unstable | --verbatim]"
+msgstr "git patch-id [--stable | --unstable | --verbatim]"
+
+msgid "use the unstable patch-id algorithm"
+msgstr "utiliser l'algorithme instable patch-id"
+
+msgid "use the stable patch-id algorithm"
+msgstr "utiliser l'algorithme stable patch-id"
+
+msgid "don't strip whitespace from the patch"
+msgstr "ne pas retirer les espaces blancs de la rustine"
 
 msgid "git prune [-n] [-v] [--progress] [--expire <time>] [--] [<head>...]"
 msgstr "git prune [-n] [-v] [--progress] [--expire <heure>] [--] [<head>…]"
 
 msgid "report pruned objects"
-msgstr "afficher les objets éliminés"
+msgstr "afficher les objets élagués"
 
 msgid "expire objects older than <time>"
 msgstr "faire expirer les objets plus vieux que <heure>"
@@ -9475,7 +9526,7 @@ msgid "limit traversal to objects outside promisor packfiles"
 msgstr "limiter la traversée aux objets hors des fichiers paquets prometteurs"
 
 msgid "cannot prune in a precious-objects repo"
-msgstr "impossible de nettoyer dans un dépôt d'objets précieux"
+msgstr "impossible d'élaguer dans un dépôt d'objets précieux"
 
 msgid "git pull [<options>] [<repository> [<refspec>...]]"
 msgstr "git pull [<options>] [<dépôt> [<spécification-de-référence>...]]"
@@ -9682,9 +9733,8 @@ msgstr ""
 
 msgid ""
 "\n"
-"To avoid automatically configuring upstream branches when their name\n"
-"doesn't match the local branch, see option 'simple' of branch."
-"autoSetupMerge\n"
+"To avoid automatically configuring an upstream branch when its name\n"
+"won't match the local branch, see option 'simple' of branch.autoSetupMerge\n"
 "in 'git help config'.\n"
 msgstr ""
 "\n"
@@ -9856,6 +9906,13 @@ msgstr "Poussée vers %s\n"
 msgid "failed to push some refs to '%s'"
 msgstr "impossible de pousser des références vers '%s'"
 
+msgid ""
+"recursing into submodule with push.recurseSubmodules=only; using on-demand "
+"instead"
+msgstr ""
+"la récursion dans le sous-module avec push.recurseSubmodules=only ; "
+"utilisation de on-demande à la place"
+
 #, c-format
 msgid "invalid value for '%s'"
 msgstr "valeur invalide pour '%s'"
@@ -9901,7 +9958,7 @@ msgid "set upstream for git pull/status"
 msgstr "définir la branche amont pour git pull/status"
 
 msgid "prune locally removed refs"
-msgstr "éliminer les références locales supprimées"
+msgstr "élaguer les références locales supprimées"
 
 msgid "bypass pre-push hook"
 msgstr "éviter d'utiliser le crochet pre-push"
@@ -9996,14 +10053,15 @@ msgid "need two commit ranges"
 msgstr "plage entre deux commits requise"
 
 msgid ""
-"git read-tree [(-m [--trivial] [--aggressive] | --reset | --prefix=<prefix>) "
-"[-u | -i]] [--no-sparse-checkout] [--index-output=<file>] (--empty | <tree-"
-"ish1> [<tree-ish2> [<tree-ish3>]])"
+"git read-tree [(-m [--trivial] [--aggressive] | --reset | --"
+"prefix=<prefix>)\n"
+"              [-u | -i]] [--index-output=<file>] [--no-sparse-checkout]\n"
+"              (--empty | <tree-ish1> [<tree-ish2> [<tree-ish3>]])"
 msgstr ""
 "git read-tree [(-m [--trivial] [--aggressive] | --reset | --"
-"prefix=<préfixe>) [-u | -i]] [--no-sparse-checkout] [--index-"
-"output=<fichier>] (--empty | <arbre-esque1> [<arbre-esque2> [<arbre-"
-"esque3>]])"
+"prefix=<préfixe>)\n"
+"              [-u | -i]] [--index-output=<fichier>] [--no-sparse-checkout]\n"
+"              (--empty | <arbre-esque1> [<arbre-esque2> [<arbre-esque3>]])"
 
 msgid "write resulting index to <file>"
 msgstr "écrire l'index résultant dans <fichier>"
@@ -10094,8 +10152,8 @@ msgid "%s requires the merge backend"
 msgstr "%s requiert un moteur de fusion"
 
 #, c-format
-msgid "could not get 'onto': '%s'"
-msgstr "impossible d'accéder 'onto' : '%s'"
+msgid "invalid onto: '%s'"
+msgstr "destination invalide : '%s'"
 
 #, c-format
 msgid "invalid orig-head: '%s'"
@@ -10405,8 +10463,8 @@ msgstr "pas de branche ou commit '%s'"
 msgid "No such ref: %s"
 msgstr "Référence inexistante : %s"
 
-msgid "Could not resolve HEAD to a revision"
-msgstr "Impossible de résoudre le commit HEAD vers un révision"
+msgid "Could not resolve HEAD to a commit"
+msgstr "impossible de résoudre HEAD en un commit"
 
 #, c-format
 msgid "'%s': need exactly one merge base with branch"
@@ -10981,14 +11039,14 @@ msgstr "URL : %s"
 
 #, c-format
 msgid " * [would prune] %s"
-msgstr " * [serait éliminé] %s"
+msgstr " * [élaguerait] %s"
 
 #, c-format
 msgid " * [pruned] %s"
-msgstr " * [éliminé] %s"
+msgstr " * [élagué] %s"
 
 msgid "prune remotes after fetching"
-msgstr "éliminer les distants après le rapatriement"
+msgstr "élagué les distants après la récupération"
 
 #, c-format
 msgid "No such remote '%s'"
@@ -11082,6 +11140,10 @@ msgstr "impossible d'ouvrir le fichier temporaire %s en écriture"
 msgid "could not close refs snapshot tempfile"
 msgstr "impossible de fermer le fichier temporaire d'instantané des réfs"
 
+#, c-format
+msgid "could not remove stale bitmap: %s"
+msgstr "impossible de revenir la bitmap obsolète : %s"
+
 msgid "pack everything in a single pack"
 msgstr "empaqueter tout dans un seul paquet"
 
@@ -11156,6 +11218,9 @@ msgstr "trouver une progression géométrique avec un facteur <N>"
 msgid "write a multi-pack index of the resulting packs"
 msgstr "écrire un index de multi-paquet des paquets résultants"
 
+msgid "pack prefix to store a pack containing pruned objects"
+msgstr "préfixe de paquet pour stocker un paquet contenant les objets élagués"
+
 msgid "cannot delete packs in a precious-objects repo"
 msgstr "impossible de supprimer les paquets dans un dépôt d'objets précieux"
 
@@ -11167,8 +11232,12 @@ msgid "pack prefix %s does not begin with objdir %s"
 msgstr "le préfixe %s ne commence pas avec objdir %s"
 
 #, c-format
-msgid "missing required file: %s"
-msgstr "fichier nécessaire manquant : %s"
+msgid "renaming pack to '%s' failed"
+msgstr "le renommage du paquet en '%s' a échoué"
+
+#, c-format
+msgid "pack-objects did not write a '%s' file for pack %s-%s"
+msgstr "pack-objects n'a pas écrit un fichier '%s' pour la paquet %s-%s"
 
 #, c-format
 msgid "could not unlink: %s"
@@ -11362,9 +11431,10 @@ msgstr "--convert-graft-file ne supporte aucun argument"
 msgid "only one pattern can be given with -l"
 msgstr "-l n'accepte qu'un motifs"
 
-msgid "git rerere [clear | forget <path>... | status | remaining | diff | gc]"
+msgid ""
+"git rerere [clear | forget <pathspec>... | diff | status | remaining | gc]"
 msgstr ""
-"git rerere [clear | forget <chemin>... | status | remaining | diff | gc]"
+"git rerere [clear | forget <chemin>... | diff | status | remaining | gc]"
 
 msgid "register clean resolutions in index"
 msgstr "enregistrer des résolutions propres dans l'index"
@@ -11572,6 +11642,15 @@ msgstr "--prefix exige un argument"
 msgid "unknown mode for --abbrev-ref: %s"
 msgstr "mode inconnu pour --abbrev-ref : %s"
 
+msgid "--exclude-hidden cannot be used together with --branches"
+msgstr "--exclude-hidden ne peut être utilisé avec --branches"
+
+msgid "--exclude-hidden cannot be used together with --tags"
+msgstr "--exclude-hidden ne peut pas être utilisé avec --tags"
+
+msgid "--exclude-hidden cannot be used together with --remotes"
+msgstr "--exclude-hidden ne peut pas être utilisé avec --remotes"
+
 msgid "this operation must be run in a work tree"
 msgstr "cette opération doit être effectuée dans un arbre de travail"
 
@@ -11579,17 +11658,25 @@ msgstr "cette opération doit être effectuée dans un arbre de travail"
 msgid "unknown mode for --show-object-format: %s"
 msgstr "mode inconnu pour --show-object-format : %s"
 
-msgid "git revert [<options>] <commit-ish>..."
-msgstr "git revert [<options>] <commit ou apparenté>..."
+msgid ""
+"git revert [--[no-]edit] [-n] [-m <parent-number>] [-s] [-S[<keyid>]] "
+"<commit>..."
+msgstr ""
+"git revert [--[no-]edit] [-n] [-m <numéro-de-parent>] [-s] [-S[<id-clé>]] "
+"<commit>..."
 
-msgid "git revert <subcommand>"
-msgstr "git revert <sous-commande>"
+msgid "git revert (--continue | --skip | --abort | --quit)"
+msgstr "git revert (--continue | --skip | --abort | --quit)"
 
-msgid "git cherry-pick [<options>] <commit-ish>..."
-msgstr "git cherry-pick [<options>] <commit ou apparenté>..."
+msgid ""
+"git cherry-pick [--edit] [-n] [-m <parent-number>] [-s] [-x] [--ff]\n"
+"                [-S[<keyid>]] <commit>..."
+msgstr ""
+"git cherry-pick [--edit] [-n] [-m <numéro-de-parent>] [-s] [-x] [--ff]\n"
+"                [-S[<clé-id>]] <commit>..."
 
-msgid "git cherry-pick <subcommand>"
-msgstr "git cherry-pick <sous-commande>"
+msgid "git cherry-pick (--continue | --skip | --abort | --quit)"
+msgstr "git cherry-pick (--continue | --skip | --abort | --quit)"
 
 #, c-format
 msgid "option `%s' expects a number greater than zero"
@@ -11650,8 +11737,14 @@ msgstr "revert a échoué"
 msgid "cherry-pick failed"
 msgstr "le picorage a échoué"
 
-msgid "git rm [<options>] [--] <file>..."
-msgstr "git rm [<options>] [--] <fichier>..."
+msgid ""
+"git rm [-f | --force] [-n] [-r] [--cached] [--ignore-unmatch]\n"
+"       [--quiet] [--pathspec-from-file=<file> [--pathspec-file-nul]]\n"
+"       [--] [<pathspec>...]"
+msgstr ""
+"git rm [-f | --force] [-n] [-r] [--cached] [--ignore-unmatch]\n"
+"       [--quiet] [--pathspec-from-file=<fichier> [--pathspec-file-nul]]\n"
+"       [--] [<spéc-de-chemin>...]"
 
 msgid ""
 "the following file has staged content different from both the\n"
@@ -11726,11 +11819,13 @@ msgid ""
 "git send-pack [--mirror] [--dry-run] [--force]\n"
 "              [--receive-pack=<git-receive-pack>]\n"
 "              [--verbose] [--thin] [--atomic]\n"
+"              [--[no-]signed | --signed=(true|false|if-asked)]\n"
 "              [<host>:]<directory> (--all | <ref>...)"
 msgstr ""
 "git send-pack [--mirror] [--dry-run] [--force]\n"
 "              [--receive-pack=<git-receive-pack>]\n"
 "              [--verbose] [--thin] [--atomic]\n"
+"              [--[no-]signed | --signed=(true | false | if-asked)]\n"
 "              [<hôte>:]<répertoire> (--all | <réf>...)"
 
 msgid "remote name"
@@ -11755,8 +11850,9 @@ msgid "using multiple --group options with stdin is not supported"
 msgstr ""
 "l'utilisation de plusieurs options --group avec stdin n'est pas supportée"
 
-msgid "using --group=trailer with stdin is not supported"
-msgstr "l'utilisation de --group=trailer avec stdin n'est pas supportée"
+#, c-format
+msgid "using %s with stdin is not supported"
+msgstr "l'utilisation de %s avec stdin n'est pas supportée"
 
 #, c-format
 msgid "unknown group type: %s"
@@ -11795,12 +11891,14 @@ msgid ""
 "git show-branch [-a | --all] [-r | --remotes] [--topo-order | --date-order]\n"
 "                [--current] [--color[=<when>] | --no-color] [--sparse]\n"
 "                [--more=<n> | --list | --independent | --merge-base]\n"
-"                [--no-name | --sha1-name] [--topics] [(<rev> | <glob>)...]"
+"                [--no-name | --sha1-name] [--topics]\n"
+"                [(<rev> | <glob>)...]"
 msgstr ""
 "git show-branch [-a | --all] [-r | --remotes] [--topo-order | --date-order]\n"
 "                [--current] [--color[=<quand>] | --no-color] [--sparse]\n"
 "                [--more=<n> | --list | --independent | --merge-base]\n"
-"                [--no-name | --sha1-name] [--topics] [(<rév> | <glob>)...]"
+"                [--no-name | --sha1-name] [--topics]\n"
+"                [(<rév> | <glob>)...]"
 
 msgid "git show-branch (-g | --reflog)[=<n>[,<base>]] [--list] [<ref>]"
 msgstr "git show-branch (-g | --reflog)[=<n>[,<base>]] [--list] [<référence>]"
@@ -11902,11 +12000,13 @@ msgid "Unknown hash algorithm"
 msgstr "Algorithme d'empreinte inconnu"
 
 msgid ""
-"git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference] [-s | --"
-"hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [<pattern>...]"
+"git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference]\n"
+"             [-s | --hash[=<n>]] [--abbrev[=<n>]] [--tags]\n"
+"             [--heads] [--] [<pattern>...]"
 msgstr ""
-"git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference] [-s | --"
-"hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [<motif>...]"
+"git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference]\n"
+"             [-s | --hash[=<n>]] [--abbrev[=<n>]] [--tags]\n"
+"             [--heads] [--] [<motif>...]"
 
 msgid "git show-ref --exclude-existing[=<pattern>]"
 msgstr "git show-ref --exclude-existing[=<motif>]"
@@ -11940,8 +12040,10 @@ msgstr ""
 "afficher les références de l'entrée standard qui ne sont pas dans le dépôt "
 "local"
 
-msgid "git sparse-checkout (init|list|set|add|reapply|disable) <options>"
-msgstr "git sparse-checkout (init|list|set|add|reapply|disable) <options>"
+msgid ""
+"git sparse-checkout (init | list | set | add | reapply | disable) [<options>]"
+msgstr ""
+"git sparse-checkout (init | list | set | add | reapply | disable) [<options>]"
 
 msgid "this worktree is not sparse"
 msgstr "cet arbre de travail n'est pas clairsemé"
@@ -12071,67 +12173,57 @@ msgstr ""
 msgid "error while refreshing working directory"
 msgstr "erreur lors du rafraîchissement du répertoire de travail"
 
-msgid "git stash list [<options>]"
-msgstr "git stash list [<options>]"
+msgid "git stash list [<log-options>]"
+msgstr "git stash list [<options-de-log>]"
 
-msgid "git stash show [<options>] [<stash>]"
-msgstr "git stash show [<options>] [<remise>]"
+msgid ""
+"git stash show [-u | --include-untracked | --only-untracked] [<diff-"
+"options>] [<stash>]"
+msgstr ""
+"git stash show [-u | --include-untracked | --only-untracked] [<options-de-"
+"diff>] [<stash>]"
 
-msgid "git stash drop [-q|--quiet] [<stash>]"
-msgstr "git stash drop [-q|--quiet] [<remise>]"
+msgid "git stash drop [-q | --quiet] [<stash>]"
+msgstr "git stash drop [-q | --quiet] [<remise>]"
 
-msgid "git stash ( pop | apply ) [--index] [-q|--quiet] [<stash>]"
-msgstr "git stash ( pop | apply ) [--index] [-q|--quiet] [<remise>]"
+msgid "git stash pop [--index] [-q | --quiet] [<stash>]"
+msgstr "git stash pop [--index] [-q | --quiet] [<remise>]"
+
+msgid "git stash apply [--index] [-q | --quiet] [<stash>]"
+msgstr "git stash apply [--index] [-q | --quiet] [<remise>]"
 
 msgid "git stash branch <branchname> [<stash>]"
 msgstr "git stash branch <nom-de-branche> [<remise>]"
 
+msgid "git stash store [(-m | --message) <message>] [-q | --quiet] <commit>"
+msgstr "git stash store [(-m | --message) <message>] [-q | --quiet] <remise>"
+
 msgid ""
-"git stash [push [-p|--patch] [-S|--staged] [-k|--[no-]keep-index] [-q|--"
-"quiet]\n"
-"          [-u|--include-untracked] [-a|--all] [-m|--message <message>]\n"
+"git stash [push [-p | --patch] [-S | --staged] [-k | --[no-]keep-index] [-q "
+"| --quiet]\n"
+"          [-u | --include-untracked] [-a | --all] [(-m | --message) "
+"<message>]\n"
 "          [--pathspec-from-file=<file> [--pathspec-file-nul]]\n"
 "          [--] [<pathspec>...]]"
 msgstr ""
-"git stash [push [-p|--patch] [-S|--staged] [-k|--[no-]keep-index] [-q|--"
-"quiet]\n"
-"          [-u|--include-untracked] [-a|--all] [-m|--message <message>]\n"
+"git stash [push [-p | --patch] [-S | --staged] [-k | --[no-]keep-index] [-q "
+"| --quiet]\n"
+"          [-u | --include-untracked] [-a | --all] [(-m | --message) "
+"<message>]\n"
 "          [--pathspec-from-file=<fichier> [--pathspec-file-nul]]\n"
 "          [--] [<spécificateur-de-chemin>...]]"
 
 msgid ""
-"git stash save [-p|--patch] [-S|--staged] [-k|--[no-]keep-index] [-q|--"
-"quiet]\n"
-"          [-u|--include-untracked] [-a|--all] [<message>]"
+"git stash save [-p | --patch] [-S | --staged] [-k | --[no-]keep-index] [-q | "
+"--quiet]\n"
+"          [-u | --include-untracked] [-a | --all] [<message>]"
 msgstr ""
-"git stash save [-p|--patch] [-S|--staged] [-k|--[no-]keep-index] [-q|--"
-"quiet]\n"
-"          [-u|--include-untracked] [-a|--all] [<message>]"
+"git stash save [-p | --patch] [-S | --staged] [-k | --[no-]keep-index] [-q | "
+"--quiet]\n"
+"          [-u | --include-untracked] [-a | --all] [<message>]"
 
-msgid "git stash pop [--index] [-q|--quiet] [<stash>]"
-msgstr "git stash pop [--index] [-q|--quiet] [<remise>]"
-
-msgid "git stash apply [--index] [-q|--quiet] [<stash>]"
-msgstr "git stash apply [--index] [-q|--quiet] [<remise>]"
-
-msgid "git stash store [-m|--message <message>] [-q|--quiet] <commit>"
-msgstr "git stash store [-m|--message <message>] [-q|--quiet] <remise>"
-
-msgid ""
-"git stash [push [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
-"          [-u|--include-untracked] [-a|--all] [-m|--message <message>]\n"
-"          [--] [<pathspec>...]]"
-msgstr ""
-"git stash [push [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
-"          [-u|--include-untracked] [-a|--all] [-m|--message <message>]\n"
-"          [--] [<spécificateur-de-chemin>...]]"
-
-msgid ""
-"git stash save [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
-"               [-u|--include-untracked] [-a|--all] [<message>]"
-msgstr ""
-"git stash save [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
-"               [-u|--include-untracked] [-a|--all] [<message>]"
+msgid "git stash create [<message>]"
+msgstr "git stash create [<message>]"
 
 #, c-format
 msgid "'%s' is not a stash-like commit"
@@ -12712,9 +12804,6 @@ msgstr "traverser les sous-modules récursivement"
 msgid "don't fetch new objects from the remote site"
 msgstr "ne pas récupérer les nouveaux objets depuis le site distant"
 
-msgid "path into the working tree"
-msgstr "chemin dans la copie de travail"
-
 msgid "use the 'checkout' update strategy (default)"
 msgstr "utiliser la stratégie de mise à jour 'checkout' (valeur par défaut)"
 
@@ -12750,27 +12839,8 @@ msgstr ""
 "[no-]recommend-shallow] [--reference <dépôt>] [--recursive] [--[no-]single-"
 "branch] [--] [<chemin>...]"
 
-msgid "recurse into submodules"
-msgstr "parcourir récursivement les sous-modules"
-
 msgid "git submodule absorbgitdirs [<options>] [<path>...]"
 msgstr "git submodule absorbgitdirs [<options>] [<chemin>...]"
-
-msgid "check if it is safe to write to the .gitmodules file"
-msgstr "vérifier si écrire dans le fichier .gitmodules est sur"
-
-msgid "unset the config in the .gitmodules file"
-msgstr "désactiver la configuration dans le fichier .gitmodules"
-
-msgid "git submodule--helper config <name> [<value>]"
-msgstr "git submodule--helper config name [<valeur>]"
-
-msgid "git submodule--helper config --unset <name>"
-msgstr "git submodule--helper config --unset <nom>"
-
-msgid "please make sure that the .gitmodules file is in the working tree"
-msgstr ""
-"veuillez vous assurer que le fichier .gitmodules est dans l'arbre de travail"
 
 msgid "suppress output for setting url of a submodule"
 msgstr "supprimer la sortie lors du paramétrage de l'url d'un sous-module"
@@ -12851,6 +12921,10 @@ msgstr "Réactivation du répertoire git local pour le sous-module '%s'\n"
 msgid "unable to checkout submodule '%s'"
 msgstr "Impossible d'extraire le sous-module '%s'"
 
+msgid "please make sure that the .gitmodules file is in the working tree"
+msgstr ""
+"veuillez vous assurer que le fichier .gitmodules est dans l'arbre de travail"
+
 #, c-format
 msgid "Failed to add submodule '%s'"
 msgstr "Échec d'ajout du sous-module '%s'"
@@ -12903,19 +12977,21 @@ msgstr "l'URL de dépôt : '%s' doit être absolu ou commencer par ./|../"
 msgid "'%s' is not a valid submodule name"
 msgstr "'%s' n'est pas un nom valide de sous-module"
 
+msgid "git submodule--helper <command>"
+msgstr "git submodule--helper <commande>"
+
 #, c-format
 msgid "%s doesn't support --super-prefix"
 msgstr "%s ne gère pas --super-prefix"
 
-#, c-format
-msgid "'%s' is not a valid submodule--helper subcommand"
-msgstr "'%s' n'est pas une sous-commande valide de submodule--helper"
+msgid "git symbolic-ref [-m <reason>] <name> <ref>"
+msgstr "git symbolic-ref [-m <raison>] <nom> <réf>"
 
-msgid "git symbolic-ref [<options>] <name> [<ref>]"
-msgstr "git symbolic-ref [<options>] <nom> [<référence>]"
+msgid "git symbolic-ref [-q] [--short] [--no-recurse] <name>"
+msgstr "git symbolic-ref [-q] [--short] [--no-recurse] <nom>"
 
-msgid "git symbolic-ref -d [-q] <name>"
-msgstr "git symbolic-ref -d [-q] <nom>"
+msgid "git symbolic-ref --delete [-q] <name>"
+msgstr "git symbolic-ref --delete [-q] <nom>"
 
 msgid "suppress error message for non-symbolic (detached) refs"
 msgstr ""
@@ -12927,6 +13003,9 @@ msgstr "supprimer la référence symbolique"
 msgid "shorten ref output"
 msgstr "raccourcir l'affichage de la référence"
 
+msgid "recursively dereference (default)"
+msgstr "déréférencer récursivement (défaut)"
+
 msgid "reason"
 msgstr "raison"
 
@@ -12934,25 +13013,25 @@ msgid "reason of the update"
 msgstr "raison de la mise à jour"
 
 msgid ""
-"git tag [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>]\n"
-"        <tagname> [<head>]"
+"git tag [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>] [-e]\n"
+"        <tagname> [<commit> | <object>]"
 msgstr ""
-"git tag [-a | -s | -u <id-clé>] [-f] [-m <msg> | -F <fichier>]\n"
-"        <nom-d-étiquette> [<tête>]"
+"git tag [-a | -s | -u <id-clé>] [-f] [-m <msg> | -F <fichier>] [-e]\n"
+"        <nom-d-étiquette> [<commit> | <objet>]"
 
 msgid "git tag -d <tagname>..."
 msgstr "git tag -d <nom-d-étiquette>..."
 
 msgid ""
-"git tag -l [-n[<num>]] [--contains <commit>] [--no-contains <commit>] [--"
-"points-at <object>]\n"
-"        [--format=<format>] [--merged <commit>] [--no-merged <commit>] "
-"[<pattern>...]"
+"git tag [-n[<num>]] -l [--contains <commit>] [--no-contains <commit>]\n"
+"        [--points-at <object>] [--column[=<options>] | --no-column]\n"
+"        [--create-reflog] [--sort=<key>] [--format=<format>]\n"
+"        [--merged <commit>] [--no-merged <commit>] [<pattern>...]"
 msgstr ""
-"git tag -l [-n[<num>]] [--contains <commit>] [--no-contains <commit>] [--"
-"points-at <objet>]\n"
-"        [--format=<format>] [--merged <commit>] [--no-merged <commit>] "
-"[<motif>...]"
+"git tag [-n[<num>]] -l [--contains <commit>] [--no-contains <commit>]\n"
+"        [--points-at <objet>] [--column[=<options>] | --no-column]\n"
+"        [--create-reflog] [--sort=<clé>] [--format=<format>]\n"
+"        [--merged <commit>] [--no-merged <commit>] [<motif>...]"
 
 msgid "git tag -v [--format=<format>] <tagname>..."
 msgstr "git tag -v [--format=<format>] <nom-d-étiquette>..."
@@ -13345,8 +13424,12 @@ msgstr "lire les mises à jour depuis l'entrée standard"
 msgid "update the info files from scratch"
 msgstr "mettre à jour les fichiers d'information à partir de zéro"
 
-msgid "git upload-pack [<options>] <dir>"
-msgstr "git upload-pack [<options>] <répertoire>"
+msgid ""
+"git-upload-pack [--[no-]strict] [--timeout=<n>] [--stateless-rpc]\n"
+"                [--advertise-refs] <directory>"
+msgstr ""
+"git-upload-pack [--[no-]strict] [--timeout=<n>] [--stateless-rpc]\n"
+"                [--advertise-refs] <répertoire>"
 
 msgid "quit after a single request/response exchange"
 msgstr "quitter après un unique échange requête/réponse"
@@ -13361,8 +13444,8 @@ msgstr ""
 msgid "interrupt transfer after <n> seconds of inactivity"
 msgstr "interrompre le transfert après <n> secondes d'inactivité"
 
-msgid "git verify-commit [-v | --verbose] <commit>..."
-msgstr "git verify-commit [-v | --verbose] <commit>..."
+msgid "git verify-commit [-v | --verbose] [--raw] <commit>..."
+msgstr "git verify-commit [-v | --verbose] [--raw] <commit>..."
 
 msgid "print commit contents"
 msgstr "afficher le contenu du commit"
@@ -13370,8 +13453,9 @@ msgstr "afficher le contenu du commit"
 msgid "print raw gpg status output"
 msgstr "afficher les messages bruts de gpg"
 
-msgid "git verify-pack [-v | --verbose] [-s | --stat-only] <pack>..."
-msgstr "git verify-pack [-v | --verbose] [-s | --stat-only] <pack>..."
+msgid "git verify-pack [-v | --verbose] [-s | --stat-only] [--] <pack>.idx..."
+msgstr ""
+"git verify-pack [-v | --verbose] [-s | --stat-only] [--] <paquet>.idx..."
 
 msgid "verbose"
 msgstr "verbeux"
@@ -13379,42 +13463,47 @@ msgstr "verbeux"
 msgid "show statistics only"
 msgstr "afficher seulement les statistiques"
 
-msgid "git verify-tag [-v | --verbose] [--format=<format>] <tag>..."
-msgstr "git verify-tag [-v | --verbose] [--format=<format>] <étiquette>..."
+msgid "git verify-tag [-v | --verbose] [--format=<format>] [--raw] <tag>..."
+msgstr ""
+"git verify-tag [-v | --verbose] [--format=<format>] [--raw] <étiquette>..."
 
 msgid "print tag contents"
 msgstr "afficher le contenu de l'étiquette"
 
-msgid "git worktree add [<options>] <path> [<commit-ish>]"
-msgstr "git worktree add [<options>] <chemin> [<commit>]"
+msgid ""
+"git worktree add [-f] [--detach] [--checkout] [--lock [--reason <string>]]\n"
+"                 [-b <new-branch>] <path> [<commit-ish>]"
+msgstr ""
+"git worktree add [-f] [--detach] [--checkout] [--lock [--reason <chaîne>]]\n"
+"                 [-b <nouvelle-branche>] <chemin> [<commit-esque>]"
 
-msgid "git worktree list [<options>]"
-msgstr "git worktree list [<options>]"
+msgid "git worktree list [-v | --porcelain [-z]]"
+msgstr "git worktree list [-v | --porcelain [-z]]"
 
-msgid "git worktree lock [<options>] <path>"
-msgstr "git worktree lock [<options>] <chemin>"
+msgid "git worktree lock [--reason <string>] <worktree>"
+msgstr "git worktree lock [--reason <chaîne>] <arbre-de-travail>"
 
 msgid "git worktree move <worktree> <new-path>"
 msgstr "git worktree move <arbre-de-travail> <nouveau-chemin>"
 
-msgid "git worktree prune [<options>]"
-msgstr "git worktree prune [<options>]"
+msgid "git worktree prune [-n] [-v] [--expire <expire>]"
+msgstr "git worktree prune [-n] [-v] [--expire <date>]"
 
-msgid "git worktree remove [<options>] <worktree>"
-msgstr "git worktree remove [<options>] <arbre-de-travail>"
+msgid "git worktree remove [-f] <worktree>"
+msgstr "git worktree remove [-f] <arbre-de-travail>"
 
 msgid "git worktree repair [<path>...]"
 msgstr "git worktree repair [<chemin>...]"
 
-msgid "git worktree unlock <path>"
-msgstr "git worktree unlock <chemin>"
+msgid "git worktree unlock <worktree>"
+msgstr "git worktree unlock <arbre-de-travail>"
 
 #, c-format
 msgid "Removing %s/%s: %s"
 msgstr "Suppression de %s/%s : %s"
 
 msgid "report pruned working trees"
-msgstr "afficher les arbres de travail éliminés"
+msgstr "afficher les arbres de travail élagués"
 
 msgid "expire working trees older than <time>"
 msgstr "faire expirer les arbres de travail plus vieux que <temps>"
@@ -13654,6 +13743,10 @@ msgstr "seulement utile pour le débogage"
 msgid "core.fsyncMethod = batch is unsupported on this platform"
 msgstr "core.fsyncMethod = batch non géré sur cette plateforme"
 
+#, c-format
+msgid "bundle list at '%s' has no mode"
+msgstr "la liste de colis n'a pas de mode à '%s'"
+
 msgid "failed to create temporary file"
 msgstr "impossible de créer un fichier temporaire"
 
@@ -13661,16 +13754,29 @@ msgid "insufficient capabilities"
 msgstr "capacités insuffisantes"
 
 #, c-format
+msgid "unrecognized bundle mode from URI '%s'"
+msgstr "mode de colisage non reconnu depuis l'URI '%s'"
+
+#, c-format
+msgid "exceeded bundle URI recursion limit (%d)"
+msgstr "limite de récursion d'URI de colis dépassée (%d)"
+
+#, c-format
 msgid "failed to download bundle from URI '%s'"
 msgstr "impossible de télécharger le colis depuis l'URI '%s'"
 
 #, c-format
-msgid "file at URI '%s' is not a bundle"
-msgstr "le fichier à l'URI '%s' n'est pas un colis"
+msgid "file at URI '%s' is not a bundle or bundle list"
+msgstr "le fichier à l'URI '%s' n'est pas un colis ou une liste de colis"
 
-#, c-format
-msgid "failed to unbundle bundle from URI '%s'"
-msgstr "échec pour ouvrir le colis de l'URI '%s'"
+msgid "bundle-uri: got an empty line"
+msgstr "bundle-uri : ligne vide rencontrée"
+
+msgid "bundle-uri: line is not of the form 'key=value'"
+msgstr "bundle-uri : la ligne n'est pas de la forme 'clé=valeur'"
+
+msgid "bundle-uri: line has empty key or value"
+msgstr "bundle-uri : la ligne a une clé ou une valeur vide"
 
 #, c-format
 msgid "unrecognized bundle hash algorithm: %s"
@@ -14062,8 +14168,7 @@ msgid "Compute unique ID for a patch"
 msgstr "Calculer l'ID unique d'un patch"
 
 msgid "Prune all unreachable objects from the object database"
-msgstr ""
-"Éliminer les objets inatteignables depuis la base de données des objets"
+msgstr "Élaguer les objets inatteignables depuis la base de données des objets"
 
 msgid "Remove extra objects that are already in pack files"
 msgstr "Éliminer les objets qui sont déjà présents dans les fichiers pack"
@@ -14265,8 +14370,8 @@ msgstr "le format du fichier de colis"
 msgid "Chunk-based file formats"
 msgstr "format de fichier avec des sections"
 
-msgid "Git commit graph format"
-msgstr "format de graphe de commit de Gti"
+msgid "Git commit-graph format"
+msgstr "format de graphe de commit de Git"
 
 msgid "Git index format"
 msgstr "format d'index Git"
@@ -14634,6 +14739,10 @@ msgstr "cas non géré dans 'has_worktree_moved': %d"
 msgid "health thread wait failed [GLE %ld]"
 msgstr "l'attente du fil de santé a échoué [GLE %ld]"
 
+#, c-format
+msgid "Invalid path: %s"
+msgstr "chemin invalide : '%s'"
+
 msgid "Unable to create FSEventStream."
 msgstr "impossible de créer FSEVEntStream."
 
@@ -14663,6 +14772,22 @@ msgstr "GetOverlappedResult a échoué sur '%s' [GLE %ld]"
 #, c-format
 msgid "could not read directory changes [GLE %ld]"
 msgstr "impossible de lire les modifications du répertoire [GLE %ld]"
+
+#, c-format
+msgid "opendir('%s') failed"
+msgstr "échec de opendir(%s)"
+
+#, c-format
+msgid "lstat('%s') failed"
+msgstr "échec de lstat('%s')"
+
+#, c-format
+msgid "strbuf_readlink('%s') failed"
+msgstr "échec de strbuf_readlink('%s')"
+
+#, c-format
+msgid "closedir('%s') failed"
+msgstr "échec de closedir('%s')"
 
 #, c-format
 msgid "[GLE %ld] unable to open for read '%ls'"
@@ -16322,9 +16447,11 @@ msgstr "le dépôt virtuel '%s' est incompatible avec fsmonitor"
 
 #, c-format
 msgid ""
-"repository '%s' is incompatible with fsmonitor due to lack of Unix sockets"
+"socket directory '%s' is incompatible with fsmonitor due to lack of Unix "
+"sockets support"
 msgstr ""
-"le dépôt '%s' est incompatible avec fsmonitor par manque de sockets Unix"
+"le répertoire de socket '%s' est incompatible avec fsmonitor par manque de "
+"sockets Unix"
 
 msgid ""
 "git [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]\n"
@@ -16650,8 +16777,8 @@ msgstr[1] ""
 "\n"
 "Les commandes les plus ressemblantes sont"
 
-msgid "git version [<options>]"
-msgstr "git version [<options>]"
+msgid "git version [--build-options]"
+msgstr "git version [--build-options]"
 
 #, c-format
 msgid "%s: %s - %s"
@@ -17584,10 +17711,6 @@ msgstr "impossible de normaliser le chemin d'objet alternatif : %s"
 msgid "%s: ignoring alternate object stores, nesting too deep"
 msgstr "%s : magasins d'objets alternatifs ignorés, récursion trop profonde"
 
-#, c-format
-msgid "unable to normalize object directory: %s"
-msgstr "impossible de normaliser le répertoire d'objet : %s"
-
 msgid "unable to fdopen alternates lockfile"
 msgstr "impossible d'ouvrir (fdopen) le fichier verrou des alternatives"
 
@@ -18432,6 +18555,10 @@ msgstr ""
 #, c-format
 msgid "promisor remote name cannot begin with '/': %s"
 msgstr "un nom de prometteur distant ne peut pas commencer par '/' : %s"
+
+#, c-format
+msgid "could not fetch %s from promisor remote"
+msgstr "impossible de récupérer %s depuis le distant de prometteur"
 
 msgid "object-info: expected flush after arguments"
 msgstr "object-info : vidage attendu après les arguments"
@@ -19519,6 +19646,13 @@ msgid "failed to find tree of %s"
 msgstr "impossible de trouver l'arbre de %s"
 
 #, c-format
+msgid "unsupported section for hidden refs: %s"
+msgstr "section non géree pour les réfs cachées : %s"
+
+msgid "--exclude-hidden= passed more than once"
+msgstr "--exclude-hidden= présent plus d'une fois"
+
+#, c-format
 msgid "resolve-undo records `%s` which is missing"
 msgstr "resolve-undo enregistre `%s` qui manque"
 
@@ -19662,6 +19796,14 @@ msgstr "scala reconfigure [--all|<enrôlement>]"
 
 msgid "--all or <enlistment>, but not both"
 msgstr "--all ou <enrôlement>, mais pas les deux"
+
+#, c-format
+msgid "could not remove stale scalar.repo '%s'"
+msgstr "impossible de supprimé le scalar.repo obsolète '%s'"
+
+#, c-format
+msgid "removing stale scalar.repo '%s'"
+msgstr "suppression du scalar.repo obsolète '%s'"
 
 #, c-format
 msgid "git repository gone in '%s'"
@@ -20291,15 +20433,15 @@ msgstr ""
 msgid "illegal label name: '%.*s'"
 msgstr "nom de label illégal '%.*s'"
 
+#, c-format
+msgid "could not resolve '%s'"
+msgstr "impossible de résoudre '%s'"
+
 msgid "writing fake root commit"
 msgstr "écriture d'un commit racine bidon"
 
 msgid "writing squash-onto"
 msgstr "écriture de 'écraser-sur'"
-
-#, c-format
-msgid "could not resolve '%s'"
-msgstr "impossible de résoudre '%s'"
 
 msgid "cannot merge without a current revision"
 msgstr "impossible de fusionner avec une révision courante"
@@ -20910,6 +21052,15 @@ msgstr "ls-tree a renvoyé un code de retour inattendu %d"
 #, c-format
 msgid "failed to lstat '%s'"
 msgstr "échec du lstat de '%s'"
+
+msgid "test-tool cache-tree <options> (control|prime|update)"
+msgstr "test-tool cache-tree <options> (control|prime|update)"
+
+msgid "clear the cache tree before each iteration"
+msgstr "effacer l'arbre de cache avant chaque itération"
+
+msgid "number of entries in the cache tree to invalidate (default 0)"
+msgstr "nombre d'entrées dans l'arbre de cache à invalider (par défaut, 0)"
 
 msgid "unhandled options"
 msgstr "options non gérées"
@@ -22768,6 +22919,153 @@ msgstr "%s sauté avec un suffix de sauvegarde '%s'.\n"
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "Souhaitez-vous réellement envoyer %s ?[y|N] : "
 
+#, c-format
+#~ msgid "unable to normalize object directory: %s"
+#~ msgstr "impossible de normaliser le répertoire d'objet : %s"
+
+#~ msgid "reset the bisection state"
+#~ msgstr "réinitialiser l'état de la bissection"
+
+#~ msgid "check whether bad or good terms exist"
+#~ msgstr "vérifier si les termes bons ou mauvais existent"
+
+#~ msgid "print out the bisect terms"
+#~ msgstr "afficher les termes de bissection"
+
+#~ msgid "start the bisect session"
+#~ msgstr "démarrer une session de bissection"
+
+#~ msgid "find the next bisection commit"
+#~ msgstr "trouver le prochain commit de bissection"
+
+#~ msgid "mark the state of ref (or refs)"
+#~ msgstr "marquer l'état d'une références (ou plusieurs)"
+
+#~ msgid "list the bisection steps so far"
+#~ msgstr "lister les étapes de bissection jusqu'ici"
+
+#~ msgid "replay the bisection process from the given file"
+#~ msgstr "rejouer le processus de bissection depuis le fichier fourni"
+
+#~ msgid "skip some commits for checkout"
+#~ msgstr "sauter certains commits pour l'extraction"
+
+#~ msgid "visualize the bisection"
+#~ msgstr "visualiser la bissection"
+
+#~ msgid "use <cmd>... to automatically bisect"
+#~ msgstr "utiliser <cmd>... pour bissecter automatiquement"
+
+#~ msgid "no log for BISECT_WRITE"
+#~ msgstr "pas de journal pour BISECT_WRITE"
+
+#~ msgid "Couldn't look up commit object for HEAD"
+#~ msgstr "Impossible de rechercher l'objet commit pour HEAD"
+
+#~ msgid "git bundle create [<options>] <file> <git-rev-list args>"
+#~ msgstr "git bundle create [<options>] <fichier> <args git-rev-list>"
+
+#, c-format
+#~ msgid "options '%s' and '%s %s' cannot be used together"
+#~ msgstr "les options '%s' et '%s %s' ne peuvent pas être utilisées ensemble"
+
+#~ msgid "git commit [<options>] [--] <pathspec>..."
+#~ msgstr "git commit [<options>] [--] <spécification-de-chemin>..."
+
+#~ msgid "git fsck [<options>] [<object>...]"
+#~ msgstr "git fsck [<options>] [<objet>...]"
+
+#~ msgid "git fsmonitor--daemon stop"
+#~ msgstr "git fsmonitor--daemon stop"
+
+#~ msgid "git fsmonitor--daemon status"
+#~ msgstr "git fsmonitor--daemon status"
+
+#~ msgid "failed to run 'git config'"
+#~ msgstr "échec du lancement de 'git config'"
+
+#, c-format
+#~ msgid "could not get 'onto': '%s'"
+#~ msgstr "impossible d'accéder 'onto' : '%s'"
+
+#~ msgid "Could not resolve HEAD to a revision"
+#~ msgstr "Impossible de résoudre le commit HEAD vers un révision"
+
+#, c-format
+#~ msgid "missing required file: %s"
+#~ msgstr "fichier nécessaire manquant : %s"
+
+#~ msgid "git revert [<options>] <commit-ish>..."
+#~ msgstr "git revert [<options>] <commit ou apparenté>..."
+
+#~ msgid "git revert <subcommand>"
+#~ msgstr "git revert <sous-commande>"
+
+#~ msgid "git cherry-pick [<options>] <commit-ish>..."
+#~ msgstr "git cherry-pick [<options>] <commit ou apparenté>..."
+
+#~ msgid "git cherry-pick <subcommand>"
+#~ msgstr "git cherry-pick <sous-commande>"
+
+#~ msgid "git rm [<options>] [--] <file>..."
+#~ msgstr "git rm [<options>] [--] <fichier>..."
+
+#~ msgid "using --group=trailer with stdin is not supported"
+#~ msgstr "l'utilisation de --group=trailer avec stdin n'est pas supportée"
+
+#~ msgid "git stash show [<options>] [<stash>]"
+#~ msgstr "git stash show [<options>] [<remise>]"
+
+#~ msgid "git stash ( pop | apply ) [--index] [-q|--quiet] [<stash>]"
+#~ msgstr "git stash ( pop | apply ) [--index] [-q|--quiet] [<remise>]"
+
+#~ msgid ""
+#~ "git stash [push [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
+#~ "          [-u|--include-untracked] [-a|--all] [-m|--message <message>]\n"
+#~ "          [--] [<pathspec>...]]"
+#~ msgstr ""
+#~ "git stash [push [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
+#~ "          [-u|--include-untracked] [-a|--all] [-m|--message <message>]\n"
+#~ "          [--] [<spécificateur-de-chemin>...]]"
+
+#~ msgid ""
+#~ "git stash save [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
+#~ "               [-u|--include-untracked] [-a|--all] [<message>]"
+#~ msgstr ""
+#~ "git stash save [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
+#~ "               [-u|--include-untracked] [-a|--all] [<message>]"
+
+#~ msgid "path into the working tree"
+#~ msgstr "chemin dans la copie de travail"
+
+#~ msgid "recurse into submodules"
+#~ msgstr "parcourir récursivement les sous-modules"
+
+#~ msgid "check if it is safe to write to the .gitmodules file"
+#~ msgstr "vérifier si écrire dans le fichier .gitmodules est sur"
+
+#~ msgid "unset the config in the .gitmodules file"
+#~ msgstr "désactiver la configuration dans le fichier .gitmodules"
+
+#~ msgid "git submodule--helper config <name> [<value>]"
+#~ msgstr "git submodule--helper config name [<valeur>]"
+
+#~ msgid "git submodule--helper config --unset <name>"
+#~ msgstr "git submodule--helper config --unset <nom>"
+
+#, c-format
+#~ msgid "'%s' is not a valid submodule--helper subcommand"
+#~ msgstr "'%s' n'est pas une sous-commande valide de submodule--helper"
+
+#~ msgid "git upload-pack [<options>] <dir>"
+#~ msgstr "git upload-pack [<options>] <répertoire>"
+
+#~ msgid "git worktree add [<options>] <path> [<commit-ish>]"
+#~ msgstr "git worktree add [<options>] <chemin> [<commit>]"
+
+#~ msgid "git worktree lock [<options>] <path>"
+#~ msgstr "git worktree lock [<options>] <chemin>"
+
 #~ msgid "(stats|all)"
 #~ msgstr "(stats|all)"
 
@@ -22803,9 +23101,6 @@ msgstr "Souhaitez-vous réellement envoyer %s ?[y|N] : "
 
 #~ msgid "git submodule--helper list [--prefix=<path>] [<path>...]"
 #~ msgstr "git submodule--helper list [--prefix=<chemin>] [<chemin>...]"
-
-#~ msgid "git submodule--helper name <path>"
-#~ msgstr "git submodule--helper <nom> <chemin>"
 
 #, c-format
 #~ msgid "failed to get the default remote for submodule '%s'"
