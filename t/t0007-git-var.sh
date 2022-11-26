@@ -5,6 +5,12 @@ test_description='basic sanity checks for git var'
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
+sane_unset_all_editors () {
+	sane_unset GIT_EDITOR &&
+	sane_unset VISUAL &&
+	sane_unset EDITOR
+}
+
 test_expect_success 'get GIT_AUTHOR_IDENT' '
 	test_tick &&
 	echo "$GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> $GIT_AUTHOR_DATE" >expect &&
@@ -43,6 +49,62 @@ test_expect_success 'get GIT_DEFAULT_BRANCH with configuration' '
 		sane_unset GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME &&
 		echo foo >expect &&
 		git var GIT_DEFAULT_BRANCH >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'get GIT_EDITOR without configuration' '
+	(
+		sane_unset_all_editors &&
+		test_expect_code 1 git var GIT_EDITOR >out &&
+		test_must_be_empty out
+	)
+'
+
+test_expect_success 'get GIT_EDITOR with configuration' '
+	test_config core.editor foo &&
+	(
+		sane_unset_all_editors &&
+		echo foo >expect &&
+		git var GIT_EDITOR >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'get GIT_EDITOR with environment variable GIT_EDITOR' '
+	(
+		sane_unset_all_editors &&
+		echo bar >expect &&
+		GIT_EDITOR=bar git var GIT_EDITOR >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'get GIT_EDITOR with environment variable EDITOR' '
+	(
+		sane_unset_all_editors &&
+		echo bar >expect &&
+		EDITOR=bar git var GIT_EDITOR >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'get GIT_EDITOR with configuration and environment variable GIT_EDITOR' '
+	test_config core.editor foo &&
+	(
+		sane_unset_all_editors &&
+		echo bar >expect &&
+		GIT_EDITOR=bar git var GIT_EDITOR >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'get GIT_EDITOR with configuration and environment variable EDITOR' '
+	test_config core.editor foo &&
+	(
+		sane_unset_all_editors &&
+		echo foo >expect &&
+		EDITOR=bar git var GIT_EDITOR >actual &&
 		test_cmp expect actual
 	)
 '

@@ -11,12 +11,7 @@ static const char var_usage[] = "git var (-l | <variable>)";
 
 static const char *editor(int flag)
 {
-	const char *pgm = git_editor();
-
-	if (!pgm && flag & IDENT_STRICT)
-		die("Terminal is dumb, but EDITOR unset");
-
-	return pgm;
+	return git_editor();
 }
 
 static const char *pager(int flag)
