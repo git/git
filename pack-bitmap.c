@@ -527,8 +527,15 @@ static int open_pack_bitmap(struct repository *r,
 	assert(!bitmap_git->map);
 
 	for (p = get_all_packs(r); p; p = p->next) {
-		if (open_pack_bitmap_1(bitmap_git, p) == 0)
+		if (open_pack_bitmap_1(bitmap_git, p) == 0) {
 			ret = 0;
+			/*
+			 * The only reason to keep looking is to report
+			 * duplicates.
+			 */
+			if (!trace2_is_enabled())
+				break;
+		}
 	}
 
 	return ret;
