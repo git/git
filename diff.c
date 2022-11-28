@@ -5772,6 +5772,13 @@ void diff_free_filepair(struct diff_filepair *p)
 	free(p);
 }
 
+void diff_free_queue(struct diff_queue_struct *q)
+{
+	for (int i = 0; i < q->nr; i++)
+		diff_free_filepair(q->queue[i]);
+	free(q->queue);
+}
+
 const char *diff_aligned_abbrev(const struct object_id *oid, int len)
 {
 	int abblen;
@@ -6329,13 +6336,9 @@ static int diff_get_patch_id(struct diff_options *options, struct object_id *oid
 int diff_flush_patch_id(struct diff_options *options, struct object_id *oid, int diff_header_only)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
-	int i;
 	int result = diff_get_patch_id(options, oid, diff_header_only);
 
-	for (i = 0; i < q->nr; i++)
-		diff_free_filepair(q->queue[i]);
-
-	free(q->queue);
+	diff_free_queue(q);
 	DIFF_QUEUE_CLEAR(q);
 
 	return result;
@@ -6604,10 +6607,8 @@ void diff_flush(struct diff_options *options)
 	if (output_format & DIFF_FORMAT_CALLBACK)
 		options->format_callback(q, options, options->format_callback_data);
 
-	for (i = 0; i < q->nr; i++)
-		diff_free_filepair(q->queue[i]);
 free_queue:
-	free(q->queue);
+	diff_free_queue(q);
 	DIFF_QUEUE_CLEAR(q);
 	diff_free(options);
 
