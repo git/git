@@ -153,6 +153,9 @@ Performance, Internal Implementation, Development Support etc.
  * "make coccicheck" is time consuming. It has been made to run more
    incrementally.
 
+ * `parse_object()` has been hardened to check for the existence of a
+   suspected blob object.
+
 
 Fixes since v2.38
 -----------------
@@ -308,6 +311,23 @@ Fixes since v2.38
  * Correct an error where `git rebase` would mistakenly use a branch or
    tag named "refs/rewritten/xyz" when missing a rebase label.
 
+ * Assorted fixes of parsing end-user input as integers.
+   (merge 14770cf0de pw/config-int-parse-fixes later to maint).
+
+ * "git prune" may try to iterate over .git/objects/pack for trash
+   files to remove in it, and loudly fail when the directory is
+   missing, which is not necessary.  The command has been taught to
+   ignore such a failure.
+   (merge 6974765352 ew/prune-with-missing-objects-pack later to maint).
+
+ * Add one more candidate directory that may house httpd modules while
+   running tests.
+   (merge 1c7dc23d41 es/locate-httpd-module-location-in-test later to maint).
+
+ * A handful of leaks in the line-log machinery have been plugged.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 413bc6d20a ds/cmd-main-reorder later to maint).
    (merge 8d2863e4ed nw/t1002-cleanup later to maint).
+   (merge 7c2dc122f9 rs/list-objects-filter-leakfix later to maint).
+   (merge 288fcb1c94 zk/push-use-bitmaps later to maint).
