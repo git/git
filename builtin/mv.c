@@ -87,7 +87,7 @@ static void prepare_move_submodule(const char *src, int first,
 				   const char **submodule_gitfile)
 {
 	struct strbuf submodule_dotgit = STRBUF_INIT;
-	if (!S_ISGITLINK(active_cache[first]->ce_mode))
+	if (!S_ISGITLINK(the_index.cache[first]->ce_mode))
 		die(_("Directory %s is in index and no submodule?"), src);
 	if (!is_staging_gitmodules_ok(&the_index))
 		die(_("Please stage your changes to .gitmodules or stash them to proceed"));
@@ -106,13 +106,13 @@ static int index_range_of_same_dir(const char *src, int length,
 	const char *src_w_slash = add_slash(src);
 	int first, last, len_w_slash = length + 1;
 
-	first = cache_name_pos(src_w_slash, len_w_slash);
+	first = index_name_pos(&the_index, src_w_slash, len_w_slash);
 	if (first >= 0)
 		die(_("%.*s is in index"), len_w_slash, src_w_slash);
 
 	first = -1 - first;
-	for (last = first; last < active_nr; last++) {
-		const char *path = active_cache[last]->name;
+	for (last = first; last < the_index.cache_nr; last++) {
+		const char *path = the_index.cache[last]->name;
 		if (strncmp(path, src_w_slash, len_w_slash))
 			break;
 	}
@@ -136,14 +136,14 @@ static int empty_dir_has_sparse_contents(const char *name)
 	const char *with_slash = add_slash(name);
 	int length = strlen(with_slash);
 
-	int pos = cache_name_pos(with_slash, length);
+	int pos = index_name_pos(&the_index, with_slash, length);
 	const struct cache_entry *ce;
 
 	if (pos < 0) {
 		pos = -pos - 1;
 		if (pos >= the_index.cache_nr)
 			goto free_return;
-		ce = active_cache[pos];
+		ce = the_index.cache[pos];
 		if (strncmp(with_slash, ce->name, length))
 			goto free_return;
 		if (ce_skip_worktree(ce))
@@ -189,8 +189,8 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	if (--argc < 1)
 		usage_with_options(builtin_mv_usage, builtin_mv_options);
 
-	hold_locked_index(&lock_file, LOCK_DIE_ON_ERROR);
-	if (read_cache() < 0)
+	repo_hold_locked_index(the_repository, &lock_file, LOCK_DIE_ON_ERROR);
+	if (repo_read_index(the_repository) < 0)
 		die(_("index file corrupt"));
 
 	source = internal_prefix_pathspec(prefix, argv, argc, 0);
@@ -255,7 +255,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 			int pos;
 			const struct cache_entry *ce;
 
-			pos = cache_name_pos(src, length);
+			pos = index_name_pos(&the_index, src, length);
 			if (pos < 0) {
 				const char *src_w_slash = add_slash(src);
 				if (!path_in_sparse_checkout(src_w_slash, &the_index) &&
@@ -268,7 +268,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 					bad = _("bad source");
 				goto act_on_entry;
 			}
-			ce = active_cache[pos];
+			ce = the_index.cache[pos];
 			if (!ce_skip_worktree(ce)) {
 				bad = _("bad source");
 				goto act_on_entry;
@@ -278,7 +278,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 				goto act_on_entry;
 			}
 			/* Check if dst exists in index */
-			if (cache_name_pos(dst, strlen(dst)) < 0) {
+			if (index_name_pos(&the_index, dst, strlen(dst)) < 0) {
 				modes[i] |= SPARSE;
 				goto act_on_entry;
 			}
@@ -303,7 +303,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 dir_check:
 		if (S_ISDIR(st.st_mode)) {
 			int j, dst_len, n;
-			int first = cache_name_pos(src, length), last;
+			int first = index_name_pos(&the_index, src, length), last;
 
 			if (first >= 0) {
 				prepare_move_submodule(src, first,
@@ -331,7 +331,7 @@ dir_check:
 			dst_len = strlen(dst);
 
 			for (j = 0; j < last - first; j++) {
-				const struct cache_entry *ce = active_cache[first + j];
+				const struct cache_entry *ce = the_index.cache[first + j];
 				const char *path = ce->name;
 				source[argc + j] = path;
 				destination[argc + j] =
@@ -343,7 +343,7 @@ dir_check:
 			argc += last - first;
 			goto act_on_entry;
 		}
-		if (!(ce = cache_file_exists(src, length, 0))) {
+		if (!(ce = index_file_exists(&the_index, src, length, 0))) {
 			bad = _("not under version control");
 			goto act_on_entry;
 		}
@@ -468,11 +468,14 @@ remove_entry:
 		if (mode & (WORKING_DIRECTORY | SKIP_WORKTREE_DIR))
 			continue;
 
-		pos = cache_name_pos(src, strlen(src));
+		pos = index_name_pos(&the_index, src, strlen(src));
 		assert(pos >= 0);
 		if (!(mode & SPARSE) && !lstat(src, &st))
-			sparse_and_dirty = ce_modified(active_cache[pos], &st, 0);
-		rename_cache_entry_at(pos, dst);
+			sparse_and_dirty = ie_modified(&the_index,
+						       the_index.cache[pos],
+						       &st,
+						       0);
+		rename_index_entry_at(&the_index, pos, dst);
 
 		if (ignore_sparse &&
 		    core_apply_sparse_checkout &&
@@ -487,7 +490,7 @@ remove_entry:
 			    path_in_sparse_checkout(dst, &the_index)) {
 				/* from out-of-cone to in-cone */
 				int dst_pos = cache_name_pos(dst, strlen(dst));
-				struct cache_entry *dst_ce = active_cache[dst_pos];
+				struct cache_entry *dst_ce = the_index.cache[dst_pos];
 
 				dst_ce->ce_flags &= ~CE_SKIP_WORKTREE;
 
@@ -498,7 +501,7 @@ remove_entry:
 				   !path_in_sparse_checkout(dst, &the_index)) {
 				/* from in-cone to out-of-cone */
 				int dst_pos = cache_name_pos(dst, strlen(dst));
-				struct cache_entry *dst_ce = active_cache[dst_pos];
+				struct cache_entry *dst_ce = the_index.cache[dst_pos];
 
 				/*
 				 * if src is clean, it will suffice to remove it

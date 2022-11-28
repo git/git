@@ -1,4 +1,4 @@
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
+#define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "repository.h"
 #include "cache.h"
@@ -196,11 +196,11 @@ static int module_list_compute(const char **argv,
 	if (pathspec->nr)
 		ps_matched = xcalloc(pathspec->nr, 1);
 
-	if (read_cache() < 0)
+	if (repo_read_index(the_repository) < 0)
 		die(_("index file corrupt"));
 
-	for (i = 0; i < active_nr; i++) {
-		const struct cache_entry *ce = active_cache[i];
+	for (i = 0; i < the_index.cache_nr; i++) {
+		const struct cache_entry *ce = the_index.cache[i];
 
 		if (!match_pathspec(&the_index, pathspec, ce->name, ce_namelen(ce),
 				    0, ps_matched, 1) ||
@@ -209,8 +209,8 @@ static int module_list_compute(const char **argv,
 
 		ALLOC_GROW(list->entries, list->nr + 1, list->alloc);
 		list->entries[list->nr++] = ce;
-		while (i + 1 < active_nr &&
-		       !strcmp(ce->name, active_cache[i + 1]->name))
+		while (i + 1 < the_index.cache_nr &&
+		       !strcmp(ce->name, the_index.cache[i + 1]->name))
 			/*
 			 * Skip entries with the same name in different stages
 			 * to make sure an entry is returned only once.
@@ -1110,13 +1110,13 @@ static int compute_summary_module_list(struct object_id *head_oid,
 	if (!info->cached) {
 		if (diff_cmd == DIFF_INDEX)
 			setup_work_tree();
-		if (read_cache_preload(&rev.diffopt.pathspec) < 0) {
-			perror("read_cache_preload");
+		if (repo_read_index_preload(the_repository, &rev.diffopt.pathspec, 0) < 0) {
+			perror("repo_read_index_preload");
 			ret = -1;
 			goto cleanup;
 		}
-	} else if (read_cache() < 0) {
-		perror("read_cache");
+	} else if (repo_read_index(the_repository) < 0) {
+		perror("repo_read_cache");
 		ret = -1;
 		goto cleanup;
 	}
@@ -3187,7 +3187,7 @@ static void die_on_index_match(const char *path, int force)
 	const char *args[] = { path, NULL };
 	parse_pathspec(&ps, 0, PATHSPEC_PREFER_CWD, NULL, args);
 
-	if (read_cache_preload(NULL) < 0)
+	if (repo_read_index_preload(the_repository, NULL, 0) < 0)
 		die(_("index file corrupt"));
 
 	if (ps.nr) {
@@ -3202,15 +3202,15 @@ static void die_on_index_match(const char *path, int force)
 		 * need to check ps_matched[0] to know if a cache
 		 * entry matched.
 		 */
-		for (i = 0; i < active_nr; i++) {
-			ce_path_match(&the_index, active_cache[i], &ps,
+		for (i = 0; i < the_index.cache_nr; i++) {
+			ce_path_match(&the_index, the_index.cache[i], &ps,
 				      ps_matched);
 
 			if (ps_matched[0]) {
 				if (!force)
 					die(_("'%s' already exists in the index"),
 					    path);
-				if (!S_ISGITLINK(active_cache[i]->ce_mode))
+				if (!S_ISGITLINK(the_index.cache[i]->ce_mode))
 					die(_("'%s' already exists in the index "
 					      "and is not a submodule"), path);
 				break;

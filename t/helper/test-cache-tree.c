@@ -1,3 +1,4 @@
+#define USE_THE_INDEX_VARIABLE
 #include "test-tool.h"
 #include "cache.h"
 #include "tree.h"
@@ -30,7 +31,7 @@ int cmd__cache_tree(int argc, const char **argv)
 
 	argc = parse_options(argc, argv, NULL, options, test_cache_tree_usage, 0);
 
-	if (read_cache() < 0)
+	if (repo_read_index(the_repository) < 0)
 		die(_("unable to read index file"));
 
 	oidcpy(&oid, &the_index.cache_tree->oid);

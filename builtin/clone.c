@@ -8,7 +8,7 @@
  * Clone a repository into a different directory that does not yet exist.
  */
 
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
+#define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "lockfile.h"
@@ -703,7 +703,7 @@ static int checkout(int submodule_progress, int filter_submodules)
 	/* We need to be in the new work tree for the checkout */
 	setup_work_tree();
 
-	hold_locked_index(&lock_file, LOCK_DIE_ON_ERROR);
+	repo_hold_locked_index(the_repository, &lock_file, LOCK_DIE_ON_ERROR);
 
 	memset(&opts, 0, sizeof opts);
 	opts.update = 1;

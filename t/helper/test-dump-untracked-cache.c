@@ -1,4 +1,4 @@
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
+#define USE_THE_INDEX_VARIABLE
 #include "test-tool.h"
 #include "cache.h"
 #include "dir.h"
@@ -51,7 +51,7 @@ int cmd__dump_untracked_cache(int ac, const char **av)
 	xsetenv("GIT_CONFIG_VALUE_0", "keep", 1);
 
 	setup_git_directory();
-	if (read_cache() < 0)
+	if (repo_read_index(the_repository) < 0)
 		die("unable to read index file");
 	uc = the_index.untracked;
 	if (!uc) {

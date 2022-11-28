@@ -7,7 +7,7 @@
  *
  * Copyright (c) 2005, 2006 Linus Torvalds and Junio C Hamano
  */
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
+#define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "lockfile.h"
@@ -84,7 +84,7 @@ static int reset_index(const char *ref, const struct object_id *oid, int reset_t
 		BUG("invalid reset_type passed to reset_index");
 	}
 
-	read_cache_unmerged();
+	repo_read_index_unmerged(the_repository);
 
 	if (reset_type == KEEP) {
 		struct object_id head_oid;
@@ -145,7 +145,7 @@ static void update_index_from_diff(struct diff_queue_struct *q,
 		struct cache_entry *ce;
 
 		if (!is_in_reset_tree && !intent_to_add) {
-			remove_file_from_cache(one->path);
+			remove_file_from_index(&the_index, one->path);
 			continue;
 		}
 
@@ -160,8 +160,8 @@ static void update_index_from_diff(struct diff_queue_struct *q,
 		 * if this entry is outside the sparse cone - this is necessary
 		 * to properly construct the reset sparse directory.
 		 */
-		pos = cache_name_pos(one->path, strlen(one->path));
-		if ((pos >= 0 && ce_skip_worktree(active_cache[pos])) ||
+		pos = index_name_pos(&the_index, one->path, strlen(one->path));
+		if ((pos >= 0 && ce_skip_worktree(the_index.cache[pos])) ||
 		    (pos < 0 && !path_in_sparse_checkout(one->path, &the_index)))
 			ce->ce_flags |= CE_SKIP_WORKTREE;
 
@@ -172,7 +172,8 @@ static void update_index_from_diff(struct diff_queue_struct *q,
 			ce->ce_flags |= CE_INTENT_TO_ADD;
 			set_object_name_for_intent_to_add_entry(ce);
 		}
-		add_cache_entry(ce, ADD_CACHE_OK_TO_ADD | ADD_CACHE_OK_TO_REPLACE);
+		add_index_entry(&the_index, ce,
+				ADD_CACHE_OK_TO_ADD | ADD_CACHE_OK_TO_REPLACE);
 	}
 }
 
@@ -220,7 +221,7 @@ static void set_reflog_message(struct strbuf *sb, const char *action,
 
 static void die_if_unmerged_cache(int reset_type)
 {
-	if (is_merge() || unmerged_cache())
+	if (is_merge() || unmerged_index(&the_index))
 		die(_("Cannot do a %s reset in the middle of a merge."),
 		    _(reset_type_names[reset_type]));
 
@@ -422,7 +423,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	prepare_repo_settings(the_repository);
 	the_repository->settings.command_requires_full_index = 0;
 
-	if (read_cache() < 0)
+	if (repo_read_index(the_repository) < 0)
 		die(_("index file corrupt"));
 
 	/* Soft reset does not touch the index file nor the working tree
@@ -433,7 +434,8 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 
 	if (reset_type != SOFT) {
 		struct lock_file lock = LOCK_INIT;
-		hold_locked_index(&lock, LOCK_DIE_ON_ERROR);
+		repo_hold_locked_index(the_repository, &lock,
+				       LOCK_DIE_ON_ERROR);
 		if (reset_type == MIXED) {
 			int flags = quiet ? REFRESH_QUIET : REFRESH_IN_PORCELAIN;
 			if (read_from_tree(&pathspec, &oid, intent_to_add))

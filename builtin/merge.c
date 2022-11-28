@@ -318,7 +318,7 @@ static int save_state(struct object_id *stash)
 	int rc = -1;
 
 	fd = repo_hold_locked_index(the_repository, &lock_file, 0);
-	refresh_cache(REFRESH_QUIET);
+	refresh_index(&the_index, REFRESH_QUIET, NULL, NULL, NULL);
 	if (0 <= fd)
 		repo_update_index_if_able(the_repository, &lock_file);
 	rollback_lock_file(&lock_file);
@@ -390,7 +390,8 @@ static void restore_state(const struct object_id *head,
 	run_command(&cmd);
 
 refresh_cache:
-	if (discard_cache() < 0 || read_cache() < 0)
+	discard_cache();
+	if (read_cache() < 0)
 		die(_("could not read index"));
 }
 
@@ -693,7 +694,7 @@ static int read_tree_trivial(struct object_id *common, struct object_id *head,
 	if (!trees[nr_trees++])
 		return -1;
 	opts.fn = threeway_merge;
-	cache_tree_free(&active_cache_tree);
+	cache_tree_free(&the_index.cache_tree);
 	for (i = 0; i < nr_trees; i++) {
 		parse_tree(trees[i]);
 		init_tree_desc(t+i, trees[i]->buffer, trees[i]->size);
@@ -715,7 +716,9 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 {
 	const char *head_arg = "HEAD";
 
-	if (refresh_and_write_cache(REFRESH_QUIET, SKIP_IF_UNCHANGED, 0) < 0)
+	if (repo_refresh_and_write_index(the_repository, REFRESH_QUIET,
+					 SKIP_IF_UNCHANGED, 0, NULL, NULL,
+					 NULL) < 0)
 		return error(_("Unable to write index."));
 
 	if (!strcmp(strategy, "recursive") || !strcmp(strategy, "subtree") ||
@@ -749,7 +752,8 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 		for (j = common; j; j = j->next)
 			commit_list_insert(j->item, &reversed);
 
-		hold_locked_index(&lock, LOCK_DIE_ON_ERROR);
+		repo_hold_locked_index(the_repository, &lock,
+				       LOCK_DIE_ON_ERROR);
 		if (!strcmp(strategy, "ort"))
 			clean = merge_ort_recursive(&o, head, remoteheads->item,
 						    reversed, &result);
@@ -783,8 +787,8 @@ static int count_unmerged_entries(void)
 {
 	int i, ret = 0;
 
-	for (i = 0; i < active_nr; i++)
-		if (ce_stage(active_cache[i]))
+	for (i = 0; i < the_index.cache_nr; i++)
+		if (ce_stage(the_index.cache[i]))
 			ret++;
 
 	return ret;
@@ -858,9 +862,9 @@ static void prepare_to_commit(struct commit_list *remoteheads)
 		 * the editor and after we invoke run_status above.
 		 */
 		if (invoked_hook)
-			discard_cache();
+			discard_index(&the_index);
 	}
-	read_cache_from(index_file);
+	read_index_from(&the_index, index_file, get_git_dir());
 	strbuf_addbuf(&msg, &merge_msg);
 	if (squash)
 		BUG("the control must not reach here under --squash");
@@ -909,7 +913,9 @@ static int merge_trivial(struct commit *head, struct commit_list *remoteheads)
 	struct object_id result_tree, result_commit;
 	struct commit_list *parents, **pptr = &parents;
 
-	if (refresh_and_write_cache(REFRESH_QUIET, SKIP_IF_UNCHANGED, 0) < 0)
+	if (repo_refresh_and_write_index(the_repository, REFRESH_QUIET,
+					 SKIP_IF_UNCHANGED, 0, NULL, NULL,
+					 NULL) < 0)
 		return error(_("Unable to write index."));
 
 	write_tree_trivial(&result_tree);
@@ -1375,7 +1381,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		goto done;
 	}
 
-	if (read_cache_unmerged())
+	if (repo_read_index_unmerged(the_repository))
 		die_resolve_conflict("merge");
 
 	if (file_exists(git_path_merge_head(the_repository))) {
@@ -1396,7 +1402,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		else
 			die(_("You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists)."));
 	}
-	resolve_undo_clear();
+	resolve_undo_clear_index(&the_index);
 
 	if (option_edit < 0)
 		option_edit = default_edit_option();
@@ -1601,7 +1607,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		 * We are not doing octopus, not fast-forward, and have
 		 * only one common.
 		 */
-		refresh_cache(REFRESH_QUIET);
+		refresh_index(&the_index, REFRESH_QUIET, NULL, NULL, NULL);
 		if (allow_trivial && fast_forward != FF_ONLY) {
 			/*
 			 * Must first ensure that index matches HEAD before

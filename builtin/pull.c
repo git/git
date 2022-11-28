@@ -5,7 +5,7 @@
  *
  * Fetch one or more remote refs and merge it/them into the current HEAD.
  */
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
+#define USE_THE_INDEX_VARIABLE
 #include "cache.h"
 #include "config.h"
 #include "builtin.h"
@@ -1030,7 +1030,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	if (opt_rebase < 0)
 		opt_rebase = config_get_rebase(&rebase_unspecified);
 
-	if (read_cache_unmerged())
+	if (repo_read_index_unmerged(the_repository))
 		die_resolve_conflict("pull");
 
 	if (file_exists(git_path_merge_head(the_repository)))
@@ -1043,7 +1043,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 		if (opt_autostash == -1)
 			opt_autostash = config_autostash;
 
-		if (is_null_oid(&orig_head) && !is_cache_unborn())
+		if (is_null_oid(&orig_head) && !is_index_unborn(&the_index))
 			die(_("Updating an unborn branch with changes added to the index."));
 
 		if (!opt_autostash)

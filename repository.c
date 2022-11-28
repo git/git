@@ -2,7 +2,7 @@
  * not really _using_ the compat macros, just make sure the_index
  * declaration matches the definition in this file.
  */
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
+#define USE_THE_INDEX_VARIABLE
 #include "cache.h"
 #include "repository.h"
 #include "object-store.h"
