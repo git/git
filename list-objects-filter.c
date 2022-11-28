@@ -709,6 +709,7 @@ static void filter_combine__free(void *filter_data)
 			BUG("expected oidset to be cleared already");
 	}
 	free(d->sub);
+	free(d);
 }
 
 static void add_all(struct oidset *dest, struct oidset *src) {
