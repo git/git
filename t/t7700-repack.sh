@@ -90,6 +90,22 @@ test_expect_success 'loose objects in alternate ODB are not repacked' '
 	test_has_duplicate_object false
 '
 
+test_expect_success SYMLINKS '--local keeps packs when alternate is objectdir ' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	test_commit -C repo A &&
+	(
+		cd repo &&
+		git repack -a &&
+		ls .git/objects/pack/*.pack >../expect &&
+		ln -s objects .git/alt_objects &&
+		echo "$(pwd)/.git/alt_objects" >.git/objects/info/alternates &&
+		git repack -a -d -l &&
+		ls .git/objects/pack/*.pack >../actual
+	) &&
+	test_cmp expect actual
+'
+
 test_expect_success 'packed obs in alt ODB are repacked even when local repo is packless' '
 	mkdir alt_objects/pack &&
 	mv .git/objects/pack/* alt_objects/pack &&
