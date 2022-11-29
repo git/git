@@ -265,6 +265,44 @@ test_expect_success 'verify normal and blob:limit packfiles have same commits/tr
 	test_cmp expected observed
 '
 
+test_expect_failure 'verify small limit and big limit results in small limit' '
+	git -C r2 ls-files -s large.1000 >ls_files_result &&
+	test_parse_ls_files_stage_oids <ls_files_result |
+	sort >expected &&
+
+	git -C r2 pack-objects --revs --stdout --filter=blob:limit=1001 \
+		--filter=blob:limit=10001 >filter.pack <<-EOF &&
+	HEAD
+	EOF
+	git -C r2 index-pack ../filter.pack &&
+
+	git -C r2 verify-pack -v ../filter.pack >verify_result &&
+	grep blob verify_result |
+	parse_verify_pack_blob_oid |
+	sort >observed &&
+
+	test_cmp expected observed
+'
+
+test_expect_success 'verify big limit and small limit results in small limit' '
+	git -C r2 ls-files -s large.1000 >ls_files_result &&
+	test_parse_ls_files_stage_oids <ls_files_result |
+	sort >expected &&
+
+	git -C r2 pack-objects --revs --stdout --filter=blob:limit=10001 \
+		--filter=blob:limit=1001 >filter.pack <<-EOF &&
+	HEAD
+	EOF
+	git -C r2 index-pack ../filter.pack &&
+
+	git -C r2 verify-pack -v ../filter.pack >verify_result &&
+	grep blob verify_result |
+	parse_verify_pack_blob_oid |
+	sort >observed &&
+
+	test_cmp expected observed
+'
+
 # Test sparse:path=<path> filter.
 # !!!!
 # NOTE: sparse:path filter support has been dropped for security reasons,
