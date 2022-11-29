@@ -5,17 +5,17 @@
 
 . ${0%/*}/lib.sh
 
-P4WHENCE=https://cdist2.perforce.com/perforce/r$LINUX_P4_VERSION
+P4WHENCE=https://cdist2.perforce.com/perforce/r21.2
 LFSWHENCE=https://github.com/github/git-lfs/releases/download/v$LINUX_GIT_LFS_VERSION
 UBUNTU_COMMON_PKGS="make libssl-dev libcurl4-openssl-dev libexpat-dev
  tcl tk gettext zlib1g-dev perl-modules liberror-perl libauthen-sasl-perl
  libemail-valid-perl libio-socket-ssl-perl libnet-smtp-ssl-perl"
 
 case "$runs_on_pool" in
-ubuntu-latest)
+ubuntu-*)
 	sudo apt-get -q update
 	sudo apt-get -q -y install language-pack-is libsvn-perl apache2 \
-		$UBUNTU_COMMON_PKGS $CC_PACKAGE
+		$UBUNTU_COMMON_PKGS $CC_PACKAGE $PYTHON_PACKAGE
 	mkdir --parents "$P4_PATH"
 	pushd "$P4_PATH"
 		wget --quiet "$P4WHENCE/bin.linux26x86_64/p4d"
@@ -40,7 +40,7 @@ macos-latest)
 	mkdir -p $HOME/bin
 	(
 		cd $HOME/bin
-		wget -q "https://cdist2.perforce.com/perforce/r21.2/bin.macosx1015x86_64/helix-core-server.tgz" &&
+		wget -q "$P4WHENCE/bin.macosx1015x86_64/helix-core-server.tgz" &&
 		tar -xf helix-core-server.tgz &&
 		sudo xattr -d com.apple.quarantine p4 p4d 2>/dev/null || true
 	)
@@ -83,9 +83,9 @@ esac
 if type p4d >/dev/null 2>&1 && type p4 >/dev/null 2>&1
 then
 	echo "$(tput setaf 6)Perforce Server Version$(tput sgr0)"
-	p4d -V | grep Rev.
+	p4d -V
 	echo "$(tput setaf 6)Perforce Client Version$(tput sgr0)"
-	p4 -V | grep Rev.
+	p4 -V
 else
 	echo >&2 "WARNING: perforce wasn't installed, see above for clues why"
 fi
