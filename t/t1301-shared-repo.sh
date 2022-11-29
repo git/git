@@ -8,6 +8,7 @@ test_description='Test shared repository initialization'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_CREATE_REPO_NO_TEMPLATE=1
 . ./test-lib.sh
 
 # Remove a default ACL from the test dir if possible.
@@ -46,8 +47,6 @@ do
 done
 
 test_expect_success 'shared=all' '
-	mkdir sub &&
-	cd sub &&
 	git init --template= --shared=all &&
 	test 2 = $(git config core.sharedrepository)
 '
