@@ -41,6 +41,6 @@ do
 		Meta/Make -j16 "$t"
 		;;
 	esac &&
-	Meta/Make -j16 distclean >/dev/null 2>&1 || return 1
+	Meta/Make -j16 distclean >/dev/null 2>&1 || exit 1
 done &&
 Meta/Make -j16 distclean
