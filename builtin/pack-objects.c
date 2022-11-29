@@ -4158,7 +4158,8 @@ static struct list_objects_filter_options *po_filter_revs_init(void *value)
 {
 	struct po_filter_data *data = value;
 
-	repo_init_revisions(the_repository, &data->revs, NULL);
+	if (!data->have_revs)
+		repo_init_revisions(the_repository, &data->revs, NULL);
 	data->have_revs = 1;
 
 	return &data->revs.filter;

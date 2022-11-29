@@ -265,7 +265,7 @@ test_expect_success 'verify normal and blob:limit packfiles have same commits/tr
 	test_cmp expected observed
 '
 
-test_expect_failure 'verify small limit and big limit results in small limit' '
+test_expect_success 'verify small limit and big limit results in small limit' '
 	git -C r2 ls-files -s large.1000 >ls_files_result &&
 	test_parse_ls_files_stage_oids <ls_files_result |
 	sort >expected &&
