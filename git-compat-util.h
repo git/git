@@ -274,9 +274,12 @@ struct itimerval {
 #endif
 
 #ifdef NO_SETITIMER
-static inline int setitimer(int which, const struct itimerval *value, struct itimerval *newvalue) {
+static inline int git_setitimer(int which,
+				const struct itimerval *value,
+				struct itimerval *newvalue) {
 	return 0; /* pretend success */
 }
+#define setitimer(which,value,ovalue) git_setitimer(which,value,ovalue)
 #endif
 
 #ifndef NO_LIBGEN_H
@@ -1312,14 +1315,16 @@ int warn_on_fopen_errors(const char *path);
 #endif
 
 #ifndef _POSIX_THREAD_SAFE_FUNCTIONS
-static inline void flockfile(FILE *fh)
+static inline void git_flockfile(FILE *fh)
 {
 	; /* nothing */
 }
-static inline void funlockfile(FILE *fh)
+static inline void git_funlockfile(FILE *fh)
 {
 	; /* nothing */
 }
+#define flockfile(fh) git_flockfile(fh)
+#define funlockfile(fh) git_funlockfile(fh)
 #define getc_unlocked(fh) getc(fh)
 #endif
 
