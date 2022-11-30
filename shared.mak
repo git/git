@@ -37,13 +37,13 @@ space := $(empty) $(empty)
 QUIET_SUBDIR0  = +$(MAKE) -C # space to separate -C and subdir
 QUIET_SUBDIR1  =
 
-ifneq ($(findstring w,$(MAKEFLAGS)),w)
+ifneq ($(findstring w,$(firstword -$(MAKEFLAGS))),w)
 PRINT_DIR = --no-print-directory
 else # "make -w"
 NO_SUBDIR = :
 endif
 
-ifneq ($(findstring s,$(MAKEFLAGS)),s)
+ifneq ($(findstring s,$(firstword -$(MAKEFLAGS))),s)
 ifndef V
 ## common
 	QUIET_SUBDIR0  = +@subdir=
