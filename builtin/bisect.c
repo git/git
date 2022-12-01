@@ -20,18 +20,40 @@ static GIT_PATH_FUNC(git_path_bisect_names, "BISECT_NAMES")
 static GIT_PATH_FUNC(git_path_bisect_first_parent, "BISECT_FIRST_PARENT")
 static GIT_PATH_FUNC(git_path_bisect_run, "BISECT_RUN")
 
-static const char * const git_bisect_helper_usage[] = {
-	N_("git bisect--helper --bisect-reset [<commit>]"),
-	"git bisect--helper --bisect-terms [--term-good | --term-old | --term-bad | --term-new]",
-	N_("git bisect--helper --bisect-start [--term-{new,bad}=<term> --term-{old,good}=<term>]"
-					    " [--no-checkout] [--first-parent] [<bad> [<good>...]] [--] [<paths>...]"),
-	"git bisect--helper --bisect-next",
-	N_("git bisect--helper --bisect-state (bad|new) [<rev>]"),
-	N_("git bisect--helper --bisect-state (good|old) [<rev>...]"),
-	N_("git bisect--helper --bisect-replay <filename>"),
-	N_("git bisect--helper --bisect-skip [(<rev>|<range>)...]"),
-	"git bisect--helper --bisect-visualize",
-	N_("git bisect--helper --bisect-run <cmd>..."),
+#define BUILTIN_GIT_BISECT_START_USAGE \
+	N_("git bisect start [--term-{new,bad}=<term> --term-{old,good}=<term>]" \
+	   "    [--no-checkout] [--first-parent] [<bad> [<good>...]] [--]" \
+	   "    [<pathspec>...]")
+#define BUILTIN_GIT_BISECT_STATE_USAGE \
+	N_("git bisect (good|bad) [<rev>...]")
+#define BUILTIN_GIT_BISECT_TERMS_USAGE \
+	"git bisect terms [--term-good | --term-bad]"
+#define BUILTIN_GIT_BISECT_SKIP_USAGE \
+	N_("git bisect skip [(<rev>|<range>)...]")
+#define BUILTIN_GIT_BISECT_NEXT_USAGE \
+	"git bisect next"
+#define BUILTIN_GIT_BISECT_RESET_USAGE \
+	N_("git bisect reset [<commit>]")
+#define BUILTIN_GIT_BISECT_VISUALIZE_USAGE \
+	"git bisect visualize"
+#define BUILTIN_GIT_BISECT_REPLAY_USAGE \
+	N_("git bisect replay <logfile>")
+#define BUILTIN_GIT_BISECT_LOG_USAGE \
+	"git bisect log"
+#define BUILTIN_GIT_BISECT_RUN_USAGE \
+	N_("git bisect run <cmd>...")
+
+static const char * const git_bisect_usage[] = {
+	BUILTIN_GIT_BISECT_START_USAGE,
+	BUILTIN_GIT_BISECT_STATE_USAGE,
+	BUILTIN_GIT_BISECT_TERMS_USAGE,
+	BUILTIN_GIT_BISECT_SKIP_USAGE,
+	BUILTIN_GIT_BISECT_NEXT_USAGE,
+	BUILTIN_GIT_BISECT_RESET_USAGE,
+	BUILTIN_GIT_BISECT_VISUALIZE_USAGE,
+	BUILTIN_GIT_BISECT_REPLAY_USAGE,
+	BUILTIN_GIT_BISECT_LOG_USAGE,
+	BUILTIN_GIT_BISECT_RUN_USAGE,
 	NULL
 };
 
@@ -1191,13 +1213,13 @@ static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
 	if (bisect_next_check(terms, NULL))
 		return BISECT_FAILED;
 
-	if (argc)
-		sq_quote_argv(&command, argv);
-	else {
+	if (!argc) {
 		error(_("bisect run failed: no command provided."));
 		return BISECT_FAILED;
 	}
 
+	sq_quote_argv(&command, argv);
+	strbuf_ltrim(&command);
 	while (1) {
 		res = do_bisect_run(command.buf);
 
@@ -1211,8 +1233,8 @@ static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
 		if (is_first_run && (res == 126 || res == 127)) {
 			int rc = verify_good(terms, command.buf);
 			is_first_run = 0;
-			if (rc < 0) {
-				error(_("unable to verify '%s' on good"
+			if (rc < 0 || 128 <= rc) {
+				error(_("unable to verify %s on good"
 					" revision"), command.buf);
 				res = BISECT_FAILED;
 				break;
@@ -1227,7 +1249,7 @@ static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
 
 		if (res < 0 || 128 <= res) {
 			error(_("bisect run failed: exit code %d from"
-				" '%s' is < 0 or >= 128"), res, command.buf);
+				" %s is < 0 or >= 128"), res, command.buf);
 			break;
 		}
 
@@ -1261,14 +1283,14 @@ static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
 		if (res == BISECT_ONLY_SKIPPED_LEFT)
 			error(_("bisect run cannot continue any more"));
 		else if (res == BISECT_INTERNAL_SUCCESS_MERGE_BASE) {
-			printf(_("bisect run success"));
+			puts(_("bisect run success"));
 			res = BISECT_OK;
 		} else if (res == BISECT_INTERNAL_SUCCESS_1ST_BAD_FOUND) {
-			printf(_("bisect found first bad commit"));
+			puts(_("bisect found first bad commit"));
 			res = BISECT_OK;
 		} else if (res) {
-			error(_("bisect run failed: 'git bisect--helper --bisect-state"
-			" %s' exited with error code %d"), new_state, res);
+			error(_("bisect run failed: 'bisect-state %s'"
+				" exited with error code %d"), new_state, res);
 		} else {
 			continue;
 		}
@@ -1282,7 +1304,8 @@ static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
 static int cmd_bisect__reset(int argc, const char **argv, const char *prefix UNUSED)
 {
 	if (argc > 1)
-		return error(_("--bisect-reset requires either no argument or a commit"));
+		return error(_("'%s' requires either no argument or a commit"),
+			     "git bisect reset");
 	return bisect_reset(argc ? argv[0] : NULL);
 }
 
@@ -1292,7 +1315,8 @@ static int cmd_bisect__terms(int argc, const char **argv, const char *prefix UNU
 	struct bisect_terms terms = { 0 };
 
 	if (argc > 1)
-		return error(_("--bisect-terms requires 0 or 1 argument"));
+		return error(_("'%s' requires 0 or 1 argument"),
+			     "git bisect terms");
 	res = bisect_terms(&terms, argc == 1 ? argv[0] : NULL);
 	free_terms(&terms);
 	return res;
@@ -1315,29 +1339,16 @@ static int cmd_bisect__next(int argc, const char **argv UNUSED, const char *pref
 	struct bisect_terms terms = { 0 };
 
 	if (argc)
-		return error(_("--bisect-next requires 0 arguments"));
+		return error(_("'%s' requires 0 arguments"),
+			     "git bisect next");
 	get_terms(&terms);
 	res = bisect_next(&terms, prefix);
 	free_terms(&terms);
 	return res;
 }
 
-static int cmd_bisect__state(int argc, const char **argv, const char *prefix UNUSED)
+static int cmd_bisect__log(int argc UNUSED, const char **argv UNUSED, const char *prefix UNUSED)
 {
-	int res;
-	struct bisect_terms terms = { 0 };
-
-	set_terms(&terms, "bad", "good");
-	get_terms(&terms);
-	res = bisect_state(&terms, argv, argc);
-	free_terms(&terms);
-	return res;
-}
-
-static int cmd_bisect__log(int argc, const char **argv UNUSED, const char *prefix UNUSED)
-{
-	if (argc)
-		return error(_("--bisect-log requires 0 arguments"));
 	return bisect_log();
 }
 
@@ -1383,14 +1394,14 @@ static int cmd_bisect__run(int argc, const char **argv, const char *prefix UNUSE
 	struct bisect_terms terms = { 0 };
 
 	if (!argc)
-		return error(_("bisect run failed: no command provided."));
+		return error(_("'%s' failed: no command provided."), "git bisect run");
 	get_terms(&terms);
 	res = bisect_run(&terms, argv, argc);
 	free_terms(&terms);
 	return res;
 }
 
-int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
+int cmd_bisect(int argc, const char **argv, const char *prefix)
 {
 	int res = 0;
 	parse_opt_subcommand_fn *fn = NULL;
@@ -1399,7 +1410,6 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		OPT_SUBCOMMAND("terms", &fn, cmd_bisect__terms),
 		OPT_SUBCOMMAND("start", &fn, cmd_bisect__start),
 		OPT_SUBCOMMAND("next", &fn, cmd_bisect__next),
-		OPT_SUBCOMMAND("state", &fn, cmd_bisect__state),
 		OPT_SUBCOMMAND("log", &fn, cmd_bisect__log),
 		OPT_SUBCOMMAND("replay", &fn, cmd_bisect__replay),
 		OPT_SUBCOMMAND("skip", &fn, cmd_bisect__skip),
@@ -1408,15 +1418,27 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		OPT_SUBCOMMAND("run", &fn, cmd_bisect__run),
 		OPT_END()
 	};
-	argc = parse_options(argc, argv, prefix, options,
-			     git_bisect_helper_usage, 0);
+	argc = parse_options(argc, argv, prefix, options, git_bisect_usage,
+			     PARSE_OPT_SUBCOMMAND_OPTIONAL);
 
-	if (!fn)
-		usage_with_options(git_bisect_helper_usage, options);
-	argc--;
-	argv++;
+	if (!fn) {
+		struct bisect_terms terms = { 0 };
 
-	res = fn(argc, argv, prefix);
+		if (!argc)
+			usage_msg_opt(_("need a command"), git_bisect_usage, options);
+
+		set_terms(&terms, "bad", "good");
+		get_terms(&terms);
+		if (check_and_set_terms(&terms, argv[0]))
+			usage_msg_optf(_("unknown command: '%s'"), git_bisect_usage,
+				       options, argv[0]);
+		res = bisect_state(&terms, argv, argc);
+		free_terms(&terms);
+	} else {
+		argc--;
+		argv++;
+		res = fn(argc, argv, prefix);
+	}
 
 	/*
 	 * Handle early success
