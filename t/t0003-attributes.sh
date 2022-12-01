@@ -339,6 +339,15 @@ test_expect_success 'query binary macro directly' '
 	test_cmp expect actual
 '
 
+test_expect_success 'large attributes line ignored in tree' '
+	test_when_finished "rm .gitattributes" &&
+	printf "path %02043d" 1 >.gitattributes &&
+	git check-attr --all path >actual 2>err &&
+	echo "warning: ignoring overly long attributes line 1" >expect &&
+	test_cmp expect err &&
+	test_must_be_empty actual
+'
+
 test_expect_success 'large attributes line ignores trailing content in tree' '
 	test_when_finished "rm .gitattributes" &&
 	# older versions of Git broke lines at 2048 bytes; the 2045 bytes
@@ -347,7 +356,18 @@ test_expect_success 'large attributes line ignores trailing content in tree' '
 	# erroneously parsed.
 	printf "a %02045dtrailing attribute\n" 1 >.gitattributes &&
 	git check-attr --all trailing >actual 2>err &&
-	test_must_be_empty err &&
+	echo "warning: ignoring overly long attributes line 1" >expect &&
+	test_cmp expect err &&
+	test_must_be_empty actual
+'
+
+test_expect_success 'large attributes line ignored in index' '
+	test_when_finished "git update-index --remove .gitattributes" &&
+	blob=$(printf "path %02043d" 1 | git hash-object -w --stdin) &&
+	git update-index --add --cacheinfo 100644,$blob,.gitattributes &&
+	git check-attr --cached --all path >actual 2>err &&
+	echo "warning: ignoring overly long attributes line 1" >expect &&
+	test_cmp expect err &&
 	test_must_be_empty actual
 '
 
@@ -356,7 +376,8 @@ test_expect_success 'large attributes line ignores trailing content in index' '
 	blob=$(printf "a %02045dtrailing attribute\n" 1 | git hash-object -w --stdin) &&
 	git update-index --add --cacheinfo 100644,$blob,.gitattributes &&
 	git check-attr --cached --all trailing >actual 2>err &&
-	test_must_be_empty err &&
+	echo "warning: ignoring overly long attributes line 1" >expect &&
+	test_cmp expect err &&
 	test_must_be_empty actual
 '
 

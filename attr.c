@@ -344,6 +344,11 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 		return NULL;
 	name = cp;
 
+	if (strlen(line) >= ATTR_MAX_LINE_LENGTH) {
+		warning(_("ignoring overly long attributes line %d"), lineno);
+		return NULL;
+	}
+
 	if (*cp == '"' && !unquote_c_style(&pattern, name, &states)) {
 		name = pattern.buf;
 		namelen = pattern.len;

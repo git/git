@@ -107,6 +107,12 @@
  * - Free the `attr_check` struct by calling `attr_check_free()`.
  */
 
+/**
+ * The maximum line length for a gitattributes file. If the line exceeds this
+ * length we will ignore it.
+ */
+#define ATTR_MAX_LINE_LENGTH 2048
+
 struct index_state;
 
 /**
