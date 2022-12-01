@@ -2,6 +2,7 @@
 #include "object-store.h"
 #include "repository.h"
 #include "object.h"
+#include "attr.h"
 #include "blob.h"
 #include "tree.h"
 #include "tree-walk.h"
@@ -615,7 +616,10 @@ static int fsck_tree(const struct object_id *tree_oid,
 		}
 
 		if (is_hfs_dotgitattributes(name) || is_ntfs_dotgitattributes(name)) {
-			if (S_ISLNK(mode))
+			if (!S_ISLNK(mode))
+				oidset_insert(&options->gitattributes_found,
+					      entry_oid);
+			else
 				retval += report(options, tree_oid, OBJ_TREE,
 						 FSCK_MSG_GITATTRIBUTES_SYMLINK,
 						 ".gitattributes is a symlink");
@@ -1206,6 +1210,35 @@ static int fsck_blob(const struct object_id *oid, const char *buf,
 		ret |= data.ret;
 	}
 
+	if (oidset_contains(&options->gitattributes_found, oid)) {
+		const char *ptr;
+
+		oidset_insert(&options->gitattributes_done, oid);
+
+		if (!buf || size > ATTR_MAX_FILE_SIZE) {
+			/*
+			 * A missing buffer here is a sign that the caller found the
+			 * blob too gigantic to load into memory. Let's just consider
+			 * that an error.
+			 */
+			return report(options, oid, OBJ_BLOB,
+					FSCK_MSG_GITATTRIBUTES_LARGE,
+					".gitattributes too large to parse");
+		}
+
+		for (ptr = buf; *ptr; ) {
+			const char *eol = strchrnul(ptr, '\n');
+			if (eol - ptr >= ATTR_MAX_LINE_LENGTH) {
+				ret |= report(options, oid, OBJ_BLOB,
+					      FSCK_MSG_GITATTRIBUTES_LINE_LENGTH,
+					      ".gitattributes has too long lines to parse");
+				break;
+			}
+
+			ptr = *eol ? eol + 1 : eol;
+		}
+	}
+
 	return ret;
 }
 
@@ -1293,6 +1326,9 @@ int fsck_finish(struct fsck_options *options)
 	ret |= fsck_blobs(&options->gitmodules_found, &options->gitmodules_done,
 			  FSCK_MSG_GITMODULES_MISSING, FSCK_MSG_GITMODULES_BLOB,
 			  options, ".gitmodules");
+	ret |= fsck_blobs(&options->gitattributes_found, &options->gitattributes_done,
+			  FSCK_MSG_GITATTRIBUTES_MISSING, FSCK_MSG_GITATTRIBUTES_BLOB,
+			  options, ".gitattributes");
 
 	return ret;
 }
