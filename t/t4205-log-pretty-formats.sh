@@ -887,6 +887,18 @@ test_expect_success 'log --pretty with magical wrapping directives' '
 	test_cmp expect actual
 '
 
+test_expect_success SIZE_T_IS_64BIT 'log --pretty with overflowing wrapping directive' '
+	cat >expect <<-EOF &&
+	fatal: number too large to represent as int on this platform: 2147483649
+	EOF
+	test_must_fail git log -1 --pretty="format:%w(2147483649,1,1)%d" 2>error &&
+	test_cmp expect error &&
+	test_must_fail git log -1 --pretty="format:%w(1,2147483649,1)%d" 2>error &&
+	test_cmp expect error &&
+	test_must_fail git log -1 --pretty="format:%w(1,1,2147483649)%d" 2>error &&
+	test_cmp expect error
+'
+
 test_expect_success EXPENSIVE,SIZE_T_IS_64BIT 'log --pretty with huge commit message' '
 	# We only assert that this command does not crash. This needs to be
 	# executed with the address sanitizer to demonstrate failure.

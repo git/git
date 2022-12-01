@@ -915,7 +915,9 @@ static void strbuf_wrap(struct strbuf *sb, size_t pos,
 	if (pos)
 		strbuf_add(&tmp, sb->buf, pos);
 	strbuf_add_wrapped_text(&tmp, sb->buf + pos,
-				(int) indent1, (int) indent2, (int) width);
+				cast_size_t_to_int(indent1),
+				cast_size_t_to_int(indent2),
+				cast_size_t_to_int(width));
 	strbuf_swap(&tmp, sb);
 	strbuf_release(&tmp);
 }
