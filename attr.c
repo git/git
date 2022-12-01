@@ -272,7 +272,7 @@ struct match_attr {
 		const struct git_attr *attr;
 	} u;
 	char is_macro;
-	unsigned num_attr;
+	size_t num_attr;
 	struct attr_state state[FLEX_ARRAY];
 };
 
@@ -333,8 +333,7 @@ static const char *parse_attr(const char *src, int lineno, const char *cp,
 static struct match_attr *parse_attr_line(const char *line, const char *src,
 					  int lineno, int macro_ok)
 {
-	size_t namelen;
-	int num_attr, i;
+	size_t namelen, num_attr, i;
 	const char *cp, *name, *states;
 	struct match_attr *res = NULL;
 	int is_macro;
@@ -451,7 +450,8 @@ static void attr_stack_free(struct attr_stack *e)
 	free(e->origin);
 	for (i = 0; i < e->num_matches; i++) {
 		struct match_attr *a = e->attrs[i];
-		int j;
+		size_t j;
+
 		for (j = 0; j < a->num_attr; j++) {
 			const char *setto = a->state[j].setto;
 			if (setto == ATTR__TRUE ||
@@ -1001,12 +1001,12 @@ static int macroexpand_one(struct all_attrs_item *all_attrs, int nr, int rem);
 static int fill_one(const char *what, struct all_attrs_item *all_attrs,
 		    const struct match_attr *a, int rem)
 {
-	int i;
+	size_t i;
 
-	for (i = a->num_attr - 1; rem > 0 && i >= 0; i--) {
-		const struct git_attr *attr = a->state[i].attr;
+	for (i = a->num_attr; rem > 0 && i > 0; i--) {
+		const struct git_attr *attr = a->state[i - 1].attr;
 		const char **n = &(all_attrs[attr->attr_nr].value);
-		const char *v = a->state[i].setto;
+		const char *v = a->state[i - 1].setto;
 
 		if (*n == ATTR__UNKNOWN) {
 			debug_set(what,
