@@ -1041,7 +1041,7 @@ static size_t parse_padding_placeholder(const char *placeholder,
 		const char *end = start + strcspn(start, ",)");
 		char *next;
 		int width;
-		if (!end || end == start)
+		if (!*end || end == start)
 			return 0;
 		width = strtol(start, &next, 10);
 		if (next == start || width == 0)

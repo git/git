@@ -873,6 +873,12 @@ test_expect_success 'log --pretty with space stealing' '
 	test_cmp expect actual
 '
 
+test_expect_success 'log --pretty with invalid padding format' '
+	printf "%s%%<(20" "$(git rev-parse HEAD)" >expect &&
+	git log -1 --pretty="format:%H%<(20" >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success EXPENSIVE,SIZE_T_IS_64BIT 'log --pretty with huge commit message' '
 	# We only assert that this command does not crash. This needs to be
 	# executed with the address sanitizer to demonstrate failure.
