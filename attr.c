@@ -333,7 +333,7 @@ static const char *parse_attr(const char *src, int lineno, const char *cp,
 static struct match_attr *parse_attr_line(const char *line, const char *src,
 					  int lineno, int macro_ok)
 {
-	int namelen;
+	size_t namelen;
 	int num_attr, i;
 	const char *cp, *name, *states;
 	struct match_attr *res = NULL;
