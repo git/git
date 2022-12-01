@@ -905,6 +905,13 @@ test_expect_success 'log --pretty with padding and preceding control chars' '
 	test_cmp expect actual
 '
 
+test_expect_success 'log --pretty truncation with control chars' '
+	test_commit "$(printf "\20\20\20\20xxxx")" file contents commit-with-control-chars &&
+	printf "\20\20\20\20x.." >expect &&
+	git log -1 --pretty="format:%<(3,trunc)%s" commit-with-control-chars >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success EXPENSIVE,SIZE_T_IS_64BIT 'log --pretty with huge commit message' '
 	# We only assert that this command does not crash. This needs to be
 	# executed with the address sanitizer to demonstrate failure.

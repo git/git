@@ -377,6 +377,7 @@ void strbuf_utf8_replace(struct strbuf *sb_src, int pos, int width,
 	dst = sb_dst.buf;
 
 	while (src < end) {
+		int glyph_width;
 		char *old;
 		size_t n;
 
@@ -390,21 +391,29 @@ void strbuf_utf8_replace(struct strbuf *sb_src, int pos, int width,
 			break;
 
 		old = src;
-		n = utf8_width((const char**)&src, NULL);
-		if (!src) 	/* broken utf-8, do nothing */
+		glyph_width = utf8_width((const char**)&src, NULL);
+		if (!src) /* broken utf-8, do nothing */
 			goto out;
-		if (n && w >= pos && w < pos + width) {
+
+		/*
+		 * In case we see a control character we copy it into the
+		 * buffer, but don't add it to the width.
+		 */
+		if (glyph_width < 0)
+			glyph_width = 0;
+
+		if (glyph_width && w >= pos && w < pos + width) {
 			if (subst) {
 				memcpy(dst, subst, subst_len);
 				dst += subst_len;
 				subst = NULL;
 			}
-			w += n;
+			w += glyph_width;
 			continue;
 		}
 		memcpy(dst, old, src - old);
 		dst += src - old;
-		w += n;
+		w += glyph_width;
 	}
 	strbuf_setlen(&sb_dst, dst - sb_dst.buf);
 	strbuf_swap(sb_src, &sb_dst);
