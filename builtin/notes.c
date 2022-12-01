@@ -562,13 +562,14 @@ out:
 static int append_edit(int argc, const char **argv, const char *prefix)
 {
 	int allow_empty = 0;
+	int blankline = 1;
 	const char *object_ref;
 	struct notes_tree *t;
 	struct object_id object, new_note;
 	const struct object_id *note;
-	char *logmsg;
+	char *logmsg = NULL;
 	const char * const *usage;
-	struct note_data d = { 0, 0, NULL, STRBUF_INIT };
+	struct note_data d = { .buf = STRBUF_INIT };
 	struct option options[] = {
 		OPT_CALLBACK_F('m', "message", &d, N_("message"),
 			N_("note contents as a string"), PARSE_OPT_NONEG,
@@ -584,6 +585,8 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 			parse_reuse_arg),
 		OPT_BOOL(0, "allow-empty", &allow_empty,
 			N_("allow storing empty note")),
+		OPT_BOOL(0, "blank-line", &blankline,
+			N_("insert paragraph break before appending to an existing note")),
 		OPT_END()
 	};
 	int edit = !strcmp(argv[0], "edit");
@@ -618,8 +621,7 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 		enum object_type type;
 		char *prev_buf = read_object_file(note, &type, &size);
 
-		strbuf_grow(&d.buf, size + 1);
-		if (d.buf.len && prev_buf && size)
+		if (blankline && d.buf.len && prev_buf && size)
 			strbuf_insertstr(&d.buf, 0, "\n");
 		if (prev_buf && size)
 			strbuf_insert(&d.buf, 0, prev_buf, size);
@@ -631,13 +633,11 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 		if (add_note(t, &object, &new_note, combine_notes_overwrite))
 			BUG("combine_notes_overwrite failed");
 		logmsg = xstrfmt("Notes added by 'git notes %s'", argv[0]);
-	} else {
-		fprintf(stderr, _("Removing note for object %s\n"),
+		commit_notes(the_repository, t, logmsg);
+	} else if (!d.buf.len && !note)
+		fprintf(stderr,
+			_("Both original and appended notes are empty in %s, do nothing\n"),
 			oid_to_hex(&object));
-		remove_note(t, object.hash);
-		logmsg = xstrfmt("Notes removed by 'git notes %s'", argv[0]);
-	}
-	commit_notes(the_repository, t, logmsg);
 
 	free(logmsg);
 	free_note_data(&d);
