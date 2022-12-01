@@ -13,7 +13,8 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Prints a Git logical variable.
+Prints a Git logical variable. Exits with code 1 if the variable has
+no value.
 
 OPTIONS
 -------
