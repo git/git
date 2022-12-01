@@ -206,13 +206,11 @@ int utf8_width(const char **start, size_t *remainder_p)
  * string, assuming that the string is utf8.  Returns strlen() instead
  * if the string does not look like a valid utf8 string.
  */
-int utf8_strnwidth(const char *string, int len, int skip_ansi)
+int utf8_strnwidth(const char *string, size_t len, int skip_ansi)
 {
 	int width = 0;
 	const char *orig = string;
 
-	if (len == -1)
-		len = strlen(string);
 	while (string && string < orig + len) {
 		int skip;
 		while (skip_ansi &&
@@ -225,7 +223,7 @@ int utf8_strnwidth(const char *string, int len, int skip_ansi)
 
 int utf8_strwidth(const char *string)
 {
-	return utf8_strnwidth(string, -1, 0);
+	return utf8_strnwidth(string, strlen(string), 0);
 }
 
 int is_utf8(const char *text)
@@ -791,7 +789,7 @@ int skip_utf8_bom(char **text, size_t len)
 void strbuf_utf8_align(struct strbuf *buf, align_type position, unsigned int width,
 		       const char *s)
 {
-	int slen = strlen(s);
+	size_t slen = strlen(s);
 	int display_len = utf8_strnwidth(s, slen, 0);
 	int utf8_compensation = slen - display_len;
 

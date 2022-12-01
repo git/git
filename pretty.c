@@ -1483,7 +1483,7 @@ static size_t format_and_pad_commit(struct strbuf *sb, /* in UTF-8 */
 		int occupied;
 		if (!start)
 			start = sb->buf;
-		occupied = utf8_strnwidth(start, -1, 1);
+		occupied = utf8_strnwidth(start, strlen(start), 1);
 		occupied += c->pretty_ctx->graph_width;
 		padding = (-padding) - occupied;
 	}
@@ -1501,7 +1501,7 @@ static size_t format_and_pad_commit(struct strbuf *sb, /* in UTF-8 */
 		placeholder++;
 		total_consumed++;
 	}
-	len = utf8_strnwidth(local_sb.buf, -1, 1);
+	len = utf8_strnwidth(local_sb.buf, local_sb.len, 1);
 
 	if (c->flush_type == flush_left_and_steal) {
 		const char *ch = sb->buf + sb->len - 1;
