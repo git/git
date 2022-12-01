@@ -1525,6 +1525,9 @@ static void pp_init(struct parallel_processes *pp,
 
 	if (!opts->get_next_task)
 		BUG("you need to specify a get_next_task function");
+	
+	if (opts->duplicate_output && opts->ungroup)
+		BUG("duplicate_output and ungroup are incompatible with each other");
 
 	CALLOC_ARRAY(pp->children, n);
 	if (!opts->ungroup)
@@ -1645,8 +1648,14 @@ static void pp_buffer_stderr(struct parallel_processes *pp,
 	for (size_t i = 0; i < opts->processes; i++) {
 		if (pp->children[i].state == GIT_CP_WORKING &&
 		    pp->pfd[i].revents & (POLLIN | POLLHUP)) {
-			int n = strbuf_read_once(&pp->children[i].err,
-						 pp->children[i].process.err, 0);
+			struct strbuf buf = STRBUF_INIT;
+			int n = strbuf_read_once(&buf, pp->children[i].process.err, 0);
+			strbuf_addbuf(&pp->children[i].err, &buf);
+			if (opts->duplicate_output)
+				opts->duplicate_output(&buf, &pp->children[i].err,
+					  opts->data,
+					  pp->children[i].data);
+			strbuf_release(&buf);
 			if (n == 0) {
 				close(pp->children[i].process.err);
 				pp->children[i].state = GIT_CP_WAIT_CLEANUP;
