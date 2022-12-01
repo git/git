@@ -1789,5 +1789,6 @@ done:
 	}
 	strbuf_release(&buf);
 	free(branch_to_free);
+	discard_index(&the_index);
 	return ret;
 }

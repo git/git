@@ -1322,6 +1322,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		if (reset_head(the_repository, &ropts) < 0)
 			die(_("could not move back to %s"),
 			    oid_to_hex(&options.orig_head->object.oid));
+		strbuf_release(&head_msg);
 		remove_branch_state(the_repository, 0);
 		ret = finish_rebase(&options);
 		goto cleanup;
@@ -1828,10 +1829,13 @@ cleanup:
 	strbuf_release(&revisions);
 	free(options.reflog_action);
 	free(options.head_name);
+	strvec_clear(&options.git_am_opts);
 	free(options.gpg_sign_opt);
 	free(options.cmd);
 	free(options.strategy);
 	strbuf_release(&options.git_format_patch_opt);
 	free(squash_onto_name);
+	string_list_clear(&exec, 0);
+	string_list_clear(&strategy_options, 0);
 	return !!ret;
 }

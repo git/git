@@ -8,6 +8,8 @@ test_description='git ls-files test (--with-tree).
 This test runs git ls-files --with-tree and in particular in
 a scenario known to trigger a crash with some versions of git.
 '
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '

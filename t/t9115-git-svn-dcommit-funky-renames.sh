@@ -5,7 +5,6 @@
 
 test_description='git svn dcommit can commit renames of files with ugly names'
 
-TEST_FAILS_SANITIZE_LEAK=true
 . ./lib-git-svn.sh
 
 test_expect_success 'load repository with strange names' '
