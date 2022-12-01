@@ -699,21 +699,22 @@ void git_attr_set_direction(enum git_attr_direction new_direction)
 
 static struct attr_stack *read_attr_from_file(const char *path, int macro_ok)
 {
+	struct strbuf buf = STRBUF_INIT;
 	FILE *fp = fopen_or_warn(path, "r");
 	struct attr_stack *res;
-	char buf[2048];
 	int lineno = 0;
 
 	if (!fp)
 		return NULL;
 	res = xcalloc(1, sizeof(*res));
-	while (fgets(buf, sizeof(buf), fp)) {
-		char *bufp = buf;
-		if (!lineno)
-			skip_utf8_bom(&bufp, strlen(bufp));
-		handle_attr_line(res, bufp, path, ++lineno, macro_ok);
+	while (strbuf_getline(&buf, fp) != EOF) {
+		if (!lineno && starts_with(buf.buf, utf8_bom))
+			strbuf_remove(&buf, 0, strlen(utf8_bom));
+		handle_attr_line(res, buf.buf, path, ++lineno, macro_ok);
 	}
+
 	fclose(fp);
+	strbuf_release(&buf);
 	return res;
 }
 

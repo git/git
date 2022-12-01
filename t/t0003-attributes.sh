@@ -339,4 +339,25 @@ test_expect_success 'query binary macro directly' '
 	test_cmp expect actual
 '
 
+test_expect_success 'large attributes line ignores trailing content in tree' '
+	test_when_finished "rm .gitattributes" &&
+	# older versions of Git broke lines at 2048 bytes; the 2045 bytes
+	# of 0-padding here is accounting for the three bytes of "a 1", which
+	# would knock "trailing" to the "next" line, where it would be
+	# erroneously parsed.
+	printf "a %02045dtrailing attribute\n" 1 >.gitattributes &&
+	git check-attr --all trailing >actual 2>err &&
+	test_must_be_empty err &&
+	test_must_be_empty actual
+'
+
+test_expect_success 'large attributes line ignores trailing content in index' '
+	test_when_finished "git update-index --remove .gitattributes" &&
+	blob=$(printf "a %02045dtrailing attribute\n" 1 | git hash-object -w --stdin) &&
+	git update-index --add --cacheinfo 100644,$blob,.gitattributes &&
+	git check-attr --cached --all trailing >actual 2>err &&
+	test_must_be_empty err &&
+	test_must_be_empty actual
+'
+
 test_done
