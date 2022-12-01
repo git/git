@@ -708,10 +708,25 @@ static struct attr_stack *read_attr_from_file(const char *path, int macro_ok)
 	FILE *fp = fopen_or_warn(path, "r");
 	struct attr_stack *res;
 	int lineno = 0;
+	int fd;
+	struct stat st;
 
 	if (!fp)
 		return NULL;
-	res = xcalloc(1, sizeof(*res));
+
+	fd = fileno(fp);
+	if (fstat(fd, &st)) {
+		warning_errno(_("cannot fstat gitattributes file '%s'"), path);
+		fclose(fp);
+		return NULL;
+	}
+	if (st.st_size >= ATTR_MAX_FILE_SIZE) {
+		warning(_("ignoring overly large gitattributes file '%s'"), path);
+		fclose(fp);
+		return NULL;
+	}
+
+	CALLOC_ARRAY(res, 1);
 	while (strbuf_getline(&buf, fp) != EOF) {
 		if (!lineno && starts_with(buf.buf, utf8_bom))
 			strbuf_remove(&buf, 0, strlen(utf8_bom));
@@ -730,13 +745,18 @@ static struct attr_stack *read_attr_from_index(const struct index_state *istate,
 	struct attr_stack *res;
 	char *buf, *sp;
 	int lineno = 0;
+	size_t size;
 
 	if (!istate)
 		return NULL;
 
-	buf = read_blob_data_from_index(istate, path, NULL);
+	buf = read_blob_data_from_index(istate, path, &size);
 	if (!buf)
 		return NULL;
+	if (size >= ATTR_MAX_FILE_SIZE) {
+		warning(_("ignoring overly large gitattributes blob '%s'"), path);
+		return NULL;
+	}
 
 	res = xcalloc(1, sizeof(*res));
 	for (sp = buf; *sp; ) {

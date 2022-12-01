@@ -361,6 +361,14 @@ test_expect_success 'large attributes line ignores trailing content in tree' '
 	test_must_be_empty actual
 '
 
+test_expect_success EXPENSIVE 'large attributes file ignored in tree' '
+	test_when_finished "rm .gitattributes" &&
+	dd if=/dev/zero of=.gitattributes bs=101M count=1 2>/dev/null &&
+	git check-attr --all path >/dev/null 2>err &&
+	echo "warning: ignoring overly large gitattributes file ${SQ}.gitattributes${SQ}" >expect &&
+	test_cmp expect err
+'
+
 test_expect_success 'large attributes line ignored in index' '
 	test_when_finished "git update-index --remove .gitattributes" &&
 	blob=$(printf "path %02043d" 1 | git hash-object -w --stdin) &&
@@ -379,6 +387,15 @@ test_expect_success 'large attributes line ignores trailing content in index' '
 	echo "warning: ignoring overly long attributes line 1" >expect &&
 	test_cmp expect err &&
 	test_must_be_empty actual
+'
+
+test_expect_success EXPENSIVE 'large attributes file ignored in index' '
+	test_when_finished "git update-index --remove .gitattributes" &&
+	blob=$(dd if=/dev/zero bs=101M count=1 2>/dev/null | git hash-object -w --stdin) &&
+	git update-index --add --cacheinfo 100644,$blob,.gitattributes &&
+	git check-attr --cached --all path >/dev/null 2>err &&
+	echo "warning: ignoring overly large gitattributes blob ${SQ}.gitattributes${SQ}" >expect &&
+	test_cmp expect err
 '
 
 test_done
