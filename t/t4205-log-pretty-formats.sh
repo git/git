@@ -899,6 +899,12 @@ test_expect_success SIZE_T_IS_64BIT 'log --pretty with overflowing wrapping dire
 	test_cmp expect error
 '
 
+test_expect_success 'log --pretty with padding and preceding control chars' '
+	printf "\20\20   0" >expect &&
+	git log -1 --pretty="format:%x10%x10%>|(4)%x30" >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success EXPENSIVE,SIZE_T_IS_64BIT 'log --pretty with huge commit message' '
 	# We only assert that this command does not crash. This needs to be
 	# executed with the address sanitizer to demonstrate failure.
