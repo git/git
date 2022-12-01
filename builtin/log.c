@@ -1871,6 +1871,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	struct strbuf rdiff2 = STRBUF_INIT;
 	struct strbuf rdiff_title = STRBUF_INIT;
 	int creation_factor = -1;
+	int mboxrd = 0;
 
 	const struct option builtin_format_patch_options[] = {
 		OPT_CALLBACK_F('n', "numbered", &numbered, NULL,
@@ -1882,6 +1883,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		OPT_BOOL('s', "signoff", &do_signoff, N_("add a Signed-off-by trailer")),
 		OPT_BOOL(0, "stdout", &use_stdout,
 			    N_("print patches to standard out")),
+		OPT_BOOL(0, "mboxrd", &mboxrd,
+			    N_("use the robust mboxrd format with --stdout")),
 		OPT_BOOL(0, "cover-letter", &cover_letter,
 			    N_("generate a cover letter")),
 		OPT_BOOL(0, "numbered-files", &just_numbers,
@@ -2104,6 +2107,10 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	die_for_incompatible_opt3(use_stdout, "--stdout",
 				  rev.diffopt.close_file, "--output",
 				  !!output_directory, "--output-directory");
+
+	/* should we warn on --mboxrd w/o --stdout? */
+	if (mboxrd)
+		rev.commit_format = CMIT_FMT_MBOXRD;
 
 	if (use_stdout) {
 		setup_pager();
