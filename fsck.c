@@ -614,17 +614,19 @@ static int fsck_tree(const struct object_id *tree_oid,
 						 ".gitmodules is a symbolic link");
 		}
 
+		if (is_hfs_dotgitattributes(name) || is_ntfs_dotgitattributes(name)) {
+			if (S_ISLNK(mode))
+				retval += report(options, tree_oid, OBJ_TREE,
+						 FSCK_MSG_GITATTRIBUTES_SYMLINK,
+						 ".gitattributes is a symlink");
+		}
+
 		if (S_ISLNK(mode)) {
 			if (is_hfs_dotgitignore(name) ||
 			    is_ntfs_dotgitignore(name))
 				retval += report(options, tree_oid, OBJ_TREE,
 						 FSCK_MSG_GITIGNORE_SYMLINK,
 						 ".gitignore is a symlink");
-			if (is_hfs_dotgitattributes(name) ||
-			    is_ntfs_dotgitattributes(name))
-				retval += report(options, tree_oid, OBJ_TREE,
-						 FSCK_MSG_GITATTRIBUTES_SYMLINK,
-						 ".gitattributes is a symlink");
 			if (is_hfs_dotmailmap(name) ||
 			    is_ntfs_dotmailmap(name))
 				retval += report(options, tree_oid, OBJ_TREE,
