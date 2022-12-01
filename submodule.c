@@ -2277,8 +2277,12 @@ int validate_submodule_git_dir(char *git_dir, const char *submodule_name)
 static void relocate_single_git_dir_into_superproject(const char *path)
 {
 	char *old_git_dir = NULL, *real_old_git_dir = NULL, *real_new_git_dir = NULL;
+	char *rel_old_git_dir;
+	const char *rel_new_git_dir;
 	struct strbuf new_gitdir = STRBUF_INIT;
 	const struct submodule *sub;
+	const char *super_prefix = get_super_prefix();
+	const char *sp = super_prefix ? super_prefix : "";
 
 	if (submodule_uses_worktrees(path))
 		die(_("relocate_gitdir for submodule '%s' with "
@@ -2290,6 +2294,7 @@ static void relocate_single_git_dir_into_superproject(const char *path)
 		return;
 
 	real_old_git_dir = real_pathdup(old_git_dir, 1);
+	rel_old_git_dir = xstrfmt("%s%s", sp, old_git_dir);
 
 	sub = submodule_from_path(the_repository, null_oid(), path);
 	if (!sub)
@@ -2298,20 +2303,23 @@ static void relocate_single_git_dir_into_superproject(const char *path)
 	submodule_name_to_gitdir(&new_gitdir, the_repository, sub->name);
 	if (validate_submodule_git_dir(new_gitdir.buf, sub->name) < 0)
 		die(_("refusing to move '%s' into an existing git dir"),
-		    real_old_git_dir);
+		    rel_old_git_dir);
 	if (safe_create_leading_directories_const(new_gitdir.buf) < 0)
 		die(_("could not create directory '%s'"), new_gitdir.buf);
-	real_new_git_dir = real_pathdup(new_gitdir.buf, 1);
 
-	fprintf(stderr, _("Migrating git directory of '%s%s' from\n'%s' to\n'%s'\n"),
-		get_super_prefix_or_empty(), path,
-		real_old_git_dir, real_new_git_dir);
+	real_new_git_dir = real_pathdup(new_gitdir.buf, 1);
+	rel_new_git_dir = relative_path(real_new_git_dir, real_old_git_dir,
+					&new_gitdir);
+
+	fprintf(stderr, _("Migrating git directory of '%s%s' from '%s' to '%s'\n"),
+		sp, path, rel_old_git_dir, rel_new_git_dir);
 
 	relocate_gitdir(path, real_old_git_dir, real_new_git_dir);
 
 	free(old_git_dir);
 	free(real_old_git_dir);
 	free(real_new_git_dir);
+	free(rel_old_git_dir);
 	strbuf_release(&new_gitdir);
 }
 

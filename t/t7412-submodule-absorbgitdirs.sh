@@ -18,13 +18,19 @@ test_expect_success 'setup a real submodule' '
 '
 
 test_expect_success 'absorb the git dir' '
+	>expect &&
+	>actual &&
 	>expect.1 &&
 	>expect.2 &&
 	>actual.1 &&
 	>actual.2 &&
 	git status >expect.1 &&
 	git -C sub1 rev-parse HEAD >expect.2 &&
-	git submodule absorbgitdirs &&
+	cat >expect <<-\EOF &&
+	Migrating git directory of '\''sub1'\'' from '\''sub1/.git'\'' to '\''../../.git/modules/sub1'\''
+	EOF
+	git submodule absorbgitdirs 2>actual &&
+	test_cmp expect actual &&
 	git fsck &&
 	test -f sub1/.git &&
 	test -d .git/modules/sub1 &&
@@ -37,7 +43,8 @@ test_expect_success 'absorb the git dir' '
 test_expect_success 'absorbing does not fail for deinitialized submodules' '
 	test_when_finished "git submodule update --init" &&
 	git submodule deinit --all &&
-	git submodule absorbgitdirs &&
+	git submodule absorbgitdirs 2>err &&
+	test_must_be_empty err &&
 	test -d .git/modules/sub1 &&
 	test -d sub1 &&
 	! test -e sub1/.git
@@ -56,7 +63,11 @@ test_expect_success 'setup nested submodule' '
 test_expect_success 'absorb the git dir in a nested submodule' '
 	git status >expect.1 &&
 	git -C sub1/nested rev-parse HEAD >expect.2 &&
-	git submodule absorbgitdirs &&
+	cat >expect <<-\EOF &&
+	Migrating git directory of '\''sub1/nested'\'' from '\''sub1/nested/.git'\'' to '\''../../../.git/modules/sub1/modules/nested'\''
+	EOF
+	git submodule absorbgitdirs 2>actual &&
+	test_cmp expect actual &&
 	test -f sub1/nested/.git &&
 	test -d .git/modules/sub1/modules/nested &&
 	git status >actual.1 &&
@@ -87,7 +98,11 @@ test_expect_success 're-setup nested submodule' '
 test_expect_success 'absorb the git dir in a nested submodule' '
 	git status >expect.1 &&
 	git -C sub1/nested rev-parse HEAD >expect.2 &&
-	git submodule absorbgitdirs &&
+	cat >expect <<-\EOF &&
+	Migrating git directory of '\''sub1'\'' from '\''sub1/.git'\'' to '\''../../.git/modules/sub1'\''
+	EOF
+	git submodule absorbgitdirs 2>actual &&
+	test_cmp expect actual &&
 	test -f sub1/.git &&
 	test -f sub1/nested/.git &&
 	test -d .git/modules/sub1/modules/nested &&
@@ -95,6 +110,25 @@ test_expect_success 'absorb the git dir in a nested submodule' '
 	git -C sub1/nested rev-parse HEAD >actual.2 &&
 	test_cmp expect.1 actual.1 &&
 	test_cmp expect.2 actual.2
+'
+
+test_expect_success 'absorb the git dir outside of primary worktree' '
+	test_when_finished "rm -rf repo-bare.git" &&
+	git clone --bare . repo-bare.git &&
+	test_when_finished "rm -rf repo-wt" &&
+	git -C repo-bare.git worktree add ../repo-wt &&
+
+	test_when_finished "rm -f .gitconfig" &&
+	test_config_global protocol.file.allow always &&
+	git -C repo-wt submodule update --init &&
+	git init repo-wt/sub2 &&
+	test_commit -C repo-wt/sub2 A &&
+	git -C repo-wt submodule add ./sub2 sub2 &&
+	cat >expect <<-EOF &&
+	Migrating git directory of '\''sub2'\'' from '\''sub2/.git'\'' to '\''../../../repo-bare.git/worktrees/repo-wt/modules/sub2'\''
+	EOF
+	DO_IT=1 git -C repo-wt submodule absorbgitdirs 2>actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'setup a gitlink with missing .gitmodules entry' '
@@ -107,7 +141,11 @@ test_expect_success 'setup a gitlink with missing .gitmodules entry' '
 test_expect_success 'absorbing the git dir fails for incomplete submodules' '
 	git status >expect.1 &&
 	git -C sub2 rev-parse HEAD >expect.2 &&
-	test_must_fail git submodule absorbgitdirs &&
+	cat >expect <<-\EOF &&
+	fatal: could not lookup name for submodule '\''sub2'\''
+	EOF
+	test_must_fail git submodule absorbgitdirs 2>actual &&
+	test_cmp expect actual &&
 	git -C sub2 fsck &&
 	test -d sub2/.git &&
 	git status >actual &&
@@ -127,8 +165,11 @@ test_expect_success 'setup a submodule with multiple worktrees' '
 '
 
 test_expect_success 'absorbing fails for a submodule with multiple worktrees' '
-	test_must_fail git submodule absorbgitdirs sub3 2>error &&
-	test_i18ngrep "not supported" error
+	cat >expect <<-\EOF &&
+	fatal: could not lookup name for submodule '\''sub2'\''
+	EOF
+	test_must_fail git submodule absorbgitdirs 2>actual &&
+	test_cmp expect actual
 '
 
 test_done
