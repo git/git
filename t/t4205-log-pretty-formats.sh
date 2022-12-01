@@ -867,4 +867,21 @@ test_expect_success 'log --pretty=reference is colored appropriately' '
 	test_cmp expect actual
 '
 
+test_expect_success EXPENSIVE,SIZE_T_IS_64BIT 'log --pretty with huge commit message' '
+	# We only assert that this command does not crash. This needs to be
+	# executed with the address sanitizer to demonstrate failure.
+	git log -1 --pretty="format:%>(2147483646)%x41%41%>(2147483646)%x41" >/dev/null
+'
+
+test_expect_success EXPENSIVE,SIZE_T_IS_64BIT 'set up huge commit' '
+	test-tool genzeros 2147483649 | tr "\000" "1" >expect &&
+	huge_commit=$(git commit-tree -F expect HEAD^{tree})
+'
+
+test_expect_success EXPENSIVE,SIZE_T_IS_64BIT 'log --pretty with huge commit message' '
+	git log -1 --format="%B%<(1)%x30" $huge_commit >actual &&
+	echo 0 >>expect &&
+	test_cmp expect actual
+'
+
 test_done

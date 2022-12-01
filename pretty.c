@@ -1473,7 +1473,9 @@ static size_t format_and_pad_commit(struct strbuf *sb, /* in UTF-8 */
 				    struct format_commit_context *c)
 {
 	struct strbuf local_sb = STRBUF_INIT;
-	int total_consumed = 0, len, padding = c->padding;
+	size_t total_consumed = 0;
+	int len, padding = c->padding;
+
 	if (padding < 0) {
 		const char *start = strrchr(sb->buf, '\n');
 		int occupied;
@@ -1485,7 +1487,7 @@ static size_t format_and_pad_commit(struct strbuf *sb, /* in UTF-8 */
 	}
 	while (1) {
 		int modifier = *placeholder == 'C';
-		int consumed = format_commit_one(&local_sb, placeholder, c);
+		size_t consumed = format_commit_one(&local_sb, placeholder, c);
 		total_consumed += consumed;
 
 		if (!modifier)
@@ -1551,7 +1553,7 @@ static size_t format_and_pad_commit(struct strbuf *sb, /* in UTF-8 */
 		}
 		strbuf_addbuf(sb, &local_sb);
 	} else {
-		int sb_len = sb->len, offset = 0;
+		size_t sb_len = sb->len, offset = 0;
 		if (c->flush_type == flush_left)
 			offset = padding - len;
 		else if (c->flush_type == flush_both)
@@ -1574,8 +1576,7 @@ static size_t format_commit_item(struct strbuf *sb, /* in UTF-8 */
 				 const char *placeholder,
 				 void *context)
 {
-	int consumed;
-	size_t orig_len;
+	size_t consumed, orig_len;
 	enum {
 		NO_MAGIC,
 		ADD_LF_BEFORE_NON_EMPTY,
