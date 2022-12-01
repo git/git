@@ -514,6 +514,7 @@ static enum list_objects_filter_result filter_sparse(
 static void filter_sparse_free(void *filter_data)
 {
 	struct filter_sparse_data *d = filter_data;
+	clear_pattern_list(&d->pl);
 	free(d->array_frame);
 	free(d);
 }
