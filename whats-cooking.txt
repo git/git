@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Nov 2022, #07; Tue, 29)
-X-master-at: 083e01275b81eb6105247ec522adf280d99f6b56
-X-next-at: c39a3162a331d3f49d7e0a5cc5b2e86db4d1a447
+Subject: What's cooking in git.git (Dec 2022, #01; Thu, 1)
+X-master-at: 805265fcf7a737664a8321aaf4a0587b78435184
+X-next-at: 54fd8350bdd496cc00f47dcf638aba6a72732ffa
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Nov 2022, #07; Tue, 29)
+What's cooking in git.git (Dec 2022, #01; Thu, 1)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -14,7 +14,7 @@ release).  Commits prefixed with '-' are only in 'seen', and aren't
 considered "accepted" at all.  A topic without enough support may be
 discarded after a long period of no activity.
 
-The preview release -rc0 for this cycle has been tagged.
+The first release candidate has been tagged.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -45,195 +45,78 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* ab/doc-synopsis-and-cmd-usage (2022-11-27) 1 commit
-  (merged to 'next' on 2022-11-28 at a517ea2f95)
- + i18n: fix command template placeholder format
-
- Doc and message fix.
- source: <pull.1435.git.1669483442230.gitgitgadget@gmail.com>
-
-
-* ab/fewer-the-index-macros (2022-11-21) 11 commits
-  (merged to 'next' on 2022-11-23 at de20206cac)
- + cocci: apply "pending" index-compatibility to some "builtin/*.c"
- + cache.h & test-tool.h: add & use "USE_THE_INDEX_VARIABLE"
- + {builtin/*,repository}.c: add & use "USE_THE_INDEX_VARIABLE"
- + cocci: apply "pending" index-compatibility to "t/helper/*.c"
- + cocci & cache.h: apply variable section of "pending" index-compatibility
- + cocci & cache.h: apply a selection of "pending" index-compatibility
- + cocci: add a index-compatibility.pending.cocci
- + read-cache API & users: make discard_index() return void
- + cocci & cache.h: remove rarely used "the_index" compat macros
- + builtin/{grep,log}.: don't define "USE_THE_INDEX_COMPATIBILITY_MACROS"
- + cache.h: remove unused "the_index" compat macros
-
- Progress on removing 'the_index' convenience wrappers.
- source: <cover-v2-00.11-00000000000-20221119T125550Z-avarab@gmail.com>
-
-
-* ah/chainlint-cpuinfo-parse-fix (2022-11-23) 1 commit
-  (merged to 'next' on 2022-11-28 at 1e51eafde5)
- + chainlint.pl: fix /proc/cpuinfo regexp
-
- The format of a line in /proc/cpuinfo that describes a CPU on s390x
- looked different from everybody else, and the code in chainlint.pl
- failed to parse it.
- source: <pull.1385.git.git.1669148861635.gitgitgadget@gmail.com>
-
-
-* es/locate-httpd-module-location-in-test (2022-11-22) 1 commit
-  (merged to 'next' on 2022-11-23 at dfa19a744f)
- + lib-httpd: extend module location auto-detection
-
- Add one more candidate directory that may house httpd modules while
- running tests.
- source: <pull.1426.git.1668999695898.gitgitgadget@gmail.com>
-
-
-* ew/prune-with-missing-objects-pack (2022-11-21) 1 commit
-  (merged to 'next' on 2022-11-23 at bd328c5d01)
- + prune: quiet ENOENT on missing directories
-
- "git prune" may try to iterate over .git/objects/pack for trash
- files to remove in it, and loudly fail when the directory is
- missing, which is not necessary.  The command has been taught to
- ignore such a failure.
- source: <20221119201213.2398081-1-e@80x24.org>
-
-
-* gc/resolve-alternate-symlinks (2022-11-25) 1 commit
-  (merged to 'next' on 2022-11-28 at 509d2005aa)
- + object-file: use real paths when adding alternates
-
- Resolve symbolic links when processing the locations of alternate
- object stores, since failing to do so can lead to confusing and buggy
- behavior.
- source: <pull.1382.v3.git.git.1669251331340.gitgitgadget@gmail.com>
-
-
-* jh/trace2-timers-and-counters (2022-11-25) 1 commit
-  (merged to 'next' on 2022-11-28 at 2fa64103b7)
- + trace2 tests: guard pthread test with "PTHREAD"
-
- Test fix.
- source: <patch-1.1-f7f21c94a6c-20221124T214813Z-avarab@gmail.com>
-
-
-* jk/parse-object-type-mismatch (2022-11-22) 3 commits
-  (merged to 'next' on 2022-11-22 at 69dc60536b)
- + parse_object(): simplify blob conditional
-  (merged to 'next' on 2022-11-18 at 1ee133a089)
- + parse_object(): check on-disk type of suspected blob
- + parse_object(): drop extra "has" check before checking object type
- (this branch is used by ab/tag-object-type-errors.)
-
- `parse_object()` hardening when checking for the existence of a
- suspected blob object.
- source: <Y3vQ/6QcTEFfpjLt@coredump.intra.peff.net>
-
-
-* jx/ci-ubuntu-fix (2022-11-27) 4 commits
-  (merged to 'next' on 2022-11-28 at 2eaa5b6c61)
- + ci: install python on ubuntu
- + ci: use the same version of p4 on both Linux and macOS
- + ci: remove the pipe after "p4 -V" to catch errors
- + github-actions: run gcc-8 on ubuntu-20.04 image
-
- Adjust the GitHub CI to newer ubuntu release.
- source: <20221124153934.12470-1-worldhello.net@gmail.com>
-
-
-* km/merge-recursive-typofix (2022-11-27) 1 commit
-  (merged to 'next' on 2022-11-28 at cb6c488e9c)
- + merge-recursive: fix variable typo in error message
-
- Fix an old typo in an error message.
- source: <20221125173745.738643-1-kyle@kyleam.com>
-
-
-* pw/config-int-parse-fixes (2022-11-09) 3 commits
-  (merged to 'next' on 2022-11-23 at 06ee2fff7b)
- + git_parse_signed(): avoid integer overflow
- + config: require at least one digit when parsing numbers
- + git_parse_unsigned: reject negative values
-
- Assorted fixes of parsing end-user input as integers.
- source: <pull.1389.v2.git.1668003388.gitgitgadget@gmail.com>
-
-
-* rs/list-objects-filter-leakfix (2022-11-21) 1 commit
-  (merged to 'next' on 2022-11-23 at 1e148fc7d2)
- + list-objects-filter: plug combine_filter_data leak
-
- Leakfix.
- source: <bc25ac8c-ce9a-2385-be0d-0c72798d319d@web.de>
-
-
-* sg/plug-line-log-leaks (2022-11-02) 3 commits
-  (merged to 'next' on 2022-11-23 at 5d2e1b065b)
- + diff.c: use diff_free_queue()
- + line-log: free the diff queues' arrays when processing merge commits
- + line-log: free diff queue when processing non-merge commits
-
- A handful of leaks in the line-log machinery have been plugged.
- source: <20221102220142.574890-1-szeder.dev@gmail.com>
-
-
-* zk/push-use-bitmaps (2022-11-22) 1 commit
-  (merged to 'next' on 2022-11-23 at 2ce20bcaf5)
- + t5516: fail to run in verbose mode
-
- Test fix.
- source: <20221121134040.12260-1-worldhello.net@gmail.com>
-
---------------------------------------------------
 [New Topics]
 
-* rr/status-untracked-advice (2022-11-25) 1 commit
- - status: modernize git-status "slow untracked files" advice
+* jk/avoid-redef-system-functions (2022-12-01) 2 commits
+  (merged to 'next' on 2022-12-01 at 7b6131f09f)
+ + Merge branch 'jk/avoid-redef-system-functions-2.30'
+ + Merge branch 'jk/avoid-redef-system-functions-2.30' into maint
+ (this branch uses jk/avoid-redef-system-functions-2.30.)
 
- The advice message given by "git status" when it takes long time to
- enumerate untracked paths has been updated.
+ The jk/avoid-redef-system-functions-2.30 topic pre-merged for more
+ recent codebase.
+
+ Will cook in 'next'.
+
+
+* jk/avoid-redef-system-functions-2.30 (2022-12-01) 1 commit
+  (merged to 'next' on 2022-12-01 at b52a884362)
+ + git-compat-util: avoid redefining system function names
+ (this branch is used by jk/avoid-redef-system-functions.)
+
+ Redefining system functions for a few functions did not follow our
+ usual "implement git_foo() and #define foo(args) git_foo(args)"
+ pattern, which has broken build for some folks.
+
+ Will cook in 'next'.
+ source: <Y4fH4rhcSztHwKvK@coredump.intra.peff.net>
+
+
+* jt/avoid-lazy-fetch-commits (2022-12-01) 4 commits
+ . commit: don't lazy-fetch commits
+ . object-file: refactor replace object lookup
+ . object-file: refactor corrupt object diagnosis
+ . object-file: reread object with exact same args
+
+ Even in a repository with promissor remote, it is useless to
+ attempt to lazily attempt fetching an object that is expected to be
+ commit, because no "filter" mode omits commit objects.  Take
+ advantage of this assumption to fail fast on errors.
+
+ Seems to break CI (win test (7)).
+ cf. https://github.com/git/git/actions/runs/3591107183/jobs/6045374690
+ source: <cover.1669839849.git.jonathantanmy@google.com>
+
+
+* rs/diff-parseopts (2022-12-01) 4 commits
+ - SQUASH???
+ - diff: remove parseopts member of struct diff_options
+ - diff: let prep_parse_options() return parseopt array
+ - diff: factor out add_diff_options()
+
+ The way the diff machinery prepares the options array for the
+ parse_options API has been refactored to avoid resource leaks.
 
  Will merge to 'next'?
- source: <pull.1384.v8.git.1669154823035.gitgitgadget@gmail.com>
+ source: <0620b4a6-b80a-d8a0-5a35-857b9fe0c986@web.de>
+
+--------------------------------------------------
+[Graduated to 'master']
+
+* ab/fewer-the-index-macros (2022-12-01) 1 commit
+  (merged to 'next' on 2022-12-01 at 21b212faed)
+ + cocci: avoid "should ... be a metavariable" warnings
+
+ Squelch warnings from Coccinelle
+ source: <patch-1.1-31af153702e-20221130T082521Z-avarab@gmail.com>
 
 
-* sa/git-var-empty (2022-11-27) 2 commits
- - var: allow GIT_EDITOR to return null
- - var: do not print usage() with a correct invocation
+* ab/gnumake-4.4-fix (2022-12-01) 1 commit
+  (merged to 'next' on 2022-12-01 at c4d7fa882b)
+ + Makefiles: change search through $(MAKEFLAGS) for GNU make 4.4
 
- "git var UNKNOWN_VARIABLE" and "git var VARIABLE" with the variable
- given an empty value used to behave identically.  Now the latter
- just gives an empty output, while the former still gives an error
- message.
-
- Will merge to 'next'?
- source: <pull.1434.v3.git.1669472277.gitgitgadget@gmail.com>
-
-
-* jx/t1301-updates (2022-11-29) 3 commits
- - t1301: do not change $CWD in "shared=all" test case
- - t1301: use test_when_finished for cleanup
- - t1301: fix wrong template dir for git-init
-
- Test updates.
-
- Seems to break CI.
- source: <20221127145130.16155-1-worldhello.net@gmail.com>
-
-
-* km/send-email-with-v-reroll-count (2022-11-27) 1 commit
- - send-email: relay '-v N' to format-patch
-
- "git send-email -v 3" used to be expanded to "git send-email
- --validate 3" when the user meant to pass them down to
- "format-patch", which has been corrected.
-
- Seems to break CI.
- source: <87edtp5uws.fsf@kyleam.com>
+ Adjust our Makefiles for GNUmake 4.4
+ source: <patch-v3-1.1-432518b2dd7-20221130T081835Z-avarab@gmail.com>
 
 
 * ps/gnumake-4.4-fix (2022-11-28) 1 commit
@@ -241,22 +124,7 @@ Release tarballs are available at:
  + Makefile: avoid multiple patterns when recipes generate one file
 
  Adjust Makefile for GNU make 4.4
-
- Will cook in 'next'.
  source: <20221127224251.2508200-2-psmith@gnu.org>
-
-
-* so/diff-merges-more (2022-11-28) 5 commits
- - diff-merges: issue warning on lone '-m' option
- - diff-merges: support list of values for --diff-merges
- - diff-merges: implement log.diffMergesForce config
- - diff-merges: implement log.diffMerges-m-imply-p config
- - diff-merges: implement [no-]hide option and log.diffMergesHide config
-
- Assorted updates to "--diff-merges=X" option.
- Seems to break CI.
- cf. https://github.com/git/git/actions/runs/3560918726
- source: <20221127093721.31012-1-sorganov@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -423,6 +291,57 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* sa/git-var-empty (2022-11-27) 2 commits
+  (merged to 'next' on 2022-12-01 at 3b81dcb382)
+ + var: allow GIT_EDITOR to return null
+ + var: do not print usage() with a correct invocation
+
+ "git var UNKNOWN_VARIABLE" and "git var VARIABLE" with the variable
+ given an empty value used to behave identically.  Now the latter
+ just gives an empty output, while the former still gives an error
+ message.
+
+ Will cook in 'next'.
+ source: <pull.1434.v3.git.1669472277.gitgitgadget@gmail.com>
+
+
+* jx/t1301-updates (2022-11-30) 3 commits
+ - t1301: do not change $CWD in "shared=all" test case
+ - t1301: use test_when_finished for cleanup
+ - t1301: fix wrong template dir for git-init
+
+ Test updates.
+ source: <20221128130323.8914-1-worldhello.net@gmail.com>
+
+
+* km/send-email-with-v-reroll-count (2022-11-30) 2 commits
+ - SQUASH???
+ - send-email: relay '-v N' to format-patch
+
+ "git send-email -v 3" used to be expanded to "git send-email
+ --validate 3" when the user meant to pass them down to
+ "format-patch", which has been corrected.
+
+ Seems to break CI.
+ source: <87edtp5uws.fsf@kyleam.com>
+
+
+* so/diff-merges-more (2022-11-30) 6 commits
+ . SQUASH??? cocci fix
+ . diff-merges: issue warning on lone '-m' option
+ . diff-merges: support list of values for --diff-merges
+ . diff-merges: implement log.diffMergesForce config
+ . diff-merges: implement log.diffMerges-m-imply-p config
+ . diff-merges: implement [no-]hide option and log.diffMergesHide config
+
+ Assorted updates to "--diff-merges=X" option.
+
+ Seems to break CI.
+ Cocci complains about "if (func_ptr != NULL)"
+ cf. https://github.com/git/git/actions/runs/3583592108/jobs/6029213624
+ source: <20221127093721.31012-1-sorganov@gmail.com>
+
+
 * ab/config-multi-and-nonbool (2022-11-27) 9 commits
  - for-each-repo: with bad config, don't conflate <path> and <cmd>
  - config API: add "string" version of *_value_multi(), fix segfaults
@@ -455,14 +374,15 @@ Release tarballs are available at:
 
 
 * sa/cat-file-mailmap--batch-check (2022-11-21) 2 commits
- - cat-file: add mailmap support to --batch-check option
- - cat-file: add mailmap support to -s option
+ . cat-file: add mailmap support to --batch-check option
+ . cat-file: add mailmap support to -s option
 
  'cat-file' gains mailmap support for its '--batch-check' and '-s'
  options.
 
  Seems to break CI.
- cf. https://github.com/git/git/actions/runs/3560918726
+ test broken on osx due to "wc -c" padding its output
+ cf. https://github.com/git/git/actions/runs/3581605069/jobs/6024866010#step:4:1860
  source: <20221120074852.121346-1-siddharthasthana31@gmail.com>
 
 
@@ -501,30 +421,32 @@ Release tarballs are available at:
 
 
 * tl/ls-tree--pattern (2022-11-17) 6 commits
- - ls-tree: introduce '--pattern' option
- - ls-tree: introduce 'match_pattern()' function
- - ls-tree: improving cohension in the print code
- - ls-tree: optimize params of 'show_tree_common_default_long()'
- - t3104: remove shift code in 'test_ls_tree_format'
- - ls-tree: cleanup the redundant SPACE
+ . ls-tree: introduce '--pattern' option
+ . ls-tree: introduce 'match_pattern()' function
+ . ls-tree: improving cohension in the print code
+ . ls-tree: optimize params of 'show_tree_common_default_long()'
+ . t3104: remove shift code in 'test_ls_tree_format'
+ . ls-tree: cleanup the redundant SPACE
 
  A synonym for "ls-tree | grep <pattern>", "ls-tree
  --pattern=<pattern>" was introduced.
 
  Waiting for review response, but leaning negative.
  Seems to break CI.
- cf. https://github.com/git/git/actions/runs/3560918726
+ test broken with SHA256 due to hardcoded hexadecimal constants
+ cf. https://github.com/git/git/actions/runs/3581947576/jobs/6025603775#step:4:1846
  source: <20221117113023.65865-1-tenglong.tl@alibaba-inc.com>
 
 
-* tr/am--no-verify (2022-11-29) 1 commit
- - am: Allow passing --no-verify flag
+* tr/am--no-verify (2022-12-01) 2 commits
+ - SQUASH???
+ - am: allow passing --no-verify flag
 
  Conditionally skip the pre-applypatch and applypatch-msg hooks when
  applying patches with 'git am'.
 
  Expecting a (hopefully final) reroll.
- source: <20221128174825.1510407-1-thierry.reding@gmail.com>
+ source: <20221130172833.2662751-1-thierry.reding@gmail.com>
 
 
 * ab/remove--super-prefix (2022-11-21) 12 commits
@@ -587,14 +509,19 @@ Release tarballs are available at:
  source: <pull.1308.git.git.1668018620148.gitgitgadget@gmail.com>
 
 
-* rs/multi-filter-args (2022-11-21) 3 commits
- - Revert "pack-objects: lazily set up "struct rev_info", don't leak"
- - t5317: demonstrate failure to handle multiple --filter options
- - t5317: stop losing return codes of git ls-files
+* rs/multi-filter-args (2022-11-30) 5 commits
+  (merged to 'next' on 2022-12-01 at 5848d16bb6)
+ + list-objects-filter: remove OPT_PARSE_LIST_OBJECTS_FILTER_INIT()
+ + pack-objects: simplify --filter handling
+ + pack-objects: fix handling of multiple --filter options
+ + t5317: demonstrate failure to handle multiple --filter options
+ + t5317: stop losing return codes of git ls-files
 
  Fix a bug where `pack-objects` would not respect multiple `--filter`
  arguments when invoked directly.
- source: <d19c6cb4-611f-afea-8a14-5e58d7509113@web.de>
+
+ Will cook in 'next'.
+ source: <c2d3e7a3-599f-dae5-8dde-dc969df39f02@web.de>
 
 
 * ab/various-leak-fixes (2022-11-21) 16 commits
@@ -622,15 +549,14 @@ Release tarballs are available at:
  source: <cover-v2-00.15-00000000000-20221108T172650Z-avarab@gmail.com>
 
 
-* aw/complete-case-insensitive (2022-11-07) 2 commits
+* aw/complete-case-insensitive (2022-11-30) 2 commits
  - completion: add case-insensitive match of pseudorefs
  - completion: add optional ignore-case when matching refs
 
  Introduce a case insensitive mode to the Bash completion helpers.
 
- Waiting for review.
- Seems to break CI.
- source: <pull.1374.git.git.1667669315.gitgitgadget@gmail.com>
+ Will cook in 'next'.
+ source: <pull.1374.v2.git.git.1668990419.gitgitgadget@gmail.com>
 
 
 * dd/git-bisect-builtin (2022-11-15) 13 commits
@@ -723,32 +649,34 @@ Release tarballs are available at:
  'git notes append' was taught '--[no-]blank-line' to conditionally
  add a LF between a new and existing note.
 
- Expecting a reroll.
+ Waiting for review.
  source: <cover.1667980450.git.dyroneteng@gmail.com>
 
 
 * ds/bundle-uri-4 (2022-11-16) 9 commits
- - clone: unbundle the advertised bundles
- - bundle-uri: download bundles from an advertised list
- - bundle-uri: allow relative URLs in bundle lists
- - strbuf: introduce strbuf_strip_file_from_path()
- - bundle-uri client: add boolean transfer.bundleURI setting
- - bundle-uri: serve bundle.* keys from config
- - bundle-uri client: add helper for testing server
- - bundle-uri client: add minimal NOOP client
- - protocol v2: add server-side "bundle-uri" skeleton
+ . clone: unbundle the advertised bundles
+ . bundle-uri: download bundles from an advertised list
+ . bundle-uri: allow relative URLs in bundle lists
+ . strbuf: introduce strbuf_strip_file_from_path()
+ . bundle-uri client: add boolean transfer.bundleURI setting
+ . bundle-uri: serve bundle.* keys from config
+ . bundle-uri client: add helper for testing server
+ . bundle-uri client: add minimal NOOP client
+ . protocol v2: add server-side "bundle-uri" skeleton
 
  Bundle URIs part 4.
 
  Waiting for review.
  Seems to break CI.
- cf. https://github.com/git/git/actions/runs/3560918726
+ test broken with linux-TEST_vars
+ cf. https://github.com/git/git/actions/runs/3583689825/jobs/6029429974
  source: <pull.1400.v2.git.1668628302.gitgitgadget@gmail.com>
 
 
 * tl/pack-bitmap-absolute-paths (2022-11-29) 4 commits
- - pack-bitmap.c: trace bitmap ignore logs when midx-bitmap is found
- - pack-bitmap.c: break out of the bitmap loop early if not tracing
+  (merged to 'next' on 2022-11-30 at cb5d17ee40)
+ + pack-bitmap.c: trace bitmap ignore logs when midx-bitmap is found
+ + pack-bitmap.c: break out of the bitmap loop early if not tracing
   (merged to 'next' on 2022-11-14 at 34eb0ea05a)
  + pack-bitmap.c: avoid exposing absolute paths
  + pack-bitmap.c: remove unnecessary "open_pack_index()" calls
@@ -756,7 +684,7 @@ Release tarballs are available at:
  The pack-bitmap machinery is taught to log the paths of redundant
  bitmap(s) to trace2 instead of stderr.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <cover.1669644101.git.dyroneteng@gmail.com>
 
 
@@ -819,31 +747,14 @@ Release tarballs are available at:
  source: <20221112143616.1429-1-philipoakley@iee.email>
 
 
-* rr/long-status-advice (2022-11-15) 1 commit
- - status: long status advice adapted to recent capabilities
+* rr/status-untracked-advice (2022-12-01) 1 commit
+ - status: modernize git-status "slow untracked files" advice
 
- The advice message emitted by a slow "status" run is amended to
- mention fsmonitor.
+ The advice message given by "git status" when it takes long time to
+ enumerate untracked paths has been updated.
 
- Waiting for reviewer feedback on the updated round.
- source: <pull.1384.v6.git.1668547188070.gitgitgadget@gmail.com>
-
-
-* gc/submodule-clone-update-with-branches (2022-10-30) 8 commits
- - clone, submodule update: create and check out branches
- - submodule--helper: remove update_data.suboid
- - submodule update: refactor update targets
- - submodule: return target of submodule symref
- - t5617: drop references to remote-tracking branches
- - submodule--helper clone: create named branch
- - repo-settings: add submodule_propagate_branches
- - clone: teach --detach option
-
- "git clone --recurse-submodules" and "git submodule update" learns
- to honor the "propagete branches" option.
-
- Waiting for review on the updated round.
- source: <pull.1321.v3.git.git.1666988096.gitgitgadget@gmail.com>
+ Will merge to 'next'.
+ source: <pull.1384.v9.git.1669769536707.gitgitgadget@gmail.com>
 
 
 * cc/filtered-repack (2022-11-23) 2 commits
@@ -860,21 +771,41 @@ Release tarballs are available at:
 
 
 * mc/credential-helper-auth-headers (2022-11-02) 11 commits
- - t5556: add HTTP authentication tests
- - test-http-server: add simple authentication
- - test-http-server: pass Git requests to http-backend
- - test-http-server: add HTTP request parsing
- - test-http-server: add HTTP error response function
- - test-http-server: add stub HTTP server test helper
- - http: set specific auth scheme depending on credential
- - http: move proactive auth to first slot creation
- - http: store all request headers on active_request_slot
- - credential: add WWW-Authenticate header to cred requests
- - http: read HTTP WWW-Authenticate response headers
+ . t5556: add HTTP authentication tests
+ . test-http-server: add simple authentication
+ . test-http-server: pass Git requests to http-backend
+ . test-http-server: add HTTP request parsing
+ . test-http-server: add HTTP error response function
+ . test-http-server: add stub HTTP server test helper
+ . http: set specific auth scheme depending on credential
+ . http: move proactive auth to first slot creation
+ . http: store all request headers on active_request_slot
+ . credential: add WWW-Authenticate header to cred requests
+ . http: read HTTP WWW-Authenticate response headers
 
  Extending credential helper protocol.
 
  Needs review.
  Seems to break CI.
- cf. https://github.com/git/git/actions/runs/3562942886/jobs/5985179202
+ cf. https://github.com/git/git/actions/runs/3580969920
  source: <pull.1352.v3.git.1667426969.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Discarded]
+
+* gc/submodule-clone-update-with-branches (2022-10-30) 8 commits
+ . clone, submodule update: create and check out branches
+ . submodule--helper: remove update_data.suboid
+ . submodule update: refactor update targets
+ . submodule: return target of submodule symref
+ . t5617: drop references to remote-tracking branches
+ . submodule--helper clone: create named branch
+ . repo-settings: add submodule_propagate_branches
+ . clone: teach --detach option
+
+ "git clone --recurse-submodules" and "git submodule update" learns
+ to honor the "propagete branches" option.
+
+ Will discard for now.
+ cf. <xmqqedtl14xr.fsf@gitster.g>
+ source: <pull.1321.v3.git.git.1666988096.gitgitgadget@gmail.com>
