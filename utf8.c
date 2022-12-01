@@ -208,11 +208,12 @@ int utf8_width(const char **start, size_t *remainder_p)
  */
 int utf8_strnwidth(const char *string, size_t len, int skip_ansi)
 {
-	int width = 0;
 	const char *orig = string;
+	size_t width = 0;
 
 	while (string && string < orig + len) {
-		int glyph_width, skip;
+		int glyph_width;
+		size_t skip;
 
 		while (skip_ansi &&
 		       (skip = display_mode_esc_sequence_len(string)) != 0)
@@ -222,7 +223,12 @@ int utf8_strnwidth(const char *string, size_t len, int skip_ansi)
 		if (glyph_width > 0)
 			width += glyph_width;
 	}
-	return string ? width : len;
+
+	/*
+	 * TODO: fix the interface of this function and `utf8_strwidth()` to
+	 * return `size_t` instead of `int`.
+	 */
+	return cast_size_t_to_int(string ? width : len);
 }
 
 int utf8_strwidth(const char *string)
