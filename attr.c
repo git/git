@@ -380,10 +380,9 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 			goto fail_return;
 	}
 
-	res = xcalloc(1,
-		      sizeof(*res) +
-		      sizeof(struct attr_state) * num_attr +
-		      (is_macro ? 0 : namelen + 1));
+	res = xcalloc(1, st_add3(sizeof(*res),
+				 st_mult(sizeof(struct attr_state), num_attr),
+				 is_macro ? 0 : namelen + 1));
 	if (is_macro) {
 		res->u.attr = git_attr_internal(name, namelen);
 	} else {
