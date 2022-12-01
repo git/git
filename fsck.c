@@ -1170,38 +1170,41 @@ static int fsck_gitmodules_fn(const char *var, const char *value, void *vdata)
 static int fsck_blob(const struct object_id *oid, const char *buf,
 		     unsigned long size, struct fsck_options *options)
 {
-	struct fsck_gitmodules_data data;
-	struct config_options config_opts = { 0 };
-
-	if (!oidset_contains(&options->gitmodules_found, oid))
-		return 0;
-	oidset_insert(&options->gitmodules_done, oid);
+	int ret = 0;
 
 	if (object_on_skiplist(options, oid))
 		return 0;
 
-	if (!buf) {
-		/*
-		 * A missing buffer here is a sign that the caller found the
-		 * blob too gigantic to load into memory. Let's just consider
-		 * that an error.
-		 */
-		return report(options, oid, OBJ_BLOB,
-			      FSCK_MSG_GITMODULES_LARGE,
-			      ".gitmodules too large to parse");
+	if (oidset_contains(&options->gitmodules_found, oid)) {
+		struct config_options config_opts = { 0 };
+		struct fsck_gitmodules_data data;
+
+		oidset_insert(&options->gitmodules_done, oid);
+
+		if (!buf) {
+			/*
+			 * A missing buffer here is a sign that the caller found the
+			 * blob too gigantic to load into memory. Let's just consider
+			 * that an error.
+			 */
+			return report(options, oid, OBJ_BLOB,
+					FSCK_MSG_GITMODULES_LARGE,
+					".gitmodules too large to parse");
+		}
+
+		data.oid = oid;
+		data.options = options;
+		data.ret = 0;
+		config_opts.error_action = CONFIG_ERROR_SILENT;
+		if (git_config_from_mem(fsck_gitmodules_fn, CONFIG_ORIGIN_BLOB,
+					".gitmodules", buf, size, &data, &config_opts))
+			data.ret |= report(options, oid, OBJ_BLOB,
+					FSCK_MSG_GITMODULES_PARSE,
+					"could not parse gitmodules blob");
+		ret |= data.ret;
 	}
 
-	data.oid = oid;
-	data.options = options;
-	data.ret = 0;
-	config_opts.error_action = CONFIG_ERROR_SILENT;
-	if (git_config_from_mem(fsck_gitmodules_fn, CONFIG_ORIGIN_BLOB,
-				".gitmodules", buf, size, &data, &config_opts))
-		data.ret |= report(options, oid, OBJ_BLOB,
-				   FSCK_MSG_GITMODULES_PARSE,
-				   "could not parse gitmodules blob");
-
-	return data.ret;
+	return ret;
 }
 
 int fsck_object(struct object *obj, void *data, unsigned long size,
