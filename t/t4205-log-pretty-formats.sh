@@ -888,15 +888,21 @@ test_expect_success 'log --pretty with magical wrapping directives' '
 '
 
 test_expect_success SIZE_T_IS_64BIT 'log --pretty with overflowing wrapping directive' '
-	cat >expect <<-EOF &&
-	fatal: number too large to represent as int on this platform: 2147483649
-	EOF
-	test_must_fail git log -1 --pretty="format:%w(2147483649,1,1)%d" 2>error &&
-	test_cmp expect error &&
-	test_must_fail git log -1 --pretty="format:%w(1,2147483649,1)%d" 2>error &&
-	test_cmp expect error &&
-	test_must_fail git log -1 --pretty="format:%w(1,1,2147483649)%d" 2>error &&
-	test_cmp expect error
+	printf "%%w(2147483649,1,1)0" >expect &&
+	git log -1 --pretty="format:%w(2147483649,1,1)%x30" >actual &&
+	test_cmp expect actual &&
+	printf "%%w(1,2147483649,1)0" >expect &&
+	git log -1 --pretty="format:%w(1,2147483649,1)%x30" >actual &&
+	test_cmp expect actual &&
+	printf "%%w(1,1,2147483649)0" >expect &&
+	git log -1 --pretty="format:%w(1,1,2147483649)%x30" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success SIZE_T_IS_64BIT 'log --pretty with overflowing padding directive' '
+	printf "%%<(2147483649)0" >expect &&
+	git log -1 --pretty="format:%<(2147483649)%x30" >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'log --pretty with padding and preceding control chars' '

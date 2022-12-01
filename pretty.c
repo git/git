@@ -13,6 +13,13 @@
 #include "gpg-interface.h"
 #include "trailer.h"
 
+/*
+ * The limit for formatting directives, which enable the caller to append
+ * arbitrarily many bytes to the formatted buffer. This includes padding
+ * and wrapping formatters.
+ */
+#define FORMATTING_LIMIT (16 * 1024)
+
 static char *user_format;
 static struct cmt_fmt_map {
 	const char *name;
@@ -1046,6 +1053,15 @@ static size_t parse_padding_placeholder(const char *placeholder,
 		if (!*end || end == start)
 			return 0;
 		width = strtol(start, &next, 10);
+
+		/*
+		 * We need to limit the amount of padding, or otherwise this
+		 * would allow the user to pad the buffer by arbitrarily many
+		 * bytes and thus cause resource exhaustion.
+		 */
+		if (width < -FORMATTING_LIMIT || width > FORMATTING_LIMIT)
+			return 0;
+
 		if (next == start || width == 0)
 			return 0;
 		if (width < 0) {
@@ -1205,6 +1221,16 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 				if (*next != ')')
 					return 0;
 			}
+
+			/*
+			 * We need to limit the format here as it allows the
+			 * user to prepend arbitrarily many bytes to the buffer
+			 * when rewrapping.
+			 */
+			if (width > FORMATTING_LIMIT ||
+			    indent1 > FORMATTING_LIMIT ||
+			    indent2 > FORMATTING_LIMIT)
+				return 0;
 			rewrap_message_tail(sb, c, width, indent1, indent2);
 			return end - placeholder + 1;
 		} else
