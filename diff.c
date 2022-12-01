@@ -5397,6 +5397,12 @@ static int diff_opt_rotate_to(const struct option *opt, const char *arg, int uns
 	return 0;
 }
 
+struct option *add_diff_options(const struct option *opts,
+				struct diff_options *options)
+{
+	return parse_options_concat(opts, options->parseopts);
+}
+
 static void prep_parse_options(struct diff_options *options)
 {
 	struct option parseopts[] = {
