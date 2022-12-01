@@ -446,7 +446,7 @@ struct attr_stack {
 
 static void attr_stack_free(struct attr_stack *e)
 {
-	int i;
+	unsigned i;
 	free(e->origin);
 	for (i = 0; i < e->num_matches; i++) {
 		struct match_attr *a = e->attrs[i];
@@ -660,8 +660,8 @@ static void handle_attr_line(struct attr_stack *res,
 	a = parse_attr_line(line, src, lineno, macro_ok);
 	if (!a)
 		return;
-	ALLOC_GROW(res->attrs, res->num_matches + 1, res->alloc);
-	res->attrs[res->num_matches++] = a;
+	ALLOC_GROW_BY(res->attrs, res->num_matches, 1, res->alloc);
+	res->attrs[res->num_matches - 1] = a;
 }
 
 static struct attr_stack *read_attr_from_array(const char **list)
@@ -1025,11 +1025,11 @@ static int fill(const char *path, int pathlen, int basename_offset,
 		struct all_attrs_item *all_attrs, int rem)
 {
 	for (; rem > 0 && stack; stack = stack->prev) {
-		int i;
+		unsigned i;
 		const char *base = stack->origin ? stack->origin : "";
 
-		for (i = stack->num_matches - 1; 0 < rem && 0 <= i; i--) {
-			const struct match_attr *a = stack->attrs[i];
+		for (i = stack->num_matches; 0 < rem && 0 < i; i--) {
+			const struct match_attr *a = stack->attrs[i - 1];
 			if (a->is_macro)
 				continue;
 			if (path_matches(path, pathlen, basename_offset,
@@ -1060,9 +1060,9 @@ static void determine_macros(struct all_attrs_item *all_attrs,
 			     const struct attr_stack *stack)
 {
 	for (; stack; stack = stack->prev) {
-		int i;
-		for (i = stack->num_matches - 1; i >= 0; i--) {
-			const struct match_attr *ma = stack->attrs[i];
+		unsigned i;
+		for (i = stack->num_matches; i > 0; i--) {
+			const struct match_attr *ma = stack->attrs[i - 1];
 			if (ma->is_macro) {
 				int n = ma->u.attr->attr_nr;
 				if (!all_attrs[n].macro) {
