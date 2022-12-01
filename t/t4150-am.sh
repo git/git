@@ -356,7 +356,6 @@ test_expect_success 'am with failing applypatch-msg hook (no verify)' '
 	git am --no-verify patch1 &&
 	test_path_is_missing .git/rebase-apply &&
 	git diff --exit-code second &&
-	test_cmp_rev second HEAD &&
 	git log -1 --format=format:%B >actual &&
 	test_cmp msg actual
 '
@@ -401,9 +400,10 @@ test_expect_success 'am with failing pre-applypatch hook (no verify)' '
 	EOF
 	git am --no-verify patch1 &&
 	test_path_is_missing .git/rebase-apply &&
+	test_path_is_file empty-file &&
 	git diff --exit-code second &&
-	test_cmp_rev second HEAD &&
-	test_path_is_file empty-file
+	git log -1 --format=format:%B >actual &&
+	test_cmp msg actual
 '
 
 test_expect_success 'am with post-applypatch hook' '
