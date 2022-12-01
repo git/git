@@ -524,11 +524,16 @@ static int open_pack_bitmap(struct repository *r,
 	struct packed_git *p;
 	int ret = -1;
 
-	assert(!bitmap_git->map);
-
 	for (p = get_all_packs(r); p; p = p->next) {
-		if (open_pack_bitmap_1(bitmap_git, p) == 0)
+		if (open_pack_bitmap_1(bitmap_git, p) == 0) {
 			ret = 0;
+			/*
+			 * The only reason to keep looking is to report
+			 * duplicates.
+			 */
+			if (!trace2_is_enabled())
+				break;
+		}
 	}
 
 	return ret;
@@ -552,11 +557,20 @@ static int open_midx_bitmap(struct repository *r,
 static int open_bitmap(struct repository *r,
 		       struct bitmap_index *bitmap_git)
 {
+	int found;
+
 	assert(!bitmap_git->map);
 
-	if (!open_midx_bitmap(r, bitmap_git))
-		return 0;
-	return open_pack_bitmap(r, bitmap_git);
+	found = !open_midx_bitmap(r, bitmap_git);
+
+	/*
+	 * these will all be skipped if we opened a midx bitmap; but run it
+	 * anyway if tracing is enabled to report the duplicates
+	 */
+	if (!found || trace2_is_enabled())
+		found |= !open_pack_bitmap(r, bitmap_git);
+
+	return found ? 0 : -1;
 }
 
 struct bitmap_index *prepare_bitmap_git(struct repository *r)
