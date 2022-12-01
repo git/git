@@ -290,10 +290,6 @@ int opt_parse_list_objects_filter(const struct option *opt,
 				  const char *arg, int unset)
 {
 	struct list_objects_filter_options *filter_options = opt->value;
-	opt_lof_init init = (opt_lof_init)opt->defval;
-
-	if (init)
-		filter_options = init(opt->value);
 
 	if (unset || !arg)
 		list_objects_filter_set_no_filter(filter_options);
