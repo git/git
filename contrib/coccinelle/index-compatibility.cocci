@@ -1,22 +1,26 @@
 // the_index.* variables
 @@
+identifier AC = active_cache;
+identifier ACC = active_cache_changed;
+identifier ACT = active_cache_tree;
 @@
 (
-- active_cache
+- AC
 + the_index.cache
 |
-- active_cache_changed
+- ACC
 + the_index.cache_changed
 |
-- active_cache_tree
+- ACT
 + the_index.cache_tree
 )
 
 @@
+identifier AN = active_nr;
 identifier f != prepare_to_commit;
 @@
   f(...) {<...
-- active_nr
+- AN
 + the_index.cache_nr
   ...>}
 
