@@ -4593,8 +4593,6 @@ static void run_checkdiff(struct diff_filepair *p, struct diff_options *o)
 	builtin_checkdiff(name, other, attr_path, p->one, p->two, o);
 }
 
-static void prep_parse_options(struct diff_options *options);
-
 void repo_diff_setup(struct repository *r, struct diff_options *options)
 {
 	memcpy(options, &default_diff_options, sizeof(*options));
@@ -4640,8 +4638,6 @@ void repo_diff_setup(struct repository *r, struct diff_options *options)
 
 	options->color_moved = diff_color_moved_default;
 	options->color_moved_ws_handling = diff_color_moved_ws_default;
-
-	prep_parse_options(options);
 }
 
 static const char diff_status_letters[] = {
@@ -4799,8 +4795,6 @@ void diff_setup_done(struct diff_options *options)
 			options->filter = ~filter_bit[DIFF_STATUS_FILTER_AON];
 		options->filter &= ~options->filter_not;
 	}
-
-	FREE_AND_NULL(options->parseopts);
 }
 
 int parse_long_opt(const char *opt, const char **argv,
@@ -5400,11 +5394,6 @@ static int diff_opt_rotate_to(const struct option *opt, const char *arg, int uns
 struct option *add_diff_options(const struct option *opts,
 				struct diff_options *options)
 {
-	return parse_options_concat(opts, options->parseopts);
-}
-
-static void prep_parse_options(struct diff_options *options)
-{
 	struct option parseopts[] = {
 		OPT_GROUP(N_("Diff output format options")),
 		OPT_BITOP('p', "patch", &options->output_format,
@@ -5673,8 +5662,7 @@ static void prep_parse_options(struct diff_options *options)
 		OPT_END()
 	};
 
-	ALLOC_ARRAY(options->parseopts, ARRAY_SIZE(parseopts));
-	memcpy(options->parseopts, parseopts, sizeof(parseopts));
+	return parse_options_concat(opts, parseopts);
 }
 
 int diff_opt_parse(struct diff_options *options,
@@ -6497,7 +6485,6 @@ void diff_free(struct diff_options *options)
 	diff_free_file(options);
 	diff_free_ignore_regex(options);
 	clear_pathspec(&options->pathspec);
-	FREE_AND_NULL(options->parseopts);
 }
 
 void diff_flush(struct diff_options *options)

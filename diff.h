@@ -394,7 +394,6 @@ struct diff_options {
 	unsigned color_moved_ws_handling;
 
 	struct repository *repo;
-	struct option *parseopts;
 	struct strmap *additional_path_headers;
 
 	int no_free;
