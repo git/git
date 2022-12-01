@@ -879,6 +879,14 @@ test_expect_success 'log --pretty with invalid padding format' '
 	test_cmp expect actual
 '
 
+test_expect_success 'log --pretty with magical wrapping directives' '
+	commit_id=$(git commit-tree HEAD^{tree} -m "describe me") &&
+	git tag describe-me $commit_id &&
+	printf "\n(tag:\ndescribe-me)%%+w(2)" >expect &&
+	git log -1 --pretty="format:%w(1)%+d%+w(2)" $commit_id >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success EXPENSIVE,SIZE_T_IS_64BIT 'log --pretty with huge commit message' '
 	# We only assert that this command does not crash. This needs to be
 	# executed with the address sanitizer to demonstrate failure.

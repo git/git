@@ -1597,8 +1597,20 @@ static size_t format_commit_item(struct strbuf *sb, /* in UTF-8 */
 	default:
 		break;
 	}
-	if (magic != NO_MAGIC)
+	if (magic != NO_MAGIC) {
 		placeholder++;
+
+		switch (placeholder[0]) {
+		case 'w':
+			/*
+			 * `%+w()` cannot ever expand to a non-empty string,
+			 * and it potentially changes the layout of preceding
+			 * contents. We're thus not able to handle the magic in
+			 * this combination and refuse the pattern.
+			 */
+			return 0;
+		};
+	}
 
 	orig_len = sb->len;
 	if (((struct format_commit_context *)context)->flush_type != no_flush)
