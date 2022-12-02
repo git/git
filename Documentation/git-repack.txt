@@ -143,6 +143,14 @@ depth is 4095.
 	a larger and slower repository; see the discussion in
 	`pack.packSizeLimit`.
 
+--filter=<filter-spec>::
+	Omits certain objects (usually blobs) from the resulting
+	packfile. WARNING: this could easily corrupt the current repo
+	and lose data if ANY of the omitted objects hasn't been already
+	pushed to a remote. Be very careful about objects that might
+	have been created locally! See linkgit:git-rev-list[1] for valid
+	`<filter-spec>` forms.
+
 -b::
 --write-bitmap-index::
 	Write a reachability bitmap index as part of the repack. This
