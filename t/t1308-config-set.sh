@@ -146,6 +146,36 @@ test_expect_success 'find multiple values' '
 	check_config get_value_multi case.baz sam bat hask
 '
 
+test_expect_success 'emit multi values from configset with NULL entry' '
+	test_when_finished "rm -f my.config" &&
+	cat >my.config <<-\EOF &&
+	[a]key=x
+	[a]key
+	[a]key=y
+	EOF
+	cat >expect <<-\EOF &&
+	x
+	(NULL)
+	y
+	EOF
+	test-tool config configset_get_value_multi a.key my.config >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'multi values from configset with a last NULL entry' '
+	test_when_finished "rm -f my.config" &&
+	cat >my.config <<-\EOF &&
+	[a]key=x
+	[a]key=y
+	[a]key
+	EOF
+	cat >expect <<-\EOF &&
+	(NULL)
+	EOF
+	test-tool config configset_get_value a.key my.config >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'find value from a configset' '
 	cat >config2 <<-\EOF &&
 	[case]
