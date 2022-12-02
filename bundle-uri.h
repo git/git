@@ -4,6 +4,7 @@
 #include "hashmap.h"
 #include "strbuf.h"
 
+struct packet_reader;
 struct repository;
 struct string_list;
 
@@ -60,6 +61,15 @@ struct bundle_list {
 	int version;
 	enum bundle_list_mode mode;
 	struct hashmap bundles;
+
+	/**
+	 * The baseURI of a bundle_list is used as the base for any
+	 * relative URIs advertised by the bundle list at that location.
+	 *
+	 * When the list is generated from a Git server, then use that
+	 * server's location.
+	 */
+	char *baseURI;
 };
 
 void init_bundle_list(struct bundle_list *list);
@@ -91,6 +101,23 @@ int bundle_uri_parse_config_format(const char *uri,
  * Returns non-zero if no bundle information is found at the given 'uri'.
  */
 int fetch_bundle_uri(struct repository *r, const char *uri);
+
+/**
+ * Given a bundle list that was already advertised (likely by the
+ * bundle-uri protocol v2 verb) at the given uri, fetch and unbundle the
+ * bundles according to the bundle strategy of that list.
+ *
+ * Returns non-zero if no bundle information is found at the given 'uri'.
+ */
+int fetch_bundle_list(struct repository *r,
+		      const char *uri,
+		      struct bundle_list *list);
+
+/**
+ * API for serve.c.
+ */
+int bundle_uri_advertise(struct repository *r, struct strbuf *value);
+int bundle_uri_command(struct repository *r, struct packet_reader *request);
 
 /**
  * General API for {transport,connect}.c etc.

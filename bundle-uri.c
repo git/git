@@ -7,6 +7,7 @@
 #include "hashmap.h"
 #include "pkt-line.h"
 #include "config.h"
+#include "remote.h"
 
 static int compare_bundles(const void *hashmap_cmp_fn_data,
 			   const struct hashmap_entry *he1,
@@ -49,6 +50,7 @@ void clear_bundle_list(struct bundle_list *list)
 
 	for_all_bundles_in_list(list, clear_remote_bundle_info, NULL);
 	hashmap_clear_and_free(&list->bundles, struct remote_bundle_info, ent);
+	free(list->baseURI);
 }
 
 int for_all_bundles_in_list(struct bundle_list *list,
@@ -163,7 +165,7 @@ static int bundle_list_update(const char *key, const char *value,
 	if (!strcmp(subkey, "uri")) {
 		if (bundle->uri)
 			return -1;
-		bundle->uri = xstrdup(value);
+		bundle->uri = relative_url(list->baseURI, value, NULL);
 		return 0;
 	}
 
@@ -190,6 +192,18 @@ int bundle_uri_parse_config_format(const char *uri,
 		.error_action = CONFIG_ERROR_ERROR,
 	};
 
+	if (!list->baseURI) {
+		struct strbuf baseURI = STRBUF_INIT;
+		strbuf_addstr(&baseURI, uri);
+
+		/*
+		 * If the URI does not end with a trailing slash, then
+		 * remove the filename portion of the path. This is
+		 * important for relative URIs.
+		 */
+		strbuf_strip_file_from_path(&baseURI);
+		list->baseURI = strbuf_detach(&baseURI, NULL);
+	}
 	result = git_config_from_file_with_options(config_to_bundle_list,
 						   filename, list,
 						   &opts);
@@ -561,6 +575,81 @@ cleanup:
 	clear_bundle_list(&list);
 	clear_remote_bundle_info(&bundle, NULL);
 	return result;
+}
+
+int fetch_bundle_list(struct repository *r, const char *uri, struct bundle_list *list)
+{
+	int result;
+	struct bundle_list global_list;
+
+	init_bundle_list(&global_list);
+
+	/* If a bundle is added to this global list, then it is required. */
+	global_list.mode = BUNDLE_MODE_ALL;
+
+	if ((result = download_bundle_list(r, list, &global_list, 0)))
+		goto cleanup;
+
+	result = unbundle_all_bundles(r, &global_list);
+
+cleanup:
+	for_all_bundles_in_list(&global_list, unlink_bundle, NULL);
+	clear_bundle_list(&global_list);
+	return result;
+}
+
+/**
+ * API for serve.c.
+ */
+
+int bundle_uri_advertise(struct repository *r, struct strbuf *value)
+{
+	static int advertise_bundle_uri = -1;
+
+	if (value &&
+	    git_env_bool("GIT_TEST_BUNDLE_URI_UNKNOWN_CAPABILITY_VALUE", 0))
+		strbuf_addstr(value, "test-unknown-capability-value");
+
+	if (advertise_bundle_uri != -1)
+		goto cached;
+
+	advertise_bundle_uri = 0;
+	git_config_get_maybe_bool("uploadpack.advertisebundleuris", &advertise_bundle_uri);
+
+cached:
+	return advertise_bundle_uri;
+}
+
+static int config_to_packet_line(const char *key, const char *value, void *data)
+{
+	struct packet_reader *writer = data;
+
+	if (!strncmp(key, "bundle.", 7))
+		packet_write_fmt(writer->fd, "%s=%s", key, value);
+
+	return 0;
+}
+
+int bundle_uri_command(struct repository *r,
+		       struct packet_reader *request)
+{
+	struct packet_writer writer;
+	packet_writer_init(&writer, 1);
+
+	while (packet_reader_read(request) == PACKET_READ_NORMAL)
+		die(_("bundle-uri: unexpected argument: '%s'"), request->line);
+	if (request->status != PACKET_READ_FLUSH)
+		die(_("bundle-uri: expected flush after arguments"));
+
+	/*
+	 * Read all "bundle.*" config lines to the client as key=value
+	 * packet lines.
+	 */
+	git_config(config_to_packet_line, &writer);
+
+	packet_writer_flush(&writer);
+
+	return 0;
 }
 
 /**

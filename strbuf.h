@@ -664,6 +664,18 @@ int launch_sequence_editor(const char *path, struct strbuf *buffer,
 int strbuf_edit_interactively(struct strbuf *buffer, const char *path,
 			      const char *const *env);
 
+/*
+ * Remove the filename from the provided path string. If the path
+ * contains a trailing separator, then the path is considered a directory
+ * and nothing is modified. Returns the number of characters removed from
+ * the path.
+ *
+ * Examples:
+ * - "/path/to/file" -> "/path/to/" (returns: 4)
+ * - "/path/to/dir/" -> "/path/to/dir/" (returns: 0)
+ */
+size_t strbuf_strip_file_from_path(struct strbuf *buf);
+
 void strbuf_add_lines(struct strbuf *sb,
 		      const char *prefix,
 		      const char *buf,
