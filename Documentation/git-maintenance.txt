@@ -397,6 +397,13 @@ If you want to customize the background tasks, please rename the tasks
 so future calls to `git maintenance (start|stop)` do not overwrite your
 custom tasks.
 
+CONFIGURATION
+-------------
+
+include::includes/cmd-config-section-all.txt[]
+
+include::config/maintenance.txt[]
+
 
 GIT
 ---

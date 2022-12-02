@@ -15,14 +15,11 @@ int cmd__submodule_config(int argc, const char **argv)
 {
 	const char **arg = argv;
 	int my_argc = argc;
-	int output_url = 0;
 	int lookup_name = 0;
 
 	arg++;
 	my_argc--;
 	while (arg[0] && starts_with(arg[0], "--")) {
-		if (!strcmp(arg[0], "--url"))
-			output_url = 1;
 		if (!strcmp(arg[0], "--name"))
 			lookup_name = 1;
 		arg++;
@@ -57,12 +54,8 @@ int cmd__submodule_config(int argc, const char **argv)
 		if (!submodule)
 			die_usage(argc, argv, "Submodule not found.");
 
-		if (output_url)
-			printf("Submodule url: '%s' for path '%s'\n",
-					submodule->url, submodule->path);
-		else
-			printf("Submodule name: '%s' for path '%s'\n",
-					submodule->name, submodule->path);
+		printf("Submodule name: '%s' for path '%s'\n", submodule->name,
+		       submodule->path);
 
 		arg += 2;
 	}

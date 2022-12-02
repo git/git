@@ -376,10 +376,7 @@ See also INCOMPATIBLE OPTIONS below.
 +
 See also INCOMPATIBLE OPTIONS below.
 
---rerere-autoupdate::
---no-rerere-autoupdate::
-	Allow the rerere mechanism to update the index with the
-	result of auto-conflict resolution if possible.
+include::rerere-options.txt[]
 
 -S[<keyid>]::
 --gpg-sign[=<keyid>]::
@@ -612,6 +609,15 @@ provided. Otherwise an explicit `--no-reschedule-failed-exec` at the
 start would be overridden by the presence of
 `rebase.rescheduleFailedExec=true` configuration.
 
+--update-refs::
+--no-update-refs::
+	Automatically force-update any branches that point to commits that
+	are being rebased. Any branches that are checked out in a worktree
+	are not updated in this way.
++
+If the configuration variable `rebase.updateRefs` is set, then this option
+can be used to override and disable this setting.
+
 INCOMPATIBLE OPTIONS
 --------------------
 
@@ -635,6 +641,7 @@ are incompatible with the following options:
  * --empty=
  * --reapply-cherry-picks
  * --edit-todo
+ * --update-refs
  * --root when used in combination with --onto
 
 In addition, the following pairs of options are incompatible:
@@ -1251,6 +1258,8 @@ merge cmake
 
 CONFIGURATION
 -------------
+
+include::includes/cmd-config-section-all.txt[]
 
 include::config/rebase.txt[]
 include::config/sequencer.txt[]

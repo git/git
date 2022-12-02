@@ -17,6 +17,10 @@ export GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB
 
 . ./test-lib.sh
 
+test_expect_success 'setup' '
+	git config --global protocol.file.allow always
+'
+
 test_expect_success 'sparse checkout setup which hides .gitmodules' '
 	git init upstream &&
 	git init submodule &&
@@ -31,8 +35,9 @@ test_expect_success 'sparse checkout setup which hides .gitmodules' '
 		test_tick &&
 		git commit -m "Add submodule"
 	) &&
-	git clone upstream super &&
+	git clone --template= upstream super &&
 	(cd super &&
+		mkdir .git/info &&
 		cat >.git/info/sparse-checkout <<-\EOF &&
 		/*
 		!/.gitmodules

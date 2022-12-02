@@ -5,6 +5,16 @@
 #
 # Resolve two trees, using enhanced multi-base read-tree.
 
+. git-sh-setup
+
+# Abort if index does not match HEAD
+if ! git diff-index --quiet --cached HEAD --
+then
+    gettextln "Error: Your local changes to the following files would be overwritten by merge"
+    git diff-index --cached --name-only HEAD -- | sed -e 's/^/    /'
+    exit 2
+fi
+
 # The first parameters up to -- are merge bases; the rest are heads.
 bases= head= remotes= sep_seen=
 for arg

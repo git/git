@@ -12,12 +12,12 @@ test_expect_success 'usage' '
 
 test_expect_success 'usage shown without sub-command' '
 	test_expect_code 129 git commit-graph 2>err &&
-	! grep error: err
+	grep usage: err
 '
 
 test_expect_success 'usage shown with an error on unknown sub-command' '
 	cat >expect <<-\EOF &&
-	error: unrecognized subcommand: unknown
+	error: unknown subcommand: `unknown'\''
 	EOF
 	test_expect_code 129 git commit-graph unknown 2>stderr &&
 	grep error stderr >actual &&
@@ -361,13 +361,14 @@ test_expect_success 'replace-objects invalidates commit-graph' '
 test_expect_success 'commit grafts invalidate commit-graph' '
 	cd "$TRASH_DIRECTORY" &&
 	test_when_finished rm -rf graft &&
-	git clone full graft &&
+	git clone --template= full graft &&
 	(
 		cd graft &&
 		git commit-graph write --reachable &&
 		test_path_is_file .git/objects/info/commit-graph &&
 		H1=$(git rev-parse --verify HEAD~1) &&
 		H3=$(git rev-parse --verify HEAD~3) &&
+		mkdir .git/info &&
 		echo "$H1 $H3" >.git/info/grafts &&
 		git -c core.commitGraph=false log >expect &&
 		git -c core.commitGraph=true log >actual &&
@@ -810,5 +811,32 @@ test_expect_success 'set up and verify repo with generation data overflow chunk'
 '
 
 graph_git_behavior 'generation data overflow chunk repo' repo left right
+
+test_expect_success 'overflow during generation version upgrade' '
+	git init overflow-v2-upgrade &&
+	(
+		cd overflow-v2-upgrade &&
+
+		# This commit will have a date at two seconds past the Epoch,
+		# and a (v1) generation number of 1, since it is a root commit.
+		#
+		# The offset will then be computed as 1-2, which will underflow
+		# to 2^31, which is greater than the v2 offset small limit of
+		# 2^31-1.
+		#
+		# This is sufficient to need a large offset table for the v2
+		# generation numbers.
+		test_commit --date "@2 +0000" base &&
+		git repack -d &&
+
+		# Test that upgrading from generation v1 to v2 correctly
+		# produces the overflow table.
+		git -c commitGraph.generationVersion=1 commit-graph write &&
+		git -c commitGraph.generationVersion=2 commit-graph write \
+			--changed-paths &&
+
+		git rev-list --all
+	)
+'
 
 test_done

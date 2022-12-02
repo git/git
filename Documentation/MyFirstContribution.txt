@@ -1160,7 +1160,7 @@ all named like `v2-000n-my-commit-subject.patch`. `-v2` will also format
 your patches by prefixing them with "[PATCH v2]" instead of "[PATCH]",
 and your range-diff will be prefaced with "Range-diff against v1".
 
-Afer you run this command, `format-patch` will output the patches to the `psuh/`
+After you run this command, `format-patch` will output the patches to the `psuh/`
 directory, alongside the v1 patches. Using a single directory makes it easy to
 refer to the old v1 patches while proofreading the v2 patches, but you will need
 to be careful to send out only the v2 patches. We will use a pattern like

@@ -50,7 +50,7 @@ int cmd_env__helper(int argc, const char **argv, const char *prefix)
 	};
 
 	argc = parse_options(argc, argv, prefix, opts, env__helper_usage,
-			     PARSE_OPT_KEEP_UNKNOWN);
+			     PARSE_OPT_KEEP_UNKNOWN_OPT);
 	if (env_default && !*env_default)
 		usage_with_options(env__helper_usage, opts);
 	if (!cmdmode)

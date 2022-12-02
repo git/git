@@ -11,11 +11,18 @@ static void repo_cfg_bool(struct repository *r, const char *key, int *dest,
 		*dest = def;
 }
 
+static void repo_cfg_int(struct repository *r, const char *key, int *dest,
+			 int def)
+{
+	if (repo_config_get_int(r, key, dest))
+		*dest = def;
+}
+
 void prepare_repo_settings(struct repository *r)
 {
 	int experimental;
 	int value;
-	char *strval;
+	const char *strval;
 	int manyfiles;
 
 	if (!r->gitdir)
@@ -42,11 +49,14 @@ void prepare_repo_settings(struct repository *r)
 		r->settings.core_untracked_cache = UNTRACKED_CACHE_WRITE;
 	}
 
-	/* Boolean config or default, does not cascade (simple)  */
+	/* Commit graph config or default, does not cascade (simple) */
 	repo_cfg_bool(r, "core.commitgraph", &r->settings.core_commit_graph, 1);
+	repo_cfg_int(r, "commitgraph.generationversion", &r->settings.commit_graph_generation_version, 2);
 	repo_cfg_bool(r, "commitgraph.readchangedpaths", &r->settings.commit_graph_read_changed_paths, 1);
 	repo_cfg_bool(r, "gc.writecommitgraph", &r->settings.gc_write_commit_graph, 1);
 	repo_cfg_bool(r, "fetch.writecommitgraph", &r->settings.fetch_write_commit_graph, 0);
+
+	/* Boolean config or default, does not cascade (simple)  */
 	repo_cfg_bool(r, "pack.usesparse", &r->settings.pack_use_sparse, 1);
 	repo_cfg_bool(r, "core.multipackindex", &r->settings.core_multi_pack_index, 1);
 	repo_cfg_bool(r, "index.sparse", &r->settings.sparse_index, 0);
@@ -67,7 +77,7 @@ void prepare_repo_settings(struct repository *r)
 	if (!repo_config_get_int(r, "index.version", &value))
 		r->settings.index_version = value;
 
-	if (!repo_config_get_string(r, "core.untrackedcache", &strval)) {
+	if (!repo_config_get_string_tmp(r, "core.untrackedcache", &strval)) {
 		int v = git_parse_maybe_bool(strval);
 
 		/*
@@ -78,10 +88,9 @@ void prepare_repo_settings(struct repository *r)
 		if (v >= 0)
 			r->settings.core_untracked_cache = v ?
 				UNTRACKED_CACHE_WRITE : UNTRACKED_CACHE_REMOVE;
-		free(strval);
 	}
 
-	if (!repo_config_get_string(r, "fetch.negotiationalgorithm", &strval)) {
+	if (!repo_config_get_string_tmp(r, "fetch.negotiationalgorithm", &strval)) {
 		int fetch_default = r->settings.fetch_negotiation_algorithm;
 		if (!strcasecmp(strval, "skipping"))
 			r->settings.fetch_negotiation_algorithm = FETCH_NEGOTIATION_SKIPPING;

@@ -324,6 +324,7 @@ test_expect_success SYMLINKS 'check moved symlink' '
 rm -f moved symlink
 
 test_expect_success 'setup submodule' '
+	test_config_global protocol.file.allow always &&
 	git commit -m initial &&
 	git reset --hard &&
 	git submodule add ./. sub &&
@@ -509,6 +510,7 @@ test_expect_success 'moving a submodule in nested directories' '
 '
 
 test_expect_success 'moving nested submodules' '
+	test_config_global protocol.file.allow always &&
 	git commit -am "cleanup commit" &&
 	mkdir sub_nested_nested &&
 	(

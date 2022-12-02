@@ -4,7 +4,7 @@
 		while true
 		do
 			echo "pop" ?!AMP?!
-			echo "glup"
+			echo "glup" ?!LOOP?!
 		done ?!AMP?!
 		foo
 	fi ?!AMP?!

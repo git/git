@@ -7,6 +7,10 @@ log.date::
 	Set the default date-time mode for the 'log' command.
 	Setting a value for log.date is similar to using 'git log''s
 	`--date` option.  See linkgit:git-log[1] for details.
++
+If the format is set to "auto:foo" and the pager is in use, format
+"foo" will be the used for the date format. Otherwise "default" will
+be used.
 
 log.decorate::
 	Print out the ref names of any commits that are shown by the log
@@ -18,6 +22,11 @@ log.decorate::
 	names are shown. This is the same as the `--decorate` option
 	of the `git log`.
 
+log.initialDecorationSet::
+	By default, `git log` only shows decorations for certain known ref
+	namespaces. If 'all' is specified, then show all refs as
+	decorations.
+
 log.excludeDecoration::
 	Exclude the specified patterns from the log decorations. This is
 	similar to the `--decorate-refs-exclude` command-line option, but
@@ -25,9 +34,9 @@ log.excludeDecoration::
 	option.
 
 log.diffMerges::
-	Set default diff format to be used for merge commits. See
-	`--diff-merges` in linkgit:git-log[1] for details.
-	Defaults to `separate`.
+	Set diff format to be used when `--diff-merges=on` is
+	specified, see `--diff-merges` in linkgit:git-log[1] for
+	details. Defaults to `separate`.
 
 log.follow::
 	If `true`, `git log` will act as if the `--follow` option was used when

@@ -14,7 +14,7 @@ SYNOPSIS
 'git cat-file' (-t | -s) [--allow-unknown-type] <object>
 'git cat-file' (--batch | --batch-check | --batch-command) [--batch-all-objects]
 	     [--buffer] [--follow-symlinks] [--unordered]
-	     [--textconv | --filters]
+	     [--textconv | --filters] [-z]
 'git cat-file' (--textconv | --filters)
 	     [<rev>:<path|tree-ish> | --path=<path|tree-ish> <rev>]
 
@@ -62,6 +62,12 @@ OPTIONS
 	"tree" with `<object>` being a commit object that contains it,
 	or to ask for a "blob" with `<object>` being a tag object that
 	points at it.
+
+--[no-]mailmap::
+--[no-]use-mailmap::
+       Use mailmap file to map author, committer and tagger names
+       and email addresses to canonical real names and email addresses.
+       See linkgit:git-shortlog[1].
 
 --textconv::
 	Show the content as transformed by a textconv filter. In this case,
@@ -206,6 +212,11 @@ respectively print:
 	symlink 11
 	/etc/passwd
 --
+
+-z::
+	Only meaningful with `--batch`, `--batch-check`, or
+	`--batch-command`; input is NUL-delimited instead of
+	newline-delimited.
 
 
 OUTPUT

@@ -23,9 +23,19 @@ struct bitmap_disk_header {
 
 #define NEEDS_BITMAP (1u<<22)
 
+/*
+ * The width in bytes of a single triplet in the lookup table
+ * extension:
+ *     (commit_pos, offset, xor_row)
+ *
+ * whose fields ar 32-, 64-, 32- bits wide, respectively.
+ */
+#define BITMAP_LOOKUP_TABLE_TRIPLET_WIDTH (16)
+
 enum pack_bitmap_opts {
-	BITMAP_OPT_FULL_DAG = 1,
-	BITMAP_OPT_HASH_CACHE = 4,
+	BITMAP_OPT_FULL_DAG = 0x1,
+	BITMAP_OPT_HASH_CACHE = 0x4,
+	BITMAP_OPT_LOOKUP_TABLE = 0x10,
 };
 
 enum pack_bitmap_flags {
@@ -75,7 +85,7 @@ int bitmap_has_oid_in_uninteresting(struct bitmap_index *, const struct object_i
 off_t get_disk_usage_from_bitmap(struct bitmap_index *, struct rev_info *);
 
 void bitmap_writer_show_progress(int show);
-void bitmap_writer_set_checksum(unsigned char *sha1);
+void bitmap_writer_set_checksum(const unsigned char *sha1);
 void bitmap_writer_build_type_index(struct packing_data *to_pack,
 				    struct pack_idx_entry **index,
 				    uint32_t index_nr);

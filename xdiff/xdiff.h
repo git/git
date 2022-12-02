@@ -120,6 +120,7 @@ typedef struct s_bdiffparam {
 
 
 #define xdl_malloc(x) xmalloc(x)
+#define xdl_calloc(n, sz) xcalloc(n, sz)
 #define xdl_free(ptr) free(ptr)
 #define xdl_realloc(ptr,x) xrealloc(ptr,x)
 

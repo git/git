@@ -12,6 +12,10 @@ as expected.
 TEST_NO_CREATE_REPO=1
 . ./test-lib.sh
 
+test_expect_success 'setup' '
+	git config --global protocol.file.allow always
+'
+
 test_expect_success 'submodule config cache setup' '
 	mkdir submodule &&
 	(

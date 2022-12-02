@@ -13,7 +13,7 @@ Note that this is currently limited to detecting credentials in
 You might want to enable this to prevent inadvertent credentials
 exposure, e.g. because:
 +
-* The OS or system where you're running git may not provide way way or
+* The OS or system where you're running git may not provide a way or
   otherwise allow you to configure the permissions of the
   configuration file where the username and/or password are stored.
 * Even if it does, having such data stored "at rest" might expose you

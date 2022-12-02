@@ -364,6 +364,20 @@ test_expect_success 'tree entry with type mismatch' '
 	test_i18ngrep ! "dangling blob" out
 '
 
+test_expect_success 'tree entry with bogus mode' '
+	test_when_finished "remove_object \$blob" &&
+	test_when_finished "remove_object \$tree" &&
+	blob=$(echo blob | git hash-object -w --stdin) &&
+	blob_oct=$(echo $blob | hex2oct) &&
+	tree=$(printf "100000 foo\0${blob_oct}" |
+	       git hash-object -t tree --stdin -w --literally) &&
+	git fsck 2>err &&
+	cat >expect <<-EOF &&
+	warning in tree $tree: badFilemode: contains bad file modes
+	EOF
+	test_cmp expect err
+'
+
 test_expect_success 'tag pointing to nonexistent' '
 	badoid=$(test_oid deadbeef) &&
 	cat >invalid-tag <<-EOF &&
@@ -491,6 +505,54 @@ test_expect_success 'rev-list --verify-objects with bad sha1' '
 
 	test_might_fail git rev-list --verify-objects refs/heads/bogus >/dev/null 2>out &&
 	test_i18ngrep -q "error: hash mismatch $(dirname $new)$(test_oid ff_2)" out
+'
+
+# An actual bit corruption is more likely than swapped commits, but
+# this provides an easy way to have commits which don't match their purported
+# hashes, but which aren't so broken we can't read them at all.
+test_expect_success 'rev-list --verify-objects notices swapped commits' '
+	git init swapped-commits &&
+	(
+		cd swapped-commits &&
+		test_commit one &&
+		test_commit two &&
+		one_oid=$(git rev-parse HEAD) &&
+		two_oid=$(git rev-parse HEAD^) &&
+		one=.git/objects/$(test_oid_to_path $one_oid) &&
+		two=.git/objects/$(test_oid_to_path $two_oid) &&
+		mv $one tmp &&
+		mv $two $one &&
+		mv tmp $two &&
+		test_must_fail git rev-list --verify-objects HEAD
+	)
+'
+
+test_expect_success 'set up repository with commit-graph' '
+	git init corrupt-graph &&
+	(
+		cd corrupt-graph &&
+		test_commit one &&
+		test_commit two &&
+		git commit-graph write --reachable
+	)
+'
+
+corrupt_graph_obj () {
+	oid=$(git -C corrupt-graph rev-parse "$1") &&
+	obj=corrupt-graph/.git/objects/$(test_oid_to_path $oid) &&
+	test_when_finished 'mv backup $obj' &&
+	mv $obj backup &&
+	echo garbage >$obj
+}
+
+test_expect_success 'rev-list --verify-objects with commit graph (tip)' '
+	corrupt_graph_obj HEAD &&
+	test_must_fail git -C corrupt-graph rev-list --verify-objects HEAD
+'
+
+test_expect_success 'rev-list --verify-objects with commit graph (parent)' '
+	corrupt_graph_obj HEAD^ &&
+	test_must_fail git -C corrupt-graph rev-list --verify-objects HEAD
 '
 
 test_expect_success 'force fsck to ignore double author' '

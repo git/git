@@ -31,7 +31,7 @@ test_description="limiting blob downloads when merging with partial clones"
 
 test_setup_repo () {
 	test -d server && return
-	test_create_repo server &&
+	git init server &&
 	(
 		cd server &&
 

@@ -59,7 +59,7 @@ struct object_array {
 
 /*
  * object flag allocation:
- * revision.h:               0---------10         15             23------26
+ * revision.h:               0---------10         15             23------27
  * fetch-pack.c:             01    67
  * negotiator/default.c:       2--5
  * walker.c:                 0-2
@@ -128,7 +128,13 @@ void *object_as_type(struct object *obj, enum object_type type, int quiet);
  *
  * Returns NULL if the object is missing or corrupt.
  */
+enum parse_object_flags {
+	PARSE_OBJECT_SKIP_HASH_CHECK = 1 << 0,
+};
 struct object *parse_object(struct repository *r, const struct object_id *oid);
+struct object *parse_object_with_flags(struct repository *r,
+				       const struct object_id *oid,
+				       enum parse_object_flags flags);
 
 /*
  * Like parse_object, but will die() instead of returning NULL. If the

@@ -264,7 +264,8 @@ void init_diff_ui_defaults(void)
 	diff_detect_rename_default = DIFF_DETECT_RENAME;
 }
 
-int git_diff_heuristic_config(const char *var, const char *value, void *cb)
+int git_diff_heuristic_config(const char *var, const char *value,
+			      void *cb UNUSED)
 {
 	if (!strcmp(var, "diff.indentheuristic"))
 		diff_indent_heuristic = git_config_bool(var, value);
@@ -916,7 +917,7 @@ struct interned_diff_symbol {
 static int interned_diff_symbol_cmp(const void *hashmap_cmp_fn_data,
 				    const struct hashmap_entry *eptr,
 				    const struct hashmap_entry *entry_or_key,
-				    const void *keydata)
+				    const void *keydata UNUSED)
 {
 	const struct diff_options *diffopt = hashmap_cmp_fn_data;
 	const struct emitted_diff_symbol *a, *b;
@@ -1289,7 +1290,6 @@ static void emit_diff_symbol_from_struct(struct diff_options *o,
 {
 	static const char *nneof = " No newline at end of file\n";
 	const char *context, *reset, *set, *set_sign, *meta, *fraginfo;
-	struct strbuf sb = STRBUF_INIT;
 
 	enum diff_symbol s = eds->s;
 	const char *line = eds->line;
@@ -1521,7 +1521,6 @@ static void emit_diff_symbol_from_struct(struct diff_options *o,
 	default:
 		BUG("unknown diff symbol");
 	}
-	strbuf_release(&sb);
 }
 
 static void emit_diff_symbol(struct diff_options *o, enum diff_symbol s,
@@ -3362,29 +3361,57 @@ struct userdiff_driver *get_textconv(struct repository *r,
 	return userdiff_get_textconv(r, one->driver);
 }
 
-static struct strbuf *additional_headers(struct diff_options *o,
-					 const char *path)
+static struct string_list *additional_headers(struct diff_options *o,
+					      const char *path)
 {
 	if (!o->additional_path_headers)
 		return NULL;
 	return strmap_get(o->additional_path_headers, path);
 }
 
-static void add_formatted_headers(struct strbuf *msg,
-				  struct strbuf *more_headers,
+static void add_formatted_header(struct strbuf *msg,
+				  const char *header,
 				  const char *line_prefix,
 				  const char *meta,
 				  const char *reset)
 {
-	char *next, *newline;
+	const char *next, *newline;
 
-	for (next = more_headers->buf; *next; next = newline) {
+	for (next = header; *next; next = newline) {
 		newline = strchrnul(next, '\n');
 		strbuf_addf(msg, "%s%s%.*s%s\n", line_prefix, meta,
 			    (int)(newline - next), next, reset);
 		if (*newline)
 			newline++;
 	}
+}
+
+static void add_formatted_headers(struct strbuf *msg,
+				  struct string_list *more_headers,
+				  const char *line_prefix,
+				  const char *meta,
+				  const char *reset)
+{
+	int i;
+
+	for (i = 0; i < more_headers->nr; i++)
+		add_formatted_header(msg, more_headers->items[i].string,
+				     line_prefix, meta, reset);
+}
+
+static int diff_filepair_is_phoney(struct diff_filespec *one,
+				   struct diff_filespec *two)
+{
+	/*
+	 * This function specifically looks for pairs injected by
+	 * create_filepairs_for_header_only_notifications().  Such
+	 * pairs are "phoney" in that they do not represent any
+	 * content or even mode difference, but were inserted because
+	 * diff_queued_diff previously had no pair associated with
+	 * that path but we needed some pair to avoid losing the
+	 * "remerge CONFLICT" header associated with the path.
+	 */
+	return !DIFF_FILE_VALID(one) && !DIFF_FILE_VALID(two);
 }
 
 static void builtin_diff(const char *name_a,
@@ -3418,14 +3445,16 @@ static void builtin_diff(const char *name_a,
 
 	if (o->submodule_format == DIFF_SUBMODULE_LOG &&
 	    (!one->mode || S_ISGITLINK(one->mode)) &&
-	    (!two->mode || S_ISGITLINK(two->mode))) {
+	    (!two->mode || S_ISGITLINK(two->mode)) &&
+	    (!diff_filepair_is_phoney(one, two))) {
 		show_submodule_diff_summary(o, one->path ? one->path : two->path,
 				&one->oid, &two->oid,
 				two->dirty_submodule);
 		return;
 	} else if (o->submodule_format == DIFF_SUBMODULE_INLINE_DIFF &&
 		   (!one->mode || S_ISGITLINK(one->mode)) &&
-		   (!two->mode || S_ISGITLINK(two->mode))) {
+		   (!two->mode || S_ISGITLINK(two->mode)) &&
+		   (!diff_filepair_is_phoney(one, two))) {
 		show_submodule_inline_diff(o, one->path ? one->path : two->path,
 				&one->oid, &two->oid,
 				two->dirty_submodule);
@@ -3445,12 +3474,12 @@ static void builtin_diff(const char *name_a,
 	b_two = quote_two(b_prefix, name_b + (*name_b == '/'));
 	lbl[0] = DIFF_FILE_VALID(one) ? a_one : "/dev/null";
 	lbl[1] = DIFF_FILE_VALID(two) ? b_two : "/dev/null";
-	if (!DIFF_FILE_VALID(one) && !DIFF_FILE_VALID(two)) {
+	if (diff_filepair_is_phoney(one, two)) {
 		/*
-		 * We should only reach this point for pairs from
+		 * We should only reach this point for pairs generated from
 		 * create_filepairs_for_header_only_notifications().  For
-		 * these, we should avoid the "/dev/null" special casing
-		 * above, meaning we avoid showing such pairs as either
+		 * these, we want to avoid the "/dev/null" special casing
+		 * above, because we do not want such pairs shown as either
 		 * "new file" or "deleted file" below.
 		 */
 		lbl[0] = a_one;
@@ -4314,7 +4343,7 @@ static void fill_metainfo(struct strbuf *msg,
 	const char *set = diff_get_color(use_color, DIFF_METAINFO);
 	const char *reset = diff_get_color(use_color, DIFF_RESET);
 	const char *line_prefix = diff_line_prefix(o);
-	struct strbuf *more_headers = NULL;
+	struct string_list *more_headers = NULL;
 
 	*must_show_header = 1;
 	strbuf_init(msg, PATH_MAX * 2 + 300);
@@ -5650,7 +5679,7 @@ int diff_opt_parse(struct diff_options *options,
 
 	ac = parse_options(ac, av, prefix, options->parseopts, NULL,
 			   PARSE_OPT_KEEP_DASHDASH |
-			   PARSE_OPT_KEEP_UNKNOWN |
+			   PARSE_OPT_KEEP_UNKNOWN_OPT |
 			   PARSE_OPT_NO_INTERNAL_HELP |
 			   PARSE_OPT_ONE_SHOT |
 			   PARSE_OPT_STOP_AT_NON_OPTION);
@@ -5841,6 +5870,7 @@ static void diff_flush_patch(struct diff_filepair *p, struct diff_options *o)
 {
 	int include_conflict_headers =
 	    (additional_headers(o, p->one->path) &&
+	     !o->pickaxe_opts &&
 	     (!o->filter || filter_bit_tst(DIFF_STATUS_UNMERGED, o)));
 
 	/*
@@ -5896,6 +5926,8 @@ int diff_queue_is_empty(struct diff_options *o)
 	int i;
 	int include_conflict_headers =
 	    (o->additional_path_headers &&
+	     strmap_get_size(o->additional_path_headers) &&
+	     !o->pickaxe_opts &&
 	     (!o->filter || filter_bit_tst(DIFF_STATUS_UNMERGED, o)));
 
 	if (include_conflict_headers)

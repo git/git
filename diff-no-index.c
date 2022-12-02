@@ -243,7 +243,9 @@ int diff_no_index(struct rev_info *revs,
 		  int argc, const char **argv)
 {
 	int i, no_index;
+	int ret = 1;
 	const char *paths[2];
+	char *to_free[ARRAY_SIZE(paths)] = { 0 };
 	struct strbuf replacement = STRBUF_INIT;
 	const char *prefix = revs->prefix;
 	struct option no_index_options[] = {
@@ -265,7 +267,7 @@ int diff_no_index(struct rev_info *revs,
 	}
 	FREE_AND_NULL(options);
 	for (i = 0; i < 2; i++) {
-		const char *p = argv[argc - 2 + i];
+		const char *p = argv[i];
 		if (!strcmp(p, "-"))
 			/*
 			 * stdin should be spelled as "-"; if you have
@@ -273,7 +275,7 @@ int diff_no_index(struct rev_info *revs,
 			 */
 			p = file_from_standard_input;
 		else if (prefix)
-			p = prefix_filename(prefix, p);
+			p = to_free[i] = prefix_filename(prefix, p);
 		paths[i] = p;
 	}
 
@@ -295,16 +297,20 @@ int diff_no_index(struct rev_info *revs,
 	revs->diffopt.flags.exit_with_status = 1;
 
 	if (queue_diff(&revs->diffopt, paths[0], paths[1]))
-		return 1;
+		goto out;
 	diff_set_mnemonic_prefix(&revs->diffopt, "1/", "2/");
 	diffcore_std(&revs->diffopt);
 	diff_flush(&revs->diffopt);
-
-	strbuf_release(&replacement);
 
 	/*
 	 * The return code for --no-index imitates diff(1):
 	 * 0 = no changes, 1 = changes, else error
 	 */
-	return diff_result_code(&revs->diffopt, 0);
+	ret = diff_result_code(&revs->diffopt, 0);
+
+out:
+	for (i = 0; i < ARRAY_SIZE(to_free); i++)
+		free(to_free[i]);
+	strbuf_release(&replacement);
+	return ret;
 }

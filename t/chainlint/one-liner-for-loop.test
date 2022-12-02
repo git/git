@@ -1,0 +1,10 @@
+git init dir-rename-and-content &&
+(
+	cd dir-rename-and-content &&
+	test_write_lines 1 2 3 4 5 >foo &&
+	mkdir olddir &&
+# LINT: one-liner for-loop missing "|| exit"; also broken &&-chain
+	for i in a b c; do echo $i >olddir/$i; done
+	git add foo olddir &&
+	git commit -m "original" &&
+)

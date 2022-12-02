@@ -127,6 +127,7 @@ verify_fetch_result () {
 }
 
 test_expect_success setup '
+	git config --global protocol.file.allow always &&
 	mkdir deepsubmodule &&
 	(
 		cd deepsubmodule &&

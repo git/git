@@ -1,0 +1,7 @@
+if bob &&
+   marcia ||
+   kevin
+then
+	echo "nomads" ?!AMP?!
+	echo "for sure"
+fi

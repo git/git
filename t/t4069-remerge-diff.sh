@@ -56,6 +56,11 @@ test_expect_success 'remerge-diff on a clean merge' '
 	test_cmp expect actual
 '
 
+test_expect_success 'remerge-diff on a clean merge with a filter' '
+	git show --oneline --remerge-diff --diff-filter=U bc_resolution >actual &&
+	test_must_be_empty actual
+'
+
 test_expect_success 'remerge-diff with both a resolved conflict and an unrelated change' '
 	git log -1 --oneline ab_resolution >tmp &&
 	cat <<-EOF >>tmp &&
@@ -87,6 +92,22 @@ test_expect_success 'remerge-diff with both a resolved conflict and an unrelated
 	git show --oneline --remerge-diff ab_resolution >tmp &&
 	sed -e "s/[0-9a-f]\{7,\}/HASH/g" tmp >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'pickaxe still includes additional headers for relevant changes' '
+	# reuses "expect" from the previous testcase
+
+	git log --oneline --remerge-diff -Sacht ab_resolution >tmp &&
+	sed -e "s/[0-9a-f]\{7,\}/HASH/g" tmp >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'can filter out additional headers with pickaxe' '
+	git show --remerge-diff --submodule=log --find-object=HEAD ab_resolution >actual &&
+	test_must_be_empty actual &&
+
+	git show --remerge-diff -S"not present" --all >actual &&
+	test_must_be_empty actual
 '
 
 test_expect_success 'setup non-content conflicts' '
@@ -180,6 +201,14 @@ test_expect_success 'remerge-diff w/ diff-filter=U: all conflict headers, no dif
 	sed -e "s/[0-9a-f]\{7,\}/HASH/g" tmp >expect &&
 
 	git show --oneline --remerge-diff --diff-filter=U resolution >tmp &&
+	sed -e "s/[0-9a-f]\{7,\}/HASH/g" tmp >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'submodule formatting ignores additional headers' '
+	# Reuses "expect" from last testcase
+
+	git show --oneline --remerge-diff --diff-filter=U --submodule=log >tmp &&
 	sed -e "s/[0-9a-f]\{7,\}/HASH/g" tmp >actual &&
 	test_cmp expect actual
 '

@@ -857,9 +857,7 @@ int cache_tree_matches_traversal(struct cache_tree *root,
 	return 0;
 }
 
-static void verify_one_sparse(struct repository *r,
-			      struct index_state *istate,
-			      struct cache_tree *it,
+static void verify_one_sparse(struct index_state *istate,
 			      struct strbuf *path,
 			      int pos)
 {
@@ -910,7 +908,7 @@ static int verify_one(struct repository *r,
 			return 1;
 
 		if (pos >= 0) {
-			verify_one_sparse(r, istate, it, path, pos);
+			verify_one_sparse(istate, path, pos);
 			return 0;
 		}
 

@@ -1,6 +1,7 @@
 #ifndef REPOSITORY_H
 #define REPOSITORY_H
 
+#include "git-compat-util.h"
 #include "path.h"
 
 struct config_set;
@@ -30,6 +31,7 @@ struct repo_settings {
 	int initialized;
 
 	int core_commit_graph;
+	int commit_graph_generation_version;
 	int commit_graph_read_changed_paths;
 	int gc_write_commit_graph;
 	int fetch_write_commit_graph;
@@ -185,6 +187,7 @@ void repo_set_gitdir(struct repository *repo, const char *root,
 void repo_set_worktree(struct repository *repo, const char *path);
 void repo_set_hash_algo(struct repository *repo, int algo);
 void initialize_the_repository(void);
+RESULT_MUST_BE_USED
 int repo_init(struct repository *r, const char *gitdir, const char *worktree);
 
 /*
@@ -196,6 +199,7 @@ int repo_init(struct repository *r, const char *gitdir, const char *worktree);
  * Return 0 upon success and a non-zero value upon failure.
  */
 struct object_id;
+RESULT_MUST_BE_USED
 int repo_submodule_init(struct repository *subrepo,
 			struct repository *superproject,
 			const char *path,

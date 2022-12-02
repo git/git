@@ -188,7 +188,9 @@ for "git add --no-all <pathspec>...", i.e. ignored removed files.
 	forcibly add them again to the index.  This is useful after
 	changing `core.autocrlf` configuration or the `text` attribute
 	in order to correct files added with wrong CRLF/LF line endings.
-	This option implies `-u`.
+	This option implies `-u`. Lone CR characters are untouched, thus
+	while a CRLF cleans to LF, a CRCRLF sequence is only partially
+	cleaned to CRLF.
 
 --chmod=(+|-)x::
 	Override the executable bit of the added files.  The executable
@@ -430,6 +432,13 @@ they will make the patch impossible to apply:
 * adding context (" ") or removal ("-") lines
 * deleting context or removal lines
 * modifying the contents of context or removal lines
+
+CONFIGURATION
+-------------
+
+include::includes/cmd-config-section-all.txt[]
+
+include::config/add.txt[]
 
 SEE ALSO
 --------

@@ -759,4 +759,20 @@ test_expect_success 'prompt - hide if pwd ignored - inside gitdir' '
 	test_cmp expected "$actual"
 '
 
+test_expect_success 'prompt - conflict indicator' '
+	printf " (main|CONFLICT)" >expected &&
+	echo "stash" >file &&
+	git stash &&
+	test_when_finished "git stash drop" &&
+	echo "commit" >file &&
+	git commit -m "commit" file &&
+	test_when_finished "git reset --hard HEAD~" &&
+	test_must_fail git stash apply &&
+	(
+		GIT_PS1_SHOWCONFLICTSTATE="yes" &&
+		__git_ps1 >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
 test_done

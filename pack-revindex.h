@@ -22,7 +22,7 @@
  *
  *   - pack position refers to an object's position within a non-existent pack
  *     described by the MIDX. The pack structure is described in
- *     Documentation/technical/pack-format.txt.
+ *     gitformat-pack(5).
  *
  *     It is effectively a concatanation of all packs in the MIDX (ordered by
  *     their numeric ID within the MIDX) in their original order within each

@@ -42,6 +42,7 @@ int xdl_emit_hunk_hdr(long s1, long c1, long s2, long c2,
 int xdl_fall_back_diff(xdfenv_t *diff_env, xpparam_t const *xpp,
 		       int line1, int count1, int line2, int count2);
 
-
+/* Do not call this function, use XDL_ALLOC_GROW instead */
+void* xdl_alloc_grow_helper(void* p, long nr, long* alloc, size_t size);
 
 #endif /* #if !defined(XUTILS_H) */

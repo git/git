@@ -642,10 +642,11 @@ struct commit_list * commit_list_insert_by_date(struct commit *item, struct comm
 	return commit_list_insert(item, pp);
 }
 
-static int commit_list_compare_by_date(const void *a, const void *b)
+static int commit_list_compare_by_date(const struct commit_list *a,
+				       const struct commit_list *b)
 {
-	timestamp_t a_date = ((const struct commit_list *)a)->item->date;
-	timestamp_t b_date = ((const struct commit_list *)b)->item->date;
+	timestamp_t a_date = a->item->date;
+	timestamp_t b_date = b->item->date;
 	if (a_date < b_date)
 		return 1;
 	if (a_date > b_date)
@@ -653,20 +654,11 @@ static int commit_list_compare_by_date(const void *a, const void *b)
 	return 0;
 }
 
-static void *commit_list_get_next(const void *a)
-{
-	return ((const struct commit_list *)a)->next;
-}
-
-static void commit_list_set_next(void *a, void *next)
-{
-	((struct commit_list *)a)->next = next;
-}
+DEFINE_LIST_SORT(static, commit_list_sort, struct commit_list, next);
 
 void commit_list_sort_by_date(struct commit_list **list)
 {
-	*list = llist_mergesort(*list, commit_list_get_next, commit_list_set_next,
-				commit_list_compare_by_date);
+	commit_list_sort(list, commit_list_compare_by_date);
 }
 
 struct commit *pop_most_recent_commit(struct commit_list **list,
@@ -959,8 +951,9 @@ static void add_one_commit(struct object_id *oid, struct rev_collect *revs)
 }
 
 static int collect_one_reflog_ent(struct object_id *ooid, struct object_id *noid,
-				  const char *ident, timestamp_t timestamp,
-				  int tz, const char *message, void *cbdata)
+				  const char *ident UNUSED,
+				  timestamp_t timestamp UNUSED, int tz UNUSED,
+				  const char *message UNUSED, void *cbdata)
 {
 	struct rev_collect *revs = cbdata;
 

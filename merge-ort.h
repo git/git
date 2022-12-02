@@ -2,6 +2,7 @@
 #define MERGE_ORT_H
 
 #include "merge-recursive.h"
+#include "hash.h"
 
 struct commit;
 struct tree;
@@ -27,7 +28,7 @@ struct merge_result {
 	/*
 	 * Special messages and conflict notices for various paths
 	 *
-	 * This is a map of pathnames to strbufs.  It contains various
+	 * This is a map of pathnames to a string_list. It contains various
 	 * warning/conflict/notice messages (possibly multiple per path)
 	 * that callers may want to use.
 	 */
@@ -79,6 +80,35 @@ void merge_switch_to_result(struct merge_options *opt,
 			    struct merge_result *result,
 			    int update_worktree_and_index,
 			    int display_update_msgs);
+
+/*
+ * Display messages about conflicts and which files were 3-way merged.
+ * Automatically called by merge_switch_to_result() with stream == stdout,
+ * so only call this when bypassing merge_switch_to_result().
+ */
+void merge_display_update_messages(struct merge_options *opt,
+				   int detailed,
+				   struct merge_result *result);
+
+struct stage_info {
+	struct object_id oid;
+	int mode;
+	int stage;
+};
+
+/*
+ * Provide a list of path -> {struct stage_info*} mappings for
+ * all conflicted files.  Note that each path could appear up to three
+ * times in the list, corresponding to 3 different stage entries.  In short,
+ * this basically provides the info that would be printed by `ls-files -u`.
+ *
+ * result should have been populated by a call to
+ * one of the merge_incore_[non]recursive() functions.
+ *
+ * conflicted_files should be empty before calling this function.
+ */
+void merge_get_conflicted_files(struct merge_result *result,
+				struct string_list *conflicted_files);
 
 /* Do needed cleanup when not calling merge_switch_to_result() */
 void merge_finalize(struct merge_options *opt,

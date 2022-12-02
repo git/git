@@ -24,6 +24,7 @@ test_expect_success 'setup' '
 
 test_expect_success 'nonshallow clone implies nonshallow submodule' '
 	test_when_finished "rm -rf super_clone" &&
+	test_config_global protocol.file.allow always &&
 	git clone --recurse-submodules "file://$pwd/." super_clone &&
 	git -C super_clone log --oneline >lines &&
 	test_line_count = 3 lines &&
@@ -33,6 +34,7 @@ test_expect_success 'nonshallow clone implies nonshallow submodule' '
 
 test_expect_success 'shallow clone with shallow submodule' '
 	test_when_finished "rm -rf super_clone" &&
+	test_config_global protocol.file.allow always &&
 	git clone --recurse-submodules --depth 2 --shallow-submodules "file://$pwd/." super_clone &&
 	git -C super_clone log --oneline >lines &&
 	test_line_count = 2 lines &&
@@ -42,6 +44,7 @@ test_expect_success 'shallow clone with shallow submodule' '
 
 test_expect_success 'shallow clone does not imply shallow submodule' '
 	test_when_finished "rm -rf super_clone" &&
+	test_config_global protocol.file.allow always &&
 	git clone --recurse-submodules --depth 2 "file://$pwd/." super_clone &&
 	git -C super_clone log --oneline >lines &&
 	test_line_count = 2 lines &&
@@ -51,6 +54,7 @@ test_expect_success 'shallow clone does not imply shallow submodule' '
 
 test_expect_success 'shallow clone with non shallow submodule' '
 	test_when_finished "rm -rf super_clone" &&
+	test_config_global protocol.file.allow always &&
 	git clone --recurse-submodules --depth 2 --no-shallow-submodules "file://$pwd/." super_clone &&
 	git -C super_clone log --oneline >lines &&
 	test_line_count = 2 lines &&
@@ -60,6 +64,7 @@ test_expect_success 'shallow clone with non shallow submodule' '
 
 test_expect_success 'non shallow clone with shallow submodule' '
 	test_when_finished "rm -rf super_clone" &&
+	test_config_global protocol.file.allow always &&
 	git clone --recurse-submodules --no-local --shallow-submodules "file://$pwd/." super_clone &&
 	git -C super_clone log --oneline >lines &&
 	test_line_count = 3 lines &&
@@ -69,6 +74,7 @@ test_expect_success 'non shallow clone with shallow submodule' '
 
 test_expect_success 'clone follows shallow recommendation' '
 	test_when_finished "rm -rf super_clone" &&
+	test_config_global protocol.file.allow always &&
 	git config -f .gitmodules submodule.sub.shallow true &&
 	git add .gitmodules &&
 	git commit -m "recommend shallow for sub" &&
@@ -87,6 +93,7 @@ test_expect_success 'clone follows shallow recommendation' '
 
 test_expect_success 'get unshallow recommended shallow submodule' '
 	test_when_finished "rm -rf super_clone" &&
+	test_config_global protocol.file.allow always &&
 	git clone --no-local "file://$pwd/." super_clone &&
 	(
 		cd super_clone &&
@@ -103,6 +110,7 @@ test_expect_success 'get unshallow recommended shallow submodule' '
 
 test_expect_success 'clone follows non shallow recommendation' '
 	test_when_finished "rm -rf super_clone" &&
+	test_config_global protocol.file.allow always &&
 	git config -f .gitmodules submodule.sub.shallow false &&
 	git add .gitmodules &&
 	git commit -m "recommend non shallow for sub" &&

@@ -1,0 +1,35 @@
+# LINT: neither loop handles failure explicitly with "|| return 1"
+for i in 0 1 2 3 4 5 6 7 8 9;
+do
+	for j in 0 1 2 3 4 5 6 7 8 9;
+	do
+		echo "$i$j" >"path$i$j"
+	done
+done &&
+
+# LINT: inner loop handles failure explicitly with "|| return 1"
+for i in 0 1 2 3 4 5 6 7 8 9;
+do
+	for j in 0 1 2 3 4 5 6 7 8 9;
+	do
+		echo "$i$j" >"path$i$j" || return 1
+	done
+done &&
+
+# LINT: outer loop handles failure explicitly with "|| return 1"
+for i in 0 1 2 3 4 5 6 7 8 9;
+do
+	for j in 0 1 2 3 4 5 6 7 8 9;
+	do
+		echo "$i$j" >"path$i$j"
+	done || return 1
+done &&
+
+# LINT: inner & outer loops handles failure explicitly with "|| return 1"
+for i in 0 1 2 3 4 5 6 7 8 9;
+do
+	for j in 0 1 2 3 4 5 6 7 8 9;
+	do
+		echo "$i$j" >"path$i$j" || return 1
+	done || return 1
+done

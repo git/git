@@ -534,7 +534,7 @@ the arguments to `traverse_commit_list()`.
 - `void *show_data`: A context buffer which is passed in turn to `show_commit`
   and `show_object`.
 
-In addition, `traverse_commit_list_filtered()` has an additional paramter:
+In addition, `traverse_commit_list_filtered()` has an additional parameter:
 
 - `struct oidset *omitted`: A linked-list of object IDs which the provided
   filter caused to be omitted.

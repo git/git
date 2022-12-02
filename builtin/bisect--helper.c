@@ -329,8 +329,9 @@ static int check_and_set_terms(struct bisect_terms *terms, const char *cmd)
 	return 0;
 }
 
-static int inc_nr(const char *refname, const struct object_id *oid,
-		  int flag, void *cb_data)
+static int inc_nr(const char *refname UNUSED,
+		  const struct object_id *oid UNUSED,
+		  int flag UNUSED, void *cb_data)
 {
 	unsigned int *nr = (unsigned int *)cb_data;
 	(*nr)++;
@@ -518,7 +519,7 @@ finish:
 }
 
 static int add_bisect_ref(const char *refname, const struct object_id *oid,
-			  int flags, void *cb)
+			  int flags UNUSED, void *cb)
 {
 	struct add_bisect_ref_data *data = cb;
 
@@ -764,11 +765,10 @@ static enum bisect_error bisect_start(struct bisect_terms *terms, const char **a
 		strbuf_read_file(&start_head, git_path_bisect_start(), 0);
 		strbuf_trim(&start_head);
 		if (!no_checkout) {
-			struct strvec argv = STRVEC_INIT;
+			const char *argv[] = { "checkout", start_head.buf,
+					       "--", NULL };
 
-			strvec_pushl(&argv, "checkout", start_head.buf,
-				     "--", NULL);
-			if (run_command_v_opt(argv.v, RUN_GIT_CMD)) {
+			if (run_command_v_opt(argv, RUN_GIT_CMD)) {
 				res = error(_("checking out '%s' failed."
 						 " Try 'git bisect start "
 						 "<valid-branch>'."),
@@ -1134,8 +1134,9 @@ static int bisect_visualize(struct bisect_terms *terms, const char **argv, int a
 	return res;
 }
 
-static int get_first_good(const char *refname, const struct object_id *oid,
-			  int flag, void *cb_data)
+static int get_first_good(const char *refname UNUSED,
+			  const struct object_id *oid,
+			  int flag UNUSED, void *cb_data)
 {
 	oidcpy(cb_data, oid);
 	return 1;
@@ -1324,7 +1325,7 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix, options,
 			     git_bisect_helper_usage,
-			     PARSE_OPT_KEEP_DASHDASH | PARSE_OPT_KEEP_UNKNOWN);
+			     PARSE_OPT_KEEP_DASHDASH | PARSE_OPT_KEEP_UNKNOWN_OPT);
 
 	if (!cmdmode)
 		usage_with_options(git_bisect_helper_usage, options);

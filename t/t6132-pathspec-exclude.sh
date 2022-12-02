@@ -293,7 +293,11 @@ test_expect_success 'add with all negative' '
 	test_cmp expect actual
 '
 
-test_expect_success 'add -p with all negative' '
+test_lazy_prereq ADD_I_USE_BUILTIN_OR_PERL '
+	test_have_prereq ADD_I_USE_BUILTIN || test_have_prereq PERL
+'
+
+test_expect_success ADD_I_USE_BUILTIN_OR_PERL 'add -p with all negative' '
 	H=$(git rev-parse HEAD) &&
 	git reset --hard $H &&
 	git clean -f &&

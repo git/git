@@ -5,6 +5,8 @@ test_description="Test whether cache-tree is properly updated
 Tests whether various commands properly update and/or rewrite the
 cache-tree extension.
 "
+
+TEST_PASSES_SANITIZE_LEAK=true
  . ./test-lib.sh
 
 cmp_cache_tree () {

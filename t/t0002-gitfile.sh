@@ -65,7 +65,7 @@ test_expect_success 'check commit-tree' '
 	test_path_is_file "$REAL/objects/$(objpath $SHA)"
 '
 
-test_expect_success !SANITIZE_LEAK 'check rev-list' '
+test_expect_success 'check rev-list' '
 	git update-ref "HEAD" "$SHA" &&
 	git rev-list HEAD >actual &&
 	echo $SHA >expected &&

@@ -102,7 +102,7 @@ resolve_full_httpd () {
 
 start_httpd () {
 	if test -f "$fqgitdir/pid"; then
-		say "Instance already running. Restarting..."
+		echo "Instance already running. Restarting..."
 		stop_httpd
 	fi
 

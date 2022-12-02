@@ -365,9 +365,6 @@ test_expect_success 'set up an unresolved merge' '
 	test_might_fail git config --unset rerere.autoupdate &&
 	git reset --hard &&
 	git checkout version2 &&
-	fifth=$(git rev-parse fifth) &&
-	echo "$fifth		branch fifth of ." |
-	git fmt-merge-msg >msg &&
 	ancestor=$(git merge-base version2 fifth) &&
 	test_must_fail git merge-recursive "$ancestor" -- HEAD fifth &&
 

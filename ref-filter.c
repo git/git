@@ -89,7 +89,7 @@ struct ref_to_worktree_entry {
 	struct worktree *wt; /* key is wt->head_ref */
 };
 
-static int ref_to_worktree_map_cmpfnc(const void *unused_lookupdata,
+static int ref_to_worktree_map_cmpfnc(const void *lookupdata UNUSED,
 				      const struct hashmap_entry *eptr,
 				      const struct hashmap_entry *kptr,
 				      const void *keydata_aka_refname)
@@ -1722,6 +1722,8 @@ char *get_head_description(void)
 	} else
 		strbuf_addstr(&desc, _("(no branch)"));
 
+	wt_status_state_free_buffers(&state);
+
 	return strbuf_detach(&desc, NULL);
 }
 
@@ -2405,12 +2407,16 @@ static void reach_filter(struct ref_array *array,
 int filter_refs(struct ref_array *array, struct ref_filter *filter, unsigned int type)
 {
 	struct ref_filter_cbdata ref_cbdata;
+	int save_commit_buffer_orig;
 	int ret = 0;
 
 	ref_cbdata.array = array;
 	ref_cbdata.filter = filter;
 
 	filter->kind = type & FILTER_REFS_KIND_MASK;
+
+	save_commit_buffer_orig = save_commit_buffer;
+	save_commit_buffer = 0;
 
 	init_contains_cache(&ref_cbdata.contains_cache);
 	init_contains_cache(&ref_cbdata.no_contains_cache);
@@ -2444,6 +2450,7 @@ int filter_refs(struct ref_array *array, struct ref_filter *filter, unsigned int
 	reach_filter(array, filter->reachable_from, INCLUDE_REACHED);
 	reach_filter(array, filter->unreachable_from, EXCLUDE_REACHED);
 
+	save_commit_buffer = save_commit_buffer_orig;
 	return ret;
 }
 

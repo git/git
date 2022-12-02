@@ -1,0 +1,23 @@
+case "$(git ls-files)" in
+one) echo pass one ;;
+# LINT: broken &&-chain okay if explicit "return 1" signals failuire
+*) echo bad one; return 1 ;;
+esac &&
+(
+	case "$(git ls-files)" in
+	two) echo pass two ;;
+# LINT: broken &&-chain okay if explicit "exit 1" signals failuire
+	*) echo bad two; exit 1 ;;
+	esac
+) &&
+case "$(git ls-files)" in
+dir/two"$LF"one) echo pass both ;;
+# LINT: broken &&-chain okay if explicit "return 1" signals failuire
+*) echo bad; return 1 ;;
+esac &&
+
+for i in 1 2 3 4 ; do
+# LINT: broken &&-chain okay if explicit "return $?" signals failure
+	git checkout main -b $i || return $?
+	test_commit $i $i $i tag$i || return $?
+done

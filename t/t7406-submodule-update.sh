@@ -25,6 +25,7 @@ compare_head()
 
 
 test_expect_success 'setup a submodule tree' '
+	git config --global protocol.file.allow always &&
 	echo file > file &&
 	git add file &&
 	test_tick &&
@@ -769,7 +770,7 @@ test_expect_success 'submodule update continues after recursive checkout error' 
 	   echo "" > file
 	  )
 	 ) &&
-	 test_must_fail git submodule update --recursive &&
+	 test_expect_code 1 git submodule update --recursive &&
 	 (cd submodule2 &&
 	  git rev-parse --verify HEAD >../actual
 	 ) &&
@@ -1074,7 +1075,7 @@ test_expect_success 'submodule update --quiet passes quietness to merge/rebase' 
 	 git submodule update --rebase --quiet >out 2>err &&
 	 test_must_be_empty out &&
 	 test_must_be_empty err &&
-	 git submodule update --rebase -v >out 2>err &&
+	 git submodule update --rebase >out 2>err &&
 	 test_file_not_empty out &&
 	 test_must_be_empty err
 	)
@@ -1114,6 +1115,68 @@ test_expect_success 'submodule update --filter sets partial clone settings' '
 	git -C super-filter submodule update --init --filter blob:none &&
 	test_cmp_config -C super-filter/submodule true remote.origin.promisor &&
 	test_cmp_config -C super-filter/submodule blob:none remote.origin.partialclonefilter
+'
+
+# NEEDSWORK: Clean up the tests so that we can reuse the test setup.
+# Don't reuse the existing repos because the earlier tests have
+# intentionally disruptive configurations.
+test_expect_success 'setup clean recursive superproject' '
+	git init bottom &&
+	test_commit -C bottom "bottom" &&
+	git init middle &&
+	git -C middle submodule add ../bottom bottom &&
+	git -C middle commit -m "middle" &&
+	git init top &&
+	git -C top submodule add ../middle middle &&
+	git -C top commit -m "top" &&
+	git clone --recurse-submodules top top-clean
+'
+
+test_expect_success 'submodule update should skip unmerged submodules' '
+	test_when_finished "rm -fr top-cloned" &&
+	cp -r top-clean top-cloned &&
+
+	# Create an upstream commit in each repo, starting with bottom
+	test_commit -C bottom upstream_commit &&
+	# Create middle commit
+	git -C middle/bottom fetch &&
+	git -C middle/bottom checkout -f FETCH_HEAD &&
+	git -C middle add bottom &&
+	git -C middle commit -m "upstream_commit" &&
+	# Create top commit
+	git -C top/middle fetch &&
+	git -C top/middle checkout -f FETCH_HEAD &&
+	git -C top add middle &&
+	git -C top commit -m "upstream_commit" &&
+
+	# Create a downstream conflict
+	test_commit -C top-cloned/middle/bottom downstream_commit &&
+	git -C top-cloned/middle add bottom &&
+	git -C top-cloned/middle commit -m "downstream_commit" &&
+	git -C top-cloned/middle fetch --recurse-submodules origin &&
+	test_must_fail git -C top-cloned/middle merge origin/main &&
+
+	# Make the update of "middle" a no-op, otherwise we error out
+	# because of its unmerged state
+	test_config -C top-cloned submodule.middle.update !true &&
+	git -C top-cloned submodule update --recursive 2>actual.err &&
+	cat >expect.err <<-\EOF &&
+	Skipping unmerged submodule middle/bottom
+	EOF
+	test_cmp expect.err actual.err
+'
+
+test_expect_success 'submodule update --recursive skip submodules with strategy=none' '
+	test_when_finished "rm -fr top-cloned" &&
+	cp -r top-clean top-cloned &&
+
+	test_commit -C top-cloned/middle/bottom downstream_commit &&
+	git -C top-cloned/middle config submodule.bottom.update none &&
+	git -C top-cloned submodule update --recursive 2>actual.err &&
+	cat >expect.err <<-\EOF &&
+	Skipping submodule '\''middle/bottom'\''
+	EOF
+	test_cmp expect.err actual.err
 '
 
 test_done

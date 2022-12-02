@@ -114,6 +114,39 @@ test_expect_success 'resolve, non-trivial' '
 	test_path_is_missing .git/MERGE_HEAD
 '
 
+test_expect_success 'resolve, trivial, related file removed' '
+	git reset --hard &&
+	git checkout B^0 &&
+
+	git rm a &&
+	test_path_is_missing a &&
+
+	test_must_fail git merge -s resolve C^0 &&
+
+	test_path_is_missing a &&
+	test_path_is_missing .git/MERGE_HEAD
+'
+
+test_expect_success 'resolve, non-trivial, related file removed' '
+	git reset --hard &&
+	git checkout B^0 &&
+
+	git rm a &&
+	test_path_is_missing a &&
+
+	# We also ask for recursive in order to turn off the "allow_trivial"
+	# setting in builtin/merge.c, and ensure that resolve really does
+	# correctly fail the merge (I guess this also tests that recursive
+	# correctly fails the merge, but the main thing we are attempting
+	# to test here is resolve and are just using the side effect of
+	# adding recursive to ensure that resolve is actually tested rather
+	# than the trivial merge codepath)
+	test_must_fail git merge -s resolve -s recursive D^0 &&
+
+	test_path_is_missing a &&
+	test_path_is_missing .git/MERGE_HEAD
+'
+
 test_expect_success 'recursive' '
 	git reset --hard &&
 	git checkout B^0 &&
@@ -240,6 +273,38 @@ test_expect_success 'subtree' '
 	test_path_is_file random_file &&
 	git rev-parse --verify :random_file &&
 	test_path_is_missing .git/MERGE_HEAD
+'
+
+test_expect_success 'avoid failure due to stat-dirty files' '
+	git reset --hard &&
+	git checkout B^0 &&
+
+	# Make "a" be stat-dirty
+	test-tool chmtime =+1 a &&
+
+	# stat-dirty file should not prevent stash creation in builtin/merge.c
+	git merge -s resolve -s recursive D^0
+'
+
+test_expect_success 'with multiple strategies, recursive or ort failure do not early abort' '
+	git reset --hard &&
+	git checkout B^0 &&
+
+	test_seq 0 10 >a &&
+	git add a &&
+	git rev-parse :a >expect &&
+
+	sane_unset GIT_TEST_MERGE_ALGORITHM &&
+	test_must_fail git merge -s recursive -s ort -s octopus C^0 >output 2>&1 &&
+
+	grep "Trying merge strategy recursive..." output &&
+	grep "Trying merge strategy ort..." output &&
+	grep "Trying merge strategy octopus..." output &&
+	grep "No merge strategy handled the merge." output &&
+
+	# Changes to "a" should remain staged
+	git rev-parse :a >actual &&
+	test_cmp expect actual
 '
 
 test_done

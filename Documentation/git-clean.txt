@@ -133,6 +133,13 @@ help::
 
   Show brief usage of interactive git-clean.
 
+CONFIGURATION
+-------------
+
+include::includes/cmd-config-section-all.txt[]
+
+include::config/clean.txt[]
+
 SEE ALSO
 --------
 linkgit:gitignore[5]

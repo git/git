@@ -1098,30 +1098,22 @@ static struct blame_entry *blame_merge(struct blame_entry *list1,
 	}
 }
 
-static void *get_next_blame(const void *p)
-{
-	return ((struct blame_entry *)p)->next;
-}
-
-static void set_next_blame(void *p1, void *p2)
-{
-	((struct blame_entry *)p1)->next = p2;
-}
+DEFINE_LIST_SORT(static, sort_blame_entries, struct blame_entry, next);
 
 /*
  * Final image line numbers are all different, so we don't need a
  * three-way comparison here.
  */
 
-static int compare_blame_final(const void *p1, const void *p2)
+static int compare_blame_final(const struct blame_entry *e1,
+			       const struct blame_entry *e2)
 {
-	return ((struct blame_entry *)p1)->lno > ((struct blame_entry *)p2)->lno
-		? 1 : -1;
+	return e1->lno > e2->lno ? 1 : -1;
 }
 
-static int compare_blame_suspect(const void *p1, const void *p2)
+static int compare_blame_suspect(const struct blame_entry *s1,
+				 const struct blame_entry *s2)
 {
-	const struct blame_entry *s1 = p1, *s2 = p2;
 	/*
 	 * to allow for collating suspects, we sort according to the
 	 * respective pointer value as the primary sorting criterion.
@@ -1138,8 +1130,7 @@ static int compare_blame_suspect(const void *p1, const void *p2)
 
 void blame_sort_final(struct blame_scoreboard *sb)
 {
-	sb->ent = llist_mergesort(sb->ent, get_next_blame, set_next_blame,
-				  compare_blame_final);
+	sort_blame_entries(&sb->ent, compare_blame_final);
 }
 
 static int compare_commits_by_reverse_commit_date(const void *a,
@@ -1964,9 +1955,7 @@ static void pass_blame_to_parent(struct blame_scoreboard *sb,
 		    parent, target, 0);
 	*d.dstq = NULL;
 	if (ignore_diffs)
-		newdest = llist_mergesort(newdest, get_next_blame,
-					  set_next_blame,
-					  compare_blame_suspect);
+		sort_blame_entries(&newdest, compare_blame_suspect);
 	queue_blames(sb, parent, newdest);
 
 	return;
@@ -2383,8 +2372,7 @@ static int num_scapegoats(struct rev_info *revs, struct commit *commit, int reve
  */
 static void distribute_blame(struct blame_scoreboard *sb, struct blame_entry *blamed)
 {
-	blamed = llist_mergesort(blamed, get_next_blame, set_next_blame,
-				 compare_blame_suspect);
+	sort_blame_entries(&blamed, compare_blame_suspect);
 	while (blamed)
 	{
 		struct blame_origin *porigin = blamed->suspect;

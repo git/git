@@ -1,0 +1,2 @@
+run_sub_test_lib_test_err run-inv-range-start "--run invalid range start" --run="a-5" <<-EOF &&
+check_sub_test_lib_test_err run-inv-range-start <<-EOF_OUT 3 <<-EOF_ERR

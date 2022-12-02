@@ -126,7 +126,7 @@ test_expect_success 'Simple merge in repo with interesting pathnames' '
 	#     foo/bar-2/baz
 	# The fact that foo/bar-2 appears between foo/bar and foo/bar/baz
 	# can trip up some codepaths, and is the point of this test.
-	test_create_repo name-ordering &&
+	git init name-ordering &&
 	(
 		cd name-ordering &&
 

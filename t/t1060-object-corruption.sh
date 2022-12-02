@@ -139,4 +139,11 @@ test_expect_success 'internal tree objects are not "missing"' '
 	)
 '
 
+test_expect_success 'partial clone of corrupted repository' '
+	test_config -C misnamed uploadpack.allowFilter true &&
+	git clone --no-local --no-checkout --filter=blob:none \
+		misnamed corrupt-partial && \
+	test_must_fail git -C corrupt-partial checkout --force
+'
+
 test_done

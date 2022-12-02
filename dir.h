@@ -414,7 +414,7 @@ int match_basename(const char *, int,
 		   const char *, int, int, unsigned);
 int match_pathname(const char *, int,
 		   const char *, int,
-		   const char *, int, int, unsigned);
+		   const char *, int, int);
 
 struct path_pattern *last_matching_pattern(struct dir_struct *dir,
 					   struct index_state *istate,

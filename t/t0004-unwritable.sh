@@ -31,7 +31,7 @@ test_expect_success WRITE_TREE_OUT 'write-tree output on unwritable repository' 
 	test_cmp expect out.write-tree
 '
 
-test_expect_success POSIXPERM,SANITY,!SANITIZE_LEAK 'commit should notice unwritable repository' '
+test_expect_success POSIXPERM,SANITY 'commit should notice unwritable repository' '
 	test_when_finished "chmod 775 .git/objects .git/objects/??" &&
 	chmod a-w .git/objects .git/objects/?? &&
 	test_must_fail git commit -m second 2>out.commit

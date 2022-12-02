@@ -1564,6 +1564,13 @@ operator can use this facility to peek at the objects and refs from an
 import in progress, at the cost of some added running time and worse
 compression.
 
+CONFIGURATION
+-------------
+
+include::includes/cmd-config-section-all.txt[]
+
+include::config/fastimport.txt[]
+
 SEE ALSO
 --------
 linkgit:git-fast-export[1]

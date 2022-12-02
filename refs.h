@@ -2,6 +2,7 @@
 #define REFS_H
 
 #include "cache.h"
+#include "commit.h"
 
 struct object_id;
 struct ref_store;
@@ -929,5 +930,50 @@ struct ref_store *get_main_ref_store(struct repository *r);
  */
 struct ref_store *get_submodule_ref_store(const char *submodule);
 struct ref_store *get_worktree_ref_store(const struct worktree *wt);
+
+/*
+ * Some of the names specified by refs have special meaning to Git.
+ * Organize these namespaces in a comon 'ref_namespace' array for
+ * reference from multiple places in the codebase.
+ */
+
+struct ref_namespace_info {
+	char *ref;
+	enum decoration_type decoration;
+
+	/*
+	 * If 'exact' is true, then we must match the 'ref' exactly.
+	 * Otherwise, use a prefix match.
+	 *
+	 * 'ref_updated' is for internal use. It represents whether the
+	 * 'ref' value was replaced from its original literal version.
+	 */
+	unsigned exact:1,
+		 ref_updated:1;
+};
+
+enum ref_namespace {
+	NAMESPACE_HEAD,
+	NAMESPACE_BRANCHES,
+	NAMESPACE_TAGS,
+	NAMESPACE_REMOTE_REFS,
+	NAMESPACE_STASH,
+	NAMESPACE_REPLACE,
+	NAMESPACE_NOTES,
+	NAMESPACE_PREFETCH,
+	NAMESPACE_REWRITTEN,
+
+	/* Must be last */
+	NAMESPACE__COUNT
+};
+
+/* See refs.c for the contents of this array. */
+extern struct ref_namespace_info ref_namespace[NAMESPACE__COUNT];
+
+/*
+ * Some ref namespaces can be modified by config values or environment
+ * variables. Modify a namespace as specified by its ref_namespace key.
+ */
+void update_ref_namespace(enum ref_namespace namespace, char *ref);
 
 #endif /* REFS_H */

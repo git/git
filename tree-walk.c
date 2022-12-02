@@ -47,17 +47,20 @@ static int decode_tree_entry(struct tree_desc *desc, const char *buf, unsigned l
 
 	/* Initialize the descriptor entry */
 	desc->entry.path = path;
-	desc->entry.mode = canon_mode(mode);
+	desc->entry.mode = (desc->flags & TREE_DESC_RAW_MODES) ? mode : canon_mode(mode);
 	desc->entry.pathlen = len - 1;
 	oidread(&desc->entry.oid, (const unsigned char *)path + len);
 
 	return 0;
 }
 
-static int init_tree_desc_internal(struct tree_desc *desc, const void *buffer, unsigned long size, struct strbuf *err)
+static int init_tree_desc_internal(struct tree_desc *desc, const void *buffer,
+				   unsigned long size, struct strbuf *err,
+				   enum tree_desc_flags flags)
 {
 	desc->buffer = buffer;
 	desc->size = size;
+	desc->flags = flags;
 	if (size)
 		return decode_tree_entry(desc, buffer, size, err);
 	return 0;
@@ -66,15 +69,16 @@ static int init_tree_desc_internal(struct tree_desc *desc, const void *buffer, u
 void init_tree_desc(struct tree_desc *desc, const void *buffer, unsigned long size)
 {
 	struct strbuf err = STRBUF_INIT;
-	if (init_tree_desc_internal(desc, buffer, size, &err))
+	if (init_tree_desc_internal(desc, buffer, size, &err, 0))
 		die("%s", err.buf);
 	strbuf_release(&err);
 }
 
-int init_tree_desc_gently(struct tree_desc *desc, const void *buffer, unsigned long size)
+int init_tree_desc_gently(struct tree_desc *desc, const void *buffer, unsigned long size,
+			  enum tree_desc_flags flags)
 {
 	struct strbuf err = STRBUF_INIT;
-	int result = init_tree_desc_internal(desc, buffer, size, &err);
+	int result = init_tree_desc_internal(desc, buffer, size, &err, flags);
 	if (result)
 		error("%s", err.buf);
 	strbuf_release(&err);

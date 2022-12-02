@@ -692,6 +692,13 @@ a `git gc` command on the origin repository.
 
 include::transfer-data-leaks.txt[]
 
+CONFIGURATION
+-------------
+
+include::includes/cmd-config-section-all.txt[]
+
+include::config/push.txt[]
+
 GIT
 ---
 Part of the linkgit:git[1] suite

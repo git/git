@@ -213,6 +213,13 @@ $ git diff -R                          <2>
     rewrites (very expensive).
 <2> Output diff in reverse.
 
+CONFIGURATION
+-------------
+
+include::includes/cmd-config-section-all.txt[]
+
+include::config/diff.txt[]
+
 SEE ALSO
 --------
 diff(1),

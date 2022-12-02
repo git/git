@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='Test ref-filter and pretty APIs for commit and tag messages using CRLF'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 LIB_CRLF_BRANCHES=""

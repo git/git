@@ -2,6 +2,7 @@
 
 test_description='git pull message generation'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 dollar='$Dollar'

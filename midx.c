@@ -577,6 +577,78 @@ static void fill_pack_entry(uint32_t pack_int_id,
 	entry->preferred = !!preferred;
 }
 
+struct midx_fanout {
+	struct pack_midx_entry *entries;
+	uint32_t nr;
+	uint32_t alloc;
+};
+
+static void midx_fanout_grow(struct midx_fanout *fanout, uint32_t nr)
+{
+	ALLOC_GROW(fanout->entries, nr, fanout->alloc);
+}
+
+static void midx_fanout_sort(struct midx_fanout *fanout)
+{
+	QSORT(fanout->entries, fanout->nr, midx_oid_compare);
+}
+
+static void midx_fanout_add_midx_fanout(struct midx_fanout *fanout,
+					struct multi_pack_index *m,
+					uint32_t cur_fanout,
+					int preferred_pack)
+{
+	uint32_t start = 0, end;
+	uint32_t cur_object;
+
+	if (cur_fanout)
+		start = ntohl(m->chunk_oid_fanout[cur_fanout - 1]);
+	end = ntohl(m->chunk_oid_fanout[cur_fanout]);
+
+	for (cur_object = start; cur_object < end; cur_object++) {
+		if ((preferred_pack > -1) &&
+		    (preferred_pack == nth_midxed_pack_int_id(m, cur_object))) {
+			/*
+			 * Objects from preferred packs are added
+			 * separately.
+			 */
+			continue;
+		}
+
+		midx_fanout_grow(fanout, fanout->nr + 1);
+		nth_midxed_pack_midx_entry(m,
+					   &fanout->entries[fanout->nr],
+					   cur_object);
+		fanout->entries[fanout->nr].preferred = 0;
+		fanout->nr++;
+	}
+}
+
+static void midx_fanout_add_pack_fanout(struct midx_fanout *fanout,
+					struct pack_info *info,
+					uint32_t cur_pack,
+					int preferred,
+					uint32_t cur_fanout)
+{
+	struct packed_git *pack = info[cur_pack].p;
+	uint32_t start = 0, end;
+	uint32_t cur_object;
+
+	if (cur_fanout)
+		start = get_pack_fanout(pack, cur_fanout - 1);
+	end = get_pack_fanout(pack, cur_fanout);
+
+	for (cur_object = start; cur_object < end; cur_object++) {
+		midx_fanout_grow(fanout, fanout->nr + 1);
+		fill_pack_entry(cur_pack,
+				info[cur_pack].p,
+				cur_object,
+				&fanout->entries[fanout->nr],
+				preferred);
+		fanout->nr++;
+	}
+}
+
 /*
  * It is possible to artificially get into a state where there are many
  * duplicate copies of objects. That can create high memory pressure if
@@ -595,8 +667,8 @@ static struct pack_midx_entry *get_sorted_entries(struct multi_pack_index *m,
 						  int preferred_pack)
 {
 	uint32_t cur_fanout, cur_pack, cur_object;
-	uint32_t alloc_fanout, alloc_objects, total_objects = 0;
-	struct pack_midx_entry *entries_by_fanout = NULL;
+	uint32_t alloc_objects, total_objects = 0;
+	struct midx_fanout fanout = { 0 };
 	struct pack_midx_entry *deduplicated_entries = NULL;
 	uint32_t start_pack = m ? m->num_packs : 0;
 
@@ -608,74 +680,51 @@ static struct pack_midx_entry *get_sorted_entries(struct multi_pack_index *m,
 	 * slices to be evenly distributed, with some noise. Hence,
 	 * allocate slightly more than one 256th.
 	 */
-	alloc_objects = alloc_fanout = total_objects > 3200 ? total_objects / 200 : 16;
+	alloc_objects = fanout.alloc = total_objects > 3200 ? total_objects / 200 : 16;
 
-	ALLOC_ARRAY(entries_by_fanout, alloc_fanout);
+	ALLOC_ARRAY(fanout.entries, fanout.alloc);
 	ALLOC_ARRAY(deduplicated_entries, alloc_objects);
 	*nr_objects = 0;
 
 	for (cur_fanout = 0; cur_fanout < 256; cur_fanout++) {
-		uint32_t nr_fanout = 0;
+		fanout.nr = 0;
 
-		if (m) {
-			uint32_t start = 0, end;
-
-			if (cur_fanout)
-				start = ntohl(m->chunk_oid_fanout[cur_fanout - 1]);
-			end = ntohl(m->chunk_oid_fanout[cur_fanout]);
-
-			for (cur_object = start; cur_object < end; cur_object++) {
-				ALLOC_GROW(entries_by_fanout, nr_fanout + 1, alloc_fanout);
-				nth_midxed_pack_midx_entry(m,
-							   &entries_by_fanout[nr_fanout],
-							   cur_object);
-				if (nth_midxed_pack_int_id(m, cur_object) == preferred_pack)
-					entries_by_fanout[nr_fanout].preferred = 1;
-				else
-					entries_by_fanout[nr_fanout].preferred = 0;
-				nr_fanout++;
-			}
-		}
+		if (m)
+			midx_fanout_add_midx_fanout(&fanout, m, cur_fanout,
+						    preferred_pack);
 
 		for (cur_pack = start_pack; cur_pack < nr_packs; cur_pack++) {
-			uint32_t start = 0, end;
 			int preferred = cur_pack == preferred_pack;
-
-			if (cur_fanout)
-				start = get_pack_fanout(info[cur_pack].p, cur_fanout - 1);
-			end = get_pack_fanout(info[cur_pack].p, cur_fanout);
-
-			for (cur_object = start; cur_object < end; cur_object++) {
-				ALLOC_GROW(entries_by_fanout, nr_fanout + 1, alloc_fanout);
-				fill_pack_entry(cur_pack,
-						info[cur_pack].p,
-						cur_object,
-						&entries_by_fanout[nr_fanout],
-						preferred);
-				nr_fanout++;
-			}
+			midx_fanout_add_pack_fanout(&fanout,
+						    info, cur_pack,
+						    preferred, cur_fanout);
 		}
 
-		QSORT(entries_by_fanout, nr_fanout, midx_oid_compare);
+		if (-1 < preferred_pack && preferred_pack < start_pack)
+			midx_fanout_add_pack_fanout(&fanout, info,
+						    preferred_pack, 1,
+						    cur_fanout);
+
+		midx_fanout_sort(&fanout);
 
 		/*
 		 * The batch is now sorted by OID and then mtime (descending).
 		 * Take only the first duplicate.
 		 */
-		for (cur_object = 0; cur_object < nr_fanout; cur_object++) {
-			if (cur_object && oideq(&entries_by_fanout[cur_object - 1].oid,
-						&entries_by_fanout[cur_object].oid))
+		for (cur_object = 0; cur_object < fanout.nr; cur_object++) {
+			if (cur_object && oideq(&fanout.entries[cur_object - 1].oid,
+						&fanout.entries[cur_object].oid))
 				continue;
 
 			ALLOC_GROW(deduplicated_entries, *nr_objects + 1, alloc_objects);
 			memcpy(&deduplicated_entries[*nr_objects],
-			       &entries_by_fanout[cur_object],
+			       &fanout.entries[cur_object],
 			       sizeof(struct pack_midx_entry));
 			(*nr_objects)++;
 		}
 	}
 
-	free(entries_by_fanout);
+	free(fanout.entries);
 	return deduplicated_entries;
 }
 
@@ -1053,40 +1102,37 @@ static struct commit **find_commits_for_midx_bitmap(uint32_t *indexed_commits_nr
 	return cb.commits;
 }
 
-static int write_midx_bitmap(char *midx_name, unsigned char *midx_hash,
-			     struct write_midx_context *ctx,
-			     const char *refs_snapshot,
+static int write_midx_bitmap(const char *midx_name,
+			     const unsigned char *midx_hash,
+			     struct packing_data *pdata,
+			     struct commit **commits,
+			     uint32_t commits_nr,
+			     uint32_t *pack_order,
 			     unsigned flags)
 {
-	struct packing_data pdata;
-	struct pack_idx_entry **index;
-	struct commit **commits = NULL;
-	uint32_t i, commits_nr;
+	int ret, i;
 	uint16_t options = 0;
-	char *bitmap_name = xstrfmt("%s-%s.bitmap", midx_name, hash_to_hex(midx_hash));
-	int ret;
-
-	if (!ctx->entries_nr)
-		BUG("cannot write a bitmap without any objects");
+	struct pack_idx_entry **index;
+	char *bitmap_name = xstrfmt("%s-%s.bitmap", midx_name,
+					hash_to_hex(midx_hash));
 
 	if (flags & MIDX_WRITE_BITMAP_HASH_CACHE)
 		options |= BITMAP_OPT_HASH_CACHE;
 
-	prepare_midx_packing_data(&pdata, ctx);
-
-	commits = find_commits_for_midx_bitmap(&commits_nr, refs_snapshot, ctx);
+	if (flags & MIDX_WRITE_BITMAP_LOOKUP_TABLE)
+		options |= BITMAP_OPT_LOOKUP_TABLE;
 
 	/*
 	 * Build the MIDX-order index based on pdata.objects (which is already
 	 * in MIDX order; c.f., 'midx_pack_order_cmp()' for the definition of
 	 * this order).
 	 */
-	ALLOC_ARRAY(index, pdata.nr_objects);
-	for (i = 0; i < pdata.nr_objects; i++)
-		index[i] = &pdata.objects[i].idx;
+	ALLOC_ARRAY(index, pdata->nr_objects);
+	for (i = 0; i < pdata->nr_objects; i++)
+		index[i] = &pdata->objects[i].idx;
 
 	bitmap_writer_show_progress(flags & MIDX_PROGRESS);
-	bitmap_writer_build_type_index(&pdata, index, pdata.nr_objects);
+	bitmap_writer_build_type_index(pdata, index, pdata->nr_objects);
 
 	/*
 	 * bitmap_writer_finish expects objects in lex order, but pack_order
@@ -1101,16 +1147,16 @@ static int write_midx_bitmap(char *midx_name, unsigned char *midx_hash,
 	 * happens between bitmap_writer_build_type_index() and
 	 * bitmap_writer_finish().
 	 */
-	for (i = 0; i < pdata.nr_objects; i++)
-		index[ctx->pack_order[i]] = &pdata.objects[i].idx;
+	for (i = 0; i < pdata->nr_objects; i++)
+		index[pack_order[i]] = &pdata->objects[i].idx;
 
 	bitmap_writer_select_commits(commits, commits_nr, -1);
-	ret = bitmap_writer_build(&pdata);
+	ret = bitmap_writer_build(pdata);
 	if (ret < 0)
 		goto cleanup;
 
 	bitmap_writer_set_checksum(midx_hash);
-	bitmap_writer_finish(index, pdata.nr_objects, bitmap_name, options);
+	bitmap_writer_finish(index, pdata->nr_objects, bitmap_name, options);
 
 cleanup:
 	free(index);
@@ -1443,14 +1489,40 @@ static int write_midx_internal(const char *object_dir,
 	if (flags & MIDX_WRITE_REV_INDEX &&
 	    git_env_bool("GIT_TEST_MIDX_WRITE_REV", 0))
 		write_midx_reverse_index(midx_name.buf, midx_hash, &ctx);
+
 	if (flags & MIDX_WRITE_BITMAP) {
-		if (write_midx_bitmap(midx_name.buf, midx_hash, &ctx,
-				      refs_snapshot, flags) < 0) {
+		struct packing_data pdata;
+		struct commit **commits;
+		uint32_t commits_nr;
+
+		if (!ctx.entries_nr)
+			BUG("cannot write a bitmap without any objects");
+
+		prepare_midx_packing_data(&pdata, &ctx);
+
+		commits = find_commits_for_midx_bitmap(&commits_nr, refs_snapshot, &ctx);
+
+		/*
+		 * The previous steps translated the information from
+		 * 'entries' into information suitable for constructing
+		 * bitmaps. We no longer need that array, so clear it to
+		 * reduce memory pressure.
+		 */
+		FREE_AND_NULL(ctx.entries);
+		ctx.entries_nr = 0;
+
+		if (write_midx_bitmap(midx_name.buf, midx_hash, &pdata,
+				      commits, commits_nr, ctx.pack_order,
+				      flags) < 0) {
 			error(_("could not write multi-pack bitmap"));
 			result = 1;
 			goto cleanup;
 		}
 	}
+	/*
+	 * NOTE: Do not use ctx.entries beyond this point, since it might
+	 * have been freed in the previous if block.
+	 */
 
 	if (ctx.m)
 		close_object_store(the_repository->objects);
@@ -1767,7 +1839,7 @@ int expire_midx_packs(struct repository *r, const char *object_dir, unsigned fla
 		if (prepare_midx_pack(r, m, i))
 			continue;
 
-		if (m->packs[i]->pack_keep)
+		if (m->packs[i]->pack_keep || m->packs[i]->is_cruft)
 			continue;
 
 		pack_name = xstrdup(m->packs[i]->pack_name);
@@ -1823,6 +1895,8 @@ static int fill_included_packs_all(struct repository *r,
 			continue;
 		if (!pack_kept_objects && m->packs[i]->pack_keep)
 			continue;
+		if (m->packs[i]->is_cruft)
+			continue;
 
 		include_pack[i] = 1;
 		count++;
@@ -1838,8 +1912,10 @@ static int fill_included_packs_batch(struct repository *r,
 {
 	uint32_t i, packs_to_repack;
 	size_t total_size;
-	struct repack_info *pack_info = xcalloc(m->num_packs, sizeof(struct repack_info));
+	struct repack_info *pack_info;
 	int pack_kept_objects = 0;
+
+	CALLOC_ARRAY(pack_info, m->num_packs);
 
 	repo_config_get_bool(r, "repack.packkeptobjects", &pack_kept_objects);
 
@@ -1852,7 +1928,7 @@ static int fill_included_packs_batch(struct repository *r,
 		pack_info[i].mtime = m->packs[i]->mtime;
 	}
 
-	for (i = 0; batch_size && i < m->num_objects; i++) {
+	for (i = 0; i < m->num_objects; i++) {
 		uint32_t pack_int_id = nth_midxed_pack_int_id(m, i);
 		pack_info[pack_int_id].referenced_objects++;
 	}
@@ -1869,6 +1945,8 @@ static int fill_included_packs_batch(struct repository *r,
 		if (!p)
 			continue;
 		if (!pack_kept_objects && p->pack_keep)
+			continue;
+		if (p->is_cruft)
 			continue;
 		if (open_pack_index(p) || !p->num_objects)
 			continue;

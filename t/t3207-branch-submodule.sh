@@ -28,6 +28,7 @@ test_no_branch () {
 }
 
 test_expect_success 'setup superproject and submodule' '
+	git config --global protocol.file.allow always &&
 	mkdir test_dirs &&
 	(
 		cd test_dirs &&

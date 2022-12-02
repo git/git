@@ -141,7 +141,7 @@ static int run_sequencer(int argc, const char **argv, struct replay_opts *opts)
 
 	argc = parse_options(argc, argv, NULL, options, usage_str,
 			PARSE_OPT_KEEP_ARGV0 |
-			PARSE_OPT_KEEP_UNKNOWN);
+			PARSE_OPT_KEEP_UNKNOWN_OPT);
 
 	prepare_repo_settings(the_repository);
 	the_repository->settings.command_requires_full_index = 0;
@@ -246,6 +246,9 @@ int cmd_revert(int argc, const char **argv, const char *prefix)
 	res = run_sequencer(argc, argv, &opts);
 	if (res < 0)
 		die(_("revert failed"));
+	if (opts.revs)
+		release_revisions(opts.revs);
+	free(opts.revs);
 	return res;
 }
 

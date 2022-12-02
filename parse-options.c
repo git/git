@@ -324,6 +324,8 @@ static enum parse_opt_result parse_long_opt(
 		const char *rest, *long_name = options->long_name;
 		enum opt_parsed flags = OPT_LONG, opt_flags = OPT_LONG;
 
+		if (options->type == OPTION_SUBCOMMAND)
+			continue;
 		if (!long_name)
 			continue;
 
@@ -332,7 +334,7 @@ again:
 			rest = NULL;
 		if (!rest) {
 			/* abbreviated? */
-			if (!(p->flags & PARSE_OPT_KEEP_UNKNOWN) &&
+			if (!(p->flags & PARSE_OPT_KEEP_UNKNOWN_OPT) &&
 			    !strncmp(long_name, arg, arg_end - arg)) {
 is_abbreviated:
 				if (abbrev_option &&
@@ -419,6 +421,19 @@ static enum parse_opt_result parse_nodash_opt(struct parse_opt_ctx_t *p,
 	return PARSE_OPT_ERROR;
 }
 
+static enum parse_opt_result parse_subcommand(const char *arg,
+					      const struct option *options)
+{
+	for (; options->type != OPTION_END; options++)
+		if (options->type == OPTION_SUBCOMMAND &&
+		    !strcmp(options->long_name, arg)) {
+			*(parse_opt_subcommand_fn **)options->value = options->subcommand_fn;
+			return PARSE_OPT_SUBCOMMAND;
+		}
+
+	return PARSE_OPT_UNKNOWN;
+}
+
 static void check_typos(const char *arg, const struct option *options)
 {
 	if (strlen(arg) < 3)
@@ -442,6 +457,7 @@ static void check_typos(const char *arg, const struct option *options)
 static void parse_options_check(const struct option *opts)
 {
 	char short_opts[128];
+	void *subcommand_value = NULL;
 
 	memset(short_opts, '\0', sizeof(short_opts));
 	for (; opts->type != OPTION_END; opts++) {
@@ -489,6 +505,14 @@ static void parse_options_check(const struct option *opts)
 			       "Are you using parse_options_step() directly?\n"
 			       "That case is not supported yet.");
 			break;
+		case OPTION_SUBCOMMAND:
+			if (!opts->value || !opts->subcommand_fn)
+				optbug(opts, "OPTION_SUBCOMMAND needs a value and a subcommand function");
+			if (!subcommand_value)
+				subcommand_value = opts->value;
+			else if (subcommand_value != opts->value)
+				optbug(opts, "all OPTION_SUBCOMMANDs need the same value");
+			break;
 		default:
 			; /* ok. (usually accepts an argument) */
 		}
@@ -497,6 +521,14 @@ static void parse_options_check(const struct option *opts)
 			optbug(opts, "multi-word argh should use dash to separate words");
 	}
 	BUG_if_bug("invalid 'struct option'");
+}
+
+static int has_subcommands(const struct option *options)
+{
+	for (; options->type != OPTION_END; options++)
+		if (options->type == OPTION_SUBCOMMAND)
+			return 1;
+	return 0;
 }
 
 static void parse_options_start_1(struct parse_opt_ctx_t *ctx,
@@ -515,7 +547,20 @@ static void parse_options_start_1(struct parse_opt_ctx_t *ctx,
 	ctx->prefix = prefix;
 	ctx->cpidx = ((flags & PARSE_OPT_KEEP_ARGV0) != 0);
 	ctx->flags = flags;
-	if ((flags & PARSE_OPT_KEEP_UNKNOWN) &&
+	ctx->has_subcommands = has_subcommands(options);
+	if (!ctx->has_subcommands && (flags & PARSE_OPT_SUBCOMMAND_OPTIONAL))
+		BUG("Using PARSE_OPT_SUBCOMMAND_OPTIONAL without subcommands");
+	if (ctx->has_subcommands) {
+		if (flags & PARSE_OPT_STOP_AT_NON_OPTION)
+			BUG("subcommands are incompatible with PARSE_OPT_STOP_AT_NON_OPTION");
+		if (!(flags & PARSE_OPT_SUBCOMMAND_OPTIONAL)) {
+			if (flags & PARSE_OPT_KEEP_UNKNOWN_OPT)
+				BUG("subcommands are incompatible with PARSE_OPT_KEEP_UNKNOWN_OPT unless in combination with PARSE_OPT_SUBCOMMAND_OPTIONAL");
+			if (flags & PARSE_OPT_KEEP_DASHDASH)
+				BUG("subcommands are incompatible with PARSE_OPT_KEEP_DASHDASH unless in combination with PARSE_OPT_SUBCOMMAND_OPTIONAL");
+		}
+	}
+	if ((flags & PARSE_OPT_KEEP_UNKNOWN_OPT) &&
 	    (flags & PARSE_OPT_STOP_AT_NON_OPTION) &&
 	    !(flags & PARSE_OPT_ONE_SHOT))
 		BUG("STOP_AT_NON_OPTION and KEEP_UNKNOWN don't go together");
@@ -589,6 +634,7 @@ static int show_gitcomp(const struct option *opts, int show_all)
 	int nr_noopts = 0;
 
 	for (; opts->type != OPTION_END; opts++) {
+		const char *prefix = "--";
 		const char *suffix = "";
 
 		if (!opts->long_name)
@@ -598,6 +644,9 @@ static int show_gitcomp(const struct option *opts, int show_all)
 			continue;
 
 		switch (opts->type) {
+		case OPTION_SUBCOMMAND:
+			prefix = "";
+			break;
 		case OPTION_GROUP:
 			continue;
 		case OPTION_STRING:
@@ -620,7 +669,8 @@ static int show_gitcomp(const struct option *opts, int show_all)
 			suffix = "=";
 		if (starts_with(opts->long_name, "no-"))
 			nr_noopts++;
-		printf(" --%s%s", opts->long_name, suffix);
+		printf("%s%s%s%s", opts == original_opts ? "" : " ",
+		       prefix, opts->long_name, suffix);
 	}
 	show_negated_gitcomp(original_opts, show_all, -1);
 	show_negated_gitcomp(original_opts, show_all, nr_noopts);
@@ -743,10 +793,38 @@ enum parse_opt_result parse_options_step(struct parse_opt_ctx_t *ctx,
 		if (*arg != '-' || !arg[1]) {
 			if (parse_nodash_opt(ctx, arg, options) == 0)
 				continue;
-			if (ctx->flags & PARSE_OPT_STOP_AT_NON_OPTION)
-				return PARSE_OPT_NON_OPTION;
-			ctx->out[ctx->cpidx++] = ctx->argv[0];
-			continue;
+			if (!ctx->has_subcommands) {
+				if (ctx->flags & PARSE_OPT_STOP_AT_NON_OPTION)
+					return PARSE_OPT_NON_OPTION;
+				ctx->out[ctx->cpidx++] = ctx->argv[0];
+				continue;
+			}
+			switch (parse_subcommand(arg, options)) {
+			case PARSE_OPT_SUBCOMMAND:
+				return PARSE_OPT_SUBCOMMAND;
+			case PARSE_OPT_UNKNOWN:
+				if (ctx->flags & PARSE_OPT_SUBCOMMAND_OPTIONAL)
+					/*
+					 * arg is neither a short or long
+					 * option nor a subcommand.  Since
+					 * this command has a default
+					 * operation mode, we have to treat
+					 * this arg and all remaining args
+					 * as args meant to that default
+					 * operation mode.
+					 * So we are done parsing.
+					 */
+					return PARSE_OPT_DONE;
+				error(_("unknown subcommand: `%s'"), arg);
+				usage_with_options(usagestr, options);
+			case PARSE_OPT_COMPLETE:
+			case PARSE_OPT_HELP:
+			case PARSE_OPT_ERROR:
+			case PARSE_OPT_DONE:
+			case PARSE_OPT_NON_OPTION:
+				/* Impossible. */
+				BUG("parse_subcommand() cannot return these");
+			}
 		}
 
 		/* lone -h asks for help */
@@ -774,6 +852,7 @@ enum parse_opt_result parse_options_step(struct parse_opt_ctx_t *ctx,
 					goto show_usage;
 				goto unknown;
 			case PARSE_OPT_NON_OPTION:
+			case PARSE_OPT_SUBCOMMAND:
 			case PARSE_OPT_HELP:
 			case PARSE_OPT_COMPLETE:
 				BUG("parse_short_opt() cannot return these");
@@ -799,6 +878,7 @@ enum parse_opt_result parse_options_step(struct parse_opt_ctx_t *ctx,
 					*(char *)ctx->argv[0] = '-';
 					goto unknown;
 				case PARSE_OPT_NON_OPTION:
+				case PARSE_OPT_SUBCOMMAND:
 				case PARSE_OPT_COMPLETE:
 				case PARSE_OPT_HELP:
 					BUG("parse_short_opt() cannot return these");
@@ -830,6 +910,7 @@ enum parse_opt_result parse_options_step(struct parse_opt_ctx_t *ctx,
 		case PARSE_OPT_HELP:
 			goto show_usage;
 		case PARSE_OPT_NON_OPTION:
+		case PARSE_OPT_SUBCOMMAND:
 		case PARSE_OPT_COMPLETE:
 			BUG("parse_long_opt() cannot return these");
 		case PARSE_OPT_DONE:
@@ -839,7 +920,19 @@ enum parse_opt_result parse_options_step(struct parse_opt_ctx_t *ctx,
 unknown:
 		if (ctx->flags & PARSE_OPT_ONE_SHOT)
 			break;
-		if (!(ctx->flags & PARSE_OPT_KEEP_UNKNOWN))
+		if (ctx->has_subcommands &&
+		    (ctx->flags & PARSE_OPT_SUBCOMMAND_OPTIONAL) &&
+		    (ctx->flags & PARSE_OPT_KEEP_UNKNOWN_OPT)) {
+			/*
+			 * Found an unknown option given to a command with
+			 * subcommands that has a default operation mode:
+			 * we treat this option and all remaining args as
+			 * arguments meant to that default operation mode.
+			 * So we are done parsing.
+			 */
+			return PARSE_OPT_DONE;
+		}
+		if (!(ctx->flags & PARSE_OPT_KEEP_UNKNOWN_OPT))
 			return PARSE_OPT_UNKNOWN;
 		ctx->out[ctx->cpidx++] = ctx->argv[0];
 		ctx->opt = NULL;
@@ -884,7 +977,14 @@ int parse_options(int argc, const char **argv,
 	case PARSE_OPT_COMPLETE:
 		exit(0);
 	case PARSE_OPT_NON_OPTION:
+	case PARSE_OPT_SUBCOMMAND:
+		break;
 	case PARSE_OPT_DONE:
+		if (ctx.has_subcommands &&
+		    !(flags & PARSE_OPT_SUBCOMMAND_OPTIONAL)) {
+			error(_("need a subcommand"));
+			usage_with_options(usagestr, options);
+		}
 		break;
 	case PARSE_OPT_UNKNOWN:
 		if (ctx.argv[0][1] == '-') {
@@ -1009,6 +1109,8 @@ static enum parse_opt_result usage_with_options_internal(struct parse_opt_ctx_t 
 		size_t pos;
 		int pad;
 
+		if (opts->type == OPTION_SUBCOMMAND)
+			continue;
 		if (opts->type == OPTION_GROUP) {
 			fputc('\n', outfile);
 			need_newline = 0;

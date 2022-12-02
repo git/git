@@ -407,6 +407,7 @@ test_expect_success 'in_vain not triggered before first ACK' '
 '
 
 test_expect_success 'in_vain resetted upon ACK' '
+	test_when_finished rm -f log trace2 &&
 	rm -rf myserver myclient &&
 	git init myserver &&
 
@@ -432,7 +433,8 @@ test_expect_success 'in_vain resetted upon ACK' '
 	# first. The 256th commit is common between the client and the server,
 	# and should reset in_vain. This allows negotiation to continue until
 	# the client reports that first_anotherbranch_commit is common.
-	git -C myclient fetch --progress origin main 2>log &&
+	GIT_TRACE2_EVENT="$(pwd)/trace2" git -C myclient fetch --progress origin main 2>log &&
+	grep \"key\":\"total_rounds\",\"value\":\"6\" trace2 &&
 	test_i18ngrep "Total 3 " log
 '
 

@@ -420,7 +420,7 @@ as `switch`, `pull`, `merge`) will avoid writing these files.
 However, these commands will sometimes write these files anyway in
 important cases such as conflicts during a merge or rebase.  Git
 commands will also avoid treating the lack of such files as an
-intentional deletion; for example `git add -u` will not not stage a
+intentional deletion; for example `git add -u` will not stage a
 deletion for these files and `git commit -a` will not make a commit
 deleting them either.
 

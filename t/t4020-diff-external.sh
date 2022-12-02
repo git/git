@@ -33,7 +33,7 @@ test_expect_success 'GIT_EXTERNAL_DIFF environment' '
 
 '
 
-test_expect_success !SANITIZE_LEAK 'GIT_EXTERNAL_DIFF environment should apply only to diff' '
+test_expect_success 'GIT_EXTERNAL_DIFF environment should apply only to diff' '
 	GIT_EXTERNAL_DIFF=echo git log -p -1 HEAD >out &&
 	grep "^diff --git a/file b/file" out
 
@@ -74,7 +74,7 @@ test_expect_success 'diff.external' '
 	test_cmp expect actual
 '
 
-test_expect_success !SANITIZE_LEAK 'diff.external should apply only to diff' '
+test_expect_success 'diff.external should apply only to diff' '
 	test_config diff.external echo &&
 	git log -p -1 HEAD >out &&
 	grep "^diff --git a/file b/file" out

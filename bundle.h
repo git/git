@@ -18,6 +18,7 @@ struct bundle_header {
 { \
 	.prerequisites = STRING_LIST_INIT_DUP, \
 	.references = STRING_LIST_INIT_DUP, \
+	.filter = LIST_OBJECTS_FILTER_INIT, \
 }
 void bundle_header_init(struct bundle_header *header);
 void bundle_header_release(struct bundle_header *header);

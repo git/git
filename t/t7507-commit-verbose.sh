@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='verbose commit template'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 write_script "check-for-diff" <<\EOF &&
@@ -74,6 +76,7 @@ test_expect_success 'diff in message is retained with -v' '
 
 test_expect_success 'submodule log is stripped out too with -v' '
 	git config diff.submodule log &&
+	test_config_global protocol.file.allow always &&
 	git submodule add ./. sub &&
 	git commit -m "sub added" &&
 	(

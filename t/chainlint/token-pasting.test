@@ -1,0 +1,32 @@
+# LINT: single token; composite of multiple strings
+git config filter.rot13.smudge ./rot13.sh &&
+git config filter.rot13.clean ./rot13.sh &&
+
+{
+    echo "*.t filter=rot13"
+    echo "*.i ident"
+} >.gitattributes &&
+
+{
+    echo a b c d e f g h i j k l m
+    echo n o p q r s t u v w x y z
+# LINT: exit/enter string context and escaped-quote outside of string
+    echo '\''$Id$'\''
+} >test &&
+cat test >test.t &&
+cat test >test.o &&
+cat test >test.i &&
+git add test test.t test.i &&
+rm -f test test.t test.i &&
+git checkout -- test test.t test.i &&
+
+echo "content-test2" >test2.o &&
+# LINT: exit/enter string context and escaped-quote outside of string
+echo "content-test3 - filename with special characters" >"test3 '\''sq'\'',\$x=.o"
+
+# LINT: single token; composite of multiple strings
+downstream_url_for_sed=$(
+	printf "%s\n" "$downstream_url" |
+# LINT: exit/enter string context; "&" inside string not command terminator
+	sed -e '\''s/\\/\\\\/g'\'' -e '\''s/[[/.*^$]/\\&/g'\''
+)

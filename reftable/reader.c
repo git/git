@@ -443,7 +443,7 @@ static int reader_start(struct reftable_reader *r, struct table_iter *ti,
 	return reader_table_iter_at(r, ti, off, typ);
 }
 
-static int reader_seek_linear(struct reftable_reader *r, struct table_iter *ti,
+static int reader_seek_linear(struct table_iter *ti,
 			      struct reftable_record *want)
 {
 	struct reftable_record rec =
@@ -510,7 +510,7 @@ static int reader_seek_indexed(struct reftable_reader *r,
 	if (err < 0)
 		goto done;
 
-	err = reader_seek_linear(r, &index_iter, &want_index);
+	err = reader_seek_linear(&index_iter, &want_index);
 	while (1) {
 		err = table_iter_next(&index_iter, &index_result);
 		table_iter_block_done(&index_iter);
@@ -570,7 +570,7 @@ static int reader_seek_internal(struct reftable_reader *r,
 	err = reader_start(r, &ti, reftable_record_type(rec), 0);
 	if (err < 0)
 		return err;
-	err = reader_seek_linear(r, &ti, rec);
+	err = reader_seek_linear(&ti, rec);
 	if (err < 0)
 		return err;
 	else {

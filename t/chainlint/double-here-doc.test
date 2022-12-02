@@ -1,0 +1,12 @@
+run_sub_test_lib_test_err run-inv-range-start \
+	"--run invalid range start" \
+	--run="a-5" <<-\EOF &&
+test_expect_success "passing test #1" "true"
+test_done
+EOF
+check_sub_test_lib_test_err run-inv-range-start \
+	<<-\EOF_OUT 3<<-EOF_ERR
+> FATAL: Unexpected exit with code 1
+EOF_OUT
+> error: --run: invalid non-numeric in range start: ${SQ}a-5${SQ}
+EOF_ERR

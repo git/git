@@ -107,6 +107,8 @@ care about this output and want to speed it up further.
 CONFIGURATION
 -------------
 
+include::includes/cmd-config-section-all.txt[]
+
 include::config/fsck.txt[]
 
 DISCUSSION

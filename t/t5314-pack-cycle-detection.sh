@@ -49,9 +49,9 @@ Then no matter which order we start looking at the packs in, we know that we
 will always find a delta for "file", because its lookup will always come
 immediately after the lookup for "dummy".
 '
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
-
-
 
 # Create a pack containing the tree $1 and blob $1:file, with
 # the latter stored as a delta against $2:file.

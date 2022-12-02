@@ -317,7 +317,7 @@ static void cleanup_subject(struct mailinfo *mi, struct strbuf *subject)
 			pos = strchr(subject->buf + at, ']');
 			if (!pos)
 				break;
-			remove = pos - subject->buf + at + 1;
+			remove = pos - (subject->buf + at) + 1;
 			if (!mi->keep_non_patch_brackets_in_subject ||
 			    (7 <= remove &&
 			     memmem(subject->buf + at, remove, "PATCH", 5)))

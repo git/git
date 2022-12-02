@@ -78,7 +78,7 @@ client and an optional response message from the server.  Both the
 client and server messages are unlimited in length and are terminated
 with a flush packet.
 
-The pkt-line routines (Documentation/technical/protocol-common.txt)
+The pkt-line routines (linkgit:gitprotocol-common[5])
 are used to simplify buffer management during message generation,
 transmission, and reception.  A flush packet is used to mark the end
 of the message.  This allows the sender to incrementally generate and

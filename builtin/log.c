@@ -52,6 +52,7 @@ static int default_encode_email_headers = 1;
 static int decoration_style;
 static int decoration_given;
 static int use_mailmap_config = 1;
+static unsigned int force_in_body_from;
 static const char *fmt_patch_subject_prefix = "PATCH";
 static int fmt_patch_name_max = FORMAT_PATCH_NAME_MAX_DEFAULT;
 static const char *fmt_pretty;
@@ -99,6 +100,20 @@ static int parse_decoration_style(const char *value)
 	 * add new decoration styles.
 	 */
 	return -1;
+}
+
+static int use_default_decoration_filter = 1;
+static struct string_list decorate_refs_exclude = STRING_LIST_INIT_NODUP;
+static struct string_list decorate_refs_exclude_config = STRING_LIST_INIT_NODUP;
+static struct string_list decorate_refs_include = STRING_LIST_INIT_NODUP;
+
+static int clear_decorations_callback(const struct option *opt,
+					    const char *arg, int unset)
+{
+	string_list_clear(&decorate_refs_include, 0);
+	string_list_clear(&decorate_refs_exclude, 0);
+	use_default_decoration_filter = 0;
+	return 0;
 }
 
 static int decorate_callback(const struct option *opt, const char *arg, int unset)
@@ -162,18 +177,61 @@ static void cmd_log_init_defaults(struct rev_info *rev)
 		parse_date_format(default_date_mode, &rev->date_mode);
 }
 
+static void set_default_decoration_filter(struct decoration_filter *decoration_filter)
+{
+	int i;
+	char *value = NULL;
+	struct string_list *include = decoration_filter->include_ref_pattern;
+	const struct string_list *config_exclude =
+			git_config_get_value_multi("log.excludeDecoration");
+
+	if (config_exclude) {
+		struct string_list_item *item;
+		for_each_string_list_item(item, config_exclude)
+			string_list_append(decoration_filter->exclude_ref_config_pattern,
+					   item->string);
+	}
+
+	/*
+	 * By default, decorate_all is disabled. Enable it if
+	 * log.initialDecorationSet=all. Don't ever disable it by config,
+	 * since the command-line takes precedent.
+	 */
+	if (use_default_decoration_filter &&
+	    !git_config_get_string("log.initialdecorationset", &value) &&
+	    !strcmp("all", value))
+		use_default_decoration_filter = 0;
+	free(value);
+
+	if (!use_default_decoration_filter ||
+	    decoration_filter->exclude_ref_pattern->nr ||
+	    decoration_filter->include_ref_pattern->nr ||
+	    decoration_filter->exclude_ref_config_pattern->nr)
+		return;
+
+	/*
+	 * No command-line or config options were given, so
+	 * populate with sensible defaults.
+	 */
+	for (i = 0; i < ARRAY_SIZE(ref_namespace); i++) {
+		if (!ref_namespace[i].decoration)
+			continue;
+
+		string_list_append(include, ref_namespace[i].ref);
+	}
+}
+
 static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 			 struct rev_info *rev, struct setup_revision_opt *opt)
 {
 	struct userformat_want w;
 	int quiet = 0, source = 0, mailmap;
 	static struct line_opt_callback_data line_cb = {NULL, NULL, STRING_LIST_INIT_DUP};
-	static struct string_list decorate_refs_exclude = STRING_LIST_INIT_NODUP;
-	static struct string_list decorate_refs_exclude_config = STRING_LIST_INIT_NODUP;
-	static struct string_list decorate_refs_include = STRING_LIST_INIT_NODUP;
-	struct decoration_filter decoration_filter = {&decorate_refs_include,
-						      &decorate_refs_exclude,
-						      &decorate_refs_exclude_config};
+	struct decoration_filter decoration_filter = {
+		.exclude_ref_pattern = &decorate_refs_exclude,
+		.include_ref_pattern = &decorate_refs_include,
+		.exclude_ref_config_pattern = &decorate_refs_exclude_config,
+	};
 	static struct revision_sources revision_sources;
 
 	const struct option builtin_log_options[] = {
@@ -181,6 +239,10 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 		OPT_BOOL(0, "source", &source, N_("show source")),
 		OPT_BOOL(0, "use-mailmap", &mailmap, N_("use mail map file")),
 		OPT_ALIAS(0, "mailmap", "use-mailmap"),
+		OPT_CALLBACK_F(0, "clear-decorations", NULL, NULL,
+			       N_("clear all previously-defined decoration filters"),
+			       PARSE_OPT_NOARG | PARSE_OPT_NONEG,
+			       clear_decorations_callback),
 		OPT_STRING_LIST(0, "decorate-refs", &decorate_refs_include,
 				N_("pattern"), N_("only decorate refs that match <pattern>")),
 		OPT_STRING_LIST(0, "decorate-refs-exclude", &decorate_refs_exclude,
@@ -199,7 +261,7 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 	mailmap = use_mailmap_config;
 	argc = parse_options(argc, argv, prefix,
 			     builtin_log_options, builtin_log_usage,
-			     PARSE_OPT_KEEP_ARGV0 | PARSE_OPT_KEEP_UNKNOWN |
+			     PARSE_OPT_KEEP_ARGV0 | PARSE_OPT_KEEP_UNKNOWN_OPT |
 			     PARSE_OPT_KEEP_DASHDASH);
 
 	if (quiet)
@@ -265,16 +327,7 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 	}
 
 	if (decoration_style || rev->simplify_by_decoration) {
-		const struct string_list *config_exclude =
-			repo_config_get_value_multi(the_repository,
-						    "log.excludeDecoration");
-
-		if (config_exclude) {
-			struct string_list_item *item;
-			for_each_string_list_item(item, config_exclude)
-				string_list_append(&decorate_refs_exclude_config,
-						   item->string);
-		}
+		set_default_decoration_filter(&decoration_filter);
 
 		if (decoration_style)
 			rev->show_decorations = 1;
@@ -645,9 +698,10 @@ static int show_tag_object(const struct object_id *oid, struct rev_info *rev)
 	return 0;
 }
 
-static int show_tree_object(const struct object_id *oid,
-		struct strbuf *base,
-		const char *pathname, unsigned mode, void *context)
+static int show_tree_object(const struct object_id *oid UNUSED,
+			    struct strbuf *base UNUSED,
+			    const char *pathname, unsigned mode,
+			    void *context)
 {
 	FILE *file = context;
 	fprintf(file, "%s%s\n", pathname, S_ISDIR(mode) ? "/" : "");
@@ -668,10 +722,10 @@ static void show_setup_revisions_tweak(struct rev_info *rev,
 int cmd_show(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info rev;
-	struct object_array_entry *objects;
+	unsigned int i;
 	struct setup_revision_opt opt;
 	struct pathspec match_all;
-	int i, count, ret = 0;
+	int ret = 0;
 
 	init_log_defaults();
 	git_config(git_log_config, NULL);
@@ -698,12 +752,10 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 	if (!rev.no_walk)
 		return cmd_log_deinit(cmd_log_walk(&rev), &rev);
 
-	count = rev.pending.nr;
-	objects = rev.pending.objects;
 	rev.diffopt.no_free = 1;
-	for (i = 0; i < count && !ret; i++) {
-		struct object *o = objects[i].item;
-		const char *name = objects[i].name;
+	for (i = 0; i < rev.pending.nr && !ret; i++) {
+		struct object *o = rev.pending.objects[i].item;
+		const char *name = rev.pending.objects[i].name;
 		switch (o->type) {
 		case OBJ_BLOB:
 			ret = show_blob_object(&o->oid, &rev, name);
@@ -726,7 +778,7 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 			if (!o)
 				ret = error(_("could not read object %s"),
 					    oid_to_hex(oid));
-			objects[i].item = o;
+			rev.pending.objects[i].item = o;
 			i--;
 			break;
 		}
@@ -743,11 +795,24 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 			rev.shown_one = 1;
 			break;
 		case OBJ_COMMIT:
-			rev.pending.nr = rev.pending.alloc = 0;
-			rev.pending.objects = NULL;
+		{
+			struct object_array old;
+			struct object_array blank = OBJECT_ARRAY_INIT;
+
+			memcpy(&old, &rev.pending, sizeof(old));
+			memcpy(&rev.pending, &blank, sizeof(rev.pending));
+
 			add_object_array(o, name, &rev.pending);
 			ret = cmd_log_walk_no_free(&rev);
+
+			/*
+			 * No need for
+			 * object_array_clear(&pending). It was
+			 * cleared already in prepare_revision_walk()
+			 */
+			memcpy(&rev.pending, &old, sizeof(rev.pending));
 			break;
+		}
 		default:
 			ret = error(_("unknown type: %d"), o->type);
 		}
@@ -993,6 +1058,10 @@ static int git_format_config(const char *var, const char *value, void *cb)
 			from = xstrdup(git_committer_info(IDENT_NO_DATE));
 		else
 			from = NULL;
+		return 0;
+	}
+	if (!strcmp(var, "format.forceinbodyfrom")) {
+		force_in_body_from = git_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "format.notes")) {
@@ -1886,6 +1955,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			   N_("show changes against <refspec> in cover letter or single patch")),
 		OPT_INTEGER(0, "creation-factor", &creation_factor,
 			    N_("percentage by which creation is weighted")),
+		OPT_BOOL(0, "force-in-body-from", &force_in_body_from,
+			 N_("show in-body From: even if identical to the e-mail header")),
 		OPT_END()
 	};
 
@@ -1926,8 +1997,10 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	 */
 	argc = parse_options(argc, argv, prefix, builtin_format_patch_options,
 			     builtin_format_patch_usage,
-			     PARSE_OPT_KEEP_ARGV0 | PARSE_OPT_KEEP_UNKNOWN |
+			     PARSE_OPT_KEEP_ARGV0 | PARSE_OPT_KEEP_UNKNOWN_OPT |
 			     PARSE_OPT_KEEP_DASHDASH);
+
+	rev.force_in_body_from = force_in_body_from;
 
 	/* Make sure "0000-$sub.patch" gives non-negative length for $sub */
 	if (fmt_patch_name_max <= strlen("0000-") + strlen(fmt_patch_suffix))

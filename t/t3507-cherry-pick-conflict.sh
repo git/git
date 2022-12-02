@@ -12,6 +12,7 @@ test_description='test cherry-pick and revert with conflicts
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_CREATE_REPO_NO_TEMPLATE=1
 . ./test-lib.sh
 
 pristine_detach () {
@@ -558,6 +559,7 @@ test_expect_success 'cherry-pick preserves sparse-checkout' '
 		echo \"/*\" >.git/info/sparse-checkout
 		git read-tree --reset -u HEAD
 		rm .git/info/sparse-checkout" &&
+	mkdir .git/info &&
 	echo /unrelated >.git/info/sparse-checkout &&
 	git read-tree --reset -u HEAD &&
 	test_must_fail git cherry-pick -Xours picked>actual &&

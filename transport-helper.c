@@ -1286,6 +1286,8 @@ int transport_helper_init(struct transport *transport, const char *name)
 	if (getenv("GIT_TRANSPORT_HELPER_DEBUG"))
 		debug = 1;
 
+	list_objects_filter_init(&data->transport_options.filter_options);
+
 	transport->data = data;
 	transport->vtable = &vtable;
 	transport->smart_options = &(data->transport_options);

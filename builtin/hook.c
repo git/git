@@ -67,18 +67,14 @@ usage:
 
 int cmd_hook(int argc, const char **argv, const char *prefix)
 {
+	parse_opt_subcommand_fn *fn = NULL;
 	struct option builtin_hook_options[] = {
+		OPT_SUBCOMMAND("run", &fn, run),
 		OPT_END(),
 	};
 
 	argc = parse_options(argc, argv, NULL, builtin_hook_options,
-			     builtin_hook_usage, PARSE_OPT_STOP_AT_NON_OPTION);
-	if (!argc)
-		goto usage;
+			     builtin_hook_usage, 0);
 
-	if (!strcmp(argv[0], "run"))
-		return run(argc, argv, prefix);
-
-usage:
-	usage_with_options(builtin_hook_usage, builtin_hook_options);
+	return fn(argc, argv, prefix);
 }

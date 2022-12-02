@@ -46,7 +46,7 @@ static void test_pq(void)
 					       .u.ref = {
 						       .refname = names[i],
 					       } } };
-		merged_iter_pqueue_add(&pq, e);
+		merged_iter_pqueue_add(&pq, &e);
 		merged_iter_pqueue_check(pq);
 		i = (i * 7) % N;
 	} while (i != 1);

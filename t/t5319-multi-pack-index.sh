@@ -784,6 +784,70 @@ test_expect_success 'repack creates a new pack' '
 	)
 '
 
+test_expect_success 'repack (all) ignores cruft pack' '
+	git init repo &&
+	test_when_finished "rm -fr repo" &&
+	(
+		cd repo &&
+
+		test_commit base &&
+		test_commit --no-tag unreachable &&
+
+		git reset --hard base &&
+		git reflog expire --all --expire=all &&
+		git repack --cruft -d &&
+
+		git multi-pack-index write &&
+
+		find $objdir/pack | sort >before &&
+		git multi-pack-index repack --batch-size=0 &&
+		find $objdir/pack | sort >after &&
+
+		test_cmp before after
+	)
+'
+
+test_expect_success 'repack (--batch-size) ignores cruft pack' '
+	git init repo &&
+	test_when_finished "rm -fr repo" &&
+	(
+		cd repo &&
+
+		test_commit_bulk 5 &&
+		test_commit --no-tag unreachable &&
+
+		git reset --hard HEAD^ &&
+		git reflog expire --all --expire=all &&
+		git repack --cruft -d &&
+
+		test_commit four &&
+
+		find $objdir/pack -type f -name "*.pack" | sort >before &&
+		git repack -d &&
+		find $objdir/pack -type f -name "*.pack" | sort >after &&
+
+		pack="$(comm -13 before after)" &&
+		test_file_size "$pack" >sz &&
+		# Set --batch-size to twice the size of the pack created
+		# in the previous step, since this is enough to
+		# accommodate it and the cruft pack.
+		#
+		# This means that the MIDX machinery *could* combine the
+		# new and cruft packs together.
+		#
+		# We ensure that it does not below.
+		batch="$((($(cat sz) * 2)))" &&
+
+		git multi-pack-index write &&
+
+		find $objdir/pack | sort >before &&
+		git multi-pack-index repack --batch-size=$batch &&
+		find $objdir/pack | sort >after &&
+
+		test_cmp before after
+	)
+'
+
 test_expect_success 'expire removes repacked packs' '
 	(
 		cd dup &&
@@ -844,6 +908,36 @@ test_expect_success 'expire respects .keep files' '
 		test_path_is_file $PACKA.pack &&
 		test-tool read-midx .git/objects | grep idx >midx-list &&
 		test_line_count = 2 midx-list
+	)
+'
+
+test_expect_success 'expiring unreferenced cruft pack retains pack' '
+	git init repo &&
+	test_when_finished "rm -fr repo" &&
+	(
+		cd repo &&
+
+		test_commit base &&
+		test_commit --no-tag unreachable &&
+		unreachable=$(git rev-parse HEAD) &&
+
+		git reset --hard base &&
+		git reflog expire --all --expire=all &&
+		git repack --cruft -d &&
+		mtimes="$(ls $objdir/pack/pack-*.mtimes)" &&
+
+		echo "base..$unreachable" >in &&
+		pack="$(git pack-objects --revs --delta-base-offset \
+			$objdir/pack/pack <in)" &&
+
+		# Preferring the contents of "$pack" will leave the
+		# cruft pack unreferenced (ie., none of the objects
+		# contained in the cruft pack will have their MIDX copy
+		# selected from the cruft pack).
+		git multi-pack-index write --preferred-pack="pack-$pack.pack" &&
+		git multi-pack-index expire &&
+
+		test_path_is_file "$mtimes"
 	)
 '
 

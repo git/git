@@ -10,6 +10,10 @@
 static int inside_git_dir = -1;
 static int inside_work_tree = -1;
 static int work_tree_config_is_bogus;
+enum allowed_bare_repo {
+	ALLOWED_BARE_REPO_EXPLICIT = 0,
+	ALLOWED_BARE_REPO_ALL,
+};
 
 static struct startup_info the_startup_info;
 struct startup_info *startup_info = &the_startup_info;
@@ -1138,16 +1142,17 @@ static int safe_directory_cb(const char *key, const char *value, void *d)
  * added, for bare ones their git directory.
  */
 static int ensure_valid_ownership(const char *gitfile,
-				const char *worktree, const char *gitdir)
+				  const char *worktree, const char *gitdir,
+				  struct strbuf *report)
 {
 	struct safe_directory_data data = {
 		.path = worktree ? worktree : gitdir
 	};
 
 	if (!git_env_bool("GIT_TEST_ASSUME_DIFFERENT_OWNER", 0) &&
-	   (!gitfile || is_path_owned_by_current_user(gitfile)) &&
-	   (!worktree || is_path_owned_by_current_user(worktree)) &&
-	   (!gitdir || is_path_owned_by_current_user(gitdir)))
+	    (!gitfile || is_path_owned_by_current_user(gitfile, report)) &&
+	    (!worktree || is_path_owned_by_current_user(worktree, report)) &&
+	    (!gitdir || is_path_owned_by_current_user(gitdir, report)))
 		return 1;
 
 	/*
@@ -1155,9 +1160,49 @@ static int ensure_valid_ownership(const char *gitfile,
 	 * constant regardless of what failed above. data.is_safe should be
 	 * initialized to false, and might be changed by the callback.
 	 */
-	read_very_early_config(safe_directory_cb, &data);
+	git_protected_config(safe_directory_cb, &data);
 
 	return data.is_safe;
+}
+
+static int allowed_bare_repo_cb(const char *key, const char *value, void *d)
+{
+	enum allowed_bare_repo *allowed_bare_repo = d;
+
+	if (strcasecmp(key, "safe.bareRepository"))
+		return 0;
+
+	if (!strcmp(value, "explicit")) {
+		*allowed_bare_repo = ALLOWED_BARE_REPO_EXPLICIT;
+		return 0;
+	}
+	if (!strcmp(value, "all")) {
+		*allowed_bare_repo = ALLOWED_BARE_REPO_ALL;
+		return 0;
+	}
+	return -1;
+}
+
+static enum allowed_bare_repo get_allowed_bare_repo(void)
+{
+	enum allowed_bare_repo result = ALLOWED_BARE_REPO_ALL;
+	git_protected_config(allowed_bare_repo_cb, &result);
+	return result;
+}
+
+static const char *allowed_bare_repo_to_string(
+	enum allowed_bare_repo allowed_bare_repo)
+{
+	switch (allowed_bare_repo) {
+	case ALLOWED_BARE_REPO_EXPLICIT:
+		return "explicit";
+	case ALLOWED_BARE_REPO_ALL:
+		return "all";
+	default:
+		BUG("invalid allowed_bare_repo %d",
+		    allowed_bare_repo);
+	}
+	return NULL;
 }
 
 enum discovery_result {
@@ -1169,7 +1214,8 @@ enum discovery_result {
 	GIT_DIR_HIT_CEILING = -1,
 	GIT_DIR_HIT_MOUNT_POINT = -2,
 	GIT_DIR_INVALID_GITFILE = -3,
-	GIT_DIR_INVALID_OWNERSHIP = -4
+	GIT_DIR_INVALID_OWNERSHIP = -4,
+	GIT_DIR_DISALLOWED_BARE = -5,
 };
 
 /*
@@ -1187,6 +1233,7 @@ enum discovery_result {
  */
 static enum discovery_result setup_git_directory_gently_1(struct strbuf *dir,
 							  struct strbuf *gitdir,
+							  struct strbuf *report,
 							  int die_on_error)
 {
 	const char *env_ceiling_dirs = getenv(CEILING_DIRECTORIES_ENVIRONMENT);
@@ -1271,10 +1318,11 @@ static enum discovery_result setup_git_directory_gently_1(struct strbuf *dir,
 		strbuf_setlen(dir, offset);
 		if (gitdirenv) {
 			enum discovery_result ret;
+			const char *gitdir_candidate =
+				gitdir_path ? gitdir_path : gitdirenv;
 
-			if (ensure_valid_ownership(gitfile,
-						 dir->buf,
-				 (gitdir_path ? gitdir_path : gitdirenv))) {
+			if (ensure_valid_ownership(gitfile, dir->buf,
+						   gitdir_candidate, report)) {
 				strbuf_addstr(gitdir, gitdirenv);
 				ret = GIT_DIR_DISCOVERED;
 			} else
@@ -1297,7 +1345,9 @@ static enum discovery_result setup_git_directory_gently_1(struct strbuf *dir,
 		}
 
 		if (is_git_directory(dir->buf)) {
-			if (!ensure_valid_ownership(NULL, NULL, dir->buf))
+			if (get_allowed_bare_repo() == ALLOWED_BARE_REPO_EXPLICIT)
+				return GIT_DIR_DISALLOWED_BARE;
+			if (!ensure_valid_ownership(NULL, NULL, dir->buf, report))
 				return GIT_DIR_INVALID_OWNERSHIP;
 			strbuf_addstr(gitdir, ".");
 			return GIT_DIR_BARE;
@@ -1330,7 +1380,7 @@ int discover_git_directory(struct strbuf *commondir,
 		return -1;
 
 	cwd_len = dir.len;
-	if (setup_git_directory_gently_1(&dir, gitdir, 0) <= 0) {
+	if (setup_git_directory_gently_1(&dir, gitdir, NULL, 0) <= 0) {
 		strbuf_release(&dir);
 		return -1;
 	}
@@ -1377,7 +1427,7 @@ int discover_git_directory(struct strbuf *commondir,
 const char *setup_git_directory_gently(int *nongit_ok)
 {
 	static struct strbuf cwd = STRBUF_INIT;
-	struct strbuf dir = STRBUF_INIT, gitdir = STRBUF_INIT;
+	struct strbuf dir = STRBUF_INIT, gitdir = STRBUF_INIT, report = STRBUF_INIT;
 	const char *prefix = NULL;
 	struct repository_format repo_fmt = REPOSITORY_FORMAT_INIT;
 
@@ -1402,7 +1452,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 		die_errno(_("Unable to read current working directory"));
 	strbuf_addbuf(&dir, &cwd);
 
-	switch (setup_git_directory_gently_1(&dir, &gitdir, 1)) {
+	switch (setup_git_directory_gently_1(&dir, &gitdir, &report, 1)) {
 	case GIT_DIR_EXPLICIT:
 		prefix = setup_explicit_git_dir(gitdir.buf, &cwd, &repo_fmt, nongit_ok);
 		break;
@@ -1434,12 +1484,22 @@ const char *setup_git_directory_gently(int *nongit_ok)
 		if (!nongit_ok) {
 			struct strbuf quoted = STRBUF_INIT;
 
+			strbuf_complete(&report, '\n');
 			sq_quote_buf_pretty(&quoted, dir.buf);
 			die(_("detected dubious ownership in repository at '%s'\n"
+			      "%s"
 			      "To add an exception for this directory, call:\n"
 			      "\n"
 			      "\tgit config --global --add safe.directory %s"),
-			    dir.buf, quoted.buf);
+			    dir.buf, report.buf, quoted.buf);
+		}
+		*nongit_ok = 1;
+		break;
+	case GIT_DIR_DISALLOWED_BARE:
+		if (!nongit_ok) {
+			die(_("cannot use bare repository '%s' (safe.bareRepository is '%s')"),
+			    dir.buf,
+			    allowed_bare_repo_to_string(get_allowed_bare_repo()));
 		}
 		*nongit_ok = 1;
 		break;
@@ -1518,6 +1578,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 
 	strbuf_release(&dir);
 	strbuf_release(&gitdir);
+	strbuf_release(&report);
 	clear_repository_format(&repo_fmt);
 
 	return prefix;

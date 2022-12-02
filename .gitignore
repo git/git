@@ -53,6 +53,7 @@
 /git-cvsimport
 /git-cvsserver
 /git-daemon
+/git-diagnose
 /git-diff
 /git-diff-files
 /git-diff-index
@@ -180,11 +181,14 @@
 /git-verify-commit
 /git-verify-pack
 /git-verify-tag
+/git-version
 /git-web--browse
 /git-whatchanged
 /git-worktree
 /git-write-tree
+/scalar
 /git-core-*/?*
+/git.res
 /gitweb/GITWEB-BUILD-OPTIONS
 /gitweb/gitweb.cgi
 /gitweb/static/gitweb.js
@@ -225,7 +229,6 @@
 *.hcc
 *.obj
 *.lib
-*.res
 *.sln
 *.sp
 *.suo

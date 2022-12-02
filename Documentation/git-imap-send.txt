@@ -54,6 +54,8 @@ CONFIGURATION
 To use the tool, `imap.folder` and either `imap.tunnel` or `imap.host` must be set
 to appropriate values.
 
+include::includes/cmd-config-section-rest.txt[]
+
 include::config/imap.txt[]
 
 EXAMPLES

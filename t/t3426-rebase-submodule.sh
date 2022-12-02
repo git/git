@@ -35,6 +35,7 @@ git_rebase_interactive () {
 	ls -1pR * >>actual &&
 	test_cmp expect actual &&
 	set_fake_editor &&
+	mkdir .git/info &&
 	echo "fake-editor.sh" >.git/info/exclude &&
 	may_only_be_test_must_fail "$2" &&
 	$2 git rebase -i "$1"
@@ -47,7 +48,8 @@ test_expect_success 'rebase interactive ignores modified submodules' '
 	git init sub &&
 	git -C sub commit --allow-empty -m "Initial commit" &&
 	git init super &&
-	git -C super submodule add ../sub &&
+	git -c protocol.file.allow=always \
+		-C super submodule add ../sub &&
 	git -C super config submodule.sub.ignore dirty &&
 	>super/foo &&
 	git -C super add foo &&
