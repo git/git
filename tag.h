@@ -12,6 +12,8 @@ struct tag {
 	timestamp_t date;
 };
 struct tag *lookup_tag(struct repository *r, const struct object_id *oid);
+struct tag *lookup_tag_type(struct repository *r, const struct object_id *oid,
+			    enum object_type type);
 int parse_tag_buffer(struct repository *r, struct tag *item, const void *data, unsigned long size);
 int parse_tag(struct tag *item);
 void release_tag_memory(struct tag *t);

@@ -100,12 +100,18 @@ struct object *deref_tag_noverify(struct object *o)
 	return o;
 }
 
-struct tag *lookup_tag(struct repository *r, const struct object_id *oid)
+struct tag *lookup_tag_type(struct repository *r, const struct object_id *oid,
+			    enum object_type type)
 {
 	struct object *obj = lookup_object(r, oid);
 	if (!obj)
 		return create_object(r, oid, alloc_tag_node(r));
-	return object_as_type(obj, OBJ_TAG, 0);
+	return object_as_type_hint(obj, OBJ_TAG, type);
+}
+
+struct tag *lookup_tag(struct repository *r, const struct object_id *oid)
+{
+	return lookup_tag_type(r, oid, OBJ_NONE);
 }
 
 static timestamp_t parse_tag_date(const char *buf, const char *tail)
@@ -135,6 +141,7 @@ void release_tag_memory(struct tag *t)
 
 int parse_tag_buffer(struct repository *r, struct tag *item, const void *data, unsigned long size)
 {
+	struct object *obj;
 	struct object_id oid;
 	char type[20];
 	const char *bufptr = data;
@@ -169,7 +176,10 @@ int parse_tag_buffer(struct repository *r, struct tag *item, const void *data, u
 	type[nl - bufptr] = '\0';
 	bufptr = nl + 1;
 
-	if (!strcmp(type, blob_type)) {
+	obj = lookup_object(r, &oid);
+	if (obj) {
+		item->tagged = obj;
+	} else if (!strcmp(type, blob_type)) {
 		item->tagged = (struct object *)lookup_blob(r, &oid);
 	} else if (!strcmp(type, tree_type)) {
 		item->tagged = (struct object *)lookup_tree(r, &oid);
@@ -182,10 +192,14 @@ int parse_tag_buffer(struct repository *r, struct tag *item, const void *data, u
 			     type, oid_to_hex(&item->object.oid));
 	}
 
-	if (!item->tagged)
+	if (!item->tagged || strcmp(type_name(item->tagged->type), type)) {
+		if (item->tagged && item->tagged->parsed)
+			error(_("object %s is a %s, not a %s"), oid_to_hex(&oid),
+			      type_name(item->tagged->type), type);
 		return error("bad tag pointer to %s in %s",
 			     oid_to_hex(&oid),
 			     oid_to_hex(&item->object.oid));
+	}
 
 	if (bufptr + 4 < tail && starts_with(bufptr, "tag "))
 		; 		/* good */
