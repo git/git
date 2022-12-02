@@ -4,7 +4,6 @@ test_description='git send-email'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # May be altered later in the test
@@ -2332,6 +2331,12 @@ test_expect_success $PREREQ 'test that send-email works outside a repo' '
 		--to=nobody@example.com \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		"$(pwd)/0001-add-main.patch"
+'
+
+test_expect_success $PREREQ 'send-email relays -v 3 to format-patch' '
+	test_when_finished "rm -f out" &&
+	git send-email --dry-run -v 3 -1 >out &&
+	grep "PATCH v3" out
 '
 
 test_expect_success $PREREQ 'test that sendmail config is rejected' '

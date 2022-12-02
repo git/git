@@ -220,6 +220,10 @@ my $compose_filename;
 my $force = 0;
 my $dump_aliases = 0;
 
+# Variables to prevent short format-patch options from being captured
+# as abbreviated send-email options
+my $reroll_count;
+
 # Handle interactive edition of files.
 my $multiedit;
 my $editor;
@@ -542,6 +546,7 @@ my %options = (
 		    "batch-size=i" => \$batch_size,
 		    "relogin-delay=i" => \$relogin_delay,
 		    "git-completion-helper" => \$git_completion_helper,
+		    "v=s" => \$reroll_count,
 );
 $rc = GetOptions(%options);
 
@@ -782,7 +787,9 @@ if (@rev_list_opts) {
 	die __("Cannot run git format-patch from outside a repository\n")
 		unless $repo;
 	require File::Temp;
-	push @files, $repo->command('format-patch', '-o', File::Temp::tempdir(CLEANUP => 1), @rev_list_opts);
+	push @files, $repo->command('format-patch', '-o', File::Temp::tempdir(CLEANUP => 1),
+				    defined $reroll_count ? ('-v', $reroll_count) : (),
+				    @rev_list_opts);
 }
 
 @files = handle_backup_files(@files);
