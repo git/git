@@ -261,6 +261,17 @@ test_expect_success 'left alignment formatting with trunc' '
 	test_cmp expected actual
 '
 
+test_expect_success 'left alignment formatting with Trunc' '
+	git log --pretty="tformat:%<(10,Trunc)%s" >actual &&
+	qz_to_tab_space <<-\EOF >expected &&
+	message tw
+	message on
+	add bar  Z
+	initial. a
+	EOF
+	test_cmp expected actual
+'
+
 test_expect_success 'left alignment formatting with trunc. i18n.logOutputEncoding' '
 	git -c i18n.logOutputEncoding=$test_encoding log --pretty="tformat:%<(10,trunc)%s" >actual &&
 	qz_to_tab_space <<-\EOF | iconv -f utf-8 -t $test_encoding >expected &&
@@ -268,6 +279,17 @@ test_expect_success 'left alignment formatting with trunc. i18n.logOutputEncodin
 	message ..
 	add bar  Z
 	initial...
+	EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'left alignment formatting with Trunc. i18n.logOutputEncoding' '
+	git -c i18n.logOutputEncoding=$test_encoding log --pretty="tformat:%<(10,Trunc)%s" >actual &&
+	qz_to_tab_space <<-\EOF | iconv -f utf-8 -t $test_encoding >expected &&
+	message tw
+	message on
+	add bar  Z
+	initial. a
 	EOF
 	test_cmp expected actual
 '
@@ -283,6 +305,18 @@ test_expect_success 'left alignment formatting with ltrunc' '
 	test_cmp expected actual
 '
 
+test_expect_success 'left alignment formatting with Ltrunc' '
+	git log --pretty="tformat:%<(10,Ltrunc)%s" >actual &&
+	qz_to_tab_space <<-EOF >expected &&
+	essage two
+	essage one
+	add bar  Z
+	an${sample_utf8_part}lich
+	EOF
+	test_cmp expected actual
+'
+
+
 test_expect_success 'left alignment formatting with ltrunc. i18n.logOutputEncoding' '
 	git -c i18n.logOutputEncoding=$test_encoding log --pretty="tformat:%<(10,ltrunc)%s" >actual &&
 	qz_to_tab_space <<-EOF | iconv -f utf-8 -t $test_encoding >expected &&
@@ -294,6 +328,16 @@ test_expect_success 'left alignment formatting with ltrunc. i18n.logOutputEncodi
 	test_cmp expected actual
 '
 
+test_expect_success 'left alignment formatting with Ltrunc. i18n.logOutputEncoding' '
+	git -c i18n.logOutputEncoding=$test_encoding log --pretty="tformat:%<(10,Ltrunc)%s" >actual &&
+	qz_to_tab_space <<-EOF | iconv -f utf-8 -t $test_encoding >expected &&
+	essage two
+	essage one
+	add bar  Z
+	an${sample_utf8_part}lich
+	EOF
+	test_cmp expected actual
+'
 test_expect_success 'left alignment formatting with mtrunc' '
 	git log --pretty="tformat:%<(10,mtrunc)%s" >actual &&
 	qz_to_tab_space <<-\EOF >expected &&
@@ -507,6 +551,19 @@ test_expect_success 'left/right alignment formatting with stealing' '
 	EOF
 	test_cmp expected actual
 '
+
+test_expect_success 'left/right hard alignment formatting with stealing' '
+	git commit --amend -m short --author "long long long <long@me.com>" &&
+	git log --pretty="tformat:%<(10,Trunc)%s%>>(10,Ltrunc)% an" >actual &&
+	cat <<-\EOF >expected &&
+	short long  long long
+	message on   A U Thor
+	add bar      A U Thor
+	initial. a   A U Thor
+	EOF
+	test_cmp expected actual
+'
+
 test_expect_success 'left/right alignment formatting with stealing. i18n.logOutputEncoding' '
 	git -c i18n.logOutputEncoding=$test_encoding log --pretty="tformat:%<(10,trunc)%s%>>(10,ltrunc)% an" >actual &&
 	cat <<-\EOF | iconv -f utf-8 -t $test_encoding >expected &&
@@ -514,6 +571,16 @@ test_expect_success 'left/right alignment formatting with stealing. i18n.logOutp
 	message ..   A U Thor
 	add bar      A U Thor
 	initial...   A U Thor
+	EOF
+	test_cmp expected actual
+'
+test_expect_success 'left/right alignment formatting with stealing. i18n.logOutputEncoding' '
+	git -c i18n.logOutputEncoding=$test_encoding log --pretty="tformat:%<(10,Trunc)%s%>>(10,Ltrunc)% an" >actual &&
+	cat <<-\EOF | iconv -f utf-8 -t $test_encoding >expected &&
+	short long  long long
+	message on   A U Thor
+	add bar      A U Thor
+	initial. a   A U Thor
 	EOF
 	test_cmp expected actual
 '

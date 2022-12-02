@@ -857,7 +857,9 @@ enum trunc_type {
 	trunc_none,
 	trunc_left,
 	trunc_middle,
-	trunc_right
+	trunc_right,
+	trunc_left_hard,
+	trunc_right_hard
 };
 
 struct format_commit_context {
@@ -1145,6 +1147,10 @@ static size_t parse_padding_placeholder(const char *placeholder,
 				c->truncate = trunc_left;
 			else if (starts_with(start, "mtrunc)"))
 				c->truncate = trunc_middle;
+			else if (starts_with(start, "Ltrunc)"))
+				c->truncate = trunc_left_hard;
+			else if (starts_with(start, "Trunc)"))
+				c->truncate = trunc_right_hard;
 			else
 				return 0;
 		} else
@@ -1742,6 +1748,16 @@ static size_t format_and_pad_commit(struct strbuf *sb, /* in UTF-8 */
 			strbuf_utf8_replace(&local_sb,
 					    padding - 2, len - (padding - 2),
 					    "..");
+			break;
+		case trunc_left_hard:
+			strbuf_utf8_replace(&local_sb,
+					    0, len - padding,
+					    NULL);
+			break;
+		case trunc_right_hard:
+			strbuf_utf8_replace(&local_sb,
+					    padding, len - padding,
+					    NULL);
 			break;
 		case trunc_none:
 			break;
