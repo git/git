@@ -37,7 +37,8 @@ There are three ways to specify the commit ranges:
 
 - `<range1> <range2>`: Either commit range can be of the form
   `<base>..<rev>`, `<rev>^!` or `<rev>^-<n>`. See `SPECIFYING RANGES`
-  in linkgit:gitrevisions[7] for more details.
+  in linkgit:gitrevisions[7] for more details. Alternatively, the
+  patches can be provided as an mbox-formatted file via `mbox:<path>`.
 
 - `<rev1>...<rev2>`. This is equivalent to
   `<rev2>..<rev1> <rev1>..<rev2>`.
