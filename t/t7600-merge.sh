@@ -105,7 +105,7 @@ verify_mergeheads () {
 	test_write_lines "$@" >mergehead.expected &&
 	while read sha1 rest
 	do
-		git rev-parse $sha1
+		git rev-parse $sha1 || return 1
 	done <.git/MERGE_HEAD >mergehead.actual &&
 	test_cmp mergehead.expected mergehead.actual
 }
