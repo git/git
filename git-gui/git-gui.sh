@@ -269,16 +269,8 @@ proc is_Windows {} {
 proc is_Cygwin {} {
 	global _iscygwin
 	if {$_iscygwin eq {}} {
-		if {$::tcl_platform(platform) eq {windows}} {
-			if {[catch {set p [exec cygpath --windir]} err]} {
-				set _iscygwin 0
-			} else {
-				set _iscygwin 1
-				# Handle MSys2 which is only cygwin when MSYSTEM is MSYS.
-				if {[info exists ::env(MSYSTEM)] && $::env(MSYSTEM) ne "MSYS"} {
-					set _iscygwin 0
-				}
-			}
+		if {[string match "CYGWIN_*" $::tcl_platform(os)]} {
+			set _iscygwin 1
 		} else {
 			set _iscygwin 0
 		}
