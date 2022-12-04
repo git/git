@@ -47,21 +47,9 @@ then
 	echo "PANIC: Running in a $TEST_DIRECTORY that doesn't end in '/t'?" >&2
 	exit 1
 fi
-
-# For CMake the top-level source directory is different from our build
-# directory. With the top-level Makefile they're the same.
-GIT_SOURCE_DIR="$GIT_BUILD_DIR"
-
-GIT_AUTO_CONTRIB_BUILDSYSTEMS_OUT=
-if test -n "$GIT_TEST_BUILD_DIR"
+if test -f "$GIT_BUILD_DIR/GIT-BUILD-DIR"
 then
-	GIT_BUILD_DIR="$GIT_TEST_BUILD_DIR"
-elif ! test -x "$GIT_BUILD_DIR/git" &&
-     test -x "$GIT_BUILD_DIR/contrib/buildsystems/out/git"
-then
-	GIT_BUILD_DIR="$GIT_SOURCE_DIR/contrib/buildsystems/out"
-	GIT_AUTO_CONTRIB_BUILDSYSTEMS_OUT=t
-
+	GIT_BUILD_DIR="$(cat "$GIT_BUILD_DIR/GIT-BUILD-DIR")" || exit 1
 	# On Windows, we must convert Windows paths lest they contain a colon
 	case "$(uname -s)" in
 	*MINGW*)
@@ -1459,7 +1447,7 @@ then
 		make_valgrind_symlink $file
 	done
 	# special-case the mergetools loadables
-	make_symlink "$GIT_SOURCE_DIR"/mergetools "$GIT_VALGRIND/bin/mergetools"
+	make_symlink "$GIT_BUILD_DIR"/mergetools "$GIT_VALGRIND/bin/mergetools"
 	OLDIFS=$IFS
 	IFS=:
 	for path in $PATH
@@ -1512,8 +1500,6 @@ GIT_CONFIG_NOSYSTEM=1
 GIT_ATTR_NOSYSTEM=1
 GIT_CEILING_DIRECTORIES="$TRASH_DIRECTORY/.."
 export PATH GIT_EXEC_PATH GIT_TEMPLATE_DIR GIT_CONFIG_NOSYSTEM GIT_ATTR_NOSYSTEM GIT_CEILING_DIRECTORIES
-MERGE_TOOLS_DIR="$GIT_SOURCE_DIR/mergetools"
-export MERGE_TOOLS_DIR
 
 if test -z "$GIT_TEST_CMP"
 then
@@ -1641,13 +1627,6 @@ remove_trash_directory () {
 remove_trash_directory "$TRASH_DIRECTORY" || {
 	BAIL_OUT 'cannot prepare test area'
 }
-
-# Emitting this now because earlier we didn't have "say", but not in
-# anything using lib-subtest.sh
-if test -n "$GIT_AUTO_CONTRIB_BUILDSYSTEMS_OUT" && test -t 1
-then
-	say "setup: had no ../git, but found & used cmake built git in ../contrib/buildsystems/out/git"
-fi
 
 remove_trash=t
 if test -z "$TEST_NO_CREATE_REPO"

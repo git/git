@@ -236,9 +236,6 @@ jobs:
             cc: gcc
             cc_package: gcc-8
             pool: ubuntu-20.04
-          - jobname: linux-cmake-ctest
-            cc: gcc
-            pool: ubuntu-20.04
           - jobname: osx-clang
             cc: clang
             pool: macos-latest
