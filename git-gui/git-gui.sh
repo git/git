@@ -77,6 +77,52 @@ proc is_Cygwin {} {
 
 ######################################################################
 ##
+## PATH lookup
+
+set _search_path {}
+proc _which {what args} {
+	global env _search_exe _search_path
+
+	if {$_search_path eq {}} {
+		if {[is_Cygwin] && [regexp {^(/|\.:)} $env(PATH)]} {
+			set _search_path [split [exec cygpath \
+				--windows \
+				--path \
+				--absolute \
+				$env(PATH)] {;}]
+			set _search_exe .exe
+		} elseif {[is_Windows]} {
+			set gitguidir [file dirname [info script]]
+			regsub -all ";" $gitguidir "\\;" gitguidir
+			set env(PATH) "$gitguidir;$env(PATH)"
+			set _search_path [split $env(PATH) {;}]
+			# Skip empty `PATH` elements
+			set _search_path [lsearch -all -inline -not -exact \
+				$_search_path ""]
+			set _search_exe .exe
+		} else {
+			set _search_path [split $env(PATH) :]
+			set _search_exe {}
+		}
+	}
+
+	if {[is_Windows] && [lsearch -exact $args -script] >= 0} {
+		set suffix {}
+	} else {
+		set suffix $_search_exe
+	}
+
+	foreach p $_search_path {
+		set p [file join $p $what$suffix]
+		if {[file exists $p]} {
+			return [file normalize $p]
+		}
+	}
+	return {}
+}
+
+######################################################################
+##
 ## locate our library
 
 if { [info exists ::env(GIT_GUI_LIB_DIR) ] } {
@@ -194,7 +240,6 @@ set _isbare {}
 set _gitexec {}
 set _githtmldir {}
 set _reponame {}
-set _search_path {}
 set _shellpath {@@SHELL_PATH@@}
 
 set _trace [lsearch -exact $argv --trace]
@@ -442,47 +487,6 @@ proc _git_cmd {name} {
 		set _git_cmd_path($name) $v
 	}
 	return $v
-}
-
-proc _which {what args} {
-	global env _search_exe _search_path
-
-	if {$_search_path eq {}} {
-		if {[is_Cygwin] && [regexp {^(/|\.:)} $env(PATH)]} {
-			set _search_path [split [exec cygpath \
-				--windows \
-				--path \
-				--absolute \
-				$env(PATH)] {;}]
-			set _search_exe .exe
-		} elseif {[is_Windows]} {
-			set gitguidir [file dirname [info script]]
-			regsub -all ";" $gitguidir "\\;" gitguidir
-			set env(PATH) "$gitguidir;$env(PATH)"
-			set _search_path [split $env(PATH) {;}]
-			# Skip empty `PATH` elements
-			set _search_path [lsearch -all -inline -not -exact \
-				$_search_path ""]
-			set _search_exe .exe
-		} else {
-			set _search_path [split $env(PATH) :]
-			set _search_exe {}
-		}
-	}
-
-	if {[is_Windows] && [lsearch -exact $args -script] >= 0} {
-		set suffix {}
-	} else {
-		set suffix $_search_exe
-	}
-
-	foreach p $_search_path {
-		set p [file join $p $what$suffix]
-		if {[file exists $p]} {
-			return [file normalize $p]
-		}
-	}
-	return {}
 }
 
 # Test a file for a hashbang to identify executable scripts on Windows.
