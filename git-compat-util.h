@@ -346,6 +346,7 @@ static inline int git_setitimer(int which UNUSED,
 				struct itimerval *newvalue UNUSED) {
 	return 0; /* pretend success */
 }
+#undef setitimer
 #define setitimer(which,value,ovalue) git_setitimer(which,value,ovalue)
 #endif
 
@@ -1480,6 +1481,9 @@ static inline void git_funlockfile(FILE *fh UNUSED)
 {
 	; /* nothing */
 }
+#undef flockfile
+#undef funlockfile
+#undef getc_unlocked
 #define flockfile(fh) git_flockfile(fh)
 #define funlockfile(fh) git_funlockfile(fh)
 #define getc_unlocked(fh) getc(fh)
