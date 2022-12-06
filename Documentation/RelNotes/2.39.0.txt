@@ -156,9 +156,9 @@ Performance, Internal Implementation, Development Support etc.
  * `parse_object()` has been hardened to check for the existence of a
    suspected blob object.
 
- * Adjust the documentation build procedure to GNUmake version 4.4,
-   which made some changes to how pattern rule with multiple targets
-   are handled.
+ * The build procedure has been adjusted to GNUmake version 4.4, which
+   made some changes to how pattern rule with multiple targets are
+   handled.
 
 
 Fixes since v2.38
