@@ -23,8 +23,8 @@ jobs:
             base=${{ github.event.before }}
             head=${{ github.event.after }}
           fi
-          echo "::set-output name=base::$base"
-          echo "::set-output name=head::$head"
+          echo base=$base >>$GITHUB_OUTPUT
+          echo head=$head >>$GITHUB_OUTPUT
       - name: Run partial clone
         run: |
           git -c init.defaultBranch=master init --bare .
