@@ -214,7 +214,7 @@ Fixes since v2.38
  * Clarify that "the sentence after <area>: prefix does not begin with
    a capital letter" rule applies only to the commit title.
 
- * "git branch --edit-description" on an unborh branch misleadingly
+ * "git branch --edit-description" on an unborn branch misleadingly
    said that no such branch exists, which has been corrected.
 
  * Work around older clang that warns against C99 zero initialization
@@ -289,7 +289,7 @@ Fixes since v2.38
    option now implies --reapply-cherry-picks and --no-fork-point
    options.
 
- * The way "git repack" creared temporary files when it received a
+ * The way "git repack" created temporary files when it received a
    signal was prone to deadlocking, which has been corrected.
 
  * Various tests exercising the transfer.credentialsInUrl
