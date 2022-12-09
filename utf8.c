@@ -206,26 +206,34 @@ int utf8_width(const char **start, size_t *remainder_p)
  * string, assuming that the string is utf8.  Returns strlen() instead
  * if the string does not look like a valid utf8 string.
  */
-int utf8_strnwidth(const char *string, int len, int skip_ansi)
+int utf8_strnwidth(const char *string, size_t len, int skip_ansi)
 {
-	int width = 0;
 	const char *orig = string;
+	size_t width = 0;
 
-	if (len == -1)
-		len = strlen(string);
 	while (string && string < orig + len) {
-		int skip;
+		int glyph_width;
+		size_t skip;
+
 		while (skip_ansi &&
 		       (skip = display_mode_esc_sequence_len(string)) != 0)
 			string += skip;
-		width += utf8_width(&string, NULL);
+
+		glyph_width = utf8_width(&string, NULL);
+		if (glyph_width > 0)
+			width += glyph_width;
 	}
-	return string ? width : len;
+
+	/*
+	 * TODO: fix the interface of this function and `utf8_strwidth()` to
+	 * return `size_t` instead of `int`.
+	 */
+	return cast_size_t_to_int(string ? width : len);
 }
 
 int utf8_strwidth(const char *string)
 {
-	return utf8_strnwidth(string, -1, 0);
+	return utf8_strnwidth(string, strlen(string), 0);
 }
 
 int is_utf8(const char *text)
@@ -357,51 +365,52 @@ void strbuf_add_wrapped_bytes(struct strbuf *buf, const char *data, int len,
 void strbuf_utf8_replace(struct strbuf *sb_src, int pos, int width,
 			 const char *subst)
 {
-	struct strbuf sb_dst = STRBUF_INIT;
-	char *src = sb_src->buf;
-	char *end = src + sb_src->len;
-	char *dst;
-	int w = 0, subst_len = 0;
+	const char *src = sb_src->buf, *end = sb_src->buf + sb_src->len;
+	struct strbuf dst;
+	int w = 0;
 
-	if (subst)
-		subst_len = strlen(subst);
-	strbuf_grow(&sb_dst, sb_src->len + subst_len);
-	dst = sb_dst.buf;
+	strbuf_init(&dst, sb_src->len);
 
 	while (src < end) {
-		char *old;
+		const char *old;
+		int glyph_width;
 		size_t n;
 
 		while ((n = display_mode_esc_sequence_len(src))) {
-			memcpy(dst, src, n);
+			strbuf_add(&dst, src, n);
 			src += n;
-			dst += n;
 		}
 
 		if (src >= end)
 			break;
 
 		old = src;
-		n = utf8_width((const char**)&src, NULL);
-		if (!src) 	/* broken utf-8, do nothing */
+		glyph_width = utf8_width((const char**)&src, NULL);
+		if (!src) /* broken utf-8, do nothing */
 			goto out;
-		if (n && w >= pos && w < pos + width) {
+
+		/*
+		 * In case we see a control character we copy it into the
+		 * buffer, but don't add it to the width.
+		 */
+		if (glyph_width < 0)
+			glyph_width = 0;
+
+		if (glyph_width && w >= pos && w < pos + width) {
 			if (subst) {
-				memcpy(dst, subst, subst_len);
-				dst += subst_len;
+				strbuf_addstr(&dst, subst);
 				subst = NULL;
 			}
-			w += n;
-			continue;
+		} else {
+			strbuf_add(&dst, old, src - old);
 		}
-		memcpy(dst, old, src - old);
-		dst += src - old;
-		w += n;
+
+		w += glyph_width;
 	}
-	strbuf_setlen(&sb_dst, dst - sb_dst.buf);
-	strbuf_swap(sb_src, &sb_dst);
+
+	strbuf_swap(sb_src, &dst);
 out:
-	strbuf_release(&sb_dst);
+	strbuf_release(&dst);
 }
 
 /*
@@ -791,7 +800,7 @@ int skip_utf8_bom(char **text, size_t len)
 void strbuf_utf8_align(struct strbuf *buf, align_type position, unsigned int width,
 		       const char *s)
 {
-	int slen = strlen(s);
+	size_t slen = strlen(s);
 	int display_len = utf8_strnwidth(s, slen, 0);
 	int utf8_compensation = slen - display_len;
 

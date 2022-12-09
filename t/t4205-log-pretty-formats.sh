@@ -867,4 +867,80 @@ test_expect_success 'log --pretty=reference is colored appropriately' '
 	test_cmp expect actual
 '
 
+test_expect_success 'log --pretty with space stealing' '
+	printf mm0 >expect &&
+	git log -1 --pretty="format:mm%>>|(1)%x30" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --pretty with invalid padding format' '
+	printf "%s%%<(20" "$(git rev-parse HEAD)" >expect &&
+	git log -1 --pretty="format:%H%<(20" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --pretty with magical wrapping directives' '
+	commit_id=$(git commit-tree HEAD^{tree} -m "describe me") &&
+	git tag describe-me $commit_id &&
+	printf "\n(tag:\ndescribe-me)%%+w(2)" >expect &&
+	git log -1 --pretty="format:%w(1)%+d%+w(2)" $commit_id >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success SIZE_T_IS_64BIT 'log --pretty with overflowing wrapping directive' '
+	printf "%%w(2147483649,1,1)0" >expect &&
+	git log -1 --pretty="format:%w(2147483649,1,1)%x30" >actual &&
+	test_cmp expect actual &&
+	printf "%%w(1,2147483649,1)0" >expect &&
+	git log -1 --pretty="format:%w(1,2147483649,1)%x30" >actual &&
+	test_cmp expect actual &&
+	printf "%%w(1,1,2147483649)0" >expect &&
+	git log -1 --pretty="format:%w(1,1,2147483649)%x30" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success SIZE_T_IS_64BIT 'log --pretty with overflowing padding directive' '
+	printf "%%<(2147483649)0" >expect &&
+	git log -1 --pretty="format:%<(2147483649)%x30" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --pretty with padding and preceding control chars' '
+	printf "\20\20   0" >expect &&
+	git log -1 --pretty="format:%x10%x10%>|(4)%x30" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --pretty truncation with control chars' '
+	test_commit "$(printf "\20\20\20\20xxxx")" file contents commit-with-control-chars &&
+	printf "\20\20\20\20x.." >expect &&
+	git log -1 --pretty="format:%<(3,trunc)%s" commit-with-control-chars >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success EXPENSIVE,SIZE_T_IS_64BIT 'log --pretty with huge commit message' '
+	# We only assert that this command does not crash. This needs to be
+	# executed with the address sanitizer to demonstrate failure.
+	git log -1 --pretty="format:%>(2147483646)%x41%41%>(2147483646)%x41" >/dev/null
+'
+
+test_expect_success EXPENSIVE,SIZE_T_IS_64BIT 'set up huge commit' '
+	test-tool genzeros 2147483649 | tr "\000" "1" >expect &&
+	huge_commit=$(git commit-tree -F expect HEAD^{tree})
+'
+
+test_expect_success EXPENSIVE,SIZE_T_IS_64BIT 'log --pretty with huge commit message' '
+	git log -1 --format="%B%<(1)%x30" $huge_commit >actual &&
+	echo 0 >>expect &&
+	test_cmp expect actual
+'
+
+test_expect_success EXPENSIVE,SIZE_T_IS_64BIT 'log --pretty with huge commit message does not cause allocation failure' '
+	test_must_fail git log -1 --format="%<(1)%B" $huge_commit 2>error &&
+	cat >expect <<-EOF &&
+	fatal: number too large to represent as int on this platform: 2147483649
+	EOF
+	test_cmp expect error
+'
+
 test_done
