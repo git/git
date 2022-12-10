@@ -244,6 +244,9 @@ cmd_update()
 		-q|--quiet)
 			quiet=1
 			;;
+		-v|--verbose)
+			quiet=0
+			;;
 		--progress)
 			progress=1
 			;;
