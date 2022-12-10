@@ -34,7 +34,7 @@ jobs:
           then
             enabled=no
           fi
-          echo "::set-output name=enabled::$enabled"
+          echo "enabled=$enabled" >>$GITHUB_OUTPUT
       - name: skip if the commit or tree was already tested
         id: skip-if-redundant
         uses: actions/github-script@v6
