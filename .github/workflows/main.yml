@@ -282,7 +282,7 @@ jobs:
             pool: ubuntu-latest
           - jobname: linux-gcc
             cc: gcc
-            pool: ubuntu-latest
+            pool: ubuntu-20.04
           - jobname: osx-clang
             cc: clang
             pool: macos-latest
