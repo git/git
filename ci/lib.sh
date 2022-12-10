@@ -253,7 +253,7 @@ ubuntu-latest)
 	GIT_LFS_PATH="$HOME/custom/git-lfs"
 	export PATH="$GIT_LFS_PATH:$P4_PATH:$PATH"
 	;;
-macos-latest)
+macos-*)
 	if [ "$jobname" = osx-gcc ]
 	then
 		MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=$(which python3)"
