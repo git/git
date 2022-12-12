@@ -5,6 +5,7 @@
 #include "walker.h"
 #include "strvec.h"
 #include "urlmatch.h"
+#include "trace2.h"
 
 static const char http_fetch_usage[] = "git http-fetch "
 "[-c] [-t] [-a] [-v] [--recover] [-w ref] [--stdin | --packfile=hash | commit-id] url";
@@ -136,6 +137,8 @@ int cmd_main(int argc, const char **argv)
 
 	if (nongit)
 		die(_("not a git repository"));
+
+	trace2_cmd_name("http-fetch");
 
 	git_config(git_default_config, NULL);
 
