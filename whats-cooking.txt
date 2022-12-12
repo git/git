@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Dec 2022, #03; Sun, 11)
-X-master-at: 694cb1b2abfda78e60c8c74f1e761de6e852f0a2
-X-next-at: 36f55fa649de7ccf398915274a1eeba1a5d9a69e
+Subject: What's cooking in git.git (Dec 2022, #04; Mon, 12)
+X-master-at: c48035d29b4e524aed3a32f0403676f0d9128863
+X-next-at: 84b9a713c41f8f10898e18b7eb7f40dffcbab76b
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Dec 2022, #03; Sun, 11)
+What's cooking in git.git (Dec 2022, #04; Mon, 12)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -14,12 +14,12 @@ release).  Commits prefixed with '-' are only in 'seen', and aren't
 considered "accepted" at all.  A topic without enough support may be
 discarded after a long period of no activity.
 
-I wanted not to distract the developers with CI related changes
-during the pre-release freeze, but ended up merging them to 'master'
-and also to 'maint', as deprecation and upgrade at GitHub does not
-wait for us at all.  It would be better to give us the same stable
-CI environment across four integration branches.  With l10n updates,
-what is at the tip of 'master' today would become the 2.39 final.
+Thanks, everybody, who has contributed to Git 2.39 that was just
+tagged.  We'll tread slowly, first expecting that we would need to
+fix some brown paper bag bugs, merge down these fixes to the
+'master' front, cut 2.39.1 if needed, then hopefully rewind the tip
+of 'next' before year-end break to reopen the development for the
+next release.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -48,80 +48,6 @@ pages):
 Release tarballs are available at:
 
 	https://www.kernel.org/pub/software/scm/git/
-
---------------------------------------------------
-[Graduated to 'master']
-
-* ab/ci-musl-bash-fix (2022-12-08) 1 commit
-  (merged to 'next' on 2022-12-08 at d8c01829b3)
- + CI: don't explicitly pick "bash" shell outside of Windows, fix regression
-
- CI fix.
- source: <patch-v2-1.1-c34fd06623a-20221207T120220Z-avarab@gmail.com>
-
-
-* ab/ci-retire-set-output (2022-12-08) 1 commit
-  (merged to 'next' on 2022-12-08 at 422475c2c6)
- + CI: migrate away from deprecated "set-output" syntax
-
- CI fix.
- source: <patch-v2-1.1-4e7db0db3be-20221207T014848Z-avarab@gmail.com>
-
-
-* ab/ci-use-macos-12 (2022-12-07) 1 commit
-  (merged to 'next' on 2022-12-08 at cdf78cca21)
- + CI: upgrade to macos-12, and pin OSX version
-
- CI fix.
- source: <patch-1.1-4c1dcc89e7a-20221206T195552Z-avarab@gmail.com>
-
-
-* js/ci-use-newer-up-down-artifact (2022-12-08) 1 commit
-  (merged to 'next' on 2022-12-08 at 27a4f05bc0)
- + ci: avoid using deprecated {up,down}load-artifacts Action
-
- CI fix.
- source: <c9e99b4f96fc4e513c62b1b028e45559f6410c57.1670423680.git.gitgitgadget@gmail.com>
-
-
-* od/ci-use-checkout-v3-when-applicable (2022-12-06) 1 commit
-  (merged to 'next' on 2022-12-05 at f8e139f01a)
- + ci(main): upgrade actions/checkout to v3
-
- Update GitHub CI to use actions/checkout@v3; use of the older
- checkout@v2 gets annoying deprecation notices.
- source: <pull.1354.v2.git.git.1670234474721.gitgitgadget@gmail.com>
-
---------------------------------------------------
-[New Topics]
-
-* js/t0021-windows-pwd (2022-12-07) 1 commit
-  (merged to 'next' on 2022-12-08 at 63bc7701e8)
- + t0021: use Windows-friendly `pwd`
-
- Test fix.
-
- Will cook in 'next'.
- source: <b38b8fb5a85e10d6189d68b6633adf23fca7b65d.1670339267.git.gitgitgadget@gmail.com>
-
-
-* rs/t3920-crlf-eating-grep-fix (2022-12-07) 1 commit
-  (merged to 'next' on 2022-12-08 at 421b255ad1)
- + t3920: support CR-eating grep
- (this branch uses js/t3920-shell-and-or-fix.)
-
- Test fix.
-
- Will cook in 'next'.
- source: <cbe88abc-c1fb-cb50-6057-47ff27f7a12d@web.de>
-
-
-* es/t1509-root-fixes (2022-12-09) 3 commits
- - t1509: facilitate repeated script invocations
- - t1509: make "setup" test more robust
- - t1509: fix failing "root work tree" test due to owner-check
-
- source: <pull.1425.git.1668999621.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -245,6 +171,35 @@ Release tarballs are available at:
 
 --------------------------------------------------
 [Cooking]
+
+* js/t0021-windows-pwd (2022-12-07) 1 commit
+  (merged to 'next' on 2022-12-08 at 63bc7701e8)
+ + t0021: use Windows-friendly `pwd`
+
+ Test fix.
+
+ Will cook in 'next'.
+ source: <b38b8fb5a85e10d6189d68b6633adf23fca7b65d.1670339267.git.gitgitgadget@gmail.com>
+
+
+* rs/t3920-crlf-eating-grep-fix (2022-12-07) 1 commit
+  (merged to 'next' on 2022-12-08 at 421b255ad1)
+ + t3920: support CR-eating grep
+ (this branch uses js/t3920-shell-and-or-fix.)
+
+ Test fix.
+
+ Will cook in 'next'.
+ source: <cbe88abc-c1fb-cb50-6057-47ff27f7a12d@web.de>
+
+
+* es/t1509-root-fixes (2022-12-09) 3 commits
+ - t1509: facilitate repeated script invocations
+ - t1509: make "setup" test more robust
+ - t1509: fix failing "root work tree" test due to owner-check
+
+ source: <pull.1425.git.1668999621.gitgitgadget@gmail.com>
+
 
 * ab/t4023-avoid-losing-exit-status-of-diff (2022-12-05) 1 commit
   (merged to 'next' on 2022-12-05 at 2f47548cad)
