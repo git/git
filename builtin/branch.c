@@ -40,7 +40,6 @@ static const char * const builtin_branch_usage[] = {
 static const char *head;
 static struct object_id head_oid;
 static int recurse_submodules = 0;
-static int submodule_propagate_branches = 0;
 
 static int branch_use_color = -1;
 static char branch_colors[][COLOR_MAXLEN] = {
@@ -104,10 +103,6 @@ static int git_branch_config(const char *var, const char *value, void *cb)
 	}
 	if (!strcmp(var, "submodule.recurse")) {
 		recurse_submodules = git_config_bool(var, value);
-		return 0;
-	}
-	if (!strcasecmp(var, "submodule.propagateBranches")) {
-		submodule_propagate_branches = git_config_bool(var, value);
 		return 0;
 	}
 
@@ -713,7 +708,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix, options, builtin_branch_usage,
 			     0);
-
+	prepare_repo_settings(the_repository);
 	if (!delete && !rename && !copy && !edit_description && !new_upstream &&
 	    !show_current && !unset_upstream && argc == 0)
 		list = 1;
@@ -729,7 +724,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		usage_with_options(builtin_branch_usage, options);
 
 	if (recurse_submodules_explicit) {
-		if (!submodule_propagate_branches)
+		if (!the_repository->settings.submodule_propagate_branches)
 			die(_("branch with --recurse-submodules can only be used if submodule.propagateBranches is enabled"));
 		if (noncreate_actions)
 			die(_("--recurse-submodules can only be used to create branches"));
@@ -737,7 +732,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 
 	recurse_submodules =
 		(recurse_submodules || recurse_submodules_explicit) &&
-		submodule_propagate_branches;
+		the_repository->settings.submodule_propagate_branches;
 
 	if (filter.abbrev == -1)
 		filter.abbrev = DEFAULT_ABBREV;

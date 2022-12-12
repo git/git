@@ -310,6 +310,28 @@ test_expect_success 'clone checking out a tag' '
 	test_cmp fetch.expected fetch.actual
 '
 
+test_expect_success '--detach detaches and does not create branch' '
+	test_when_finished "rm -fr dst" &&
+	git clone --detach src dst &&
+	(
+		cd dst &&
+		test_must_fail git rev-parse main &&
+		test_must_fail git symbolic-ref HEAD &&
+		test_cmp_rev HEAD refs/remotes/origin/HEAD
+	)
+'
+
+test_expect_success '--detach with --bare detaches but creates branch' '
+	test_when_finished "rm -fr dst" &&
+	git clone --bare --detach src dst &&
+	(
+		cd dst &&
+		git rev-parse main &&
+		test_must_fail git symbolic-ref HEAD &&
+		test_cmp_rev HEAD refs/heads/main
+	)
+'
+
 test_expect_success 'set up ssh wrapper' '
 	cp "$GIT_BUILD_DIR/t/helper/test-fake-ssh$X" \
 		"$TRASH_DIRECTORY/ssh$X" &&

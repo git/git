@@ -137,9 +137,12 @@ int peel_iterated_oid(const struct object_id *base, struct object_id *peeled);
  * submodule (which must be non-NULL). If the resolution is
  * successful, return 0 and set oid to the name of the object;
  * otherwise, return a non-zero value.
+ *
+ * FIXME: Return "target" just like refs_resolve_ref_unsafe(). This will be
+ * safe to do once we merge resolve_gitlink_ref() into master.
  */
 int resolve_gitlink_ref(const char *submodule, const char *refname,
-			struct object_id *oid);
+			struct object_id *oid, const char **target);
 
 /*
  * Return true iff abbrev_name is a possible abbreviation for

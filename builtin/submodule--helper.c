@@ -1503,6 +1503,8 @@ struct module_clone_data {
 	const char *name;
 	const char *url;
 	const char *depth;
+	const char *branch;
+	const char *branch_oid;
 	struct list_objects_filter_options *filter_options;
 	unsigned int quiet: 1;
 	unsigned int progress: 1;
@@ -1692,6 +1694,8 @@ static int clone_submodule(const struct module_clone_data *clone_data,
 			strvec_push(&cp.args, clone_data->single_branch ?
 				    "--single-branch" :
 				    "--no-single-branch");
+		if (the_repository->settings.submodule_propagate_branches)
+			strvec_push(&cp.args, "--detach");
 
 		strvec_push(&cp.args, "--");
 		strvec_push(&cp.args, clone_data->url);
@@ -1704,6 +1708,21 @@ static int clone_submodule(const struct module_clone_data *clone_data,
 		if(run_command(&cp))
 			die(_("clone of '%s' into submodule path '%s' failed"),
 			    clone_data->url, clone_data_path);
+
+		if (clone_data->branch) {
+			struct child_process branch_cp = CHILD_PROCESS_INIT;
+
+			branch_cp.git_cmd = 1;
+			prepare_other_repo_env(&branch_cp.env, sm_gitdir);
+
+			strvec_pushl(&branch_cp.args, "branch",
+				     clone_data->branch, clone_data->branch_oid,
+				     NULL);
+
+			if (run_command(&branch_cp))
+				die(_("could not create branch '%s' in submodule path '%s'"),
+				    clone_data->branch, clone_data_path);
+		}
 	} else {
 		char *path;
 
@@ -1778,6 +1797,12 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 			   N_("disallow cloning into non-empty directory")),
 		OPT_BOOL(0, "single-branch", &clone_data.single_branch,
 			 N_("clone only one branch, HEAD or --branch")),
+		OPT_STRING(0, "branch", &clone_data.branch,
+			   N_("string"),
+			   N_("name of branch to be created")),
+		OPT_STRING(0, "branch-oid", &clone_data.branch_oid,
+			   N_("object-id"),
+			   N_("commit id for new branch")),
 		OPT_PARSE_LIST_OBJECTS_FILTER(&filter_options),
 		OPT_END()
 	};
@@ -1785,12 +1810,14 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 		N_("git submodule--helper clone [--prefix=<path>] [--quiet] "
 		   "[--reference <repository>] [--name <name>] [--depth <depth>] "
 		   "[--single-branch] [--filter <filter-spec>] "
+		   "[--branch <branch> --branch-oid <oid>]"
 		   "--url <url> --path <path>"),
 		NULL
 	};
 
 	argc = parse_options(argc, argv, prefix, module_clone_options,
 			     git_submodule_helper_usage, 0);
+	prepare_repo_settings(the_repository);
 
 	clone_data.dissociate = !!dissociate;
 	clone_data.quiet = !!quiet;
@@ -1801,6 +1828,12 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 	if (argc || !clone_data.url || !clone_data.path || !*(clone_data.path))
 		usage_with_options(git_submodule_helper_usage,
 				   module_clone_options);
+
+	if (!!clone_data.branch != !!clone_data.branch_oid)
+		BUG("--branch and --branch-oid must be set/unset together");
+	if ((clone_data.branch &&
+	     !the_repository->settings.submodule_propagate_branches))
+		BUG("--branch is only expected with submodule.propagateBranches");
 
 	clone_submodule(&clone_data, &reference);
 	list_objects_filter_release(&filter_options);
@@ -1884,8 +1917,8 @@ static void submodule_update_clone_release(struct submodule_update_clone *suc)
 struct update_data {
 	const char *prefix;
 	char *displaypath;
+	const char *super_branch;
 	enum submodule_update_type update_default;
-	struct object_id suboid;
 	struct string_list references;
 	struct submodule_update_strategy update_strategy;
 	struct list_objects_filter_options *filter_options;
@@ -2059,6 +2092,11 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 		strvec_push(&child->args, suc->update_data->single_branch ?
 					      "--single-branch" :
 					      "--no-single-branch");
+	if (ud->super_branch) {
+		strvec_pushf(&child->args, "--branch=%s", ud->super_branch);
+		strvec_pushf(&child->args, "--branch-oid=%s",
+			     oid_to_hex(&ce->oid));
+	}
 
 cleanup:
 	free(displaypath);
@@ -2222,8 +2260,13 @@ static int fetch_in_submodule(const char *module_path, int depth, int quiet,
 static int run_update_command(const struct update_data *ud, int subforce)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
-	char *oid = oid_to_hex(&ud->oid);
+	const char *update_target;
 	int ret;
+
+	if (ud->update_strategy.type == SM_UPDATE_CHECKOUT && ud->super_branch)
+		update_target = ud->super_branch;
+	else
+		update_target = oid_to_hex(&ud->oid);
 
 	switch (ud->update_strategy.type) {
 	case SM_UPDATE_CHECKOUT:
@@ -2252,7 +2295,7 @@ static int run_update_command(const struct update_data *ud, int subforce)
 		BUG("unexpected update strategy type: %d",
 		    ud->update_strategy.type);
 	}
-	strvec_push(&cp.args, oid);
+	strvec_push(&cp.args, update_target);
 
 	cp.dir = ud->sm_path;
 	prepare_submodule_repo_env(&cp.env);
@@ -2260,20 +2303,20 @@ static int run_update_command(const struct update_data *ud, int subforce)
 		switch (ud->update_strategy.type) {
 		case SM_UPDATE_CHECKOUT:
 			die_message(_("Unable to checkout '%s' in submodule path '%s'"),
-				    oid, ud->displaypath);
+				    update_target, ud->displaypath);
 			/* No "ret" assignment, use "git checkout"'s */
 			break;
 		case SM_UPDATE_REBASE:
 			ret = die_message(_("Unable to rebase '%s' in submodule path '%s'"),
-					  oid, ud->displaypath);
+					  update_target, ud->displaypath);
 			break;
 		case SM_UPDATE_MERGE:
 			ret = die_message(_("Unable to merge '%s' in submodule path '%s'"),
-					  oid, ud->displaypath);
+					  update_target, ud->displaypath);
 			break;
 		case SM_UPDATE_COMMAND:
 			ret = die_message(_("Execution of '%s %s' failed in submodule path '%s'"),
-					  ud->update_strategy.command, oid, ud->displaypath);
+					  ud->update_strategy.command, update_target, ud->displaypath);
 			break;
 		default:
 			BUG("unexpected update strategy type: %d",
@@ -2289,19 +2332,19 @@ static int run_update_command(const struct update_data *ud, int subforce)
 	switch (ud->update_strategy.type) {
 	case SM_UPDATE_CHECKOUT:
 		printf(_("Submodule path '%s': checked out '%s'\n"),
-		       ud->displaypath, oid);
+		       ud->displaypath, update_target);
 		break;
 	case SM_UPDATE_REBASE:
 		printf(_("Submodule path '%s': rebased into '%s'\n"),
-		       ud->displaypath, oid);
+		       ud->displaypath, update_target);
 		break;
 	case SM_UPDATE_MERGE:
 		printf(_("Submodule path '%s': merged in '%s'\n"),
-		       ud->displaypath, oid);
+		       ud->displaypath, update_target);
 		break;
 	case SM_UPDATE_COMMAND:
 		printf(_("Submodule path '%s': '%s %s'\n"),
-		       ud->displaypath, ud->update_strategy.command, oid);
+		       ud->displaypath, ud->update_strategy.command, update_target);
 		break;
 	default:
 		BUG("unexpected update strategy type: %d",
@@ -2313,7 +2356,7 @@ static int run_update_command(const struct update_data *ud, int subforce)
 
 static int run_update_procedure(const struct update_data *ud)
 {
-	int subforce = is_null_oid(&ud->suboid) || ud->force;
+	int subforce = ud->just_cloned || ud->force;
 
 	if (!ud->nofetch) {
 		/*
@@ -2488,7 +2531,10 @@ static void update_data_to_args(const struct update_data *update_data,
 
 static int update_submodule(struct update_data *update_data)
 {
+	int submodule_up_to_date;
 	int ret;
+	struct object_id suboid;
+	const char *submodule_head = NULL;
 
 	ret = determine_submodule_update_strategy(the_repository,
 						  update_data->just_cloned,
@@ -2498,9 +2544,9 @@ static int update_submodule(struct update_data *update_data)
 	if (ret)
 		return ret;
 
-	if (update_data->just_cloned)
-		oidcpy(&update_data->suboid, null_oid());
-	else if (resolve_gitlink_ref(update_data->sm_path, "HEAD", &update_data->suboid))
+	if (!update_data->just_cloned &&
+	    resolve_gitlink_ref(update_data->sm_path, "HEAD", &suboid,
+				&submodule_head))
 		return die_message(_("Unable to find current revision in submodule path '%s'"),
 				   update_data->displaypath);
 
@@ -2527,14 +2573,26 @@ static int update_submodule(struct update_data *update_data)
 						   update_data->sm_path);
 		}
 
-		if (resolve_gitlink_ref(update_data->sm_path, remote_ref, &update_data->oid))
+		if (resolve_gitlink_ref(update_data->sm_path, remote_ref,
+					&update_data->oid, NULL))
 			return die_message(_("Unable to find %s revision in submodule path '%s'"),
 					   remote_ref, update_data->sm_path);
 
 		free(remote_ref);
 	}
 
-	if (!oideq(&update_data->oid, &update_data->suboid) || update_data->force) {
+	if (update_data->just_cloned)
+		submodule_up_to_date = 0;
+	else if (update_data->super_branch)
+		/* Check that the submodule's HEAD points to super_branch. */
+		submodule_up_to_date =
+			skip_prefix(submodule_head, "refs/heads/",
+				    &submodule_head) &&
+			!strcmp(update_data->super_branch, submodule_head);
+	else
+		submodule_up_to_date = oideq(&update_data->oid, &suboid);
+
+	if (!submodule_up_to_date || update_data->force) {
 		ret = run_update_procedure(update_data);
 		if (ret)
 			return ret;
@@ -2546,7 +2604,6 @@ static int update_submodule(struct update_data *update_data)
 
 		next.prefix = NULL;
 		oidcpy(&next.oid, null_oid());
-		oidcpy(&next.suboid, null_oid());
 
 		cp.dir = update_data->sm_path;
 		cp.git_cmd = 1;
@@ -2578,6 +2635,12 @@ static int update_submodules(struct update_data *update_data)
 		.task_finished = update_clone_task_finished,
 		.data = &suc,
 	};
+
+	if (the_repository->settings.submodule_propagate_branches) {
+		struct branch *current_branch = branch_get(NULL);
+		if (current_branch)
+			update_data->super_branch = current_branch->name;
+	}
 
 	suc.update_data = update_data;
 	run_processes_parallel(&opts);
@@ -2688,6 +2751,7 @@ static int module_update(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix, module_update_options,
 			     git_submodule_helper_usage, 0);
+	prepare_repo_settings(the_repository);
 
 	if (opt.require_init)
 		opt.init = 1;
@@ -3227,7 +3291,7 @@ static void die_on_repo_without_commits(const char *path)
 	strbuf_addstr(&sb, path);
 	if (is_nonbare_repository_dir(&sb)) {
 		struct object_id oid;
-		if (resolve_gitlink_ref(path, "HEAD", &oid) < 0)
+		if (resolve_gitlink_ref(path, "HEAD", &oid, NULL) < 0)
 			die(_("'%s' does not have a commit checked out"), path);
 	}
 	strbuf_release(&sb);
