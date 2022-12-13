@@ -2,6 +2,7 @@
 #include "object-store.h"
 #include "repository.h"
 #include "object.h"
+#include "attr.h"
 #include "blob.h"
 #include "tree.h"
 #include "tree-walk.h"
@@ -614,17 +615,22 @@ static int fsck_tree(const struct object_id *tree_oid,
 						 ".gitmodules is a symbolic link");
 		}
 
+		if (is_hfs_dotgitattributes(name) || is_ntfs_dotgitattributes(name)) {
+			if (!S_ISLNK(mode))
+				oidset_insert(&options->gitattributes_found,
+					      entry_oid);
+			else
+				retval += report(options, tree_oid, OBJ_TREE,
+						 FSCK_MSG_GITATTRIBUTES_SYMLINK,
+						 ".gitattributes is a symlink");
+		}
+
 		if (S_ISLNK(mode)) {
 			if (is_hfs_dotgitignore(name) ||
 			    is_ntfs_dotgitignore(name))
 				retval += report(options, tree_oid, OBJ_TREE,
 						 FSCK_MSG_GITIGNORE_SYMLINK,
 						 ".gitignore is a symlink");
-			if (is_hfs_dotgitattributes(name) ||
-			    is_ntfs_dotgitattributes(name))
-				retval += report(options, tree_oid, OBJ_TREE,
-						 FSCK_MSG_GITATTRIBUTES_SYMLINK,
-						 ".gitattributes is a symlink");
 			if (is_hfs_dotmailmap(name) ||
 			    is_ntfs_dotmailmap(name))
 				retval += report(options, tree_oid, OBJ_TREE,
@@ -1170,38 +1176,70 @@ static int fsck_gitmodules_fn(const char *var, const char *value, void *vdata)
 static int fsck_blob(const struct object_id *oid, const char *buf,
 		     unsigned long size, struct fsck_options *options)
 {
-	struct fsck_gitmodules_data data;
-	struct config_options config_opts = { 0 };
-
-	if (!oidset_contains(&options->gitmodules_found, oid))
-		return 0;
-	oidset_insert(&options->gitmodules_done, oid);
+	int ret = 0;
 
 	if (object_on_skiplist(options, oid))
 		return 0;
 
-	if (!buf) {
-		/*
-		 * A missing buffer here is a sign that the caller found the
-		 * blob too gigantic to load into memory. Let's just consider
-		 * that an error.
-		 */
-		return report(options, oid, OBJ_BLOB,
-			      FSCK_MSG_GITMODULES_LARGE,
-			      ".gitmodules too large to parse");
+	if (oidset_contains(&options->gitmodules_found, oid)) {
+		struct config_options config_opts = { 0 };
+		struct fsck_gitmodules_data data;
+
+		oidset_insert(&options->gitmodules_done, oid);
+
+		if (!buf) {
+			/*
+			 * A missing buffer here is a sign that the caller found the
+			 * blob too gigantic to load into memory. Let's just consider
+			 * that an error.
+			 */
+			return report(options, oid, OBJ_BLOB,
+					FSCK_MSG_GITMODULES_LARGE,
+					".gitmodules too large to parse");
+		}
+
+		data.oid = oid;
+		data.options = options;
+		data.ret = 0;
+		config_opts.error_action = CONFIG_ERROR_SILENT;
+		if (git_config_from_mem(fsck_gitmodules_fn, CONFIG_ORIGIN_BLOB,
+					".gitmodules", buf, size, &data, &config_opts))
+			data.ret |= report(options, oid, OBJ_BLOB,
+					FSCK_MSG_GITMODULES_PARSE,
+					"could not parse gitmodules blob");
+		ret |= data.ret;
 	}
 
-	data.oid = oid;
-	data.options = options;
-	data.ret = 0;
-	config_opts.error_action = CONFIG_ERROR_SILENT;
-	if (git_config_from_mem(fsck_gitmodules_fn, CONFIG_ORIGIN_BLOB,
-				".gitmodules", buf, size, &data, &config_opts))
-		data.ret |= report(options, oid, OBJ_BLOB,
-				   FSCK_MSG_GITMODULES_PARSE,
-				   "could not parse gitmodules blob");
+	if (oidset_contains(&options->gitattributes_found, oid)) {
+		const char *ptr;
 
-	return data.ret;
+		oidset_insert(&options->gitattributes_done, oid);
+
+		if (!buf || size > ATTR_MAX_FILE_SIZE) {
+			/*
+			 * A missing buffer here is a sign that the caller found the
+			 * blob too gigantic to load into memory. Let's just consider
+			 * that an error.
+			 */
+			return report(options, oid, OBJ_BLOB,
+					FSCK_MSG_GITATTRIBUTES_LARGE,
+					".gitattributes too large to parse");
+		}
+
+		for (ptr = buf; *ptr; ) {
+			const char *eol = strchrnul(ptr, '\n');
+			if (eol - ptr >= ATTR_MAX_LINE_LENGTH) {
+				ret |= report(options, oid, OBJ_BLOB,
+					      FSCK_MSG_GITATTRIBUTES_LINE_LENGTH,
+					      ".gitattributes has too long lines to parse");
+				break;
+			}
+
+			ptr = *eol ? eol + 1 : eol;
+		}
+	}
+
+	return ret;
 }
 
 int fsck_object(struct object *obj, void *data, unsigned long size,
@@ -1240,19 +1278,21 @@ int fsck_error_function(struct fsck_options *o,
 	return 1;
 }
 
-int fsck_finish(struct fsck_options *options)
+static int fsck_blobs(struct oidset *blobs_found, struct oidset *blobs_done,
+		      enum fsck_msg_id msg_missing, enum fsck_msg_id msg_type,
+		      struct fsck_options *options, const char *blob_type)
 {
 	int ret = 0;
 	struct oidset_iter iter;
 	const struct object_id *oid;
 
-	oidset_iter_init(&options->gitmodules_found, &iter);
+	oidset_iter_init(blobs_found, &iter);
 	while ((oid = oidset_iter_next(&iter))) {
 		enum object_type type;
 		unsigned long size;
 		char *buf;
 
-		if (oidset_contains(&options->gitmodules_done, oid))
+		if (oidset_contains(blobs_done, oid))
 			continue;
 
 		buf = read_object_file(oid, &type, &size);
@@ -1260,25 +1300,36 @@ int fsck_finish(struct fsck_options *options)
 			if (is_promisor_object(oid))
 				continue;
 			ret |= report(options,
-				      oid, OBJ_BLOB,
-				      FSCK_MSG_GITMODULES_MISSING,
-				      "unable to read .gitmodules blob");
+				      oid, OBJ_BLOB, msg_missing,
+				      "unable to read %s blob", blob_type);
 			continue;
 		}
 
 		if (type == OBJ_BLOB)
 			ret |= fsck_blob(oid, buf, size, options);
 		else
-			ret |= report(options,
-				      oid, type,
-				      FSCK_MSG_GITMODULES_BLOB,
-				      "non-blob found at .gitmodules");
+			ret |= report(options, oid, type, msg_type,
+				      "non-blob found at %s", blob_type);
 		free(buf);
 	}
 
+	oidset_clear(blobs_found);
+	oidset_clear(blobs_done);
 
-	oidset_clear(&options->gitmodules_found);
-	oidset_clear(&options->gitmodules_done);
+	return ret;
+}
+
+int fsck_finish(struct fsck_options *options)
+{
+	int ret = 0;
+
+	ret |= fsck_blobs(&options->gitmodules_found, &options->gitmodules_done,
+			  FSCK_MSG_GITMODULES_MISSING, FSCK_MSG_GITMODULES_BLOB,
+			  options, ".gitmodules");
+	ret |= fsck_blobs(&options->gitattributes_found, &options->gitattributes_done,
+			  FSCK_MSG_GITATTRIBUTES_MISSING, FSCK_MSG_GITATTRIBUTES_BLOB,
+			  options, ".gitattributes");
+
 	return ret;
 }
 
