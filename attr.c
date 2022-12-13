@@ -29,7 +29,7 @@ static const char git_attr__unknown[] = "(builtin)unknown";
 #endif
 
 struct git_attr {
-	int attr_nr; /* unique attribute number */
+	unsigned int attr_nr; /* unique attribute number */
 	char name[FLEX_ARRAY]; /* attribute name */
 };
 
@@ -211,7 +211,7 @@ static void report_invalid_attr(const char *name, size_t len,
  * dictionary.  If no entry is found, create a new attribute and store it in
  * the dictionary.
  */
-static const struct git_attr *git_attr_internal(const char *name, int namelen)
+static const struct git_attr *git_attr_internal(const char *name, size_t namelen)
 {
 	struct git_attr *a;
 
@@ -227,8 +227,8 @@ static const struct git_attr *git_attr_internal(const char *name, int namelen)
 		a->attr_nr = hashmap_get_size(&g_attr_hashmap.map);
 
 		attr_hashmap_add(&g_attr_hashmap, a->name, namelen, a);
-		assert(a->attr_nr ==
-		       (hashmap_get_size(&g_attr_hashmap.map) - 1));
+		if (a->attr_nr != hashmap_get_size(&g_attr_hashmap.map) - 1)
+			die(_("unable to add additional attribute"));
 	}
 
 	hashmap_unlock(&g_attr_hashmap);
@@ -273,7 +273,7 @@ struct match_attr {
 		const struct git_attr *attr;
 	} u;
 	char is_macro;
-	unsigned num_attr;
+	size_t num_attr;
 	struct attr_state state[FLEX_ARRAY];
 };
 
@@ -294,7 +294,7 @@ static const char *parse_attr(const char *src, int lineno, const char *cp,
 			      struct attr_state *e)
 {
 	const char *ep, *equals;
-	int len;
+	size_t len;
 
 	ep = cp + strcspn(cp, blank);
 	equals = strchr(cp, '=');
@@ -338,8 +338,7 @@ static const char *parse_attr(const char *src, int lineno, const char *cp,
 static struct match_attr *parse_attr_line(const char *line, const char *src,
 					  int lineno, unsigned flags)
 {
-	int namelen;
-	int num_attr, i;
+	size_t namelen, num_attr, i;
 	const char *cp, *name, *states;
 	struct match_attr *res = NULL;
 	int is_macro;
@@ -349,6 +348,11 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 	if (!*cp || *cp == '#')
 		return NULL;
 	name = cp;
+
+	if (strlen(line) >= ATTR_MAX_LINE_LENGTH) {
+		warning(_("ignoring overly long attributes line %d"), lineno);
+		return NULL;
+	}
 
 	if (*cp == '"' && !unquote_c_style(&pattern, name, &states)) {
 		name = pattern.buf;
@@ -386,10 +390,9 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 			goto fail_return;
 	}
 
-	res = xcalloc(1,
-		      sizeof(*res) +
-		      sizeof(struct attr_state) * num_attr +
-		      (is_macro ? 0 : namelen + 1));
+	res = xcalloc(1, st_add3(sizeof(*res),
+				 st_mult(sizeof(struct attr_state), num_attr),
+				 is_macro ? 0 : namelen + 1));
 	if (is_macro) {
 		res->u.attr = git_attr_internal(name, namelen);
 	} else {
@@ -452,11 +455,12 @@ struct attr_stack {
 
 static void attr_stack_free(struct attr_stack *e)
 {
-	int i;
+	unsigned i;
 	free(e->origin);
 	for (i = 0; i < e->num_matches; i++) {
 		struct match_attr *a = e->attrs[i];
-		int j;
+		size_t j;
+
 		for (j = 0; j < a->num_attr; j++) {
 			const char *setto = a->state[j].setto;
 			if (setto == ATTR__TRUE ||
@@ -665,8 +669,8 @@ static void handle_attr_line(struct attr_stack *res,
 	a = parse_attr_line(line, src, lineno, flags);
 	if (!a)
 		return;
-	ALLOC_GROW(res->attrs, res->num_matches + 1, res->alloc);
-	res->attrs[res->num_matches++] = a;
+	ALLOC_GROW_BY(res->attrs, res->num_matches, 1, res->alloc);
+	res->attrs[res->num_matches - 1] = a;
 }
 
 static struct attr_stack *read_attr_from_array(const char **list)
@@ -706,11 +710,12 @@ void git_attr_set_direction(enum git_attr_direction new_direction)
 
 static struct attr_stack *read_attr_from_file(const char *path, unsigned flags)
 {
+	struct strbuf buf = STRBUF_INIT;
 	int fd;
 	FILE *fp;
 	struct attr_stack *res;
-	char buf[2048];
 	int lineno = 0;
+	struct stat st;
 
 	if (flags & READ_ATTR_NOFOLLOW)
 		fd = open_nofollow(path, O_RDONLY);
@@ -722,15 +727,26 @@ static struct attr_stack *read_attr_from_file(const char *path, unsigned flags)
 		return NULL;
 	}
 	fp = xfdopen(fd, "r");
+	if (fstat(fd, &st)) {
+		warning_errno(_("cannot fstat gitattributes file '%s'"), path);
+		fclose(fp);
+		return NULL;
+	}
+	if (st.st_size >= ATTR_MAX_FILE_SIZE) {
+		warning(_("ignoring overly large gitattributes file '%s'"), path);
+		fclose(fp);
+		return NULL;
+	}
 
 	CALLOC_ARRAY(res, 1);
-	while (fgets(buf, sizeof(buf), fp)) {
-		char *bufp = buf;
-		if (!lineno)
-			skip_utf8_bom(&bufp, strlen(bufp));
-		handle_attr_line(res, bufp, path, ++lineno, flags);
+	while (strbuf_getline(&buf, fp) != EOF) {
+		if (!lineno && starts_with(buf.buf, utf8_bom))
+			strbuf_remove(&buf, 0, strlen(utf8_bom));
+		handle_attr_line(res, buf.buf, path, ++lineno, flags);
 	}
+
 	fclose(fp);
+	strbuf_release(&buf);
 	return res;
 }
 
@@ -741,6 +757,7 @@ static struct attr_stack *read_attr_from_index(struct index_state *istate,
 	struct attr_stack *res;
 	char *buf, *sp;
 	int lineno = 0;
+	size_t size;
 
 	if (!istate)
 		return NULL;
@@ -759,9 +776,13 @@ static struct attr_stack *read_attr_from_index(struct index_state *istate,
 	if (!path_in_cone_mode_sparse_checkout(path, istate))
 		return NULL;
 
-	buf = read_blob_data_from_index(istate, path, NULL);
+	buf = read_blob_data_from_index(istate, path, &size);
 	if (!buf)
 		return NULL;
+	if (size >= ATTR_MAX_FILE_SIZE) {
+		warning(_("ignoring overly large gitattributes blob '%s'"), path);
+		return NULL;
+	}
 
 	CALLOC_ARRAY(res, 1);
 	for (sp = buf; *sp; ) {
@@ -1032,12 +1053,12 @@ static int macroexpand_one(struct all_attrs_item *all_attrs, int nr, int rem);
 static int fill_one(const char *what, struct all_attrs_item *all_attrs,
 		    const struct match_attr *a, int rem)
 {
-	int i;
+	size_t i;
 
-	for (i = a->num_attr - 1; rem > 0 && i >= 0; i--) {
-		const struct git_attr *attr = a->state[i].attr;
+	for (i = a->num_attr; rem > 0 && i > 0; i--) {
+		const struct git_attr *attr = a->state[i - 1].attr;
 		const char **n = &(all_attrs[attr->attr_nr].value);
-		const char *v = a->state[i].setto;
+		const char *v = a->state[i - 1].setto;
 
 		if (*n == ATTR__UNKNOWN) {
 			debug_set(what,
@@ -1056,11 +1077,11 @@ static int fill(const char *path, int pathlen, int basename_offset,
 		struct all_attrs_item *all_attrs, int rem)
 {
 	for (; rem > 0 && stack; stack = stack->prev) {
-		int i;
+		unsigned i;
 		const char *base = stack->origin ? stack->origin : "";
 
-		for (i = stack->num_matches - 1; 0 < rem && 0 <= i; i--) {
-			const struct match_attr *a = stack->attrs[i];
+		for (i = stack->num_matches; 0 < rem && 0 < i; i--) {
+			const struct match_attr *a = stack->attrs[i - 1];
 			if (a->is_macro)
 				continue;
 			if (path_matches(path, pathlen, basename_offset,
@@ -1091,11 +1112,11 @@ static void determine_macros(struct all_attrs_item *all_attrs,
 			     const struct attr_stack *stack)
 {
 	for (; stack; stack = stack->prev) {
-		int i;
-		for (i = stack->num_matches - 1; i >= 0; i--) {
-			const struct match_attr *ma = stack->attrs[i];
+		unsigned i;
+		for (i = stack->num_matches; i > 0; i--) {
+			const struct match_attr *ma = stack->attrs[i - 1];
 			if (ma->is_macro) {
-				int n = ma->u.attr->attr_nr;
+				unsigned int n = ma->u.attr->attr_nr;
 				if (!all_attrs[n].macro) {
 					all_attrs[n].macro = ma;
 				}
@@ -1147,7 +1168,7 @@ void git_check_attr(struct index_state *istate,
 	collect_some_attrs(istate, path, check);
 
 	for (i = 0; i < check->nr; i++) {
-		size_t n = check->items[i].attr->attr_nr;
+		unsigned int n = check->items[i].attr->attr_nr;
 		const char *value = check->all_attrs[n].value;
 		if (value == ATTR__UNKNOWN)
 			value = ATTR__UNSET;

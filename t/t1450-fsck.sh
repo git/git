@@ -928,4 +928,28 @@ test_expect_success 'fsck error and recovery on invalid object type' '
 	)
 '
 
+test_expect_success 'fsck error on gitattributes with excessive line lengths' '
+	blob=$(printf "pattern %02048d" 1 | git hash-object -w --stdin) &&
+	test_when_finished "remove_object $blob" &&
+	tree=$(printf "100644 blob %s\t%s\n" $blob .gitattributes | git mktree) &&
+	test_when_finished "remove_object $tree" &&
+	cat >expected <<-EOF &&
+	error in blob $blob: gitattributesLineLength: .gitattributes has too long lines to parse
+	EOF
+	test_must_fail git fsck --no-dangling >actual 2>&1 &&
+	test_cmp expected actual
+'
+
+test_expect_success 'fsck error on gitattributes with excessive size' '
+	blob=$(test-tool genzeros $((100 * 1024 * 1024 + 1)) | git hash-object -w --stdin) &&
+	test_when_finished "remove_object $blob" &&
+	tree=$(printf "100644 blob %s\t%s\n" $blob .gitattributes | git mktree) &&
+	test_when_finished "remove_object $tree" &&
+	cat >expected <<-EOF &&
+	error in blob $blob: gitattributesLarge: .gitattributes too large to parse
+	EOF
+	test_must_fail git fsck --no-dangling >actual 2>&1 &&
+	test_cmp expected actual
+'
+
 test_done

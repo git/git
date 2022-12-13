@@ -23,7 +23,7 @@ struct column_data {
 /* return length of 's' in letters, ANSI escapes stripped */
 static int item_length(const char *s)
 {
-	return utf8_strnwidth(s, -1, 1);
+	return utf8_strnwidth(s, strlen(s), 1);
 }
 
 /*
