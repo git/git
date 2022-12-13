@@ -1954,7 +1954,7 @@ static int color_words_output_graph_prefix(struct diff_words_data *diff_words)
 static void fn_out_diff_words_aux(void *priv,
 				  long minus_first, long minus_len,
 				  long plus_first, long plus_len,
-				  const char *func, long funclen)
+				  const char *func UNUSED, long funclen UNUSED)
 {
 	struct diff_words_data *diff_words = priv;
 	struct diff_words_style *style = diff_words->style;
@@ -3184,8 +3184,9 @@ static int is_conflict_marker(const char *line, int marker_size, unsigned long l
 }
 
 static void checkdiff_consume_hunk(void *priv,
-				   long ob, long on, long nb, long nn,
-				   const char *func, long funclen)
+				   long ob UNUSED, long on UNUSED,
+				   long nb, long nn UNUSED,
+				   const char *func UNUSED, long funclen UNUSED)
 
 {
 	struct checkdiff_t *data = priv;

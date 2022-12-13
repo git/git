@@ -776,7 +776,7 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 }
 
 static void count_diff_files(struct diff_queue_struct *q,
-			     struct diff_options *opt, void *data)
+			     struct diff_options *opt UNUSED, void *data)
 {
 	int *count = data;
 
