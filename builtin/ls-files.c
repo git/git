@@ -613,6 +613,7 @@ void overlay_tree_on_index(struct index_state *istate,
 	if (!fn)
 		fn = read_one_entry_quick;
 	err = read_tree(the_repository, tree, &pathspec, fn, istate);
+	clear_pathspec(&pathspec);
 	if (err)
 		die("unable to read tree entries %s", tree_name);
 
