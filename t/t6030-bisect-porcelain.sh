@@ -34,6 +34,36 @@ HASH2=
 HASH3=
 HASH4=
 
+test_bisect_usage () {
+	local code="$1" &&
+	shift &&
+	cat >expect &&
+	test_expect_code $code "$@" >out 2>actual &&
+	test_must_be_empty out &&
+	test_cmp expect actual
+}
+
+test_expect_success 'bisect usage' "
+	test_bisect_usage 1 git bisect reset extra1 extra2 <<-\EOF &&
+	error: 'git bisect reset' requires either no argument or a commit
+	EOF
+	test_bisect_usage 1 git bisect terms extra1 extra2 <<-\EOF &&
+	error: 'git bisect terms' requires 0 or 1 argument
+	EOF
+	test_bisect_usage 1 git bisect next extra1 <<-\EOF &&
+	error: 'git bisect next' requires 0 arguments
+	EOF
+	test_bisect_usage 1 git bisect log extra1 <<-\EOF &&
+	error: We are not bisecting.
+	EOF
+	test_bisect_usage 1 git bisect replay <<-\EOF &&
+	error: no logfile given
+	EOF
+	test_bisect_usage 1 git bisect run <<-\EOF
+	error: 'git bisect run' failed: no command provided.
+	EOF
+"
+
 test_expect_success 'set up basic repo with 1 file (hello) and 4 commits' '
      add_line_into_file "1: Hello World" hello &&
      HASH1=$(git rev-parse --verify HEAD) &&
@@ -251,6 +281,124 @@ test_expect_success 'bisect skip: with commit both bad and skipped' '
 	grep $HASH3 my_bisect_log.txt &&
 	grep $HASH4 my_bisect_log.txt
 '
+
+test_bisect_run_args () {
+	test_when_finished "rm -f run.sh actual" &&
+	>actual &&
+	cat >expect.args &&
+	cat <&6 >expect.out &&
+	cat <&7 >expect.err &&
+	write_script run.sh <<-\EOF &&
+	while test $# != 0
+	do
+		echo "<$1>" &&
+		shift
+	done >actual.args
+	EOF
+
+	test_when_finished "git bisect reset" &&
+	git bisect start &&
+	git bisect good $HASH1 &&
+	git bisect bad $HASH4 &&
+	git bisect run ./run.sh $@ >actual.out.raw 2>actual.err &&
+	# Prune just the log output
+	sed -n \
+		-e '/^Author:/d' \
+		-e '/^Date:/d' \
+		-e '/^$/d' \
+		-e '/^commit /d' \
+		-e '/^ /d' \
+		-e 'p' \
+		<actual.out.raw >actual.out &&
+	test_cmp expect.out actual.out &&
+	test_cmp expect.err actual.err &&
+	test_cmp expect.args actual.args
+}
+
+test_expect_success 'git bisect run: args, stdout and stderr with no arguments' "
+	test_bisect_run_args <<-'EOF_ARGS' 6<<-EOF_OUT 7<<-'EOF_ERR'
+	EOF_ARGS
+	running './run.sh'
+	$HASH4 is the first bad commit
+	bisect found first bad commit
+	EOF_OUT
+	EOF_ERR
+"
+
+test_expect_success 'git bisect run: args, stdout and stderr: "--" argument' "
+	test_bisect_run_args -- <<-'EOF_ARGS' 6<<-EOF_OUT 7<<-'EOF_ERR'
+	<-->
+	EOF_ARGS
+	running './run.sh' '--'
+	$HASH4 is the first bad commit
+	bisect found first bad commit
+	EOF_OUT
+	EOF_ERR
+"
+
+test_expect_success 'git bisect run: args, stdout and stderr: "--log foo --no-log bar" arguments' "
+	test_bisect_run_args --log foo --no-log bar <<-'EOF_ARGS' 6<<-EOF_OUT 7<<-'EOF_ERR'
+	<--log>
+	<foo>
+	<--no-log>
+	<bar>
+	EOF_ARGS
+	running './run.sh' '--log' 'foo' '--no-log' 'bar'
+	$HASH4 is the first bad commit
+	bisect found first bad commit
+	EOF_OUT
+	EOF_ERR
+"
+
+test_expect_success 'git bisect run: args, stdout and stderr: "--bisect-start" argument' "
+	test_bisect_run_args --bisect-start <<-'EOF_ARGS' 6<<-EOF_OUT 7<<-'EOF_ERR'
+	<--bisect-start>
+	EOF_ARGS
+	running './run.sh' '--bisect-start'
+	$HASH4 is the first bad commit
+	bisect found first bad commit
+	EOF_OUT
+	EOF_ERR
+"
+
+test_expect_success 'git bisect run: negative exit code' "
+	write_script fail.sh <<-'EOF' &&
+	exit 255
+	EOF
+	cat <<-'EOF' >expect &&
+	bisect run failed: exit code -1 from './fail.sh' is < 0 or >= 128
+	EOF
+	test_when_finished 'git bisect reset' &&
+	git bisect start &&
+	git bisect good $HASH1 &&
+	git bisect bad $HASH4 &&
+	! git bisect run ./fail.sh 2>err &&
+	sed -En 's/.*(bisect.*code) (-?[0-9]+) (from.*)/\1 -1 \3/p' err >actual &&
+	test_cmp expect actual
+"
+
+test_expect_success 'git bisect run: unable to verify on good' "
+	write_script fail.sh <<-'EOF' &&
+	head=\$(git rev-parse --verify HEAD)
+	good=\$(git rev-parse --verify $HASH1)
+	if test "\$head" = "\$good"
+	then
+		exit 255
+	else
+		exit 127
+	fi
+	EOF
+	cat <<-'EOF' >expect &&
+	unable to verify './fail.sh' on good revision
+	EOF
+	test_when_finished 'git bisect reset' &&
+	git bisect start &&
+	git bisect good $HASH1 &&
+	git bisect bad $HASH4 &&
+	! git bisect run ./fail.sh 2>err &&
+	sed -n 's/.*\(unable to verify.*\)/\1/p' err >actual &&
+	test_cmp expect actual
+"
 
 # We want to automatically find the commit that
 # added "Another" into hello.
