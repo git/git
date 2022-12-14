@@ -228,6 +228,12 @@ static int strbuf_addf_ret(struct strbuf *sb, int ret, const char *fmt, ...)
 	return ret;
 }
 
+static int err_no_arg(struct strbuf *sb, const char *name)
+{
+	strbuf_addf(sb, _("%%(%s) does not take arguments"), name);
+	return -1;
+}
+
 static int color_atom_parser(struct ref_format *format, struct used_atom *atom,
 			     const char *color_value, struct strbuf *err)
 {
@@ -317,7 +323,7 @@ static int objecttype_atom_parser(struct ref_format *format, struct used_atom *a
 				  const char *arg, struct strbuf *err)
 {
 	if (arg)
-		return strbuf_addf_ret(err, -1, _("%%(objecttype) does not take arguments"));
+		return err_no_arg(err, "objecttype");
 	if (*atom->name == '*')
 		oi_deref.info.typep = &oi_deref.type;
 	else
@@ -349,7 +355,7 @@ static int deltabase_atom_parser(struct ref_format *format, struct used_atom *at
 				 const char *arg, struct strbuf *err)
 {
 	if (arg)
-		return strbuf_addf_ret(err, -1, _("%%(deltabase) does not take arguments"));
+		return err_no_arg(err, "deltabase");
 	if (*atom->name == '*')
 		oi_deref.info.delta_base_oid = &oi_deref.delta_base_oid;
 	else
@@ -361,7 +367,7 @@ static int body_atom_parser(struct ref_format *format, struct used_atom *atom,
 			    const char *arg, struct strbuf *err)
 {
 	if (arg)
-		return strbuf_addf_ret(err, -1, _("%%(body) does not take arguments"));
+		return err_no_arg(err, "body");
 	atom->u.contents.option = C_BODY_DEP;
 	return 0;
 }
@@ -565,7 +571,7 @@ static int rest_atom_parser(struct ref_format *format, struct used_atom *atom,
 			    const char *arg, struct strbuf *err)
 {
 	if (arg)
-		return strbuf_addf_ret(err, -1, _("%%(rest) does not take arguments"));
+		return err_no_arg(err, "rest");
 	format->use_rest = 1;
 	return 0;
 }
@@ -574,7 +580,7 @@ static int head_atom_parser(struct ref_format *format, struct used_atom *atom,
 			    const char *arg, struct strbuf *err)
 {
 	if (arg)
-		return strbuf_addf_ret(err, -1, _("%%(HEAD) does not take arguments"));
+		return err_no_arg(err, "HEAD");
 	atom->u.head = resolve_refdup("HEAD", RESOLVE_REF_READING, NULL, NULL);
 	return 0;
 }
