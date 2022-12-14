@@ -15,6 +15,6 @@ int cmd__subprocess(int argc, const char **argv)
 		argv++;
 	}
 	cp.git_cmd = 1;
-	strvec_pushv(&cp.args, (const char **)argv + 1);
+	strvec_pushv(&cp.args, argv + 1);
 	return run_command(&cp);
 }

@@ -396,7 +396,7 @@ static int trailers_atom_parser(struct ref_format *format, struct used_atom *ato
 				strbuf_addf(err, _("expected %%(trailers:key=<value>)"));
 			else
 				strbuf_addf(err, _("unknown %%(trailers) argument: %s"), invalid_arg);
-			free((char *)invalid_arg);
+			free(invalid_arg);
 			return -1;
 		}
 	}

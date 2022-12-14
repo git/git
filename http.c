@@ -2319,8 +2319,8 @@ static size_t fwrite_sha1_file(char *ptr, size_t eltsize, size_t nmemb,
 	}
 
 	do {
-		ssize_t retval = xwrite(freq->localfile,
-					(char *) ptr + posn, size - posn);
+		ssize_t retval =
+			xwrite(freq->localfile, ptr + posn, size - posn);
 		if (retval < 0)
 			return posn / eltsize;
 		posn += retval;

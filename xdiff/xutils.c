@@ -130,7 +130,7 @@ long xdl_guess_lines(mmfile_t *mf, long sample) {
 			else
 				cur++;
 		}
-		tsize += (long) (cur - data);
+		tsize += (cur - data);
 	}
 
 	if (nl && tsize)

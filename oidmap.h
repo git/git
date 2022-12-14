@@ -87,7 +87,7 @@ static inline void *oidmap_iter_first(struct oidmap *map,
 {
 	oidmap_iter_init(map, iter);
 	/* TODO: this API could be reworked to do compile-time type checks */
-	return (void *)oidmap_iter_next(iter);
+	return oidmap_iter_next(iter);
 }
 
 #endif
