@@ -860,4 +860,66 @@ test_expect_success '--stdin with both a successful and a conflicted merge' '
 	test_cmp expect actual
 '
 
+
+test_expect_success '--merge-base is incompatible with --stdin' '
+	test_must_fail git merge-tree --merge-base=side1 --stdin 2>expect &&
+
+	grep "^fatal: --merge-base is incompatible with --stdin" expect
+'
+
+# specify merge-base as parent of branch2
+# git merge-tree --write-tree --merge-base=c2 c1 c3
+#   Commit c1: add file1
+#   Commit c2: add file2 after c1
+#   Commit c3: add file3 after c2
+#   Expected: add file3, and file2 does NOT appear
+
+test_expect_success 'specify merge-base as parent of branch2' '
+	# Setup
+	test_when_finished "rm -rf base-b2-p" &&
+	git init base-b2-p &&
+	test_commit -C base-b2-p c1 file1 &&
+	test_commit -C base-b2-p c2 file2 &&
+	test_commit -C base-b2-p c3 file3 &&
+
+	# Testing
+	TREE_OID=$(git -C base-b2-p merge-tree --write-tree --merge-base=c2 c1 c3) &&
+
+	q_to_tab <<-EOF >expect &&
+	100644 blob $(git -C base-b2-p rev-parse c1:file1)Qfile1
+	100644 blob $(git -C base-b2-p rev-parse c3:file3)Qfile3
+	EOF
+
+	git -C base-b2-p ls-tree $TREE_OID >actual &&
+	test_cmp expect actual
+'
+
+# Since the earlier tests have verified that individual merge-tree calls
+# are doing the right thing, this test case is only used to verify that
+# we can also trigger merges via --stdin, and that when we do we get
+# the same answer as running a bunch of separate merges.
+
+test_expect_success 'check the input format when --stdin is passed' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	test_commit -C repo c1 &&
+	test_commit -C repo c2 &&
+	test_commit -C repo c3 &&
+	printf "c1 c3\nc2 -- c1 c3\nc2 c3" | git -C repo merge-tree --stdin >actual &&
+
+	printf "1\0" >expect &&
+	git -C repo merge-tree --write-tree -z c1 c3 >>expect &&
+	printf "\0" >>expect &&
+
+	printf "1\0" >>expect &&
+	git -C repo merge-tree --write-tree -z --merge-base=c2 c1 c3 >>expect &&
+	printf "\0" >>expect &&
+
+	printf "1\0" >>expect &&
+	git -C repo merge-tree --write-tree -z c2 c3 >>expect &&
+	printf "\0" >>expect &&
+
+	test_cmp expect actual
+'
+
 test_done
