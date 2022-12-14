@@ -778,7 +778,8 @@ struct filter *list_objects_filter__init(
 	struct filter *filter;
 	filter_init_fn init_fn;
 
-	assert((sizeof(s_filters) / sizeof(s_filters[0])) == LOFC__COUNT);
+	static_assert((sizeof(s_filters) / sizeof(s_filters[0])) == LOFC__COUNT,
+		      "");
 
 	if (!filter_options)
 		return NULL;
