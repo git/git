@@ -489,7 +489,7 @@ static int person_email_atom_parser(struct ref_format *format, struct used_atom 
 	else if (!strcmp(arg, "localpart"))
 		atom->u.email_option.option = EO_LOCALPART;
 	else
-		return strbuf_addf_ret(err, -1, _("unrecognized email option: %s"), arg);
+		return err_bad_arg(err, atom->name, arg);
 	return 0;
 }
 
