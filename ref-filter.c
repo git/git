@@ -571,8 +571,10 @@ static int rest_atom_parser(struct ref_format *format, struct used_atom *atom,
 }
 
 static int head_atom_parser(struct ref_format *format, struct used_atom *atom,
-			    const char *arg, struct strbuf *unused_err)
+			    const char *arg, struct strbuf *err)
 {
+	if (arg)
+		return strbuf_addf_ret(err, -1, _("%%(HEAD) does not take arguments"));
 	atom->u.head = resolve_refdup("HEAD", RESOLVE_REF_READING, NULL, NULL);
 	return 0;
 }
