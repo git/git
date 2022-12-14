@@ -234,6 +234,12 @@ static int err_no_arg(struct strbuf *sb, const char *name)
 	return -1;
 }
 
+static int err_bad_arg(struct strbuf *sb, const char *name, const char *arg)
+{
+	strbuf_addf(sb, _("unrecognized %%(%s) argument: %s"), name, arg);
+	return -1;
+}
+
 static int color_atom_parser(struct ref_format *format, struct used_atom *atom,
 			     const char *color_value, struct strbuf *err)
 {
@@ -347,7 +353,7 @@ static int objectsize_atom_parser(struct ref_format *format, struct used_atom *a
 		else
 			oi.info.disk_sizep = &oi.disk_size;
 	} else
-		return strbuf_addf_ret(err, -1, _("unrecognized %%(%s) argument: %s"), "objectsize", arg);
+		return err_bad_arg(err, "objectsize", arg);
 	return 0;
 }
 
@@ -380,7 +386,7 @@ static int subject_atom_parser(struct ref_format *format, struct used_atom *atom
 	else if (!strcmp(arg, "sanitize"))
 		atom->u.contents.option = C_SUB_SANITIZE;
 	else
-		return strbuf_addf_ret(err, -1, _("unrecognized %%(%s) argument: %s"), "subject", arg);
+		return err_bad_arg(err, "subject", arg);
 	return 0;
 }
 
@@ -434,7 +440,7 @@ static int contents_atom_parser(struct ref_format *format, struct used_atom *ato
 		if (strtoul_ui(arg, 10, &atom->u.contents.nlines))
 			return strbuf_addf_ret(err, -1, _("positive value expected contents:lines=%s"), arg);
 	} else
-		return strbuf_addf_ret(err, -1, _("unrecognized %%(%s) argument: %s"), "contents", arg);
+		return err_bad_arg(err, "contents", arg);
 	return 0;
 }
 
@@ -446,7 +452,7 @@ static int raw_atom_parser(struct ref_format *format, struct used_atom *atom,
 	else if (!strcmp(arg, "size"))
 		atom->u.raw_data.option = RAW_LENGTH;
 	else
-		return strbuf_addf_ret(err, -1, _("unrecognized %%(%s) argument: %s"), "raw", arg);
+		return err_bad_arg(err, "raw", arg);
 	return 0;
 }
 
@@ -563,7 +569,7 @@ static int if_atom_parser(struct ref_format *format, struct used_atom *atom,
 	} else if (skip_prefix(arg, "notequals=", &atom->u.if_then_else.str)) {
 		atom->u.if_then_else.cmp_status = COMPARE_UNEQUAL;
 	} else
-		return strbuf_addf_ret(err, -1, _("unrecognized %%(%s) argument: %s"), "if", arg);
+		return err_bad_arg(err, "if", arg);
 	return 0;
 }
 
