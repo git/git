@@ -2784,7 +2784,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 		else if (file->is_unmerged) {
 			strbuf_addf(&out, " %s%s%*s | %*s",
 				    prefix, name, padding, "",
-				    number_width, "Unmerged");
+				    number_width, "Unmerged\n");
 			emit_diff_symbol(options, DIFF_SYMBOL_STATS_LINE,
 					 out.buf, out.len, 0);
 			strbuf_reset(&out);
