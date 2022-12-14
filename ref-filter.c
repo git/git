@@ -230,13 +230,17 @@ static int strbuf_addf_ret(struct strbuf *sb, int ret, const char *fmt, ...)
 
 static int err_no_arg(struct strbuf *sb, const char *name)
 {
-	strbuf_addf(sb, _("%%(%s) does not take arguments"), name);
+	size_t namelen = strchrnul(name, ':') - name;
+	strbuf_addf(sb, _("%%(%.*s) does not take arguments"),
+		    (int)namelen, name);
 	return -1;
 }
 
 static int err_bad_arg(struct strbuf *sb, const char *name, const char *arg)
 {
-	strbuf_addf(sb, _("unrecognized %%(%s) argument: %s"), name, arg);
+	size_t namelen = strchrnul(name, ':') - name;
+	strbuf_addf(sb, _("unrecognized %%(%.*s) argument: %s"),
+		    (int)namelen, name, arg);
 	return -1;
 }
 
@@ -274,7 +278,7 @@ static int refname_atom_parser_internal(struct refname_atom *atom, const char *a
 		if (strtol_i(arg, 10, &atom->rstrip))
 			return strbuf_addf_ret(err, -1, _("Integer value expected refname:rstrip=%s"), arg);
 	} else
-		return strbuf_addf_ret(err, -1, _("unrecognized %%(%s) argument: %s"), name, arg);
+		return err_bad_arg(err, name, arg);
 	return 0;
 }
 
@@ -471,7 +475,7 @@ static int oid_atom_parser(struct ref_format *format, struct used_atom *atom,
 		if (atom->u.oid.length < MINIMUM_ABBREV)
 			atom->u.oid.length = MINIMUM_ABBREV;
 	} else
-		return strbuf_addf_ret(err, -1, _("unrecognized %%(%s) argument: %s"), atom->name, arg);
+		return err_bad_arg(err, atom->name, arg);
 	return 0;
 }
 

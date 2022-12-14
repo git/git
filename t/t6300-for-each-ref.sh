@@ -1254,6 +1254,12 @@ test_expect_success 'subject atom rejects unknown arguments' '
 	test_cmp expect err
 '
 
+test_expect_success 'refname atom rejects unknown arguments' '
+	test_must_fail git for-each-ref --format="%(refname:foo)" 2>err &&
+	echo "fatal: unrecognized %(refname) argument: foo" >expect &&
+	test_cmp expect err
+'
+
 test_expect_success 'trailer parsing not fooled by --- line' '
 	git commit --allow-empty -F - <<-\EOF &&
 	this is the subject
