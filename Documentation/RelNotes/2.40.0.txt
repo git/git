@@ -1,0 +1,37 @@
+Git v2.40 Release Notes
+=======================
+
+UI, Workflows & Features
+
+ * "merge-tree" learns a new `--merge-base` option.
+
+ * "git jump" (in contrib/) learned to present the "quickfix list" to
+   its standard output (instead of letting it consumed by the editor
+   it invokes), and learned to also drive emacs/emacsclient.
+
+ * "git var UNKNOWN_VARIABLE" and "git var VARIABLE" with the variable
+   given an empty value used to behave identically.  Now the latter
+   just gives an empty output, while the former still gives an error
+   message.
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * `git bisect` becomes a builtin.
+
+ * The pack-bitmap machinery is taught to log the paths of redundant
+   bitmap(s) to trace2 instead of stderr.
+
+
+
+Fixes since v2.39
+-----------------
+
+ * Various leak fixes.
+   (merge ac95f5d36a ab/various-leak-fixes later to maint).
+
+ * Fix a bug where `pack-objects` would not respect multiple `--filter`
+   arguments when invoked directly.
+   (merge d4f7036887 rs/multi-filter-args later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
