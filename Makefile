@@ -511,10 +511,8 @@ include shared.mak
 # Define BLK_SHA1 to make use of optimized C SHA-1 routines bundled
 # with git (in the block-sha1/ directory).
 #
-# Define NO_APPLE_COMMON_CRYPTO on OSX to opt-out of using the
-# "APPLE_COMMON_CRYPTO" backend for SHA-1, which is currently the
-# default on that OS. On macOS 01.4 (Tiger) or older,
-# NO_APPLE_COMMON_CRYPTO is defined by default.
+# Define APPLE_COMMON_CRYPTO_SHA1 to use Apple's CommonCrypto for
+# SHA-1.
 #
 # If don't enable any of the *_SHA1 settings in this section, Git will
 # default to its built-in sha1collisiondetection library, which is a
@@ -1912,7 +1910,7 @@ ifdef NO_POSIX_GOODIES
 	BASIC_CFLAGS += -DNO_POSIX_GOODIES
 endif
 
-ifdef APPLE_COMMON_CRYPTO
+ifdef APPLE_COMMON_CRYPTO_SHA1
 	# Apple CommonCrypto requires chunking
 	SHA1_MAX_BLOCK_SIZE = 1024L*1024L*1024L
 endif
@@ -1929,7 +1927,7 @@ ifdef BLK_SHA1
 	LIB_OBJS += block-sha1/sha1.o
 	BASIC_CFLAGS += -DSHA1_BLK
 else
-ifdef APPLE_COMMON_CRYPTO
+ifdef APPLE_COMMON_CRYPTO_SHA1
 	COMPAT_CFLAGS += -DCOMMON_DIGEST_FOR_OPENSSL
 	BASIC_CFLAGS += -DSHA1_APPLE
 else
