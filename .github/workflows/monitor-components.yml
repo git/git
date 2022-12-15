@@ -16,6 +16,8 @@ env:
 
 jobs:
   job:
+    # Only run this in Git for Windows' fork
+    if: github.event.repository.owner.login == 'git-for-windows'
     runs-on: ubuntu-latest
     permissions:
       issues: write
