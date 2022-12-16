@@ -581,13 +581,13 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 	strbuf_release(&logmsg);
 
 	strbuf_addf(&oldsection, "branch.%s", interpreted_oldname);
-	strbuf_release(&oldref);
 	strbuf_addf(&newsection, "branch.%s", interpreted_newname);
-	strbuf_release(&newref);
 	if (!copy && git_config_rename_section(oldsection.buf, newsection.buf) < 0)
 		die(_("Branch is renamed, but update of config-file failed"));
-	if (copy && strcmp(oldname, newname) && git_config_copy_section(oldsection.buf, newsection.buf) < 0)
+	if (copy && strcmp(interpreted_oldname, interpreted_newname) && git_config_copy_section(oldsection.buf, newsection.buf) < 0)
 		die(_("Branch is copied, but update of config-file failed"));
+	strbuf_release(&oldref);
+	strbuf_release(&newref);
 	strbuf_release(&oldsection);
 	strbuf_release(&newsection);
 }
