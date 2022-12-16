@@ -445,13 +445,13 @@ test_expect_success 'no threading' '
 
 cat >expect.thread <<EOF
 ---
-Message-Id: <0>
+Message-ID: <0>
 ---
-Message-Id: <1>
+Message-ID: <1>
 In-Reply-To: <0>
 References: <0>
 ---
-Message-Id: <2>
+Message-ID: <2>
 In-Reply-To: <0>
 References: <0>
 EOF
@@ -462,15 +462,15 @@ test_expect_success 'thread' '
 
 cat >expect.in-reply-to <<EOF
 ---
-Message-Id: <0>
+Message-ID: <0>
 In-Reply-To: <1>
 References: <1>
 ---
-Message-Id: <2>
+Message-ID: <2>
 In-Reply-To: <1>
 References: <1>
 ---
-Message-Id: <3>
+Message-ID: <3>
 In-Reply-To: <1>
 References: <1>
 EOF
@@ -482,17 +482,17 @@ test_expect_success 'thread in-reply-to' '
 
 cat >expect.cover-letter <<EOF
 ---
-Message-Id: <0>
+Message-ID: <0>
 ---
-Message-Id: <1>
+Message-ID: <1>
 In-Reply-To: <0>
 References: <0>
 ---
-Message-Id: <2>
+Message-ID: <2>
 In-Reply-To: <0>
 References: <0>
 ---
-Message-Id: <3>
+Message-ID: <3>
 In-Reply-To: <0>
 References: <0>
 EOF
@@ -503,21 +503,21 @@ test_expect_success 'thread cover-letter' '
 
 cat >expect.cl-irt <<EOF
 ---
-Message-Id: <0>
+Message-ID: <0>
 In-Reply-To: <1>
 References: <1>
 ---
-Message-Id: <2>
+Message-ID: <2>
 In-Reply-To: <0>
 References: <1>
 	<0>
 ---
-Message-Id: <3>
+Message-ID: <3>
 In-Reply-To: <0>
 References: <1>
 	<0>
 ---
-Message-Id: <4>
+Message-ID: <4>
 In-Reply-To: <0>
 References: <1>
 	<0>
@@ -535,13 +535,13 @@ test_expect_success 'thread explicit shallow' '
 
 cat >expect.deep <<EOF
 ---
-Message-Id: <0>
+Message-ID: <0>
 ---
-Message-Id: <1>
+Message-ID: <1>
 In-Reply-To: <0>
 References: <0>
 ---
-Message-Id: <2>
+Message-ID: <2>
 In-Reply-To: <1>
 References: <0>
 	<1>
@@ -553,16 +553,16 @@ test_expect_success 'thread deep' '
 
 cat >expect.deep-irt <<EOF
 ---
-Message-Id: <0>
+Message-ID: <0>
 In-Reply-To: <1>
 References: <1>
 ---
-Message-Id: <2>
+Message-ID: <2>
 In-Reply-To: <0>
 References: <1>
 	<0>
 ---
-Message-Id: <3>
+Message-ID: <3>
 In-Reply-To: <2>
 References: <1>
 	<0>
@@ -576,18 +576,18 @@ test_expect_success 'thread deep in-reply-to' '
 
 cat >expect.deep-cl <<EOF
 ---
-Message-Id: <0>
+Message-ID: <0>
 ---
-Message-Id: <1>
+Message-ID: <1>
 In-Reply-To: <0>
 References: <0>
 ---
-Message-Id: <2>
+Message-ID: <2>
 In-Reply-To: <1>
 References: <0>
 	<1>
 ---
-Message-Id: <3>
+Message-ID: <3>
 In-Reply-To: <2>
 References: <0>
 	<1>
@@ -600,22 +600,22 @@ test_expect_success 'thread deep cover-letter' '
 
 cat >expect.deep-cl-irt <<EOF
 ---
-Message-Id: <0>
+Message-ID: <0>
 In-Reply-To: <1>
 References: <1>
 ---
-Message-Id: <2>
+Message-ID: <2>
 In-Reply-To: <0>
 References: <1>
 	<0>
 ---
-Message-Id: <3>
+Message-ID: <3>
 In-Reply-To: <2>
 References: <1>
 	<0>
 	<2>
 ---
-Message-Id: <4>
+Message-ID: <4>
 In-Reply-To: <3>
 References: <1>
 	<0>
