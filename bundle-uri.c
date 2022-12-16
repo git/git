@@ -337,10 +337,10 @@ static int download_https_uri_to_file(const char *file, const char *uri)
 cleanup:
 	if (child_in)
 		fclose(child_in);
-	if (finish_command(&cp))
-		return 1;
 	if (child_out)
 		fclose(child_out);
+	if (finish_command(&cp))
+		return 1;
 	return result;
 }
 
