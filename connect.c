@@ -66,7 +66,7 @@ static NORETURN void die_initial_contact(int unexpected)
 }
 
 /* Checks if the server supports the capability 'c' */
-int server_supports_v2(const char *c, int die_on_error)
+int server_supports_v2(const char *c)
 {
 	int i;
 
@@ -76,11 +76,13 @@ int server_supports_v2(const char *c, int die_on_error)
 		    (!*out || *out == '='))
 			return 1;
 	}
-
-	if (die_on_error)
-		die(_("server doesn't support '%s'"), c);
-
 	return 0;
+}
+
+void ensure_server_supports_v2(const char *c)
+{
+	if (!server_supports_v2(c))
+		die(_("server doesn't support '%s'"), c);
 }
 
 int server_feature_v2(const char *c, const char **v)
@@ -477,7 +479,7 @@ static void send_capabilities(int fd_out, struct packet_reader *reader)
 {
 	const char *hash_name;
 
-	if (server_supports_v2("agent", 0))
+	if (server_supports_v2("agent"))
 		packet_write_fmt(fd_out, "agent=%s", git_user_agent_sanitized());
 
 	if (server_feature_v2("object-format", &hash_name)) {
@@ -504,17 +506,18 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 		&transport_options->unborn_head_target : NULL;
 	*list = NULL;
 
-	if (server_supports_v2("ls-refs", 1))
-		packet_write_fmt(fd_out, "command=ls-refs\n");
+	ensure_server_supports_v2("ls-refs");
+	packet_write_fmt(fd_out, "command=ls-refs\n");
 
 	/* Send capabilities */
 	send_capabilities(fd_out, reader);
 
-	if (server_options && server_options->nr &&
-	    server_supports_v2("server-option", 1))
+	if (server_options && server_options->nr) {
+		ensure_server_supports_v2("server-option");
 		for (i = 0; i < server_options->nr; i++)
 			packet_write_fmt(fd_out, "server-option=%s",
 					 server_options->items[i].string);
+	}
 
 	packet_delim(fd_out);
 	/* When pushing we don't want to request the peeled tags */
