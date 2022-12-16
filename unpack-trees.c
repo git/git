@@ -19,7 +19,6 @@
 #include "promisor-remote.h"
 #include "entry.h"
 #include "parallel-checkout.h"
-#include "sparse-index.h"
 
 /*
  * Error messages expected by scripts out of plumbing commands such as
