@@ -88,7 +88,7 @@ static int fix_unmerged_status(struct diff_filepair *p,
 }
 
 static void update_callback(struct diff_queue_struct *q,
-			    struct diff_options *opt, void *cbdata)
+			    struct diff_options *opt UNUSED, void *cbdata)
 {
 	int i;
 	struct update_callback_data *data = cbdata;

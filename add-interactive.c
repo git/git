@@ -724,7 +724,7 @@ static int run_update(struct add_i_state *s, const struct pathspec *ps,
 }
 
 static void revert_from_diff(struct diff_queue_struct *q,
-			     struct diff_options *opt, void *data)
+			     struct diff_options *opt, void *data UNUSED)
 {
 	int i, add_flags = ADD_CACHE_OK_TO_ADD | ADD_CACHE_OK_TO_REPLACE;
 

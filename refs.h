@@ -354,8 +354,10 @@ int for_each_fullref_in(const char *prefix, each_ref_fn fn, void *cb_data);
  *
  * callers should be prepared to ignore references that they did not ask for.
  */
-int for_each_fullref_in_prefixes(const char *namespace, const char **patterns,
-				 each_ref_fn fn, void *cb_data);
+int refs_for_each_fullref_in_prefixes(struct ref_store *refs,
+				      const char *namespace, const char **patterns,
+				      each_ref_fn fn, void *cb_data);
+
 /**
  * iterate refs from the respective area.
  */

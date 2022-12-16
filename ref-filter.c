@@ -2129,8 +2129,9 @@ static int for_each_fullref_in_pattern(struct ref_filter *filter,
 		return for_each_fullref_in("", cb, cb_data);
 	}
 
-	return for_each_fullref_in_prefixes(NULL, filter->name_patterns,
-					    cb, cb_data);
+	return refs_for_each_fullref_in_prefixes(get_main_ref_store(the_repository),
+						 NULL, filter->name_patterns,
+						 cb, cb_data);
 }
 
 /*

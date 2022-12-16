@@ -315,7 +315,8 @@ struct find_by_namelen_data {
 };
 
 static int userdiff_find_by_namelen_cb(struct userdiff_driver *driver,
-				       enum userdiff_driver_type type, void *priv)
+				       enum userdiff_driver_type type UNUSED,
+				       void *priv)
 {
 	struct find_by_namelen_data *cb_data = priv;
 
