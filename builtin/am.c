@@ -1476,6 +1476,7 @@ static int run_apply(const struct am_state *state, const char *index_file)
 	int res, opts_left;
 	int force_apply = 0;
 	int options = 0;
+	const char **apply_argv;
 
 	if (init_apply_state(&apply_state, the_repository, NULL))
 		BUG("init_apply_state() failed");
@@ -1483,7 +1484,15 @@ static int run_apply(const struct am_state *state, const char *index_file)
 	strvec_push(&apply_opts, "apply");
 	strvec_pushv(&apply_opts, state->git_apply_opts.v);
 
-	opts_left = apply_parse_options(apply_opts.nr, apply_opts.v,
+	/*
+	 * Build a copy that apply_parse_options() can rearrange.
+	 * apply_opts.v keeps referencing the allocated strings for
+	 * strvec_clear() to release.
+	 */
+	ALLOC_ARRAY(apply_argv, apply_opts.nr);
+	COPY_ARRAY(apply_argv, apply_opts.v, apply_opts.nr);
+
+	opts_left = apply_parse_options(apply_opts.nr, apply_argv,
 					&apply_state, &force_apply, &options,
 					NULL);
 
@@ -1513,6 +1522,7 @@ static int run_apply(const struct am_state *state, const char *index_file)
 	strvec_clear(&apply_paths);
 	strvec_clear(&apply_opts);
 	clear_apply_state(&apply_state);
+	free(apply_argv);
 
 	if (res)
 		return res;
