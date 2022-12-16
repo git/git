@@ -86,4 +86,14 @@ test_expect_success 'diff-files -3' '
 	test_cmp diff-files-3.expect diff-files-3.actual
 '
 
+test_expect_success 'diff --stat' '
+	for path in $paths
+	do
+		echo " $path | Unmerged" || return 1
+	done >diff-stat.expect &&
+	echo " 0 files changed" >>diff-stat.expect &&
+	git diff --cached --stat >diff-stat.actual &&
+	test_cmp diff-stat.expect diff-stat.actual
+'
+
 test_done
