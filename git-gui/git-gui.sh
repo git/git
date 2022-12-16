@@ -46,6 +46,37 @@ catch {rename send {}} ; # What an evil concept...
 
 ######################################################################
 ##
+## Enabling platform-specific code paths
+
+proc is_MacOSX {} {
+	if {[tk windowingsystem] eq {aqua}} {
+		return 1
+	}
+	return 0
+}
+
+proc is_Windows {} {
+	if {$::tcl_platform(platform) eq {windows}} {
+		return 1
+	}
+	return 0
+}
+
+set _iscygwin {}
+proc is_Cygwin {} {
+	global _iscygwin
+	if {$_iscygwin eq {}} {
+		if {[string match "CYGWIN_*" $::tcl_platform(os)]} {
+			set _iscygwin 1
+		} else {
+			set _iscygwin 0
+		}
+	}
+	return $_iscygwin
+}
+
+######################################################################
+##
 ## locate our library
 
 if { [info exists ::env(GIT_GUI_LIB_DIR) ] } {
@@ -163,7 +194,6 @@ set _isbare {}
 set _gitexec {}
 set _githtmldir {}
 set _reponame {}
-set _iscygwin {}
 set _search_path {}
 set _shellpath {@@SHELL_PATH@@}
 
@@ -250,32 +280,6 @@ proc githtmldir {args} {
 
 proc reponame {} {
 	return $::_reponame
-}
-
-proc is_MacOSX {} {
-	if {[tk windowingsystem] eq {aqua}} {
-		return 1
-	}
-	return 0
-}
-
-proc is_Windows {} {
-	if {$::tcl_platform(platform) eq {windows}} {
-		return 1
-	}
-	return 0
-}
-
-proc is_Cygwin {} {
-	global _iscygwin
-	if {$_iscygwin eq {}} {
-		if {[string match "CYGWIN_*" $::tcl_platform(os)]} {
-			set _iscygwin 1
-		} else {
-			set _iscygwin 0
-		}
-	}
-	return $_iscygwin
 }
 
 proc is_enabled {option} {
