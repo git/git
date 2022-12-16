@@ -316,9 +316,9 @@ static int bisect_write(const char *state, const char *rev,
 	if (!nolog)
 		fprintf(fp, "git bisect %s %s\n", state, rev);
 
+	fclose(fp);
+
 finish:
-	if (fp)
-		fclose(fp);
 	strbuf_release(&tag);
 	return res;
 }
@@ -484,9 +484,9 @@ static int get_terms(struct bisect_terms *terms)
 	strbuf_getline_lf(&str, fp);
 	terms->term_good = strbuf_detach(&str, NULL);
 
+	fclose(fp);
+
 finish:
-	if (fp)
-		fclose(fp);
 	strbuf_release(&str);
 	return res;
 }
