@@ -485,6 +485,14 @@ test_expect_success 'log --diff-merges=on matches --diff-merges=separate' '
 	test_cmp expected actual
 '
 
+test_expect_success 'log --diff-merges=<V1>,<V2>' '
+	git log --diff-merges=1,hide master >result &&
+	process_diffs result >expected &&
+	git log --diff-merges=1 --diff-merges=hide master >result &&
+	process_diffs result >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'deny wrong log.diffMerges config' '
 	test_config log.diffMerges wrong-value &&
 	test_expect_code 128 git log

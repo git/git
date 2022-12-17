@@ -1,6 +1,7 @@
 #include "diff-merges.h"
 
 #include "revision.h"
+#include "strbuf.h"
 
 typedef void (*diff_merges_setup_func_t)(struct rev_info *);
 static void set_separate(struct rev_info *revs);
@@ -109,12 +110,25 @@ static diff_merges_setup_func_t func_by_opt(const char *optarg)
 
 static void set_diff_merges(struct rev_info *revs, const char *optarg)
 {
-	diff_merges_setup_func_t func = func_by_opt(optarg);
+	char const delim = ',';
+	struct strbuf **opts = strbuf_split_str(optarg, delim, -1);
+	struct strbuf **p;
 
-	if (!func)
-		die(_("invalid value for '%s': '%s'"), "--diff-merges", optarg);
+	for (p = opts; *p; p++) {
+		diff_merges_setup_func_t func;
+		char *opt = (*p)->buf;
+		int len = (*p)->len;
 
-	func(revs);
+		if (opt[len - 1] == delim)
+			opt[len - 1] = '\0';
+		func = func_by_opt(opt);
+		if (!func) {
+			strbuf_list_free(opts);
+			die(_("invalid value for '%s': '%s'"), "--diff-merges", opt);
+		}
+		func(revs);
+	}
+	strbuf_list_free(opts);
 }
 
 /*

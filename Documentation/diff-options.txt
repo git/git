@@ -38,7 +38,8 @@ ifdef::git-log[]
 --no-diff-merges::
 	Specify diff format to be used for merge commits. Default is
 	{diff-merges-default} unless `--first-parent` is in use, in which case
-	`first-parent` is the default.
+	`first-parent` is the default. Comma-separated list of
+	supported values is accepted as well.
 +
 --diff-merges=(off|none):::
 --no-diff-merges:::
@@ -53,7 +54,7 @@ ifdef::git-log[]
 	`log.diffMerges` configuration parameter, which default value
 	is `separate`.
 +
-	`-m` is a shortcut for '--diff-merges=on --diff-merges=hide'.
+	`-m` is a shortcut for '--diff-merges=on,hide'.
 	In addition it implies `-p` when `log.diffMerges-m-imply-p` is
 	active.
 +
