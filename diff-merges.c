@@ -7,6 +7,7 @@ static void set_separate(struct rev_info *revs);
 
 static diff_merges_setup_func_t set_to_default = set_separate;
 static int suppress_m_parsing;
+static int hide = 0;
 
 static void suppress(struct rev_info *revs)
 {
@@ -20,15 +21,32 @@ static void suppress(struct rev_info *revs)
 	revs->remerge_diff = 0;
 }
 
+static void set_need_diff(struct rev_info *revs)
+{
+	revs->merges_need_diff = !hide;
+}
+
 static void common_setup(struct rev_info *revs)
 {
 	suppress(revs);
-	revs->merges_need_diff = 1;
+	set_need_diff(revs);
 }
 
 static void set_none(struct rev_info *revs)
 {
 	suppress(revs);
+}
+
+static void set_hide(struct rev_info *revs)
+{
+	hide = 1;
+	set_need_diff(revs);
+}
+
+static void set_no_hide(struct rev_info *revs)
+{
+	hide = 0;
+	set_need_diff(revs);
 }
 
 static void set_separate(struct rev_info *revs)
@@ -69,6 +87,10 @@ static diff_merges_setup_func_t func_by_opt(const char *optarg)
 {
 	if (!strcmp(optarg, "off") || !strcmp(optarg, "none"))
 		return set_none;
+	if (!strcmp(optarg, "hide"))
+		return set_hide;
+	if (!strcmp(optarg, "no-hide"))
+		return set_no_hide;
 	if (!strcmp(optarg, "1") || !strcmp(optarg, "first-parent"))
 		return set_first_parent;
 	if (!strcmp(optarg, "separate"))
@@ -105,7 +127,19 @@ int diff_merges_config(const char *value)
 	if (!func)
 		return -1;
 
-	set_to_default = func;
+	if (func == set_hide)
+		hide = 1;
+	else if (func == set_no_hide)
+		hide = 0;
+	else
+		set_to_default = func;
+
+	return 0;
+}
+
+int diff_merges_hide_config(int on)
+{
+	hide = on;
 	return 0;
 }
 
@@ -122,7 +156,7 @@ int diff_merges_parse_opts(struct rev_info *revs, const char **argv)
 
 	if (!suppress_m_parsing && !strcmp(arg, "-m")) {
 		set_to_default(revs);
-		revs->merges_need_diff = 0;
+		set_hide(revs);
 	} else if (!strcmp(arg, "-c")) {
 		set_combined(revs);
 		revs->merges_imply_patch = 1;
