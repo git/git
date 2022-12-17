@@ -2498,6 +2498,7 @@ test_expect_success 'git config - variable name' '
 	log.decorate Z
 	log.diffMerges Z
 	log.diffMergesHide Z
+	log.diffMerges-m-imply-p Z
 	EOF
 '
 
@@ -2527,6 +2528,7 @@ test_expect_success 'git -c - variable name' '
 	log.decorate=Z
 	log.diffMerges=Z
 	log.diffMergesHide=Z
+	log.diffMerges-m-imply-p=Z
 	EOF
 '
 
@@ -2550,6 +2552,7 @@ test_expect_success 'git clone --config= - variable name' '
 	log.decorate=Z
 	log.diffMerges=Z
 	log.diffMergesHide=Z
+	log.diffMerges-m-imply-p=Z
 	EOF
 '
 

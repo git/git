@@ -548,6 +548,15 @@ test_expect_success 'git config log.diffMerges hide: has no effect on --cc' '
 	test_cmp expected actual
 '
 
+test_expect_success 'git config log.diffMerges-m-imply-p has proper effect' '
+	git log -m -p master >result &&
+	process_diffs result >expected &&
+	test_config log.diffMerges-m-imply-p true &&
+	git log -m master >result &&
+	process_diffs result >actual &&
+	test_cmp expected actual
+'
+
 # -m in "git diff-index" means "match missing", that differs
 # from its meaning in "git diff". Let's check it in diff-index.
 # The line in the output for removed file should disappear when

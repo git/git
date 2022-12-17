@@ -48,12 +48,14 @@ ifdef::git-log[]
 --diff-merges=on:::
 --diff-merges=m:::
 -m:::
-	This option makes diff output for merge commits to be shown in
+	These options make diff output for merge commits to be shown in
 	the default format. The default format could be changed using
 	`log.diffMerges` configuration parameter, which default value
 	is `separate`.
 +
-	`-m` is a shortcut for '--diff-merges=on --diff-merges=hide'
+	`-m` is a shortcut for '--diff-merges=on --diff-merges=hide'.
+	In addition it implies `-p` when `log.diffMerges-m-imply-p` is
+	active.
 +
 --diff-merges=first-parent:::
 --diff-merges=1:::

@@ -8,6 +8,7 @@ static void set_separate(struct rev_info *revs);
 static diff_merges_setup_func_t set_to_default = set_separate;
 static int suppress_m_parsing;
 static int hide = 0;
+static int m_imply_p = 0;
 
 static void suppress(struct rev_info *revs)
 {
@@ -143,6 +144,12 @@ int diff_merges_hide_config(int on)
 	return 0;
 }
 
+int diff_merges_m_imply_p_config(int on)
+{
+	m_imply_p = on;
+	return 0;
+}
+
 void diff_merges_suppress_m_parsing(void)
 {
 	suppress_m_parsing = 1;
@@ -157,6 +164,7 @@ int diff_merges_parse_opts(struct rev_info *revs, const char **argv)
 	if (!suppress_m_parsing && !strcmp(arg, "-m")) {
 		set_to_default(revs);
 		set_hide(revs);
+		revs->merges_imply_patch = m_imply_p;
 	} else if (!strcmp(arg, "-c")) {
 		set_combined(revs);
 		revs->merges_imply_patch = 1;

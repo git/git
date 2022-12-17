@@ -44,6 +44,9 @@ diffs for merge commits when `-p` option is not used.
 log.diffMergesHide::
 	`true` implies `--diff-merges=hide` option.
 
+log.diffMerges-m-imply-p::
+	`true` enables implication of `-p` by `-m`.
+
 log.follow::
 	If `true`, `git log` will act as if the `--follow` option was used when
 	a single <path> is given.  This has the same limitations as `--follow`,
