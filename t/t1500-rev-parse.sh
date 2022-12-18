@@ -195,7 +195,7 @@ test_expect_success 'rev-parse --is-shallow-repository in non-shallow repo' '
 '
 
 test_expect_success 'rev-parse --show-object-format in repo' '
-	echo "$(test_oid algo)" >expect &&
+	test_oid algo >expect &&
 	git rev-parse --show-object-format >actual &&
 	test_cmp expect actual &&
 	git rev-parse --show-object-format=storage >actual &&

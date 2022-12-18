@@ -815,7 +815,8 @@ test_expect_success 'test_oid provides sane info by default' '
 	grep "^00*\$" actual &&
 	rawsz="$(test_oid rawsz)" &&
 	hexsz="$(test_oid hexsz)" &&
-	test "$hexsz" -eq $(wc -c <actual) &&
+	# +1 accounts for the trailing newline
+	test $(( $hexsz + 1)) -eq $(wc -c <actual) &&
 	test $(( $rawsz * 2)) -eq "$hexsz"
 '
 
@@ -826,7 +827,7 @@ test_expect_success 'test_oid can look up data for SHA-1' '
 	grep "^00*\$" actual &&
 	rawsz="$(test_oid rawsz)" &&
 	hexsz="$(test_oid hexsz)" &&
-	test $(wc -c <actual) -eq 40 &&
+	test $(wc -c <actual) -eq 41 &&
 	test "$rawsz" -eq 20 &&
 	test "$hexsz" -eq 40
 '
@@ -838,7 +839,7 @@ test_expect_success 'test_oid can look up data for SHA-256' '
 	grep "^00*\$" actual &&
 	rawsz="$(test_oid rawsz)" &&
 	hexsz="$(test_oid hexsz)" &&
-	test $(wc -c <actual) -eq 64 &&
+	test $(wc -c <actual) -eq 65 &&
 	test "$rawsz" -eq 32 &&
 	test "$hexsz" -eq 64
 '
