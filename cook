@@ -709,7 +709,7 @@ sub tweak_willdo {
 	# NEEDSWORK: does this work correctly for a half-merged topic?
 	$desc =~ s/\n<<\n.*//s;
 	if ($desc =~ /^  \(merged to 'next'/m) {
-		$text =~ s/^ Will merge to 'next'\.$/ $mergetomaster/m;
+		$text =~ s/^ Will merge (back )?to 'next'\.$/ $mergetomaster/m;
 		$text =~ s/^ Will merge to and (then )?cook in 'next'\.$/ Will cook in 'next'./m;
 		$text =~ s/^ Will merge to 'next' and (then )?to '$MASTER'\.$/ Will merge to '$MASTER'./m;
 	}
