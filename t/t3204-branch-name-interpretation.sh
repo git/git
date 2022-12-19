@@ -57,6 +57,16 @@ test_expect_success 'create branch with pseudo-qualified name' '
 	expect_branch refs/heads/refs/heads/qualified two
 '
 
+test_expect_success 'force-copy a branch to itself via @{-1} is no-op' '
+	git branch -t copiable main &&
+	git checkout copiable &&
+	git checkout - &&
+	git branch -C @{-1} copiable &&
+	git config --get-all branch.copiable.merge >actual &&
+	echo refs/heads/main >expect &&
+	test_cmp expect actual
+'
+
 test_expect_success 'delete branch via @{-1}' '
 	git branch previous-del &&
 
