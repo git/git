@@ -394,7 +394,6 @@ struct diff_options {
 	unsigned color_moved_ws_handling;
 
 	struct repository *repo;
-	struct option *parseopts;
 	struct strmap *additional_path_headers;
 
 	int no_free;
@@ -539,6 +538,7 @@ int git_diff_ui_config(const char *var, const char *value, void *cb);
 #define diff_setup(diffopts) repo_diff_setup(the_repository, diffopts)
 #endif
 void repo_diff_setup(struct repository *, struct diff_options *);
+struct option *add_diff_options(const struct option *, struct diff_options *);
 int diff_opt_parse(struct diff_options *, const char **, int, const char *);
 void diff_setup_done(struct diff_options *);
 int git_config_rename(const char *var, const char *value);
