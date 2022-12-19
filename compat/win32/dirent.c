@@ -34,13 +34,13 @@ DIR *opendir(const char *name)
 	if (len && !is_dir_sep(pattern[len - 1]))
 		pattern[len++] = '/';
 	pattern[len++] = '*';
-	pattern[len] = 0;
+	pattern[len] = '\0';
 
 	/* open find handle */
 	h = FindFirstFileW(pattern, &fdata);
 	if (h == INVALID_HANDLE_VALUE) {
 		DWORD err = GetLastError();
-		errno = (err == ERROR_DIRECTORY) ? ENOTDIR : err_win_to_posix(err);
+		errno = (err == ERROR_DIRECTORY) ? ENOTDIR : ENOENT;
 		return NULL;
 	}
 
