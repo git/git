@@ -1019,7 +1019,7 @@ static void *run_thread(void *data)
 		sigset_t mask;
 		sigemptyset(&mask);
 		sigaddset(&mask, SIGPIPE);
-		if (pthread_sigmask(SIG_BLOCK, &mask, NULL) < 0) {
+		if (pthread_sigmask(SIG_BLOCK, &mask, NULL)) {
 			ret = error("unable to block SIGPIPE in async thread");
 			return (void *)ret;
 		}
