@@ -14,6 +14,11 @@ UI, Workflows & Features
    just gives an empty output, while the former still gives an error
    message.
 
+ * Introduce a case insensitive mode to the Bash completion helpers.
+
+ * The advice message given by "git status" when it takes long time to
+   enumerate untracked paths has been updated.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -34,4 +39,31 @@ Fixes since v2.39
    arguments when invoked directly.
    (merge d4f7036887 rs/multi-filter-args later to maint).
 
+ * Make fsmonitor more robust to avoid the flakiness seen in t7527.
+   (merge 6692d45477 jh/t7527-unflake-by-forcing-cookie later to maint).
+
+ * Stop using deprecated macOS API in fsmonitor.
+   (merge b0226007f0 jh/fsmonitor-darwin-modernize later to maint).
+
+ * Redefining system functions for a few functions did not follow our
+   usual "implement git_foo() and #define foo(args) git_foo(args)"
+   pattern, which has broken build for some folks.
+   (merge e1a95b78d8 jk/avoid-redef-system-functions-2.30 later to maint).
+   (merge 395bec6b39 jk/avoid-redef-system-functions later to maint).
+
+ * The way the diff machinery prepares the options array for the
+   parse_options API has been refactored to avoid resource leaks.
+   (merge 189e97bc4b rs/diff-parseopts later to maint).
+
+ * Correct pthread API usage.
+   (merge 786e67611d sx/pthread-error-check-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
+   (merge 77e04b2ed4 rs/t4205-do-not-exit-in-test-script later to maint).
+   (merge faebba436e rs/plug-pattern-list-leak-in-lof later to maint).
+   (merge 243caa8982 ab/t5314-avoid-losing-exit-status later to maint).
+   (merge 4d81ce1b99 ab/t7600-avoid-losing-exit-status-of-git later to maint).
+   (merge 5f3bfdc4f3 ab/t4023-avoid-losing-exit-status-of-diff later to maint).
+   (merge 500317ae03 js/t3920-shell-and-or-fix later to maint).
+   (merge 86325d36e6 rs/t3920-crlf-eating-grep-fix later to maint).
+   (merge cfbd173ccb rj/branch-copy-and-rename later to maint).
