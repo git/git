@@ -345,82 +345,98 @@ static unsigned parse_color_moved_ws(const char *arg)
 
 int git_diff_ui_config(const char *var, const char *value, void *cb)
 {
-	if (!strcmp(var, "diff.color") || !strcmp(var, "color.diff")) {
+	if (!strcmp(var, "color.diff")) {
 		diff_use_color_default = git_config_colorbool(var, value);
 		return 0;
 	}
-	if (!strcmp(var, "diff.colormoved")) {
-		int cm = parse_color_moved(value);
-		if (cm < 0)
-			return -1;
-		diff_color_moved_default = cm;
-		return 0;
-	}
-	if (!strcmp(var, "diff.colormovedws")) {
-		unsigned cm = parse_color_moved_ws(value);
-		if (cm & COLOR_MOVED_WS_ERROR)
-			return -1;
-		diff_color_moved_ws_default = cm;
-		return 0;
-	}
-	if (!strcmp(var, "diff.context")) {
-		diff_context_default = git_config_int(var, value);
-		if (diff_context_default < 0)
-			return -1;
-		return 0;
-	}
-	if (!strcmp(var, "diff.interhunkcontext")) {
-		diff_interhunk_context_default = git_config_int(var, value);
-		if (diff_interhunk_context_default < 0)
-			return -1;
-		return 0;
-	}
-	if (!strcmp(var, "diff.renames")) {
-		diff_detect_rename_default = git_config_rename(var, value);
-		return 0;
-	}
-	if (!strcmp(var, "diff.autorefreshindex")) {
-		diff_auto_refresh_index = git_config_bool(var, value);
-		return 0;
-	}
-	if (!strcmp(var, "diff.mnemonicprefix")) {
-		diff_mnemonic_prefix = git_config_bool(var, value);
-		return 0;
-	}
-	if (!strcmp(var, "diff.noprefix")) {
-		diff_no_prefix = git_config_bool(var, value);
-		return 0;
-	}
-	if (!strcmp(var, "diff.relative")) {
-		diff_relative = git_config_bool(var, value);
-		return 0;
-	}
-	if (!strcmp(var, "diff.statgraphwidth")) {
-		diff_stat_graph_width = git_config_int(var, value);
-		return 0;
-	}
-	if (!strcmp(var, "diff.external"))
-		return git_config_string(&external_diff_cmd_cfg, var, value);
-	if (!strcmp(var, "diff.wordregex"))
-		return git_config_string(&diff_word_regex_cfg, var, value);
-	if (!strcmp(var, "diff.orderfile"))
-		return git_config_pathname(&diff_order_file_cfg, var, value);
 
-	if (!strcmp(var, "diff.ignoresubmodules"))
-		handle_ignore_submodules_arg(&default_diff_options, value);
+	if (!strncmp(var, "diff.", 5)) {
+		const char *tmp = var + 5;
+		if (!strcmp(var, "color")) {
+			diff_use_color_default =
+				git_config_colorbool(var, value);
+			return 0;
+		}
+		if (!strcmp(tmp, "colormoved")) {
+			int cm = parse_color_moved(value);
+			if (cm < 0)
+				return -1;
+			diff_color_moved_default = cm;
+			return 0;
+		}
+		if (!strcmp(tmp, "colormovedws")) {
+			unsigned cm = parse_color_moved_ws(value);
+			if (cm & COLOR_MOVED_WS_ERROR)
+				return -1;
+			diff_color_moved_ws_default = cm;
+			return 0;
+		}
+		if (!strcmp(tmp, "context")) {
+			diff_context_default = git_config_int(var, value);
+			if (diff_context_default < 0)
+				return -1;
+			return 0;
+		}
+		if (!strcmp(tmp, "interhunkcontext")) {
+			diff_interhunk_context_default =
+				git_config_int(var, value);
+			if (diff_interhunk_context_default < 0)
+				return -1;
+			return 0;
+		}
+		if (!strcmp(tmp, "renames")) {
+			diff_detect_rename_default =
+				git_config_rename(var, value);
+			return 0;
+		}
+		if (!strcmp(tmp, "autorefreshindex")) {
+			diff_auto_refresh_index = git_config_bool(var, value);
+			return 0;
+		}
+		if (!strcmp(tmp, "mnemonicprefix")) {
+			diff_mnemonic_prefix = git_config_bool(var, value);
+			return 0;
+		}
+		if (!strcmp(tmp, "noprefix")) {
+			diff_no_prefix = git_config_bool(var, value);
+			return 0;
+		}
+		if (!strcmp(tmp, "relative")) {
+			diff_relative = git_config_bool(var, value);
+			return 0;
+		}
+		if (!strcmp(tmp, "statgraphwidth")) {
+			diff_stat_graph_width = git_config_int(var, value);
+			return 0;
+		}
+		if (!strcmp(tmp, "external"))
+			return git_config_string(&external_diff_cmd_cfg, var,
+						 value);
+		if (!strcmp(tmp, "wordregex"))
+			return git_config_string(&diff_word_regex_cfg, var,
+						 value);
+		if (!strcmp(tmp, "orderfile"))
+			return git_config_pathname(&diff_order_file_cfg, var,
+						   value);
 
-	if (!strcmp(var, "diff.submodule")) {
-		if (parse_submodule_params(&default_diff_options, value))
-			warning(_("Unknown value for 'diff.submodule' config variable: '%s'"),
-				value);
-		return 0;
-	}
+		if (!strcmp(tmp, "ignoresubmodules"))
+			handle_ignore_submodules_arg(&default_diff_options,
+						     value);
 
-	if (!strcmp(var, "diff.algorithm")) {
-		diff_algorithm = parse_algorithm_value(value);
-		if (diff_algorithm < 0)
-			return -1;
-		return 0;
+		if (!strcmp(tmp, "submodule")) {
+			if (parse_submodule_params(&default_diff_options,
+						   value))
+				warning(_("Unknown value for 'diff.submodule' config variable: '%s'"),
+					value);
+			return 0;
+		}
+
+		if (!strcmp(tmp, "algorithm")) {
+			diff_algorithm = parse_algorithm_value(value);
+			if (diff_algorithm < 0)
+				return -1;
+			return 0;
+		}
 	}
 
 	if (git_color_config(var, value, cb) < 0)
