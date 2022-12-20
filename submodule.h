@@ -164,7 +164,8 @@ void submodule_unset_core_worktree(const struct submodule *sub);
  */
 void prepare_submodule_repo_env(struct strvec *env);
 
-void absorb_git_dir_into_superproject(const char *path);
+void absorb_git_dir_into_superproject(const char *path,
+				      const char *super_prefix);
 
 /*
  * Return the absolute path of the working tree of the superproject, which this

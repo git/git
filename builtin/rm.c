@@ -86,7 +86,7 @@ static void submodules_absorb_gitdir_if_needed(void)
 			continue;
 
 		if (!submodule_uses_gitfile(name))
-			absorb_git_dir_into_superproject(name);
+			absorb_git_dir_into_superproject(name, NULL);
 	}
 }
 
