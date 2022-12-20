@@ -370,7 +370,7 @@ test_expect_success 'read-tree supports the super-prefix' '
 	cat <<-EOF >expect &&
 		error: Updating '\''fictional/a'\'' would lose untracked files in it
 	EOF
-	test_must_fail git --super-prefix fictional/ read-tree -u -m "$treeH" "$treeM" 2>actual &&
+	test_must_fail git read-tree --super-prefix fictional/ -u -m "$treeH" "$treeM" 2>actual &&
 	test_cmp expect actual
 '
 

@@ -51,10 +51,6 @@
  *	on bare repositories.
  *	This only makes sense when `RUN_SETUP` is also set.
  *
- * `SUPPORT_SUPER_PREFIX`:
- *
- *	The built-in supports `--super-prefix`.
- *
  * `DELAY_PAGER_CONFIG`:
  *
  *	If RUN_SETUP or RUN_SETUP_GENTLY is set, git.c normally handles
