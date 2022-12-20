@@ -136,7 +136,7 @@ static void repo_set_commondir(struct repository *repo,
 {
 	struct strbuf sb = STRBUF_INIT;
 
-	free(repo->commondir);
+	FREE_AND_NULL(repo->commondir);
 
 	if (commondir) {
 		repo->different_commondir = 1;
