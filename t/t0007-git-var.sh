@@ -109,6 +109,44 @@ test_expect_success 'get GIT_EDITOR with configuration and environment variable 
 	)
 '
 
+test_expect_success 'get GIT_SEQUENCE_EDITOR without configuration' '
+	(
+		sane_unset GIT_SEQUENCE_EDITOR &&
+		git var GIT_EDITOR >expect &&
+		git var GIT_SEQUENCE_EDITOR >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'get GIT_SEQUENCE_EDITOR with configuration' '
+	test_config sequence.editor foo &&
+	(
+		sane_unset GIT_SEQUENCE_EDITOR &&
+		echo foo >expect &&
+		git var GIT_SEQUENCE_EDITOR >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'get GIT_SEQUENCE_EDITOR with environment variable' '
+	(
+		sane_unset GIT_SEQUENCE_EDITOR &&
+		echo bar >expect &&
+		GIT_SEQUENCE_EDITOR=bar git var GIT_SEQUENCE_EDITOR >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'get GIT_SEQUENCE_EDITOR with configuration and environment variable' '
+	test_config sequence.editor foo &&
+	(
+		sane_unset GIT_SEQUENCE_EDITOR &&
+		echo bar >expect &&
+		GIT_SEQUENCE_EDITOR=bar git var GIT_SEQUENCE_EDITOR >actual &&
+		test_cmp expect actual
+	)
+'
+
 # For git var -l, we check only a representative variable;
 # testing the whole output would make our test too brittle with
 # respect to unrelated changes in the test suite's environment.

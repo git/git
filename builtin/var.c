@@ -14,6 +14,11 @@ static const char *editor(int flag)
 	return git_editor();
 }
 
+static const char *sequence_editor(int flag)
+{
+	return git_sequence_editor();
+}
+
 static const char *pager(int flag)
 {
 	const char *pgm = git_pager(1);
@@ -36,6 +41,7 @@ static struct git_var git_vars[] = {
 	{ "GIT_COMMITTER_IDENT", git_committer_info },
 	{ "GIT_AUTHOR_IDENT",   git_author_info },
 	{ "GIT_EDITOR", editor },
+	{ "GIT_SEQUENCE_EDITOR", sequence_editor },
 	{ "GIT_PAGER", pager },
 	{ "GIT_DEFAULT_BRANCH", default_branch },
 	{ "", NULL },
