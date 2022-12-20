@@ -437,11 +437,13 @@ static int starts_with_dot_dot_slash(const char *const path)
 
 struct init_cb {
 	const char *prefix;
+	const char *super_prefix;
 	unsigned int flags;
 };
 #define INIT_CB_INIT { 0 }
 
 static void init_submodule(const char *path, const char *prefix,
+			   const char *super_prefix,
 			   unsigned int flags)
 {
 	const struct submodule *sub;
@@ -449,8 +451,7 @@ static void init_submodule(const char *path, const char *prefix,
 	const char *upd;
 	char *url = NULL, *displaypath;
 
-	displaypath = get_submodule_displaypath(path, prefix,
-						get_super_prefix());
+	displaypath = get_submodule_displaypath(path, prefix, super_prefix);
 
 	sub = submodule_from_path(the_repository, null_oid(), path);
 
@@ -526,7 +527,8 @@ static void init_submodule_cb(const struct cache_entry *list_item, void *cb_data
 {
 	struct init_cb *info = cb_data;
 
-	init_submodule(list_item->name, info->prefix, info->flags);
+	init_submodule(list_item->name, info->prefix, info->super_prefix,
+		       info->flags);
 }
 
 static int module_init(int argc, const char **argv, const char *prefix)
@@ -792,6 +794,7 @@ struct summary_cb {
 	int argc;
 	const char **argv;
 	const char *prefix;
+	const char *super_prefix;
 	unsigned int cached: 1;
 	unsigned int for_status: 1;
 	unsigned int files: 1;
@@ -954,7 +957,7 @@ static void generate_submodule_summary(struct summary_cb *info,
 	}
 
 	displaypath = get_submodule_displaypath(p->sm_path, info->prefix,
-						get_super_prefix());
+						info->super_prefix);
 
 	if (!missing_src && !missing_dst) {
 		struct child_process cp_rev_list = CHILD_PROCESS_INIT;
@@ -1893,6 +1896,7 @@ static void submodule_update_clone_release(struct submodule_update_clone *suc)
 
 struct update_data {
 	const char *prefix;
+	const char *super_prefix;
 	char *displaypath;
 	enum submodule_update_type update_default;
 	struct object_id suboid;
@@ -1969,7 +1973,7 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 	char *key;
 	const struct update_data *ud = suc->update_data;
 	char *displaypath = get_submodule_displaypath(ce->name, ud->prefix,
-						      get_super_prefix());
+						      ud->super_prefix);
 	struct strbuf sb = STRBUF_INIT;
 	int needs_cloning = 0;
 	int need_free_url = 0;
@@ -2449,11 +2453,11 @@ static void update_data_to_args(const struct update_data *update_data,
 {
 	enum submodule_update_type update_type = update_data->update_default;
 
+	strvec_pushl(args, "submodule--helper", "update", "--recursive", NULL);
 	if (update_data->displaypath) {
 		strvec_push(args, "--super-prefix");
 		strvec_pushf(args, "%s/", update_data->displaypath);
 	}
-	strvec_pushl(args, "submodule--helper", "update", "--recursive", NULL);
 	strvec_pushf(args, "--jobs=%d", update_data->max_jobs);
 	if (update_data->quiet)
 		strvec_push(args, "--quiet");
@@ -2620,7 +2624,7 @@ static int update_submodules(struct update_data *update_data)
 
 		update_data->displaypath = get_submodule_displaypath(
 			update_data->sm_path, update_data->prefix,
-			get_super_prefix());
+			update_data->super_prefix);
 		code = update_submodule(update_data);
 		FREE_AND_NULL(update_data->displaypath);
 fail:
@@ -2646,6 +2650,7 @@ static int module_update(int argc, const char **argv, const char *prefix)
 		LIST_OBJECTS_FILTER_INIT;
 	int ret;
 	struct option module_update_options[] = {
+		OPT__SUPER_PREFIX(&opt.super_prefix),
 		OPT__FORCE(&opt.force, N_("force checkout updates"), 0),
 		OPT_BOOL(0, "init", &opt.init,
 			 N_("initialize uninitialized submodules before update")),
@@ -2742,6 +2747,7 @@ static int module_update(int argc, const char **argv, const char *prefix)
 			module_list_active(&list);
 
 		info.prefix = opt.prefix;
+		info.super_prefix = opt.super_prefix;
 		if (opt.quiet)
 			info.flags |= OPT_QUIET;
 
@@ -3368,8 +3374,6 @@ cleanup:
 
 int cmd_submodule__helper(int argc, const char **argv, const char *prefix)
 {
-	const char *cmd = argv[0];
-	const char *subcmd;
 	parse_opt_subcommand_fn *fn = NULL;
 	const char *const usage[] = {
 		N_("git submodule--helper <command>"),
@@ -3393,16 +3397,6 @@ int cmd_submodule__helper(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 	argc = parse_options(argc, argv, prefix, options, usage, 0);
-	subcmd = argv[0];
-
-	if (strcmp(subcmd, "clone") && strcmp(subcmd, "update") &&
-	    get_super_prefix())
-		/*
-		 * xstrfmt() rather than "%s %s" to keep the translated
-		 * string identical to git.c's.
-		 */
-		die(_("%s doesn't support --super-prefix"),
-		    xstrfmt("'%s %s'", cmd, subcmd));
 
 	return fn(argc, argv, prefix);
 }
