@@ -1051,4 +1051,40 @@ test_expect_success 'git cat-file -s returns correct size with --use-mailmap for
 	test_cmp expect actual
 '
 
+test_expect_success 'git cat-file --batch-check returns correct size with --use-mailmap' '
+	test_when_finished "rm .mailmap" &&
+	cat >.mailmap <<-\EOF &&
+	C O Mitter <committer@example.com> Orig <orig@example.com>
+	EOF
+	git cat-file commit HEAD >commit.out &&
+	commit_size=$(wc -c <commit.out) &&
+	commit_sha=$(git rev-parse HEAD) &&
+	echo $commit_sha commit $commit_size >expect &&
+	git cat-file --use-mailmap commit HEAD >commit.out &&
+	commit_size=$(wc -c <commit.out) &&
+	echo $commit_sha commit $commit_size >>expect &&
+	echo "HEAD" >in &&
+	git cat-file --batch-check <in >actual &&
+	git cat-file --use-mailmap --batch-check <in >>actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git cat-file --batch-command returns correct size with --use-mailmap' '
+	test_when_finished "rm .mailmap" &&
+	cat >.mailmap <<-\EOF &&
+	C O Mitter <committer@example.com> Orig <orig@example.com>
+	EOF
+	git cat-file commit HEAD >commit.out &&
+	commit_size=$(wc -c <commit.out) &&
+	commit_sha=$(git rev-parse HEAD) &&
+	echo $commit_sha commit $commit_size >expect &&
+	git cat-file --use-mailmap commit HEAD >commit.out &&
+	commit_size=$(wc -c <commit.out) &&
+	echo $commit_sha commit $commit_size >>expect &&
+	echo "info HEAD" >in &&
+	git cat-file --batch-command <in >actual &&
+	git cat-file --use-mailmap --batch-command <in >>actual &&
+	test_cmp expect actual
+'
+
 test_done
