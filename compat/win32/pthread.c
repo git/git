@@ -13,12 +13,14 @@
 #include <errno.h>
 #include <limits.h>
 
-static unsigned __stdcall win32_start_routine(void *arg)
+static void __cdecl win32_start_routine(void *arg)
 {
+	void* arg2;
 	pthread_t *thread = arg;
+	arg2 = thread->arg;
+	thread->arg = NULL;
 	thread->tid = GetCurrentThreadId();
-	thread->arg = thread->start_routine(thread->arg);
-	return 0;
+	thread->arg = thread->start_routine(arg2);
 }
 
 int pthread_create(pthread_t *thread, const void *unused,
@@ -26,8 +28,7 @@ int pthread_create(pthread_t *thread, const void *unused,
 {
 	thread->arg = arg;
 	thread->start_routine = start_routine;
-	thread->handle = (HANDLE)
-		_beginthreadex(NULL, 0, win32_start_routine, thread, 0, NULL);
+	thread->handle = (HANDLE)_beginthread(win32_start_routine, 0, thread);
 
 	if (!thread->handle)
 		return errno;
@@ -37,8 +38,13 @@ int pthread_create(pthread_t *thread, const void *unused,
 
 int win32_pthread_join(pthread_t *thread, void **value_ptr)
 {
-	DWORD result = WaitForSingleObject(thread->handle, INFINITE);
-	switch (result) {
+	if (thread->arg) {
+		if (value_ptr)
+			*value_ptr = thread->arg;
+		return 0;
+	}
+
+	switch (WaitForSingleObject(thread->handle, INFINITE)) {
 		case WAIT_OBJECT_0:
 			if (value_ptr)
 				*value_ptr = thread->arg;
