@@ -2075,15 +2075,17 @@ ifdef USE_MIMALLOC
 
 $(MIMALLOC_OBJS): COMPAT_CFLAGS += -DBANNED_H
 
-ifdef DEVELOPER
 $(MIMALLOC_OBJS): COMPAT_CFLAGS += \
 	-Wno-attributes \
-	-Wno-pedantic \
 	-Wno-unknown-pragmas \
+	-Wno-array-bounds
+
+ifdef DEVELOPER
+$(MIMALLOC_OBJS): COMPAT_CFLAGS += \
+	-Wno-pedantic \
 	-Wno-declaration-after-statement \
 	-Wno-old-style-definition \
-	-Wno-missing-prototypes \
-	-Wno-array-bounds
+	-Wno-missing-prototypes
 endif
 endif
 
