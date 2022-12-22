@@ -52,6 +52,7 @@ static int decoration_style;
 static int decoration_given;
 static int use_mailmap_config = 1;
 static unsigned int force_in_body_from;
+static int stdout_mboxrd;
 static const char *fmt_patch_subject_prefix = "PATCH";
 static int fmt_patch_name_max = FORMAT_PATCH_NAME_MAX_DEFAULT;
 static const char *fmt_pretty;
@@ -1075,6 +1076,10 @@ static int git_format_config(const char *var, const char *value, void *cb)
 	}
 	if (!strcmp(var, "format.coverfromdescription")) {
 		cover_from_description_mode = parse_cover_from_description(value);
+		return 0;
+	}
+	if (!strcmp(var, "format.mboxrd")) {
+		stdout_mboxrd = git_config_bool(var, value);
 		return 0;
 	}
 
@@ -2104,6 +2109,9 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	die_for_incompatible_opt3(use_stdout, "--stdout",
 				  rev.diffopt.close_file, "--output",
 				  !!output_directory, "--output-directory");
+
+	if (use_stdout && stdout_mboxrd)
+		rev.commit_format = CMIT_FMT_MBOXRD;
 
 	if (use_stdout) {
 		setup_pager();
