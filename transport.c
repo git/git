@@ -198,7 +198,7 @@ struct git_transport_data {
 	struct git_transport_options options;
 	struct child_process *conn;
 	int fd[2];
-	unsigned got_remote_heads : 1;
+	unsigned finished_handshake : 1;
 	enum protocol_version version;
 	struct oid_array extra_have;
 	struct oid_array shallow;
@@ -345,7 +345,7 @@ static struct ref *handshake(struct transport *transport, int for_push,
 	case protocol_unknown_version:
 		BUG("unknown protocol version");
 	}
-	data->got_remote_heads = 1;
+	data->finished_handshake = 1;
 	transport->hash_algo = reader.hash_algo;
 
 	if (reader.line_peeked)
@@ -421,7 +421,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 	args.negotiation_tips = data->options.negotiation_tips;
 	args.reject_shallow_remote = transport->smart_options->reject_shallow;
 
-	if (!data->got_remote_heads) {
+	if (!data->finished_handshake) {
 		int i;
 		int must_list_refs = 0;
 		for (i = 0; i < nr_heads; i++) {
@@ -461,7 +461,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 			  to_fetch, nr_heads, &data->shallow,
 			  &transport->pack_lockfiles, data->version);
 
-	data->got_remote_heads = 0;
+	data->finished_handshake = 0;
 	data->options.self_contained_and_connected =
 		args.self_contained_and_connected;
 	data->options.connectivity_checked = args.connectivity_checked;
@@ -846,7 +846,7 @@ static int git_transport_push(struct transport *transport, struct ref *remote_re
 	if (transport_color_config() < 0)
 		return -1;
 
-	if (!data->got_remote_heads)
+	if (!data->finished_handshake)
 		get_refs_via_connect(transport, 1, NULL);
 
 	memset(&args, 0, sizeof(args));
@@ -894,7 +894,7 @@ static int git_transport_push(struct transport *transport, struct ref *remote_re
 	else
 		ret = finish_connect(data->conn);
 	data->conn = NULL;
-	data->got_remote_heads = 0;
+	data->finished_handshake = 0;
 
 	return ret;
 }
@@ -914,7 +914,7 @@ static int disconnect_git(struct transport *transport)
 {
 	struct git_transport_data *data = transport->data;
 	if (data->conn) {
-		if (data->got_remote_heads && !transport->stateless_rpc)
+		if (data->finished_handshake && !transport->stateless_rpc)
 			packet_flush(data->fd[1]);
 		close(data->fd[0]);
 		if (data->fd[1] >= 0)
@@ -949,7 +949,7 @@ void transport_take_over(struct transport *transport,
 	data->conn = child;
 	data->fd[0] = data->conn->out;
 	data->fd[1] = data->conn->in;
-	data->got_remote_heads = 0;
+	data->finished_handshake = 0;
 	transport->data = data;
 
 	transport->vtable = &taken_over_vtable;
@@ -1150,7 +1150,7 @@ struct transport *transport_get(struct remote *remote, const char *url)
 		ret->smart_options = &(data->options);
 
 		data->conn = NULL;
-		data->got_remote_heads = 0;
+		data->finished_handshake = 0;
 	} else {
 		/* Unknown protocol in URL. Pass to external handler. */
 		int len = external_specification_len(url);
