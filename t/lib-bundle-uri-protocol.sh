@@ -83,3 +83,22 @@ test_expect_success "connect with $BUNDLE_URI_PROTOCOL:// using protocol v2: hav
 	# Server advertised bundle-uri capability
 	grep "< bundle-uri" log
 '
+
+test_expect_success "clone with $BUNDLE_URI_PROTOCOL:// using protocol v2: request bundle-uris" '
+	test_when_finished "rm -rf log cloned" &&
+
+	GIT_TRACE_PACKET="$PWD/log" \
+	git \
+		-c protocol.version=2 \
+		clone "$BUNDLE_URI_REPO_URI" cloned \
+		>actual 2>err &&
+
+	# Server responded using protocol v2
+	grep "< version 2" log &&
+
+	# Server advertised bundle-uri capability
+	grep "< bundle-uri" log &&
+
+	# Client issued bundle-uri command
+	grep "> command=bundle-uri" log
+'
