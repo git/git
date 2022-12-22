@@ -581,6 +581,16 @@ cached:
 	return advertise_bundle_uri;
 }
 
+static int config_to_packet_line(const char *key, const char *value, void *data)
+{
+	struct packet_reader *writer = data;
+
+	if (!strncmp(key, "bundle.", 7))
+		packet_write_fmt(writer->fd, "%s=%s", key, value);
+
+	return 0;
+}
+
 int bundle_uri_command(struct repository *r,
 		       struct packet_reader *request)
 {
@@ -592,7 +602,11 @@ int bundle_uri_command(struct repository *r,
 	if (request->status != PACKET_READ_FLUSH)
 		die(_("bundle-uri: expected flush after arguments"));
 
-	/* TODO: Implement the communication */
+	/*
+	 * Read all "bundle.*" config lines to the client as key=value
+	 * packet lines.
+	 */
+	git_config(config_to_packet_line, &writer);
 
 	packet_writer_flush(&writer);
 
