@@ -119,3 +119,49 @@ test_expect_success "clone with $BUNDLE_URI_PROTOCOL:// using protocol v2: reque
 	# Client issued bundle-uri command
 	grep "> command=bundle-uri" log
 '
+
+# The remaining tests will all assume transfer.bundleURI=true
+#
+# This test can be removed when transfer.bundleURI is enabled by default.
+test_expect_success 'enable transfer.bundleURI for remaining tests' '
+	git config --global transfer.bundleURI true
+'
+
+test_expect_success "test bundle-uri with $BUNDLE_URI_PROTOCOL:// using protocol v2" '
+	test_config -C "$BUNDLE_URI_PARENT" \
+		bundle.only.uri "$BUNDLE_URI_BUNDLE_URI_ESCAPED" &&
+
+	# All data about bundle URIs
+	cat >expect <<-EOF &&
+	[bundle]
+		version = 1
+		mode = all
+	EOF
+
+	test-tool bundle-uri \
+		ls-remote \
+		"$BUNDLE_URI_REPO_URI" \
+		>actual &&
+	test_cmp_config_output expect actual
+'
+
+test_expect_success "test bundle-uri with $BUNDLE_URI_PROTOCOL:// using protocol v2 and extra data" '
+	test_config -C "$BUNDLE_URI_PARENT" \
+		bundle.only.uri "$BUNDLE_URI_BUNDLE_URI_ESCAPED" &&
+
+	# Extra data should be ignored
+	test_config -C "$BUNDLE_URI_PARENT" bundle.only.extra bogus &&
+
+	# All data about bundle URIs
+	cat >expect <<-EOF &&
+	[bundle]
+		version = 1
+		mode = all
+	EOF
+
+	test-tool bundle-uri \
+		ls-remote \
+		"$BUNDLE_URI_REPO_URI" \
+		>actual &&
+	test_cmp_config_output expect actual
+'

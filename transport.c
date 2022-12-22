@@ -371,6 +371,13 @@ static int get_bundle_uri(struct transport *transport)
 		init_bundle_list(transport->bundles);
 	}
 
+	if (!data->finished_handshake) {
+		struct ref *refs = handshake(transport, 0, NULL, 0);
+
+		if (refs)
+			free_refs(refs);
+	}
+
 	/*
 	 * "Support" protocol v0 and v2 without bundle-uri support by
 	 * silently degrading to a NOOP.
