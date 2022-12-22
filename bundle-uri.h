@@ -108,6 +108,20 @@ int bundle_uri_parse_config_format(const char *uri,
 int fetch_bundle_uri(struct repository *r, const char *uri);
 
 /**
+ * Given a bundle list that was already advertised (likely by the
+ * bundle-uri protocol v2 verb) at the given uri, fetch and unbundle the
+ * bundles according to the bundle strategy of that list.
+ *
+ * It is expected that the given 'list' is initialized, including its
+ * 'baseURI' value.
+ *
+ * Returns non-zero if there was an error trying to download the list
+ * or any of its advertised bundles.
+ */
+int fetch_bundle_list(struct repository *r,
+		      struct bundle_list *list);
+
+/**
  * API for serve.c.
  */
 int bundle_uri_advertise(struct repository *r, struct strbuf *value);
