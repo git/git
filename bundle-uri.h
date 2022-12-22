@@ -4,6 +4,7 @@
 #include "hashmap.h"
 #include "strbuf.h"
 
+struct packet_reader;
 struct repository;
 struct string_list;
 
@@ -91,6 +92,12 @@ int bundle_uri_parse_config_format(const char *uri,
  * Returns non-zero if no bundle information is found at the given 'uri'.
  */
 int fetch_bundle_uri(struct repository *r, const char *uri);
+
+/**
+ * API for serve.c.
+ */
+int bundle_uri_advertise(struct repository *r, struct strbuf *value);
+int bundle_uri_command(struct repository *r, struct packet_reader *request);
 
 /**
  * General API for {transport,connect}.c etc.
