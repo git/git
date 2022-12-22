@@ -506,11 +506,11 @@ static void output(struct string_list *a, struct string_list *b,
 		b_util = j < b->nr ? b->items[j].util : NULL;
 
 		/* Skip all the already-shown commits from the LHS. */
-		while (i < a->nr && a_util->shown)
+		while (a_util && a_util->shown)
 			a_util = ++i < a->nr ? a->items[i].util : NULL;
 
 		/* Show unmatched LHS commit whose predecessors were shown. */
-		if (i < a->nr && a_util->matching < 0) {
+		if (a_util && a_util->matching < 0) {
 			if (!range_diff_opts->right_only)
 				output_pair_header(&opts, patch_no_width,
 					   &buf, &dashes, a_util, NULL);
@@ -519,7 +519,7 @@ static void output(struct string_list *a, struct string_list *b,
 		}
 
 		/* Show unmatched RHS commits. */
-		while (j < b->nr && b_util->matching < 0) {
+		while (b_util && b_util->matching < 0) {
 			if (!range_diff_opts->left_only)
 				output_pair_header(&opts, patch_no_width,
 					   &buf, &dashes, NULL, b_util);
@@ -527,7 +527,7 @@ static void output(struct string_list *a, struct string_list *b,
 		}
 
 		/* Show matching LHS/RHS pair. */
-		if (j < b->nr) {
+		if (b_util) {
 			a_util = a->items[b_util->matching].util;
 			output_pair_header(&opts, patch_no_width,
 					   &buf, &dashes, a_util, b_util);
