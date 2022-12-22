@@ -10,11 +10,12 @@ void *git_mmap(void *start, size_t length, int prot, int flags, int fd, off_t of
 	uint32_t h = (o >> 32) & 0xFFFFFFFF;
 
 	osfhandle = (HANDLE)_get_osfhandle(fd);
-	if (!GetFileInformationByHandleEx(osfhandle, FileEndOfFileInfo, &info, sizeof(info)))
+	if (!GetFileInformationByHandleEx(osfhandle, FileEndOfFileInfo, &info,
+					  sizeof(info)))
 		die("mmap: could not determine filesize");
 
 	if ((length + offset) > info.EndOfFile.QuadPart)
-		length = xsize_t(info.EndOfFile.QuadPart- offset);
+		length = xsize_t(info.EndOfFile.QuadPart - offset);
 
 	if (!(flags & MAP_PRIVATE))
 		die("Invalid usage of mmap when built with USE_WIN32_MMAP");
