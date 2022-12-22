@@ -85,7 +85,7 @@ test_expect_success "connect with $BUNDLE_URI_PROTOCOL:// using protocol v2: hav
 '
 
 test_expect_success "clone with $BUNDLE_URI_PROTOCOL:// using protocol v2: request bundle-uris" '
-	test_when_finished "rm -rf log cloned cloned2" &&
+	test_when_finished "rm -rf log* cloned*" &&
 
 	GIT_TRACE_PACKET="$PWD/log" \
 	git \
@@ -117,7 +117,24 @@ test_expect_success "clone with $BUNDLE_URI_PROTOCOL:// using protocol v2: reque
 	grep "< bundle-uri" log &&
 
 	# Client issued bundle-uri command
-	grep "> command=bundle-uri" log
+	grep "> command=bundle-uri" log &&
+
+	GIT_TRACE_PACKET="$PWD/log3" \
+	git \
+		-c transfer.bundleURI=true \
+		-c protocol.version=2 \
+		clone --bundle-uri="$BUNDLE_URI_BUNDLE_URI" \
+		"$BUNDLE_URI_REPO_URI" cloned3 \
+		>actual 2>err &&
+
+	# Server responded using protocol v2
+	grep "< version 2" log3 &&
+
+	# Server advertised bundle-uri capability
+	grep "< bundle-uri" log3 &&
+
+	# Client did not issue bundle-uri command (--bundle-uri override)
+	! grep "> command=bundle-uri" log3
 '
 
 # The remaining tests will all assume transfer.bundleURI=true
