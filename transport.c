@@ -1538,6 +1538,9 @@ int transport_get_remote_bundle_uri(struct transport *transport)
 	if (git_config_get_bool("transfer.bundleuri", &value) || !value)
 		return 0;
 
+	if (!transport->bundles->baseURI)
+		transport->bundles->baseURI = xstrdup(transport->url);
+
 	if (!vtable->get_bundle_uri)
 		return error(_("bundle-uri operation not supported by protocol"));
 

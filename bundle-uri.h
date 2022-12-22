@@ -61,6 +61,20 @@ struct bundle_list {
 	int version;
 	enum bundle_list_mode mode;
 	struct hashmap bundles;
+
+	/**
+	 * The baseURI of a bundle_list is the URI that provided the list.
+	 *
+	 * In the case of the 'bundle-uri' protocol v2 command, the base
+	 * URI is the URI of the Git remote.
+	 *
+	 * Otherwise, the bundle list was downloaded over HTTP from some
+	 * known URI. 'baseURI' is set to that value.
+	 *
+	 * The baseURI is used as the base for any relative URIs
+	 * advertised by the bundle list at that location.
+	 */
+	char *baseURI;
 };
 
 void init_bundle_list(struct bundle_list *list);
