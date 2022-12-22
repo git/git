@@ -1751,6 +1751,13 @@ test_path_is_hidden () {
 	return 1
 }
 
+# Poor man's URI escaping. Good enough for the test suite whose trash
+# directory has a space in it. See 93c3fcbe4d4 (git-svn: attempt to
+# mimic SVN 1.7 URL canonicalization, 2012-07-28) for prior art.
+test_uri_escape() {
+	sed 's/ /%20/g'
+}
+
 # Check that the given command was invoked as part of the
 # trace2-format trace on stdin.
 #
