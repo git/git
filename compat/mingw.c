@@ -3,7 +3,7 @@
 #include <aclapi.h>
 #include <sddl.h>
 #include <conio.h>
-#include <wchar.h>
+#include <direct.h>
 #include "../strbuf.h"
 #include "../run-command.h"
 #include "../cache.h"
@@ -322,32 +322,9 @@ int mingw_unlink(const char *pathname)
 	return ret;
 }
 
-static int is_dir_empty(const wchar_t *wpath)
-{
-	WIN32_FIND_DATAW findbuf;
-	HANDLE handle;
-	wchar_t wbuf[MAX_PATH + 2];
-	wcscpy(wbuf, wpath);
-	wcscat(wbuf, L"\\*");
-	handle = FindFirstFileW(wbuf, &findbuf);
-	if (handle == INVALID_HANDLE_VALUE)
-		return GetLastError() == ERROR_NO_MORE_FILES;
-
-	while (!wcscmp(findbuf.cFileName, L".") ||
-			!wcscmp(findbuf.cFileName, L".."))
-		if (!FindNextFileW(handle, &findbuf)) {
-			DWORD err = GetLastError();
-			FindClose(handle);
-			return err == ERROR_NO_MORE_FILES;
-		}
-	FindClose(handle);
-	return 0;
-}
-
 int mingw_rmdir(const char *pathname)
 {
 	int ret, tries = 0;
-	wchar_t wpathname[MAX_PATH];
 	struct stat st;
 
 	/*
@@ -360,7 +337,7 @@ int mingw_rmdir(const char *pathname)
 	 * directories recursively until failure (which usually happens when
 	 * the directory is not empty).
 	 *
-	 * Therefore, before calling `_wrmdir()`, we first check if the path is
+	 * Therefore, before calling `_rmdir()`, we first check if the path is
 	 * a symbolic link. If it is, we exit and return the same error as
 	 * Linux' `rmdir()` would, i.e. `ENOTDIR`.
 	 */
@@ -369,15 +346,12 @@ int mingw_rmdir(const char *pathname)
 		return -1;
 	}
 
-	if (xutftowcs_path(wpathname, pathname) < 0)
-		return -1;
-
-	while ((ret = _wrmdir(wpathname)) == -1 && tries < ARRAY_SIZE(delay)) {
+	while ((ret = _rmdir(pathname)) == -1 && tries < ARRAY_SIZE(delay)) {
 		if (!is_file_in_use_error(GetLastError()))
 			errno = err_win_to_posix(GetLastError());
 		if (errno != EACCES)
 			break;
-		if (!is_dir_empty(wpathname)) {
+		if (!PathIsDirectoryEmptyA(pathname)) {
 			errno = ENOTEMPTY;
 			break;
 		}
@@ -394,7 +368,7 @@ int mingw_rmdir(const char *pathname)
 	while (ret == -1 && errno == EACCES && is_file_in_use_error(GetLastError()) &&
 	       ask_yes_no_if_possible("Deletion of directory '%s' failed. "
 			"Should I try again?", pathname))
-	       ret = _wrmdir(wpathname);
+	       ret = _rmdir(pathname);
 	if (!ret)
 		invalidate_lstat_cache();
 	return ret;
@@ -434,7 +408,14 @@ static inline int needs_hiding(const char *path)
 
 static int set_hidden_flag(const wchar_t *path, int set)
 {
-	DWORD original = GetFileAttributesW(path), modified;
+	WIN32_FILE_ATTRIBUTE_DATA data;
+	DWORD original;
+	if (!GetFileAttributesExW(path, GetFileExInfoStandard, &data))
+	{
+		errno = err_win_to_posix(GetLastError());
+		return -1;
+	}
+	original = data.dwFileAttributes;
 	if (set)
 		modified = original | FILE_ATTRIBUTE_HIDDEN;
 	else
@@ -448,19 +429,23 @@ static int set_hidden_flag(const wchar_t *path, int set)
 int mingw_mkdir(const char *path, int mode)
 {
 	int ret;
-	wchar_t wpath[MAX_PATH];
 
 	if (!is_valid_win32_path(path, 0)) {
 		errno = EINVAL;
 		return -1;
 	}
 
-	if (xutftowcs_path(wpath, path) < 0)
+	ret= CreateDirectoryA(path, NULL);
+	
+	if (!ret) {
+		errno = err_win_to_posix(GetLastError());
 		return -1;
-	ret = _wmkdir(wpath);
-	if (!ret && needs_hiding(path))
+	}
+
+	if (needs_hiding(path))
 		return set_hidden_flag(wpath, 1);
-	return ret;
+
+	return 0;
 }
 
 /*
@@ -734,7 +719,7 @@ int mingw_chmod(const char *filename, int mode)
 	wchar_t wfilename[MAX_PATH];
 	if (xutftowcs_path(wfilename, filename) < 0)
 		return -1;
-	return _wchmod(wfilename, mode);
+	return _chmod(wfilename, mode);
 }
 
 /*
@@ -2676,13 +2661,9 @@ static PSID get_current_user_sid(void)
 
 static int acls_supported(const char *path)
 {
-	size_t offset = offset_1st_component(path);
-	WCHAR wroot[MAX_PATH];
 	DWORD file_system_flags;
 
-	if (offset &&
-	    xutftowcsn(wroot, path, MAX_PATH, offset) > 0 &&
-	    GetVolumeInformationW(wroot, NULL, 0, NULL, NULL,
+	if (GetVolumeInformationA(root, NULL, 0, NULL, NULL,
 				  &file_system_flags, NULL, 0))
 		return !!(file_system_flags & FILE_PERSISTENT_ACLS);
 
