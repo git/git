@@ -157,6 +157,8 @@ parse_option () {
 	local opt="$1"
 
 	case "$opt" in
+	-c|--c|--co|--cou|--coun|--count|--counts)
+		record_counts=t ;;
 	-d|--d|--de|--deb|--debu|--debug)
 		debug=t ;;
 	-i|--i|--im|--imm|--imme|--immed|--immedi|--immedia|--immediat|--immediate)
@@ -1282,7 +1284,7 @@ test_done () {
 
 	finalize_test_output
 
-	if test -z "$HARNESS_ACTIVE"
+	if test -z "$HARNESS_ACTIVE" || test -n "$record_counts"
 	then
 		mkdir -p "$TEST_RESULTS_DIR"
 
