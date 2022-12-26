@@ -11,6 +11,13 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-bundle.sh
 
+for cmd in create verify list-heads unbundle
+do
+	test_expect_success "usage: git bundle $cmd needs an argument" '
+		test_expect_code 129 git bundle $cmd
+	'
+done
+
 # Create a commit or tag and set the variable with the object ID.
 test_commit_setvar () {
 	notick=

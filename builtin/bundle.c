@@ -58,7 +58,7 @@ static int parse_options_cmd_bundle(int argc,
 	int newargc;
 	newargc = parse_options(argc, argv, NULL, options, usagestr,
 			     PARSE_OPT_STOP_AT_NON_OPTION);
-	if (argc < 1)
+	if (!newargc)
 		usage_with_options(usagestr, options);
 	*bundle_file = prefix_filename(prefix, argv[0]);
 	return newargc;
