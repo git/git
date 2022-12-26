@@ -1865,7 +1865,7 @@ unsigned ws_check(const char *line, int len, unsigned ws_rule);
 void ws_check_emit(const char *line, int len, unsigned ws_rule, FILE *stream, const char *set, const char *reset, const char *ws);
 char *whitespace_error_string(unsigned ws);
 void ws_fix_copy(struct strbuf *, const char *, int, unsigned, int *);
-int ws_blank_line(const char *line, int len, unsigned ws_rule);
+int ws_blank_line(const char *line, int len);
 #define ws_tab_width(rule)     ((rule) & WS_TAB_WIDTH_MASK)
 
 /* ls-files */

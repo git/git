@@ -832,7 +832,7 @@ static void changed_submodule_data_clear(struct changed_submodule_data *cs_data)
 }
 
 static void collect_changed_submodules_cb(struct diff_queue_struct *q,
-					  struct diff_options *options,
+					  struct diff_options *options UNUSED,
 					  void *data)
 {
 	struct collect_changed_submodules_cb_data *me = data;

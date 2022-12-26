@@ -440,7 +440,7 @@ static char short_submodule_status(struct wt_status_change_data *d)
 }
 
 static void wt_status_collect_changed_cb(struct diff_queue_struct *q,
-					 struct diff_options *options,
+					 struct diff_options *options UNUSED,
 					 void *data)
 {
 	struct wt_status *s = data;
@@ -527,7 +527,7 @@ static int unmerged_mask(struct index_state *istate, const char *path)
 }
 
 static void wt_status_collect_updated_cb(struct diff_queue_struct *q,
-					 struct diff_options *options,
+					 struct diff_options *options UNUSED,
 					 void *data)
 {
 	struct wt_status *s = data;
