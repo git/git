@@ -1242,6 +1242,24 @@ test_expect_success 'basic atom: rest must fail' '
 	test_must_fail git for-each-ref --format="%(rest)" refs/heads/main
 '
 
+test_expect_success 'HEAD atom does not take arguments' '
+	test_must_fail git for-each-ref --format="%(HEAD:foo)" 2>err &&
+	echo "fatal: %(HEAD) does not take arguments" >expect &&
+	test_cmp expect err
+'
+
+test_expect_success 'subject atom rejects unknown arguments' '
+	test_must_fail git for-each-ref --format="%(subject:foo)" 2>err &&
+	echo "fatal: unrecognized %(subject) argument: foo" >expect &&
+	test_cmp expect err
+'
+
+test_expect_success 'refname atom rejects unknown arguments' '
+	test_must_fail git for-each-ref --format="%(refname:foo)" 2>err &&
+	echo "fatal: unrecognized %(refname) argument: foo" >expect &&
+	test_cmp expect err
+'
+
 test_expect_success 'trailer parsing not fooled by --- line' '
 	git commit --allow-empty -F - <<-\EOF &&
 	this is the subject

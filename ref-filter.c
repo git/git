@@ -228,6 +228,22 @@ static int strbuf_addf_ret(struct strbuf *sb, int ret, const char *fmt, ...)
 	return ret;
 }
 
+static int err_no_arg(struct strbuf *sb, const char *name)
+{
+	size_t namelen = strchrnul(name, ':') - name;
+	strbuf_addf(sb, _("%%(%.*s) does not take arguments"),
+		    (int)namelen, name);
+	return -1;
+}
+
+static int err_bad_arg(struct strbuf *sb, const char *name, const char *arg)
+{
+	size_t namelen = strchrnul(name, ':') - name;
+	strbuf_addf(sb, _("unrecognized %%(%.*s) argument: %s"),
+		    (int)namelen, name, arg);
+	return -1;
+}
+
 static int color_atom_parser(struct ref_format *format, struct used_atom *atom,
 			     const char *color_value, struct strbuf *err)
 {
@@ -262,7 +278,7 @@ static int refname_atom_parser_internal(struct refname_atom *atom, const char *a
 		if (strtol_i(arg, 10, &atom->rstrip))
 			return strbuf_addf_ret(err, -1, _("Integer value expected refname:rstrip=%s"), arg);
 	} else
-		return strbuf_addf_ret(err, -1, _("unrecognized %%(%s) argument: %s"), name, arg);
+		return err_bad_arg(err, name, arg);
 	return 0;
 }
 
@@ -317,7 +333,7 @@ static int objecttype_atom_parser(struct ref_format *format, struct used_atom *a
 				  const char *arg, struct strbuf *err)
 {
 	if (arg)
-		return strbuf_addf_ret(err, -1, _("%%(objecttype) does not take arguments"));
+		return err_no_arg(err, "objecttype");
 	if (*atom->name == '*')
 		oi_deref.info.typep = &oi_deref.type;
 	else
@@ -341,7 +357,7 @@ static int objectsize_atom_parser(struct ref_format *format, struct used_atom *a
 		else
 			oi.info.disk_sizep = &oi.disk_size;
 	} else
-		return strbuf_addf_ret(err, -1, _("unrecognized %%(%s) argument: %s"), "objectsize", arg);
+		return err_bad_arg(err, "objectsize", arg);
 	return 0;
 }
 
@@ -349,7 +365,7 @@ static int deltabase_atom_parser(struct ref_format *format, struct used_atom *at
 				 const char *arg, struct strbuf *err)
 {
 	if (arg)
-		return strbuf_addf_ret(err, -1, _("%%(deltabase) does not take arguments"));
+		return err_no_arg(err, "deltabase");
 	if (*atom->name == '*')
 		oi_deref.info.delta_base_oid = &oi_deref.delta_base_oid;
 	else
@@ -361,7 +377,7 @@ static int body_atom_parser(struct ref_format *format, struct used_atom *atom,
 			    const char *arg, struct strbuf *err)
 {
 	if (arg)
-		return strbuf_addf_ret(err, -1, _("%%(body) does not take arguments"));
+		return err_no_arg(err, "body");
 	atom->u.contents.option = C_BODY_DEP;
 	return 0;
 }
@@ -374,7 +390,7 @@ static int subject_atom_parser(struct ref_format *format, struct used_atom *atom
 	else if (!strcmp(arg, "sanitize"))
 		atom->u.contents.option = C_SUB_SANITIZE;
 	else
-		return strbuf_addf_ret(err, -1, _("unrecognized %%(%s) argument: %s"), "subject", arg);
+		return err_bad_arg(err, "subject", arg);
 	return 0;
 }
 
@@ -428,7 +444,7 @@ static int contents_atom_parser(struct ref_format *format, struct used_atom *ato
 		if (strtoul_ui(arg, 10, &atom->u.contents.nlines))
 			return strbuf_addf_ret(err, -1, _("positive value expected contents:lines=%s"), arg);
 	} else
-		return strbuf_addf_ret(err, -1, _("unrecognized %%(%s) argument: %s"), "contents", arg);
+		return err_bad_arg(err, "contents", arg);
 	return 0;
 }
 
@@ -440,7 +456,7 @@ static int raw_atom_parser(struct ref_format *format, struct used_atom *atom,
 	else if (!strcmp(arg, "size"))
 		atom->u.raw_data.option = RAW_LENGTH;
 	else
-		return strbuf_addf_ret(err, -1, _("unrecognized %%(%s) argument: %s"), "raw", arg);
+		return err_bad_arg(err, "raw", arg);
 	return 0;
 }
 
@@ -459,7 +475,7 @@ static int oid_atom_parser(struct ref_format *format, struct used_atom *atom,
 		if (atom->u.oid.length < MINIMUM_ABBREV)
 			atom->u.oid.length = MINIMUM_ABBREV;
 	} else
-		return strbuf_addf_ret(err, -1, _("unrecognized %%(%s) argument: %s"), atom->name, arg);
+		return err_bad_arg(err, atom->name, arg);
 	return 0;
 }
 
@@ -473,7 +489,7 @@ static int person_email_atom_parser(struct ref_format *format, struct used_atom 
 	else if (!strcmp(arg, "localpart"))
 		atom->u.email_option.option = EO_LOCALPART;
 	else
-		return strbuf_addf_ret(err, -1, _("unrecognized email option: %s"), arg);
+		return err_bad_arg(err, atom->name, arg);
 	return 0;
 }
 
@@ -557,7 +573,7 @@ static int if_atom_parser(struct ref_format *format, struct used_atom *atom,
 	} else if (skip_prefix(arg, "notequals=", &atom->u.if_then_else.str)) {
 		atom->u.if_then_else.cmp_status = COMPARE_UNEQUAL;
 	} else
-		return strbuf_addf_ret(err, -1, _("unrecognized %%(%s) argument: %s"), "if", arg);
+		return err_bad_arg(err, "if", arg);
 	return 0;
 }
 
@@ -565,14 +581,16 @@ static int rest_atom_parser(struct ref_format *format, struct used_atom *atom,
 			    const char *arg, struct strbuf *err)
 {
 	if (arg)
-		return strbuf_addf_ret(err, -1, _("%%(rest) does not take arguments"));
+		return err_no_arg(err, "rest");
 	format->use_rest = 1;
 	return 0;
 }
 
 static int head_atom_parser(struct ref_format *format, struct used_atom *atom,
-			    const char *arg, struct strbuf *unused_err)
+			    const char *arg, struct strbuf *err)
 {
+	if (arg)
+		return err_no_arg(err, "HEAD");
 	atom->u.head = resolve_refdup("HEAD", RESOLVE_REF_READING, NULL, NULL);
 	return 0;
 }
