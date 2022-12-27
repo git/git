@@ -45,13 +45,12 @@ static int parse_options_cmd_bundle(int argc,
 		const char * const usagestr[],
 		const struct option options[],
 		char **bundle_file) {
-	int newargc;
-	newargc = parse_options(argc, argv, NULL, options, usagestr,
+	argc = parse_options(argc, argv, NULL, options, usagestr,
 			     PARSE_OPT_STOP_AT_NON_OPTION);
-	if (!newargc)
+	if (!argc)
 		usage_with_options(usagestr, options);
 	*bundle_file = prefix_filename(prefix, argv[0]);
-	return newargc;
+	return argc;
 }
 
 static int cmd_bundle_create(int argc, const char **argv, const char *prefix) {
