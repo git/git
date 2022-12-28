@@ -19,6 +19,10 @@ UI, Workflows & Features
  * The advice message given by "git status" when it takes long time to
    enumerate untracked paths has been updated.
 
+ * Just like "git var GIT_EDITOR" abstracts the complex logic to
+   choose which editor gets used behind it, "git var" now give support
+   to GIT_SEQUENCE_EDITOR.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -72,6 +76,11 @@ Fixes since v2.39
  * The output from "git diff --stat" on an unmerged path lost the
    terminating LF in Git 2.39, which has been corrected.
    (merge 209d9cb011 pg/diff-stat-unmerged-regression-fix later to maint).
+
+ * "git pull -v --recurse-submodules" attempted to pass "-v" down to
+   underlying "git submodule update", which did not understand the
+   request and barfed, which has been corrected.
+   (merge 6f65f84766 ss/pull-v-recurse-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 77e04b2ed4 rs/t4205-do-not-exit-in-test-script later to maint).
