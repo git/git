@@ -114,6 +114,7 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 	int prefix_set = 0;
 	struct lock_file lock_file = LOCK_INIT;
 	const struct option read_tree_options[] = {
+		OPT__SUPER_PREFIX(&opts.super_prefix),
 		OPT_CALLBACK_F(0, "index-output", NULL, N_("file"),
 		  N_("write resulting index to <file>"),
 		  PARSE_OPT_NONEG, index_output_cb),

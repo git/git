@@ -150,9 +150,8 @@ int validate_submodule_git_dir(char *git_dir, const char *submodule_name);
 
 #define SUBMODULE_MOVE_HEAD_DRY_RUN (1<<0)
 #define SUBMODULE_MOVE_HEAD_FORCE   (1<<1)
-int submodule_move_head(const char *path,
-			const char *old,
-			const char *new_head,
+int submodule_move_head(const char *path, const char *super_prefix,
+			const char *old_head, const char *new_head,
 			unsigned flags);
 
 void submodule_unset_core_worktree(const struct submodule *sub);
@@ -164,7 +163,8 @@ void submodule_unset_core_worktree(const struct submodule *sub);
  */
 void prepare_submodule_repo_env(struct strvec *env);
 
-void absorb_git_dir_into_superproject(const char *path);
+void absorb_git_dir_into_superproject(const char *path,
+				      const char *super_prefix);
 
 /*
  * Return the absolute path of the working tree of the superproject, which this

@@ -2054,14 +2054,6 @@ void submodule_unset_core_worktree(const struct submodule *sub)
 	strbuf_release(&config_path);
 }
 
-static const char *get_super_prefix_or_empty(void)
-{
-	const char *s = get_super_prefix();
-	if (!s)
-		s = "";
-	return s;
-}
-
 static int submodule_has_dirty_index(const struct submodule *sub)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
@@ -2080,7 +2072,7 @@ static int submodule_has_dirty_index(const struct submodule *sub)
 	return finish_command(&cp);
 }
 
-static void submodule_reset_index(const char *path)
+static void submodule_reset_index(const char *path, const char *super_prefix)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 	prepare_submodule_repo_env(&cp.env);
@@ -2089,10 +2081,10 @@ static void submodule_reset_index(const char *path)
 	cp.no_stdin = 1;
 	cp.dir = path;
 
-	strvec_pushf(&cp.args, "--super-prefix=%s%s/",
-		     get_super_prefix_or_empty(), path);
 	/* TODO: determine if this might overwright untracked files */
 	strvec_pushl(&cp.args, "read-tree", "-u", "--reset", NULL);
+	strvec_pushf(&cp.args, "--super-prefix=%s%s/",
+		     (super_prefix ? super_prefix : ""), path);
 
 	strvec_push(&cp.args, empty_tree_oid_hex());
 
@@ -2105,10 +2097,9 @@ static void submodule_reset_index(const char *path)
  * For edge cases (a submodule coming into existence or removing a submodule)
  * pass NULL for old or new respectively.
  */
-int submodule_move_head(const char *path,
-			 const char *old_head,
-			 const char *new_head,
-			 unsigned flags)
+int submodule_move_head(const char *path, const char *super_prefix,
+			const char *old_head, const char *new_head,
+			unsigned flags)
 {
 	int ret = 0;
 	struct child_process cp = CHILD_PROCESS_INIT;
@@ -2145,7 +2136,8 @@ int submodule_move_head(const char *path,
 	if (!(flags & SUBMODULE_MOVE_HEAD_DRY_RUN)) {
 		if (old_head) {
 			if (!submodule_uses_gitfile(path))
-				absorb_git_dir_into_superproject(path);
+				absorb_git_dir_into_superproject(path,
+								 super_prefix);
 		} else {
 			struct strbuf gitdir = STRBUF_INIT;
 			submodule_name_to_gitdir(&gitdir, the_repository,
@@ -2154,7 +2146,7 @@ int submodule_move_head(const char *path,
 			strbuf_release(&gitdir);
 
 			/* make sure the index is clean as well */
-			submodule_reset_index(path);
+			submodule_reset_index(path, super_prefix);
 		}
 
 		if (old_head && (flags & SUBMODULE_MOVE_HEAD_FORCE)) {
@@ -2172,9 +2164,9 @@ int submodule_move_head(const char *path,
 	cp.no_stdin = 1;
 	cp.dir = path;
 
-	strvec_pushf(&cp.args, "--super-prefix=%s%s/",
-		     get_super_prefix_or_empty(), path);
 	strvec_pushl(&cp.args, "read-tree", "--recurse-submodules", NULL);
+	strvec_pushf(&cp.args, "--super-prefix=%s%s/",
+		     (super_prefix ? super_prefix : ""), path);
 
 	if (flags & SUBMODULE_MOVE_HEAD_DRY_RUN)
 		strvec_push(&cp.args, "-n");
@@ -2274,7 +2266,8 @@ int validate_submodule_git_dir(char *git_dir, const char *submodule_name)
  * Embeds a single submodules git directory into the superprojects git dir,
  * non recursively.
  */
-static void relocate_single_git_dir_into_superproject(const char *path)
+static void relocate_single_git_dir_into_superproject(const char *path,
+						      const char *super_prefix)
 {
 	char *old_git_dir = NULL, *real_old_git_dir = NULL, *real_new_git_dir = NULL;
 	struct strbuf new_gitdir = STRBUF_INIT;
@@ -2304,7 +2297,7 @@ static void relocate_single_git_dir_into_superproject(const char *path)
 	real_new_git_dir = real_pathdup(new_gitdir.buf, 1);
 
 	fprintf(stderr, _("Migrating git directory of '%s%s' from\n'%s' to\n'%s'\n"),
-		get_super_prefix_or_empty(), path,
+		super_prefix ? super_prefix : "", path,
 		real_old_git_dir, real_new_git_dir);
 
 	relocate_gitdir(path, real_old_git_dir, real_new_git_dir);
@@ -2315,7 +2308,8 @@ static void relocate_single_git_dir_into_superproject(const char *path)
 	strbuf_release(&new_gitdir);
 }
 
-static void absorb_git_dir_into_superproject_recurse(const char *path)
+static void absorb_git_dir_into_superproject_recurse(const char *path,
+						     const char *super_prefix)
 {
 
 	struct child_process cp = CHILD_PROCESS_INIT;
@@ -2323,10 +2317,11 @@ static void absorb_git_dir_into_superproject_recurse(const char *path)
 	cp.dir = path;
 	cp.git_cmd = 1;
 	cp.no_stdin = 1;
-	strvec_pushf(&cp.args, "--super-prefix=%s%s/",
-		     get_super_prefix_or_empty(), path);
 	strvec_pushl(&cp.args, "submodule--helper",
 		     "absorbgitdirs", NULL);
+	strvec_pushf(&cp.args, "--super-prefix=%s%s/", super_prefix ?
+		     super_prefix : "", path);
+
 	prepare_submodule_repo_env(&cp.env);
 	if (run_command(&cp))
 		die(_("could not recurse into submodule '%s'"), path);
@@ -2337,7 +2332,8 @@ static void absorb_git_dir_into_superproject_recurse(const char *path)
  * having its git directory within the working tree to the git dir nested
  * in its superprojects git dir under modules/.
  */
-void absorb_git_dir_into_superproject(const char *path)
+void absorb_git_dir_into_superproject(const char *path,
+				      const char *super_prefix)
 {
 	int err_code;
 	const char *sub_git_dir;
@@ -2379,14 +2375,14 @@ void absorb_git_dir_into_superproject(const char *path)
 		char *real_common_git_dir = real_pathdup(get_git_common_dir(), 1);
 
 		if (!starts_with(real_sub_git_dir, real_common_git_dir))
-			relocate_single_git_dir_into_superproject(path);
+			relocate_single_git_dir_into_superproject(path, super_prefix);
 
 		free(real_sub_git_dir);
 		free(real_common_git_dir);
 	}
 	strbuf_release(&gitdir);
 
-	absorb_git_dir_into_superproject_recurse(path);
+	absorb_git_dir_into_superproject_recurse(path, super_prefix);
 }
 
 int get_superproject_working_tree(struct strbuf *buf)
