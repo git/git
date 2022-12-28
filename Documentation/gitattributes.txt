@@ -1155,7 +1155,7 @@ Unspecified::
 
 String::
 
-	Specify a comma separate list of common whitespace problems to
+	Specify a comma separated list of common whitespace problems to
 	notice in the same format as the `core.whitespace` configuration
 	variable.
 
