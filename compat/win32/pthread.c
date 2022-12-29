@@ -13,11 +13,12 @@
 #include <errno.h>
 #include <limits.h>
 
-static void win32_start_routine(void *arg)
+static unsigned win32_start_routine(void *arg)
 {
 	pthread_t *thread = arg;
 	thread->tid = GetCurrentThreadId();
 	thread->arg = thread->start_routine(thread->arg);
+	return 0;
 }
 
 int pthread_create(pthread_t *thread, const void *unused,
