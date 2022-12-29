@@ -13,7 +13,7 @@
 #include <errno.h>
 #include <limits.h>
 
-static unsigned win32_start_routine(void *arg)
+static DWORD win32_start_routine(void *arg)
 {
 	pthread_t *thread = arg;
 	thread->tid = GetCurrentThreadId();
