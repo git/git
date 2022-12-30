@@ -15,6 +15,8 @@ struct tree {
 extern const char *tree_type;
 
 struct tree *lookup_tree(struct repository *r, const struct object_id *oid);
+struct tree *lookup_tree_type(struct repository *r, const struct object_id *oid,
+			      enum object_type type);
 
 int parse_tree_buffer(struct tree *item, void *buffer, unsigned long size);
 
