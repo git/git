@@ -231,7 +231,7 @@ test_expect_success !SANITIZE_LEAK 'traverse unexpected non-tag tag (tree seen t
 '
 
 
-test_expect_failure !SANITIZE_LEAK 'traverse unexpected objects with for-each-ref' '
+test_expect_success !SANITIZE_LEAK 'traverse unexpected objects with for-each-ref' '
 	cat >expect <<-EOF &&
 	error: bad tag pointer to $tree in $tag_tag_tree
 	fatal: parse_object_buffer failed on $tag_tag_tree for refs/tags/tag_tag_tree
@@ -251,7 +251,7 @@ test_expect_success 'setup: unexpected objects with fsck' '
 
 while read oid type
 do
-	test_expect_failure "fsck knows unexpected object $oid is $type" '
+	test_expect_success "fsck knows unexpected object $oid is $type" '
 		git cat-file -t $oid >expect &&
 		echo $type >actual &&
 		test_cmp expect actual
