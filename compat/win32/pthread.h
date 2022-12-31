@@ -18,10 +18,10 @@
  */
 #define pthread_mutex_t CRITICAL_SECTION
 
-static inline int return_0(int i) {
-	return 0;
+static inline int return_i(int i) {
+	return i;
 }
-#define pthread_mutex_init(a,b) return_0((InitializeCriticalSection((a)), 0))
+#define pthread_mutex_init(a,b) return_i((InitializeCriticalSection((a)), 0))
 #define pthread_mutex_destroy(a) DeleteCriticalSection((a))
 #define pthread_mutex_lock EnterCriticalSection
 #define pthread_mutex_unlock LeaveCriticalSection
@@ -36,7 +36,7 @@ typedef int pthread_mutexattr_t;
 
 #define pthread_cond_init(a,b) InitializeConditionVariable((a))
 #define pthread_cond_destroy(a) do {} while (0)
-#define pthread_cond_wait(a,b) return_0(SleepConditionVariableCS((a), (b), INFINITE))
+#define pthread_cond_wait(a,b) SleepConditionVariableCS((a), (b), INFINITE)
 #define pthread_cond_signal WakeConditionVariable
 #define pthread_cond_broadcast WakeAllConditionVariable
 
