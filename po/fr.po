@@ -79,7 +79,7 @@ msgstr ""
 "Project-Id-Version: git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
 "POT-Creation-Date: 2022-11-30 19:40+0100\n"
-"PO-Revision-Date: 2022-11-30 19:42+0100\n"
+"PO-Revision-Date: 2022-12-31 15:58+0100\n"
 "Last-Translator: Cédric Malard <c.malard-git@valdun.net>\n"
 "Language-Team: Jean-Noël Avila <jn.avila@free.fr>\n"
 "Language: fr\n"
@@ -16427,11 +16427,11 @@ msgstr "fsmonitor--daemon n'est pas en cours d'exécution"
 
 #, c-format
 msgid "could not send '%s' command to fsmonitor--daemon"
-msgstr "impossible de lancer la commmand '%s' à fsmonitor--daemon"
+msgstr "impossible de lancer la commande '%s' à fsmonitor--daemon"
 
 #, c-format
 msgid "bare repository '%s' is incompatible with fsmonitor"
-msgstr "le dépôit nu '%s' est incompatible avec fsmonitor"
+msgstr "le dépôt nu '%s' est incompatible avec fsmonitor"
 
 #, c-format
 msgid "repository '%s' is incompatible with fsmonitor due to errors"
