@@ -245,8 +245,7 @@ static int remove_redundant_with_gen(struct repository *r,
 	 * min_gen_pos points to the current position within 'array'
 	 * that is not yet known to be STALE.
 	 */
-	ALLOC_ARRAY(sorted, cnt);
-	COPY_ARRAY(sorted, array, cnt);
+	DUP_ARRAY(sorted, array, cnt);
 	QSORT(sorted, cnt, compare_commits_by_gen);
 	min_generation = commit_graph_generation(sorted[0]);
 

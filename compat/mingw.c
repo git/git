@@ -1396,8 +1396,7 @@ static wchar_t *make_environment_block(char **deltaenv)
 			p += s;
 		}
 
-		ALLOC_ARRAY(result, size);
-		COPY_ARRAY(result, wenv, size);
+		DUP_ARRAY(result, wenv, size);
 		FreeEnvironmentStringsW(wenv);
 		return result;
 	}

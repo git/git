@@ -599,8 +599,7 @@ struct attr_check *attr_check_dup(const struct attr_check *check)
 
 	ret->nr = check->nr;
 	ret->alloc = check->alloc;
-	ALLOC_ARRAY(ret->items, ret->nr);
-	COPY_ARRAY(ret->items, check->items, ret->nr);
+	DUP_ARRAY(ret->items, check->items, ret->nr);
 
 	return ret;
 }
