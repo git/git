@@ -1115,6 +1115,11 @@ static inline void move_array(void *dst, const void *src, size_t n, size_t size)
 		memmove(dst, src, st_mult(size, n));
 }
 
+#define DUP_ARRAY(dst, src, n) do { \
+	size_t dup_array_n_ = (n); \
+	COPY_ARRAY(ALLOC_ARRAY((dst), dup_array_n_), (src), dup_array_n_); \
+} while (0)
+
 /*
  * These functions help you allocate structs with flex arrays, and copy
  * the data directly into the array. For example, if you had:
