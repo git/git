@@ -139,3 +139,7 @@ For example,
 ------------
 +
 will only show notes from `refs/notes/bar`.
+
+format.mboxrd::
+	A boolean value which enables the robust "mboxrd" format when
+	`--stdout` is in use to escape "^>+From " lines.
