@@ -23,6 +23,9 @@ UI, Workflows & Features
    choose which editor gets used behind it, "git var" now give support
    to GIT_SEQUENCE_EDITOR.
 
+ * "git format-patch" learned to honor format.mboxrd even when sending
+   patches to the standard output stream,
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -81,6 +84,15 @@ Fixes since v2.39
    underlying "git submodule update", which did not understand the
    request and barfed, which has been corrected.
    (merge 6f65f84766 ss/pull-v-recurse-fix later to maint).
+
+ * When given a pattern that matches an empty string at the end of a
+   line, the code to parse the "git diff" line-ranges fell into an
+   infinite loop, which has been corrected.
+   (merge 4e57c88e02 lk/line-range-parsing-fix later to maint).
+
+ * Fix the sequence to fsync $GIT_DIR/packed-refs file that forgot to
+   flush its output to the disk..
+   (merge ce54672f9b ps/fsync-refs-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 77e04b2ed4 rs/t4205-do-not-exit-in-test-script later to maint).
