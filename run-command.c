@@ -1030,6 +1030,13 @@ static void *run_thread(void *data)
 	return (void *)ret;
 }
 
+int in_async(void)
+{
+	if (!main_thread_set)
+		return 0; /* no asyncs started yet */
+	return !pthread_equal(main_thread, pthread_self());
+}
+
 static NORETURN void die_async(const char *err, va_list params)
 {
 	report_fn die_message_fn = get_die_message_routine();
@@ -1053,18 +1060,6 @@ static int async_die_is_recursing(void)
 	void *ret = pthread_getspecific(async_die_counter);
 	pthread_setspecific(async_die_counter, &async_die_counter); /* set to any non-NULL valid pointer */
 	return ret != NULL;
-}
-
-int in_async(void)
-{
-	if (!main_thread_set)
-		return 0; /* no asyncs started yet */
-	return !pthread_equal(main_thread, pthread_self());
-}
-
-static void NORETURN async_exit(int code)
-{
-	pthread_exit((void *)(intptr_t)code);
 }
 
 #else
@@ -1112,18 +1107,18 @@ int in_async(void)
 	return process_is_async;
 }
 
-static void NORETURN async_exit(int code)
-{
-	exit(code);
-}
-
 #endif
 
 void check_pipe(int err)
 {
 	if (err == EPIPE) {
-		if (in_async())
-			async_exit(141);
+		if (in_async()) {
+#ifdef NO_PTHREADS
+			exit(141);
+#else
+			pthread_exit((void *)141);
+#endif
+		}
 
 		signal(SIGPIPE, SIG_DFL);
 		raise(SIGPIPE);
