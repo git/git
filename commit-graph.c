@@ -501,7 +501,7 @@ static struct commit_graph *load_commit_graph_chain(struct repository *r,
 	struct strbuf line = STRBUF_INIT;
 	struct stat st;
 	struct object_id *oids;
-	int i = 0, valid = 1, count;
+	int i, valid = 1, count;
 	char *chain_name = get_commit_graph_chain_filename(odb);
 	FILE *fp;
 	int stat_res;
@@ -1045,7 +1045,8 @@ static int write_graph_chunk_fanout(struct hashfile *f,
 				    void *data)
 {
 	struct write_commit_graph_context *ctx = data;
-	int i, count = 0;
+	unsigned int i;
+	uint32_t count = 0;
 	struct commit **list = ctx->commits.list;
 
 	/*
@@ -1195,7 +1196,7 @@ static int write_graph_chunk_generation_data(struct hashfile *f,
 					     void *data)
 {
 	struct write_commit_graph_context *ctx = data;
-	int i, num_generation_data_overflows = 0;
+	size_t i, num_generation_data_overflows = 0;
 
 	for (i = 0; i < ctx->commits.nr; i++) {
 		struct commit *c = ctx->commits.list[i];
@@ -1219,7 +1220,7 @@ static int write_graph_chunk_generation_data_overflow(struct hashfile *f,
 						      void *data)
 {
 	struct write_commit_graph_context *ctx = data;
-	int i;
+	size_t i;
 	for (i = 0; i < ctx->commits.nr; i++) {
 		struct commit *c = ctx->commits.list[i];
 		timestamp_t offset = commit_graph_data_at(c)->generation - c->date;
@@ -1390,7 +1391,7 @@ static void add_missing_parents(struct write_commit_graph_context *ctx, struct c
 
 static void close_reachable(struct write_commit_graph_context *ctx)
 {
-	int i;
+	size_t i;
 	struct commit *commit;
 	enum commit_graph_split_flags flags = ctx->opts ?
 		ctx->opts->split_flags : COMMIT_GRAPH_SPLIT_UNSPECIFIED;
@@ -1448,7 +1449,7 @@ static void close_reachable(struct write_commit_graph_context *ctx)
 
 static void compute_topological_levels(struct write_commit_graph_context *ctx)
 {
-	int i;
+	size_t i;
 	struct commit_list *list = NULL;
 
 	if (ctx->report_progress)
@@ -1501,7 +1502,7 @@ static void compute_topological_levels(struct write_commit_graph_context *ctx)
 
 static void compute_generation_numbers(struct write_commit_graph_context *ctx)
 {
-	int i;
+	size_t i;
 	struct commit_list *list = NULL;
 
 	if (ctx->report_progress)
@@ -1582,10 +1583,10 @@ static void trace2_bloom_filter_write_statistics(struct write_commit_graph_conte
 
 static void compute_bloom_filters(struct write_commit_graph_context *ctx)
 {
-	int i;
+	size_t i;
 	struct progress *progress = NULL;
 	struct commit **sorted_commits;
-	int max_new_filters;
+	size_t max_new_filters;
 
 	init_bloom_filters();
 

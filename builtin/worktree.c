@@ -160,7 +160,7 @@ static int prune_cmp(const void *a, const void *b)
 
 static void prune_dups(struct string_list *l)
 {
-	int i;
+	size_t i;
 
 	QSORT(l->items, l->nr, prune_cmp);
 	for (i = 1; i < l->nr; i++) {
@@ -785,7 +785,7 @@ static void show_worktree(struct worktree *wt, int path_maxlen, int abbrev_len)
 
 static void measure_widths(struct worktree **wt, int *abbrev, int *maxlen)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; wt[i]; i++) {
 		int sha1_len;
@@ -925,7 +925,8 @@ static void validate_no_submodules(const struct worktree *wt)
 {
 	struct index_state istate = INDEX_STATE_INIT(the_repository);
 	struct strbuf path = STRBUF_INIT;
-	int i, found_submodules = 0;
+	unsigned int i;
+	int found_submodules = 0;
 
 	if (is_directory(worktree_git_path(wt, "modules"))) {
 		/*

@@ -267,7 +267,7 @@ void mark_edges_uninteresting(struct rev_info *revs,
 			      int sparse)
 {
 	struct commit_list *list;
-	int i;
+	unsigned int i;
 
 	if (sparse) {
 		struct oidset set;
@@ -326,7 +326,7 @@ static void add_pending_tree(struct rev_info *revs, struct tree *tree)
 static void traverse_non_commits(struct traversal_context *ctx,
 				 struct strbuf *base)
 {
-	int i;
+	unsigned int i;
 
 	assert(base->len == 0);
 

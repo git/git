@@ -722,7 +722,8 @@ int can_all_from_reach_with_flag(struct object_array *from,
 				 timestamp_t min_generation)
 {
 	struct commit **list = NULL;
-	int i;
+	unsigned int i;
+	int j;
 	int nr_commits;
 	int result = 1;
 
@@ -759,12 +760,12 @@ int can_all_from_reach_with_flag(struct object_array *from,
 
 	QSORT(list, nr_commits, compare_commits_by_gen);
 
-	for (i = 0; i < nr_commits; i++) {
+	for (j = 0; j < nr_commits; j++) {
 		/* DFS from list[i] */
 		struct commit_list *stack = NULL;
 
-		list[i]->object.flags |= assign_flag;
-		commit_list_insert(list[i], &stack);
+		list[j]->object.flags |= assign_flag;
+		commit_list_insert(list[j], &stack);
 
 		while (stack) {
 			struct commit_list *parent;
@@ -797,7 +798,7 @@ int can_all_from_reach_with_flag(struct object_array *from,
 				pop_commit(&stack);
 		}
 
-		if (!(list[i]->object.flags & (with_flag | RESULT))) {
+		if (!(list[j]->object.flags & (with_flag | RESULT))) {
 			result = 0;
 			goto cleanup;
 		}

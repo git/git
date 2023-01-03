@@ -172,7 +172,7 @@ static int split_maildir(const char *maildir, const char *dir,
 	char *file = NULL;
 	FILE *f = NULL;
 	int ret = -1;
-	int i;
+	size_t i;
 	struct string_list list = STRING_LIST_INIT_DUP;
 
 	list.cmp = maildir_filename_cmp;

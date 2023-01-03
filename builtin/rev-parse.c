@@ -707,7 +707,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 
 		if (!seen_end_of_options) {
 			if (!strcmp(arg, "--local-env-vars")) {
-				int i;
+				size_t i;
 				for (i = 0; local_repo_env[i]; i++)
 					printf("%s\n", local_repo_env[i]);
 				continue;

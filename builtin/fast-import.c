@@ -860,7 +860,7 @@ static void end_packfile(void)
 		struct packed_git *new_p;
 		struct object_id cur_pack_oid;
 		char *idx_name;
-		int i;
+		unsigned long i;
 		struct branch *b;
 		struct tag *t;
 

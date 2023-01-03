@@ -536,7 +536,7 @@ static void hmac_hash(unsigned char *out,
 	unsigned char key[GIT_MAX_BLKSZ];
 	unsigned char k_ipad[GIT_MAX_BLKSZ];
 	unsigned char k_opad[GIT_MAX_BLKSZ];
-	int i;
+	size_t i;
 	git_hash_ctx ctx;
 
 	/* RFC 2104 2. (1) */
@@ -1302,7 +1302,7 @@ static int update_shallow_ref(struct command *cmd, struct shallow_info *si)
 	struct oid_array extra = OID_ARRAY_INIT;
 	struct check_connected_options opt = CHECK_CONNECTED_INIT;
 	uint32_t mask = 1 << (cmd->index % 32);
-	int i;
+	size_t i;
 
 	trace_printf_key(&trace_shallow,
 			 "shallow: update_shallow_ref %s\n", cmd->ref_name);
@@ -2313,7 +2313,9 @@ static const char *unpack_with_sideband(struct shallow_info *si)
 
 static void prepare_shallow_update(struct shallow_info *si)
 {
-	int i, j, k, bitmap_size = DIV_ROUND_UP(si->ref->nr, 32);
+	size_t i, j, k;
+	size_t bitmap_size = DIV_ROUND_UP(si->ref->nr, 32);
+	int l;
 
 	ALLOC_ARRAY(si->used_shallow, si->shallow->nr);
 	assign_shallow_commits_to_refs(si, si->used_shallow, NULL);
@@ -2322,8 +2324,8 @@ static void prepare_shallow_update(struct shallow_info *si)
 	CALLOC_ARRAY(si->reachable, si->shallow->nr);
 	CALLOC_ARRAY(si->shallow_ref, si->ref->nr);
 
-	for (i = 0; i < si->nr_ours; i++)
-		si->need_reachability_test[si->ours[i]] = 1;
+	for (l = 0; l < si->nr_ours; l++)
+		si->need_reachability_test[si->ours[l]] = 1;
 
 	for (i = 0; i < si->shallow->nr; i++) {
 		if (!si->used_shallow[i])

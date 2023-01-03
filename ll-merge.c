@@ -194,7 +194,8 @@ static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
 	struct strbuf_expand_dict_entry dict[6];
 	struct strbuf path_sq = STRBUF_INIT;
 	struct child_process child = CHILD_PROCESS_INIT;
-	int status, fd, i;
+	int status, fd;
+	unsigned int i;
 	struct stat st;
 	enum ll_merge_result ret;
 	assert(opts);
@@ -329,7 +330,7 @@ static const struct ll_merge_driver *find_ll_merge_driver(const char *merge_attr
 {
 	struct ll_merge_driver *fn;
 	const char *name;
-	int i;
+	size_t i;
 
 	initialize_ll_merge();
 

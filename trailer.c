@@ -518,7 +518,7 @@ static int git_trailer_config(const char *conf_key, const char *value,
 	struct conf_info *conf;
 	char *name = NULL;
 	enum trailer_info_type type;
-	int i;
+	size_t i;
 
 	if (!skip_prefix(conf_key, "trailer.", &trailer_item))
 		return 0;

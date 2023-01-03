@@ -67,7 +67,7 @@ char *find_pathspecs_matching_skip_worktree(const struct pathspec *pathspec)
 {
 	struct index_state *istate = the_repository->index;
 	char *seen = xcalloc(pathspec->nr, 1);
-	int i;
+	unsigned i;
 
 	for (i = 0; i < istate->cache_nr; i++) {
 		struct cache_entry *ce = istate->cache[i];
@@ -103,7 +103,7 @@ static struct pathspec_magic {
 
 static void prefix_magic(struct strbuf *sb, int prefixlen, unsigned magic)
 {
-	int i;
+	size_t i;
 	strbuf_addstr(sb, ":(");
 	for (i = 0; i < ARRAY_SIZE(pathspec_magic); i++)
 		if (magic & pathspec_magic[i].bit) {
@@ -309,7 +309,7 @@ static const char *parse_long_magic(unsigned *magic, int *prefix_len,
 
 	for (pos = elem + 2; *pos && *pos != ')'; pos = nextat) {
 		size_t len = strcspn_escaped(pos, ",)");
-		int i;
+		size_t i;
 
 		if (pos[len] == ',')
 			nextat = pos + len + 1; /* handle ',' */
@@ -368,7 +368,7 @@ static const char *parse_short_magic(unsigned *magic, const char *elem)
 
 	for (pos = elem + 1; *pos && *pos != ':'; pos++) {
 		char ch = *pos;
-		int i;
+		size_t i;
 
 		/* Special case alias for '!' */
 		if (ch == '^') {
@@ -529,7 +529,7 @@ static void NORETURN unsupported_magic(const char *pattern,
 				       unsigned magic)
 {
 	struct strbuf sb = STRBUF_INIT;
-	int i;
+	size_t i;
 	for (i = 0; i < ARRAY_SIZE(pathspec_magic); i++) {
 		const struct pathspec_magic *m = pathspec_magic + i;
 		if (!(magic & m->bit))
@@ -558,7 +558,8 @@ void parse_pathspec(struct pathspec *pathspec,
 {
 	struct pathspec_item *item;
 	const char *entry = argv ? *argv : NULL;
-	int i, n, prefixlen, nr_exclude = 0;
+	size_t i, n;
+	int prefixlen, nr_exclude = 0;
 
 	memset(pathspec, 0, sizeof(*pathspec));
 
@@ -678,7 +679,7 @@ void parse_pathspec_file(struct pathspec *pathspec, unsigned magic_mask,
 
 void copy_pathspec(struct pathspec *dst, const struct pathspec *src)
 {
-	int i, j;
+	size_t i, j;
 
 	*dst = *src;
 	DUP_ARRAY(dst->items, src->items, dst->nr);
@@ -702,7 +703,7 @@ void copy_pathspec(struct pathspec *dst, const struct pathspec *src)
 
 void clear_pathspec(struct pathspec *pathspec)
 {
-	int i, j;
+	size_t i, j;
 
 	for (i = 0; i < pathspec->nr; i++) {
 		free(pathspec->items[i].match);
@@ -724,7 +725,7 @@ int match_pathspec_attrs(struct index_state *istate,
 			 const char *name, int namelen,
 			 const struct pathspec_item *item)
 {
-	int i;
+	size_t i;
 	char *to_free = NULL;
 
 	if (name[namelen])
@@ -761,7 +762,8 @@ int match_pathspec_attrs(struct index_state *istate,
 int pathspec_needs_expanded_index(struct index_state *istate,
 				  const struct pathspec *pathspec)
 {
-	unsigned int i, pos;
+	size_t i;
+	unsigned int pos;
 	int res = 0;
 	char *skip_worktree_seen = NULL;
 

@@ -161,7 +161,7 @@ static int add(int argc, const char **argv, const char *prefix)
 	struct remote *remote;
 	struct strbuf buf = STRBUF_INIT, buf2 = STRBUF_INIT;
 	const char *name, *url;
-	int i;
+	size_t i;
 
 	struct option options[] = {
 		OPT_BOOL('f', "fetch", &fetch, N_("fetch the remote branches")),
@@ -862,7 +862,8 @@ static int rm(int argc, const char **argv, const char *prefix)
 	struct string_list branches = STRING_LIST_INIT_DUP;
 	struct string_list skipped = STRING_LIST_INIT_DUP;
 	struct branches_for_remote cb_data;
-	int i, result;
+	size_t i;
+	int result;
 
 	memset(&cb_data, 0, sizeof(cb_data));
 	cb_data.branches = &branches;
@@ -1093,7 +1094,7 @@ static int show_local_info_item(struct string_list_item *item, void *cb_data)
 	struct branch_info *branch_info = item->util;
 	struct string_list *merge = &branch_info->merge;
 	int width = show_info->width + 4;
-	int i;
+	size_t i;
 
 	if (branch_info->rebase >= REBASE_TRUE && branch_info->merge.nr > 1) {
 		error(_("invalid branch.%s.merge; cannot rebase onto > 1 branch"),
@@ -1245,7 +1246,7 @@ static int show_all(void)
 	result = for_each_remote(get_one_entry, &list);
 
 	if (!result) {
-		int i;
+		size_t i;
 
 		string_list_sort(&list);
 		for (i = 0; i < list.nr; i++) {
@@ -1370,7 +1371,7 @@ static int show(int argc, const char **argv, const char *prefix)
 
 static int set_head(int argc, const char **argv, const char *prefix)
 {
-	int i, opt_a = 0, opt_d = 0, result = 0;
+	int opt_a = 0, opt_d = 0, result = 0;
 	struct strbuf buf = STRBUF_INIT, buf2 = STRBUF_INIT;
 	char *head_name = NULL;
 
@@ -1394,6 +1395,7 @@ static int set_head(int argc, const char **argv, const char *prefix)
 		if (!states.heads.nr)
 			result |= error(_("Cannot determine remote HEAD"));
 		else if (states.heads.nr > 1) {
+			size_t i;
 			result |= error(_("Multiple remote HEAD branches. "
 					  "Please choose one explicitly with:"));
 			for (i = 0; i < states.heads.nr; i++)

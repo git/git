@@ -377,9 +377,10 @@ static int is_octal(const char *p, size_t len)
 	if (!len)
 		return 0;
 
-	while (len--)
+	do {
 		if (*p < '0' || *(p++) > '7')
 			return 0;
+	} while (--len);
 	return 1;
 }
 

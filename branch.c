@@ -375,7 +375,7 @@ static struct strmap current_checked_out_branches = STRMAP_INIT;
 
 static void prepare_checked_out_branches(void)
 {
-	int i = 0;
+	size_t i = 0;
 	struct worktree **worktrees;
 
 	if (initialized_checked_out_branches)
@@ -836,7 +836,7 @@ int replace_each_worktree_head_symref(const char *oldref, const char *newref,
 {
 	int ret = 0;
 	struct worktree **worktrees = get_worktrees();
-	int i;
+	size_t i;
 
 	for (i = 0; worktrees[i]; i++) {
 		struct ref_store *refs;

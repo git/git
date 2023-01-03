@@ -803,7 +803,7 @@ static void post_assign_shallow(struct shallow_info *info,
 }
 
 /* (Delayed) step 7, reachability test at commit level */
-int delayed_reachability_test(struct shallow_info *si, int c)
+int delayed_reachability_test(struct shallow_info *si, size_t c)
 {
 	if (si->need_reachability_test[c]) {
 		struct commit *commit = lookup_commit(the_repository,

@@ -186,7 +186,8 @@ static struct strategy *get_strategy(const char *name)
 		memset(&not_strategies, 0, sizeof(struct cmdnames));
 		load_command_list("git-merge-", &main_cmds, &other_cmds);
 		for (i = 0; i < main_cmds.cnt; i++) {
-			int j, found = 0;
+			size_t j;
+			int found = 0;
 			struct cmdname *ent = main_cmds.names[i];
 			for (j = 0; !found && j < ARRAY_SIZE(all_strategy); j++)
 				if (!strncmp(ent->name, all_strategy[j].name, ent->len)

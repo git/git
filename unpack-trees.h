@@ -88,7 +88,7 @@ struct unpack_trees_options {
 	struct string_list unpack_rejects[NB_UNPACK_TREES_WARNING_TYPES];
 
 	int head_idx;
-	int merge_size;
+	unsigned merge_size;
 
 	struct cache_entry *df_conflict_entry;
 	void *unpack_data;

@@ -853,7 +853,7 @@ static void diff_include_untracked(const struct stash_info *info, struct diff_op
 	struct tree *tree[ARRAY_SIZE(oid)];
 	struct tree_desc tree_desc[ARRAY_SIZE(oid)];
 	struct unpack_trees_options unpack_tree_opt = { 0 };
-	int i;
+	size_t i;
 
 	for (i = 0; i < ARRAY_SIZE(oid); i++) {
 		tree[i] = parse_tree_indirect(oid[i]);
@@ -1521,7 +1521,7 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 
 	repo_read_index_preload(the_repository, NULL, 0);
 	if (!include_untracked && ps->nr) {
-		int i;
+		unsigned int i;
 		char *ps_matched = xcalloc(ps->nr, 1);
 
 		/* TODO: audit for interaction with sparse-index. */

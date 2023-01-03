@@ -68,7 +68,7 @@ static struct string_list pack_garbage = STRING_LIST_INIT_DUP;
 
 static void clean_pack_garbage(void)
 {
-	int i;
+	size_t i;
 	for (i = 0; i < pack_garbage.nr; i++)
 		unlink_or_warn(pack_garbage.items[i].string);
 	string_list_clear(&pack_garbage, 0);
@@ -1288,7 +1288,8 @@ static int compare_tasks_by_selection(const void *a_, const void *b_)
 
 static int maintenance_run_tasks(struct maintenance_run_opts *opts)
 {
-	int i, found_selected = 0;
+	unsigned int i;
+	int found_selected = 0;
 	int result = 0;
 	struct lock_file lk;
 	struct repository *r = the_repository;
@@ -1367,7 +1368,7 @@ static void initialize_maintenance_strategy(void)
 
 static void initialize_task_config(int schedule)
 {
-	int i;
+	unsigned int i;
 	struct strbuf config_name = STRBUF_INIT;
 	gc_config();
 
@@ -1401,7 +1402,8 @@ static void initialize_task_config(int schedule)
 static int task_option_parse(const struct option *opt,
 			     const char *arg, int unset)
 {
-	int i, num_selected = 0;
+	unsigned int i;
+	int num_selected = 0;
 	struct maintenance_task *task = NULL;
 
 	BUG_ON_OPT_NEG(unset);
@@ -1431,7 +1433,7 @@ static int task_option_parse(const struct option *opt,
 
 static int maintenance_run(int argc, const char **argv, const char *prefix)
 {
-	int i;
+	unsigned int i;
 	struct maintenance_run_opts opts;
 	struct option builtin_maintenance_run_options[] = {
 		OPT_BOOL(0, "auto", &opts.auto_flag,
@@ -1810,8 +1812,9 @@ static int launchctl_list_contains_plist(const char *name, const char *cmd)
 
 static int launchctl_schedule_plist(const char *exec_path, enum schedule_priority schedule)
 {
-	int i, fd;
-	const char *preamble, *repeat;
+	unsigned int i;
+	int fd;
+	const char *preamble;
 	const char *frequency = get_frequency(schedule);
 	char *name = launchctl_service_name(frequency);
 	char *filename = launchctl_service_filename(name);
@@ -1843,22 +1846,24 @@ static int launchctl_schedule_plist(const char *exec_path, enum schedule_priorit
 
 	switch (schedule) {
 	case SCHEDULE_HOURLY:
-		repeat = "<dict>\n"
-			 "<key>Hour</key><integer>%d</integer>\n"
-			 "<key>Minute</key><integer>0</integer>\n"
-			 "</dict>\n";
 		for (i = 1; i <= 23; i++)
-			strbuf_addf(&plist, repeat, i);
+			strbuf_addf(&plist,
+				    "<dict>\n"
+				    "<key>Hour</key><integer>%u</integer>\n"
+				    "<key>Minute</key><integer>0</integer>\n"
+				    "</dict>\n",
+				    i);
 		break;
 
 	case SCHEDULE_DAILY:
-		repeat = "<dict>\n"
-			 "<key>Day</key><integer>%d</integer>\n"
-			 "<key>Hour</key><integer>0</integer>\n"
-			 "<key>Minute</key><integer>0</integer>\n"
-			 "</dict>\n";
 		for (i = 1; i <= 6; i++)
-			strbuf_addf(&plist, repeat, i);
+			strbuf_addf(&plist,
+				    "<dict>\n"
+				    "<key>Day</key><integer>%u</integer>\n"
+				    "<key>Hour</key><integer>0</integer>\n"
+				    "<key>Minute</key><integer>0</integer>\n"
+				    "</dict>\n",
+				    i);
 		break;
 
 	case SCHEDULE_WEEKLY:
@@ -2553,7 +2558,7 @@ static void validate_scheduler(enum scheduler scheduler)
 static int update_background_schedule(const struct maintenance_start_opts *opts,
 				      int enable)
 {
-	unsigned int i;
+	size_t i;
 	int result = 0;
 	struct lock_file lk;
 	char *lock_path = xstrfmt("%s/schedule", the_repository->objects->odb->path);

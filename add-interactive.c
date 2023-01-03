@@ -218,7 +218,8 @@ static ssize_t find_unique(const char *string, struct prefix_item_list *list)
 struct list_options {
 	int columns;
 	const char *header;
-	void (*print_item)(int i, int selected, struct string_list_item *item,
+	void (*print_item)(size_t i, int selected,
+			   struct string_list_item *item,
 			   void *print_item_data);
 	void *print_item_data;
 };
@@ -226,7 +227,8 @@ struct list_options {
 static void list(struct add_i_state *s, struct string_list *list, int *selected,
 		 struct list_options *opts)
 {
-	int i, last_lf = 0;
+	size_t i;
+	int last_lf = 0;
 
 	if (!list->nr)
 		return;
@@ -469,7 +471,7 @@ static void collect_changes_cb(struct diff_queue_struct *q,
 
 	for (i = 0; i < stat.nr; i++) {
 		const char *name = stat.files[i]->name;
-		int hash = strhash(name);
+		unsigned int hash = strhash(name);
 		struct pathname_entry *entry;
 		struct file_item *file_item;
 		struct adddel *adddel, *other_adddel;
@@ -528,7 +530,7 @@ static int get_modified_files(struct repository *r,
 	int is_initial = !resolve_ref_unsafe("HEAD", RESOLVE_REF_READING,
 					     &head_oid, NULL);
 	struct collection_status s = { 0 };
-	int i;
+	unsigned int i;
 
 	discard_index(r->index);
 	if (repo_read_index_preload(r, ps, 0) < 0)
@@ -617,12 +619,14 @@ struct print_file_item_data {
 	unsigned only_names:1;
 };
 
-static void print_file_item(int i, int selected, struct string_list_item *item,
+static void print_file_item(size_t i, int selected,
+			    struct string_list_item *item,
 			    void *print_file_item_data)
 {
 	struct file_item *c = item->util;
 	struct print_file_item_data *d = print_file_item_data;
 	const char *highlighted = NULL;
+	unsigned int e = (unsigned int)i + 1;
 
 	strbuf_reset(&d->index);
 	strbuf_reset(&d->worktree);
@@ -639,7 +643,7 @@ static void print_file_item(int i, int selected, struct string_list_item *item,
 	}
 
 	if (d->only_names) {
-		printf("%c%2d: %s", selected ? '*' : ' ', i + 1,
+		printf("%c%2u: %s", selected ? '*' : ' ', e,
 		       highlighted ? highlighted : item->string);
 		return;
 	}
@@ -650,7 +654,7 @@ static void print_file_item(int i, int selected, struct string_list_item *item,
 	strbuf_addf(&d->buf, d->modified_fmt, d->index.buf, d->worktree.buf,
 		    highlighted ? highlighted : item->string);
 
-	printf("%c%2d: %s", selected ? '*' : ' ', i + 1, d->buf.buf);
+	printf("%c%2u: %s", selected ? '*' : ' ', e, d->buf.buf);
 }
 
 static int run_status(struct add_i_state *s, const struct pathspec *ps,
@@ -1067,20 +1071,21 @@ struct print_command_item_data {
 	const char *color, *reset;
 };
 
-static void print_command_item(int i, int selected,
+static void print_command_item(size_t i, int selected,
 			       struct string_list_item *item,
 			       void *print_command_item_data)
 {
+	unsigned int e = (unsigned int)(i + 1);
 	struct print_command_item_data *d = print_command_item_data;
 	struct command_item *util = item->util;
 
 	if (!util->prefix_length ||
 	    !is_valid_prefix(item->string, util->prefix_length))
-		printf(" %2d: %s", i + 1, item->string);
+		printf(" %2u: %s", e, item->string);
 	else
-		printf(" %2d: %s%.*s%s%s", i + 1,
-		       d->color, (int)util->prefix_length, item->string,
-		       d->reset, item->string + util->prefix_length);
+		printf(" %2u: %s%.*s%s%s", e, d->color,
+		       (int)util->prefix_length, item->string, d->reset,
+		       item->string + util->prefix_length);
 }
 
 static void command_prompt_help(struct add_i_state *s)

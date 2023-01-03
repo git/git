@@ -166,7 +166,7 @@ int copy_note_for_rewrite(struct notes_rewrite_cfg *c,
 			  const struct object_id *from_obj, const struct object_id *to_obj)
 {
 	int ret = 0;
-	int i;
+	size_t i;
 	for (i = 0; c->trees[i]; i++)
 		ret = copy_note(c->trees[i], from_obj, to_obj, 1, c->combine) || ret;
 	return ret;
@@ -176,7 +176,7 @@ void finish_copy_notes_for_rewrite(struct repository *r,
 				   struct notes_rewrite_cfg *c,
 				   const char *msg)
 {
-	int i;
+	size_t i;
 	for (i = 0; c->trees[i]; i++) {
 		commit_notes(r, c->trees[i], msg);
 		free_notes(c->trees[i]);

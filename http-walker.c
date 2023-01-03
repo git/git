@@ -170,7 +170,7 @@ static int is_alternate_allowed(const char *url)
 	const char *protocols[] = {
 		"http", "https", "ftp", "ftps"
 	};
-	int i;
+	size_t i;
 
 	if (http_follow_config != HTTP_FOLLOW_ALWAYS) {
 		warning("alternate disabled by http.followRedirects: %s", url);
@@ -207,7 +207,7 @@ static void process_alternates_response(void *callback_data)
 	const char *base = alt_req->base;
 	const char null_byte = '\0';
 	char *data;
-	int i = 0;
+	size_t i = 0;
 
 	normalize_curl_result(&slot->curl_result, slot->http_code,
 			      curl_errorstr, sizeof(curl_errorstr));
@@ -247,12 +247,12 @@ static void process_alternates_response(void *callback_data)
 	data = alt_req->buffer->buf;
 
 	while (i < alt_req->buffer->len) {
-		int posn = i;
+		size_t posn = i;
 		while (posn < alt_req->buffer->len && data[posn] != '\n')
 			posn++;
 		if (data[posn] == '\n') {
 			int okay = 0;
-			int serverlen = 0;
+			size_t serverlen = 0;
 			struct alt_base *newalt;
 			if (data[i] == '/') {
 				/*

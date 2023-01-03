@@ -50,7 +50,7 @@ static inline int is_merge(void)
 
 static int reset_index(const char *ref, const struct object_id *oid, int reset_type, int quiet)
 {
-	int i, nr = 0;
+	unsigned int i, nr = 0;
 	struct tree_desc desc[2];
 	struct tree *tree;
 	struct unpack_trees_options opts;

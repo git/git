@@ -109,9 +109,9 @@ static void name_parent(struct commit *commit, struct commit *parent)
 			    commit_name->generation + 1);
 }
 
-static int name_first_parent_chain(struct commit *c)
+static size_t name_first_parent_chain(struct commit *c)
 {
-	int i = 0;
+	size_t i = 0;
 	while (c) {
 		struct commit *p;
 		if (!commit_to_name(c))
@@ -130,14 +130,12 @@ static int name_first_parent_chain(struct commit *c)
 	return i;
 }
 
-static void name_commits(struct commit_list *list,
-			 struct commit **rev,
-			 char **ref_name,
-			 int num_rev)
+static void name_commits(struct commit_list *list, struct commit **rev,
+			 char **ref_name, size_t num_rev)
 {
 	struct commit_list *cl;
 	struct commit *c;
-	int i;
+	size_t i;
 
 	/* First give names to the given heads */
 	for (cl = list; cl; cl = cl->next) {
@@ -213,18 +211,17 @@ static int mark_seen(struct commit *commit, struct commit_list **seen_p)
 	return 0;
 }
 
-static void join_revs(struct commit_list **list_p,
-		      struct commit_list **seen_p,
-		      int num_rev, int extra)
+static void join_revs(struct commit_list **list_p, struct commit_list **seen_p,
+		      size_t num_rev, int extra)
 {
-	int all_mask = ((1u << (REV_SHIFT + num_rev)) - 1);
-	int all_revs = all_mask & ~((1u << REV_SHIFT) - 1);
+	size_t all_mask = ((1u << (REV_SHIFT + num_rev)) - 1);
+	size_t all_revs = all_mask & ~((1u << REV_SHIFT) - 1);
 
 	while (*list_p) {
 		struct commit_list *parents;
 		int still_interesting = !!interesting(*list_p);
 		struct commit *commit = pop_commit(list_p);
-		int flags = commit->object.flags & all_mask;
+		unsigned int flags = commit->object.flags & all_mask;
 
 		if (!still_interesting && extra <= 0)
 			break;
@@ -513,11 +510,10 @@ static int show_merge_base(struct commit_list *seen, int num_rev)
 	return exit_status;
 }
 
-static int show_independent(struct commit **rev,
-			    int num_rev,
+static int show_independent(struct commit **rev, size_t num_rev,
 			    unsigned int *rev_mask)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < num_rev; i++) {
 		struct commit *commit = rev[i];
@@ -625,7 +621,8 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	char *reflog_msg[MAX_REVS];
 	struct commit_list *list = NULL, *seen = NULL;
 	unsigned int rev_mask[MAX_REVS];
-	int num_rev, i, extra = 0;
+	size_t num_rev, i;
+	int extra = 0;
 	int all_heads = 0, all_remotes = 0;
 	int all_mask, all_revs;
 	enum rev_sort_order sort_order = REV_SORT_IN_GRAPH_ORDER;
@@ -789,7 +786,8 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 						msg);
 			free(logmsg);
 
-			nth_desc = xstrfmt("%s@{%d}", *av, base+i);
+			nth_desc = xstrfmt("%s@{%lu}", *av,
+					   (unsigned long)(base + i));
 			append_ref(nth_desc, &oid, 1);
 			free(nth_desc);
 		}

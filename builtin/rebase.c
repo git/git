@@ -1465,15 +1465,15 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	}
 
 	if (strategy_options.nr) {
-		int i;
+		size_t j;
 
 		if (!options.strategy)
 			options.strategy = "ort";
 
 		strbuf_reset(&buf);
-		for (i = 0; i < strategy_options.nr; i++)
+		for (j = 0; j < strategy_options.nr; j++)
 			strbuf_addf(&buf, " --%s",
-				    strategy_options.items[i].string);
+				    strategy_options.items[j].string);
 		options.strategy_opts = xstrdup(buf.buf);
 	}
 

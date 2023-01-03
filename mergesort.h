@@ -54,7 +54,7 @@ scope void name(type **listp,						\
 		return;							\
 									\
 	for (;;) {							\
-		int i;							\
+		size_t i;							\
 		size_t m;						\
 		type *next = name##__get_next(list);			\
 		if (next)						\

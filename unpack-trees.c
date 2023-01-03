@@ -2285,8 +2285,8 @@ static int verify_clean_subdirectory(const struct cache_entry *ce,
 	 * we are about to extract "ce->name"; we would not want to lose
 	 * anything in the existing directory there.
 	 */
-	int namelen;
-	int i;
+	unsigned int namelen;
+	unsigned int i;
 	struct dir_struct d;
 	char *pathbuf;
 	int cnt = 0;
@@ -2313,7 +2313,7 @@ static int verify_clean_subdirectory(const struct cache_entry *ce,
 	     i < o->src_index->cache_nr;
 	     i++) {
 		struct cache_entry *ce2 = o->src_index->cache[i];
-		int len = ce_namelen(ce2);
+		unsigned int len = ce_namelen(ce2);
 		if (len < namelen ||
 		    strncmp(ce->name, ce2->name, namelen) ||
 		    ce2->name[namelen] != '/')
@@ -2333,7 +2333,7 @@ static int verify_clean_subdirectory(const struct cache_entry *ce,
 	}
 
 	/* Do not lose a locally present file that is not ignored. */
-	pathbuf = xstrfmt("%.*s/", namelen, ce->name);
+	pathbuf = xstrfmt("%.*s/", (int)namelen, ce->name);
 
 	memset(&d, 0, sizeof(d));
 	if (o->dir)
@@ -2876,7 +2876,7 @@ int twoway_merge(const struct cache_entry * const *src,
 	const struct cache_entry *newtree = src[2];
 
 	if (o->merge_size != 2)
-		return error("Cannot do a twoway merge of %d trees",
+		return error("Cannot do a twoway merge of %u trees",
 			     o->merge_size);
 
 	if (oldtree == o->df_conflict_entry)
@@ -2958,7 +2958,7 @@ int bind_merge(const struct cache_entry * const *src,
 	const struct cache_entry *a = src[1];
 
 	if (o->merge_size != 1)
-		return error("Cannot do a bind merge of %d trees",
+		return error("Cannot do a bind merge of %u trees",
 			     o->merge_size);
 	if (a && old)
 		return o->quiet ? -1 :
@@ -2984,7 +2984,7 @@ int oneway_merge(const struct cache_entry * const *src,
 	const struct cache_entry *a = src[1];
 
 	if (o->merge_size != 1)
-		return error("Cannot do a oneway merge of %d trees",
+		return error("Cannot do a oneway merge of %u trees",
 			     o->merge_size);
 
 	if (!a || a == o->df_conflict_entry)
@@ -3021,7 +3021,7 @@ int stash_worktree_untracked_merge(const struct cache_entry * const *src,
 	const struct cache_entry *untracked = src[2];
 
 	if (o->merge_size != 2)
-		BUG("invalid merge_size: %d", o->merge_size);
+		BUG("invalid merge_size: %u", o->merge_size);
 
 	if (worktree && untracked)
 		return error(_("worktree and untracked commit have duplicate entries: %s"),

@@ -42,7 +42,7 @@ static int transport_color_config(void)
 		"color.transport.rejected"
 	}, *key = "color.transport";
 	char *value;
-	int i;
+	size_t i;
 	static int initialized;
 
 	if (initialized)
@@ -147,7 +147,7 @@ static struct ref *get_refs_from_bundle(struct transport *transport,
 {
 	struct bundle_transport_data *data = transport->data;
 	struct ref *result = NULL;
-	int i;
+	size_t i;
 
 	if (for_push)
 		return NULL;
@@ -1233,7 +1233,7 @@ void transport_set_verbosity(struct transport *transport, int verbosity,
 
 static void die_with_unpushed_submodules(struct string_list *needs_pushing)
 {
-	int i;
+	size_t i;
 
 	fprintf(stderr, _("The following submodule paths contain changes that can\n"
 			"not be found on any remote:\n"));
@@ -1552,7 +1552,7 @@ int transport_get_remote_bundle_uri(struct transport *transport)
 void transport_unlock_pack(struct transport *transport, unsigned int flags)
 {
 	int in_signal_handler = !!(flags & TRANSPORT_UNLOCK_PACK_IN_SIGNAL_HANDLER);
-	int i;
+	size_t i;
 
 	for (i = 0; i < transport->pack_lockfiles.nr; i++)
 		if (in_signal_handler)

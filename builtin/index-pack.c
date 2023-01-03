@@ -1726,7 +1726,7 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	unsigned char pack_hash[GIT_MAX_RAWSZ];
 	unsigned foreign_nr = 1;	/* zero is a "good" value, assume bad */
 	int report_end_of_input = 0;
-	int hash_algo = 0;
+	unsigned hash_algo = 0;
 
 	/*
 	 * index-pack never needs to fetch missing objects except when

@@ -34,8 +34,8 @@ static void *insert_decoration(struct decoration *n, const struct object *base, 
 
 static void grow_decoration(struct decoration *n)
 {
-	int i;
-	int old_size = n->size;
+	unsigned int i;
+	unsigned int old_size = n->size;
 	struct decoration_entry *old_entries = n->entries;
 
 	n->size = (old_size + 1000) * 3 / 2;
@@ -56,7 +56,7 @@ static void grow_decoration(struct decoration *n)
 void *add_decoration(struct decoration *n, const struct object *obj,
 		void *decoration)
 {
-	int nr = n->nr + 1;
+	unsigned int nr = n->nr + 1;
 
 	if (nr > n->size * 2 / 3)
 		grow_decoration(n);

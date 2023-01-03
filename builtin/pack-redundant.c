@@ -51,9 +51,9 @@ static inline struct llist_item *llist_item_get(void)
 		new_item = free_nodes;
 		free_nodes = free_nodes->next;
 	} else {
-		int i = 1;
+		size_t i;
 		ALLOC_ARRAY(new_item, BLKSIZE);
-		for (; i < BLKSIZE; i++)
+		for (i = 1; i < BLKSIZE; i++)
 			llist_item_put(&new_item[i]);
 	}
 	return new_item;
@@ -366,7 +366,7 @@ static int cmp_remaining_objects(const void *a, const void *b)
 static void sort_pack_list(struct pack_list **pl)
 {
 	struct pack_list **ary, *p;
-	int i;
+	size_t i;
 	size_t n = pack_list_size(*pl);
 
 	if (n < 2)

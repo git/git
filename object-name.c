@@ -758,8 +758,8 @@ static void find_abbrev_len_packed(struct min_abbrev_data *mad)
 		find_abbrev_len_for_pack(p, mad);
 }
 
-int repo_find_unique_abbrev_r(struct repository *r, char *hex,
-			      const struct object_id *oid, int len)
+unsigned int repo_find_unique_abbrev_r(struct repository *r, char *hex,
+				       const struct object_id *oid, int len)
 {
 	struct disambiguate_state ds;
 	struct min_abbrev_data mad;
@@ -818,7 +818,7 @@ const char *repo_find_unique_abbrev(struct repository *r,
 				    const struct object_id *oid,
 				    int len)
 {
-	static int bufno;
+	static unsigned int bufno;
 	static char hexbuffer[4][GIT_MAX_HEXSZ + 1];
 	char *hex = hexbuffer[bufno];
 	bufno = (bufno + 1) % ARRAY_SIZE(hexbuffer);

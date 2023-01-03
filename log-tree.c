@@ -138,7 +138,7 @@ static int add_ref_decoration(const char *refname, const struct object_id *oid,
 			      int flags UNUSED,
 			      void *cb_data)
 {
-	int i;
+	size_t i;
 	struct object *obj;
 	enum object_type objtype;
 	enum decoration_type deco_type = DECORATION_NONE;

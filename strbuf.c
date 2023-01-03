@@ -172,7 +172,7 @@ struct strbuf **strbuf_split_buf(const char *str, size_t slen,
 	struct strbuf *t;
 
 	while (slen) {
-		int len = slen;
+		size_t len = slen;
 		if (max <= 0 || nr + 1 < max) {
 			const char *end = memchr(str, terminator, slen);
 			if (end)
@@ -1075,7 +1075,7 @@ void strbuf_addftime(struct strbuf *sb, const char *fmt, const struct tm *tm,
 void strbuf_repo_add_unique_abbrev(struct strbuf *sb, struct repository *repo,
 				   const struct object_id *oid, int abbrev_len)
 {
-	int r;
+	unsigned int r;
 	strbuf_grow(sb, GIT_MAX_HEXSZ + 1);
 	r = repo_find_unique_abbrev_r(repo, sb->buf + sb->len, oid, abbrev_len);
 	strbuf_setlen(sb, sb->len + r);

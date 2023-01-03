@@ -58,7 +58,8 @@ void add_chunk(struct chunkfile *cf,
 
 int write_chunkfile(struct chunkfile *cf, void *data)
 {
-	int i, result = 0;
+	size_t i;
+	int result = 0;
 	uint64_t cur_offset = hashfile_total(cf->f);
 
 	trace2_region_enter("chunkfile", "write", the_repository);
@@ -101,7 +102,7 @@ int read_table_of_contents(struct chunkfile *cf,
 			   uint64_t toc_offset,
 			   int toc_length)
 {
-	int i;
+	size_t i;
 	uint32_t chunk_id;
 	const unsigned char *table_of_contents = mfile + toc_offset;
 
@@ -172,7 +173,7 @@ int read_chunk(struct chunkfile *cf,
 	       chunk_read_fn fn,
 	       void *data)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < cf->chunks_nr; i++) {
 		if (cf->chunks[i].id == chunk_id)

@@ -423,8 +423,8 @@ int parse_commit_buffer(struct repository *r, struct commit *item, const void *b
 	struct object_id parent;
 	struct commit_list **pptr;
 	struct commit_graft *graft;
-	const int tree_entry_len = the_hash_algo->hexsz + 5;
-	const int parent_entry_len = the_hash_algo->hexsz + 7;
+	const size_t tree_entry_len = the_hash_algo->hexsz + 5;
+	const size_t parent_entry_len = the_hash_algo->hexsz + 7;
 	struct tree *tree;
 
 	if (item->object.parsed)
@@ -1168,10 +1168,10 @@ int remove_signature(struct strbuf *buf)
 		if (in_signature && line[0] == ' ')
 			sigp->end = next;
 		else if (starts_with(line, "gpgsig")) {
-			int i;
-			for (i = 1; i < GIT_HASH_NALGOS; i++) {
+			unsigned int j;
+			for (j = 1; j < GIT_HASH_NALGOS; j++) {
 				const char *p;
-				if (skip_prefix(line, gpg_sig_headers[i], &p) &&
+				if (skip_prefix(line, gpg_sig_headers[j], &p) &&
 				    *p == ' ') {
 					sigp->start = line;
 					sigp->end = next;

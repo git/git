@@ -30,8 +30,8 @@ static int filename_changed(char status)
 
 static struct combine_diff_path *intersect_paths(
 	struct combine_diff_path *curr,
-	int n,
-	int num_parent,
+	size_t n,
+	size_t num_parent,
 	int combined_all_paths)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
@@ -40,7 +40,7 @@ static struct combine_diff_path *intersect_paths(
 
 	if (!n) {
 		for (i = 0; i < q->nr; i++) {
-			int len;
+			size_t len;
 			const char *path;
 			if (diff_unmodified_pair(q->queue[i]))
 				continue;
@@ -251,7 +251,7 @@ static struct lline *coalesce_lines(struct lline *base, int *lenbase,
 	/* At this point, baseend and newend point to the end of each lists */
 	i--;
 	j--;
-	while (i != 0 || j != 0) {
+	while (i > 0 || j > 0) {
 		if (directions[i][j] == MATCH) {
 			baseend->parent_map |= 1<<parent;
 			baseend = baseend->prev;
@@ -836,14 +836,13 @@ static void dump_sline(struct sline *sline, const char *line_prefix,
 		printf("%s\n", c_reset);
 		while (lno < hunk_end) {
 			struct lline *ll;
-			int j;
 			unsigned long p_mask;
 			struct sline *sl = &sline[lno++];
 			ll = (sl->flag & no_pre_delete) ? NULL : sl->lost;
 			while (ll) {
 				printf("%s%s", line_prefix, c_old);
-				for (j = 0; j < num_parent; j++) {
-					if (ll->parent_map & (1UL<<j))
+				for (i = 0; i < num_parent; i++) {
+					if (ll->parent_map & (1UL<<i))
 						putchar('-');
 					else
 						putchar(' ');
@@ -866,7 +865,7 @@ static void dump_sline(struct sline *sline, const char *line_prefix,
 			}
 			else
 				fputs(c_new, stdout);
-			for (j = 0; j < num_parent; j++) {
+			for (i = 0; i < num_parent; i++) {
 				if (p_mask & sl->flag)
 					putchar('+');
 				else
@@ -1383,7 +1382,7 @@ static struct combine_diff_path *find_paths_generic(const struct object_id *oid,
 	int combined_all_paths)
 {
 	struct combine_diff_path *paths = NULL;
-	int i, num_parent = parents->nr;
+	size_t i, num_parent = parents->nr;
 
 	int output_format = opt->output_format;
 	const char *orderfile = opt->orderfile;
@@ -1431,7 +1430,7 @@ static struct combine_diff_path *find_paths_multitree(
 	const struct object_id *oid, const struct oid_array *parents,
 	struct diff_options *opt)
 {
-	int i, nparent = parents->nr;
+	size_t i, nparent = parents->nr;
 	const struct object_id **parents_oid;
 	struct combine_diff_path paths_head;
 	struct strbuf base;

@@ -76,7 +76,7 @@ void remove_nonexistent_theirs_shallow(struct shallow_info *);
 void assign_shallow_commits_to_refs(struct shallow_info *info,
 				    uint32_t **used,
 				    int *ref_status);
-int delayed_reachability_test(struct shallow_info *si, int c);
+int delayed_reachability_test(struct shallow_info *si, size_t c);
 
 extern struct trace_key trace_shallow;
 

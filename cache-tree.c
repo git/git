@@ -694,7 +694,7 @@ struct tree* write_in_core_index_as_tree(struct repository *repo) {
 
 	ret = write_index_as_tree_internal(&o, index_state, was_valid, 0, NULL);
 	if (ret == WRITE_TREE_UNMERGED_INDEX) {
-		int i;
+		unsigned int i;
 		bug("there are unmerged index entries:");
 		for (i = 0; i < index_state->cache_nr; i++) {
 			const struct cache_entry *ce = index_state->cache[i];
@@ -879,7 +879,8 @@ static int verify_one(struct repository *r,
 		      struct cache_tree *it,
 		      struct strbuf *path)
 {
-	int i, pos, len = path->len;
+	int i, pos;
+	size_t len = path->len;
 	struct strbuf tree_buf = STRBUF_INIT;
 	struct object_id new_oid;
 
@@ -952,8 +953,9 @@ static int verify_one(struct repository *r,
 			 &new_oid);
 	if (!oideq(&new_oid, &it->oid))
 		BUG("cache-tree for path %.*s does not match. "
-		    "Expected %s got %s", len, path->buf,
-		    oid_to_hex(&new_oid), oid_to_hex(&it->oid));
+		    "Expected %s got %s",
+		    (int)len, path->buf, oid_to_hex(&new_oid),
+		    oid_to_hex(&it->oid));
 	strbuf_setlen(path, len);
 	strbuf_release(&tree_buf);
 	return 0;

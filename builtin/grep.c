@@ -174,7 +174,7 @@ static void work_done(struct work_item *w)
 
 static void free_repos(void)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < repos_to_free_nr; i++) {
 		repo_clear(repos_to_free[i]);
@@ -409,7 +409,8 @@ static void run_pager(struct grep_opt *opt, const char *prefix)
 {
 	struct string_list *path_list = opt->output_priv;
 	struct child_process child = CHILD_PROCESS_INIT;
-	int i, status;
+	size_t i;
+	int status;
 
 	for (i = 0; i < path_list->nr; i++)
 		strvec_push(&child.args, path_list->items[i].string);

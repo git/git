@@ -906,7 +906,7 @@ static struct commit *get_commit(struct rev_cmdline_entry *e, char *full_name)
 
 static void get_tags_and_duplicates(struct rev_cmdline_info *info)
 {
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < info->nr; i++) {
 		struct rev_cmdline_entry *e = info->rev + i;
@@ -1230,7 +1230,7 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 		die(_("the option '%s' requires '%s'"), "--anonymize-map", "--anonymize");
 
 	if (refspecs_list.nr) {
-		int i;
+		size_t i;
 
 		for (i = 0; i < refspecs_list.nr; i++)
 			refspec_append(&refspecs, refspecs_list.items[i].string);

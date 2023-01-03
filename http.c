@@ -481,7 +481,7 @@ static void init_curl_proxy_auth(CURL *result)
 	var_override(&http_proxy_authmethod, getenv("GIT_HTTP_PROXY_AUTHMETHOD"));
 
 	if (http_proxy_authmethod) {
-		int i;
+		size_t i;
 		for (i = 0; i < ARRAY_SIZE(proxy_authmethods); i++) {
 			if (!strcmp(http_proxy_authmethod, proxy_authmethods[i].name)) {
 				curl_easy_setopt(result, CURLOPT_PROXYAUTH,
@@ -800,7 +800,7 @@ static long get_curl_allowed_protocols(int from_user, struct strbuf *list)
 #ifdef GIT_CURL_HAVE_CURL_HTTP_VERSION_2
 static int get_curl_http_version_opt(const char *version_string, long *opt)
 {
-	int i;
+	size_t i;
 	static struct {
 		const char *name;
 		long opt_token;
@@ -854,7 +854,7 @@ static CURL *get_curl_handle(void)
 
 #ifdef CURLGSSAPI_DELEGATION_FLAG
 	if (curl_deleg) {
-		int i;
+		size_t i;
 		for (i = 0; i < ARRAY_SIZE(curl_deleg_levels); i++) {
 			if (!strcmp(curl_deleg, curl_deleg_levels[i].name)) {
 				curl_easy_setopt(result, CURLOPT_GSSAPI_DELEGATION,
@@ -883,7 +883,7 @@ static CURL *get_curl_handle(void)
 	if (getenv("GIT_SSL_VERSION"))
 		ssl_version = getenv("GIT_SSL_VERSION");
 	if (ssl_version && *ssl_version) {
-		int i;
+		size_t i;
 		for (i = 0; i < ARRAY_SIZE(sslversions); i++) {
 			if (!strcmp(ssl_version, sslversions[i].name)) {
 				curl_easy_setopt(result, CURLOPT_SSLVERSION,
@@ -1089,7 +1089,7 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
 	if (http_ssl_backend) {
 		const curl_ssl_backend **backends;
 		struct strbuf buf = STRBUF_INIT;
-		int i;
+		size_t i;
 
 		switch (curl_global_sslset(-1, http_ssl_backend, &backends)) {
 		case CURLSSLSET_UNKNOWN_BACKEND:
@@ -1754,9 +1754,9 @@ static void write_accept_language(struct strbuf *buf)
 	const int MAX_LANGUAGE_TAGS = 1000;
 	const int MAX_ACCEPT_LANGUAGE_HEADER_SIZE = 4000;
 	char **language_tags = NULL;
-	int num_langs = 0;
+	unsigned int num_langs = 0;
 	const char *s = get_preferred_languages();
-	int i;
+	unsigned int i;
 	struct strbuf tag = STRBUF_INIT;
 
 	/* Don't add Accept-Language header if no language is preferred. */
@@ -1802,7 +1802,7 @@ static void write_accept_language(struct strbuf *buf)
 		     decimal_places++, max_q *= 10)
 			;
 
-		xsnprintf(q_format, sizeof(q_format), ";q=0.%%0%dd", decimal_places);
+		xsnprintf(q_format, sizeof(q_format), ";q=0.%%0%ud", decimal_places);
 
 		strbuf_addstr(buf, "Accept-Language: ");
 

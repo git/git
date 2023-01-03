@@ -313,17 +313,15 @@ static void trace_encoding(const char *context, const char *path,
 {
 	static struct trace_key coe = TRACE_KEY_INIT(WORKING_TREE_ENCODING);
 	struct strbuf trace = STRBUF_INIT;
-	int i;
+	size_t i;
 
 	strbuf_addf(&trace, "%s (%s, considered %s):\n", context, path, encoding);
 	for (i = 0; i < len && buf; ++i) {
-		strbuf_addf(
-			&trace, "| \033[2m%2i:\033[0m %2x \033[2m%c\033[0m%c",
-			i,
-			(unsigned char) buf[i],
-			(buf[i] > 32 && buf[i] < 127 ? buf[i] : ' '),
-			((i+1) % 8 && (i+1) < len ? ' ' : '\n')
-		);
+		strbuf_addf(&trace,
+			    "| \033[2m%2u:\033[0m %2x \033[2m%c\033[0m%c",
+			    (unsigned int)i, (unsigned char)buf[i],
+			    (buf[i] > 32 && buf[i] < 127 ? buf[i] : ' '),
+			    ((i + 1) % 8 && (i + 1) < len ? ' ' : '\n'));
 	}
 	strbuf_addchars(&trace, '\n', 1);
 
@@ -1815,7 +1813,7 @@ struct ident_filter {
 
 static int is_foreign_ident(const char *str)
 {
-	int i;
+	size_t i;
 
 	if (!skip_prefix(str, "$Id: ", &str))
 		return 0;

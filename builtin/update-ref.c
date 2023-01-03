@@ -393,7 +393,7 @@ static void update_refs_stdin(void)
 	struct strbuf input = STRBUF_INIT, err = STRBUF_INIT;
 	enum update_refs_state state = UPDATE_REFS_OPEN;
 	struct ref_transaction *transaction;
-	int i, j;
+	size_t i;
 
 	transaction = ref_transaction_begin(&err);
 	if (!transaction)
@@ -435,7 +435,7 @@ static void update_refs_stdin(void)
 		 * error in case there is an early EOF to let the command
 		 * handle missing arguments with a proper error message.
 		 */
-		for (j = 1; line_termination == '\0' && j < cmd->args; j++)
+		for (i = 1; line_termination == '\0' && i < cmd->args; i++)
 			if (strbuf_appendwholeline(&input, stdin, line_termination))
 				break;
 

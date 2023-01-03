@@ -14,7 +14,7 @@
  */
 static void trim_last_path_component(struct strbuf *path)
 {
-	int i = path->len;
+	size_t i = path->len;
 
 	/* back up past trailing slashes, if any */
 	while (i && path->buf[i - 1] == '/')

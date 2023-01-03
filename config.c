@@ -721,7 +721,7 @@ int git_config_from_parameters(config_fn_t fn, void *data)
 	if (env) {
 		unsigned long count;
 		char *endp;
-		int i;
+		unsigned long i;
 
 		count = strtoul(env, &endp, 10);
 		if (*endp) {
@@ -736,7 +736,7 @@ int git_config_from_parameters(config_fn_t fn, void *data)
 		for (i = 0; i < count; i++) {
 			const char *key, *value;
 
-			strbuf_addf(&envvar, "GIT_CONFIG_KEY_%d", i);
+			strbuf_addf(&envvar, "GIT_CONFIG_KEY_%lu", i);
 			key = getenv_safe(&to_free, envvar.buf);
 			if (!key) {
 				ret = error(_("missing config key %s"), envvar.buf);
@@ -744,7 +744,7 @@ int git_config_from_parameters(config_fn_t fn, void *data)
 			}
 			strbuf_reset(&envvar);
 
-			strbuf_addf(&envvar, "GIT_CONFIG_VALUE_%d", i);
+			strbuf_addf(&envvar, "GIT_CONFIG_VALUE_%lu", i);
 			value = getenv_safe(&to_free, envvar.buf);
 			if (!value) {
 				ret = error(_("missing config value %s"), envvar.buf);
@@ -1372,7 +1372,7 @@ static enum fsync_component parse_fsync_components(const char *var, const char *
 	enum fsync_component positive = 0, negative = 0;
 
 	while (string) {
-		int i;
+		size_t i;
 		size_t len;
 		const char *ep;
 		int negated = 0;
@@ -2221,7 +2221,8 @@ int config_with_options(config_fn_t fn, void *data,
 
 static void configset_iter(struct config_set *cs, config_fn_t fn, void *data)
 {
-	int i, value_index;
+	unsigned int i;
+	size_t value_index;
 	struct string_list *values;
 	struct config_set_element *entry;
 	struct configset_list *list = &cs->list;
@@ -3008,7 +3009,7 @@ static ssize_t write_section(int fd, const char *key,
 static ssize_t write_pair(int fd, const char *key, const char *value,
 			  const struct config_store_data *store)
 {
-	int i;
+	size_t i;
 	ssize_t ret;
 	const char *quote = "";
 	struct strbuf sb = STRBUF_INIT;
@@ -3065,17 +3066,19 @@ static ssize_t write_pair(int fd, const char *key, const char *value,
  */
 static void maybe_remove_section(struct config_store_data *store,
 				 size_t *begin_offset, size_t *end_offset,
-				 int *seen_ptr)
+				 unsigned int *seen_ptr)
 {
 	size_t begin;
-	int i, seen, section_seen = 0;
+	unsigned int i;
+	unsigned int seen;
+	int section_seen = 0;
 
 	/*
 	 * First, ensure that this is the first key, and that there are no
 	 * comments before the entry nor before the section header.
 	 */
 	seen = *seen_ptr;
-	for (i = store->seen[seen]; i > 0; i--) {
+	for (i = store->seen[seen]; i; i--) {
 		enum config_event_t type = store->parsed[i - 1].type;
 
 		if (type == CONFIG_EVENT_COMMENT)
@@ -3257,7 +3260,8 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 	} else {
 		struct stat st;
 		size_t copy_begin, copy_end;
-		int i, new_line = 0;
+		unsigned int i;
+		int new_line = 0;
 		struct config_options opts;
 
 		if (!value_pattern)
@@ -3352,7 +3356,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 
 		for (i = 0, copy_begin = 0; i < store.seen_nr; i++) {
 			size_t replace_end;
-			int j = store.seen[i];
+			unsigned int j = store.seen[i];
 
 			new_line = 0;
 			if (!store.key_seen) {
@@ -3487,9 +3491,10 @@ void git_config_set_multivar(const char *key, const char *value,
 					flags);
 }
 
-static int section_name_match (const char *buf, const char *name)
+static unsigned int section_name_match(const char *buf, const char *name)
 {
-	int i = 0, j = 0, dot = 0;
+	unsigned int i = 0, j = 0;
+	int dot = 0;
 	if (buf[i] != '[')
 		return 0;
 	for (i = 1; buf[i] && buf[i] != ']'; i++) {

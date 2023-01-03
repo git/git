@@ -50,7 +50,7 @@ int hex_to_bytes(unsigned char *binary, const char *hex, size_t len)
 static int get_hash_hex_algop(const char *hex, unsigned char *hash,
 			      const struct git_hash_algo *algop)
 {
-	int i;
+	size_t i;
 	for (i = 0; i < algop->rawsz; i++) {
 		int val = hex2chr(hex);
 		if (val < 0)
@@ -122,7 +122,7 @@ char *hash_to_hex_algop_r(char *buffer, const unsigned char *hash,
 {
 	static const char hex[] = "0123456789abcdef";
 	char *buf = buffer;
-	int i;
+	size_t i;
 
 	/*
 	 * Our struct object_id has been memset to 0, so default to printing

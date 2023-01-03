@@ -180,16 +180,16 @@ static int attr_name_valid(const char *name, size_t namelen)
 	 * Attribute name cannot begin with '-' and must consist of
 	 * characters from [-A-Za-z0-9_.].
 	 */
-	if (namelen <= 0 || *name == '-')
+	if (namelen == 0 || *name == '-')
 		return 0;
-	while (namelen--) {
+	do {
 		char ch = *name++;
 		if (! (ch == '-' || ch == '.' || ch == '_' ||
 		       ('0' <= ch && ch <= '9') ||
 		       ('a' <= ch && ch <= 'z') ||
 		       ('A' <= ch && ch <= 'Z')) )
 			return 0;
-	}
+	} while (--namelen);
 	return 1;
 }
 
@@ -515,7 +515,7 @@ static void check_vector_add(struct attr_check *c)
 
 static void check_vector_remove(struct attr_check *check)
 {
-	int i;
+	size_t i;
 
 	vector_lock();
 
@@ -539,7 +539,7 @@ static void check_vector_remove(struct attr_check *check)
 /* Iterate through all attr_check instances and drop their stacks */
 static void drop_all_attr_stacks(void)
 {
-	int i;
+	size_t i;
 
 	vector_lock();
 

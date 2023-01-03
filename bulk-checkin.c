@@ -48,7 +48,7 @@ static void flush_bulk_checkin_packfile(struct bulk_checkin_packfile *state)
 {
 	unsigned char hash[GIT_MAX_RAWSZ];
 	struct strbuf packname = STRBUF_INIT;
-	int i;
+	uint32_t i;
 
 	if (!state->f)
 		return;
@@ -121,7 +121,7 @@ static void flush_batch_fsync(void)
 
 static int already_written(struct bulk_checkin_packfile *state, struct object_id *oid)
 {
-	int i;
+	uint32_t i;
 
 	/* The object may already exist in the repository */
 	if (has_object_file(oid))

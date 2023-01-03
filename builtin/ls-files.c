@@ -348,7 +348,8 @@ static void show_ru_info(struct index_state *istate)
 	for_each_string_list_item(item, istate->resolve_undo) {
 		const char *path = item->string;
 		struct resolve_undo_info *ui = item->util;
-		int i, len;
+		unsigned int i;
+		int len;
 
 		len = strlen(path);
 		if (len < max_prefix_len)
@@ -359,9 +360,8 @@ static void show_ru_info(struct index_state *istate)
 		for (i = 0; i < 3; i++) {
 			if (!ui->mode[i])
 				continue;
-			printf("%s%06o %s %d\t", tag_resolve_undo, ui->mode[i],
-			       find_unique_abbrev(&ui->oid[i], abbrev),
-			       i + 1);
+			printf("%s%06o %s %u\t", tag_resolve_undo, ui->mode[i],
+			       find_unique_abbrev(&ui->oid[i], abbrev), i + 1);
 			write_name(path);
 		}
 	}
@@ -385,7 +385,7 @@ static void construct_fullname(struct strbuf *out, const struct repository *repo
 
 static void show_files(struct repository *repo, struct dir_struct *dir)
 {
-	int i;
+	unsigned int i;
 	struct strbuf fullname = STRBUF_INIT;
 
 	/* For cached/deleted files we don't need to even do the readdir */
@@ -449,12 +449,12 @@ static void show_files(struct repository *repo, struct dir_struct *dir)
 
 skip_to_next_name:
 		{
-			int j;
-			struct cache_entry **cache = repo->index->cache;
-			for (j = i + 1; j < repo->index->cache_nr; j++)
-				if (strcmp(ce->name, cache[j]->name))
-					break;
-			i = j - 1; /* compensate for the for loop */
+		unsigned int j;
+		struct cache_entry **cache = repo->index->cache;
+		for (j = i + 1; j < repo->index->cache_nr; j++)
+			if (strcmp(ce->name, cache[j]->name))
+				break;
+		i = j - 1; /* compensate for the for loop */
 		}
 	}
 
@@ -571,7 +571,7 @@ void overlay_tree_on_index(struct index_state *istate,
 	struct object_id oid;
 	struct pathspec pathspec;
 	struct cache_entry *last_stage0 = NULL;
-	int i;
+	unsigned int i;
 	read_tree_fn_t fn = NULL;
 	int err;
 

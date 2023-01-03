@@ -116,7 +116,7 @@ static int handshake_version(struct child_process *process,
 			     int *chosen_version)
 {
 	int version_scratch;
-	int i;
+	size_t i;
 	char *line;
 	const char *p;
 
@@ -162,7 +162,7 @@ static int handshake_capabilities(struct child_process *process,
 				  struct subprocess_capability *capabilities,
 				  unsigned int *supported_capabilities)
 {
-	int i;
+	size_t i;
 	char *line;
 
 	for (i = 0; capabilities[i].name; i++) {

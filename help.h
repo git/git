@@ -58,7 +58,7 @@ static inline void list_config_item(struct string_list *list,
 #define define_list_config_array(array)					\
 void list_config_##array(struct string_list *list, const char *prefix)	\
 {									\
-	int i;								\
+	size_t i;								\
 	for (i = 0; i < ARRAY_SIZE(array); i++)				\
 		if (array[i])						\
 			list_config_item(list, prefix, array[i]);	\
@@ -68,7 +68,7 @@ struct string_list
 #define define_list_config_array_extra(array, values)			\
 void list_config_##array(struct string_list *list, const char *prefix)	\
 {									\
-	int i;								\
+	size_t i;								\
 	static const char *extra[] = values;				\
 	for (i = 0; i < ARRAY_SIZE(extra); i++)				\
 		list_config_item(list, prefix, extra[i]);		\

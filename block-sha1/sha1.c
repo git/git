@@ -214,7 +214,7 @@ void blk_SHA1_Final(unsigned char hashout[20], blk_SHA_CTX *ctx)
 {
 	static const unsigned char pad[64] = { 0x80 };
 	unsigned int padlen[2];
-	int i;
+	size_t i;
 
 	/* Pad with a binary 1 (ie 0x80), then zeroes, then length */
 	padlen[0] = htonl((uint32_t)(ctx->size >> 29));

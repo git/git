@@ -33,7 +33,7 @@ static int packet_trace_pack(const char *buf, unsigned int len, int sideband)
 
 static void packet_trace(const char *buf, unsigned int len, int write)
 {
-	int i;
+	unsigned i;
 	struct strbuf out;
 	static int in_pack, sideband;
 

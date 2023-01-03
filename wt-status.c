@@ -151,7 +151,7 @@ void wt_status_prepare(struct repository *r, struct wt_status *s)
 
 static void wt_longstatus_print_unmerged_header(struct wt_status *s)
 {
-	int i;
+	size_t i;
 	int del_mod_conflict = 0;
 	int both_deleted = 0;
 	int not_deleted = 0;
@@ -700,7 +700,7 @@ static int add_file_to_list(const struct object_id *oid,
 static void wt_status_collect_changes_initial(struct wt_status *s)
 {
 	struct index_state *istate = s->repo->index;
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < istate->cache_nr; i++) {
 		struct string_list_item *it;
@@ -803,7 +803,7 @@ static void wt_status_collect_untracked(struct wt_status *s)
 
 static int has_unmerged(struct wt_status *s)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < s->change.nr; i++) {
 		struct wt_status_change_data *d;
@@ -854,7 +854,7 @@ void wt_status_state_free_buffers(struct wt_status_state *state)
 static void wt_longstatus_print_unmerged(struct wt_status *s)
 {
 	int shown_header = 0;
-	int i;
+	size_t i;
 
 	for (i = 0; i < s->change.nr; i++) {
 		struct wt_status_change_data *d;
@@ -877,7 +877,7 @@ static void wt_longstatus_print_unmerged(struct wt_status *s)
 static void wt_longstatus_print_updated(struct wt_status *s)
 {
 	int shown_header = 0;
-	int i;
+	size_t i;
 
 	for (i = 0; i < s->change.nr; i++) {
 		struct wt_status_change_data *d;
@@ -905,7 +905,7 @@ static void wt_longstatus_print_updated(struct wt_status *s)
 static int wt_status_check_worktree_changes(struct wt_status *s,
 					     int *dirty_submodules)
 {
-	int i;
+	size_t i;
 	int changes = 0;
 
 	*dirty_submodules = 0;
@@ -928,7 +928,8 @@ static int wt_status_check_worktree_changes(struct wt_status *s,
 
 static void wt_longstatus_print_changed(struct wt_status *s)
 {
-	int i, dirty_submodules;
+	size_t i;
+	int dirty_submodules;
 	int worktree_changes = wt_status_check_worktree_changes(s, &dirty_submodules);
 
 	if (!worktree_changes)
@@ -1028,7 +1029,7 @@ static void wt_longstatus_print_other(struct wt_status *s,
 				      const char *what,
 				      const char *how)
 {
-	int i;
+	size_t i;
 	struct strbuf buf = STRBUF_INIT;
 	static struct string_list output = STRING_LIST_INIT_DUP;
 	struct column_options copts;
@@ -1164,7 +1165,7 @@ static void wt_longstatus_print_tracking(struct wt_status *s)
 	const char *cp, *ep, *branch_name;
 	struct branch *branch;
 	char comment_line_string[3];
-	int i;
+	unsigned int i;
 	uint64_t t_begin = 0;
 
 	assert(s->branch && !s->is_initial);
@@ -1320,7 +1321,7 @@ static int split_commit_in_progress(struct wt_status *s)
 static void abbrev_oid_in_line(struct strbuf *line)
 {
 	struct strbuf **split;
-	int i;
+	size_t i;
 
 	if (starts_with(line->buf, "exec ") ||
 	    starts_with(line->buf, "x ") ||
@@ -1379,8 +1380,8 @@ static void show_rebase_information(struct wt_status *s,
 				    const char *color)
 {
 	if (s->state.rebase_interactive_in_progress) {
-		int i;
-		int nr_lines_to_show = 2;
+		size_t i;
+		const size_t nr_lines_to_show = 2;
 
 		struct string_list have_done = STRING_LIST_INIT_DUP;
 		struct string_list yet_to_do = STRING_LIST_INIT_DUP;
@@ -1729,7 +1730,7 @@ static void wt_status_check_sparse_checkout(struct repository *r,
 					    struct wt_status_state *state)
 {
 	int skip_worktree = 0;
-	int i;
+	unsigned int i;
 
 	if (!core_apply_sparse_checkout || r->index->cache_nr == 0) {
 		/*
@@ -2487,7 +2488,7 @@ static void wt_porcelain_v2_print(struct wt_status *s)
 {
 	struct wt_status_change_data *d;
 	struct string_list_item *it;
-	int i;
+	size_t i;
 
 	if (s->show_branch)
 		wt_porcelain_v2_print_tracking(s);

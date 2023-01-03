@@ -54,7 +54,7 @@ static void ensure_config_read(void)
  */
 static int ref_match(const struct strvec *prefixes, const char *refname)
 {
-	int i;
+	size_t i;
 
 	if (!prefixes->nr)
 		return 1; /* no restriction */

@@ -42,7 +42,7 @@ static void list_builtins(struct string_list *list, unsigned int exclude_option)
 
 static void exclude_helpers_from_list(struct string_list *list)
 {
-	int i = 0;
+	size_t i = 0;
 
 	while (i < list->nr) {
 		if (strstr(list->items[i].string, "--"))

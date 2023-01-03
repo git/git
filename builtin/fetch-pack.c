@@ -239,7 +239,7 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 	ref = fetch_pack(&args, fd, ref, sought, nr_sought,
 			 &shallow, pack_lockfiles_ptr, version);
 	if (pack_lockfiles.nr) {
-		int i;
+		size_t i;
 
 		printf("lock %s\n", pack_lockfiles.items[0].string);
 		fflush(stdout);

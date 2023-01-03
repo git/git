@@ -941,7 +941,7 @@ static int get_can_ff(struct object_id *orig_head,
 static int already_up_to_date(struct object_id *orig_head,
 			      struct oid_array *merge_heads)
 {
-	int i;
+	size_t i;
 	struct commit *ours;
 
 	ours = lookup_commit_reference(the_repository, orig_head);

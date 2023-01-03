@@ -109,7 +109,7 @@ static void collect_pack_filenames(struct string_list *fname_nonkept_list,
 
 	while ((e = readdir(dir)) != NULL) {
 		size_t len;
-		int i;
+		size_t i;
 
 		if (!strip_suffix(e->d_name, ".pack", &len))
 			continue;
@@ -218,7 +218,7 @@ static struct generated_pack_data *populate_pack_exts(const char *name)
 	struct stat statbuf;
 	struct strbuf path = STRBUF_INIT;
 	struct generated_pack_data *data = xcalloc(1, sizeof(*data));
-	int i;
+	size_t i;
 
 	for (i = 0; i < ARRAY_SIZE(exts); i++) {
 		strbuf_reset(&path);
@@ -744,7 +744,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	struct pack_geometry *geometry = NULL;
 	struct strbuf line = STRBUF_INIT;
 	struct tempfile *refs_snapshot = NULL;
-	int i, ext, ret;
+	size_t i;
+	int ext, ret;
 	FILE *out;
 	int show_progress;
 

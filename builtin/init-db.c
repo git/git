@@ -167,17 +167,17 @@ static int needs_work_tree_config(const char *git_dir, const char *work_tree)
 	return 1;
 }
 
-void initialize_repository_version(int hash_algo, int reinit)
+void initialize_repository_version(unsigned hash_algo, int reinit)
 {
 	char repo_version_string[10];
-	int repo_version = GIT_REPO_VERSION;
+	unsigned repo_version = GIT_REPO_VERSION;
 
 	if (hash_algo != GIT_HASH_SHA1)
 		repo_version = GIT_REPO_VERSION_READ;
 
 	/* This forces creation of new config file */
 	xsnprintf(repo_version_string, sizeof(repo_version_string),
-		  "%d", repo_version);
+		  "%u", repo_version);
 	git_config_set("core.repositoryformatversion", repo_version_string);
 
 	if (hash_algo != GIT_HASH_SHA1)
@@ -374,7 +374,7 @@ static void validate_hash_algorithm(struct repository_format *repo_fmt, int hash
 	else if (hash != GIT_HASH_UNKNOWN)
 		repo_fmt->hash_algo = hash;
 	else if (env) {
-		int env_algo = hash_algo_by_name(env);
+		unsigned env_algo = hash_algo_by_name(env);
 		if (env_algo == GIT_HASH_UNKNOWN)
 			die(_("unknown hash algorithm '%s'"), env);
 		repo_fmt->hash_algo = env_algo;
@@ -537,7 +537,7 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 	unsigned int flags = 0;
 	const char *object_format = NULL;
 	const char *initial_branch = NULL;
-	int hash_algo = GIT_HASH_UNKNOWN;
+	unsigned hash_algo = GIT_HASH_UNKNOWN;
 	const struct option init_db_options[] = {
 		OPT_STRING(0, "template", &template_dir, N_("template-directory"),
 				N_("directory from which templates will be used")),

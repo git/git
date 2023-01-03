@@ -421,12 +421,12 @@ static const struct {
 
 static int match_string(const char *date, const char *str)
 {
-	int i = 0;
+	int i;
 
 	for (i = 0; *date; date++, str++, i++) {
 		if (*date == *str)
 			continue;
-		if (toupper(*date) == toupper(*str))
+		if (tolower(*date) == tolower(*str))
 			continue;
 		if (!isalnum(*date))
 			break;

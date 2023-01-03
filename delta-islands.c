@@ -243,8 +243,8 @@ void resolve_tree_islands(struct repository *r,
 {
 	struct progress *progress_state = NULL;
 	struct tree_islands_todo *todo;
-	int nr = 0;
-	int i;
+	uint32_t nr = 0;
+	uint32_t i;
 
 	if (!island_marks)
 		return;
@@ -320,7 +320,8 @@ static const char *core_island_name;
 
 static void free_config_regexes(struct island_load_data *ild)
 {
-	for (size_t i = 0; i < ild->nr; i++)
+	size_t i;
+	for (i = 0; i < ild->nr; i++)
 		regfree(&ild->rx[i]);
 	free(ild->rx);
 }
@@ -400,7 +401,8 @@ static int find_island_for_ref(const char *refname, const struct object_id *oid,
 	 * than we support.
 	 */
 	regmatch_t matches[16];
-	int i, m;
+	int i;
+	size_t m;
 	struct strbuf island_name = STRBUF_INIT;
 
 	/* walk backwards to get last-one-wins ordering */

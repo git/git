@@ -2988,7 +2988,8 @@ static void emit_traversal_statistics(struct dir_struct *dir,
 }
 
 int read_directory(struct dir_struct *dir, struct index_state *istate,
-		   const char *path, int len, const struct pathspec *pathspec)
+		   const char *path, unsigned int len,
+		   const struct pathspec *pathspec)
 {
 	struct untracked_cache_dir *untracked;
 

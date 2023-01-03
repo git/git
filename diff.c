@@ -124,7 +124,7 @@ static int parse_dirstat_params(struct diff_options *options, const char *params
 	char *params_copy = xstrdup(params_string);
 	struct string_list params = STRING_LIST_INIT_NODUP;
 	int ret = 0;
-	int i;
+	size_t i;
 
 	if (*params_copy)
 		string_list_split_in_place(&params, params_copy, ',', -1);
@@ -1678,7 +1678,7 @@ static void emit_hunk_header(struct emit_callback *ecbdata,
 
 static struct diff_tempfile *claim_diff_tempfile(void)
 {
-	int i;
+	size_t i;
 	for (i = 0; i < ARRAY_SIZE(diff_temp); i++)
 		if (!diff_temp[i].name)
 			return diff_temp + i;
@@ -1687,7 +1687,7 @@ static struct diff_tempfile *claim_diff_tempfile(void)
 
 static void remove_tempfile(void)
 {
-	int i;
+	size_t i;
 	for (i = 0; i < ARRAY_SIZE(diff_temp); i++) {
 		if (is_tempfile_active(diff_temp[i].tempfile))
 			delete_tempfile(&diff_temp[i].tempfile);
@@ -2006,7 +2006,7 @@ static void fn_out_diff_words_aux(void *priv,
 
 /* This function starts looking at *begin, and returns 0 iff a word was found. */
 static int find_word_boundaries(mmfile_t *buffer, regex_t *word_regex,
-		int *begin, int *end)
+				long *begin, long *end)
 {
 	while (word_regex && *begin < buffer->size) {
 		regmatch_t match[1];
@@ -2047,7 +2047,7 @@ static int find_word_boundaries(mmfile_t *buffer, regex_t *word_regex,
 static void diff_words_fill(struct diff_words_buffer *buffer, mmfile_t *out,
 		regex_t *word_regex)
 {
-	int i, j;
+	long i, j;
 	long alloc = 0;
 
 	out->size = 0;
@@ -2188,7 +2188,7 @@ static void init_diff_words_data(struct emit_callback *ecbdata,
 				 struct diff_filespec *one,
 				 struct diff_filespec *two)
 {
-	int i;
+	size_t i;
 	struct diff_options *o = xmalloc(sizeof(struct diff_options));
 	memcpy(o, orig_opts, sizeof(struct diff_options));
 
@@ -3305,8 +3305,8 @@ static void emit_binary_diff_body(struct diff_options *o,
 	/* emit data encoded in base85 */
 	cp = data;
 	while (data_size) {
-		int len;
-		int bytes = (52 < data_size) ? 52 : data_size;
+		size_t len;
+		size_t bytes = (52 < data_size) ? 52 : data_size;
 		char line[71];
 		data_size -= bytes;
 		if (bytes <= 26)
@@ -3415,7 +3415,7 @@ static void add_formatted_headers(struct strbuf *msg,
 				  const char *meta,
 				  const char *reset)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < more_headers->nr; i++)
 		add_formatted_header(msg, more_headers->items[i].string,
@@ -4702,7 +4702,7 @@ static unsigned int filter_bit['Z' + 1];
 
 static void prepare_filter_bits(void)
 {
-	int i;
+	unsigned int i;
 
 	if (!filter_bit[DIFF_STATUS_ADDED]) {
 		for (i = 0; diff_status_letters[i]; i++)
@@ -4933,7 +4933,8 @@ static int diff_opt_diff_filter(const struct option *option,
 				const char *optarg, int unset)
 {
 	struct diff_options *opt = option->value;
-	int i, optch;
+	size_t i;
+	int optch;
 
 	BUG_ON_OPT_NEG(unset);
 	prepare_filter_bits();
@@ -5287,7 +5288,7 @@ static int diff_opt_patience(const struct option *opt,
 			     const char *arg, int unset)
 {
 	struct diff_options *options = opt->value;
-	int i;
+	size_t i;
 
 	BUG_ON_OPT_NEG(unset);
 	BUG_ON_OPT_ARG(arg);
@@ -6213,12 +6214,12 @@ static void diff_summary(struct diff_options *opt, struct diff_filepair *p)
 
 struct patch_id_t {
 	git_hash_ctx *ctx;
-	int patchlen;
+	size_t patchlen;
 };
 
-static int remove_space(char *line, int len)
+static size_t remove_space(char *line, unsigned long len)
 {
-	int i;
+	unsigned long i;
 	char *dst = line;
 	unsigned char c;
 
@@ -6248,7 +6249,7 @@ void flush_one_hunk(struct object_id *result, git_hash_ctx *ctx)
 static int patch_id_consume(void *priv, char *line, unsigned long len)
 {
 	struct patch_id_t *data = priv;
-	int new_len;
+	size_t new_len;
 
 	if (len > 12 && starts_with(line, "\\ "))
 		return 0;
@@ -6290,7 +6291,7 @@ static int diff_get_patch_id(struct diff_options *options, struct object_id *oid
 		xdemitconf_t xecfg;
 		mmfile_t mf1, mf2;
 		struct diff_filepair *p = q->queue[i];
-		int len1, len2;
+		size_t len1, len2;
 
 		memset(&xpp, 0, sizeof(xpp));
 		memset(&xecfg, 0, sizeof(xecfg));

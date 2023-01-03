@@ -801,8 +801,8 @@ const char *enter_repo(const char *path, int strict)
 			"/.git", "", ".git/.git", ".git", NULL,
 		};
 		const char *gitfile;
-		int len = strlen(path);
-		int i;
+		size_t len = strlen(path);
+		size_t i;
 		while ((1 < len) && (path[len-1] == '/'))
 			len--;
 

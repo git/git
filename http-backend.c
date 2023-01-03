@@ -255,7 +255,7 @@ static struct rpc_service *select_service(struct strbuf *hdr, const char *name)
 {
 	const char *svc_name;
 	struct rpc_service *svc = NULL;
-	int i;
+	size_t i;
 
 	if (!skip_prefix(name, "git-", &svc_name))
 		forbidden(hdr, "Unsupported service: '%s'", name);
@@ -743,7 +743,7 @@ int cmd_main(int argc, const char **argv)
 	char *dir;
 	struct service_cmd *cmd = NULL;
 	char *cmd_arg = NULL;
-	int i;
+	size_t i;
 	struct strbuf hdr = STRBUF_INIT;
 
 	set_die_routine(die_webcgi);

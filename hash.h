@@ -186,13 +186,13 @@ extern const struct git_hash_algo hash_algos[GIT_HASH_NALGOS];
  * Return a GIT_HASH_* constant based on the name.  Returns GIT_HASH_UNKNOWN if
  * the name doesn't match a known algorithm.
  */
-int hash_algo_by_name(const char *name);
+unsigned hash_algo_by_name(const char *name);
 /* Identical, except based on the format ID. */
-int hash_algo_by_id(uint32_t format_id);
+unsigned hash_algo_by_id(uint32_t format_id);
 /* Identical, except based on the length. */
-int hash_algo_by_length(int len);
+unsigned hash_algo_by_length(size_t len);
 /* Identical, except for a pointer to struct git_hash_algo. */
-static inline int hash_algo_by_ptr(const struct git_hash_algo *p)
+static inline unsigned hash_algo_by_ptr(const struct git_hash_algo *p)
 {
 	return p - hash_algos;
 }

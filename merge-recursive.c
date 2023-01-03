@@ -523,7 +523,7 @@ static struct stage_data *insert_stage_data(struct repository *r,
 static struct string_list *get_unmerged(struct index_state *istate)
 {
 	struct string_list *unmerged = xmalloc(sizeof(struct string_list));
-	int i;
+	unsigned i;
 
 	string_list_init_dup(unmerged);
 
@@ -594,8 +594,8 @@ static void record_df_conflict_files(struct merge_options *opt,
 	 */
 	struct string_list df_sorted_entries = STRING_LIST_INIT_NODUP;
 	const char *last_file = NULL;
-	int last_len = 0;
-	int i;
+	size_t last_len = 0;
+	size_t i;
 
 	/*
 	 * If we're merging merge-bases, we don't want to bother with
@@ -616,7 +616,7 @@ static void record_df_conflict_files(struct merge_options *opt,
 	string_list_clear(&opt->priv->df_conflict_file_set, 1);
 	for (i = 0; i < df_sorted_entries.nr; i++) {
 		const char *path = df_sorted_entries.items[i].string;
-		int len = strlen(path);
+		size_t len = strlen(path);
 		struct stage_data *e = df_sorted_entries.items[i].util;
 
 		/*
@@ -877,7 +877,8 @@ static int was_dirty(struct merge_options *opt, const char *path)
 
 static int make_room_for_path(struct merge_options *opt, const char *path)
 {
-	int status, i;
+	int status;
+	size_t i;
 	const char *msg = _("failed to create path '%s'%s");
 
 	/* Unlink any D/F conflict files that are in the way */
@@ -1103,11 +1104,11 @@ static int merge_3way(struct merge_options *opt,
 	return merge_status;
 }
 
-static int find_first_merges(struct repository *repo,
+static unsigned find_first_merges(struct repository *repo,
 			     struct object_array *result, const char *path,
 			     struct commit *a, struct commit *b)
 {
-	int i, j;
+	unsigned i, j;
 	struct object_array merges = OBJECT_ARRAY_INIT;
 	struct commit *commit;
 	int contains_another;
@@ -1189,10 +1190,10 @@ static int merge_submodule(struct merge_options *opt,
 	struct repository subrepo;
 	int ret = 0;
 	struct commit *commit_base, *commit_a, *commit_b;
-	int parent_count;
+	unsigned parent_count;
 	struct object_array merges;
 
-	int i;
+	unsigned i;
 	int search = !opt->priv->call_depth;
 
 	/* store a in result in case we fail */
@@ -2065,7 +2066,7 @@ static void get_renamed_dir_portion(const char *old_path, const char *new_path,
 static void remove_hashmap_entries(struct hashmap *dir_renames,
 				   struct string_list *items_to_remove)
 {
-	int i;
+	size_t i;
 	struct dir_rename_entry *entry;
 
 	for (i = 0; i < items_to_remove->nr; i++) {
@@ -2995,7 +2996,7 @@ cleanup:
 static void final_cleanup_rename(struct string_list *rename)
 {
 	const struct rename *re;
-	int i;
+	size_t i;
 
 	if (!rename)
 		return;
@@ -3805,7 +3806,7 @@ static struct commit *get_ref(struct repository *repo,
 int merge_recursive_generic(struct merge_options *opt,
 			    const struct object_id *head,
 			    const struct object_id *merge,
-			    int num_merge_bases,
+			    unsigned int num_merge_bases,
 			    const struct object_id **merge_bases,
 			    struct commit **result)
 {
@@ -3816,7 +3817,7 @@ int merge_recursive_generic(struct merge_options *opt,
 	struct commit_list *ca = NULL;
 
 	if (merge_bases) {
-		int i;
+		unsigned int i;
 		for (i = 0; i < num_merge_bases; ++i) {
 			struct commit *base;
 			if (!(base = get_ref(opt->repo, merge_bases[i],

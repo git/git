@@ -109,7 +109,7 @@ int bad_to_remove_submodule(const char *path, unsigned flags);
  * added as alternates in the_repository.
  */
 void add_submodule_odb_by_path(const char *path);
-int register_all_submodule_odb_as_alternates(void);
+size_t register_all_submodule_odb_as_alternates(void);
 
 /*
  * Checks if there are submodule changes in a..b. If a is the null OID,

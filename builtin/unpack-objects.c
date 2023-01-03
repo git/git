@@ -571,7 +571,7 @@ static void unpack_one(unsigned nr)
 
 static void unpack_all(void)
 {
-	int i;
+	unsigned int i;
 	struct pack_header *hdr = fill(sizeof(struct pack_header));
 
 	nr_objects = ntohl(hdr->hdr_entries);

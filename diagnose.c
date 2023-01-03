@@ -25,7 +25,7 @@ static struct diagnose_option diagnose_options[] = {
 
 int option_parse_diagnose(const struct option *opt, const char *arg, int unset)
 {
-	int i;
+	size_t i;
 	enum diagnose_mode *diagnose = opt->value;
 
 	if (!arg) {

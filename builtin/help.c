@@ -124,7 +124,7 @@ static void list_config_help(enum show_config_type type)
 	struct string_list keys = STRING_LIST_INIT_DUP;
 	struct string_list keys_uniq = STRING_LIST_INIT_DUP;
 	struct string_list_item *item;
-	int i;
+	size_t i;
 
 	for (p = config_name_list; *p; p++) {
 		const char *var = *p;

@@ -413,7 +413,7 @@ struct config_set_element {
 
 struct configset_list_item {
 	struct config_set_element *e;
-	int value_index;
+	size_t value_index;
 };
 
 /*

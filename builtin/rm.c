@@ -49,7 +49,7 @@ static void print_error_files(struct string_list *files_list,
 			      int *errs)
 {
 	if (files_list->nr) {
-		int i;
+		size_t i;
 		struct strbuf err_msg = STRBUF_INIT;
 
 		strbuf_addstr(&err_msg, main_msg);
@@ -258,7 +258,9 @@ static struct option builtin_rm_options[] = {
 int cmd_rm(int argc, const char **argv, const char *prefix)
 {
 	struct lock_file lock_file = LOCK_INIT;
-	int i, ret = 0;
+	int i;
+	unsigned int j;
+	int ret = 0;
 	struct pathspec pathspec;
 	char *seen;
 
@@ -302,8 +304,8 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	if (pathspec_needs_expanded_index(&the_index, &pathspec))
 		ensure_full_index(&the_index);
 
-	for (i = 0; i < the_index.cache_nr; i++) {
-		const struct cache_entry *ce = the_index.cache[i];
+	for (j = 0; j < the_index.cache_nr; j++) {
+		const struct cache_entry *ce = the_index.cache[j];
 
 		if (!include_sparse &&
 		    (ce_skip_worktree(ce) ||

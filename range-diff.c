@@ -38,7 +38,7 @@ static int read_patches(const char *range, struct string_list *list,
 	struct patch_util *util = NULL;
 	int in_header = 1;
 	char *line, *current_filename = NULL;
-	ssize_t len;
+	size_t len;
 	size_t size;
 	int ret = -1;
 
@@ -117,7 +117,7 @@ static int read_patches(const char *range, struct string_list *list,
 			struct patch patch = { 0 };
 			struct strbuf root = STRBUF_INIT;
 			int linenr = 0;
-			int orig_len;
+			int orig_len, output;
 
 			in_header = 0;
 			strbuf_addch(&buf, '\n');
@@ -126,15 +126,16 @@ static int read_patches(const char *range, struct string_list *list,
 			if (eol)
 				*eol = '\n';
 			orig_len = len;
-			len = parse_git_diff_header(&root, &linenr, 0, line,
-						    len, size, &patch);
-			if (len < 0) {
+			output = parse_git_diff_header(&root, &linenr, 0, line,
+						       len, size, &patch);
+			if (output < 0) {
 				error(_("could not parse git header '%.*s'"),
 				      orig_len, line);
 				FREE_AND_NULL(util);
 				string_list_clear(list, 1);
 				goto cleanup;
 			}
+			len = output;
 			strbuf_addstr(&buf, " ## ");
 			if (patch.is_new > 0)
 				strbuf_addf(&buf, "%s (new)", patch.new_name);
@@ -585,7 +586,7 @@ int is_range_diff_range(const char *arg)
 {
 	char *copy = xstrdup(arg); /* setup_revisions() modifies it */
 	const char *argv[] = { "", copy, "--", NULL };
-	int i, positive = 0, negative = 0;
+	unsigned int i, positive = 0, negative = 0;
 	struct rev_info revs;
 
 	init_revisions(&revs, NULL);
@@ -606,5 +607,5 @@ int is_range_diff_range(const char *arg)
 
 	free(copy);
 	release_revisions(&revs);
-	return negative > 0 && positive > 0;
+	return negative != 0 && positive != 0;
 }

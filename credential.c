@@ -344,7 +344,7 @@ static int credential_do(struct credential *c, const char *helper,
 
 void credential_fill(struct credential *c)
 {
-	int i;
+	size_t i;
 
 	if (c->username && c->password)
 		return;
@@ -373,7 +373,7 @@ void credential_fill(struct credential *c)
 
 void credential_approve(struct credential *c)
 {
-	int i;
+	size_t i;
 
 	if (c->approved)
 		return;
@@ -389,7 +389,7 @@ void credential_approve(struct credential *c)
 
 void credential_reject(struct credential *c)
 {
-	int i;
+	size_t i;
 
 	credential_apply_config(c);
 

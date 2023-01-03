@@ -443,7 +443,7 @@ static int name_terminate(int c, int terminate)
 /* remove double slashes to make --index work with such filenames */
 static char *squash_slash(char *name)
 {
-	int i = 0, j = 0;
+	size_t i = 0, j = 0;
 
 	if (!name)
 		return NULL;
@@ -654,7 +654,7 @@ static char *find_name_common(struct strbuf *root,
 			      const char *end,
 			      int terminate)
 {
-	int len;
+	size_t len;
 	const char *start = NULL;
 
 	if (p_value == 0)
@@ -685,13 +685,13 @@ static char *find_name_common(struct strbuf *root,
 	 * or "file~").
 	 */
 	if (def) {
-		int deflen = strlen(def);
+		size_t deflen = strlen(def);
 		if (deflen < len && !strncmp(start, def, deflen))
 			return squash_slash(xstrdup(def));
 	}
 
 	if (root->len) {
-		char *ret = xstrfmt("%s%.*s", root->buf, len, start);
+		char *ret = xstrfmt("%s%.*s", root->buf, (int)len, start);
 		return squash_slash(ret);
 	}
 
@@ -790,7 +790,7 @@ static int has_epoch_timestamp(const char *nameline)
 	const char *timestamp = NULL, *cp, *colon;
 	static regex_t *stamp;
 	regmatch_t m[10];
-	int zoneoffset, epoch_hour, hour, minute;
+	long zoneoffset, epoch_hour, hour, minute;
 	int status;
 
 	for (cp = nameline; *cp != '\n'; cp++) {
@@ -1068,7 +1068,7 @@ static int gitdiff_dissimilarity(struct gitdiff_data *state UNUSED,
 				 const char *line,
 				 struct patch *patch)
 {
-	unsigned long val = strtoul(line, NULL, 10);
+	int val = atoi(line);
 	if (val <= 100)
 		patch->score = val;
 	return 0;
@@ -1083,7 +1083,7 @@ static int gitdiff_index(struct gitdiff_data *state,
 	 * and optional space with octal mode.
 	 */
 	const char *ptr, *eol;
-	int len;
+	size_t len;
 	const unsigned hexsz = the_hash_algo->hexsz;
 
 	ptr = strchr(line, '.');
@@ -1125,12 +1125,10 @@ static int gitdiff_unrecognized(struct gitdiff_data *state UNUSED,
  * Skip p_value leading components from "line"; as we do not accept
  * absolute paths, return NULL in that case.
  */
-static const char *skip_tree_prefix(int p_value,
-				    const char *line,
-				    int llen)
+static const char *skip_tree_prefix(int p_value, const char *line, size_t llen)
 {
 	int nslash;
-	int i;
+	size_t i;
 
 	if (!p_value)
 		return (llen && line[0] == '/') ? NULL : line;
@@ -1152,9 +1150,7 @@ static const char *skip_tree_prefix(int p_value,
  * creation or deletion of an empty file.  In any of these cases,
  * both sides are the same name under a/ and b/ respectively.
  */
-static char *git_header_name(int p_value,
-			     const char *line,
-			     int llen)
+static char *git_header_name(int p_value, const char *line, size_t llen)
 {
 	const char *name;
 	const char *second = NULL;
@@ -1302,12 +1298,8 @@ static int check_header_line(int linenr, struct patch *patch)
 	return 0;
 }
 
-int parse_git_diff_header(struct strbuf *root,
-			  int *linenr,
-			  int p_value,
-			  const char *line,
-			  int len,
-			  unsigned int size,
+int parse_git_diff_header(struct strbuf *root, int *linenr, int p_value,
+			  const char *line, size_t len, unsigned int size,
 			  struct patch *patch)
 {
 	unsigned long offset;
@@ -1360,14 +1352,14 @@ int parse_git_diff_header(struct strbuf *root,
 			{ "index ", gitdiff_index },
 			{ "", gitdiff_unrecognized },
 		};
-		int i;
+		size_t i;
 
 		len = linelen(line, size);
 		if (!len || line[len-1] != '\n')
 			break;
 		for (i = 0; i < ARRAY_SIZE(optable); i++) {
 			const struct opentry *p = optable + i;
-			int oplen = strlen(p->str);
+			size_t oplen = strlen(p->str);
 			int res;
 			if (len < oplen || memcmp(p->str, line, oplen))
 				continue;
@@ -1391,7 +1383,7 @@ done:
 				 "%d leading pathname components (line %d)",
 				 parse_hdr_state.p_value),
 			      parse_hdr_state.p_value, *linenr);
-			return -128;
+			return -1;
 		}
 		patch->old_name = xstrdup(patch->def_name);
 		patch->new_name = xstrdup(patch->def_name);
@@ -1400,7 +1392,7 @@ done:
 	    (!patch->old_name && !patch->is_new)) {
 		error(_("git diff header lacks filename information "
 			"(line %d)"), *linenr);
-		return -128;
+		return -1;
 	}
 	patch->is_toplevel_relative = 1;
 	return offset;
@@ -1454,22 +1446,23 @@ static int parse_range(const char *line, int len, int offset, const char *expect
 	return offset + ex;
 }
 
-static void recount_diff(const char *line, int size, struct fragment *fragment)
+static void recount_diff(const char *line, size_t size,
+			 struct fragment *fragment)
 {
 	int oldlines = 0, newlines = 0, ret = 0;
 
-	if (size < 1) {
+	if (size == 0) {
 		warning("recount: ignore empty hunk");
 		return;
 	}
 
 	for (;;) {
-		int len = linelen(line, size);
+		size_t len = linelen(line, size);
+
+		if (size <= len)
+			break;
 		size -= len;
 		line += len;
-
-		if (size < 1)
-			break;
 
 		switch (*line) {
 		case ' ': case '\n':
@@ -2086,7 +2079,7 @@ static void add_name_limit(struct apply_state *state,
 static int use_patch(struct apply_state *state, struct patch *p)
 {
 	const char *pathname = p->new_name ? p->new_name : p->old_name;
-	int i;
+	size_t i;
 
 	/* Paths outside are not touched regardless of "--include" */
 	if (state->prefix && *state->prefix) {
@@ -2172,9 +2165,9 @@ static int parse_chunk(struct apply_state *state, char *buffer, unsigned long si
 				"Files ",
 				NULL,
 			};
-			int i;
+			size_t i;
 			for (i = 0; binhdr[i]; i++) {
-				int len = strlen(binhdr[i]);
+				size_t len = strlen(binhdr[i]);
 				if (len < size - hd &&
 				    !memcmp(binhdr[i], buffer + hd, len)) {
 					state->linenr++;
@@ -2384,8 +2377,9 @@ static void update_pre_post_images(struct image *preimage,
 	if (postlen
 	    ? postlen < new_buf - postimage->buf
 	    : postimage->len < new_buf - postimage->buf)
-		BUG("caller miscounted postlen: asked %d, orig = %d, used = %d",
-		    (int)postlen, (int) postimage->len, (int)(new_buf - postimage->buf));
+		BUG("caller miscounted postlen: asked %u, orig = %u, used = %u",
+		    (unsigned int)postlen, (unsigned int)postimage->len,
+		    (unsigned int)(new_buf - postimage->buf));
 
 	/* Fix the length of the whole thing */
 	postimage->len = new_buf - postimage->buf;

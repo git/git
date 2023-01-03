@@ -218,7 +218,7 @@ static struct commit_list *best_bisection_sorted(struct commit_list *list, int n
 	struct commit_list *p;
 	struct commit_dist *array = xcalloc(nr, sizeof(*array));
 	struct strbuf buf = STRBUF_INIT;
-	int cnt, i;
+	size_t cnt, i;
 
 	for (p = list, cnt = 0; p; p = p->next) {
 		int distance;
@@ -493,7 +493,7 @@ static void read_bisect_paths(struct strvec *array)
 static char *join_oid_array_hex(struct oid_array *array, char delim)
 {
 	struct strbuf joined_hexs = STRBUF_INIT;
-	int i;
+	size_t i;
 
 	for (i = 0; i < array->nr; i++) {
 		strbuf_addstr(&joined_hexs, oid_to_hex(array->oid + i));
@@ -653,7 +653,7 @@ static void bisect_rev_setup(struct repository *r, struct rev_info *revs,
 	struct setup_revision_opt opt = {
 		.free_removed_argv_elements = 1,
 	};
-	int i;
+	size_t i;
 
 	repo_init_revisions(r, revs, prefix);
 	revs->abbrev = 0;
@@ -771,7 +771,7 @@ static struct commit **get_bad_and_good_commits(struct repository *r,
 						int *rev_nr)
 {
 	struct commit **rev;
-	int i, n = 0;
+	size_t i, n = 0;
 
 	ALLOC_ARRAY(rev, 1 + good_revs.nr);
 	rev[n++] = get_commit_reference(r, current_bad_oid);

@@ -92,7 +92,7 @@ static void extract_cmds(struct cmdname_help **p_cmds, uint32_t mask)
 static void print_command_list(const struct cmdname_help *cmds,
 			       uint32_t mask, int longest)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; cmds[i].name; i++) {
 		if (cmds[i].category & mask) {
@@ -380,7 +380,7 @@ void list_all_other_cmds(struct string_list *list)
 void list_cmds_by_category(struct string_list *list,
 			   const char *cat)
 {
-	int i, n = ARRAY_SIZE(command_list);
+	size_t i, n = ARRAY_SIZE(command_list);
 	uint32_t cat_id = 0;
 
 	for (i = 0; category_names[i]; i++) {
@@ -470,7 +470,7 @@ static int get_alias(const char *var, const char *value, void *data)
 static void list_all_cmds_help_external_commands(void)
 {
 	struct string_list others = STRING_LIST_INIT_DUP;
-	int i;
+	size_t i;
 
 	list_all_other_cmds(&others);
 	if (others.nr)
@@ -484,7 +484,7 @@ static void list_all_cmds_help_aliases(int longest)
 {
 	struct string_list alias_list = STRING_LIST_INIT_DUP;
 	struct cmdname_help *aliases;
-	int i;
+	size_t i;
 
 	git_config(get_alias, &alias_list);
 	string_list_sort(&alias_list);
@@ -810,7 +810,7 @@ static struct string_list guess_refs(const char *ref)
 NORETURN void help_unknown_ref(const char *ref, const char *cmd,
 			       const char *error)
 {
-	int i;
+	size_t i;
 	struct string_list suggested_refs = guess_refs(ref);
 
 	fprintf_ln(stderr, _("%s: %s - %s"), cmd, ref, error);

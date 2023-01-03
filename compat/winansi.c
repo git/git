@@ -195,9 +195,9 @@ static void erase_in_line(void)
 		&dummy);
 }
 
-static void set_attr(char func, const int *params, int paramlen)
+static void set_attr(char func, const int *params, size_t paramlen)
 {
-	int i;
+	size_t i;
 	switch (func) {
 	case 'm':
 		for (i = 0; i < paramlen; i++) {
@@ -344,7 +344,8 @@ static DWORD WINAPI console_thread(LPVOID unused)
 {
 	unsigned char buffer[BUFFER_SIZE];
 	DWORD bytes;
-	int start, end = 0, c, parampos = 0, state = TEXT;
+	int start, end = 0, c, state = TEXT;
+	size_t parampos = 0;
 	int params[MAX_PARAMS];
 
 	while (1) {

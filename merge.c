@@ -20,7 +20,8 @@ int try_merge_command(struct repository *r,
 		      const char *head_arg, struct commit_list *remotes)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
-	int i, ret;
+	size_t i;
+	int ret;
 	struct commit_list *j;
 
 	strvec_pushf(&cmd.args, "merge-%s", strategy);
@@ -52,7 +53,7 @@ int checkout_fast_forward(struct repository *r,
 	struct tree *trees[MAX_UNPACK_TREES];
 	struct unpack_trees_options opts;
 	struct tree_desc t[MAX_UNPACK_TREES];
-	int i, nr_trees = 0;
+	unsigned int i, nr_trees = 0;
 	struct lock_file lock_file = LOCK_INIT;
 
 	refresh_index(r->index, REFRESH_QUIET, NULL, NULL, NULL);

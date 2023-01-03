@@ -1480,11 +1480,11 @@ static int add_oid(const char *refname UNUSED,
 static void add_negotiation_tips(struct git_transport_options *smart_options)
 {
 	struct oid_array *oids = xcalloc(1, sizeof(*oids));
-	int i;
+	size_t i;
 
 	for (i = 0; i < negotiation_tip.nr; i++) {
 		const char *s = negotiation_tip.items[i].string;
-		int old_nr;
+		size_t old_nr;
 		if (!has_glob_specials(s)) {
 			struct object_id oid;
 			if (get_oid(s, &oid))
@@ -1939,7 +1939,8 @@ static int fetch_finished(int result, struct strbuf *out,
 
 static int fetch_multiple(struct string_list *list, int max_children)
 {
-	int i, result = 0;
+	size_t i;
+	int result = 0;
 	struct strvec argv = STRVEC_INIT;
 
 	if (!append && write_fetch_head) {

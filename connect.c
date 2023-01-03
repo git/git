@@ -238,7 +238,7 @@ static void process_capabilities(struct packet_reader *reader, int *linelen)
 	feat_val = server_feature_value("object-format", &feat_len);
 	if (feat_val) {
 		char *hash_name = xstrndup(feat_val, feat_len);
-		int hash_algo = hash_algo_by_name(hash_name);
+		unsigned hash_algo = hash_algo_by_name(hash_name);
 		if (hash_algo != GIT_HASH_UNKNOWN)
 			reader->hash_algo = &hash_algos[hash_algo];
 		free(hash_name);
@@ -385,7 +385,7 @@ static int process_ref_v2(struct packet_reader *reader, struct ref ***list,
 			  const char **unborn_head_target)
 {
 	int ret = 1;
-	int i = 0;
+	size_t i;
 	struct object_id old_oid;
 	struct ref *ref;
 	struct string_list line_sections = STRING_LIST_INIT_DUP;
@@ -403,15 +403,14 @@ static int process_ref_v2(struct packet_reader *reader, struct ref ***list,
 		goto out;
 	}
 
-	if (!strcmp("unborn", line_sections.items[i].string)) {
-		i++;
+	if (!strcmp("unborn", line_sections.items[0].string)) {
 		if (unborn_head_target &&
-		    !strcmp("HEAD", line_sections.items[i++].string)) {
+		    !strcmp("HEAD", line_sections.items[1].string)) {
 			/*
 			 * Look for the symref target (if any). If found,
 			 * return it to the caller.
 			 */
-			for (; i < line_sections.nr; i++) {
+			for (i = 2; i < line_sections.nr; i++) {
 				const char *arg = line_sections.items[i].string;
 
 				if (skip_prefix(arg, "symref-target:", &arg)) {
@@ -422,19 +421,20 @@ static int process_ref_v2(struct packet_reader *reader, struct ref ***list,
 		}
 		goto out;
 	}
-	if (parse_oid_hex_algop(line_sections.items[i++].string, &old_oid, &end, reader->hash_algo) ||
+	if (parse_oid_hex_algop(line_sections.items[0].string, &old_oid, &end,
+				reader->hash_algo) ||
 	    *end) {
 		ret = 0;
 		goto out;
 	}
 
-	ref = alloc_ref(line_sections.items[i++].string);
+	ref = alloc_ref(line_sections.items[1].string);
 
 	memcpy(ref->old_oid.hash, old_oid.hash, reader->hash_algo->rawsz);
 	**list = ref;
 	*list = &ref->next;
 
-	for (; i < line_sections.nr; i++) {
+	for (i = 2; i < line_sections.nr; i++) {
 		const char *arg = line_sections.items[i].string;
 		if (skip_prefix(arg, "symref-target:", &arg))
 			ref->symref = xstrdup(arg);
@@ -484,7 +484,7 @@ static void send_capabilities(int fd_out, struct packet_reader *reader)
 		packet_write_fmt(fd_out, "agent=%s", git_user_agent_sanitized());
 
 	if (server_feature_v2("object-format", &hash_name)) {
-		int hash_algo = hash_algo_by_name(hash_name);
+		unsigned hash_algo = hash_algo_by_name(hash_name);
 		if (hash_algo == GIT_HASH_UNKNOWN)
 			die(_("unknown object format '%s' specified by server"), hash_name);
 		reader->hash_algo = &hash_algos[hash_algo];
@@ -543,7 +543,7 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 			     const struct string_list *server_options,
 			     int stateless_rpc)
 {
-	int i;
+	size_t i;
 	struct strvec *ref_prefixes = transport_options ?
 		&transport_options->ref_prefixes : NULL;
 	const char **unborn_head_target = transport_options ?

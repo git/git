@@ -236,9 +236,9 @@ const char *empty_blob_oid_hex(void)
 	return oid_to_hex_r(buf, the_hash_algo->empty_blob);
 }
 
-int hash_algo_by_name(const char *name)
+unsigned hash_algo_by_name(const char *name)
 {
-	int i;
+	unsigned i;
 	if (!name)
 		return GIT_HASH_UNKNOWN;
 	for (i = 1; i < GIT_HASH_NALGOS; i++)
@@ -247,18 +247,18 @@ int hash_algo_by_name(const char *name)
 	return GIT_HASH_UNKNOWN;
 }
 
-int hash_algo_by_id(uint32_t format_id)
+unsigned hash_algo_by_id(uint32_t format_id)
 {
-	int i;
+	unsigned i;
 	for (i = 1; i < GIT_HASH_NALGOS; i++)
 		if (format_id == hash_algos[i].format_id)
 			return i;
 	return GIT_HASH_UNKNOWN;
 }
 
-int hash_algo_by_length(int len)
+unsigned hash_algo_by_length(size_t len)
 {
-	int i;
+	unsigned i;
 	for (i = 1; i < GIT_HASH_NALGOS; i++)
 		if (len == hash_algos[i].rawsz)
 			return i;

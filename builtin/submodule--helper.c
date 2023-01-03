@@ -185,7 +185,8 @@ static int module_list_compute(const char **argv,
 			       struct pathspec *pathspec,
 			       struct module_list *list)
 {
-	int i, result = 0;
+	unsigned int i;
+	int result = 0;
 	char *ps_matched = NULL;
 
 	parse_pathspec(pathspec, 0,
@@ -251,7 +252,7 @@ static char *get_up_path(const char *path)
 	int i;
 	struct strbuf sb = STRBUF_INIT;
 
-	for (i = count_slashes(path); i; i--)
+	for (i = count_slashes(path); i > 0; i--)
 		strbuf_addstr(&sb, "../");
 
 	/*
@@ -3212,7 +3213,7 @@ static void die_on_index_match(const char *path, int force)
 		die(_("index file corrupt"));
 
 	if (ps.nr) {
-		int i;
+		unsigned int i;
 		char *ps_matched = xcalloc(ps.nr, 1);
 
 		/* TODO: audit for interaction with sparse-index. */

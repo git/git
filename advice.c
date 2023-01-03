@@ -138,7 +138,7 @@ void advise_if_enabled(enum advice_type type, const char *advice, ...)
 int git_default_advice_config(const char *var, const char *value)
 {
 	const char *k, *slot_name;
-	int i;
+	size_t i;
 
 	if (!strcmp(var, "color.advice")) {
 		advice_use_color = git_config_colorbool(var, value);
@@ -169,7 +169,7 @@ int git_default_advice_config(const char *var, const char *value)
 
 void list_config_advices(struct string_list *list, const char *prefix)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < ARRAY_SIZE(advice_setting); i++)
 		list_config_item(list, prefix, advice_setting[i].key);

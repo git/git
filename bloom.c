@@ -73,11 +73,11 @@ uint32_t murmur3_seeded(uint32_t seed, const char *data, size_t len)
 	const uint32_t r2 = 13;
 	const uint32_t m = 5;
 	const uint32_t n = 0xe6546b64;
-	int i;
+	size_t i;
 	uint32_t k1 = 0;
 	const char *tail;
 
-	int len4 = len / sizeof(uint32_t);
+	size_t len4 = len / sizeof(uint32_t);
 
 	uint32_t k;
 	for (i = 0; i < len4; i++) {
@@ -127,7 +127,7 @@ void fill_bloom_key(const char *data,
 		    struct bloom_key *key,
 		    const struct bloom_filter_settings *settings)
 {
-	int i;
+	uint32_t i;
 	const uint32_t seed0 = 0x293ae76f;
 	const uint32_t seed1 = 0x7e646e2c;
 	const uint32_t hash0 = murmur3_seeded(seed0, data, len);
@@ -147,7 +147,7 @@ void add_key_to_filter(const struct bloom_key *key,
 		       struct bloom_filter *filter,
 		       const struct bloom_filter_settings *settings)
 {
-	int i;
+	uint32_t i;
 	uint64_t mod = filter->len * BITS_PER_WORD;
 
 	for (i = 0; i < settings->num_hashes; i++) {
@@ -310,7 +310,7 @@ int bloom_filter_contains(const struct bloom_filter *filter,
 			  const struct bloom_key *key,
 			  const struct bloom_filter_settings *settings)
 {
-	int i;
+	uint32_t i;
 	uint64_t mod = filter->len * BITS_PER_WORD;
 
 	if (!mod)

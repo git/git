@@ -359,7 +359,7 @@ static void check_object(struct object *obj)
 
 static void check_connectivity(void)
 {
-	int i, max;
+	unsigned int i, max;
 
 	/* Traverse the pending reachable objects */
 	traverse_reachable();

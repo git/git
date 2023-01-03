@@ -206,7 +206,7 @@ static int set_option(const char *name, const char *value)
 		options.filter = xstrdup(value);
 		return 0;
 	} else if (!strcmp(name, "object-format")) {
-		int algo;
+		unsigned algo;
 		options.object_format = 1;
 		if (strcmp(value, "true")) {
 			algo = hash_algo_by_name(value);

@@ -1325,7 +1325,7 @@ static struct object_list **process_tree(struct tree *tree,
 
 static int get_delta(struct rev_info *revs, struct remote_lock *lock)
 {
-	int i;
+	unsigned int i;
 	struct commit *commit;
 	struct object_list **p = &objects;
 	int count = 0;
@@ -1580,8 +1580,8 @@ static int delete_remote_branch(const char *pattern, int force)
 	struct object_id head_oid;
 	char *symref = NULL;
 	int match;
-	int patlen = strlen(pattern);
-	int i;
+	size_t patlen = strlen(pattern);
+	size_t i;
 	struct active_request_slot *slot;
 	struct slot_results results;
 	char *url;
@@ -1589,7 +1589,7 @@ static int delete_remote_branch(const char *pattern, int force)
 	/* Find the remote branch(es) matching the specified branch name */
 	for (match = 0; refs; refs = refs->next) {
 		char *name = refs->name;
-		int namelen = strlen(name);
+		size_t namelen = strlen(name);
 		if (namelen < patlen ||
 		    memcmp(name + namelen - patlen, pattern, patlen))
 			continue;

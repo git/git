@@ -179,7 +179,7 @@ static void cmd_log_init_defaults(struct rev_info *rev)
 
 static void set_default_decoration_filter(struct decoration_filter *decoration_filter)
 {
-	int i;
+	size_t i;
 	char *value = NULL;
 	struct string_list *include = decoration_filter->include_ref_pattern;
 	const struct string_list *config_exclude =
@@ -386,7 +386,7 @@ static struct itimerval early_output_timer;
 
 static void log_show_early(struct rev_info *revs, struct commit_list *list)
 {
-	int i = revs->early_output;
+	unsigned int i = revs->early_output;
 	int show_header = 1;
 	int no_free = revs->diffopt.no_free;
 

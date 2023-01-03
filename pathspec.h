@@ -28,7 +28,7 @@ struct index_state;
  * prepared by parse_pathspec().
  */
 struct pathspec {
-	int nr;
+	size_t nr;
 	unsigned int has_wildcard:1;
 	unsigned int recursive:1;
 	unsigned int recurse_submodules:1;
@@ -41,7 +41,7 @@ struct pathspec {
 		int len, prefix;
 		int nowildcard_len;
 		int flags;
-		int attr_match_nr;
+		size_t attr_match_nr;
 		struct attr_match {
 			char *value;
 			enum attr_match_mode {

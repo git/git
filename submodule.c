@@ -173,10 +173,10 @@ void add_submodule_odb_by_path(const char *path)
 	string_list_insert(&added_submodule_odb_paths, xstrdup(path));
 }
 
-int register_all_submodule_odb_as_alternates(void)
+size_t register_all_submodule_odb_as_alternates(void)
 {
-	int i;
-	int ret = added_submodule_odb_paths.nr;
+	size_t i;
+	size_t ret = added_submodule_odb_paths.nr;
 
 	for (i = 0; i < added_submodule_odb_paths.nr; i++)
 		add_to_alternates_memory(added_submodule_odb_paths.items[i].string);
@@ -324,7 +324,7 @@ int is_submodule_populated_gently(const char *path, int *return_error_code)
 void die_in_unpopulated_submodule(struct index_state *istate,
 				  const char *prefix)
 {
-	int i, prefixlen;
+	size_t i, prefixlen;
 
 	if (!prefix)
 		return;
@@ -333,7 +333,7 @@ void die_in_unpopulated_submodule(struct index_state *istate,
 
 	for (i = 0; i < istate->cache_nr; i++) {
 		struct cache_entry *ce = istate->cache[i];
-		int ce_len = ce_namelen(ce);
+		size_t ce_len = ce_namelen(ce);
 
 		if (!S_ISGITLINK(ce->ce_mode))
 			continue;
@@ -354,7 +354,8 @@ void die_in_unpopulated_submodule(struct index_state *istate,
 void die_path_inside_submodule(struct index_state *istate,
 			       const struct pathspec *ps)
 {
-	int i, j;
+	unsigned int i;
+	int j;
 
 	for (i = 0; i < istate->cache_nr; i++) {
 		struct cache_entry *ce = istate->cache[i];
@@ -1206,7 +1207,8 @@ int push_unpushed_submodules(struct repository *r,
 			     const struct string_list *push_options,
 			     int dry_run)
 {
-	int i, ret = 1;
+	size_t i;
+	int ret = 1;
 	struct string_list needs_pushing = STRING_LIST_INIT_DUP;
 
 	if (!find_unpushed_submodules(r, commits,

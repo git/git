@@ -56,7 +56,7 @@ static int git_pretty_formats_config(const char *var, const char *value,
 	struct cmt_fmt_map *commit_format = NULL;
 	const char *name;
 	const char *fmt;
-	int i;
+	size_t i;
 
 	if (!skip_prefix(var, "pretty.", &name))
 		return 0;
@@ -130,7 +130,7 @@ static struct cmt_fmt_map *find_commit_format_recursive(const char *sought,
 {
 	struct cmt_fmt_map *found = NULL;
 	size_t found_match_len = 0;
-	int i;
+	size_t i;
 
 	if (num_redirections >= commit_formats_len)
 		die("invalid --pretty format: "
@@ -259,9 +259,9 @@ static int is_rfc822_special(char ch)
 	}
 }
 
-static int needs_rfc822_quoting(const char *s, int len)
+static int needs_rfc822_quoting(const char *s, size_t len)
 {
-	int i;
+	size_t i;
 	for (i = 0; i < len; i++)
 		if (is_rfc822_special(s[i]))
 			return 1;
@@ -279,9 +279,9 @@ static int last_line_length(struct strbuf *sb)
 	return sb->len - (i + 1);
 }
 
-static void add_rfc822_quoted(struct strbuf *out, const char *s, int len)
+static void add_rfc822_quoted(struct strbuf *out, const char *s, size_t len)
 {
-	int i;
+	size_t i;
 
 	/* just a guess, we may have to also backslash-quote */
 	strbuf_grow(out, len + 2);
@@ -357,9 +357,9 @@ static int is_rfc2047_special(char ch, enum rfc2047_type type)
 	return !(isalnum(ch) || ch == '!' || ch == '*' || ch == '+' || ch == '-' || ch == '/');
 }
 
-static int needs_rfc2047_encoding(const char *line, int len)
+static int needs_rfc2047_encoding(const char *line, size_t len)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < len; i++) {
 		int ch = line[i];
@@ -896,11 +896,11 @@ struct format_commit_context {
 static void parse_commit_header(struct format_commit_context *context)
 {
 	const char *msg = context->message;
-	int i;
+	size_t i;
 
 	for (i = 0; msg[i]; i++) {
 		const char *name;
-		int eol;
+		size_t eol;
 		for (eol = i; msg[eol] && msg[eol] != '\n'; eol++)
 			; /* do nothing */
 
@@ -930,7 +930,7 @@ void format_sanitized_subject(struct strbuf *sb, const char *msg, size_t len)
 	size_t trimlen;
 	size_t start_len = sb->len;
 	int space = 2;
-	int i;
+	size_t i;
 
 	for (i = 0; i < len; i++) {
 		if (istitlechar(msg[i])) {
@@ -1324,7 +1324,7 @@ static size_t parse_describe_args(const char *start, struct strvec *args)
 		const char *argval;
 		size_t arglen = 0;
 		int optval = 0;
-		int i;
+		size_t i;
 
 		for (i = 0; !found && i < ARRAY_SIZE(option); i++) {
 			switch (option[i].type) {
@@ -2022,7 +2022,7 @@ void pp_title_line(struct pretty_print_context *pp,
 	strbuf_addch(sb, '\n');
 
 	if (need_8bit_cte == 0) {
-		int i;
+		size_t i;
 		for (i = 0; i < pp->in_body_headers.nr; i++) {
 			if (has_non_ascii(pp->in_body_headers.items[i].string)) {
 				need_8bit_cte = 1;
@@ -2046,7 +2046,7 @@ void pp_title_line(struct pretty_print_context *pp,
 	}
 
 	if (pp->in_body_headers.nr) {
-		int i;
+		size_t i;
 		for (i = 0; i < pp->in_body_headers.nr; i++) {
 			strbuf_addstr(sb, pp->in_body_headers.items[i].string);
 			free(pp->in_body_headers.items[i].string);

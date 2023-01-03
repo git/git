@@ -13,7 +13,7 @@
 struct dir_entry {
 	struct hashmap_entry ent;
 	struct dir_entry *parent;
-	int nr;
+	unsigned int nr;
 	unsigned int namelen;
 	char name[FLEX_ARRAY];
 };
@@ -477,7 +477,7 @@ struct lazy_name_thread_data {
 static void *lazy_name_thread_proc(void *_data)
 {
 	struct lazy_name_thread_data *d = _data;
-	int k;
+	unsigned int k;
 
 	for (k = 0; k < d->istate->cache_nr; k++) {
 		struct cache_entry *ce_k = d->istate->cache[k];
@@ -493,7 +493,7 @@ static inline void lazy_update_dir_ref_counts(
 	struct index_state *istate,
 	struct lazy_entry *lazy_entries)
 {
-	int k;
+	unsigned int k;
 
 	for (k = 0; k < istate->cache_nr; k++) {
 		if (lazy_entries[k].dir)

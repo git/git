@@ -90,7 +90,7 @@ static int match_stat_with_submodule(struct diff_options *diffopt,
 
 int run_diff_files(struct rev_info *revs, unsigned int option)
 {
-	int entries, i;
+	unsigned int entries, i;
 	int diff_unmerged_stage = revs->max_count;
 	unsigned ce_option = ((option & DIFF_RACY_IS_MODIFIED)
 			      ? CE_MATCH_RACY_IS_DIRTY : 0);
@@ -556,7 +556,7 @@ static int diff_cache(struct rev_info *revs,
 
 void diff_get_merge_base(const struct rev_info *revs, struct object_id *mb)
 {
-	int i;
+	unsigned int i;
 	struct commit *mb_child[2] = {0};
 	struct commit_list *merge_bases;
 

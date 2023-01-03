@@ -649,9 +649,9 @@ int path_inside_repo(const char *prefix, const char *path);
 #define INIT_DB_EXIST_OK 0x0002
 
 int init_db(const char *git_dir, const char *real_git_dir,
-	    const char *template_dir, int hash_algo,
+	    const char *template_dir, int hash,
 	    const char *initial_branch, unsigned int flags);
-void initialize_repository_version(int hash_algo, int reinit);
+void initialize_repository_version(unsigned int hash, int reinit);
 
 void sanitize_stdfds(void);
 int daemonize(void);
@@ -1132,7 +1132,7 @@ struct repository_format {
 	char *partial_clone; /* value of extensions.partialclone */
 	int worktree_config;
 	int is_bare;
-	int hash_algo;
+	unsigned hash_algo;
 	int sparse_index;
 	char *work_tree;
 	struct string_list unknown_extensions;
@@ -1212,7 +1212,8 @@ void check_repository_format(struct repository_format *fmt);
  */
 const char *repo_find_unique_abbrev(struct repository *r, const struct object_id *oid, int len);
 #define find_unique_abbrev(oid, len) repo_find_unique_abbrev(the_repository, oid, len)
-int repo_find_unique_abbrev_r(struct repository *r, char *hex, const struct object_id *oid, int len);
+unsigned int repo_find_unique_abbrev_r(struct repository *r, char *hex,
+				       const struct object_id *oid, int len);
 #define find_unique_abbrev_r(hex, oid, len) repo_find_unique_abbrev_r(the_repository, hex, oid, len)
 
 /* set default permissions by passing mode arguments to open(2) */
@@ -1618,7 +1619,8 @@ int base_name_compare(const char *name1, size_t len1, int mode1,
 int df_name_compare(const char *name1, size_t len1, int mode1,
 		    const char *name2, size_t len2, int mode2);
 int name_compare(const char *name1, size_t len1, const char *name2, size_t len2);
-int cache_name_stage_compare(const char *name1, int len1, int stage1, const char *name2, int len2, int stage2);
+int cache_name_stage_compare(const char *name1, size_t len1, int stage1,
+			     const char *name2, size_t len2, int stage2);
 
 void *read_object_with_reference(struct repository *r,
 				 const struct object_id *oid,
@@ -1828,8 +1830,8 @@ extern const char *askpass_program;
 extern const char *excludes_file;
 
 /* base85 */
-int decode_85(char *dst, const char *line, int linelen);
-void encode_85(char *buf, const unsigned char *data, int bytes);
+int decode_85(char *dst, const char *line, size_t linelen);
+void encode_85(char *buf, const unsigned char *data, size_t bytes);
 
 /* pkt-line.c */
 void packet_trace_identity(const char *prog);

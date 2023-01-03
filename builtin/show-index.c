@@ -10,13 +10,13 @@ static const char *const show_index_usage[] = {
 
 int cmd_show_index(int argc, const char **argv, const char *prefix)
 {
-	int i;
+	unsigned int i;
 	unsigned nr;
 	unsigned int version;
 	static unsigned int top_index[256];
 	unsigned hashsz;
 	const char *hash_name = NULL;
-	int hash_algo;
+	unsigned hash_algo;
 	const struct option show_index_options[] = {
 		OPT_STRING(0, "object-format", &hash_name, N_("hash-algorithm"),
 			   N_("specify the hash algorithm to use")),

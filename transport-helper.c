@@ -295,7 +295,8 @@ static int string_list_set_helper_option(struct helper_data *data,
 					 struct string_list *list)
 {
 	struct strbuf buf = STRBUF_INIT;
-	int i, ret = 0;
+	int ret = 0;
+	size_t i;
 
 	for (i = 0; i < list->nr; i++) {
 		strbuf_addf(&buf, "option %s ", name);
@@ -315,7 +316,8 @@ static int set_helper_option(struct transport *transport,
 {
 	struct helper_data *data = transport->data;
 	struct strbuf buf = STRBUF_INIT;
-	int i, ret, is_bool = 0;
+	size_t i;
+	int ret, is_bool = 0;
 
 	get_helper(transport);
 
@@ -459,7 +461,7 @@ static int get_exporter(struct transport *transport,
 {
 	struct helper_data *data = transport->data;
 	struct child_process *helper = get_helper(transport);
-	int i;
+	size_t i;
 
 	child_process_init(fastexport);
 
@@ -1226,7 +1228,7 @@ static struct ref *get_refs_list_using_list(struct transport *transport,
 		else if (buf.buf[0] == ':') {
 			const char *value;
 			if (skip_prefix(buf.buf, ":object-format ", &value)) {
-				int algo = hash_algo_by_name(value);
+				unsigned algo = hash_algo_by_name(value);
 				if (algo == GIT_HASH_UNKNOWN)
 					die(_("unsupported object format '%s'"),
 					    value);

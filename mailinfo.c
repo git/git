@@ -617,7 +617,7 @@ check_header_out:
 static int is_inbody_header(const struct mailinfo *mi,
 			    const struct strbuf *line)
 {
-	int i;
+	size_t i;
 	const char *val;
 	for (i = 0; header[i]; i++)
 		if (!mi->s_hdr_data[i] && skip_header(line, header[i], &val))
@@ -765,7 +765,7 @@ static int check_inbody_header(struct mailinfo *mi, const struct strbuf *line)
 	if (starts_with(line->buf, ">From") && isspace(line->buf[5]))
 		return is_format_patch_separator(line->buf + 1, line->len - 1);
 	if (starts_with(line->buf, "[PATCH]") && isspace(line->buf[7])) {
-		int i;
+		size_t i;
 		for (i = 0; header[i]; i++)
 			if (!strcmp("Subject", header[i])) {
 				handle_header(&mi->s_hdr_data[i], line);
@@ -809,7 +809,7 @@ static int handle_commit_msg(struct mailinfo *mi, struct strbuf *line)
 		return 0; /* mi->input_error already set */
 
 	if (mi->use_scissors && is_scissors_line(line->buf)) {
-		int i;
+		size_t i;
 
 		strbuf_setlen(&mi->log_message, 0);
 		mi->header_stage = 1;
@@ -1147,7 +1147,7 @@ static void output_header_lines(FILE *fout, const char *hdr, const struct strbuf
 static void handle_info(struct mailinfo *mi)
 {
 	struct strbuf *hdr;
-	int i;
+	size_t i;
 
 	for (i = 0; header[i]; i++) {
 		/* only print inbody headers if we output a patch file */

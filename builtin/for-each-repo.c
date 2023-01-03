@@ -30,7 +30,8 @@ static int run_command_on_repo(const char *path, int argc, const char ** argv)
 int cmd_for_each_repo(int argc, const char **argv, const char *prefix)
 {
 	static const char *config_key = NULL;
-	int i, result = 0;
+	int result = 0;
+	size_t i;
 	const struct string_list *values;
 
 	const struct option options[] = {

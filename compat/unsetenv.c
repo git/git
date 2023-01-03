@@ -5,7 +5,7 @@ int gitunsetenv(const char *name)
 #if !defined(__MINGW32__)
      extern char **environ;
 #endif
-     int src, dst;
+     size_t src, dst;
      size_t nmln;
 
      nmln = strlen(name);

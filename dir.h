@@ -374,7 +374,7 @@ int fill_directory(struct dir_struct *dir,
 		   struct index_state *istate,
 		   const struct pathspec *pathspec);
 int read_directory(struct dir_struct *, struct index_state *istate,
-		   const char *path, int len,
+		   const char *path, unsigned int len,
 		   const struct pathspec *pathspec);
 
 enum pattern_match_result {

@@ -1298,7 +1298,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	}
 
 	if (mapped_refs) {
-		int hash_algo = hash_algo_by_ptr(transport_get_hash_algo(transport));
+		unsigned hash_algo = hash_algo_by_ptr(transport_get_hash_algo(transport));
 
 		/*
 		 * Now that we know what algorithm the remote side is using,
