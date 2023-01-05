@@ -26,6 +26,9 @@ UI, Workflows & Features
  * "git format-patch" learned to honor format.mboxrd even when sending
    patches to the standard output stream,
 
+ * 'cat-file' gains mailmap support for its '--batch-check' and '-s'
+   options.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -36,6 +39,14 @@ Performance, Internal Implementation, Development Support etc.
 
  * Use the SHA1DC implementation on macOS, just like other platforms,
    by default.
+
+ * Even in a repository with promisor remote, it is useless to
+   attempt to lazily attempt fetching an object that is expected to be
+   commit, because no "filter" mode omits commit objects.  Take
+   advantage of this assumption to fail fast on errors.
+
+ * Stop using "git --super-prefix" and narrow the scope of its use to
+   the submodule--helper.
 
 
 Fixes since v2.39
@@ -94,6 +105,9 @@ Fixes since v2.39
    flush its output to the disk..
    (merge ce54672f9b ps/fsync-refs-fix later to maint).
 
+ * Fix to a small regression in 2.38 days.
+   (merge 6d5e9e53aa ab/bundle-wo-args later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 77e04b2ed4 rs/t4205-do-not-exit-in-test-script later to maint).
    (merge faebba436e rs/plug-pattern-list-leak-in-lof later to maint).
@@ -110,3 +124,6 @@ Fixes since v2.39
    (merge b07a819c05 rs/reflog-expiry-cleanup later to maint).
    (merge d422d06167 rs/clarify-error-in-write-loose-object later to maint).
    (merge 92cb135855 sk/remove-duplicate-includes later to maint).
+   (merge 4eb1ccecd4 dh/mingw-ownership-check-typofix later to maint).
+   (merge f95526419b ar/typofix-gitattributes-doc later to maint).
+   (merge 27875aeec9 km/doc-branch-start-point later to maint).
