@@ -59,7 +59,7 @@ test_expect_success 'setup' '
 test_expect_success 'set up base packfile and variables' '
 	# the hash of this content starts with ff, which
 	# makes some later computations much simpler
-	echo $(test_oid oidfff) >file &&
+	test_oid oidfff >file &&
 	git add file &&
 	git commit -m base &&
 	git repack -ad &&
