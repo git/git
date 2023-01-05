@@ -102,8 +102,6 @@ char *git_work_tree_cfg;
 
 static char *git_namespace;
 
-static char *super_prefix;
-
 /*
  * Repository-local GIT_* environment variables; see cache.h for details.
  */
@@ -121,7 +119,6 @@ const char * const local_repo_env[] = {
 	NO_REPLACE_OBJECTS_ENVIRONMENT,
 	GIT_REPLACE_REF_BASE_ENVIRONMENT,
 	GIT_PREFIX_ENVIRONMENT,
-	GIT_SUPER_PREFIX_ENVIRONMENT,
 	GIT_SHALLOW_FILE_ENVIRONMENT,
 	GIT_COMMON_DIR_ENVIRONMENT,
 	NULL
@@ -232,16 +229,6 @@ const char *strip_namespace(const char *namespaced_ref)
 	if (skip_prefix(namespaced_ref, get_git_namespace(), &out))
 		return out;
 	return NULL;
-}
-
-const char *get_super_prefix(void)
-{
-	static int initialized;
-	if (!initialized) {
-		super_prefix = xstrdup_or_null(getenv(GIT_SUPER_PREFIX_ENVIRONMENT));
-		initialized = 1;
-	}
-	return super_prefix;
 }
 
 static int git_work_tree_initialized;

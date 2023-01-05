@@ -70,7 +70,7 @@ static const char *unpack_plumbing_errors[NB_UNPACK_TREES_WARNING_TYPES] = {
 	  ? ((o)->msgs[(type)])      \
 	  : (unpack_plumbing_errors[(type)]) )
 
-static const char *super_prefixed(const char *path)
+static const char *super_prefixed(const char *path, const char *super_prefix)
 {
 	/*
 	 * It is necessary and sufficient to have two static buffers
@@ -82,7 +82,6 @@ static const char *super_prefixed(const char *path)
 	static unsigned idx = ARRAY_SIZE(buf) - 1;
 
 	if (super_prefix_len < 0) {
-		const char *super_prefix = get_super_prefix();
 		if (!super_prefix) {
 			super_prefix_len = 0;
 		} else {
@@ -235,7 +234,8 @@ static int add_rejected_path(struct unpack_trees_options *o,
 		return -1;
 
 	if (!o->show_all_errors)
-		return error(ERRORMSG(o, e), super_prefixed(path));
+		return error(ERRORMSG(o, e), super_prefixed(path,
+							    o->super_prefix));
 
 	/*
 	 * Otherwise, insert in a list for future display by
@@ -262,7 +262,8 @@ static void display_error_msgs(struct unpack_trees_options *o)
 			error_displayed = 1;
 			for (i = 0; i < rejects->nr; i++)
 				strbuf_addf(&path, "\t%s\n", rejects->items[i].string);
-			error(ERRORMSG(o, e), super_prefixed(path.buf));
+			error(ERRORMSG(o, e), super_prefixed(path.buf,
+							     o->super_prefix));
 			strbuf_release(&path);
 		}
 		string_list_clear(rejects, 0);
@@ -289,7 +290,8 @@ static void display_warning_msgs(struct unpack_trees_options *o)
 			warning_displayed = 1;
 			for (i = 0; i < rejects->nr; i++)
 				strbuf_addf(&path, "\t%s\n", rejects->items[i].string);
-			warning(ERRORMSG(o, e), super_prefixed(path.buf));
+			warning(ERRORMSG(o, e), super_prefixed(path.buf,
+							       o->super_prefix));
 			strbuf_release(&path);
 		}
 		string_list_clear(rejects, 0);
@@ -311,7 +313,8 @@ static int check_submodule_move_head(const struct cache_entry *ce,
 	if (o->reset)
 		flags |= SUBMODULE_MOVE_HEAD_FORCE;
 
-	if (submodule_move_head(ce->name, old_id, new_id, flags))
+	if (submodule_move_head(ce->name, o->super_prefix, old_id, new_id,
+				flags))
 		return add_rejected_path(o, ERROR_WOULD_LOSE_SUBMODULE, ce->name);
 	return 0;
 }
@@ -414,6 +417,7 @@ static int check_updates(struct unpack_trees_options *o,
 	int i, pc_workers, pc_threshold;
 
 	trace_performance_enter();
+	state.super_prefix = o->super_prefix;
 	state.force = 1;
 	state.quiet = 1;
 	state.refresh_cache = 1;
@@ -444,7 +448,7 @@ static int check_updates(struct unpack_trees_options *o,
 
 		if (ce->ce_flags & CE_WT_REMOVE) {
 			display_progress(progress, ++cnt);
-			unlink_entry(ce);
+			unlink_entry(ce, o->super_prefix);
 		}
 	}
 
@@ -2958,8 +2962,8 @@ int bind_merge(const struct cache_entry * const *src,
 	if (a && old)
 		return o->quiet ? -1 :
 			error(ERRORMSG(o, ERROR_BIND_OVERLAP),
-			      super_prefixed(a->name),
-			      super_prefixed(old->name));
+			      super_prefixed(a->name, o->super_prefix),
+			      super_prefixed(old->name, o->super_prefix));
 	if (!a)
 		return keep_entry(old, o);
 	else
@@ -3020,7 +3024,7 @@ int stash_worktree_untracked_merge(const struct cache_entry * const *src,
 
 	if (worktree && untracked)
 		return error(_("worktree and untracked commit have duplicate entries: %s"),
-			     super_prefixed(worktree->name));
+			     super_prefixed(worktree->name, o->super_prefix));
 
 	return merged_entry(worktree ? worktree : untracked, NULL, o);
 }
