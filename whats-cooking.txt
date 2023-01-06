@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2023, #01; Mon, 2)
-X-master-at: 2b4f5a4e4bb102ac8d967cea653ed753b608193c
-X-next-at: 7cf837fe5f11ff7b613db06ba8547786c6d37bd9
+Subject: What's cooking in git.git (Jan 2023, #02; Fri, 6)
+X-master-at: 4dbebc36b0893f5094668ddea077d0e235560b16
+X-next-at: 2a6d74b5839c13a139e2856e92b7bd8110056098
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jan 2023, #01; Mon, 2)
+What's cooking in git.git (Jan 2023, #02; Fri, 6)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -45,90 +45,33 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ds/bundle-uri-4 (2022-12-25) 11 commits
-  (merged to 'next' on 2022-12-26 at 6d7c21c44a)
- + clone: unbundle the advertised bundles
- + bundle-uri: download bundles from an advertised list
- + bundle-uri: allow relative URLs in bundle lists
- + strbuf: introduce strbuf_strip_file_from_path()
- + bundle-uri: serve bundle.* keys from config
- + bundle-uri client: add helper for testing server
- + transport: rename got_remote_heads
- + bundle-uri client: add boolean transfer.bundleURI setting
- + clone: request the 'bundle-uri' command when available
- + t: create test harness for 'bundle-uri' command
- + protocol v2: add server-side "bundle-uri" skeleton
+* ab/bundle-wo-args (2022-12-28) 3 commits
+  (merged to 'next' on 2022-12-28 at 6ae8fc1c88)
+ + bundle <cmd>: have usage_msg_opt() note the missing "<file>"
+ + builtin/bundle.c: remove superfluous "newargc" variable
+  (merged to 'next' on 2022-12-26 at b086677fd0)
+ + bundle: don't segfault on "git bundle <subcmd>"
 
- Bundle URIs part 4.
- source: <pull.1400.v4.git.1671722058.gitgitgadget@gmail.com>
+ Fix to a small regression in 2.38 days.
+ source: <patch-1.1-2319eb2ddbd-20221220T133941Z-avarab@gmail.com>
+ source: <cover-0.2-00000000000-20221227T183708Z-avarab@gmail.com>
 
 
-* ew/format-patch-mboxrd (2022-12-25) 1 commit
-  (merged to 'next' on 2022-12-26 at bb6cc9e207)
- + format-patch: support format.mboxrd with --stdout
+* ab/no-more-git-global-super-prefix (2022-12-26) 9 commits
+  (merged to 'next' on 2022-12-28 at 126b1fbad1)
+ + read-tree: add "--super-prefix" option, eliminate global
+ + submodule--helper: convert "{update,clone}" to their own "--super-prefix"
+ + submodule--helper: convert "status" to its own "--super-prefix"
+ + submodule--helper: convert "sync" to its own "--super-prefix"
+ + submodule--helper: convert "foreach" to its own "--super-prefix"
+ + submodule--helper: don't use global --super-prefix in "absorbgitdirs"
+ + submodule.c & submodule--helper: pass along "super_prefix" param
+ + read-tree + fetch tests: test failing "--super-prefix" interaction
+ + submodule absorbgitdirs tests: add missing "Migrating git..." tests
 
- "git format-patch" learned to honor format.mboxrd even when sending
- patches to the standard output stream,
- source: <20221222201619.M435985@dcvr>
-
-
-* lk/line-range-parsing-fix (2022-12-20) 1 commit
-  (merged to 'next' on 2022-12-26 at 216226a6e2)
- + line-range: fix infinite loop bug with '$' regex
-
- When given a pattern that matches an empty string at the end of a
- line, the code to parse the "git diff" line-ranges fell into an
- infinite loop, which has been corrected.
- source: <20221219224850.2703967-1-lars@oddbit.com>
-
-
-* ps/fsync-refs-fix (2022-12-25) 1 commit
-  (merged to 'next' on 2022-12-26 at 6358875b39)
- + refs: fix corruption by not correctly syncing packed-refs to disk
-
- Fix the sequence to fsync $GIT_DIR/packed-refs file that forgot to
- flush its output to the disk..
- source: <8c8ecf8e3718cbca049ee7a283edd7b7887e464e.1671547905.git.ps@pks.im>
-
-
-* sa/git-var-sequence-editor (2022-12-18) 1 commit
-  (merged to 'next' on 2022-12-20 at a5737674b6)
- + var: add GIT_SEQUENCE_EDITOR variable
-
- Just like "git var GIT_EDITOR" abstracts the complex logic to
- choose which editor gets used behind it, "git var" now give support
- to GIT_SEQUENCE_EDITOR.
- source: <pull.1424.v2.git.1671318599482.gitgitgadget@gmail.com>
-
-
-* sk/win32-pthread-exit-fix (2022-12-25) 1 commit
-  (merged to 'next' on 2022-12-26 at ebcb1fef4c)
- + win32: use _endthreadex to terminate threads, not ExitThread
-
- An API emulation fix.
- source: <pull.1414.v2.git.git.1671932510529.gitgitgadget@gmail.com>
-
-
-* ss/pull-v-recurse-fix (2022-12-18) 1 commit
-  (merged to 'next' on 2022-12-20 at 21f91dc75d)
- + submodule: accept -v for the update command
-
- "git pull -v --recurse-submodules" attempted to pass "-v" down to
- underlying "git submodule update", which did not understand the
- request and barfed, which has been corrected.
- source: <f805f2da-a7e1-9fde-cc0a-04a30f79c9af@cs-ware.de>
-
---------------------------------------------------
-[New Topics]
-
-* km/doc-branch-start-point (2022-12-27) 1 commit
-  (merged to 'next' on 2022-12-28 at 0c24f1cd9b)
- + doc/git-branch: fix --force description typo
-
- Typofix.
-
- Will merge to 'master'.
- source: <20221226165441.126625-1-kyle@kyleam.com>
+ Stop using "git --super-prefix" and narrow the scope of its use to
+ the submodule--helper.
+ source: <cover-v5-0.9-00000000000-20221220T104519Z-avarab@gmail.com>
 
 
 * ar/typofix-gitattributes-doc (2022-12-28) 1 commit
@@ -136,9 +79,296 @@ Release tarballs are available at:
  + gitattributes.txt: fix typo in "comma separated"
 
  Typofix.
-
- Will merge to 'master'.
  source: <20221227210156.1532168-1-rybak.a.v@gmail.com>
+
+
+* dh/mingw-ownership-check-typofix (2022-12-20) 1 commit
+  (merged to 'next' on 2022-12-28 at 3753a46f6d)
+ + mingw: fix typo in an error message from ownership check
+
+ Error message typofix.
+ source: <pull.1393.git.git.1671416810927.gitgitgadget@gmail.com>
+
+
+* jt/avoid-lazy-fetch-commits (2022-12-15) 4 commits
+  (merged to 'next' on 2022-12-28 at 35276d17e2)
+ + commit: don't lazy-fetch commits
+ + object-file: emit corruption errors when detected
+ + object-file: refactor map_loose_object_1()
+ + object-file: remove OBJECT_INFO_IGNORE_LOOSE
+
+ Even in a repository with promisor remote, it is useless to
+ attempt to lazily attempt fetching an object that is expected to be
+ commit, because no "filter" mode omits commit objects.  Take
+ advantage of this assumption to fail fast on errors.
+ source: <cover.1671045259.git.jonathantanmy@google.com>
+
+
+* km/doc-branch-start-point (2022-12-27) 1 commit
+  (merged to 'next' on 2022-12-28 at 0c24f1cd9b)
+ + doc/git-branch: fix --force description typo
+
+ Typofix.
+ source: <20221226165441.126625-1-kyle@kyleam.com>
+
+
+* sa/cat-file-mailmap--batch-check (2022-12-20) 2 commits
+  (merged to 'next' on 2022-12-28 at 57531d3fe8)
+ + cat-file: add mailmap support to --batch-check option
+ + cat-file: add mailmap support to -s option
+
+ 'cat-file' gains mailmap support for its '--batch-check' and '-s'
+ options.
+ cf. <221220.865ye6xlmo.gmgdl@evledraar.gmail.com>
+ source: <20221220060113.51010-1-siddharthasthana31@gmail.com>
+
+
+* sg/test-oid-wo-incomplete-line (2022-12-19) 1 commit
+  (merged to 'next' on 2022-12-28 at 8dadf8c521)
+ + tests: make 'test_oid' print trailing newline
+
+ Test helper updates.
+ source: <20221218162905.3508164-1-szeder.dev@gmail.com>
+
+--------------------------------------------------
+[New Topics]
+
+* pw/ci-print-failure-name-fix (2023-01-04) 1 commit
+ - ci(github): restore "print test failures" step name
+
+ (cosmetic) CI regression fix.
+
+ Will merge to 'next'.
+ source: <pull.1453.git.1672741640587.gitgitgadget@gmail.com>
+
+
+* rs/use-enhanced-bre-on-macos (2023-01-04) 1 commit
+ - grep: use REG_ENHANCED on macOS
+
+ Newer regex library macOS stopped enabling GNU-like enhanced BRE,
+ where '\(A\|B\)' works as alternation, unless explicitly asked with
+ the REG_ENHANCED flag.  "git grep" now can be compiled to do so, to
+ retain the old behaviour.
+
+ Will merge to 'next'.
+ source: <343a891e-d737-0ace-26a9-3839d3bd5583@web.de>
+
+
+* cw/submodule-status-in-parallel (2023-01-05) 6 commits
+ - submodule: call parallel code from serial status
+ - diff-lib: parallelize run_diff_files for submodules
+ - diff-lib: refactor match_stat_with_submodule
+ - submodule: move status parsing into function
+ - submodule: strbuf variable rename
+ - run-command: add duplicate_output_fn to run_processes_parallel_opts
+
+ "git submodule status" learned to run the comparison in submodule
+ repositories in parallel.
+
+ Needs review.
+ source: <https://lore.kernel.org/git/20221108184200.2813458-1-calvinwan@google.com/>
+
+
+* kn/attr-from-tree (2023-01-04) 3 commits
+ - SQUASH???
+ - attr: add flag `--source` to work with tree-ish
+ - t0003: move setup for `--all` into new block
+
+ Expecting a reroll.
+ cf. <CAOLa=ZStKKgyaHGjGVpQ5jsSpkdqXuH2RhvWOgrU2qKxGbQFGA@mail.gmail.com>
+ source: <cover.1671793109.git.karthik.188@gmail.com>
+
+
+* ws/single-file-cone (2023-01-05) 1 commit
+ - dir: check for single file cone patterns
+
+ The logic to see if we are using the "cone" mode by checking the
+ sparsity patterns has been tightened to avoid mistaking a pattern
+ that names a single file as specifying a cone.
+
+ Will merge to 'next'.
+ source: <pull.1446.v2.git.1672734059938.gitgitgadget@gmail.com>
+
+
+* ds/bundle-uri-4 (2023-01-06) 1 commit
+ - test-bundle-uri: drop unused variables
+
+ Code clean-up.
+
+ Will merge to 'next'.
+ source: <Y7fgV5eFx78BHdQ4@coredump.intra.peff.net>
+
+
+* jk/ext-diff-with-relative (2023-01-06) 3 commits
+ - diff: drop "name" parameter from prepare_temp_file()
+ - diff: clean up external-diff argv setup
+ - diff: use filespec path to set up tempfiles for ext-diff
+
+ "git diff --relative" did not mix well with "git diff --ext-diff",
+ which has been corrected.
+
+ Will merge to 'next'.
+ source: <Y7f/YiVu1TgbucDI@coredump.intra.peff.net>
+
+--------------------------------------------------
+[Stalled]
+
+* tl/notes--blankline (2022-11-09) 5 commits
+ - notes.c: introduce "--no-blank-line" option
+ - notes.c: provide tips when target and append note are both empty
+ - notes.c: drop unreachable code in 'append_edit()'
+ - notes.c: cleanup for "designated init" and "char ptr init"
+ - notes.c: cleanup 'strbuf_grow' call in 'append_edit'
+
+ 'git notes append' was taught '--[no-]blank-line' to conditionally
+ add a LF between a new and existing note.
+
+ Expecting a reroll.
+ cf. <CAPig+cRcezSp4Rqt1Y9bD-FT6+7b0g9qHfbGRx65AOnw2FQXKg@mail.gmail.com>
+ source: <cover.1667980450.git.dyroneteng@gmail.com>
+
+
+* po/pretty-hard-trunc (2022-11-13) 1 commit
+ - pretty-formats: add hard truncation, without ellipsis, options
+
+ Add a new pretty format which truncates without ellipsis.
+
+ Expecting a reroll.
+ cf. <093e1dca-b9d4-f1f2-0845-ad6711622cf5@iee.email>
+ source: <20221112143616.1429-1-philipoakley@iee.email>
+
+
+* mc/switch-advice (2022-11-09) 1 commit
+ - po: use `switch` over `checkout` in error message
+
+ Use 'switch' instead of 'checkout' in an error message.
+
+ Waiting for review response.
+ source: <pull.1308.git.git.1668018620148.gitgitgadget@gmail.com>
+
+
+* js/range-diff-mbox (2022-11-23) 1 commit
+ - range-diff: support reading mbox files
+
+ 'git range-diff' gained support for reading either side from an .mbox
+ file instead of a revision range.
+
+ Waiting for review response.
+ cf. <xmqqr0xupmnf.fsf@gitster.g>
+ source: <pull.1420.v3.git.1669108102092.gitgitgadget@gmail.com>
+
+
+* ab/tag-object-type-errors (2022-11-22) 5 commits
+ - tag: don't emit potentially incorrect "object is a X, not a Y"
+ - tag: don't misreport type of tagged objects in errors
+ - object tests: add test for unexpected objects in tags
+ - object-file.c: free the "t.tag" in check_tag()
+ - Merge branch 'jk/parse-object-type-mismatch' into ab/tag-object-type-errors
+
+ Hardening checks around mismatched object types when one of those
+ objects is a tag.
+
+ Expecting a reroll.
+ cf. <xmqqzgb5jz5c.fsf@gitster.g>
+ cf. <xmqqsfgxjugi.fsf@gitster.g>
+ source: <cover-0.4-00000000000-20221118T113442Z-avarab@gmail.com>
+
+
+* ab/config-multi-and-nonbool (2022-11-27) 9 commits
+ - for-each-repo: with bad config, don't conflate <path> and <cmd>
+ - config API: add "string" version of *_value_multi(), fix segfaults
+ - config API users: test for *_get_value_multi() segfaults
+ - for-each-repo: error on bad --config
+ - config API: have *_multi() return an "int" and take a "dest"
+ - versioncmp.c: refactor config reading next commit
+ - config tests: add "NULL" tests for *_get_value_multi()
+ - config tests: cover blind spots in git_die_config() tests
+ - for-each-repo tests: test bad --config keys
+
+ Assorted config API updates.
+
+ Needs review.
+ source: <cover-v3-0.9-00000000000-20221125T093158Z-avarab@gmail.com>
+
+
+* ed/fsmonitor-inotify (2022-12-13) 6 commits
+ - fsmonitor: update doc for Linux
+ - fsmonitor: test updates
+ - fsmonitor: enable fsmonitor for Linux
+ - fsmonitor: implement filesystem change listener for Linux
+ - fsmonitor: determine if filesystem is local or remote
+ - fsmonitor: prepare to share code between Mac OS and Linux
+
+ Bundled fsmonitor for Linux using inotify API.
+
+ Needs review on the updated round.
+ source: <pull.1352.v5.git.git.1670882286.gitgitgadget@gmail.com>
+
+
+* jc/spell-id-in-both-caps-in-message-id (2022-12-17) 1 commit
+ - e-mail workflow: Message-ID is spelled with ID in both capital letters
+
+ Consistently spell "Message-ID" as such, not "Message-Id".
+
+ Needs review.
+ source: <xmqqsfhgnmqg.fsf@gitster.g>
+
+
+* cb/grep-fallback-failing-jit (2022-12-17) 1 commit
+ - grep: fall back to interpreter mode if JIT fails
+
+ In an environment where dynamically generated code is prohibited to
+ run (e.g. SELinux), failure to JIT pcre patterns is expected.  Fall
+ back to interpreted execution in such a case.
+
+ Expecting a reroll.
+ cf. <62a06c5b-9646-17f8-b4d5-39823d3cc25a@grsecurity.net>
+ source: <20221216121557.30714-1-minipli@grsecurity.net>
+
+
+* ad/test-record-count-when-harness-is-in-use (2022-12-25) 1 commit
+ - test-lib: allow storing counts with test harnesses
+
+ Allow summary results from tests to be written to t/test-results
+ directory even when a test harness like 'prove' is in use.
+
+ Needs review.
+ source: <20221224225200.1027806-1-adam@dinwoodie.org>
+
+
+* so/diff-merges-more (2022-12-18) 5 commits
+ - diff-merges: improve --diff-merges documentation
+ - diff-merges: issue warning on lone '-m' option
+ - diff-merges: support list of values for --diff-merges
+ - diff-merges: implement log.diffMerges-m-imply-p config
+ - diff-merges: implement [no-]hide option and log.diffMergesHide config
+
+ Assorted updates to "--diff-merges=X" option.
+
+ May want to discard.  Breaking compatibility does not seem worth it.
+ source: <20221217132955.108542-1-sorganov@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
+* tb/ci-concurrency (2022-11-08) 1 commit
+ - ci: avoid unnecessary builds
+
+ Avoid unnecessary builds in CI, with settings configured in
+ ci-config.
+
+ Will merge to 'next'.
+ source: <ff172f1de982f6f79b598e4ac6d5b2964ca4a098.1667931937.git.me@ttaylorr.com>
+
+
+* tr/am--no-verify (2023-01-05) 1 commit
+ - am: allow passing --no-verify flag
+
+ Conditionally skip the pre-applypatch and applypatch-msg hooks when
+ applying patches with 'git am'.
+
+ Will merge to 'next'.
+ source: <20221130172833.2662751-1-thierry.reding@gmail.com>
 
 
 * ab/various-leak-fixes (2022-12-30) 20 commits
@@ -163,6 +393,9 @@ Release tarballs are available at:
  - bundle.c: don't leak the "args" in the "struct child_process"
  - tests: mark tests as passing with SANITIZE=leak
 
+ Leak fixes.
+
+ Expecting a reroll.
  source: <cover-v2-00.20-00000000000-20221230T020341Z-avarab@gmail.com>
 
 
@@ -170,6 +403,8 @@ Release tarballs are available at:
  - branch: rename orphan branches in any worktree
  - branch: description for orphan branch errors
 
+ Error messages given when working on an unborn branch that is
+ checked out in another worktree have been improvved.
  source: <ffd675e9-8a64-ae05-fc3b-36ae99092735@gmail.com>
 
 
@@ -179,10 +414,11 @@ Release tarballs are available at:
  - do full type check in BARF_UNLESS_COPYABLE
  - factor out BARF_UNLESS_COPYABLE
 
+ Code cleaning.
+
+ Will merge to 'next'.
  source: <9bc1bd74-f72c-1b43-df7c-950815babb03@web.de>
 
---------------------------------------------------
-[Cooking]
 
 * ab/avoid-losing-exit-codes-in-tests (2022-12-20) 6 commits
  - tests: don't lose misc "git" exit codes
@@ -201,26 +437,17 @@ Release tarballs are available at:
 
 
 * cw/ci-whitespace (2022-12-20) 3 commits
- - ci (check-whitespace): move to actions/checkout@v3
- - ci (check-whitespace): add links to job output
- - ci (check-whitespace): suggest fixes for errors
+  (merged to 'next' on 2023-01-05 at d3dc35f08c)
+ + ci (check-whitespace): move to actions/checkout@v3
+ + ci (check-whitespace): add links to job output
+ + ci (check-whitespace): suggest fixes for errors
 
  CI updates.  We probably want a clean-up to move the long shell
  script embedded in yaml file into a separate file, but that can
  come later.
 
- Will merge to 'next'.
- source: <pull.1444.v2.git.1671496548.gitgitgadget@gmail.com>
-
-
-* dh/mingw-ownership-check-typofix (2022-12-20) 1 commit
-  (merged to 'next' on 2022-12-28 at 3753a46f6d)
- + mingw: fix typo in an error message from ownership check
-
- Error message typofix.
-
  Will merge to 'master'.
- source: <pull.1393.git.git.1671416810927.gitgitgadget@gmail.com>
+ source: <pull.1444.v2.git.1671496548.gitgitgadget@gmail.com>
 
 
 * js/ci-disable-cmake-by-default (2022-12-20) 1 commit
@@ -233,85 +460,15 @@ Release tarballs are available at:
  source: <pull.1445.git.1671461414191.gitgitgadget@gmail.com>
 
 
-* sg/test-oid-wo-incomplete-line (2022-12-19) 1 commit
-  (merged to 'next' on 2022-12-28 at 8dadf8c521)
- + tests: make 'test_oid' print trailing newline
-
- Test helper updates.
-
- Will merge to 'master'.
- source: <20221218162905.3508164-1-szeder.dev@gmail.com>
-
-
-* ab/bundle-wo-args (2022-12-28) 3 commits
-  (merged to 'next' on 2022-12-28 at 6ae8fc1c88)
- + bundle <cmd>: have usage_msg_opt() note the missing "<file>"
- + builtin/bundle.c: remove superfluous "newargc" variable
-  (merged to 'next' on 2022-12-26 at b086677fd0)
- + bundle: don't segfault on "git bundle <subcmd>"
-
- Fix to a small regression in 2.38 days.
-
- Will merge to 'master'.
- source: <patch-1.1-2319eb2ddbd-20221220T133941Z-avarab@gmail.com>
- source: <cover-0.2-00000000000-20221227T183708Z-avarab@gmail.com>
-
-
-* ad/test-record-count-when-harness-is-in-use (2022-12-25) 1 commit
- - test-lib: allow storing counts with test harnesses
-
- Allow summary results from tests to be written to t/test-results
- directory even when a test harness like 'prove' is in use.
-
- Comments?
- source: <20221224225200.1027806-1-adam@dinwoodie.org>
-
-
-* sk/win32-close-handle-upon-pthread-join (2022-12-26) 2 commits
+* sk/win32-close-handle-upon-pthread-join (2023-01-04) 2 commits
  - win32: close handles of threads that have been joined
- - win32-pthread: prepare pthread.c for change by formatting
+ - win32: prepare pthread.c for change by formatting
 
- source: <pull.1406.v12.git.git.1671932405.gitgitgadget@gmail.com>
+ Pthread emulation on Win32 leaked thread handle when a thread is
+ joined.
 
-
-* ab/no-more-git-global-super-prefix (2022-12-26) 9 commits
-  (merged to 'next' on 2022-12-28 at 126b1fbad1)
- + read-tree: add "--super-prefix" option, eliminate global
- + submodule--helper: convert "{update,clone}" to their own "--super-prefix"
- + submodule--helper: convert "status" to its own "--super-prefix"
- + submodule--helper: convert "sync" to its own "--super-prefix"
- + submodule--helper: convert "foreach" to its own "--super-prefix"
- + submodule--helper: don't use global --super-prefix in "absorbgitdirs"
- + submodule.c & submodule--helper: pass along "super_prefix" param
- + read-tree + fetch tests: test failing "--super-prefix" interaction
- + submodule absorbgitdirs tests: add missing "Migrating git..." tests
-
- Stop using "git --super-prefix" and narrow the scope of its use to
- the submodule--helper.
-
- Will merge to 'master'.
- source: <cover-v5-0.9-00000000000-20221220T104519Z-avarab@gmail.com>
-
-
-* cb/grep-fallback-failing-jit (2022-12-17) 1 commit
- - grep: fall back to interpreter mode if JIT fails
-
- In an environment where dynamically generated code is prohibited to
- run (e.g. SELinux), failure to JIT pcre patterns is expected.  Fall
- back to interpreted execution in such a case.
-
- Expecting a reroll.
- cf. <62a06c5b-9646-17f8-b4d5-39823d3cc25a@grsecurity.net>
- source: <20221216121557.30714-1-minipli@grsecurity.net>
-
-
-* jc/spell-id-in-both-caps-in-message-id (2022-12-17) 1 commit
- - e-mail workflow: Message-ID is spelled with ID in both capital letters
-
- Consistently spell "Message-ID" as such, not "Message-Id".
-
- Comments?
- source: <xmqqsfhgnmqg.fsf@gitster.g>
+ Will merge to 'next'?
+ <source: <pull.1406.v13.git.git.1672762819.gitgitgadget@gmail.com>
 
 
 * ds/omit-trailing-hash-in-index (2022-12-17) 4 commits
@@ -323,22 +480,9 @@ Release tarballs are available at:
  Introduce an optional configuration to allow the trailing hash that
  protects the index file from bit flipping.
 
+ Will merge to 'next'?
  cf. <221216.86sfhf1gbc.gmgdl@evledraar.gmail.com>
  source: <pull.1439.v4.git.1671204678.gitgitgadget@gmail.com>
-
-
-* ed/fsmonitor-inotify (2022-12-13) 6 commits
- - fsmonitor: update doc for Linux
- - fsmonitor: test updates
- - fsmonitor: enable fsmonitor for Linux
- - fsmonitor: implement filesystem change listener for Linux
- - fsmonitor: determine if filesystem is local or remote
- - fsmonitor: prepare to share code between Mac OS and Linux
-
- Bundled fsmonitor for Linux using inotify API.
-
- Needs review on the updated round.
- source: <pull.1352.v5.git.git.1670882286.gitgitgadget@gmail.com>
 
 
 * es/t1509-root-fixes (2022-12-09) 3 commits
@@ -346,23 +490,10 @@ Release tarballs are available at:
  - t1509: make "setup" test more robust
  - t1509: fix failing "root work tree" test due to owner-check
 
+ Test fixes.
+
+ Will merge to 'next'.
  source: <pull.1425.git.1668999621.gitgitgadget@gmail.com>
-
-
-* jt/avoid-lazy-fetch-commits (2022-12-15) 4 commits
-  (merged to 'next' on 2022-12-28 at 35276d17e2)
- + commit: don't lazy-fetch commits
- + object-file: emit corruption errors when detected
- + object-file: refactor map_loose_object_1()
- + object-file: remove OBJECT_INFO_IGNORE_LOOSE
-
- Even in a repository with promisor remote, it is useless to
- attempt to lazily attempt fetching an object that is expected to be
- commit, because no "filter" mode omits commit objects.  Take
- advantage of this assumption to fail fast on errors.
-
- Will merge to 'master'.
- source: <cover.1671045259.git.jonathantanmy@google.com>
 
 
 * jx/t1301-updates (2022-11-30) 3 commits
@@ -371,95 +502,18 @@ Release tarballs are available at:
  - t1301: fix wrong template dir for git-init
 
  Test updates.
+
+ Will merge to 'next'?
  source: <20221128130323.8914-1-worldhello.net@gmail.com>
 
 
-* km/send-email-with-v-reroll-count (2022-11-30) 2 commits
- - SQUASH???
+* km/send-email-with-v-reroll-count (2022-11-27) 1 commit
  - send-email: relay '-v N' to format-patch
 
  "git send-email -v 3" used to be expanded to "git send-email
  --validate 3" when the user meant to pass them down to
  "format-patch", which has been corrected.
-
- Seems to break CI.
  source: <87edtp5uws.fsf@kyleam.com>
-
-
-* so/diff-merges-more (2022-12-18) 5 commits
- - diff-merges: improve --diff-merges documentation
- - diff-merges: issue warning on lone '-m' option
- - diff-merges: support list of values for --diff-merges
- - diff-merges: implement log.diffMerges-m-imply-p config
- - diff-merges: implement [no-]hide option and log.diffMergesHide config
-
- Assorted updates to "--diff-merges=X" option.
- source: <20221217132955.108542-1-sorganov@gmail.com>
-
-
-* ab/config-multi-and-nonbool (2022-11-27) 9 commits
- - for-each-repo: with bad config, don't conflate <path> and <cmd>
- - config API: add "string" version of *_value_multi(), fix segfaults
- - config API users: test for *_get_value_multi() segfaults
- - for-each-repo: error on bad --config
- - config API: have *_multi() return an "int" and take a "dest"
- - versioncmp.c: refactor config reading next commit
- - config tests: add "NULL" tests for *_get_value_multi()
- - config tests: cover blind spots in git_die_config() tests
- - for-each-repo tests: test bad --config keys
-
- Assorted config API updates.
-
- Waiting for review.
- source: <cover-v3-0.9-00000000000-20221125T093158Z-avarab@gmail.com>
-
-
-* sa/cat-file-mailmap--batch-check (2022-12-20) 2 commits
-  (merged to 'next' on 2022-12-28 at 57531d3fe8)
- + cat-file: add mailmap support to --batch-check option
- + cat-file: add mailmap support to -s option
-
- 'cat-file' gains mailmap support for its '--batch-check' and '-s'
- options.
-
- Will merge to 'master'.
- cf. <221220.865ye6xlmo.gmgdl@evledraar.gmail.com>
- source: <20221220060113.51010-1-siddharthasthana31@gmail.com>
-
-
-* ab/tag-object-type-errors (2022-11-22) 5 commits
- - tag: don't emit potentially incorrect "object is a X, not a Y"
- - tag: don't misreport type of tagged objects in errors
- - object tests: add test for unexpected objects in tags
- - object-file.c: free the "t.tag" in check_tag()
- - Merge branch 'jk/parse-object-type-mismatch' into ab/tag-object-type-errors
-
- Hardening checks around mismatched object types when one of those
- objects is a tag.
-
- Needs review.
- source: <cover-0.4-00000000000-20221118T113442Z-avarab@gmail.com>
-
-
-* js/range-diff-mbox (2022-11-23) 1 commit
- - range-diff: support reading mbox files
-
- 'git range-diff' gained support for reading either side from an .mbox
- file instead of a revision range.
-
- Expecting review responses.
- source: <pull.1420.v3.git.1669108102092.gitgitgadget@gmail.com>
-
-
-* tr/am--no-verify (2022-12-01) 2 commits
- - SQUASH???
- - am: allow passing --no-verify flag
-
- Conditionally skip the pre-applypatch and applypatch-msg hooks when
- applying patches with 'git am'.
-
- Expecting a (hopefully final) reroll.
- source: <20221130172833.2662751-1-thierry.reding@gmail.com>
 
 
 * js/drop-mingw-test-cmp (2022-12-13) 1 commit
@@ -474,15 +528,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <6a80fab7e3936ec56e1583d6136d47487327e907.1670339267.git.gitgitgadget@gmail.com>
-
-
-* mc/switch-advice (2022-11-09) 1 commit
- - po: use `switch` over `checkout` in error message
-
- Use 'switch' instead of 'checkout' in an error message.
-
- Waiting for review response.
- source: <pull.1308.git.git.1668018620148.gitgitgadget@gmail.com>
 
 
 * ja/worktree-orphan (2022-12-20) 4 commits
@@ -500,39 +545,6 @@ Release tarballs are available at:
  source: <20221220023637.29042-1-jacobabel@nullpo.dev>
 
 
-* tb/ci-concurrency (2022-11-08) 1 commit
- - ci: avoid unnecessary builds
-
- Avoid unnecessary builds in CI, with settings configured in
- ci-config.
-
- Waiting for review.
- source: <ff172f1de982f6f79b598e4ac6d5b2964ca4a098.1667931937.git.me@ttaylorr.com>
-
-
-* tl/notes--blankline (2022-11-09) 5 commits
- - notes.c: introduce "--no-blank-line" option
- - notes.c: provide tips when target and append note are both empty
- - notes.c: drop unreachable code in 'append_edit()'
- - notes.c: cleanup for "designated init" and "char ptr init"
- - notes.c: cleanup 'strbuf_grow' call in 'append_edit'
-
- 'git notes append' was taught '--[no-]blank-line' to conditionally
- add a LF between a new and existing note.
-
- Waiting for review.
- source: <cover.1667980450.git.dyroneteng@gmail.com>
-
-
-* po/pretty-hard-trunc (2022-11-13) 1 commit
- - pretty-formats: add hard truncation, without ellipsis, options
-
- Add a new pretty format which truncates without ellipsis.
-
- Waiting for review.
- source: <20221112143616.1429-1-philipoakley@iee.email>
-
-
 * cc/filtered-repack (2022-12-25) 3 commits
  - gc: add gc.repackFilter config option
  - repack: add --filter=<filter-spec> option
@@ -540,6 +552,9 @@ Release tarballs are available at:
 
  "git repack" learns to discard objects that ought to be retrievable
  again from the promisor remote.
+
+ May want to discard.  Its jaggy edges may be a bit too sharp.
+ cf. <Y7WTv19aqiFCU8au@ncase>
  source: <20221221040446.2860985-1-christian.couder@gmail.com>
 
 
