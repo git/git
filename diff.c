@@ -4278,7 +4278,6 @@ static struct diff_tempfile *prepare_temp_file(struct repository *r,
 
 static void add_external_diff_name(struct repository *r,
 				   struct strvec *argv,
-				   const char *name,
 				   struct diff_filespec *df)
 {
 	struct diff_tempfile *temp = prepare_temp_file(r, df->path, df);
@@ -4308,11 +4307,9 @@ static void run_external_diff(const char *pgm,
 	strvec_push(&cmd.args, name);
 
 	if (one && two) {
-		add_external_diff_name(o->repo, &cmd.args, name, one);
-		if (!other)
-			add_external_diff_name(o->repo, &cmd.args, name, two);
-		else {
-			add_external_diff_name(o->repo, &cmd.args, other, two);
+		add_external_diff_name(o->repo, &cmd.args, one);
+		add_external_diff_name(o->repo, &cmd.args, two);
+		if (other) {
 			strvec_push(&cmd.args, other);
 			strvec_push(&cmd.args, xfrm_msg);
 		}
