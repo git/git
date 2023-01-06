@@ -4281,7 +4281,7 @@ static void add_external_diff_name(struct repository *r,
 				   const char *name,
 				   struct diff_filespec *df)
 {
-	struct diff_tempfile *temp = prepare_temp_file(r, name, df);
+	struct diff_tempfile *temp = prepare_temp_file(r, df->path, df);
 	strvec_push(argv, temp->name);
 	strvec_push(argv, temp->hex);
 	strvec_push(argv, temp->mode);
