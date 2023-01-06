@@ -73,6 +73,17 @@ test_expect_success 'index.skipHash config option' '
 	test_cmp expect hash &&
 	git fsck &&
 
+	rm -f .git/index &&
+	git -c feature.manyFiles=true add a &&
+	test_trailing_hash .git/index >hash &&
+	cmp expect hash &&
+
+	rm -f .git/index &&
+	git -c feature.manyFiles=true \
+	    -c index.skipHash=false add a &&
+	test_trailing_hash .git/index >hash &&
+	! cmp expect hash &&
+
 	test_commit start &&
 	git -c protocol.file.allow=always submodule add ./ sub &&
 	git config index.skipHash false &&

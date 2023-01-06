@@ -2927,7 +2927,8 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 
 	f = hashfd(tempfile->fd, tempfile->filename.buf);
 
-	repo_config_get_bool(r, "index.skiphash", &f->skip_hash);
+	prepare_repo_settings(r);
+	f->skip_hash = r->settings.index_skip_hash;
 
 	for (i = removed = extended = 0; i < entries; i++) {
 		if (cache[i]->ce_flags & CE_REMOVE)
