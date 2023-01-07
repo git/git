@@ -1698,18 +1698,15 @@ int pretend_object_file(void *buf, unsigned long len, enum object_type type,
 void *read_object_file_extended(struct repository *r,
 				const struct object_id *oid,
 				enum object_type *type,
-				unsigned long *size,
-				int lookup_replace)
+				unsigned long *size)
 {
 	struct object_info oi = OBJECT_INFO_INIT;
-	unsigned flags = OBJECT_INFO_DIE_IF_CORRUPT;
+	unsigned flags = OBJECT_INFO_DIE_IF_CORRUPT | OBJECT_INFO_LOOKUP_REPLACE;
 	void *data;
 
 	oi.typep = type;
 	oi.sizep = size;
 	oi.contentp = &data;
-	if (lookup_replace)
-		flags |= OBJECT_INFO_LOOKUP_REPLACE;
 	if (oid_object_info_extended(r, oid, &oi, flags))
 	    return NULL;
 

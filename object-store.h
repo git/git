@@ -244,13 +244,13 @@ void *map_loose_object(struct repository *r, const struct object_id *oid,
 void *read_object_file_extended(struct repository *r,
 				const struct object_id *oid,
 				enum object_type *type,
-				unsigned long *size, int lookup_replace);
+				unsigned long *size);
 static inline void *repo_read_object_file(struct repository *r,
 					  const struct object_id *oid,
 					  enum object_type *type,
 					  unsigned long *size)
 {
-	return read_object_file_extended(r, oid, type, size, 1);
+	return read_object_file_extended(r, oid, type, size);
 }
 #ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
 #define read_object_file(oid, type, size) repo_read_object_file(the_repository, oid, type, size)
