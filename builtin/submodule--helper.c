@@ -3219,9 +3219,8 @@ static void die_on_index_match(const char *path, int force)
 		ensure_full_index(&the_index);
 
 		/*
-		 * Since there is only one pathspec, we just need
-		 * need to check ps_matched[0] to know if a cache
-		 * entry matched.
+		 * Since there is only one pathspec, we just need to
+		 * check ps_matched[0] to know if a cache entry matched.
 		 */
 		for (i = 0; i < the_index.cache_nr; i++) {
 			ce_path_match(&the_index, the_index.cache[i], &ps,
