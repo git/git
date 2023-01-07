@@ -241,17 +241,10 @@ const char *loose_object_path(struct repository *r, struct strbuf *buf,
 void *map_loose_object(struct repository *r, const struct object_id *oid,
 		       unsigned long *size);
 
-void *read_object_file_extended(struct repository *r,
-				const struct object_id *oid,
-				enum object_type *type,
-				unsigned long *size);
-static inline void *repo_read_object_file(struct repository *r,
-					  const struct object_id *oid,
-					  enum object_type *type,
-					  unsigned long *size)
-{
-	return read_object_file_extended(r, oid, type, size);
-}
+void *repo_read_object_file(struct repository *r,
+			    const struct object_id *oid,
+			    enum object_type *type,
+			    unsigned long *size);
 #ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
 #define read_object_file(oid, type, size) repo_read_object_file(the_repository, oid, type, size)
 #endif
@@ -358,8 +351,7 @@ void assert_oid_type(const struct object_id *oid, enum object_type expect);
 /*
  * Enabling the object read lock allows multiple threads to safely call the
  * following functions in parallel: repo_read_object_file(), read_object_file(),
- * read_object_file_extended(), read_object_with_reference(),
- * oid_object_info() and oid_object_info_extended().
+ * read_object_with_reference(), oid_object_info() and oid_object_info_extended().
  *
  * obj_read_lock() and obj_read_unlock() may also be used to protect other
  * section which cannot execute in parallel with object reading. Since the used
