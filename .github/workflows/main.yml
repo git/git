@@ -265,8 +265,9 @@ jobs:
     - uses: actions/checkout@v3
     - run: ci/install-dependencies.sh
     - run: ci/run-build-and-tests.sh
-    - run: ci/print-test-failures.sh
+    - name: print test failures
       if: failure() && env.FAILED_TEST_ARTIFACTS != ''
+      run: ci/print-test-failures.sh
     - name: Upload failed tests' directories
       if: failure() && env.FAILED_TEST_ARTIFACTS != ''
       uses: actions/upload-artifact@v3
@@ -298,8 +299,9 @@ jobs:
       if: matrix.vector.jobname == 'linux32'
     - run: ci/install-docker-dependencies.sh
     - run: ci/run-build-and-tests.sh
-    - run: ci/print-test-failures.sh
+    - name: print test failures
       if: failure() && env.FAILED_TEST_ARTIFACTS != ''
+      run: ci/print-test-failures.sh
     - name: Upload failed tests' directories
       if: failure() && env.FAILED_TEST_ARTIFACTS != '' && matrix.vector.jobname != 'linux32'
       uses: actions/upload-artifact@v3
