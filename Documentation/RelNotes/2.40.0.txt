@@ -48,6 +48,20 @@ Performance, Internal Implementation, Development Support etc.
  * Stop using "git --super-prefix" and narrow the scope of its use to
    the submodule--helper.
 
+ * Stop running win+VS build by default.
+   (merge a0da6deeec js/ci-disable-cmake-by-default later to maint).
+
+ * CI updates.  We probably want a clean-up to move the long shell
+   script embedded in yaml file into a separate file, but that can
+   come later.
+   (merge 4542582e59 cw/ci-whitespace later to maint).
+
+ * Use `git diff --no-index` as a test_cmp on Windows.
+
+   We'd probably need to revisit "do we really want to, and have to,
+   lose CRLF vs LF?" later, at which time we may be able to further
+   clean this up by replacing "git diff --no-index" with "diff -u".
+
 
 Fixes since v2.39
 -----------------
