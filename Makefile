@@ -289,6 +289,10 @@ include shared.mak
 # Define NO_REGEX if your C library lacks regex support with REG_STARTEND
 # feature.
 #
+# Define USE_ENHANCED_BASIC_REGULAR_EXPRESSIONS if your C library provides
+# the flag REG_ENHANCED and you'd like to use it to enable enhanced basic
+# regular expressions.
+#
 # Define HAVE_DEV_TTY if your system can open /dev/tty to interact with the
 # user.
 #
@@ -2040,6 +2044,11 @@ endif
 ifdef NO_REGEX
 	COMPAT_CFLAGS += -Icompat/regex
 	COMPAT_OBJS += compat/regex/regex.o
+else
+ifdef USE_ENHANCED_BASIC_REGULAR_EXPRESSIONS
+	COMPAT_CFLAGS += -DUSE_ENHANCED_BASIC_REGULAR_EXPRESSIONS
+	COMPAT_OBJS += compat/regcomp_enhanced.o
+endif
 endif
 ifdef NATIVE_CRLF
 	BASIC_CFLAGS += -DNATIVE_CRLF

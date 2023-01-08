@@ -1336,6 +1336,11 @@ static inline int regexec_buf(const regex_t *preg, const char *buf, size_t size,
 	return regexec(preg, buf, nmatch, pmatch, eflags | REG_STARTEND);
 }
 
+#ifdef USE_ENHANCED_BASIC_REGULAR_EXPRESSIONS
+int git_regcomp(regex_t *preg, const char *pattern, int cflags);
+#define regcomp git_regcomp
+#endif
+
 #ifndef DIR_HAS_BSD_GROUP_SEMANTICS
 # define FORCE_DIR_SET_GID S_ISGID
 #else
