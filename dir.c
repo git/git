@@ -732,6 +732,13 @@ static void add_pattern_to_hashsets(struct pattern_list *pl, struct path_pattern
 		goto clear_hashmaps;
 	}
 
+	if (!(given->flags & PATTERN_FLAG_MUSTBEDIR) &&
+	    strcmp(given->pattern, "/*")) {
+		/* Not a cone pattern. */
+		warning(_("unrecognized pattern: '%s'"), given->pattern);
+		goto clear_hashmaps;
+	}
+
 	prev = given->pattern;
 	cur = given->pattern + 1;
 	next = given->pattern + 2;

@@ -238,7 +238,7 @@ test_expect_success 'cone mode: match patterns' '
 test_expect_success 'cone mode: warn on bad pattern' '
 	test_when_finished mv sparse-checkout repo/.git/info/ &&
 	cp repo/.git/info/sparse-checkout . &&
-	echo "!/deep/deeper/*" >>repo/.git/info/sparse-checkout &&
+	echo "!/deep/deeper/*/" >>repo/.git/info/sparse-checkout &&
 	git -C repo read-tree -mu HEAD 2>err &&
 	test_i18ngrep "unrecognized negative pattern" err
 '
@@ -665,6 +665,15 @@ test_expect_success 'pattern-checks: starting "*"' '
 	*eep/
 	EOF
 	check_read_tree_errors repo "a deep" "disabling cone pattern matching"
+'
+
+test_expect_success 'pattern-checks: non directory pattern' '
+	cat >repo/.git/info/sparse-checkout <<-\EOF &&
+	/deep/deeper1/a
+	EOF
+	check_read_tree_errors repo deep "disabling cone pattern matching" &&
+	check_files repo/deep deeper1 &&
+	check_files repo/deep/deeper1 a
 '
 
 test_expect_success 'pattern-checks: contained glob characters' '
