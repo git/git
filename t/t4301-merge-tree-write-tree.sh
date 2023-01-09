@@ -141,7 +141,7 @@ test_expect_success 'test conflict notices and such' '
 #   Commit O: foo, olddir/{a,b,c}
 #   Commit A: modify foo, newdir/{a,b,c}
 #   Commit B: modify foo differently & rename foo -> olddir/bar
-#   Expected: CONFLICT(content) for for newdir/bar (not olddir/bar or foo)
+#   Expected: CONFLICT(content) for newdir/bar (not olddir/bar or foo)
 
 test_expect_success 'directory rename + content conflict' '
 	# Setup
@@ -653,7 +653,7 @@ test_expect_success 'mod6: chains of rename/rename(1to2) and add/add via collidi
 #   Commit O: foo, olddir/{a,b,c}
 #   Commit A: delete foo, rename olddir/ -> newdir/, add newdir/bar/file
 #   Commit B: modify foo & rename foo -> olddir/bar
-#   Expected: CONFLICT(content) for for newdir/bar (not olddir/bar or foo)
+#   Expected: CONFLICT(content) for newdir/bar (not olddir/bar or foo)
 
 test_expect_success 'directory rename + rename/delete + modify/delete + directory/file conflict' '
 	# Setup

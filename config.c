@@ -3154,7 +3154,7 @@ int git_config_set_gently(const char *key, const char *value)
 int repo_config_set_worktree_gently(struct repository *r,
 				    const char *key, const char *value)
 {
-	/* Only use worktree-specific config if it is is already enabled. */
+	/* Only use worktree-specific config if it is already enabled. */
 	if (repository_format_worktree_config) {
 		char *file = repo_git_path(r, "config.worktree");
 		int ret = git_config_set_multivar_in_file_gently(
