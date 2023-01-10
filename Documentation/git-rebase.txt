@@ -38,6 +38,13 @@ The current branch is reset to `<upstream>` or `<newbase>` if the
 `git reset --hard <upstream>` (or `<newbase>`). `ORIG_HEAD` is set
 to point at the tip of the branch before the reset.
 
+[NOTE]
+`ORIG_HEAD` is not guaranteed to still point to the previous branch tip
+at the end of the rebase if other commands that write that pseudo-ref
+(e.g. `git reset`) are used during the rebase. The previous branch tip,
+however, is accessible using the reflog of the current branch
+(i.e. `@{1}`, see linkgit:gitrevisions[7]).
+
 The commits that were previously saved into the temporary area are
 then reapplied to the current branch, one by one, in order. Note that
 any commits in `HEAD` which introduce the same textual changes as a commit
