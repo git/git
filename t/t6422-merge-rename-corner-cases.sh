@@ -1159,7 +1159,6 @@ test_conflicts_with_adds_and_renames() {
 	#   4) There should not be any three~* files in the working
 	#      tree
 	test_setup_collision_conflict () {
-	#test_expect_success "setup simple $sideL/$sideR conflict" '
 		git init simple_${sideL}_${sideR} &&
 		(
 			cd simple_${sideL}_${sideR} &&
@@ -1236,7 +1235,6 @@ test_conflicts_with_adds_and_renames() {
 			fi &&
 			test_tick && git commit -m R
 		)
-	#'
 	}
 
 	test_expect_success "check simple $sideL/$sideR conflict" '
