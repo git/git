@@ -678,7 +678,8 @@ static enum bisect_error bisect_auto_next(struct bisect_terms *terms, const char
 	return bisect_next(terms, prefix);
 }
 
-static enum bisect_error bisect_start(struct bisect_terms *terms, const char **argv, int argc)
+static enum bisect_error bisect_start(struct bisect_terms *terms, int argc,
+				      const char **argv)
 {
 	int no_checkout = 0;
 	int first_parent_only = 0;
@@ -908,13 +909,13 @@ static int bisect_autostart(struct bisect_terms *terms)
 	yesno = git_prompt(_("Do you want me to do it for you "
 			     "[Y/n]? "), PROMPT_ECHO);
 	res = tolower(*yesno) == 'n' ?
-		-1 : bisect_start(terms, empty_strvec, 0);
+		-1 : bisect_start(terms, 0, empty_strvec);
 
 	return res;
 }
 
-static enum bisect_error bisect_state(struct bisect_terms *terms, const char **argv,
-				      int argc)
+static enum bisect_error bisect_state(struct bisect_terms *terms, int argc,
+				      const char **argv)
 {
 	const char *state;
 	int i, verify_expected = 1;
@@ -1033,7 +1034,7 @@ static int process_replay_line(struct bisect_terms *terms, struct strbuf *line)
 		struct strvec argv = STRVEC_INIT;
 		int res;
 		sq_dequote_to_strvec(rev, &argv);
-		res = bisect_start(terms, argv.v, argv.nr);
+		res = bisect_start(terms, argv.nr, argv.v);
 		strvec_clear(&argv);
 		return res;
 	}
@@ -1083,7 +1084,8 @@ static enum bisect_error bisect_replay(struct bisect_terms *terms, const char *f
 	return bisect_auto_next(terms, NULL);
 }
 
-static enum bisect_error bisect_skip(struct bisect_terms *terms, const char **argv, int argc)
+static enum bisect_error bisect_skip(struct bisect_terms *terms, int argc,
+				     const char **argv)
 {
 	int i;
 	enum bisect_error res;
@@ -1113,13 +1115,14 @@ static enum bisect_error bisect_skip(struct bisect_terms *terms, const char **ar
 			strvec_push(&argv_state, argv[i]);
 		}
 	}
-	res = bisect_state(terms, argv_state.v, argv_state.nr);
+	res = bisect_state(terms, argv_state.nr, argv_state.v);
 
 	strvec_clear(&argv_state);
 	return res;
 }
 
-static int bisect_visualize(struct bisect_terms *terms, const char **argv, int argc)
+static int bisect_visualize(struct bisect_terms *terms, int argc,
+			    const char **argv)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	struct strbuf sb = STRBUF_INIT;
@@ -1202,7 +1205,7 @@ static int verify_good(const struct bisect_terms *terms, const char *command)
 	return rc;
 }
 
-static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
+static int bisect_run(struct bisect_terms *terms, int argc, const char **argv)
 {
 	int res = BISECT_OK;
 	struct strbuf command = STRBUF_INIT;
@@ -1271,7 +1274,7 @@ static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
 		saved_stdout = dup(1);
 		dup2(temporary_stdout_fd, 1);
 
-		res = bisect_state(terms, &new_state, 1);
+		res = bisect_state(terms, 1, &new_state);
 
 		fflush(stdout);
 		dup2(saved_stdout, 1);
@@ -1328,7 +1331,7 @@ static int cmd_bisect__start(int argc, const char **argv, const char *prefix UNU
 	struct bisect_terms terms = { 0 };
 
 	set_terms(&terms, "bad", "good");
-	res = bisect_start(&terms, argv, argc);
+	res = bisect_start(&terms, argc, argv);
 	free_terms(&terms);
 	return res;
 }
@@ -1372,7 +1375,7 @@ static int cmd_bisect__skip(int argc, const char **argv, const char *prefix UNUS
 
 	set_terms(&terms, "bad", "good");
 	get_terms(&terms);
-	res = bisect_skip(&terms, argv, argc);
+	res = bisect_skip(&terms, argc, argv);
 	free_terms(&terms);
 	return res;
 }
@@ -1383,7 +1386,7 @@ static int cmd_bisect__visualize(int argc, const char **argv, const char *prefix
 	struct bisect_terms terms = { 0 };
 
 	get_terms(&terms);
-	res = bisect_visualize(&terms, argv, argc);
+	res = bisect_visualize(&terms, argc, argv);
 	free_terms(&terms);
 	return res;
 }
@@ -1396,7 +1399,7 @@ static int cmd_bisect__run(int argc, const char **argv, const char *prefix UNUSE
 	if (!argc)
 		return error(_("'%s' failed: no command provided."), "git bisect run");
 	get_terms(&terms);
-	res = bisect_run(&terms, argv, argc);
+	res = bisect_run(&terms, argc, argv);
 	free_terms(&terms);
 	return res;
 }
@@ -1432,7 +1435,7 @@ int cmd_bisect(int argc, const char **argv, const char *prefix)
 		if (check_and_set_terms(&terms, argv[0]))
 			usage_msg_optf(_("unknown command: '%s'"), git_bisect_usage,
 				       options, argv[0]);
-		res = bisect_state(&terms, argv, argc);
+		res = bisect_state(&terms, argc, argv);
 		free_terms(&terms);
 	} else {
 		argc--;
