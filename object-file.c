@@ -1708,7 +1708,7 @@ void *repo_read_object_file(struct repository *r,
 	oi.sizep = size;
 	oi.contentp = &data;
 	if (oid_object_info_extended(r, oid, &oi, flags))
-	    return NULL;
+		return NULL;
 
 	return data;
 }
