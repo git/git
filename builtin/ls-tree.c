@@ -39,7 +39,7 @@ static void expand_objectsize(struct strbuf *line, const struct object_id *oid,
 }
 
 struct ls_tree_options {
-	int line_termination;
+	unsigned null_termination:1;
 	int abbrev;
 	enum ls_tree_path_options {
 		LS_RECURSIVE = 1 << 0,
@@ -166,7 +166,7 @@ static int show_tree_fmt(const struct object_id *oid, struct strbuf *base,
 
 	baselen = base->len;
 	strbuf_expand(&sb, options->format, expand_show_tree, &cb_data);
-	strbuf_addch(&sb, options->line_termination);
+	strbuf_addch(&sb, options->null_termination ? '\0' : '\n');
 	fwrite(sb.buf, sb.len, 1, stdout);
 	strbuf_release(&sb);
 	strbuf_setlen(base, baselen);
@@ -198,10 +198,22 @@ static void show_tree_common_default_long(struct ls_tree_options *options,
 					  const char *pathname,
 					  const size_t baselen)
 {
+	const char *prefix = options->chomp_prefix ? options->ls_tree_prefix : NULL;
+
 	strbuf_addstr(base, pathname);
-	write_name_quoted_relative(base->buf,
-				   options->chomp_prefix ? options->ls_tree_prefix : NULL, stdout,
-				   options->line_termination);
+
+	if (options->null_termination) {
+		struct strbuf sb = STRBUF_INIT;
+		const char *name = relative_path(base->buf, prefix, &sb);
+
+		fputs(name, stdout);
+		fputc('\0', stdout);
+
+		strbuf_release(&sb);
+	} else {
+		write_name_quoted_relative(base->buf, prefix, stdout, '\n');
+	}
+
 	strbuf_setlen(base, baselen);
 }
 
@@ -264,15 +276,25 @@ static int show_tree_name_only(const struct object_id *oid, struct strbuf *base,
 	int recurse;
 	const size_t baselen = base->len;
 	enum object_type type = object_type(mode);
+	const char *prefix;
 
 	early = show_tree_common(options, &recurse, base, pathname, type);
 	if (early >= 0)
 		return early;
 
+	prefix = options->chomp_prefix ? options->ls_tree_prefix : NULL;
 	strbuf_addstr(base, pathname);
-	write_name_quoted_relative(base->buf,
-				   options->chomp_prefix ? options->ls_tree_prefix : NULL,
-				   stdout, options->line_termination);
+	if (options->null_termination) {
+		struct strbuf sb = STRBUF_INIT;
+		const char *name = relative_path(base->buf, prefix, &sb);
+
+		fputs(name, stdout);
+		fputc('\0', stdout);
+
+		strbuf_release(&sb);
+	} else {
+		write_name_quoted_relative(base->buf, prefix, stdout, '\n');
+	}
 	strbuf_setlen(base, baselen);
 	return recurse;
 }
@@ -285,12 +307,19 @@ static int show_tree_object(const struct object_id *oid, struct strbuf *base,
 	int early;
 	int recurse;
 	enum object_type type = object_type(mode);
+	const char *str;
 
 	early = show_tree_common(options, &recurse, base, pathname, type);
 	if (early >= 0)
 		return early;
 
-	printf("%s%c", find_unique_abbrev(oid, options->abbrev), options->line_termination);
+	str = find_unique_abbrev(oid, options->abbrev);
+	if (options->null_termination) {
+		fputs(str, stdout);
+		fputc('\0', stdout);
+	} else  {
+		puts(str);
+	}
 	return recurse;
 }
 
@@ -342,9 +371,8 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 	int i, full_tree = 0;
 	read_tree_fn_t fn = NULL;
 	enum ls_tree_cmdmode cmdmode = MODE_DEFAULT;
-	struct ls_tree_options options = {
-		.line_termination = '\n',
-	};
+	int null_termination = 0;
+	struct ls_tree_options options = { 0 };
 	const struct option ls_tree_options[] = {
 		OPT_BIT('d', NULL, &options.ls_options, N_("only show trees"),
 			LS_TREE_ONLY),
@@ -352,8 +380,8 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 			LS_RECURSIVE),
 		OPT_BIT('t', NULL, &options.ls_options, N_("show trees when recursing"),
 			LS_SHOW_TREES),
-		OPT_SET_INT('z', NULL, &options.line_termination,
-			    N_("terminate entries with NUL byte"), 0),
+		OPT_BOOL('z', NULL, &null_termination,
+			 N_("terminate entries with NUL byte")),
 		OPT_CMDMODE('l', "long", &cmdmode, N_("include object size"),
 			    MODE_LONG),
 		OPT_CMDMODE(0, "name-only", &cmdmode, N_("list only filenames"),
@@ -383,6 +411,8 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix, ls_tree_options,
 			     ls_tree_usage, 0);
+	options.null_termination = null_termination;
+
 	if (full_tree) {
 		options.ls_tree_prefix = prefix = NULL;
 		options.chomp_prefix = 0;
