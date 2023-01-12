@@ -53,6 +53,7 @@ struct ls_tree_options {
 };
 
 struct show_tree_data {
+	struct ls_tree_options *options;
 	unsigned mode;
 	enum object_type type;
 	const struct object_id *oid;
@@ -60,17 +61,11 @@ struct show_tree_data {
 	struct strbuf *base;
 };
 
-struct show_tree_data_cb {
-	struct ls_tree_options *options;
-	struct show_tree_data *data;
-};
-
 static size_t expand_show_tree(struct strbuf *sb, const char *start,
 			       void *context)
 {
-	struct show_tree_data_cb *wrapper = context;
-	struct ls_tree_options *options = wrapper->options;
-	struct show_tree_data *data = wrapper->data;
+	struct show_tree_data *data = context;
+	struct ls_tree_options *options = data->options;
 	const char *end;
 	const char *p;
 	unsigned int errlen;
@@ -153,16 +148,13 @@ static int show_tree_fmt(const struct object_id *oid, struct strbuf *base,
 	int recurse = 0;
 	struct strbuf sb = STRBUF_INIT;
 	enum object_type type = object_type(mode);
-	struct show_tree_data data = {
+	struct show_tree_data cb_data = {
+		.options = options,
 		.mode = mode,
 		.type = type,
 		.oid = oid,
 		.pathname = pathname,
 		.base = base,
-	};
-	struct show_tree_data_cb cb_data = {
-		.data = &data,
-		.options = options,
 	};
 
 	if (type == OBJ_TREE && show_recursive(options, base->buf, base->len, pathname))
