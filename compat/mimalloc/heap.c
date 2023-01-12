@@ -139,9 +139,9 @@ static void mi_heap_collect_ex(mi_heap_t* heap, mi_collect_t collect)
     mi_heap_visit_pages(heap, &mi_heap_page_never_delayed_free, NULL, NULL);
   }
 
-  // free thread delayed blocks.
+  // free all current thread delayed blocks.
   // (if abandoning, after this there are no more thread-delayed references into the pages.)
-  _mi_heap_delayed_free(heap);
+  _mi_heap_delayed_free_all(heap);
 
   // collect retired pages
   _mi_heap_collect_retired(heap, force);
@@ -200,13 +200,14 @@ mi_heap_t* mi_heap_get_backing(void) {
   return bheap;
 }
 
-mi_heap_t* mi_heap_new(void) {
+mi_decl_nodiscard mi_heap_t* mi_heap_new_in_arena( mi_arena_id_t arena_id ) {
   mi_heap_t* bheap = mi_heap_get_backing();
   mi_heap_t* heap = mi_heap_malloc_tp(bheap, mi_heap_t);  // todo: OS allocate in secure mode?
   if (heap==NULL) return NULL;
   _mi_memcpy_aligned(heap, &_mi_heap_empty, sizeof(mi_heap_t));
   heap->tld = bheap->tld;
   heap->thread_id = _mi_thread_id();
+  heap->arena_id = arena_id;
   _mi_random_split(&bheap->random, &heap->random);
   heap->cookie  = _mi_heap_random_next(heap) | 1;
   heap->keys[0] = _mi_heap_random_next(heap);
@@ -216,6 +217,14 @@ mi_heap_t* mi_heap_new(void) {
   heap->next = heap->tld->heaps;
   heap->tld->heaps = heap;
   return heap;
+}
+
+mi_decl_nodiscard mi_heap_t* mi_heap_new(void) {
+  return mi_heap_new_in_arena(_mi_arena_id_none());
+}
+
+bool _mi_heap_memid_is_suitable(mi_heap_t* heap, size_t memid) {
+  return _mi_arena_memid_is_suitable(memid, heap->arena_id);
 }
 
 uintptr_t _mi_heap_random_next(mi_heap_t* heap) {
@@ -338,7 +347,20 @@ void mi_heap_destroy(mi_heap_t* heap) {
   }
 }
 
-
+void _mi_heap_destroy_all(void) {
+  mi_heap_t* bheap = mi_heap_get_backing();
+  mi_heap_t* curr = bheap->tld->heaps;
+  while (curr != NULL) {
+    mi_heap_t* next = curr->next;
+    if (curr->no_reclaim) {
+      mi_heap_destroy(curr);
+    }
+    else {
+      _mi_heap_destroy_pages(curr);
+    }
+    curr = next;
+  }
+}
 
 /* -----------------------------------------------------------
   Safe Heap delete
@@ -350,7 +372,7 @@ static void mi_heap_absorb(mi_heap_t* heap, mi_heap_t* from) {
   if (from==NULL || from->page_count == 0) return;
 
   // reduce the size of the delayed frees
-  _mi_heap_delayed_free(from);
+  _mi_heap_delayed_free_partial(from);
 
   // transfer all pages by appending the queues; this will set a new heap field
   // so threads may do delayed frees in either heap for a while.
@@ -369,7 +391,7 @@ static void mi_heap_absorb(mi_heap_t* heap, mi_heap_t* from) {
   // note: be careful here as the `heap` field in all those pages no longer point to `from`,
   // turns out to be ok as `_mi_heap_delayed_free` only visits the list and calls a
   // the regular `_mi_free_delayed_block` which is safe.
-  _mi_heap_delayed_free(from);
+  _mi_heap_delayed_free_all(from);
   #if !defined(_MSC_VER) || (_MSC_VER > 1900) // somehow the following line gives an error in VS2015, issue #353
   mi_assert_internal(mi_atomic_load_ptr_relaxed(mi_block_t,&from->thread_delayed_free) == NULL);
   #endif
@@ -421,7 +443,7 @@ static mi_heap_t* mi_heap_of_block(const void* p) {
   mi_segment_t* segment = _mi_ptr_segment(p);
   bool valid = (_mi_ptr_cookie(segment) == segment->cookie);
   mi_assert_internal(valid);
-  if (mi_unlikely(!valid)) return NULL;
+  if mi_unlikely(!valid) return NULL;
   return mi_page_heap(_mi_segment_page_of(segment,p));
 }
 
@@ -543,7 +565,7 @@ static bool mi_heap_visit_areas_page(mi_heap_t* heap, mi_page_queue_t* pq, mi_pa
   xarea.area.reserved = page->reserved * bsize;
   xarea.area.committed = page->capacity * bsize;
   xarea.area.blocks = _mi_page_start(_mi_page_segment(page), page, NULL);
-  xarea.area.used = page->used * bsize;
+  xarea.area.used = page->used;   // number of blocks in use (#553)
   xarea.area.block_size = ubsize;
   xarea.area.full_block_size = bsize;
   return fun(heap, &xarea, arg);

@@ -122,7 +122,7 @@ size_t _mi_os_good_alloc_size(size_t size) {
   else if (size < 8*MI_MiB) align_size = 256*MI_KiB;
   else if (size < 32*MI_MiB) align_size = 1*MI_MiB;
   else align_size = 4*MI_MiB;
-  if (mi_unlikely(size >= (SIZE_MAX - align_size))) return size; // possible overflow?
+  if mi_unlikely(size >= (SIZE_MAX - align_size)) return size; // possible overflow?
   return _mi_align_up(size, align_size);
 }
 
@@ -365,9 +365,9 @@ static bool mi_os_mem_free(void* addr, size_t size, bool was_committed, mi_stats
     // In mi_os_mem_alloc_aligned the fallback path may have returned a pointer inside
     // the memory region returned by VirtualAlloc; in that case we need to free using
     // the start of the region.
-    MEMORY_BASIC_INFORMATION info = { 0, 0 };
+    MEMORY_BASIC_INFORMATION info = { 0 };
     VirtualQuery(addr, &info, sizeof(info));
-    if (info.AllocationBase < addr && ((uint8_t*)addr - (uint8_t*)info.AllocationBase) < MI_SEGMENT_SIZE) {
+    if (info.AllocationBase < addr && ((uint8_t*)addr - (uint8_t*)info.AllocationBase) < (ptrdiff_t)MI_SEGMENT_SIZE) {
       errcode = 0;
       err = (VirtualFree(info.AllocationBase, 0, MEM_RELEASE) == 0);
       if (err) { errcode = GetLastError(); }
@@ -840,7 +840,45 @@ void* _mi_os_alloc_aligned(size_t size, size_t alignment, bool commit, bool* lar
   return mi_os_mem_alloc_aligned(size, alignment, commit, allow_large, (large!=NULL?large:&allow_large), &_mi_stats_main /*tld->stats*/ );
 }
 
+/* -----------------------------------------------------------
+  OS aligned allocation with an offset. This is used
+  for large alignments > MI_ALIGNMENT_MAX. We use a large mimalloc
+  page where the object can be aligned at an offset from the start of the segment.
+  As we may need to overallocate, we need to free such pointers using `mi_free_aligned`
+  to use the actual start of the memory region.
+----------------------------------------------------------- */
 
+void* _mi_os_alloc_aligned_offset(size_t size, size_t alignment, size_t offset, bool commit, bool* large, mi_stats_t* tld_stats) {
+  mi_assert(offset <= MI_SEGMENT_SIZE);
+  mi_assert(offset <= size);
+  mi_assert((alignment % _mi_os_page_size()) == 0);
+  if (offset > MI_SEGMENT_SIZE) return NULL;
+  if (offset == 0) {
+    // regular aligned allocation
+    return _mi_os_alloc_aligned(size, alignment, commit, large, tld_stats);
+  }
+  else {
+    // overallocate to align at an offset
+    const size_t extra = _mi_align_up(offset, alignment) - offset;
+    const size_t oversize = size + extra;
+    void* start = _mi_os_alloc_aligned(oversize, alignment, commit, large, tld_stats);
+    if (start == NULL) return NULL;
+    void* p = (uint8_t*)start + extra;
+    mi_assert(_mi_is_aligned((uint8_t*)p + offset, alignment));
+    // decommit the overallocation at the start
+    if (commit && extra > _mi_os_page_size()) {
+      _mi_os_decommit(start, extra, tld_stats);
+    }
+    return p;
+  }
+}
+
+void _mi_os_free_aligned(void* p, size_t size, size_t alignment, size_t align_offset, bool was_committed, mi_stats_t* tld_stats) {
+  mi_assert(align_offset <= MI_SEGMENT_SIZE);
+  const size_t extra = _mi_align_up(align_offset, alignment) - align_offset;
+  void* start = (uint8_t*)p - extra;
+  _mi_os_free_ex(start, size + extra, was_committed, tld_stats);
+}
 
 /* -----------------------------------------------------------
   OS memory API: reset, commit, decommit, protect, unprotect.
@@ -989,7 +1027,7 @@ static bool mi_os_resetx(void* addr, size_t size, bool reset, mi_stats_t* stats)
 	else _mi_stat_decrease(&stats->reset, csize);
   if (!reset) return true; // nothing to do on unreset!
 
-  #if (MI_DEBUG>1)
+  #if (MI_DEBUG>1) && !MI_TRACK_ENABLED
   if (MI_SECURE==0) {
     memset(start, 0, csize); // pretend it is eagerly reset
   }
@@ -1044,13 +1082,8 @@ bool _mi_os_reset(void* addr, size_t size, mi_stats_t* tld_stats) {
 bool _mi_os_unreset(void* addr, size_t size, bool* is_zero, mi_stats_t* tld_stats) {
   MI_UNUSED(tld_stats);
   mi_stats_t* stats = &_mi_stats_main;
-  if (mi_option_is_enabled(mi_option_reset_decommits)) {
-    return mi_os_commit_unreset(addr, size, is_zero, stats);  // re-commit it (conservatively!)
-  }
-  else {
-    *is_zero = false;
-    return mi_os_resetx(addr, size, false, stats);
-  }
+  *is_zero = false;
+  return mi_os_resetx(addr, size, false, stats);
 }
 */
 
@@ -1317,14 +1350,14 @@ static size_t mi_os_numa_nodex(void) {
     (*pGetCurrentProcessorNumberEx)(&pnum);
     USHORT nnode = 0;
     BOOL ok = (*pGetNumaProcessorNodeEx)(&pnum, &nnode);
-    if (ok) numa_node = nnode;
+    if (ok) { numa_node = nnode; }
   }
   else if (pGetNumaProcessorNode != NULL) {
     // Vista or earlier, use older API that is limited to 64 processors. Issue #277
     DWORD pnum = GetCurrentProcessorNumber();
     UCHAR nnode = 0;
     BOOL ok = pGetNumaProcessorNode((UCHAR)pnum, &nnode);
-    if (ok) numa_node = nnode;
+    if (ok) { numa_node = nnode; }
   }
   return numa_node;
 }

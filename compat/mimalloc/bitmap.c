@@ -108,6 +108,25 @@ bool _mi_bitmap_try_find_from_claim(mi_bitmap_t bitmap, const size_t bitmap_fiel
   return false;
 }
 
+// Like _mi_bitmap_try_find_from_claim but with an extra predicate that must be fullfilled
+bool _mi_bitmap_try_find_from_claim_pred(mi_bitmap_t bitmap, const size_t bitmap_fields,
+	    const size_t start_field_idx, const size_t count,
+	    mi_bitmap_pred_fun_t pred_fun, void* pred_arg,
+	    mi_bitmap_index_t* bitmap_idx) {
+  size_t idx = start_field_idx;
+  for (size_t visited = 0; visited < bitmap_fields; visited++, idx++) {
+    if (idx >= bitmap_fields) idx = 0; // wrap
+    if (_mi_bitmap_try_find_claim_field(bitmap, idx, count, bitmap_idx)) {
+      if (pred_fun == NULL || pred_fun(*bitmap_idx, pred_arg)) {
+	return true;
+      }
+      // predicate returned false, unclaim and look further
+      _mi_bitmap_unclaim(bitmap, bitmap_fields, count, *bitmap_idx);
+    }
+  }
+  return false;
+}
+
 /*
 // Find `count` bits of 0 and set them to 1 atomically; returns `true` on success.
 // For now, `count` can be at most MI_BITMAP_FIELD_BITS and will never span fields.
@@ -283,7 +302,7 @@ bool _mi_bitmap_try_find_from_claim_across(mi_bitmap_t bitmap, const size_t bitm
 static size_t mi_bitmap_mask_across(mi_bitmap_index_t bitmap_idx, size_t bitmap_fields, size_t count, size_t* pre_mask, size_t* mid_mask, size_t* post_mask) {
   MI_UNUSED_RELEASE(bitmap_fields);
   const size_t bitidx = mi_bitmap_index_bit_in_field(bitmap_idx);
-  if (mi_likely(bitidx + count <= MI_BITMAP_FIELD_BITS)) {
+  if mi_likely(bitidx + count <= MI_BITMAP_FIELD_BITS) {
     *pre_mask = mi_bitmap_mask_(count, bitidx);
     *mid_mask = 0;
     *post_mask = 0;

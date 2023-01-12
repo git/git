@@ -229,8 +229,9 @@ static void mi_page_queue_remove(mi_page_queue_t* queue, mi_page_t* page) {
 static void mi_page_queue_push(mi_heap_t* heap, mi_page_queue_t* queue, mi_page_t* page) {
   mi_assert_internal(mi_page_heap(page) == heap);
   mi_assert_internal(!mi_page_queue_contains(queue, page));
-
+  #if MI_HUGE_PAGE_ABANDON
   mi_assert_internal(_mi_page_segment(page)->kind != MI_SEGMENT_HUGE);
+  #endif
   mi_assert_internal(page->xblock_size == queue->block_size ||
 		      (page->xblock_size > MI_MEDIUM_OBJ_SIZE_MAX) ||
 			(mi_page_is_in_full(page) && mi_page_queue_is_full(queue)));

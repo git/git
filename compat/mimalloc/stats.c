@@ -170,19 +170,23 @@ static void mi_print_count(int64_t n, int64_t unit, mi_output_fun* out, void* ar
 	  else mi_print_amount(n,0,out,arg);
 }
 
-static void mi_stat_print(const mi_stat_count_t* stat, const char* msg, int64_t unit, mi_output_fun* out, void* arg ) {
+static void mi_stat_print_ex(const mi_stat_count_t* stat, const char* msg, int64_t unit, mi_output_fun* out, void* arg, const char* notok ) {
   _mi_fprintf(out, arg,"%10s:", msg);
-  if (unit>0) {
+  if (unit > 0) {
     mi_print_amount(stat->peak, unit, out, arg);
     mi_print_amount(stat->allocated, unit, out, arg);
     mi_print_amount(stat->freed, unit, out, arg);
     mi_print_amount(stat->current, unit, out, arg);
     mi_print_amount(unit, 1, out, arg);
     mi_print_count(stat->allocated, unit, out, arg);
-    if (stat->allocated > stat->freed)
-      _mi_fprintf(out, arg, "  not all freed!\n");
-    else
+    if (stat->allocated > stat->freed) {
+      _mi_fprintf(out, arg, "  ");
+      _mi_fprintf(out, arg, (notok == NULL ? "not all freed!" : notok));
+      _mi_fprintf(out, arg, "\n");
+    }
+    else {
       _mi_fprintf(out, arg, "  ok\n");
+    }
   }
   else if (unit<0) {
     mi_print_amount(stat->peak, -1, out, arg);
@@ -208,6 +212,10 @@ static void mi_stat_print(const mi_stat_count_t* stat, const char* msg, int64_t 
     mi_print_amount(stat->current, 1, out, arg);
     _mi_fprintf(out, arg, "\n");
   }
+}
+
+static void mi_stat_print(const mi_stat_count_t* stat, const char* msg, int64_t unit, mi_output_fun* out, void* arg) {
+  mi_stat_print_ex(stat, msg, unit, out, arg, NULL);
 }
 
 static void mi_stat_counter_print(const mi_stat_counter_t* stat, const char* msg, mi_output_fun* out, void* arg ) {
@@ -267,7 +275,7 @@ static void mi_buffered_flush(buffered_t* buf) {
   buf->used = 0;
 }
 
-static void mi_buffered_out(const char* msg, void* arg) {
+static void mi_cdecl mi_buffered_out(const char* msg, void* arg) {
   buffered_t* buf = (buffered_t*)arg;
   if (msg==NULL || buf==NULL) return;
   for (const char* src = msg; *src != 0; src++) {
@@ -312,8 +320,8 @@ static void _mi_stats_print(mi_stats_t* stats, mi_output_fun* out0, void* arg0) 
   mi_stat_print(&stats->malloc, "malloc req", 1, out, arg);
   _mi_fprintf(out, arg, "\n");
   #endif
-  mi_stat_print(&stats->reserved, "reserved", 1, out, arg);
-  mi_stat_print(&stats->committed, "committed", 1, out, arg);
+  mi_stat_print_ex(&stats->reserved, "reserved", 1, out, arg, "");
+  mi_stat_print_ex(&stats->committed, "committed", 1, out, arg, "");
   mi_stat_print(&stats->reset, "reset", 1, out, arg);
   mi_stat_print(&stats->page_committed, "touched", 1, out, arg);
   mi_stat_print(&stats->segments, "segments", -1, out, arg);
@@ -457,9 +465,6 @@ mi_msecs_t _mi_clock_end(mi_msecs_t start) {
 
 #if defined(_WIN32)
 #include <windows.h>
-#include <psapi.h>
-#pragma comment(lib,"psapi.lib")
-#include "compat/win32/lazyload.h"
 
 static mi_msecs_t filetime_msecs(const FILETIME* ftime) {
   ULARGE_INTEGER i;
@@ -468,6 +473,22 @@ static mi_msecs_t filetime_msecs(const FILETIME* ftime) {
   mi_msecs_t msecs = (i.QuadPart / 10000); // FILETIME is in 100 nano seconds
   return msecs;
 }
+
+typedef struct _PROCESS_MEMORY_COUNTERS {
+  DWORD cb;
+  DWORD PageFaultCount;
+  SIZE_T PeakWorkingSetSize;
+  SIZE_T WorkingSetSize;
+  SIZE_T QuotaPeakPagedPoolUsage;
+  SIZE_T QuotaPagedPoolUsage;
+  SIZE_T QuotaPeakNonPagedPoolUsage;
+  SIZE_T QuotaNonPagedPoolUsage;
+  SIZE_T PagefileUsage;
+  SIZE_T PeakPagefileUsage;
+} PROCESS_MEMORY_COUNTERS;
+typedef PROCESS_MEMORY_COUNTERS* PPROCESS_MEMORY_COUNTERS;
+typedef BOOL (WINAPI *PGetProcessMemoryInfo)(HANDLE, PPROCESS_MEMORY_COUNTERS, DWORD);
+static PGetProcessMemoryInfo pGetProcessMemoryInfo = NULL;
 
 static void mi_stat_process_info(mi_msecs_t* elapsed, mi_msecs_t* utime, mi_msecs_t* stime, size_t* current_rss, size_t* peak_rss, size_t* current_commit, size_t* peak_commit, size_t* page_faults)
 {
@@ -479,18 +500,26 @@ static void mi_stat_process_info(mi_msecs_t* elapsed, mi_msecs_t* utime, mi_msec
   GetProcessTimes(GetCurrentProcess(), &ct, &et, &st, &ut);
   *utime = filetime_msecs(&ut);
   *stime = filetime_msecs(&st);
-  PROCESS_MEMORY_COUNTERS info;
-  DECLARE_PROC_ADDR(psapi, BOOL, WINAPI, GetProcessMemoryInfo, HANDLE, PPROCESS_MEMORY_COUNTERS, DWORD);
-  if (INIT_PROC_ADDR(GetProcessMemoryInfo)) {
-    GetProcessMemoryInfo(GetCurrentProcess(), &info, sizeof(info));
-    *current_rss    = (size_t)info.WorkingSetSize;
-    *peak_rss       = (size_t)info.PeakWorkingSetSize;
-    *current_commit = (size_t)info.PagefileUsage;
-    *peak_commit    = (size_t)info.PeakPagefileUsage;
-    *page_faults    = (size_t)info.PageFaultCount;
-  } else {
-    *current_rss = *peak_rss = *current_commit = *peak_commit = *page_faults = 0;
+
+  // load psapi on demand
+  if (pGetProcessMemoryInfo == NULL) {
+    HINSTANCE hDll = LoadLibrary(TEXT("psapi.dll"));
+    if (hDll != NULL) {
+      pGetProcessMemoryInfo = (PGetProcessMemoryInfo)(void (*)(void))GetProcAddress(hDll, "GetProcessMemoryInfo");
+    }
   }
+
+  // get process info
+  PROCESS_MEMORY_COUNTERS info;
+  memset(&info, 0, sizeof(info));
+  if (pGetProcessMemoryInfo != NULL) {
+    pGetProcessMemoryInfo(GetCurrentProcess(), &info, sizeof(info));
+  }
+  *current_rss    = (size_t)info.WorkingSetSize;
+  *peak_rss       = (size_t)info.PeakWorkingSetSize;
+  *current_commit = (size_t)info.PagefileUsage;
+  *peak_commit    = (size_t)info.PeakPagefileUsage;
+  *page_faults    = (size_t)info.PageFaultCount;
 }
 
 #elif !defined(__wasi__) && (defined(__unix__) || defined(__unix) || defined(unix) || defined(__APPLE__) || defined(__HAIKU__))

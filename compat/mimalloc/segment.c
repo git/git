@@ -316,7 +316,7 @@ static uint8_t* _mi_segment_page_start_from_slice(const mi_segment_t* segment, c
   ptrdiff_t idx = slice - segment->slices;
   size_t psize = (size_t)slice->slice_count * MI_SEGMENT_SLICE_SIZE;
   // make the start not OS page aligned for smaller blocks to avoid page/cache effects
-  size_t start_offset = (xblock_size >= MI_INTPTR_SIZE && xblock_size <= 1024 ? MI_MAX_ALIGN_GUARANTEE : 0);
+  size_t start_offset = (xblock_size >= MI_INTPTR_SIZE && xblock_size <= 1024 ? 3*MI_MAX_ALIGN_GUARANTEE : 0);
   if (page_size != NULL) { *page_size = psize - start_offset; }
   return (uint8_t*)segment + ((idx*MI_SEGMENT_SLICE_SIZE) + start_offset);
 }
@@ -340,8 +340,10 @@ static size_t mi_segment_calculate_slices(size_t required, size_t* pre_size, siz
   if (MI_SECURE>0) {
     // in secure mode, we set up a protected page in between the segment info
     // and the page data (and one at the end of the segment)
-    guardsize =  page_size;
-    required  = _mi_align_up(required, page_size);
+    guardsize = page_size;
+    if (required > 0) {
+      required = _mi_align_up(required, MI_SEGMENT_SLICE_SIZE) + page_size;
+    }
   }
 
   if (pre_size != NULL) *pre_size = isize;
@@ -386,11 +388,13 @@ static void mi_segment_os_free(mi_segment_t* segment, mi_segments_tld_t* tld) {
 
   // _mi_os_free(segment, mi_segment_size(segment), /*segment->memid,*/ tld->stats);
   const size_t size = mi_segment_size(segment);
-  if (size != MI_SEGMENT_SIZE || !_mi_segment_cache_push(segment, size, segment->memid, &segment->commit_mask, &segment->decommit_mask, segment->mem_is_large, segment->mem_is_pinned, tld->os)) {
+  if (size != MI_SEGMENT_SIZE || segment->mem_align_offset != 0 || segment->kind == MI_SEGMENT_HUGE || // only push regular segments on the cache
+       !_mi_segment_cache_push(segment, size, segment->memid, &segment->commit_mask, &segment->decommit_mask, segment->mem_is_large, segment->mem_is_pinned, tld->os))
+  {
     const size_t csize = _mi_commit_mask_committed_size(&segment->commit_mask, size);
     if (csize > 0 && !segment->mem_is_pinned) _mi_stat_decrease(&_mi_stats_main.committed, csize);
     _mi_abandoned_await_readers();  // wait until safe to free
-    _mi_arena_free(segment, mi_segment_size(segment), segment->memid, segment->mem_is_pinned /* pretend not committed to not double count decommits */, tld->os);
+    _mi_arena_free(segment, mi_segment_size(segment), segment->mem_alignment, segment->mem_align_offset, segment->memid, segment->mem_is_pinned /* pretend not committed to not double count decommits */, tld->stats);
   }
 }
 
@@ -402,11 +406,11 @@ void _mi_segment_thread_collect(mi_segments_tld_t* tld) {
 
 
 /* -----------------------------------------------------------
-   Span management
+   Commit/Decommit ranges
 ----------------------------------------------------------- */
 
 static void mi_segment_commit_mask(mi_segment_t* segment, bool conservative, uint8_t* p, size_t size, uint8_t** start_p, size_t* full_size, mi_commit_mask_t* cm) {
-  mi_assert_internal(_mi_ptr_segment(p) == segment);
+  mi_assert_internal(_mi_ptr_segment(p + 1) == segment);
   mi_assert_internal(segment->kind != MI_SEGMENT_HUGE);
   mi_commit_mask_create_empty(cm);
   if (size == 0 || size > MI_SEGMENT_SIZE || segment->kind == MI_SEGMENT_HUGE) return;
@@ -459,15 +463,6 @@ static void mi_segment_commit_mask(mi_segment_t* segment, bool conservative, uin
 static bool mi_segment_commitx(mi_segment_t* segment, bool commit, uint8_t* p, size_t size, mi_stats_t* stats) {
   mi_assert_internal(mi_commit_mask_all_set(&segment->commit_mask, &segment->decommit_mask));
 
-  // try to commit in at least MI_MINIMAL_COMMIT_SIZE sizes.
-  /*
-  if (commit && size > 0) {
-    const size_t csize = _mi_align_up(size, MI_MINIMAL_COMMIT_SIZE);
-    if (p + csize <= mi_segment_end(segment)) {
-      size = csize;
-    }
-  }
-  */
   // commit liberal, but decommit conservative
   uint8_t* start = NULL;
   size_t   full_size = 0;
@@ -536,8 +531,12 @@ static void mi_segment_perhaps_decommit(mi_segment_t* segment, uint8_t* p, size_
     }
     else if (segment->decommit_expire <= now) {
       // previous decommit mask already expired
-      // mi_segment_delayed_decommit(segment, true, stats);
-      segment->decommit_expire = now + mi_option_get(mi_option_decommit_extend_delay); // (mi_option_get(mi_option_decommit_delay) / 8); // wait a tiny bit longer in case there is a series of free's
+      if (segment->decommit_expire + mi_option_get(mi_option_decommit_extend_delay) <= now) {
+	mi_segment_delayed_decommit(segment, true, stats);
+      }
+      else {
+	segment->decommit_expire = now + mi_option_get(mi_option_decommit_extend_delay); // (mi_option_get(mi_option_decommit_delay) / 8); // wait a tiny bit longer in case there is a series of free's
+      }
     }
     else {
       // previous decommit mask is not yet expired, increase the expiration by a bit.
@@ -570,12 +569,16 @@ static void mi_segment_delayed_decommit(mi_segment_t* segment, bool force, mi_st
 }
 
 
+/* -----------------------------------------------------------
+   Span free
+----------------------------------------------------------- */
+
 static bool mi_segment_is_abandoned(mi_segment_t* segment) {
   return (segment->thread_id == 0);
 }
 
 // note: can be called on abandoned segments
-static void mi_segment_span_free(mi_segment_t* segment, size_t slice_index, size_t slice_count, mi_segments_tld_t* tld) {
+static void mi_segment_span_free(mi_segment_t* segment, size_t slice_index, size_t slice_count, bool allow_decommit, mi_segments_tld_t* tld) {
   mi_assert_internal(slice_index < segment->slice_entries);
   mi_span_queue_t* sq = (segment->kind == MI_SEGMENT_HUGE || mi_segment_is_abandoned(segment)
 			  ? NULL : mi_span_queue_for(slice_count,tld));
@@ -595,7 +598,9 @@ static void mi_segment_span_free(mi_segment_t* segment, size_t slice_index, size
   }
 
   // perhaps decommit
-  mi_segment_perhaps_decommit(segment,mi_slice_start(slice),slice_count*MI_SEGMENT_SLICE_SIZE,tld->stats);
+  if (allow_decommit) {
+    mi_segment_perhaps_decommit(segment, mi_slice_start(slice), slice_count * MI_SEGMENT_SLICE_SIZE, tld->stats);
+  }
 
   // and push it on the free page queue (if it was not a huge page)
   if (sq != NULL) mi_span_queue_push( sq, slice );
@@ -657,27 +662,20 @@ static mi_slice_t* mi_segment_span_free_coalesce(mi_slice_t* slice, mi_segments_
   }
 
   // and add the new free page
-  mi_segment_span_free(segment, mi_slice_index(slice), slice_count, tld);
+  mi_segment_span_free(segment, mi_slice_index(slice), slice_count, true, tld);
   return slice;
 }
 
 
-static void mi_segment_slice_split(mi_segment_t* segment, mi_slice_t* slice, size_t slice_count, mi_segments_tld_t* tld) {
-  mi_assert_internal(_mi_ptr_segment(slice)==segment);
-  mi_assert_internal(slice->slice_count >= slice_count);
-  mi_assert_internal(slice->xblock_size > 0); // no more in free queue
-  if (slice->slice_count <= slice_count) return;
-  mi_assert_internal(segment->kind != MI_SEGMENT_HUGE);
-  size_t next_index = mi_slice_index(slice) + slice_count;
-  size_t next_count = slice->slice_count - slice_count;
-  mi_segment_span_free(segment, next_index, next_count, tld);
-  slice->slice_count = (uint32_t)slice_count;
-}
+
+/* -----------------------------------------------------------
+   Page allocation
+----------------------------------------------------------- */
 
 // Note: may still return NULL if committing the memory failed
 static mi_page_t* mi_segment_span_allocate(mi_segment_t* segment, size_t slice_index, size_t slice_count, mi_segments_tld_t* tld) {
   mi_assert_internal(slice_index < segment->slice_entries);
-  mi_slice_t* slice = &segment->slices[slice_index];
+  mi_slice_t* const slice = &segment->slices[slice_index];
   mi_assert_internal(slice->xblock_size==0 || slice->xblock_size==1);
 
   // commit before changing the slice data
@@ -698,18 +696,21 @@ static mi_page_t* mi_segment_span_allocate(mi_segment_t* segment, size_t slice_i
   size_t extra = slice_count-1;
   if (extra > MI_MAX_SLICE_OFFSET) extra = MI_MAX_SLICE_OFFSET;
   if (slice_index + extra >= segment->slice_entries) extra = segment->slice_entries - slice_index - 1;  // huge objects may have more slices than avaiable entries in the segment->slices
-  slice++;
-  for (size_t i = 1; i <= extra; i++, slice++) {
-    slice->slice_offset = (uint32_t)(sizeof(mi_slice_t)*i);
-    slice->slice_count = 0;
-    slice->xblock_size = 1;
+
+  mi_slice_t* slice_next = slice + 1;
+  for (size_t i = 1; i <= extra; i++, slice_next++) {
+    slice_next->slice_offset = (uint32_t)(sizeof(mi_slice_t)*i);
+    slice_next->slice_count = 0;
+    slice_next->xblock_size = 1;
   }
 
-  // and also for the last one (if not set already) (the last one is needed for coalescing)
+  // and also for the last one (if not set already) (the last one is needed for coalescing and for large alignments)
   // note: the cast is needed for ubsan since the index can be larger than MI_SLICES_PER_SEGMENT for huge allocations (see #543)
-  mi_slice_t* last = &((mi_slice_t*)segment->slices)[slice_index + slice_count - 1];
-  if (last < mi_segment_slices_end(segment) && last >= slice) {
-    last->slice_offset = (uint32_t)(sizeof(mi_slice_t)*(slice_count-1));
+  mi_slice_t* last = slice + slice_count - 1;
+  mi_slice_t* end = (mi_slice_t*)mi_segment_slices_end(segment);
+  if (last > end) last = end;
+  if (last > slice) {
+    last->slice_offset = (uint32_t)(sizeof(mi_slice_t) * (last - slice));
     last->slice_count = 0;
     last->xblock_size = 1;
   }
@@ -721,7 +722,19 @@ static mi_page_t* mi_segment_span_allocate(mi_segment_t* segment, size_t slice_i
   return page;
 }
 
-static mi_page_t* mi_segments_page_find_and_allocate(size_t slice_count, mi_segments_tld_t* tld) {
+static void mi_segment_slice_split(mi_segment_t* segment, mi_slice_t* slice, size_t slice_count, mi_segments_tld_t* tld) {
+  mi_assert_internal(_mi_ptr_segment(slice) == segment);
+  mi_assert_internal(slice->slice_count >= slice_count);
+  mi_assert_internal(slice->xblock_size > 0); // no more in free queue
+  if (slice->slice_count <= slice_count) return;
+  mi_assert_internal(segment->kind != MI_SEGMENT_HUGE);
+  size_t next_index = mi_slice_index(slice) + slice_count;
+  size_t next_count = slice->slice_count - slice_count;
+  mi_segment_span_free(segment, next_index, next_count, false /* don't decommit left-over part */, tld);
+  slice->slice_count = (uint32_t)slice_count;
+}
+
+static mi_page_t* mi_segments_page_find_and_allocate(size_t slice_count, mi_arena_id_t req_arena_id, mi_segments_tld_t* tld) {
   mi_assert_internal(slice_count*MI_SEGMENT_SLICE_SIZE <= MI_LARGE_OBJ_SIZE_MAX);
   // search from best fit up
   mi_span_queue_t* sq = mi_span_queue_for(slice_count, tld);
@@ -730,19 +743,23 @@ static mi_page_t* mi_segments_page_find_and_allocate(size_t slice_count, mi_segm
     for (mi_slice_t* slice = sq->first; slice != NULL; slice = slice->next) {
       if (slice->slice_count >= slice_count) {
 	// found one
-	mi_span_queue_delete(sq, slice);
 	mi_segment_t* segment = _mi_ptr_segment(slice);
-	if (slice->slice_count > slice_count) {
-	  mi_segment_slice_split(segment, slice, slice_count, tld);
+	if (_mi_arena_memid_is_suitable(segment->memid, req_arena_id)) {
+	  // found a suitable page span
+	  mi_span_queue_delete(sq, slice);
+
+	  if (slice->slice_count > slice_count) {
+	    mi_segment_slice_split(segment, slice, slice_count, tld);
+	  }
+	  mi_assert_internal(slice != NULL && slice->slice_count == slice_count && slice->xblock_size > 0);
+	  mi_page_t* page = mi_segment_span_allocate(segment, mi_slice_index(slice), slice->slice_count, tld);
+	  if (page == NULL) {
+	    // commit failed; return NULL but first restore the slice
+	    mi_segment_span_free_coalesce(slice, tld);
+	    return NULL;
+	  }
+	  return page;
 	}
-	mi_assert_internal(slice != NULL && slice->slice_count == slice_count && slice->xblock_size > 0);
-	mi_page_t* page = mi_segment_span_allocate(segment, mi_slice_index(slice), slice->slice_count, tld);
-	if (page == NULL) {
-	  // commit failed; return NULL but first restore the slice
-	  mi_segment_span_free_coalesce(slice, tld);
-	  return NULL;
-	}
-	return page;
       }
     }
     sq++;
@@ -756,17 +773,85 @@ static mi_page_t* mi_segments_page_find_and_allocate(size_t slice_count, mi_segm
    Segment allocation
 ----------------------------------------------------------- */
 
+static mi_segment_t* mi_segment_os_alloc( size_t required, size_t page_alignment, bool eager_delay, mi_arena_id_t req_arena_id,
+					  size_t* psegment_slices, size_t* ppre_size, size_t* pinfo_slices,
+					  mi_commit_mask_t* pcommit_mask, mi_commit_mask_t* pdecommit_mask,
+					  bool* is_zero, bool* pcommit, mi_segments_tld_t* tld, mi_os_tld_t* os_tld)
+
+{
+  // Allocate the segment from the OS
+  bool mem_large = (!eager_delay && (MI_SECURE==0)); // only allow large OS pages once we are no longer lazy
+  bool is_pinned = false;
+  size_t memid = 0;
+  size_t align_offset = 0;
+  size_t alignment = MI_SEGMENT_ALIGN;
+
+  if (page_alignment > 0) {
+    // mi_assert_internal(huge_page != NULL);
+    mi_assert_internal(page_alignment >= MI_SEGMENT_ALIGN);
+    alignment = page_alignment;
+    const size_t info_size = (*pinfo_slices) * MI_SEGMENT_SLICE_SIZE;
+    align_offset = _mi_align_up( info_size, MI_SEGMENT_ALIGN );
+    const size_t extra = align_offset - info_size;
+    // recalculate due to potential guard pages
+    *psegment_slices = mi_segment_calculate_slices(required + extra, ppre_size, pinfo_slices);
+    //segment_size += _mi_align_up(align_offset - info_size, MI_SEGMENT_SLICE_SIZE);
+    //segment_slices = segment_size / MI_SEGMENT_SLICE_SIZE;
+  }
+  const size_t segment_size = (*psegment_slices) * MI_SEGMENT_SLICE_SIZE;
+  mi_segment_t* segment = NULL;
+
+  // get from cache?
+  if (page_alignment == 0) {
+    segment = (mi_segment_t*)_mi_segment_cache_pop(segment_size, pcommit_mask, pdecommit_mask, &mem_large, &is_pinned, is_zero, req_arena_id, &memid, os_tld);
+  }
+
+  // get from OS
+  if (segment==NULL) {
+    segment = (mi_segment_t*)_mi_arena_alloc_aligned(segment_size, alignment, align_offset, pcommit, &mem_large, &is_pinned, is_zero, req_arena_id, &memid, os_tld);
+    if (segment == NULL) return NULL;  // failed to allocate
+    if (*pcommit) {
+      mi_commit_mask_create_full(pcommit_mask);
+    }
+    else {
+      mi_commit_mask_create_empty(pcommit_mask);
+    }
+  }
+  mi_assert_internal(segment != NULL && (uintptr_t)segment % MI_SEGMENT_SIZE == 0);
+
+  const size_t commit_needed = _mi_divide_up((*pinfo_slices)*MI_SEGMENT_SLICE_SIZE, MI_COMMIT_SIZE);
+  mi_assert_internal(commit_needed>0);
+  mi_commit_mask_t commit_needed_mask;
+  mi_commit_mask_create(0, commit_needed, &commit_needed_mask);
+  if (!mi_commit_mask_all_set(pcommit_mask, &commit_needed_mask)) {
+    // at least commit the info slices
+    mi_assert_internal(commit_needed*MI_COMMIT_SIZE >= (*pinfo_slices)*MI_SEGMENT_SLICE_SIZE);
+    bool ok = _mi_os_commit(segment, commit_needed*MI_COMMIT_SIZE, is_zero, tld->stats);
+    if (!ok) return NULL; // failed to commit
+    mi_commit_mask_set(pcommit_mask, &commit_needed_mask);
+  }
+  mi_track_mem_undefined(segment,commit_needed);
+  segment->memid = memid;
+  segment->mem_is_pinned = is_pinned;
+  segment->mem_is_large = mem_large;
+  segment->mem_is_committed = mi_commit_mask_is_full(pcommit_mask);
+  segment->mem_alignment = alignment;
+  segment->mem_align_offset = align_offset;
+  mi_segments_track_size((long)(segment_size), tld);
+  _mi_segment_map_allocated_at(segment);
+  return segment;
+}
+
+
 // Allocate a segment from the OS aligned to `MI_SEGMENT_SIZE` .
-static mi_segment_t* mi_segment_init(mi_segment_t* segment, size_t required, mi_segments_tld_t* tld, mi_os_tld_t* os_tld, mi_page_t** huge_page)
+static mi_segment_t* mi_segment_alloc(size_t required, size_t page_alignment, mi_arena_id_t req_arena_id, mi_segments_tld_t* tld, mi_os_tld_t* os_tld, mi_page_t** huge_page)
 {
   mi_assert_internal((required==0 && huge_page==NULL) || (required>0 && huge_page != NULL));
-  mi_assert_internal((segment==NULL) || (segment!=NULL && required==0));
+
   // calculate needed sizes first
   size_t info_slices;
   size_t pre_size;
-  const size_t segment_slices = mi_segment_calculate_slices(required, &pre_size, &info_slices);
-  const size_t slice_entries = (segment_slices > MI_SLICES_PER_SEGMENT ? MI_SLICES_PER_SEGMENT : segment_slices);
-  const size_t segment_size = segment_slices * MI_SEGMENT_SLICE_SIZE;
+  size_t segment_slices = mi_segment_calculate_slices(required, &pre_size, &info_slices);
 
   // Commit eagerly only if not the first N lazy segments (to reduce impact of many threads that allocate just a little)
   const bool eager_delay = (// !_mi_os_has_overcommit() &&             // never delay on overcommit systems
@@ -774,89 +859,43 @@ static mi_segment_t* mi_segment_init(mi_segment_t* segment, size_t required, mi_
 			    tld->count < (size_t)mi_option_get(mi_option_eager_commit_delay));
   const bool eager = !eager_delay && mi_option_is_enabled(mi_option_eager_commit);
   bool commit = eager || (required > 0);
-
-  // Try to get from our cache first
   bool is_zero = false;
-  const bool commit_info_still_good = (segment != NULL);
+
   mi_commit_mask_t commit_mask;
   mi_commit_mask_t decommit_mask;
-  if (segment != NULL) {
-    commit_mask = segment->commit_mask;
-    decommit_mask = segment->decommit_mask;
-  }
-  else {
-    mi_commit_mask_create_empty(&commit_mask);
-    mi_commit_mask_create_empty(&decommit_mask);
-  }
-  if (segment==NULL) {
-    // Allocate the segment from the OS
-    bool mem_large = (!eager_delay && (MI_SECURE==0)); // only allow large OS pages once we are no longer lazy
-    bool is_pinned = false;
-    size_t memid = 0;
-    segment = (mi_segment_t*)_mi_segment_cache_pop(segment_size, &commit_mask, &decommit_mask, &mem_large, &is_pinned, &is_zero, &memid, os_tld);
-    if (segment==NULL) {
-      segment = (mi_segment_t*)_mi_arena_alloc_aligned(segment_size, MI_SEGMENT_SIZE, &commit, &mem_large, &is_pinned, &is_zero, &memid, os_tld);
-      if (segment == NULL) return NULL;  // failed to allocate
-      if (commit) {
-	mi_commit_mask_create_full(&commit_mask);
-      }
-      else {
-	mi_commit_mask_create_empty(&commit_mask);
-      }
-    }
-    mi_assert_internal(segment != NULL && (uintptr_t)segment % MI_SEGMENT_SIZE == 0);
+  mi_commit_mask_create_empty(&commit_mask);
+  mi_commit_mask_create_empty(&decommit_mask);
 
-    const size_t commit_needed = _mi_divide_up(info_slices*MI_SEGMENT_SLICE_SIZE, MI_COMMIT_SIZE);
-    mi_assert_internal(commit_needed>0);
-    mi_commit_mask_t commit_needed_mask;
-    mi_commit_mask_create(0, commit_needed, &commit_needed_mask);
-    if (!mi_commit_mask_all_set(&commit_mask, &commit_needed_mask)) {
-      // at least commit the info slices
-      mi_assert_internal(commit_needed*MI_COMMIT_SIZE >= info_slices*MI_SEGMENT_SLICE_SIZE);
-      bool ok = _mi_os_commit(segment, commit_needed*MI_COMMIT_SIZE, &is_zero, tld->stats);
-      if (!ok) return NULL; // failed to commit
-      mi_commit_mask_set(&commit_mask, &commit_needed_mask);
-    }
-    segment->memid = memid;
-    segment->mem_is_pinned = is_pinned;
-    segment->mem_is_large = mem_large;
-    segment->mem_is_committed = mi_commit_mask_is_full(&commit_mask);
-    mi_segments_track_size((long)(segment_size), tld);
-    _mi_segment_map_allocated_at(segment);
-  }
+  // Allocate the segment from the OS
+  mi_segment_t* segment = mi_segment_os_alloc(required, page_alignment, eager_delay, req_arena_id,
+					      &segment_slices, &pre_size, &info_slices, &commit_mask, &decommit_mask,
+					      &is_zero, &commit, tld, os_tld);
+  if (segment == NULL) return NULL;
 
-  // zero the segment info? -- not always needed as it is zero initialized from the OS
+  // zero the segment info? -- not always needed as it may be zero initialized from the OS
   mi_atomic_store_ptr_release(mi_segment_t, &segment->abandoned_next, NULL);  // tsan
   if (!is_zero) {
     ptrdiff_t ofs = offsetof(mi_segment_t, next);
     size_t    prefix = offsetof(mi_segment_t, slices) - ofs;
-    memset((uint8_t*)segment+ofs, 0, prefix + sizeof(mi_slice_t)*segment_slices);
+    memset((uint8_t*)segment+ofs, 0, prefix + sizeof(mi_slice_t)*(segment_slices+1));  // one more
   }
 
-  if (!commit_info_still_good) {
-    segment->commit_mask = commit_mask; // on lazy commit, the initial part is always committed
-    segment->allow_decommit = (mi_option_is_enabled(mi_option_allow_decommit) && !segment->mem_is_pinned && !segment->mem_is_large);
-    if (segment->allow_decommit) {
-      segment->decommit_expire = _mi_clock_now() + mi_option_get(mi_option_decommit_delay);
-      segment->decommit_mask = decommit_mask;
-      mi_assert_internal(mi_commit_mask_all_set(&segment->commit_mask, &segment->decommit_mask));
-      #if MI_DEBUG>2
-      const size_t commit_needed = _mi_divide_up(info_slices*MI_SEGMENT_SLICE_SIZE, MI_COMMIT_SIZE);
-      mi_commit_mask_t commit_needed_mask;
-      mi_commit_mask_create(0, commit_needed, &commit_needed_mask);
-      mi_assert_internal(!mi_commit_mask_any_set(&segment->decommit_mask, &commit_needed_mask));
-      #endif
-    }
-    else {
-      mi_assert_internal(mi_commit_mask_is_empty(&decommit_mask));
-      segment->decommit_expire = 0;
-      mi_commit_mask_create_empty( &segment->decommit_mask );
-      mi_assert_internal(mi_commit_mask_is_empty(&segment->decommit_mask));
-    }
+  segment->commit_mask = commit_mask; // on lazy commit, the initial part is always committed
+  segment->allow_decommit = (mi_option_is_enabled(mi_option_allow_decommit) && !segment->mem_is_pinned && !segment->mem_is_large);
+  if (segment->allow_decommit) {
+    segment->decommit_expire = 0; // don't decommit just committed memory // _mi_clock_now() + mi_option_get(mi_option_decommit_delay);
+    segment->decommit_mask = decommit_mask;
+    mi_assert_internal(mi_commit_mask_all_set(&segment->commit_mask, &segment->decommit_mask));
+    #if MI_DEBUG>2
+    const size_t commit_needed = _mi_divide_up(info_slices*MI_SEGMENT_SLICE_SIZE, MI_COMMIT_SIZE);
+    mi_commit_mask_t commit_needed_mask;
+    mi_commit_mask_create(0, commit_needed, &commit_needed_mask);
+    mi_assert_internal(!mi_commit_mask_any_set(&segment->decommit_mask, &commit_needed_mask));
+    #endif
   }
-
 
   // initialize segment info
+  const size_t slice_entries = (segment_slices > MI_SLICES_PER_SEGMENT ? MI_SLICES_PER_SEGMENT : segment_slices);
   segment->segment_slices = segment_slices;
   segment->segment_info_slices = info_slices;
   segment->thread_id = _mi_thread_id();
@@ -891,7 +930,7 @@ static mi_segment_t* mi_segment_init(mi_segment_t* segment, size_t required, mi_
   // initialize initial free pages
   if (segment->kind == MI_SEGMENT_NORMAL) { // not a huge page
     mi_assert_internal(huge_page==NULL);
-    mi_segment_span_free(segment, info_slices, segment->slice_entries - info_slices, tld);
+    mi_segment_span_free(segment, info_slices, segment->slice_entries - info_slices, false /* don't decommit */, tld);
   }
   else {
     mi_assert_internal(huge_page!=NULL);
@@ -903,12 +942,6 @@ static mi_segment_t* mi_segment_init(mi_segment_t* segment, size_t required, mi_
 
   mi_assert_expensive(mi_segment_is_valid(segment,tld));
   return segment;
-}
-
-
-// Allocate a segment from the OS aligned to `MI_SEGMENT_SIZE` .
-static mi_segment_t* mi_segment_alloc(size_t required, mi_segments_tld_t* tld, mi_os_tld_t* os_tld, mi_page_t** huge_page) {
-  return mi_segment_init(NULL, required, tld, os_tld, huge_page);
 }
 
 
@@ -1149,8 +1182,8 @@ static mi_segment_t* mi_abandoned_pop(void) {
   // Check efficiently if it is empty (or if the visited list needs to be moved)
   mi_tagged_segment_t ts = mi_atomic_load_relaxed(&abandoned);
   segment = mi_tagged_segment_ptr(ts);
-  if (mi_likely(segment == NULL)) {
-    if (mi_likely(!mi_abandoned_visited_revisit())) { // try to swap in the visited list on NULL
+  if mi_likely(segment == NULL) {
+    if mi_likely(!mi_abandoned_visited_revisit()) { // try to swap in the visited list on NULL
       return NULL;
     }
   }
@@ -1367,6 +1400,9 @@ static mi_segment_t* mi_segment_try_reclaim(mi_heap_t* heap, size_t needed_slice
   long max_tries = mi_option_get_clamp(mi_option_max_segment_reclaim, 8, 1024);     // limit the work to bound allocation times
   while ((max_tries-- > 0) && ((segment = mi_abandoned_pop()) != NULL)) {
     segment->abandoned_visits++;
+    // todo: an arena exclusive heap will potentially visit many abandoned unsuitable segments
+    // and push them into the visited list and use many tries. Perhaps we can skip non-suitable ones in a better way?
+    bool is_suitable = _mi_heap_memid_is_suitable(heap, segment->memid);
     bool has_page = mi_segment_check_free(segment,needed_slices,block_size,tld); // try to free up pages (due to concurrent frees)
     if (segment->used == 0) {
       // free the segment (by forced reclaim) to make it available to other threads.
@@ -1376,13 +1412,13 @@ static mi_segment_t* mi_segment_try_reclaim(mi_heap_t* heap, size_t needed_slice
       // freeing but that would violate some invariants temporarily)
       mi_segment_reclaim(segment, heap, 0, NULL, tld);
     }
-    else if (has_page) {
+    else if (has_page && is_suitable) {
       // found a large enough free span, or a page of the right block_size with free space
       // we return the result of reclaim (which is usually `segment`) as it might free
       // the segment due to concurrent frees (in which case `NULL` is returned).
       return mi_segment_reclaim(segment, heap, block_size, reclaimed, tld);
     }
-    else if (segment->abandoned_visits > 3) {
+    else if (segment->abandoned_visits > 3 && is_suitable) {
       // always reclaim on 3rd visit to limit the abandoned queue length.
       mi_segment_reclaim(segment, heap, 0, NULL, tld);
     }
@@ -1442,7 +1478,7 @@ static mi_segment_t* mi_segment_reclaim_or_alloc(mi_heap_t* heap, size_t needed_
     return segment;
   }
   // 2. otherwise allocate a fresh segment
-  return mi_segment_alloc(0, tld, os_tld, NULL);
+  return mi_segment_alloc(0, 0, heap->arena_id, tld, os_tld, NULL);
 }
 
 
@@ -1458,7 +1494,7 @@ static mi_page_t* mi_segments_page_alloc(mi_heap_t* heap, mi_page_kind_t page_ki
   size_t page_size = _mi_align_up(required, (required > MI_MEDIUM_PAGE_SIZE ? MI_MEDIUM_PAGE_SIZE : MI_SEGMENT_SLICE_SIZE));
   size_t slices_needed = page_size / MI_SEGMENT_SLICE_SIZE;
   mi_assert_internal(slices_needed * MI_SEGMENT_SLICE_SIZE == page_size);
-  mi_page_t* page = mi_segments_page_find_and_allocate(slices_needed, tld); //(required <= MI_SMALL_SIZE_MAX ? 0 : slices_needed), tld);
+  mi_page_t* page = mi_segments_page_find_and_allocate(slices_needed, heap->arena_id, tld); //(required <= MI_SMALL_SIZE_MAX ? 0 : slices_needed), tld);
   if (page==NULL) {
     // no free page, allocate a new segment and try again
     if (mi_segment_reclaim_or_alloc(heap, slices_needed, block_size, tld, os_tld) == NULL) {
@@ -1482,17 +1518,37 @@ static mi_page_t* mi_segments_page_alloc(mi_heap_t* heap, mi_page_kind_t page_ki
    Huge page allocation
 ----------------------------------------------------------- */
 
-static mi_page_t* mi_segment_huge_page_alloc(size_t size, mi_segments_tld_t* tld, mi_os_tld_t* os_tld)
+static mi_page_t* mi_segment_huge_page_alloc(size_t size, size_t page_alignment, mi_arena_id_t req_arena_id, mi_segments_tld_t* tld, mi_os_tld_t* os_tld)
 {
   mi_page_t* page = NULL;
-  mi_segment_t* segment = mi_segment_alloc(size,tld,os_tld,&page);
+  mi_segment_t* segment = mi_segment_alloc(size,page_alignment,req_arena_id,tld,os_tld,&page);
   if (segment == NULL || page==NULL) return NULL;
   mi_assert_internal(segment->used==1);
   mi_assert_internal(mi_page_block_size(page) >= size);
+  #if MI_HUGE_PAGE_ABANDON
   segment->thread_id = 0; // huge segments are immediately abandoned
+  #endif
+
+  // for huge pages we initialize the xblock_size as we may
+  // overallocate to accommodate large alignments.
+  size_t psize;
+  uint8_t* start = _mi_segment_page_start(segment, page, &psize);
+  page->xblock_size = (psize > MI_HUGE_BLOCK_SIZE ? MI_HUGE_BLOCK_SIZE : (uint32_t)psize);
+
+  // decommit the part of the prefix of a page that will not be used; this can be quite large (close to MI_SEGMENT_SIZE)
+  if (page_alignment > 0 && segment->allow_decommit) {
+    uint8_t* aligned_p = (uint8_t*)_mi_align_up((uintptr_t)start, page_alignment);
+    mi_assert_internal(_mi_is_aligned(aligned_p, page_alignment));
+    mi_assert_internal(psize - (aligned_p - start) >= size);
+    uint8_t* decommit_start = start + sizeof(mi_block_t);              // for the free list
+    ptrdiff_t decommit_size = aligned_p - decommit_start;
+    _mi_os_decommit(decommit_start, decommit_size, &_mi_stats_main);   // note: cannot use segment_decommit on huge segments
+  }
+
   return page;
 }
 
+#if MI_HUGE_PAGE_ABANDON
 // free huge block from another thread
 void _mi_segment_huge_page_free(mi_segment_t* segment, mi_page_t* page, mi_block_t* block) {
   // huge page segments are always abandoned and can be freed immediately by any thread
@@ -1520,12 +1576,34 @@ void _mi_segment_huge_page_free(mi_segment_t* segment, mi_page_t* page, mi_block
 #endif
 }
 
+#else
+// reset memory of a huge block from another thread
+void _mi_segment_huge_page_reset(mi_segment_t* segment, mi_page_t* page, mi_block_t* block) {
+  MI_UNUSED(page);
+  mi_assert_internal(segment->kind == MI_SEGMENT_HUGE);
+  mi_assert_internal(segment == _mi_page_segment(page));
+  mi_assert_internal(page->used == 1); // this is called just before the free
+  mi_assert_internal(page->free == NULL);
+  if (segment->allow_decommit) {
+    const size_t csize = mi_usable_size(block) - sizeof(mi_block_t);
+    uint8_t* p = (uint8_t*)block + sizeof(mi_block_t);
+    _mi_os_decommit(p, csize, &_mi_stats_main);  // note: cannot use segment_decommit on huge segments
+  }
+}
+#endif
+
 /* -----------------------------------------------------------
    Page allocation and free
 ----------------------------------------------------------- */
-mi_page_t* _mi_segment_page_alloc(mi_heap_t* heap, size_t block_size, mi_segments_tld_t* tld, mi_os_tld_t* os_tld) {
+mi_page_t* _mi_segment_page_alloc(mi_heap_t* heap, size_t block_size, size_t page_alignment, mi_segments_tld_t* tld, mi_os_tld_t* os_tld) {
   mi_page_t* page;
-  if (block_size <= MI_SMALL_OBJ_SIZE_MAX) {
+  if mi_unlikely(page_alignment > MI_ALIGNMENT_MAX) {
+    mi_assert_internal(_mi_is_power_of_two(page_alignment));
+    mi_assert_internal(page_alignment >= MI_SEGMENT_SIZE);
+    if (page_alignment < MI_SEGMENT_SIZE) { page_alignment = MI_SEGMENT_SIZE; }
+    page = mi_segment_huge_page_alloc(block_size,page_alignment,heap->arena_id,tld,os_tld);
+  }
+  else if (block_size <= MI_SMALL_OBJ_SIZE_MAX) {
     page = mi_segments_page_alloc(heap,MI_PAGE_SMALL,block_size,block_size,tld,os_tld);
   }
   else if (block_size <= MI_MEDIUM_OBJ_SIZE_MAX) {
@@ -1535,8 +1613,9 @@ mi_page_t* _mi_segment_page_alloc(mi_heap_t* heap, size_t block_size, mi_segment
     page = mi_segments_page_alloc(heap,MI_PAGE_LARGE,block_size,block_size,tld, os_tld);
   }
   else {
-    page = mi_segment_huge_page_alloc(block_size,tld,os_tld);
+    page = mi_segment_huge_page_alloc(block_size,page_alignment,heap->arena_id,tld,os_tld);
   }
+  mi_assert_internal(page == NULL || _mi_heap_memid_is_suitable(heap, _mi_page_segment(page)->memid));
   mi_assert_expensive(page == NULL || mi_segment_is_valid(_mi_page_segment(page),tld));
   return page;
 }

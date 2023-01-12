@@ -8,7 +8,7 @@ terms of the MIT license. A copy of the license can be found in the file
 #ifndef MIMALLOC_H
 #define MIMALLOC_H
 
-#define MI_MALLOC_VERSION 206   // major + 2 digits minor
+#define MI_MALLOC_VERSION 209   // major + 2 digits minor
 
 // ------------------------------------------------------
 // Compiler specific attributes
@@ -28,6 +28,8 @@ terms of the MIT license. A copy of the license can be found in the file
   #define mi_decl_nodiscard    [[nodiscard]]
 #elif (defined(__GNUC__) && (__GNUC__ >= 4)) || defined(__clang__)  // includes clang, icc, and clang-cl
   #define mi_decl_nodiscard    __attribute__((warn_unused_result))
+#elif defined(_HAS_NODISCARD)
+  #define mi_decl_nodiscard    _NODISCARD
 #elif (_MSC_VER >= 1700)
   #define mi_decl_nodiscard    _Check_return_
 #else
@@ -96,6 +98,7 @@ terms of the MIT license. A copy of the license can be found in the file
 #include "git-compat-util.h"
 
 #include <stdbool.h>    // bool
+#include <stdint.h>     // INTPTR_MAX
 
 #ifdef __cplusplus
 extern "C" {
@@ -167,7 +170,6 @@ mi_decl_export void mi_process_info(size_t* elapsed_msecs, size_t* user_msecs, s
 // Note that `alignment` always follows `size` for consistency with unaligned
 // allocation, but unfortunately this differs from `posix_memalign` and `aligned_alloc`.
 // -------------------------------------------------------------------------------------
-#define MI_ALIGNMENT_MAX   (1024*1024UL)    // maximum supported alignment is 1MiB
 
 mi_decl_nodiscard mi_decl_export mi_decl_restrict void* mi_malloc_aligned(size_t size, size_t alignment) mi_attr_noexcept mi_attr_malloc mi_attr_alloc_size(1) mi_attr_alloc_align(2);
 mi_decl_nodiscard mi_decl_export mi_decl_restrict void* mi_malloc_aligned_at(size_t size, size_t alignment, size_t offset) mi_attr_noexcept mi_attr_malloc mi_attr_alloc_size(1);
@@ -276,6 +278,18 @@ mi_decl_export bool mi_manage_os_memory(void* start, size_t size, bool is_commit
 
 mi_decl_export void mi_debug_show_arenas(void) mi_attr_noexcept;
 
+// Experimental: heaps associated with specific memory arena's
+typedef int mi_arena_id_t;
+mi_decl_export void* mi_arena_area(mi_arena_id_t arena_id, size_t* size);
+mi_decl_export int   mi_reserve_huge_os_pages_at_ex(size_t pages, int numa_node, size_t timeout_msecs, bool exclusive, mi_arena_id_t* arena_id) mi_attr_noexcept;
+mi_decl_export int   mi_reserve_os_memory_ex(size_t size, bool commit, bool allow_large, bool exclusive, mi_arena_id_t* arena_id) mi_attr_noexcept;
+mi_decl_export bool  mi_manage_os_memory_ex(void* start, size_t size, bool is_committed, bool is_large, bool is_zero, int numa_node, bool exclusive, mi_arena_id_t* arena_id) mi_attr_noexcept;
+
+#if MI_MALLOC_VERSION >= 200
+// Create a heap that only allocates in the specified arena
+mi_decl_nodiscard mi_decl_export mi_heap_t* mi_heap_new_in_arena(mi_arena_id_t arena_id);
+#endif
+
 // deprecated
 mi_decl_export int  mi_reserve_huge_os_pages(size_t pages, double max_secs, size_t* pages_reserved) mi_attr_noexcept;
 
@@ -332,6 +346,7 @@ typedef enum mi_option_e {
   mi_option_allow_decommit,
   mi_option_segment_decommit_delay,
   mi_option_decommit_extend_delay,
+  mi_option_destroy_on_exit,
   _mi_option_last
 } mi_option_t;
 
@@ -390,6 +405,9 @@ mi_decl_nodiscard mi_decl_export mi_decl_restrict void* mi_new_n(size_t count, s
 mi_decl_nodiscard mi_decl_export void* mi_new_realloc(void* p, size_t newsize)                mi_attr_alloc_size(2);
 mi_decl_nodiscard mi_decl_export void* mi_new_reallocn(void* p, size_t newcount, size_t size) mi_attr_alloc_size2(2, 3);
 
+mi_decl_nodiscard mi_decl_export mi_decl_restrict void* mi_heap_alloc_new(mi_heap_t* heap, size_t size)                mi_attr_malloc mi_attr_alloc_size(2);
+mi_decl_nodiscard mi_decl_export mi_decl_restrict void* mi_heap_alloc_new_n(mi_heap_t* heap, size_t count, size_t size) mi_attr_malloc mi_attr_alloc_size2(2, 3);
+
 #ifdef __cplusplus
 }
 #endif
@@ -407,7 +425,7 @@ mi_decl_nodiscard mi_decl_export void* mi_new_reallocn(void* p, size_t newcount,
 #include <utility>     // std::forward
 #endif
 
-template<class T> struct mi_stl_allocator {
+template<class T> struct _mi_stl_allocator_common {
   typedef T                 value_type;
   typedef std::size_t       size_type;
   typedef std::ptrdiff_t    difference_type;
@@ -415,6 +433,27 @@ template<class T> struct mi_stl_allocator {
   typedef value_type const& const_reference;
   typedef value_type*       pointer;
   typedef value_type const* const_pointer;
+
+  #if ((__cplusplus >= 201103L) || (_MSC_VER > 1900))  // C++11
+  using propagate_on_container_copy_assignment = std::true_type;
+  using propagate_on_container_move_assignment = std::true_type;
+  using propagate_on_container_swap            = std::true_type;
+  template <class U, class ...Args> void construct(U* p, Args&& ...args) { ::new(p) U(std::forward<Args>(args)...); }
+  template <class U> void destroy(U* p) mi_attr_noexcept { p->~U(); }
+  #else
+  void construct(pointer p, value_type const& val) { ::new(p) value_type(val); }
+  void destroy(pointer p) { p->~value_type(); }
+  #endif
+
+  size_type     max_size() const mi_attr_noexcept { return (PTRDIFF_MAX/sizeof(value_type)); }
+  pointer       address(reference x) const        { return &x; }
+  const_pointer address(const_reference x) const  { return &x; }
+};
+
+template<class T> struct mi_stl_allocator : public _mi_stl_allocator_common<T> {
+  using typename _mi_stl_allocator_common<T>::size_type;
+  using typename _mi_stl_allocator_common<T>::value_type;
+  using typename _mi_stl_allocator_common<T>::pointer;
   template <class U> struct rebind { typedef mi_stl_allocator<U> other; };
 
   mi_stl_allocator()                                             mi_attr_noexcept = default;
@@ -431,24 +470,89 @@ template<class T> struct mi_stl_allocator {
   #endif
 
   #if ((__cplusplus >= 201103L) || (_MSC_VER > 1900))  // C++11
-  using propagate_on_container_copy_assignment = std::true_type;
-  using propagate_on_container_move_assignment = std::true_type;
-  using propagate_on_container_swap            = std::true_type;
-  using is_always_equal                        = std::true_type;
-  template <class U, class ...Args> void construct(U* p, Args&& ...args) { ::new(p) U(std::forward<Args>(args)...); }
-  template <class U> void destroy(U* p) mi_attr_noexcept { p->~U(); }
-  #else
-  void construct(pointer p, value_type const& val) { ::new(p) value_type(val); }
-  void destroy(pointer p) { p->~value_type(); }
+  using is_always_equal = std::true_type;
   #endif
-
-  size_type     max_size() const mi_attr_noexcept { return (PTRDIFF_MAX/sizeof(value_type)); }
-  pointer       address(reference x) const        { return &x; }
-  const_pointer address(const_reference x) const  { return &x; }
 };
 
 template<class T1,class T2> bool operator==(const mi_stl_allocator<T1>& , const mi_stl_allocator<T2>& ) mi_attr_noexcept { return true; }
 template<class T1,class T2> bool operator!=(const mi_stl_allocator<T1>& , const mi_stl_allocator<T2>& ) mi_attr_noexcept { return false; }
+
+
+#if (__cplusplus >= 201103L) || (_MSC_VER > 1900)  // C++11
+#include <memory>      // std::shared_ptr
+
+// Common base class for STL allocators in a specific heap
+template<class T, bool destroy> struct _mi_heap_stl_allocator_common : public _mi_stl_allocator_common<T> {
+  using typename _mi_stl_allocator_common<T>::size_type;
+  using typename _mi_stl_allocator_common<T>::value_type;
+  using typename _mi_stl_allocator_common<T>::pointer;
+
+  _mi_heap_stl_allocator_common(mi_heap_t* hp) : heap(hp) { }    /* will not delete nor destroy the passed in heap */
+
+  #if (__cplusplus >= 201703L)  // C++17
+  mi_decl_nodiscard T* allocate(size_type count) { return static_cast<T*>(mi_heap_alloc_new_n(this->heap.get(), count, sizeof(T))); }
+  mi_decl_nodiscard T* allocate(size_type count, const void*) { return allocate(count); }
+  #else
+  mi_decl_nodiscard pointer allocate(size_type count, const void* = 0) { return static_cast<pointer>(mi_heap_alloc_new_n(this->heap.get(), count, sizeof(value_type))); }
+  #endif
+
+  #if ((__cplusplus >= 201103L) || (_MSC_VER > 1900))  // C++11
+  using is_always_equal = std::false_type;
+  #endif
+
+  void collect(bool force) { mi_heap_collect(this->heap.get(), force); }
+  template<class U> bool is_equal(const _mi_heap_stl_allocator_common<U, destroy>& x) const { return (this->heap == x.heap); }
+
+protected:
+  std::shared_ptr<mi_heap_t> heap;
+  template<class U, bool D> friend struct _mi_heap_stl_allocator_common;
+
+  _mi_heap_stl_allocator_common() {
+    mi_heap_t* hp = mi_heap_new();
+    this->heap.reset(hp, (destroy ? &heap_destroy : &heap_delete));  /* calls heap_delete/destroy when the refcount drops to zero */
+  }
+  _mi_heap_stl_allocator_common(const _mi_heap_stl_allocator_common& x) mi_attr_noexcept : heap(x.heap) { }
+  template<class U> _mi_heap_stl_allocator_common(const _mi_heap_stl_allocator_common<U, destroy>& x) mi_attr_noexcept : heap(x.heap) { }
+
+private:
+  static void heap_delete(mi_heap_t* hp)  { if (hp != NULL) { mi_heap_delete(hp); } }
+  static void heap_destroy(mi_heap_t* hp) { if (hp != NULL) { mi_heap_destroy(hp); } }
+};
+
+// STL allocator allocation in a specific heap
+template<class T> struct mi_heap_stl_allocator : public _mi_heap_stl_allocator_common<T, false> {
+  using typename _mi_heap_stl_allocator_common<T, false>::size_type;
+  mi_heap_stl_allocator() : _mi_heap_stl_allocator_common<T, false>() { } // creates fresh heap that is deleted when the destructor is called
+  mi_heap_stl_allocator(mi_heap_t* hp) : _mi_heap_stl_allocator_common<T, false>(hp) { }  // no delete nor destroy on the passed in heap
+  template<class U> mi_heap_stl_allocator(const mi_heap_stl_allocator<U>& x) mi_attr_noexcept : _mi_heap_stl_allocator_common<T, false>(x) { }
+
+  mi_heap_stl_allocator select_on_container_copy_construction() const { return *this; }
+  void deallocate(T* p, size_type) { mi_free(p); }
+  template<class U> struct rebind { typedef mi_heap_stl_allocator<U> other; };
+};
+
+template<class T1, class T2> bool operator==(const mi_heap_stl_allocator<T1>& x, const mi_heap_stl_allocator<T2>& y) mi_attr_noexcept { return (x.is_equal(y)); }
+template<class T1, class T2> bool operator!=(const mi_heap_stl_allocator<T1>& x, const mi_heap_stl_allocator<T2>& y) mi_attr_noexcept { return (!x.is_equal(y)); }
+
+
+// STL allocator allocation in a specific heap, where `free` does nothing and
+// the heap is destroyed in one go on destruction -- use with care!
+template<class T> struct mi_heap_destroy_stl_allocator : public _mi_heap_stl_allocator_common<T, true> {
+  using typename _mi_heap_stl_allocator_common<T, true>::size_type;
+  mi_heap_destroy_stl_allocator() : _mi_heap_stl_allocator_common<T, true>() { } // creates fresh heap that is destroyed when the destructor is called
+  mi_heap_destroy_stl_allocator(mi_heap_t* hp) : _mi_heap_stl_allocator_common<T, true>(hp) { }  // no delete nor destroy on the passed in heap
+  template<class U> mi_heap_destroy_stl_allocator(const mi_heap_destroy_stl_allocator<U>& x) mi_attr_noexcept : _mi_heap_stl_allocator_common<T, true>(x) { }
+
+  mi_heap_destroy_stl_allocator select_on_container_copy_construction() const { return *this; }
+  void deallocate(T*, size_type) { /* do nothing as we destroy the heap on destruct. */ }
+  template<class U> struct rebind { typedef mi_heap_destroy_stl_allocator<U> other; };
+};
+
+template<class T1, class T2> bool operator==(const mi_heap_destroy_stl_allocator<T1>& x, const mi_heap_destroy_stl_allocator<T2>& y) mi_attr_noexcept { return (x.is_equal(y)); }
+template<class T1, class T2> bool operator!=(const mi_heap_destroy_stl_allocator<T1>& x, const mi_heap_destroy_stl_allocator<T2>& y) mi_attr_noexcept { return (!x.is_equal(y)); }
+
+#endif // C++11
+
 #endif // __cplusplus
 
 #endif
