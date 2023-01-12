@@ -60,7 +60,6 @@
 /git-difftool
 /git-difftool--helper
 /git-describe
-/git-env--helper
 /git-fast-export
 /git-fast-import
 /git-fetch

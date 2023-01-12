@@ -1542,8 +1542,8 @@ then
 	# Normalize with test_bool_env
 	passes_sanitize_leak=
 
-	# We need to see TEST_PASSES_SANITIZE_LEAK in "git
-	# env--helper" (via test_bool_env)
+	# We need to see TEST_PASSES_SANITIZE_LEAK in "test-tool
+	# env-helper" (via test_bool_env)
 	export TEST_PASSES_SANITIZE_LEAK
 	if test_bool_env TEST_PASSES_SANITIZE_LEAK false
 	then
@@ -1682,7 +1682,7 @@ yes () {
 # The GIT_TEST_FAIL_PREREQS code hooks into test_set_prereq(), and
 # thus needs to be set up really early, and set an internal variable
 # for convenience so the hot test_set_prereq() codepath doesn't need
-# to call "git env--helper" (via test_bool_env). Only do that work
+# to call "test-tool env-helper" (via test_bool_env). Only do that work
 # if needed by seeing if GIT_TEST_FAIL_PREREQS is set at all.
 GIT_TEST_FAIL_PREREQS_INTERNAL=
 if test -n "$GIT_TEST_FAIL_PREREQS"
