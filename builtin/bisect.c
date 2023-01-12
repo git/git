@@ -1292,7 +1292,7 @@ static int bisect_run(struct bisect_terms *terms, int argc, const char **argv)
 			puts(_("bisect found first bad commit"));
 			res = BISECT_OK;
 		} else if (res) {
-			error(_("bisect run failed: 'bisect-state %s'"
+			error(_("bisect run failed: 'git bisect %s'"
 				" exited with error code %d"), new_state, res);
 		} else {
 			continue;
