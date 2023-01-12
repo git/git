@@ -173,19 +173,11 @@ static int show_tree_fmt(const struct object_id *oid, struct strbuf *base,
 	return recurse;
 }
 
-static int show_tree_common(struct show_tree_data *data, int *recurse,
-			    const struct object_id *oid, struct strbuf *base,
-			    const char *pathname, unsigned mode)
+static int show_tree_common(int *recurse, struct strbuf *base,
+			    const char *pathname, enum object_type type)
 {
-	enum object_type type = object_type(mode);
 	int ret = -1;
-
 	*recurse = 0;
-	data->mode = mode;
-	data->type = type;
-	data->oid = oid;
-	data->pathname = pathname;
-	data->base = base;
 
 	if (type == OBJ_BLOB) {
 		if (ls_options & LS_TREE_ONLY)
@@ -217,15 +209,15 @@ static int show_tree_default(const struct object_id *oid, struct strbuf *base,
 {
 	int early;
 	int recurse;
-	struct show_tree_data data = { 0 };
+	enum object_type type = object_type(mode);
 
-	early = show_tree_common(&data, &recurse, oid, base, pathname, mode);
+	early = show_tree_common(&recurse, base, pathname, type);
 	if (early >= 0)
 		return early;
 
-	printf("%06o %s %s\t", data.mode, type_name(data.type),
-	       find_unique_abbrev(data.oid, abbrev));
-	show_tree_common_default_long(base, pathname, data.base->len);
+	printf("%06o %s %s\t", mode, type_name(object_type(mode)),
+	       find_unique_abbrev(oid, abbrev));
+	show_tree_common_default_long(base, pathname, base->len);
 	return recurse;
 }
 
@@ -235,16 +227,16 @@ static int show_tree_long(const struct object_id *oid, struct strbuf *base,
 {
 	int early;
 	int recurse;
-	struct show_tree_data data = { 0 };
 	char size_text[24];
+	enum object_type type = object_type(mode);
 
-	early = show_tree_common(&data, &recurse, oid, base, pathname, mode);
+	early = show_tree_common(&recurse, base, pathname, type);
 	if (early >= 0)
 		return early;
 
-	if (data.type == OBJ_BLOB) {
+	if (type == OBJ_BLOB) {
 		unsigned long size;
-		if (oid_object_info(the_repository, data.oid, &size) == OBJ_BAD)
+		if (oid_object_info(the_repository, oid, &size) == OBJ_BAD)
 			xsnprintf(size_text, sizeof(size_text), "BAD");
 		else
 			xsnprintf(size_text, sizeof(size_text),
@@ -253,9 +245,9 @@ static int show_tree_long(const struct object_id *oid, struct strbuf *base,
 		xsnprintf(size_text, sizeof(size_text), "-");
 	}
 
-	printf("%06o %s %s %7s\t", data.mode, type_name(data.type),
-	       find_unique_abbrev(data.oid, abbrev), size_text);
-	show_tree_common_default_long(base, pathname, data.base->len);
+	printf("%06o %s %s %7s\t", mode, type_name(type),
+	       find_unique_abbrev(oid, abbrev), size_text);
+	show_tree_common_default_long(base, pathname, base->len);
 	return recurse;
 }
 
@@ -266,9 +258,9 @@ static int show_tree_name_only(const struct object_id *oid, struct strbuf *base,
 	int early;
 	int recurse;
 	const size_t baselen = base->len;
-	struct show_tree_data data = { 0 };
+	enum object_type type = object_type(mode);
 
-	early = show_tree_common(&data, &recurse, oid, base, pathname, mode);
+	early = show_tree_common(&recurse, base, pathname, type);
 	if (early >= 0)
 		return early;
 
@@ -286,9 +278,9 @@ static int show_tree_object(const struct object_id *oid, struct strbuf *base,
 {
 	int early;
 	int recurse;
-	struct show_tree_data data = { 0 };
+	enum object_type type = object_type(mode);
 
-	early = show_tree_common(&data, &recurse, oid, base, pathname, mode);
+	early = show_tree_common(&recurse, base, pathname, type);
 	if (early >= 0)
 		return early;
 
