@@ -2292,12 +2292,12 @@ static void set_new_index_sparsity(struct index_state *istate)
 	 * If the index's repo exists, mark it sparse according to
 	 * repo settings.
 	 */
-	if (istate->repo) {
-		prepare_repo_settings(istate->repo);
-		if (!istate->repo->settings.command_requires_full_index &&
-		    is_sparse_index_allowed(istate, 0))
-			istate->sparse_index = 1;
-	}
+	if (!istate->repo)
+		return;
+	prepare_repo_settings(istate->repo);
+	if (!istate->repo->settings.command_requires_full_index &&
+	    is_sparse_index_allowed(istate, 0))
+		istate->sparse_index = 1;
 }
 
 /* remember to discard_cache() before reading a different cache! */
