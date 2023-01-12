@@ -547,7 +547,7 @@ void expand_to_path(struct index_state *istate,
 	if (in_expand_to_path)
 		return;
 
-	if (!istate || !istate->sparse_index)
+	if (!istate->sparse_index)
 		return;
 
 	if (!istate->repo)
