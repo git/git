@@ -757,21 +757,39 @@ void setup_curl_trace(CURL *handle)
 	curl_easy_setopt(handle, CURLOPT_DEBUGDATA, NULL);
 }
 
-static long get_curl_allowed_protocols(int from_user)
+/*
+ * Possible protocols are http, https, ftp and ftps.
+ * We're dealing with a string that holds a comma-separated list of
+ * case insensitive protocol names, therefore the maximum size for that
+ * string is 20 characters, (also accounting for commas).
+ */
+#define CURL_ALLOWED_PROTOCOLS_STR_SIZE 20
+static void get_curl_allowed_protocols(int from_user, char *allowed_protocols_str)
 {
-	long allowed_protocols = 0;
+	int offset = 0;
 
-	if (is_transport_allowed("http", from_user))
-		allowed_protocols |= CURLPROTO_HTTP;
-	if (is_transport_allowed("https", from_user))
-		allowed_protocols |= CURLPROTO_HTTPS;
-	if (is_transport_allowed("ftp", from_user))
-		allowed_protocols |= CURLPROTO_FTP;
-	if (is_transport_allowed("ftps", from_user))
-		allowed_protocols |= CURLPROTO_FTPS;
+	memset(allowed_protocols_str, 0, CURL_ALLOWED_PROTOCOLS_STR_SIZE);
 
-	return allowed_protocols;
+	if (is_transport_allowed("http", from_user)) {
+		offset += xsnprintf(allowed_protocols_str + offset, CURL_ALLOWED_PROTOCOLS_STR_SIZE - offset, "http,");
+	}
+	if (is_transport_allowed("https", from_user)) {
+		offset += xsnprintf(allowed_protocols_str + offset, CURL_ALLOWED_PROTOCOLS_STR_SIZE - offset, "https,");
+	}
+	if (is_transport_allowed("ftp", from_user)) {
+		offset += xsnprintf(allowed_protocols_str + offset, CURL_ALLOWED_PROTOCOLS_STR_SIZE - offset, "ftp,");
+	}
+	if (is_transport_allowed("ftps", from_user)) {
+		offset += xsnprintf(allowed_protocols_str + offset, CURL_ALLOWED_PROTOCOLS_STR_SIZE - offset, "ftps,");
+	}
+
+	/* remove the last comma */
+	if (offset > 0) {
+		allowed_protocols_str[offset - 1] = '\0';
+	}
 }
+
+
 
 #ifdef GIT_CURL_HAVE_CURL_HTTP_VERSION_2
 static int get_curl_http_version_opt(const char *version_string, long *opt)
@@ -801,6 +819,7 @@ static int get_curl_http_version_opt(const char *version_string, long *opt)
 static CURL *get_curl_handle(void)
 {
 	CURL *result = curl_easy_init();
+	char allowed_protocols_str[CURL_ALLOWED_PROTOCOLS_STR_SIZE];
 
 	if (!result)
 		die("curl_easy_init failed");
@@ -914,10 +933,12 @@ static CURL *get_curl_handle(void)
 
 	curl_easy_setopt(result, CURLOPT_MAXREDIRS, 20);
 	curl_easy_setopt(result, CURLOPT_POSTREDIR, CURL_REDIR_POST_ALL);
-	curl_easy_setopt(result, CURLOPT_REDIR_PROTOCOLS,
-			 get_curl_allowed_protocols(0));
-	curl_easy_setopt(result, CURLOPT_PROTOCOLS,
-			 get_curl_allowed_protocols(-1));
+	get_curl_allowed_protocols(0, allowed_protocols_str);
+	curl_easy_setopt(result, CURLOPT_REDIR_PROTOCOLS_STR,
+			 allowed_protocols_str);
+	get_curl_allowed_protocols(-1, allowed_protocols_str);
+	curl_easy_setopt(result, CURLOPT_PROTOCOLS_STR,
+			 allowed_protocols_str);
 	if (getenv("GIT_CURL_VERBOSE"))
 		http_trace_curl_no_data();
 	setup_curl_trace(result);
