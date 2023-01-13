@@ -29,21 +29,26 @@ This merges the file listing in the index with the actual working
 directory list, and shows different combinations of the two.
 
 One or more of the options below may be used to determine the files
-shown:
+shown, and each file may be printed multiple times if there are
+multiple entries in the index or multiple statuses are applicable for
+the relevant file selection options.
 
 OPTIONS
 -------
 -c::
 --cached::
-	Show cached files in the output (default)
+	Show all files cached in Git's index, i.e. all tracked files.
+	(This is the default if no -c/-s/-d/-o/-u/-k/-m/--resolve-undo
+	options are specified.)
 
 -d::
 --deleted::
-	Show deleted files in the output
+	Show files with an unstaged deletion
 
 -m::
 --modified::
-	Show modified files in the output
+	Show files with an unstaged modification (note that an unstaged
+	deletion also counts as an unstaged modification)
 
 -o::
 --others::
@@ -51,11 +56,14 @@ OPTIONS
 
 -i::
 --ignored::
-	Show only ignored files in the output. When showing files in the
-	index, print only those matched by an exclude pattern. When
-	showing "other" files, show only those matched by an exclude
-	pattern. Standard ignore rules are not automatically activated,
-	therefore at least one of the `--exclude*` options is required.
+	Show only ignored files in the output.  Must be used with
+	either an explicit '-c' or '-o'.  When showing files in the
+	index (i.e. when used with '-c'), print only those files
+	matching an exclude pattern.  When showing "other" files
+	(i.e. when used with '-o'), show only those matched by an
+	exclude pattern.  Standard ignore rules are not automatically
+	activated, therefore at least one of the `--exclude*` options
+	is required.
 
 -s::
 --stage::
@@ -64,19 +72,22 @@ OPTIONS
 --directory::
 	If a whole directory is classified as "other", show just its
 	name (with a trailing slash) and not its whole contents.
+	Has no effect without -o/--others.
 
 --no-empty-directory::
 	Do not list empty directories. Has no effect without --directory.
 
 -u::
 --unmerged::
-	Show unmerged files in the output (forces --stage)
+	Show information about unmerged files in the output, but do
+	not show any other tracked files (forces --stage, overrides
+	--cached).
 
 -k::
 --killed::
-	Show files on the filesystem that need to be removed due
-	to file/directory conflicts for checkout-index to
-	succeed.
+	Show untracked files on the filesystem that need to be removed
+	due to file/directory conflicts for tracked files to be able to
+	be written to the filesystem.
 
 --resolve-undo::
 	Show files having resolve-undo information in the index
