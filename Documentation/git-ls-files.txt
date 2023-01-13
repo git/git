@@ -119,7 +119,8 @@ OPTIONS
 
 --exclude-per-directory=<file>::
 	Read additional exclude patterns that apply only to the
-	directory and its subdirectories in <file>.
+	directory and its subdirectories in <file>.  Deprecated; use
+	--exclude-standard instead.
 
 --exclude-standard::
 	Add the standard Git exclusions: .git/info/exclude, .gitignore
@@ -291,7 +292,9 @@ traversing the directory tree and finding files to show when the
 flags --others or --ignored are specified.  linkgit:gitignore[5]
 specifies the format of exclude patterns.
 
-These exclude patterns come from these places, in order:
+Generally, you should just use --exclude-standard, but for historical
+reasons the exclude patterns can be specified from the following
+places, in order:
 
   1. The command-line flag --exclude=<pattern> specifies a
      single pattern.  Patterns are ordered in the same order
