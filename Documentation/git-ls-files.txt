@@ -12,6 +12,7 @@ SYNOPSIS
 'git ls-files' [-z] [-t] [-v] [-f]
 		[-c|--cached] [-d|--deleted] [-o|--others] [-i|--ignored]
 		[-s|--stage] [-u|--unmerged] [-k|--killed] [-m|--modified]
+		[--resolve-undo]
 		[--directory [--no-empty-directory]] [--eol]
 		[--deduplicate]
 		[-x <pattern>|--exclude=<pattern>]
@@ -77,6 +78,13 @@ OPTIONS
 	to file/directory conflicts for checkout-index to
 	succeed.
 
+--resolve-undo::
+	Show files having resolve-undo information in the index
+	together with their resolve-undo information.  (resolve-undo
+	information is what is used to implement "git checkout -m
+	$PATH", i.e. to recreate merge conflicts that were
+	accidentally resolved)
+
 -z::
 	\0 line termination on output and do not quote filenames.
 	See OUTPUT below for more information.
@@ -136,6 +144,7 @@ a space) at the start of each line:
 	C::	modified/changed
 	K::	to be killed
 	?::	other
+	U::     resolve-undo
 --
 
 -v::
