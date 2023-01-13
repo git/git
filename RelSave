@@ -1,0 +1,37 @@
+#!/bin/sh
+
+mode="$1"
+saved="./+saved"
+formats='htmldocs manpages'
+mkdir -p "$saved"
+
+products () {
+	with_sig=: with_src=echo
+	case "$mode" in
+	with-sig)
+		with_sig=echo
+		;;
+	only-sig)
+		with_sig=echo with_src=:
+		;;
+	esac
+	version=$1
+	$with_src "git-$version.tar.gz"
+	$with_sig "git-$version.tar.sig"
+	$with_sig "git-$version.sign"
+	for fmt in $formats
+	do
+		$with_src "git-$fmt-$version.tar.gz"
+		$with_sig "git-$fmt-$version.tar.sig"
+	done
+}
+
+for tar in git-[0-9]*.tar.gz
+do
+	version=$(expr "$tar" : 'git-\(.*\)\.tar.gz$')
+	for file in $(products "$version")
+	do
+		rm -f "$saved/$file"
+		ln "$file" "$saved/$file"
+	done
+done
