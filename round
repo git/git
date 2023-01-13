@@ -37,6 +37,9 @@ do
 	coccicheck)
 		SPATCH_FLAGS=--recursive-includes Meta/Make -j16 "$t"
 		;;
+	sparse)
+		Meta/Make -j16 -- NO_REGEX=NoThanks SPARSE_FLAGS=-Wsparse-error "$t"
+		;;
 	*)
 		Meta/Make -j16 "$t"
 		;;
