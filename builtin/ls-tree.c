@@ -93,19 +93,16 @@ static size_t expand_show_tree(struct strbuf *sb, const char *start,
 	} else if (skip_prefix(start, "(objectname)", &p)) {
 		strbuf_add_unique_abbrev(sb, data->oid, abbrev);
 	} else if (skip_prefix(start, "(path)", &p)) {
-		const char *name = data->base->buf;
+		const char *name;
 		const char *prefix = chomp_prefix ? ls_tree_prefix : NULL;
-		struct strbuf quoted = STRBUF_INIT;
 		struct strbuf sbuf = STRBUF_INIT;
 		size_t baselen = data->base->len;
 
 		strbuf_addstr(data->base, data->pathname);
 		name = relative_path(data->base->buf, prefix, &sbuf);
-		quote_c_style(name, &quoted, NULL, 0);
+		quote_c_style(name, sb, NULL, 0);
 		strbuf_setlen(data->base, baselen);
-		strbuf_addbuf(sb, &quoted);
 		strbuf_release(&sbuf);
-		strbuf_release(&quoted);
 	} else {
 		errlen = (unsigned long)len;
 		die(_("bad ls-tree format: %%%.*s"), errlen, start);
