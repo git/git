@@ -97,9 +97,12 @@ static size_t expand_show_tree(struct strbuf *sb, const char *start,
 		const char *prefix = chomp_prefix ? ls_tree_prefix : NULL;
 		struct strbuf quoted = STRBUF_INIT;
 		struct strbuf sbuf = STRBUF_INIT;
+		size_t baselen = data->base->len;
+
 		strbuf_addstr(data->base, data->pathname);
 		name = relative_path(data->base->buf, prefix, &sbuf);
 		quote_c_style(name, &quoted, NULL, 0);
+		strbuf_setlen(data->base, baselen);
 		strbuf_addbuf(sb, &quoted);
 		strbuf_release(&sbuf);
 		strbuf_release(&quoted);
@@ -143,7 +146,6 @@ static int show_recursive(const char *base, size_t baselen, const char *pathname
 static int show_tree_fmt(const struct object_id *oid, struct strbuf *base,
 			 const char *pathname, unsigned mode, void *context)
 {
-	size_t baselen;
 	int recurse = 0;
 	struct strbuf sb = STRBUF_INIT;
 	enum object_type type = object_type(mode);
@@ -163,12 +165,10 @@ static int show_tree_fmt(const struct object_id *oid, struct strbuf *base,
 	if (type == OBJ_BLOB && (ls_options & LS_TREE_ONLY))
 		return 0;
 
-	baselen = base->len;
 	strbuf_expand(&sb, format, expand_show_tree, &data);
 	strbuf_addch(&sb, line_termination);
 	fwrite(sb.buf, sb.len, 1, stdout);
 	strbuf_release(&sb);
-	strbuf_setlen(base, baselen);
 	return recurse;
 }
 

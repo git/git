@@ -37,6 +37,12 @@ test_ls_tree_format () {
 	'
 }
 
+test_expect_success "ls-tree --format='%(path) %(path) %(path)' HEAD top-file" '
+	git ls-tree --format="%(path) %(path) %(path)" HEAD top-file.t >actual &&
+	echo top-file.t top-file.t top-file.t >expect &&
+	test_cmp expect actual
+'
+
 test_ls_tree_format \
 	"%(objectmode) %(objecttype) %(objectname)%x09%(path)" \
 	""
