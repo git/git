@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2023, #03; Mon, 9)
+Subject: What's cooking in git.git (Jan 2023, #04; Sat, 14)
 X-master-at: a38d39a4c50d1275833aba54c4dbdfce9e2e9ca1
-X-next-at: 19cc3de33e2ecf9e71de376dc7271792f26fb258
+X-next-at: 8cbeef4abda4907dd68ea144d9dcb85f0b49c3e6
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jan 2023, #03; Mon, 9)
+What's cooking in git.git (Jan 2023, #04; Sat, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -13,10 +13,6 @@ topic is stable enough to be used and are candidate to be in a future
 release).  Commits prefixed with '-' are only in 'seen', and aren't
 considered "accepted" at all.  A topic without enough support may be
 discarded after a long period of no activity.
-
-A handful of topics have graduated to 'master'.  On 'seen', there
-are many topics accumulated that need reviews and review responses.
-I'll be offline for a few days and will reappear later this week.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -47,146 +43,181 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* cw/ci-whitespace (2022-12-20) 3 commits
-  (merged to 'next' on 2023-01-05 at d3dc35f08c)
- + ci (check-whitespace): move to actions/checkout@v3
- + ci (check-whitespace): add links to job output
- + ci (check-whitespace): suggest fixes for errors
-
- CI updates.  We probably want a clean-up to move the long shell
- script embedded in yaml file into a separate file, but that can
- come later.
- source: <pull.1444.v2.git.1671496548.gitgitgadget@gmail.com>
-
-
-* js/ci-disable-cmake-by-default (2022-12-20) 1 commit
-  (merged to 'next' on 2023-01-02 at 3f014ca5d1)
- + ci: only run win+VS build & tests in Git for Windows' fork
-
- Stop running win+VS build by default.
- source: <pull.1445.git.1671461414191.gitgitgadget@gmail.com>
-
-
-* js/drop-mingw-test-cmp (2022-12-13) 1 commit
-  (merged to 'next' on 2023-01-02 at 402866b048)
- + tests(mingw): avoid very slow `mingw_test_cmp`
-
- Use `git diff --no-index` as a test_cmp on Windows.
-
- We'd probably need to revisit "do we really want to, and have to,
- lose CRLF vs LF?" later, at which time we may be able to further
- clean this up by replacing "git diff --no-index" with "diff -u".
- source: <6a80fab7e3936ec56e1583d6136d47487327e907.1670339267.git.gitgitgadget@gmail.com>
-
---------------------------------------------------
 [New Topics]
 
-* ar/dup-words-fixes (2023-01-08) 1 commit
-  (merged to 'next' on 2023-01-09 at 2a5d4537a2)
- + *: fix typos which duplicate a word
+* ab/cache-api-cleanup (2023-01-13) 5 commits
+ - cache API: add a "INDEX_STATE_INIT" macro/function, add release_index()
+ - read-cache.c: refactor set_new_index_sparsity() for subsequent commit
+ - sparse-index API: BUG() out on NULL ensure_full_index()
+ - sparse-index.c: expand_to_path() can assume non-NULL "istate"
+ - builtin/difftool.c: { 0 }-initialize rather than using memset()
 
- Typofixes.
+ Code clean-up to tighten the use of in-core index in the API.
 
- Will merge to 'master'.
- source: <20230107135655.149892-1-rybak.a.v@gmail.com>
+ Will merge to 'next'.
+ source: <cover-v2-0.6-00000000000-20230112T124842Z-avarab@gmail.com>
 
 
-* ds/bundle-uri-5 (2023-01-07) 8 commits
- - bundle-uri: store fetch.bundleCreationToken
- - fetch: fetch from an external bundle URI
- - bundle-uri: drop bundle.flag from design doc
- - clone: set fetch.bundleURI if appropriate
- - bundle-uri: download in creationToken order
- - bundle-uri: parse bundle.<id>.creationToken values
- - bundle-uri: parse bundle.heuristic=creationToken
- - t5558: add tests for creationToken heuristic
- (this branch uses ds/bundle-uri-4.)
+* ab/test-env-helper (2023-01-13) 1 commit
+ - env-helper: move this built-in to to "test-tool env-helper"
 
- The bundle-URI subsystem adds support for creation-token heuristics
- to help incremental fetches.
+ Remove "git env--helper" and demote it to a test-tool subcommand.
+
+ Will merge to 'next'.
+ source: <patch-1.1-e662c570f1d-20230112T155226Z-avarab@gmail.com>
+
+
+* ar/bisect-doc-update (2023-01-13) 2 commits
+ - git-bisect-lk2009: update nist report link
+ - git-bisect-lk2009: update java code conventions link
+
+ Doc update.
+
+ Will merge to 'next'.
+ source: <20230110093251.193552-1-rybak.a.v@gmail.com>
+
+
+* ar/test-cleanup (2023-01-13) 3 commits
+ - t7527: use test_when_finished in 'case insensitive+preserving'
+ - t6422: drop commented out code
+ - t6003: uncomment test '--max-age=c3, --topo-order'
+
+ Test clean-up.
+
+ Will merge to 'next'.
+ source: <20230111233242.16870-1-rybak.a.v@gmail.com>
+
+
+* en/ls-files-doc-update (2023-01-13) 4 commits
+ - ls-files: guide folks to --exclude-standard over other --exclude* options
+ - ls-files: clarify descriptions of status tags for -t
+ - ls-files: clarify descriptions of file selection options
+ - ls-files: add missing documentation for --resolve-undo option
+
+ Doc update to ls-files.
 
  Needs review.
- source: <pull.1454.git.1673037405.gitgitgadget@gmail.com>
+ source: <pull.1463.git.1673584914.gitgitgadget@gmail.com>
 
 
-* jk/read-object-cleanup (2023-01-08) 5 commits
-  (merged to 'next' on 2023-01-09 at 19cc3de33e)
- + packfile: inline custom read_object()
- + repo_read_object_file(): stop wrapping read_object_file_extended()
- + read_object_file_extended(): drop lookup_replace option
- + streaming: inline call to read_object_file_extended()
- + object-file: inline calls to read_object()
+* en/t6426-todo-cleanup (2023-01-13) 1 commit
+ - t6426: fix TODO about making test more comprehensive
+
+ Test clean-up.
+
+ Expecting a reroll.
+ cf. <CABPp-BE8O0beOS3=Y5Sh23KMRJGsOqmdHWD=ide4_=Zn5bWSPg@mail.gmail.com>
+ source: <pull.1462.git.1673584084761.gitgitgadget@gmail.com>
+
+
+* jc/doc-diff-patch.txt (2023-01-13) 1 commit
+ - docs: link generating patch sections
+
+ Doc update.
+
+ Will merge to 'next'.
+ source: <pull.1392.v2.git.git.1673626524221.gitgitgadget@gmail.com>
+
+
+* jk/interop-error (2023-01-13) 1 commit
+ - t/interop: report which vanilla git command failed
+
+ Test helper improvement.
+
+ Will merge to 'next'.
+ source: <Y8A3yGeJl0TCDNqe@coredump.intra.peff.net>
+
+
+* pw/rebase-exec-cleanup (2023-01-13) 1 commit
+ - rebase: cleanup "--exec" option handling
 
  Code clean-up.
 
- Will merge to 'master'.
- source: <Y7l4LsEQcDT9HZ21@coredump.intra.peff.net>
+ Will merge to 'next'.
+ source: <pull.1461.git.1673542201452.gitgitgadget@gmail.com>
 
 
-* jk/strncmp-to-api-funcs (2023-01-08) 2 commits
-  (merged to 'next' on 2023-01-09 at 47395b7c6f)
- + convert trivial uses of strncmp() to skip_prefix()
- + convert trivial uses of strncmp() to starts_with()
+* sk/merge-filtering-strategies-micro-optim (2023-01-13) 1 commit
+ - merge: break out of all_strategy loop when strategy is found
+
+ Micro optimization.
+
+ Will merge to 'next'.
+ source: <pull.1429.v2.git.git.1673285669004.gitgitgadget@gmail.com>
+
+
+* yo/doc-use-more-switch-c (2023-01-13) 1 commit
+ - doc: add "git switch -c" as another option on detached HEAD
+
+ Doc update.
+
+ Will merge to 'next'.
+ source: <pull.1422.v2.git.git.1673261237449.gitgitgadget@gmail.com>
+
+
+* zh/scalar-progress (2023-01-13) 2 commits
+ - SQUASH???
+ - scalar: show progress if stderr refers to a terminal
+
+ "scalar" learned to give progress bar.
+
+ Will merge to 'next' after squashing the fixlet in?
+ source: <pull.1441.v3.git.1673442860379.gitgitgadget@gmail.com>
+
+
+* ab/bisect-cleanup (2023-01-13) 6 commits
+ - bisect: no longer try to clean up left-over `.git/head-name` files
+ - bisect: remove Cogito-related code
+ - bisect run: fix the error message
+ - bisect: verify that a bogus option won't try to start a bisection
+ - bisect--helper: make the order consistently `argc, argv`
+ - bisect--helper: simplify exit code computation
 
  Code clean-up.
 
- Will merge to 'master'.
- source: <Y7lyga5g2leSmWQd@coredump.intra.peff.net>
+ Will merge to 'next'.
+ source: <cover-v2-0.6-00000000000-20230112T151651Z-avarab@gmail.com>
 
 
-* pb/doc-orig-head (2023-01-08) 5 commits
- - git-rebase.txt: add a note about 'ORIG_HEAD' being overwritten
- - revisions.txt: be explicit about commands writing 'ORIG_HEAD'
- - git-merge.txt: mention 'ORIG_HEAD' in the Description
- - git-reset.txt: mention 'ORIG_HEAD' in the Description
- - git-cherry-pick.txt: do not use 'ORIG_HEAD' in example
+* ms/send-email-feed-header-to-validate-hook (2023-01-13) 2 commits
+ - send-email: expose header information to git-send-email's sendemail-validate hook
+ - send-email: refactor header generation functions
 
- Document ORIG_HEAD a bit more.
-
- Will merge to 'next'?
- source: <pull.1456.git.1673120359.gitgitgadget@gmail.com>
+ "git send-email" learned to give the e-mail headers to the validate
+ hook by passing an extra argument from the command line.
+ source: <20230110211452.2568535-1-michael.strawbridge@amd.com>
 
 
-* tc/cat-file-z-use-cquote (2023-01-08) 1 commit
- . cat-file: quote-format name in error when using -z
+* tl/ls-tree-code-clean-up (2023-01-13) 6 commits
+ - t3104: remove shift code in 'test_ls_tree_format'
+ - ls-tree: cleanup the redundant SPACE
+ - ls-tree: make "line_termination" less generic
+ - ls-tree: fold "show_tree_data" into "cb" struct
+ - ls-tree: use a "struct options"
+ - ls-tree: don't use "show_tree_data" for "fast" callbacks
 
- "cat-file" in the batch mode that is fed NUL-terminated pathnames
- learned to cquote them in its error output (otherwise, a funny
- pathname with LF in it would break the lines in the output stream).
+ Code clean-up.
 
- Breaks t1006.
- cf. https://github.com/git/git/actions/runs/3865911497/jobs/6589699288#step:6:1802
- source: <20230105062447.2943709-2-toon@iotcl.com>
-
-
-* cb/grep-pcre-ucp (2023-01-09) 1 commit
- - grep: correctly identify utf-8 characters with \{b,w} in -P
-
- "grep -P" learned to use Unicode Character Property to grok
- character classes when processing \b and \w etc.
-
- Will merge to 'next'?
- source: <20230108155217.2817-1-carenas@gmail.com>
+ Will merge to 'next'.
+ source: <20230112091135.20050-1-tenglong.tl@alibaba-inc.com>
 
 
-* es/hooks-and-local-env (2023-01-09) 1 commit
- - githooks: discuss Git operations in foreign repositories
+* yc/doc-fetch-fix (2023-01-13) 1 commit
+ - doc: fix non-existent config name
 
- Doc update for environment variables set when hooks are invoked.
+ Doc fix.
+
+ Will merge to 'next'.
+ source: <CAEg0tHSZi22RUBREJB=Cfy6O72cicv9FTkgo_Z=gvGRdPK1acw@mail.gmail.com>
+
+
+* jc/ci-deprecated-declarations-are-not-fatal (2023-01-13) 1 commit
+ - ci: do not die on deprecated-declarations warning
+
+ CI build fix for overzealous -Werror.
 
  Will merge to 'next'?
- source: <pull.1457.git.1673171924727.gitgitgadget@gmail.com>
-
-
-* ph/parse-date-reduced-precision (2023-01-09) 1 commit
- . date.c: allow ISO 8601 reduced precision times
-
- Loosen date parsing heuristics.
-
- Seems to break many tests.
- source: <20221216033638.2582956-1-phil.hord@gmail.com>
+ source: <xmqqv8l9n5fj.fsf@gitster.g>
 
 --------------------------------------------------
 [Stalled]
@@ -329,6 +360,114 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* ar/dup-words-fixes (2023-01-08) 1 commit
+  (merged to 'next' on 2023-01-09 at 2a5d4537a2)
+ + *: fix typos which duplicate a word
+
+ Typofixes.
+
+ Will merge to 'master'.
+ source: <20230107135655.149892-1-rybak.a.v@gmail.com>
+
+
+* ds/bundle-uri-5 (2023-01-07) 8 commits
+ - bundle-uri: store fetch.bundleCreationToken
+ - fetch: fetch from an external bundle URI
+ - bundle-uri: drop bundle.flag from design doc
+ - clone: set fetch.bundleURI if appropriate
+ - bundle-uri: download in creationToken order
+ - bundle-uri: parse bundle.<id>.creationToken values
+ - bundle-uri: parse bundle.heuristic=creationToken
+ - t5558: add tests for creationToken heuristic
+ (this branch uses ds/bundle-uri-4.)
+
+ The bundle-URI subsystem adds support for creation-token heuristics
+ to help incremental fetches.
+
+ Needs review.
+ source: <pull.1454.git.1673037405.gitgitgadget@gmail.com>
+
+
+* jk/read-object-cleanup (2023-01-13) 6 commits
+  (merged to 'next' on 2023-01-13 at 8cbeef4abd)
+ + object-file: fix indent-with-space
+  (merged to 'next' on 2023-01-09 at 19cc3de33e)
+ + packfile: inline custom read_object()
+ + repo_read_object_file(): stop wrapping read_object_file_extended()
+ + read_object_file_extended(): drop lookup_replace option
+ + streaming: inline call to read_object_file_extended()
+ + object-file: inline calls to read_object()
+
+ Code clean-up.
+
+ Will merge to 'master'.
+ source: <Y7l4LsEQcDT9HZ21@coredump.intra.peff.net>
+
+
+* jk/strncmp-to-api-funcs (2023-01-08) 2 commits
+  (merged to 'next' on 2023-01-09 at 47395b7c6f)
+ + convert trivial uses of strncmp() to skip_prefix()
+ + convert trivial uses of strncmp() to starts_with()
+
+ Code clean-up.
+
+ Will merge to 'master'.
+ source: <Y7lyga5g2leSmWQd@coredump.intra.peff.net>
+
+
+* pb/doc-orig-head (2023-01-13) 5 commits
+ - git-rebase.txt: add a note about 'ORIG_HEAD' being overwritten
+ - revisions.txt: be explicit about commands writing 'ORIG_HEAD'
+ - git-merge.txt: mention 'ORIG_HEAD' in the Description
+ - git-reset.txt: mention 'ORIG_HEAD' in the Description
+ - git-cherry-pick.txt: do not use 'ORIG_HEAD' in example
+
+ Document ORIG_HEAD a bit more.
+
+ Will merge to 'next'.
+ source: <pull.1456.v2.git.1673356521.gitgitgadget@gmail.com>
+
+
+* tc/cat-file-z-use-cquote (2023-01-08) 1 commit
+ . cat-file: quote-format name in error when using -z
+
+ "cat-file" in the batch mode that is fed NUL-terminated pathnames
+ learned to cquote them in its error output (otherwise, a funny
+ pathname with LF in it would break the lines in the output stream).
+
+ Breaks t1006.
+ cf. https://github.com/git/git/actions/runs/3865911497/jobs/6589699288#step:6:1802
+ source: <20230105062447.2943709-2-toon@iotcl.com>
+
+
+* cb/grep-pcre-ucp (2023-01-09) 1 commit
+ - grep: correctly identify utf-8 characters with \{b,w} in -P
+
+ "grep -P" learned to use Unicode Character Property to grok
+ character classes when processing \b and \w etc.
+
+ Will merge to 'next'?
+ source: <20230108155217.2817-1-carenas@gmail.com>
+
+
+* es/hooks-and-local-env (2023-01-13) 1 commit
+ - githooks: discuss Git operations in foreign repositories
+
+ Doc update for environment variables set when hooks are invoked.
+
+ Will merge to 'next'.
+ source: <pull.1457.v2.git.1673293508399.gitgitgadget@gmail.com>
+
+
+* ph/parse-date-reduced-precision (2023-01-13) 1 commit
+ - date.c: allow ISO 8601 reduced precision times
+
+ Loosen date parsing heuristics.
+
+ Will merge to 'next'.
+ source: <20230111001003.10916-1-congdanhqx@gmail.com>
+
+
 * pw/ci-print-failure-name-fix (2023-01-04) 1 commit
   (merged to 'next' on 2023-01-08 at 8bb55c12c7)
  + ci(github): restore "print test failures" step name
@@ -367,14 +506,15 @@ Release tarballs are available at:
  source: <https://lore.kernel.org/git/20221108184200.2813458-1-calvinwan@google.com/>
 
 
-* kn/attr-from-tree (2023-01-04) 3 commits
- - SQUASH???
+* kn/attr-from-tree (2023-01-13) 2 commits
  - attr: add flag `--source` to work with tree-ish
  - t0003: move setup for `--all` into new block
 
- Expecting a reroll.
- cf. <CAOLa=ZStKKgyaHGjGVpQ5jsSpkdqXuH2RhvWOgrU2qKxGbQFGA@mail.gmail.com>
- source: <cover.1671793109.git.karthik.188@gmail.com>
+ "git check-attr" learned to take an optional tree-ish to read the
+ .gitattributes file from.
+
+ Will merge to 'next'.
+ source: <cover.1673521102.git.karthik.188@gmail.com>
 
 
 * ws/single-file-cone (2023-01-05) 1 commit
@@ -546,7 +686,7 @@ Release tarballs are available at:
 
  Test updates.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20221128130323.8914-1-worldhello.net@gmail.com>
 
 
@@ -559,8 +699,7 @@ Release tarballs are available at:
  source: <87edtp5uws.fsf@kyleam.com>
 
 
-* ja/worktree-orphan (2023-01-08) 5 commits
- - SQUASH???
+* ja/worktree-orphan (2023-01-13) 4 commits
  - worktree add: add hint to direct users towards --orphan
  - worktree add: add --orphan flag
  - worktree add: refactor opt exclusion tests
@@ -569,9 +708,8 @@ Release tarballs are available at:
  'git worktree add' learned how to create a worktree based on an
  orphaned branch with `--orphan`.
 
- Breaks t2400 by using non-portable "grep -P".
- cf. https://github.com/git/git/actions/runs/3865911497/jobs/6589699288#step:6:1838
- source: <20230107045757.30037-1-jacobabel@nullpo.dev>
+ Will merge to 'next'.
+ source: <20230109173227.29264-1-jacobabel@nullpo.dev>
 
 
 * cc/filtered-repack (2022-12-25) 3 commits
