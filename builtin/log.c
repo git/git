@@ -1870,6 +1870,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	struct strbuf rdiff1 = STRBUF_INIT;
 	struct strbuf rdiff2 = STRBUF_INIT;
 	struct strbuf rdiff_title = STRBUF_INIT;
+	struct strbuf sprefix = STRBUF_INIT;
 	int creation_factor = -1;
 
 	const struct option builtin_format_patch_options[] = {
@@ -2010,12 +2011,10 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		cover_from_description_mode = parse_cover_from_description(cover_from_description_arg);
 
 	if (reroll_count) {
-		struct strbuf sprefix = STRBUF_INIT;
-
 		strbuf_addf(&sprefix, "%s v%s",
 			    rev.subject_prefix, reroll_count);
 		rev.reroll_count = reroll_count;
-		rev.subject_prefix = strbuf_detach(&sprefix, NULL);
+		rev.subject_prefix = sprefix.buf;
 	}
 
 	for (i = 0; i < extra_hdr.nr; i++) {
@@ -2376,6 +2375,7 @@ done:
 	strbuf_release(&rdiff1);
 	strbuf_release(&rdiff2);
 	strbuf_release(&rdiff_title);
+	strbuf_release(&sprefix);
 	free(to_free);
 	if (rev.ref_message_ids)
 		string_list_clear(rev.ref_message_ids, 0);
