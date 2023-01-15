@@ -702,8 +702,7 @@ static struct option *preprocess_options(struct parse_opt_ctx_t *ctx,
 	if (!nr_aliases)
 		return NULL;
 
-	ALLOC_ARRAY(newopt, nr + 1);
-	COPY_ARRAY(newopt, options, nr + 1);
+	DUP_ARRAY(newopt, options, nr + 1);
 
 	/* each alias has two string pointers and NULL */
 	CALLOC_ARRAY(ctx->alias_groups, 3 * (nr_aliases + 1));

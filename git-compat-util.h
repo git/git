@@ -97,8 +97,14 @@ struct strbuf;
 # define BARF_UNLESS_AN_ARRAY(arr)						\
 	BUILD_ASSERT_OR_ZERO(!__builtin_types_compatible_p(__typeof__(arr), \
 							   __typeof__(&(arr)[0])))
+# define BARF_UNLESS_COPYABLE(dst, src) \
+	BUILD_ASSERT_OR_ZERO(__builtin_types_compatible_p(__typeof__(*(dst)), \
+							  __typeof__(*(src))))
 #else
 # define BARF_UNLESS_AN_ARRAY(arr) 0
+# define BARF_UNLESS_COPYABLE(dst, src) \
+	BUILD_ASSERT_OR_ZERO(0 ? ((*(dst) = *(src)), 0) : \
+				 sizeof(*(dst)) == sizeof(*(src)))
 #endif
 /*
  * ARRAY_SIZE - get the number of elements in a visible array
@@ -1094,7 +1100,7 @@ int xstrncmpz(const char *s, const char *t, size_t len);
 #define REALLOC_ARRAY(x, alloc) (x) = xrealloc((x), st_mult(sizeof(*(x)), (alloc)))
 
 #define COPY_ARRAY(dst, src, n) copy_array((dst), (src), (n), sizeof(*(dst)) + \
-	BUILD_ASSERT_OR_ZERO(sizeof(*(dst)) == sizeof(*(src))))
+	BARF_UNLESS_COPYABLE((dst), (src)))
 static inline void copy_array(void *dst, const void *src, size_t n, size_t size)
 {
 	if (n)
@@ -1102,12 +1108,17 @@ static inline void copy_array(void *dst, const void *src, size_t n, size_t size)
 }
 
 #define MOVE_ARRAY(dst, src, n) move_array((dst), (src), (n), sizeof(*(dst)) + \
-	BUILD_ASSERT_OR_ZERO(sizeof(*(dst)) == sizeof(*(src))))
+	BARF_UNLESS_COPYABLE((dst), (src)))
 static inline void move_array(void *dst, const void *src, size_t n, size_t size)
 {
 	if (n)
 		memmove(dst, src, st_mult(size, n));
 }
+
+#define DUP_ARRAY(dst, src, n) do { \
+	size_t dup_array_n_ = (n); \
+	COPY_ARRAY(ALLOC_ARRAY((dst), dup_array_n_), (src), dup_array_n_); \
+} while (0)
 
 /*
  * These functions help you allocate structs with flex arrays, and copy
