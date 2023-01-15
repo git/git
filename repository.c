@@ -302,8 +302,10 @@ int repo_read_index(struct repository *repo)
 {
 	int res;
 
-	if (!repo->index)
-		CALLOC_ARRAY(repo->index, 1);
+	if (!repo->index) {
+		ALLOC_ARRAY(repo->index, 1);
+		index_state_init(repo->index);
+	}
 
 	/* Complete the double-reference */
 	if (!repo->index->repo)
