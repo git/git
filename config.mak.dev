@@ -69,6 +69,15 @@ DEVELOPER_CFLAGS += -Wno-missing-braces
 endif
 endif
 
+# Libraries deprecate symbols while retaining them for a long time to
+# keep software working with both older and newer versions of them.
+# Getting warnings does help the developers' awareness, but we cannot
+# afford to update too aggressively.  E.g. CURLOPT_REDIR_PROTOCOLS_STR
+# is only available in 7.85.0 that deprecates CURLOPT_REDIR_PROTOCOLS
+# but we cannot rewrite the uses of the latter with the former until
+# 7.85.0, which was released in August 2022, becomes ubiquitous.
+DEVELOPER_CFLAGS += -DCURL_DISABLE_DEPRECATION
+
 # Old versions of clang complain about initializaing a
 # struct-within-a-struct using just "{0}" rather than "{{0}}".  This
 # error is considered a false-positive and not worth fixing, because
