@@ -29,6 +29,12 @@ UI, Workflows & Features
  * 'cat-file' gains mailmap support for its '--batch-check' and '-s'
    options.
 
+ * Conditionally skip the pre-applypatch and applypatch-msg hooks when
+   applying patches with 'git am'.
+
+ * Introduce an optional configuration to allow the trailing hash that
+   protects the index file from bit flipping.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -61,6 +67,10 @@ Performance, Internal Implementation, Development Support etc.
    We'd probably need to revisit "do we really want to, and have to,
    lose CRLF vs LF?" later, at which time we may be able to further
    clean this up by replacing "git diff --no-index" with "diff -u".
+
+ * Avoid unnecessary builds in CI, with settings configured in
+   ci-config.
+   (merge eb5b03a9c0 tb/ci-concurrency later to maint).
 
 
 Fixes since v2.39
@@ -122,6 +132,15 @@ Fixes since v2.39
  * Fix to a small regression in 2.38 days.
    (merge 6d5e9e53aa ab/bundle-wo-args later to maint).
 
+ * "git diff --relative" did not mix well with "git diff --ext-diff",
+   which has been corrected.
+   (merge f034bb1cad jk/ext-diff-with-relative later to maint).
+
+ * The logic to see if we are using the "cone" mode by checking the
+   sparsity patterns has been tightened to avoid mistaking a pattern
+   that names a single file as specifying a cone.
+   (merge 5842710dc2 ws/single-file-cone later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 77e04b2ed4 rs/t4205-do-not-exit-in-test-script later to maint).
    (merge faebba436e rs/plug-pattern-list-leak-in-lof later to maint).
@@ -141,3 +160,5 @@ Fixes since v2.39
    (merge 4eb1ccecd4 dh/mingw-ownership-check-typofix later to maint).
    (merge f95526419b ar/typofix-gitattributes-doc later to maint).
    (merge 27875aeec9 km/doc-branch-start-point later to maint).
+   (merge 35c194dc57 es/t1509-root-fixes later to maint).
+   (merge 7b341645e3 pw/ci-print-failure-name-fix later to maint).
