@@ -76,8 +76,6 @@ usage:
 
 static int cmd_ls_remote(int argc, const char **argv)
 {
-	const char *uploadpack = NULL;
-	struct string_list server_options = STRING_LIST_INIT_DUP;
 	const char *dest;
 	struct remote *remote;
 	struct transport *transport;
@@ -95,11 +93,6 @@ static int cmd_ls_remote(int argc, const char **argv)
 		die(_("remote '%s' has no configured URL"), dest);
 
 	transport = transport_get(remote, NULL);
-	if (uploadpack)
-		transport_set_option(transport, TRANS_OPT_UPLOADPACK, uploadpack);
-	if (server_options.nr)
-		transport->server_options = &server_options;
-
 	if (transport_get_remote_bundle_uri(transport) < 0) {
 		error(_("could not get the bundle-uri list"));
 		status = 1;
