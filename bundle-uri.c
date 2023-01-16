@@ -620,7 +620,7 @@ static int config_to_packet_line(const char *key, const char *value, void *data)
 {
 	struct packet_reader *writer = data;
 
-	if (!strncmp(key, "bundle.", 7))
+	if (starts_with(key, "bundle."))
 		packet_write_fmt(writer->fd, "%s=%s", key, value);
 
 	return 0;
