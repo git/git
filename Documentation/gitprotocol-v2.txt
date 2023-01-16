@@ -665,7 +665,7 @@ headers and their prerequisite relationships, or something else.
 +
 Server operators should feel confident in turning on "bundle-uri" and
 not worry if e.g. their CDN goes down that clones or fetches will run
-into hard failures. Even if the server bundle bundle(s) are
+into hard failures. Even if the server bundle(s) are
 incomplete, or bad in some way the client should still end up with a
 functioning repository, just as if it had chosen not to use this
 protocol extension.

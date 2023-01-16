@@ -405,7 +405,7 @@ static int update_one(struct cache_tree *it,
 		}
 
 		/*
-		 * CE_INTENT_TO_ADD entries exist on on-disk index but
+		 * CE_INTENT_TO_ADD entries exist in on-disk index but
 		 * they are not part of generated trees. Invalidate up
 		 * to root to force cache-tree users to read elsewhere.
 		 */

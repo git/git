@@ -904,7 +904,7 @@ test_expect_success "submodule absorbgitdirs implicitly starts daemon" '
 
 # On a case-insensitive file system, confirm that the daemon
 # notices when the .git directory is moved/renamed/deleted
-# regardless of how it is spelled in the the FS event.
+# regardless of how it is spelled in the FS event.
 # That is, does the FS event receive the spelling of the
 # operation or does it receive the spelling preserved with
 # the file/directory.
@@ -922,8 +922,8 @@ test_expect_success CASE_INSENSITIVE_FS 'case insensitive+preserving' '
 	test_path_is_dir test_insensitive/.git &&
 	test_path_is_dir test_insensitive/.GIT &&
 
-	# Rename .git using an alternate spelling to verify that that
-	# daemon detects it and automatically shuts down.
+	# Rename .git using an alternate spelling to verify that
+	# the daemon detects it and automatically shuts down.
 	mv test_insensitive/.GIT test_insensitive/.FOO &&
 
 	# See [1] above.

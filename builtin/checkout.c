@@ -1270,7 +1270,7 @@ static int parse_branchname_arg(int argc, const char **argv,
 	 *       between A and B, A...B names that merge base.
 	 *
 	 *   (b) If <something> is _not_ a commit, either "--" is present
-	 *       or <something> is not a path, no -t or -b was given, and
+	 *       or <something> is not a path, no -t or -b was given,
 	 *       and there is a tracking branch whose name is <something>
 	 *       in one and only one remote (or if the branch exists on the
 	 *       remote named in checkout.defaultRemote), then this is a
