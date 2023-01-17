@@ -454,7 +454,7 @@ static int register_ref(const char *refname, const char *referent UNUSED, const 
 {
 	struct strbuf good_prefix = STRBUF_INIT;
 	strbuf_addstr(&good_prefix, term_good);
-	strbuf_addstr(&good_prefix, "-");
+	strbuf_addch(&good_prefix, '-');
 
 	if (!strcmp(refname, term_bad)) {
 		free(current_bad_oid);

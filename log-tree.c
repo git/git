@@ -452,7 +452,7 @@ void fmt_output_subject(struct strbuf *filename,
 
 		strbuf_addf(&temp, "v%s", info->reroll_count);
 		format_sanitized_subject(filename, temp.buf, temp.len);
-		strbuf_addstr(filename, "-");
+		strbuf_addch(filename, '-');
 		strbuf_release(&temp);
 	}
 	strbuf_addf(filename, "%04d-%s", nr, subject);

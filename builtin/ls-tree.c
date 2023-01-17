@@ -37,7 +37,7 @@ static void expand_objectsize(struct strbuf *line, const struct object_id *oid,
 	} else if (padded) {
 		strbuf_addf(line, "%7s", "-");
 	} else {
-		strbuf_addstr(line, "-");
+		strbuf_addch(line, '-');
 	}
 }
 

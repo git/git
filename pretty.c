@@ -590,7 +590,7 @@ void pp_user_info(struct pretty_print_context *pp,
 
 		strbuf_addf(sb, "%s: ", what);
 		if (pp->fmt == CMIT_FMT_FULLER)
-			strbuf_addchars(sb, ' ', 4);
+			strbuf_addstr(sb, "    ");
 
 		strbuf_addf(&id, "%.*s <%.*s>", (int)namelen, namebuf,
 			    (int)maillen, mailbuf);

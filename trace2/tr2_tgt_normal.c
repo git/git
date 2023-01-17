@@ -226,7 +226,7 @@ static void fn_child_start_fl(const char *file, int line,
 	if (cmd->dir) {
 		strbuf_addstr(&buf_payload, " cd ");
 		sq_quote_buf_pretty(&buf_payload, cmd->dir);
-		strbuf_addstr(&buf_payload, ";");
+		strbuf_addch(&buf_payload, ';');
 	}
 
 	/*

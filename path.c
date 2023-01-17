@@ -982,7 +982,7 @@ const char *remove_leading_path(const char *in, const char *prefix)
 
 	strbuf_reset(&buf);
 	if (!in[j])
-		strbuf_addstr(&buf, ".");
+		strbuf_addch(&buf, '.');
 	else
 		strbuf_addstr(&buf, in + j);
 	return buf.buf;
