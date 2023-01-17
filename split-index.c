@@ -91,7 +91,7 @@ void move_cache_to_base_index(struct index_state *istate)
 	}
 
 	ALLOC_ARRAY(si->base, 1);
-	index_state_init(si->base);
+	index_state_init(si->base, istate->repo);
 	si->base->version = istate->version;
 	/* zero timestamp disables racy test in ce_write_index() */
 	si->base->timestamp = istate->timestamp;

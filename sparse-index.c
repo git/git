@@ -128,9 +128,6 @@ int is_sparse_index_allowed(struct index_state *istate, int flags)
 	if (!core_apply_sparse_checkout || !core_sparse_checkout_cone)
 		return 0;
 
-	if (!istate->repo)
-		istate->repo = the_repository;
-
 	if (!(flags & SPARSE_INDEX_MEMORY_ONLY)) {
 		int test_env;
 
@@ -326,9 +323,6 @@ void expand_index(struct index_state *istate, struct pattern_list *pl)
 		if (cache_tree_update(istate, 0))
 			pl = NULL;
 	}
-
-	if (!istate->repo)
-		istate->repo = the_repository;
 
 	/*
 	 * A NULL pattern set indicates we are expanding a full index, so
@@ -551,9 +545,6 @@ void expand_to_path(struct index_state *istate,
 
 	if (!istate->sparse_index)
 		return;
-
-	if (!istate->repo)
-		istate->repo = the_repository;
 
 	in_expand_to_path = 1;
 
