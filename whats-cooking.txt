@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2023, #04; Sat, 14)
-X-master-at: a38d39a4c50d1275833aba54c4dbdfce9e2e9ca1
-X-next-at: 8cbeef4abda4907dd68ea144d9dcb85f0b49c3e6
+Subject: What's cooking in git.git (Jan 2023, #05; Tue, 17)
+X-master-at: a7caae2729742fc80147bca1c02ae848cb55921a
+X-next-at: 3abcab475e35598790da85d8a607d719986a9436
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jan 2023, #04; Sat, 14)
+What's cooking in git.git (Jan 2023, #05; Tue, 17)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -13,6 +13,10 @@ topic is stable enough to be used and are candidate to be in a future
 release).  Commits prefixed with '-' are only in 'seen', and aren't
 considered "accepted" at all.  A topic without enough support may be
 discarded after a long period of no activity.
+
+A maintenance release Git 2.39.1 and friends to address two security
+issues are out, and today's 'master', 'next', and 'seen' all include
+the fix.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -43,181 +47,144 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* ds/omit-trailing-hash-in-index (2023-01-07) 4 commits
+  (merged to 'next' on 2023-01-09 at e17ef56485)
+ + features: feature.manyFiles implies fast index writes
+ + test-lib-functions: add helper for trailing hash
+ + read-cache: add index.skipHash config option
+ + hashfile: allow skipping the hash function
+
+ Introduce an optional configuration to allow the trailing hash that
+ protects the index file from bit flipping.
+ source: <pull.1439.v5.git.1673022717.gitgitgadget@gmail.com>
+
+* ar/dup-words-fixes (2023-01-08) 1 commit
+  (merged to 'next' on 2023-01-09 at 2a5d4537a2)
+ + *: fix typos which duplicate a word
+
+ Typofixes.
+ source: <20230107135655.149892-1-rybak.a.v@gmail.com>
+
+
+* ds/bundle-uri-4 (2023-01-06) 1 commit
+  (merged to 'next' on 2023-01-08 at d5b03bdd48)
+ + test-bundle-uri: drop unused variables
+ (this branch is used by ds/bundle-uri-5.)
+
+ Code clean-up.
+ source: <Y7fgV5eFx78BHdQ4@coredump.intra.peff.net>
+
+
+* es/t1509-root-fixes (2022-12-09) 3 commits
+  (merged to 'next' on 2023-01-08 at c922e34bab)
+ + t1509: facilitate repeated script invocations
+ + t1509: make "setup" test more robust
+ + t1509: fix failing "root work tree" test due to owner-check
+
+ Test fixes.
+ source: <pull.1425.git.1668999621.gitgitgadget@gmail.com>
+
+
+* jk/ext-diff-with-relative (2023-01-06) 3 commits
+  (merged to 'next' on 2023-01-08 at 5233a7d3ee)
+ + diff: drop "name" parameter from prepare_temp_file()
+ + diff: clean up external-diff argv setup
+ + diff: use filespec path to set up tempfiles for ext-diff
+
+ "git diff --relative" did not mix well with "git diff --ext-diff",
+ which has been corrected.
+ source: <Y7f/YiVu1TgbucDI@coredump.intra.peff.net>
+
+
+* jk/strncmp-to-api-funcs (2023-01-08) 2 commits
+  (merged to 'next' on 2023-01-09 at 47395b7c6f)
+ + convert trivial uses of strncmp() to skip_prefix()
+ + convert trivial uses of strncmp() to starts_with()
+
+ Code clean-up.
+ source: <Y7lyga5g2leSmWQd@coredump.intra.peff.net>
+
+
+* pw/ci-print-failure-name-fix (2023-01-04) 1 commit
+  (merged to 'next' on 2023-01-08 at 8bb55c12c7)
+ + ci(github): restore "print test failures" step name
+
+ (cosmetic) CI regression fix.
+ source: <pull.1453.git.1672741640587.gitgitgadget@gmail.com>
+
+
+* tb/ci-concurrency (2022-11-08) 1 commit
+  (merged to 'next' on 2023-01-08 at ab7cdc20b8)
+ + ci: avoid unnecessary builds
+
+ Avoid unnecessary builds in CI, with settings configured in
+ ci-config.
+ source: <ff172f1de982f6f79b598e4ac6d5b2964ca4a098.1667931937.git.me@ttaylorr.com>
+
+
+* tr/am--no-verify (2023-01-05) 1 commit
+  (merged to 'next' on 2023-01-08 at 4585013067)
+ + am: allow passing --no-verify flag
+
+ Conditionally skip the pre-applypatch and applypatch-msg hooks when
+ applying patches with 'git am'.
+ source: <20221130172833.2662751-1-thierry.reding@gmail.com>
+
+
+* ws/single-file-cone (2023-01-05) 1 commit
+  (merged to 'next' on 2023-01-09 at b6d4d7b905)
+ + dir: check for single file cone patterns
+
+ The logic to see if we are using the "cone" mode by checking the
+ sparsity patterns has been tightened to avoid mistaking a pattern
+ that names a single file as specifying a cone.
+ source: <pull.1446.v2.git.1672734059938.gitgitgadget@gmail.com>
+
+--------------------------------------------------
 [New Topics]
 
-* ab/cache-api-cleanup (2023-01-13) 5 commits
- - cache API: add a "INDEX_STATE_INIT" macro/function, add release_index()
- - read-cache.c: refactor set_new_index_sparsity() for subsequent commit
- - sparse-index API: BUG() out on NULL ensure_full_index()
- - sparse-index.c: expand_to_path() can assume non-NULL "istate"
- - builtin/difftool.c: { 0 }-initialize rather than using memset()
+* rs/ls-tree-path-expansion-fix (2023-01-14) 2 commits
+  (merged to 'next' on 2023-01-16 at 6359f28ba7)
+ + ls-tree: remove dead store and strbuf for quote_c_style()
+ + ls-tree: fix expansion of repeated %(path)
 
- Code clean-up to tighten the use of in-core index in the API.
+ "git ls-tree --format='%(path) %(path)' $tree $path" showed the
+ path three times, which has been corrected.
 
- Will merge to 'next'.
- source: <cover-v2-0.6-00000000000-20230112T124842Z-avarab@gmail.com>
-
-
-* ab/test-env-helper (2023-01-13) 1 commit
- - env-helper: move this built-in to to "test-tool env-helper"
-
- Remove "git env--helper" and demote it to a test-tool subcommand.
-
- Will merge to 'next'.
- source: <patch-1.1-e662c570f1d-20230112T155226Z-avarab@gmail.com>
+ Will merge to 'master'.
+ source: <55ae7333-3a13-0575-93ed-f858a1c2877e@web.de>
 
 
-* ar/bisect-doc-update (2023-01-13) 2 commits
- - git-bisect-lk2009: update nist report link
- - git-bisect-lk2009: update java code conventions link
+* jc/format-patch-v-unleak (2023-01-16) 1 commit
+  (merged to 'next' on 2023-01-16 at 2155d512bc)
+ + format-patch: unleak "-v <num>"
 
- Doc update.
+ Plug a small leak.
 
- Will merge to 'next'.
- source: <20230110093251.193552-1-rybak.a.v@gmail.com>
+ Will merge to 'master'.
+ source: <xmqqv8l8gr6s.fsf@gitster.g>
 
 
-* ar/test-cleanup (2023-01-13) 3 commits
- - t7527: use test_when_finished in 'case insensitive+preserving'
- - t6422: drop commented out code
- - t6003: uncomment test '--max-age=c3, --topo-order'
+* jk/curl-avoid-deprecated-api (2023-01-17) 3 commits
+ - http: support CURLOPT_PROTOCOLS_STR
+ - http: prefer CURLOPT_SEEKFUNCTION to CURLOPT_IOCTLFUNCTION
+ - http-push: prefer CURLOPT_UPLOAD to CURLOPT_PUT
 
- Test clean-up.
+ Deal with a few deprecation warning from cURL library.
 
  Will merge to 'next'.
- source: <20230111233242.16870-1-rybak.a.v@gmail.com>
+ source: <Y8YP+R/hyNr6sEFA@coredump.intra.peff.net>
 
 
-* en/ls-files-doc-update (2023-01-13) 4 commits
- - ls-files: guide folks to --exclude-standard over other --exclude* options
- - ls-files: clarify descriptions of status tags for -t
- - ls-files: clarify descriptions of file selection options
- - ls-files: add missing documentation for --resolve-undo option
+* ds/omit-trailing-hash-in-index (2023-01-17) 1 commit
+ - t1600: fix racy index.skipHash test
 
- Doc update to ls-files.
+ Quickfix for a topic already in 'master'.
 
- Needs review.
- source: <pull.1463.git.1673584914.gitgitgadget@gmail.com>
-
-
-* en/t6426-todo-cleanup (2023-01-13) 1 commit
- - t6426: fix TODO about making test more comprehensive
-
- Test clean-up.
-
- Expecting a reroll.
- cf. <CABPp-BE8O0beOS3=Y5Sh23KMRJGsOqmdHWD=ide4_=Zn5bWSPg@mail.gmail.com>
- source: <pull.1462.git.1673584084761.gitgitgadget@gmail.com>
-
-
-* jc/doc-diff-patch.txt (2023-01-13) 1 commit
- - docs: link generating patch sections
-
- Doc update.
-
- Will merge to 'next'.
- source: <pull.1392.v2.git.git.1673626524221.gitgitgadget@gmail.com>
-
-
-* jk/interop-error (2023-01-13) 1 commit
- - t/interop: report which vanilla git command failed
-
- Test helper improvement.
-
- Will merge to 'next'.
- source: <Y8A3yGeJl0TCDNqe@coredump.intra.peff.net>
-
-
-* pw/rebase-exec-cleanup (2023-01-13) 1 commit
- - rebase: cleanup "--exec" option handling
-
- Code clean-up.
-
- Will merge to 'next'.
- source: <pull.1461.git.1673542201452.gitgitgadget@gmail.com>
-
-
-* sk/merge-filtering-strategies-micro-optim (2023-01-13) 1 commit
- - merge: break out of all_strategy loop when strategy is found
-
- Micro optimization.
-
- Will merge to 'next'.
- source: <pull.1429.v2.git.git.1673285669004.gitgitgadget@gmail.com>
-
-
-* yo/doc-use-more-switch-c (2023-01-13) 1 commit
- - doc: add "git switch -c" as another option on detached HEAD
-
- Doc update.
-
- Will merge to 'next'.
- source: <pull.1422.v2.git.git.1673261237449.gitgitgadget@gmail.com>
-
-
-* zh/scalar-progress (2023-01-13) 2 commits
- - SQUASH???
- - scalar: show progress if stderr refers to a terminal
-
- "scalar" learned to give progress bar.
-
- Will merge to 'next' after squashing the fixlet in?
- source: <pull.1441.v3.git.1673442860379.gitgitgadget@gmail.com>
-
-
-* ab/bisect-cleanup (2023-01-13) 6 commits
- - bisect: no longer try to clean up left-over `.git/head-name` files
- - bisect: remove Cogito-related code
- - bisect run: fix the error message
- - bisect: verify that a bogus option won't try to start a bisection
- - bisect--helper: make the order consistently `argc, argv`
- - bisect--helper: simplify exit code computation
-
- Code clean-up.
-
- Will merge to 'next'.
- source: <cover-v2-0.6-00000000000-20230112T151651Z-avarab@gmail.com>
-
-
-* ms/send-email-feed-header-to-validate-hook (2023-01-13) 2 commits
- - send-email: expose header information to git-send-email's sendemail-validate hook
- - send-email: refactor header generation functions
-
- "git send-email" learned to give the e-mail headers to the validate
- hook by passing an extra argument from the command line.
- source: <20230110211452.2568535-1-michael.strawbridge@amd.com>
-
-
-* tl/ls-tree-code-clean-up (2023-01-13) 6 commits
- - t3104: remove shift code in 'test_ls_tree_format'
- - ls-tree: cleanup the redundant SPACE
- - ls-tree: make "line_termination" less generic
- - ls-tree: fold "show_tree_data" into "cb" struct
- - ls-tree: use a "struct options"
- - ls-tree: don't use "show_tree_data" for "fast" callbacks
-
- Code clean-up.
-
- Will merge to 'next'.
- source: <20230112091135.20050-1-tenglong.tl@alibaba-inc.com>
-
-
-* yc/doc-fetch-fix (2023-01-13) 1 commit
- - doc: fix non-existent config name
-
- Doc fix.
-
- Will merge to 'next'.
- source: <CAEg0tHSZi22RUBREJB=Cfy6O72cicv9FTkgo_Z=gvGRdPK1acw@mail.gmail.com>
-
-
-* jc/ci-deprecated-declarations-are-not-fatal (2023-01-13) 1 commit
- - ci: do not die on deprecated-declarations warning
-
- CI build fix for overzealous -Werror.
-
- Will merge to 'next'?
- source: <xmqqv8l9n5fj.fsf@gitster.g>
+ Will merge to 'next' and then to 'master'.
+ source: <76204710-356a-2a85-9057-302e6619b9df@github.com>
 
 --------------------------------------------------
 [Stalled]
@@ -360,14 +327,193 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
-* ar/dup-words-fixes (2023-01-08) 1 commit
-  (merged to 'next' on 2023-01-09 at 2a5d4537a2)
- + *: fix typos which duplicate a word
+* ab/cache-api-cleanup (2023-01-16) 5 commits
+  (merged to 'next' on 2023-01-16 at a0f388b149)
+ + cache API: add a "INDEX_STATE_INIT" macro/function, add release_index()
+ + read-cache.c: refactor set_new_index_sparsity() for subsequent commit
+ + sparse-index API: BUG() out on NULL ensure_full_index()
+ + sparse-index.c: expand_to_path() can assume non-NULL "istate"
+ + builtin/difftool.c: { 0 }-initialize rather than using memset()
 
- Typofixes.
+ Code clean-up to tighten the use of in-core index in the API.
 
  Will merge to 'master'.
- source: <20230107135655.149892-1-rybak.a.v@gmail.com>
+ source: <cover-v2-0.6-00000000000-20230112T124842Z-avarab@gmail.com>
+
+
+* ab/test-env-helper (2023-01-14) 1 commit
+  (merged to 'next' on 2023-01-16 at 82c17f02e5)
+ + env-helper: move this built-in to "test-tool env-helper"
+
+ Remove "git env--helper" and demote it to a test-tool subcommand.
+
+ Will merge to 'master'.
+ source: <patch-1.1-e662c570f1d-20230112T155226Z-avarab@gmail.com>
+
+
+* ar/bisect-doc-update (2023-01-13) 2 commits
+  (merged to 'next' on 2023-01-14 at df5185519c)
+ + git-bisect-lk2009: update nist report link
+ + git-bisect-lk2009: update java code conventions link
+
+ Doc update.
+
+ Will merge to 'master'.
+ source: <20230110093251.193552-1-rybak.a.v@gmail.com>
+
+
+* ar/test-cleanup (2023-01-13) 3 commits
+  (merged to 'next' on 2023-01-14 at 16d372b65d)
+ + t7527: use test_when_finished in 'case insensitive+preserving'
+ + t6422: drop commented out code
+ + t6003: uncomment test '--max-age=c3, --topo-order'
+
+ Test clean-up.
+
+ Will merge to 'master'.
+ source: <20230111233242.16870-1-rybak.a.v@gmail.com>
+
+
+* en/ls-files-doc-update (2023-01-13) 4 commits
+ - ls-files: guide folks to --exclude-standard over other --exclude* options
+ - ls-files: clarify descriptions of status tags for -t
+ - ls-files: clarify descriptions of file selection options
+ - ls-files: add missing documentation for --resolve-undo option
+
+ Doc update to ls-files.
+
+ Needs review.
+ source: <pull.1463.git.1673584914.gitgitgadget@gmail.com>
+
+
+* en/t6426-todo-cleanup (2023-01-14) 1 commit
+  (merged to 'next' on 2023-01-16 at 7d13842eeb)
+ + t6426: fix TODO about making test more comprehensive
+
+ Test clean-up.
+
+ Will merge to 'master'.
+ source: <pull.1462.v2.git.1673722187025.gitgitgadget@gmail.com>
+
+
+* jc/doc-diff-patch.txt (2023-01-13) 1 commit
+  (merged to 'next' on 2023-01-14 at d25ec1f631)
+ + docs: link generating patch sections
+
+ Doc update.
+
+ Will merge to 'master'.
+ source: <pull.1392.v2.git.git.1673626524221.gitgitgadget@gmail.com>
+
+
+* jk/interop-error (2023-01-13) 1 commit
+  (merged to 'next' on 2023-01-14 at ddca7887a5)
+ + t/interop: report which vanilla git command failed
+
+ Test helper improvement.
+
+ Will merge to 'master'.
+ source: <Y8A3yGeJl0TCDNqe@coredump.intra.peff.net>
+
+
+* pw/rebase-exec-cleanup (2023-01-13) 1 commit
+  (merged to 'next' on 2023-01-14 at 553d0daa62)
+ + rebase: cleanup "--exec" option handling
+
+ Code clean-up.
+
+ Will merge to 'master'.
+ source: <pull.1461.git.1673542201452.gitgitgadget@gmail.com>
+
+
+* sk/merge-filtering-strategies-micro-optim (2023-01-13) 1 commit
+  (merged to 'next' on 2023-01-14 at f171559fae)
+ + merge: break out of all_strategy loop when strategy is found
+
+ Micro optimization.
+
+ Will merge to 'master'.
+ source: <pull.1429.v2.git.git.1673285669004.gitgitgadget@gmail.com>
+
+
+* yo/doc-use-more-switch-c (2023-01-13) 1 commit
+  (merged to 'next' on 2023-01-14 at 7169d5dabc)
+ + doc: add "git switch -c" as another option on detached HEAD
+
+ Doc update.
+
+ Will merge to 'master'.
+ source: <pull.1422.v2.git.git.1673261237449.gitgitgadget@gmail.com>
+
+
+* zh/scalar-progress (2023-01-16) 1 commit
+ - scalar: show progress if stderr refers to a terminal
+
+ "scalar" learned to give progress bar.
+
+ Will merge to 'next'.
+ source: <pull.1441.v3.git.1673442860379.gitgitgadget@gmail.com>
+
+
+* ab/bisect-cleanup (2023-01-13) 6 commits
+  (merged to 'next' on 2023-01-14 at 945b631a1e)
+ + bisect: no longer try to clean up left-over `.git/head-name` files
+ + bisect: remove Cogito-related code
+ + bisect run: fix the error message
+ + bisect: verify that a bogus option won't try to start a bisection
+ + bisect--helper: make the order consistently `argc, argv`
+ + bisect--helper: simplify exit code computation
+
+ Code clean-up.
+
+ Will merge to 'master'.
+ source: <cover-v2-0.6-00000000000-20230112T151651Z-avarab@gmail.com>
+
+
+* ms/send-email-feed-header-to-validate-hook (2023-01-17) 2 commits
+ - send-email: expose header information to git-send-email's sendemail-validate hook
+ - send-email: refactor header generation functions
+
+ "git send-email" learned to give the e-mail headers to the validate
+ hook by passing an extra argument from the command line.
+
+ Under review.
+ source: <20230117142706.230404-1-michael.strawbridge@amd.com>
+
+
+* tl/ls-tree-code-clean-up (2023-01-13) 6 commits
+  (merged to 'next' on 2023-01-14 at f7238037fd)
+ + t3104: remove shift code in 'test_ls_tree_format'
+ + ls-tree: cleanup the redundant SPACE
+ + ls-tree: make "line_termination" less generic
+ + ls-tree: fold "show_tree_data" into "cb" struct
+ + ls-tree: use a "struct options"
+ + ls-tree: don't use "show_tree_data" for "fast" callbacks
+
+ Code clean-up.
+
+ Will merge to 'master'.
+ source: <20230112091135.20050-1-tenglong.tl@alibaba-inc.com>
+
+
+* yc/doc-fetch-fix (2023-01-13) 1 commit
+  (merged to 'next' on 2023-01-14 at a3ca60840b)
+ + doc: fix non-existent config name
+
+ Doc fix.
+
+ Will merge to 'master'.
+ source: <CAEg0tHSZi22RUBREJB=Cfy6O72cicv9FTkgo_Z=gvGRdPK1acw@mail.gmail.com>
+
+
+* jc/ci-deprecated-declarations-are-not-fatal (2023-01-14) 1 commit
+  (merged to 'next' on 2023-01-14 at 5efb778ab0)
+ + ci: do not die on deprecated-declarations warning
+
+ CI build fix for overzealous -Werror.
+
+ Will merge to 'master'.
+ source: <xmqq7cxpkpjp.fsf@gitster.g>
 
 
 * ds/bundle-uri-5 (2023-01-07) 8 commits
@@ -379,7 +525,6 @@ Release tarballs are available at:
  - bundle-uri: parse bundle.<id>.creationToken values
  - bundle-uri: parse bundle.heuristic=creationToken
  - t5558: add tests for creationToken heuristic
- (this branch uses ds/bundle-uri-4.)
 
  The bundle-URI subsystem adds support for creation-token heuristics
  to help incremental fetches.
@@ -404,40 +549,27 @@ Release tarballs are available at:
  source: <Y7l4LsEQcDT9HZ21@coredump.intra.peff.net>
 
 
-* jk/strncmp-to-api-funcs (2023-01-08) 2 commits
-  (merged to 'next' on 2023-01-09 at 47395b7c6f)
- + convert trivial uses of strncmp() to skip_prefix()
- + convert trivial uses of strncmp() to starts_with()
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <Y7lyga5g2leSmWQd@coredump.intra.peff.net>
-
-
 * pb/doc-orig-head (2023-01-13) 5 commits
- - git-rebase.txt: add a note about 'ORIG_HEAD' being overwritten
- - revisions.txt: be explicit about commands writing 'ORIG_HEAD'
- - git-merge.txt: mention 'ORIG_HEAD' in the Description
- - git-reset.txt: mention 'ORIG_HEAD' in the Description
- - git-cherry-pick.txt: do not use 'ORIG_HEAD' in example
+  (merged to 'next' on 2023-01-14 at 0583c146cb)
+ + git-rebase.txt: add a note about 'ORIG_HEAD' being overwritten
+ + revisions.txt: be explicit about commands writing 'ORIG_HEAD'
+ + git-merge.txt: mention 'ORIG_HEAD' in the Description
+ + git-reset.txt: mention 'ORIG_HEAD' in the Description
+ + git-cherry-pick.txt: do not use 'ORIG_HEAD' in example
 
  Document ORIG_HEAD a bit more.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1456.v2.git.1673356521.gitgitgadget@gmail.com>
 
 
-* tc/cat-file-z-use-cquote (2023-01-08) 1 commit
- . cat-file: quote-format name in error when using -z
+* tc/cat-file-z-use-cquote (2023-01-16) 1 commit
+ - cat-file: quote-format name in error when using -z
 
  "cat-file" in the batch mode that is fed NUL-terminated pathnames
  learned to cquote them in its error output (otherwise, a funny
  pathname with LF in it would break the lines in the output stream).
-
- Breaks t1006.
- cf. https://github.com/git/git/actions/runs/3865911497/jobs/6589699288#step:6:1802
- source: <20230105062447.2943709-2-toon@iotcl.com>
+ source: <20230116190749.4141516-1-toon@iotcl.com>
 
 
 * cb/grep-pcre-ucp (2023-01-09) 1 commit
@@ -446,142 +578,79 @@ Release tarballs are available at:
  "grep -P" learned to use Unicode Character Property to grok
  character classes when processing \b and \w etc.
 
- Will merge to 'next'?
+ Still skeptical.
+ cf. <230109.86v8lf297g.gmgdl@evledraar.gmail.com>
  source: <20230108155217.2817-1-carenas@gmail.com>
 
 
 * es/hooks-and-local-env (2023-01-13) 1 commit
- - githooks: discuss Git operations in foreign repositories
+  (merged to 'next' on 2023-01-14 at 93acd89393)
+ + githooks: discuss Git operations in foreign repositories
 
  Doc update for environment variables set when hooks are invoked.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1457.v2.git.1673293508399.gitgitgadget@gmail.com>
 
 
 * ph/parse-date-reduced-precision (2023-01-13) 1 commit
- - date.c: allow ISO 8601 reduced precision times
+  (merged to 'next' on 2023-01-14 at eb83564c3e)
+ + date.c: allow ISO 8601 reduced precision times
 
  Loosen date parsing heuristics.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20230111001003.10916-1-congdanhqx@gmail.com>
 
 
-* pw/ci-print-failure-name-fix (2023-01-04) 1 commit
-  (merged to 'next' on 2023-01-08 at 8bb55c12c7)
- + ci(github): restore "print test failures" step name
-
- (cosmetic) CI regression fix.
-
- Will merge to 'master'.
- source: <pull.1453.git.1672741640587.gitgitgadget@gmail.com>
-
-
 * rs/use-enhanced-bre-on-macos (2023-01-08) 1 commit
- - use enhanced basic regular expressions on macOS
+  (merged to 'next' on 2023-01-16 at 9b80d4253f)
+ + use enhanced basic regular expressions on macOS
 
  Newer regex library macOS stopped enabling GNU-like enhanced BRE,
  where '\(A\|B\)' works as alternation, unless explicitly asked with
  the REG_ENHANCED flag.  "git grep" now can be compiled to do so, to
  retain the old behaviour.
 
- Under discussion.
- cf. <26a0d4ca-3d97-ace4-1a1f-92b1ee6715a6@web.de>
+ Will merge to 'master'.
  source: <26a0d4ca-3d97-ace4-1a1f-92b1ee6715a6@web.de>
 
 
 * cw/submodule-status-in-parallel (2023-01-05) 6 commits
- - submodule: call parallel code from serial status
- - diff-lib: parallelize run_diff_files for submodules
- - diff-lib: refactor match_stat_with_submodule
- - submodule: move status parsing into function
- - submodule: strbuf variable rename
- - run-command: add duplicate_output_fn to run_processes_parallel_opts
+ . submodule: call parallel code from serial status
+ . diff-lib: parallelize run_diff_files for submodules
+ . diff-lib: refactor match_stat_with_submodule
+ . submodule: move status parsing into function
+ . submodule: strbuf variable rename
+ . run-command: add duplicate_output_fn to run_processes_parallel_opts
 
  "git submodule status" learned to run the comparison in submodule
  repositories in parallel.
 
  Needs review.
+ Breaks "linux-leaks" CI job.
+ cf. <xmqqv8l8f8j8.fsf@gitster.g>
  source: <https://lore.kernel.org/git/20221108184200.2813458-1-calvinwan@google.com/>
 
 
-* kn/attr-from-tree (2023-01-13) 2 commits
- - attr: add flag `--source` to work with tree-ish
- - t0003: move setup for `--all` into new block
+* kn/attr-from-tree (2023-01-14) 2 commits
+  (merged to 'next' on 2023-01-16 at 426f357683)
+ + attr: add flag `--source` to work with tree-ish
+ + t0003: move setup for `--all` into new block
 
  "git check-attr" learned to take an optional tree-ish to read the
  .gitattributes file from.
 
- Will merge to 'next'.
- source: <cover.1673521102.git.karthik.188@gmail.com>
-
-
-* ws/single-file-cone (2023-01-05) 1 commit
-  (merged to 'next' on 2023-01-09 at b6d4d7b905)
- + dir: check for single file cone patterns
-
- The logic to see if we are using the "cone" mode by checking the
- sparsity patterns has been tightened to avoid mistaking a pattern
- that names a single file as specifying a cone.
-
  Will merge to 'master'.
- source: <pull.1446.v2.git.1672734059938.gitgitgadget@gmail.com>
+ source: <cover.1673684790.git.karthik.188@gmail.com>
 
 
-* ds/bundle-uri-4 (2023-01-06) 1 commit
-  (merged to 'next' on 2023-01-08 at d5b03bdd48)
- + test-bundle-uri: drop unused variables
- (this branch is used by ds/bundle-uri-5.)
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <Y7fgV5eFx78BHdQ4@coredump.intra.peff.net>
-
-
-* jk/ext-diff-with-relative (2023-01-06) 3 commits
-  (merged to 'next' on 2023-01-08 at 5233a7d3ee)
- + diff: drop "name" parameter from prepare_temp_file()
- + diff: clean up external-diff argv setup
- + diff: use filespec path to set up tempfiles for ext-diff
-
- "git diff --relative" did not mix well with "git diff --ext-diff",
- which has been corrected.
-
- Will merge to 'master'.
- source: <Y7f/YiVu1TgbucDI@coredump.intra.peff.net>
-
-
-* tb/ci-concurrency (2022-11-08) 1 commit
-  (merged to 'next' on 2023-01-08 at ab7cdc20b8)
- + ci: avoid unnecessary builds
-
- Avoid unnecessary builds in CI, with settings configured in
- ci-config.
-
- Will merge to 'master'.
- source: <ff172f1de982f6f79b598e4ac6d5b2964ca4a098.1667931937.git.me@ttaylorr.com>
-
-
-* tr/am--no-verify (2023-01-05) 1 commit
-  (merged to 'next' on 2023-01-08 at 4585013067)
- + am: allow passing --no-verify flag
-
- Conditionally skip the pre-applypatch and applypatch-msg hooks when
- applying patches with 'git am'.
-
- Will merge to 'master'.
- source: <20221130172833.2662751-1-thierry.reding@gmail.com>
-
-
-* ab/various-leak-fixes (2022-12-30) 20 commits
+* ab/various-leak-fixes (2023-01-14) 19 commits
  - push: free_refs() the "local_refs" in set_refspecs()
  - receive-pack: free() the "ref_name" in "struct command"
  - grep API: plug memory leaks by freeing "header_list"
  - grep.c: refactor free_grep_patterns()
  - object-file.c: release the "tag" in check_tag()
- - connected.c: free(new_pack) in check_connected()
  - builtin/merge.c: free "&buf" on "Your local changes..." error
  - builtin/merge.c: always free "struct strbuf msg"
  - show-branch: free() allocated "head" before return
@@ -593,14 +662,14 @@ Release tarballs are available at:
  - name-rev: don't xstrdup() an already dup'd string
  - various: add missing clear_pathspec(), fix leaks
  - clone: use free() instead of UNLEAK()
- - commit-graph: use free() instead of UNLEAK()
+ - commit-graph: use free_commit_graph() instead of UNLEAK()
  - bundle.c: don't leak the "args" in the "struct child_process"
  - tests: mark tests as passing with SANITIZE=leak
 
  Leak fixes.
 
- Expecting a reroll.
- source: <cover-v2-00.20-00000000000-20221230T020341Z-avarab@gmail.com>
+ Will merge to 'next'?
+ source: <cover-v3-00.19-00000000000-20230110T054138Z-avarab@gmail.com>
 
 
 * rj/branch-unborn-in-other-worktrees (2023-01-01) 2 commits
@@ -613,15 +682,16 @@ Release tarballs are available at:
 
 
 * rs/dup-array (2023-01-09) 5 commits
- - use DUP_ARRAY
- - add DUP_ARRAY
- - do full type check in BARF_UNLESS_COPYABLE
- - factor out BARF_UNLESS_COPYABLE
- - mingw: make argv2 in try_shell_exec() non-const
+  (merged to 'next' on 2023-01-14 at 3efbd1ffe0)
+ + use DUP_ARRAY
+ + add DUP_ARRAY
+ + do full type check in BARF_UNLESS_COPYABLE
+ + factor out BARF_UNLESS_COPYABLE
+ + mingw: make argv2 in try_shell_exec() non-const
 
  Code cleaning.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <9bc1bd74-f72c-1b43-df7c-950815babb03@web.de>
  source: <3e04e283-cad0-7be4-d85c-65d0a52289e2@web.de>
 
@@ -643,50 +713,26 @@ Release tarballs are available at:
 
 
 * sk/win32-close-handle-upon-pthread-join (2023-01-04) 2 commits
- - win32: close handles of threads that have been joined
- - win32: prepare pthread.c for change by formatting
+  (merged to 'next' on 2023-01-16 at faa279fd5b)
+ + win32: close handles of threads that have been joined
+ + win32: prepare pthread.c for change by formatting
 
  Pthread emulation on Win32 leaked thread handle when a thread is
  joined.
 
- Will merge to 'next'?
- <source: <pull.1406.v13.git.git.1672762819.gitgitgadget@gmail.com>
-
-
-* ds/omit-trailing-hash-in-index (2023-01-07) 4 commits
-  (merged to 'next' on 2023-01-09 at e17ef56485)
- + features: feature.manyFiles implies fast index writes
- + test-lib-functions: add helper for trailing hash
- + read-cache: add index.skipHash config option
- + hashfile: allow skipping the hash function
-
- Introduce an optional configuration to allow the trailing hash that
- protects the index file from bit flipping.
-
  Will merge to 'master'.
- source: <pull.1439.v5.git.1673022717.gitgitgadget@gmail.com>
-
-
-* es/t1509-root-fixes (2022-12-09) 3 commits
-  (merged to 'next' on 2023-01-08 at c922e34bab)
- + t1509: facilitate repeated script invocations
- + t1509: make "setup" test more robust
- + t1509: fix failing "root work tree" test due to owner-check
-
- Test fixes.
-
- Will merge to 'master'.
- source: <pull.1425.git.1668999621.gitgitgadget@gmail.com>
+ source: <pull.1406.v13.git.git.1672762819.gitgitgadget@gmail.com>
 
 
 * jx/t1301-updates (2022-11-30) 3 commits
- - t1301: do not change $CWD in "shared=all" test case
- - t1301: use test_when_finished for cleanup
- - t1301: fix wrong template dir for git-init
+  (merged to 'next' on 2023-01-14 at d4f081b3f8)
+ + t1301: do not change $CWD in "shared=all" test case
+ + t1301: use test_when_finished for cleanup
+ + t1301: fix wrong template dir for git-init
 
  Test updates.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20221128130323.8914-1-worldhello.net@gmail.com>
 
 
@@ -696,6 +742,8 @@ Release tarballs are available at:
  "git send-email -v 3" used to be expanded to "git send-email
  --validate 3" when the user meant to pass them down to
  "format-patch", which has been corrected.
+
+ Will merge to 'next'?
  source: <87edtp5uws.fsf@kyleam.com>
 
 
@@ -708,7 +756,8 @@ Release tarballs are available at:
  'git worktree add' learned how to create a worktree based on an
  orphaned branch with `--orphan`.
 
- Will merge to 'next'.
+ Expecting a reroll.
+ cf. <11be1b0e-ee38-119f-1d80-cb818946116b@dunelm.org.uk>
  source: <20230109173227.29264-1-jacobabel@nullpo.dev>
 
 
