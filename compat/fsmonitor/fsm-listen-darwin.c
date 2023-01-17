@@ -129,9 +129,9 @@ static int ef_is_root_renamed(const FSEventStreamEventFlags ef)
 
 static int ef_is_dropped(const FSEventStreamEventFlags ef)
 {
-	return (ef & kFSEventStreamEventFlagMustScanSubDirs ||
-		ef & kFSEventStreamEventFlagKernelDropped ||
-		ef & kFSEventStreamEventFlagUserDropped);
+	return (ef & (kFSEventStreamEventFlagMustScanSubDirs |
+		      kFSEventStreamEventFlagKernelDropped |
+		      kFSEventStreamEventFlagUserDropped));
 }
 
 /*
