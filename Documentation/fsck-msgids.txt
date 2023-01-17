@@ -46,6 +46,18 @@
 `fullPathname`::
 	(WARN) A path contains the full path starting with "/".
 
+`gitattributesBlob`::
+	(ERROR) A non-blob found at `.gitattributes`.
+
+`gitattributesLarge`::
+	(ERROR) The `.gitattributes` blob is too large.
+
+`gitattributesLineLength`::
+	(ERROR) The `.gitattributes` blob contains too long lines.
+
+`gitattributesMissing`::
+	(ERROR) Unable to read `.gitattributes` blob.
+
 `gitattributesSymlink`::
 	(INFO) `.gitattributes` is a symlink.
 
