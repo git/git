@@ -222,6 +222,17 @@ test_expect_success 'empty filename in tree' '
 	grep "empty filename in tree entry" err
 '
 
+test_expect_success 'duplicate filename in tree' '
+	hex_oid=$(echo foo | git hash-object --stdin -w) &&
+	bin_oid=$(echo $hex_oid | hex2oct) &&
+	{
+		printf "100644 file\0$bin_oid" &&
+		printf "100644 file\0$bin_oid"
+	} >tree-with-duplicate-filename &&
+	test_must_fail git hash-object -t tree tree-with-duplicate-filename 2>err &&
+	grep "duplicateEntries" err
+'
+
 test_expect_success 'corrupt commit' '
 	test_must_fail git hash-object -t commit --stdin </dev/null
 '
