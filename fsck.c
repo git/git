@@ -1237,19 +1237,26 @@ int fsck_object(struct object *obj, void *data, unsigned long size,
 	if (!obj)
 		return report(options, NULL, OBJ_NONE, FSCK_MSG_BAD_OBJECT_SHA1, "no valid object to fsck");
 
-	if (obj->type == OBJ_BLOB)
-		return fsck_blob(&obj->oid, data, size, options);
-	if (obj->type == OBJ_TREE)
-		return fsck_tree(&obj->oid, data, size, options);
-	if (obj->type == OBJ_COMMIT)
-		return fsck_commit(&obj->oid, data, size, options);
-	if (obj->type == OBJ_TAG)
-		return fsck_tag(&obj->oid, data, size, options);
+	return fsck_buffer(&obj->oid, obj->type, data, size, options);
+}
 
-	return report(options, &obj->oid, obj->type,
+int fsck_buffer(const struct object_id *oid, enum object_type type,
+		void *data, unsigned long size,
+		struct fsck_options *options)
+{
+	if (type == OBJ_BLOB)
+		return fsck_blob(oid, data, size, options);
+	if (type == OBJ_TREE)
+		return fsck_tree(oid, data, size, options);
+	if (type == OBJ_COMMIT)
+		return fsck_commit(oid, data, size, options);
+	if (type == OBJ_TAG)
+		return fsck_tag(oid, data, size, options);
+
+	return report(options, oid, type,
 		      FSCK_MSG_UNKNOWN_TYPE,
 		      "unknown type '%d' (internal fsck error)",
-		      obj->type);
+		      type);
 }
 
 int fsck_error_function(struct fsck_options *o,

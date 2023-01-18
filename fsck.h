@@ -184,6 +184,14 @@ int fsck_object(struct object *obj, void *data, unsigned long size,
 	struct fsck_options *options);
 
 /*
+ * Same as fsck_object(), but for when the caller doesn't have an object
+ * struct.
+ */
+int fsck_buffer(const struct object_id *oid, enum object_type,
+		void *data, unsigned long size,
+		struct fsck_options *options);
+
+/*
  * fsck a tag, and pass info about it back to the caller. This is
  * exposed fsck_object() internals for git-mktag(1).
  */
