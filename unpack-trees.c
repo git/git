@@ -1905,7 +1905,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		populate_from_existing_patterns(o, &pl);
 	}
 
-	index_state_init(&o->result);
+	index_state_init(&o->result, o->src_index->repo);
 	o->result.initialized = 1;
 	o->result.timestamp.sec = o->src_index->timestamp.sec;
 	o->result.timestamp.nsec = o->src_index->timestamp.nsec;

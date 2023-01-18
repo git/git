@@ -367,10 +367,13 @@ struct index_state {
  * If the variable won't be used again, use release_index() to free()
  * its resources. If it needs to be used again use discard_index(),
  * which does the same thing, but will use use index_state_init() at
- * the end.
+ * the end. The discard_index() will use its own "istate->repo" as the
+ * "r" argument to index_state_init() in that case.
  */
-#define INDEX_STATE_INIT { 0 }
-void index_state_init(struct index_state *istate);
+#define INDEX_STATE_INIT(r) { \
+	.repo = (r), \
+}
+void index_state_init(struct index_state *istate, struct repository *r);
 void release_index(struct index_state *istate);
 
 /* Name hashing */
