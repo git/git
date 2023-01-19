@@ -158,7 +158,9 @@ The placeholders are:
 				  Note 2: spaces around the N and M (see below)
 				  values are optional.
 '%<|( <M> )':: make the next placeholder take at least until Mth
-	     display column, padding spaces on the right if necessary
+	     display column, padding spaces on the right if necessary.
+	     Use negative M values for column positions measured
+	     from the right hand edge of the terminal window.
 '%>( <N> )', '%>|( <M> )':: similar to '%<( <N> )', '%<|( <M> )' respectively,
 			but padding spaces on the left
 '%>>( <N> )', '%>>|( <M> )':: similar to '%>( <N> )', '%>|( <M> )'
