@@ -757,7 +757,7 @@ static struct attr_stack *read_attr_from_index(struct index_state *istate,
 	struct attr_stack *res;
 	char *buf, *sp;
 	int lineno = 0;
-	size_t size;
+	unsigned long size;
 
 	if (!istate)
 		return NULL;
