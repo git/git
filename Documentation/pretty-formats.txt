@@ -146,24 +146,27 @@ The placeholders are:
 '%m':: left (`<`), right (`>`) or boundary (`-`) mark
 '%w([<w>[,<i1>[,<i2>]]])':: switch line wrapping, like the -w option of
 			    linkgit:git-shortlog[1].
-'%<(<N>[,trunc|ltrunc|mtrunc])':: make the next placeholder take at
+'%<( <N> [,trunc|ltrunc|mtrunc])':: make the next placeholder take at
 				  least N columns, padding spaces on
 				  the right if necessary.  Optionally
 				  truncate at the beginning (ltrunc),
 				  the middle (mtrunc) or the end
 				  (trunc) if the output is longer than
-				  N columns.  Note that truncating
+				  N columns.
+				  Note 1: that truncating
 				  only works correctly with N >= 2.
-'%<|(<N>)':: make the next placeholder take at least until Nth
+				  Note 2: spaces around the N
+				  values are optional.
+'%<|( <N> )':: make the next placeholder take at least until Nth
 	     columns, padding spaces on the right if necessary
-'%>(<N>)', '%>|(<N>)':: similar to '%<(<N>)', '%<|(<N>)' respectively,
+'%>( <N> )', '%>|( <N> )':: similar to '%<( <N> )', '%<|( <N> )' respectively,
 			but padding spaces on the left
-'%>>(<N>)', '%>>|(<N>)':: similar to '%>(<N>)', '%>|(<N>)'
+'%>>( <N> )', '%>>|( <N> )':: similar to '%>( <N> )', '%>|( <N> )'
 			  respectively, except that if the next
 			  placeholder takes more spaces than given and
 			  there are spaces on its left, use those
 			  spaces
-'%><(<N>)', '%><|(<N>)':: similar to '%<(<N>)', '%<|(<N>)'
+'%><( <N> )', '%><|( <N> )':: similar to '%<( <N> )', '%<|( <N> )'
 			  respectively, but padding both sides
 			  (i.e. the text is centered)
 
