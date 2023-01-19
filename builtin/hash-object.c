@@ -27,6 +27,7 @@ static int hash_literally(struct object_id *oid, int fd, const char *type, unsig
 	else
 		ret = write_object_file_literally(buf.buf, buf.len, type, oid,
 						 flags);
+	close(fd);
 	strbuf_release(&buf);
 	return ret;
 }
