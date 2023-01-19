@@ -157,6 +157,11 @@ The placeholders are:
 				  only works correctly with N >= 2.
 				  Note 2: spaces around the N and M (see below)
 				  values are optional.
+				  Note 3: Emojis and other wide characters
+				  will take two display columns, which may
+				  over-run column boundaries.
+				  Note 4: decomposed character combining marks
+				  may be misplaced at padding boundaries.
 '%<|( <M> )':: make the next placeholder take at least until Mth
 	     display column, padding spaces on the right if necessary.
 	     Use negative M values for column positions measured
