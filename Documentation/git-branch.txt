@@ -123,6 +123,10 @@ OPTIONS
 	points to a valid commit. In combination with
 	`-m` (or `--move`), allow renaming the branch even if the new
 	branch name already exists, the same applies for `-c` (or `--copy`).
++
+Note that 'git branch -f <branchname> [<start-point>]', even with '-f',
+refuses to change an existing branch `<branchname>` that is checked out
+in another worktree linked to the same repository.
 
 -m::
 --move::
