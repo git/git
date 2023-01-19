@@ -149,9 +149,9 @@ The placeholders are:
 '%<( <N> [,trunc|ltrunc|mtrunc])':: make the next placeholder take at
 				  least N column widths, padding spaces on
 				  the right if necessary.  Optionally
-				  truncate at the beginning (ltrunc),
-				  the middle (mtrunc) or the end
-				  (trunc) if the output is longer than
+				  truncate (with ellipsis '..') at the left (ltrunc) `..ft`,
+				  the middle (mtrunc) `mi..le`, or the end
+				  (trunc) `rig..`, if the output is longer than
 				  N columns.
 				  Note 1: that truncating
 				  only works correctly with N >= 2.
