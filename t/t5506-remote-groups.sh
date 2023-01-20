@@ -99,4 +99,13 @@ test_expect_success 'updating remote name updates that remote' '
 	! repo_fetched two
 '
 
+test_expect_success 'updating group in parallel with a duplicate remote does not fail (fetch)' '
+	mark fetch-group-duplicate &&
+	update_repo one &&
+	git config --add remotes.duplicate one &&
+	git config --add remotes.duplicate one &&
+	git -c fetch.parallel=2 remote update duplicate &&
+	repo_fetched one
+'
+
 test_done
