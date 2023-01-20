@@ -1671,23 +1671,6 @@ int oid_object_info(struct repository *r,
 	return type;
 }
 
-static void *read_object(struct repository *r,
-			 const struct object_id *oid, enum object_type *type,
-			 unsigned long *size,
-			 int die_if_corrupt)
-{
-	struct object_info oi = OBJECT_INFO_INIT;
-	void *content;
-	oi.typep = type;
-	oi.sizep = size;
-	oi.contentp = &content;
-
-	if (oid_object_info_extended(r, oid, &oi, die_if_corrupt
-				     ? OBJECT_INFO_DIE_IF_CORRUPT : 0) < 0)
-		return NULL;
-	return content;
-}
-
 int pretend_object_file(void *buf, unsigned long len, enum object_type type,
 			struct object_id *oid)
 {
@@ -1709,25 +1692,25 @@ int pretend_object_file(void *buf, unsigned long len, enum object_type type,
 
 /*
  * This function dies on corrupt objects; the callers who want to
- * deal with them should arrange to call read_object() and give error
- * messages themselves.
+ * deal with them should arrange to call oid_object_info_extended() and give
+ * error messages themselves.
  */
-void *read_object_file_extended(struct repository *r,
-				const struct object_id *oid,
-				enum object_type *type,
-				unsigned long *size,
-				int lookup_replace)
+void *repo_read_object_file(struct repository *r,
+			    const struct object_id *oid,
+			    enum object_type *type,
+			    unsigned long *size)
 {
+	struct object_info oi = OBJECT_INFO_INIT;
+	unsigned flags = OBJECT_INFO_DIE_IF_CORRUPT | OBJECT_INFO_LOOKUP_REPLACE;
 	void *data;
-	const struct object_id *repl = lookup_replace ?
-		lookup_replace_object(r, oid) : oid;
 
-	errno = 0;
-	data = read_object(r, repl, type, size, 1);
-	if (data)
-		return data;
+	oi.typep = type;
+	oi.sizep = size;
+	oi.contentp = &data;
+	if (oid_object_info_extended(r, oid, &oi, flags))
+		return NULL;
 
-	return NULL;
+	return data;
 }
 
 void *read_object_with_reference(struct repository *r,
@@ -2255,6 +2238,7 @@ int force_object_loose(const struct object_id *oid, time_t mtime)
 {
 	void *buf;
 	unsigned long len;
+	struct object_info oi = OBJECT_INFO_INIT;
 	enum object_type type;
 	char hdr[MAX_HEADER_LEN];
 	int hdrlen;
@@ -2262,8 +2246,10 @@ int force_object_loose(const struct object_id *oid, time_t mtime)
 
 	if (has_loose_object(oid))
 		return 0;
-	buf = read_object(the_repository, oid, &type, &len, 0);
-	if (!buf)
+	oi.typep = &type;
+	oi.sizep = &len;
+	oi.contentp = &buf;
+	if (oid_object_info_extended(the_repository, oid, &oi, 0))
 		return error(_("cannot read object for %s"), oid_to_hex(oid));
 	hdrlen = format_object_header(hdr, sizeof(hdr), type, len);
 	ret = write_loose_object(oid, hdr, hdrlen, buf, len, mtime, 0);
