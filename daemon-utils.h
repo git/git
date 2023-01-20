@@ -32,7 +32,7 @@ struct child {
  * live children.
  */
 void add_child(struct child_process *cld, struct sockaddr *addr, socklen_t addrlen,
-	       struct child *firstborn, unsigned int *live_children);
+	       struct child *first_child, unsigned int *live_children);
 
 /*
  * Kill the newest connection from a duplicate IP.
@@ -40,7 +40,7 @@ void add_child(struct child_process *cld, struct sockaddr *addr, socklen_t addrl
  * This function should be called if the number of connections grows
  * past the maximum number of allowed connections.
  */
-void kill_some_child(struct child *firstborn);
+void kill_some_child(struct child *first_child);
 
 /*
  * Check for children that have disconnected and remove them from the
@@ -49,7 +49,7 @@ void kill_some_child(struct child *firstborn);
  * Optionally log the child PID that disconnected by passing a loginfo
  * function.
  */
-void check_dead_children(struct child *firstborn, unsigned int *live_children,
+void check_dead_children(struct child *first_child, unsigned int *live_children,
 			 log_fn loginfo);
 
 #endif

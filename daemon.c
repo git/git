@@ -789,7 +789,7 @@ static int max_connections = 32;
 
 static unsigned int live_children;
 
-static struct child *firstborn;
+static struct child *first_child;
 
 static struct strvec cld_argv = STRVEC_INIT;
 static void handle(int incoming, struct sockaddr *addr, socklen_t addrlen)
@@ -797,9 +797,9 @@ static void handle(int incoming, struct sockaddr *addr, socklen_t addrlen)
 	struct child_process cld = CHILD_PROCESS_INIT;
 
 	if (max_connections && live_children >= max_connections) {
-		kill_some_child(firstborn);
+		kill_some_child(first_child);
 		sleep(1);  /* give it some time to die */
-		check_dead_children(firstborn, &live_children, loginfo);
+		check_dead_children(first_child, &live_children, loginfo);
 		if (live_children >= max_connections) {
 			close(incoming);
 			logerror("Too many children, dropping connection");
@@ -832,7 +832,7 @@ static void handle(int incoming, struct sockaddr *addr, socklen_t addrlen)
 	if (start_command(&cld))
 		logerror("unable to fork");
 	else
-		add_child(&cld, addr, addrlen, firstborn, &live_children);
+		add_child(&cld, addr, addrlen, first_child, &live_children);
 }
 
 static void child_handler(int signo)
@@ -862,7 +862,7 @@ static int service_loop(struct socketlist *socklist)
 	for (;;) {
 		int i;
 
-		check_dead_children(firstborn, &live_children, loginfo);
+		check_dead_children(first_child, &live_children, loginfo);
 
 		if (poll(pfd, socklist->nr, -1) < 0) {
 			if (errno != EINTR) {

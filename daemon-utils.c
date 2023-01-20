@@ -230,44 +230,44 @@ static int addrcmp(const struct sockaddr_storage *s1,
 }
 
 void add_child(struct child_process *cld, struct sockaddr *addr, socklen_t addrlen,
-	       struct child *firstborn , unsigned int *live_children)
+	       struct child *first_child, unsigned int *live_children)
 {
-	struct child *newborn, **cradle;
+	struct child *new_cld, **current;
 
-	CALLOC_ARRAY(newborn, 1);
+	CALLOC_ARRAY(new_cld, 1);
 	(*live_children)++;
-	memcpy(&newborn->cld, cld, sizeof(*cld));
-	memcpy(&newborn->address, addr, addrlen);
-	for (cradle = &firstborn; *cradle; cradle = &(*cradle)->next)
-		if (!addrcmp(&(*cradle)->address, &newborn->address))
+	memcpy(&new_cld->cld, cld, sizeof(*cld));
+	memcpy(&new_cld->address, addr, addrlen);
+	for (current = &first_child; *current; current = &(*current)->next)
+		if (!addrcmp(&(*current)->address, &new_cld->address))
 			break;
-	newborn->next = *cradle;
-	*cradle = newborn;
+	new_cld->next = *current;
+	*current = new_cld;
 }
 
-void kill_some_child(struct child *firstborn)
+void kill_some_child(struct child *first_child)
 {
-	const struct child *blanket, *next;
+	const struct child *current, *next;
 
-	if (!(blanket = firstborn))
+	if (!(current = first_child))
 		return;
 
-	for (; (next = blanket->next); blanket = next)
-		if (!addrcmp(&blanket->address, &next->address)) {
-			kill(blanket->cld.pid, SIGTERM);
+	for (; (next = current->next); current = next)
+		if (!addrcmp(&current->address, &next->address)) {
+			kill(current->cld.pid, SIGTERM);
 			break;
 		}
 }
 
-void check_dead_children(struct child *firstborn, unsigned int *live_children,
+void check_dead_children(struct child *first_child, unsigned int *live_children,
 			 log_fn loginfo)
 {
 	int status;
 	pid_t pid;
 
-	struct child **cradle, *blanket;
-	for (cradle = &firstborn; (blanket = *cradle);)
-		if ((pid = waitpid(blanket->cld.pid, &status, WNOHANG)) > 1) {
+	struct child **ptr, *current;
+	for (ptr = &first_child; (current = *ptr);)
+		if ((pid = waitpid(current->cld.pid, &status, WNOHANG)) > 1) {
 			if (loginfo) {
 				const char *dead = "";
 				if (status)
@@ -277,10 +277,10 @@ void check_dead_children(struct child *firstborn, unsigned int *live_children,
 			}
 
 			/* remove the child */
-			*cradle = blanket->next;
+			*ptr = current->next;
 			(*live_children)--;
-			child_process_clear(&blanket->cld);
-			free(blanket);
+			child_process_clear(&current->cld);
+			free(current);
 		} else
-			cradle = &blanket->next;
+			ptr = &current->next;
 }
