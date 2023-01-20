@@ -323,8 +323,76 @@ done:
 	return result;
 }
 
+static int is_git_request(struct req *req)
+{
+	static regex_t *smart_http_regex;
+	static int initialized;
+
+	if (!initialized) {
+		smart_http_regex = xmalloc(sizeof(*smart_http_regex));
+		/*
+		 * This regular expression matches all dumb and smart HTTP
+		 * requests that are currently in use, and defined in
+		 * Documentation/gitprotocol-http.txt.
+		 *
+		 */
+		if (regcomp(smart_http_regex, "^/(HEAD|info/refs|"
+			    "objects/info/[^/]+|git-(upload|receive)-pack)$",
+			    REG_EXTENDED)) {
+			warning("could not compile smart HTTP regex");
+			smart_http_regex = NULL;
+		}
+		initialized = 1;
+	}
+
+	return smart_http_regex &&
+		!regexec(smart_http_regex, req->uri_path.buf, 0, NULL, 0);
+}
+
+static enum worker_result do__git(struct req *req)
+{
+	const char *ok = "HTTP/1.1 200 OK\r\n";
+	struct child_process cp = CHILD_PROCESS_INIT;
+	int res;
+
+	/*
+	 * Note that we always respond with a 200 OK response even if the
+	 * http-backend process exits with an error. This helper is intended
+	 * only to be used to exercise the HTTP auth handling in the Git client,
+	 * and specifically around authentication (not handled by http-backend).
+	 *
+	 * If we wanted to respond with a more 'valid' HTTP response status then
+	 * we'd need to buffer the output of http-backend, wait for and grok the
+	 * exit status of the process, then write the HTTP status line followed
+	 * by the http-backend output. This is outside of the scope of this test
+	 * helper's use at time of writing.
+	 */
+	if (write(STDOUT_FILENO, ok, strlen(ok)) < 0)
+		return error(_("could not send '%s'"), ok);
+
+	strvec_pushf(&cp.env, "REQUEST_METHOD=%s", req->method);
+	strvec_pushf(&cp.env, "PATH_TRANSLATED=%s", req->uri_path.buf);
+	strvec_push(&cp.env, "SERVER_PROTOCOL=HTTP/1.1");
+	if (req->query_args.len)
+		strvec_pushf(&cp.env, "QUERY_STRING=%s", req->query_args.buf);
+	if (req->content_type)
+		strvec_pushf(&cp.env, "CONTENT_TYPE=%s", req->content_type);
+	if (req->has_content_length)
+		strvec_pushf(&cp.env, "CONTENT_LENGTH=%" PRIuMAX,
+			(uintmax_t)req->content_length);
+	cp.git_cmd = 1;
+	strvec_push(&cp.args, "http-backend");
+	res = run_command(&cp);
+	close(STDOUT_FILENO);
+	close(STDIN_FILENO);
+	return !!res;
+}
+
 static enum worker_result dispatch(struct req *req)
 {
+	if (is_git_request(req))
+		return do__git(req);
+
 	return send_http_error(STDOUT_FILENO, 501, "Not Implemented", -1, NULL,
 			       WR_HANGUP);
 }
