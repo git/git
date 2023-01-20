@@ -146,7 +146,7 @@ static int http_schannel_use_ssl_cainfo;
 
 size_t fread_buffer(char *ptr, size_t eltsize, size_t nmemb, void *buffer_)
 {
-	size_t size = eltsize * nmemb;
+	size_t size = st_mult(eltsize, nmemb);
 	struct buffer *buffer = buffer_;
 
 	if (size > buffer->buf.len - buffer->posn)
@@ -176,7 +176,7 @@ curlioerr ioctl_buffer(CURL *handle, int cmd, void *clientp)
 
 size_t fwrite_buffer(char *ptr, size_t eltsize, size_t nmemb, void *buffer_)
 {
-	size_t size = eltsize * nmemb;
+	size_t size = st_mult(eltsize, nmemb);
 	struct strbuf *buffer = buffer_;
 
 	strbuf_add(buffer, ptr, size);
