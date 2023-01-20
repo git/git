@@ -141,6 +141,9 @@ Fixes since v2.39
    that names a single file as specifying a cone.
    (merge 5842710dc2 ws/single-file-cone later to maint).
 
+ * Deal with a few deprecation warning from cURL library.
+   (merge 6c065f72b8 jk/curl-avoid-deprecated-api later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 77e04b2ed4 rs/t4205-do-not-exit-in-test-script later to maint).
    (merge faebba436e rs/plug-pattern-list-leak-in-lof later to maint).
