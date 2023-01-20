@@ -81,7 +81,52 @@ enum worker_result {
 	 * Close the socket and clean up. Does not imply an error.
 	 */
 	WR_HANGUP = 2,
+
+	/*
+	 * Unexpected request message or error in request parsing.
+	 * Respond with an 400 error. Close the socket and cleanup.
+	 * Exit child-process with a non-zero status.
+	 */
+	WR_CLIENT_ERROR = 3,
 };
+
+/*
+ * Fields from a parsed HTTP request.
+ */
+struct req {
+	struct strbuf start_line;
+
+	const char *method;
+	const char *http_version;
+
+	struct strbuf uri_path;
+	struct strbuf query_args;
+
+	struct string_list header_list;
+	const char *content_type;
+	uintmax_t content_length;
+	unsigned has_content_length:1;
+};
+
+#define REQ__INIT { \
+	.start_line = STRBUF_INIT, \
+	.uri_path = STRBUF_INIT, \
+	.query_args = STRBUF_INIT, \
+	.header_list = STRING_LIST_INIT_NODUP, \
+	.content_type = NULL, \
+	.content_length = 0, \
+	.has_content_length = 0, \
+}
+
+static void req__release(struct req *req)
+{
+	strbuf_release(&req->start_line);
+
+	strbuf_release(&req->uri_path);
+	strbuf_release(&req->query_args);
+
+	string_list_clear(&req->header_list, 0);
+}
 
 static enum worker_result send_http_error(int fd, int http_code,
 					  const char *http_code_name,
@@ -143,8 +188,150 @@ done:
 	return wr;
 }
 
+/*
+ * Read the HTTP request up to the start of the optional message-body.
+ * We do this byte-by-byte because we have keep-alive turned on and
+ * cannot rely on an EOF.
+ *
+ * https://tools.ietf.org/html/rfc7230
+ *
+ * We cannot call die() here because our caller needs to properly
+ * respond to the client and/or close the socket before this
+ * child exits so that the client doesn't get a connection reset
+ * by peer error.
+ */
+static enum worker_result req__read(struct req *req, int fd)
+{
+	struct strbuf h = STRBUF_INIT;
+	struct string_list start_line_fields = STRING_LIST_INIT_DUP;
+	int nr_start_line_fields;
+	const char *uri_target;
+	const char *query;
+	char *hp;
+	const char *hv;
+
+	enum worker_result result = WR_OK;
+
+	/*
+	 * Read line 0 of the request and split it into component parts:
+	 *
+	 *    <method> SP <uri-target> SP <HTTP-version> CRLF
+	 *
+	 */
+	if (strbuf_getwholeline_fd(&req->start_line, fd, '\n') == EOF) {
+		result = WR_HANGUP;
+		goto done;
+	}
+
+	strbuf_trim_trailing_newline(&req->start_line);
+
+	nr_start_line_fields = string_list_split(&start_line_fields,
+						 req->start_line.buf,
+						 ' ', -1);
+	if (nr_start_line_fields != 3) {
+		logerror("could not parse request start-line '%s'",
+			 req->start_line.buf);
+		result = WR_CLIENT_ERROR;
+		goto done;
+	}
+
+	req->method = xstrdup(start_line_fields.items[0].string);
+	req->http_version = xstrdup(start_line_fields.items[2].string);
+
+	uri_target = start_line_fields.items[1].string;
+
+	if (strcmp(req->http_version, "HTTP/1.1")) {
+		logerror("unsupported version '%s' (expecting HTTP/1.1)",
+			 req->http_version);
+		result = WR_CLIENT_ERROR;
+		goto done;
+	}
+
+	query = strchr(uri_target, '?');
+
+	if (query) {
+		strbuf_add(&req->uri_path, uri_target, (query - uri_target));
+		strbuf_trim_trailing_dir_sep(&req->uri_path);
+		strbuf_addstr(&req->query_args, query + 1);
+	} else {
+		strbuf_addstr(&req->uri_path, uri_target);
+		strbuf_trim_trailing_dir_sep(&req->uri_path);
+	}
+
+	/*
+	 * Read the set of HTTP headers into a string-list.
+	 */
+	while (1) {
+		if (strbuf_getwholeline_fd(&h, fd, '\n') == EOF)
+			goto done;
+		strbuf_trim_trailing_newline(&h);
+
+		if (!h.len)
+			goto done; /* a blank line ends the header */
+
+		hp = strbuf_detach(&h, NULL);
+		string_list_append(&req->header_list, hp);
+
+		/* also store common request headers as struct req members */
+		if (skip_iprefix(hp, "Content-Type: ", &hv)) {
+			req->content_type = hv;
+		} else if (skip_iprefix(hp, "Content-Length: ", &hv)) {
+			/*
+			 * Content-Length is always non-negative, but has no
+			 * upper bound according to RFC 7230 (§3.3.2).
+			 */
+			intmax_t len = 0;
+			if (sscanf(hv, "%"PRIdMAX, &len) != 1 || len < 0 ||
+			    len == INTMAX_MAX) {
+				logerror("invalid content-length: '%s'", hv);
+				result = WR_CLIENT_ERROR;
+				goto done;
+			}
+
+			req->content_length = (uintmax_t)len;
+			req->has_content_length = 1;
+		}
+	}
+
+	/*
+	 * We do not attempt to read the <message-body>, if it exists.
+	 * We let our caller read/chunk it in as appropriate.
+	 */
+
+done:
+	string_list_clear(&start_line_fields, 0);
+
+	/*
+	 * This is useful for debugging the request, but very noisy.
+	 */
+	if (trace2_is_enabled()) {
+		struct string_list_item *item;
+		trace2_printf("%s: %s", TR2_CAT, req->start_line.buf);
+		trace2_printf("%s: hver: %s", TR2_CAT, req->http_version);
+		trace2_printf("%s: hmth: %s", TR2_CAT, req->method);
+		trace2_printf("%s: path: %s", TR2_CAT, req->uri_path.buf);
+		trace2_printf("%s: qury: %s", TR2_CAT, req->query_args.buf);
+		if (req->has_content_length)
+			trace2_printf("%s: clen: %"PRIuMAX, TR2_CAT,
+				      req->content_length);
+		if (req->content_type)
+			trace2_printf("%s: ctyp: %s", TR2_CAT, req->content_type);
+		for_each_string_list_item(item, &req->header_list)
+			trace2_printf("%s: hdrs: %s", TR2_CAT, item->string);
+	}
+
+	return result;
+}
+
+static enum worker_result dispatch(struct req *req)
+{
+	return send_http_error(STDOUT_FILENO, 501, "Not Implemented", -1, NULL,
+			       WR_HANGUP);
+}
+
 static enum worker_result worker(void)
 {
+	struct req req = REQ__INIT;
 	char *client_addr = getenv("REMOTE_ADDR");
 	char *client_port = getenv("REMOTE_PORT");
 	enum worker_result wr = WR_OK;
@@ -155,9 +342,20 @@ static enum worker_result worker(void)
 	set_keep_alive(0, logerror);
 
 	while (1) {
-		wr = send_http_error(STDOUT_FILENO, 501, "Not Implemented", -1,
-				     NULL, WR_HANGUP);
+		req__release(&req);
 
+		alarm(timeout);
+		wr = req__read(&req, 0);
+		alarm(0);
+
+		if (wr == WR_CLIENT_ERROR)
+			wr = send_http_error(STDOUT_FILENO, 400, "Bad Request",
+					     -1, NULL, wr);
+
+		if (wr != WR_OK)
+			break;
+
+		wr = dispatch(&req);
 		if (wr != WR_OK)
 			break;
 	}
