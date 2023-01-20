@@ -178,6 +178,10 @@ test_expect_success CURL 'http auth server auth config' '
 		token = reset-tokens:the-only-valid-one
 
 		allowAnonymous = false
+
+		extraHeader = X-Extra-Header: abc
+		extraHeader = X-Extra-Header: 123
+		extraHeader = X-Another: header\twith\twhitespace!
 	EOF
 
 	cat >OUT.expected <<-EOF &&
@@ -185,6 +189,9 @@ test_expect_success CURL 'http auth server auth config' '
 	WWW-Authenticate: with-params foo="replaced" q=1
 	WWW-Authenticate: no-explicit-challenge
 	WWW-Authenticate: reset-tokens
+	X-Extra-Header: abc
+	X-Extra-Header: 123
+	X-Another: header	with	whitespace!
 
 	Error: 401 Unauthorized
 	EOF

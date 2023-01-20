@@ -417,6 +417,7 @@ static int allow_anonymous;
 static struct auth_module **auth_modules = NULL;
 static size_t auth_modules_nr = 0;
 static size_t auth_modules_alloc = 0;
+static struct strvec extra_headers = STRVEC_INIT;
 
 static struct auth_module *get_auth_module(const char *scheme, int create)
 {
@@ -520,6 +521,9 @@ done:
 			string_list_append(&hdrs, challenge);
 		}
 
+		for (i = 0; i < extra_headers.nr; i++)
+			string_list_append(&hdrs, extra_headers.v[i]);
+
 		*wr = send_http_error(STDOUT_FILENO, 401, "Unauthorized", -1,
 				      &hdrs, *wr);
 	}
@@ -585,6 +589,8 @@ static int read_auth_config(const char *name, const char *val, void *data)
 			string_list_clear(mod->tokens, 1);
 	} else if (!strcmp(name, "auth.allowanonymous")) {
 		allow_anonymous = git_config_bool(name, val);
+	} else if (!strcmp(name, "auth.extraheader")) {
+		strvec_push(&extra_headers, val);
 	} else {
 		warning("unknown auth config '%s'", name);
 	}
