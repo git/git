@@ -76,11 +76,75 @@ enum worker_result {
 	 * Exit child-process with non-zero status.
 	 */
 	WR_FATAL_ERROR = 1,
+
+	/*
+	 * Close the socket and clean up. Does not imply an error.
+	 */
+	WR_HANGUP = 2,
 };
+
+static enum worker_result send_http_error(int fd, int http_code,
+					  const char *http_code_name,
+					  int retry_after_seconds,
+					  struct string_list *response_headers,
+					  enum worker_result wr_in)
+{
+	struct strbuf response_header = STRBUF_INIT;
+	struct strbuf response_content = STRBUF_INIT;
+	struct string_list_item *h;
+	enum worker_result wr;
+
+	strbuf_addf(&response_content, "Error: %d %s\r\n", http_code,
+		    http_code_name);
+
+	if (retry_after_seconds > 0)
+		strbuf_addf(&response_content, "Retry-After: %d\r\n",
+			    retry_after_seconds);
+
+	strbuf_addf(&response_header, "HTTP/1.1 %d %s\r\n", http_code,
+		    http_code_name);
+	strbuf_addstr(&response_header, "Cache-Control: private\r\n");
+	strbuf_addstr(&response_header, "Content-Type: text/plain\r\n");
+	strbuf_addf(&response_header, "Content-Length: %"PRIuMAX"\r\n",
+		    (uintmax_t)response_content.len);
+
+	if (retry_after_seconds > 0)
+		strbuf_addf(&response_header, "Retry-After: %d\r\n",
+			    retry_after_seconds);
+
+	strbuf_addf(&response_header, "Server: test-http-server/%s\r\n",
+		    git_version_string);
+	strbuf_addf(&response_header, "Date: %s\r\n", show_date(time(NULL), 0,
+		    DATE_MODE(RFC2822)));
+
+	if (response_headers)
+		for_each_string_list_item(h, response_headers)
+			strbuf_addf(&response_header, "%s\r\n", h->string);
+	strbuf_addstr(&response_header, "\r\n");
+
+	if (write_in_full(fd, response_header.buf, response_header.len) < 0) {
+		logerror("unable to write response header");
+		wr = WR_FATAL_ERROR;
+		goto done;
+	}
+
+	if (write_in_full(fd, response_content.buf, response_content.len) < 0) {
+		logerror("unable to write response content body");
+		wr = WR_FATAL_ERROR;
+		goto done;
+	}
+
+	wr = wr_in;
+
+done:
+	strbuf_release(&response_header);
+	strbuf_release(&response_content);
+
+	return wr;
+}
 
 static enum worker_result worker(void)
 {
-	const char *response = "HTTP/1.1 501 Not Implemented\r\n";
 	char *client_addr = getenv("REMOTE_ADDR");
 	char *client_port = getenv("REMOTE_PORT");
 	enum worker_result wr = WR_OK;
@@ -91,10 +155,8 @@ static enum worker_result worker(void)
 	set_keep_alive(0, logerror);
 
 	while (1) {
-		if (write_in_full(STDOUT_FILENO, response, strlen(response)) < 0) {
-			logerror("unable to write response");
-			wr = WR_FATAL_ERROR;
-		}
+		wr = send_http_error(STDOUT_FILENO, 501, "Not Implemented", -1,
+				     NULL, WR_HANGUP);
 
 		if (wr != WR_OK)
 			break;
@@ -103,8 +165,8 @@ static enum worker_result worker(void)
 	close(STDIN_FILENO);
 	close(STDOUT_FILENO);
 
-	/* Only WR_OK should result in a non-zero exit code */
-	return wr != WR_OK;
+	/* Only WR_OK and WR_HANGUP should result in a non-zero exit code */
+	return wr != WR_OK && wr != WR_HANGUP;
 }
 
 static int max_connections = 32;
