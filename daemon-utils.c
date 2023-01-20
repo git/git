@@ -207,3 +207,80 @@ void socksetup(struct string_list *listen_addr, int listen_port,
 		}
 	}
 }
+
+static int addrcmp(const struct sockaddr_storage *s1,
+    const struct sockaddr_storage *s2)
+{
+	const struct sockaddr *sa1 = (const struct sockaddr*) s1;
+	const struct sockaddr *sa2 = (const struct sockaddr*) s2;
+
+	if (sa1->sa_family != sa2->sa_family)
+		return sa1->sa_family - sa2->sa_family;
+	if (sa1->sa_family == AF_INET)
+		return memcmp(&((struct sockaddr_in *)s1)->sin_addr,
+		    &((struct sockaddr_in *)s2)->sin_addr,
+		    sizeof(struct in_addr));
+#ifndef NO_IPV6
+	if (sa1->sa_family == AF_INET6)
+		return memcmp(&((struct sockaddr_in6 *)s1)->sin6_addr,
+		    &((struct sockaddr_in6 *)s2)->sin6_addr,
+		    sizeof(struct in6_addr));
+#endif
+	return 0;
+}
+
+void add_child(struct child_process *cld, struct sockaddr *addr, socklen_t addrlen,
+	       struct child *firstborn , unsigned int *live_children)
+{
+	struct child *newborn, **cradle;
+
+	CALLOC_ARRAY(newborn, 1);
+	(*live_children)++;
+	memcpy(&newborn->cld, cld, sizeof(*cld));
+	memcpy(&newborn->address, addr, addrlen);
+	for (cradle = &firstborn; *cradle; cradle = &(*cradle)->next)
+		if (!addrcmp(&(*cradle)->address, &newborn->address))
+			break;
+	newborn->next = *cradle;
+	*cradle = newborn;
+}
+
+void kill_some_child(struct child *firstborn)
+{
+	const struct child *blanket, *next;
+
+	if (!(blanket = firstborn))
+		return;
+
+	for (; (next = blanket->next); blanket = next)
+		if (!addrcmp(&blanket->address, &next->address)) {
+			kill(blanket->cld.pid, SIGTERM);
+			break;
+		}
+}
+
+void check_dead_children(struct child *firstborn, unsigned int *live_children,
+			 log_fn loginfo)
+{
+	int status;
+	pid_t pid;
+
+	struct child **cradle, *blanket;
+	for (cradle = &firstborn; (blanket = *cradle);)
+		if ((pid = waitpid(blanket->cld.pid, &status, WNOHANG)) > 1) {
+			if (loginfo) {
+				const char *dead = "";
+				if (status)
+					dead = " (with error)";
+				loginfo("[%"PRIuMAX"] Disconnected%s",
+					(uintmax_t)pid, dead);
+			}
+
+			/* remove the child */
+			*cradle = blanket->next;
+			(*live_children)--;
+			child_process_clear(&blanket->cld);
+			free(blanket);
+		} else
+			cradle = &blanket->next;
+}
