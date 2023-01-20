@@ -101,6 +101,7 @@ per_test_cleanup () {
 	stop_http_server &&
 	rm -f OUT.* &&
 	rm -f IN.* &&
+	rm -f auth.config
 }
 
 test_expect_success 'http auth server request parsing' '
@@ -160,11 +161,51 @@ test_expect_success 'http auth server request parsing' '
 	test_cmp OUT.http400 OUT.actual
 '
 
+test_expect_success CURL 'http auth server auth config' '
+	test_when_finished "per_test_cleanup" &&
+
+	cat >auth.config <<-EOF &&
+	[auth]
+		challenge = no-params
+		challenge = with-params:foo=\"bar\" p=1
+		challenge = with-params:foo=\"replaced\" q=1
+
+		token = no-explicit-challenge:valid-token
+		token = no-explicit-challenge:also-valid
+		token = reset-tokens:these-tokens
+		token = reset-tokens:will-be-reset
+		token = reset-tokens:
+		token = reset-tokens:the-only-valid-one
+
+		allowAnonymous = false
+	EOF
+
+	cat >OUT.expected <<-EOF &&
+	WWW-Authenticate: no-params
+	WWW-Authenticate: with-params foo="replaced" q=1
+	WWW-Authenticate: no-explicit-challenge
+	WWW-Authenticate: reset-tokens
+
+	Error: 401 Unauthorized
+	EOF
+
+	start_http_server --auth-config="$TRASH_DIRECTORY/auth.config" &&
+
+	curl --include $ORIGIN_URL >OUT.curl &&
+	tr -d "\r" <OUT.curl | sed -n "/WWW-Authenticate/,\$p" >OUT.actual &&
+
+	test_cmp OUT.expected OUT.actual
+'
 
 test_expect_success 'http auth anonymous no challenge' '
 	test_when_finished "per_test_cleanup" &&
 
-	start_http_server &&
+	cat >auth.config <<-EOF &&
+	[auth]
+		allowAnonymous = true
+	EOF
+
+	start_http_server --auth-config="$TRASH_DIRECTORY/auth.config" &&
 
 	# Attempt to read from a protected repository
 	git ls-remote $ORIGIN_URL
