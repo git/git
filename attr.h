@@ -45,7 +45,7 @@
  * const char *path;
  *
  * setup_check();
- * git_check_attr(path, check);
+ * git_check_attr(&the_index, tree_oid, path, check);
  * ------------
  *
  * - Act on `.value` member of the result, left in `check->items[]`:
