@@ -493,6 +493,12 @@ static int match_alpha(const char *date, struct tm *tm, int *offset)
 		return 2;
 	}
 
+	/* ISO-8601 allows yyyymmDD'T'HHMMSS, with less precision */
+	if (*date == 'T' && isdigit(date[1]) && tm->tm_hour == -1) {
+		tm->tm_min = tm->tm_sec = 0;
+		return 1;
+	}
+
 	/* BAD CRAP */
 	return skip_alpha(date);
 }
@@ -639,6 +645,18 @@ static inline int nodate(struct tm *tm)
 }
 
 /*
+ * Have we seen an ISO-8601-alike date, i.e. 20220101T0,
+ * In which, hour is still unset,
+ * and minutes and second has been set to 0.
+ */
+static inline int maybeiso8601(struct tm *tm)
+{
+	return tm->tm_hour == -1 &&
+		tm->tm_min == 0 &&
+		tm->tm_sec == 0;
+}
+
+/*
  * We've seen a digit. Time? Year? Date?
  */
 static int match_digit(const char *date, struct tm *tm, int *offset, int *tm_gmt)
@@ -699,6 +717,25 @@ static int match_digit(const char *date, struct tm *tm, int *offset, int *tm_gmt
 			 *end == '.' && isdigit(end[1]))
 			strtoul(end + 1, &end, 10);
 		return end - date;
+	}
+
+	/* reduced precision of ISO-8601's time: HHMM or HH */
+	if (maybeiso8601(tm)) {
+		unsigned int num1 = num;
+		unsigned int num2 = 0;
+		if (n == 4) {
+			num1 = num / 100;
+			num2 = num % 100;
+		}
+		if ((n == 4 || n == 2) && !nodate(tm) &&
+		    set_time(num1, num2, 0, tm) == 0)
+			return n;
+		/*
+		 * We thought this is an ISO-8601 time string,
+		 * we set minutes and seconds to 0,
+		 * turn out it isn't, rollback the change.
+		 */
+		tm->tm_min = tm->tm_sec = -1;
 	}
 
 	/* Four-digit year or a timezone? */
