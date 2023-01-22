@@ -338,7 +338,6 @@ See also INCOMPATIBLE OPTIONS below.
 	upstream changes, the behavior towards them is controlled by
 	the `--empty` flag.)
 +
-
 In the absence of `--keep-base` (or if `--no-reapply-cherry-picks` is
 given), these commits will be automatically dropped.  Because this
 necessitates reading all upstream commits, this can be expensive in
@@ -347,7 +346,6 @@ read. When using the 'merge' backend, warnings will be issued for each
 dropped commit (unless `--quiet` is given). Advice will also be issued
 unless `advice.skippedCherryPicks` is set to false (see
 linkgit:git-config[1]).
-
 +
 `--reapply-cherry-picks` allows rebase to forgo reading all upstream
 commits, potentially improving performance.
