@@ -144,6 +144,12 @@ Fixes since v2.39
  * Deal with a few deprecation warning from cURL library.
    (merge 6c065f72b8 jk/curl-avoid-deprecated-api later to maint).
 
+ * Doc update for environment variables set when hooks are invoked.
+   (merge 772f8ff826 es/hooks-and-local-env later to maint).
+
+ * Document ORIG_HEAD a bit more.
+   (merge f1c9243fc5 pb/doc-orig-head later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 77e04b2ed4 rs/t4205-do-not-exit-in-test-script later to maint).
    (merge faebba436e rs/plug-pattern-list-leak-in-lof later to maint).
@@ -165,3 +171,9 @@ Fixes since v2.39
    (merge 27875aeec9 km/doc-branch-start-point later to maint).
    (merge 35c194dc57 es/t1509-root-fixes later to maint).
    (merge 7b341645e3 pw/ci-print-failure-name-fix later to maint).
+   (merge bcb71d45bf jx/t1301-updates later to maint).
+   (merge ebdc46c242 jc/doc-diff-patch.txt later to maint).
+   (merge a87a20cbb4 ar/test-cleanup later to maint).
+   (merge f5156f1885 ar/bisect-doc-update later to maint).
+   (merge fca2d86c97 jk/interop-error later to maint).
+   (merge cf4936ed74 tl/ls-tree-code-clean-up later to maint).
