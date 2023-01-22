@@ -20,7 +20,6 @@ test_ls_tree_format () {
 	format=$1 &&
 	opts=$2 &&
 	fmtopts=$3 &&
-	shift 2 &&
 
 	test_expect_success "ls-tree '--format=<$format>' is like options '$opts $fmtopts'" '
 		git ls-tree $opts -r HEAD >expect &&
