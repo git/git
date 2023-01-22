@@ -208,6 +208,39 @@ Alternatively, you can undo the 'git rebase' with
 
     git rebase --abort
 
+MODE OPTIONS
+------------
+
+The options in this section cannot be used with any other option,
+including not with each other:
+
+--continue::
+	Restart the rebasing process after having resolved a merge conflict.
+
+--skip::
+	Restart the rebasing process by skipping the current patch.
+
+--abort::
+	Abort the rebase operation and reset HEAD to the original
+	branch. If `<branch>` was provided when the rebase operation was
+	started, then `HEAD` will be reset to `<branch>`. Otherwise `HEAD`
+	will be reset to where it was when the rebase operation was
+	started.
+
+--quit::
+	Abort the rebase operation but `HEAD` is not reset back to the
+	original branch. The index and working tree are also left
+	unchanged as a result. If a temporary stash entry was created
+	using `--autostash`, it will be saved to the stash list.
+
+--edit-todo::
+	Edit the todo list during an interactive rebase.
+
+--show-current-patch::
+	Show the current patch in an interactive rebase or when rebase
+	is stopped because of conflicts. This is the equivalent of
+	`git show REBASE_HEAD`.
+
 OPTIONS
 -------
 --onto <newbase>::
@@ -248,22 +281,6 @@ See also INCOMPATIBLE OPTIONS below.
 
 <branch>::
 	Working branch; defaults to `HEAD`.
-
---continue::
-	Restart the rebasing process after having resolved a merge conflict.
-
---abort::
-	Abort the rebase operation and reset HEAD to the original
-	branch. If `<branch>` was provided when the rebase operation was
-	started, then `HEAD` will be reset to `<branch>`. Otherwise `HEAD`
-	will be reset to where it was when the rebase operation was
-	started.
-
---quit::
-	Abort the rebase operation but `HEAD` is not reset back to the
-	original branch. The index and working tree are also left
-	unchanged as a result. If a temporary stash entry was created
-	using `--autostash`, it will be saved to the stash list.
 
 --apply::
 	Use applying strategies to rebase (calling `git-am`
@@ -344,17 +361,6 @@ See also INCOMPATIBLE OPTIONS below.
 	message do not cause rebasing to halt.
 +
 See also INCOMPATIBLE OPTIONS below.
-
---skip::
-	Restart the rebasing process by skipping the current patch.
-
---edit-todo::
-	Edit the todo list during an interactive rebase.
-
---show-current-patch::
-	Show the current patch in an interactive rebase or when rebase
-	is stopped because of conflicts. This is the equivalent of
-	`git show REBASE_HEAD`.
 
 -m::
 --merge::
@@ -651,7 +657,6 @@ are incompatible with the following options:
  * --no-keep-empty
  * --empty=
  * --[no-]reapply-cherry-picks
- * --edit-todo
  * --update-refs
  * --root when used without --onto
 
