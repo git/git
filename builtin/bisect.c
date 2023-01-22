@@ -15,7 +15,6 @@ static GIT_PATH_FUNC(git_path_bisect_expected_rev, "BISECT_EXPECTED_REV")
 static GIT_PATH_FUNC(git_path_bisect_ancestors_ok, "BISECT_ANCESTORS_OK")
 static GIT_PATH_FUNC(git_path_bisect_start, "BISECT_START")
 static GIT_PATH_FUNC(git_path_bisect_log, "BISECT_LOG")
-static GIT_PATH_FUNC(git_path_head_name, "head-name")
 static GIT_PATH_FUNC(git_path_bisect_names, "BISECT_NAMES")
 static GIT_PATH_FUNC(git_path_bisect_first_parent, "BISECT_FIRST_PARENT")
 static GIT_PATH_FUNC(git_path_bisect_run, "BISECT_RUN")
@@ -678,7 +677,8 @@ static enum bisect_error bisect_auto_next(struct bisect_terms *terms, const char
 	return bisect_next(terms, prefix);
 }
 
-static enum bisect_error bisect_start(struct bisect_terms *terms, const char **argv, int argc)
+static enum bisect_error bisect_start(struct bisect_terms *terms, int argc,
+				      const char **argv)
 {
 	int no_checkout = 0;
 	int first_parent_only = 0;
@@ -807,13 +807,6 @@ static enum bisect_error bisect_start(struct bisect_terms *terms, const char **a
 			strbuf_addstr(&start_head, oid_to_hex(&head_oid));
 		} else if (!get_oid(head, &head_oid) &&
 			   skip_prefix(head, "refs/heads/", &head)) {
-			/*
-			 * This error message should only be triggered by
-			 * cogito usage, and cogito users should understand
-			 * it relates to cg-seek.
-			 */
-			if (!is_empty_or_missing_file(git_path_head_name()))
-				return error(_("won't bisect on cg-seek'ed tree"));
 			strbuf_addstr(&start_head, head);
 		} else {
 			return error(_("bad HEAD - strange symbolic ref"));
@@ -908,13 +901,13 @@ static int bisect_autostart(struct bisect_terms *terms)
 	yesno = git_prompt(_("Do you want me to do it for you "
 			     "[Y/n]? "), PROMPT_ECHO);
 	res = tolower(*yesno) == 'n' ?
-		-1 : bisect_start(terms, empty_strvec, 0);
+		-1 : bisect_start(terms, 0, empty_strvec);
 
 	return res;
 }
 
-static enum bisect_error bisect_state(struct bisect_terms *terms, const char **argv,
-				      int argc)
+static enum bisect_error bisect_state(struct bisect_terms *terms, int argc,
+				      const char **argv)
 {
 	const char *state;
 	int i, verify_expected = 1;
@@ -1033,7 +1026,7 @@ static int process_replay_line(struct bisect_terms *terms, struct strbuf *line)
 		struct strvec argv = STRVEC_INIT;
 		int res;
 		sq_dequote_to_strvec(rev, &argv);
-		res = bisect_start(terms, argv.v, argv.nr);
+		res = bisect_start(terms, argv.nr, argv.v);
 		strvec_clear(&argv);
 		return res;
 	}
@@ -1083,7 +1076,8 @@ static enum bisect_error bisect_replay(struct bisect_terms *terms, const char *f
 	return bisect_auto_next(terms, NULL);
 }
 
-static enum bisect_error bisect_skip(struct bisect_terms *terms, const char **argv, int argc)
+static enum bisect_error bisect_skip(struct bisect_terms *terms, int argc,
+				     const char **argv)
 {
 	int i;
 	enum bisect_error res;
@@ -1113,13 +1107,14 @@ static enum bisect_error bisect_skip(struct bisect_terms *terms, const char **ar
 			strvec_push(&argv_state, argv[i]);
 		}
 	}
-	res = bisect_state(terms, argv_state.v, argv_state.nr);
+	res = bisect_state(terms, argv_state.nr, argv_state.v);
 
 	strvec_clear(&argv_state);
 	return res;
 }
 
-static int bisect_visualize(struct bisect_terms *terms, const char **argv, int argc)
+static int bisect_visualize(struct bisect_terms *terms, int argc,
+			    const char **argv)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	struct strbuf sb = STRBUF_INIT;
@@ -1202,7 +1197,7 @@ static int verify_good(const struct bisect_terms *terms, const char *command)
 	return rc;
 }
 
-static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
+static int bisect_run(struct bisect_terms *terms, int argc, const char **argv)
 {
 	int res = BISECT_OK;
 	struct strbuf command = STRBUF_INIT;
@@ -1271,7 +1266,7 @@ static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
 		saved_stdout = dup(1);
 		dup2(temporary_stdout_fd, 1);
 
-		res = bisect_state(terms, &new_state, 1);
+		res = bisect_state(terms, 1, &new_state);
 
 		fflush(stdout);
 		dup2(saved_stdout, 1);
@@ -1289,7 +1284,7 @@ static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
 			puts(_("bisect found first bad commit"));
 			res = BISECT_OK;
 		} else if (res) {
-			error(_("bisect run failed: 'bisect-state %s'"
+			error(_("bisect run failed: 'git bisect %s'"
 				" exited with error code %d"), new_state, res);
 		} else {
 			continue;
@@ -1328,7 +1323,7 @@ static int cmd_bisect__start(int argc, const char **argv, const char *prefix UNU
 	struct bisect_terms terms = { 0 };
 
 	set_terms(&terms, "bad", "good");
-	res = bisect_start(&terms, argv, argc);
+	res = bisect_start(&terms, argc, argv);
 	free_terms(&terms);
 	return res;
 }
@@ -1372,7 +1367,7 @@ static int cmd_bisect__skip(int argc, const char **argv, const char *prefix UNUS
 
 	set_terms(&terms, "bad", "good");
 	get_terms(&terms);
-	res = bisect_skip(&terms, argv, argc);
+	res = bisect_skip(&terms, argc, argv);
 	free_terms(&terms);
 	return res;
 }
@@ -1383,7 +1378,7 @@ static int cmd_bisect__visualize(int argc, const char **argv, const char *prefix
 	struct bisect_terms terms = { 0 };
 
 	get_terms(&terms);
-	res = bisect_visualize(&terms, argv, argc);
+	res = bisect_visualize(&terms, argc, argv);
 	free_terms(&terms);
 	return res;
 }
@@ -1396,7 +1391,7 @@ static int cmd_bisect__run(int argc, const char **argv, const char *prefix UNUSE
 	if (!argc)
 		return error(_("'%s' failed: no command provided."), "git bisect run");
 	get_terms(&terms);
-	res = bisect_run(&terms, argv, argc);
+	res = bisect_run(&terms, argc, argv);
 	free_terms(&terms);
 	return res;
 }
@@ -1432,7 +1427,7 @@ int cmd_bisect(int argc, const char **argv, const char *prefix)
 		if (check_and_set_terms(&terms, argv[0]))
 			usage_msg_optf(_("unknown command: '%s'"), git_bisect_usage,
 				       options, argv[0]);
-		res = bisect_state(&terms, argv, argc);
+		res = bisect_state(&terms, argc, argv);
 		free_terms(&terms);
 	} else {
 		argc--;
@@ -1440,12 +1435,5 @@ int cmd_bisect(int argc, const char **argv, const char *prefix)
 		res = fn(argc, argv, prefix);
 	}
 
-	/*
-	 * Handle early success
-	 * From check_merge_bases > check_good_are_ancestors_of_bad > bisect_next_all
-	 */
-	if ((res == BISECT_INTERNAL_SUCCESS_MERGE_BASE) || (res == BISECT_INTERNAL_SUCCESS_1ST_BAD_FOUND))
-		res = BISECT_OK;
-
-	return -res;
+	return is_bisect_success(res) ? 0 : -res;
 }
