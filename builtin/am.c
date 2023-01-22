@@ -1492,8 +1492,7 @@ static int run_apply(const struct am_state *state, const char *index_file)
 	 * apply_opts.v keeps referencing the allocated strings for
 	 * strvec_clear() to release.
 	 */
-	ALLOC_ARRAY(apply_argv, apply_opts.nr);
-	COPY_ARRAY(apply_argv, apply_opts.v, apply_opts.nr);
+	DUP_ARRAY(apply_argv, apply_opts.v, apply_opts.nr);
 
 	opts_left = apply_parse_options(apply_opts.nr, apply_argv,
 					&apply_state, &force_apply, &options,

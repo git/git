@@ -94,3 +94,10 @@ expression n != 1;
 @@
 - ptr = xcalloc(n, \( sizeof(*ptr) \| sizeof(T) \) )
 + CALLOC_ARRAY(ptr, n)
+
+@@
+expression dst, src, n;
+@@
+-ALLOC_ARRAY(dst, n);
+-COPY_ARRAY(dst, src, n);
++DUP_ARRAY(dst, src, n);
