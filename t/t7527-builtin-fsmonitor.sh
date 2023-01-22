@@ -910,7 +910,7 @@ test_expect_success "submodule absorbgitdirs implicitly starts daemon" '
 # the file/directory.
 #
 test_expect_success CASE_INSENSITIVE_FS 'case insensitive+preserving' '
-#	test_when_finished "stop_daemon_delete_repo test_insensitive" &&
+	test_when_finished "stop_daemon_delete_repo test_insensitive" &&
 
 	git init test_insensitive &&
 
