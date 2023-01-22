@@ -65,6 +65,10 @@ test_rebase_am_only () {
 		test_must_fail git rebase $opt --update-refs A
 	"
 
+	test_expect_success "$opt incompatible with --root without --onto" "
+		git checkout B^0 &&
+		test_must_fail git rebase $opt --root A
+	"
 }
 
 # Check options which imply --apply
