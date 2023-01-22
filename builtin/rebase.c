@@ -1225,6 +1225,26 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			options.fork_point = 0;
 	}
 	/*
+	 * The apply backend does not support --[no-]reapply-cherry-picks.
+	 * The behavior it implements by default is equivalent to
+	 * --no-reapply-cherry-picks (due to passing --cherry-picks to
+	 * format-patch), but --keep-base alters the upstream such that no
+	 * cherry-picks can be found (effectively making it act like
+	 * --reapply-cherry-picks).
+	 *
+	 * Now, if the user does specify --[no-]reapply-cherry-picks, but
+	 * does so in such a way that options.reapply_cherry_picks ==
+	 * keep_base, then the behavior they get will match what they
+	 * expect despite options.reapply_cherry_picks being ignored.  We
+	 * could just allow the flag in that case, but it seems better to
+	 * just alert the user that they've specified a flag that the
+	 * backend ignores.
+	 */
+	if (options.reapply_cherry_picks >= 0)
+		imply_merge(&options, options.reapply_cherry_picks ? "--reapply-cherry-picks" :
+								     "--no-reapply-cherry-picks");
+
+	/*
 	 * --keep-base defaults to --reapply-cherry-picks to avoid losing
 	 * commits when using this option.
 	 */
@@ -1406,13 +1426,6 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	if (options.empty != EMPTY_UNSPECIFIED)
 		imply_merge(&options, "--empty");
 
-	/*
-	 * --keep-base implements --reapply-cherry-picks by altering upstream so
-	 * it works with both backends.
-	 */
-	if (options.reapply_cherry_picks && !keep_base)
-		imply_merge(&options, "--reapply-cherry-picks");
-
 	if (gpg_sign)
 		options.gpg_sign_opt = xstrfmt("-S%s", gpg_sign);
 
@@ -1502,6 +1515,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	if (options.update_refs)
 		imply_merge(&options, "--update-refs");
+
+	if (options.autosquash)
+		imply_merge(&options, "--autosquash");
 
 	if (options.type == REBASE_UNSPECIFIED) {
 		if (!strcmp(options.default_backend, "merge"))
