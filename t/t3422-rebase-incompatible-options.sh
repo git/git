@@ -94,6 +94,30 @@ test_rebase_am_only () {
 		git checkout B^0 &&
 		test_must_fail git rebase $opt --root A
 	"
+
+	test_expect_success "$opt incompatible with rebase.autosquash" "
+		git checkout B^0 &&
+		test_must_fail git -c rebase.autosquash=true rebase $opt A 2>err &&
+		grep -e --no-autosquash err
+	"
+
+	test_expect_success "$opt incompatible with rebase.updateRefs" "
+		git checkout B^0 &&
+		test_must_fail git -c rebase.updateRefs=true rebase $opt A 2>err &&
+		grep -e --no-update-refs err
+	"
+
+	test_expect_success "$opt okay with overridden rebase.autosquash" "
+		test_when_finished \"git reset --hard B^0\" &&
+		git checkout B^0 &&
+		git -c rebase.autosquash=true rebase --no-autosquash $opt A
+	"
+
+	test_expect_success "$opt okay with overridden rebase.updateRefs" "
+		test_when_finished \"git reset --hard B^0\" &&
+		git checkout B^0 &&
+		git -c rebase.updateRefs=true rebase --no-update-refs $opt A
+	"
 }
 
 # Check options which imply --apply
