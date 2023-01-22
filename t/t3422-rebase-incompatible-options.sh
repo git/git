@@ -25,11 +25,11 @@ test_expect_success 'setup' '
 '
 
 #
-# Rebase has lots of useful options like --whitepsace=fix, which are
-# actually all built in terms of flags to git-am.  Since neither
-# --merge nor --interactive (nor any options that imply those two) use
-# git-am, using them together will result in flags like --whitespace=fix
-# being ignored.  Make sure rebase warns the user and aborts instead.
+# Rebase has a couple options which are specific to the apply backend,
+# and several options which are specific to the merge backend.  Flags
+# from the different sets cannot work together, and we do not want to
+# just ignore one of the sets of flags.  Make sure rebase warns the
+# user and aborts instead.
 #
 
 test_rebase_am_only () {
@@ -58,6 +58,11 @@ test_rebase_am_only () {
 	test_expect_success "$opt incompatible with --exec" "
 		git checkout B^0 &&
 		test_must_fail git rebase $opt --exec 'true' A
+	"
+
+	test_expect_success "$opt incompatible with --update-refs" "
+		git checkout B^0 &&
+		test_must_fail git rebase $opt --update-refs A
 	"
 
 }
