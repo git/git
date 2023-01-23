@@ -2300,12 +2300,12 @@ static void set_new_index_sparsity(struct index_state *istate)
 	 * If the index's repo exists, mark it sparse according to
 	 * repo settings.
 	 */
-	if (istate->repo) {
-		prepare_repo_settings(istate->repo);
-		if (!istate->repo->settings.command_requires_full_index &&
-		    is_sparse_index_allowed(istate, 0))
-			istate->sparse_index = 1;
-	}
+	if (!istate->repo)
+		return;
+	prepare_repo_settings(istate->repo);
+	if (!istate->repo->settings.command_requires_full_index &&
+	    is_sparse_index_allowed(istate, 0))
+		istate->sparse_index = 1;
 }
 
 /* remember to discard_cache() before reading a different cache! */
@@ -2498,9 +2498,10 @@ int read_index_from(struct index_state *istate, const char *path,
 
 	trace_performance_enter();
 	if (split_index->base)
-		discard_index(split_index->base);
+		release_index(split_index->base);
 	else
-		CALLOC_ARRAY(split_index->base, 1);
+		ALLOC_ARRAY(split_index->base, 1);
+	index_state_init(split_index->base);
 
 	base_oid_hex = oid_to_hex(&split_index->base_oid);
 	base_path = xstrfmt("%s/sharedindex.%s", gitdir, base_oid_hex);
@@ -2539,7 +2540,13 @@ int is_index_unborn(struct index_state *istate)
 	return (!istate->cache_nr && !istate->timestamp.sec);
 }
 
-void discard_index(struct index_state *istate)
+void index_state_init(struct index_state *istate)
+{
+	struct index_state blank = INDEX_STATE_INIT;
+	memcpy(istate, &blank, sizeof(*istate));
+}
+
+void release_index(struct index_state *istate)
 {
 	/*
 	 * Cache entries in istate->cache[] should have been allocated
@@ -2551,20 +2558,12 @@ void discard_index(struct index_state *istate)
 	validate_cache_entries(istate);
 
 	resolve_undo_clear_index(istate);
-	istate->cache_nr = 0;
-	istate->cache_changed = 0;
-	istate->timestamp.sec = 0;
-	istate->timestamp.nsec = 0;
 	free_name_hash(istate);
 	cache_tree_free(&(istate->cache_tree));
-	istate->initialized = 0;
-	istate->fsmonitor_has_run_once = 0;
-	FREE_AND_NULL(istate->fsmonitor_last_update);
-	FREE_AND_NULL(istate->cache);
-	istate->cache_alloc = 0;
+	free(istate->fsmonitor_last_update);
+	free(istate->cache);
 	discard_split_index(istate);
 	free_untracked_cache(istate->untracked);
-	istate->untracked = NULL;
 
 	if (istate->sparse_checkout_patterns) {
 		clear_pattern_list(istate->sparse_checkout_patterns);
@@ -2575,6 +2574,12 @@ void discard_index(struct index_state *istate)
 		mem_pool_discard(istate->ce_mem_pool, should_validate_cache_entries());
 		FREE_AND_NULL(istate->ce_mem_pool);
 	}
+}
+
+void discard_index(struct index_state *istate)
+{
+	release_index(istate);
+	index_state_init(istate);
 }
 
 /*
