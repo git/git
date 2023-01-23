@@ -35,6 +35,11 @@ UI, Workflows & Features
  * Introduce an optional configuration to allow the trailing hash that
    protects the index file from bit flipping.
 
+ * "git check-attr" learned to take an optional tree-ish to read the
+   .gitattributes file from.
+
+ * "scalar" learned to give progress bar.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -150,6 +155,23 @@ Fixes since v2.39
  * Document ORIG_HEAD a bit more.
    (merge f1c9243fc5 pb/doc-orig-head later to maint).
 
+ * "git ls-tree --format='%(path) %(path)' $tree $path" showed the
+   path three times, which has been corrected.
+   (merge c388fcda99 rs/ls-tree-path-expansion-fix later to maint).
+
+ * Remove "git env--helper" and demote it to a test-tool subcommand.
+   (merge 4a1baacd46 ab/test-env-helper later to maint).
+
+ * Newer regex library macOS stopped enabling GNU-like enhanced BRE,
+   where '\(A\|B\)' works as alternation, unless explicitly asked with
+   the REG_ENHANCED flag.  "git grep" now can be compiled to do so, to
+   retain the old behaviour.
+   (merge 54463d32ef rs/use-enhanced-bre-on-macos later to maint).
+
+ * Pthread emulation on Win32 leaked thread handle when a thread is
+   joined.
+   (merge 238a9dfe86 sk/win32-close-handle-upon-pthread-join later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 77e04b2ed4 rs/t4205-do-not-exit-in-test-script later to maint).
    (merge faebba436e rs/plug-pattern-list-leak-in-lof later to maint).
@@ -177,3 +199,5 @@ Fixes since v2.39
    (merge f5156f1885 ar/bisect-doc-update later to maint).
    (merge fca2d86c97 jk/interop-error later to maint).
    (merge cf4936ed74 tl/ls-tree-code-clean-up later to maint).
+   (merge dcb47e52b0 en/t6426-todo-cleanup later to maint).
+   (merge 5b8db44bdd jc/format-patch-v-unleak later to maint).
