@@ -263,7 +263,7 @@ tag guten tag
 This is an invalid tag.
 EOF
 
-	tag=$(git hash-object -t tag -w --stdin <wrong-tag) &&
+	tag=$(git hash-object -t tag -w --stdin --literally <wrong-tag) &&
 	pack1=$(echo $tag $sha | git pack-objects tag-test) &&
 	echo remove tag object &&
 	thirtyeight=${tag#??} &&

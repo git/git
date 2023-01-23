@@ -373,7 +373,7 @@ EOF
 
 test_expect_success 'cope with tagger-less tags' '
 
-	TAG=$(git hash-object -t tag -w tag-content) &&
+	TAG=$(git hash-object --literally -t tag -w tag-content) &&
 	git update-ref refs/tags/sonnenschein $TAG &&
 	git fast-export -C -C --signed-tags=strip --all > output &&
 	test $(grep -c "^tag " output) = 4 &&

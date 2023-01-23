@@ -606,7 +606,7 @@ test_expect_success 'create tag without tagger' '
 	git tag -a -m "Broken tag" taggerless &&
 	git tag -f taggerless $(git cat-file tag taggerless |
 		sed -e "/^tagger /d" |
-		git hash-object --stdin -w -t tag)
+		git hash-object --literally --stdin -w -t tag)
 '
 
 test_atom refs/tags/taggerless type 'commit'

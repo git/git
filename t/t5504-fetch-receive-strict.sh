@@ -138,7 +138,7 @@ This commit object intentionally broken
 EOF
 
 test_expect_success 'setup bogus commit' '
-	commit="$(git hash-object -t commit -w --stdin <bogus-commit)"
+	commit="$(git hash-object --literally -t commit -w --stdin <bogus-commit)"
 '
 
 test_expect_success 'fsck with no skipList input' '
