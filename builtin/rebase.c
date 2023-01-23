@@ -122,6 +122,8 @@ struct rebase_options {
 	int reapply_cherry_picks;
 	int fork_point;
 	int update_refs;
+	int config_autosquash;
+	int config_update_refs;
 };
 
 #define REBASE_OPTIONS_INIT {			  	\
@@ -134,6 +136,12 @@ struct rebase_options {
 		.exec = STRING_LIST_INIT_NODUP,		\
 		.git_format_patch_opt = STRBUF_INIT,	\
 		.fork_point = -1,			\
+		.reapply_cherry_picks = -1,             \
+		.allow_empty_message = 1,               \
+		.autosquash = -1,                       \
+		.config_autosquash = -1,                \
+		.update_refs = -1,                      \
+		.config_update_refs = -1,               \
 	}
 
 static struct replay_opts get_replay_opts(const struct rebase_options *opts)
@@ -776,7 +784,7 @@ static int rebase_config(const char *var, const char *value, void *data)
 	}
 
 	if (!strcmp(var, "rebase.autosquash")) {
-		opts->autosquash = git_config_bool(var, value);
+		opts->config_autosquash = git_config_bool(var, value);
 		return 0;
 	}
 
@@ -793,7 +801,7 @@ static int rebase_config(const char *var, const char *value, void *data)
 	}
 
 	if (!strcmp(var, "rebase.updaterefs")) {
-		opts->update_refs = git_config_bool(var, value);
+		opts->config_update_refs = git_config_bool(var, value);
 		return 0;
 	}
 
@@ -907,6 +915,9 @@ static int parse_opt_am(const struct option *opt, const char *arg, int unset)
 	BUG_ON_OPT_NEG(unset);
 	BUG_ON_OPT_ARG(arg);
 
+	if (opts->type != REBASE_UNSPECIFIED && opts->type != REBASE_APPLY)
+	    die(_("apply options and merge options cannot be used together"));
+
 	opts->type = REBASE_APPLY;
 
 	return 0;
@@ -920,8 +931,10 @@ static int parse_opt_merge(const struct option *opt, const char *arg, int unset)
 	BUG_ON_OPT_NEG(unset);
 	BUG_ON_OPT_ARG(arg);
 
-	if (!is_merge(opts))
-		opts->type = REBASE_MERGE;
+	if (opts->type != REBASE_UNSPECIFIED && opts->type != REBASE_MERGE)
+	    die(_("apply options and merge options cannot be used together"));
+
+	opts->type = REBASE_MERGE;
 
 	return 0;
 }
@@ -934,6 +947,9 @@ static int parse_opt_interactive(const struct option *opt, const char *arg,
 
 	BUG_ON_OPT_NEG(unset);
 	BUG_ON_OPT_ARG(arg);
+
+	if (opts->type != REBASE_UNSPECIFIED && opts->type != REBASE_MERGE)
+	    die(_("apply options and merge options cannot be used together"));
 
 	opts->type = REBASE_MERGE;
 	opts->flags |= REBASE_INTERACTIVE_EXPLICIT;
@@ -1150,8 +1166,6 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	prepare_repo_settings(the_repository);
 	the_repository->settings.command_requires_full_index = 0;
 
-	options.reapply_cherry_picks = -1;
-	options.allow_empty_message = 1;
 	git_config(rebase_config, &options);
 	/* options.gpg_sign_opt will be either "-S" or NULL */
 	gpg_sign = options.gpg_sign_opt ? "" : NULL;
@@ -1216,6 +1230,26 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		if (options.fork_point < 0)
 			options.fork_point = 0;
 	}
+	/*
+	 * The apply backend does not support --[no-]reapply-cherry-picks.
+	 * The behavior it implements by default is equivalent to
+	 * --no-reapply-cherry-picks (due to passing --cherry-picks to
+	 * format-patch), but --keep-base alters the upstream such that no
+	 * cherry-picks can be found (effectively making it act like
+	 * --reapply-cherry-picks).
+	 *
+	 * Now, if the user does specify --[no-]reapply-cherry-picks, but
+	 * does so in such a way that options.reapply_cherry_picks ==
+	 * keep_base, then the behavior they get will match what they
+	 * expect despite options.reapply_cherry_picks being ignored.  We
+	 * could just allow the flag in that case, but it seems better to
+	 * just alert the user that they've specified a flag that the
+	 * backend ignores.
+	 */
+	if (options.reapply_cherry_picks >= 0)
+		imply_merge(&options, options.reapply_cherry_picks ? "--reapply-cherry-picks" :
+								     "--no-reapply-cherry-picks");
+
 	/*
 	 * --keep-base defaults to --reapply-cherry-picks to avoid losing
 	 * commits when using this option.
@@ -1365,7 +1399,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	if ((options.flags & REBASE_INTERACTIVE_EXPLICIT) ||
 	    (options.action != ACTION_NONE) ||
 	    (options.exec.nr > 0) ||
-	    options.autosquash) {
+	    (options.autosquash == -1 && options.config_autosquash == 1) ||
+	    options.autosquash == 1) {
 		allow_preemptive_ff = 0;
 	}
 	if (options.committer_date_is_author_date || options.ignore_date)
@@ -1397,13 +1432,6 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	if (options.empty != EMPTY_UNSPECIFIED)
 		imply_merge(&options, "--empty");
-
-	/*
-	 * --keep-base implements --reapply-cherry-picks by altering upstream so
-	 * it works with both backends.
-	 */
-	if (options.reapply_cherry_picks && !keep_base)
-		imply_merge(&options, "--reapply-cherry-picks");
 
 	if (gpg_sign)
 		options.gpg_sign_opt = xstrfmt("-S%s", gpg_sign);
@@ -1483,14 +1511,28 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			if (strcmp(options.git_am_opts.v[i], "-q"))
 				break;
 
-		if (i >= 0) {
+		if (i >= 0 || options.type == REBASE_APPLY) {
 			if (is_merge(&options))
 				die(_("apply options and merge options "
 					  "cannot be used together"));
+			else if (options.autosquash == -1 && options.config_autosquash == 1)
+				die(_("apply options are incompatible with rebase.autosquash.  Consider adding --no-autosquash"));
+			else if (options.update_refs == -1 && options.config_update_refs == 1)
+				die(_("apply options are incompatible with rebase.updateRefs.  Consider adding --no-update-refs"));
 			else
 				options.type = REBASE_APPLY;
 		}
 	}
+
+	if (options.update_refs == 1)
+		imply_merge(&options, "--update-refs");
+	options.update_refs = (options.update_refs >= 0) ? options.update_refs :
+			     ((options.config_update_refs >= 0) ? options.config_update_refs : 0);
+
+	if (options.autosquash == 1)
+		imply_merge(&options, "--autosquash");
+	options.autosquash = (options.autosquash >= 0) ? options.autosquash :
+			     ((options.config_autosquash >= 0) ? options.config_autosquash : 0);
 
 	if (options.type == REBASE_UNSPECIFIED) {
 		if (!strcmp(options.default_backend, "merge"))
