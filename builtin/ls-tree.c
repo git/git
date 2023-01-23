@@ -94,14 +94,14 @@ static size_t expand_show_tree(struct strbuf *sb, const char *start,
 	} else if (skip_prefix(start, "(path)", &p)) {
 		const char *name = data->base->buf;
 		const char *prefix = options->chomp_prefix ? options->ls_tree_prefix : NULL;
-		struct strbuf quoted = STRBUF_INIT;
 		struct strbuf sbuf = STRBUF_INIT;
+		size_t baselen = data->base->len;
+
 		strbuf_addstr(data->base, data->pathname);
 		name = relative_path(data->base->buf, prefix, &sbuf);
-		quote_c_style(name, &quoted, NULL, 0);
-		strbuf_addbuf(sb, &quoted);
+		quote_c_style(name, sb, NULL, 0);
+		strbuf_setlen(data->base, baselen);
 		strbuf_release(&sbuf);
-		strbuf_release(&quoted);
 	} else {
 		errlen = (unsigned long)len;
 		die(_("bad ls-tree format: %%%.*s"), errlen, start);
@@ -144,7 +144,6 @@ static int show_tree_fmt(const struct object_id *oid, struct strbuf *base,
 			 const char *pathname, unsigned mode, void *context)
 {
 	struct ls_tree_options *options = context;
-	size_t baselen;
 	int recurse = 0;
 	struct strbuf sb = STRBUF_INIT;
 	enum object_type type = object_type(mode);
@@ -164,12 +163,10 @@ static int show_tree_fmt(const struct object_id *oid, struct strbuf *base,
 	if (type == OBJ_BLOB && (options->ls_options & LS_TREE_ONLY))
 		return 0;
 
-	baselen = base->len;
 	strbuf_expand(&sb, options->format, expand_show_tree, &cb_data);
 	strbuf_addch(&sb, options->null_termination ? '\0' : '\n');
 	fwrite(sb.buf, sb.len, 1, stdout);
 	strbuf_release(&sb);
-	strbuf_setlen(base, baselen);
 	return recurse;
 }
 
