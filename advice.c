@@ -82,6 +82,7 @@ static struct {
 	[ADVICE_SUBMODULE_ALTERNATE_ERROR_STRATEGY_DIE] = { "submoduleAlternateErrorStrategyDie" },
 	[ADVICE_SUGGEST_DETACHING_HEAD]			= { "suggestDetachingHead" },
 	[ADVICE_UPDATE_SPARSE_PATH]			= { "updateSparsePath" },
+	[ADVICE_USE_CORE_FSMONITOR_CONFIG]		= { "useCoreFSMonitorConfig" },
 	[ADVICE_WAITING_FOR_EDITOR]			= { "waitingForEditor" },
 	[ADVICE_WORKTREE_ADD_ORPHAN]			= { "worktreeAddOrphan" },
 };
