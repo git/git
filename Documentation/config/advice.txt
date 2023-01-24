@@ -163,4 +163,8 @@ advice.*::
 		Shown when the user tries to create a worktree from an
 		invalid reference, to tell the user how to create a new unborn
 		branch instead.
+
+	useCoreFSMonitorConfig::
+		Advice shown if the deprecated 'core.useBuiltinFSMonitor' config
+		setting is in use.
 --
