@@ -99,7 +99,7 @@ conflict to leave line D means that the user declares:
     compatible with what AB and AC wanted to do.
 
 So the conflict we would see when merging AB into ACAB should be
-resolved the same way---it is the resolution that is in line with that
+resolved the same way--it is the resolution that is in line with that
 declaration.
 
 Imagine that similarly previously a branch XYXZ was forked from XY,
