@@ -122,6 +122,8 @@ struct rebase_options {
 	int reapply_cherry_picks;
 	int fork_point;
 	int update_refs;
+	int config_autosquash;
+	int config_update_refs;
 };
 
 #define REBASE_OPTIONS_INIT {			  	\
@@ -136,6 +138,10 @@ struct rebase_options {
 		.fork_point = -1,			\
 		.reapply_cherry_picks = -1,             \
 		.allow_empty_message = 1,               \
+		.autosquash = -1,                       \
+		.config_autosquash = -1,                \
+		.update_refs = -1,                      \
+		.config_update_refs = -1,               \
 	}
 
 static struct replay_opts get_replay_opts(const struct rebase_options *opts)
@@ -778,7 +784,7 @@ static int rebase_config(const char *var, const char *value, void *data)
 	}
 
 	if (!strcmp(var, "rebase.autosquash")) {
-		opts->autosquash = git_config_bool(var, value);
+		opts->config_autosquash = git_config_bool(var, value);
 		return 0;
 	}
 
@@ -795,7 +801,7 @@ static int rebase_config(const char *var, const char *value, void *data)
 	}
 
 	if (!strcmp(var, "rebase.updaterefs")) {
-		opts->update_refs = git_config_bool(var, value);
+		opts->config_update_refs = git_config_bool(var, value);
 		return 0;
 	}
 
@@ -1366,7 +1372,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	if ((options.flags & REBASE_INTERACTIVE_EXPLICIT) ||
 	    (options.action != ACTION_NONE) ||
 	    (options.exec.nr > 0) ||
-	    options.autosquash) {
+	    (options.autosquash == -1 && options.config_autosquash == 1) ||
+	    options.autosquash == 1) {
 		allow_preemptive_ff = 0;
 	}
 	if (options.committer_date_is_author_date || options.ignore_date)
@@ -1499,20 +1506,28 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			if (strcmp(options.git_am_opts.v[i], "-q"))
 				break;
 
-		if (i >= 0) {
+		if (i >= 0 || options.type == REBASE_APPLY) {
 			if (is_merge(&options))
 				die(_("apply options and merge options "
 					  "cannot be used together"));
+			else if (options.autosquash == -1 && options.config_autosquash == 1)
+				die(_("apply options are incompatible with rebase.autosquash.  Consider adding --no-autosquash"));
+			else if (options.update_refs == -1 && options.config_update_refs == 1)
+				die(_("apply options are incompatible with rebase.updateRefs.  Consider adding --no-update-refs"));
 			else
 				options.type = REBASE_APPLY;
 		}
 	}
 
-	if (options.update_refs)
+	if (options.update_refs == 1)
 		imply_merge(&options, "--update-refs");
+	options.update_refs = (options.update_refs >= 0) ? options.update_refs :
+			     ((options.config_update_refs >= 0) ? options.config_update_refs : 0);
 
-	if (options.autosquash)
+	if (options.autosquash == 1)
 		imply_merge(&options, "--autosquash");
+	options.autosquash = (options.autosquash >= 0) ? options.autosquash :
+			     ((options.config_autosquash >= 0) ? options.config_autosquash : 0);
 
 	if (options.type == REBASE_UNSPECIFIED) {
 		if (!strcmp(options.default_backend, "merge"))

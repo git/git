@@ -648,7 +648,7 @@ are incompatible with the following options:
  * --merge
  * --strategy
  * --strategy-option
- * --[no-]autosquash
+ * --autosquash
  * --rebase-merges
  * --interactive
  * --exec
