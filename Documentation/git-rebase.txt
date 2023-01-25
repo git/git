@@ -647,7 +647,6 @@ are incompatible with the following options:
  * --merge
  * --strategy
  * --strategy-option
- * --allow-empty-message
  * --[no-]autosquash
  * --rebase-merges
  * --interactive
