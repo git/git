@@ -6545,7 +6545,7 @@ msgstr "  (usa \"git branch --unset-upstream\" per correggere la situazione)\n"
 #: remote.c:2105
 #, c-format
 msgid "Your branch is up to date with '%s'.\n"
-msgstr "Il tuo branch è aggiornato rispetto a '%s'.\n"
+msgstr "Il tuo branch è aggiornato a '%s'.\n"
 
 #: remote.c:2109
 #, c-format
@@ -24606,7 +24606,7 @@ msgstr "Impossibile trovare un commit comune con $pretty_name"
 #: git-merge-octopus.sh:77
 #, sh-format
 msgid "Already up to date with $pretty_name"
-msgstr "Già aggiornato rispetto a $pretty_name"
+msgstr "Già aggiornato a $pretty_name"
 
 #: git-merge-octopus.sh:89
 #, sh-format
