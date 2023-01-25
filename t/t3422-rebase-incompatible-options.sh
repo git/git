@@ -67,7 +67,10 @@ test_rebase_am_only () {
 
 }
 
+# Check options which imply --apply
 test_rebase_am_only --whitespace=fix
 test_rebase_am_only -C4
+# Also check an explicit --apply
+test_rebase_am_only --apply
 
 test_done
