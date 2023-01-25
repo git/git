@@ -50,6 +50,11 @@ test_rebase_am_only () {
 		test_must_fail git rebase $opt --strategy-option=ours A
 	"
 
+	test_expect_success "$opt incompatible with --autosquash" "
+		git checkout B^0 &&
+		test_must_fail git rebase $opt --autosquash A
+	"
+
 	test_expect_success "$opt incompatible with --interactive" "
 		git checkout B^0 &&
 		test_must_fail git rebase $opt --interactive A
@@ -58,6 +63,16 @@ test_rebase_am_only () {
 	test_expect_success "$opt incompatible with --exec" "
 		git checkout B^0 &&
 		test_must_fail git rebase $opt --exec 'true' A
+	"
+
+	test_expect_success "$opt incompatible with --keep-empty" "
+		git checkout B^0 &&
+		test_must_fail git rebase $opt --keep-empty A
+	"
+
+	test_expect_success "$opt incompatible with --empty=..." "
+		git checkout B^0 &&
+		test_must_fail git rebase $opt --empty=ask A
 	"
 
 	test_expect_success "$opt incompatible with --no-reapply-cherry-picks" "
