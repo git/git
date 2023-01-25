@@ -53,11 +53,18 @@ test_expect_success 'setup' '
 	git -C "$REPO" update-server-info
 '
 
-test_expect_failure 'ambiguous transport does not lead to arbitrary file-inclusion' '
+test_expect_success 'ambiguous transport does not lead to arbitrary file-inclusion' '
 	git clone malicious clone &&
-	git -C clone submodule update --init &&
+	test_must_fail git -C clone submodule update --init 2>err &&
 
-	test_path_is_missing clone/.git/modules/sub/objects/secret
+	test_path_is_missing clone/.git/modules/sub/objects/secret &&
+	# We would actually expect "transport .file. not allowed" here,
+	# but due to quirks of the URL detection in Git, we mis-parse
+	# the absolute path as a bogus URL and die before that step.
+	#
+	# This works for now, and if we ever fix the URL detection, it
+	# is OK to change this to detect the transport error.
+	grep "protocol .* is not supported" err
 '
 
 test_done
