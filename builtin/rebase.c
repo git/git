@@ -1224,13 +1224,6 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		if (options.fork_point < 0)
 			options.fork_point = 0;
 	}
-	/*
-	 * --keep-base defaults to --reapply-cherry-picks to avoid losing
-	 * commits when using this option.
-	 */
-	if (options.reapply_cherry_picks < 0)
-		options.reapply_cherry_picks = keep_base;
-
 	if (options.root && options.fork_point > 0)
 		die(_("options '%s' and '%s' cannot be used together"), "--root", "--fork-point");
 
@@ -1406,12 +1399,27 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	if (options.empty != EMPTY_UNSPECIFIED)
 		imply_merge(&options, "--empty");
 
-	/*
-	 * --keep-base implements --reapply-cherry-picks by altering upstream so
-	 * it works with both backends.
-	 */
-	if (options.reapply_cherry_picks && !keep_base)
-		imply_merge(&options, "--reapply-cherry-picks");
+	if (options.reapply_cherry_picks < 0)
+		/*
+		 * We default to --no-reapply-cherry-picks unless
+		 * --keep-base is given; when --keep-base is given, we want
+		 * to default to --reapply-cherry-picks.
+		 */
+		options.reapply_cherry_picks = keep_base;
+	else if (!keep_base)
+		/*
+		 * The apply backend always searches for and drops cherry
+		 * picks.  This is often not wanted with --keep-base, so
+		 * --keep-base allows --reapply-cherry-picks to be
+		 * simulated by altering the upstream such that
+		 * cherry-picks cannot be detected and thus all commits are
+		 * reapplied.  Thus, --[no-]reapply-cherry-picks is
+		 * supported when --keep-base is specified, but not when
+		 * --keep-base is left out.
+		 */
+		imply_merge(&options, options.reapply_cherry_picks ?
+					  "--reapply-cherry-picks" :
+					  "--no-reapply-cherry-picks");
 
 	if (gpg_sign)
 		options.gpg_sign_opt = xstrfmt("-S%s", gpg_sign);

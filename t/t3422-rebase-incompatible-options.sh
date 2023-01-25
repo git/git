@@ -60,6 +60,16 @@ test_rebase_am_only () {
 		test_must_fail git rebase $opt --exec 'true' A
 	"
 
+	test_expect_success "$opt incompatible with --no-reapply-cherry-picks" "
+		git checkout B^0 &&
+		test_must_fail git rebase $opt --no-reapply-cherry-picks A
+	"
+
+	test_expect_success "$opt incompatible with --reapply-cherry-picks" "
+		git checkout B^0 &&
+		test_must_fail git rebase $opt --reapply-cherry-picks A
+	"
+
 	test_expect_success "$opt incompatible with --update-refs" "
 		git checkout B^0 &&
 		test_must_fail git rebase $opt --update-refs A

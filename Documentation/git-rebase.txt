@@ -650,7 +650,7 @@ are incompatible with the following options:
  * --exec
  * --no-keep-empty
  * --empty=
- * --reapply-cherry-picks
+ * --[no-]reapply-cherry-picks when used without --keep-base
  * --edit-todo
  * --update-refs
  * --root when used without --onto
