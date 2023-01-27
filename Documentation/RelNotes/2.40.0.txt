@@ -40,6 +40,9 @@ UI, Workflows & Features
 
  * "scalar" learned to give progress bar.
 
+ * "grep -P" learned to use Unicode Character Property to grok
+   character classes when processing \b and \w etc.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -172,6 +175,20 @@ Fixes since v2.39
    joined.
    (merge 238a9dfe86 sk/win32-close-handle-upon-pthread-join later to maint).
 
+ * "git send-email -v 3" used to be expanded to "git send-email
+   --validate 3" when the user meant to pass them down to
+   "format-patch", which has been corrected.
+   (merge 8774aa56ad km/send-email-with-v-reroll-count later to maint).
+
+ * Document that "branch -f <branch>" disables only the safety to
+   avoid recreating an existing branch.
+   (merge bf08abac56 jc/doc-branch-update-checked-out-branch later to maint).
+
+ * "git fetch <group>", when "<group>" of remotes lists the same
+   remote twice, unnecessarily failed when parallel fetching was
+   enabled, which has been corrected.
+   (merge 06a668cb90 cw/fetch-remote-group-with-duplication later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 77e04b2ed4 rs/t4205-do-not-exit-in-test-script later to maint).
    (merge faebba436e rs/plug-pattern-list-leak-in-lof later to maint).
@@ -201,3 +218,4 @@ Fixes since v2.39
    (merge cf4936ed74 tl/ls-tree-code-clean-up later to maint).
    (merge dcb47e52b0 en/t6426-todo-cleanup later to maint).
    (merge 5b8db44bdd jc/format-patch-v-unleak later to maint).
+   (merge 590b636737 jk/hash-object-literally-fd-leak later to maint).
