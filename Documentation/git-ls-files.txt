@@ -12,6 +12,7 @@ SYNOPSIS
 'git ls-files' [-z] [-t] [-v] [-f]
 		[-c|--cached] [-d|--deleted] [-o|--others] [-i|--ignored]
 		[-s|--stage] [-u|--unmerged] [-k|--killed] [-m|--modified]
+		[--resolve-undo]
 		[--directory [--no-empty-directory]] [--eol]
 		[--deduplicate]
 		[-x <pattern>|--exclude=<pattern>]
@@ -28,21 +29,26 @@ This merges the file listing in the index with the actual working
 directory list, and shows different combinations of the two.
 
 One or more of the options below may be used to determine the files
-shown:
+shown, and each file may be printed multiple times if there are
+multiple entries in the index or multiple statuses are applicable for
+the relevant file selection options.
 
 OPTIONS
 -------
 -c::
 --cached::
-	Show cached files in the output (default)
+	Show all files cached in Git's index, i.e. all tracked files.
+	(This is the default if no -c/-s/-d/-o/-u/-k/-m/--resolve-undo
+	options are specified.)
 
 -d::
 --deleted::
-	Show deleted files in the output
+	Show files with an unstaged deletion
 
 -m::
 --modified::
-	Show modified files in the output
+	Show files with an unstaged modification (note that an unstaged
+	deletion also counts as an unstaged modification)
 
 -o::
 --others::
@@ -50,11 +56,14 @@ OPTIONS
 
 -i::
 --ignored::
-	Show only ignored files in the output. When showing files in the
-	index, print only those matched by an exclude pattern. When
-	showing "other" files, show only those matched by an exclude
-	pattern. Standard ignore rules are not automatically activated,
-	therefore at least one of the `--exclude*` options is required.
+	Show only ignored files in the output.  Must be used with
+	either an explicit '-c' or '-o'.  When showing files in the
+	index (i.e. when used with '-c'), print only those files
+	matching an exclude pattern.  When showing "other" files
+	(i.e. when used with '-o'), show only those matched by an
+	exclude pattern.  Standard ignore rules are not automatically
+	activated, therefore at least one of the `--exclude*` options
+	is required.
 
 -s::
 --stage::
@@ -63,19 +72,29 @@ OPTIONS
 --directory::
 	If a whole directory is classified as "other", show just its
 	name (with a trailing slash) and not its whole contents.
+	Has no effect without -o/--others.
 
 --no-empty-directory::
 	Do not list empty directories. Has no effect without --directory.
 
 -u::
 --unmerged::
-	Show unmerged files in the output (forces --stage)
+	Show information about unmerged files in the output, but do
+	not show any other tracked files (forces --stage, overrides
+	--cached).
 
 -k::
 --killed::
-	Show files on the filesystem that need to be removed due
-	to file/directory conflicts for checkout-index to
-	succeed.
+	Show untracked files on the filesystem that need to be removed
+	due to file/directory conflicts for tracked files to be able to
+	be written to the filesystem.
+
+--resolve-undo::
+	Show files having resolve-undo information in the index
+	together with their resolve-undo information.  (resolve-undo
+	information is what is used to implement "git checkout -m
+	$PATH", i.e. to recreate merge conflicts that were
+	accidentally resolved)
 
 -z::
 	\0 line termination on output and do not quote filenames.
@@ -100,7 +119,8 @@ OPTIONS
 
 --exclude-per-directory=<file>::
 	Read additional exclude patterns that apply only to the
-	directory and its subdirectories in <file>.
+	directory and its subdirectories in <file>.  Deprecated; use
+	--exclude-standard instead.
 
 --exclude-standard::
 	Add the standard Git exclusions: .git/info/exclude, .gitignore
@@ -118,24 +138,27 @@ OPTIONS
 	with `-s` or `-u` options does not make any sense.
 
 -t::
-	This feature is semi-deprecated. For scripting purpose,
-	linkgit:git-status[1] `--porcelain` and
+	Show status tags together with filenames.  Note that for
+	scripting purposes, linkgit:git-status[1] `--porcelain` and
 	linkgit:git-diff-files[1] `--name-status` are almost always
 	superior alternatives, and users should look at
 	linkgit:git-status[1] `--short` or linkgit:git-diff[1]
 	`--name-status` for more user-friendly alternatives.
 +
 --
-This option identifies the file status with the following tags (followed by
-a space) at the start of each line:
+This option provides a reason for showing each filename, in the form
+of a status tag (which is followed by a space and then the filename).
+The status tags are all single characters from the following list:
 
-	H::	cached
-	S::	skip-worktree
-	M::	unmerged
-	R::	removed/deleted
-	C::	modified/changed
-	K::	to be killed
-	?::	other
+	H::	tracked file that is not either unmerged or skip-worktree
+	S::	tracked file that is skip-worktree
+	M::	tracked file that is unmerged
+	R::	tracked file with unstaged removal/deletion
+	C::	tracked file with unstaged modification/change
+	K::	untracked paths which are part of file/directory conflicts
+		which prevent checking out tracked files
+	?::	untracked file
+	U::     file with resolve-undo information
 --
 
 -v::
@@ -269,7 +292,9 @@ traversing the directory tree and finding files to show when the
 flags --others or --ignored are specified.  linkgit:gitignore[5]
 specifies the format of exclude patterns.
 
-These exclude patterns come from these places, in order:
+Generally, you should just use --exclude-standard, but for historical
+reasons the exclude patterns can be specified from the following
+places, in order:
 
   1. The command-line flag --exclude=<pattern> specifies a
      single pattern.  Patterns are ordered in the same order
