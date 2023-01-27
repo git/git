@@ -174,4 +174,10 @@ test_expect_success 'progress without tty' '
 	cleanup_clone $enlistment
 '
 
+test_expect_success 'scalar clone fails when background maintenance fails' '
+	GIT_TEST_MAINT_SCHEDULER="crontab:false,launchctl:false,schtasks:false" \
+		test_must_fail scalar clone "file://$(pwd)/to-clone" maint-fail 2>err &&
+	grep "could not turn on maintenance" err
+'
+
 test_done
