@@ -104,10 +104,10 @@ test_expect_success FSMONITOR_DAEMON 'scalar register starts fsmon daemon' '
 	test_cmp_config -C test/src true core.fsmonitor
 '
 
-test_expect_success 'scalar register fails when background maintenance fails' '
+test_expect_success 'scalar register warns when background maintenance fails' '
 	git init register-repo &&
 	GIT_TEST_MAINT_SCHEDULER="crontab:false,launchctl:false,schtasks:false" \
-		test_must_fail scalar register register-repo 2>err &&
+		scalar register register-repo 2>err &&
 	grep "could not turn on maintenance" err
 '
 
