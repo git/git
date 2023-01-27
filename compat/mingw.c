@@ -1410,7 +1410,15 @@ char *mingw_strbuf_realpath(struct strbuf *resolved, const char *path)
 
 		if (p != wpath && (last_component = find_last_dir_sep(path))) {
 			append = xstrdup(last_component + 1); /* skip directory separator */
-			*p = L'\0';
+			/*
+			 * Do not strip the trailing slash at the drive root, otherwise
+			 * the path would be e.g. `C:` (which resolves to the
+			 * _current_ directory on that drive).
+			 */
+			if (p[-1] == L':')
+				p[1] = L'\0';
+			else
+				*p = L'\0';
 			h = CreateFileW(wpath, 0, FILE_SHARE_READ |
 					FILE_SHARE_WRITE | FILE_SHARE_DELETE,
 					NULL, OPEN_EXISTING,
@@ -1438,7 +1446,7 @@ realpath_failed:
 
 	if (append) {
 		/* Use forward-slash, like `normalize_ntpath()` */
-		strbuf_addch(resolved, '/');
+		strbuf_complete(resolved, '/');
 		strbuf_addstr(resolved, append);
 		FREE_AND_NULL(append);
 	}
