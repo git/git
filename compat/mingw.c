@@ -1386,6 +1386,7 @@ char *mingw_strbuf_realpath(struct strbuf *resolved, const char *path)
 	DWORD ret;
 	int len;
 	const char *last_component = NULL;
+	char *append = NULL;
 
 	if (xutftowcs_path(wpath, path) < 0)
 		return NULL;
@@ -1408,8 +1409,16 @@ char *mingw_strbuf_realpath(struct strbuf *resolved, const char *path)
 				break; /* found start of last component */
 
 		if (p != wpath && (last_component = find_last_dir_sep(path))) {
-			last_component++; /* skip directory separator */
-			*p = L'\0';
+			append = xstrdup(last_component + 1); /* skip directory separator */
+			/*
+			 * Do not strip the trailing slash at the drive root, otherwise
+			 * the path would be e.g. `C:` (which resolves to the
+			 * _current_ directory on that drive).
+			 */
+			if (p[-1] == L':')
+				p[1] = L'\0';
+			else
+				*p = L'\0';
 			h = CreateFileW(wpath, 0, FILE_SHARE_READ |
 					FILE_SHARE_WRITE | FILE_SHARE_DELETE,
 					NULL, OPEN_EXISTING,
@@ -1417,25 +1426,29 @@ char *mingw_strbuf_realpath(struct strbuf *resolved, const char *path)
 		}
 	}
 
-	if (h == INVALID_HANDLE_VALUE)
+	if (h == INVALID_HANDLE_VALUE) {
+realpath_failed:
+		FREE_AND_NULL(append);
 		return NULL;
+	}
 
 	ret = GetFinalPathNameByHandleW(h, wpath, ARRAY_SIZE(wpath), 0);
 	CloseHandle(h);
 	if (!ret || ret >= ARRAY_SIZE(wpath))
-		return NULL;
+		goto realpath_failed;
 
 	len = wcslen(wpath) * 3;
 	strbuf_grow(resolved, len);
 	len = xwcstoutf(resolved->buf, normalize_ntpath(wpath), len);
 	if (len < 0)
-		return NULL;
+		goto realpath_failed;
 	resolved->len = len;
 
-	if (last_component) {
+	if (append) {
 		/* Use forward-slash, like `normalize_ntpath()` */
-		strbuf_addch(resolved, '/');
-		strbuf_addstr(resolved, last_component);
+		strbuf_complete(resolved, '/');
+		strbuf_addstr(resolved, append);
+		FREE_AND_NULL(append);
 	}
 
 	return resolved->buf;
