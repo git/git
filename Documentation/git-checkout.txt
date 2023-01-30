@@ -146,14 +146,16 @@ on your side branch as `theirs` (i.e. "one contributor's work on top
 of it").
 
 -b <new-branch>::
-	Create a new branch named `<new-branch>` and start it at
-	`<start-point>`; see linkgit:git-branch[1] for details.
+	Create a new branch named `<new-branch>`, start it at
+	`<start-point>`, and check the resulting branch out;
+	see linkgit:git-branch[1] for details.
 
 -B <new-branch>::
-	Creates the branch `<new-branch>` and start it at `<start-point>`;
-	if it already exists, then reset it to `<start-point>`. This is
-	equivalent to running "git branch" with "-f"; see
-	linkgit:git-branch[1] for details.
+	Creates the branch `<new-branch>`, start it at `<start-point>`;
+	if it already exists, then reset it to `<start-point>`. And then
+	check the resulting branch out.  This is equivalent to running
+	"git branch" with "-f" followed by "git checkout" of that branch;
+	see linkgit:git-branch[1] for details.
 
 -t::
 --track[=(direct|inherit)]::
