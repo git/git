@@ -684,7 +684,7 @@ test_expect_success 'subtest: tests respect lazy prerequisites' '
 	write_and_run_sub_test_lib_test lazy-prereqs <<-\EOF &&
 
 	test_lazy_prereq LAZY_TRUE true
-	test_expect_success LAZY_TRUE "lazy prereq is satisifed" "true"
+	test_expect_success LAZY_TRUE "lazy prereq is satisfied" "true"
 	test_expect_success !LAZY_TRUE "negative lazy prereq" "false"
 
 	test_lazy_prereq LAZY_FALSE false
@@ -695,7 +695,7 @@ test_expect_success 'subtest: tests respect lazy prerequisites' '
 	EOF
 
 	check_sub_test_lib_test lazy-prereqs <<-\EOF
-	ok 1 - lazy prereq is satisifed
+	ok 1 - lazy prereq is satisfied
 	ok 2 # skip negative lazy prereq (missing !LAZY_TRUE)
 	ok 3 # skip lazy prereq not satisfied (missing LAZY_FALSE)
 	ok 4 - negative false prereq

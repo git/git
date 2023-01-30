@@ -76,7 +76,7 @@ test_expect_success 'before initial commit, things added (-z)' '
 	test_cmp expect actual
 '
 
-test_expect_success 'make first commit, comfirm HEAD oid and branch' '
+test_expect_success 'make first commit, confirm HEAD oid and branch' '
 	git commit -m initial &&
 	H0=$(git rev-parse HEAD) &&
 	cat >expect <<-EOF &&

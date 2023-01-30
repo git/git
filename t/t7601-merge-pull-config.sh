@@ -280,7 +280,7 @@ test_expect_success '--rebase overrides pull.ff unset' '
 	test_does_rebase pull --rebase
 '
 
-# Group 4: --no-rebase heeds pull.ff=!only or explict --ff or --no-ff
+# Group 4: --no-rebase heeds pull.ff=!only or explicit --ff or --no-ff
 
 test_expect_success '--no-rebase works with --no-ff' '
 	test_does_merge_when_ff_possible pull --no-rebase --no-ff

@@ -35,7 +35,7 @@ test_expect_success 'moving the file out of subdirectory' '
 '
 
 # in path0 currently
-test_expect_success 'commiting the change' '
+test_expect_success 'committing the change' '
 	git commit -m move-out -a
 '
 
@@ -49,7 +49,7 @@ test_expect_success 'moving the file back into subdirectory' '
 '
 
 # in path0 currently
-test_expect_success 'commiting the change' '
+test_expect_success 'committing the change' '
 	git commit -m move-in -a
 '
 
@@ -136,7 +136,7 @@ test_expect_success 'moving whole subdirectory' '
 	git mv path0 path2
 '
 
-test_expect_success 'commiting the change' '
+test_expect_success 'committing the change' '
 	git commit -m dir-move -a
 '
 
@@ -154,7 +154,7 @@ test_expect_success 'moving whole subdirectory into subdirectory' '
 	git mv path2 path1
 '
 
-test_expect_success 'commiting the change' '
+test_expect_success 'committing the change' '
 	git commit -m dir-move -a
 '
 
