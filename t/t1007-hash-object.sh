@@ -203,23 +203,34 @@ done
 test_expect_success 'too-short tree' '
 	echo abc >malformed-tree &&
 	test_must_fail git hash-object -t tree malformed-tree 2>err &&
-	test_i18ngrep "too-short tree object" err
+	grep "too-short tree object" err
 '
 
 test_expect_success 'malformed mode in tree' '
-	hex_sha1=$(echo foo | git hash-object --stdin -w) &&
-	bin_sha1=$(echo $hex_sha1 | hex2oct) &&
-	printf "9100644 \0$bin_sha1" >tree-with-malformed-mode &&
+	hex_oid=$(echo foo | git hash-object --stdin -w) &&
+	bin_oid=$(echo $hex_oid | hex2oct) &&
+	printf "9100644 \0$bin_oid" >tree-with-malformed-mode &&
 	test_must_fail git hash-object -t tree tree-with-malformed-mode 2>err &&
-	test_i18ngrep "malformed mode in tree entry" err
+	grep "malformed mode in tree entry" err
 '
 
 test_expect_success 'empty filename in tree' '
-	hex_sha1=$(echo foo | git hash-object --stdin -w) &&
-	bin_sha1=$(echo $hex_sha1 | hex2oct) &&
-	printf "100644 \0$bin_sha1" >tree-with-empty-filename &&
+	hex_oid=$(echo foo | git hash-object --stdin -w) &&
+	bin_oid=$(echo $hex_oid | hex2oct) &&
+	printf "100644 \0$bin_oid" >tree-with-empty-filename &&
 	test_must_fail git hash-object -t tree tree-with-empty-filename 2>err &&
-	test_i18ngrep "empty filename in tree entry" err
+	grep "empty filename in tree entry" err
+'
+
+test_expect_success 'duplicate filename in tree' '
+	hex_oid=$(echo foo | git hash-object --stdin -w) &&
+	bin_oid=$(echo $hex_oid | hex2oct) &&
+	{
+		printf "100644 file\0$bin_oid" &&
+		printf "100644 file\0$bin_oid"
+	} >tree-with-duplicate-filename &&
+	test_must_fail git hash-object -t tree tree-with-duplicate-filename 2>err &&
+	grep "duplicateEntries" err
 '
 
 test_expect_success 'corrupt commit' '

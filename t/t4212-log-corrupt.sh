@@ -10,7 +10,7 @@ test_expect_success 'setup' '
 
 	git cat-file commit HEAD |
 	sed "/^author /s/>/>-<>/" >broken_email.commit &&
-	git hash-object -w -t commit broken_email.commit >broken_email.hash &&
+	git hash-object --literally -w -t commit broken_email.commit >broken_email.hash &&
 	git update-ref refs/heads/broken_email $(cat broken_email.hash)
 '
 
@@ -46,7 +46,7 @@ test_expect_success 'git log --format with broken author email' '
 munge_author_date () {
 	git cat-file commit "$1" >commit.orig &&
 	sed "s/^\(author .*>\) [0-9]*/\1 $2/" <commit.orig >commit.munge &&
-	git hash-object -w -t commit commit.munge
+	git hash-object --literally -w -t commit commit.munge
 }
 
 test_expect_success 'unparsable dates produce sentinel value' '
