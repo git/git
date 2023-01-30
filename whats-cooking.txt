@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2023, #07; Thu, 26)
-X-master-at: 5dec958dcf965fc75e0f459f8e8ccf9c9f495b15
-X-next-at: 140f2c2c60f2ff502a86a78405724f6276de87bb
+Subject: What's cooking in git.git (Jan 2023, #07; Mon, 30)
+X-master-at: 2fc9e9ca3c7505bc60069f11e7ef09b1aeeee473
+X-next-at: b5b5020ace4838582d9c7d79847f668b65391eb7
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jan 2023, #07; Thu, 26)
+What's cooking in git.git (Jan 2023, #08; Mon, 30)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -45,162 +45,157 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ab/cache-api-cleanup (2023-01-16) 5 commits
-  (merged to 'next' on 2023-01-16 at a0f388b149)
- + cache API: add a "INDEX_STATE_INIT" macro/function, add release_index()
- + read-cache.c: refactor set_new_index_sparsity() for subsequent commit
- + sparse-index API: BUG() out on NULL ensure_full_index()
- + sparse-index.c: expand_to_path() can assume non-NULL "istate"
- + builtin/difftool.c: { 0 }-initialize rather than using memset()
- (this branch is used by ab/cache-api-cleanup-users.)
+* ab/cache-api-cleanup-users (2023-01-17) 3 commits
+  (merged to 'next' on 2023-01-18 at c5a4374652)
+ + treewide: always have a valid "index_state.repo" member
+ + Merge branch 'ds/omit-trailing-hash-in-index' into ab/cache-api-cleanup-users
+ + Merge branch 'ab/cache-api-cleanup' into ab/cache-api-cleanup-users
 
- Code clean-up to tighten the use of in-core index in the API.
- source: <cover-v2-0.6-00000000000-20230112T124842Z-avarab@gmail.com>
+ Updates the users of the cache API.
+ cf. <db312853-81a1-542b-db96-d816c463516c@github.com>
+ source: <patch-1.1-b4998652822-20230117T135234Z-avarab@gmail.com>
 
-
-* ab/test-env-helper (2023-01-14) 1 commit
-  (merged to 'next' on 2023-01-16 at 82c17f02e5)
- + env-helper: move this built-in to "test-tool env-helper"
-
- Remove "git env--helper" and demote it to a test-tool subcommand.
- source: <patch-1.1-e662c570f1d-20230112T155226Z-avarab@gmail.com>
-
-
-* ds/omit-trailing-hash-in-index (2023-01-17) 1 commit
-  (merged to 'next' on 2023-01-17 at 8dde3cf2db)
- + t1600: fix racy index.skipHash test
- (this branch is used by ab/cache-api-cleanup-users.)
-
- Quickfix for a topic already in 'master'.
- source: <76204710-356a-2a85-9057-302e6619b9df@github.com>
-
-
-* en/t6426-todo-cleanup (2023-01-14) 1 commit
-  (merged to 'next' on 2023-01-16 at 7d13842eeb)
- + t6426: fix TODO about making test more comprehensive
-
- Test clean-up.
- source: <pull.1462.v2.git.1673722187025.gitgitgadget@gmail.com>
-
-
-* jc/format-patch-v-unleak (2023-01-16) 1 commit
-  (merged to 'next' on 2023-01-16 at 2155d512bc)
- + format-patch: unleak "-v <num>"
-
- Plug a small leak.
- source: <xmqqv8l8gr6s.fsf@gitster.g>
-
-
-* kn/attr-from-tree (2023-01-14) 2 commits
-  (merged to 'next' on 2023-01-16 at 426f357683)
- + attr: add flag `--source` to work with tree-ish
- + t0003: move setup for `--all` into new block
-
- "git check-attr" learned to take an optional tree-ish to read the
- .gitattributes file from.
- source: <cover.1673684790.git.karthik.188@gmail.com>
-
-
-* rs/ls-tree-path-expansion-fix (2023-01-14) 2 commits
-  (merged to 'next' on 2023-01-16 at 6359f28ba7)
- + ls-tree: remove dead store and strbuf for quote_c_style()
- + ls-tree: fix expansion of repeated %(path)
-
- "git ls-tree --format='%(path) %(path)' $tree $path" showed the
- path three times, which has been corrected.
- source: <55ae7333-3a13-0575-93ed-f858a1c2877e@web.de>
-
-
-* rs/use-enhanced-bre-on-macos (2023-01-08) 1 commit
-  (merged to 'next' on 2023-01-16 at 9b80d4253f)
- + use enhanced basic regular expressions on macOS
-
- Newer regex library macOS stopped enabling GNU-like enhanced BRE,
- where '\(A\|B\)' works as alternation, unless explicitly asked with
- the REG_ENHANCED flag.  "git grep" now can be compiled to do so, to
- retain the old behaviour.
- source: <26a0d4ca-3d97-ace4-1a1f-92b1ee6715a6@web.de>
-
-
-* sk/win32-close-handle-upon-pthread-join (2023-01-04) 2 commits
-  (merged to 'next' on 2023-01-16 at faa279fd5b)
- + win32: close handles of threads that have been joined
- + win32: prepare pthread.c for change by formatting
-
- Pthread emulation on Win32 leaked thread handle when a thread is
- joined.
- source: <pull.1406.v13.git.git.1672762819.gitgitgadget@gmail.com>
-
-
-* zh/scalar-progress (2023-01-16) 1 commit
-  (merged to 'next' on 2023-01-17 at d4c25cc71f)
- + scalar: show progress if stderr refers to a terminal
-
- "scalar" learned to give progress bar.
- source: <pull.1441.v3.git.1673442860379.gitgitgadget@gmail.com>
-
---------------------------------------------------
-[New Topics]
 
 * ar/markup-em-dash (2023-01-23) 1 commit
   (merged to 'next' on 2023-01-24 at 0367e3035f)
  + Documentation: render dash correctly
 
  Doc mark-up updates.
-
- Will merge to 'master'.
  source: <20230123090114.429844-1-rybak.a.v@gmail.com>
 
 
-* ab/hook-api-with-stdin (2023-01-23) 5 commits
- - hook: support a --to-stdin=<path> option for testing
- - sequencer: use the new hook API for the simpler "post-rewrite" call
- - hook API: support passing stdin to hooks, convert am's 'post-rewrite'
- - run-command: allow stdin for run_processes_parallel
- - run-command.c: remove dead assignment in while-loop
+* cb/grep-pcre-ucp (2023-01-18) 1 commit
+  (merged to 'next' on 2023-01-19 at 2c7e531839)
+ + grep: correctly identify utf-8 characters with \{b,w} in -P
 
- Extend the run-hooks API to allow feeding data from the standard
- input when running the hook script(s).
-
- Expecting review responses.
- source: <cover-0.5-00000000000-20230123T170550Z-avarab@gmail.com>
+ "grep -P" learned to use Unicode Character Property to grok
+ character classes when processing \b and \w etc.
+ cf. <xmqqzgaf2zpt.fsf@gitster.g>
+ source: <20230108155217.2817-1-carenas@gmail.com>
 
 
-* as/ssh-signing-improve-key-missing-error (2023-01-25) 1 commit
-  (merged to 'next' on 2023-01-25 at 140f2c2c60)
- + ssh signing: better error message when key not in agent
+* cw/fetch-remote-group-with-duplication (2023-01-19) 1 commit
+  (merged to 'next' on 2023-01-20 at 7f00e43209)
+ + fetch: fix duplicate remote parallel fetch bug
 
- Improve the error message given when private key is not loaded in
- the ssh agent in the codepath to sign with an ssh key.
+ "git fetch <group>", when "<group>" of remotes lists the same
+ remote twice, unnecessarily failed when parallel fetching was
+ enabled, which has been corrected.
+ source: <20230119220538.1522464-1-calvinwan@google.com>
 
- Will merge to 'master'.
- source: <pull.1270.v3.git.git.1674650450662.gitgitgadget@gmail.com>
+
+* jc/doc-branch-update-checked-out-branch (2023-01-18) 1 commit
+  (merged to 'next' on 2023-01-19 at 970900a232)
+ + branch: document `-f` and linked worktree behaviour
+
+ Document that "branch -f <branch>" disables only the safety to
+ avoid recreating an existing branch.
+ source: <xmqqa62f2dj1.fsf_-_@gitster.g>
 
 
-* en/rebase-incompatible-opts (2023-01-25) 10 commits
- - rebase: provide better error message for apply options vs. merge config
- - rebase: put rebase_options initialization in single place
- - rebase: fix formatting of rebase --reapply-cherry-picks option in docs
- - rebase: clarify the OPT_CMDMODE incompatibilities
- - rebase: add coverage of other incompatible options
- - rebase: fix incompatiblity checks for --[no-]reapply-cherry-picks
- - rebase: fix docs about incompatibilities with --root
- - rebase: remove --allow-empty-message from incompatible opts
- - rebase: flag --apply and --merge as incompatible
- - rebase: mark --update-refs as requiring the merge backend
+* jc/doc-checkout-b (2023-01-19) 1 commit
+  (merged to 'next' on 2023-01-23 at 95340e1941)
+ + checkout: document -b/-B to highlight the differences from "git branch"
 
- "git rebase" often ignored incompatible options instead of
- complaining, which has been corrected.
+ Clarify how "checkout -b/-B" and "git branch [-f]" are similar but
+ different in the documentation.
+ source: <xmqqtu0m1m9i.fsf@gitster.g>
+
+
+* jk/hash-object-fsck (2023-01-19) 7 commits
+  (merged to 'next' on 2023-01-23 at 985e87fc34)
+ + fsck: do not assume NUL-termination of buffers
+ + hash-object: use fsck for object checks
+ + fsck: provide a function to fsck buffer without object struct
+ + t: use hash-object --literally when created malformed objects
+ + t7030: stop using invalid tag name
+ + t1006: stop using 0-padded timestamps
+ + t1007: modernize malformed object tests
+
+ "git hash-object" now checks that the resulting object is well
+ formed with the same code as "git fsck".
+ source: <Y8hX+pIZUKXsyYj5@coredump.intra.peff.net>
+ source: <Y8ifa7hyqxSbL92U@coredump.intra.peff.net>
+
+
+* jk/hash-object-literally-fd-leak (2023-01-19) 1 commit
+  (merged to 'next' on 2023-01-19 at fff9b60a36)
+ + hash-object: fix descriptor leak with --literally
+
+ Leakfix.
+ source: <Y8ijpJqtkDTi792i@coredump.intra.peff.net>
+
+
+* km/send-email-with-v-reroll-count (2022-11-27) 1 commit
+  (merged to 'next' on 2023-01-19 at 9b3543471c)
+ + send-email: relay '-v N' to format-patch
+
+ "git send-email -v 3" used to be expanded to "git send-email
+ --validate 3" when the user meant to pass them down to
+ "format-patch", which has been corrected.
+ source: <87edtp5uws.fsf@kyleam.com>
+
+
+* pb/branch-advice-recurse-submodules (2023-01-18) 1 commit
+  (merged to 'next' on 2023-01-19 at 13747fc72d)
+ + branch: improve advice when --recurse-submodules fails
+
+ Improve advice message given when "git branch --recurse-submodules"
+ fails.
+ source: <pull.1464.git.1673890908453.gitgitgadget@gmail.com>
+
+
+* po/pretty-format-columns-doc (2023-01-19) 5 commits
+  (merged to 'next' on 2023-01-23 at d41cb5f527)
+ + doc: pretty-formats note wide char limitations, and add tests
+ + doc: pretty-formats describe use of ellipsis in truncation
+ + doc: pretty-formats document negative column alignments
+ + doc: pretty-formats: delineate `%<|(` parameter values
+ + doc: pretty-formats: separate parameters from placeholders
+
+ Clarify column-padding operators in the pretty format string.
+ source: <20230119181827.1319-1-philipoakley@iee.email>
+
+
+* sa/cat-file-mailmap--batch-check (2023-01-18) 1 commit
+  (merged to 'next' on 2023-01-18 at 25ecb1dd3a)
+ + git-cat-file.txt: fix list continuations rendering literally
+
+ Docfix.
+ source: <20230118082749.1252459-1-martin.agren@gmail.com>
+
+
+* tb/t0003-invoke-dd-more-portably (2023-01-22) 1 commit
+  (merged to 'next' on 2023-01-23 at 917aa24a27)
+ + t0003: call dd with portable blocksize
+
+ Test portability fix.
+ source: <20230122062839.14542-1-tboegi@web.de>
+
+
+--------------------------------------------------
+[New Topics]
+
+* ds/scalar-ignore-cron-error (2023-01-27) 3 commits
+ - scalar: only warn when background maintenance fails
+ - t921*: test scalar behavior starting maintenance
+ - t: allow 'scalar' in test_must_fail
+
+ Allow "scalar" to warn but continue when its periodic maintenance
+ feature cannot be enabled.
 
  Will merge to 'next'.
- Replaces en/rebase-update-refs-needs-merge-backend.
- source: <pull.1466.v5.git.1674619434.gitgitgadget@gmail.com>
+ source: <pull.1473.git.1674849963.gitgitgadget@gmail.com>
 
 
-* gm/request-pull-with-non-pgp-signed-tags (2023-01-25) 1 commit
- - request-pull: filter out SSH/X.509 tag signatures
+* mh/doc-credential-cache-only-in-core (2023-01-29) 1 commit
+  (merged to 'next' on 2023-01-30 at 021b5227af)
+ + Documentation: clarify that cache forgets credentials if the system restarts
 
- source: <20230125234725.3918563-1-gwymor@tilde.club>
+ Documentation clarification.
+
+ Will merge to 'master'.
+ source: <pull.1447.v3.git.1674936815117.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -326,18 +321,6 @@ Release tarballs are available at:
  source: <xmqqsfhgnmqg.fsf@gitster.g>
 
 
-* cb/grep-fallback-failing-jit (2022-12-17) 1 commit
- - grep: fall back to interpreter mode if JIT fails
-
- In an environment where dynamically generated code is prohibited to
- run (e.g. SELinux), failure to JIT pcre patterns is expected.  Fall
- back to interpreted execution in such a case.
-
- Expecting a reroll.
- cf. <f680b274-fa85-6624-096a-7753a2671c15@grsecurity.net>
- source: <20221216121557.30714-1-minipli@grsecurity.net>
-
-
 * ad/test-record-count-when-harness-is-in-use (2022-12-25) 1 commit
  - test-lib: allow storing counts with test harnesses
 
@@ -363,17 +346,74 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
-* ab/cache-api-cleanup-users (2023-01-17) 3 commits
-  (merged to 'next' on 2023-01-18 at c5a4374652)
- + treewide: always have a valid "index_state.repo" member
- + Merge branch 'ds/omit-trailing-hash-in-index' into ab/cache-api-cleanup-users
- + Merge branch 'ab/cache-api-cleanup' into ab/cache-api-cleanup-users
+* ab/hook-api-with-stdin (2023-01-23) 5 commits
+ - hook: support a --to-stdin=<path> option for testing
+ - sequencer: use the new hook API for the simpler "post-rewrite" call
+ - hook API: support passing stdin to hooks, convert am's 'post-rewrite'
+ - run-command: allow stdin for run_processes_parallel
+ - run-command.c: remove dead assignment in while-loop
 
- Updates the users of the cache API.
+ Extend the run-hooks API to allow feeding data from the standard
+ input when running the hook script(s).
+
+ Expecting review responses.
+ source: <cover-0.5-00000000000-20230123T170550Z-avarab@gmail.com>
+
+
+* as/ssh-signing-improve-key-missing-error (2023-01-25) 1 commit
+  (merged to 'next' on 2023-01-25 at 140f2c2c60)
+ + ssh signing: better error message when key not in agent
+
+ Improve the error message given when private key is not loaded in
+ the ssh agent in the codepath to sign with an ssh key.
 
  Will merge to 'master'.
- cf. <db312853-81a1-542b-db96-d816c463516c@github.com>
- source: <patch-1.1-b4998652822-20230117T135234Z-avarab@gmail.com>
+ source: <pull.1270.v3.git.git.1674650450662.gitgitgadget@gmail.com>
+
+
+* en/rebase-incompatible-opts (2023-01-25) 10 commits
+  (merged to 'next' on 2023-01-27 at 35a67cf2c6)
+ + rebase: provide better error message for apply options vs. merge config
+ + rebase: put rebase_options initialization in single place
+ + rebase: fix formatting of rebase --reapply-cherry-picks option in docs
+ + rebase: clarify the OPT_CMDMODE incompatibilities
+ + rebase: add coverage of other incompatible options
+ + rebase: fix incompatiblity checks for --[no-]reapply-cherry-picks
+ + rebase: fix docs about incompatibilities with --root
+ + rebase: remove --allow-empty-message from incompatible opts
+ + rebase: flag --apply and --merge as incompatible
+ + rebase: mark --update-refs as requiring the merge backend
+
+ "git rebase" often ignored incompatible options instead of
+ complaining, which has been corrected.
+
+ Will merge to 'master'.
+ Replaces en/rebase-update-refs-needs-merge-backend.
+ source: <pull.1466.v5.git.1674619434.gitgitgadget@gmail.com>
+
+
+* gm/request-pull-with-non-pgp-signed-tags (2023-01-25) 1 commit
+  (merged to 'next' on 2023-01-30 at abc684d8df)
+ + request-pull: filter out SSH/X.509 tag signatures
+
+ Adjust "git request-pull" to strip embedded signature from signed
+ tags to notice non-PGP signatures.
+
+ Will merge to 'master'.
+ source: <20230125234725.3918563-1-gwymor@tilde.club>
+
+
+* cb/grep-fallback-failing-jit (2023-01-30) 2 commits
+ - SQUASH???
+ - grep: fall back to interpreter if JIT memory allocation fails
+
+ In an environment where dynamically generated code is prohibited to
+ run (e.g. SELinux), failure to JIT pcre patterns is expected.  Fall
+ back to interpreted execution in such a case.
+
+ Expecting a (hopefully final minor) reroll.
+ cf. <xmqqlelj3hvk.fsf@gitster.g>
+ source: <20230127154952.485913-1-minipli@grsecurity.net>
 
 
 * cb/checkout-same-branch-twice (2023-01-20) 1 commit
@@ -385,27 +425,6 @@ Release tarballs are available at:
  Expecting a (hopefully final) reroll.
  cf. <8f24fc3c-c30f-dc70-5a94-5ee4ed3de102@dunelm.org.uk>
  source: <20230120113553.24655-1-carenas@gmail.com>
-
-
-* sa/cat-file-mailmap--batch-check (2023-01-18) 1 commit
-  (merged to 'next' on 2023-01-18 at 25ecb1dd3a)
- + git-cat-file.txt: fix list continuations rendering literally
-
- Docfix.
-
- Will merge to 'master'.
- source: <20230118082749.1252459-1-martin.agren@gmail.com>
-
-
-* pb/branch-advice-recurse-submodules (2023-01-18) 1 commit
-  (merged to 'next' on 2023-01-19 at 13747fc72d)
- + branch: improve advice when --recurse-submodules fails
-
- Improve advice message given when "git branch --resurse-submodules"
- fails.
-
- Will merge to 'master'.
- source: <pull.1464.git.1673890908453.gitgitgadget@gmail.com>
 
 
 * ab/sequencer-unleak (2023-01-18) 8 commits
@@ -425,100 +444,14 @@ Release tarballs are available at:
  source: <cover-v3-0.8-00000000000-20230118T160600Z-avarab@gmail.com>
 
 
-* jk/hash-object-literally-fd-leak (2023-01-19) 1 commit
-  (merged to 'next' on 2023-01-19 at fff9b60a36)
- + hash-object: fix descriptor leak with --literally
-
- Leakfix.
-
- Will merge to 'master'.
- source: <Y8ijpJqtkDTi792i@coredump.intra.peff.net>
-
-
-* jc/doc-branch-update-checked-out-branch (2023-01-18) 1 commit
-  (merged to 'next' on 2023-01-19 at 970900a232)
- + branch: document `-f` and linked worktree behaviour
-
- Document that "branch -f <branch>" disables only the safety to
- avoid recreating an existing branch.
-
- Will merge to 'master'.
- source: <xmqqa62f2dj1.fsf_-_@gitster.g>
-
-
-* jc/doc-checkout-b (2023-01-19) 1 commit
-  (merged to 'next' on 2023-01-23 at 95340e1941)
- + checkout: document -b/-B to highlight the differences from "git branch"
-
- Clarify how "checkout -b/-B" and "git branch [-f]" are similar but
- different in the documentation.
-
- Will merge to 'master'.
- source: <xmqqtu0m1m9i.fsf@gitster.g>
-
-
-* cw/fetch-remote-group-with-duplication (2023-01-19) 1 commit
-  (merged to 'next' on 2023-01-20 at 7f00e43209)
- + fetch: fix duplicate remote parallel fetch bug
-
- "git fetch <group>", when "<group>" of remotes lists the same
- remote twice, unnecessarily failed when parallel fetching was
- enabled, which has been corrected.
-
- Will merge to 'master'.
- source: <20230119220538.1522464-1-calvinwan@google.com>
-
-
-* po/pretty-format-columns-doc (2023-01-19) 5 commits
-  (merged to 'next' on 2023-01-23 at d41cb5f527)
- + doc: pretty-formats note wide char limitations, and add tests
- + doc: pretty-formats describe use of ellipsis in truncation
- + doc: pretty-formats document negative column alignments
- + doc: pretty-formats: delineate `%<|(` parameter values
- + doc: pretty-formats: separate parameters from placeholders
-
- Clarify column-padding operators in the pretty format string.
-
- Will merge to 'master'.
- source: <20230119181827.1319-1-philipoakley@iee.email>
-
-
-* jk/hash-object-fsck (2023-01-19) 7 commits
-  (merged to 'next' on 2023-01-23 at 985e87fc34)
- + fsck: do not assume NUL-termination of buffers
- + hash-object: use fsck for object checks
- + fsck: provide a function to fsck buffer without object struct
- + t: use hash-object --literally when created malformed objects
- + t7030: stop using invalid tag name
- + t1006: stop using 0-padded timestamps
- + t1007: modernize malformed object tests
-
- "git hash-object" now checks that the resulting object is well
- formed with the same code as "git fsck".
-
- Will merge to 'master'.
- source: <Y8hX+pIZUKXsyYj5@coredump.intra.peff.net>
- source: <Y8ifa7hyqxSbL92U@coredump.intra.peff.net>
-
-
-* tb/t0003-invoke-dd-more-portably (2023-01-22) 1 commit
-  (merged to 'next' on 2023-01-23 at 917aa24a27)
- + t0003: call dd with portable blocksize
-
- Test portability fix.
-
- Will merge to 'master'.
- source: <20230122062839.14542-1-tboegi@web.de>
-
-
-* jc/attr-doc-fix (2023-01-22) 1 commit
-  (merged to 'next' on 2023-01-24 at a25d37cb0f)
+* jc/attr-doc-fix (2023-01-26) 1 commit
+  (merged to 'next' on 2023-01-26 at cb327c4b5f)
  + attr: fix instructions on how to check attrs
 
  Comment fix.
 
  Will merge to 'master'.
- source: <pull.1441.v2.git.git.1674447742078.gitgitgadget@gmail.com>
+ source: <pull.1441.v3.git.git.1674768107941.gitgitgadget@gmail.com>
 
 
 * rj/avoid-switching-to-already-used-branch (2023-01-22) 3 commits
@@ -548,14 +481,15 @@ Release tarballs are available at:
 
 
 * en/ls-files-doc-update (2023-01-13) 4 commits
- - ls-files: guide folks to --exclude-standard over other --exclude* options
- - ls-files: clarify descriptions of status tags for -t
- - ls-files: clarify descriptions of file selection options
- - ls-files: add missing documentation for --resolve-undo option
+  (merged to 'next' on 2023-01-27 at 20b9803add)
+ + ls-files: guide folks to --exclude-standard over other --exclude* options
+ + ls-files: clarify descriptions of status tags for -t
+ + ls-files: clarify descriptions of file selection options
+ + ls-files: add missing documentation for --resolve-undo option
 
  Doc update to ls-files.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1463.git.1673584914.gitgitgadget@gmail.com>
 
 
@@ -603,18 +537,6 @@ Release tarballs are available at:
  Expecting a reroll.
  cf. <2a2a46f0-a9bc-06a6-72e1-28800518777c@dunelm.org.uk>
  source: <20230116190749.4141516-1-toon@iotcl.com>
-
-
-* cb/grep-pcre-ucp (2023-01-18) 1 commit
-  (merged to 'next' on 2023-01-19 at 2c7e531839)
- + grep: correctly identify utf-8 characters with \{b,w} in -P
-
- "grep -P" learned to use Unicode Character Property to grok
- character classes when processing \b and \w etc.
-
- Will merge to 'master'.
- cf. <xmqqzgaf2zpt.fsf@gitster.g>
- source: <20230108155217.2817-1-carenas@gmail.com>
 
 
 * cw/submodule-status-in-parallel (2023-01-17) 6 commits
@@ -672,18 +594,6 @@ Release tarballs are available at:
  Expecting a reroll.
  cf. <527f7315-be7b-7ec0-04fc-d07da7d4fefa@gmail.com>
  source: <34a58449-4f2e-66ef-ea01-119186aebd23@gmail.com>
-
-
-* km/send-email-with-v-reroll-count (2022-11-27) 1 commit
-  (merged to 'next' on 2023-01-19 at 9b3543471c)
- + send-email: relay '-v N' to format-patch
-
- "git send-email -v 3" used to be expanded to "git send-email
- --validate 3" when the user meant to pass them down to
- "format-patch", which has been corrected.
-
- Will merge to 'master'.
- source: <87edtp5uws.fsf@kyleam.com>
 
 
 * mc/credential-helper-auth-headers (2023-01-20) 12 commits
