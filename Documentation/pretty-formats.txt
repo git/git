@@ -146,24 +146,34 @@ The placeholders are:
 '%m':: left (`<`), right (`>`) or boundary (`-`) mark
 '%w([<w>[,<i1>[,<i2>]]])':: switch line wrapping, like the -w option of
 			    linkgit:git-shortlog[1].
-'%<(<N>[,trunc|ltrunc|mtrunc])':: make the next placeholder take at
-				  least N columns, padding spaces on
+'%<( <N> [,trunc|ltrunc|mtrunc])':: make the next placeholder take at
+				  least N column widths, padding spaces on
 				  the right if necessary.  Optionally
-				  truncate at the beginning (ltrunc),
-				  the middle (mtrunc) or the end
-				  (trunc) if the output is longer than
-				  N columns.  Note that truncating
+				  truncate (with ellipsis '..') at the left (ltrunc) `..ft`,
+				  the middle (mtrunc) `mi..le`, or the end
+				  (trunc) `rig..`, if the output is longer than
+				  N columns.
+				  Note 1: that truncating
 				  only works correctly with N >= 2.
-'%<|(<N>)':: make the next placeholder take at least until Nth
-	     columns, padding spaces on the right if necessary
-'%>(<N>)', '%>|(<N>)':: similar to '%<(<N>)', '%<|(<N>)' respectively,
+				  Note 2: spaces around the N and M (see below)
+				  values are optional.
+				  Note 3: Emojis and other wide characters
+				  will take two display columns, which may
+				  over-run column boundaries.
+				  Note 4: decomposed character combining marks
+				  may be misplaced at padding boundaries.
+'%<|( <M> )':: make the next placeholder take at least until Mth
+	     display column, padding spaces on the right if necessary.
+	     Use negative M values for column positions measured
+	     from the right hand edge of the terminal window.
+'%>( <N> )', '%>|( <M> )':: similar to '%<( <N> )', '%<|( <M> )' respectively,
 			but padding spaces on the left
-'%>>(<N>)', '%>>|(<N>)':: similar to '%>(<N>)', '%>|(<N>)'
+'%>>( <N> )', '%>>|( <M> )':: similar to '%>( <N> )', '%>|( <M> )'
 			  respectively, except that if the next
 			  placeholder takes more spaces than given and
 			  there are spaces on its left, use those
 			  spaces
-'%><(<N>)', '%><|(<N>)':: similar to '%<(<N>)', '%<|(<N>)'
+'%><( <N> )', '%><|( <M> )':: similar to '%<( <N> )', '%<|( <M> )'
 			  respectively, but padding both sides
 			  (i.e. the text is centered)
 
