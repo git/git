@@ -285,6 +285,8 @@ test_expect_success 'clone HTTP bundle' '
 '
 
 test_expect_success 'clone bundle list (HTTP, no heuristic)' '
+	test_when_finished rm -f trace*.txt &&
+
 	cp clone-from/bundle-*.bundle "$HTTPD_DOCUMENT_ROOT_PATH/" &&
 	cat >"$HTTPD_DOCUMENT_ROOT_PATH/bundle-list" <<-EOF &&
 	[bundle]
@@ -304,12 +306,26 @@ test_expect_success 'clone bundle list (HTTP, no heuristic)' '
 		uri = $HTTPD_URL/bundle-4.bundle
 	EOF
 
-	git clone --bundle-uri="$HTTPD_URL/bundle-list" \
+	GIT_TRACE2_EVENT="$(pwd)/trace-clone.txt" \
+		git clone --bundle-uri="$HTTPD_URL/bundle-list" \
 		clone-from clone-list-http  2>err &&
 	! grep "Repository lacks these prerequisite commits" err &&
 
 	git -C clone-from for-each-ref --format="%(objectname)" >oids &&
-	git -C clone-list-http cat-file --batch-check <oids
+	git -C clone-list-http cat-file --batch-check <oids &&
+
+	cat >expect <<-EOF &&
+	$HTTPD_URL/bundle-1.bundle
+	$HTTPD_URL/bundle-2.bundle
+	$HTTPD_URL/bundle-3.bundle
+	$HTTPD_URL/bundle-4.bundle
+	$HTTPD_URL/bundle-list
+	EOF
+
+	# Sort the list, since the order is not well-defined
+	# without a heuristic.
+	test_remote_https_urls <trace-clone.txt | sort >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'clone bundle list (HTTP, any mode)' '
@@ -347,6 +363,55 @@ test_expect_success 'clone bundle list (HTTP, any mode)' '
 	refs/bundles/merge
 	refs/bundles/right
 	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'clone bundle list (http, creationToken)' '
+	test_when_finished rm -f trace*.txt &&
+
+	cp clone-from/bundle-*.bundle "$HTTPD_DOCUMENT_ROOT_PATH/" &&
+	cat >"$HTTPD_DOCUMENT_ROOT_PATH/bundle-list" <<-EOF &&
+	[bundle]
+		version = 1
+		mode = all
+		heuristic = creationToken
+
+	[bundle "bundle-1"]
+		uri = bundle-1.bundle
+		creationToken = 1
+
+	[bundle "bundle-2"]
+		uri = bundle-2.bundle
+		creationToken = 2
+
+	[bundle "bundle-3"]
+		uri = bundle-3.bundle
+		creationToken = 3
+
+	[bundle "bundle-4"]
+		uri = bundle-4.bundle
+		creationToken = 4
+	EOF
+
+	GIT_TRACE2_EVENT="$(pwd)/trace-clone.txt" git \
+		clone --bundle-uri="$HTTPD_URL/bundle-list" \
+		"$HTTPD_URL/smart/fetch.git" clone-list-http-2 &&
+
+	git -C clone-from for-each-ref --format="%(objectname)" >oids &&
+	git -C clone-list-http-2 cat-file --batch-check <oids &&
+
+	cat >expect <<-EOF &&
+	$HTTPD_URL/bundle-1.bundle
+	$HTTPD_URL/bundle-2.bundle
+	$HTTPD_URL/bundle-3.bundle
+	$HTTPD_URL/bundle-4.bundle
+	$HTTPD_URL/bundle-list
+	EOF
+
+	# Since the creationToken heuristic is not yet understood by the
+	# client, the order cannot be verified at this moment. Sort the
+	# list for consistent results.
+	test_remote_https_urls <trace-clone.txt | sort >actual &&
 	test_cmp expect actual
 '
 
