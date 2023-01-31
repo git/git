@@ -588,14 +588,14 @@ test_expect_success 'verify catches unreachable, broken prerequisites' '
 		# Verify should fail
 		test_must_fail git bundle verify \
 			../clone-from/tip.bundle 2>err &&
-		grep "Could not read $BAD_OID" err &&
-		grep "Failed to traverse parents of commit $TIP_OID" err &&
+		grep "some prerequisite commits .* are not connected" err &&
+		test_line_count = 1 err &&
 
 		# Unbundling should fail
 		test_must_fail git bundle unbundle \
 			../clone-from/tip.bundle 2>err &&
-		grep "Could not read $BAD_OID" err &&
-		grep "Failed to traverse parents of commit $TIP_OID" err
+		grep "some prerequisite commits .* are not connected" err &&
+		test_line_count = 1 err
 	)
 '
 
