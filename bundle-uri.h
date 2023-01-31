@@ -124,8 +124,14 @@ int bundle_uri_parse_config_format(const char *uri,
  * based on that information.
  *
  * Returns non-zero if no bundle information is found at the given 'uri'.
+ *
+ * If the pointer 'has_heuristic' is non-NULL, then the value it points to
+ * will be set to be non-zero if and only if the fetched list has a
+ * heuristic value. Such a value indicates that the list was designed for
+ * incremental fetches.
  */
-int fetch_bundle_uri(struct repository *r, const char *uri);
+int fetch_bundle_uri(struct repository *r, const char *uri,
+		     int *has_heuristic);
 
 /**
  * Given a bundle list that was already advertised (likely by the

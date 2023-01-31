@@ -432,6 +432,8 @@ test_expect_success 'clone incomplete bundle list (http, creationToken)' '
 		--single-branch --branch=base --no-tags \
 		"$HTTPD_URL/smart/fetch.git" clone-token-http &&
 
+	test_cmp_config -C clone-token-http "$HTTPD_URL/bundle-list" fetch.bundleuri &&
+
 	cat >expect <<-EOF &&
 	$HTTPD_URL/bundle-list
 	$HTTPD_URL/bundle-1.bundle
@@ -439,6 +441,43 @@ test_expect_success 'clone incomplete bundle list (http, creationToken)' '
 
 	test_remote_https_urls <trace-clone.txt >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'http clone with bundle.heuristic creates fetch.bundleURI' '
+	test_when_finished rm -rf fetch-http-4 trace*.txt &&
+
+	cat >"$HTTPD_DOCUMENT_ROOT_PATH/bundle-list" <<-EOF &&
+	[bundle]
+		version = 1
+		mode = all
+		heuristic = creationToken
+
+	[bundle "bundle-1"]
+		uri = bundle-1.bundle
+		creationToken = 1
+	EOF
+
+	GIT_TRACE2_EVENT="$(pwd)/trace-clone.txt" \
+	git clone --single-branch --branch=base \
+		--bundle-uri="$HTTPD_URL/bundle-list" \
+		"$HTTPD_URL/smart/fetch.git" fetch-http-4 &&
+
+	test_cmp_config -C fetch-http-4 "$HTTPD_URL/bundle-list" fetch.bundleuri &&
+
+	cat >expect <<-EOF &&
+	$HTTPD_URL/bundle-list
+	$HTTPD_URL/bundle-1.bundle
+	EOF
+
+	test_remote_https_urls <trace-clone.txt >actual &&
+	test_cmp expect actual &&
+
+	# only received base ref from bundle-1
+	git -C fetch-http-4 for-each-ref --format="%(refname)" "refs/bundles/*" >refs &&
+	cat >expect <<-\EOF &&
+	refs/bundles/base
+	EOF
+	test_cmp expect refs
 '
 
 # Do not add tests here unless they use the HTTP server, as they will

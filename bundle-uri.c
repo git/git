@@ -736,7 +736,8 @@ static int unlink_bundle(struct remote_bundle_info *info, void *data)
 	return 0;
 }
 
-int fetch_bundle_uri(struct repository *r, const char *uri)
+int fetch_bundle_uri(struct repository *r, const char *uri,
+		     int *has_heuristic)
 {
 	int result;
 	struct bundle_list list;
@@ -756,6 +757,8 @@ int fetch_bundle_uri(struct repository *r, const char *uri)
 	result = unbundle_all_bundles(r, &list);
 
 cleanup:
+	if (has_heuristic)
+		*has_heuristic = (list.heuristic != BUNDLE_HEURISTIC_NONE);
 	for_all_bundles_in_list(&list, unlink_bundle, NULL);
 	clear_bundle_list(&list);
 	clear_remote_bundle_info(&bundle, NULL);

@@ -96,3 +96,11 @@ fetch.writeCommitGraph::
 	merge and the write may take longer. Having an updated commit-graph
 	file helps performance of many Git commands, including `git merge-base`,
 	`git push -f`, and `git log --graph`. Defaults to false.
+
+fetch.bundleURI::
+	This value stores a URI for downloading Git object data from a bundle
+	URI before performing an incremental fetch from the origin Git server.
+	This is similar to how the `--bundle-uri` option behaves in
+	linkgit:git-clone[1]. `git clone --bundle-uri` will set the
+	`fetch.bundleURI` value if the supplied bundle URI contains a bundle
+	list that is organized for incremental fetches.
