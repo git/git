@@ -42,6 +42,12 @@ struct remote_bundle_info {
 	 * this boolean is true.
 	 */
 	unsigned unbundled:1;
+
+	/**
+	 * If the bundle is part of a list with the creationToken
+	 * heuristic, then we use this member for sorting the bundles.
+	 */
+	uint64_t creationToken;
 };
 
 #define REMOTE_BUNDLE_INFO_INIT { 0 }

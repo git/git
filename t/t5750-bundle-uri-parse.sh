@@ -258,15 +258,33 @@ test_expect_success 'parse config format: creationToken heuristic' '
 		heuristic = creationToken
 	[bundle "one"]
 		uri = http://example.com/bundle.bdl
+		creationToken = 123456
 	[bundle "two"]
 		uri = https://example.com/bundle.bdl
+		creationToken = 12345678901234567890
 	[bundle "three"]
 		uri = file:///usr/share/git/bundle.bdl
+		creationToken = 1
 	EOF
 
 	test-tool bundle-uri parse-config expect >actual 2>err &&
 	test_must_be_empty err &&
 	test_cmp_config_output expect actual
+'
+
+test_expect_success 'parse config format edge cases: creationToken heuristic' '
+	cat >expect <<-\EOF &&
+	[bundle]
+		version = 1
+		mode = all
+		heuristic = creationToken
+	[bundle "one"]
+		uri = http://example.com/bundle.bdl
+		creationToken = bogus
+	EOF
+
+	test-tool bundle-uri parse-config expect >actual 2>err &&
+	grep "could not parse bundle list key creationToken with value '\''bogus'\''" err
 '
 
 test_done

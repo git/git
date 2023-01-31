@@ -83,6 +83,9 @@ static int summarize_bundle(struct remote_bundle_info *info, void *data)
 	FILE *fp = data;
 	fprintf(fp, "[bundle \"%s\"]\n", info->id);
 	fprintf(fp, "\turi = %s\n", info->uri);
+
+	if (info->creationToken)
+		fprintf(fp, "\tcreationToken = %"PRIu64"\n", info->creationToken);
 	return 0;
 }
 
@@ -200,6 +203,13 @@ static int bundle_list_update(const char *key, const char *value,
 		if (bundle->uri)
 			return -1;
 		bundle->uri = relative_url(list->baseURI, value, NULL);
+		return 0;
+	}
+
+	if (!strcmp(subkey, "creationtoken")) {
+		if (sscanf(value, "%"PRIu64, &bundle->creationToken) != 1)
+			warning(_("could not parse bundle list key %s with value '%s'"),
+				"creationToken", value);
 		return 0;
 	}
 
