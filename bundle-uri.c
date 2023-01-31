@@ -481,6 +481,8 @@ static int fetch_bundles_by_token(struct repository *r,
 {
 	int cur;
 	int move_direction = 0;
+	const char *creationTokenStr;
+	uint64_t maxCreationToken = 0, newMaxCreationToken = 0;
 	struct bundle_list_context ctx = {
 		.r = r,
 		.list = list,
@@ -494,7 +496,26 @@ static int fetch_bundles_by_token(struct repository *r,
 
 	for_all_bundles_in_list(list, append_bundle, &bundles);
 
+	if (!bundles.nr) {
+		free(bundles.items);
+		return 0;
+	}
+
 	QSORT(bundles.items, bundles.nr, compare_creation_token_decreasing);
+
+	/*
+	 * If fetch.bundleCreationToken exists, parses to a uint64t, and
+	 * is not strictly smaller than the maximum creation token in the
+	 * bundle list, then do not download any bundles.
+	 */
+	if (!repo_config_get_value(r,
+				   "fetch.bundlecreationtoken",
+				   &creationTokenStr) &&
+	    sscanf(creationTokenStr, "%"PRIu64, &maxCreationToken) == 1 &&
+	    bundles.items[0]->creationToken <= maxCreationToken) {
+		free(bundles.items);
+		return 0;
+	}
 
 	/*
 	 * Attempt to download and unbundle the minimum number of bundles by
@@ -516,6 +537,16 @@ static int fetch_bundles_by_token(struct repository *r,
 	cur = 0;
 	while (cur >= 0 && cur < bundles.nr) {
 		struct remote_bundle_info *bundle = bundles.items[cur];
+
+		/*
+		 * If we need to dig into bundles below the previous
+		 * creation token value, then likely we are in an erroneous
+		 * state due to missing or invalid bundles. Halt the process
+		 * instead of continuing to download extra data.
+		 */
+		if (bundle->creationToken <= maxCreationToken)
+			break;
+
 		if (!bundle->file) {
 			/*
 			 * Not downloaded yet. Try downloading.
@@ -555,6 +586,9 @@ static int fetch_bundles_by_token(struct repository *r,
 				 */
 				move_direction = -1;
 				bundle->unbundled = 1;
+
+				if (bundle->creationToken > newMaxCreationToken)
+					newMaxCreationToken = bundle->creationToken;
 			}
 		}
 
@@ -569,14 +603,24 @@ move:
 		cur += move_direction;
 	}
 
-	free(bundles.items);
-
 	/*
 	 * We succeed if the loop terminates because 'cur' drops below
 	 * zero. The other case is that we terminate because 'cur'
 	 * reaches the end of the list, so we have a failure no matter
 	 * which bundles we apply from the list.
 	 */
+	if (cur < 0) {
+		struct strbuf value = STRBUF_INIT;
+		strbuf_addf(&value, "%"PRIu64"", newMaxCreationToken);
+		if (repo_config_set_multivar_gently(ctx.r,
+						    "fetch.bundleCreationToken",
+						    value.buf, NULL, 0))
+			warning(_("failed to store maximum creation token"));
+
+		strbuf_release(&value);
+	}
+
+	free(bundles.items);
 	return cur >= 0;
 }
 

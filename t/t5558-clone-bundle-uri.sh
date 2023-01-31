@@ -433,6 +433,7 @@ test_expect_success 'clone incomplete bundle list (http, creationToken)' '
 		"$HTTPD_URL/smart/fetch.git" clone-token-http &&
 
 	test_cmp_config -C clone-token-http "$HTTPD_URL/bundle-list" fetch.bundleuri &&
+	test_cmp_config -C clone-token-http 1 fetch.bundlecreationtoken &&
 
 	cat >expect <<-EOF &&
 	$HTTPD_URL/bundle-list
@@ -468,6 +469,7 @@ test_expect_success 'clone incomplete bundle list (http, creationToken)' '
 	GIT_TRACE2_EVENT="$(pwd)/trace1.txt" \
 		git -C clone-token-http fetch origin --no-tags \
 		refs/heads/merge:refs/heads/merge &&
+	test_cmp_config -C clone-token-http 4 fetch.bundlecreationtoken &&
 
 	cat >expect <<-EOF &&
 	$HTTPD_URL/bundle-list
@@ -511,6 +513,7 @@ test_expect_success 'http clone with bundle.heuristic creates fetch.bundleURI' '
 		"$HTTPD_URL/smart/fetch.git" fetch-http-4 &&
 
 	test_cmp_config -C fetch-http-4 "$HTTPD_URL/bundle-list" fetch.bundleuri &&
+	test_cmp_config -C fetch-http-4 1 fetch.bundlecreationtoken &&
 
 	cat >expect <<-EOF &&
 	$HTTPD_URL/bundle-list
@@ -538,6 +541,7 @@ test_expect_success 'http clone with bundle.heuristic creates fetch.bundleURI' '
 		git -C fetch-http-4 fetch origin --no-tags \
 		refs/heads/left:refs/heads/left \
 		refs/heads/right:refs/heads/right &&
+	test_cmp_config -C fetch-http-4 2 fetch.bundlecreationtoken &&
 
 	cat >expect <<-EOF &&
 	$HTTPD_URL/bundle-list
@@ -555,6 +559,18 @@ test_expect_success 'http clone with bundle.heuristic creates fetch.bundleURI' '
 	EOF
 	test_cmp expect refs &&
 
+	# No-op fetch
+	GIT_TRACE2_EVENT="$(pwd)/trace1b.txt" \
+		git -C fetch-http-4 fetch origin --no-tags \
+		refs/heads/left:refs/heads/left \
+		refs/heads/right:refs/heads/right &&
+
+	cat >expect <<-EOF &&
+	$HTTPD_URL/bundle-list
+	EOF
+	test_remote_https_urls <trace1b.txt >actual &&
+	test_cmp expect actual &&
+
 	cat >>"$HTTPD_DOCUMENT_ROOT_PATH/bundle-list" <<-EOF &&
 	[bundle "bundle-3"]
 		uri = bundle-3.bundle
@@ -570,6 +586,7 @@ test_expect_success 'http clone with bundle.heuristic creates fetch.bundleURI' '
 	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
 		git -C fetch-http-4 fetch origin --no-tags \
 		refs/heads/merge:refs/heads/merge &&
+	test_cmp_config -C fetch-http-4 4 fetch.bundlecreationtoken &&
 
 	cat >expect <<-EOF &&
 	$HTTPD_URL/bundle-list
@@ -588,7 +605,17 @@ test_expect_success 'http clone with bundle.heuristic creates fetch.bundleURI' '
 	refs/bundles/left
 	refs/bundles/merge
 	EOF
-	test_cmp expect refs
+	test_cmp expect refs &&
+
+	# No-op fetch
+	GIT_TRACE2_EVENT="$(pwd)/trace2b.txt" \
+		git -C fetch-http-4 fetch origin &&
+
+	cat >expect <<-EOF &&
+	$HTTPD_URL/bundle-list
+	EOF
+	test_remote_https_urls <trace2b.txt >actual &&
+	test_cmp expect actual
 '
 
 # Do not add tests here unless they use the HTTP server, as they will

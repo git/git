@@ -104,3 +104,19 @@ fetch.bundleURI::
 	linkgit:git-clone[1]. `git clone --bundle-uri` will set the
 	`fetch.bundleURI` value if the supplied bundle URI contains a bundle
 	list that is organized for incremental fetches.
++
+If you modify this value and your repository has a `fetch.bundleCreationToken`
+value, then remove that `fetch.bundleCreationToken` value before fetching from
+the new bundle URI.
+
+fetch.bundleCreationToken::
+	When using `fetch.bundleURI` to fetch incrementally from a bundle
+	list that uses the "creationToken" heuristic, this config value
+	stores the maximum `creationToken` value of the downloaded bundles.
+	This value is used to prevent downloading bundles in the future
+	if the advertised `creationToken` is not strictly larger than this
+	value.
++
+The creation token values are chosen by the provider serving the specific
+bundle URI. If you modify the URI at `fetch.bundleURI`, then be sure to
+remove the value for the `fetch.bundleCreationToken` value before fetching.
