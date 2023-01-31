@@ -29,6 +29,7 @@
 #include "commit-graph.h"
 #include "shallow.h"
 #include "worktree.h"
+#include "bundle-uri.h"
 
 #define FORCED_UPDATES_DELAY_WARNING_IN_MS (10 * 1000)
 
@@ -2109,6 +2110,7 @@ static int fetch_one(struct remote *remote, int argc, const char **argv,
 int cmd_fetch(int argc, const char **argv, const char *prefix)
 {
 	int i;
+	const char *bundle_uri;
 	struct string_list list = STRING_LIST_INIT_DUP;
 	struct remote *remote = NULL;
 	int result = 0;
@@ -2193,6 +2195,10 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	/* FETCH_HEAD never gets updated in --dry-run mode */
 	if (dry_run)
 		write_fetch_head = 0;
+
+	if (!git_config_get_string_tmp("fetch.bundleuri", &bundle_uri) &&
+	    fetch_bundle_uri(the_repository, bundle_uri, NULL))
+		warning(_("failed to fetch bundles from '%s'"), bundle_uri);
 
 	if (all) {
 		if (argc == 1)
