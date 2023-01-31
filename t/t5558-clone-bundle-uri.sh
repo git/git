@@ -618,6 +618,406 @@ test_expect_success 'http clone with bundle.heuristic creates fetch.bundleURI' '
 	test_cmp expect actual
 '
 
+test_expect_success 'creationToken heuristic with failed downloads (clone)' '
+	test_when_finished rm -rf download-* trace*.txt &&
+
+	# Case 1: base bundle does not exist, nothing can unbundle
+	cat >"$HTTPD_DOCUMENT_ROOT_PATH/bundle-list" <<-EOF &&
+	[bundle]
+		version = 1
+		mode = all
+		heuristic = creationToken
+
+	[bundle "bundle-1"]
+		uri = fake.bundle
+		creationToken = 1
+
+	[bundle "bundle-2"]
+		uri = bundle-2.bundle
+		creationToken = 2
+
+	[bundle "bundle-3"]
+		uri = bundle-3.bundle
+		creationToken = 3
+
+	[bundle "bundle-4"]
+		uri = bundle-4.bundle
+		creationToken = 4
+	EOF
+
+	GIT_TRACE2_EVENT="$(pwd)/trace-clone-1.txt" \
+	git clone --single-branch --branch=base \
+		--bundle-uri="$HTTPD_URL/bundle-list" \
+		"$HTTPD_URL/smart/fetch.git" download-1 &&
+
+	# Bundle failure does not set these configs.
+	test_must_fail git -C download-1 config fetch.bundleuri &&
+	test_must_fail git -C download-1 config fetch.bundlecreationtoken &&
+
+	cat >expect <<-EOF &&
+	$HTTPD_URL/bundle-list
+	$HTTPD_URL/bundle-4.bundle
+	$HTTPD_URL/bundle-3.bundle
+	$HTTPD_URL/bundle-2.bundle
+	$HTTPD_URL/fake.bundle
+	EOF
+	test_remote_https_urls <trace-clone-1.txt >actual &&
+	test_cmp expect actual &&
+
+	# All bundles failed to unbundle
+	git -C download-1 for-each-ref --format="%(refname)" "refs/bundles/*" >refs &&
+	test_must_be_empty refs &&
+
+	# Case 2: middle bundle does not exist, only two bundles can unbundle
+	cat >"$HTTPD_DOCUMENT_ROOT_PATH/bundle-list" <<-EOF &&
+	[bundle]
+		version = 1
+		mode = all
+		heuristic = creationToken
+
+	[bundle "bundle-1"]
+		uri = bundle-1.bundle
+		creationToken = 1
+
+	[bundle "bundle-2"]
+		uri = fake.bundle
+		creationToken = 2
+
+	[bundle "bundle-3"]
+		uri = bundle-3.bundle
+		creationToken = 3
+
+	[bundle "bundle-4"]
+		uri = bundle-4.bundle
+		creationToken = 4
+	EOF
+
+	GIT_TRACE2_EVENT="$(pwd)/trace-clone-2.txt" \
+	git clone --single-branch --branch=base \
+		--bundle-uri="$HTTPD_URL/bundle-list" \
+		"$HTTPD_URL/smart/fetch.git" download-2 &&
+
+	# Bundle failure does not set these configs.
+	test_must_fail git -C download-2 config fetch.bundleuri &&
+	test_must_fail git -C download-2 config fetch.bundlecreationtoken &&
+
+	cat >expect <<-EOF &&
+	$HTTPD_URL/bundle-list
+	$HTTPD_URL/bundle-4.bundle
+	$HTTPD_URL/bundle-3.bundle
+	$HTTPD_URL/fake.bundle
+	$HTTPD_URL/bundle-1.bundle
+	EOF
+	test_remote_https_urls <trace-clone-2.txt >actual &&
+	test_cmp expect actual &&
+
+	# bundle-1 and bundle-3 could unbundle, but bundle-4 could not
+	git -C download-2 for-each-ref --format="%(refname)" "refs/bundles/*" >refs &&
+	cat >expect <<-EOF &&
+	refs/bundles/base
+	refs/bundles/right
+	EOF
+	test_cmp expect refs &&
+
+	# Case 3: top bundle does not exist, rest unbundle fine.
+	cat >"$HTTPD_DOCUMENT_ROOT_PATH/bundle-list" <<-EOF &&
+	[bundle]
+		version = 1
+		mode = all
+		heuristic = creationToken
+
+	[bundle "bundle-1"]
+		uri = bundle-1.bundle
+		creationToken = 1
+
+	[bundle "bundle-2"]
+		uri = bundle-2.bundle
+		creationToken = 2
+
+	[bundle "bundle-3"]
+		uri = bundle-3.bundle
+		creationToken = 3
+
+	[bundle "bundle-4"]
+		uri = fake.bundle
+		creationToken = 4
+	EOF
+
+	GIT_TRACE2_EVENT="$(pwd)/trace-clone-3.txt" \
+	git clone --single-branch --branch=base \
+		--bundle-uri="$HTTPD_URL/bundle-list" \
+		"$HTTPD_URL/smart/fetch.git" download-3 &&
+
+	# As long as we have continguous successful downloads,
+	# we _do_ set these configs.
+	test_cmp_config -C download-3 "$HTTPD_URL/bundle-list" fetch.bundleuri &&
+	test_cmp_config -C download-3 3 fetch.bundlecreationtoken &&
+
+	cat >expect <<-EOF &&
+	$HTTPD_URL/bundle-list
+	$HTTPD_URL/fake.bundle
+	$HTTPD_URL/bundle-3.bundle
+	$HTTPD_URL/bundle-2.bundle
+	$HTTPD_URL/bundle-1.bundle
+	EOF
+	test_remote_https_urls <trace-clone-3.txt >actual &&
+	test_cmp expect actual &&
+
+	# fake.bundle did not unbundle, but the others did.
+	git -C download-3 for-each-ref --format="%(refname)" "refs/bundles/*" >refs &&
+	cat >expect <<-EOF &&
+	refs/bundles/base
+	refs/bundles/left
+	refs/bundles/right
+	EOF
+	test_cmp expect refs
+'
+
+# Expand the bundle list to include other interesting shapes, specifically
+# interesting for use when fetching from a previous state.
+#
+# ---------------- bundle-7
+#       7
+#     _/|\_
+# ---/--|--\------ bundle-6
+#   5   |   6
+# --|---|---|----- bundle-4
+#   |   4   |
+#   |  / \  /
+# --|-|---|/------ bundle-3 (the client will be caught up to this point.)
+#   \ |   3
+# ---\|---|------- bundle-2
+#     2   |
+# ----|---|------- bundle-1
+#      \ /
+#       1
+#       |
+# (previous commits)
+test_expect_success 'expand incremental bundle list' '
+	(
+		cd clone-from &&
+		git checkout -b lefter left &&
+		test_commit 5 &&
+		git checkout -b righter right &&
+		test_commit 6 &&
+		git checkout -b top lefter &&
+		git merge -m "7" merge righter &&
+
+		git bundle create bundle-6.bundle lefter righter --not left right &&
+		git bundle create bundle-7.bundle top --not lefter merge righter &&
+
+		cp bundle-*.bundle "$HTTPD_DOCUMENT_ROOT_PATH/"
+	) &&
+	git -C "$HTTPD_DOCUMENT_ROOT_PATH/fetch.git" fetch origin +refs/heads/*:refs/heads/*
+'
+
+test_expect_success 'creationToken heuristic with failed downloads (fetch)' '
+	test_when_finished rm -rf download-* trace*.txt &&
+
+	cat >"$HTTPD_DOCUMENT_ROOT_PATH/bundle-list" <<-EOF &&
+	[bundle]
+		version = 1
+		mode = all
+		heuristic = creationToken
+
+	[bundle "bundle-1"]
+		uri = bundle-1.bundle
+		creationToken = 1
+
+	[bundle "bundle-2"]
+		uri = bundle-2.bundle
+		creationToken = 2
+
+	[bundle "bundle-3"]
+		uri = bundle-3.bundle
+		creationToken = 3
+	EOF
+
+	git clone --single-branch --branch=left \
+		--bundle-uri="$HTTPD_URL/bundle-list" \
+		"$HTTPD_URL/smart/fetch.git" fetch-base &&
+	test_cmp_config -C fetch-base "$HTTPD_URL/bundle-list" fetch.bundleURI &&
+	test_cmp_config -C fetch-base 3 fetch.bundleCreationToken &&
+
+	# Case 1: all bundles exist: successful unbundling of all bundles
+	cat >"$HTTPD_DOCUMENT_ROOT_PATH/bundle-list" <<-EOF &&
+	[bundle]
+		version = 1
+		mode = all
+		heuristic = creationToken
+
+	[bundle "bundle-1"]
+		uri = bundle-1.bundle
+		creationToken = 1
+
+	[bundle "bundle-2"]
+		uri = bundle-2.bundle
+		creationToken = 2
+
+	[bundle "bundle-3"]
+		uri = bundle-3.bundle
+		creationToken = 3
+
+	[bundle "bundle-4"]
+		uri = bundle-4.bundle
+		creationToken = 4
+
+	[bundle "bundle-6"]
+		uri = bundle-6.bundle
+		creationToken = 6
+
+	[bundle "bundle-7"]
+		uri = bundle-7.bundle
+		creationToken = 7
+	EOF
+
+	cp -r fetch-base fetch-1 &&
+	GIT_TRACE2_EVENT="$(pwd)/trace-fetch-1.txt" \
+		git -C fetch-1 fetch origin &&
+	test_cmp_config -C fetch-1 7 fetch.bundlecreationtoken &&
+
+	cat >expect <<-EOF &&
+	$HTTPD_URL/bundle-list
+	$HTTPD_URL/bundle-7.bundle
+	$HTTPD_URL/bundle-6.bundle
+	$HTTPD_URL/bundle-4.bundle
+	EOF
+	test_remote_https_urls <trace-fetch-1.txt >actual &&
+	test_cmp expect actual &&
+
+	# Check which bundles have unbundled by refs
+	git -C fetch-1 for-each-ref --format="%(refname)" "refs/bundles/*" >refs &&
+	cat >expect <<-EOF &&
+	refs/bundles/base
+	refs/bundles/left
+	refs/bundles/lefter
+	refs/bundles/merge
+	refs/bundles/right
+	refs/bundles/righter
+	refs/bundles/top
+	EOF
+	test_cmp expect refs &&
+
+	# Case 2: middle bundle does not exist, only bundle-4 can unbundle
+	cat >"$HTTPD_DOCUMENT_ROOT_PATH/bundle-list" <<-EOF &&
+	[bundle]
+		version = 1
+		mode = all
+		heuristic = creationToken
+
+	[bundle "bundle-1"]
+		uri = bundle-1.bundle
+		creationToken = 1
+
+	[bundle "bundle-2"]
+		uri = bundle-2.bundle
+		creationToken = 2
+
+	[bundle "bundle-3"]
+		uri = bundle-3.bundle
+		creationToken = 3
+
+	[bundle "bundle-4"]
+		uri = bundle-4.bundle
+		creationToken = 4
+
+	[bundle "bundle-6"]
+		uri = fake.bundle
+		creationToken = 6
+
+	[bundle "bundle-7"]
+		uri = bundle-7.bundle
+		creationToken = 7
+	EOF
+
+	cp -r fetch-base fetch-2 &&
+	GIT_TRACE2_EVENT="$(pwd)/trace-fetch-2.txt" \
+		git -C fetch-2 fetch origin &&
+
+	# Since bundle-7 fails to unbundle, do not update creation token.
+	test_cmp_config -C fetch-2 3 fetch.bundlecreationtoken &&
+
+	cat >expect <<-EOF &&
+	$HTTPD_URL/bundle-list
+	$HTTPD_URL/bundle-7.bundle
+	$HTTPD_URL/fake.bundle
+	$HTTPD_URL/bundle-4.bundle
+	EOF
+	test_remote_https_urls <trace-fetch-2.txt >actual &&
+	test_cmp expect actual &&
+
+	# Check which bundles have unbundled by refs
+	git -C fetch-2 for-each-ref --format="%(refname)" "refs/bundles/*" >refs &&
+	cat >expect <<-EOF &&
+	refs/bundles/base
+	refs/bundles/left
+	refs/bundles/merge
+	refs/bundles/right
+	EOF
+	test_cmp expect refs &&
+
+	# Case 3: top bundle does not exist, rest unbundle fine.
+	cat >"$HTTPD_DOCUMENT_ROOT_PATH/bundle-list" <<-EOF &&
+	[bundle]
+		version = 1
+		mode = all
+		heuristic = creationToken
+
+	[bundle "bundle-1"]
+		uri = bundle-1.bundle
+		creationToken = 1
+
+	[bundle "bundle-2"]
+		uri = bundle-2.bundle
+		creationToken = 2
+
+	[bundle "bundle-3"]
+		uri = bundle-3.bundle
+		creationToken = 3
+
+	[bundle "bundle-4"]
+		uri = bundle-4.bundle
+		creationToken = 4
+
+	[bundle "bundle-6"]
+		uri = bundle-6.bundle
+		creationToken = 6
+
+	[bundle "bundle-7"]
+		uri = fake.bundle
+		creationToken = 7
+	EOF
+
+	cp -r fetch-base fetch-3 &&
+	GIT_TRACE2_EVENT="$(pwd)/trace-fetch-3.txt" \
+		git -C fetch-3 fetch origin &&
+
+	# As long as we have continguous successful downloads,
+	# we _do_ set the maximum creation token.
+	test_cmp_config -C fetch-3 6 fetch.bundlecreationtoken &&
+
+	# NOTE: the fetch skips bundle-4 since bundle-6 successfully
+	# unbundles itself and bundle-7 failed to download.
+	cat >expect <<-EOF &&
+	$HTTPD_URL/bundle-list
+	$HTTPD_URL/fake.bundle
+	$HTTPD_URL/bundle-6.bundle
+	EOF
+	test_remote_https_urls <trace-fetch-3.txt >actual &&
+	test_cmp expect actual &&
+
+	# Check which bundles have unbundled by refs
+	git -C fetch-3 for-each-ref --format="%(refname)" "refs/bundles/*" >refs &&
+	cat >expect <<-EOF &&
+	refs/bundles/base
+	refs/bundles/left
+	refs/bundles/lefter
+	refs/bundles/right
+	refs/bundles/righter
+	EOF
+	test_cmp expect refs
+'
+
 # Do not add tests here unless they use the HTTP server, as they will
 # not run unless the HTTP dependencies exist.
 
