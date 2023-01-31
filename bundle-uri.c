@@ -9,6 +9,14 @@
 #include "config.h"
 #include "remote.h"
 
+static struct {
+	enum bundle_list_heuristic heuristic;
+	const char *name;
+} heuristics[BUNDLE_HEURISTIC__COUNT] = {
+	{ BUNDLE_HEURISTIC_NONE, ""},
+	{ BUNDLE_HEURISTIC_CREATIONTOKEN, "creationToken" },
+};
+
 static int compare_bundles(const void *hashmap_cmp_fn_data,
 			   const struct hashmap_entry *he1,
 			   const struct hashmap_entry *he2,
@@ -100,6 +108,17 @@ void print_bundle_list(FILE *fp, struct bundle_list *list)
 	fprintf(fp, "\tversion = %d\n", list->version);
 	fprintf(fp, "\tmode = %s\n", mode);
 
+	if (list->heuristic) {
+		int i;
+		for (i = 0; i < BUNDLE_HEURISTIC__COUNT; i++) {
+			if (heuristics[i].heuristic == list->heuristic) {
+				printf("\theuristic = %s\n",
+				       heuristics[list->heuristic].name);
+				break;
+			}
+		}
+	}
+
 	for_all_bundles_in_list(list, summarize_bundle, fp);
 }
 
@@ -139,6 +158,21 @@ static int bundle_list_update(const char *key, const char *value,
 				list->mode = BUNDLE_MODE_ANY;
 			else
 				return -1;
+			return 0;
+		}
+
+		if (!strcmp(subkey, "heuristic")) {
+			int i;
+			for (i = 0; i < BUNDLE_HEURISTIC__COUNT; i++) {
+				if (heuristics[i].heuristic &&
+				    heuristics[i].name &&
+				    !strcmp(value, heuristics[i].name)) {
+					list->heuristic = heuristics[i].heuristic;
+					return 0;
+				}
+			}
+
+			/* Ignore unknown heuristics. */
 			return 0;
 		}
 

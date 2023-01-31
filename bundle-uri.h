@@ -52,6 +52,14 @@ enum bundle_list_mode {
 	BUNDLE_MODE_ANY
 };
 
+enum bundle_list_heuristic {
+	BUNDLE_HEURISTIC_NONE = 0,
+	BUNDLE_HEURISTIC_CREATIONTOKEN,
+
+	/* Must be last. */
+	BUNDLE_HEURISTIC__COUNT
+};
+
 /**
  * A bundle_list contains an unordered set of remote_bundle_info structs,
  * as well as information about the bundle listing, such as version and
@@ -75,6 +83,12 @@ struct bundle_list {
 	 * advertised by the bundle list at that location.
 	 */
 	char *baseURI;
+
+	/**
+	 * A list can have a heuristic, which helps reduce the number of
+	 * downloaded bundles.
+	 */
+	enum bundle_list_heuristic heuristic;
 };
 
 void init_bundle_list(struct bundle_list *list);
