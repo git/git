@@ -401,17 +401,43 @@ test_expect_success 'clone bundle list (http, creationToken)' '
 	git -C clone-list-http-2 cat-file --batch-check <oids &&
 
 	cat >expect <<-EOF &&
-	$HTTPD_URL/bundle-1.bundle
-	$HTTPD_URL/bundle-2.bundle
-	$HTTPD_URL/bundle-3.bundle
-	$HTTPD_URL/bundle-4.bundle
 	$HTTPD_URL/bundle-list
+	$HTTPD_URL/bundle-4.bundle
+	$HTTPD_URL/bundle-3.bundle
+	$HTTPD_URL/bundle-2.bundle
+	$HTTPD_URL/bundle-1.bundle
 	EOF
 
-	# Since the creationToken heuristic is not yet understood by the
-	# client, the order cannot be verified at this moment. Sort the
-	# list for consistent results.
-	test_remote_https_urls <trace-clone.txt | sort >actual &&
+	test_remote_https_urls <trace-clone.txt >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'clone incomplete bundle list (http, creationToken)' '
+	test_when_finished rm -f trace*.txt &&
+
+	cp clone-from/bundle-*.bundle "$HTTPD_DOCUMENT_ROOT_PATH/" &&
+	cat >"$HTTPD_DOCUMENT_ROOT_PATH/bundle-list" <<-EOF &&
+	[bundle]
+		version = 1
+		mode = all
+		heuristic = creationToken
+
+	[bundle "bundle-1"]
+		uri = bundle-1.bundle
+		creationToken = 1
+	EOF
+
+	GIT_TRACE2_EVENT=$(pwd)/trace-clone.txt \
+	git clone --bundle-uri="$HTTPD_URL/bundle-list" \
+		--single-branch --branch=base --no-tags \
+		"$HTTPD_URL/smart/fetch.git" clone-token-http &&
+
+	cat >expect <<-EOF &&
+	$HTTPD_URL/bundle-list
+	$HTTPD_URL/bundle-1.bundle
+	EOF
+
+	test_remote_https_urls <trace-clone.txt >actual &&
 	test_cmp expect actual
 '
 
