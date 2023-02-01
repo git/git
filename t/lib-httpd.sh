@@ -108,10 +108,10 @@ then
 	if test -z "$LIB_HTTPD_MODULE_PATH"
 	then
 		if ! test "$HTTPD_VERSION_MAJOR" -eq 2 ||
-		   ! test "$HTTPD_VERSION_MINOR" -ge 2
+		   ! test "$HTTPD_VERSION_MINOR" -ge 4
 		then
 			test_skip_or_die GIT_TEST_HTTPD \
-				"at least Apache version 2.2 is required"
+				"at least Apache version 2.4 is required"
 		fi
 		if ! test -d "$DEFAULT_HTTPD_MODULE_PATH"
 		then
