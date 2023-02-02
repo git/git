@@ -1121,7 +1121,7 @@ static struct imap_store *imap_open_store(struct imap_server_conf *srvc, const c
 					goto bail;
 				}
 			} else {
-				fprintf(stderr, "Unknown authentication method:%s\n", srvc->host);
+				fprintf(stderr, "Unknown authentication method:%s\n", srvc->auth_method);
 				goto bail;
 			}
 		} else {
