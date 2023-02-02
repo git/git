@@ -39,7 +39,7 @@ static const char * const imap_send_usage[] = { "git imap-send [-v] [-q] [--[no-
 
 static struct option imap_send_options[] = {
 	OPT__VERBOSITY(&verbosity),
-	OPT_BOOL(0, "curl", &use_curl, "use libcurl to communicate with the IMAP server"),
+	OPT_HIDDEN_BOOL(0, "curl", &use_curl, "use libcurl to communicate with the IMAP server"),
 	OPT_END()
 };
 
@@ -1519,12 +1519,8 @@ int cmd_main(int argc, const char **argv)
 	if (argc)
 		usage_with_options(imap_send_usage, imap_send_options);
 
-#if defined(NO_OPENSSL)
-	if (!use_curl) {
-		warning("--no-curl not supported in this build");
-		use_curl = 1;
-	}
-#endif
+	if (!use_curl)
+		die(_("the --no-curl option to imap-send has been deprecated"));
 
 	if (!server.port)
 		server.port = server.use_ssl ? 993 : 143;
@@ -1560,10 +1556,7 @@ int cmd_main(int argc, const char **argv)
 
 	/* write it to the imap server */
 
-	if (server.tunnel)
-		return append_msgs_to_imap(&server, &all_msgs, total);
-
-	if (use_curl)
+	if (!server.tunnel)
 		return curl_append_msgs_to_imap(&server, &all_msgs, total);
 
 	return append_msgs_to_imap(&server, &all_msgs, total);
