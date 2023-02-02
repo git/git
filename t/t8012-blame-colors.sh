@@ -89,6 +89,14 @@ test_expect_success 'blame color by age and lines' '
 		hello.c \
 		>actual.raw &&
 
+	git \
+		-c color.blame.repeatedLines=blue \
+		-c color.blame.highlightRecent="yellow,1 month ago, cyan" \
+		-c blame.coloring=highlightRecent,repeatedLines \
+		blame hello.c \
+		>actual.raw.2 &&
+	test_cmp actual.raw actual.raw.2 &&
+
 	test_decode_color <actual.raw >actual &&
 	normalize_color_decoded_blame <actual >actual.norm &&
 

@@ -6,6 +6,7 @@ blame.coloring::
 	This determines the coloring scheme to be applied to blame
 	output. It can be 'repeatedLines', 'highlightRecent',
 	or 'none' which is the default.
+	Multiple values may be separated by commas.
 
 blame.date::
 	Specifies the format used to output dates in linkgit:git-blame[1].
