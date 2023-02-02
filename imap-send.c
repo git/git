@@ -917,7 +917,7 @@ static void server_fill_credential(struct imap_server_conf *srvc, struct credent
 		return;
 
 	cred->protocol = xstrdup(srvc->use_ssl ? "imaps" : "imap");
-	cred->host = xstrdup(srvc->host);
+	cred->host = xstrdup(srvc->tunnel ? "tunnel" : srvc->host);
 
 	cred->username = xstrdup_or_null(srvc->user);
 	cred->password = xstrdup_or_null(srvc->pass);
@@ -1004,7 +1004,7 @@ static struct imap_store *imap_open_store(struct imap_server_conf *srvc, const c
 				if (!CAP(AUTH_CRAM_MD5)) {
 					fprintf(stderr, "You specified "
 						"CRAM-MD5 as authentication method, "
-						"but %s doesn't support it.\n", srvc->host);
+						"but tunnel doesn't support it.\n");
 					goto bail;
 				}
 				/* CRAM-MD5 */
@@ -1021,8 +1021,8 @@ static struct imap_store *imap_open_store(struct imap_server_conf *srvc, const c
 			}
 		} else {
 			if (CAP(NOLOGIN)) {
-				fprintf(stderr, "Skipping account %s@%s, server forbids LOGIN\n",
-					srvc->user, srvc->host);
+				fprintf(stderr, "Skipping account %s, server forbids LOGIN\n",
+					srvc->user);
 				goto bail;
 			}
 			if (!imap->buf.sock.ssl)
@@ -1434,12 +1434,9 @@ int cmd_main(int argc, const char **argv)
 		fprintf(stderr, "no imap store specified\n");
 		return 1;
 	}
-	if (!server.host) {
-		if (!server.tunnel) {
-			fprintf(stderr, "no imap host specified\n");
-			return 1;
-		}
-		server.host = "tunnel";
+	if (!server.host && !server.tunnel) {
+		fprintf(stderr, "no imap host specified\n");
+		return 1;
 	}
 
 	/* read the messages */
