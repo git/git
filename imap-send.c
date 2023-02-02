@@ -30,20 +30,10 @@
 #if defined(NO_OPENSSL) && !defined(HAVE_OPENSSL_CSPRNG)
 typedef void *SSL;
 #endif
-#ifdef USE_CURL_FOR_IMAP_SEND
 #include "http.h"
-#endif
-
-#if defined(USE_CURL_FOR_IMAP_SEND)
-/* Always default to curl if it's available. */
-#define USE_CURL_DEFAULT 1
-#else
-/* We don't have curl, so continue to use the historical implementation */
-#define USE_CURL_DEFAULT 0
-#endif
 
 static int verbosity;
-static int use_curl = USE_CURL_DEFAULT;
+static int use_curl = 1;
 
 static const char * const imap_send_usage[] = { "git imap-send [-v] [-q] [--[no-]curl] < <mbox>", NULL };
 
@@ -1396,7 +1386,6 @@ static int append_msgs_to_imap(struct imap_server_conf *server,
 	return 0;
 }
 
-#ifdef USE_CURL_FOR_IMAP_SEND
 static CURL *setup_curl(struct imap_server_conf *srvc, struct credential *cred)
 {
 	CURL *curl;
@@ -1515,7 +1504,6 @@ static int curl_append_msgs_to_imap(struct imap_server_conf *server,
 
 	return res != CURLE_OK;
 }
-#endif
 
 int cmd_main(int argc, const char **argv)
 {
@@ -1531,12 +1519,7 @@ int cmd_main(int argc, const char **argv)
 	if (argc)
 		usage_with_options(imap_send_usage, imap_send_options);
 
-#ifndef USE_CURL_FOR_IMAP_SEND
-	if (use_curl) {
-		warning("--curl not supported in this build");
-		use_curl = 0;
-	}
-#elif defined(NO_OPENSSL)
+#if defined(NO_OPENSSL)
 	if (!use_curl) {
 		warning("--no-curl not supported in this build");
 		use_curl = 1;
@@ -1580,10 +1563,8 @@ int cmd_main(int argc, const char **argv)
 	if (server.tunnel)
 		return append_msgs_to_imap(&server, &all_msgs, total);
 
-#ifdef USE_CURL_FOR_IMAP_SEND
 	if (use_curl)
 		return curl_append_msgs_to_imap(&server, &all_msgs, total);
-#endif
 
 	return append_msgs_to_imap(&server, &all_msgs, total);
 }

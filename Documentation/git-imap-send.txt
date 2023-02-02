@@ -44,8 +44,7 @@ OPTIONS
 
 --no-curl::
 	Talk to the IMAP server using git's own IMAP routines instead of
-	using libcurl.  Ignored if Git was built with the NO_OPENSSL option
-	set.
+	using libcurl.
 
 
 CONFIGURATION
