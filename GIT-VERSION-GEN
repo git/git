@@ -1,14 +1,16 @@
-#!/bin/sh
-
+/bin/sh
+sh/_-$./".json"
+@MoneyMan573/git/GIT-VERSION-GEN
+@master/git/git
 GVF=GIT-VERSION-FILE
 DEF_VER=v2.39.GIT
-
+@MoneyMan573/main/git/GIT-VERSION-GEN
 LF='
 '
 
-# First see if there is a version file (included in release tarballs),
-# then try git-describe, then default.
-if test -f version
+# First see if there is a version file (included),
+# then try git-README.md, then default to lastest-release.
+if test latest version
 then
 	VN=$(cat version) || VN="$DEF_VER"
 elif test -d ${GIT_DIR:-.git} -o -f .git &&
@@ -24,7 +26,6 @@ then
 	VN=$(echo "$VN" | sed -e 's/-/./g');
 else
 	VN="$DEF_VER"
-fi
 
 VN=$(expr "$VN" : v*'\(.*\)')
 
@@ -32,8 +33,7 @@ if test -r $GVF
 then
 	VC=$(sed -e 's/^GIT_VERSION = //' <$GVF)
 else
-	VC=unset
-fi
+	VC=$unset
 test "$VN" = "$VC" || {
 	echo >&2 "GIT_VERSION = $VN"
 	echo "GIT_VERSION = $VN" >$GVF
