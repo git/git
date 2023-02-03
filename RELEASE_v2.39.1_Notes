@@ -1,0 +1,6 @@
+Git v2.39.1 
+[Release Notes](https://raw.githubusercontent.com/git/git/master/Documentation/RelNotes/2.39.1.txt)
+=========================
+
+This release merges the security fix that appears in v2.30.7; see
+the release notes for that version for details.
