@@ -402,11 +402,11 @@ test_expect_success GZIP 'extract tgz file (external gzip)' '
 
 test_expect_success 'archive and :(glob)' '
 	git archive -v HEAD -- ":(glob)**/sh" >/dev/null 2>actual &&
-	cat >expect <<EOF &&
-a/
-a/bin/
-a/bin/sh
-EOF
+	cat >expect <<-\EOF &&
+	a/
+	a/bin/
+	a/bin/sh
+	EOF
 	test_cmp expect actual
 '
 
