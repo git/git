@@ -208,6 +208,39 @@ Alternatively, you can undo the 'git rebase' with
 
     git rebase --abort
 
+MODE OPTIONS
+------------
+
+The options in this section cannot be used with any other option,
+including not with each other:
+
+--continue::
+	Restart the rebasing process after having resolved a merge conflict.
+
+--skip::
+	Restart the rebasing process by skipping the current patch.
+
+--abort::
+	Abort the rebase operation and reset HEAD to the original
+	branch. If `<branch>` was provided when the rebase operation was
+	started, then `HEAD` will be reset to `<branch>`. Otherwise `HEAD`
+	will be reset to where it was when the rebase operation was
+	started.
+
+--quit::
+	Abort the rebase operation but `HEAD` is not reset back to the
+	original branch. The index and working tree are also left
+	unchanged as a result. If a temporary stash entry was created
+	using `--autostash`, it will be saved to the stash list.
+
+--edit-todo::
+	Edit the todo list during an interactive rebase.
+
+--show-current-patch::
+	Show the current patch in an interactive rebase or when rebase
+	is stopped because of conflicts. This is the equivalent of
+	`git show REBASE_HEAD`.
+
 OPTIONS
 -------
 --onto <newbase>::
@@ -248,22 +281,6 @@ See also INCOMPATIBLE OPTIONS below.
 
 <branch>::
 	Working branch; defaults to `HEAD`.
-
---continue::
-	Restart the rebasing process after having resolved a merge conflict.
-
---abort::
-	Abort the rebase operation and reset HEAD to the original
-	branch. If `<branch>` was provided when the rebase operation was
-	started, then `HEAD` will be reset to `<branch>`. Otherwise `HEAD`
-	will be reset to where it was when the rebase operation was
-	started.
-
---quit::
-	Abort the rebase operation but `HEAD` is not reset back to the
-	original branch. The index and working tree are also left
-	unchanged as a result. If a temporary stash entry was created
-	using `--autostash`, it will be saved to the stash list.
 
 --apply::
 	Use applying strategies to rebase (calling `git-am`
@@ -321,7 +338,6 @@ See also INCOMPATIBLE OPTIONS below.
 	upstream changes, the behavior towards them is controlled by
 	the `--empty` flag.)
 +
-
 In the absence of `--keep-base` (or if `--no-reapply-cherry-picks` is
 given), these commits will be automatically dropped.  Because this
 necessitates reading all upstream commits, this can be expensive in
@@ -330,7 +346,6 @@ read. When using the 'merge' backend, warnings will be issued for each
 dropped commit (unless `--quiet` is given). Advice will also be issued
 unless `advice.skippedCherryPicks` is set to false (see
 linkgit:git-config[1]).
-
 +
 `--reapply-cherry-picks` allows rebase to forgo reading all upstream
 commits, potentially improving performance.
@@ -344,17 +359,6 @@ See also INCOMPATIBLE OPTIONS below.
 	message do not cause rebasing to halt.
 +
 See also INCOMPATIBLE OPTIONS below.
-
---skip::
-	Restart the rebasing process by skipping the current patch.
-
---edit-todo::
-	Edit the todo list during an interactive rebase.
-
---show-current-patch::
-	Show the current patch in an interactive rebase or when rebase
-	is stopped because of conflicts. This is the equivalent of
-	`git show REBASE_HEAD`.
 
 -m::
 --merge::
@@ -574,10 +578,7 @@ See also INCOMPATIBLE OPTIONS below.
 --root::
 	Rebase all commits reachable from `<branch>`, instead of
 	limiting them with an `<upstream>`.  This allows you to rebase
-	the root commit(s) on a branch.  When used with `--onto`, it
-	will skip changes already contained in `<newbase>` (instead of
-	`<upstream>`) whereas without `--onto` it will operate on every
-	change.
+	the root commit(s) on a branch.
 +
 See also INCOMPATIBLE OPTIONS below.
 
@@ -630,6 +631,8 @@ start would be overridden by the presence of
 +
 If the configuration variable `rebase.updateRefs` is set, then this option
 can be used to override and disable this setting.
++
+See also INCOMPATIBLE OPTIONS below.
 
 INCOMPATIBLE OPTIONS
 --------------------
@@ -645,17 +648,15 @@ are incompatible with the following options:
  * --merge
  * --strategy
  * --strategy-option
- * --allow-empty-message
- * --[no-]autosquash
+ * --autosquash
  * --rebase-merges
  * --interactive
  * --exec
  * --no-keep-empty
  * --empty=
- * --reapply-cherry-picks
- * --edit-todo
+ * --[no-]reapply-cherry-picks when used without --keep-base
  * --update-refs
- * --root when used in combination with --onto
+ * --root when used without --onto
 
 In addition, the following pairs of options are incompatible:
 
