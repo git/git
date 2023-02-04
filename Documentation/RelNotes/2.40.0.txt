@@ -43,6 +43,9 @@ UI, Workflows & Features
  * "grep -P" learned to use Unicode Character Property to grok
    character classes when processing \b and \w etc.
 
+ * "git rebase" often ignored incompatible options instead of
+   complaining, which has been corrected.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -197,6 +200,10 @@ Fixes since v2.39
    formed with the same code as "git fsck".
    (merge 8e4309038f jk/hash-object-fsck later to maint).
 
+ * Improve the error message given when private key is not loaded in
+   the ssh agent in the codepath to sign with an ssh key.
+   (merge dce7b31126 as/ssh-signing-improve-key-missing-error later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 77e04b2ed4 rs/t4205-do-not-exit-in-test-script later to maint).
    (merge faebba436e rs/plug-pattern-list-leak-in-lof later to maint).
@@ -229,3 +236,4 @@ Fixes since v2.39
    (merge 590b636737 jk/hash-object-literally-fd-leak later to maint).
    (merge 5458ba0a4d tb/t0003-invoke-dd-more-portably later to maint).
    (merge 70661d288b ar/markup-em-dash later to maint).
+   (merge e750951e74 en/ls-files-doc-update later to maint).
