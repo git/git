@@ -14,6 +14,8 @@ so.
 These tests _might_ catch such overruns in normal use, but should be run with
 ASan or valgrind for more confidence.
 '
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # the general idea for tags and commits is to build up the "base" file
