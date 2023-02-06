@@ -4426,6 +4426,33 @@ static int create_one_file(struct apply_state *state,
 	if (state->cached)
 		return 0;
 
+	/*
+	 * We already try to detect whether files are beyond a symlink in our
+	 * up-front checks. But in the case where symlinks are created by any
+	 * of the intermediate hunks it can happen that our up-front checks
+	 * didn't yet see the symlink, but at the point of arriving here there
+	 * in fact is one. We thus repeat the check for symlinks here.
+	 *
+	 * Note that this does not make the up-front check obsolete as the
+	 * failure mode is different:
+	 *
+	 * - The up-front checks cause us to abort before we have written
+	 *   anything into the working directory. So when we exit this way the
+	 *   working directory remains clean.
+	 *
+	 * - The checks here happen in the middle of the action where we have
+	 *   already started to apply the patch. The end result will be a dirty
+	 *   working directory.
+	 *
+	 * Ideally, we should update the up-front checks to catch what would
+	 * happen when we apply the patch before we damage the working tree.
+	 * We have all the information necessary to do so.  But for now, as a
+	 * part of embargoed security work, having this check would serve as a
+	 * reasonable first step.
+	 */
+	if (path_is_beyond_symlink(state, path))
+		return error(_("affected file '%s' is beyond a symbolic link"), path);
+
 	res = try_create_file(state, path, mode, buf, size);
 	if (res < 0)
 		return -1;
