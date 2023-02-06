@@ -251,6 +251,7 @@ int cmd_revert(int argc, const char **argv, const char *prefix)
 	if (opts.revs)
 		release_revisions(opts.revs);
 	free(opts.revs);
+	replay_opts_release(&opts);
 	return res;
 }
 
@@ -267,5 +268,6 @@ int cmd_cherry_pick(int argc, const char **argv, const char *prefix)
 	free(opts.revs);
 	if (res < 0)
 		die(_("cherry-pick failed"));
+	replay_opts_release(&opts);
 	return res;
 }

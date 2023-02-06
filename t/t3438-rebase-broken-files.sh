@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='rebase behavior when on-disk files are broken'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'set up conflicting branches' '
