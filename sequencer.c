@@ -361,6 +361,9 @@ void replay_opts_release(struct replay_opts *opts)
 		free(opts->xopts[i]);
 	free(opts->xopts);
 	strbuf_release(&opts->current_fixups);
+	if (opts->revs)
+		release_revisions(opts->revs);
+	free(opts->revs);
 }
 
 int sequencer_remove_state(struct replay_opts *opts)
