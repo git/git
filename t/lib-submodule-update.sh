@@ -185,7 +185,9 @@ test_git_directory_exists () {
 	if test -f sub1/.git
 	then
 		# does core.worktree point at the right place?
-		test "$(git -C .git/modules/$1 config core.worktree)" = "../../../$1"
+		echo "../../../$1" >expect &&
+		git -C ".git/modules/$1" config core.worktree >actual &&
+		test_cmp expect actual
 	fi
 }
 
