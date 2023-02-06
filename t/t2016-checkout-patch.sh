@@ -4,12 +4,6 @@ test_description='git checkout --patch'
 
 . ./lib-patch-mode.sh
 
-if ! test_have_prereq ADD_I_USE_BUILTIN && ! test_have_prereq PERL
-then
-	skip_all='skipping interactive add tests, PERL not set'
-	test_done
-fi
-
 test_expect_success 'setup' '
 	mkdir dir &&
 	echo parent > dir/foo &&
