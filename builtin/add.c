@@ -238,30 +238,6 @@ static int refresh(int verbose, const struct pathspec *pathspec)
 	return ret;
 }
 
-int run_add_interactive(const char *revision, const char *patch_mode,
-			const struct pathspec *pathspec)
-{
-	enum add_p_mode mode;
-
-	if (!patch_mode)
-		return !!run_add_i(the_repository, pathspec);
-
-	if (!strcmp(patch_mode, "--patch"))
-		mode = ADD_P_ADD;
-	else if (!strcmp(patch_mode, "--patch=stash"))
-		mode = ADD_P_STASH;
-	else if (!strcmp(patch_mode, "--patch=reset"))
-		mode = ADD_P_RESET;
-	else if (!strcmp(patch_mode, "--patch=checkout"))
-		mode = ADD_P_CHECKOUT;
-	else if (!strcmp(patch_mode, "--patch=worktree"))
-		mode = ADD_P_WORKTREE;
-	else
-		die("'%s' not supported", patch_mode);
-
-	return !!run_add_p(the_repository, mode, revision, pathspec);
-}
-
 int interactive_add(const char **argv, const char *prefix, int patch)
 {
 	struct pathspec pathspec;
@@ -277,9 +253,10 @@ int interactive_add(const char **argv, const char *prefix, int patch)
 		       PATHSPEC_PREFIX_ORIGIN,
 		       prefix, argv);
 
-	return run_add_interactive(NULL,
-				   patch ? "--patch" : NULL,
-				   &pathspec);
+	if (patch)
+		return !!run_add_p(the_repository, ADD_P_ADD, NULL, &pathspec);
+	else
+		return !!run_add_i(the_repository, &pathspec);
 }
 
 static int edit_patch(int argc, const char **argv, const char *prefix)
