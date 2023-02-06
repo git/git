@@ -110,7 +110,9 @@ test_expect_success SYMLINKS 'setup dirs with symlinks' '
 	mkdir -p dir5/a/c &&
 	ln -s ../c dir5/a/b/d &&
 	ln -s ../ dir5/a/b/e &&
-	ln -s ../../ dir5/a/b/f
+	ln -s ../../ dir5/a/b/f &&
+
+	ln -s dir4 dir6
 '
 
 test_expect_success SYMLINKS 'dir-iterator should not follow symlinks by default' '
@@ -141,6 +143,29 @@ test_expect_success SYMLINKS 'dir-iterator should follow symlinks w/ follow flag
 	EOF
 
 	test-tool dir-iterator --follow-symlinks ./dir4 >out &&
+	sort out >actual-follow-sorted-output &&
+
+	test_cmp expected-follow-sorted-output actual-follow-sorted-output
+'
+
+test_expect_success SYMLINKS 'dir-iterator does not resolve top-level symlinks' '
+	test_must_fail test-tool dir-iterator ./dir6 >out &&
+
+	grep "ENOTDIR" out
+'
+
+test_expect_success SYMLINKS 'dir-iterator resolves top-level symlinks w/ follow flag' '
+	cat >expected-follow-sorted-output <<-EOF &&
+	[d] (a) [a] ./dir6/a
+	[d] (a/f) [f] ./dir6/a/f
+	[d] (a/f/c) [c] ./dir6/a/f/c
+	[d] (b) [b] ./dir6/b
+	[d] (b/c) [c] ./dir6/b/c
+	[f] (a/d) [d] ./dir6/a/d
+	[f] (a/e) [e] ./dir6/a/e
+	EOF
+
+	test-tool dir-iterator --follow-symlinks ./dir6 >out &&
 	sort out >actual-follow-sorted-output &&
 
 	test_cmp expected-follow-sorted-output actual-follow-sorted-output

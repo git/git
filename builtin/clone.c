@@ -1112,10 +1112,6 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	refspec_appendf(&remote->fetch, "+%s*:%s*", src_ref_prefix,
 			branch_top.buf);
 
-	transport = transport_get(remote, remote->url[0]);
-	transport_set_verbosity(transport, option_verbosity, option_progress);
-	transport->family = family;
-
 	path = get_repo_path(remote->url[0], &is_bundle);
 	is_local = option_local != 0 && path && !is_bundle;
 	if (is_local) {
@@ -1137,6 +1133,10 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	}
 	if (option_local > 0 && !is_local)
 		warning(_("--local is ignored"));
+
+	transport = transport_get(remote, path ? path : remote->url[0]);
+	transport_set_verbosity(transport, option_verbosity, option_progress);
+	transport->family = family;
 	transport->cloning = 1;
 
 	transport_set_option(transport, TRANS_OPT_KEEP, "yes");
