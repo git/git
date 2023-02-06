@@ -254,7 +254,7 @@ static int init_basic_state(struct replay_opts *opts, const char *head_name,
 
 static int do_interactive_rebase(struct rebase_options *opts, unsigned flags)
 {
-	int ret;
+	int ret = -1;
 	char *revisions = NULL, *shortrevisions = NULL;
 	struct strvec make_script_args = STRVEC_INIT;
 	struct todo_list todo_list = TODO_LIST_INIT;
@@ -262,16 +262,12 @@ static int do_interactive_rebase(struct rebase_options *opts, unsigned flags)
 
 	if (get_revision_ranges(opts->upstream, opts->onto, &opts->orig_head->object.oid,
 				&revisions, &shortrevisions))
-		return -1;
+		goto cleanup;
 
 	if (init_basic_state(&replay,
 			     opts->head_name ? opts->head_name : "detached HEAD",
-			     opts->onto, &opts->orig_head->object.oid)) {
-		free(revisions);
-		free(shortrevisions);
-
-		return -1;
-	}
+			     opts->onto, &opts->orig_head->object.oid))
+		goto cleanup;
 
 	if (!opts->upstream && opts->squash_onto)
 		write_file(path_squash_onto(), "%s\n",
@@ -300,6 +296,7 @@ static int do_interactive_rebase(struct rebase_options *opts, unsigned flags)
 			opts->autosquash, opts->update_refs, &todo_list);
 	}
 
+cleanup:
 	free(revisions);
 	free(shortrevisions);
 	todo_list_release(&todo_list);
