@@ -203,7 +203,7 @@ struct dir_iterator *dir_iterator_begin(const char *path, unsigned int flags)
 {
 	struct dir_iterator_int *iter = xcalloc(1, sizeof(*iter));
 	struct dir_iterator *dir_iterator = &iter->base;
-	int saved_errno;
+	int saved_errno, err;
 
 	strbuf_init(&iter->base.path, PATH_MAX);
 	strbuf_addstr(&iter->base.path, path);
@@ -213,10 +213,15 @@ struct dir_iterator *dir_iterator_begin(const char *path, unsigned int flags)
 	iter->flags = flags;
 
 	/*
-	 * Note: stat already checks for NULL or empty strings and
-	 * inexistent paths.
+	 * Note: stat/lstat already checks for NULL or empty strings and
+	 * nonexistent paths.
 	 */
-	if (stat(iter->base.path.buf, &iter->base.st) < 0) {
+	if (iter->flags & DIR_ITERATOR_FOLLOW_SYMLINKS)
+		err = stat(iter->base.path.buf, &iter->base.st);
+	else
+		err = lstat(iter->base.path.buf, &iter->base.st);
+
+	if (err < 0) {
 		saved_errno = errno;
 		goto error_out;
 	}
