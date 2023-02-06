@@ -33,7 +33,8 @@ test_expect_success 'symbolic-ref refuses non-ref for HEAD' '
 reset_to_sane
 
 test_expect_success 'symbolic-ref refuses bare sha1' '
-	test_must_fail git symbolic-ref HEAD $(git rev-parse HEAD)
+	rev=$(git rev-parse HEAD) &&
+	test_must_fail git symbolic-ref HEAD "$rev"
 '
 
 reset_to_sane
