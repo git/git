@@ -1039,6 +1039,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	struct string_list strategy_options = STRING_LIST_INIT_NODUP;
 	struct object_id squash_onto;
 	char *squash_onto_name = NULL;
+	char *keep_base_onto_name = NULL;
 	int reschedule_failed_exec = -1;
 	int allow_preemptive_ff = 1;
 	int preserve_merges_selected = 0;
@@ -1675,7 +1676,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		strbuf_addstr(&buf, options.upstream_name);
 		strbuf_addstr(&buf, "...");
 		strbuf_addstr(&buf, branch_name);
-		options.onto_name = xstrdup(buf.buf);
+		options.onto_name = keep_base_onto_name = xstrdup(buf.buf);
 	} else if (!options.onto_name)
 		options.onto_name = options.upstream_name;
 	if (strstr(options.onto_name, "...")) {
@@ -1851,6 +1852,7 @@ cleanup:
 	free(options.strategy);
 	strbuf_release(&options.git_format_patch_opt);
 	free(squash_onto_name);
+	free(keep_base_onto_name);
 	string_list_clear(&strategy_options, 0);
 	return !!ret;
 }
