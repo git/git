@@ -61,6 +61,11 @@
  *   not the symlinks themselves, which is the default behavior. Broken
  *   symlinks are ignored.
  *
+ *   Note: setting DIR_ITERATOR_FOLLOW_SYMLINKS affects resolving the
+ *   starting path as well (e.g., attempting to iterate starting at a
+ *   symbolic link pointing to a directory without FOLLOW_SYMLINKS will
+ *   result in an error).
+ *
  * Warning: circular symlinks are also followed when
  * DIR_ITERATOR_FOLLOW_SYMLINKS is set. The iteration may end up with
  * an ELOOP if they happen and DIR_ITERATOR_PEDANTIC is set.
