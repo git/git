@@ -15,8 +15,12 @@ test_expect_success 'preparing origin repository' '
 	: >file && git add . && git commit -m1 &&
 	git clone --bare . a.git &&
 	git clone --bare . x &&
-	test "$(cd a.git && git config --bool core.bare)" = true &&
-	test "$(cd x && git config --bool core.bare)" = true &&
+	echo true >expect &&
+	git -C a.git config --bool core.bare >actual &&
+	test_cmp expect actual &&
+	echo true >expect &&
+	git -C x config --bool core.bare >actual &&
+	test_cmp expect actual &&
 	git bundle create b1.bundle --all &&
 	git bundle create b2.bundle main &&
 	mkdir dir &&
@@ -29,7 +33,9 @@ test_expect_success 'preparing origin repository' '
 test_expect_success 'local clone without .git suffix' '
 	git clone -l -s a b &&
 	(cd b &&
-	test "$(git config --bool core.bare)" = false &&
+	echo false >expect &&
+	git config --bool core.bare >actual &&
+	test_cmp expect actual &&
 	git fetch)
 '
 
