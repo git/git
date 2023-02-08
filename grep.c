@@ -262,6 +262,31 @@ static void pcre2_free(void *pointer, MAYBE_UNUSED void *memory_data)
 	free(pointer);
 }
 
+static int pcre2_jit_functional(void)
+{
+	static int jit_working = -1;
+	pcre2_code *code;
+	size_t off;
+	int err;
+
+	if (jit_working != -1)
+		return jit_working;
+
+	/*
+	 * Try to JIT compile a simple pattern to probe if the JIT is
+	 * working in general. It might fail for systems where creating
+	 * memory mappings for runtime code generation is restricted.
+	 */
+	code = pcre2_compile((PCRE2_SPTR)".", 1, 0, &err, &off, NULL);
+	if (!code)
+		return 0;
+
+	jit_working = pcre2_jit_compile(code, PCRE2_JIT_COMPLETE) == 0;
+	pcre2_code_free(code);
+
+	return jit_working;
+}
+
 static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt)
 {
 	int error;
@@ -317,8 +342,29 @@ static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt
 	pcre2_config(PCRE2_CONFIG_JIT, &p->pcre2_jit_on);
 	if (p->pcre2_jit_on) {
 		jitret = pcre2_jit_compile(p->pcre2_pattern, PCRE2_JIT_COMPLETE);
-		if (jitret)
-			die("Couldn't JIT the PCRE2 pattern '%s', got '%d'\n", p->pattern, jitret);
+		if (jitret == PCRE2_ERROR_NOMEMORY && !pcre2_jit_functional()) {
+			/*
+			 * Even though pcre2_config(PCRE2_CONFIG_JIT, ...)
+			 * indicated JIT support, the library might still
+			 * fail to generate JIT code for various reasons,
+			 * e.g. when SELinux's 'deny_execmem' or PaX's
+			 * MPROTECT prevent creating W|X memory mappings.
+			 *
+			 * Instead of faling hard, fall back to interpreter
+			 * mode, just as if the pattern was prefixed with
+			 * '(*NO_JIT)'.
+			 */
+			p->pcre2_jit_on = 0;
+			return;
+		} else if (jitret) {
+			int need_clip = p->patternlen > 64;
+			int clip_len = need_clip ? 64 : p->patternlen;
+			die("Couldn't JIT the PCRE2 pattern '%.*s'%s, got '%d'%s",
+			    clip_len, p->pattern, need_clip ? "..." : "", jitret,
+			    pcre2_jit_functional()
+			    ? "\nPerhaps prefix (*NO_JIT) to your pattern?"
+			    : "");
+		}
 
 		/*
 		 * The pcre2_config(PCRE2_CONFIG_JIT, ...) call just
