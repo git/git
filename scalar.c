@@ -262,7 +262,7 @@ static int register_dir(void)
 		return error(_("could not set recommended config"));
 
 	if (toggle_maintenance(1))
-		return error(_("could not turn on maintenance"));
+		warning(_("could not turn on maintenance"));
 
 	if (have_fsmonitor_support() && start_fsmonitor_daemon()) {
 		return error(_("could not start the FSMonitor daemon"));
