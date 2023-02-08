@@ -1767,6 +1767,14 @@ test_region () {
 	return 0
 }
 
+# Given a GIT_TRACE2_EVENT log over stdin, writes to stdout a list of URLs
+# sent to git-remote-https child processes.
+test_remote_https_urls() {
+	grep -e '"event":"child_start".*"argv":\["git-remote-https",".*"\]' |
+		sed -e 's/{"event":"child_start".*"argv":\["git-remote-https","//g' \
+		    -e 's/"\]}//g'
+}
+
 # Print the destination of symlink(s) provided as arguments. Basically
 # the same as the readlink command, but it's not available everywhere.
 test_readlink () {
