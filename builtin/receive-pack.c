@@ -136,10 +136,6 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 	if (status)
 		return status;
 
-	status = git_gpg_config(var, value, NULL);
-	if (status)
-		return status;
-
 	if (strcmp(var, "receive.denydeletes") == 0) {
 		deny_deletes = git_config_bool(var, value);
 		return 0;

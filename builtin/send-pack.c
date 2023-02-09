@@ -130,8 +130,6 @@ static void print_helper_status(struct ref *ref)
 
 static int send_pack_config(const char *k, const char *v, void *cb)
 {
-	git_gpg_config(k, v, NULL);
-
 	if (!strcmp(k, "push.gpgsign")) {
 		const char *value;
 		if (!git_config_get_value("push.gpgsign", &value)) {

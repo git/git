@@ -359,8 +359,6 @@ static enum rebase_type config_get_rebase(int *rebase_unspecified)
  */
 static int git_pull_config(const char *var, const char *value, void *cb)
 {
-	int status;
-
 	if (!strcmp(var, "rebase.autostash")) {
 		config_autostash = git_config_bool(var, value);
 		return 0;
@@ -371,10 +369,6 @@ static int git_pull_config(const char *var, const char *value, void *cb)
 	} else if (!strcmp(var, "gpg.mintrustlevel")) {
 		check_trust_level = 0;
 	}
-
-	status = git_gpg_config(var, value, cb);
-	if (status)
-		return status;
 
 	return git_default_config(var, value, cb);
 }
