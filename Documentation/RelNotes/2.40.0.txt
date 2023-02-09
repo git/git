@@ -211,6 +211,17 @@ Fixes since v2.39
    tags to notice non-PGP signatures.
    (merge a9cad02538 gm/request-pull-with-non-pgp-signed-tags later to maint).
 
+ * Remove support for MSys, which now lags way behind MSys2.
+   (merge 2987407f3c hj/remove-msys-support later to maint).
+
+ * Fix use of CreateThread() API call made early in the windows
+   start-up code.
+   (merge 592bcab61b sk/winansi-createthread-fix later to maint).
+
+ * "git pack-objects" learned to release delta-island bitmap data when
+   it is done using it, saving peak heap memory usage.
+   (merge 647982bb71 ew/free-island-marks later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 77e04b2ed4 rs/t4205-do-not-exit-in-test-script later to maint).
    (merge faebba436e rs/plug-pattern-list-leak-in-lof later to maint).
@@ -245,3 +256,5 @@ Fixes since v2.39
    (merge 70661d288b ar/markup-em-dash later to maint).
    (merge e750951e74 en/ls-files-doc-update later to maint).
    (merge 4f542975d1 mh/doc-credential-cache-only-in-core later to maint).
+   (merge 3a2ebaebc7 gc/index-format-doc later to maint).
+   (merge b08edf709d jk/httpd-test-updates later to maint).
