@@ -1,7 +1,7 @@
 RANDFILE                = $ENV::RANDFILE_PATH
 
 [ req ]
-default_bits            = 1024
+default_bits            = 2048
 distinguished_name      = req_distinguished_name
 prompt                  = no
 [ req_distinguished_name ]

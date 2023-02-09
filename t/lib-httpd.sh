@@ -99,16 +99,19 @@ then
 fi
 
 HTTPD_VERSION=$($LIB_HTTPD_PATH -v | \
-	sed -n 's/^Server version: Apache\/\([0-9]*\)\..*$/\1/p; q')
+	sed -n 's/^Server version: Apache\/\([0-9.]*\).*$/\1/p; q')
+HTTPD_VERSION_MAJOR=$(echo $HTTPD_VERSION | cut -d. -f1)
+HTTPD_VERSION_MINOR=$(echo $HTTPD_VERSION | cut -d. -f2)
 
-if test -n "$HTTPD_VERSION"
+if test -n "$HTTPD_VERSION_MAJOR"
 then
 	if test -z "$LIB_HTTPD_MODULE_PATH"
 	then
-		if ! test $HTTPD_VERSION -ge 2
+		if ! test "$HTTPD_VERSION_MAJOR" -eq 2 ||
+		   ! test "$HTTPD_VERSION_MINOR" -ge 4
 		then
 			test_skip_or_die GIT_TEST_HTTPD \
-				"at least Apache version 2 is required"
+				"at least Apache version 2.4 is required"
 		fi
 		if ! test -d "$DEFAULT_HTTPD_MODULE_PATH"
 		then
