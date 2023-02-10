@@ -94,6 +94,9 @@ identifier ACT = active_cache_tree;
 |
 - cache_name_pos
 + index_name_pos
+|
+- update_main_cache_tree
++ cache_tree_update
 )
   (
 + &the_index,
