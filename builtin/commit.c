@@ -991,7 +991,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		struct object_id oid;
 		const char *parent = "HEAD";
 
-		if (!active_nr) {
+		if (!the_index.cache_nr) {
 			discard_cache();
 			if (read_cache() < 0)
 				die(_("Cannot read index"));

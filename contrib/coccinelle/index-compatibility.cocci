@@ -1,6 +1,7 @@
 // the_index.* variables
 @@
 identifier AC = active_cache;
+identifier AN = active_nr;
 identifier ACC = active_cache_changed;
 identifier ACT = active_cache_tree;
 @@
@@ -8,21 +9,15 @@ identifier ACT = active_cache_tree;
 - AC
 + the_index.cache
 |
+- AN
++ the_index.cache_nr
+|
 - ACC
 + the_index.cache_changed
 |
 - ACT
 + the_index.cache_tree
 )
-
-@@
-identifier AN = active_nr;
-identifier f != prepare_to_commit;
-@@
-  f(...) {<...
-- AN
-+ the_index.cache_nr
-  ...>}
 
 // "the_repository" simple cases
 @@
