@@ -806,6 +806,14 @@ test_expect_success 'fetch.writeCommitGraph with submodules' '
 	)
 '
 
+# fetches from first configured url
+test_expect_success 'fetch from multiple configured URLs in single remote' '
+	git init url1 &&
+	git remote add multipleurls url1 &&
+	git remote set-url --add multipleurls url2 &&
+	git fetch multipleurls
+'
+
 # configured prune tests
 
 set_config_tristate () {
