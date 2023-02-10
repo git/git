@@ -1937,10 +1937,6 @@ test_lazy_prereq SHA1 '
 	esac
 '
 
-test_lazy_prereq ADD_I_USE_BUILTIN '
-	test_bool_env GIT_TEST_ADD_I_USE_BUILTIN true
-'
-
 # Ensure that no test accidentally triggers a Git command
 # that runs the actual maintenance scheduler, affecting a user's
 # system permanently.

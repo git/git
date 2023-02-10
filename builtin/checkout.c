@@ -29,6 +29,7 @@
 #include "xdiff-interface.h"
 #include "entry.h"
 #include "parallel-checkout.h"
+#include "add-interactive.h"
 
 static const char * const checkout_usage[] = {
 	N_("git checkout [<options>] <branch>"),
@@ -499,7 +500,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 		    "--merge", "--conflict", "--staged");
 
 	if (opts->patch_mode) {
-		const char *patch_mode;
+		enum add_p_mode patch_mode;
 		const char *rev = new_branch_info->name;
 		char rev_oid[GIT_MAX_HEXSZ + 1];
 
@@ -517,15 +518,16 @@ static int checkout_paths(const struct checkout_opts *opts,
 			rev = oid_to_hex_r(rev_oid, &new_branch_info->commit->object.oid);
 
 		if (opts->checkout_index && opts->checkout_worktree)
-			patch_mode = "--patch=checkout";
+			patch_mode = ADD_P_CHECKOUT;
 		else if (opts->checkout_index && !opts->checkout_worktree)
-			patch_mode = "--patch=reset";
+			patch_mode = ADD_P_RESET;
 		else if (!opts->checkout_index && opts->checkout_worktree)
-			patch_mode = "--patch=worktree";
+			patch_mode = ADD_P_WORKTREE;
 		else
 			BUG("either flag must have been set, worktree=%d, index=%d",
 			    opts->checkout_worktree, opts->checkout_index);
-		return run_add_interactive(rev, patch_mode, &opts->pathspec);
+		return !!run_add_p(the_repository, patch_mode, rev,
+				   &opts->pathspec);
 	}
 
 	repo_hold_locked_index(the_repository, &lock_file, LOCK_DIE_ON_ERROR);

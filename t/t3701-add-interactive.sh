@@ -7,7 +7,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
-if test_have_prereq !ADD_I_USE_BUILTIN,!PERL
+if test_have_prereq !PERL
 then
 	skip_all='skipping add -i (scripted) tests, perl not available'
 	test_done
@@ -45,6 +45,21 @@ force_color () {
 		"$@"
 	)
 }
+
+test_expect_success 'warn about add.interactive.useBuiltin' '
+	cat >expect <<-\EOF &&
+	warning: the add.interactive.useBuiltin setting has been removed!
+	See its entry in '\''git help config'\'' for details.
+	No changes.
+	EOF
+
+	for v in = =true =false
+	do
+		git -c "add.interactive.useBuiltin$v" add -p >out 2>actual &&
+		test_must_be_empty out &&
+		test_cmp expect actual || return 1
+	done
+'
 
 test_expect_success 'setup (initial)' '
 	echo content >file &&
@@ -547,15 +562,7 @@ test_expect_success 'split hunk "add -p (edit)"' '
 	! grep "^+15" actual
 '
 
-test_expect_success 'setup ADD_I_USE_BUILTIN check' '
-	result=success &&
-	if ! test_have_prereq ADD_I_USE_BUILTIN
-	then
-		result=failure
-	fi
-'
-
-test_expect_$result 'split hunk "add -p (no, yes, edit)"' '
+test_expect_success 'split hunk "add -p (no, yes, edit)"' '
 	test_write_lines 5 10 20 21 30 31 40 50 60 >test &&
 	git reset &&
 	# test sequence is s(plit), n(o), y(es), e(dit)
@@ -579,7 +586,7 @@ test_expect_success 'split hunk with incomplete line at end' '
 	test_must_fail git grep --cached before
 '
 
-test_expect_$result 'edit, adding lines to the first hunk' '
+test_expect_success 'edit, adding lines to the first hunk' '
 	test_write_lines 10 11 20 30 40 50 51 60 >test &&
 	git reset &&
 	tr _ " " >patch <<-EOF &&
