@@ -1,0 +1,8 @@
+public abstract sealed class SealedClass {
+    public static non-sealed class RIGHT extends SealedClass {
+        static int ONE;
+        static int TWO;
+        static int THREE;
+        private int ChangeMe;
+    }
+}
