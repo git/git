@@ -135,3 +135,14 @@ identifier ACT = active_cache_tree;
   ...
 + , NULL, NULL, NULL
   )
+
+@@
+expression O;
+@@
+- write_cache_as_tree
++ write_index_as_tree
+  (
+- O,
++ O, &the_index, get_index_file(),
+  ...
+  )
