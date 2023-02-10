@@ -5,7 +5,7 @@
  * Based on git-commit.sh by Junio C Hamano and Linus Torvalds
  */
 
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
+#define USE_THE_INDEX_VARIABLE
 #include "cache.h"
 #include "config.h"
 #include "lockfile.h"
@@ -992,8 +992,8 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		const char *parent = "HEAD";
 
 		if (!the_index.cache_nr) {
-			discard_cache();
-			if (read_cache() < 0)
+			discard_index(&the_index);
+			if (repo_read_index(the_repository) < 0)
 				die(_("Cannot read index"));
 		}
 

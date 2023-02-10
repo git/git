@@ -23,6 +23,9 @@ identifier ACT = active_cache_tree;
 @@
 @@
 (
+- read_cache
++ repo_read_index
+|
 - read_cache_unmerged
 + repo_read_index_unmerged
 |
@@ -97,6 +100,9 @@ identifier ACT = active_cache_tree;
 |
 - update_main_cache_tree
 + cache_tree_update
+|
+- discard_cache
++ discard_index
 )
   (
 + &the_index,
