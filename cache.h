@@ -456,7 +456,6 @@ extern struct index_state the_index;
 #ifdef USE_THE_INDEX_COMPATIBILITY_MACROS
 #define read_cache() repo_read_index(the_repository)
 #define discard_cache() discard_index(&the_index)
-#define cache_name_pos(name, namelen) index_name_pos(&the_index,(name),(namelen))
 #endif
 #endif
 #endif

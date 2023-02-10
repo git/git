@@ -91,6 +91,9 @@ identifier ACT = active_cache_tree;
 |
 - resolve_undo_clear
 + resolve_undo_clear_index
+|
+- cache_name_pos
++ index_name_pos
 )
   (
 + &the_index,
