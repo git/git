@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'git ls-remote' [--heads] [--tags] [--refs] [--upload-pack=<exec>]
 	      [-q | --quiet] [--exit-code] [--get-url] [--sort=<key>]
-	      [--symref] [<repository> [<refs>...]]
+	      [--symref] [<repository> [<patterns>...]]
 
 DESCRIPTION
 -----------
@@ -85,11 +85,16 @@ OPTIONS
 	either a URL or the name of a remote (see the GIT URLS and
 	REMOTES sections of linkgit:git-fetch[1]).
 
-<refs>...::
+<patterns>...::
 	When unspecified, all references, after filtering done
-	with --heads and --tags, are shown.  When <refs>... are
-	specified, only references matching the given patterns
-	are displayed.
+	with --heads and --tags, are shown.  When <patterns>... are
+	specified, only references matching one or more of the given
+	patterns are displayed. Each pattern is interpreted as a glob
+	(see `glob` in linkgit:gitglossary[7]) which is matched against
+	the "tail" of a ref, starting either from the start of the ref
+	(so a full name like `refs/heads/foo` matches) or from a slash
+	separator (so `bar` matches `refs/heads/bar` but not
+	`refs/heads/foobar`).
 
 EXAMPLES
 --------
