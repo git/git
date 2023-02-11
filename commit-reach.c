@@ -628,8 +628,12 @@ cleanup:
 	}
 	free(list);
 
-	for (i = 0; i < from->nr; i++)
-		from->objects[i].item->flags &= ~assign_flag;
+	for (i = 0; i < from->nr; i++) {
+		struct object *from_one = from->objects[i].item;
+
+		if (from_one)
+			from_one->flags &= ~assign_flag;
+	}
 
 	return result;
 }
