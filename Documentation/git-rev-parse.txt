@@ -197,10 +197,11 @@ respectively, and they must begin with `refs/` when applied to `--glob`
 or `--all`. If a trailing '/{asterisk}' is intended, it must be given
 explicitly.
 
---exclude-hidden=[receive|uploadpack]::
-	Do not include refs that would be hidden by `git-receive-pack` or
-	`git-upload-pack` by consulting the appropriate `receive.hideRefs` or
-	`uploadpack.hideRefs` configuration along with `transfer.hideRefs` (see
+--exclude-hidden=[fetch|receive|uploadpack]::
+	Do not include refs that would be hidden by `git-fetch`,
+	`git-receive-pack` or `git-upload-pack` by consulting the appropriate
+	`fetch.hideRefs`, `receive.hideRefs` or `uploadpack.hideRefs`
+	configuration along with `transfer.hideRefs` (see
 	linkgit:git-config[1]). This option affects the next pseudo-ref option
 	`--all` or `--glob` and is cleared after processing them.
 
