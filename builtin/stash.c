@@ -1,4 +1,4 @@
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
+#define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "parse-options.h"
@@ -529,7 +529,8 @@ static int do_apply_stash(const char *prefix, struct stash_info *info,
 					 NULL, NULL, NULL))
 		return -1;
 
-	if (write_cache_as_tree(&c_tree, 0, NULL))
+	if (write_index_as_tree(&c_tree, &the_index, get_index_file(), 0,
+				NULL))
 		return error(_("cannot apply a stash in the middle of a merge"));
 
 	if (index) {
@@ -553,7 +554,8 @@ static int do_apply_stash(const char *prefix, struct stash_info *info,
 
 			discard_index(&the_index);
 			repo_read_index(the_repository);
-			if (write_cache_as_tree(&index_tree, 0, NULL))
+			if (write_index_as_tree(&index_tree, &the_index,
+						get_index_file(), 0, NULL))
 				return error(_("could not save index tree"));
 
 			reset_head();
@@ -1378,7 +1380,8 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 
 	strbuf_addf(&commit_tree_label, "index on %s\n", msg.buf);
 	commit_list_insert(head_commit, &parents);
-	if (write_cache_as_tree(&info->i_tree, 0, NULL) ||
+	if (write_index_as_tree(&info->i_tree, &the_index, get_index_file(), 0,
+				NULL) ||
 	    commit_tree(commit_tree_label.buf, commit_tree_label.len,
 			&info->i_tree, parents, &info->i_commit, NULL, NULL)) {
 		if (!quiet)

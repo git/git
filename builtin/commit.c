@@ -5,7 +5,7 @@
  * Based on git-commit.sh by Junio C Hamano and Linus Torvalds
  */
 
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
+#define USE_THE_INDEX_VARIABLE
 #include "cache.h"
 #include "config.h"
 #include "lockfile.h"
@@ -414,7 +414,7 @@ static const char *prepare_index(const char **argv, const char *prefix,
 		discard_index(&the_index);
 		read_index_from(&the_index, get_lock_file_path(&index_lock),
 				get_git_dir());
-		if (update_main_cache_tree(WRITE_TREE_SILENT) == 0) {
+		if (cache_tree_update(&the_index, WRITE_TREE_SILENT) == 0) {
 			if (reopen_lock_file(&index_lock) < 0)
 				die(_("unable to write index file"));
 			if (write_locked_index(&the_index, &index_lock, 0))
@@ -444,7 +444,7 @@ static const char *prepare_index(const char **argv, const char *prefix,
 				       LOCK_DIE_ON_ERROR);
 		add_files_to_cache(also ? prefix : NULL, &pathspec, 0);
 		refresh_cache_or_die(refresh_flags);
-		update_main_cache_tree(WRITE_TREE_SILENT);
+		cache_tree_update(&the_index, WRITE_TREE_SILENT);
 		if (write_locked_index(&the_index, &index_lock, 0))
 			die(_("unable to write new_index file"));
 		commit_style = COMMIT_NORMAL;
@@ -467,7 +467,7 @@ static const char *prepare_index(const char **argv, const char *prefix,
 		refresh_cache_or_die(refresh_flags);
 		if (the_index.cache_changed
 		    || !cache_tree_fully_valid(the_index.cache_tree))
-			update_main_cache_tree(WRITE_TREE_SILENT);
+			cache_tree_update(&the_index, WRITE_TREE_SILENT);
 		if (write_locked_index(&the_index, &index_lock,
 				       COMMIT_LOCK | SKIP_IF_UNCHANGED))
 			die(_("unable to write new_index file"));
@@ -516,7 +516,7 @@ static const char *prepare_index(const char **argv, const char *prefix,
 	repo_hold_locked_index(the_repository, &index_lock, LOCK_DIE_ON_ERROR);
 	add_remove_files(&partial);
 	refresh_index(&the_index, REFRESH_QUIET, NULL, NULL, NULL);
-	update_main_cache_tree(WRITE_TREE_SILENT);
+	cache_tree_update(&the_index, WRITE_TREE_SILENT);
 	if (write_locked_index(&the_index, &index_lock, 0))
 		die(_("unable to write new_index file"));
 
@@ -991,9 +991,9 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		struct object_id oid;
 		const char *parent = "HEAD";
 
-		if (!active_nr) {
-			discard_cache();
-			if (read_cache() < 0)
+		if (!the_index.cache_nr) {
+			discard_index(&the_index);
+			if (repo_read_index(the_repository) < 0)
 				die(_("Cannot read index"));
 		}
 
@@ -1079,7 +1079,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	}
 	read_index_from(&the_index, index_file, get_git_dir());
 
-	if (update_main_cache_tree(0)) {
+	if (cache_tree_update(&the_index, 0)) {
 		error(_("Error building trees"));
 		return 0;
 	}

@@ -449,18 +449,8 @@ typedef int (*must_prefetch_predicate)(const struct cache_entry *);
 void prefetch_cache_entries(const struct index_state *istate,
 			    must_prefetch_predicate must_prefetch);
 
-#if defined(USE_THE_INDEX_COMPATIBILITY_MACROS) || defined(USE_THE_INDEX_VARIABLE)
+#ifdef USE_THE_INDEX_VARIABLE
 extern struct index_state the_index;
-
-#ifndef USE_THE_INDEX_VARIABLE
-#ifdef USE_THE_INDEX_COMPATIBILITY_MACROS
-#define active_nr (the_index.cache_nr)
-
-#define read_cache() repo_read_index(the_repository)
-#define discard_cache() discard_index(&the_index)
-#define cache_name_pos(name, namelen) index_name_pos(&the_index,(name),(namelen))
-#endif
-#endif
 #endif
 
 #define TYPE_BITS 3

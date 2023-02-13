@@ -3,7 +3,7 @@
  *
  * Based on git-am.sh by Junio C Hamano.
  */
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
+#define USE_THE_INDEX_VARIABLE
 #include "cache.h"
 #include "config.h"
 #include "builtin.h"
@@ -1655,7 +1655,7 @@ static void do_commit(const struct am_state *state)
 	if (!state->no_verify && run_hooks("pre-applypatch"))
 		exit(1);
 
-	if (write_cache_as_tree(&tree, 0, NULL))
+	if (write_index_as_tree(&tree, &the_index, get_index_file(), 0, NULL))
 		die(_("git write-tree failed to write a tree"));
 
 	if (!get_oid_commit("HEAD", &parent)) {
@@ -2063,7 +2063,7 @@ static int clean_index(const struct object_id *head, const struct object_id *rem
 	if (fast_forward_to(head_tree, head_tree, 1))
 		return -1;
 
-	if (write_cache_as_tree(&index, 0, NULL))
+	if (write_index_as_tree(&index, &the_index, get_index_file(), 0, NULL))
 		return -1;
 
 	index_tree = parse_tree_indirect(&index);

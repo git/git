@@ -6,7 +6,7 @@
  * Based on git-merge.sh by Junio C Hamano.
  */
 
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
+#define USE_THE_INDEX_VARIABLE
 #include "cache.h"
 #include "config.h"
 #include "parse-options.h"
@@ -390,8 +390,8 @@ static void restore_state(const struct object_id *head,
 	run_command(&cmd);
 
 refresh_cache:
-	discard_cache();
-	if (read_cache() < 0)
+	discard_index(&the_index);
+	if (repo_read_index(the_repository) < 0)
 		die(_("could not read index"));
 }
 
@@ -706,7 +706,7 @@ static int read_tree_trivial(struct object_id *common, struct object_id *head,
 
 static void write_tree_trivial(struct object_id *oid)
 {
-	if (write_cache_as_tree(oid, 0, NULL))
+	if (write_index_as_tree(oid, &the_index, get_index_file(), 0, NULL))
 		die(_("git write-tree failed to write a tree"));
 }
 

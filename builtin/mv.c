@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2006 Johannes Schindelin
  */
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
+#define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "pathspec.h"
@@ -489,7 +489,8 @@ remove_entry:
 			if ((mode & SPARSE) &&
 			    path_in_sparse_checkout(dst, &the_index)) {
 				/* from out-of-cone to in-cone */
-				int dst_pos = cache_name_pos(dst, strlen(dst));
+				int dst_pos = index_name_pos(&the_index, dst,
+							     strlen(dst));
 				struct cache_entry *dst_ce = the_index.cache[dst_pos];
 
 				dst_ce->ce_flags &= ~CE_SKIP_WORKTREE;
@@ -500,7 +501,8 @@ remove_entry:
 				   !(mode & SPARSE) &&
 				   !path_in_sparse_checkout(dst, &the_index)) {
 				/* from in-cone to out-of-cone */
-				int dst_pos = cache_name_pos(dst, strlen(dst));
+				int dst_pos = index_name_pos(&the_index, dst,
+							     strlen(dst));
 				struct cache_entry *dst_ce = the_index.cache[dst_pos];
 
 				/*
