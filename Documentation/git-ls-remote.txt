@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'git ls-remote' [--heads] [--tags] [--refs] [--upload-pack=<exec>]
 	      [-q | --quiet] [--exit-code] [--get-url] [--sort=<key>]
-	      [--symref] [<repository> [<refs>...]]
+	      [--symref] [<repository> [<patterns>...]]
 
 DESCRIPTION
 -----------
@@ -85,25 +85,32 @@ OPTIONS
 	either a URL or the name of a remote (see the GIT URLS and
 	REMOTES sections of linkgit:git-fetch[1]).
 
-<refs>...::
+<patterns>...::
 	When unspecified, all references, after filtering done
-	with --heads and --tags, are shown.  When <refs>... are
-	specified, only references matching the given patterns
-	are displayed.
+	with --heads and --tags, are shown.  When <patterns>... are
+	specified, only references matching one or more of the given
+	patterns are displayed. Each pattern is interpreted as a glob
+	(see `glob` in linkgit:gitglossary[7]) which is matched against
+	the "tail" of a ref, starting either from the start of the ref
+	(so a full name like `refs/heads/foo` matches) or from a slash
+	separator (so `bar` matches `refs/heads/bar` but not
+	`refs/heads/foobar`).
 
 EXAMPLES
 --------
 
 ----
-$ git ls-remote --tags ./.
+$ git ls-remote --tags .
 d6602ec5194c87b0fc87103ca4d67251c76f233a	refs/tags/v0.99
 f25a265a342aed6041ab0cc484224d9ca54b6f41	refs/tags/v0.99.1
 7ceca275d047c90c0c7d5afb13ab97efdf51bd6e	refs/tags/v0.99.3
 c5db5456ae3b0873fc659c19fafdde22313cc441	refs/tags/v0.99.2
 0918385dbd9656cab0d1d81ba7453d49bbc16250	refs/tags/junio-gpg-pub
+
 $ git ls-remote http://www.kernel.org/pub/scm/git/git.git master seen rc
 5fe978a5381f1fbad26a80e682ddd2a401966740	refs/heads/master
 c781a84b5204fb294c9ccc79f8b3baceeb32c061	refs/heads/seen
+
 $ git remote add korg http://www.kernel.org/pub/scm/git/git.git
 $ git ls-remote --tags korg v\*
 d6602ec5194c87b0fc87103ca4d67251c76f233a	refs/tags/v0.99
