@@ -53,6 +53,8 @@ int cmd__ctype(int argc, const char **argv)
 	TEST_CLASS(is_regex_special, "$()*+.?[\\^{|");
 	TEST_CLASS(is_pathspec_magic, "!\"#%&',-/:;<=>@_`~");
 	TEST_CLASS(isascii, ASCII);
+	TEST_CLASS(islower, LOWER);
+	TEST_CLASS(isupper, UPPER);
 
 	return rc;
 }
