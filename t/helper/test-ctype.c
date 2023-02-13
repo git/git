@@ -33,6 +33,7 @@ static int is_in(const char *s, int ch)
 #define DIGIT "0123456789"
 #define LOWER "abcdefghijklmnopqrstuvwxyz"
 #define UPPER "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+#define PUNCT "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
 #define ASCII \
 	"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f" \
 	"\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f" \
@@ -42,6 +43,10 @@ static int is_in(const char *s, int ch)
 	"\x50\x51\x52\x53\x54\x55\x56\x57\x58\x59\x5a\x5b\x5c\x5d\x5e\x5f" \
 	"\x60\x61\x62\x63\x64\x65\x66\x67\x68\x69\x6a\x6b\x6c\x6d\x6e\x6f" \
 	"\x70\x71\x72\x73\x74\x75\x76\x77\x78\x79\x7a\x7b\x7c\x7d\x7e\x7f"
+#define CNTRL \
+	"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f" \
+	"\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f" \
+	"\x7f"
 
 int cmd__ctype(int argc, const char **argv)
 {
@@ -55,6 +60,10 @@ int cmd__ctype(int argc, const char **argv)
 	TEST_CLASS(isascii, ASCII);
 	TEST_CLASS(islower, LOWER);
 	TEST_CLASS(isupper, UPPER);
+	TEST_CLASS(iscntrl, CNTRL);
+	TEST_CLASS(ispunct, PUNCT);
+	TEST_CLASS(isxdigit, DIGIT "abcdefABCDEF");
+	TEST_CLASS(isprint, LOWER UPPER DIGIT PUNCT " ");
 
 	return rc;
 }
