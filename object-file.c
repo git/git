@@ -1864,13 +1864,6 @@ out:
 	return 0;
 }
 
-static int write_buffer(int fd, const void *buf, size_t len)
-{
-	if (write_in_full(fd, buf, len) < 0)
-		return error_errno(_("file write error"));
-	return 0;
-}
-
 static void hash_object_file_literally(const struct git_hash_algo *algo,
 				       const void *buf, unsigned long len,
 				       const char *type, struct object_id *oid)
@@ -2015,8 +2008,8 @@ static int write_loose_object_common(git_hash_ctx *c,
 
 	ret = git_deflate(stream, flush ? Z_FINISH : 0);
 	the_hash_algo->update_fn(c, in0, stream->next_in - in0);
-	if (write_buffer(fd, compressed, stream->next_out - compressed) < 0)
-		die(_("unable to write loose object file"));
+	if (write_in_full(fd, compressed, stream->next_out - compressed) < 0)
+		die_errno(_("unable to write loose object file"));
 	stream->next_out = compressed;
 	stream->avail_out = compressed_len;
 
