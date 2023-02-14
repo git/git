@@ -193,7 +193,6 @@ static void mark_reachable(struct expire_reflog_policy_cb *cb)
 			commit_list_insert(commit, &leftover);
 			continue;
 		}
-		commit->object.flags |= REACHABLE;
 		parent = commit->parents;
 		while (parent) {
 			commit = parent->item;
@@ -371,6 +370,9 @@ void reflog_expiry_cleanup(void *cb_data)
 		clear_commit_marks(cb->tip_commit, REACHABLE);
 		break;
 	}
+	for (elem = cb->mark_list; elem; elem = elem->next)
+		clear_commit_marks(elem->item, REACHABLE);
+	free_commit_list(cb->mark_list);
 }
 
 int count_reflog_ent(struct object_id *ooid UNUSED,
