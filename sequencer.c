@@ -36,7 +36,6 @@
 #include "rebase-interactive.h"
 #include "reset.h"
 #include "branch.h"
-#include "log-tree.h"
 
 #define GIT_REFLOG_ACTION "GIT_REFLOG_ACTION"
 
