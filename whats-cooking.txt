@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2023, #02; Thu, 9)
-X-master-at: 23c56f7bd5f1667f8b793d796bf30e39545920f6
-X-next-at: 21b0678d19ca98d422ed7f3fad3e2875a54a19af
+Subject: What's cooking in git.git (Feb 2023, #03; Tue, 14)
+X-master-at: c867e4fa180bec4750e9b54eb10f459030dbebfd
+X-next-at: 0c349d5c3e2f4fa3283bdb20107953df3ec27116
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Feb 2023, #02; Thu, 9)
+What's cooking in git.git (Feb 2023, #03; Tue, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -13,6 +13,10 @@ topic is stable enough to be used and are candidate to be in a future
 release).  Commits prefixed with '-' are only in 'seen', and aren't
 considered "accepted" at all.  A topic without enough support may be
 discarded after a long period of no activity.
+
+There are security releases, ranging from 2.30.8 to 2.39.2.  The
+fixes in these releases have already been integrated to the 'master'
+branch as well.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -45,260 +49,79 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
-* ab/config-h-remove-unused (2023-02-07) 1 commit
-  (merged to 'next' on 2023-02-09 at fa83258b81)
- + config.h: remove unused git_configset_add_parameters()
+* ab/the-index-compatibility (2023-02-10) 6 commits
+  (merged to 'next' on 2023-02-13 at 4f9869d4cf)
+ + cocci & cache.h: remove "USE_THE_INDEX_COMPATIBILITY_MACROS"
+ + cache-tree API: remove redundant update_main_cache_tree()
+ + cocci & cache-tree.h: migrate "write_cache_as_tree" to "*_index_*"
+ + cocci & cache.h: apply pending "index_cache_pos" rule
+ + cocci & cache.h: fully apply "active_nr" part of index-compatibility
+ + builtin/rm.c: use narrower "USE_THE_INDEX_VARIABLE"
 
- Code clean-up.
-
- Will merge to 'master'.
- source: <patch-1.1-31f4a08c068-20230207T161453Z-avarab@gmail.com>
-
-
-* ab/retire-scripted-add-p (2023-02-06) 3 commits
-  (merged to 'next' on 2023-02-09 at 1b8c7bce7d)
- + docs & comments: replace mentions of "git-add--interactive.perl"
- + add API: remove run_add_interactive() wrapper function
- + add: remove "add.interactive.useBuiltin" & Perl "git add--interactive"
-
- Finally retire the scripted "git add -p/-i" implementation and have
- everybody use the one reimplemented in C.
+ Remove more remaining uses of macros that relies on the_index
+ singleton instance without explicitly spelling it out.
 
  Will merge to 'master'.
- source: <cover-v2-0.3-00000000000-20230206T225639Z-avarab@gmail.com>
+ source: <cover-v2-0.6-00000000000-20230210T102114Z-avarab@gmail.com>
 
 
-* ar/userdiff-java-update (2023-02-08) 3 commits
-  (merged to 'next' on 2023-02-09 at f62497382a)
- + userdiff: support Java sealed classes
- + userdiff: support Java record types
- + userdiff: support Java type parameters
+* rs/cache-tree-strbuf-growth-fix (2023-02-10) 1 commit
+  (merged to 'next' on 2023-02-13 at fd9ae8790b)
+ + cache-tree: fix strbuf growth in prime_cache_tree_rec()
 
- Userdiff regexp update for Java language.
+ Remove unnecessary explicit sizing of strbuf.
 
  Will merge to 'master'.
- source: <20230207234259.452141-1-rybak.a.v@gmail.com>
+ source: <a37623c8-d2fb-aec6-3423-2d402d717959@web.de>
 
 
-* cw/doc-pushurl-vs-url (2023-02-07) 1 commit
-  (merged to 'next' on 2023-02-09 at 21b0678d19)
- + Documentation: clarify multiple pushurls vs urls
+* jk/doc-ls-remote-matching (2023-02-10) 2 commits
+  (merged to 'next' on 2023-02-13 at 79a209bcb3)
+ + doc/ls-remote: clarify pattern format
+ + doc/ls-remote: cosmetic cleanups for examples
 
  Doc update.
 
  Will merge to 'master'.
- source: <20230207181227.361290-1-calvinwan@google.com>
+ source: <Y+cAdZTs5y0yiTkM@coredump.intra.peff.net>
 
 
-* en/name-rev-make-taggerdate-much-less-important (2023-02-09) 1 commit
- - name-rev: fix names by dropping taggerdate workaround
+* ew/commit-reach-clean-up-flags-fix (2023-02-11) 1 commit
+ - commit-reach: avoid NULL dereference
 
- "git name-rev" heuristics update.
+ Under discussion.
+ cf. <876cf920-113a-90cf-f49e-6e1b7b146acf@github.com>
+ source: <20230211111526.2028178-1-e@80x24.org>
+
+
+* rs/ctype-test (2023-02-13) 3 commits
+ - test-ctype: test iscntrl, ispunct, isxdigit and isprint
+ - test-ctype: test islower and isupper
+ - test-ctype: test isascii
+
+ Test safe_ctype
 
  Will merge to 'next'.
- source: <pull.1468.v3.git.1675933906906.gitgitgadget@gmail.com>
+ source: <81eee04b-598e-dfe1-f954-3105bcbcb2f2@web.de>
 
 
-* kf/t5000-modernise (2023-02-06) 1 commit
-  (merged to 'next' on 2023-02-09 at 0341c54639)
- + t5000: modernise archive and :(glob) test
+* mh/credential-password-expiry (2023-02-13) 1 commit
+ . credential: new attribute password_expiry_utc
 
- Test clean-up.
+ Seems to break CI only on Windows?
+ cf. https://github.com/git/git/actions/runs/4169057114/jobs/7217377625
+ source: <pull.1443.v3.git.git.1675545372271.gitgitgadget@gmail.com>
 
- Will merge to 'master'.
- source: <20230204204124.80741-1-kostya.farber@gmail.com>
 
+* tk/pull-conflict-suggest-rebase-merge-not-rebase-true (2023-02-13) 1 commit
+ - pull: conflict hint pull.rebase suggestion should offer "merges" vs "true"
 
-* po/attributes-text (2023-02-06) 1 commit
-  (merged to 'next' on 2023-02-09 at 8be7b134da)
- + .gitattributes: include `text` attribute for eol attributes
+ In an advice message after failed non-ff pull, we used to suggest
+ setting pull.rebase=true, but these days pull.rebase=merges may be
+ more inline with the original spirit of "rebuild your side on top
+ of theirs".
 
- In-tree .gitattributes update to match the way we recommend our
- users to mark a file as text.
-
- Will merge to 'master'.
- source: <20230203125920.751-1-philipoakley@iee.email>
-
-
-* rs/size-t-fixes (2023-02-06) 2 commits
-  (merged to 'next' on 2023-02-09 at 4bf6998479)
- + pack-objects: use strcspn(3) in name_cmp_len()
- + read-cache: use size_t for {base,df}_name_compare()
-
- Type fixes.
-
- Will merge to 'master'.
- source: <7315487c-c97c-b8a2-d3b2-4fbf642495dd@web.de>
-
-
-* wl/new-command-doc (2023-02-06) 1 commit
-  (merged to 'next' on 2023-02-09 at 23bcd4d4d9)
- + new-command.txt: update reference to builtin docs
-
- Comment fix.
-
- Will merge to 'master'.
- source: <pull.1451.git.git.1675477659972.gitgitgadget@gmail.com>
-
-
-* jc/gpg-lazy-init (2023-02-09) 1 commit
- - gpg-interface: lazily initialize and read the configuration
-
- Instead of forcing each command to choose to honor GPG related
- configuration variables, make the subsystem lazily initialize
- itself.
- source: <xmqqpmaimvtd.fsf_-_@gitster.g>
-
-
-* jc/test-prereq-symlink-update (2023-02-09) 1 commit
- - test: make SYMLINKS prerequisite more robust
-
- For some reason, "ln -s x y && test -h y" started passing on
- Windows, even though we do not have working readlink(3) there.
- Tighten the check to enable SYMLINKS prerequisite in our tests.
- source: <xmqqwn4sq73f.fsf@gitster.g>
-
-
-* mc/credential-helper-www-authenticate (2023-02-08) 3 commits
- - credential: add WWW-Authenticate header to cred requests
- - http: read HTTP WWW-Authenticate response headers
- - t5563: add tests for basic and anoymous HTTP access
-
- Allow information carried on the WWW-AUthenticate header to be
- passed to the credential helpers.
-
- Expecting a (hopefully minor and final) reroll.
- cf. <9012b8a3-4abe-d3c6-41ee-f28931869ad7@github.com>
- source: <pull.1352.v8.git.1675711789.gitgitgadget@gmail.com>
-
-
-* jc/t5559-workaround (2023-02-09) 1 commit
- - t5559: skip a known-to-be-broken test
-
- source: <xmqq357ems2h.fsf@gitster.g>
-
---------------------------------------------------
-[Graduated to 'master']
-
-* as/ssh-signing-improve-key-missing-error (2023-01-25) 1 commit
-  (merged to 'next' on 2023-01-25 at 140f2c2c60)
- + ssh signing: better error message when key not in agent
-
- Improve the error message given when private key is not loaded in
- the ssh agent in the codepath to sign with an ssh key.
- source: <pull.1270.v3.git.git.1674650450662.gitgitgadget@gmail.com>
-
-
-* ds/scalar-ignore-cron-error (2023-01-27) 3 commits
-  (merged to 'next' on 2023-01-31 at 98d13ac3e7)
- + scalar: only warn when background maintenance fails
- + t921*: test scalar behavior starting maintenance
- + t: allow 'scalar' in test_must_fail
-
- Allow "scalar" to warn but continue when its periodic maintenance
- feature cannot be enabled.
- source: <pull.1473.git.1674849963.gitgitgadget@gmail.com>
-
-
-* en/ls-files-doc-update (2023-01-13) 4 commits
-  (merged to 'next' on 2023-01-27 at 20b9803add)
- + ls-files: guide folks to --exclude-standard over other --exclude* options
- + ls-files: clarify descriptions of status tags for -t
- + ls-files: clarify descriptions of file selection options
- + ls-files: add missing documentation for --resolve-undo option
-
- Doc update to ls-files.
- source: <pull.1463.git.1673584914.gitgitgadget@gmail.com>
-
-
-* en/rebase-incompatible-opts (2023-01-25) 10 commits
-  (merged to 'next' on 2023-01-27 at 35a67cf2c6)
- + rebase: provide better error message for apply options vs. merge config
- + rebase: put rebase_options initialization in single place
- + rebase: fix formatting of rebase --reapply-cherry-picks option in docs
- + rebase: clarify the OPT_CMDMODE incompatibilities
- + rebase: add coverage of other incompatible options
- + rebase: fix incompatiblity checks for --[no-]reapply-cherry-picks
- + rebase: fix docs about incompatibilities with --root
- + rebase: remove --allow-empty-message from incompatible opts
- + rebase: flag --apply and --merge as incompatible
- + rebase: mark --update-refs as requiring the merge backend
-
- "git rebase" often ignored incompatible options instead of
- complaining, which has been corrected.
- Replaces en/rebase-update-refs-needs-merge-backend.
- source: <pull.1466.v5.git.1674619434.gitgitgadget@gmail.com>
-
-
-* ew/free-island-marks (2023-02-03) 1 commit
-  (merged to 'next' on 2023-02-03 at bfd45094c4)
- + delta-islands: free island_marks and bitmaps
-
- "git pack-objects" learned to release delta-island bitmap data when
- it is done using it, saving peak heap memory usage.
- source: <20230203234430.M553381@dcvr>
-
-
-* gc/index-format-doc (2023-02-01) 1 commit
-  (merged to 'next' on 2023-02-03 at b6d99570c2)
- + docs: document zero bits in index "mode"
-
- Doc update.
- source: <20230201024041.29401-1-chooglen@google.com>
-
-
-* gm/request-pull-with-non-pgp-signed-tags (2023-01-25) 1 commit
-  (merged to 'next' on 2023-01-30 at abc684d8df)
- + request-pull: filter out SSH/X.509 tag signatures
-
- Adjust "git request-pull" to strip embedded signature from signed
- tags to notice non-PGP signatures.
- source: <20230125234725.3918563-1-gwymor@tilde.club>
-
-
-* hj/remove-msys-support (2023-02-02) 2 commits
-  (merged to 'next' on 2023-02-03 at 11f0f55291)
- + mingw: remove msysGit/MSYS1 support
- + mingw: remove duplicate `USE_NED_ALLOCATOR` directive
-
- Remove support for MSys, which now lags way behind MSys2.
- source: <pull.1433.v2.git.1675309898.gitgitgadget@gmail.com>
-
-
-* jc/attr-doc-fix (2023-01-26) 1 commit
-  (merged to 'next' on 2023-01-26 at cb327c4b5f)
- + attr: fix instructions on how to check attrs
-
- Comment fix.
- source: <pull.1441.v3.git.git.1674768107941.gitgitgadget@gmail.com>
-
-
-* jk/httpd-test-updates (2023-02-01) 4 commits
-  (merged to 'next' on 2023-02-03 at 79c7df1700)
- + t/lib-httpd: increase ssl key size to 2048 bits
- + t/lib-httpd: drop SSLMutex config
- + t/lib-httpd: bump required apache version to 2.4
- + t/lib-httpd: bump required apache version to 2.2
-
- Test update.
- source: <Y9pOmR5fOfCHwYpF@coredump.intra.peff.net>
-
-
-* mh/doc-credential-cache-only-in-core (2023-01-29) 1 commit
-  (merged to 'next' on 2023-01-30 at 021b5227af)
- + Documentation: clarify that cache forgets credentials if the system restarts
-
- Documentation clarification.
- source: <pull.1447.v3.git.1674936815117.gitgitgadget@gmail.com>
-
-
-* sk/winansi-createthread-fix (2023-02-01) 1 commit
-  (merged to 'next' on 2023-02-03 at 88ce39d2f9)
- + compat/winansi: check for errors of CreateThread() correctly
-
- Fix use of CreateThread() API call made early in the windows
- start-up code.
- source: <pull.1445.v4.git.git.1675290034144.gitgitgadget@gmail.com>
+ source: <pull.1474.git.1675614276549.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -396,6 +219,125 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* ab/config-h-remove-unused (2023-02-07) 1 commit
+  (merged to 'next' on 2023-02-09 at fa83258b81)
+ + config.h: remove unused git_configset_add_parameters()
+
+ Code clean-up.
+
+ Will merge to 'master'.
+ source: <patch-1.1-31f4a08c068-20230207T161453Z-avarab@gmail.com>
+
+
+* ab/retire-scripted-add-p (2023-02-06) 3 commits
+  (merged to 'next' on 2023-02-09 at 1b8c7bce7d)
+ + docs & comments: replace mentions of "git-add--interactive.perl"
+ + add API: remove run_add_interactive() wrapper function
+ + add: remove "add.interactive.useBuiltin" & Perl "git add--interactive"
+
+ Finally retire the scripted "git add -p/-i" implementation and have
+ everybody use the one reimplemented in C.
+
+ Will merge to 'master'.
+ source: <cover-v2-0.3-00000000000-20230206T225639Z-avarab@gmail.com>
+
+
+* ar/userdiff-java-update (2023-02-08) 3 commits
+  (merged to 'next' on 2023-02-09 at f62497382a)
+ + userdiff: support Java sealed classes
+ + userdiff: support Java record types
+ + userdiff: support Java type parameters
+
+ Userdiff regexp update for Java language.
+
+ Will merge to 'master'.
+ source: <20230207234259.452141-1-rybak.a.v@gmail.com>
+
+
+* cw/doc-pushurl-vs-url (2023-02-07) 1 commit
+  (merged to 'next' on 2023-02-09 at 21b0678d19)
+ + Documentation: clarify multiple pushurls vs urls
+
+ Doc update.
+
+ Will merge to 'master'.
+ source: <20230207181227.361290-1-calvinwan@google.com>
+
+
+* en/name-rev-make-taggerdate-much-less-important (2023-02-09) 1 commit
+  (merged to 'next' on 2023-02-10 at 059bc956aa)
+ + name-rev: fix names by dropping taggerdate workaround
+
+ "git name-rev" heuristics update.
+
+ Will merge to 'master'.
+ source: <pull.1468.v3.git.1675933906906.gitgitgadget@gmail.com>
+
+
+* kf/t5000-modernise (2023-02-06) 1 commit
+  (merged to 'next' on 2023-02-09 at 0341c54639)
+ + t5000: modernise archive and :(glob) test
+
+ Test clean-up.
+
+ Will merge to 'master'.
+ source: <20230204204124.80741-1-kostya.farber@gmail.com>
+
+
+* po/attributes-text (2023-02-06) 1 commit
+  (merged to 'next' on 2023-02-09 at 8be7b134da)
+ + .gitattributes: include `text` attribute for eol attributes
+
+ In-tree .gitattributes update to match the way we recommend our
+ users to mark a file as text.
+
+ Will merge to 'master'.
+ source: <20230203125920.751-1-philipoakley@iee.email>
+
+
+* rs/size-t-fixes (2023-02-06) 2 commits
+  (merged to 'next' on 2023-02-09 at 4bf6998479)
+ + pack-objects: use strcspn(3) in name_cmp_len()
+ + read-cache: use size_t for {base,df}_name_compare()
+
+ Type fixes.
+
+ Will merge to 'master'.
+ source: <7315487c-c97c-b8a2-d3b2-4fbf642495dd@web.de>
+
+
+* wl/new-command-doc (2023-02-06) 1 commit
+  (merged to 'next' on 2023-02-09 at 23bcd4d4d9)
+ + new-command.txt: update reference to builtin docs
+
+ Comment fix.
+
+ Will merge to 'master'.
+ source: <pull.1451.git.git.1675477659972.gitgitgadget@gmail.com>
+
+
+* jc/gpg-lazy-init (2023-02-09) 1 commit
+ - gpg-interface: lazily initialize and read the configuration
+
+ Instead of forcing each command to choose to honor GPG related
+ configuration variables, make the subsystem lazily initialize
+ itself.
+ source: <xmqqpmaimvtd.fsf_-_@gitster.g>
+
+
+* mc/credential-helper-www-authenticate (2023-02-08) 3 commits
+ - credential: add WWW-Authenticate header to cred requests
+ - http: read HTTP WWW-Authenticate response headers
+ - t5563: add tests for basic and anoymous HTTP access
+
+ Allow information carried on the WWW-AUthenticate header to be
+ passed to the credential helpers.
+
+ Expecting a (hopefully minor and final) reroll.
+ cf. <9012b8a3-4abe-d3c6-41ee-f28931869ad7@github.com>
+ source: <pull.1352.v8.git.1675711789.gitgitgadget@gmail.com>
+
+
 * ab/avoid-losing-exit-codes-in-tests (2023-02-06) 6 commits
  - tests: don't lose misc "git" exit codes
  - tests: don't lose exit status with "test <op> $(git ...)"
@@ -460,16 +402,17 @@ Release tarballs are available at:
 
 
 * ab/hook-api-with-stdin (2023-02-08) 5 commits
- - hook: support a --to-stdin=<path> option
- - sequencer: use the new hook API for the simpler "post-rewrite" call
- - hook API: support passing stdin to hooks, convert am's 'post-rewrite'
- - run-command: allow stdin for run_processes_parallel
- - run-command.c: remove dead assignment in while-loop
+  (merged to 'next' on 2023-02-13 at 4cb74ecb6b)
+ + hook: support a --to-stdin=<path> option
+ + sequencer: use the new hook API for the simpler "post-rewrite" call
+ + hook API: support passing stdin to hooks, convert am's 'post-rewrite'
+ + run-command: allow stdin for run_processes_parallel
+ + run-command.c: remove dead assignment in while-loop
 
  Extend the run-hooks API to allow feeding data from the standard
  input when running the hook script(s).
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <cover-v2-0.5-00000000000-20230208T191924Z-avarab@gmail.com>
 
 
@@ -600,29 +543,30 @@ Release tarballs are available at:
 
 
 * ab/various-leak-fixes (2023-02-06) 19 commits
- - push: free_refs() the "local_refs" in set_refspecs()
- - push: refactor refspec_append_mapped() for subsequent leak-fix
- - receive-pack: release the linked "struct command *" list
- - grep API: plug memory leaks by freeing "header_list"
- - grep.c: refactor free_grep_patterns()
- - builtin/merge.c: free "&buf" on "Your local changes..." error
- - builtin/merge.c: use fixed strings, not "strbuf", fix leak
- - show-branch: free() allocated "head" before return
- - commit-graph: fix a parse_options_concat() leak
- - http-backend.c: fix cmd_main() memory leak, refactor reg{exec,free}()
- - http-backend.c: fix "dir" and "cmd_arg" leaks in cmd_main()
- - worktree: fix a trivial leak in prune_worktrees()
- - repack: fix leaks on error with "goto cleanup"
- - name-rev: don't xstrdup() an already dup'd string
- - various: add missing clear_pathspec(), fix leaks
- - clone: use free() instead of UNLEAK()
- - commit-graph: use free_commit_graph() instead of UNLEAK()
- - bundle.c: don't leak the "args" in the "struct child_process"
- - tests: mark tests as passing with SANITIZE=leak
+  (merged to 'next' on 2023-02-13 at 0cee9746f7)
+ + push: free_refs() the "local_refs" in set_refspecs()
+ + push: refactor refspec_append_mapped() for subsequent leak-fix
+ + receive-pack: release the linked "struct command *" list
+ + grep API: plug memory leaks by freeing "header_list"
+ + grep.c: refactor free_grep_patterns()
+ + builtin/merge.c: free "&buf" on "Your local changes..." error
+ + builtin/merge.c: use fixed strings, not "strbuf", fix leak
+ + show-branch: free() allocated "head" before return
+ + commit-graph: fix a parse_options_concat() leak
+ + http-backend.c: fix cmd_main() memory leak, refactor reg{exec,free}()
+ + http-backend.c: fix "dir" and "cmd_arg" leaks in cmd_main()
+ + worktree: fix a trivial leak in prune_worktrees()
+ + repack: fix leaks on error with "goto cleanup"
+ + name-rev: don't xstrdup() an already dup'd string
+ + various: add missing clear_pathspec(), fix leaks
+ + clone: use free() instead of UNLEAK()
+ + commit-graph: use free_commit_graph() instead of UNLEAK()
+ + bundle.c: don't leak the "args" in the "struct child_process"
+ + tests: mark tests as passing with SANITIZE=leak
 
  Leak fixes.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <cover-v7-00.19-00000000000-20230206T230141Z-avarab@gmail.com>
 
 --------------------------------------------------
@@ -647,3 +591,21 @@ Release tarballs are available at:
  Getting tired of waiting for review response.
  cf. <xmqqr0xupmnf.fsf@gitster.g>
  source: <pull.1420.v3.git.1669108102092.gitgitgadget@gmail.com>
+
+
+* jc/test-prereq-symlink-update (2023-02-09) 1 commit
+ . test: make SYMLINKS prerequisite more robust
+
+ For some reason, "ln -s x y && test -h y" started passing on
+ Windows, even though we do not have working readlink(3) there.
+ Tighten the check to enable SYMLINKS prerequisite in our tests.
+
+ It turns out that this was caused by using a faulty build of the
+ Windows dev environment, which was fixed.
+ source: <xmqqwn4sq73f.fsf@gitster.g>
+
+
+* jc/t5559-workaround (2023-02-09) 1 commit
+ . t5559: skip a known-to-be-broken test
+
+ source: <xmqq357ems2h.fsf@gitster.g>
