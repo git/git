@@ -1723,9 +1723,10 @@ static void find_longest_prefixes(struct string_list *out,
 	strbuf_release(&prefix);
 }
 
-int for_each_fullref_in_prefixes(const char *namespace,
-				 const char **patterns,
-				 each_ref_fn fn, void *cb_data)
+int refs_for_each_fullref_in_prefixes(struct ref_store *ref_store,
+				      const char *namespace,
+				      const char **patterns,
+				      each_ref_fn fn, void *cb_data)
 {
 	struct string_list prefixes = STRING_LIST_INIT_DUP;
 	struct string_list_item *prefix;
@@ -1740,7 +1741,7 @@ int for_each_fullref_in_prefixes(const char *namespace,
 
 	for_each_string_list_item(prefix, &prefixes) {
 		strbuf_addstr(&buf, prefix->string);
-		ret = for_each_fullref_in(buf.buf, fn, cb_data);
+		ret = refs_for_each_fullref_in(ref_store, buf.buf, fn, cb_data);
 		if (ret)
 			break;
 		strbuf_setlen(&buf, namespace_len);

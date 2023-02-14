@@ -2913,7 +2913,7 @@ static int apply_one_fragment(struct apply_state *state,
 			break;
 		case ' ':
 			if (plen && (ws_rule & WS_BLANK_AT_EOF) &&
-			    ws_blank_line(patch + 1, plen, ws_rule))
+			    ws_blank_line(patch + 1, plen))
 				is_blank_context = 1;
 			/* fallthrough */
 		case '-':
@@ -2942,7 +2942,7 @@ static int apply_one_fragment(struct apply_state *state,
 				      (first == '+' ? 0 : LINE_COMMON));
 			if (first == '+' &&
 			    (ws_rule & WS_BLANK_AT_EOF) &&
-			    ws_blank_line(patch + 1, plen, ws_rule))
+			    ws_blank_line(patch + 1, plen))
 				added_blank_line = 1;
 			break;
 		case '@': case '\\':
