@@ -12,7 +12,7 @@ create_crlf_ref () {
 	cat >.crlf-orig-$branch.txt &&
 	cat .crlf-orig-$branch.txt | append_cr >.crlf-message-$branch.txt &&
 	grep 'Subject' .crlf-orig-$branch.txt | tr '\n' ' ' | sed 's/[ ]*$//' | tr -d '\n' >.crlf-subject-$branch.txt &&
-	grep 'Body' .crlf-message-$branch.txt >.crlf-body-$branch.txt || true &&
+	{ grep 'Body' .crlf-message-$branch.txt >.crlf-body-$branch.txt || true; } &&
 	LIB_CRLF_BRANCHES="${LIB_CRLF_BRANCHES} ${branch}" &&
 	test_tick &&
 	hash=$(git commit-tree HEAD^{tree} -p HEAD -F .crlf-message-${branch}.txt) &&
