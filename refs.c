@@ -1315,11 +1315,10 @@ char *refs_shorten_unambiguous_ref(struct ref_store *refs,
 {
 	int i;
 	static char **scanf_fmts;
-	static int nr_rules;
 	char *short_name;
 	struct strbuf resolved_buf = STRBUF_INIT;
 
-	if (!nr_rules) {
+	if (!scanf_fmts) {
 		/*
 		 * Pre-generate scanf formats from ref_rev_parse_rules[].
 		 * Generate a format suitable for scanf from a
@@ -1329,31 +1328,26 @@ char *refs_shorten_unambiguous_ref(struct ref_store *refs,
 		size_t total_len = 0;
 		size_t offset = 0;
 
-		/* the rule list is NULL terminated, count them first */
-		for (nr_rules = 0; ref_rev_parse_rules[nr_rules]; nr_rules++)
+		for (i = 0; i < NUM_REV_PARSE_RULES; i++)
 			/* -2 for strlen("%.*s") - strlen("%s"); +1 for NUL */
-			total_len += strlen(ref_rev_parse_rules[nr_rules]) - 2 + 1;
+			total_len += strlen(ref_rev_parse_rules[i]) - 2 + 1;
 
-		scanf_fmts = xmalloc(st_add(st_mult(sizeof(char *), nr_rules), total_len));
+		scanf_fmts = xmalloc(st_add(st_mult(sizeof(char *), NUM_REV_PARSE_RULES), total_len));
 
 		offset = 0;
-		for (i = 0; i < nr_rules; i++) {
+		for (i = 0; i < NUM_REV_PARSE_RULES; i++) {
 			assert(offset < total_len);
-			scanf_fmts[i] = (char *)&scanf_fmts[nr_rules] + offset;
+			scanf_fmts[i] = (char *)&scanf_fmts[NUM_REV_PARSE_RULES] + offset;
 			offset += xsnprintf(scanf_fmts[i], total_len - offset,
 					    ref_rev_parse_rules[i], 2, "%s") + 1;
 		}
 	}
 
-	/* bail out if there are no rules */
-	if (!nr_rules)
-		return xstrdup(refname);
-
 	/* buffer for scanf result, at most refname must fit */
 	short_name = xstrdup(refname);
 
 	/* skip first rule, it will always match */
-	for (i = nr_rules - 1; i > 0 ; --i) {
+	for (i = NUM_REV_PARSE_RULES - 1; i > 0 ; --i) {
 		int j;
 		int rules_to_fail = i;
 		size_t short_name_len;
@@ -1368,7 +1362,7 @@ char *refs_shorten_unambiguous_ref(struct ref_store *refs,
 		 * must fail to resolve to a valid non-ambiguous ref
 		 */
 		if (strict)
-			rules_to_fail = nr_rules;
+			rules_to_fail = NUM_REV_PARSE_RULES;
 
 		/*
 		 * check if the short name resolves to a valid ref,
