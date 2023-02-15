@@ -399,6 +399,10 @@ test_expect_success 'custom `gpg.program`' '
 
 	case "$1" in
 	-bsau)
+		test -z "$LET_GPG_PROGRAM_FAIL" || {
+			echo "zOMG signing failed!" >&2
+			exit 1
+		}
 		cat >sign.file
 		echo "[GNUPG:] SIG_CREATED $args" >&2
 		echo "-----BEGIN PGP MESSAGE-----"
@@ -420,7 +424,11 @@ test_expect_success 'custom `gpg.program`' '
 	git commit -S --allow-empty -m signed-commit &&
 	test_path_exists sign.file &&
 	git show --show-signature &&
-	test_path_exists verify.file
+	test_path_exists verify.file &&
+
+	test_must_fail env LET_GPG_PROGRAM_FAIL=1 \
+	git commit -S --allow-empty -m must-fail 2>err &&
+	grep zOMG err
 '
 
 test_done

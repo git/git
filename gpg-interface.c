@@ -977,9 +977,13 @@ static int sign_buffer_gpg(struct strbuf *buffer, struct strbuf *signature,
 			break; /* found */
 	}
 	ret |= !cp;
+	if (ret) {
+		error(_("gpg failed to sign the data:\n%s"),
+		      gpg_status.len ? gpg_status.buf : "(no gpg output)");
+		strbuf_release(&gpg_status);
+		return -1;
+	}
 	strbuf_release(&gpg_status);
-	if (ret)
-		return error(_("gpg failed to sign the data"));
 
 	/* Strip CR from the line endings, in case we are on Windows. */
 	remove_cr_after(signature, bottom);
