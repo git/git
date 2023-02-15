@@ -1356,7 +1356,7 @@ char *refs_shorten_unambiguous_ref(struct ref_store *refs,
 	for (i = nr_rules - 1; i > 0 ; --i) {
 		int j;
 		int rules_to_fail = i;
-		int short_name_len;
+		size_t short_name_len;
 
 		if (1 != sscanf(refname, scanf_fmts[i], short_name))
 			continue;
@@ -1388,7 +1388,8 @@ char *refs_shorten_unambiguous_ref(struct ref_store *refs,
 			 */
 			strbuf_reset(&resolved_buf);
 			strbuf_addf(&resolved_buf, rule,
-				    short_name_len, short_name);
+				    cast_size_t_to_int(short_name_len),
+				    short_name);
 			if (refs_ref_exists(refs, resolved_buf.buf))
 				break;
 		}
