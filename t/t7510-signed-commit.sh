@@ -387,4 +387,40 @@ test_expect_success GPG 'verify-commit verifies multiply signed commits' '
 	! grep "BAD signature from" actual
 '
 
+test_expect_success 'custom `gpg.program`' '
+	write_script fake-gpg <<-\EOF &&
+	args="$*"
+
+	# skip uninteresting options
+	while case "$1" in
+	--status-fd=*|--keyid-format=*) ;; # skip
+	*) break;;
+	esac; do shift; done
+
+	case "$1" in
+	-bsau)
+		cat >sign.file
+		echo "[GNUPG:] SIG_CREATED $args" >&2
+		echo "-----BEGIN PGP MESSAGE-----"
+		echo "$args"
+		echo "-----END PGP MESSAGE-----"
+		;;
+	--verify)
+		cat "$2" >verify.file
+		exit 0
+		;;
+	*)
+		echo "Unhandled args: $*" >&2
+		exit 1
+		;;
+	esac
+	EOF
+
+	test_config gpg.program "$(pwd)/fake-gpg" &&
+	git commit -S --allow-empty -m signed-commit &&
+	test_path_exists sign.file &&
+	git show --show-signature &&
+	test_path_exists verify.file
+'
+
 test_done
