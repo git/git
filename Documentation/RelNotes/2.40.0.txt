@@ -49,6 +49,11 @@ UI, Workflows & Features
  * "scalar" warns but continues when its periodic maintenance
    feature cannot be enabled.
 
+ * The bundle-URI subsystem adds support for creation-token heuristics
+   to help incremental fetches.
+
+ * Userdiff regexp update for Java language.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -69,12 +74,10 @@ Performance, Internal Implementation, Development Support etc.
    the submodule--helper.
 
  * Stop running win+VS build by default.
-   (merge a0da6deeec js/ci-disable-cmake-by-default later to maint).
 
  * CI updates.  We probably want a clean-up to move the long shell
    script embedded in yaml file into a separate file, but that can
    come later.
-   (merge 4542582e59 cw/ci-whitespace later to maint).
 
  * Use `git diff --no-index` as a test_cmp on Windows.
 
@@ -84,14 +87,21 @@ Performance, Internal Implementation, Development Support etc.
 
  * Avoid unnecessary builds in CI, with settings configured in
    ci-config.
-   (merge eb5b03a9c0 tb/ci-concurrency later to maint).
+
+ * Plug leaks in sequencer subsystem and its users.
+
+ * In-tree .gitattributes update to match the way we recommend our
+   users to mark a file as text.
+   (merge 1f34e0cd3d po/attributes-text later to maint).
+
+ * Finally retire the scripted "git add -p/-i" implementation and have
+   everybody use the one reimplemented in C.
 
 
 Fixes since v2.39
 -----------------
 
  * Various leak fixes.
-   (merge ac95f5d36a ab/various-leak-fixes later to maint).
 
  * Fix a bug where `pack-objects` would not respect multiple `--filter`
    arguments when invoked directly.
@@ -106,8 +116,6 @@ Fixes since v2.39
  * Redefining system functions for a few functions did not follow our
    usual "implement git_foo() and #define foo(args) git_foo(args)"
    pattern, which has broken build for some folks.
-   (merge e1a95b78d8 jk/avoid-redef-system-functions-2.30 later to maint).
-   (merge 395bec6b39 jk/avoid-redef-system-functions later to maint).
 
  * The way the diff machinery prepares the options array for the
    parse_options API has been refactored to avoid resource leaks.
@@ -137,36 +145,27 @@ Fixes since v2.39
  * When given a pattern that matches an empty string at the end of a
    line, the code to parse the "git diff" line-ranges fell into an
    infinite loop, which has been corrected.
-   (merge 4e57c88e02 lk/line-range-parsing-fix later to maint).
 
  * Fix the sequence to fsync $GIT_DIR/packed-refs file that forgot to
    flush its output to the disk..
-   (merge ce54672f9b ps/fsync-refs-fix later to maint).
 
  * Fix to a small regression in 2.38 days.
-   (merge 6d5e9e53aa ab/bundle-wo-args later to maint).
 
  * "git diff --relative" did not mix well with "git diff --ext-diff",
    which has been corrected.
-   (merge f034bb1cad jk/ext-diff-with-relative later to maint).
 
  * The logic to see if we are using the "cone" mode by checking the
    sparsity patterns has been tightened to avoid mistaking a pattern
    that names a single file as specifying a cone.
-   (merge 5842710dc2 ws/single-file-cone later to maint).
 
  * Deal with a few deprecation warning from cURL library.
-   (merge 6c065f72b8 jk/curl-avoid-deprecated-api later to maint).
 
  * Doc update for environment variables set when hooks are invoked.
-   (merge 772f8ff826 es/hooks-and-local-env later to maint).
 
  * Document ORIG_HEAD a bit more.
-   (merge f1c9243fc5 pb/doc-orig-head later to maint).
 
  * "git ls-tree --format='%(path) %(path)' $tree $path" showed the
    path three times, which has been corrected.
-   (merge c388fcda99 rs/ls-tree-path-expansion-fix later to maint).
 
  * Remove "git env--helper" and demote it to a test-tool subcommand.
    (merge 4a1baacd46 ab/test-env-helper later to maint).
@@ -175,7 +174,6 @@ Fixes since v2.39
    where '\(A\|B\)' works as alternation, unless explicitly asked with
    the REG_ENHANCED flag.  "git grep" now can be compiled to do so, to
    retain the old behaviour.
-   (merge 54463d32ef rs/use-enhanced-bre-on-macos later to maint).
 
  * Pthread emulation on Win32 leaked thread handle when a thread is
    joined.
@@ -188,7 +186,6 @@ Fixes since v2.39
 
  * Document that "branch -f <branch>" disables only the safety to
    avoid recreating an existing branch.
-   (merge bf08abac56 jc/doc-branch-update-checked-out-branch later to maint).
 
  * "git fetch <group>", when "<group>" of remotes lists the same
    remote twice, unnecessarily failed when parallel fetching was
@@ -197,7 +194,6 @@ Fixes since v2.39
 
  * Clarify how "checkout -b/-B" and "git branch [-f]" are similar but
    different in the documentation.
-   (merge fedb8ea2df jc/doc-checkout-b later to maint).
 
  * "git hash-object" now checks that the resulting object is well
    formed with the same code as "git fsck".
@@ -222,22 +218,12 @@ Fixes since v2.39
    it is done using it, saving peak heap memory usage.
    (merge 647982bb71 ew/free-island-marks later to maint).
 
+ * In an environment where dynamically generated code is prohibited to
+   run (e.g. SELinux), failure to JIT pcre patterns is expected.  Fall
+   back to interpreted execution in such a case.
+   (merge 50b6ad55b0 cb/grep-fallback-failing-jit later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
-   (merge 77e04b2ed4 rs/t4205-do-not-exit-in-test-script later to maint).
-   (merge faebba436e rs/plug-pattern-list-leak-in-lof later to maint).
-   (merge 243caa8982 ab/t5314-avoid-losing-exit-status later to maint).
-   (merge 4d81ce1b99 ab/t7600-avoid-losing-exit-status-of-git later to maint).
-   (merge 5f3bfdc4f3 ab/t4023-avoid-losing-exit-status-of-diff later to maint).
-   (merge 500317ae03 js/t3920-shell-and-or-fix later to maint).
-   (merge 86325d36e6 rs/t3920-crlf-eating-grep-fix later to maint).
-   (merge cfbd173ccb rj/branch-copy-and-rename later to maint).
-   (merge c25d9e529d jk/unused-post-2.39 later to maint).
-   (merge a31cfe3283 jk/server-supports-v2-cleanup later to maint).
-   (merge a658e881c1 rs/am-parse-options-cleanup later to maint).
-   (merge 4cb39fcf19 rs/clear-commit-marks-cleanup later to maint).
-   (merge b07a819c05 rs/reflog-expiry-cleanup later to maint).
-   (merge d422d06167 rs/clarify-error-in-write-loose-object later to maint).
-   (merge 92cb135855 sk/remove-duplicate-includes later to maint).
    (merge 4eb1ccecd4 dh/mingw-ownership-check-typofix later to maint).
    (merge f95526419b ar/typofix-gitattributes-doc later to maint).
    (merge 27875aeec9 km/doc-branch-start-point later to maint).
@@ -258,3 +244,8 @@ Fixes since v2.39
    (merge 4f542975d1 mh/doc-credential-cache-only-in-core later to maint).
    (merge 3a2ebaebc7 gc/index-format-doc later to maint).
    (merge b08edf709d jk/httpd-test-updates later to maint).
+   (merge d85e9448dd wl/new-command-doc later to maint).
+   (merge d912a603ed kf/t5000-modernise later to maint).
+   (merge e65b868d07 rs/size-t-fixes later to maint).
+   (merge 3eb1e1ca9a ab/config-h-remove-unused later to maint).
+   (merge d390e08076 cw/doc-pushurl-vs-url later to maint).
