@@ -1,0 +1,6 @@
+class RIGHT <TYPE, PARAMS, AFTER, SPACE> {
+    static int ONE;
+    static int TWO;
+    static int THREE;
+    private A ChangeMe;
+}
