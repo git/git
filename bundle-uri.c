@@ -9,6 +9,14 @@
 #include "config.h"
 #include "remote.h"
 
+static struct {
+	enum bundle_list_heuristic heuristic;
+	const char *name;
+} heuristics[BUNDLE_HEURISTIC__COUNT] = {
+	{ BUNDLE_HEURISTIC_NONE, ""},
+	{ BUNDLE_HEURISTIC_CREATIONTOKEN, "creationToken" },
+};
+
 static int compare_bundles(const void *hashmap_cmp_fn_data,
 			   const struct hashmap_entry *he1,
 			   const struct hashmap_entry *he2,
@@ -75,6 +83,9 @@ static int summarize_bundle(struct remote_bundle_info *info, void *data)
 	FILE *fp = data;
 	fprintf(fp, "[bundle \"%s\"]\n", info->id);
 	fprintf(fp, "\turi = %s\n", info->uri);
+
+	if (info->creationToken)
+		fprintf(fp, "\tcreationToken = %"PRIu64"\n", info->creationToken);
 	return 0;
 }
 
@@ -99,6 +110,17 @@ void print_bundle_list(FILE *fp, struct bundle_list *list)
 	fprintf(fp, "[bundle]\n");
 	fprintf(fp, "\tversion = %d\n", list->version);
 	fprintf(fp, "\tmode = %s\n", mode);
+
+	if (list->heuristic) {
+		int i;
+		for (i = 0; i < BUNDLE_HEURISTIC__COUNT; i++) {
+			if (heuristics[i].heuristic == list->heuristic) {
+				printf("\theuristic = %s\n",
+				       heuristics[list->heuristic].name);
+				break;
+			}
+		}
+	}
 
 	for_all_bundles_in_list(list, summarize_bundle, fp);
 }
@@ -142,6 +164,21 @@ static int bundle_list_update(const char *key, const char *value,
 			return 0;
 		}
 
+		if (!strcmp(subkey, "heuristic")) {
+			int i;
+			for (i = 0; i < BUNDLE_HEURISTIC__COUNT; i++) {
+				if (heuristics[i].heuristic &&
+				    heuristics[i].name &&
+				    !strcmp(value, heuristics[i].name)) {
+					list->heuristic = heuristics[i].heuristic;
+					return 0;
+				}
+			}
+
+			/* Ignore unknown heuristics. */
+			return 0;
+		}
+
 		/* Ignore other unknown global keys. */
 		return 0;
 	}
@@ -166,6 +203,13 @@ static int bundle_list_update(const char *key, const char *value,
 		if (bundle->uri)
 			return -1;
 		bundle->uri = relative_url(list->baseURI, value, NULL);
+		return 0;
+	}
+
+	if (!strcmp(subkey, "creationtoken")) {
+		if (sscanf(value, "%"PRIu64, &bundle->creationToken) != 1)
+			warning(_("could not parse bundle list key %s with value '%s'"),
+				"creationToken", value);
 		return 0;
 	}
 
@@ -403,6 +447,183 @@ static int download_bundle_to_file(struct remote_bundle_info *bundle, void *data
 	return 0;
 }
 
+struct bundles_for_sorting {
+	struct remote_bundle_info **items;
+	size_t alloc;
+	size_t nr;
+};
+
+static int append_bundle(struct remote_bundle_info *bundle, void *data)
+{
+	struct bundles_for_sorting *list = data;
+	list->items[list->nr++] = bundle;
+	return 0;
+}
+
+/**
+ * For use in QSORT() to get a list sorted by creationToken
+ * in decreasing order.
+ */
+static int compare_creation_token_decreasing(const void *va, const void *vb)
+{
+	const struct remote_bundle_info * const *a = va;
+	const struct remote_bundle_info * const *b = vb;
+
+	if ((*a)->creationToken > (*b)->creationToken)
+		return -1;
+	if ((*a)->creationToken < (*b)->creationToken)
+		return 1;
+	return 0;
+}
+
+static int fetch_bundles_by_token(struct repository *r,
+				  struct bundle_list *list)
+{
+	int cur;
+	int move_direction = 0;
+	const char *creationTokenStr;
+	uint64_t maxCreationToken = 0, newMaxCreationToken = 0;
+	struct bundle_list_context ctx = {
+		.r = r,
+		.list = list,
+		.mode = list->mode,
+	};
+	struct bundles_for_sorting bundles = {
+		.alloc = hashmap_get_size(&list->bundles),
+	};
+
+	ALLOC_ARRAY(bundles.items, bundles.alloc);
+
+	for_all_bundles_in_list(list, append_bundle, &bundles);
+
+	if (!bundles.nr) {
+		free(bundles.items);
+		return 0;
+	}
+
+	QSORT(bundles.items, bundles.nr, compare_creation_token_decreasing);
+
+	/*
+	 * If fetch.bundleCreationToken exists, parses to a uint64t, and
+	 * is not strictly smaller than the maximum creation token in the
+	 * bundle list, then do not download any bundles.
+	 */
+	if (!repo_config_get_value(r,
+				   "fetch.bundlecreationtoken",
+				   &creationTokenStr) &&
+	    sscanf(creationTokenStr, "%"PRIu64, &maxCreationToken) == 1 &&
+	    bundles.items[0]->creationToken <= maxCreationToken) {
+		free(bundles.items);
+		return 0;
+	}
+
+	/*
+	 * Attempt to download and unbundle the minimum number of bundles by
+	 * creationToken in decreasing order. If we fail to unbundle (after
+	 * a successful download) then move to the next non-downloaded bundle
+	 * and attempt downloading. Once we succeed in applying a bundle,
+	 * move to the previous unapplied bundle and attempt to unbundle it
+	 * again.
+	 *
+	 * In the case of a fresh clone, we will likely download all of the
+	 * bundles before successfully unbundling the oldest one, then the
+	 * rest of the bundles unbundle successfully in increasing order
+	 * of creationToken.
+	 *
+	 * If there are existing objects, then this process may terminate
+	 * early when all required commits from "new" bundles exist in the
+	 * repo's object store.
+	 */
+	cur = 0;
+	while (cur >= 0 && cur < bundles.nr) {
+		struct remote_bundle_info *bundle = bundles.items[cur];
+
+		/*
+		 * If we need to dig into bundles below the previous
+		 * creation token value, then likely we are in an erroneous
+		 * state due to missing or invalid bundles. Halt the process
+		 * instead of continuing to download extra data.
+		 */
+		if (bundle->creationToken <= maxCreationToken)
+			break;
+
+		if (!bundle->file) {
+			/*
+			 * Not downloaded yet. Try downloading.
+			 *
+			 * Note that bundle->file is non-NULL if a download
+			 * was attempted, even if it failed to download.
+			 */
+			if (fetch_bundle_uri_internal(ctx.r, bundle, ctx.depth + 1, ctx.list)) {
+				/* Mark as unbundled so we do not retry. */
+				bundle->unbundled = 1;
+
+				/* Try looking deeper in the list. */
+				move_direction = 1;
+				goto move;
+			}
+
+			/* We expect bundles when using creationTokens. */
+			if (!is_bundle(bundle->file, 1)) {
+				warning(_("file downloaded from '%s' is not a bundle"),
+					bundle->uri);
+				break;
+			}
+		}
+
+		if (bundle->file && !bundle->unbundled) {
+			/*
+			 * This was downloaded, but not successfully
+			 * unbundled. Try unbundling again.
+			 */
+			if (unbundle_from_file(ctx.r, bundle->file)) {
+				/* Try looking deeper in the list. */
+				move_direction = 1;
+			} else {
+				/*
+				 * Succeeded in unbundle. Retry bundles
+				 * that previously failed to unbundle.
+				 */
+				move_direction = -1;
+				bundle->unbundled = 1;
+
+				if (bundle->creationToken > newMaxCreationToken)
+					newMaxCreationToken = bundle->creationToken;
+			}
+		}
+
+		/*
+		 * Else case: downloaded and unbundled successfully.
+		 * Skip this by moving in the same direction as the
+		 * previous step.
+		 */
+
+move:
+		/* Move in the specified direction and repeat. */
+		cur += move_direction;
+	}
+
+	/*
+	 * We succeed if the loop terminates because 'cur' drops below
+	 * zero. The other case is that we terminate because 'cur'
+	 * reaches the end of the list, so we have a failure no matter
+	 * which bundles we apply from the list.
+	 */
+	if (cur < 0) {
+		struct strbuf value = STRBUF_INIT;
+		strbuf_addf(&value, "%"PRIu64"", newMaxCreationToken);
+		if (repo_config_set_multivar_gently(ctx.r,
+						    "fetch.bundleCreationToken",
+						    value.buf, NULL, 0))
+			warning(_("failed to store maximum creation token"));
+
+		strbuf_release(&value);
+	}
+
+	free(bundles.items);
+	return cur >= 0;
+}
+
 static int download_bundle_list(struct repository *r,
 				struct bundle_list *local_list,
 				struct bundle_list *global_list,
@@ -440,7 +661,15 @@ static int fetch_bundle_list_in_config_format(struct repository *r,
 		goto cleanup;
 	}
 
-	if ((result = download_bundle_list(r, &list_from_bundle,
+	/*
+	 * If this list uses the creationToken heuristic, then the URIs
+	 * it advertises are expected to be bundles, not nested lists.
+	 * We can drop 'global_list' and 'depth'.
+	 */
+	if (list_from_bundle.heuristic == BUNDLE_HEURISTIC_CREATIONTOKEN) {
+		result = fetch_bundles_by_token(r, &list_from_bundle);
+		global_list->heuristic = BUNDLE_HEURISTIC_CREATIONTOKEN;
+	} else if ((result = download_bundle_list(r, &list_from_bundle,
 					   global_list, depth)))
 		goto cleanup;
 
@@ -551,7 +780,8 @@ static int unlink_bundle(struct remote_bundle_info *info, void *data)
 	return 0;
 }
 
-int fetch_bundle_uri(struct repository *r, const char *uri)
+int fetch_bundle_uri(struct repository *r, const char *uri,
+		     int *has_heuristic)
 {
 	int result;
 	struct bundle_list list;
@@ -571,6 +801,8 @@ int fetch_bundle_uri(struct repository *r, const char *uri)
 	result = unbundle_all_bundles(r, &list);
 
 cleanup:
+	if (has_heuristic)
+		*has_heuristic = (list.heuristic != BUNDLE_HEURISTIC_NONE);
 	for_all_bundles_in_list(&list, unlink_bundle, NULL);
 	clear_bundle_list(&list);
 	clear_remote_bundle_info(&bundle, NULL);
@@ -582,6 +814,14 @@ int fetch_bundle_list(struct repository *r, struct bundle_list *list)
 	int result;
 	struct bundle_list global_list;
 
+	/*
+	 * If the creationToken heuristic is used, then the URIs
+	 * advertised by 'list' are not nested lists and instead
+	 * direct bundles. We do not need to use global_list.
+	 */
+	if (list->heuristic == BUNDLE_HEURISTIC_CREATIONTOKEN)
+		return fetch_bundles_by_token(r, list);
+
 	init_bundle_list(&global_list);
 
 	/* If a bundle is added to this global list, then it is required. */
@@ -590,7 +830,10 @@ int fetch_bundle_list(struct repository *r, struct bundle_list *list)
 	if ((result = download_bundle_list(r, list, &global_list, 0)))
 		goto cleanup;
 
-	result = unbundle_all_bundles(r, &global_list);
+	if (list->heuristic == BUNDLE_HEURISTIC_CREATIONTOKEN)
+		result = fetch_bundles_by_token(r, list);
+	else
+		result = unbundle_all_bundles(r, &global_list);
 
 cleanup:
 	for_all_bundles_in_list(&global_list, unlink_bundle, NULL);

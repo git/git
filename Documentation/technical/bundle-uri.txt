@@ -479,14 +479,14 @@ outline for submitting these features:
    (This choice is an opt-in via a config option and a command-line
    option.)
 
-4. Allow the client to understand the `bundle.flag=forFetch` configuration
+4. Allow the client to understand the `bundle.heuristic` configuration key
    and the `bundle.<id>.creationToken` heuristic. When `git clone`
-   discovers a bundle URI with `bundle.flag=forFetch`, it configures the
-   client repository to check that bundle URI during later `git fetch <remote>`
+   discovers a bundle URI with `bundle.heuristic`, it configures the client
+   repository to check that bundle URI during later `git fetch <remote>`
    commands.
 
 5. Allow clients to discover bundle URIs during `git fetch` and configure
-   a bundle URI for later fetches if `bundle.flag=forFetch`.
+   a bundle URI for later fetches if `bundle.heuristic` is set.
 
 6. Implement the "inspect headers" heuristic to reduce data downloads when
    the `bundle.<id>.creationToken` heuristic is not available.
