@@ -238,58 +238,14 @@ static int refresh(int verbose, const struct pathspec *pathspec)
 	return ret;
 }
 
-int run_add_interactive(const char *revision, const char *patch_mode,
-			const struct pathspec *pathspec)
-{
-	int i;
-	struct child_process cmd = CHILD_PROCESS_INIT;
-	int use_builtin_add_i =
-		git_env_bool("GIT_TEST_ADD_I_USE_BUILTIN", -1);
-
-	if (use_builtin_add_i < 0 &&
-	    git_config_get_bool("add.interactive.usebuiltin",
-				&use_builtin_add_i))
-		use_builtin_add_i = 1;
-
-	if (use_builtin_add_i != 0) {
-		enum add_p_mode mode;
-
-		if (!patch_mode)
-			return !!run_add_i(the_repository, pathspec);
-
-		if (!strcmp(patch_mode, "--patch"))
-			mode = ADD_P_ADD;
-		else if (!strcmp(patch_mode, "--patch=stash"))
-			mode = ADD_P_STASH;
-		else if (!strcmp(patch_mode, "--patch=reset"))
-			mode = ADD_P_RESET;
-		else if (!strcmp(patch_mode, "--patch=checkout"))
-			mode = ADD_P_CHECKOUT;
-		else if (!strcmp(patch_mode, "--patch=worktree"))
-			mode = ADD_P_WORKTREE;
-		else
-			die("'%s' not supported", patch_mode);
-
-		return !!run_add_p(the_repository, mode, revision, pathspec);
-	}
-
-	strvec_push(&cmd.args, "add--interactive");
-	if (patch_mode)
-		strvec_push(&cmd.args, patch_mode);
-	if (revision)
-		strvec_push(&cmd.args, revision);
-	strvec_push(&cmd.args, "--");
-	for (i = 0; i < pathspec->nr; i++)
-		/* pass original pathspec, to be re-parsed */
-		strvec_push(&cmd.args, pathspec->items[i].original);
-
-	cmd.git_cmd = 1;
-	return run_command(&cmd);
-}
-
 int interactive_add(const char **argv, const char *prefix, int patch)
 {
 	struct pathspec pathspec;
+	int unused;
+
+	if (!git_config_get_bool("add.interactive.usebuiltin", &unused))
+		warning(_("the add.interactive.useBuiltin setting has been removed!\n"
+			  "See its entry in 'git help config' for details."));
 
 	parse_pathspec(&pathspec, 0,
 		       PATHSPEC_PREFER_FULL |
@@ -297,9 +253,10 @@ int interactive_add(const char **argv, const char *prefix, int patch)
 		       PATHSPEC_PREFIX_ORIGIN,
 		       prefix, argv);
 
-	return run_add_interactive(NULL,
-				   patch ? "--patch" : NULL,
-				   &pathspec);
+	if (patch)
+		return !!run_add_p(the_repository, ADD_P_ADD, NULL, &pathspec);
+	else
+		return !!run_add_i(the_repository, &pathspec);
 }
 
 static int edit_patch(int argc, const char **argv, const char *prefix)

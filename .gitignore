@@ -14,7 +14,6 @@
 /bin-wrappers/
 /git
 /git-add
-/git-add--interactive
 /git-am
 /git-annotate
 /git-apply

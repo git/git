@@ -560,7 +560,7 @@ static int parse_choice(struct menu_stuff *menu_stuff,
 
 /*
  * Implement a git-add-interactive compatible UI, which is borrowed
- * from git-add--interactive.perl.
+ * from add-interactive.c.
  *
  * Return value:
  *

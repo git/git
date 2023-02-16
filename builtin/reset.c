@@ -26,6 +26,7 @@
 #include "submodule.h"
 #include "submodule-config.h"
 #include "dir.h"
+#include "add-interactive.h"
 
 #define REFRESH_INDEX_DELAY_WARNING_IN_MS (2 * 1000)
 
@@ -390,7 +391,8 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		if (reset_type != NONE)
 			die(_("options '%s' and '%s' cannot be used together"), "--patch", "--{hard,mixed,soft}");
 		trace2_cmd_mode("patch-interactive");
-		return run_add_interactive(rev, "--patch=reset", &pathspec);
+		return !!run_add_p(the_repository, ADD_P_RESET, rev,
+				   &pathspec);
 	}
 
 	/* git reset tree [--] paths... can be used to
