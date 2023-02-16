@@ -131,44 +131,10 @@ test_expect_success SYMLINKS 'dir-iterator should not follow symlinks by default
 	test_cmp expected-no-follow-sorted-output actual-no-follow-sorted-output
 '
 
-test_expect_success SYMLINKS 'dir-iterator should follow symlinks w/ follow flag' '
-	cat >expected-follow-sorted-output <<-EOF &&
-	[d] (a) [a] ./dir4/a
-	[d] (a/f) [f] ./dir4/a/f
-	[d] (a/f/c) [c] ./dir4/a/f/c
-	[d] (b) [b] ./dir4/b
-	[d] (b/c) [c] ./dir4/b/c
-	[f] (a/d) [d] ./dir4/a/d
-	[f] (a/e) [e] ./dir4/a/e
-	EOF
-
-	test-tool dir-iterator --follow-symlinks ./dir4 >out &&
-	sort out >actual-follow-sorted-output &&
-
-	test_cmp expected-follow-sorted-output actual-follow-sorted-output
-'
-
 test_expect_success SYMLINKS 'dir-iterator does not resolve top-level symlinks' '
 	test_must_fail test-tool dir-iterator ./dir6 >out &&
 
 	grep "ENOTDIR" out
-'
-
-test_expect_success SYMLINKS 'dir-iterator resolves top-level symlinks w/ follow flag' '
-	cat >expected-follow-sorted-output <<-EOF &&
-	[d] (a) [a] ./dir6/a
-	[d] (a/f) [f] ./dir6/a/f
-	[d] (a/f/c) [c] ./dir6/a/f/c
-	[d] (b) [b] ./dir6/b
-	[d] (b/c) [c] ./dir6/b/c
-	[f] (a/d) [d] ./dir6/a/d
-	[f] (a/e) [e] ./dir6/a/e
-	EOF
-
-	test-tool dir-iterator --follow-symlinks ./dir6 >out &&
-	sort out >actual-follow-sorted-output &&
-
-	test_cmp expected-follow-sorted-output actual-follow-sorted-output
 '
 
 test_done
