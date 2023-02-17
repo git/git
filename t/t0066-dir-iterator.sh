@@ -106,13 +106,7 @@ test_expect_success SYMLINKS 'setup dirs with symlinks' '
 	ln -s d dir4/a/e &&
 	ln -s ../b dir4/a/f &&
 
-	mkdir -p dir5/a/b &&
-	mkdir -p dir5/a/c &&
-	ln -s ../c dir5/a/b/d &&
-	ln -s ../ dir5/a/b/e &&
-	ln -s ../../ dir5/a/b/f &&
-
-	ln -s dir4 dir6
+	ln -s dir4 dir5
 '
 
 test_expect_success SYMLINKS 'dir-iterator should not follow symlinks by default' '
@@ -132,7 +126,7 @@ test_expect_success SYMLINKS 'dir-iterator should not follow symlinks by default
 '
 
 test_expect_success SYMLINKS 'dir-iterator does not resolve top-level symlinks' '
-	test_must_fail test-tool dir-iterator ./dir6 >out &&
+	test_must_fail test-tool dir-iterator ./dir5 >out &&
 
 	grep "ENOTDIR" out
 '
