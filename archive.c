@@ -472,6 +472,8 @@ static void parse_treeish_arg(const char **argv,
 		commit_oid = NULL;
 		archive_time = time(NULL);
 	}
+	if (ar_args->mtime_option)
+		archive_time = approxidate(ar_args->mtime_option);
 
 	tree = parse_tree_indirect(&oid);
 	if (!tree)
@@ -586,6 +588,7 @@ static int parse_archive_args(int argc, const char **argv,
 	const char *remote = NULL;
 	const char *exec = NULL;
 	const char *output = NULL;
+	const char *mtime_option = NULL;
 	int compression_level = -1;
 	int verbose = 0;
 	int i;
@@ -607,6 +610,9 @@ static int parse_archive_args(int argc, const char **argv,
 		OPT_BOOL(0, "worktree-attributes", &worktree_attributes,
 			N_("read .gitattributes in working directory")),
 		OPT__VERBOSE(&verbose, N_("report archived files on stderr")),
+		{ OPTION_STRING, 0, "mtime", &mtime_option, N_("time"),
+		  N_("set modification time of archive entries"),
+		  PARSE_OPT_NONEG },
 		OPT_NUMBER_CALLBACK(&compression_level,
 			N_("set compression level"), number_callback),
 		OPT_GROUP(""),
@@ -668,6 +674,7 @@ static int parse_archive_args(int argc, const char **argv,
 	args->base = base;
 	args->baselen = strlen(base);
 	args->worktree_attributes = worktree_attributes;
+	args->mtime_option = mtime_option;
 
 	return argc;
 }
