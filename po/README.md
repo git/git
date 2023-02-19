@@ -458,3 +458,4 @@ additional conventions:
 
 [git-po-helper/README]: https://github.com/git-l10n/git-po-helper#readme
 [Documentation/SubmittingPatches]: Documentation/SubmittingPatches
+
