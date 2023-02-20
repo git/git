@@ -383,11 +383,14 @@ static void output_pair_header(struct diff_options *diffopt,
 	const char *color_new = diff_get_color_opt(diffopt, DIFF_FILE_NEW);
 	const char *color_commit = diff_get_color_opt(diffopt, DIFF_COMMIT);
 	const char *color;
+	char abbrev = diffopt->abbrev;
+
+	if (abbrev < 0)
+		abbrev = DEFAULT_ABBREV;
 
 	if (!dashes->len)
 		strbuf_addchars(dashes, '-',
-				strlen(find_unique_abbrev(oid,
-							  DEFAULT_ABBREV)));
+				strlen(find_unique_abbrev(oid, abbrev)));
 
 	if (!b_util) {
 		color = color_old;
@@ -409,7 +412,7 @@ static void output_pair_header(struct diff_options *diffopt,
 		strbuf_addf(buf, "%*s:  %s ", patch_no_width, "-", dashes->buf);
 	else
 		strbuf_addf(buf, "%*d:  %s ", patch_no_width, a_util->i + 1,
-			    find_unique_abbrev(&a_util->oid, DEFAULT_ABBREV));
+			    find_unique_abbrev(&a_util->oid, abbrev));
 
 	if (status == '!')
 		strbuf_addf(buf, "%s%s", color_reset, color);
@@ -421,7 +424,7 @@ static void output_pair_header(struct diff_options *diffopt,
 		strbuf_addf(buf, " %*s:  %s", patch_no_width, "-", dashes->buf);
 	else
 		strbuf_addf(buf, " %*d:  %s", patch_no_width, b_util->i + 1,
-			    find_unique_abbrev(&b_util->oid, DEFAULT_ABBREV));
+			    find_unique_abbrev(&b_util->oid, abbrev));
 
 	commit = lookup_commit_reference(the_repository, oid);
 	if (commit) {
