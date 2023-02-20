@@ -2487,6 +2487,34 @@ static int is_command(enum todo_command command, const char **bol)
 		 (*bol = p));
 }
 
+static int check_label_or_ref_arg(enum todo_command command, const char *arg)
+{
+	switch (command) {
+	case TODO_LABEL:
+		/*
+		 * '#' is not a valid label as the merge command uses it to
+		 * separate merge parents from the commit subject.
+		 */
+		if (!strcmp(arg, "#") ||
+		    check_refname_format(arg, REFNAME_ALLOW_ONELEVEL))
+			return error(_("'%s' is not a valid label"), arg);
+		break;
+
+	case TODO_UPDATE_REF:
+		if (check_refname_format(arg, REFNAME_ALLOW_ONELEVEL))
+			return error(_("'%s' is not a valid refname"), arg);
+		if (check_refname_format(arg, 0))
+			return error(_("update-ref requires a fully qualified "
+				       "refname e.g. refs/heads/%s"), arg);
+		break;
+
+	default:
+		BUG("unexpected todo_command");
+	}
+
+	return 0;
+}
+
 static int parse_insn_line(struct repository *r, struct todo_item *item,
 			   const char *buf, const char *bol, char *eol)
 {
@@ -2535,10 +2563,19 @@ static int parse_insn_line(struct repository *r, struct todo_item *item,
 
 	if (item->command == TODO_EXEC || item->command == TODO_LABEL ||
 	    item->command == TODO_RESET || item->command == TODO_UPDATE_REF) {
+		int ret = 0;
+
 		item->commit = NULL;
 		item->arg_offset = bol - buf;
 		item->arg_len = (int)(eol - bol);
-		return 0;
+		if (item->command == TODO_LABEL ||
+		    item->command == TODO_UPDATE_REF) {
+			saved = *eol;
+			*eol = '\0';
+			ret = check_label_or_ref_arg(item->command, bol);
+			*eol = saved;
+		}
+		return ret;
 	}
 
 	if (item->command == TODO_FIXUP) {
