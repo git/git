@@ -4460,15 +4460,13 @@ static void run_diff_cmd(const char *pgm,
 	const char *xfrm_msg = NULL;
 	int complete_rewrite = (p->status == DIFF_STATUS_MODIFIED) && p->score;
 	int must_show_header = 0;
+	struct userdiff_driver *drv = NULL;
 
-
-	if (o->flags.allow_external) {
-		struct userdiff_driver *drv;
-
+	if (o->flags.allow_external || !o->ignore_driver_algorithm)
 		drv = userdiff_find_by_path(o->repo->index, attr_path);
-		if (drv && drv->external)
-			pgm = drv->external;
-	}
+
+	if (o->flags.allow_external && drv && drv->external)
+		pgm = drv->external;
 
 	if (msg) {
 		/*
@@ -4485,12 +4483,16 @@ static void run_diff_cmd(const char *pgm,
 		run_external_diff(pgm, name, other, one, two, xfrm_msg, o);
 		return;
 	}
-	if (one && two)
+	if (one && two) {
+		if (!o->ignore_driver_algorithm && drv && drv->algorithm)
+			set_diff_algorithm(o, drv->algorithm);
+
 		builtin_diff(name, other ? other : name,
 			     one, two, xfrm_msg, must_show_header,
 			     o, complete_rewrite);
-	else
+	} else {
 		fprintf(o->file, "* Unmerged path %s\n", name);
+	}
 }
 
 static void diff_fill_oid_info(struct diff_filespec *one, struct index_state *istate)
@@ -4586,6 +4588,14 @@ static void run_diffstat(struct diff_filepair *p, struct diff_options *o,
 {
 	const char *name;
 	const char *other;
+
+	if (!o->ignore_driver_algorithm) {
+		struct userdiff_driver *drv = userdiff_find_by_path(o->repo->index,
+								    p->one->path);
+
+		if (drv && drv->algorithm)
+			set_diff_algorithm(o, drv->algorithm);
+	}
 
 	if (DIFF_PAIR_UNMERGED(p)) {
 		/* unmerged */
@@ -5140,6 +5150,8 @@ static int diff_opt_diff_algorithm(const struct option *opt,
 		return error(_("option diff-algorithm accepts \"myers\", "
 			       "\"minimal\", \"patience\" and \"histogram\""));
 
+	options->ignore_driver_algorithm = 1;
+
 	return 0;
 }
 
@@ -5154,6 +5166,8 @@ static int diff_opt_diff_algorithm_no_arg(const struct option *opt,
 	if (set_diff_algorithm(options, opt->long_name))
 		BUG("available diff algorithms include \"myers\", "
 			       "\"minimal\", \"patience\" and \"histogram\"");
+
+	options->ignore_driver_algorithm = 1;
 
 	return 0;
 }
@@ -5295,6 +5309,7 @@ static int diff_opt_patience(const struct option *opt,
 	for (i = 0; i < options->anchors_nr; i++)
 		free(options->anchors[i]);
 	options->anchors_nr = 0;
+	options->ignore_driver_algorithm = 1;
 
 	return set_diff_algorithm(options, "patience");
 }
