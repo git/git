@@ -25,6 +25,7 @@
 #    LIB_HTTPD_DAV               enable DAV
 #    LIB_HTTPD_SVN               enable SVN at given location (e.g. "svn")
 #    LIB_HTTPD_SSL               enable SSL
+#    LIB_HTTPD_PROXY             enable proxy
 #
 # Copyright (c) 2008 Clemens Buchacher <drizzd@aon.at>
 #
@@ -133,6 +134,7 @@ install_script () {
 prepare_httpd() {
 	mkdir -p "$HTTPD_DOCUMENT_ROOT_PATH"
 	cp "$TEST_PATH"/passwd "$HTTPD_ROOT_PATH"
+	cp "$TEST_PATH"/proxy-passwd "$HTTPD_ROOT_PATH"
 	install_script incomplete-length-upload-pack-v2-http.sh
 	install_script incomplete-body-upload-pack-v2-http.sh
 	install_script error-no-report.sh
@@ -175,6 +177,11 @@ prepare_httpd() {
 			svnrepo="$svnrepo$LIB_HTTPD_SVN"
 			export LIB_HTTPD_SVN LIB_HTTPD_SVNPATH
 		fi
+	fi
+
+	if test -n "$LIB_HTTPD_PROXY"
+	then
+		HTTPD_PARA="$HTTPD_PARA -DPROXY"
 	fi
 }
 
