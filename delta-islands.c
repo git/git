@@ -517,11 +517,13 @@ void free_island_marks(void)
 {
 	struct island_bitmap *bitmap;
 
-	kh_foreach_value(island_marks, bitmap, {
-		if (!--bitmap->refcount)
-			free(bitmap);
-	});
-	kh_destroy_oid_map(island_marks);
+	if (island_marks) {
+		kh_foreach_value(island_marks, bitmap, {
+			if (!--bitmap->refcount)
+				free(bitmap);
+		});
+		kh_destroy_oid_map(island_marks);
+	}
 
 	/* detect use-after-free with a an address which is never valid: */
 	island_marks = (void *)-1;

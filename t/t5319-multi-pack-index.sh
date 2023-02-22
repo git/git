@@ -1015,4 +1015,20 @@ test_expect_success 'complains when run outside of a repository' '
 	grep "not a git repository" err
 '
 
+test_expect_success 'repack with delta islands' '
+	git init repo &&
+	test_when_finished "rm -fr repo" &&
+	(
+		cd repo &&
+
+		test_commit first &&
+		git repack &&
+		test_commit second &&
+		git repack &&
+
+		git multi-pack-index write &&
+		git -c repack.useDeltaIslands=true multi-pack-index repack
+	)
+'
+
 test_done
