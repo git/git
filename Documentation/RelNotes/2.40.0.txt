@@ -223,6 +223,18 @@ Fixes since v2.39
    back to interpreted execution in such a case.
    (merge 50b6ad55b0 cb/grep-fallback-failing-jit later to maint).
 
+ * "git name-rev" heuristics update.
+   (merge b2182a8730 en/name-rev-make-taggerdate-much-less-important later to maint).
+
+ * Remove more remaining uses of macros that relies on the_index
+   singleton instance without explicitly spelling it out.
+
+ * Remove unnecessary explicit sizing of strbuf.
+   (merge 93ea118bed rs/cache-tree-strbuf-growth-fix later to maint).
+
+ * Doc update.
+   (merge d9ec3b0dc0 jk/doc-ls-remote-matching later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 4eb1ccecd4 dh/mingw-ownership-check-typofix later to maint).
    (merge f95526419b ar/typofix-gitattributes-doc later to maint).
