@@ -197,4 +197,9 @@ test_expect_success 'parallel' '
 	test_i18ngrep "could not fetch .two.*128" err
 '
 
+test_expect_success 'git fetch --multiple --jobs=0 picks a default' '
+	(cd test &&
+	 git fetch --multiple --jobs=0)
+'
+
 test_done
