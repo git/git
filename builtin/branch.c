@@ -486,6 +486,9 @@ static void print_current_branch_name(void)
 		die(_("HEAD (%s) points outside of refs/heads/"), refname);
 }
 
+#define IS_BISECTED 1
+#define IS_REBASED 2
+#define IS_HEAD 4
 
 static void copy_or_rename_branch(const char *oldname, const char *newname, int copy, int force)
 {
@@ -493,8 +496,9 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 	struct strbuf oldsection = STRBUF_INIT, newsection = STRBUF_INIT;
 	const char *interpreted_oldname = NULL;
 	const char *interpreted_newname = NULL;
-	int recovery = 0;
+	int recovery = 0, oldref_usage = 0;
 	struct worktree **worktrees = get_worktrees();
+	struct worktree *oldref_wt = NULL;
 
 	if (strbuf_check_branch_ref(&oldref, oldname)) {
 		/*
@@ -507,8 +511,28 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 			die(_("Invalid branch name: '%s'"), oldname);
 	}
 
-	if ((copy || strcmp(head, oldname)) && !ref_exists(oldref.buf)) {
-		if (copy && !strcmp(head, oldname))
+	for (int i = 0; worktrees[i]; i++) {
+		struct worktree *wt = worktrees[i];
+
+		if (wt->head_ref && !strcmp(oldref.buf, wt->head_ref))
+			oldref_usage |= IS_HEAD;
+
+		if (!wt->is_detached)
+			continue;
+
+		if (is_worktree_being_rebased(wt, oldref.buf)) {
+			oldref_usage |= IS_REBASED;
+			oldref_wt = wt;
+		}
+
+		if (is_worktree_being_bisected(wt, oldref.buf)) {
+			oldref_usage |= IS_BISECTED;
+			oldref_wt = wt;
+		}
+	}
+
+	if ((copy || !(oldref_usage & IS_HEAD)) && !ref_exists(oldref.buf)) {
+		if (oldref_usage & IS_HEAD)
 			die(_("No commit on branch '%s' yet."), oldname);
 		else
 			die(_("No branch named '%s'."), oldname);
@@ -523,20 +547,13 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 	else
 		validate_new_branchname(newname, &newref, force);
 
-	for (int i = 0; worktrees[i]; i++) {
-		struct worktree *wt = worktrees[i];
+	if (oldref_usage & IS_BISECTED)
+		die(_("Branch %s is being rebased at %s"),
+		    oldref.buf, oldref_wt->path);
 
-		if (!wt->is_detached)
-			continue;
-
-		if (is_worktree_being_rebased(wt, oldref.buf))
-			die(_("Branch %s is being rebased at %s"),
-			    oldref.buf, wt->path);
-
-		if (is_worktree_being_bisected(wt, oldref.buf))
-			die(_("Branch %s is being bisected at %s"),
-			    oldref.buf, wt->path);
-	}
+	if (oldref_usage & IS_REBASED)
+		die(_("Branch %s is being bisected at %s"),
+		    oldref.buf, oldref_wt->path);
 
 	if (!skip_prefix(oldref.buf, "refs/heads/", &interpreted_oldname) ||
 	    !skip_prefix(newref.buf, "refs/heads/", &interpreted_newname)) {
@@ -818,7 +835,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 
 		strbuf_addf(&branch_ref, "refs/heads/%s", branch_name);
 		if (!ref_exists(branch_ref.buf))
-			error((!argc || !strcmp(head, branch_name))
+			error((!argc || branch_checked_out(branch_ref.buf))
 			      ? _("No commit on branch '%s' yet.")
 			      : _("No branch named '%s'."),
 			      branch_name);
@@ -863,7 +880,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		}
 
 		if (!ref_exists(branch->refname)) {
-			if (!argc || !strcmp(head, branch->name))
+			if (!argc || branch_checked_out(branch->refname))
 				die(_("No commit on branch '%s' yet."), branch->name);
 			die(_("branch '%s' does not exist"), branch->name);
 		}
