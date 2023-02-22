@@ -14,6 +14,7 @@ struct userdiff_funcname {
 struct userdiff_driver {
 	const char *name;
 	const char *external;
+	const char *algorithm;
 	int binary;
 	struct userdiff_funcname funcname;
 	const char *word_regex;

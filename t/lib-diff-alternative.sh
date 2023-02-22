@@ -105,10 +105,46 @@ index $file1..$file2 100644
  }
 EOF
 
+	cat >expect_diffstat <<EOF
+ file1 => file2 | 21 ++++++++++-----------
+ 1 file changed, 10 insertions(+), 11 deletions(-)
+EOF
+
 	STRATEGY=$1
 
+	test_expect_success "$STRATEGY diff from attributes" '
+		echo "file* diff=driver" >.gitattributes &&
+		git config diff.driver.algorithm "$STRATEGY" &&
+		test_must_fail git diff --no-index file1 file2 > output &&
+		cat expect &&
+		cat output &&
+		test_cmp expect output
+	'
+
+	test_expect_success "$STRATEGY diff from attributes has valid diffstat" '
+		echo "file* diff=driver" >.gitattributes &&
+		git config diff.driver.algorithm "$STRATEGY" &&
+		test_must_fail git diff --stat --no-index file1 file2 > output &&
+		test_cmp expect_diffstat output
+	'
+
 	test_expect_success "$STRATEGY diff" '
-		test_must_fail git diff --no-index "--$STRATEGY" file1 file2 > output &&
+		test_must_fail git diff --no-index "--diff-algorithm=$STRATEGY" file1 file2 > output &&
+		test_cmp expect output
+	'
+
+	test_expect_success "$STRATEGY diff command line precedence before attributes" '
+		echo "file* diff=driver" >.gitattributes &&
+		git config diff.driver.algorithm myers &&
+		test_must_fail git diff --no-index "--diff-algorithm=$STRATEGY" file1 file2 > output &&
+		test_cmp expect output
+	'
+
+	test_expect_success "$STRATEGY diff attributes precedence before config" '
+		git config diff.algorithm default &&
+		echo "file* diff=driver" >.gitattributes &&
+		git config diff.driver.algorithm "$STRATEGY" &&
+		test_must_fail git diff --no-index file1 file2 > output &&
 		test_cmp expect output
 	'
 

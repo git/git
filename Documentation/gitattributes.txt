@@ -758,6 +758,37 @@ with the above configuration, i.e. `j-c-diff`, with 7
 parameters, just like `GIT_EXTERNAL_DIFF` program is called.
 See linkgit:git[1] for details.
 
+Setting the internal diff algorithm
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The diff algorithm can be set through the `diff.algorithm` config key, but
+sometimes it may be helpful to set the diff algorithm per path. For example,
+one may want to use the `minimal` diff algorithm for .json files, and the
+`histogram` for .c files, and so on without having to pass in the algorithm
+through the command line each time.
+
+First, in `.gitattributes`, assign the `diff` attribute for paths.
+
+------------------------
+*.json diff=<name>
+------------------------
+
+Then, define a "diff.<name>.algorithm" configuration to specify the diff
+algorithm, choosing from `myers`, `patience`, `minimal`, or `histogram`.
+
+----------------------------------------------------------------
+[diff "<name>"]
+  algorithm = histogram
+----------------------------------------------------------------
+
+This diff algorithm applies to user facing diff output like git-diff(1),
+git-show(1) and is used for the `--stat` output as well. The merge machinery
+will not use the diff algorithm set through this method.
+
+NOTE: If `diff.<name>.command` is defined for path with the
+`diff=<name>` attribute, it is executed as an external diff driver
+(see above), and adding `diff.<name>.algorithm` has no effect, as the
+algorithm is not passed to the external diff driver.
 
 Defining a custom hunk-header
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

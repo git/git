@@ -333,6 +333,7 @@ struct diff_options {
 	int prefix_length;
 	const char *stat_sep;
 	int xdl_opts;
+	int ignore_driver_algorithm;
 
 	/* see Documentation/diff-options.txt */
 	char **anchors;
