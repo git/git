@@ -108,19 +108,11 @@ static int is_better_name(struct rev_name *name,
 	int name_distance = effective_distance(name->distance, name->generation);
 	int new_distance = effective_distance(distance, generation);
 
-	/*
-	 * When comparing names based on tags, prefer names
-	 * based on the older tag, even if it is farther away.
-	 */
+	/* If both are tags, we prefer the nearer one. */
 	if (from_tag && name->from_tag)
-		return (name->taggerdate > taggerdate ||
-			(name->taggerdate == taggerdate &&
-			 name_distance > new_distance));
+		return name_distance > new_distance;
 
-	/*
-	 * We know that at least one of them is a non-tag at this point.
-	 * favor a tag over a non-tag.
-	 */
+	/* Favor a tag over a non-tag. */
 	if (name->from_tag != from_tag)
 		return from_tag;
 
