@@ -63,16 +63,9 @@ static struct refspec rs = REFSPEC_INIT_PUSH;
 static struct string_list push_options_config = STRING_LIST_INIT_DUP;
 
 static void refspec_append_mapped(struct refspec *refspec, const char *ref,
-				  struct remote *remote, struct ref *local_refs)
+				  struct remote *remote, struct ref *matched)
 {
 	const char *branch_name;
-	struct ref *matched = NULL;
-
-	/* Does "ref" uniquely name our ref? */
-	if (count_refspec_match(ref, local_refs, &matched) != 1) {
-		refspec_append(refspec, ref);
-		return;
-	}
 
 	if (remote->push.nr) {
 		struct refspec_item query;
@@ -120,15 +113,28 @@ static void set_refspecs(const char **refs, int nr, const char *repo)
 				die(_("--delete only accepts plain target ref names"));
 			refspec_appendf(&rs, ":%s", ref);
 		} else if (!strchr(ref, ':')) {
-			if (!remote) {
-				/* lazily grab remote and local_refs */
-				remote = remote_get(repo);
+			struct ref *matched = NULL;
+
+			/* lazily grab local_refs */
+			if (!local_refs)
 				local_refs = get_local_heads();
+
+			/* Does "ref" uniquely name our ref? */
+			if (count_refspec_match(ref, local_refs, &matched) != 1) {
+				refspec_append(&rs, ref);
+			} else {
+				/* lazily grab remote */
+				if (!remote)
+					remote = remote_get(repo);
+				if (!remote)
+					BUG("must get a remote for repo '%s'", repo);
+
+				refspec_append_mapped(&rs, ref, remote, matched);
 			}
-			refspec_append_mapped(&rs, ref, remote, local_refs);
 		} else
 			refspec_append(&rs, ref);
 	}
+	free_refs(local_refs);
 }
 
 static int push_url_of_remote(struct remote *remote, const char ***url_p)
