@@ -33,12 +33,13 @@ test_expect_success 'create http-accessible bare repository' '
 setup_askpass_helper
 
 test_expect_success 'clone http repository' '
-	cat >exp <<-EOF &&
+	cat >exp.raw <<-EOF &&
 	> GET /smart/repo.git/info/refs?service=git-upload-pack HTTP/1.1
 	> accept: */*
 	> accept-encoding: ENCODINGS
 	> accept-language: ko-KR, *;q=0.9
 	> pragma: no-cache
+	{V2} > git-protocol: version=2
 	< $HTTP_PROTO 200 OK
 	< pragma: no-cache
 	< cache-control: no-cache, max-age=0, must-revalidate
@@ -48,12 +49,31 @@ test_expect_success 'clone http repository' '
 	> content-type: application/x-git-upload-pack-request
 	> accept: application/x-git-upload-pack-result
 	> accept-language: ko-KR, *;q=0.9
+	{V2} > git-protocol: version=2
 	> content-length: xxx
 	< HTTP/1.1 200 OK
 	< pragma: no-cache
 	< cache-control: no-cache, max-age=0, must-revalidate
 	< content-type: application/x-git-upload-pack-result
+	{V2} > POST /smart/repo.git/git-upload-pack HTTP/1.1
+	{V2} > accept-encoding: ENCODINGS
+	{V2} > content-type: application/x-git-upload-pack-request
+	{V2} > accept: application/x-git-upload-pack-result
+	{V2} > accept-language: ko-KR, *;q=0.9
+	{V2} > git-protocol: version=2
+	{V2} > content-length: xxx
+	{V2} < HTTP/1.1 200 OK
+	{V2} < pragma: no-cache
+	{V2} < cache-control: no-cache, max-age=0, must-revalidate
+	{V2} < content-type: application/x-git-upload-pack-result
 	EOF
+
+	if test "$GIT_TEST_PROTOCOL_VERSION" = 0
+	then
+		sed "/^{V2}/d" <exp.raw >exp
+	else
+		sed "s/^{V2} //" <exp.raw >exp
+	fi &&
 
 	GIT_TRACE_CURL=true LANGUAGE="ko_KR.UTF-8" \
 		git clone --quiet $HTTPD_URL/smart/repo.git clone 2>err &&
@@ -107,17 +127,11 @@ test_expect_success 'clone http repository' '
 		/^< transfer-encoding: /d
 	" >actual &&
 
-	# NEEDSWORK: If the overspecification of the expected result is reduced, we
-	# might be able to run this test in all protocol versions.
-	if test "$GIT_TEST_PROTOCOL_VERSION" = 0
-	then
-		sed -e "s/^> accept-encoding: .*/> accept-encoding: ENCODINGS/" \
-				actual >actual.smudged &&
-		test_cmp exp actual.smudged &&
+	sed -e "s/^> accept-encoding: .*/> accept-encoding: ENCODINGS/" \
+			actual >actual.smudged &&
+	test_cmp exp actual.smudged &&
 
-		grep "accept-encoding:.*gzip" actual >actual.gzip &&
-		test_line_count = 2 actual.gzip
-	fi
+	grep "accept-encoding:.*gzip" actual >actual.gzip
 '
 
 test_expect_success 'fetch changes via http' '
