@@ -294,7 +294,6 @@ test_expect_success 'cookies stored in http.cookiefile when http.savecookies set
 	127.0.0.1	FALSE	/smart_cookies/	FALSE	0	othername	othervalue
 	EOF
 	sort >expect_cookies.txt <<-\EOF &&
-
 	127.0.0.1	FALSE	/smart_cookies/	FALSE	0	othername	othervalue
 	127.0.0.1	FALSE	/smart_cookies/repo.git/info/	FALSE	0	name	value
 	EOF
@@ -306,8 +305,8 @@ test_expect_success 'cookies stored in http.cookiefile when http.savecookies set
 	# might be able to run this test in all protocol versions.
 	if test "$GIT_TEST_PROTOCOL_VERSION" = 0
 	then
-		tail -3 cookies.txt | sort >cookies_tail.txt &&
-		test_cmp expect_cookies.txt cookies_tail.txt
+		grep "^[^#]" cookies.txt | sort >cookies_stripped.txt &&
+		test_cmp expect_cookies.txt cookies_stripped.txt
 	fi
 '
 
