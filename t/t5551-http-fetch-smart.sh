@@ -295,19 +295,22 @@ test_expect_success 'cookies stored in http.cookiefile when http.savecookies set
 	EOF
 	sort >expect_cookies.txt <<-\EOF &&
 	127.0.0.1	FALSE	/smart_cookies/	FALSE	0	othername	othervalue
+	127.0.0.1	FALSE	/smart_cookies/repo.git/	FALSE	0	name	value
 	127.0.0.1	FALSE	/smart_cookies/repo.git/info/	FALSE	0	name	value
 	EOF
 	git config http.cookiefile cookies.txt &&
 	git config http.savecookies true &&
-	git ls-remote $HTTPD_URL/smart_cookies/repo.git main &&
 
-	# NEEDSWORK: If the overspecification of the expected result is reduced, we
-	# might be able to run this test in all protocol versions.
-	if test "$GIT_TEST_PROTOCOL_VERSION" = 0
-	then
-		grep "^[^#]" cookies.txt | sort >cookies_stripped.txt &&
-		test_cmp expect_cookies.txt cookies_stripped.txt
-	fi
+	test_when_finished "
+		git --git-dir=\"\$HTTPD_DOCUMENT_ROOT_PATH/repo.git\" \
+			tag -d cookie-tag
+	" &&
+	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/repo.git" \
+		tag -m "foo" cookie-tag &&
+	git fetch $HTTPD_URL/smart_cookies/repo.git cookie-tag &&
+
+	grep "^[^#]" cookies.txt | sort >cookies_stripped.txt &&
+	test_cmp expect_cookies.txt cookies_stripped.txt
 '
 
 test_expect_success 'transfer.hiderefs works over smart-http' '
