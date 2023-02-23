@@ -2469,12 +2469,11 @@ static int is_command(enum todo_command command, const char **bol)
 {
 	const char *str = todo_command_info[command].str;
 	const char nick = todo_command_info[command].c;
-	const char *p = *bol + 1;
+	const char *p = *bol;
 
-	return skip_prefix(*bol, str, bol) ||
-		((nick && **bol == nick) &&
-		 (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r' || !*p) &&
-		 (*bol = p));
+	return (skip_prefix(p, str, &p) || (nick && *p++ == nick)) &&
+		(*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r' || !*p) &&
+		(*bol = p);
 }
 
 static int parse_insn_line(struct repository *r, struct todo_item *item,
@@ -2503,7 +2502,8 @@ static int parse_insn_line(struct repository *r, struct todo_item *item,
 			break;
 		}
 	if (i >= TODO_COMMENT)
-		return -1;
+		return error(_("invalid command '%.*s'"),
+			     (int)strcspn(bol, " \t\r\n"), bol);
 
 	/* Eat up extra spaces/ tabs before object name */
 	padding = strspn(bol, " \t");

@@ -60,7 +60,7 @@ set_fake_editor () {
 		">")
 			echo >> "$1";;
 		bad)
-			action="badcmd";;
+			action="pickled";;
 		fakesha)
 			test \& != "$action" || action=pick
 			echo "$action XXXXXXX False commit" >> "$1"
