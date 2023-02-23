@@ -2532,12 +2532,10 @@ static int parse_insn_line(struct repository *r, struct todo_item *item,
 	}
 
 	if (item->command == TODO_FIXUP) {
-		if (skip_prefix(bol, "-C", &bol) &&
-		   (*bol == ' ' || *bol == '\t')) {
+		if (skip_prefix(bol, "-C", &bol)) {
 			bol += strspn(bol, " \t");
 			item->flags |= TODO_REPLACE_FIXUP_MSG;
-		} else if (skip_prefix(bol, "-c", &bol) &&
-				  (*bol == ' ' || *bol == '\t')) {
+		} else if (skip_prefix(bol, "-c", &bol)) {
 			bol += strspn(bol, " \t");
 			item->flags |= TODO_EDIT_FIXUP_MSG;
 		}
