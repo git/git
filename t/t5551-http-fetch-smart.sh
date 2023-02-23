@@ -35,30 +35,35 @@ setup_askpass_helper
 test_expect_success 'clone http repository' '
 	cat >exp <<-\EOF &&
 	> GET /smart/repo.git/info/refs?service=git-upload-pack HTTP/1.1
-	> Accept: */*
-	> Accept-Encoding: ENCODINGS
-	> Accept-Language: ko-KR, *;q=0.9
-	> Pragma: no-cache
+	> accept: */*
+	> accept-encoding: ENCODINGS
+	> accept-language: ko-KR, *;q=0.9
+	> pragma: no-cache
 	< HTTP/1.1 200 OK
-	< Pragma: no-cache
-	< Cache-Control: no-cache, max-age=0, must-revalidate
-	< Content-Type: application/x-git-upload-pack-advertisement
+	< pragma: no-cache
+	< cache-control: no-cache, max-age=0, must-revalidate
+	< content-type: application/x-git-upload-pack-advertisement
 	> POST /smart/repo.git/git-upload-pack HTTP/1.1
-	> Accept-Encoding: ENCODINGS
-	> Content-Type: application/x-git-upload-pack-request
-	> Accept: application/x-git-upload-pack-result
-	> Accept-Language: ko-KR, *;q=0.9
-	> Content-Length: xxx
+	> accept-encoding: ENCODINGS
+	> content-type: application/x-git-upload-pack-request
+	> accept: application/x-git-upload-pack-result
+	> accept-language: ko-KR, *;q=0.9
+	> content-length: xxx
 	< HTTP/1.1 200 OK
-	< Pragma: no-cache
-	< Cache-Control: no-cache, max-age=0, must-revalidate
-	< Content-Type: application/x-git-upload-pack-result
+	< pragma: no-cache
+	< cache-control: no-cache, max-age=0, must-revalidate
+	< content-type: application/x-git-upload-pack-result
 	EOF
 
 	GIT_TRACE_CURL=true GIT_TEST_PROTOCOL_VERSION=0 LANGUAGE="ko_KR.UTF-8" \
 		git clone --quiet $HTTPD_URL/smart/repo.git clone 2>err &&
 	test_cmp file clone/file &&
 	tr '\''\015'\'' Q <err |
+	perl -pe '\''
+		s/(Send|Recv) header: ([A-Za-z0-9-]+):/
+		"$1 header: " . lc($2) . ":"
+		/e;
+	'\'' |
 	sed -e "
 		s/Q\$//
 		/^[*] /d
@@ -78,31 +83,31 @@ test_expect_success 'clone http repository' '
 			s/^/> /
 		}
 
-		/^> User-Agent: /d
-		/^> Host: /d
+		/^> user-agent: /d
+		/^> host: /d
 		/^> POST /,$ {
 			/^> Accept: [*]\\/[*]/d
 		}
-		s/^> Content-Length: .*/> Content-Length: xxx/
+		s/^> content-length: .*/> content-length: xxx/
 		/^> 00..want /d
 		/^> 00.*done/d
 
-		/^< Server: /d
-		/^< Expires: /d
-		/^< Date: /d
-		/^< Content-Length: /d
-		/^< Transfer-Encoding: /d
+		/^< server: /d
+		/^< expires: /d
+		/^< date: /d
+		/^< content-length: /d
+		/^< transfer-encoding: /d
 	" >actual &&
 
 	# NEEDSWORK: If the overspecification of the expected result is reduced, we
 	# might be able to run this test in all protocol versions.
 	if test "$GIT_TEST_PROTOCOL_VERSION" = 0
 	then
-		sed -e "s/^> Accept-Encoding: .*/> Accept-Encoding: ENCODINGS/" \
+		sed -e "s/^> accept-encoding: .*/> accept-encoding: ENCODINGS/" \
 				actual >actual.smudged &&
 		test_cmp exp actual.smudged &&
 
-		grep "Accept-Encoding:.*gzip" actual >actual.gzip &&
+		grep "accept-encoding:.*gzip" actual >actual.gzip &&
 		test_line_count = 2 actual.gzip
 	fi
 '
