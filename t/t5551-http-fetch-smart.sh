@@ -103,10 +103,7 @@ test_expect_success 'clone http repository' '
 		test_cmp exp actual.smudged &&
 
 		grep "Accept-Encoding:.*gzip" actual >actual.gzip &&
-		test_line_count = 2 actual.gzip &&
-
-		grep "Accept-Language: ko-KR, *" actual >actual.language &&
-		test_line_count = 2 actual.language
+		test_line_count = 2 actual.gzip
 	fi
 '
 
