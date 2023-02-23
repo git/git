@@ -666,4 +666,13 @@ test_expect_success 'push warns or fails when using username:password' '
 	test_line_count -ge 1 warnings
 '
 
+test_expect_success 'no empty path components' '
+	# In the URL, add a trailing slash, and see if git appends yet another
+	# slash.
+	git clone $HTTPD_URL/smart/repo.git/ clone-with-slash &&
+
+	strip_access_log >log &&
+	! grep "//" log
+'
+
 test_done
