@@ -86,7 +86,7 @@ test_expect_success 'clone http repository' '
 	'\'' |
 	sed -e "
 		s/Q\$//
-		/^[*] /d
+		/^[^<=]/d
 		/^== Info:/d
 		/^=> Send header, /d
 		/^=> Send header:$/d
