@@ -143,19 +143,9 @@ test_expect_success 'fetch changes via http' '
 '
 
 test_expect_success 'used upload-pack service' '
-	cat >exp <<-\EOF &&
-	GET  /smart/repo.git/info/refs?service=git-upload-pack HTTP/1.1 200
-	POST /smart/repo.git/git-upload-pack HTTP/1.1 200
-	GET  /smart/repo.git/info/refs?service=git-upload-pack HTTP/1.1 200
-	POST /smart/repo.git/git-upload-pack HTTP/1.1 200
-	EOF
-
-	# NEEDSWORK: If the overspecification of the expected result is reduced, we
-	# might be able to run this test in all protocol versions.
-	if test "$GIT_TEST_PROTOCOL_VERSION" = 0
-	then
-		check_access_log exp
-	fi
+	strip_access_log >log &&
+	grep "GET  /smart/repo.git/info/refs?service=git-upload-pack HTTP/[0-9.]* 200" log &&
+	grep "POST /smart/repo.git/git-upload-pack HTTP/[0-9.]* 200" log
 '
 
 test_expect_success 'follow redirects (301)' '
