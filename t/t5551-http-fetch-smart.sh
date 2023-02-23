@@ -1,6 +1,6 @@
 #!/bin/sh
 
-: ${HTTP_PROTO:=HTTP}
+: ${HTTP_PROTO:=HTTP/1.1}
 test_description="test smart fetching over http via http-backend ($HTTP_PROTO)"
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
@@ -33,13 +33,13 @@ test_expect_success 'create http-accessible bare repository' '
 setup_askpass_helper
 
 test_expect_success 'clone http repository' '
-	cat >exp <<-\EOF &&
+	cat >exp <<-EOF &&
 	> GET /smart/repo.git/info/refs?service=git-upload-pack HTTP/1.1
 	> accept: */*
 	> accept-encoding: ENCODINGS
 	> accept-language: ko-KR, *;q=0.9
 	> pragma: no-cache
-	< HTTP/1.1 200 OK
+	< $HTTP_PROTO 200 OK
 	< pragma: no-cache
 	< cache-control: no-cache, max-age=0, must-revalidate
 	< content-type: application/x-git-upload-pack-advertisement
@@ -82,6 +82,14 @@ test_expect_success 'clone http repository' '
 		/^[^><]/{
 			s/^/> /
 		}
+
+		/^< HTTP/ {
+			s/200$/200 OK/
+		}
+		/^< HTTP\\/1.1 101/d
+		/^[><] connection: /d
+		/^[><] upgrade: /d
+		/^> http2-settings: /d
 
 		/^> user-agent: /d
 		/^> host: /d
