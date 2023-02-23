@@ -86,12 +86,7 @@ test_expect_success 'used receive-pack service' '
 	POST /smart/test_repo.git/git-receive-pack HTTP/1.1 200
 	EOF
 
-	# NEEDSWORK: If the overspecification of the expected result is reduced, we
-	# might be able to run this test in all protocol versions.
-	if test "$GIT_TEST_PROTOCOL_VERSION" = 0
-	then
-		check_access_log exp
-	fi
+	check_access_log exp
 '
 
 test_expect_success 'push to remote repository (standard) with sending Accept-Language' '
