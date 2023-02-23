@@ -33,8 +33,19 @@ test_expect_success 'create http-accessible bare repository' '
 setup_askpass_helper
 
 test_expect_success 'clone http repository' '
+	if test_have_prereq HTTP2 && test "$HTTPD_PROTO" = "https"
+	then
+		# ALPN lets us immediately use HTTP/2; likewise, POSTs with
+		# bodies can use it because they do not need to upgrade
+		INITIAL_PROTO=HTTP/2
+	else
+		# either we are not using HTTP/2, or the initial
+		# request is sent via HTTP/1.1 and asks for upgrade
+		INITIAL_PROTO=HTTP/1.1
+	fi &&
+
 	cat >exp.raw <<-EOF &&
-	> GET /smart/repo.git/info/refs?service=git-upload-pack HTTP/1.1
+	> GET /smart/repo.git/info/refs?service=git-upload-pack $INITIAL_PROTO
 	> accept: */*
 	> accept-encoding: ENCODINGS
 	> accept-language: ko-KR, *;q=0.9
@@ -44,25 +55,25 @@ test_expect_success 'clone http repository' '
 	< pragma: no-cache
 	< cache-control: no-cache, max-age=0, must-revalidate
 	< content-type: application/x-git-upload-pack-advertisement
-	> POST /smart/repo.git/git-upload-pack HTTP/1.1
+	> POST /smart/repo.git/git-upload-pack $INITIAL_PROTO
 	> accept-encoding: ENCODINGS
 	> content-type: application/x-git-upload-pack-request
 	> accept: application/x-git-upload-pack-result
 	> accept-language: ko-KR, *;q=0.9
 	{V2} > git-protocol: version=2
 	> content-length: xxx
-	< HTTP/1.1 200 OK
+	< $INITIAL_PROTO 200 OK
 	< pragma: no-cache
 	< cache-control: no-cache, max-age=0, must-revalidate
 	< content-type: application/x-git-upload-pack-result
-	{V2} > POST /smart/repo.git/git-upload-pack HTTP/1.1
+	{V2} > POST /smart/repo.git/git-upload-pack $INITIAL_PROTO
 	{V2} > accept-encoding: ENCODINGS
 	{V2} > content-type: application/x-git-upload-pack-request
 	{V2} > accept: application/x-git-upload-pack-result
 	{V2} > accept-language: ko-KR, *;q=0.9
 	{V2} > git-protocol: version=2
 	{V2} > content-length: xxx
-	{V2} < HTTP/1.1 200 OK
+	{V2} < $INITIAL_PROTO 200 OK
 	{V2} < pragma: no-cache
 	{V2} < cache-control: no-cache, max-age=0, must-revalidate
 	{V2} < content-type: application/x-git-upload-pack-result
@@ -96,6 +107,8 @@ test_expect_success 'clone http repository' '
 		s/= Recv header://
 		/^<= Recv data/d
 		/^=> Send data/d
+		/^<= Recv SSL data/d
+		/^=> Send SSL data/d
 		/^$/d
 		/^< $/d
 
