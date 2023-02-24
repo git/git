@@ -1,7 +1,6 @@
 #ifndef SUBMODULE_CONFIG_CACHE_H
 #define SUBMODULE_CONFIG_CACHE_H
 
-#include "cache.h"
 #include "config.h"
 #include "hashmap.h"
 #include "submodule.h"

@@ -4,9 +4,11 @@
 #ifndef DIFFCORE_H
 #define DIFFCORE_H
 
-#include "cache.h"
+#include "hash.h"
 
 struct diff_options;
+struct mem_pool;
+struct oid_array;
 struct repository;
 struct strintmap;
 struct strmap;

@@ -1,7 +1,9 @@
 #ifndef TREE_WALK_H
 #define TREE_WALK_H
 
-#include "cache.h"
+#include "hash.h"
+
+struct index_state;
 
 #define MAX_TRAVERSE_TREES 8
 
