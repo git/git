@@ -126,10 +126,12 @@ struct credential {
 	char *protocol;
 	char *host;
 	char *path;
+	timestamp_t password_expiry_utc;
 };
 
 #define CREDENTIAL_INIT { \
 	.helpers = STRING_LIST_INIT_DUP, \
+	.password_expiry_utc = TIME_MAX, \
 }
 
 /* Initialize a credential structure, setting all fields to empty. */
