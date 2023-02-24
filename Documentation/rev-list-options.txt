@@ -1100,12 +1100,12 @@ preferred format.  See the `strftime` manual for a complete list of
 format placeholders. When using `-local`, the correct syntax is
 `--date=format-local:...`.
 
-`--date=default` is the default format, and is similar to
-`--date=rfc2822`, with a few exceptions:
+`--date=default` is the default format, and is based on ctime(3)
+output.  It shows a single line with three-letter day of the week,
+three-letter month, day-of-month, hour-minute-seconds in "HH:MM:SS"
+format, followed by 4-digit year, plus timezone information, unless
+the local time zone is used, e.g. `Thu Jan 1 00:00:00 1970 +0000`.
 --
-	- there is no comma after the day-of-week
-
-	- the time zone is omitted when the local time zone is used
 
 ifdef::git-rev-list[]
 --header::
