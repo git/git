@@ -6,7 +6,6 @@
 
 #include "tree-walk.h"
 #include "pathspec.h"
-#include "object.h"
 #include "oidset.h"
 #include "strbuf.h"
 
