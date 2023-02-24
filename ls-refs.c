@@ -8,38 +8,32 @@
 #include "config.h"
 #include "string-list.h"
 
-static int config_read;
-static int advertise_unborn;
-static int allow_unborn;
-
-static void ensure_config_read(void)
+static enum {
+	UNBORN_IGNORE = 0,
+	UNBORN_ALLOW,
+	UNBORN_ADVERTISE /* implies ALLOW */
+} unborn_config(void)
 {
 	const char *str = NULL;
-
-	if (config_read)
-		return;
 
 	if (repo_config_get_string_tmp(the_repository, "lsrefs.unborn", &str)) {
 		/*
 		 * If there is no such config, advertise and allow it by
 		 * default.
 		 */
-		advertise_unborn = 1;
-		allow_unborn = 1;
+		return UNBORN_ADVERTISE;
 	} else {
 		if (!strcmp(str, "advertise")) {
-			advertise_unborn = 1;
-			allow_unborn = 1;
+			return UNBORN_ADVERTISE;
 		} else if (!strcmp(str, "allow")) {
-			allow_unborn = 1;
+			return UNBORN_ALLOW;
 		} else if (!strcmp(str, "ignore")) {
-			/* do nothing */
+			return UNBORN_IGNORE;
 		} else {
 			die(_("invalid value for '%s': '%s'"),
 			    "lsrefs.unborn", str);
 		}
 	}
-	config_read = 1;
 }
 
 /*
@@ -159,7 +153,6 @@ int ls_refs(struct repository *r, struct packet_reader *request)
 	strbuf_init(&data.buf, 0);
 	string_list_init_dup(&data.hidden_refs);
 
-	ensure_config_read();
 	git_config(ls_refs_config, &data);
 
 	while (packet_reader_read(request) == PACKET_READ_NORMAL) {
@@ -175,7 +168,7 @@ int ls_refs(struct repository *r, struct packet_reader *request)
 				strvec_push(&data.prefixes, out);
 		}
 		else if (!strcmp("unborn", arg))
-			data.unborn = allow_unborn;
+			data.unborn = !!unborn_config();
 		else
 			die(_("unexpected line: '%s'"), arg);
 	}
@@ -206,11 +199,8 @@ int ls_refs(struct repository *r, struct packet_reader *request)
 
 int ls_refs_advertise(struct repository *r, struct strbuf *value)
 {
-	if (value) {
-		ensure_config_read();
-		if (advertise_unborn)
-			strbuf_addstr(value, "unborn");
-	}
+	if (value && unborn_config() == UNBORN_ADVERTISE)
+		strbuf_addstr(value, "unborn");
 
 	return 1;
 }
