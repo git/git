@@ -9,7 +9,7 @@
 **  work differently than '*', and to fix the character-class code.
 */
 
-#include "cache.h"
+#include "git-compat-util.h"
 #include "wildmatch.h"
 
 typedef unsigned char uchar;
