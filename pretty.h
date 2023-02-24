@@ -1,11 +1,11 @@
 #ifndef PRETTY_H
 #define PRETTY_H
 
-#include "cache.h"
 #include "date.h"
 #include "string-list.h"
 
 struct commit;
+struct repository;
 struct strbuf;
 struct process_trailer_options;
 
