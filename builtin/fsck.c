@@ -20,6 +20,7 @@
 #include "decorate.h"
 #include "packfile.h"
 #include "object-store.h"
+#include "replace-object.h"
 #include "resolve-undo.h"
 #include "run-command.h"
 #include "worktree.h"

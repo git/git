@@ -887,14 +887,6 @@ int get_shared_repository(void);
 void reset_shared_repository(void);
 
 /*
- * Do replace refs need to be checked this run?  This variable is
- * initialized to true unless --no-replace-object is used or
- * $GIT_NO_REPLACE_OBJECTS is set, but is set to false by some
- * commands that do not want replace references to be active.
- */
-extern int read_replace_refs;
-
-/*
  * These values are used to help identify parts of a repository to fsync.
  * FSYNC_COMPONENT_NONE identifies data that will not be a persistent part of the
  * repository and so shouldn't be fsynced.

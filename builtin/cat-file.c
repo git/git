@@ -18,6 +18,7 @@
 #include "oid-array.h"
 #include "packfile.h"
 #include "object-store.h"
+#include "replace-object.h"
 #include "promisor-remote.h"
 #include "mailmap.h"
 

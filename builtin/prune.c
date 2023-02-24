@@ -8,6 +8,7 @@
 #include "parse-options.h"
 #include "progress.h"
 #include "prune-packed.h"
+#include "replace-object.h"
 #include "object-store.h"
 #include "shallow.h"
 

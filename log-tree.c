@@ -13,6 +13,7 @@
 #include "merge-ort.h"
 #include "reflog-walk.h"
 #include "refs.h"
+#include "replace-object.h"
 #include "string-list.h"
 #include "color.h"
 #include "gpg-interface.h"

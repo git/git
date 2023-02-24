@@ -23,6 +23,7 @@
 #include "utf8.h"
 #include "dir.h"
 #include "color.h"
+#include "replace-object.h"
 #include "refs.h"
 #include "worktree.h"
 

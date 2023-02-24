@@ -9,6 +9,7 @@
 #include "pack.h"
 #include "blob.h"
 #include "commit.h"
+#include "replace-object.h"
 #include "tag.h"
 #include "tree.h"
 #include "tree-walk.h"

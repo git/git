@@ -1,10 +1,17 @@
 #ifndef REPLACE_OBJECT_H
 #define REPLACE_OBJECT_H
 
-#include "cache.h"
 #include "oidmap.h"
 #include "repository.h"
 #include "object-store.h"
+
+/*
+ * Do replace refs need to be checked this run?  This variable is
+ * initialized to true unless --no-replace-object is used or
+ * $GIT_NO_REPLACE_OBJECTS is set, but is set to false by some
+ * commands that do not want replace references to be active.
+ */
+extern int read_replace_refs;
 
 struct replace_object {
 	struct oidmap_entry original;

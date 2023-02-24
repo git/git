@@ -8,6 +8,7 @@
 #include "commit-graph.h"
 #include "object-store.h"
 #include "progress.h"
+#include "replace-object.h"
 #include "tag.h"
 
 #define BUILTIN_COMMIT_GRAPH_VERIFY_USAGE \
