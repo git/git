@@ -1,8 +1,6 @@
 #ifndef ADVICE_H
 #define ADVICE_H
 
-#include "git-compat-util.h"
-
 struct string_list;
 
 /*
