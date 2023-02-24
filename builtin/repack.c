@@ -1,5 +1,5 @@
 #include "builtin.h"
-#include "cache.h"
+#include "alloc.h"
 #include "config.h"
 #include "dir.h"
 #include "parse-options.h"

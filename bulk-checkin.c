@@ -1,7 +1,8 @@
 /*
  * Copyright (c) 2011, Google Inc.
  */
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "bulk-checkin.h"
 #include "lockfile.h"
 #include "repository.h"

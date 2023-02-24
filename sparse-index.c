@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "alloc.h"
 #include "repository.h"
 #include "sparse-index.h"
 #include "tree.h"

@@ -1,5 +1,6 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "string-list.h"
+#include "alloc.h"
 
 void string_list_init_nodup(struct string_list *list)
 {

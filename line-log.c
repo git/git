@@ -1,4 +1,5 @@
 #include "git-compat-util.h"
+#include "alloc.h"
 #include "line-range.h"
 #include "cache.h"
 #include "tag.h"

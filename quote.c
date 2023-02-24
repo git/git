@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "alloc.h"
 #include "quote.h"
 #include "strvec.h"
 

@@ -1,5 +1,6 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "strvec.h"
+#include "alloc.h"
 #include "strbuf.h"
 
 const char *empty_strvec[] = { NULL };

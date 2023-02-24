@@ -1,4 +1,5 @@
 #include "builtin.h"
+#include "alloc.h"
 #include "pkt-line.h"
 #include "fetch-pack.h"
 #include "remote.h"

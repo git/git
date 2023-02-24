@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "alloc.h"
 #include "dir.h"
 #include "tag.h"
 #include "commit.h"

@@ -8,6 +8,7 @@
 
 #define USE_THE_INDEX_VARIABLE
 #include "cache.h"
+#include "alloc.h"
 #include "config.h"
 #include "parse-options.h"
 #include "builtin.h"

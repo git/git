@@ -1,4 +1,5 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "object-store.h"
 #include "repository.h"
 #include "object.h"

@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "alloc.h"
 #include "config.h"
 #include "entry.h"
 #include "parallel-checkout.h"

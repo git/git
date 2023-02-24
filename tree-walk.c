@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "tree-walk.h"
+#include "alloc.h"
 #include "dir.h"
 #include "object-store.h"
 #include "tree.h"

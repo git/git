@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "alloc.h"
 #include "config.h"
 #include "lockfile.h"
 #include "dir.h"

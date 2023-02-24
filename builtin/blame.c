@@ -5,7 +5,8 @@
  * See COPYING for licensing conditions
  */
 
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "config.h"
 #include "color.h"
 #include "builtin.h"

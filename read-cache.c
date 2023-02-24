@@ -4,6 +4,7 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 #include "cache.h"
+#include "alloc.h"
 #include "config.h"
 #include "diff.h"
 #include "diffcore.h"

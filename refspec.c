@@ -1,4 +1,5 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "strvec.h"
 #include "refs.h"
 #include "refspec.h"
