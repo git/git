@@ -5,6 +5,7 @@
 #include "exec-cmd.h"
 #include "run-command.h"
 #include "levenshtein.h"
+#include "gettext.h"
 #include "help.h"
 #include "command-list.h"
 #include "string-list.h"

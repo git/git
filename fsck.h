@@ -1,6 +1,7 @@
 #ifndef GIT_FSCK_H
 #define GIT_FSCK_H
 
+#include "object.h"
 #include "oidset.h"
 
 enum fsck_msg_type {

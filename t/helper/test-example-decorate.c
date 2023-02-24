@@ -1,5 +1,5 @@
 #include "test-tool.h"
-#include "cache.h"
+#include "git-compat-util.h"
 #include "object.h"
 #include "decorate.h"
 

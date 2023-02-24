@@ -1,7 +1,6 @@
 #ifndef CACHE_TREE_H
 #define CACHE_TREE_H
 
-#include "cache.h"
 #include "tree.h"
 #include "tree-walk.h"
 

@@ -14,6 +14,7 @@
 #include "pack-revindex.h"
 #include "hash.h"
 #include "path.h"
+#include "object.h"
 #include "oid-array.h"
 #include "repository.h"
 #include "mem-pool.h"
@@ -452,26 +453,6 @@ void prefetch_cache_entries(const struct index_state *istate,
 #ifdef USE_THE_INDEX_VARIABLE
 extern struct index_state the_index;
 #endif
-
-#define TYPE_BITS 3
-
-/*
- * Values in this enum (except those outside the 3 bit range) are part
- * of pack file format. See gitformat-pack(5) for more information.
- */
-enum object_type {
-	OBJ_BAD = -1,
-	OBJ_NONE = 0,
-	OBJ_COMMIT = 1,
-	OBJ_TREE = 2,
-	OBJ_BLOB = 3,
-	OBJ_TAG = 4,
-	/* 5 for future expansion */
-	OBJ_OFS_DELTA = 6,
-	OBJ_REF_DELTA = 7,
-	OBJ_ANY,
-	OBJ_MAX
-};
 
 static inline enum object_type object_type(unsigned int mode)
 {
