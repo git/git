@@ -1,7 +1,7 @@
 /*
  * Generic implementation of hash-based key value mappings.
  */
-#include "cache.h"
+#include "git-compat-util.h"
 #include "hashmap.h"
 
 #define FNV32_BASE ((unsigned int) 0x811c9dc5)

@@ -1,5 +1,4 @@
 #include "test-tool.h"
-#include "cache.h"
 
 /*
  * Usage: test-tool crontab <file> -l|<input>

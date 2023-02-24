@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "repository.h"
 #include "config.h"
 #include "pkt-line.h"
@@ -8,6 +8,7 @@
 #include "serve.h"
 #include "upload-pack.h"
 #include "bundle-uri.h"
+#include "trace2.h"
 
 static int advertise_sid = -1;
 static int client_hash_algo = GIT_HASH_SHA1;

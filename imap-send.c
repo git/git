@@ -21,7 +21,7 @@
  *  along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
 #include "credential.h"
 #include "exec-cmd.h"
