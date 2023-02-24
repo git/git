@@ -1775,26 +1775,26 @@ int upload_pack_advertise(struct repository *r,
 
 		strbuf_addstr(value, "shallow wait-for-done");
 
-		if (!repo_config_get_bool(the_repository,
+		if (!repo_config_get_bool(r,
 					 "uploadpack.allowfilter",
 					 &allow_filter_value) &&
 		    allow_filter_value)
 			strbuf_addstr(value, " filter");
 
-		if (!repo_config_get_bool(the_repository,
+		if (!repo_config_get_bool(r,
 					 "uploadpack.allowrefinwant",
 					 &allow_ref_in_want) &&
 		    allow_ref_in_want)
 			strbuf_addstr(value, " ref-in-want");
 
 		if (git_env_bool("GIT_TEST_SIDEBAND_ALL", 0) ||
-		    (!repo_config_get_bool(the_repository,
+		    (!repo_config_get_bool(r,
 					   "uploadpack.allowsidebandall",
 					   &allow_sideband_all_value) &&
 		     allow_sideband_all_value))
 			strbuf_addstr(value, " sideband-all");
 
-		if (!repo_config_get_string(the_repository,
+		if (!repo_config_get_string(r,
 					    "uploadpack.blobpackfileuri",
 					    &str) &&
 		    str) {

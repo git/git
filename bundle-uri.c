@@ -884,7 +884,7 @@ int bundle_uri_command(struct repository *r,
 	 * Read all "bundle.*" config lines to the client as key=value
 	 * packet lines.
 	 */
-	git_config(config_to_packet_line, &writer);
+	repo_config(r, config_to_packet_line, &writer);
 
 	packet_writer_flush(&writer);
 

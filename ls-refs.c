@@ -12,11 +12,11 @@ static enum {
 	UNBORN_IGNORE = 0,
 	UNBORN_ALLOW,
 	UNBORN_ADVERTISE /* implies ALLOW */
-} unborn_config(void)
+} unborn_config(struct repository *r)
 {
 	const char *str = NULL;
 
-	if (repo_config_get_string_tmp(the_repository, "lsrefs.unborn", &str)) {
+	if (repo_config_get_string_tmp(r, "lsrefs.unborn", &str)) {
 		/*
 		 * If there is no such config, advertise and allow it by
 		 * default.
@@ -168,7 +168,7 @@ int ls_refs(struct repository *r, struct packet_reader *request)
 				strvec_push(&data.prefixes, out);
 		}
 		else if (!strcmp("unborn", arg))
-			data.unborn = !!unborn_config();
+			data.unborn = !!unborn_config(r);
 		else
 			die(_("unexpected line: '%s'"), arg);
 	}
@@ -199,7 +199,7 @@ int ls_refs(struct repository *r, struct packet_reader *request)
 
 int ls_refs_advertise(struct repository *r, struct strbuf *value)
 {
-	if (value && unborn_config() == UNBORN_ADVERTISE)
+	if (value && unborn_config(r) == UNBORN_ADVERTISE)
 		strbuf_addstr(value, "unborn");
 
 	return 1;
