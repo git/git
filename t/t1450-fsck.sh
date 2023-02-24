@@ -1023,4 +1023,16 @@ test_expect_success 'fsck error on gitattributes with excessive size' '
 	test_cmp expected actual
 '
 
+test_expect_success 'fsck detects problems in worktree index' '
+	test_when_finished "git worktree remove -f wt" &&
+	git worktree add wt &&
+
+	echo "this will be removed to break the worktree index" >wt/file &&
+	git -C wt add file &&
+	blob=$(git -C wt rev-parse :file) &&
+	remove_object $blob &&
+
+	test_must_fail git fsck
+'
+
 test_done

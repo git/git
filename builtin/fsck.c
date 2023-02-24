@@ -984,10 +984,24 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 	}
 
 	if (keep_cache_objects) {
+		struct worktree **worktrees, **p;
+
 		verify_index_checksum = 1;
 		verify_ce_order = 1;
-		repo_read_index(the_repository);
-		fsck_index(the_repository->index);
+
+		worktrees = get_worktrees();
+		for (p = worktrees; *p; p++) {
+			struct worktree *wt = *p;
+			struct index_state istate =
+				INDEX_STATE_INIT(the_repository);
+
+			if (read_index_from(&istate,
+					    worktree_git_path(wt, "index"),
+					    get_worktree_git_dir(wt)) > 0)
+				fsck_index(&istate);
+			discard_index(&istate);
+		}
+		free_worktrees(worktrees);
 	}
 
 	check_connectivity();
