@@ -7,6 +7,7 @@
 */
 
 #include "builtin.h"
+#include "hex.h"
 #include "repository.h"
 #include "packfile.h"
 #include "object-store.h"

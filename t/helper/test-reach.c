@@ -3,6 +3,7 @@
 #include "commit.h"
 #include "commit-reach.h"
 #include "config.h"
+#include "hex.h"
 #include "parse-options.h"
 #include "ref-filter.h"
 #include "string-list.h"

@@ -5,6 +5,7 @@
  */
 #include "cache.h"
 #include "config.h"
+#include "hex.h"
 #include "object-store.h"
 #include "repository.h"
 #include "commit.h"

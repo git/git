@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "hex.h"
 
 #ifdef DC_SHA1_EXTERNAL
 /*

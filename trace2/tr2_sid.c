@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "hex.h"
 #include "trace2/tr2_tbuf.h"
 #include "trace2/tr2_sid.h"
 

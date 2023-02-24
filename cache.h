@@ -13,7 +13,6 @@
 #include "string-list.h"
 #include "pack-revindex.h"
 #include "hash.h"
-#include "hex.h"
 #include "path.h"
 #include "oid-array.h"
 #include "repository.h"

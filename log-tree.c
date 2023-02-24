@@ -2,6 +2,7 @@
 #include "commit-reach.h"
 #include "config.h"
 #include "diff.h"
+#include "hex.h"
 #include "object-store.h"
 #include "repository.h"
 #include "tmp-objdir.h"

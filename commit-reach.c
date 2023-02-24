@@ -3,6 +3,7 @@
 #include "commit.h"
 #include "commit-graph.h"
 #include "decorate.h"
+#include "hex.h"
 #include "prio-queue.h"
 #include "tree.h"
 #include "ref-filter.h"

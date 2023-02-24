@@ -1,5 +1,6 @@
 #include "test-tool.h"
 #include "cache.h"
+#include "hex.h"
 #include "oid-array.h"
 
 static int print_oid(const struct object_id *oid, void *data)

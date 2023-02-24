@@ -10,6 +10,7 @@
 #include "config.h"
 #include "color.h"
 #include "builtin.h"
+#include "hex.h"
 #include "repository.h"
 #include "commit.h"
 #include "diff.h"

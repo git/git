@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "tag.h"
 #include "commit.h"
+#include "hex.h"
 #include "tree.h"
 #include "blob.h"
 #include "diff.h"

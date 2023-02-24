@@ -1,6 +1,7 @@
 #include "git-compat-util.h"
 #include "protocol-caps.h"
 #include "gettext.h"
+#include "hex.h"
 #include "pkt-line.h"
 #include "strvec.h"
 #include "hash.h"

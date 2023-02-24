@@ -9,6 +9,7 @@
 #include "diff.h"
 #include "diffcore.h"
 #include "delta.h"
+#include "hex.h"
 #include "xdiff-interface.h"
 #include "color.h"
 #include "attr.h"

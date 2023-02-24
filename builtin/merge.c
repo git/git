@@ -10,6 +10,7 @@
 #include "cache.h"
 #include "alloc.h"
 #include "config.h"
+#include "hex.h"
 #include "parse-options.h"
 #include "builtin.h"
 #include "lockfile.h"

@@ -1,6 +1,7 @@
 #include "git-compat-util.h"
 #include "alloc.h"
 #include "config.h"
+#include "hex.h"
 #include "remote.h"
 #include "urlmatch.h"
 #include "refs.h"

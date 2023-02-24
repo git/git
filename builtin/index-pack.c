@@ -2,6 +2,7 @@
 #include "alloc.h"
 #include "config.h"
 #include "delta.h"
+#include "hex.h"
 #include "pack.h"
 #include "csum-file.h"
 #include "blob.h"

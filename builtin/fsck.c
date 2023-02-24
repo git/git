@@ -1,6 +1,7 @@
 #define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "cache.h"
+#include "hex.h"
 #include "repository.h"
 #include "config.h"
 #include "commit.h"

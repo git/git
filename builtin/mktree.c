@@ -5,6 +5,7 @@
  */
 #include "builtin.h"
 #include "alloc.h"
+#include "hex.h"
 #include "quote.h"
 #include "tree.h"
 #include "parse-options.h"

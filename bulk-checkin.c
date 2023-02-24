@@ -4,6 +4,7 @@
 #include "git-compat-util.h"
 #include "alloc.h"
 #include "bulk-checkin.h"
+#include "hex.h"
 #include "lockfile.h"
 #include "repository.h"
 #include "csum-file.h"

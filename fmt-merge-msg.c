@@ -5,6 +5,7 @@
 #include "object-store.h"
 #include "diff.h"
 #include "diff-merges.h"
+#include "hex.h"
 #include "revision.h"
 #include "tag.h"
 #include "string-list.h"

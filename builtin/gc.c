@@ -11,6 +11,7 @@
  */
 
 #include "builtin.h"
+#include "hex.h"
 #include "repository.h"
 #include "config.h"
 #include "tempfile.h"

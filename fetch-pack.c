@@ -2,6 +2,7 @@
 #include "alloc.h"
 #include "repository.h"
 #include "config.h"
+#include "hex.h"
 #include "lockfile.h"
 #include "refs.h"
 #include "pkt-line.h"

@@ -2,6 +2,7 @@
 #include "alloc.h"
 #include "line-range.h"
 #include "cache.h"
+#include "hex.h"
 #include "tag.h"
 #include "blob.h"
 #include "tree.h"

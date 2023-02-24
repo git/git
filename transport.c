@@ -1,6 +1,7 @@
 #include "git-compat-util.h"
 #include "alloc.h"
 #include "config.h"
+#include "hex.h"
 #include "transport.h"
 #include "hook.h"
 #include "pkt-line.h"

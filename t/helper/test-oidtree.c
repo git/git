@@ -1,5 +1,6 @@
 #include "test-tool.h"
 #include "cache.h"
+#include "hex.h"
 #include "oidtree.h"
 
 static enum cb_next print_oid(const struct object_id *oid, void *data)

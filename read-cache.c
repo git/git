@@ -8,6 +8,7 @@
 #include "config.h"
 #include "diff.h"
 #include "diffcore.h"
+#include "hex.h"
 #include "tempfile.h"
 #include "lockfile.h"
 #include "cache-tree.h"

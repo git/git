@@ -2,6 +2,7 @@
 #include "alloc.h"
 #include "config.h"
 #include "dir.h"
+#include "hex.h"
 #include "parse-options.h"
 #include "run-command.h"
 #include "sigchain.h"

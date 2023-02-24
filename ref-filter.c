@@ -1,5 +1,6 @@
 #include "git-compat-util.h"
 #include "alloc.h"
+#include "hex.h"
 #include "parse-options.h"
 #include "refs.h"
 #include "wildmatch.h"

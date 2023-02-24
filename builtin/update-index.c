@@ -7,6 +7,7 @@
 #include "cache.h"
 #include "bulk-checkin.h"
 #include "config.h"
+#include "hex.h"
 #include "lockfile.h"
 #include "quote.h"
 #include "cache-tree.h"

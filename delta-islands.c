@@ -4,6 +4,7 @@
 #include "object.h"
 #include "blob.h"
 #include "commit.h"
+#include "hex.h"
 #include "tag.h"
 #include "tree.h"
 #include "delta.h"

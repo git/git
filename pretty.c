@@ -2,6 +2,7 @@
 #include "alloc.h"
 #include "config.h"
 #include "commit.h"
+#include "hex.h"
 #include "utf8.h"
 #include "diff.h"
 #include "revision.h"

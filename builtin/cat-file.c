@@ -9,6 +9,7 @@
 #include "config.h"
 #include "builtin.h"
 #include "diff.h"
+#include "hex.h"
 #include "parse-options.h"
 #include "userdiff.h"
 #include "streaming.h"

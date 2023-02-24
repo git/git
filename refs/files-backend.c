@@ -1,5 +1,6 @@
 #include "../cache.h"
 #include "../config.h"
+#include "../hex.h"
 #include "../refs.h"
 #include "refs-internal.h"
 #include "ref-cache.h"

@@ -8,6 +8,7 @@
 #include "alloc.h"
 #include "config.h"
 #include "commit.h"
+#include "hex.h"
 #include "refs.h"
 #include "quote.h"
 #include "builtin.h"

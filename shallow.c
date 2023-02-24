@@ -1,5 +1,6 @@
 #include "git-compat-util.h"
 #include "alloc.h"
+#include "hex.h"
 #include "repository.h"
 #include "tempfile.h"
 #include "lockfile.h"
