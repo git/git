@@ -1032,7 +1032,25 @@ test_expect_success 'fsck detects problems in worktree index' '
 	blob=$(git -C wt rev-parse :file) &&
 	remove_object $blob &&
 
-	test_must_fail git fsck
+	test_must_fail git fsck --name-objects >actual 2>&1 &&
+	cat >expect <<-EOF &&
+	missing blob $blob (.git/worktrees/wt/index:file)
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'fsck reports problems in main index without filename' '
+	test_when_finished "rm -f .git/index && git read-tree HEAD" &&
+	echo "this object will be removed to break the main index" >file &&
+	git add file &&
+	blob=$(git rev-parse :file) &&
+	remove_object $blob &&
+
+	test_must_fail git fsck --name-objects >actual 2>&1 &&
+	cat >expect <<-EOF &&
+	missing blob $blob (:file)
+	EOF
+	test_cmp expect actual
 '
 
 test_done
