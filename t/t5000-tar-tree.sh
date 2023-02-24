@@ -105,6 +105,18 @@ check_added() {
 	'
 }
 
+check_mtime() {
+	dir=$1
+	path_in_archive=$2
+	mtime=$3
+
+	test_expect_success " validate mtime of $path_in_archive" '
+		test-tool chmtime --get $dir/$path_in_archive >actual.mtime &&
+		echo $mtime >expect.mtime &&
+		test_cmp expect.mtime actual.mtime
+	'
+}
+
 test_expect_success 'setup' '
 	test_oid_cache <<-EOF
 	obj sha1:19f9c8273ec45a8938e6999cb59b3ff66739902a
@@ -173,6 +185,13 @@ test_expect_success 'git archive' '
 '
 
 check_tar b
+
+test_expect_success 'git archive --mtime' '
+	git archive --mtime=2002-02-02T02:02:02-0200 HEAD >with_mtime.tar
+'
+
+check_tar with_mtime
+check_mtime with_mtime a/a 1012622522
 
 test_expect_success 'git archive --prefix=prefix/' '
 	git archive --prefix=prefix/ HEAD >with_prefix.tar
