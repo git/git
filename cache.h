@@ -1445,65 +1445,10 @@ struct object *repo_peel_to_type(struct repository *r,
 #define peel_to_type(name, namelen, obj, type) \
 	repo_peel_to_type(the_repository, name, namelen, obj, type)
 
-#define IDENT_STRICT	       1
-#define IDENT_NO_DATE	       2
-#define IDENT_NO_NAME	       4
-
-enum want_ident {
-	WANT_BLANK_IDENT,
-	WANT_AUTHOR_IDENT,
-	WANT_COMMITTER_IDENT
-};
-
-const char *git_author_info(int);
-const char *git_committer_info(int);
-const char *fmt_ident(const char *name, const char *email,
-		      enum want_ident whose_ident,
-		      const char *date_str, int);
-const char *fmt_name(enum want_ident);
-const char *ident_default_name(void);
-const char *ident_default_email(void);
 const char *git_editor(void);
 const char *git_sequence_editor(void);
 const char *git_pager(int stdout_is_tty);
 int is_terminal_dumb(void);
-int git_ident_config(const char *, const char *, void *);
-/*
- * Prepare an ident to fall back on if the user didn't configure it.
- */
-void prepare_fallback_ident(const char *name, const char *email);
-void reset_ident_date(void);
-
-struct ident_split {
-	const char *name_begin;
-	const char *name_end;
-	const char *mail_begin;
-	const char *mail_end;
-	const char *date_begin;
-	const char *date_end;
-	const char *tz_begin;
-	const char *tz_end;
-};
-/*
- * Signals an success with 0, but time part of the result may be NULL
- * if the input lacks timestamp and zone
- */
-int split_ident_line(struct ident_split *, const char *, int);
-
-/*
- * Given a commit or tag object buffer and the commit or tag headers, replaces
- * the idents in the headers with their canonical versions using the mailmap mechanism.
- */
-void apply_mailmap_to_header(struct strbuf *, const char **, struct string_list *);
-
-/*
- * Compare split idents for equality or strict ordering. Note that we
- * compare only the ident part of the line, ignoring any timestamp.
- *
- * Because there are two fields, we must choose one as the primary key; we
- * currently arbitrarily pick the email.
- */
-int ident_cmp(const struct ident_split *, const struct ident_split *);
 
 struct cache_def {
 	struct strbuf path;
@@ -1569,9 +1514,6 @@ int update_server_info(int);
 
 const char *get_log_output_encoding(void);
 const char *get_commit_output_encoding(void);
-
-int committer_ident_sufficiently_given(void);
-int author_ident_sufficiently_given(void);
 
 extern const char *git_commit_encoding;
 extern const char *git_log_output_encoding;

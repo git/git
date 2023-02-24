@@ -5,6 +5,7 @@
 #include "refs-internal.h"
 #include "ref-cache.h"
 #include "packed-backend.h"
+#include "../ident.h"
 #include "../iterator.h"
 #include "../dir-iterator.h"
 #include "../lockfile.h"
