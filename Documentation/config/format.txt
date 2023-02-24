@@ -3,7 +3,8 @@ format.attach::
 	'format-patch'.  The value can also be a double quoted string
 	which will enable attachments as the default and set the
 	value as the boundary.  See the --attach option in
-	linkgit:git-format-patch[1].
+	linkgit:git-format-patch[1].  To countermand an earlier
+	value, set it to an empty string.
 
 format.from::
 	Provides the default value for the `--from` option to format-patch.
