@@ -29,6 +29,7 @@
 #include "promisor-remote.h"
 #include "dir.h"
 #include "strmap.h"
+#include "tree.h"
 
 #ifdef NO_FAST_WORKING_DIRECTORY
 #define FAST_WORKING_DIRECTORY 0
@@ -4443,6 +4444,27 @@ static void fill_metainfo(struct strbuf *msg,
 	}
 }
 
+static void get_userdiff(struct diff_options *o,
+			     struct userdiff_driver **drv,
+			     const char *attr_path)
+{
+	const char *commit = "HEAD";
+	struct object_id *tree_oid = NULL;
+
+	if (is_bare_repository() && o->repo->gitdir) {
+		struct object_id oid;
+
+		if (!get_oid(commit, &oid)) {
+			struct tree *t = parse_tree_indirect(&oid);
+
+			if (t)
+				tree_oid = &t->object.oid;
+		}
+	}
+
+	*drv = userdiff_find_by_tree_and_path(o->repo->index, tree_oid, attr_path);
+}
+
 static void run_diff_cmd(const char *pgm,
 			 const char *name,
 			 const char *other,
@@ -4458,8 +4480,10 @@ static void run_diff_cmd(const char *pgm,
 	int must_show_header = 0;
 	struct userdiff_driver *drv = NULL;
 
-	if (o->flags.allow_external || !o->ignore_driver_algorithm)
-		drv = userdiff_find_by_path(o->repo->index, attr_path);
+	if (o->flags.allow_external || !o->ignore_driver_algorithm) {
+
+		get_userdiff(o, &drv, attr_path);
+	}
 
 	if (o->flags.allow_external && drv && drv->external)
 		pgm = drv->external;
@@ -4586,8 +4610,9 @@ static void run_diffstat(struct diff_filepair *p, struct diff_options *o,
 	const char *other;
 
 	if (!o->ignore_driver_algorithm) {
-		struct userdiff_driver *drv = userdiff_find_by_path(o->repo->index,
-								    p->one->path);
+		struct userdiff_driver *drv = NULL;
+
+		get_userdiff(o, &drv, p->one->path);
 
 		if (drv && drv->algorithm)
 			set_diff_algorithm(o, drv->algorithm);

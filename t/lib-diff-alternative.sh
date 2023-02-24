@@ -121,6 +121,16 @@ EOF
 		test_cmp expect output
 	'
 
+	test_expect_success "$STRATEGY diff from attributes with bare repo" '
+		echo "file* diff=driver" >.gitattributes &&
+		git add file1 file2 .gitattributes &&
+		git commit -m "adding files" &&
+		git clone --bare --no-local . bare.git &&
+		git -C bare.git config diff.driver.algorithm "$STRATEGY" &&
+		git -C bare.git diff HEAD:file1 HEAD:file2 > output &&
+		test_cmp expect output
+	'
+
 	test_expect_success "$STRATEGY diff from attributes has valid diffstat" '
 		echo "file* diff=driver" >.gitattributes &&
 		git config diff.driver.algorithm "$STRATEGY" &&

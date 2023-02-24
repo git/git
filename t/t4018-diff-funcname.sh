@@ -63,6 +63,17 @@ do
 		test_i18ngrep ! fatal msg &&
 		test_i18ngrep ! error msg
 	'
+	test_expect_success "builtin $p pattern compiles on bare repo" '
+		test_when_finished "rm -rf bare.git" &&
+		echo "*.java diff=$p" >.gitattributes &&
+		git add . &&
+		git commit -am "adding files" &&
+		git clone --bare --no-local . bare.git &&
+		test_expect_code 1 git -C bare.git diff --exit-code \
+			HEAD:A.java HEAD:B.java 2>msg &&
+		test_i18ngrep ! fatal msg &&
+		test_i18ngrep ! error msg
+	'
 done
 
 test_expect_success 'last regexp must not be negated' '

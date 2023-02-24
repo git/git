@@ -409,13 +409,20 @@ struct userdiff_driver *userdiff_find_by_name(const char *name)
 struct userdiff_driver *userdiff_find_by_path(struct index_state *istate,
 					      const char *path)
 {
+	return userdiff_find_by_tree_and_path(istate, NULL, path);
+}
+
+struct userdiff_driver *userdiff_find_by_tree_and_path(struct index_state *istate,
+						       const struct object_id *tree_oid,
+						       const char *path)
+{
 	static struct attr_check *check;
 
 	if (!check)
 		check = attr_check_initl("diff", NULL);
 	if (!path)
 		return NULL;
-	git_check_attr(istate, NULL, path, check);
+	git_check_attr(istate, tree_oid, path, check);
 
 	if (ATTR_TRUE(check->items[0].value))
 		return &driver_true;

@@ -758,6 +758,8 @@ with the above configuration, i.e. `j-c-diff`, with 7
 parameters, just like `GIT_EXTERNAL_DIFF` program is called.
 See linkgit:git[1] for details.
 
+When using a bare repository, the gitattributes from HEAD will be used.
+
 Setting the internal diff algorithm
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -784,6 +786,8 @@ algorithm, choosing from `myers`, `patience`, `minimal`, or `histogram`.
 This diff algorithm applies to user facing diff output like git-diff(1),
 git-show(1) and is used for the `--stat` output as well. The merge machinery
 will not use the diff algorithm set through this method.
+
+When using a bare repository, the gitattributes from HEAD will be used.
 
 NOTE: If `diff.<name>.command` is defined for path with the
 `diff=<name>` attribute, it is executed as an external diff driver
