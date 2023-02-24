@@ -1310,65 +1310,68 @@ int update_ref(const char *msg, const char *refname,
 			       old_oid, flags, onerr);
 }
 
+/*
+ * Check that the string refname matches a rule of the form
+ * "{prefix}%.*s{suffix}". So "foo/bar/baz" would match the rule
+ * "foo/%.*s/baz", and return the string "bar".
+ */
+static const char *match_parse_rule(const char *refname, const char *rule,
+				    size_t *len)
+{
+	/*
+	 * Check that rule matches refname up to the first percent in the rule.
+	 * We can bail immediately if not, but otherwise we leave "rule" at the
+	 * %-placeholder, and "refname" at the start of the potential matched
+	 * name.
+	 */
+	while (*rule != '%') {
+		if (!*rule)
+			BUG("rev-parse rule did not have percent");
+		if (*refname++ != *rule++)
+			return NULL;
+	}
+
+	/*
+	 * Check that our "%" is the expected placeholder. This assumes there
+	 * are no other percents (placeholder or quoted) in the string, but
+	 * that is sufficient for our rev-parse rules.
+	 */
+	if (!skip_prefix(rule, "%.*s", &rule))
+		return NULL;
+
+	/*
+	 * And now check that our suffix (if any) matches.
+	 */
+	if (!strip_suffix(refname, rule, len))
+		return NULL;
+
+	return refname; /* len set by strip_suffix() */
+}
+
 char *refs_shorten_unambiguous_ref(struct ref_store *refs,
 				   const char *refname, int strict)
 {
 	int i;
-	static char **scanf_fmts;
-	static int nr_rules;
-	char *short_name;
 	struct strbuf resolved_buf = STRBUF_INIT;
 
-	if (!nr_rules) {
-		/*
-		 * Pre-generate scanf formats from ref_rev_parse_rules[].
-		 * Generate a format suitable for scanf from a
-		 * ref_rev_parse_rules rule by interpolating "%s" at the
-		 * location of the "%.*s".
-		 */
-		size_t total_len = 0;
-		size_t offset = 0;
-
-		/* the rule list is NULL terminated, count them first */
-		for (nr_rules = 0; ref_rev_parse_rules[nr_rules]; nr_rules++)
-			/* -2 for strlen("%.*s") - strlen("%s"); +1 for NUL */
-			total_len += strlen(ref_rev_parse_rules[nr_rules]) - 2 + 1;
-
-		scanf_fmts = xmalloc(st_add(st_mult(sizeof(char *), nr_rules), total_len));
-
-		offset = 0;
-		for (i = 0; i < nr_rules; i++) {
-			assert(offset < total_len);
-			scanf_fmts[i] = (char *)&scanf_fmts[nr_rules] + offset;
-			offset += xsnprintf(scanf_fmts[i], total_len - offset,
-					    ref_rev_parse_rules[i], 2, "%s") + 1;
-		}
-	}
-
-	/* bail out if there are no rules */
-	if (!nr_rules)
-		return xstrdup(refname);
-
-	/* buffer for scanf result, at most refname must fit */
-	short_name = xstrdup(refname);
-
 	/* skip first rule, it will always match */
-	for (i = nr_rules - 1; i > 0 ; --i) {
+	for (i = NUM_REV_PARSE_RULES - 1; i > 0 ; --i) {
 		int j;
 		int rules_to_fail = i;
-		int short_name_len;
+		const char *short_name;
+		size_t short_name_len;
 
-		if (1 != sscanf(refname, scanf_fmts[i], short_name))
+		short_name = match_parse_rule(refname, ref_rev_parse_rules[i],
+					      &short_name_len);
+		if (!short_name)
 			continue;
-
-		short_name_len = strlen(short_name);
 
 		/*
 		 * in strict mode, all (except the matched one) rules
 		 * must fail to resolve to a valid non-ambiguous ref
 		 */
 		if (strict)
-			rules_to_fail = nr_rules;
+			rules_to_fail = NUM_REV_PARSE_RULES;
 
 		/*
 		 * check if the short name resolves to a valid ref,
@@ -1388,7 +1391,8 @@ char *refs_shorten_unambiguous_ref(struct ref_store *refs,
 			 */
 			strbuf_reset(&resolved_buf);
 			strbuf_addf(&resolved_buf, rule,
-				    short_name_len, short_name);
+				    cast_size_t_to_int(short_name_len),
+				    short_name);
 			if (refs_ref_exists(refs, resolved_buf.buf))
 				break;
 		}
@@ -1399,12 +1403,11 @@ char *refs_shorten_unambiguous_ref(struct ref_store *refs,
 		 */
 		if (j == rules_to_fail) {
 			strbuf_release(&resolved_buf);
-			return short_name;
+			return xmemdupz(short_name, short_name_len);
 		}
 	}
 
 	strbuf_release(&resolved_buf);
-	free(short_name);
 	return xstrdup(refname);
 }
 

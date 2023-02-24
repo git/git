@@ -189,4 +189,38 @@ test_expect_success 'symbolic-ref pointing at another' '
 	test_cmp expect actual
 '
 
+test_expect_success 'symbolic-ref --short handles complex utf8 case' '
+	name="测试-加-增加-加-增加" &&
+	git symbolic-ref TEST_SYMREF "refs/heads/$name" &&
+	# In the real world, we saw problems with this case only
+	# when the locale includes UTF-8. Set it here to try to make things as
+	# hard as possible for us to pass, but in practice we should do the
+	# right thing regardless (and of course some platforms may not even
+	# have this locale).
+	LC_ALL=en_US.UTF-8 git symbolic-ref --short TEST_SYMREF >actual &&
+	echo "$name" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'symbolic-ref --short handles name with suffix' '
+	git symbolic-ref TEST_SYMREF "refs/remotes/origin/HEAD" &&
+	git symbolic-ref --short TEST_SYMREF >actual &&
+	echo "origin" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'symbolic-ref --short handles almost-matching name' '
+	git symbolic-ref TEST_SYMREF "refs/headsXfoo" &&
+	git symbolic-ref --short TEST_SYMREF >actual &&
+	echo "headsXfoo" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'symbolic-ref --short handles name with percent' '
+	git symbolic-ref TEST_SYMREF "refs/heads/%foo" &&
+	git symbolic-ref --short TEST_SYMREF >actual &&
+	echo "%foo" >expect &&
+	test_cmp expect actual
+'
+
 test_done
