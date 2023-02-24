@@ -1,4 +1,5 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "sha1dc_git.h"
 #include "hex.h"
 
 #ifdef DC_SHA1_EXTERNAL

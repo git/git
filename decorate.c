@@ -2,7 +2,8 @@
  * decorate.c - decorate a git object with some arbitrary
  * data.
  */
-#include "cache.h"
+#include "git-compat-util.h"
+#include "hashmap.h"
 #include "object.h"
 #include "decorate.h"
 
