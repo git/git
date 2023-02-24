@@ -13,7 +13,6 @@
 #include "diffcore.h"
 #include "revision.h"
 #include "log-tree.h"
-#include "builtin.h"
 #include "parse-options.h"
 #include "string-list.h"
 #include "dir.h"

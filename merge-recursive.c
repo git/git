@@ -10,7 +10,6 @@
 #include "alloc.h"
 #include "attr.h"
 #include "blob.h"
-#include "builtin.h"
 #include "cache-tree.h"
 #include "commit.h"
 #include "commit-reach.h"
