@@ -3440,8 +3440,8 @@ void reset_revision_walk(void)
 }
 
 static int mark_uninteresting(const struct object_id *oid,
-			      struct packed_git *pack,
-			      uint32_t pos,
+			      struct packed_git *pack UNUSED,
+			      uint32_t pos UNUSED,
 			      void *cb)
 {
 	struct rev_info *revs = cb;

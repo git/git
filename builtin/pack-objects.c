@@ -3260,13 +3260,14 @@ static int add_object_entry_from_pack(const struct object_id *oid,
 	return 0;
 }
 
-static void show_commit_pack_hint(struct commit *commit, void *_data)
+static void show_commit_pack_hint(struct commit *commit UNUSED,
+				  void *data UNUSED)
 {
 	/* nothing to do; commits don't have a namehash */
 }
 
 static void show_object_pack_hint(struct object *object, const char *name,
-				  void *_data)
+				  void *data UNUSED)
 {
 	struct object_entry *oe = packlist_find(&to_pack, &object->oid);
 	if (!oe)
@@ -3762,7 +3763,7 @@ static void show_edge(struct commit *commit)
 static int add_object_in_unpacked_pack(const struct object_id *oid,
 				       struct packed_git *pack,
 				       uint32_t pos,
-				       void *_data)
+				       void *data UNUSED)
 {
 	if (cruft) {
 		off_t offset;
@@ -3796,7 +3797,7 @@ static void add_objects_in_unpacked_packs(void)
 }
 
 static int add_loose_object(const struct object_id *oid, const char *path,
-			    void *data)
+			    void *data UNUSED)
 {
 	enum object_type type = oid_object_info(the_repository, oid, NULL);
 
@@ -3947,13 +3948,13 @@ static int get_object_list_from_bitmap(struct rev_info *revs)
 }
 
 static void record_recent_object(struct object *obj,
-				 const char *name,
-				 void *data)
+				 const char *name UNUSED,
+				 void *data UNUSED)
 {
 	oid_array_append(&recent_objects, &obj->oid);
 }
 
-static void record_recent_commit(struct commit *commit, void *data)
+static void record_recent_commit(struct commit *commit, void *data UNUSED)
 {
 	oid_array_append(&recent_objects, &commit->object.oid);
 }
