@@ -362,11 +362,11 @@ static int show_bisect_vars(struct rev_list_info *info, int reaches, int all)
 
 static int show_object_fast(
 	const struct object_id *oid,
-	enum object_type type,
-	int exclude,
-	uint32_t name_hash,
-	struct packed_git *found_pack,
-	off_t found_offset)
+	enum object_type type UNUSED,
+	int exclude UNUSED,
+	uint32_t name_hash UNUSED,
+	struct packed_git *found_pack UNUSED,
+	off_t found_offset UNUSED)
 {
 	fprintf(stdout, "%s\n", oid_to_hex(oid));
 	return 1;

@@ -1590,7 +1590,7 @@ static int add_object_entry(const struct object_id *oid, enum object_type type,
 
 static int add_object_entry_from_bitmap(const struct object_id *oid,
 					enum object_type type,
-					int flags, uint32_t name_hash,
+					int flags UNUSED, uint32_t name_hash,
 					struct packed_git *pack, off_t offset)
 {
 	display_progress(progress_state, ++nr_seen);
@@ -3464,7 +3464,7 @@ static void add_cruft_object_entry(const struct object_id *oid, enum object_type
 	return;
 }
 
-static void show_cruft_object(struct object *obj, const char *name, void *data)
+static void show_cruft_object(struct object *obj, const char *name, void *data UNUSED)
 {
 	/*
 	 * if we did not record it earlier, it's at least as old as our
@@ -3484,7 +3484,7 @@ static void show_cruft_commit(struct commit *commit, void *data)
 	show_cruft_object((struct object*)commit, NULL, data);
 }
 
-static int cruft_include_check_obj(struct object *obj, void *data)
+static int cruft_include_check_obj(struct object *obj, void *data UNUSED)
 {
 	return !has_object_kept_pack(&obj->oid, IN_CORE_KEEP_PACKS);
 }
@@ -3663,7 +3663,7 @@ static void read_object_list_from_stdin(void)
 	}
 }
 
-static void show_commit(struct commit *commit, void *data)
+static void show_commit(struct commit *commit, void *data UNUSED)
 {
 	add_object_entry(&commit->object.oid, OBJ_COMMIT, NULL, 0);
 
@@ -3674,7 +3674,8 @@ static void show_commit(struct commit *commit, void *data)
 		propagate_island_marks(commit);
 }
 
-static void show_object(struct object *obj, const char *name, void *data)
+static void show_object(struct object *obj, const char *name,
+			void *data UNUSED)
 {
 	add_preferred_base_object(name);
 	add_object_entry(&obj->oid, obj->type, name, 0);

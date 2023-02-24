@@ -48,7 +48,9 @@ static int add_one_ref(const char *path, const struct object_id *oid,
  * The traversal will have already marked us as SEEN, so we
  * only need to handle any progress reporting here.
  */
-static void mark_object(struct object *obj, const char *name, void *data)
+static void mark_object(struct object *obj UNUSED,
+			const char *name UNUSED,
+			void *data)
 {
 	update_progress(data);
 }
@@ -202,10 +204,10 @@ int add_unseen_recent_objects_to_traversal(struct rev_info *revs,
 
 static int mark_object_seen(const struct object_id *oid,
 			     enum object_type type,
-			     int exclude,
-			     uint32_t name_hash,
-			     struct packed_git *found_pack,
-			     off_t found_offset)
+			     int exclude UNUSED,
+			     uint32_t name_hash UNUSED,
+			     struct packed_git *found_pack UNUSED,
+			     off_t found_offset UNUSED)
 {
 	struct object *obj = lookup_object_by_type(the_repository, oid, type);
 	if (!obj)
