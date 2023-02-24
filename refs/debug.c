@@ -1,4 +1,4 @@
-
+#include "git-compat-util.h"
 #include "refs-internal.h"
 #include "trace.h"
 

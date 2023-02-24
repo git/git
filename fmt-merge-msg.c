@@ -1,3 +1,4 @@
+#include "git-compat-util.h"
 #include "config.h"
 #include "refs.h"
 #include "object-store.h"

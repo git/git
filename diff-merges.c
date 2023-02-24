@@ -1,3 +1,4 @@
+#include "git-compat-util.h"
 #include "diff-merges.h"
 
 #include "revision.h"
