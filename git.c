@@ -430,7 +430,7 @@ static int run_builtin(struct cmd_struct *p, int argc, const char **argv)
 		use_pager = 1;
 	if (run_setup && startup_info->have_repository)
 		/* get_git_dir() may set up repo, avoid that */
-		trace_repo_setup(prefix);
+		trace_repo_setup();
 	commit_pager_choice();
 
 	if (!help && p->option & NEED_WORK_TREE)
