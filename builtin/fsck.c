@@ -1,4 +1,3 @@
-#define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "cache.h"
 #include "repository.h"
@@ -796,6 +795,35 @@ static int fsck_resolve_undo(struct index_state *istate)
 	return 0;
 }
 
+static void fsck_index(struct index_state *istate)
+{
+	unsigned int i;
+
+	/* TODO: audit for interaction with sparse-index. */
+	ensure_full_index(istate);
+	for (i = 0; i < istate->cache_nr; i++) {
+		unsigned int mode;
+		struct blob *blob;
+		struct object *obj;
+
+		mode = istate->cache[i]->ce_mode;
+		if (S_ISGITLINK(mode))
+			continue;
+		blob = lookup_blob(the_repository,
+				   &istate->cache[i]->oid);
+		if (!blob)
+			continue;
+		obj = &blob->object;
+		obj->flags |= USED;
+		fsck_put_object_name(&fsck_walk_options, &obj->oid,
+				     ":%s", istate->cache[i]->name);
+		mark_object_reachable(obj);
+	}
+	if (istate->cache_tree)
+		fsck_cache_tree(istate->cache_tree);
+	fsck_resolve_undo(istate);
+}
+
 static void mark_object_for_connectivity(const struct object_id *oid)
 {
 	struct object *obj = lookup_unknown_object(the_repository, oid);
@@ -959,29 +987,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 		verify_index_checksum = 1;
 		verify_ce_order = 1;
 		repo_read_index(the_repository);
-		/* TODO: audit for interaction with sparse-index. */
-		ensure_full_index(&the_index);
-		for (i = 0; i < the_index.cache_nr; i++) {
-			unsigned int mode;
-			struct blob *blob;
-			struct object *obj;
-
-			mode = the_index.cache[i]->ce_mode;
-			if (S_ISGITLINK(mode))
-				continue;
-			blob = lookup_blob(the_repository,
-					   &the_index.cache[i]->oid);
-			if (!blob)
-				continue;
-			obj = &blob->object;
-			obj->flags |= USED;
-			fsck_put_object_name(&fsck_walk_options, &obj->oid,
-					     ":%s", the_index.cache[i]->name);
-			mark_object_reachable(obj);
-		}
-		if (the_index.cache_tree)
-			fsck_cache_tree(the_index.cache_tree);
-		fsck_resolve_undo(&the_index);
+		fsck_index(the_repository->index);
 	}
 
 	check_connectivity();
