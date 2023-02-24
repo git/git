@@ -235,6 +235,19 @@ Fixes since v2.39
  * Doc update.
    (merge d9ec3b0dc0 jk/doc-ls-remote-matching later to maint).
 
+ * Error messages given upon a signature verification failure used to
+   discard the errors from underlying gpg program, which has been
+   corrected.
+   (merge ad6b320756 js/gpg-errors later to maint).
+
+ * Update --date=default documentation.
+   (merge 9deef088ae rd/doc-default-date-format later to maint).
+
+ * A test helper had a single write(2) of 256kB, which was too big for
+   some platforms (e.g. NonStop), which has been corrected by using
+   xwrite() wrapper appropriately.
+   (merge 58eab6ff13 jc/genzeros-avoid-raw-write later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 4eb1ccecd4 dh/mingw-ownership-check-typofix later to maint).
    (merge f95526419b ar/typofix-gitattributes-doc later to maint).
@@ -261,3 +274,4 @@ Fixes since v2.39
    (merge e65b868d07 rs/size-t-fixes later to maint).
    (merge 3eb1e1ca9a ab/config-h-remove-unused later to maint).
    (merge d390e08076 cw/doc-pushurl-vs-url later to maint).
+   (merge 567342fc77 rs/ctype-test later to maint).
