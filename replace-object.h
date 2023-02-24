@@ -1,6 +1,7 @@
 #ifndef REPLACE_OBJECT_H
 #define REPLACE_OBJECT_H
 
+#include "cache.h"
 #include "oidmap.h"
 #include "repository.h"
 #include "object-store.h"
