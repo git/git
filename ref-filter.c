@@ -1822,7 +1822,7 @@ static void lazy_init_worktree_map(void)
 	populate_worktree_map(&(ref_to_worktree_map.map), ref_to_worktree_map.worktrees);
 }
 
-static char *get_worktree_path(const struct used_atom *atom, const struct ref_array_item *ref)
+static char *get_worktree_path(const struct ref_array_item *ref)
 {
 	struct hashmap_entry entry, *e;
 	struct ref_to_worktree_entry *lookup_result;
@@ -1881,7 +1881,7 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 			refname = get_refname(atom, ref);
 		else if (atom_type == ATOM_WORKTREEPATH) {
 			if (ref->kind == FILTER_REFS_BRANCHES)
-				v->s = get_worktree_path(atom, ref);
+				v->s = get_worktree_path(ref);
 			else
 				v->s = xstrdup("");
 			continue;
