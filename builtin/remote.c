@@ -126,7 +126,7 @@ static void add_branch(const char *key, const char *branchname,
 				branchname, branchname);
 	else
 		strbuf_addf(tmp, "refs/heads/%s:refs/remotes/%s/%s",
-				branchname, remotename, branchname);
+				branchname, REMOTE_NAME_THIS, branchname);
 	git_config_set_multivar(key, tmp->buf, "^$", 0);
 }
 
