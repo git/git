@@ -435,10 +435,9 @@ const struct worktree *find_shared_symref(struct worktree **worktrees,
 					  const char *target)
 {
 
-	for (int i = 0; worktrees[i]; i++) {
+	for (int i = 0; worktrees[i]; i++)
 		if (is_shared_symref(worktrees[i], symref, target))
 			return worktrees[i];
-	}
 
 	return NULL;
 }
