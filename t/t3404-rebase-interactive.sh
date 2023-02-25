@@ -1449,14 +1449,15 @@ test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = ig
 
 test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = warn' '
 	cat >expect <<-EOF &&
-	error: invalid line 1: badcmd $(git rev-list --pretty=oneline --abbrev-commit -1 primary~4)
+	error: invalid command '\''pickled'\''
+	error: invalid line 1: pickled $(git rev-list --pretty=oneline --abbrev-commit -1 primary~4)
 	Warning: some commits may have been dropped accidentally.
 	Dropped commits (newer to older):
 	 - $(git rev-list --pretty=oneline --abbrev-commit -1 primary)
 	 - $(git rev-list --pretty=oneline --abbrev-commit -1 primary~4)
 	To avoid this message, use "drop" to explicitly remove a commit.
 	EOF
-	head -n4 expect >expect.2 &&
+	head -n5 expect >expect.2 &&
 	tail -n1 expect >>expect.2 &&
 	tail -n4 expect.2 >expect.3 &&
 	test_config rebase.missingCommitsCheck warn &&
@@ -1467,7 +1468,7 @@ test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = wa
 			git rebase -i --root &&
 		cp .git/rebase-merge/git-rebase-todo.backup orig &&
 		FAKE_LINES="2 3 4" git rebase --edit-todo 2>actual.2 &&
-		head -n6 actual.2 >actual &&
+		head -n7 actual.2 >actual &&
 		test_cmp expect actual &&
 		cp orig .git/rebase-merge/git-rebase-todo &&
 		FAKE_LINES="1 2 3 4" git rebase --edit-todo 2>actual.2 &&
@@ -1483,7 +1484,8 @@ test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = wa
 
 test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = error' '
 	cat >expect <<-EOF &&
-	error: invalid line 1: badcmd $(git rev-list --pretty=oneline --abbrev-commit -1 primary~4)
+	error: invalid command '\''pickled'\''
+	error: invalid line 1: pickled $(git rev-list --pretty=oneline --abbrev-commit -1 primary~4)
 	Warning: some commits may have been dropped accidentally.
 	Dropped commits (newer to older):
 	 - $(git rev-list --pretty=oneline --abbrev-commit -1 primary)
@@ -1583,7 +1585,7 @@ test_expect_success 'static check of bad command' '
 		set_fake_editor &&
 		test_must_fail env FAKE_LINES="1 2 3 bad 4 5" \
 		git rebase -i --root 2>actual &&
-		test_i18ngrep "badcmd $(git rev-list --oneline -1 primary~1)" \
+		test_i18ngrep "pickled $(git rev-list --oneline -1 primary~1)" \
 				actual &&
 		test_i18ngrep "You can fix this with .git rebase --edit-todo.." \
 				actual &&

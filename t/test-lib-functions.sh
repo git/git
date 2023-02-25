@@ -32,6 +32,14 @@ test_set_editor () {
 	export EDITOR
 }
 
+# Like test_set_editor but sets GIT_SEQUENCE_EDITOR instead of EDITOR
+test_set_sequence_editor () {
+	FAKE_SEQUENCE_EDITOR="$1"
+	export FAKE_SEQUENCE_EDITOR
+	GIT_SEQUENCE_EDITOR='"$FAKE_SEQUENCE_EDITOR"'
+	export GIT_SEQUENCE_EDITOR
+}
+
 test_decode_color () {
 	awk '
 		function name(n) {
