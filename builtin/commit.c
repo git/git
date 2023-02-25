@@ -940,6 +940,12 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		}
 
 		fprintf(s->fp, "\n");
+
+		struct strbuf *line_lenght_helper = line_length_helper_string(2);
+		status_printf_ln(s, GIT_COLOR_NORMAL, "%s", line_lenght_helper->buf);
+		strbuf_release(line_lenght_helper);
+		status_printf_ln(s, GIT_COLOR_NORMAL, "%s", "");
+
 		if (cleanup_mode == COMMIT_MSG_CLEANUP_ALL)
 			status_printf(s, GIT_COLOR_NORMAL, hint_cleanup_all, comment_line_char);
 		else if (cleanup_mode == COMMIT_MSG_CLEANUP_SCISSORS) {
