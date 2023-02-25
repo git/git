@@ -54,6 +54,9 @@ UI, Workflows & Features
 
  * Userdiff regexp update for Java language.
 
+ * "git fetch --jobs=0" used to hit a BUG(), which has been corrected
+   to use the available CPUs.
+
 
 Performance, Internal Implementation, Development Support etc.
 
