@@ -1,4 +1,3 @@
-#define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "cache.h"
 #include "repository.h"
@@ -732,19 +731,19 @@ static int fsck_head_link(const char *head_ref_name,
 	return 0;
 }
 
-static int fsck_cache_tree(struct cache_tree *it)
+static int fsck_cache_tree(struct cache_tree *it, const char *index_path)
 {
 	int i;
 	int err = 0;
 
 	if (verbose)
-		fprintf_ln(stderr, _("Checking cache tree"));
+		fprintf_ln(stderr, _("Checking cache tree of %s"), index_path);
 
 	if (0 <= it->entry_count) {
 		struct object *obj = parse_object(the_repository, &it->oid);
 		if (!obj) {
-			error(_("%s: invalid sha1 pointer in cache-tree"),
-			      oid_to_hex(&it->oid));
+			error(_("%s: invalid sha1 pointer in cache-tree of %s"),
+			      oid_to_hex(&it->oid), index_path);
 			errors_found |= ERROR_REFS;
 			return 1;
 		}
@@ -755,11 +754,12 @@ static int fsck_cache_tree(struct cache_tree *it)
 			err |= objerror(obj, _("non-tree in cache-tree"));
 	}
 	for (i = 0; i < it->subtree_nr; i++)
-		err |= fsck_cache_tree(it->down[i]->cache_tree);
+		err |= fsck_cache_tree(it->down[i]->cache_tree, index_path);
 	return err;
 }
 
-static int fsck_resolve_undo(struct index_state *istate)
+static int fsck_resolve_undo(struct index_state *istate,
+			     const char *index_path)
 {
 	struct string_list_item *item;
 	struct string_list *resolve_undo = istate->resolve_undo;
@@ -782,8 +782,9 @@ static int fsck_resolve_undo(struct index_state *istate)
 
 			obj = parse_object(the_repository, &ru->oid[i]);
 			if (!obj) {
-				error(_("%s: invalid sha1 pointer in resolve-undo"),
-				      oid_to_hex(&ru->oid[i]));
+				error(_("%s: invalid sha1 pointer in resolve-undo of %s"),
+				      oid_to_hex(&ru->oid[i]),
+				      index_path);
 				errors_found |= ERROR_REFS;
 				continue;
 			}
@@ -794,6 +795,38 @@ static int fsck_resolve_undo(struct index_state *istate)
 		}
 	}
 	return 0;
+}
+
+static void fsck_index(struct index_state *istate, const char *index_path,
+		       int is_main_index)
+{
+	unsigned int i;
+
+	/* TODO: audit for interaction with sparse-index. */
+	ensure_full_index(istate);
+	for (i = 0; i < istate->cache_nr; i++) {
+		unsigned int mode;
+		struct blob *blob;
+		struct object *obj;
+
+		mode = istate->cache[i]->ce_mode;
+		if (S_ISGITLINK(mode))
+			continue;
+		blob = lookup_blob(the_repository,
+				   &istate->cache[i]->oid);
+		if (!blob)
+			continue;
+		obj = &blob->object;
+		obj->flags |= USED;
+		fsck_put_object_name(&fsck_walk_options, &obj->oid,
+				     "%s:%s",
+				     is_main_index ? "" : index_path,
+				     istate->cache[i]->name);
+		mark_object_reachable(obj);
+	}
+	if (istate->cache_tree)
+		fsck_cache_tree(istate->cache_tree, index_path);
+	fsck_resolve_undo(istate, index_path);
 }
 
 static void mark_object_for_connectivity(const struct object_id *oid)
@@ -956,32 +989,31 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 	}
 
 	if (keep_cache_objects) {
+		struct worktree **worktrees, **p;
+
 		verify_index_checksum = 1;
 		verify_ce_order = 1;
-		repo_read_index(the_repository);
-		/* TODO: audit for interaction with sparse-index. */
-		ensure_full_index(&the_index);
-		for (i = 0; i < the_index.cache_nr; i++) {
-			unsigned int mode;
-			struct blob *blob;
-			struct object *obj;
 
-			mode = the_index.cache[i]->ce_mode;
-			if (S_ISGITLINK(mode))
-				continue;
-			blob = lookup_blob(the_repository,
-					   &the_index.cache[i]->oid);
-			if (!blob)
-				continue;
-			obj = &blob->object;
-			obj->flags |= USED;
-			fsck_put_object_name(&fsck_walk_options, &obj->oid,
-					     ":%s", the_index.cache[i]->name);
-			mark_object_reachable(obj);
+		worktrees = get_worktrees();
+		for (p = worktrees; *p; p++) {
+			struct worktree *wt = *p;
+			struct index_state istate =
+				INDEX_STATE_INIT(the_repository);
+			char *path;
+
+			/*
+			 * Make a copy since the buffer is reusable
+			 * and may get overwritten by other calls
+			 * while we're examining the index.
+			 */
+			path = xstrdup(worktree_git_path(wt, "index"));
+			if (read_index_from(&istate, path,
+					    get_worktree_git_dir(wt)) > 0)
+				fsck_index(&istate, path, wt->is_current);
+			discard_index(&istate);
+			free(path);
 		}
-		if (the_index.cache_tree)
-			fsck_cache_tree(the_index.cache_tree);
-		fsck_resolve_undo(&the_index);
+		free_worktrees(worktrees);
 	}
 
 	check_connectivity();
