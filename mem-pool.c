@@ -4,6 +4,7 @@
 
 #include "cache.h"
 #include "mem-pool.h"
+#include "trace.h"
 
 static struct trace_key trace_mem_pool = TRACE_KEY_INIT(MEMPOOL);
 #define BLOCK_GROWTH_SIZE (1024 * 1024 - sizeof(struct mp_block))
