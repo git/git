@@ -1007,9 +1007,8 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 			 * while we're examining the index.
 			 */
 			path = xstrdup(worktree_git_path(wt, "index"));
-			if (read_index_from(&istate, path,
-					    get_worktree_git_dir(wt)) > 0)
-				fsck_index(&istate, path, wt->is_current);
+			read_index_from(&istate, path, get_worktree_git_dir(wt));
+			fsck_index(&istate, path, wt->is_current);
 			discard_index(&istate);
 			free(path);
 		}
