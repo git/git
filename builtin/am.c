@@ -2312,11 +2312,6 @@ static int parse_opt_show_current_patch(const struct option *opt, const char *ar
 	return 0;
 }
 
-static int git_am_config(const char *k, const char *v, void *cb UNUSED)
-{
-	return git_default_config(k, v, NULL);
-}
-
 int cmd_am(int argc, const char **argv, const char *prefix)
 {
 	struct am_state state;
@@ -2440,7 +2435,7 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage_with_options(usage, options);
 
-	git_config(git_am_config, NULL);
+	git_config(git_default_config, NULL);
 
 	am_state_init(&state);
 
