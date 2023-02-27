@@ -1809,7 +1809,7 @@ static void populate_from_existing_patterns(struct unpack_trees_options *o,
 	if (get_sparse_checkout_patterns(pl) < 0)
 		o->skip_sparse_checkout = 1;
 	else
-		o->pl = pl;
+		o->internal.pl = pl;
 }
 
 static void update_sparsity_for_prefix(const char *prefix,
@@ -1871,10 +1871,10 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 
 	if (len > MAX_UNPACK_TREES)
 		die("unpack_trees takes at most %d trees", MAX_UNPACK_TREES);
-	if (o->dir)
-		BUG("o->dir is for internal use only");
-	if (o->pl)
-		BUG("o->pl is for internal use only");
+	if (o->internal.dir)
+		BUG("o->internal.dir is for internal use only");
+	if (o->internal.pl)
+		BUG("o->internal.pl is for internal use only");
 
 	trace_performance_enter();
 	trace2_region_enter("unpack_trees", "unpack_trees", the_repository);
@@ -1891,9 +1891,9 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		BUG("UNPACK_RESET_OVERWRITE_UNTRACKED incompatible with preserved ignored files");
 
 	if (!o->preserve_ignored) {
-		o->dir = &dir;
-		o->dir->flags |= DIR_SHOW_IGNORED;
-		setup_standard_excludes(o->dir);
+		o->internal.dir = &dir;
+		o->internal.dir->flags |= DIR_SHOW_IGNORED;
+		setup_standard_excludes(o->internal.dir);
 	}
 
 	if (o->prefix)
@@ -1943,7 +1943,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	 * Sparse checkout loop #1: set NEW_SKIP_WORKTREE on existing entries
 	 */
 	if (!o->skip_sparse_checkout)
-		mark_new_skip_worktree(o->pl, o->src_index, 0,
+		mark_new_skip_worktree(o->internal.pl, o->src_index, 0,
 				       CE_NEW_SKIP_WORKTREE, o->verbose_update);
 
 	if (!dfc)
@@ -2009,7 +2009,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		 * If they will have NEW_SKIP_WORKTREE, also set CE_SKIP_WORKTREE
 		 * so apply_sparse_checkout() won't attempt to remove it from worktree
 		 */
-		mark_new_skip_worktree(o->pl, &o->result,
+		mark_new_skip_worktree(o->internal.pl, &o->result,
 				       CE_ADDED, CE_SKIP_WORKTREE | CE_NEW_SKIP_WORKTREE,
 				       o->verbose_update);
 
@@ -2067,9 +2067,9 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 done:
 	if (free_pattern_list)
 		clear_pattern_list(&pl);
-	if (o->dir) {
-		dir_clear(o->dir);
-		o->dir = NULL;
+	if (o->internal.dir) {
+		dir_clear(o->internal.dir);
+		o->internal.dir = NULL;
 	}
 	trace2_region_leave("unpack_trees", "unpack_trees", the_repository);
 	trace_performance_leave("unpack_trees");
@@ -2117,14 +2117,14 @@ enum update_sparsity_result update_sparsity(struct unpack_trees_options *o,
 		pl = xcalloc(1, sizeof(*pl));
 		populate_from_existing_patterns(o, pl);
 	}
-	o->pl = pl;
+	o->internal.pl = pl;
 
 	/* Expand sparse directories as needed */
-	expand_index(o->src_index, o->pl);
+	expand_index(o->src_index, o->internal.pl);
 
 	/* Set NEW_SKIP_WORKTREE on existing entries. */
 	mark_all_ce_unused(o->src_index);
-	mark_new_skip_worktree(o->pl, o->src_index, 0,
+	mark_new_skip_worktree(o->internal.pl, o->src_index, 0,
 			       CE_NEW_SKIP_WORKTREE, o->verbose_update);
 
 	/* Then loop over entries and update/remove as needed */
@@ -2152,7 +2152,7 @@ enum update_sparsity_result update_sparsity(struct unpack_trees_options *o,
 	if (free_pattern_list) {
 		clear_pattern_list(pl);
 		free(pl);
-		o->pl = NULL;
+		o->internal.pl = NULL;
 	}
 	trace_performance_leave("update_sparsity");
 	return ret;
@@ -2340,7 +2340,7 @@ static int verify_clean_subdirectory(const struct cache_entry *ce,
 	pathbuf = xstrfmt("%.*s/", namelen, ce->name);
 
 	memset(&d, 0, sizeof(d));
-	if (o->dir)
+	if (o->internal.dir)
 		setup_standard_excludes(&d);
 	i = read_directory(&d, o->src_index, pathbuf, namelen+1, NULL);
 	dir_clear(&d);
@@ -2395,8 +2395,8 @@ static int check_ok_to_remove(const char *name, int len, int dtype,
 	if (ignore_case && icase_exists(o, name, len, st))
 		return 0;
 
-	if (o->dir &&
-	    is_excluded(o->dir, o->src_index, name, &dtype))
+	if (o->internal.dir &&
+	    is_excluded(o->internal.dir, o->src_index, name, &dtype))
 		/*
 		 * ce->name is explicitly excluded, so it is Ok to
 		 * overwrite it.

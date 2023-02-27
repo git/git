@@ -97,9 +97,12 @@ struct unpack_trees_options {
 	struct index_state *src_index;
 	struct index_state result;
 
-	struct pattern_list *pl; /* for internal use */
-	struct dir_struct *dir; /* for internal use only */
 	struct checkout_metadata meta;
+
+	struct unpack_trees_options_internal {
+		struct pattern_list *pl;
+		struct dir_struct *dir;
+	} internal;
 };
 
 int unpack_trees(unsigned n, struct tree_desc *t,
