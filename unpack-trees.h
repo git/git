@@ -59,7 +59,6 @@ struct unpack_trees_options {
 		     preserve_ignored,
 		     clone,
 		     index_only,
-		     nontrivial_merge,
 		     trivial_merges_only,
 		     verbose_update,
 		     aggressive,
@@ -70,22 +69,13 @@ struct unpack_trees_options {
 		     skip_sparse_checkout,
 		     quiet,
 		     exiting_early,
-		     show_all_errors,
 		     dry_run,
 		     skip_cache_tree_update;
 	enum unpack_trees_reset_type reset;
 	const char *prefix;
 	const char *super_prefix;
-	int cache_bottom;
 	struct pathspec *pathspec;
 	merge_fn_t fn;
-	const char *msgs[NB_UNPACK_TREES_WARNING_TYPES];
-	struct strvec msgs_to_free;
-	/*
-	 * Store error messages in an array, each case
-	 * corresponding to a error message type
-	 */
-	struct string_list unpack_rejects[NB_UNPACK_TREES_WARNING_TYPES];
 
 	int head_idx;
 	int merge_size;
@@ -95,11 +85,25 @@ struct unpack_trees_options {
 
 	struct index_state *dst_index;
 	struct index_state *src_index;
-	struct index_state result;
 
 	struct checkout_metadata meta;
 
 	struct unpack_trees_options_internal {
+		unsigned int nontrivial_merge,
+			     show_all_errors;
+
+		int cache_bottom;
+		const char *msgs[NB_UNPACK_TREES_WARNING_TYPES];
+		struct strvec msgs_to_free;
+
+		/*
+		 * Store error messages in an array, each case
+		 * corresponding to a error message type
+		 */
+		struct string_list unpack_rejects[NB_UNPACK_TREES_WARNING_TYPES];
+
+		struct index_state result;
+
 		struct pattern_list *pl;
 		struct dir_struct *dir;
 	} internal;
