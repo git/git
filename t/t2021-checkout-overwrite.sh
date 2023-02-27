@@ -50,8 +50,11 @@ test_expect_success 'checkout commit with dir must not remove untracked a/b' '
 
 test_expect_success SYMLINKS 'the symlink remained' '
 
-	test_when_finished "rm a/b" &&
 	test -h a/b
+'
+
+test_expect_success 'cleanup after previous symlink tests' '
+	rm a/b
 '
 
 test_expect_success SYMLINKS 'checkout -f must not follow symlinks when removing entries' '
