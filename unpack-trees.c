@@ -2091,10 +2091,10 @@ return_failed:
  *
  * CE_NEW_SKIP_WORKTREE is used internally.
  */
-enum update_sparsity_result update_sparsity(struct unpack_trees_options *o)
+enum update_sparsity_result update_sparsity(struct unpack_trees_options *o,
+					    struct pattern_list *pl)
 {
 	enum update_sparsity_result ret = UPDATE_SPARSITY_SUCCESS;
-	struct pattern_list pl;
 	int i;
 	unsigned old_show_all_errors;
 	int free_pattern_list = 0;
@@ -2111,11 +2111,12 @@ enum update_sparsity_result update_sparsity(struct unpack_trees_options *o)
 	trace_performance_enter();
 
 	/* If we weren't given patterns, use the recorded ones */
-	if (!o->pl) {
-		memset(&pl, 0, sizeof(pl));
+	if (!pl) {
 		free_pattern_list = 1;
-		populate_from_existing_patterns(o, &pl);
+		pl = xcalloc(1, sizeof(*pl));
+		populate_from_existing_patterns(o, pl);
 	}
+	o->pl = pl;
 
 	/* Expand sparse directories as needed */
 	expand_index(o->src_index, o->pl);
@@ -2147,8 +2148,11 @@ enum update_sparsity_result update_sparsity(struct unpack_trees_options *o)
 
 	display_warning_msgs(o);
 	o->show_all_errors = old_show_all_errors;
-	if (free_pattern_list)
-		clear_pattern_list(&pl);
+	if (free_pattern_list) {
+		clear_pattern_list(pl);
+		free(pl);
+		o->pl = NULL;
+	}
 	trace_performance_leave("update_sparsity");
 	return ret;
 }

@@ -112,7 +112,8 @@ enum update_sparsity_result {
 	UPDATE_SPARSITY_WORKTREE_UPDATE_FAILURES = -2
 };
 
-enum update_sparsity_result update_sparsity(struct unpack_trees_options *options);
+enum update_sparsity_result update_sparsity(struct unpack_trees_options *options,
+					    struct pattern_list *pl);
 
 int verify_uptodate(const struct cache_entry *ce,
 		    struct unpack_trees_options *o);
