@@ -1876,6 +1876,8 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		BUG("o->internal.dir is for internal use only");
 	if (o->internal.pl)
 		BUG("o->internal.pl is for internal use only");
+	if (o->df_conflict_entry)
+		BUG("o->df_conflict_entry is an output only field");
 
 	trace_performance_enter();
 	trace2_region_enter("unpack_trees", "unpack_trees", the_repository);

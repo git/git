@@ -78,7 +78,7 @@ struct unpack_trees_options {
 
 	int head_idx;
 
-	struct cache_entry *df_conflict_entry;
+	struct cache_entry *df_conflict_entry; /* output only */
 	void *unpack_data;
 
 	struct index_state *dst_index;
