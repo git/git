@@ -295,8 +295,12 @@ struct dir_struct {
 	struct untracked_cache *untracked;
 
 	/**
-	 * The name of the file to be read in each directory for excluded files
-	 * (typically `.gitignore`).
+	 * Deprecated: ls-files is the only allowed caller; all other callers
+	 * should leave this as NULL; it pre-dated the
+	 * setup_standard_excludes() mechanism that replaces this.
+	 *
+	 * This field tracks the name of the file to be read in each directory
+	 * for excluded files (typically `.gitignore`).
 	 */
 	const char *exclude_per_dir;
 
