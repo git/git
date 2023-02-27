@@ -839,7 +839,7 @@ static int traverse_by_cache_tree(int pos, int nr_entries, int nr_names,
 		mark_ce_used(src[0], o);
 	}
 	free(tree_ce);
-	if (o->debug_unpack)
+	if (o->internal.debug_unpack)
 		printf("Unpacked %d entries from %s to %s using cache-tree\n",
 		       nr_entries,
 		       o->src_index->cache[pos]->name,
@@ -1488,7 +1488,7 @@ static int unpack_callback(int n, unsigned long mask, unsigned long dirmask, str
 	while (!p->mode)
 		p++;
 
-	if (o->debug_unpack)
+	if (o->internal.debug_unpack)
 		debug_unpack_callback(n, mask, dirmask, names, info);
 
 	/* Are we supposed to look at the index too? */
@@ -1929,7 +1929,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 			init_split_index(&o->internal.result);
 	}
 	oidcpy(&o->internal.result.oid, &o->src_index->oid);
-	o->merge_size = len;
+	o->internal.merge_size = len;
 	mark_all_ce_unused(o->src_index);
 
 	o->internal.result.fsmonitor_last_update =
@@ -2882,9 +2882,9 @@ int twoway_merge(const struct cache_entry * const *src,
 	const struct cache_entry *oldtree = src[1];
 	const struct cache_entry *newtree = src[2];
 
-	if (o->merge_size != 2)
+	if (o->internal.merge_size != 2)
 		return error("Cannot do a twoway merge of %d trees",
-			     o->merge_size);
+			     o->internal.merge_size);
 
 	if (oldtree == o->df_conflict_entry)
 		oldtree = NULL;
@@ -2964,9 +2964,9 @@ int bind_merge(const struct cache_entry * const *src,
 	const struct cache_entry *old = src[0];
 	const struct cache_entry *a = src[1];
 
-	if (o->merge_size != 1)
+	if (o->internal.merge_size != 1)
 		return error("Cannot do a bind merge of %d trees",
-			     o->merge_size);
+			     o->internal.merge_size);
 	if (a && old)
 		return o->quiet ? -1 :
 			error(ERRORMSG(o, ERROR_BIND_OVERLAP),
@@ -2990,9 +2990,9 @@ int oneway_merge(const struct cache_entry * const *src,
 	const struct cache_entry *old = src[0];
 	const struct cache_entry *a = src[1];
 
-	if (o->merge_size != 1)
+	if (o->internal.merge_size != 1)
 		return error("Cannot do a oneway merge of %d trees",
-			     o->merge_size);
+			     o->internal.merge_size);
 
 	if (!a || a == o->df_conflict_entry)
 		return deleted_entry(old, old, o);
@@ -3027,8 +3027,8 @@ int stash_worktree_untracked_merge(const struct cache_entry * const *src,
 	const struct cache_entry *worktree = src[1];
 	const struct cache_entry *untracked = src[2];
 
-	if (o->merge_size != 2)
-		BUG("invalid merge_size: %d", o->merge_size);
+	if (o->internal.merge_size != 2)
+		BUG("invalid merge_size: %d", o->internal.merge_size);
 
 	if (worktree && untracked)
 		return error(_("worktree and untracked commit have duplicate entries: %s"),

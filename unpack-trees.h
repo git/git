@@ -65,7 +65,6 @@ struct unpack_trees_options {
 		     skip_unmerged,
 		     initial_checkout,
 		     diff_index_cached,
-		     debug_unpack,
 		     skip_sparse_checkout,
 		     quiet,
 		     exiting_early,
@@ -78,7 +77,6 @@ struct unpack_trees_options {
 	merge_fn_t fn;
 
 	int head_idx;
-	int merge_size;
 
 	struct cache_entry *df_conflict_entry;
 	void *unpack_data;
@@ -90,8 +88,10 @@ struct unpack_trees_options {
 
 	struct unpack_trees_options_internal {
 		unsigned int nontrivial_merge,
-			     show_all_errors;
+			     show_all_errors,
+			     debug_unpack; /* used by read-tree debugging */
 
+		int merge_size; /* used by read-tree debugging */
 		int cache_bottom;
 		const char *msgs[NB_UNPACK_TREES_WARNING_TYPES];
 		struct strvec msgs_to_free;
