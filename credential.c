@@ -23,6 +23,7 @@ void credential_clear(struct credential *c)
 	free(c->username);
 	free(c->password);
 	string_list_clear(&c->helpers, 0);
+	strvec_clear(&c->wwwauth_headers);
 
 	credential_init(c);
 }
@@ -280,6 +281,8 @@ void credential_write(const struct credential *c, FILE *fp)
 		credential_write_item(fp, "password_expiry_utc", s, 0);
 		free(s);
 	}
+	for (size_t i = 0; i < c->wwwauth_headers.nr; i++)
+		credential_write_item(fp, "wwwauth[]", c->wwwauth_headers.v[i], 0);
 }
 
 static int run_credential_helper(struct credential *c,
