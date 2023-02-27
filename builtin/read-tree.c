@@ -87,9 +87,9 @@ static int debug_merge(const struct cache_entry * const *stages,
 {
 	int i;
 
-	printf("* %d-way merge\n", o->merge_size);
+	printf("* %d-way merge\n", o->internal.merge_size);
 	debug_stage("index", stages[0], o);
-	for (i = 1; i <= o->merge_size; i++) {
+	for (i = 1; i <= o->internal.merge_size; i++) {
 		char buf[24];
 		xsnprintf(buf, sizeof(buf), "ent#%d", i);
 		debug_stage(buf, stages[i], o);
@@ -144,7 +144,7 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 		OPT__DRY_RUN(&opts.dry_run, N_("don't update the index or the work tree")),
 		OPT_BOOL(0, "no-sparse-checkout", &opts.skip_sparse_checkout,
 			 N_("skip applying sparse checkout filter")),
-		OPT_BOOL(0, "debug-unpack", &opts.debug_unpack,
+		OPT_BOOL(0, "debug-unpack", &opts.internal.debug_unpack,
 			 N_("debug unpack-trees")),
 		OPT_CALLBACK_F(0, "recurse-submodules", NULL,
 			    "checkout", "control recursive updating of submodules",
@@ -247,7 +247,7 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 			opts.head_idx = 1;
 	}
 
-	if (opts.debug_unpack)
+	if (opts.internal.debug_unpack)
 		opts.fn = debug_merge;
 
 	/* If we're going to prime_cache_tree later, skip cache tree update */
@@ -263,7 +263,7 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 	if (unpack_trees(nr_trees, t, &opts))
 		return 128;
 
-	if (opts.debug_unpack || opts.dry_run)
+	if (opts.internal.debug_unpack || opts.dry_run)
 		return 0; /* do not write the index out */
 
 	/*
