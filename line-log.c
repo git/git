@@ -1283,7 +1283,8 @@ int line_log_process_ranges_arbitrary_commit(struct rev_info *rev, struct commit
 	return changed;
 }
 
-static enum rewrite_result line_log_rewrite_one(struct rev_info *rev, struct commit **pp)
+static enum rewrite_result line_log_rewrite_one(struct rev_info *rev UNUSED,
+						struct commit **pp)
 {
 	for (;;) {
 		struct commit *p = *pp;

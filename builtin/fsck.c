@@ -234,17 +234,17 @@ static void mark_unreachable_referents(const struct object_id *oid)
 }
 
 static int mark_loose_unreachable_referents(const struct object_id *oid,
-					    const char *path,
-					    void *data)
+					    const char *path UNUSED,
+					    void *data UNUSED)
 {
 	mark_unreachable_referents(oid);
 	return 0;
 }
 
 static int mark_packed_unreachable_referents(const struct object_id *oid,
-					     struct packed_git *pack,
-					     uint32_t pos,
-					     void *data)
+					     struct packed_git *pack UNUSED,
+					     uint32_t pos UNUSED,
+					     void *data UNUSED)
 {
 	mark_unreachable_referents(oid);
 	return 0;
@@ -662,14 +662,15 @@ static int fsck_loose(const struct object_id *oid, const char *path, void *data)
 	return 0; /* keep checking other objects, even if we saw an error */
 }
 
-static int fsck_cruft(const char *basename, const char *path, void *data)
+static int fsck_cruft(const char *basename, const char *path,
+		      void *data UNUSED)
 {
 	if (!starts_with(basename, "tmp_obj_"))
 		fprintf_ln(stderr, _("bad sha1 file: %s"), path);
 	return 0;
 }
 
-static int fsck_subdir(unsigned int nr, const char *path, void *data)
+static int fsck_subdir(unsigned int nr, const char *path UNUSED, void *data)
 {
 	struct for_each_loose_cb *cb_data = data;
 	struct progress *progress = cb_data->progress;
@@ -838,17 +839,17 @@ static void mark_object_for_connectivity(const struct object_id *oid)
 }
 
 static int mark_loose_for_connectivity(const struct object_id *oid,
-				       const char *path,
-				       void *data)
+				       const char *path UNUSED,
+				       void *data UNUSED)
 {
 	mark_object_for_connectivity(oid);
 	return 0;
 }
 
 static int mark_packed_for_connectivity(const struct object_id *oid,
-					struct packed_git *pack,
-					uint32_t pos,
-					void *data)
+					struct packed_git *pack UNUSED,
+					uint32_t pos UNUSED,
+					void *data UNUSED)
 {
 	mark_object_for_connectivity(oid);
 	return 0;

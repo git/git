@@ -57,7 +57,8 @@ static void loose_garbage(const char *path)
 		report_garbage(PACKDIR_FILE_GARBAGE, path);
 }
 
-static int count_loose(const struct object_id *oid, const char *path, void *data)
+static int count_loose(const struct object_id *oid, const char *path,
+		       void *data UNUSED)
 {
 	struct stat st;
 
@@ -72,7 +73,8 @@ static int count_loose(const struct object_id *oid, const char *path, void *data
 	return 0;
 }
 
-static int count_cruft(const char *basename, const char *path, void *data)
+static int count_cruft(const char *basename UNUSED, const char *path,
+		       void *data UNUSED)
 {
 	loose_garbage(path);
 	return 0;

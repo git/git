@@ -1609,7 +1609,7 @@ struct clear_midx_data {
 	const char *ext;
 };
 
-static void clear_midx_file_ext(const char *full_path, size_t full_path_len,
+static void clear_midx_file_ext(const char *full_path, size_t full_path_len UNUSED,
 				const char *file_name, void *_data)
 {
 	struct clear_midx_data *data = _data;

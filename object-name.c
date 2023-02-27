@@ -224,7 +224,7 @@ static int finish_object_disambiguation(struct disambiguate_state *ds,
 
 static int disambiguate_commit_only(struct repository *r,
 				    const struct object_id *oid,
-				    void *cb_data_unused)
+				    void *cb_data UNUSED)
 {
 	int kind = oid_object_info(r, oid, NULL);
 	return kind == OBJ_COMMIT;
@@ -232,7 +232,7 @@ static int disambiguate_commit_only(struct repository *r,
 
 static int disambiguate_committish_only(struct repository *r,
 					const struct object_id *oid,
-					void *cb_data_unused)
+					void *cb_data UNUSED)
 {
 	struct object *obj;
 	int kind;
@@ -252,7 +252,7 @@ static int disambiguate_committish_only(struct repository *r,
 
 static int disambiguate_tree_only(struct repository *r,
 				  const struct object_id *oid,
-				  void *cb_data_unused)
+				  void *cb_data UNUSED)
 {
 	int kind = oid_object_info(r, oid, NULL);
 	return kind == OBJ_TREE;
@@ -260,7 +260,7 @@ static int disambiguate_tree_only(struct repository *r,
 
 static int disambiguate_treeish_only(struct repository *r,
 				     const struct object_id *oid,
-				     void *cb_data_unused)
+				     void *cb_data UNUSED)
 {
 	struct object *obj;
 	int kind;
@@ -280,7 +280,7 @@ static int disambiguate_treeish_only(struct repository *r,
 
 static int disambiguate_blob_only(struct repository *r,
 				  const struct object_id *oid,
-				  void *cb_data_unused)
+				  void *cb_data UNUSED)
 {
 	int kind = oid_object_info(r, oid, NULL);
 	return kind == OBJ_BLOB;
@@ -474,7 +474,7 @@ static int collect_ambiguous(const struct object_id *oid, void *data)
 	return 0;
 }
 
-static int repo_collect_ambiguous(struct repository *r,
+static int repo_collect_ambiguous(struct repository *r UNUSED,
 				  const struct object_id *oid,
 				  void *data)
 {
@@ -666,7 +666,7 @@ static int extend_abbrev_len(const struct object_id *oid, void *cb_data)
 	return 0;
 }
 
-static int repo_extend_abbrev_len(struct repository *r,
+static int repo_extend_abbrev_len(struct repository *r UNUSED,
 				  const struct object_id *oid,
 				  void *cb_data)
 {

@@ -977,9 +977,9 @@ struct write_loose_object_data {
 
 static int loose_object_auto_limit = 100;
 
-static int loose_object_count(const struct object_id *oid,
-			       const char *path,
-			       void *data)
+static int loose_object_count(const struct object_id *oid UNUSED,
+			      const char *path UNUSED,
+			      void *data)
 {
 	int *count = (int*)data;
 	if (++(*count) >= loose_object_auto_limit)
@@ -1004,15 +1004,15 @@ static int loose_object_auto_condition(void)
 					     NULL, NULL, &count);
 }
 
-static int bail_on_loose(const struct object_id *oid,
-			 const char *path,
-			 void *data)
+static int bail_on_loose(const struct object_id *oid UNUSED,
+			 const char *path UNUSED,
+			 void *data UNUSED)
 {
 	return 1;
 }
 
 static int write_loose_object_to_stdin(const struct object_id *oid,
-				       const char *path,
+				       const char *path UNUSED,
 				       void *data)
 {
 	struct write_loose_object_data *d = (struct write_loose_object_data *)data;

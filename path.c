@@ -348,7 +348,8 @@ static void init_common_trie(void)
  * Helper function for update_common_dir: returns 1 if the dir
  * prefix is common.
  */
-static int check_common(const char *unmatched, void *value, void *baton)
+static int check_common(const char *unmatched, void *value,
+			void *baton UNUSED)
 {
 	struct common_dir *dir = value;
 

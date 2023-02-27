@@ -753,7 +753,7 @@ static int write_each_non_note_until(const char *note_path,
 	return 0;
 }
 
-static int write_each_note(const struct object_id *object_oid,
+static int write_each_note(const struct object_id *object_oid UNUSED,
 		const struct object_id *note_oid, char *note_path,
 		void *cb_data)
 {
@@ -781,8 +781,9 @@ struct note_delete_list {
 };
 
 static int prune_notes_helper(const struct object_id *object_oid,
-		const struct object_id *note_oid, char *note_path,
-		void *cb_data)
+			      const struct object_id *note_oid UNUSED,
+			      char *note_path UNUSED,
+			      void *cb_data)
 {
 	struct note_delete_list **l = (struct note_delete_list **) cb_data;
 	struct note_delete_list *n;
@@ -849,8 +850,8 @@ int combine_notes_overwrite(struct object_id *cur_oid,
 	return 0;
 }
 
-int combine_notes_ignore(struct object_id *cur_oid,
-			 const struct object_id *new_oid)
+int combine_notes_ignore(struct object_id *cur_oid UNUSED,
+			 const struct object_id *new_oid UNUSED)
 {
 	return 0;
 }

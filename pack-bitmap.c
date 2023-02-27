@@ -953,7 +953,8 @@ static void show_object(struct object *object, const char *name, void *data_)
 	bitmap_set(data->base, bitmap_pos);
 }
 
-static void show_commit(struct commit *commit, void *data)
+static void show_commit(struct commit *commit UNUSED,
+			void *data UNUSED)
 {
 }
 
@@ -1942,7 +1943,8 @@ static void test_bitmap_type(struct bitmap_test_data *tdata,
 		    type_name(bitmap_type));
 }
 
-static void test_show_object(struct object *object, const char *name,
+static void test_show_object(struct object *object,
+			     const char *name UNUSED,
 			     void *data)
 {
 	struct bitmap_test_data *tdata = data;
