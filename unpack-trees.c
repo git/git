@@ -1213,8 +1213,8 @@ static int unpack_single_entry(int n, unsigned long mask,
 		 * cache entry from the index aware logic.
 		 */
 		src[i + o->merge] = create_ce_entry(info, names + i, stage,
-						    &o->internal.result, o->merge,
-						    bit & dirmask);
+						    &o->internal.result,
+						    o->merge, bit & dirmask);
 	}
 
 	if (o->merge) {
@@ -1918,14 +1918,15 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	} else if (o->src_index == o->dst_index) {
 		/*
 		 * o->dst_index (and thus o->src_index) will be discarded
-		 * and overwritten with o->internal.result at the end of this function,
-		 * so just use src_index's split_index to avoid having to
-		 * create a new one.
+		 * and overwritten with o->internal.result at the end of
+		 * this function, so just use src_index's split_index to
+		 * avoid having to create a new one.
 		 */
 		o->internal.result.split_index = o->src_index->split_index;
 		o->internal.result.split_index->refcount++;
 	} else {
-		o->internal.result.split_index = init_split_index(&o->internal.result);
+		o->internal.result.split_index =
+			init_split_index(&o->internal.result);
 	}
 	oidcpy(&o->internal.result.oid, &o->src_index->oid);
 	o->merge_size = len;
@@ -2049,7 +2050,8 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		move_index_extensions(&o->internal.result, o->src_index);
 		if (!ret) {
 			if (git_env_bool("GIT_TEST_CHECK_CACHE_TREE", 0))
-				cache_tree_verify(the_repository, &o->internal.result);
+				cache_tree_verify(the_repository,
+						  &o->internal.result);
 			if (!o->skip_cache_tree_update &&
 			    !cache_tree_fully_valid(o->internal.result.cache_tree))
 				cache_tree_update(&o->internal.result,
