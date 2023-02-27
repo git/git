@@ -217,7 +217,6 @@ static int update_working_directory(struct pattern_list *pl)
 	o.head_idx = -1;
 	o.src_index = r->index;
 	o.dst_index = r->index;
-	index_state_init(&o.result, r);
 	o.skip_sparse_checkout = 0;
 
 	setup_work_tree();

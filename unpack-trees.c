@@ -2101,6 +2101,7 @@ enum update_sparsity_result update_sparsity(struct unpack_trees_options *o,
 
 	old_show_all_errors = o->show_all_errors;
 	o->show_all_errors = 1;
+	index_state_init(&o->result, o->src_index->repo);
 
 	/* Sanity checks */
 	if (!o->update || o->index_only || o->skip_sparse_checkout)
