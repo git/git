@@ -293,7 +293,7 @@ PATTERNS("scheme",
 	 "|([^][)(}{[ \t])+"),
 PATTERNS("tex", "^(\\\\((sub)*section|chapter|part)\\*{0,1}\\{.*)$",
 	 "\\\\[a-zA-Z@]+|\\\\.|[a-zA-Z0-9\x80-\xff]+"),
-{ "default", NULL, -1, { NULL, 0 } },
+{ "default", NULL, NULL, -1, { NULL, 0 } },
 };
 #undef PATTERNS
 #undef IPATTERN
@@ -394,6 +394,8 @@ int userdiff_config(const char *k, const char *v)
 		return parse_bool(&drv->textconv_want_cache, k, v);
 	if (!strcmp(type, "wordregex"))
 		return git_config_string(&drv->word_regex, k, v);
+	if (!strcmp(type, "algorithm"))
+		return git_config_string(&drv->algorithm, k, v);
 
 	return 0;
 }
