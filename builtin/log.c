@@ -1007,6 +1007,8 @@ static int git_format_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "format.attach")) {
 		if (value && *value)
 			default_attach = xstrdup(value);
+		else if (value && !*value)
+			FREE_AND_NULL(default_attach);
 		else
 			default_attach = xstrdup(git_version_string);
 		return 0;
