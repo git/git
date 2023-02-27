@@ -1,7 +1,6 @@
 #ifndef REFS_REFS_INTERNAL_H
 #define REFS_REFS_INTERNAL_H
 
-#include "cache.h"
 #include "refs.h"
 #include "iterator.h"
 

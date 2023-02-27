@@ -1,4 +1,5 @@
 #include "builtin.h"
+#include "hex.h"
 #include "parse-options.h"
 #include "tag.h"
 #include "replace-object.h"

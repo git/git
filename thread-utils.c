@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "thread-utils.h"
 
 #if defined(hpux) || defined(__hpux) || defined(_hpux)

@@ -2,9 +2,11 @@
  * The backend-independent part of the reference module.
  */
 
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "config.h"
 #include "hashmap.h"
+#include "hex.h"
 #include "lockfile.h"
 #include "iterator.h"
 #include "refs.h"

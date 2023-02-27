@@ -4,6 +4,8 @@
  * Copyright (c) Junio C Hamano, 2006, 2009
  */
 #include "builtin.h"
+#include "alloc.h"
+#include "hex.h"
 #include "quote.h"
 #include "tree.h"
 #include "parse-options.h"

@@ -1,5 +1,5 @@
-
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "repository.h"
 #include "config.h"
 #include "submodule-config.h"
@@ -7,6 +7,7 @@
 #include "dir.h"
 #include "diff.h"
 #include "commit.h"
+#include "hex.h"
 #include "revision.h"
 #include "run-command.h"
 #include "diffcore.h"

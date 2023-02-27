@@ -1,6 +1,8 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "advice.h"
 #include "config.h"
 #include "color.h"
+#include "gettext.h"
 #include "help.h"
 #include "string-list.h"
 

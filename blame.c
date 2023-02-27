@@ -5,6 +5,7 @@
 #include "mergesort.h"
 #include "diff.h"
 #include "diffcore.h"
+#include "hex.h"
 #include "tag.h"
 #include "blame.h"
 #include "alloc.h"

@@ -1,5 +1,7 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "config.h"
+#include "hex.h"
 #include "remote.h"
 #include "connect.h"
 #include "strbuf.h"

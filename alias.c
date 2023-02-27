@@ -1,6 +1,8 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "alias.h"
+#include "alloc.h"
 #include "config.h"
+#include "gettext.h"
 #include "string-list.h"
 
 struct config_alias_data {

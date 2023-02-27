@@ -1,5 +1,7 @@
 #include "cache.h"
+#include "alloc.h"
 #include "config.h"
+#include "hex.h"
 #include "lockfile.h"
 #include "dir.h"
 #include "object-store.h"

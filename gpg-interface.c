@@ -4,6 +4,7 @@
 #include "run-command.h"
 #include "strbuf.h"
 #include "dir.h"
+#include "ident.h"
 #include "gpg-interface.h"
 #include "sigchain.h"
 #include "tempfile.h"

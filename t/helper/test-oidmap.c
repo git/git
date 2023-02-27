@@ -1,5 +1,6 @@
 #include "test-tool.h"
 #include "cache.h"
+#include "hex.h"
 #include "oidmap.h"
 #include "strbuf.h"
 

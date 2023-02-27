@@ -1,5 +1,6 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
+#include "gettext.h"
 #include "repository.h"
 #include "fsmonitor-ipc.h"
 #include "fsmonitor-settings.h"

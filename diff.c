@@ -2,12 +2,14 @@
  * Copyright (C) 2005 Junio C Hamano
  */
 #include "cache.h"
+#include "alloc.h"
 #include "config.h"
 #include "tempfile.h"
 #include "quote.h"
 #include "diff.h"
 #include "diffcore.h"
 #include "delta.h"
+#include "hex.h"
 #include "xdiff-interface.h"
 #include "color.h"
 #include "attr.h"

@@ -6,8 +6,10 @@
  * This handles basic git object files - packing, unpacking,
  * creation etc.
  */
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "config.h"
+#include "hex.h"
 #include "string-list.h"
 #include "lockfile.h"
 #include "delta.h"

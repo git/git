@@ -1,5 +1,6 @@
 #include "builtin.h"
-#include "cache.h"
+#include "alloc.h"
+#include "hex.h"
 #include "repository.h"
 #include "config.h"
 #include "commit.h"

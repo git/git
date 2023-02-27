@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "hex.h"
 #include "oidmap.h"
 #include "object-store.h"
 #include "replace-object.h"

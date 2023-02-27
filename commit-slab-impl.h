@@ -1,8 +1,6 @@
 #ifndef COMMIT_SLAB_IMPL_H
 #define COMMIT_SLAB_IMPL_H
 
-#include "git-compat-util.h"
-
 #define implement_static_commit_slab(slabname, elemtype) \
 	implement_commit_slab(slabname, elemtype, MAYBE_UNUSED static)
 

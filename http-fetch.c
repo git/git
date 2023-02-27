@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "config.h"
 #include "exec-cmd.h"
+#include "hex.h"
 #include "http.h"
 #include "walker.h"
 #include "strvec.h"

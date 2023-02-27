@@ -1,7 +1,6 @@
 #ifndef TRACE_H
 #define TRACE_H
 
-#include "git-compat-util.h"
 #include "strbuf.h"
 
 /**

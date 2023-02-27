@@ -1,3 +1,4 @@
+#include "git-compat-util.h"
 #include "commit-graph.h"
 #include "repository.h"
 

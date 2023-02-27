@@ -5,6 +5,7 @@
 
 struct rev_info;
 struct commit;
+struct string_list;
 
 /* A range [start,end].  Lines are numbered starting at 0, and the
  * ranges include start but exclude end. */

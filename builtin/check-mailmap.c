@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "config.h"
+#include "ident.h"
 #include "mailmap.h"
 #include "parse-options.h"
 #include "string-list.h"

@@ -1,6 +1,8 @@
 #include "builtin.h"
+#include "alloc.h"
 #include "config.h"
 #include "delta.h"
+#include "hex.h"
 #include "pack.h"
 #include "csum-file.h"
 #include "blob.h"
@@ -14,6 +16,7 @@
 #include "thread-utils.h"
 #include "packfile.h"
 #include "object-store.h"
+#include "replace-object.h"
 #include "promisor-remote.h"
 
 static const char index_pack_usage[] =

@@ -1,7 +1,6 @@
 #ifndef CHUNK_FORMAT_H
 #define CHUNK_FORMAT_H
 
-#include "git-compat-util.h"
 #include "hash.h"
 
 struct hashfile;

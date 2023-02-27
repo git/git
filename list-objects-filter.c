@@ -1,5 +1,7 @@
 #include "cache.h"
+#include "alloc.h"
 #include "dir.h"
+#include "hex.h"
 #include "tag.h"
 #include "commit.h"
 #include "tree.h"

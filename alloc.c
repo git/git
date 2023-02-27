@@ -8,7 +8,7 @@
  * up with maximal alignment because it doesn't know what the object alignment
  * for the new allocation is.
  */
-#include "cache.h"
+#include "git-compat-util.h"
 #include "object.h"
 #include "blob.h"
 #include "tree.h"

@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "pkt-line.h"
+#include "hex.h"
 #include "run-command.h"
 
 char packet_buffer[LARGE_PACKET_MAX];

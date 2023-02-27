@@ -6,8 +6,8 @@
 
 #include "tree-walk.h"
 #include "pathspec.h"
-#include "object.h"
 #include "oidset.h"
+#include "strbuf.h"
 
 /**
  * The diff API is for programs that compare two sets of files (e.g. two trees,
@@ -71,7 +71,6 @@ struct oid_array;
 struct option;
 struct repository;
 struct rev_info;
-struct strbuf;
 struct userdiff_driver;
 
 typedef int (*pathchange_fn_t)(struct diff_options *options,

@@ -1,4 +1,6 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
+#include "hex.h"
 #include "refs.h"
 #include "string-list.h"
 #include "utf8.h"

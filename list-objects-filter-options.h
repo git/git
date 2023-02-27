@@ -1,9 +1,10 @@
 #ifndef LIST_OBJECTS_FILTER_OPTIONS_H
 #define LIST_OBJECTS_FILTER_OPTIONS_H
 
-#include "cache.h"
+#include "object.h"
 #include "parse-options.h"
 #include "string-list.h"
+#include "strbuf.h"
 
 /*
  * The list of defined filters for list-objects.

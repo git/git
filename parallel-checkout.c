@@ -1,6 +1,8 @@
 #include "cache.h"
+#include "alloc.h"
 #include "config.h"
 #include "entry.h"
+#include "hex.h"
 #include "parallel-checkout.h"
 #include "pkt-line.h"
 #include "progress.h"

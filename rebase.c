@@ -1,3 +1,4 @@
+#include "git-compat-util.h"
 #include "rebase.h"
 #include "config.h"
 #include "gettext.h"

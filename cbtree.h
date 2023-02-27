@@ -14,8 +14,6 @@
 #ifndef CBTREE_H
 #define CBTREE_H
 
-#include "git-compat-util.h"
-
 struct cb_node;
 struct cb_node {
 	struct cb_node *child[2];

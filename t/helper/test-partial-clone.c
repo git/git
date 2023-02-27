@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "hex.h"
 #include "test-tool.h"
 #include "repository.h"
 #include "object-store.h"
