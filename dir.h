@@ -212,12 +212,6 @@ struct untracked_cache {
  */
 struct dir_struct {
 
-	/* The number of members in `entries[]` array. */
-	int nr;
-
-	/* The number of members in `ignored[]` array. */
-	int ignored_nr;
-
 	/* bit-field of options */
 	enum {
 
@@ -282,14 +276,20 @@ struct dir_struct {
 		DIR_SKIP_NESTED_GIT = 1<<9
 	} flags;
 
+	/* The number of members in `entries[]` array. */
+	int nr; /* output only */
+
+	/* The number of members in `ignored[]` array. */
+	int ignored_nr; /* output only */
+
 	/* An array of `struct dir_entry`, each element of which describes a path. */
-	struct dir_entry **entries;
+	struct dir_entry **entries; /* output only */
 
 	/**
 	 * used for ignored paths with the `DIR_SHOW_IGNORED_TOO` and
 	 * `DIR_COLLECT_IGNORED` flags.
 	 */
-	struct dir_entry **ignored;
+	struct dir_entry **ignored; /* output only */
 
 	/* Enable/update untracked file cache if set */
 	struct untracked_cache *untracked;
