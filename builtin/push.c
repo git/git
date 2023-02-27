@@ -508,11 +508,6 @@ static int git_push_config(const char *k, const char *v, void *cb)
 {
 	const char *slot_name;
 	int *flags = cb;
-	int status;
-
-	status = git_gpg_config(k, v, NULL);
-	if (status)
-		return status;
 
 	if (!strcmp(k, "push.followtags")) {
 		if (git_config_bool(k, v))

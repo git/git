@@ -603,8 +603,6 @@ static int git_log_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	if (git_gpg_config(var, value, cb) < 0)
-		return -1;
 	return git_diff_ui_config(var, value, cb);
 }
 

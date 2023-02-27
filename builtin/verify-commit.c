@@ -52,14 +52,6 @@ static int verify_commit(const char *name, unsigned flags)
 	return run_gpg_verify((struct commit *)obj, flags);
 }
 
-static int git_verify_commit_config(const char *var, const char *value, void *cb)
-{
-	int status = git_gpg_config(var, value, cb);
-	if (status)
-		return status;
-	return git_default_config(var, value, cb);
-}
-
 int cmd_verify_commit(int argc, const char **argv, const char *prefix)
 {
 	int i = 1, verbose = 0, had_error = 0;
@@ -70,7 +62,7 @@ int cmd_verify_commit(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	git_config(git_verify_commit_config, NULL);
+	git_config(git_default_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, verify_commit_options,
 			     verify_commit_usage, PARSE_OPT_KEEP_ARGV0);

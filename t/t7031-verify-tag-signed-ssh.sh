@@ -200,4 +200,14 @@ test_expect_success GPGSSH 'verifying a forged tag with --format should fail sil
 	test_must_be_empty actual-forged
 '
 
+test_expect_success GPGSSH 'rev-list --format=%G' '
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
+	git rev-list -1 --format="%G? %H" sixth-signed >actual &&
+	cat >expect <<-EOF &&
+	commit $(git rev-parse sixth-signed^0)
+	G $(git rev-parse sixth-signed^0)
+	EOF
+	test_cmp expect actual
+'
+
 test_done

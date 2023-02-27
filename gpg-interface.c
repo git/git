@@ -10,6 +10,18 @@
 #include "tempfile.h"
 #include "alias.h"
 
+static int git_gpg_config(const char *, const char *, void *);
+
+static void gpg_interface_lazy_init(void)
+{
+	static int done;
+
+	if (done)
+		return;
+	done = 1;
+	git_config(git_gpg_config, NULL);
+}
+
 static char *configured_signing_key;
 static const char *ssh_default_key_command, *ssh_allowed_signers, *ssh_revocation_file;
 static enum signature_trust_level configured_min_trust_level = TRUST_UNDEFINED;
@@ -633,6 +645,8 @@ int check_signature(struct signature_check *sigc,
 	struct gpg_format *fmt;
 	int status;
 
+	gpg_interface_lazy_init();
+
 	sigc->result = 'N';
 	sigc->trust_level = -1;
 
@@ -696,11 +710,13 @@ int parse_signature(const char *buf, size_t size, struct strbuf *payload, struct
 
 void set_signing_key(const char *key)
 {
+	gpg_interface_lazy_init();
+
 	free(configured_signing_key);
 	configured_signing_key = xstrdup(key);
 }
 
-int git_gpg_config(const char *var, const char *value, void *cb UNUSED)
+static int git_gpg_config(const char *var, const char *value, void *cb UNUSED)
 {
 	struct gpg_format *fmt = NULL;
 	char *fmtname = NULL;
@@ -889,6 +905,8 @@ static const char *get_ssh_key_id(void) {
 /* Returns a textual but unique representation of the signing key */
 const char *get_signing_key_id(void)
 {
+	gpg_interface_lazy_init();
+
 	if (use_format->get_key_id) {
 		return use_format->get_key_id();
 	}
@@ -899,6 +917,8 @@ const char *get_signing_key_id(void)
 
 const char *get_signing_key(void)
 {
+	gpg_interface_lazy_init();
+
 	if (configured_signing_key)
 		return configured_signing_key;
 	if (use_format->get_default_key) {
@@ -924,6 +944,8 @@ const char *gpg_trust_level_to_str(enum signature_trust_level level)
 
 int sign_buffer(struct strbuf *buffer, struct strbuf *signature, const char *signing_key)
 {
+	gpg_interface_lazy_init();
+
 	return use_format->sign_buffer(buffer, signature, signing_key);
 }
 
