@@ -270,6 +270,9 @@ void credential_write(const struct credential *c, FILE *fp)
 	credential_write_item(fp, "path", c->path, 0);
 	credential_write_item(fp, "username", c->username, 0);
 	credential_write_item(fp, "password", c->password, 0);
+	for (size_t i = 0; i < c->wwwauth_headers.nr; i++)
+		credential_write_item(fp, "wwwauth[]", c->wwwauth_headers.v[i],
+				      0);
 }
 
 static int run_credential_helper(struct credential *c,
