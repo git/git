@@ -2337,7 +2337,7 @@ static int verify_clean_subdirectory(const struct cache_entry *ce,
 
 	memset(&d, 0, sizeof(d));
 	if (o->dir)
-		d.exclude_per_dir = o->dir->exclude_per_dir;
+		setup_standard_excludes(&d);
 	i = read_directory(&d, o->src_index, pathbuf, namelen+1, NULL);
 	dir_clear(&d);
 	free(pathbuf);
