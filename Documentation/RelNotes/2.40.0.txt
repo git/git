@@ -57,6 +57,31 @@ UI, Workflows & Features
  * "git fetch --jobs=0" used to hit a BUG(), which has been corrected
    to use the available CPUs.
 
+ * An invalid label or ref in the "rebase -i" todo file used to
+   trigger an runtime error. SUch an error is now diagnosed while the
+   todo file is parsed.
+
+ * The "diff" drivers specified by the "diff" attribute attached to
+   paths can now specify which algorithm (e.g. histogram) to use.
+
+ * "git range-diff" learned --abbrev=<num> option.
+
+ * "git archive HEAD^{tree}" records the paths with the current
+   timestamp in the archive, making it harder to obtain a stable
+   output.  The command learned the --mtime option to specify an
+   arbitrary timestamp (e.g. --mtime="@0 +0000" for the epoch).
+
+ * The credential subsystem learned that a password may have an
+   explicit expiration.
+
+ * The format.attach configuration variable lacked a way to override a
+   value defined in a lower-priority configuration file (e.g. the
+   system one) by redefining it in a higher-priority configuration
+   file.  Now, setting format.attach to an empty string means show the
+   patch inline in the e-mail message, without using MIME attachment.
+
+   This is a backward incompatible change.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -251,6 +276,11 @@ Fixes since v2.39
    xwrite() wrapper appropriately.
    (merge 58eab6ff13 jc/genzeros-avoid-raw-write later to maint).
 
+ * sscanf(3) used in "git symbolic-ref --short" implementation found
+   to be not working reliably on macOS in UTF-8 locales.  Rewrite the
+   code to avoid sscanf() altogether to work it around.
+   (merge 613bef56b8 jk/shorten-unambiguous-ref-wo-sscanf later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 4eb1ccecd4 dh/mingw-ownership-check-typofix later to maint).
    (merge f95526419b ar/typofix-gitattributes-doc later to maint).
@@ -278,3 +308,4 @@ Fixes since v2.39
    (merge 3eb1e1ca9a ab/config-h-remove-unused later to maint).
    (merge d390e08076 cw/doc-pushurl-vs-url later to maint).
    (merge 567342fc77 rs/ctype-test later to maint).
+   (merge d35d8f2e7a ap/t2015-style-update later to maint).
