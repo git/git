@@ -54,24 +54,8 @@
  *   and ITER_ERROR is returned immediately. In both cases, a meaningful
  *   warning is emitted. Note: ENOENT errors are always ignored so that
  *   the API users may remove files during iteration.
- *
- * - DIR_ITERATOR_FOLLOW_SYMLINKS: make dir-iterator follow symlinks.
- *   i.e., linked directories' contents will be iterated over and
- *   iter->base.st will contain information on the referred files,
- *   not the symlinks themselves, which is the default behavior. Broken
- *   symlinks are ignored.
- *
- *   Note: setting DIR_ITERATOR_FOLLOW_SYMLINKS affects resolving the
- *   starting path as well (e.g., attempting to iterate starting at a
- *   symbolic link pointing to a directory without FOLLOW_SYMLINKS will
- *   result in an error).
- *
- * Warning: circular symlinks are also followed when
- * DIR_ITERATOR_FOLLOW_SYMLINKS is set. The iteration may end up with
- * an ELOOP if they happen and DIR_ITERATOR_PEDANTIC is set.
  */
 #define DIR_ITERATOR_PEDANTIC (1 << 0)
-#define DIR_ITERATOR_FOLLOW_SYMLINKS (1 << 1)
 
 struct dir_iterator {
 	/* The current path: */
@@ -88,9 +72,7 @@ struct dir_iterator {
 	const char *basename;
 
 	/*
-	 * The result of calling lstat() on path; or stat(), if the
-	 * DIR_ITERATOR_FOLLOW_SYMLINKS flag was set at
-	 * dir_iterator's initialization.
+	 * The result of calling lstat() on path.
 	 */
 	struct stat st;
 };
