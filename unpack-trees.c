@@ -1873,6 +1873,8 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		die("unpack_trees takes at most %d trees", MAX_UNPACK_TREES);
 	if (o->dir)
 		BUG("o->dir is for internal use only");
+	if (o->pl)
+		BUG("o->pl is for internal use only");
 
 	trace_performance_enter();
 	trace2_region_enter("unpack_trees", "unpack_trees", the_repository);
@@ -1899,7 +1901,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 
 	if (!core_apply_sparse_checkout || !o->update)
 		o->skip_sparse_checkout = 1;
-	if (!o->skip_sparse_checkout && !o->pl) {
+	if (!o->skip_sparse_checkout) {
 		memset(&pl, 0, sizeof(pl));
 		free_pattern_list = 1;
 		populate_from_existing_patterns(o, &pl);
@@ -2113,8 +2115,6 @@ enum update_sparsity_result update_sparsity(struct unpack_trees_options *o)
 		memset(&pl, 0, sizeof(pl));
 		free_pattern_list = 1;
 		populate_from_existing_patterns(o, &pl);
-		if (o->skip_sparse_checkout)
-			goto skip_sparse_checkout;
 	}
 
 	/* Expand sparse directories as needed */
@@ -2142,7 +2142,6 @@ enum update_sparsity_result update_sparsity(struct unpack_trees_options *o)
 			ret = UPDATE_SPARSITY_WARNINGS;
 	}
 
-skip_sparse_checkout:
 	if (check_updates(o, o->src_index))
 		ret = UPDATE_SPARSITY_WORKTREE_UPDATE_FAILURES;
 
