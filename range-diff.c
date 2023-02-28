@@ -383,7 +383,7 @@ static void output_pair_header(struct diff_options *diffopt,
 	const char *color_new = diff_get_color_opt(diffopt, DIFF_FILE_NEW);
 	const char *color_commit = diff_get_color_opt(diffopt, DIFF_COMMIT);
 	const char *color;
-	char abbrev = diffopt->abbrev;
+	int abbrev = diffopt->abbrev;
 
 	if (abbrev < 0)
 		abbrev = DEFAULT_ABBREV;
