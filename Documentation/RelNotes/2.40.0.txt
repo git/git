@@ -281,6 +281,15 @@ Fixes since v2.39
    code to avoid sscanf() altogether to work it around.
    (merge 613bef56b8 jk/shorten-unambiguous-ref-wo-sscanf later to maint).
 
+ * Various fix-ups on HTTP tests.
+   (merge 8f2146dbf1 jk/http-test-fixes later to maint).
+
+ * Fixes to code that parses the todo file used in "rebase -i".
+   (merge 666b6e1135 pw/rebase-i-parse-fix later to maint).
+
+ * Test library clean-up.
+   (merge c600a91c94 ar/test-lib-remove-stale-comment later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 4eb1ccecd4 dh/mingw-ownership-check-typofix later to maint).
    (merge f95526419b ar/typofix-gitattributes-doc later to maint).
