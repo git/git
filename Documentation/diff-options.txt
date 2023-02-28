@@ -173,6 +173,10 @@ endif::git-log[]
 
 --anchored=<text>::
 	Generate a diff using the "anchored diff" algorithm.
+
+--attr-source=<commit>::
+	Specify a commit to read gitattributes from when using a bare
+	repository when defining external drivers, or internal algorithms.
 +
 This option may be specified more than once.
 +

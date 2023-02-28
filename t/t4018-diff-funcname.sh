@@ -63,6 +63,7 @@ do
 		test_i18ngrep ! fatal msg &&
 		test_i18ngrep ! error msg
 	'
+
 	test_expect_success "builtin $p pattern compiles on bare repo" '
 		test_when_finished "rm -rf bare.git" &&
 		echo "*.java diff=$p" >.gitattributes &&
@@ -71,6 +72,23 @@ do
 		git clone --bare --no-local . bare.git &&
 		test_expect_code 1 git -C bare.git diff --exit-code \
 			HEAD:A.java HEAD:B.java 2>msg &&
+		test_i18ngrep ! fatal msg &&
+		test_i18ngrep ! error msg
+	'
+	test_expect_success "builtin $p pattern compiles on bare repo with --attr-source" '
+		test_when_finished "rm -rf bare.git" &&
+		git checkout -B master &&
+		echo "*.java diff=notexist" > .gitattributes &&
+		git add .gitattributes &&
+		git commit -am "changing gitattributes" &&
+		git checkout -B branchA &&
+		echo "*.java diff=$p" >.gitattributes &&
+		git add .gitattributes &&
+		git commit -am "changing gitattributes" &&
+		git clone --bare --no-local . bare.git &&
+		git -C bare.git symbolic-ref HEAD refs/heads/master &&
+		test_expect_code 1 git -C bare.git diff --exit-code \
+			--attr-source branchA HEAD:A.java HEAD:B.java 2>msg &&
 		test_i18ngrep ! fatal msg &&
 		test_i18ngrep ! error msg
 	'
