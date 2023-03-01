@@ -51,6 +51,7 @@ test_expect_success 'setup' '
 	body
 	EOF
 
+	test_commit initial &&
 	test_commit A A &&
 	test_commit B B &&
 	get_author HEAD >expected-author &&
@@ -207,6 +208,31 @@ test_expect_success 'fixup -C works upon --autosquash with amend!' '
 	test_cmp_rev HEAD^ A &&
 	test_cmp "$TEST_DIRECTORY/t3437/expected-squash-message" \
 		actual-squash-message
+'
+
+test_expect_success 'fixup -[Cc]<commit> works' '
+	test_when_finished "test_might_fail git rebase --abort" &&
+	cat >todo <<-\EOF &&
+	pick A
+	fixup -CA1
+	pick B
+	fixup -cA2
+	EOF
+	(
+		set_replace_editor todo &&
+		FAKE_COMMIT_MESSAGE="edited and fixed up" \
+			git rebase -i initial initial
+	) &&
+	git log --pretty=format:%B initial.. >actual &&
+	cat >expect <<-EOF &&
+	edited and fixed up
+	$EMPTY
+	new subject
+	$EMPTY
+	new
+	body
+	EOF
+	test_cmp expect actual
 '
 
 test_done
