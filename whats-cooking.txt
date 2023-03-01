@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2023, #05; Fri, 24)
-X-master-at: c5f7ef5fdc2d60af86669931829e4da57e2eed68
-X-next-at: c4246ad0f009a06c1700b2eed4428c9737325f67
+Subject: What's cooking in git.git (Mar 2023, #01; Wed, 1)
+X-master-at: ef7d4f53c2fd9e8186d093dea6d45a91ce57110e
+X-next-at: e12885d4f5a6a5e9a900ddf12ad1635bcc81869b
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Feb 2023, #05; Fri, 24)
+What's cooking in git.git (Mar 2023, #01; Wed, 1)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -14,11 +14,8 @@ release).  Commits prefixed with '-' are only in 'seen', and aren't
 considered "accepted" at all.  A topic without enough support may be
 discarded after a long period of no activity.
 
-We are at Git 2.40-rc0 as of today.  There are a handful of topics
-still cooking in 'next', and more topics that we have seen but
-haven't hit 'next' yet.  Many of the former are expected to be in
--rc1 while many of the latter are expected to wait for the next
-cycle.
+I just tagged Git 2.40-rc1; from here on, let's concentrate on
+finding and fixing regressions relative to Git 2.39.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -49,171 +46,295 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* jc/genzeros-avoid-raw-write (2023-02-16) 1 commit
-  (merged to 'next' on 2023-02-22 at a60fe69bce)
- + test-genzeros: avoid raw write(2)
-
- A test helper had a single write(2) of 256kB, which was too big for
- some platforms (e.g. NonStop), which has been corrected by using
- xwrite() wrapper appropriately.
- source: <xmqqo7putj1t.fsf_-_@gitster.g>
-
-
-* js/gpg-errors (2023-02-15) 2 commits
-  (merged to 'next' on 2023-02-16 at 510898ff10)
- + gpg: do show gpg's error message upon failure
- + t7510: add a test case that does not need gpg
-
- Error messages given upon a signature verification failure used to
- discard the errors from underlying gpg program, which has been
- corrected.
- source: <pull.1480.git.1676440714.gitgitgadget@gmail.com>
-
-
-* rd/doc-default-date-format (2023-02-15) 1 commit
-  (merged to 'next' on 2023-02-22 at 3818705ca9)
- + rev-list: clarify git-log default date format
-
- Update --date=default documentation.
- source: <xmqqcz6av3ta.fsf_-_@gitster.g>
-
-
-* rs/ctype-test (2023-02-13) 3 commits
-  (merged to 'next' on 2023-02-15 at 279f198dec)
- + test-ctype: test iscntrl, ispunct, isxdigit and isprint
- + test-ctype: test islower and isupper
- + test-ctype: test isascii
-
- Test safe_ctype
- source: <81eee04b-598e-dfe1-f954-3105bcbcb2f2@web.de>
-
---------------------------------------------------
 [New Topics]
 
-* ah/rebase-merges-config (2023-02-23) 3 commits
- - rebase: add a config option for --rebase-merges
- - rebase: stop accepting --rebase-merges=""
- - rebase: add documentation and test for --no-rebase-merges
+* ak/restore-both-incompatible-with-conflicts (2023-02-27) 1 commit
+ - restore: fault --staged --worktree with merge opts
 
- Streamline --rebase-merges command line option handling and
- introduce rebase.merges configuration variable.
+ "git restore" supports options like "--ours" that are only
+ meaningful during a conflicted merge, but these options are only
+ meaningful when updating the working tree files.  These options are
+ marked to be incompatible when both "--staged" and "--worktree" are
+ in effect.
 
- On Hold.
- cf. <b4be9cb3-c24b-4377-bab3-5d53035efdf8@gmx.de>
- source: <20230223053410.644503-3-alexhenrie24@gmail.com>
-
-
-* en/dir-api-cleanup (2023-02-23) 11 commits
- - unpack-trees: add usage notices around df_conflict_entry
- - unpack-trees: special case read-tree debugging as internal usage
- - unpack-trees: rewrap a few overlong lines from previous patch
- - unpack-trees: mark fields only used internally as internal
- - unpack_trees: start splitting internal fields from public API
- - sparse-checkout: avoid using internal API of unpack-trees, take 2
- - sparse-checkout: avoid using internal API of unpack-trees
- - unpack-trees: clean up some flow control
- - dir: mark output only fields of dir_struct as such
- - dir: add a usage note to exclude_per_dir
- - dir: separate public from internal portion of dir_struct
-
- source: <pull.1149.git.1677143700.gitgitgadget@gmail.com>
+ Comments?
+ source: <20230226184354.221-1-andy.koppe@gmail.com>
 
 
-* en/header-cleanup (2023-02-23) 17 commits
- - diff.h: remove unnecessary include of object.h
- - Remove unnecessary includes of builtin.h
- - treewide: replace cache.h with more direct headers, where possible
- - replace-object.h: move read_replace_refs declaration from cache.h to here
- - object-store.h: move struct object_info from cache.h
- - dir.h: refactor to no longer need to include cache.h
- - object.h: stop depending on cache.h; make cache.h depend on object.h
- - ident.h: move ident-related declarations out of cache.h
- - pretty.h: move has_non_ascii() declaration from commit.h
- - cache.h: remove dependence on hex.h; make other files include it explicitly
- - hex.h: move some hex-related declarations from cache.h
- - hash.h: move some oid-related declarations from cache.h
- - alloc.h: move ALLOC_GROW() functions from cache.h
- - treewide: remove unnecessary cache.h includes in source files
- - treewide: remove unnecessary cache.h includes
- - treewide: remove unnecessary git-compat-util.h includes in headers
- - treewide: ensure one of the appropriate headers is sourced first
+* ew/fetch-hiderefs (2023-02-27) 1 commit
+  (merged to 'next' on 2023-03-01 at 6a7eece733)
+ + fetch: support hideRefs to speed up connectivity checks
 
- source: <pull.1485.v2.git.1677197376.gitgitgadget@gmail.com>
+ A new "fetch.hideRefs" option can be used to exclude specified refs
+ from "rev-list --objects --stdin --not --all" traversal for
+ checking object connectivity, most useful when there are many
+ unrelated histories in a single repository.
+
+ Will cook in 'next'.
+ source: <20230212090426.M558990@dcvr>
+
+
+* zh/push-to-delete-onelevel-ref (2023-03-01) 2 commits
+ - push: allow delete single-level ref
+ - receive-pack: fix funny ref error messsage
+
+ "git push" has been taught to allow deletion of refs with one-level
+ names to help repairing a repository who acquired such a ref by
+ mistake.  In general, we don't encourage use of such a ref, and
+ creation or update to such a ref is rejected as before.
+
+ Comments?
+ source: <pull.1465.v4.git.1677666029.gitgitgadget@gmail.com>
+
+
+* fz/rebase-msg-update (2023-02-27) 1 commit
+  (merged to 'next' on 2023-03-01 at f28c0df111)
+ + rebase: fix capitalisation autoSquash in i18n string
+
+ Message update.
+
+ Will cook in 'next'.
+ source: <pull.1462.git.git.1677434429160.gitgitgadget@gmail.com>
+
+
+* gm/signature-format-doc (2023-02-27) 1 commit
+  (merged to 'next' on 2023-03-01 at 19f9ce8c40)
+ + signature-format.txt: note SSH and X.509 signature delimiters
+
+ Doc update.
+
+ Will cook in 'next'.
+ source: <20230227202718.173698-1-gwymor@tilde.club>
+
+
+* my/wildmatch-cleanups (2023-02-27) 5 commits
+ - wildmatch: more cleanups after killing uchar
+ - wildmatch: use char instead of uchar
+ - wildmatch: remove NEGATE_CLASS(2) macros with trivial refactoring
+ - wildmatch: remove IS*() macros
+ - git-compat-util: add isblank() and isgraph()
+
+ Code clean-up.
+
+ Comments?
+ source: <20230226115021.1681834-1-masahiroy@kernel.org>
+
+
+* rs/range-diff-custom-abbrev-fix (2023-02-28) 1 commit
+  (merged to 'next' on 2023-02-28 at 82f1929a15)
+ + range-diff: avoid compiler warning when char is unsigned
+
+ Hotfix for a topic that is already in 'master'.
+
+ Will merge to 'master'.
+ source: <1156586e-9dbe-335e-7e33-74eea7913e86@web.de>
+
+
+* cw/forbid-use-of-gitlink-outside-submodules (2023-02-28) 6 commits
+ . add: reject nested repositories
+ . tests: remove duplicate .gitmodules path
+ . tests: use `git submodule add` and fix expected status
+ . tests: use `git submodule add` and fix expected diffs
+ . tests: Use `git submodule add` instead of `git add`
+ . t4041, t4060: modernize test style
+
+ Forbid "git add dir" from adding a gitlink to the index.
+
+ Comments?
+ Seems to break tests when merged to 'seen'.
+ source: <20230228185253.2356546-1-calvinwan@google.com>
+
+--------------------------------------------------
+[Graduated to 'master']
+
+* ap/t2015-style-update (2023-02-21) 1 commit
+  (merged to 'next' on 2023-02-22 at 40883b85c7)
+ + t2015-checkout-unborn.sh: changes the style for cd
+
+ Test clean-up.
+ source: <20230218192128.7963-1-ashutosh.pandeyhlr007@gmail.com>
+
+
+* ar/test-lib-remove-stale-comment (2023-02-27) 1 commit
+  (merged to 'next' on 2023-02-27 at d948667d2d)
+ + test-lib: drop comment about test_description
+
+ Test library clean-up.
+ source: <20230226105303.55033-1-rybak.a.v@gmail.com>
+
+
+* if/simplify-trace-setup (2023-02-21) 1 commit
+  (merged to 'next' on 2023-02-24 at 9c8e690f3d)
+ + trace.c, git.c: remove unnecessary parameter to trace_repo_setup()
+
+ Code clean-up.
+ source: <20230219002527.84315-1-mcsm224@gmail.com>
+
+
+* jc/countermand-format-attach (2023-02-17) 1 commit
+  (merged to 'next' on 2023-02-24 at 709ed91a7c)
+ + format.attach: allow empty value to disable multi-part messages
+
+ The format.attach configuration variable lacked a way to override a
+ value defined in a lower-priority configuration file (e.g. the
+ system one) by redefining it in a higher-priority configuration
+ file.  Now, setting format.attach to an empty string means show the
+ patch inline in the e-mail message, without using MIME attachment.
+
+ This is a backward incompatible change.
+ source: <xmqqwn4fkgtq.fsf@gitster.g>
+
+
+* jc/diff-algo-attribute (2023-02-21) 2 commits
+  (merged to 'next' on 2023-02-22 at 2375640330)
+ + diff: teach diff to read algorithm from diff driver
+ + diff: consolidate diff algorithm option parsing
+
+ The "diff" drivers specified by the "diff" attribute attached to
+ paths can now specify which algorithm (e.g. histogram) to use.
+ source: <pull.1452.v4.git.git.1676927082.gitgitgadget@gmail.com>
+
+
+* jk/http-proxy-tests (2023-02-16) 1 commit
+  (merged to 'next' on 2023-02-22 at f1f69d188f)
+ + add basic http proxy tests
+
+ Test updates.
+ source: <Y+6YgALh6L9m6rSX@coredump.intra.peff.net>
 
 
 * jk/http-test-fixes (2023-02-23) 16 commits
- - t5559: make SSL/TLS the default
- - t5559: fix test failures with LIB_HTTPD_SSL
- - t/lib-httpd: enable HTTP/2 "h2" protocol, not just h2c
- - t/lib-httpd: respect $HTTPD_PROTO in expect_askpass()
- - t5551: drop curl trace lines without headers
- - t5551: handle v2 protocol in cookie test
- - t5551: simplify expected cookie file
- - t5551: handle v2 protocol in upload-pack service test
- - t5551: handle v2 protocol when checking curl trace
- - t5551: stop forcing clone to run with v0 protocol
- - t5551: handle HTTP/2 when checking curl trace
- - t5551: lower-case headers in expected curl trace
- - t5551: drop redundant grep for Accept-Language
- - t5541: simplify and move "no empty path components" test
- - t5541: stop marking "used receive-pack service" test as v0 only
- - t5541: run "used receive-pack service" test earlier
+  (merged to 'next' on 2023-02-24 at 8f3d70acc4)
+ + t5559: make SSL/TLS the default
+ + t5559: fix test failures with LIB_HTTPD_SSL
+ + t/lib-httpd: enable HTTP/2 "h2" protocol, not just h2c
+ + t/lib-httpd: respect $HTTPD_PROTO in expect_askpass()
+ + t5551: drop curl trace lines without headers
+ + t5551: handle v2 protocol in cookie test
+ + t5551: simplify expected cookie file
+ + t5551: handle v2 protocol in upload-pack service test
+ + t5551: handle v2 protocol when checking curl trace
+ + t5551: stop forcing clone to run with v0 protocol
+ + t5551: handle HTTP/2 when checking curl trace
+ + t5551: lower-case headers in expected curl trace
+ + t5551: drop redundant grep for Accept-Language
+ + t5541: simplify and move "no empty path components" test
+ + t5541: stop marking "used receive-pack service" test as v0 only
+ + t5541: run "used receive-pack service" test earlier
 
+ Various fix-ups on HTTP tests.
  source: <Y/dEYYWKy/o96vBG@coredump.intra.peff.net>
 
 
-* pw/rebase-i-parse-fix (2023-02-23) 2 commits
- - rebase -i: fix parsing of "fixup -C<commit>"
- - rebase -i: match whole word in is_command()
+* jk/shorten-unambiguous-ref-wo-sscanf (2023-02-15) 3 commits
+  (merged to 'next' on 2023-02-24 at 12ca5684f0)
+ + shorten_unambiguous_ref(): avoid sscanf()
+ + shorten_unambiguous_ref(): use NUM_REV_PARSE_RULES constant
+ + shorten_unambiguous_ref(): avoid integer truncation
 
+ sscanf(3) used in "git symbolic-ref --short" implementation found
+ to be not working reliably on macOS in UTF-8 locales.  Rewrite the
+ code to avoid sscanf() altogether to work it around.
+ source: <Y+z3MtgayoXsxaHA@coredump.intra.peff.net>
+
+
+* ma/fetch-parallel-use-online-cpus (2023-02-21) 1 commit
+  (merged to 'next' on 2023-02-22 at 756d379bf0)
+ + fetch: choose a sensible default with --jobs=0 again
+
+ "git fetch --jobs=0" used to hit a BUG(), which has been corrected
+ to use the available CPUs.
+ source: <pull.1483.git.1676928805555.gitgitgadget@gmail.com>
+
+
+* mh/credential-password-expiry (2023-02-22) 1 commit
+  (merged to 'next' on 2023-02-24 at dbff7db22a)
+ + credential: new attribute password_expiry_utc
+
+ The credential subsystem learned that a password may have an
+ explicit expiration.
+ source: <pull.1443.v4.git.git.1676701977347.gitgitgadget@gmail.com>
+
+
+* ps/free-island-marks (2023-02-21) 1 commit
+  (merged to 'next' on 2023-02-22 at f46938bce3)
+ + delta-islands: fix segfault when freeing island marks
+
+ Fix on a previous fix already in 'master'.
+ source: <61e490595b80b34c55fd640e093e021ff6fa9591.1676542973.git.ps@pks.im>
+
+
+* pw/rebase-i-parse-fix (2023-02-23) 2 commits
+  (merged to 'next' on 2023-02-24 at 5a2a2569eb)
+ + rebase -i: fix parsing of "fixup -C<commit>"
+ + rebase -i: match whole word in is_command()
+
+ Fixes to code that parses the todo file used in "rebase -i".
  source: <pull.1486.git.1677185701.gitgitgadget@gmail.com>
 
 
-* zy/t9700-style (2023-02-23) 3 commits
- - t9700: delete whitespaces after redirect operators
- - t9700: change indents to TAB
- - t9700: fix title style
+* pw/rebase-i-validate-labels-early (2023-02-21) 1 commit
+  (merged to 'next' on 2023-02-22 at 9b37d42d24)
+ + rebase -i: check labels and refs when parsing todo list
 
- source: <20230223141520.1967625-1-18994118902@163.com>
-
-
-* jk/fsck-indices-in-worktrees (2023-02-24) 3 commits
- - fsck: mention file path for index errors
- - fsck: check index files in all worktrees
- - fsck: factor out index fsck
-
- source: <Y/hv0MXAyBY3HEo9@coredump.intra.peff.net>
+ An invalid label or ref in the "rebase -i" todo file used to
+ trigger an runtime error. SUch an error is now diagnosed while the
+ todo file is parsed.
+ source: <pull.1482.v2.git.1676902774366.gitgitgadget@gmail.com>
 
 
-* jk/unused-post-2.39-part2 (2023-02-24) 21 commits
- - help: mark unused parameter in git_unknown_cmd_config()
- - run_processes_parallel: mark unused callback parameters
- - userformat_want_item(): mark unused parameter
- - for_each_commit_graft(): mark unused callback parameter
- - rewrite_parents(): mark unused callback parameter
- - fetch-pack: mark unused parameter in callback function
- - notes: mark unused callback parameters
- - prio-queue: mark unused parameters in comparison functions
- - for_each_object: mark unused callback parameters
- - list-objects: mark unused callback parameters
- - mark unused parameters in signal handlers
- - run-command: mark error routine parameters as unused
- - mark "pointless" data pointers in callbacks
- - ref-filter: mark unused callback parameters
- - http-backend: mark unused parameters in virtual functions
- - http-backend: mark argc/argv unused
- - object-name: mark unused parameters in disambiguate callbacks
- - serve: mark unused parameters in virtual functions
- - serve: use repository pointer to get config
- - ls-refs: drop config caching
- - ref-filter: drop unused atom parameter from get_worktree_path()
+* rs/archive-mtime (2023-02-18) 1 commit
+  (merged to 'next' on 2023-02-24 at 34869696a2)
+ + archive: add --mtime
 
- source: <Y/habYJxDRJQg/kJ@coredump.intra.peff.net>
+ "git archive HEAD^{tree}" records the paths with the current
+ timestamp in the archive, making it harder to obtain a stable
+ output.  The command learned the --mtime option to specify an
+ arbitrary timestamp (e.g. --mtime="@0 +0000" for the epoch).
+ source: <91a73f5d-ca3e-6cb0-4ba3-38d703074ee6@web.de>
+
+
+* tb/drop-dir-iterator-follow-symlink-bit (2023-02-16) 2 commits
+  (merged to 'next' on 2023-02-22 at 785e1f323e)
+ + t0066: drop setup of "dir5"
+ + dir-iterator: drop unused `DIR_ITERATOR_FOLLOW_SYMLINKS`
+
+ Remove leftover and unused code.
+ source: <9bb10b607e46f867a3f8f5c71abf13c990d1ecfe.1676572031.git.me@ttaylorr.com>
+ source: <CAGdrTFhHBU2BNYdYr7LbOS7i1LOHGjWLw_d5ZJAXxvTKyLiFCA@mail.gmail.com>
+
+
+* tl/range-diff-custom-abbrev (2023-02-21) 1 commit
+  (merged to 'next' on 2023-02-22 at 49db7cce13)
+ + range-diff: let '--abbrev' option takes effect
+
+ "git range-diff" learned --abbrev=<num> option.
+ source: <20230220142444.18739-2-tenglong.tl@alibaba-inc.com>
+
+
+* zy/t9700-style (2023-02-25) 1 commit
+  (merged to 'next' on 2023-02-27 at 6c52b8ebb2)
+ + t9700: modernize test scripts
+
+ Test style fixes.
+ source: <20230225013003.1971931-1-18994118902@163.com>
 
 --------------------------------------------------
 [Stalled]
+
+* ed/fsmonitor-inotify (2022-12-13) 6 commits
+ - fsmonitor: update doc for Linux
+ - fsmonitor: test updates
+ - fsmonitor: enable fsmonitor for Linux
+ - fsmonitor: implement filesystem change listener for Linux
+ - fsmonitor: determine if filesystem is local or remote
+ - fsmonitor: prepare to share code between Mac OS and Linux
+
+ Bundled fsmonitor for Linux using inotify API.
+
+ What's the status of this one?
+ source: <pull.1352.v5.git.git.1670882286.gitgitgadget@gmail.com>
+
 
 * ja/worktree-orphan (2023-01-13) 4 commits
  - worktree add: add hint to direct users towards --orphan
@@ -229,15 +350,16 @@ Release tarballs are available at:
  source: <20230109173227.29264-1-jacobabel@nullpo.dev>
 
 
-* tl/notes--blankline (2023-02-23) 3 commits
- . notes.c: introduce '--separator=<paragraph-break>' option
- . notes.c: cleanup for "designated init"
- . notes.c: cleanup 'strbuf_grow' call in 'append_edit'
+* tl/notes--blankline (2023-02-24) 4 commits
+ - SQUASH??? leakfix
+ - notes.c: introduce '--separator=<paragraph-break>' option
+ - notes.c: cleanup for "designated init"
+ - notes.c: cleanup 'strbuf_grow' call in 'append_edit'
 
  'git notes append' was taught '--separator' to specify string to insert
  between paragraphs.
 
- Leaky???
+ Expecting further updates on -c/-C.
  source: <cover.1677136319.git.dyroneteng@gmail.com>
 
 
@@ -255,20 +377,6 @@ Release tarballs are available at:
  cf. <xmqqzgb5jz5c.fsf@gitster.g>
  cf. <xmqqsfgxjugi.fsf@gitster.g>
  source: <cover-0.4-00000000000-20221118T113442Z-avarab@gmail.com>
-
-
-* ed/fsmonitor-inotify (2022-12-13) 6 commits
- - fsmonitor: update doc for Linux
- - fsmonitor: test updates
- - fsmonitor: enable fsmonitor for Linux
- - fsmonitor: implement filesystem change listener for Linux
- - fsmonitor: determine if filesystem is local or remote
- - fsmonitor: prepare to share code between Mac OS and Linux
-
- Bundled fsmonitor for Linux using inotify API.
-
- Needs review on the updated round.
- source: <pull.1352.v5.git.git.1670882286.gitgitgadget@gmail.com>
 
 
 * jc/spell-id-in-both-caps-in-message-id (2022-12-17) 1 commit
@@ -305,144 +413,111 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
-* jc/diff-algo-attribute (2023-02-21) 2 commits
-  (merged to 'next' on 2023-02-22 at 2375640330)
- + diff: teach diff to read algorithm from diff driver
- + diff: consolidate diff algorithm option parsing
+* ah/rebase-merges-config (2023-02-25) 3 commits
+ - rebase: add a config option for --rebase-merges
+ - rebase: deprecate --rebase-merges=""
+ - rebase: add documentation and test for --no-rebase-merges
 
- The "diff" drivers specified by the "diff" attribute attached to
- paths can now specify which algorithm (e.g. histogram) to use.
+ Streamline --rebase-merges command line option handling and
+ introduce rebase.merges configuration variable.
 
- Will merge to 'master'.
- source: <pull.1452.v4.git.git.1676927082.gitgitgadget@gmail.com>
-
-
-* jk/shorten-unambiguous-ref-wo-sscanf (2023-02-15) 3 commits
-  (merged to 'next' on 2023-02-24 at 12ca5684f0)
- + shorten_unambiguous_ref(): avoid sscanf()
- + shorten_unambiguous_ref(): use NUM_REV_PARSE_RULES constant
- + shorten_unambiguous_ref(): avoid integer truncation
-
- sscanf(3) used in "git symbolic-ref --short" implementation found
- to be not working reliably on macOS in UTF-8 locales.  Rewrite the
- code to avoid sscanf() altogether to work it around.
-
- Will merge to 'master'.
- source: <Y+z3MtgayoXsxaHA@coredump.intra.peff.net>
+ On hold.
+ cf. <b4be9cb3-c24b-4377-bab3-5d53035efdf8@gmx.de>
+ source: <20230225180325.796624-1-alexhenrie24@gmail.com>
 
 
-* jk/http-proxy-tests (2023-02-16) 1 commit
-  (merged to 'next' on 2023-02-22 at f1f69d188f)
- + add basic http proxy tests
+* en/dir-api-cleanup (2023-02-27) 13 commits
+  (merged to 'next' on 2023-02-27 at 434ac6b592)
+ + unpack-trees: add usage notices around df_conflict_entry
+ + unpack-trees: special case read-tree debugging as internal usage
+ + unpack-trees: rewrap a few overlong lines from previous patch
+ + unpack-trees: mark fields only used internally as internal
+ + unpack_trees: start splitting internal fields from public API
+ + sparse-checkout: avoid using internal API of unpack-trees, take 2
+ + sparse-checkout: avoid using internal API of unpack-trees
+ + unpack-trees: clean up some flow control
+ + dir: mark output only fields of dir_struct as such
+ + dir: add a usage note to exclude_per_dir
+ + dir: separate public from internal portion of dir_struct
+ + unpack-trees: heed requests to overwrite ignored files
+ + t2021: fix platform-specific leftover cruft
 
- Test updates.
+ Code clean-up to clarify directory traversal API.
 
- Will merge to 'master'.
- source: <Y+6YgALh6L9m6rSX@coredump.intra.peff.net>
-
-
-* ps/free-island-marks (2023-02-21) 1 commit
-  (merged to 'next' on 2023-02-22 at f46938bce3)
- + delta-islands: fix segfault when freeing island marks
-
- Fix on a previous fix already in 'master'.
-
- Will merge to 'master'.
- source: <61e490595b80b34c55fd640e093e021ff6fa9591.1676542973.git.ps@pks.im>
-
-
-* tb/drop-dir-iterator-follow-symlink-bit (2023-02-16) 2 commits
-  (merged to 'next' on 2023-02-22 at 785e1f323e)
- + t0066: drop setup of "dir5"
- + dir-iterator: drop unused `DIR_ITERATOR_FOLLOW_SYMLINKS`
-
- Remove leftover and unused code.
-
- Will merge to 'master'.
- source: <9bb10b607e46f867a3f8f5c71abf13c990d1ecfe.1676572031.git.me@ttaylorr.com>
- source: <CAGdrTFhHBU2BNYdYr7LbOS7i1LOHGjWLw_d5ZJAXxvTKyLiFCA@mail.gmail.com>
+ Will cook in 'next'.
+ source: <pull.1149.v3.git.1677511700.gitgitgadget@gmail.com>
 
 
-* jc/countermand-format-attach (2023-02-17) 1 commit
-  (merged to 'next' on 2023-02-24 at 709ed91a7c)
- + format.attach: allow empty value to disable multi-part messages
+* en/header-cleanup (2023-02-23) 17 commits
+  (merged to 'next' on 2023-02-27 at f4a3707530)
+ + diff.h: remove unnecessary include of object.h
+ + Remove unnecessary includes of builtin.h
+ + treewide: replace cache.h with more direct headers, where possible
+ + replace-object.h: move read_replace_refs declaration from cache.h to here
+ + object-store.h: move struct object_info from cache.h
+ + dir.h: refactor to no longer need to include cache.h
+ + object.h: stop depending on cache.h; make cache.h depend on object.h
+ + ident.h: move ident-related declarations out of cache.h
+ + pretty.h: move has_non_ascii() declaration from commit.h
+ + cache.h: remove dependence on hex.h; make other files include it explicitly
+ + hex.h: move some hex-related declarations from cache.h
+ + hash.h: move some oid-related declarations from cache.h
+ + alloc.h: move ALLOC_GROW() functions from cache.h
+ + treewide: remove unnecessary cache.h includes in source files
+ + treewide: remove unnecessary cache.h includes
+ + treewide: remove unnecessary git-compat-util.h includes in headers
+ + treewide: ensure one of the appropriate headers is sourced first
 
- The format.attach configuration variable lacked a way to override a
- value defined in a lower-priority configuration file (e.g. the
- system one) by redefining it in a higher-priority configuration
- file.  Now, setting format.attach to an empty string means show the
- patch inline in the e-mail message, without using MIME attachment.
+ Code clean-up to clarify the rule that "git-compat-util.h" must be
+ the first to be included.
 
- This is a backward incompatible change.
-
- Will merge to 'master'.
- source: <xmqqwn4fkgtq.fsf@gitster.g>
-
-
-* rs/archive-mtime (2023-02-18) 1 commit
-  (merged to 'next' on 2023-02-24 at 34869696a2)
- + archive: add --mtime
-
- "git archive HEAD^{tree}" records the paths with the current
- timestamp in the archive, making it harder to obtain a stable
- output.  The command learned the --mtime option to specify an
- arbitrary timestamp (e.g. --mtime="@0 +0000" for the epoch).
-
- Will merge to 'master'.
- source: <91a73f5d-ca3e-6cb0-4ba3-38d703074ee6@web.de>
+ Will cook in 'next'.
+ source: <pull.1485.v2.git.1677197376.gitgitgadget@gmail.com>
 
 
-* ap/t2015-style-update (2023-02-21) 1 commit
-  (merged to 'next' on 2023-02-22 at 40883b85c7)
- + t2015-checkout-unborn.sh: changes the style for cd
+* jk/fsck-indices-in-worktrees (2023-02-27) 4 commits
+  (merged to 'next' on 2023-02-27 at 6eb92abb6b)
+ + fsck: check even zero-entry index files
+  (merged to 'next' on 2023-02-24 at 38c0793286)
+ + fsck: mention file path for index errors
+ + fsck: check index files in all worktrees
+ + fsck: factor out index fsck
 
- Test clean-up.
+ "git fsck" learned to check the index files in other worktrees,
+ just like "git gc" honors them as anchoring points.
 
- Will merge to 'master'.
- source: <20230218192128.7963-1-ashutosh.pandeyhlr007@gmail.com>
-
-
-* if/simplify-trace-setup (2023-02-21) 1 commit
-  (merged to 'next' on 2023-02-24 at 9c8e690f3d)
- + trace.c, git.c: remove unnecessary parameter to trace_repo_setup()
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <20230219002527.84315-1-mcsm224@gmail.com>
+ Will cook in 'next'.
+ source: <Y/hv0MXAyBY3HEo9@coredump.intra.peff.net>
 
 
-* ma/fetch-parallel-use-online-cpus (2023-02-21) 1 commit
-  (merged to 'next' on 2023-02-22 at 756d379bf0)
- + fetch: choose a sensible default with --jobs=0 again
+* jk/unused-post-2.39-part2 (2023-02-24) 21 commits
+  (merged to 'next' on 2023-02-27 at f0ec2a81b3)
+ + help: mark unused parameter in git_unknown_cmd_config()
+ + run_processes_parallel: mark unused callback parameters
+ + userformat_want_item(): mark unused parameter
+ + for_each_commit_graft(): mark unused callback parameter
+ + rewrite_parents(): mark unused callback parameter
+ + fetch-pack: mark unused parameter in callback function
+ + notes: mark unused callback parameters
+ + prio-queue: mark unused parameters in comparison functions
+ + for_each_object: mark unused callback parameters
+ + list-objects: mark unused callback parameters
+ + mark unused parameters in signal handlers
+ + run-command: mark error routine parameters as unused
+ + mark "pointless" data pointers in callbacks
+ + ref-filter: mark unused callback parameters
+ + http-backend: mark unused parameters in virtual functions
+ + http-backend: mark argc/argv unused
+ + object-name: mark unused parameters in disambiguate callbacks
+ + serve: mark unused parameters in virtual functions
+ + serve: use repository pointer to get config
+ + ls-refs: drop config caching
+ + ref-filter: drop unused atom parameter from get_worktree_path()
 
- "git fetch --jobs=0" used to hit a BUG(), which has been corrected
- to use the available CPUs.
+ More work towards -Wunused.
 
- Will merge to 'master'.
- source: <pull.1483.git.1676928805555.gitgitgadget@gmail.com>
-
-
-* pw/rebase-i-validate-labels-early (2023-02-21) 1 commit
-  (merged to 'next' on 2023-02-22 at 9b37d42d24)
- + rebase -i: check labels and refs when parsing todo list
-
- An invalid label or ref in the "rebase -i" todo file used to
- trigger an runtime error. SUch an error is now diagnosed while the
- todo file is parsed.
-
- Will merge to 'master'.
- source: <pull.1482.v2.git.1676902774366.gitgitgadget@gmail.com>
-
-
-* tl/range-diff-custom-abbrev (2023-02-21) 1 commit
-  (merged to 'next' on 2023-02-22 at 49db7cce13)
- + range-diff: let '--abbrev' option takes effect
-
- "git range-diff" learned --abbrev=<num> option.
-
- Will merge to 'master'.
- source: <20230220142444.18739-2-tenglong.tl@alibaba-inc.com>
+ Will cook in 'next'.
+ source: <Y/habYJxDRJQg/kJ@coredump.intra.peff.net>
 
 
 * ew/commit-reach-clean-up-flags-fix (2023-02-11) 1 commit
@@ -451,17 +526,6 @@ Release tarballs are available at:
  Under discussion.
  cf. <876cf920-113a-90cf-f49e-6e1b7b146acf@github.com>
  source: <20230211111526.2028178-1-e@80x24.org>
-
-
-* mh/credential-password-expiry (2023-02-22) 1 commit
-  (merged to 'next' on 2023-02-24 at dbff7db22a)
- + credential: new attribute password_expiry_utc
-
- The credential subsystem learned that a password may have an
- explicit expiration.
-
- Will merge to 'master'.
- source: <pull.1443.v4.git.git.1676701977347.gitgitgadget@gmail.com>
 
 
 * tk/pull-conflict-suggest-rebase-merge-not-rebase-true (2023-02-13) 1 commit
@@ -478,28 +542,30 @@ Release tarballs are available at:
  source: <pull.1474.git.1675614276549.gitgitgadget@gmail.com>
 
 
-* jc/gpg-lazy-init (2023-02-09) 1 commit
- - gpg-interface: lazily initialize and read the configuration
+* jc/gpg-lazy-init (2023-02-27) 2 commits
+  (merged to 'next' on 2023-02-27 at e3f81cfdbc)
+ + drop pure pass-through config callbacks
+ + gpg-interface: lazily initialize and read the configuration
 
  Instead of forcing each command to choose to honor GPG related
  configuration variables, make the subsystem lazily initialize
  itself.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <xmqqpmaimvtd.fsf_-_@gitster.g>
 
 
-* mc/credential-helper-www-authenticate (2023-02-16) 3 commits
- - credential: add WWW-Authenticate header to cred requests
- - http: read HTTP WWW-Authenticate response headers
- - t5563: add tests for basic and anoymous HTTP access
+* mc/credential-helper-www-authenticate (2023-02-27) 3 commits
+  (merged to 'next' on 2023-02-27 at 89c9bd4b8f)
+ + credential: add WWW-Authenticate header to cred requests
+ + http: read HTTP WWW-Authenticate response headers
+ + t5563: add tests for basic and anoymous HTTP access
 
  Allow information carried on the WWW-AUthenticate header to be
  passed to the credential helpers.
 
- Expecting a reroll.
- cf. <Y/c1+Llb/D27eWdg@coredump.intra.peff.net>
- source: <pull.1352.v10.git.1676586881.gitgitgadget@gmail.com>
+ Will cook in 'next'.
+ source: <pull.1352.v11.git.1677518420.gitgitgadget@gmail.com>
 
 
 * ab/avoid-losing-exit-codes-in-tests (2023-02-06) 6 commits
@@ -512,7 +578,7 @@ Release tarballs are available at:
 
  Test clean-up.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <cover-v5-0.6-00000000000-20230206T224200Z-avarab@gmail.com>
 
 
@@ -575,18 +641,16 @@ Release tarballs are available at:
  source: <20230120113553.24655-1-carenas@gmail.com>
 
 
-* rj/avoid-switching-to-already-used-branch (2023-01-22) 3 commits
+* rj/avoid-switching-to-already-used-branch (2023-02-25) 4 commits
  - switch: reject if the branch is already checked out elsewhere (test)
  - rebase: refuse to switch to a branch already checked out elsewhere (test)
  - branch: fix die_if_checked_out() when ignore_current_worktree
+ - worktree: introduce is_shared_symref()
 
  A few subcommands have been taught to stop users from working on a
  branch that is being used in another worktree linked to the same
  repository.
-
- Expecting a hopefully minor and final reroll.
- cf. <d61a2393-64c8-da49-fe13-00bc4a52d5e3@gmail.com>
- source: <f7f45f54-9261-45ea-3399-8ba8dee6832b@gmail.com>
+ source: <6fed3b1b-1c4e-9298-19b6-7ad9c04c87dd@gmail.com>
 
 
 * rj/bisect-already-used-branch (2023-01-22) 1 commit
@@ -596,7 +660,7 @@ Release tarballs are available at:
  the original one) even when the branch is already checked out in a
  different worktree linked to the same repository.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <1c36c334-9f10-3859-c92f-3d889e226769@gmail.com>
 
 
