@@ -1576,7 +1576,8 @@ void exclude_hidden_refs(struct ref_exclusions *exclusions, const char *section)
 {
 	struct exclude_hidden_refs_cb cb;
 
-	if (strcmp(section, "receive") && strcmp(section, "uploadpack"))
+	if (strcmp(section, "fetch") && strcmp(section, "receive") &&
+			strcmp(section, "uploadpack"))
 		die(_("unsupported section for hidden refs: %s"), section);
 
 	if (exclusions->hidden_refs_configured)

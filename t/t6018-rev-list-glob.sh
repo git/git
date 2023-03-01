@@ -187,7 +187,7 @@ test_expect_success 'rev-parse --exclude=ref with --remotes=glob' '
 	compare rev-parse "--exclude=upstream/x --remotes=upstream/*" "upstream/one upstream/two"
 '
 
-for section in receive uploadpack
+for section in fetch receive uploadpack
 do
 	test_expect_success "rev-parse --exclude-hidden=$section with --all" '
 		compare "-c transfer.hideRefs=refs/remotes/ rev-parse" "--branches --tags" "--exclude-hidden=$section --all"

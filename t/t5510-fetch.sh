@@ -1171,6 +1171,15 @@ test_expect_success '--no-show-forced-updates' '
 	)
 '
 
+for section in fetch transfer
+do
+	test_expect_success "$section.hideRefs affects connectivity check" '
+		GIT_TRACE="$PWD"/trace git -c $section.hideRefs=refs -c \
+			$section.hideRefs="!refs/tags/" fetch &&
+		grep "git rev-list .*--exclude-hidden=fetch" trace
+	'
+done
+
 setup_negotiation_tip () {
 	SERVER="$1"
 	URL="$2"
