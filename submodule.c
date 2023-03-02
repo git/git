@@ -28,6 +28,10 @@ static int config_update_recurse_submodules = RECURSE_SUBMODULES_OFF;
 static int initialized_fetch_ref_tips;
 static struct oid_array ref_tips_before_fetch;
 static struct oid_array ref_tips_after_fetch;
+#define STATUS_PORCELAIN_START_ERROR \
+	N_("could not run 'git status --porcelain=2' in submodule %s")
+#define STATUS_PORCELAIN_FAIL_ERROR \
+	N_("'git status --porcelain=2' failed in submodule %s")
 
 /*
  * Check if the .gitmodules file is unmerged. Parsing of the .gitmodules file
@@ -1870,6 +1874,40 @@ out:
 	return spf.result;
 }
 
+static int verify_submodule_git_directory(const char *path)
+{
+	const char *git_dir;
+	struct strbuf buf = STRBUF_INIT;
+
+	strbuf_addf(&buf, "%s/.git", path);
+	git_dir = read_gitfile(buf.buf);
+	if (!git_dir)
+		git_dir = buf.buf;
+	if (!is_git_directory(git_dir)) {
+		if (is_directory(git_dir))
+			die(_("'%s' not recognized as a git repository"), git_dir);
+		strbuf_release(&buf);
+		/* The submodule is not checked out, so it is not modified */
+		return 0;
+	}
+	strbuf_release(&buf);
+	return 1;
+}
+
+static void prepare_status_porcelain(struct child_process *cp,
+			     const char *path, int ignore_untracked)
+{
+	strvec_pushl(&cp->args, "status", "--porcelain=2", NULL);
+	if (ignore_untracked)
+		strvec_push(&cp->args, "-uno");
+
+	prepare_submodule_repo_env(&cp->env);
+	cp->git_cmd = 1;
+	cp->no_stdin = 1;
+	cp->out = -1;
+	cp->dir = path;
+}
+
 static int parse_status_porcelain(char *str, size_t len,
 				  unsigned *dirty_submodule,
 				  int ignore_untracked)
@@ -1915,33 +1953,14 @@ unsigned is_submodule_modified(const char *path, int ignore_untracked)
 	struct strbuf buf = STRBUF_INIT;
 	FILE *fp;
 	unsigned dirty_submodule = 0;
-	const char *git_dir;
 	int ignore_cp_exit_code = 0;
 
-	strbuf_addf(&buf, "%s/.git", path);
-	git_dir = read_gitfile(buf.buf);
-	if (!git_dir)
-		git_dir = buf.buf;
-	if (!is_git_directory(git_dir)) {
-		if (is_directory(git_dir))
-			die(_("'%s' not recognized as a git repository"), git_dir);
-		strbuf_release(&buf);
-		/* The submodule is not checked out, so it is not modified */
+	if (!verify_submodule_git_directory(path))
 		return 0;
-	}
-	strbuf_reset(&buf);
 
-	strvec_pushl(&cp.args, "status", "--porcelain=2", NULL);
-	if (ignore_untracked)
-		strvec_push(&cp.args, "-uno");
-
-	prepare_submodule_repo_env(&cp.env);
-	cp.git_cmd = 1;
-	cp.no_stdin = 1;
-	cp.out = -1;
-	cp.dir = path;
+	prepare_status_porcelain(&cp, path, ignore_untracked);
 	if (start_command(&cp))
-		die(_("Could not run 'git status --porcelain=2' in submodule %s"), path);
+		die(_(STATUS_PORCELAIN_START_ERROR), path);
 
 	fp = xfdopen(cp.out, "r");
 	while (strbuf_getwholeline(&buf, fp, '\n') != EOF) {
@@ -1956,7 +1975,7 @@ unsigned is_submodule_modified(const char *path, int ignore_untracked)
 	fclose(fp);
 
 	if (finish_command(&cp) && !ignore_cp_exit_code)
-		die(_("'git status --porcelain=2' failed in submodule %s"), path);
+		die(_(STATUS_PORCELAIN_FAIL_ERROR), path);
 
 	strbuf_release(&buf);
 	return dirty_submodule;
