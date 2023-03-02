@@ -78,8 +78,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2023-02-27 18:57+0000\n"
-"PO-Revision-Date: 2023-02-27 21:02+0100\n"
+"POT-Creation-Date: 2023-03-01 01:20+0000\n"
+"PO-Revision-Date: 2023-03-02 18:44+0100\n"
 "Last-Translator: Cédric Malard <c.malard-git@valdun.net>\n"
 "Language-Team: Jean-Noël Avila <jn.avila@free.fr>\n"
 "Language: fr\n"
@@ -20307,6 +20307,10 @@ msgid "update-ref requires a fully qualified refname e.g. refs/heads/%s"
 msgstr ""
 "update-ref requiert un nom de référence totalement qualifié par ex. refs/"
 "heads/%s"
+
+#, c-format
+msgid "invalid command '%.*s'"
+msgstr "commande '%.*s' invalide"
 
 #, c-format
 msgid "%s does not accept arguments: '%s'"
