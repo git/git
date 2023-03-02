@@ -88,6 +88,34 @@ static int match_stat_with_submodule(struct diff_options *diffopt,
 	return changed;
 }
 
+/**
+ * Records diff_change if there is a change in the entry from run_diff_files.
+ * If there is no change, then the cache entry is marked CE_UPTODATE and
+ * CE_FSMONITOR_VALID. If there is no change and the find_copies_harder flag
+ * is not set, then the function returns early.
+ */
+static void record_file_diff(struct diff_options *options, unsigned newmode,
+			     unsigned dirty_submodule, int changed,
+			     struct index_state *istate,
+			     struct cache_entry *ce)
+{
+	unsigned int oldmode;
+	const struct object_id *old_oid, *new_oid;
+
+	if (!changed && !dirty_submodule) {
+		ce_mark_uptodate(ce);
+		mark_fsmonitor_valid(istate, ce);
+		if (!options->flags.find_copies_harder)
+			return;
+	}
+	oldmode = ce->ce_mode;
+	old_oid = &ce->oid;
+	new_oid = changed ? null_oid() : &ce->oid;
+	diff_change(options, oldmode, newmode, old_oid, new_oid,
+		    !is_null_oid(old_oid), !is_null_oid(new_oid),
+		    ce->name, 0, dirty_submodule);
+}
+
 int run_diff_files(struct rev_info *revs, unsigned int option)
 {
 	int entries, i;
@@ -105,11 +133,10 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 		diff_unmerged_stage = 2;
 	entries = istate->cache_nr;
 	for (i = 0; i < entries; i++) {
-		unsigned int oldmode, newmode;
+		unsigned int newmode;
 		struct cache_entry *ce = istate->cache[i];
 		int changed;
 		unsigned dirty_submodule = 0;
-		const struct object_id *old_oid, *new_oid;
 
 		if (diff_can_quit_early(&revs->diffopt))
 			break;
@@ -245,21 +272,8 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 			newmode = ce_mode_from_stat(ce, st.st_mode);
 		}
 
-		if (!changed && !dirty_submodule) {
-			ce_mark_uptodate(ce);
-			mark_fsmonitor_valid(istate, ce);
-			if (!revs->diffopt.flags.find_copies_harder)
-				continue;
-		}
-		oldmode = ce->ce_mode;
-		old_oid = &ce->oid;
-		new_oid = changed ? null_oid() : &ce->oid;
-		diff_change(&revs->diffopt, oldmode, newmode,
-			    old_oid, new_oid,
-			    !is_null_oid(old_oid),
-			    !is_null_oid(new_oid),
-			    ce->name, 0, dirty_submodule);
-
+		record_file_diff(&revs->diffopt, newmode, dirty_submodule,
+				 changed, istate, ce);
 	}
 	diffcore_std(&revs->diffopt);
 	diff_flush(&revs->diffopt);
