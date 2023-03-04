@@ -63,10 +63,8 @@ static void fix_filename(const char *prefix, char **file)
 {
 	if (!file || !*file)
 		; /* leave as NULL */
-	else if (!strcmp("-", *file))
-		*file = xstrdup(*file);
 	else
-		*file = prefix_filename(prefix, *file);
+		*file = prefix_filename_except_for_dash(prefix, *file);
 }
 
 static enum parse_opt_result opt_command_mode_error(
