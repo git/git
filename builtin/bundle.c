@@ -107,6 +107,23 @@ static int cmd_bundle_create(int argc, const char **argv, const char *prefix) {
 	return ret;
 }
 
+/*
+ * Similar to read_bundle_header(), but handle "-" as stdin.
+ */
+static int open_bundle(const char *path, struct bundle_header *header,
+		       const char **name)
+{
+	if (!strcmp(path, "-")) {
+		if (name)
+			*name = "<stdin>";
+		return read_bundle_header_fd(0, header, "<stdin>");
+	}
+
+	if (name)
+		*name = path;
+	return read_bundle_header(path, header);
+}
+
 static int cmd_bundle_verify(int argc, const char **argv, const char *prefix) {
 	struct bundle_header header = BUNDLE_HEADER_INIT;
 	int bundle_fd = -1;
@@ -118,12 +135,13 @@ static int cmd_bundle_verify(int argc, const char **argv, const char *prefix) {
 		OPT_END()
 	};
 	char *bundle_file;
+	const char *name;
 
 	argc = parse_options_cmd_bundle(argc, argv, prefix,
 			builtin_bundle_verify_usage, options, &bundle_file);
 	/* bundle internals use argv[1] as further parameters */
 
-	if ((bundle_fd = read_bundle_header(bundle_file, &header)) < 0) {
+	if ((bundle_fd = open_bundle(bundle_file, &header, &name)) < 0) {
 		ret = 1;
 		goto cleanup;
 	}
@@ -134,7 +152,7 @@ static int cmd_bundle_verify(int argc, const char **argv, const char *prefix) {
 		goto cleanup;
 	}
 
-	fprintf(stderr, _("%s is okay\n"), bundle_file);
+	fprintf(stderr, _("%s is okay\n"), name);
 	ret = 0;
 cleanup:
 	free(bundle_file);
@@ -155,7 +173,7 @@ static int cmd_bundle_list_heads(int argc, const char **argv, const char *prefix
 			builtin_bundle_list_heads_usage, options, &bundle_file);
 	/* bundle internals use argv[1] as further parameters */
 
-	if ((bundle_fd = read_bundle_header(bundle_file, &header)) < 0) {
+	if ((bundle_fd = open_bundle(bundle_file, &header, NULL)) < 0) {
 		ret = 1;
 		goto cleanup;
 	}
@@ -185,7 +203,7 @@ static int cmd_bundle_unbundle(int argc, const char **argv, const char *prefix) 
 			builtin_bundle_unbundle_usage, options, &bundle_file);
 	/* bundle internals use argv[1] as further parameters */
 
-	if ((bundle_fd = read_bundle_header(bundle_file, &header)) < 0) {
+	if ((bundle_fd = open_bundle(bundle_file, &header, NULL)) < 0) {
 		ret = 1;
 		goto cleanup;
 	}

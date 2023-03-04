@@ -566,4 +566,19 @@ test_expect_success 'cloning from filtered bundle has useful error' '
 	grep "cannot clone from filtered bundle" err
 '
 
+test_expect_success 'read bundle over stdin' '
+	git bundle create some.bundle HEAD &&
+
+	git bundle verify - <some.bundle 2>err &&
+	grep "<stdin> is okay" err &&
+
+	git bundle list-heads some.bundle >expect &&
+	git bundle list-heads - <some.bundle >actual &&
+	test_cmp expect actual &&
+
+	git bundle unbundle some.bundle >expect &&
+	git bundle unbundle - <some.bundle >actual &&
+	test_cmp expect actual
+'
+
 test_done
