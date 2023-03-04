@@ -12,7 +12,7 @@
  */
 
 #define BUILTIN_BUNDLE_CREATE_USAGE \
-	N_("git bundle create [-q | --quiet | --progress | --all-progress] [--all-progress-implied]\n" \
+	N_("git bundle create [-q | --quiet | --progress]\n" \
 	   "                  [--version=<version>] <file> <git-rev-list-args>")
 #define BUILTIN_BUNDLE_VERIFY_USAGE \
 	N_("git bundle verify [-q | --quiet] <file>")
@@ -64,7 +64,7 @@ static int parse_options_cmd_bundle(int argc,
 }
 
 static int cmd_bundle_create(int argc, const char **argv, const char *prefix) {
-	int all_progress_implied = 0;
+	int all_progress_implied = 1;
 	int progress = isatty(STDERR_FILENO);
 	struct strvec pack_opts;
 	int version = -1;
@@ -74,11 +74,12 @@ static int cmd_bundle_create(int argc, const char **argv, const char *prefix) {
 			    N_("do not show progress meter"), 0),
 		OPT_SET_INT(0, "progress", &progress,
 			    N_("show progress meter"), 1),
-		OPT_SET_INT(0, "all-progress", &progress,
-			    N_("show progress meter during object writing phase"), 2),
-		OPT_BOOL(0, "all-progress-implied",
-			 &all_progress_implied,
-			 N_("similar to --all-progress when progress meter is shown")),
+		OPT_SET_INT_F(0, "all-progress", &progress,
+			      N_("historical; same as --progress"), 2,
+			      PARSE_OPT_HIDDEN),
+		OPT_HIDDEN_BOOL(0, "all-progress-implied",
+				&all_progress_implied,
+				N_("historical; does nothing")),
 		OPT_INTEGER(0, "version", &version,
 			    N_("specify bundle format version")),
 		OPT_END()
