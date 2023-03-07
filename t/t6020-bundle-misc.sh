@@ -10,6 +10,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-bundle.sh
+. "$TEST_DIRECTORY"/lib-terminal.sh
 
 for cmd in create verify list-heads unbundle
 do
@@ -604,6 +605,18 @@ test_expect_success 'verify catches unreachable, broken prerequisites' '
 		grep "some prerequisite commits .* are not connected" err &&
 		test_line_count = 1 err
 	)
+'
+
+test_expect_success 'bundle progress includes write phase' '
+	GIT_PROGRESS_DELAY=0 \
+		git bundle create --progress out.bundle --all 2>err &&
+	grep 'Writing' err
+'
+
+test_expect_success TTY 'create --quiet disables all bundle progress' '
+	test_terminal env GIT_PROGRESS_DELAY=0 \
+		git bundle create --quiet out.bundle --all 2>err &&
+	test_must_be_empty err
 '
 
 test_done
