@@ -30,7 +30,7 @@ trap 'rm -f "$tmp".*' 0
 
 (
 	git pull --ff-only "$MASTERREPO" master &&
-	git fetch --tags "$MASTERREPO"
+	git fetch --tags --force "$MASTERREPO"
 ) || exit $?
 
 test $(git rev-parse --verify refs/heads/master) = "$ID" &&
