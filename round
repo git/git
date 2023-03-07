@@ -32,13 +32,16 @@ do
 		;;
 	leaks)
 		SANITIZE=leak \
-		GIT_TEST_PASSING_SANITIZE_LEAK=true Meta/Make -j16 test
+		GIT_TEST_PASSING_SANITIZE_LEAK=true Meta/Make -j16 test &&
+		SANITIZE=leak \
+		GIT_TEST_PASSING_SANITIZE_LEAK=true Meta/Make -j16 clean
 		;;
 	coccicheck)
 		SPATCH_FLAGS=--recursive-includes Meta/Make -j16 "$t"
 		;;
 	sparse)
-		Meta/Make -j16 -- NO_REGEX=NoThanks SPARSE_FLAGS=-Wsparse-error "$t"
+		Meta/Make -j16 -- NO_REGEX=NoThanks SPARSE_FLAGS=-Wsparse-error "$t" &&
+		Meta/Make -j16 -- NO_REGEX=NoThanks clean >/dev/null 2>&1
 		;;
 	*)
 		Meta/Make -j16 "$t"
