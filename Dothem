@@ -231,7 +231,7 @@ do
 
 		Meta/Make $M $jobs -- NO_REGEX=NoThanks \
 			SPARSE_FLAGS=-Wsparse-error sparse &&
-
+		rm -f compat/regex/regex.o &&
 		Meta/Make $M $jobs -- hdr-check &&
 
 		case "$dotest,$san" in
