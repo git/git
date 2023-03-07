@@ -29,8 +29,12 @@ set_and_save_state () {
 
 # verify_state <path> <expected-worktree-content> <expected-index-content>
 verify_state () {
-	test "$(cat "$1")" = "$2" &&
-	test "$(git show :"$1")" = "$3"
+	echo "$2" >expect &&
+	test_cmp expect "$1" &&
+
+	echo "$3" >expect &&
+	git show :"$1" >actual &&
+	test_cmp expect actual
 }
 
 # verify_saved_state <path>
@@ -46,5 +50,6 @@ save_head () {
 }
 
 verify_saved_head () {
-	test "$(cat _head)" = "$(git rev-parse HEAD)"
+	git rev-parse HEAD >actual &&
+	test_cmp _head actual
 }

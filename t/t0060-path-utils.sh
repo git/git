@@ -10,20 +10,27 @@ TEST_PASSES_SANITIZE_LEAK=true
 
 norm_path() {
 	expected=$(test-tool path-utils print_path "$2")
-	test_expect_success $3 "normalize path: $1 => $2" \
-	"test \"\$(test-tool path-utils normalize_path_copy '$1')\" = '$expected'"
+	test_expect_success $3 "normalize path: $1 => $2" "
+		echo '$expected' >expect &&
+		test-tool path-utils normalize_path_copy '$1' >actual &&
+		test_cmp expect actual
+	"
 }
 
 relative_path() {
 	expected=$(test-tool path-utils print_path "$3")
-	test_expect_success $4 "relative path: $1 $2 => $3" \
-	"test \"\$(test-tool path-utils relative_path '$1' '$2')\" = '$expected'"
+	test_expect_success $4 "relative path: $1 $2 => $3" "
+		echo '$expected' >expect &&
+		test-tool path-utils relative_path '$1' '$2' >actual &&
+		test_cmp expect actual
+	"
 }
 
 test_submodule_relative_url() {
 	test_expect_success "test_submodule_relative_url: $1 $2 $3 => $4" "
-		actual=\$(test-tool submodule resolve-relative-url '$1' '$2' '$3') &&
-		test \"\$actual\" = '$4'
+		echo '$4' >expect &&
+		test-tool submodule resolve-relative-url '$1' '$2' '$3' >actual &&
+		test_cmp expect actual
 	"
 }
 
@@ -64,9 +71,11 @@ ancestor() {
 		expected=$(($expected-$rootslash+$rootoff))
 		;;
 	esac
-	test_expect_success $4 "longest ancestor: $1 $2 => $expected" \
-	"actual=\$(test-tool path-utils longest_ancestor_length '$1' '$2') &&
-	 test \"\$actual\" = '$expected'"
+	test_expect_success $4 "longest ancestor: $1 $2 => $expected" "
+		echo '$expected' >expect &&
+		test-tool path-utils longest_ancestor_length '$1' '$2' >actual &&
+		test_cmp expect actual
+	"
 }
 
 # Some absolute path tests should be skipped on Windows due to path mangling
@@ -166,8 +175,10 @@ ancestor D:/Users/me C:/ -1 MINGW
 ancestor //server/share/my-directory //server/share/ 14 MINGW
 
 test_expect_success 'strip_path_suffix' '
-	test c:/msysgit = $(test-tool path-utils strip_path_suffix \
-		c:/msysgit/libexec//git-core libexec/git-core)
+	echo c:/msysgit >expect &&
+	test-tool path-utils strip_path_suffix \
+		c:/msysgit/libexec//git-core libexec/git-core >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'absolute path rejects the empty string' '
@@ -188,35 +199,61 @@ test_expect_success 'real path rejects the empty string' '
 '
 
 test_expect_success POSIX 'real path works on absolute paths 1' '
+	echo / >expect &&
+	test-tool path-utils real_path "/" >actual &&
+	test_cmp expect actual &&
+
 	nopath="hopefully-absent-path" &&
-	test "/" = "$(test-tool path-utils real_path "/")" &&
-	test "/$nopath" = "$(test-tool path-utils real_path "/$nopath")"
+	echo "/$nopath" >expect &&
+	test-tool path-utils real_path "/$nopath" >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'real path works on absolute paths 2' '
-	nopath="hopefully-absent-path" &&
 	# Find an existing top-level directory for the remaining tests:
 	d=$(pwd -P | sed -e "s|^\([^/]*/[^/]*\)/.*|\1|") &&
-	test "$d" = "$(test-tool path-utils real_path "$d")" &&
-	test "$d/$nopath" = "$(test-tool path-utils real_path "$d/$nopath")"
+	echo "$d" >expect &&
+	test-tool path-utils real_path "$d" >actual &&
+	test_cmp expect actual &&
+
+	nopath="hopefully-absent-path" &&
+	echo "$d/$nopath" >expect &&
+	test-tool path-utils real_path "$d/$nopath" >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success POSIX 'real path removes extra leading slashes' '
+	echo "/" >expect &&
+	test-tool path-utils real_path "///" >actual &&
+	test_cmp expect actual &&
+
 	nopath="hopefully-absent-path" &&
-	test "/" = "$(test-tool path-utils real_path "///")" &&
-	test "/$nopath" = "$(test-tool path-utils real_path "///$nopath")" &&
+	echo "/$nopath" >expect &&
+	test-tool path-utils real_path "///$nopath" >actual &&
+	test_cmp expect actual &&
+
 	# Find an existing top-level directory for the remaining tests:
 	d=$(pwd -P | sed -e "s|^\([^/]*/[^/]*\)/.*|\1|") &&
-	test "$d" = "$(test-tool path-utils real_path "//$d")" &&
-	test "$d/$nopath" = "$(test-tool path-utils real_path "//$d/$nopath")"
+	echo "$d" >expect &&
+	test-tool path-utils real_path "//$d" >actual &&
+	test_cmp expect actual &&
+
+	echo "$d/$nopath" >expect &&
+	test-tool path-utils real_path "//$d/$nopath" >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'real path removes other extra slashes' '
-	nopath="hopefully-absent-path" &&
 	# Find an existing top-level directory for the remaining tests:
 	d=$(pwd -P | sed -e "s|^\([^/]*/[^/]*\)/.*|\1|") &&
-	test "$d" = "$(test-tool path-utils real_path "$d///")" &&
-	test "$d/$nopath" = "$(test-tool path-utils real_path "$d///$nopath")"
+	echo "$d" >expect &&
+	test-tool path-utils real_path "$d///" >actual &&
+	test_cmp expect actual &&
+
+	nopath="hopefully-absent-path" &&
+	echo "$d/$nopath" >expect &&
+	test-tool path-utils real_path "$d///$nopath" >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success SYMLINKS 'real path works on symlinks' '
@@ -227,19 +264,29 @@ test_expect_success SYMLINKS 'real path works on symlinks' '
 	mkdir third &&
 	dir="$(cd .git && pwd -P)" &&
 	dir2=third/../second/other/.git &&
-	test "$dir" = "$(test-tool path-utils real_path $dir2)" &&
+	echo "$dir" >expect &&
+	test-tool path-utils real_path $dir2 >actual &&
+	test_cmp expect actual &&
 	file="$dir"/index &&
-	test "$file" = "$(test-tool path-utils real_path $dir2/index)" &&
+	echo "$file" >expect &&
+	test-tool path-utils real_path $dir2/index >actual &&
+	test_cmp expect actual &&
 	basename=blub &&
-	test "$dir/$basename" = "$(cd .git && test-tool path-utils real_path "$basename")" &&
+	echo "$dir/$basename" >expect &&
+	test-tool -C .git path-utils real_path "$basename" >actual &&
+	test_cmp expect actual &&
 	ln -s ../first/file .git/syml &&
 	sym="$(cd first && pwd -P)"/file &&
-	test "$sym" = "$(test-tool path-utils real_path "$dir2/syml")"
+	echo "$sym" >expect &&
+	test-tool path-utils real_path "$dir2/syml" >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success SYMLINKS 'prefix_path works with absolute paths to work tree symlinks' '
 	ln -s target symlink &&
-	test "$(test-tool path-utils prefix_path prefix "$(pwd)/symlink")" = "symlink"
+	echo "symlink" >expect &&
+	test-tool path-utils prefix_path prefix "$(pwd)/symlink" >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'prefix_path works with only absolute path to work tree' '
@@ -255,7 +302,10 @@ test_expect_success 'prefix_path rejects absolute path to dir with same beginnin
 test_expect_success SYMLINKS 'prefix_path works with absolute path to a symlink to work tree having  same beginning as work tree' '
 	git init repo &&
 	ln -s repo repolink &&
-	test "a" = "$(cd repo && test-tool path-utils prefix_path prefix "$(pwd)/../repolink/a")"
+	echo "a" >expect &&
+	repo_path="$(cd repo && pwd)" &&
+	test-tool -C repo path-utils prefix_path prefix "$repo_path/../repolink/a" >actual &&
+	test_cmp expect actual
 '
 
 relative_path /foo/a/b/c/	/foo/a/b/	c/

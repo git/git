@@ -79,7 +79,9 @@ test_expect_success SYMLINKS 'pushing from symlinked subdir' '
 		git commit -m push ./file &&
 		git push
 	) &&
-	test push = $(git show HEAD:subdir/file)
+	echo push >expect &&
+	git show HEAD:subdir/file >actual &&
+	test_cmp expect actual
 '
 
 test_done

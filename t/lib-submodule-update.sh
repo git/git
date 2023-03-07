@@ -168,20 +168,16 @@ replace_gitfile_with_git_dir () {
 # Note that this only supports submodules at the root level of the
 # superproject, with the default name, i.e. same as its path.
 test_git_directory_is_unchanged () {
-	(
-		cd ".git/modules/$1" &&
-		# does core.worktree point at the right place?
-		test "$(git config core.worktree)" = "../../../$1" &&
-		# remove it temporarily before comparing, as
-		# "$1/.git/config" lacks it...
-		git config --unset core.worktree
-	) &&
+	# does core.worktree point at the right place?
+	echo "../../../$1" >expect &&
+	git -C ".git/modules/$1" config core.worktree >actual &&
+	test_cmp expect actual &&
+	# remove it temporarily before comparing, as
+	# "$1/.git/config" lacks it...
+	git -C ".git/modules/$1" config --unset core.worktree &&
 	diff -r ".git/modules/$1" "$1/.git" &&
-	(
-		# ... and then restore.
-		cd ".git/modules/$1" &&
-		git config core.worktree "../../../$1"
-	)
+	# ... and then restore.
+	git -C ".git/modules/$1" config core.worktree "../../../$1"
 }
 
 test_git_directory_exists () {
@@ -189,7 +185,9 @@ test_git_directory_exists () {
 	if test -f sub1/.git
 	then
 		# does core.worktree point at the right place?
-		test "$(git -C .git/modules/$1 config core.worktree)" = "../../../$1"
+		echo "../../../$1" >expect &&
+		git -C ".git/modules/$1" config core.worktree >actual &&
+		test_cmp expect actual
 	fi
 }
 

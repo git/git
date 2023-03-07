@@ -10,7 +10,8 @@ test_expect_success 'race to create orphan commit' '
 	test_must_fail env EDITOR=./hare-editor git commit --allow-empty -m tortoise -e &&
 	git show -s --pretty=format:%s >subject &&
 	grep hare subject &&
-	test -z "$(git show -s --pretty=format:%P)"
+	git show -s --pretty=format:%P >out &&
+	test_must_be_empty out
 '
 
 test_expect_success 'race to create non-orphan commit' '
