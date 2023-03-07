@@ -66,7 +66,7 @@ create [options] <file> <git-rev-list-args>::
 	Used to create a bundle named 'file'.  This requires the
 	'<git-rev-list-args>' arguments to define the bundle contents.
 	'options' contains the options specific to the 'git bundle create'
-	subcommand.
+	subcommand. If 'file' is `-`, the bundle is written to stdout.
 
 verify <file>::
 	Used to check that a bundle file is valid and will apply
@@ -77,12 +77,13 @@ verify <file>::
 	Finally, information about additional capabilities, such as "object
 	filter", is printed. See "Capabilities" in linkgit:gitformat-bundle[5]
 	for more information. The exit code is zero for success, but will
-	be nonzero if the bundle file is invalid.
+	be nonzero if the bundle file is invalid. If 'file' is `-`, the
+	bundle is read from stdin.
 
 list-heads <file>::
 	Lists the references defined in the bundle.  If followed by a
 	list of references, only references matching those given are
-	printed out.
+	printed out. If 'file' is `-`, the bundle is read from stdin.
 
 unbundle <file>::
 	Passes the objects in the bundle to 'git index-pack'
@@ -90,6 +91,7 @@ unbundle <file>::
 	defined references. If a list of references is given, only
 	references matching those in the list are printed. This command is
 	really plumbing, intended to be called only by 'git fetch'.
+	If 'file' is `-`, the bundle is read from stdin.
 
 <git-rev-list-args>::
 	A list of arguments, acceptable to 'git rev-parse' and

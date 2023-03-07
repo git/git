@@ -429,7 +429,8 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	int create_reflog = 0;
 	int annotate = 0, force = 0;
 	int cmdmode = 0, create_tag_object = 0;
-	const char *msgfile = NULL, *keyid = NULL;
+	char *msgfile = NULL;
+	const char *keyid = NULL;
 	struct msg_arg msg = { .buf = STRBUF_INIT };
 	struct ref_transaction *transaction;
 	struct strbuf err = STRBUF_INIT;
@@ -639,5 +640,6 @@ cleanup:
 	strbuf_release(&reflog_msg);
 	strbuf_release(&msg.buf);
 	strbuf_release(&err);
+	free(msgfile);
 	return ret;
 }

@@ -280,3 +280,10 @@ char *prefix_filename(const char *pfx, const char *arg)
 #endif
 	return strbuf_detach(&path, NULL);
 }
+
+char *prefix_filename_except_for_dash(const char *pfx, const char *arg)
+{
+	if (!strcmp(arg, "-"))
+		return xstrdup(arg);
+	return prefix_filename(pfx, arg);
+}

@@ -619,4 +619,30 @@ test_expect_success TTY 'create --quiet disables all bundle progress' '
 	test_must_be_empty err
 '
 
+test_expect_success 'read bundle over stdin' '
+	git bundle create some.bundle HEAD &&
+
+	git bundle verify - <some.bundle 2>err &&
+	grep "<stdin> is okay" err &&
+
+	git bundle list-heads some.bundle >expect &&
+	git bundle list-heads - <some.bundle >actual &&
+	test_cmp expect actual &&
+
+	git bundle unbundle some.bundle >expect &&
+	git bundle unbundle - <some.bundle >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'send a bundle to standard output' '
+	git bundle create - --all HEAD >bundle-one &&
+	mkdir -p down &&
+	git -C down bundle create - --all HEAD >bundle-two &&
+	git bundle verify bundle-one &&
+	git bundle verify bundle-two &&
+	git ls-remote bundle-one >expect &&
+	git ls-remote bundle-two >actual &&
+	test_cmp expect actual
+'
+
 test_done
