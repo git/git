@@ -1,21 +1,20 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Mar 2023, #01; Wed, 1)
-X-master-at: ef7d4f53c2fd9e8186d093dea6d45a91ce57110e
-X-next-at: e12885d4f5a6a5e9a900ddf12ad1635bcc81869b
+Subject: What's cooking in git.git (Mar 2023, #02; Tue, 7)
+X-master-at: 725f57037d81e24eacfda6e59a19c60c0b4c8062
+X-next-at: 97d40d926ee7422876456a84ac38bfc5edc7d9d1
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Mar 2023, #01; Wed, 1)
+What's cooking in git.git (Mar 2023, #02; Tue, 7)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
 prefixed with '+' are in 'next' (being in 'next' is a sign that a
 topic is stable enough to be used and are candidate to be in a future
 release).  Commits prefixed with '-' are only in 'seen', and aren't
-considered "accepted" at all.  A topic without enough support may be
-discarded after a long period of no activity.
-
-I just tagged Git 2.40-rc1; from here on, let's concentrate on
-finding and fixing regressions relative to Git 2.39.
+considered "accepted" at all and may be annotated with an URL to a
+message that raises issues but they are no means exhaustive.  A
+topic without enough support may be discarded after a long period of
+no activity.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -48,54 +47,95 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
-* ak/restore-both-incompatible-with-conflicts (2023-02-27) 1 commit
- - restore: fault --staged --worktree with merge opts
+* as/doc-markup-fix (2023-03-06) 1 commit
+ - git-merge-tree.txt: replace spurious HTML entity
 
- "git restore" supports options like "--ours" that are only
- meaningful during a conflicted merge, but these options are only
- meaningful when updating the working tree files.  These options are
- marked to be incompatible when both "--staged" and "--worktree" are
- in effect.
+ Fix for a mis-mark-up in doc made in Git 2.39 days.
 
- Comments?
- source: <20230226184354.221-1-andy.koppe@gmail.com>
+ Will merge to 'next'.
+ source: <87y1oco3i9.fsf@igel.home>
 
 
-* ew/fetch-hiderefs (2023-02-27) 1 commit
-  (merged to 'next' on 2023-03-01 at 6a7eece733)
- + fetch: support hideRefs to speed up connectivity checks
+* ds/ahead-behind (2023-03-06) 8 commits
+ - ahead-behind: add --contains mode
+ - ahead-behind: implement ahead_behind() logic
+ - commit-graph: introduce `ensure_generations_valid()`
+ - commit-graph: return generation from memory
+ - commit-graph: combine generation computations
+ - ahead-behind: implement --ignore-missing option
+ - ahead-behind: parse tip references
+ - ahead-behind: create empty builtin
 
- A new "fetch.hideRefs" option can be used to exclude specified refs
- from "rev-list --objects --stdin --not --all" traversal for
- checking object connectivity, most useful when there are many
- unrelated histories in a single repository.
-
- Will cook in 'next'.
- source: <20230212090426.M558990@dcvr>
-
-
-* zh/push-to-delete-onelevel-ref (2023-03-01) 2 commits
- - push: allow delete single-level ref
- - receive-pack: fix funny ref error messsage
-
- "git push" has been taught to allow deletion of refs with one-level
- names to help repairing a repository who acquired such a ref by
- mistake.  In general, we don't encourage use of such a ref, and
- creation or update to such a ref is rejected as before.
+ "git ahead-behind --base=<reference> --stdin" computes the
+ distances from a single reference point in the history with bunch
+ of commits in bulk.
 
  Comments?
- source: <pull.1465.v4.git.1677666029.gitgitgadget@gmail.com>
+ source: <pull.1489.git.1678111598.gitgitgadget@gmail.com>
 
 
-* fz/rebase-msg-update (2023-02-27) 1 commit
-  (merged to 'next' on 2023-03-01 at f28c0df111)
- + rebase: fix capitalisation autoSquash in i18n string
+* gc/config-parsing-cleanup (2023-03-03) 6 commits
+ - config.c: remove current_parsing_scope
+ - config.c: remove current_config_kvi
+ - config.c: plumb the_reader through callbacks
+ - config.c: create config_reader and the_reader
+ - config.c: don't assign to "cf" directly
+ - config.c: plumb config_source through static fns
 
- Message update.
+ Config API clean-up to reduce its dependence on static variables
 
- Will cook in 'next'.
- source: <pull.1462.git.git.1677434429160.gitgitgadget@gmail.com>
+ Comments?
+ source: <pull.1463.git.git.1677631097.gitgitgadget@gmail.com>
 
+
+* jk/bundle-progress (2023-03-06) 1 commit
+ - bundle: turn on --all-progress-implied by default
+
+ Simplify UI to control progress meter given by "git bundle" command.
+
+ Will merge to 'next'.
+ source: <ZAMjkffYmp+DNmr+@coredump.intra.peff.net>
+
+
+* jk/bundle-use-dash-for-stdfiles (2023-03-06) 5 commits
+ - parse-options: use prefix_filename_except_for_dash() helper
+ - parse-options: consistently allocate memory in fix_filename()
+ - bundle: don't blindly apply prefix_filename() to "-"
+ - bundle: document handling of "-" as stdin
+ - bundle: let "-" mean stdin for reading operations
+
+ "git bundle" learned that "-" is a common way to say that the input
+ comes from the standard input and/or the output goes to the
+ standard output.  It used to work only for output and only from the
+ root level of the working tree.
+
+ Will merge to 'next'.
+ source: <ZAMb8LSpm2gOrpeY@coredump.intra.peff.net>
+
+
+* jk/format-patch-change-format-for-empty-commits (2023-03-03) 1 commit
+ - format-patch: output header for empty commits
+
+ "git format-patch" learned to write a log-message only output file
+ for empty commits.
+
+ Will merge to 'next'.
+ source: <20230303160301.3659328-1-john@keeping.me.uk>
+
+
+* ds/reprepare-alternates-when-repreparing-packfiles (2023-03-06) 1 commit
+ - object-file: reprepare alternates when necessary
+
+ Once we start running, we assumed that the list of alternate object
+ databases would never change.  Hook into the machinery used to
+ update the list of packfiles during runtime to update this list as
+ well.
+
+ Comments?
+ source: <pull.1490.git.1678136369387.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Graduated to 'master']
 
 * gm/signature-format-doc (2023-02-27) 1 commit
   (merged to 'next' on 2023-03-01 at 19f9ce8c40)
@@ -107,217 +147,12 @@ Release tarballs are available at:
  source: <20230227202718.173698-1-gwymor@tilde.club>
 
 
-* my/wildmatch-cleanups (2023-02-27) 5 commits
- - wildmatch: more cleanups after killing uchar
- - wildmatch: use char instead of uchar
- - wildmatch: remove NEGATE_CLASS(2) macros with trivial refactoring
- - wildmatch: remove IS*() macros
- - git-compat-util: add isblank() and isgraph()
-
- Code clean-up.
-
- Comments?
- source: <20230226115021.1681834-1-masahiroy@kernel.org>
-
-
 * rs/range-diff-custom-abbrev-fix (2023-02-28) 1 commit
   (merged to 'next' on 2023-02-28 at 82f1929a15)
  + range-diff: avoid compiler warning when char is unsigned
 
  Hotfix for a topic that is already in 'master'.
-
- Will merge to 'master'.
  source: <1156586e-9dbe-335e-7e33-74eea7913e86@web.de>
-
-
-* cw/forbid-use-of-gitlink-outside-submodules (2023-02-28) 6 commits
- . add: reject nested repositories
- . tests: remove duplicate .gitmodules path
- . tests: use `git submodule add` and fix expected status
- . tests: use `git submodule add` and fix expected diffs
- . tests: Use `git submodule add` instead of `git add`
- . t4041, t4060: modernize test style
-
- Forbid "git add dir" from adding a gitlink to the index.
-
- Comments?
- Seems to break tests when merged to 'seen'.
- source: <20230228185253.2356546-1-calvinwan@google.com>
-
---------------------------------------------------
-[Graduated to 'master']
-
-* ap/t2015-style-update (2023-02-21) 1 commit
-  (merged to 'next' on 2023-02-22 at 40883b85c7)
- + t2015-checkout-unborn.sh: changes the style for cd
-
- Test clean-up.
- source: <20230218192128.7963-1-ashutosh.pandeyhlr007@gmail.com>
-
-
-* ar/test-lib-remove-stale-comment (2023-02-27) 1 commit
-  (merged to 'next' on 2023-02-27 at d948667d2d)
- + test-lib: drop comment about test_description
-
- Test library clean-up.
- source: <20230226105303.55033-1-rybak.a.v@gmail.com>
-
-
-* if/simplify-trace-setup (2023-02-21) 1 commit
-  (merged to 'next' on 2023-02-24 at 9c8e690f3d)
- + trace.c, git.c: remove unnecessary parameter to trace_repo_setup()
-
- Code clean-up.
- source: <20230219002527.84315-1-mcsm224@gmail.com>
-
-
-* jc/countermand-format-attach (2023-02-17) 1 commit
-  (merged to 'next' on 2023-02-24 at 709ed91a7c)
- + format.attach: allow empty value to disable multi-part messages
-
- The format.attach configuration variable lacked a way to override a
- value defined in a lower-priority configuration file (e.g. the
- system one) by redefining it in a higher-priority configuration
- file.  Now, setting format.attach to an empty string means show the
- patch inline in the e-mail message, without using MIME attachment.
-
- This is a backward incompatible change.
- source: <xmqqwn4fkgtq.fsf@gitster.g>
-
-
-* jc/diff-algo-attribute (2023-02-21) 2 commits
-  (merged to 'next' on 2023-02-22 at 2375640330)
- + diff: teach diff to read algorithm from diff driver
- + diff: consolidate diff algorithm option parsing
-
- The "diff" drivers specified by the "diff" attribute attached to
- paths can now specify which algorithm (e.g. histogram) to use.
- source: <pull.1452.v4.git.git.1676927082.gitgitgadget@gmail.com>
-
-
-* jk/http-proxy-tests (2023-02-16) 1 commit
-  (merged to 'next' on 2023-02-22 at f1f69d188f)
- + add basic http proxy tests
-
- Test updates.
- source: <Y+6YgALh6L9m6rSX@coredump.intra.peff.net>
-
-
-* jk/http-test-fixes (2023-02-23) 16 commits
-  (merged to 'next' on 2023-02-24 at 8f3d70acc4)
- + t5559: make SSL/TLS the default
- + t5559: fix test failures with LIB_HTTPD_SSL
- + t/lib-httpd: enable HTTP/2 "h2" protocol, not just h2c
- + t/lib-httpd: respect $HTTPD_PROTO in expect_askpass()
- + t5551: drop curl trace lines without headers
- + t5551: handle v2 protocol in cookie test
- + t5551: simplify expected cookie file
- + t5551: handle v2 protocol in upload-pack service test
- + t5551: handle v2 protocol when checking curl trace
- + t5551: stop forcing clone to run with v0 protocol
- + t5551: handle HTTP/2 when checking curl trace
- + t5551: lower-case headers in expected curl trace
- + t5551: drop redundant grep for Accept-Language
- + t5541: simplify and move "no empty path components" test
- + t5541: stop marking "used receive-pack service" test as v0 only
- + t5541: run "used receive-pack service" test earlier
-
- Various fix-ups on HTTP tests.
- source: <Y/dEYYWKy/o96vBG@coredump.intra.peff.net>
-
-
-* jk/shorten-unambiguous-ref-wo-sscanf (2023-02-15) 3 commits
-  (merged to 'next' on 2023-02-24 at 12ca5684f0)
- + shorten_unambiguous_ref(): avoid sscanf()
- + shorten_unambiguous_ref(): use NUM_REV_PARSE_RULES constant
- + shorten_unambiguous_ref(): avoid integer truncation
-
- sscanf(3) used in "git symbolic-ref --short" implementation found
- to be not working reliably on macOS in UTF-8 locales.  Rewrite the
- code to avoid sscanf() altogether to work it around.
- source: <Y+z3MtgayoXsxaHA@coredump.intra.peff.net>
-
-
-* ma/fetch-parallel-use-online-cpus (2023-02-21) 1 commit
-  (merged to 'next' on 2023-02-22 at 756d379bf0)
- + fetch: choose a sensible default with --jobs=0 again
-
- "git fetch --jobs=0" used to hit a BUG(), which has been corrected
- to use the available CPUs.
- source: <pull.1483.git.1676928805555.gitgitgadget@gmail.com>
-
-
-* mh/credential-password-expiry (2023-02-22) 1 commit
-  (merged to 'next' on 2023-02-24 at dbff7db22a)
- + credential: new attribute password_expiry_utc
-
- The credential subsystem learned that a password may have an
- explicit expiration.
- source: <pull.1443.v4.git.git.1676701977347.gitgitgadget@gmail.com>
-
-
-* ps/free-island-marks (2023-02-21) 1 commit
-  (merged to 'next' on 2023-02-22 at f46938bce3)
- + delta-islands: fix segfault when freeing island marks
-
- Fix on a previous fix already in 'master'.
- source: <61e490595b80b34c55fd640e093e021ff6fa9591.1676542973.git.ps@pks.im>
-
-
-* pw/rebase-i-parse-fix (2023-02-23) 2 commits
-  (merged to 'next' on 2023-02-24 at 5a2a2569eb)
- + rebase -i: fix parsing of "fixup -C<commit>"
- + rebase -i: match whole word in is_command()
-
- Fixes to code that parses the todo file used in "rebase -i".
- source: <pull.1486.git.1677185701.gitgitgadget@gmail.com>
-
-
-* pw/rebase-i-validate-labels-early (2023-02-21) 1 commit
-  (merged to 'next' on 2023-02-22 at 9b37d42d24)
- + rebase -i: check labels and refs when parsing todo list
-
- An invalid label or ref in the "rebase -i" todo file used to
- trigger an runtime error. SUch an error is now diagnosed while the
- todo file is parsed.
- source: <pull.1482.v2.git.1676902774366.gitgitgadget@gmail.com>
-
-
-* rs/archive-mtime (2023-02-18) 1 commit
-  (merged to 'next' on 2023-02-24 at 34869696a2)
- + archive: add --mtime
-
- "git archive HEAD^{tree}" records the paths with the current
- timestamp in the archive, making it harder to obtain a stable
- output.  The command learned the --mtime option to specify an
- arbitrary timestamp (e.g. --mtime="@0 +0000" for the epoch).
- source: <91a73f5d-ca3e-6cb0-4ba3-38d703074ee6@web.de>
-
-
-* tb/drop-dir-iterator-follow-symlink-bit (2023-02-16) 2 commits
-  (merged to 'next' on 2023-02-22 at 785e1f323e)
- + t0066: drop setup of "dir5"
- + dir-iterator: drop unused `DIR_ITERATOR_FOLLOW_SYMLINKS`
-
- Remove leftover and unused code.
- source: <9bb10b607e46f867a3f8f5c71abf13c990d1ecfe.1676572031.git.me@ttaylorr.com>
- source: <CAGdrTFhHBU2BNYdYr7LbOS7i1LOHGjWLw_d5ZJAXxvTKyLiFCA@mail.gmail.com>
-
-
-* tl/range-diff-custom-abbrev (2023-02-21) 1 commit
-  (merged to 'next' on 2023-02-22 at 49db7cce13)
- + range-diff: let '--abbrev' option takes effect
-
- "git range-diff" learned --abbrev=<num> option.
- source: <20230220142444.18739-2-tenglong.tl@alibaba-inc.com>
-
-
-* zy/t9700-style (2023-02-25) 1 commit
-  (merged to 'next' on 2023-02-27 at 6c52b8ebb2)
- + t9700: modernize test scripts
-
- Test style fixes.
- source: <20230225013003.1971931-1-18994118902@163.com>
 
 --------------------------------------------------
 [Stalled]
@@ -413,7 +248,86 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
-* ah/rebase-merges-config (2023-02-25) 3 commits
+* ak/restore-both-incompatible-with-conflicts (2023-02-27) 1 commit
+  (merged to 'next' on 2023-03-06 at 4ee341853c)
+ + restore: fault --staged --worktree with merge opts
+
+ "git restore" supports options like "--ours" that are only
+ meaningful during a conflicted merge, but these options are only
+ meaningful when updating the working tree files.  These options are
+ marked to be incompatible when both "--staged" and "--worktree" are
+ in effect.
+
+ Will cook in 'next'.
+ source: <20230226184354.221-1-andy.koppe@gmail.com>
+
+
+* ew/fetch-hiderefs (2023-02-27) 1 commit
+  (merged to 'next' on 2023-03-01 at 6a7eece733)
+ + fetch: support hideRefs to speed up connectivity checks
+
+ A new "fetch.hideRefs" option can be used to exclude specified refs
+ from "rev-list --objects --stdin --not --all" traversal for
+ checking object connectivity, most useful when there are many
+ unrelated histories in a single repository.
+
+ Will cook in 'next'.
+ source: <20230212090426.M558990@dcvr>
+
+
+* zh/push-to-delete-onelevel-ref (2023-03-01) 2 commits
+  (merged to 'next' on 2023-03-06 at f08def5949)
+ + push: allow delete single-level ref
+ + receive-pack: fix funny ref error messsage
+
+ "git push" has been taught to allow deletion of refs with one-level
+ names to help repairing a repository who acquired such a ref by
+ mistake.  In general, we don't encourage use of such a ref, and
+ creation or update to such a ref is rejected as before.
+
+ Will cook in 'next'.
+ source: <pull.1465.v4.git.1677666029.gitgitgadget@gmail.com>
+
+
+* fz/rebase-msg-update (2023-02-27) 1 commit
+  (merged to 'next' on 2023-03-01 at f28c0df111)
+ + rebase: fix capitalisation autoSquash in i18n string
+
+ Message update.
+
+ Will cook in 'next'.
+ source: <pull.1462.git.git.1677434429160.gitgitgadget@gmail.com>
+
+
+* my/wildmatch-cleanups (2023-02-27) 5 commits
+ - wildmatch: more cleanups after killing uchar
+ - wildmatch: use char instead of uchar
+ - wildmatch: remove NEGATE_CLASS(2) macros with trivial refactoring
+ - wildmatch: remove IS*() macros
+ - git-compat-util: add isblank() and isgraph()
+
+ Code clean-up.
+
+ Comments?
+ source: <20230226115021.1681834-1-masahiroy@kernel.org>
+
+
+* cw/forbid-use-of-gitlink-outside-submodules (2023-02-28) 6 commits
+ . add: reject nested repositories
+ . tests: remove duplicate .gitmodules path
+ . tests: use `git submodule add` and fix expected status
+ . tests: use `git submodule add` and fix expected diffs
+ . tests: Use `git submodule add` instead of `git add`
+ . t4041, t4060: modernize test style
+
+ Forbid "git add dir" from adding a gitlink to the index.
+
+ Comments?
+ Seems to break tests when merged to 'seen'.
+ source: <20230228185253.2356546-1-calvinwan@google.com>
+
+
+* ah/rebase-merges-config (2023-03-06) 3 commits
  - rebase: add a config option for --rebase-merges
  - rebase: deprecate --rebase-merges=""
  - rebase: add documentation and test for --no-rebase-merges
@@ -423,7 +337,7 @@ Release tarballs are available at:
 
  On hold.
  cf. <b4be9cb3-c24b-4377-bab3-5d53035efdf8@gmx.de>
- source: <20230225180325.796624-1-alexhenrie24@gmail.com>
+ source: <20230305050709.68736-1-alexhenrie24@gmail.com>
 
 
 * en/dir-api-cleanup (2023-02-27) 13 commits
@@ -521,9 +435,13 @@ Release tarballs are available at:
 
 
 * ew/commit-reach-clean-up-flags-fix (2023-02-11) 1 commit
- - commit-reach: avoid NULL dereference
+  (merged to 'next' on 2023-03-06 at 5dc1c4c0b7)
+ + commit-reach: avoid NULL dereference
 
- Under discussion.
+ Fix a segfaulting loop.  The function and its caller may need
+ further clean-up.
+
+ Will cook in 'next'.
  cf. <876cf920-113a-90cf-f49e-6e1b7b146acf@github.com>
  source: <20230211111526.2028178-1-e@80x24.org>
 
@@ -569,28 +487,30 @@ Release tarballs are available at:
 
 
 * ab/avoid-losing-exit-codes-in-tests (2023-02-06) 6 commits
- - tests: don't lose misc "git" exit codes
- - tests: don't lose exit status with "test <op> $(git ...)"
- - tests: don't lose "git" exit codes in "! ( git ... | grep )"
- - tests: don't lose exit status with "(cd ...; test <op> $(git ...))"
- - t/lib-patch-mode.sh: fix ignored exit codes
- - auto-crlf tests: don't lose exit code in loops and outside tests
+  (merged to 'next' on 2023-03-06 at 60d7d0d493)
+ + tests: don't lose misc "git" exit codes
+ + tests: don't lose exit status with "test <op> $(git ...)"
+ + tests: don't lose "git" exit codes in "! ( git ... | grep )"
+ + tests: don't lose exit status with "(cd ...; test <op> $(git ...))"
+ + t/lib-patch-mode.sh: fix ignored exit codes
+ + auto-crlf tests: don't lose exit code in loops and outside tests
 
  Test clean-up.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <cover-v5-0.6-00000000000-20230206T224200Z-avarab@gmail.com>
 
 
 * rj/branch-unborn-in-other-worktrees (2023-02-22) 3 commits
- - branch: rename orphan branches in any worktree
- - branch: description for orphan branch errors
- - branch: avoid unnecessary worktrees traversals
+  (merged to 'next' on 2023-03-06 at 6ee0ec72ae)
+ + branch: rename orphan branches in any worktree
+ + branch: description for orphan branch errors
+ + branch: avoid unnecessary worktrees traversals
 
  Error messages given when working on an unborn branch that is
  checked out in another worktree have been improvved.
 
- Comments?
+ Will cook in 'next'.
  source: <139555f1-21ab-d987-a58e-c7f04ce222d3@gmail.com>
 
 
@@ -611,12 +531,11 @@ Release tarballs are available at:
  source: <cover-v2-0.6-00000000000-20230202T093706Z-avarab@gmail.com>
 
 
-* ab/config-multi-and-nonbool (2023-02-07) 10 commits
+* ab/config-multi-and-nonbool (2023-03-07) 9 commits
  - for-each-repo: with bad config, don't conflate <path> and <cmd>
  - config API: add "string" version of *_value_multi(), fix segfaults
  - config API users: test for *_get_value_multi() segfaults
  - for-each-repo: error on bad --config
- - config API: don't lose the git_*get*() return values
  - config API: have *_multi() return an "int" and take a "dest"
  - versioncmp.c: refactor config reading next commit
  - config API: add and use a "git_config_get()" family of functions
@@ -625,9 +544,8 @@ Release tarballs are available at:
 
  Assorted config API updates.
 
- Drop [06/10] step before merging in?
- cf. <kl6lfsaw84vo.fsf@chooglen-macbookpro.roam.corp.google.com>
- source: <cover-v5-00.10-00000000000-20230207T154000Z-avarab@gmail.com>
+ Comments?
+ source: <cover-v6-0.9-00000000000-20230307T180516Z-avarab@gmail.com>
 
 
 * cb/checkout-same-branch-twice (2023-01-20) 1 commit
@@ -642,25 +560,29 @@ Release tarballs are available at:
 
 
 * rj/avoid-switching-to-already-used-branch (2023-02-25) 4 commits
- - switch: reject if the branch is already checked out elsewhere (test)
- - rebase: refuse to switch to a branch already checked out elsewhere (test)
- - branch: fix die_if_checked_out() when ignore_current_worktree
- - worktree: introduce is_shared_symref()
+  (merged to 'next' on 2023-03-06 at 7546231ddf)
+ + switch: reject if the branch is already checked out elsewhere (test)
+ + rebase: refuse to switch to a branch already checked out elsewhere (test)
+ + branch: fix die_if_checked_out() when ignore_current_worktree
+ + worktree: introduce is_shared_symref()
 
  A few subcommands have been taught to stop users from working on a
  branch that is being used in another worktree linked to the same
  repository.
+
+ Will cook in 'next'.
  source: <6fed3b1b-1c4e-9298-19b6-7ad9c04c87dd@gmail.com>
 
 
 * rj/bisect-already-used-branch (2023-01-22) 1 commit
- - bisect: fix "reset" when branch is checked out elsewhere
+  (merged to 'next' on 2023-03-06 at 3508814a41)
+ + bisect: fix "reset" when branch is checked out elsewhere
 
  Allow "git bisect reset [name]" to check out the named branch (or
  the original one) even when the branch is already checked out in a
  different worktree linked to the same repository.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <1c36c334-9f10-3859-c92f-3d889e226769@gmail.com>
 
 
@@ -676,31 +598,32 @@ Release tarballs are available at:
  source: <20230120012459.920932-1-michael.strawbridge@amd.com>
 
 
-* tc/cat-file-z-use-cquote (2023-01-16) 1 commit
- - cat-file: quote-format name in error when using -z
+* tc/cat-file-z-use-cquote (2023-03-03) 2 commits
+ . cat-file: quote-format name in error when using -z
+ . cat-file: extract printing batch error message into function
 
  "cat-file" in the batch mode that is fed NUL-terminated pathnames
  learned to cquote them in its error output (otherwise, a funny
  pathname with LF in it would break the lines in the output stream).
 
- Expecting a reroll.
- cf. <2a2a46f0-a9bc-06a6-72e1-28800518777c@dunelm.org.uk>
- source: <20230116190749.4141516-1-toon@iotcl.com>
+ Breaks "cat-file --batch-all-objects --batch-check".
+ cf. <xmqqilfhctrr.fsf@gitster.g>
+ source: <20230303191708.77894-1-toon@iotcl.com>
 
 
-* cw/submodule-status-in-parallel (2023-02-09) 6 commits
+* cw/submodule-status-in-parallel (2023-03-02) 6 commits
  - diff-lib: parallelize run_diff_files for submodules
  - diff-lib: refactor out diff_change logic
  - submodule: refactor is_submodule_modified()
  - submodule: move status parsing into function
- - submodule: strbuf variable rename
- - run-command: add duplicate_output_fn to run_processes_parallel_opts
+ - submodule: rename strbuf variable
+ - run-command: add on_stderr_output_fn to run_processes_parallel_opts
 
  "git submodule status" learned to run the comparison in submodule
  repositories in parallel.
 
- Not quite there yet...
- source: <20230209000212.1892457-1-calvinwan@google.com>
+ Comments?
+ source: <20230302215237.1473444-1-calvinwan@google.com>
 
 --------------------------------------------------
 [Discarded]
