@@ -360,7 +360,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	parse_args(&pathspec, argv, prefix, patch_mode, &rev);
 
 	if (read_from_stdin) {
-		pathspec_from_file = "-";
+		pathspec_from_file = xstrdup("-");
 		if (nul_term_line)
 			pathspec_file_nul = 1;
 	}
