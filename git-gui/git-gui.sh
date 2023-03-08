@@ -683,12 +683,9 @@ proc sq {value} {
 proc load_current_branch {} {
 	global current_branch is_detached
 
-	set fd [open [gitdir HEAD] r]
-	fconfigure $fd -translation binary -encoding utf-8
-	if {[gets $fd ref] < 1} {
+	if {[catch {set ref [git rev-parse --verify HEAD]}]} {
 		set ref {}
 	}
-	close $fd
 
 	set pfx {ref: refs/heads/}
 	set len [string length $pfx]
