@@ -2919,13 +2919,18 @@ static int populate_opts_cb(const char *key, const char *value, void *data)
 void parse_strategy_opts(struct replay_opts *opts, char *raw_opts)
 {
 	int i;
+	int count;
 	char *strategy_opts_string = raw_opts;
 
 	if (*strategy_opts_string == ' ')
 		strategy_opts_string++;
 
-	opts->xopts_nr = split_cmdline(strategy_opts_string,
-				       (const char ***)&opts->xopts);
+	count = split_cmdline(strategy_opts_string,
+			      (const char ***)&opts->xopts);
+	if (count < 0)
+		die(_("could not split '%s': %s"), strategy_opts_string,
+			    split_cmdline_strerror(count));
+	opts->xopts_nr = count;
 	for (i = 0; i < opts->xopts_nr; i++) {
 		const char *arg = opts->xopts[i];
 
