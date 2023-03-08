@@ -46,6 +46,7 @@ static struct {
 	[ADVICE_COMMIT_BEFORE_MERGE]			= { "commitBeforeMerge", 1 },
 	[ADVICE_DETACHED_HEAD]				= { "detachedHead", 1 },
 	[ADVICE_SUGGEST_DETACHING_HEAD]			= { "suggestDetachingHead", 1 },
+	[ADVICE_DIVERGING]				= { "diverging", 1 },
 	[ADVICE_FETCH_SHOW_FORCED_UPDATES]		= { "fetchShowForcedUpdates", 1 },
 	[ADVICE_GRAFT_FILE_DEPRECATED]			= { "graftFileDeprecated", 1 },
 	[ADVICE_IGNORED_HOOK]				= { "ignoredHook", 1 },
@@ -219,6 +220,14 @@ void NORETURN die_conclude_merge(void)
 
 void NORETURN die_ff_impossible(void)
 {
+	advise_if_enabled(ADVICE_DIVERGING,
+		_("Diverging branches can't be fast-forwarded, you need to either:\n"
+		"\n"
+		"\tgit merge --no-ff\n"
+		"\n"
+		"or:\n"
+		"\n"
+		"\tgit rebase\n"));
 	die(_("Not possible to fast-forward, aborting."));
 }
 
