@@ -29,7 +29,7 @@ jobs:
           - label: git-lfs
             feed: https://github.com/git-lfs/git-lfs/tags.atom
           - label: git-credential-manager
-            feed: https://github.com/GitCredentialManager/git-credential-manager/tags.atom
+            feed: https://github.com/git-ecosystem/git-credential-manager/tags.atom
           - label: tig
             feed: https://github.com/jonas/tig/tags.atom
           - label: cygwin
