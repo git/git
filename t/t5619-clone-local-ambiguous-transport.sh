@@ -64,7 +64,7 @@ test_expect_success 'ambiguous transport does not lead to arbitrary file-inclusi
 	#
 	# This works for now, and if we ever fix the URL detection, it
 	# is OK to change this to detect the transport error.
-	grep "protocol .* is not supported" err
+	test_i18ngrep "protocol .* is not supported" err
 '
 
 test_done
