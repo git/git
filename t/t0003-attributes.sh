@@ -344,7 +344,7 @@ test_expect_success 'large attributes line ignored in tree' '
 	printf "path %02043d" 1 >.gitattributes &&
 	git check-attr --all path >actual 2>err &&
 	echo "warning: ignoring overly long attributes line 1" >expect &&
-	test_cmp expect err &&
+	test_i18ncmp expect err &&
 	test_must_be_empty actual
 '
 
@@ -357,7 +357,7 @@ test_expect_success 'large attributes line ignores trailing content in tree' '
 	printf "a %02045dtrailing attribute\n" 1 >.gitattributes &&
 	git check-attr --all trailing >actual 2>err &&
 	echo "warning: ignoring overly long attributes line 1" >expect &&
-	test_cmp expect err &&
+	test_i18ncmp expect err &&
 	test_must_be_empty actual
 '
 
@@ -375,7 +375,7 @@ test_expect_success 'large attributes line ignored in index' '
 	git update-index --add --cacheinfo 100644,$blob,.gitattributes &&
 	git check-attr --cached --all path >actual 2>err &&
 	echo "warning: ignoring overly long attributes line 1" >expect &&
-	test_cmp expect err &&
+	test_i18ncmp expect err &&
 	test_must_be_empty actual
 '
 
@@ -385,7 +385,7 @@ test_expect_success 'large attributes line ignores trailing content in index' '
 	git update-index --add --cacheinfo 100644,$blob,.gitattributes &&
 	git check-attr --cached --all trailing >actual 2>err &&
 	echo "warning: ignoring overly long attributes line 1" >expect &&
-	test_cmp expect err &&
+	test_i18ncmp expect err &&
 	test_must_be_empty actual
 '
 
