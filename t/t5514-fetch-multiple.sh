@@ -58,6 +58,13 @@ test_expect_success 'git fetch --all' '
 	 test_cmp expect output)
 '
 
+test_expect_success 'git fetch --all --no-write-fetch-head' '
+	(cd test &&
+	rm -f .git/FETCH_HEAD &&
+	git fetch --all --no-write-fetch-head &&
+	test_path_is_missing .git/FETCH_HEAD)
+'
+
 test_expect_success 'git fetch --all should continue if a remote has errors' '
 	(git clone one test2 &&
 	 cd test2 &&
