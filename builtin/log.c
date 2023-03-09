@@ -56,6 +56,7 @@ static int stdout_mboxrd;
 static const char *fmt_patch_subject_prefix = "PATCH";
 static int fmt_patch_name_max = FORMAT_PATCH_NAME_MAX_DEFAULT;
 static const char *fmt_pretty;
+static int format_no_prefix;
 
 static const char * const builtin_log_usage[] = {
 	N_("git log [<options>] [<revision-range>] [[--] <path>...]"),
@@ -1084,6 +1085,10 @@ static int git_format_config(const char *var, const char *value, void *cb)
 		stdout_mboxrd = git_config_bool(var, value);
 		return 0;
 	}
+	if (!strcmp(var, "format.noprefix")) {
+		format_no_prefix = 1;
+		return 0;
+	}
 
 	/*
 	 * ignore some porcelain config which would otherwise be parsed by
@@ -2001,6 +2006,9 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	memset(&s_r_opt, 0, sizeof(s_r_opt));
 	s_r_opt.def = "HEAD";
 	s_r_opt.revarg_opt = REVARG_COMMITTISH;
+
+	if (format_no_prefix)
+		diff_set_noprefix(&rev.diffopt);
 
 	if (default_attach) {
 		rev.mime_boundary = default_attach;

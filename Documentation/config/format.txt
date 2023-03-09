@@ -144,3 +144,10 @@ will only show notes from `refs/notes/bar`.
 format.mboxrd::
 	A boolean value which enables the robust "mboxrd" format when
 	`--stdout` is in use to escape "^>+From " lines.
+
+format.noprefix::
+	If set, do not show any source or destination prefix in patches.
+	This is equivalent to the `diff.noprefix` option used by `git
+	diff` (but which is not respected by `format-patch`). Note that
+	by setting this, the receiver of any patches you generate will
+	have to apply them using the `-p0` option.
