@@ -8,7 +8,7 @@ broken=0
 total=0
 missing_prereq=
 
-while read file
+for file in "$1"/t*-*.counts
 do
 	while read type value
 	do
