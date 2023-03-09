@@ -56,6 +56,7 @@ struct git_config_source {
 };
 
 enum config_origin_type {
+	CONFIG_ORIGIN_UNKNOWN = 0,
 	CONFIG_ORIGIN_BLOB,
 	CONFIG_ORIGIN_FILE,
 	CONFIG_ORIGIN_STDIN,
