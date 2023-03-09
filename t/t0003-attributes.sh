@@ -366,7 +366,7 @@ test_expect_success EXPENSIVE 'large attributes file ignored in tree' '
 	dd if=/dev/zero of=.gitattributes bs=101M count=1 2>/dev/null &&
 	git check-attr --all path >/dev/null 2>err &&
 	echo "warning: ignoring overly large gitattributes file ${SQ}.gitattributes${SQ}" >expect &&
-	test_cmp expect err
+	test_i18ncmp expect err
 '
 
 test_expect_success 'large attributes line ignored in index' '
