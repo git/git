@@ -484,7 +484,8 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 		if (!eol)
 			eol = pend;
 
-		if (starts_with(p, "diff ")) {
+		if (starts_with(p, "diff ") ||
+		    starts_with(p, "* Unmerged path ")) {
 			complete_file(marker, hunk);
 			ALLOC_GROW_BY(s->file_diff, s->file_diff_nr, 1,
 				   file_diff_alloc);
