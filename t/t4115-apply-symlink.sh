@@ -72,7 +72,7 @@ test_expect_success SYMLINKS 'symlink escape when creating new files' '
 	cat >expected_stderr <<-EOF &&
 	error: affected file ${SQ}renamed-symlink/create-me${SQ} is beyond a symbolic link
 	EOF
-	test_cmp expected_stderr stderr &&
+	test_i18ncmp expected_stderr stderr &&
 	! test_path_exists .git/create-me
 '
 
