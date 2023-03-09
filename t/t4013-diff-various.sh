@@ -643,9 +643,19 @@ test_expect_success 'diff respects diff.noprefix' '
 	check_prefix actual file0 file0
 '
 
+test_expect_success 'diff --default-prefix overrides diff.noprefix' '
+	git -c diff.noprefix diff --default-prefix >actual &&
+	check_prefix actual a/file0 b/file0
+'
+
 test_expect_success 'diff respects diff.mnemonicprefix' '
 	git -c diff.mnemonicprefix diff >actual &&
 	check_prefix actual i/file0 w/file0
+'
+
+test_expect_success 'diff --default-prefix overrides diff.mnemonicprefix' '
+	git -c diff.mnemonicprefix diff --default-prefix >actual &&
+	check_prefix actual a/file0 b/file0
 '
 
 test_done
