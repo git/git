@@ -1085,6 +1085,15 @@ static int git_format_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
+	/*
+	 * ignore some porcelain config which would otherwise be parsed by
+	 * git_diff_ui_config(), via git_log_config(); we can't just avoid
+	 * diff_ui_config completely, because we do care about some ui options
+	 * like color.
+	 */
+	if (!strcmp(var, "diff.noprefix"))
+		return 0;
+
 	return git_log_config(var, value, cb);
 }
 

@@ -2386,4 +2386,9 @@ test_expect_success 'interdiff: solo-patch' '
 	test_cmp expect actual
 '
 
+test_expect_success 'format-patch does not respect diff.noprefix' '
+	git -c diff.noprefix format-patch -1 --stdout >actual &&
+	grep "^--- a/blorp" actual
+'
+
 test_done
