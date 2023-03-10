@@ -54,6 +54,22 @@ test_expect_success 'git ls-files --format path v.s. -s' '
 	test_cmp expect actual
 '
 
+test_expect_success 'git ls-files --format with relative path' '
+	cat >expect <<-\EOF &&
+	../o1.txt
+	../o2.txt
+	../o3.txt
+	../o4.txt
+	../o5.txt
+	../o6.txt
+	EOF
+	mkdir sub &&
+	cd sub &&
+	git ls-files --format="%(path)" ":/" >../actual &&
+	cd .. &&
+	test_cmp expect actual
+'
+
 test_expect_success 'git ls-files --format with -m' '
 	echo change >o1.txt &&
 	cat >expect <<-\EOF &&
