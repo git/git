@@ -26,17 +26,6 @@ struct patch_util {
 	struct object_id oid;
 };
 
-static size_t find_end_of_line(char *buffer, unsigned long size)
-{
-	char *eol = memchr(buffer, '\n', size);
-
-	if (!eol)
-		return size;
-
-	*eol = '\0';
-	return eol + 1 - buffer;
-}
-
 /*
  * Reads the patches into a string list, with the `util` field being populated
  * as struct object_id (will need to be free()d).
@@ -49,7 +38,7 @@ static int read_patches(const char *range, struct string_list *list,
 	struct patch_util *util = NULL;
 	int in_header = 1;
 	char *line, *current_filename = NULL;
-	int offset, len;
+	ssize_t len;
 	size_t size;
 
 	strvec_pushl(&cp.args, "log", "--no-color", "-p", "--no-merges",
@@ -86,11 +75,18 @@ static int read_patches(const char *range, struct string_list *list,
 
 	line = contents.buf;
 	size = contents.len;
-	for (offset = 0; size > 0; offset += len, size -= len, line += len) {
+	for (; size > 0; size -= len, line += len) {
 		const char *p;
+		char *eol;
 
-		len = find_end_of_line(line, size);
-		line[len - 1] = '\0';
+		eol = memchr(line, '\n', size);
+		if (eol) {
+			*eol = '\0';
+			len = eol + 1 - line;
+		} else {
+			len = size;
+		}
+
 		if (skip_prefix(line, "commit ", &p)) {
 			if (util) {
 				string_list_append(list, buf.buf)->util = util;
@@ -132,7 +128,8 @@ static int read_patches(const char *range, struct string_list *list,
 			strbuf_addch(&buf, '\n');
 			if (!util->diff_offset)
 				util->diff_offset = buf.len;
-			line[len - 1] = '\n';
+			if (eol)
+				*eol = '\n';
 			orig_len = len;
 			len = parse_git_diff_header(&root, &linenr, 0, line,
 						    len, size, &patch);
