@@ -186,22 +186,20 @@ size_t fread_buffer(char *ptr, size_t eltsize, size_t nmemb, void *buffer_)
 	return size / eltsize;
 }
 
-#ifndef NO_CURL_IOCTL
-curlioerr ioctl_buffer(CURL *handle, int cmd, void *clientp)
+#ifndef NO_CURL_SEEK
+int seek_buffer(void *clientp, curl_off_t offset, int origin)
 {
 	struct buffer *buffer = clientp;
 
-	switch (cmd) {
-	case CURLIOCMD_NOP:
-		return CURLIOE_OK;
-
-	case CURLIOCMD_RESTARTREAD:
-		buffer->posn = 0;
-		return CURLIOE_OK;
-
-	default:
-		return CURLIOE_UNKNOWNCMD;
+	if (origin != SEEK_SET)
+		BUG("seek_buffer only handles SEEK_SET");
+	if (offset < 0 || offset >= buffer->buf.len) {
+		error("curl seek would be outside of buffer");
+		return CURL_SEEKFUNC_FAIL;
 	}
+
+	buffer->posn = offset;
+	return CURL_SEEKFUNC_OK;
 }
 #endif
 
@@ -810,20 +808,37 @@ void setup_curl_trace(CURL *handle)
 }
 
 #ifdef CURLPROTO_HTTP
-static long get_curl_allowed_protocols(int from_user)
+static void proto_list_append(struct strbuf *list, const char *proto)
 {
-	long allowed_protocols = 0;
+	if (!list)
+		return;
+	if (list->len)
+		strbuf_addch(list, ',');
+	strbuf_addstr(list, proto);
+}
 
-	if (is_transport_allowed("http", from_user))
-		allowed_protocols |= CURLPROTO_HTTP;
-	if (is_transport_allowed("https", from_user))
-		allowed_protocols |= CURLPROTO_HTTPS;
-	if (is_transport_allowed("ftp", from_user))
-		allowed_protocols |= CURLPROTO_FTP;
-	if (is_transport_allowed("ftps", from_user))
-		allowed_protocols |= CURLPROTO_FTPS;
+static long get_curl_allowed_protocols(int from_user, struct strbuf *list)
+{
+	long bits = 0;
 
-	return allowed_protocols;
+	if (is_transport_allowed("http", from_user)) {
+		bits |= CURLPROTO_HTTP;
+		proto_list_append(list, "http");
+	}
+	if (is_transport_allowed("https", from_user)) {
+		bits |= CURLPROTO_HTTPS;
+		proto_list_append(list, "https");
+	}
+	if (is_transport_allowed("ftp", from_user)) {
+		bits |= CURLPROTO_FTP;
+		proto_list_append(list, "ftp");
+	}
+	if (is_transport_allowed("ftps", from_user)) {
+		bits |= CURLPROTO_FTPS;
+		proto_list_append(list, "ftps");
+	}
+
+	return bits;
 }
 #endif
 
@@ -981,10 +996,24 @@ static CURL *get_curl_handle(void)
 	curl_easy_setopt(result, CURLOPT_POST301, 1);
 #endif
 #ifdef CURLPROTO_HTTP
+#if LIBCURL_VERSION_NUM >= 0x075500
+	{
+		struct strbuf buf = STRBUF_INIT;
+
+		get_curl_allowed_protocols(0, &buf);
+		curl_easy_setopt(result, CURLOPT_REDIR_PROTOCOLS_STR, buf.buf);
+		strbuf_reset(&buf);
+
+		get_curl_allowed_protocols(-1, &buf);
+		curl_easy_setopt(result, CURLOPT_PROTOCOLS_STR, buf.buf);
+		strbuf_release(&buf);
+	}
+#else
 	curl_easy_setopt(result, CURLOPT_REDIR_PROTOCOLS,
-			 get_curl_allowed_protocols(0));
+			 get_curl_allowed_protocols(0, NULL));
 	curl_easy_setopt(result, CURLOPT_PROTOCOLS,
-			 get_curl_allowed_protocols(-1));
+			 get_curl_allowed_protocols(-1, NULL));
+#endif
 #else
 	warning(_("Protocol restrictions not supported with cURL < 7.19.4"));
 #endif
@@ -1523,6 +1552,32 @@ void run_active_slot(struct active_request_slot *slot)
 		finish_active_slot(slot);
 	}
 #endif
+
+	/*
+	 * The value of slot->finished we set before the loop was used
+	 * to set our "finished" variable when our request completed.
+	 *
+	 * 1. The slot may not have been reused for another requst
+	 *    yet, in which case it still has &finished.
+	 *
+	 * 2. The slot may already be in-use to serve another request,
+	 *    which can further be divided into two cases:
+	 *
+	 * (a) If call run_active_slot() hasn't been called for that
+	 *     other request, slot->finished would have been cleared
+	 *     by get_active_slot() and has NULL.
+	 *
+	 * (b) If the request did call run_active_slot(), then the
+	 *     call would have updated slot->finished at the beginning
+	 *     of this function, and with the clearing of the member
+	 *     below, we would find that slot->finished is now NULL.
+	 *
+	 * In all cases, slot->finished has no useful information to
+	 * anybody at this point.  Some compilers warn us for
+	 * attempting to smuggle a pointer that is about to become
+	 * invalid, i.e. &finished.  We clear it here to assure them.
+	 */
+	slot->finished = NULL;
 }
 
 static void release_active_slot(struct active_request_slot *slot)

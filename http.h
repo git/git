@@ -41,8 +41,8 @@
 #define CURLE_HTTP_RETURNED_ERROR CURLE_HTTP_NOT_FOUND
 #endif
 
-#if LIBCURL_VERSION_NUM < 0x070c03
-#define NO_CURL_IOCTL
+#if LIBCURL_VERSION_NUM < 0x071200
+#define NO_CURL_SEEK
 #endif
 
 /*
@@ -82,8 +82,8 @@ struct buffer {
 size_t fread_buffer(char *ptr, size_t eltsize, size_t nmemb, void *strbuf);
 size_t fwrite_buffer(char *ptr, size_t eltsize, size_t nmemb, void *strbuf);
 size_t fwrite_null(char *ptr, size_t eltsize, size_t nmemb, void *strbuf);
-#ifndef NO_CURL_IOCTL
-curlioerr ioctl_buffer(CURL *handle, int cmd, void *clientp);
+#ifndef NO_CURL_SEEK
+int seek_buffer(void *clientp, curl_off_t offset, int origin);
 #endif
 
 /* Slot lifecycle functions */
