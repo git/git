@@ -945,9 +945,9 @@ test_failing_trailer_option () {
 	test_expect_success "$title" '
 		# error message cannot be checked under i18n
 		test_must_fail git for-each-ref --format="%($option)" refs/heads/main 2>actual &&
-		test_i18ncmp expect actual &&
+		test_cmp expect actual &&
 		test_must_fail git for-each-ref --format="%(contents:$option)" refs/heads/main 2>actual &&
-		test_i18ncmp expect actual
+		test_cmp expect actual
 	'
 }
 
@@ -966,7 +966,7 @@ test_expect_success 'if arguments, %(contents:trailers) shows error if colon is 
 	fatal: unrecognized %(contents) argument: trailersonly
 	EOF
 	test_must_fail git for-each-ref --format="%(contents:trailersonly)" 2>actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'basic atom: head contents:trailers' '
