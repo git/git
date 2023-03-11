@@ -232,12 +232,12 @@ jobs:
           - jobname: linux-gcc
             cc: gcc
             cc_package: gcc-8
-            pool: ubuntu-latest
+            pool: ubuntu-20.04
           - jobname: linux-TEST-vars
             cc: gcc
             os: ubuntu
             cc_package: gcc-8
-            pool: ubuntu-latest
+            pool: ubuntu-20.04
           - jobname: osx-clang
             cc: clang
             pool: macos-latest
@@ -305,7 +305,7 @@ jobs:
     if: needs.ci-config.outputs.enabled == 'yes'
     env:
       jobname: StaticAnalysis
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v2
     - run: ci/install-dependencies.sh

@@ -3192,9 +3192,10 @@ void git_config_set_multivar(const char *key, const char *value,
 					flags);
 }
 
-static int section_name_match (const char *buf, const char *name)
+static size_t section_name_match (const char *buf, const char *name)
 {
-	int i = 0, j = 0, dot = 0;
+	size_t i = 0, j = 0;
+	int dot = 0;
 	if (buf[i] != '[')
 		return 0;
 	for (i = 1; buf[i] && buf[i] != ']'; i++) {
@@ -3247,6 +3248,8 @@ static int section_name_is_ok(const char *name)
 	return 1;
 }
 
+#define GIT_CONFIG_MAX_LINE_LEN (512 * 1024)
+
 /* if new_name == NULL, the section is removed instead */
 static int git_config_copy_or_rename_section_in_file(const char *config_filename,
 				      const char *old_name,
@@ -3256,11 +3259,12 @@ static int git_config_copy_or_rename_section_in_file(const char *config_filename
 	char *filename_buf = NULL;
 	struct lock_file lock = LOCK_INIT;
 	int out_fd;
-	char buf[1024];
+	struct strbuf buf = STRBUF_INIT;
 	FILE *config_file = NULL;
 	struct stat st;
 	struct strbuf copystr = STRBUF_INIT;
 	struct config_store_data store;
+	uint32_t line_nr = 0;
 
 	memset(&store, 0, sizeof(store));
 
@@ -3297,16 +3301,25 @@ static int git_config_copy_or_rename_section_in_file(const char *config_filename
 		goto out;
 	}
 
-	while (fgets(buf, sizeof(buf), config_file)) {
-		unsigned i;
-		int length;
+	while (!strbuf_getwholeline(&buf, config_file, '\n')) {
+		size_t i, length;
 		int is_section = 0;
-		char *output = buf;
-		for (i = 0; buf[i] && isspace(buf[i]); i++)
+		char *output = buf.buf;
+
+		line_nr++;
+
+		if (buf.len >= GIT_CONFIG_MAX_LINE_LEN) {
+			ret = error(_("refusing to work with overly long line "
+				      "in '%s' on line %"PRIuMAX),
+				    config_filename, (uintmax_t)line_nr);
+			goto out;
+		}
+
+		for (i = 0; buf.buf[i] && isspace(buf.buf[i]); i++)
 			; /* do nothing */
-		if (buf[i] == '[') {
+		if (buf.buf[i] == '[') {
 			/* it's a section */
-			int offset;
+			size_t offset;
 			is_section = 1;
 
 			/*
@@ -3323,7 +3336,7 @@ static int git_config_copy_or_rename_section_in_file(const char *config_filename
 				strbuf_reset(&copystr);
 			}
 
-			offset = section_name_match(&buf[i], old_name);
+			offset = section_name_match(&buf.buf[i], old_name);
 			if (offset > 0) {
 				ret++;
 				if (new_name == NULL) {
@@ -3398,6 +3411,7 @@ out:
 out_no_rollback:
 	free(filename_buf);
 	config_store_data_clear(&store);
+	strbuf_release(&buf);
 	return ret;
 }
 

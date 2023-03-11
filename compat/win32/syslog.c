@@ -43,6 +43,7 @@ void syslog(int priority, const char *fmt, ...)
 	va_end(ap);
 
 	while ((pos = strstr(str, "%1")) != NULL) {
+		size_t offset = pos - str;
 		char *oldstr = str;
 		str = realloc(str, st_add(++str_len, 1));
 		if (!str) {
@@ -50,6 +51,7 @@ void syslog(int priority, const char *fmt, ...)
 			warning_errno("realloc failed");
 			return;
 		}
+		pos = str + offset;
 		memmove(pos + 2, pos + 1, strlen(pos));
 		pos[1] = ' ';
 	}
