@@ -14,13 +14,17 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Restore specified paths in the working tree with some contents from a
+Restore specified paths in the working tree and/or index with some contents from a
 restore source. If a path is tracked but does not exist in the restore
 source, it will be removed to match the source.
 
-The command can also be used to restore the content in the index with
+The command can be used to restore the content in the index with
 `--staged`, or restore both the working tree and the index with
 `--staged --worktree`.
+
+The config options `restore.defaultDestination`, which accepts values "worktree",
+"staged" or "both", can be used to control the default behavior for which
+flag(s) apply if neither `--staged` nor `--worktree` is supplied.
 
 By default, if `--staged` is given, the contents are restored from `HEAD`,
 otherwise from the index. Use `--source` to restore from a different commit.
@@ -59,9 +63,12 @@ all modified paths.
 --worktree::
 -S::
 --staged::
-	Specify the restore location. If neither option is specified,
-	by default the working tree is restored. Specifying `--staged`
-	will only restore the index. Specifying both restores both.
+	Specify the restore location. If neither option is specified, the
+	default depends on the `'restore.defaultDestination` config option, which
+	can be "worktree" (the default), "staged" or "both", to control which of
+	the two flags is assumed if none are given. Specifying `--worktree` will
+	only restore the worktree. Specifying `--staged` will only restore the
+	index. Specifying both restores both.
 
 -q::
 --quiet::
