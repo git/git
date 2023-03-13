@@ -72,7 +72,7 @@ cat <<EOF
 To: git@vger.kernel.org
 Cc: Linux Kernel <linux-kernel@vger.kernel.org>,
     git-packagers@googlegroups.com
-Bcc: lwn\@lwn.net, gitster\@pobox.com
+Bcc: lwn@lwn.net, gitster@pobox.com
 Subject: [ANNOUNCE] Git $relname
 
 EOF
