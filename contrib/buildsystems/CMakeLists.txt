@@ -740,6 +740,7 @@ if(WIN32)
 	endif()
 
 	add_executable(headless-git ${CMAKE_SOURCE_DIR}/compat/win32/headless.c)
+	list(APPEND PROGRAMS_BUILT headless-git)
 	if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
 		target_link_options(headless-git PUBLIC -municode -Wl,-subsystem,windows)
 	elseif(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
@@ -919,7 +920,7 @@ list(TRANSFORM git_perl_scripts PREPEND "${CMAKE_BINARY_DIR}/")
 
 #install
 foreach(program ${PROGRAMS_BUILT})
-if(program MATCHES "^(git|git-shell|scalar)$")
+if(program MATCHES "^(git|git-shell|headless-git|scalar)$")
 install(TARGETS ${program}
 	RUNTIME DESTINATION bin)
 else()
