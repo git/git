@@ -18,11 +18,12 @@ inst_prefix=$(
 )
 
 force= with_dash= test_long= M= install= doc= notest= bootstrap= branches= jobs=
-scratch= noprove= memtrash=--memtrash with_cocci= san=
+scratch= noprove= memtrash=--memtrash with_cocci= san= clean=
 while	case "$1" in
 	--pedantic | --locale=* | --loose) M="$M $1" ;;
 	--force) force=$1 ;;
 	--dash) with_dash=y ;;
+	--clean) clean=y ;;
 	--cocci) with_cocci=y ;;
 	--no-cocci) with_cocci= ;;
 	--long) test_long=--long ;;
@@ -192,13 +193,13 @@ do
 		cd "$BUILDBASE/$branch"
 		git reset --hard  &&
 
-		case "$scratch" in
+		case "$scratch$clean" in
 		'')
 			;;
-		y)
+		*y*)
 			saveMeta=$(readlink Meta)
 			Meta/Make distclean
-			git clean -f -x
+			git clean -f -x -d
 			ln -s "$saveMeta" Meta
 			;;
 		esac &&
@@ -209,6 +210,10 @@ do
 		*)
 			git checkout "$branch" &&
 			git reset --hard || exit
+		esac &&
+
+		case "$clean" in
+		y)	exit 0 ;;
 		esac &&
 
 		case "$private" in
