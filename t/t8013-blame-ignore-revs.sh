@@ -115,6 +115,25 @@ test_expect_success ignore_revs_from_configs_and_files '
 	test_cmp expect actual
 '
 
+# Ignore X from the config option, Y from a file.
+test_expect_success ignore_revs_from_configs_and_blobs '
+	git rev-parse X >ignore_x &&
+	git rev-parse Y >ignore_y &&
+	git add ignore_x ignore_y &&
+	git commit -m ignore &&
+	git config --add blame.ignoreRevsBlob HEAD:ignore_x &&
+	git blame --line-porcelain file --ignore-revs-blob HEAD:ignore_y >blame_raw 2>&1 &&
+	git config --unset blame.ignoreRevsBlob HEAD:ignore_x &&
+
+	grep -E "^[0-9a-f]+ [0-9]+ 1" blame_raw | sed -e "s/ .*//" >actual &&
+	git rev-parse A >expect &&
+	test_cmp expect actual &&
+
+	grep -E "^[0-9a-f]+ [0-9]+ 2" blame_raw | sed -e "s/ .*//" >actual &&
+	git rev-parse B >expect &&
+	test_cmp expect actual
+'
+
 # Override blame.ignoreRevsFile (ignore_x) with an empty string.  X should be
 # blamed now for lines 1 and 2, since we are no longer ignoring X.
 test_expect_success override_ignore_revs_file '

@@ -84,6 +84,8 @@ void oidset_parse_file(struct oidset *set, const char *path);
 typedef int (*oidset_parse_tweak_fn)(struct object_id *, void *);
 void oidset_parse_file_carefully(struct oidset *set, const char *path,
 				 oidset_parse_tweak_fn fn, void *cbdata);
+void oidset_parse_blob(struct oidset *set, const char *path,
+				 oidset_parse_tweak_fn fn, void *cbdata);
 
 struct oidset_iter {
 	kh_oid_set_t *set;
