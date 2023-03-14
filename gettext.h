@@ -31,9 +31,11 @@
 int use_gettext_poison(void);
 
 #ifndef NO_GETTEXT
+extern int git_gettext_enabled;
 void git_setup_gettext(void);
 int gettext_width(const char *s);
 #else
+#define git_gettext_enabled (0)
 static inline void git_setup_gettext(void)
 {
 	use_gettext_poison(); /* getenv() reentrancy paranoia */
@@ -48,7 +50,8 @@ static inline FORMAT_PRESERVING(1) const char *_(const char *msgid)
 {
 	if (!*msgid)
 		return "";
-	return use_gettext_poison() ? "# GETTEXT POISON #" : gettext(msgid);
+	return use_gettext_poison() ? "# GETTEXT POISON #" :
+		!git_gettext_enabled ? msgid : gettext(msgid);
 }
 
 static inline FORMAT_PRESERVING(1) FORMAT_PRESERVING(2)
@@ -56,6 +59,8 @@ const char *Q_(const char *msgid, const char *plu, unsigned long n)
 {
 	if (use_gettext_poison())
 		return "# GETTEXT POISON #";
+	if (!git_gettext_enabled)
+		return n == 1 ? msgid : plu;
 	return ngettext(msgid, plu, n);
 }
 
