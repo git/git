@@ -127,7 +127,7 @@ static void release_object_request(struct object_request *obj_req)
 	free(obj_req);
 }
 
-static int fill_active_slot(struct walker *walker)
+static int fill_active_slot(void *data UNUSED)
 {
 	struct object_request *obj_req;
 	struct list_head *pos, *tmp, *head = &object_queue_head;
@@ -613,7 +613,7 @@ struct walker *get_http_walker(const char *url)
 	walker->cleanup = cleanup;
 	walker->data = data;
 
-	add_fill_function(walker, (int (*)(void *)) fill_active_slot);
+	add_fill_function(NULL, fill_active_slot);
 
 	return walker;
 }
