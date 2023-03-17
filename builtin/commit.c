@@ -1600,7 +1600,6 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 static int git_commit_config(const char *k, const char *v, void *cb)
 {
 	struct wt_status *s = cb;
-	int status;
 
 	if (!strcmp(k, "commit.template"))
 		return git_config_pathname(&template_file, k, v);
@@ -1620,9 +1619,6 @@ static int git_commit_config(const char *k, const char *v, void *cb)
 		return 0;
 	}
 
-	status = git_gpg_config(k, v, NULL);
-	if (status)
-		return status;
 	return git_status_config(k, v, s);
 }
 
