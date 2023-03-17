@@ -137,4 +137,148 @@ test_expect_success 'restore --staged invalidates cache tree for deletions' '
 	test_must_fail git rev-parse HEAD:new1
 '
 
+test_expect_success 'restore with restore.defaultDestination unset works as if --worktree given' '
+	test_when_finished git reset --hard HEAD^ &&
+	test_commit root-unset-restore.defaultDestination &&
+	test_commit unset-restore.defaultDestination one one &&
+	>one &&
+
+	git restore one &&
+	git status --porcelain --untracked-files=no >status &&
+	test_must_be_empty status &&
+	rm status &&
+
+	>one &&
+	git add one &&
+	git restore one &&
+	git status --porcelain --untracked-files=no | grep "^M " &&
+
+	>one &&
+	git add one &&
+	git restore --worktree one &&
+	git status --porcelain --untracked-files=no | grep "^M " &&
+
+	git restore --staged one &&
+	git status --porcelain --untracked-files=no | grep "^ M" &&
+
+	>one &&
+	git add one &&
+	git restore --worktree --staged one &&
+	git status --porcelain --untracked-files=no >status &&
+	test_must_be_empty status &&
+	rm status
+'
+
+test_expect_success 'restore with restore.defaultDestination set to worktree works as if --worktree given' '
+	test_when_finished git reset --hard HEAD^ &&
+	test_when_finished git config --unset restore.defaultDestination &&
+	test_commit root-worktree-restore.defaultDestination &&
+	test_commit worktree-restore.defaultDestination one one &&
+	git config restore.defaultDestination worktree &&
+	>one &&
+
+	git restore one &&
+	git status --porcelain --untracked-files=no >status &&
+	test_must_be_empty status &&
+	rm status &&
+
+	>one &&
+	git add one &&
+	git restore one &&
+	git status --porcelain --untracked-files=no | grep "^M " &&
+
+	>one &&
+	git add one &&
+	git restore --worktree one &&
+	git status --porcelain --untracked-files=no | grep "^M " &&
+
+	git restore --staged one &&
+	git status --porcelain --untracked-files=no | grep "^ M" &&
+
+	>one &&
+	git add one &&
+	git restore --worktree --staged one &&
+	git status --porcelain --untracked-files=no >status &&
+	test_must_be_empty status &&
+	rm status
+'
+
+test_expect_success 'restore with restore.defaultDestination set to staged works as if --staged given' '
+	test_when_finished git reset --hard HEAD^ &&
+	test_when_finished git config --unset restore.defaultDestination &&
+	test_commit root-staged-restore.defaultDestination &&
+	test_commit staged-restore.defaultDestination one one &&
+	git config restore.defaultDestination staged &&
+	>one &&
+
+	git restore one &&
+	git status --porcelain --untracked-files=no | grep "^ M" &&
+
+	git restore --staged one &&
+	git status --porcelain --untracked-files=no | grep "^ M" &&
+
+	git add one &&
+	git restore one &&
+	git status --porcelain --untracked-files=no | grep "^ M" &&
+
+	git add one &&
+	git restore --staged one &&
+	git status --porcelain --untracked-files=no | grep "^ M" &&
+
+	git restore --worktree one &&
+	git status --porcelain --untracked-files=no >status &&
+	test_must_be_empty status &&
+	rm status &&
+
+	>one &&
+	git add one &&
+	git restore --worktree --staged one &&
+	git status --porcelain --untracked-files=no >status &&
+	test_must_be_empty status &&
+	rm status
+'
+
+test_expect_success 'restore with restore.defaultDestination set to both works as if --worktree --staged given' '
+	test_when_finished git reset --hard HEAD^ &&
+	test_when_finished git config --unset restore.defaultDestination &&
+	test_commit root-both-restore.defaultDestination &&
+	test_commit both-restore.defaultDestination one one &&
+	git config restore.defaultDestination both &&
+	>one &&
+
+	git restore one &&
+	git status --porcelain --untracked-files=no >status &&
+	test_must_be_empty status &&
+	rm status &&
+
+	>one &&
+	git add one &&
+	git restore --staged one &&
+	git status --porcelain --untracked-files=no | grep "^ M"  &&
+
+	git add one &&
+	git restore one &&
+	git status --porcelain --untracked-files=no >status &&
+	test_must_be_empty status &&
+	rm status &&
+
+	>one &&
+	git add one &&
+	git restore --staged one &&
+	git status --porcelain --untracked-files=no | grep "^ M" &&
+
+	git restore --worktree one &&
+	git status --porcelain --untracked-files=no >status &&
+	test_must_be_empty status &&
+	rm status &&
+
+	>one &&
+	git add one &&
+	git restore --worktree --staged one &&
+	git status --porcelain --untracked-files=no >status &&
+	test_must_be_empty status &&
+	rm status
+'
+
+
 test_done

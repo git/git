@@ -501,6 +501,8 @@ include::config/repack.txt[]
 
 include::config/rerere.txt[]
 
+include::config/restore.txt[]
+
 include::config/revert.txt[]
 
 include::config/safe.txt[]

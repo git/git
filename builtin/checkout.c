@@ -1923,6 +1923,31 @@ int cmd_switch(int argc, const char **argv, const char *prefix)
 	return ret;
 }
 
+static const char *checkout_default_index_worktree;
+static int git_restore_config(const char *var, const char *value, void *cb)
+{
+	struct checkout_opts *opts = cb;
+
+	if (!strcmp(var, "restore.defaultdestination")) {
+		fprintf(stderr, value);
+		git_config_string(&checkout_default_index_worktree, var, value);
+
+		if (!strcmp(checkout_default_index_worktree, "both")) {
+			opts->checkout_index = -2;    /* default on */
+			opts->checkout_worktree = -2; /* default on */
+		} else if (!strcmp(checkout_default_index_worktree, "staged")) {
+			opts->checkout_index = -2;    /* default on */
+			opts->checkout_worktree = -1; /* default off */
+		} else {
+			opts->checkout_index = -1;    /* default off */
+			opts->checkout_worktree = -2; /* default on */
+		}
+		return 0;
+	}
+	return git_xmerge_config(var, value, NULL);
+}
+
+
 int cmd_restore(int argc, const char **argv, const char *prefix)
 {
 	struct checkout_opts opts;
@@ -1950,6 +1975,8 @@ int cmd_restore(int argc, const char **argv, const char *prefix)
 	opts.checkout_index = -1;    /* default off */
 	opts.checkout_worktree = -2; /* default on */
 	opts.ignore_unmerged_opt = "--ignore-unmerged";
+
+	git_config(git_restore_config, &opts);
 
 	options = parse_options_dup(restore_options);
 	options = add_common_options(&opts, options);
