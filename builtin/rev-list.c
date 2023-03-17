@@ -39,7 +39,7 @@ static const char rev_list_usage[] =
 "    --tags\n"
 "    --remotes\n"
 "    --stdin\n"
-"    --exclude-hidden=[receive|uploadpack]\n"
+"    --exclude-hidden=[fetch|receive|uploadpack]\n"
 "    --quiet\n"
 "  ordering output:\n"
 "    --topo-order\n"
