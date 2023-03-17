@@ -1,0 +1,36 @@
+Git v2.41 Release Notes
+=======================
+
+UI, Workflows & Features
+
+ * Allow information carried on the WWW-AUthenticate header to be
+   passed to the credential helpers.
+
+ * A new "fetch.hideRefs" option can be used to exclude specified refs
+   from "rev-list --objects --stdin --not --all" traversal for
+   checking object connectivity, most useful when there are many
+   unrelated histories in a single repository.
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * Code clean-up to clarify directory traversal API.
+
+ * Code clean-up to clarify the rule that "git-compat-util.h" must be
+   the first to be included.
+
+ * More work towards -Wunused.
+
+ * Instead of forcing each command to choose to honor GPG related
+   configuration variables, make the subsystem lazily initialize
+   itself.
+
+
+Fixes since v2.40
+-----------------
+
+ * "git fsck" learned to check the index files in other worktrees,
+   just like "git gc" honors them as anchoring points.
+   (merge 8d3e7eac52 jk/fsck-indices-in-worktrees later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
