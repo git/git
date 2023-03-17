@@ -53,8 +53,7 @@ static void fetch_alternates(struct walker *walker, const char *base);
 
 static void process_object_response(void *callback_data);
 
-static void start_object_request(struct walker *walker,
-				 struct object_request *obj_req)
+static void start_object_request(struct object_request *obj_req)
 {
 	struct active_request_slot *slot;
 	struct http_object_request *req;
@@ -111,7 +110,7 @@ static void process_object_response(void *callback_data)
 			obj_req->repo =
 				obj_req->repo->next;
 			release_http_object_request(obj_req->req);
-			start_object_request(walker, obj_req);
+			start_object_request(obj_req);
 			return;
 		}
 	}
@@ -139,7 +138,7 @@ static int fill_active_slot(struct walker *walker)
 			if (has_object_file(&obj_req->oid))
 				obj_req->state = COMPLETE;
 			else {
-				start_object_request(walker, obj_req);
+				start_object_request(obj_req);
 				return 1;
 			}
 		}
