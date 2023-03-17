@@ -728,6 +728,33 @@ test_expect_success 'file:// --negotiate-only with protocol v0' '
 	test_i18ngrep "negotiate-only requires protocol v2" err
 '
 
+test_expect_success 'push with custom path does not request v2' '
+	rm -f env.trace &&
+	git -C client push \
+		--receive-pack="env >../env.trace; git-receive-pack" \
+		origin HEAD:refs/heads/custom-push-test &&
+	test_path_is_file env.trace &&
+	! grep ^GIT_PROTOCOL env.trace
+'
+
+test_expect_success 'fetch with custom path does request v2' '
+	rm -f env.trace &&
+	git -C client fetch \
+		--upload-pack="env >../env.trace; git-upload-pack" \
+		origin HEAD &&
+	grep ^GIT_PROTOCOL=version=2 env.trace
+'
+
+test_expect_success 'archive with custom path does not request v2' '
+	rm -f env.trace &&
+	git -C client archive \
+		--exec="env >../env.trace; git-upload-archive" \
+		--remote=origin \
+		HEAD >/dev/null &&
+	test_path_is_file env.trace &&
+	! grep ^GIT_PROTOCOL env.trace
+'
+
 # Test protocol v2 with 'http://' transport
 #
 . "$TEST_DIRECTORY"/lib-httpd.sh
