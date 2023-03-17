@@ -1,6 +1,7 @@
 #define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "config.h"
+#include "hex.h"
 #include "parse-options.h"
 #include "refs.h"
 #include "lockfile.h"

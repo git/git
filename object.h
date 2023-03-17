@@ -1,7 +1,7 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
-#include "cache.h"
+#include "hash.h"
 
 struct buffer_slab;
 
@@ -80,6 +80,26 @@ struct object_array {
  * builtin/unpack-objects.c:                                 2021
  */
 #define FLAG_BITS  28
+
+#define TYPE_BITS 3
+
+/*
+ * Values in this enum (except those outside the 3 bit range) are part
+ * of pack file format. See gitformat-pack(5) for more information.
+ */
+enum object_type {
+	OBJ_BAD = -1,
+	OBJ_NONE = 0,
+	OBJ_COMMIT = 1,
+	OBJ_TREE = 2,
+	OBJ_BLOB = 3,
+	OBJ_TAG = 4,
+	/* 5 for future expansion */
+	OBJ_OFS_DELTA = 6,
+	OBJ_REF_DELTA = 7,
+	OBJ_ANY,
+	OBJ_MAX
+};
 
 /*
  * The object type is stored in 3 bits.

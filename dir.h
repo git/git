@@ -1,8 +1,9 @@
 #ifndef DIR_H
 #define DIR_H
 
-#include "cache.h"
 #include "hashmap.h"
+#include "pathspec.h"
+#include "statinfo.h"
 #include "strbuf.h"
 
 /**
@@ -373,10 +374,6 @@ int count_slashes(const char *s);
 int simple_length(const char *match);
 int no_wildcard(const char *string);
 char *common_prefix(const struct pathspec *pathspec);
-int match_pathspec(struct index_state *istate,
-		   const struct pathspec *pathspec,
-		   const char *name, int namelen,
-		   int prefix, char *seen, int is_dir);
 int report_path_error(const char *ps_matched, const struct pathspec *pathspec);
 int within_depth(const char *name, int namelen, int depth, int max_depth);
 
@@ -542,15 +539,6 @@ int submodule_path_match(struct index_state *istate,
 			 const struct pathspec *ps,
 			 const char *submodule_name,
 			 char *seen);
-
-static inline int ce_path_match(struct index_state *istate,
-				const struct cache_entry *ce,
-				const struct pathspec *pathspec,
-				char *seen)
-{
-	return match_pathspec(istate, pathspec, ce->name, ce_namelen(ce), 0, seen,
-			      S_ISDIR(ce->ce_mode) || S_ISGITLINK(ce->ce_mode));
-}
 
 static inline int dir_path_match(struct index_state *istate,
 				 const struct dir_entry *ent,

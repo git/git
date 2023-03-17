@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "config.h"
 #include "grep.h"
+#include "hex.h"
 #include "object-store.h"
 #include "userdiff.h"
 #include "xdiff-interface.h"

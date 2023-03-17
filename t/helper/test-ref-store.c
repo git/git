@@ -1,5 +1,6 @@
 #include "test-tool.h"
 #include "cache.h"
+#include "hex.h"
 #include "refs.h"
 #include "worktree.h"
 #include "object-store.h"

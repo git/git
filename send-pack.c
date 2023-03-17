@@ -1,6 +1,7 @@
-#include "builtin.h"
+#include "git-compat-util.h"
 #include "config.h"
 #include "commit.h"
+#include "hex.h"
 #include "refs.h"
 #include "object-store.h"
 #include "pkt-line.h"

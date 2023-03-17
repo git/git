@@ -2,6 +2,7 @@
 #include "blob.h"
 #include "object-store.h"
 #include "dir.h"
+#include "hex.h"
 #include "streaming.h"
 #include "submodule.h"
 #include "progress.h"

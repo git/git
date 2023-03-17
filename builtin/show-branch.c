@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "config.h"
+#include "hex.h"
 #include "pretty.h"
 #include "refs.h"
 #include "builtin.h"

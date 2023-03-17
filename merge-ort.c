@@ -26,6 +26,7 @@
 #include "diff.h"
 #include "diffcore.h"
 #include "dir.h"
+#include "hex.h"
 #include "entry.h"
 #include "ll-merge.h"
 #include "object-store.h"

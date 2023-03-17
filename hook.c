@@ -1,7 +1,10 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "advice.h"
+#include "gettext.h"
 #include "hook.h"
 #include "run-command.h"
 #include "config.h"
+#include "strbuf.h"
 
 const char *find_hook(const char *name)
 {

@@ -1,5 +1,6 @@
 #include "git-compat-util.h"
 #include "git-curl-compat.h"
+#include "hex.h"
 #include "http.h"
 #include "config.h"
 #include "pack.h"

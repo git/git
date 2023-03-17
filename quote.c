@@ -1,5 +1,7 @@
 #include "cache.h"
+#include "alloc.h"
 #include "quote.h"
+#include "strbuf.h"
 #include "strvec.h"
 
 int quote_path_fully = 1;

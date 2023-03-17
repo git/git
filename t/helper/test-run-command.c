@@ -9,8 +9,6 @@
  */
 
 #include "test-tool.h"
-#include "git-compat-util.h"
-#include "cache.h"
 #include "run-command.h"
 #include "strvec.h"
 #include "strbuf.h"

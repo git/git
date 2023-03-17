@@ -1,4 +1,5 @@
-
+#include "git-compat-util.h"
+#include "hex.h"
 #include "refs-internal.h"
 #include "trace.h"
 

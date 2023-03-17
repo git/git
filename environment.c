@@ -17,6 +17,7 @@
 #include "commit.h"
 #include "strvec.h"
 #include "object-store.h"
+#include "replace-object.h"
 #include "tmp-objdir.h"
 #include "chdir-notify.h"
 #include "shallow.h"

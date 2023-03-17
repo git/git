@@ -6,6 +6,7 @@
  */
 #include "builtin.h"
 #include "config.h"
+#include "hex.h"
 #include "object-store.h"
 #include "blob.h"
 #include "quote.h"

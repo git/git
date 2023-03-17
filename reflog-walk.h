@@ -1,8 +1,6 @@
 #ifndef REFLOG_WALK_H
 #define REFLOG_WALK_H
 
-#include "cache.h"
-
 struct commit;
 struct reflog_walk_info;
 struct date_mode;

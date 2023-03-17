@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "hex.h"
 #include "repository.h"
 #include "refs.h"
 #include "remote.h"

@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "connect.h"
+#include "hex.h"
 #include "parse-options.h"
 #include "pkt-line.h"
 #include "sigchain.h"

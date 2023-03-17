@@ -2,6 +2,7 @@
 #include "skipping.h"
 #include "../commit.h"
 #include "../fetch-negotiator.h"
+#include "../hex.h"
 #include "../prio-queue.h"
 #include "../refs.h"
 #include "../tag.h"

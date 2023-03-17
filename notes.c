@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "config.h"
+#include "hex.h"
 #include "notes.h"
 #include "object-store.h"
 #include "blob.h"

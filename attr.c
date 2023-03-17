@@ -7,6 +7,7 @@
  */
 
 #include "cache.h"
+#include "alloc.h"
 #include "config.h"
 #include "exec-cmd.h"
 #include "attr.h"

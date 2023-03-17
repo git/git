@@ -1,5 +1,6 @@
 #define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
+#include "hex.h"
 #include "run-command.h"
 
 static const char *pgm;

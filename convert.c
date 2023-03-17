@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "config.h"
+#include "hex.h"
 #include "object-store.h"
 #include "attr.h"
 #include "run-command.h"

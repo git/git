@@ -6,6 +6,7 @@
 #include "commit.h"
 #include "diff.h"
 #include "diffcore.h"
+#include "hex.h"
 #include "revision.h"
 #include "cache-tree.h"
 #include "unpack-trees.h"

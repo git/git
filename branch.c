@@ -2,6 +2,7 @@
 #include "cache.h"
 #include "config.h"
 #include "branch.h"
+#include "hex.h"
 #include "refs.h"
 #include "refspec.h"
 #include "remote.h"

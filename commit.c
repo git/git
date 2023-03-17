@@ -2,6 +2,7 @@
 #include "tag.h"
 #include "commit.h"
 #include "commit-graph.h"
+#include "hex.h"
 #include "repository.h"
 #include "object-store.h"
 #include "pkt-line.h"

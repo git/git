@@ -9,6 +9,7 @@
 #include "config.h"
 #include "diff.h"
 #include "dir.h"
+#include "hex.h"
 #include "hook.h"
 #include "ll-merge.h"
 #include "lockfile.h"

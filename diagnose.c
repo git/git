@@ -4,6 +4,7 @@
 #include "archive.h"
 #include "dir.h"
 #include "help.h"
+#include "hex.h"
 #include "strvec.h"
 #include "object-store.h"
 #include "packfile.h"

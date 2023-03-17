@@ -8,6 +8,7 @@
 #include "config.h"
 #include "builtin.h"
 #include "exec-cmd.h"
+#include "hex.h"
 #include "parse-options.h"
 #include "dir.h"
 #include "run-command.h"
