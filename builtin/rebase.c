@@ -1514,7 +1514,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 				die(_("apply options and merge options "
 					  "cannot be used together"));
 			else if (options.autosquash == -1 && options.config_autosquash == 1)
-				die(_("apply options are incompatible with rebase.autosquash.  Consider adding --no-autosquash"));
+				die(_("apply options are incompatible with rebase.autoSquash.  Consider adding --no-autosquash"));
 			else if (options.update_refs == -1 && options.config_update_refs == 1)
 				die(_("apply options are incompatible with rebase.updateRefs.  Consider adding --no-update-refs"));
 			else
