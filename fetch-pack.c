@@ -724,7 +724,7 @@ static void filter_refs(struct fetch_pack_args *args,
 	*refs = newlist;
 }
 
-static void mark_alternate_complete(struct fetch_negotiator *unused,
+static void mark_alternate_complete(struct fetch_negotiator *negotiator UNUSED,
 				    struct object *obj)
 {
 	mark_complete(&obj->oid);

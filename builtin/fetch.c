@@ -1891,7 +1891,8 @@ struct parallel_fetch_state {
 	int next, result;
 };
 
-static int fetch_next_remote(struct child_process *cp, struct strbuf *out,
+static int fetch_next_remote(struct child_process *cp,
+			     struct strbuf *out UNUSED,
 			     void *cb, void **task_cb)
 {
 	struct parallel_fetch_state *state = cb;
@@ -1913,7 +1914,8 @@ static int fetch_next_remote(struct child_process *cp, struct strbuf *out,
 	return 1;
 }
 
-static int fetch_failed_to_start(struct strbuf *out, void *cb, void *task_cb)
+static int fetch_failed_to_start(struct strbuf *out UNUSED,
+				 void *cb, void *task_cb)
 {
 	struct parallel_fetch_state *state = cb;
 	const char *remote = task_cb;

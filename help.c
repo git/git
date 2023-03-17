@@ -542,7 +542,8 @@ static struct cmdnames aliases;
 #define AUTOCORRECT_NEVER (-2)
 #define AUTOCORRECT_IMMEDIATELY (-1)
 
-static int git_unknown_cmd_config(const char *var, const char *value, void *cb)
+static int git_unknown_cmd_config(const char *var, const char *value,
+				  void *cb UNUSED)
 {
 	const char *p;
 

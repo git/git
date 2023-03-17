@@ -1740,7 +1740,7 @@ static int get_next_submodule(struct child_process *cp, struct strbuf *err,
 	return 0;
 }
 
-static int fetch_start_failure(struct strbuf *err,
+static int fetch_start_failure(struct strbuf *err UNUSED,
 			       void *cb, void *task_cb)
 {
 	struct submodule_parallel_fetch *spf = cb;
@@ -1761,7 +1761,7 @@ static int commit_missing_in_sub(const struct object_id *oid, void *data)
 	return type != OBJ_COMMIT;
 }
 
-static int fetch_finish(int retvalue, struct strbuf *err,
+static int fetch_finish(int retvalue, struct strbuf *err UNUSED,
 			void *cb, void *task_cb)
 {
 	struct submodule_parallel_fetch *spf = cb;

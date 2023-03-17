@@ -2646,7 +2646,8 @@ int for_each_loose_object(each_loose_object_fn cb, void *data,
 	return 0;
 }
 
-static int append_loose_object(const struct object_id *oid, const char *path,
+static int append_loose_object(const struct object_id *oid,
+			       const char *path UNUSED,
 			       void *data)
 {
 	oidtree_insert(data, oid);

@@ -438,7 +438,7 @@ static void log_show_early(struct rev_info *revs, struct commit_list *list)
 	setitimer(ITIMER_REAL, &early_output_timer, NULL);
 }
 
-static void early_output(int signal)
+static void early_output(int signal UNUSED)
 {
 	show_early_output = log_show_early;
 }

@@ -22,7 +22,7 @@ static int number_callbacks;
 static int parallel_next(struct child_process *cp,
 			 struct strbuf *err,
 			 void *cb,
-			 void **task_cb)
+			 void **task_cb UNUSED)
 {
 	struct child_process *d = cb;
 	if (number_callbacks >= 4)
@@ -38,10 +38,10 @@ static int parallel_next(struct child_process *cp,
 	return 1;
 }
 
-static int no_job(struct child_process *cp,
+static int no_job(struct child_process *cp UNUSED,
 		  struct strbuf *err,
-		  void *cb,
-		  void **task_cb)
+		  void *cb UNUSED,
+		  void **task_cb UNUSED)
 {
 	if (err)
 		strbuf_addstr(err, "no further jobs available\n");
@@ -50,10 +50,10 @@ static int no_job(struct child_process *cp,
 	return 0;
 }
 
-static int task_finished(int result,
+static int task_finished(int result UNUSED,
 			 struct strbuf *err,
-			 void *pp_cb,
-			 void *pp_task_cb)
+			 void *pp_cb UNUSED,
+			 void *pp_task_cb UNUSED)
 {
 	if (err)
 		strbuf_addstr(err, "asking for a quick stop\n");

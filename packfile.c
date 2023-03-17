@@ -2206,8 +2206,8 @@ int for_each_packed_object(each_packed_object_fn cb, void *data,
 }
 
 static int add_promisor_object(const struct object_id *oid,
-			       struct packed_git *pack,
-			       uint32_t pos,
+			       struct packed_git *pack UNUSED,
+			       uint32_t pos UNUSED,
 			       void *set_)
 {
 	struct oidset *set = set_;

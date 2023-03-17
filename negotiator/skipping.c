@@ -51,7 +51,7 @@ struct data {
 	int non_common_revs;
 };
 
-static int compare(const void *a_, const void *b_, void *unused)
+static int compare(const void *a_, const void *b_, void *data UNUSED)
 {
 	const struct entry *a = a_;
 	const struct entry *b = b_;

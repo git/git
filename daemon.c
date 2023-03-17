@@ -929,7 +929,7 @@ static void handle(int incoming, struct sockaddr *addr, socklen_t addrlen)
 		add_child(&cld, addr, addrlen);
 }
 
-static void child_handler(int signo)
+static void child_handler(int signo UNUSED)
 {
 	/*
 	 * Otherwise empty handler because systemcalls will get interrupted

@@ -2134,9 +2134,9 @@ static int update_clone_get_next_task(struct child_process *child,
 	return 0;
 }
 
-static int update_clone_start_failure(struct strbuf *err,
+static int update_clone_start_failure(struct strbuf *err UNUSED,
 				      void *suc_cb,
-				      void *idx_task_cb)
+				      void *idx_task_cb UNUSED)
 {
 	struct submodule_update_clone *suc = suc_cb;
 

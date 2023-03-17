@@ -44,7 +44,8 @@ int option_parse_diagnose(const struct option *opt, const char *arg, int unset)
 	return error(_("invalid --%s value '%s'"), opt->long_name, arg);
 }
 
-static void dir_file_stats_objects(const char *full_path, size_t full_path_len,
+static void dir_file_stats_objects(const char *full_path,
+				   size_t full_path_len UNUSED,
 				   const char *file_name, void *data)
 {
 	struct strbuf *buf = data;

@@ -183,8 +183,9 @@ static void prepare_pack_objects(struct child_process *cmd,
  * Write oid to the given struct child_process's stdin, starting it first if
  * necessary.
  */
-static int write_oid(const struct object_id *oid, struct packed_git *pack,
-		     uint32_t pos, void *data)
+static int write_oid(const struct object_id *oid,
+		     struct packed_git *pack UNUSED,
+		     uint32_t pos UNUSED, void *data)
 {
 	struct child_process *cmd = data;
 
