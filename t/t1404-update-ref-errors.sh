@@ -551,7 +551,6 @@ test_expect_success REFFILES 'no bogus intermediate values during delete' '
 	git update-ref $prefix/foo $C &&
 	git pack-refs --all &&
 	git update-ref $prefix/foo $D &&
-	git for-each-ref $prefix >unchanged &&
 	# Now try to update the reference, but hold the `packed-refs` lock
 	# for a while to see what happens while the process is blocked:
 	: >.git/packed-refs.lock &&
