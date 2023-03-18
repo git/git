@@ -603,7 +603,8 @@ do
 			fatal: Not a valid object name $(test_oid deadbeef_short)
 			EOF
 			test_must_fail git cat-file $arg1 $arg2 $(test_oid deadbeef_short) >out 2>err.actual &&
-			test_must_be_empty out
+			test_must_be_empty out &&
+			test_cmp expect.err err.actual
 		'
 
 		test_expect_success "cat-file $arg1 $arg2 error on missing full OID" '
