@@ -15,6 +15,7 @@
 #include "commit-reach.h"
 #include "advice.h"
 #include "connect.h"
+#include "parse-options.h"
 
 enum map_direction { FROM_SRC, FROM_DST };
 
