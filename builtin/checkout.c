@@ -76,7 +76,7 @@ struct checkout_opts {
 	const char *ignore_unmerged_opt;
 	int ignore_unmerged;
 	int pathspec_file_nul;
-	const char *pathspec_from_file;
+	char *pathspec_from_file;
 
 	const char *new_branch;
 	const char *new_branch_force;
@@ -1890,6 +1890,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 			    options, checkout_usage, &new_branch_info);
 	branch_info_release(&new_branch_info);
 	clear_pathspec(&opts.pathspec);
+	free(opts.pathspec_from_file);
 	FREE_AND_NULL(options);
 	return ret;
 }
