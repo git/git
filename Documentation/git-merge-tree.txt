@@ -108,7 +108,7 @@ This is an integer status followed by a NUL character.  The integer status is:
 
      0: merge had conflicts
      1: merge was clean
-     &lt;0: something prevented the merge from running (e.g. access to repository
+     <0: something prevented the merge from running (e.g. access to repository
 	 objects denied by filesystem)
 
 [[OIDTLT]]
