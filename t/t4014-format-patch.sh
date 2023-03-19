@@ -59,6 +59,10 @@ test_expect_success setup '
 	test_tick &&
 	git commit -m "patchid 3" &&
 
+	git checkout -b empty main &&
+	test_tick &&
+	git commit --allow-empty -m "empty commit" &&
+
 	git checkout main
 '
 
@@ -126,6 +130,12 @@ test_expect_success 'format-patch did not screw up the log message' '
 test_expect_success 'replay did not screw up the log message' '
 	git cat-file commit rebuild-1 >actual &&
 	grep "^Side .* with .* backslash-n" actual
+'
+
+test_expect_success 'format-patch empty commit' '
+	git format-patch --stdout main..empty >empty &&
+	grep "^From " empty >from &&
+	test_line_count = 1 from
 '
 
 test_expect_success 'extra headers' '

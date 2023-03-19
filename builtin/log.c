@@ -2097,6 +2097,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 
 	/* Always generate a patch */
 	rev.diffopt.output_format |= DIFF_FORMAT_PATCH;
+	rev.always_show_header = 1;
 
 	rev.zero_commit = zero_commit;
 	rev.patch_name_max = fmt_patch_name_max;
