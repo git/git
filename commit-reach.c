@@ -809,8 +809,12 @@ cleanup:
 	clear_commit_marks_many(nr_commits, list, RESULT | assign_flag);
 	free(list);
 
-	for (i = 0; i < from->nr; i++)
-		from->objects[i].item->flags &= ~assign_flag;
+	for (i = 0; i < from->nr; i++) {
+		struct object *from_one = from->objects[i].item;
+
+		if (from_one)
+			from_one->flags &= ~assign_flag;
+	}
 
 	return result;
 }
