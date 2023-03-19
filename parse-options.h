@@ -199,10 +199,10 @@ struct option {
 #define OPT_EXPIRY_DATE(s, l, v, h) \
 	{ OPTION_CALLBACK, (s), (l), (v), N_("expiry-date"),(h), 0,	\
 	  parse_opt_expiry_date_cb }
-#define OPT_CALLBACK(s, l, v, a, h, f) OPT_CALLBACK_F(s, l, v, a, h, 0, f)
-#define OPT_NUMBER_CALLBACK(v, h, f) \
+#define OPT_CALLBACK(s, l, v, a, h, cb) OPT_CALLBACK_F(s, l, v, a, h, 0, cb)
+#define OPT_NUMBER_CALLBACK(v, h, cb) \
 	{ OPTION_NUMBER, 0, NULL, (v), NULL, (h), \
-	  PARSE_OPT_NOARG | PARSE_OPT_NONEG, (f) }
+	  PARSE_OPT_NOARG | PARSE_OPT_NONEG, (cb) }
 #define OPT_FILENAME(s, l, v, h)    { OPTION_FILENAME, (s), (l), (v), \
 				       N_("file"), (h) }
 #define OPT_COLOR_FLAG(s, l, v, h) \
