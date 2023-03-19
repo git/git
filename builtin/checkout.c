@@ -490,15 +490,28 @@ static int checkout_paths(const struct checkout_opts *opts,
 		die(_("'%s' must be used when '%s' is not specified"),
 		    "--worktree", "--source");
 
-	if (opts->checkout_index && !opts->checkout_worktree &&
-	    opts->writeout_stage)
-		die(_("'%s' or '%s' cannot be used with %s"),
-		    "--ours", "--theirs", "--staged");
+	/*
+	 * Reject --staged option to the restore command when combined with
+	 * merge-related options. Use the accept_ref flag to distinguish it
+	 * from the checkout command, which does not accept --staged anyway.
+	 *
+	 * `restore --ours|--theirs --worktree --staged` could mean resolving
+	 * conflicted paths to one side in both the worktree and the index,
+	 * but does not currently.
+	 *
+	 * `restore --merge|--conflict=<style>` already recreates conflicts
+	 * in both the worktree and the index, so adding --staged would be
+	 * meaningless.
+	 */
+	if (!opts->accept_ref && opts->checkout_index) {
+		if (opts->writeout_stage)
+			die(_("'%s' or '%s' cannot be used with %s"),
+			    "--ours", "--theirs", "--staged");
 
-	if (opts->checkout_index && !opts->checkout_worktree &&
-	    opts->merge)
-		die(_("'%s' or '%s' cannot be used with %s"),
-		    "--merge", "--conflict", "--staged");
+		if (opts->merge)
+			die(_("'%s' or '%s' cannot be used with %s"),
+			    "--merge", "--conflict", "--staged");
+	}
 
 	if (opts->patch_mode) {
 		enum add_p_mode patch_mode;
