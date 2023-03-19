@@ -2,8 +2,9 @@
 #define LIST_OBJECTS_FILTER_OPTIONS_H
 
 #include "cache.h"
-#include "parse-options.h"
 #include "string-list.h"
+
+struct option;
 
 /*
  * The list of defined filters for list-objects.
