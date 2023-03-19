@@ -1883,6 +1883,8 @@ static void add_options_to_argv(struct strvec *argv)
 		strvec_push(argv, "--ipv4");
 	else if (family == TRANSPORT_FAMILY_IPV6)
 		strvec_push(argv, "--ipv6");
+	if (!write_fetch_head)
+		strvec_push(argv, "--no-write-fetch-head");
 }
 
 /* Fetch multiple remotes in parallel */

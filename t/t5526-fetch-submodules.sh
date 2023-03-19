@@ -167,6 +167,19 @@ test_expect_success "fetch --recurse-submodules recurses into submodules" '
 	verify_fetch_result actual.err
 '
 
+test_expect_success "fetch --recurse-submodules honors --no-write-fetch-head" '
+	(
+		cd downstream &&
+		git submodule foreach --recursive \
+		sh -c "cd \"\$(git rev-parse --git-dir)\" && rm -f FETCH_HEAD" &&
+
+		git fetch --recurse-submodules --no-write-fetch-head &&
+
+		git submodule foreach --recursive \
+		sh -c "cd \"\$(git rev-parse --git-dir)\" && ! test -f FETCH_HEAD"
+	)
+'
+
 test_expect_success "submodule.recurse option triggers recursive fetch" '
 	add_submodule_commits &&
 	(
