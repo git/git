@@ -381,9 +381,9 @@ int parse_opt_tracking_mode(const struct option *, const char *, int);
 	{ OPTION_CALLBACK, (s), (l), (v), (a), (h), (f), parse_opt_passthru }
 #define OPT_PASSTHRU_ARGV(s, l, v, a, h, f) \
 	{ OPTION_CALLBACK, (s), (l), (v), (a), (h), (f), parse_opt_passthru_argv }
-#define _OPT_CONTAINS_OR_WITH(name, variable, help, flag) \
-	{ OPTION_CALLBACK, 0, name, (variable), N_("commit"), (help), \
-	  PARSE_OPT_LASTARG_DEFAULT | flag, \
+#define _OPT_CONTAINS_OR_WITH(l, v, h, f) \
+	{ OPTION_CALLBACK, 0, (l), (v), N_("commit"), (h), \
+	  PARSE_OPT_LASTARG_DEFAULT | (f), \
 	  parse_opt_commits, (intptr_t) "HEAD" \
 	}
 #define OPT_CONTAINS(v, h) _OPT_CONTAINS_OR_WITH("contains", v, h, PARSE_OPT_NONEG)
