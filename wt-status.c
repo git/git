@@ -4,6 +4,7 @@
 #include "dir.h"
 #include "commit.h"
 #include "diff.h"
+#include "hex.h"
 #include "revision.h"
 #include "diffcore.h"
 #include "quote.h"

@@ -6,6 +6,8 @@
 #include "repository.h"
 #include "strbuf.h"
 
+struct oid_array;
+
 void set_alternate_shallow_file(struct repository *r, const char *path, int override);
 int register_shallow(struct repository *r, const struct object_id *oid);
 int unregister_shallow(const struct object_id *oid);

@@ -2,6 +2,7 @@
 #include "config.h"
 #include "commit.h"
 #include "diff.h"
+#include "hex.h"
 #include "revision.h"
 #include "list-objects.h"
 #include "list-objects-filter.h"
@@ -38,7 +39,7 @@ static const char rev_list_usage[] =
 "    --tags\n"
 "    --remotes\n"
 "    --stdin\n"
-"    --exclude-hidden=[receive|uploadpack]\n"
+"    --exclude-hidden=[fetch|receive|uploadpack]\n"
 "    --quiet\n"
 "  ordering output:\n"
 "    --topo-order\n"
@@ -257,7 +258,8 @@ static inline void finish_object__ma(struct object *obj)
 	}
 }
 
-static int finish_object(struct object *obj, const char *name, void *cb_data)
+static int finish_object(struct object *obj, const char *name UNUSED,
+			 void *cb_data)
 {
 	struct rev_list_info *info = cb_data;
 	if (oid_object_info_extended(the_repository, &obj->oid, NULL, 0) < 0) {
@@ -362,11 +364,11 @@ static int show_bisect_vars(struct rev_list_info *info, int reaches, int all)
 
 static int show_object_fast(
 	const struct object_id *oid,
-	enum object_type type,
-	int exclude,
-	uint32_t name_hash,
-	struct packed_git *found_pack,
-	off_t found_offset)
+	enum object_type type UNUSED,
+	int exclude UNUSED,
+	uint32_t name_hash UNUSED,
+	struct packed_git *found_pack UNUSED,
+	off_t found_offset UNUSED)
 {
 	fprintf(stdout, "%s\n", oid_to_hex(oid));
 	return 1;

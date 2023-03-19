@@ -1,7 +1,6 @@
 #ifndef SUBPROCESS_H
 #define SUBPROCESS_H
 
-#include "git-compat-util.h"
 #include "hashmap.h"
 #include "run-command.h"
 

@@ -4,8 +4,10 @@
  * (C) Copyright 2006 Linus Torvalds
  *		 2006 Junio Hamano
  */
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "config.h"
+#include "hex.h"
 #include "refs.h"
 #include "object-store.h"
 #include "color.h"
@@ -436,7 +438,7 @@ static void log_show_early(struct rev_info *revs, struct commit_list *list)
 	setitimer(ITIMER_REAL, &early_output_timer, NULL);
 }
 
-static void early_output(int signal)
+static void early_output(int signal UNUSED)
 {
 	show_early_output = log_show_early;
 }
@@ -601,8 +603,6 @@ static int git_log_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	if (git_gpg_config(var, value, cb) < 0)
-		return -1;
 	return git_diff_ui_config(var, value, cb);
 }
 

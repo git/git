@@ -5,9 +5,12 @@
  */
 #define USE_THE_INDEX_VARIABLE
 #include "cache.h"
+#include "alloc.h"
 #include "config.h"
 #include "builtin.h"
 #include "diff.h"
+#include "hex.h"
+#include "ident.h"
 #include "parse-options.h"
 #include "userdiff.h"
 #include "streaming.h"
@@ -15,6 +18,7 @@
 #include "oid-array.h"
 #include "packfile.h"
 #include "object-store.h"
+#include "replace-object.h"
 #include "promisor-remote.h"
 #include "mailmap.h"
 
@@ -559,7 +563,7 @@ static int batch_object_cb(const struct object_id *oid, void *vdata)
 }
 
 static int collect_loose_object(const struct object_id *oid,
-				const char *path,
+				const char *path UNUSED,
 				void *data)
 {
 	oid_array_append(data, oid);
@@ -567,8 +571,8 @@ static int collect_loose_object(const struct object_id *oid,
 }
 
 static int collect_packed_object(const struct object_id *oid,
-				 struct packed_git *pack,
-				 uint32_t pos,
+				 struct packed_git *pack UNUSED,
+				 uint32_t pos UNUSED,
 				 void *data)
 {
 	oid_array_append(data, oid);
@@ -591,7 +595,7 @@ static int batch_unordered_object(const struct object_id *oid,
 }
 
 static int batch_unordered_loose(const struct object_id *oid,
-				 const char *path,
+				 const char *path UNUSED,
 				 void *data)
 {
 	return batch_unordered_object(oid, NULL, 0, data);

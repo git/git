@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "lockfile.h"
 #include "bundle.h"
+#include "hex.h"
 #include "object-store.h"
 #include "repository.h"
 #include "object.h"

@@ -2,6 +2,7 @@
 #include "test-tool.h"
 #include "cache.h"
 #include "dir.h"
+#include "hex.h"
 
 static int compare_untracked(const void *a_, const void *b_)
 {

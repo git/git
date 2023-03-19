@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "cache.h"
+#include "hex.h"
 #include "repository.h"
 #include "config.h"
 #include "lockfile.h"
@@ -436,7 +437,7 @@ static void set_checkpoint_signal(void)
 
 #else
 
-static void checkpoint_signal(int signo)
+static void checkpoint_signal(int signo UNUSED)
 {
 	checkpoint_requested = 1;
 }

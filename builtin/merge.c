@@ -8,7 +8,9 @@
 
 #define USE_THE_INDEX_VARIABLE
 #include "cache.h"
+#include "alloc.h"
 #include "config.h"
+#include "hex.h"
 #include "parse-options.h"
 #include "builtin.h"
 #include "lockfile.h"
@@ -659,9 +661,6 @@ static int git_merge_config(const char *k, const char *v, void *cb)
 	}
 
 	status = fmt_merge_msg_config(k, v, cb);
-	if (status)
-		return status;
-	status = git_gpg_config(k, v, NULL);
 	if (status)
 		return status;
 	return git_diff_ui_config(k, v, cb);

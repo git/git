@@ -8,12 +8,14 @@
  */
 
 #include "cache.h"
+#include "alloc.h"
 #include "config.h"
 #include "object-store.h"
 #include "blob.h"
 #include "delta.h"
 #include "diff.h"
 #include "dir.h"
+#include "hex.h"
 #include "xdiff-interface.h"
 #include "ll-merge.h"
 #include "lockfile.h"

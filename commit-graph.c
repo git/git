@@ -1,5 +1,6 @@
 #include "git-compat-util.h"
 #include "config.h"
+#include "hex.h"
 #include "lockfile.h"
 #include "pack.h"
 #include "packfile.h"

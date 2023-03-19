@@ -5,6 +5,7 @@
  */
 #define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
+#include "alloc.h"
 #include "advice.h"
 #include "config.h"
 #include "lockfile.h"

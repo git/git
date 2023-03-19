@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "hex.h"
 #include "tree.h"
 #include "tree-walk.h"
 #include "object-store.h"

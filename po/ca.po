@@ -1,7 +1,7 @@
 # Catalan translations for Git.
 # This file is distributed under the same license as the Git package.
 # Alex Henrie <alexhenrie24@gmail.com>, 2014-2016.
-# Jordi Mas i Hernàndez <jmas@softcatala.org>, 2016-2022
+# Jordi Mas i Hernàndez <jmas@softcatala.org>, 2016-2023
 #
 # Terminologia i criteris utilitzats
 #
@@ -68,8 +68,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2022-12-07 07:33+0100\n"
-"PO-Revision-Date: 2022-12-07 19:00-0600\n"
+"POT-Creation-Date: 2023-03-01 01:20+0000\n"
+"PO-Revision-Date: 2023-03-01 19:00-0600\n"
 "Last-Translator: Jordi Mas i Hernàndez <jmas@softcatala.org>\n"
 "Language-Team: Catalan\n"
 "Language: ca\n"
@@ -105,13 +105,13 @@ msgstr "no s'ha pogut fer «stage» «%s»"
 msgid "could not write index"
 msgstr "no s'ha pogut escriure l'índex"
 
-#, c-format, perl-format
+#, c-format
 msgid "updated %d path\n"
 msgid_plural "updated %d paths\n"
 msgstr[0] "actualitzat %d camí\n"
 msgstr[1] "actualitzats %d camins\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "note: %s is untracked now.\n"
 msgstr "nota: %s està ara sense seguiment.\n"
 
@@ -125,7 +125,7 @@ msgstr "Reverteix"
 msgid "Could not parse HEAD^{tree}"
 msgstr "No s'ha pogut analitzar HEAD^{tree}"
 
-#, c-format, perl-format
+#, c-format
 msgid "reverted %d path\n"
 msgid_plural "reverted %d paths\n"
 msgstr[0] "revertit %d camí\n"
@@ -138,7 +138,7 @@ msgstr "Sense fitxers no seguits.\n"
 msgid "Add untracked"
 msgstr "Afegeix sense seguiment"
 
-#, c-format, perl-format
+#, c-format
 msgid "added %d path\n"
 msgid_plural "added %d paths\n"
 msgstr[0] "afegit %d camí\n"
@@ -232,19 +232,19 @@ msgstr "no s'ha pogut actualitzar l'índex"
 msgid "Bye.\n"
 msgstr "Adeu.\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Stage mode change [y,n,q,a,d%s,?]? "
 msgstr "Canvia el mode de «stage» [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Stage deletion [y,n,q,a,d%s,?]? "
 msgstr "Suprimeix «stage» [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Stage addition [y,n,q,a,d%s,?]? "
 msgstr "Afegeix a «stage» [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Stage this hunk [y,n,q,a,d%s,?]? "
 msgstr "Fer un «stage» d'aquest tros [y,n,q,a,d%s,?]? "
 
@@ -268,19 +268,19 @@ msgstr ""
 "a - fes «stage» d'aquest tros i de tota la resta de trossos del fitxer\n"
 "d - no facis «stage» d'aquest tros ni de cap altre restant del fitxer\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Stash mode change [y,n,q,a,d%s,?]? "
 msgstr "Canvia el mode de «stash» [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Stash deletion [y,n,q,a,d%s,?]? "
 msgstr "Suprimeix «stash» [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Stash addition [y,n,q,a,d%s,?]? "
 msgstr "Afegeix a «stash» [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Stash this hunk [y,n,q,a,d%s,?]? "
 msgstr "Fer un «stash» d'aquest tros [y,n,q,a,d%s,?]? "
 
@@ -304,19 +304,19 @@ msgstr ""
 "a - fes «stash» d'aquest tros i de tota la resta de trossos del fitxer\n"
 "d - no facis «stash» d'aquest tros ni de cap altre restant del fitxer\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Unstage mode change [y,n,q,a,d%s,?]? "
 msgstr "Canvia el mode de «unstage» [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Unstage deletion [y,n,q,a,d%s,?]? "
 msgstr "Suprimeix «Unstage» [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Unstage addition [y,n,q,a,d%s,?]? "
 msgstr "Afegeix a «unstage» [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Unstage this hunk [y,n,q,a,d%s,?]? "
 msgstr "Fer un «unstage» d'aquest tros [y,n,q,a,d%s,?]? "
 
@@ -340,19 +340,19 @@ msgstr ""
 "a - fes «unstage» d'aquest tros i de tota la resta de trossos del fitxer\n"
 "d - no facis «unstage» d'aquest tros ni de cap altre restant del fitxer\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply mode change to index [y,n,q,a,d%s,?]? "
 msgstr "Aplica el canvi de mode a l'índex [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply deletion to index [y,n,q,a,d%s,?]? "
 msgstr "Aplica la supressió a l'índex [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply addition to index [y,n,q,a,d%s,?]? "
 msgstr "Aplica l'addició a l'índex [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply this hunk to index [y,n,q,a,d%s,?]? "
 msgstr "Aplica aquest tros a l'índex [y,n,q,a,d%s,?]? "
 
@@ -376,19 +376,19 @@ msgstr ""
 "a - aplica aquest tros i tots els trossos posteriors en el fitxer\n"
 "d - no apliquis aquest tros ni cap dels trossos posteriors en el fitxer\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard mode change from worktree [y,n,q,a,d%s,?]? "
 msgstr "Descarta el canvi de mode de l'arbre de treball [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard deletion from worktree [y,n,q,a,d%s,?]? "
 msgstr "Descarta suprimir de l'arbre de treball [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard addition from worktree [y,n,q,a,d%s,?]? "
 msgstr "Descarta l'addició de l'arbre de treball [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard this hunk from worktree [y,n,q,a,d%s,?]? "
 msgstr "Descarta aquest tros de l'arbre de treball [y,n,q,a,d%s,?]? "
 
@@ -412,22 +412,22 @@ msgstr ""
 "a - descarta aquest tros i tots els trossos posteriors en el fitxer\n"
 "d - no descartis aquest tros ni cap dels trossos posteriors en el fitxer\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard mode change from index and worktree [y,n,q,a,d%s,?]? "
 msgstr ""
 "Descarta el canvi de mode de l'índex i de l'arbre de treball [y,n,q,a,"
 "d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard deletion from index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Descarta suprimir de l'índex i de l'arbre de treball [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard addition from index and worktree [y,n,q,a,d%s,?]? "
 msgstr ""
 "Descarta l'addició de l'índex i de l'arbre de treball [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard this hunk from index and worktree [y,n,q,a,d%s,?]? "
 msgstr ""
 "Descarta aquest tros de l'índex i de l'arbre de treball [y,n,q,a,d%s,?]? "
@@ -445,20 +445,20 @@ msgstr ""
 "a - descarta aquest tros i tots els trossos posteriors en el fitxer\n"
 "d - no descartis aquest tros ni cap dels trossos posteriors en el fitxer\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply mode change to index and worktree [y,n,q,a,d%s,?]? "
 msgstr ""
 "Aplica el canvi de mode a l'índex i a l'arbre de treball [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply deletion to index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Aplica la supressió a l'índex i a l'arbre de treball [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply addition to index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Aplica l'addició a l'índex i a l'arbre de treball [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply this hunk to index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Aplica aquest tros a l'índex i a l'arbre de treball [y,n,q,a,d%s,?]? "
 
@@ -475,19 +475,19 @@ msgstr ""
 "a - aplica aquest tros i tots els trossos posteriors en el fitxer\n"
 "d - no apliquis aquest tros ni cap dels trossos posteriors en el fitxer\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply mode change to worktree [y,n,q,a,d%s,?]? "
 msgstr "Aplica el canvi de mode a l'arbre de treball [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply deletion to worktree [y,n,q,a,d%s,?]? "
 msgstr "Aplica la supressió a l'arbre de treball [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply addition to worktree [y,n,q,a,d%s,?]? "
 msgstr "Aplica l'addició a l'arbre de treball [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply this hunk to worktree [y,n,q,a,d%s,?]? "
 msgstr "Aplica aquest tros a l'arbre de treball [y,n,q,a,d%s,?]? "
 
@@ -564,8 +564,6 @@ msgstr ""
 "Per a eliminar les línies «%c», suprimiu-les.\n"
 "Les línies que comencin per %c s'eliminaran.\n"
 
-#. #-#-#-#-#  git-add--interactive.perl.po  #-#-#-#-#
-#. TRANSLATORS: 'it' refers to the patch mentioned in the previous messages.
 msgid ""
 "If it does not apply cleanly, you will be given an opportunity to\n"
 "edit again.  If all lines of the hunk are removed, then the edit is\n"
@@ -581,20 +579,12 @@ msgstr "no s'ha pogut analitzar la capçalera del tros"
 msgid "'git apply --cached' failed"
 msgstr "«git apply --cached» ha fallat"
 
-#. #-#-#-#-#  add-patch.c.po  #-#-#-#-#
 #. TRANSLATORS: do not translate [y/n]
 #. The program will only accept that input at this point.
 #. Consider translating (saying "no" discards!) as
 #. (saying "n" for "no" discards!) if the translation
 #. of the word "no" does not start with n.
 #.
-#. #-#-#-#-#  git-add--interactive.perl.po  #-#-#-#-#
-#. TRANSLATORS: do not translate [y/n]
-#. The program will only accept that input
-#. at this point.
-#. Consider translating (saying "no" discards!) as
-#. (saying "n" for "no" discards!) if the translation
-#. of the word "no" does not start with n.
 msgid ""
 "Your edited hunk does not apply. Edit again (saying \"no\" discards!) [y/n]? "
 msgstr ""
@@ -1443,6 +1433,12 @@ msgstr "llegeix .gitattributes en el directori de treball"
 msgid "report archived files on stderr"
 msgstr "informa de fitxers arxivats en stderr"
 
+msgid "time"
+msgstr "data"
+
+msgid "set modification time of archive entries"
+msgstr "estableix l'hora de modificació de les entrades de l'arxiu"
+
 msgid "set compression level"
 msgstr "estableix el nivell de compressió"
 
@@ -1483,6 +1479,13 @@ msgstr "Argument no admès per al format «%s»: -%d"
 msgid "%.*s is not a valid attribute name"
 msgstr "%.*s no és un nom d'atribut vàlid"
 
+msgid "unable to add additional attribute"
+msgstr "no s'ha pogut afegir l'atribut addicional"
+
+#, c-format
+msgid "ignoring overly long attributes line %d"
+msgstr "s'ignorarà la línia d'atributs massa llarga %d"
+
 #, c-format
 msgid "%s not allowed: %s:%d"
 msgstr "%s no està permès: %s:%d"
@@ -1493,6 +1496,18 @@ msgid ""
 msgstr ""
 "Els patrons negatius s'ignoren en els atributs de git\n"
 "Useu «\\!» per exclamació capdavantera literal."
+
+#, c-format
+msgid "cannot fstat gitattributes file '%s'"
+msgstr "no es pot fer fstat gitattributes al fitxer «%s»"
+
+#, c-format
+msgid "ignoring overly large gitattributes file '%s'"
+msgstr "s'ignorarà el fitxer «%s» gitattributes per massa gran"
+
+#, c-format
+msgid "ignoring overly large gitattributes blob '%s'"
+msgstr "s'ignorarà la blob «%s» gitattributes per massa gran"
 
 #, c-format
 msgid "Badly quoted content in file '%s': %s"
@@ -1773,11 +1788,11 @@ msgstr "submòdul «%s»: no es pot trobar el submòdul"
 
 #, c-format
 msgid ""
-"You may try updating the submodules using 'git checkout %s && git submodule "
-"update --init'"
+"You may try updating the submodules using 'git checkout --no-recurse-"
+"submodules %s && git submodule update --init'"
 msgstr ""
-"Podeu provar d'actualitzar els submòduls utilitzant «git checkout %s && git "
-"submodule update --init»"
+"Podeu provar d'actualitzar els submòduls utilitzant «git checkout --no-"
+"recurse-submodules %s && git submodule update --init»"
 
 #, c-format
 msgid "submodule '%s': cannot create branch '%s'"
@@ -1811,6 +1826,13 @@ msgstr "elimina «%s»\n"
 
 msgid "Unstaged changes after refreshing the index:"
 msgstr "Canvis «unstaged» després d'actualitzar l'índex:"
+
+msgid ""
+"the add.interactive.useBuiltin setting has been removed!\n"
+"See its entry in 'git help config' for details."
+msgstr ""
+"s'ha eliminat la configuració add.interactive.useBuiltin\n"
+"Per a més detalls, vegeu la seva entrada a «git help config»."
 
 msgid "Could not read the index"
 msgstr "No s'ha pogut llegir l'índex"
@@ -2201,6 +2223,9 @@ msgstr "git am [<opcions>] (--continue | --skip | --abort)"
 msgid "run interactively"
 msgstr "executa interactivament"
 
+msgid "bypass pre-applypatch and applypatch-msg hooks"
+msgstr "evita els lligams pre-applypatch i applypatch-msg"
+
 msgid "historical option -- no-op"
 msgstr "opció històrica -- no-op"
 
@@ -2344,32 +2369,27 @@ msgstr "git archive: error de protocol"
 msgid "git archive: expected a flush"
 msgstr "git archive: s'esperava una neteja"
 
-msgid "git bisect--helper --bisect-reset [<commit>]"
-msgstr "git bisect--helper --bisect-reset [<comissió>]"
-
 msgid ""
-"git bisect--helper --bisect-start [--term-{new,bad}=<term> --term-{old,good}"
-"=<term>] [--no-checkout] [--first-parent] [<bad> [<good>...]] [--] "
-"[<paths>...]"
+"git bisect start [--term-{new,bad}=<term> --term-{old,good}=<term>]    [--no-"
+"checkout] [--first-parent] [<bad> [<good>...]] [--]    [<pathspec>...]"
 msgstr ""
-"git bisect--helper --bisect-start [--term-{new,bad}=<term> --term-{old,good}"
-"=<term>] [--no-checkout] [--first-parent] [<bad> [<good>...]] [--] "
-"[<paths>...]"
+"git bisect start [--term-{new,bad}=<term> --term-{old,good}=<term>]    [--no-"
+"checkout] [--first-parent] [<bad> [<good>...]] [--]    [<pathspec>...]"
 
-msgid "git bisect--helper --bisect-state (bad|new) [<rev>]"
-msgstr "git bisect--helper --bisect-state (bad|new) [<rev>]"
+msgid "git bisect (good|bad) [<rev>...]"
+msgstr "git bisect (good|bad) [<rev>...]"
 
-msgid "git bisect--helper --bisect-state (good|old) [<rev>...]"
-msgstr "git bisect--helper --bisect-state (good|old) [<rev>...]"
+msgid "git bisect skip [(<rev>|<range>)...]"
+msgstr "git bisect skip [(<rev>|<range>)...]"
 
-msgid "git bisect--helper --bisect-replay <filename>"
-msgstr "git bisect--helper --bisect-replay <filename>"
+msgid "git bisect reset [<commit>]"
+msgstr "git bisect reset [<comissió>]"
 
-msgid "git bisect--helper --bisect-skip [(<rev>|<range>)...]"
-msgstr "git bisect--helper --bisect-skip [(<rev>|<range>)...]"
+msgid "git bisect replay <logfile>"
+msgstr "git bisect replay <logfile>"
 
-msgid "git bisect--helper --bisect-run <cmd>..."
-msgstr "git bisect--helper --bisect-run <ordre>..."
+msgid "git bisect run <cmd>..."
+msgstr "git bisect run <ordre>..."
 
 #, c-format
 msgid "cannot open file '%s' in mode '%s'"
@@ -2519,9 +2539,6 @@ msgid "checking out '%s' failed. Try 'git bisect start <valid-branch>'."
 msgstr ""
 "l'agafament de «%s» ha fallat. Proveu «git bisect start <branca-vàlida>»."
 
-msgid "won't bisect on cg-seek'ed tree"
-msgstr "no es bisecarà en un arbre en el qual s'ha fet cg-seek"
-
 msgid "bad HEAD - strange symbolic ref"
 msgstr "HEAD incorrecte - referència simbòlica estranya"
 
@@ -2573,7 +2590,7 @@ msgid "bisect run failed: no command provided."
 msgstr "ha fallat l'execució de bisect: no s'ha proporcionat cap ordre."
 
 #, c-format
-msgid "unable to verify '%s' on good revision"
+msgid "unable to verify %s on good revision"
 msgstr "no s'ha pogut verificar «%s» en una bona revisió"
 
 #, c-format
@@ -2581,10 +2598,10 @@ msgid "bogus exit code %d for good revision"
 msgstr "codi d'error de sortida %d per a una bona revisió"
 
 #, c-format
-msgid "bisect run failed: exit code %d from '%s' is < 0 or >= 128"
+msgid "bisect run failed: exit code %d from %s is < 0 or >= 128"
 msgstr ""
-"l'execució de la de bisecció ha fallat: codi de sortida %d de «%s» és < 0 o "
-">= 128"
+"l'execució de la de bisecció ha fallat: codi de sortida %d de %s és < 0 o >= "
+"128"
 
 #, c-format
 msgid "cannot open file '%s' for writing"
@@ -2593,36 +2610,43 @@ msgstr "no es pot obrir «%s» per a escriptura"
 msgid "bisect run cannot continue any more"
 msgstr "l'execució de la bisecció no pot continuar més"
 
-#, c-format
 msgid "bisect run success"
 msgstr "execució de bisecció amb èxit"
 
-#, c-format
 msgid "bisect found first bad commit"
 msgstr "la bisecció ha trobat una primera comissió errònia"
 
 #, c-format
-msgid ""
-"bisect run failed: 'git bisect--helper --bisect-state %s' exited with error "
-"code %d"
+msgid "bisect run failed: 'git bisect %s' exited with error code %d"
 msgstr ""
-"l'execució de la bisecció ha fallat: «git bisect--helper --bisect-state %s» "
-"ha sortit amb el codi d'error %d"
+"ha fallat l'execució del bisect: «git bisect %s» ha sortit amb el codi "
+"d'error %d"
 
-msgid "--bisect-reset requires either no argument or a commit"
-msgstr "--bisect-reset no requereix cap argument ni comissió"
+#, c-format
+msgid "'%s' requires either no argument or a commit"
+msgstr "«%s» no requereix cap argument ni comissió"
 
-msgid "--bisect-terms requires 0 or 1 argument"
-msgstr "--bisect-terms requereix 0 o 1 argument"
+#, c-format
+msgid "'%s' requires 0 or 1 argument"
+msgstr "%s requereix 0 o 1 arguments"
 
-msgid "--bisect-next requires 0 arguments"
-msgstr "--bisect-next no requereix cap argument"
-
-msgid "--bisect-log requires 0 arguments"
-msgstr "--bisect-log no requereix cap argument"
+#, c-format
+msgid "'%s' requires 0 arguments"
+msgstr "«%s» requereix 0 arguments"
 
 msgid "no logfile given"
 msgstr "no s'ha donat cap fitxer de registre"
+
+#, c-format
+msgid "'%s' failed: no command provided."
+msgstr "«%s» ha fallat: no s'ha proporcionat cap ordre."
+
+msgid "need a command"
+msgstr "cal una subordre"
+
+#, c-format
+msgid "unknown command: '%s'"
+msgstr "ordre desconeguda: «%s»"
 
 msgid "git blame [<options>] [<rev-opts>] [<rev>] [--] <file>"
 msgstr "git blame [<opcions>] [<opcions-de-revisió>] [<revisió>] [--] fitxer"
@@ -3203,6 +3227,9 @@ msgstr "git bundle list-heads <fitxer> [<refname>...]"
 msgid "git bundle unbundle [--progress] <file> [<refname>...]"
 msgstr "git bundle unbundle [--progress] <fitxer> [<refname>...]"
 
+msgid "need a <file> argument"
+msgstr "necessita un argument <fitxer>"
+
 msgid "do not show progress meter"
 msgstr "no mostris l'indicador de progrés"
 
@@ -3255,10 +3282,6 @@ msgstr "%s requereix arguments"
 #, c-format
 msgid "%s takes no arguments"
 msgstr "%s no accepta cap valor"
-
-#, c-format
-msgid "unknown command: '%s'"
-msgstr "ordre desconeguda: «%s»"
 
 msgid "only one batch option may be specified"
 msgstr "només es pot especificar una opció per lots"
@@ -3395,11 +3418,17 @@ msgstr "<objecte> requerit amb «-%c»"
 msgid "only two arguments allowed in <type> <object> mode, not %d"
 msgstr "només es permeten dos arguments en el mode <tipus> <objecte>, no %d"
 
-msgid "git check-attr [-a | --all | <attr>...] [--] <pathname>..."
-msgstr "git check-attr [-a | --all | <atribut>...] [--] <nom-de-camí>..."
+msgid ""
+"git check-attr [--source <tree-ish>] [-a | --all | <attr>...] [--] "
+"<pathname>..."
+msgstr ""
+"git check-attr [--source <tree-ish>] [-a | --all | <attr>...] [--] "
+"<pathname>..."
 
-msgid "git check-attr --stdin [-z] [-a | --all | <attr>...]"
-msgstr "git check-attr --stdin [-z] [-a | --all | <atribut>...]"
+msgid ""
+"git check-attr --stdin [-z] [--source <tree-ish>] [-a | --all | <attr>...]"
+msgstr ""
+"git check-attr --stdin [-z] [--source <tree-ish>] [-a | --all | <attr>...]"
 
 msgid "report all attributes set on file"
 msgstr "informa de tots els atributs establerts en el fitxer"
@@ -3412,6 +3441,12 @@ msgstr "llegeix els noms de fitxer de stdin"
 
 msgid "terminate input and output records by a NUL character"
 msgstr "acaba els registres d'entrada i de sortida amb un caràcter NUL"
+
+msgid "<tree-ish>"
+msgstr "<tree-ish>"
+
+msgid "which tree-ish to check attributes at"
+msgstr "a quin tree-ish s'han de comprovar els atributs"
 
 msgid "suppress progress reporting"
 msgstr "omet els informes de progrés"
@@ -3993,7 +4028,7 @@ msgstr ""
 "*          - tria tots els ítems\n"
 "           - (buit) finalitza la selecció\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Huh (%s)?\n"
 msgstr "Perdó (%s)?\n"
 
@@ -4141,9 +4176,6 @@ msgstr "profunditat"
 
 msgid "create a shallow clone of that depth"
 msgstr "crea un clon superficial d'aquesta profunditat"
-
-msgid "time"
-msgstr "data"
 
 msgid "create a shallow clone since a specific time"
 msgstr "crea un clon superficial des d'una data específica"
@@ -4376,6 +4408,9 @@ msgstr "no s'ha pogut inicialitzar el repositori, s'omet l'URI del paquet"
 #, c-format
 msgid "failed to fetch objects from bundle URI '%s'"
 msgstr "no s'han pogut obtenir els objectes de l'URI del paquet «%s»"
+
+msgid "failed to fetch advertised bundles"
+msgstr "no s'han pogut obtenir els paquets anunciats"
 
 msgid "remote transport reported error"
 msgstr "el transport remot ha informat d'un error"
@@ -5625,27 +5660,6 @@ msgstr "no s'ha proporcionat l'<eina> per a --tool=<eina>"
 msgid "no <cmd> given for --extcmd=<cmd>"
 msgstr "no s'ha proporcionat l'<ordre> per a --extcmd=<ordre>"
 
-msgid "git env--helper --type=[bool|ulong] <options> <env-var>"
-msgstr "git env--helper --type=[bool|ulong] <opcions> <env-var>"
-
-msgid "default for git_env_*(...) to fall back on"
-msgstr "valor per defecte per a git_env_*(...) en cas d'absència"
-
-msgid "be quiet only use git_env_*() value as exit code"
-msgstr "silenciós només utilitza el valor git_env_*() com a codi de sortida"
-
-#, c-format
-msgid "option `--default' expects a boolean value with `--type=bool`, not `%s`"
-msgstr "l'opció «--default» espera un valor booleà amb «--type=bool», no «%s»"
-
-#, c-format
-msgid ""
-"option `--default' expects an unsigned long value with `--type=ulong`, not "
-"`%s`"
-msgstr ""
-"l'opció «--default» espera un valor llarg sense signe amb «--type=ulong», no "
-"«%s»"
-
 msgid "git fast-export [<rev-list-opts>]"
 msgstr "git fast-export [<rev-list-opts>]"
 
@@ -6054,6 +6068,10 @@ msgstr "no s'admet una profunditat negativa en --deepen"
 
 msgid "--unshallow on a complete repository does not make sense"
 msgstr "--unshallow en un repositori complet no té sentit"
+
+#, c-format
+msgid "failed to fetch bundles from '%s'"
+msgstr "no s'han pogut obtenir els paquets de «%s»"
 
 msgid "fetch --all does not take a repository argument"
 msgstr "fetch --all no accepta un argument de repositori"
@@ -7087,11 +7105,18 @@ msgstr "ús: %s%s"
 msgid "'git help config' for more information"
 msgstr "«git help config» per a més informació"
 
-msgid "git hook run [--ignore-missing] <hook-name> [-- <hook-args>]"
-msgstr "git hook run [--ignore-missing] <hook-name> [-- <hook-args>]"
+msgid ""
+"git hook run [--ignore-missing] [--to-stdin=<path>] <hook-name> [-- <hook-"
+"args>]"
+msgstr ""
+"git hook run [--ignore-missing] [--to-stdin=<camí>] <hook-name> [-- <hook-"
+"args>]"
 
 msgid "silently ignore missing requested <hook-name>"
 msgstr "ignora silenciosament la sol·licitud <hook-name> perduda"
+
+msgid "file to read into hooks' stdin"
+msgstr "fitxer per a llegir a l'entrada estàndard dels lligams"
 
 #, c-format
 msgid "object type mismatch at %s"
@@ -7929,11 +7954,11 @@ msgstr ""
 msgid ""
 "git ls-remote [--heads] [--tags] [--refs] [--upload-pack=<exec>]\n"
 "              [-q | --quiet] [--exit-code] [--get-url] [--sort=<key>]\n"
-"              [--symref] [<repository> [<refs>...]]"
+"              [--symref] [<repository> [<patterns>...]]"
 msgstr ""
 "git ls-remote [--heads] [--tags] [--refs] [--upload-pack=<exec>]\n"
 "              [-q | --quiet] [--exit-code] [--get-url] [--sort=<key>]\n"
-"              [--symref] [<repository> [<refs>...]]"
+"              [--symref] [<repository> [<patterns>...]]"
 
 msgid "do not print remote URL"
 msgstr "no imprimeixis l'URL remot"
@@ -8179,8 +8204,14 @@ msgstr "permet fusionar històries no relacionades"
 msgid "perform multiple merges, one per line of input"
 msgstr "realitza múltiples fusions, una per línia d'entrada"
 
+msgid "specify a merge-base for the merge"
+msgstr "cal especificar una referència base per a la fusió"
+
 msgid "--trivial-merge is incompatible with all other options"
 msgstr "--trivial-merge és incompatible amb totes les altres opcions"
+
+msgid "--merge-base is incompatible with --stdin"
+msgstr "--merge-base és incompatible amb --stdin"
 
 #, c-format
 msgid "malformed input line: '%s'."
@@ -10102,6 +10133,9 @@ msgstr ""
 msgid "could not switch to %s"
 msgstr "no s'ha pogut commutar a %s"
 
+msgid "apply options and merge options cannot be used together"
+msgstr "les opcions apply i merge no es poden usar juntes"
+
 #, c-format
 msgid ""
 "unrecognized empty type '%s'; valid values are \"drop\", \"keep\", and "
@@ -10312,7 +10346,7 @@ msgid ""
 "and run me again.  I am stopping in case you still have something\n"
 "valuable there.\n"
 msgstr ""
-"Sembla que ja exigeix un directori %s, i em pregunto\n"
+"Sembla que ja existeix un directori %s, i em pregunto\n"
 "si esteu enmig d'un altre «rebase». Si aquest és el cas, proveu\n"
 "\t%s\n"
 "Si no és cas, feu:\n"
@@ -10330,8 +10364,19 @@ msgstr "Mode desconegut: %s"
 msgid "--strategy requires --merge or --interactive"
 msgstr "--strategy requereix --merge o --interactive"
 
-msgid "apply options and merge options cannot be used together"
-msgstr "les opcions apply i merge no es poden usar juntes"
+msgid ""
+"apply options are incompatible with rebase.autosquash.  Consider adding --no-"
+"autosquash"
+msgstr ""
+"les opcions «apply» són incompatibles amb rebase.autosquash. Considereu "
+"afegir-hi --no-autosquash"
+
+msgid ""
+"apply options are incompatible with rebase.updateRefs.  Consider adding --no-"
+"update-refs"
+msgstr ""
+"les opcions «apply» són incompatibles amb rebase.updateRefs. Considereu "
+"afegir-hi --no-update-refs"
 
 #, c-format
 msgid "Unknown rebase backend: %s"
@@ -12846,10 +12891,6 @@ msgstr "«%s» no és un nom de submòdul vàlid"
 msgid "git submodule--helper <command>"
 msgstr "git submodule--helper <command>"
 
-#, c-format
-msgid "%s doesn't support --super-prefix"
-msgstr "%s no admet --super-prefix"
-
 msgid "git symbolic-ref [-m <reason>] <name> <ref>"
 msgstr "git symbolic-ref [-m <reason>] <name> <ref>"
 
@@ -13597,6 +13638,11 @@ msgid "core.fsyncMethod = batch is unsupported on this platform"
 msgstr "core.fsyncMethod = batch no és compatible amb aquesta plataforma"
 
 #, c-format
+msgid "could not parse bundle list key %s with value '%s'"
+msgstr ""
+"no s'ha pogut analitzar la clau de llista de paquets %s amb el valor «%s»"
+
+#, c-format
 msgid "bundle list at '%s' has no mode"
 msgstr "la llista de farcells a «%s» no té mode"
 
@@ -13605,6 +13651,13 @@ msgstr "no s'ha pogut crear un fitxer temporal"
 
 msgid "insufficient capabilities"
 msgstr "capacitats insuficients"
+
+#, c-format
+msgid "file downloaded from '%s' is not a bundle"
+msgstr "el fitxer baixat de «%s» no és un paquet"
+
+msgid "failed to store maximum creation token"
+msgstr "no s'ha pogut emmagatzemar el testimoni de creació màxim"
 
 #, c-format
 msgid "unrecognized bundle mode from URI '%s'"
@@ -13621,6 +13674,13 @@ msgstr "no s'ha pogut baixar el paquet de l'URI «%s»"
 #, c-format
 msgid "file at URI '%s' is not a bundle or bundle list"
 msgstr "el fitxer a l'URI «%s» no és farcell o una llista de farcells"
+
+#, c-format
+msgid "bundle-uri: unexpected argument: '%s'"
+msgstr "bundle-uri: argument inesperat: «%s»"
+
+msgid "bundle-uri: expected flush after arguments"
+msgstr "bundle-uri: s'esperava una neteja després dels arguments"
 
 msgid "bundle-uri: got an empty line"
 msgstr "bundle-uri: té una línia buida"
@@ -13652,6 +13712,13 @@ msgstr "Al repositori li manquen aquestes comissions prerequerides:"
 
 msgid "need a repository to verify a bundle"
 msgstr "cal un repositori per a verificar un farcell"
+
+msgid ""
+"some prerequisite commits exist in the object store, but are not connected "
+"to the repository's history"
+msgstr ""
+"hi ha algunes comissions requerides al magatzem d'objectes, però no estan "
+"connectades a l'historial del repositori"
 
 #, c-format
 msgid "The bundle contains this ref:"
@@ -15096,15 +15163,22 @@ msgid "unknown object format '%s' specified by server"
 msgstr "format d'objecte «%s» especificat pel servidor desconegut"
 
 #, c-format
+msgid "error on bundle-uri response line %d: %s"
+msgstr "error a la línia de resposta de bundle-uri %d: %s"
+
+msgid "expected flush after bundle-uri listing"
+msgstr "s'esperava un buidatge després del llistat de bundle-uri"
+
+msgid "expected response end packet after ref listing"
+msgstr ""
+"s'esperava un paquet de final de resposta després del llistat de referències"
+
+#, c-format
 msgid "invalid ls-refs response: %s"
 msgstr "resposta de ls-refs no vàlida: %s"
 
 msgid "expected flush after ref listing"
 msgstr "s'esperava una neteja després del llistat de referències"
-
-msgid "expected response end packet after ref listing"
-msgstr ""
-"s'esperava un paquet de final de resposta després del llistat de referències"
 
 #, c-format
 msgid "protocol '%s' is not supported"
@@ -15479,7 +15553,7 @@ msgid ""
 "unknown color-moved-ws mode '%s', possible values are 'ignore-space-change', "
 "'ignore-space-at-eol', 'ignore-all-space', 'allow-indentation-change'"
 msgstr ""
-"el mode «%s» de «color-moved-ws» és desconegut, els valor possibles són "
+"el mode «%s» de «color-moved-ws» és desconegut, els valors possibles són "
 "«ignore-space-change», «ignore-space-at-eol», «ignore-all-space», «allow-"
 "indentation-change»"
 
@@ -16284,16 +16358,14 @@ msgid ""
 "           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--"
 "bare]\n"
 "           [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]\n"
-"           [--super-prefix=<path>] [--config-env=<name>=<envvar>]\n"
-"           <command> [<args>]"
+"           [--config-env=<name>=<envvar>] <command> [<args>]"
 msgstr ""
-"git [-v | --version] [-h | --help] [-C <camí>] [-c <name>=<value>]\n"
-"           [--exec-path[=<camí>]] [--html-path] [--man-path] [--info-path]\n"
+"git [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]\n"
+"           [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]\n"
 "           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--"
 "bare]\n"
-"           [--git-dir=<camí>] [--work-tree=<camí>] [--namespace=<name>]\n"
-"           [--super-prefix=<camí>] [--config-env=<name>=<envvar>]\n"
-"           <command> [<args>]"
+"           [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]\n"
+"           [--config-env=<name>=<envvar>] <command> [<args>]"
 
 msgid ""
 "'git help -a' and 'git help -g' list available subcommands and some\n"
@@ -16317,10 +16389,6 @@ msgstr "no s'ha especificat un directori per a l'opció «%s»\n"
 #, c-format
 msgid "no namespace given for --namespace\n"
 msgstr "no s'ha especificat un nom d'espai per --namespace\n"
-
-#, c-format
-msgid "no prefix given for --super-prefix\n"
-msgstr "no s'ha especificat cap prefix per a --super-prefix\n"
 
 #, c-format
 msgid "-c expects a configuration string\n"
@@ -16434,8 +16502,13 @@ msgstr ""
 msgid "gpg.ssh.defaultKeyCommand failed: %s %s"
 msgstr "gpg.ssh.defaultKeyCommand ha fallat: %s %s"
 
-msgid "gpg failed to sign the data"
-msgstr "gpg ha fallat en signar les dades"
+#, c-format
+msgid ""
+"gpg failed to sign the data:\n"
+"%s"
+msgstr ""
+"gpg ha fallat en signar les dades:\n"
+"%s"
 
 msgid "user.signingKey needs to be set for ssh signing"
 msgstr "user.signingKey s'ha d'establir per a signar amb ssh"
@@ -17605,6 +17678,10 @@ msgid "garbage at end of loose object '%s'"
 msgstr "brossa al final de l'objecte solt «%s»"
 
 #, c-format
+msgid "unable to open loose object %s"
+msgstr "no s'ha pogut obrir l'objecte solt %s"
+
+#, c-format
 msgid "unable to parse %s header"
 msgstr "no s'ha pogut analitzar la capçalera %s"
 
@@ -17620,16 +17697,12 @@ msgid "header for %s too long, exceeds %d bytes"
 msgstr "la capçalera per a %s és massa llarga, supera els %d bytes"
 
 #, c-format
-msgid "failed to read object %s"
-msgstr "s'ha produït un error en llegir l'objecte %s"
+msgid "loose object %s (stored in %s) is corrupt"
+msgstr "l'objecte solt %s (emmagatzemat a %s) és corrupte"
 
 #, c-format
 msgid "replacement %s not found for %s"
 msgstr "no s'ha trobat el reemplaçament %s per a %s"
-
-#, c-format
-msgid "loose object %s (stored in %s) is corrupt"
-msgstr "l'objecte solt %s (emmagatzemat a %s) és corrupte"
 
 #, c-format
 msgid "packed object %s (stored in %s) is corrupt"
@@ -17642,9 +17715,6 @@ msgstr "no s'ha pogut escriure al fitxer %s"
 #, c-format
 msgid "unable to set permission to '%s'"
 msgstr "no s'ha pogut establir el permís a «%s»"
-
-msgid "file write error"
-msgstr "s'ha produït un error en escriure al fitxer"
 
 msgid "error when closing loose object file"
 msgstr "error en tancar el fitxer d'objecte solt"
@@ -17693,11 +17763,12 @@ msgstr "s'ha produït un error en crear el directori %s"
 msgid "cannot read object for %s"
 msgstr "no es pot llegir l'objecte per a %s"
 
-msgid "corrupt commit"
-msgstr "comissió corrupta"
+#, c-format
+msgid "object fails fsck: %s"
+msgstr "l'objecte ha fallat fsck: %s"
 
-msgid "corrupt tag"
-msgstr "etiqueta corrupta"
+msgid "refusing to create malformed object"
+msgstr "es nega a crear un objecte mal format"
 
 #, c-format
 msgid "read error while indexing %s"
@@ -17965,10 +18036,6 @@ msgstr "el desplaçament XOR a l'índex de mapa de bits no és vàlid"
 
 msgid "cannot fstat bitmap file"
 msgstr "no es pot fer fstat en el fitxer de mapa de bits"
-
-#, c-format
-msgid "ignoring extra bitmap file: '%s'"
-msgstr "s'ignorarà el fitxer extra de mapa de bits: «%s»"
 
 msgid "checksum doesn't match in MIDX and bitmap"
 msgstr "la suma de verificació no coincideix amb el MIDX i el mapa de bits"
@@ -18239,6 +18306,9 @@ msgstr "sigues més discret"
 
 msgid "use <n> digits to display object names"
 msgstr "usa <n> xifres per a mostrar els noms d'objecte"
+
+msgid "prefixed path to initial superproject"
+msgstr "camí prefixat al superprojecte inicial"
 
 msgid "how to strip spaces and #comments from message"
 msgstr "com suprimir els espais i #comentaris del missatge"
@@ -18749,6 +18819,14 @@ msgid "ahead %d, behind %d"
 msgstr "davant per %d, darrere per %d"
 
 #, c-format
+msgid "%%(%.*s) does not take arguments"
+msgstr "%%(%.*s) no accepta arguments"
+
+#, c-format
+msgid "unrecognized %%(%.*s) argument: %s"
+msgstr "argument %%(%.*s) desconegut: %s"
+
+#, c-format
 msgid "expected format: %%(color:<color>)"
 msgstr "format esperat: %%(color:<color>)"
 
@@ -18763,22 +18841,6 @@ msgstr "Valor enter esperat pel nom de referència:lstrip=%s"
 #, c-format
 msgid "Integer value expected refname:rstrip=%s"
 msgstr "Valor enter esperat pel nom de referència:rstrip=%s"
-
-#, c-format
-msgid "unrecognized %%(%s) argument: %s"
-msgstr "argument %%(%s) desconegut: %s"
-
-#, c-format
-msgid "%%(objecttype) does not take arguments"
-msgstr "%%(objecttype) no accepta arguments"
-
-#, c-format
-msgid "%%(deltabase) does not take arguments"
-msgstr "%%(deltabase) no accepta arguments"
-
-#, c-format
-msgid "%%(body) does not take arguments"
-msgstr "%%(body) no accepta arguments"
 
 #, c-format
 msgid "expected %%(trailers:key=<value>)"
@@ -18797,10 +18859,6 @@ msgid "positive value expected '%s' in %%(%s)"
 msgstr "valor positiu esperat «%s» a %%(%s)"
 
 #, c-format
-msgid "unrecognized email option: %s"
-msgstr "opció del correu electrònic no reconeguda: «%s»"
-
-#, c-format
 msgid "expected format: %%(align:<width>,<position>)"
 msgstr "format esperat: %%(align:<amplada>,<posició>)"
 
@@ -18813,12 +18871,12 @@ msgid "unrecognized width:%s"
 msgstr "amplada no reconeguda:%s"
 
 #, c-format
-msgid "positive width expected with the %%(align) atom"
-msgstr "amplada positiva esperada amb l'àtom %%(align)"
+msgid "unrecognized %%(%s) argument: %s"
+msgstr "argument %%(%s) desconegut: %s"
 
 #, c-format
-msgid "%%(rest) does not take arguments"
-msgstr "%%(rest) no accepta arguments"
+msgid "positive width expected with the %%(align) atom"
+msgstr "amplada positiva esperada amb l'àtom %%(align)"
 
 #, c-format
 msgid "malformed field name: %.*s"
@@ -20077,6 +20135,23 @@ msgid "git %s: failed to refresh the index"
 msgstr "git %s: s'ha produït un error en actualitzar l'índex"
 
 #, c-format
+msgid "'%s' is not a valid label"
+msgstr "«%s» no és una etiqueta vàlida"
+
+#, c-format
+msgid "'%s' is not a valid refname"
+msgstr "«%s» no és un nom de referència vàlid"
+
+#, c-format
+msgid "update-ref requires a fully qualified refname e.g. refs/heads/%s"
+msgstr ""
+"«update-ref» requereix un refname plenament qualificat, p. ex. refs/heads/%s"
+
+#, c-format
+msgid "invalid command '%.*s'"
+msgstr "ordre no vàlida «%.*s»"
+
+#, c-format
 msgid "%s does not accept arguments: '%s'"
 msgstr "%s no accepta arguments: «%s»"
 
@@ -20882,6 +20957,16 @@ msgstr "ls-tree ha retornat un codi de retorn %d no esperat"
 msgid "failed to lstat '%s'"
 msgstr "s'ha produït un error en fer lstat a «%s»"
 
+msgid "no remote configured to get bundle URIs from"
+msgstr "no hi ha cap remot configurat per a obtenir els URI del paquet"
+
+#, c-format
+msgid "remote '%s' has no configured URL"
+msgstr "el remot «%s» no té cap URL configurat"
+
+msgid "could not get the bundle-uri list"
+msgstr "no s'ha pogut obtenir la llista bundle-uri"
+
 msgid "test-tool cache-tree <options> (control|prime|update)"
 msgstr "test-tool cache-tree <opcions> (control|prime|update)"
 
@@ -21233,6 +21318,13 @@ msgstr "S'està avortant."
 
 msgid "failed to push all needed submodules"
 msgstr "no s'han pogut pujar tots els submòduls necessaris"
+
+msgid "bundle-uri operation not supported by protocol"
+msgstr "L'operació bundle-uri no és compatible amb el protocol"
+
+msgid "could not retrieve server-advertised bundle-uri list"
+msgstr ""
+"no s'ha pogut recuperar la llista de paquets d'URI anunciats pel servidor"
 
 msgid "too-short tree object"
 msgstr "objecte d'arbre massa curt"
@@ -21981,14 +22073,20 @@ msgstr "Fitxers ignorats"
 
 #, c-format
 msgid ""
-"It took %.2f seconds to enumerate untracked files. 'status -uno'\n"
-"may speed it up, but you have to be careful not to forget to add\n"
-"new files yourself (see 'git help status')."
+"It took %.2f seconds to enumerate untracked files,\n"
+"but the results were cached, and subsequent runs may be faster."
 msgstr ""
-"S'ha trigat %.2f segons enumerar els fitxers no seguits.\n"
-"«status -uno» pot accelerar-ho, però heu d'anar amb compte de no\n"
-"oblidar-vos d'afegir fitxers nous vosaltres mateixos (vegeu\n"
-"«git help status»)."
+"S'han trigat %.2f segons a enumerar els fitxers sense seguiment,\n"
+"però els resultats es van emmagatzemar a la memòria cau, i les\n"
+"execucions posteriors podrien ser més ràpides."
+
+#, c-format
+msgid "It took %.2f seconds to enumerate untracked files."
+msgstr "S'han trigat %.2f segons a enumerar els fitxers sense seguiment."
+
+msgid "See 'git help status' for information on how to improve this."
+msgstr ""
+"Vegeu «git help status» per a obtenir informació sobre com millorar-ho."
 
 #, c-format
 msgid "Untracked files not listed%s"
@@ -22133,276 +22231,6 @@ msgstr ""
 
 msgid "Unable to determine absolute path of git directory"
 msgstr "No s'ha pogut determinar el camí absolut del directori de git"
-
-#. TRANSLATORS: you can adjust this to align "git add -i" status menu
-#, perl-format
-msgid "%12s %12s %s"
-msgstr "%12s %12s %s"
-
-#, perl-format
-msgid "touched %d path\n"
-msgid_plural "touched %d paths\n"
-msgstr[0] "modificat %d camí\n"
-msgstr[1] "modificat %d camins\n"
-
-msgid ""
-"If the patch applies cleanly, the edited hunk will immediately be\n"
-"marked for staging."
-msgstr ""
-"Si el pedaç s'aplica correctament, el tros editat es marcarà immediatament\n"
-"per «staging»."
-
-msgid ""
-"If the patch applies cleanly, the edited hunk will immediately be\n"
-"marked for stashing."
-msgstr ""
-"Si el pedaç s'aplica correctament, el tros editat es marcarà immediatament\n"
-"per «stashing»."
-
-msgid ""
-"If the patch applies cleanly, the edited hunk will immediately be\n"
-"marked for unstaging."
-msgstr ""
-"Si el pedaç s'aplica correctament, el tros editat es marcarà immediatament\n"
-"per «unstaging»."
-
-msgid ""
-"If the patch applies cleanly, the edited hunk will immediately be\n"
-"marked for applying."
-msgstr ""
-"Si el pedaç s'aplica correctament, el tros editat es marcarà immediatament\n"
-"per a aplicar-se."
-
-msgid ""
-"If the patch applies cleanly, the edited hunk will immediately be\n"
-"marked for discarding."
-msgstr ""
-"Si el pedaç s'aplica correctament, el tros editat es marcarà immediatament\n"
-"per a descartar-se."
-
-#, perl-format
-msgid "failed to open hunk edit file for writing: %s"
-msgstr "s'ha produït un error en escriure al fitxer d'edició del tros: %s"
-
-#, perl-format
-msgid ""
-"---\n"
-"To remove '%s' lines, make them ' ' lines (context).\n"
-"To remove '%s' lines, delete them.\n"
-"Lines starting with %s will be removed.\n"
-msgstr ""
-"---\n"
-"Per a eliminar les línies «%s», convertiu-les en línies ' ' (context).\n"
-"Per a eliminar les línies «%s», suprimiu-les.\n"
-"Les línies que comencin per %s s'eliminaran.\n"
-
-#, perl-format
-msgid "failed to open hunk edit file for reading: %s"
-msgstr "s'ha produït un error en llegir al fitxer d'edició del tros: %s"
-
-msgid ""
-"y - stage this hunk\n"
-"n - do not stage this hunk\n"
-"q - quit; do not stage this hunk or any of the remaining ones\n"
-"a - stage this hunk and all later hunks in the file\n"
-"d - do not stage this hunk or any of the later hunks in the file"
-msgstr ""
-"y - fes «stage» d'aquest tros\n"
-"n - no facis «stage» d'aquest tros\n"
-"q - surt; no facis «stage» d'aquest tros o de cap altre restant\n"
-"a - fes «stage» d'aquest tros i tota la resta de trossos del fitxer\n"
-"d - no facis «stage» d'aquest tros o de cap altre restant del fitxer"
-
-msgid ""
-"y - stash this hunk\n"
-"n - do not stash this hunk\n"
-"q - quit; do not stash this hunk or any of the remaining ones\n"
-"a - stash this hunk and all later hunks in the file\n"
-"d - do not stash this hunk or any of the later hunks in the file"
-msgstr ""
-"y - fes «stash» d'aquest tros\n"
-"n - no facis «stash» d'aquest tros\n"
-"q - surt; no facis «stash» d'aquest tros o de cap altre restant\n"
-"a - fes «stash» d'aquest tros i tota la resta de trossos del fitxer\n"
-"d - no facis «stash» d'aquest tros o de cap altre restant del fitxer"
-
-msgid ""
-"y - unstage this hunk\n"
-"n - do not unstage this hunk\n"
-"q - quit; do not unstage this hunk or any of the remaining ones\n"
-"a - unstage this hunk and all later hunks in the file\n"
-"d - do not unstage this hunk or any of the later hunks in the file"
-msgstr ""
-"y - fes «unstage» d'aquest tros\n"
-"n - no facis «unstage» d'aquest tros\n"
-"q - surt; no facis «unstage» d'aquest tros o de cap altre restant\n"
-"a - fes «unstage» d'aquest tros i tota la resta de trossos del fitxer\n"
-"d - no facis «unstage» d'aquest tros o de cap altre restant del fitxer"
-
-msgid ""
-"y - apply this hunk to index\n"
-"n - do not apply this hunk to index\n"
-"q - quit; do not apply this hunk or any of the remaining ones\n"
-"a - apply this hunk and all later hunks in the file\n"
-"d - do not apply this hunk or any of the later hunks in the file"
-msgstr ""
-"y - aplica aquest tros a l'índex\n"
-"n - no apliquis aquest tros a l'índex\n"
-"q - surt; no apliquis aquest tros ni cap dels pendents\n"
-"a - aplica aquest tros i tots els trossos posteriors en el fitxer\n"
-"d - no apliquis aquest tros ni cap dels trossos posteriors en el fitxer"
-
-msgid ""
-"y - discard this hunk from worktree\n"
-"n - do not discard this hunk from worktree\n"
-"q - quit; do not discard this hunk or any of the remaining ones\n"
-"a - discard this hunk and all later hunks in the file\n"
-"d - do not discard this hunk or any of the later hunks in the file"
-msgstr ""
-"y - descarta aquest tros de l'arbre de treball\n"
-"n - no descartis aquest tros des de l'arbre de treball\n"
-"q - surt; no descartis aquest tros ni cap dels pendents\n"
-"a - descarta aquest tros i tots els trossos posteriors en el fitxer\n"
-"d - no descartis aquest tros ni cap dels trossos posteriors en el fitxer"
-
-msgid ""
-"y - discard this hunk from index and worktree\n"
-"n - do not discard this hunk from index and worktree\n"
-"q - quit; do not discard this hunk or any of the remaining ones\n"
-"a - discard this hunk and all later hunks in the file\n"
-"d - do not discard this hunk or any of the later hunks in the file"
-msgstr ""
-"y - descarta aquest tros de l'índex i de l'arbre de treball\n"
-"n - no descartis aquest tros des de l'índex i de l'arbre de treball\n"
-"q - surt; no descartis aquest tros ni cap dels pendents\n"
-"a - descarta aquest tros i tots els trossos posteriors en el fitxer\n"
-"d - no descartis aquest tros ni cap dels trossos posteriors en el fitxer"
-
-msgid ""
-"y - apply this hunk to index and worktree\n"
-"n - do not apply this hunk to index and worktree\n"
-"q - quit; do not apply this hunk or any of the remaining ones\n"
-"a - apply this hunk and all later hunks in the file\n"
-"d - do not apply this hunk or any of the later hunks in the file"
-msgstr ""
-"y - aplica aquest tros a l'índex i l'arbre de treball\n"
-"n - no apliquis aquest tros des de l'índex i de l'arbre de treball\n"
-"q - surt; no apliquis aquest tros ni cap dels pendents\n"
-"a - aplica aquest tros i tots els trossos posteriors en el fitxer\n"
-"d - no apliquis aquest tros ni cap dels trossos posteriors en el fitxer"
-
-msgid ""
-"y - apply this hunk to worktree\n"
-"n - do not apply this hunk to worktree\n"
-"q - quit; do not apply this hunk or any of the remaining ones\n"
-"a - apply this hunk and all later hunks in the file\n"
-"d - do not apply this hunk or any of the later hunks in the file"
-msgstr ""
-"y - aplica aquest tros a l'arbre de treball\n"
-"n - no apliquis aquest tros a l'arbre de treball\n"
-"q - surt; no apliquis aquest tros ni cap dels pendents\n"
-"a - aplica aquest tros i tots els trossos posteriors en el fitxer\n"
-"d - no apliquis aquest tros ni cap dels trossos posteriors en el fitxer"
-
-msgid ""
-"g - select a hunk to go to\n"
-"/ - search for a hunk matching the given regex\n"
-"j - leave this hunk undecided, see next undecided hunk\n"
-"J - leave this hunk undecided, see next hunk\n"
-"k - leave this hunk undecided, see previous undecided hunk\n"
-"K - leave this hunk undecided, see previous hunk\n"
-"s - split the current hunk into smaller hunks\n"
-"e - manually edit the current hunk\n"
-"? - print help\n"
-msgstr ""
-"g - selecciona el tros on voleu anar\n"
-"/ - cerca un tros que coincideixi amb l'expressió regular donada\n"
-"j - deixa aquest tros sense decidir, veure el tros sense decidir següent\n"
-"J - deixa aquest tros sense decidir, veure el tros següent\n"
-"k - deixa aquest tros sense decidir, veure el tros sense decidir anterior\n"
-"K - deixa aquest tros sense decidir, veure el tros anterior\n"
-"s - divideix el tros actual en trossos més petits\n"
-"e - edita manualment el tros actual\n"
-"? - mostra l'ajuda\n"
-
-msgid "The selected hunks do not apply to the index!\n"
-msgstr "Els trossos seleccionats no apliquen a l'índex\n"
-
-#, perl-format
-msgid "ignoring unmerged: %s\n"
-msgstr "s'està ignorant %s no fusionat\n"
-
-msgid "No other hunks to goto\n"
-msgstr "No hi ha altres trossos on anar-hi\n"
-
-#, perl-format
-msgid "Invalid number: '%s'\n"
-msgstr "Número no vàlid: «%s»\n"
-
-#, perl-format
-msgid "Sorry, only %d hunk available.\n"
-msgid_plural "Sorry, only %d hunks available.\n"
-msgstr[0] "Només %d tros disponible.\n"
-msgstr[1] "Només %d trossos disponibles.\n"
-
-msgid "No other hunks to search\n"
-msgstr "No hi ha cap altre tros a cercar\n"
-
-#, perl-format
-msgid "Malformed search regexp %s: %s\n"
-msgstr "Expressió regular de cerca mal formada %s: %s\n"
-
-msgid "No hunk matches the given pattern\n"
-msgstr "No hi ha trossos que coincideixin amb el patró donat\n"
-
-msgid "No previous hunk\n"
-msgstr "Sense tros previ\n"
-
-msgid "No next hunk\n"
-msgstr "No hi ha tros següent\n"
-
-msgid "Sorry, cannot split this hunk\n"
-msgstr "No es pot dividir aquest tros\n"
-
-#, perl-format
-msgid "Split into %d hunk.\n"
-msgid_plural "Split into %d hunks.\n"
-msgstr[0] "Divideix en %d tros.\n"
-msgstr[1] "Divideix en %d trossos.\n"
-
-msgid "Sorry, cannot edit this hunk\n"
-msgstr "No es pot editar aquest tros\n"
-
-#. TRANSLATORS: please do not translate the command names
-#. 'status', 'update', 'revert', etc.
-msgid ""
-"status        - show paths with changes\n"
-"update        - add working tree state to the staged set of changes\n"
-"revert        - revert staged set of changes back to the HEAD version\n"
-"patch         - pick hunks and update selectively\n"
-"diff          - view diff between HEAD and index\n"
-"add untracked - add contents of untracked files to the staged set of "
-"changes\n"
-msgstr ""
-"status        - mostra els camins amb canvis\n"
-"update        - afegeix l'estat de l'arbre de treball al conjunt de canvis "
-"«staged»\n"
-"revert        - reverteix el conjunt de canvis de «staged» a la versió HEAD\n"
-"patch         - selecciona trossos i actualitza'ls selectivament\n"
-"diff          - mostra la diferència entre HEAD i l'índex\n"
-"add untracked - afegeix el contingut dels fitxers no seguits al conjunt de "
-"canvis «staged»\n"
-
-msgid "missing --"
-msgstr "manca --"
-
-#, perl-format
-msgid "unknown --patch mode: %s"
-msgstr "desconegut --patch mode: %s"
-
-#, perl-format
-msgid "invalid argument %s, expecting --"
-msgstr "argument %s no vàlid, s'esperava --"
 
 msgid "local zone differs from GMT by a non-minute interval\n"
 msgstr "la zona local difereix de GMT per un interval que no és de minuts\n"
@@ -22727,6 +22555,366 @@ msgstr "S'està ometent %s amb el sufix de còpia de seguretat «%s».\n"
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "Esteu segur que voleu enviar %s? [y|N]: "
+
+#~ msgid "git bisect--helper --bisect-state (bad|new) [<rev>]"
+#~ msgstr "git bisect--helper --bisect-state (bad|new) [<rev>]"
+
+#~ msgid "won't bisect on cg-seek'ed tree"
+#~ msgstr "no es bisecarà en un arbre en el qual s'ha fet cg-seek"
+
+#~ msgid "--bisect-terms requires 0 or 1 argument"
+#~ msgstr "--bisect-terms requereix 0 o 1 argument"
+
+#~ msgid "--bisect-next requires 0 arguments"
+#~ msgstr "--bisect-next no requereix cap argument"
+
+#~ msgid "--bisect-log requires 0 arguments"
+#~ msgstr "--bisect-log no requereix cap argument"
+
+#~ msgid "git env--helper --type=[bool|ulong] <options> <env-var>"
+#~ msgstr "git env--helper --type=[bool|ulong] <opcions> <env-var>"
+
+#~ msgid "default for git_env_*(...) to fall back on"
+#~ msgstr "valor per defecte per a git_env_*(...) en cas d'absència"
+
+#~ msgid "be quiet only use git_env_*() value as exit code"
+#~ msgstr "silenciós només utilitza el valor git_env_*() com a codi de sortida"
+
+#, c-format
+#~ msgid ""
+#~ "option `--default' expects a boolean value with `--type=bool`, not `%s`"
+#~ msgstr ""
+#~ "l'opció «--default» espera un valor booleà amb «--type=bool», no «%s»"
+
+#, c-format
+#~ msgid ""
+#~ "option `--default' expects an unsigned long value with `--type=ulong`, "
+#~ "not `%s`"
+#~ msgstr ""
+#~ "l'opció «--default» espera un valor llarg sense signe amb «--type=ulong», "
+#~ "no «%s»"
+
+#, c-format
+#~ msgid "%s doesn't support --super-prefix"
+#~ msgstr "%s no admet --super-prefix"
+
+#, c-format
+#~ msgid "no prefix given for --super-prefix\n"
+#~ msgstr "no s'ha especificat cap prefix per a --super-prefix\n"
+
+#, c-format
+#~ msgid "failed to read object %s"
+#~ msgstr "s'ha produït un error en llegir l'objecte %s"
+
+#~ msgid "file write error"
+#~ msgstr "s'ha produït un error en escriure al fitxer"
+
+#~ msgid "corrupt commit"
+#~ msgstr "comissió corrupta"
+
+#~ msgid "corrupt tag"
+#~ msgstr "etiqueta corrupta"
+
+#, c-format
+#~ msgid "%%(objecttype) does not take arguments"
+#~ msgstr "%%(objecttype) no accepta arguments"
+
+#, c-format
+#~ msgid "%%(deltabase) does not take arguments"
+#~ msgstr "%%(deltabase) no accepta arguments"
+
+#, c-format
+#~ msgid "%%(body) does not take arguments"
+#~ msgstr "%%(body) no accepta arguments"
+
+#, c-format
+#~ msgid "unrecognized email option: %s"
+#~ msgstr "opció del correu electrònic no reconeguda: «%s»"
+
+#, c-format
+#~ msgid ""
+#~ "It took %.2f seconds to enumerate untracked files. 'status -uno'\n"
+#~ "may speed it up, but you have to be careful not to forget to add\n"
+#~ "new files yourself (see 'git help status')."
+#~ msgstr ""
+#~ "S'ha trigat %.2f segons enumerar els fitxers no seguits.\n"
+#~ "«status -uno» pot accelerar-ho, però heu d'anar amb compte de no\n"
+#~ "oblidar-vos d'afegir fitxers nous vosaltres mateixos (vegeu\n"
+#~ "«git help status»)."
+
+#, perl-format
+#~ msgid "%12s %12s %s"
+#~ msgstr "%12s %12s %s"
+
+#, perl-format
+#~ msgid "touched %d path\n"
+#~ msgid_plural "touched %d paths\n"
+#~ msgstr[0] "modificat %d camí\n"
+#~ msgstr[1] "modificat %d camins\n"
+
+#~ msgid ""
+#~ "If the patch applies cleanly, the edited hunk will immediately be\n"
+#~ "marked for staging."
+#~ msgstr ""
+#~ "Si el pedaç s'aplica correctament, el tros editat es marcarà "
+#~ "immediatament\n"
+#~ "per «staging»."
+
+#~ msgid ""
+#~ "If the patch applies cleanly, the edited hunk will immediately be\n"
+#~ "marked for stashing."
+#~ msgstr ""
+#~ "Si el pedaç s'aplica correctament, el tros editat es marcarà "
+#~ "immediatament\n"
+#~ "per «stashing»."
+
+#~ msgid ""
+#~ "If the patch applies cleanly, the edited hunk will immediately be\n"
+#~ "marked for unstaging."
+#~ msgstr ""
+#~ "Si el pedaç s'aplica correctament, el tros editat es marcarà "
+#~ "immediatament\n"
+#~ "per «unstaging»."
+
+#~ msgid ""
+#~ "If the patch applies cleanly, the edited hunk will immediately be\n"
+#~ "marked for applying."
+#~ msgstr ""
+#~ "Si el pedaç s'aplica correctament, el tros editat es marcarà "
+#~ "immediatament\n"
+#~ "per a aplicar-se."
+
+#~ msgid ""
+#~ "If the patch applies cleanly, the edited hunk will immediately be\n"
+#~ "marked for discarding."
+#~ msgstr ""
+#~ "Si el pedaç s'aplica correctament, el tros editat es marcarà "
+#~ "immediatament\n"
+#~ "per a descartar-se."
+
+#, perl-format
+#~ msgid "failed to open hunk edit file for writing: %s"
+#~ msgstr "s'ha produït un error en escriure al fitxer d'edició del tros: %s"
+
+#, perl-format
+#~ msgid ""
+#~ "---\n"
+#~ "To remove '%s' lines, make them ' ' lines (context).\n"
+#~ "To remove '%s' lines, delete them.\n"
+#~ "Lines starting with %s will be removed.\n"
+#~ msgstr ""
+#~ "---\n"
+#~ "Per a eliminar les línies «%s», convertiu-les en línies ' ' (context).\n"
+#~ "Per a eliminar les línies «%s», suprimiu-les.\n"
+#~ "Les línies que comencin per %s s'eliminaran.\n"
+
+#, perl-format
+#~ msgid "failed to open hunk edit file for reading: %s"
+#~ msgstr "s'ha produït un error en llegir al fitxer d'edició del tros: %s"
+
+#~ msgid ""
+#~ "y - stage this hunk\n"
+#~ "n - do not stage this hunk\n"
+#~ "q - quit; do not stage this hunk or any of the remaining ones\n"
+#~ "a - stage this hunk and all later hunks in the file\n"
+#~ "d - do not stage this hunk or any of the later hunks in the file"
+#~ msgstr ""
+#~ "y - fes «stage» d'aquest tros\n"
+#~ "n - no facis «stage» d'aquest tros\n"
+#~ "q - surt; no facis «stage» d'aquest tros o de cap altre restant\n"
+#~ "a - fes «stage» d'aquest tros i tota la resta de trossos del fitxer\n"
+#~ "d - no facis «stage» d'aquest tros o de cap altre restant del fitxer"
+
+#~ msgid ""
+#~ "y - stash this hunk\n"
+#~ "n - do not stash this hunk\n"
+#~ "q - quit; do not stash this hunk or any of the remaining ones\n"
+#~ "a - stash this hunk and all later hunks in the file\n"
+#~ "d - do not stash this hunk or any of the later hunks in the file"
+#~ msgstr ""
+#~ "y - fes «stash» d'aquest tros\n"
+#~ "n - no facis «stash» d'aquest tros\n"
+#~ "q - surt; no facis «stash» d'aquest tros o de cap altre restant\n"
+#~ "a - fes «stash» d'aquest tros i tota la resta de trossos del fitxer\n"
+#~ "d - no facis «stash» d'aquest tros o de cap altre restant del fitxer"
+
+#~ msgid ""
+#~ "y - unstage this hunk\n"
+#~ "n - do not unstage this hunk\n"
+#~ "q - quit; do not unstage this hunk or any of the remaining ones\n"
+#~ "a - unstage this hunk and all later hunks in the file\n"
+#~ "d - do not unstage this hunk or any of the later hunks in the file"
+#~ msgstr ""
+#~ "y - fes «unstage» d'aquest tros\n"
+#~ "n - no facis «unstage» d'aquest tros\n"
+#~ "q - surt; no facis «unstage» d'aquest tros o de cap altre restant\n"
+#~ "a - fes «unstage» d'aquest tros i tota la resta de trossos del fitxer\n"
+#~ "d - no facis «unstage» d'aquest tros o de cap altre restant del fitxer"
+
+#~ msgid ""
+#~ "y - apply this hunk to index\n"
+#~ "n - do not apply this hunk to index\n"
+#~ "q - quit; do not apply this hunk or any of the remaining ones\n"
+#~ "a - apply this hunk and all later hunks in the file\n"
+#~ "d - do not apply this hunk or any of the later hunks in the file"
+#~ msgstr ""
+#~ "y - aplica aquest tros a l'índex\n"
+#~ "n - no apliquis aquest tros a l'índex\n"
+#~ "q - surt; no apliquis aquest tros ni cap dels pendents\n"
+#~ "a - aplica aquest tros i tots els trossos posteriors en el fitxer\n"
+#~ "d - no apliquis aquest tros ni cap dels trossos posteriors en el fitxer"
+
+#~ msgid ""
+#~ "y - discard this hunk from worktree\n"
+#~ "n - do not discard this hunk from worktree\n"
+#~ "q - quit; do not discard this hunk or any of the remaining ones\n"
+#~ "a - discard this hunk and all later hunks in the file\n"
+#~ "d - do not discard this hunk or any of the later hunks in the file"
+#~ msgstr ""
+#~ "y - descarta aquest tros de l'arbre de treball\n"
+#~ "n - no descartis aquest tros des de l'arbre de treball\n"
+#~ "q - surt; no descartis aquest tros ni cap dels pendents\n"
+#~ "a - descarta aquest tros i tots els trossos posteriors en el fitxer\n"
+#~ "d - no descartis aquest tros ni cap dels trossos posteriors en el fitxer"
+
+#~ msgid ""
+#~ "y - discard this hunk from index and worktree\n"
+#~ "n - do not discard this hunk from index and worktree\n"
+#~ "q - quit; do not discard this hunk or any of the remaining ones\n"
+#~ "a - discard this hunk and all later hunks in the file\n"
+#~ "d - do not discard this hunk or any of the later hunks in the file"
+#~ msgstr ""
+#~ "y - descarta aquest tros de l'índex i de l'arbre de treball\n"
+#~ "n - no descartis aquest tros des de l'índex i de l'arbre de treball\n"
+#~ "q - surt; no descartis aquest tros ni cap dels pendents\n"
+#~ "a - descarta aquest tros i tots els trossos posteriors en el fitxer\n"
+#~ "d - no descartis aquest tros ni cap dels trossos posteriors en el fitxer"
+
+#~ msgid ""
+#~ "y - apply this hunk to index and worktree\n"
+#~ "n - do not apply this hunk to index and worktree\n"
+#~ "q - quit; do not apply this hunk or any of the remaining ones\n"
+#~ "a - apply this hunk and all later hunks in the file\n"
+#~ "d - do not apply this hunk or any of the later hunks in the file"
+#~ msgstr ""
+#~ "y - aplica aquest tros a l'índex i l'arbre de treball\n"
+#~ "n - no apliquis aquest tros des de l'índex i de l'arbre de treball\n"
+#~ "q - surt; no apliquis aquest tros ni cap dels pendents\n"
+#~ "a - aplica aquest tros i tots els trossos posteriors en el fitxer\n"
+#~ "d - no apliquis aquest tros ni cap dels trossos posteriors en el fitxer"
+
+#~ msgid ""
+#~ "y - apply this hunk to worktree\n"
+#~ "n - do not apply this hunk to worktree\n"
+#~ "q - quit; do not apply this hunk or any of the remaining ones\n"
+#~ "a - apply this hunk and all later hunks in the file\n"
+#~ "d - do not apply this hunk or any of the later hunks in the file"
+#~ msgstr ""
+#~ "y - aplica aquest tros a l'arbre de treball\n"
+#~ "n - no apliquis aquest tros a l'arbre de treball\n"
+#~ "q - surt; no apliquis aquest tros ni cap dels pendents\n"
+#~ "a - aplica aquest tros i tots els trossos posteriors en el fitxer\n"
+#~ "d - no apliquis aquest tros ni cap dels trossos posteriors en el fitxer"
+
+#~ msgid ""
+#~ "g - select a hunk to go to\n"
+#~ "/ - search for a hunk matching the given regex\n"
+#~ "j - leave this hunk undecided, see next undecided hunk\n"
+#~ "J - leave this hunk undecided, see next hunk\n"
+#~ "k - leave this hunk undecided, see previous undecided hunk\n"
+#~ "K - leave this hunk undecided, see previous hunk\n"
+#~ "s - split the current hunk into smaller hunks\n"
+#~ "e - manually edit the current hunk\n"
+#~ "? - print help\n"
+#~ msgstr ""
+#~ "g - selecciona el tros on voleu anar\n"
+#~ "/ - cerca un tros que coincideixi amb l'expressió regular donada\n"
+#~ "j - deixa aquest tros sense decidir, veure el tros sense decidir següent\n"
+#~ "J - deixa aquest tros sense decidir, veure el tros següent\n"
+#~ "k - deixa aquest tros sense decidir, veure el tros sense decidir "
+#~ "anterior\n"
+#~ "K - deixa aquest tros sense decidir, veure el tros anterior\n"
+#~ "s - divideix el tros actual en trossos més petits\n"
+#~ "e - edita manualment el tros actual\n"
+#~ "? - mostra l'ajuda\n"
+
+#~ msgid "The selected hunks do not apply to the index!\n"
+#~ msgstr "Els trossos seleccionats no apliquen a l'índex\n"
+
+#, perl-format
+#~ msgid "ignoring unmerged: %s\n"
+#~ msgstr "s'està ignorant %s no fusionat\n"
+
+#~ msgid "No other hunks to goto\n"
+#~ msgstr "No hi ha altres trossos on anar-hi\n"
+
+#, perl-format
+#~ msgid "Invalid number: '%s'\n"
+#~ msgstr "Número no vàlid: «%s»\n"
+
+#, perl-format
+#~ msgid "Sorry, only %d hunk available.\n"
+#~ msgid_plural "Sorry, only %d hunks available.\n"
+#~ msgstr[0] "Només %d tros disponible.\n"
+#~ msgstr[1] "Només %d trossos disponibles.\n"
+
+#~ msgid "No other hunks to search\n"
+#~ msgstr "No hi ha cap altre tros a cercar\n"
+
+#, perl-format
+#~ msgid "Malformed search regexp %s: %s\n"
+#~ msgstr "Expressió regular de cerca mal formada %s: %s\n"
+
+#~ msgid "No hunk matches the given pattern\n"
+#~ msgstr "No hi ha trossos que coincideixin amb el patró donat\n"
+
+#~ msgid "No previous hunk\n"
+#~ msgstr "Sense tros previ\n"
+
+#~ msgid "No next hunk\n"
+#~ msgstr "No hi ha tros següent\n"
+
+#~ msgid "Sorry, cannot split this hunk\n"
+#~ msgstr "No es pot dividir aquest tros\n"
+
+#, perl-format
+#~ msgid "Split into %d hunk.\n"
+#~ msgid_plural "Split into %d hunks.\n"
+#~ msgstr[0] "Divideix en %d tros.\n"
+#~ msgstr[1] "Divideix en %d trossos.\n"
+
+#~ msgid "Sorry, cannot edit this hunk\n"
+#~ msgstr "No es pot editar aquest tros\n"
+
+#~ msgid ""
+#~ "status        - show paths with changes\n"
+#~ "update        - add working tree state to the staged set of changes\n"
+#~ "revert        - revert staged set of changes back to the HEAD version\n"
+#~ "patch         - pick hunks and update selectively\n"
+#~ "diff          - view diff between HEAD and index\n"
+#~ "add untracked - add contents of untracked files to the staged set of "
+#~ "changes\n"
+#~ msgstr ""
+#~ "status        - mostra els camins amb canvis\n"
+#~ "update        - afegeix l'estat de l'arbre de treball al conjunt de "
+#~ "canvis «staged»\n"
+#~ "revert        - reverteix el conjunt de canvis de «staged» a la versió "
+#~ "HEAD\n"
+#~ "patch         - selecciona trossos i actualitza'ls selectivament\n"
+#~ "diff          - mostra la diferència entre HEAD i l'índex\n"
+#~ "add untracked - afegeix el contingut dels fitxers no seguits al conjunt "
+#~ "de canvis «staged»\n"
+
+#~ msgid "missing --"
+#~ msgstr "manca --"
+
+#, perl-format
+#~ msgid "unknown --patch mode: %s"
+#~ msgstr "desconegut --patch mode: %s"
+
+#, perl-format
+#~ msgid "invalid argument %s, expecting --"
+#~ msgstr "argument %s no vàlid, s'esperava --"
 
 #, c-format
 #~ msgid "unable to normalize object directory: %s"

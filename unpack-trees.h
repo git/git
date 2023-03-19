@@ -59,47 +59,54 @@ struct unpack_trees_options {
 		     preserve_ignored,
 		     clone,
 		     index_only,
-		     nontrivial_merge,
 		     trivial_merges_only,
 		     verbose_update,
 		     aggressive,
 		     skip_unmerged,
 		     initial_checkout,
 		     diff_index_cached,
-		     debug_unpack,
 		     skip_sparse_checkout,
 		     quiet,
 		     exiting_early,
-		     show_all_errors,
 		     dry_run,
 		     skip_cache_tree_update;
 	enum unpack_trees_reset_type reset;
 	const char *prefix;
 	const char *super_prefix;
-	int cache_bottom;
 	struct pathspec *pathspec;
 	merge_fn_t fn;
-	const char *msgs[NB_UNPACK_TREES_WARNING_TYPES];
-	struct strvec msgs_to_free;
-	/*
-	 * Store error messages in an array, each case
-	 * corresponding to a error message type
-	 */
-	struct string_list unpack_rejects[NB_UNPACK_TREES_WARNING_TYPES];
 
 	int head_idx;
-	int merge_size;
 
-	struct cache_entry *df_conflict_entry;
+	struct cache_entry *df_conflict_entry; /* output only */
 	void *unpack_data;
 
 	struct index_state *dst_index;
 	struct index_state *src_index;
-	struct index_state result;
 
-	struct pattern_list *pl; /* for internal use */
-	struct dir_struct *dir; /* for internal use only */
 	struct checkout_metadata meta;
+
+	struct unpack_trees_options_internal {
+		unsigned int nontrivial_merge,
+			     show_all_errors,
+			     debug_unpack; /* used by read-tree debugging */
+
+		int merge_size; /* used by read-tree debugging */
+		int cache_bottom;
+		const char *msgs[NB_UNPACK_TREES_WARNING_TYPES];
+		struct strvec msgs_to_free;
+
+		/*
+		 * Store error messages in an array, each case
+		 * corresponding to a error message type
+		 */
+		struct string_list unpack_rejects[NB_UNPACK_TREES_WARNING_TYPES];
+
+		struct index_state result;
+
+		struct pattern_list *pl;
+		struct dir_struct *dir;
+	} internal;
 };
 
 int unpack_trees(unsigned n, struct tree_desc *t,
@@ -112,7 +119,8 @@ enum update_sparsity_result {
 	UPDATE_SPARSITY_WORKTREE_UPDATE_FAILURES = -2
 };
 
-enum update_sparsity_result update_sparsity(struct unpack_trees_options *options);
+enum update_sparsity_result update_sparsity(struct unpack_trees_options *options,
+					    struct pattern_list *pl);
 
 int verify_uptodate(const struct cache_entry *ce,
 		    struct unpack_trees_options *o);

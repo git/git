@@ -1,6 +1,8 @@
 #include "cache.h"
+#include "alloc.h"
 #include "config.h"
 #include "commit.h"
+#include "hex.h"
 #include "utf8.h"
 #include "diff.h"
 #include "revision.h"
@@ -1857,7 +1859,8 @@ static size_t format_commit_item(struct strbuf *sb, /* in UTF-8 */
 	return consumed + 1;
 }
 
-static size_t userformat_want_item(struct strbuf *sb, const char *placeholder,
+static size_t userformat_want_item(struct strbuf *sb UNUSED,
+				   const char *placeholder,
 				   void *context)
 {
 	struct userformat_want *w = context;

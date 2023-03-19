@@ -3,6 +3,7 @@
 #include "config.h"
 #include "builtin.h"
 #include "dir.h"
+#include "hex.h"
 #include "parse-options.h"
 #include "strvec.h"
 #include "branch.h"

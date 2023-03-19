@@ -1,4 +1,5 @@
 #include "builtin.h"
+#include "alloc.h"
 #include "config.h"
 #include "parse-options.h"
 #include "fsmonitor.h"

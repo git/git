@@ -1,3 +1,4 @@
+#include "git-compat-util.h"
 #include "object-store.h"
 #include "packfile.h"
 #include "progress.h"

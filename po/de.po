@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2022-12-02 17:16+0100\n"
-"PO-Revision-Date: 2022-12-02 17:19+0100\n"
+"POT-Creation-Date: 2023-03-03 17:13+0100\n"
+"PO-Revision-Date: 2023-03-03 13:46+0100\n"
 "Last-Translator: Ralf Thielow <ralf.thielow@gmail.com>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n!=1);\n"
-"X-Generator: Poedit 3.2\n"
+"X-Generator: Poedit 3.2.2\n"
 
 #, c-format
 msgid "Huh (%s)?"
@@ -45,13 +45,13 @@ msgstr "Konnte '%s' nicht zum Commit vormerken."
 msgid "could not write index"
 msgstr "konnte Index nicht schreiben"
 
-#, c-format, perl-format
+#, c-format
 msgid "updated %d path\n"
 msgid_plural "updated %d paths\n"
 msgstr[0] "%d Pfad aktualisiert\n"
 msgstr[1] "%d Pfade aktualisiert\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "note: %s is untracked now.\n"
 msgstr "Hinweis: %s ist nun unversioniert.\n"
 
@@ -65,7 +65,7 @@ msgstr "Revert"
 msgid "Could not parse HEAD^{tree}"
 msgstr "Konnte HEAD^{tree} nicht parsen."
 
-#, c-format, perl-format
+#, c-format
 msgid "reverted %d path\n"
 msgid_plural "reverted %d paths\n"
 msgstr[0] "%d Pfad wiederhergestellt\n"
@@ -78,7 +78,7 @@ msgstr "Keine unversionierten Dateien.\n"
 msgid "Add untracked"
 msgstr "Unversionierte Dateien hinzufügen"
 
-#, c-format, perl-format
+#, c-format
 msgid "added %d path\n"
 msgid_plural "added %d paths\n"
 msgstr[0] "%d Pfad hinzugefügt\n"
@@ -172,19 +172,19 @@ msgstr "Index konnte nicht aktualisiert werden"
 msgid "Bye.\n"
 msgstr "Tschüss.\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Stage mode change [y,n,q,a,d%s,?]? "
 msgstr "Modusänderung der Staging-Area hinzufügen [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Stage deletion [y,n,q,a,d%s,?]? "
 msgstr "Löschung der Staging-Area hinzufügen [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Stage addition [y,n,q,a,d%s,?]? "
 msgstr "Ergänzung der Staging-Area hinzufügen [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Stage this hunk [y,n,q,a,d%s,?]? "
 msgstr "Diesen Patch-Block der Staging-Area hinzufügen [y,n,q,a,d%s,?]? "
 
@@ -210,19 +210,19 @@ msgstr ""
 "d - diesen oder alle weiteren Patch-Blöcke in dieser Datei nicht zum Commit "
 "vormerken\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Stash mode change [y,n,q,a,d%s,?]? "
 msgstr "Modusänderung stashen [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Stash deletion [y,n,q,a,d%s,?]? "
 msgstr "Löschung stashen [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Stash addition [y,n,q,a,d%s,?]? "
 msgstr "Ergänzung stashen [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Stash this hunk [y,n,q,a,d%s,?]? "
 msgstr "Diesen Patch-Block stashen [y,n,q,a,d%s,?]? "
 
@@ -246,19 +246,19 @@ msgstr ""
 "a - diesen und alle weiteren Patch-Blöcke dieser Datei stashen\n"
 "d - diesen oder alle weiteren Patch-Blöcke dieser Datei nicht stashen\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Unstage mode change [y,n,q,a,d%s,?]? "
 msgstr "Modusänderung aus der Staging-Area entfernen [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Unstage deletion [y,n,q,a,d%s,?]? "
 msgstr "Löschung aus der Staging-Area entfernen [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Unstage addition [y,n,q,a,d%s,?]? "
 msgstr "Ergänzung aus der Staging-Area entfernen [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Unstage this hunk [y,n,q,a,d%s,?]? "
 msgstr "Diesen Patch-Block aus der Staging-Area entfernen [y,n,q,a,d%s,?]? "
 
@@ -285,19 +285,19 @@ msgstr ""
 "d - diesen oder alle weiteren Patch-Blöcke dieser Datei nicht aus Staging-"
 "Area entfernen\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply mode change to index [y,n,q,a,d%s,?]? "
 msgstr "Modusänderung auf Index anwenden [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply deletion to index [y,n,q,a,d%s,?]? "
 msgstr "Löschung auf Index anwenden [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply addition to index [y,n,q,a,d%s,?]? "
 msgstr "Ergänzung auf Index anwenden [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply this hunk to index [y,n,q,a,d%s,?]? "
 msgstr "Diesen Patch-Block auf Index anwenden [y,n,q,a,d%s,?]? "
 
@@ -324,19 +324,19 @@ msgstr ""
 "d - diesen oder alle weiteren Patch-Blöcke dieser Datei nicht auf den Index "
 "anwenden\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard mode change from worktree [y,n,q,a,d%s,?]? "
 msgstr "Modusänderung im Arbeitsverzeichnis verwerfen [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard deletion from worktree [y,n,q,a,d%s,?]? "
 msgstr "Löschung im Arbeitsverzeichnis verwerfen [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard addition from worktree [y,n,q,a,d%s,?]? "
 msgstr "Ergänzung im Arbeitsverzeichnis verwerfen [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard this hunk from worktree [y,n,q,a,d%s,?]? "
 msgstr "Diesen Patch-Block im Arbeitsverzeichnis verwerfen [y,n,q,a,d%s,?]? "
 
@@ -363,20 +363,20 @@ msgstr ""
 "d - diesen oder alle weiteren Patch-Blöcke dieser Datei nicht im "
 "Arbeitsverzeichnis verwerfen\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard mode change from index and worktree [y,n,q,a,d%s,?]? "
 msgstr ""
 "Modusänderung vom Index und Arbeitsverzeichnis verwerfen [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard deletion from index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Löschung vom Index und Arbeitsverzeichnis verwerfen [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard addition from index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Ergänzung im Index und Arbeitsverzeichnis verwerfen [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard this hunk from index and worktree [y,n,q,a,d%s,?]? "
 msgstr ""
 "Diesen Patch-Block vom Index und Arbeitsverzeichnis verwerfen [y,n,q,a,"
@@ -395,20 +395,20 @@ msgstr ""
 "a - diesen und alle weiteren Patch-Blöcke in der Datei verwerfen\n"
 "d - diesen oder alle weiteren Patch-Blöcke in der Datei nicht verwerfen\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply mode change to index and worktree [y,n,q,a,d%s,?]? "
 msgstr ""
 "Modusänderung auf Index und Arbeitsverzeichnis anwenden [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply deletion to index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Löschung auf Index und Arbeitsverzeichnis anwenden [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply addition to index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Ergänzung auf Index und Arbeitsverzeichnis anwenden [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply this hunk to index and worktree [y,n,q,a,d%s,?]? "
 msgstr ""
 "Diesen Patch-Block auf Index und Arbeitsverzeichnis anwenden [y,n,q,a,"
@@ -428,19 +428,19 @@ msgstr ""
 "a - diesen und alle weiteren Patch-Blöcke in der Datei anwenden\n"
 "d - diesen oder alle weiteren Patch-Blöcke in der Datei nicht anwenden\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply mode change to worktree [y,n,q,a,d%s,?]? "
 msgstr "Modusänderung auf Arbeitsverzeichnis anwenden [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply deletion to worktree [y,n,q,a,d%s,?]? "
 msgstr "Löschung auf Arbeitsverzeichnis anwenden [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply addition to worktree [y,n,q,a,d%s,?]? "
 msgstr "Ergänzung auf Arbeitsverzeichnis anwenden [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply this hunk to worktree [y,n,q,a,d%s,?]? "
 msgstr ""
 "Diesen Patch-Block auf das Arbeitsverzeichnis anwenden [y,n,q,a,d%s,?]? "
@@ -519,7 +519,6 @@ msgstr ""
 "Um '%c' Zeilen zu entfernen, löschen Sie diese.\n"
 "Zeilen, die mit %c beginnen, werden entfernt.\n"
 
-#. TRANSLATORS: 'it' refers to the patch mentioned in the previous messages.
 msgid ""
 "If it does not apply cleanly, you will be given an opportunity to\n"
 "edit again.  If all lines of the hunk are removed, then the edit is\n"
@@ -542,12 +541,6 @@ msgstr "'git apply --cached' schlug fehl"
 #. (saying "n" for "no" discards!) if the translation
 #. of the word "no" does not start with n.
 #.
-#. TRANSLATORS: do not translate [y/n]
-#. The program will only accept that input
-#. at this point.
-#. Consider translating (saying "no" discards!) as
-#. (saying "n" for "no" discards!) if the translation
-#. of the word "no" does not start with n.
 msgid ""
 "Your edited hunk does not apply. Edit again (saying \"no\" discards!) [y/n]? "
 msgstr ""
@@ -1416,6 +1409,12 @@ msgstr ".gitattributes aus dem Arbeitsverzeichnis lesen"
 msgid "report archived files on stderr"
 msgstr "archivierte Dateien in der Standard-Fehlerausgabe ausgeben"
 
+msgid "time"
+msgstr "Zeit"
+
+msgid "set modification time of archive entries"
+msgstr "Änderungszeitpunkt von Archiveinträgen festlegen"
+
 msgid "set compression level"
 msgstr "Komprimierungsgrad setzen"
 
@@ -1456,6 +1455,13 @@ msgstr "Argument für Format '%s' nicht unterstützt: -%d"
 msgid "%.*s is not a valid attribute name"
 msgstr "%.*s ist kein gültiger Attributname"
 
+msgid "unable to add additional attribute"
+msgstr "konnte kein zusätzliches Attribut hinzufügen"
+
+#, c-format
+msgid "ignoring overly long attributes line %d"
+msgstr "ignoriere übermäßig lange Attribut-Zeile %d"
+
 #, c-format
 msgid "%s not allowed: %s:%d"
 msgstr "%s nicht erlaubt: %s:%d"
@@ -1466,6 +1472,18 @@ msgid ""
 msgstr ""
 "Verneinende Muster werden in Git-Attributen ignoriert.\n"
 "Benutzen Sie '\\!' für führende Ausrufezeichen."
+
+#, c-format
+msgid "cannot fstat gitattributes file '%s'"
+msgstr "Kann gitattributes-Datei '%s' nicht lesen"
+
+#, c-format
+msgid "ignoring overly large gitattributes file '%s'"
+msgstr "ignoriere übermäßig große gitattributes-Datei '%s'"
+
+#, c-format
+msgid "ignoring overly large gitattributes blob '%s'"
+msgstr "ignoriere übermäßig großen gitattribute-Blob '%s'"
 
 #, c-format
 msgid "Badly quoted content in file '%s': %s"
@@ -1651,10 +1669,12 @@ msgstr ""
 msgid "not tracking: ambiguous information for ref '%s'"
 msgstr "kein Tracking: mehrdeutige Informationen für Referenz '%s'"
 
+#. #-#-#-#-#  branch.c.po  #-#-#-#-#
 #. TRANSLATORS: This is a line listing a remote with duplicate
 #. refspecs in the advice message below. For RTL languages you'll
 #. probably want to swap the "%s" and leading "  " space around.
 #.
+#. #-#-#-#-#  object-name.c.po  #-#-#-#-#
 #. TRANSLATORS: This is line item of ambiguous object output
 #. from describe_ambiguous_object() above. For RTL languages
 #. you'll probably want to swap the "%s" and leading " " space
@@ -1748,11 +1768,11 @@ msgstr "Submodul '%s': Submodul konnte nicht gefunden werden"
 
 #, c-format
 msgid ""
-"You may try updating the submodules using 'git checkout %s && git submodule "
-"update --init'"
+"You may try updating the submodules using 'git checkout --no-recurse-"
+"submodules %s && git submodule update --init'"
 msgstr ""
-"Sie können versuchen die Submodule mit 'git checkout %s && git submodule "
-"update --init' zu aktualisieren"
+"Sie können versuchen, die Submodule mit \"git checkout --no-recurse-"
+"submodules %s && git submodule update --init\" zu aktualisieren."
 
 #, c-format
 msgid "submodule '%s': cannot create branch '%s'"
@@ -1787,6 +1807,13 @@ msgstr "lösche '%s'\n"
 msgid "Unstaged changes after refreshing the index:"
 msgstr ""
 "Nicht zum Commit vorgemerkte Änderungen nach Aktualisierung der Staging-Area:"
+
+msgid ""
+"the add.interactive.useBuiltin setting has been removed!\n"
+"See its entry in 'git help config' for details."
+msgstr ""
+"Die Einstellung add.interactive.useBuiltin wurde entfernt!\n"
+"Siehe den Eintrag in 'git help config' für Details."
 
 msgid "Could not read the index"
 msgstr "Konnte den Index nicht lesen"
@@ -2194,6 +2221,9 @@ msgstr "git am [<Optionen>] (--continue | --skip | --abort)"
 msgid "run interactively"
 msgstr "interaktiv ausführen"
 
+msgid "bypass pre-applypatch and applypatch-msg hooks"
+msgstr "Hooks pre-applypatch und applypatch-msg umgehen"
+
 msgid "historical option -- no-op"
 msgstr "historische Option -- kein Effekt"
 
@@ -2335,32 +2365,28 @@ msgstr "git archive: Protokollfehler"
 msgid "git archive: expected a flush"
 msgstr "git archive: erwartete eine Spülung (flush)"
 
-msgid "git bisect--helper --bisect-reset [<commit>]"
-msgstr "git bisect--helper --bisect-reset [<Commit>]"
-
 msgid ""
-"git bisect--helper --bisect-start [--term-{new,bad}=<term> --term-{old,good}"
-"=<term>] [--no-checkout] [--first-parent] [<bad> [<good>...]] [--] "
-"[<paths>...]"
+"git bisect start [--term-{new,bad}=<term> --term-{old,good}=<term>]    [--no-"
+"checkout] [--first-parent] [<bad> [<good>...]] [--]    [<pathspec>...]"
 msgstr ""
-"git bisect--helper --bisect-start [--term-{new,bad}=<Begriff> --term-{old,"
-"good}=<Begriff>] [--no-checkout] [--first-parent] [<schlecht> [<gut>...]] "
-"[--] [<Pfade>...]"
+"git bisect start [--term-{new,bad}=<Begriff> --term-{old,good}=<Begriff>] [--"
+"no-checkout] [--first-parent] [<schlecht> [<gut>...]] [--] "
+"[<Pfadspezifikation>...]"
 
-msgid "git bisect--helper --bisect-state (bad|new) [<rev>]"
-msgstr "git bisect--helper --bisect-state (bad|new) [<Commit>]"
+msgid "git bisect (good|bad) [<rev>...]"
+msgstr "git bisect (good|bad) [<Commit>...]"
 
-msgid "git bisect--helper --bisect-state (good|old) [<rev>...]"
-msgstr "git bisect--helper --bisect-state (good|old) [<Commit>...]"
+msgid "git bisect skip [(<rev>|<range>)...]"
+msgstr "git bisect skip [(<Commit>|<Bereich>)...]"
 
-msgid "git bisect--helper --bisect-replay <filename>"
-msgstr "git bisect--helper --bisect-replay <Dateiname>"
+msgid "git bisect reset [<commit>]"
+msgstr "git bisect reset [<Commit>]"
 
-msgid "git bisect--helper --bisect-skip [(<rev>|<range>)...]"
-msgstr "git bisect--helper --bisect-skip [(<Commit>|<Bereich>)...]"
+msgid "git bisect replay <logfile>"
+msgstr "git bisect replay <Logdatei>"
 
-msgid "git bisect--helper --bisect-run <cmd>..."
-msgstr "git bisect--helper --bisect-run <Programm>..."
+msgid "git bisect run <cmd>..."
+msgstr "git bisect run <Programm>..."
 
 #, c-format
 msgid "cannot open file '%s' in mode '%s'"
@@ -2507,10 +2533,6 @@ msgstr ""
 "Auschecken von '%s' fehlgeschlagen. Versuchen Sie 'git bisect start "
 "<gültiger-Branch>'."
 
-msgid "won't bisect on cg-seek'ed tree"
-msgstr ""
-"binäre Suche auf einem durch 'cg-seek' geändertem Verzeichnis nicht möglich"
-
 msgid "bad HEAD - strange symbolic ref"
 msgstr "ungültiger HEAD - merkwürdige symbolische Referenz"
 
@@ -2562,16 +2584,16 @@ msgid "bisect run failed: no command provided."
 msgstr "'bisect run' fehlgeschlagen: kein Befehl angegeben."
 
 #, c-format
-msgid "unable to verify '%s' on good revision"
-msgstr "konnte '%s' nicht für guten Commit überprüfen"
+msgid "unable to verify %s on good revision"
+msgstr "kann %s bei gutem Commit nicht verifizieren"
 
 #, c-format
 msgid "bogus exit code %d for good revision"
 msgstr "fehlerhafter Exit-Code %d für guten Commit"
 
 #, c-format
-msgid "bisect run failed: exit code %d from '%s' is < 0 or >= 128"
-msgstr "'bisect run' fehlgeschlagen: Exit-Code %d von '%s' ist < 0 oder >= 128"
+msgid "bisect run failed: exit code %d from %s is < 0 or >= 128"
+msgstr "bisect-Lauf fehlgeschlagen: Exit-Code %d von %s ist < 0 oder >= 128"
 
 #, c-format
 msgid "cannot open file '%s' for writing"
@@ -2580,36 +2602,42 @@ msgstr "Datei '%s' kann nicht zum Schreiben geöffnet werden"
 msgid "bisect run cannot continue any more"
 msgstr "'bisect run' kann nicht mehr fortgesetzt werden"
 
-#, c-format
 msgid "bisect run success"
 msgstr "'bisect run' erfolgreich ausgeführt"
 
-#, c-format
 msgid "bisect found first bad commit"
 msgstr "binäre Suche fand ersten schlechten Commit"
 
 #, c-format
-msgid ""
-"bisect run failed: 'git bisect--helper --bisect-state %s' exited with error "
-"code %d"
+msgid "bisect run failed: 'git bisect %s' exited with error code %d"
 msgstr ""
-"'bisect run' fehlgeschlagen: 'git bisect--helper --bisect-state %s' mit "
-"Fehlercode %d beendet"
+"bisect-Lauf fehlgeschlagen: 'git bisect %s' wurde mit Fehlercode %d beendet"
 
-msgid "--bisect-reset requires either no argument or a commit"
-msgstr "--bisect-reset benötigt entweder kein Argument oder ein Commit"
+#, c-format
+msgid "'%s' requires either no argument or a commit"
+msgstr "'%s' erfordert entweder kein Argument oder einen Commit"
 
-msgid "--bisect-terms requires 0 or 1 argument"
-msgstr "--bisect-terms benötigt 0 oder 1 Argument"
+#, c-format
+msgid "'%s' requires 0 or 1 argument"
+msgstr "'%s' erfordert 0 oder 1 Argument"
 
-msgid "--bisect-next requires 0 arguments"
-msgstr "--bisect-next benötigt 0 Argumente"
-
-msgid "--bisect-log requires 0 arguments"
-msgstr "--bisect-log benötigt 0 Argumente"
+#, c-format
+msgid "'%s' requires 0 arguments"
+msgstr "'%s' erfordert 0 Argumente"
 
 msgid "no logfile given"
 msgstr "keine Log-Datei angegeben"
+
+#, c-format
+msgid "'%s' failed: no command provided."
+msgstr "'%s' ist fehlgeschlagen: kein Befehl angegeben."
+
+msgid "need a command"
+msgstr "Befehl benötigt"
+
+#, c-format
+msgid "unknown command: '%s'"
+msgstr "unbekannter Befehl: '%s'"
 
 msgid "git blame [<options>] [<rev-opts>] [<rev>] [--] <file>"
 msgstr "git blame [<Optionen>] [<rev-opts>] [<Commit>] [--] <Datei>"
@@ -3201,6 +3229,9 @@ msgstr "git bundle list-heads <Datei> [<Referenzname>...]"
 msgid "git bundle unbundle [--progress] <file> [<refname>...]"
 msgstr "git bundle unbundle [--progress] <Datei> [<Referenzname>...]"
 
+msgid "need a <file> argument"
+msgstr "<Datei> Argument benötigt"
+
 msgid "do not show progress meter"
 msgstr "keine Fortschrittsanzeige anzeigen"
 
@@ -3253,10 +3284,6 @@ msgstr "%s benötigt Argumente"
 #, c-format
 msgid "%s takes no arguments"
 msgstr "%s braucht kein Argument"
-
-#, c-format
-msgid "unknown command: '%s'"
-msgstr "unbekannter Befehl: '%s'"
 
 msgid "only one batch option may be specified"
 msgstr "Nur eine Batch-Option erlaubt."
@@ -3396,11 +3423,18 @@ msgstr "<Objekt> benötigt mit '-%c'"
 msgid "only two arguments allowed in <type> <object> mode, not %d"
 msgstr "nur zwei Argumente im <Typ> <Objekt> Modus erlaubt, nicht %d"
 
-msgid "git check-attr [-a | --all | <attr>...] [--] <pathname>..."
-msgstr "git check-attr [-a | --all | <Attribut>...] [--] <Pfadname>..."
+msgid ""
+"git check-attr [--source <tree-ish>] [-a | --all | <attr>...] [--] "
+"<pathname>..."
+msgstr ""
+"git check-attr [--source <Commit-Referenz>] [-a | --all | <Attribut>...] "
+"[--] <Pfadname>..."
 
-msgid "git check-attr --stdin [-z] [-a | --all | <attr>...]"
-msgstr "git check-attr --stdin [-z] [-a | --all | <Attribut>...]"
+msgid ""
+"git check-attr --stdin [-z] [--source <tree-ish>] [-a | --all | <attr>...]"
+msgstr ""
+"git check-attr --stdin [-z] [--source <Commit-Referenz>] [-a | --all | "
+"<Attribut>...]"
 
 msgid "report all attributes set on file"
 msgstr "alle Attribute einer Datei ausgeben"
@@ -3413,6 +3447,12 @@ msgstr "Dateinamen von der Standard-Eingabe lesen"
 
 msgid "terminate input and output records by a NUL character"
 msgstr "Einträge von Ein- und Ausgabe mit NUL-Zeichen abschließen"
+
+msgid "<tree-ish>"
+msgstr "<Commit-Referenz>"
+
+msgid "which tree-ish to check attributes at"
+msgstr "in welchem Commit die Attribute zu prüfen sind"
 
 msgid "suppress progress reporting"
 msgstr "Fortschrittsanzeige unterdrücken"
@@ -4006,7 +4046,7 @@ msgstr ""
 "*          - alle Elemente auswählen\n"
 "           - (leer) Auswahl beenden\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Huh (%s)?\n"
 msgstr "Wie bitte (%s)?\n"
 
@@ -4155,9 +4195,6 @@ msgstr "Tiefe"
 msgid "create a shallow clone of that depth"
 msgstr ""
 "einen Klon mit unvollständiger Historie (shallow) in dieser Tiefe erstellen"
-
-msgid "time"
-msgstr "Zeit"
 
 msgid "create a shallow clone since a specific time"
 msgstr ""
@@ -4409,6 +4446,9 @@ msgstr "konnte das Repository nicht initialisieren, überspringe Bundle-URI"
 #, c-format
 msgid "failed to fetch objects from bundle URI '%s'"
 msgstr "Objekte aus Bundle-URI '%s' konnten nicht abgerufen werden"
+
+msgid "failed to fetch advertised bundles"
+msgstr "angekündigte Bundles konnten nicht abgerufen werden"
 
 msgid "remote transport reported error"
 msgstr "Remoteübertragung meldete Fehler"
@@ -5675,29 +5715,6 @@ msgstr "kein <Tool> für --tool=<Tool> angegeben"
 msgid "no <cmd> given for --extcmd=<cmd>"
 msgstr "kein <Programm> für --extcmd=<Programm> angegeben"
 
-msgid "git env--helper --type=[bool|ulong] <options> <env-var>"
-msgstr "git env--helper --type=[bool|ulong] <Optionen> <Umgebungsvariable>"
-
-msgid "default for git_env_*(...) to fall back on"
-msgstr "Standard für git_env_*(...), um darauf zurückzugreifen"
-
-msgid "be quiet only use git_env_*() value as exit code"
-msgstr "Ausgaben unterdrücken; nur git_env_*() Werte als Exit-Code verwenden"
-
-#, c-format
-msgid "option `--default' expects a boolean value with `--type=bool`, not `%s`"
-msgstr ""
-"Option `--default' erwartet einen booleschen Wert bei `--type=bool`, nicht "
-"`%s`"
-
-#, c-format
-msgid ""
-"option `--default' expects an unsigned long value with `--type=ulong`, not "
-"`%s`"
-msgstr ""
-"Option `--default' erwartet einen vorzeichenlosen Long-Wert bei `--"
-"type=ulong`, nicht `%s`"
-
 msgid "git fast-export [<rev-list-opts>]"
 msgstr "git fast-export [<rev-list-opts>]"
 
@@ -6110,6 +6127,10 @@ msgid "--unshallow on a complete repository does not make sense"
 msgstr ""
 "--unshallow kann nicht in einem Repository mit vollständiger Historie "
 "verwendet werden"
+
+#, c-format
+msgid "failed to fetch bundles from '%s'"
+msgstr "Bundles aus '%s' konnten nicht abgerufen werden"
 
 msgid "fetch --all does not take a repository argument"
 msgstr "fetch --all akzeptiert kein Repository als Argument"
@@ -6812,6 +6833,7 @@ msgstr "grep: Fehler beim Erzeugen eines Thread: %s"
 msgid "invalid number of threads specified (%d) for %s"
 msgstr "ungültige Anzahl von Threads (%d) für %s angegeben"
 
+#. #-#-#-#-#  grep.c.po  #-#-#-#-#
 #. TRANSLATORS: %s is the configuration
 #. variable for tweaking threads, currently
 #. grep.threads
@@ -7156,11 +7178,18 @@ msgstr "Verwendung: %s%s"
 msgid "'git help config' for more information"
 msgstr "'git help config' für weitere Informationen"
 
-msgid "git hook run [--ignore-missing] <hook-name> [-- <hook-args>]"
-msgstr "git hook run [--ignore-missing] <Hook-Name> [-- <Hook-Argumente>]"
+msgid ""
+"git hook run [--ignore-missing] [--to-stdin=<path>] <hook-name> [-- <hook-"
+"args>]"
+msgstr ""
+"git hook run [--ignore-missing] [--to-stdin=<Pfad>] <Hook-Name> [-- <Hook-"
+"Argumente>]"
 
 msgid "silently ignore missing requested <hook-name>"
 msgstr "fehlende Anforderung <Hook-Name> stillschweigend ignorieren"
+
+msgid "file to read into hooks' stdin"
+msgstr "Datei zum Einlesen in das Hook-stdin"
 
 #, c-format
 msgid "object type mismatch at %s"
@@ -7999,11 +8028,11 @@ msgstr ""
 msgid ""
 "git ls-remote [--heads] [--tags] [--refs] [--upload-pack=<exec>]\n"
 "              [-q | --quiet] [--exit-code] [--get-url] [--sort=<key>]\n"
-"              [--symref] [<repository> [<refs>...]]"
+"              [--symref] [<repository> [<patterns>...]]"
 msgstr ""
 "git ls-remote [--heads] [--tags] [--refs] [--upload-pack=<Programm>]\n"
 "              [-q | --quiet] [--exit-code] [--get-url] [--sort=<Schlüssel>]\n"
-"              [--symref] [<Repository> [<Referenzen>...]]"
+"              [--symref] [<Repository> [<Muster>...]]"
 
 msgid "do not print remote URL"
 msgstr "URL des Remote-Repositories nicht ausgeben"
@@ -8253,8 +8282,14 @@ msgstr "erlaube das Zusammenführen von nicht zusammenhängenden Historien"
 msgid "perform multiple merges, one per line of input"
 msgstr "mehrere Merges durchführen, eine pro Eingabezeile"
 
+msgid "specify a merge-base for the merge"
+msgstr "Merge-Basis für den Merge angeben"
+
 msgid "--trivial-merge is incompatible with all other options"
 msgstr "--trivial-merge ist mit allen anderen Optionen inkompatibel"
+
+msgid "--merge-base is incompatible with --stdin"
+msgstr "--merge-base ist inkompatibel mit --stdin"
 
 #, c-format
 msgid "malformed input line: '%s'."
@@ -10210,6 +10245,11 @@ msgstr ""
 msgid "could not switch to %s"
 msgstr "Konnte nicht zu %s wechseln."
 
+msgid "apply options and merge options cannot be used together"
+msgstr ""
+"Optionen für \"am\" und Optionen für \"merge\" können nicht gemeinsam "
+"verwendet werden"
+
 #, c-format
 msgid ""
 "unrecognized empty type '%s'; valid values are \"drop\", \"keep\", and "
@@ -10450,10 +10490,19 @@ msgstr "Unbekannter Modus: %s"
 msgid "--strategy requires --merge or --interactive"
 msgstr "--strategy erfordert --merge oder --interactive"
 
-msgid "apply options and merge options cannot be used together"
+msgid ""
+"apply options are incompatible with rebase.autosquash.  Consider adding --no-"
+"autosquash"
 msgstr ""
-"Optionen für \"am\" und Optionen für \"merge\" können nicht gemeinsam "
-"verwendet werden"
+"apply-Optionen sind mit rebase.autosquash nicht kompatibel. Erwägen Sie das "
+"Hinzufügen von --no-autosquash"
+
+msgid ""
+"apply options are incompatible with rebase.updateRefs.  Consider adding --no-"
+"update-refs"
+msgstr ""
+"apply-Optionen sind nicht kompatibel mit rebase.updateRefs. Erwägen Sie das "
+"Hinzufügen von --no-update-refs"
 
 #, c-format
 msgid "Unknown rebase backend: %s"
@@ -13004,10 +13053,6 @@ msgstr "'%s' ist kein gültiger Submodul-Name"
 msgid "git submodule--helper <command>"
 msgstr "git submodule--helper <Befehl>"
 
-#, c-format
-msgid "%s doesn't support --super-prefix"
-msgstr "%s unterstützt kein --super-prefix"
-
 msgid "git symbolic-ref [-m <reason>] <name> <ref>"
 msgstr "git symbolic-ref [-m <Grund>] <Name> <Referenz>"
 
@@ -13779,6 +13824,10 @@ msgid "core.fsyncMethod = batch is unsupported on this platform"
 msgstr "core.fsyncMethod = batch wird auf dieser Plattform nicht unterstützt"
 
 #, c-format
+msgid "could not parse bundle list key %s with value '%s'"
+msgstr "Konnte Bundle-Listenschlüssel %s mit Wert '%s' nicht parsen."
+
+#, c-format
 msgid "bundle list at '%s' has no mode"
 msgstr "Paketliste bei '%s' hat keinen Modus"
 
@@ -13787,6 +13836,13 @@ msgstr "temporäre Datei kann nicht erstellt werden"
 
 msgid "insufficient capabilities"
 msgstr "unzureichende Fähigkeiten"
+
+#, c-format
+msgid "file downloaded from '%s' is not a bundle"
+msgstr "die von '%s' heruntergeladene Datei ist kein Bundle"
+
+msgid "failed to store maximum creation token"
+msgstr "das maximale Erstellungs-Token konnte nicht gespeichert werden"
 
 #, c-format
 msgid "unrecognized bundle mode from URI '%s'"
@@ -13803,6 +13859,13 @@ msgstr "Download des Bundles von URI '%s' fehlgeschlagen"
 #, c-format
 msgid "file at URI '%s' is not a bundle or bundle list"
 msgstr "Datei unter URI '%s' ist kein Paket oder keine Paketliste"
+
+#, c-format
+msgid "bundle-uri: unexpected argument: '%s'"
+msgstr "bundle-uri: unerwartetes Argument: '%s'"
+
+msgid "bundle-uri: expected flush after arguments"
+msgstr "bundle-uri: erwarteter Flush nach Argumenten"
 
 msgid "bundle-uri: got an empty line"
 msgstr "bundle-uri: erhielt eine leere Zeile"
@@ -13834,6 +13897,13 @@ msgstr "Dem Repository fehlen folgende vorausgesetzte Commits:"
 
 msgid "need a repository to verify a bundle"
 msgstr "um ein Paket zu überprüfen wird ein Repository benötigt"
+
+msgid ""
+"some prerequisite commits exist in the object store, but are not connected "
+"to the repository's history"
+msgstr ""
+"einige vorausgesetzte Commits sind im Objektspeicher vorhanden, aber sind "
+"nicht mit der Repository-Historie verbunden"
 
 #, c-format
 msgid "The bundle contains this ref:"
@@ -15287,14 +15357,21 @@ msgid "unknown object format '%s' specified by server"
 msgstr "unbekanntes Objekt-Format '%s' vom Server angegeben"
 
 #, c-format
+msgid "error on bundle-uri response line %d: %s"
+msgstr "Fehler in der bundle-uri-Antwortzeile %d: %s"
+
+msgid "expected flush after bundle-uri listing"
+msgstr "erwartete Flush nach Bundle-uri-Auflistung"
+
+msgid "expected response end packet after ref listing"
+msgstr "Antwort-Endpaket nach Auflistung der Referenzen erwartet"
+
+#, c-format
 msgid "invalid ls-refs response: %s"
 msgstr "ungültige ls-refs Antwort: %s"
 
 msgid "expected flush after ref listing"
 msgstr "Flush nach Auflistung der Referenzen erwartet"
-
-msgid "expected response end packet after ref listing"
-msgstr "Antwort-Endpaket nach Auflistung der Referenzen erwartet"
 
 #, c-format
 msgid "protocol '%s' is not supported"
@@ -16472,16 +16549,14 @@ msgid ""
 "           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--"
 "bare]\n"
 "           [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]\n"
-"           [--super-prefix=<path>] [--config-env=<name>=<envvar>]\n"
-"           <command> [<args>]"
+"           [--config-env=<name>=<envvar>] <command> [<args>]"
 msgstr ""
 "git [-v | --version] [-h | --help] [-C <Pfad>] [-c <Name>=<Wert>]\n"
 "           [--exec-path[=<Pfad>]] [--html-path] [--man-path] [--info-path]\n"
 "           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--"
 "bare]\n"
 "           [--git-dir=<Pfad>] [--work-tree=<Pfad>] [--namespace=<Name>]\n"
-"           [--super-prefix=<Pfad>] [--config-env=<Name>=<Variable>]\n"
-"           <Befehl> [<Argumente>]"
+"           [--config-env=<Name>=<Umgebungsvariable>] <Befehl> [<Argumente>]"
 
 msgid ""
 "'git help -a' and 'git help -g' list available subcommands and some\n"
@@ -16506,10 +16581,6 @@ msgstr "kein Verzeichnis für Option '%s' angegeben\n"
 #, c-format
 msgid "no namespace given for --namespace\n"
 msgstr "Kein Namespace für --namespace angegeben.\n"
-
-#, c-format
-msgid "no prefix given for --super-prefix\n"
-msgstr "Kein Präfix für --super-prefix angegeben.\n"
 
 #, c-format
 msgid "-c expects a configuration string\n"
@@ -16625,8 +16696,13 @@ msgstr ""
 msgid "gpg.ssh.defaultKeyCommand failed: %s %s"
 msgstr "gpg.ssh.defaultKeyCommand fehlgeschlagen: %s %s"
 
-msgid "gpg failed to sign the data"
-msgstr "gpg beim Signieren der Daten fehlgeschlagen"
+#, c-format
+msgid ""
+"gpg failed to sign the data:\n"
+"%s"
+msgstr ""
+"gpg konnte die Daten nicht signieren:\n"
+"%s"
 
 msgid "user.signingKey needs to be set for ssh signing"
 msgstr "user.signingKey muss für die SSH-Signatur gesetzt sein"
@@ -17206,7 +17282,7 @@ msgstr ""
 #. conflict in a submodule. The first argument is the submodule
 #. name, and the second argument is the abbreviated id of the
 #. commit that needs to be merged.  For example:
-#. - go to submodule (mysubmodule), and either merge commit abc1234"
+#.  - go to submodule (mysubmodule), and either merge commit abc1234"
 #.
 #, c-format
 msgid ""
@@ -17800,6 +17876,10 @@ msgid "garbage at end of loose object '%s'"
 msgstr "Nutzlose Daten am Ende von losem Objekt '%s'."
 
 #, c-format
+msgid "unable to open loose object %s"
+msgstr "loses Objekt %s kann nicht geöffnet werden"
+
+#, c-format
 msgid "unable to parse %s header"
 msgstr "Konnte %s Kopfbereich nicht parsen."
 
@@ -17815,16 +17895,12 @@ msgid "header for %s too long, exceeds %d bytes"
 msgstr "Header für %s zu lang, überschreitet %d Bytes"
 
 #, c-format
-msgid "failed to read object %s"
-msgstr "Konnte Objekt %s nicht lesen."
+msgid "loose object %s (stored in %s) is corrupt"
+msgstr "Loses Objekt %s (gespeichert in %s) ist beschädigt."
 
 #, c-format
 msgid "replacement %s not found for %s"
 msgstr "Ersetzung %s für %s nicht gefunden."
-
-#, c-format
-msgid "loose object %s (stored in %s) is corrupt"
-msgstr "Loses Objekt %s (gespeichert in %s) ist beschädigt."
 
 #, c-format
 msgid "packed object %s (stored in %s) is corrupt"
@@ -17837,9 +17913,6 @@ msgstr "Konnte Datei %s nicht schreiben."
 #, c-format
 msgid "unable to set permission to '%s'"
 msgstr "Konnte Zugriffsberechtigung auf '%s' nicht setzen."
-
-msgid "file write error"
-msgstr "Fehler beim Schreiben einer Datei."
 
 msgid "error when closing loose object file"
 msgstr "Fehler beim Schließen der Datei für lose Objekte."
@@ -17888,11 +17961,12 @@ msgstr "Verzeichnis %s kann nicht erstellt werden"
 msgid "cannot read object for %s"
 msgstr "Kann Objekt für %s nicht lesen."
 
-msgid "corrupt commit"
-msgstr "fehlerhafter Commit"
+#, c-format
+msgid "object fails fsck: %s"
+msgstr "fsck schlägt bei Objekt fehl: %s"
 
-msgid "corrupt tag"
-msgstr "fehlerhaftes Tag"
+msgid "refusing to create malformed object"
+msgstr "verweigere Erstellung eines ungültigen Objekts"
 
 #, c-format
 msgid "read error while indexing %s"
@@ -17949,7 +18023,7 @@ msgstr "%s [ungültiges Objekt]"
 #. TRANSLATORS: This is a line of ambiguous commit
 #. object output. E.g.:
 #. *
-#. "deadbeef commit 2021-01-01 - Some Commit Message"
+#.    "deadbeef commit 2021-01-01 - Some Commit Message"
 #.
 #, c-format
 msgid "%s commit %s - %s"
@@ -17958,7 +18032,7 @@ msgstr "%s Commit %s - %s"
 #. TRANSLATORS: This is a line of ambiguous
 #. tag object output. E.g.:
 #. *
-#. "deadbeef tag 2022-01-01 - Some Tag Message"
+#.    "deadbeef tag 2022-01-01 - Some Tag Message"
 #. *
 #. The second argument is the YYYY-MM-DD found
 #. in the tag.
@@ -17974,7 +18048,7 @@ msgstr "%s Tag %s - %s"
 #. tag object output where we couldn't parse
 #. the tag itself. E.g.:
 #. *
-#. "deadbeef [bad tag, could not parse it]"
+#.    "deadbeef [bad tag, could not parse it]"
 #.
 #, c-format
 msgid "%s [bad tag, could not parse it]"
@@ -18159,10 +18233,6 @@ msgstr "ungültiger XOR-Offset im Bitmap-Pack-Index"
 
 msgid "cannot fstat bitmap file"
 msgstr "kann Bitmap-Datei nicht lesen"
-
-#, c-format
-msgid "ignoring extra bitmap file: '%s'"
-msgstr "ignoriere zusätzliche Bitmap-Datei: '%s'"
 
 msgid "checksum doesn't match in MIDX and bitmap"
 msgstr "Prüfsumme stimmt in MIDX und Bitmap nicht überein"
@@ -18431,6 +18501,9 @@ msgstr "weniger Ausgaben"
 
 msgid "use <n> digits to display object names"
 msgstr "benutze <Anzahl> Ziffern zur Anzeige von Objektnamen"
+
+msgid "prefixed path to initial superproject"
+msgstr "vorangestellter Pfad zum ursprünglichen Superprojekt"
 
 msgid "how to strip spaces and #comments from message"
 msgstr ""
@@ -18939,6 +19012,14 @@ msgid "ahead %d, behind %d"
 msgstr "%d voraus, %d hinterher"
 
 #, c-format
+msgid "%%(%.*s) does not take arguments"
+msgstr "%%(%.*s) nimmt keine Argumente entgegen"
+
+#, c-format
+msgid "unrecognized %%(%.*s) argument: %s"
+msgstr "nicht erkanntes %%(%.*s) Argument: %s"
+
+#, c-format
 msgid "expected format: %%(color:<color>)"
 msgstr "Erwartetes Format: %%(color:<Farbe>)"
 
@@ -18953,22 +19034,6 @@ msgstr "Positiver Wert erwartet refname:lstrip=%s"
 #, c-format
 msgid "Integer value expected refname:rstrip=%s"
 msgstr "Positiver Wert erwartet refname:rstrip=%s"
-
-#, c-format
-msgid "unrecognized %%(%s) argument: %s"
-msgstr "nicht erkanntes %%(%s) Argument: %s"
-
-#, c-format
-msgid "%%(objecttype) does not take arguments"
-msgstr "%%(objecttype) akzeptiert keine Argumente"
-
-#, c-format
-msgid "%%(deltabase) does not take arguments"
-msgstr "%%(deltabase) akzeptiert keine Argumente"
-
-#, c-format
-msgid "%%(body) does not take arguments"
-msgstr "%%(body) akzeptiert keine Argumente"
 
 #, c-format
 msgid "expected %%(trailers:key=<value>)"
@@ -18987,10 +19052,6 @@ msgid "positive value expected '%s' in %%(%s)"
 msgstr "positiver Wert erwartet '%s' in %%(%s)"
 
 #, c-format
-msgid "unrecognized email option: %s"
-msgstr "nicht erkannte E-Mail Option: %s"
-
-#, c-format
 msgid "expected format: %%(align:<width>,<position>)"
 msgstr "erwartetes Format: %%(align:<Breite>,<Position>)"
 
@@ -19003,12 +19064,12 @@ msgid "unrecognized width:%s"
 msgstr "nicht erkannte Breite:%s"
 
 #, c-format
-msgid "positive width expected with the %%(align) atom"
-msgstr "Positive Breitenangabe für %%(align) erwartet"
+msgid "unrecognized %%(%s) argument: %s"
+msgstr "nicht erkanntes %%(%s) Argument: %s"
 
 #, c-format
-msgid "%%(rest) does not take arguments"
-msgstr "%%(rest) akzeptiert keine Argumente"
+msgid "positive width expected with the %%(align) atom"
+msgstr "Positive Breitenangabe für %%(align) erwartet"
 
 #, c-format
 msgid "malformed field name: %.*s"
@@ -20275,6 +20336,24 @@ msgid "git %s: failed to refresh the index"
 msgstr "git %s: Fehler beim Aktualisieren des Index"
 
 #, c-format
+msgid "'%s' is not a valid label"
+msgstr "'%s' ist keine gültige Beschriftung"
+
+#, c-format
+msgid "'%s' is not a valid refname"
+msgstr "'%s' ist kein gültiger Referenzname"
+
+#, c-format
+msgid "update-ref requires a fully qualified refname e.g. refs/heads/%s"
+msgstr ""
+"update-ref erfordert einen vollständig qualifizierten Referenznamen, z. B. "
+"refs/heads/%s"
+
+#, c-format
+msgid "invalid command '%.*s'"
+msgstr "ungültiger Befehl '%.*s'"
+
+#, c-format
 msgid "%s does not accept arguments: '%s'"
 msgstr "%s akzeptiert keine Argumente: '%s'"
 
@@ -21087,6 +21166,16 @@ msgstr "ls-tree mit unerwartetem Rückgabewert %d beendet"
 msgid "failed to lstat '%s'"
 msgstr "'lstat' für '%s' fehlgeschlagen"
 
+msgid "no remote configured to get bundle URIs from"
+msgstr "kein Remote-Repository zum Erhalten von Bundle-URIs konfiguriert"
+
+#, c-format
+msgid "remote '%s' has no configured URL"
+msgstr "Remote-Repository '%s' hat keine konfigurierte URL"
+
+msgid "could not get the bundle-uri list"
+msgstr "konnte die Bundle-uri-Liste nicht erhalten"
+
 msgid "test-tool cache-tree <options> (control|prime|update)"
 msgstr "test-tool cache-tree <Optionen> (control|prime|update)"
 
@@ -21441,6 +21530,12 @@ msgstr "Abbruch."
 
 msgid "failed to push all needed submodules"
 msgstr "Fehler beim Versand aller erforderlichen Submodule."
+
+msgid "bundle-uri operation not supported by protocol"
+msgstr "bundle-uri Operation wird vom Protokoll nicht unterstützt"
+
+msgid "could not retrieve server-advertised bundle-uri list"
+msgstr "konnte die vom Server angekündigte bundle-uri-Liste nicht abrufen"
 
 msgid "too-short tree object"
 msgstr "zu kurzes Tree-Objekt"
@@ -22229,13 +22324,22 @@ msgstr "Ignorierte Dateien"
 
 #, c-format
 msgid ""
-"It took %.2f seconds to enumerate untracked files. 'status -uno'\n"
-"may speed it up, but you have to be careful not to forget to add\n"
-"new files yourself (see 'git help status')."
+"It took %.2f seconds to enumerate untracked files,\n"
+"but the results were cached, and subsequent runs may be faster."
 msgstr ""
-"Es dauerte %.2f Sekunden die unversionierten Dateien zu bestimmen.\n"
-"'status -uno' könnte das beschleunigen, aber Sie müssen darauf achten,\n"
-"neue Dateien selbstständig hinzuzufügen (siehe 'git help status')."
+"Es dauerte %.2f Sekunden, um die unversionierten Dateien aufzuzählen,\n"
+"aber die Ergebnisse wurden zwischengespeichert, sodass spätere Durchläufe "
+"schneller sein können."
+
+#, c-format
+msgid "It took %.2f seconds to enumerate untracked files."
+msgstr ""
+"Es hat %.2f Sekunden gedauert, um die unversionierten Dateien aufzuzählen."
+
+msgid "See 'git help status' for information on how to improve this."
+msgstr ""
+"Siehe 'git help status' für Informationen darüber, wie man dies verbessern "
+"kann."
 
 #, c-format
 msgid "Untracked files not listed%s"
@@ -22394,289 +22498,6 @@ msgstr ""
 
 msgid "Unable to determine absolute path of git directory"
 msgstr "Konnte absoluten Pfad des Git-Verzeichnisses nicht bestimmen"
-
-#. TRANSLATORS: you can adjust this to align "git add -i" status menu
-#, perl-format
-msgid "%12s %12s %s"
-msgstr "%28s %25s %s"
-
-#, perl-format
-msgid "touched %d path\n"
-msgid_plural "touched %d paths\n"
-msgstr[0] "%d Pfad angefasst\n"
-msgstr[1] "%d Pfade angefasst\n"
-
-msgid ""
-"If the patch applies cleanly, the edited hunk will immediately be\n"
-"marked for staging."
-msgstr ""
-"Wenn der Patch sauber angewendet werden kann, wird der bearbeitete\n"
-"Patch-Block direkt zum Hinzufügen zur Staging-Area markiert."
-
-msgid ""
-"If the patch applies cleanly, the edited hunk will immediately be\n"
-"marked for stashing."
-msgstr ""
-"Wenn der Patch sauber angewendet werden kann, wird der bearbeitete\n"
-"Patch-Block direkt zum Hinzufügen zum Stash markiert."
-
-msgid ""
-"If the patch applies cleanly, the edited hunk will immediately be\n"
-"marked for unstaging."
-msgstr ""
-"Wenn der Patch sauber angewendet werden kann, wird der bearbeitete\n"
-"Patch-Block direkt zum Entfernen aus der Staging-Area markiert."
-
-msgid ""
-"If the patch applies cleanly, the edited hunk will immediately be\n"
-"marked for applying."
-msgstr ""
-"Wenn der Patch sauber angewendet werden kann, wird der bearbeitete\n"
-"Patch-Block direkt zum Anwenden markiert."
-
-msgid ""
-"If the patch applies cleanly, the edited hunk will immediately be\n"
-"marked for discarding."
-msgstr ""
-"Wenn der Patch sauber angewendet werden kann, wird der bearbeitete\n"
-"Patch-Block direkt zum Verwerfen markiert."
-
-#, perl-format
-msgid "failed to open hunk edit file for writing: %s"
-msgstr ""
-"Fehler beim Öffnen von Editier-Datei eines Patch-Blocks zum Schreiben: %s"
-
-#, perl-format
-msgid ""
-"---\n"
-"To remove '%s' lines, make them ' ' lines (context).\n"
-"To remove '%s' lines, delete them.\n"
-"Lines starting with %s will be removed.\n"
-msgstr ""
-"---\n"
-"Um '%s' Zeilen zu entfernen, machen Sie aus diesen ' ' Zeilen (Kontext).\n"
-"Um '%s' Zeilen zu entfernen, löschen Sie diese.\n"
-"Zeilen, die mit %s beginnen, werden entfernt.\n"
-
-#, perl-format
-msgid "failed to open hunk edit file for reading: %s"
-msgstr "Fehler beim Öffnen von Editier-Datei eines Patch-Blocks zum Lesen: %s"
-
-msgid ""
-"y - stage this hunk\n"
-"n - do not stage this hunk\n"
-"q - quit; do not stage this hunk or any of the remaining ones\n"
-"a - stage this hunk and all later hunks in the file\n"
-"d - do not stage this hunk or any of the later hunks in the file"
-msgstr ""
-"y - diesen Patch-Block zum Commit vormerken\n"
-"n - diesen Patch-Block nicht zum Commit vormerken\n"
-"q - Beenden; diesen oder alle verbleibenden Patch-Blöcke nicht zum Commit "
-"vormerken\n"
-"a - diesen und alle weiteren Patch-Blöcke dieser Datei zum Commit vormerken\n"
-"d - diesen oder alle weiteren Patch-Blöcke in dieser Datei nicht zum Commit "
-"vormerken"
-
-msgid ""
-"y - stash this hunk\n"
-"n - do not stash this hunk\n"
-"q - quit; do not stash this hunk or any of the remaining ones\n"
-"a - stash this hunk and all later hunks in the file\n"
-"d - do not stash this hunk or any of the later hunks in the file"
-msgstr ""
-"y - diesen Patch-Block stashen\n"
-"n - diesen Patch-Block nicht stashen\n"
-"q - Beenden; diesen oder alle verbleibenden Patch-Blöcke nicht stashen\n"
-"a - diesen und alle weiteren Patch-Blöcke dieser Datei stashen\n"
-"d - diesen oder alle weiteren Patch-Blöcke dieser Datei nicht stashen"
-
-msgid ""
-"y - unstage this hunk\n"
-"n - do not unstage this hunk\n"
-"q - quit; do not unstage this hunk or any of the remaining ones\n"
-"a - unstage this hunk and all later hunks in the file\n"
-"d - do not unstage this hunk or any of the later hunks in the file"
-msgstr ""
-"y - diesen Patch-Block unstashen\n"
-"n - diesen Patch-Block nicht unstashen\n"
-"q - Beenden; diesen oder alle verbleibenden Patch-Blöcke nicht unstashen\n"
-"a - diesen und alle weiteren Patch-Blöcke dieser Datei unstashen\n"
-"d - diesen oder alle weiteren Patch-Blöcke dieser Datei nicht unstashen"
-
-msgid ""
-"y - apply this hunk to index\n"
-"n - do not apply this hunk to index\n"
-"q - quit; do not apply this hunk or any of the remaining ones\n"
-"a - apply this hunk and all later hunks in the file\n"
-"d - do not apply this hunk or any of the later hunks in the file"
-msgstr ""
-"y - diesen Patch-Block auf den Index anwenden\n"
-"n - diesen Patch-Block nicht auf den Index anwenden\n"
-"q - Beenden; diesen oder alle verbleibenden Patch-Blöcke nicht auf den Index "
-"anwenden\n"
-"a - diesen und alle weiteren Patch-Blöcke dieser Datei auf den Index "
-"anwenden\n"
-"d - diesen oder alle weiteren Patch-Blöcke dieser Datei nicht auf den Index "
-"anwenden"
-
-msgid ""
-"y - discard this hunk from worktree\n"
-"n - do not discard this hunk from worktree\n"
-"q - quit; do not discard this hunk or any of the remaining ones\n"
-"a - discard this hunk and all later hunks in the file\n"
-"d - do not discard this hunk or any of the later hunks in the file"
-msgstr ""
-"y - diesen Patch-Block im Arbeitsverzeichnis verwerfen\n"
-"n - diesen Patch-Block im Arbeitsverzeichnis nicht verwerfen\n"
-"q - Beenden; diesen oder alle verbleibenden Patch-Blöcke nicht im "
-"Arbeitsverzeichnis verwerfen\n"
-"a - diesen und alle weiteren Patch-Blöcke dieser Datei im Arbeitsverzeichnis "
-"verwerfen\n"
-"d - diesen oder alle weiteren Patch-Blöcke dieser Datei nicht im "
-"Arbeitsverzeichnis verwerfen"
-
-msgid ""
-"y - discard this hunk from index and worktree\n"
-"n - do not discard this hunk from index and worktree\n"
-"q - quit; do not discard this hunk or any of the remaining ones\n"
-"a - discard this hunk and all later hunks in the file\n"
-"d - do not discard this hunk or any of the later hunks in the file"
-msgstr ""
-"y - diesen Patch-Block im Index und Arbeitsverzeichnis verwerfen\n"
-"n - diesen Patch-Block nicht im Index und Arbeitsverzeichnis verwerfen\n"
-"q - Beenden; diesen oder alle verbleibenden Patch-Blöcke nicht im Index und "
-"Arbeitsverzeichnis verwerfen\n"
-"a - diesen und alle weiteren Patch-Blöcke in der Datei verwerfen\n"
-"d - diesen oder alle weiteren Patch-Blöcke in der Datei nicht verwerfen"
-
-msgid ""
-"y - apply this hunk to index and worktree\n"
-"n - do not apply this hunk to index and worktree\n"
-"q - quit; do not apply this hunk or any of the remaining ones\n"
-"a - apply this hunk and all later hunks in the file\n"
-"d - do not apply this hunk or any of the later hunks in the file"
-msgstr ""
-"y - diesen Patch-Block im Index und auf Arbeitsverzeichnis anwenden\n"
-"n - diesen Patch-Block nicht im Index und auf Arbeitsverzeichnis anwenden\n"
-"q - Beenden; diesen oder alle verbleibenden Patch-Blöcke nicht anwenden\n"
-"a - diesen und alle weiteren Patch-Blöcke in der Datei anwenden\n"
-"d - diesen oder alle weiteren Patch-Blöcke in der Datei nicht anwenden"
-
-msgid ""
-"y - apply this hunk to worktree\n"
-"n - do not apply this hunk to worktree\n"
-"q - quit; do not apply this hunk or any of the remaining ones\n"
-"a - apply this hunk and all later hunks in the file\n"
-"d - do not apply this hunk or any of the later hunks in the file"
-msgstr ""
-"y - diesen Patch-Block auf das Arbeitsverzeichnis anwenden\n"
-"n - diesen Patch-Block nicht auf das Arbeitsverzeichnis anwenden\n"
-"q - Beenden; diesen und alle verbleibenden Patch-Blöcke nicht anwenden\n"
-"a - diesen und alle weiteren Patch-Blöcke in der Datei anwenden\n"
-"d - diesen und alle weiteren Patch-Blöcke in der Datei nicht anwenden"
-
-msgid ""
-"g - select a hunk to go to\n"
-"/ - search for a hunk matching the given regex\n"
-"j - leave this hunk undecided, see next undecided hunk\n"
-"J - leave this hunk undecided, see next hunk\n"
-"k - leave this hunk undecided, see previous undecided hunk\n"
-"K - leave this hunk undecided, see previous hunk\n"
-"s - split the current hunk into smaller hunks\n"
-"e - manually edit the current hunk\n"
-"? - print help\n"
-msgstr ""
-"g - Patch-Block zum Hinspringen auswählen\n"
-"/ - nach Patch-Block suchen, der gegebenem regulärem Ausdruck entspricht\n"
-"j - diesen Patch-Block unbestimmt lassen, nächsten unbestimmten Patch-Block "
-"anzeigen\n"
-"J - diesen Patch-Block unbestimmt lassen, nächsten Patch-Block anzeigen\n"
-"k - diesen Patch-Block unbestimmt lassen, vorherigen unbestimmten Patch-"
-"Block anzeigen\n"
-"K - diesen Patch-Block unbestimmt lassen, vorherigen Patch-Block anzeigen\n"
-"s - aktuellen Patch-Block in kleinere Patch-Blöcke aufteilen\n"
-"e - aktuellen Patch-Block manuell editieren\n"
-"? - Hilfe anzeigen\n"
-
-msgid "The selected hunks do not apply to the index!\n"
-msgstr ""
-"Die ausgewählten Patch-Blöcke können nicht auf den Index angewendet werden!\n"
-
-#, perl-format
-msgid "ignoring unmerged: %s\n"
-msgstr "ignoriere nicht zusammengeführte Datei: %s\n"
-
-msgid "No other hunks to goto\n"
-msgstr "Keine anderen Patch-Blöcke verbleibend\n"
-
-#, perl-format
-msgid "Invalid number: '%s'\n"
-msgstr "Ungültige Nummer: '%s'\n"
-
-#, perl-format
-msgid "Sorry, only %d hunk available.\n"
-msgid_plural "Sorry, only %d hunks available.\n"
-msgstr[0] "Entschuldigung, nur %d Patch-Block verfügbar.\n"
-msgstr[1] "Entschuldigung, nur %d Patch-Blöcke verfügbar.\n"
-
-msgid "No other hunks to search\n"
-msgstr "Keine anderen Patch-Blöcke zum Durchsuchen\n"
-
-#, perl-format
-msgid "Malformed search regexp %s: %s\n"
-msgstr "Fehlerhafter regulärer Ausdruck für Suche %s: %s\n"
-
-msgid "No hunk matches the given pattern\n"
-msgstr "Kein Patch-Block entspricht dem angegebenen Muster\n"
-
-msgid "No previous hunk\n"
-msgstr "Kein vorheriger Patch-Block\n"
-
-msgid "No next hunk\n"
-msgstr "Kein folgender Patch-Block\n"
-
-msgid "Sorry, cannot split this hunk\n"
-msgstr "Entschuldigung, kann diesen Patch-Block nicht aufteilen.\n"
-
-#, perl-format
-msgid "Split into %d hunk.\n"
-msgid_plural "Split into %d hunks.\n"
-msgstr[0] "In %d Patch-Block aufgeteilt.\n"
-msgstr[1] "In %d Patch-Blöcke aufgeteilt.\n"
-
-msgid "Sorry, cannot edit this hunk\n"
-msgstr "Entschuldigung, kann diesen Patch-Block nicht bearbeiten.\n"
-
-#. TRANSLATORS: please do not translate the command names
-#. 'status', 'update', 'revert', etc.
-msgid ""
-"status        - show paths with changes\n"
-"update        - add working tree state to the staged set of changes\n"
-"revert        - revert staged set of changes back to the HEAD version\n"
-"patch         - pick hunks and update selectively\n"
-"diff          - view diff between HEAD and index\n"
-"add untracked - add contents of untracked files to the staged set of "
-"changes\n"
-msgstr ""
-"status        - Pfade mit Änderungen anzeigen\n"
-"update        - Zustand des Arbeitsverzeichnisses den zum Commit "
-"vorgemerkten Änderungen hinzufügen\n"
-"revert        - zum Commit vorgemerkte Änderungen auf HEAD Version "
-"zurücksetzen\n"
-"patch         - Patch-Blöcke auswählen und selektiv aktualisieren\n"
-"diff          - Unterschiede zwischen HEAD und Index anzeigen\n"
-"add untracked - Inhalte von unversionierten Dateien zum Commit vormerken\n"
-
-msgid "missing --"
-msgstr "-- fehlt"
-
-#, perl-format
-msgid "unknown --patch mode: %s"
-msgstr "Unbekannter --patch Modus: %s"
-
-#, perl-format
-msgid "invalid argument %s, expecting --"
-msgstr "ungültiges Argument %s, erwarte --"
 
 msgid "local zone differs from GMT by a non-minute interval\n"
 msgstr ""
@@ -23016,3 +22837,377 @@ msgstr "Lasse %s mit Backup-Suffix '%s' aus.\n"
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "Wollen Sie %s wirklich versenden? [y|N]: "
+
+#~ msgid "git bisect--helper --bisect-state (bad|new) [<rev>]"
+#~ msgstr "git bisect--helper --bisect-state (bad|new) [<Commit>]"
+
+#~ msgid "won't bisect on cg-seek'ed tree"
+#~ msgstr ""
+#~ "binäre Suche auf einem durch 'cg-seek' geändertem Verzeichnis nicht "
+#~ "möglich"
+
+#~ msgid "--bisect-terms requires 0 or 1 argument"
+#~ msgstr "--bisect-terms benötigt 0 oder 1 Argument"
+
+#~ msgid "--bisect-next requires 0 arguments"
+#~ msgstr "--bisect-next benötigt 0 Argumente"
+
+#~ msgid "--bisect-log requires 0 arguments"
+#~ msgstr "--bisect-log benötigt 0 Argumente"
+
+#~ msgid "git env--helper --type=[bool|ulong] <options> <env-var>"
+#~ msgstr "git env--helper --type=[bool|ulong] <Optionen> <Umgebungsvariable>"
+
+#~ msgid "default for git_env_*(...) to fall back on"
+#~ msgstr "Standard für git_env_*(...), um darauf zurückzugreifen"
+
+#~ msgid "be quiet only use git_env_*() value as exit code"
+#~ msgstr ""
+#~ "Ausgaben unterdrücken; nur git_env_*() Werte als Exit-Code verwenden"
+
+#, c-format
+#~ msgid ""
+#~ "option `--default' expects a boolean value with `--type=bool`, not `%s`"
+#~ msgstr ""
+#~ "Option `--default' erwartet einen booleschen Wert bei `--type=bool`, "
+#~ "nicht `%s`"
+
+#, c-format
+#~ msgid ""
+#~ "option `--default' expects an unsigned long value with `--type=ulong`, "
+#~ "not `%s`"
+#~ msgstr ""
+#~ "Option `--default' erwartet einen vorzeichenlosen Long-Wert bei `--"
+#~ "type=ulong`, nicht `%s`"
+
+#, c-format
+#~ msgid "%s doesn't support --super-prefix"
+#~ msgstr "%s unterstützt kein --super-prefix"
+
+#, c-format
+#~ msgid "no prefix given for --super-prefix\n"
+#~ msgstr "Kein Präfix für --super-prefix angegeben.\n"
+
+#, c-format
+#~ msgid "failed to read object %s"
+#~ msgstr "Konnte Objekt %s nicht lesen."
+
+#~ msgid "file write error"
+#~ msgstr "Fehler beim Schreiben einer Datei."
+
+#~ msgid "corrupt commit"
+#~ msgstr "fehlerhafter Commit"
+
+#~ msgid "corrupt tag"
+#~ msgstr "fehlerhaftes Tag"
+
+#, c-format
+#~ msgid "%%(objecttype) does not take arguments"
+#~ msgstr "%%(objecttype) akzeptiert keine Argumente"
+
+#, c-format
+#~ msgid "%%(deltabase) does not take arguments"
+#~ msgstr "%%(deltabase) akzeptiert keine Argumente"
+
+#, c-format
+#~ msgid "%%(body) does not take arguments"
+#~ msgstr "%%(body) akzeptiert keine Argumente"
+
+#, c-format
+#~ msgid "unrecognized email option: %s"
+#~ msgstr "nicht erkannte E-Mail Option: %s"
+
+#, c-format
+#~ msgid ""
+#~ "It took %.2f seconds to enumerate untracked files. 'status -uno'\n"
+#~ "may speed it up, but you have to be careful not to forget to add\n"
+#~ "new files yourself (see 'git help status')."
+#~ msgstr ""
+#~ "Es dauerte %.2f Sekunden die unversionierten Dateien zu bestimmen.\n"
+#~ "'status -uno' könnte das beschleunigen, aber Sie müssen darauf achten,\n"
+#~ "neue Dateien selbstständig hinzuzufügen (siehe 'git help status')."
+
+#, perl-format
+#~ msgid "%12s %12s %s"
+#~ msgstr "%28s %25s %s"
+
+#, perl-format
+#~ msgid "touched %d path\n"
+#~ msgid_plural "touched %d paths\n"
+#~ msgstr[0] "%d Pfad angefasst\n"
+#~ msgstr[1] "%d Pfade angefasst\n"
+
+#~ msgid ""
+#~ "If the patch applies cleanly, the edited hunk will immediately be\n"
+#~ "marked for staging."
+#~ msgstr ""
+#~ "Wenn der Patch sauber angewendet werden kann, wird der bearbeitete\n"
+#~ "Patch-Block direkt zum Hinzufügen zur Staging-Area markiert."
+
+#~ msgid ""
+#~ "If the patch applies cleanly, the edited hunk will immediately be\n"
+#~ "marked for stashing."
+#~ msgstr ""
+#~ "Wenn der Patch sauber angewendet werden kann, wird der bearbeitete\n"
+#~ "Patch-Block direkt zum Hinzufügen zum Stash markiert."
+
+#~ msgid ""
+#~ "If the patch applies cleanly, the edited hunk will immediately be\n"
+#~ "marked for unstaging."
+#~ msgstr ""
+#~ "Wenn der Patch sauber angewendet werden kann, wird der bearbeitete\n"
+#~ "Patch-Block direkt zum Entfernen aus der Staging-Area markiert."
+
+#~ msgid ""
+#~ "If the patch applies cleanly, the edited hunk will immediately be\n"
+#~ "marked for applying."
+#~ msgstr ""
+#~ "Wenn der Patch sauber angewendet werden kann, wird der bearbeitete\n"
+#~ "Patch-Block direkt zum Anwenden markiert."
+
+#~ msgid ""
+#~ "If the patch applies cleanly, the edited hunk will immediately be\n"
+#~ "marked for discarding."
+#~ msgstr ""
+#~ "Wenn der Patch sauber angewendet werden kann, wird der bearbeitete\n"
+#~ "Patch-Block direkt zum Verwerfen markiert."
+
+#, perl-format
+#~ msgid "failed to open hunk edit file for writing: %s"
+#~ msgstr ""
+#~ "Fehler beim Öffnen von Editier-Datei eines Patch-Blocks zum Schreiben: %s"
+
+#, perl-format
+#~ msgid ""
+#~ "---\n"
+#~ "To remove '%s' lines, make them ' ' lines (context).\n"
+#~ "To remove '%s' lines, delete them.\n"
+#~ "Lines starting with %s will be removed.\n"
+#~ msgstr ""
+#~ "---\n"
+#~ "Um '%s' Zeilen zu entfernen, machen Sie aus diesen ' ' Zeilen (Kontext).\n"
+#~ "Um '%s' Zeilen zu entfernen, löschen Sie diese.\n"
+#~ "Zeilen, die mit %s beginnen, werden entfernt.\n"
+
+#, perl-format
+#~ msgid "failed to open hunk edit file for reading: %s"
+#~ msgstr ""
+#~ "Fehler beim Öffnen von Editier-Datei eines Patch-Blocks zum Lesen: %s"
+
+#~ msgid ""
+#~ "y - stage this hunk\n"
+#~ "n - do not stage this hunk\n"
+#~ "q - quit; do not stage this hunk or any of the remaining ones\n"
+#~ "a - stage this hunk and all later hunks in the file\n"
+#~ "d - do not stage this hunk or any of the later hunks in the file"
+#~ msgstr ""
+#~ "y - diesen Patch-Block zum Commit vormerken\n"
+#~ "n - diesen Patch-Block nicht zum Commit vormerken\n"
+#~ "q - Beenden; diesen oder alle verbleibenden Patch-Blöcke nicht zum Commit "
+#~ "vormerken\n"
+#~ "a - diesen und alle weiteren Patch-Blöcke dieser Datei zum Commit "
+#~ "vormerken\n"
+#~ "d - diesen oder alle weiteren Patch-Blöcke in dieser Datei nicht zum "
+#~ "Commit vormerken"
+
+#~ msgid ""
+#~ "y - stash this hunk\n"
+#~ "n - do not stash this hunk\n"
+#~ "q - quit; do not stash this hunk or any of the remaining ones\n"
+#~ "a - stash this hunk and all later hunks in the file\n"
+#~ "d - do not stash this hunk or any of the later hunks in the file"
+#~ msgstr ""
+#~ "y - diesen Patch-Block stashen\n"
+#~ "n - diesen Patch-Block nicht stashen\n"
+#~ "q - Beenden; diesen oder alle verbleibenden Patch-Blöcke nicht stashen\n"
+#~ "a - diesen und alle weiteren Patch-Blöcke dieser Datei stashen\n"
+#~ "d - diesen oder alle weiteren Patch-Blöcke dieser Datei nicht stashen"
+
+#~ msgid ""
+#~ "y - unstage this hunk\n"
+#~ "n - do not unstage this hunk\n"
+#~ "q - quit; do not unstage this hunk or any of the remaining ones\n"
+#~ "a - unstage this hunk and all later hunks in the file\n"
+#~ "d - do not unstage this hunk or any of the later hunks in the file"
+#~ msgstr ""
+#~ "y - diesen Patch-Block unstashen\n"
+#~ "n - diesen Patch-Block nicht unstashen\n"
+#~ "q - Beenden; diesen oder alle verbleibenden Patch-Blöcke nicht unstashen\n"
+#~ "a - diesen und alle weiteren Patch-Blöcke dieser Datei unstashen\n"
+#~ "d - diesen oder alle weiteren Patch-Blöcke dieser Datei nicht unstashen"
+
+#~ msgid ""
+#~ "y - apply this hunk to index\n"
+#~ "n - do not apply this hunk to index\n"
+#~ "q - quit; do not apply this hunk or any of the remaining ones\n"
+#~ "a - apply this hunk and all later hunks in the file\n"
+#~ "d - do not apply this hunk or any of the later hunks in the file"
+#~ msgstr ""
+#~ "y - diesen Patch-Block auf den Index anwenden\n"
+#~ "n - diesen Patch-Block nicht auf den Index anwenden\n"
+#~ "q - Beenden; diesen oder alle verbleibenden Patch-Blöcke nicht auf den "
+#~ "Index anwenden\n"
+#~ "a - diesen und alle weiteren Patch-Blöcke dieser Datei auf den Index "
+#~ "anwenden\n"
+#~ "d - diesen oder alle weiteren Patch-Blöcke dieser Datei nicht auf den "
+#~ "Index anwenden"
+
+#~ msgid ""
+#~ "y - discard this hunk from worktree\n"
+#~ "n - do not discard this hunk from worktree\n"
+#~ "q - quit; do not discard this hunk or any of the remaining ones\n"
+#~ "a - discard this hunk and all later hunks in the file\n"
+#~ "d - do not discard this hunk or any of the later hunks in the file"
+#~ msgstr ""
+#~ "y - diesen Patch-Block im Arbeitsverzeichnis verwerfen\n"
+#~ "n - diesen Patch-Block im Arbeitsverzeichnis nicht verwerfen\n"
+#~ "q - Beenden; diesen oder alle verbleibenden Patch-Blöcke nicht im "
+#~ "Arbeitsverzeichnis verwerfen\n"
+#~ "a - diesen und alle weiteren Patch-Blöcke dieser Datei im "
+#~ "Arbeitsverzeichnis verwerfen\n"
+#~ "d - diesen oder alle weiteren Patch-Blöcke dieser Datei nicht im "
+#~ "Arbeitsverzeichnis verwerfen"
+
+#~ msgid ""
+#~ "y - discard this hunk from index and worktree\n"
+#~ "n - do not discard this hunk from index and worktree\n"
+#~ "q - quit; do not discard this hunk or any of the remaining ones\n"
+#~ "a - discard this hunk and all later hunks in the file\n"
+#~ "d - do not discard this hunk or any of the later hunks in the file"
+#~ msgstr ""
+#~ "y - diesen Patch-Block im Index und Arbeitsverzeichnis verwerfen\n"
+#~ "n - diesen Patch-Block nicht im Index und Arbeitsverzeichnis verwerfen\n"
+#~ "q - Beenden; diesen oder alle verbleibenden Patch-Blöcke nicht im Index "
+#~ "und Arbeitsverzeichnis verwerfen\n"
+#~ "a - diesen und alle weiteren Patch-Blöcke in der Datei verwerfen\n"
+#~ "d - diesen oder alle weiteren Patch-Blöcke in der Datei nicht verwerfen"
+
+#~ msgid ""
+#~ "y - apply this hunk to index and worktree\n"
+#~ "n - do not apply this hunk to index and worktree\n"
+#~ "q - quit; do not apply this hunk or any of the remaining ones\n"
+#~ "a - apply this hunk and all later hunks in the file\n"
+#~ "d - do not apply this hunk or any of the later hunks in the file"
+#~ msgstr ""
+#~ "y - diesen Patch-Block im Index und auf Arbeitsverzeichnis anwenden\n"
+#~ "n - diesen Patch-Block nicht im Index und auf Arbeitsverzeichnis "
+#~ "anwenden\n"
+#~ "q - Beenden; diesen oder alle verbleibenden Patch-Blöcke nicht anwenden\n"
+#~ "a - diesen und alle weiteren Patch-Blöcke in der Datei anwenden\n"
+#~ "d - diesen oder alle weiteren Patch-Blöcke in der Datei nicht anwenden"
+
+#~ msgid ""
+#~ "y - apply this hunk to worktree\n"
+#~ "n - do not apply this hunk to worktree\n"
+#~ "q - quit; do not apply this hunk or any of the remaining ones\n"
+#~ "a - apply this hunk and all later hunks in the file\n"
+#~ "d - do not apply this hunk or any of the later hunks in the file"
+#~ msgstr ""
+#~ "y - diesen Patch-Block auf das Arbeitsverzeichnis anwenden\n"
+#~ "n - diesen Patch-Block nicht auf das Arbeitsverzeichnis anwenden\n"
+#~ "q - Beenden; diesen und alle verbleibenden Patch-Blöcke nicht anwenden\n"
+#~ "a - diesen und alle weiteren Patch-Blöcke in der Datei anwenden\n"
+#~ "d - diesen und alle weiteren Patch-Blöcke in der Datei nicht anwenden"
+
+#~ msgid ""
+#~ "g - select a hunk to go to\n"
+#~ "/ - search for a hunk matching the given regex\n"
+#~ "j - leave this hunk undecided, see next undecided hunk\n"
+#~ "J - leave this hunk undecided, see next hunk\n"
+#~ "k - leave this hunk undecided, see previous undecided hunk\n"
+#~ "K - leave this hunk undecided, see previous hunk\n"
+#~ "s - split the current hunk into smaller hunks\n"
+#~ "e - manually edit the current hunk\n"
+#~ "? - print help\n"
+#~ msgstr ""
+#~ "g - Patch-Block zum Hinspringen auswählen\n"
+#~ "/ - nach Patch-Block suchen, der gegebenem regulärem Ausdruck entspricht\n"
+#~ "j - diesen Patch-Block unbestimmt lassen, nächsten unbestimmten Patch-"
+#~ "Block anzeigen\n"
+#~ "J - diesen Patch-Block unbestimmt lassen, nächsten Patch-Block anzeigen\n"
+#~ "k - diesen Patch-Block unbestimmt lassen, vorherigen unbestimmten Patch-"
+#~ "Block anzeigen\n"
+#~ "K - diesen Patch-Block unbestimmt lassen, vorherigen Patch-Block "
+#~ "anzeigen\n"
+#~ "s - aktuellen Patch-Block in kleinere Patch-Blöcke aufteilen\n"
+#~ "e - aktuellen Patch-Block manuell editieren\n"
+#~ "? - Hilfe anzeigen\n"
+
+#~ msgid "The selected hunks do not apply to the index!\n"
+#~ msgstr ""
+#~ "Die ausgewählten Patch-Blöcke können nicht auf den Index angewendet "
+#~ "werden!\n"
+
+#, perl-format
+#~ msgid "ignoring unmerged: %s\n"
+#~ msgstr "ignoriere nicht zusammengeführte Datei: %s\n"
+
+#~ msgid "No other hunks to goto\n"
+#~ msgstr "Keine anderen Patch-Blöcke verbleibend\n"
+
+#, perl-format
+#~ msgid "Invalid number: '%s'\n"
+#~ msgstr "Ungültige Nummer: '%s'\n"
+
+#, perl-format
+#~ msgid "Sorry, only %d hunk available.\n"
+#~ msgid_plural "Sorry, only %d hunks available.\n"
+#~ msgstr[0] "Entschuldigung, nur %d Patch-Block verfügbar.\n"
+#~ msgstr[1] "Entschuldigung, nur %d Patch-Blöcke verfügbar.\n"
+
+#~ msgid "No other hunks to search\n"
+#~ msgstr "Keine anderen Patch-Blöcke zum Durchsuchen\n"
+
+#, perl-format
+#~ msgid "Malformed search regexp %s: %s\n"
+#~ msgstr "Fehlerhafter regulärer Ausdruck für Suche %s: %s\n"
+
+#~ msgid "No hunk matches the given pattern\n"
+#~ msgstr "Kein Patch-Block entspricht dem angegebenen Muster\n"
+
+#~ msgid "No previous hunk\n"
+#~ msgstr "Kein vorheriger Patch-Block\n"
+
+#~ msgid "No next hunk\n"
+#~ msgstr "Kein folgender Patch-Block\n"
+
+#~ msgid "Sorry, cannot split this hunk\n"
+#~ msgstr "Entschuldigung, kann diesen Patch-Block nicht aufteilen.\n"
+
+#, perl-format
+#~ msgid "Split into %d hunk.\n"
+#~ msgid_plural "Split into %d hunks.\n"
+#~ msgstr[0] "In %d Patch-Block aufgeteilt.\n"
+#~ msgstr[1] "In %d Patch-Blöcke aufgeteilt.\n"
+
+#~ msgid "Sorry, cannot edit this hunk\n"
+#~ msgstr "Entschuldigung, kann diesen Patch-Block nicht bearbeiten.\n"
+
+#~ msgid ""
+#~ "status        - show paths with changes\n"
+#~ "update        - add working tree state to the staged set of changes\n"
+#~ "revert        - revert staged set of changes back to the HEAD version\n"
+#~ "patch         - pick hunks and update selectively\n"
+#~ "diff          - view diff between HEAD and index\n"
+#~ "add untracked - add contents of untracked files to the staged set of "
+#~ "changes\n"
+#~ msgstr ""
+#~ "status        - Pfade mit Änderungen anzeigen\n"
+#~ "update        - Zustand des Arbeitsverzeichnisses den zum Commit "
+#~ "vorgemerkten Änderungen hinzufügen\n"
+#~ "revert        - zum Commit vorgemerkte Änderungen auf HEAD Version "
+#~ "zurücksetzen\n"
+#~ "patch         - Patch-Blöcke auswählen und selektiv aktualisieren\n"
+#~ "diff          - Unterschiede zwischen HEAD und Index anzeigen\n"
+#~ "add untracked - Inhalte von unversionierten Dateien zum Commit vormerken\n"
+
+#~ msgid "missing --"
+#~ msgstr "-- fehlt"
+
+#, perl-format
+#~ msgid "unknown --patch mode: %s"
+#~ msgstr "Unbekannter --patch Modus: %s"
+
+#, perl-format
+#~ msgid "invalid argument %s, expecting --"
+#~ msgstr "ungültiges Argument %s, erwarte --"

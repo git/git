@@ -1225,6 +1225,7 @@ extern const unsigned char tolower_trans_tbl[256];
 #undef isxdigit
 
 extern const unsigned char sane_ctype[256];
+extern const signed char hexval_table[256];
 #define GIT_SPACE 0x01
 #define GIT_DIGIT 0x02
 #define GIT_ALPHA 0x04
@@ -1284,6 +1285,25 @@ static inline int skip_iprefix(const char *str, const char *prefix,
 			return 1;
 		}
 	} while (tolower(*str++) == tolower(*prefix++));
+	return 0;
+}
+
+/*
+ * Like skip_prefix_mem, but compare case-insensitively. Note that the
+ * comparison is done via tolower(), so it is strictly ASCII (no multi-byte
+ * characters or locale-specific conversions).
+ */
+static inline int skip_iprefix_mem(const char *buf, size_t len,
+				   const char *prefix,
+				   const char **out, size_t *outlen)
+{
+	do {
+		if (!*prefix) {
+			*out = buf;
+			*outlen = len;
+			return 1;
+		}
+	} while (len-- > 0 && tolower(*buf++) == tolower(*prefix++));
 	return 0;
 }
 

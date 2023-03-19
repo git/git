@@ -9,6 +9,7 @@
 #include "cache.h"
 #include "config.h"
 #include "builtin.h"
+#include "hex.h"
 #include "refs.h"
 #include "object-store.h"
 #include "tag.h"
@@ -180,8 +181,6 @@ static const char tag_template_nocleanup[] =
 
 static int git_tag_config(const char *var, const char *value, void *cb)
 {
-	int status;
-
 	if (!strcmp(var, "tag.gpgsign")) {
 		config_sign_tag = git_config_bool(var, value);
 		return 0;
@@ -194,9 +193,6 @@ static int git_tag_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	status = git_gpg_config(var, value, cb);
-	if (status)
-		return status;
 	if (!strcmp(var, "tag.forcesignannotated")) {
 		force_sign_annotate = git_config_bool(var, value);
 		return 0;

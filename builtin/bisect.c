@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "cache.h"
+#include "hex.h"
 #include "parse-options.h"
 #include "bisect.h"
 #include "refs.h"

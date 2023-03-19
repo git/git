@@ -3,6 +3,7 @@
 #include "tree-walk.h"
 #include "xdiff-interface.h"
 #include "help.h"
+#include "hex.h"
 #include "commit.h"
 #include "commit-reach.h"
 #include "merge-ort.h"

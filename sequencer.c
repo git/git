@@ -1,5 +1,7 @@
 #include "cache.h"
+#include "alloc.h"
 #include "config.h"
+#include "hex.h"
 #include "lockfile.h"
 #include "dir.h"
 #include "object-store.h"
@@ -262,10 +264,6 @@ static int git_sequencer_config(const char *k, const char *v, void *cb)
 
 	if (opts->action == REPLAY_REVERT && !strcmp(k, "revert.reference"))
 		opts->commit_use_reference = git_config_bool(k, v);
-
-	status = git_gpg_config(k, v, NULL);
-	if (status)
-		return status;
 
 	return git_diff_basic_config(k, v, NULL);
 }

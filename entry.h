@@ -1,8 +1,10 @@
 #ifndef ENTRY_H
 #define ENTRY_H
 
-#include "cache.h"
 #include "convert.h"
+
+struct cache_entry;
+struct index_state;
 
 struct checkout {
 	struct index_state *istate;

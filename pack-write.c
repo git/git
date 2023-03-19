@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "hex.h"
 #include "pack.h"
 #include "csum-file.h"
 #include "remote.h"

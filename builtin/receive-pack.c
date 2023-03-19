@@ -1,6 +1,7 @@
 #include "builtin.h"
 #include "repository.h"
 #include "config.h"
+#include "hex.h"
 #include "lockfile.h"
 #include "pack.h"
 #include "refs.h"
@@ -133,10 +134,6 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 {
 	int status = parse_hide_refs_config(var, value, "receive", &hidden_refs);
 
-	if (status)
-		return status;
-
-	status = git_gpg_config(var, value, NULL);
 	if (status)
 		return status;
 

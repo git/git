@@ -4,6 +4,7 @@
  * Based on Adam Langley's adaptation of Dan Bernstein's public domain code
  * git clone https://github.com/agl/critbit.git
  */
+#include "git-compat-util.h"
 #include "cbtree.h"
 
 static struct cb_node *cb_node_of(const void *p)

@@ -1,5 +1,7 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
+#include "gettext.h"
+#include "hex.h"
 #include "utf8.h"
 #include "strbuf.h"
 #include "mailinfo.h"

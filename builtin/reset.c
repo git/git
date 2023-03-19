@@ -10,6 +10,7 @@
 #define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "config.h"
+#include "hex.h"
 #include "lockfile.h"
 #include "tag.h"
 #include "object.h"

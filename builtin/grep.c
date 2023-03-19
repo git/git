@@ -4,6 +4,8 @@
  * Copyright (c) 2006 Junio C Hamano
  */
 #include "cache.h"
+#include "alloc.h"
+#include "hex.h"
 #include "repository.h"
 #include "config.h"
 #include "blob.h"

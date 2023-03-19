@@ -1,11 +1,11 @@
 #ifndef PRETTY_H
 #define PRETTY_H
 
-#include "cache.h"
 #include "date.h"
 #include "string-list.h"
 
 struct commit;
+struct repository;
 struct strbuf;
 struct process_trailer_options;
 
@@ -152,6 +152,8 @@ int commit_format_is_empty(enum cmit_fmt);
 
 /* Make subject of commit message suitable for filename */
 void format_sanitized_subject(struct strbuf *sb, const char *msg, size_t len);
+
+int has_non_ascii(const char *text);
 
 /*
  * Set values of fields in "struct process_trailer_options"

@@ -4,6 +4,7 @@
 #include "blob.h"
 #include "diff.h"
 #include "diffcore.h"
+#include "hex.h"
 #include "quote.h"
 #include "xdiff-interface.h"
 #include "xdiff/xmacros.h"

@@ -1,4 +1,5 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "dir.h"
 #include "iterator.h"
 #include "dir-iterator.h"

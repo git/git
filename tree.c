@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "cache-tree.h"
+#include "hex.h"
 #include "tree.h"
 #include "object-store.h"
 #include "blob.h"

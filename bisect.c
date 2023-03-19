@@ -2,6 +2,7 @@
 #include "config.h"
 #include "commit.h"
 #include "diff.h"
+#include "hex.h"
 #include "revision.h"
 #include "refs.h"
 #include "list-objects.h"
