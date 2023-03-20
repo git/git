@@ -242,10 +242,10 @@ static struct stored_bitmap *store_bitmap(struct bitmap_index *index,
 	return stored;
 }
 
-static inline uint32_t read_be32(const unsigned char *buffer, size_t *pos)
+static inline uint32_t read_be32(struct bitmap_index *bitmap_git)
 {
-	uint32_t result = get_be32(buffer + *pos);
-	(*pos) += sizeof(result);
+	uint32_t result = get_be32(bitmap_git->map + bitmap_git->map_pos);
+	bitmap_git->map_pos += sizeof(result);
 	return result;
 }
 
@@ -280,7 +280,7 @@ static int load_bitmap_entries_v1(struct bitmap_index *index)
 		if (index->map_size - index->map_pos < 6)
 			return error(_("corrupt ewah bitmap: truncated header for entry %d"), i);
 
-		commit_idx_pos = read_be32(index->map, &index->map_pos);
+		commit_idx_pos = read_be32(index);
 		xor_offset = read_u8(index);
 		flags = read_u8(index);
 
