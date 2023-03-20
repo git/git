@@ -14,6 +14,10 @@
 
 typedef unsigned char uchar;
 
+/* Internal return values */
+#define WM_ABORT_ALL -1
+#define WM_ABORT_TO_STARSTAR -2
+
 /* What character marks an inverted character class? */
 #define NEGATE_CLASS	'!'
 #define NEGATE_CLASS2	'^'
@@ -278,5 +282,6 @@ static int dowild(const uchar *p, const uchar *text, unsigned int flags)
 /* Match the "pattern" against the "text" string. */
 int wildmatch(const char *pattern, const char *text, unsigned int flags)
 {
-	return dowild((const uchar*)pattern, (const uchar*)text, flags);
+	int res = dowild((const uchar*)pattern, (const uchar*)text, flags);
+	return res == WM_MATCH ? WM_MATCH : WM_NOMATCH;
 }
