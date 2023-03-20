@@ -83,12 +83,12 @@ static int dowild(const uchar *p, const uchar *text, unsigned int flags)
 			continue;
 		case '*':
 			if (*++p == '*') {
-				const uchar *prev_p = p - 2;
+				const uchar *prev_p = p;
 				while (*++p == '*') {}
 				if (!(flags & WM_PATHNAME))
 					/* without WM_PATHNAME, '*' == '**' */
 					match_slash = 1;
-				else if ((prev_p < pattern || *prev_p == '/') &&
+				else if ((prev_p - pattern < 2 || *(prev_p - 2) == '/') &&
 				    (*p == '\0' || *p == '/' ||
 				     (p[0] == '\\' && p[1] == '/'))) {
 					/*
