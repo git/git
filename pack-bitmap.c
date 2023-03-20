@@ -249,9 +249,9 @@ static inline uint32_t read_be32(const unsigned char *buffer, size_t *pos)
 	return result;
 }
 
-static inline uint8_t read_u8(const unsigned char *buffer, size_t *pos)
+static inline uint8_t read_u8(struct bitmap_index *bitmap_git)
 {
-	return buffer[(*pos)++];
+	return bitmap_git->map[bitmap_git->map_pos++];
 }
 
 #define MAX_XOR_OFFSET 160
@@ -281,8 +281,8 @@ static int load_bitmap_entries_v1(struct bitmap_index *index)
 			return error(_("corrupt ewah bitmap: truncated header for entry %d"), i);
 
 		commit_idx_pos = read_be32(index->map, &index->map_pos);
-		xor_offset = read_u8(index->map, &index->map_pos);
-		flags = read_u8(index->map, &index->map_pos);
+		xor_offset = read_u8(index);
+		flags = read_u8(index);
 
 		if (nth_bitmap_object_oid(index, &oid, commit_idx_pos) < 0)
 			return error(_("corrupt ewah bitmap: commit index %u out of range"),
@@ -778,7 +778,7 @@ static struct stored_bitmap *lazy_bitmap_for_commit(struct bitmap_index *bitmap_
 		}
 
 		bitmap_git->map_pos += sizeof(uint32_t) + sizeof(uint8_t);
-		xor_flags = read_u8(bitmap_git->map, &bitmap_git->map_pos);
+		xor_flags = read_u8(bitmap_git);
 		bitmap = read_bitmap_1(bitmap_git);
 
 		if (!bitmap)
@@ -819,7 +819,7 @@ static struct stored_bitmap *lazy_bitmap_for_commit(struct bitmap_index *bitmap_
 	 * ewah bitmap.
 	 */
 	bitmap_git->map_pos += sizeof(uint32_t) + sizeof(uint8_t);
-	flags = read_u8(bitmap_git->map, &bitmap_git->map_pos);
+	flags = read_u8(bitmap_git);
 	bitmap = read_bitmap_1(bitmap_git);
 
 	if (!bitmap)
