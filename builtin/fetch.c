@@ -887,9 +887,9 @@ static void format_display(struct display_state *display_state,
 
 	strbuf_addf(display_buffer, "%c %-*s ", code, width, summary);
 	if (!display_state->compact_format)
-		print_remote_to_local(display_state, display_buffer, remote, local);
+		print_remote_to_local(display_state, display_buffer, remote, prettify_refname(local));
 	else
-		print_compact(display_state, display_buffer, remote, local);
+		print_compact(display_state, display_buffer, remote, prettify_refname(local));
 	if (error)
 		strbuf_addf(display_buffer, "  (%s)", error);
 }
@@ -901,7 +901,6 @@ static int update_local_ref(struct ref *ref,
 			    struct strbuf *display, int summary_width)
 {
 	struct commit *current = NULL, *updated;
-	const char *pretty_ref = prettify_refname(ref->name);
 	int fast_forward = 0;
 
 	if (!repo_has_object_file(the_repository, &ref->new_oid))
@@ -910,7 +909,7 @@ static int update_local_ref(struct ref *ref,
 	if (oideq(&ref->old_oid, &ref->new_oid)) {
 		if (verbosity > 0)
 			format_display(display_state, display, '=', _("[up to date]"), NULL,
-				       remote, pretty_ref, summary_width);
+				       remote, ref->name, summary_width);
 		return 0;
 	}
 
@@ -923,7 +922,7 @@ static int update_local_ref(struct ref *ref,
 		 */
 		format_display(display_state, display, '!', _("[rejected]"),
 			       _("can't fetch into checked-out branch"),
-			       remote, pretty_ref, summary_width);
+			       remote, ref->name, summary_width);
 		return 1;
 	}
 
@@ -934,12 +933,12 @@ static int update_local_ref(struct ref *ref,
 			r = s_update_ref("updating tag", ref, transaction, 0);
 			format_display(display_state, display, r ? '!' : 't', _("[tag update]"),
 				       r ? _("unable to update local ref") : NULL,
-				       remote, pretty_ref, summary_width);
+				       remote, ref->name, summary_width);
 			return r;
 		} else {
 			format_display(display_state, display, '!', _("[rejected]"),
 				       _("would clobber existing tag"),
-				       remote, pretty_ref, summary_width);
+				       remote, ref->name, summary_width);
 			return 1;
 		}
 	}
@@ -972,7 +971,7 @@ static int update_local_ref(struct ref *ref,
 		r = s_update_ref(msg, ref, transaction, 0);
 		format_display(display_state, display, r ? '!' : '*', what,
 			       r ? _("unable to update local ref") : NULL,
-			       remote, pretty_ref, summary_width);
+			       remote, ref->name, summary_width);
 		return r;
 	}
 
@@ -994,7 +993,7 @@ static int update_local_ref(struct ref *ref,
 		r = s_update_ref("fast-forward", ref, transaction, 1);
 		format_display(display_state, display, r ? '!' : ' ', quickref.buf,
 			       r ? _("unable to update local ref") : NULL,
-			       remote, pretty_ref, summary_width);
+			       remote, ref->name, summary_width);
 		strbuf_release(&quickref);
 		return r;
 	} else if (force || ref->force) {
@@ -1006,12 +1005,12 @@ static int update_local_ref(struct ref *ref,
 		r = s_update_ref("forced-update", ref, transaction, 1);
 		format_display(display_state, display, r ? '!' : '+', quickref.buf,
 			       r ? _("unable to update local ref") : _("forced update"),
-			       remote, pretty_ref, summary_width);
+			       remote, ref->name, summary_width);
 		strbuf_release(&quickref);
 		return r;
 	} else {
 		format_display(display_state, display, '!', _("[rejected]"), _("non-fast-forward"),
-			       remote, pretty_ref, summary_width);
+			       remote, ref->name, summary_width);
 		return 1;
 	}
 }
@@ -1431,7 +1430,7 @@ static int prune_refs(struct display_state *display_state,
 				shown_url = 1;
 			}
 			format_display(display_state, &sb, '-', _("[deleted]"), NULL,
-				       _("(none)"), prettify_refname(ref->name),
+				       _("(none)"), ref->name,
 				       summary_width);
 			fprintf(stderr, " %s\n",sb.buf);
 			strbuf_release(&sb);
