@@ -242,14 +242,14 @@ static struct stored_bitmap *store_bitmap(struct bitmap_index *index,
 	return stored;
 }
 
-static inline uint32_t read_be32(struct bitmap_index *bitmap_git)
+static uint32_t read_be32(struct bitmap_index *bitmap_git)
 {
 	uint32_t result = get_be32(bitmap_git->map + bitmap_git->map_pos);
 	bitmap_git->map_pos += sizeof(result);
 	return result;
 }
 
-static inline uint8_t read_u8(struct bitmap_index *bitmap_git)
+static uint8_t read_u8(struct bitmap_index *bitmap_git)
 {
 	return bitmap_git->map[bitmap_git->map_pos++];
 }
