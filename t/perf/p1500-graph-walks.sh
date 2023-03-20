@@ -35,11 +35,16 @@ test_perf 'ahead-behind counts: git tag' '
 	xargs git tag -l --format="%(ahead-behind:HEAD)" <tags
 '
 
-test_perf 'ahead-behind counts: git rev-list' '
-	for r in $(cat refs)
-	do
-		git rev-list --count "HEAD..$r" || return 1
-	done
+test_perf 'contains: git for-each-ref --merged' '
+	git for-each-ref --merged=HEAD --stdin <refs
+'
+
+test_perf 'contains: git branch --merged' '
+	xargs git branch --merged=HEAD <branches
+'
+
+test_perf 'contains: git tag --merged' '
+	xargs git tag --merged=HEAD <tags
 '
 
 test_done

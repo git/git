@@ -529,4 +529,87 @@ test_expect_success 'for-each-ref ahead-behind:none' '
 		--format="%(refname) %(ahead-behind:commit-8-4)" --stdin
 '
 
+test_expect_success 'for-each-ref merged:linear' '
+	cat >input <<-\EOF &&
+	refs/heads/commit-1-1
+	refs/heads/commit-1-3
+	refs/heads/commit-1-5
+	refs/heads/commit-1-8
+	refs/heads/commit-2-1
+	refs/heads/commit-5-1
+	refs/heads/commit-9-1
+	EOF
+	cat >expect <<-\EOF &&
+	refs/heads/commit-1-1
+	refs/heads/commit-1-3
+	refs/heads/commit-1-5
+	refs/heads/commit-1-8
+	EOF
+	run_all_modes git for-each-ref --merged=commit-1-9 \
+		--format="%(refname)" --stdin
+'
+
+test_expect_success 'for-each-ref merged:all' '
+	cat >input <<-\EOF &&
+	refs/heads/commit-1-1
+	refs/heads/commit-2-4
+	refs/heads/commit-4-2
+	refs/heads/commit-4-4
+	EOF
+	cat >expect <<-\EOF &&
+	refs/heads/commit-1-1
+	refs/heads/commit-2-4
+	refs/heads/commit-4-2
+	refs/heads/commit-4-4
+	EOF
+	run_all_modes git for-each-ref --merged=commit-5-5 \
+		--format="%(refname)" --stdin
+'
+
+test_expect_success 'for-each-ref ahead-behind:some' '
+	cat >input <<-\EOF &&
+	refs/heads/commit-1-1
+	refs/heads/commit-5-3
+	refs/heads/commit-4-8
+	refs/heads/commit-9-9
+	EOF
+	cat >expect <<-\EOF &&
+	refs/heads/commit-1-1
+	refs/heads/commit-5-3
+	EOF
+	run_all_modes git for-each-ref --merged=commit-9-6 \
+		--format="%(refname)" --stdin
+'
+
+test_expect_success 'for-each-ref merged:some, multibase' '
+	cat >input <<-\EOF &&
+	refs/heads/commit-1-1
+	refs/heads/commit-5-3
+	refs/heads/commit-7-8
+	refs/heads/commit-4-8
+	refs/heads/commit-9-9
+	EOF
+	cat >expect <<-\EOF &&
+	refs/heads/commit-1-1
+	refs/heads/commit-4-8
+	refs/heads/commit-5-3
+	EOF
+	run_all_modes git for-each-ref \
+		--merged=commit-5-8 \
+		--merged=commit-8-5 \
+		--format="%(refname)" \
+		--stdin
+'
+
+test_expect_success 'for-each-ref merged:none' '
+	cat >input <<-\EOF &&
+	refs/heads/commit-7-5
+	refs/heads/commit-4-8
+	refs/heads/commit-9-9
+	EOF
+	>expect &&
+	run_all_modes git for-each-ref --merged=commit-8-4 \
+		--format="%(refname)" --stdin
+'
+
 test_done
