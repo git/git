@@ -885,13 +885,14 @@ static void format_display(struct display_state *display_state,
 
 	width = (summary_width + strlen(summary) - gettext_width(summary));
 
-	strbuf_addf(display_buffer, "%c %-*s ", code, width, summary);
+	strbuf_addf(display_buffer, " %c %-*s ", code, width, summary);
 	if (!display_state->compact_format)
 		print_remote_to_local(display_state, display_buffer, remote, prettify_refname(local));
 	else
 		print_compact(display_state, display_buffer, remote, prettify_refname(local));
 	if (error)
 		strbuf_addf(display_buffer, "  (%s)", error);
+	strbuf_addch(display_buffer, '\n');
 }
 
 static int update_local_ref(struct ref *ref,
@@ -1271,7 +1272,7 @@ static int store_updated_refs(struct display_state *display_state,
 							url_len, url);
 					shown_url = 1;
 				}
-				fprintf(stderr, " %s\n", note.buf);
+				fputs(note.buf, stderr);
 			}
 		}
 	}
@@ -1432,7 +1433,7 @@ static int prune_refs(struct display_state *display_state,
 			format_display(display_state, &sb, '-', _("[deleted]"), NULL,
 				       _("(none)"), ref->name,
 				       summary_width);
-			fprintf(stderr, " %s\n",sb.buf);
+			fputs(sb.buf, stderr);
 			strbuf_release(&sb);
 			warn_dangling_symref(stderr, dangling_msg, ref->name);
 		}
