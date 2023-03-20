@@ -114,7 +114,7 @@ static int dowild(const uchar *p, const uchar *text, unsigned int flags)
 				 * only if there are no more slash characters. */
 				if (!match_slash) {
 					if (strchr((char *)text, '/'))
-						return WM_NOMATCH;
+						return WM_ABORT_TO_STARSTAR;
 				}
 				return WM_MATCH;
 			} else if (!match_slash && *p == '/') {
@@ -125,7 +125,7 @@ static int dowild(const uchar *p, const uchar *text, unsigned int flags)
 				 */
 				const char *slash = strchr((char*)text, '/');
 				if (!slash)
-					return WM_NOMATCH;
+					return WM_ABORT_ALL;
 				text = (const uchar*)slash;
 				/* the slash is consumed by the top-level for loop */
 				break;
@@ -153,8 +153,12 @@ static int dowild(const uchar *p, const uchar *text, unsigned int flags)
 							break;
 						text++;
 					}
-					if (t_ch != p_ch)
-						return WM_NOMATCH;
+					if (t_ch != p_ch) {
+						if (match_slash)
+							return WM_ABORT_ALL;
+						else
+							return WM_ABORT_TO_STARSTAR;
+					}
 				}
 				if ((matched = dowild(p, text, flags)) != WM_NOMATCH) {
 					if (!match_slash || matched != WM_ABORT_TO_STARSTAR)

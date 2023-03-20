@@ -431,4 +431,13 @@ match 1 1 1 1 'a' '[B-a]'
 match 0 1 0 1 'z' '[Z-y]'
 match 1 1 1 1 'Z' '[Z-y]'
 
+test_expect_success 'matching does not exhibit exponential behavior' '
+	test-tool wildmatch wildmatch \
+		aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab \
+		"*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a" &
+	pid=$! &&
+	sleep 2 &&
+	! kill $!
+'
+
 test_done
