@@ -6,6 +6,7 @@
 #include "parse-options.h"
 #include "ref-filter.h"
 #include "strvec.h"
+#include "commit-reach.h"
 
 static char const * const for_each_ref_usage[] = {
 	N_("git for-each-ref [<options>] [<pattern>]"),
@@ -98,6 +99,8 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 
 	filter.match_as_path = 1;
 	filter_refs(&array, &filter, FILTER_REFS_ALL);
+	filter_ahead_behind(the_repository, &format, &array);
+
 	ref_array_sort(sorting, &array);
 
 	if (!maxcount || array.nr < maxcount)

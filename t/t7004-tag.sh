@@ -792,6 +792,34 @@ test_expect_success 'annotations for blobs are empty' '
 	test_cmp expect actual
 '
 
+# Run this before doing any signing, so the test has the same results
+# regardless of the GPG prereq.
+test_expect_success 'git tag --format with ahead-behind' '
+	test_when_finished git reset --hard tag-one-line &&
+	git commit --allow-empty -m "left" &&
+	git tag -a -m left tag-left &&
+	git reset --hard HEAD~1 &&
+	git commit --allow-empty -m "right" &&
+	git tag -a -m left tag-right &&
+
+	# Use " !" at the end to demonstrate whitespace
+	# around empty ahead-behind token for tag-blob.
+	cat >expect <<-EOF &&
+	refs/tags/tag-blob  !
+	refs/tags/tag-left 1 1 !
+	refs/tags/tag-lines 0 1 !
+	refs/tags/tag-one-line 0 1 !
+	refs/tags/tag-right 0 0 !
+	refs/tags/tag-zero-lines 0 1 !
+	EOF
+	git tag -l --format="%(refname) %(ahead-behind:HEAD) !" >actual 2>err &&
+	grep "refs/tags/tag" actual >actual.focus &&
+	test_cmp expect actual.focus &&
+
+	# Error reported for tags that point to non-commits.
+	grep "error: object [0-9a-f]* is a blob, not a commit" err
+'
+
 # trying to verify annotated non-signed tags:
 
 test_expect_success GPG \

@@ -222,6 +222,11 @@ worktreepath::
 	out, if it is checked out in any linked worktree. Empty string
 	otherwise.
 
+ahead-behind:<committish>::
+	Two integers, separated by a space, demonstrating the number of
+	commits ahead and behind, respectively, when comparing the output
+	ref to the `<committish>` specified in the format.
+
 In addition to the above, for commit and tag objects, the header
 field names (`tree`, `parent`, `object`, `type`, and `tag`) can
 be used to specify the value in the header field.
