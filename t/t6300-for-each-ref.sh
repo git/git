@@ -1501,4 +1501,17 @@ test_expect_success 'git for-each-ref --stdin: matches' '
 	test_cmp expect actual
 '
 
+test_expect_success 'git for-each-ref with non-existing refs' '
+	cat >in <<-EOF &&
+	refs/heads/this-ref-does-not-exist
+	refs/tags/bogus
+	EOF
+
+	git for-each-ref --format="%(refname)" --stdin <in >actual &&
+	test_must_be_empty actual &&
+
+	xargs git for-each-ref --format="%(refname)" <in >actual &&
+	test_must_be_empty actual
+'
+
 test_done
