@@ -6,7 +6,7 @@
  * This handles basic git object files - packing, unpacking,
  * creation etc.
  */
-#include "git-compat-util.h"
+#include "cache.h"
 #include "abspath.h"
 #include "alloc.h"
 #include "config.h"

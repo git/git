@@ -1,7 +1,6 @@
 #ifndef CSUM_FILE_H
 #define CSUM_FILE_H
 
-#include "cache.h"
 #include "hash.h"
 #include "write-or-die.h"
 

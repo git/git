@@ -3,6 +3,7 @@
 #include "chunk-format.h"
 #include "csum-file.h"
 #include "gettext.h"
+#include "trace2.h"
 
 /*
  * When writing a chunk-based file format, collect the chunks in

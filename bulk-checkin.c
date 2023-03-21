@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2011, Google Inc.
  */
-#include "git-compat-util.h"
+#include "cache.h"
 #include "alloc.h"
 #include "bulk-checkin.h"
 #include "environment.h"
