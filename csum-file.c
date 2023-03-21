@@ -7,7 +7,7 @@
  * files. Useful when you write a file that you want to be
  * able to verify hasn't been messed with afterwards.
  */
-#include "cache.h"
+#include "git-compat-util.h"
 #include "progress.h"
 #include "csum-file.h"
 #include "wrapper.h"
