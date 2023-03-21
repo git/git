@@ -1105,7 +1105,6 @@ enum sharedrepo {
 	PERM_EVERYBODY      = 0664
 };
 int git_config_perm(const char *var, const char *value);
-int adjust_shared_perm(const char *path);
 
 /*
  * Create the directory containing the named path, using care to be
@@ -1141,54 +1140,6 @@ enum scld_error safe_create_leading_directories_const(const char *path);
 enum scld_error safe_create_leading_directories_no_share(char *path);
 
 int mkdir_in_gitdir(const char *path);
-char *interpolate_path(const char *path, int real_home);
-const char *enter_repo(const char *path, int strict);
-const char *remove_leading_path(const char *in, const char *prefix);
-const char *relative_path(const char *in, const char *prefix, struct strbuf *sb);
-int normalize_path_copy_len(char *dst, const char *src, int *prefix_len);
-int normalize_path_copy(char *dst, const char *src);
-int longest_ancestor_length(const char *path, struct string_list *prefixes);
-char *strip_path_suffix(const char *path, const char *suffix);
-int daemon_avoid_alias(const char *path);
-
-/*
- * These functions match their is_hfs_dotgit() counterparts; see utf8.h for
- * details.
- */
-int is_ntfs_dotgit(const char *name);
-int is_ntfs_dotgitmodules(const char *name);
-int is_ntfs_dotgitignore(const char *name);
-int is_ntfs_dotgitattributes(const char *name);
-int is_ntfs_dotmailmap(const char *name);
-
-/*
- * Returns true iff "str" could be confused as a command-line option when
- * passed to a sub-program like "ssh". Note that this has nothing to do with
- * shell-quoting, which should be handled separately; we're assuming here that
- * the string makes it verbatim to the sub-program.
- */
-int looks_like_command_line_option(const char *str);
-
-/**
- * Return a newly allocated string with the evaluation of
- * "$XDG_CONFIG_HOME/$subdir/$filename" if $XDG_CONFIG_HOME is non-empty, otherwise
- * "$HOME/.config/$subdir/$filename". Return NULL upon error.
- */
-char *xdg_config_home_for(const char *subdir, const char *filename);
-
-/**
- * Return a newly allocated string with the evaluation of
- * "$XDG_CONFIG_HOME/git/$filename" if $XDG_CONFIG_HOME is non-empty, otherwise
- * "$HOME/.config/git/$filename". Return NULL upon error.
- */
-char *xdg_config_home(const char *filename);
-
-/**
- * Return a newly allocated string with the evaluation of
- * "$XDG_CACHE_HOME/git/$filename" if $XDG_CACHE_HOME is non-empty, otherwise
- * "$HOME/.cache/git/$filename". Return NULL upon error.
- */
-char *xdg_cache_home(const char *filename);
 
 int git_open_cloexec(const char *name, int flags);
 #define git_open(name) git_open_cloexec(name, O_RDONLY)
@@ -1354,8 +1305,6 @@ int repo_interpret_branch_name(struct repository *r,
 			       const struct interpret_branch_name_options *options);
 #define interpret_branch_name(str, len, buf, options) \
 	repo_interpret_branch_name(the_repository, str, len, buf, options)
-
-int validate_headref(const char *ref);
 
 int base_name_compare(const char *name1, size_t len1, int mode1,
 		      const char *name2, size_t len2, int mode2);
@@ -1615,14 +1564,6 @@ int stat_validity_check(struct stat_validity *sv, const char *path);
 void stat_validity_update(struct stat_validity *sv, int fd);
 
 int versioncmp(const char *s1, const char *s2);
-
-/*
- * Create a directory and (if share is nonzero) adjust its permissions
- * according to the shared_repository setting. Only use this for
- * directories under $GIT_DIR.  Don't use it for working tree
- * directories.
- */
-void safe_create_dir(const char *dir, int share);
 
 /*
  * Should we print an ellipsis after an abbreviated SHA-1 value
