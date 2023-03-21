@@ -1,7 +1,6 @@
 #include "test-tool.h"
 #include "parse-options.h"
 #include "pathspec.h"
-#include "gettext.h"
 
 int cmd__parse_pathspec_file(int argc, const char **argv)
 {
