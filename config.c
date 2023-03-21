@@ -5,7 +5,7 @@
  * Copyright (C) Johannes Schindelin, 2005
  *
  */
-#include "git-compat-util.h"
+#include "cache.h"
 #include "alloc.h"
 #include "date.h"
 #include "branch.h"

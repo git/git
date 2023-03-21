@@ -1,5 +1,5 @@
-#include "git-compat-util.h"
 #include "test-tool.h"
+#include "cache.h"
 #include "hex.h"
 #include "strbuf.h"
 #include "object-store.h"

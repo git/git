@@ -4,7 +4,7 @@
 #ifndef BULK_CHECKIN_H
 #define BULK_CHECKIN_H
 
-#include "cache.h"
+#include "object.h"
 
 void prepare_loose_object_bulk_checkin(void);
 void fsync_loose_object_bulk_checkin(int fd, const char *filename);

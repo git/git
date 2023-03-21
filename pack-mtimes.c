@@ -1,4 +1,4 @@
-#include "git-compat-util.h"
+#include "cache.h"
 #include "pack-mtimes.h"
 #include "object-store.h"
 #include "packfile.h"
