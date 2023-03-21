@@ -15,6 +15,7 @@
 #include "revision.h"
 #include "diff.h"
 #include "hashmap.h"
+#include "setup.h"
 #include "strvec.h"
 #include "run-command.h"
 #include "object-store.h"

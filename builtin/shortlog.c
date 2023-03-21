@@ -9,6 +9,7 @@
 #include "revision.h"
 #include "utf8.h"
 #include "mailmap.h"
+#include "setup.h"
 #include "shortlog.h"
 #include "parse-options.h"
 #include "trailer.h"

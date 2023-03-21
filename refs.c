@@ -22,6 +22,7 @@
 #include "worktree.h"
 #include "strvec.h"
 #include "repository.h"
+#include "setup.h"
 #include "sigchain.h"
 #include "date.h"
 #include "commit.h"

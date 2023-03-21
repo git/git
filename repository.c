@@ -11,6 +11,7 @@
 #include "object.h"
 #include "lockfile.h"
 #include "remote.h"
+#include "setup.h"
 #include "submodule-config.h"
 #include "sparse-index.h"
 #include "promisor-remote.h"

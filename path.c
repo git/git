@@ -11,6 +11,7 @@
 #include "string-list.h"
 #include "dir.h"
 #include "worktree.h"
+#include "setup.h"
 #include "submodule-config.h"
 #include "path.h"
 #include "packfile.h"

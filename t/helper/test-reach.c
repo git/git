@@ -8,6 +8,7 @@
 #include "hex.h"
 #include "parse-options.h"
 #include "ref-filter.h"
+#include "setup.h"
 #include "string-list.h"
 #include "tag.h"
 

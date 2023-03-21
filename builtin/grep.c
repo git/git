@@ -23,6 +23,7 @@
 #include "quote.h"
 #include "dir.h"
 #include "pathspec.h"
+#include "setup.h"
 #include "submodule.h"
 #include "submodule-config.h"
 #include "object-store.h"

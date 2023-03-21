@@ -5,6 +5,7 @@
 #include "object-store.h"
 #include "packfile.h"
 #include "pack-mtimes.h"
+#include "setup.h"
 
 static void dump_mtimes(struct packed_git *p)
 {

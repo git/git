@@ -37,6 +37,7 @@
 #include "packfile.h"
 #include "object-store.h"
 #include "promisor-remote.h"
+#include "setup.h"
 #include "submodule.h"
 #include "fsck.h"
 #include "wrapper.h"

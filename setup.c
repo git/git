@@ -5,6 +5,7 @@
 #include "repository.h"
 #include "config.h"
 #include "dir.h"
+#include "setup.h"
 #include "string-list.h"
 #include "chdir-notify.h"
 #include "promisor-remote.h"

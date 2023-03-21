@@ -20,6 +20,7 @@
 #include "object-store.h"
 #include "replace-object.h"
 #include "promisor-remote.h"
+#include "setup.h"
 #include "wrapper.h"
 
 static const char index_pack_usage[] =

@@ -19,6 +19,7 @@
 #include "revision.h"
 #include "log-tree.h"
 #include "builtin.h"
+#include "setup.h"
 #include "submodule.h"
 #include "oid-array.h"
 

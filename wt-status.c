@@ -16,6 +16,7 @@
 #include "refs.h"
 #include "submodule.h"
 #include "column.h"
+#include "setup.h"
 #include "strbuf.h"
 #include "utf8.h"
 #include "worktree.h"

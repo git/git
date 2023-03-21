@@ -31,6 +31,7 @@
 #include "object-store.h"
 #include "blame.h"
 #include "refs.h"
+#include "setup.h"
 #include "tag.h"
 
 static char blame_usage[] = N_("git blame [<options>] [<rev-opts>] [<rev>] [--] <file>");

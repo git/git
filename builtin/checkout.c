@@ -23,6 +23,7 @@
 #include "resolve-undo.h"
 #include "revision.h"
 #include "run-command.h"
+#include "setup.h"
 #include "submodule.h"
 #include "submodule-config.h"
 #include "tree.h"

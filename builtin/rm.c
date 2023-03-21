@@ -15,6 +15,7 @@
 #include "tree-walk.h"
 #include "parse-options.h"
 #include "string-list.h"
+#include "setup.h"
 #include "submodule.h"
 #include "pathspec.h"
 

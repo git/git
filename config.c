@@ -27,6 +27,7 @@
 #include "color.h"
 #include "replace-object.h"
 #include "refs.h"
+#include "setup.h"
 #include "worktree.h"
 #include "wrapper.h"
 

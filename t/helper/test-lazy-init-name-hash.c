@@ -3,6 +3,7 @@
 #include "cache.h"
 #include "environment.h"
 #include "parse-options.h"
+#include "setup.h"
 
 static int single;
 static int multi;

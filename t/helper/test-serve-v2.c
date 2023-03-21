@@ -3,6 +3,7 @@
 #include "gettext.h"
 #include "parse-options.h"
 #include "serve.h"
+#include "setup.h"
 
 static char const * const serve_usage[] = {
 	N_("test-tool serve-v2 [<options>]"),

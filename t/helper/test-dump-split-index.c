@@ -2,6 +2,7 @@
 #include "test-tool.h"
 #include "cache.h"
 #include "hex.h"
+#include "setup.h"
 #include "split-index.h"
 #include "ewah/ewok.h"
 

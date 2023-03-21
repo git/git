@@ -19,6 +19,7 @@
 #include "builtin.h"
 #include "parse-options.h"
 #include "resolve-undo.h"
+#include "setup.h"
 #include "submodule.h"
 #include "submodule-config.h"
 

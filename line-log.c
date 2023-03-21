@@ -16,6 +16,7 @@
 #include "graph.h"
 #include "userdiff.h"
 #include "line-log.h"
+#include "setup.h"
 #include "strvec.h"
 #include "bloom.h"
 

@@ -18,6 +18,7 @@
 #include "quote.h"
 #include "revision.h"
 #include "object-store.h"
+#include "setup.h"
 #include "thread-utils.h"
 
 const char git_attr__true[] = "(builtin)true";

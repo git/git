@@ -12,6 +12,7 @@
 #include "quote.h"
 #include "pathspec.h"
 #include "dir.h"
+#include "setup.h"
 #include "submodule.h"
 #include "submodule-config.h"
 #include "string-list.h"

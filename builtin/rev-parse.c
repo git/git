@@ -18,6 +18,7 @@
 #include "parse-options.h"
 #include "diff.h"
 #include "revision.h"
+#include "setup.h"
 #include "split-index.h"
 #include "submodule.h"
 #include "commit-reach.h"

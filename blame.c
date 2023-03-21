@@ -7,6 +7,7 @@
 #include "diffcore.h"
 #include "gettext.h"
 #include "hex.h"
+#include "setup.h"
 #include "tag.h"
 #include "blame.h"
 #include "alloc.h"

@@ -1,5 +1,6 @@
 #include "test-tool.h"
 #include "cache.h"
+#include "setup.h"
 #include "userdiff.h"
 #include "config.h"
 

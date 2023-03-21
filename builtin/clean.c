@@ -14,6 +14,7 @@
 #include "dir.h"
 #include "gettext.h"
 #include "parse-options.h"
+#include "setup.h"
 #include "string-list.h"
 #include "quote.h"
 #include "column.h"

@@ -16,6 +16,7 @@
 #include "unpack-trees.h"
 #include "wt-status.h"
 #include "quote.h"
+#include "setup.h"
 #include "sparse-index.h"
 #include "worktree.h"
 

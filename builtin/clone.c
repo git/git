@@ -33,6 +33,7 @@
 #include "branch.h"
 #include "remote.h"
 #include "run-command.h"
+#include "setup.h"
 #include "connected.h"
 #include "packfile.h"
 #include "list-objects-filter-options.h"

@@ -33,6 +33,7 @@
 #include "help.h"
 #include "promisor-remote.h"
 #include "dir.h"
+#include "setup.h"
 #include "strmap.h"
 #include "wrapper.h"
 

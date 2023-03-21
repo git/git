@@ -20,6 +20,7 @@
 #include "parse-options.h"
 #include "pathspec.h"
 #include "dir.h"
+#include "setup.h"
 #include "split-index.h"
 #include "fsmonitor.h"
 

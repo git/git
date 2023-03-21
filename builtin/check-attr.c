@@ -6,6 +6,7 @@
 #include "environment.h"
 #include "gettext.h"
 #include "quote.h"
+#include "setup.h"
 #include "parse-options.h"
 
 static int all_attrs;

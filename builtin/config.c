@@ -9,6 +9,7 @@
 #include "parse-options.h"
 #include "urlmatch.h"
 #include "quote.h"
+#include "setup.h"
 #include "worktree.h"
 #include "wrapper.h"
 

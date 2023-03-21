@@ -20,6 +20,7 @@
 #include "string-list.h"
 #include "pathspec.h"
 #include "run-command.h"
+#include "setup.h"
 #include "submodule.h"
 #include "submodule-config.h"
 

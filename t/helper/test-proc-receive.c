@@ -3,6 +3,7 @@
 #include "hex.h"
 #include "parse-options.h"
 #include "pkt-line.h"
+#include "setup.h"
 #include "sigchain.h"
 #include "test-tool.h"
 

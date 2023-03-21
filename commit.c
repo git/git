@@ -23,6 +23,7 @@
 #include "refs.h"
 #include "commit-reach.h"
 #include "run-command.h"
+#include "setup.h"
 #include "shallow.h"
 #include "hook.h"
 

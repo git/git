@@ -22,6 +22,7 @@
 #include "promisor-remote.h"
 #include "entry.h"
 #include "parallel-checkout.h"
+#include "setup.h"
 
 /*
  * Error messages expected by scripts out of plumbing commands such as

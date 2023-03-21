@@ -1,5 +1,6 @@
 #include "test-tool.h"
 #include "cache.h"
+#include "setup.h"
 #include "submodule-config.h"
 
 static void die_usage(const char **argv, const char *msg)

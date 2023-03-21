@@ -12,6 +12,7 @@
 #include "builtin.h"
 #include "exec-cmd.h"
 #include "parse-options.h"
+#include "setup.h"
 #include "worktree.h"
 #include "wrapper.h"
 

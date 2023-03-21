@@ -7,6 +7,7 @@
 #include "cache.h"
 #include "parse-options.h"
 #include "fsmonitor-ipc.h"
+#include "setup.h"
 #include "thread-utils.h"
 #include "trace2.h"
 #include "wrapper.h"

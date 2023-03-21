@@ -7,6 +7,7 @@
 #include "run-command.h"
 #include "alias.h"
 #include "replace-object.h"
+#include "setup.h"
 #include "shallow.h"
 
 #define RUN_SETUP		(1<<0)

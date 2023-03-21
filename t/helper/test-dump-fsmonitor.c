@@ -1,5 +1,6 @@
 #include "test-tool.h"
 #include "cache.h"
+#include "setup.h"
 
 int cmd__dump_fsmonitor(int ac, const char **av)
 {

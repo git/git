@@ -6,6 +6,7 @@
 #include "tree.h"
 #include "cache-tree.h"
 #include "parse-options.h"
+#include "setup.h"
 
 static char const * const test_cache_tree_usage[] = {
 	N_("test-tool cache-tree <options> (control|prime|update)"),

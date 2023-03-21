@@ -26,6 +26,7 @@
 #include "parse-options.h"
 #include "unpack-trees.h"
 #include "cache-tree.h"
+#include "setup.h"
 #include "submodule.h"
 #include "submodule-config.h"
 #include "dir.h"

@@ -3,6 +3,7 @@
 #include "hex.h"
 #include "test-tool.h"
 #include "commit.h"
+#include "setup.h"
 
 static struct bloom_filter_settings settings = DEFAULT_BLOOM_FILTER_SETTINGS;
 

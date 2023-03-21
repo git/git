@@ -3,6 +3,7 @@
 #include "test-tool.h"
 #include "repository.h"
 #include "object-store.h"
+#include "setup.h"
 
 /*
  * Prints the size of the object corresponding to the given hash in a specific

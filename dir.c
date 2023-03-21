@@ -21,6 +21,7 @@
 #include "varint.h"
 #include "ewah/ewok.h"
 #include "fsmonitor.h"
+#include "setup.h"
 #include "submodule-config.h"
 #include "wrapper.h"
 

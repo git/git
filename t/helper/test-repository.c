@@ -8,6 +8,7 @@
 #include "object-store.h"
 #include "object.h"
 #include "repository.h"
+#include "setup.h"
 #include "tree.h"
 
 static void test_parse_commit_in_graph(const char *gitdir, const char *worktree,

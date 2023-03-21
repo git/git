@@ -14,6 +14,7 @@
 #include "../object.h"
 #include "../dir.h"
 #include "../chdir-notify.h"
+#include "../setup.h"
 #include "../worktree.h"
 #include "../wrapper.h"
 

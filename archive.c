@@ -5,6 +5,7 @@
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
+#include "setup.h"
 #include "refs.h"
 #include "object-store.h"
 #include "commit.h"

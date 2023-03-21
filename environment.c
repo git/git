@@ -22,6 +22,7 @@
 #include "replace-object.h"
 #include "tmp-objdir.h"
 #include "chdir-notify.h"
+#include "setup.h"
 #include "shallow.h"
 #include "wrapper.h"
 

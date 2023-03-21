@@ -15,6 +15,7 @@
 #include "packfile.h"
 #include "object-store.h"
 #include "repository.h"
+#include "setup.h"
 #include "submodule.h"
 #include "midx.h"
 #include "commit-reach.h"

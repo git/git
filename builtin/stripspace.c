@@ -3,6 +3,7 @@
 #include "config.h"
 #include "gettext.h"
 #include "parse-options.h"
+#include "setup.h"
 #include "strbuf.h"
 
 static void comment_lines(struct strbuf *buf)
