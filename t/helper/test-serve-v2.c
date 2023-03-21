@@ -1,5 +1,4 @@
 #include "test-tool.h"
-#include "cache.h"
 #include "gettext.h"
 #include "parse-options.h"
 #include "serve.h"

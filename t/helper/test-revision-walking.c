@@ -9,7 +9,6 @@
  */
 
 #include "test-tool.h"
-#include "cache.h"
 #include "commit.h"
 #include "diff.h"
 #include "revision.h"

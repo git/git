@@ -1,7 +1,7 @@
 /*
  * Utilities for paths and pathnames
  */
-#include "cache.h"
+#include "git-compat-util.h"
 #include "abspath.h"
 #include "environment.h"
 #include "gettext.h"

@@ -1,5 +1,4 @@
 #include "test-tool.h"
-#include "cache.h"
 #include "commit-graph.h"
 #include "repository.h"
 #include "object-store.h"

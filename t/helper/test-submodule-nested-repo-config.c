@@ -1,5 +1,4 @@
 #include "test-tool.h"
-#include "cache.h"
 #include "setup.h"
 #include "submodule-config.h"
 

@@ -1,7 +1,6 @@
-#include "cache.h"
+#include "test-tool.h"
 #include "bloom.h"
 #include "hex.h"
-#include "test-tool.h"
 #include "commit.h"
 #include "setup.h"
 

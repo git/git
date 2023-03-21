@@ -1,5 +1,4 @@
 #include "test-tool.h"
-#include "cache.h"
 #include "commit-graph.h"
 #include "commit.h"
 #include "config.h"
