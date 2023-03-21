@@ -183,6 +183,11 @@ test_expect_success '@{u} error message when no upstream' '
 	test_cmp expect actual
 '
 
+test_expect_success '@{u} silent error when no upstream' '
+	test_must_fail git rev-parse --verify --quiet @{u} 2>actual &&
+	test_must_be_empty actual
+'
+
 test_expect_success 'branch@{u} error message with misspelt branch' '
 	cat >expect <<-EOF &&
 	fatal: no such branch: ${SQ}no-such-branch${SQ}
