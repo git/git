@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "alloc.h"
 #include "config.h"
+#include "environment.h"
 #include "refs.h"
 #include "object-store.h"
 #include "diff.h"

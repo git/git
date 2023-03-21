@@ -959,13 +959,6 @@ extern int sparse_expect_files_outside_of_patterns;
  */
 int use_optional_locks(void);
 
-/*
- * The character that begins a commented line in user-editable file
- * that is subject to stripspace.
- */
-extern char comment_line_char;
-extern int auto_comment_line_char;
-
 enum log_refs_config {
 	LOG_REFS_UNSET = -1,
 	LOG_REFS_NONE = 0,

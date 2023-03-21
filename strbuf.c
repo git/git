@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "alloc.h"
+#include "environment.h"
 #include "gettext.h"
 #include "hex.h"
 #include "refs.h"
