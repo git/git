@@ -1049,7 +1049,7 @@ static int sign_buffer_ssh(struct strbuf *buffer, struct strbuf *signature,
 		ssh_signing_key_file = strbuf_detach(&key_file->filename, NULL);
 	} else {
 		/* We assume a file */
-		ssh_signing_key_file = expand_user_path(signing_key, 1);
+		ssh_signing_key_file = interpolate_path(signing_key, 1);
 	}
 
 	buffer_file = mks_tempfile_t(".git_signing_buffer_tmpXXXXXX");
