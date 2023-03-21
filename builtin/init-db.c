@@ -4,6 +4,7 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 #include "cache.h"
+#include "abspath.h"
 #include "config.h"
 #include "gettext.h"
 #include "refs.h"

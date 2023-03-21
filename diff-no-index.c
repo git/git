@@ -5,6 +5,7 @@
  */
 
 #include "cache.h"
+#include "abspath.h"
 #include "color.h"
 #include "commit.h"
 #include "blob.h"

@@ -13,6 +13,7 @@
  */
 #define USE_THE_INDEX_VARIABLE
 #include "cache.h"
+#include "abspath.h"
 #include "config.h"
 #include "builtin.h"
 #include "run-command.h"

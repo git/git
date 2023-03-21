@@ -1,5 +1,6 @@
 #include "git-compat-util.h"
 #include "parse-options.h"
+#include "abspath.h"
 #include "cache.h"
 #include "config.h"
 #include "commit.h"

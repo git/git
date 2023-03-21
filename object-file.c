@@ -7,6 +7,7 @@
  * creation etc.
  */
 #include "git-compat-util.h"
+#include "abspath.h"
 #include "alloc.h"
 #include "config.h"
 #include "gettext.h"

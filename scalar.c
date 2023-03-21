@@ -3,6 +3,7 @@
  */
 
 #include "cache.h"
+#include "abspath.h"
 #include "gettext.h"
 #include "parse-options.h"
 #include "config.h"

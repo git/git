@@ -5,6 +5,7 @@
  * Copyright (C) Junio C Hamano, 2005
  */
 #include "builtin.h"
+#include "abspath.h"
 #include "config.h"
 #include "gettext.h"
 #include "hex.h"

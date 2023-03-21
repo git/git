@@ -2,6 +2,7 @@
  * Utilities for paths and pathnames
  */
 #include "cache.h"
+#include "abspath.h"
 #include "gettext.h"
 #include "hex.h"
 #include "repository.h"

@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "tmp-objdir.h"
+#include "abspath.h"
 #include "chdir-notify.h"
 #include "dir.h"
 #include "sigchain.h"

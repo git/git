@@ -22,6 +22,7 @@
  */
 
 #include "cache.h"
+#include "abspath.h"
 #include "quote.h"
 
 struct trace_key trace_default_key = { "GIT_TRACE", 0, 0, 0 };

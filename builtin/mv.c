@@ -5,6 +5,7 @@
  */
 #define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
+#include "abspath.h"
 #include "alloc.h"
 #include "config.h"
 #include "gettext.h"

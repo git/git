@@ -6,6 +6,7 @@
  *		 Junio Hamano, 2005-2006
  */
 #include "git-compat-util.h"
+#include "abspath.h"
 #include "alloc.h"
 #include "config.h"
 #include "dir.h"

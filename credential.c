@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "abspath.h"
 #include "config.h"
 #include "credential.h"
 #include "gettext.h"

@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "abspath.h"
 #include "sigchain.h"
 #include "trace2/tr2_dst.h"
 #include "trace2/tr2_sid.h"

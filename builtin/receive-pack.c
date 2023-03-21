@@ -1,4 +1,5 @@
 #include "builtin.h"
+#include "abspath.h"
 #include "repository.h"
 #include "config.h"
 #include "gettext.h"

@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "abspath.h"
 #include "alloc.h"
 #include "environment.h"
 #include "gettext.h"

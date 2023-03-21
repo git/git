@@ -2,6 +2,7 @@
  * Various trivial helper wrappers around standard functions
  */
 #include "cache.h"
+#include "abspath.h"
 #include "config.h"
 #include "gettext.h"
 

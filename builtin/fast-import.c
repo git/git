@@ -1,4 +1,5 @@
 #include "builtin.h"
+#include "abspath.h"
 #include "cache.h"
 #include "gettext.h"
 #include "hex.h"

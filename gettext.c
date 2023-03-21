@@ -3,6 +3,7 @@
  */
 
 #include "cache.h"
+#include "abspath.h"
 #include "exec-cmd.h"
 #include "gettext.h"
 #include "strbuf.h"

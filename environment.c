@@ -8,6 +8,7 @@
  * are.
  */
 #include "cache.h"
+#include "abspath.h"
 #include "branch.h"
 #include "environment.h"
 #include "gettext.h"

@@ -4,6 +4,7 @@
  */
 #define USE_THE_INDEX_VARIABLE
 #include "cache.h"
+#include "abspath.h"
 #include "repository.h"
 #include "object-store.h"
 #include "config.h"
