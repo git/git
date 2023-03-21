@@ -17,6 +17,7 @@
 #include "../setup.h"
 #include "../worktree.h"
 #include "../wrapper.h"
+#include "../write-or-die.h"
 
 /*
  * This backend uses the following flags in `ref_update::flags` for

@@ -5,6 +5,7 @@
 #include "sideband.h"
 #include "help.h"
 #include "pkt-line.h"
+#include "write-or-die.h"
 
 struct keyword_entry {
 	/*

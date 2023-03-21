@@ -9,6 +9,7 @@
 #include "../iterator.h"
 #include "../lockfile.h"
 #include "../chdir-notify.h"
+#include "../write-or-die.h"
 
 enum mmap_strategy {
 	/*

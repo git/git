@@ -33,6 +33,7 @@
 #include "refs.h"
 #include "setup.h"
 #include "tag.h"
+#include "write-or-die.h"
 
 static char blame_usage[] = N_("git blame [<options>] [<rev-opts>] [<rev>] [--] <file>");
 static char annotate_usage[] = N_("git annotate [<options>] [<rev-opts>] [<rev>] [--] <file>");

@@ -5,6 +5,7 @@
 #include "credential.h"
 #include "string-list.h"
 #include "parse-options.h"
+#include "write-or-die.h"
 
 static struct lock_file credential_lock;
 

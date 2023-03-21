@@ -23,6 +23,7 @@
 #include "setup.h"
 #include "split-index.h"
 #include "fsmonitor.h"
+#include "write-or-die.h"
 
 /*
  * Default to not allowing changes to the list of files. The

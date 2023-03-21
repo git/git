@@ -8,6 +8,7 @@
 #include "quote.h"
 #include "setup.h"
 #include "parse-options.h"
+#include "write-or-die.h"
 
 static int all_attrs;
 static int cached_attrs;

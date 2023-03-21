@@ -3,6 +3,7 @@
 
 #include "cache.h"
 #include "hash.h"
+#include "write-or-die.h"
 
 struct progress;
 

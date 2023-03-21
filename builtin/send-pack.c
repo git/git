@@ -16,6 +16,7 @@
 #include "gpg-interface.h"
 #include "gettext.h"
 #include "protocol.h"
+#include "write-or-die.h"
 
 static const char * const send_pack_usage[] = {
 	N_("git send-pack [--mirror] [--dry-run] [--force]\n"

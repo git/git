@@ -9,6 +9,7 @@
 #include "strvec.h"
 #include "object-store.h"
 #include "packfile.h"
+#include "write-or-die.h"
 
 struct archive_dir {
 	const char *path;

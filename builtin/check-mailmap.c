@@ -5,6 +5,7 @@
 #include "mailmap.h"
 #include "parse-options.h"
 #include "string-list.h"
+#include "write-or-die.h"
 
 static int use_stdin;
 static const char * const check_mailmap_usage[] = {

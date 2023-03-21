@@ -25,6 +25,7 @@
 #include "setup.h"
 #include "shallow.h"
 #include "wrapper.h"
+#include "write-or-die.h"
 
 int trust_executable_bit = 1;
 int trust_ctime = 1;

@@ -28,6 +28,7 @@
 #include "submodule-config.h"
 #include "object-store.h"
 #include "packfile.h"
+#include "write-or-die.h"
 
 static const char *grep_prefix;
 

@@ -22,6 +22,7 @@
 #include "protocol.h"
 #include "quote.h"
 #include "transport.h"
+#include "write-or-die.h"
 
 static struct remote *remote;
 /* always ends with a trailing slash */
