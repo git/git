@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "exec-cmd.h"
+#include "gettext.h"
 #include "attr.h"
 
 /*

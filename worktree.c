@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "alloc.h"
+#include "gettext.h"
 #include "repository.h"
 #include "refs.h"
 #include "strbuf.h"

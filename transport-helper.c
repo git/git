@@ -4,6 +4,7 @@
 #include "run-command.h"
 #include "commit.h"
 #include "diff.h"
+#include "gettext.h"
 #include "hex.h"
 #include "revision.h"
 #include "remote.h"

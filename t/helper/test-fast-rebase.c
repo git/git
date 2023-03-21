@@ -15,6 +15,7 @@
 #include "cache.h"
 #include "cache-tree.h"
 #include "commit.h"
+#include "gettext.h"
 #include "hex.h"
 #include "lockfile.h"
 #include "merge-ort.h"

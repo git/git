@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "commit.h"
+#include "gettext.h"
 #include "sequencer.h"
 #include "rebase-interactive.h"
 #include "strbuf.h"

@@ -11,6 +11,7 @@
 #include "color.h"
 #include "commit.h"
 #include "blob.h"
+#include "gettext.h"
 #include "tag.h"
 #include "diff.h"
 #include "diff-merges.h"

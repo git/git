@@ -3,6 +3,7 @@
 #include "cache.h"
 #include "config.h"
 #include "attr.h"
+#include "gettext.h"
 #include "quote.h"
 #include "parse-options.h"
 

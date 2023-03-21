@@ -9,6 +9,7 @@
 #include "builtin.h"
 #include "lockfile.h"
 #include "dir.h"
+#include "gettext.h"
 #include "pathspec.h"
 #include "exec-cmd.h"
 #include "cache-tree.h"

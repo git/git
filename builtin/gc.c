@@ -32,6 +32,7 @@
 #include "refs.h"
 #include "remote.h"
 #include "exec-cmd.h"
+#include "gettext.h"
 #include "hook.h"
 
 #define FAILED_RUN "failed to run %s"

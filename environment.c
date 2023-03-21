@@ -10,6 +10,7 @@
 #include "cache.h"
 #include "branch.h"
 #include "environment.h"
+#include "gettext.h"
 #include "repository.h"
 #include "config.h"
 #include "refs.h"

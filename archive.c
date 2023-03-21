@@ -1,6 +1,7 @@
 #include "git-compat-util.h"
 #include "alloc.h"
 #include "config.h"
+#include "gettext.h"
 #include "hex.h"
 #include "refs.h"
 #include "object-store.h"

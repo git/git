@@ -11,6 +11,7 @@
 #include "quote.h"
 #include "dir.h"
 #include "builtin.h"
+#include "gettext.h"
 #include "strbuf.h"
 #include "tree.h"
 #include "cache-tree.h"

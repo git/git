@@ -4,6 +4,7 @@
 #include "commit.h"
 #include "commit-reach.h"
 #include "config.h"
+#include "gettext.h"
 #include "hex.h"
 #include "parse-options.h"
 #include "ref-filter.h"

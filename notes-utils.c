@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "config.h"
 #include "commit.h"
+#include "gettext.h"
 #include "refs.h"
 #include "notes-utils.h"
 #include "repository.h"

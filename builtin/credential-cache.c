@@ -1,4 +1,5 @@
 #include "builtin.h"
+#include "gettext.h"
 #include "parse-options.h"
 
 #ifndef NO_UNIX_SOCKETS

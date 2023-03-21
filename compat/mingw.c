@@ -11,6 +11,7 @@
 #include "win32/lazyload.h"
 #include "../config.h"
 #include "dir.h"
+#include "gettext.h"
 #define SECURITY_WIN32
 #include <sspi.h>
 

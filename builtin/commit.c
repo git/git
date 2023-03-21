@@ -16,6 +16,7 @@
 #include "diff.h"
 #include "diffcore.h"
 #include "commit.h"
+#include "gettext.h"
 #include "revision.h"
 #include "wt-status.h"
 #include "run-command.h"

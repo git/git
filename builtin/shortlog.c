@@ -3,6 +3,7 @@
 #include "config.h"
 #include "commit.h"
 #include "diff.h"
+#include "gettext.h"
 #include "string-list.h"
 #include "revision.h"
 #include "utf8.h"

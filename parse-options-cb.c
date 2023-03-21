@@ -4,6 +4,7 @@
 #include "cache.h"
 #include "commit.h"
 #include "color.h"
+#include "gettext.h"
 #include "string-list.h"
 #include "strvec.h"
 #include "oid-array.h"

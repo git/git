@@ -2,6 +2,7 @@
 #include "cache.h"
 #include "config.h"
 #include "dir.h"
+#include "gettext.h"
 #include "parse-options.h"
 #include "pathspec.h"
 #include "repository.h"

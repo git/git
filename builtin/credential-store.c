@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "config.h"
+#include "gettext.h"
 #include "lockfile.h"
 #include "credential.h"
 #include "string-list.h"

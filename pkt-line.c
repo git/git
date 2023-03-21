@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "pkt-line.h"
+#include "gettext.h"
 #include "hex.h"
 #include "run-command.h"
 

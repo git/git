@@ -4,6 +4,7 @@
  */
 #include "cache.h"
 #include "builtin.h"
+#include "gettext.h"
 #include "utf8.h"
 #include "strbuf.h"
 #include "mailinfo.h"

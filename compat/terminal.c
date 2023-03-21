@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "compat/terminal.h"
+#include "gettext.h"
 #include "sigchain.h"
 #include "strbuf.h"
 #include "run-command.h"

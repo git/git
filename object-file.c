@@ -9,6 +9,7 @@
 #include "git-compat-util.h"
 #include "alloc.h"
 #include "config.h"
+#include "gettext.h"
 #include "hex.h"
 #include "string-list.h"
 #include "lockfile.h"

@@ -8,6 +8,7 @@
 #include "builtin.h"
 #include "config.h"
 #include "dir.h"
+#include "gettext.h"
 #include "lockfile.h"
 #include "quote.h"
 #include "cache-tree.h"

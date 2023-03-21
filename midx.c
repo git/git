@@ -3,6 +3,7 @@
 #include "config.h"
 #include "csum-file.h"
 #include "dir.h"
+#include "gettext.h"
 #include "hex.h"
 #include "lockfile.h"
 #include "packfile.h"

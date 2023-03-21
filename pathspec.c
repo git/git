@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "config.h"
 #include "dir.h"
+#include "gettext.h"
 #include "pathspec.h"
 #include "attr.h"
 #include "strvec.h"

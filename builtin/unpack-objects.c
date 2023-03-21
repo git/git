@@ -2,6 +2,7 @@
 #include "cache.h"
 #include "bulk-checkin.h"
 #include "config.h"
+#include "gettext.h"
 #include "hex.h"
 #include "object-store.h"
 #include "object.h"

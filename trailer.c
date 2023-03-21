@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "alloc.h"
 #include "config.h"
+#include "gettext.h"
 #include "string-list.h"
 #include "run-command.h"
 #include "commit.h"

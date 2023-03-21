@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "bundle-uri.h"
 #include "bundle.h"
+#include "gettext.h"
 #include "object-store.h"
 #include "refs.h"
 #include "run-command.h"

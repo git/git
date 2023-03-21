@@ -3,6 +3,7 @@
 #include "color.h"
 #include "config.h"
 #include "diffcore.h"
+#include "gettext.h"
 #include "hex.h"
 #include "revision.h"
 #include "refs.h"

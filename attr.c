@@ -12,6 +12,7 @@
 #include "exec-cmd.h"
 #include "attr.h"
 #include "dir.h"
+#include "gettext.h"
 #include "utf8.h"
 #include "quote.h"
 #include "revision.h"

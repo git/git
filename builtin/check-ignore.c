@@ -3,6 +3,7 @@
 #include "cache.h"
 #include "config.h"
 #include "dir.h"
+#include "gettext.h"
 #include "quote.h"
 #include "pathspec.h"
 #include "parse-options.h"

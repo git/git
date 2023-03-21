@@ -9,6 +9,7 @@
 #include "cache.h"
 #include "config.h"
 #include "builtin.h"
+#include "gettext.h"
 #include "hex.h"
 #include "parse-options.h"
 #include "exec-cmd.h"

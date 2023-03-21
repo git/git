@@ -4,6 +4,7 @@
 #include "cache.h"
 #include "config.h"
 #include "archive.h"
+#include "gettext.h"
 #include "hex.h"
 #include "streaming.h"
 #include "utf8.h"

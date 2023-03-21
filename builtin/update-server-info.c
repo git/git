@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "config.h"
 #include "builtin.h"
+#include "gettext.h"
 #include "parse-options.h"
 
 static const char * const update_server_info_usage[] = {

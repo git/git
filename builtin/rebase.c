@@ -6,6 +6,7 @@
 
 #define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
+#include "gettext.h"
 #include "hex.h"
 #include "run-command.h"
 #include "exec-cmd.h"

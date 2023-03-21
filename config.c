@@ -11,6 +11,7 @@
 #include "branch.h"
 #include "config.h"
 #include "environment.h"
+#include "gettext.h"
 #include "ident.h"
 #include "repository.h"
 #include "lockfile.h"

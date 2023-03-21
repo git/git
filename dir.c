@@ -9,6 +9,7 @@
 #include "alloc.h"
 #include "config.h"
 #include "dir.h"
+#include "gettext.h"
 #include "object-store.h"
 #include "attr.h"
 #include "refs.h"

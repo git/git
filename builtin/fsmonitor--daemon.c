@@ -1,6 +1,7 @@
 #include "builtin.h"
 #include "alloc.h"
 #include "config.h"
+#include "gettext.h"
 #include "parse-options.h"
 #include "fsmonitor.h"
 #include "fsmonitor-ipc.h"

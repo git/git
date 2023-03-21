@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "gettext.h"
 #include "merge-ort.h"
 #include "merge-ort-wrappers.h"
 

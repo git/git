@@ -4,6 +4,7 @@
 #include "cache.h"
 #include "alloc.h"
 #include "config.h"
+#include "gettext.h"
 #include "tempfile.h"
 #include "quote.h"
 #include "diff.h"

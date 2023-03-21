@@ -2,6 +2,7 @@
 #include "alloc.h"
 #include "config.h"
 #include "color.h"
+#include "gettext.h"
 #include "ident.h"
 #include "parse-options.h"
 #include "urlmatch.h"

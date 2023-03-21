@@ -11,6 +11,7 @@
 #include "cache.h"
 #include "config.h"
 #include "dir.h"
+#include "gettext.h"
 #include "parse-options.h"
 #include "string-list.h"
 #include "quote.h"

@@ -17,6 +17,7 @@
 #include "diff.h"
 #include "diffcore.h"
 #include "dir.h"
+#include "gettext.h"
 #include "hex.h"
 #include "ll-merge.h"
 #include "lockfile.h"

@@ -5,6 +5,7 @@
 #include "pathspec.h"
 #include "dir.h"
 #include "fsmonitor.h"
+#include "gettext.h"
 #include "config.h"
 #include "progress.h"
 #include "thread-utils.h"

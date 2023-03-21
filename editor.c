@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "config.h"
+#include "gettext.h"
 #include "strbuf.h"
 #include "strvec.h"
 #include "run-command.h"

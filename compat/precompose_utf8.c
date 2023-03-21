@@ -7,6 +7,7 @@
 
 #include "cache.h"
 #include "config.h"
+#include "gettext.h"
 #include "utf8.h"
 #include "precompose_utf8.h"
 

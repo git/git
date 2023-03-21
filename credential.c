@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "config.h"
 #include "credential.h"
+#include "gettext.h"
 #include "string-list.h"
 #include "run-command.h"
 #include "url.h"

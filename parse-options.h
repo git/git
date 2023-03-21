@@ -1,6 +1,8 @@
 #ifndef PARSE_OPTIONS_H
 #define PARSE_OPTIONS_H
 
+#include "gettext.h"
+
 /**
  * Refer to Documentation/technical/api-parse-options.txt for the API doc.
  */

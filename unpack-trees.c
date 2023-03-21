@@ -3,6 +3,7 @@
 #include "repository.h"
 #include "config.h"
 #include "dir.h"
+#include "gettext.h"
 #include "hex.h"
 #include "tree.h"
 #include "tree-walk.h"

@@ -4,6 +4,7 @@
 #include "config.h"
 #include "commit.h"
 #include "color.h"
+#include "gettext.h"
 #include "utf8.h"
 
 static int disallow_abbreviated_options;

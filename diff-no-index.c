@@ -11,6 +11,7 @@
 #include "tag.h"
 #include "diff.h"
 #include "diffcore.h"
+#include "gettext.h"
 #include "revision.h"
 #include "log-tree.h"
 #include "parse-options.h"

@@ -7,6 +7,7 @@
 #include "cache.h"
 #include "config.h"
 #include "dir.h"
+#include "gettext.h"
 #include "repository.h"
 #include "builtin.h"
 #include "parse-options.h"

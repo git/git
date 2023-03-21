@@ -1,6 +1,7 @@
 #ifndef RERERE_H
 #define RERERE_H
 
+#include "gettext.h"
 #include "string-list.h"
 
 struct pathspec;

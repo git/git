@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "commit.h"
 #include "diff.h"
+#include "gettext.h"
 #include "hex.h"
 #include "revision.h"
 #include "builtin.h"

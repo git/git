@@ -11,6 +11,7 @@
 #include "refs.h"
 #include "commit.h"
 #include "builtin.h"
+#include "gettext.h"
 #include "remote.h"
 #include "parse-options.h"
 #include "branch.h"

@@ -2,6 +2,7 @@
 #include "alloc.h"
 #include "repository.h"
 #include "config.h"
+#include "gettext.h"
 #include "hex.h"
 #include "lockfile.h"
 #include "refs.h"

@@ -3,6 +3,7 @@
  */
 
 #include "cache.h"
+#include "gettext.h"
 #include "lockfile.h"
 
 /*

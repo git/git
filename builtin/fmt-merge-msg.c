@@ -1,6 +1,7 @@
 #include "builtin.h"
 #include "config.h"
 #include "fmt-merge-msg.h"
+#include "gettext.h"
 #include "parse-options.h"
 
 static const char * const fmt_merge_msg_usage[] = {

@@ -4,6 +4,7 @@
 #include "git-compat-util.h"
 #include "alloc.h"
 #include "config.h"
+#include "gettext.h"
 #include "hex.h"
 #include "tar.h"
 #include "archive.h"

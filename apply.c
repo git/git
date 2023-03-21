@@ -15,6 +15,7 @@
 #include "delta.h"
 #include "diff.h"
 #include "dir.h"
+#include "gettext.h"
 #include "hex.h"
 #include "xdiff-interface.h"
 #include "ll-merge.h"

@@ -7,6 +7,7 @@
 #include "builtin.h"
 #include "alloc.h"
 #include "config.h"
+#include "gettext.h"
 #include "pathspec.h"
 #include "lockfile.h"
 #include "dir.h"

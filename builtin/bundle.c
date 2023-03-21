@@ -1,4 +1,5 @@
 #include "builtin.h"
+#include "gettext.h"
 #include "strvec.h"
 #include "parse-options.h"
 #include "cache.h"

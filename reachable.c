@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "gettext.h"
 #include "hex.h"
 #include "refs.h"
 #include "tag.h"

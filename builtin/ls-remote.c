@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "cache.h"
+#include "gettext.h"
 #include "hex.h"
 #include "transport.h"
 #include "ref-filter.h"

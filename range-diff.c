@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "gettext.h"
 #include "range-diff.h"
 #include "string-list.h"
 #include "run-command.h"

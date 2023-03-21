@@ -2,6 +2,7 @@
 #define COMPAT_DISK_H
 
 #include "git-compat-util.h"
+#include "gettext.h"
 
 static int get_disk_info(struct strbuf *out)
 {
