@@ -35,6 +35,7 @@
 #include "exec-cmd.h"
 #include "gettext.h"
 #include "hook.h"
+#include "wrapper.h"
 
 #define FAILED_RUN "failed to run %s"
 

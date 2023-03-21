@@ -12,6 +12,7 @@
 #include "exec-cmd.h"
 #include "parse-options.h"
 #include "worktree.h"
+#include "wrapper.h"
 
 #ifndef DEFAULT_GIT_TEMPLATE_DIR
 #define DEFAULT_GIT_TEMPLATE_DIR "/usr/share/git-core/templates"

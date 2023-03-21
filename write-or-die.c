@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "config.h"
 #include "run-command.h"
+#include "wrapper.h"
 
 /*
  * Some cases use stdio, but want to flush after the write

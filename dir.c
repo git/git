@@ -21,6 +21,7 @@
 #include "ewah/ewok.h"
 #include "fsmonitor.h"
 #include "submodule-config.h"
+#include "wrapper.h"
 
 /*
  * Tells read_directory_recursive how a file or directory should be treated.

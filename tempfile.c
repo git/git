@@ -45,6 +45,7 @@
 #include "cache.h"
 #include "tempfile.h"
 #include "sigchain.h"
+#include "wrapper.h"
 
 static VOLATILE_LIST_HEAD(tempfile_list);
 

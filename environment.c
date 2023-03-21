@@ -23,6 +23,7 @@
 #include "tmp-objdir.h"
 #include "chdir-notify.h"
 #include "shallow.h"
+#include "wrapper.h"
 
 int trust_executable_bit = 1;
 int trust_ctime = 1;

@@ -11,6 +11,7 @@
 #include "../alloc.h"
 #include "win32/lazyload.h"
 #include "../config.h"
+#include "../wrapper.h"
 #include "dir.h"
 #include "gettext.h"
 #define SECURITY_WIN32

@@ -9,6 +9,7 @@
 #include "dir.h"
 #include "wt-status.h"
 #include "config.h"
+#include "wrapper.h"
 
 void free_worktrees(struct worktree **worktrees)
 {

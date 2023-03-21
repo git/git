@@ -40,6 +40,7 @@
 #include "shallow.h"
 #include "promisor-remote.h"
 #include "pack-mtimes.h"
+#include "wrapper.h"
 
 /*
  * Objects we are going to pack are collected in the `to_pack` structure.

@@ -1085,10 +1085,6 @@ const char *repo_find_unique_abbrev(struct repository *r, const struct object_id
 int repo_find_unique_abbrev_r(struct repository *r, char *hex, const struct object_id *oid, int len);
 #define find_unique_abbrev_r(hex, oid, len) repo_find_unique_abbrev_r(the_repository, hex, oid, len)
 
-/* set default permissions by passing mode arguments to open(2) */
-int git_mkstemps_mode(char *pattern, int suffix_len, int mode);
-int git_mkstemp_mode(char *pattern, int mode);
-
 /*
  * NOTE NOTE NOTE!!
  *
@@ -1423,31 +1419,6 @@ static inline int batch_fsync_enabled(enum fsync_component component)
 	return (fsync_components & component) && (fsync_method == FSYNC_METHOD_BATCH);
 }
 
-ssize_t read_in_full(int fd, void *buf, size_t count);
-ssize_t write_in_full(int fd, const void *buf, size_t count);
-ssize_t pread_in_full(int fd, void *buf, size_t count, off_t offset);
-
-static inline ssize_t write_str_in_full(int fd, const char *str)
-{
-	return write_in_full(fd, str, strlen(str));
-}
-
-/**
- * Open (and truncate) the file at path, write the contents of buf to it,
- * and close it. Dies if any errors are encountered.
- */
-void write_file_buf(const char *path, const char *buf, size_t len);
-
-/**
- * Like write_file_buf(), but format the contents into a buffer first.
- * Additionally, write_file() will append a newline if one is not already
- * present, making it convenient to write text files:
- *
- *   write_file(path, "counter: %d", ctr);
- */
-__attribute__((format (printf, 2, 3)))
-void write_file(const char *path, const char *fmt, ...);
-
 /* pager.c */
 void setup_pager(void);
 int pager_in_use(void);
@@ -1570,8 +1541,5 @@ int versioncmp(const char *s1, const char *s2);
  * when doing diff-raw output or indicating a detached HEAD?
  */
 int print_sha1_ellipsis(void);
-
-/* Return 1 if the file is empty or does not exists, 0 otherwise. */
-int is_empty_or_missing_file(const char *filename);
 
 #endif /* CACHE_H */

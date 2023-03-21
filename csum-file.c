@@ -10,6 +10,7 @@
 #include "cache.h"
 #include "progress.h"
 #include "csum-file.h"
+#include "wrapper.h"
 
 static void verify_buffer_or_die(struct hashfile *f,
 				 const void *buf,

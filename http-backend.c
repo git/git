@@ -16,6 +16,7 @@
 #include "object-store.h"
 #include "protocol.h"
 #include "date.h"
+#include "wrapper.h"
 
 static const char content_type[] = "Content-Type";
 static const char content_length[] = "Content-Length";

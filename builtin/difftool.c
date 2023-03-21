@@ -27,6 +27,7 @@
 #include "object-store.h"
 #include "dir.h"
 #include "entry.h"
+#include "wrapper.h"
 
 static int trust_exit_code;
 

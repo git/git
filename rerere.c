@@ -16,6 +16,7 @@
 #include "object-store.h"
 #include "hash-lookup.h"
 #include "strmap.h"
+#include "wrapper.h"
 
 #define RESOLVED 0
 #define PUNTED 1

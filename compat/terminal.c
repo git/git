@@ -6,6 +6,7 @@
 #include "run-command.h"
 #include "string-list.h"
 #include "hashmap.h"
+#include "wrapper.h"
 
 #if defined(HAVE_DEV_TTY) || defined(GIT_WINDOWS_NATIVE)
 

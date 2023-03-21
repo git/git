@@ -24,6 +24,7 @@
 #include "cache.h"
 #include "abspath.h"
 #include "quote.h"
+#include "wrapper.h"
 
 struct trace_key trace_default_key = { "GIT_TRACE", 0, 0, 0 };
 struct trace_key trace_perf_key = TRACE_KEY_INIT(PERFORMANCE);

@@ -24,6 +24,7 @@
 #include "sigchain.h"
 #include "date.h"
 #include "commit.h"
+#include "wrapper.h"
 
 /*
  * List of all available backends

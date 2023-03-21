@@ -28,6 +28,7 @@
 #include "replace-object.h"
 #include "refs.h"
 #include "worktree.h"
+#include "wrapper.h"
 
 struct config_source {
 	struct config_source *prev;
