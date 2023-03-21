@@ -5,6 +5,7 @@
 #include "cache.h"
 #include "alloc.h"
 #include "config.h"
+#include "environment.h"
 #include "hashmap.h"
 #include "gettext.h"
 #include "hex.h"

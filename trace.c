@@ -23,6 +23,7 @@
 
 #include "cache.h"
 #include "abspath.h"
+#include "environment.h"
 #include "quote.h"
 #include "wrapper.h"
 

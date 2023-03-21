@@ -2,6 +2,7 @@
 #include "alloc.h"
 #include "config.h"
 #include "delta.h"
+#include "environment.h"
 #include "gettext.h"
 #include "hex.h"
 #include "pack.h"

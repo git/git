@@ -12,6 +12,7 @@
 
 #include "builtin.h"
 #include "abspath.h"
+#include "environment.h"
 #include "hex.h"
 #include "repository.h"
 #include "config.h"

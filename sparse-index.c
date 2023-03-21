@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "alloc.h"
+#include "environment.h"
 #include "gettext.h"
 #include "repository.h"
 #include "sparse-index.h"

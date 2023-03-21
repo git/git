@@ -3,6 +3,7 @@
 #include "commit-graph.h"
 #include "commit.h"
 #include "config.h"
+#include "environment.h"
 #include "hex.h"
 #include "object-store.h"
 #include "object.h"

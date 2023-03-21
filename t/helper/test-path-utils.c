@@ -1,6 +1,7 @@
 #include "test-tool.h"
 #include "cache.h"
 #include "abspath.h"
+#include "environment.h"
 #include "string-list.h"
 #include "utf8.h"
 

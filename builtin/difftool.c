@@ -17,6 +17,7 @@
 #include "config.h"
 #include "builtin.h"
 #include "run-command.h"
+#include "environment.h"
 #include "exec-cmd.h"
 #include "gettext.h"
 #include "hex.h"

@@ -9,6 +9,7 @@
 #include "config.h"
 #include "diff.h"
 #include "dir.h"
+#include "environment.h"
 #include "gettext.h"
 #include "hex.h"
 #include "hook.h"

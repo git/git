@@ -4,6 +4,7 @@
 #include "cache.h"
 #include "pathspec.h"
 #include "dir.h"
+#include "environment.h"
 #include "fsmonitor.h"
 #include "gettext.h"
 #include "config.h"

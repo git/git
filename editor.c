@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "abspath.h"
 #include "config.h"
+#include "environment.h"
 #include "gettext.h"
 #include "strbuf.h"
 #include "strvec.h"

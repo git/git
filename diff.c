@@ -5,6 +5,7 @@
 #include "abspath.h"
 #include "alloc.h"
 #include "config.h"
+#include "environment.h"
 #include "gettext.h"
 #include "tempfile.h"
 #include "quote.h"

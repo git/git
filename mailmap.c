@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "environment.h"
 #include "string-list.h"
 #include "mailmap.h"
 #include "object-store.h"

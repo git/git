@@ -10,6 +10,7 @@
 #include "alloc.h"
 #include "config.h"
 #include "dir.h"
+#include "environment.h"
 #include "gettext.h"
 #include "object-store.h"
 #include "attr.h"

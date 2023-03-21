@@ -2,6 +2,7 @@
 #include "abspath.h"
 #include "config.h"
 #include "dir.h"
+#include "environment.h"
 #include "gettext.h"
 #include "pathspec.h"
 #include "attr.h"

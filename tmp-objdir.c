@@ -3,6 +3,7 @@
 #include "abspath.h"
 #include "chdir-notify.h"
 #include "dir.h"
+#include "environment.h"
 #include "sigchain.h"
 #include "string-list.h"
 #include "strbuf.h"

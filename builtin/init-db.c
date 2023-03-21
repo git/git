@@ -6,6 +6,7 @@
 #include "cache.h"
 #include "abspath.h"
 #include "config.h"
+#include "environment.h"
 #include "gettext.h"
 #include "refs.h"
 #include "builtin.h"

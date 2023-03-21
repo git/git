@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "environment.h"
 #include "tag.h"
 #include "object-store.h"
 #include "commit.h"

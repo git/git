@@ -2,6 +2,7 @@
 #include "abspath.h"
 #include "repository.h"
 #include "config.h"
+#include "environment.h"
 #include "gettext.h"
 #include "hex.h"
 #include "lockfile.h"

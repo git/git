@@ -3,6 +3,7 @@
  */
 #include "cache.h"
 #include "abspath.h"
+#include "environment.h"
 #include "gettext.h"
 #include "hex.h"
 #include "repository.h"

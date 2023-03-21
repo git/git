@@ -5,6 +5,7 @@
 #include "cache.h"
 #include "abspath.h"
 #include "builtin.h"
+#include "environment.h"
 #include "gettext.h"
 #include "utf8.h"
 #include "strbuf.h"

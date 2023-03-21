@@ -26,6 +26,7 @@
 #include "diff.h"
 #include "diffcore.h"
 #include "dir.h"
+#include "environment.h"
 #include "gettext.h"
 #include "hex.h"
 #include "entry.h"

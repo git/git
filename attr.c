@@ -9,6 +9,7 @@
 #include "cache.h"
 #include "alloc.h"
 #include "config.h"
+#include "environment.h"
 #include "exec-cmd.h"
 #include "attr.h"
 #include "dir.h"

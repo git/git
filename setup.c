@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "abspath.h"
+#include "environment.h"
 #include "gettext.h"
 #include "repository.h"
 #include "config.h"

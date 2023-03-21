@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "config.h"
+#include "environment.h"
 #include "protocol.h"
 
 static enum protocol_version parse_protocol_version(const char *value)

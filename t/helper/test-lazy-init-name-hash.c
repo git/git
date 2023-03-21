@@ -1,6 +1,7 @@
 #define USE_THE_INDEX_VARIABLE
 #include "test-tool.h"
 #include "cache.h"
+#include "environment.h"
 #include "parse-options.h"
 
 static int single;

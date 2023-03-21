@@ -8,6 +8,7 @@
 #include "dir.h"
 #include "diff.h"
 #include "commit.h"
+#include "environment.h"
 #include "gettext.h"
 #include "hex.h"
 #include "revision.h"

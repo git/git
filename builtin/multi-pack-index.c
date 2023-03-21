@@ -2,6 +2,7 @@
 #include "abspath.h"
 #include "cache.h"
 #include "config.h"
+#include "environment.h"
 #include "gettext.h"
 #include "parse-options.h"
 #include "midx.h"

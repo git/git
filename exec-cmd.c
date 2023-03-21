@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "abspath.h"
+#include "environment.h"
 #include "exec-cmd.h"
 #include "gettext.h"
 #include "quote.h"
