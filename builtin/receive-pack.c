@@ -2183,7 +2183,7 @@ static const char *parse_pack_header(struct pack_header *hdr)
 	}
 }
 
-static const char *pack_lockfile;
+static struct tempfile *pack_lockfile;
 
 static void push_header_arg(struct strvec *args, struct pack_header *hdr)
 {
@@ -2250,6 +2250,7 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 			return "unpack-objects abnormal exit";
 	} else {
 		char hostname[HOST_NAME_MAX + 1];
+		char *lockfile;
 
 		strvec_pushl(&child.args, "index-pack", "--stdin", NULL);
 		push_header_arg(&child.args, &hdr);
@@ -2279,8 +2280,14 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 		status = start_command(&child);
 		if (status)
 			return "index-pack fork failed";
-		pack_lockfile = index_pack_lockfile(child.out, NULL);
+
+		lockfile = index_pack_lockfile(child.out, NULL);
+		if (lockfile) {
+			pack_lockfile = register_tempfile(lockfile);
+			free(lockfile);
+		}
 		close(child.out);
+
 		status = finish_command(&child);
 		if (status)
 			return "index-pack abnormal exit";
@@ -2567,8 +2574,7 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 		use_keepalive = KEEPALIVE_ALWAYS;
 		execute_commands(commands, unpack_status, &si,
 				 &push_options);
-		if (pack_lockfile)
-			unlink_or_warn(pack_lockfile);
+		delete_tempfile(&pack_lockfile);
 		sigchain_push(SIGPIPE, SIG_IGN);
 		if (report_status_v2)
 			report_v2(commands, unpack_status);
