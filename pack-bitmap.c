@@ -134,6 +134,43 @@ static struct ewah_bitmap *lookup_stored_bitmap(struct stored_bitmap *st)
 	return composed;
 }
 
+static size_t bitmap_index_seek(struct bitmap_index *bitmap_git, size_t offset,
+				int whence)
+{
+	switch (whence) {
+	case SEEK_SET:
+		bitmap_git->map_pos = offset;
+		break;
+	case SEEK_CUR:
+		bitmap_git->map_pos = st_add(bitmap_git->map_pos, offset);
+		break;
+	default:
+		BUG("unhandled seek whence: %d", whence);
+	}
+
+	if (bitmap_git->map_pos >= bitmap_git->map_size)
+		BUG("bitmap position exceeds size (%"PRIuMAX" >= %"PRIuMAX")",
+		    (uintmax_t)bitmap_git->map_pos,
+		    (uintmax_t)bitmap_git->map_size);
+
+	return bitmap_git->map_pos;
+}
+
+static int bitmap_index_seek_commit(struct bitmap_index *bitmap_git,
+				     struct object_id *oid,
+				     size_t pos)
+{
+	const int bitmap_header_size = 6;
+
+	bitmap_index_seek(bitmap_git, pos, SEEK_SET);
+
+	if (bitmap_git->map_size - bitmap_git->map_pos < bitmap_header_size)
+		return error(_("corrupt ewah bitmap: truncated header for "
+			       "bitmap of commit \"%s\""),
+			oid_to_hex(oid));
+	return 0;
+}
+
 /*
  * Read a bitmap from the current read position on the mmaped
  * index, and increase the read position accordingly
@@ -152,7 +189,7 @@ static struct ewah_bitmap *read_bitmap_1(struct bitmap_index *index)
 		return NULL;
 	}
 
-	index->map_pos += bitmap_size;
+	bitmap_index_seek(index, bitmap_size, SEEK_CUR);
 	return b;
 }
 
@@ -208,7 +245,7 @@ static int load_bitmap_header(struct bitmap_index *index)
 
 	index->entry_count = ntohl(header->entry_count);
 	index->checksum = header->checksum;
-	index->map_pos += header_size;
+	bitmap_index_seek(index, header_size, SEEK_CUR);
 	return 0;
 }
 
@@ -244,16 +281,18 @@ static struct stored_bitmap *store_bitmap(struct bitmap_index *index,
 	return stored;
 }
 
-static inline uint32_t read_be32(const unsigned char *buffer, size_t *pos)
+static uint32_t read_be32(struct bitmap_index *bitmap_git)
 {
-	uint32_t result = get_be32(buffer + *pos);
-	(*pos) += sizeof(result);
+	uint32_t result = get_be32(bitmap_git->map + bitmap_git->map_pos);
+	bitmap_index_seek(bitmap_git, sizeof(uint32_t), SEEK_CUR);
 	return result;
 }
 
-static inline uint8_t read_u8(const unsigned char *buffer, size_t *pos)
+static uint8_t read_u8(struct bitmap_index *bitmap_git)
 {
-	return buffer[(*pos)++];
+	uint8_t result = bitmap_git->map[bitmap_git->map_pos];
+	bitmap_index_seek(bitmap_git, sizeof(uint8_t), SEEK_CUR);
+	return result;
 }
 
 #define MAX_XOR_OFFSET 160
@@ -282,9 +321,9 @@ static int load_bitmap_entries_v1(struct bitmap_index *index)
 		if (index->map_size - index->map_pos < 6)
 			return error(_("corrupt ewah bitmap: truncated header for entry %d"), i);
 
-		commit_idx_pos = read_be32(index->map, &index->map_pos);
-		xor_offset = read_u8(index->map, &index->map_pos);
-		flags = read_u8(index->map, &index->map_pos);
+		commit_idx_pos = read_be32(index);
+		xor_offset = read_u8(index);
+		flags = read_u8(index);
 
 		if (nth_bitmap_object_oid(index, &oid, commit_idx_pos) < 0)
 			return error(_("corrupt ewah bitmap: commit index %u out of range"),
@@ -713,7 +752,6 @@ static struct stored_bitmap *lazy_bitmap_for_commit(struct bitmap_index *bitmap_
 	struct object_id *oid = &commit->object.oid;
 	struct ewah_bitmap *bitmap;
 	struct stored_bitmap *xor_bitmap = NULL;
-	const int bitmap_header_size = 6;
 	static struct bitmap_lookup_table_xor_item *xor_items = NULL;
 	static size_t xor_items_nr = 0, xor_items_alloc = 0;
 	static int is_corrupt = 0;
@@ -772,15 +810,14 @@ static struct stored_bitmap *lazy_bitmap_for_commit(struct bitmap_index *bitmap_
 
 	while (xor_items_nr) {
 		xor_item = &xor_items[xor_items_nr - 1];
-		bitmap_git->map_pos = xor_item->offset;
-		if (bitmap_git->map_size - bitmap_git->map_pos < bitmap_header_size) {
-			error(_("corrupt ewah bitmap: truncated header for bitmap of commit \"%s\""),
-				oid_to_hex(&xor_item->oid));
-			goto corrupt;
-		}
 
-		bitmap_git->map_pos += sizeof(uint32_t) + sizeof(uint8_t);
-		xor_flags = read_u8(bitmap_git->map, &bitmap_git->map_pos);
+		if (bitmap_index_seek_commit(bitmap_git, &xor_item->oid,
+					     xor_item->offset) < 0)
+			goto corrupt;
+
+		bitmap_index_seek(bitmap_git,
+				  sizeof(uint32_t) + sizeof(uint8_t), SEEK_CUR);
+		xor_flags = read_u8(bitmap_git);
 		bitmap = read_bitmap_1(bitmap_git);
 
 		if (!bitmap)
@@ -790,12 +827,8 @@ static struct stored_bitmap *lazy_bitmap_for_commit(struct bitmap_index *bitmap_
 		xor_items_nr--;
 	}
 
-	bitmap_git->map_pos = offset;
-	if (bitmap_git->map_size - bitmap_git->map_pos < bitmap_header_size) {
-		error(_("corrupt ewah bitmap: truncated header for bitmap of commit \"%s\""),
-			oid_to_hex(oid));
+	if (bitmap_index_seek_commit(bitmap_git, oid, offset) < 0)
 		goto corrupt;
-	}
 
 	/*
 	 * Don't bother reading the commit's index position or its xor
@@ -820,8 +853,9 @@ static struct stored_bitmap *lazy_bitmap_for_commit(struct bitmap_index *bitmap_
 	 * Instead, we can skip ahead and immediately read the flags and
 	 * ewah bitmap.
 	 */
-	bitmap_git->map_pos += sizeof(uint32_t) + sizeof(uint8_t);
-	flags = read_u8(bitmap_git->map, &bitmap_git->map_pos);
+	bitmap_index_seek(bitmap_git, sizeof(uint32_t) + sizeof(uint8_t),
+			  SEEK_CUR);
+	flags = read_u8(bitmap_git);
 	bitmap = read_bitmap_1(bitmap_git);
 
 	if (!bitmap)
