@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "compat/terminal.h"
 #include "gettext.h"
 #include "sigchain.h"

@@ -3,8 +3,9 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
-#include "cache.h"
+#include "git-compat-util.h"
 #include "gettext.h"
+#include "trace2.h"
 #include "wrapper.h"
 
 static void vreportf(const char *prefix, const char *err, va_list params)
