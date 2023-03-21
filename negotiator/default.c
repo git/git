@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "default.h"
 #include "../commit.h"
 #include "../fetch-negotiator.h"
