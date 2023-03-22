@@ -157,7 +157,7 @@ test_expect_success 'and not die on re-checking out current branch even if confl
 	)
 '
 
-test_expect_failure 'unless using force without --ignore-other-worktrees' '
+test_expect_success 'unless using force without --ignore-other-worktrees' '
 	(
 		cd there &&
 		test_must_fail git checkout -B newmain &&
