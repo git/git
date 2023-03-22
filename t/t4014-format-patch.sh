@@ -59,6 +59,10 @@ test_expect_success setup '
 	test_tick &&
 	git commit -m "patchid 3" &&
 
+	git checkout -b empty main &&
+	test_tick &&
+	git commit --allow-empty -m "empty commit" &&
+
 	git checkout main
 '
 
@@ -126,6 +130,12 @@ test_expect_success 'format-patch did not screw up the log message' '
 test_expect_success 'replay did not screw up the log message' '
 	git cat-file commit rebuild-1 >actual &&
 	grep "^Side .* with .* backslash-n" actual
+'
+
+test_expect_success 'format-patch empty commit' '
+	git format-patch --stdout main..empty >empty &&
+	grep "^From " empty >from &&
+	test_line_count = 1 from
 '
 
 test_expect_success 'extra headers' '
@@ -2384,6 +2394,22 @@ test_expect_success 'interdiff: solo-patch' '
 	test_i18ngrep "^Interdiff:$" 0001-fleep.patch &&
 	sed "1,/^  @@ /d; /^$/q" 0001-fleep.patch >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'format-patch does not respect diff.noprefix' '
+	git -c diff.noprefix format-patch -1 --stdout >actual &&
+	grep "^--- a/blorp" actual
+'
+
+test_expect_success 'format-patch respects format.noprefix' '
+	git -c format.noprefix format-patch -1 --stdout >actual &&
+	grep "^--- blorp" actual
+'
+
+test_expect_success 'format-patch --default-prefix overrides format.noprefix' '
+	git -c format.noprefix \
+		format-patch -1 --default-prefix --stdout >actual &&
+	grep "^--- a/blorp" actual
 '
 
 test_done

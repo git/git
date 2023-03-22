@@ -122,6 +122,29 @@ test_expect_success 'bisect start without -- takes unknown arg as pathspec' '
 	grep bar ".git/BISECT_NAMES"
 '
 
+test_expect_success 'bisect reset: back in a branch checked out also elsewhere' '
+	echo "shared" > branch.expect &&
+	test_bisect_reset() {
+		git -C $1 bisect start &&
+		git -C $1 bisect good $HASH1 &&
+		git -C $1 bisect bad $HASH3 &&
+		git -C $1 bisect reset &&
+		git -C $1 branch --show-current > branch.output &&
+		cmp branch.expect branch.output
+	} &&
+	test_when_finished "
+		git worktree remove wt1 &&
+		git worktree remove wt2 &&
+		git branch -d shared
+	" &&
+	git worktree add wt1 -b shared &&
+	git worktree add wt2 -f shared &&
+	# we test in both worktrees to ensure that works
+	# as expected with "first" and "next" worktrees
+	test_bisect_reset wt1 &&
+	test_bisect_reset wt2
+'
+
 test_expect_success 'bisect reset: back in the main branch' '
 	git bisect reset &&
 	echo "* main" > branch.expect &&

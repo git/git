@@ -136,4 +136,6 @@ advice.*::
 		Advice shown when either linkgit:git-add[1] or linkgit:git-rm[1]
 		is asked to update index entries outside the current sparse
 		checkout.
+	diverging::
+		Advice shown when a fast-forward is not possible.
 --

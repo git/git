@@ -9,7 +9,7 @@ git-bundle - Move objects and refs by archive
 SYNOPSIS
 --------
 [verse]
-'git bundle' create [-q | --quiet | --progress | --all-progress] [--all-progress-implied]
+'git bundle' create [-q | --quiet | --progress]
 		    [--version=<version>] <file> <git-rev-list-args>
 'git bundle' verify [-q | --quiet] <file>
 'git bundle' list-heads <file> [<refname>...]
@@ -66,7 +66,7 @@ create [options] <file> <git-rev-list-args>::
 	Used to create a bundle named 'file'.  This requires the
 	'<git-rev-list-args>' arguments to define the bundle contents.
 	'options' contains the options specific to the 'git bundle create'
-	subcommand.
+	subcommand. If 'file' is `-`, the bundle is written to stdout.
 
 verify <file>::
 	Used to check that a bundle file is valid and will apply
@@ -77,12 +77,13 @@ verify <file>::
 	Finally, information about additional capabilities, such as "object
 	filter", is printed. See "Capabilities" in linkgit:gitformat-bundle[5]
 	for more information. The exit code is zero for success, but will
-	be nonzero if the bundle file is invalid.
+	be nonzero if the bundle file is invalid. If 'file' is `-`, the
+	bundle is read from stdin.
 
 list-heads <file>::
 	Lists the references defined in the bundle.  If followed by a
 	list of references, only references matching those given are
-	printed out.
+	printed out. If 'file' is `-`, the bundle is read from stdin.
 
 unbundle <file>::
 	Passes the objects in the bundle to 'git index-pack'
@@ -90,6 +91,7 @@ unbundle <file>::
 	defined references. If a list of references is given, only
 	references matching those in the list are printed. This command is
 	really plumbing, intended to be called only by 'git fetch'.
+	If 'file' is `-`, the bundle is read from stdin.
 
 <git-rev-list-args>::
 	A list of arguments, acceptable to 'git rev-parse' and
@@ -114,22 +116,6 @@ unbundle <file>::
 	by default when it is attached to a terminal, unless -q
 	is specified. This flag forces progress status even if
 	the standard error stream is not directed to a terminal.
-
---all-progress::
-	When --stdout is specified then progress report is
-	displayed during the object count and compression phases
-	but inhibited during the write-out phase. The reason is
-	that in some cases the output stream is directly linked
-	to another command which may wish to display progress
-	status of its own as it processes incoming pack data.
-	This flag is like --progress except that it forces progress
-	report for the write-out phase as well even if --stdout is
-	used.
-
---all-progress-implied::
-	This is used to imply --all-progress whenever progress display
-	is activated.  Unlike --all-progress this flag doesn't actually
-	force any progress display by itself.
 
 --version=<version>::
 	Specify the bundle version.  Version 2 is the older format and can only be

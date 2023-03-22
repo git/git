@@ -401,6 +401,11 @@ test_expect_success 'push with ambiguity' '
 
 '
 
+test_expect_success 'push with onelevel ref' '
+	mk_test testrepo heads/main &&
+	test_must_fail git push testrepo HEAD:refs/onelevel
+'
+
 test_expect_success 'push with colon-less refspec (1)' '
 
 	mk_test testrepo heads/frotz tags/frotz &&
@@ -896,6 +901,13 @@ test_expect_success 'push --delete refuses src:dest refspecs' '
 test_expect_success 'push --delete refuses empty string' '
 	mk_test testrepo heads/master &&
 	test_must_fail git push testrepo --delete ""
+'
+
+test_expect_success 'push --delete onelevel refspecs' '
+	mk_test testrepo heads/main &&
+	git -C testrepo update-ref refs/onelevel refs/heads/main &&
+	git push testrepo --delete refs/onelevel &&
+	test_must_fail git -C testrepo rev-parse --verify refs/onelevel
 '
 
 test_expect_success 'warn on push to HEAD of non-bare repository' '

@@ -661,7 +661,7 @@ static int run_am(struct rebase_options *opts)
 	format_patch.git_cmd = 1;
 	strvec_pushl(&format_patch.args, "format-patch", "-k", "--stdout",
 		     "--full-index", "--cherry-pick", "--right-only",
-		     "--src-prefix=a/", "--dst-prefix=b/", "--no-renames",
+		     "--default-prefix", "--no-renames",
 		     "--no-cover-letter", "--pretty=mboxrd", "--topo-order",
 		     "--no-base", NULL);
 	if (opts->git_format_patch_opt.len)

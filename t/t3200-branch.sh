@@ -245,9 +245,13 @@ test_expect_success 'git branch -M baz bam should succeed within a worktree in w
 	(
 		cd bazdir &&
 		git branch -M baz bam &&
-		test $(git rev-parse --abbrev-ref HEAD) = bam
+		echo bam >expect &&
+		git rev-parse --abbrev-ref HEAD >actual &&
+		test_cmp expect actual
 	) &&
-	test $(git rev-parse --abbrev-ref HEAD) = bam &&
+	echo bam >expect &&
+	git rev-parse --abbrev-ref HEAD >actual &&
+	test_cmp expect actual &&
 	rm -r bazdir &&
 	git worktree prune
 '

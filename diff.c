@@ -3376,6 +3376,17 @@ void diff_set_mnemonic_prefix(struct diff_options *options, const char *a, const
 		options->b_prefix = b;
 }
 
+void diff_set_noprefix(struct diff_options *options)
+{
+	options->a_prefix = options->b_prefix = "";
+}
+
+void diff_set_default_prefix(struct diff_options *options)
+{
+	options->a_prefix = "a/";
+	options->b_prefix = "b/";
+}
+
 struct userdiff_driver *get_textconv(struct repository *r,
 				     struct diff_filespec *one)
 {
@@ -4676,10 +4687,9 @@ void repo_diff_setup(struct repository *r, struct diff_options *options)
 		options->flags.ignore_untracked_in_submodules = 1;
 
 	if (diff_no_prefix) {
-		options->a_prefix = options->b_prefix = "";
+		diff_set_noprefix(options);
 	} else if (!diff_mnemonic_prefix) {
-		options->a_prefix = "a/";
-		options->b_prefix = "b/";
+		diff_set_default_prefix(options);
 	}
 
 	options->color_moved = diff_color_moved_default;
@@ -5263,8 +5273,18 @@ static int diff_opt_no_prefix(const struct option *opt,
 
 	BUG_ON_OPT_NEG(unset);
 	BUG_ON_OPT_ARG(optarg);
-	options->a_prefix = "";
-	options->b_prefix = "";
+	diff_set_noprefix(options);
+	return 0;
+}
+
+static int diff_opt_default_prefix(const struct option *opt,
+				   const char *optarg, int unset)
+{
+	struct diff_options *options = opt->value;
+
+	BUG_ON_OPT_NEG(unset);
+	BUG_ON_OPT_ARG(optarg);
+	diff_set_default_prefix(options);
 	return 0;
 }
 
@@ -5557,6 +5577,9 @@ struct option *add_diff_options(const struct option *opts,
 		OPT_CALLBACK_F(0, "no-prefix", options, NULL,
 			       N_("do not show any source or destination prefix"),
 			       PARSE_OPT_NONEG | PARSE_OPT_NOARG, diff_opt_no_prefix),
+		OPT_CALLBACK_F(0, "default-prefix", options, NULL,
+			       N_("use default prefixes a/ and b/"),
+			       PARSE_OPT_NONEG | PARSE_OPT_NOARG, diff_opt_default_prefix),
 		OPT_INTEGER_F(0, "inter-hunk-context", &options->interhunkcontext,
 			      N_("show context between diff hunks up to the specified number of lines"),
 			      PARSE_OPT_NONEG),

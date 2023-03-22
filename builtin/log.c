@@ -58,6 +58,7 @@ static int stdout_mboxrd;
 static const char *fmt_patch_subject_prefix = "PATCH";
 static int fmt_patch_name_max = FORMAT_PATCH_NAME_MAX_DEFAULT;
 static const char *fmt_pretty;
+static int format_no_prefix;
 
 static const char * const builtin_log_usage[] = {
 	N_("git log [<options>] [<revision-range>] [[--] <path>...]"),
@@ -1084,6 +1085,19 @@ static int git_format_config(const char *var, const char *value, void *cb)
 		stdout_mboxrd = git_config_bool(var, value);
 		return 0;
 	}
+	if (!strcmp(var, "format.noprefix")) {
+		format_no_prefix = 1;
+		return 0;
+	}
+
+	/*
+	 * ignore some porcelain config which would otherwise be parsed by
+	 * git_diff_ui_config(), via git_log_config(); we can't just avoid
+	 * diff_ui_config completely, because we do care about some ui options
+	 * like color.
+	 */
+	if (!strcmp(var, "diff.noprefix"))
+		return 0;
 
 	return git_log_config(var, value, cb);
 }
@@ -1993,6 +2007,9 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	s_r_opt.def = "HEAD";
 	s_r_opt.revarg_opt = REVARG_COMMITTISH;
 
+	if (format_no_prefix)
+		diff_set_noprefix(&rev.diffopt);
+
 	if (default_attach) {
 		rev.mime_boundary = default_attach;
 		rev.no_inline = 1;
@@ -2097,6 +2114,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 
 	/* Always generate a patch */
 	rev.diffopt.output_format |= DIFF_FORMAT_PATCH;
+	rev.always_show_header = 1;
 
 	rev.zero_commit = zero_commit;
 	rev.patch_name_max = fmt_patch_name_max;

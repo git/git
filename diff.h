@@ -496,6 +496,8 @@ void diff_tree_combined(const struct object_id *oid, const struct oid_array *par
 void diff_tree_combined_merge(const struct commit *commit, struct rev_info *rev);
 
 void diff_set_mnemonic_prefix(struct diff_options *options, const char *a, const char *b);
+void diff_set_noprefix(struct diff_options *options);
+void diff_set_default_prefix(struct diff_options *options);
 
 int diff_can_quit_early(struct diff_options *);
 

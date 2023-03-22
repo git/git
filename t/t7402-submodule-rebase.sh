@@ -56,12 +56,15 @@ chmod a+x fake-editor.sh
 
 test_expect_success 'interactive rebase with a dirty submodule' '
 
-	test submodule = $(git diff --name-only) &&
+	echo submodule >expect &&
+	git diff --name-only >actual &&
+	test_cmp expect actual &&
 	HEAD=$(git rev-parse HEAD) &&
 	GIT_EDITOR="\"$(pwd)/fake-editor.sh\"" EDITOR_TEXT="pick $HEAD" \
 		git rebase -i HEAD^ &&
-	test submodule = $(git diff --name-only)
-
+	echo submodule >expect &&
+	git diff --name-only >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'rebase with dirty file and submodule fails' '
@@ -83,11 +86,19 @@ test_expect_success 'stash with a dirty submodule' '
 	CURRENT=$(cd submodule && git rev-parse HEAD) &&
 	git stash &&
 	test new != $(cat file) &&
-	test submodule = $(git diff --name-only) &&
-	test $CURRENT = $(cd submodule && git rev-parse HEAD) &&
+	echo submodule >expect &&
+	git diff --name-only >actual &&
+	test_cmp expect actual &&
+
+	echo "$CURRENT" >expect &&
+	git -C submodule rev-parse HEAD >actual &&
+	test_cmp expect actual &&
+
 	git stash apply &&
 	test new = $(cat file) &&
-	test $CURRENT = $(cd submodule && git rev-parse HEAD)
+	echo "$CURRENT" >expect &&
+	git -C submodule rev-parse HEAD >actual &&
+	test_cmp expect actual
 
 '
 
