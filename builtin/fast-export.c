@@ -1140,11 +1140,6 @@ static void handle_deletes(void)
 	}
 }
 
-static char *anonymize_seed(void *data)
-{
-	return xstrdup(data);
-}
-
 static int parse_opt_anonymize_map(const struct option *opt,
 				   const char *arg, int unset)
 {
@@ -1166,7 +1161,8 @@ static int parse_opt_anonymize_map(const struct option *opt,
 	if (!keylen || !*value)
 		return error(_("--anonymize-map token cannot be empty"));
 
-	anonymize_str(map, anonymize_seed, arg, keylen, (void *)value);
+	add_anonymized_entry(map, memhash(arg, keylen), arg, keylen,
+			     xstrdup(value));
 
 	return 0;
 }
