@@ -556,7 +556,7 @@ static const char *anonymize_refname(const char *refname)
  * We do not even bother to cache commit messages, as they are unlikely
  * to be repeated verbatim, and it is not that interesting when they are.
  */
-static char *anonymize_commit_message(const char *old)
+static char *anonymize_commit_message(void)
 {
 	static int counter;
 	return xstrfmt("subject %d\n\nbody\n", counter++);
@@ -683,7 +683,7 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 
 	mark_next_object(&commit->object);
 	if (anonymize) {
-		reencoded = anonymize_commit_message(message);
+		reencoded = anonymize_commit_message();
 	} else if (encoding) {
 		switch(reencode_mode) {
 		case REENCODE_YES:
