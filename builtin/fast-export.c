@@ -110,7 +110,7 @@ static struct decoration idnums;
 static uint32_t last_idnum;
 struct anonymized_entry {
 	struct hashmap_entry hash;
-	const char *anon;
+	char *anon;
 	const char orig[FLEX_ARRAY];
 };
 
