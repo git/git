@@ -152,18 +152,12 @@ static const char *anonymize_str(struct hashmap *map,
 	struct anonymized_entry_key key;
 	struct anonymized_entry *ret;
 
-	if (!map->cmpfn)
-		hashmap_init(map, anonymized_entry_cmp, NULL, 0);
-
 	hashmap_entry_init(&key.hash, memhash(orig, len));
 	key.orig = orig;
 	key.orig_len = len;
 
 	/* First check if it's a token the user configured manually... */
-	if (anonymized_seeds.cmpfn)
-		ret = hashmap_get_entry(&anonymized_seeds, &key, hash, &key);
-	else
-		ret = NULL;
+	ret = hashmap_get_entry(&anonymized_seeds, &key, hash, &key);
 
 	/* ...otherwise check if we've already seen it in this context... */
 	if (!ret)
@@ -171,6 +165,9 @@ static const char *anonymize_str(struct hashmap *map,
 
 	/* ...and finally generate a new mapping if necessary */
 	if (!ret) {
+		if (!map->cmpfn)
+			hashmap_init(map, anonymized_entry_cmp, NULL, 0);
+
 		FLEX_ALLOC_MEM(ret, orig, orig, len);
 		hashmap_entry_init(&ret->hash, key.hash.hash);
 		ret->anon = generate(data);
