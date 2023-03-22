@@ -139,6 +139,29 @@ static int anonymized_entry_cmp(const void *cmp_data UNUSED,
 	return strcmp(a->orig, b->orig);
 }
 
+static struct anonymized_entry *add_anonymized_entry(struct hashmap *map,
+						     unsigned hash,
+						     const char *orig, size_t len,
+						     char *anon)
+{
+	struct anonymized_entry *ret, *old;
+
+	if (!map->cmpfn)
+		hashmap_init(map, anonymized_entry_cmp, NULL, 0);
+
+	FLEX_ALLOC_MEM(ret, orig, orig, len);
+	hashmap_entry_init(&ret->hash, hash);
+	ret->anon = anon;
+	old = hashmap_put_entry(map, ret, hash);
+
+	if (old) {
+		free(old->anon);
+		free(old);
+	}
+
+	return ret;
+}
+
 /*
  * Basically keep a cache of X->Y so that we can repeatedly replace
  * the same anonymized string with another. The actual generation
@@ -164,15 +187,9 @@ static const char *anonymize_str(struct hashmap *map,
 		ret = hashmap_get_entry(map, &key, hash, &key);
 
 	/* ...and finally generate a new mapping if necessary */
-	if (!ret) {
-		if (!map->cmpfn)
-			hashmap_init(map, anonymized_entry_cmp, NULL, 0);
-
-		FLEX_ALLOC_MEM(ret, orig, orig, len);
-		hashmap_entry_init(&ret->hash, key.hash.hash);
-		ret->anon = generate(data);
-		hashmap_put(map, &ret->hash);
-	}
+	if (!ret)
+		ret = add_anonymized_entry(map, key.hash.hash,
+					   orig, len, generate(data));
 
 	return ret->anon;
 }
