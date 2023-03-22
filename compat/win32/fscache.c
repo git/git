@@ -7,6 +7,7 @@
 #include "../../mem-pool.h"
 #include "ntifs.h"
 #include "../../abspath.h"
+#include "../../trace.h"
 
 static volatile long initialized;
 static DWORD dwTlsIndex;
