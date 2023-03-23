@@ -4,7 +4,6 @@
 #include "oid-array.h"
 #include "refs.h"
 #include "commit.h"
-#include "parse-options.h"
 
 /* Quoting styles */
 #define QUOTE_NONE 0
@@ -24,6 +23,7 @@
 
 struct atom_value;
 struct ref_sorting;
+struct option;
 
 enum ref_sorting_order {
 	REF_SORTING_REVERSE = 1<<0,

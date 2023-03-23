@@ -11,6 +11,7 @@
 #include "promisor-remote.h"
 #include "trace.h"
 #include "url.h"
+#include "parse-options.h"
 
 static int parse_combine_filter(
 	struct list_objects_filter_options *filter_options,

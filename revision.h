@@ -2,7 +2,6 @@
 #define REVISION_H
 
 #include "commit.h"
-#include "parse-options.h"
 #include "grep.h"
 #include "notes.h"
 #include "pretty.h"
@@ -62,6 +61,8 @@ struct string_list;
 struct saved_parents;
 struct bloom_key;
 struct bloom_filter_settings;
+struct option;
+struct parse_opt_ctx_t;
 define_shared_commit_slab(revision_sources, char *);
 
 struct rev_cmdline_info {
