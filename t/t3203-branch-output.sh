@@ -337,6 +337,20 @@ test_expect_success 'git branch --format option' '
 	test_cmp expect actual
 '
 
+test_expect_success 'git branch --format with ahead-behind' '
+	cat >expect <<-\EOF &&
+	(HEAD detached from fromtag) 0 0
+	refs/heads/ambiguous 0 0
+	refs/heads/branch-one 1 0
+	refs/heads/branch-two 0 0
+	refs/heads/main 1 0
+	refs/heads/ref-to-branch 1 0
+	refs/heads/ref-to-remote 1 0
+	EOF
+	git branch --format="%(refname) %(ahead-behind:HEAD)" >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'git branch with --format=%(rest) must fail' '
 	test_must_fail git branch --format="%(rest)" >actual
 '

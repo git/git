@@ -54,4 +54,18 @@ test_expect_success 'Missing objects are reported correctly' '
 	test_must_be_empty brief-err
 '
 
+test_expect_success 'ahead-behind requires an argument' '
+	test_must_fail git for-each-ref \
+		--format="%(ahead-behind)" 2>err &&
+	echo "fatal: expected format: %(ahead-behind:<committish>)" >expect &&
+	test_cmp expect err
+'
+
+test_expect_success 'missing ahead-behind base' '
+	test_must_fail git for-each-ref \
+		--format="%(ahead-behind:refs/heads/missing)" 2>err &&
+	echo "fatal: failed to find '\''refs/heads/missing'\''" >expect &&
+	test_cmp expect err
+'
+
 test_done

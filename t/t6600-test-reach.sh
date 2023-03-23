@@ -443,4 +443,173 @@ test_expect_success 'get_reachable_subset:none' '
 	test_all_modes get_reachable_subset
 '
 
+test_expect_success 'for-each-ref ahead-behind:linear' '
+	cat >input <<-\EOF &&
+	refs/heads/commit-1-1
+	refs/heads/commit-1-3
+	refs/heads/commit-1-5
+	refs/heads/commit-1-8
+	EOF
+	cat >expect <<-\EOF &&
+	refs/heads/commit-1-1 0 8
+	refs/heads/commit-1-3 0 6
+	refs/heads/commit-1-5 0 4
+	refs/heads/commit-1-8 0 1
+	EOF
+	run_all_modes git for-each-ref \
+		--format="%(refname) %(ahead-behind:commit-1-9)" --stdin
+'
+
+test_expect_success 'for-each-ref ahead-behind:all' '
+	cat >input <<-\EOF &&
+	refs/heads/commit-1-1
+	refs/heads/commit-2-4
+	refs/heads/commit-4-2
+	refs/heads/commit-4-4
+	EOF
+	cat >expect <<-\EOF &&
+	refs/heads/commit-1-1 0 24
+	refs/heads/commit-2-4 0 17
+	refs/heads/commit-4-2 0 17
+	refs/heads/commit-4-4 0 9
+	EOF
+	run_all_modes git for-each-ref \
+		--format="%(refname) %(ahead-behind:commit-5-5)" --stdin
+'
+
+test_expect_success 'for-each-ref ahead-behind:some' '
+	cat >input <<-\EOF &&
+	refs/heads/commit-1-1
+	refs/heads/commit-5-3
+	refs/heads/commit-4-8
+	refs/heads/commit-9-9
+	EOF
+	cat >expect <<-\EOF &&
+	refs/heads/commit-1-1 0 53
+	refs/heads/commit-4-8 8 30
+	refs/heads/commit-5-3 0 39
+	refs/heads/commit-9-9 27 0
+	EOF
+	run_all_modes git for-each-ref \
+		--format="%(refname) %(ahead-behind:commit-9-6)" --stdin
+'
+
+test_expect_success 'for-each-ref ahead-behind:some, multibase' '
+	cat >input <<-\EOF &&
+	refs/heads/commit-1-1
+	refs/heads/commit-5-3
+	refs/heads/commit-7-8
+	refs/heads/commit-4-8
+	refs/heads/commit-9-9
+	EOF
+	cat >expect <<-\EOF &&
+	refs/heads/commit-1-1 0 53 0 53
+	refs/heads/commit-4-8 8 30 0 22
+	refs/heads/commit-5-3 0 39 0 39
+	refs/heads/commit-7-8 14 12 8 6
+	refs/heads/commit-9-9 27 0 27 0
+	EOF
+	run_all_modes git for-each-ref \
+		--format="%(refname) %(ahead-behind:commit-9-6) %(ahead-behind:commit-6-9)" \
+		--stdin
+'
+
+test_expect_success 'for-each-ref ahead-behind:none' '
+	cat >input <<-\EOF &&
+	refs/heads/commit-7-5
+	refs/heads/commit-4-8
+	refs/heads/commit-9-9
+	EOF
+	cat >expect <<-\EOF &&
+	refs/heads/commit-4-8 16 16
+	refs/heads/commit-7-5 7 4
+	refs/heads/commit-9-9 49 0
+	EOF
+	run_all_modes git for-each-ref \
+		--format="%(refname) %(ahead-behind:commit-8-4)" --stdin
+'
+
+test_expect_success 'for-each-ref merged:linear' '
+	cat >input <<-\EOF &&
+	refs/heads/commit-1-1
+	refs/heads/commit-1-3
+	refs/heads/commit-1-5
+	refs/heads/commit-1-8
+	refs/heads/commit-2-1
+	refs/heads/commit-5-1
+	refs/heads/commit-9-1
+	EOF
+	cat >expect <<-\EOF &&
+	refs/heads/commit-1-1
+	refs/heads/commit-1-3
+	refs/heads/commit-1-5
+	refs/heads/commit-1-8
+	EOF
+	run_all_modes git for-each-ref --merged=commit-1-9 \
+		--format="%(refname)" --stdin
+'
+
+test_expect_success 'for-each-ref merged:all' '
+	cat >input <<-\EOF &&
+	refs/heads/commit-1-1
+	refs/heads/commit-2-4
+	refs/heads/commit-4-2
+	refs/heads/commit-4-4
+	EOF
+	cat >expect <<-\EOF &&
+	refs/heads/commit-1-1
+	refs/heads/commit-2-4
+	refs/heads/commit-4-2
+	refs/heads/commit-4-4
+	EOF
+	run_all_modes git for-each-ref --merged=commit-5-5 \
+		--format="%(refname)" --stdin
+'
+
+test_expect_success 'for-each-ref ahead-behind:some' '
+	cat >input <<-\EOF &&
+	refs/heads/commit-1-1
+	refs/heads/commit-5-3
+	refs/heads/commit-4-8
+	refs/heads/commit-9-9
+	EOF
+	cat >expect <<-\EOF &&
+	refs/heads/commit-1-1
+	refs/heads/commit-5-3
+	EOF
+	run_all_modes git for-each-ref --merged=commit-9-6 \
+		--format="%(refname)" --stdin
+'
+
+test_expect_success 'for-each-ref merged:some, multibase' '
+	cat >input <<-\EOF &&
+	refs/heads/commit-1-1
+	refs/heads/commit-5-3
+	refs/heads/commit-7-8
+	refs/heads/commit-4-8
+	refs/heads/commit-9-9
+	EOF
+	cat >expect <<-\EOF &&
+	refs/heads/commit-1-1
+	refs/heads/commit-4-8
+	refs/heads/commit-5-3
+	EOF
+	run_all_modes git for-each-ref \
+		--merged=commit-5-8 \
+		--merged=commit-8-5 \
+		--format="%(refname)" \
+		--stdin
+'
+
+test_expect_success 'for-each-ref merged:none' '
+	cat >input <<-\EOF &&
+	refs/heads/commit-7-5
+	refs/heads/commit-4-8
+	refs/heads/commit-9-9
+	EOF
+	>expect &&
+	run_all_modes git for-each-ref --merged=commit-8-4 \
+		--format="%(refname)" --stdin
+'
+
 test_done

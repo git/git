@@ -448,6 +448,7 @@ static void print_ref_list(struct ref_filter *filter, struct ref_sorting *sortin
 	if (verify_ref_format(format))
 		die(_("unable to parse format string"));
 
+	filter_ahead_behind(the_repository, format, &array);
 	ref_array_sort(sorting, &array);
 
 	for (i = 0; i < array.nr; i++) {

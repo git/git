@@ -5,6 +5,8 @@
 #include "object.h"
 #include "parse-options.h"
 #include "ref-filter.h"
+#include "strvec.h"
+#include "commit-reach.h"
 
 static char const * const for_each_ref_usage[] = {
 	N_("git for-each-ref [<options>] [<pattern>]"),
@@ -25,6 +27,8 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 	struct ref_format format = REF_FORMAT_INIT;
 	struct strbuf output = STRBUF_INIT;
 	struct strbuf err = STRBUF_INIT;
+	int from_stdin = 0;
+	struct strvec vec = STRVEC_INIT;
 
 	struct option opts[] = {
 		OPT_BIT('s', "shell", &format.quote_style,
@@ -49,6 +53,7 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 		OPT_CONTAINS(&filter.with_commit, N_("print only refs which contain the commit")),
 		OPT_NO_CONTAINS(&filter.no_commit, N_("print only refs which don't contain the commit")),
 		OPT_BOOL(0, "ignore-case", &icase, N_("sorting and filtering are case insensitive")),
+		OPT_BOOL(0, "stdin", &from_stdin, N_("read reference patterns from stdin")),
 		OPT_END(),
 	};
 
@@ -75,9 +80,27 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 	ref_sorting_set_sort_flags_all(sorting, REF_SORTING_ICASE, icase);
 	filter.ignore_case = icase;
 
-	filter.name_patterns = argv;
+	if (from_stdin) {
+		struct strbuf line = STRBUF_INIT;
+
+		if (argv[0])
+			die(_("unknown arguments supplied with --stdin"));
+
+		while (strbuf_getline(&line, stdin) != EOF)
+			strvec_push(&vec, line.buf);
+
+		strbuf_release(&line);
+
+		/* vec.v is NULL-terminated, just like 'argv'. */
+		filter.name_patterns = vec.v;
+	} else {
+		filter.name_patterns = argv;
+	}
+
 	filter.match_as_path = 1;
 	filter_refs(&array, &filter, FILTER_REFS_ALL);
+	filter_ahead_behind(the_repository, &format, &array);
+
 	ref_array_sort(sorting, &array);
 
 	if (!maxcount || array.nr < maxcount)
@@ -97,5 +120,6 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 	free_commit_list(filter.with_commit);
 	free_commit_list(filter.no_commit);
 	ref_sorting_release(sorting);
+	strvec_clear(&vec);
 	return 0;
 }

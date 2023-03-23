@@ -67,6 +67,7 @@ static int list_tags(struct ref_filter *filter, struct ref_sorting *sorting,
 		die(_("unable to parse format string"));
 	filter->with_commit_tag_algo = 1;
 	filter_refs(&array, filter, FILTER_REFS_TAGS);
+	filter_ahead_behind(the_repository, format, &array);
 	ref_array_sort(sorting, &array);
 
 	for (i = 0; i < array.nr; i++) {
