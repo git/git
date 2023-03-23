@@ -2530,7 +2530,6 @@ static int safe_append(const char *filename, const char *fmt, ...)
 	}
 	if (commit_lock_file(&lock) < 0) {
 		strbuf_release(&buf);
-		rollback_lock_file(&lock);
 		return error(_("failed to finalize '%s'"), filename);
 	}
 
