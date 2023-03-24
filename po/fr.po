@@ -12419,7 +12419,7 @@ msgid "stash staged changes only"
 msgstr "remiser seulement les modifications indexées"
 
 msgid "stash in patch mode"
-msgstr "remiser une mode rustine"
+msgstr "remiser en mode rustine"
 
 msgid "quiet mode"
 msgstr "mode silencieux"
