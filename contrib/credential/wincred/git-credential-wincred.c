@@ -91,7 +91,8 @@ static void load_cred_funcs(void)
 		die("failed to load functions");
 }
 
-static WCHAR *wusername, *password, *protocol, *host, *path, target[1024];
+static WCHAR *wusername, *password, *protocol, *host, *path, target[1024],
+	*password_expiry_utc;
 
 static void write_item(const char *what, LPCWSTR wbuf, int wlen)
 {
@@ -183,6 +184,7 @@ static void get_credential(void)
 	CREDENTIALW **creds;
 	DWORD num_creds;
 	int i;
+	CREDENTIAL_ATTRIBUTEW *attr;
 
 	if (!CredEnumerateW(L"git:*", 0, &num_creds, &creds))
 		return;
@@ -195,6 +197,14 @@ static void get_credential(void)
 			write_item("password",
 				(LPCWSTR)creds[i]->CredentialBlob,
 				creds[i]->CredentialBlobSize / sizeof(WCHAR));
+			for (int j = 0; j < creds[i]->AttributeCount; j++) {
+				attr = creds[i]->Attributes + j;
+				if (!wcscmp(attr->Keyword, L"git_password_expiry_utc")) {
+					write_item("password_expiry_utc", (LPCWSTR)attr->Value,
+					attr->ValueSize / sizeof(WCHAR));
+					break;
+				}
+			}
 			break;
 		}
 
@@ -204,6 +214,7 @@ static void get_credential(void)
 static void store_credential(void)
 {
 	CREDENTIALW cred;
+	CREDENTIAL_ATTRIBUTEW expiry_attr;
 
 	if (!wusername || !password)
 		return;
@@ -217,6 +228,14 @@ static void store_credential(void)
 	cred.Persist = CRED_PERSIST_LOCAL_MACHINE;
 	cred.AttributeCount = 0;
 	cred.Attributes = NULL;
+	if (password_expiry_utc != NULL) {
+		expiry_attr.Keyword = L"git_password_expiry_utc";
+		expiry_attr.Value = (LPVOID)password_expiry_utc;
+		expiry_attr.ValueSize = (wcslen(password_expiry_utc)) * sizeof(WCHAR);
+		expiry_attr.Flags = 0;
+		cred.Attributes = &expiry_attr;
+		cred.AttributeCount = 1;
+	}
 	cred.TargetAlias = NULL;
 	cred.UserName = wusername;
 
@@ -278,6 +297,8 @@ static void read_credential(void)
 			wusername = utf8_to_utf16_dup(v);
 		} else if (!strcmp(buf, "password"))
 			password = utf8_to_utf16_dup(v);
+		else if (!strcmp(buf, "password_expiry_utc"))
+			password_expiry_utc = utf8_to_utf16_dup(v);
 		/*
 		 * Ignore other lines; we don't know what they mean, but
 		 * this future-proofs us when later versions of git do
@@ -292,7 +313,7 @@ int main(int argc, char *argv[])
 	    "usage: git credential-wincred <get|store|erase>\n";
 
 	if (!argv[1])
-		die(usage);
+		die("%s", usage);
 
 	/* git use binary pipes to avoid CRLF-issues */
 	_setmode(_fileno(stdin), _O_BINARY);
