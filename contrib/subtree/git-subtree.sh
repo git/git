@@ -46,6 +46,8 @@ rejoin        merge the new branch back into HEAD
  options for 'add' and 'merge' (also: 'pull', 'split --rejoin', and 'push --rejoin')
 squash        merge subtree changes as a single commit
 m,message!=   use the given message as the commit message for the merge commit
+S,gpg-sign?   GPG-sign commits, optionally specifying keyid.
+no-gpg-sign   Disable GPG commit signing.
 "
 
 indent=0
@@ -165,6 +167,7 @@ main () {
 	arg_quiet=
 	arg_debug=
 	arg_prefix=
+	arg_gpgsign=
 	arg_split_branch=
 	arg_split_onto=
 	arg_split_ignore_joins=
@@ -240,6 +243,9 @@ main () {
 			test -n "$allow_addmerge" || die_incompatible_opt "$opt" "$arg_command"
 			arg_addmerge_squash=
 			;;
+		-S*|--gpg-sign=*|--no-gpg-sign)
+			arg_gpgsign="${opt}"
+			;;
 		--)
 			break
 			;;
@@ -267,6 +273,12 @@ main () {
 	esac
 
 	dir="$(dirname "$arg_prefix/.")"
+
+	if test -z "$arg_gpgsign" &&
+		git config --bool commit.gpgsign >/dev/null
+	then
+		arg_gpgsign="-S"
+	fi
 
 	debug "command: {$arg_command}"
 	debug "quiet: {$arg_quiet}"
@@ -537,7 +549,7 @@ copy_commit () {
 			printf "%s" "$arg_split_annotate"
 			cat
 		) |
-		git commit-tree "$2" $3  # reads the rest of stdin
+		git commit-tree $arg_gpgsign "$2" $3  # reads the rest of stdin
 	) || die "fatal: can't copy commit $1"
 }
 
@@ -683,10 +695,10 @@ new_squash_commit () {
 	if test -n "$old"
 	then
 		squash_msg "$dir" "$oldsub" "$newsub" |
-		git commit-tree "$tree" -p "$old" || exit $?
+		git commit-tree $arg_gpgsign "$tree" -p "$old" || exit $?
 	else
 		squash_msg "$dir" "" "$newsub" |
-		git commit-tree "$tree" || exit $?
+		git commit-tree $arg_gpgsign "$tree" || exit $?
 	fi
 }
 
@@ -925,11 +937,13 @@ cmd_add_commit () {
 	then
 		rev=$(new_squash_commit "" "" "$rev") || exit $?
 		commit=$(add_squashed_msg "$rev" "$dir" |
-			git commit-tree "$tree" $headp -p "$rev") || exit $?
+			git commit-tree $arg_gpgsign "$tree" \
+			$headp -p "$rev") || exit $?
 	else
 		revp=$(peel_committish "$rev") || exit $?
 		commit=$(add_msg "$dir" $headrev "$rev" |
-			git commit-tree "$tree" $headp -p "$revp") || exit $?
+			git commit-tree $arg_gpgsign "$tree" \
+			$headp -p "$revp") || exit $?
 	fi
 	git reset "$commit" || exit $?
 
