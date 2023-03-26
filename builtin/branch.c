@@ -539,6 +539,7 @@ static int replace_each_worktree_head_symref(struct worktree **worktrees,
 }
 
 #define IS_HEAD 1
+#define IS_ORPHAN 2
 
 static void copy_or_rename_branch(const char *oldname, const char *newname, int copy, int force)
 {
@@ -565,6 +566,8 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 
 		if (wt->head_ref && !strcmp(oldref.buf, wt->head_ref)) {
 			oldref_usage |= IS_HEAD;
+			if (is_null_oid(&wt->head_oid))
+				oldref_usage |= IS_ORPHAN;
 			break;
 		}
 	}
@@ -599,8 +602,7 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 		strbuf_addf(&logmsg, "Branch: renamed %s to %s",
 			    oldref.buf, newref.buf);
 
-	if (!copy &&
-	    (!head || strcmp(oldname, head) || !is_null_oid(&head_oid)) &&
+	if (!copy && !(oldref_usage & IS_ORPHAN) &&
 	    rename_ref(oldref.buf, newref.buf, logmsg.buf))
 		die(_("Branch rename failed"));
 	if (copy && copy_existing_ref(oldref.buf, newref.buf, logmsg.buf))
