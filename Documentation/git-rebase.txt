@@ -537,7 +537,8 @@ See also INCOMPATIBLE OPTIONS below.
 	by recreating the merge commits. Any resolved merge conflicts or
 	manual amendments in these merge commits will have to be
 	resolved/re-applied manually. `--no-rebase-merges` can be used to
-	countermand a previous `--rebase-merges`.
+	countermand both the `rebase.rebaseMerges` config option and a previous
+	`--rebase-merges`.
 +
 When rebasing merges, there are two modes: `rebase-cousins` and
 `no-rebase-cousins`. If the mode is not specified, it defaults to
