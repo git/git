@@ -1003,4 +1003,41 @@ test_expect_success !UNICODE_COMPOSITION_SENSITIVE 'Unicode nfc/nfd' '
 	egrep "^event: nfd/d_${utf8_nfc}/?$" ./unicode.trace
 '
 
+test_expect_failure 'split-index and FSMonitor work well together' '
+	git init split-index &&
+	test_when_finished "git -C \"$PWD/split-index\" \
+		fsmonitor--daemon stop" &&
+	(
+		cd split-index &&
+		git config core.splitIndex true &&
+		# force split-index in most cases
+		git config splitIndex.maxPercentChange 99 &&
+		git config core.fsmonitor true &&
+
+		# Create the following commit topology:
+		#
+		# *   merge three
+		# |\
+		# | * three
+		# * | merge two
+		# |\|
+		# | * two
+		# * | one
+		# |/
+		# * 5a5efd7 initial
+
+		test_commit initial &&
+		test_commit two &&
+		test_commit three &&
+		git reset --hard initial &&
+		test_commit one &&
+		test_tick &&
+		git merge two &&
+		test_tick &&
+		git merge three &&
+
+		git rebase --force-rebase -r one
+	)
+'
+
 test_done
