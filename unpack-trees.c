@@ -1916,6 +1916,8 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		 * create a new one.
 		 */
 		o->result.split_index = o->src_index->split_index;
+		if (o->src_index->cache_changed & SPLIT_INDEX_ORDERED)
+			o->result.cache_changed |= SPLIT_INDEX_ORDERED;
 		o->result.split_index->refcount++;
 	} else {
 		o->result.split_index = init_split_index(&o->result);
