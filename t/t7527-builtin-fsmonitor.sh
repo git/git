@@ -1003,7 +1003,7 @@ test_expect_success !UNICODE_COMPOSITION_SENSITIVE 'Unicode nfc/nfd' '
 	egrep "^event: nfd/d_${utf8_nfc}/?$" ./unicode.trace
 '
 
-test_expect_failure 'split-index and FSMonitor work well together' '
+test_expect_success 'split-index and FSMonitor work well together' '
 	git init split-index &&
 	test_when_finished "git -C \"$PWD/split-index\" \
 		fsmonitor--daemon stop" &&
