@@ -486,9 +486,9 @@ static void print_current_branch_name(void)
 		die(_("HEAD (%s) points outside of refs/heads/"), refname);
 }
 
-static void reject_rebase_or_bisect_branch(const char *target)
+static void reject_rebase_or_bisect_branch(struct worktree **worktrees,
+					   const char *target)
 {
-	struct worktree **worktrees = get_worktrees();
 	int i;
 
 	for (i = 0; worktrees[i]; i++) {
@@ -505,8 +505,6 @@ static void reject_rebase_or_bisect_branch(const char *target)
 			die(_("Branch %s is being bisected at %s"),
 			    target, wt->path);
 	}
-
-	free_worktrees(worktrees);
 }
 
 /*
@@ -514,11 +512,11 @@ static void reject_rebase_or_bisect_branch(const char *target)
  * This will be used when renaming a branch. Returns 0 if successful, non-zero
  * otherwise.
  */
-static int replace_each_worktree_head_symref(const char *oldref, const char *newref,
+static int replace_each_worktree_head_symref(struct worktree **worktrees,
+					     const char *oldref, const char *newref,
 					     const char *logmsg)
 {
 	int ret = 0;
-	struct worktree **worktrees = get_worktrees();
 	int i;
 
 	for (i = 0; worktrees[i]; i++) {
@@ -537,7 +535,6 @@ static int replace_each_worktree_head_symref(const char *oldref, const char *new
 				    worktrees[i]->path);
 	}
 
-	free_worktrees(worktrees);
 	return ret;
 }
 
@@ -548,6 +545,7 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 	const char *interpreted_oldname = NULL;
 	const char *interpreted_newname = NULL;
 	int recovery = 0;
+	struct worktree **worktrees = get_worktrees();
 
 	if (strbuf_check_branch_ref(&oldref, oldname)) {
 		/*
@@ -576,7 +574,7 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 	else
 		validate_new_branchname(newname, &newref, force);
 
-	reject_rebase_or_bisect_branch(oldref.buf);
+	reject_rebase_or_bisect_branch(worktrees, oldref.buf);
 
 	if (!skip_prefix(oldref.buf, "refs/heads/", &interpreted_oldname) ||
 	    !skip_prefix(newref.buf, "refs/heads/", &interpreted_newname)) {
@@ -607,7 +605,8 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 	}
 
 	if (!copy &&
-	    replace_each_worktree_head_symref(oldref.buf, newref.buf, logmsg.buf))
+	    replace_each_worktree_head_symref(worktrees, oldref.buf, newref.buf,
+					      logmsg.buf))
 		die(_("Branch renamed to %s, but HEAD is not updated!"), newname);
 
 	strbuf_release(&logmsg);
@@ -622,6 +621,7 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 	strbuf_release(&newref);
 	strbuf_release(&oldsection);
 	strbuf_release(&newsection);
+	free_worktrees(worktrees);
 }
 
 static GIT_PATH_FUNC(edit_description, "EDIT_DESCRIPTION")
