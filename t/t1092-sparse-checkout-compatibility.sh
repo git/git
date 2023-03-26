@@ -1514,6 +1514,16 @@ test_expect_success 'sparse-index is not expanded: stash' '
 	ensure_not_expanded stash pop
 '
 
+test_expect_success 'sparse-index is not expanded: describe' '
+	init_repos &&
+	ensure_not_expanded tag -a v1.0 -m "Version 1" &&
+	ensure_not_expanded describe --dirty &&
+	ensure_not_expanded describe &&
+	echo "test" >> sparse-index/extra.txt &&
+	ensure_not_expanded describe --dirty &&
+	ensure_not_expanded describe
+'
+
 test_expect_success 'sparse index is not expanded: diff' '
 	init_repos &&
 
