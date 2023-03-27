@@ -63,4 +63,13 @@ test_expect_success 'set up and verify repo with generation data overflow chunk'
 
 graph_git_behavior 'overflow 2' repo left right
 
+test_expect_success 'single commit with generation data exceeding UINT32_MAX' '
+	git init repo-uint32-max &&
+	cd repo-uint32-max &&
+	test_commit --date "@4294967297 +0000" 1 &&
+	git commit-graph write --reachable &&
+	graph_read_expect 1 "generation_data" &&
+	git commit-graph verify
+'
+
 test_done
