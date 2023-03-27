@@ -9,7 +9,7 @@ git-sparse-checkout - Reduce your working tree to a subset of tracked files
 SYNOPSIS
 --------
 [verse]
-'git sparse-checkout' (init | list | set | add | reapply | disable) [<options>]
+'git sparse-checkout' (init | list | set | add | reapply | disable | check-rules) [<options>]
 
 
 DESCRIPTION
@@ -134,6 +134,29 @@ paths to pass to a subsequent 'set' or 'add' command.  However,
 `--cone` and `--sparse-index` options would not be remembered across
 the disable command, so the easy restore of calling a plain `init`
 decreased in utility.
+
+'check-rules'::
+	Check whether sparsity rules match one or more paths.
++
+By default `check-rules` reads a list of paths from stdin and outputs only
+the ones that match the current sparsity rules. The input is expected to consist
+of one path per line, matching the output of `git ls-tree --name-only` including
+that pathnames that begin with a double quote (") are interpreted as C-style
+quoted strings.
++
+When called with the `--rules-file <file>` flag the input files are matched
+against the sparse checkout rules found in `<file>` instead of the current ones.
+The rules in the files are expected to be in the same form as accepted by `git
+sparse-checkout set --stdin` (in particular, they must be newline-delimited).
++
+By default, the rules passed to the `--rules-file` option are interpreted as
+cone mode directories. To pass non-cone mode patterns with `--rules-file`,
+combine the option with the `--no-cone` option.
++
+When called with the `-z` flag, the format of the paths input on stdin as well
+as the output paths are \0 terminated and not quoted. Note that this does not
+apply to the format of the rules passed with the `--rules-file` option.
+
 
 EXAMPLES
 --------
