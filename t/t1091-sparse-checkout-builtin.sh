@@ -882,4 +882,37 @@ test_expect_success 'by default, non-cone mode will warn on individual files' '
 	grep "pass a leading slash before paths.*if you want a single file" warning
 '
 
+test_expect_success 'setup bare repo' '
+	git clone --bare "file://$(pwd)/repo" bare
+'
+test_expect_success 'list fails outside work tree' '
+	test_must_fail git -C bare sparse-checkout list 2>err &&
+	test_i18ngrep "this operation must be run in a work tree" err
+'
+
+test_expect_success 'add fails outside work tree' '
+	test_must_fail git -C bare sparse-checkout add deeper 2>err &&
+	test_i18ngrep "this operation must be run in a work tree" err
+'
+
+test_expect_success 'set fails outside work tree' '
+	test_must_fail git -C bare sparse-checkout set deeper 2>err &&
+	test_i18ngrep "this operation must be run in a work tree" err
+'
+
+test_expect_success 'init fails outside work tree' '
+	test_must_fail git -C bare sparse-checkout init 2>err &&
+	test_i18ngrep "this operation must be run in a work tree" err
+'
+
+test_expect_success 'reapply fails outside work tree' '
+	test_must_fail git -C bare sparse-checkout reapply 2>err &&
+	test_i18ngrep "this operation must be run in a work tree" err
+'
+
+test_expect_success 'disable fails outside work tree' '
+	test_must_fail git -C bare sparse-checkout disable 2>err &&
+	test_i18ngrep "this operation must be run in a work tree" err
+'
+
 test_done
