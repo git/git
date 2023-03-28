@@ -901,7 +901,7 @@ static int show_stash(int argc, const char **argv, const char *prefix)
 
 	init_diff_ui_defaults();
 	git_config(git_diff_ui_config, NULL);
-	init_revisions(&rev, prefix);
+	repo_init_revisions(the_repository, &rev, prefix);
 
 	argc = parse_options(argc, argv, prefix, options, git_stash_show_usage,
 			     PARSE_OPT_KEEP_ARGV0 | PARSE_OPT_KEEP_UNKNOWN_OPT |
@@ -1090,7 +1090,7 @@ static int check_changes_tracked_files(const struct pathspec *ps)
 	if (repo_read_index(the_repository) < 0)
 		return -1;
 
-	init_revisions(&rev, NULL);
+	repo_init_revisions(the_repository, &rev, NULL);
 	copy_pathspec(&rev.prune_data, ps);
 
 	rev.diffopt.flags.quick = 1;
@@ -1277,7 +1277,7 @@ static int stash_working_tree(struct stash_info *info, const struct pathspec *ps
 	struct strbuf diff_output = STRBUF_INIT;
 	struct index_state istate = INDEX_STATE_INIT(the_repository);
 
-	init_revisions(&rev, NULL);
+	repo_init_revisions(the_repository, &rev, NULL);
 	copy_pathspec(&rev.prune_data, ps);
 
 	set_alternate_index_output(stash_index_path.buf);

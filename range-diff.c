@@ -588,7 +588,7 @@ int is_range_diff_range(const char *arg)
 	int i, positive = 0, negative = 0;
 	struct rev_info revs;
 
-	init_revisions(&revs, NULL);
+	repo_init_revisions(the_repository, &revs, NULL);
 	if (setup_revisions(3, argv, &revs, NULL) == 1) {
 		for (i = 0; i < revs.pending.nr; i++)
 			if (revs.pending.objects[i].item->flags & UNINTERESTING)

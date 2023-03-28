@@ -1108,7 +1108,7 @@ static int compute_summary_module_list(struct object_id *head_oid,
 		strvec_pushv(&diff_args, info->argv);
 
 	git_config(git_diff_basic_config, NULL);
-	init_revisions(&rev, info->prefix);
+	repo_init_revisions(the_repository, &rev, info->prefix);
 	rev.abbrev = 0;
 	precompose_argv_prefix(diff_args.nr, diff_args.v, NULL);
 	setup_revisions(diff_args.nr, diff_args.v, &rev, &opt);

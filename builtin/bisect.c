@@ -568,7 +568,7 @@ static int prepare_revs(struct bisect_terms *terms, struct rev_info *revs)
 	 * sets up a revision walk.
 	 */
 	reset_revision_walk();
-	init_revisions(revs, NULL);
+	repo_init_revisions(the_repository, revs, NULL);
 	setup_revisions(0, NULL, revs, NULL);
 	for_each_glob_ref_in(add_bisect_ref, bad, "refs/bisect/", &cb);
 	cb.object_flags = UNINTERESTING;
@@ -1095,7 +1095,7 @@ static enum bisect_error bisect_skip(struct bisect_terms *terms, int argc,
 			struct rev_info revs;
 			struct commit *commit;
 
-			init_revisions(&revs, NULL);
+			repo_init_revisions(the_repository, &revs, NULL);
 			setup_revisions(2, argv + i - 1, &revs, NULL);
 
 			if (prepare_revision_walk(&revs))
