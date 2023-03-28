@@ -36,14 +36,6 @@ expression G;
 
 @@
 expression E;
-expression F;
-@@
-- parse_commit_gently(
-+ repo_parse_commit_gently(the_repository,
-  E, F)
-
-@@
-expression E;
 @@
 - parse_commit(
 + repo_parse_commit(the_repository,
