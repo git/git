@@ -551,7 +551,7 @@ static int get_modified_files(struct repository *r,
 		opt.def = is_initial ?
 			empty_tree_oid_hex() : oid_to_hex(&head_oid);
 
-		repo_init_revisions(the_repository, &rev, NULL);
+		repo_init_revisions(r, &rev, NULL);
 		setup_revisions(0, NULL, &rev, &opt);
 
 		rev.diffopt.output_format = DIFF_FORMAT_CALLBACK;

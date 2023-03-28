@@ -1664,7 +1664,7 @@ static void wt_status_get_detached_from(struct repository *r,
 		return;
 	}
 
-	if (repo_dwim_ref(the_repository, cb.buf.buf, cb.buf.len, &oid, &ref,
+	if (repo_dwim_ref(r, cb.buf.buf, cb.buf.len, &oid, &ref,
 			  1) == 1 &&
 	    /* oid is a commit? match without further lookup */
 	    (oideq(&cb.noid, &oid) ||
@@ -1677,9 +1677,9 @@ static void wt_status_get_detached_from(struct repository *r,
 		state->detached_from = xstrdup(from);
 	} else
 		state->detached_from =
-			xstrdup(repo_find_unique_abbrev(the_repository, &cb.noid, DEFAULT_ABBREV));
+			xstrdup(repo_find_unique_abbrev(r, &cb.noid, DEFAULT_ABBREV));
 	oidcpy(&state->detached_oid, &cb.noid);
-	state->detached_at = !repo_get_oid(the_repository, "HEAD", &oid) &&
+	state->detached_at = !repo_get_oid(r, "HEAD", &oid) &&
 			     oideq(&oid, &state->detached_oid);
 
 	free(ref);
@@ -1770,13 +1770,13 @@ void wt_status_get_state(struct repository *r,
 	} else if (wt_status_check_rebase(NULL, state)) {
 		;		/* all set */
 	} else if (refs_ref_exists(get_main_ref_store(r), "CHERRY_PICK_HEAD") &&
-		   !repo_get_oid(the_repository, "CHERRY_PICK_HEAD", &oid)) {
+		   !repo_get_oid(r, "CHERRY_PICK_HEAD", &oid)) {
 		state->cherry_pick_in_progress = 1;
 		oidcpy(&state->cherry_pick_head_oid, &oid);
 	}
 	wt_status_check_bisect(NULL, state);
 	if (refs_ref_exists(get_main_ref_store(r), "REVERT_HEAD") &&
-	    !repo_get_oid(the_repository, "REVERT_HEAD", &oid)) {
+	    !repo_get_oid(r, "REVERT_HEAD", &oid)) {
 		state->revert_in_progress = 1;
 		oidcpy(&state->revert_head_oid, &oid);
 	}

@@ -694,8 +694,8 @@ static int do_recursive_merge(struct repository *r,
 	o.show_rename_progress = 1;
 
 	head_tree = parse_tree_indirect(head);
-	next_tree = next ? repo_get_commit_tree(the_repository, next) : empty_tree(r);
-	base_tree = base ? repo_get_commit_tree(the_repository, base) : empty_tree(r);
+	next_tree = next ? repo_get_commit_tree(r, next) : empty_tree(r);
+	base_tree = base ? repo_get_commit_tree(r, base) : empty_tree(r);
 
 	for (i = 0; i < opts->xopts_nr; i++)
 		parse_merge_opt(&o, opts->xopts[i]);
@@ -773,7 +773,7 @@ static int is_index_unchanged(struct repository *r)
 	 * the commit is invalid, repo_parse_commit() will complain.  So
 	 * there is nothing for us to say here.  Just return failure.
 	 */
-	if (repo_parse_commit(the_repository, head_commit))
+	if (repo_parse_commit(r, head_commit))
 		return -1;
 
 	if (!(cache_tree_oid = get_cache_tree_oid(istate)))
@@ -1338,15 +1338,15 @@ void print_commit_summary(struct repository *r,
 	commit = lookup_commit(r, oid);
 	if (!commit)
 		die(_("couldn't look up newly created commit"));
-	if (repo_parse_commit(the_repository, commit))
+	if (repo_parse_commit(r, commit))
 		die(_("could not parse newly created commit"));
 
 	strbuf_addstr(&format, "format:%h] %s");
 
-	repo_format_commit_message(the_repository, commit, "%an <%ae>",
-				   &author_ident, &pctx);
-	repo_format_commit_message(the_repository, commit, "%cn <%ce>",
-				   &committer_ident, &pctx);
+	repo_format_commit_message(r, commit, "%an <%ae>", &author_ident,
+				   &pctx);
+	repo_format_commit_message(r, commit, "%cn <%ce>", &committer_ident,
+				   &pctx);
 	if (strbuf_cmp(&author_ident, &committer_ident)) {
 		strbuf_addstr(&format, "\n Author: ");
 		strbuf_addbuf_percentquote(&format, &author_ident);
@@ -1354,8 +1354,7 @@ void print_commit_summary(struct repository *r,
 	if (flags & SUMMARY_SHOW_AUTHOR_DATE) {
 		struct strbuf date = STRBUF_INIT;
 
-		repo_format_commit_message(the_repository, commit, "%ad",
-					   &date, &pctx);
+		repo_format_commit_message(r, commit, "%ad", &date, &pctx);
 		strbuf_addstr(&format, "\n Date: ");
 		strbuf_addbuf_percentquote(&format, &date);
 		strbuf_release(&date);
@@ -1385,7 +1384,7 @@ void print_commit_summary(struct repository *r,
 	rev.diffopt.detect_rename = DIFF_DETECT_RENAME;
 	diff_setup_done(&rev.diffopt);
 
-	refs = get_main_ref_store(the_repository);
+	refs = get_main_ref_store(r);
 	head = refs_resolve_ref_unsafe(refs, "HEAD", 0, NULL, NULL);
 	if (!head)
 		die(_("unable to resolve HEAD after creating commit"));
@@ -1411,7 +1410,7 @@ static int parse_head(struct repository *r, struct commit **head)
 	struct commit *current_head;
 	struct object_id oid;
 
-	if (repo_get_oid(the_repository, "HEAD", &oid)) {
+	if (repo_get_oid(r, "HEAD", &oid)) {
 		current_head = NULL;
 	} else {
 		current_head = lookup_commit_reference(r, &oid);
@@ -1421,7 +1420,7 @@ static int parse_head(struct repository *r, struct commit **head)
 			warning(_("HEAD %s is not a commit!"),
 				oid_to_hex(&oid));
 		}
-		if (repo_parse_commit(the_repository, current_head))
+		if (repo_parse_commit(r, current_head))
 			return error(_("could not parse HEAD commit"));
 	}
 	*head = current_head;
@@ -1464,9 +1463,8 @@ static int try_to_commit(struct repository *r,
 	if (flags & AMEND_MSG) {
 		const char *exclude_gpgsig[] = { "gpgsig", "gpgsig-sha256", NULL };
 		const char *out_enc = get_commit_output_encoding();
-		const char *message = repo_logmsg_reencode(the_repository,
-							   current_head, NULL,
-							   out_enc);
+		const char *message = repo_logmsg_reencode(r, current_head,
+							   NULL, out_enc);
 
 		if (!msg) {
 			const char *orig_message = NULL;
@@ -1477,7 +1475,7 @@ static int try_to_commit(struct repository *r,
 			hook_commit = "HEAD";
 		}
 		author = amend_author = get_author(message);
-		repo_unuse_commit_buffer(the_repository, current_head,
+		repo_unuse_commit_buffer(r, current_head,
 					 message);
 		if (!author) {
 			res = error(_("unable to parse commit author"));
@@ -2004,18 +2002,18 @@ static int update_squash_messages(struct repository *r,
 		struct commit *head_commit;
 		const char *head_message, *body;
 
-		if (repo_get_oid(the_repository, "HEAD", &head))
+		if (repo_get_oid(r, "HEAD", &head))
 			return error(_("need a HEAD to fixup"));
 		if (!(head_commit = lookup_commit_reference(r, &head)))
 			return error(_("could not read HEAD"));
-		if (!(head_message = repo_logmsg_reencode(the_repository, head_commit, NULL, encoding)))
+		if (!(head_message = repo_logmsg_reencode(r, head_commit, NULL,
+							  encoding)))
 			return error(_("could not read HEAD's commit message"));
 
 		find_commit_subject(head_message, &body);
 		if (command == TODO_FIXUP && !flag && write_message(body, strlen(body),
 							rebase_path_fixup_msg(), 0) < 0) {
-			repo_unuse_commit_buffer(the_repository, head_commit,
-						 head_message);
+			repo_unuse_commit_buffer(r, head_commit, head_message);
 			return error(_("cannot write '%s'"), rebase_path_fixup_msg());
 		}
 		strbuf_addf(&buf, "%c ", comment_line_char);
@@ -2030,11 +2028,10 @@ static int update_squash_messages(struct repository *r,
 		else
 			strbuf_addstr(&buf, body);
 
-		repo_unuse_commit_buffer(the_repository, head_commit,
-					 head_message);
+		repo_unuse_commit_buffer(r, head_commit, head_message);
 	}
 
-	if (!(message = repo_logmsg_reencode(the_repository, commit, NULL, encoding)))
+	if (!(message = repo_logmsg_reencode(r, commit, NULL, encoding)))
 		return error(_("could not read commit message of %s"),
 			     oid_to_hex(&commit->object.oid));
 	find_commit_subject(message, &body);
@@ -2049,7 +2046,7 @@ static int update_squash_messages(struct repository *r,
 		strbuf_add_commented_lines(&buf, body, strlen(body));
 	} else
 		return error(_("unknown command: %d"), command);
-	repo_unuse_commit_buffer(the_repository, commit, message);
+	repo_unuse_commit_buffer(r, commit, message);
 
 	if (!res)
 		res = write_message(buf.buf, buf.len, rebase_path_squash_msg(),
@@ -2162,7 +2159,7 @@ static int do_pick_commit(struct repository *r,
 		if (write_index_as_tree(&head, r->index, r->index_file, 0, NULL))
 			return error(_("your index file is unmerged."));
 	} else {
-		unborn = repo_get_oid(the_repository, "HEAD", &head);
+		unborn = repo_get_oid(r, "HEAD", &head);
 		/* Do we want to generate a root commit? */
 		if (is_pick_or_similar(command) && opts->have_squash_onto &&
 		    oideq(&head, &opts->squash_onto)) {
@@ -2224,7 +2221,7 @@ static int do_pick_commit(struct repository *r,
 		msg_file = NULL;
 		goto fast_forward_edit;
 	}
-	if (parent && repo_parse_commit(the_repository, parent) < 0)
+	if (parent && repo_parse_commit(r, parent) < 0)
 		/* TRANSLATORS: The first %s will be a "todo" command like
 		   "revert" or "pick", the second %s a SHA1. */
 		return error(_("%s: cannot parse parent commit %s"),
@@ -2616,7 +2613,7 @@ static int parse_insn_line(struct repository *r, struct todo_item *item,
 	end_of_object_name = (char *) bol + strcspn(bol, " \t\n");
 	saved = *end_of_object_name;
 	*end_of_object_name = '\0';
-	status = repo_get_oid(the_repository, bol, &commit_oid);
+	status = repo_get_oid(r, bol, &commit_oid);
 	if (status < 0)
 		error(_("could not parse '%s'"), bol); /* return later */
 	*end_of_object_name = saved;
@@ -3531,12 +3528,12 @@ static int make_patch(struct repository *r,
 	strbuf_addf(&buf, "%s/message", get_dir(opts));
 	if (!file_exists(buf.buf)) {
 		const char *encoding = get_commit_output_encoding();
-		const char *commit_buffer = repo_logmsg_reencode(the_repository,
+		const char *commit_buffer = repo_logmsg_reencode(r,
 								 commit, NULL,
 								 encoding);
 		find_commit_subject(commit_buffer, &subject);
 		res |= write_message(subject, strlen(subject), buf.buf, 1);
-		repo_unuse_commit_buffer(the_repository, commit,
+		repo_unuse_commit_buffer(r, commit,
 					 commit_buffer);
 	}
 	strbuf_release(&buf);
@@ -3716,7 +3713,7 @@ static int do_label(struct repository *r, const char *name, int len)
 	if (!transaction) {
 		error("%s", err.buf);
 		ret = -1;
-	} else if (repo_get_oid(the_repository, "HEAD", &head_oid)) {
+	} else if (repo_get_oid(r, "HEAD", &head_oid)) {
 		error(_("could not read HEAD"));
 		ret = -1;
 	} else if (ref_transaction_update(transaction, ref_name.buf, &head_oid,
@@ -4004,8 +4001,7 @@ static int do_merge(struct repository *r,
 
 	if (commit) {
 		const char *encoding = get_commit_output_encoding();
-		const char *message = repo_logmsg_reencode(the_repository,
-							   commit, NULL,
+		const char *message = repo_logmsg_reencode(r, commit, NULL,
 							   encoding);
 		const char *body;
 		int len;
@@ -4019,7 +4015,7 @@ static int do_merge(struct repository *r,
 		find_commit_subject(message, &body);
 		len = strlen(body);
 		ret = write_message(body, len, git_path_merge_msg(r), 0);
-		repo_unuse_commit_buffer(the_repository, commit, message);
+		repo_unuse_commit_buffer(r, commit, message);
 		if (ret) {
 			error_errno(_("could not write '%s'"),
 				    git_path_merge_msg(r));
@@ -4119,8 +4115,7 @@ static int do_merge(struct repository *r,
 	}
 
 	merge_commit = to_merge->item;
-	bases = repo_get_merge_bases(the_repository, head_commit,
-				     merge_commit);
+	bases = repo_get_merge_bases(r, head_commit, merge_commit);
 	if (bases && oideq(&merge_commit->object.oid,
 			   &bases->item->object.oid)) {
 		ret = 0;
@@ -4475,7 +4470,7 @@ void create_autostash(struct repository *r, const char *path)
 		if (capture_command(&stash, &buf, GIT_MAX_HEXSZ))
 			die(_("Cannot autostash"));
 		strbuf_trim_trailing_newline(&buf);
-		if (repo_get_oid(the_repository, buf.buf, &oid))
+		if (repo_get_oid(r, buf.buf, &oid))
 			die(_("Unexpected stash response: '%s'"),
 			    buf.buf);
 		strbuf_reset(&buf);
@@ -4600,9 +4595,9 @@ static int stopped_at_head(struct repository *r)
 	struct commit *commit;
 	struct commit_message message;
 
-	if (repo_get_oid(the_repository, "HEAD", &head) ||
+	if (repo_get_oid(r, "HEAD", &head) ||
 	    !(commit = lookup_commit(r, &head)) ||
-	    repo_parse_commit(the_repository, commit) || get_message(commit, &message))
+	    repo_parse_commit(r, commit) || get_message(commit, &message))
 		fprintf(stderr, _("Stopped at HEAD\n"));
 	else {
 		fprintf(stderr, _("Stopped at %s\n"), message.label);
@@ -4750,7 +4745,7 @@ static int pick_commits(struct repository *r,
 				 * otherwise we do not.
 				 */
 				if (item->command == TODO_REWORD &&
-				    !repo_get_oid(the_repository, "HEAD", &oid) &&
+				    !repo_get_oid(r, "HEAD", &oid) &&
 				    (oideq(&item->commit->object.oid, &oid) ||
 				     (opts->have_squash_onto &&
 				      oideq(&opts->squash_onto, &oid))))
@@ -4839,7 +4834,7 @@ static int pick_commits(struct repository *r,
 			struct object_id head, orig;
 			int res;
 
-			if (repo_get_oid(the_repository, "HEAD", &head)) {
+			if (repo_get_oid(r, "HEAD", &head)) {
 				res = error(_("cannot read HEAD"));
 cleanup_head_ref:
 				strbuf_release(&head_ref);
@@ -4886,8 +4881,8 @@ cleanup_head_ref:
 			log_tree_opt.disable_stdin = 1;
 
 			if (read_oneliner(&buf, rebase_path_orig_head(), 0) &&
-			    !repo_get_oid(the_repository, buf.buf, &orig) &&
-			    !repo_get_oid(the_repository, "HEAD", &head)) {
+			    !repo_get_oid(r, buf.buf, &orig) &&
+			    !repo_get_oid(r, "HEAD", &head)) {
 				diff_tree_oid(&orig, &head, "",
 					      &log_tree_opt.diffopt);
 				log_tree_diff_flush(&log_tree_opt);
@@ -4979,7 +4974,7 @@ static int commit_staged_changes(struct repository *r,
 		struct strbuf rev = STRBUF_INIT;
 		struct object_id head, to_amend;
 
-		if (repo_get_oid(the_repository, "HEAD", &head))
+		if (repo_get_oid(r, "HEAD", &head))
 			return error(_("cannot amend non-existing commit"));
 		if (!read_oneliner(&rev, rebase_path_amend(), 0))
 			return error(_("invalid file: '%s'"), rebase_path_amend());
@@ -5059,14 +5054,13 @@ static int commit_staged_changes(struct repository *r,
 				const char *encoding = get_commit_output_encoding();
 
 				if (parse_head(r, &commit) ||
-				    !(p = repo_logmsg_reencode(the_repository, commit, NULL, encoding)) ||
+				    !(p = repo_logmsg_reencode(r, commit, NULL, encoding)) ||
 				    write_message(p, strlen(p), path, 0)) {
-					repo_unuse_commit_buffer(the_repository,
-								 commit, p);
+					repo_unuse_commit_buffer(r, commit, p);
 					return error(_("could not write file: "
 						       "'%s'"), path);
 				}
-				repo_unuse_commit_buffer(the_repository,
+				repo_unuse_commit_buffer(r,
 							 commit, p);
 			}
 		}
@@ -5206,7 +5200,7 @@ int sequencer_pick_revisions(struct repository *r,
 		if (!strlen(name))
 			continue;
 
-		if (!repo_get_oid(the_repository, name, &oid)) {
+		if (!repo_get_oid(r, name, &oid)) {
 			if (!lookup_commit_reference_gently(r, &oid, 1)) {
 				enum object_type type = oid_object_info(r,
 									&oid,
@@ -5249,7 +5243,7 @@ int sequencer_pick_revisions(struct repository *r,
 	if (walk_revs_populate_todo(&todo_list, opts) ||
 			create_seq_dir(r) < 0)
 		return -1;
-	if (repo_get_oid(the_repository, "HEAD", &oid) && (opts->action == REPLAY_REVERT))
+	if (repo_get_oid(r, "HEAD", &oid) && (opts->action == REPLAY_REVERT))
 		return error(_("can't revert as initial commit"));
 	if (save_head(oid_to_hex(&oid)))
 		return -1;
@@ -5944,7 +5938,7 @@ static int skip_unnecessary_picks(struct repository *r,
 			continue;
 		if (item->command != TODO_PICK)
 			break;
-		if (repo_parse_commit(the_repository, item->commit)) {
+		if (repo_parse_commit(r, item->commit)) {
 			return error(_("could not parse commit '%s'"),
 				oid_to_hex(&item->commit->object.oid));
 		}
@@ -6115,7 +6109,7 @@ int complete_action(struct repository *r, struct replay_opts *opts, unsigned fla
 	struct object_id oid = onto->object.oid;
 	int res;
 
-	repo_find_unique_abbrev_r(the_repository, shortonto, &oid,
+	repo_find_unique_abbrev_r(r, shortonto, &oid,
 				  DEFAULT_ABBREV);
 
 	if (buf->len == 0) {
@@ -6395,8 +6389,8 @@ int sequencer_determine_whence(struct repository *r, enum commit_whence *whence)
 		if (file_exists(git_path_seq_dir()))
 			*whence = FROM_CHERRY_PICK_MULTI;
 		if (file_exists(rebase_path()) &&
-		    !repo_get_oid(the_repository, "REBASE_HEAD", &rebase_head) &&
-		    !repo_get_oid(the_repository, "CHERRY_PICK_HEAD", &cherry_pick_head) &&
+		    !repo_get_oid(r, "REBASE_HEAD", &rebase_head) &&
+		    !repo_get_oid(r, "CHERRY_PICK_HEAD", &cherry_pick_head) &&
 		    oideq(&rebase_head, &cherry_pick_head))
 			*whence = FROM_REBASE_PICK;
 		else

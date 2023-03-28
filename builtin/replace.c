@@ -54,7 +54,7 @@ static int show_reference(struct repository *r, const char *refname,
 			struct object_id object;
 			enum object_type obj_type, repl_type;
 
-			if (repo_get_oid(the_repository, refname, &object))
+			if (repo_get_oid(r, refname, &object))
 				return error(_("failed to resolve '%s' as a valid ref"), refname);
 
 			obj_type = oid_object_info(r, &object, NULL);

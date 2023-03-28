@@ -1038,7 +1038,7 @@ static enum get_oid_result get_parent(struct repository *r,
 	if (ret)
 		return ret;
 	commit = lookup_commit_reference(r, &oid);
-	if (repo_parse_commit(the_repository, commit))
+	if (repo_parse_commit(r, commit))
 		return MISSING_OBJECT;
 	if (!idx) {
 		oidcpy(result, &commit->object.oid);
@@ -1072,7 +1072,7 @@ static enum get_oid_result get_nth_ancestor(struct repository *r,
 		return MISSING_OBJECT;
 
 	while (generation--) {
-		if (repo_parse_commit(the_repository, commit) || !commit->parents)
+		if (repo_parse_commit(r, commit) || !commit->parents)
 			return MISSING_OBJECT;
 		commit = commit->parents->item;
 	}
@@ -1363,10 +1363,10 @@ static int get_oid_oneline(struct repository *r,
 		commit = pop_most_recent_commit(&list, ONELINE_SEEN);
 		if (!parse_object(r, &commit->object.oid))
 			continue;
-		buf = repo_get_commit_buffer(the_repository, commit, NULL);
+		buf = repo_get_commit_buffer(r, commit, NULL);
 		p = strstr(buf, "\n\n");
 		matches = negative ^ (p && !regexec(&regex, p + 2, 0, NULL, 0));
-		repo_unuse_commit_buffer(the_repository, commit, buf);
+		repo_unuse_commit_buffer(r, commit, buf);
 
 		if (matches) {
 			oidcpy(oid, &commit->object.oid);

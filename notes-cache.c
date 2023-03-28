@@ -23,7 +23,7 @@ static int notes_cache_match_validity(struct repository *r,
 		return 0;
 
 	memset(&pretty_ctx, 0, sizeof(pretty_ctx));
-	repo_format_commit_message(the_repository, commit, "%s", &msg,
+	repo_format_commit_message(r, commit, "%s", &msg,
 				   &pretty_ctx);
 	strbuf_trim(&msg);
 

@@ -30,7 +30,7 @@ int register_shallow(struct repository *r, const struct object_id *oid)
 {
 	struct commit_graft *graft =
 		xmalloc(sizeof(struct commit_graft));
-	struct commit *commit = lookup_commit(the_repository, oid);
+	struct commit *commit = lookup_commit(r, oid);
 
 	oidcpy(&graft->oid, oid);
 	graft->nr_parent = -1;

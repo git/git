@@ -2628,7 +2628,7 @@ int repo_index_has_changes(struct repository *repo,
 
 	if (tree)
 		cmp = tree->object.oid;
-	if (tree || !repo_get_oid_tree(the_repository, "HEAD", &cmp)) {
+	if (tree || !repo_get_oid_tree(repo, "HEAD", &cmp)) {
 		struct diff_options opt;
 
 		repo_diff_setup(repo, &opt);
@@ -2947,7 +2947,7 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 	}
 
 	if (!istate->version)
-		istate->version = get_index_format_default(the_repository);
+		istate->version = get_index_format_default(r);
 
 	/* demote version 3 to version 2 when the latter suffices */
 	if (istate->version == 3 || istate->version == 2)

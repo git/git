@@ -448,7 +448,7 @@ int repo_is_descendant_of(struct repository *r,
 	if (!with_commit)
 		return 1;
 
-	if (generation_numbers_enabled(the_repository)) {
+	if (generation_numbers_enabled(r)) {
 		struct commit_list *from_list = NULL;
 		int result;
 		commit_list_insert(commit, &from_list);

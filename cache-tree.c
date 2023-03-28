@@ -814,14 +814,14 @@ void prime_cache_tree(struct repository *r,
 {
 	struct strbuf tree_path = STRBUF_INIT;
 
-	trace2_region_enter("cache-tree", "prime_cache_tree", the_repository);
+	trace2_region_enter("cache-tree", "prime_cache_tree", r);
 	cache_tree_free(&istate->cache_tree);
 	istate->cache_tree = cache_tree();
 
 	prime_cache_tree_rec(r, istate->cache_tree, tree, &tree_path);
 	strbuf_release(&tree_path);
 	istate->cache_changed |= CACHE_TREE_CHANGED;
-	trace2_region_leave("cache-tree", "prime_cache_tree", the_repository);
+	trace2_region_leave("cache-tree", "prime_cache_tree", r);
 }
 
 /*
