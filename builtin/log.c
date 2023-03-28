@@ -1371,7 +1371,7 @@ static void make_cover_letter(struct rev_info *rev, int use_separate_file,
 			.other_arg = &other_arg
 		};
 
-		diff_setup(&opts);
+		repo_diff_setup(the_repository, &opts);
 		opts.file = rev->diffopt.file;
 		opts.use_color = rev->diffopt.use_color;
 		diff_setup_done(&opts);

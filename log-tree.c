@@ -849,7 +849,7 @@ void show_log(struct rev_info *opt)
 		 * Pass minimum required diff-options to range-diff; others
 		 * can be added later if deemed desirable.
 		 */
-		diff_setup(&opts);
+		repo_diff_setup(the_repository, &opts);
 		opts.file = opt->diffopt.file;
 		opts.use_color = opt->diffopt.use_color;
 		diff_setup_done(&opts);

@@ -5,11 +5,7 @@
 @@
 @@
 (
-// diff.h
-- diff_setup
-+ repo_diff_setup
 // object-store.h
-|
 - read_object_file
 + repo_read_object_file
 |

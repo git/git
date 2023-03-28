@@ -73,6 +73,10 @@
 |
 - get_commit_tree
 + repo_get_commit_tree
+// diff.h
+|
+- diff_setup
++ repo_diff_setup
 )
   (
 + the_repository,

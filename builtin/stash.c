@@ -427,7 +427,7 @@ static void unstage_changes_unless_new(struct object_id *orig_tree)
 	 * to the index before a merge was run) and the current index
 	 * (reflecting the changes brought in by the merge).
 	 */
-	diff_setup(&diff_opts);
+	repo_diff_setup(the_repository, &diff_opts);
 	diff_opts.flags.recursive = 1;
 	diff_opts.detect_rename = 0;
 	diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;

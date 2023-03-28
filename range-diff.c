@@ -485,7 +485,7 @@ static void output(struct string_list *a, struct string_list *b,
 	if (range_diff_opts->diffopt)
 		memcpy(&opts, range_diff_opts->diffopt, sizeof(opts));
 	else
-		diff_setup(&opts);
+		repo_diff_setup(the_repository, &opts);
 
 	opts.no_free = 1;
 	if (!opts.output_format)

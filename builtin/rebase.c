@@ -1786,7 +1786,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		}
 
 		/* We want color (if set), but no pager */
-		diff_setup(&opts);
+		repo_diff_setup(the_repository, &opts);
 		opts.stat_width = -1; /* use full terminal width */
 		opts.stat_graph_width = -1; /* respect statGraphWidth config */
 		opts.output_format |=
