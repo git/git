@@ -24,6 +24,8 @@ int cmd_get_tar_commit_id(int argc, const char **argv, const char *prefix)
 	long len;
 	char *end;
 
+	BUG_ON_NON_EMPTY_PREFIX(prefix);
+
 	if (argc != 1)
 		usage(builtin_get_tar_commit_id_usage);
 
