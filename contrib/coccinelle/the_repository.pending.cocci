@@ -5,21 +5,7 @@
 @@
 @@
 (
-- read_object_file
-+ repo_read_object_file
-|
-- has_object_file
-+ repo_has_object_file
-|
-- has_object_file_with_flags
-+ repo_has_object_file_with_flags
-|
-- parse_commit_internal
-+ repo_parse_commit_internal
-|
-- parse_commit
-+ repo_parse_commit
-|
+// commit-reach.h
 - get_merge_bases
 + repo_get_merge_bases
 |
@@ -34,6 +20,13 @@
 |
 - in_merge_bases_many
 + repo_in_merge_bases_many
+// commit.h
+|
+- parse_commit_internal
++ repo_parse_commit_internal
+|
+- parse_commit
++ repo_parse_commit
 |
 - get_commit_buffer
 + repo_get_commit_buffer
@@ -43,6 +36,17 @@
 |
 - logmsg_reencode
 + repo_logmsg_reencode
+// object-store.h
+|
+- read_object_file
++ repo_read_object_file
+|
+- has_object_file
++ repo_has_object_file
+|
+- has_object_file_with_flags
++ repo_has_object_file_with_flags
+// pretty.h
 |
 - format_commit_message
 + repo_format_commit_message
