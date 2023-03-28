@@ -74,7 +74,7 @@ static void stuff_change(struct diff_options *opt,
 }
 
 static int builtin_diff_b_f(struct rev_info *revs,
-			    int argc, const char **argv,
+			    int argc, const char **argv UNUSED,
 			    struct object_array_entry **blob)
 {
 	/* Blob vs file in the working tree*/
@@ -109,7 +109,7 @@ static int builtin_diff_b_f(struct rev_info *revs,
 }
 
 static int builtin_diff_blobs(struct rev_info *revs,
-			      int argc, const char **argv,
+			      int argc, const char **argv UNUSED,
 			      struct object_array_entry **blob)
 {
 	const unsigned mode = canon_mode(S_IFREG | 0644);
@@ -209,7 +209,7 @@ static int builtin_diff_tree(struct rev_info *revs,
 }
 
 static int builtin_diff_combined(struct rev_info *revs,
-				 int argc, const char **argv,
+				 int argc, const char **argv UNUSED,
 				 struct object_array_entry *ent,
 				 int ents, int first_non_parent)
 {
