@@ -1212,7 +1212,8 @@ static void handle_signed_tag(struct commit *parent, struct commit_extra_header 
 	desc = merge_remote_util(parent);
 	if (!desc || !desc->obj)
 		return;
-	buf = read_object_file(&desc->obj->oid, &type, &size);
+	buf = repo_read_object_file(the_repository, &desc->obj->oid, &type,
+				    &size);
 	if (!buf || type != OBJ_TAG)
 		goto free_return;
 	if (!parse_signature(buf, size, &payload, &signature))

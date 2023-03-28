@@ -245,9 +245,6 @@ void *repo_read_object_file(struct repository *r,
 			    const struct object_id *oid,
 			    enum object_type *type,
 			    unsigned long *size);
-#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
-#define read_object_file(oid, type, size) repo_read_object_file(the_repository, oid, type, size)
-#endif
 
 /* Read and unpack an object file into memory, write memory to an object file */
 int oid_object_info(struct repository *r, const struct object_id *, unsigned long *);
@@ -324,10 +321,6 @@ int has_object(struct repository *r, const struct object_id *oid,
 int repo_has_object_file(struct repository *r, const struct object_id *oid);
 int repo_has_object_file_with_flags(struct repository *r,
 				    const struct object_id *oid, int flags);
-#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
-#define has_object_file(oid) repo_has_object_file(the_repository, oid)
-#define has_object_file_with_flags(oid, flags) repo_has_object_file_with_flags(the_repository, oid, flags)
-#endif
 
 /*
  * Return true iff an alternate object database has a loose object

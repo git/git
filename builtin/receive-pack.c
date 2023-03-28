@@ -1494,7 +1494,7 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 		}
 	}
 
-	if (!is_null_oid(new_oid) && !has_object_file(new_oid)) {
+	if (!is_null_oid(new_oid) && !repo_has_object_file(the_repository, new_oid)) {
 		error("unpack should have generated %s, "
 		      "but I can't find it!", oid_to_hex(new_oid));
 		ret = "bad pack";

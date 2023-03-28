@@ -3201,7 +3201,8 @@ static int apply_binary(struct apply_state *state,
 		unsigned long size;
 		char *result;
 
-		result = read_object_file(&oid, &type, &size);
+		result = repo_read_object_file(the_repository, &oid, &type,
+					       &size);
 		if (!result)
 			return error(_("the necessary postimage %s for "
 				       "'%s' cannot be read"),
@@ -3264,7 +3265,8 @@ static int read_blob_object(struct strbuf *buf, const struct object_id *oid, uns
 		unsigned long sz;
 		char *result;
 
-		result = read_object_file(oid, &type, &sz);
+		result = repo_read_object_file(the_repository, oid, &type,
+					       &sz);
 		if (!result)
 			return -1;
 		/* XXX read_sha1_file NUL-terminates */
@@ -3492,7 +3494,8 @@ static int resolve_to(struct image *image, const struct object_id *result_id)
 
 	clear_image(image);
 
-	image->buf = read_object_file(result_id, &type, &size);
+	image->buf = repo_read_object_file(the_repository, result_id, &type,
+					   &size);
 	if (!image->buf || type != OBJ_BLOB)
 		die("unable to read blob object %s", oid_to_hex(result_id));
 	image->len = size;

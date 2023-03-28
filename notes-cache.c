@@ -81,7 +81,7 @@ char *notes_cache_get(struct notes_cache *c, struct object_id *key_oid,
 	value_oid = get_note(&c->tree, key_oid);
 	if (!value_oid)
 		return NULL;
-	value = read_object_file(value_oid, &type, &size);
+	value = repo_read_object_file(the_repository, value_oid, &type, &size);
 
 	*outsize = size;
 	return value;

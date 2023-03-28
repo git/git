@@ -951,7 +951,8 @@ static int update_file_flags(struct merge_options *opt,
 			goto update_index;
 		}
 
-		buf = read_object_file(&contents->oid, &type, &size);
+		buf = repo_read_object_file(the_repository, &contents->oid,
+					    &type, &size);
 		if (!buf) {
 			ret = err(opt, _("cannot read object %s '%s'"),
 				  oid_to_hex(&contents->oid), path);
@@ -3021,7 +3022,7 @@ static int read_oid_strbuf(struct merge_options *opt,
 	void *buf;
 	enum object_type type;
 	unsigned long size;
-	buf = read_object_file(oid, &type, &size);
+	buf = repo_read_object_file(the_repository, oid, &type, &size);
 	if (!buf)
 		return err(opt, _("cannot read object %s"), oid_to_hex(oid));
 	if (type != OBJ_BLOB) {

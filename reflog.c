@@ -28,7 +28,8 @@ static int tree_is_complete(const struct object_id *oid)
 	if (!tree->buffer) {
 		enum object_type type;
 		unsigned long size;
-		void *data = read_object_file(oid, &type, &size);
+		void *data = repo_read_object_file(the_repository, oid, &type,
+						   &size);
 		if (!data) {
 			tree->object.flags |= INCOMPLETE;
 			return 0;
@@ -39,7 +40,7 @@ static int tree_is_complete(const struct object_id *oid)
 	init_tree_desc(&desc, tree->buffer, tree->size);
 	complete = 1;
 	while (tree_entry(&desc, &entry)) {
-		if (!has_object_file(&entry.oid) ||
+		if (!repo_has_object_file(the_repository, &entry.oid) ||
 		    (S_ISDIR(entry.mode) && !tree_is_complete(&entry.oid))) {
 			tree->object.flags |= INCOMPLETE;
 			complete = 0;

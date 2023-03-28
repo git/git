@@ -124,7 +124,7 @@ static void copy_obj_to_fd(int fd, const struct object_id *oid)
 {
 	unsigned long size;
 	enum object_type type;
-	char *buf = read_object_file(oid, &type, &size);
+	char *buf = repo_read_object_file(the_repository, oid, &type, &size);
 	if (buf) {
 		if (size)
 			write_or_die(fd, buf, size);
@@ -259,7 +259,7 @@ static int parse_reuse_arg(const struct option *opt, const char *arg, int unset)
 
 	if (repo_get_oid(the_repository, arg, &object))
 		die(_("failed to resolve '%s' as a valid ref."), arg);
-	if (!(buf = read_object_file(&object, &type, &len)))
+	if (!(buf = repo_read_object_file(the_repository, &object, &type, &len)))
 		die(_("failed to read object '%s'."), arg);
 	if (type != OBJ_BLOB) {
 		free(buf);
@@ -616,7 +616,8 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 		/* Append buf to previous note contents */
 		unsigned long size;
 		enum object_type type;
-		char *prev_buf = read_object_file(note, &type, &size);
+		char *prev_buf = repo_read_object_file(the_repository, note,
+						       &type, &size);
 
 		strbuf_grow(&d.buf, size + 1);
 		if (d.buf.len && prev_buf && size)

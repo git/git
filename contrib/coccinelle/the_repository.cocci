@@ -77,6 +77,16 @@
 |
 - diff_setup
 + repo_diff_setup
+// object-store.h
+|
+- read_object_file
++ repo_read_object_file
+|
+- has_object_file
++ repo_has_object_file
+|
+- has_object_file_with_flags
++ repo_has_object_file_with_flags
 )
   (
 + the_repository,

@@ -26,7 +26,7 @@ static void show_one(const char *refname, const struct object_id *oid)
 	const char *hex;
 	struct object_id peeled;
 
-	if (!has_object_file(oid))
+	if (!repo_has_object_file(the_repository, oid))
 		die("git show-ref: bad ref %s (%s)", refname,
 		    oid_to_hex(oid));
 

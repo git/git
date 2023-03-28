@@ -786,7 +786,7 @@ static int prune_notes_helper(const struct object_id *object_oid,
 	struct note_delete_list **l = (struct note_delete_list **) cb_data;
 	struct note_delete_list *n;
 
-	if (has_object_file(object_oid))
+	if (repo_has_object_file(the_repository, object_oid))
 		return 0; /* nothing to do for this note */
 
 	/* failed to find object => prune this note */
@@ -807,13 +807,15 @@ int combine_notes_concatenate(struct object_id *cur_oid,
 
 	/* read in both note blob objects */
 	if (!is_null_oid(new_oid))
-		new_msg = read_object_file(new_oid, &new_type, &new_len);
+		new_msg = repo_read_object_file(the_repository, new_oid,
+						&new_type, &new_len);
 	if (!new_msg || !new_len || new_type != OBJ_BLOB) {
 		free(new_msg);
 		return 0;
 	}
 	if (!is_null_oid(cur_oid))
-		cur_msg = read_object_file(cur_oid, &cur_type, &cur_len);
+		cur_msg = repo_read_object_file(the_repository, cur_oid,
+						&cur_type, &cur_len);
 	if (!cur_msg || !cur_len || cur_type != OBJ_BLOB) {
 		free(cur_msg);
 		free(new_msg);
@@ -869,7 +871,7 @@ static int string_list_add_note_lines(struct string_list *list,
 		return 0;
 
 	/* read_sha1_file NUL-terminates */
-	data = read_object_file(oid, &t, &len);
+	data = repo_read_object_file(the_repository, oid, &t, &len);
 	if (t != OBJ_BLOB || !data || !len) {
 		free(data);
 		return t != OBJ_BLOB || !data;
@@ -1264,7 +1266,7 @@ static void format_note(struct notes_tree *t, const struct object_id *object_oid
 	if (!oid)
 		return;
 
-	if (!(msg = read_object_file(oid, &type, &msglen)) || type != OBJ_BLOB) {
+	if (!(msg = repo_read_object_file(the_repository, oid, &type, &msglen)) || type != OBJ_BLOB) {
 		free(msg);
 		return;
 	}

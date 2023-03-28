@@ -60,7 +60,7 @@ static int filter_object(const char *path, unsigned mode,
 {
 	enum object_type type;
 
-	*buf = read_object_file(oid, &type, size);
+	*buf = repo_read_object_file(the_repository, oid, &type, size);
 	if (!*buf)
 		return error(_("cannot read object %s '%s'"),
 			     oid_to_hex(oid), path);
@@ -152,7 +152,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 		goto cleanup;
 
 	case 'e':
-		return !has_object_file(&oid);
+		return !repo_has_object_file(the_repository, &oid);
 
 	case 'w':
 
@@ -187,7 +187,8 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 			ret = stream_blob(&oid);
 			goto cleanup;
 		}
-		buf = read_object_file(&oid, &type, &size);
+		buf = repo_read_object_file(the_repository, &oid, &type,
+					    &size);
 		if (!buf)
 			die("Cannot read object %s", obj_name);
 
@@ -207,8 +208,10 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 		if (exp_type_id == OBJ_BLOB) {
 			struct object_id blob_oid;
 			if (oid_object_info(the_repository, &oid, NULL) == OBJ_TAG) {
-				char *buffer = read_object_file(&oid, &type,
-								&size);
+				char *buffer = repo_read_object_file(the_repository,
+								     &oid,
+								     &type,
+								     &size);
 				const char *target;
 				if (!skip_prefix(buffer, "object ", &target) ||
 				    get_oid_hex(target, &blob_oid))
@@ -383,9 +386,10 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 				if (!textconv_object(the_repository,
 						     data->rest, 0100644, oid,
 						     1, &contents, &size))
-					contents = read_object_file(oid,
-								    &type,
-								    &size);
+					contents = repo_read_object_file(the_repository,
+									 oid,
+									 &type,
+									 &size);
 				if (!contents)
 					die("could not convert '%s' %s",
 					    oid_to_hex(oid), data->rest);
@@ -402,7 +406,8 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 		unsigned long size;
 		void *contents;
 
-		contents = read_object_file(oid, &type, &size);
+		contents = repo_read_object_file(the_repository, oid, &type,
+						 &size);
 
 		if (use_mailmap) {
 			size_t s = size;

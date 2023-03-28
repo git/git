@@ -64,7 +64,7 @@ static void process_blob(struct traversal_context *ctx,
 	 * of missing objects.
 	 */
 	if (ctx->revs->exclude_promisor_objects &&
-	    !has_object_file(&obj->oid) &&
+	    !repo_has_object_file(the_repository, &obj->oid) &&
 	    is_promisor_object(&obj->oid))
 		return;
 
