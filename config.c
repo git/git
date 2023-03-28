@@ -1311,39 +1311,48 @@ int git_parse_ssize_t(const char *value, ssize_t *ret)
 	return 1;
 }
 
+static int reader_config_name(struct config_reader *reader, const char **out);
+static int reader_origin_type(struct config_reader *reader,
+			      enum config_origin_type *type);
 NORETURN
-static void die_bad_number(struct config_source *cf, const char *name,
+static void die_bad_number(struct config_reader *reader, const char *name,
 			   const char *value)
 {
 	const char *error_type = (errno == ERANGE) ?
 		N_("out of range") : N_("invalid unit");
 	const char *bad_numeric = N_("bad numeric config value '%s' for '%s': %s");
+	const char *config_name = NULL;
+	enum config_origin_type config_origin = CONFIG_ORIGIN_UNKNOWN;
 
 	if (!value)
 		value = "";
 
-	if (!(cf && cf->name))
+	/* Ignoring the return value is okay since we handle missing values. */
+	reader_config_name(reader, &config_name);
+	reader_origin_type(reader, &config_origin);
+
+	if (!config_name)
 		die(_(bad_numeric), value, name, _(error_type));
 
-	switch (cf->origin_type) {
+	switch (config_origin) {
 	case CONFIG_ORIGIN_BLOB:
 		die(_("bad numeric config value '%s' for '%s' in blob %s: %s"),
-		    value, name, cf->name, _(error_type));
+		    value, name, config_name, _(error_type));
 	case CONFIG_ORIGIN_FILE:
 		die(_("bad numeric config value '%s' for '%s' in file %s: %s"),
-		    value, name, cf->name, _(error_type));
+		    value, name, config_name, _(error_type));
 	case CONFIG_ORIGIN_STDIN:
 		die(_("bad numeric config value '%s' for '%s' in standard input: %s"),
 		    value, name, _(error_type));
 	case CONFIG_ORIGIN_SUBMODULE_BLOB:
 		die(_("bad numeric config value '%s' for '%s' in submodule-blob %s: %s"),
-		    value, name, cf->name, _(error_type));
+		    value, name, config_name, _(error_type));
 	case CONFIG_ORIGIN_CMDLINE:
 		die(_("bad numeric config value '%s' for '%s' in command line %s: %s"),
-		    value, name, cf->name, _(error_type));
+		    value, name, config_name, _(error_type));
 	default:
 		die(_("bad numeric config value '%s' for '%s' in %s: %s"),
-		    value, name, cf->name, _(error_type));
+		    value, name, config_name, _(error_type));
 	}
 }
 
@@ -1351,7 +1360,7 @@ int git_config_int(const char *name, const char *value)
 {
 	int ret;
 	if (!git_parse_int(value, &ret))
-		die_bad_number(the_reader.source, name, value);
+		die_bad_number(&the_reader, name, value);
 	return ret;
 }
 
@@ -1359,7 +1368,7 @@ int64_t git_config_int64(const char *name, const char *value)
 {
 	int64_t ret;
 	if (!git_parse_int64(value, &ret))
-		die_bad_number(the_reader.source, name, value);
+		die_bad_number(&the_reader, name, value);
 	return ret;
 }
 
@@ -1367,7 +1376,7 @@ unsigned long git_config_ulong(const char *name, const char *value)
 {
 	unsigned long ret;
 	if (!git_parse_ulong(value, &ret))
-		die_bad_number(the_reader.source, name, value);
+		die_bad_number(&the_reader, name, value);
 	return ret;
 }
 
@@ -1375,7 +1384,7 @@ ssize_t git_config_ssize_t(const char *name, const char *value)
 {
 	ssize_t ret;
 	if (!git_parse_ssize_t(value, &ret))
-		die_bad_number(the_reader.source, name, value);
+		die_bad_number(&the_reader, name, value);
 	return ret;
 }
 
@@ -3839,14 +3848,23 @@ int parse_config_key(const char *var,
 	return 0;
 }
 
+static int reader_origin_type(struct config_reader *reader,
+			      enum config_origin_type *type)
+{
+	if (the_reader.config_kvi)
+		*type = reader->config_kvi->origin_type;
+	else if(the_reader.source)
+		*type = reader->source->origin_type;
+	else
+		return 1;
+	return 0;
+}
+
 const char *current_config_origin_type(void)
 {
-	int type;
-	if (the_reader.config_kvi)
-		type = the_reader.config_kvi->origin_type;
-	else if(the_reader.source)
-		type = the_reader.source->origin_type;
-	else
+	enum config_origin_type type = CONFIG_ORIGIN_UNKNOWN;
+
+	if (reader_origin_type(&the_reader, &type))
 		BUG("current_config_origin_type called outside config callback");
 
 	switch (type) {
@@ -3885,14 +3903,21 @@ const char *config_scope_name(enum config_scope scope)
 	}
 }
 
+static int reader_config_name(struct config_reader *reader, const char **out)
+{
+	if (the_reader.config_kvi)
+		*out = reader->config_kvi->filename;
+	else if (the_reader.source)
+		*out = reader->source->name;
+	else
+		return 1;
+	return 0;
+}
+
 const char *current_config_name(void)
 {
 	const char *name;
-	if (the_reader.config_kvi)
-		name = the_reader.config_kvi->filename;
-	else if (the_reader.source)
-		name = the_reader.source->name;
-	else
+	if (reader_config_name(&the_reader, &name))
 		BUG("current_config_name called outside config callback");
 	return name ? name : "";
 }
