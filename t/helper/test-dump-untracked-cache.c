@@ -41,7 +41,7 @@ static void dump(struct untracked_cache_dir *ucd, struct strbuf *base)
 	strbuf_setlen(base, len);
 }
 
-int cmd__dump_untracked_cache(int ac, const char **av)
+int cmd__dump_untracked_cache(int ac UNUSED, const char **av UNUSED)
 {
 	struct untracked_cache *uc;
 	struct strbuf base = STRBUF_INIT;

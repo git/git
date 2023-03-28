@@ -4,7 +4,7 @@
 #include "submodule-config.h"
 #include "submodule.h"
 
-static void die_usage(int argc, const char **argv, const char *msg)
+static void die_usage(int argc UNUSED, const char **argv, const char *msg)
 {
 	fprintf(stderr, "%s\n", msg);
 	fprintf(stderr, "Usage: %s [<commit> <submodulepath>] ...\n", argv[0]);

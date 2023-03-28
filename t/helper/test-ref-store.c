@@ -201,7 +201,8 @@ static int cmd_verify_ref(struct ref_store *refs, const char **argv)
 	return ret;
 }
 
-static int cmd_for_each_reflog(struct ref_store *refs, const char **argv)
+static int cmd_for_each_reflog(struct ref_store *refs,
+			       const char **argv UNUSED)
 {
 	return refs_for_each_reflog(refs, each_ref, NULL);
 }
@@ -323,7 +324,7 @@ static struct command commands[] = {
 	{ NULL, NULL }
 };
 
-int cmd__ref_store(int argc, const char **argv)
+int cmd__ref_store(int argc UNUSED, const char **argv)
 {
 	struct ref_store *refs;
 	const char *func;

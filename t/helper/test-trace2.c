@@ -208,7 +208,7 @@ static int ut_007BUG(int argc, const char **argv)
 	BUG("the bug message");
 }
 
-static int ut_008bug(int argc, const char **argv)
+static int ut_008bug(int argc UNUSED, const char **argv UNUSED)
 {
 	bug("a bug message");
 	bug("another bug message");
@@ -216,7 +216,7 @@ static int ut_008bug(int argc, const char **argv)
 	return 0;
 }
 
-static int ut_009bug_BUG(int argc, const char **argv)
+static int ut_009bug_BUG(int argc UNUSED, const char **argv UNUSED)
 {
 	bug("a bug message");
 	bug("another bug message");
@@ -224,7 +224,7 @@ static int ut_009bug_BUG(int argc, const char **argv)
 	return 0;
 }
 
-static int ut_010bug_BUG(int argc, const char **argv)
+static int ut_010bug_BUG(int argc UNUSED, const char **argv UNUSED)
 {
 	bug("a %s message", "bug");
 	BUG("a %s message", "BUG");
