@@ -699,7 +699,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 			strvec_push(&prune, prune_expire);
 			if (quiet)
 				strvec_push(&prune, "--no-progress");
-			if (has_promisor_remote())
+			if (repo_has_promisor_remote(the_repository))
 				strvec_push(&prune,
 					    "--exclude-promisor-objects");
 			prune_cmd.git_cmd = 1;

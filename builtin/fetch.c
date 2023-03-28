@@ -2008,7 +2008,7 @@ static inline void fetch_one_setup_partial(struct remote *remote)
 	 * If no prior partial clone/fetch and the current fetch DID NOT
 	 * request a partial-fetch, do a normal fetch.
 	 */
-	if (!has_promisor_remote() && !filter_options.choice)
+	if (!repo_has_promisor_remote(the_repository) && !filter_options.choice)
 		return;
 
 	/*
@@ -2264,7 +2264,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 			printf("%s\n", oid_to_hex(oid));
 		oidset_clear(&acked_commits);
 	} else if (remote) {
-		if (filter_options.choice || has_promisor_remote())
+		if (filter_options.choice || repo_has_promisor_remote(the_repository))
 			fetch_one_setup_partial(remote);
 		result = fetch_one(remote, argc, argv, prune_tags_ok, stdin_refspecs);
 	} else {

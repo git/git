@@ -792,7 +792,7 @@ static int batch_objects(struct batch_options *opt)
 		if (!memcmp(&data.info, &empty, sizeof(empty)))
 			data.skip_object_info = 1;
 
-		if (has_promisor_remote())
+		if (repo_has_promisor_remote(the_repository))
 			warning("This repository uses promisor remotes. Some objects may not be loaded.");
 
 		read_replace_refs = 0;

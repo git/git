@@ -2078,7 +2078,7 @@ static void check_object(struct object_entry *entry, uint32_t object_index)
 
 	if (oid_object_info_extended(the_repository, &entry->idx.oid, &oi,
 				     OBJECT_INFO_SKIP_FETCH_OBJECT | OBJECT_INFO_LOOKUP_REPLACE) < 0) {
-		if (has_promisor_remote()) {
+		if (repo_has_promisor_remote(the_repository)) {
 			prefetch_to_pack(object_index);
 			if (oid_object_info_extended(the_repository, &entry->idx.oid, &oi,
 						     OBJECT_INFO_SKIP_FETCH_OBJECT | OBJECT_INFO_LOOKUP_REPLACE) < 0)

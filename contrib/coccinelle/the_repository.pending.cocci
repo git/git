@@ -5,17 +5,7 @@
 @@
 @@
 (
-// promisor-remote.h
-- promisor_remote_reinit
-+ repo_promisor_remote_reinit
-|
-- promisor_remote_find
-+ repo_promisor_remote_find
-|
-- has_promisor_remote
-+ repo_has_promisor_remote
 // refs.h
-|
 - dwim_ref
 + repo_dwim_ref
 // rerere.h

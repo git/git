@@ -240,7 +240,7 @@ int cache_tree_fully_valid(struct cache_tree *it)
 
 static int must_check_existence(const struct cache_entry *ce)
 {
-	return !(has_promisor_remote() && ce_skip_worktree(ce));
+	return !(repo_has_promisor_remote(the_repository) && ce_skip_worktree(ce));
 }
 
 static int update_one(struct cache_tree *it,
@@ -470,7 +470,7 @@ int cache_tree_update(struct index_state *istate, int flags)
 	if (!istate->cache_tree)
 		istate->cache_tree = cache_tree();
 
-	if (!(flags & WRITE_TREE_MISSING_OK) && has_promisor_remote())
+	if (!(flags & WRITE_TREE_MISSING_OK) && repo_has_promisor_remote(the_repository))
 		prefetch_cache_entries(istate, must_check_existence);
 
 	trace_performance_enter();
