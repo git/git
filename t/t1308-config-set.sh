@@ -58,6 +58,8 @@ test_expect_success 'setup default config' '
 		skin = false
 		nose = 1
 		horns
+	[value]
+		less
 	EOF
 '
 
@@ -114,6 +116,45 @@ test_expect_success 'find value with misspelled key' '
 
 test_expect_success 'find value with the highest priority' '
 	check_config get_value case.baz "hask"
+'
+
+test_expect_success 'return value for an existing key' '
+	test-tool config get lamb.chop >out 2>err &&
+	test_must_be_empty out &&
+	test_must_be_empty err
+'
+
+test_expect_success 'return value for value-less key' '
+	test-tool config get value.less >out 2>err &&
+	test_must_be_empty out &&
+	test_must_be_empty err
+'
+
+test_expect_success 'return value for a missing key' '
+	cat >expect <<-\EOF &&
+	Value not found for "missing.key"
+	EOF
+	test_expect_code 1 test-tool config get missing.key >actual 2>err &&
+	test_cmp actual expect &&
+	test_must_be_empty err
+'
+
+test_expect_success 'return value for a bad key: CONFIG_INVALID_KEY' '
+	cat >expect <<-\EOF &&
+	Key "fails.iskeychar.-" is invalid
+	EOF
+	test_expect_code 1 test-tool config get fails.iskeychar.- >actual 2>err &&
+	test_cmp actual expect &&
+	test_must_be_empty out
+'
+
+test_expect_success 'return value for a bad key: CONFIG_NO_SECTION_OR_NAME' '
+	cat >expect <<-\EOF &&
+	Key "keynosection" has no section
+	EOF
+	test_expect_code 1 test-tool config get keynosection >actual 2>err &&
+	test_cmp actual expect &&
+	test_must_be_empty out
 '
 
 test_expect_success 'find integer value for a key' '
@@ -272,7 +313,7 @@ test_expect_success 'proper error on error in default config files' '
 	cp .git/config .git/config.old &&
 	test_when_finished "mv .git/config.old .git/config" &&
 	echo "[" >>.git/config &&
-	echo "fatal: bad config line 34 in file .git/config" >expect &&
+	echo "fatal: bad config line 36 in file .git/config" >expect &&
 	test_expect_code 128 test-tool config get_value foo.bar 2>actual &&
 	test_cmp expect actual
 '
