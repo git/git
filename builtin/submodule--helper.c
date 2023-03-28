@@ -2766,7 +2766,7 @@ cleanup:
 	return ret;
 }
 
-static int push_check(int argc, const char **argv, const char *prefix)
+static int push_check(int argc, const char **argv, const char *prefix UNUSED)
 {
 	struct remote *remote;
 	const char *superproject_head;

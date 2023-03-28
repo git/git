@@ -24,7 +24,7 @@ static char *create_temp_file(struct object_id *oid)
 	return path;
 }
 
-int cmd_unpack_file(int argc, const char **argv, const char *prefix)
+int cmd_unpack_file(int argc, const char **argv, const char *prefix UNUSED)
 {
 	struct object_id oid;
 
