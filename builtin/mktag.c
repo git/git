@@ -81,7 +81,7 @@ int cmd_mktag(int argc, const char **argv, const char *prefix)
 	int tagged_type;
 	struct object_id result;
 
-	argc = parse_options(argc, argv, NULL,
+	argc = parse_options(argc, argv, prefix,
 			     builtin_mktag_options,
 			     builtin_mktag_usage, 0);
 
