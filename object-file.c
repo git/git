@@ -267,7 +267,7 @@ int hash_algo_by_length(int len)
 
 /*
  * This is meant to hold a *small* number of objects that you would
- * want read_object_file() to be able to return, but yet you do not want
+ * want repo_read_object_file() to be able to return, but yet you do not want
  * to write them into the object store (e.g. a browse-only
  * application).
  */

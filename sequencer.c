@@ -768,9 +768,9 @@ static int is_index_unchanged(struct repository *r)
 	/*
 	 * If head_commit is NULL, check_commit, called from
 	 * lookup_commit, would have indicated that head_commit is not
-	 * a commit object already.  parse_commit() will return failure
+	 * a commit object already.  repo_parse_commit() will return failure
 	 * without further complaints in such a case.  Otherwise, if
-	 * the commit is invalid, parse_commit() will complain.  So
+	 * the commit is invalid, repo_parse_commit() will complain.  So
 	 * there is nothing for us to say here.  Just return failure.
 	 */
 	if (repo_parse_commit(the_repository, head_commit))
@@ -5365,7 +5365,7 @@ static const char *label_oid(struct object_id *oid, const char *label,
 	 * For "uninteresting" commits, i.e. commits that are not to be
 	 * rebased, and which can therefore not be labeled, we use a unique
 	 * abbreviation of the commit name. This is slightly more complicated
-	 * than calling find_unique_abbrev() because we also need to make
+	 * than calling repo_find_unique_abbrev() because we also need to make
 	 * sure that the abbreviation does not conflict with any other
 	 * label.
 	 *

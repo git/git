@@ -216,7 +216,7 @@ struct raw_object_store {
 	/*
 	 * A fast, rough count of the number of objects in the repository.
 	 * These two fields are not meant for direct access. Use
-	 * approximate_object_count() instead.
+	 * repo_approximate_object_count() instead.
 	 */
 	unsigned long approximate_object_count;
 	unsigned approximate_object_count_valid : 1;
@@ -343,7 +343,7 @@ void assert_oid_type(const struct object_id *oid, enum object_type expect);
 
 /*
  * Enabling the object read lock allows multiple threads to safely call the
- * following functions in parallel: repo_read_object_file(), read_object_file(),
+ * following functions in parallel: repo_read_object_file(),
  * read_object_with_reference(), oid_object_info() and oid_object_info_extended().
  *
  * obj_read_lock() and obj_read_unlock() may also be used to protect other

@@ -443,7 +443,7 @@ void validate_cache_entries(const struct index_state *istate);
 /*
  * Bulk prefetch all missing cache entries that are not GITLINKs and that match
  * the given predicate. This function should only be called if
- * has_promisor_remote() returns true.
+ * repo_has_promisor_remote() returns true.
  */
 typedef int (*must_prefetch_predicate)(const struct cache_entry *);
 void prefetch_cache_entries(const struct index_state *istate,
@@ -1201,7 +1201,7 @@ void check_repository_format(struct repository_format *fmt);
  * terminated.
  *
  * The non-`_r` version returns a static buffer which remains valid until 4
- * more calls to find_unique_abbrev are made.
+ * more calls to repo_find_unique_abbrev are made.
  *
  * The `_r` variant writes to a buffer supplied by the caller, which must be at
  * least `GIT_MAX_HEXSZ + 1` bytes. The return value is the number of bytes

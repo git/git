@@ -719,7 +719,7 @@ const char *repo_logmsg_reencode(struct repository *r,
 		 * Otherwise, we still want to munge the encoding header in the
 		 * result, which will be done by modifying the buffer. If we
 		 * are using a fresh copy, we can reuse it. But if we are using
-		 * the cached copy from get_commit_buffer, we need to duplicate it
+		 * the cached copy from repo_get_commit_buffer, we need to duplicate it
 		 * to avoid munging the cached copy.
 		 */
 		if (msg == get_cached_commit_buffer(r, commit, NULL))

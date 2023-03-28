@@ -156,7 +156,7 @@ static int branch_merged(int kind, const char *name,
 	/*
 	 * After the safety valve is fully redefined to "check with
 	 * upstream, if any, otherwise with HEAD", we should just
-	 * return the result of the in_merge_bases() above without
+	 * return the result of the repo_in_merge_bases() above without
 	 * any of the following code, but during the transition period,
 	 * a gentle reminder is in order.
 	 */

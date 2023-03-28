@@ -176,7 +176,7 @@ static void insert_records_from_trailers(struct shortlog *log,
 		return;
 
 	/*
-	 * Using format_commit_message("%B") would be simpler here, but
+	 * Using repo_format_commit_message("%B") would be simpler here, but
 	 * this saves us copying the message.
 	 */
 	commit_buffer = repo_logmsg_reencode(the_repository, commit, NULL,

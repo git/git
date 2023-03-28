@@ -130,7 +130,7 @@ const void *get_cached_commit_buffer(struct repository *, const struct commit *,
 /*
  * Get the commit's object contents, either from cache or by reading the object
  * from disk. The resulting memory should not be modified, and must be given
- * to unuse_commit_buffer when the caller is done.
+ * to repo_unuse_commit_buffer when the caller is done.
  */
 const void *repo_get_commit_buffer(struct repository *r,
 				   const struct commit *,
@@ -139,7 +139,7 @@ const void *repo_get_commit_buffer(struct repository *r,
 /*
  * Tell the commit subsystem that we are done with a particular commit buffer.
  * The commit and buffer should be the input and return value, respectively,
- * from an earlier call to get_commit_buffer.  The buffer may or may not be
+ * from an earlier call to repo_get_commit_buffer.  The buffer may or may not be
  * freed by this call; callers should not access the memory afterwards.
  */
 void repo_unuse_commit_buffer(struct repository *r,
