@@ -846,7 +846,8 @@ static enum bisect_error check_merge_bases(int rev_nr, struct commit **rev, int 
 	enum bisect_error res = BISECT_OK;
 	struct commit_list *result;
 
-	result = get_merge_bases_many(rev[0], rev_nr - 1, rev + 1);
+	result = repo_get_merge_bases_many(the_repository, rev[0], rev_nr - 1,
+					   rev + 1);
 
 	for (; result; result = result->next) {
 		const struct object_id *mb = &result->item->object.oid;

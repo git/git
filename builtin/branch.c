@@ -150,7 +150,8 @@ static int branch_merged(int kind, const char *name,
 	if (!reference_rev)
 		reference_rev = head_rev;
 
-	merged = reference_rev ? in_merge_bases(rev, reference_rev) : 0;
+	merged = reference_rev ? repo_in_merge_bases(the_repository, rev,
+						     reference_rev) : 0;
 
 	/*
 	 * After the safety valve is fully redefined to "check with
@@ -160,7 +161,7 @@ static int branch_merged(int kind, const char *name,
 	 * a gentle reminder is in order.
 	 */
 	if ((head_rev != reference_rev) &&
-	    (head_rev ? in_merge_bases(rev, head_rev) : 0) != merged) {
+	    (head_rev ? repo_in_merge_bases(the_repository, rev, head_rev) : 0) != merged) {
 		if (merged)
 			warning(_("deleting branch '%s' that has been merged to\n"
 				"         '%s', but not yet merged to HEAD."),

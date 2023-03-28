@@ -1649,7 +1649,9 @@ static struct commit *get_base_commit(const char *base_commit,
 					return NULL;
 			}
 			commit = lookup_commit_or_die(&oid, "upstream base");
-			base_list = get_merge_bases_many(commit, total, list);
+			base_list = repo_get_merge_bases_many(the_repository,
+							      commit, total,
+							      list);
 			/* There should be one and only one merge base. */
 			if (!base_list || base_list->next) {
 				if (die_on_failure) {
@@ -1683,7 +1685,9 @@ static struct commit *get_base_commit(const char *base_commit,
 	while (rev_nr > 1) {
 		for (i = 0; i < rev_nr / 2; i++) {
 			struct commit_list *merge_base;
-			merge_base = get_merge_bases(rev[2 * i], rev[2 * i + 1]);
+			merge_base = repo_get_merge_bases(the_repository,
+							  rev[2 * i],
+							  rev[2 * i + 1]);
 			if (!merge_base || merge_base->next) {
 				if (die_on_failure) {
 					die(_("failed to find exact merge base"));
@@ -1701,7 +1705,7 @@ static struct commit *get_base_commit(const char *base_commit,
 		rev_nr = DIV_ROUND_UP(rev_nr, 2);
 	}
 
-	if (!in_merge_bases(base, rev[0])) {
+	if (!repo_in_merge_bases(the_repository, base, rev[0])) {
 		if (die_on_failure) {
 			die(_("base commit should be the ancestor of revision list"));
 		} else {

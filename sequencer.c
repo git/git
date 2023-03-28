@@ -4102,7 +4102,8 @@ static int do_merge(struct repository *r,
 	}
 
 	merge_commit = to_merge->item;
-	bases = get_merge_bases(head_commit, merge_commit);
+	bases = repo_get_merge_bases(the_repository, head_commit,
+				     merge_commit);
 	if (bases && oideq(&merge_commit->object.oid,
 			   &bases->item->object.oid)) {
 		ret = 0;

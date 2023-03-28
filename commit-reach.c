@@ -162,7 +162,8 @@ struct commit_list *get_octopus_merge_bases(struct commit_list *in)
 
 		for (j = ret; j; j = j->next) {
 			struct commit_list *bases;
-			bases = get_merge_bases(i->item, j->item);
+			bases = repo_get_merge_bases(the_repository, i->item,
+						     j->item);
 			if (!new_commits)
 				new_commits = bases;
 			else

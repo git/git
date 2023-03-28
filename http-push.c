@@ -1570,7 +1570,7 @@ static int verify_merge_base(struct object_id *head_oid, struct ref *remote)
 	struct commit *branch = lookup_commit_or_die(&remote->old_oid,
 						     remote->name);
 
-	return in_merge_bases(branch, head);
+	return repo_in_merge_bases(the_repository, branch, head);
 }
 
 static int delete_remote_branch(const char *pattern, int force)

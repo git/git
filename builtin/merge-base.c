@@ -13,7 +13,8 @@ static int show_merge_base(struct commit **rev, int rev_nr, int show_all)
 {
 	struct commit_list *result, *r;
 
-	result = get_merge_bases_many_dirty(rev[0], rev_nr - 1, rev + 1);
+	result = repo_get_merge_bases_many_dirty(the_repository, rev[0],
+						 rev_nr - 1, rev + 1);
 
 	if (!result)
 		return 1;
@@ -105,7 +106,7 @@ static int handle_is_ancestor(int argc, const char **argv)
 		die("--is-ancestor takes exactly two commits");
 	one = get_commit_reference(argv[0]);
 	two = get_commit_reference(argv[1]);
-	if (in_merge_bases(one, two))
+	if (repo_in_merge_bases(the_repository, one, two))
 		return 0;
 	else
 		return 1;

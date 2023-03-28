@@ -38,6 +38,22 @@
 |
 - peel_to_type
 + repo_peel_to_type
+// commit-reach.h
+|
+- get_merge_bases
++ repo_get_merge_bases
+|
+- get_merge_bases_many
++ repo_get_merge_bases_many
+|
+- get_merge_bases_many_dirty
++ repo_get_merge_bases_many_dirty
+|
+- in_merge_bases
++ repo_in_merge_bases
+|
+- in_merge_bases_many
++ repo_in_merge_bases_many
 )
   (
 + the_repository,

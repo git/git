@@ -965,7 +965,8 @@ static int update_local_ref(struct ref *ref,
 
 	if (fetch_show_forced_updates) {
 		uint64_t t_before = getnanotime();
-		fast_forward = in_merge_bases(current, updated);
+		fast_forward = repo_in_merge_bases(the_repository, current,
+						   updated);
 		forced_updates_ms += (getnanotime() - t_before) / 1000000;
 	} else {
 		fast_forward = 1;

@@ -993,7 +993,7 @@ static int do_remerge_diff(struct rev_info *opt,
 	/* Parse the relevant commits and get the merge bases */
 	parse_commit_or_die(parent1);
 	parse_commit_or_die(parent2);
-	bases = get_merge_bases(parent1, parent2);
+	bases = repo_get_merge_bases(the_repository, parent1, parent2);
 
 	/* Re-merge the parents */
 	merge_incore_recursive(&o, bases, parent1, parent2, &res);
