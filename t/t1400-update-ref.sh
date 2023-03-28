@@ -1568,6 +1568,7 @@ test_expect_success 'transaction can create and delete' '
 	EOF
 	git update-ref --stdin <stdin >actual &&
 	printf "%s: ok\n" start commit start commit >expect &&
+	test_cmp expect actual &&
 	test_must_fail git show-ref --verify refs/heads/create-and-delete
 '
 
@@ -1595,6 +1596,8 @@ test_expect_success 'transaction cannot restart ongoing transaction' '
 	commit
 	EOF
 	test_must_fail git update-ref --stdin <stdin >actual &&
+	printf "%s: ok\n" start >expect &&
+	test_cmp expect actual &&
 	test_must_fail git show-ref --verify refs/heads/restart
 '
 
