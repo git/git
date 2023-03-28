@@ -24,9 +24,6 @@ struct rerere_id {
 };
 
 int setup_rerere(struct repository *,struct string_list *, int);
-#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
-#define rerere(flags) repo_rerere(the_repository, flags)
-#endif
 int repo_rerere(struct repository *, int);
 /*
  * Given the conflict ID and the name of a "file" used for replaying

@@ -5,11 +5,7 @@
 @@
 @@
 (
-// rerere.h
-- rerere
-+ repo_rerere
 // revision.h
-|
 - init_revisions
 + repo_init_revisions
 )

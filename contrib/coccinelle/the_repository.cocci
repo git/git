@@ -109,6 +109,10 @@
 |
 - dwim_ref
 + repo_dwim_ref
+// rerere.h
+|
+- rerere
++ repo_rerere
 )
   (
 + the_repository,
