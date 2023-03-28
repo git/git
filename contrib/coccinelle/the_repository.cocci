@@ -54,6 +54,25 @@
 |
 - in_merge_bases_many
 + repo_in_merge_bases_many
+// commit.h
+|
+- parse_commit_internal
++ repo_parse_commit_internal
+|
+- parse_commit
++ repo_parse_commit
+|
+- get_commit_buffer
++ repo_get_commit_buffer
+|
+- unuse_commit_buffer
++ repo_unuse_commit_buffer
+|
+- logmsg_reencode
++ repo_logmsg_reencode
+|
+- get_commit_tree
++ repo_get_commit_tree
 )
   (
 + the_repository,

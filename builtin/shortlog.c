@@ -179,7 +179,8 @@ static void insert_records_from_trailers(struct shortlog *log,
 	 * Using format_commit_message("%B") would be simpler here, but
 	 * this saves us copying the message.
 	 */
-	commit_buffer = logmsg_reencode(commit, NULL, ctx->output_encoding);
+	commit_buffer = repo_logmsg_reencode(the_repository, commit, NULL,
+					     ctx->output_encoding);
 	body = strstr(commit_buffer, "\n\n");
 	if (!body)
 		return;
@@ -202,7 +203,7 @@ static void insert_records_from_trailers(struct shortlog *log,
 	trailer_iterator_release(&iter);
 
 	strbuf_release(&ident);
-	unuse_commit_buffer(commit, commit_buffer);
+	repo_unuse_commit_buffer(the_repository, commit, commit_buffer);
 }
 
 static int shortlog_needs_dedup(const struct shortlog *log)

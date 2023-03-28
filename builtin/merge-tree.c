@@ -443,9 +443,9 @@ static int real_merge(struct merge_tree_options *o,
 			die(_("could not lookup commit %s"), merge_base);
 
 		opt.ancestor = merge_base;
-		base_tree = get_commit_tree(base_commit);
-		parent1_tree = get_commit_tree(parent1);
-		parent2_tree = get_commit_tree(parent2);
+		base_tree = repo_get_commit_tree(the_repository, base_commit);
+		parent1_tree = repo_get_commit_tree(the_repository, parent1);
+		parent2_tree = repo_get_commit_tree(the_repository, parent2);
 		merge_incore_nonrecursive(&opt, base_tree, parent1_tree, parent2_tree, &result);
 	} else {
 		/*

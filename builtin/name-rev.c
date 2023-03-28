@@ -181,7 +181,7 @@ static void name_rev(struct commit *start_commit,
 	size_t parents_to_queue_nr, parents_to_queue_alloc = 0;
 	struct rev_name *start_name;
 
-	parse_commit(start_commit);
+	repo_parse_commit(the_repository, start_commit);
 	if (commit_is_before_cutoff(start_commit))
 		return;
 
@@ -211,7 +211,7 @@ static void name_rev(struct commit *start_commit,
 			struct rev_name *parent_name;
 			int generation, distance;
 
-			parse_commit(parent);
+			repo_parse_commit(the_repository, parent);
 			if (commit_is_before_cutoff(parent))
 				continue;
 

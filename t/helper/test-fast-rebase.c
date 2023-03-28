@@ -65,7 +65,8 @@ static struct commit *create_commit(struct tree *tree,
 	struct commit_extra_header *extra;
 	struct strbuf msg = STRBUF_INIT;
 	const char *out_enc = get_commit_output_encoding();
-	const char *message = logmsg_reencode(based_on, NULL, out_enc);
+	const char *message = repo_logmsg_reencode(the_repository, based_on,
+						   NULL, out_enc);
 	const char *orig_message = NULL;
 	const char *exclude_gpgsig[] = { "gpgsig", NULL };
 
@@ -156,7 +157,7 @@ int cmd__fast_rebase(int argc, const char **argv)
 	memset(&result, 0, sizeof(result));
 	merge_opt.show_rename_progress = 1;
 	merge_opt.branch1 = "HEAD";
-	head_tree = get_commit_tree(onto);
+	head_tree = repo_get_commit_tree(the_repository, onto);
 	result.tree = head_tree;
 	last_commit = onto;
 	while ((commit = get_revision(&revs))) {
@@ -167,8 +168,8 @@ int cmd__fast_rebase(int argc, const char **argv)
 		assert(commit->parents && !commit->parents->next);
 		base = commit->parents->item;
 
-		next_tree = get_commit_tree(commit);
-		base_tree = get_commit_tree(base);
+		next_tree = repo_get_commit_tree(the_repository, commit);
+		base_tree = repo_get_commit_tree(the_repository, base);
 
 		merge_opt.branch2 = short_commit_name(commit);
 		merge_opt.ancestor = xstrfmt("parent of %s", merge_opt.branch2);

@@ -678,7 +678,8 @@ int notes_merge_commit(struct notes_merge_options *o,
 	DIR *dir;
 	struct dirent *e;
 	struct strbuf path = STRBUF_INIT;
-	const char *buffer = get_commit_buffer(partial_commit, NULL);
+	const char *buffer = repo_get_commit_buffer(the_repository,
+						    partial_commit, NULL);
 	const char *msg = strstr(buffer, "\n\n");
 	int baselen;
 
@@ -725,7 +726,7 @@ int notes_merge_commit(struct notes_merge_options *o,
 
 	create_notes_commit(o->repo, partial_tree, partial_commit->parents, msg,
 			    strlen(msg), result_oid);
-	unuse_commit_buffer(partial_commit, buffer);
+	repo_unuse_commit_buffer(the_repository, partial_commit, buffer);
 	if (o->verbosity >= 4)
 		printf("Finalized notes merge commit: %s\n",
 			oid_to_hex(result_oid));
