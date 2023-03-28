@@ -91,6 +91,10 @@
 |
 - format_commit_message
 + repo_format_commit_message
+// packfile.h
+|
+- approximate_object_count
++ repo_approximate_object_count
 )
   (
 + the_repository,

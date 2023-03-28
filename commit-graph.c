@@ -2360,7 +2360,7 @@ int write_commit_graph(struct object_directory *odb,
 			replace = ctx->opts->split_flags & COMMIT_GRAPH_SPLIT_REPLACE;
 	}
 
-	ctx->approx_nr_objects = approximate_object_count();
+	ctx->approx_nr_objects = repo_approximate_object_count(the_repository);
 
 	if (ctx->append && ctx->r->objects->commit_graph) {
 		struct commit_graph *g = ctx->r->objects->commit_graph;

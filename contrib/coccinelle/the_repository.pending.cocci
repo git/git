@@ -5,11 +5,7 @@
 @@
 @@
 (
-// packfile.h
-- approximate_object_count
-+ repo_approximate_object_count
 // promisor-remote.h
-|
 - promisor_remote_reinit
 + repo_promisor_remote_reinit
 |
