@@ -105,6 +105,10 @@
 |
 - has_promisor_remote
 + repo_has_promisor_remote
+// refs.h
+|
+- dwim_ref
++ repo_dwim_ref
 )
   (
 + the_repository,

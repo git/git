@@ -996,7 +996,8 @@ struct commit *get_fork_point(const char *refname, struct commit *commit)
 	struct commit *ret = NULL;
 	char *full_refname;
 
-	switch (dwim_ref(refname, strlen(refname), &oid, &full_refname, 0)) {
+	switch (repo_dwim_ref(the_repository, refname, strlen(refname), &oid,
+			      &full_refname, 0)) {
 	case 0:
 		die("No such ref: '%s'", refname);
 	case 1:

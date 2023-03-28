@@ -456,10 +456,11 @@ static void parse_treeish_arg(const char **argv,
 		const char *colon = strchrnul(name, ':');
 		int refnamelen = colon - name;
 
-		if (!dwim_ref(name, refnamelen, &oid, &ref, 0))
+		if (!repo_dwim_ref(the_repository, name, refnamelen, &oid, &ref, 0))
 			die(_("no such ref: %.*s"), refnamelen, name);
 	} else {
-		dwim_ref(name, strlen(name), &oid, &ref, 0);
+		repo_dwim_ref(the_repository, name, strlen(name), &oid, &ref,
+			      0);
 	}
 
 	if (repo_get_oid(the_repository, name, &oid))

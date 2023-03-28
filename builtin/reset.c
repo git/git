@@ -465,7 +465,8 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 			char *ref = NULL;
 			int err;
 
-			dwim_ref(rev, strlen(rev), &dummy, &ref, 0);
+			repo_dwim_ref(the_repository, rev, strlen(rev),
+				      &dummy, &ref, 0);
 			if (ref && !starts_with(ref, "refs/"))
 				FREE_AND_NULL(ref);
 

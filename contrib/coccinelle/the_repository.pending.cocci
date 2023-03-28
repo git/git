@@ -5,11 +5,7 @@
 @@
 @@
 (
-// refs.h
-- dwim_ref
-+ repo_dwim_ref
 // rerere.h
-|
 - rerere
 + repo_rerere
 // revision.h

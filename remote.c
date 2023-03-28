@@ -1808,8 +1808,9 @@ static void set_merge(struct remote_state *remote_state, struct branch *ret)
 		if (!remote_find_tracking(remote, ret->merge[i]) ||
 		    strcmp(ret->remote_name, "."))
 			continue;
-		if (dwim_ref(ret->merge_name[i], strlen(ret->merge_name[i]),
-			     &oid, &ref, 0) == 1)
+		if (repo_dwim_ref(the_repository, ret->merge_name[i],
+				  strlen(ret->merge_name[i]), &oid, &ref,
+				  0) == 1)
 			ret->merge[i]->dst = ref;
 		else
 			ret->merge[i]->dst = xstrdup(ret->merge_name[i]);

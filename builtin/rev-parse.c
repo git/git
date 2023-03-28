@@ -136,7 +136,9 @@ static void show_rev(int type, const struct object_id *oid, const char *name)
 			struct object_id discard;
 			char *full;
 
-			switch (dwim_ref(name, strlen(name), &discard, &full, 0)) {
+			switch (repo_dwim_ref(the_repository, name,
+					      strlen(name), &discard, &full,
+					      0)) {
 			case 0:
 				/*
 				 * Not found -- not a ref.  We could
