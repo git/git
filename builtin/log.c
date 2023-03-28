@@ -1642,7 +1642,7 @@ static struct commit *get_base_commit(const char *base_commit,
 			struct commit *commit;
 			struct object_id oid;
 
-			if (get_oid(upstream, &oid)) {
+			if (repo_get_oid(the_repository, upstream, &oid)) {
 				if (die_on_failure)
 					die(_("failed to resolve '%s' as a valid ref"), upstream);
 				else
@@ -2396,7 +2396,7 @@ done:
 static int add_pending_commit(const char *arg, struct rev_info *revs, int flags)
 {
 	struct object_id oid;
-	if (get_oid(arg, &oid) == 0) {
+	if (repo_get_oid(the_repository, arg, &oid) == 0) {
 		struct commit *commit = lookup_commit_reference(the_repository,
 								&oid);
 		if (commit) {
@@ -2418,12 +2418,12 @@ static void print_commit(char sign, struct commit *commit, int verbose,
 {
 	if (!verbose) {
 		fprintf(file, "%c %s\n", sign,
-		       find_unique_abbrev(&commit->object.oid, abbrev));
+		       repo_find_unique_abbrev(the_repository, &commit->object.oid, abbrev));
 	} else {
 		struct strbuf buf = STRBUF_INIT;
 		pp_commit_easy(CMIT_FMT_ONELINE, commit, &buf);
 		fprintf(file, "%c %s %s\n", sign,
-		       find_unique_abbrev(&commit->object.oid, abbrev),
+		       repo_find_unique_abbrev(the_repository, &commit->object.oid, abbrev),
 		       buf.buf);
 		strbuf_release(&buf);
 	}

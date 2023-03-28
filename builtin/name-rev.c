@@ -493,7 +493,8 @@ static void show_name(const struct object *obj,
 	else if (allow_undefined)
 		printf("undefined\n");
 	else if (always)
-		printf("%s\n", find_unique_abbrev(oid, DEFAULT_ABBREV));
+		printf("%s\n",
+		       repo_find_unique_abbrev(the_repository, oid, DEFAULT_ABBREV));
 	else
 		die("cannot describe '%s'", oid_to_hex(oid));
 	strbuf_release(&buf);
@@ -527,7 +528,7 @@ static void name_rev_line(char *p, struct name_ref_data *data)
 			counter = 0;
 
 			*(p+1) = 0;
-			if (!get_oid(p - (hexsz - 1), &oid)) {
+			if (!repo_get_oid(the_repository, p - (hexsz - 1), &oid)) {
 				struct object *o =
 					lookup_object(the_repository, &oid);
 				if (o)
@@ -604,7 +605,7 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 		struct object *object;
 		struct commit *commit;
 
-		if (get_oid(*argv, &oid)) {
+		if (repo_get_oid(the_repository, *argv, &oid)) {
 			fprintf(stderr, "Could not get sha1 for %s. Skipping.\n",
 					*argv);
 			continue;

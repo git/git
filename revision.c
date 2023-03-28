@@ -324,7 +324,8 @@ static void add_pending_object_with_path(struct rev_info *revs,
 	if (revs->reflog_info && obj->type == OBJ_COMMIT) {
 		struct strbuf buf = STRBUF_INIT;
 		size_t namelen = strlen(name);
-		int len = interpret_branch_name(name, namelen, &buf, &options);
+		int len = repo_interpret_branch_name(the_repository, name,
+						     namelen, &buf, &options);
 
 		if (0 < len && len < namelen && buf.len)
 			strbuf_addstr(&buf, name + len);
@@ -354,7 +355,7 @@ void add_head_to_pending(struct rev_info *revs)
 {
 	struct object_id oid;
 	struct object *obj;
-	if (get_oid("HEAD", &oid))
+	if (repo_get_oid(the_repository, "HEAD", &oid))
 		return;
 	obj = parse_object(revs->repo, &oid);
 	if (!obj)
@@ -1867,7 +1868,7 @@ static int add_parents_only(struct rev_info *revs, const char *arg_, int flags,
 		flags ^= UNINTERESTING | BOTTOM;
 		arg++;
 	}
-	if (get_oid_committish(arg, &oid))
+	if (repo_get_oid_committish(the_repository, arg, &oid))
 		return 0;
 	while (1) {
 		it = get_reference(revs, arg, &oid, 0);
@@ -1948,10 +1949,10 @@ static void prepare_show_merge(struct rev_info *revs)
 	int i, prune_num = 1; /* counting terminating NULL */
 	struct index_state *istate = revs->repo->index;
 
-	if (get_oid("HEAD", &oid))
+	if (repo_get_oid(the_repository, "HEAD", &oid))
 		die("--merge without HEAD?");
 	head = lookup_commit_or_die(&oid, "HEAD");
-	if (get_oid("MERGE_HEAD", &oid))
+	if (repo_get_oid(the_repository, "MERGE_HEAD", &oid))
 		die("--merge without MERGE_HEAD?");
 	other = lookup_commit_or_die(&oid, "MERGE_HEAD");
 	add_pending_object(revs, &head->object, "HEAD");

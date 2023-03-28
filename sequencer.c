@@ -419,7 +419,8 @@ struct commit_message {
 
 static const char *short_commit_name(struct commit *commit)
 {
-	return find_unique_abbrev(&commit->object.oid, DEFAULT_ABBREV);
+	return repo_find_unique_abbrev(the_repository, &commit->object.oid,
+				       DEFAULT_ABBREV);
 }
 
 static int get_message(struct commit *commit, struct commit_message *out)
@@ -561,7 +562,7 @@ static void update_abort_safety_file(void)
 	if (!file_exists(git_path_seq_dir()))
 		return;
 
-	if (!get_oid("HEAD", &head))
+	if (!repo_get_oid(the_repository, "HEAD", &head))
 		write_file(git_path_abort_safety_file(), "%s", oid_to_hex(&head));
 	else
 		write_file(git_path_abort_safety_file(), "%s", "");
@@ -1406,7 +1407,7 @@ static int parse_head(struct repository *r, struct commit **head)
 	struct commit *current_head;
 	struct object_id oid;
 
-	if (get_oid("HEAD", &oid)) {
+	if (repo_get_oid(the_repository, "HEAD", &oid)) {
 		current_head = NULL;
 	} else {
 		current_head = lookup_commit_reference(r, &oid);
@@ -1997,7 +1998,7 @@ static int update_squash_messages(struct repository *r,
 		struct commit *head_commit;
 		const char *head_message, *body;
 
-		if (get_oid("HEAD", &head))
+		if (repo_get_oid(the_repository, "HEAD", &head))
 			return error(_("need a HEAD to fixup"));
 		if (!(head_commit = lookup_commit_reference(r, &head)))
 			return error(_("could not read HEAD"));
@@ -2067,7 +2068,7 @@ static void flush_rewritten_pending(void)
 	FILE *out;
 
 	if (strbuf_read_file(&buf, rebase_path_rewritten_pending(), (GIT_MAX_HEXSZ + 1) * 2) > 0 &&
-	    !get_oid("HEAD", &newoid) &&
+	    !repo_get_oid(the_repository, "HEAD", &newoid) &&
 	    (out = fopen_or_warn(rebase_path_rewritten_list(), "a"))) {
 		char *bol = buf.buf, *eol;
 
@@ -2152,7 +2153,7 @@ static int do_pick_commit(struct repository *r,
 		if (write_index_as_tree(&head, r->index, r->index_file, 0, NULL))
 			return error(_("your index file is unmerged."));
 	} else {
-		unborn = get_oid("HEAD", &head);
+		unborn = repo_get_oid(the_repository, "HEAD", &head);
 		/* Do we want to generate a root commit? */
 		if (is_pick_or_similar(command) && opts->have_squash_onto &&
 		    oideq(&head, &opts->squash_onto)) {
@@ -2606,7 +2607,7 @@ static int parse_insn_line(struct repository *r, struct todo_item *item,
 	end_of_object_name = (char *) bol + strcspn(bol, " \t\n");
 	saved = *end_of_object_name;
 	*end_of_object_name = '\0';
-	status = get_oid(bol, &commit_oid);
+	status = repo_get_oid(the_repository, bol, &commit_oid);
 	if (status < 0)
 		error(_("could not parse '%s'"), bol); /* return later */
 	*end_of_object_name = saved;
@@ -3022,7 +3023,7 @@ static int read_populate_opts(struct replay_opts *opts)
 		}
 
 		if (read_oneliner(&buf, rebase_path_squash_onto(), 0)) {
-			if (get_oid_committish(buf.buf, &opts->squash_onto) < 0) {
+			if (repo_get_oid_committish(the_repository, buf.buf, &opts->squash_onto) < 0) {
 				ret = error(_("unusable squash-onto"));
 				goto done_rebase_i;
 			}
@@ -3223,7 +3224,7 @@ static int rollback_is_safe(void)
 	else
 		die_errno(_("could not read '%s'"), git_path_abort_safety_file());
 
-	if (get_oid("HEAD", &actual_head))
+	if (repo_get_oid(the_repository, "HEAD", &actual_head))
 		oidclr(&actual_head);
 
 	return oideq(&actual_head, &expected_head);
@@ -3534,7 +3535,7 @@ static int intend_to_amend(void)
 	struct object_id head;
 	char *p;
 
-	if (get_oid("HEAD", &head))
+	if (repo_get_oid(the_repository, "HEAD", &head))
 		return error(_("cannot read HEAD"));
 
 	p = oid_to_hex(&head);
@@ -3700,7 +3701,7 @@ static int do_label(struct repository *r, const char *name, int len)
 	if (!transaction) {
 		error("%s", err.buf);
 		ret = -1;
-	} else if (get_oid("HEAD", &head_oid)) {
+	} else if (repo_get_oid(the_repository, "HEAD", &head_oid)) {
 		error(_("could not read HEAD"));
 		ret = -1;
 	} else if (ref_transaction_update(transaction, ref_name.buf, &head_oid,
@@ -4456,7 +4457,7 @@ void create_autostash(struct repository *r, const char *path)
 		if (capture_command(&stash, &buf, GIT_MAX_HEXSZ))
 			die(_("Cannot autostash"));
 		strbuf_trim_trailing_newline(&buf);
-		if (get_oid(buf.buf, &oid))
+		if (repo_get_oid(the_repository, buf.buf, &oid))
 			die(_("Unexpected stash response: '%s'"),
 			    buf.buf);
 		strbuf_reset(&buf);
@@ -4581,7 +4582,7 @@ static int stopped_at_head(struct repository *r)
 	struct commit *commit;
 	struct commit_message message;
 
-	if (get_oid("HEAD", &head) ||
+	if (repo_get_oid(the_repository, "HEAD", &head) ||
 	    !(commit = lookup_commit(r, &head)) ||
 	    parse_commit(commit) || get_message(commit, &message))
 		fprintf(stderr, _("Stopped at HEAD\n"));
@@ -4731,7 +4732,7 @@ static int pick_commits(struct repository *r,
 				 * otherwise we do not.
 				 */
 				if (item->command == TODO_REWORD &&
-				    !get_oid("HEAD", &oid) &&
+				    !repo_get_oid(the_repository, "HEAD", &oid) &&
 				    (oideq(&item->commit->object.oid, &oid) ||
 				     (opts->have_squash_onto &&
 				      oideq(&opts->squash_onto, &oid))))
@@ -4820,7 +4821,7 @@ static int pick_commits(struct repository *r,
 			struct object_id head, orig;
 			int res;
 
-			if (get_oid("HEAD", &head)) {
+			if (repo_get_oid(the_repository, "HEAD", &head)) {
 				res = error(_("cannot read HEAD"));
 cleanup_head_ref:
 				strbuf_release(&head_ref);
@@ -4867,8 +4868,8 @@ cleanup_head_ref:
 			log_tree_opt.disable_stdin = 1;
 
 			if (read_oneliner(&buf, rebase_path_orig_head(), 0) &&
-			    !get_oid(buf.buf, &orig) &&
-			    !get_oid("HEAD", &head)) {
+			    !repo_get_oid(the_repository, buf.buf, &orig) &&
+			    !repo_get_oid(the_repository, "HEAD", &head)) {
 				diff_tree_oid(&orig, &head, "",
 					      &log_tree_opt.diffopt);
 				log_tree_diff_flush(&log_tree_opt);
@@ -4960,7 +4961,7 @@ static int commit_staged_changes(struct repository *r,
 		struct strbuf rev = STRBUF_INIT;
 		struct object_id head, to_amend;
 
-		if (get_oid("HEAD", &head))
+		if (repo_get_oid(the_repository, "HEAD", &head))
 			return error(_("cannot amend non-existing commit"));
 		if (!read_oneliner(&rev, rebase_path_amend(), 0))
 			return error(_("invalid file: '%s'"), rebase_path_amend());
@@ -5185,7 +5186,7 @@ int sequencer_pick_revisions(struct repository *r,
 		if (!strlen(name))
 			continue;
 
-		if (!get_oid(name, &oid)) {
+		if (!repo_get_oid(the_repository, name, &oid)) {
 			if (!lookup_commit_reference_gently(r, &oid, 1)) {
 				enum object_type type = oid_object_info(r,
 									&oid,
@@ -5228,7 +5229,7 @@ int sequencer_pick_revisions(struct repository *r,
 	if (walk_revs_populate_todo(&todo_list, opts) ||
 			create_seq_dir(r) < 0)
 		return -1;
-	if (get_oid("HEAD", &oid) && (opts->action == REPLAY_REVERT))
+	if (repo_get_oid(the_repository, "HEAD", &oid) && (opts->action == REPLAY_REVERT))
 		return error(_("can't revert as initial commit"));
 	if (save_head(oid_to_hex(&oid)))
 		return -1;
@@ -5360,7 +5361,8 @@ static const char *label_oid(struct object_id *oid, const char *label,
 		strbuf_grow(&state->buf, GIT_MAX_HEXSZ);
 		label = p = state->buf.buf;
 
-		find_unique_abbrev_r(p, oid, default_abbrev);
+		repo_find_unique_abbrev_r(the_repository, p, oid,
+					  default_abbrev);
 
 		/*
 		 * We may need to extend the abbreviated hash so that there is
@@ -6093,7 +6095,8 @@ int complete_action(struct repository *r, struct replay_opts *opts, unsigned fla
 	struct object_id oid = onto->object.oid;
 	int res;
 
-	find_unique_abbrev_r(shortonto, &oid, DEFAULT_ABBREV);
+	repo_find_unique_abbrev_r(the_repository, shortonto, &oid,
+				  DEFAULT_ABBREV);
 
 	if (buf->len == 0) {
 		struct todo_item *item = append_new_todo(todo_list);
@@ -6369,8 +6372,8 @@ int sequencer_determine_whence(struct repository *r, enum commit_whence *whence)
 		if (file_exists(git_path_seq_dir()))
 			*whence = FROM_CHERRY_PICK_MULTI;
 		if (file_exists(rebase_path()) &&
-		    !get_oid("REBASE_HEAD", &rebase_head) &&
-		    !get_oid("CHERRY_PICK_HEAD", &cherry_pick_head) &&
+		    !repo_get_oid(the_repository, "REBASE_HEAD", &rebase_head) &&
+		    !repo_get_oid(the_repository, "CHERRY_PICK_HEAD", &cherry_pick_head) &&
 		    oideq(&rebase_head, &cherry_pick_head))
 			*whence = FROM_REBASE_PICK;
 		else

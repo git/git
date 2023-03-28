@@ -566,7 +566,7 @@ int notes_merge(struct notes_merge_options *o,
 	trace_printf("\tlocal commit: %.7s\n", oid_to_hex(&local_oid));
 
 	/* Dereference o->remote_ref into remote_oid */
-	if (get_oid(o->remote_ref, &remote_oid)) {
+	if (repo_get_oid(the_repository, o->remote_ref, &remote_oid)) {
 		/*
 		 * Failed to get remote_oid. If o->remote_ref looks like an
 		 * unborn ref, perform the merge using an empty notes tree.

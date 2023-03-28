@@ -280,7 +280,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 		item = string_list_append(&refs_to_delete, name);
 		item->util = xstrdup((flags & REF_ISBROKEN) ? "broken"
 				    : (flags & REF_ISSYMREF) ? target
-				    : find_unique_abbrev(&oid, DEFAULT_ABBREV));
+				    : repo_find_unique_abbrev(the_repository, &oid, DEFAULT_ABBREV));
 
 	next:
 		free(target);

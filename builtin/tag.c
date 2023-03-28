@@ -137,7 +137,7 @@ static int delete_tags(const char **argv)
 		if (!ref_exists(name))
 			printf(_("Deleted tag '%s' (was %s)\n"),
 				item->string + 10,
-				find_unique_abbrev(oid, DEFAULT_ABBREV));
+				repo_find_unique_abbrev(the_repository, oid, DEFAULT_ABBREV));
 
 		free(oid);
 	}
@@ -593,7 +593,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	if (argc > 2)
 		die(_("too many arguments"));
 
-	if (get_oid(object_ref, &object))
+	if (repo_get_oid(the_repository, object_ref, &object))
 		die(_("Failed to resolve '%s' as a valid ref."), object_ref);
 
 	if (strbuf_check_tag_ref(&ref, tag))
@@ -634,7 +634,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	ref_transaction_free(transaction);
 	if (force && !is_null_oid(&prev) && !oideq(&prev, &object))
 		printf(_("Updated tag '%s' (was %s)\n"), tag,
-		       find_unique_abbrev(&prev, DEFAULT_ABBREV));
+		       repo_find_unique_abbrev(the_repository, &prev, DEFAULT_ABBREV));
 
 cleanup:
 	ref_sorting_release(sorting);

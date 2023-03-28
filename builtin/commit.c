@@ -557,7 +557,7 @@ static int run_status(FILE *fp, const char *index_file, const char *prefix, int 
 	s->index_file = index_file;
 	s->fp = fp;
 	s->nowarn = nowarn;
-	s->is_initial = get_oid(s->reference, &oid) ? 1 : 0;
+	s->is_initial = repo_get_oid(the_repository, s->reference, &oid) ? 1 : 0;
 	if (!s->is_initial)
 		oidcpy(&s->oid_commit, &oid);
 	s->status_format = status_format;
@@ -1000,7 +1000,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		if (amend)
 			parent = "HEAD^1";
 
-		if (get_oid(parent, &oid)) {
+		if (repo_get_oid(the_repository, parent, &oid)) {
 			int i, ita_nr = 0;
 
 			/* TODO: audit for interaction with sparse-index. */
@@ -1567,7 +1567,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	else
 		fd = -1;
 
-	s.is_initial = get_oid(s.reference, &oid) ? 1 : 0;
+	s.is_initial = repo_get_oid(the_repository, s.reference, &oid) ? 1 : 0;
 	if (!s.is_initial)
 		oidcpy(&s.oid_commit, &oid);
 
@@ -1714,7 +1714,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	status_format = STATUS_FORMAT_NONE; /* Ignore status.short */
 	s.colopts = 0;
 
-	if (get_oid("HEAD", &oid))
+	if (repo_get_oid(the_repository, "HEAD", &oid))
 		current_head = NULL;
 	else {
 		current_head = lookup_commit_or_die(&oid, "HEAD");

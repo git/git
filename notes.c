@@ -944,7 +944,7 @@ void string_list_add_refs_by_glob(struct string_list *list, const char *glob)
 		for_each_glob_ref(string_list_add_one_ref, glob, list);
 	} else {
 		struct object_id oid;
-		if (get_oid(glob, &oid))
+		if (repo_get_oid(the_repository, glob, &oid))
 			warning("notes ref %s is invalid", glob);
 		if (!unsorted_string_list_has_string(list, glob))
 			string_list_append(list, glob);
@@ -1021,7 +1021,7 @@ void init_notes(struct notes_tree *t, const char *notes_ref,
 	t->dirty = 0;
 
 	if (flags & NOTES_INIT_EMPTY || !notes_ref ||
-	    get_oid_treeish(notes_ref, &object_oid))
+	    repo_get_oid_treeish(the_repository, notes_ref, &object_oid))
 		return;
 	if (flags & NOTES_INIT_WRITABLE && read_ref(notes_ref, &object_oid))
 		die("Cannot use notes ref %s", notes_ref);
@@ -1348,7 +1348,7 @@ void expand_loose_notes_ref(struct strbuf *sb)
 {
 	struct object_id object;
 
-	if (get_oid(sb->buf, &object)) {
+	if (repo_get_oid(the_repository, sb->buf, &object)) {
 		/* fallback to expand_notes_ref */
 		expand_notes_ref(sb);
 	}

@@ -1174,7 +1174,7 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 	if (!summary_limit)
 		return 0;
 
-	if (!get_oid(argc ? argv[0] : "HEAD", &head_oid)) {
+	if (!repo_get_oid(the_repository, argc ? argv[0] : "HEAD", &head_oid)) {
 		if (argc) {
 			argv++;
 			argc--;
@@ -1187,7 +1187,7 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 			argc--;
 		}
 	} else {
-		if (get_oid("HEAD", &head_oid))
+		if (repo_get_oid(the_repository, "HEAD", &head_oid))
 			die(_("could not fetch a revision for HEAD"));
 	}
 

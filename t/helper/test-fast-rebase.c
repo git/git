@@ -25,7 +25,8 @@
 
 static const char *short_commit_name(struct commit *commit)
 {
-	return find_unique_abbrev(&commit->object.oid, DEFAULT_ABBREV);
+	return repo_find_unique_abbrev(the_repository, &commit->object.oid,
+				       DEFAULT_ABBREV);
 }
 
 static struct commit *peel_committish(const char *name)
@@ -33,10 +34,11 @@ static struct commit *peel_committish(const char *name)
 	struct object *obj;
 	struct object_id oid;
 
-	if (get_oid(name, &oid))
+	if (repo_get_oid(the_repository, name, &oid))
 		return NULL;
 	obj = parse_object(the_repository, &oid);
-	return (struct commit *)peel_to_type(name, 0, obj, OBJ_COMMIT);
+	return (struct commit *)repo_peel_to_type(the_repository, name, 0, obj,
+						  OBJ_COMMIT);
 }
 
 static char *get_author(const char *message)
@@ -119,7 +121,7 @@ int cmd__fast_rebase(int argc, const char **argv)
 	strbuf_addf(&branch_name, "refs/heads/%s", argv[4]);
 
 	/* Sanity check */
-	if (get_oid("HEAD", &head))
+	if (repo_get_oid(the_repository, "HEAD", &head))
 		die(_("Cannot read HEAD"));
 	assert(oideq(&onto->object.oid, &head));
 

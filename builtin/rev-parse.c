@@ -162,7 +162,8 @@ static void show_rev(int type, const struct object_id *oid, const char *name)
 		}
 	}
 	else if (abbrev)
-		show_with_type(type, find_unique_abbrev(oid, abbrev));
+		show_with_type(type,
+			       repo_find_unique_abbrev(the_repository, oid, abbrev));
 	else
 		show_with_type(type, oid_to_hex(oid));
 }
@@ -187,7 +188,7 @@ static int show_default(void)
 		struct object_id oid;
 
 		def = NULL;
-		if (!get_oid(s, &oid)) {
+		if (!repo_get_oid(the_repository, s, &oid)) {
 			show_rev(NORMAL, &oid, s);
 			return 1;
 		}
@@ -279,7 +280,7 @@ static int try_difference(const char *arg)
 		return 0;
 	}
 
-	if (!get_oid_committish(start, &start_oid) && !get_oid_committish(end, &end_oid)) {
+	if (!repo_get_oid_committish(the_repository, start, &start_oid) && !repo_get_oid_committish(the_repository, end, &end_oid)) {
 		show_rev(NORMAL, &end_oid, end);
 		show_rev(symmetric ? NORMAL : REVERSED, &start_oid, start);
 		if (symmetric) {
@@ -337,7 +338,7 @@ static int try_parent_shorthands(const char *arg)
 		return 0;
 
 	*dotdot = 0;
-	if (get_oid_committish(arg, &oid) ||
+	if (repo_get_oid_committish(the_repository, arg, &oid) ||
 	    !(commit = lookup_commit_reference(the_repository, &oid))) {
 		*dotdot = '^';
 		return 0;
@@ -868,7 +869,8 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (skip_prefix(arg, "--disambiguate=", &arg)) {
-				for_each_abbrev(arg, show_abbrev, NULL);
+				repo_for_each_abbrev(the_repository, arg,
+						     show_abbrev, NULL);
 				continue;
 			}
 			if (!strcmp(arg, "--bisect")) {

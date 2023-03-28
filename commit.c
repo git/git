@@ -80,7 +80,7 @@ struct commit *lookup_commit_reference_by_name(const char *name)
 	struct object_id oid;
 	struct commit *commit;
 
-	if (get_oid_committish(name, &oid))
+	if (repo_get_oid_committish(the_repository, name, &oid))
 		return NULL;
 	commit = lookup_commit_reference(the_repository, &oid);
 	if (parse_commit(commit))
@@ -1271,7 +1271,8 @@ void verify_merge_signature(struct commit *commit, int verbosity,
 
 	ret = check_commit_signature(commit, &signature_check);
 
-	find_unique_abbrev_r(hex, &commit->object.oid, DEFAULT_ABBREV);
+	repo_find_unique_abbrev_r(the_repository, hex, &commit->object.oid,
+				  DEFAULT_ABBREV);
 	switch (signature_check.result) {
 	case 'G':
 		if (ret || (check_trust && signature_check.trust_level < TRUST_MARGINAL))
@@ -1632,10 +1633,11 @@ struct commit *get_merge_parent(const char *name)
 	struct object *obj;
 	struct commit *commit;
 	struct object_id oid;
-	if (get_oid(name, &oid))
+	if (repo_get_oid(the_repository, name, &oid))
 		return NULL;
 	obj = parse_object(the_repository, &oid);
-	commit = (struct commit *)peel_to_type(name, 0, obj, OBJ_COMMIT);
+	commit = (struct commit *)repo_peel_to_type(the_repository, name, 0,
+						    obj, OBJ_COMMIT);
 	if (commit && !merge_remote_util(commit))
 		set_merge_remote_desc(commit, name, obj);
 	return commit;

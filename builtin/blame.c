@@ -601,8 +601,9 @@ static int read_ancestry(const char *graft_file)
 
 static int update_auto_abbrev(int auto_abbrev, struct blame_origin *suspect)
 {
-	const char *uniq = find_unique_abbrev(&suspect->commit->object.oid,
-					      auto_abbrev);
+	const char *uniq = repo_find_unique_abbrev(the_repository,
+						   &suspect->commit->object.oid,
+						   auto_abbrev);
 	int len = strlen(uniq);
 	if (auto_abbrev < len)
 		return len;
@@ -802,7 +803,7 @@ static int is_a_rev(const char *name)
 {
 	struct object_id oid;
 
-	if (get_oid(name, &oid))
+	if (repo_get_oid(the_repository, name, &oid))
 		return 0;
 	return OBJ_NONE < oid_object_info(the_repository, &oid, NULL);
 }
@@ -845,7 +846,7 @@ static void build_ignorelist(struct blame_scoreboard *sb,
 						    peel_to_commit_oid, sb);
 	}
 	for_each_string_list_item(i, ignore_rev_list) {
-		if (get_oid_committish(i->string, &oid) ||
+		if (repo_get_oid_committish(the_repository, i->string, &oid) ||
 		    peel_to_commit_oid(&oid, sb))
 			die(_("cannot find revision %s to ignore"), i->string);
 		oidset_insert(&sb->ignore_list, &oid);

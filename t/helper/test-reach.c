@@ -57,7 +57,7 @@ int cmd__reach(int ac, const char **av)
 		if (buf.len < 3)
 			continue;
 
-		if (get_oid_committish(buf.buf + 2, &oid))
+		if (repo_get_oid_committish(the_repository, buf.buf + 2, &oid))
 			die("failed to resolve %s", buf.buf + 2);
 
 		orig = parse_object(r, &oid);

@@ -605,7 +605,9 @@ static void find_merge_parents(struct merge_parents *result,
 		 * util field yet.
 		 */
 		obj = parse_object(the_repository, &oid);
-		parent = (struct commit *)peel_to_type(NULL, 0, obj, OBJ_COMMIT);
+		parent = (struct commit *)repo_peel_to_type(the_repository,
+							    NULL, 0, obj,
+							    OBJ_COMMIT);
 		if (!parent)
 			continue;
 		commit_list_insert(parent, &parents);

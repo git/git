@@ -33,7 +33,7 @@ static void show_one(const char *refname, const struct object_id *oid)
 	if (quiet)
 		return;
 
-	hex = find_unique_abbrev(oid, abbrev);
+	hex = repo_find_unique_abbrev(the_repository, oid, abbrev);
 	if (hash_only)
 		printf("%s\n", hex);
 	else
@@ -43,7 +43,7 @@ static void show_one(const char *refname, const struct object_id *oid)
 		return;
 
 	if (!peel_iterated_oid(oid, &peeled)) {
-		hex = find_unique_abbrev(&peeled, abbrev);
+		hex = repo_find_unique_abbrev(the_repository, &peeled, abbrev);
 		printf("%s %s^{}\n", hex, refname);
 	}
 }

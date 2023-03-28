@@ -298,7 +298,8 @@ static void append_name(struct commit_name *n, struct strbuf *dst)
 
 static void append_suffix(int depth, const struct object_id *oid, struct strbuf *dst)
 {
-	strbuf_addf(dst, "-%d-g%s", depth, find_unique_abbrev(oid, abbrev));
+	strbuf_addf(dst, "-%d-g%s", depth,
+		    repo_find_unique_abbrev(the_repository, oid, abbrev));
 }
 
 static void describe_commit(struct object_id *oid, struct strbuf *dst)
@@ -531,7 +532,7 @@ static void describe(const char *arg, int last_one)
 	if (debug)
 		fprintf(stderr, _("describe %s\n"), arg);
 
-	if (get_oid(arg, &oid))
+	if (repo_get_oid(the_repository, arg, &oid))
 		die(_("Not a valid object name %s"), arg);
 	cmit = lookup_commit_reference_gently(the_repository, &oid, 1);
 

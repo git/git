@@ -213,7 +213,7 @@ static int read_mailmap_blob(struct string_list *map, const char *name)
 
 	if (!name)
 		return 0;
-	if (get_oid(name, &oid) < 0)
+	if (repo_get_oid(the_repository, name, &oid) < 0)
 		return 0;
 
 	buf = read_object_file(&oid, &type, &size);

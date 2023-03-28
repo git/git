@@ -4351,7 +4351,7 @@ static int similarity_index(struct diff_filepair *p)
 static const char *diff_abbrev_oid(const struct object_id *oid, int abbrev)
 {
 	if (startup_info->have_repository)
-		return find_unique_abbrev(oid, abbrev);
+		return repo_find_unique_abbrev(the_repository, oid, abbrev);
 	else {
 		char *hex = oid_to_hex(oid);
 		if (abbrev < 0)
@@ -4988,7 +4988,7 @@ static int diff_opt_find_object(const struct option *option,
 	struct object_id oid;
 
 	BUG_ON_OPT_NEG(unset);
-	if (get_oid(arg, &oid))
+	if (repo_get_oid(the_repository, arg, &oid))
 		return error(_("unable to resolve '%s'"), arg);
 
 	if (!opt->objfind)

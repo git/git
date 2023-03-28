@@ -1666,7 +1666,8 @@ void strbuf_branchname(struct strbuf *sb, const char *name, unsigned allowed)
 	struct interpret_branch_name_options options = {
 		.allowed = allowed
 	};
-	int used = interpret_branch_name(name, len, sb, &options);
+	int used = repo_interpret_branch_name(the_repository, name, len, sb,
+					      &options);
 
 	if (used < 0)
 		used = 0;
@@ -1719,7 +1720,7 @@ int get_oidf(struct object_id *oid, const char *fmt, ...)
 	strbuf_vaddf(&sb, fmt, ap);
 	va_end(ap);
 
-	ret = get_oid(sb.buf, oid);
+	ret = repo_get_oid(the_repository, sb.buf, oid);
 	strbuf_release(&sb);
 
 	return ret;

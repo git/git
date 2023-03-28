@@ -337,7 +337,7 @@ static int save_state(struct object_id *stash)
 	else if (!len)		/* no changes */
 		goto out;
 	strbuf_setlen(&buffer, buffer.len-1);
-	if (get_oid(buffer.buf, stash))
+	if (repo_get_oid(the_repository, buffer.buf, stash))
 		die(_("not a valid object: %s"), buffer.buf);
 	rc = 0;
 out:
@@ -1567,10 +1567,10 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 
 		if (verbosity >= 0) {
 			printf(_("Updating %s..%s\n"),
-			       find_unique_abbrev(&head_commit->object.oid,
-						  DEFAULT_ABBREV),
-			       find_unique_abbrev(&remoteheads->item->object.oid,
-						  DEFAULT_ABBREV));
+			       repo_find_unique_abbrev(the_repository, &head_commit->object.oid,
+						       DEFAULT_ABBREV),
+			       repo_find_unique_abbrev(the_repository, &remoteheads->item->object.oid,
+						       DEFAULT_ABBREV));
 		}
 		commit = remoteheads->item;
 		if (!commit) {

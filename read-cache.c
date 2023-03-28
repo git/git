@@ -2628,7 +2628,7 @@ int repo_index_has_changes(struct repository *repo,
 
 	if (tree)
 		cmp = tree->object.oid;
-	if (tree || !get_oid_tree("HEAD", &cmp)) {
+	if (tree || !repo_get_oid_tree(the_repository, "HEAD", &cmp)) {
 		struct diff_options opt;
 
 		repo_diff_setup(repo, &opt);

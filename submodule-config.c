@@ -535,7 +535,7 @@ static int gitmodule_oid_from_commit(const struct object_id *treeish_name,
 	}
 
 	strbuf_addf(rev, "%s:.gitmodules", oid_to_hex(treeish_name));
-	if (get_oid(rev->buf, gitmodules_oid) >= 0)
+	if (repo_get_oid(the_repository, rev->buf, gitmodules_oid) >= 0)
 		ret = 1;
 
 	return ret;

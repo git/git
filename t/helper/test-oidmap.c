@@ -49,7 +49,7 @@ int cmd__oidmap(int argc, const char **argv)
 
 		if (!strcmp("put", cmd) && p1 && p2) {
 
-			if (get_oid(p1, &oid)) {
+			if (repo_get_oid(the_repository, p1, &oid)) {
 				printf("Unknown oid: %s\n", p1);
 				continue;
 			}
@@ -67,7 +67,7 @@ int cmd__oidmap(int argc, const char **argv)
 
 		} else if (!strcmp("get", cmd) && p1) {
 
-			if (get_oid(p1, &oid)) {
+			if (repo_get_oid(the_repository, p1, &oid)) {
 				printf("Unknown oid: %s\n", p1);
 				continue;
 			}
@@ -80,7 +80,7 @@ int cmd__oidmap(int argc, const char **argv)
 
 		} else if (!strcmp("remove", cmd) && p1) {
 
-			if (get_oid(p1, &oid)) {
+			if (repo_get_oid(the_repository, p1, &oid)) {
 				printf("Unknown oid: %s\n", p1);
 				continue;
 			}

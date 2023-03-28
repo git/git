@@ -42,7 +42,7 @@ static struct commit *get_commit_reference(const char *arg)
 	struct object_id revkey;
 	struct commit *r;
 
-	if (get_oid(arg, &revkey))
+	if (repo_get_oid(the_repository, arg, &revkey))
 		die("Not a valid object name %s", arg);
 	r = lookup_commit_reference(the_repository, &revkey);
 	if (!r)
@@ -118,7 +118,7 @@ static int handle_fork_point(int argc, const char **argv)
 	const char *commitname;
 
 	commitname = (argc == 2) ? argv[1] : "HEAD";
-	if (get_oid(commitname, &oid))
+	if (repo_get_oid(the_repository, commitname, &oid))
 		die("Not a valid object name: '%s'", commitname);
 
 	derived = lookup_commit_reference(the_repository, &oid);

@@ -218,13 +218,15 @@ static int get_revision_ranges(struct commit *upstream, struct commit *onto,
 	*revisions = xstrfmt("%s...%s", oid_to_hex(&base_rev->object.oid),
 			     oid_to_hex(orig_head));
 
-	shorthead = find_unique_abbrev(orig_head, DEFAULT_ABBREV);
+	shorthead = repo_find_unique_abbrev(the_repository, orig_head,
+					    DEFAULT_ABBREV);
 
 	if (upstream) {
 		const char *shortrev;
 
-		shortrev = find_unique_abbrev(&base_rev->object.oid,
-					      DEFAULT_ABBREV);
+		shortrev = repo_find_unique_abbrev(the_repository,
+						   &base_rev->object.oid,
+						   DEFAULT_ABBREV);
 
 		*shortrevisions = xstrfmt("%s..%s", shortrev, shorthead);
 	} else
@@ -1261,7 +1263,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		int fd;
 
 		/* Sanity check */
-		if (get_oid("HEAD", &head))
+		if (repo_get_oid(the_repository, "HEAD", &head))
 			die(_("Cannot read HEAD"));
 
 		fd = repo_hold_locked_index(the_repository, &lock_file, 0);
@@ -1680,7 +1682,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	} else if (!options.onto_name)
 		options.onto_name = options.upstream_name;
 	if (strstr(options.onto_name, "...")) {
-		if (get_oid_mb(options.onto_name, &branch_base) < 0) {
+		if (repo_get_oid_mb(the_repository, options.onto_name, &branch_base) < 0) {
 			if (keep_base)
 				die(_("'%s': need exactly one merge base with branch"),
 				    options.upstream_name);

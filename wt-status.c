@@ -1337,7 +1337,7 @@ static void abbrev_oid_in_line(struct strbuf *line)
 		 * it after abbreviation.
 		 */
 		strbuf_trim(split[1]);
-		if (!get_oid(split[1]->buf, &oid)) {
+		if (!repo_get_oid(the_repository, split[1]->buf, &oid)) {
 			strbuf_reset(split[1]);
 			strbuf_add_unique_abbrev(split[1], &oid,
 						 DEFAULT_ABBREV);
@@ -1503,8 +1503,8 @@ static void show_cherry_pick_in_progress(struct wt_status *s,
 	else
 		status_printf_ln(s, color,
 			_("You are currently cherry-picking commit %s."),
-			find_unique_abbrev(&s->state.cherry_pick_head_oid,
-					   DEFAULT_ABBREV));
+			repo_find_unique_abbrev(the_repository, &s->state.cherry_pick_head_oid,
+						DEFAULT_ABBREV));
 
 	if (s->hints) {
 		if (has_unmerged(s))
@@ -1533,8 +1533,8 @@ static void show_revert_in_progress(struct wt_status *s,
 	else
 		status_printf_ln(s, color,
 			_("You are currently reverting commit %s."),
-			find_unique_abbrev(&s->state.revert_head_oid,
-					   DEFAULT_ABBREV));
+			repo_find_unique_abbrev(the_repository, &s->state.revert_head_oid,
+						DEFAULT_ABBREV));
 	if (s->hints) {
 		if (has_unmerged(s))
 			status_printf_ln(s, color,
@@ -1676,9 +1676,9 @@ static void wt_status_get_detached_from(struct repository *r,
 		state->detached_from = xstrdup(from);
 	} else
 		state->detached_from =
-			xstrdup(find_unique_abbrev(&cb.noid, DEFAULT_ABBREV));
+			xstrdup(repo_find_unique_abbrev(the_repository, &cb.noid, DEFAULT_ABBREV));
 	oidcpy(&state->detached_oid, &cb.noid);
-	state->detached_at = !get_oid("HEAD", &oid) &&
+	state->detached_at = !repo_get_oid(the_repository, "HEAD", &oid) &&
 			     oideq(&oid, &state->detached_oid);
 
 	free(ref);
@@ -1769,13 +1769,13 @@ void wt_status_get_state(struct repository *r,
 	} else if (wt_status_check_rebase(NULL, state)) {
 		;		/* all set */
 	} else if (refs_ref_exists(get_main_ref_store(r), "CHERRY_PICK_HEAD") &&
-		   !get_oid("CHERRY_PICK_HEAD", &oid)) {
+		   !repo_get_oid(the_repository, "CHERRY_PICK_HEAD", &oid)) {
 		state->cherry_pick_in_progress = 1;
 		oidcpy(&state->cherry_pick_head_oid, &oid);
 	}
 	wt_status_check_bisect(NULL, state);
 	if (refs_ref_exists(get_main_ref_store(r), "REVERT_HEAD") &&
-	    !get_oid("REVERT_HEAD", &oid)) {
+	    !repo_get_oid(the_repository, "REVERT_HEAD", &oid)) {
 		state->revert_in_progress = 1;
 		oidcpy(&state->revert_head_oid, &oid);
 	}

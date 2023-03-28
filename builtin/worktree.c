@@ -552,7 +552,7 @@ static void print_preparing_worktree_line(int detach,
 		else
 			fprintf_ln(stderr, _("Preparing worktree (resetting branch '%s'; was at %s)"),
 				  new_branch,
-				  find_unique_abbrev(&commit->object.oid, DEFAULT_ABBREV));
+				  repo_find_unique_abbrev(the_repository, &commit->object.oid, DEFAULT_ABBREV));
 	} else if (new_branch) {
 		fprintf_ln(stderr, _("Preparing worktree (new branch '%s')"), new_branch);
 	} else {
@@ -566,7 +566,7 @@ static void print_preparing_worktree_line(int detach,
 			if (!commit)
 				die(_("invalid reference: %s"), branch);
 			fprintf_ln(stderr, _("Preparing worktree (detached HEAD %s)"),
-				  find_unique_abbrev(&commit->object.oid, DEFAULT_ABBREV));
+				  repo_find_unique_abbrev(the_repository, &commit->object.oid, DEFAULT_ABBREV));
 		}
 		strbuf_release(&s);
 	}
@@ -756,7 +756,7 @@ static void show_worktree(struct worktree *wt, int path_maxlen, int abbrev_len)
 		strbuf_addstr(&sb, "(bare)");
 	else {
 		strbuf_addf(&sb, "%-*s ", abbrev_len,
-				find_unique_abbrev(&wt->head_oid, DEFAULT_ABBREV));
+				repo_find_unique_abbrev(the_repository, &wt->head_oid, DEFAULT_ABBREV));
 		if (wt->is_detached)
 			strbuf_addstr(&sb, "(detached HEAD)");
 		else if (wt->head_ref) {
@@ -793,7 +793,7 @@ static void measure_widths(struct worktree **wt, int *abbrev, int *maxlen)
 
 		if (path_len > *maxlen)
 			*maxlen = path_len;
-		sha1_len = strlen(find_unique_abbrev(&wt[i]->head_oid, *abbrev));
+		sha1_len = strlen(repo_find_unique_abbrev(the_repository, &wt[i]->head_oid, *abbrev));
 		if (sha1_len > *abbrev)
 			*abbrev = sha1_len;
 	}

@@ -187,7 +187,7 @@ int todo_list_check(struct todo_list *old_todo, struct todo_list *new_todo)
 		struct commit *commit = item->commit;
 		if (commit && !*commit_seen_at(&commit_seen, commit)) {
 			strbuf_addf(&missing, " - %s %.*s\n",
-				    find_unique_abbrev(&commit->object.oid, DEFAULT_ABBREV),
+				    repo_find_unique_abbrev(the_repository, &commit->object.oid, DEFAULT_ABBREV),
 				    item->arg_len,
 				    todo_item_get_arg(old_todo, item));
 			*commit_seen_at(&commit_seen, commit) = 1;

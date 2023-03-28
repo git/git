@@ -2486,7 +2486,7 @@ static void note_change_n(const char *p, struct branch *b, unsigned char *old_fa
 		if (commit_oe->type != OBJ_COMMIT)
 			die("Mark :%" PRIuMAX " not a commit", commit_mark);
 		oidcpy(&commit_oid, &commit_oe->idx.oid);
-	} else if (!get_oid(p, &commit_oid)) {
+	} else if (!repo_get_oid(the_repository, p, &commit_oid)) {
 		unsigned long size;
 		char *buf = read_object_with_reference(the_repository,
 						       &commit_oid,
@@ -2599,7 +2599,7 @@ static int parse_objectish(struct branch *b, const char *objectish)
 			} else
 				parse_from_existing(b);
 		}
-	} else if (!get_oid(objectish, &b->oid)) {
+	} else if (!repo_get_oid(the_repository, objectish, &b->oid)) {
 		parse_from_existing(b);
 		if (is_null_oid(&b->oid))
 			b->delete = 1;
@@ -2654,7 +2654,7 @@ static struct hash_list *parse_merge(unsigned int *count)
 			if (oe->type != OBJ_COMMIT)
 				die("Mark :%" PRIuMAX " not a commit", idnum);
 			oidcpy(&n->oid, &oe->idx.oid);
-		} else if (!get_oid(from, &n->oid)) {
+		} else if (!repo_get_oid(the_repository, from, &n->oid)) {
 			unsigned long size;
 			char *buf = read_object_with_reference(the_repository,
 							       &n->oid,
@@ -2827,7 +2827,7 @@ static void parse_new_tag(const char *arg)
 		oe = find_mark(marks, from_mark);
 		type = oe->type;
 		oidcpy(&oid, &oe->idx.oid);
-	} else if (!get_oid(from, &oid)) {
+	} else if (!repo_get_oid(the_repository, from, &oid)) {
 		struct object_entry *oe = find_object(&oid);
 		if (!oe) {
 			type = oid_object_info(the_repository, &oid, NULL);

@@ -1163,7 +1163,7 @@ static int try_explicit_object_name(const char *name,
 		return 0;
 	}
 
-	if (get_oid(name, &oid))
+	if (repo_get_oid(the_repository, name, &oid))
 		return -1;
 
 	if (match) {
@@ -1251,7 +1251,7 @@ static void show_push_unqualified_ref_name_error(const char *dst_value,
 	if (!advice_enabled(ADVICE_PUSH_UNQUALIFIED_REF_NAME))
 		return;
 
-	if (get_oid(matched_src_name, &oid))
+	if (repo_get_oid(the_repository, matched_src_name, &oid))
 		BUG("'%s' is not a valid object, "
 		    "match_explicit_lhs() should catch this!",
 		    matched_src_name);
@@ -2505,7 +2505,7 @@ static int parse_push_cas_option(struct push_cas_option *cas, const char *arg, i
 		entry->use_tracking = 1;
 	else if (!colon[1])
 		oidclr(&entry->expect);
-	else if (get_oid(colon + 1, &entry->expect))
+	else if (repo_get_oid(the_repository, colon + 1, &entry->expect))
 		return error(_("cannot parse expected object name '%s'"),
 			     colon + 1);
 	return 0;

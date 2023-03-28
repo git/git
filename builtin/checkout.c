@@ -432,8 +432,8 @@ static int checkout_worktree(const struct checkout_opts *opts,
 					      "Updated %d paths from %s",
 					      nr_checkouts),
 				   nr_checkouts,
-				   find_unique_abbrev(&opts->source_tree->object.oid,
-						      DEFAULT_ABBREV));
+				   repo_find_unique_abbrev(the_repository, &opts->source_tree->object.oid,
+							   DEFAULT_ABBREV));
 		else if (!nr_unmerged || nr_checkouts)
 			fprintf_ln(stderr, Q_("Updated %d path from the index",
 					      "Updated %d paths from the index",
@@ -644,10 +644,12 @@ static void describe_detached_head(const char *msg, struct commit *commit)
 		pp_commit_easy(CMIT_FMT_ONELINE, commit, &sb);
 	if (print_sha1_ellipsis()) {
 		fprintf(stderr, "%s %s... %s\n", msg,
-			find_unique_abbrev(&commit->object.oid, DEFAULT_ABBREV), sb.buf);
+			repo_find_unique_abbrev(the_repository, &commit->object.oid, DEFAULT_ABBREV),
+			sb.buf);
 	} else {
 		fprintf(stderr, "%s %s %s\n", msg,
-			find_unique_abbrev(&commit->object.oid, DEFAULT_ABBREV), sb.buf);
+			repo_find_unique_abbrev(the_repository, &commit->object.oid, DEFAULT_ABBREV),
+			sb.buf);
 	}
 	strbuf_release(&sb);
 }
@@ -1060,7 +1062,7 @@ static void suggest_reattach(struct commit *commit, struct rev_info *revs)
 			" git branch <new-branch-name> %s\n\n",
 			/* Give ngettext() the count */
 			lost),
-			find_unique_abbrev(&commit->object.oid, DEFAULT_ABBREV));
+			repo_find_unique_abbrev(the_repository, &commit->object.oid, DEFAULT_ABBREV));
 }
 
 /*
@@ -1322,7 +1324,7 @@ static int parse_branchname_arg(int argc, const char **argv,
 	if (!strcmp(arg, "-"))
 		arg = "@{-1}";
 
-	if (get_oid_mb(arg, rev)) {
+	if (repo_get_oid_mb(the_repository, arg, rev)) {
 		/*
 		 * Either case (3) or (4), with <something> not being
 		 * a commit, or an attempt to use case (1) with an
@@ -1748,7 +1750,7 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 	} else if (!opts->accept_ref && opts->from_treeish) {
 		struct object_id rev;
 
-		if (get_oid_mb(opts->from_treeish, &rev))
+		if (repo_get_oid_mb(the_repository, opts->from_treeish, &rev))
 			die(_("could not resolve %s"), opts->from_treeish);
 
 		setup_new_branch_info_and_source_tree(new_branch_info,

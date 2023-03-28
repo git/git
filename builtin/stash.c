@@ -201,7 +201,7 @@ static int get_stash_info(struct stash_info *info, int argc, const char **argv)
 
 	revision = info->revision.buf;
 
-	if (get_oid(revision, &info->w_commit))
+	if (repo_get_oid(the_repository, revision, &info->w_commit))
 		return error(_("%s is not a valid reference"), revision);
 
 	assert_stash_like(info, revision);
@@ -231,7 +231,7 @@ static int get_stash_info(struct stash_info *info, int argc, const char **argv)
 static int do_clear_stash(void)
 {
 	struct object_id obj;
-	if (get_oid(ref_stash, &obj))
+	if (repo_get_oid(the_repository, ref_stash, &obj))
 		return 0;
 
 	return delete_ref(NULL, ref_stash, &obj, 0);
@@ -1083,7 +1083,7 @@ static int check_changes_tracked_files(const struct pathspec *ps)
 	int ret = 0;
 
 	/* No initial commit. */
-	if (get_oid("HEAD", &dummy))
+	if (repo_get_oid(the_repository, "HEAD", &dummy))
 		return -1;
 
 	if (repo_read_index(the_repository) < 0)
@@ -1355,7 +1355,7 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 		goto done;
 	}
 
-	if (get_oid("HEAD", &info->b_commit)) {
+	if (repo_get_oid(the_repository, "HEAD", &info->b_commit)) {
 		if (!quiet)
 			fprintf_ln(stderr, _("You do not have "
 					     "the initial commit yet"));
@@ -1373,8 +1373,9 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 	branch_ref = resolve_ref_unsafe("HEAD", 0, NULL, &flags);
 	if (flags & REF_ISSYMREF)
 		skip_prefix(branch_ref, "refs/heads/", &branch_name);
-	head_short_sha1 = find_unique_abbrev(&head_commit->object.oid,
-					     DEFAULT_ABBREV);
+	head_short_sha1 = repo_find_unique_abbrev(the_repository,
+						  &head_commit->object.oid,
+						  DEFAULT_ABBREV);
 	strbuf_addf(&msg, "%s: %s ", branch_name, head_short_sha1);
 	pp_commit_easy(CMIT_FMT_ONELINE, head_commit, &msg);
 
