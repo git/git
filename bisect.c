@@ -752,7 +752,8 @@ enum bisect_error bisect_checkout(const struct object_id *bisect_rev,
 	}
 
 	commit = lookup_commit_reference(the_repository, bisect_rev);
-	format_commit_message(commit, "[%H] %s%n", &commit_msg, &pp);
+	repo_format_commit_message(the_repository, commit, "[%H] %s%n",
+				   &commit_msg, &pp);
 	fputs(commit_msg.buf, stdout);
 	strbuf_release(&commit_msg);
 

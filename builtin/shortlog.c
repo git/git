@@ -223,7 +223,8 @@ static void insert_records_from_format(struct shortlog *log,
 	for_each_string_list_item(item, &log->format) {
 		strbuf_reset(&buf);
 
-		format_commit_message(commit, item->string, &buf, ctx);
+		repo_format_commit_message(the_repository, commit,
+					   item->string, &buf, ctx);
 
 		if (!shortlog_needs_dedup(log) || strset_add(dups, buf.buf))
 			insert_one_record(log, buf.buf, oneline);
@@ -249,7 +250,8 @@ void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 		if (log->user_format)
 			pretty_print_commit(&ctx, commit, &oneline);
 		else
-			format_commit_message(commit, "%s", &oneline, &ctx);
+			repo_format_commit_message(the_repository, commit,
+						   "%s", &oneline, &ctx);
 	}
 	oneline_str = oneline.len ? oneline.buf : "<none>";
 

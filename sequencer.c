@@ -1343,8 +1343,10 @@ void print_commit_summary(struct repository *r,
 
 	strbuf_addstr(&format, "format:%h] %s");
 
-	format_commit_message(commit, "%an <%ae>", &author_ident, &pctx);
-	format_commit_message(commit, "%cn <%ce>", &committer_ident, &pctx);
+	repo_format_commit_message(the_repository, commit, "%an <%ae>",
+				   &author_ident, &pctx);
+	repo_format_commit_message(the_repository, commit, "%cn <%ce>",
+				   &committer_ident, &pctx);
 	if (strbuf_cmp(&author_ident, &committer_ident)) {
 		strbuf_addstr(&format, "\n Author: ");
 		strbuf_addbuf_percentquote(&format, &author_ident);
@@ -1352,7 +1354,8 @@ void print_commit_summary(struct repository *r,
 	if (flags & SUMMARY_SHOW_AUTHOR_DATE) {
 		struct strbuf date = STRBUF_INIT;
 
-		format_commit_message(commit, "%ad", &date, &pctx);
+		repo_format_commit_message(the_repository, commit, "%ad",
+					   &date, &pctx);
 		strbuf_addstr(&format, "\n Date: ");
 		strbuf_addbuf_percentquote(&format, &date);
 		strbuf_release(&date);
@@ -2125,7 +2128,8 @@ static void refer_to_commit(struct replay_opts *opts,
 			.abbrev = DEFAULT_ABBREV,
 			.date_mode.type = DATE_SHORT,
 		};
-		format_commit_message(commit, "%h (%s, %ad)", msgbuf, &ctx);
+		repo_format_commit_message(the_repository, commit,
+					   "%h (%s, %ad)", msgbuf, &ctx);
 	} else {
 		strbuf_addstr(msgbuf, oid_to_hex(&commit->object.oid));
 	}

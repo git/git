@@ -87,6 +87,10 @@
 |
 - has_object_file_with_flags
 + repo_has_object_file_with_flags
+// pretty.h
+|
+- format_commit_message
++ repo_format_commit_message
 )
   (
 + the_repository,

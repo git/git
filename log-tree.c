@@ -407,7 +407,8 @@ void fmt_output_commit(struct strbuf *filename,
 	struct pretty_print_context ctx = {0};
 	struct strbuf subject = STRBUF_INIT;
 
-	format_commit_message(commit, "%f", &subject, &ctx);
+	repo_format_commit_message(the_repository, commit, "%f", &subject,
+				   &ctx);
 	fmt_output_subject(filename, subject.buf, info);
 	strbuf_release(&subject);
 }
@@ -985,8 +986,10 @@ static int do_remerge_diff(struct rev_info *opt,
 	o.msg_header_prefix = "remerge";
 
 	ctx.abbrev = DEFAULT_ABBREV;
-	format_commit_message(parent1, "%h (%s)", &parent1_desc, &ctx);
-	format_commit_message(parent2, "%h (%s)", &parent2_desc, &ctx);
+	repo_format_commit_message(the_repository, parent1, "%h (%s)",
+				   &parent1_desc, &ctx);
+	repo_format_commit_message(the_repository, parent2, "%h (%s)",
+				   &parent2_desc, &ctx);
 	o.branch1 = parent1_desc.buf;
 	o.branch2 = parent2_desc.buf;
 

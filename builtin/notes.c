@@ -742,7 +742,8 @@ static int merge_commit(struct notes_merge_options *o)
 
 	/* Reuse existing commit message in reflog message */
 	memset(&pretty_ctx, 0, sizeof(pretty_ctx));
-	format_commit_message(partial, "%s", &msg, &pretty_ctx);
+	repo_format_commit_message(the_repository, partial, "%s", &msg,
+				   &pretty_ctx);
 	strbuf_trim(&msg);
 	strbuf_insertstr(&msg, 0, "notes: ");
 	update_ref(msg.buf, o->local_ref, &oid,

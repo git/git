@@ -265,7 +265,8 @@ static void log_commit(FILE *fp, char *fmt, const char *state,
 	struct strbuf commit_msg = STRBUF_INIT;
 	char *label = xstrfmt(fmt, state);
 
-	format_commit_message(commit, "%s", &commit_msg, &pp);
+	repo_format_commit_message(the_repository, commit, "%s", &commit_msg,
+				   &pp);
 
 	fprintf(fp, "# %s: [%s] %s\n", label, oid_to_hex(&commit->object.oid),
 		commit_msg.buf);
@@ -603,8 +604,8 @@ static int bisect_skipped_commits(struct bisect_terms *terms)
 
 	while ((commit = get_revision(&revs)) != NULL) {
 		strbuf_reset(&commit_name);
-		format_commit_message(commit, "%s",
-				      &commit_name, &pp);
+		repo_format_commit_message(the_repository, commit, "%s",
+					   &commit_name, &pp);
 		fprintf(fp, "# possible first %s commit: [%s] %s\n",
 			terms->term_bad, oid_to_hex(&commit->object.oid),
 			commit_name.buf);
@@ -633,7 +634,8 @@ static int bisect_successful(struct bisect_terms *terms)
 
 	read_ref(bad_ref, &oid);
 	commit = lookup_commit_reference_by_name(bad_ref);
-	format_commit_message(commit, "%s", &commit_name, &pp);
+	repo_format_commit_message(the_repository, commit, "%s", &commit_name,
+				   &pp);
 
 	res = append_to_file(git_path_bisect_log(), "# first %s commit: [%s] %s\n",
 			    terms->term_bad, oid_to_hex(&commit->object.oid),

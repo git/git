@@ -2199,7 +2199,8 @@ void pretty_print_commit(struct pretty_print_context *pp,
 	int need_8bit_cte = pp->need_8bit_cte;
 
 	if (pp->fmt == CMIT_FMT_USERFORMAT) {
-		format_commit_message(commit, user_format, sb, pp);
+		repo_format_commit_message(the_repository, commit,
+					   user_format, sb, pp);
 		return;
 	}
 
