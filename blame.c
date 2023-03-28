@@ -177,12 +177,12 @@ static void set_commit_buffer_from_strbuf(struct repository *r,
 static struct commit *fake_working_tree_commit(struct repository *r,
 					       struct diff_options *opt,
 					       const char *path,
-					       const char *contents_from)
+					       const char *contents_from,
+					       struct object_id *oid)
 {
 	struct commit *commit;
 	struct blame_origin *origin;
 	struct commit_list **parent_tail, *parent;
-	struct object_id head_oid;
 	struct strbuf buf = STRBUF_INIT;
 	const char *ident;
 	time_t now;
@@ -198,10 +198,7 @@ static struct commit *fake_working_tree_commit(struct repository *r,
 	commit->date = now;
 	parent_tail = &commit->parents;
 
-	if (!resolve_ref_unsafe("HEAD", RESOLVE_REF_READING, &head_oid, NULL))
-		die("no such ref: HEAD");
-
-	parent_tail = append_parent(r, parent_tail, &head_oid);
+	parent_tail = append_parent(r, parent_tail, oid);
 	append_merge_parents(r, parent_tail);
 	verify_working_tree_path(r, commit, path);
 
@@ -2772,22 +2769,37 @@ void setup_scoreboard(struct blame_scoreboard *sb,
 		sb->commits.compare = compare_commits_by_reverse_commit_date;
 	}
 
-	if (sb->final && sb->contents_from)
-		die(_("cannot use --contents with final commit object name"));
-
 	if (sb->reverse && sb->revs->first_parent_only)
 		sb->revs->children.name = NULL;
 
-	if (!sb->final) {
+	if (sb->contents_from || !sb->final) {
+		struct object_id head_oid, *parent_oid;
+
 		/*
-		 * "--not A B -- path" without anything positive;
-		 * do not default to HEAD, but use the working tree
-		 * or "--contents".
+		 * Build a fake commit at the top of the history, when
+		 * (1) "git blame [^A] --path", i.e. with no positive end
+		 *     of the history range, in which case we build such
+		 *     a fake commit on top of the HEAD to blame in-tree
+		 *     modifications.
+		 * (2) "git blame --contents=file [A] -- path", with or
+		 *     without positive end of the history range but with
+		 *     --contents, in which case we pretend that there is
+		 *     a fake commit on top of the positive end (defaulting to
+		 *     HEAD) that has the given contents in the path.
 		 */
+		if (sb->final) {
+			parent_oid = &sb->final->object.oid;
+		} else {
+			if (!resolve_ref_unsafe("HEAD", RESOLVE_REF_READING, &head_oid, NULL))
+				die("no such ref: HEAD");
+			parent_oid = &head_oid;
+		}
+
 		setup_work_tree();
 		sb->final = fake_working_tree_commit(sb->repo,
 						     &sb->revs->diffopt,
-						     sb->path, sb->contents_from);
+						     sb->path, sb->contents_from,
+						     parent_oid);
 		add_pending_object(sb->revs, &(sb->final->object), ":");
 	}
 
