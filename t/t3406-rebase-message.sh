@@ -10,9 +10,15 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 test_expect_success 'setup' '
 	test_commit O fileO &&
 	test_commit X fileX &&
+	git branch fast-forward &&
 	test_commit A fileA &&
 	test_commit B fileB &&
 	test_commit Y fileY &&
+
+	git checkout -b conflicts O &&
+	test_commit P &&
+	test_commit conflict-X fileX &&
+	test_commit Q &&
 
 	git checkout -b topic O &&
 	git cherry-pick A B &&
@@ -79,54 +85,165 @@ test_expect_success 'error out early upon -C<n> or --whitespace=<bad>' '
 	test_i18ngrep "Invalid whitespace option" err
 '
 
-test_expect_success 'GIT_REFLOG_ACTION' '
-	git checkout start &&
-	test_commit reflog-onto &&
-	git checkout -b reflog-topic start &&
-	test_commit reflog-to-rebase &&
+write_reflog_expect () {
+	if test $mode = --apply
+	then
+		sed 's/(continue)/(pick)/'
+	else
+		cat
+	fi >expect
+}
 
-	git rebase reflog-onto &&
-	git log -g --format=%gs -3 >actual &&
-	cat >expect <<-\EOF &&
-	rebase (finish): returning to refs/heads/reflog-topic
-	rebase (pick): reflog-to-rebase
-	rebase (start): checkout reflog-onto
+test_reflog () {
+	mode=$1
+	reflog_action="$2"
+
+	test_expect_success "rebase $mode reflog${reflog_action:+ GIT_REFLOG_ACTION=$reflog_action}" '
+	git checkout conflicts &&
+	test_when_finished "git reset --hard Q" &&
+
+	(
+		if test -n "$reflog_action"
+		then
+			GIT_REFLOG_ACTION="$reflog_action" &&
+			export GIT_REFLOG_ACTION
+		fi &&
+		test_must_fail git rebase $mode main &&
+		echo resolved >fileX &&
+		git add fileX &&
+		git rebase --continue
+	) &&
+
+	git log -g --format=%gs -5 >actual &&
+	write_reflog_expect <<-EOF &&
+	${reflog_action:-rebase} (finish): returning to refs/heads/conflicts
+	${reflog_action:-rebase} (pick): Q
+	${reflog_action:-rebase} (continue): conflict-X
+	${reflog_action:-rebase} (pick): P
+	${reflog_action:-rebase} (start): checkout main
 	EOF
 	test_cmp expect actual &&
 
-	git checkout -b reflog-prefix reflog-to-rebase &&
-	GIT_REFLOG_ACTION=change-the-reflog git rebase reflog-onto &&
-	git log -g --format=%gs -3 >actual &&
-	cat >expect <<-\EOF &&
-	change-the-reflog (finish): returning to refs/heads/reflog-prefix
-	change-the-reflog (pick): reflog-to-rebase
-	change-the-reflog (start): checkout reflog-onto
-	EOF
-	test_cmp expect actual
-'
-
-test_expect_success 'rebase --apply reflog' '
-	git checkout -b reflog-apply start &&
-	old_head_reflog="$(git log -g --format=%gs -1 HEAD)" &&
-
-	git rebase --apply Y &&
-
-	git log -g --format=%gs -4 HEAD >actual &&
-	cat >expect <<-EOF &&
-	rebase finished: returning to refs/heads/reflog-apply
-	rebase: Z
-	rebase: checkout Y
-	$old_head_reflog
+	git log -g --format=%gs -1 conflicts >actual &&
+	write_reflog_expect <<-EOF &&
+	${reflog_action:-rebase} (finish): refs/heads/conflicts onto $(git rev-parse main)
 	EOF
 	test_cmp expect actual &&
 
-	git log -g --format=%gs -2 reflog-apply >actual &&
-	cat >expect <<-EOF &&
-	rebase finished: refs/heads/reflog-apply onto $(git rev-parse Y)
-	branch: Created from start
+	# check there is only one new entry in the branch reflog
+	test_cmp_rev conflicts@{1} Q
+	'
+
+	test_expect_success "rebase $mode fast-forward reflog${reflog_action:+ GIT_REFLOG_ACTION=$reflog_action}" '
+	git checkout fast-forward &&
+	test_when_finished "git reset --hard X" &&
+
+	(
+		if test -n "$reflog_action"
+		then
+			GIT_REFLOG_ACTION="$reflog_action" &&
+			export GIT_REFLOG_ACTION
+		fi &&
+		git rebase $mode main
+	) &&
+
+	git log -g --format=%gs -2 >actual &&
+	write_reflog_expect <<-EOF &&
+	${reflog_action:-rebase} (finish): returning to refs/heads/fast-forward
+	${reflog_action:-rebase} (start): checkout main
+	EOF
+	test_cmp expect actual &&
+
+	git log -g --format=%gs -1 fast-forward >actual &&
+	write_reflog_expect <<-EOF &&
+	${reflog_action:-rebase} (finish): refs/heads/fast-forward onto $(git rev-parse main)
+	EOF
+	test_cmp expect actual &&
+
+	# check there is only one new entry in the branch reflog
+	test_cmp_rev fast-forward@{1} X
+	'
+
+	test_expect_success "rebase $mode --skip reflog${reflog_action:+ GIT_REFLOG_ACTION=$reflog_action}" '
+	git checkout conflicts &&
+	test_when_finished "git reset --hard Q" &&
+
+	(
+		if test -n "$reflog_action"
+		then
+			GIT_REFLOG_ACTION="$reflog_action" &&
+			export GIT_REFLOG_ACTION
+		fi &&
+		test_must_fail git rebase $mode main &&
+		git rebase --skip
+	) &&
+
+	git log -g --format=%gs -4 >actual &&
+	write_reflog_expect <<-EOF &&
+	${reflog_action:-rebase} (finish): returning to refs/heads/conflicts
+	${reflog_action:-rebase} (pick): Q
+	${reflog_action:-rebase} (pick): P
+	${reflog_action:-rebase} (start): checkout main
 	EOF
 	test_cmp expect actual
-'
+	'
+
+	test_expect_success "rebase $mode --abort reflog${reflog_action:+ GIT_REFLOG_ACTION=$reflog_action}" '
+	git checkout conflicts &&
+	test_when_finished "git reset --hard Q" &&
+
+	git log -g -1 conflicts >branch-expect &&
+	(
+		if test -n "$reflog_action"
+		then
+			GIT_REFLOG_ACTION="$reflog_action" &&
+			export GIT_REFLOG_ACTION
+		fi &&
+		test_must_fail git rebase $mode main &&
+		git rebase --abort
+	) &&
+
+	git log -g --format=%gs -3 >actual &&
+	write_reflog_expect <<-EOF &&
+	${reflog_action:-rebase} (abort): returning to refs/heads/conflicts
+	${reflog_action:-rebase} (pick): P
+	${reflog_action:-rebase} (start): checkout main
+	EOF
+	test_cmp expect actual &&
+
+	# check branch reflog is unchanged
+	git log -g -1 conflicts >branch-actual &&
+	test_cmp branch-expect branch-actual
+	'
+
+	test_expect_success "rebase $mode --abort detached HEAD reflog${reflog_action:+ GIT_REFLOG_ACTION=$reflog_action}" '
+	git checkout Q &&
+	test_when_finished "git reset --hard Q" &&
+
+	(
+		if test -n "$reflog_action"
+		then
+			GIT_REFLOG_ACTION="$reflog_action" &&
+			export GIT_REFLOG_ACTION
+		fi &&
+		test_must_fail git rebase $mode main &&
+		git rebase --abort
+	) &&
+
+	git log -g --format=%gs -3 >actual &&
+	write_reflog_expect <<-EOF &&
+	${reflog_action:-rebase} (abort): returning to $(git rev-parse Q)
+	${reflog_action:-rebase} (pick): P
+	${reflog_action:-rebase} (start): checkout main
+	EOF
+	test_cmp expect actual
+	'
+}
+
+test_reflog --merge
+test_reflog --merge my-reflog-action
+test_reflog --apply
+test_reflog --apply my-reflog-action
 
 test_expect_success 'rebase -i onto unrelated history' '
 	git init unrelated &&

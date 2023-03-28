@@ -7,7 +7,7 @@
 #include "strvec.h"
 
 #define BUILTIN_HOOK_RUN_USAGE \
-	N_("git hook run [--ignore-missing] <hook-name> [-- <hook-args>]")
+	N_("git hook run [--ignore-missing] [--to-stdin=<path>] <hook-name> [-- <hook-args>]")
 
 static const char * const builtin_hook_usage[] = {
 	BUILTIN_HOOK_RUN_USAGE,
@@ -28,6 +28,8 @@ static int run(int argc, const char **argv, const char *prefix)
 	struct option run_options[] = {
 		OPT_BOOL(0, "ignore-missing", &ignore_missing,
 			 N_("silently ignore missing requested <hook-name>")),
+		OPT_STRING(0, "to-stdin", &opt.path_to_stdin, N_("path"),
+			   N_("file to read into hooks' stdin")),
 		OPT_END(),
 	};
 	int ret;
@@ -67,18 +69,14 @@ usage:
 
 int cmd_hook(int argc, const char **argv, const char *prefix)
 {
+	parse_opt_subcommand_fn *fn = NULL;
 	struct option builtin_hook_options[] = {
+		OPT_SUBCOMMAND("run", &fn, run),
 		OPT_END(),
 	};
 
 	argc = parse_options(argc, argv, NULL, builtin_hook_options,
-			     builtin_hook_usage, PARSE_OPT_STOP_AT_NON_OPTION);
-	if (!argc)
-		goto usage;
+			     builtin_hook_usage, 0);
 
-	if (!strcmp(argv[0], "run"))
-		return run(argc, argv, prefix);
-
-usage:
-	usage_with_options(builtin_hook_usage, builtin_hook_options);
+	return fn(argc, argv, prefix);
 }

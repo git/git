@@ -241,6 +241,26 @@ test_expect_success 'add invalid foreign_vcs remote' '
 	test_cmp expect actual
 '
 
+test_expect_success 'without subcommand' '
+	echo origin >expect &&
+	git -C test remote >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'without subcommand accepts -v' '
+	cat >expect <<-EOF &&
+	origin	$(pwd)/one (fetch)
+	origin	$(pwd)/one (push)
+	EOF
+	git -C test remote -v >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'without subcommand does not take arguments' '
+	test_expect_code 129 git -C test remote origin 2>err &&
+	grep "^error: unknown subcommand:" err
+'
+
 cat >test/expect <<EOF
 * remote origin
   Fetch URL: $(pwd)/one
@@ -300,6 +320,52 @@ test_expect_success 'show' '
 		git branch -d rebase octopus &&
 		test_cmp expect output
 	)
+'
+
+cat >expect <<EOF
+* remote origin
+  Fetch URL: $(pwd)/one
+  Push  URL: $(pwd)/one
+  HEAD branch: main
+  Remote branches:
+    main skipped
+    side tracked
+  Local branches configured for 'git pull':
+    ahead merges with remote main
+    main  merges with remote main
+  Local refs configured for 'git push':
+    main pushes to main     (local out of date)
+    main pushes to upstream (create)
+EOF
+
+test_expect_success 'show with negative refspecs' '
+	test_when_finished "git -C test config --unset-all --fixed-value remote.origin.fetch ^refs/heads/main" &&
+	git -C test config --add remote.origin.fetch ^refs/heads/main &&
+	git -C test remote show origin >output &&
+	test_cmp expect output
+'
+
+cat >expect <<EOF
+* remote origin
+  Fetch URL: $(pwd)/one
+  Push  URL: $(pwd)/one
+  HEAD branch: main
+  Remote branches:
+    main new (next fetch will store in remotes/origin)
+    side stale (use 'git remote prune' to remove)
+  Local branches configured for 'git pull':
+    ahead merges with remote main
+    main  merges with remote main
+  Local refs configured for 'git push':
+    main pushes to main     (local out of date)
+    main pushes to upstream (create)
+EOF
+
+test_expect_failure 'show stale with negative refspecs' '
+	test_when_finished "git -C test config --unset-all --fixed-value remote.origin.fetch ^refs/heads/side" &&
+	git -C test config --add remote.origin.fetch ^refs/heads/side &&
+	git -C test remote show origin >output &&
+	test_cmp expect output
 '
 
 cat >test/expect <<EOF
@@ -836,6 +902,17 @@ test_expect_success 'rename a remote renames repo remote.pushDefault but keeps g
 	)
 '
 
+test_expect_success 'rename handles remote without fetch refspec' '
+	git clone --bare one no-refspec.git &&
+	# confirm assumption that bare clone does not create refspec
+	test_expect_code 5 \
+		git -C no-refspec.git config --unset-all remote.origin.fetch &&
+	git -C no-refspec.git config remote.origin.url >expect &&
+	git -C no-refspec.git remote rename origin foo &&
+	git -C no-refspec.git config remote.foo.url >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'rename does not update a non-default fetch refspec' '
 	git clone one four.one &&
 	(
@@ -957,11 +1034,12 @@ test_expect_success 'migrate a remote from named file in $GIT_DIR/remotes' '
 '
 
 test_expect_success 'migrate a remote from named file in $GIT_DIR/branches' '
-	git clone one six &&
+	git clone --template= one six &&
 	origin_url=$(pwd)/one &&
 	(
 		cd six &&
 		git remote rm origin &&
+		mkdir .git/branches &&
 		echo "$origin_url#main" >.git/branches/origin &&
 		git remote rename origin origin &&
 		test_path_is_missing .git/branches/origin &&
@@ -972,10 +1050,11 @@ test_expect_success 'migrate a remote from named file in $GIT_DIR/branches' '
 '
 
 test_expect_success 'migrate a remote from named file in $GIT_DIR/branches (2)' '
-	git clone one seven &&
+	git clone --template= one seven &&
 	(
 		cd seven &&
 		git remote rm origin &&
+		mkdir .git/branches &&
 		echo "quux#foom" > .git/branches/origin &&
 		git remote rename origin origin &&
 		test_path_is_missing .git/branches/origin &&

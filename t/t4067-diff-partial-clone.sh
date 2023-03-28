@@ -2,6 +2,7 @@
 
 test_description='behavior of diff when reading objects in a partial clone'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'git show batches blobs' '
@@ -77,6 +78,7 @@ test_expect_success 'diff skips same-OID blobs' '
 
 test_expect_success 'when fetching missing objects, diff skips GITLINKs' '
 	test_when_finished "rm -rf sub server client trace" &&
+	test_config_global protocol.file.allow always &&
 
 	test_create_repo sub &&
 	test_commit -C sub first &&

@@ -49,14 +49,14 @@ void reset_merge_attributes(void)
 /*
  * Built-in low-levels
  */
-static enum ll_merge_result ll_binary_merge(const struct ll_merge_driver *drv_unused,
+static enum ll_merge_result ll_binary_merge(const struct ll_merge_driver *drv UNUSED,
 			   mmbuffer_t *result,
-			   const char *path,
-			   mmfile_t *orig, const char *orig_name,
-			   mmfile_t *src1, const char *name1,
-			   mmfile_t *src2, const char *name2,
+			   const char *path UNUSED,
+			   mmfile_t *orig, const char *orig_name UNUSED,
+			   mmfile_t *src1, const char *name1 UNUSED,
+			   mmfile_t *src2, const char *name2 UNUSED,
 			   const struct ll_merge_options *opts,
-			   int marker_size)
+			   int marker_size UNUSED)
 {
 	enum ll_merge_result ret;
 	mmfile_t *stolen;
@@ -183,9 +183,9 @@ static void create_temp(mmfile_t *src, char *path, size_t len)
 static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
 			mmbuffer_t *result,
 			const char *path,
-			mmfile_t *orig, const char *orig_name,
-			mmfile_t *src1, const char *name1,
-			mmfile_t *src2, const char *name2,
+			mmfile_t *orig, const char *orig_name UNUSED,
+			mmfile_t *src1, const char *name1 UNUSED,
+			mmfile_t *src2, const char *name2 UNUSED,
 			const struct ll_merge_options *opts,
 			int marker_size)
 {
@@ -193,7 +193,7 @@ static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
 	struct strbuf cmd = STRBUF_INIT;
 	struct strbuf_expand_dict_entry dict[6];
 	struct strbuf path_sq = STRBUF_INIT;
-	const char *args[] = { NULL, NULL };
+	struct child_process child = CHILD_PROCESS_INIT;
 	int status, fd, i;
 	struct stat st;
 	enum ll_merge_result ret;
@@ -219,8 +219,9 @@ static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
 
 	strbuf_expand(&cmd, fn->cmdline, strbuf_expand_dict_cb, &dict);
 
-	args[0] = cmd.buf;
-	status = run_command_v_opt(args, RUN_USING_SHELL);
+	child.use_shell = 1;
+	strvec_push(&child.args, cmd.buf);
+	status = run_command(&child);
 	fd = open(temp[1], O_RDONLY);
 	if (fd < 0)
 		goto bad;
@@ -249,7 +250,8 @@ static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
 static struct ll_merge_driver *ll_user_merge, **ll_user_merge_tail;
 static const char *default_ll_merge;
 
-static int read_merge_config(const char *var, const char *value, void *cb)
+static int read_merge_config(const char *var, const char *value,
+			     void *cb UNUSED)
 {
 	struct ll_merge_driver *fn;
 	const char *key, *name;
@@ -389,7 +391,7 @@ enum ll_merge_result ll_merge(mmbuffer_t *result_buf,
 		normalize_file(theirs, path, istate);
 	}
 
-	git_check_attr(istate, path, check);
+	git_check_attr(istate, NULL, path, check);
 	ll_driver_name = check->items[0].value;
 	if (check->items[1].value) {
 		marker_size = atoi(check->items[1].value);
@@ -417,7 +419,7 @@ int ll_merge_marker_size(struct index_state *istate, const char *path)
 
 	if (!check)
 		check = attr_check_initl("conflict-marker-size", NULL);
-	git_check_attr(istate, path, check);
+	git_check_attr(istate, NULL, path, check);
 	if (check->items[0].value) {
 		marker_size = atoi(check->items[0].value);
 		if (marker_size <= 0)

@@ -43,6 +43,15 @@
 # specified here, which can only have "guide" attribute and nothing
 # else.
 #
+# User-facing repository, command and file interfaces such as
+# documentation for the .gitmodules, .mailmap etc. files lives in man
+# sections 5 and 7. These entries can only have the "userinterfaces"
+# attribute and nothing else.
+#
+# Git's file formats and protocols, such as documentation for the
+# *.bundle format lives in man section 5. These entries can only have
+# the "developerinterfaces" attribute and nothing else.
+#
 ### command list (do not change this line)
 # command name                          category [category] [category]
 git-add                                 mainporcelain           worktree
@@ -82,6 +91,7 @@ git-cvsimport                           foreignscminterface
 git-cvsserver                           foreignscminterface
 git-daemon                              synchingrepositories
 git-describe                            mainporcelain
+git-diagnose                            ancillaryinterrogators
 git-diff                                mainporcelain           info
 git-diff-files                          plumbinginterrogators
 git-diff-index                          plumbinginterrogators
@@ -189,29 +199,42 @@ git-var                                 plumbinginterrogators
 git-verify-commit                       ancillaryinterrogators
 git-verify-pack                         plumbinginterrogators
 git-verify-tag                          ancillaryinterrogators
+git-version                             ancillaryinterrogators
 git-whatchanged                         ancillaryinterrogators          complete
 git-worktree                            mainporcelain
 git-write-tree                          plumbingmanipulators
-gitattributes                           guide
-gitcli                                  guide
+gitattributes                           userinterfaces
+gitcli                                  userinterfaces
 gitcore-tutorial                        guide
 gitcredentials                          guide
 gitcvs-migration                        guide
 gitdiffcore                             guide
 giteveryday                             guide
 gitfaq                                  guide
+gitformat-bundle                        developerinterfaces
+gitformat-chunk                         developerinterfaces
+gitformat-commit-graph                  developerinterfaces
+gitformat-index                         developerinterfaces
+gitformat-pack                          developerinterfaces
+gitformat-signature                     developerinterfaces
 gitglossary                             guide
-githooks                                guide
-gitignore                               guide
+githooks                                userinterfaces
+gitignore                               userinterfaces
 gitk                                    mainporcelain
-gitmailmap                              guide
-gitmodules                              guide
+gitmailmap                              userinterfaces
+gitmodules                              userinterfaces
 gitnamespaces                           guide
+gitprotocol-capabilities                developerinterfaces
+gitprotocol-common                      developerinterfaces
+gitprotocol-http                        developerinterfaces
+gitprotocol-pack                        developerinterfaces
+gitprotocol-v2                          developerinterfaces
 gitremote-helpers                       guide
-gitrepository-layout                    guide
-gitrevisions                            guide
+gitrepository-layout                    userinterfaces
+gitrevisions                            userinterfaces
 gitsubmodules                           guide
 gittutorial                             guide
 gittutorial-2                           guide
 gitweb                                  ancillaryinterrogators
 gitworkflows                            guide
+scalar                                  mainporcelain

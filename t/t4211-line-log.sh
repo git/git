@@ -315,4 +315,26 @@ test_expect_success 'line-log with --before' '
 	test_cmp expect actual
 '
 
+test_expect_success 'setup tests for zero-width regular expressions' '
+	cat >expect <<-EOF
+	Modify func1() in file.c
+	Add func1() and func2() in file.c
+	EOF
+'
+
+test_expect_success 'zero-width regex $ matches any function name' '
+	git log --format="%s" --no-patch "-L:$:file.c" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'zero-width regex ^ matches any function name' '
+	git log --format="%s" --no-patch "-L:^:file.c" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'zero-width regex .* matches any function name' '
+	git log --format="%s" --no-patch "-L:.*:file.c" >actual &&
+	test_cmp expect actual
+'
+
 test_done

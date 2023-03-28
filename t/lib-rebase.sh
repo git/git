@@ -60,7 +60,7 @@ set_fake_editor () {
 		">")
 			echo >> "$1";;
 		bad)
-			action="badcmd";;
+			action="pickled";;
 		fakesha)
 			test \& != "$action" || action=pick
 			echo "$action XXXXXXX False commit" >> "$1"
@@ -206,4 +206,23 @@ check_reworded_commits () {
 	git log --format="%an <%ae> %at%n%B" -n $# --first-parent --reverse \
 		>reword-log &&
 	test_cmp reword-expected reword-log
+}
+
+# usage: set_replace_editor <file>
+#
+# Replace the todo file with the exact contents of the given file.
+# N.B. sets GIT_SEQUENCE_EDITOR rather than EDITOR so it can be
+# combined with set_fake_editor to reword commits and replace the
+# todo list
+set_replace_editor () {
+	cat >script <<-\EOF &&
+	cat FILENAME >"$1"
+
+	echo 'rebase -i script after editing:'
+	cat "$1"
+	EOF
+
+	sed -e "s/FILENAME/$1/g" script |
+		write_script fake-sequence-editor.sh &&
+	test_set_sequence_editor "$(pwd)/fake-sequence-editor.sh"
 }

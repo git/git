@@ -33,7 +33,7 @@ static void vreportf(const char *prefix, const char *err, va_list params)
 
 static NORETURN void usage_builtin(const char *err, va_list params)
 {
-	vreportf("usage: ", err, params);
+	vreportf(_("usage: "), err, params);
 
 	/*
 	 * When we detect a usage error *before* the command dispatch in
@@ -58,7 +58,7 @@ static NORETURN void usage_builtin(const char *err, va_list params)
 static void die_message_builtin(const char *err, va_list params)
 {
 	trace2_cmd_error_va(err, params);
-	vreportf("fatal: ", err, params);
+	vreportf(_("fatal: "), err, params);
 }
 
 /*
@@ -78,14 +78,14 @@ static void error_builtin(const char *err, va_list params)
 {
 	trace2_cmd_error_va(err, params);
 
-	vreportf("error: ", err, params);
+	vreportf(_("error: "), err, params);
 }
 
 static void warn_builtin(const char *warn, va_list params)
 {
 	trace2_cmd_error_va(warn, params);
 
-	vreportf("warning: ", warn, params);
+	vreportf(_("warning: "), warn, params);
 }
 
 static int die_is_recursing_builtin(void)

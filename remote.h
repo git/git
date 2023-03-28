@@ -1,7 +1,6 @@
 #ifndef REMOTE_H
 #define REMOTE_H
 
-#include "cache.h"
 #include "parse-options.h"
 #include "hashmap.h"
 #include "refspec.h"
@@ -207,9 +206,7 @@ struct ref *find_ref_by_name(const struct ref *list, const char *name);
 struct ref *alloc_ref(const char *name);
 struct ref *copy_ref(const struct ref *ref);
 struct ref *copy_ref_list(const struct ref *ref);
-void sort_ref_list(struct ref **, int (*cmp)(const void *, const void *));
 int count_refspec_match(const char *, struct ref *refs, struct ref **matched_ref);
-int ref_compare_name(const void *, const void *);
 
 int check_ref_type(const struct ref *ref, int flags);
 
@@ -236,6 +233,11 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 			     const struct string_list *server_options,
 			     int stateless_rpc);
 
+/* Used for protocol v2 in order to retrieve refs from a remote */
+struct bundle_list;
+int get_remote_bundle_uri(int fd_out, struct packet_reader *reader,
+			  struct bundle_list *bundles, int stateless_rpc);
+
 int resolve_remote_symref(struct ref *ref, struct ref *list);
 
 /*
@@ -246,6 +248,12 @@ int resolve_remote_symref(struct ref *ref, struct ref *list);
  * pointer to the head of the resulting list.
  */
 struct ref *ref_remove_duplicates(struct ref *ref_map);
+
+/*
+ * Check whether a name matches any negative refspec in rs. Returns 1 if the
+ * name matches at least one negative refspec, and 0 otherwise.
+ */
+int omit_name_by_refspec(const char *name, struct refspec *rs);
 
 /*
  * Remove all entries in the input list which match any negative refspec in

@@ -226,18 +226,18 @@ export GIT_TEST_CLONE_2GB=true
 export SKIP_DASHED_BUILT_INS=YesPlease
 
 case "$runs_on_pool" in
-ubuntu-latest)
+ubuntu-*)
 	if test "$jobname" = "linux-gcc-default"
 	then
 		break
 	fi
 
-	if [ "$jobname" = linux-gcc ]
+	PYTHON_PACKAGE=python2
+	if test "$jobname" = linux-gcc
 	then
-		MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=/usr/bin/python3"
-	else
-		MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=/usr/bin/python2"
+		PYTHON_PACKAGE=python3
 	fi
+	MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=/usr/bin/$PYTHON_PACKAGE"
 
 	export GIT_TEST_HTTPD=true
 
@@ -246,19 +246,19 @@ ubuntu-latest)
 	# were recorded in the Homebrew database upon creating the OS X
 	# image.
 	# Keep that in mind when you encounter a broken OS X build!
-	export LINUX_P4_VERSION="16.2"
 	export LINUX_GIT_LFS_VERSION="1.5.2"
 
 	P4_PATH="$HOME/custom/p4"
 	GIT_LFS_PATH="$HOME/custom/git-lfs"
 	export PATH="$GIT_LFS_PATH:$P4_PATH:$PATH"
 	;;
-macos-latest)
+macos-*)
 	if [ "$jobname" = osx-gcc ]
 	then
 		MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=$(which python3)"
 	else
 		MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=$(which python2)"
+		MAKEFLAGS="$MAKEFLAGS APPLE_COMMON_CRYPTO_SHA1=Yes"
 	fi
 	;;
 esac
@@ -276,6 +276,13 @@ linux-musl)
 linux-leaks)
 	export SANITIZE=leak
 	export GIT_TEST_PASSING_SANITIZE_LEAK=true
+	export GIT_TEST_SANITIZE_LEAK_LOG=true
+	;;
+linux-asan)
+	export SANITIZE=address
+	;;
+linux-ubsan)
+	export SANITIZE=undefined
 	;;
 esac
 

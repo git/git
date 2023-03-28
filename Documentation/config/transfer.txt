@@ -13,14 +13,14 @@ Note that this is currently limited to detecting credentials in
 You might want to enable this to prevent inadvertent credentials
 exposure, e.g. because:
 +
-* The OS or system where you're running git may not provide way way or
+* The OS or system where you're running git may not provide a way or
   otherwise allow you to configure the permissions of the
   configuration file where the username and/or password are stored.
 * Even if it does, having such data stored "at rest" might expose you
   in other ways, e.g. a backup process might copy the data to another
   system.
 * The git programs will pass the full URL to one another as arguments
-  on the command-line, meaning the credentials will be exposed to oher
+  on the command-line, meaning the credentials will be exposed to other
   users on OS's or systems that allow other users to see the full
   process list of other users. On linux the "hidepid" setting
   documented in procfs(5) allows for configuring this behavior.
@@ -115,3 +115,9 @@ transfer.unpackLimit::
 transfer.advertiseSID::
 	Boolean. When true, client and server processes will advertise their
 	unique session IDs to their remote counterpart. Defaults to false.
+
+transfer.bundleURI::
+	When `true`, local `git clone` commands will request bundle
+	information from the remote server (if advertised) and download
+	bundles before continuing the clone through the Git protocol.
+	Defaults to `false`.

@@ -66,7 +66,7 @@ pthread_t pthread_self(void);
 
 static inline void NORETURN pthread_exit(void *ret)
 {
-	ExitThread((DWORD)(intptr_t)ret);
+	_endthreadex((unsigned)(uintptr_t)ret);
 }
 
 typedef DWORD pthread_key_t;

@@ -29,6 +29,14 @@ test_expect_success setup '
 	git gc
 '
 
+test_expect_success 'bare repo prune is quiet without $GIT_DIR/objects/pack' '
+	git clone -q --shared --template= --bare . bare.git &&
+	rmdir bare.git/objects/pack &&
+	git --git-dir=bare.git prune --no-progress 2>prune.err &&
+	test_must_be_empty prune.err &&
+	rm -r bare.git prune.err
+'
+
 test_expect_success 'prune stale packs' '
 	orig_pack=$(echo .git/objects/pack/*.pack) &&
 	>.git/objects/tmp_1.pack &&

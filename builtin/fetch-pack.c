@@ -1,4 +1,6 @@
 #include "builtin.h"
+#include "alloc.h"
+#include "hex.h"
 #include "pkt-line.h"
 #include "fetch-pack.h"
 #include "remote.h"
@@ -62,6 +64,7 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 	packet_trace_identity("fetch-pack");
 
 	memset(&args, 0, sizeof(args));
+	list_objects_filter_init(&args.filter_options);
 	args.uploadpack = "git-upload-pack";
 
 	for (i = 1; i < argc && *argv[i] == '-'; i++) {

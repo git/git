@@ -1,6 +1,8 @@
 #include "git-compat-util.h"
+#include "alloc.h"
 #include "line-range.h"
 #include "cache.h"
+#include "hex.h"
 #include "tag.h"
 #include "blob.h"
 #include "tree.h"
@@ -1089,10 +1091,8 @@ static struct diff_filepair *diff_filepair_dup(struct diff_filepair *pair)
 
 static void free_diffqueues(int n, struct diff_queue_struct *dq)
 {
-	int i, j;
-	for (i = 0; i < n; i++)
-		for (j = 0; j < dq[i].nr; j++)
-			diff_free_filepair(dq[i].queue[j]);
+	for (int i = 0; i < n; i++)
+		diff_free_queue(&dq[i]);
 	free(dq);
 }
 
@@ -1195,6 +1195,7 @@ static int process_ranges_ordinary_commit(struct rev_info *rev, struct commit *c
 	if (parent)
 		add_line_range(rev, parent, parent_range);
 	free_line_log_data(parent_range);
+	diff_free_queue(&queue);
 	return changed;
 }
 
@@ -1282,7 +1283,8 @@ int line_log_process_ranges_arbitrary_commit(struct rev_info *rev, struct commit
 	return changed;
 }
 
-static enum rewrite_result line_log_rewrite_one(struct rev_info *rev, struct commit **pp)
+static enum rewrite_result line_log_rewrite_one(struct rev_info *rev UNUSED,
+						struct commit **pp)
 {
 	for (;;) {
 		struct commit *p = *pp;

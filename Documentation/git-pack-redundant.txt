@@ -9,7 +9,7 @@ git-pack-redundant - Find redundant pack files
 SYNOPSIS
 --------
 [verse]
-'git pack-redundant' [ --verbose ] [ --alt-odb ] ( --all | <pack-filename>... )
+'git pack-redundant' [--verbose] [--alt-odb] (--all | <pack-filename>...)
 
 DESCRIPTION
 -----------
@@ -34,7 +34,7 @@ OPTIONS
 
 --alt-odb::
 	Don't require objects present in packs from alternate object
-	directories to be present in local packs.
+	database (odb) directories to be present in local packs.
 
 --verbose::
 	Outputs some statistics to stderr. Has a small performance penalty.

@@ -216,7 +216,7 @@ test_expect_success 'detect copies' '
 # variable exists, which allows admins to disable the "p4 move" command.
 test_lazy_prereq P4D_HAVE_CONFIGURABLE_RUN_MOVE_ALLOW '
 	p4 configure show run.move.allow >out &&
-	egrep ^run.move.allow: out
+	grep -E ^run.move.allow: out
 '
 
 # If move can be disabled, turn it off and test p4 move handling

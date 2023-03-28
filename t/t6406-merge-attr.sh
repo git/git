@@ -8,6 +8,7 @@ test_description='per path merge controlled by merge attribute'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -162,8 +163,8 @@ test_expect_success 'custom merge backend' '
 '
 
 test_expect_success 'up-to-date merge without common ancestor' '
-	test_create_repo repo1 &&
-	test_create_repo repo2 &&
+	git init repo1 &&
+	git init repo2 &&
 	test_tick &&
 	(
 		cd repo1 &&

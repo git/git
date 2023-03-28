@@ -5,7 +5,6 @@
 
 test_description='git svn property tests'
 
-TEST_FAILS_SANITIZE_LEAK=true
 . ./lib-git-svn.sh
 
 mkdir import

@@ -125,7 +125,7 @@ test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'verify-tag failes with tag date ou
 test_expect_success GPGSSH 'detect fudged ssh signature' '
 	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
 	git cat-file tag seventh-signed >raw &&
-	sed -e "/^tag / s/seventh/7th forged/" raw >forged1 &&
+	sed -e "/^tag / s/seventh/7th-forged/" raw >forged1 &&
 	git hash-object -w -t tag forged1 >forged1.tag &&
 	test_must_fail git verify-tag $(cat forged1.tag) 2>actual1 &&
 	grep "${GPGSSH_BAD_SIGNATURE}" actual1 &&
@@ -198,6 +198,16 @@ test_expect_success GPGSSH 'verifying tag with --format - ssh' '
 test_expect_success GPGSSH 'verifying a forged tag with --format should fail silently - ssh' '
 	test_must_fail git verify-tag --format="tagname : %(tag)" $(cat forged1.tag) >actual-forged &&
 	test_must_be_empty actual-forged
+'
+
+test_expect_success GPGSSH 'rev-list --format=%G' '
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
+	git rev-list -1 --format="%G? %H" sixth-signed >actual &&
+	cat >expect <<-EOF &&
+	commit $(git rev-parse sixth-signed^0)
+	G $(git rev-parse sixth-signed^0)
+	EOF
+	test_cmp expect actual
 '
 
 test_done

@@ -1,5 +1,5 @@
-
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "repository.h"
 #include "config.h"
 #include "submodule-config.h"
@@ -7,6 +7,7 @@
 #include "dir.h"
 #include "diff.h"
 #include "commit.h"
+#include "hex.h"
 #include "revision.h"
 #include "run-command.h"
 #include "diffcore.h"
@@ -213,7 +214,8 @@ void set_diffopt_flags_from_submodule_config(struct diff_options *diffopt,
 }
 
 /* Cheap function that only determines if we're interested in submodules at all */
-int git_default_submodule_config(const char *var, const char *value, void *cb)
+int git_default_submodule_config(const char *var, const char *value,
+				 void *cb UNUSED)
 {
 	if (!strcmp(var, "submodule.recurse")) {
 		int v = git_config_bool(var, value) ?
@@ -415,10 +417,9 @@ int parse_submodule_update_strategy(const char *value,
 	return 0;
 }
 
-const char *submodule_strategy_to_string(const struct submodule_update_strategy *s)
+const char *submodule_update_type_to_string(enum submodule_update_type type)
 {
-	struct strbuf sb = STRBUF_INIT;
-	switch (s->type) {
+	switch (type) {
 	case SM_UPDATE_CHECKOUT:
 		return "checkout";
 	case SM_UPDATE_MERGE:
@@ -428,12 +429,11 @@ const char *submodule_strategy_to_string(const struct submodule_update_strategy 
 	case SM_UPDATE_NONE:
 		return "none";
 	case SM_UPDATE_UNSPECIFIED:
-		return NULL;
 	case SM_UPDATE_COMMAND:
-		strbuf_addf(&sb, "!%s", s->command);
-		return strbuf_detach(&sb, NULL);
+		BUG("init_submodule() should handle type %d", type);
+	default:
+		BUG("unexpected update strategy type: %d", type);
 	}
-	return NULL;
 }
 
 void handle_ignore_submodules_arg(struct diff_options *diffopt,
@@ -833,7 +833,7 @@ static void changed_submodule_data_clear(struct changed_submodule_data *cs_data)
 }
 
 static void collect_changed_submodules_cb(struct diff_queue_struct *q,
-					  struct diff_options *options,
+					  struct diff_options *options UNUSED,
 					  void *data)
 {
 	struct collect_changed_submodules_cb_data *me = data;
@@ -940,8 +940,9 @@ static void free_submodules_data(struct string_list *submodules)
 	string_list_clear(submodules, 1);
 }
 
-static int has_remote(const char *refname, const struct object_id *oid,
-		      int flags, void *cb_data)
+static int has_remote(const char *refname UNUSED,
+		      const struct object_id *oid UNUSED,
+		      int flags UNUSED, void *cb_data UNUSED)
 {
 	return 1;
 }
@@ -1130,6 +1131,12 @@ static int push_submodule(const char *path,
 	if (for_each_remote_ref_submodule(path, has_remote, NULL) > 0) {
 		struct child_process cp = CHILD_PROCESS_INIT;
 		strvec_push(&cp.args, "push");
+		/*
+		 * When recursing into a submodule, treat any "only" configurations as "on-
+		 * demand", since "only" would not work (we need all submodules to be pushed
+		 * in order to be able to push the superproject).
+		 */
+		strvec_push(&cp.args, "--recurse-submodules=only-is-on-demand");
 		if (dry_run)
 			strvec_push(&cp.args, "--dry-run");
 
@@ -1243,8 +1250,9 @@ int push_unpushed_submodules(struct repository *r,
 	return ret;
 }
 
-static int append_oid_to_array(const char *ref, const struct object_id *oid,
-			       int flags, void *data)
+static int append_oid_to_array(const char *ref UNUSED,
+			       const struct object_id *oid,
+			       int flags UNUSED, void *data)
 {
 	struct oid_array *array = data;
 	oid_array_append(array, oid);
@@ -1732,7 +1740,7 @@ static int get_next_submodule(struct child_process *cp, struct strbuf *err,
 	return 0;
 }
 
-static int fetch_start_failure(struct strbuf *err,
+static int fetch_start_failure(struct strbuf *err UNUSED,
 			       void *cb, void *task_cb)
 {
 	struct submodule_parallel_fetch *spf = cb;
@@ -1753,7 +1761,7 @@ static int commit_missing_in_sub(const struct object_id *oid, void *data)
 	return type != OBJ_COMMIT;
 }
 
-static int fetch_finish(int retvalue, struct strbuf *err,
+static int fetch_finish(int retvalue, struct strbuf *err UNUSED,
 			void *cb, void *task_cb)
 {
 	struct submodule_parallel_fetch *spf = cb;
@@ -1818,6 +1826,17 @@ int fetch_submodules(struct repository *r,
 {
 	int i;
 	struct submodule_parallel_fetch spf = SPF_INIT;
+	const struct run_process_parallel_opts opts = {
+		.tr2_category = "submodule",
+		.tr2_label = "parallel/fetch",
+
+		.processes = max_parallel_jobs,
+
+		.get_next_task = get_next_submodule,
+		.start_failure = fetch_start_failure,
+		.task_finished = fetch_finish,
+		.data = &spf,
+	};
 
 	spf.r = r;
 	spf.command_line_option = command_line_option;
@@ -1839,12 +1858,7 @@ int fetch_submodules(struct repository *r,
 
 	calculate_changed_submodule_paths(r, &spf.changed_submodule_names);
 	string_list_sort(&spf.changed_submodule_names);
-	run_processes_parallel_tr2(max_parallel_jobs,
-				   get_next_submodule,
-				   fetch_start_failure,
-				   fetch_finish,
-				   &spf,
-				   "submodule", "parallel/fetch");
+	run_processes_parallel(&opts);
 
 	if (spf.submodules_with_errors.len > 0)
 		fprintf(stderr, _("Errors during submodule fetch:\n%s"),
@@ -2041,14 +2055,6 @@ void submodule_unset_core_worktree(const struct submodule *sub)
 	strbuf_release(&config_path);
 }
 
-static const char *get_super_prefix_or_empty(void)
-{
-	const char *s = get_super_prefix();
-	if (!s)
-		s = "";
-	return s;
-}
-
 static int submodule_has_dirty_index(const struct submodule *sub)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
@@ -2067,7 +2073,7 @@ static int submodule_has_dirty_index(const struct submodule *sub)
 	return finish_command(&cp);
 }
 
-static void submodule_reset_index(const char *path)
+static void submodule_reset_index(const char *path, const char *super_prefix)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 	prepare_submodule_repo_env(&cp.env);
@@ -2076,10 +2082,10 @@ static void submodule_reset_index(const char *path)
 	cp.no_stdin = 1;
 	cp.dir = path;
 
-	strvec_pushf(&cp.args, "--super-prefix=%s%s/",
-		     get_super_prefix_or_empty(), path);
 	/* TODO: determine if this might overwright untracked files */
 	strvec_pushl(&cp.args, "read-tree", "-u", "--reset", NULL);
+	strvec_pushf(&cp.args, "--super-prefix=%s%s/",
+		     (super_prefix ? super_prefix : ""), path);
 
 	strvec_push(&cp.args, empty_tree_oid_hex());
 
@@ -2092,10 +2098,9 @@ static void submodule_reset_index(const char *path)
  * For edge cases (a submodule coming into existence or removing a submodule)
  * pass NULL for old or new respectively.
  */
-int submodule_move_head(const char *path,
-			 const char *old_head,
-			 const char *new_head,
-			 unsigned flags)
+int submodule_move_head(const char *path, const char *super_prefix,
+			const char *old_head, const char *new_head,
+			unsigned flags)
 {
 	int ret = 0;
 	struct child_process cp = CHILD_PROCESS_INIT;
@@ -2133,7 +2138,7 @@ int submodule_move_head(const char *path,
 		if (old_head) {
 			if (!submodule_uses_gitfile(path))
 				absorb_git_dir_into_superproject(path,
-					ABSORB_GITDIR_RECURSE_SUBMODULES);
+								 super_prefix);
 		} else {
 			struct strbuf gitdir = STRBUF_INIT;
 			submodule_name_to_gitdir(&gitdir, the_repository,
@@ -2142,7 +2147,7 @@ int submodule_move_head(const char *path,
 			strbuf_release(&gitdir);
 
 			/* make sure the index is clean as well */
-			submodule_reset_index(path);
+			submodule_reset_index(path, super_prefix);
 		}
 
 		if (old_head && (flags & SUBMODULE_MOVE_HEAD_FORCE)) {
@@ -2160,9 +2165,9 @@ int submodule_move_head(const char *path,
 	cp.no_stdin = 1;
 	cp.dir = path;
 
-	strvec_pushf(&cp.args, "--super-prefix=%s%s/",
-		     get_super_prefix_or_empty(), path);
 	strvec_pushl(&cp.args, "read-tree", "--recurse-submodules", NULL);
+	strvec_pushf(&cp.args, "--super-prefix=%s%s/",
+		     (super_prefix ? super_prefix : ""), path);
 
 	if (flags & SUBMODULE_MOVE_HEAD_DRY_RUN)
 		strvec_push(&cp.args, "-n");
@@ -2262,7 +2267,8 @@ int validate_submodule_git_dir(char *git_dir, const char *submodule_name)
  * Embeds a single submodules git directory into the superprojects git dir,
  * non recursively.
  */
-static void relocate_single_git_dir_into_superproject(const char *path)
+static void relocate_single_git_dir_into_superproject(const char *path,
+						      const char *super_prefix)
 {
 	char *old_git_dir = NULL, *real_old_git_dir = NULL, *real_new_git_dir = NULL;
 	struct strbuf new_gitdir = STRBUF_INIT;
@@ -2292,7 +2298,7 @@ static void relocate_single_git_dir_into_superproject(const char *path)
 	real_new_git_dir = real_pathdup(new_gitdir.buf, 1);
 
 	fprintf(stderr, _("Migrating git directory of '%s%s' from\n'%s' to\n'%s'\n"),
-		get_super_prefix_or_empty(), path,
+		super_prefix ? super_prefix : "", path,
 		real_old_git_dir, real_new_git_dir);
 
 	relocate_gitdir(path, real_old_git_dir, real_new_git_dir);
@@ -2303,13 +2309,32 @@ static void relocate_single_git_dir_into_superproject(const char *path)
 	strbuf_release(&new_gitdir);
 }
 
+static void absorb_git_dir_into_superproject_recurse(const char *path,
+						     const char *super_prefix)
+{
+
+	struct child_process cp = CHILD_PROCESS_INIT;
+
+	cp.dir = path;
+	cp.git_cmd = 1;
+	cp.no_stdin = 1;
+	strvec_pushl(&cp.args, "submodule--helper",
+		     "absorbgitdirs", NULL);
+	strvec_pushf(&cp.args, "--super-prefix=%s%s/", super_prefix ?
+		     super_prefix : "", path);
+
+	prepare_submodule_repo_env(&cp.env);
+	if (run_command(&cp))
+		die(_("could not recurse into submodule '%s'"), path);
+}
+
 /*
  * Migrate the git directory of the submodule given by path from
  * having its git directory within the working tree to the git dir nested
  * in its superprojects git dir under modules/.
  */
 void absorb_git_dir_into_superproject(const char *path,
-				      unsigned flags)
+				      const char *super_prefix)
 {
 	int err_code;
 	const char *sub_git_dir;
@@ -2351,36 +2376,14 @@ void absorb_git_dir_into_superproject(const char *path,
 		char *real_common_git_dir = real_pathdup(get_git_common_dir(), 1);
 
 		if (!starts_with(real_sub_git_dir, real_common_git_dir))
-			relocate_single_git_dir_into_superproject(path);
+			relocate_single_git_dir_into_superproject(path, super_prefix);
 
 		free(real_sub_git_dir);
 		free(real_common_git_dir);
 	}
 	strbuf_release(&gitdir);
 
-	if (flags & ABSORB_GITDIR_RECURSE_SUBMODULES) {
-		struct child_process cp = CHILD_PROCESS_INIT;
-		struct strbuf sb = STRBUF_INIT;
-
-		if (flags & ~ABSORB_GITDIR_RECURSE_SUBMODULES)
-			BUG("we don't know how to pass the flags down?");
-
-		strbuf_addstr(&sb, get_super_prefix_or_empty());
-		strbuf_addstr(&sb, path);
-		strbuf_addch(&sb, '/');
-
-		cp.dir = path;
-		cp.git_cmd = 1;
-		cp.no_stdin = 1;
-		strvec_pushl(&cp.args, "--super-prefix", sb.buf,
-			     "submodule--helper",
-			     "absorb-git-dirs", NULL);
-		prepare_submodule_repo_env(&cp.env);
-		if (run_command(&cp))
-			die(_("could not recurse into submodule '%s'"), path);
-
-		strbuf_release(&sb);
-	}
+	absorb_git_dir_into_superproject_recurse(path, super_prefix);
 }
 
 int get_superproject_working_tree(struct strbuf *buf)
@@ -2388,7 +2391,7 @@ int get_superproject_working_tree(struct strbuf *buf)
 	struct child_process cp = CHILD_PROCESS_INIT;
 	struct strbuf sb = STRBUF_INIT;
 	struct strbuf one_up = STRBUF_INIT;
-	const char *cwd = xgetcwd();
+	char *cwd = xgetcwd();
 	int ret = 0;
 	const char *subpath;
 	int code;
@@ -2451,6 +2454,7 @@ int get_superproject_working_tree(struct strbuf *buf)
 		ret = 1;
 		free(super_wt);
 	}
+	free(cwd);
 	strbuf_release(&sb);
 
 	code = finish_command(&cp);

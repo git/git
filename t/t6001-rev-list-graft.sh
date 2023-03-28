@@ -99,6 +99,7 @@ do
 	"
 
 	test_expect_success 'with grafts' "
+		mkdir -p .git/info &&
 		echo '$B0 $A2' >.git/info/grafts &&
 		check $type $B2 -- $B2 $B1 $B0 $A2 $A1 $A0
 	"

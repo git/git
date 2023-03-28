@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "config.h"
+#include "hex.h"
 #include "tag.h"
 #include "commit.h"
 #include "tree.h"
@@ -223,7 +224,7 @@ static int finish_object_disambiguation(struct disambiguate_state *ds,
 
 static int disambiguate_commit_only(struct repository *r,
 				    const struct object_id *oid,
-				    void *cb_data_unused)
+				    void *cb_data UNUSED)
 {
 	int kind = oid_object_info(r, oid, NULL);
 	return kind == OBJ_COMMIT;
@@ -231,7 +232,7 @@ static int disambiguate_commit_only(struct repository *r,
 
 static int disambiguate_committish_only(struct repository *r,
 					const struct object_id *oid,
-					void *cb_data_unused)
+					void *cb_data UNUSED)
 {
 	struct object *obj;
 	int kind;
@@ -251,7 +252,7 @@ static int disambiguate_committish_only(struct repository *r,
 
 static int disambiguate_tree_only(struct repository *r,
 				  const struct object_id *oid,
-				  void *cb_data_unused)
+				  void *cb_data UNUSED)
 {
 	int kind = oid_object_info(r, oid, NULL);
 	return kind == OBJ_TREE;
@@ -259,7 +260,7 @@ static int disambiguate_tree_only(struct repository *r,
 
 static int disambiguate_treeish_only(struct repository *r,
 				     const struct object_id *oid,
-				     void *cb_data_unused)
+				     void *cb_data UNUSED)
 {
 	struct object *obj;
 	int kind;
@@ -279,7 +280,7 @@ static int disambiguate_treeish_only(struct repository *r,
 
 static int disambiguate_blob_only(struct repository *r,
 				  const struct object_id *oid,
-				  void *cb_data_unused)
+				  void *cb_data UNUSED)
 {
 	int kind = oid_object_info(r, oid, NULL);
 	return kind == OBJ_BLOB;
@@ -473,7 +474,7 @@ static int collect_ambiguous(const struct object_id *oid, void *data)
 	return 0;
 }
 
-static int repo_collect_ambiguous(struct repository *r,
+static int repo_collect_ambiguous(struct repository *r UNUSED,
 				  const struct object_id *oid,
 				  void *data)
 {
@@ -665,7 +666,7 @@ static int extend_abbrev_len(const struct object_id *oid, void *cb_data)
 	return 0;
 }
 
-static int repo_extend_abbrev_len(struct repository *r,
+static int repo_extend_abbrev_len(struct repository *r UNUSED,
 				  const struct object_id *oid,
 				  void *cb_data)
 {
@@ -1306,7 +1307,8 @@ struct handle_one_ref_cb {
 };
 
 static int handle_one_ref(const char *path, const struct object_id *oid,
-			  int flag, void *cb_data)
+			  int flag UNUSED,
+			  void *cb_data)
 {
 	struct handle_one_ref_cb *cb = cb_data;
 	struct commit_list **list = cb->list;
@@ -1384,8 +1386,11 @@ struct grab_nth_branch_switch_cbdata {
 	struct strbuf *sb;
 };
 
-static int grab_nth_branch_switch(struct object_id *ooid, struct object_id *noid,
-				  const char *email, timestamp_t timestamp, int tz,
+static int grab_nth_branch_switch(struct object_id *ooid UNUSED,
+				  struct object_id *noid UNUSED,
+				  const char *email UNUSED,
+				  timestamp_t timestamp UNUSED,
+				  int tz UNUSED,
 				  const char *message, void *cb_data)
 {
 	struct grab_nth_branch_switch_cbdata *cb = cb_data;

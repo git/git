@@ -1,6 +1,8 @@
 #include "cache.h"
+#include "alloc.h"
 #include "config.h"
 #include "commit.h"
+#include "hex.h"
 #include "utf8.h"
 #include "diff.h"
 #include "revision.h"
@@ -13,6 +15,13 @@
 #include "gpg-interface.h"
 #include "trailer.h"
 #include "run-command.h"
+
+/*
+ * The limit for formatting directives, which enable the caller to append
+ * arbitrarily many bytes to the formatted buffer. This includes padding
+ * and wrapping formatters.
+ */
+#define FORMATTING_LIMIT (16 * 1024)
 
 static char *user_format;
 static struct cmt_fmt_map {
@@ -43,7 +52,8 @@ static void save_user_format(struct rev_info *rev, const char *cp, int is_tforma
 	rev->commit_format = CMIT_FMT_USERFORMAT;
 }
 
-static int git_pretty_formats_config(const char *var, const char *value, void *cb)
+static int git_pretty_formats_config(const char *var, const char *value,
+				     void *cb UNUSED)
 {
 	struct cmt_fmt_map *commit_format = NULL;
 	const char *name;
@@ -477,6 +487,16 @@ end:
 	}
 }
 
+static int use_in_body_from(const struct pretty_print_context *pp,
+			    const struct ident_split *ident)
+{
+	if (pp->rev && pp->rev->force_in_body_from)
+		return 1;
+	if (ident_cmp(pp->from_ident, ident))
+		return 1;
+	return 0;
+}
+
 void pp_user_info(struct pretty_print_context *pp,
 		  const char *what, struct strbuf *sb,
 		  const char *line, const char *encoding)
@@ -503,7 +523,7 @@ void pp_user_info(struct pretty_print_context *pp,
 		map_user(pp->mailmap, &mailbuf, &maillen, &namebuf, &namelen);
 
 	if (cmit_fmt_is_mail(pp->fmt)) {
-		if (pp->from_ident && ident_cmp(pp->from_ident, &ident)) {
+		if (pp->from_ident && use_in_body_from(pp, &ident)) {
 			struct strbuf buf = STRBUF_INIT;
 
 			strbuf_addstr(&buf, "From: ");
@@ -983,7 +1003,9 @@ static void strbuf_wrap(struct strbuf *sb, size_t pos,
 	if (pos)
 		strbuf_add(&tmp, sb->buf, pos);
 	strbuf_add_wrapped_text(&tmp, sb->buf + pos,
-				(int) indent1, (int) indent2, (int) width);
+				cast_size_t_to_int(indent1),
+				cast_size_t_to_int(indent2),
+				cast_size_t_to_int(width));
 	strbuf_swap(&tmp, sb);
 	strbuf_release(&tmp);
 }
@@ -1109,9 +1131,18 @@ static size_t parse_padding_placeholder(const char *placeholder,
 		const char *end = start + strcspn(start, ",)");
 		char *next;
 		int width;
-		if (!end || end == start)
+		if (!*end || end == start)
 			return 0;
 		width = strtol(start, &next, 10);
+
+		/*
+		 * We need to limit the amount of padding, or otherwise this
+		 * would allow the user to pad the buffer by arbitrarily many
+		 * bytes and thus cause resource exhaustion.
+		 */
+		if (width < -FORMATTING_LIMIT || width > FORMATTING_LIMIT)
+			return 0;
+
 		if (next == start || width == 0)
 			return 0;
 		if (width < 0) {
@@ -1394,6 +1425,16 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 				if (*next != ')')
 					return 0;
 			}
+
+			/*
+			 * We need to limit the format here as it allows the
+			 * user to prepend arbitrarily many bytes to the buffer
+			 * when rewrapping.
+			 */
+			if (width > FORMATTING_LIMIT ||
+			    indent1 > FORMATTING_LIMIT ||
+			    indent2 > FORMATTING_LIMIT)
+				return 0;
 			rewrap_message_tail(sb, c, width, indent1, indent2);
 			return end - placeholder + 1;
 		} else
@@ -1575,23 +1616,7 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 				strbuf_addstr(sb, c->signature_check.primary_key_fingerprint);
 			break;
 		case 'T':
-			switch (c->signature_check.trust_level) {
-			case TRUST_UNDEFINED:
-				strbuf_addstr(sb, "undefined");
-				break;
-			case TRUST_NEVER:
-				strbuf_addstr(sb, "never");
-				break;
-			case TRUST_MARGINAL:
-				strbuf_addstr(sb, "marginal");
-				break;
-			case TRUST_FULLY:
-				strbuf_addstr(sb, "fully");
-				break;
-			case TRUST_ULTIMATE:
-				strbuf_addstr(sb, "ultimate");
-				break;
-			}
+			strbuf_addstr(sb, gpg_trust_level_to_str(c->signature_check.trust_level));
 			break;
 		default:
 			return 0;
@@ -1675,19 +1700,21 @@ static size_t format_and_pad_commit(struct strbuf *sb, /* in UTF-8 */
 				    struct format_commit_context *c)
 {
 	struct strbuf local_sb = STRBUF_INIT;
-	int total_consumed = 0, len, padding = c->padding;
+	size_t total_consumed = 0;
+	int len, padding = c->padding;
+
 	if (padding < 0) {
 		const char *start = strrchr(sb->buf, '\n');
 		int occupied;
 		if (!start)
 			start = sb->buf;
-		occupied = utf8_strnwidth(start, -1, 1);
+		occupied = utf8_strnwidth(start, strlen(start), 1);
 		occupied += c->pretty_ctx->graph_width;
 		padding = (-padding) - occupied;
 	}
 	while (1) {
 		int modifier = *placeholder == 'C';
-		int consumed = format_commit_one(&local_sb, placeholder, c);
+		size_t consumed = format_commit_one(&local_sb, placeholder, c);
 		total_consumed += consumed;
 
 		if (!modifier)
@@ -1699,7 +1726,7 @@ static size_t format_and_pad_commit(struct strbuf *sb, /* in UTF-8 */
 		placeholder++;
 		total_consumed++;
 	}
-	len = utf8_strnwidth(local_sb.buf, -1, 1);
+	len = utf8_strnwidth(local_sb.buf, local_sb.len, 1);
 
 	if (c->flush_type == flush_left_and_steal) {
 		const char *ch = sb->buf + sb->len - 1;
@@ -1714,7 +1741,7 @@ static size_t format_and_pad_commit(struct strbuf *sb, /* in UTF-8 */
 			if (*ch != 'm')
 				break;
 			p = ch - 1;
-			while (ch - p < 10 && *p != '\033')
+			while (p > sb->buf && ch - p < 10 && *p != '\033')
 				p--;
 			if (*p != '\033' ||
 			    ch + 1 - p != display_mode_esc_sequence_len(p))
@@ -1753,7 +1780,7 @@ static size_t format_and_pad_commit(struct strbuf *sb, /* in UTF-8 */
 		}
 		strbuf_addbuf(sb, &local_sb);
 	} else {
-		int sb_len = sb->len, offset = 0;
+		size_t sb_len = sb->len, offset = 0;
 		if (c->flush_type == flush_left)
 			offset = padding - len;
 		else if (c->flush_type == flush_both)
@@ -1776,8 +1803,7 @@ static size_t format_commit_item(struct strbuf *sb, /* in UTF-8 */
 				 const char *placeholder,
 				 void *context)
 {
-	int consumed;
-	size_t orig_len;
+	size_t consumed, orig_len;
 	enum {
 		NO_MAGIC,
 		ADD_LF_BEFORE_NON_EMPTY,
@@ -1798,8 +1824,20 @@ static size_t format_commit_item(struct strbuf *sb, /* in UTF-8 */
 	default:
 		break;
 	}
-	if (magic != NO_MAGIC)
+	if (magic != NO_MAGIC) {
 		placeholder++;
+
+		switch (placeholder[0]) {
+		case 'w':
+			/*
+			 * `%+w()` cannot ever expand to a non-empty string,
+			 * and it potentially changes the layout of preceding
+			 * contents. We're thus not able to handle the magic in
+			 * this combination and refuse the pattern.
+			 */
+			return 0;
+		};
+	}
 
 	orig_len = sb->len;
 	if (((struct format_commit_context *)context)->flush_type != no_flush)
@@ -1821,7 +1859,8 @@ static size_t format_commit_item(struct strbuf *sb, /* in UTF-8 */
 	return consumed + 1;
 }
 
-static size_t userformat_want_item(struct strbuf *sb, const char *placeholder,
+static size_t userformat_want_item(struct strbuf *sb UNUSED,
+				   const char *placeholder,
 				   void *context)
 {
 	struct userformat_want *w = context;

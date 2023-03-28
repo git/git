@@ -20,7 +20,7 @@ Outline:
   3. Why any rename on MERGE_SIDE1 in any given pick is _almost_ always also
      a rename on MERGE_SIDE1 for the next pick
 
-  4. A detailed description of the the counter-examples to #3.
+  4. A detailed description of the counter-examples to #3.
 
   5. Why the special cases in #4 are still fully reasonable to use to pair
      up files for three-way content merging in the merge machinery, and why
@@ -407,7 +407,7 @@ considered to be "irrelevant".  See for example the following commits:
 		no longer relevant", 2021-03-13)
 
 Relevance is always determined by what the _other_ side of history has
-done, in terms of modifing a file that our side renamed, or adding a
+done, in terms of modifying a file that our side renamed, or adding a
 file to a directory which our side renamed.  This means that a path
 that is "irrelevant" when picking the first commit of a series in a
 rebase or cherry-pick, may suddenly become "relevant" when picking the

@@ -101,6 +101,13 @@ void create_branches_recursively(struct repository *r, const char *name,
 				 const char *tracking_name, int force,
 				 int reflog, int quiet, enum branch_track track,
 				 int dry_run);
+
+/*
+ * If the branch at 'refname' is currently checked out in a worktree,
+ * then return the path to that worktree.
+ */
+const char *branch_checked_out(const char *refname);
+
 /*
  * Check if 'name' can be a valid name for a branch; die otherwise.
  * Return 1 if the named branch already exists; return 0 otherwise.

@@ -7,6 +7,7 @@
 */
 
 #include "builtin.h"
+#include "hex.h"
 #include "repository.h"
 #include "packfile.h"
 #include "object-store.h"
@@ -14,7 +15,7 @@
 #define BLKSIZE 512
 
 static const char pack_redundant_usage[] =
-"git pack-redundant [--verbose] [--alt-odb] (--all | <filename.pack>...)";
+"git pack-redundant [--verbose] [--alt-odb] (--all | <pack-filename>...)";
 
 static int load_all_packs, verbose, alt_odb;
 

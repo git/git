@@ -36,28 +36,6 @@ test_expect_success 'setup remote repository' '
 
 setup_askpass_helper
 
-cat >exp <<EOF
-GET  /smart/test_repo.git/info/refs?service=git-upload-pack HTTP/1.1 200
-POST /smart/test_repo.git/git-upload-pack HTTP/1.1 200
-EOF
-test_expect_success 'no empty path components' '
-	# Clear the log, so that it does not affect the "used receive-pack
-	# service" test which reads the log too.
-	test_when_finished ">\"\$HTTPD_ROOT_PATH\"/access.log" &&
-
-	# In the URL, add a trailing slash, and see if git appends yet another
-	# slash.
-	cd "$ROOT_PATH" &&
-	git clone $HTTPD_URL/smart/test_repo.git/ test_repo_clone &&
-
-	# NEEDSWORK: If the overspecification of the expected result is reduced, we
-	# might be able to run this test in all protocol versions.
-	if test "$GIT_TEST_PROTOCOL_VERSION" = 0
-	then
-		check_access_log exp
-	fi
-'
-
 test_expect_success 'clone remote repository' '
 	rm -rf test_repo_clone &&
 	git clone $HTTPD_URL/smart/test_repo.git test_repo_clone &&
@@ -67,6 +45,10 @@ test_expect_success 'clone remote repository' '
 '
 
 test_expect_success 'push to remote repository (standard)' '
+	# Clear the log, so that the "used receive-pack service" test below
+	# sees just what we did here.
+	>"$HTTPD_ROOT_PATH"/access.log &&
+
 	cd "$ROOT_PATH"/test_repo_clone &&
 	: >path2 &&
 	git add path2 &&
@@ -78,6 +60,34 @@ test_expect_success 'push to remote repository (standard)' '
 	grep "POST git-receive-pack ([0-9]* bytes)" err &&
 	(cd "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git &&
 	 test $HEAD = $(git rev-parse --verify HEAD))
+'
+
+test_expect_success 'used receive-pack service' '
+	cat >exp <<-\EOF &&
+	GET  /smart/test_repo.git/info/refs?service=git-receive-pack HTTP/1.1 200
+	POST /smart/test_repo.git/git-receive-pack HTTP/1.1 200
+	EOF
+
+	check_access_log exp
+'
+
+test_expect_success 'push to remote repository (standard) with sending Accept-Language' '
+	cat >exp <<-\EOF &&
+	=> Send header: Accept-Language: ko-KR, *;q=0.9
+	=> Send header: Accept-Language: ko-KR, *;q=0.9
+	EOF
+
+	cd "$ROOT_PATH"/test_repo_clone &&
+	: >path_lang &&
+	git add path_lang &&
+	test_tick &&
+	git commit -m path_lang &&
+	HEAD=$(git rev-parse --verify HEAD) &&
+	GIT_TRACE_CURL=true LANGUAGE="ko_KR.UTF-8" git push -v -v 2>err &&
+	! grep "Expect: 100-continue" err &&
+
+	grep "=> Send header: Accept-Language:" err >err.language &&
+	test_cmp exp err.language
 '
 
 test_expect_success 'push already up-to-date' '
@@ -121,28 +131,6 @@ test_expect_success 'rejected update prints status' '
 	test_cmp exp cmp
 '
 rm -f "$HTTPD_DOCUMENT_ROOT_PATH/test_repo.git/hooks/update"
-
-cat >exp <<EOF
-GET  /smart/test_repo.git/info/refs?service=git-upload-pack HTTP/1.1 200
-POST /smart/test_repo.git/git-upload-pack HTTP/1.1 200
-GET  /smart/test_repo.git/info/refs?service=git-receive-pack HTTP/1.1 200
-POST /smart/test_repo.git/git-receive-pack HTTP/1.1 200
-GET  /smart/test_repo.git/info/refs?service=git-receive-pack HTTP/1.1 200
-GET  /smart/test_repo.git/info/refs?service=git-receive-pack HTTP/1.1 200
-POST /smart/test_repo.git/git-receive-pack HTTP/1.1 200
-GET  /smart/test_repo.git/info/refs?service=git-receive-pack HTTP/1.1 200
-POST /smart/test_repo.git/git-receive-pack HTTP/1.1 200
-GET  /smart/test_repo.git/info/refs?service=git-receive-pack HTTP/1.1 200
-POST /smart/test_repo.git/git-receive-pack HTTP/1.1 200
-EOF
-test_expect_success 'used receive-pack service' '
-	# NEEDSWORK: If the overspecification of the expected result is reduced, we
-	# might be able to run this test in all protocol versions.
-	if test "$GIT_TEST_PROTOCOL_VERSION" = 0
-	then
-		check_access_log exp
-	fi
-'
 
 test_http_push_nonff "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git \
 	"$ROOT_PATH"/test_repo_clone main 		success

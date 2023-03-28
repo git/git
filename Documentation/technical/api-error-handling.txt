@@ -46,7 +46,7 @@ parse-options.c.
   returns -1 after reporting the situation to the caller.
 
 These reports will be logged via the trace2 facility. See the "error"
-event in link:api-trace2.txt[trace2 API].
+event in link:api-trace2.html[trace2 API].
 
 Customizable error handlers
 ---------------------------

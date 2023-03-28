@@ -3,7 +3,7 @@
 test_description='git read-tree in partial clones'
 
 TEST_NO_CREATE_REPO=1
-
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'read-tree in partial clone prefetches in one batch' '
@@ -19,7 +19,7 @@ test_expect_success 'read-tree in partial clone prefetches in one batch' '
 	git -C server config uploadpack.allowfilter 1 &&
 	git -C server config uploadpack.allowanysha1inwant 1 &&
 	git clone --bare --filter=blob:none "file://$(pwd)/server" client &&
-	GIT_TRACE_PACKET="$(pwd)/trace" git -C client read-tree $TREE &&
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C client read-tree $TREE $TREE &&
 
 	# "done" marks the end of negotiation (once per fetch). Expect that
 	# only one fetch occurs.

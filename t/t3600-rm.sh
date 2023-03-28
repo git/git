@@ -333,7 +333,7 @@ test_expect_success 'rm removes empty submodules from work tree' '
 
 test_expect_success 'rm removes removed submodule from index and .gitmodules' '
 	git reset --hard &&
-	git submodule update &&
+	git -c protocol.file.allow=always submodule update &&
 	rm -rf submod &&
 	git rm submod &&
 	git status -s -uno --ignore-submodules=none >actual &&
@@ -639,6 +639,7 @@ cat >expect.deepmodified <<EOF
 EOF
 
 test_expect_success 'setup subsubmodule' '
+	test_config_global protocol.file.allow always &&
 	git reset --hard &&
 	git submodule update &&
 	(

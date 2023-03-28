@@ -4,6 +4,8 @@
 #
 
 test_description='pack index with 64-bit offsets and object CRC'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -263,7 +265,7 @@ tag guten tag
 This is an invalid tag.
 EOF
 
-	tag=$(git hash-object -t tag -w --stdin <wrong-tag) &&
+	tag=$(git hash-object -t tag -w --stdin --literally <wrong-tag) &&
 	pack1=$(echo $tag $sha | git pack-objects tag-test) &&
 	echo remove tag object &&
 	thirtyeight=${tag#??} &&

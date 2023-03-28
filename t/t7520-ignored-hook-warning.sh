@@ -2,6 +2,7 @@
 
 test_description='ignored hook warning'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '

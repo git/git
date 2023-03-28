@@ -63,16 +63,9 @@ static struct refspec rs = REFSPEC_INIT_PUSH;
 static struct string_list push_options_config = STRING_LIST_INIT_DUP;
 
 static void refspec_append_mapped(struct refspec *refspec, const char *ref,
-				  struct remote *remote, struct ref *local_refs)
+				  struct remote *remote, struct ref *matched)
 {
 	const char *branch_name;
-	struct ref *matched = NULL;
-
-	/* Does "ref" uniquely name our ref? */
-	if (count_refspec_match(ref, local_refs, &matched) != 1) {
-		refspec_append(refspec, ref);
-		return;
-	}
 
 	if (remote->push.nr) {
 		struct refspec_item query;
@@ -120,15 +113,28 @@ static void set_refspecs(const char **refs, int nr, const char *repo)
 				die(_("--delete only accepts plain target ref names"));
 			refspec_appendf(&rs, ":%s", ref);
 		} else if (!strchr(ref, ':')) {
-			if (!remote) {
-				/* lazily grab remote and local_refs */
-				remote = remote_get(repo);
+			struct ref *matched = NULL;
+
+			/* lazily grab local_refs */
+			if (!local_refs)
 				local_refs = get_local_heads();
+
+			/* Does "ref" uniquely name our ref? */
+			if (count_refspec_match(ref, local_refs, &matched) != 1) {
+				refspec_append(&rs, ref);
+			} else {
+				/* lazily grab remote */
+				if (!remote)
+					remote = remote_get(repo);
+				if (!remote)
+					BUG("must get a remote for repo '%s'", repo);
+
+				refspec_append_mapped(&rs, ref, remote, matched);
 			}
-			refspec_append_mapped(&rs, ref, remote, local_refs);
 		} else
 			refspec_append(&rs, ref);
 	}
+	free_refs(local_refs);
 }
 
 static int push_url_of_remote(struct remote *remote, const char ***url_p)
@@ -169,8 +175,8 @@ static NORETURN void die_push_simple(struct branch *branch,
 	if (git_branch_track != BRANCH_TRACK_SIMPLE)
 		advice_automergesimple_maybe = _("\n"
 				 "To avoid automatically configuring "
-				 "upstream branches when their name\n"
-				 "doesn't match the local branch, see option "
+				 "an upstream branch when its name\n"
+				 "won't match the local branch, see option "
 				 "'simple' of branch.autoSetupMerge\n"
 				 "in 'git help config'.\n");
 	die(_("The upstream branch of your current branch does not match\n"
@@ -466,8 +472,16 @@ static int option_parse_recurse_submodules(const struct option *opt,
 
 	if (unset)
 		*recurse_submodules = RECURSE_SUBMODULES_OFF;
-	else
-		*recurse_submodules = parse_push_recurse_submodules_arg(opt->long_name, arg);
+	else {
+		if (!strcmp(arg, "only-is-on-demand")) {
+			if (*recurse_submodules == RECURSE_SUBMODULES_ONLY) {
+				warning(_("recursing into submodule with push.recurseSubmodules=only; using on-demand instead"));
+				*recurse_submodules = RECURSE_SUBMODULES_ON_DEMAND;
+			}
+		} else {
+			*recurse_submodules = parse_push_recurse_submodules_arg(opt->long_name, arg);
+		}
+	}
 
 	return 0;
 }
@@ -494,11 +508,6 @@ static int git_push_config(const char *k, const char *v, void *cb)
 {
 	const char *slot_name;
 	int *flags = cb;
-	int status;
-
-	status = git_gpg_config(k, v, NULL);
-	if (status)
-		return status;
 
 	if (!strcmp(k, "push.followtags")) {
 		if (git_config_bool(k, v))

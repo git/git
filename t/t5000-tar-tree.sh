@@ -24,6 +24,7 @@ commit id embedding:
 
 '
 
+TEST_CREATE_REPO_NO_TEMPLATE=1
 . ./test-lib.sh
 
 SUBSTFORMAT=%H%n
@@ -104,6 +105,18 @@ check_added() {
 	'
 }
 
+check_mtime() {
+	dir=$1
+	path_in_archive=$2
+	mtime=$3
+
+	test_expect_success " validate mtime of $path_in_archive" '
+		test-tool chmtime --get $dir/$path_in_archive >actual.mtime &&
+		echo $mtime >expect.mtime &&
+		test_cmp expect.mtime actual.mtime
+	'
+}
+
 test_expect_success 'setup' '
 	test_oid_cache <<-EOF
 	obj sha1:19f9c8273ec45a8938e6999cb59b3ff66739902a
@@ -143,6 +156,7 @@ test_expect_success 'populate workdir' '
 test_expect_success \
     'add ignored file' \
     'echo ignore me >a/ignored &&
+     mkdir .git/info &&
      echo ignored export-ignore >.git/info/attributes'
 
 test_expect_success 'add files to repository' '
@@ -157,7 +171,8 @@ test_expect_success 'setup export-subst' '
 '
 
 test_expect_success 'create bare clone' '
-	git clone --bare . bare.git &&
+	git clone --template= --bare . bare.git &&
+	mkdir bare.git/info &&
 	cp .git/info/attributes bare.git/info/attributes
 '
 
@@ -170,6 +185,13 @@ test_expect_success 'git archive' '
 '
 
 check_tar b
+
+test_expect_success 'git archive --mtime' '
+	git archive --mtime=2002-02-02T02:02:02-0200 HEAD >with_mtime.tar
+'
+
+check_tar with_mtime
+check_mtime with_mtime a/a 1012622522
 
 test_expect_success 'git archive --prefix=prefix/' '
 	git archive --prefix=prefix/ HEAD >with_prefix.tar
@@ -339,21 +361,28 @@ test_expect_success 'only enabled filters are available remotely' '
 	test_cmp_bin remote.bar config.bar
 '
 
-test_expect_success GZIP 'git archive --format=tgz' '
+test_expect_success 'invalid filter is reported only once' '
+	test_must_fail git -c tar.invalid.command= archive --format=invalid \
+		HEAD >out 2>err &&
+	test_must_be_empty out &&
+	test_line_count = 1 err
+'
+
+test_expect_success 'git archive --format=tgz' '
 	git archive --format=tgz HEAD >j.tgz
 '
 
-test_expect_success GZIP 'git archive --format=tar.gz' '
+test_expect_success 'git archive --format=tar.gz' '
 	git archive --format=tar.gz HEAD >j1.tar.gz &&
 	test_cmp_bin j.tgz j1.tar.gz
 '
 
-test_expect_success GZIP 'infer tgz from .tgz filename' '
+test_expect_success 'infer tgz from .tgz filename' '
 	git archive --output=j2.tgz HEAD &&
 	test_cmp_bin j.tgz j2.tgz
 '
 
-test_expect_success GZIP 'infer tgz from .tar.gz filename' '
+test_expect_success 'infer tgz from .tar.gz filename' '
 	git archive --output=j3.tar.gz HEAD &&
 	test_cmp_bin j.tgz j3.tar.gz
 '
@@ -363,24 +392,40 @@ test_expect_success GZIP 'extract tgz file' '
 	test_cmp_bin b.tar j.tar
 '
 
-test_expect_success GZIP 'remote tar.gz is allowed by default' '
+test_expect_success 'remote tar.gz is allowed by default' '
 	git archive --remote=. --format=tar.gz HEAD >remote.tar.gz &&
 	test_cmp_bin j.tgz remote.tar.gz
 '
 
-test_expect_success GZIP 'remote tar.gz can be disabled' '
+test_expect_success 'remote tar.gz can be disabled' '
 	git config tar.tar.gz.remote false &&
 	test_must_fail git archive --remote=. --format=tar.gz HEAD \
 		>remote.tar.gz
 '
 
+test_expect_success GZIP 'git archive --format=tgz (external gzip)' '
+	test_config tar.tgz.command "gzip -cn" &&
+	git archive --format=tgz HEAD >external_gzip.tgz
+'
+
+test_expect_success GZIP 'git archive --format=tar.gz (external gzip)' '
+	test_config tar.tar.gz.command "gzip -cn" &&
+	git archive --format=tar.gz HEAD >external_gzip.tar.gz &&
+	test_cmp_bin external_gzip.tgz external_gzip.tar.gz
+'
+
+test_expect_success GZIP 'extract tgz file (external gzip)' '
+	gzip -d -c <external_gzip.tgz >external_gzip.tar &&
+	test_cmp_bin b.tar external_gzip.tar
+'
+
 test_expect_success 'archive and :(glob)' '
 	git archive -v HEAD -- ":(glob)**/sh" >/dev/null 2>actual &&
-	cat >expect <<EOF &&
-a/
-a/bin/
-a/bin/sh
-EOF
+	cat >expect <<-\EOF &&
+	a/
+	a/bin/
+	a/bin/sh
+	EOF
 	test_cmp expect actual
 '
 

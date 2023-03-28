@@ -71,7 +71,7 @@ struct pq_entry merged_iter_pqueue_remove(struct merged_iter_pqueue *pq)
 	return e;
 }
 
-void merged_iter_pqueue_add(struct merged_iter_pqueue *pq, struct pq_entry e)
+void merged_iter_pqueue_add(struct merged_iter_pqueue *pq, const struct pq_entry *e)
 {
 	int i = 0;
 
@@ -81,7 +81,7 @@ void merged_iter_pqueue_add(struct merged_iter_pqueue *pq, struct pq_entry e)
 					    pq->cap * sizeof(struct pq_entry));
 	}
 
-	pq->heap[pq->len++] = e;
+	pq->heap[pq->len++] = *e;
 	i = pq->len - 1;
 	while (i > 0) {
 		int j = (i - 1) / 2;

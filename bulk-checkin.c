@@ -1,8 +1,10 @@
 /*
  * Copyright (c) 2011, Google Inc.
  */
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "bulk-checkin.h"
+#include "hex.h"
 #include "lockfile.h"
 #include "repository.h"
 #include "csum-file.h"
@@ -340,6 +342,8 @@ void fsync_loose_object_bulk_checkin(int fd, const char *filename)
 	 */
 	if (!bulk_fsync_objdir ||
 	    git_fsync(fd, FSYNC_WRITEOUT_ONLY) < 0) {
+		if (errno == ENOSYS)
+			warning(_("core.fsyncMethod = batch is unsupported on this platform"));
 		fsync_or_die(fd, filename);
 	}
 }

@@ -1,5 +1,8 @@
 (
-	x=$(bobble <<-END &&
+	x=$(bobble <<-\END &&
+		fossil
+		vegetable
+		END
 		wiffle) ?!AMP?!
 	echo $x
 )

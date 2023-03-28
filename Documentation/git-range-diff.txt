@@ -12,12 +12,16 @@ SYNOPSIS
 	[--no-dual-color] [--creation-factor=<factor>]
 	[--left-only | --right-only]
 	( <range1> <range2> | <rev1>...<rev2> | <base> <rev1> <rev2> )
+	[[--] <path>...]
 
 DESCRIPTION
 -----------
 
 This command shows the differences between two versions of a patch
 series, or more generally, two commit ranges (ignoring merge commits).
+
+In the presence of `<path>` arguments, these commit ranges are limited
+accordingly.
 
 To that end, it first finds pairs of commits from both commit ranges
 that correspond with each other. Two commits are said to correspond when

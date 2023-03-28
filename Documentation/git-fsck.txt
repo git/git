@@ -107,6 +107,8 @@ care about this output and want to speed it up further.
 CONFIGURATION
 -------------
 
+include::includes/cmd-config-section-all.txt[]
+
 include::config/fsck.txt[]
 
 DISCUSSION
@@ -149,6 +151,18 @@ hash mismatch <object>::
 	The database has an object whose hash doesn't match the
 	object database value.
 	This indicates a serious data integrity problem.
+
+
+FSCK MESSAGES
+-------------
+
+The following lists the types of errors `git fsck` detects and what
+each error means, with their default severity.  The severity of the
+error, other than those that are marked as "(FATAL)", can be tweaked
+by setting the corresponding `fsck.<msg-id>` configuration variable.
+
+include::fsck-msgids.txt[]
+
 
 Environment Variables
 ---------------------

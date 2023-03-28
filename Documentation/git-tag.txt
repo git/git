@@ -9,7 +9,7 @@ git-tag - Create, list, delete or verify a tag object signed with GPG
 SYNOPSIS
 --------
 [verse]
-'git tag' [-a | -s | -u <keyid>] [-f] [-m <msg> | -F <file>] [-e]
+'git tag' [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>] [-e]
 	<tagname> [<commit> | <object>]
 'git tag' -d <tagname>...
 'git tag' [-n[<num>]] -l [--contains <commit>] [--no-contains <commit>]
@@ -26,19 +26,19 @@ to delete, list or verify tags.
 
 Unless `-f` is given, the named tag must not yet exist.
 
-If one of `-a`, `-s`, or `-u <keyid>` is passed, the command
+If one of `-a`, `-s`, or `-u <key-id>` is passed, the command
 creates a 'tag' object, and requires a tag message.  Unless
 `-m <msg>` or `-F <file>` is given, an editor is started for the user to type
 in the tag message.
 
-If `-m <msg>` or `-F <file>` is given and `-a`, `-s`, and `-u <keyid>`
+If `-m <msg>` or `-F <file>` is given and `-a`, `-s`, and `-u <key-id>`
 are absent, `-a` is implied.
 
 Otherwise, a tag reference that points directly at the given object
 (i.e., a lightweight tag) is created.
 
 A GnuPG signed tag object will be created when `-s` or `-u
-<keyid>` is used.  When `-u <keyid>` is not used, the
+<key-id>` is used.  When `-u <key-id>` is not used, the
 committer identity for the current user is used to find the
 GnuPG key for signing. 	The configuration variable `gpg.program`
 is used to specify custom GnuPG binary.
@@ -72,8 +72,8 @@ OPTIONS
 	Override `tag.gpgSign` configuration variable that is
 	set to force each and every tag to be signed.
 
--u <keyid>::
---local-user=<keyid>::
+-u <key-id>::
+--local-user=<key-id>::
 	Make a GPG-signed tag, using the given key.
 
 -f::
@@ -164,14 +164,14 @@ This option is only applicable when listing tags without annotation lines.
 	Use the given tag message (instead of prompting).
 	If multiple `-m` options are given, their values are
 	concatenated as separate paragraphs.
-	Implies `-a` if none of `-a`, `-s`, or `-u <keyid>`
+	Implies `-a` if none of `-a`, `-s`, or `-u <key-id>`
 	is given.
 
 -F <file>::
 --file=<file>::
 	Take the tag message from the given file.  Use '-' to
 	read the message from the standard input.
-	Implies `-a` if none of `-a`, `-s`, or `-u <keyid>`
+	Implies `-a` if none of `-a`, `-s`, or `-u <key-id>`
 	is given.
 
 -e::
@@ -220,7 +220,7 @@ it in the repository configuration as follows:
 
 -------------------------------------
 [user]
-    signingKey = <gpg-keyid>
+    signingKey = <gpg-key_id>
 -------------------------------------
 
 `pager.tag` is only respected when listing tags, i.e., when `-l` is

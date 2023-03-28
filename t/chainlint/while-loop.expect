@@ -2,10 +2,12 @@
 	while true
 	do
 		echo foo ?!AMP?!
-		cat <<-EOF
+		cat <<-\EOF ?!LOOP?!
+		bar
+		EOF
 	done ?!AMP?!
 	while true; do
 		echo foo &&
-		cat bar
+		cat bar ?!LOOP?!
 	done
 )

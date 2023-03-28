@@ -206,6 +206,7 @@ int config_with_options(config_fn_t fn, void *,
 
 int git_parse_ssize_t(const char *, ssize_t *);
 int git_parse_ulong(const char *, unsigned long *);
+int git_parse_int(const char *value, int *ret);
 
 /**
  * Same as `git_config_bool`, except that it returns -1 on error rather
@@ -504,6 +505,13 @@ int repo_config_get_maybe_bool(struct repository *repo,
 			       const char *key, int *dest);
 int repo_config_get_pathname(struct repository *repo,
 			     const char *key, const char **dest);
+
+/*
+ * Functions for reading protected config. By definition, protected
+ * config ignores repository config, so these do not take a `struct
+ * repository` parameter.
+ */
+void git_protected_config(config_fn_t fn, void *data);
 
 /**
  * Querying For Specific Variables

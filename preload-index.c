@@ -151,6 +151,12 @@ void preload_index(struct index_state *index,
 	}
 	stop_progress(&pd.progress);
 
+	if (pathspec) {
+		/* earlier we made deep copies for each thread to work with */
+		for (i = 0; i < threads; i++)
+			clear_pathspec(&data[i].pathspec);
+	}
+
 	trace_performance_leave("preload index");
 
 	trace2_data_intmax("index", NULL, "preload/sum_lstat", t2_sum_lstat);

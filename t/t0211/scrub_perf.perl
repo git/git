@@ -64,6 +64,12 @@ while (<>) {
 	    goto SKIP_LINE;
 	}
     }
+    elsif ($tokens[$col_event] =~ m/timer/) {
+	# This also captures "th_timer" events
+	$tokens[$col_rest] =~ s/ total:\d+\.\d*/ total:_T_TOTAL_/;
+	$tokens[$col_rest] =~ s/ min:\d+\.\d*/ min:_T_MIN_/;
+	$tokens[$col_rest] =~ s/ max:\d+\.\d*/ max:_T_MAX_/;
+    }
 
     # t_abs and t_rel are either blank or a float.  Replace the float
     # with a constant for matching the HEREDOC in the test script.

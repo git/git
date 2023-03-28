@@ -1,4 +1,4 @@
-Git Commit Graph Design Notes
+Git Commit-Graph Design Notes
 =============================
 
 Git walks the commit graph for many reasons, including:
@@ -17,7 +17,7 @@ There are two main costs here:
 
 The commit-graph file is a supplemental data structure that accelerates
 commit graph walks. If a user downgrades or disables the 'core.commitGraph'
-config setting, then the existing ODB is sufficient. The file is stored
+config setting, then the existing object database is sufficient. The file is stored
 as "commit-graph" either in the .git/objects/info directory or in the info
 directory of an alternate.
 
@@ -40,7 +40,7 @@ Values 1-4 satisfy the requirements of parse_commit_gently().
 
 There are two definitions of generation number:
 1. Corrected committer dates (generation number v2)
-2. Topological levels (generation nummber v1)
+2. Topological levels (generation number v1)
 
 Define "corrected committer date" of a commit recursively as follows:
 
@@ -48,7 +48,7 @@ Define "corrected committer date" of a commit recursively as follows:
     equal to its committer date.
 
  * A commit with at least one parent has corrected committer date equal to
-    the maximum of its commiter date and one more than the largest corrected
+    the maximum of its committer date and one more than the largest corrected
     committer date among its parents.
 
  * As a special case, a root commit with timestamp zero has corrected commit
@@ -95,7 +95,7 @@ with default order), but is not used when the topological order is
 required (such as merge base calculations, "git log --graph").
 
 In practice, we expect some commits to be created recently and not stored
-in the commit graph. We can treat these commits as having "infinite"
+in the commit-graph. We can treat these commits as having "infinite"
 generation number and walk until reaching commits with known generation
 number.
 
@@ -149,7 +149,7 @@ Design Details
   helpful for these clones, anyway. The commit-graph will not be read or
   written when shallow commits are present.
 
-Commit Graphs Chains
+Commit-Graphs Chains
 --------------------
 
 Typically, repos grow with near-constant velocity (commits per day). Over time,

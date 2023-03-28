@@ -12,6 +12,9 @@ from the database and from the worktree works.
 TEST_NO_CREATE_REPO=1
 . ./test-lib.sh
 
+test_expect_success 'setup' '
+	git config --global protocol.file.allow always
+'
 test_expect_success 'submodule config cache setup' '
 	mkdir submodule &&
 	(cd submodule &&
@@ -134,44 +137,44 @@ test_expect_success 'error in history in fetchrecursesubmodule lets continue' '
 	)
 '
 
-test_expect_success 'reading submodules config from the working tree with "submodule--helper config"' '
+test_expect_success 'reading submodules config from the working tree' '
 	(cd super &&
 		echo "../submodule" >expect &&
-		git submodule--helper config submodule.submodule.url >actual &&
+		test-tool submodule config-list submodule.submodule.url >actual &&
 		test_cmp expect actual
 	)
 '
 
-test_expect_success 'unsetting submodules config from the working tree with "submodule--helper config --unset"' '
+test_expect_success 'unsetting submodules config from the working tree' '
 	(cd super &&
-		git submodule--helper config --unset submodule.submodule.url &&
-		git submodule--helper config submodule.submodule.url >actual &&
+		test-tool submodule config-unset submodule.submodule.url &&
+		test-tool submodule config-list submodule.submodule.url >actual &&
 		test_must_be_empty actual
 	)
 '
 
 
-test_expect_success 'writing submodules config with "submodule--helper config"' '
+test_expect_success 'writing submodules config' '
 	(cd super &&
 		echo "new_url" >expect &&
-		git submodule--helper config submodule.submodule.url "new_url" &&
-		git submodule--helper config submodule.submodule.url >actual &&
+		test-tool submodule config-set submodule.submodule.url "new_url" &&
+		test-tool submodule config-list submodule.submodule.url >actual &&
 		test_cmp expect actual
 	)
 '
 
-test_expect_success 'overwriting unstaged submodules config with "submodule--helper config"' '
+test_expect_success 'overwriting unstaged submodules config' '
 	test_when_finished "git -C super checkout .gitmodules" &&
 	(cd super &&
 		echo "newer_url" >expect &&
-		git submodule--helper config submodule.submodule.url "newer_url" &&
-		git submodule--helper config submodule.submodule.url >actual &&
+		test-tool submodule config-set submodule.submodule.url "newer_url" &&
+		test-tool submodule config-list submodule.submodule.url >actual &&
 		test_cmp expect actual
 	)
 '
 
 test_expect_success 'writeable .gitmodules when it is in the working tree' '
-	git -C super submodule--helper config --check-writeable
+	test-tool -C super submodule config-writeable
 '
 
 test_expect_success 'writeable .gitmodules when it is nowhere in the repository' '
@@ -180,7 +183,7 @@ test_expect_success 'writeable .gitmodules when it is nowhere in the repository'
 	(cd super &&
 		git rm .gitmodules &&
 		git commit -m "remove .gitmodules from the current branch" &&
-		git submodule--helper config --check-writeable
+		test-tool submodule config-writeable
 	)
 '
 
@@ -188,7 +191,7 @@ test_expect_success 'non-writeable .gitmodules when it is in the index but not i
 	test_when_finished "git -C super checkout .gitmodules" &&
 	(cd super &&
 		rm -f .gitmodules &&
-		test_must_fail git submodule--helper config --check-writeable
+		test_must_fail test-tool submodule config-writeable
 	)
 '
 
@@ -197,7 +200,7 @@ test_expect_success 'non-writeable .gitmodules when it is in the current branch 
 	test_when_finished "git -C super reset --hard $ORIG" &&
 	(cd super &&
 		git rm .gitmodules &&
-		test_must_fail git submodule--helper config --check-writeable
+		test_must_fail test-tool submodule config-writeable
 	)
 '
 
@@ -205,11 +208,11 @@ test_expect_success 'reading submodules config from the index when .gitmodules i
 	ORIG=$(git -C super rev-parse HEAD) &&
 	test_when_finished "git -C super reset --hard $ORIG" &&
 	(cd super &&
-		git submodule--helper config submodule.submodule.url "staged_url" &&
+		test-tool submodule config-set submodule.submodule.url "staged_url" &&
 		git add .gitmodules &&
 		rm -f .gitmodules &&
 		echo "staged_url" >expect &&
-		git submodule--helper config submodule.submodule.url >actual &&
+		test-tool submodule config-list submodule.submodule.url >actual &&
 		test_cmp expect actual
 	)
 '
@@ -220,7 +223,7 @@ test_expect_success 'reading submodules config from the current branch when .git
 	(cd super &&
 		git rm .gitmodules &&
 		echo "../submodule" >expect &&
-		git submodule--helper config submodule.submodule.url >actual &&
+		test-tool submodule config-list submodule.submodule.url >actual &&
 		test_cmp expect actual
 	)
 '

@@ -12,6 +12,9 @@ gpg.program::
 gpg.format::
 	Specifies which key format to use when signing with `--gpg-sign`.
 	Default is "openpgp". Other possible values are "x509", "ssh".
++
+See linkgit:gitformat-signature[5] for the signature format, which differs
+based on the selected `gpg.format`.
 
 gpg.<format>.program::
 	Use this to customize the program used for the signing format you

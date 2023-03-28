@@ -1,0 +1,106 @@
+Git v2.41 Release Notes
+=======================
+
+UI, Workflows & Features
+
+ * Allow information carried on the WWW-AUthenticate header to be
+   passed to the credential helpers.
+
+ * A new "fetch.hideRefs" option can be used to exclude specified refs
+   from "rev-list --objects --stdin --not --all" traversal for
+   checking object connectivity, most useful when there are many
+   unrelated histories in a single repository.
+
+ * "git push" has been taught to allow deletion of refs with one-level
+   names to help repairing a repository who acquired such a ref by
+   mistake.  In general, we don't encourage use of such a ref, and
+   creation or update to such a ref is rejected as before.
+
+ * Allow "git bisect reset" to check out the original branch when the
+   branch is already checked out in a different worktree linked to the
+   same repository.
+
+ * A few subcommands have been taught to stop users from working on a
+   branch that is being used in another worktree linked to the same
+   repository.
+
+ * "git format-patch" learned to write a log-message only output file
+   for empty commits.
+
+ * "git format-patch" honors the src/dst prefixes set to nonstandard
+   values with configuration variables like "diff.noprefix", causing
+   receiving end of the patch that expects the standard -p1 format to
+   break.  "format-patch" has been taught to ignore end-user configuration
+   and always use the standard prefixes.
+
+   This is a backward compatibility breaking change.
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * Code clean-up to clarify directory traversal API.
+
+ * Code clean-up to clarify the rule that "git-compat-util.h" must be
+   the first to be included.
+
+ * More work towards -Wunused.
+
+ * Instead of forcing each command to choose to honor GPG related
+   configuration variables, make the subsystem lazily initialize
+   itself.
+
+
+Fixes since v2.40
+-----------------
+
+ * "git fsck" learned to check the index files in other worktrees,
+   just like "git gc" honors them as anchoring points.
+   (merge 8d3e7eac52 jk/fsck-indices-in-worktrees later to maint).
+
+ * Fix a segfaulting loop.  The function and its caller may need
+   further clean-up.
+   (merge c5773dc078 ew/commit-reach-clean-up-flags-fix later to maint).
+
+ * "git restore" supports options like "--ours" that are only
+   meaningful during a conflicted merge, but these options are only
+   meaningful when updating the working tree files.  These options are
+   marked to be incompatible when both "--staged" and "--worktree" are
+   in effect.
+   (merge ee8a88826a ak/restore-both-incompatible-with-conflicts later to maint).
+
+ * Simplify UI to control progress meter given by "git bundle" command.
+   (merge 8b95521edb jk/bundle-progress later to maint).
+
+ * "git bundle" learned that "-" is a common way to say that the input
+   comes from the standard input and/or the output goes to the
+   standard output.  It used to work only for output and only from the
+   root level of the working tree.
+   (merge 0bbe10313e jk/bundle-use-dash-for-stdfiles later to maint).
+
+ * Once we start running, we assumed that the list of alternate object
+   databases would never change.  Hook into the machinery used to
+   update the list of packfiles during runtime to update this list as
+   well.
+   (merge e2d003dbed ds/reprepare-alternates-when-repreparing-packfiles later to maint).
+
+ * The code to parse "git rebase -X<opt>" was not prepared to see an
+   unparsable option string, which has been corrected.
+   (merge 15a4cc912e ab/fix-strategy-opts-parsing later to maint).
+
+ * "git add -p" while the index is unmerged sometimes failed to parse
+   the diff output it internally produces and died, which has been
+   corrected.
+   (merge 28d1122f9c jk/add-p-unmerged-fix later to maint).
+
+ * Fix for a "ls-files --format="%(path)" that produced nonsense
+   output, which was a bug in 2.38.
+   (merge cfb62dd006 aj/ls-files-format-fix later to maint).
+
+ * "git receive-pack" that responds to "git push" requests failed to
+   clean a stale lockfile when killed in the middle, which has been
+   corrected.
+   (merge c55c30669c ps/receive-pack-unlock-before-die later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge f7111175df as/doc-markup-fix later to maint).
+   (merge 90ff7c9898 fc/test-aggregation-clean-up later to maint).

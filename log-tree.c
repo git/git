@@ -2,6 +2,7 @@
 #include "commit-reach.h"
 #include "config.h"
 #include "diff.h"
+#include "hex.h"
 #include "object-store.h"
 #include "repository.h"
 #include "tmp-objdir.h"
@@ -12,6 +13,7 @@
 #include "merge-ort.h"
 #include "reflog-walk.h"
 #include "refs.h"
+#include "replace-object.h"
 #include "string-list.h"
 #include "color.h"
 #include "gpg-interface.h"
@@ -135,12 +137,15 @@ static int ref_filter_match(const char *refname,
 }
 
 static int add_ref_decoration(const char *refname, const struct object_id *oid,
-			      int flags, void *cb_data)
+			      int flags UNUSED,
+			      void *cb_data)
 {
+	int i;
 	struct object *obj;
 	enum object_type objtype;
 	enum decoration_type deco_type = DECORATION_NONE;
 	struct decoration_filter *filter = (struct decoration_filter *)cb_data;
+	const char *git_replace_ref_base = ref_namespace[NAMESPACE_REPLACE].ref;
 
 	if (filter && !ref_filter_match(refname, filter))
 		return 0;
@@ -165,16 +170,21 @@ static int add_ref_decoration(const char *refname, const struct object_id *oid,
 		return 0;
 	obj = lookup_object_by_type(the_repository, oid, objtype);
 
-	if (starts_with(refname, "refs/heads/"))
-		deco_type = DECORATION_REF_LOCAL;
-	else if (starts_with(refname, "refs/remotes/"))
-		deco_type = DECORATION_REF_REMOTE;
-	else if (starts_with(refname, "refs/tags/"))
-		deco_type = DECORATION_REF_TAG;
-	else if (!strcmp(refname, "refs/stash"))
-		deco_type = DECORATION_REF_STASH;
-	else if (!strcmp(refname, "HEAD"))
-		deco_type = DECORATION_REF_HEAD;
+	for (i = 0; i < ARRAY_SIZE(ref_namespace); i++) {
+		struct ref_namespace_info *info = &ref_namespace[i];
+
+		if (!info->decoration)
+			continue;
+		if (info->exact) {
+			if (!strcmp(refname, info->ref)) {
+				deco_type = info->decoration;
+				break;
+			}
+		} else if (starts_with(refname, info->ref)) {
+			deco_type = info->decoration;
+			break;
+		}
+	}
 
 	add_name_decoration(deco_type, refname, obj);
 	while (obj->type == OBJ_TAG) {
@@ -188,7 +198,8 @@ static int add_ref_decoration(const char *refname, const struct object_id *oid,
 	return 0;
 }
 
-static int add_graft_decoration(const struct commit_graft *graft, void *cb_data)
+static int add_graft_decoration(const struct commit_graft *graft,
+				void *cb_data UNUSED)
 {
 	struct commit *commit = lookup_commit(the_repository, &graft->oid);
 	if (!commit)
@@ -956,8 +967,7 @@ static void cleanup_additional_headers(struct diff_options *o)
 
 static int do_remerge_diff(struct rev_info *opt,
 			   struct commit_list *parents,
-			   struct object_id *oid,
-			   struct commit *commit)
+			   struct object_id *oid)
 {
 	struct merge_options o;
 	struct commit_list *bases;
@@ -1052,7 +1062,7 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 					"for octopus merges.\n");
 				return 1;
 			}
-			return do_remerge_diff(opt, parents, oid, commit);
+			return do_remerge_diff(opt, parents, oid);
 		}
 		if (opt->combine_merges)
 			return do_diff_combined(opt, commit);

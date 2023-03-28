@@ -9,7 +9,7 @@ git-mv - Move or rename a file, a directory, or a symlink
 SYNOPSIS
 --------
 [verse]
-'git mv' <options>... <args>...
+'git mv' [<options>] <source>... <destination>
 
 DESCRIPTION
 -----------
@@ -30,7 +30,7 @@ OPTIONS
 -------
 -f::
 --force::
-	Force renaming or moving of a file even if the target exists
+	Force renaming or moving of a file even if the <destination> exists.
 -k::
 	Skip move or rename actions which would lead to an error
 	condition. An error happens when a source is neither existing nor

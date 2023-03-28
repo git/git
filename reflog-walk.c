@@ -1,4 +1,5 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "commit.h"
 #include "refs.h"
 #include "diff.h"
@@ -55,7 +56,7 @@ static void free_complete_reflog(struct complete_reflogs *array)
 	free(array);
 }
 
-static void complete_reflogs_clear(void *util, const char *str)
+static void complete_reflogs_clear(void *util, const char *str UNUSED)
 {
 	struct complete_reflogs *array = util;
 	free_complete_reflog(array);

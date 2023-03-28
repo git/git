@@ -116,7 +116,7 @@ ifeq ($(uname_S),Darwin)
 	TKEXECUTABLE = $(shell basename "$(TKFRAMEWORK)" .app)
 endif
 
-ifeq ($(findstring $(MAKEFLAGS),s),s)
+ifeq ($(findstring $(firstword -$(MAKEFLAGS)),s),s)
 QUIET_GEN =
 endif
 

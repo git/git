@@ -1,5 +1,6 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "string-list.h"
+#include "alloc.h"
 
 void string_list_init_nodup(struct string_list *list)
 {
@@ -156,7 +157,7 @@ void filter_string_list(struct string_list *list, int free_util,
 	list->nr = dst;
 }
 
-static int item_is_not_empty(struct string_list_item *item, void *unused)
+static int item_is_not_empty(struct string_list_item *item, void *data UNUSED)
 {
 	return *item->string != '\0';
 }

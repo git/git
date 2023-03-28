@@ -116,16 +116,6 @@ struct object_entry {
 	unsigned dfs_state:OE_DFS_STATE_BITS;
 	unsigned depth:OE_DEPTH_BITS;
 	unsigned ext_base:1; /* delta_idx points outside packlist */
-
-	/*
-	 * pahole results on 64-bit linux (gcc and clang)
-	 *
-	 *   size: 80, bit_padding: 9 bits
-	 *
-	 * and on 32-bit (gcc)
-	 *
-	 *   size: 76, bit_padding: 9 bits
-	 */
 };
 
 struct packing_data {

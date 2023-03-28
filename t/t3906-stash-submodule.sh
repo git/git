@@ -36,7 +36,7 @@ setup_basic () {
 	git init main &&
 	(
 		cd main &&
-		git submodule add ../sub &&
+		git -c protocol.file.allow=always submodule add ../sub &&
 		test_commit main_file
 	)
 }

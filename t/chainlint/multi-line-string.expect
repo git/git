@@ -1,9 +1,14 @@
 (
-	x="line 1		line 2		line 3" &&
-	y="line 1		line2" ?!AMP?!
+	x="line 1
+		line 2
+		line 3" &&
+	y="line 1
+		line2" ?!AMP?!
 	foobar
 ) &&
 (
-	echo "xyz" "abc		def		ghi" &&
+	echo "xyz" "abc
+		def
+		ghi" &&
 	barfoo
 )

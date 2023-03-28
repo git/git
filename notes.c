@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "config.h"
+#include "hex.h"
 #include "notes.h"
 #include "object-store.h"
 #include "blob.h"
@@ -752,7 +753,7 @@ static int write_each_non_note_until(const char *note_path,
 	return 0;
 }
 
-static int write_each_note(const struct object_id *object_oid,
+static int write_each_note(const struct object_id *object_oid UNUSED,
 		const struct object_id *note_oid, char *note_path,
 		void *cb_data)
 {
@@ -780,8 +781,9 @@ struct note_delete_list {
 };
 
 static int prune_notes_helper(const struct object_id *object_oid,
-		const struct object_id *note_oid, char *note_path,
-		void *cb_data)
+			      const struct object_id *note_oid UNUSED,
+			      char *note_path UNUSED,
+			      void *cb_data)
 {
 	struct note_delete_list **l = (struct note_delete_list **) cb_data;
 	struct note_delete_list *n;
@@ -848,8 +850,8 @@ int combine_notes_overwrite(struct object_id *cur_oid,
 	return 0;
 }
 
-int combine_notes_ignore(struct object_id *cur_oid,
-			 const struct object_id *new_oid)
+int combine_notes_ignore(struct object_id *cur_oid UNUSED,
+			 const struct object_id *new_oid UNUSED)
 {
 	return 0;
 }
@@ -924,8 +926,9 @@ out:
 	return ret;
 }
 
-static int string_list_add_one_ref(const char *refname, const struct object_id *oid,
-				   int flag, void *cb)
+static int string_list_add_one_ref(const char *refname,
+				   const struct object_id *oid UNUSED,
+				   int flag UNUSED, void *cb)
 {
 	struct string_list *refs = cb;
 	if (!unsorted_string_list_has_string(refs, refname))
@@ -1005,6 +1008,7 @@ void init_notes(struct notes_tree *t, const char *notes_ref,
 
 	if (!notes_ref)
 		notes_ref = default_notes_ref();
+	update_ref_namespace(NAMESPACE_NOTES, xstrdup(notes_ref));
 
 	if (!combine_notes)
 		combine_notes = combine_notes_concatenate;

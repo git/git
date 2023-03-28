@@ -4,6 +4,7 @@ test_description='fetch/receive strict mode'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup and inject "corrupt or missing" object' '
@@ -138,7 +139,7 @@ This commit object intentionally broken
 EOF
 
 test_expect_success 'setup bogus commit' '
-	commit="$(git hash-object -t commit -w --stdin <bogus-commit)"
+	commit="$(git hash-object --literally -t commit -w --stdin <bogus-commit)"
 '
 
 test_expect_success 'fsck with no skipList input' '
@@ -350,6 +351,23 @@ test_expect_success \
 		fetch.fsck.unterminatedheader warn &&
 	test_must_fail git --git-dir=dst/.git fetch "file://$(pwd)" HEAD &&
 	grep "Cannot demote unterminatedheader" act
+'
+
+test_expect_success 'badFilemode is not a strict error' '
+	git init --bare badmode.git &&
+	tree=$(
+		cd badmode.git &&
+		blob=$(echo blob | git hash-object -w --stdin | hex2oct) &&
+		printf "123456 foo\0${blob}" |
+		git hash-object -t tree --stdin -w --literally
+	) &&
+
+	rm -rf dst.git &&
+	git init --bare dst.git &&
+	git -C dst.git config transfer.fsckObjects true &&
+
+	git -C badmode.git push ../dst.git $tree:refs/tags/tree 2>err &&
+	grep "$tree: badFilemode" err
 '
 
 test_done

@@ -409,10 +409,14 @@ Specifying `--no-force-if-includes` disables this behavior.
 	all submodules that changed in the revisions to be pushed will be
 	pushed. If on-demand was not able to push all necessary revisions it will
 	also be aborted and exit with non-zero status. If 'only' is used all
-	submodules will be recursively pushed while the superproject is left
+	submodules will be pushed while the superproject is left
 	unpushed. A value of 'no' or using `--no-recurse-submodules` can be used
 	to override the push.recurseSubmodules configuration variable when no
 	submodule recursion is required.
++
+When using 'on-demand' or 'only', if a submodule has a
+"push.recurseSubmodules={on-demand,only}" or "submodule.recurse" configuration,
+further recursion will occur. In this case, "only" is treated as "on-demand".
 
 --[no-]verify::
 	Toggle the pre-push hook (see linkgit:githooks[5]).  The
@@ -691,6 +695,13 @@ and so would be unreachable.  As such, these commits would be removed by
 a `git gc` command on the origin repository.
 
 include::transfer-data-leaks.txt[]
+
+CONFIGURATION
+-------------
+
+include::includes/cmd-config-section-all.txt[]
+
+include::config/push.txt[]
 
 GIT
 ---

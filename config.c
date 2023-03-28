@@ -5,11 +5,13 @@
  * Copyright (C) Johannes Schindelin, 2005
  *
  */
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "date.h"
 #include "branch.h"
 #include "config.h"
 #include "environment.h"
+#include "ident.h"
 #include "repository.h"
 #include "lockfile.h"
 #include "exec-cmd.h"
@@ -21,6 +23,7 @@
 #include "utf8.h"
 #include "dir.h"
 #include "color.h"
+#include "replace-object.h"
 #include "refs.h"
 #include "worktree.h"
 
@@ -80,6 +83,17 @@ static enum config_scope current_parsing_scope;
 
 static int pack_compression_seen;
 static int zlib_compression_seen;
+
+/*
+ * Config that comes from trusted scopes, namely:
+ * - CONFIG_SCOPE_SYSTEM (e.g. /etc/gitconfig)
+ * - CONFIG_SCOPE_GLOBAL (e.g. $HOME/.gitconfig, $XDG_CONFIG_HOME/git)
+ * - CONFIG_SCOPE_COMMAND (e.g. "-c" option, environment variables)
+ *
+ * This is declared here for code cleanliness, but unlike the other
+ * static variables, this does not hold config parser state.
+ */
+static struct config_set protected_config;
 
 static int config_file_fgetc(struct config_source *conf)
 {
@@ -351,7 +365,8 @@ static void populate_remote_urls(struct config_include_data *inc)
 	current_parsing_scope = store_scope;
 }
 
-static int forbid_remote_url(const char *var, const char *value, void *data)
+static int forbid_remote_url(const char *var, const char *value UNUSED,
+			     void *data UNUSED)
 {
 	const char *remote_name;
 	size_t remote_name_len;
@@ -1148,21 +1163,26 @@ static int git_parse_signed(const char *value, intmax_t *ret, intmax_t max)
 	if (value && *value) {
 		char *end;
 		intmax_t val;
-		uintmax_t uval;
-		uintmax_t factor;
+		intmax_t factor;
+
+		if (max < 0)
+			BUG("max must be a positive integer");
 
 		errno = 0;
 		val = strtoimax(value, &end, 0);
 		if (errno == ERANGE)
 			return 0;
+		if (end == value) {
+			errno = EINVAL;
+			return 0;
+		}
 		factor = get_unit_factor(end);
 		if (!factor) {
 			errno = EINVAL;
 			return 0;
 		}
-		uval = val < 0 ? -val : val;
-		if (unsigned_mult_overflows(factor, uval) ||
-		    factor * uval > max) {
+		if ((val < 0 && -max / factor > val) ||
+		    (val > 0 && max / factor < val)) {
 			errno = ERANGE;
 			return 0;
 		}
@@ -1181,10 +1201,19 @@ static int git_parse_unsigned(const char *value, uintmax_t *ret, uintmax_t max)
 		uintmax_t val;
 		uintmax_t factor;
 
+		/* negative values would be accepted by strtoumax */
+		if (strchr(value, '-')) {
+			errno = EINVAL;
+			return 0;
+		}
 		errno = 0;
 		val = strtoumax(value, &end, 0);
 		if (errno == ERANGE)
 			return 0;
+		if (end == value) {
+			errno = EINVAL;
+			return 0;
+		}
 		factor = get_unit_factor(end);
 		if (!factor) {
 			errno = EINVAL;
@@ -1203,7 +1232,7 @@ static int git_parse_unsigned(const char *value, uintmax_t *ret, uintmax_t max)
 	return 0;
 }
 
-static int git_parse_int(const char *value, int *ret)
+int git_parse_int(const char *value, int *ret)
 {
 	intmax_t tmp;
 	if (!git_parse_signed(value, &tmp, maximum_signed_value_of_type(int)))
@@ -1968,6 +1997,8 @@ int git_config_from_file_with_options(config_fn_t fn, const char *filename,
 	int ret = -1;
 	FILE *f;
 
+	if (!filename)
+		BUG("filename cannot be NULL");
 	f = fopen_or_warn(filename, "r");
 	if (f) {
 		ret = do_config_from_file(fn, CONFIG_ORIGIN_FILE, filename,
@@ -2324,10 +2355,10 @@ static int configset_add_value(struct config_set *cs, const char *key, const cha
 	return 0;
 }
 
-static int config_set_element_cmp(const void *unused_cmp_data,
+static int config_set_element_cmp(const void *cmp_data UNUSED,
 				  const struct hashmap_entry *eptr,
 				  const struct hashmap_entry *entry_or_key,
-				  const void *unused_keydata)
+				  const void *keydata UNUSED)
 {
 	const struct config_set_element *e1, *e2;
 
@@ -2617,6 +2648,27 @@ int repo_config_get_pathname(struct repository *repo,
 	if (ret < 0)
 		git_die_config(key, NULL);
 	return ret;
+}
+
+/* Read values into protected_config. */
+static void read_protected_config(void)
+{
+	struct config_options opts = {
+		.respect_includes = 1,
+		.ignore_repo = 1,
+		.ignore_worktree = 1,
+		.system_gently = 1,
+	};
+	git_configset_init(&protected_config);
+	config_with_options(config_set_callback, &protected_config,
+			    NULL, &opts);
+}
+
+void git_protected_config(config_fn_t fn, void *data)
+{
+	if (!protected_config.hash_initialized)
+		read_protected_config();
+	configset_iter(&protected_config, fn, data);
 }
 
 /* Functions used historically to read configuration from 'the_repository' */
@@ -3105,7 +3157,7 @@ int git_config_set_gently(const char *key, const char *value)
 int repo_config_set_worktree_gently(struct repository *r,
 				    const char *key, const char *value)
 {
-	/* Only use worktree-specific config if it is is already enabled. */
+	/* Only use worktree-specific config if it is already enabled. */
 	if (repository_format_worktree_config) {
 		char *file = repo_git_path(r, "config.worktree");
 		int ret = git_config_set_multivar_in_file_gently(

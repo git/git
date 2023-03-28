@@ -252,7 +252,7 @@ static const char *system_prefix(void)
  * This is called during initialization, but No work needs to be done here when
  * runtime prefix is not being used.
  */
-void git_resolve_executable_dir(const char *argv0)
+void git_resolve_executable_dir(const char *argv0 UNUSED)
 {
 }
 

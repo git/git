@@ -64,6 +64,19 @@ enum decoration_type {
 void add_name_decoration(enum decoration_type type, const char *name, struct object *obj);
 const struct name_decoration *get_name_decoration(const struct object *obj);
 
+/*
+ * Look up commit named by "oid" respecting replacement objects.
+ * Returns NULL if "oid" is not a commit or does not exist.
+ */
+struct commit *lookup_commit_object(struct repository *r, const struct object_id *oid);
+
+/*
+ * Look up commit named by "oid" without replacement objects or
+ * checking for object existence. Returns the requested commit if it
+ * is found in the object cache, NULL if "oid" is in the object cache
+ * but is not a commit and a newly allocated unparsed commit object if
+ * "oid" is not in the object cache.
+ */
 struct commit *lookup_commit(struct repository *r, const struct object_id *oid);
 struct commit *lookup_commit_reference(struct repository *r,
 				       const struct object_id *oid);
@@ -192,7 +205,6 @@ void free_commit_list(struct commit_list *list);
 
 struct rev_info; /* in revision.h, it circularly uses enum cmit_fmt */
 
-int has_non_ascii(const char *text);
 const char *logmsg_reencode(const struct commit *commit,
 			    char **commit_encoding,
 			    const char *output_encoding);
@@ -261,8 +273,6 @@ struct ref;
 int for_each_commit_graft(each_commit_graft_fn, void *);
 
 int interactive_add(const char **argv, const char *prefix, int patch);
-int run_add_interactive(const char *revision, const char *patch_mode,
-			const struct pathspec *pathspec);
 
 struct commit_extra_header {
 	struct commit_extra_header *next;

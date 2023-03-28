@@ -16,6 +16,7 @@ struct archiver_args {
 	struct tree *tree;
 	const struct object_id *commit_oid;
 	const struct commit *commit;
+	const char *mtime_option;
 	timestamp_t time;
 	struct pathspec pathspec;
 	unsigned int verbose : 1;
@@ -43,7 +44,7 @@ struct archiver {
 	const char *name;
 	int (*write_archive)(const struct archiver *, struct archiver_args *);
 	unsigned flags;
-	void *data;
+	char *filter_command;
 };
 void register_archiver(struct archiver *);
 

@@ -103,8 +103,25 @@ test_expect_success 'setup for merge search' '
 	 echo "file-c" > file-c &&
 	 git add file-c &&
 	 git commit -m "sub-c") &&
-	git commit -a -m "c" &&
+	git commit -a -m "c")
+'
 
+test_expect_success 'merging should conflict for non fast-forward' '
+	test_when_finished "git -C merge-search reset --hard" &&
+	(cd merge-search &&
+	 git checkout -b test-nonforward-a b &&
+	  if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+	  then
+		test_must_fail git merge c >actual &&
+		sub_expect="go to submodule (sub), and either merge commit $(git -C sub rev-parse --short sub-c)" &&
+		grep "$sub_expect" actual
+	  else
+		test_must_fail git merge c 2> actual
+	  fi)
+'
+
+test_expect_success 'finish setup for merge-search' '
+	(cd merge-search &&
 	git checkout -b d a &&
 	(cd sub &&
 	 git checkout -b sub-d sub-b &&
@@ -129,14 +146,16 @@ test_expect_success 'merge with one side as a fast-forward of the other' '
 	 test_cmp expect actual)
 '
 
-test_expect_success 'merging should conflict for non fast-forward' '
+test_expect_success 'merging should conflict for non fast-forward (resolution exists)' '
 	(cd merge-search &&
-	 git checkout -b test-nonforward b &&
+	 git checkout -b test-nonforward-b b &&
 	 (cd sub &&
-	  git rev-parse sub-d > ../expect) &&
+	  git rev-parse --short sub-d > ../expect) &&
 	  if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 	  then
-		test_must_fail git merge c >actual
+		test_must_fail git merge c >actual &&
+		sub_expect="go to submodule (sub), and either merge commit $(git -C sub rev-parse --short sub-c)" &&
+		grep "$sub_expect" actual
 	  else
 		test_must_fail git merge c 2> actual
 	  fi &&
@@ -161,7 +180,9 @@ test_expect_success 'merging should fail for ambiguous common parent' '
 	 ) &&
 	 if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 	 then
-		test_must_fail git merge c >actual
+		test_must_fail git merge c >actual &&
+		sub_expect="go to submodule (sub), and either merge commit $(git -C sub rev-parse --short sub-c)" &&
+		grep "$sub_expect" actual
 	 else
 		test_must_fail git merge c 2> actual
 	 fi &&
@@ -205,7 +226,12 @@ test_expect_success 'merging should fail for changes that are backwards' '
 	git commit -a -m "f" &&
 
 	git checkout -b test-backward e &&
-	test_must_fail git merge f)
+	test_must_fail git merge f >actual &&
+	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+    then
+		sub_expect="go to submodule (sub), and either merge commit $(git -C sub rev-parse --short sub-d)" &&
+		grep "$sub_expect" actual
+	fi)
 '
 
 
@@ -310,7 +336,7 @@ test_expect_success 'recursive merge with submodule' '
 #   Expected: path/ is submodule and file contents for B's path are somewhere
 
 test_expect_success 'setup file/submodule conflict' '
-	test_create_repo file-submodule &&
+	git init file-submodule &&
 	(
 		cd file-submodule &&
 
@@ -325,7 +351,7 @@ test_expect_success 'setup file/submodule conflict' '
 		git commit -m B &&
 
 		git checkout A &&
-		test_create_repo path &&
+		git init path &&
 		test_commit -C path world &&
 		git submodule add ./path &&
 		git commit -m A
@@ -385,7 +411,7 @@ test_expect_success 'file/submodule conflict; merge --abort works afterward' '
 #     under the submodule to be treated as untracked or in the way.
 
 test_expect_success 'setup directory/submodule conflict' '
-	test_create_repo directory-submodule &&
+	git init directory-submodule &&
 	(
 		cd directory-submodule &&
 
@@ -408,7 +434,7 @@ test_expect_success 'setup directory/submodule conflict' '
 		git commit -m B2 &&
 
 		git checkout A &&
-		test_create_repo path &&
+		git init path &&
 		test_commit -C path hello world &&
 		git submodule add ./path &&
 		git commit -m A
@@ -474,6 +500,46 @@ test_expect_failure 'directory/submodule conflict; merge --abort works afterward
 		git ls-files -u >conflicts &&
 		test_must_be_empty conflicts
 	)
+'
+
+# Setup:
+#   - Submodule has 2 commits: a and b
+#   - Superproject branch 'a' adds and commits submodule pointing to 'commit a'
+#   - Superproject branch 'b' adds and commits submodule pointing to 'commit b'
+# If these two branches are now merged, there is no merge base
+test_expect_success 'setup for null merge base' '
+	mkdir no-merge-base &&
+	(cd no-merge-base &&
+	git init &&
+	mkdir sub &&
+	(cd sub &&
+	 git init &&
+	 echo "file-a" > file-a &&
+	 git add file-a &&
+	 git commit -m "commit a") &&
+	git commit --allow-empty -m init &&
+	git branch init &&
+	git checkout -b a init &&
+	git add sub &&
+	git commit -m "a" &&
+	git switch main &&
+	(cd sub &&
+	 echo "file-b" > file-b &&
+	 git add file-b &&
+	 git commit -m "commit b"))
+'
+
+test_expect_success 'merging should fail with no merge base' '
+	(cd no-merge-base &&
+	git checkout -b b init &&
+	git add sub &&
+	git commit -m "b" &&
+	test_must_fail git merge a >actual &&
+	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+    then
+		sub_expect="go to submodule (sub), and either merge commit $(git -C sub rev-parse --short HEAD^1)" &&
+		grep "$sub_expect" actual
+	fi)
 '
 
 test_done

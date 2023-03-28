@@ -8,12 +8,14 @@
  */
 
 #include "cache.h"
+#include "alloc.h"
 #include "config.h"
 #include "object-store.h"
 #include "blob.h"
 #include "delta.h"
 #include "diff.h"
 #include "dir.h"
+#include "hex.h"
 #include "xdiff-interface.h"
 #include "ll-merge.h"
 #include "lockfile.h"
@@ -125,7 +127,7 @@ void clear_apply_state(struct apply_state *state)
 	/* &state->fn_table is cleared at the end of apply_patch() */
 }
 
-static void mute_routine(const char *msg, va_list params)
+static void mute_routine(const char *msg UNUSED, va_list params UNUSED)
 {
 	/* do nothing */
 }
@@ -386,9 +388,19 @@ static void say_patch_name(FILE *output, const char *fmt, struct patch *patch)
 
 #define SLOP (16)
 
+/*
+ * apply.c isn't equipped to handle arbitrarily large patches, because
+ * it intermingles `unsigned long` with `int` for the type used to store
+ * buffer lengths.
+ *
+ * Only process patches that are just shy of 1 GiB large in order to
+ * avoid any truncation or overflow issues.
+ */
+#define MAX_APPLY_SIZE (1024UL * 1024 * 1023)
+
 static int read_patch_file(struct strbuf *sb, int fd)
 {
-	if (strbuf_read(sb, fd, 0) < 0)
+	if (strbuf_read(sb, fd, 0) < 0 || sb->len >= MAX_APPLY_SIZE)
 		return error_errno("git apply: failed to read");
 
 	/*
@@ -892,9 +904,9 @@ static int parse_traditional_patch(struct apply_state *state,
 	return 0;
 }
 
-static int gitdiff_hdrend(struct gitdiff_data *state,
-			  const char *line,
-			  struct patch *patch)
+static int gitdiff_hdrend(struct gitdiff_data *state UNUSED,
+			  const char *line UNUSED,
+			  struct patch *patch UNUSED)
 {
 	return 1;
 }
@@ -1044,7 +1056,7 @@ static int gitdiff_renamedst(struct gitdiff_data *state,
 	return 0;
 }
 
-static int gitdiff_similarity(struct gitdiff_data *state,
+static int gitdiff_similarity(struct gitdiff_data *state UNUSED,
 			      const char *line,
 			      struct patch *patch)
 {
@@ -1054,7 +1066,7 @@ static int gitdiff_similarity(struct gitdiff_data *state,
 	return 0;
 }
 
-static int gitdiff_dissimilarity(struct gitdiff_data *state,
+static int gitdiff_dissimilarity(struct gitdiff_data *state UNUSED,
 				 const char *line,
 				 struct patch *patch)
 {
@@ -1104,9 +1116,9 @@ static int gitdiff_index(struct gitdiff_data *state,
  * This is normal for a diff that doesn't change anything: we'll fall through
  * into the next diff. Tell the parser to break out.
  */
-static int gitdiff_unrecognized(struct gitdiff_data *state,
-				const char *line,
-				struct patch *patch)
+static int gitdiff_unrecognized(struct gitdiff_data *state UNUSED,
+				const char *line UNUSED,
+				struct patch *patch UNUSED)
 {
 	return 1;
 }
@@ -2903,7 +2915,7 @@ static int apply_one_fragment(struct apply_state *state,
 			break;
 		case ' ':
 			if (plen && (ws_rule & WS_BLANK_AT_EOF) &&
-			    ws_blank_line(patch + 1, plen, ws_rule))
+			    ws_blank_line(patch + 1, plen))
 				is_blank_context = 1;
 			/* fallthrough */
 		case '-':
@@ -2932,7 +2944,7 @@ static int apply_one_fragment(struct apply_state *state,
 				      (first == '+' ? 0 : LINE_COMMON));
 			if (first == '+' &&
 			    (ws_rule & WS_BLANK_AT_EOF) &&
-			    ws_blank_line(patch + 1, plen, ws_rule))
+			    ws_blank_line(patch + 1, plen))
 				added_blank_line = 1;
 			break;
 		case '@': case '\\':
@@ -4095,7 +4107,7 @@ static int preimage_oid_in_gitlink_patch(struct patch *p, struct object_id *oid)
 static int build_fake_ancestor(struct apply_state *state, struct patch *list)
 {
 	struct patch *patch;
-	struct index_state result = { NULL };
+	struct index_state result = INDEX_STATE_INIT(state->repo);
 	struct lock_file lock = LOCK_INIT;
 	int res;
 
@@ -4407,6 +4419,33 @@ static int create_one_file(struct apply_state *state,
 
 	if (state->cached)
 		return 0;
+
+	/*
+	 * We already try to detect whether files are beyond a symlink in our
+	 * up-front checks. But in the case where symlinks are created by any
+	 * of the intermediate hunks it can happen that our up-front checks
+	 * didn't yet see the symlink, but at the point of arriving here there
+	 * in fact is one. We thus repeat the check for symlinks here.
+	 *
+	 * Note that this does not make the up-front check obsolete as the
+	 * failure mode is different:
+	 *
+	 * - The up-front checks cause us to abort before we have written
+	 *   anything into the working directory. So when we exit this way the
+	 *   working directory remains clean.
+	 *
+	 * - The checks here happen in the middle of the action where we have
+	 *   already started to apply the patch. The end result will be a dirty
+	 *   working directory.
+	 *
+	 * Ideally, we should update the up-front checks to catch what would
+	 * happen when we apply the patch before we damage the working tree.
+	 * We have all the information necessary to do so.  But for now, as a
+	 * part of embargoed security work, having this check would serve as a
+	 * reasonable first step.
+	 */
+	if (path_is_beyond_symlink(state, path))
+		return error(_("affected file '%s' is beyond a symbolic link"), path);
 
 	res = try_create_file(state, path, mode, buf, size);
 	if (res < 0)

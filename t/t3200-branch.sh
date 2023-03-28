@@ -201,8 +201,8 @@ test_expect_success 'git branch -M baz bam should succeed when baz is checked ou
 
 test_expect_success 'git branch -M baz bam should add entries to .git/logs/HEAD' '
 	msg="Branch: renamed refs/heads/baz to refs/heads/bam" &&
-	grep " 0\{40\}.*$msg$" .git/logs/HEAD &&
-	grep "^0\{40\}.*$msg$" .git/logs/HEAD
+	grep " $ZERO_OID.*$msg$" .git/logs/HEAD &&
+	grep "^$ZERO_OID.*$msg$" .git/logs/HEAD
 '
 
 test_expect_success 'git branch -M should leave orphaned HEAD alone' '
@@ -245,9 +245,13 @@ test_expect_success 'git branch -M baz bam should succeed within a worktree in w
 	(
 		cd bazdir &&
 		git branch -M baz bam &&
-		test $(git rev-parse --abbrev-ref HEAD) = bam
+		echo bam >expect &&
+		git rev-parse --abbrev-ref HEAD >actual &&
+		test_cmp expect actual
 	) &&
-	test $(git rev-parse --abbrev-ref HEAD) = bam &&
+	echo bam >expect &&
+	git rev-parse --abbrev-ref HEAD >actual &&
+	test_cmp expect actual &&
 	rm -r bazdir &&
 	git worktree prune
 '
@@ -266,6 +270,53 @@ test_expect_success 'git branch -M topic topic should work when main is checked 
 	git checkout main &&
 	git branch topic &&
 	git branch -M topic topic
+'
+
+test_expect_success 'git branch -M and -C fail on detached HEAD' '
+	git checkout HEAD^{} &&
+	test_when_finished git checkout - &&
+	echo "fatal: cannot rename the current branch while not on any." >expect &&
+	test_must_fail git branch -M must-fail 2>err &&
+	test_cmp expect err &&
+	echo "fatal: cannot copy the current branch while not on any." >expect &&
+	test_must_fail git branch -C must-fail 2>err &&
+	test_cmp expect err
+'
+
+test_expect_success 'git branch -d on orphan HEAD (merged)' '
+	test_when_finished git checkout main &&
+	git checkout --orphan orphan &&
+	test_when_finished "rm -rf .git/objects/commit-graph*" &&
+	git commit-graph write --reachable &&
+	git branch --track to-delete main &&
+	git branch -d to-delete
+'
+
+test_expect_success 'git branch -d on orphan HEAD (merged, graph)' '
+	test_when_finished git checkout main &&
+	git checkout --orphan orphan &&
+	git branch --track to-delete main &&
+	git branch -d to-delete
+'
+
+test_expect_success 'git branch -d on orphan HEAD (unmerged)' '
+	test_when_finished git checkout main &&
+	git checkout --orphan orphan &&
+	test_when_finished "git branch -D to-delete" &&
+	git branch to-delete main &&
+	test_must_fail git branch -d to-delete 2>err &&
+	grep "not fully merged" err
+'
+
+test_expect_success 'git branch -d on orphan HEAD (unmerged, graph)' '
+	test_when_finished git checkout main &&
+	git checkout --orphan orphan &&
+	test_when_finished "git branch -D to-delete" &&
+	git branch to-delete main &&
+	test_when_finished "rm -rf .git/objects/commit-graph*" &&
+	git commit-graph write --reachable &&
+	test_must_fail git branch -d to-delete 2>err &&
+	grep "not fully merged" err
 '
 
 test_expect_success 'git branch -v -d t should work' '
@@ -306,6 +357,7 @@ test_expect_success 'deleting checked-out branch from repo that is a submodule' 
 	git init repo1 &&
 	git init repo1/sub &&
 	test_commit -C repo1/sub x &&
+	test_config_global protocol.file.allow always &&
 	git -C repo1 submodule add ./sub &&
 	git -C repo1 commit -m "adding sub" &&
 
@@ -1381,6 +1433,9 @@ test_expect_success 'branch --delete --force removes dangling branch' '
 '
 
 test_expect_success 'use --edit-description' '
+	EDITOR=: git branch --edit-description &&
+	test_expect_code 1 git config branch.main.description &&
+
 	write_script editor <<-\EOF &&
 		echo "New contents" >"$1"
 	EOF

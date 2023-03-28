@@ -14,8 +14,11 @@
 #include "pack-revindex.h"
 #include "hash.h"
 #include "path.h"
+#include "pathspec.h"
+#include "object.h"
 #include "oid-array.h"
 #include "repository.h"
+#include "statinfo.h"
 #include "mem-pool.h"
 
 typedef struct git_zstream {
@@ -117,26 +120,6 @@ struct cache_header {
 
 #define INDEX_FORMAT_LB 2
 #define INDEX_FORMAT_UB 4
-
-/*
- * The "cache_time" is just the low 32 bits of the
- * time. It doesn't matter if it overflows - we only
- * check it for equality in the 32 bits we save.
- */
-struct cache_time {
-	uint32_t sec;
-	uint32_t nsec;
-};
-
-struct stat_data {
-	struct cache_time sd_ctime;
-	struct cache_time sd_mtime;
-	unsigned int sd_dev;
-	unsigned int sd_ino;
-	unsigned int sd_uid;
-	unsigned int sd_gid;
-	unsigned int sd_size;
-};
 
 struct cache_entry {
 	struct hashmap_entry ent;
@@ -293,6 +276,15 @@ static inline unsigned int canon_mode(unsigned int mode)
 	return S_IFGITLINK;
 }
 
+static inline int ce_path_match(struct index_state *istate,
+				const struct cache_entry *ce,
+				const struct pathspec *pathspec,
+				char *seen)
+{
+	return match_pathspec(istate, pathspec, ce->name, ce_namelen(ce), 0, seen,
+			      S_ISDIR(ce->ce_mode) || S_ISGITLINK(ce->ce_mode));
+}
+
 #define cache_entry_size(len) (offsetof(struct cache_entry,name) + (len) + 1)
 
 #define SOMETHING_CHANGED	(1 << 0) /* unclassified changes go here */
@@ -359,6 +351,22 @@ struct index_state {
 	struct repository *repo;
 	struct pattern_list *sparse_checkout_patterns;
 };
+
+/**
+ * A "struct index_state istate" must be initialized with
+ * INDEX_STATE_INIT or the corresponding index_state_init().
+ *
+ * If the variable won't be used again, use release_index() to free()
+ * its resources. If it needs to be used again use discard_index(),
+ * which does the same thing, but will use use index_state_init() at
+ * the end. The discard_index() will use its own "istate->repo" as the
+ * "r" argument to index_state_init() in that case.
+ */
+#define INDEX_STATE_INIT(r) { \
+	.repo = (r), \
+}
+void index_state_init(struct index_state *istate, struct repository *r);
+void release_index(struct index_state *istate);
 
 /* Name hashing */
 int test_lazy_init_name_hash(struct index_state *istate, int try_threaded);
@@ -433,64 +441,9 @@ typedef int (*must_prefetch_predicate)(const struct cache_entry *);
 void prefetch_cache_entries(const struct index_state *istate,
 			    must_prefetch_predicate must_prefetch);
 
-#ifdef USE_THE_INDEX_COMPATIBILITY_MACROS
+#ifdef USE_THE_INDEX_VARIABLE
 extern struct index_state the_index;
-
-#define active_cache (the_index.cache)
-#define active_nr (the_index.cache_nr)
-#define active_alloc (the_index.cache_alloc)
-#define active_cache_changed (the_index.cache_changed)
-#define active_cache_tree (the_index.cache_tree)
-
-#define read_cache() repo_read_index(the_repository)
-#define read_cache_from(path) read_index_from(&the_index, (path), (get_git_dir()))
-#define read_cache_preload(pathspec) repo_read_index_preload(the_repository, (pathspec), 0)
-#define is_cache_unborn() is_index_unborn(&the_index)
-#define read_cache_unmerged() repo_read_index_unmerged(the_repository)
-#define discard_cache() discard_index(&the_index)
-#define unmerged_cache() unmerged_index(&the_index)
-#define cache_name_pos(name, namelen) index_name_pos(&the_index,(name),(namelen))
-#define add_cache_entry(ce, option) add_index_entry(&the_index, (ce), (option))
-#define rename_cache_entry_at(pos, new_name) rename_index_entry_at(&the_index, (pos), (new_name))
-#define remove_cache_entry_at(pos) remove_index_entry_at(&the_index, (pos))
-#define remove_file_from_cache(path) remove_file_from_index(&the_index, (path))
-#define add_to_cache(path, st, flags) add_to_index(&the_index, (path), (st), (flags))
-#define add_file_to_cache(path, flags) add_file_to_index(&the_index, (path), (flags))
-#define chmod_cache_entry(ce, flip) chmod_index_entry(&the_index, (ce), (flip))
-#define refresh_cache(flags) refresh_index(&the_index, (flags), NULL, NULL, NULL)
-#define refresh_and_write_cache(refresh_flags, write_flags, gentle) repo_refresh_and_write_index(the_repository, (refresh_flags), (write_flags), (gentle), NULL, NULL, NULL)
-#define ce_match_stat(ce, st, options) ie_match_stat(&the_index, (ce), (st), (options))
-#define ce_modified(ce, st, options) ie_modified(&the_index, (ce), (st), (options))
-#define cache_dir_exists(name, namelen) index_dir_exists(&the_index, (name), (namelen))
-#define cache_file_exists(name, namelen, igncase) index_file_exists(&the_index, (name), (namelen), (igncase))
-#define cache_name_is_other(name, namelen) index_name_is_other(&the_index, (name), (namelen))
-#define resolve_undo_clear() resolve_undo_clear_index(&the_index)
-#define unmerge_cache_entry_at(at) unmerge_index_entry_at(&the_index, at)
-#define unmerge_cache(pathspec) unmerge_index(&the_index, pathspec)
-#define read_blob_data_from_cache(path, sz) read_blob_data_from_index(&the_index, (path), (sz))
-#define hold_locked_index(lock_file, flags) repo_hold_locked_index(the_repository, (lock_file), (flags))
 #endif
-
-#define TYPE_BITS 3
-
-/*
- * Values in this enum (except those outside the 3 bit range) are part
- * of pack file format. See Documentation/technical/pack-format.txt
- * for more information.
- */
-enum object_type {
-	OBJ_BAD = -1,
-	OBJ_NONE = 0,
-	OBJ_COMMIT = 1,
-	OBJ_TREE = 2,
-	OBJ_BLOB = 3,
-	OBJ_TAG = 4,
-	/* 5 for future expansion */
-	OBJ_OFS_DELTA = 6,
-	OBJ_REF_DELTA = 7,
-	OBJ_ANY,
-	OBJ_MAX
-};
 
 static inline enum object_type object_type(unsigned int mode)
 {
@@ -505,7 +458,6 @@ static inline enum object_type object_type(unsigned int mode)
 #define GIT_NAMESPACE_ENVIRONMENT "GIT_NAMESPACE"
 #define GIT_WORK_TREE_ENVIRONMENT "GIT_WORK_TREE"
 #define GIT_PREFIX_ENVIRONMENT "GIT_PREFIX"
-#define GIT_SUPER_PREFIX_ENVIRONMENT "GIT_INTERNAL_SUPER_PREFIX"
 #define DEFAULT_GIT_DIR_ENVIRONMENT ".git"
 #define DB_ENVIRONMENT "GIT_OBJECT_DIRECTORY"
 #define INDEX_ENVIRONMENT "GIT_INDEX_FILE"
@@ -591,7 +543,6 @@ int get_common_dir_noenv(struct strbuf *sb, const char *gitdir);
 int get_common_dir(struct strbuf *sb, const char *gitdir);
 const char *get_git_namespace(void);
 const char *strip_namespace(const char *namespaced_ref);
-const char *get_super_prefix(void);
 const char *get_git_work_tree(void);
 
 /*
@@ -659,6 +610,9 @@ char *prefix_path_gently(const char *prefix, int len, int *remaining, const char
  */
 char *prefix_filename(const char *prefix, const char *path);
 
+/* Likewise, but path=="-" always yields "-" */
+char *prefix_filename_except_for_dash(const char *prefix, const char *path);
+
 int check_filename(const char *prefix, const char *name);
 void verify_filename(const char *prefix,
 		     const char *name,
@@ -676,81 +630,6 @@ void initialize_repository_version(int hash_algo, int reinit);
 
 void sanitize_stdfds(void);
 int daemonize(void);
-
-#define alloc_nr(x) (((x)+16)*3/2)
-
-/**
- * Dynamically growing an array using realloc() is error prone and boring.
- *
- * Define your array with:
- *
- * - a pointer (`item`) that points at the array, initialized to `NULL`
- *   (although please name the variable based on its contents, not on its
- *   type);
- *
- * - an integer variable (`alloc`) that keeps track of how big the current
- *   allocation is, initialized to `0`;
- *
- * - another integer variable (`nr`) to keep track of how many elements the
- *   array currently has, initialized to `0`.
- *
- * Then before adding `n`th element to the item, call `ALLOC_GROW(item, n,
- * alloc)`.  This ensures that the array can hold at least `n` elements by
- * calling `realloc(3)` and adjusting `alloc` variable.
- *
- * ------------
- * sometype *item;
- * size_t nr;
- * size_t alloc
- *
- * for (i = 0; i < nr; i++)
- * 	if (we like item[i] already)
- * 		return;
- *
- * // we did not like any existing one, so add one
- * ALLOC_GROW(item, nr + 1, alloc);
- * item[nr++] = value you like;
- * ------------
- *
- * You are responsible for updating the `nr` variable.
- *
- * If you need to specify the number of elements to allocate explicitly
- * then use the macro `REALLOC_ARRAY(item, alloc)` instead of `ALLOC_GROW`.
- *
- * Consider using ALLOC_GROW_BY instead of ALLOC_GROW as it has some
- * added niceties.
- *
- * DO NOT USE any expression with side-effect for 'x', 'nr', or 'alloc'.
- */
-#define ALLOC_GROW(x, nr, alloc) \
-	do { \
-		if ((nr) > alloc) { \
-			if (alloc_nr(alloc) < (nr)) \
-				alloc = (nr); \
-			else \
-				alloc = alloc_nr(alloc); \
-			REALLOC_ARRAY(x, alloc); \
-		} \
-	} while (0)
-
-/*
- * Similar to ALLOC_GROW but handles updating of the nr value and
- * zeroing the bytes of the newly-grown array elements.
- *
- * DO NOT USE any expression with side-effect for any of the
- * arguments.
- */
-#define ALLOC_GROW_BY(x, nr, increase, alloc) \
-	do { \
-		if (increase) { \
-			size_t new_nr = nr + (increase); \
-			if (new_nr < nr) \
-				BUG("negative growth in ALLOC_GROW_BY"); \
-			ALLOC_GROW(x, new_nr, alloc); \
-			memset((x) + nr, 0, sizeof(*(x)) * (increase)); \
-			nr = new_nr; \
-		} \
-	} while (0)
 
 /* Initialize and use the cache information */
 struct lock_file;
@@ -790,7 +669,7 @@ void ensure_full_index(struct index_state *istate);
  */
 int write_locked_index(struct index_state *, struct lock_file *lock, unsigned flags);
 
-int discard_index(struct index_state *);
+void discard_index(struct index_state *);
 void move_index_extensions(struct index_state *dst, struct index_state *src);
 int unmerged_index(const struct index_state *);
 
@@ -829,6 +708,15 @@ struct cache_entry *index_file_exists(struct index_state *istate, const char *na
  * index_name_pos(&index, "g", 1) -> -5
  */
 int index_name_pos(struct index_state *, const char *name, int namelen);
+
+/*
+ * Like index_name_pos, returns the position of an entry of the given name in
+ * the index if one exists, otherwise returns a negative value where the negated
+ * value minus 1 is the position where the index entry would be inserted. Unlike
+ * index_name_pos, however, a sparse index is not expanded to find an entry
+ * inside a sparse directory.
+ */
+int index_name_pos_sparse(struct index_state *, const char *name, int namelen);
 
 /*
  * Determines whether an entry with the given name exists within the
@@ -1000,15 +888,6 @@ extern unsigned long pack_size_limit_cfg;
 void set_shared_repository(int value);
 int get_shared_repository(void);
 void reset_shared_repository(void);
-
-/*
- * Do replace refs need to be checked this run?  This variable is
- * initialized to true unless --no-replace-object is used or
- * $GIT_NO_REPLACE_OBJECTS is set, but is set to false by some
- * commands that do not want replace references to be active.
- */
-extern int read_replace_refs;
-extern char *git_replace_ref_base;
 
 /*
  * These values are used to help identify parts of a repository to fsync.
@@ -1413,22 +1292,6 @@ int finalize_object_file(const char *tmpfile, const char *filename);
 /* Helper to check and "touch" a file */
 int check_and_freshen_file(const char *fn, int freshen);
 
-extern const signed char hexval_table[256];
-static inline unsigned int hexval(unsigned char c)
-{
-	return hexval_table[c];
-}
-
-/*
- * Convert two consecutive hexadecimal digits into a char.  Return a
- * negative value on error.  Don't run over the end of short strings.
- */
-static inline int hex2chr(const char *s)
-{
-	unsigned int val = hexval(s[0]);
-	return (val & ~0xf) ? val : (val << 4) | hexval(s[1]);
-}
-
 /* Convert to/from hex/sha1 representation */
 #define MINIMUM_ABBREV minimum_abbrev
 #define DEFAULT_ABBREV default_abbrev
@@ -1449,40 +1312,6 @@ struct object_context {
 	 * releasing the memory.
 	 */
 	char *path;
-};
-
-#define GET_OID_QUIETLY           01
-#define GET_OID_COMMIT            02
-#define GET_OID_COMMITTISH        04
-#define GET_OID_TREE             010
-#define GET_OID_TREEISH          020
-#define GET_OID_BLOB             040
-#define GET_OID_FOLLOW_SYMLINKS 0100
-#define GET_OID_RECORD_PATH     0200
-#define GET_OID_ONLY_TO_DIE    04000
-#define GET_OID_REQUIRE_PATH  010000
-
-#define GET_OID_DISAMBIGUATORS \
-	(GET_OID_COMMIT | GET_OID_COMMITTISH | \
-	GET_OID_TREE | GET_OID_TREEISH | \
-	GET_OID_BLOB)
-
-enum get_oid_result {
-	FOUND = 0,
-	MISSING_OBJECT = -1, /* The requested object is missing */
-	SHORT_NAME_AMBIGUOUS = -2,
-	/* The following only apply when symlinks are followed */
-	DANGLING_SYMLINK = -4, /*
-				* The initial symlink is there, but
-				* (transitively) points to a missing
-				* in-tree file
-				*/
-	SYMLINK_LOOP = -5,
-	NOT_DIR = -6, /*
-		       * Somewhere along the symlink chain, a path is
-		       * requested which contains a file as a
-		       * non-final element.
-		       */
 };
 
 int repo_get_oid(struct repository *r, const char *str, struct object_id *oid);
@@ -1514,68 +1343,6 @@ int repo_for_each_abbrev(struct repository *r, const char *prefix, each_abbrev_f
 #define for_each_abbrev(prefix, fn, data) repo_for_each_abbrev(the_repository, prefix, fn, data)
 
 int set_disambiguate_hint_config(const char *var, const char *value);
-
-/*
- * Try to read a SHA1 in hexadecimal format from the 40 characters
- * starting at hex.  Write the 20-byte result to sha1 in binary form.
- * Return 0 on success.  Reading stops if a NUL is encountered in the
- * input, so it is safe to pass this function an arbitrary
- * null-terminated string.
- */
-int get_sha1_hex(const char *hex, unsigned char *sha1);
-int get_oid_hex(const char *hex, struct object_id *sha1);
-
-/* Like get_oid_hex, but for an arbitrary hash algorithm. */
-int get_oid_hex_algop(const char *hex, struct object_id *oid, const struct git_hash_algo *algop);
-
-/*
- * Read `len` pairs of hexadecimal digits from `hex` and write the
- * values to `binary` as `len` bytes. Return 0 on success, or -1 if
- * the input does not consist of hex digits).
- */
-int hex_to_bytes(unsigned char *binary, const char *hex, size_t len);
-
-/*
- * Convert a binary hash in "unsigned char []" or an object name in
- * "struct object_id *" to its hex equivalent. The `_r` variant is reentrant,
- * and writes the NUL-terminated output to the buffer `out`, which must be at
- * least `GIT_MAX_HEXSZ + 1` bytes, and returns a pointer to out for
- * convenience.
- *
- * The non-`_r` variant returns a static buffer, but uses a ring of 4
- * buffers, making it safe to make multiple calls for a single statement, like:
- *
- *   printf("%s -> %s", hash_to_hex(one), hash_to_hex(two));
- *   printf("%s -> %s", oid_to_hex(one), oid_to_hex(two));
- */
-char *hash_to_hex_algop_r(char *buffer, const unsigned char *hash, const struct git_hash_algo *);
-char *oid_to_hex_r(char *out, const struct object_id *oid);
-char *hash_to_hex_algop(const unsigned char *hash, const struct git_hash_algo *);	/* static buffer result! */
-char *hash_to_hex(const unsigned char *hash);						/* same static buffer */
-char *oid_to_hex(const struct object_id *oid);						/* same static buffer */
-
-/*
- * Parse a 40-character hexadecimal object ID starting from hex, updating the
- * pointer specified by end when parsing stops.  The resulting object ID is
- * stored in oid.  Returns 0 on success.  Parsing will stop on the first NUL or
- * other invalid character.  end is only updated on success; otherwise, it is
- * unmodified.
- */
-int parse_oid_hex(const char *hex, struct object_id *oid, const char **end);
-
-/* Like parse_oid_hex, but for an arbitrary hash algorithm. */
-int parse_oid_hex_algop(const char *hex, struct object_id *oid, const char **end,
-			const struct git_hash_algo *algo);
-
-
-/*
- * These functions work like get_oid_hex and parse_oid_hex, but they will parse
- * a hex value for any algorithm. The algorithm is detected based on the length
- * and the algorithm in use is returned. If this is not a hex object ID in any
- * algorithm, returns GIT_HASH_UNKNOWN.
- */
-int get_oid_hex_any(const char *hex, struct object_id *oid);
-int parse_oid_hex_any(const char *hex, struct object_id *oid, const char **end);
 
 /*
  * This reads short-hand syntax that not only evaluates to a commit
@@ -1626,8 +1393,10 @@ int repo_interpret_branch_name(struct repository *r,
 
 int validate_headref(const char *ref);
 
-int base_name_compare(const char *name1, int len1, int mode1, const char *name2, int len2, int mode2);
-int df_name_compare(const char *name1, int len1, int mode1, const char *name2, int len2, int mode2);
+int base_name_compare(const char *name1, size_t len1, int mode1,
+		      const char *name2, size_t len2, int mode2);
+int df_name_compare(const char *name1, size_t len1, int mode1,
+		    const char *name2, size_t len2, int mode2);
 int name_compare(const char *name1, size_t len1, const char *name2, size_t len2);
 int cache_name_stage_compare(const char *name1, int len1, int stage1, const char *name2, int len2, int stage2);
 
@@ -1643,59 +1412,10 @@ struct object *repo_peel_to_type(struct repository *r,
 #define peel_to_type(name, namelen, obj, type) \
 	repo_peel_to_type(the_repository, name, namelen, obj, type)
 
-#define IDENT_STRICT	       1
-#define IDENT_NO_DATE	       2
-#define IDENT_NO_NAME	       4
-
-enum want_ident {
-	WANT_BLANK_IDENT,
-	WANT_AUTHOR_IDENT,
-	WANT_COMMITTER_IDENT
-};
-
-const char *git_author_info(int);
-const char *git_committer_info(int);
-const char *fmt_ident(const char *name, const char *email,
-		      enum want_ident whose_ident,
-		      const char *date_str, int);
-const char *fmt_name(enum want_ident);
-const char *ident_default_name(void);
-const char *ident_default_email(void);
 const char *git_editor(void);
 const char *git_sequence_editor(void);
 const char *git_pager(int stdout_is_tty);
 int is_terminal_dumb(void);
-int git_ident_config(const char *, const char *, void *);
-/*
- * Prepare an ident to fall back on if the user didn't configure it.
- */
-void prepare_fallback_ident(const char *name, const char *email);
-void reset_ident_date(void);
-
-struct ident_split {
-	const char *name_begin;
-	const char *name_end;
-	const char *mail_begin;
-	const char *mail_end;
-	const char *date_begin;
-	const char *date_end;
-	const char *tz_begin;
-	const char *tz_end;
-};
-/*
- * Signals an success with 0, but time part of the result may be NULL
- * if the input lacks timestamp and zone
- */
-int split_ident_line(struct ident_split *, const char *, int);
-
-/*
- * Compare split idents for equality or strict ordering. Note that we
- * compare only the ident part of the line, ignoring any timestamp.
- *
- * Because there are two fields, we must choose one as the primary key; we
- * currently arbitrarily pick the email.
- */
-int ident_cmp(const struct ident_split *, const struct ident_split *);
 
 struct cache_def {
 	struct strbuf path;
@@ -1761,9 +1481,6 @@ int update_server_info(int);
 
 const char *get_log_output_encoding(void);
 const char *get_commit_output_encoding(void);
-
-int committer_ident_sufficiently_given(void);
-int author_ident_sufficiently_given(void);
 
 extern const char *git_commit_encoding;
 extern const char *git_log_output_encoding;
@@ -1876,7 +1593,7 @@ unsigned ws_check(const char *line, int len, unsigned ws_rule);
 void ws_check_emit(const char *line, int len, unsigned ws_rule, FILE *stream, const char *set, const char *reset, const char *ws);
 char *whitespace_error_string(unsigned ws);
 void ws_fix_copy(struct strbuf *, const char *, int, unsigned, int *);
-int ws_blank_line(const char *line, int len, unsigned ws_rule);
+int ws_blank_line(const char *line, int len);
 #define ws_tab_width(rule)     ((rule) & WS_TAB_WIDTH_MASK)
 
 /* ls-files */

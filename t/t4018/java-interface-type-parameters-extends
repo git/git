@@ -1,0 +1,6 @@
+interface RIGHT<A, B> extends Function<A, B> {
+    static int ONE;
+    static int TWO;
+    static int THREE;
+    public B foo(A ChangeMe);
+}

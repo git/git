@@ -30,8 +30,10 @@ struct repo_settings {
 	int initialized;
 
 	int core_commit_graph;
+	int commit_graph_generation_version;
 	int commit_graph_read_changed_paths;
 	int gc_write_commit_graph;
+	int gc_cruft_packs;
 	int fetch_write_commit_graph;
 	int command_requires_full_index;
 	int sparse_index;
@@ -39,6 +41,7 @@ struct repo_settings {
 	struct fsmonitor_settings *fsmonitor; /* lazily loaded */
 
 	int index_version;
+	int index_skip_hash;
 	enum untracked_cache_setting core_untracked_cache;
 
 	int pack_use_sparse;
@@ -185,6 +188,7 @@ void repo_set_gitdir(struct repository *repo, const char *root,
 void repo_set_worktree(struct repository *repo, const char *path);
 void repo_set_hash_algo(struct repository *repo, int algo);
 void initialize_the_repository(void);
+RESULT_MUST_BE_USED
 int repo_init(struct repository *r, const char *gitdir, const char *worktree);
 
 /*
@@ -196,6 +200,7 @@ int repo_init(struct repository *r, const char *gitdir, const char *worktree);
  * Return 0 upon success and a non-zero value upon failure.
  */
 struct object_id;
+RESULT_MUST_BE_USED
 int repo_submodule_init(struct repository *subrepo,
 			struct repository *superproject,
 			const char *path,

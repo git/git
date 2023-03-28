@@ -40,7 +40,7 @@ struct buffer {
 size_t fread_buffer(char *ptr, size_t eltsize, size_t nmemb, void *strbuf);
 size_t fwrite_buffer(char *ptr, size_t eltsize, size_t nmemb, void *strbuf);
 size_t fwrite_null(char *ptr, size_t eltsize, size_t nmemb, void *strbuf);
-curlioerr ioctl_buffer(CURL *handle, int cmd, void *clientp);
+int seek_buffer(void *clientp, curl_off_t offset, int origin);
 
 /* Slot lifecycle functions */
 struct active_request_slot *get_active_slot(void);
@@ -177,6 +177,9 @@ int http_fetch_ref(const char *base, struct ref *ref);
 /* Helpers for fetching packs */
 int http_get_info_packs(const char *base_url,
 			struct packed_git **packs_head);
+
+/* Helper for getting Accept-Language header */
+const char *http_get_accept_language_header(void);
 
 struct http_pack_request {
 	char *url;

@@ -590,7 +590,7 @@ test_expect_success 'prompt - bash color pc mode - dirty status indicator - dirt
 '
 
 test_expect_success 'prompt - bash color pc mode - dirty status indicator - dirty index and worktree' '
-	printf "BEFORE: (${c_green}\${__git_ps1_branch_name}${c_clear} ${c_red}*${c_green}+${c_clear}):AFTER\\nmain" >expected &&
+	printf "BEFORE: (${c_green}\${__git_ps1_branch_name}${c_clear} ${c_red}*${c_clear}${c_green}+${c_clear}):AFTER\\nmain" >expected &&
 	echo "dirty index" >file &&
 	test_when_finished "git reset --hard" &&
 	git add -u &&
@@ -754,6 +754,22 @@ test_expect_success 'prompt - hide if pwd ignored - inside gitdir' '
 	(
 		GIT_PS1_HIDE_IF_PWD_IGNORED=y &&
 		cd .git &&
+		__git_ps1 >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success 'prompt - conflict indicator' '
+	printf " (main|CONFLICT)" >expected &&
+	echo "stash" >file &&
+	git stash &&
+	test_when_finished "git stash drop" &&
+	echo "commit" >file &&
+	git commit -m "commit" file &&
+	test_when_finished "git reset --hard HEAD~" &&
+	test_must_fail git stash apply &&
+	(
+		GIT_PS1_SHOWCONFLICTSTATE="yes" &&
 		__git_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"

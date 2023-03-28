@@ -473,6 +473,7 @@ test_expect_success 'create and add submodule, submodule appears clean (A. S...)
 	git checkout initial-branch &&
 	git clone . sub_repo &&
 	git clone . super_repo &&
+	test_config_global protocol.file.allow always &&
 	(	cd super_repo &&
 		git submodule add ../sub_repo sub1 &&
 

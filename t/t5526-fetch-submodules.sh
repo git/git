@@ -127,6 +127,7 @@ verify_fetch_result () {
 }
 
 test_expect_success setup '
+	git config --global protocol.file.allow always &&
 	mkdir deepsubmodule &&
 	(
 		cd deepsubmodule &&
@@ -166,6 +167,19 @@ test_expect_success "fetch --recurse-submodules recurses into submodules" '
 	verify_fetch_result actual.err
 '
 
+test_expect_success "fetch --recurse-submodules honors --no-write-fetch-head" '
+	(
+		cd downstream &&
+		git submodule foreach --recursive \
+		sh -c "cd \"\$(git rev-parse --git-dir)\" && rm -f FETCH_HEAD" &&
+
+		git fetch --recurse-submodules --no-write-fetch-head &&
+
+		git submodule foreach --recursive \
+		sh -c "cd \"\$(git rev-parse --git-dir)\" && ! test -f FETCH_HEAD"
+	)
+'
+
 test_expect_success "submodule.recurse option triggers recursive fetch" '
 	add_submodule_commits &&
 	(
@@ -177,6 +191,7 @@ test_expect_success "submodule.recurse option triggers recursive fetch" '
 '
 
 test_expect_success "fetch --recurse-submodules -j2 has the same output behaviour" '
+	test_when_finished "rm -f trace.out" &&
 	add_submodule_commits &&
 	(
 		cd downstream &&
@@ -704,17 +719,30 @@ test_expect_success "'fetch.recurseSubmodules=on-demand' works also without .git
 
 test_expect_success 'fetching submodules respects parallel settings' '
 	git config fetch.recurseSubmodules true &&
+	test_when_finished "rm -f downstream/trace.out" &&
 	(
 		cd downstream &&
 		GIT_TRACE=$(pwd)/trace.out git fetch &&
 		grep "1 tasks" trace.out &&
+		>trace.out &&
+
 		GIT_TRACE=$(pwd)/trace.out git fetch --jobs 7 &&
 		grep "7 tasks" trace.out &&
+		>trace.out &&
+
 		git config submodule.fetchJobs 8 &&
 		GIT_TRACE=$(pwd)/trace.out git fetch &&
 		grep "8 tasks" trace.out &&
+		>trace.out &&
+
 		GIT_TRACE=$(pwd)/trace.out git fetch --jobs 9 &&
-		grep "9 tasks" trace.out
+		grep "9 tasks" trace.out &&
+		>trace.out &&
+
+		GIT_TRACE=$(pwd)/trace.out git -c submodule.fetchJobs=0 fetch &&
+		grep "preparing to run up to [0-9]* tasks" trace.out &&
+		! grep "up to 0 tasks" trace.out &&
+		>trace.out
 	)
 '
 

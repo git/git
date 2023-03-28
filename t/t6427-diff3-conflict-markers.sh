@@ -19,7 +19,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 #
 
 test_expect_success 'setup no merge base' '
-	test_create_repo no_merge_base &&
+	git init no_merge_base &&
 	(
 		cd no_merge_base &&
 
@@ -55,7 +55,7 @@ test_expect_success 'check no merge base' '
 #
 
 test_expect_success 'setup unique merge base' '
-	test_create_repo unique_merge_base &&
+	git init unique_merge_base &&
 	(
 		cd unique_merge_base &&
 
@@ -116,7 +116,7 @@ test_expect_success 'check unique merge base' '
 #
 
 test_expect_success 'setup multiple merge bases' '
-	test_create_repo multiple_merge_bases &&
+	git init multiple_merge_bases &&
 	(
 		cd multiple_merge_bases &&
 
@@ -190,7 +190,7 @@ test_expect_success 'check multiple merge bases' '
 '
 
 test_expect_success 'rebase --merge describes parent of commit being picked' '
-	test_create_repo rebase &&
+	git init rebase &&
 	(
 		cd rebase &&
 		test_commit base file &&
@@ -212,7 +212,7 @@ test_expect_success 'rebase --apply describes fake ancestor base' '
 '
 
 test_setup_zdiff3 () {
-	test_create_repo zdiff3 &&
+	git init zdiff3 &&
 	(
 		cd zdiff3 &&
 

@@ -9,7 +9,7 @@ git-rev-list - Lists commit objects in reverse chronological order
 SYNOPSIS
 --------
 [verse]
-'git rev-list' [<options>] <commit>... [[--] <path>...]
+'git rev-list' [<options>] <commit>... [--] [<path>...]
 
 DESCRIPTION
 -----------

@@ -51,8 +51,8 @@ static int empty_ref_iterator_advance(struct ref_iterator *ref_iterator)
 	return ref_iterator_abort(ref_iterator);
 }
 
-static int empty_ref_iterator_peel(struct ref_iterator *ref_iterator,
-				   struct object_id *peeled)
+static int empty_ref_iterator_peel(struct ref_iterator *ref_iterator UNUSED,
+				   struct object_id *peeled UNUSED)
 {
 	BUG("peel called for empty iterator");
 }
@@ -238,7 +238,7 @@ struct ref_iterator *merge_ref_iterator_begin(
  */
 static enum iterator_selection overlay_iterator_select(
 		struct ref_iterator *front, struct ref_iterator *back,
-		void *cb_data)
+		void *cb_data UNUSED)
 {
 	int cmp;
 

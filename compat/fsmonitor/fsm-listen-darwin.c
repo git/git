@@ -1,4 +1,5 @@
 #ifndef __clang__
+#include <dispatch/dispatch.h>
 #include "fsm-darwin-gcc.h"
 #else
 #include <CoreFoundation/CoreFoundation.h>
@@ -26,6 +27,7 @@
 #include "fsmonitor.h"
 #include "fsm-listen.h"
 #include "fsmonitor--daemon.h"
+#include "fsmonitor-path-utils.h"
 
 struct fsm_listen_data
 {
@@ -37,7 +39,9 @@ struct fsm_listen_data
 
 	FSEventStreamRef stream;
 
-	CFRunLoopRef rl;
+	dispatch_queue_t dq;
+	pthread_cond_t dq_finished;
+	pthread_mutex_t dq_lock;
 
 	enum shutdown_style {
 		SHUTDOWN_EVENT = 0,
@@ -198,8 +202,9 @@ static void fsevent_callback(ConstFSEventStreamRef streamRef,
 	struct string_list cookie_list = STRING_LIST_INIT_DUP;
 	const char *path_k;
 	const char *slash;
-	int k;
+	char *resolved = NULL;
 	struct strbuf tmp = STRBUF_INIT;
+	int k;
 
 	/*
 	 * Build a list of all filesystem changes into a private/local
@@ -209,7 +214,12 @@ static void fsevent_callback(ConstFSEventStreamRef streamRef,
 		/*
 		 * On Mac, we receive an array of absolute paths.
 		 */
-		path_k = paths[k];
+		free(resolved);
+		resolved = fsmonitor__resolve_alias(paths[k], &state->alias);
+		if (resolved)
+			path_k = resolved;
+		else
+			path_k = paths[k];
 
 		/*
 		 * If you want to debug FSEvents, log them to GIT_TRACE_FSMONITOR.
@@ -238,6 +248,7 @@ static void fsevent_callback(ConstFSEventStreamRef streamRef,
 			fsmonitor_force_resync(state);
 			fsmonitor_batch__free_list(batch);
 			string_list_clear(&cookie_list, 0);
+			batch = NULL;
 
 			/*
 			 * We assume that any events that we received
@@ -328,7 +339,7 @@ static void fsevent_callback(ConstFSEventStreamRef streamRef,
 			 * know how much to invalidate/refresh.
 			 */
 
-			if (event_flags[k] & kFSEventStreamEventFlagItemIsFile) {
+			if (event_flags[k] & (kFSEventStreamEventFlagItemIsFile | kFSEventStreamEventFlagItemIsSymlink)) {
 				const char *rel = path_k +
 					state->path_worktree_watch.len + 1;
 
@@ -360,17 +371,22 @@ static void fsevent_callback(ConstFSEventStreamRef streamRef,
 		}
 	}
 
+	free(resolved);
 	fsmonitor_publish(state, batch, &cookie_list);
 	string_list_clear(&cookie_list, 0);
 	strbuf_release(&tmp);
 	return;
 
 force_shutdown:
+	free(resolved);
 	fsmonitor_batch__free_list(batch);
 	string_list_clear(&cookie_list, 0);
 
+	pthread_mutex_lock(&data->dq_lock);
 	data->shutdown_style = FORCE_SHUTDOWN;
-	CFRunLoopStop(data->rl);
+	pthread_cond_broadcast(&data->dq_finished);
+	pthread_mutex_unlock(&data->dq_lock);
+
 	strbuf_release(&tmp);
 	return;
 }
@@ -431,10 +447,6 @@ int fsm_listen__ctor(struct fsmonitor_daemon_state *state)
 	if (!data->stream)
 		goto failed;
 
-	/*
-	 * `data->rl` needs to be set inside the listener thread.
-	 */
-
 	return 0;
 
 failed:
@@ -461,6 +473,11 @@ void fsm_listen__dtor(struct fsmonitor_daemon_state *state)
 		FSEventStreamRelease(data->stream);
 	}
 
+	if (data->dq)
+		dispatch_release(data->dq);
+	pthread_cond_destroy(&data->dq_finished);
+	pthread_mutex_destroy(&data->dq_lock);
+
 	FREE_AND_NULL(state->listen_data);
 }
 
@@ -469,9 +486,11 @@ void fsm_listen__stop_async(struct fsmonitor_daemon_state *state)
 	struct fsm_listen_data *data;
 
 	data = state->listen_data;
-	data->shutdown_style = SHUTDOWN_EVENT;
 
-	CFRunLoopStop(data->rl);
+	pthread_mutex_lock(&data->dq_lock);
+	data->shutdown_style = SHUTDOWN_EVENT;
+	pthread_cond_broadcast(&data->dq_finished);
+	pthread_mutex_unlock(&data->dq_lock);
 }
 
 void fsm_listen__loop(struct fsmonitor_daemon_state *state)
@@ -480,9 +499,11 @@ void fsm_listen__loop(struct fsmonitor_daemon_state *state)
 
 	data = state->listen_data;
 
-	data->rl = CFRunLoopGetCurrent();
+	pthread_mutex_init(&data->dq_lock, NULL);
+	pthread_cond_init(&data->dq_finished, NULL);
+	data->dq = dispatch_queue_create("FSMonitor", NULL);
 
-	FSEventStreamScheduleWithRunLoop(data->stream, data->rl, kCFRunLoopDefaultMode);
+	FSEventStreamSetDispatchQueue(data->stream, data->dq);
 	data->stream_scheduled = 1;
 
 	if (!FSEventStreamStart(data->stream)) {
@@ -491,7 +512,9 @@ void fsm_listen__loop(struct fsmonitor_daemon_state *state)
 	}
 	data->stream_started = 1;
 
-	CFRunLoopRun();
+	pthread_mutex_lock(&data->dq_lock);
+	pthread_cond_wait(&data->dq_finished, &data->dq_lock);
+	pthread_mutex_unlock(&data->dq_lock);
 
 	switch (data->shutdown_style) {
 	case FORCE_ERROR_STOP:

@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "config.h"
 #include "color.h"
+#include "hex.h"
 
 static int git_use_color_default = GIT_COLOR_AUTO;
 int color_stdout_is_tty = -1;
@@ -415,7 +416,7 @@ int want_color_fd(int fd, int var)
 	return var;
 }
 
-int git_color_config(const char *var, const char *value, void *cb)
+int git_color_config(const char *var, const char *value, void *cb UNUSED)
 {
 	if (!strcmp(var, "color.ui")) {
 		git_use_color_default = git_config_colorbool(var, value);

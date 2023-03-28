@@ -75,7 +75,7 @@ do
 		continue
 	fi
 	git checkout -q "$parent1^0"
-	if git merge $other_parents >/dev/null 2>&1
+	if git merge --no-gpg-sign $other_parents >/dev/null 2>&1
 	then
 		# Cleanly merges
 		continue

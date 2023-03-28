@@ -8,7 +8,8 @@
  * GIT_CEILING_DIRECTORIES.  If the path is unusable for some reason,
  * die with an explanation.
  */
-static int normalize_ceiling_entry(struct string_list_item *item, void *unused)
+static int normalize_ceiling_entry(struct string_list_item *item,
+				   void *data UNUSED)
 {
 	char *ceil = item->string;
 
@@ -296,9 +297,8 @@ int cmd__path_utils(int argc, const char **argv)
 	if (argc == 3 && !strcmp(argv[1], "normalize_path_copy")) {
 		char *buf = xmallocz(strlen(argv[2]));
 		int rv = normalize_path_copy(buf, argv[2]);
-		if (rv)
-			buf = "++failed++";
-		puts(buf);
+		puts(rv ? "++failed++" : buf);
+		free(buf);
 		return 0;
 	}
 
@@ -356,7 +356,10 @@ int cmd__path_utils(int argc, const char **argv)
 		int nongit_ok;
 		setup_git_directory_gently(&nongit_ok);
 		while (argc > 3) {
-			puts(prefix_path(prefix, prefix_len, argv[3]));
+			char *pfx = prefix_path(prefix, prefix_len, argv[3]);
+
+			puts(pfx);
+			free(pfx);
 			argc--;
 			argv++;
 		}
@@ -366,6 +369,7 @@ int cmd__path_utils(int argc, const char **argv)
 	if (argc == 4 && !strcmp(argv[1], "strip_path_suffix")) {
 		char *prefix = strip_path_suffix(argv[2], argv[3]);
 		printf("%s\n", prefix ? prefix : "(null)");
+		free(prefix);
 		return 0;
 	}
 

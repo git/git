@@ -43,7 +43,7 @@ That is, from the left to the right:
 . a space.
 . sha1 for "src"; 0\{40\} if creation or unmerged.
 . a space.
-. sha1 for "dst"; 0\{40\} if creation, unmerged or "look at work tree".
+. sha1 for "dst"; 0\{40\} if deletion, unmerged or "work tree out of sync with the index".
 . a space.
 . status, followed by optional "score" number.
 . a tab or a NUL when `-z` option is used.
@@ -69,8 +69,8 @@ percentage of similarity between the source and target of the move or
 copy).  Status letter M may be followed by a score (denoting the
 percentage of dissimilarity) for file rewrites.
 
-<sha1> is shown as all 0's if a file is new on the filesystem
-and it is out of sync with the index.
+The sha1 for "dst" is shown as all 0's if a file on the filesystem
+is out of sync with the index.
 
 Example:
 

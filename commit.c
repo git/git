@@ -2,6 +2,7 @@
 #include "tag.h"
 #include "commit.h"
 #include "commit-graph.h"
+#include "hex.h"
 #include "repository.h"
 #include "object-store.h"
 #include "pkt-line.h"
@@ -57,6 +58,14 @@ struct commit *lookup_commit_or_die(const struct object_id *oid, const char *ref
 			ref_name, oid_to_hex(oid));
 	}
 	return c;
+}
+
+struct commit *lookup_commit_object(struct repository *r,
+				    const struct object_id *oid)
+{
+	struct object *obj = parse_object(r, oid);
+	return obj ? object_as_type(obj, OBJ_COMMIT, 0) : NULL;
+
 }
 
 struct commit *lookup_commit(struct repository *r, const struct object_id *oid)
@@ -500,6 +509,17 @@ int repo_parse_commit_internal(struct repository *r,
 	enum object_type type;
 	void *buffer;
 	unsigned long size;
+	struct object_info oi = {
+		.typep = &type,
+		.sizep = &size,
+		.contentp = &buffer,
+	};
+	/*
+	 * Git does not support partial clones that exclude commits, so set
+	 * OBJECT_INFO_SKIP_FETCH_OBJECT to fail fast when an object is missing.
+	 */
+	int flags = OBJECT_INFO_LOOKUP_REPLACE | OBJECT_INFO_SKIP_FETCH_OBJECT |
+		OBJECT_INFO_DIE_IF_CORRUPT;
 	int ret;
 
 	if (!item)
@@ -508,8 +528,8 @@ int repo_parse_commit_internal(struct repository *r,
 		return 0;
 	if (use_commit_graph && parse_commit_in_graph(r, item))
 		return 0;
-	buffer = repo_read_object_file(r, &item->object.oid, &type, &size);
-	if (!buffer)
+
+	if (oid_object_info_extended(r, &item->object.oid, &oi, flags) < 0)
 		return quiet_on_missing ? -1 :
 			error("Could not read %s",
 			     oid_to_hex(&item->object.oid));
@@ -642,10 +662,11 @@ struct commit_list * commit_list_insert_by_date(struct commit *item, struct comm
 	return commit_list_insert(item, pp);
 }
 
-static int commit_list_compare_by_date(const void *a, const void *b)
+static int commit_list_compare_by_date(const struct commit_list *a,
+				       const struct commit_list *b)
 {
-	timestamp_t a_date = ((const struct commit_list *)a)->item->date;
-	timestamp_t b_date = ((const struct commit_list *)b)->item->date;
+	timestamp_t a_date = a->item->date;
+	timestamp_t b_date = b->item->date;
 	if (a_date < b_date)
 		return 1;
 	if (a_date > b_date)
@@ -653,20 +674,11 @@ static int commit_list_compare_by_date(const void *a, const void *b)
 	return 0;
 }
 
-static void *commit_list_get_next(const void *a)
-{
-	return ((const struct commit_list *)a)->next;
-}
-
-static void commit_list_set_next(void *a, void *next)
-{
-	((struct commit_list *)a)->next = next;
-}
+DEFINE_LIST_SORT(static, commit_list_sort, struct commit_list, next);
 
 void commit_list_sort_by_date(struct commit_list **list)
 {
-	*list = llist_mergesort(*list, commit_list_get_next, commit_list_set_next,
-				commit_list_compare_by_date);
+	commit_list_sort(list, commit_list_compare_by_date);
 }
 
 struct commit *pop_most_recent_commit(struct commit_list **list,
@@ -701,8 +713,10 @@ static void clear_commit_marks_1(struct commit_list **plist,
 		if (!parents)
 			return;
 
-		while ((parents = parents->next))
-			commit_list_insert(parents->item, plist);
+		while ((parents = parents->next)) {
+			if (parents->item->object.flags & mark)
+				commit_list_insert(parents->item, plist);
+		}
 
 		commit = commit->parents->item;
 	}
@@ -788,7 +802,8 @@ int compare_commits_by_author_date(const void *a_, const void *b_,
 	return 0;
 }
 
-int compare_commits_by_gen_then_commit_date(const void *a_, const void *b_, void *unused)
+int compare_commits_by_gen_then_commit_date(const void *a_, const void *b_,
+					    void *unused UNUSED)
 {
 	const struct commit *a = a_, *b = b_;
 	const timestamp_t generation_a = commit_graph_generation(a),
@@ -808,7 +823,8 @@ int compare_commits_by_gen_then_commit_date(const void *a_, const void *b_, void
 	return 0;
 }
 
-int compare_commits_by_commit_date(const void *a_, const void *b_, void *unused)
+int compare_commits_by_commit_date(const void *a_, const void *b_,
+				   void *unused UNUSED)
 {
 	const struct commit *a = a_, *b = b_;
 	/* newer commits with larger date first */
@@ -959,8 +975,9 @@ static void add_one_commit(struct object_id *oid, struct rev_collect *revs)
 }
 
 static int collect_one_reflog_ent(struct object_id *ooid, struct object_id *noid,
-				  const char *ident, timestamp_t timestamp,
-				  int tz, const char *message, void *cbdata)
+				  const char *ident UNUSED,
+				  timestamp_t timestamp UNUSED, int tz UNUSED,
+				  const char *message UNUSED, void *cbdata)
 {
 	struct rev_collect *revs = cbdata;
 
@@ -1019,6 +1036,7 @@ struct commit *get_fork_point(const char *refname, struct commit *commit)
 	ret = bases->item;
 
 cleanup_return:
+	free(revs.commit);
 	free_commit_list(bases);
 	free(full_refname);
 	return ret;

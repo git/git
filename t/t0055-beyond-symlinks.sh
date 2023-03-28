@@ -15,12 +15,22 @@ test_expect_success SYMLINKS setup '
 
 test_expect_success SYMLINKS 'update-index --add beyond symlinks' '
 	test_must_fail git update-index --add c/d &&
-	! ( git ls-files | grep c/d )
+	cat >expect <<-\EOF &&
+	a
+	b/d
+	EOF
+	git ls-files >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success SYMLINKS 'add beyond symlinks' '
 	test_must_fail git add c/d &&
-	! ( git ls-files | grep c/d )
+	cat >expect <<-\EOF &&
+	a
+	b/d
+	EOF
+	git ls-files >actual &&
+	test_cmp expect actual
 '
 
 test_done

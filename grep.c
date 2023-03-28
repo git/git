@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "config.h"
 #include "grep.h"
+#include "hex.h"
 #include "object-store.h"
 #include "userdiff.h"
 #include "xdiff-interface.h"
@@ -262,6 +263,31 @@ static void pcre2_free(void *pointer, MAYBE_UNUSED void *memory_data)
 	free(pointer);
 }
 
+static int pcre2_jit_functional(void)
+{
+	static int jit_working = -1;
+	pcre2_code *code;
+	size_t off;
+	int err;
+
+	if (jit_working != -1)
+		return jit_working;
+
+	/*
+	 * Try to JIT compile a simple pattern to probe if the JIT is
+	 * working in general. It might fail for systems where creating
+	 * memory mappings for runtime code generation is restricted.
+	 */
+	code = pcre2_compile((PCRE2_SPTR)".", 1, 0, &err, &off, NULL);
+	if (!code)
+		return 0;
+
+	jit_working = pcre2_jit_compile(code, PCRE2_JIT_COMPLETE) == 0;
+	pcre2_code_free(code);
+
+	return jit_working;
+}
+
 static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt)
 {
 	int error;
@@ -293,7 +319,7 @@ static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt
 		options |= PCRE2_CASELESS;
 	}
 	if (!opt->ignore_locale && is_utf8_locale() && !literal)
-		options |= (PCRE2_UTF | PCRE2_MATCH_INVALID_UTF);
+		options |= (PCRE2_UTF | PCRE2_UCP | PCRE2_MATCH_INVALID_UTF);
 
 #ifndef GIT_PCRE2_VERSION_10_36_OR_HIGHER
 	/* Work around https://bugs.exim.org/show_bug.cgi?id=2642 fixed in 10.36 */
@@ -317,8 +343,29 @@ static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt
 	pcre2_config(PCRE2_CONFIG_JIT, &p->pcre2_jit_on);
 	if (p->pcre2_jit_on) {
 		jitret = pcre2_jit_compile(p->pcre2_pattern, PCRE2_JIT_COMPLETE);
-		if (jitret)
-			die("Couldn't JIT the PCRE2 pattern '%s', got '%d'\n", p->pattern, jitret);
+		if (jitret == PCRE2_ERROR_NOMEMORY && !pcre2_jit_functional()) {
+			/*
+			 * Even though pcre2_config(PCRE2_CONFIG_JIT, ...)
+			 * indicated JIT support, the library might still
+			 * fail to generate JIT code for various reasons,
+			 * e.g. when SELinux's 'deny_execmem' or PaX's
+			 * MPROTECT prevent creating W|X memory mappings.
+			 *
+			 * Instead of faling hard, fall back to interpreter
+			 * mode, just as if the pattern was prefixed with
+			 * '(*NO_JIT)'.
+			 */
+			p->pcre2_jit_on = 0;
+			return;
+		} else if (jitret) {
+			int need_clip = p->patternlen > 64;
+			int clip_len = need_clip ? 64 : p->patternlen;
+			die("Couldn't JIT the PCRE2 pattern '%.*s'%s, got '%d'%s",
+			    clip_len, p->pattern, need_clip ? "..." : "", jitret,
+			    pcre2_jit_functional()
+			    ? "\nPerhaps prefix (*NO_JIT) to your pattern?"
+			    : "");
+		}
 
 		/*
 		 * The pcre2_config(PCRE2_CONFIG_JIT, ...) call just
@@ -708,6 +755,7 @@ void compile_grep_patterns(struct grep_opt *opt)
 {
 	struct grep_pat *p;
 	struct grep_expr *header_expr = prep_header_patterns(opt);
+	int extended = 0;
 
 	for (p = opt->pattern_list; p; p = p->next) {
 		switch (p->token) {
@@ -717,14 +765,14 @@ void compile_grep_patterns(struct grep_opt *opt)
 			compile_regexp(p, opt);
 			break;
 		default:
-			opt->extended = 1;
+			extended = 1;
 			break;
 		}
 	}
 
 	if (opt->all_match || opt->no_body_match || header_expr)
-		opt->extended = 1;
-	else if (!opt->extended)
+		extended = 1;
+	else if (!extended)
 		return;
 
 	p = opt->pattern_list;
@@ -768,11 +816,11 @@ static void free_pattern_expr(struct grep_expr *x)
 	free(x);
 }
 
-void free_grep_patterns(struct grep_opt *opt)
+static void free_grep_pat(struct grep_pat *pattern)
 {
 	struct grep_pat *p, *n;
 
-	for (p = opt->pattern_list; p; p = n) {
+	for (p = pattern; p; p = n) {
 		n = p->next;
 		switch (p->token) {
 		case GREP_PATTERN: /* atom */
@@ -789,10 +837,15 @@ void free_grep_patterns(struct grep_opt *opt)
 		}
 		free(p);
 	}
+}
 
-	if (!opt->extended)
-		return;
-	free_pattern_expr(opt->pattern_expression);
+void free_grep_patterns(struct grep_opt *opt)
+{
+	free_grep_pat(opt->pattern_list);
+	free_grep_pat(opt->header_list);
+
+	if (opt->pattern_expression)
+		free_pattern_expr(opt->pattern_expression);
 }
 
 static const char *end_of_line(const char *cp, unsigned long *left)
@@ -971,8 +1024,6 @@ static int match_expr_eval(struct grep_opt *opt, struct grep_expr *x,
 {
 	int h = 0;
 
-	if (!x)
-		die("Not a valid grep expression");
 	switch (x->node) {
 	case GREP_NODE_TRUE:
 		h = 1;
@@ -1052,7 +1103,7 @@ static int match_line(struct grep_opt *opt,
 	struct grep_pat *p;
 	int hit = 0;
 
-	if (opt->extended)
+	if (opt->pattern_expression)
 		return match_expr(opt, bol, eol, ctx, col, icol,
 				  collect_hits);
 
@@ -1370,7 +1421,7 @@ static int should_lookahead(struct grep_opt *opt)
 {
 	struct grep_pat *p;
 
-	if (opt->extended)
+	if (opt->pattern_expression)
 		return 0; /* punt for too complex stuff */
 	if (opt->invert)
 		return 0;
@@ -1615,7 +1666,7 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
 				return 0;
 			goto next_line;
 		}
-		if (hit) {
+		if (hit && (opt->max_count < 0 || count < opt->max_count)) {
 			count++;
 			if (opt->status_only)
 				return 1;

@@ -5,6 +5,7 @@
 
 test_description='Tests for "git reset" with "--merge" and "--keep" options'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '

@@ -90,6 +90,22 @@ test_expect_success 'loose objects in alternate ODB are not repacked' '
 	test_has_duplicate_object false
 '
 
+test_expect_success SYMLINKS '--local keeps packs when alternate is objectdir ' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	test_commit -C repo A &&
+	(
+		cd repo &&
+		git repack -a &&
+		ls .git/objects/pack/*.pack >../expect &&
+		ln -s objects .git/alt_objects &&
+		echo "$(pwd)/.git/alt_objects" >.git/objects/info/alternates &&
+		git repack -a -d -l &&
+		ls .git/objects/pack/*.pack >../actual
+	) &&
+	test_cmp expect actual
+'
+
 test_expect_success 'packed obs in alt ODB are repacked even when local repo is packless' '
 	mkdir alt_objects/pack &&
 	mv .git/objects/pack/* alt_objects/pack &&
@@ -426,10 +442,71 @@ test_expect_success '--write-midx -b packs non-kept objects' '
 	)
 '
 
+test_expect_success '--write-midx removes stale pack-based bitmaps' '
+       rm -fr repo &&
+       git init repo &&
+       test_when_finished "rm -fr repo" &&
+       (
+		cd repo &&
+		test_commit base &&
+		GIT_TEST_MULTI_PACK_INDEX=0 git repack -Ab &&
+
+		pack_bitmap=$(ls $objdir/pack/pack-*.bitmap) &&
+		test_path_is_file "$pack_bitmap" &&
+
+		test_commit tip &&
+		GIT_TEST_MULTI_PACK_INDEX=0 git repack -bm &&
+
+		test_path_is_file $midx &&
+		test_path_is_file $midx-$(midx_checksum $objdir).bitmap &&
+		test_path_is_missing $pack_bitmap
+       )
+'
+
+test_expect_success '--write-midx with --pack-kept-objects' '
+	git init repo &&
+	test_when_finished "rm -fr repo" &&
+	(
+		cd repo &&
+
+		test_commit one &&
+		test_commit two &&
+
+		one="$(echo "one" | git pack-objects --revs $objdir/pack/pack)" &&
+		two="$(echo "one..two" | git pack-objects --revs $objdir/pack/pack)" &&
+
+		keep="$objdir/pack/pack-$one.keep" &&
+		touch "$keep" &&
+
+		git repack --write-midx --write-bitmap-index --geometric=2 -d \
+			--pack-kept-objects &&
+
+		test_path_is_file $keep &&
+		test_path_is_file $midx &&
+		test_path_is_file $midx-$(midx_checksum $objdir).bitmap
+	)
+'
+
 test_expect_success TTY '--quiet disables progress' '
 	test_terminal env GIT_PROGRESS_DELAY=0 \
 		git -C midx repack -ad --quiet --write-midx 2>stderr &&
 	test_must_be_empty stderr
+'
+
+test_expect_success 'clean up .tmp-* packs on error' '
+	test_must_fail ok=sigpipe git \
+		-c repack.cruftwindow=bogus \
+		repack -ad --cruft &&
+	find $objdir/pack -name '.tmp-*' >tmpfiles &&
+	test_must_be_empty tmpfiles
+'
+
+test_expect_success 'repack -ad cleans up old .tmp-* packs' '
+	git rev-parse HEAD >input &&
+	git pack-objects $objdir/pack/.tmp-1234 <input &&
+	git repack -ad &&
+	find $objdir/pack -name '.tmp-*' >tmpfiles &&
+	test_must_be_empty tmpfiles
 '
 
 test_expect_success 'setup for update-server-info' '
@@ -480,6 +557,127 @@ test_expect_success '-n overrides repack.updateServerInfo=true' '
 	test_server_info_cleanup &&
 	git -C update-server-info -c repack.updateServerInfo=true repack -n &&
 	test_server_info_missing
+'
+
+test_expect_success '--expire-to stores pruned objects (now)' '
+	git init expire-to-now &&
+	(
+		cd expire-to-now &&
+
+		git branch -M main &&
+
+		test_commit base &&
+
+		git checkout -b cruft &&
+		test_commit --no-tag cruft &&
+
+		git rev-list --objects --no-object-names main..cruft >moved.raw &&
+		sort moved.raw >moved.want &&
+
+		git rev-list --all --objects --no-object-names >expect.raw &&
+		sort expect.raw >expect &&
+
+		git checkout main &&
+		git branch -D cruft &&
+		git reflog expire --all --expire=all &&
+
+		git init --bare expired.git &&
+		git repack -d \
+			--cruft --cruft-expiration="now" \
+			--expire-to="expired.git/objects/pack/pack" &&
+
+		expired="$(ls expired.git/objects/pack/pack-*.idx)" &&
+		test_path_is_file "${expired%.idx}.mtimes" &&
+
+		# Since the `--cruft-expiration` is "now", the effective
+		# behavior is to move _all_ unreachable objects out to
+		# the location in `--expire-to`.
+		git show-index <$expired >expired.raw &&
+		cut -d" " -f2 expired.raw | sort >expired.objects &&
+		git rev-list --all --objects --no-object-names \
+			>remaining.objects &&
+
+		# ...in other words, the combined contents of this
+		# repository and expired.git should be the same as the
+		# set of objects we started with.
+		cat expired.objects remaining.objects | sort >actual &&
+		test_cmp expect actual &&
+
+		# The "moved" objects (i.e., those in expired.git)
+		# should be the same as the cruft objects which were
+		# expired in the previous step.
+		test_cmp moved.want expired.objects
+	)
+'
+
+test_expect_success '--expire-to stores pruned objects (5.minutes.ago)' '
+	git init expire-to-5.minutes.ago &&
+	(
+		cd expire-to-5.minutes.ago &&
+
+		git branch -M main &&
+
+		test_commit base &&
+
+		# Create two classes of unreachable objects, one which
+		# is older than 5 minutes (stale), and another which is
+		# newer (recent).
+		for kind in stale recent
+		do
+			git checkout -b $kind main &&
+			test_commit --no-tag $kind || return 1
+		done &&
+
+		git rev-list --objects --no-object-names main..stale >in &&
+		stale="$(git pack-objects $objdir/pack/pack <in)" &&
+		mtime="$(test-tool chmtime --get =-600 $objdir/pack/pack-$stale.pack)" &&
+
+		# expect holds the set of objects we expect to find in
+		# this repository after repacking
+		git rev-list --objects --no-object-names recent >expect.raw &&
+		sort expect.raw >expect &&
+
+		# moved.want holds the set of objects we expect to find
+		# in expired.git
+		git rev-list --objects --no-object-names main..stale >out &&
+		sort out >moved.want &&
+
+		git checkout main &&
+		git branch -D stale recent &&
+		git reflog expire --all --expire=all &&
+		git prune-packed &&
+
+		git init --bare expired.git &&
+		git repack -d \
+			--cruft --cruft-expiration=5.minutes.ago \
+			--expire-to="expired.git/objects/pack/pack" &&
+
+		# Some of the remaining objects in this repository are
+		# unreachable, so use `cat-file --batch-all-objects`
+		# instead of `rev-list` to get their names
+		git cat-file --batch-all-objects --batch-check="%(objectname)" \
+			>remaining.objects &&
+		sort remaining.objects >actual &&
+		test_cmp expect actual &&
+
+		(
+			cd expired.git &&
+
+			expired="$(ls objects/pack/pack-*.mtimes)" &&
+			test-tool pack-mtimes $(basename $expired) >out &&
+			cut -d" " -f1 out | sort >../moved.got &&
+
+			# Ensure that there are as many objects with the
+			# expected mtime as were moved to expired.git.
+			#
+			# In other words, ensure that the recorded
+			# mtimes of any moved objects was written
+			# correctly.
+			grep " $mtime$" out >matching &&
+			test_line_count = $(wc -l <../moved.want) matching
+		) &&
+		test_cmp moved.want moved.got
+	)
 '
 
 test_done

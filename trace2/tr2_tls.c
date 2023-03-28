@@ -1,5 +1,7 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "thread-utils.h"
+#include "trace.h"
 #include "trace2/tr2_tls.h"
 
 /*
@@ -31,10 +33,11 @@ void tr2tls_start_process_clock(void)
 	tr2tls_us_start_process = getnanotime() / 1000;
 }
 
-struct tr2tls_thread_ctx *tr2tls_create_self(const char *thread_name,
+struct tr2tls_thread_ctx *tr2tls_create_self(const char *thread_base_name,
 					     uint64_t us_thread_start)
 {
 	struct tr2tls_thread_ctx *ctx = xcalloc(1, sizeof(*ctx));
+	struct strbuf buf = STRBUF_INIT;
 
 	/*
 	 * Implicitly "tr2tls_push_self()" to capture the thread's start
@@ -47,12 +50,13 @@ struct tr2tls_thread_ctx *tr2tls_create_self(const char *thread_name,
 
 	ctx->thread_id = tr2tls_locked_increment(&tr2_next_thread_id);
 
-	strbuf_init(&ctx->thread_name, 0);
+	strbuf_init(&buf, 0);
 	if (ctx->thread_id)
-		strbuf_addf(&ctx->thread_name, "th%02d:", ctx->thread_id);
-	strbuf_addstr(&ctx->thread_name, thread_name);
-	if (ctx->thread_name.len > TR2_MAX_THREAD_NAME)
-		strbuf_setlen(&ctx->thread_name, TR2_MAX_THREAD_NAME);
+		strbuf_addf(&buf, "th%02d:", ctx->thread_id);
+	strbuf_addstr(&buf, thread_base_name);
+	if (buf.len > TR2_MAX_THREAD_NAME)
+		strbuf_setlen(&buf, TR2_MAX_THREAD_NAME);
+	ctx->thread_name = strbuf_detach(&buf, NULL);
 
 	pthread_setspecific(tr2tls_key, ctx);
 
@@ -69,9 +73,9 @@ struct tr2tls_thread_ctx *tr2tls_get_self(void)
 	ctx = pthread_getspecific(tr2tls_key);
 
 	/*
-	 * If the thread-proc did not call trace2_thread_start(), we won't
-	 * have any TLS data associated with the current thread.  Fix it
-	 * here and silently continue.
+	 * If the current thread's thread-proc did not call
+	 * trace2_thread_start(), then the thread will not have any
+	 * thread-local storage.  Create it now and silently continue.
 	 */
 	if (!ctx)
 		ctx = tr2tls_create_self("unknown", getnanotime() / 1000);
@@ -95,7 +99,7 @@ void tr2tls_unset_self(void)
 
 	pthread_setspecific(tr2tls_key, NULL);
 
-	strbuf_release(&ctx->thread_name);
+	free((char *)ctx->thread_name);
 	free(ctx->array_us_start);
 	free(ctx);
 }
@@ -113,7 +117,7 @@ void tr2tls_pop_self(void)
 	struct tr2tls_thread_ctx *ctx = tr2tls_get_self();
 
 	if (!ctx->nr_open_regions)
-		BUG("no open regions in thread '%s'", ctx->thread_name.buf);
+		BUG("no open regions in thread '%s'", ctx->thread_name);
 
 	ctx->nr_open_regions--;
 }
@@ -178,4 +182,14 @@ int tr2tls_locked_increment(int *p)
 	pthread_mutex_unlock(&tr2tls_mutex);
 
 	return current_value;
+}
+
+void tr2tls_lock(void)
+{
+	pthread_mutex_lock(&tr2tls_mutex);
+}
+
+void tr2tls_unlock(void)
+{
+	pthread_mutex_unlock(&tr2tls_mutex);
 }

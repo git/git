@@ -1,7 +1,6 @@
 #ifndef WORKTREE_H
 #define WORKTREE_H
 
-#include "cache.h"
 #include "refs.h"
 
 struct strbuf;
@@ -150,6 +149,12 @@ const struct worktree *find_shared_symref(struct worktree **worktrees,
 					  const char *target);
 
 /*
+ * Returns true if a symref points to a ref in a worktree.
+ */
+int is_shared_symref(const struct worktree *wt,
+		     const char *symref, const char *target);
+
+/*
  * Similar to head_ref() for all HEADs _except_ one from the current
  * worktree, which is covered by head_ref().
  */
@@ -165,16 +170,6 @@ int is_worktree_being_bisected(const struct worktree *wt, const char *target);
 const char *worktree_git_path(const struct worktree *wt,
 			      const char *fmt, ...)
 	__attribute__((format (printf, 2, 3)));
-
-/*
- * Parse a worktree ref (i.e. with prefix main-worktree/ or
- * worktrees/) and return the position of the worktree's name and
- * length (or NULL and zero if it's main worktree), and ref.
- *
- * All name, name_length and ref arguments could be NULL.
- */
-int parse_worktree_ref(const char *worktree_ref, const char **name,
-		       int *name_length, const char **ref);
 
 /*
  * Return a refname suitable for access from the current ref store.

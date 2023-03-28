@@ -1,5 +1,6 @@
 #include "git-compat-util.h"
 #include "test-tool.h"
+#include "hex.h"
 #include "strbuf.h"
 #include "object-store.h"
 #include "packfile.h"

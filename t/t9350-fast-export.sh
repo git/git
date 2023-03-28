@@ -268,6 +268,7 @@ test_expect_success 'signed-tags=warn-strip' '
 
 test_expect_success 'setup submodule' '
 
+	test_config_global protocol.file.allow always &&
 	git checkout -f main &&
 	mkdir sub &&
 	(
@@ -293,6 +294,7 @@ test_expect_success 'setup submodule' '
 
 test_expect_success 'submodule fast-export | fast-import' '
 
+	test_config_global protocol.file.allow always &&
 	SUBENT1=$(git ls-tree main^ sub) &&
 	SUBENT2=$(git ls-tree main sub) &&
 	rm -rf new &&
@@ -371,7 +373,7 @@ EOF
 
 test_expect_success 'cope with tagger-less tags' '
 
-	TAG=$(git hash-object -t tag -w tag-content) &&
+	TAG=$(git hash-object --literally -t tag -w tag-content) &&
 	git update-ref refs/tags/sonnenschein $TAG &&
 	git fast-export -C -C --signed-tags=strip --all > output &&
 	test $(grep -c "^tag " output) = 4 &&

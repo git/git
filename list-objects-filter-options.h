@@ -1,9 +1,10 @@
 #ifndef LIST_OBJECTS_FILTER_OPTIONS_H
 #define LIST_OBJECTS_FILTER_OPTIONS_H
 
-#include "cache.h"
+#include "object.h"
 #include "parse-options.h"
 #include "string-list.h"
+#include "strbuf.h"
 
 /*
  * The list of defined filters for list-objects.
@@ -35,7 +36,7 @@ struct list_objects_filter_options {
 	 * To get the raw filter spec given by the user, use the result of
 	 * list_objects_filter_spec().
 	 */
-	struct string_list filter_spec;
+	struct strbuf filter_spec;
 
 	/*
 	 * 'choice' is determined by parsing the filter-spec.  This indicates
@@ -68,6 +69,9 @@ struct list_objects_filter_options {
 	 * END choice-specific parsed values.
 	 */
 };
+
+#define LIST_OBJECTS_FILTER_INIT { .filter_spec = STRBUF_INIT }
+void list_objects_filter_init(struct list_objects_filter_options *filter_options);
 
 /*
  * Parse value of the argument to the "filter" keyword.
@@ -108,27 +112,13 @@ void parse_list_objects_filter(
  * The opt->value to opt_parse_list_objects_filter() is either a
  * "struct list_objects_filter_option *" when using
  * OPT_PARSE_LIST_OBJECTS_FILTER().
- *
- * Or, if using no "struct option" field is used by the callback,
- * except the "defval" which is expected to be an "opt_lof_init"
- * function, which is called with the "opt->value" and must return a
- * pointer to the ""struct list_objects_filter_option *" to be used.
- *
- * The OPT_PARSE_LIST_OBJECTS_FILTER_INIT() can be used e.g. the
- * "struct list_objects_filter_option" is embedded in a "struct
- * rev_info", which the "defval" could be tasked with lazily
- * initializing. See cmd_pack_objects() for an example.
  */
 int opt_parse_list_objects_filter(const struct option *opt,
 				  const char *arg, int unset);
-typedef struct list_objects_filter_options *(*opt_lof_init)(void *);
-#define OPT_PARSE_LIST_OBJECTS_FILTER_INIT(fo, init) \
-	{ OPTION_CALLBACK, 0, "filter", (fo), N_("args"), \
-	  N_("object filtering"), 0, opt_parse_list_objects_filter, \
-	  (intptr_t)(init) }
 
 #define OPT_PARSE_LIST_OBJECTS_FILTER(fo) \
-	OPT_PARSE_LIST_OBJECTS_FILTER_INIT((fo), NULL)
+	OPT_CALLBACK(0, "filter", (fo), N_("args"), \
+		     N_("object filtering"), opt_parse_list_objects_filter)
 
 /*
  * Translates abbreviated numbers in the filter's filter_spec into their

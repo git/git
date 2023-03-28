@@ -115,6 +115,13 @@ If no such configuration option has been set, `warn` will be used.
 <patch>::
 	The patch extracted from e-mail.
 
+CONFIGURATION
+-------------
+
+include::includes/cmd-config-section-all.txt[]
+
+include::config/mailinfo.txt[]
+
 GIT
 ---
 Part of the linkgit:git[1] suite

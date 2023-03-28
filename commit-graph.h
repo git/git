@@ -1,7 +1,6 @@
 #ifndef COMMIT_GRAPH_H
 #define COMMIT_GRAPH_H
 
-#include "git-compat-util.h"
 #include "object-store.h"
 #include "oidset.h"
 
@@ -39,6 +38,21 @@ int open_commit_graph(const char *graph_file, int *fd, struct stat *st);
  * See parse_commit_buffer() for the fallback after this call.
  */
 int parse_commit_in_graph(struct repository *r, struct commit *item);
+
+/*
+ * Fills `*pos` with the graph position of `c`, and returns 1 if `c` is
+ * found in the commit-graph belonging to `r`, or 0 otherwise.
+ * Initializes the commit-graph belonging to `r` if it hasn't been
+ * already.
+ *
+ * Note: this is a low-level helper that does not alter any slab data
+ * associated with `c`. Useful in circumstances where the slab data is
+ * already being modified (e.g., writing the commit-graph itself).
+ *
+ * In most cases, callers should use `parse_commit_in_graph()` instead.
+ */
+int repo_find_commit_pos_in_graph(struct repository *r, struct commit *c,
+				  uint32_t *pos);
 
 /*
  * Look up the given commit ID in the commit-graph. This will only return a
@@ -93,7 +107,12 @@ struct commit_graph *load_commit_graph_one_fd_st(struct repository *r,
 						 struct object_directory *odb);
 struct commit_graph *read_commit_graph_one(struct repository *r,
 					   struct object_directory *odb);
-struct commit_graph *parse_commit_graph(struct repository *r,
+
+/*
+ * Callers should initialize the repo_settings with prepare_repo_settings()
+ * prior to calling parse_commit_graph().
+ */
+struct commit_graph *parse_commit_graph(struct repo_settings *s,
 					void *graph_map, size_t graph_size);
 
 /*

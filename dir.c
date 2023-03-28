@@ -5,7 +5,8 @@
  * Copyright (C) Linus Torvalds, 2005-2006
  *		 Junio Hamano, 2005-2006
  */
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "config.h"
 #include "dir.h"
 #include "object-store.h"
@@ -655,10 +656,10 @@ void parse_path_pattern(const char **pattern,
 	*patternlen = len;
 }
 
-int pl_hashmap_cmp(const void *unused_cmp_data,
+int pl_hashmap_cmp(const void *cmp_data UNUSED,
 		   const struct hashmap_entry *a,
 		   const struct hashmap_entry *b,
-		   const void *key)
+		   const void *key UNUSED)
 {
 	const struct pattern_entry *ee1 =
 			container_of(a, struct pattern_entry, ent);
@@ -669,9 +670,7 @@ int pl_hashmap_cmp(const void *unused_cmp_data,
 			 ? ee1->patternlen
 			 : ee2->patternlen;
 
-	if (ignore_case)
-		return strncasecmp(ee1->pattern, ee2->pattern, min_len);
-	return strncmp(ee1->pattern, ee2->pattern, min_len);
+	return fspathncmp(ee1->pattern, ee2->pattern, min_len);
 }
 
 static char *dup_and_filter_pattern(const char *pattern)
@@ -729,6 +728,13 @@ static void add_pattern_to_hashsets(struct pattern_list *pl, struct path_pattern
 	if (given->patternlen < 2 ||
 	    *given->pattern != '/' ||
 	    strstr(given->pattern, "**")) {
+		/* Not a cone pattern. */
+		warning(_("unrecognized pattern: '%s'"), given->pattern);
+		goto clear_hashmaps;
+	}
+
+	if (!(given->flags & PATTERN_FLAG_MUSTBEDIR) &&
+	    strcmp(given->pattern, "/*")) {
 		/* Not a cone pattern. */
 		warning(_("unrecognized pattern: '%s'"), given->pattern);
 		goto clear_hashmaps;
@@ -1185,7 +1191,7 @@ struct pattern_list *add_pattern_list(struct dir_struct *dir,
 	struct pattern_list *pl;
 	struct exclude_list_group *group;
 
-	group = &dir->exclude_list_group[group_type];
+	group = &dir->internal.exclude_list_group[group_type];
 	ALLOC_GROW(group->pl, group->nr + 1, group->alloc);
 	pl = &group->pl[group->nr++];
 	memset(pl, 0, sizeof(*pl));
@@ -1206,7 +1212,7 @@ static void add_patterns_from_file_1(struct dir_struct *dir, const char *fname,
 	 * differently when dir->untracked is non-NULL.
 	 */
 	if (!dir->untracked)
-		dir->unmanaged_exclude_files++;
+		dir->internal.unmanaged_exclude_files++;
 	pl = add_pattern_list(dir, EXC_FILE, fname);
 	if (add_patterns(fname, "", 0, pl, NULL, 0, oid_stat) < 0)
 		die(_("cannot use %s as an exclude file"), fname);
@@ -1214,7 +1220,7 @@ static void add_patterns_from_file_1(struct dir_struct *dir, const char *fname,
 
 void add_patterns_from_file(struct dir_struct *dir, const char *fname)
 {
-	dir->unmanaged_exclude_files++; /* see validate_untracked_cache() */
+	dir->internal.unmanaged_exclude_files++; /* see validate_untracked_cache() */
 	add_patterns_from_file_1(dir, fname, NULL);
 }
 
@@ -1244,8 +1250,7 @@ int match_basename(const char *basename, int basenamelen,
 
 int match_pathname(const char *pathname, int pathlen,
 		   const char *base, int baselen,
-		   const char *pattern, int prefix, int patternlen,
-		   unsigned flags)
+		   const char *pattern, int prefix, int patternlen)
 {
 	const char *name;
 	int namelen;
@@ -1347,8 +1352,7 @@ static struct path_pattern *last_matching_pattern_from_list(const char *pathname
 		if (match_pathname(pathname, pathlen,
 				   pattern->base,
 				   pattern->baselen ? pattern->baselen - 1 : 0,
-				   exclude, prefix, pattern->patternlen,
-				   pattern->flags)) {
+				   exclude, prefix, pattern->patternlen)) {
 			res = pattern;
 			break;
 		}
@@ -1516,7 +1520,7 @@ static struct path_pattern *last_matching_pattern_from_lists(
 	struct exclude_list_group *group;
 	struct path_pattern *pattern;
 	for (i = EXC_CMDL; i <= EXC_FILE; i++) {
-		group = &dir->exclude_list_group[i];
+		group = &dir->internal.exclude_list_group[i];
 		for (j = group->nr - 1; j >= 0; j--) {
 			pattern = last_matching_pattern_from_list(
 				pathname, pathlen, basename, dtype_p,
@@ -1542,20 +1546,20 @@ static void prep_exclude(struct dir_struct *dir,
 	struct untracked_cache_dir *untracked;
 	int current;
 
-	group = &dir->exclude_list_group[EXC_DIRS];
+	group = &dir->internal.exclude_list_group[EXC_DIRS];
 
 	/*
 	 * Pop the exclude lists from the EXCL_DIRS exclude_list_group
 	 * which originate from directories not in the prefix of the
 	 * path being checked.
 	 */
-	while ((stk = dir->exclude_stack) != NULL) {
+	while ((stk = dir->internal.exclude_stack) != NULL) {
 		if (stk->baselen <= baselen &&
-		    !strncmp(dir->basebuf.buf, base, stk->baselen))
+		    !strncmp(dir->internal.basebuf.buf, base, stk->baselen))
 			break;
-		pl = &group->pl[dir->exclude_stack->exclude_ix];
-		dir->exclude_stack = stk->prev;
-		dir->pattern = NULL;
+		pl = &group->pl[dir->internal.exclude_stack->exclude_ix];
+		dir->internal.exclude_stack = stk->prev;
+		dir->internal.pattern = NULL;
 		free((char *)pl->src); /* see strbuf_detach() below */
 		clear_pattern_list(pl);
 		free(stk);
@@ -1563,7 +1567,7 @@ static void prep_exclude(struct dir_struct *dir,
 	}
 
 	/* Skip traversing into sub directories if the parent is excluded */
-	if (dir->pattern)
+	if (dir->internal.pattern)
 		return;
 
 	/*
@@ -1571,12 +1575,12 @@ static void prep_exclude(struct dir_struct *dir,
 	 * memset(dir, 0, sizeof(*dir)) before use. Changing all of
 	 * them seems lots of work for little benefit.
 	 */
-	if (!dir->basebuf.buf)
-		strbuf_init(&dir->basebuf, PATH_MAX);
+	if (!dir->internal.basebuf.buf)
+		strbuf_init(&dir->internal.basebuf, PATH_MAX);
 
 	/* Read from the parent directories and push them down. */
 	current = stk ? stk->baselen : -1;
-	strbuf_setlen(&dir->basebuf, current < 0 ? 0 : current);
+	strbuf_setlen(&dir->internal.basebuf, current < 0 ? 0 : current);
 	if (dir->untracked)
 		untracked = stk ? stk->ucd : dir->untracked->root;
 	else
@@ -1596,32 +1600,33 @@ static void prep_exclude(struct dir_struct *dir,
 				die("oops in prep_exclude");
 			cp++;
 			untracked =
-				lookup_untracked(dir->untracked, untracked,
+				lookup_untracked(dir->untracked,
+						 untracked,
 						 base + current,
 						 cp - base - current);
 		}
-		stk->prev = dir->exclude_stack;
+		stk->prev = dir->internal.exclude_stack;
 		stk->baselen = cp - base;
 		stk->exclude_ix = group->nr;
 		stk->ucd = untracked;
 		pl = add_pattern_list(dir, EXC_DIRS, NULL);
-		strbuf_add(&dir->basebuf, base + current, stk->baselen - current);
-		assert(stk->baselen == dir->basebuf.len);
+		strbuf_add(&dir->internal.basebuf, base + current, stk->baselen - current);
+		assert(stk->baselen == dir->internal.basebuf.len);
 
 		/* Abort if the directory is excluded */
 		if (stk->baselen) {
 			int dt = DT_DIR;
-			dir->basebuf.buf[stk->baselen - 1] = 0;
-			dir->pattern = last_matching_pattern_from_lists(dir,
+			dir->internal.basebuf.buf[stk->baselen - 1] = 0;
+			dir->internal.pattern = last_matching_pattern_from_lists(dir,
 									istate,
-				dir->basebuf.buf, stk->baselen - 1,
-				dir->basebuf.buf + current, &dt);
-			dir->basebuf.buf[stk->baselen - 1] = '/';
-			if (dir->pattern &&
-			    dir->pattern->flags & PATTERN_FLAG_NEGATIVE)
-				dir->pattern = NULL;
-			if (dir->pattern) {
-				dir->exclude_stack = stk;
+				dir->internal.basebuf.buf, stk->baselen - 1,
+				dir->internal.basebuf.buf + current, &dt);
+			dir->internal.basebuf.buf[stk->baselen - 1] = '/';
+			if (dir->internal.pattern &&
+			    dir->internal.pattern->flags & PATTERN_FLAG_NEGATIVE)
+				dir->internal.pattern = NULL;
+			if (dir->internal.pattern) {
+				dir->internal.exclude_stack = stk;
 				return;
 			}
 		}
@@ -1644,15 +1649,15 @@ static void prep_exclude(struct dir_struct *dir,
 		      */
 		     !is_null_oid(&untracked->exclude_oid))) {
 			/*
-			 * dir->basebuf gets reused by the traversal, but we
-			 * need fname to remain unchanged to ensure the src
-			 * member of each struct path_pattern correctly
+			 * dir->internal.basebuf gets reused by the traversal,
+			 * but we need fname to remain unchanged to ensure the
+			 * src member of each struct path_pattern correctly
 			 * back-references its source file.  Other invocations
 			 * of add_pattern_list provide stable strings, so we
 			 * strbuf_detach() and free() here in the caller.
 			 */
 			struct strbuf sb = STRBUF_INIT;
-			strbuf_addbuf(&sb, &dir->basebuf);
+			strbuf_addbuf(&sb, &dir->internal.basebuf);
 			strbuf_addstr(&sb, dir->exclude_per_dir);
 			pl->src = strbuf_detach(&sb, NULL);
 			add_patterns(pl->src, pl->src, stk->baselen, pl, istate,
@@ -1678,10 +1683,10 @@ static void prep_exclude(struct dir_struct *dir,
 			invalidate_gitignore(dir->untracked, untracked);
 			oidcpy(&untracked->exclude_oid, &oid_stat.oid);
 		}
-		dir->exclude_stack = stk;
+		dir->internal.exclude_stack = stk;
 		current = stk->baselen;
 	}
-	strbuf_setlen(&dir->basebuf, baselen);
+	strbuf_setlen(&dir->internal.basebuf, baselen);
 }
 
 /*
@@ -1701,8 +1706,8 @@ struct path_pattern *last_matching_pattern(struct dir_struct *dir,
 
 	prep_exclude(dir, istate, pathname, basename-pathname);
 
-	if (dir->pattern)
-		return dir->pattern;
+	if (dir->internal.pattern)
+		return dir->internal.pattern;
 
 	return last_matching_pattern_from_lists(dir, istate, pathname, pathlen,
 			basename, dtype_p);
@@ -1739,7 +1744,7 @@ static struct dir_entry *dir_add_name(struct dir_struct *dir,
 	if (index_file_exists(istate, pathname, len, ignore_case))
 		return NULL;
 
-	ALLOC_GROW(dir->entries, dir->nr+1, dir->alloc);
+	ALLOC_GROW(dir->entries, dir->nr+1, dir->internal.alloc);
 	return dir->entries[dir->nr++] = dir_entry_new(pathname, len);
 }
 
@@ -1750,7 +1755,7 @@ struct dir_entry *dir_add_ignored(struct dir_struct *dir,
 	if (!index_name_is_other(istate, pathname, len))
 		return NULL;
 
-	ALLOC_GROW(dir->ignored, dir->ignored_nr+1, dir->ignored_alloc);
+	ALLOC_GROW(dir->ignored, dir->ignored_nr+1, dir->internal.ignored_alloc);
 	return dir->ignored[dir->ignored_nr++] = dir_entry_new(pathname, len);
 }
 
@@ -1861,7 +1866,7 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 	 */
 	enum path_treatment state;
 	int matches_how = 0;
-	int nested_repo = 0, check_only, stop_early;
+	int check_only, stop_early;
 	int old_ignored_nr, old_untracked_nr;
 	/* The "len-1" is to strip the final '/' */
 	enum exist_status status = directory_exists_in_index(istate, dirname, len-1);
@@ -1893,16 +1898,37 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 
 	if ((dir->flags & DIR_SKIP_NESTED_GIT) ||
 		!(dir->flags & DIR_NO_GITLINKS)) {
+		/*
+		 * Determine if `dirname` is a nested repo by confirming that:
+		 * 1) we are in a nonbare repository, and
+		 * 2) `dirname` is not an immediate parent of `the_repository->gitdir`,
+		 *    which could occur if the git_dir or worktree location was
+		 *    manually configured by the user; see t2205 testcases 1-3 for
+		 *    examples where this matters
+		 */
+		int nested_repo;
 		struct strbuf sb = STRBUF_INIT;
 		strbuf_addstr(&sb, dirname);
 		nested_repo = is_nonbare_repository_dir(&sb);
+
+		if (nested_repo) {
+			char *real_dirname, *real_gitdir;
+			strbuf_addstr(&sb, ".git");
+			real_dirname = real_pathdup(sb.buf, 1);
+			real_gitdir = real_pathdup(the_repository->gitdir, 1);
+
+			nested_repo = !!strcmp(real_dirname, real_gitdir);
+			free(real_gitdir);
+			free(real_dirname);
+		}
 		strbuf_release(&sb);
-	}
-	if (nested_repo) {
-		if ((dir->flags & DIR_SKIP_NESTED_GIT) ||
-		    (matches_how == MATCHED_RECURSIVELY_LEADING_PATHSPEC))
-			return path_none;
-		return excluded ? path_excluded : path_untracked;
+
+		if (nested_repo) {
+			if ((dir->flags & DIR_SKIP_NESTED_GIT) ||
+				(matches_how == MATCHED_RECURSIVELY_LEADING_PATHSPEC))
+				return path_none;
+			return excluded ? path_excluded : path_untracked;
+		}
 	}
 
 	if (!(dir->flags & DIR_SHOW_OTHER_DIRECTORIES)) {
@@ -2545,7 +2571,7 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 
 	if (open_cached_dir(&cdir, dir, untracked, istate, &path, check_only))
 		goto out;
-	dir->visited_directories++;
+	dir->internal.visited_directories++;
 
 	if (untracked)
 		untracked->check_only = !!check_only;
@@ -2554,7 +2580,7 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 		/* check how the file or directory should be treated */
 		state = treat_path(dir, untracked, &cdir, istate, &path,
 				   baselen, pathspec);
-		dir->visited_paths++;
+		dir->internal.visited_paths++;
 
 		if (state > dir_state)
 			dir_state = state;
@@ -2562,7 +2588,8 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 		/* recurse into subdir if instructed by treat_path */
 		if (state == path_recurse) {
 			struct untracked_cache_dir *ud;
-			ud = lookup_untracked(dir->untracked, untracked,
+			ud = lookup_untracked(dir->untracked,
+					      untracked,
 					      path.buf + baselen,
 					      path.len - baselen);
 			subdir_state =
@@ -2822,7 +2849,7 @@ static struct untracked_cache_dir *validate_untracked_cache(struct dir_struct *d
 	 * condition also catches running setup_standard_excludes()
 	 * before setting dir->untracked!
 	 */
-	if (dir->unmanaged_exclude_files)
+	if (dir->internal.unmanaged_exclude_files)
 		return NULL;
 
 	/*
@@ -2851,7 +2878,7 @@ static struct untracked_cache_dir *validate_untracked_cache(struct dir_struct *d
 	 * EXC_CMDL is not considered in the cache. If people set it,
 	 * skip the cache.
 	 */
-	if (dir->exclude_list_group[EXC_CMDL].nr)
+	if (dir->internal.exclude_list_group[EXC_CMDL].nr)
 		return NULL;
 
 	if (!ident_in_untracked(dir->untracked)) {
@@ -2911,15 +2938,15 @@ static struct untracked_cache_dir *validate_untracked_cache(struct dir_struct *d
 
 	/* Validate $GIT_DIR/info/exclude and core.excludesfile */
 	root = dir->untracked->root;
-	if (!oideq(&dir->ss_info_exclude.oid,
+	if (!oideq(&dir->internal.ss_info_exclude.oid,
 		   &dir->untracked->ss_info_exclude.oid)) {
 		invalidate_gitignore(dir->untracked, root);
-		dir->untracked->ss_info_exclude = dir->ss_info_exclude;
+		dir->untracked->ss_info_exclude = dir->internal.ss_info_exclude;
 	}
-	if (!oideq(&dir->ss_excludes_file.oid,
+	if (!oideq(&dir->internal.ss_excludes_file.oid,
 		   &dir->untracked->ss_excludes_file.oid)) {
 		invalidate_gitignore(dir->untracked, root);
-		dir->untracked->ss_excludes_file = dir->ss_excludes_file;
+		dir->untracked->ss_excludes_file = dir->internal.ss_excludes_file;
 	}
 
 	/* Make sure this directory is not dropped out at saving phase */
@@ -2945,9 +2972,9 @@ static void emit_traversal_statistics(struct dir_struct *dir,
 	}
 
 	trace2_data_intmax("read_directory", repo,
-			   "directories-visited", dir->visited_directories);
+			   "directories-visited", dir->internal.visited_directories);
 	trace2_data_intmax("read_directory", repo,
-			   "paths-visited", dir->visited_paths);
+			   "paths-visited", dir->internal.visited_paths);
 
 	if (!dir->untracked)
 		return;
@@ -2969,8 +2996,8 @@ int read_directory(struct dir_struct *dir, struct index_state *istate,
 	struct untracked_cache_dir *untracked;
 
 	trace2_region_enter("dir", "read_directory", istate->repo);
-	dir->visited_paths = 0;
-	dir->visited_directories = 0;
+	dir->internal.visited_paths = 0;
+	dir->internal.visited_directories = 0;
 
 	if (has_symlink_leading_path(path, len)) {
 		trace2_region_leave("dir", "read_directory", istate->repo);
@@ -3318,14 +3345,14 @@ void setup_standard_excludes(struct dir_struct *dir)
 		excludes_file = xdg_config_home("ignore");
 	if (excludes_file && !access_or_warn(excludes_file, R_OK, 0))
 		add_patterns_from_file_1(dir, excludes_file,
-					 dir->untracked ? &dir->ss_excludes_file : NULL);
+					 dir->untracked ? &dir->internal.ss_excludes_file : NULL);
 
 	/* per repository user preference */
 	if (startup_info->have_repository) {
 		const char *path = git_path_info_exclude();
 		if (!access_or_warn(path, R_OK, 0))
 			add_patterns_from_file_1(dir, path,
-						 dir->untracked ? &dir->ss_info_exclude : NULL);
+						 dir->untracked ? &dir->internal.ss_info_exclude : NULL);
 	}
 }
 
@@ -3381,7 +3408,7 @@ void dir_clear(struct dir_struct *dir)
 	struct dir_struct new = DIR_INIT;
 
 	for (i = EXC_CMDL; i <= EXC_FILE; i++) {
-		group = &dir->exclude_list_group[i];
+		group = &dir->internal.exclude_list_group[i];
 		for (j = 0; j < group->nr; j++) {
 			pl = &group->pl[j];
 			if (i == EXC_DIRS)
@@ -3398,13 +3425,13 @@ void dir_clear(struct dir_struct *dir)
 	free(dir->ignored);
 	free(dir->entries);
 
-	stk = dir->exclude_stack;
+	stk = dir->internal.exclude_stack;
 	while (stk) {
 		struct exclude_stack *prev = stk->prev;
 		free(stk);
 		stk = prev;
 	}
-	strbuf_release(&dir->basebuf);
+	strbuf_release(&dir->internal.basebuf);
 
 	memcpy(dir, &new, sizeof(*dir));
 }
@@ -3564,8 +3591,12 @@ static void free_untracked(struct untracked_cache_dir *ucd)
 
 void free_untracked_cache(struct untracked_cache *uc)
 {
-	if (uc)
-		free_untracked(uc->root);
+	if (!uc)
+		return;
+
+	free(uc->exclude_per_dir_to_free);
+	strbuf_release(&uc->ident);
+	free_untracked(uc->root);
 	free(uc);
 }
 
@@ -3722,7 +3753,7 @@ struct untracked_cache *read_untracked_extension(const void *data, unsigned long
 		      next + offset + hashsz);
 	uc->dir_flags = get_be32(next + ouc_offset(dir_flags));
 	exclude_per_dir = (const char *)next + exclude_per_dir_offset;
-	uc->exclude_per_dir = xstrdup(exclude_per_dir);
+	uc->exclude_per_dir = uc->exclude_per_dir_to_free = xstrdup(exclude_per_dir);
 	/* NUL after exclude_per_dir is covered by sizeof(*ouc) */
 	next += exclude_per_dir_offset + strlen(exclude_per_dir) + 1;
 	if (next >= end)

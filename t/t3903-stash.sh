@@ -9,7 +9,7 @@ GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
-. $TEST_DIRECTORY/lib-unique-files.sh
+. "$TEST_DIRECTORY"/lib-unique-files.sh
 
 test_expect_success 'usage on cmd and subcommand invalid option' '
 	test_expect_code 129 git stash --invalid-option 2>usage &&
@@ -25,7 +25,7 @@ test_expect_success 'usage on main command -h emits a summary of subcommands' '
 	grep -F "or: git stash show" usage
 '
 
-test_expect_failure 'usage for subcommands should emit subcommand usage' '
+test_expect_success 'usage for subcommands should emit subcommand usage' '
 	test_expect_code 129 git stash push -h >usage &&
 	grep -F "usage: git stash [push" usage
 '

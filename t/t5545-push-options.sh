@@ -119,6 +119,7 @@ test_expect_success 'push options and submodules' '
 	test_commit -C parent one &&
 	git -C parent push --mirror up &&
 
+	test_config_global protocol.file.allow always &&
 	git -C parent submodule add ../upstream workbench &&
 	git -C parent/workbench remote add up ../../upstream &&
 	git -C parent commit -m "add submodule" &&

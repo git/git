@@ -82,9 +82,9 @@ When the config key `extensions.preciousObjects` is set to `true`,
 objects in the repository MUST NOT be deleted (e.g., by `git-prune` or
 `git repack -d`).
 
-==== `partialclone`
+==== `partialClone`
 
-When the config key `extensions.partialclone` is set, it indicates
+When the config key `extensions.partialClone` is set, it indicates
 that the repo was created with a partial clone (or later performed
 a partial fetch) and that the remote may have omitted sending
 certain unwanted objects.  Such a remote is called a "promisor remote"

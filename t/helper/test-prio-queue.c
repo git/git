@@ -1,8 +1,7 @@
 #include "test-tool.h"
-#include "cache.h"
 #include "prio-queue.h"
 
-static int intcmp(const void *va, const void *vb, void *data)
+static int intcmp(const void *va, const void *vb, void *data UNUSED)
 {
 	const int *a = va, *b = vb;
 	return *a - *b;

@@ -25,8 +25,12 @@ cat >.vscode/settings.json.new <<\EOF ||
         "editor.detectIndentation": false,
         "editor.insertSpaces": false,
         "editor.tabSize": 8,
-        "editor.wordWrap": "wordWrapColumn",
-        "editor.wordWrapColumn": 80,
+        "files.trimTrailingWhitespace": true
+    },
+    "[txt]": {
+        "editor.detectIndentation": false,
+        "editor.insertSpaces": false,
+        "editor.tabSize": 8,
         "files.trimTrailingWhitespace": true
     },
     "files.associations": {

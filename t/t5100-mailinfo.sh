@@ -201,13 +201,13 @@ test_expect_success 'mailinfo -b double [PATCH]' '
 	test z"$subj" = z"Subject: message"
 '
 
-test_expect_failure 'mailinfo -b trailing [PATCH]' '
+test_expect_success 'mailinfo -b trailing [PATCH]' '
 	subj="$(echo "Subject: [other] [PATCH] message" |
 		git mailinfo -b /dev/null /dev/null)" &&
 	test z"$subj" = z"Subject: [other] message"
 '
 
-test_expect_failure 'mailinfo -b separated double [PATCH]' '
+test_expect_success 'mailinfo -b separated double [PATCH]' '
 	subj="$(echo "Subject: [PATCH] [other] [PATCH] message" |
 		git mailinfo -b /dev/null /dev/null)" &&
 	test z"$subj" = z"Subject: [other] message"

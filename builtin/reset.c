@@ -7,9 +7,10 @@
  *
  * Copyright (c) 2005, 2006 Linus Torvalds and Junio C Hamano
  */
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
+#define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "config.h"
+#include "hex.h"
 #include "lockfile.h"
 #include "tag.h"
 #include "object.h"
@@ -26,6 +27,7 @@
 #include "submodule.h"
 #include "submodule-config.h"
 #include "dir.h"
+#include "add-interactive.h"
 
 #define REFRESH_INDEX_DELAY_WARNING_IN_MS (2 * 1000)
 
@@ -73,16 +75,18 @@ static int reset_index(const char *ref, const struct object_id *oid, int reset_t
 	case HARD:
 		opts.update = 1;
 		opts.reset = UNPACK_RESET_OVERWRITE_UNTRACKED;
+		opts.skip_cache_tree_update = 1;
 		break;
 	case MIXED:
 		opts.reset = UNPACK_RESET_PROTECT_UNTRACKED;
+		opts.skip_cache_tree_update = 1;
 		/* but opts.update=0, so working tree not updated */
 		break;
 	default:
 		BUG("invalid reset_type passed to reset_index");
 	}
 
-	read_cache_unmerged();
+	repo_read_index_unmerged(the_repository);
 
 	if (reset_type == KEEP) {
 		struct object_id head_oid;
@@ -131,7 +135,8 @@ static void print_new_head_line(struct commit *commit)
 }
 
 static void update_index_from_diff(struct diff_queue_struct *q,
-		struct diff_options *opt, void *data)
+				   struct diff_options *opt UNUSED,
+				   void *data)
 {
 	int i;
 	int intent_to_add = *(int *)data;
@@ -143,7 +148,7 @@ static void update_index_from_diff(struct diff_queue_struct *q,
 		struct cache_entry *ce;
 
 		if (!is_in_reset_tree && !intent_to_add) {
-			remove_file_from_cache(one->path);
+			remove_file_from_index(&the_index, one->path);
 			continue;
 		}
 
@@ -158,8 +163,8 @@ static void update_index_from_diff(struct diff_queue_struct *q,
 		 * if this entry is outside the sparse cone - this is necessary
 		 * to properly construct the reset sparse directory.
 		 */
-		pos = cache_name_pos(one->path, strlen(one->path));
-		if ((pos >= 0 && ce_skip_worktree(active_cache[pos])) ||
+		pos = index_name_pos(&the_index, one->path, strlen(one->path));
+		if ((pos >= 0 && ce_skip_worktree(the_index.cache[pos])) ||
 		    (pos < 0 && !path_in_sparse_checkout(one->path, &the_index)))
 			ce->ce_flags |= CE_SKIP_WORKTREE;
 
@@ -170,90 +175,9 @@ static void update_index_from_diff(struct diff_queue_struct *q,
 			ce->ce_flags |= CE_INTENT_TO_ADD;
 			set_object_name_for_intent_to_add_entry(ce);
 		}
-		add_cache_entry(ce, ADD_CACHE_OK_TO_ADD | ADD_CACHE_OK_TO_REPLACE);
+		add_index_entry(&the_index, ce,
+				ADD_CACHE_OK_TO_ADD | ADD_CACHE_OK_TO_REPLACE);
 	}
-}
-
-static int pathspec_needs_expanded_index(const struct pathspec *pathspec)
-{
-	unsigned int i, pos;
-	int res = 0;
-	char *skip_worktree_seen = NULL;
-
-	/*
-	 * When using a magic pathspec, assume for the sake of simplicity that
-	 * the index needs to be expanded to match all matchable files.
-	 */
-	if (pathspec->magic)
-		return 1;
-
-	for (i = 0; i < pathspec->nr; i++) {
-		struct pathspec_item item = pathspec->items[i];
-
-		/*
-		 * If the pathspec item has a wildcard, the index should be expanded
-		 * if the pathspec has the possibility of matching a subset of entries inside
-		 * of a sparse directory (but not the entire directory).
-		 *
-		 * If the pathspec item is a literal path, the index only needs to be expanded
-		 * if a) the pathspec isn't in the sparse checkout cone (to make sure we don't
-		 * expand for in-cone files) and b) it doesn't match any sparse directories
-		 * (since we can reset whole sparse directories without expanding them).
-		 */
-		if (item.nowildcard_len < item.len) {
-			/*
-			 * Special case: if the pattern is a path inside the cone
-			 * followed by only wildcards, the pattern cannot match
-			 * partial sparse directories, so we know we don't need to
-			 * expand the index.
-			 *
-			 * Examples:
-			 * - in-cone/foo***: doesn't need expanded index
-			 * - not-in-cone/bar*: may need expanded index
-			 * - **.c: may need expanded index
-			 */
-			if (strspn(item.original + item.nowildcard_len, "*") == item.len - item.nowildcard_len &&
-			    path_in_cone_mode_sparse_checkout(item.original, &the_index))
-				continue;
-
-			for (pos = 0; pos < active_nr; pos++) {
-				struct cache_entry *ce = active_cache[pos];
-
-				if (!S_ISSPARSEDIR(ce->ce_mode))
-					continue;
-
-				/*
-				 * If the pre-wildcard length is longer than the sparse
-				 * directory name and the sparse directory is the first
-				 * component of the pathspec, need to expand the index.
-				 */
-				if (item.nowildcard_len > ce_namelen(ce) &&
-				    !strncmp(item.original, ce->name, ce_namelen(ce))) {
-					res = 1;
-					break;
-				}
-
-				/*
-				 * If the pre-wildcard length is shorter than the sparse
-				 * directory and the pathspec does not match the whole
-				 * directory, need to expand the index.
-				 */
-				if (!strncmp(item.original, ce->name, item.nowildcard_len) &&
-				    wildmatch(item.original, ce->name, 0)) {
-					res = 1;
-					break;
-				}
-			}
-		} else if (!path_in_cone_mode_sparse_checkout(item.original, &the_index) &&
-			   !matches_skip_worktree(pathspec, i, &skip_worktree_seen))
-			res = 1;
-
-		if (res > 0)
-			break;
-	}
-
-	free(skip_worktree_seen);
-	return res;
 }
 
 static int read_from_tree(const struct pathspec *pathspec,
@@ -273,7 +197,7 @@ static int read_from_tree(const struct pathspec *pathspec,
 	opt.change = diff_change;
 	opt.add_remove = diff_addremove;
 
-	if (pathspec->nr && the_index.sparse_index && pathspec_needs_expanded_index(pathspec))
+	if (pathspec->nr && pathspec_needs_expanded_index(&the_index, pathspec))
 		ensure_full_index(&the_index);
 
 	if (do_diff_cache(tree_oid, &opt))
@@ -300,7 +224,7 @@ static void set_reflog_message(struct strbuf *sb, const char *action,
 
 static void die_if_unmerged_cache(int reset_type)
 {
-	if (is_merge() || unmerged_cache())
+	if (is_merge() || unmerged_index(&the_index))
 		die(_("Cannot do a %s reset in the middle of a merge."),
 		    _(reset_type_names[reset_type]));
 
@@ -394,7 +318,8 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	int reset_type = NONE, update_ref_status = 0, quiet = 0;
 	int no_refresh = 0;
 	int patch_mode = 0, pathspec_file_nul = 0, unborn;
-	const char *rev, *pathspec_from_file = NULL;
+	const char *rev;
+	char *pathspec_from_file = NULL;
 	struct object_id oid;
 	struct pathspec pathspec;
 	int intent_to_add = 0;
@@ -468,7 +393,9 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		if (reset_type != NONE)
 			die(_("options '%s' and '%s' cannot be used together"), "--patch", "--{hard,mixed,soft}");
 		trace2_cmd_mode("patch-interactive");
-		return run_add_interactive(rev, "--patch=reset", &pathspec);
+		update_ref_status = !!run_add_p(the_repository, ADD_P_RESET, rev,
+				   &pathspec);
+		goto cleanup;
 	}
 
 	/* git reset tree [--] paths... can be used to
@@ -502,7 +429,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	prepare_repo_settings(the_repository);
 	the_repository->settings.command_requires_full_index = 0;
 
-	if (read_cache() < 0)
+	if (repo_read_index(the_repository) < 0)
 		die(_("index file corrupt"));
 
 	/* Soft reset does not touch the index file nor the working tree
@@ -513,11 +440,14 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 
 	if (reset_type != SOFT) {
 		struct lock_file lock = LOCK_INIT;
-		hold_locked_index(&lock, LOCK_DIE_ON_ERROR);
+		repo_hold_locked_index(the_repository, &lock,
+				       LOCK_DIE_ON_ERROR);
 		if (reset_type == MIXED) {
 			int flags = quiet ? REFRESH_QUIET : REFRESH_IN_PORCELAIN;
-			if (read_from_tree(&pathspec, &oid, intent_to_add))
-				return 1;
+			if (read_from_tree(&pathspec, &oid, intent_to_add)) {
+				update_ref_status = 1;
+				goto cleanup;
+			}
 			the_index.updated_skipworktree = 1;
 			if (!no_refresh && get_git_work_tree()) {
 				uint64_t t_begin, t_delta_in_ms;
@@ -563,5 +493,10 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	if (!pathspec.nr)
 		remove_branch_state(the_repository, 0);
 
+	discard_index(&the_index);
+
+cleanup:
+	clear_pathspec(&pathspec);
+	free(pathspec_from_file);
 	return update_ref_status;
 }

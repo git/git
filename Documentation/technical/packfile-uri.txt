@@ -18,7 +18,7 @@ a `packfile-uris` argument, the server MAY send a `packfile-uris` section
 directly before the `packfile` section (right after `wanted-refs` if it is
 sent) containing URIs of any of the given protocols. The URIs point to
 packfiles that use only features that the client has declared that it supports
-(e.g. ofs-delta and thin-pack). See protocol-v2.txt for the documentation of
+(e.g. ofs-delta and thin-pack). See linkgit:gitprotocol-v2[5] for the documentation of
 this section.
 
 Clients should then download and index all the given URIs (in addition to

@@ -49,7 +49,8 @@ section of linkgit:git-add[1] to learn how to operate the `--patch` mode.
 'git reset' [<mode>] [<commit>]::
 	This form resets the current branch head to `<commit>` and
 	possibly updates the index (resetting it to the tree of `<commit>`) and
-	the working tree depending on `<mode>`. If `<mode>` is omitted,
+	the working tree depending on `<mode>`. Before the operation, `ORIG_HEAD`
+	is set to the tip of the current branch. If `<mode>` is omitted,
 	defaults to `--mixed`. The `<mode>` must be one of the following:
 +
 --

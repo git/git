@@ -5,6 +5,7 @@ test_description='git pack-objects using object filtering'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # Test blob:none filter.
@@ -24,8 +25,9 @@ parse_verify_pack_blob_oid () {
 }
 
 test_expect_success 'verify blob count in normal packfile' '
-	git -C r1 ls-files -s file.1 file.2 file.3 file.4 file.5 |
-	test_parse_ls_files_stage_oids |
+	git -C r1 ls-files -s file.1 file.2 file.3 file.4 file.5 \
+		>ls_files_result &&
+	test_parse_ls_files_stage_oids <ls_files_result |
 	sort >expected &&
 
 	git -C r1 pack-objects --revs --stdout >all.pack <<-EOF &&
@@ -123,8 +125,8 @@ test_expect_success 'setup r2' '
 '
 
 test_expect_success 'verify blob count in normal packfile' '
-	git -C r2 ls-files -s large.1000 large.10000 |
-	test_parse_ls_files_stage_oids |
+	git -C r2 ls-files -s large.1000 large.10000 >ls_files_result &&
+	test_parse_ls_files_stage_oids <ls_files_result |
 	sort >expected &&
 
 	git -C r2 pack-objects --revs --stdout >all.pack <<-EOF &&
@@ -161,8 +163,8 @@ test_expect_success 'verify blob:limit=1000' '
 '
 
 test_expect_success 'verify blob:limit=1001' '
-	git -C r2 ls-files -s large.1000 |
-	test_parse_ls_files_stage_oids |
+	git -C r2 ls-files -s large.1000 >ls_files_result &&
+	test_parse_ls_files_stage_oids <ls_files_result |
 	sort >expected &&
 
 	git -C r2 pack-objects --revs --stdout --filter=blob:limit=1001 >filter.pack <<-EOF &&
@@ -179,8 +181,8 @@ test_expect_success 'verify blob:limit=1001' '
 '
 
 test_expect_success 'verify blob:limit=10001' '
-	git -C r2 ls-files -s large.1000 large.10000 |
-	test_parse_ls_files_stage_oids |
+	git -C r2 ls-files -s large.1000 large.10000 >ls_files_result &&
+	test_parse_ls_files_stage_oids <ls_files_result |
 	sort >expected &&
 
 	git -C r2 pack-objects --revs --stdout --filter=blob:limit=10001 >filter.pack <<-EOF &&
@@ -197,8 +199,8 @@ test_expect_success 'verify blob:limit=10001' '
 '
 
 test_expect_success 'verify blob:limit=1k' '
-	git -C r2 ls-files -s large.1000 |
-	test_parse_ls_files_stage_oids |
+	git -C r2 ls-files -s large.1000 >ls_files_result &&
+	test_parse_ls_files_stage_oids <ls_files_result |
 	sort >expected &&
 
 	git -C r2 pack-objects --revs --stdout --filter=blob:limit=1k >filter.pack <<-EOF &&
@@ -215,8 +217,8 @@ test_expect_success 'verify blob:limit=1k' '
 '
 
 test_expect_success 'verify explicitly specifying oversized blob in input' '
-	git -C r2 ls-files -s large.1000 large.10000 |
-	test_parse_ls_files_stage_oids |
+	git -C r2 ls-files -s large.1000 large.10000 >ls_files_result &&
+	test_parse_ls_files_stage_oids <ls_files_result |
 	sort >expected &&
 
 	echo HEAD >objects &&
@@ -233,8 +235,8 @@ test_expect_success 'verify explicitly specifying oversized blob in input' '
 '
 
 test_expect_success 'verify blob:limit=1m' '
-	git -C r2 ls-files -s large.1000 large.10000 |
-	test_parse_ls_files_stage_oids |
+	git -C r2 ls-files -s large.1000 large.10000 >ls_files_result &&
+	test_parse_ls_files_stage_oids <ls_files_result |
 	sort >expected &&
 
 	git -C r2 pack-objects --revs --stdout --filter=blob:limit=1m >filter.pack <<-EOF &&
@@ -258,6 +260,44 @@ test_expect_success 'verify normal and blob:limit packfiles have same commits/tr
 
 	git -C r2 verify-pack -v ../filter.pack >verify_result &&
 	grep -E "commit|tree" verify_result |
+	parse_verify_pack_blob_oid |
+	sort >observed &&
+
+	test_cmp expected observed
+'
+
+test_expect_success 'verify small limit and big limit results in small limit' '
+	git -C r2 ls-files -s large.1000 >ls_files_result &&
+	test_parse_ls_files_stage_oids <ls_files_result |
+	sort >expected &&
+
+	git -C r2 pack-objects --revs --stdout --filter=blob:limit=1001 \
+		--filter=blob:limit=10001 >filter.pack <<-EOF &&
+	HEAD
+	EOF
+	git -C r2 index-pack ../filter.pack &&
+
+	git -C r2 verify-pack -v ../filter.pack >verify_result &&
+	grep blob verify_result |
+	parse_verify_pack_blob_oid |
+	sort >observed &&
+
+	test_cmp expected observed
+'
+
+test_expect_success 'verify big limit and small limit results in small limit' '
+	git -C r2 ls-files -s large.1000 >ls_files_result &&
+	test_parse_ls_files_stage_oids <ls_files_result |
+	sort >expected &&
+
+	git -C r2 pack-objects --revs --stdout --filter=blob:limit=10001 \
+		--filter=blob:limit=1001 >filter.pack <<-EOF &&
+	HEAD
+	EOF
+	git -C r2 index-pack ../filter.pack &&
+
+	git -C r2 verify-pack -v ../filter.pack >verify_result &&
+	grep blob verify_result |
 	parse_verify_pack_blob_oid |
 	sort >observed &&
 
@@ -289,8 +329,9 @@ test_expect_success 'setup r3' '
 '
 
 test_expect_success 'verify blob count in normal packfile' '
-	git -C r3 ls-files -s sparse1 sparse2 dir1/sparse1 dir1/sparse2 |
-	test_parse_ls_files_stage_oids |
+	git -C r3 ls-files -s sparse1 sparse2 dir1/sparse1 dir1/sparse2 \
+		>ls_files_result &&
+	test_parse_ls_files_stage_oids <ls_files_result |
 	sort >expected &&
 
 	git -C r3 pack-objects --revs --stdout >all.pack <<-EOF &&
@@ -341,8 +382,9 @@ test_expect_success 'setup r4' '
 '
 
 test_expect_success 'verify blob count in normal packfile' '
-	git -C r4 ls-files -s pattern sparse1 sparse2 dir1/sparse1 dir1/sparse2 |
-	test_parse_ls_files_stage_oids |
+	git -C r4 ls-files -s pattern sparse1 sparse2 dir1/sparse1 dir1/sparse2 \
+		>ls_files_result &&
+	test_parse_ls_files_stage_oids <ls_files_result |
 	sort >expected &&
 
 	git -C r4 pack-objects --revs --stdout >all.pack <<-EOF &&
@@ -359,8 +401,8 @@ test_expect_success 'verify blob count in normal packfile' '
 '
 
 test_expect_success 'verify sparse:oid=OID' '
-	git -C r4 ls-files -s dir1/sparse1 dir1/sparse2 |
-	test_parse_ls_files_stage_oids |
+	git -C r4 ls-files -s dir1/sparse1 dir1/sparse2 >ls_files_result &&
+	test_parse_ls_files_stage_oids <ls_files_result |
 	sort >expected &&
 
 	git -C r4 ls-files -s pattern >staged &&
@@ -379,8 +421,8 @@ test_expect_success 'verify sparse:oid=OID' '
 '
 
 test_expect_success 'verify sparse:oid=oid-ish' '
-	git -C r4 ls-files -s dir1/sparse1 dir1/sparse2 |
-	test_parse_ls_files_stage_oids |
+	git -C r4 ls-files -s dir1/sparse1 dir1/sparse2 >ls_files_result &&
+	test_parse_ls_files_stage_oids <ls_files_result |
 	sort >expected &&
 
 	git -C r4 pack-objects --revs --stdout --filter=sparse:oid=main:pattern >filter.pack <<-EOF &&
@@ -400,8 +442,9 @@ test_expect_success 'verify sparse:oid=oid-ish' '
 # This models previously omitted objects that we did not receive.
 
 test_expect_success 'setup r1 - delete loose blobs' '
-	git -C r1 ls-files -s file.1 file.2 file.3 file.4 file.5 |
-	test_parse_ls_files_stage_oids |
+	git -C r1 ls-files -s file.1 file.2 file.3 file.4 file.5 \
+		>ls_files_result &&
+	test_parse_ls_files_stage_oids <ls_files_result |
 	sort >expected &&
 
 	for id in `cat expected | sed "s|..|&/|"`

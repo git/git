@@ -3,8 +3,9 @@
  *
  * Copyright (c) 2006 Junio C Hamano
  */
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
+#include "alloc.h"
+#include "hex.h"
 #include "repository.h"
 #include "config.h"
 #include "blob.h"
@@ -458,6 +459,33 @@ static int grep_submodule(struct grep_opt *opt,
 	 * subrepo's odbs to the in-memory alternates list.
 	 */
 	obj_read_lock();
+
+	/*
+	 * NEEDSWORK: when reading a submodule, the sparsity settings in the
+	 * superproject are incorrectly forgotten or misused. For example:
+	 *
+	 * 1. "command_requires_full_index"
+	 * 	When this setting is turned on for `grep`, only the superproject
+	 *	knows it. All the submodules are read with their own configs
+	 *	and get prepare_repo_settings()'d. Therefore, these submodules
+	 *	"forget" the sparse-index feature switch. As a result, the index
+	 *	of these submodules are expanded unexpectedly.
+	 *
+	 * 2. "core_apply_sparse_checkout"
+	 *	When running `grep` in the superproject, this setting is
+	 *	populated using the superproject's configs. However, once
+	 *	initialized, this config is globally accessible and is read by
+	 *	prepare_repo_settings() for the submodules. For instance, if a
+	 *	submodule is using a sparse-checkout, however, the superproject
+	 *	is not, the result is that the config from the superproject will
+	 *	dictate the behavior for the submodule, making it "forget" its
+	 *	sparse-checkout state.
+	 *
+	 * 3. "core_sparse_checkout_cone"
+	 *	ditto.
+	 *
+	 * Note that this list is not exhaustive.
+	 */
 	repo_read_gitmodules(subrepo, 0);
 
 	/*
@@ -520,8 +548,6 @@ static int grep_cache(struct grep_opt *opt,
 	if (repo_read_index(repo) < 0)
 		die(_("index file corrupt"));
 
-	/* TODO: audit for interaction with sparse-index. */
-	ensure_full_index(repo->index);
 	for (nr = 0; nr < repo->index->cache_nr; nr++) {
 		const struct cache_entry *ce = repo->index->cache[nr];
 
@@ -530,8 +556,20 @@ static int grep_cache(struct grep_opt *opt,
 
 		strbuf_setlen(&name, name_base_len);
 		strbuf_addstr(&name, ce->name);
+		if (S_ISSPARSEDIR(ce->ce_mode)) {
+			enum object_type type;
+			struct tree_desc tree;
+			void *data;
+			unsigned long size;
 
-		if (S_ISREG(ce->ce_mode) &&
+			data = read_object_file(&ce->oid, &type, &size);
+			init_tree_desc(&tree, data, size);
+
+			hit |= grep_tree(opt, pathspec, &tree, &name, 0, 0);
+			strbuf_setlen(&name, name_base_len);
+			strbuf_addstr(&name, ce->name);
+			free(data);
+		} else if (S_ISREG(ce->ce_mode) &&
 		    match_pathspec(repo->index, pathspec, name.buf, name.len, 0, NULL,
 				   S_ISDIR(ce->ce_mode) ||
 				   S_ISGITLINK(ce->ce_mode))) {
@@ -961,6 +999,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		OPT_BOOL_F(0, "ext-grep", &external_grep_allowed__ignored,
 			   N_("allow calling of grep(1) (ignored by this build)"),
 			   PARSE_OPT_NOCOMPLETE),
+		OPT_INTEGER('m', "max-count", &opt.max_count,
+			N_("maximum number of results per file")),
 		OPT_END()
 	};
 	grep_prefix = prefix;
@@ -981,6 +1021,11 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, options, grep_usage,
 			     PARSE_OPT_KEEP_DASHDASH |
 			     PARSE_OPT_STOP_AT_NON_OPTION);
+
+	if (the_repository->gitdir) {
+		prepare_repo_settings(the_repository);
+		the_repository->settings.command_requires_full_index = 0;
+	}
 
 	if (use_index && !startup_info->have_repository) {
 		int fallback = 0;
@@ -1100,6 +1145,13 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 
 	if (recurse_submodules && untracked)
 		die(_("--untracked not supported with --recurse-submodules"));
+
+	/*
+	 * Optimize out the case where the amount of matches is limited to zero.
+	 * We do this to keep results consistent with GNU grep(1).
+	 */
+	if (opt.max_count == 0)
+		return 1;
 
 	if (show_in_pager) {
 		if (num_threads > 1)

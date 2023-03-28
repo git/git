@@ -221,7 +221,8 @@ test_expect_success 'setup' '
 	rm -rf /.git &&
 	echo "Initialized empty Git repository in /.git/" > expected &&
 	git init > result &&
-	test_cmp expected result
+	test_cmp expected result &&
+	git config --global --add safe.directory /
 '
 
 test_vars 'auto gitdir, root' ".git" "/" ""
@@ -242,7 +243,7 @@ say "auto bare gitdir"
 # DESTROYYYYY!!!!!
 test_expect_success 'setup' '
 	rm -rf /refs /objects /info /hooks &&
-	rm -f /expected /ls.expected /me /result &&
+	rm -f /HEAD /expected /ls.expected /me /result &&
 	cd / &&
 	echo "Initialized empty Git repository in /" > expected &&
 	git init --bare > result &&
@@ -254,5 +255,10 @@ test_vars 'auto gitdir, root' "." "" ""
 test_expect_success 'go to /foo' 'cd /foo'
 
 test_vars 'auto gitdir, root' "/" "" ""
+
+test_expect_success 'cleanup root' '
+	rm -rf /.git /refs /objects /info /hooks /branches /foo &&
+	rm -f /HEAD /config /description /expected /ls.expected /me /result
+'
 
 test_done

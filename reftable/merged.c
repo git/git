@@ -36,7 +36,7 @@ static int merged_iter_init(struct merged_iter *mi)
 				.rec = rec,
 				.index = i,
 			};
-			merged_iter_pqueue_add(&mi->pq, e);
+			merged_iter_pqueue_add(&mi->pq, &e);
 		}
 	}
 
@@ -71,7 +71,7 @@ static int merged_iter_advance_nonnull_subiter(struct merged_iter *mi,
 		return 0;
 	}
 
-	merged_iter_pqueue_add(&mi->pq, e);
+	merged_iter_pqueue_add(&mi->pq, &e);
 	return 0;
 }
 

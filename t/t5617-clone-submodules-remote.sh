@@ -5,11 +5,13 @@ test_description='Test cloning repos with submodules using remote-tracking branc
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 pwd=$(pwd)
 
 test_expect_success 'setup' '
+	git config --global protocol.file.allow always &&
 	git checkout -b main &&
 	test_commit commit1 &&
 	mkdir sub &&

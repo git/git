@@ -177,16 +177,27 @@ sub repository {
 		-d $opts{Directory} or throw Error::Simple("Directory not found: $opts{Directory} $!");
 
 		my $search = Git->repository(WorkingCopy => $opts{Directory});
-		my $dir;
+
+		# This rev-parse will throw an exception if we're not in a
+		# repository, which is what we want, but it's kind of noisy.
+		# Ideally we'd capture stderr and relay it, but doing so is
+		# awkward without depending on it fitting in a pipe buffer. So
+		# we just reproduce a plausible error message ourselves.
+		my $out;
 		try {
-			$dir = $search->command_oneline(['rev-parse', '--git-dir'],
-			                                STDERR => 0);
+		  # Note that "--is-bare-repository" must come first, as
+		  # --git-dir output could contain newlines.
+		  $out = $search->command([qw(rev-parse --is-bare-repository --git-dir)],
+			                  STDERR => 0);
 		} catch Git::Error::Command with {
-			$dir = undef;
+			throw Error::Simple("fatal: not a git repository: $opts{Directory}");
 		};
 
+		chomp $out;
+		my ($bare, $dir) = split /\n/, $out, 2;
+
 		require Cwd;
-		if ($dir) {
+		if ($bare ne 'true') {
 			require File::Spec;
 			File::Spec->file_name_is_absolute($dir) or $dir = $opts{Directory} . '/' . $dir;
 			$opts{Repository} = Cwd::abs_path($dir);
@@ -204,21 +215,6 @@ sub repository {
 			$opts{WorkingSubdir} = $prefix;
 
 		} else {
-			# A bare repository? Let's see...
-			$dir = $opts{Directory};
-
-			unless (-d "$dir/refs" and -d "$dir/objects" and -e "$dir/HEAD") {
-				# Mimic git-rev-parse --git-dir error message:
-				throw Error::Simple("fatal: Not a git repository: $dir");
-			}
-			my $search = Git->repository(Repository => $dir);
-			try {
-				$search->command('symbolic-ref', 'HEAD');
-			} catch Git::Error::Command with {
-				# Mimic git-rev-parse --git-dir error message:
-				throw Error::Simple("fatal: Not a git repository: $dir");
-			}
-
 			$opts{Repository} = Cwd::abs_path($dir);
 		}
 

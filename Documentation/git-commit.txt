@@ -557,6 +557,10 @@ The editor used to edit the commit log message will be chosen from the
 `VISUAL` environment variable, or the `EDITOR` environment variable (in that
 order).  See linkgit:git-var[1] for details.
 
+include::includes/cmd-config-section-rest.txt[]
+
+include::config/commit.txt[]
+
 HOOKS
 -----
 This command can run `commit-msg`, `prepare-commit-msg`, `pre-commit`,

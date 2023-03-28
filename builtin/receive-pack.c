@@ -1,6 +1,7 @@
 #include "builtin.h"
 #include "repository.h"
 #include "config.h"
+#include "hex.h"
 #include "lockfile.h"
 #include "pack.h"
 #include "refs.h"
@@ -80,6 +81,7 @@ static struct object_id push_cert_oid;
 static struct signature_check sigcheck;
 static const char *push_cert_nonce;
 static const char *cert_nonce_seed;
+static struct string_list hidden_refs = STRING_LIST_INIT_DUP;
 
 static const char *NONCE_UNSOLICITED = "UNSOLICITED";
 static const char *NONCE_BAD = "BAD";
@@ -130,12 +132,8 @@ static enum deny_action parse_deny_action(const char *var, const char *value)
 
 static int receive_pack_config(const char *var, const char *value, void *cb)
 {
-	int status = parse_hide_refs_config(var, value, "receive");
+	int status = parse_hide_refs_config(var, value, "receive", &hidden_refs);
 
-	if (status)
-		return status;
-
-	status = git_gpg_config(var, value, NULL);
 	if (status)
 		return status;
 
@@ -291,12 +289,12 @@ static void show_ref(const char *path, const struct object_id *oid)
 }
 
 static int show_ref_cb(const char *path_full, const struct object_id *oid,
-		       int flag, void *data)
+		       int flag UNUSED, void *data)
 {
 	struct oidset *seen = data;
 	const char *path = strip_namespace(path_full);
 
-	if (ref_is_hidden(path, path_full))
+	if (ref_is_hidden(path, path_full, &hidden_refs))
 		return 0;
 
 	/*
@@ -465,7 +463,7 @@ static void rp_error(const char *err, ...)
 	va_end(params);
 }
 
-static int copy_to_sideband(int in, int out, void *arg)
+static int copy_to_sideband(int in, int out UNUSED, void *arg UNUSED)
 {
 	char data[128];
 	int keepalive_active = 0;
@@ -1462,8 +1460,10 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 		find_shared_symref(worktrees, "HEAD", name);
 
 	/* only refs/... are allowed */
-	if (!starts_with(name, "refs/") || check_refname_format(name + 5, 0)) {
-		rp_error("refusing to create funny ref '%s' remotely", name);
+	if (!starts_with(name, "refs/") ||
+	    check_refname_format(name + 5, is_null_oid(new_oid) ?
+				 REFNAME_ALLOW_ONELEVEL : 0)) {
+		rp_error("refusing to update funny ref '%s' remotely", name);
 		ret = "funny refname";
 		goto out;
 	}
@@ -1794,7 +1794,7 @@ static void reject_updates_to_hidden(struct command *commands)
 		strbuf_setlen(&refname_full, prefix_len);
 		strbuf_addstr(&refname_full, cmd->ref_name);
 
-		if (!ref_is_hidden(cmd->ref_name, refname_full.buf))
+		if (!ref_is_hidden(cmd->ref_name, refname_full.buf, &hidden_refs))
 			continue;
 		if (is_null_oid(&cmd->new_oid))
 			cmd->error_string = "deny deleting a hidden ref";
@@ -1928,6 +1928,8 @@ static void execute_commands(struct command *commands,
 	opt.err_fd = err_fd;
 	opt.progress = err_fd && !quiet;
 	opt.env = tmp_objdir_env(tmp_objdir);
+	opt.exclude_hidden_refs_section = "receive";
+
 	if (check_connected(iterate_receive_command_list, &data, &opt))
 		set_connectivity_errors(commands, si);
 
@@ -2027,6 +2029,16 @@ static struct command **queue_command(struct command **tail,
 	oidcpy(&cmd->new_oid, &new_oid);
 	*tail = cmd;
 	return &cmd->next;
+}
+
+static void free_commands(struct command *commands)
+{
+	while (commands) {
+		struct command *next = commands->next;
+
+		free(commands);
+		commands = next;
+	}
 }
 
 static void queue_commands_from_cert(struct command **tail,
@@ -2171,7 +2183,7 @@ static const char *parse_pack_header(struct pack_header *hdr)
 	}
 }
 
-static const char *pack_lockfile;
+static struct tempfile *pack_lockfile;
 
 static void push_header_arg(struct strvec *args, struct pack_header *hdr)
 {
@@ -2238,6 +2250,7 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 			return "unpack-objects abnormal exit";
 	} else {
 		char hostname[HOST_NAME_MAX + 1];
+		char *lockfile;
 
 		strvec_pushl(&child.args, "index-pack", "--stdin", NULL);
 		push_header_arg(&child.args, &hdr);
@@ -2267,8 +2280,14 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 		status = start_command(&child);
 		if (status)
 			return "index-pack fork failed";
-		pack_lockfile = index_pack_lockfile(child.out, NULL);
+
+		lockfile = index_pack_lockfile(child.out, NULL);
+		if (lockfile) {
+			pack_lockfile = register_tempfile(lockfile);
+			free(lockfile);
+		}
 		close(child.out);
+
 		status = finish_command(&child);
 		if (status)
 			return "index-pack abnormal exit";
@@ -2555,8 +2574,7 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 		use_keepalive = KEEPALIVE_ALWAYS;
 		execute_commands(commands, unpack_status, &si,
 				 &push_options);
-		if (pack_lockfile)
-			unlink_or_warn(pack_lockfile);
+		delete_tempfile(&pack_lockfile);
 		sigchain_push(SIGPIPE, SIG_IGN);
 		if (report_status_v2)
 			report_v2(commands, unpack_status);
@@ -2566,6 +2584,7 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 		run_receive_hook(commands, "post-receive", 1,
 				 &push_options);
 		run_update_post_hook(commands);
+		free_commands(commands);
 		string_list_clear(&push_options, 0);
 		if (auto_gc) {
 			struct child_process proc = CHILD_PROCESS_INIT;
@@ -2591,6 +2610,7 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 		packet_flush(1);
 	oid_array_clear(&shallow);
 	oid_array_clear(&ref);
+	string_list_clear(&hidden_refs, 0);
 	free((void *)push_cert_nonce);
 	return 0;
 }

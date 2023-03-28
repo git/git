@@ -20,7 +20,6 @@ test_ls_tree_format () {
 	format=$1 &&
 	opts=$2 &&
 	fmtopts=$3 &&
-	shift 2 &&
 
 	test_expect_success "ls-tree '--format=<$format>' is like options '$opts $fmtopts'" '
 		git ls-tree $opts -r HEAD >expect &&
@@ -35,6 +34,12 @@ test_ls_tree_format () {
 		test_cmp expect actual
 	'
 }
+
+test_expect_success "ls-tree --format='%(path) %(path) %(path)' HEAD top-file" '
+	git ls-tree --format="%(path) %(path) %(path)" HEAD top-file.t >actual &&
+	echo top-file.t top-file.t top-file.t >expect &&
+	test_cmp expect actual
+'
 
 test_ls_tree_format \
 	"%(objectmode) %(objecttype) %(objectname)%x09%(path)" \

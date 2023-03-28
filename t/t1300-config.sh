@@ -2083,12 +2083,13 @@ test_expect_success '--show-scope with --show-origin' '
 '
 
 test_expect_success 'override global and system config' '
-	test_when_finished rm -f "$HOME"/.config/git &&
-
+	test_when_finished rm -f \"\$HOME\"/.gitconfig &&
 	cat >"$HOME"/.gitconfig <<-EOF &&
 	[home]
 		config = true
 	EOF
+
+	test_when_finished rm -rf \"\$HOME\"/.config/git &&
 	mkdir -p "$HOME"/.config/git &&
 	cat >"$HOME"/.config/git/config <<-EOF &&
 	[xdg]
@@ -2225,6 +2226,12 @@ test_expect_success 'unset type specifiers may be reset to conflicting ones' '
 test_expect_success '--type rejects unknown specifiers' '
 	test_must_fail git config --type=nonsense section.foo 2>error &&
 	test_i18ngrep "unrecognized --type argument" error
+'
+
+test_expect_success '--type=int requires at least one digit' '
+	test_must_fail git config --type int --default m some.key >out 2>error &&
+	grep "bad numeric config value" error &&
+	test_must_be_empty out
 '
 
 test_expect_success '--replace-all does not invent newlines' '

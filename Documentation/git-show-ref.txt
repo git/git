@@ -8,8 +8,8 @@ git-show-ref - List references in a local repository
 SYNOPSIS
 --------
 [verse]
-'git show-ref' [-q|--quiet] [--verify] [--head] [-d|--dereference]
-	     [-s|--hash[=<n>]] [--abbrev[=<n>]] [--tags]
+'git show-ref' [-q | --quiet] [--verify] [--head] [-d | --dereference]
+	     [-s | --hash[=<n>]] [--abbrev[=<n>]] [--tags]
 	     [--heads] [--] [<pattern>...]
 'git show-ref' --exclude-existing[=<pattern>]
 

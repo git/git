@@ -2,6 +2,7 @@
 #include "cache.h"
 #include "config.h"
 #include "branch.h"
+#include "hex.h"
 #include "refs.h"
 #include "refspec.h"
 #include "remote.h"
@@ -10,6 +11,7 @@
 #include "worktree.h"
 #include "submodule-config.h"
 #include "run-command.h"
+#include "strmap.h"
 
 struct tracking {
 	struct refspec_item spec;
@@ -369,6 +371,83 @@ int validate_branchname(const char *name, struct strbuf *ref)
 	return ref_exists(ref->buf);
 }
 
+static int initialized_checked_out_branches;
+static struct strmap current_checked_out_branches = STRMAP_INIT;
+
+static void prepare_checked_out_branches(void)
+{
+	int i = 0;
+	struct worktree **worktrees;
+
+	if (initialized_checked_out_branches)
+		return;
+	initialized_checked_out_branches = 1;
+
+	worktrees = get_worktrees();
+
+	while (worktrees[i]) {
+		char *old;
+		struct wt_status_state state = { 0 };
+		struct worktree *wt = worktrees[i++];
+		struct string_list update_refs = STRING_LIST_INIT_DUP;
+
+		if (wt->is_bare)
+			continue;
+
+		if (wt->head_ref) {
+			old = strmap_put(&current_checked_out_branches,
+					 wt->head_ref,
+					 xstrdup(wt->path));
+			free(old);
+		}
+
+		if (wt_status_check_rebase(wt, &state) &&
+		    (state.rebase_in_progress || state.rebase_interactive_in_progress) &&
+		    state.branch) {
+			struct strbuf ref = STRBUF_INIT;
+			strbuf_addf(&ref, "refs/heads/%s", state.branch);
+			old = strmap_put(&current_checked_out_branches,
+					 ref.buf,
+					 xstrdup(wt->path));
+			free(old);
+			strbuf_release(&ref);
+		}
+		wt_status_state_free_buffers(&state);
+
+		if (wt_status_check_bisect(wt, &state) &&
+		    state.branch) {
+			struct strbuf ref = STRBUF_INIT;
+			strbuf_addf(&ref, "refs/heads/%s", state.branch);
+			old = strmap_put(&current_checked_out_branches,
+					 ref.buf,
+					 xstrdup(wt->path));
+			free(old);
+			strbuf_release(&ref);
+		}
+		wt_status_state_free_buffers(&state);
+
+		if (!sequencer_get_update_refs_state(get_worktree_git_dir(wt),
+						     &update_refs)) {
+			struct string_list_item *item;
+			for_each_string_list_item(item, &update_refs) {
+				old = strmap_put(&current_checked_out_branches,
+						 item->string,
+						 xstrdup(wt->path));
+				free(old);
+			}
+			string_list_clear(&update_refs, 1);
+		}
+	}
+
+	free_worktrees(worktrees);
+}
+
+const char *branch_checked_out(const char *refname)
+{
+	prepare_checked_out_branches();
+	return strmap_get(&current_checked_out_branches, refname);
+}
+
 /*
  * Check if a branch 'name' can be created as a new branch; die otherwise.
  * 'force' can be used when it is OK for the named branch already exists.
@@ -377,9 +456,7 @@ int validate_branchname(const char *name, struct strbuf *ref)
  */
 int validate_new_branchname(const char *name, struct strbuf *ref, int force)
 {
-	struct worktree **worktrees;
-	const struct worktree *wt;
-
+	const char *path;
 	if (!validate_branchname(name, ref))
 		return 0;
 
@@ -387,13 +464,10 @@ int validate_new_branchname(const char *name, struct strbuf *ref, int force)
 		die(_("a branch named '%s' already exists"),
 		    ref->buf + strlen("refs/heads/"));
 
-	worktrees = get_worktrees();
-	wt = find_shared_symref(worktrees, "HEAD", ref->buf);
-	if (wt && !wt->is_bare)
+	if ((path = branch_checked_out(ref->buf)))
 		die(_("cannot force update the branch '%s' "
 		      "checked out at '%s'"),
-		    ref->buf + strlen("refs/heads/"), wt->path);
-	free_worktrees(worktrees);
+		    ref->buf + strlen("refs/heads/"), path);
 
 	return 1;
 }
@@ -683,7 +757,7 @@ void create_branches_recursively(struct repository *r, const char *name,
 				_("submodule '%s': unable to find submodule"),
 				submodule_entry_list.entries[i].submodule->name);
 			if (advice_enabled(ADVICE_SUBMODULES_NOT_UPDATED))
-				advise(_("You may try updating the submodules using 'git checkout %s && git submodule update --init'"),
+				advise(_("You may try updating the submodules using 'git checkout --no-recurse-submodules %s && git submodule update --init'"),
 				       start_commitish);
 			exit(code);
 		}
@@ -747,12 +821,16 @@ void remove_branch_state(struct repository *r, int verbose)
 void die_if_checked_out(const char *branch, int ignore_current_worktree)
 {
 	struct worktree **worktrees = get_worktrees();
-	const struct worktree *wt;
 
-	wt = find_shared_symref(worktrees, "HEAD", branch);
-	if (wt && (!ignore_current_worktree || !wt->is_current)) {
-		skip_prefix(branch, "refs/heads/", &branch);
-		die(_("'%s' is already checked out at '%s'"), branch, wt->path);
+	for (int i = 0; worktrees[i]; i++) {
+		if (worktrees[i]->is_current && ignore_current_worktree)
+			continue;
+
+		if (is_shared_symref(worktrees[i], "HEAD", branch)) {
+			skip_prefix(branch, "refs/heads/", &branch);
+			die(_("'%s' is already checked out at '%s'"),
+				branch, worktrees[i]->path);
+		}
 	}
 
 	free_worktrees(worktrees);

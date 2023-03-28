@@ -10,6 +10,14 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-bundle.sh
+. "$TEST_DIRECTORY"/lib-terminal.sh
+
+for cmd in create verify list-heads unbundle
+do
+	test_expect_success "usage: git bundle $cmd needs an argument" '
+		test_expect_code 129 git bundle $cmd
+	'
+done
 
 # Create a commit or tag and set the variable with the object ID.
 test_commit_setvar () {
@@ -557,6 +565,84 @@ test_expect_success 'cloning from filtered bundle has useful error' '
 		--filter=blob:none &&
 	test_must_fail git clone --bare partial.bdl partial 2>err &&
 	grep "cannot clone from filtered bundle" err
+'
+
+test_expect_success 'verify catches unreachable, broken prerequisites' '
+	test_when_finished rm -rf clone-from clone-to &&
+	git init clone-from &&
+	(
+		cd clone-from &&
+		git checkout -b base &&
+		test_commit A &&
+		git checkout -b tip &&
+		git commit --allow-empty -m "will drop by shallow" &&
+		git commit --allow-empty -m "will keep by shallow" &&
+		git commit --allow-empty -m "for bundle, not clone" &&
+		git bundle create tip.bundle tip~1..tip &&
+		git reset --hard HEAD~1 &&
+		git checkout base
+	) &&
+	BAD_OID=$(git -C clone-from rev-parse tip~1) &&
+	TIP_OID=$(git -C clone-from rev-parse tip) &&
+	git clone --depth=1 --no-single-branch \
+		"file://$(pwd)/clone-from" clone-to &&
+	(
+		cd clone-to &&
+
+		# Set up broken history by removing shallow markers
+		git update-ref -d refs/remotes/origin/tip &&
+		rm .git/shallow &&
+
+		# Verify should fail
+		test_must_fail git bundle verify \
+			../clone-from/tip.bundle 2>err &&
+		grep "some prerequisite commits .* are not connected" err &&
+		test_line_count = 1 err &&
+
+		# Unbundling should fail
+		test_must_fail git bundle unbundle \
+			../clone-from/tip.bundle 2>err &&
+		grep "some prerequisite commits .* are not connected" err &&
+		test_line_count = 1 err
+	)
+'
+
+test_expect_success 'bundle progress includes write phase' '
+	GIT_PROGRESS_DELAY=0 \
+		git bundle create --progress out.bundle --all 2>err &&
+	grep 'Writing' err
+'
+
+test_expect_success TTY 'create --quiet disables all bundle progress' '
+	test_terminal env GIT_PROGRESS_DELAY=0 \
+		git bundle create --quiet out.bundle --all 2>err &&
+	test_must_be_empty err
+'
+
+test_expect_success 'read bundle over stdin' '
+	git bundle create some.bundle HEAD &&
+
+	git bundle verify - <some.bundle 2>err &&
+	grep "<stdin> is okay" err &&
+
+	git bundle list-heads some.bundle >expect &&
+	git bundle list-heads - <some.bundle >actual &&
+	test_cmp expect actual &&
+
+	git bundle unbundle some.bundle >expect &&
+	git bundle unbundle - <some.bundle >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'send a bundle to standard output' '
+	git bundle create - --all HEAD >bundle-one &&
+	mkdir -p down &&
+	git -C down bundle create - --all HEAD >bundle-two &&
+	git bundle verify bundle-one &&
+	git bundle verify bundle-two &&
+	git ls-remote bundle-one >expect &&
+	git ls-remote bundle-two >actual &&
+	test_cmp expect actual
 '
 
 test_done

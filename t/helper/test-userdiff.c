@@ -12,7 +12,7 @@ static int driver_cb(struct userdiff_driver *driver,
 	return 0;
 }
 
-static int cmd__userdiff_config(const char *var, const char *value, void *cb)
+static int cmd__userdiff_config(const char *var, const char *value, void *cb UNUSED)
 {
 	if (userdiff_config(var, value) < 0)
 		return -1;

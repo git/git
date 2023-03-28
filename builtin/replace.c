@@ -11,10 +11,12 @@
 #include "cache.h"
 #include "config.h"
 #include "builtin.h"
+#include "hex.h"
 #include "refs.h"
 #include "parse-options.h"
 #include "run-command.h"
 #include "object-store.h"
+#include "replace-object.h"
 #include "repository.h"
 #include "tag.h"
 
@@ -106,6 +108,7 @@ static int for_each_replace_name(const char **argv, each_replace_name_fn fn)
 	size_t base_len;
 	int had_error = 0;
 	struct object_id oid;
+	const char *git_replace_ref_base = ref_namespace[NAMESPACE_REPLACE].ref;
 
 	strbuf_addstr(&ref, git_replace_ref_base);
 	base_len = ref.len;
@@ -147,6 +150,8 @@ static int check_ref_valid(struct object_id *object,
 			    struct strbuf *ref,
 			    int force)
 {
+	const char *git_replace_ref_base = ref_namespace[NAMESPACE_REPLACE].ref;
+
 	strbuf_reset(ref);
 	strbuf_addf(ref, "%s%s", git_replace_ref_base, oid_to_hex(object));
 	if (check_refname_format(ref->buf, 0))

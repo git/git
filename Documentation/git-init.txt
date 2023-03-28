@@ -169,6 +169,13 @@ $ git commit    <3>
 <2> Add all existing files to the index.
 <3> Record the pristine state as the first commit in the history.
 
+CONFIGURATION
+-------------
+
+include::includes/cmd-config-section-all.txt[]
+
+include::config/init.txt[]
+
 GIT
 ---
 Part of the linkgit:git[1] suite

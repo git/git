@@ -5,6 +5,7 @@ test_description='commit-msg hook'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'with no hook' '
@@ -101,7 +102,9 @@ test_expect_success 'setup: commit-msg hook that always fails' '
 '
 
 commit_msg_is () {
-	test "$(git log --pretty=format:%s%b -1)" = "$1"
+	printf "%s" "$1" >expect &&
+	git log --pretty=format:%s%b -1 >actual &&
+	test_cmp expect actual
 }
 
 test_expect_success 'with failing hook' '

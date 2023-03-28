@@ -45,13 +45,23 @@ OPTIONS
 
 --decorate-refs=<pattern>::
 --decorate-refs-exclude=<pattern>::
-	If no `--decorate-refs` is given, pretend as if all refs were
-	included.  For each candidate, do not use it for decoration if it
+	For each candidate reference, do not use it for decoration if it
 	matches any patterns given to `--decorate-refs-exclude` or if it
 	doesn't match any of the patterns given to `--decorate-refs`. The
 	`log.excludeDecoration` config option allows excluding refs from
 	the decorations, but an explicit `--decorate-refs` pattern will
 	override a match in `log.excludeDecoration`.
++
+If none of these options or config settings are given, then references are
+used as decoration if they match `HEAD`, `refs/heads/`, `refs/remotes/`,
+`refs/stash/`, or `refs/tags/`.
+
+--clear-decorations::
+	When specified, this option clears all previous `--decorate-refs`
+	or `--decorate-refs-exclude` options and relaxes the default
+	decoration filter to include all references. This option is
+	assumed if the config value `log.initialDecorationSet` is set to
+	`all`.
 
 --source::
 	Print out the ref name given on the command line by which each
@@ -199,47 +209,11 @@ i18n.logOutputEncoding::
 	Defaults to the value of `i18n.commitEncoding` if set, and UTF-8
 	otherwise.
 
-log.date::
-	Default format for human-readable dates.  (Compare the
-	`--date` option.)  Defaults to "default", which means to write
-	dates like `Sat May 8 19:35:34 2010 -0500`.
-+
-If the format is set to "auto:foo" and the pager is in use, format
-"foo" will be the used for the date format. Otherwise "default" will
-be used.
+include::includes/cmd-config-section-rest.txt[]
 
-log.follow::
-	If `true`, `git log` will act as if the `--follow` option was used when
-	a single <path> is given.  This has the same limitations as `--follow`,
-	i.e. it cannot be used to follow multiple files and does not work well
-	on non-linear history.
+include::config/log.txt[]
 
-log.showRoot::
-	If `false`, `git log` and related commands will not treat the
-	initial commit as a big creation event.  Any root commits in
-	`git log -p` output would be shown without a diff attached.
-	The default is `true`.
-
-log.showSignature::
-	If `true`, `git log` and related commands will act as if the
-	`--show-signature` option was passed to them.
-
-mailmap.*::
-	See linkgit:git-shortlog[1].
-
-notes.displayRef::
-	Which refs, in addition to the default set by `core.notesRef`
-	or `GIT_NOTES_REF`, to read notes from when showing commit
-	messages with the `log` family of commands.  See
-	linkgit:git-notes[1].
-+
-May be an unabbreviated ref name or a glob and may be specified
-multiple times.  A warning will be issued for refs that do not exist,
-but a glob that does not match any refs is silently ignored.
-+
-This setting can be disabled by the `--no-notes` option,
-overridden by the `GIT_NOTES_DISPLAY_REF` environment variable,
-and overridden by the `--notes=<ref>` option.
+include::config/notes.txt[]
 
 GIT
 ---

@@ -4,6 +4,7 @@
 #include "blob.h"
 #include "diff.h"
 #include "diffcore.h"
+#include "hex.h"
 #include "quote.h"
 #include "xdiff-interface.h"
 #include "xdiff/xmacros.h"
@@ -372,7 +373,7 @@ struct combine_diff_state {
 static void consume_hunk(void *state_,
 			 long ob, long on,
 			 long nb, long nn,
-			 const char *funcline, long funclen)
+			 const char *func UNUSED, long funclen UNUSED)
 {
 	struct combine_diff_state *state = state_;
 
@@ -1497,6 +1498,13 @@ void diff_tree_combined(const struct object_id *oid,
 	struct combine_diff_path *p, *paths;
 	int i, num_paths, needsep, show_log_first, num_parent = parents->nr;
 	int need_generic_pathscan;
+
+	if (opt->ignore_regex_nr)
+		die("combined diff and '%s' cannot be used together",
+		    "--ignore-matching-lines");
+	if (opt->close_file)
+		die("combined diff and '%s' cannot be used together",
+		    "--output");
 
 	/* nothing to do, if no parents */
 	if (!num_parent)

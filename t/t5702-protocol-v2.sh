@@ -250,6 +250,65 @@ test_expect_success 'bare clone propagates empty default branch' '
 	grep "refs/heads/mydefaultbranch" file_empty_child.git/HEAD
 '
 
+test_expect_success 'clone propagates unborn HEAD from non-empty repo' '
+	test_when_finished "rm -rf file_unborn_parent file_unborn_child" &&
+
+	git init file_unborn_parent &&
+	(
+		cd file_unborn_parent &&
+		git checkout -b branchwithstuff &&
+		test_commit --no-tag stuff &&
+		git symbolic-ref HEAD refs/heads/mydefaultbranch
+	) &&
+
+	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= \
+	git -c init.defaultBranch=main -c protocol.version=2 \
+		clone "file://$(pwd)/file_unborn_parent" \
+		file_unborn_child 2>stderr &&
+	grep "refs/heads/mydefaultbranch" file_unborn_child/.git/HEAD &&
+	grep "warning: remote HEAD refers to nonexistent ref" stderr
+'
+
+test_expect_success 'bare clone propagates unborn HEAD from non-empty repo' '
+	test_when_finished "rm -rf file_unborn_parent file_unborn_child.git" &&
+
+	git init file_unborn_parent &&
+	(
+		cd file_unborn_parent &&
+		git checkout -b branchwithstuff &&
+		test_commit --no-tag stuff &&
+		git symbolic-ref HEAD refs/heads/mydefaultbranch
+	) &&
+
+	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= \
+	git -c init.defaultBranch=main -c protocol.version=2 \
+		clone --bare "file://$(pwd)/file_unborn_parent" \
+		file_unborn_child.git 2>stderr &&
+	grep "refs/heads/mydefaultbranch" file_unborn_child.git/HEAD &&
+	! grep "warning:" stderr
+'
+
+test_expect_success 'defaulted HEAD uses remote branch if available' '
+	test_when_finished "rm -rf file_unborn_parent file_unborn_child" &&
+
+	git init file_unborn_parent &&
+	(
+		cd file_unborn_parent &&
+		git config lsrefs.unborn ignore &&
+		git checkout -b branchwithstuff &&
+		test_commit --no-tag stuff &&
+		git symbolic-ref HEAD refs/heads/mydefaultbranch
+	) &&
+
+	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= \
+	git -c init.defaultBranch=branchwithstuff -c protocol.version=2 \
+		clone "file://$(pwd)/file_unborn_parent" \
+		file_unborn_child 2>stderr &&
+	grep "refs/heads/branchwithstuff" file_unborn_child/.git/HEAD &&
+	test_path_is_file file_unborn_child/stuff.t &&
+	! grep "warning:" stderr
+'
+
 test_expect_success 'fetch with file:// using protocol v2' '
 	test_when_finished "rm -f log" &&
 
@@ -942,7 +1001,7 @@ test_expect_success 'part of packfile response provided as URI' '
 	do
 		git verify-pack --object-format=$(test_oid algo) --verbose $idx >out &&
 		{
-			grep "^[0-9a-f]\{16,\} " out || :
+			grep -E "^[0-9a-f]{16,} " out || :
 		} >out.objectlist &&
 		if test_line_count = 1 out.objectlist
 		then
@@ -1055,7 +1114,7 @@ test_expect_success 'packfile-uri with transfer.fsckobjects fails on bad object'
 
 	This commit object intentionally broken
 	EOF
-	BOGUS=$(git -C "$P" hash-object -t commit -w --stdin <bogus-commit) &&
+	BOGUS=$(git -C "$P" hash-object -t commit -w --stdin --literally <bogus-commit) &&
 	git -C "$P" branch bogus-branch "$BOGUS" &&
 
 	echo my-blob >"$P/my-blob" &&

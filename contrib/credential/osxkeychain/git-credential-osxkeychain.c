@@ -159,6 +159,11 @@ static void read_credential(void)
 			username = xstrdup(v);
 		else if (!strcmp(buf, "password"))
 			password = xstrdup(v);
+		/*
+		 * Ignore other lines; we don't know what they mean, but
+		 * this future-proofs us when later versions of git do
+		 * learn new lines, and the helpers are updated to match.
+		 */
 	}
 }
 
@@ -168,7 +173,7 @@ int main(int argc, const char **argv)
 		"usage: git credential-osxkeychain <get|store|erase>";
 
 	if (!argv[1])
-		die(usage);
+		die("%s", usage);
 
 	read_credential();
 

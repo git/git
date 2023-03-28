@@ -194,4 +194,75 @@ test_expect_success 'rerere forget (add-add conflict)' '
 	test_i18ngrep "no remembered" actual
 '
 
+test_expect_success 'resolve-undo keeps blobs from gc' '
+	git checkout -f main &&
+
+	# First make sure we do not have any cruft left in the object store
+	git repack -a -d &&
+	git prune --expire=now &&
+	git prune-packed &&
+	git gc --prune=now &&
+	git fsck --unreachable >cruft &&
+	test_must_be_empty cruft &&
+
+	# Now add three otherwise unreferenced blob objects to the index
+	git reset --hard &&
+	B1=$(echo "resolve undo test data 1" | git hash-object -w --stdin) &&
+	B2=$(echo "resolve undo test data 2" | git hash-object -w --stdin) &&
+	B3=$(echo "resolve undo test data 3" | git hash-object -w --stdin) &&
+	git update-index --add --index-info <<-EOF &&
+	100644 $B1 1	frotz
+	100644 $B2 2	frotz
+	100644 $B3 3	frotz
+	EOF
+
+	# These three blob objects are reachable (only) from the index
+	git fsck --unreachable >cruft &&
+	test_must_be_empty cruft &&
+	# and they should be protected from GC
+	git gc --prune=now &&
+	git cat-file -e $B1 &&
+	git cat-file -e $B2 &&
+	git cat-file -e $B3 &&
+
+	# Now resolve the conflicted path
+	B0=$(echo "resolve undo test data 0" | git hash-object -w --stdin) &&
+	git update-index --add --cacheinfo 100644,$B0,frotz &&
+
+	# These three blob objects are now reachable only from the resolve-undo
+	git fsck --unreachable >cruft &&
+	test_must_be_empty cruft &&
+
+	# and they should survive GC
+	git gc --prune=now &&
+	git cat-file -e $B0 &&
+	git cat-file -e $B1 &&
+	git cat-file -e $B2 &&
+	git cat-file -e $B3 &&
+
+	# Now we switch away, which nukes resolve-undo, and
+	# blobs B0..B3 would become dangling.  fsck should
+	# notice that they are now unreachable.
+	git checkout -f side &&
+	git fsck --unreachable >cruft &&
+	sort cruft >actual &&
+	sort <<-EOF >expect &&
+	unreachable blob $B0
+	unreachable blob $B1
+	unreachable blob $B2
+	unreachable blob $B3
+	EOF
+	test_cmp expect actual &&
+
+	# And they should go away when gc runs.
+	git gc --prune=now &&
+	git fsck --unreachable >cruft &&
+	test_must_be_empty cruft &&
+
+	test_must_fail git cat-file -e $B0 &&
+	test_must_fail git cat-file -e $B1 &&
+	test_must_fail git cat-file -e $B2 &&
+	test_must_fail git cat-file -e $B3
+'
+
 test_done

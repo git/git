@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "quote.h"
 #include "exec-cmd.h"
 #include "strbuf.h"
@@ -47,42 +47,71 @@ static void cd_to_homedir(void)
 		die("could not chdir to user's home directory");
 }
 
+#define MAX_INTERACTIVE_COMMAND (4*1024*1024)
+
 static void run_shell(void)
 {
 	int done = 0;
-	static const char *help_argv[] = { HELP_COMMAND, NULL };
+	struct child_process help_cmd = CHILD_PROCESS_INIT;
 
 	if (!access(NOLOGIN_COMMAND, F_OK)) {
 		/* Interactive login disabled. */
-		const char *argv[] = { NOLOGIN_COMMAND, NULL };
+		struct child_process nologin_cmd = CHILD_PROCESS_INIT;
 		int status;
 
-		status = run_command_v_opt(argv, 0);
+		strvec_push(&nologin_cmd.args, NOLOGIN_COMMAND);
+		status = run_command(&nologin_cmd);
 		if (status < 0)
 			exit(127);
 		exit(status);
 	}
 
 	/* Print help if enabled */
-	run_command_v_opt(help_argv, RUN_SILENT_EXEC_FAILURE);
+	help_cmd.silent_exec_failure = 1;
+	strvec_push(&help_cmd.args, HELP_COMMAND);
+	run_command(&help_cmd);
 
 	do {
-		struct strbuf line = STRBUF_INIT;
 		const char *prog;
 		char *full_cmd;
 		char *rawargs;
+		size_t len;
 		char *split_args;
 		const char **argv;
 		int code;
 		int count;
 
 		fprintf(stderr, "git> ");
-		if (git_read_line_interactively(&line) == EOF) {
+
+		/*
+		 * Avoid using a strbuf or git_read_line_interactively() here.
+		 * We don't want to allocate arbitrary amounts of memory on
+		 * behalf of a possibly untrusted client, and we're subject to
+		 * OS limits on command length anyway.
+		 */
+		fflush(stdout);
+		rawargs = xmalloc(MAX_INTERACTIVE_COMMAND);
+		if (!fgets(rawargs, MAX_INTERACTIVE_COMMAND, stdin)) {
 			fprintf(stderr, "\n");
-			strbuf_release(&line);
+			free(rawargs);
 			break;
 		}
-		rawargs = strbuf_detach(&line, NULL);
+		len = strlen(rawargs);
+
+		/*
+		 * If we truncated due to our input buffer size, reject the
+		 * command. That's better than running bogus input, and
+		 * there's a good chance it's just malicious garbage anyway.
+		 */
+		if (len >= MAX_INTERACTIVE_COMMAND - 1)
+			die("invalid command format: input too long");
+
+		if (len > 0 && rawargs[len - 1] == '\n') {
+			if (--len > 0 && rawargs[len - 1] == '\r')
+				--len;
+			rawargs[len] = '\0';
+		}
+
 		split_args = xstrdup(rawargs);
 		count = split_cmdline(split_args, &argv);
 		if (count < 0) {
@@ -99,9 +128,13 @@ static void run_shell(void)
 			   !strcmp(prog, "exit") || !strcmp(prog, "bye")) {
 			done = 1;
 		} else if (is_valid_cmd_name(prog)) {
+			struct child_process cmd = CHILD_PROCESS_INIT;
+
 			full_cmd = make_cmd(prog);
 			argv[0] = full_cmd;
-			code = run_command_v_opt(argv, RUN_SILENT_EXEC_FAILURE);
+			cmd.silent_exec_failure = 1;
+			strvec_pushv(&cmd.args, argv);
+			code = run_command(&cmd);
 			if (code == -1 && errno == ENOENT) {
 				fprintf(stderr, "unrecognized command '%s'\n", prog);
 			}

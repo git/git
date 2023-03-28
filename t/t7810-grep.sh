@@ -18,6 +18,9 @@ test_invalid_grep_expression() {
 	'
 }
 
+LC_ALL=en_US.UTF-8 test-tool regex '^.$' '¿' &&
+  test_set_prereq MB_REGEX
+
 cat >hello.c <<EOF
 #include <assert.h>
 #include <stdio.h>
@@ -77,6 +80,7 @@ test_expect_success setup '
 	# Say hello.
 	function hello() {
 	  echo "Hello world."
+	  echo "Hello again."
 	} # hello
 
 	# Still a no-op.
@@ -86,6 +90,10 @@ test_expect_success setup '
 	then
 		echo unusual >"\"unusual\" pathname" &&
 		echo unusual >"t/nested \"unusual\" pathname"
+	fi &&
+	if test_have_prereq MB_REGEX
+	then
+		echo "¿" >reverse-question-mark
 	fi &&
 	git add . &&
 	test_tick &&
@@ -568,6 +576,14 @@ do
 	'
 done
 
+test_expect_success MB_REGEX 'grep exactly one char in single-char multibyte file' '
+	LC_ALL=en_US.UTF-8 git grep "^.$" reverse-question-mark
+'
+
+test_expect_success MB_REGEX 'grep two chars in single-char multibyte file' '
+	LC_ALL=en_US.UTF-8 test_expect_code 1 git grep ".." reverse-question-mark
+'
+
 cat >expected <<EOF
 file
 EOF
@@ -593,6 +609,92 @@ test_expect_success 'grep -L -C' '
 test_expect_success 'grep --files-without-match --quiet' '
 	git grep --files-without-match --quiet nonexistent_string >actual &&
 	test_must_be_empty actual
+'
+
+test_expect_success 'grep --max-count 0 (must exit with non-zero)' '
+	test_must_fail git grep --max-count 0 foo >actual &&
+	test_must_be_empty actual
+'
+
+test_expect_success 'grep --max-count 3' '
+	cat >expected <<-EOF &&
+	file:foo mmap bar
+	file:foo_mmap bar
+	file:foo_mmap bar mmap
+	EOF
+	git grep --max-count 3 foo >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'grep --max-count -1 (no limit)' '
+	cat >expected <<-EOF &&
+	file:foo mmap bar
+	file:foo_mmap bar
+	file:foo_mmap bar mmap
+	file:foo mmap bar_mmap
+	file:foo_mmap bar mmap baz
+	EOF
+	git grep --max-count -1 foo >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'grep --max-count 1 --context 2' '
+	cat >expected <<-EOF &&
+	file-foo mmap bar
+	file:foo_mmap bar
+	file-foo_mmap bar mmap
+	EOF
+	git grep --max-count 1 --context 1 foo_mmap >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'grep --max-count 1 --show-function' '
+	cat >expected <<-EOF &&
+	hello.ps1=function hello() {
+	hello.ps1:  echo "Hello world."
+	EOF
+	git grep --max-count 1 --show-function Hello hello.ps1 >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'grep --max-count 2 --show-function' '
+	cat >expected <<-EOF &&
+	hello.ps1=function hello() {
+	hello.ps1:  echo "Hello world."
+	hello.ps1:  echo "Hello again."
+	EOF
+	git grep --max-count 2 --show-function Hello hello.ps1 >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'grep --max-count 1 --count' '
+	cat >expected <<-EOF &&
+	hello.ps1:1
+	EOF
+	git grep --max-count 1 --count Hello hello.ps1 >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'grep --max-count 1 (multiple files)' '
+	cat >expected <<-EOF &&
+	hello.c:#include <stdio.h>
+	hello.ps1:# No-op.
+	EOF
+	git grep --max-count 1 -e o -- hello.\* >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'grep --max-count 1 --context 1 (multiple files)' '
+	cat >expected <<-EOF &&
+	hello.c-#include <assert.h>
+	hello.c:#include <stdio.h>
+	hello.c-
+	--
+	hello.ps1:# No-op.
+	hello.ps1-function dummy() {}
+	EOF
+	git grep --max-count 1 --context 1 -e o -- hello.\* >actual &&
+	test_cmp expected actual
 '
 
 cat >expected <<EOF
@@ -899,7 +1001,9 @@ test_expect_success 'log --committer does not search in timestamp' '
 test_expect_success 'grep with CE_VALID file' '
 	git update-index --assume-unchanged t/t &&
 	rm t/t &&
-	test "$(git grep test)" = "t/t:test" &&
+	echo "t/t:test" >expect &&
+	git grep test >actual &&
+	test_cmp expect actual &&
 	git update-index --no-assume-unchanged t/t &&
 	git checkout t/t
 '

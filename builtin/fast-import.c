@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "cache.h"
+#include "hex.h"
 #include "repository.h"
 #include "config.h"
 #include "lockfile.h"
@@ -46,7 +47,7 @@ struct object_entry {
 		depth : DEPTH_BITS;
 };
 
-static int object_entry_hashcmp(const void *map_data,
+static int object_entry_hashcmp(const void *map_data UNUSED,
 				const struct hashmap_entry *eptr,
 				const struct hashmap_entry *entry_or_key,
 				const void *keydata)
@@ -436,7 +437,7 @@ static void set_checkpoint_signal(void)
 
 #else
 
-static void checkpoint_signal(int signo)
+static void checkpoint_signal(int signo UNUSED)
 {
 	checkpoint_requested = 1;
 }

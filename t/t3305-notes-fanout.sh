@@ -9,7 +9,7 @@ path_has_fanout() {
 	path=$1 &&
 	fanout=$2 &&
 	after_last_slash=$(($(test_oid hexsz) - $fanout * 2)) &&
-	echo $path | grep -q "^\([0-9a-f]\{2\}/\)\{$fanout\}[0-9a-f]\{$after_last_slash\}$"
+	echo $path | grep -q -E "^([0-9a-f]{2}/){$fanout}[0-9a-f]{$after_last_slash}$"
 }
 
 touched_one_note_with_fanout() {
@@ -51,7 +51,7 @@ test_expect_success 'creating many notes with git-notes' '
 	done
 '
 
-test_expect_success !SANITIZE_LEAK 'many notes created correctly with git-notes' '
+test_expect_success 'many notes created correctly with git-notes' '
 	git log >output.raw &&
 	grep "^    " output.raw >output &&
 	i=$num_notes &&

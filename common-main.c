@@ -40,6 +40,7 @@ int main(int argc, const char **argv)
 
 	git_resolve_executable_dir(argv[0]);
 
+	setlocale(LC_CTYPE, "");
 	git_setup_gettext();
 
 	initialize_the_repository();

@@ -6,6 +6,7 @@
 #include "builtin.h"
 #include "cache.h"
 #include "config.h"
+#include "hex.h"
 #include "refs.h"
 #include "refspec.h"
 #include "object-store.h"
@@ -119,7 +120,7 @@ struct anonymized_entry_key {
 	size_t orig_len;
 };
 
-static int anonymized_entry_cmp(const void *unused_cmp_data,
+static int anonymized_entry_cmp(const void *cmp_data UNUSED,
 				const struct hashmap_entry *eptr,
 				const struct hashmap_entry *entry_or_key,
 				const void *keydata)
@@ -409,7 +410,7 @@ static const char *anonymize_oid(const char *oid_hex)
 }
 
 static void show_filemodify(struct diff_queue_struct *q,
-			    struct diff_options *options, void *data)
+			    struct diff_options *options UNUSED, void *data)
 {
 	int i;
 	struct string_list *changed = data;
@@ -1221,7 +1222,7 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 	revs.sources = &revision_sources;
 	revs.rewrite_parents = 1;
 	argc = parse_options(argc, argv, prefix, options, fast_export_usage,
-			PARSE_OPT_KEEP_ARGV0 | PARSE_OPT_KEEP_UNKNOWN);
+			PARSE_OPT_KEEP_ARGV0 | PARSE_OPT_KEEP_UNKNOWN_OPT);
 	argc = setup_revisions(argc, argv, &revs, NULL);
 	if (argc > 1)
 		usage_with_options (fast_export_usage, options);

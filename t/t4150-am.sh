@@ -345,6 +345,21 @@ test_expect_success 'am with failing applypatch-msg hook' '
 	test_cmp_rev first HEAD
 '
 
+test_expect_success 'am with failing applypatch-msg hook (no verify)' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	git checkout first &&
+	test_hook applypatch-msg <<-\EOF &&
+	echo hook-message >"$1"
+	exit 1
+	EOF
+	git am --no-verify patch1 &&
+	test_path_is_missing .git/rebase-apply &&
+	git diff --exit-code second &&
+	git log -1 --format=format:%B >actual &&
+	test_cmp msg actual
+'
+
 test_expect_success 'am with pre-applypatch hook' '
 	rm -fr .git/rebase-apply &&
 	git reset --hard &&
@@ -372,6 +387,23 @@ test_expect_success 'am with failing pre-applypatch hook' '
 	test_path_is_dir .git/rebase-apply &&
 	git diff --exit-code second &&
 	test_cmp_rev first HEAD
+'
+
+test_expect_success 'am with failing pre-applypatch hook (no verify)' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	git checkout first &&
+	touch empty-file &&
+	test_hook pre-applypatch <<-\EOF &&
+	rm empty-file
+	exit 1
+	EOF
+	git am --no-verify patch1 &&
+	test_path_is_missing .git/rebase-apply &&
+	test_path_is_file empty-file &&
+	git diff --exit-code second &&
+	git log -1 --format=format:%B >actual &&
+	test_cmp msg actual
 '
 
 test_expect_success 'am with post-applypatch hook' '
@@ -1033,7 +1065,7 @@ test_expect_success 'am --patch-format=mboxrd handles mboxrd' '
 	>From extra escape for reversibility
 	INPUT_END
 	git commit -F msg &&
-	git format-patch --pretty=mboxrd --stdout -1 >mboxrd1 &&
+	git -c format.mboxrd format-patch --stdout -1 >mboxrd1 &&
 	grep "^>From could trip up a loose mbox parser" mboxrd1 &&
 	git checkout -f first &&
 	git am --patch-format=mboxrd mboxrd1 &&

@@ -1,4 +1,7 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "gettext.h"
+#include "hex.h"
+#include "strbuf.h"
 #include "urlmatch.h"
 
 #define URL_ALPHA "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
@@ -209,7 +212,7 @@ static char *url_normalize_1(const char *url, struct url_info *out_info, char al
 	 */
 	if (!url_len || strchr(":/?#", *url)) {
 		/* Missing host invalid for all URL schemes except file */
-		if (strncmp(norm.buf, "file:", 5)) {
+		if (!starts_with(norm.buf, "file:")) {
 			if (out_info) {
 				out_info->url = NULL;
 				out_info->err = _("missing host and scheme is not 'file:'");
@@ -268,11 +271,11 @@ static char *url_normalize_1(const char *url, struct url_info *out_info, char al
 		if (url == slash_ptr) {
 			/* Skip ":" port with no number, it's same as default */
 		} else if (slash_ptr - url == 2 &&
-			   !strncmp(norm.buf, "http:", 5) &&
+			   starts_with(norm.buf, "http:") &&
 			   !strncmp(url, "80", 2)) {
 			/* Skip http :80 as it's the default */
 		} else if (slash_ptr - url == 3 &&
-			   !strncmp(norm.buf, "https:", 6) &&
+			   starts_with(norm.buf, "https:") &&
 			   !strncmp(url, "443", 3)) {
 			/* Skip https :443 as it's the default */
 		} else {

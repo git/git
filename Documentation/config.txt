@@ -387,6 +387,8 @@ include::config/branch.txt[]
 
 include::config/browser.txt[]
 
+include::config/bundle.txt[]
+
 include::config/checkout.txt[]
 
 include::config/clean.txt[]
@@ -423,6 +425,8 @@ include::config/filter.txt[]
 
 include::config/fsck.txt[]
 
+include::config/fsmonitor--daemon.txt[]
+
 include::config/gc.txt[]
 
 include::config/gitcvs.txt[]
@@ -444,6 +448,8 @@ include::config/http.txt[]
 include::config/i18n.txt[]
 
 include::config/imap.txt[]
+
+include::config/includeif.txt[]
 
 include::config/index.txt[]
 
@@ -494,6 +500,8 @@ include::config/remotes.txt[]
 include::config/repack.txt[]
 
 include::config/rerere.txt[]
+
+include::config/revert.txt[]
 
 include::config/safe.txt[]
 

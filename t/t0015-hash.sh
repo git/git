@@ -1,8 +1,9 @@
 #!/bin/sh
 
 test_description='test basic hash implementation'
-. ./test-lib.sh
 
+TEST_PASSES_SANITIZE_LEAK=true
+. ./test-lib.sh
 
 test_expect_success 'test basic SHA-1 hash values' '
 	test-tool sha1 </dev/null >actual &&

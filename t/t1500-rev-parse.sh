@@ -4,6 +4,7 @@ test_description='test git rev-parse'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_one () {
@@ -194,7 +195,7 @@ test_expect_success 'rev-parse --is-shallow-repository in non-shallow repo' '
 '
 
 test_expect_success 'rev-parse --show-object-format in repo' '
-	echo "$(test_oid algo)" >expect &&
+	test_oid algo >expect &&
 	git rev-parse --show-object-format >actual &&
 	test_cmp expect actual &&
 	git rev-parse --show-object-format=storage >actual &&
@@ -225,7 +226,8 @@ test_expect_success 'showing the superproject correctly' '
 	test_commit -C super test_commit &&
 	test_create_repo sub &&
 	test_commit -C sub test_commit &&
-	git -C super submodule add ../sub dir/sub &&
+	git -c protocol.file.allow=always \
+		-C super submodule add ../sub dir/sub &&
 	echo $(pwd)/super >expect  &&
 	git -C super/dir/sub rev-parse --show-superproject-working-tree >out &&
 	test_cmp expect out &&

@@ -195,6 +195,14 @@ respectively, and they must begin with `refs/` when applied to `--glob`
 or `--all`. If a trailing '/{asterisk}' is intended, it must be given
 explicitly.
 
+--exclude-hidden=[fetch|receive|uploadpack]::
+	Do not include refs that would be hidden by `git-fetch`,
+	`git-receive-pack` or `git-upload-pack` by consulting the appropriate
+	`fetch.hideRefs`, `receive.hideRefs` or `uploadpack.hideRefs`
+	configuration along with `transfer.hideRefs` (see
+	linkgit:git-config[1]). This option affects the next pseudo-ref option
+	`--all` or `--glob` and is cleared after processing them.
+
 --reflog::
 	Pretend as if all objects mentioned by reflogs are listed on the
 	command line as `<commit>`.
@@ -242,6 +250,7 @@ ifdef::git-rev-list[]
 	to `/dev/null` as the output does not have to be formatted.
 
 --disk-usage::
+--disk-usage=human::
 	Suppress normal output; instead, print the sum of the bytes used
 	for on-disk storage by the selected commits or objects. This is
 	equivalent to piping the output into `git cat-file
@@ -249,6 +258,8 @@ ifdef::git-rev-list[]
 	faster (especially with `--use-bitmap-index`). See the `CAVEATS`
 	section in linkgit:git-cat-file[1] for the limitations of what
 	"on-disk storage" means.
+	With the optional value `human`, on-disk storage size is shown
+	in human-readable string(e.g. 12.24 Kib, 3.50 Mib).
 endif::git-rev-list[]
 
 --cherry-mark::
@@ -389,12 +400,14 @@ Default mode::
 	merges from the resulting history, as there are no selected
 	commits contributing to this merge.
 
---ancestry-path::
+--ancestry-path[=<commit>]::
 	When given a range of commits to display (e.g. 'commit1..commit2'
-	or 'commit2 {caret}commit1'), only display commits that exist
-	directly on the ancestry chain between the 'commit1' and
-	'commit2', i.e. commits that are both descendants of 'commit1',
-	and ancestors of 'commit2'.
+	or 'commit2 {caret}commit1'), only display commits in that range
+	that are ancestors of <commit>, descendants of <commit>, or
+	<commit> itself.  If no commit is specified, use 'commit1' (the
+	excluded part of the range) as <commit>.  Can be passed multiple
+	times; if so, a commit is included if it is any of the commits
+	given or if it is an ancestor or descendant of one of them.
 
 A more detailed explanation follows.
 
@@ -568,11 +581,10 @@ Note the major differences in `N`, `P`, and `Q` over `--full-history`:
 
 There is another simplification mode available:
 
---ancestry-path::
-	Limit the displayed commits to those directly on the ancestry
-	chain between the ``from'' and ``to'' commits in the given commit
-	range. I.e. only display commits that are ancestor of the ``to''
-	commit and descendants of the ``from'' commit.
+--ancestry-path[=<commit>]::
+	Limit the displayed commits to those which are an ancestor of
+	<commit>, or which are a descendant of <commit>, or are <commit>
+	itself.
 +
 As an example use case, consider the following commit history:
 +
@@ -603,6 +615,29 @@ option does. Applied to the 'D..M' range, it results in:
 		  G---H---I---J
 			       \
 				L--M
+-----------------------------------------------------------------------
++
+We can also use `--ancestry-path=D` instead of `--ancestry-path` which
+means the same thing when applied to the 'D..M' range but is just more
+explicit.
++
+If we instead are interested in a given topic within this range, and all
+commits affected by that topic, we may only want to view the subset of
+`D..M` which contain that topic in their ancestry path.  So, using
+`--ancestry-path=H D..M` for example would result in:
++
+-----------------------------------------------------------------------
+		E
+		 \
+		  G---H---I---J
+			       \
+				L--M
+-----------------------------------------------------------------------
++
+Whereas `--ancestry-path=K D..M` would result in
++
+-----------------------------------------------------------------------
+		K---------------L--M
 -----------------------------------------------------------------------
 
 Before discussing another option, `--show-pulls`, we need to
@@ -659,7 +694,7 @@ Here, the merge commits `O` and `P` contribute extra noise, as they did
 not actually contribute a change to `file.txt`. They only merged a topic
 that was based on an older version of `file.txt`. This is a common
 issue in repositories using a workflow where many contributors work in
-parallel and merge their topic branches along a single trunk: manu
+parallel and merge their topic branches along a single trunk: many
 unrelated merges appear in the `--full-history` results.
 
 When using the `--simplify-merges` option, the commits `O` and `P`
@@ -1066,12 +1101,12 @@ preferred format.  See the `strftime` manual for a complete list of
 format placeholders. When using `-local`, the correct syntax is
 `--date=format-local:...`.
 
-`--date=default` is the default format, and is similar to
-`--date=rfc2822`, with a few exceptions:
+`--date=default` is the default format, and is based on ctime(3)
+output.  It shows a single line with three-letter day of the week,
+three-letter month, day-of-month, hour-minute-seconds in "HH:MM:SS"
+format, followed by 4-digit year, plus timezone information, unless
+the local time zone is used, e.g. `Thu Jan 1 00:00:00 1970 +0000`.
 --
-	- there is no comma after the day-of-week
-
-	- the time zone is omitted when the local time zone is used
 
 ifdef::git-rev-list[]
 --header::

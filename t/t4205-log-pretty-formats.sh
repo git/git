@@ -156,7 +156,7 @@ test_expect_success 'NUL termination with --reflog --pretty=oneline' '
 	for r in $revs
 	do
 		git show -s --pretty=oneline "$r" >raw &&
-		cat raw | lf_to_nul || exit 1
+		cat raw | lf_to_nul || return 1
 	done >expect &&
 	# the trailing NUL is already produced so we do not need to
 	# output another one
@@ -1016,6 +1016,109 @@ test_expect_success '%(describe:abbrev=...) vs git describe --abbrev=...' '
 	git describe --abbrev=15 >expect &&
 	git log -1 --format="%(describe:abbrev=15)" >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'log --pretty with space stealing' '
+	printf mm0 >expect &&
+	git log -1 --pretty="format:mm%>>|(1)%x30" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --pretty with invalid padding format' '
+	printf "%s%%<(20" "$(git rev-parse HEAD)" >expect &&
+	git log -1 --pretty="format:%H%<(20" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --pretty with magical wrapping directives' '
+	commit_id=$(git commit-tree HEAD^{tree} -m "describe me") &&
+	git tag describe-me $commit_id &&
+	printf "\n(tag:\ndescribe-me)%%+w(2)" >expect &&
+	git log -1 --pretty="format:%w(1)%+d%+w(2)" $commit_id >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success SIZE_T_IS_64BIT 'log --pretty with overflowing wrapping directive' '
+	printf "%%w(2147483649,1,1)0" >expect &&
+	git log -1 --pretty="format:%w(2147483649,1,1)%x30" >actual &&
+	test_cmp expect actual &&
+	printf "%%w(1,2147483649,1)0" >expect &&
+	git log -1 --pretty="format:%w(1,2147483649,1)%x30" >actual &&
+	test_cmp expect actual &&
+	printf "%%w(1,1,2147483649)0" >expect &&
+	git log -1 --pretty="format:%w(1,1,2147483649)%x30" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success SIZE_T_IS_64BIT 'log --pretty with overflowing padding directive' '
+	printf "%%<(2147483649)0" >expect &&
+	git log -1 --pretty="format:%<(2147483649)%x30" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --pretty with padding and preceding control chars' '
+	printf "\20\20   0" >expect &&
+	git log -1 --pretty="format:%x10%x10%>|(4)%x30" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --pretty truncation with control chars' '
+	test_commit "$(printf "\20\20\20\20xxxx")" file contents commit-with-control-chars &&
+	printf "\20\20\20\20x.." >expect &&
+	git log -1 --pretty="format:%<(3,trunc)%s" commit-with-control-chars >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success EXPENSIVE,SIZE_T_IS_64BIT 'log --pretty with huge commit message' '
+	# We only assert that this command does not crash. This needs to be
+	# executed with the address sanitizer to demonstrate failure.
+	git log -1 --pretty="format:%>(2147483646)%x41%41%>(2147483646)%x41" >/dev/null
+'
+
+test_expect_success EXPENSIVE,SIZE_T_IS_64BIT 'set up huge commit' '
+	test-tool genzeros 2147483649 | tr "\000" "1" >expect &&
+	huge_commit=$(git commit-tree -F expect HEAD^{tree})
+'
+
+test_expect_success EXPENSIVE,SIZE_T_IS_64BIT 'log --pretty with huge commit message' '
+	git log -1 --format="%B%<(1)%x30" $huge_commit >actual &&
+	echo 0 >>expect &&
+	test_cmp expect actual
+'
+
+test_expect_success EXPENSIVE,SIZE_T_IS_64BIT 'log --pretty with huge commit message does not cause allocation failure' '
+	test_must_fail git log -1 --format="%<(1)%B" $huge_commit 2>error &&
+	cat >expect <<-EOF &&
+	fatal: number too large to represent as int on this platform: 2147483649
+	EOF
+	test_cmp expect error
+'
+
+# pretty-formats note wide char limitations, and add tests
+test_expect_failure 'wide and decomposed characters column counting' '
+
+# from t/lib-unicode-nfc-nfd.sh hex values converted to octal
+	utf8_nfc=$(printf "\303\251") && # e acute combined.
+	utf8_nfd=$(printf "\145\314\201") && # e with a combining acute (i.e. decomposed)
+	utf8_emoji=$(printf "\360\237\221\250") &&
+
+# replacement character when requesting a wide char fits in a single display colum.
+# "half wide" alternative could be a plain ASCII dot `.`
+	utf8_vert_ell=$(printf "\342\213\256") &&
+
+# use ${xxx} here!
+	nfc10="${utf8_nfc}${utf8_nfc}${utf8_nfc}${utf8_nfc}${utf8_nfc}${utf8_nfc}${utf8_nfc}${utf8_nfc}${utf8_nfc}${utf8_nfc}" &&
+	nfd10="${utf8_nfd}${utf8_nfd}${utf8_nfd}${utf8_nfd}${utf8_nfd}${utf8_nfd}${utf8_nfd}${utf8_nfd}${utf8_nfd}${utf8_nfd}" &&
+	emoji5="${utf8_emoji}${utf8_emoji}${utf8_emoji}${utf8_emoji}${utf8_emoji}" &&
+# emoji5 uses 10 display columns
+
+	test_commit "abcdefghij" &&
+	test_commit --no-tag "${nfc10}" &&
+	test_commit --no-tag "${nfd10}" &&
+	test_commit --no-tag "${emoji5}" &&
+	printf "${utf8_emoji}..${utf8_emoji}${utf8_vert_ell}\n${utf8_nfd}..${utf8_nfd}${utf8_nfd}\n${utf8_nfc}..${utf8_nfc}${utf8_nfc}\na..ij\n" >expected &&
+	git log --format="%<(5,mtrunc)%s" -4 >actual &&
+	test_cmp expected actual
 '
 
 test_done

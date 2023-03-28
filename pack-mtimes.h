@@ -1,8 +1,6 @@
 #ifndef PACK_MTIMES_H
 #define PACK_MTIMES_H
 
-#include "git-compat-util.h"
-
 #define MTIMES_SIGNATURE 0x4d544d45 /* "MTME" */
 #define MTIMES_VERSION 1
 

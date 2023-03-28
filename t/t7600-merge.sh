@@ -105,7 +105,7 @@ verify_mergeheads () {
 	test_write_lines "$@" >mergehead.expected &&
 	while read sha1 rest
 	do
-		git rev-parse $sha1
+		git rev-parse $sha1 || return 1
 	done <.git/MERGE_HEAD >mergehead.actual &&
 	test_cmp mergehead.expected mergehead.actual
 }
@@ -253,6 +253,15 @@ test_expect_success 'merge --squash c3 with c7' '
 	git cat-file commit HEAD >raw &&
 	sed -e "1,/^$/d" raw >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'merge --squash --autostash conflict does not attempt to apply autostash' '
+	git reset --hard c3 &&
+	>unrelated &&
+	git add unrelated &&
+	test_must_fail git merge --squash c7 --autostash >out 2>err &&
+	! grep "Applying autostash resulted in conflicts." err &&
+	grep "When finished, apply stashed changes with \`git stash pop\`" out
 '
 
 test_expect_success 'merge c3 with c7 with commit.cleanup = scissors' '

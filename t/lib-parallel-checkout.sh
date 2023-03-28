@@ -25,7 +25,11 @@ test_checkout_workers () {
 
 	local trace_file=trace-test-checkout-workers &&
 	rm -f "$trace_file" &&
-	GIT_TRACE2="$(pwd)/$trace_file" "$@" 2>&8 &&
+	(
+		GIT_TRACE2="$(pwd)/$trace_file" &&
+		export GIT_TRACE2 &&
+		"$@" 2>&8
+	) &&
 
 	local workers="$(grep "child_start\[..*\] git checkout--worker" "$trace_file" | wc -l)" &&
 	test $workers -eq $expected_workers &&

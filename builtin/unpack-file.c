@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "config.h"
+#include "hex.h"
 #include "object-store.h"
 
 static char *create_temp_file(struct object_id *oid)
@@ -19,6 +20,7 @@ static char *create_temp_file(struct object_id *oid)
 	if (write_in_full(fd, buf, size) < 0)
 		die_errno("unable to write temp-file");
 	close(fd);
+	free(buf);
 	return path;
 }
 
@@ -27,7 +29,7 @@ int cmd_unpack_file(int argc, const char **argv, const char *prefix)
 	struct object_id oid;
 
 	if (argc != 2 || !strcmp(argv[1], "-h"))
-		usage("git unpack-file <sha1>");
+		usage("git unpack-file <blob>");
 	if (get_oid(argv[1], &oid))
 		die("Not a valid object name %s", argv[1]);
 

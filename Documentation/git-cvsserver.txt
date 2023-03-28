@@ -63,11 +63,10 @@ Print version information and exit
 Print usage information and exit
 
 <directory>::
-You can specify a list of allowed directories. If no directories
-are given, all are allowed. This is an additional restriction, gitcvs
-access still needs to be enabled by the `gitcvs.enabled` config option
-unless `--export-all` was given, too.
-
+The remaining arguments provide a list of directories. If no directories
+are given, then all are allowed. Repositories within these directories
+still require the `gitcvs.enabled` config option, unless `--export-all`
+is specified.
 
 LIMITATIONS
 -----------
@@ -311,11 +310,13 @@ ENVIRONMENT
 These variables obviate the need for command-line options in some
 circumstances, allowing easier restricted usage through git-shell.
 
-GIT_CVSSERVER_BASE_PATH takes the place of the argument to --base-path.
+GIT_CVSSERVER_BASE_PATH::
+	This variable replaces the argument to --base-path.
 
-GIT_CVSSERVER_ROOT specifies a single-directory whitelist. The
-repository must still be configured to allow access through
-git-cvsserver, as described above.
+GIT_CVSSERVER_ROOT::
+	This variable specifies a single directory, replacing the
+	`<directory>...` argument list. The repository still requires the
+	`gitcvs.enabled` config option, unless `--export-all` is specified.
 
 When these environment variables are set, the corresponding
 command-line arguments may not be used.

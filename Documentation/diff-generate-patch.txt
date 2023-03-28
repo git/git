@@ -1,3 +1,4 @@
+[[generate_patch_text_with_p]]
 Generating patch text with -p
 -----------------------------
 

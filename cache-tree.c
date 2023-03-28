@@ -1,4 +1,6 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
+#include "hex.h"
 #include "lockfile.h"
 #include "tree.h"
 #include "tree-walk.h"
@@ -405,7 +407,7 @@ static int update_one(struct cache_tree *it,
 		}
 
 		/*
-		 * CE_INTENT_TO_ADD entries exist on on-disk index but
+		 * CE_INTENT_TO_ADD entries exist in on-disk index but
 		 * they are not part of generated trees. Invalidate up
 		 * to root to force cache-tree users to read elsewhere.
 		 */
@@ -760,7 +762,7 @@ static void prime_cache_tree_rec(struct repository *r,
 	struct tree_desc desc;
 	struct name_entry entry;
 	int cnt;
-	int base_path_len = tree_path->len;
+	size_t base_path_len = tree_path->len;
 
 	oidcpy(&it->oid, &tree->object.oid);
 
@@ -785,7 +787,6 @@ static void prime_cache_tree_rec(struct repository *r,
 			 */
 			if (r->index->sparse_index) {
 				strbuf_setlen(tree_path, base_path_len);
-				strbuf_grow(tree_path, base_path_len + entry.pathlen + 1);
 				strbuf_add(tree_path, entry.path, entry.pathlen);
 				strbuf_addch(tree_path, '/');
 			}
@@ -857,9 +858,7 @@ int cache_tree_matches_traversal(struct cache_tree *root,
 	return 0;
 }
 
-static void verify_one_sparse(struct repository *r,
-			      struct index_state *istate,
-			      struct cache_tree *it,
+static void verify_one_sparse(struct index_state *istate,
 			      struct strbuf *path,
 			      int pos)
 {
@@ -910,7 +909,7 @@ static int verify_one(struct repository *r,
 			return 1;
 
 		if (pos >= 0) {
-			verify_one_sparse(r, istate, it, path, pos);
+			verify_one_sparse(istate, path, pos);
 			return 0;
 		}
 
