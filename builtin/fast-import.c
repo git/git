@@ -176,6 +176,7 @@ static FILE *pack_edges;
 static unsigned int show_stats = 1;
 static int global_argc;
 static const char **global_argv;
+static const char *global_prefix;
 
 /* Memory pools */
 static struct mem_pool fi_mem_pool = {
@@ -3246,7 +3247,7 @@ static void parse_alias(void)
 static char* make_fast_import_path(const char *path)
 {
 	if (!relative_marks_paths || is_absolute_path(path))
-		return xstrdup(path);
+		return prefix_filename(global_prefix, path);
 	return git_pathdup("info/fast-import/%s", path);
 }
 
@@ -3317,9 +3318,11 @@ static void option_cat_blob_fd(const char *fd)
 
 static void option_export_pack_edges(const char *edges)
 {
+	char *fn = prefix_filename(global_prefix, edges);
 	if (pack_edges)
 		fclose(pack_edges);
-	pack_edges = xfopen(edges, "a");
+	pack_edges = xfopen(fn, "a");
+	free(fn);
 }
 
 static void option_rewrite_submodules(const char *arg, struct string_list *list)
@@ -3334,11 +3337,13 @@ static void option_rewrite_submodules(const char *arg, struct string_list *list)
 	f++;
 	CALLOC_ARRAY(ms, 1);
 
+	f = prefix_filename(global_prefix, f);
 	fp = fopen(f, "r");
 	if (!fp)
 		die_errno("cannot read '%s'", f);
 	read_mark_file(&ms, fp, insert_oid_entry);
 	fclose(fp);
+	free(f);
 
 	string_list_insert(list, s)->util = ms;
 }
@@ -3552,6 +3557,7 @@ int cmd_fast_import(int argc, const char **argv, const char *prefix)
 
 	global_argc = argc;
 	global_argv = argv;
+	global_prefix = prefix;
 
 	rc_free = mem_pool_alloc(&fi_mem_pool, cmd_save * sizeof(*rc_free));
 	for (i = 0; i < (cmd_save - 1); i++)

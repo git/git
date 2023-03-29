@@ -10,7 +10,7 @@ static void show_bit(size_t pos, void *data)
 	printf(" %d", (int)pos);
 }
 
-int cmd__dump_split_index(int ac, const char **av)
+int cmd__dump_split_index(int ac UNUSED, const char **av)
 {
 	struct split_index *si;
 	int i;

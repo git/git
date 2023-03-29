@@ -563,7 +563,7 @@ static int cmd_diagnose(int argc, const char **argv)
 	return res;
 }
 
-static int cmd_list(int argc, const char **argv)
+static int cmd_list(int argc, const char **argv UNUSED)
 {
 	if (argc != 1)
 		die(_("`scalar list` does not take arguments"));

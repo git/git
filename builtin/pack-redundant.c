@@ -558,7 +558,7 @@ static void load_all(void)
 	}
 }
 
-int cmd_pack_redundant(int argc, const char **argv, const char *prefix)
+int cmd_pack_redundant(int argc, const char **argv, const char *prefix UNUSED)
 {
 	int i;
 	int i_still_use_this = 0;

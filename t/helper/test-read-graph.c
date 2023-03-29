@@ -5,7 +5,7 @@
 #include "object-store.h"
 #include "bloom.h"
 
-int cmd__read_graph(int argc, const char **argv)
+int cmd__read_graph(int argc UNUSED, const char **argv UNUSED)
 {
 	struct commit_graph *graph = NULL;
 	struct object_directory *odb;

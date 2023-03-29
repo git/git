@@ -1466,7 +1466,7 @@ done:
 	return ret;
 }
 
-static int create_stash(int argc, const char **argv, const char *prefix)
+static int create_stash(int argc, const char **argv, const char *prefix UNUSED)
 {
 	int ret;
 	struct strbuf stash_msg_buf = STRBUF_INIT;

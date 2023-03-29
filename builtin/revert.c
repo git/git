@@ -94,7 +94,8 @@ static void verify_opt_compatible(const char *me, const char *base_opt, ...)
 		die(_("%s: %s cannot be used with %s"), me, this_opt, base_opt);
 }
 
-static int run_sequencer(int argc, const char **argv, struct replay_opts *opts)
+static int run_sequencer(int argc, const char **argv, const char *prefix,
+			 struct replay_opts *opts)
 {
 	const char * const * usage_str = revert_or_cherry_pick_usage(opts);
 	const char *me = action_name(opts);
@@ -141,7 +142,7 @@ static int run_sequencer(int argc, const char **argv, struct replay_opts *opts)
 		options = parse_options_concat(options, cp_extra);
 	}
 
-	argc = parse_options(argc, argv, NULL, options, usage_str,
+	argc = parse_options(argc, argv, prefix, options, usage_str,
 			PARSE_OPT_KEEP_ARGV0 |
 			PARSE_OPT_KEEP_UNKNOWN_OPT);
 
@@ -246,7 +247,7 @@ int cmd_revert(int argc, const char **argv, const char *prefix)
 
 	opts.action = REPLAY_REVERT;
 	sequencer_init_config(&opts);
-	res = run_sequencer(argc, argv, &opts);
+	res = run_sequencer(argc, argv, prefix, &opts);
 	if (res < 0)
 		die(_("revert failed"));
 	replay_opts_release(&opts);
@@ -260,7 +261,7 @@ int cmd_cherry_pick(int argc, const char **argv, const char *prefix)
 
 	opts.action = REPLAY_PICK;
 	sequencer_init_config(&opts);
-	res = run_sequencer(argc, argv, &opts);
+	res = run_sequencer(argc, argv, prefix, &opts);
 	if (res < 0)
 		die(_("cherry-pick failed"));
 	replay_opts_release(&opts);
