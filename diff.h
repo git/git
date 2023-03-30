@@ -333,6 +333,7 @@ struct diff_options {
 	const char *stat_sep;
 	int xdl_opts;
 	int ignore_driver_algorithm;
+	const char *attr_source;
 
 	/* see Documentation/diff-options.txt */
 	char **anchors;

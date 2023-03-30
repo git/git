@@ -31,6 +31,7 @@
 #include "promisor-remote.h"
 #include "dir.h"
 #include "strmap.h"
+#include "tree.h"
 
 #ifdef NO_FAST_WORKING_DIRECTORY
 #define FAST_WORKING_DIRECTORY 0
@@ -4456,6 +4457,32 @@ static void fill_metainfo(struct strbuf *msg,
 	}
 }
 
+static void get_userdiff(struct diff_options *o,
+			     struct userdiff_driver **drv,
+			     const char *attr_path)
+{
+	const char *commit = o->attr_source;
+	struct object_id *tree_oid = NULL;
+
+	if (!commit)
+		commit = "HEAD";
+
+	if ((o->attr_source || is_bare_repository()) && o->repo->gitdir) {
+		struct object_id oid;
+
+		if (!get_oid(commit, &oid)) {
+			struct tree *t = parse_tree_indirect(&oid);
+
+			if (t)
+				tree_oid = &t->object.oid;
+		} else if (o->attr_source) {
+			die(_("%s is not a valid object"), commit);
+		}
+	}
+
+	*drv = userdiff_find_by_tree_and_path(o->repo->index, tree_oid, attr_path);
+}
+
 static void run_diff_cmd(const char *pgm,
 			 const char *name,
 			 const char *other,
@@ -4472,7 +4499,7 @@ static void run_diff_cmd(const char *pgm,
 	struct userdiff_driver *drv = NULL;
 
 	if (o->flags.allow_external || !o->ignore_driver_algorithm)
-		drv = userdiff_find_by_path(o->repo->index, attr_path);
+		get_userdiff(o, &drv, attr_path);
 
 	if (o->flags.allow_external && drv && drv->external)
 		pgm = drv->external;
@@ -4599,8 +4626,9 @@ static void run_diffstat(struct diff_filepair *p, struct diff_options *o,
 	const char *other;
 
 	if (!o->ignore_driver_algorithm) {
-		struct userdiff_driver *drv = userdiff_find_by_path(o->repo->index,
-								    p->one->path);
+		struct userdiff_driver *drv = NULL;
+
+		get_userdiff(o, &drv, p->one->path);
 
 		if (drv && drv->algorithm)
 			set_diff_algorithm(o, drv->algorithm);
@@ -5699,6 +5727,9 @@ struct option *add_diff_options(const struct option *opts,
 			 N_("disable all output of the program")),
 		OPT_BOOL(0, "ext-diff", &options->flags.allow_external,
 			 N_("allow an external diff helper to be executed")),
+		OPT_STRING(0, "attr-source", &options->attr_source,
+			 N_("attributes-source"),
+			 N_("the commit to read attributes from")),
 		OPT_CALLBACK_F(0, "textconv", options, NULL,
 			       N_("run external text conversion filters when comparing binary files"),
 			       PARSE_OPT_NOARG, diff_opt_textconv),

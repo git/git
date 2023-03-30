@@ -33,6 +33,10 @@ int userdiff_config(const char *k, const char *v);
 struct userdiff_driver *userdiff_find_by_name(const char *name);
 struct userdiff_driver *userdiff_find_by_path(struct index_state *istate,
 					      const char *path);
+struct userdiff_driver *userdiff_find_by_tree_and_path(struct index_state *istate,
+						       const struct object_id *tree_oid,
+						       const char *path);
+
 
 /*
  * Initialize any textconv-related fields in the driver and return it, or NULL
