@@ -1101,9 +1101,10 @@ test_run_ () {
 		trace=
 		# 117 is magic because it is unlikely to match the exit
 		# code of other programs
-		if test "OK-117" != "$(test_eval_ "fail_117 && $1${LF}${LF}echo OK-\$?" 3>&1)"
+		test_eval_ "fail_117 && $1"
+		if test $? != 117
 		then
-			BUG "broken &&-chain or run-away HERE-DOC: $1"
+			BUG "broken &&-chain: $1"
 		fi
 		trace=$trace_tmp
 	fi
