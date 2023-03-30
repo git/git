@@ -1593,7 +1593,8 @@ then
 	BAIL_OUT_ENV_NEEDS_SANITIZE_LEAK "GIT_TEST_SANITIZE_LEAK_LOG=true"
 fi
 
-if test "${GIT_TEST_CHAIN_LINT:-1}" != 0
+if test "${GIT_TEST_CHAIN_LINT:-1}" != 0 &&
+   test "${GIT_TEST_EXT_CHAIN_LINT:-1}" != 0
 then
 	"$PERL_PATH" "$TEST_DIRECTORY/chainlint.pl" "$0" ||
 		BUG "lint error (see '?!...!? annotations above)"
