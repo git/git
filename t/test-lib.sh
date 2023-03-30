@@ -1086,6 +1086,10 @@ test_eval_ () {
 	return $test_eval_ret_
 }
 
+fail_117 () {
+	return 117
+}
+
 test_run_ () {
 	test_cleanup=:
 	expecting_failure=$2
@@ -1097,7 +1101,7 @@ test_run_ () {
 		trace=
 		# 117 is magic because it is unlikely to match the exit
 		# code of other programs
-		if test "OK-117" != "$(test_eval_ "(exit 117) && $1${LF}${LF}echo OK-\$?" 3>&1)"
+		if test "OK-117" != "$(test_eval_ "fail_117 && $1${LF}${LF}echo OK-\$?" 3>&1)"
 		then
 			BUG "broken &&-chain or run-away HERE-DOC: $1"
 		fi
