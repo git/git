@@ -75,7 +75,6 @@ struct ref_format {
 	const char *format;
 	const char *rest;
 	int quote_style;
-	int use_rest;
 	int use_color;
 
 	/* Internal state to ref-filter */
