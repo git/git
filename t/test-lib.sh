@@ -1041,10 +1041,7 @@ want_trace () {
 # (and we want to make sure we run any cleanup like
 # "set +x").
 test_eval_inner_ () {
-	# Do not add anything extra (including LF) after '$*'
-	eval "
-		want_trace && trace_level_=$(($trace_level_+1)) && set -x
-		$*"
+	eval "$*"
 }
 
 test_eval_ () {
@@ -1069,7 +1066,10 @@ test_eval_ () {
 	#     be _inside_ the block to avoid polluting the "set -x" output
 	#
 
-	test_eval_inner_ "$@" </dev/null >&3 2>&4
+	# Do not add anything extra (including LF) after '$*'
+	test_eval_inner_ </dev/null >&3 2>&4 "
+		want_trace && trace_level_=$(($trace_level_+1)) && set -x
+		$*"
 	{
 		test_eval_ret_=$?
 		if want_trace
@@ -1095,18 +1095,13 @@ test_run_ () {
 	expecting_failure=$2
 
 	if test "${GIT_TEST_CHAIN_LINT:-1}" != 0; then
-		# turn off tracing for this test-eval, as it simply creates
-		# confusing noise in the "-x" output
-		trace_tmp=$trace
-		trace=
 		# 117 is magic because it is unlikely to match the exit
 		# code of other programs
-		test_eval_ "fail_117 && $1"
+		test_eval_inner_ "fail_117 && $1" </dev/null >&3 2>&4
 		if test $? != 117
 		then
 			BUG "broken &&-chain: $1"
 		fi
-		trace=$trace_tmp
 	fi
 
 	setup_malloc_check
