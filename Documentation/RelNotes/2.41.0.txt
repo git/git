@@ -56,6 +56,9 @@ Performance, Internal Implementation, Development Support etc.
    correctly with groff, which has not been necessary since docbook
    1.76 from 2010.
 
+ * Code clean-up to include and/or uninclude parse-options.h file as
+   needed.
+
 
 Fixes since v2.40
 -----------------
@@ -123,6 +126,16 @@ Fixes since v2.40
    filesystem.  Replace all calls to it with a git_time() wrapper and
    (merge 370ddcbc89 pe/time-use-gettimeofday later to maint).
 
+ * Code clean-up to use designated initializers in parse-options API.
+   (merge 353e6d4554 sg/parse-options-h-initializers later to maint).
+
+ * A recent-ish change to allow unicode character classes to be used
+   with "grep -P" triggered a JIT bug in older pcre2 libraries.
+   The problematic change in Git built with these older libraries has
+   been disabled to work around the bug.
+   (merge 14b9a04479 mk/workaround-pcre-jit-ucp-bug later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f7111175df as/doc-markup-fix later to maint).
    (merge 90ff7c9898 fc/test-aggregation-clean-up later to maint).
+   (merge 9b0c7f308a jc/am-doc-refer-to-format-patch later to maint).
