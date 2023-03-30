@@ -2,7 +2,8 @@
 #define DIAGNOSE_H
 
 #include "strbuf.h"
-#include "parse-options.h"
+
+struct option;
 
 enum diagnose_mode {
 	DIAGNOSE_NONE,
