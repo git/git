@@ -94,7 +94,8 @@ some output processing may assume ref names in UTF-8.
 
 '@{-<n>}', e.g. '@{-1}'::
   The construct '@{-<n>}' means the <n>th branch/commit checked out
-  before the current one.
+  before the current one. You may also specify - which is synonymous
+  to @{-1}.
 
 '[<branchname>]@\{upstream\}', e.g. 'master@\{upstream\}', '@\{u\}'::
   A branch B may be set up to build on top of a branch X (configured with
