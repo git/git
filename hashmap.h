@@ -270,7 +270,7 @@ void hashmap_clear_(struct hashmap *map, ssize_t offset);
 #define hashmap_clear(map) hashmap_clear_(map, -1)
 
 /*
- * Similar to hashmap_clear(), except that the table is no deallocated; it
+ * Similar to hashmap_clear(), except that the table is not deallocated; it
  * is merely zeroed out but left the same size as before.  If the hashmap
  * will be reused, this avoids the overhead of deallocating and
  * reallocating map->table.  As with hashmap_clear(), you may need to free
