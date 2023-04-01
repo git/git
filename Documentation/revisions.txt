@@ -306,7 +306,7 @@ other, e.g.
 
 does *not* specify two revision ranges for most commands.  Instead
 it will name a single connected set of commits, i.e. those that are
-reachable from either B or D but are reachable from neither A or C.
+reachable from either B or D but are not reachable from neither A or C.
 In a linear history like this:
 
     ---A---B---o---o---C---D
