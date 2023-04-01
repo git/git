@@ -139,3 +139,7 @@ Fixes since v2.40
    (merge f7111175df as/doc-markup-fix later to maint).
    (merge 90ff7c9898 fc/test-aggregation-clean-up later to maint).
    (merge 9b0c7f308a jc/am-doc-refer-to-format-patch later to maint).
+   (merge b10cbdac4c bb/unicode-width-table-15 later to maint).
+   (merge 3457b50e8c ab/retire-scripted-add-p later to maint).
+   (merge d52fcf493b ds/p2000-fix-grep-sparse later to maint).
+   (merge ec063d2591 ss/hashmap-typofix later to maint).
