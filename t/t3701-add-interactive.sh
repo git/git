@@ -7,12 +7,6 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
-if test_have_prereq !PERL
-then
-	skip_all='skipping add -i (scripted) tests, perl not available'
-	test_done
-fi
-
 diff_cmp () {
 	for x
 	do
