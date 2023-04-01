@@ -252,15 +252,14 @@ test_expect_success 'access using basic auth with wwwauth header empty continuat
 
 	# Note that leading and trailing whitespace is important to correctly
 	# simulate a continuation/folded header.
-	printf "">$CHALLENGE &&
-	printf "WWW-Authenticate: FooBar param1=\"value1\"\r\n" >$CHALLENGE &&
-	printf " \r\n" >>$CHALLENGE &&
-	printf " param2=\"value2\"\r\n" >>$CHALLENGE &&
-	printf "WWW-Authenticate: Bearer authorize_uri=\"id.example.com\"\r\n" >>$CHALLENGE &&
-	printf " p=1\r\n" >>$CHALLENGE &&
-	printf " \r\n" >>$CHALLENGE &&
-	printf " q=0\r\n" >>$CHALLENGE &&
-	printf "WWW-Authenticate: Basic realm=\"example.com\"\r\n" >>$CHALLENGE &&
+	printf "WWW-Authenticate: FooBar param1=\"value1\"\r\n" >"$CHALLENGE" &&
+	printf " \r\n" >>"$CHALLENGE" &&
+	printf " param2=\"value2\"\r\n" >>"$CHALLENGE" &&
+	printf "WWW-Authenticate: Bearer authorize_uri=\"id.example.com\"\r\n" >>"$CHALLENGE" &&
+	printf " p=1\r\n" >>"$CHALLENGE" &&
+	printf " \r\n" >>"$CHALLENGE" &&
+	printf " q=0\r\n" >>"$CHALLENGE" &&
+	printf "WWW-Authenticate: Basic realm=\"example.com\"\r\n" >>"$CHALLENGE" &&
 
 	test_config_global credential.helper test-helper &&
 	git ls-remote "$HTTPD_URL/custom_auth/repo.git" &&
@@ -298,11 +297,10 @@ test_expect_success 'access using basic auth with wwwauth header mixed line-endi
 
 	# Note that leading and trailing whitespace is important to correctly
 	# simulate a continuation/folded header.
-	printf "">$CHALLENGE &&
-	printf "WWW-Authenticate: FooBar param1=\"value1\"\r\n" >$CHALLENGE &&
-	printf " \r\n" >>$CHALLENGE &&
-	printf "\tparam2=\"value2\"\r\n" >>$CHALLENGE &&
-	printf "WWW-Authenticate: Basic realm=\"example.com\"" >>$CHALLENGE &&
+	printf "WWW-Authenticate: FooBar param1=\"value1\"\r\n" >"$CHALLENGE" &&
+	printf " \r\n" >>"$CHALLENGE" &&
+	printf "\tparam2=\"value2\"\r\n" >>"$CHALLENGE" &&
+	printf "WWW-Authenticate: Basic realm=\"example.com\"" >>"$CHALLENGE" &&
 
 	test_config_global credential.helper test-helper &&
 	git ls-remote "$HTTPD_URL/custom_auth/repo.git" &&
