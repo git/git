@@ -173,8 +173,7 @@ series, where the head is chosen from the cover letter, the
 threading makes every mail a reply to the previous one.
 +
 The default is `--no-thread`, unless the `format.thread` configuration
-is set.  If `--thread` is specified without a style, it defaults to the
-style specified by `format.thread` if any, or else `shallow`.
+is set.  `--thread` without an argument is equivalent to `--thread=shallow`.
 +
 Beware that the default for 'git send-email' is to thread emails
 itself.  If you want `git format-patch` to take care of threading, you
