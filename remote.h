@@ -1,10 +1,10 @@
 #ifndef REMOTE_H
 #define REMOTE_H
 
-#include "parse-options.h"
 #include "hashmap.h"
 #include "refspec.h"
 
+struct option;
 struct transport_ls_refs_options;
 
 /**

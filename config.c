@@ -1686,7 +1686,7 @@ static int git_default_core_config(const char *var, const char *value, void *cb)
 			comment_line_char = value[0];
 			auto_comment_line_char = 0;
 		} else
-			return error(_("core.commentChar should only be one character"));
+			return error(_("core.commentChar should only be one ASCII character"));
 		return 0;
 	}
 

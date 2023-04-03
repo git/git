@@ -17,6 +17,7 @@
 #include "gpg-interface.h"
 #include "cache.h"
 #include "shallow.h"
+#include "parse-options.h"
 
 int option_parse_push_signed(const struct option *opt,
 			     const char *arg, int unset)

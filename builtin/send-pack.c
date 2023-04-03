@@ -16,6 +16,7 @@
 #include "gpg-interface.h"
 #include "gettext.h"
 #include "protocol.h"
+#include "parse-options.h"
 
 static const char * const send_pack_usage[] = {
 	N_("git send-pack [--mirror] [--dry-run] [--force]\n"
@@ -274,7 +275,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 		fd[0] = 0;
 		fd[1] = 1;
 	} else {
-		conn = git_connect(fd, dest, receivepack,
+		conn = git_connect(fd, dest, "git-receive-pack", receivepack,
 			args.verbose ? CONNECT_VERBOSE : 0);
 	}
 

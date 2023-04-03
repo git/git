@@ -35,6 +35,9 @@ UI, Workflows & Features
 
    This is a backward compatibility breaking change.
 
+ * Lift the limitation that colored prompts can only be used with
+   PROMPT_COMMAND mode.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -48,6 +51,13 @@ Performance, Internal Implementation, Development Support etc.
  * Instead of forcing each command to choose to honor GPG related
    configuration variables, make the subsystem lazily initialize
    itself.
+
+ * Remove workaround for ancient versions of DocBook to make it work
+   correctly with groff, which has not been necessary since docbook
+   1.76 from 2010.
+
+ * Code clean-up to include and/or uninclude parse-options.h file as
+   needed.
 
 
 Fixes since v2.40
@@ -101,6 +111,35 @@ Fixes since v2.40
    corrected.
    (merge c55c30669c ps/receive-pack-unlock-before-die later to maint).
 
+ * "git rev-parse --quiet foo@{u}", or anything that asks @{u} to be
+   parsed with GET_OID_QUIETLY option, did not quietly fail, which has
+   been corrected.
+   (merge dfbfdc521d fc/oid-quietly-parse-upstream later to maint).
+
+ * Transports that do not support protocol v2 did not correctly fall
+   back to protocol v0 under certain conditions, which has been
+   corrected.
+   (merge eaa0fd6584 jk/fix-proto-downgrade-to-v0 later to maint).
+
+ * time(2) on glib 2.31+, especially on Linux, goes out of sync with
+   higher resolution timers used for gettimeofday(2) and by the
+   filesystem.  Replace all calls to it with a git_time() wrapper and
+   (merge 370ddcbc89 pe/time-use-gettimeofday later to maint).
+
+ * Code clean-up to use designated initializers in parse-options API.
+   (merge 353e6d4554 sg/parse-options-h-initializers later to maint).
+
+ * A recent-ish change to allow unicode character classes to be used
+   with "grep -P" triggered a JIT bug in older pcre2 libraries.
+   The problematic change in Git built with these older libraries has
+   been disabled to work around the bug.
+   (merge 14b9a04479 mk/workaround-pcre-jit-ucp-bug later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f7111175df as/doc-markup-fix later to maint).
    (merge 90ff7c9898 fc/test-aggregation-clean-up later to maint).
+   (merge 9b0c7f308a jc/am-doc-refer-to-format-patch later to maint).
+   (merge b10cbdac4c bb/unicode-width-table-15 later to maint).
+   (merge 3457b50e8c ab/retire-scripted-add-p later to maint).
+   (merge d52fcf493b ds/p2000-fix-grep-sparse later to maint).
+   (merge ec063d2591 ss/hashmap-typofix later to maint).
