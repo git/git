@@ -814,33 +814,6 @@ static void print_remote_to_local(struct strbuf *display,
 	strbuf_addf(display, "%-*s -> %s", refcol_width, remote, local);
 }
 
-static int find_and_replace(struct strbuf *haystack,
-			    const char *needle,
-			    const char *placeholder)
-{
-	const char *p = NULL;
-	int plen, nlen;
-
-	nlen = strlen(needle);
-	if (ends_with(haystack->buf, needle))
-		p = haystack->buf + haystack->len - nlen;
-	else
-		p = strstr(haystack->buf, needle);
-	if (!p)
-		return 0;
-
-	if (p > haystack->buf && p[-1] != '/')
-		return 0;
-
-	plen = strlen(p);
-	if (plen > nlen && p[nlen] != '/')
-		return 0;
-
-	strbuf_splice(haystack, p - haystack->buf, nlen,
-		      placeholder, strlen(placeholder));
-	return 1;
-}
-
 static void print_compact(struct strbuf *display,
 			  const char *remote, const char *local)
 {

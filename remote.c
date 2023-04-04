@@ -442,7 +442,11 @@ static int handle_config(const char *key, const char *value, void *cb)
 		const char *v;
 		if (git_config_string(&v, key, value))
 			return -1;
-		refspec_append(&remote->fetch, v);
+		struct strbuf v2 = STRBUF_INIT;
+		strbuf_addstr(&v2, v);
+		find_and_replace(&v2, REMOTE_NAME_THIS, remote->name);
+		refspec_append(&remote->fetch, v2.buf);
+		strbuf_release(&v2);
 		free((char *)v);
 	} else if (!strcmp(subkey, "receivepack")) {
 		const char *v;
