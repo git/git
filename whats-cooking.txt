@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Mar 2023, #06; Wed, 29)
-X-master-at: 8d90352acc5c855620042fdcc6092f23a276af6d
-X-next-at: 7aeee1b6c6ffd94d2145753860ccc6d375edb1da
+Subject: What's cooking in git.git (Apr 2023, #01; Tue, 4)
+X-master-at: ae73b2c8f1da39c39335ee76a0f95857712c22a7
+X-next-at: 699aa5c54e8a07724f4438867e3ecd26ba51585d
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Mar 2023, #06; Wed, 29)
+What's cooking in git.git (Apr 2023, #01; Tue, 4)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -15,10 +15,6 @@ considered "accepted" at all and may be annotated with an URL to a
 message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity.
-
-The first two batches of topics are in 'master' for the next feature
-release, and the tip of 'maint' now points at Git 2.40.0 to start
-another maintenance track.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -51,57 +47,94 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* fc/completion-colors-do-not-need-prompt-command (2023-03-16) 1 commit
-  (merged to 'next' on 2023-03-19 at 35911c8f54)
- + completion: prompt: use generic colors
+* ab/retire-scripted-add-p (2023-03-27) 1 commit
+  (merged to 'next' on 2023-03-27 at f8cbc0c604)
+ + t3701: we don't need no Perl for `add -i` anymore
 
- Lift the limitation that colored prompts can only be used with
- PROMPT_COMMAND mode.
- source: <20230228145934.4182166-1-felipe.contreras@gmail.com>
-
-
-* fc/docbook-remove-groff-workaround (2023-03-21) 1 commit
-  (merged to 'next' on 2023-03-21 at 6c59b16205)
- + doc: remove GNU troff workaround
-
- Remove workaround for ancient versions of DocBook to make it work
- correctly with groff, which has not been necessary since docbook
- 1.76 from 2010.
- source: <20230320190047.79836-1-felipe.contreras@gmail.com>
+ Test fix.
+ source: <pull.1504.git.1679898996492.gitgitgadget@gmail.com>
 
 
-* fc/oid-quietly-parse-upstream (2023-03-16) 1 commit
-  (merged to 'next' on 2023-03-21 at 593883005f)
- + object-name: fix quiet @{u} parsing
+* ah/rebase-merges-config (2023-03-27) 3 commits
+  (merged to 'next' on 2023-03-27 at c8a894ba4b)
+ + rebase: add a config option for --rebase-merges
+ + rebase: deprecate --rebase-merges=""
+ + rebase: add documentation and test for --no-rebase-merges
 
- "git rev-parse --quiet foo@{u}", or anything that asks @{u} to be
- parsed with GET_OID_QUIETLY option, did not quietly fail, which has
- been corrected.
- source: <20230316171514.23741-1-felipe.contreras@gmail.com>
-
-
-* jk/fix-proto-downgrade-to-v0 (2023-03-17) 1 commit
-  (merged to 'next' on 2023-03-21 at ed9e43d3ed)
- + git_connect(): fix corner cases in downgrading v2 to v0
-
- Transports that do not support protocol v2 did not correctly fall
- back to protocol v0 under certain conditions, which has been
- corrected.
- source: <ZBS6wwWXcEBwGBm/@coredump.intra.peff.net>
+ Streamline --rebase-merges command line option handling and
+ introduce rebase.merges configuration variable.
+ source: <20230326030636.2635642-1-alexhenrie24@gmail.com>
 
 
-* pe/time-use-gettimeofday (2023-03-21) 1 commit
-  (merged to 'next' on 2023-03-21 at 456b65b4c2)
- + git-compat-util: use gettimeofday(2) for time(2)
+* ar/test-cleanup-unused-file-creation (2023-03-20) 7 commits
+  (merged to 'next' on 2023-03-28 at ad035b41ea)
+ + t1507: assert output of rev-parse
+ + t1404: don't create unused file
+ + t1400: assert output of update-ref
+ + t1302: don't create unused file
+ + t1010: don't create unused files
+ + t1006: assert error output of cat-file
+ + t1005: assert output of ls-files
 
- time(2) on glib 2.31+, especially on Linux, goes out of sync with
- higher resolution timers used for gettimeofday(2) and by the
- filesystem.  Replace all calls to it with a git_time() wrapper and
- use gettimeofday(2) in its implementation.
- source: <20230320230507.3932018-1-gitster@pobox.com>
+ Test clean-up.
+ source: <20230312201520.370234-1-rybak.a.v@gmail.com>
 
---------------------------------------------------
-[New Topics]
+
+* bb/unicode-width-table-15 (2023-03-30) 1 commit
+  (merged to 'next' on 2023-03-31 at b8f3e899ac)
+ + unicode: update the width tables to Unicode 15
+
+ Update width table for the latest edition of Unicode.
+ source: <20230330191517.1762375-1-dev+git@drbeat.li>
+
+
+* ds/p2000-fix-grep-sparse (2023-03-28) 1 commit
+  (merged to 'next' on 2023-03-29 at 6a59283aa3)
+ + p2000: remove stray '--sparse' flag from test
+
+ Fix perf test.
+ source: <pull.1505.git.1680034162144.gitgitgadget@gmail.com>
+
+
+* jc/am-doc-refer-to-format-patch (2023-03-21) 1 commit
+  (merged to 'next' on 2023-03-23 at 01b35c0581)
+ + am: refer to format-patch in the documentation
+
+ Doc update.
+ source: <xmqq1qlij9qr.fsf@gitster.g>
+
+
+* jk/blame-contents-with-arbitrary-commit (2023-03-24) 1 commit
+  (merged to 'next' on 2023-03-27 at 74beb3baf9)
+ + blame: allow --contents to work with non-HEAD commit
+
+ "git blame --contents=<file> <rev> -- <path>" used to be forbidden,
+ but now it finds the origins of lines starting at <file> contents
+ through the history that leads to <rev>.
+ source: <20230324170800.331022-1-jacob.e.keller@intel.com>
+
+
+* jk/document-rev-list-object-name (2023-03-28) 1 commit
+  (merged to 'next' on 2023-03-29 at e1cd79f572)
+ + docs: document caveats of rev-list's object-name output
+
+ Document what the pathname-looking strings in "rev-list --object"
+ output are for and what they mean.
+ source: <20230328182650.GC18558@coredump.intra.peff.net>
+
+
+* jk/fast-export-cleanup (2023-03-22) 6 commits
+  (merged to 'next' on 2023-03-27 at 12b9a9308e)
+ + fast-export: drop unused parameter from anonymize_commit_message()
+ + fast-export: drop data parameter from anonymous generators
+ + fast-export: de-obfuscate --anonymize-map handling
+ + fast-export: factor out anonymized_entry creation
+ + fast-export: simplify initialization of anonymized hashmaps
+ + fast-export: drop const when storing anonymized values
+
+ Code clean-up.
+ source: <20230322173636.GA5643@coredump.intra.peff.net>
+
 
 * jk/really-deprecate-pack-redundant (2023-03-23) 1 commit
   (merged to 'next' on 2023-03-29 at 4d1bc9ac42)
@@ -110,9 +143,36 @@ Release tarballs are available at:
  "git pack-redundant" gave a warning when run, as the command has
  outlived its usefulness long ago and is nominated for future
  removal.  Now we escalate to give an error.
-
- Will merge to 'master'.
  source: <20230323204047.GA9290@coredump.intra.peff.net>
+
+
+* js/split-index-fixes (2023-03-27) 4 commits
+  (merged to 'next' on 2023-03-27 at 3a7b7da0d1)
+ + unpack-trees: take care to propagate the split-index flag
+ + fsmonitor: avoid overriding `cache_changed` bits
+ + split-index; stop abusing the `base_oid` to strip the "link" extension
+ + split-index & fsmonitor: demonstrate a bug
+
+ The index files can become corrupt under certain conditions when
+ the split-index feature is in use, especially together with
+ fsmonitor, which have been corrected.
+ source: <pull.1497.v2.git.1679870743.gitgitgadget@gmail.com>
+
+
+* js/t5563-portability-fix (2023-03-31) 1 commit
+  (merged to 'next' on 2023-03-31 at 12f95a9567)
+ + t5563: prevent "ambiguous redirect"
+
+ Test portability fix.
+ source: <pull.1507.git.1680245525637.gitgitgadget@gmail.com>
+
+
+* kh/commentchar-config-error-message (2023-03-27) 1 commit
+  (merged to 'next' on 2023-03-27 at 7fdda0a984)
+ + config: tell the user that we expect an ASCII character
+
+ Doc update.
+ source: <20230327194344.12910-1-code@khaugsbakk.name>
 
 
 * mk/workaround-pcre-jit-ucp-bug (2023-03-23) 1 commit
@@ -123,42 +183,7 @@ Release tarballs are available at:
  with "grep -P" triggered a JIT bug in older pcre2 libraries.
  The problematic change in Git built with these older libraries has
  been disabled to work around the bug.
-
- Will merge to 'master'.
  source: <20230323172539.25230-1-minipli@grsecurity.net>
-
-
-* sm/ssl-key-type-config (2023-03-23) 1 commit
- - http: add support for different sslcert and sslkey types.
-
- Add a few configuration variables to tell the cURL library that
- different types of ssl-cert and ssl-key are in use.
-
- Will merge to 'next'.
- source: <pull.1474.v2.git.git.1679327330032.gitgitgadget@gmail.com>
-
-
-* jk/blame-contents-with-arbitrary-commit (2023-03-24) 1 commit
-  (merged to 'next' on 2023-03-27 at 74beb3baf9)
- + blame: allow --contents to work with non-HEAD commit
-
- "git blame --contents=<file> <rev> -- <path>" used to be forbidden,
- but now it finds the origins of lines starting at <file> contents
- through the history that leads to <rev>.
-
- Will merge to 'master'.
- source: <20230324170800.331022-1-jacob.e.keller@intel.com>
-
-
-* ed/fsmonitor-windows-named-pipe (2023-03-24) 1 commit
- - fsmonitor: handle differences between Windows named pipe functions
-
- Fix fsmonitor on Windows when the filesystem path contains certain
- characters.
-
- Expecting a reroll.
- cf. <b9cf67e4-22a7-2ff0-8310-9223bea10d6d@jeffhostetler.com>
- source: <pull.1503.git.1679678090412.gitgitgadget@gmail.com>
 
 
 * ob/rollback-after-commit-lock-failure (2023-03-24) 1 commit
@@ -166,8 +191,6 @@ Release tarballs are available at:
  + sequencer: remove pointless rollback_lock_file()
 
  Code clean-up.
-
- Will merge to 'master'.
  source: <20230323162235.995529-1-oswald.buddenhagen@gmx.de>
 
 
@@ -176,29 +199,20 @@ Release tarballs are available at:
  + sequencer: rewrite save_head() in terms of write_message()
 
  Code clean-up.
-
- Will merge to 'master'.
  source: <20230323162235.995544-1-oswald.buddenhagen@gmx.de>
 
 
-* ab/retire-scripted-add-p (2023-03-27) 1 commit
-  (merged to 'next' on 2023-03-27 at f8cbc0c604)
- + t3701: we don't need no Perl for `add -i` anymore
+* pw/wildmatch-fixes (2023-03-27) 4 commits
+  (merged to 'next' on 2023-03-27 at 40f52ba243)
+ + t3070: make chain lint tester happy
+  (merged to 'next' on 2023-03-24 at d0d1f23565)
+ + wildmatch: hide internal return values
+ + wildmatch: avoid undefined behavior
+ + wildmatch: fix exponential behavior
 
- Test fix.
-
- Will merge to 'master'.
- source: <pull.1504.git.1679898996492.gitgitgadget@gmail.com>
-
-
-* ps/ahead-behind-truncation-fix (2023-03-27) 1 commit
- - commit-graph: fix truncated generation numbers
- (this branch uses ds/ahead-behind.)
-
- Fix unnecessary truncation of generation numbers used in-core.
-
- Comments?
- source: <pull.1489.v4.git.1679311615.gitgitgadget@gmail.com>
+ The wildmatch library code unlearns exponential behaviour it
+ acquired some time ago since it was borrowed from rsync.
+ source: <cover.1679328580.git.phillip.wood@dunelm.org.uk>
 
 
 * rs/archive-mtime (2023-03-27) 1 commit
@@ -206,120 +220,163 @@ Release tarballs are available at:
  + t5000: use check_mtime()
 
  Test update.
-
- Will merge to 'master'.
  source: <233edbbe-35c1-9b5b-7578-4c70c6d24449@web.de>
 
 
-* ws/sparse-check-rules (2023-03-27) 2 commits
- - builtin/sparse-checkout: add check-rules command
- - builtin/sparse-checkout: remove NEED_WORK_TREE flag
+* sg/parse-options-h-initializers (2023-03-20) 3 commits
+  (merged to 'next' on 2023-03-23 at f16b3ab6d7)
+ + parse-options.h: use designated initializers in OPT_* macros
+ + parse-options.h: rename _OPT_CONTAINS_OR_WITH()'s parameters
+ + parse-options.h: use consistent name for the callback parameters
 
- "git sparse-checkout" command learns a debugging aid for the sparse
- rule definitions.
-
- Comments?
- source: <pull.1488.v2.git.1679903703.gitgitgadget@gmail.com>
-
-
-* kh/commentchar-config-error-message (2023-03-27) 1 commit
-  (merged to 'next' on 2023-03-27 at 7fdda0a984)
- + config: tell the user that we expect an ASCII character
-
- Doc update.
-
- Will merge to 'master'.
- source: <20230327194344.12910-1-code@khaugsbakk.name>
+ Code clean-up to use designated initializers in parse-options API.
+ source: <20230319165648.656738-1-szeder.dev@gmail.com>
 
 
-* mh/credential-password-expiry-wincred (2023-03-27) 1 commit
- - credential/wincred: store password_expiry_utc
+* sg/parse-options-h-users (2023-03-20) 2 commits
+  (merged to 'next' on 2023-03-23 at 2ca7d1e737)
+ + treewide: remove unnecessary inclusions of parse-options.h from headers
+ + treewide: include parse-options.h in source files
 
- Teach the recently invented "password expiry time" trait to the
- wincred credential helper.
-
- Area maintainer is fairly negative.  Perhaps drop?
- cf. <35e1ebe6-e15b-1712-f030-70ab708740db@gmx.de>
- source: <pull.1477.git.git.1679729956620.gitgitgadget@gmail.com>
+ Code clean-up to include and/or uninclude parse-options.h file as
+ needed.
+ source: <20230319162712.654137-1-szeder.dev@gmail.com>
 
 
-* mh/use-wincred-from-system (2023-03-27) 1 commit
- - credential/wincred: include wincred.h
+* ss/hashmap-typofix (2023-03-30) 1 commit
+  (merged to 'next' on 2023-03-30 at ac1e443424)
+ + hashmap.h: fix minor typo
+
+ Typofix.
+ source: <pull.1506.git.1680190083688.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[New Topics]
+
+* ow/ref-filter-omit-empty (2023-03-30) 1 commit
+ - branch, for-each-ref: add option to omit empty lines
+
+ "git branch --format=..." and "git format-patch --format=..."
+ learns "--omit-empty-lines" to hide refs that whose formatting
+ result becomes an empty string from the output.
+
+ Expecting a reroll.  "git tag" should learn the same.
+ cf. <xmqqilei1bgk.fsf@gitster.g>
+ source: <20230330112133.4437-3-oystwa@gmail.com>
+
+
+* ow/ref-format-remove-unused-member (2023-03-30) 1 commit
+  (merged to 'next' on 2023-03-30 at 898a5df956)
+ + ref-filter: remove unused ref_format member
 
  Code clean-up.
 
- Area maintainer is fairly negative.  Perhaps drop?
- cf. <8511e030-8167-715c-5ed4-1646e6e9ef85@gmx.de>
- source: <pull.1496.git.1679707396407.gitgitgadget@gmail.com>
+ Will merge to 'master'.
+ source: <20230330112133.4437-2-oystwa@gmail.com>
 
 
-* ds/p2000-fix-grep-sparse (2023-03-28) 1 commit
-  (merged to 'next' on 2023-03-29 at 6a59283aa3)
- + p2000: remove stray '--sparse' flag from test
+* rn/sparse-describe (2023-04-03) 1 commit
+ - describe: enable sparse index for describe
 
- Fix perf test.
+ "git describe --dirty" learns to work better with sparse-index.
+
+ Will merge to 'next'?
+ source: <20230403164749.246001-1-nanth.raghul@gmail.com>
+
+
+* ds/fetch-bundle-uri-with-all (2023-03-31) 1 commit
+  (merged to 'next' on 2023-03-31 at a9f787341d)
+ + fetch: download bundles once, even with --all
+
+ "git fetch --all" does not have to download and handle the same
+ bundleURI over and over, which has been corrected.
 
  Will merge to 'master'.
- source: <pull.1505.git.1680034162144.gitgitgadget@gmail.com>
+ source: <pull.1508.git.1680278344173.gitgitgadget@gmail.com>
 
 
-* jk/chainlint-fixes (2023-03-28) 4 commits
- - tests: skip test_eval_ in internal chain-lint
- - tests: drop here-doc check from internal chain-linter
- - tests: replace chainlint subshell with a function
- - tests: run internal chain-linter under "make test"
+* ar/adjust-tests-for-the-index-fallout (2023-03-31) 2 commits
+  (merged to 'next' on 2023-04-04 at 48861fc381)
+ + t2107: fix mention of the_index.cache_changed
+ + t3060: fix mention of function prune_index
 
- Test framework fix.
-
- Comments?
- source: <20230328202043.GA1241391@coredump.intra.peff.net>
-
-
-* jk/document-pack-redundant-deprecation (2023-03-28) 1 commit
-  (merged to 'next' on 2023-03-29 at cb64256b97)
- + pack-redundant: document deprecation
-
- Document that we have marked "pack-redundant" as deprecated.
+ Comment updates.
 
  Will merge to 'master'.
- source: <20230328190641.GF18558@coredump.intra.peff.net>
+ source: <20230331143604.82040-2-rybak.a.v@gmail.com>
 
 
-* jk/document-rev-list-object-name (2023-03-28) 1 commit
-  (merged to 'next' on 2023-03-29 at e1cd79f572)
- + docs: document caveats of rev-list's object-name output
+* ah/format-patch-thread-doc (2023-04-03) 1 commit
+ - format-patch: correct documentation of --thread without an argument
 
- Document what the pathname-looking strings in "rev-list --object"
- output are for and what they mean.
+ Doc update.
 
- Will merge to 'master'.
- source: <20230328182650.GC18558@coredump.intra.peff.net>
+ source: <20230403040724.642513-1-alexhenrie24@gmail.com>
 
 
-* ob/revert-of-revert (2023-03-28) 1 commit
- - sequencer: call a revert of a revert "reapply"
+* ar/test-cleanup-unused-file-creation-part2 (2023-04-03) 6 commits
+ - t2019: don't create unused files
+ - t1502: don't create unused files
+ - t1450: don't create unused files
+ - t1300: don't create unused files
+ - t1300: fix config file syntax error descriptions
+ - t0300: don't create unused file
 
- Instead of "Revert "Revert "original"", give "Replay "original""
- as the title for a revert of a revert.
+ Test cleanup.
 
- Needs more polishing: docs, tests, transitions.
- source: <20230323162234.995465-1-oswald.buddenhagen@gmx.de>
+ Will merge to 'next'?
+ source: <20230403223338.468025-1-rybak.a.v@gmail.com>
 
 
-* jk/unused-post-2.40-part2 (2023-03-28) 7 commits
-  (merged to 'next' on 2023-03-29 at 7aeee1b6c6)
- + parse-options: drop parse_opt_unknown_cb()
- + t/helper: mark unused argv/argc arguments
- + mark "argv" as unused when we check argc
- + builtins: mark unused prefix parameters
- + builtins: annotate always-empty prefix parameters
- + builtins: always pass prefix to parse_options()
- + fast-import: fix file access when run from subdir
+* en/header-split-cache-h (2023-04-04) 25 commits
+ - mailmap, quote: move declarations of global vars to correct unit
+ - treewide: reduce includes of cache.h in other headers
+ - treewide: remove double forward declaration of read_in_full
+ - strbuf: move forward declarations to beginning of file
+ - cache.h: remove unnecessary includes
+ - treewide: remove cache.h inclusion due to pager.h changes
+ - pager.h: move declarations for pager.c functions from cache.h
+ - treewide: remove cache.h inclusion due to editor.h changes
+ - editor: move editor-related functions and declarations into common file
+ - treewide: remove cache.h inclusion due to object.h changes
+ - object.h: move some inline functions and defines from cache.h
+ - treewide: remove cache.h inclusion due to object-file.h changes
+ - object-file.h: move declarations for object-file.c functions from cache.h
+ - treewide: remove cache.h inclusion due to git-zlib changes
+ - git-zlib: move declarations for git-zlib functions from cache.h
+ - treewide: remove cache.h inclusion due to object-name.h changes
+ - object-name.h: move declarations for object-name.c functions from cache.h
+ - treewide: remove unnecessary cache.h inclusion
+ - treewide: be explicit about dependence on mem-pool.h
+ - treewide: be explicit about dependence on oid-array.h
+ - treewide: be explicit about dependence on pack-revindex.h
+ - treewide: be explicit about dependence on convert.h
+ - treewide: be explicit about dependence on advice.h
+ - treewide: be explicit about dependence on trace.h & trace2.h
+ - Merge branch 'ab/remove-implicit-use-of-the-repository' into en/header-split-cache-h
+ (this branch uses ab/remove-implicit-use-of-the-repository and en/header-split-cleanup.)
 
- Code clean-up for "-Wunused-parameter" build.
+ Header clean-up.
 
- Will merge to 'master'.
- source: <20230328205253.GA1753925@coredump.intra.peff.net>
+ source: <pull.1509.v2.git.1680571348.gitgitgadget@gmail.com>
+
+
+* jx/cap-object-info-uninitialized-fix (2023-04-03) 1 commit
+ - object-info: init request_info before reading arg
+
+ Correct use of an uninitialized structure member.
+
+ Will merge to 'next'.
+ source: <20230402130557.17662-1-worldhello.net@gmail.com>
+
+
+* sl/sparse-write-tree (2023-04-04) 1 commit
+ - write-tree: integrate with sparse index
+
+ "git write-tree" learns to work better with sparse-index.
+
+ Will merge to 'next'.
+ source: <20230404003539.1578245-1-cheskaqiqi@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -361,7 +418,6 @@ Release tarballs are available at:
  'git notes append' was taught '--separator' to specify string to insert
  between paragraphs.
 
- Expecting further updates on -c/-C.
  Seems to break CI.
  cf. <xmqqy1nf8c0f.fsf@gitster.g>
  source: <cover.1680012650.git.dyroneteng@gmail.com>
@@ -383,12 +439,13 @@ Release tarballs are available at:
  source: <cover-0.4-00000000000-20221118T113442Z-avarab@gmail.com>
 
 
-* jc/spell-id-in-both-caps-in-message-id (2022-12-17) 1 commit
- - e-mail workflow: Message-ID is spelled with ID in both capital letters
+* jc/spell-id-in-both-caps-in-message-id (2023-04-03) 1 commit
+  (merged to 'next' on 2023-04-04 at 4cfa5997eb)
+ + e-mail workflow: Message-ID is spelled with ID in both capital letters
 
  Consistently spell "Message-ID" as such, not "Message-Id".
 
- Needs review.
+ Will merge to 'master'.
  source: <xmqqsfhgnmqg.fsf@gitster.g>
 
 
@@ -398,7 +455,8 @@ Release tarballs are available at:
  Allow summary results from tests to be written to t/test-results
  directory even when a test harness like 'prove' is in use.
 
- Needs review.
+ Expecting a reroll.
+ cf. <CABPp-BGoPuGCZw+9wCgdYyRR4Zf4y9Kun27GrQhtMdYWpOUsYQ@mail.gmail.com>
  source: <20221224225200.1027806-1-adam@dinwoodie.org>
 
 
@@ -417,6 +475,121 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* sm/ssl-key-type-config (2023-03-23) 1 commit
+  (merged to 'next' on 2023-03-30 at 773716fc60)
+ + http: add support for different sslcert and sslkey types.
+
+ Add a few configuration variables to tell the cURL library that
+ different types of ssl-cert and ssl-key are in use.
+
+ Will merge to 'master'.
+ source: <pull.1474.v2.git.git.1679327330032.gitgitgadget@gmail.com>
+
+
+* ed/fsmonitor-windows-named-pipe (2023-03-24) 1 commit
+ - fsmonitor: handle differences between Windows named pipe functions
+
+ Fix fsmonitor on Windows when the filesystem path contains certain
+ characters.
+
+ Expecting a reroll.
+ cf. <b9cf67e4-22a7-2ff0-8310-9223bea10d6d@jeffhostetler.com>
+ source: <pull.1503.git.1679678090412.gitgitgadget@gmail.com>
+
+
+* ps/ahead-behind-truncation-fix (2023-03-27) 1 commit
+  (merged to 'next' on 2023-03-31 at 60bc243011)
+ + commit-graph: fix truncated generation numbers
+ (this branch uses ds/ahead-behind.)
+
+ Fix unnecessary truncation of generation numbers used in-core.
+
+ Will merge to 'master'.
+ source: <f8a0a869e8b0882f05cac49d78f49ba3553d3c44.1679904401.git.ps@pks.im>
+
+
+* ws/sparse-check-rules (2023-03-27) 2 commits
+  (merged to 'next' on 2023-04-04 at 17a29244a6)
+ + builtin/sparse-checkout: add check-rules command
+ + builtin/sparse-checkout: remove NEED_WORK_TREE flag
+
+ "git sparse-checkout" command learns a debugging aid for the sparse
+ rule definitions.
+
+ Will merge to 'master'.
+ source: <pull.1488.v2.git.1679903703.gitgitgadget@gmail.com>
+
+
+* mh/credential-password-expiry-wincred (2023-04-03) 1 commit
+ - credential/wincred: store password_expiry_utc
+
+ Teach the recently invented "password expiry time" trait to the
+ wincred credential helper.
+
+ Will merge to 'next'?
+ source: <pull.1477.v3.git.git.1680508028077.gitgitgadget@gmail.com>
+
+
+* mh/use-wincred-from-system (2023-03-27) 1 commit
+ - credential/wincred: include wincred.h
+
+ Code clean-up.
+
+ Area maintainer is fairly negative.  Perhaps drop?
+ cf. <8511e030-8167-715c-5ed4-1646e6e9ef85@gmx.de>
+ source: <pull.1496.git.1679707396407.gitgitgadget@gmail.com>
+
+
+* jk/chainlint-fixes (2023-03-30) 5 commits
+  (merged to 'next' on 2023-03-30 at 52f229b710)
+ + tests: skip test_eval_ in internal chain-lint
+ + tests: drop here-doc check from internal chain-linter
+ + tests: diagnose unclosed here-doc in chainlint.pl
+ + tests: replace chainlint subshell with a function
+ + tests: run internal chain-linter under "make test"
+
+ Test framework fix.
+
+ Will merge to 'master'.
+ source: <20230330192712.GA27719@coredump.intra.peff.net>
+
+
+* jk/document-pack-redundant-deprecation (2023-03-30) 1 commit
+  (merged to 'next' on 2023-03-30 at e9d10e27a4)
+ + pack-redundant: document deprecation
+
+ Document that we have marked "pack-redundant" as deprecated.
+
+ Will merge to 'master'.
+ source: <20230328190641.GF18558@coredump.intra.peff.net>
+
+
+* ob/revert-of-revert (2023-03-28) 1 commit
+ - sequencer: call a revert of a revert "reapply"
+
+ Instead of "Revert "Revert "original"", give "Replay "original""
+ as the title for a revert of a revert.
+
+ Needs more polishing: docs, tests, transitions.
+ source: <20230323162234.995465-1-oswald.buddenhagen@gmx.de>
+
+
+* jk/unused-post-2.40-part2 (2023-03-28) 7 commits
+  (merged to 'next' on 2023-03-29 at 7aeee1b6c6)
+ + parse-options: drop parse_opt_unknown_cb()
+ + t/helper: mark unused argv/argc arguments
+ + mark "argv" as unused when we check argc
+ + builtins: mark unused prefix parameters
+ + builtins: annotate always-empty prefix parameters
+ + builtins: always pass prefix to parse_options()
+ + fast-import: fix file access when run from subdir
+
+ Code clean-up for "-Wunused-parameter" build.
+
+ Will merge to 'master'.
+ source: <20230328205253.GA1753925@coredump.intra.peff.net>
+
+
 * pw/sequencer-rescheduled-ones-are-not-done-yet (2023-03-20) 1 commit
  - rebase -i: do not update "done" when rescheduling command
 
@@ -425,45 +598,6 @@ Release tarballs are available at:
 
  Expecting clarification.
  source: <pull.1492.git.1679237337683.gitgitgadget@gmail.com>
-
-
-* pw/wildmatch-fixes (2023-03-27) 4 commits
-  (merged to 'next' on 2023-03-27 at 40f52ba243)
- + t3070: make chain lint tester happy
-  (merged to 'next' on 2023-03-24 at d0d1f23565)
- + wildmatch: hide internal return values
- + wildmatch: avoid undefined behavior
- + wildmatch: fix exponential behavior
-
- The wildmatch library code unlearns exponential behaviour it
- acquired some time ago since it was borrowed from rsync.
-
- Will merge to 'master'.
- source: <cover.1679328580.git.phillip.wood@dunelm.org.uk>
-
-
-* sg/parse-options-h-initializers (2023-03-20) 3 commits
-  (merged to 'next' on 2023-03-23 at f16b3ab6d7)
- + parse-options.h: use designated initializers in OPT_* macros
- + parse-options.h: rename _OPT_CONTAINS_OR_WITH()'s parameters
- + parse-options.h: use consistent name for the callback parameters
-
- Code clean-up to use designated initializers in parse-options API.
-
- Will merge to 'master'.
- source: <20230319165648.656738-1-szeder.dev@gmail.com>
-
-
-* sg/parse-options-h-users (2023-03-20) 2 commits
-  (merged to 'next' on 2023-03-23 at 2ca7d1e737)
- + treewide: remove unnecessary inclusions of parse-options.h from headers
- + treewide: include parse-options.h in source files
-
- Code clean-up to include and/or uninclude parse-options.h file as
- needed.
-
- Will merge to 'master'.
- source: <20230319162712.654137-1-szeder.dev@gmail.com>
 
 
 * rs/archive-from-subdirectory-fixes (2023-03-24) 1 commit
@@ -490,84 +624,30 @@ Release tarballs are available at:
 
 
 * en/header-split-cleanup (2023-03-21) 16 commits
- - csum-file.h: remove unnecessary inclusion of cache.h
- - write-or-die.h: move declarations for write-or-die.c functions from cache.h
- - treewide: remove cache.h inclusion due to setup.h changes
- - setup.h: move declarations for setup.c functions from cache.h
- - treewide: remove cache.h inclusion due to environment.h changes
- - environment.h: move declarations for environment.c functions from cache.h
- - treewide: remove unnecessary includes of cache.h
- - wrapper.h: move declarations for wrapper.c functions from cache.h
- - path.h: move function declarations for path.c functions from cache.h
- - cache.h: remove expand_user_path()
- - abspath.h: move absolute path functions from cache.h
- - environment: move comment_line_char from cache.h
- - treewide: remove unnecessary cache.h inclusion from several sources
- - treewide: remove unnecessary inclusion of gettext.h
- - treewide: be explicit about dependence on gettext.h
- - treewide: remove unnecessary cache.h inclusion from a few headers
+  (merged to 'next' on 2023-03-30 at b69ff46cad)
+ + csum-file.h: remove unnecessary inclusion of cache.h
+ + write-or-die.h: move declarations for write-or-die.c functions from cache.h
+ + treewide: remove cache.h inclusion due to setup.h changes
+ + setup.h: move declarations for setup.c functions from cache.h
+ + treewide: remove cache.h inclusion due to environment.h changes
+ + environment.h: move declarations for environment.c functions from cache.h
+ + treewide: remove unnecessary includes of cache.h
+ + wrapper.h: move declarations for wrapper.c functions from cache.h
+ + path.h: move function declarations for path.c functions from cache.h
+ + cache.h: remove expand_user_path()
+ + abspath.h: move absolute path functions from cache.h
+ + environment: move comment_line_char from cache.h
+ + treewide: remove unnecessary cache.h inclusion from several sources
+ + treewide: remove unnecessary inclusion of gettext.h
+ + treewide: be explicit about dependence on gettext.h
+ + treewide: remove unnecessary cache.h inclusion from a few headers
+ (this branch is used by en/header-split-cache-h.)
 
  Split key function and data structure definitions out of cache.h to
  new header files and adjust the users.
 
- Needs review.
+ Will merge to 'master'.
  source: <pull.1493.v2.git.1679379968.gitgitgadget@gmail.com>
-
-
-* jc/am-doc-refer-to-format-patch (2023-03-21) 1 commit
-  (merged to 'next' on 2023-03-23 at 01b35c0581)
- + am: refer to format-patch in the documentation
-
- Doc update.
-
- Will merge to 'master'.
- source: <xmqq1qlij9qr.fsf@gitster.g>
-
-
-* jk/fast-export-cleanup (2023-03-22) 6 commits
-  (merged to 'next' on 2023-03-27 at 12b9a9308e)
- + fast-export: drop unused parameter from anonymize_commit_message()
- + fast-export: drop data parameter from anonymous generators
- + fast-export: de-obfuscate --anonymize-map handling
- + fast-export: factor out anonymized_entry creation
- + fast-export: simplify initialization of anonymized hashmaps
- + fast-export: drop const when storing anonymized values
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <20230322173636.GA5643@coredump.intra.peff.net>
-
-
-* js/split-index-fixes (2023-03-27) 4 commits
-  (merged to 'next' on 2023-03-27 at 3a7b7da0d1)
- + unpack-trees: take care to propagate the split-index flag
- + fsmonitor: avoid overriding `cache_changed` bits
- + split-index; stop abusing the `base_oid` to strip the "link" extension
- + split-index & fsmonitor: demonstrate a bug
-
- The index files can become corrupt under certain conditions when
- the split-index feature is in use, especially together with
- fsmonitor, which have been corrected.
-
- Will merge to 'master'.
- source: <pull.1497.v2.git.1679870743.gitgitgadget@gmail.com>
-
-
-* ar/test-cleanup-unused-file-creation (2023-03-20) 7 commits
-  (merged to 'next' on 2023-03-28 at ad035b41ea)
- + t1507: assert output of rev-parse
- + t1404: don't create unused file
- + t1400: assert output of update-ref
- + t1302: don't create unused file
- + t1010: don't create unused files
- + t1006: assert error output of cat-file
- + t1005: assert output of ls-files
-
- Test clean-up.
-
- Will merge to 'master'.
- source: <20230312201520.370234-1-rybak.a.v@gmail.com>
 
 
 * nw/for-each-ref-signature (2023-03-13) 1 commit
@@ -601,17 +681,18 @@ Release tarballs are available at:
 
 
 * ps/fetch-ref-update-reporting (2023-03-20) 6 commits
- - fetch: centralize printing of reference updates
- - fetch: centralize logic to print remote URL
- - fetch: centralize handling of per-reference format
- - fetch: pass the full local reference name to `format_display`
- - fetch: move output format into `display_state`
- - fetch: move reference width calculation into `display_state`
+  (merged to 'next' on 2023-03-30 at e5df1cae0b)
+ + fetch: centralize printing of reference updates
+ + fetch: centralize logic to print remote URL
+ + fetch: centralize handling of per-reference format
+ + fetch: pass the full local reference name to `format_display`
+ + fetch: move output format into `display_state`
+ + fetch: move reference width calculation into `display_state`
 
  Clean-up of the code path that reports what "git fetch" did to each
  ref.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <cover.1679315383.git.ps@pks.im>
 
 
@@ -630,39 +711,42 @@ Release tarballs are available at:
 
 
 * ab/remove-implicit-use-of-the-repository (2023-03-28) 17 commits
- - libs: use "struct repository *" argument, not "the_repository"
- - post-cocci: adjust comments for recent repo_* migration
- - cocci: apply the "revision.h" part of "the_repository.pending"
- - cocci: apply the "rerere.h" part of "the_repository.pending"
- - cocci: apply the "refs.h" part of "the_repository.pending"
- - cocci: apply the "promisor-remote.h" part of "the_repository.pending"
- - cocci: apply the "packfile.h" part of "the_repository.pending"
- - cocci: apply the "pretty.h" part of "the_repository.pending"
- - cocci: apply the "object-store.h" part of "the_repository.pending"
- - cocci: apply the "diff.h" part of "the_repository.pending"
- - cocci: apply the "commit.h" part of "the_repository.pending"
- - cocci: apply the "commit-reach.h" part of "the_repository.pending"
- - cocci: apply the "cache.h" part of "the_repository.pending"
- - cocci: add missing "the_repository" macros to "pending"
- - cocci: sort "the_repository" rules by header
- - cocci: fix incorrect & verbose "the_repository" rules
- - cocci: remove dead rule from "the_repository.pending.cocci"
+  (merged to 'next' on 2023-03-30 at e0abe2d872)
+ + libs: use "struct repository *" argument, not "the_repository"
+ + post-cocci: adjust comments for recent repo_* migration
+ + cocci: apply the "revision.h" part of "the_repository.pending"
+ + cocci: apply the "rerere.h" part of "the_repository.pending"
+ + cocci: apply the "refs.h" part of "the_repository.pending"
+ + cocci: apply the "promisor-remote.h" part of "the_repository.pending"
+ + cocci: apply the "packfile.h" part of "the_repository.pending"
+ + cocci: apply the "pretty.h" part of "the_repository.pending"
+ + cocci: apply the "object-store.h" part of "the_repository.pending"
+ + cocci: apply the "diff.h" part of "the_repository.pending"
+ + cocci: apply the "commit.h" part of "the_repository.pending"
+ + cocci: apply the "commit-reach.h" part of "the_repository.pending"
+ + cocci: apply the "cache.h" part of "the_repository.pending"
+ + cocci: add missing "the_repository" macros to "pending"
+ + cocci: sort "the_repository" rules by header
+ + cocci: fix incorrect & verbose "the_repository" rules
+ + cocci: remove dead rule from "the_repository.pending.cocci"
+ (this branch is used by en/header-split-cache-h.)
 
  Code clean-up around the use of the_repository.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover-v2-00.17-00000000000-20230328T110946Z-avarab@gmail.com>
 
 
 * jk/unused-post-2.40 (2023-03-17) 4 commits
- - transport: mark unused parameters in fetch_refs_from_bundle()
- - http: mark unused parameter in fill_active_slot() callbacks
- - http: drop unused parameter from start_object_request()
- - mailmap: drop debugging code
+  (merged to 'next' on 2023-03-30 at 10aeb0d4ae)
+ + transport: mark unused parameters in fetch_refs_from_bundle()
+ + http: mark unused parameter in fill_active_slot() callbacks
+ + http: drop unused parameter from start_object_request()
+ + mailmap: drop debugging code
 
  More "-Wunused-parameters" code clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <ZBS77VYL9ZrxKtCN@coredump.intra.peff.net>
 
 
@@ -693,23 +777,24 @@ Release tarballs are available at:
  distances from a single reference point in the history with bunch
  of commits in bulk.
 
- Will merge to 'master' after ps/ahead-behind-truncation-fix is acked.
+ Will merge to 'master' together with ps/ahead-behind-truncation-fix topic.
  source: <pull.1489.v4.git.1679311615.gitgitgadget@gmail.com>
 
 
 * gc/config-parsing-cleanup (2023-03-28) 8 commits
- - config.c: rename "struct config_source cf"
- - config: report cached filenames in die_bad_number()
- - config.c: remove current_parsing_scope
- - config.c: remove current_config_kvi
- - config.c: plumb the_reader through callbacks
- - config.c: create config_reader and the_reader
- - config.c: don't assign to "cf_global" directly
- - config.c: plumb config_source through static fns
+  (merged to 'next' on 2023-03-30 at e7ea626edf)
+ + config.c: rename "struct config_source cf"
+ + config: report cached filenames in die_bad_number()
+ + config.c: remove current_parsing_scope
+ + config.c: remove current_config_kvi
+ + config.c: plumb the_reader through callbacks
+ + config.c: create config_reader and the_reader
+ + config.c: don't assign to "cf_global" directly
+ + config.c: plumb config_source through static fns
 
  Config API clean-up to reduce its dependence on static variables
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1463.v3.git.git.1680025914.gitgitgadget@gmail.com>
 
 
@@ -739,19 +824,6 @@ Release tarballs are available at:
  Comments?
  Seems to break tests when merged to 'seen'.
  source: <20230228185253.2356546-1-calvinwan@google.com>
-
-
-* ah/rebase-merges-config (2023-03-27) 3 commits
-  (merged to 'next' on 2023-03-27 at c8a894ba4b)
- + rebase: add a config option for --rebase-merges
- + rebase: deprecate --rebase-merges=""
- + rebase: add documentation and test for --no-rebase-merges
-
- Streamline --rebase-merges command line option handling and
- introduce rebase.merges configuration variable.
-
- Will merge to 'master'.
- source: <20230326030636.2635642-1-alexhenrie24@gmail.com>
 
 
 * tk/pull-conflict-suggest-rebase-merge-not-rebase-true (2023-02-13) 1 commit
@@ -800,19 +872,20 @@ Release tarballs are available at:
 
 
 * ab/config-multi-and-nonbool (2023-03-28) 9 commits
- - for-each-repo: with bad config, don't conflate <path> and <cmd>
- - config API: add "string" version of *_value_multi(), fix segfaults
- - config API users: test for *_get_value_multi() segfaults
- - for-each-repo: error on bad --config
- - config API: have *_multi() return an "int" and take a "dest"
- - versioncmp.c: refactor config reading next commit
- - config API: add and use a "git_config_get()" family of functions
- - config tests: add "NULL" tests for *_get_value_multi()
- - config tests: cover blind spots in git_die_config() tests
+  (merged to 'next' on 2023-03-30 at bcfe99b43d)
+ + for-each-repo: with bad config, don't conflate <path> and <cmd>
+ + config API: add "string" version of *_value_multi(), fix segfaults
+ + config API users: test for *_get_value_multi() segfaults
+ + for-each-repo: error on bad --config
+ + config API: have *_multi() return an "int" and take a "dest"
+ + versioncmp.c: refactor config reading next commit
+ + config API: add and use a "git_config_get()" family of functions
+ + config tests: add "NULL" tests for *_get_value_multi()
+ + config tests: cover blind spots in git_die_config() tests
 
  Assorted config API updates.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover-v8-0.9-00000000000-20230328T140126Z-avarab@gmail.com>
 
 
@@ -864,5 +937,7 @@ Release tarballs are available at:
  "git submodule status" learned to run the comparison in submodule
  repositories in parallel.
 
- Comments?
+ Expecting a reroll.
+ cf. <CAFySSZDk05m6gU5-V1R+y3YnQ5PPduVW54+_gjBwD0rmacsLsw@mail.gmail.com>
+ cf. <230307.865ybc273g.gmgdl@evledraar.gmail.com>
  source: <20230302215237.1473444-1-calvinwan@google.com>
