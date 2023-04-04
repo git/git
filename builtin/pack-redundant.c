@@ -604,6 +604,7 @@ int cmd_pack_redundant(int argc, const char **argv, const char *prefix)
 			"option, '--i-still-use-this', on the command line\n"
 			"and let us know you still use it by sending an e-mail\n"
 			"to <git@vger.kernel.org>.  Thanks.\n"), stderr);
+		die(_("refusing to run without --i-still-use-this"));
 	}
 
 	if (load_all_packs)
