@@ -38,6 +38,13 @@ UI, Workflows & Features
  * Lift the limitation that colored prompts can only be used with
    PROMPT_COMMAND mode.
 
+ * "git blame --contents=<file> <rev> -- <path>" used to be forbidden,
+   but now it finds the origins of lines starting at <file> contents
+   through the history that leads to <rev>.
+
+ * "git pack-redundant" gave a warning when run, as the command has
+   outlived its usefulness long ago and is nominated for future
+   removal.  Now we escalate to give an error.
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -135,6 +142,19 @@ Fixes since v2.40
    been disabled to work around the bug.
    (merge 14b9a04479 mk/workaround-pcre-jit-ucp-bug later to maint).
 
+ * The wildmatch library code unlearns exponential behaviour it
+   acquired some time ago since it was borrowed from rsync.
+   (merge 3dc0b7f0dc pw/wildmatch-fixes later to maint).
+
+ * The index files can become corrupt under certain conditions when
+   the split-index feature is in use, especially together with
+   fsmonitor, which have been corrected.
+   (merge 061dd722dc js/split-index-fixes later to maint).
+
+ * Document what the pathname-looking strings in "rev-list --object"
+   output are for and what they mean.
+   (merge 15364d2a3c jk/document-rev-list-object-name later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f7111175df as/doc-markup-fix later to maint).
    (merge 90ff7c9898 fc/test-aggregation-clean-up later to maint).
@@ -143,3 +163,7 @@ Fixes since v2.40
    (merge 3457b50e8c ab/retire-scripted-add-p later to maint).
    (merge d52fcf493b ds/p2000-fix-grep-sparse later to maint).
    (merge ec063d2591 ss/hashmap-typofix later to maint).
+   (merge 1aaed69d11 rs/archive-mtime later to maint).
+   (merge 2da2cc9b28 ob/rollback-after-commit-lock-failure later to maint).
+   (merge 54dbd0933b ob/sequencer-save-head-simplify later to maint).
+   (merge a93cbe8d78 ar/test-cleanup-unused-file-creation later to maint).
