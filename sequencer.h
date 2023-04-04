@@ -263,4 +263,6 @@ int sequencer_determine_whence(struct repository *r, enum commit_whence *whence)
  */
 int sequencer_get_update_refs_state(const char *wt_dir, struct string_list *refs);
 
+struct strbuf *line_length_helper_string(unsigned margin);
+
 #endif /* SEQUENCER_H */

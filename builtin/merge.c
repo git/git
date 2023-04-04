@@ -869,6 +869,12 @@ static void prepare_to_commit(struct commit_list *remoteheads)
 		BUG("the control must not reach here under --squash");
 	if (0 < option_edit) {
 		strbuf_addch(&msg, '\n');
+
+		struct strbuf *line_lenght_helper = line_length_helper_string(2);
+		strbuf_commented_addf(&msg, "%s", line_lenght_helper->buf);
+		strbuf_release(line_lenght_helper);
+		strbuf_commented_addf(&msg, "\n");
+
 		if (cleanup_mode == COMMIT_MSG_CLEANUP_SCISSORS) {
 			wt_status_append_cut_line(&msg);
 			strbuf_commented_addf(&msg, "\n");

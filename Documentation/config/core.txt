@@ -736,3 +736,7 @@ core.abbrev::
 	If set to "no", no abbreviation is made and the object names
 	are shown in their full length.
 	The minimum length is 4.
+
+core.linelength::
+	Set the line length for use with line length helper during edits.
+	The default is 80 characters.

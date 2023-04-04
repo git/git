@@ -6416,3 +6416,17 @@ cleanup:
 	strbuf_release(&hash);
 	return result;
 }
+
+struct strbuf *line_length_helper_string(unsigned margin)
+{
+	struct strbuf *line = (struct strbuf*)malloc(sizeof(struct strbuf));
+	*line = (struct strbuf)STRBUF_INIT;
+
+	strbuf_addf(line, "--[%u]", line_length);
+	for (unsigned i = line->len; i < line_length - margin - 1; ++i) {
+		strbuf_addch(line, '-');
+	}
+	strbuf_addch(line, '^');
+
+	return line;
+}
