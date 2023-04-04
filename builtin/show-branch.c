@@ -243,7 +243,7 @@ static void join_revs(struct commit_list **list_p,
 			parents = parents->next;
 			if ((this_flag & flags) == flags)
 				continue;
-			parse_commit(p);
+			repo_parse_commit(the_repository, p);
 			if (mark_seen(p, seen_p) && !still_interesting)
 				extra--;
 			p->object.flags |= flags;
@@ -315,8 +315,8 @@ static void show_one_commit(struct commit *commit, int no_name)
 		}
 		else
 			printf("[%s] ",
-			       find_unique_abbrev(&commit->object.oid,
-						  DEFAULT_ABBREV));
+			       repo_find_unique_abbrev(the_repository, &commit->object.oid,
+						       DEFAULT_ABBREV));
 	}
 	puts(pretty_str);
 	strbuf_release(&pretty);
@@ -417,7 +417,7 @@ static int append_head_ref(const char *refname, const struct object_id *oid,
 	/* If both heads/foo and tags/foo exists, get_sha1 would
 	 * get confused.
 	 */
-	if (get_oid(refname + ofs, &tmp) || !oideq(&tmp, oid))
+	if (repo_get_oid(the_repository, refname + ofs, &tmp) || !oideq(&tmp, oid))
 		ofs = 5;
 	return append_ref(refname + ofs, oid, 0);
 }
@@ -432,7 +432,7 @@ static int append_remote_ref(const char *refname, const struct object_id *oid,
 	/* If both heads/foo and tags/foo exists, get_sha1 would
 	 * get confused.
 	 */
-	if (get_oid(refname + ofs, &tmp) || !oideq(&tmp, oid))
+	if (repo_get_oid(the_repository, refname + ofs, &tmp) || !oideq(&tmp, oid))
 		ofs = 5;
 	return append_ref(refname + ofs, oid, 0);
 }
@@ -536,7 +536,7 @@ static int show_independent(struct commit **rev,
 static void append_one_rev(const char *av)
 {
 	struct object_id revkey;
-	if (!get_oid(av, &revkey)) {
+	if (!repo_get_oid(the_repository, av, &revkey)) {
 		append_ref(av, &revkey, 0);
 		return;
 	}
@@ -749,7 +749,8 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			die(Q_("only %d entry can be shown at one time.",
 			       "only %d entries can be shown at one time.",
 			       MAX_REVS), MAX_REVS);
-		if (!dwim_ref(*av, strlen(*av), &oid, &ref, 0))
+		if (!repo_dwim_ref(the_repository, *av, strlen(*av), &oid,
+				   &ref, 0))
 			die(_("no such ref %s"), *av);
 
 		/* Has the base been specified? */
@@ -839,13 +840,13 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			die(Q_("cannot handle more than %d rev.",
 			       "cannot handle more than %d revs.",
 			       MAX_REVS), MAX_REVS);
-		if (get_oid(ref_name[num_rev], &revkey))
+		if (repo_get_oid(the_repository, ref_name[num_rev], &revkey))
 			die(_("'%s' is not a valid ref."), ref_name[num_rev]);
 		commit = lookup_commit_reference(the_repository, &revkey);
 		if (!commit)
 			die(_("cannot find commit %s (%s)"),
 			    ref_name[num_rev], oid_to_hex(&revkey));
-		parse_commit(commit);
+		repo_parse_commit(the_repository, commit);
 		mark_seen(commit, &seen);
 
 		/* rev#0 uses bit REV_SHIFT, rev#1 uses bit REV_SHIFT+1,

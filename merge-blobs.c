@@ -12,7 +12,8 @@ static int fill_mmfile_blob(mmfile_t *f, struct blob *obj)
 	unsigned long size;
 	enum object_type type;
 
-	buf = read_object_file(&obj->object.oid, &type, &size);
+	buf = repo_read_object_file(the_repository, &obj->object.oid, &type,
+				    &size);
 	if (!buf)
 		return -1;
 	if (type != OBJ_BLOB) {
@@ -78,7 +79,8 @@ void *merge_blobs(struct index_state *istate, const char *path,
 			return NULL;
 		if (!our)
 			our = their;
-		return read_object_file(&our->object.oid, &type, size);
+		return repo_read_object_file(the_repository, &our->object.oid,
+					     &type, size);
 	}
 
 	if (fill_mmfile_blob(&f1, our) < 0)

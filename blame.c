@@ -1031,8 +1031,9 @@ static void fill_origin_blob(struct diff_options *opt,
 				    &o->blob_oid, 1, &file->ptr, &file_size))
 			;
 		else
-			file->ptr = read_object_file(&o->blob_oid, &type,
-						     &file_size);
+			file->ptr = repo_read_object_file(the_repository,
+							  &o->blob_oid, &type,
+							  &file_size);
 		file->size = file_size;
 
 		if (!file->ptr)
@@ -2432,7 +2433,7 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 
 			if (sg_origin[i])
 				continue;
-			if (parse_commit(p))
+			if (repo_parse_commit(the_repository, p))
 				continue;
 			porigin = find(sb->repo, p, origin, sb->bloom_data);
 			if (!porigin)
@@ -2595,7 +2596,7 @@ void assign_blame(struct blame_scoreboard *sb, int opt)
 		 * so hold onto it in the meantime.
 		 */
 		blame_origin_incref(suspect);
-		parse_commit(commit);
+		repo_parse_commit(the_repository, commit);
 		if (sb->reverse ||
 		    (!(commit->object.flags & UNINTERESTING) &&
 		     !(revs->max_age != -1 && commit->date < revs->max_age)))
@@ -2841,8 +2842,10 @@ void setup_scoreboard(struct blame_scoreboard *sb,
 				    &sb->final_buf_size))
 			;
 		else
-			sb->final_buf = read_object_file(&o->blob_oid, &type,
-							 &sb->final_buf_size);
+			sb->final_buf = repo_read_object_file(the_repository,
+							      &o->blob_oid,
+							      &type,
+							      &sb->final_buf_size);
 
 		if (!sb->final_buf)
 			die(_("cannot read blob %s for path %s"),

@@ -435,7 +435,7 @@ void validate_cache_entries(const struct index_state *istate);
 /*
  * Bulk prefetch all missing cache entries that are not GITLINKs and that match
  * the given predicate. This function should only be called if
- * has_promisor_remote() returns true.
+ * repo_has_promisor_remote() returns true.
  */
 typedef int (*must_prefetch_predicate)(const struct cache_entry *);
 void prefetch_cache_entries(const struct index_state *istate,
@@ -700,7 +700,7 @@ extern int quote_path_fully;
  * terminated.
  *
  * The non-`_r` version returns a static buffer which remains valid until 4
- * more calls to find_unique_abbrev are made.
+ * more calls to repo_find_unique_abbrev are made.
  *
  * The `_r` variant writes to a buffer supplied by the caller, which must be at
  * least `GIT_MAX_HEXSZ + 1` bytes. The return value is the number of bytes
@@ -710,9 +710,7 @@ extern int quote_path_fully;
  * reentrant, as it calls into other non-reentrant git code.
  */
 const char *repo_find_unique_abbrev(struct repository *r, const struct object_id *oid, int len);
-#define find_unique_abbrev(oid, len) repo_find_unique_abbrev(the_repository, oid, len)
 int repo_find_unique_abbrev_r(struct repository *r, char *hex, const struct object_id *oid, int len);
-#define find_unique_abbrev_r(hex, oid, len) repo_find_unique_abbrev_r(the_repository, hex, oid, len)
 
 /*
  * Create the directory containing the named path, using care to be
@@ -853,17 +851,8 @@ enum get_oid_result get_oid_with_context(struct repository *repo, const char *st
 					 unsigned flags, struct object_id *oid,
 					 struct object_context *oc);
 
-#define get_oid(str, oid)		repo_get_oid(the_repository, str, oid)
-#define get_oid_commit(str, oid)	repo_get_oid_commit(the_repository, str, oid)
-#define get_oid_committish(str, oid)	repo_get_oid_committish(the_repository, str, oid)
-#define get_oid_tree(str, oid)		repo_get_oid_tree(the_repository, str, oid)
-#define get_oid_treeish(str, oid)	repo_get_oid_treeish(the_repository, str, oid)
-#define get_oid_blob(str, oid)		repo_get_oid_blob(the_repository, str, oid)
-#define get_oid_mb(str, oid) 		repo_get_oid_mb(the_repository, str, oid)
-
 typedef int each_abbrev_fn(const struct object_id *oid, void *);
 int repo_for_each_abbrev(struct repository *r, const char *prefix, each_abbrev_fn, void *);
-#define for_each_abbrev(prefix, fn, data) repo_for_each_abbrev(the_repository, prefix, fn, data)
 
 int set_disambiguate_hint_config(const char *var, const char *value);
 
@@ -911,8 +900,6 @@ int repo_interpret_branch_name(struct repository *r,
 			       const char *str, int len,
 			       struct strbuf *buf,
 			       const struct interpret_branch_name_options *options);
-#define interpret_branch_name(str, len, buf, options) \
-	repo_interpret_branch_name(the_repository, str, len, buf, options)
 
 int base_name_compare(const char *name1, size_t len1, int mode1,
 		      const char *name2, size_t len2, int mode2);
@@ -930,8 +917,6 @@ void *read_object_with_reference(struct repository *r,
 struct object *repo_peel_to_type(struct repository *r,
 				 const char *name, int namelen,
 				 struct object *o, enum object_type);
-#define peel_to_type(name, namelen, obj, type) \
-	repo_peel_to_type(the_repository, name, namelen, obj, type)
 
 const char *git_editor(void);
 const char *git_sequence_editor(void);
