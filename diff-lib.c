@@ -6,6 +6,7 @@
 #include "commit.h"
 #include "diff.h"
 #include "diffcore.h"
+#include "hex.h"
 #include "revision.h"
 #include "cache-tree.h"
 #include "unpack-trees.h"
@@ -673,7 +674,7 @@ int index_differs_from(struct repository *r,
 	return (has_changes != 0);
 }
 
-static struct strbuf *idiff_prefix_cb(struct diff_options *opt, void *data)
+static struct strbuf *idiff_prefix_cb(struct diff_options *opt UNUSED, void *data)
 {
 	return data;
 }

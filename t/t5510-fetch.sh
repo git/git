@@ -806,6 +806,14 @@ test_expect_success 'fetch.writeCommitGraph with submodules' '
 	)
 '
 
+# fetches from first configured url
+test_expect_success 'fetch from multiple configured URLs in single remote' '
+	git init url1 &&
+	git remote add multipleurls url1 &&
+	git remote set-url --add multipleurls url2 &&
+	git fetch multipleurls
+'
+
 # configured prune tests
 
 set_config_tristate () {
@@ -1162,6 +1170,15 @@ test_expect_success '--no-show-forced-updates' '
 		test_i18ngrep ! "(forced update)" output
 	)
 '
+
+for section in fetch transfer
+do
+	test_expect_success "$section.hideRefs affects connectivity check" '
+		GIT_TRACE="$PWD"/trace git -c $section.hideRefs=refs -c \
+			$section.hideRefs="!refs/tags/" fetch &&
+		grep "git rev-list .*--exclude-hidden=fetch" trace
+	'
+done
 
 setup_negotiation_tip () {
 	SERVER="$1"

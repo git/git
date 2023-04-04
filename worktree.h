@@ -1,7 +1,6 @@
 #ifndef WORKTREE_H
 #define WORKTREE_H
 
-#include "cache.h"
 #include "refs.h"
 
 struct strbuf;
@@ -148,6 +147,12 @@ void free_worktrees(struct worktree **);
 const struct worktree *find_shared_symref(struct worktree **worktrees,
 					  const char *symref,
 					  const char *target);
+
+/*
+ * Returns true if a symref points to a ref in a worktree.
+ */
+int is_shared_symref(const struct worktree *wt,
+		     const char *symref, const char *target);
 
 /*
  * Similar to head_ref() for all HEADs _except_ one from the current

@@ -866,27 +866,9 @@ test_expect_success 'submodule always visited' '
 # the submodule, and someone does a `git submodule absorbgitdirs`
 # in the super, Git will recursively invoke `git submodule--helper`
 # to do the work and this may try to read the index.  This will
-# try to start the daemon in the submodule *and* pass (either
-# directly or via inheritance) the `--super-prefix` arg to the
-# `git fsmonitor--daemon start` command inside the submodule.
-# This causes a warning because fsmonitor--daemon does take that
-# global arg (see the table in git.c)
-#
-# This causes a warning when trying to start the daemon that is
-# somewhat confusing.  It does not seem to hurt anything because
-# the fsmonitor code maps the query failure into a trivial response
-# and does the work anyway.
-#
-# It would be nice to silence the warning, however.
+# try to start the daemon in the submodule.
 
-have_t2_error_event () {
-	log=$1
-	msg="fsmonitor--daemon doesnQt support --super-prefix" &&
-
-	tr '\047' Q <$1 | grep -e "$msg"
-}
-
-test_expect_success "stray submodule super-prefix warning" '
+test_expect_success "submodule absorbgitdirs implicitly starts daemon" '
 	test_when_finished "rm -rf super; \
 			    rm -rf sub;   \
 			    rm super-sub.trace" &&
@@ -904,21 +886,31 @@ test_expect_success "stray submodule super-prefix warning" '
 
 	test_path_is_dir super/dir_1/dir_2/sub/.git &&
 
+	cwd="$(cd super && pwd)" &&
+	cat >expect <<-EOF &&
+	Migrating git directory of '\''dir_1/dir_2/sub'\'' from
+	'\''$cwd/dir_1/dir_2/sub/.git'\'' to
+	'\''$cwd/.git/modules/dir_1/dir_2/sub'\''
+	EOF
 	GIT_TRACE2_EVENT="$PWD/super-sub.trace" \
-		git -C super submodule absorbgitdirs &&
+		git -C super submodule absorbgitdirs >out 2>actual &&
+	test_cmp expect actual &&
+	test_must_be_empty out &&
 
-	! have_t2_error_event super-sub.trace
+	# Confirm that the trace2 log contains a record of the
+	# daemon starting.
+	test_subcommand git fsmonitor--daemon start <super-sub.trace
 '
 
 # On a case-insensitive file system, confirm that the daemon
 # notices when the .git directory is moved/renamed/deleted
-# regardless of how it is spelled in the the FS event.
+# regardless of how it is spelled in the FS event.
 # That is, does the FS event receive the spelling of the
 # operation or does it receive the spelling preserved with
 # the file/directory.
 #
 test_expect_success CASE_INSENSITIVE_FS 'case insensitive+preserving' '
-#	test_when_finished "stop_daemon_delete_repo test_insensitive" &&
+	test_when_finished "stop_daemon_delete_repo test_insensitive" &&
 
 	git init test_insensitive &&
 
@@ -930,8 +922,8 @@ test_expect_success CASE_INSENSITIVE_FS 'case insensitive+preserving' '
 	test_path_is_dir test_insensitive/.git &&
 	test_path_is_dir test_insensitive/.GIT &&
 
-	# Rename .git using an alternate spelling to verify that that
-	# daemon detects it and automatically shuts down.
+	# Rename .git using an alternate spelling to verify that
+	# the daemon detects it and automatically shuts down.
 	mv test_insensitive/.GIT test_insensitive/.FOO &&
 
 	# See [1] above.

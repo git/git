@@ -1,14 +1,14 @@
 # Swedish translations for Git.
-# Copyright (C) 2010-2022 Peter Krefting <peter@softwolves.pp.se>
+# Copyright (C) 2010-2023 Peter Krefting <peter@softwolves.pp.se>
 # This file is distributed under the same license as the Git package.
-# Peter Krefting <peter@softwolves.pp.se>, 2010-2022.
+# Peter Krefting <peter@softwolves.pp.se>, 2010-2023.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: git 2.38.0\n"
+"Project-Id-Version: git 2.40.0\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2022-09-26 06:34+0100\n"
-"PO-Revision-Date: 2022-09-26 06:35+0100\n"
+"POT-Creation-Date: 2023-03-02 09:34+0100\n"
+"PO-Revision-Date: 2023-03-02 09:35+0100\n"
 "Last-Translator: Peter Krefting <peter@softwolves.pp.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -44,13 +44,13 @@ msgstr "kunde inte köa \"%s\""
 msgid "could not write index"
 msgstr "kunde inte skriva indexet"
 
-#, c-format, perl-format
+#, c-format
 msgid "updated %d path\n"
 msgid_plural "updated %d paths\n"
 msgstr[0] "uppdaterade %d sökväg\n"
 msgstr[1] "uppdaterade %d sökvägar\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "note: %s is untracked now.\n"
 msgstr "observera: %s spåras inte längre.\n"
 
@@ -64,7 +64,7 @@ msgstr "Återställ"
 msgid "Could not parse HEAD^{tree}"
 msgstr "kunde inte tolka HEAD^{tree}"
 
-#, c-format, perl-format
+#, c-format
 msgid "reverted %d path\n"
 msgid_plural "reverted %d paths\n"
 msgstr[0] "återställde %d sökväg\n"
@@ -77,7 +77,7 @@ msgstr "Inga ospårade filer.\n"
 msgid "Add untracked"
 msgstr "Lägg till ospårad"
 
-#, c-format, perl-format
+#, c-format
 msgid "added %d path\n"
 msgid_plural "added %d paths\n"
 msgstr[0] "lade till %d sökväg\n"
@@ -171,19 +171,19 @@ msgstr "kunde inte uppdatera indexet"
 msgid "Bye.\n"
 msgstr "Hej då.\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Stage mode change [y,n,q,a,d%s,?]? "
 msgstr "Köa ändrat läge [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Stage deletion [y,n,q,a,d%s,?]? "
 msgstr "Köa borttagning [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Stage addition [y,n,q,a,d%s,?]? "
 msgstr "Köa tillägg [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Stage this hunk [y,n,q,a,d%s,?]? "
 msgstr "Köa stycket [y,n,q,a,d%s,?]? "
 
@@ -207,19 +207,19 @@ msgstr ""
 "a - köa stycket och alla följande i filen\n"
 "d - köa inte stycket eller något av de följande i filen\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Stash mode change [y,n,q,a,d%s,?]? "
 msgstr "Stash:a ändrat läge [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Stash deletion [y,n,q,a,d%s,?]? "
 msgstr "Stash:a borttagning [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Stash addition [y,n,q,a,d%s,?]? "
 msgstr "Stash:a tillägg [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Stash this hunk [y,n,q,a,d%s,?]? "
 msgstr "Stash:a stycket [y,n,q,a,d%s,?]? "
 
@@ -243,19 +243,19 @@ msgstr ""
 "a - \"stash\":a stycket och alla följande i filen\n"
 "d - \"stash\":a inte stycket eller något av de följande i filen\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Unstage mode change [y,n,q,a,d%s,?]? "
 msgstr "Ta bort ändrat läge från kön [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Unstage deletion [y,n,q,a,d%s,?]? "
 msgstr "Ta bort borttagning från kön [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Unstage addition [y,n,q,a,d%s,?]? "
 msgstr "Ta bort tillägg från kön [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Unstage this hunk [y,n,q,a,d%s,?]? "
 msgstr "Ta bort stycket från kön [y,n,q,a,d%s,?]? "
 
@@ -279,19 +279,19 @@ msgstr ""
 "a - ta bort stycket och alla följande i filen från kön\n"
 "d - ta inte bort stycket eller något av de följande i filen från kön\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply mode change to index [y,n,q,a,d%s,?]? "
 msgstr "Applicera ändrat läge på indexet [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply deletion to index [y,n,q,a,d%s,?]? "
 msgstr "Applicera borttagning på indexet [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply addition to index [y,n,q,a,d%s,?]? "
 msgstr "Applicera tillägg på indexet [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply this hunk to index [y,n,q,a,d%s,?]? "
 msgstr "Applicera stycket på indexet [y,n,q,a,d%s,?]? "
 
@@ -315,19 +315,19 @@ msgstr ""
 "a - applicera stycket och alla följande i filen\n"
 "d - applicera inte stycket eller något av de följande i filen\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard mode change from worktree [y,n,q,a,d%s,?]? "
 msgstr "Kasta ändrat läge från arbetskatalogen [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard deletion from worktree [y,n,q,a,d%s,?]? "
 msgstr "Kasta borttagning från arbetskatalogen [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard addition from worktree [y,n,q,a,d%s,?]? "
 msgstr "Kasta tillägg från arbetskatalogen [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard this hunk from worktree [y,n,q,a,d%s,?]? "
 msgstr "Kasta stycket från arbetskatalogen [y,n,q,a,d%s,?]? "
 
@@ -351,19 +351,19 @@ msgstr ""
 "a - förkasta stycket och alla följande i filen\n"
 "d - förkasta inte stycket eller något av de följande i filen\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard mode change from index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Kasta ändrat läge från indexet och arbetskatalogen [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard deletion from index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Kasta borttagning från indexet och arbetskatalogen [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard addition from index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Kasta tillägg från indexet och arbetskatalogen [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard this hunk from index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Kasta stycket från indexet och arbetskatalogen [y,n,q,a,d%s,?]? "
 
@@ -380,19 +380,19 @@ msgstr ""
 "a - förkasta stycket och alla följande i filen\n"
 "d - förkasta inte stycket eller något av de följande i filen\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply mode change to index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Applicera ändrat läge på indexet och arbetskatalogen [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply deletion to index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Applicera borttagning på indexet och arbetskatalogen [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply addition to index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Applicera tillägg på indexet och arbetskatalogen [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply this hunk to index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Applicera stycket på indexet och arbetskatalogen [y,n,q,a,d%s,?]? "
 
@@ -409,19 +409,19 @@ msgstr ""
 "a - applicera stycket och alla följande i filen\n"
 "d - applicera inte stycket eller något av de följande i filen\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply mode change to worktree [y,n,q,a,d%s,?]? "
 msgstr "Applicera ändrat läge på arbetskatalogen [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply deletion to worktree [y,n,q,a,d%s,?]? "
 msgstr "Applicera borttagning på arbetskatalogen [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply addition to worktree [y,n,q,a,d%s,?]? "
 msgstr "Applicera tillägg på arbetskatalogen [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply this hunk to worktree [y,n,q,a,d%s,?]? "
 msgstr "Applicera stycket på arbetskatalogen [y,n,q,a,d%s,?]? "
 
@@ -497,8 +497,6 @@ msgstr ""
 "Ta bort \"%c\" rader genom att radera dem.\n"
 "Rader som börjar med %c kommer att tas bort.\n"
 
-#. #-#-#-#-#  git-add--interactive.perl.po  #-#-#-#-#
-#. TRANSLATORS: 'it' refers to the patch mentioned in the previous messages.
 msgid ""
 "If it does not apply cleanly, you will be given an opportunity to\n"
 "edit again.  If all lines of the hunk are removed, then the edit is\n"
@@ -514,20 +512,12 @@ msgstr "kunde inte tolka styckehuvud"
 msgid "'git apply --cached' failed"
 msgstr "\"git apply --cached\" misslyckades"
 
-#. #-#-#-#-#  add-patch.c.po  #-#-#-#-#
 #. TRANSLATORS: do not translate [y/n]
 #. The program will only accept that input at this point.
 #. Consider translating (saying "no" discards!) as
 #. (saying "n" for "no" discards!) if the translation
 #. of the word "no" does not start with n.
 #.
-#. #-#-#-#-#  git-add--interactive.perl.po  #-#-#-#-#
-#. TRANSLATORS: do not translate [y/n]
-#. The program will only accept that input
-#. at this point.
-#. Consider translating (saying "no" discards!) as
-#. (saying "n" for "no" discards!) if the translation
-#. of the word "no" does not start with n.
 msgid ""
 "Your edited hunk does not apply. Edit again (saying \"no\" discards!) [y/n]? "
 msgstr ""
@@ -763,6 +753,9 @@ msgstr "kommandorad avslutas med \\"
 
 msgid "unclosed quote"
 msgstr "citat ej stängt"
+
+msgid "too many arguments"
+msgstr "för många argument"
 
 #, c-format
 msgid "unrecognized whitespace option '%s'"
@@ -1371,6 +1364,12 @@ msgstr "läs .gitattributes i arbetskatalogen"
 msgid "report archived files on stderr"
 msgstr "rapportera arkiverade filer på standard fel"
 
+msgid "time"
+msgstr "tid"
+
+msgid "set modification time of archive entries"
+msgstr "välj modifieringstid för arkivposter"
+
 msgid "set compression level"
 msgstr "välj komprimeringsgrad"
 
@@ -1411,6 +1410,13 @@ msgstr "Argumentet stöd inte för formatet \"%s\": -%d"
 msgid "%.*s is not a valid attribute name"
 msgstr "%-*s är inte ett giltigt namn på attribut"
 
+msgid "unable to add additional attribute"
+msgstr "Kunde inte lägga till ytterligare attribut"
+
+#, c-format
+msgid "ignoring overly long attributes line %d"
+msgstr "ignorerar överlång attributrad %d"
+
 #, c-format
 msgid "%s not allowed: %s:%d"
 msgstr "%s inte tillåtet: %s:%d"
@@ -1421,6 +1427,18 @@ msgid ""
 msgstr ""
 "Negativa mönster ignoreras i git-attribut\n"
 "Använd '\\!' för att inleda med ett utropstecken."
+
+#, c-format
+msgid "cannot fstat gitattributes file '%s'"
+msgstr "kan inte utföra fstat på gitattributes-filen \"%s\""
+
+#, c-format
+msgid "ignoring overly large gitattributes file '%s'"
+msgstr "ignorerar allt för stor gitattributes-fil \"%s\""
+
+#, c-format
+msgid "ignoring overly large gitattributes blob '%s'"
+msgstr "ignorerar allt för stor gitattributes-objekt \"%s\""
 
 #, c-format
 msgid "Badly quoted content in file '%s': %s"
@@ -1699,11 +1717,11 @@ msgstr "undermodulen \"%s\": kan inte hitta undermodulen"
 
 #, c-format
 msgid ""
-"You may try updating the submodules using 'git checkout %s && git submodule "
-"update --init'"
+"You may try updating the submodules using 'git checkout --no-recurse-"
+"submodules %s && git submodule update --init'"
 msgstr ""
-"Du kan försöka uppdatera undermodulerna med \"git checkout %s && git "
-"submodule update --init\""
+"Du kan försöka uppdatera undermodulerna med \"git checkout --no-recurse-"
+"submodules %s && git submodule update --init\""
 
 #, c-format
 msgid "submodule '%s': cannot create branch '%s'"
@@ -1737,6 +1755,13 @@ msgstr "ta bort \"%s\"\n"
 
 msgid "Unstaged changes after refreshing the index:"
 msgstr "Oköade ändringar efter att ha uppdaterat indexet:"
+
+msgid ""
+"the add.interactive.useBuiltin setting has been removed!\n"
+"See its entry in 'git help config' for details."
+msgstr ""
+"inställningen add.interactive.useBuiltin har tagits bort!\n"
+"Se dess post i \"git help config\" för detaljer."
 
 msgid "Could not read the index"
 msgstr "Kunde inte läsa indexet"
@@ -2122,6 +2147,9 @@ msgstr "git am [<flaggor>] (--continue | --skip | --abort)"
 msgid "run interactively"
 msgstr "kör interaktivt"
 
+msgid "bypass pre-applypatch and applypatch-msg hooks"
+msgstr "förbigå pre-applypatch- och applypatch-msg-krokar"
+
 msgid "historical option -- no-op"
 msgstr "historisk flagga -- no-op"
 
@@ -2262,32 +2290,27 @@ msgstr "git archive: protokollfel"
 msgid "git archive: expected a flush"
 msgstr "git archive: förväntade en tömning (flush)"
 
-msgid "git bisect--helper --bisect-reset [<commit>]"
-msgstr "git bisect--helper --bisect-reset [<incheckning>]"
-
 msgid ""
-"git bisect--helper --bisect-start [--term-{new,bad}=<term> --term-{old,good}"
-"=<term>] [--no-checkout] [--first-parent] [<bad> [<good>...]] [--] "
-"[<paths>...]"
+"git bisect start [--term-{new,bad}=<term> --term-{old,good}=<term>]    [--no-"
+"checkout] [--first-parent] [<bad> [<good>...]] [--]    [<pathspec>...]"
 msgstr ""
-"git bisect--helper --bisect-start [--term-{new,bad}=<term> --term-{old,good}"
-"=<term>] [--no-checkout] [--first-parent] [<dålig> [<bra>...]] [--] "
-"[<sökvägar>...]"
+"git bisect start [--term-{new,bad}=<term> --term-{old,good}=<term>]    [--no-"
+"checkout] [--first-parent] [<dålig> [<bra>...]] [--]    [<sökvägar>...]"
 
-msgid "git bisect--helper --bisect-state (bad|new) [<rev>]"
-msgstr "git bisect--helper --bisect-state (bad|new) [<incheckning>]"
+msgid "git bisect (good|bad) [<rev>...]"
+msgstr "git bisect (good|bad) [<incheckning>...]"
 
-msgid "git bisect--helper --bisect-state (good|old) [<rev>...]"
-msgstr "git bisect--helper --bisect-state (good|old) [<incheckning>...]"
+msgid "git bisect skip [(<rev>|<range>)...]"
+msgstr "git bisect skip [(<incheckning>|<intervall>)...]"
 
-msgid "git bisect--helper --bisect-replay <filename>"
-msgstr "git bisect--helper --bisect-replay <filnamn>"
+msgid "git bisect reset [<commit>]"
+msgstr "git bisect reset [<incheckning>]"
 
-msgid "git bisect--helper --bisect-skip [(<rev>|<range>)...]"
-msgstr "git bisect--helper --bisect-skip [(<incheckning>|<intervall>)...]"
+msgid "git bisect replay <logfile>"
+msgstr "git bisect replay <loggfil>"
 
-msgid "git bisect--helper --bisect-run <cmd>..."
-msgstr "git bisect--helper --bisect-run <kommando>..."
+msgid "git bisect run <cmd>..."
+msgstr "git bisect run <kommando>..."
 
 #, c-format
 msgid "cannot open file '%s' in mode '%s'"
@@ -2433,10 +2456,6 @@ msgid "checking out '%s' failed. Try 'git bisect start <valid-branch>'."
 msgstr ""
 "misslyckades checka ut \"%s\". Försök \"git bisect reset <giltig_gren>\"."
 
-# cogito-relaterat
-msgid "won't bisect on cg-seek'ed tree"
-msgstr "kör inte \"bisect\" på träd där \"cg-seek\" använts"
-
 msgid "bad HEAD - strange symbolic ref"
 msgstr "felaktigt HEAD - konstig symbolisk referens"
 
@@ -2488,17 +2507,17 @@ msgid "bisect run failed: no command provided."
 msgstr "bisect-körning misslyckades: inget kommando gavs."
 
 #, c-format
-msgid "unable to verify '%s' on good revision"
-msgstr "kan inte bekräfta \"%s\" på bra revision"
+msgid "unable to verify %s on good revision"
+msgstr "kan inte bekräfta %s på bra revision"
 
 #, c-format
 msgid "bogus exit code %d for good revision"
 msgstr "falsk slutkod %d för bra revision"
 
 #, c-format
-msgid "bisect run failed: exit code %d from '%s' is < 0 or >= 128"
+msgid "bisect run failed: exit code %d from %s is < 0 or >= 128"
 msgstr ""
-"\"bisect\"-körningen misslyckades: felkod %d från \"%s\" är < 0 eller >= 128"
+"\"bisect\"-körningen misslyckades: felkod %d från %s är < 0 eller >= 128"
 
 #, c-format
 msgid "cannot open file '%s' for writing"
@@ -2507,75 +2526,49 @@ msgstr "kan inte öppna \"%s\" för skrivning"
 msgid "bisect run cannot continue any more"
 msgstr "\"bisect\"-körningen kan inte fortsätta längre"
 
-#, c-format
 msgid "bisect run success"
 msgstr "\"bisect\"-körningen lyckades"
 
-#, c-format
 msgid "bisect found first bad commit"
 msgstr "bisect hittade första trasiga incheckning"
 
 #, c-format
-msgid ""
-"bisect run failed: 'git bisect--helper --bisect-state %s' exited with error "
-"code %d"
+msgid "bisect run failed: 'git bisect %s' exited with error code %d"
 msgstr ""
-"\"bisect\"-körningen misslyckades: \"git bisect--helper --bisect-state %s\" "
-"avslutades med felkoden %d"
+"\"bisect\"-körningen misslyckades: \"git bisect %s\" avslutades med felkoden "
+"%d"
 
-msgid "reset the bisection state"
-msgstr "återställ bisect-tillstånd"
+#, c-format
+msgid "'%s' requires either no argument or a commit"
+msgstr "\"%s\" kräver antingen inget argument eller en incheckning"
 
-msgid "check whether bad or good terms exist"
-msgstr "se efter om termer för rätt och fel finns"
+#, c-format
+msgid "'%s' requires 0 or 1 argument"
+msgstr "\"%s\" kräver noll eller ett argument"
 
-msgid "print out the bisect terms"
-msgstr "skriv ut termer för bisect"
-
-msgid "start the bisect session"
-msgstr "påbörja bisect-körningen"
-
-msgid "find the next bisection commit"
-msgstr "hitta nästa incheckning i bisect"
-
-msgid "mark the state of ref (or refs)"
-msgstr "markera tillståndet för en eller flera referenser"
-
-msgid "list the bisection steps so far"
-msgstr "lista \"bisect\"-stegen som utförts så långt"
-
-msgid "replay the bisection process from the given file"
-msgstr "spela upp \"bisect\"-processen från angiven fil"
-
-msgid "skip some commits for checkout"
-msgstr "hoppa över ett par incheckningar"
-
-msgid "visualize the bisection"
-msgstr "visualisera \"bisect\"-körningen"
-
-msgid "use <cmd>... to automatically bisect"
-msgstr "använd <kommando>... för att utföra \"bisect\" automatiskt"
-
-msgid "no log for BISECT_WRITE"
-msgstr "ingen logg för BISECT_WRITE"
-
-msgid "--bisect-reset requires either no argument or a commit"
-msgstr "--bisect-reset kräver antingen inget argument eller en incheckning"
-
-msgid "--bisect-terms requires 0 or 1 argument"
-msgstr "--bisect-terms kräver noll eller ett argument"
-
-msgid "--bisect-next requires 0 arguments"
-msgstr "--bisect-next kräver 0 argument"
-
-msgid "--bisect-log requires 0 arguments"
-msgstr "--bisect-log kräver 0 argument"
+#, c-format
+msgid "'%s' requires 0 arguments"
+msgstr "\"%s\" kräver noll argument"
 
 msgid "no logfile given"
 msgstr "ingen loggfil angiven"
 
+#, c-format
+msgid "'%s' failed: no command provided."
+msgstr "\"%s\" misslyckades: inget kommando gavs."
+
+msgid "need a command"
+msgstr "behöver ett kommando"
+
+#, c-format
+msgid "unknown command: '%s'"
+msgstr "okänt kommando: \"%s\""
+
 msgid "git blame [<options>] [<rev-opts>] [<rev>] [--] <file>"
 msgstr "git blame [<flaggor>] [<rev-flaggor>] [<rev>] [--] <fil>"
+
+msgid "git annotate [<options>] [<rev-opts>] [<rev>] [--] <file>"
+msgstr "git annotate [<flaggor>] [<rev-flaggor>] [<rev>] [--] <fil>"
 
 msgid "<rev-opts> are documented in git-rev-list(1)"
 msgstr "<rev-flaggor> dokumenteras i git-rev-list(1)"
@@ -2763,9 +2756,6 @@ msgstr "Misslyckades uppdatera konfigurationsfil"
 msgid "cannot use -a with -d"
 msgstr "kan inte ange -a med -d"
 
-msgid "Couldn't look up commit object for HEAD"
-msgstr "Kunde inte slå upp incheckningsobjekt för HEAD"
-
 #, c-format
 msgid "Cannot delete branch '%s' checked out at '%s'"
 msgstr "Kan inte ta bort grenen \"%s\" som är utcheckad på \"%s\""
@@ -2804,16 +2794,17 @@ msgstr "Grenen %s ombaseras på %s"
 msgid "Branch %s is being bisected at %s"
 msgstr "Grenen %s är i en \"bisect\" på %s"
 
-msgid "cannot copy the current branch while not on any."
-msgstr "kunde inte kopiera aktuell gren när du inte befinner dig på någon."
-
-msgid "cannot rename the current branch while not on any."
-msgstr ""
-"kunde inte byta namn på aktuell gren när du inte befinner dig på någon."
-
 #, c-format
 msgid "Invalid branch name: '%s'"
 msgstr "Felaktigt namn på gren: \"%s\""
+
+#, c-format
+msgid "No commit on branch '%s' yet."
+msgstr "Inga incheckningar på grenen \"%s\" ännu."
+
+#, c-format
+msgid "No branch named '%s'."
+msgstr "Ingen gren vid namnet \"%s\"."
 
 msgid "Branch rename failed"
 msgstr "Misslyckades byta namn på gren"
@@ -2962,7 +2953,7 @@ msgstr ""
 "propagateBranches har aktiverats"
 
 msgid "--recurse-submodules can only be used to create branches"
-msgstr "--recurse-submodules jan endast användas för att skapa grenar"
+msgstr "--recurse-submodules kan endast användas för att skapa grenar"
 
 msgid "branch name required"
 msgstr "grennamn krävs"
@@ -2973,13 +2964,12 @@ msgstr "Kan inte beskriva frånkopplad HEAD"
 msgid "cannot edit description of more than one branch"
 msgstr "kan inte redigera beskrivning för mer än en gren"
 
-#, c-format
-msgid "No commit on branch '%s' yet."
-msgstr "Inga incheckningar på grenen \"%s\" ännu."
+msgid "cannot copy the current branch while not on any."
+msgstr "kunde inte kopiera aktuell gren när du inte befinner dig på någon."
 
-#, c-format
-msgid "No branch named '%s'."
-msgstr "Ingen gren vid namnet \"%s\"."
+msgid "cannot rename the current branch while not on any."
+msgstr ""
+"kunde inte byta namn på aktuell gren när du inte befinner dig på någon."
 
 msgid "too many branches for a copy operation"
 msgstr "för många grenar för kopiering"
@@ -3046,11 +3036,11 @@ msgid "not run from a git repository - no hooks to show\n"
 msgstr "körs inte från ett git-arkiv - inga krokar att visa\n"
 
 msgid ""
-"git bugreport [-o|--output-directory <file>] [-s|--suffix <format>] [--"
-"diagnose[=<mode>]"
+"git bugreport [(-o | --output-directory) <path>] [(-s | --suffix) <format>]\n"
+"              [--diagnose[=<mode>]]"
 msgstr ""
-"git bugreport [-o|--output-directory <fil>] [-s|--suffix <format>] [--"
-"diagnose[=<läge>]"
+"git bugreport [(-o | --output-directory) <fil>] [(-s | --suffix) <format>]\n"
+"              [--diagnose[=<läge>]"
 
 msgid ""
 "Thank you for filling out a Git bug report!\n"
@@ -3124,17 +3114,26 @@ msgstr "kunde inte skriva till %s"
 msgid "Created new report at '%s'.\n"
 msgstr "Skapade ny rapport på \"%s\"\n"
 
-msgid "git bundle create [<options>] <file> <git-rev-list args>"
-msgstr "git bundle create [<flaggor>] <fil> <git-rev-list-flaggor>"
+msgid ""
+"git bundle create [-q | --quiet | --progress | --all-progress] [--all-"
+"progress-implied]\n"
+"                  [--version=<version>] <file> <git-rev-list-args>"
+msgstr ""
+"git bundle create [-q | --quiet | --progress | --all-progress] [--all-"
+"progress-implied]\n"
+"                  [--version=<version>] <fil> <git-rev-list-flaggor>"
 
-msgid "git bundle verify [<options>] <file>"
-msgstr "git bundle verify [<flaggor>] <fil>"
+msgid "git bundle verify [-q | --quiet] <file>"
+msgstr "git bundle verify [-q | --quiet] <fil>"
 
 msgid "git bundle list-heads <file> [<refname>...]"
 msgstr "git bundle list-heads <fil> [<refnamn>...]"
 
-msgid "git bundle unbundle <file> [<refname>...]"
-msgstr "git bundle unbundle <fil> [<refnamn>...]"
+msgid "git bundle unbundle [--progress] <file> [<refname>...]"
+msgstr "git bundle unbundle [--progress] <fil> [<refnamn>...]"
+
+msgid "need a <file> argument"
+msgstr "behöver ett <fil>-argument"
 
 msgid "do not show progress meter"
 msgstr "visa inte förloppsindikator"
@@ -3189,10 +3188,6 @@ msgstr "%s kräver ett argument"
 msgid "%s takes no arguments"
 msgstr "%s tar inget argument"
 
-#, c-format
-msgid "unknown command: '%s'"
-msgstr "okänt kommando: \"%s\""
-
 msgid "only one batch option may be specified"
 msgstr "endast en buntflagga kan anges"
 
@@ -3209,12 +3204,12 @@ msgid ""
 "git cat-file (--batch | --batch-check | --batch-command) [--batch-all-"
 "objects]\n"
 "             [--buffer] [--follow-symlinks] [--unordered]\n"
-"             [--textconv | --filters]"
+"             [--textconv | --filters] [-z]"
 msgstr ""
 "git cat-file (--batch | --batch-check | --batch-command) [--batch-all-"
 "objects]\n"
 "             [--buffer] [--follow-symlinks] [--unordered]\n"
-"             [--textconv | --filters]"
+"             [--textconv | --filters] [-z]"
 
 msgid ""
 "git cat-file (--textconv | --filters)\n"
@@ -3323,18 +3318,21 @@ msgstr "<rev> krävs med \"%s\""
 msgid "<object> required with '-%c'"
 msgstr "<objekt> krävs med \"-%c\""
 
-msgid "too many arguments"
-msgstr "för många argument"
-
 #, c-format
 msgid "only two arguments allowed in <type> <object> mode, not %d"
 msgstr "endast två argument krävs i <typ> <objekt>-läge, inte %d"
 
-msgid "git check-attr [-a | --all | <attr>...] [--] <pathname>..."
-msgstr "git check-attr [-a | --all | <attr>...] [--] <sökväg>..."
+msgid ""
+"git check-attr [--source <tree-ish>] [-a | --all | <attr>...] [--] "
+"<pathname>..."
+msgstr ""
+"git check-attr [--source <träd:igt>] [-a | --all | <attr>...] [--] "
+"<sökväg>..."
 
-msgid "git check-attr --stdin [-z] [-a | --all | <attr>...]"
-msgstr "git check-attr --stdin [-z] [-a | --all | <attr>...]"
+msgid ""
+"git check-attr --stdin [-z] [--source <tree-ish>] [-a | --all | <attr>...]"
+msgstr ""
+"git check-attr --stdin [-z] [--source <träd:igt>] [-a | --all | <attr>...]"
 
 msgid "report all attributes set on file"
 msgstr "visa alla attribut som satts på filen"
@@ -3347,6 +3345,12 @@ msgstr "läs filnamn från standard in"
 
 msgid "terminate input and output records by a NUL character"
 msgstr "avsluta in- och utdataposter med NUL-tecken"
+
+msgid "<tree-ish>"
+msgstr "<träd-igt>"
+
+msgid "which tree-ish to check attributes at"
+msgstr "vilken träd-igt att kontrollera attribut på"
 
 msgid "suppress progress reporting"
 msgstr "undertryck förloppsrapportering"
@@ -3858,10 +3862,10 @@ msgid "use overlay mode"
 msgstr "använd överläggsläge"
 
 msgid ""
-"git clean [-d] [-f] [-i] [-n] [-q] [-e <pattern>] [-x | -X] [--] <paths>..."
+"git clean [-d] [-f] [-i] [-n] [-q] [-e <pattern>] [-x | -X] [--] "
+"[<pathspec>...]"
 msgstr ""
-"git clean [-d] [-f] [-i] [-n] [-q] [-e <mönster>] [-x | -X] [--] "
-"<sökvägar>..."
+"git clean [-d] [-f] [-i] [-n] [-q] [-e <mönster>] [-x | -X] [--] <sökväg>..."
 
 #, c-format
 msgid "Removing %s\n"
@@ -3925,7 +3929,7 @@ msgstr ""
 "*          - välj alla poster\n"
 "           - (tomt) avsluta markering\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Huh (%s)?\n"
 msgstr "Vadå (%s)?\n"
 
@@ -4074,9 +4078,6 @@ msgstr "djup"
 msgid "create a shallow clone of that depth"
 msgstr "skapa en grund klon på detta djup"
 
-msgid "time"
-msgstr "tid"
-
 msgid "create a shallow clone since a specific time"
 msgstr "skapa en grund klon från en angiven tidpunkt"
 
@@ -4151,6 +4152,10 @@ msgid "failed to start iterator over '%s'"
 msgstr "misslyckades starta iterator över \"%s\""
 
 #, c-format
+msgid "symlink '%s' exists, refusing to clone with --local"
+msgstr "symbolisk länk \"%s\" finns redan, vägrar klona med --local"
+
+#, c-format
 msgid "failed to unlink '%s'"
 msgstr "misslyckades ta bort länken \"%s\""
 
@@ -4213,10 +4218,6 @@ msgstr "För många argument."
 
 msgid "You must specify a repository to clone."
 msgstr "Du måste ange ett arkiv att klona."
-
-#, c-format
-msgid "options '%s' and '%s %s' cannot be used together"
-msgstr "flaggorna \"%s\" och \"%s %s\" kan inte användas samtidigt"
 
 msgid ""
 "--bundle-uri is incompatible with --depth, --shallow-since, and --shallow-"
@@ -4303,6 +4304,9 @@ msgstr "misslyckades initiera arkivet, hoppar över bunt-URI"
 msgid "failed to fetch objects from bundle URI '%s'"
 msgstr "misslyckades hämta objekt från bunt-URI \"%s\""
 
+msgid "failed to fetch advertised bundles"
+msgstr "misslyckades hämta annonserade buntar"
+
 msgid "remote transport reported error"
 msgstr "fjärrtransport rapporterade fel"
 
@@ -4338,18 +4342,24 @@ msgid "--command must be the first argument"
 msgstr "--command måste vara första argument"
 
 msgid ""
-"git commit-graph verify [--object-dir <objdir>] [--shallow] [--[no-]progress]"
+"git commit-graph verify [--object-dir <dir>] [--shallow] [--[no-]progress]"
 msgstr ""
-"git commit-graph verify [--object-dir <objkat>] [--shallow] [--[no-]progress]"
+"git commit-graph verify [--object-dir <kat>] [--shallow] [--[no-]progress]"
 
 msgid ""
-"git commit-graph write [--object-dir <objdir>] [--append] [--"
-"split[=<strategy>]] [--reachable|--stdin-packs|--stdin-commits] [--changed-"
-"paths] [--[no-]max-new-filters <n>] [--[no-]progress] <split options>"
+"git commit-graph write [--object-dir <dir>] [--append]\n"
+"                       [--split[=<strategy>]] [--reachable | --stdin-packs | "
+"--stdin-commits]\n"
+"                       [--changed-paths] [--[no-]max-new-filters <n>] [--"
+"[no-]progress]\n"
+"                       <split options>"
 msgstr ""
-"git commit-graph write [--object-dir <objkat>] [--append] [--"
-"split[=<strategi>]] [--reachable|--stdin-packs|--stdin-commits] [--changed-"
-"paths] [--[no-]max-new-filters <n>] [--[no-]progress] <delnings-flaggor>"
+"git commit-graph write [--object-dir <kat>] [--append]\n"
+"                       [--split[=<strategi>]] [--reachable | --stdin-packs | "
+"--stdin-commits]\n"
+"                       [--changed-paths] [--[no-]max-new-filters <n>] [--"
+"[no-]progress]\n"
+"                       <delnings-flaggor>"
 
 msgid "dir"
 msgstr "kat"
@@ -4417,12 +4427,16 @@ msgstr "använd som mest en av --reachable, --stdin-commits och --stdin-packs"
 msgid "Collecting commits from input"
 msgstr "Hämtar incheckningar från indata"
 
+msgid "git commit-tree <tree> [(-p <parent>)...]"
+msgstr "git commit-tree <träd> [(-p <förälder>)...]"
+
 msgid ""
-"git commit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...] [(-F "
-"<file>)...] <tree>"
+"git commit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...]\n"
+"                [(-F <file>)...] <tree>"
 msgstr ""
-"git commit-tree [(-p <föräldrer>)...] [-S[<nyckelid>]] [(-m "
-"<meddelande>)...] [(-F <fil>)...] <träd>"
+"git commit-tree [(-p <förälder>)...] [-S[<nyckelid>]] [(-m "
+"<meddelande>)...]\n"
+"                [(-F <fil>)...] <träd>"
 
 #, c-format
 msgid "duplicate parent %s ignored"
@@ -4464,10 +4478,29 @@ msgstr "måste ange exakt ett träd"
 msgid "git commit-tree: failed to read"
 msgstr "git commit-tree: misslyckades läsa"
 
-msgid "git commit [<options>] [--] <pathspec>..."
-msgstr "git commit [<flaggor>] [--] <sökväg>..."
+msgid ""
+"git commit [-a | --interactive | --patch] [-s] [-v] [-u<mode>] [--amend]\n"
+"           [--dry-run] [(-c | -C | --squash) <commit> | --fixup [(amend|"
+"reword):]<commit>)]\n"
+"           [-F <file> | -m <msg>] [--reset-author] [--allow-empty]\n"
+"           [--allow-empty-message] [--no-verify] [-e] [--author=<author>]\n"
+"           [--date=<date>] [--cleanup=<mode>] [--[no-]status]\n"
+"           [-i | -o] [--pathspec-from-file=<file> [--pathspec-file-nul]]\n"
+"           [(--trailer <token>[(=|:)<value>])...] [-S[<keyid>]]\n"
+"           [--] [<pathspec>...]"
+msgstr ""
+"git commit [-a | --interactive | --patch] [-s] [-v] [-u<läge>] [--amend]\n"
+"           [--dry-run] [(-c | -C | --squash) <incheckning> | --fixup [(amend|"
+"reword):]<incheckning>)]\n"
+"           [-F <fil> | -m <medd>] [--reset-author] [--allow-empty]\n"
+"           [--allow-empty-message] [--no-verify] [-e] [--"
+"author=<författare>]\n"
+"           [--date=<datum>] [--cleanup=<läge>] [--[no-]status]\n"
+"           [-i | -o] [--pathspec-from-file=<fil> [--pathspec-file-nul]]\n"
+"           [(--trailer <symbol>[(=|:)<värde>])...] [-S[<nyckel-id>]]\n"
+"           [--] [<sökväg>...]"
 
-msgid "git status [<options>] [--] <pathspec>..."
+msgid "git status [<options>] [--] [<pathspec>...]"
 msgstr "git status [<flaggor>] [--] <sökväg>..."
 
 msgid ""
@@ -5233,11 +5266,19 @@ msgstr "\"credential-cache\" ej tillgänglig; stöd för unix-uttag saknas"
 msgid "unable to get credential storage lock in %d ms"
 msgstr "kunde inte erhålla låset för lagring av inlogginsuppgifter på %d ms"
 
-msgid "git describe [<options>] [<commit-ish>...]"
-msgstr "git describe [<flaggor>] [<incheckning-igt>...]"
+msgid ""
+"git describe [--all] [--tags] [--contains] [--abbrev=<n>] [<commit-ish>...]"
+msgstr ""
+"git describe [--all] [--tag] [--contains] [--abbrev=<n>] [<incheckning-"
+"igt>...]"
 
-msgid "git describe [<options>] --dirty"
-msgstr "git describe [<flaggor>] --dirty"
+msgid ""
+"git describe [--all] [--tags] [--contains] [--abbrev=<n>] --dirty[=<mark>]"
+msgstr ""
+"git describe [--all] [--tags] [--contains] [--abbrev=<n>] --dirty[=<märke>]"
+
+msgid "git describe <blob>"
+msgstr "git describe <objekt>"
 
 msgid "head"
 msgstr "huvud"
@@ -5359,11 +5400,12 @@ msgid "option '%s' and commit-ishes cannot be used together"
 msgstr "flaggorna \"%s\" och incheckning-igter kan inte användas samtidigt"
 
 msgid ""
-"git diagnose [-o|--output-directory <path>] [-s|--suffix <format>] [--"
-"mode=<mode>]"
+"git diagnose [(-o | --output-directory) <path>] [(-s | --suffix) <format>]\n"
+"             [--mode=<mode>]"
 msgstr ""
-"git diagnose [-o|--output-directory <sökväg>] [-s|--suffix <format>] [--"
-"mode=<läge>]"
+"git diagnose [(-o | --output-directory) <sökväg>] [(-s | --suffix) "
+"<format>]\n"
+"             [--mode=<läge>]"
 
 msgid "specify a destination for the diagnostics archive"
 msgstr "ange mål för diagnostikarkivet"
@@ -5380,6 +5422,9 @@ msgstr "--merge-base fungerar endast med två incheckningar"
 #, c-format
 msgid "'%s': not a regular file or symlink"
 msgstr "\"%s\": inte en normal fil eller symbolisk länk"
+
+msgid "no merge given, only parents."
+msgstr "ingen sammanslagning angiven, endast föräldrar."
 
 #, c-format
 msgid "invalid option: %s"
@@ -5495,29 +5540,6 @@ msgstr "inget <verktyg> angavs för --tool=<verktyg>"
 
 msgid "no <cmd> given for --extcmd=<cmd>"
 msgstr "inget <kommando> angavs för --extcmd=<kommando>"
-
-msgid "git env--helper --type=[bool|ulong] <options> <env-var>"
-msgstr "git env--helper --type=[bool|ulong] <flaggor> <miljövariabel>"
-
-msgid "default for git_env_*(...) to fall back on"
-msgstr "standard för git_env_*(...) att falla tillbaka på"
-
-msgid "be quiet only use git_env_*() value as exit code"
-msgstr "var tyst, använd bara git_env_*() som resultatvärde"
-
-#, c-format
-msgid "option `--default' expects a boolean value with `--type=bool`, not `%s`"
-msgstr ""
-"flaggan \"--default\" förväntar ett sanningsvärde med \"--type=bool\", inte "
-"\"%s\""
-
-#, c-format
-msgid ""
-"option `--default' expects an unsigned long value with `--type=ulong`, not `"
-"%s`"
-msgstr ""
-"flaggan \"--default\" förväntar ett teckenlöst långt värde med \"--type=ulong"
-"\", inte \"%s\""
 
 msgid "git fast-export [<rev-list-opts>]"
 msgstr "git fast-export [<rev-list-flaggor>]"
@@ -5911,6 +5933,10 @@ msgstr "negativa djup stöds inte i --deepen"
 msgid "--unshallow on a complete repository does not make sense"
 msgstr "--unshallow kan inte användas på ett komplett arkiv"
 
+#, c-format
+msgid "failed to fetch bundles from '%s'"
+msgstr "misslyckades hämta buntar från \"%s\""
+
 msgid "fetch --all does not take a repository argument"
 msgstr "fetch --all tar inte namnet på ett arkiv som argument"
 
@@ -6013,8 +6039,8 @@ msgstr "visa endast referenser som innehåller incheckningen"
 msgid "print only refs which don't contain the commit"
 msgstr "visa endast referenser som inte innehåller incheckningen"
 
-msgid "git for-each-repo --config=<config> <command-args>"
-msgstr "git for-each-repo --config=<konfig> <kommandoargument>"
+msgid "git for-each-repo --config=<config> [--] <arguments>"
+msgstr "git for-each-repo --config=<konfig> [--] <argument>"
 
 msgid "config"
 msgstr "konfig"
@@ -6189,8 +6215,16 @@ msgstr "icke-träd i cacheträd"
 msgid "%s: invalid sha1 pointer in resolve-undo"
 msgstr "%s: ogiltig sha1-pekare i resolve-undo"
 
-msgid "git fsck [<options>] [<object>...]"
-msgstr "git fsck [<flaggor>] [<objekt>...]"
+msgid ""
+"git fsck [--tags] [--root] [--unreachable] [--cache] [--no-reflogs]\n"
+"         [--[no-]full] [--strict] [--verbose] [--lost-found]\n"
+"         [--[no-]dangling] [--[no-]progress] [--connectivity-only]\n"
+"         [--[no-]name-objects] [<object>...]"
+msgstr ""
+"git fsck [--tags] [--root] [--unreachable] [--cache] [--no-reflogs]\n"
+"         [--[no-]full] [--strict] [--verbose] [--lost-found]\n"
+"         [--[no-]dangling] [--[no-]progress] [--connectivity-only]\n"
+"         [--[no-]name-objects] [<objekt>...]"
 
 msgid "show unreachable objects"
 msgstr "visa onåbara objekt"
@@ -6246,12 +6280,6 @@ msgstr "git fsmonitor--daemon start [<flaggor>]"
 
 msgid "git fsmonitor--daemon run [<options>]"
 msgstr "git fsmonitor--daemon run [<flaggor>]"
-
-msgid "git fsmonitor--daemon stop"
-msgstr "git fsmonitor--daemon stop"
-
-msgid "git fsmonitor--daemon status"
-msgstr "git fsmonitor--daemon status"
 
 #, c-format
 msgid "value of '%s' out of range: %d"
@@ -6494,8 +6522,20 @@ msgstr "utför en specifik uppgift"
 msgid "use at most one of --auto and --schedule=<frequency>"
 msgstr "använd som mest en av --auto och --schedule=<frekvens>"
 
-msgid "failed to run 'git config'"
-msgstr "misslyckades köra \"git config\""
+#, c-format
+msgid "unable to add '%s' value of '%s'"
+msgstr "kan inte lägga till \"%s\"-värdet för \"%s\""
+
+msgid "return success even if repository was not registered"
+msgstr "returnera framgång även om arkivet inte var registrerat"
+
+#, c-format
+msgid "unable to unset '%s' value of '%s'"
+msgstr "kan inte ta bort \"%s\"-värdet för \"%s\""
+
+#, c-format
+msgid "repository '%s' is not registered"
+msgstr "arkivet \"%s\" har inte registrerats"
 
 #, c-format
 msgid "failed to expand path '%s'"
@@ -6783,11 +6823,14 @@ msgid "both --cached and trees are given"
 msgstr "både --cached och träd angavs"
 
 msgid ""
-"git hash-object [-t <type>] [-w] [--path=<file> | --no-filters] [--stdin] "
-"[--] <file>..."
+"git hash-object [-t <type>] [-w] [--path=<file> | --no-filters]\n"
+"                [--stdin [--literally]] [--] <file>..."
 msgstr ""
-"git hash-object [-t <typ>] [-w] [--path=<fil> | --no-filters] [--stdin] [--] "
-"<fil>..."
+"git hash-object [-t <typ>] [-w] [--path=<fil> | --no-filters]\n"
+"                [--stdin [--literally]] [--] <fil>..."
+
+msgid "git hash-object [-t <type>] [-w] --stdin-paths [--no-filters]"
+msgstr "git hash-object [-t <typ>] [-w] --stdin-paths [--no-filters]"
 
 msgid "object type"
 msgstr "objekttyp"
@@ -6917,11 +6960,18 @@ msgstr "användning: %s%s"
 msgid "'git help config' for more information"
 msgstr "\"git help config\" för mer information"
 
-msgid "git hook run [--ignore-missing] <hook-name> [-- <hook-args>]"
-msgstr "git hook run [--ignore-missing] <krok-namn> [-- <krok-argument>]"
+msgid ""
+"git hook run [--ignore-missing] [--to-stdin=<path>] <hook-name> [-- <hook-"
+"args>]"
+msgstr ""
+"git hook run [--ignore-missing] [--to-stdin=<sökväg>] <krok-namn> [-- <krok-"
+"argument>]"
 
 msgid "silently ignore missing requested <hook-name>"
 msgstr "ignorera tyst om önskat <krok-namn> saknas"
+
+msgid "file to read into hooks' stdin"
+msgstr "misslyckades läsa till krokens standard in"
 
 #, c-format
 msgid "object type mismatch at %s"
@@ -7211,11 +7261,15 @@ msgid "Initialized empty Git repository in %s%s\n"
 msgstr "Initierade tomt Git-arkiv i %s%s\n"
 
 msgid ""
-"git init [-q | --quiet] [--bare] [--template=<template-directory>] [--"
-"shared[=<permissions>]] [<directory>]"
+"git init [-q | --quiet] [--bare] [--template=<template-directory>]\n"
+"         [--separate-git-dir <git-dir>] [--object-format=<format>]\n"
+"         [-b <branch-name> | --initial-branch=<branch-name>]\n"
+"         [--shared[=<permissions>]] [<directory>]"
 msgstr ""
-"git init [-q | --quiet] [--bare] [--template=<mallkatalog>] [--"
-"shared[=<behörigheter>]] [<katalog>]"
+"git init [-q | --quiet] [--bare] [--template=<mallkatalog>]\n"
+"         [--separate-git-dir <git-kat>] [--object-format=<format>]\n"
+"         [-b <grennamn> | --initial-branch=<grennamn>]\n"
+"         [--shared[=<behörigheter>]] [<katalog>]"
 
 msgid "permissions"
 msgstr "behörigheter"
@@ -7256,11 +7310,13 @@ msgid "--separate-git-dir incompatible with bare repository"
 msgstr "--separate-git-dir är inkompatibelt med naket arkiv"
 
 msgid ""
-"git interpret-trailers [--in-place] [--trim-empty] [(--trailer "
-"<token>[(=|:)<value>])...] [<file>...]"
+"git interpret-trailers [--in-place] [--trim-empty]\n"
+"                       [(--trailer <token>[(=|:)<value>])...]\n"
+"                       [--parse] [<file>...]"
 msgstr ""
-"git interpret-trailers [--in-place] [--trim-empty] [(--trailer "
-"<symbol>[(=|:)<värde>])...] [<fil>...]"
+"git interpret-trailers [--in-place] [--trim-empty]\n"
+"                       [(--trailer <symbol>[(=|:)<värde>])...]\n"
+"                       [--parse] [<fil>...]"
 
 msgid "edit files in place"
 msgstr "redigera filer på plats"
@@ -7735,12 +7791,12 @@ msgstr ""
 
 msgid ""
 "git ls-remote [--heads] [--tags] [--refs] [--upload-pack=<exec>]\n"
-"              [-q | --quiet] [--exit-code] [--get-url]\n"
-"              [--symref] [<repository> [<refs>...]]"
+"              [-q | --quiet] [--exit-code] [--get-url] [--sort=<key>]\n"
+"              [--symref] [<repository> [<patterns>...]]"
 msgstr ""
 "git ls-remote [--heads] [--tags] [--refs] [--upload-pack=<exec>]\n"
-"              [-q | --quiet] [--exit-code] [--get-url]\n"
-"              [--symref] [<arkiv> [<referenser>...]]"
+"              [-q | --quiet] [--exit-code] [--get-url] [--sort=<nyckel>]\n"
+"              [--symref] [<arkiv> [<mönster>...]]"
 
 msgid "do not print remote URL"
 msgstr "visa inte fjärr-URL"
@@ -7868,11 +7924,11 @@ msgstr "git merge-base [-a | --all] <incheckning> <incheckning>..."
 msgid "git merge-base [-a | --all] --octopus <commit>..."
 msgstr "git merge-base [-a | --all] --octopus <incheckning>..."
 
-msgid "git merge-base --independent <commit>..."
-msgstr "git merge-base --independent <incheckning>..."
-
 msgid "git merge-base --is-ancestor <commit> <commit>"
 msgstr "git merge-base --is-ancestor <incheckning> <incheckning>"
+
+msgid "git merge-base --independent <commit>..."
+msgstr "git merge-base --independent <incheckning>..."
 
 msgid "git merge-base --fork-point <ref> [<commit>]"
 msgstr "git merge-base --fork-point <ref> [<incheckning>]"
@@ -7981,8 +8037,25 @@ msgstr "lista filnamn utan lägen/oid/köer"
 msgid "allow merging unrelated histories"
 msgstr "tillåt sammanslagning av orelaterade historier"
 
+msgid "perform multiple merges, one per line of input"
+msgstr "utför flera sammanslagningar, en per indatarad"
+
+msgid "specify a merge-base for the merge"
+msgstr "ange en sammanslagningsbas för sammanslagningen"
+
 msgid "--trivial-merge is incompatible with all other options"
 msgstr "--trivial-merge är inkompatibelt med andra flaggor"
+
+msgid "--merge-base is incompatible with --stdin"
+msgstr "--merge-base är inkompatibel med --stdin"
+
+#, c-format
+msgid "malformed input line: '%s'."
+msgstr "felaktig indatarad: \"%s\"."
+
+#, c-format
+msgid "merging cannot continue; got unclean result of %d"
+msgstr "sammanslagning kan inte fortsätta; fick inte rent resultat från %d"
 
 msgid "git merge [<options>] [<commit>...]"
 msgstr "git merge [<flaggor>] [<incheckning>...]"
@@ -8600,10 +8673,6 @@ msgid "cannot read note data from non-blob object '%s'."
 msgstr "kan inte läsa anteckningsdata från icke-blob-objektet \"%s\"."
 
 #, c-format
-msgid "malformed input line: '%s'."
-msgstr "felaktig indatarad: \"%s\"."
-
-#, c-format
 msgid "failed to copy notes from '%s' to '%s'"
 msgstr "misslyckades kopiera anteckningar från \"%s\" till \"%s\""
 
@@ -8794,15 +8863,13 @@ msgstr "använd anteckningar från <anteckningsref>"
 msgid "unknown subcommand: `%s'"
 msgstr "okänt underkommando: \"%s\""
 
-msgid ""
-"git pack-objects --stdout [<options>...] [< <ref-list> | < <object-list>]"
-msgstr ""
-"git pack-objects --stdout [<flaggor>...] [< <reflista> | < <objektlista>]"
+msgid "git pack-objects --stdout [<options>] [< <ref-list> | < <object-list>]"
+msgstr "git pack-objects --stdout [<flaggor>] [< <reflista> | < <objektlista>]"
 
 msgid ""
-"git pack-objects [<options>...] <base-name> [< <ref-list> | < <object-list>]"
+"git pack-objects [<options>] <base-name> [< <ref-list> | < <object-list>]"
 msgstr ""
-"git pack-objects [<flaggor>...] <basnamn> [< <reflista> | < <objektlista>]"
+"git pack-objects [<flaggor>] <basnamn> [< <reflista> | < <objektlista>]"
 
 #, c-format
 msgid ""
@@ -9176,14 +9243,26 @@ msgstr ""
 "oss att du fortfarande använder det på e-post till\n"
 "<git@vger.kernel.org>. Tack.\n"
 
-msgid "git pack-refs [<options>]"
-msgstr "git pack-refs [<flaggor>]"
+msgid "git pack-refs [--all] [--no-prune]"
+msgstr "git pack-refs [--all] [--no-prune]"
 
 msgid "pack everything"
 msgstr "packa allt"
 
 msgid "prune loose refs (default)"
 msgstr "ta bort lösa referenser (standard)"
+
+msgid "git patch-id [--stable | --unstable | --verbatim]"
+msgstr "git patch-id [--stable | --unstable | --verbatim]"
+
+msgid "use the unstable patch-id algorithm"
+msgstr "använd den instabila patch-id-algoritmen"
+
+msgid "use the stable patch-id algorithm"
+msgstr "använd den stabila patch-id-algoritmen"
+
+msgid "don't strip whitespace from the patch"
+msgstr "ta inte bort blanksteg från patchen"
 
 msgid "git prune [-n] [-v] [--progress] [--expire <time>] [--] [<head>...]"
 msgstr "git prune [-n] [-v] [--progress] [--expire <tid>] [--] [<huvud>...]"
@@ -9397,14 +9476,13 @@ msgstr ""
 
 msgid ""
 "\n"
-"To avoid automatically configuring upstream branches when their name\n"
-"doesn't match the local branch, see option 'simple' of branch."
-"autoSetupMerge\n"
+"To avoid automatically configuring an upstream branch when its name\n"
+"won't match the local branch, see option 'simple' of branch.autoSetupMerge\n"
 "in 'git help config'.\n"
 msgstr ""
 "\n"
-"För att undvika att uppströmsgrenar automatiskt konfigureras när deras\n"
-"namn inte motsvarar en lokal gren, se värdet \"simple\" i branch."
+"För att undvika att en uppströmsgren automatiskt konfigureras när dess namn\n"
+"inte motsvarar den lokala grenen, se värdet \"simple\" i branch."
 "autoSetupMerge\n"
 "i \"git help config\".\n"
 
@@ -9556,6 +9634,13 @@ msgstr "Sänder till %s\n"
 msgid "failed to push some refs to '%s'"
 msgstr "misslyckades sända vissa referenser till \"%s\""
 
+msgid ""
+"recursing into submodule with push.recurseSubmodules=only; using on-demand "
+"instead"
+msgstr ""
+"rekurserar in i undermoduler med push.recurseSubmodules=only; använder "
+"istället vid behov"
+
 #, c-format
 msgid "invalid value for '%s'"
 msgstr "ogiltigt värde för \"%s\""
@@ -9691,13 +9776,15 @@ msgid "need two commit ranges"
 msgstr "behöver två incheckningsintervall"
 
 msgid ""
-"git read-tree [(-m [--trivial] [--aggressive] | --reset | --prefix=<prefix>) "
-"[-u | -i]] [--no-sparse-checkout] [--index-output=<file>] (--empty | <tree-"
-"ish1> [<tree-ish2> [<tree-ish3>]])"
+"git read-tree [(-m [--trivial] [--aggressive] | --reset | --"
+"prefix=<prefix>)\n"
+"              [-u | -i]] [--index-output=<file>] [--no-sparse-checkout]\n"
+"              (--empty | <tree-ish1> [<tree-ish2> [<tree-ish3>]])"
 msgstr ""
-"git read-tree [(-m [--trivial] [--aggressive] | --reset | --prefix=<prefix>) "
-"[-u | -i]] [--no-sparse-checkout] [--index-output=<fil>] (--empty | <träd-"
-"igt1> [<träd-igt2> [<träd-igt3>]])"
+"git read-tree [(-m [--trivial] [--aggressive] | --reset | --"
+"prefix=<prefix>)\n"
+"              [-u | -i]] [--index-output=<fil>] [--no-sparse-checkout]\n"
+"              (--empty | <träd-igt1> [<träd-igt2> [<träd-igt3>]])"
 
 msgid "write resulting index to <file>"
 msgstr "skriv resulterande index till <fil>"
@@ -9787,12 +9874,12 @@ msgid "%s requires the merge backend"
 msgstr "%s kräver \"merge\"-bakändan"
 
 #, c-format
-msgid "could not get 'onto': '%s'"
-msgstr "kunde inte hämta \"onto\": \"%s\""
+msgid "invalid onto: '%s'"
+msgstr "ogiltig \"onto\": \"%s\""
 
 #, c-format
 msgid "invalid orig-head: '%s'"
-msgstr "ogiltigt orig-head: \"%s\""
+msgstr "ogiltig \"orig-head\": \"%s\""
 
 #, c-format
 msgid "ignoring invalid allow_rerere_autoupdate: '%s'"
@@ -9836,6 +9923,10 @@ msgstr ""
 #, c-format
 msgid "could not switch to %s"
 msgstr "kunde inte växla till %s"
+
+msgid "apply options and merge options cannot be used together"
+msgstr ""
+"appliceringsflaggor och sammanslagningsflaggor kan inte användas tillsammans"
 
 #, c-format
 msgid ""
@@ -10065,9 +10156,19 @@ msgstr "Okänt läge: %s"
 msgid "--strategy requires --merge or --interactive"
 msgstr "--strategy kräver --merge eller --interactive"
 
-msgid "apply options and merge options cannot be used together"
+msgid ""
+"apply options are incompatible with rebase.autosquash.  Consider adding --no-"
+"autosquash"
 msgstr ""
-"appliceringsflaggor och sammanslagningsflaggor kan inte användas tillsammans"
+"argument för \"apply\" är inkompatibla med rebase.autosquash. Överväg att "
+"lägga till --no-autosquash"
+
+msgid ""
+"apply options are incompatible with rebase.updateRefs.  Consider adding --no-"
+"update-refs"
+msgstr ""
+"argument för \"apply\" är inkompatibla med rebase.updateRefs. Överväg att "
+"lägga till --no-update-refs"
 
 #, c-format
 msgid "Unknown rebase backend: %s"
@@ -10091,8 +10192,8 @@ msgstr "ingen sådan gren/incheckning: \"%s\""
 msgid "No such ref: %s"
 msgstr "Ingen sådan referens: %s"
 
-msgid "Could not resolve HEAD to a revision"
-msgstr "Kunde inte bestämma HEAD:s incheckning"
+msgid "Could not resolve HEAD to a commit"
+msgstr "Kunde inte bestämma en incheckning för HEAD"
 
 #, c-format
 msgid "'%s': need exactly one merge base with branch"
@@ -10746,6 +10847,10 @@ msgstr "kunde inte öppna temporär fil %s för skrivning"
 msgid "could not close refs snapshot tempfile"
 msgstr "kunde inte stänga temporär fil för refs-ögonblicksbild"
 
+#, c-format
+msgid "could not remove stale bitmap: %s"
+msgstr "kunde inte ta bort gammal bitkarta: %s"
+
 msgid "pack everything in a single pack"
 msgstr "packa allt i ett enda paket"
 
@@ -10818,6 +10923,9 @@ msgstr "hitta ett geometrisk förlopp med faktor <N>"
 msgid "write a multi-pack index of the resulting packs"
 msgstr "skriv ett flerpaketsindex för de skapade paketen"
 
+msgid "pack prefix to store a pack containing pruned objects"
+msgstr "paketprefix att lagra ett paket som innehåller bortrensade objekt"
+
 msgid "cannot delete packs in a precious-objects repo"
 msgstr "kan inte ta bort paket i ett \"precious-objects\"-arkiv"
 
@@ -10829,8 +10937,12 @@ msgid "pack prefix %s does not begin with objdir %s"
 msgstr "paketprefixet %s börjar inte med objkat %s"
 
 #, c-format
-msgid "missing required file: %s"
-msgstr "nödvändig fil saknas: %s"
+msgid "renaming pack to '%s' failed"
+msgstr "misslyckades byta namn på paket till \"%s\""
+
+#, c-format
+msgid "pack-objects did not write a '%s' file for pack %s-%s"
+msgstr "pack-objects skrev inte en \"%s\"-fil för paketet %s-%s"
 
 #, c-format
 msgid "could not unlink: %s"
@@ -11024,8 +11136,10 @@ msgstr "--convert-graft-file tar inga argument"
 msgid "only one pattern can be given with -l"
 msgstr "endast ett mönster kan anges med -l"
 
-msgid "git rerere [clear | forget <path>... | status | remaining | diff | gc]"
-msgstr "git rerere [clear | forget <path>... | status | remaining | diff | gc]"
+msgid ""
+"git rerere [clear | forget <pathspec>... | diff | status | remaining | gc]"
+msgstr ""
+"git rerere [clear | forget <sökväg>... | diff | status | remaining | gc]"
 
 msgid "register clean resolutions in index"
 msgstr "registrera rena lösningar i indexet"
@@ -11229,6 +11343,15 @@ msgstr "--prefix kräver ett argument"
 msgid "unknown mode for --abbrev-ref: %s"
 msgstr "okänt läge för --abbrev-ref: %s"
 
+msgid "--exclude-hidden cannot be used together with --branches"
+msgstr "--exclude-hidden kan endast användas tillsammans med --branches"
+
+msgid "--exclude-hidden cannot be used together with --tags"
+msgstr "--exclude-hidden kan  kan inte användas tillsammans med --tags"
+
+msgid "--exclude-hidden cannot be used together with --remotes"
+msgstr "--exclude-hidden kan  kan inte användas tillsammans med --remotes"
+
 msgid "this operation must be run in a work tree"
 msgstr "funktionen måste köras i en arbetskatalog"
 
@@ -11236,17 +11359,25 @@ msgstr "funktionen måste köras i en arbetskatalog"
 msgid "unknown mode for --show-object-format: %s"
 msgstr "okänt läge för --show-object-format: %s"
 
-msgid "git revert [<options>] <commit-ish>..."
-msgstr "git revert [<flaggor>] <incheckning-igt>..."
+msgid ""
+"git revert [--[no-]edit] [-n] [-m <parent-number>] [-s] [-S[<keyid>]] "
+"<commit>..."
+msgstr ""
+"git revert [--[no-]edit] [-n] [-m <förälder-nummer>] [-s] [-S[<nyckelid>]] "
+"<incheckning>..."
 
-msgid "git revert <subcommand>"
-msgstr "git revert <underkommando>"
+msgid "git revert (--continue | --skip | --abort | --quit)"
+msgstr "git revert (--continue | --skip | --abort | --quit)"
 
-msgid "git cherry-pick [<options>] <commit-ish>..."
-msgstr "git cherry-pick [<flaggor>] <incheckning-igt>..."
+msgid ""
+"git cherry-pick [--edit] [-n] [-m <parent-number>] [-s] [-x] [--ff]\n"
+"                [-S[<keyid>]] <commit>..."
+msgstr ""
+"git cherry-pick [--edit] [-n] [-m <förälder-nummer>] [-s] [-x] [--ff]\n"
+"                [-S[<nyckelid>]] <incheckning>..."
 
-msgid "git cherry-pick <subcommand>"
-msgstr "git cherry-pick <underkommando>"
+msgid "git cherry-pick (--continue | --skip | --abort | --quit)"
+msgstr "git cherry-pick (--continue | --skip | --abort | --quit)"
 
 #, c-format
 msgid "option `%s' expects a number greater than zero"
@@ -11307,8 +11438,14 @@ msgstr "\"revert\" misslyckades"
 msgid "cherry-pick failed"
 msgstr "\"cherry-pick\" misslyckades"
 
-msgid "git rm [<options>] [--] <file>..."
-msgstr "git rm [<flaggor>] [--] <fil>..."
+msgid ""
+"git rm [-f | --force] [-n] [-r] [--cached] [--ignore-unmatch]\n"
+"       [--quiet] [--pathspec-from-file=<file> [--pathspec-file-nul]]\n"
+"       [--] [<pathspec>...]"
+msgstr ""
+"git rm [-f | --force] [-n] [-r] [--cached] [--ignore-unmatch]\n"
+"       [--quiet] [--pathspec-from-file=<fil> [--pathspec-file-nul]]\n"
+"       [--] [<sökväg>...]"
 
 msgid ""
 "the following file has staged content different from both the\n"
@@ -11379,11 +11516,13 @@ msgid ""
 "git send-pack [--mirror] [--dry-run] [--force]\n"
 "              [--receive-pack=<git-receive-pack>]\n"
 "              [--verbose] [--thin] [--atomic]\n"
+"              [--[no-]signed | --signed=(true|false|if-asked)]\n"
 "              [<host>:]<directory> (--all | <ref>...)"
 msgstr ""
 "git send-pack [--mirror] [--dry-run] [--force]\n"
 "              [--receive-pack=<git-receive-pack>]\n"
 "              [--verbose] [--thin] [--atomic]\n"
+"              [--[no-]signed | --signed=(true|false|if-asked)]\n"
 "              [<värd>:]<katalog> (--all | <ref>...)"
 
 msgid "remote name"
@@ -11407,8 +11546,9 @@ msgstr "git log --pretty=short | git shortlog [<flaggor>]"
 msgid "using multiple --group options with stdin is not supported"
 msgstr "mer än en \"--group\"-flagga stöds inte med standard in"
 
-msgid "using --group=trailer with stdin is not supported"
-msgstr "att använda --group=trailer stöds inte med standard in"
+#, c-format
+msgid "using %s with stdin is not supported"
+msgstr "använda %s med standard in stöds inte"
 
 #, c-format
 msgid "unknown group type: %s"
@@ -11445,12 +11585,14 @@ msgid ""
 "git show-branch [-a | --all] [-r | --remotes] [--topo-order | --date-order]\n"
 "                [--current] [--color[=<when>] | --no-color] [--sparse]\n"
 "                [--more=<n> | --list | --independent | --merge-base]\n"
-"                [--no-name | --sha1-name] [--topics] [(<rev> | <glob>)...]"
+"                [--no-name | --sha1-name] [--topics]\n"
+"                [(<rev> | <glob>)...]"
 msgstr ""
 "git show-branch [-a | --all] [-r | --remotes] [--topo-order | --date-order]\n"
 "                [--current] [--color[=<när>] | --no-color] [--sparse]\n"
 "                [--more=<n> | --list | --independent | --merge-base]\n"
-"                [--no-name | --sha1-name] [--topics] [(<rev> | <mönster>)...]"
+"                [--no-name | --sha1-name] [--topics]\n"
+"                [(<rev> | <mönster>)...]"
 
 msgid "git show-branch (-g | --reflog)[=<n>[,<base>]] [--list] [<ref>]"
 msgstr "git show-branch (-g | --reflog)[=<n>[,<bas>]] [--list] [<ref>]"
@@ -11550,11 +11692,13 @@ msgid "Unknown hash algorithm"
 msgstr "okänd hashningsalgoritm"
 
 msgid ""
-"git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference] [-s | --"
-"hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [<pattern>...]"
+"git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference]\n"
+"             [-s | --hash[=<n>]] [--abbrev[=<n>]] [--tags]\n"
+"             [--heads] [--] [<pattern>...]"
 msgstr ""
-"git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference] [-s | --"
-"hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [<mönster>...]"
+"git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference]\n"
+"             [-s | --hash[=<n>]] [--abbrev[=<n>]] [--tags]\n"
+"             [--heads] [--] [<mönster>...]"
 
 msgid "git show-ref --exclude-existing[=<pattern>]"
 msgstr "git show-ref --exclude-existing[=<mönster>]"
@@ -11583,8 +11727,10 @@ msgstr "visa inte resultat på standard ut (användbart med --verify)"
 msgid "show refs from stdin that aren't in local repository"
 msgstr "visa referenser från standard in som inte finns i lokalt arkiv"
 
-msgid "git sparse-checkout (init|list|set|add|reapply|disable) <options>"
-msgstr "git sparse-checkout (init|list|set|add|reapply|disable) <flaggor>"
+msgid ""
+"git sparse-checkout (init | list | set | add | reapply | disable) [<options>]"
+msgstr ""
+"git sparse-checkout (init | list | set | add | reapply | disable) <flaggor>"
 
 msgid "this worktree is not sparse"
 msgstr "arbetskatalogen är inte gren"
@@ -11707,67 +11853,58 @@ msgstr ""
 msgid "error while refreshing working directory"
 msgstr "fel vid uppdatering av arbetskatalog"
 
-msgid "git stash list [<options>]"
-msgstr "git stash list [<flaggor>]"
+msgid "git stash list [<log-options>]"
+msgstr "git stash list [<\"log\"-flaggor>]"
 
-msgid "git stash show [<options>] [<stash>]"
-msgstr "git stash show [<flaggor>] [<stash>]"
+msgid ""
+"git stash show [-u | --include-untracked | --only-untracked] [<diff-"
+"options>] [<stash>]"
+msgstr ""
+"git stash show [-u | --include-untracked | --only-untracked] [<\"diff\"-"
+"flaggor>] [<stash>]"
 
-msgid "git stash drop [-q|--quiet] [<stash>]"
-msgstr "git stash drop [-q|--quiet] [<stash>]"
+msgid "git stash drop [-q | --quiet] [<stash>]"
+msgstr "git stash drop [-q | --quiet] [<stash>]"
 
-msgid "git stash ( pop | apply ) [--index] [-q|--quiet] [<stash>]"
-msgstr "git stash ( pop | apply ) [--index] [-q|--quiet] [<stash>]"
+msgid "git stash pop [--index] [-q | --quiet] [<stash>]"
+msgstr "git stash pop [--index] [-q | --quiet] [<stash>]"
+
+msgid "git stash apply [--index] [-q | --quiet] [<stash>]"
+msgstr "git stash apply [--index] [-q | --quiet] [<stash>]"
 
 msgid "git stash branch <branchname> [<stash>]"
 msgstr "git stash branch <grennamn> [<stash>]"
 
+msgid "git stash store [(-m | --message) <message>] [-q | --quiet] <commit>"
+msgstr ""
+"git stash store [(-m | --message) <meddelande>] [-q | --quiet] <incheckning>"
+
 msgid ""
-"git stash [push [-p|--patch] [-S|--staged] [-k|--[no-]keep-index] [-q|--"
-"quiet]\n"
-"          [-u|--include-untracked] [-a|--all] [-m|--message <message>]\n"
+"git stash [push [-p | --patch] [-S | --staged] [-k | --[no-]keep-index] [-q "
+"| --quiet]\n"
+"          [-u | --include-untracked] [-a | --all] [(-m | --message) "
+"<message>]\n"
 "          [--pathspec-from-file=<file> [--pathspec-file-nul]]\n"
 "          [--] [<pathspec>...]]"
 msgstr ""
-"git stash [push [-p|--patch] [S|--staged] [-k|--[no-]keep-index] [-q|--"
-"quiet]\n"
-"          [-u|--include-untracked] [-a|--all] [-m|--message <meddelande>]\n"
+"git stash [push [-p | --patch] [S | --staged] [-k | --[no-]keep-index] [-q | "
+"--quiet]\n"
+"          [-u | --include-untracked] [-a | --all] [(-m | --message "
+"<meddelande>]\n"
 "          [--pathspec-from-file=<fil> [--pathspec-file-nul]]\n"
 "          [--] [<sökväg>...]]"
 
 msgid ""
-"git stash save [-p|--patch] [-S|--staged] [-k|--[no-]keep-index] [-q|--"
-"quiet]\n"
-"          [-u|--include-untracked] [-a|--all] [<message>]"
+"git stash save [-p | --patch] [-S | --staged] [-k | --[no-]keep-index] [-q | "
+"--quiet]\n"
+"          [-u | --include-untracked] [-a | --all] [<message>]"
 msgstr ""
-"git stash save [-p|--patch] [-S|--staged] [-k|--[no-]keep-index] [-q|--"
-"quiet]\n"
-"          [-u|--include-untracked] [-a|--all] [<meddelande>]"
+"git stash save [-p | --patch] [-S | --staged] [-k | --[no-]keep-index] [-q | "
+"--quiet]\n"
+"          [-u | --include-untracked] [-a | --all] [<meddelande>]"
 
-msgid "git stash pop [--index] [-q|--quiet] [<stash>]"
-msgstr "git stash pop [--index] [-q|--quiet] [<stash>]"
-
-msgid "git stash apply [--index] [-q|--quiet] [<stash>]"
-msgstr "git stash apply [--index] [-q|--quiet] [<stash>]"
-
-msgid "git stash store [-m|--message <message>] [-q|--quiet] <commit>"
-msgstr "git stash store [-m|--message <meddelande>] [-q|--quiet] <incheckning>"
-
-msgid ""
-"git stash [push [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
-"          [-u|--include-untracked] [-a|--all] [-m|--message <message>]\n"
-"          [--] [<pathspec>...]]"
-msgstr ""
-"git stash [push [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
-"          [-u|--include-untracked] [-a|--all] [-m|--message <meddelande>]\n"
-"          [--] [<sökväg>...]]"
-
-msgid ""
-"git stash save [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
-"               [-u|--include-untracked] [-a|--all] [<message>]"
-msgstr ""
-"git stash save [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
-"               [-u|--include-untracked] [-a|--all] [<meddelande>]"
+msgid "git stash create [<message>]"
+msgstr "git stash create [<meddelande>]"
 
 #, c-format
 msgid "'%s' is not a stash-like commit"
@@ -12327,9 +12464,6 @@ msgstr "traversera undermoduler rekursivt"
 msgid "don't fetch new objects from the remote site"
 msgstr "hämta inte nya objekt från fjärrplatsen"
 
-msgid "path into the working tree"
-msgstr "sökväg inuti arbetskatalogen"
-
 msgid "use the 'checkout' update strategy (default)"
 msgstr "använd uppdateringsstrategin \"checkout\" (utcheckning; förval)"
 
@@ -12365,26 +12499,8 @@ msgstr ""
 "[no-]recommend-shallow] [--reference <arkiv>] [--recursive] [--[no-]single-"
 "branch] [--] [<sökväg>...]"
 
-msgid "recurse into submodules"
-msgstr "rekursera ner i undermoduler"
-
 msgid "git submodule absorbgitdirs [<options>] [<path>...]"
 msgstr "git submodule absorbgitdirs [<flaggor>] [<sökväg>...]"
-
-msgid "check if it is safe to write to the .gitmodules file"
-msgstr "se om det är säkert att skriva till .gitmodules-filen"
-
-msgid "unset the config in the .gitmodules file"
-msgstr "ta bort konfigurationen från .gitmodules-filen"
-
-msgid "git submodule--helper config <name> [<value>]"
-msgstr "git submodule--helper config <namn> [<värde>]"
-
-msgid "git submodule--helper config --unset <name>"
-msgstr "git submodule--helper config --unset <namn>"
-
-msgid "please make sure that the .gitmodules file is in the working tree"
-msgstr "se till att .gitmodules finns i arbetskatalogen"
 
 msgid "suppress output for setting url of a submodule"
 msgstr "dölj utdata från inställning av url för undermodul"
@@ -12464,6 +12580,9 @@ msgstr "Aktiverar lokal git-katalog för undermodulen \"%s\" på nytt.\n"
 msgid "unable to checkout submodule '%s'"
 msgstr "Kan inte checka ut undermodulen \"%s\""
 
+msgid "please make sure that the .gitmodules file is in the working tree"
+msgstr "se till att .gitmodules finns i arbetskatalogen"
+
 #, c-format
 msgid "Failed to add submodule '%s'"
 msgstr "Misslyckades lägga till undermodulen \"%s\""
@@ -12514,19 +12633,17 @@ msgstr "arkiv-URL: \"%s\" måste vara absolut eller börja med ./|../"
 msgid "'%s' is not a valid submodule name"
 msgstr "\"%s\" är inte ett giltigt namn på undermodul"
 
-#, c-format
-msgid "%s doesn't support --super-prefix"
-msgstr "%s stöder inte --super-prefix"
+msgid "git submodule--helper <command>"
+msgstr "git submodule--helper <kommando>"
 
-#, c-format
-msgid "'%s' is not a valid submodule--helper subcommand"
-msgstr "\"%s\" är inte ett giltigt underkommando till submodule--helper"
+msgid "git symbolic-ref [-m <reason>] <name> <ref>"
+msgstr "git symbolic-ref [-m <orsak>] <namn> <ref>"
 
-msgid "git symbolic-ref [<options>] <name> [<ref>]"
-msgstr "git symbolic-ref [<flaggor>] <namn> [<ref>]"
+msgid "git symbolic-ref [-q] [--short] [--no-recurse] <name>"
+msgstr "git symbolic-ref [-q] [--short] [--no-recurse] <namn>"
 
-msgid "git symbolic-ref -d [-q] <name>"
-msgstr "git symbolic-ref -d [-q] <namn>"
+msgid "git symbolic-ref --delete [-q] <name>"
+msgstr "git symbolic-ref --delete [-q] <namn>"
 
 msgid "suppress error message for non-symbolic (detached) refs"
 msgstr ""
@@ -12538,6 +12655,9 @@ msgstr "ta bort symbolisk referens"
 msgid "shorten ref output"
 msgstr "förkorta ref-utdata"
 
+msgid "recursively dereference (default)"
+msgstr "avreferera rekursivt (standard)"
+
 msgid "reason"
 msgstr "skäl"
 
@@ -12545,25 +12665,26 @@ msgid "reason of the update"
 msgstr "skäl till uppdateringen"
 
 msgid ""
-"git tag [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>]\n"
-"        <tagname> [<head>]"
+"git tag [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>] [-e]\n"
+"        <tagname> [<commit> | <object>]"
 msgstr ""
-"git tag [-a | -s | -u <nyckel-id>] [-f] [-m <medd> | -F <fil>]\n"
-"        <taggnamn> [<huvud>]"
+"git tag [-a | -s | -u <nyckel-id>] [-f] [-m <medd> | -F <fil>] [-e]\n"
+"        <taggnamn> [<incheckning> | <objekt>]"
 
 msgid "git tag -d <tagname>..."
 msgstr "git tag -d <taggnamn>..."
 
 msgid ""
-"git tag -l [-n[<num>]] [--contains <commit>] [--no-contains <commit>] [--"
-"points-at <object>]\n"
-"        [--format=<format>] [--merged <commit>] [--no-merged <commit>] "
-"[<pattern>...]"
+"git tag [-n[<num>]] -l [--contains <commit>] [--no-contains <commit>]\n"
+"        [--points-at <object>] [--column[=<options>] | --no-column]\n"
+"        [--create-reflog] [--sort=<key>] [--format=<format>]\n"
+"        [--merged <commit>] [--no-merged <commit>] [<pattern>...]"
 msgstr ""
-"git tag -l [-n[<antal>]] [--contains <incheckning>] [--no-contains "
-"<incheckning>] [--points-at <objekt>]\n"
-"        [--format=<format>] [--merged <incheckning>] [--no-merged "
-"<incheckning>] [<mönster>...]"
+"git tag [-n[<antal>]] -l [--contains <incheckning>] [--no-contains "
+"<incheckning>\n"
+"        [--points-at <objekt>] [--column[=<flaggor>] | --no-column]\n"
+"        [--create-reflog] [--sort=<nyckel>] [--format=<format>]\n"
+"        [--merged <incheckning>] [--no-merged <incheckning>] [<mönster>...]"
 
 msgid "git tag -v [--format=<format>] <tagname>..."
 msgstr "git tag -v [--format=<format>] <taggnamn>..."
@@ -12938,8 +13059,12 @@ msgstr "läs uppdateringar från standard in"
 msgid "update the info files from scratch"
 msgstr "uppdatera informationsfilerna från grunden"
 
-msgid "git upload-pack [<options>] <dir>"
-msgstr "git upload-pack [<flaggor>] <katalog>"
+msgid ""
+"git-upload-pack [--[no-]strict] [--timeout=<n>] [--stateless-rpc]\n"
+"                [--advertise-refs] <directory>"
+msgstr ""
+"git-upload-pack [--[no-]strict] [--timeout=<n>] [--stateless-rpc]\n"
+"                [--advertise-refs] <katalog>"
 
 msgid "quit after a single request/response exchange"
 msgstr "avsluta omedelbart efter första anrop/svar-utväxling"
@@ -12953,8 +13078,8 @@ msgstr "testa inte <katalog>/.git/ om <katalog> inte är en Git-katalog"
 msgid "interrupt transfer after <n> seconds of inactivity"
 msgstr "avbryt överföringen efter <n> sekunders inaktivitet"
 
-msgid "git verify-commit [-v | --verbose] <commit>..."
-msgstr "git verify-commit [-v | --verbose] <incheckning>..."
+msgid "git verify-commit [-v | --verbose] [--raw] <commit>..."
+msgstr "git verify-commit [-v | --verbose] [--raw] <incheckning>..."
 
 msgid "print commit contents"
 msgstr "visa innehåll för incheckning"
@@ -12962,8 +13087,9 @@ msgstr "visa innehåll för incheckning"
 msgid "print raw gpg status output"
 msgstr "visa råa gpg-statusdata"
 
-msgid "git verify-pack [-v | --verbose] [-s | --stat-only] <pack>..."
-msgstr "git verify-pack [-v | --verbose] [-s | --stat-only] <paket>..."
+msgid "git verify-pack [-v | --verbose] [-s | --stat-only] [--] <pack>.idx..."
+msgstr ""
+"git verify-pack [-v | --verbose] [-s | --stat-only] [--] <paket>.idx..."
 
 msgid "verbose"
 msgstr "pratsam"
@@ -12971,35 +13097,39 @@ msgstr "pratsam"
 msgid "show statistics only"
 msgstr "visa endast statistik"
 
-msgid "git verify-tag [-v | --verbose] [--format=<format>] <tag>..."
-msgstr "git verify-tag [-v | --verbose] [--format=<format>] <tagg>..."
+msgid "git verify-tag [-v | --verbose] [--format=<format>] [--raw] <tag>..."
+msgstr "git verify-tag [-v | --verbose] [--format=<format>] [--raw] <tagg>..."
 
 msgid "print tag contents"
 msgstr "visa innehåll för tag"
 
-msgid "git worktree add [<options>] <path> [<commit-ish>]"
-msgstr "git worktree add [<flaggor>] <sökväg> [<incheckning-igt>]"
+msgid ""
+"git worktree add [-f] [--detach] [--checkout] [--lock [--reason <string>]]\n"
+"                 [-b <new-branch>] <path> [<commit-ish>]"
+msgstr ""
+"git worktree add [-f] [--detach] [--checkout] [--lock [--reason <sträng>]]\n"
+"                 [-b <ny-gren>] <sökväg> [<incheckning-igt>]"
 
-msgid "git worktree list [<options>]"
-msgstr "git worktree list [<flaggor>]"
+msgid "git worktree list [-v | --porcelain [-z]]"
+msgstr "git worktree list [-v | --porcelain [-z]]"
 
-msgid "git worktree lock [<options>] <path>"
-msgstr "git worktree lock [<flaggor>] <sökväg>"
+msgid "git worktree lock [--reason <string>] <worktree>"
+msgstr "git worktree lock [--reason <sträng>] <arbetskatalog>"
 
 msgid "git worktree move <worktree> <new-path>"
 msgstr "git worktree move <arbetskatalog> <ny-sökväg>"
 
-msgid "git worktree prune [<options>]"
-msgstr "git worktree prune [<flaggor>]"
+msgid "git worktree prune [-n] [-v] [--expire <expire>]"
+msgstr "git worktree prune [-n] [-v] [--expire <utgår>]"
 
-msgid "git worktree remove [<options>] <worktree>"
-msgstr "git worktree remove [<flaggor>] <arbetskatalog>"
+msgid "git worktree remove [-f] <worktree>"
+msgstr "git worktree remove [-f] <arbetskatalog>"
 
 msgid "git worktree repair [<path>...]"
 msgstr "git worktree repair [<sökväg>...]"
 
-msgid "git worktree unlock <path>"
-msgstr "git worktree unlock <sökväg>"
+msgid "git worktree unlock <worktree>"
+msgstr "git worktree unlock <arbetskatalog>"
 
 #, c-format
 msgid "Removing %s/%s: %s"
@@ -13235,6 +13365,14 @@ msgstr "endast användbart vid felsökning"
 msgid "core.fsyncMethod = batch is unsupported on this platform"
 msgstr "core.fsyncMethod = batch stöds inte på denna plattform"
 
+#, c-format
+msgid "could not parse bundle list key %s with value '%s'"
+msgstr "kunde inte tolka listnyckeln %s med värdet \"%s\""
+
+#, c-format
+msgid "bundle list at '%s' has no mode"
+msgstr "buntlistan på \"%s\" har inget läge"
+
 msgid "failed to create temporary file"
 msgstr "misslyckades skapa temporär fil"
 
@@ -13242,16 +13380,43 @@ msgid "insufficient capabilities"
 msgstr "otillräckliga kapabiliteter"
 
 #, c-format
+msgid "file downloaded from '%s' is not a bundle"
+msgstr "filen hämtad från \"%s\" är inte en bunt"
+
+msgid "failed to store maximum creation token"
+msgstr "misslyckades lagra maximal skaparsymbol"
+
+#, c-format
+msgid "unrecognized bundle mode from URI '%s'"
+msgstr "okänt buntlägre från URI:en \"%s\""
+
+#, c-format
+msgid "exceeded bundle URI recursion limit (%d)"
+msgstr "överskred buntens URI-rekursionsgräns (%d)"
+
+#, c-format
 msgid "failed to download bundle from URI '%s'"
 msgstr "kunde inte hämta bunt från URI:en \"%s\""
 
 #, c-format
-msgid "file at URI '%s' is not a bundle"
-msgstr "filen på URI \"%s\" är inte en bunt"
+msgid "file at URI '%s' is not a bundle or bundle list"
+msgstr "filen på URI:en \"%s\" är inte en bunt eller buntlista"
 
 #, c-format
-msgid "failed to unbundle bundle from URI '%s'"
-msgstr "misslyckades packa upp bunten från URI:en \"%s\""
+msgid "bundle-uri: unexpected argument: '%s'"
+msgstr "bundle-uri: okänt argument: \"%s\""
+
+msgid "bundle-uri: expected flush after arguments"
+msgstr "bundle-uri: förväntade \"flush\" efter argument"
+
+msgid "bundle-uri: got an empty line"
+msgstr "bunt-uri: fick en tom rad"
+
+msgid "bundle-uri: line is not of the form 'key=value'"
+msgstr "bunt-uri: raden är inte på formen \"nyckel=värde\""
+
+msgid "bundle-uri: line has empty key or value"
+msgstr "bunt-uri: raden har tom nyckel eller värde"
 
 #, c-format
 msgid "unrecognized bundle hash algorithm: %s"
@@ -13274,6 +13439,13 @@ msgstr "Arkivet saknar dessa nödvändiga incheckningar:"
 
 msgid "need a repository to verify a bundle"
 msgstr "behöver ett arkiv för att bekräfta en bunt."
+
+msgid ""
+"some prerequisite commits exist in the object store, but are not connected "
+"to the repository's history"
+msgstr ""
+"några förutsättande incheckningar finns i objektkatalogen, men är inte "
+"anslutna i arkivets historik"
 
 #, c-format
 msgid "The bundle contains this ref:"
@@ -13822,7 +13994,7 @@ msgstr "Filformat för bunt"
 msgid "Chunk-based file formats"
 msgstr "Styckebaserade filformat"
 
-msgid "Git commit graph format"
+msgid "Git commit-graph format"
 msgstr "Format för Git-incheckningsgraf"
 
 msgid "Git index format"
@@ -14175,6 +14347,10 @@ msgstr "ohanterat fall i \"has_worktree_moved\": %d"
 msgid "health thread wait failed [GLE %ld]"
 msgstr "misslyckades vänta på hälsotråden [GLE %ld]"
 
+#, c-format
+msgid "Invalid path: %s"
+msgstr "ogiltig sökväg: %s"
+
 msgid "Unable to create FSEventStream."
 msgstr "kunde inte skapa FSEventStream."
 
@@ -14204,6 +14380,22 @@ msgstr "GetOverlappedResult misslyckades på \"%s\" [GLE %ld]"
 #, c-format
 msgid "could not read directory changes [GLE %ld]"
 msgstr "kunde inte läsa katalogändringar [GLE %ld]"
+
+#, c-format
+msgid "opendir('%s') failed"
+msgstr "opendir('%s') misslyckades"
+
+#, c-format
+msgid "lstat('%s') failed"
+msgstr "lstat('%s') misslyckades"
+
+#, c-format
+msgid "strbuf_readlink('%s') failed"
+msgstr "strbuf_readlink('%s') misslyckades"
+
+#, c-format
+msgid "closedir('%s') failed"
+msgstr "closedir('%s') misslyckades"
 
 #, c-format
 msgid "[GLE %ld] unable to open for read '%ls'"
@@ -14660,14 +14852,21 @@ msgid "unknown object format '%s' specified by server"
 msgstr "okänt objektformat \"%s\" angavs av servern"
 
 #, c-format
+msgid "error on bundle-uri response line %d: %s"
+msgstr "fel på bundle-uri-svar rad %d: %s"
+
+msgid "expected flush after bundle-uri listing"
+msgstr "förväntade \"flush\" efter bundle-uri-listan"
+
+msgid "expected response end packet after ref listing"
+msgstr "förväntade svarsavslutningspaket efter ref-listan"
+
+#, c-format
 msgid "invalid ls-refs response: %s"
 msgstr "ogiltigt svar på ls-refs: %s"
 
 msgid "expected flush after ref listing"
 msgstr "förväntade \"flush\" efter ref-listan"
-
-msgid "expected response end packet after ref listing"
-msgstr "förväntade svarsavslutningspaket efter ref-listan"
 
 #, c-format
 msgid "protocol '%s' is not supported"
@@ -15804,10 +16003,11 @@ msgstr "det virtuella arkivet \"%s\" är inkompatibelt med fsmonitor"
 
 #, c-format
 msgid ""
-"repository '%s' is incompatible with fsmonitor due to lack of Unix sockets"
+"socket directory '%s' is incompatible with fsmonitor due to lack of Unix "
+"sockets support"
 msgstr ""
-"arkivet \"%s\" är inkompatibelt med fsmonitor på grund av avsaknad av Unix-"
-"uttag"
+"uttagskatalogen \"%s\" är inkompatibelt med fsmonitor på grund av avsaknad "
+"av Unix-uttag"
 
 msgid ""
 "git [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]\n"
@@ -15815,8 +16015,7 @@ msgid ""
 "           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--"
 "bare]\n"
 "           [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]\n"
-"           [--super-prefix=<path>] [--config-env=<name>=<envvar>]\n"
-"           <command> [<args>]"
+"           [--config-env=<name>=<envvar>] <command> [<args>]"
 msgstr ""
 "git [-v | --version] [-h |--help] [-C <sökväg>] [-c <namn>=<värde>]\n"
 "           [--exec-path[=<sökväg>]] [--html-path] [--man-path] [--info-"
@@ -15824,8 +16023,7 @@ msgstr ""
 "           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--"
 "bare]\n"
 "           [--git-dir=<sökväg>] [--work-tree=<sökväg>] [--namespace=<namn>]\n"
-"           [--super-prefix=<sökväg>] [--config-env=<namn>=<miljövar>]\n"
-"           <kommando> [<flaggor>]"
+"           [--config-env=<namn>=<miljövar>] <kommando> [<flaggor>]"
 
 msgid ""
 "'git help -a' and 'git help -g' list available subcommands and some\n"
@@ -15849,10 +16047,6 @@ msgstr "ingen katalog angavs för flaggan \"%s\"\n"
 #, c-format
 msgid "no namespace given for --namespace\n"
 msgstr "ingen namnrymd angavs för --namespace\n"
-
-#, c-format
-msgid "no prefix given for --super-prefix\n"
-msgstr "inget prefix angavs för --super-prefix\n"
 
 #, c-format
 msgid "-c expects a configuration string\n"
@@ -15966,8 +16160,13 @@ msgstr "gpg.ssh.defaultKeyCommand lyckades men gav inga nycklar: %s %s"
 msgid "gpg.ssh.defaultKeyCommand failed: %s %s"
 msgstr "gpg.ssh.defaultKeyCommand misslyckades: %s %s"
 
-msgid "gpg failed to sign the data"
-msgstr "gpg misslyckades signera data"
+#, c-format
+msgid ""
+"gpg failed to sign the data:\n"
+"%s"
+msgstr ""
+"gpg misslyckades signera data:\n"
+"%s"
 
 msgid "user.signingKey needs to be set for ssh signing"
 msgstr "user.signingKey måste anges för ssh-signering"
@@ -16128,8 +16327,8 @@ msgstr[1] ""
 "\n"
 "Mest lika kommandon är"
 
-msgid "git version [<options>]"
-msgstr "git version [<flaggor>]"
+msgid "git version [--build-options]"
+msgstr "git version [--build-options]"
 
 #, c-format
 msgid "%s: %s - %s"
@@ -17041,10 +17240,6 @@ msgstr "kunde inte normalisera supplerande objektsökväg: %s"
 msgid "%s: ignoring alternate object stores, nesting too deep"
 msgstr "%s: ignorerar supplerande objektlager, för djup nästling"
 
-#, c-format
-msgid "unable to normalize object directory: %s"
-msgstr "kan inte normalisera objektkatalogen: %s"
-
 msgid "unable to fdopen alternates lockfile"
 msgstr "kan inte utföra \"fdopen\" på suppleantlåsfil"
 
@@ -17103,6 +17298,10 @@ msgid "garbage at end of loose object '%s'"
 msgstr "skräp i slutet av löst objekt \"%s\""
 
 #, c-format
+msgid "unable to open loose object %s"
+msgstr "kan inte öppna lösa objekt %s"
+
+#, c-format
 msgid "unable to parse %s header"
 msgstr "kan inte tolka %s-huvud"
 
@@ -17118,16 +17317,12 @@ msgid "header for %s too long, exceeds %d bytes"
 msgstr "huvudet för %s är för långt, mer än %d byte"
 
 #, c-format
-msgid "failed to read object %s"
-msgstr "misslyckades läsa objektet %s"
+msgid "loose object %s (stored in %s) is corrupt"
+msgstr "löst objekt %s (lagrat i %s) är trasigt"
 
 #, c-format
 msgid "replacement %s not found for %s"
 msgstr "ersättningen %s hittades inte för %s"
-
-#, c-format
-msgid "loose object %s (stored in %s) is corrupt"
-msgstr "löst objekt %s (lagrat i %s) är trasigt"
 
 #, c-format
 msgid "packed object %s (stored in %s) is corrupt"
@@ -17140,9 +17335,6 @@ msgstr "kunde inte skriva filen %s"
 #, c-format
 msgid "unable to set permission to '%s'"
 msgstr "kan inte sätta behörigheten till \"%s\""
-
-msgid "file write error"
-msgstr "fel vid skrivning av fil"
 
 msgid "error when closing loose object file"
 msgstr "fel vid stängning av fil för löst objekt"
@@ -17190,11 +17382,12 @@ msgstr "kunde inte skapa katalogen %s"
 msgid "cannot read object for %s"
 msgstr "kan inte läsa objekt för %s"
 
-msgid "corrupt commit"
-msgstr "trasik incheckning"
+#, c-format
+msgid "object fails fsck: %s"
+msgstr "objekt klarar inte fsck: %s"
 
-msgid "corrupt tag"
-msgstr "trasig tagg"
+msgid "refusing to create malformed object"
+msgstr "vägrar skapa ett felaktigt format objekt"
 
 #, c-format
 msgid "read error while indexing %s"
@@ -17454,10 +17647,6 @@ msgstr "ogiltigt XOR-offset i bitkarte-packindex"
 
 msgid "cannot fstat bitmap file"
 msgstr "kan inte utföra \"fstat\" på bitkartefil"
-
-#, c-format
-msgid "ignoring extra bitmap file: '%s'"
-msgstr "ignorerar extra bitkartefil: %s"
 
 msgid "checksum doesn't match in MIDX and bitmap"
 msgstr "checksumman stämmer inte i MIDX och bitkarta"
@@ -17723,6 +17912,9 @@ msgstr "var mer tyst"
 msgid "use <n> digits to display object names"
 msgstr "använd <n> siffror för att visa objektnamn"
 
+msgid "prefixed path to initial superproject"
+msgstr "inledande sökväg till start-överprojekt"
+
 msgid "how to strip spaces and #comments from message"
 msgstr "hur blanksteg och #kommentarer ska tas bort från meddelande"
 
@@ -17866,6 +18058,10 @@ msgstr ""
 #, c-format
 msgid "promisor remote name cannot begin with '/': %s"
 msgstr "kontraktsfjärr kan inte börja med \"/\": %s"
+
+#, c-format
+msgid "could not fetch %s from promisor remote"
+msgstr "kunde inte hämta %s från kontraktsfjärr"
 
 msgid "object-info: expected flush after arguments"
 msgstr "object-info: förväntade \"flush\" efter argument"
@@ -18221,6 +18417,14 @@ msgid "ahead %d, behind %d"
 msgstr "före %d, bakom %d"
 
 #, c-format
+msgid "%%(%.*s) does not take arguments"
+msgstr "%%(%.*s) tar inte argument"
+
+#, c-format
+msgid "unrecognized %%(%.*s) argument: %s"
+msgstr "okänt %%(%.*s)-argument: %s"
+
+#, c-format
 msgid "expected format: %%(color:<color>)"
 msgstr "förväntat format: %%(color:<color>)"
 
@@ -18235,22 +18439,6 @@ msgstr "Heltalsvärde förväntades refname:lstrip=%s"
 #, c-format
 msgid "Integer value expected refname:rstrip=%s"
 msgstr "Heltalsvärde förväntades refname:rstrip=%s"
-
-#, c-format
-msgid "unrecognized %%(%s) argument: %s"
-msgstr "okänt %%(%s)-argument: %s"
-
-#, c-format
-msgid "%%(objecttype) does not take arguments"
-msgstr "%%(objecttype) tar inte argument"
-
-#, c-format
-msgid "%%(deltabase) does not take arguments"
-msgstr "%%(deltabase) tar inte argument"
-
-#, c-format
-msgid "%%(body) does not take arguments"
-msgstr "%%(body) tar inte argument"
 
 #, c-format
 msgid "expected %%(trailers:key=<value>)"
@@ -18269,10 +18457,6 @@ msgid "positive value expected '%s' in %%(%s)"
 msgstr "positivt värde förväntat \"%s\" i %%(%s)"
 
 #, c-format
-msgid "unrecognized email option: %s"
-msgstr "okänd e-postalternativ: %s"
-
-#, c-format
 msgid "expected format: %%(align:<width>,<position>)"
 msgstr "förväntat format: %%(align:<bredd>,<position>)"
 
@@ -18285,12 +18469,12 @@ msgid "unrecognized width:%s"
 msgstr "okänd bredd:%s"
 
 #, c-format
-msgid "positive width expected with the %%(align) atom"
-msgstr "positiv bredd förväntad med atomen %%(align)"
+msgid "unrecognized %%(%s) argument: %s"
+msgstr "okänt %%(%s)-argument: %s"
 
 #, c-format
-msgid "%%(rest) does not take arguments"
-msgstr "%%(rest) tar inte argument"
+msgid "positive width expected with the %%(align) atom"
+msgstr "positiv bredd förväntad med atomen %%(align)"
 
 #, c-format
 msgid "malformed field name: %.*s"
@@ -18937,6 +19121,13 @@ msgid "failed to find tree of %s"
 msgstr "kunde inte hitta trädet för %s."
 
 #, c-format
+msgid "unsupported section for hidden refs: %s"
+msgstr "sktionen för dolda referenser stöds ej: %s"
+
+msgid "--exclude-hidden= passed more than once"
+msgstr "--exclude-hidden= angavs mer än en gång"
+
+#, c-format
 msgid "resolve-undo records `%s` which is missing"
 msgstr "resolve-undo registrerar \"%s\" som saknas"
 
@@ -19078,6 +19269,14 @@ msgstr "scalar reconfigure [--all | <enrollering>]"
 
 msgid "--all or <enlistment>, but not both"
 msgstr "--all eller <enrollering>, men inte bägge"
+
+#, c-format
+msgid "could not remove stale scalar.repo '%s'"
+msgstr "kunde inte ta bort gammal scalar.repo \"%s\""
+
+#, c-format
+msgid "removing stale scalar.repo '%s'"
+msgstr "tar bort gammal scalar.repo \"%s\""
 
 #, c-format
 msgid "git repository gone in '%s'"
@@ -19511,6 +19710,22 @@ msgid "git %s: failed to refresh the index"
 msgstr "git %s: misslyckades uppdatera indexet"
 
 #, c-format
+msgid "'%s' is not a valid label"
+msgstr "\"%s\" är inte en giltig etikett"
+
+#, c-format
+msgid "'%s' is not a valid refname"
+msgstr "\"%s\" är inte ett giltigt referensnamn"
+
+#, c-format
+msgid "update-ref requires a fully qualified refname e.g. refs/heads/%s"
+msgstr "update-ref kräver ett fullständigt referensnamn, t.ex refs/heads/%s"
+
+#, c-format
+msgid "invalid command '%.*s'"
+msgstr "ogiltigt kommando \"%.*s\""
+
+#, c-format
 msgid "%s does not accept arguments: '%s'"
 msgstr "%s tar inte argument: \"%s\""
 
@@ -19702,15 +19917,15 @@ msgstr ""
 msgid "illegal label name: '%.*s'"
 msgstr "ogiltigt etikettnamn: \"%.*s\""
 
+#, c-format
+msgid "could not resolve '%s'"
+msgstr "kunde inte upplösa \"%s\""
+
 msgid "writing fake root commit"
 msgstr "skriver fejkad rotincheckning"
 
 msgid "writing squash-onto"
 msgstr "skriver squash-onto"
-
-#, c-format
-msgid "could not resolve '%s'"
-msgstr "kunde inte upplösa \"%s\""
 
 msgid "cannot merge without a current revision"
 msgstr "kan inte slå ihop utan en aktuell incheckning"
@@ -20308,6 +20523,25 @@ msgstr "ls-tree returnerade en oväntad returkod %d"
 msgid "failed to lstat '%s'"
 msgstr "misslyckades ta status (lstat) på \"%s\""
 
+msgid "no remote configured to get bundle URIs from"
+msgstr "ingen fjärr att hämta bunt-URI:er från inställd"
+
+#, c-format
+msgid "remote '%s' has no configured URL"
+msgstr "fjärren \"%s\" har ingen URL konfigurerad"
+
+msgid "could not get the bundle-uri list"
+msgstr "kunde inte hämta bundle-uri-listan"
+
+msgid "test-tool cache-tree <options> (control|prime|update)"
+msgstr "test-tool cache-tree <flaggor> (control|prime|update)"
+
+msgid "clear the cache tree before each iteration"
+msgstr "töm cacheträdet före varje iteration"
+
+msgid "number of entries in the cache tree to invalidate (default 0)"
+msgstr "antal poster i cacheträdet att ogiltigförklara (förval är 0)"
+
 msgid "unhandled options"
 msgstr "flaggor som inte hanterats"
 
@@ -20651,6 +20885,12 @@ msgstr "Avbryter."
 
 msgid "failed to push all needed submodules"
 msgstr "kunde inte sända alla nödvändiga undermoduler"
+
+msgid "bundle-uri operation not supported by protocol"
+msgstr "bundle-uri-funktionen stöds inte av protokollet"
+
+msgid "could not retrieve server-advertised bundle-uri list"
+msgstr "kunde inte hämta bundle-uri-listan som servern annonserade"
 
 msgid "too-short tree object"
 msgstr "trädobjekt för kort"
@@ -21386,13 +21626,18 @@ msgstr "Ignorerade filer"
 
 #, c-format
 msgid ""
-"It took %.2f seconds to enumerate untracked files. 'status -uno'\n"
-"may speed it up, but you have to be careful not to forget to add\n"
-"new files yourself (see 'git help status')."
+"It took %.2f seconds to enumerate untracked files,\n"
+"but the results were cached, and subsequent runs may be faster."
 msgstr ""
-"Det tog %.2f sekunder att räkna upp ospårade filer. \"status -uno\"\n"
-"kan gå snabbare, men du måste vara försiktig så du inte glömmer\n"
-"lägga till nya filer själv (se \"git help status\")."
+"Det tog %.2f sekunder att räkna upp ospårade filer,\n"
+"men resultaten cachelagrades och senare körningar kan bli snabbare."
+
+#, c-format
+msgid "It took %.2f seconds to enumerate untracked files."
+msgstr "Det tog %.2f sekunder att räkna upp ospårade filer."
+
+msgid "See 'git help status' for information on how to improve this."
+msgstr "Se \"git help status\" för information om hur du kan förbättra detta."
 
 # %s är nästa sträng eller tom.
 #, c-format
@@ -21534,274 +21779,6 @@ msgstr "Du måste köra kommandot från arbetskatalogens toppnivå."
 
 msgid "Unable to determine absolute path of git directory"
 msgstr "Kunde inte bestämma absolut sökväg till git-katalogen"
-
-#. TRANSLATORS: you can adjust this to align "git add -i" status menu
-#, perl-format
-msgid "%12s %12s %s"
-msgstr "%12s %12s %s"
-
-#, perl-format
-msgid "touched %d path\n"
-msgid_plural "touched %d paths\n"
-msgstr[0] "rörde %d sökväg\n"
-msgstr[1] "rörde %d sökvägar\n"
-
-msgid ""
-"If the patch applies cleanly, the edited hunk will immediately be\n"
-"marked for staging."
-msgstr ""
-"Om patchen kan appliceras rent kommer det redigerade stycket att\n"
-"köas omedelbart."
-
-msgid ""
-"If the patch applies cleanly, the edited hunk will immediately be\n"
-"marked for stashing."
-msgstr ""
-"Om patchen kan appliceras rent kommer det redigerade stycket att\n"
-"läggas till i \"stash\" omedelbart."
-
-msgid ""
-"If the patch applies cleanly, the edited hunk will immediately be\n"
-"marked for unstaging."
-msgstr ""
-"Om patchen kan appliceras rent kommer det redigerade stycket att\n"
-"tas bort från kön omedelbart."
-
-msgid ""
-"If the patch applies cleanly, the edited hunk will immediately be\n"
-"marked for applying."
-msgstr ""
-"Om patchen kan appliceras rent kommer det redigerade stycket att\n"
-"markeras för applicering omedelbart."
-
-msgid ""
-"If the patch applies cleanly, the edited hunk will immediately be\n"
-"marked for discarding."
-msgstr ""
-"Om patchen kan appliceras rent kommer det redigerade stycket att\n"
-"markeras för kasta omedelbart."
-
-#, perl-format
-msgid "failed to open hunk edit file for writing: %s"
-msgstr "misslyckades öppna styckeredigeringsfil för skrivning: %s"
-
-#, perl-format
-msgid ""
-"---\n"
-"To remove '%s' lines, make them ' ' lines (context).\n"
-"To remove '%s' lines, delete them.\n"
-"Lines starting with %s will be removed.\n"
-msgstr ""
-"---\n"
-"Ta bort \"%s\" rader genom att göra dem \" \"-rader (sammanhang).\n"
-"Ta bort \"%s\" rader genom att radera dem.\n"
-"Rader som börjar med %s kommer att tas bort.\n"
-
-#, perl-format
-msgid "failed to open hunk edit file for reading: %s"
-msgstr "misslyckades öppna styckesredigeringsfil för läsning: %s"
-
-msgid ""
-"y - stage this hunk\n"
-"n - do not stage this hunk\n"
-"q - quit; do not stage this hunk or any of the remaining ones\n"
-"a - stage this hunk and all later hunks in the file\n"
-"d - do not stage this hunk or any of the later hunks in the file"
-msgstr ""
-"y - köa stycket\n"
-"n - köa inte stycket\n"
-"q - avsluta; köa inte stycket eller något av de följande\n"
-"a - köa stycket och alla följande i filen\n"
-"d - köa inte stycket eller något av de följande i filen"
-
-msgid ""
-"y - stash this hunk\n"
-"n - do not stash this hunk\n"
-"q - quit; do not stash this hunk or any of the remaining ones\n"
-"a - stash this hunk and all later hunks in the file\n"
-"d - do not stash this hunk or any of the later hunks in the file"
-msgstr ""
-"y - \"stash\":a stycket\n"
-"n - \"stash\":a inte stycket\n"
-"q - avsluta; \"stash\":a inte stycket eller något av de följande\n"
-"a - \"stash\":a stycket och alla följande i filen\n"
-"d - \"stash\":a inte stycket eller något av de följande i filen"
-
-msgid ""
-"y - unstage this hunk\n"
-"n - do not unstage this hunk\n"
-"q - quit; do not unstage this hunk or any of the remaining ones\n"
-"a - unstage this hunk and all later hunks in the file\n"
-"d - do not unstage this hunk or any of the later hunks in the file"
-msgstr ""
-"y - ta bort stycket från kön\n"
-"n - ta inte bort stycket från kön\n"
-"q - avsluta; ta inte bort stycket eller något av de följande från kön\n"
-"a - ta bort stycket och alla följande i filen från kön\n"
-"d - ta inte bort stycket eller något av de följande i filen från kön"
-
-msgid ""
-"y - apply this hunk to index\n"
-"n - do not apply this hunk to index\n"
-"q - quit; do not apply this hunk or any of the remaining ones\n"
-"a - apply this hunk and all later hunks in the file\n"
-"d - do not apply this hunk or any of the later hunks in the file"
-msgstr ""
-"y - applicera stycket på indexet\n"
-"n - applicera inte stycket på indexet\n"
-"q - avsluta; applicera inte stycket eller något av de följande\n"
-"a - applicera stycket och alla följande i filen\n"
-"d - applicera inte stycket eller något av de följande i filen"
-
-msgid ""
-"y - discard this hunk from worktree\n"
-"n - do not discard this hunk from worktree\n"
-"q - quit; do not discard this hunk or any of the remaining ones\n"
-"a - discard this hunk and all later hunks in the file\n"
-"d - do not discard this hunk or any of the later hunks in the file"
-msgstr ""
-"y - förkasta stycket från arbetskatalogen\n"
-"n - förkasta inte stycket från arbetskatalogen\n"
-"q - avsluta; förkasta inte stycket eller något av de följande\n"
-"a - förkasta stycket och alla följande i filen\n"
-"d - förkasta inte stycket eller något av de följande i filen"
-
-msgid ""
-"y - discard this hunk from index and worktree\n"
-"n - do not discard this hunk from index and worktree\n"
-"q - quit; do not discard this hunk or any of the remaining ones\n"
-"a - discard this hunk and all later hunks in the file\n"
-"d - do not discard this hunk or any of the later hunks in the file"
-msgstr ""
-"y - förkasta stycket från indexet och arbetskatalogen\n"
-"n - förkasta inte stycket från indexet och arbetskatalogen\n"
-"q - avsluta; förkasta inte stycket eller något av de följande\n"
-"a - förkasta stycket och alla följande i filen\n"
-"d - förkasta inte stycket eller något av de följande i filen"
-
-msgid ""
-"y - apply this hunk to index and worktree\n"
-"n - do not apply this hunk to index and worktree\n"
-"q - quit; do not apply this hunk or any of the remaining ones\n"
-"a - apply this hunk and all later hunks in the file\n"
-"d - do not apply this hunk or any of the later hunks in the file"
-msgstr ""
-"y - applicera stycket på indexet och arbetskatalogen\n"
-"n - applicera inte stycket på indexet och arbetskatalogen\n"
-"q - avsluta; applicera inte stycket eller något av de följande\n"
-"a - applicera stycket och alla följande i filen\n"
-"d - applicera inte stycket eller något av de följande i filen"
-
-msgid ""
-"y - apply this hunk to worktree\n"
-"n - do not apply this hunk to worktree\n"
-"q - quit; do not apply this hunk or any of the remaining ones\n"
-"a - apply this hunk and all later hunks in the file\n"
-"d - do not apply this hunk or any of the later hunks in the file"
-msgstr ""
-"y - applicera stycket på arbetskatalogen\n"
-"n - applicera inte stycket på arbetskatalogen\n"
-"q - avsluta; applicera inte stycket eller något av de följande\n"
-"a - applicera stycket och alla följande i filen\n"
-"d - applicera inte stycket eller något av de följande i filen"
-
-msgid ""
-"g - select a hunk to go to\n"
-"/ - search for a hunk matching the given regex\n"
-"j - leave this hunk undecided, see next undecided hunk\n"
-"J - leave this hunk undecided, see next hunk\n"
-"k - leave this hunk undecided, see previous undecided hunk\n"
-"K - leave this hunk undecided, see previous hunk\n"
-"s - split the current hunk into smaller hunks\n"
-"e - manually edit the current hunk\n"
-"? - print help\n"
-msgstr ""
-"g - välj ett stycke att gå till\n"
-"/ - sök efter stycke som motsvarar angivet reguljärt uttryck\n"
-"j - lämna stycket obestämt, se nästa obestämda stycke\n"
-"J - lämna stycket obestämt, se nästa stycke\n"
-"k - lämna stycket obestämt, se föregående obestämda stycke\n"
-"K - lämna stycket obestämt, se föregående stycke\n"
-"s - dela aktuellt stycke i mindre styckens\n"
-"e - redigera aktuellt stycke manuellt\n"
-"? - visa hjälp\n"
-
-msgid "The selected hunks do not apply to the index!\n"
-msgstr "Markerade stycken kan inte appliceras på indexet!\n"
-
-#, perl-format
-msgid "ignoring unmerged: %s\n"
-msgstr "ignorerar ej sammanslagen: %s\n"
-
-msgid "No other hunks to goto\n"
-msgstr "Inga andra stycken att gå till\n"
-
-#, perl-format
-msgid "Invalid number: '%s'\n"
-msgstr "Ogiltigt siffervärde: \"%s\"\n"
-
-#, perl-format
-msgid "Sorry, only %d hunk available.\n"
-msgid_plural "Sorry, only %d hunks available.\n"
-msgstr[0] "Beklagar, det finns bara %d stycke.\n"
-msgstr[1] "Beklagar, det finns bara %d stycken.\n"
-
-msgid "No other hunks to search\n"
-msgstr "Inga andra stycken att söka efter\n"
-
-#, perl-format
-msgid "Malformed search regexp %s: %s\n"
-msgstr "Felaktigt format på reguljärt sökuttryck %s: %s\n"
-
-msgid "No hunk matches the given pattern\n"
-msgstr "Inga stycken motsvarar givet mönster\n"
-
-msgid "No previous hunk\n"
-msgstr "Inget föregående stycke\n"
-
-msgid "No next hunk\n"
-msgstr "Inget följande stycke\n"
-
-msgid "Sorry, cannot split this hunk\n"
-msgstr "Beklagar, kan inte dela stycket\n"
-
-#, perl-format
-msgid "Split into %d hunk.\n"
-msgid_plural "Split into %d hunks.\n"
-msgstr[0] "Dela i %d stycke.\n"
-msgstr[1] "Dela i %d stycken.\n"
-
-msgid "Sorry, cannot edit this hunk\n"
-msgstr "Beklagar, kan inte redigera stycket\n"
-
-#. TRANSLATORS: please do not translate the command names
-#. 'status', 'update', 'revert', etc.
-msgid ""
-"status        - show paths with changes\n"
-"update        - add working tree state to the staged set of changes\n"
-"revert        - revert staged set of changes back to the HEAD version\n"
-"patch         - pick hunks and update selectively\n"
-"diff          - view diff between HEAD and index\n"
-"add untracked - add contents of untracked files to the staged set of "
-"changes\n"
-msgstr ""
-"status        - visa sökvägar med ändringar\n"
-"update        - lägg arbetskatalogens tillstånd till köade ändringar\n"
-"revert        - återställ köade ändringar till HEAD-versionen\n"
-"patch         - välj och uppdatera valda stycken\n"
-"diff          - visa diff mellan HEAD och index\n"
-"add untracked - lägg till innehåll i ospårade filer till köade ändringar\n"
-
-msgid "missing --"
-msgstr "saknad --"
-
-#, perl-format
-msgid "unknown --patch mode: %s"
-msgstr "okänt läge för --patch: %s"
-
-#, perl-format
-msgid "invalid argument %s, expecting --"
-msgstr "felaktigt argument %s, förväntar --"
 
 msgid "local zone differs from GMT by a non-minute interval\n"
 msgstr "lokal zon skiljer sig från GMT med delar av minuter\n"

@@ -231,7 +231,7 @@ by doing the following:
  - Prepare 'jch' branch, which is used to represent somewhere
    between 'master' and 'seen' and often is slightly ahead of 'next'.
 
-     $ Meta/Reintegrate master..seen >Meta/redo-jch.sh
+     $ Meta/Reintegrate master..jch >Meta/redo-jch.sh
 
    The result is a script that lists topics to be merged in order to
    rebuild 'seen' as the input to Meta/Reintegrate script.  Remove
@@ -256,7 +256,7 @@ by doing the following:
    merged to 'next', add it at the end of the list.  Then:
 
      $ git checkout -B jch master
-     $ Meta/redo-jch.sh -c1
+     $ sh Meta/redo-jch.sh -c1
 
    to rebuild the 'jch' branch from scratch.  "-c1" tells the script
    to stop merging at the first line that begins with '###'
@@ -283,6 +283,11 @@ by doing the following:
 
      $ git diff jch next
 
+   Then build the rest of 'jch':
+
+     $ git checkout jch
+     $ sh Meta/redo-jch.sh
+
    When all is well, clean up the redo-jch.sh script with
 
      $ sh Meta/redo-jch.sh -u
@@ -293,7 +298,7 @@ by doing the following:
 
  - Rebuild 'seen'.
 
-     $ Meta/Reintegrate master..seen >Meta/redo-seen.sh
+     $ Meta/Reintegrate jch..seen >Meta/redo-seen.sh
 
    Edit the result by adding new topics that are not still in 'seen'
    in the script.  Then

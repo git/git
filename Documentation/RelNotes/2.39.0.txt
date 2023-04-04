@@ -29,6 +29,35 @@ UI, Workflows & Features
    existing bugs in the internal patch-id logic that did not match
    what "git patch-id" produces have been corrected.
 
+ * Enable gc.cruftpacks by default for those who opt into
+   feature.experimental setting.
+
+ * "git repack" learns to send cruft objects out of the way into
+   packfiles outside the repository.
+
+ * 'scalar reconfigure -a' is taught to automatically remove
+   scalar.repo entires which no longer exist.
+
+ * Redact headers from cURL's h2h3 module in GIT_CURL_VERBOSE and
+   others.
+
+ * 'git maintenance register' is taught to write configuration to an
+   arbitrary path, and 'git for-each-repo' is taught to expand tilde
+   characters in paths.
+
+ * When creating new notes, the template used to get a stray empty
+   newline, which has been removed.
+
+ * "git receive-pack" used to use all the local refs as the boundary for
+   checking connectivity of the data "git push" sent, but now it uses
+   only the refs that it advertised to the pusher. In a repository with
+   the .hideRefs configuration, this reduces the resources needed to
+   perform the check.
+
+ * With '--recurse-submodules=on-demand', all submodules are
+   recursively pushed.
+
+
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
 
@@ -84,6 +113,54 @@ Performance, Internal Implementation, Development Support etc.
  * Make sure generated dependency file is stably sorted to help
    developers debugging their build issues.
 
+ * The glossary entries for "commit-graph file" and "reachability
+   bitmap" have been added.
+
+ * Various tests exercising the transfer.credentialsInUrl
+   configuration are taught to avoid making requests which require
+   resolving localhost to reduce CI-flakiness.
+
+ * A redundant diagnostic message is dropped from test_path_is_missing().
+
+ * Simplify the run-command API.
+
+ * Update the actions/github-script dependency in CI to avoid a
+   deprecation warning.
+
+ * Progress on being able to initialize a rev_info struct with a
+   macro.
+
+ * Add trace2 counters to the region to clear skip worktree bits in a
+   sparse checkout.
+
+ * Modernize test script to avoid "test -f" and friends.
+
+ * Avoid calling 'cache_tree_update()' when doing so would be
+   redundant.
+
+ * Update the credential-cache documentation to provide a more
+   realistic example.
+
+ * Makefile comments updates and reordering to clarify knobs used to
+   choose SHA implementations.
+
+ * A design document for sparse-checkout's future directions has been
+   added.
+
+ * Teach chainlint.pl to annotate the original test definition instead
+   of the token stream.
+
+ * "make coccicheck" is time consuming. It has been made to run more
+   incrementally.
+
+ * `parse_object()` has been hardened to check for the existence of a
+   suspected blob object.
+
+ * The build procedure has been adjusted to GNUmake version 4.4, which
+   made some changes to how pattern rule with multiple targets are
+   handled.
+
+
 Fixes since v2.38
 -----------------
 
@@ -137,7 +214,7 @@ Fixes since v2.38
  * Clarify that "the sentence after <area>: prefix does not begin with
    a capital letter" rule applies only to the commit title.
 
- * "git branch --edit-description" on an unborh branch misleadingly
+ * "git branch --edit-description" on an unborn branch misleadingly
    said that no such branch exists, which has been corrected.
 
  * Work around older clang that warns against C99 zero initialization
@@ -212,9 +289,58 @@ Fixes since v2.38
    option now implies --reapply-cherry-picks and --no-fork-point
    options.
 
- * The way "git repack" creared temporary files when it received a
+ * The way "git repack" created temporary files when it received a
    signal was prone to deadlocking, which has been corrected.
+
+ * Various tests exercising the transfer.credentialsInUrl
+   configuration are taught to avoid making requests which require
+   resolving localhost to reduce CI-flakiness.
+
+ * The adjust_shared_perm() helper function learned to refrain from
+   setting the "g+s" bit on directories when it is not necessary.
+
+ * "git archive" mistakenly complained twice about a missing
+   executable, which has been corrected.
+
+ * Fix a bug where `git branch -d` did not work on an orphaned HEAD.
+
+ * `git rebase --update-refs` would delete references when all
+   `update-ref` commands in the sequencer were removed, which has been
+   corrected.
+
+ * Fix a regression in the bisect-helper which mistakenly treats
+   arguments to the command given to 'git bisect run' as arguments to
+   the helper.
+
+ * Correct an error where `git rebase` would mistakenly use a branch or
+   tag named "refs/rewritten/xyz" when missing a rebase label.
+
+ * Assorted fixes of parsing end-user input as integers.
+   (merge 14770cf0de pw/config-int-parse-fixes later to maint).
+
+ * "git prune" may try to iterate over .git/objects/pack for trash
+   files to remove in it, and loudly fail when the directory is
+   missing, which is not necessary.  The command has been taught to
+   ignore such a failure.
+   (merge 6974765352 ew/prune-with-missing-objects-pack later to maint).
+
+ * Add one more candidate directory that may house httpd modules while
+   running tests.
+   (merge 1c7dc23d41 es/locate-httpd-module-location-in-test later to maint).
+
+ * A handful of leaks in the line-log machinery have been plugged.
+
+ * The format of a line in /proc/cpuinfo that describes a CPU on s390x
+   looked different from everybody else, and the code in chainlint.pl
+   failed to parse it.
+   (merge 1f51b77f4f ah/chainlint-cpuinfo-parse-fix later to maint).
+
+ * Adjust the GitHub CI to newer ubuntu release.
+   (merge 0d3507f3e7 jx/ci-ubuntu-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 413bc6d20a ds/cmd-main-reorder later to maint).
    (merge 8d2863e4ed nw/t1002-cleanup later to maint).
+   (merge 7c2dc122f9 rs/list-objects-filter-leakfix later to maint).
+   (merge 288fcb1c94 zk/push-use-bitmaps later to maint).
+   (merge 42db324c0f km/merge-recursive-typofix later to maint).

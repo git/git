@@ -1,9 +1,9 @@
-#include "builtin.h"
+#include "test-tool.h"
 #include "config.h"
 #include "parse-options.h"
 
 static char const * const env__helper_usage[] = {
-	N_("git env--helper --type=[bool|ulong] <options> <env-var>"),
+	"test-tool env-helper --type=[bool|ulong] <options> <env-var>",
 	NULL
 };
 
@@ -24,12 +24,12 @@ static int option_parse_type(const struct option *opt, const char *arg,
 	else if (!strcmp(arg, "ulong"))
 		*cmdmode = ENV_HELPER_TYPE_ULONG;
 	else
-		die(_("unrecognized --type argument, %s"), arg);
+		die("unrecognized --type argument, %s", arg);
 
 	return 0;
 }
 
-int cmd_env__helper(int argc, const char **argv, const char *prefix)
+int cmd__env_helper(int argc, const char **argv)
 {
 	int exit_code = 0;
 	const char *env_variable = NULL;
@@ -39,17 +39,17 @@ int cmd_env__helper(int argc, const char **argv, const char *prefix)
 	unsigned long ret_ulong, default_ulong;
 	enum cmdmode cmdmode = 0;
 	struct option opts[] = {
-		OPT_CALLBACK_F(0, "type", &cmdmode, N_("type"),
-			       N_("value is given this type"), PARSE_OPT_NONEG,
+		OPT_CALLBACK_F(0, "type", &cmdmode, "type",
+			       "value is given this type", PARSE_OPT_NONEG,
 			       option_parse_type),
-		OPT_STRING(0, "default", &env_default, N_("value"),
-			   N_("default for git_env_*(...) to fall back on")),
+		OPT_STRING(0, "default", &env_default, "value",
+			   "default for git_env_*(...) to fall back on"),
 		OPT_BOOL(0, "exit-code", &exit_code,
-			 N_("be quiet only use git_env_*() value as exit code")),
+			 "be quiet only use git_env_*() value as exit code"),
 		OPT_END(),
 	};
 
-	argc = parse_options(argc, argv, prefix, opts, env__helper_usage,
+	argc = parse_options(argc, argv, NULL, opts, env__helper_usage,
 			     PARSE_OPT_KEEP_UNKNOWN_OPT);
 	if (env_default && !*env_default)
 		usage_with_options(env__helper_usage, opts);
@@ -64,7 +64,7 @@ int cmd_env__helper(int argc, const char **argv, const char *prefix)
 		if (env_default) {
 			default_int = git_parse_maybe_bool(env_default);
 			if (default_int == -1) {
-				error(_("option `--default' expects a boolean value with `--type=bool`, not `%s`"),
+				error("option `--default' expects a boolean value with `--type=bool`, not `%s`",
 				      env_default);
 				usage_with_options(env__helper_usage, opts);
 			}
@@ -79,7 +79,7 @@ int cmd_env__helper(int argc, const char **argv, const char *prefix)
 	case ENV_HELPER_TYPE_ULONG:
 		if (env_default) {
 			if (!git_parse_ulong(env_default, &default_ulong)) {
-				error(_("option `--default' expects an unsigned long value with `--type=ulong`, not `%s`"),
+				error("option `--default' expects an unsigned long value with `--type=ulong`, not `%s`",
 				      env_default);
 				usage_with_options(env__helper_usage, opts);
 			}

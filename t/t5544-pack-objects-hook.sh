@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='test custom script in place of pack-objects'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'create some history to fetch' '

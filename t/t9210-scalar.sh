@@ -104,6 +104,13 @@ test_expect_success FSMONITOR_DAEMON 'scalar register starts fsmon daemon' '
 	test_cmp_config -C test/src true core.fsmonitor
 '
 
+test_expect_success 'scalar register warns when background maintenance fails' '
+	git init register-repo &&
+	GIT_TEST_MAINT_SCHEDULER="crontab:false,launchctl:false,schtasks:false" \
+		scalar register register-repo 2>err &&
+	grep "could not turn on maintenance" err
+'
+
 test_expect_success 'scalar unregister' '
 	git init vanish/src &&
 	scalar register vanish/src &&
@@ -164,6 +171,20 @@ test_expect_success 'scalar reconfigure' '
 	git -C one/src config core.preloadIndex false &&
 	scalar reconfigure -a &&
 	test true = "$(git -C one/src config core.preloadIndex)"
+'
+
+test_expect_success '`reconfigure -a` removes stale config entries' '
+	git init stale/src &&
+	scalar register stale &&
+	scalar list >scalar.repos &&
+	grep stale scalar.repos &&
+
+	grep -v stale scalar.repos >expect &&
+
+	rm -rf stale &&
+	scalar reconfigure -a &&
+	scalar list >scalar.repos &&
+	test_cmp expect scalar.repos
 '
 
 test_expect_success 'scalar delete without enlistment shows a usage' '

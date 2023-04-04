@@ -47,7 +47,7 @@ int cmd_range_diff(int argc, const char **argv, const char *prefix)
 
 	repo_diff_setup(the_repository, &diffopt);
 
-	options = parse_options_concat(range_diff_options, diffopt.parseopts);
+	options = add_diff_options(range_diff_options, &diffopt);
 	argc = parse_options(argc, argv, prefix, options,
 			     builtin_range_diff_usage, PARSE_OPT_KEEP_DASHDASH);
 

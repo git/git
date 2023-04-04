@@ -1,4 +1,5 @@
 #include "builtin.h"
+#include "alloc.h"
 #include "config.h"
 #include "parse-options.h"
 #include "fsmonitor.h"
@@ -710,6 +711,7 @@ static int do_handle_client(struct fsmonitor_daemon_state *state,
 				  "fsmonitor: unsupported V1 protocol '%s'"),
 				 command);
 		do_trivial = 1;
+		do_cookie = 1;
 
 	} else {
 		/* We have "builtin:*" */
@@ -719,6 +721,7 @@ static int do_handle_client(struct fsmonitor_daemon_state *state,
 					 "fsmonitor: invalid V2 protocol token '%s'",
 					 command);
 			do_trivial = 1;
+			do_cookie = 1;
 
 		} else {
 			/*
@@ -1209,7 +1212,7 @@ static int fsmonitor_run_daemon_1(struct fsmonitor_daemon_state *state)
 	 * events.
 	 */
 	if (pthread_create(&state->listener_thread, NULL,
-			   fsm_listen__thread_proc, state) < 0) {
+			   fsm_listen__thread_proc, state)) {
 		ipc_server_stop_async(state->ipc_server_data);
 		err = error(_("could not start fsmonitor listener thread"));
 		goto cleanup;
@@ -1220,7 +1223,7 @@ static int fsmonitor_run_daemon_1(struct fsmonitor_daemon_state *state)
 	 * Start the health thread to watch over our process.
 	 */
 	if (pthread_create(&state->health_thread, NULL,
-			   fsm_health__thread_proc, state) < 0) {
+			   fsm_health__thread_proc, state)) {
 		ipc_server_stop_async(state->ipc_server_data);
 		err = error(_("could not start fsmonitor health thread"));
 		goto cleanup;

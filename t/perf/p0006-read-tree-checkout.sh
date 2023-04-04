@@ -49,6 +49,14 @@ test_perf "read-tree br_base br_ballast ($nr_files)" '
 	git read-tree -n -m br_base br_ballast
 '
 
+test_perf "read-tree br_ballast_plus_1 ($nr_files)" '
+	# Run read-tree 100 times for clearer performance results & comparisons
+	for i in  $(test_seq 100)
+	do
+		git read-tree -n -m br_ballast_plus_1 || return 1
+	done
+'
+
 test_perf "switch between br_base br_ballast ($nr_files)" '
 	git checkout -q br_base &&
 	git checkout -q br_ballast

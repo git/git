@@ -1,5 +1,7 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "config.h"
+#include "hex.h"
 #include "remote.h"
 #include "connect.h"
 #include "strbuf.h"
@@ -472,10 +474,11 @@ static struct discovery *discover_refs(const char *service, int for_push)
 
 	/*
 	 * NEEDSWORK: If we are trying to use protocol v2 and we are planning
-	 * to perform a push, then fallback to v0 since the client doesn't know
-	 * how to push yet using v2.
+	 * to perform any operation that doesn't involve upload-pack (i.e., a
+	 * fetch, ls-remote, etc), then fallback to v0 since we don't know how
+	 * to do anything else (like push or remote archive) via v2.
 	 */
-	if (version == protocol_v2 && !strcmp("git-receive-pack", service))
+	if (version == protocol_v2 && strcmp("git-upload-pack", service))
 		version = protocol_v0;
 
 	/* Add the extra Git-Protocol header */
@@ -717,25 +720,23 @@ static size_t rpc_out(void *ptr, size_t eltsize,
 	return avail;
 }
 
-static curlioerr rpc_ioctl(CURL *handle, int cmd, void *clientp)
+static int rpc_seek(void *clientp, curl_off_t offset, int origin)
 {
 	struct rpc_state *rpc = clientp;
 
-	switch (cmd) {
-	case CURLIOCMD_NOP:
-		return CURLIOE_OK;
+	if (origin != SEEK_SET)
+		BUG("rpc_seek only handles SEEK_SET, not %d", origin);
 
-	case CURLIOCMD_RESTARTREAD:
-		if (rpc->initial_buffer) {
-			rpc->pos = 0;
-			return CURLIOE_OK;
+	if (rpc->initial_buffer) {
+		if (offset < 0 || offset > rpc->len) {
+			error("curl seek would be outside of rpc buffer");
+			return CURL_SEEKFUNC_FAIL;
 		}
-		error(_("unable to rewind rpc post data - try increasing http.postBuffer"));
-		return CURLIOE_FAILRESTART;
-
-	default:
-		return CURLIOE_UNKNOWNCMD;
+		rpc->pos = offset;
+		return CURL_SEEKFUNC_OK;
 	}
+	error(_("unable to rewind rpc post data - try increasing http.postBuffer"));
+	return CURL_SEEKFUNC_FAIL;
 }
 
 struct check_pktline_state {
@@ -959,8 +960,8 @@ retry:
 		rpc->initial_buffer = 1;
 		curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, rpc_out);
 		curl_easy_setopt(slot->curl, CURLOPT_INFILE, rpc);
-		curl_easy_setopt(slot->curl, CURLOPT_IOCTLFUNCTION, rpc_ioctl);
-		curl_easy_setopt(slot->curl, CURLOPT_IOCTLDATA, rpc);
+		curl_easy_setopt(slot->curl, CURLOPT_SEEKFUNCTION, rpc_seek);
+		curl_easy_setopt(slot->curl, CURLOPT_SEEKDATA, rpc);
 		if (options.verbosity > 1) {
 			fprintf(stderr, "POST %s (chunked)\n", rpc->service_name);
 			fflush(stderr);

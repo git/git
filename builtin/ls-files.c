@@ -89,12 +89,15 @@ static void write_name(const char *name)
 
 static void write_name_to_buf(struct strbuf *sb, const char *name)
 {
-	const char *rel = relative_path(name, prefix_len ? prefix : NULL, sb);
+	struct strbuf buf = STRBUF_INIT;
+	const char *rel = relative_path(name, prefix_len ? prefix : NULL, &buf);
 
 	if (line_terminator)
 		quote_c_style(rel, sb, NULL, 0);
 	else
 		strbuf_addstr(sb, rel);
+
+	strbuf_release(&buf);
 }
 
 static const char *get_tag(const struct cache_entry *ce, const char *tag)
@@ -613,6 +616,7 @@ void overlay_tree_on_index(struct index_state *istate,
 	if (!fn)
 		fn = read_one_entry_quick;
 	err = read_tree(the_repository, tree, &pathspec, fn, istate);
+	clear_pathspec(&pathspec);
 	if (err)
 		die("unable to read tree entries %s", tree_name);
 

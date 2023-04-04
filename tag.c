@@ -6,6 +6,7 @@
 #include "blob.h"
 #include "alloc.h"
 #include "gpg-interface.h"
+#include "hex.h"
 #include "packfile.h"
 
 const char *tag_type = "tag";

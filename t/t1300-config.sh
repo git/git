@@ -2228,6 +2228,12 @@ test_expect_success '--type rejects unknown specifiers' '
 	test_i18ngrep "unrecognized --type argument" error
 '
 
+test_expect_success '--type=int requires at least one digit' '
+	test_must_fail git config --type int --default m some.key >out 2>error &&
+	grep "bad numeric config value" error &&
+	test_must_be_empty out
+'
+
 test_expect_success '--replace-all does not invent newlines' '
 	q_to_tab >.git/config <<-\EOF &&
 	[abc]key

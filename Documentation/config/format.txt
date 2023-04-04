@@ -3,7 +3,8 @@ format.attach::
 	'format-patch'.  The value can also be a double quoted string
 	which will enable attachments as the default and set the
 	value as the boundary.  See the --attach option in
-	linkgit:git-format-patch[1].
+	linkgit:git-format-patch[1].  To countermand an earlier
+	value, set it to an empty string.
 
 format.from::
 	Provides the default value for the `--from` option to format-patch.
@@ -139,3 +140,14 @@ For example,
 ------------
 +
 will only show notes from `refs/notes/bar`.
+
+format.mboxrd::
+	A boolean value which enables the robust "mboxrd" format when
+	`--stdout` is in use to escape "^>+From " lines.
+
+format.noprefix::
+	If set, do not show any source or destination prefix in patches.
+	This is equivalent to the `diff.noprefix` option used by `git
+	diff` (but which is not respected by `format-patch`). Note that
+	by setting this, the receiver of any patches you generate will
+	have to apply them using the `-p0` option.

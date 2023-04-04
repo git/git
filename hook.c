@@ -1,7 +1,10 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "advice.h"
+#include "gettext.h"
 #include "hook.h"
 #include "run-command.h"
 #include "config.h"
+#include "strbuf.h"
 
 const char *find_hook(const char *name)
 {
@@ -43,9 +46,9 @@ int hook_exists(const char *name)
 }
 
 static int pick_next_hook(struct child_process *cp,
-			  struct strbuf *out,
+			  struct strbuf *out UNUSED,
 			  void *pp_cb,
-			  void **pp_task_cb)
+			  void **pp_task_cb UNUSED)
 {
 	struct hook_cb_data *hook_cb = pp_cb;
 	const char *hook_path = hook_cb->hook_path;
@@ -55,6 +58,11 @@ static int pick_next_hook(struct child_process *cp,
 
 	cp->no_stdin = 1;
 	strvec_pushv(&cp->env, hook_cb->options->env.v);
+	/* reopen the file for stdin; run_command closes it. */
+	if (hook_cb->options->path_to_stdin) {
+		cp->no_stdin = 0;
+		cp->in = xopen(hook_cb->options->path_to_stdin, O_RDONLY);
+	}
 	cp->stdout_to_stderr = 1;
 	cp->trace2_hook_name = hook_cb->hook_name;
 	cp->dir = hook_cb->options->dir;
@@ -72,9 +80,9 @@ static int pick_next_hook(struct child_process *cp,
 	return 1;
 }
 
-static int notify_start_failure(struct strbuf *out,
+static int notify_start_failure(struct strbuf *out UNUSED,
 				void *pp_cb,
-				void *pp_task_cp)
+				void *pp_task_cp UNUSED)
 {
 	struct hook_cb_data *hook_cb = pp_cb;
 
@@ -84,9 +92,9 @@ static int notify_start_failure(struct strbuf *out,
 }
 
 static int notify_hook_finished(int result,
-				struct strbuf *out,
+				struct strbuf *out UNUSED,
 				void *pp_cb,
-				void *pp_task_cb)
+				void *pp_task_cb UNUSED)
 {
 	struct hook_cb_data *hook_cb = pp_cb;
 	struct run_hooks_opt *opt = hook_cb->options;

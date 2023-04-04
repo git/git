@@ -270,7 +270,7 @@ test_expect_success GPGSSH 'detect fudged signature with NUL' '
 	git cat-file commit seventh-signed >raw &&
 	cat raw >forged2 &&
 	echo Qwik | tr "Q" "\000" >>forged2 &&
-	git hash-object -w -t commit forged2 >forged2.commit &&
+	git hash-object --literally -w -t commit forged2 >forged2.commit &&
 	test_must_fail git verify-commit $(cat forged2.commit) &&
 	git show --pretty=short --show-signature $(cat forged2.commit) >actual2 &&
 	grep "${GPGSSH_BAD_SIGNATURE}" actual2 &&

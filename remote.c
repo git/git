@@ -1,5 +1,7 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "config.h"
+#include "hex.h"
 #include "remote.h"
 #include "urlmatch.h"
 #include "refs.h"
@@ -15,6 +17,7 @@
 #include "commit-reach.h"
 #include "advice.h"
 #include "connect.h"
+#include "parse-options.h"
 
 enum map_direction { FROM_SRC, FROM_DST };
 

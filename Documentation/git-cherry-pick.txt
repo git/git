@@ -219,7 +219,7 @@ again, this time exercising more care about matching up context lines.
 ------------
 $ git cherry-pick topic^             <1>
 $ git diff                           <2>
-$ git reset --merge ORIG_HEAD        <3>
+$ git cherry-pick --abort            <3>
 $ git cherry-pick -Xpatience topic^  <4>
 ------------
 <1> apply the change that would be shown by `git show topic^`.

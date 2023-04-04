@@ -146,4 +146,33 @@ test_expect_success 'tracking info copied with autoSetupMerge=inherit' '
 	test_cmp_config "" --default "" branch.main2.merge
 '
 
+test_expect_success 'switch back when temporarily detached and checked out elsewhere ' '
+	test_when_finished "
+		git worktree remove wt1 ||:
+		git worktree remove wt2 ||:
+		git checkout - ||:
+		git branch -D shared ||:
+	" &&
+	git checkout -b shared &&
+	test_commit shared-first &&
+	HASH1=$(git rev-parse --verify HEAD) &&
+	test_commit shared-second &&
+	test_commit shared-third &&
+	HASH2=$(git rev-parse --verify HEAD) &&
+	git worktree add wt1 -f shared &&
+	git -C wt1 bisect start &&
+	git -C wt1 bisect good $HASH1 &&
+	git -C wt1 bisect bad $HASH2 &&
+	git worktree add wt2 -f shared &&
+	git -C wt2 bisect start &&
+	git -C wt2 bisect good $HASH1 &&
+	git -C wt2 bisect bad $HASH2 &&
+	# we test in both worktrees to ensure that works
+	# as expected with "first" and "next" worktrees
+	test_must_fail git -C wt1 switch shared &&
+	git -C wt1 switch --ignore-other-worktrees shared &&
+	test_must_fail git -C wt2 switch shared &&
+	git -C wt2 switch --ignore-other-worktrees shared
+'
+
 test_done

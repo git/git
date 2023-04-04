@@ -38,7 +38,7 @@ struct git_istream {
 
 	union {
 		struct {
-			char *buf; /* from read_object() */
+			char *buf; /* from oid_object_info_extended() */
 			unsigned long read_ptr;
 		} incore;
 
@@ -388,12 +388,17 @@ static ssize_t read_istream_incore(struct git_istream *st, char *buf, size_t sz)
 static int open_istream_incore(struct git_istream *st, struct repository *r,
 			       const struct object_id *oid, enum object_type *type)
 {
-	st->u.incore.buf = read_object_file_extended(r, oid, type, &st->size, 0);
+	struct object_info oi = OBJECT_INFO_INIT;
+
 	st->u.incore.read_ptr = 0;
 	st->close = close_istream_incore;
 	st->read = read_istream_incore;
 
-	return st->u.incore.buf ? 0 : -1;
+	oi.typep = type;
+	oi.sizep = &st->size;
+	oi.contentp = (void **)&st->u.incore.buf;
+	return oid_object_info_extended(r, oid, &oi,
+					OBJECT_INFO_DIE_IF_CORRUPT);
 }
 
 /*****************************************************************************

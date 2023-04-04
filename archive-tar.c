@@ -1,8 +1,10 @@
 /*
  * Copyright (c) 2005, 2006 Rene Scharfe
  */
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "config.h"
+#include "hex.h"
 #include "tar.h"
 #include "archive.h"
 #include "object-store.h"
@@ -498,6 +500,7 @@ static int write_tar_filter_archive(const struct archiver *ar,
 	strvec_push(&filter.args, cmd.buf);
 	filter.use_shell = 1;
 	filter.in = -1;
+	filter.silent_exec_failure = 1;
 
 	if (start_command(&filter) < 0)
 		die_errno(_("unable to start '%s' filter"), cmd.buf);

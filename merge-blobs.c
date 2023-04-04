@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "run-command.h"
 #include "xdiff-interface.h"
 #include "ll-merge.h"

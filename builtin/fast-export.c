@@ -6,6 +6,7 @@
 #include "builtin.h"
 #include "cache.h"
 #include "config.h"
+#include "hex.h"
 #include "refs.h"
 #include "refspec.h"
 #include "object-store.h"
@@ -409,7 +410,7 @@ static const char *anonymize_oid(const char *oid_hex)
 }
 
 static void show_filemodify(struct diff_queue_struct *q,
-			    struct diff_options *options, void *data)
+			    struct diff_options *options UNUSED, void *data)
 {
 	int i;
 	struct string_list *changed = data;

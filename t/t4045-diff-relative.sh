@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='diff --relative tests'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -161,6 +163,35 @@ check_diff_relative_option subdir file2 false --no-relative --relative
 check_diff_relative_option subdir file2 true --no-relative --relative
 check_diff_relative_option . file2 false --no-relative --relative=subdir
 check_diff_relative_option . file2 true --no-relative --relative=subdir
+
+test_expect_success 'external diff with --relative' '
+	test_when_finished "git reset --hard" &&
+	echo changed >file1 &&
+	echo changed >subdir/file2 &&
+
+	write_script mydiff <<-\EOF &&
+	# hacky pretend diff; the goal here is just to make sure we got
+	# passed sensible input that we _could_ diff, without relying on
+	# the specific output of a system diff tool.
+	echo "diff a/$1 b/$1" &&
+	echo "--- a/$1" &&
+	echo "+++ b/$1" &&
+	echo "@@ -1 +0,0 @@" &&
+	sed "s/^/-/" "$2" &&
+	sed "s/^/+/" "$5"
+	EOF
+
+	cat >expect <<-\EOF &&
+	diff a/file2 b/file2
+	--- a/file2
+	+++ b/file2
+	@@ -1 +0,0 @@
+	-other content
+	+changed
+	EOF
+	GIT_EXTERNAL_DIFF=./mydiff git diff --relative=subdir >actual &&
+	test_cmp expect actual
+'
 
 test_expect_success 'setup diff --relative unmerged' '
 	test_commit zero file0 &&

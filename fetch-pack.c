@@ -1,6 +1,8 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "repository.h"
 #include "config.h"
+#include "hex.h"
 #include "lockfile.h"
 #include "refs.h"
 #include "pkt-line.h"
@@ -722,7 +724,7 @@ static void filter_refs(struct fetch_pack_args *args,
 	*refs = newlist;
 }
 
-static void mark_alternate_complete(struct fetch_negotiator *unused,
+static void mark_alternate_complete(struct fetch_negotiator *negotiator UNUSED,
 				    struct object *obj)
 {
 	mark_complete(&obj->oid);
@@ -1317,15 +1319,15 @@ static void write_fetch_command_and_capabilities(struct strbuf *req_buf,
 {
 	const char *hash_name;
 
-	if (server_supports_v2("fetch", 1))
-		packet_buf_write(req_buf, "command=fetch");
-	if (server_supports_v2("agent", 0))
+	ensure_server_supports_v2("fetch");
+	packet_buf_write(req_buf, "command=fetch");
+	if (server_supports_v2("agent"))
 		packet_buf_write(req_buf, "agent=%s", git_user_agent_sanitized());
-	if (advertise_sid && server_supports_v2("session-id", 0))
+	if (advertise_sid && server_supports_v2("session-id"))
 		packet_buf_write(req_buf, "session-id=%s", trace2_session_id());
-	if (server_options && server_options->nr &&
-	    server_supports_v2("server-option", 1)) {
+	if (server_options && server_options->nr) {
 		int i;
+		ensure_server_supports_v2("server-option");
 		for (i = 0; i < server_options->nr; i++)
 			packet_buf_write(req_buf, "server-option=%s",
 					 server_options->items[i].string);

@@ -1,5 +1,7 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "config.h"
+#include "hex.h"
 #include "repository.h"
 #include "refs.h"
 #include "pkt-line.h"
@@ -524,7 +526,7 @@ static int show_text_ref(const char *name, const struct object_id *oid,
 	return 0;
 }
 
-static void get_info_refs(struct strbuf *hdr, char *arg)
+static void get_info_refs(struct strbuf *hdr, char *arg UNUSED)
 {
 	const char *service_name = get_parameter("service");
 	struct strbuf buf = STRBUF_INIT;
@@ -578,7 +580,7 @@ static int show_head_ref(const char *refname, const struct object_id *oid,
 	return 0;
 }
 
-static void get_head(struct strbuf *hdr, char *arg)
+static void get_head(struct strbuf *hdr, char *arg UNUSED)
 {
 	struct strbuf buf = STRBUF_INIT;
 
@@ -588,7 +590,7 @@ static void get_head(struct strbuf *hdr, char *arg)
 	strbuf_release(&buf);
 }
 
-static void get_info_packs(struct strbuf *hdr, char *arg)
+static void get_info_packs(struct strbuf *hdr, char *arg UNUSED)
 {
 	size_t objdirlen = strlen(get_object_directory());
 	struct strbuf buf = STRBUF_INIT;
@@ -736,7 +738,7 @@ static int bad_request(struct strbuf *hdr, const struct service_cmd *c)
 	return 0;
 }
 
-int cmd_main(int argc, const char **argv)
+int cmd_main(int argc UNUSED, const char **argv UNUSED)
 {
 	char *method = getenv("REQUEST_METHOD");
 	const char *proto_header;
@@ -759,10 +761,14 @@ int cmd_main(int argc, const char **argv)
 		struct service_cmd *c = &services[i];
 		regex_t re;
 		regmatch_t out[1];
+		int ret;
 
 		if (regcomp(&re, c->pattern, REG_EXTENDED))
 			die("Bogus regex in service table: %s", c->pattern);
-		if (!regexec(&re, dir, 1, out, 0)) {
+		ret = regexec(&re, dir, 1, out, 0);
+		regfree(&re);
+
+		if (!ret) {
 			size_t n;
 
 			if (strcmp(method, c->method))
@@ -774,7 +780,6 @@ int cmd_main(int argc, const char **argv)
 			dir[out[0].rm_so] = 0;
 			break;
 		}
-		regfree(&re);
 	}
 
 	if (!cmd)
@@ -786,6 +791,7 @@ int cmd_main(int argc, const char **argv)
 	if (!getenv("GIT_HTTP_EXPORT_ALL") &&
 	    access("git-daemon-export-ok", F_OK) )
 		not_found(&hdr, "Repository not exported: '%s'", dir);
+	free(dir);
 
 	http_config();
 	max_request_buffer = git_env_ulong("GIT_HTTP_MAX_REQUEST_BUFFER",
@@ -795,5 +801,6 @@ int cmd_main(int argc, const char **argv)
 		setenv(GIT_PROTOCOL_ENVIRONMENT, proto_header, 0);
 
 	cmd->imp(&hdr, cmd_arg);
+	free(cmd_arg);
 	return 0;
 }

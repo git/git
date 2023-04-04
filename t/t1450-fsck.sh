@@ -212,7 +212,7 @@ test_expect_success 'email without @ is okay' '
 test_expect_success 'email with embedded > is not okay' '
 	git cat-file commit HEAD >basis &&
 	sed "s/@[a-z]/&>/" basis >bad-email &&
-	new=$(git hash-object -t commit -w --stdin <bad-email) &&
+	new=$(git hash-object --literally -t commit -w --stdin <bad-email) &&
 	test_when_finished "remove_object $new" &&
 	git update-ref refs/heads/bogus "$new" &&
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
@@ -223,7 +223,7 @@ test_expect_success 'email with embedded > is not okay' '
 test_expect_success 'missing < email delimiter is reported nicely' '
 	git cat-file commit HEAD >basis &&
 	sed "s/<//" basis >bad-email-2 &&
-	new=$(git hash-object -t commit -w --stdin <bad-email-2) &&
+	new=$(git hash-object --literally -t commit -w --stdin <bad-email-2) &&
 	test_when_finished "remove_object $new" &&
 	git update-ref refs/heads/bogus "$new" &&
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
@@ -234,7 +234,7 @@ test_expect_success 'missing < email delimiter is reported nicely' '
 test_expect_success 'missing email is reported nicely' '
 	git cat-file commit HEAD >basis &&
 	sed "s/[a-z]* <[^>]*>//" basis >bad-email-3 &&
-	new=$(git hash-object -t commit -w --stdin <bad-email-3) &&
+	new=$(git hash-object --literally -t commit -w --stdin <bad-email-3) &&
 	test_when_finished "remove_object $new" &&
 	git update-ref refs/heads/bogus "$new" &&
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
@@ -245,7 +245,7 @@ test_expect_success 'missing email is reported nicely' '
 test_expect_success '> in name is reported' '
 	git cat-file commit HEAD >basis &&
 	sed "s/ </> </" basis >bad-email-4 &&
-	new=$(git hash-object -t commit -w --stdin <bad-email-4) &&
+	new=$(git hash-object --literally -t commit -w --stdin <bad-email-4) &&
 	test_when_finished "remove_object $new" &&
 	git update-ref refs/heads/bogus "$new" &&
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
@@ -258,7 +258,7 @@ test_expect_success 'integer overflow in timestamps is reported' '
 	git cat-file commit HEAD >basis &&
 	sed "s/^\\(author .*>\\) [0-9]*/\\1 18446744073709551617/" \
 		<basis >bad-timestamp &&
-	new=$(git hash-object -t commit -w --stdin <bad-timestamp) &&
+	new=$(git hash-object --literally -t commit -w --stdin <bad-timestamp) &&
 	test_when_finished "remove_object $new" &&
 	git update-ref refs/heads/bogus "$new" &&
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
@@ -269,7 +269,7 @@ test_expect_success 'integer overflow in timestamps is reported' '
 test_expect_success 'commit with NUL in header' '
 	git cat-file commit HEAD >basis &&
 	sed "s/author ./author Q/" <basis | q_to_nul >commit-NUL-header &&
-	new=$(git hash-object -t commit -w --stdin <commit-NUL-header) &&
+	new=$(git hash-object --literally -t commit -w --stdin <commit-NUL-header) &&
 	test_when_finished "remove_object $new" &&
 	git update-ref refs/heads/bogus "$new" &&
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
@@ -292,7 +292,7 @@ test_expect_success 'tree object with duplicate entries' '
 			git cat-file tree $T &&
 			git cat-file tree $T
 		) |
-		git hash-object -w -t tree --stdin
+		git hash-object --literally -w -t tree --stdin
 	) &&
 	test_must_fail git fsck 2>out &&
 	test_i18ngrep "error in tree .*contains duplicate file entries" out
@@ -426,7 +426,7 @@ test_expect_success 'tag with incorrect tag name & missing tagger' '
 	This is an invalid tag.
 	EOF
 
-	tag=$(git hash-object -t tag -w --stdin <wrong-tag) &&
+	tag=$(git hash-object --literally -t tag -w --stdin <wrong-tag) &&
 	test_when_finished "remove_object $tag" &&
 	echo $tag >.git/refs/tags/wrong &&
 	test_when_finished "git update-ref -d refs/tags/wrong" &&
@@ -558,7 +558,7 @@ test_expect_success 'rev-list --verify-objects with commit graph (parent)' '
 test_expect_success 'force fsck to ignore double author' '
 	git cat-file commit HEAD >basis &&
 	sed "s/^author .*/&,&/" <basis | tr , \\n >multiple-authors &&
-	new=$(git hash-object -t commit -w --stdin <multiple-authors) &&
+	new=$(git hash-object --literally -t commit -w --stdin <multiple-authors) &&
 	test_when_finished "remove_object $new" &&
 	git update-ref refs/heads/bogus "$new" &&
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
@@ -573,7 +573,7 @@ test_expect_success 'fsck notices blob entry pointing to null sha1' '
 	(git init null-blob &&
 	 cd null-blob &&
 	 sha=$(printf "100644 file$_bz$_bzoid" |
-	       git hash-object -w --stdin -t tree) &&
+	       git hash-object --literally -w --stdin -t tree) &&
 	  git fsck 2>out &&
 	  test_i18ngrep "warning.*null sha1" out
 	)
@@ -583,7 +583,7 @@ test_expect_success 'fsck notices submodule entry pointing to null sha1' '
 	(git init null-commit &&
 	 cd null-commit &&
 	 sha=$(printf "160000 submodule$_bz$_bzoid" |
-	       git hash-object -w --stdin -t tree) &&
+	       git hash-object --literally -w --stdin -t tree) &&
 	  git fsck 2>out &&
 	  test_i18ngrep "warning.*null sha1" out
 	)
@@ -648,7 +648,7 @@ test_expect_success 'NUL in commit' '
 		git commit --allow-empty -m "initial commitQNUL after message" &&
 		git cat-file commit HEAD >original &&
 		q_to_nul <original >munged &&
-		git hash-object -w -t commit --stdin <munged >name &&
+		git hash-object --literally -w -t commit --stdin <munged >name &&
 		git branch bad $(cat name) &&
 
 		test_must_fail git -c fsck.nulInCommit=error fsck 2>warn.1 &&
@@ -794,8 +794,8 @@ test_expect_success 'fsck errors in packed objects' '
 	git cat-file commit HEAD >basis &&
 	sed "s/</one/" basis >one &&
 	sed "s/</foo/" basis >two &&
-	one=$(git hash-object -t commit -w one) &&
-	two=$(git hash-object -t commit -w two) &&
+	one=$(git hash-object --literally -t commit -w one) &&
+	two=$(git hash-object --literally -t commit -w two) &&
 	pack=$(
 		{
 			echo $one &&
@@ -997,6 +997,60 @@ test_expect_success 'fsck error and recovery on invalid object type' '
 		test_line_count = 1 errors &&
 		grep "$garbage_blob: object is of unknown type '"'"'garbage'"'"':" err
 	)
+'
+
+test_expect_success 'fsck error on gitattributes with excessive line lengths' '
+	blob=$(printf "pattern %02048d" 1 | git hash-object -w --stdin) &&
+	test_when_finished "remove_object $blob" &&
+	tree=$(printf "100644 blob %s\t%s\n" $blob .gitattributes | git mktree) &&
+	test_when_finished "remove_object $tree" &&
+	cat >expected <<-EOF &&
+	error in blob $blob: gitattributesLineLength: .gitattributes has too long lines to parse
+	EOF
+	test_must_fail git fsck --no-dangling >actual 2>&1 &&
+	test_cmp expected actual
+'
+
+test_expect_success 'fsck error on gitattributes with excessive size' '
+	blob=$(test-tool genzeros $((100 * 1024 * 1024 + 1)) | git hash-object -w --stdin) &&
+	test_when_finished "remove_object $blob" &&
+	tree=$(printf "100644 blob %s\t%s\n" $blob .gitattributes | git mktree) &&
+	test_when_finished "remove_object $tree" &&
+	cat >expected <<-EOF &&
+	error in blob $blob: gitattributesLarge: .gitattributes too large to parse
+	EOF
+	test_must_fail git fsck --no-dangling >actual 2>&1 &&
+	test_cmp expected actual
+'
+
+test_expect_success 'fsck detects problems in worktree index' '
+	test_when_finished "git worktree remove -f wt" &&
+	git worktree add wt &&
+
+	echo "this will be removed to break the worktree index" >wt/file &&
+	git -C wt add file &&
+	blob=$(git -C wt rev-parse :file) &&
+	remove_object $blob &&
+
+	test_must_fail git fsck --name-objects >actual 2>&1 &&
+	cat >expect <<-EOF &&
+	missing blob $blob (.git/worktrees/wt/index:file)
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'fsck reports problems in main index without filename' '
+	test_when_finished "rm -f .git/index && git read-tree HEAD" &&
+	echo "this object will be removed to break the main index" >file &&
+	git add file &&
+	blob=$(git rev-parse :file) &&
+	remove_object $blob &&
+
+	test_must_fail git fsck --name-objects >actual 2>&1 &&
+	cat >expect <<-EOF &&
+	missing blob $blob (:file)
+	EOF
+	test_cmp expect actual
 '
 
 test_done

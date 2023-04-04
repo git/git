@@ -545,7 +545,7 @@ static void NORETURN unsupported_magic(const char *pattern,
 	}
 	/*
 	 * We may want to substitute "this command" with a command
-	 * name. E.g. when add--interactive dies when running
+	 * name. E.g. when "git add -p" or "git add -i" dies when running
 	 * "checkout -p"
 	 */
 	die(_("%s: pathspec magic not supported by this command: %s"),
@@ -681,8 +681,7 @@ void copy_pathspec(struct pathspec *dst, const struct pathspec *src)
 	int i, j;
 
 	*dst = *src;
-	ALLOC_ARRAY(dst->items, dst->nr);
-	COPY_ARRAY(dst->items, src->items, dst->nr);
+	DUP_ARRAY(dst->items, src->items, dst->nr);
 
 	for (i = 0; i < dst->nr; i++) {
 		struct pathspec_item *d = &dst->items[i];
@@ -691,8 +690,7 @@ void copy_pathspec(struct pathspec *dst, const struct pathspec *src)
 		d->match = xstrdup(s->match);
 		d->original = xstrdup(s->original);
 
-		ALLOC_ARRAY(d->attr_match, d->attr_match_nr);
-		COPY_ARRAY(d->attr_match, s->attr_match, d->attr_match_nr);
+		DUP_ARRAY(d->attr_match, s->attr_match, d->attr_match_nr);
 		for (j = 0; j < d->attr_match_nr; j++) {
 			const char *value = s->attr_match[j].value;
 			d->attr_match[j].value = xstrdup_or_null(value);
@@ -732,7 +730,7 @@ int match_pathspec_attrs(struct index_state *istate,
 	if (name[namelen])
 		name = to_free = xmemdupz(name, namelen);
 
-	git_check_attr(istate, name, item->attr_check);
+	git_check_attr(istate, NULL, name, item->attr_check);
 
 	free(to_free);
 

@@ -130,7 +130,8 @@ World
 EOF
 
 test_expect_success 'run_command runs in parallel with more jobs available than tasks' '
-	test-tool run-command run-command-parallel 5 sh -c "printf \"%s\n%s\n\" Hello World" 2>actual &&
+	test-tool run-command run-command-parallel 5 sh -c "printf \"%s\n%s\n\" Hello World" >out 2>actual &&
+	test_must_be_empty out &&
 	test_cmp expect actual
 '
 
@@ -141,7 +142,8 @@ test_expect_success 'run_command runs ungrouped in parallel with more jobs avail
 '
 
 test_expect_success 'run_command runs in parallel with as many jobs as tasks' '
-	test-tool run-command run-command-parallel 4 sh -c "printf \"%s\n%s\n\" Hello World" 2>actual &&
+	test-tool run-command run-command-parallel 4 sh -c "printf \"%s\n%s\n\" Hello World" >out 2>actual &&
+	test_must_be_empty out &&
 	test_cmp expect actual
 '
 
@@ -152,7 +154,8 @@ test_expect_success 'run_command runs ungrouped in parallel with as many jobs as
 '
 
 test_expect_success 'run_command runs in parallel with more tasks than jobs available' '
-	test-tool run-command run-command-parallel 3 sh -c "printf \"%s\n%s\n\" Hello World" 2>actual &&
+	test-tool run-command run-command-parallel 3 sh -c "printf \"%s\n%s\n\" Hello World" >out 2>actual &&
+	test_must_be_empty out &&
 	test_cmp expect actual
 '
 
@@ -172,7 +175,8 @@ asking for a quick stop
 EOF
 
 test_expect_success 'run_command is asked to abort gracefully' '
-	test-tool run-command run-command-abort 3 false 2>actual &&
+	test-tool run-command run-command-abort 3 false >out 2>actual &&
+	test_must_be_empty out &&
 	test_cmp expect actual
 '
 
@@ -187,7 +191,8 @@ no further jobs available
 EOF
 
 test_expect_success 'run_command outputs ' '
-	test-tool run-command run-command-no-jobs 3 sh -c "printf \"%s\n%s\n\" Hello World" 2>actual &&
+	test-tool run-command run-command-no-jobs 3 sh -c "printf \"%s\n%s\n\" Hello World" >out 2>actual &&
+	test_must_be_empty out &&
 	test_cmp expect actual
 '
 

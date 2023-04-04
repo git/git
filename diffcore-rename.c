@@ -2,14 +2,19 @@
  *
  * Copyright (C) 2005 Junio C Hamano
  */
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "diff.h"
 #include "diffcore.h"
 #include "object-store.h"
 #include "hashmap.h"
+#include "mem-pool.h"
+#include "oid-array.h"
 #include "progress.h"
 #include "promisor-remote.h"
+#include "string-list.h"
 #include "strmap.h"
+#include "trace2.h"
 
 /* Table of rename/copy destinations */
 

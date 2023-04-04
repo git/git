@@ -1,4 +1,6 @@
 #include "builtin.h"
+#include "alloc.h"
+#include "hex.h"
 #include "pkt-line.h"
 #include "fetch-pack.h"
 #include "remote.h"
@@ -211,8 +213,8 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 		int flags = args.verbose ? CONNECT_VERBOSE : 0;
 		if (args.diag_url)
 			flags |= CONNECT_DIAG_URL;
-		conn = git_connect(fd, dest, args.uploadpack,
-				   flags);
+		conn = git_connect(fd, dest, "git-upload-pack",
+				   args.uploadpack, flags);
 		if (!conn)
 			return args.diag_url ? 0 : 1;
 	}

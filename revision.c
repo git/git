@@ -1,4 +1,7 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
+#include "config.h"
+#include "hex.h"
 #include "object-store.h"
 #include "tag.h"
 #include "blob.h"
@@ -34,6 +37,7 @@
 #include "json-writer.h"
 #include "list-objects-filter-options.h"
 #include "resolve-undo.h"
+#include "parse-options.h"
 
 volatile show_early_output_fn_t show_early_output;
 
@@ -599,10 +603,12 @@ static struct commit *one_relevant_parent(const struct rev_info *revs,
 static int tree_difference = REV_TREE_SAME;
 
 static void file_add_remove(struct diff_options *options,
-		    int addremove, unsigned mode,
-		    const struct object_id *oid,
-		    int oid_valid,
-		    const char *fullpath, unsigned dirty_submodule)
+		    int addremove,
+		    unsigned mode UNUSED,
+		    const struct object_id *oid UNUSED,
+		    int oid_valid UNUSED,
+		    const char *fullpath UNUSED,
+		    unsigned dirty_submodule UNUSED)
 {
 	int diff = addremove == '+' ? REV_TREE_NEW : REV_TREE_OLD;
 	struct rev_info *revs = options->change_fn_data;
@@ -613,12 +619,15 @@ static void file_add_remove(struct diff_options *options,
 }
 
 static void file_change(struct diff_options *options,
-		 unsigned old_mode, unsigned new_mode,
-		 const struct object_id *old_oid,
-		 const struct object_id *new_oid,
-		 int old_oid_valid, int new_oid_valid,
-		 const char *fullpath,
-		 unsigned old_dirty_submodule, unsigned new_dirty_submodule)
+		 unsigned old_mode UNUSED,
+		 unsigned new_mode UNUSED,
+		 const struct object_id *old_oid UNUSED,
+		 const struct object_id *new_oid UNUSED,
+		 int old_oid_valid UNUSED,
+		 int new_oid_valid UNUSED,
+		 const char *fullpath UNUSED,
+		 unsigned old_dirty_submodule UNUSED,
+		 unsigned new_dirty_submodule UNUSED)
 {
 	tree_difference = REV_TREE_DIFFERENT;
 	options->flags.has_changes = 1;
@@ -1517,6 +1526,70 @@ static void add_rev_cmdline_list(struct rev_info *revs,
 	}
 }
 
+int ref_excluded(const struct ref_exclusions *exclusions, const char *path)
+{
+	const char *stripped_path = strip_namespace(path);
+	struct string_list_item *item;
+
+	for_each_string_list_item(item, &exclusions->excluded_refs) {
+		if (!wildmatch(item->string, path, 0))
+			return 1;
+	}
+
+	if (ref_is_hidden(stripped_path, path, &exclusions->hidden_refs))
+		return 1;
+
+	return 0;
+}
+
+void init_ref_exclusions(struct ref_exclusions *exclusions)
+{
+	struct ref_exclusions blank = REF_EXCLUSIONS_INIT;
+	memcpy(exclusions, &blank, sizeof(*exclusions));
+}
+
+void clear_ref_exclusions(struct ref_exclusions *exclusions)
+{
+	string_list_clear(&exclusions->excluded_refs, 0);
+	string_list_clear(&exclusions->hidden_refs, 0);
+	exclusions->hidden_refs_configured = 0;
+}
+
+void add_ref_exclusion(struct ref_exclusions *exclusions, const char *exclude)
+{
+	string_list_append(&exclusions->excluded_refs, exclude);
+}
+
+struct exclude_hidden_refs_cb {
+	struct ref_exclusions *exclusions;
+	const char *section;
+};
+
+static int hide_refs_config(const char *var, const char *value, void *cb_data)
+{
+	struct exclude_hidden_refs_cb *cb = cb_data;
+	cb->exclusions->hidden_refs_configured = 1;
+	return parse_hide_refs_config(var, value, cb->section,
+				      &cb->exclusions->hidden_refs);
+}
+
+void exclude_hidden_refs(struct ref_exclusions *exclusions, const char *section)
+{
+	struct exclude_hidden_refs_cb cb;
+
+	if (strcmp(section, "fetch") && strcmp(section, "receive") &&
+			strcmp(section, "uploadpack"))
+		die(_("unsupported section for hidden refs: %s"), section);
+
+	if (exclusions->hidden_refs_configured)
+		die(_("--exclude-hidden= passed more than once"));
+
+	cb.exclusions = exclusions;
+	cb.section = section;
+
+	git_config(hide_refs_config, &cb);
+}
+
 struct all_refs_cb {
 	int all_flags;
 	int warned_bad_reflog;
@@ -1525,19 +1598,6 @@ struct all_refs_cb {
 	struct worktree *wt;
 };
 
-int ref_excluded(struct string_list *ref_excludes, const char *path)
-{
-	struct string_list_item *item;
-
-	if (!ref_excludes)
-		return 0;
-	for_each_string_list_item(item, ref_excludes) {
-		if (!wildmatch(item->string, path, 0))
-			return 1;
-	}
-	return 0;
-}
-
 static int handle_one_ref(const char *path, const struct object_id *oid,
 			  int flag UNUSED,
 			  void *cb_data)
@@ -1545,7 +1605,7 @@ static int handle_one_ref(const char *path, const struct object_id *oid,
 	struct all_refs_cb *cb = cb_data;
 	struct object *object;
 
-	if (ref_excluded(cb->all_revs->ref_excludes, path))
+	if (ref_excluded(&cb->all_revs->ref_excludes, path))
 	    return 0;
 
 	object = get_reference(cb->all_revs, path, oid, cb->all_flags);
@@ -1561,24 +1621,6 @@ static void init_all_refs_cb(struct all_refs_cb *cb, struct rev_info *revs,
 	cb->all_flags = flags;
 	revs->rev_input_given = 1;
 	cb->wt = NULL;
-}
-
-void clear_ref_exclusion(struct string_list **ref_excludes_p)
-{
-	if (*ref_excludes_p) {
-		string_list_clear(*ref_excludes_p, 0);
-		free(*ref_excludes_p);
-	}
-	*ref_excludes_p = NULL;
-}
-
-void add_ref_exclusion(struct string_list **ref_excludes_p, const char *exclude)
-{
-	if (!*ref_excludes_p) {
-		CALLOC_ARRAY(*ref_excludes_p, 1);
-		(*ref_excludes_p)->strdup_strings = 1;
-	}
-	string_list_append(*ref_excludes_p, exclude);
 }
 
 static void handle_refs(struct ref_store *refs,
@@ -1775,7 +1817,7 @@ void add_index_objects_to_pending(struct rev_info *revs, unsigned int flags)
 	worktrees = get_worktrees();
 	for (p = worktrees; *p; p++) {
 		struct worktree *wt = *p;
-		struct index_state istate = { NULL };
+		struct index_state istate = INDEX_STATE_INIT(revs->repo);
 
 		if (wt->is_current)
 			continue; /* current index already taken care of */
@@ -1865,30 +1907,15 @@ void repo_init_revisions(struct repository *r,
 			 struct rev_info *revs,
 			 const char *prefix)
 {
-	memset(revs, 0, sizeof(*revs));
+	struct rev_info blank = REV_INFO_INIT;
+	memcpy(revs, &blank, sizeof(*revs));
 
 	revs->repo = r;
-	revs->abbrev = DEFAULT_ABBREV;
-	revs->simplify_history = 1;
 	revs->pruning.repo = r;
-	revs->pruning.flags.recursive = 1;
-	revs->pruning.flags.quick = 1;
 	revs->pruning.add_remove = file_add_remove;
 	revs->pruning.change = file_change;
 	revs->pruning.change_fn_data = revs;
-	revs->sort_order = REV_SORT_IN_GRAPH_ORDER;
-	revs->dense = 1;
 	revs->prefix = prefix;
-	revs->max_age = -1;
-	revs->max_age_as_filter = -1;
-	revs->min_age = -1;
-	revs->skip_count = -1;
-	revs->max_count = -1;
-	revs->max_parents = -1;
-	revs->expand_tabs_in_log = -1;
-
-	revs->commit_format = CMIT_FMT_DEFAULT;
-	revs->expand_tabs_in_log_default = 8;
 
 	grep_init(&revs->grep_filter, revs->repo);
 	revs->grep_filter.status_only = 1;
@@ -1901,6 +1928,7 @@ void repo_init_revisions(struct repository *r,
 
 	init_display_notes(&revs->notes_opt);
 	list_objects_filter_init(&revs->filter);
+	init_ref_exclusions(&revs->ref_excludes);
 }
 
 static void add_pending_commit_list(struct rev_info *revs,
@@ -2225,7 +2253,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	    !strcmp(arg, "--bisect") || starts_with(arg, "--glob=") ||
 	    !strcmp(arg, "--indexed-objects") ||
 	    !strcmp(arg, "--alternate-refs") ||
-	    starts_with(arg, "--exclude=") ||
+	    starts_with(arg, "--exclude=") || starts_with(arg, "--exclude-hidden=") ||
 	    starts_with(arg, "--branches=") || starts_with(arg, "--tags=") ||
 	    starts_with(arg, "--remotes=") || starts_with(arg, "--no-walk="))
 	{
@@ -2689,10 +2717,12 @@ static int handle_revision_pseudo_opt(struct rev_info *revs,
 			init_all_refs_cb(&cb, revs, *flags);
 			other_head_refs(handle_one_ref, &cb);
 		}
-		clear_ref_exclusion(&revs->ref_excludes);
+		clear_ref_exclusions(&revs->ref_excludes);
 	} else if (!strcmp(arg, "--branches")) {
+		if (revs->ref_excludes.hidden_refs_configured)
+			return error(_("--exclude-hidden cannot be used together with --branches"));
 		handle_refs(refs, revs, *flags, refs_for_each_branch_ref);
-		clear_ref_exclusion(&revs->ref_excludes);
+		clear_ref_exclusions(&revs->ref_excludes);
 	} else if (!strcmp(arg, "--bisect")) {
 		read_bisect_terms(&term_bad, &term_good);
 		handle_refs(refs, revs, *flags, for_each_bad_bisect_ref);
@@ -2700,35 +2730,48 @@ static int handle_revision_pseudo_opt(struct rev_info *revs,
 			    for_each_good_bisect_ref);
 		revs->bisect = 1;
 	} else if (!strcmp(arg, "--tags")) {
+		if (revs->ref_excludes.hidden_refs_configured)
+			return error(_("--exclude-hidden cannot be used together with --tags"));
 		handle_refs(refs, revs, *flags, refs_for_each_tag_ref);
-		clear_ref_exclusion(&revs->ref_excludes);
+		clear_ref_exclusions(&revs->ref_excludes);
 	} else if (!strcmp(arg, "--remotes")) {
+		if (revs->ref_excludes.hidden_refs_configured)
+			return error(_("--exclude-hidden cannot be used together with --remotes"));
 		handle_refs(refs, revs, *flags, refs_for_each_remote_ref);
-		clear_ref_exclusion(&revs->ref_excludes);
+		clear_ref_exclusions(&revs->ref_excludes);
 	} else if ((argcount = parse_long_opt("glob", argv, &optarg))) {
 		struct all_refs_cb cb;
 		init_all_refs_cb(&cb, revs, *flags);
 		for_each_glob_ref(handle_one_ref, optarg, &cb);
-		clear_ref_exclusion(&revs->ref_excludes);
+		clear_ref_exclusions(&revs->ref_excludes);
 		return argcount;
 	} else if ((argcount = parse_long_opt("exclude", argv, &optarg))) {
 		add_ref_exclusion(&revs->ref_excludes, optarg);
 		return argcount;
+	} else if ((argcount = parse_long_opt("exclude-hidden", argv, &optarg))) {
+		exclude_hidden_refs(&revs->ref_excludes, optarg);
+		return argcount;
 	} else if (skip_prefix(arg, "--branches=", &optarg)) {
 		struct all_refs_cb cb;
+		if (revs->ref_excludes.hidden_refs_configured)
+			return error(_("--exclude-hidden cannot be used together with --branches"));
 		init_all_refs_cb(&cb, revs, *flags);
 		for_each_glob_ref_in(handle_one_ref, optarg, "refs/heads/", &cb);
-		clear_ref_exclusion(&revs->ref_excludes);
+		clear_ref_exclusions(&revs->ref_excludes);
 	} else if (skip_prefix(arg, "--tags=", &optarg)) {
 		struct all_refs_cb cb;
+		if (revs->ref_excludes.hidden_refs_configured)
+			return error(_("--exclude-hidden cannot be used together with --tags"));
 		init_all_refs_cb(&cb, revs, *flags);
 		for_each_glob_ref_in(handle_one_ref, optarg, "refs/tags/", &cb);
-		clear_ref_exclusion(&revs->ref_excludes);
+		clear_ref_exclusions(&revs->ref_excludes);
 	} else if (skip_prefix(arg, "--remotes=", &optarg)) {
 		struct all_refs_cb cb;
+		if (revs->ref_excludes.hidden_refs_configured)
+			return error(_("--exclude-hidden cannot be used together with --remotes"));
 		init_all_refs_cb(&cb, revs, *flags);
 		for_each_glob_ref_in(handle_one_ref, optarg, "refs/remotes/", &cb);
-		clear_ref_exclusion(&revs->ref_excludes);
+		clear_ref_exclusions(&revs->ref_excludes);
 	} else if (!strcmp(arg, "--reflog")) {
 		add_reflogs_to_pending(revs, *flags);
 	} else if (!strcmp(arg, "--indexed-objects")) {
@@ -3020,6 +3063,7 @@ void release_revisions(struct rev_info *revs)
 	date_mode_release(&revs->date_mode);
 	release_revisions_mailmap(revs->mailmap);
 	free_grep_patterns(&revs->grep_filter);
+	graph_clear(revs->graph);
 	/* TODO (need to handle "no_free"): diff_free(&revs->diffopt) */
 	diff_free(&revs->pruning);
 	reflog_walk_info_release(revs->reflog_info);
@@ -3400,8 +3444,8 @@ void reset_revision_walk(void)
 }
 
 static int mark_uninteresting(const struct object_id *oid,
-			      struct packed_git *pack,
-			      uint32_t pos,
+			      struct packed_git *pack UNUSED,
+			      uint32_t pos UNUSED,
 			      void *cb)
 {
 	struct rev_info *revs = cb;
@@ -4119,7 +4163,7 @@ static struct commit *get_revision_1(struct rev_info *revs)
  * Return true for entries that have not yet been shown.  (This is an
  * object_array_each_func_t.)
  */
-static int entry_unshown(struct object_array_entry *entry, void *cb_data_unused)
+static int entry_unshown(struct object_array_entry *entry, void *cb_data UNUSED)
 {
 	return !(entry->item->flags & SHOWN);
 }

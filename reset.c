@@ -1,5 +1,6 @@
 #include "git-compat-util.h"
 #include "cache-tree.h"
+#include "hex.h"
 #include "lockfile.h"
 #include "refs.h"
 #include "reset.h"
@@ -128,6 +129,7 @@ int reset_head(struct repository *r, const struct reset_head_opts *opts)
 	unpack_tree_opts.update = 1;
 	unpack_tree_opts.merge = 1;
 	unpack_tree_opts.preserve_ignored = 0; /* FIXME: !overwrite_ignore */
+	unpack_tree_opts.skip_cache_tree_update = 1;
 	init_checkout_metadata(&unpack_tree_opts.meta, switch_to_branch, oid, NULL);
 	if (reset_hard)
 		unpack_tree_opts.reset = UNPACK_RESET_PROTECT_UNTRACKED;

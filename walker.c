@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "hex.h"
 #include "walker.h"
 #include "repository.h"
 #include "object-store.h"

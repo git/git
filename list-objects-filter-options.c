@@ -1,6 +1,8 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "commit.h"
 #include "config.h"
+#include "gettext.h"
 #include "revision.h"
 #include "strvec.h"
 #include "list-objects.h"
@@ -9,6 +11,7 @@
 #include "promisor-remote.h"
 #include "trace.h"
 #include "url.h"
+#include "parse-options.h"
 
 static int parse_combine_filter(
 	struct list_objects_filter_options *filter_options,
@@ -290,10 +293,6 @@ int opt_parse_list_objects_filter(const struct option *opt,
 				  const char *arg, int unset)
 {
 	struct list_objects_filter_options *filter_options = opt->value;
-	opt_lof_init init = (opt_lof_init)opt->defval;
-
-	if (init)
-		filter_options = init(opt->value);
 
 	if (unset || !arg)
 		list_objects_filter_set_no_filter(filter_options);

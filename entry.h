@@ -1,13 +1,16 @@
 #ifndef ENTRY_H
 #define ENTRY_H
 
-#include "cache.h"
 #include "convert.h"
+
+struct cache_entry;
+struct index_state;
 
 struct checkout {
 	struct index_state *istate;
 	const char *base_dir;
 	int base_dir_len;
+	const char *super_prefix;
 	struct delayed_checkout *delayed_checkout;
 	struct checkout_metadata meta;
 	unsigned force:1,
@@ -48,8 +51,11 @@ int finish_delayed_checkout(struct checkout *state, int show_progress);
 /*
  * Unlink the last component and schedule the leading directories for
  * removal, such that empty directories get removed.
+ *
+ * The "super_prefix" is either NULL, or the "--super-prefix" passed
+ * down from "read-tree" et al.
  */
-void unlink_entry(const struct cache_entry *ce);
+void unlink_entry(const struct cache_entry *ce, const char *super_prefix);
 
 void *read_blob_entry(const struct cache_entry *ce, size_t *size);
 int fstat_checkout_output(int fd, const struct checkout *state, struct stat *st);

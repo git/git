@@ -15,6 +15,13 @@ bundle.mode::
 	complete understanding of the bundled information (`all`) or if any one
 	of the listed bundle URIs is sufficient (`any`).
 
+bundle.heuristic::
+	If this string-valued key exists, then the bundle list is designed to
+	work well with incremental `git fetch` commands. The heuristic signals
+	that there are additional keys available for each bundle that help
+	determine which subset of bundles the client should download. The
+	only value currently understood is `creationToken`.
+
 bundle.<id>.*::
 	The `bundle.<id>.*` keys are used to describe a single item in the
 	bundle list, grouped under `<id>` for identification purposes.

@@ -58,6 +58,13 @@ test_expect_success 'git fetch --all' '
 	 test_cmp expect output)
 '
 
+test_expect_success 'git fetch --all --no-write-fetch-head' '
+	(cd test &&
+	rm -f .git/FETCH_HEAD &&
+	git fetch --all --no-write-fetch-head &&
+	test_path_is_missing .git/FETCH_HEAD)
+'
+
 test_expect_success 'git fetch --all should continue if a remote has errors' '
 	(git clone one test2 &&
 	 cd test2 &&
@@ -195,6 +202,11 @@ test_expect_success 'parallel' '
 	grep "preparing to run up to 2 tasks" trace &&
 	test_i18ngrep "could not fetch .one.*128" err &&
 	test_i18ngrep "could not fetch .two.*128" err
+'
+
+test_expect_success 'git fetch --multiple --jobs=0 picks a default' '
+	(cd test &&
+	 git fetch --multiple --jobs=0)
 '
 
 test_done

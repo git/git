@@ -3,7 +3,6 @@
 # Copyright (c) 2006 Eric Wong
 test_description='git svn commit-diff clobber'
 
-TEST_FAILS_SANITIZE_LEAK=true
 . ./lib-git-svn.sh
 
 test_expect_success 'initialize repo' '

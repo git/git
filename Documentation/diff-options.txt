@@ -22,7 +22,13 @@ ifndef::git-format-patch[]
 -p::
 -u::
 --patch::
-	Generate patch (see section on generating patches).
+	Generate patch (see section titled
+ifdef::git-log[]
+<<generate_patch_text_with_p, "Generating patch text with -p">>).
+endif::git-log[]
+ifndef::git-log[]
+"Generating patch text with -p").
+endif::git-log[]
 ifdef::git-diff[]
 	This is the default.
 endif::git-diff[]
@@ -845,6 +851,11 @@ endif::git-format-patch[]
 
 --no-prefix::
 	Do not show any source or destination prefix.
+
+--default-prefix::
+	Use the default source and destination prefixes ("a/" and "b/").
+	This is usually the default already, but may be used to override
+	config such as `diff.noprefix`.
 
 --line-prefix=<prefix>::
 	Prepend an additional prefix to every line of output.

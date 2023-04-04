@@ -57,4 +57,11 @@ Fixes since v2.38.1
  * "git branch --edit-description" on an unborh branch misleadingly
    said that no such branch exists, which has been corrected.
 
+ * GitHub CI settings have been adjusted to recent reality, merging
+   and cherry-picking necessary topics that have been prepared for Git
+   2.39.
+
+ * `git rebase --update-refs` would delete references when all `update-ref`
+   commands in the sequencer were removed, which has been corrected.
+
 Also contains various documentation updates and code clean-ups.

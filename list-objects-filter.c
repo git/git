@@ -1,5 +1,7 @@
 #include "cache.h"
+#include "alloc.h"
 #include "dir.h"
+#include "hex.h"
 #include "tag.h"
 #include "commit.h"
 #include "tree.h"
@@ -70,13 +72,13 @@ struct filter {
 };
 
 static enum list_objects_filter_result filter_blobs_none(
-	struct repository *r,
+	struct repository *r UNUSED,
 	enum list_objects_filter_situation filter_situation,
 	struct object *obj,
-	const char *pathname,
-	const char *filename,
+	const char *pathname UNUSED,
+	const char *filename UNUSED,
 	struct oidset *omits,
-	void *filter_data_)
+	void *filter_data_ UNUSED)
 {
 	switch (filter_situation) {
 	default:
@@ -112,7 +114,7 @@ static enum list_objects_filter_result filter_blobs_none(
 }
 
 static void filter_blobs_none__init(
-	struct list_objects_filter_options *filter_options,
+	struct list_objects_filter_options *filter_options UNUSED,
 	struct filter *filter)
 {
 	filter->filter_object_fn = filter_blobs_none;
@@ -159,11 +161,11 @@ static int filter_trees_update_omits(
 }
 
 static enum list_objects_filter_result filter_trees_depth(
-	struct repository *r,
+	struct repository *r UNUSED,
 	enum list_objects_filter_situation filter_situation,
 	struct object *obj,
-	const char *pathname,
-	const char *filename,
+	const char *pathname UNUSED,
+	const char *filename UNUSED,
 	struct oidset *omits,
 	void *filter_data_)
 {
@@ -274,8 +276,8 @@ static enum list_objects_filter_result filter_blobs_limit(
 	struct repository *r,
 	enum list_objects_filter_situation filter_situation,
 	struct object *obj,
-	const char *pathname,
-	const char *filename,
+	const char *pathname UNUSED,
+	const char *filename UNUSED,
 	struct oidset *omits,
 	void *filter_data_)
 {
@@ -514,6 +516,7 @@ static enum list_objects_filter_result filter_sparse(
 static void filter_sparse_free(void *filter_data)
 {
 	struct filter_sparse_data *d = filter_data;
+	clear_pattern_list(&d->pl);
 	free(d->array_frame);
 	free(d);
 }
@@ -554,12 +557,12 @@ struct filter_object_type_data {
 };
 
 static enum list_objects_filter_result filter_object_type(
-	struct repository *r,
+	struct repository *r UNUSED,
 	enum list_objects_filter_situation filter_situation,
 	struct object *obj,
-	const char *pathname,
-	const char *filename,
-	struct oidset *omits,
+	const char *pathname UNUSED,
+	const char *filename UNUSED,
+	struct oidset *omits UNUSED,
 	void *filter_data_)
 {
 	struct filter_object_type_data *filter_data = filter_data_;
@@ -675,7 +678,7 @@ static enum list_objects_filter_result filter_combine(
 	struct object *obj,
 	const char *pathname,
 	const char *filename,
-	struct oidset *omits,
+	struct oidset *omits UNUSED,
 	void *filter_data)
 {
 	struct combine_filter_data *d = filter_data;
@@ -709,6 +712,7 @@ static void filter_combine__free(void *filter_data)
 			BUG("expected oidset to be cleared already");
 	}
 	free(d->sub);
+	free(d);
 }
 
 static void add_all(struct oidset *dest, struct oidset *src) {

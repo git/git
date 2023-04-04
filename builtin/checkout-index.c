@@ -4,7 +4,7 @@
  * Copyright (C) 2005 Linus Torvalds
  *
  */
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
+#define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "dir.h"
@@ -65,7 +65,7 @@ static void write_tempfile_record(const char *name, const char *prefix)
 static int checkout_file(const char *name, const char *prefix)
 {
 	int namelen = strlen(name);
-	int pos = cache_name_pos(name, namelen);
+	int pos = index_name_pos(&the_index, name, namelen);
 	int has_same_name = 0;
 	int is_file = 0;
 	int is_skipped = 1;
@@ -75,8 +75,8 @@ static int checkout_file(const char *name, const char *prefix)
 	if (pos < 0)
 		pos = -pos - 1;
 
-	while (pos < active_nr) {
-		struct cache_entry *ce = active_cache[pos];
+	while (pos < the_index.cache_nr) {
+		struct cache_entry *ce = the_index.cache[pos];
 		if (ce_namelen(ce) != namelen ||
 		    memcmp(ce->name, name, namelen))
 			break;
@@ -136,8 +136,8 @@ static int checkout_all(const char *prefix, int prefix_length)
 	int i, errs = 0;
 	struct cache_entry *last_ce = NULL;
 
-	for (i = 0; i < active_nr ; i++) {
-		struct cache_entry *ce = active_cache[i];
+	for (i = 0; i < the_index.cache_nr ; i++) {
+		struct cache_entry *ce = the_index.cache[i];
 
 		if (S_ISSPARSEDIR(ce->ce_mode)) {
 			if (!ce_skip_worktree(ce))
@@ -151,7 +151,7 @@ static int checkout_all(const char *prefix, int prefix_length)
 			 */
 			if (ignore_skip_worktree) {
 				ensure_full_index(&the_index);
-				ce = active_cache[i];
+				ce = the_index.cache[i];
 			}
 		}
 
@@ -249,7 +249,7 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 	prepare_repo_settings(the_repository);
 	the_repository->settings.command_requires_full_index = 0;
 
-	if (read_cache() < 0) {
+	if (repo_read_index(the_repository) < 0) {
 		die("invalid cache");
 	}
 
@@ -270,7 +270,8 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 	if (index_opt && !state.base_dir_len && !to_tempfile) {
 		state.refresh_cache = 1;
 		state.istate = &the_index;
-		hold_locked_index(&lock_file, LOCK_DIE_ON_ERROR);
+		repo_hold_locked_index(the_repository, &lock_file,
+				       LOCK_DIE_ON_ERROR);
 	}
 
 	get_parallel_checkout_configs(&pc_workers, &pc_threshold);

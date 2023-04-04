@@ -2,6 +2,7 @@
  * Utilities for paths and pathnames
  */
 #include "cache.h"
+#include "hex.h"
 #include "repository.h"
 #include "strbuf.h"
 #include "string-list.h"
@@ -347,7 +348,8 @@ static void init_common_trie(void)
  * Helper function for update_common_dir: returns 1 if the dir
  * prefix is common.
  */
-static int check_common(const char *unmatched, void *value, void *baton)
+static int check_common(const char *unmatched, void *value,
+			void *baton UNUSED)
 {
 	struct common_dir *dir = value;
 
@@ -901,7 +903,13 @@ int adjust_shared_perm(const char *path)
 	if (S_ISDIR(old_mode)) {
 		/* Copy read bits to execute bits */
 		new_mode |= (new_mode & 0444) >> 2;
-		new_mode |= FORCE_DIR_SET_GID;
+
+		/*
+		 * g+s matters only if any extra access is granted
+		 * based on group membership.
+		 */
+		if (FORCE_DIR_SET_GID && (new_mode & 060))
+			new_mode |= FORCE_DIR_SET_GID;
 	}
 
 	if (((old_mode ^ new_mode) & ~S_IFMT) &&

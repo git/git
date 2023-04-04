@@ -3,11 +3,14 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
+#define USE_THE_INDEX_VARIABLE
 #include "cache.h"
+#include "alloc.h"
 #include "config.h"
 #include "builtin.h"
 #include "diff.h"
+#include "hex.h"
+#include "ident.h"
 #include "parse-options.h"
 #include "userdiff.h"
 #include "streaming.h"
@@ -15,6 +18,7 @@
 #include "oid-array.h"
 #include "packfile.h"
 #include "object-store.h"
+#include "replace-object.h"
 #include "promisor-remote.h"
 #include "mailmap.h"
 
@@ -132,8 +136,21 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 
 	case 's':
 		oi.sizep = &size;
+
+		if (use_mailmap) {
+			oi.typep = &type;
+			oi.contentp = (void**)&buf;
+		}
+
 		if (oid_object_info_extended(the_repository, &oid, &oi, flags) < 0)
 			die("git cat-file: could not get object info");
+
+		if (use_mailmap && (type == OBJ_COMMIT || type == OBJ_TAG)) {
+			size_t s = size;
+			buf = replace_idents_using_mailmap(buf, &s);
+			size = cast_size_t_to_ulong(s);
+		}
+
 		printf("%"PRIuMAX"\n", (uintmax_t)size);
 		ret = 0;
 		goto cleanup;
@@ -431,6 +448,9 @@ static void batch_object_write(const char *obj_name,
 	if (!data->skip_object_info) {
 		int ret;
 
+		if (use_mailmap)
+			data->info.typep = &data->type;
+
 		if (pack)
 			ret = packed_object_info(the_repository, pack, offset,
 						 &data->info);
@@ -443,6 +463,18 @@ static void batch_object_write(const char *obj_name,
 			       obj_name ? obj_name : oid_to_hex(&data->oid));
 			fflush(stdout);
 			return;
+		}
+
+		if (use_mailmap && (data->type == OBJ_COMMIT || data->type == OBJ_TAG)) {
+			size_t s = data->size;
+			char *buf = NULL;
+
+			buf = repo_read_object_file(the_repository, &data->oid, &data->type,
+						    &data->size);
+			buf = replace_idents_using_mailmap(buf, &s);
+			data->size = cast_size_t_to_ulong(s);
+
+			free(buf);
 		}
 	}
 
@@ -531,7 +563,7 @@ static int batch_object_cb(const struct object_id *oid, void *vdata)
 }
 
 static int collect_loose_object(const struct object_id *oid,
-				const char *path,
+				const char *path UNUSED,
 				void *data)
 {
 	oid_array_append(data, oid);
@@ -539,8 +571,8 @@ static int collect_loose_object(const struct object_id *oid,
 }
 
 static int collect_packed_object(const struct object_id *oid,
-				 struct packed_git *pack,
-				 uint32_t pos,
+				 struct packed_git *pack UNUSED,
+				 uint32_t pos UNUSED,
 				 void *data)
 {
 	oid_array_append(data, oid);
@@ -563,7 +595,7 @@ static int batch_unordered_object(const struct object_id *oid,
 }
 
 static int batch_unordered_loose(const struct object_id *oid,
-				 const char *path,
+				 const char *path UNUSED,
 				 void *data)
 {
 	return batch_unordered_object(oid, NULL, 0, data);

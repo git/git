@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='test git-http-backend respects CONTENT_LENGTH'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_lazy_prereq GZIP 'gzip --version'

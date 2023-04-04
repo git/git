@@ -1,5 +1,6 @@
 #include "git-compat-util.h"
 #include "config.h"
+#include "hex.h"
 #include "lockfile.h"
 #include "pack.h"
 #include "packfile.h"
@@ -1594,8 +1595,7 @@ static void compute_bloom_filters(struct write_commit_graph_context *ctx)
 			_("Computing commit changed paths Bloom filters"),
 			ctx->commits.nr);
 
-	ALLOC_ARRAY(sorted_commits, ctx->commits.nr);
-	COPY_ARRAY(sorted_commits, ctx->commits.list, ctx->commits.nr);
+	DUP_ARRAY(sorted_commits, ctx->commits.list, ctx->commits.nr);
 
 	if (ctx->order_by_pack)
 		QSORT(sorted_commits, ctx->commits.nr, commit_pos_cmp);

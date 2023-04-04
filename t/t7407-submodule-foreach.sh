@@ -154,6 +154,11 @@ test_expect_success 'use "submodule foreach" to checkout 2nd level submodule' '
 	)
 '
 
+test_expect_success 'usage: foreach -- --not-an-option' '
+	test_expect_code 1 git submodule foreach -- --not-an-option &&
+	test_expect_code 1 git -C clone2 submodule foreach -- --not-an-option
+'
+
 test_expect_success 'use "foreach --recursive" to checkout all submodules' '
 	(
 		cd clone2 &&

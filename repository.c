@@ -2,7 +2,7 @@
  * not really _using_ the compat macros, just make sure the_index
  * declaration matches the definition in this file.
  */
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
+#define USE_THE_INDEX_VARIABLE
 #include "cache.h"
 #include "repository.h"
 #include "object-store.h"
@@ -27,6 +27,8 @@ void initialize_the_repository(void)
 	the_repo.objects = raw_object_store_new();
 	the_repo.remote_state = remote_state_new();
 	the_repo.parsed_objects = parsed_object_pool_new();
+
+	index_state_init(&the_index, the_repository);
 
 	repo_set_hash_algo(&the_repo, GIT_HASH_SHA1);
 }
@@ -302,14 +304,13 @@ int repo_read_index(struct repository *repo)
 {
 	int res;
 
-	if (!repo->index)
-		CALLOC_ARRAY(repo->index, 1);
-
 	/* Complete the double-reference */
-	if (!repo->index->repo)
-		repo->index->repo = repo;
-	else if (repo->index->repo != repo)
+	if (!repo->index) {
+		ALLOC_ARRAY(repo->index, 1);
+		index_state_init(repo->index, repo);
+	} else if (repo->index->repo != repo) {
 		BUG("repo's index should point back at itself");
+	}
 
 	res = read_index_from(repo->index, repo->index_file, repo->gitdir);
 

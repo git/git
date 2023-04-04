@@ -1,9 +1,11 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "config.h"
 #include "builtin.h"
 #include "exec-cmd.h"
 #include "run-command.h"
 #include "levenshtein.h"
+#include "gettext.h"
 #include "help.h"
 #include "command-list.h"
 #include "string-list.h"
@@ -540,7 +542,8 @@ static struct cmdnames aliases;
 #define AUTOCORRECT_NEVER (-2)
 #define AUTOCORRECT_IMMEDIATELY (-1)
 
-static int git_unknown_cmd_config(const char *var, const char *value, void *cb)
+static int git_unknown_cmd_config(const char *var, const char *value,
+				  void *cb UNUSED)
 {
 	const char *p;
 
@@ -563,7 +566,7 @@ static int git_unknown_cmd_config(const char *var, const char *value, void *cb)
 	if (skip_prefix(var, "alias.", &p))
 		add_cmdname(&aliases, p, strlen(p));
 
-	return git_default_config(var, value, cb);
+	return 0;
 }
 
 static int levenshtein_compare(const void *p1, const void *p2)

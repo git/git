@@ -1,13 +1,13 @@
 From: Eric S. Raymond <esr@thyrsus.com>
 Abstract: This is how-to documentation for people who want to add extension
- commands to Git.  It should be read alongside api-builtin.txt.
+ commands to Git.  It should be read alongside builtin.h.
 Content-type: text/asciidoc
 
 How to integrate new subcommands
 ================================
 
 This is how-to documentation for people who want to add extension
-commands to Git.  It should be read alongside api-builtin.txt.
+commands to Git.  It should be read alongside builtin.h.
 
 Runtime environment
 -------------------

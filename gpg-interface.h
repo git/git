@@ -79,7 +79,6 @@ int sign_buffer(struct strbuf *buffer, struct strbuf *signature,
  */
 const char *gpg_trust_level_to_str(enum signature_trust_level level);
 
-int git_gpg_config(const char *, const char *, void *);
 void set_signing_key(const char *);
 const char *get_signing_key(void);
 

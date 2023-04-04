@@ -10,7 +10,6 @@
 #include "alloc.h"
 #include "attr.h"
 #include "blob.h"
-#include "builtin.h"
 #include "cache-tree.h"
 #include "commit.h"
 #include "commit-reach.h"
@@ -18,6 +17,7 @@
 #include "diff.h"
 #include "diffcore.h"
 #include "dir.h"
+#include "hex.h"
 #include "ll-merge.h"
 #include "lockfile.h"
 #include "object-store.h"
@@ -412,7 +412,7 @@ static int unpack_trees_start(struct merge_options *opt,
 {
 	int rc;
 	struct tree_desc t[3];
-	struct index_state tmp_index = { NULL };
+	struct index_state tmp_index = INDEX_STATE_INIT(opt->repo);
 
 	memset(&opt->priv->unpack_opts, 0, sizeof(opt->priv->unpack_opts));
 	if (opt->priv->call_depth)
@@ -2100,7 +2100,7 @@ static char *handle_path_level_conflicts(struct merge_options *opt,
 	if (!new_path) {
 		/* This should only happen when entry->non_unique_new_dir set */
 		if (!entry->non_unique_new_dir)
-			BUG("entry->non_unqiue_dir not set and !new_path");
+			BUG("entry->non_unique_new_dir not set and !new_path");
 		output(opt, 1, _("CONFLICT (directory rename split): "
 			       "Unclear where to place %s because directory "
 			       "%s was renamed to multiple other directories, "

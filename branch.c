@@ -2,6 +2,7 @@
 #include "cache.h"
 #include "config.h"
 #include "branch.h"
+#include "hex.h"
 #include "refs.h"
 #include "refspec.h"
 #include "remote.h"
@@ -756,7 +757,7 @@ void create_branches_recursively(struct repository *r, const char *name,
 				_("submodule '%s': unable to find submodule"),
 				submodule_entry_list.entries[i].submodule->name);
 			if (advice_enabled(ADVICE_SUBMODULES_NOT_UPDATED))
-				advise(_("You may try updating the submodules using 'git checkout %s && git submodule update --init'"),
+				advise(_("You may try updating the submodules using 'git checkout --no-recurse-submodules %s && git submodule update --init'"),
 				       start_commitish);
 			exit(code);
 		}
@@ -820,12 +821,16 @@ void remove_branch_state(struct repository *r, int verbose)
 void die_if_checked_out(const char *branch, int ignore_current_worktree)
 {
 	struct worktree **worktrees = get_worktrees();
-	const struct worktree *wt;
 
-	wt = find_shared_symref(worktrees, "HEAD", branch);
-	if (wt && (!ignore_current_worktree || !wt->is_current)) {
-		skip_prefix(branch, "refs/heads/", &branch);
-		die(_("'%s' is already checked out at '%s'"), branch, wt->path);
+	for (int i = 0; worktrees[i]; i++) {
+		if (worktrees[i]->is_current && ignore_current_worktree)
+			continue;
+
+		if (is_shared_symref(worktrees[i], "HEAD", branch)) {
+			skip_prefix(branch, "refs/heads/", &branch);
+			die(_("'%s' is already checked out at '%s'"),
+				branch, worktrees[i]->path);
+		}
 	}
 
 	free_worktrees(worktrees);

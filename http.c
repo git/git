@@ -1,5 +1,6 @@
 #include "git-compat-util.h"
 #include "git-curl-compat.h"
+#include "hex.h"
 #include "http.h"
 #include "config.h"
 #include "pack.h"
@@ -157,21 +158,19 @@ size_t fread_buffer(char *ptr, size_t eltsize, size_t nmemb, void *buffer_)
 	return size / eltsize;
 }
 
-curlioerr ioctl_buffer(CURL *handle, int cmd, void *clientp)
+int seek_buffer(void *clientp, curl_off_t offset, int origin)
 {
 	struct buffer *buffer = clientp;
 
-	switch (cmd) {
-	case CURLIOCMD_NOP:
-		return CURLIOE_OK;
-
-	case CURLIOCMD_RESTARTREAD:
-		buffer->posn = 0;
-		return CURLIOE_OK;
-
-	default:
-		return CURLIOE_UNKNOWNCMD;
+	if (origin != SEEK_SET)
+		BUG("seek_buffer only handles SEEK_SET");
+	if (offset < 0 || offset >= buffer->buf.len) {
+		error("curl seek would be outside of buffer");
+		return CURL_SEEKFUNC_FAIL;
 	}
+
+	buffer->posn = offset;
+	return CURL_SEEKFUNC_OK;
 }
 
 size_t fwrite_buffer(char *ptr, size_t eltsize, size_t nmemb, void *buffer_)
@@ -181,6 +180,115 @@ size_t fwrite_buffer(char *ptr, size_t eltsize, size_t nmemb, void *buffer_)
 
 	strbuf_add(buffer, ptr, size);
 	return nmemb;
+}
+
+/*
+ * A folded header continuation line starts with any number of spaces or
+ * horizontal tab characters (SP or HTAB) as per RFC 7230 section 3.2.
+ * It is not a continuation line if the line starts with any other character.
+ */
+static inline int is_hdr_continuation(const char *ptr, const size_t size)
+{
+	return size && (*ptr == ' ' || *ptr == '\t');
+}
+
+static size_t fwrite_wwwauth(char *ptr, size_t eltsize, size_t nmemb, void *p)
+{
+	size_t size = eltsize * nmemb;
+	struct strvec *values = &http_auth.wwwauth_headers;
+	struct strbuf buf = STRBUF_INIT;
+	const char *val;
+	size_t val_len;
+
+	/*
+	 * Header lines may not come NULL-terminated from libcurl so we must
+	 * limit all scans to the maximum length of the header line, or leverage
+	 * strbufs for all operations.
+	 *
+	 * In addition, it is possible that header values can be split over
+	 * multiple lines as per RFC 7230. 'Line folding' has been deprecated
+	 * but older servers may still emit them. A continuation header field
+	 * value is identified as starting with a space or horizontal tab.
+	 *
+	 * The formal definition of a header field as given in RFC 7230 is:
+	 *
+	 * header-field   = field-name ":" OWS field-value OWS
+	 *
+	 * field-name     = token
+	 * field-value    = *( field-content / obs-fold )
+	 * field-content  = field-vchar [ 1*( SP / HTAB ) field-vchar ]
+	 * field-vchar    = VCHAR / obs-text
+	 *
+	 * obs-fold       = CRLF 1*( SP / HTAB )
+	 *                ; obsolete line folding
+	 *                ; see Section 3.2.4
+	 */
+
+	/* Start of a new WWW-Authenticate header */
+	if (skip_iprefix_mem(ptr, size, "www-authenticate:", &val, &val_len)) {
+		strbuf_add(&buf, val, val_len);
+
+		/*
+		 * Strip the CRLF that should be present at the end of each
+		 * field as well as any trailing or leading whitespace from the
+		 * value.
+		 */
+		strbuf_trim(&buf);
+
+		strvec_push(values, buf.buf);
+		http_auth.header_is_last_match = 1;
+		goto exit;
+	}
+
+	/*
+	 * This line could be a continuation of the previously matched header
+	 * field. If this is the case then we should append this value to the
+	 * end of the previously consumed value.
+	 */
+	if (http_auth.header_is_last_match && is_hdr_continuation(ptr, size)) {
+		/*
+		 * Trim the CRLF and any leading or trailing from this line.
+		 */
+		strbuf_add(&buf, ptr, size);
+		strbuf_trim(&buf);
+
+		/*
+		 * At this point we should always have at least one existing
+		 * value, even if it is empty. Do not bother appending the new
+		 * value if this continuation header is itself empty.
+		 */
+		if (!values->nr) {
+			BUG("should have at least one existing header value");
+		} else if (buf.len) {
+			char *prev = xstrdup(values->v[values->nr - 1]);
+
+			/* Join two non-empty values with a single space. */
+			const char *const sp = *prev ? " " : "";
+
+			strvec_pop(values);
+			strvec_pushf(values, "%s%s%s", prev, sp, buf.buf);
+			free(prev);
+		}
+
+		goto exit;
+	}
+
+	/* Not a continuation of a previously matched auth header line. */
+	http_auth.header_is_last_match = 0;
+
+	/*
+	 * If this is a HTTP status line and not a header field, this signals
+	 * a different HTTP response. libcurl writes all the output of all
+	 * response headers of all responses, including redirects.
+	 * We only care about the last HTTP request response's headers so clear
+	 * the existing array.
+	 */
+	if (skip_iprefix_mem(ptr, size, "http/", &val, &val_len))
+		strvec_clear(values);
+
+exit:
+	strbuf_release(&buf);
+	return size;
 }
 
 size_t fwrite_null(char *ptr, size_t eltsize, size_t nmemb, void *strbuf)
@@ -560,13 +668,15 @@ static void set_curl_keepalive(CURL *c)
 }
 #endif
 
-static void redact_sensitive_header(struct strbuf *header)
+/* Return 1 if redactions have been made, 0 otherwise. */
+static int redact_sensitive_header(struct strbuf *header, size_t offset)
 {
+	int ret = 0;
 	const char *sensitive_header;
 
 	if (trace_curl_redact &&
-	    (skip_iprefix(header->buf, "Authorization:", &sensitive_header) ||
-	     skip_iprefix(header->buf, "Proxy-Authorization:", &sensitive_header))) {
+	    (skip_iprefix(header->buf + offset, "Authorization:", &sensitive_header) ||
+	     skip_iprefix(header->buf + offset, "Proxy-Authorization:", &sensitive_header))) {
 		/* The first token is the type, which is OK to log */
 		while (isspace(*sensitive_header))
 			sensitive_header++;
@@ -575,8 +685,9 @@ static void redact_sensitive_header(struct strbuf *header)
 		/* Everything else is opaque and possibly sensitive */
 		strbuf_setlen(header,  sensitive_header - header->buf);
 		strbuf_addstr(header, " <redacted>");
+		ret = 1;
 	} else if (trace_curl_redact &&
-		   skip_iprefix(header->buf, "Cookie:", &sensitive_header)) {
+		   skip_iprefix(header->buf + offset, "Cookie:", &sensitive_header)) {
 		struct strbuf redacted_header = STRBUF_INIT;
 		const char *cookie;
 
@@ -612,6 +723,26 @@ static void redact_sensitive_header(struct strbuf *header)
 
 		strbuf_setlen(header, sensitive_header - header->buf);
 		strbuf_addbuf(header, &redacted_header);
+		ret = 1;
+	}
+	return ret;
+}
+
+/* Redact headers in info */
+static void redact_sensitive_info_header(struct strbuf *header)
+{
+	const char *sensitive_header;
+
+	/*
+	 * curl's h2h3 prints headers in info, e.g.:
+	 *   h2h3 [<header-name>: <header-val>]
+	 */
+	if (trace_curl_redact &&
+	    skip_iprefix(header->buf, "h2h3 [", &sensitive_header)) {
+		if (redact_sensitive_header(header, sensitive_header - header->buf)) {
+			/* redaction ate our closing bracket */
+			strbuf_addch(header, ']');
+		}
 	}
 }
 
@@ -629,7 +760,7 @@ static void curl_dump_header(const char *text, unsigned char *ptr, size_t size, 
 
 	for (header = headers; *header; header++) {
 		if (hide_sensitive_header)
-			redact_sensitive_header(*header);
+			redact_sensitive_header(*header, 0);
 		strbuf_insertstr((*header), 0, text);
 		strbuf_insertstr((*header), strlen(text), ": ");
 		strbuf_rtrim((*header));
@@ -668,6 +799,18 @@ static void curl_dump_data(const char *text, unsigned char *ptr, size_t size)
 	strbuf_release(&out);
 }
 
+static void curl_dump_info(char *data, size_t size)
+{
+	struct strbuf buf = STRBUF_INIT;
+
+	strbuf_add(&buf, data, size);
+
+	redact_sensitive_info_header(&buf);
+	trace_printf_key(&trace_curl, "== Info: %s", buf.buf);
+
+	strbuf_release(&buf);
+}
+
 static int curl_trace(CURL *handle, curl_infotype type, char *data, size_t size, void *userp)
 {
 	const char *text;
@@ -675,7 +818,7 @@ static int curl_trace(CURL *handle, curl_infotype type, char *data, size_t size,
 
 	switch (type) {
 	case CURLINFO_TEXT:
-		trace_printf_key(&trace_curl, "== Info: %s", data);
+		curl_dump_info(data, size);
 		break;
 	case CURLINFO_HEADER_OUT:
 		text = "=> Send header";
@@ -731,20 +874,37 @@ void setup_curl_trace(CURL *handle)
 	curl_easy_setopt(handle, CURLOPT_DEBUGDATA, NULL);
 }
 
-static long get_curl_allowed_protocols(int from_user)
+static void proto_list_append(struct strbuf *list, const char *proto)
 {
-	long allowed_protocols = 0;
+	if (!list)
+		return;
+	if (list->len)
+		strbuf_addch(list, ',');
+	strbuf_addstr(list, proto);
+}
 
-	if (is_transport_allowed("http", from_user))
-		allowed_protocols |= CURLPROTO_HTTP;
-	if (is_transport_allowed("https", from_user))
-		allowed_protocols |= CURLPROTO_HTTPS;
-	if (is_transport_allowed("ftp", from_user))
-		allowed_protocols |= CURLPROTO_FTP;
-	if (is_transport_allowed("ftps", from_user))
-		allowed_protocols |= CURLPROTO_FTPS;
+static long get_curl_allowed_protocols(int from_user, struct strbuf *list)
+{
+	long bits = 0;
 
-	return allowed_protocols;
+	if (is_transport_allowed("http", from_user)) {
+		bits |= CURLPROTO_HTTP;
+		proto_list_append(list, "http");
+	}
+	if (is_transport_allowed("https", from_user)) {
+		bits |= CURLPROTO_HTTPS;
+		proto_list_append(list, "https");
+	}
+	if (is_transport_allowed("ftp", from_user)) {
+		bits |= CURLPROTO_FTP;
+		proto_list_append(list, "ftp");
+	}
+	if (is_transport_allowed("ftps", from_user)) {
+		bits |= CURLPROTO_FTPS;
+		proto_list_append(list, "ftps");
+	}
+
+	return bits;
 }
 
 #ifdef GIT_CURL_HAVE_CURL_HTTP_VERSION_2
@@ -888,10 +1048,26 @@ static CURL *get_curl_handle(void)
 
 	curl_easy_setopt(result, CURLOPT_MAXREDIRS, 20);
 	curl_easy_setopt(result, CURLOPT_POSTREDIR, CURL_REDIR_POST_ALL);
+
+#ifdef GIT_CURL_HAVE_CURLOPT_PROTOCOLS_STR
+	{
+		struct strbuf buf = STRBUF_INIT;
+
+		get_curl_allowed_protocols(0, &buf);
+		curl_easy_setopt(result, CURLOPT_REDIR_PROTOCOLS_STR, buf.buf);
+		strbuf_reset(&buf);
+
+		get_curl_allowed_protocols(-1, &buf);
+		curl_easy_setopt(result, CURLOPT_PROTOCOLS_STR, buf.buf);
+		strbuf_release(&buf);
+	}
+#else
 	curl_easy_setopt(result, CURLOPT_REDIR_PROTOCOLS,
-			 get_curl_allowed_protocols(0));
+			 get_curl_allowed_protocols(0, NULL));
 	curl_easy_setopt(result, CURLOPT_PROTOCOLS,
-			 get_curl_allowed_protocols(-1));
+			 get_curl_allowed_protocols(-1, NULL));
+#endif
+
 	if (getenv("GIT_CURL_VERBOSE"))
 		http_trace_curl_no_data();
 	setup_curl_trace(result);
@@ -1828,6 +2004,8 @@ static int http_request(const char *url,
 			curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION,
 					 fwrite_buffer);
 	}
+
+	curl_easy_setopt(slot->curl, CURLOPT_HEADERFUNCTION, fwrite_wwwauth);
 
 	accept_language = http_get_accept_language_header();
 

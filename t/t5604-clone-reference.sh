@@ -7,6 +7,7 @@ test_description='test clone --reference'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 base_dir=$(pwd)
@@ -342,6 +343,22 @@ test_expect_success SYMLINKS 'clone repo with symlinked or unknown files at obje
 	echo ./info/alternates >expected-files &&
 	test_cmp expected-files T--shared.objects-files.raw &&
 	test_must_be_empty T--shared.objects-symlinks.raw
+'
+
+test_expect_success SYMLINKS 'clone repo with symlinked objects directory' '
+	test_when_finished "rm -fr sensitive malicious" &&
+
+	mkdir -p sensitive &&
+	echo "secret" >sensitive/file &&
+
+	git init malicious &&
+	rm -fr malicious/.git/objects &&
+	ln -s "$(pwd)/sensitive" ./malicious/.git/objects &&
+
+	test_must_fail git clone --local malicious clone 2>err &&
+
+	test_path_is_missing clone &&
+	grep "failed to start iterator over" err
 '
 
 test_done

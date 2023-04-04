@@ -5,6 +5,7 @@
 
 test_description='Test repository version check'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -27,7 +28,7 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'gitdir selection on normal repos' '
-	echo $(test_oid version) >expect &&
+	test_oid version >expect &&
 	git config core.repositoryformatversion >actual &&
 	git -C test config core.repositoryformatversion >actual2 &&
 	test_cmp expect actual &&

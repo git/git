@@ -111,10 +111,94 @@ static int cmd__submodule_resolve_relative_url(int argc, const char **argv)
 	return 0;
 }
 
+static int cmd__submodule_config_list(int argc, const char **argv)
+{
+	struct option options[] = {
+		OPT_END()
+	};
+	const char *const usage[] = {
+		"test-tool submodule config-list <key>",
+		NULL
+	};
+	argc = parse_options(argc, argv, "test-tools", options, usage,
+			     PARSE_OPT_KEEP_ARGV0);
+
+	setup_git_directory();
+
+	if (argc == 2)
+		return print_config_from_gitmodules(the_repository, argv[1]);
+	usage_with_options(usage, options);
+}
+
+static int cmd__submodule_config_set(int argc, const char **argv)
+{
+	struct option options[] = {
+		OPT_END()
+	};
+	const char *const usage[] = {
+		"test-tool submodule config-set <key> <value>",
+		NULL
+	};
+	argc = parse_options(argc, argv, "test-tools", options, usage,
+			     PARSE_OPT_KEEP_ARGV0);
+
+	setup_git_directory();
+
+	/* Equivalent to ACTION_SET in builtin/config.c */
+	if (argc == 3) {
+		if (!is_writing_gitmodules_ok())
+			die("please make sure that the .gitmodules file is in the working tree");
+
+		return config_set_in_gitmodules_file_gently(argv[1], argv[2]);
+	}
+	usage_with_options(usage, options);
+}
+
+static int cmd__submodule_config_unset(int argc, const char **argv)
+{
+	struct option options[] = {
+		OPT_END()
+	};
+	const char *const usage[] = {
+		"test-tool submodule config-unset <key>",
+		NULL
+	};
+
+	setup_git_directory();
+
+	if (argc == 2) {
+		if (!is_writing_gitmodules_ok())
+			die("please make sure that the .gitmodules file is in the working tree");
+		return config_set_in_gitmodules_file_gently(argv[1], NULL);
+	}
+	usage_with_options(usage, options);
+}
+
+static int cmd__submodule_config_writeable(int argc, const char **argv)
+{
+	struct option options[] = {
+		OPT_END()
+	};
+	const char *const usage[] = {
+		"test-tool submodule config-writeable",
+		NULL
+	};
+	setup_git_directory();
+
+	if (argc == 1)
+		return is_writing_gitmodules_ok() ? 0 : -1;
+
+	usage_with_options(usage, options);
+}
+
 static struct test_cmd cmds[] = {
 	{ "check-name", cmd__submodule_check_name },
 	{ "is-active", cmd__submodule_is_active },
 	{ "resolve-relative-url", cmd__submodule_resolve_relative_url},
+	{ "config-list", cmd__submodule_config_list },
+	{ "config-set", cmd__submodule_config_set },
+	{ "config-unset", cmd__submodule_config_unset },
+	{ "config-writeable", cmd__submodule_config_writeable },
 };
 
 int cmd__submodule(int argc, const char **argv)

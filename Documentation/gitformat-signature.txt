@@ -17,12 +17,24 @@ DESCRIPTION
 Git uses cryptographic signatures in various places, currently objects (tags,
 commits, mergetags) and transactions (pushes). In every case, the command which
 is about to create an object or transaction determines a payload from that,
-calls gpg to obtain a detached signature for the payload (`gpg -bsa`) and
-embeds the signature into the object or transaction.
+calls an external program to obtain a detached signature for the payload
+(`gpg -bsa` in the case of PGP signatures), and embeds the signature into the
+object or transaction.
 
-Signatures always begin with `-----BEGIN PGP SIGNATURE-----`
-and end with `-----END PGP SIGNATURE-----`, unless gpg is told to
-produce RFC1991 signatures which use `MESSAGE` instead of `SIGNATURE`.
+Signatures begin with an "ASCII Armor" header line and end with a tail line,
+which differ depending on signature type (as selected by `gpg.format`, see
+linkgit:git-config[1]). These are, for `gpg.format` values:
+
+`gpg` (PGP)::
+	`-----BEGIN PGP SIGNATURE-----` and `-----END PGP SIGNATURE-----`.
+	Or, if gpg is told to produce RFC1991 signatures,
+	`-----BEGIN PGP MESSAGE-----` and `-----END PGP MESSAGE-----`
+
+`ssh` (SSH)::
+	`-----BEGIN SSH SIGNATURE-----` and `-----END SSH SIGNATURE-----`
+
+`x509` (X.509)::
+	`-----BEGIN SIGNED MESSAGE-----` and `-----END SIGNED MESSAGE-----`
 
 Signatures sometimes appear as a part of the normal payload
 (e.g. a signed tag has the signature block appended after the payload
@@ -37,7 +49,7 @@ line.
 This is even true for an originally empty line.  In the following
 examples, the end of line that ends with a whitespace letter is
 highlighted with a `$` sign; if you are trying to recreate these
-example by hand, do not cut and paste them---they are there
+example by hand, do not cut and paste them--they are there
 primarily to highlight extra whitespace at the end of some lines.
 
 The signed payload and the way the signature is embedded depends

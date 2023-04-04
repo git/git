@@ -15,7 +15,8 @@
 ) | wuzzle &&
 (
 	bop
-) | fazz 	fozz &&
+) | fazz \
+	fozz &&
 (
 	bup
 ) |

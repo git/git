@@ -606,7 +606,7 @@ test_expect_success 'create tag without tagger' '
 	git tag -a -m "Broken tag" taggerless &&
 	git tag -f taggerless $(git cat-file tag taggerless |
 		sed -e "/^tagger /d" |
-		git hash-object --stdin -w -t tag)
+		git hash-object --literally --stdin -w -t tag)
 '
 
 test_atom refs/tags/taggerless type 'commit'
@@ -1242,6 +1242,24 @@ test_expect_success 'basic atom: rest must fail' '
 	test_must_fail git for-each-ref --format="%(rest)" refs/heads/main
 '
 
+test_expect_success 'HEAD atom does not take arguments' '
+	test_must_fail git for-each-ref --format="%(HEAD:foo)" 2>err &&
+	echo "fatal: %(HEAD) does not take arguments" >expect &&
+	test_cmp expect err
+'
+
+test_expect_success 'subject atom rejects unknown arguments' '
+	test_must_fail git for-each-ref --format="%(subject:foo)" 2>err &&
+	echo "fatal: unrecognized %(subject) argument: foo" >expect &&
+	test_cmp expect err
+'
+
+test_expect_success 'refname atom rejects unknown arguments' '
+	test_must_fail git for-each-ref --format="%(refname:foo)" 2>err &&
+	echo "fatal: unrecognized %(refname) argument: foo" >expect &&
+	test_cmp expect err
+'
+
 test_expect_success 'trailer parsing not fooled by --- line' '
 	git commit --allow-empty -F - <<-\EOF &&
 	this is the subject
@@ -1405,5 +1423,45 @@ test_expect_success 'for-each-ref reports broken tags' '
 	test_must_fail git for-each-ref --format="%(*objectname)" \
 		refs/tags/broken-tag-*
 '
+
+test_expect_success 'set up tag with signature and no blank lines' '
+	git tag -F - fake-sig-no-blanks <<-\EOF
+	this is the subject
+	-----BEGIN PGP SIGNATURE-----
+	not a real signature, but we just care about the
+	subject/body parsing. It is important here that
+	there are no blank lines in the signature.
+	-----END PGP SIGNATURE-----
+	EOF
+'
+
+test_atom refs/tags/fake-sig-no-blanks contents:subject 'this is the subject'
+test_atom refs/tags/fake-sig-no-blanks contents:body ''
+test_atom refs/tags/fake-sig-no-blanks contents:signature "$sig"
+
+test_expect_success 'set up tag with CRLF signature' '
+	append_cr <<-\EOF |
+	this is the subject
+	-----BEGIN PGP SIGNATURE-----
+
+	not a real signature, but we just care about
+	the subject/body parsing. It is important here
+	that there is a blank line separating this
+	from the signature header.
+	-----END PGP SIGNATURE-----
+	EOF
+	git tag -F - --cleanup=verbatim fake-sig-crlf
+'
+
+test_atom refs/tags/fake-sig-crlf contents:subject 'this is the subject'
+test_atom refs/tags/fake-sig-crlf contents:body ''
+
+# CRLF is retained in the signature, so we have to pass our expected value
+# through append_cr. But test_atom requires a shell string, which means command
+# substitution, and the shell will strip trailing newlines from the output of
+# the substitution. Hack around it by adding and then removing a dummy line.
+sig_crlf="$(printf "%s" "$sig" | append_cr; echo dummy)"
+sig_crlf=${sig_crlf%dummy}
+test_atom refs/tags/fake-sig-crlf contents:signature "$sig_crlf"
 
 test_done

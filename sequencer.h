@@ -1,11 +1,11 @@
 #ifndef SEQUENCER_H
 #define SEQUENCER_H
 
-#include "cache.h"
 #include "strbuf.h"
 #include "wt-status.h"
 
 struct commit;
+struct index_state;
 struct repository;
 
 const char *git_path_commit_editmsg(void);
@@ -63,6 +63,9 @@ struct replay_opts {
 	char **xopts;
 	size_t xopts_nr, xopts_alloc;
 
+	/* Reflog */
+	char *reflog_action;
+
 	/* Used by fixup/squash */
 	struct strbuf current_fixups;
 	int current_fixup_count;
@@ -73,6 +76,9 @@ struct replay_opts {
 
 	/* Only used by REPLAY_NONE */
 	struct rev_info *revs;
+
+	/* Private use */
+	const char *reflog_message;
 };
 #define REPLAY_OPTS_INIT { .edit = -1, .action = -1, .current_fixups = STRBUF_INIT }
 
@@ -152,6 +158,7 @@ int sequencer_pick_revisions(struct repository *repo,
 int sequencer_continue(struct repository *repo, struct replay_opts *opts);
 int sequencer_rollback(struct repository *repo, struct replay_opts *opts);
 int sequencer_skip(struct repository *repo, struct replay_opts *opts);
+void replay_opts_release(struct replay_opts *opts);
 int sequencer_remove_state(struct replay_opts *opts);
 
 #define TODO_LIST_KEEP_EMPTY (1U << 0)

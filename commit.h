@@ -205,7 +205,6 @@ void free_commit_list(struct commit_list *list);
 
 struct rev_info; /* in revision.h, it circularly uses enum cmit_fmt */
 
-int has_non_ascii(const char *text);
 const char *logmsg_reencode(const struct commit *commit,
 			    char **commit_encoding,
 			    const char *output_encoding);
@@ -274,8 +273,6 @@ struct ref;
 int for_each_commit_graft(each_commit_graft_fn, void *);
 
 int interactive_add(const char **argv, const char *prefix, int patch);
-int run_add_interactive(const char *revision, const char *patch_mode,
-			const struct pathspec *pathspec);
 
 struct commit_extra_header {
 	struct commit_extra_header *next;

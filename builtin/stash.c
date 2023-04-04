@@ -1,6 +1,7 @@
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
+#define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "config.h"
+#include "hex.h"
 #include "parse-options.h"
 #include "refs.h"
 #include "lockfile.h"
@@ -18,6 +19,7 @@
 #include "diffcore.h"
 #include "exec-cmd.h"
 #include "reflog.h"
+#include "add-interactive.h"
 
 #define INCLUDE_ALL_FILES 2
 
@@ -261,11 +263,11 @@ static int reset_tree(struct object_id *i_tree, int update, int reset)
 	struct tree *tree;
 	struct lock_file lock_file = LOCK_INIT;
 
-	read_cache_preload(NULL);
-	if (refresh_cache(REFRESH_QUIET))
+	repo_read_index_preload(the_repository, NULL, 0);
+	if (refresh_index(&the_index, REFRESH_QUIET, NULL, NULL, NULL))
 		return -1;
 
-	hold_locked_index(&lock_file, LOCK_DIE_ON_ERROR);
+	repo_hold_locked_index(the_repository, &lock_file, LOCK_DIE_ON_ERROR);
 
 	memset(&opts, 0, sizeof(opts));
 
@@ -454,10 +456,10 @@ static void unstage_changes_unless_new(struct object_id *orig_tree)
 		 * path, but left it out of the working tree, then clear the
 		 * SKIP_WORKTREE bit and write it to the working tree.
 		 */
-		if (pos >= 0 && ce_skip_worktree(active_cache[pos])) {
+		if (pos >= 0 && ce_skip_worktree(the_index.cache[pos])) {
 			struct stat st;
 
-			ce = active_cache[pos];
+			ce = the_index.cache[pos];
 			if (!lstat(ce->name, &st)) {
 				/* Conflicting path present; relocate it */
 				struct strbuf new_path = STRBUF_INIT;
@@ -523,11 +525,13 @@ static int do_apply_stash(const char *prefix, struct stash_info *info,
 	struct tree *head, *merge, *merge_base;
 	struct lock_file lock = LOCK_INIT;
 
-	read_cache_preload(NULL);
-	if (refresh_and_write_cache(REFRESH_QUIET, 0, 0))
+	repo_read_index_preload(the_repository, NULL, 0);
+	if (repo_refresh_and_write_index(the_repository, REFRESH_QUIET, 0, 0,
+					 NULL, NULL, NULL))
 		return -1;
 
-	if (write_cache_as_tree(&c_tree, 0, NULL))
+	if (write_index_as_tree(&c_tree, &the_index, get_index_file(), 0,
+				NULL))
 		return error(_("cannot apply a stash in the middle of a merge"));
 
 	if (index) {
@@ -549,14 +553,15 @@ static int do_apply_stash(const char *prefix, struct stash_info *info,
 				return error(_("conflicts in index. "
 					       "Try without --index."));
 
-			discard_cache();
-			read_cache();
-			if (write_cache_as_tree(&index_tree, 0, NULL))
+			discard_index(&the_index);
+			repo_read_index(the_repository);
+			if (write_index_as_tree(&index_tree, &the_index,
+						get_index_file(), 0, NULL))
 				return error(_("could not save index tree"));
 
 			reset_head();
-			discard_cache();
-			read_cache();
+			discard_index(&the_index);
+			repo_read_index(the_repository);
 		}
 	}
 
@@ -1082,7 +1087,7 @@ static int check_changes_tracked_files(const struct pathspec *ps)
 	if (get_oid("HEAD", &dummy))
 		return -1;
 
-	if (read_cache() < 0)
+	if (repo_read_index(the_repository) < 0)
 		return -1;
 
 	init_revisions(&rev, NULL);
@@ -1136,7 +1141,7 @@ static int save_untracked_files(struct stash_info *info, struct strbuf *msg,
 	int ret = 0;
 	struct strbuf untracked_msg = STRBUF_INIT;
 	struct child_process cp_upd_index = CHILD_PROCESS_INIT;
-	struct index_state istate = { NULL };
+	struct index_state istate = INDEX_STATE_INIT(the_repository);
 
 	cp_upd_index.git_cmd = 1;
 	strvec_pushl(&cp_upd_index.args, "update-index", "-z", "--add",
@@ -1164,7 +1169,7 @@ static int save_untracked_files(struct stash_info *info, struct strbuf *msg,
 	}
 
 done:
-	discard_index(&istate);
+	release_index(&istate);
 	strbuf_release(&untracked_msg);
 	remove_path(stash_index_path.buf);
 	return ret;
@@ -1175,7 +1180,7 @@ static int stash_staged(struct stash_info *info, struct strbuf *out_patch,
 {
 	int ret = 0;
 	struct child_process cp_diff_tree = CHILD_PROCESS_INIT;
-	struct index_state istate = { NULL };
+	struct index_state istate = INDEX_STATE_INIT(the_repository);
 
 	if (write_index_as_tree(&info->w_tree, &istate, the_repository->index_file,
 				0, NULL)) {
@@ -1198,7 +1203,7 @@ static int stash_staged(struct stash_info *info, struct strbuf *out_patch,
 	}
 
 done:
-	discard_index(&istate);
+	release_index(&istate);
 	return ret;
 }
 
@@ -1208,7 +1213,7 @@ static int stash_patch(struct stash_info *info, const struct pathspec *ps,
 	int ret = 0;
 	struct child_process cp_read_tree = CHILD_PROCESS_INIT;
 	struct child_process cp_diff_tree = CHILD_PROCESS_INIT;
-	struct index_state istate = { NULL };
+	struct index_state istate = INDEX_STATE_INIT(the_repository);
 	char *old_index_env = NULL, *old_repo_index_file;
 
 	remove_path(stash_index_path.buf);
@@ -1228,7 +1233,7 @@ static int stash_patch(struct stash_info *info, const struct pathspec *ps,
 	old_index_env = xstrdup_or_null(getenv(INDEX_ENVIRONMENT));
 	setenv(INDEX_ENVIRONMENT, the_repository->index_file, 1);
 
-	ret = run_add_interactive(NULL, "--patch=stash", ps);
+	ret = !!run_add_p(the_repository, ADD_P_STASH, NULL, ps);
 
 	the_repository->index_file = old_repo_index_file;
 	if (old_index_env && *old_index_env)
@@ -1259,7 +1264,7 @@ static int stash_patch(struct stash_info *info, const struct pathspec *ps,
 	}
 
 done:
-	discard_index(&istate);
+	release_index(&istate);
 	remove_path(stash_index_path.buf);
 	return ret;
 }
@@ -1270,7 +1275,7 @@ static int stash_working_tree(struct stash_info *info, const struct pathspec *ps
 	struct rev_info rev;
 	struct child_process cp_upd_index = CHILD_PROCESS_INIT;
 	struct strbuf diff_output = STRBUF_INIT;
-	struct index_state istate = { NULL };
+	struct index_state istate = INDEX_STATE_INIT(the_repository);
 
 	init_revisions(&rev, NULL);
 	copy_pathspec(&rev.prune_data, ps);
@@ -1286,7 +1291,7 @@ static int stash_working_tree(struct stash_info *info, const struct pathspec *ps
 	rev.diffopt.format_callback = add_diff_to_buf;
 	rev.diffopt.format_callback_data = &diff_output;
 
-	if (read_cache_preload(&rev.diffopt.pathspec) < 0) {
+	if (repo_read_index_preload(the_repository, &rev.diffopt.pathspec, 0) < 0) {
 		ret = -1;
 		goto done;
 	}
@@ -1318,7 +1323,7 @@ static int stash_working_tree(struct stash_info *info, const struct pathspec *ps
 	}
 
 done:
-	discard_index(&istate);
+	release_index(&istate);
 	release_revisions(&rev);
 	strbuf_release(&diff_output);
 	remove_path(stash_index_path.buf);
@@ -1344,8 +1349,9 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 
 	prepare_fallback_ident("git stash", "git@stash");
 
-	read_cache_preload(NULL);
-	if (refresh_and_write_cache(REFRESH_QUIET, 0, 0) < 0) {
+	repo_read_index_preload(the_repository, NULL, 0);
+	if (repo_refresh_and_write_index(the_repository, REFRESH_QUIET, 0, 0,
+					 NULL, NULL, NULL) < 0) {
 		ret = -1;
 		goto done;
 	}
@@ -1375,7 +1381,8 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 
 	strbuf_addf(&commit_tree_label, "index on %s\n", msg.buf);
 	commit_list_insert(head_commit, &parents);
-	if (write_cache_as_tree(&info->i_tree, 0, NULL) ||
+	if (write_index_as_tree(&info->i_tree, &the_index, get_index_file(), 0,
+				NULL) ||
 	    commit_tree(commit_tree_label.buf, commit_tree_label.len,
 			&info->i_tree, parents, &info->i_commit, NULL, NULL)) {
 		if (!quiet)
@@ -1513,15 +1520,15 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 		goto done;
 	}
 
-	read_cache_preload(NULL);
+	repo_read_index_preload(the_repository, NULL, 0);
 	if (!include_untracked && ps->nr) {
 		int i;
 		char *ps_matched = xcalloc(ps->nr, 1);
 
 		/* TODO: audit for interaction with sparse-index. */
 		ensure_full_index(&the_index);
-		for (i = 0; i < active_nr; i++)
-			ce_path_match(&the_index, active_cache[i], ps,
+		for (i = 0; i < the_index.cache_nr; i++)
+			ce_path_match(&the_index, the_index.cache[i], ps,
 				      ps_matched);
 
 		if (report_path_error(ps_matched, ps)) {
@@ -1533,7 +1540,8 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 		free(ps_matched);
 	}
 
-	if (refresh_and_write_cache(REFRESH_QUIET, 0, 0)) {
+	if (repo_refresh_and_write_index(the_repository, REFRESH_QUIET, 0, 0,
+					 NULL, NULL, NULL)) {
 		ret = -1;
 		goto done;
 	}
@@ -1590,7 +1598,7 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 				goto done;
 			}
 		}
-		discard_cache();
+		discard_index(&the_index);
 		if (ps->nr) {
 			struct child_process cp_add = CHILD_PROCESS_INIT;
 			struct child_process cp_diff = CHILD_PROCESS_INIT;
@@ -1686,8 +1694,10 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 	}
 
 done:
+	strbuf_release(&patch);
 	free_stash_info(&info);
 	strbuf_release(&stash_msg_buf);
+	strbuf_release(&untracked_files);
 	return ret;
 }
 
@@ -1722,6 +1732,7 @@ static int push_stash(int argc, const char **argv, const char *prefix,
 		OPT_PATHSPEC_FILE_NUL(&pathspec_file_nul),
 		OPT_END()
 	};
+	int ret;
 
 	if (argc) {
 		force_assume = !strcmp(argv[0], "-p");
@@ -1761,8 +1772,10 @@ static int push_stash(int argc, const char **argv, const char *prefix,
 		die(_("the option '%s' requires '%s'"), "--pathspec-file-nul", "--pathspec-from-file");
 	}
 
-	return do_push_stash(&ps, stash_msg, quiet, keep_index, patch_mode,
-			     include_untracked, only_staged);
+	ret = do_push_stash(&ps, stash_msg, quiet, keep_index, patch_mode,
+			    include_untracked, only_staged);
+	clear_pathspec(&ps);
+	return ret;
 }
 
 static int push_stash_unassumed(int argc, const char **argv, const char *prefix)

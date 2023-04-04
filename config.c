@@ -5,11 +5,13 @@
  * Copyright (C) Johannes Schindelin, 2005
  *
  */
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "date.h"
 #include "branch.h"
 #include "config.h"
 #include "environment.h"
+#include "ident.h"
 #include "repository.h"
 #include "lockfile.h"
 #include "exec-cmd.h"
@@ -21,6 +23,7 @@
 #include "utf8.h"
 #include "dir.h"
 #include "color.h"
+#include "replace-object.h"
 #include "refs.h"
 #include "worktree.h"
 
@@ -1160,21 +1163,26 @@ static int git_parse_signed(const char *value, intmax_t *ret, intmax_t max)
 	if (value && *value) {
 		char *end;
 		intmax_t val;
-		uintmax_t uval;
-		uintmax_t factor;
+		intmax_t factor;
+
+		if (max < 0)
+			BUG("max must be a positive integer");
 
 		errno = 0;
 		val = strtoimax(value, &end, 0);
 		if (errno == ERANGE)
 			return 0;
+		if (end == value) {
+			errno = EINVAL;
+			return 0;
+		}
 		factor = get_unit_factor(end);
 		if (!factor) {
 			errno = EINVAL;
 			return 0;
 		}
-		uval = val < 0 ? -val : val;
-		if (unsigned_mult_overflows(factor, uval) ||
-		    factor * uval > max) {
+		if ((val < 0 && -max / factor > val) ||
+		    (val > 0 && max / factor < val)) {
 			errno = ERANGE;
 			return 0;
 		}
@@ -1193,10 +1201,19 @@ static int git_parse_unsigned(const char *value, uintmax_t *ret, uintmax_t max)
 		uintmax_t val;
 		uintmax_t factor;
 
+		/* negative values would be accepted by strtoumax */
+		if (strchr(value, '-')) {
+			errno = EINVAL;
+			return 0;
+		}
 		errno = 0;
 		val = strtoumax(value, &end, 0);
 		if (errno == ERANGE)
 			return 0;
+		if (end == value) {
+			errno = EINVAL;
+			return 0;
+		}
 		factor = get_unit_factor(end);
 		if (!factor) {
 			errno = EINVAL;
@@ -1669,7 +1686,7 @@ static int git_default_core_config(const char *var, const char *value, void *cb)
 			comment_line_char = value[0];
 			auto_comment_line_char = 0;
 		} else
-			return error(_("core.commentChar should only be one character"));
+			return error(_("core.commentChar should only be one ASCII character"));
 		return 0;
 	}
 
@@ -3140,7 +3157,7 @@ int git_config_set_gently(const char *key, const char *value)
 int repo_config_set_worktree_gently(struct repository *r,
 				    const char *key, const char *value)
 {
-	/* Only use worktree-specific config if it is is already enabled. */
+	/* Only use worktree-specific config if it is already enabled. */
 	if (repository_format_worktree_config) {
 		char *file = repo_git_path(r, "config.worktree");
 		int ret = git_config_set_multivar_in_file_gently(

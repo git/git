@@ -29,7 +29,7 @@ make_tree () {
 		make_tree_entry "$1" "$2" "$3"
 		shift; shift; shift
 	done |
-	git hash-object -w -t tree --stdin
+	git hash-object --literally -w -t tree --stdin
 }
 
 # this is kind of a convoluted setup, but matches

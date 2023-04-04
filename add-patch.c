@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "add-interactive.h"
+#include "alloc.h"
 #include "strbuf.h"
 #include "run-command.h"
 #include "strvec.h"
@@ -483,7 +484,8 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 		if (!eol)
 			eol = pend;
 
-		if (starts_with(p, "diff ")) {
+		if (starts_with(p, "diff ") ||
+		    starts_with(p, "* Unmerged path ")) {
 			complete_file(marker, hunk);
 			ALLOC_GROW_BY(s->file_diff, s->file_diff_nr, 1,
 				   file_diff_alloc);
@@ -1750,7 +1752,8 @@ int run_add_p(struct repository *r, enum add_p_mode mode,
 		s.mode = &patch_mode_add;
 	s.revision = revision;
 
-	if (discard_index(r->index) < 0 || repo_read_index(r) < 0 ||
+	discard_index(r->index);
+	if (repo_read_index(r) < 0 ||
 	    (!s.mode->index_only &&
 	     repo_refresh_and_write_index(r, REFRESH_QUIET, 0, 1,
 					  NULL, NULL, NULL) < 0) ||

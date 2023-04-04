@@ -187,6 +187,46 @@ test_expect_success 'rev-parse --exclude=ref with --remotes=glob' '
 	compare rev-parse "--exclude=upstream/x --remotes=upstream/*" "upstream/one upstream/two"
 '
 
+for section in fetch receive uploadpack
+do
+	test_expect_success "rev-parse --exclude-hidden=$section with --all" '
+		compare "-c transfer.hideRefs=refs/remotes/ rev-parse" "--branches --tags" "--exclude-hidden=$section --all"
+	'
+
+	test_expect_success "rev-parse --exclude-hidden=$section with --all" '
+		compare "-c transfer.hideRefs=refs/heads/subspace/ rev-parse" "--exclude=refs/heads/subspace/* --all" "--exclude-hidden=$section --all"
+	'
+
+	test_expect_success "rev-parse --exclude-hidden=$section with --glob" '
+		compare "-c transfer.hideRefs=refs/heads/subspace/ rev-parse" "--exclude=refs/heads/subspace/* --glob=refs/heads/*" "--exclude-hidden=$section --glob=refs/heads/*"
+	'
+
+	test_expect_success "rev-parse --exclude-hidden=$section can be passed once per pseudo-ref" '
+		compare "-c transfer.hideRefs=refs/remotes/ rev-parse" "--branches --tags --branches --tags" "--exclude-hidden=$section --all --exclude-hidden=$section --all"
+	'
+
+	test_expect_success "rev-parse --exclude-hidden=$section can only be passed once per pseudo-ref" '
+		echo "fatal: --exclude-hidden= passed more than once" >expected &&
+		test_must_fail git rev-parse --exclude-hidden=$section --exclude-hidden=$section 2>err &&
+		test_cmp expected err
+	'
+
+	for pseudoopt in branches tags remotes
+	do
+		test_expect_success "rev-parse --exclude-hidden=$section fails with --$pseudoopt" '
+			echo "error: --exclude-hidden cannot be used together with --$pseudoopt" >expected &&
+			test_must_fail git rev-parse --exclude-hidden=$section --$pseudoopt 2>err &&
+			test_cmp expected err
+		'
+
+		test_expect_success "rev-parse --exclude-hidden=$section fails with --$pseudoopt=pattern" '
+			echo "error: --exclude-hidden cannot be used together with --$pseudoopt" >expected &&
+			test_must_fail git rev-parse --exclude-hidden=$section --$pseudoopt=pattern 2>err &&
+			test_cmp expected err
+		'
+	done
+done
+
 test_expect_success 'rev-list --exclude=glob with --branches=glob' '
 	compare rev-list "--exclude=subspace-* --branches=sub*" "subspace/one subspace/two"
 '

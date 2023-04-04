@@ -5,6 +5,7 @@
 #include "repository.h"
 #include "diff.h"
 #include "diffcore.h"
+#include "hex.h"
 #include "xdiff-interface.h"
 #include "ll-merge.h"
 #include "dir.h"

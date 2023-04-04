@@ -116,13 +116,17 @@ OPTIONS
 
 -f::
 --force::
-	Reset <branchname> to <startpoint>, even if <branchname> exists
+	Reset <branchname> to <start-point>, even if <branchname> exists
 	already. Without `-f`, 'git branch' refuses to change an existing branch.
 	In combination with `-d` (or `--delete`), allow deleting the
 	branch irrespective of its merged status, or whether it even
 	points to a valid commit. In combination with
 	`-m` (or `--move`), allow renaming the branch even if the new
 	branch name already exists, the same applies for `-c` (or `--copy`).
++
+Note that 'git branch -f <branchname> [<start-point>]', even with '-f',
+refuses to change an existing branch `<branchname>` that is checked out
+in another worktree linked to the same repository.
 
 -m::
 --move::

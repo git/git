@@ -562,7 +562,7 @@ hash re-encode during clone and to encourage peers to modernize.
 The design described here allows fetches by SHA-1 clients of a
 personal SHA-256 repository because it's not much more difficult than
 allowing pushes from that repository. This support needs to be guarded
-by a configuration option --- servers like git.kernel.org that serve a
+by a configuration option -- servers like git.kernel.org that serve a
 large number of clients would not be expected to bear that cost.
 
 Meaning of signatures

@@ -709,4 +709,16 @@ test_expect_success 'subcommands are incompatible with KEEP_DASHDASH unless in c
 	grep ^BUG err
 '
 
+test_expect_success 'negative magnitude' '
+	test_must_fail test-tool parse-options --magnitude -1 >out 2>err &&
+	grep "non-negative integer" err &&
+	test_must_be_empty out
+'
+
+test_expect_success 'magnitude with units but no numbers' '
+	test_must_fail test-tool parse-options --magnitude m >out 2>err &&
+	grep "non-negative integer" err &&
+	test_must_be_empty out
+'
+
 test_done

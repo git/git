@@ -202,7 +202,7 @@ test_expect_success GPG 'detect fudged signature with NUL' '
 	git cat-file commit seventh-signed >raw &&
 	cat raw >forged2 &&
 	echo Qwik | tr "Q" "\000" >>forged2 &&
-	git hash-object -w -t commit forged2 >forged2.commit &&
+	git hash-object --literally -w -t commit forged2 >forged2.commit &&
 	test_must_fail git verify-commit $(cat forged2.commit) &&
 	git show --pretty=short --show-signature $(cat forged2.commit) >actual2 &&
 	grep "BAD signature from" actual2 &&
@@ -385,6 +385,50 @@ test_expect_success GPG 'verify-commit verifies multiply signed commits' '
 	git verify-commit $head 2>actual &&
 	grep "Good signature from" actual &&
 	! grep "BAD signature from" actual
+'
+
+test_expect_success 'custom `gpg.program`' '
+	write_script fake-gpg <<-\EOF &&
+	args="$*"
+
+	# skip uninteresting options
+	while case "$1" in
+	--status-fd=*|--keyid-format=*) ;; # skip
+	*) break;;
+	esac; do shift; done
+
+	case "$1" in
+	-bsau)
+		test -z "$LET_GPG_PROGRAM_FAIL" || {
+			echo "zOMG signing failed!" >&2
+			exit 1
+		}
+		cat >sign.file
+		echo "[GNUPG:] SIG_CREATED $args" >&2
+		echo "-----BEGIN PGP MESSAGE-----"
+		echo "$args"
+		echo "-----END PGP MESSAGE-----"
+		;;
+	--verify)
+		cat "$2" >verify.file
+		exit 0
+		;;
+	*)
+		echo "Unhandled args: $*" >&2
+		exit 1
+		;;
+	esac
+	EOF
+
+	test_config gpg.program "$(pwd)/fake-gpg" &&
+	git commit -S --allow-empty -m signed-commit &&
+	test_path_exists sign.file &&
+	git show --show-signature &&
+	test_path_exists verify.file &&
+
+	test_must_fail env LET_GPG_PROGRAM_FAIL=1 \
+	git commit -S --allow-empty -m must-fail 2>err &&
+	grep zOMG err
 '
 
 test_done

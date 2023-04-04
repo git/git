@@ -208,7 +208,7 @@ behavior:
 * `warn` outputs warnings for a few such errors, but applies the
   patch as-is (default).
 * `fix` outputs warnings for a few such errors, and applies the
-  patch after fixing them (`strip` is a synonym --- the tool
+  patch after fixing them (`strip` is a synonym -- the tool
   used to consider only trailing whitespace characters as errors, and the
   fix involved 'stripping' them, but modern Gits do more).
 * `error` outputs warnings for a few such errors, and refuses

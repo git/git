@@ -251,10 +251,10 @@ EXAMPLES
 $ git fetch origin
 ------------------------------------------------
 +
-The above command copies all branches from the remote refs/heads/
-namespace and stores them to the local refs/remotes/origin/ namespace,
-unless the branch.<name>.fetch option is used to specify a non-default
-refspec.
+The above command copies all branches from the remote `refs/heads/`
+namespace and stores them to the local `refs/remotes/origin/` namespace,
+unless the `remote.<repository>.fetch` option is used to specify a
+non-default refspec.
 
 * Using refspecs explicitly:
 +

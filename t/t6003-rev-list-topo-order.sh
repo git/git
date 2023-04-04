@@ -326,19 +326,16 @@ a2
 c3
 EOF
 
-#
-# this test fails on --topo-order - a fix is required
-#
-#test_output_expect_success '--max-age=c3, --topo-order' "git rev-list --topo-order --max-age=$(commit_date c3) l5" <<EOF
-#l5
-#l4
-#l3
-#a4
-#c3
-#b4
-#a3
-#a2
-#EOF
+test_output_expect_success '--max-age=c3, --topo-order' "git rev-list --topo-order --max-age=$(commit_date c3) l5" <<EOF
+l5
+l4
+l3
+a4
+c3
+b4
+a3
+a2
+EOF
 
 test_output_expect_success 'one specified head reachable from another a4, c3, --topo-order' "list_duplicates git rev-list --topo-order a4 c3" <<EOF
 EOF

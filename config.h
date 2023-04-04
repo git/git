@@ -448,15 +448,6 @@ void git_configset_init(struct config_set *cs);
 int git_configset_add_file(struct config_set *cs, const char *filename);
 
 /**
- * Parses command line options and environment variables, and adds the
- * variable-value pairs to the `config_set`. Returns 0 on success, or -1
- * if there is an error in parsing. The caller decides whether to free
- * the incomplete configset or continue using it when the function
- * returns -1.
- */
-int git_configset_add_parameters(struct config_set *cs);
-
-/**
  * Finds and returns the value list, sorted in order of increasing priority
  * for the configuration variable `key` and config set `cs`. When the
  * configuration variable `key` is not found, returns NULL. The caller

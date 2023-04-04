@@ -11,12 +11,13 @@
  *
  * Copyright (C) 2016 Johannes Schindelin
  */
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
+#define USE_THE_INDEX_VARIABLE
 #include "cache.h"
 #include "config.h"
 #include "builtin.h"
 #include "run-command.h"
 #include "exec-cmd.h"
+#include "hex.h"
 #include "parse-options.h"
 #include "strvec.h"
 #include "strbuf.h"
@@ -44,8 +45,11 @@ static int difftool_config(const char *var, const char *value, void *cb)
 
 static int print_tool_help(void)
 {
-	const char *argv[] = { "mergetool", "--tool-help=diff", NULL };
-	return run_command_v_opt(argv, RUN_GIT_CMD);
+	struct child_process cmd = CHILD_PROCESS_INIT;
+
+	cmd.git_cmd = 1;
+	strvec_pushl(&cmd.args, "mergetool", "--tool-help=diff", NULL);
+	return run_command(&cmd);
 }
 
 static int parse_index_info(char *p, int *mode1, int *mode2,
@@ -358,10 +362,10 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	struct hashmap symlinks2 = HASHMAP_INIT(pair_cmp, NULL);
 	struct hashmap_iter iter;
 	struct pair_entry *entry;
-	struct index_state wtindex;
+	struct index_state wtindex = INDEX_STATE_INIT(the_repository);
 	struct checkout lstate, rstate;
-	int flags = RUN_GIT_CMD, err = 0;
-	const char *helper_argv[] = { "difftool--helper", NULL, NULL, NULL };
+	int err = 0;
+	struct child_process cmd = CHILD_PROCESS_INIT;
 	struct hashmap wt_modified, tmp_modified;
 	int indices_loaded = 0;
 
@@ -383,8 +387,6 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 		strbuf_addch(&wtdir, '/');
 	mkdir(ldir.buf, 0700);
 	mkdir(rdir.buf, 0700);
-
-	memset(&wtindex, 0, sizeof(wtindex));
 
 	memset(&lstate, 0, sizeof(lstate));
 	lstate.base_dir = lbase_dir = xstrdup(ldir.buf);
@@ -563,16 +565,17 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	}
 
 	strbuf_setlen(&ldir, ldir_len);
-	helper_argv[1] = ldir.buf;
 	strbuf_setlen(&rdir, rdir_len);
-	helper_argv[2] = rdir.buf;
 
 	if (extcmd) {
-		helper_argv[0] = extcmd;
-		flags = 0;
-	} else
+		strvec_push(&cmd.args, extcmd);
+	} else {
+		strvec_push(&cmd.args, "difftool--helper");
+		cmd.git_cmd = 1;
 		setenv("GIT_DIFFTOOL_DIRDIFF", "true", 1);
-	ret = run_command_v_opt(helper_argv, flags);
+	}
+	strvec_pushl(&cmd.args, ldir.buf, rdir.buf, NULL);
+	ret = run_command(&cmd);
 
 	/* TODO: audit for interaction with sparse-index. */
 	ensure_full_index(&wtindex);

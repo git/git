@@ -9,7 +9,7 @@ git-am - Apply a series of patches from a mailbox
 SYNOPSIS
 --------
 [verse]
-'git am' [--signoff] [--keep] [--[no-]keep-cr] [--[no-]utf8]
+'git am' [--signoff] [--keep] [--[no-]keep-cr] [--[no-]utf8] [--no-verify]
 	 [--[no-]3way] [--interactive] [--committer-date-is-author-date]
 	 [--ignore-date] [--ignore-space-change | --ignore-whitespace]
 	 [--whitespace=<option>] [-C<n>] [-p<n>] [--directory=<dir>]
@@ -24,7 +24,9 @@ DESCRIPTION
 -----------
 Splits mail messages in a mailbox into commit log message,
 authorship information and patches, and applies them to the
-current branch.
+current branch. You could think of it as a reverse operation
+of linkgit:git-format-patch[1] run on a branch with a straight
+history without merges.
 
 OPTIONS
 -------
@@ -137,6 +139,12 @@ include::rerere-options.txt[]
 -i::
 --interactive::
 	Run interactively.
+
+-n::
+--no-verify::
+	By default, the pre-applypatch and applypatch-msg hooks are run.
+	When any of `--no-verify` or `-n` is given, these are bypassed.
+	See also linkgit:githooks[5].
 
 --committer-date-is-author-date::
 	By default the command records the date from the e-mail
@@ -267,7 +275,8 @@ include::config/am.txt[]
 
 SEE ALSO
 --------
-linkgit:git-apply[1].
+linkgit:git-apply[1],
+linkgit:git-format-patch[1].
 
 GIT
 ---

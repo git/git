@@ -341,19 +341,19 @@ static void child_close_pair(int fd[2])
 	child_close(fd[1]);
 }
 
-static void child_error_fn(const char *err, va_list params)
+static void child_error_fn(const char *err UNUSED, va_list params UNUSED)
 {
 	const char msg[] = "error() should not be called in child\n";
 	xwrite(2, msg, sizeof(msg) - 1);
 }
 
-static void child_warn_fn(const char *err, va_list params)
+static void child_warn_fn(const char *err UNUSED, va_list params UNUSED)
 {
 	const char msg[] = "warn() should not be called in child\n";
 	xwrite(2, msg, sizeof(msg) - 1);
 }
 
-static void NORETURN child_die_fn(const char *err, va_list params)
+static void NORETURN child_die_fn(const char *err UNUSED, va_list params UNUSED)
 {
 	const char msg[] = "die() should not be called in child\n";
 	xwrite(2, msg, sizeof(msg) - 1);
@@ -1004,41 +1004,6 @@ int run_command(struct child_process *cmd)
 	return finish_command(cmd);
 }
 
-int run_command_v_opt(const char **argv, int opt)
-{
-	return run_command_v_opt_cd_env(argv, opt, NULL, NULL);
-}
-
-int run_command_v_opt_tr2(const char **argv, int opt, const char *tr2_class)
-{
-	return run_command_v_opt_cd_env_tr2(argv, opt, NULL, NULL, tr2_class);
-}
-
-int run_command_v_opt_cd_env(const char **argv, int opt, const char *dir, const char *const *env)
-{
-	return run_command_v_opt_cd_env_tr2(argv, opt, dir, env, NULL);
-}
-
-int run_command_v_opt_cd_env_tr2(const char **argv, int opt, const char *dir,
-				 const char *const *env, const char *tr2_class)
-{
-	struct child_process cmd = CHILD_PROCESS_INIT;
-	strvec_pushv(&cmd.args, argv);
-	cmd.no_stdin = opt & RUN_COMMAND_NO_STDIN ? 1 : 0;
-	cmd.git_cmd = opt & RUN_GIT_CMD ? 1 : 0;
-	cmd.stdout_to_stderr = opt & RUN_COMMAND_STDOUT_TO_STDERR ? 1 : 0;
-	cmd.silent_exec_failure = opt & RUN_SILENT_EXEC_FAILURE ? 1 : 0;
-	cmd.use_shell = opt & RUN_USING_SHELL ? 1 : 0;
-	cmd.clean_on_exit = opt & RUN_CLEAN_ON_EXIT ? 1 : 0;
-	cmd.wait_after_clean = opt & RUN_WAIT_AFTER_CLEAN ? 1 : 0;
-	cmd.close_object_store = opt & RUN_CLOSE_OBJECT_STORE ? 1 : 0;
-	cmd.dir = dir;
-	if (env)
-		strvec_pushv(&cmd.env, (const char **)env);
-	cmd.trace2_child_class = tr2_class;
-	return run_command(&cmd);
-}
-
 #ifndef NO_PTHREADS
 static pthread_t main_thread;
 static int main_thread_set;
@@ -1054,7 +1019,7 @@ static void *run_thread(void *data)
 		sigset_t mask;
 		sigemptyset(&mask);
 		sigaddset(&mask, SIGPIPE);
-		if (pthread_sigmask(SIG_BLOCK, &mask, NULL) < 0) {
+		if (pthread_sigmask(SIG_BLOCK, &mask, NULL)) {
 			ret = error("unable to block SIGPIPE in async thread");
 			return (void *)ret;
 		}
@@ -1621,6 +1586,14 @@ static int pp_start_one(struct parallel_processes *pp,
 	if (i == opts->processes)
 		BUG("bookkeeping is hard");
 
+	/*
+	 * By default, do not inherit stdin from the parent process - otherwise,
+	 * all children would share stdin! Users may overwrite this to provide
+	 * something to the child's stdin by having their 'get_next_task'
+	 * callback assign 0 to .no_stdin and an appropriate integer to .in.
+	 */
+	pp->children[i].process.no_stdin = 1;
+
 	code = opts->get_next_task(&pp->children[i].process,
 				   opts->ungroup ? NULL : &pp->children[i].err,
 				   opts->data,
@@ -1636,7 +1609,6 @@ static int pp_start_one(struct parallel_processes *pp,
 		pp->children[i].process.err = -1;
 		pp->children[i].process.stdout_to_stderr = 1;
 	}
-	pp->children[i].process.no_stdin = 1;
 
 	if (start_command(&pp->children[i].process)) {
 		if (opts->start_failure)
@@ -1667,9 +1639,7 @@ static void pp_buffer_stderr(struct parallel_processes *pp,
 			     const struct run_process_parallel_opts *opts,
 			     int output_timeout)
 {
-	int i;
-
-	while ((i = poll(pp->pfd, opts->processes, output_timeout) < 0)) {
+	while (poll(pp->pfd, opts->processes, output_timeout) < 0) {
 		if (errno == EINTR)
 			continue;
 		pp_cleanup(pp, opts);
@@ -1888,7 +1858,7 @@ enum start_bg_result start_bg_command(struct child_process *cmd,
 		 *
 		 * We also assume that `start_command()` does not add
 		 * us to the cleanup list.  And that it calls
-		 * calls `child_process_clear()`.
+		 * `child_process_clear()`.
 		 */
 		sbgr = SBGR_ERROR;
 		goto done;

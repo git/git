@@ -92,13 +92,15 @@ static int verbose;
 
 static int fetch_remote(const char *name)
 {
-	const char *argv[] = { "fetch", name, NULL, NULL };
-	if (verbose) {
-		argv[1] = "-v";
-		argv[2] = name;
-	}
+	struct child_process cmd = CHILD_PROCESS_INIT;
+
+	strvec_push(&cmd.args, "fetch");
+	if (verbose)
+		strvec_push(&cmd.args, "-v");
+	strvec_push(&cmd.args, name);
+	cmd.git_cmd = 1;
 	printf_ln(_("Updating %s"), name);
-	if (run_command_v_opt(argv, RUN_GIT_CMD))
+	if (run_command(&cmd))
 		return error(_("Could not fetch %s"), name);
 	return 0;
 }
@@ -1508,37 +1510,35 @@ static int update(int argc, const char **argv, const char *prefix)
 			 N_("prune remotes after fetching")),
 		OPT_END()
 	};
-	struct strvec fetch_argv = STRVEC_INIT;
+	struct child_process cmd = CHILD_PROCESS_INIT;
 	int default_defined = 0;
-	int retval;
 
 	argc = parse_options(argc, argv, prefix, options,
 			     builtin_remote_update_usage,
 			     PARSE_OPT_KEEP_ARGV0);
 
-	strvec_push(&fetch_argv, "fetch");
+	strvec_push(&cmd.args, "fetch");
 
 	if (prune != -1)
-		strvec_push(&fetch_argv, prune ? "--prune" : "--no-prune");
+		strvec_push(&cmd.args, prune ? "--prune" : "--no-prune");
 	if (verbose)
-		strvec_push(&fetch_argv, "-v");
-	strvec_push(&fetch_argv, "--multiple");
+		strvec_push(&cmd.args, "-v");
+	strvec_push(&cmd.args, "--multiple");
 	if (argc < 2)
-		strvec_push(&fetch_argv, "default");
+		strvec_push(&cmd.args, "default");
 	for (i = 1; i < argc; i++)
-		strvec_push(&fetch_argv, argv[i]);
+		strvec_push(&cmd.args, argv[i]);
 
-	if (strcmp(fetch_argv.v[fetch_argv.nr-1], "default") == 0) {
+	if (strcmp(cmd.args.v[cmd.args.nr-1], "default") == 0) {
 		git_config(get_remote_default, &default_defined);
 		if (!default_defined) {
-			strvec_pop(&fetch_argv);
-			strvec_push(&fetch_argv, "--all");
+			strvec_pop(&cmd.args);
+			strvec_push(&cmd.args, "--all");
 		}
 	}
 
-	retval = run_command_v_opt(fetch_argv.v, RUN_GIT_CMD);
-	strvec_clear(&fetch_argv);
-	return retval;
+	cmd.git_cmd = 1;
+	return run_command(&cmd);
 }
 
 static int remove_all_fetch_refspecs(const char *key)

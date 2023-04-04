@@ -37,7 +37,8 @@ Then "`git merge topic`" will replay the changes made on the
 `topic` branch since it diverged from `master` (i.e., `E`) until
 its current commit (`C`) on top of `master`, and record the result
 in a new commit along with the names of the two parent commits and
-a log message from the user describing the changes.
+a log message from the user describing the changes. Before the operation,
+`ORIG_HEAD` is set to the tip of the current branch (`C`).
 
 ------------
 	  A---B---C topic

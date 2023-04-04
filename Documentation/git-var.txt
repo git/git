@@ -13,7 +13,8 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Prints a Git logical variable.
+Prints a Git logical variable. Exits with code 1 if the variable has
+no value.
 
 OPTIONS
 -------
@@ -48,6 +49,14 @@ GIT_EDITOR::
 ifdef::git-default-editor[]
     The build you are using chose '{git-default-editor}' as the default.
 endif::git-default-editor[]
+
+GIT_SEQUENCE_EDITOR::
+    Text editor used to edit the 'todo' file while running `git rebase
+    -i`. Like `GIT_EDITOR`, the value is meant to be interpreted by
+    the shell when it is used. The order of preference is the
+    `$GIT_SEQUENCE_EDITOR` environment variable, then
+    `sequence.editor` configuration, and then the value of `git var
+    GIT_EDITOR`.
 
 GIT_PAGER::
     Text viewer for use by Git commands (e.g., 'less').  The value

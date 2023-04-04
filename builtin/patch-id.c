@@ -2,6 +2,7 @@
 #include "builtin.h"
 #include "config.h"
 #include "diff.h"
+#include "hex.h"
 #include "parse-options.h"
 
 static void flush_current_id(int patchlen, struct object_id *id, struct object_id *result)

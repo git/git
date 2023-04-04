@@ -3,6 +3,7 @@
  */
 #include "cache.h"
 #include "config.h"
+#include "hex.h"
 #include "repository.h"
 #include "refs.h"
 #include "refspec.h"
@@ -29,6 +30,7 @@
 #include "commit-graph.h"
 #include "shallow.h"
 #include "worktree.h"
+#include "bundle-uri.h"
 
 #define FORCED_UPDATES_DELAY_WARNING_IN_MS (10 * 1000)
 
@@ -1131,6 +1133,7 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 	if (!connectivity_checked) {
 		struct check_connected_options opt = CHECK_CONNECTED_INIT;
 
+		opt.exclude_hidden_refs_section = "fetch";
 		rm = ref_map;
 		if (check_connected(iterate_ref_map, &rm, &opt)) {
 			rc = error(_("%s did not send all necessary objects\n"), url);
@@ -1324,6 +1327,7 @@ static int check_exist_and_connected(struct ref *ref_map)
 	}
 
 	opt.quiet = 1;
+	opt.exclude_hidden_refs_section = "fetch";
 	return check_connected(iterate_ref_map, &rm, &opt);
 }
 
@@ -1879,6 +1883,8 @@ static void add_options_to_argv(struct strvec *argv)
 		strvec_push(argv, "--ipv4");
 	else if (family == TRANSPORT_FAMILY_IPV6)
 		strvec_push(argv, "--ipv6");
+	if (!write_fetch_head)
+		strvec_push(argv, "--no-write-fetch-head");
 }
 
 /* Fetch multiple remotes in parallel */
@@ -1889,7 +1895,8 @@ struct parallel_fetch_state {
 	int next, result;
 };
 
-static int fetch_next_remote(struct child_process *cp, struct strbuf *out,
+static int fetch_next_remote(struct child_process *cp,
+			     struct strbuf *out UNUSED,
 			     void *cb, void **task_cb)
 {
 	struct parallel_fetch_state *state = cb;
@@ -1911,7 +1918,8 @@ static int fetch_next_remote(struct child_process *cp, struct strbuf *out,
 	return 1;
 }
 
-static int fetch_failed_to_start(struct strbuf *out, void *cb, void *task_cb)
+static int fetch_failed_to_start(struct strbuf *out UNUSED,
+				 void *cb, void *task_cb)
 {
 	struct parallel_fetch_state *state = cb;
 	const char *remote = task_cb;
@@ -1972,14 +1980,17 @@ static int fetch_multiple(struct string_list *list, int max_children)
 	} else
 		for (i = 0; i < list->nr; i++) {
 			const char *name = list->items[i].string;
-			strvec_push(&argv, name);
+			struct child_process cmd = CHILD_PROCESS_INIT;
+
+			strvec_pushv(&cmd.args, argv.v);
+			strvec_push(&cmd.args, name);
 			if (verbosity >= 0)
 				printf(_("Fetching %s\n"), name);
-			if (run_command_v_opt(argv.v, RUN_GIT_CMD)) {
+			cmd.git_cmd = 1;
+			if (run_command(&cmd)) {
 				error(_("could not fetch %s"), name);
 				result = 1;
 			}
-			strvec_pop(&argv);
 		}
 
 	strvec_clear(&argv);
@@ -2106,6 +2117,7 @@ static int fetch_one(struct remote *remote, int argc, const char **argv,
 int cmd_fetch(int argc, const char **argv, const char *prefix)
 {
 	int i;
+	const char *bundle_uri;
 	struct string_list list = STRING_LIST_INIT_DUP;
 	struct remote *remote = NULL;
 	int result = 0;
@@ -2191,6 +2203,13 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	if (dry_run)
 		write_fetch_head = 0;
 
+	if (!max_jobs)
+		max_jobs = online_cpus();
+
+	if (!git_config_get_string_tmp("fetch.bundleuri", &bundle_uri) &&
+	    fetch_bundle_uri(the_repository, bundle_uri, NULL))
+		warning(_("failed to fetch bundles from '%s'"), bundle_uri);
+
 	if (all) {
 		if (argc == 1)
 			die(_("fetch --all does not take a repository argument"));
@@ -2225,6 +2244,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 			argv++;
 		}
 	}
+	string_list_remove_duplicates(&list, 0);
 
 	if (negotiate_only) {
 		struct oidset acked_commits = OIDSET_INIT;

@@ -269,14 +269,18 @@ static void find_exact_matches(struct string_list *a, struct string_list *b)
 	hashmap_clear(&map);
 }
 
-static int diffsize_consume(void *data, char *line, unsigned long len)
+static int diffsize_consume(void *data,
+			     char *line UNUSED,
+			     unsigned long len UNUSED)
 {
 	(*(int *)data)++;
 	return 0;
 }
 
-static void diffsize_hunk(void *data, long ob, long on, long nb, long nn,
-			  const char *funcline, long funclen)
+static void diffsize_hunk(void *data,
+			  long ob UNUSED, long on UNUSED,
+			  long nb UNUSED, long nn UNUSED,
+			  const char *func UNUSED, long funclen UNUSED)
 {
 	diffsize_consume(data, NULL, 0);
 }
@@ -379,11 +383,14 @@ static void output_pair_header(struct diff_options *diffopt,
 	const char *color_new = diff_get_color_opt(diffopt, DIFF_FILE_NEW);
 	const char *color_commit = diff_get_color_opt(diffopt, DIFF_COMMIT);
 	const char *color;
+	int abbrev = diffopt->abbrev;
+
+	if (abbrev < 0)
+		abbrev = DEFAULT_ABBREV;
 
 	if (!dashes->len)
 		strbuf_addchars(dashes, '-',
-				strlen(find_unique_abbrev(oid,
-							  DEFAULT_ABBREV)));
+				strlen(find_unique_abbrev(oid, abbrev)));
 
 	if (!b_util) {
 		color = color_old;
@@ -405,7 +412,7 @@ static void output_pair_header(struct diff_options *diffopt,
 		strbuf_addf(buf, "%*s:  %s ", patch_no_width, "-", dashes->buf);
 	else
 		strbuf_addf(buf, "%*d:  %s ", patch_no_width, a_util->i + 1,
-			    find_unique_abbrev(&a_util->oid, DEFAULT_ABBREV));
+			    find_unique_abbrev(&a_util->oid, abbrev));
 
 	if (status == '!')
 		strbuf_addf(buf, "%s%s", color_reset, color);
@@ -417,7 +424,7 @@ static void output_pair_header(struct diff_options *diffopt,
 		strbuf_addf(buf, " %*s:  %s", patch_no_width, "-", dashes->buf);
 	else
 		strbuf_addf(buf, " %*d:  %s", patch_no_width, b_util->i + 1,
-			    find_unique_abbrev(&b_util->oid, DEFAULT_ABBREV));
+			    find_unique_abbrev(&b_util->oid, abbrev));
 
 	commit = lookup_commit_reference(the_repository, oid);
 	if (commit) {
@@ -461,7 +468,7 @@ static void patch_diff(const char *a, const char *b,
 	diff_flush(diffopt);
 }
 
-static struct strbuf *output_prefix_cb(struct diff_options *opt, void *data)
+static struct strbuf *output_prefix_cb(struct diff_options *opt UNUSED, void *data)
 {
 	return data;
 }

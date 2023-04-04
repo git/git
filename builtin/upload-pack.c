@@ -4,6 +4,7 @@
 #include "pkt-line.h"
 #include "parse-options.h"
 #include "protocol.h"
+#include "replace-object.h"
 #include "upload-pack.h"
 #include "serve.h"
 

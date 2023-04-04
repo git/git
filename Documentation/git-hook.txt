@@ -8,7 +8,7 @@ git-hook - Run git hooks
 SYNOPSIS
 --------
 [verse]
-'git hook' run [--ignore-missing] <hook-name> [-- <hook-args>]
+'git hook' run [--ignore-missing] [--to-stdin=<path>] <hook-name> [-- <hook-args>]
 
 DESCRIPTION
 -----------
@@ -30,6 +30,11 @@ linkgit:githooks[5] for arguments hooks might expect (if any).
 
 OPTIONS
 -------
+
+--to-stdin::
+	For "run"; Specify a file which will be streamed into the
+	hook's stdin. The hook will receive the entire file from
+	beginning to EOF.
 
 --ignore-missing::
 	Ignore any missing hook by quietly returning zero. Used for

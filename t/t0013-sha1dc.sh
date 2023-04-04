@@ -6,9 +6,11 @@ TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 TEST_DATA="$TEST_DIRECTORY/t0013"
 
-if test -z "$DC_SHA1"
+test_lazy_prereq SHA1_IS_SHA1DC 'test-tool sha1-is-sha1dc'
+
+if ! test_have_prereq SHA1_IS_SHA1DC
 then
-	skip_all='skipping sha1 collision tests, DC_SHA1 not set'
+	skip_all='skipping sha1 collision tests, not using sha1collisiondetection'
 	test_done
 fi
 

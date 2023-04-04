@@ -1,7 +1,6 @@
 #ifndef COMMIT_GRAPH_H
 #define COMMIT_GRAPH_H
 
-#include "git-compat-util.h"
 #include "object-store.h"
 #include "oidset.h"
 

@@ -618,7 +618,7 @@ but risks losing recent work in the event of an unclean system shutdown.
 * `loose-object` hardens objects added to the repo in loose-object form.
 * `pack` hardens objects added to the repo in packfile form.
 * `pack-metadata` hardens packfile bitmaps and indexes.
-* `commit-graph` hardens the commit graph file.
+* `commit-graph` hardens the commit-graph file.
 * `index` hardens the index when it is modified.
 * `objects` is an aggregate option that is equivalent to
   `loose-object,pack`.

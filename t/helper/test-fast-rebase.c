@@ -10,11 +10,12 @@
  * refactoring is the better route).
  */
 
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
+#define USE_THE_INDEX_VARIABLE
 #include "test-tool.h"
 
 #include "cache-tree.h"
 #include "commit.h"
+#include "hex.h"
 #include "lockfile.h"
 #include "merge-ort.h"
 #include "refs.h"
@@ -123,7 +124,7 @@ int cmd__fast_rebase(int argc, const char **argv)
 		die(_("Cannot read HEAD"));
 	assert(oideq(&onto->object.oid, &head));
 
-	hold_locked_index(&lock, LOCK_DIE_ON_ERROR);
+	repo_hold_locked_index(the_repository, &lock, LOCK_DIE_ON_ERROR);
 	if (repo_read_index(the_repository) < 0)
 		BUG("Could not read index");
 

@@ -59,6 +59,10 @@ test_expect_success setup '
 	test_tick &&
 	git commit -m "patchid 3" &&
 
+	git checkout -b empty main &&
+	test_tick &&
+	git commit --allow-empty -m "empty commit" &&
+
 	git checkout main
 '
 
@@ -126,6 +130,12 @@ test_expect_success 'format-patch did not screw up the log message' '
 test_expect_success 'replay did not screw up the log message' '
 	git cat-file commit rebuild-1 >actual &&
 	grep "^Side .* with .* backslash-n" actual
+'
+
+test_expect_success 'format-patch empty commit' '
+	git format-patch --stdout main..empty >empty &&
+	grep "^From " empty >from &&
+	test_line_count = 1 from
 '
 
 test_expect_success 'extra headers' '
@@ -2281,7 +2291,25 @@ test_expect_success 'format-patch --attach cover-letter only is non-multipart' '
 	test_line_count = 1 output
 '
 
-test_expect_success 'format-patch --pretty=mboxrd' '
+test_expect_success 'format-patch with format.attach' '
+	test_when_finished "rm -fr patches" &&
+	separator=attachment-separator &&
+	test_config format.attach "$separator" &&
+	filename=$(git format-patch -o patches -1) &&
+	grep "^Content-Type: multipart/.*$separator" "$filename"
+'
+
+test_expect_success 'format-patch with format.attach=disabled' '
+	test_when_finished "rm -fr patches" &&
+	separator=attachment-separator &&
+	test_config_global format.attach "$separator" &&
+	test_config format.attach "" &&
+	filename=$(git format-patch -o patches -1) &&
+	# The output should not even declare content type for text/plain.
+	! grep "^Content-Type: multipart/" "$filename"
+'
+
+test_expect_success '-c format.mboxrd format-patch' '
 	sp=" " &&
 	cat >msg <<-INPUT_END &&
 	mboxrd should escape the body
@@ -2316,7 +2344,9 @@ test_expect_success 'format-patch --pretty=mboxrd' '
 	INPUT_END
 
 	C=$(git commit-tree HEAD^^{tree} -p HEAD <msg) &&
-	git format-patch --pretty=mboxrd --stdout -1 $C~1..$C >patch &&
+	git -c format.mboxrd format-patch --stdout -1 $C~1..$C >patch &&
+	git format-patch --pretty=mboxrd --stdout -1 $C~1..$C >compat &&
+	test_cmp patch compat &&
 	git grep -h --no-index -A11 \
 		"^>From could trip up a loose mbox parser" patch >actual &&
 	test_cmp expect actual
@@ -2364,6 +2394,22 @@ test_expect_success 'interdiff: solo-patch' '
 	test_i18ngrep "^Interdiff:$" 0001-fleep.patch &&
 	sed "1,/^  @@ /d; /^$/q" 0001-fleep.patch >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'format-patch does not respect diff.noprefix' '
+	git -c diff.noprefix format-patch -1 --stdout >actual &&
+	grep "^--- a/blorp" actual
+'
+
+test_expect_success 'format-patch respects format.noprefix' '
+	git -c format.noprefix format-patch -1 --stdout >actual &&
+	grep "^--- blorp" actual
+'
+
+test_expect_success 'format-patch --default-prefix overrides format.noprefix' '
+	git -c format.noprefix \
+		format-patch -1 --default-prefix --stdout >actual &&
+	grep "^--- a/blorp" actual
 '
 
 test_done

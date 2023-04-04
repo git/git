@@ -1,4 +1,6 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
+#include "hex.h"
 #include "list.h"
 #include "pack.h"
 #include "repository.h"
@@ -1008,6 +1010,16 @@ void reprepare_packed_git(struct repository *r)
 	struct object_directory *odb;
 
 	obj_read_lock();
+
+	/*
+	 * Reprepare alt odbs, in case the alternates file was modified
+	 * during the course of this process. This only _adds_ odbs to
+	 * the linked list, so existing odbs will continue to exist for
+	 * the lifetime of the process.
+	 */
+	r->objects->loaded_alternates = 0;
+	prepare_alt_odb(r);
+
 	for (odb = r->objects->odb; odb; odb = odb->next)
 		odb_clear_loose_cache(odb);
 
@@ -1650,22 +1662,6 @@ struct unpack_entry_stack_ent {
 	unsigned long size;
 };
 
-static void *read_object(struct repository *r,
-			 const struct object_id *oid,
-			 enum object_type *type,
-			 unsigned long *size)
-{
-	struct object_info oi = OBJECT_INFO_INIT;
-	void *content;
-	oi.typep = type;
-	oi.sizep = size;
-	oi.contentp = &content;
-
-	if (oid_object_info_extended(r, oid, &oi, 0) < 0)
-		return NULL;
-	return content;
-}
-
 void *unpack_entry(struct repository *r, struct packed_git *p, off_t obj_offset,
 		   enum object_type *final_type, unsigned long *final_size)
 {
@@ -1798,6 +1794,8 @@ void *unpack_entry(struct repository *r, struct packed_git *p, off_t obj_offset,
 			uint32_t pos;
 			struct object_id base_oid;
 			if (!(offset_to_pack_pos(p, obj_offset, &pos))) {
+				struct object_info oi = OBJECT_INFO_INIT;
+
 				nth_packed_object_id(&base_oid, p,
 						     pack_pos_to_index(p, pos));
 				error("failed to read delta base object %s"
@@ -1805,7 +1803,13 @@ void *unpack_entry(struct repository *r, struct packed_git *p, off_t obj_offset,
 				      oid_to_hex(&base_oid), (uintmax_t)obj_offset,
 				      p->pack_name);
 				mark_bad_packed_object(p, &base_oid);
-				base = read_object(r, &base_oid, &type, &base_size);
+
+				oi.typep = &type;
+				oi.sizep = &base_size;
+				oi.contentp = &base;
+				if (oid_object_info_extended(r, &base_oid, &oi, 0) < 0)
+					base = NULL;
+
 				external_base = base;
 			}
 		}
@@ -2212,8 +2216,8 @@ int for_each_packed_object(each_packed_object_fn cb, void *data,
 }
 
 static int add_promisor_object(const struct object_id *oid,
-			       struct packed_git *pack,
-			       uint32_t pos,
+			       struct packed_git *pack UNUSED,
+			       uint32_t pos UNUSED,
 			       void *set_)
 {
 	struct oidset *set = set_;

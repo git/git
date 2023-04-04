@@ -132,6 +132,7 @@ static int ut_003error(int argc, const char **argv)
  */
 static int ut_004child(int argc, const char **argv)
 {
+	struct child_process cmd = CHILD_PROCESS_INIT;
 	int result;
 
 	/*
@@ -141,7 +142,8 @@ static int ut_004child(int argc, const char **argv)
 	if (!argc)
 		return 0;
 
-	result = run_command_v_opt(argv, 0);
+	strvec_pushv(&cmd.args, argv);
+	result = run_command(&cmd);
 	exit(result);
 }
 

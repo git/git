@@ -150,9 +150,7 @@ struct child_process {
 }
 
 /**
- * The functions: child_process_init, start_command, finish_command,
- * run_command, run_command_v_opt, run_command_v_opt_cd_env, child_process_clear
- * do the following:
+ * The functions: start_command, finish_command, run_command do the following:
  *
  * - If a system call failed, errno is set and -1 is returned. A diagnostic
  *   is printed.
@@ -223,36 +221,6 @@ int run_command(struct child_process *);
  * Trigger an auto-gc
  */
 int run_auto_maintenance(int quiet);
-
-#define RUN_COMMAND_NO_STDIN		(1<<0)
-#define RUN_GIT_CMD			(1<<1)
-#define RUN_COMMAND_STDOUT_TO_STDERR	(1<<2)
-#define RUN_SILENT_EXEC_FAILURE		(1<<3)
-#define RUN_USING_SHELL			(1<<4)
-#define RUN_CLEAN_ON_EXIT		(1<<5)
-#define RUN_WAIT_AFTER_CLEAN		(1<<6)
-#define RUN_CLOSE_OBJECT_STORE		(1<<7)
-
-/**
- * Convenience functions that encapsulate a sequence of
- * start_command() followed by finish_command(). The argument argv
- * specifies the program and its arguments. The argument opt is zero
- * or more of the flags `RUN_COMMAND_NO_STDIN`, `RUN_GIT_CMD`,
- * `RUN_COMMAND_STDOUT_TO_STDERR`, or `RUN_SILENT_EXEC_FAILURE`
- * that correspond to the members .no_stdin, .git_cmd,
- * .stdout_to_stderr, .silent_exec_failure of `struct child_process`.
- * The argument dir corresponds the member .dir. The argument env
- * corresponds to the member .env.
- */
-int run_command_v_opt(const char **argv, int opt);
-int run_command_v_opt_tr2(const char **argv, int opt, const char *tr2_class);
-/*
- * env (the environment) is to be formatted like environ: "VAR=VALUE".
- * To unset an environment variable use just "VAR".
- */
-int run_command_v_opt_cd_env(const char **argv, int opt, const char *dir, const char *const *env);
-int run_command_v_opt_cd_env_tr2(const char **argv, int opt, const char *dir,
-				 const char *const *env, const char *tr2_class);
 
 /**
  * Execute the given command, sending "in" to its stdin, and capturing its

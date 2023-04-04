@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "hex.h"
 #include "object-store.h"
 #include "run-command.h"
 #include "sigchain.h"
@@ -85,6 +86,7 @@ int check_connected(oid_iterate_fn fn, void *cb_data,
 promisor_pack_found:
 			;
 		} while ((oid = fn(cb_data)) != NULL);
+		free(new_pack);
 		return 0;
 	}
 
@@ -100,6 +102,9 @@ no_promisor_pack_found:
 		strvec_push(&rev_list.args, "--exclude-promisor-objects");
 	if (!opt->is_deepening_fetch) {
 		strvec_push(&rev_list.args, "--not");
+		if (opt->exclude_hidden_refs_section)
+			strvec_pushf(&rev_list.args, "--exclude-hidden=%s",
+				     opt->exclude_hidden_refs_section);
 		strvec_push(&rev_list.args, "--all");
 	}
 	strvec_push(&rev_list.args, "--quiet");
@@ -118,8 +123,10 @@ no_promisor_pack_found:
 	else
 		rev_list.no_stderr = opt->quiet;
 
-	if (start_command(&rev_list))
+	if (start_command(&rev_list)) {
+		free(new_pack);
 		return error(_("Could not run 'git rev-list'"));
+	}
 
 	sigchain_push(SIGPIPE, SIG_IGN);
 
@@ -151,5 +158,6 @@ no_promisor_pack_found:
 		err = error_errno(_("failed to close rev-list's stdin"));
 
 	sigchain_pop(SIGPIPE);
+	free(new_pack);
 	return finish_command(&rev_list) || err;
 }

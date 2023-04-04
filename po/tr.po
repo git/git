@@ -1,8 +1,8 @@
 # Turkish translations for Git
 # Git Türkçe çevirileri
-# Copyright (C) 2020-2022 Emir SARI <emir_sari@icloud.com>
+# Copyright (C) 2020-2023 Emir SARI <emir_sari@icloud.com>
 # This file is distributed under the same license as the Git package.
-# Emir SARI <emir_sari@icloud.com>, 2020-2022
+# Emir SARI <emir_sari@icloud.com>, 2020-2023
 #
 # ######################################################### #
 #     Git Türkçe kavramlar dizini / Git Turkish Glossary    #
@@ -92,8 +92,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git Turkish Localization Project\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2022-09-28 10:54+0300\n"
-"PO-Revision-Date: 2022-09-28 14:00+0300\n"
+"POT-Creation-Date: 2023-03-03 11:32+0300\n"
+"PO-Revision-Date: 2023-03-03 11:40+0300\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish (https://github.com/bitigchi/git-po/)\n"
 "Language: tr\n"
@@ -128,13 +128,13 @@ msgstr "'%s' hazırlanamadı"
 msgid "could not write index"
 msgstr "indeks yazılamadı"
 
-#, c-format, perl-format
+#, c-format
 msgid "updated %d path\n"
 msgid_plural "updated %d paths\n"
 msgstr[0] "%d yol güncellendi\n"
 msgstr[1] "%d yol güncellendi\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "note: %s is untracked now.\n"
 msgstr "not: %s artık izlenmiyor.\n"
 
@@ -148,7 +148,7 @@ msgstr "Geri al"
 msgid "Could not parse HEAD^{tree}"
 msgstr "HEAD^{tree} ayrıştırılamadı"
 
-#, c-format, perl-format
+#, c-format
 msgid "reverted %d path\n"
 msgid_plural "reverted %d paths\n"
 msgstr[0] "%d yol geri alındı\n"
@@ -161,7 +161,7 @@ msgstr "İzlenmeyen dosya yok.\n"
 msgid "Add untracked"
 msgstr "İzlenmeyenleri ekle"
 
-#, c-format, perl-format
+#, c-format
 msgid "added %d path\n"
 msgid_plural "added %d paths\n"
 msgstr[0] "%d yol eklendi\n"
@@ -255,19 +255,19 @@ msgstr "indeks yenilenemedi"
 msgid "Bye.\n"
 msgstr "Güle güle.\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Stage mode change [y,n,q,a,d%s,?]? "
 msgstr "Kip değişimi hazırlansın mı [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Stage deletion [y,n,q,a,d%s,?]? "
 msgstr "Silme hazırlansın mı [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Stage addition [y,n,q,a,d%s,?]? "
 msgstr "Ekleme hazırlansın mı [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Stage this hunk [y,n,q,a,d%s,?]? "
 msgstr "Bu parça hazırlansın mı [y,n,q,a,d%s,?]? "
 
@@ -291,19 +291,19 @@ msgstr ""
 "a - bu parçayı ve sonraki tüm parçaları hazırla\n"
 "d - bu parçayı veya sonraki parçalardan herhangi birini hazırlama\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Stash mode change [y,n,q,a,d%s,?]? "
 msgstr "Kip değişimi zulalansın mı [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Stash deletion [y,n,q,a,d%s,?]? "
 msgstr "Silme zulalansın mı [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Stash addition [y,n,q,a,d%s,?]? "
 msgstr "Ekleme zulalansın mı [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Stash this hunk [y,n,q,a,d%s,?]? "
 msgstr "Bu parça zulalansın mı [y,n,q,a,d%s,?]? "
 
@@ -327,19 +327,19 @@ msgstr ""
 "a - bu parçayı ve sonraki tüm parçaları zulala\n"
 "d - bu parçayı veya sonraki parçalardan herhangi birini zulalama\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Unstage mode change [y,n,q,a,d%s,?]? "
 msgstr "Kip değişimi hazırlıktan çıkarılsın mı [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Unstage deletion [y,n,q,a,d%s,?]? "
 msgstr "Silme hazırlıktan çıkarılsın mı [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Unstage addition [y,n,q,a,d%s,?]? "
 msgstr "Ekleme hazırlıktan çıkarılsın mı [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Unstage this hunk [y,n,q,a,d%s,?]? "
 msgstr "Bu parça hazırlıktan çıkarılsın mı [y,n,q,a,d%s,?]? "
 
@@ -363,19 +363,19 @@ msgstr ""
 "a - bu parçayı ve sonraki tüm parçaları hazırlıktan çıkar\n"
 "d - bu parçayı veya sonraki parçalardan herhangi birini hazırlıktan çıkarma\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply mode change to index [y,n,q,a,d%s,?]? "
 msgstr "Kip değişimi indekse uygulansın mı [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply deletion to index [y,n,q,a,d%s,?]? "
 msgstr "Silme indekse uygulansın mı [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply addition to index [y,n,q,a,d%s,?]? "
 msgstr "Ekleme indekse uygulansın mı [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply this hunk to index [y,n,q,a,d%s,?]? "
 msgstr "Bu parça indekse uygulansın mı [y,n,q,a,d%s,?]? "
 
@@ -399,19 +399,19 @@ msgstr ""
 "a - bu parçayı ve sonraki tüm parçaları uygula\n"
 "d - bu parçayı veya sonraki parçalardan herhangi birini uygulama\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard mode change from worktree [y,n,q,a,d%s,?]? "
 msgstr "Kip değişimi çalışma ağacından atılsın mı [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard deletion from worktree [y,n,q,a,d%s,?]? "
 msgstr "Silme çalışma ağacından atılsın mı [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard addition from worktree [y,n,q,a,d%s,?]? "
 msgstr "Ekleme çalışma ağacından atılsın mı [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard this hunk from worktree [y,n,q,a,d%s,?]? "
 msgstr "Bu parça çalışma ağacından atılsın mı [y,n,q,a,d%s,?]? "
 
@@ -435,20 +435,20 @@ msgstr ""
 "a - bu parçayı ve sonraki tüm parçaları at\n"
 "d - bu parçayı veya sonraki parçalardan herhangi birini atma\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard mode change from index and worktree [y,n,q,a,d%s,?]? "
 msgstr ""
 "Kip değişimi indeksten ve çalışma ağacından atılsın mı [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard deletion from index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Silme indeksten ve çalışma ağacından atılsın mı [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard addition from index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Ekleme indeksten ve çalışma ağacından atılsın mı [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard this hunk from index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Bu parça indeksten ve çalışma ağacından atılsın mı [y,n,q,a,d%s,?]? "
 
@@ -465,20 +465,20 @@ msgstr ""
 "a - bu parçayı ve sonraki tüm parçaları at\n"
 "d - bu parçayı veya sonraki parçalardan herhangi birini atma\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply mode change to index and worktree [y,n,q,a,d%s,?]? "
 msgstr ""
 "Kip değişimi indekse ve çalışma ağacına uygulansın mı [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply deletion to index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Silme indekse ve çalışma ağacına uygulansın mı [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply addition to index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Ekleme indekse ve çalışma ağacına uygulansın mı [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply this hunk to index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Bu parça indekse ve çalışma ağacına uygulansın mı [y,n,q,a,d%s,?]? "
 
@@ -495,19 +495,19 @@ msgstr ""
 "a - bu parçayı ve sonraki tüm parçaları uygula\n"
 "d - bu parçayı veya sonraki parçalardan herhangi birini uygulama\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply mode change to worktree [y,n,q,a,d%s,?]? "
 msgstr "Kip değişimi çalışma ağacına uygulansın mı [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply deletion to worktree [y,n,q,a,d%s,?]? "
 msgstr "Silme çalışma ağacına uygulansın mı [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply addition to worktree [y,n,q,a,d%s,?]? "
 msgstr "Ekleme çalışma ağacına uygulansın mı [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply this hunk to worktree [y,n,q,a,d%s,?]? "
 msgstr "Bu parça çalışma ağacına uygulansın mı [y,n,q,a,d%s,?]? "
 
@@ -583,8 +583,6 @@ msgstr ""
 "'%c' satır kaldırmak için onları silin.\n"
 "%c kaldırılacak.\n"
 
-#. #-#-#-#-#  git-add--interactive.perl.po  #-#-#-#-#
-#. TRANSLATORS: 'it' refers to the patch mentioned in the previous messages.
 msgid ""
 "If it does not apply cleanly, you will be given an opportunity to\n"
 "edit again.  If all lines of the hunk are removed, then the edit is\n"
@@ -600,20 +598,12 @@ msgstr "parça üstbilgisi ayrıştırılamadı"
 msgid "'git apply --cached' failed"
 msgstr "'git apply --cached' başarısız oldu"
 
-#. #-#-#-#-#  add-patch.c.po  #-#-#-#-#
 #. TRANSLATORS: do not translate [y/n]
 #. The program will only accept that input at this point.
 #. Consider translating (saying "no" discards!) as
 #. (saying "n" for "no" discards!) if the translation
 #. of the word "no" does not start with n.
 #.
-#. #-#-#-#-#  git-add--interactive.perl.po  #-#-#-#-#
-#. TRANSLATORS: do not translate [y/n]
-#. The program will only accept that input
-#. at this point.
-#. Consider translating (saying "no" discards!) as
-#. (saying "n" for "no" discards!) if the translation
-#. of the word "no" does not start with n.
 msgid ""
 "Your edited hunk does not apply. Edit again (saying \"no\" discards!) [y/n]? "
 msgstr ""
@@ -839,6 +829,9 @@ msgstr "komut satırı \\ ile bitiyor"
 
 msgid "unclosed quote"
 msgstr "kapatılmamış tırnak"
+
+msgid "too many arguments"
+msgstr "pek fazla argüman"
 
 #, c-format
 msgid "unrecognized whitespace option '%s'"
@@ -1441,6 +1434,12 @@ msgstr "çalışma dizinindeki .gitattributes'u oku"
 msgid "report archived files on stderr"
 msgstr "arşivlenmiş dosyaları stderr'de raporla"
 
+msgid "time"
+msgstr "zaman"
+
+msgid "set modification time of archive entries"
+msgstr "arşiv girdilerinin değiştirilme zamanını ayarla"
+
 msgid "set compression level"
 msgstr "sıkıştırma düzeyini ayarla"
 
@@ -1481,6 +1480,13 @@ msgstr "'%s' biçimi için desteklenmeyen argüman: -%d"
 msgid "%.*s is not a valid attribute name"
 msgstr "%.*s geçerli bir öznitelik adı değil"
 
+msgid "unable to add additional attribute"
+msgstr "ek öznitelik eklenemiyor"
+
+#, c-format
+msgid "ignoring overly long attributes line %d"
+msgstr "pek uzun öznitelik satırı %d yok sayılıyor"
+
 #, c-format
 msgid "%s not allowed: %s:%d"
 msgstr "%s izin verilmiyor: %s:%d"
@@ -1491,6 +1497,18 @@ msgid ""
 msgstr ""
 "Negatif dizgiler git özniteliklerinde yok sayılır.\n"
 "Gerçek öncü ünlem için '\\!' kullanın."
+
+#, c-format
+msgid "cannot fstat gitattributes file '%s'"
+msgstr "fstat gitattributes dosyası '%s' bulunamıyor"
+
+#, c-format
+msgid "ignoring overly large gitattributes file '%s'"
+msgstr "pek büyük gitattributes dosyası '%s' dosyası yok sayılıyor"
+
+#, c-format
+msgid "ignoring overly large gitattributes blob '%s'"
+msgstr "pek büyük gitattributes ikili nesnesi '%s' yok sayılıyor"
 
 #, c-format
 msgid "Badly quoted content in file '%s': %s"
@@ -1768,11 +1786,11 @@ msgstr "'%s' altmodülü: altmodül bulunamıyor"
 
 #, c-format
 msgid ""
-"You may try updating the submodules using 'git checkout %s && git submodule "
-"update --init'"
+"You may try updating the submodules using 'git checkout --no-recurse-"
+"submodules %s && git submodule update --init'"
 msgstr ""
-"Altmodülleri güncellemeyi 'git checkout %s && git submodule update --init' "
-"kullanarak deneyebilirsiniz"
+"'git checkout --no-recurse-submodules %s && git submodule update --init' "
+"kullanarak altmodülleri güncellemeyi deneyebilirsiniz"
 
 #, c-format
 msgid "submodule '%s': cannot create branch '%s'"
@@ -1806,6 +1824,13 @@ msgstr "kaldır: '%s'\n"
 
 msgid "Unstaged changes after refreshing the index:"
 msgstr "İndeksi yeniledikten sonra hazırlanmamış değişiklikler:"
+
+msgid ""
+"the add.interactive.useBuiltin setting has been removed!\n"
+"See its entry in 'git help config' for details."
+msgstr ""
+"add.interactive.useBuiltin ayarı kaldırıldı!\n"
+"Ayrıntılar için onun 'git help config' içindeki girdisine bakın."
 
 msgid "Could not read the index"
 msgstr "İndeks okunamadı"
@@ -1880,7 +1905,7 @@ msgid "allow updating entries outside of the sparse-checkout cone"
 msgstr "aralıklı çıkış konisi dışındaki girdileri güncellemeye izin ver"
 
 msgid "override the executable bit of the listed files"
-msgstr "listelenen dosyaların çalıştırılabilir kısımlarını geçersiz kıl"
+msgstr "listelenen dosyaların yürütülebilir kısımlarını geçersiz kıl"
 
 msgid "warn when adding an embedded repository"
 msgstr "gömülü bir depo eklenirken uyar"
@@ -2197,6 +2222,9 @@ msgstr "git am [<seçenekler>] (--continue | --skip | --abort)"
 msgid "run interactively"
 msgstr "etkileşimli olarak çalıştır"
 
+msgid "bypass pre-applypatch and applypatch-msg hooks"
+msgstr "pre-applypatch ve applypatch-msg kancalarını atla"
+
 msgid "historical option -- no-op"
 msgstr "tarihi seçenek -- no-op"
 
@@ -2339,32 +2367,27 @@ msgstr "git archive: Protokol hatası"
 msgid "git archive: expected a flush"
 msgstr "git archive: Floş bekleniyordu"
 
-msgid "git bisect--helper --bisect-reset [<commit>]"
-msgstr "git bisect--helper --bisect-reset [<işleme>]"
-
 msgid ""
-"git bisect--helper --bisect-start [--term-{new,bad}=<term> --term-{old,good}"
-"=<term>] [--no-checkout] [--first-parent] [<bad> [<good>...]] [--] "
-"[<paths>...]"
+"git bisect start [--term-{new,bad}=<term> --term-{old,good}=<term>]    [--no-"
+"checkout] [--first-parent] [<bad> [<good>...]] [--]    [<pathspec>...]"
 msgstr ""
-"git bisect--helper --bisect-start [--term-{new,bad}=<terim> --term-{old,good}"
-"=<terim>] [--no-checkout] [--first-parent] [<kötü> [<iyi>...]] [--] "
-"[<yollar>...]"
+"git bisect start [--term-{new,bad}=<terim> --term-{old,good}=<terim>]    [--"
+"no-checkout] [--first-parent] [<kötü> [<iyi>...]] [--]    [<yol-blrtç>...]"
 
-msgid "git bisect--helper --bisect-state (bad|new) [<rev>]"
-msgstr "git bisect--helper --bisect-state (bad|new) [<rev>]"
+msgid "git bisect (good|bad) [<rev>...]"
+msgstr "git bisect (good|bad) [<rev>...]"
 
-msgid "git bisect--helper --bisect-state (good|old) [<rev>...]"
-msgstr "git bisect--helper --bisect-state (good|old) [<rev>...]"
+msgid "git bisect skip [(<rev>|<range>)...]"
+msgstr "git bisect skip [(<rev>|<erim>)...]"
 
-msgid "git bisect--helper --bisect-replay <filename>"
-msgstr "git bisect--helper --bisect-replay <dosyaadı>"
+msgid "git bisect reset [<commit>]"
+msgstr "git bisect reset [<işleme>]"
 
-msgid "git bisect--helper --bisect-skip [(<rev>|<range>)...]"
-msgstr "git bisect--helper --bisect-skip [(<rev>|<erim>)...]"
+msgid "git bisect replay <logfile>"
+msgstr "git bisect replay <günlük-dosyası>"
 
-msgid "git bisect--helper --bisect-run <cmd>..."
-msgstr "git bisect--helper --bisect-run <komut>..."
+msgid "git bisect run <cmd>..."
+msgstr "git bisect run <komut>..."
 
 #, c-format
 msgid "cannot open file '%s' in mode '%s'"
@@ -2508,9 +2531,6 @@ msgstr "hatalı HEAD - Bana bir HEAD gerek"
 msgid "checking out '%s' failed. Try 'git bisect start <valid-branch>'."
 msgstr "'%s' çıkış yapımı başarısız. 'git bisect start <geçerli-dal>' deneyin."
 
-msgid "won't bisect on cg-seek'ed tree"
-msgstr "cg-seek yapılmış bir ağaçta ikili arama yapılmayacak"
-
 msgid "bad HEAD - strange symbolic ref"
 msgstr "hatalı HEAD - tuhaf sembolik başvuru"
 
@@ -2562,17 +2582,16 @@ msgid "bisect run failed: no command provided."
 msgstr "ikili arama başarısız: Komut verilmedi."
 
 #, c-format
-msgid "unable to verify '%s' on good revision"
-msgstr "'%s', iyi revizyonda doğrulanamadı"
+msgid "unable to verify %s on good revision"
+msgstr "%s, iyi revizyonda doğrulanamıyor"
 
 #, c-format
 msgid "bogus exit code %d for good revision"
 msgstr "iyi revizyon için anlamsız %d çıkış kodu"
 
 #, c-format
-msgid "bisect run failed: exit code %d from '%s' is < 0 or >= 128"
-msgstr ""
-"bisect çalıştırılamadı: çıkış kodu %d, '%s' konumundan, < 0 veya >= 128"
+msgid "bisect run failed: exit code %d from %s is < 0 or >= 128"
+msgstr "bisect çalıştırılamadı: çıkış kodu %d, %s konumundan, < 0 veya >= 128"
 
 #, c-format
 msgid "cannot open file '%s' for writing"
@@ -2581,75 +2600,47 @@ msgstr "'%s' dosyası yazma için açılamadı"
 msgid "bisect run cannot continue any more"
 msgstr "ikili arama artık çalışmayı sürdüremiyor"
 
-#, c-format
 msgid "bisect run success"
 msgstr "ikili arama başarılı"
 
-#, c-format
 msgid "bisect found first bad commit"
 msgstr "ikili arama ilk hatalı işlemeyi buldu"
 
 #, c-format
-msgid ""
-"bisect run failed: 'git bisect--helper --bisect-state %s' exited with error "
-"code %d"
-msgstr ""
-"ikili arama çalıştırılamadı: 'git bisect--helper --bisect-state %s', %d hata "
-"koduyla çıktı"
+msgid "bisect run failed: 'git bisect %s' exited with error code %d"
+msgstr "ikili arama çalıştırılamadı: 'git bisect %s', %d hata koduyla çıktı"
 
-msgid "reset the bisection state"
-msgstr "ikili arama durumunu sıfırla"
+#, c-format
+msgid "'%s' requires either no argument or a commit"
+msgstr "'%s', bir argüman veya işleme gerektirmiyor"
 
-msgid "check whether bad or good terms exist"
-msgstr "iyi veya kötü terimlerin olup olmadığını denetle"
+#, c-format
+msgid "'%s' requires 0 or 1 argument"
+msgstr "'%s', 0 veya 1 argümanı gerektiriyor"
 
-msgid "print out the bisect terms"
-msgstr "ikili arama terimlerini yazdır"
-
-msgid "start the bisect session"
-msgstr "ikili arama oturumunu başlat"
-
-msgid "find the next bisection commit"
-msgstr "bir sonraki ikili arama işlemesini bul"
-
-msgid "mark the state of ref (or refs)"
-msgstr "başvurunun (veya başvuruların) durumunu imle"
-
-msgid "list the bisection steps so far"
-msgstr "şu ana kadarki ikili arama durumunu listele"
-
-msgid "replay the bisection process from the given file"
-msgstr "verilen dosyadan ikili arama işlemini yeniden oynat"
-
-msgid "skip some commits for checkout"
-msgstr "çıkış için birkaç işlemeyi atla"
-
-msgid "visualize the bisection"
-msgstr "ikili aramayı görselleştir"
-
-msgid "use <cmd>... to automatically bisect"
-msgstr "kendiliğinden ikili aramak için <komut>... kullan"
-
-msgid "no log for BISECT_WRITE"
-msgstr "BISECT_WRITE için günlük yok"
-
-msgid "--bisect-reset requires either no argument or a commit"
-msgstr "--bisect-reset bir argüman veya işleme gerektirmiyor"
-
-msgid "--bisect-terms requires 0 or 1 argument"
-msgstr "--bisect-terms 0 veya 1 argüman gerektiriyor"
-
-msgid "--bisect-next requires 0 arguments"
-msgstr "--bisect-next 0 argüman gerektiriyor"
-
-msgid "--bisect-log requires 0 arguments"
-msgstr "--bisect-log 0 argüman gerektiriyor"
+#, c-format
+msgid "'%s' requires 0 arguments"
+msgstr "'%s', 0 argüman gerektiriyor"
 
 msgid "no logfile given"
 msgstr "hiçbir günlük dosyası verilmedi"
 
+#, c-format
+msgid "'%s' failed: no command provided."
+msgstr "'%s' başarısız: Komut verilmedi."
+
+msgid "need a command"
+msgstr "bir komut gerekli"
+
+#, c-format
+msgid "unknown command: '%s'"
+msgstr "bilinmeyen komut: '%s'"
+
 msgid "git blame [<options>] [<rev-opts>] [<rev>] [--] <file>"
 msgstr "git blame [<seçenekler>] [<rev-sçnk>] [<rev>] [--] <dosya>"
+
+msgid "git annotate [<options>] [<rev-opts>] [<rev>] [--] <file>"
+msgstr "git annotate [<seçenekler>] [<rev-sçnk>] [<rev>] [--] <dosya>"
 
 msgid "<rev-opts> are documented in git-rev-list(1)"
 msgstr "<rev-sçnk>, git-rev-list(1) içinde belgelendirilmiştir"
@@ -2774,7 +2765,7 @@ msgstr[0] "%s dosyasında yalnızca %lu satır var"
 msgstr[1] "%s dosyasında yalnızca %lu satır var"
 
 msgid "Blaming lines"
-msgstr "Genel bakış satırları"
+msgstr "Satırlara bakılıyor"
 
 msgid "git branch [<options>] [-r | -a] [--merged] [--no-merged]"
 msgstr "git branch [<seçenekler>] [-r | -a] [--merged] [--no-merged]"
@@ -2838,9 +2829,6 @@ msgstr "config-file güncellemesi başarısız"
 msgid "cannot use -a with -d"
 msgstr "-a, -d ile kullanılamıyor"
 
-msgid "Couldn't look up commit object for HEAD"
-msgstr "HEAD için işleme nesnesi aranamadı"
-
 #, c-format
 msgid "Cannot delete branch '%s' checked out at '%s'"
 msgstr "'%s' dalı silinemiyor, şurada çıkış yapılmış: '%s'"
@@ -2879,15 +2867,17 @@ msgstr "%s dalı %s konumunda yeniden temellendiriliyor"
 msgid "Branch %s is being bisected at %s"
 msgstr "%s dalı %s konumunda ikili aranıyor"
 
-msgid "cannot copy the current branch while not on any."
-msgstr "Bir dalın üzerinde değilken geçerli dal kopyalanamaz."
-
-msgid "cannot rename the current branch while not on any."
-msgstr "Bir dalın üzerinde değilken geçerli dal yeniden adlandırılamaz."
-
 #, c-format
 msgid "Invalid branch name: '%s'"
 msgstr "Geçersiz dal adı: '%s'"
+
+#, c-format
+msgid "No commit on branch '%s' yet."
+msgstr "'%s' dalında henüz bir işleme yok."
+
+#, c-format
+msgid "No branch named '%s'."
+msgstr "'%s' adında bir dal yok."
 
 msgid "Branch rename failed"
 msgstr "Dal yeniden adlandırması başarısız"
@@ -3047,22 +3037,20 @@ msgstr "Ayrılmış HEAD'e açıklama verilemiyor"
 msgid "cannot edit description of more than one branch"
 msgstr "birden çok dalın açıklaması düzenlenemiyor"
 
-#, c-format
-msgid "No commit on branch '%s' yet."
-msgstr "'%s' dalında henüz bir işleme yok."
+msgid "cannot copy the current branch while not on any."
+msgstr "Bir dalın üzerinde değilken geçerli dal kopyalanamaz."
 
-#, c-format
-msgid "No branch named '%s'."
-msgstr "'%s' adında bir dal yok."
+msgid "cannot rename the current branch while not on any."
+msgstr "Bir dalın üzerinde değilken geçerli dal yeniden adlandırılamaz."
 
 msgid "too many branches for a copy operation"
-msgstr "bir kopyalama işlemi için çok fazla dal"
+msgstr "bir kopyalama işlemi için pek fazla dal"
 
 msgid "too many arguments for a rename operation"
-msgstr "bir yeniden adlandırma işlemi için çok fazla argüman"
+msgstr "bir yeniden adlandırma işlemi için pek fazla argüman"
 
 msgid "too many arguments to set new upstream"
-msgstr "yeni üstkaynak ayarlamak için çok fazla argüman"
+msgstr "yeni üstkaynak ayarlamak için pek fazla argüman"
 
 #, c-format
 msgid ""
@@ -3080,7 +3068,7 @@ msgid "branch '%s' does not exist"
 msgstr "'%s' diye bir dal yok"
 
 msgid "too many arguments to unset upstream"
-msgstr "üst kaynağı kaldırmak için çok fazla argüman"
+msgstr "üst kaynağı kaldırmak için pek fazla argüman"
 
 msgid "could not unset upstream of HEAD when it does not point to any branch."
 msgstr ""
@@ -3121,11 +3109,11 @@ msgid "not run from a git repository - no hooks to show\n"
 msgstr "bir git deposundan çalıştırılmadı - gösterilecek kanca yok\n"
 
 msgid ""
-"git bugreport [-o|--output-directory <file>] [-s|--suffix <format>] [--"
-"diagnose[=<mode>]"
+"git bugreport [(-o | --output-directory) <path>] [(-s | --suffix) <format>]\n"
+"              [--diagnose[=<mode>]]"
 msgstr ""
-"git bugreport [-o|--output-directory <dosya>] [-s|--suffix <biçim>] [--"
-"diagnose[=<kip>]"
+"git bugreport [(-o | --output-directory) <yol>] [(-s | --suffix) <biçim>]\n"
+"              [--diagnose[=<kip>]]"
 
 msgid ""
 "Thank you for filling out a Git bug report!\n"
@@ -3196,17 +3184,26 @@ msgstr "%s dosyasına yazılamıyor"
 msgid "Created new report at '%s'.\n"
 msgstr "Hata raporu '%s' dosyasına yazıldı.\n"
 
-msgid "git bundle create [<options>] <file> <git-rev-list args>"
-msgstr "git bundle create [<seçenekler>] <dosya> <git-rev-liste argümanlar>"
+msgid ""
+"git bundle create [-q | --quiet | --progress | --all-progress] [--all-"
+"progress-implied]\n"
+"                  [--version=<version>] <file> <git-rev-list-args>"
+msgstr ""
+"git bundle create [-q | --quiet | --progress | --all-progress] [--all-"
+"progress-implied]\n"
+"                  [--version=<sürüm>] <dosya> <git-rev-liste-argümanları>"
 
-msgid "git bundle verify [<options>] <file>"
-msgstr "git bundle verify [<seçenekler>] <dosya>"
+msgid "git bundle verify [-q | --quiet] <file>"
+msgstr "git bundle verify [-q | --quiet] <dosya>"
 
 msgid "git bundle list-heads <file> [<refname>...]"
 msgstr "git bundle list-heads <dosya> [<başvuru-adı>...]"
 
-msgid "git bundle unbundle <file> [<refname>...]"
-msgstr "git bundle unbundle <dosya> [<başvuru-adı>...]"
+msgid "git bundle unbundle [--progress] <file> [<refname>...]"
+msgstr "git bundle unbundle [--progress] <dosya> [<başvuru-adı>...]"
+
+msgid "need a <file> argument"
+msgstr "bir <dosya> argümanı gerekiyor"
 
 msgid "do not show progress meter"
 msgstr "ilerleme çubuğunu gösterme"
@@ -3261,10 +3258,6 @@ msgstr "%s, argümanlar gerektiriyor"
 msgid "%s takes no arguments"
 msgstr "%s, bir argüman almıyor"
 
-#, c-format
-msgid "unknown command: '%s'"
-msgstr "bilinmeyen komut: '%s'"
-
 msgid "only one batch option may be specified"
 msgstr "yalnızca bir toplu iş seçeneği belirtilebilir"
 
@@ -3281,12 +3274,12 @@ msgid ""
 "git cat-file (--batch | --batch-check | --batch-command) [--batch-all-"
 "objects]\n"
 "             [--buffer] [--follow-symlinks] [--unordered]\n"
-"             [--textconv | --filters]"
+"             [--textconv | --filters] [-z]"
 msgstr ""
 "git cat-file (--batch | --batch-check | --batch-command) [--batch-all-"
 "objects]\n"
 "             [--buffer] [--follow-symlinks] [--unordered]\n"
-"             [--textconv | --filters]"
+"             [--textconv | --filters] [-z]"
 
 msgid ""
 "git cat-file (--textconv | --filters)\n"
@@ -3396,18 +3389,22 @@ msgstr "<revizyon>, '%s' ile gerekiyor"
 msgid "<object> required with '-%c'"
 msgstr "<nesne>, '-%c' ile gerekiyor"
 
-msgid "too many arguments"
-msgstr "çok fazla argüman"
-
 #, c-format
 msgid "only two arguments allowed in <type> <object> mode, not %d"
 msgstr "<tür> <nesne> kipinde yalnızca iki argümana izin veriliyor, %d değil"
 
-msgid "git check-attr [-a | --all | <attr>...] [--] <pathname>..."
-msgstr "git check-attr [-a | --all | <öznitelik>...] [--] <yol-adı>..."
+msgid ""
+"git check-attr [--source <tree-ish>] [-a | --all | <attr>...] [--] "
+"<pathname>..."
+msgstr ""
+"git check-attr [--source <ağacımsı>] [-a | --all | <öznitelik>...] [--] <yol-"
+"adı>..."
 
-msgid "git check-attr --stdin [-z] [-a | --all | <attr>...]"
-msgstr "git check-attr --stdin [-z] [-a | --all | <öznitelik>...]"
+msgid ""
+"git check-attr --stdin [-z] [--source <tree-ish>] [-a | --all | <attr>...]"
+msgstr ""
+"git check-attr --stdin [-z] [--source <ağacımsı>] [-a | --all | "
+"<öznitelik>...]"
 
 msgid "report all attributes set on file"
 msgstr "tüm dosya özniteliklerini bildir"
@@ -3420,6 +3417,12 @@ msgstr "dosya adlarını stdin'den oku"
 
 msgid "terminate input and output records by a NUL character"
 msgstr "girdi ve çıktı kayıtlarını bir NUL karakteri ile sonlandır"
+
+msgid "<tree-ish>"
+msgstr "<ağacımsı>"
+
+msgid "which tree-ish to check attributes at"
+msgstr "özniteliklerin hangi ağacımsıda denetleneceği"
 
 msgid "suppress progress reporting"
 msgstr "ilerleme bildirimini gizle"
@@ -3929,9 +3932,11 @@ msgid "use overlay mode"
 msgstr "yerpaylaşım kipini kullan"
 
 msgid ""
-"git clean [-d] [-f] [-i] [-n] [-q] [-e <pattern>] [-x | -X] [--] <paths>..."
+"git clean [-d] [-f] [-i] [-n] [-q] [-e <pattern>] [-x | -X] [--] "
+"[<pathspec>...]"
 msgstr ""
-"git clean [-d] [-f] [-i] [-n] [-q] [-e <dizgi>] [-x | -X] [--] <yollar>..."
+"git clean [-d] [-f] [-i] [-n] [-q] [-e <dizgi>] [-x | -X] [--] [<yol-"
+"blrtç>...]"
 
 #, c-format
 msgid "Removing %s\n"
@@ -3995,7 +4000,7 @@ msgstr ""
 "*          - tüm ögeleri seç\n"
 "           - (boş) seçimi bitir\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Huh (%s)?\n"
 msgstr "Pardon (%s)?\n"
 
@@ -4144,9 +4149,6 @@ msgstr "derinlik"
 msgid "create a shallow clone of that depth"
 msgstr "verilen derinlikte sığ bir depo oluştur"
 
-msgid "time"
-msgstr "zaman"
-
 msgid "create a shallow clone since a specific time"
 msgstr "verilen zamandan sonrasını içeren bir sığ depo oluştur"
 
@@ -4223,6 +4225,10 @@ msgid "failed to start iterator over '%s'"
 msgstr "yineleyici '%s' üzerinden çalıştırılamadı"
 
 #, c-format
+msgid "symlink '%s' exists, refusing to clone with --local"
+msgstr "'%s' sembolik bağlantısı var, --local ile klonlama reddediliyor"
+
+#, c-format
 msgid "failed to unlink '%s'"
 msgstr "'%s' bağlantısı kesilemedi"
 
@@ -4285,10 +4291,6 @@ msgstr "Çok fazla argüman."
 
 msgid "You must specify a repository to clone."
 msgstr "Klonlamak için bir depo belirtmelisiniz."
-
-#, c-format
-msgid "options '%s' and '%s %s' cannot be used together"
-msgstr "'%s' ve '%s %s' seçenekleri birlikte kullanılamaz"
 
 msgid ""
 "--bundle-uri is incompatible with --depth, --shallow-since, and --shallow-"
@@ -4374,6 +4376,9 @@ msgstr "depo ilklendirilemedi, demet URI'si atlanıyor"
 msgid "failed to fetch objects from bundle URI '%s'"
 msgstr "'%s' demet URI'sinden nesneler getirilemedi"
 
+msgid "failed to fetch advertised bundles"
+msgstr "tanıtılan demetler alınamadı"
+
 msgid "remote transport reported error"
 msgstr "uzak konum taşıması hata bildirdi"
 
@@ -4409,18 +4414,24 @@ msgid "--command must be the first argument"
 msgstr "--command ilk argüman olmalı"
 
 msgid ""
-"git commit-graph verify [--object-dir <objdir>] [--shallow] [--[no-]progress]"
+"git commit-graph verify [--object-dir <dir>] [--shallow] [--[no-]progress]"
 msgstr ""
-"git commit-graph verify [--object-dir <nsndzn>] [--shallow] [--[no-]progress]"
+"git commit-graph verify [--object-dir <dizin>] [--shallow] [--[no-]progress]"
 
 msgid ""
-"git commit-graph write [--object-dir <objdir>] [--append] [--"
-"split[=<strategy>]] [--reachable|--stdin-packs|--stdin-commits] [--changed-"
-"paths] [--[no-]max-new-filters <n>] [--[no-]progress] <split options>"
+"git commit-graph write [--object-dir <dir>] [--append]\n"
+"                       [--split[=<strategy>]] [--reachable | --stdin-packs | "
+"--stdin-commits]\n"
+"                       [--changed-paths] [--[no-]max-new-filters <n>] [--"
+"[no-]progress]\n"
+"                       <split options>"
 msgstr ""
-"git commit-graph write [--object-dir <nsndzn>] [--append] [--"
-"split[=<strateji>]] [--reachable|--stdin-packs|--stdin-commits] [--changed-"
-"paths] [--[no-]max-new-filters <n>] [--[no-]progress] <bölme-seçenekleri>"
+"git commit-graph write [--object-dir <dizin>] [--append]\n"
+"                       [--split[=<<strateji>]] [--reachable | --stdin-packs "
+"| --stdin-commits]\n"
+"                       [--changed-paths] [--[no-]max-new-filters <n>] [--"
+"[no-]progress]\n"
+"                       <bölme-seçenekleri>"
 
 msgid "dir"
 msgstr "dizin"
@@ -4491,12 +4502,16 @@ msgstr ""
 msgid "Collecting commits from input"
 msgstr "Girdiden işlemeler toplanıyor"
 
+msgid "git commit-tree <tree> [(-p <parent>)...]"
+msgstr "git commit-tree <ağaç> [(-p <üst-öge>)...]"
+
 msgid ""
-"git commit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...] [(-F "
-"<file>)...] <tree>"
+"git commit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...]\n"
+"                [(-F <file>)...] <tree>"
 msgstr ""
-"git commit-tree [(-p <üst-öge>)...] [-S[<değer-no>]] [(-m <ileti>)...] [(-F "
-"<dosya>)...] <ağaç>"
+"git commit-tree [(-p <üst-öge>)...] [-S[<anahtar-kimliği>]] [(-m "
+"<ileti>)...]\n"
+"                [(-F <dosya>)...] <ağaç>"
 
 #, c-format
 msgid "duplicate parent %s ignored"
@@ -4538,11 +4553,29 @@ msgstr "bir tam ağaç vermeli"
 msgid "git commit-tree: failed to read"
 msgstr "git commit-tree: okunamadı"
 
-msgid "git commit [<options>] [--] <pathspec>..."
-msgstr "git commit [<seçenekler>] [--] <yol-blrtç>..."
+msgid ""
+"git commit [-a | --interactive | --patch] [-s] [-v] [-u<mode>] [--amend]\n"
+"           [--dry-run] [(-c | -C | --squash) <commit> | --fixup [(amend|"
+"reword):]<commit>)]\n"
+"           [-F <file> | -m <msg>] [--reset-author] [--allow-empty]\n"
+"           [--allow-empty-message] [--no-verify] [-e] [--author=<author>]\n"
+"           [--date=<date>] [--cleanup=<mode>] [--[no-]status]\n"
+"           [-i | -o] [--pathspec-from-file=<file> [--pathspec-file-nul]]\n"
+"           [(--trailer <token>[(=|:)<value>])...] [-S[<keyid>]]\n"
+"           [--] [<pathspec>...]"
+msgstr ""
+"git commit [-a | --interactive | --patch] [-s] [-v] [-u<kip>] [--amend]\n"
+"           [--dry-run] [(-c | -C | --squash) <işleme> | --fixup [(amend|"
+"reword):]<işleme>)]\n"
+"           [-F <dosya> | -m <ileti>] [--reset-author] [--allow-empty]\n"
+"           [--allow-empty-message] [--no-verify] [-e] [--author=<author>]\n"
+"           [--date=<tarih>] [--cleanup=<kip>] [--[no-]status]\n"
+"           [-i | -o] [--pathspec-from-file=<dosya> [--pathspec-file-nul]]\n"
+"           [(--trailer <jeton>[(=|:)<değer>])...] [-S[<anahtar-kimliği>]]\n"
+"           [--] [<yol-blrtç>...]"
 
-msgid "git status [<options>] [--] <pathspec>..."
-msgstr "git status [<seçenekler>] [--] <yol-blrtç>..."
+msgid "git status [<options>] [--] [<pathspec>...]"
+msgstr "git status [<seçenekler>] [--] [<yol-blrtç>...]"
 
 msgid ""
 "You asked to amend the most recent commit, but doing so would make\n"
@@ -5298,7 +5331,7 @@ msgid ""
 "\n"
 "\tchmod 0700 %s"
 msgstr ""
-"Soket dizininizdeki izinler çok gevşek; diğer kullanıcılar sizin\n"
+"Yuva dizininizdeki izinler çok gevşek; diğer kullanıcılar sizin\n"
 "önbelleğe alınmış yetkilerinizi okuyabilirler. Şunu çalıştırmayı düşünün:\n"
 "\n"
 "\tchmod 0700 %s"
@@ -5307,20 +5340,27 @@ msgid "print debugging messages to stderr"
 msgstr "hata ayıklama iletilerini stderr'e yazdır"
 
 msgid "credential-cache--daemon unavailable; no unix socket support"
-msgstr "credential-cache--daemon kullanılamıyor; unix soket desteği yok"
+msgstr "credential-cache--daemon kullanılamıyor; unix yuva desteği yok"
 
 msgid "credential-cache unavailable; no unix socket support"
-msgstr "credential-cache kullanılamıyor; unix soket desteği yok"
+msgstr "credential-cache kullanılamıyor; unix yuva desteği yok"
 
 #, c-format
 msgid "unable to get credential storage lock in %d ms"
 msgstr "kimlik depo kilidi %d ms içinde alınamadı"
 
-msgid "git describe [<options>] [<commit-ish>...]"
-msgstr "git describe [<seçenekler>] [<işlememsi>...]"
+msgid ""
+"git describe [--all] [--tags] [--contains] [--abbrev=<n>] [<commit-ish>...]"
+msgstr ""
+"git describe [--all] [--tags] [--contains] [--abbrev=<n>] [<işlememsi>...]"
 
-msgid "git describe [<options>] --dirty"
-msgstr "git describe [<seçenekler>] --dirty"
+msgid ""
+"git describe [--all] [--tags] [--contains] [--abbrev=<n>] --dirty[=<mark>]"
+msgstr ""
+"git describe [--all] [--tags] [--contains] [--abbrev=<n>] --dirty[=<im>]"
+
+msgid "git describe <blob>"
+msgstr "git describe <ikili>"
 
 msgid "head"
 msgstr "dal ucu"
@@ -5442,11 +5482,11 @@ msgid "option '%s' and commit-ishes cannot be used together"
 msgstr "'%s' seçeneği ve işlememsiler birlikte kullanılamaz"
 
 msgid ""
-"git diagnose [-o|--output-directory <path>] [-s|--suffix <format>] [--"
-"mode=<mode>]"
+"git diagnose [(-o | --output-directory) <path>] [(-s | --suffix) <format>]\n"
+"             [--mode=<mode>]"
 msgstr ""
-"git diagnose [-o|--output-directory <yol>] [-s|--suffix <biçim>] [--"
-"mode=<kip>]"
+"git diagnose [(-o | --output-directory) <yol>] [(-s | --suffix) <biçim>]\n"
+"             [--mode=<kip>]"
 
 msgid "specify a destination for the diagnostics archive"
 msgstr "tanı arşivi için bir hedef konum belirtin"
@@ -5463,6 +5503,9 @@ msgstr "--merge-base yalnızca iki işleme ile kullanılabilir"
 #, c-format
 msgid "'%s': not a regular file or symlink"
 msgstr "'%s': Sıradan bir dosya veya sembolik bağ değil"
+
+msgid "no merge given, only parents."
+msgstr "birleştirme verilmedi, yalnızca üst ögeler."
 
 #, c-format
 msgid "invalid option: %s"
@@ -5578,29 +5621,6 @@ msgstr "--tool=<araç> için bir <araç> verilmedi"
 
 msgid "no <cmd> given for --extcmd=<cmd>"
 msgstr "--extcmd=<komut> için bir <komut> verilmedi"
-
-msgid "git env--helper --type=[bool|ulong] <options> <env-var>"
-msgstr "git env--helper --type=[bool|ulong] <seçenekler> <ortam-dğşkn>"
-
-msgid "default for git_env_*(...) to fall back on"
-msgstr "git_env_*(...)'ın geri çekileceği öntanımlı"
-
-msgid "be quiet only use git_env_*() value as exit code"
-msgstr "sessiz ol, yalnızca git_env_*() değerini çıkış kodu olarak kullan"
-
-#, c-format
-msgid "option `--default' expects a boolean value with `--type=bool`, not `%s`"
-msgstr ""
-"--default seçeneği, --type=bool ile birlikte bir Boole değeri bekliyor, '%s' "
-"değil"
-
-#, c-format
-msgid ""
-"option `--default' expects an unsigned long value with `--type=ulong`, not `"
-"%s`"
-msgstr ""
-"--default seçeneği, --type=ulong ile birlikte bir imzalanmamış uzun değer "
-"bekliyor, '%s' değil"
 
 msgid "git fast-export [<rev-list-opts>]"
 msgstr "git fast-export [<revizyon-listesi-seçenekleri>]"
@@ -5999,6 +6019,10 @@ msgstr "--deepen içinde negatif derinlik desteklenmiyor"
 msgid "--unshallow on a complete repository does not make sense"
 msgstr "tam bir depo üzerinde --unshallow bir anlam ifade etmiyor"
 
+#, c-format
+msgid "failed to fetch bundles from '%s'"
+msgstr "'%s' konumundan demetler getirilemedi"
+
 msgid "fetch --all does not take a repository argument"
 msgstr "fetch --all bir depo argümanı almıyor"
 
@@ -6101,8 +6125,8 @@ msgstr "yalnızca işlemeyi içeren başvuruları yazdır"
 msgid "print only refs which don't contain the commit"
 msgstr "yalnızca işlemeyi içermeyen başvuruları yazdır"
 
-msgid "git for-each-repo --config=<config> <command-args>"
-msgstr "git for-each-repo --config=<yapılandırma> <komut-argümanları>"
+msgid "git for-each-repo --config=<config> [--] <arguments>"
+msgstr "git for-each-repo --config=<yapılandırma> [--] <argümanlar>"
 
 msgid "config"
 msgstr "yapılandırma"
@@ -6273,8 +6297,16 @@ msgstr "cache-tree içinde ağaç olmayan öge"
 msgid "%s: invalid sha1 pointer in resolve-undo"
 msgstr "%s: resolve-undo içinde geçersiz sha1 işaretçisi"
 
-msgid "git fsck [<options>] [<object>...]"
-msgstr "git fsck [<seçenekler>] [<nesne>...]"
+msgid ""
+"git fsck [--tags] [--root] [--unreachable] [--cache] [--no-reflogs]\n"
+"         [--[no-]full] [--strict] [--verbose] [--lost-found]\n"
+"         [--[no-]dangling] [--[no-]progress] [--connectivity-only]\n"
+"         [--[no-]name-objects] [<object>...]"
+msgstr ""
+"git fsck [--tags] [--root] [--unreachable] [--cache] [--no-reflogs]\n"
+"         [--[no-]full] [--strict] [--verbose] [--lost-found]\n"
+"         [--[no-]dangling] [--[no-]progress] [--connectivity-only]\n"
+"         [--[no-]name-objects] [<nesne>...]"
 
 msgid "show unreachable objects"
 msgstr "ulaşılamayan nesneleri göster"
@@ -6328,12 +6360,6 @@ msgstr "git fsmonitor--daemon start [<seçenekler>]"
 
 msgid "git fsmonitor--daemon run [<options>]"
 msgstr "git fsmonitor--daemon run [<seçenekler>]"
-
-msgid "git fsmonitor--daemon stop"
-msgstr "git fsmonitor--daemon stop"
-
-msgid "git fsmonitor--daemon status"
-msgstr "git fsmonitor--daemon status"
 
 #, c-format
 msgid "value of '%s' out of range: %d"
@@ -6574,8 +6600,20 @@ msgstr "belirli bir görevi çalıştır"
 msgid "use at most one of --auto and --schedule=<frequency>"
 msgstr "tek kezde --auto ve --schedule=<sıklık>'tan birini kullan"
 
-msgid "failed to run 'git config'"
-msgstr "'git config' çalıştırılamadı"
+#, c-format
+msgid "unable to add '%s' value of '%s'"
+msgstr "şunun için '%s' değeri eklenemiyor: '%s'"
+
+msgid "return success even if repository was not registered"
+msgstr "depo kaydı yapılmamış olsa bile başarılı durum döndür"
+
+#, c-format
+msgid "unable to unset '%s' value of '%s'"
+msgstr "şunun '%s' değeri ayarı kaldırılamıyor: '%s'"
+
+#, c-format
+msgid "repository '%s' is not registered"
+msgstr "'%s' deposu kaydı yapılmamış"
 
 #, c-format
 msgid "failed to expand path '%s'"
@@ -6863,11 +6901,14 @@ msgid "both --cached and trees are given"
 msgstr "hem --cached hem ağaçlar verilmiş"
 
 msgid ""
-"git hash-object [-t <type>] [-w] [--path=<file> | --no-filters] [--stdin] "
-"[--] <file>..."
+"git hash-object [-t <type>] [-w] [--path=<file> | --no-filters]\n"
+"                [--stdin [--literally]] [--] <file>..."
 msgstr ""
-"git hash-object [-t <tür>] [-w] [--path=<dosya> | --no-filters] [--stdin] "
-"[--] <dosya>..."
+"git hash-object [-t <tür>] [-w] [--path=<dosya> | --no-filters]\n"
+"                [--stdin [--literally]] [--] <dosya>..."
+
+msgid "git hash-object [-t <type>] [-w] --stdin-paths [--no-filters]"
+msgstr "git hash-object [-t <tür>] [-w] --stdin-paths [--no-filters]"
 
 msgid "object type"
 msgstr "nesne türü"
@@ -7001,11 +7042,18 @@ msgstr "kullanım: %s%s"
 msgid "'git help config' for more information"
 msgstr "ek bilgi için: 'git help config'"
 
-msgid "git hook run [--ignore-missing] <hook-name> [-- <hook-args>]"
-msgstr "git hook run [--ignore-missing] <kanca-adı> [-- <kanca-argümanları>]"
+msgid ""
+"git hook run [--ignore-missing] [--to-stdin=<path>] <hook-name> [-- <hook-"
+"args>]"
+msgstr ""
+"git hook run [--ignore-missing] [--to-stdin=<yol>] <kanca-adı> [-- <kanca-"
+"argümanları>]"
 
 msgid "silently ignore missing requested <hook-name>"
 msgstr "istenen eksik <kanca-adı> sessizce yok sayılıyor"
+
+msgid "file to read into hooks' stdin"
+msgstr "kancaların stdin'ine okunacak dosya"
 
 #, c-format
 msgid "object type mismatch at %s"
@@ -7295,11 +7343,15 @@ msgid "Initialized empty Git repository in %s%s\n"
 msgstr "%s%s içinde boş Git deposu ilklendirildi\n"
 
 msgid ""
-"git init [-q | --quiet] [--bare] [--template=<template-directory>] [--"
-"shared[=<permissions>]] [<directory>]"
+"git init [-q | --quiet] [--bare] [--template=<template-directory>]\n"
+"         [--separate-git-dir <git-dir>] [--object-format=<format>]\n"
+"         [-b <branch-name> | --initial-branch=<branch-name>]\n"
+"         [--shared[=<permissions>]] [<directory>]"
 msgstr ""
-"git init [-q | --quiet] [--bare] [--template=<şablon-dizini>] [--"
-"shared[=<izinler>]] [<dizin>]"
+"git init [-q | --quiet] [--bare] [--template=<şablon-dizini>]\n"
+"         [--separate-git-dir <git-dizini>] [--object-format=<biçim>]\n"
+"         [-b <dal-adı> | --initial-branch=<dal-adı>]\n"
+"         [--shared[=<izinler>]] [<dizin>]"
 
 msgid "permissions"
 msgstr "izinler"
@@ -7340,11 +7392,13 @@ msgid "--separate-git-dir incompatible with bare repository"
 msgstr "--separate-git-dir, çıplak depo ile uyumsuz"
 
 msgid ""
-"git interpret-trailers [--in-place] [--trim-empty] [(--trailer "
-"<token>[(=|:)<value>])...] [<file>...]"
+"git interpret-trailers [--in-place] [--trim-empty]\n"
+"                       [(--trailer <token>[(=|:)<value>])...]\n"
+"                       [--parse] [<file>...]"
 msgstr ""
-"git interpret-trailers [--in-place] [--trim-empty] [(--trailer "
-"<jeton>[(=|:)<değer>])...] [<dosya>...]"
+"git interpret-trailers [--in-place] [--trim-empty]\n"
+"                       [(--trailer <jeton>[(=|:)<değer>])...]\n"
+"                       [--parse] [<dosya>...]"
 
 msgid "edit files in place"
 msgstr "dosyaları yerinde düzenle"
@@ -7822,12 +7876,12 @@ msgstr ""
 
 msgid ""
 "git ls-remote [--heads] [--tags] [--refs] [--upload-pack=<exec>]\n"
-"              [-q | --quiet] [--exit-code] [--get-url]\n"
-"              [--symref] [<repository> [<refs>...]]"
+"              [-q | --quiet] [--exit-code] [--get-url] [--sort=<key>]\n"
+"              [--symref] [<repository> [<patterns>...]]"
 msgstr ""
-"git ls-remote [--heads] [--tags] [--refs] [--upload-pack=<çlştr>]\n"
-"              [-q | --quiet] [--exit-code] [--get-url]\n"
-"              [--symref] [<depo> [<başvurular>...]]"
+"git ls-remote [--heads] [--tags] [--refs] [--upload-pack=<yürütülebilir>]\n"
+"              [-q | --quiet] [--exit-code] [--get-url] [--sort=<anahtar>]\n"
+"              [--symref] [<depo> [<dizgiler>...]]"
 
 msgid "do not print remote URL"
 msgstr "uzak konum URL'sini yazdırma"
@@ -7955,11 +8009,11 @@ msgstr "git merge-base [-a | --all] <işleme> <işleme>..."
 msgid "git merge-base [-a | --all] --octopus <commit>..."
 msgstr "git merge-base [-a | --all] --octopus <işleme>..."
 
-msgid "git merge-base --independent <commit>..."
-msgstr "git merge-base --independent <işleme>..."
-
 msgid "git merge-base --is-ancestor <commit> <commit>"
 msgstr "git merge-base --is-ancestor <işleme> <işleme>"
+
+msgid "git merge-base --independent <commit>..."
+msgstr "git merge-base --independent <işleme>..."
 
 msgid "git merge-base --fork-point <ref> [<commit>]"
 msgstr "git merge-base --fork-point <başvuru> [<işleme>]"
@@ -8068,8 +8122,25 @@ msgstr "kipi/oid'si/hazırlığı olmayan dosya adlarını listele"
 msgid "allow merging unrelated histories"
 msgstr "birbiriyle ilişkisi olmayan geçmişlerin birleştirilmesine izin ver"
 
+msgid "perform multiple merges, one per line of input"
+msgstr "girdi satırı başına bir adet çoklu birleştirmeler gerçekleştir"
+
+msgid "specify a merge-base for the merge"
+msgstr "birleştirme için bir birleştirme temeli belirtilmeli"
+
 msgid "--trivial-merge is incompatible with all other options"
 msgstr "--trivial-merge, tüm diğer seçeneklerle uyumsuz"
+
+msgid "--merge-base is incompatible with --stdin"
+msgstr "--merge-base, --stdin ile uyumsuz"
+
+#, c-format
+msgid "malformed input line: '%s'."
+msgstr "hatalı oluşturulmuş girdi satırı: '%s'."
+
+#, c-format
+msgid "merging cannot continue; got unclean result of %d"
+msgstr "birleştirme sürdürülemiyor; %d için temiz olmayan sonuçlar alındı"
 
 msgid "git merge [<options>] [<commit>...]"
 msgstr "git merge [<seçenekler>] [<işleme>...]"
@@ -8683,10 +8754,6 @@ msgid "cannot read note data from non-blob object '%s'."
 msgstr "İkili nesne olmayan '%s' nesnesinden not verisi okunamıyor."
 
 #, c-format
-msgid "malformed input line: '%s'."
-msgstr "hatalı oluşturulmuş girdi satırı: '%s'."
-
-#, c-format
 msgid "failed to copy notes from '%s' to '%s'"
 msgstr "notlar '%s' konumundan '%s' konumuna kopyalanamadı"
 
@@ -8875,16 +8942,16 @@ msgstr "notları <not-bşvr>'ndan kullan"
 msgid "unknown subcommand: `%s'"
 msgstr "bilinmeyen altkomut: '%s'"
 
-msgid ""
-"git pack-objects --stdout [<options>...] [< <ref-list> | < <object-list>]"
+msgid "git pack-objects --stdout [<options>] [< <ref-list> | < <object-list>]"
 msgstr ""
-"git pack-objects --stdout [<seçenekler>...] [< <bşvr-liste> | < <nesne-"
-"liste>]"
+"git pack-objects --stdout [<sçnklr>] [< <başvuru-listesi> | < <nesne-"
+"listesi>]"
 
 msgid ""
-"git pack-objects [<options>...] <base-name> [< <ref-list> | < <object-list>]"
+"git pack-objects [<options>] <base-name> [< <ref-list> | < <object-list>]"
 msgstr ""
-"git pack-objects [<sçnklr>...] <base-name> [< <bşvr-liste> | < <nesne-liste>]"
+"git pack-objects [<sçnklr>] <temel-ad> [< <bşvru-listesi> | < <nesne-"
+"listesi>]"
 
 #, c-format
 msgid ""
@@ -9262,14 +9329,26 @@ msgstr ""
 "<git@vger.kernel.org> adresine bir e-posta atarak\n"
 "bize haber verin. Sağ olun.\n"
 
-msgid "git pack-refs [<options>]"
-msgstr "git pack-refs [<seçenekler>]"
+msgid "git pack-refs [--all] [--no-prune]"
+msgstr "git pack-refs [--all] [--no-prune]"
 
 msgid "pack everything"
 msgstr "her şeyi paketle"
 
 msgid "prune loose refs (default)"
 msgstr "gevşek başvuruları buda (öntanımlı)"
+
+msgid "git patch-id [--stable | --unstable | --verbatim]"
+msgstr "git patch-id [--stable | --unstable | --verbatim]"
+
+msgid "use the unstable patch-id algorithm"
+msgstr "kararlı olmayan yama kimliği algoritmasını kullan"
+
+msgid "use the stable patch-id algorithm"
+msgstr "kararlı yama kimliği algoritmasını kullan"
+
+msgid "don't strip whitespace from the patch"
+msgstr "yamadan boşlukları çıkarma"
 
 msgid "git prune [-n] [-v] [--progress] [--expire <time>] [--] [<head>...]"
 msgstr ""
@@ -9484,9 +9563,8 @@ msgstr ""
 
 msgid ""
 "\n"
-"To avoid automatically configuring upstream branches when their name\n"
-"doesn't match the local branch, see option 'simple' of branch."
-"autoSetupMerge\n"
+"To avoid automatically configuring an upstream branch when its name\n"
+"won't match the local branch, see option 'simple' of branch.autoSetupMerge\n"
 "in 'git help config'.\n"
 msgstr ""
 "\n"
@@ -9643,6 +9721,13 @@ msgstr "İtme konumu: %s\n"
 msgid "failed to push some refs to '%s'"
 msgstr "bazı başvurular '%s' konumuna itilemedi"
 
+msgid ""
+"recursing into submodule with push.recurseSubmodules=only; using on-demand "
+"instead"
+msgstr ""
+"altmodül içine push.recurseSubmodules=only ile özyineleniyor; yerine talep "
+"başına kullanılıyor"
+
 #, c-format
 msgid "invalid value for '%s'"
 msgstr "'%s' için geçersiz değer"
@@ -9666,7 +9751,7 @@ msgid "force updates"
 msgstr "zorla güncelle"
 
 msgid "<refname>:<expect>"
-msgstr "<başvuruadı>:<bekle>"
+msgstr "<bşvr-adı>:<bekle>"
 
 msgid "require old value of ref to be at this value"
 msgstr "başvurunun eski değerinin bu değerde olmasını gerektir"
@@ -9779,13 +9864,14 @@ msgid "need two commit ranges"
 msgstr "iki işleme erimi gerekli"
 
 msgid ""
-"git read-tree [(-m [--trivial] [--aggressive] | --reset | --prefix=<prefix>) "
-"[-u | -i]] [--no-sparse-checkout] [--index-output=<file>] (--empty | <tree-"
-"ish1> [<tree-ish2> [<tree-ish3>]])"
+"git read-tree [(-m [--trivial] [--aggressive] | --reset | --"
+"prefix=<prefix>)\n"
+"              [-u | -i]] [--index-output=<file>] [--no-sparse-checkout]\n"
+"              (--empty | <tree-ish1> [<tree-ish2> [<tree-ish3>]])"
 msgstr ""
-"git read-tree [(-m [--trivial] [--aggressive] | --reset | --prefix=<önek>) [-"
-"u | -i]] [--no-sparse-checkout] [--index-output=<dosya>] (--empty | "
-"<ağacımsı1> [<ağacımsı2> [<ağacımsı3>]])"
+"git read-tree [(-m [--trivial] [--aggressive] | --reset | --prefix=<önek>)\n"
+"              [-u | -i]] [--index-output=<dosya>] [--no-sparse-checkout]\n"
+"              (--empty | <ağacımsı1> [<ağacımsı2> [<ağacımsı3>]])"
 
 msgid "write resulting index to <file>"
 msgstr "ortaya çıkan indeksi <dosya>'ya yaz"
@@ -9876,8 +9962,8 @@ msgid "%s requires the merge backend"
 msgstr "%s birleştirme arka ucunu gerektiriyor"
 
 #, c-format
-msgid "could not get 'onto': '%s'"
-msgstr "'onto' alınamadı: '%s'"
+msgid "invalid onto: '%s'"
+msgstr "üzerine geçersiz: '%s'"
 
 #, c-format
 msgid "invalid orig-head: '%s'"
@@ -9926,10 +10012,13 @@ msgstr ""
 msgid "could not switch to %s"
 msgstr "şuraya geçilemedi: %s"
 
+msgid "apply options and merge options cannot be used together"
+msgstr "uygulama seçenekleri ve birleştirme seçenekleri birlikte kullanılamaz"
+
 #, c-format
 msgid ""
-"unrecognized empty type '%s'; valid values are \"drop\", \"keep\", and \"ask"
-"\"."
+"unrecognized empty type '%s'; valid values are \"drop\", \"keep\", and "
+"\"ask\"."
 msgstr ""
 "Tanımlanamayan boş tür '%s'; geçerli türler: \"drop\", \"keep\" ve \"ask\"."
 
@@ -10161,8 +10250,19 @@ msgstr "Bilinmeyen kip: %s"
 msgid "--strategy requires --merge or --interactive"
 msgstr "--strategy, --merge veya --interactive gerektiriyor"
 
-msgid "apply options and merge options cannot be used together"
-msgstr "uygulama seçenekleri ve birleştirme seçenekleri birlikte kullanılamaz"
+msgid ""
+"apply options are incompatible with rebase.autosquash.  Consider adding --no-"
+"autosquash"
+msgstr ""
+"uygulama seçenekleri, rebase.autosquash ile uyumlu değil. --no-autosquash "
+"eklemeyi düşünün"
+
+msgid ""
+"apply options are incompatible with rebase.updateRefs.  Consider adding --no-"
+"update-refs"
+msgstr ""
+"uygulama seçenekleri, rebase.updateRefs ile uyumlu değil. --no-update-refs "
+"eklemeyi düşünün"
 
 #, c-format
 msgid "Unknown rebase backend: %s"
@@ -10186,8 +10286,8 @@ msgstr "böyle bir dal/işleme yok: '%s'"
 msgid "No such ref: %s"
 msgstr "Böyle bir başvuru yok: %s"
 
-msgid "Could not resolve HEAD to a revision"
-msgstr "HEAD bir revizyona çözülemedi"
+msgid "Could not resolve HEAD to a commit"
+msgstr "HEAD, bir işlemeye çözülemedi"
 
 #, c-format
 msgid "'%s': need exactly one merge base with branch"
@@ -10849,6 +10949,10 @@ msgstr "geçici dosya '%s', yazma için açılamadı"
 msgid "could not close refs snapshot tempfile"
 msgstr "başvurular anlık görüntü geçici dosyası kapatılamadı"
 
+#, c-format
+msgid "could not remove stale bitmap: %s"
+msgstr "eskimiş biteşlem kaldırılamadı: %s"
+
 msgid "pack everything in a single pack"
 msgstr "her şeyi tek bir pakete sığdır"
 
@@ -10921,6 +11025,9 @@ msgstr "<N> faktörlü bir geometrik ilerleme bul"
 msgid "write a multi-pack index of the resulting packs"
 msgstr "ortaya çıkan paketlerin bir çoklu paket indeksini yaz"
 
+msgid "pack prefix to store a pack containing pruned objects"
+msgstr "budanan nesneler içeren paketi depolamak için paket öneki"
+
 msgid "cannot delete packs in a precious-objects repo"
 msgstr "bir precious-objects deposundaki paketler silinemiyor"
 
@@ -10932,8 +11039,12 @@ msgid "pack prefix %s does not begin with objdir %s"
 msgstr "paket öneki %s, nesne dizini %s ile başlamıyor"
 
 #, c-format
-msgid "missing required file: %s"
-msgstr "gereken dosya eksik: %s"
+msgid "renaming pack to '%s' failed"
+msgstr "paketi '%s' olarak yeniden adlandırma başarısız"
+
+#, c-format
+msgid "pack-objects did not write a '%s' file for pack %s-%s"
+msgstr "pack-objects, şu paket için bir '%s' dosyası yazmadı: %s-%s"
 
 #, c-format
 msgid "could not unlink: %s"
@@ -11127,8 +11238,10 @@ msgstr "--convert-graft-file argüman almaz"
 msgid "only one pattern can be given with -l"
 msgstr "-l ile yalnızca bir dizgi verilebilir"
 
-msgid "git rerere [clear | forget <path>... | status | remaining | diff | gc]"
-msgstr "git rerere [clear | forget <yol>... | status | remaining | diff | gc]"
+msgid ""
+"git rerere [clear | forget <pathspec>... | diff | status | remaining | gc]"
+msgstr ""
+"git rerere [clear | forget <yol-blrtç>... | diff | status | remaining | gc]"
 
 msgid "register clean resolutions in index"
 msgstr "indeksteki temiz çözümlerin kaydını yap"
@@ -11333,6 +11446,15 @@ msgstr "--prefix bir argüman gerektiriyor"
 msgid "unknown mode for --abbrev-ref: %s"
 msgstr "--abbrev-ref için bilinmeyen kip: %s"
 
+msgid "--exclude-hidden cannot be used together with --branches"
+msgstr "--exclude-hidden, --branches ile birlikte kullanılamıyor"
+
+msgid "--exclude-hidden cannot be used together with --tags"
+msgstr "--exclude-hidden, --tags ile birlikte kullanılamıyor"
+
+msgid "--exclude-hidden cannot be used together with --remotes"
+msgstr "--exclude-hidden, --remotes ile birlikte kullanılamıyor"
+
 msgid "this operation must be run in a work tree"
 msgstr "bu işlem bir çalışma ağacı içinde çalıştırılmalı"
 
@@ -11340,17 +11462,25 @@ msgstr "bu işlem bir çalışma ağacı içinde çalıştırılmalı"
 msgid "unknown mode for --show-object-format: %s"
 msgstr "--show-object-format için bilinmeyen kip: %s"
 
-msgid "git revert [<options>] <commit-ish>..."
-msgstr "git revert [<seçenekler>] <işlememsi>..."
+msgid ""
+"git revert [--[no-]edit] [-n] [-m <parent-number>] [-s] [-S[<keyid>]] "
+"<commit>..."
+msgstr ""
+"git revert [--[no-]edit] [-n] [-m <üst-öge-numarası>] [-s] [-S[<anahtar-"
+"kimliği>]] <işleme>..."
 
-msgid "git revert <subcommand>"
-msgstr "git revert <altkomut>"
+msgid "git revert (--continue | --skip | --abort | --quit)"
+msgstr "git revert (--continue | --skip | --abort | --quit)"
 
-msgid "git cherry-pick [<options>] <commit-ish>..."
-msgstr "git cherry-pick [<seçenekler>] <işlememsi>..."
+msgid ""
+"git cherry-pick [--edit] [-n] [-m <parent-number>] [-s] [-x] [--ff]\n"
+"                [-S[<keyid>]] <commit>..."
+msgstr ""
+"git cherry-pick [--edit] [-n] [-m <üst-öge-numarası>] [-s] [-x] [--ff]\n"
+"                [-S[<anahtar-kimliği>]] <işleme>..."
 
-msgid "git cherry-pick <subcommand>"
-msgstr "git cherry-pick <altkomut>"
+msgid "git cherry-pick (--continue | --skip | --abort | --quit)"
+msgstr "git cherry-pick (--continue | --skip | --abort | --quit)"
 
 #, c-format
 msgid "option `%s' expects a number greater than zero"
@@ -11411,8 +11541,14 @@ msgstr "geri al başarısız"
 msgid "cherry-pick failed"
 msgstr "seç-al başarısız"
 
-msgid "git rm [<options>] [--] <file>..."
-msgstr "git rm [<seçenekler>] [--] <dosya>..."
+msgid ""
+"git rm [-f | --force] [-n] [-r] [--cached] [--ignore-unmatch]\n"
+"       [--quiet] [--pathspec-from-file=<file> [--pathspec-file-nul]]\n"
+"       [--] [<pathspec>...]"
+msgstr ""
+"git rm [-f | --force] [-n] [-r] [--cached] [--ignore-unmatch]\n"
+"       [--quiet] [--pathspec-from-file=<dosya> [--pathspec-file-nul]]\n"
+"       [--] [<yol-blrtç>...]"
 
 msgid ""
 "the following file has staged content different from both the\n"
@@ -11486,12 +11622,14 @@ msgid ""
 "git send-pack [--mirror] [--dry-run] [--force]\n"
 "              [--receive-pack=<git-receive-pack>]\n"
 "              [--verbose] [--thin] [--atomic]\n"
+"              [--[no-]signed | --signed=(true|false|if-asked)]\n"
 "              [<host>:]<directory> (--all | <ref>...)"
 msgstr ""
 "git send-pack [--mirror] [--dry-run] [--force]\n"
-"              [--receive-pack=<git-receive-pack>]\n"
+"              [--receive-pack=<git-paket-al>]\n"
 "              [--verbose] [--thin] [--atomic]\n"
-"              [<makine>:]<dizin> (--all | <başvurular>...)"
+"              [--[no-]signed | --signed=(true|false|if-asked)]\n"
+"              [<makine>:]<dizin> (--all | <başvuru>...)"
 
 msgid "remote name"
 msgstr "uzak konum adı"
@@ -11514,8 +11652,9 @@ msgstr "git log --pretty=short | git shortlog [<seçenekler>]"
 msgid "using multiple --group options with stdin is not supported"
 msgstr "stdin ile çoklu --group seçenekleri kullanımı desteklenmiyor"
 
-msgid "using --group=trailer with stdin is not supported"
-msgstr "stdin ile --group=trailer kullanımı desteklenmiyor"
+#, c-format
+msgid "using %s with stdin is not supported"
+msgstr "stdin ile %s kullanma desteklenmiyor"
 
 #, c-format
 msgid "unknown group type: %s"
@@ -11546,18 +11685,20 @@ msgid "group by field"
 msgstr "alan ile grupla"
 
 msgid "too many arguments given outside repository"
-msgstr "depo dışında çok fazla argüman verildi"
+msgstr "depo dışında pek fazla argüman verildi"
 
 msgid ""
 "git show-branch [-a | --all] [-r | --remotes] [--topo-order | --date-order]\n"
 "                [--current] [--color[=<when>] | --no-color] [--sparse]\n"
 "                [--more=<n> | --list | --independent | --merge-base]\n"
-"                [--no-name | --sha1-name] [--topics] [(<rev> | <glob>)...]"
+"                [--no-name | --sha1-name] [--topics]\n"
+"                [(<rev> | <glob>)...]"
 msgstr ""
 "git show-branch [-a | --all] [-r | --remotes] [--topo-order | --date-order]\n"
-"                [--current] [--color[=<nezaman>] | --no-color] [--sparse]\n"
+"                [--current] [--color[=<ne-zaman>] | --no-color] [--sparse]\n"
 "                [--more=<n> | --list | --independent | --merge-base]\n"
-"                [--no-name | --sha1-name] [--topics] [(<bşvr> | <glob>)...]"
+"                [--no-name | --sha1-name] [--topics]\n"
+"                [(<rev> | <glob>)...]"
 
 msgid "git show-branch (-g | --reflog)[=<n>[,<base>]] [--list] [<ref>]"
 msgstr "git show-branch (-g | --reflog)[=<n>[,<temel>]] [--list] [<başvuru>]"
@@ -11657,11 +11798,13 @@ msgid "Unknown hash algorithm"
 msgstr "bilinmeyen sağlama algoritması '%s'"
 
 msgid ""
-"git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference] [-s | --"
-"hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [<pattern>...]"
+"git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference]\n"
+"             [-s | --hash[=<n>]] [--abbrev[=<n>]] [--tags]\n"
+"             [--heads] [--] [<pattern>...]"
 msgstr ""
-"git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference] [-s | --"
-"hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [<dizgi>...]"
+"git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference]\n"
+"             [-s | --hash[=<n>]] [--abbrev[=<n>]] [--tags]\n"
+"             [--heads] [--] [<dizgi>...]"
 
 msgid "git show-ref --exclude-existing[=<pattern>]"
 msgstr "git show-ref --exclude-existing[=<dizgi>]"
@@ -11690,8 +11833,10 @@ msgstr "sonuçları stdout'a yazdırma (--verify ile birlikte kullanışlı)"
 msgid "show refs from stdin that aren't in local repository"
 msgstr "stdin'den yerel bir depoda olmayan başvuruları göster"
 
-msgid "git sparse-checkout (init|list|set|add|reapply|disable) <options>"
-msgstr "git sparse-checkout (init|list|set|add|reapply|disable) <seçenekler>"
+msgid ""
+"git sparse-checkout (init | list | set | add | reapply | disable) [<options>]"
+msgstr ""
+"git sparse-checkout (init | list | set | add | reapply | disable) [<sçnklr>]"
 
 msgid "this worktree is not sparse"
 msgstr "bu çalışma ağacı aralıklı değil"
@@ -11813,67 +11958,56 @@ msgstr ""
 msgid "error while refreshing working directory"
 msgstr "çalışma dizini yenilenirken hata"
 
-msgid "git stash list [<options>]"
-msgstr "git stash list [<seçenekler>]"
+msgid "git stash list [<log-options>]"
+msgstr "git stash list [<günlük-seçenekleri>]"
 
-msgid "git stash show [<options>] [<stash>]"
-msgstr "git stash show [<seçenekler>] [<zula>]"
+msgid ""
+"git stash show [-u | --include-untracked | --only-untracked] [<diff-"
+"options>] [<stash>]"
+msgstr ""
+"git stash show [-u | --include-untracked | --only-untracked] [<diff-"
+"seçenekleri>] [<zula>]"
 
-msgid "git stash drop [-q|--quiet] [<stash>]"
-msgstr "git stash drop [-q|--quiet] [<zula>]"
+msgid "git stash drop [-q | --quiet] [<stash>]"
+msgstr "git stash drop [-q | --quiet] [<zula>]"
 
-msgid "git stash ( pop | apply ) [--index] [-q|--quiet] [<stash>]"
-msgstr "git stash ( pop | apply ) [--index] [-q|--quiet] [<zula>]"
+msgid "git stash pop [--index] [-q | --quiet] [<stash>]"
+msgstr "git stash pop [--index] [-q | --quiet] [<zula>]"
+
+msgid "git stash apply [--index] [-q | --quiet] [<stash>]"
+msgstr "git stash apply [--index] [-q | --quiet] [<zula>]"
 
 msgid "git stash branch <branchname> [<stash>]"
 msgstr "git stash branch <dal-adı> [<zula>]"
 
+msgid "git stash store [(-m | --message) <message>] [-q | --quiet] <commit>"
+msgstr "git stash store [(-m | --message) <ileti>] [-q | --quiet] <işleme>"
+
 msgid ""
-"git stash [push [-p|--patch] [-S|--staged] [-k|--[no-]keep-index] [-q|--"
-"quiet]\n"
-"          [-u|--include-untracked] [-a|--all] [-m|--message <message>]\n"
+"git stash [push [-p | --patch] [-S | --staged] [-k | --[no-]keep-index] [-q "
+"| --quiet]\n"
+"          [-u | --include-untracked] [-a | --all] [(-m | --message) "
+"<message>]\n"
 "          [--pathspec-from-file=<file> [--pathspec-file-nul]]\n"
 "          [--] [<pathspec>...]]"
 msgstr ""
-"git stash [push [-p|--patch] [-S|--staged] [-k|--[no-]keep-index] [-q|--"
-"quiet]\n"
-"          [-u|--include-untracked] [-a|--all] [-m|--message <ileti>]\n"
-"          [--pathspec-from-file=<dosya> [--pathspec-file-nul]]\n"
+"git stash [push [-p | --patch] [-S | --staged] [-k | --[no-]keep-index] [-q\n"
+"          | --quiet] [-u | --include-untracked] [-a | --all] [(-m | --"
+"message)\n"
+"          <ileti>] [--pathspec-from-file=<dosya> [--pathspec-file-nul]]\n"
 "          [--] [<yol-blrtç>...]]"
 
 msgid ""
-"git stash save [-p|--patch] [-S|--staged] [-k|--[no-]keep-index] [-q|--"
-"quiet]\n"
-"          [-u|--include-untracked] [-a|--all] [<message>]"
+"git stash save [-p | --patch] [-S | --staged] [-k | --[no-]keep-index] [-q | "
+"--quiet]\n"
+"          [-u | --include-untracked] [-a | --all] [<message>]"
 msgstr ""
-"git stash save [-p|--patch] [-S|--staged] [-k|--[no-]keep-index] [-q|--"
-"quiet]\n"
-"          [-u|--include-untracked] [-a|--all] [<ileti>]"
+"git stash save [-p | --patch] [-S | --staged] [-k | --[no-]keep-index] [-q "
+"|\n"
+"          --quiet] [-u | --include-untracked] [-a | --all] [<ileti>]"
 
-msgid "git stash pop [--index] [-q|--quiet] [<stash>]"
-msgstr "git stash pop [--index] [-q|--quiet] [<zula>]"
-
-msgid "git stash apply [--index] [-q|--quiet] [<stash>]"
-msgstr "git stash apply [--index] [-q|--quiet] [<zula>]"
-
-msgid "git stash store [-m|--message <message>] [-q|--quiet] <commit>"
-msgstr "git stash store [-m|--message <ileti>] [-q|--quiet] <işleme>"
-
-msgid ""
-"git stash [push [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
-"          [-u|--include-untracked] [-a|--all] [-m|--message <message>]\n"
-"          [--] [<pathspec>...]]"
-msgstr ""
-"git stash [push [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
-"          [-u|--include-untracked] [-a|--all] [-m|--message <ileti>]\n"
-"          [--] [<yol-blrtç>...]]"
-
-msgid ""
-"git stash save [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
-"               [-u|--include-untracked] [-a|--all] [<message>]"
-msgstr ""
-"git stash save [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
-"               [-u|--include-untracked] [-a|--all] [<ileti>]"
+msgid "git stash create [<message>]"
+msgstr "git stash create [<ileti>]"
 
 #, c-format
 msgid "'%s' is not a stash-like commit"
@@ -12359,7 +12493,7 @@ msgstr "Şu altmodül yolunda '%s' birleştirilemedi: '%s'"
 
 #, c-format
 msgid "Execution of '%s %s' failed in submodule path '%s'"
-msgstr "Şu altmodül yolunda '%s %s' çalıştırılamadı: '%s'"
+msgstr "Şu altmodül yolunda '%s %s' yürütülemedi: '%s'"
 
 #, c-format
 msgid "Submodule path '%s': checked out '%s'\n"
@@ -12434,9 +12568,6 @@ msgstr "altmodülleri özyineli basamaklandır"
 msgid "don't fetch new objects from the remote site"
 msgstr "yeni nesneleri uzak konumdan getirme"
 
-msgid "path into the working tree"
-msgstr "çalışma ağacına giden yol"
-
 msgid "use the 'checkout' update strategy (default)"
 msgstr "'checkout' güncelleme stratejisini kullan (öntanımlı)"
 
@@ -12472,26 +12603,8 @@ msgstr ""
 "shallow] [--reference <depo>] [--recursive] [--[no-]single-branch] [--] "
 "[<yol>...]"
 
-msgid "recurse into submodules"
-msgstr "altmodüllere özyinele"
-
 msgid "git submodule absorbgitdirs [<options>] [<path>...]"
 msgstr "git submodule absorbgitdirs [<seçenekler>] [<yol>...]"
-
-msgid "check if it is safe to write to the .gitmodules file"
-msgstr ".gitmodules dosyasına yazım güvenli mi değil mi denetle"
-
-msgid "unset the config in the .gitmodules file"
-msgstr ".gitmodules dosyasındaki yapılandırmayı kaldır"
-
-msgid "git submodule--helper config <name> [<value>]"
-msgstr "git submodule--helper config <ad> [<değer>]"
-
-msgid "git submodule--helper config --unset <name>"
-msgstr "git submodule--helper config --unset <ad>"
-
-msgid "please make sure that the .gitmodules file is in the working tree"
-msgstr ".gitmodules dosyasının çalışma ağacında olduğundan lütfen emin ol"
 
 msgid "suppress output for setting url of a submodule"
 msgstr "bir altmodül url ayarlanması çıktısını gizle"
@@ -12570,6 +12683,9 @@ msgstr "'%s' altmodülü için yerel git dizini yeniden etkinleştiriliyor\n"
 msgid "unable to checkout submodule '%s'"
 msgstr "'%s' altmodülü çıkış yapılamıyor"
 
+msgid "please make sure that the .gitmodules file is in the working tree"
+msgstr ".gitmodules dosyasının çalışma ağacında olduğundan lütfen emin ol"
+
 #, c-format
 msgid "Failed to add submodule '%s'"
 msgstr "'%s' altmodülü eklenemedi"
@@ -12620,19 +12736,17 @@ msgstr "depo URL'si: '%s' mutlak olmalı veya ./|../ ile başlamalıdır"
 msgid "'%s' is not a valid submodule name"
 msgstr "'%s' geçerli bir altmodül adı değil"
 
-#, c-format
-msgid "%s doesn't support --super-prefix"
-msgstr "%s, --super-prefix desteklemiyor"
+msgid "git submodule--helper <command>"
+msgstr "git submodule--helper <komut>"
 
-#, c-format
-msgid "'%s' is not a valid submodule--helper subcommand"
-msgstr "'%s' geçerli bir submodule--helper altkomutu değil"
+msgid "git symbolic-ref [-m <reason>] <name> <ref>"
+msgstr "git symbolic-ref [-m <neden>] <ad> <başvuru>"
 
-msgid "git symbolic-ref [<options>] <name> [<ref>]"
-msgstr "git symbolic-ref [<seçenekler>] <ad> [<başvuru>]"
+msgid "git symbolic-ref [-q] [--short] [--no-recurse] <name>"
+msgstr "git symbolic-ref [-q] [--short] [--no-recurse] <ad>"
 
-msgid "git symbolic-ref -d [-q] <name>"
-msgstr "git symbolic-ref -d [-q] <ad>"
+msgid "git symbolic-ref --delete [-q] <name>"
+msgstr "git symbolic-ref --delete [-q] <ad>"
 
 msgid "suppress error message for non-symbolic (detached) refs"
 msgstr "sembolik olmayan (ayrık) başvurular için hata iletisini gizle"
@@ -12643,6 +12757,9 @@ msgstr "sembolik başvuruyu sil"
 msgid "shorten ref output"
 msgstr "başvuru çıktısını kısalt"
 
+msgid "recursively dereference (default)"
+msgstr "başvuruyu özyineli olarak kaldır (öntanımlı)"
+
 msgid "reason"
 msgstr "neden"
 
@@ -12650,24 +12767,26 @@ msgid "reason of the update"
 msgstr "güncelleme nedeni"
 
 msgid ""
-"git tag [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>]\n"
-"        <tagname> [<head>]"
+"git tag [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>] [-e]\n"
+"        <tagname> [<commit> | <object>]"
 msgstr ""
-"git tag [-a | -s | -u <anahtar-kimliği>] [-f] [-m <ileti> | -F <dosya>]\n"
-"        <etiket-adı> [<head>]"
+"git tag [-a | -s | -u <anahtar-kimliği>] [-f] [-m <ileti> | -F <dosya>] [-"
+"e]\n"
+"        <etiket-adı> [<işleme> | <nesne>]"
 
 msgid "git tag -d <tagname>..."
 msgstr "git tag -d <etiket-adı>..."
 
 msgid ""
-"git tag -l [-n[<num>]] [--contains <commit>] [--no-contains <commit>] [--"
-"points-at <object>]\n"
-"        [--format=<format>] [--merged <commit>] [--no-merged <commit>] "
-"[<pattern>...]"
+"git tag [-n[<num>]] -l [--contains <commit>] [--no-contains <commit>]\n"
+"        [--points-at <object>] [--column[=<options>] | --no-column]\n"
+"        [--create-reflog] [--sort=<key>] [--format=<format>]\n"
+"        [--merged <commit>] [--no-merged <commit>] [<pattern>...]"
 msgstr ""
-"git tag -l [-n[<sayı>]] [--contains <işleme>] [--no-contains <işleme>]\n"
-" [-- points-at <nesne>] [--format=<biçim>] [--merged <işleme>]\n"
-" [--no-merged <işleme>] [<dizgi>...]"
+"git tag [-n[<sayı>]] -l [--contains <işleme>] [--no-contains <işleme>]\n"
+"        [--points-at <nesne>] [--column[=<seçenekler>] | --no-column]\n"
+"        [--create-reflog] [--sort=<anahtar>] [--format=<biçim>]\n"
+"        [--merged <işleme>] [--no-merged <işleme>] [<dizgi>...]"
 
 msgid "git tag -v [--format=<format>] <tagname>..."
 msgstr "git tag -v [--format=<biçim>] <etiket-adı>..."
@@ -13043,8 +13162,12 @@ msgstr "güncellemeleri stdin'den oku"
 msgid "update the info files from scratch"
 msgstr "bilgi dosyalarını en baştan güncelle"
 
-msgid "git upload-pack [<options>] <dir>"
-msgstr "git upload-pack [<seçenekler>] <dizin>"
+msgid ""
+"git-upload-pack [--[no-]strict] [--timeout=<n>] [--stateless-rpc]\n"
+"                [--advertise-refs] <directory>"
+msgstr ""
+"git-upload-pack [--[no-]strict] [--timeout=<n>] [--stateless-rpc]\n"
+"                [--advertise-refs] <dizin>"
 
 msgid "quit after a single request/response exchange"
 msgstr "tek bir istek/yanıt değiş tokuşundan sonra çık"
@@ -13058,8 +13181,8 @@ msgstr "eğer <dizin> bir Git dizini değilse <dizin>/.git/ deneme"
 msgid "interrupt transfer after <n> seconds of inactivity"
 msgstr "aktarımı <n> saniye hareketsizlikten sonra kes"
 
-msgid "git verify-commit [-v | --verbose] <commit>..."
-msgstr "git verify-commit [-v | --verbose] <işleme>..."
+msgid "git verify-commit [-v | --verbose] [--raw] <commit>..."
+msgstr "git verify-commit [-v | --verbose] [--raw] <işleme>..."
 
 msgid "print commit contents"
 msgstr "işleme içeriğini yazdır"
@@ -13067,8 +13190,9 @@ msgstr "işleme içeriğini yazdır"
 msgid "print raw gpg status output"
 msgstr "ham gpg durum çıktısını yazdır"
 
-msgid "git verify-pack [-v | --verbose] [-s | --stat-only] <pack>..."
-msgstr "git verify-pack [-v | --verbose] [-s | --stat-only] <paket>..."
+msgid "git verify-pack [-v | --verbose] [-s | --stat-only] [--] <pack>.idx..."
+msgstr ""
+"git verify-pack [-v | --verbose] [-s | --stat-only] [--] <paket>.idx..."
 
 msgid "verbose"
 msgstr "ayrıntılı anlatım"
@@ -13076,35 +13200,39 @@ msgstr "ayrıntılı anlatım"
 msgid "show statistics only"
 msgstr "yalnızca istatistikleri göster"
 
-msgid "git verify-tag [-v | --verbose] [--format=<format>] <tag>..."
-msgstr "git verify-tag [-v | --verbose] [--format=<biçim>] <etiket>..."
+msgid "git verify-tag [-v | --verbose] [--format=<format>] [--raw] <tag>..."
+msgstr "git verify-tag [-v | --verbose] [--format=<biçim>] [--raw] <etiket>..."
 
 msgid "print tag contents"
 msgstr "etiket içeriğini yazdır"
 
-msgid "git worktree add [<options>] <path> [<commit-ish>]"
-msgstr "git worktree add [<seçenekler>] <yol> [<işlememsi>]"
+msgid ""
+"git worktree add [-f] [--detach] [--checkout] [--lock [--reason <string>]]\n"
+"                 [-b <new-branch>] <path> [<commit-ish>]"
+msgstr ""
+"git worktree add [-f] [--detach] [--checkout] [--lock [--reason <dizi>]]\n"
+"                 [-b <yeni-dal>] <yol> [<işlememsi>]"
 
-msgid "git worktree list [<options>]"
-msgstr "git worktree list [<seçenekler>]"
+msgid "git worktree list [-v | --porcelain [-z]]"
+msgstr "git worktree list [-v | --porcelain [-z]]"
 
-msgid "git worktree lock [<options>] <path>"
-msgstr "git worktree lock [<seçenekler>] <yol>"
+msgid "git worktree lock [--reason <string>] <worktree>"
+msgstr "git worktree lock [--reason <dizi>] <çalışma-ağacı>"
 
 msgid "git worktree move <worktree> <new-path>"
 msgstr "git worktree move <ç-ağacı> <yeni-yol>"
 
-msgid "git worktree prune [<options>]"
-msgstr "git worktree prune [<seçenekler>]"
+msgid "git worktree prune [-n] [-v] [--expire <expire>]"
+msgstr "git worktree prune [-n] [-v] [--expire <süre-dolum>]"
 
-msgid "git worktree remove [<options>] <worktree>"
-msgstr "git worktree remove [<seçenekler>] <ç-ağacı>"
+msgid "git worktree remove [-f] <worktree>"
+msgstr "git worktree remove [-f] <çalışma-ağacı>"
 
 msgid "git worktree repair [<path>...]"
 msgstr "git worktree repair [<yol>...]"
 
-msgid "git worktree unlock <path>"
-msgstr "git worktree unlock <yol>"
+msgid "git worktree unlock <worktree>"
+msgstr "git worktree unlock <çalışma-ağacı>"
 
 #, c-format
 msgid "Removing %s/%s: %s"
@@ -13334,6 +13462,14 @@ msgstr "yalnızca hata ayıklama için yararlı"
 msgid "core.fsyncMethod = batch is unsupported on this platform"
 msgstr "core.fsyncMethod = batch, bu platformda desteklenmiyor"
 
+#, c-format
+msgid "could not parse bundle list key %s with value '%s'"
+msgstr "demet liste anahtarı %s ile '%s' değeri ayrıştırılamıyor"
+
+#, c-format
+msgid "bundle list at '%s' has no mode"
+msgstr "'%s' konumundaki demet listesinin kipi yok"
+
 msgid "failed to create temporary file"
 msgstr "geçici dosya oluşturulamadı"
 
@@ -13341,16 +13477,43 @@ msgid "insufficient capabilities"
 msgstr "yetersiz yetenekler"
 
 #, c-format
+msgid "file downloaded from '%s' is not a bundle"
+msgstr "'%s' konumundan indirilen dosya bir demet değil"
+
+msgid "failed to store maximum creation token"
+msgstr "en büyük oluşturma jetonu depolanamadı"
+
+#, c-format
+msgid "unrecognized bundle mode from URI '%s'"
+msgstr "'%s' URI'sinden tanımlanamayan demet kipi"
+
+#, c-format
+msgid "exceeded bundle URI recursion limit (%d)"
+msgstr "demet URI özyineleme sınırı aşıldı (%d)"
+
+#, c-format
 msgid "failed to download bundle from URI '%s'"
 msgstr "'%s' URI'sinden demet indirilemedi"
 
 #, c-format
-msgid "file at URI '%s' is not a bundle"
-msgstr "'%s' URI'sindeki dosya bir demet değil"
+msgid "file at URI '%s' is not a bundle or bundle list"
+msgstr "'%s' URI'sindeki dosya bir demet veya demet listesi değil"
 
 #, c-format
-msgid "failed to unbundle bundle from URI '%s'"
-msgstr "'%s' URI'sindeki demet çözülemedi"
+msgid "bundle-uri: unexpected argument: '%s'"
+msgstr "bundle-uri: beklenmedik argüman: '%s'"
+
+msgid "bundle-uri: expected flush after arguments"
+msgstr "bundle-uri: argümanlardan sonra floş bekleniyordu"
+
+msgid "bundle-uri: got an empty line"
+msgstr "bundle-uri: boş bir satır alındı"
+
+msgid "bundle-uri: line is not of the form 'key=value'"
+msgstr "bundle-uri: satır, 'anahtar=değer' olarak biçimlenmemiş"
+
+msgid "bundle-uri: line has empty key or value"
+msgstr "bundle-uri: satırda boş anahtar veya değer var"
 
 #, c-format
 msgid "unrecognized bundle hash algorithm: %s"
@@ -13373,6 +13536,13 @@ msgstr "Depo aşağıdaki önkoşul işlemelere iye değil:"
 
 msgid "need a repository to verify a bundle"
 msgstr "bir demeti doğrulamak için bir depo gerekiyor"
+
+msgid ""
+"some prerequisite commits exist in the object store, but are not connected "
+"to the repository's history"
+msgstr ""
+"nesne deposunda bazı önkoşul işlemeleri var; ancak deponun geçmişine bağlı "
+"değiller"
 
 #, c-format
 msgid "The bundle contains this ref:"
@@ -13920,8 +14090,8 @@ msgstr "Demet dosya biçimi"
 msgid "Chunk-based file formats"
 msgstr "geçersiz gitfile biçimi: %s"
 
-msgid "Git commit graph format"
-msgstr "Git işleme grafiği biçimi"
+msgid "Git commit-graph format"
+msgstr "Git commit-graph biçimi"
 
 msgid "Git index format"
 msgstr "Git indeks biçimi"
@@ -14115,7 +14285,7 @@ msgstr ""
 "bir commit-graph yazılmaya çalışılıyor; ancak 'core.commitGraph' devre dışı"
 
 msgid "too many commits to write graph"
-msgstr "grafik yazımı için çok fazla işleme"
+msgstr "grafik yazımı için pek fazla işleme"
 
 msgid "the commit-graph file has incorrect checksum and is likely corrupt"
 msgstr ""
@@ -14269,6 +14439,10 @@ msgstr "'has_worktree_moved' içinde işlenmemiş senaryo: %d"
 msgid "health thread wait failed [GLE %ld]"
 msgstr "sağlık iş parçacığı bekleme başarısız oldu [GLE %ld]"
 
+#, c-format
+msgid "Invalid path: %s"
+msgstr "Geçersiz yol %s"
+
 msgid "Unable to create FSEventStream."
 msgstr "FSEventStream oluşturulamadı."
 
@@ -14298,6 +14472,22 @@ msgstr "GetOverlappedResult, '%s' üzerinde başarısız oldu [GLE %ld]"
 #, c-format
 msgid "could not read directory changes [GLE %ld]"
 msgstr "dizin değişiklikleri okunamadı [GLE %ld]"
+
+#, c-format
+msgid "opendir('%s') failed"
+msgstr "opendir('%s') başarısız oldu"
+
+#, c-format
+msgid "lstat('%s') failed"
+msgstr "lstat('%s') başarısız oldu"
+
+#, c-format
+msgid "strbuf_readlink('%s') failed"
+msgstr "strbuf_readlink('%s') başarısız oldu"
+
+#, c-format
+msgid "closedir('%s') failed"
+msgstr "closedir('%s') başarısız oldu"
 
 #, c-format
 msgid "[GLE %ld] unable to open for read '%ls'"
@@ -14484,7 +14674,7 @@ msgstr "%s içinde düzmece sayım"
 
 #, c-format
 msgid "too many entries in %s"
-msgstr "%s içinde çok fazla girdi"
+msgstr "%s içinde pek fazla girdi"
 
 #, c-format
 msgid "missing config key %s"
@@ -14754,21 +14944,28 @@ msgid "unknown object format '%s' specified by server"
 msgstr "sunucu tarafından bilinmeyen nesne biçimi '%s' belirtildi"
 
 #, c-format
+msgid "error on bundle-uri response line %d: %s"
+msgstr "bundle-uri %d. yanıt satırında hata: %s"
+
+msgid "expected flush after bundle-uri listing"
+msgstr "bundle-uri listelemesinden sonra floş bekleniyordu"
+
+msgid "expected response end packet after ref listing"
+msgstr "başvuru listelemesinden sonra yanıt sonu paketi bekleniyordu"
+
+#, c-format
 msgid "invalid ls-refs response: %s"
 msgstr "geçersiz ls-refs yanıtı: %s"
 
 msgid "expected flush after ref listing"
 msgstr "başvuru listelemesinden sonra floş bekleniyordu"
 
-msgid "expected response end packet after ref listing"
-msgstr "başvuru listelemesinden sonra yanıt sonu paketi bekleniyordu"
-
 #, c-format
 msgid "protocol '%s' is not supported"
 msgstr "'%s' protokolü desteklenmiyor"
 
 msgid "unable to set SO_KEEPALIVE on socket"
-msgstr "soket üzerinde SO_KEEPALIVE ayarlanamıyor"
+msgstr "yuva üzerinde SO_KEEPALIVE ayarlanamıyor"
 
 #, c-format
 msgid "Looking up %s ... "
@@ -15049,7 +15246,7 @@ msgstr "'%s' için delta adası düzenli ifadesi yüklenemedi: %s"
 #, c-format
 msgid "island regex from config has too many capture groups (max=%d)"
 msgstr ""
-"yapılandırmanın delta adası düzenli ifadesinde çok fazla yakalama grubu var "
+"yapılandırmanın delta adası düzenli ifadesinde pek fazla yakalama grubu var "
 "(en çok %d)"
 
 #, c-format
@@ -15504,7 +15701,7 @@ msgid "disable all output of the program"
 msgstr "tüm program çıktısını devre dışı bırak"
 
 msgid "allow an external diff helper to be executed"
-msgstr "bir dış diff yardımcısının çalıştırılmasına izin ver"
+msgstr "bir dış diff yardımcısının yürütülmesine izin ver"
 
 msgid "run external text conversion filters when comparing binary files"
 msgstr ""
@@ -15581,7 +15778,7 @@ msgstr "belirli bir dosyaya çıktıla"
 
 msgid "exhaustive rename detection was skipped due to too many files."
 msgstr ""
-"Geniş kapsamlı yeniden adlandırma algılaması çok fazla dosya olmasından "
+"Geniş kapsamlı yeniden adlandırma algılaması pek fazla dosya olmasından "
 "dolayı atlandı."
 
 msgid "only found copies from modified paths due to too many files."
@@ -15672,7 +15869,7 @@ msgstr "hatalı git ad alanı yolu \"%s\""
 
 #, c-format
 msgid "too many args to run %s"
-msgstr "%s çalıştırmak için çok fazla argüman"
+msgstr "%s çalıştırmak için pek fazla argüman"
 
 msgid "git fetch-pack: expected shallow list"
 msgstr "git fetch-pack: sığ bir liste bekleniyordu"
@@ -15902,9 +16099,10 @@ msgstr "sanal depo '%s', fsmonitor ile uyumsuz"
 
 #, c-format
 msgid ""
-"repository '%s' is incompatible with fsmonitor due to lack of Unix sockets"
+"socket directory '%s' is incompatible with fsmonitor due to lack of Unix "
+"sockets support"
 msgstr ""
-"Unix soketleri eksik olduğundan dolayı; '%s' deposu, fsmonitor ile uyumsuz"
+"yuva dizini '%s', Unix yuva dasteği olmadığından dolayı fsmonitor ile uyumsuz"
 
 msgid ""
 "git [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]\n"
@@ -15912,16 +16110,14 @@ msgid ""
 "           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--"
 "bare]\n"
 "           [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]\n"
-"           [--super-prefix=<path>] [--config-env=<name>=<envvar>]\n"
-"           <command> [<args>]"
+"           [--config-env=<name>=<envvar>] <command> [<args>]"
 msgstr ""
 "git [-v | --version] [-h | --help] [-C <yol>] [-c <ad>=<değer>]\n"
 "           [--exec-path[=<yol>]] [--html-path] [--man-path] [--info-path]\n"
 "           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--"
 "bare]\n"
 "           [--git-dir=<yol>] [--work-tree=<yol>] [--namespace=<ad>]\n"
-"           [--super-prefix=<yol>] [--config-env=<ad>=<çevredeğişkeni>]\n"
-"           <komut> [<argümanlar>]"
+"           [--config-env=<ad>=<çevre-değişkeni>] <komut> [<argümanlar>]"
 
 msgid ""
 "'git help -a' and 'git help -g' list available subcommands and some\n"
@@ -15945,10 +16141,6 @@ msgstr "'%s' seçeneği için bir dizin verilmedi\n"
 #, c-format
 msgid "no namespace given for --namespace\n"
 msgstr "--namespace için ad alanı verilmedi\n"
-
-#, c-format
-msgid "no prefix given for --super-prefix\n"
-msgstr "--super-prefix için önek verilmedi\n"
 
 #, c-format
 msgid "-c expects a configuration string\n"
@@ -16065,8 +16257,13 @@ msgstr ""
 msgid "gpg.ssh.defaultKeyCommand failed: %s %s"
 msgstr "gpg.ssh.defaultKeyCommand başarısız oldu: %s %s"
 
-msgid "gpg failed to sign the data"
-msgstr "gpg veriyi imzalayamadı"
+#, c-format
+msgid ""
+"gpg failed to sign the data:\n"
+"%s"
+msgstr ""
+"gpg veriyi imzalayamadı:\n"
+"%s"
 
 msgid "user.signingKey needs to be set for ssh signing"
 msgstr "user.signingKey'in ssh imzalaması için ayarlanması gerekiyor"
@@ -16189,7 +16386,7 @@ msgid ""
 "able to execute it. Maybe git-%s is broken?"
 msgstr ""
 "'%s' bir git komutu gibi görünüyor; ancak biz onu\n"
-"çalıştıramadık. git-%s bozuk olabilir mi?"
+"yürütemedik. git-%s bozuk olabilir mi?"
 
 #, c-format
 msgid "git: '%s' is not a git command. See 'git --help'."
@@ -16228,8 +16425,8 @@ msgstr[1] ""
 "\n"
 "Buna en yakın komutlar:"
 
-msgid "git version [<options>]"
-msgstr "git version [<seçenekler>]"
+msgid "git version [--build-options]"
+msgstr "git version [--build-options]"
 
 #, c-format
 msgid "%s: %s - %s"
@@ -16253,7 +16450,7 @@ msgid ""
 "The '%s' hook was ignored because it's not set as executable.\n"
 "You can disable this warning with `git config advice.ignoredHook false`."
 msgstr ""
-"'%s' kancası yok sayıldı; çünkü bir çalıştırılabilir olarak ayarlanmamış.\n"
+"'%s' kancası yok sayıldı; çünkü bir yürütülebilir olarak ayarlanmamış.\n"
 "Bu uyarıyı 'git config advice.ignoredHook false' ile kapatabilirsiniz."
 
 #, c-format
@@ -16479,7 +16676,7 @@ msgstr ""
 "%s"
 
 msgid "Failed to execute internal merge"
-msgstr "İç birleştirme çalıştırılamadı"
+msgstr "İç birleştirme yürütülemedi"
 
 #, c-format
 msgid "Unable to add %s to database"
@@ -16833,8 +17030,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"CONFLICT (rename/rename): Rename \"%s\"->\"%s\" in branch \"%s\" rename \"%s"
-"\"->\"%s\" in \"%s\"%s"
+"CONFLICT (rename/rename): Rename \"%s\"->\"%s\" in branch \"%s\" rename "
+"\"%s\"->\"%s\" in \"%s\"%s"
 msgstr ""
 "ÇAKIŞMA (y. adlandır/y. adlandır): \"%s\"->\"%s\" olarak adlandır (\"%s\" "
 "dalında), \"%s\"->\"%s\" olarak adlandır (\"%s\"%s içinde)"
@@ -16845,8 +17042,8 @@ msgstr " (çözülmeden bırakıldı)"
 #, c-format
 msgid "CONFLICT (rename/rename): Rename %s->%s in %s. Rename %s->%s in %s"
 msgstr ""
-"ÇAKIŞMA (y. adlandır/y. adlandır): %s->%s olarak adlandır (%s içinde). %s->"
-"%s olarak adlandır (%s içinde)"
+"ÇAKIŞMA (y. adlandır/y. adlandır): %s->%s olarak adlandır (%s içinde). %s-"
+">%s olarak adlandır (%s içinde)"
 
 #, c-format
 msgid ""
@@ -17148,10 +17345,6 @@ msgstr "alternatif nesne yolu olağanlaştırılamıyor: %s"
 msgid "%s: ignoring alternate object stores, nesting too deep"
 msgstr "%s: alternatif nesne depoları yok sayılıyor, iç içe geçme pek derin"
 
-#, c-format
-msgid "unable to normalize object directory: %s"
-msgstr "nesne dizini olağanlaştırılamıyor: %s"
-
 msgid "unable to fdopen alternates lockfile"
 msgstr "alternatifler kilit dosyası fdopen yapılamıyor"
 
@@ -17211,6 +17404,10 @@ msgid "garbage at end of loose object '%s'"
 msgstr "gevşek nesne '%s' sonunda anlamsız veri"
 
 #, c-format
+msgid "unable to open loose object %s"
+msgstr "gevşek nesne %s açılamıyor"
+
+#, c-format
 msgid "unable to parse %s header"
 msgstr "%s üstbilgisi ayrıştırılamıyor"
 
@@ -17226,16 +17423,12 @@ msgid "header for %s too long, exceeds %d bytes"
 msgstr "%s üstbilgisi pek uzun, %d bayt'ı aşıyor"
 
 #, c-format
-msgid "failed to read object %s"
-msgstr "%s nesnesi okunamadı"
+msgid "loose object %s (stored in %s) is corrupt"
+msgstr "%s gevşek nesnesi (%s içinde depolanıyor) hasarlı"
 
 #, c-format
 msgid "replacement %s not found for %s"
 msgstr "%s yedeği %s için bulunamadı"
-
-#, c-format
-msgid "loose object %s (stored in %s) is corrupt"
-msgstr "%s gevşek nesnesi (%s içinde depolanıyor) hasarlı"
 
 #, c-format
 msgid "packed object %s (stored in %s) is corrupt"
@@ -17248,9 +17441,6 @@ msgstr "%s dosyası yazılamıyor"
 #, c-format
 msgid "unable to set permission to '%s'"
 msgstr "'%s' ögesine izin ayarlanamıyor"
-
-msgid "file write error"
-msgstr "dosya yazım hatası"
 
 msgid "error when closing loose object file"
 msgstr "gevşek nesne dosyası kapatılırken hata"
@@ -17297,11 +17487,12 @@ msgstr "%s dizini oluşturulamıyor"
 msgid "cannot read object for %s"
 msgstr "%s için nesne okunamıyor"
 
-msgid "corrupt commit"
-msgstr "hasarlı işleme"
+#, c-format
+msgid "object fails fsck: %s"
+msgstr "nesne fsck'yi başarısız ediyor: %s"
 
-msgid "corrupt tag"
-msgstr "hasarlı etiket"
+msgid "refusing to create malformed object"
+msgstr "hatalı oluşturulmuş nesne oluşturma reddediliyor"
 
 #, c-format
 msgid "read error while indexing %s"
@@ -17565,10 +17756,6 @@ msgstr "biteşlem paket indeksinde geçersi XOR ofseti"
 msgid "cannot fstat bitmap file"
 msgstr "biteşlem dosyası fstat yapılamıyor"
 
-#, c-format
-msgid "ignoring extra bitmap file: '%s'"
-msgstr "ek biteşlem dosyası yok sayılıyor: '%s'"
-
 msgid "checksum doesn't match in MIDX and bitmap"
 msgstr "sağlama toplamı, MIDX ve biteşlem içinde uymuyor"
 
@@ -17831,6 +18018,9 @@ msgstr "daha sessiz ol"
 msgid "use <n> digits to display object names"
 msgstr "nesne adlarını görüntülemek için <n> basamak kullan"
 
+msgid "prefixed path to initial superproject"
+msgstr "yol, ilk üst projeye öneklendi"
+
 msgid "how to strip spaces and #comments from message"
 msgstr "iletiden boşlukları ve #yorumları çıkart"
 
@@ -17973,6 +18163,10 @@ msgstr "promisor-remote: alt sürecine getirmek için stdin kapatılamıyor"
 #, c-format
 msgid "promisor remote name cannot begin with '/': %s"
 msgstr "vaatçi uzak konum adı '/' ile başlayamaz: %s"
+
+#, c-format
+msgid "could not fetch %s from promisor remote"
+msgstr "vaatçi uzak konumundan %s getirilemedi"
 
 msgid "object-info: expected flush after arguments"
 msgstr "object-info: argümanlardan sonra floş bekleniyordu"
@@ -18225,7 +18419,7 @@ msgstr ""
 "                      bir yer tutucu izle. <baş>, yeniden temellendirmenin\n"
 "                      sonunda güncellenir\n"
 "\n"
-"Bu satırlar yeniden sıralanabilirler, yukarıdan aşağıya çalıştırılırlar.\n"
+"Bu satırlar yeniden sıralanabilirler, yukarıdan aşağıya yürütülürler.\n"
 
 #, c-format
 msgid "Rebase %s onto %s (%d command)"
@@ -18319,6 +18513,14 @@ msgid "ahead %d, behind %d"
 msgstr "%d önünde, %d arkasında"
 
 #, c-format
+msgid "%%(%.*s) does not take arguments"
+msgstr "%%(%.*s) argüman almıyor"
+
+#, c-format
+msgid "unrecognized %%(%.*s) argument: %s"
+msgstr "tanımlanamayan %%(%.*s) argümanı: %s"
+
+#, c-format
 msgid "expected format: %%(color:<color>)"
 msgstr "beklenen biçim: %%(color:<renk>)"
 
@@ -18333,22 +18535,6 @@ msgstr "Tamsayı değeri şunu bekliyordu: refname:lstrip=%s"
 #, c-format
 msgid "Integer value expected refname:rstrip=%s"
 msgstr "Tamsayı değeri şunu bekliyordu: refname:rstrip=%s"
-
-#, c-format
-msgid "unrecognized %%(%s) argument: %s"
-msgstr "tanımlanamayan %%(%s) argümanı: %s"
-
-#, c-format
-msgid "%%(objecttype) does not take arguments"
-msgstr "%%(objecttype) argüman almıyor"
-
-#, c-format
-msgid "%%(deltabase) does not take arguments"
-msgstr "%%(deltabase) argüman almıyor"
-
-#, c-format
-msgid "%%(body) does not take arguments"
-msgstr "%%(body) argüman almıyor"
 
 #, c-format
 msgid "expected %%(trailers:key=<value>)"
@@ -18367,10 +18553,6 @@ msgid "positive value expected '%s' in %%(%s)"
 msgstr "pozitif değer şurada '%s' bekliyordu: %%(%s)"
 
 #, c-format
-msgid "unrecognized email option: %s"
-msgstr "tanımlanamayan e-posta seçeneği: %s"
-
-#, c-format
 msgid "expected format: %%(align:<width>,<position>)"
 msgstr "beklenen biçim: %%(align:<genişlik>,<konum>)"
 
@@ -18383,12 +18565,12 @@ msgid "unrecognized width:%s"
 msgstr "tanımlanamayan genişlik:%s"
 
 #, c-format
-msgid "positive width expected with the %%(align) atom"
-msgstr "pozitif genişlik %%(align) ögeciği ile birlikte bekleniyordu"
+msgid "unrecognized %%(%s) argument: %s"
+msgstr "tanımlanamayan %%(%s) argümanı: %s"
 
 #, c-format
-msgid "%%(rest) does not take arguments"
-msgstr "%%(rest) argüman almıyor"
+msgid "positive width expected with the %%(align) atom"
+msgstr "pozitif genişlik %%(align) ögeciği ile birlikte bekleniyordu"
 
 #, c-format
 msgid "malformed field name: %.*s"
@@ -19038,6 +19220,13 @@ msgid "failed to find tree of %s"
 msgstr "%s ögesinin ağacı bulunamadı"
 
 #, c-format
+msgid "unsupported section for hidden refs: %s"
+msgstr "gizli başvurular için desteklenmeyen bölüm: %s"
+
+msgid "--exclude-hidden= passed more than once"
+msgstr "--exclude-hidden=, birden çok kez geçirildi"
+
+#, c-format
 msgid "resolve-undo records `%s` which is missing"
 msgstr "resolve-undo, kayıp olan '%s' ögesini kaydetmiş"
 
@@ -19179,6 +19368,14 @@ msgstr "scalar reconfigure [--all | <gönüllükayıt>]"
 
 msgid "--all or <enlistment>, but not both"
 msgstr "--all veya <gönüllükayıt>; ancak ikisi değil"
+
+#, c-format
+msgid "could not remove stale scalar.repo '%s'"
+msgstr "eskimiş scalar.repo '%s' kaldırılamadı"
+
+#, c-format
+msgid "removing stale scalar.repo '%s'"
+msgstr "eskimiş scalar.repo '%s' kaldırılıyor"
 
 #, c-format
 msgid "git repository gone in '%s'"
@@ -19611,6 +19808,23 @@ msgid "git %s: failed to refresh the index"
 msgstr "git %s: indeks yenilenemedi"
 
 #, c-format
+msgid "'%s' is not a valid label"
+msgstr "'%s', geçerli bir etiket değil"
+
+#, c-format
+msgid "'%s' is not a valid refname"
+msgstr "'%s', geçerli bir başvuru adı değil"
+
+#, c-format
+msgid "update-ref requires a fully qualified refname e.g. refs/heads/%s"
+msgstr ""
+"update-ref, tümüyle kalifiye bir başvuru adı gerektiriyor; örn. refs/heads/%s"
+
+#, c-format
+msgid "invalid command '%.*s'"
+msgstr "geçersiz komut %.*s"
+
+#, c-format
 msgid "%s does not accept arguments: '%s'"
 msgstr "%s argüman kabul etmiyor: '%s'"
 
@@ -19761,7 +19975,7 @@ msgstr "%.*s birleştirilemedi"
 
 #, c-format
 msgid "Executing: %s\n"
-msgstr "Çalıştırılıyor: %s\n"
+msgstr "Yürütülüyor: %s\n"
 
 #, c-format
 msgid ""
@@ -19771,7 +19985,7 @@ msgid ""
 "  git rebase --continue\n"
 "\n"
 msgstr ""
-"Çalıştırma başarısız: %s\n"
+"Yürütme başarısız: %s\n"
 "%sSorunu çözüp sürdürmek için şunu çalıştırın:\n"
 "\n"
 "\tgit rebase --continue\n"
@@ -19789,7 +20003,7 @@ msgid ""
 "  git rebase --continue\n"
 "\n"
 msgstr ""
-"Çalıştırma başarılı oldu: %s,\n"
+"Yürütme başarılı oldu: %s,\n"
 "ancak indeksinize ve/veya çalışma ağacınıza değişiklikler bıraktı\n"
 "Değişikliklerinizi işleyin veya zulalayın, ardından şunu çalıştırın:\n"
 "\n"
@@ -19800,15 +20014,15 @@ msgstr ""
 msgid "illegal label name: '%.*s'"
 msgstr "izin verilmeyen etiket adı: '%.*s'"
 
+#, c-format
+msgid "could not resolve '%s'"
+msgstr "'%s' çözülemedi"
+
 msgid "writing fake root commit"
 msgstr "sahte kök işlemesi yazılıyor"
 
 msgid "writing squash-onto"
 msgstr "squash-onto yazılıyor"
-
-#, c-format
-msgid "could not resolve '%s'"
-msgstr "'%s' çözülemedi"
 
 msgid "cannot merge without a current revision"
 msgstr "güncel bir revizyon olmadan birleştirilemiyor"
@@ -19822,7 +20036,7 @@ msgid "nothing to merge: '%.*s'"
 msgstr "birleştirilecek bir şey yok: '%.*s'"
 
 msgid "octopus merge cannot be executed on top of a [new root]"
-msgstr "ahtapot birleştirmesi bir [yeni kök]ün üzerinde çalıştırılamaz"
+msgstr "ahtapot birleştirmesi bir [yeni kök]ün üzerinde yürütülemez"
 
 #, c-format
 msgid "could not get commit message of '%s'"
@@ -19920,7 +20134,7 @@ msgid ""
 "    git rebase --edit-todo\n"
 "    git rebase --continue\n"
 msgstr ""
-"todo komutu çalıştırılamadı.\n"
+"todo komutu yürütülemedi.\n"
 "\n"
 "\t%.*s\n"
 "Yeniden zamanlandı; sürdürmeden önce komutu düzenlemek için lütfen\n"
@@ -20405,6 +20619,25 @@ msgstr "ls-tree beklenmedik bir biçimde %d kodu ile çıktı"
 msgid "failed to lstat '%s'"
 msgstr "'%s', lstat yapılamadı"
 
+msgid "no remote configured to get bundle URIs from"
+msgstr "demet URI'lerini almak için bir uzak konum yapılandırılmamış"
+
+#, c-format
+msgid "remote '%s' has no configured URL"
+msgstr "'%s' uzak konumunun yapılandırılmış bir URL'si yok"
+
+msgid "could not get the bundle-uri list"
+msgstr "bundle-uri listesi alınamadı"
+
+msgid "test-tool cache-tree <options> (control|prime|update)"
+msgstr "test-tool cache-tree <seçenekler> (control|prime|update)"
+
+msgid "clear the cache tree before each iteration"
+msgstr "her bir yinelemeden önce önbellek ağacını temizle"
+
+msgid "number of entries in the cache tree to invalidate (default 0)"
+msgstr "önbellek ağacındaki geçersizleştirilecek girdi sayısı (öntanımlı 0)"
+
 msgid "unhandled options"
 msgstr "beklenmeyen seçenekler"
 
@@ -20416,7 +20649,7 @@ msgid "commit %s is not marked reachable"
 msgstr "%s işlemesi ulaşılabilir olarak imlenmedi"
 
 msgid "too many commits marked reachable"
-msgstr "çok fazla işleme ulaşılabilir olarak imlenmiş"
+msgstr "pek fazla işleme ulaşılabilir olarak imlenmiş"
 
 msgid "test-tool serve-v2 [<options>]"
 msgstr "test-tool serve-v2 [<seçenekler>]"
@@ -20746,6 +20979,12 @@ msgstr "İptal ediliyor."
 
 msgid "failed to push all needed submodules"
 msgstr "gereken tüm altmodüller itilemedi"
+
+msgid "bundle-uri operation not supported by protocol"
+msgstr "bundle-uri işlemi protokol tarafından desteklenmiyor"
+
+msgid "could not retrieve server-advertised bundle-uri list"
+msgstr "sunucu tarafından tanıtılan bundle-uri listesi alınamadı"
 
 msgid "too-short tree object"
 msgstr "ağaç nesnesi çok kısa"
@@ -21175,8 +21414,8 @@ msgstr "  (işlenecekleri güncellemek için \"git add/rm <dosya>...\" kullanın
 msgid ""
 "  (use \"git restore <file>...\" to discard changes in working directory)"
 msgstr ""
-"  (çalışma dizinindeki değişiklikleri atmak için \"git restore <dosya>...\" "
-"kullanın)"
+"  (çalışma dizinindeki değişiklikleri atmak için\n"
+"    \"git restore <dosya>...\" kullanın)"
 
 msgid "  (commit or discard the untracked or modified content in submodules)"
 msgstr "  (altmodüllerdeki izlenmeyen/değiştirilen içeriği gönder veya at)"
@@ -21476,13 +21715,18 @@ msgstr "Yok sayılan dosyalar"
 
 #, c-format
 msgid ""
-"It took %.2f seconds to enumerate untracked files. 'status -uno'\n"
-"may speed it up, but you have to be careful not to forget to add\n"
-"new files yourself (see 'git help status')."
+"It took %.2f seconds to enumerate untracked files,\n"
+"but the results were cached, and subsequent runs may be faster."
 msgstr ""
-"İzlenmeyen dosyaların ortaya dökülmesi %.2f saniye sürdü. 'status -uno'\n"
-"bunu hızlandırabilir; ancak yeni dosyaları eklemeyi unutmamanız\n"
-"konusunda dikkatli olmalısınız (ek bilgi için 'git help status')."
+"İzlenmeyen dosyaları ortaya dökme %.2f saniye sürdü;\n"
+"ancak sonuçlar önbelleğe alındı ve sonrakiler daha hızlı olabilir."
+
+#, c-format
+msgid "It took %.2f seconds to enumerate untracked files."
+msgstr "İzlenmeyen dosyaları ortaya dökme %.2f saniye sürdü."
+
+msgid "See 'git help status' for information on how to improve this."
+msgstr "Bunu iyileştirme üzerine bilgi için 'git help status'a bakın."
 
 #, c-format
 msgid "Untracked files not listed%s"
@@ -21509,8 +21753,8 @@ msgid ""
 "nothing added to commit but untracked files present (use \"git add\" to "
 "track)\n"
 msgstr ""
-"işlemeye bir şey eklenmedi; ancak izlenmeyen dosyalar var (izlemek için "
-"\"git add\" kullanın)\n"
+"işlemeye bir şey eklenmedi; ancak izlenmeyen dosyalar var\n"
+"  (izlemek için \"git add\" kullanın)\n"
 
 #, c-format
 msgid "nothing added to commit but untracked files present\n"
@@ -21519,8 +21763,8 @@ msgstr "işlemeye bir şey eklenmedi; ancak izlenmeyen dosyalar var\n"
 #, c-format
 msgid "nothing to commit (create/copy files and use \"git add\" to track)\n"
 msgstr ""
-"İşlenecek bir şey yok (dosyalar oluşturun/kopyalayın ve izlemek için \"git "
-"add\" kullanın)\n"
+"İşlenecek bir şey yok\n"
+"  (dosyalar oluşturun/kopyalayın ve izlemek için \"git add\" kullanın)\n"
 
 #, c-format
 msgid "nothing to commit\n"
@@ -21625,275 +21869,6 @@ msgstr "Bu komutu çalışma ağacının en üst düzeyinden çalıştırmanız 
 
 msgid "Unable to determine absolute path of git directory"
 msgstr "Git dizininin kesin yolu algılanamıyor"
-
-#. TRANSLATORS: you can adjust this to align "git add -i" status menu
-#, perl-format
-msgid "%12s %12s %s"
-msgstr "%12s %12s %s"
-
-#, perl-format
-msgid "touched %d path\n"
-msgid_plural "touched %d paths\n"
-msgstr[0] "%d yola dokunuldu\n"
-msgstr[1] "%d yola dokunuldu\n"
-
-msgid ""
-"If the patch applies cleanly, the edited hunk will immediately be\n"
-"marked for staging."
-msgstr ""
-"Eğer yama sorunsuzca uygulanırsa düzenlenen parça derhal hazırlama\n"
-"için imlenecektir."
-
-msgid ""
-"If the patch applies cleanly, the edited hunk will immediately be\n"
-"marked for stashing."
-msgstr ""
-"Eğer yama sorunsuzca uygulanırsa düzenlenen parça derhal zulalama\n"
-"için imlenecektir."
-
-msgid ""
-"If the patch applies cleanly, the edited hunk will immediately be\n"
-"marked for unstaging."
-msgstr ""
-"Eğer yama sorunsuzca uygulanırsa, düzenlenen parça derhal hazırlıktan\n"
-"çıkarılma için imlenecektir."
-
-msgid ""
-"If the patch applies cleanly, the edited hunk will immediately be\n"
-"marked for applying."
-msgstr ""
-"Eğer yama sorunsuzca uygulanırsa düzenlenen parça derhal uygulama\n"
-"için imlenecektir."
-
-msgid ""
-"If the patch applies cleanly, the edited hunk will immediately be\n"
-"marked for discarding."
-msgstr ""
-"Eğer yama sorunsuzca uygulanırsa düzenlenen parça derhal ıskartaya\n"
-"çıkarım için imlenecektir."
-
-#, perl-format
-msgid "failed to open hunk edit file for writing: %s"
-msgstr "parça düzenleme dosyası yazım için açılamadı: %s"
-
-#, perl-format
-msgid ""
-"---\n"
-"To remove '%s' lines, make them ' ' lines (context).\n"
-"To remove '%s' lines, delete them.\n"
-"Lines starting with %s will be removed.\n"
-msgstr ""
-"---\n"
-"'%s' satır kaldırmak için onları ' ' satır yapın (bağlam).\n"
-"'%s' satır kaldırmak için onları silin.\n"
-"%s ile başlayan satırlar kaldırılacaktır.\n"
-
-#, perl-format
-msgid "failed to open hunk edit file for reading: %s"
-msgstr "parça düzenleme dosyası okuma için açılamadı: %s"
-
-msgid ""
-"y - stage this hunk\n"
-"n - do not stage this hunk\n"
-"q - quit; do not stage this hunk or any of the remaining ones\n"
-"a - stage this hunk and all later hunks in the file\n"
-"d - do not stage this hunk or any of the later hunks in the file"
-msgstr ""
-"y - bu parçayı hazırla\n"
-"n - bu parçayı hazırlama\n"
-"q - çık; bu parçayı veya kalanlardan herhangi birini hazırlama\n"
-"a - bu parçayı ve sonraki tüm parçaları hazırla\n"
-"d - bu parçayı veya sonraki parçalardan herhangi birini hazırlama"
-
-msgid ""
-"y - stash this hunk\n"
-"n - do not stash this hunk\n"
-"q - quit; do not stash this hunk or any of the remaining ones\n"
-"a - stash this hunk and all later hunks in the file\n"
-"d - do not stash this hunk or any of the later hunks in the file"
-msgstr ""
-"y - bu parçayı zulala\n"
-"n - bu parçayı zulalama\n"
-"q - çık; bu parçayı veya kalanlardan herhangi birini zulalama\n"
-"a - bu parçayı ve sonraki tüm parçaları zulala\n"
-"d - bu parçayı veya sonraki parçalardan herhangi birini zulalama"
-
-msgid ""
-"y - unstage this hunk\n"
-"n - do not unstage this hunk\n"
-"q - quit; do not unstage this hunk or any of the remaining ones\n"
-"a - unstage this hunk and all later hunks in the file\n"
-"d - do not unstage this hunk or any of the later hunks in the file"
-msgstr ""
-"y - bu parçayı hazırlıktan çıkar\n"
-"n - bu parçayı hazırlıktan çıkarma\n"
-"q - çık; bu parçayı veya kalanlardan herhangi birini hazırlıktan çıkarma\n"
-"a - bu parçayı ve sonraki tüm parçaları hazırlıktan çıkar\n"
-"d - bu parçayı veya sonraki parçalardan herhangi birini hazırlıktan çıkarma"
-
-msgid ""
-"y - apply this hunk to index\n"
-"n - do not apply this hunk to index\n"
-"q - quit; do not apply this hunk or any of the remaining ones\n"
-"a - apply this hunk and all later hunks in the file\n"
-"d - do not apply this hunk or any of the later hunks in the file"
-msgstr ""
-"y - bu parçayı indekse uygula\n"
-"n - bu parçayı indekse uygulama\n"
-"q - çık; bu parçayı veya kalanlardan herhangi birini uygulama\n"
-"a - bu parçayı ve sonraki tüm parçaları uygula\n"
-"d - bu parçayı veya sonraki parçalardan herhangi birini uygulama"
-
-msgid ""
-"y - discard this hunk from worktree\n"
-"n - do not discard this hunk from worktree\n"
-"q - quit; do not discard this hunk or any of the remaining ones\n"
-"a - discard this hunk and all later hunks in the file\n"
-"d - do not discard this hunk or any of the later hunks in the file"
-msgstr ""
-"y - bu parçayı çalışma ağacından at\n"
-"n - bu parçayı çalışma ağacından atma\n"
-"q - çık; bu parçayı veya kalanlardan herhangi birini atma\n"
-"a - bu parçayı ve sonraki tüm parçaları at\n"
-"d - bu parçayı veya sonraki parçalardan herhangi birini atma"
-
-msgid ""
-"y - discard this hunk from index and worktree\n"
-"n - do not discard this hunk from index and worktree\n"
-"q - quit; do not discard this hunk or any of the remaining ones\n"
-"a - discard this hunk and all later hunks in the file\n"
-"d - do not discard this hunk or any of the later hunks in the file"
-msgstr ""
-"y - bu parçayı çalışma ağacından ve indeksten at\n"
-"n - bu parçayı çalışma ağacından ve indeksten atma\n"
-"q - çık; bu parçayı veya kalanlardan herhangi birini atma\n"
-"a - bu parçayı ve sonraki tüm parçaları at\n"
-"d - bu parçayı veya sonraki parçalardan herhangi birini atma"
-
-msgid ""
-"y - apply this hunk to index and worktree\n"
-"n - do not apply this hunk to index and worktree\n"
-"q - quit; do not apply this hunk or any of the remaining ones\n"
-"a - apply this hunk and all later hunks in the file\n"
-"d - do not apply this hunk or any of the later hunks in the file"
-msgstr ""
-"y - bu parçayı indekse ve çalışma ağacına uygula\n"
-"n - bu parçayı indekse ve çalışma ağacına uygulama\n"
-"q - çık; bu parçayı veya kalanlardan herhangi birini uygulama\n"
-"a - bu parçayı ve sonraki tüm parçaları uygula\n"
-"d - bu parçayı veya sonraki parçalardan herhangi birini uygulama"
-
-msgid ""
-"y - apply this hunk to worktree\n"
-"n - do not apply this hunk to worktree\n"
-"q - quit; do not apply this hunk or any of the remaining ones\n"
-"a - apply this hunk and all later hunks in the file\n"
-"d - do not apply this hunk or any of the later hunks in the file"
-msgstr ""
-"y - bu parçayı çalışma ağacına uygula\n"
-"n - bu parçayı çalışma ağacına uygulama\n"
-"q - çık; bu parçayı veya kalanlardan herhangi birini uygulama\n"
-"a - bu parçayı ve sonraki tüm parçaları uygula\n"
-"d - bu parçayı veya sonraki parçalardan herhangi birini uygulama"
-
-msgid ""
-"g - select a hunk to go to\n"
-"/ - search for a hunk matching the given regex\n"
-"j - leave this hunk undecided, see next undecided hunk\n"
-"J - leave this hunk undecided, see next hunk\n"
-"k - leave this hunk undecided, see previous undecided hunk\n"
-"K - leave this hunk undecided, see previous hunk\n"
-"s - split the current hunk into smaller hunks\n"
-"e - manually edit the current hunk\n"
-"? - print help\n"
-msgstr ""
-"g - gidilecek bir parça seç\n"
-"/ - verilen düzenli ifade ile eşleşen bir parça ara\n"
-"j - bu parça için sonra karar ver, bir sonraki karar verilmemiş parçayı gör\n"
-"J - bu parça için sonra karar ver, bir sonraki parçayı gör\n"
-"k - bu parça için sonra karar ver, bir önceki karar verilmemiş parçayı gör\n"
-"K - bu parça için sonra karar ver, bir önceki parçayı gör\n"
-"s - geçerli parçayı daha ufak parçalara böl\n"
-"e - geçerli parçayı el ile düzenle\n"
-"? - yardımı yazdır\n"
-
-msgid "The selected hunks do not apply to the index!\n"
-msgstr "Seçili parçalar indekse uygulanamıyor!\n"
-
-#, perl-format
-msgid "ignoring unmerged: %s\n"
-msgstr "birleştirilmeyenler yok sayılıyor: %s\n"
-
-msgid "No other hunks to goto\n"
-msgstr "Gidilecek başka parça yok\n"
-
-#, perl-format
-msgid "Invalid number: '%s'\n"
-msgstr "Geçersiz sayı: '%s'\n"
-
-#, perl-format
-msgid "Sorry, only %d hunk available.\n"
-msgid_plural "Sorry, only %d hunks available.\n"
-msgstr[0] "Üzgünüm, yalnızca %d parça kullanılabilir.\n"
-msgstr[1] "Üzgünüm, yalnızca %d parça kullanılabilir.\n"
-
-msgid "No other hunks to search\n"
-msgstr "Aranacak başka parça yok\n"
-
-#, perl-format
-msgid "Malformed search regexp %s: %s\n"
-msgstr "Hatalı oluşturulmuş arama düzenli ifadesi %s: %s\n"
-
-msgid "No hunk matches the given pattern\n"
-msgstr "Verilen dizgi ile hiçbir parça eşleşmiyor\n"
-
-msgid "No previous hunk\n"
-msgstr "Öncesinde parça yok\n"
-
-msgid "No next hunk\n"
-msgstr "Sonrasında parça yok\n"
-
-msgid "Sorry, cannot split this hunk\n"
-msgstr "Üzgünüm, bu parça bölünemiyor\n"
-
-#, perl-format
-msgid "Split into %d hunk.\n"
-msgid_plural "Split into %d hunks.\n"
-msgstr[0] "%d parçaya bölündü.\n"
-msgstr[1] "%d parçaya bölündü.\n"
-
-msgid "Sorry, cannot edit this hunk\n"
-msgstr "Üzgünüm, bu parça düzenlenemiyor\n"
-
-#. TRANSLATORS: please do not translate the command names
-#. 'status', 'update', 'revert', etc.
-msgid ""
-"status        - show paths with changes\n"
-"update        - add working tree state to the staged set of changes\n"
-"revert        - revert staged set of changes back to the HEAD version\n"
-"patch         - pick hunks and update selectively\n"
-"diff          - view diff between HEAD and index\n"
-"add untracked - add contents of untracked files to the staged set of "
-"changes\n"
-msgstr ""
-"status        - değişiklik içeren yolları göster\n"
-"update        - çalışma ağacı durumunu hazırlanan değişiklik setine ekle\n"
-"revert        - hazırlanan değişiklik setini HEAD sürümüne geri al\n"
-"patch         - parçaları seç ve seçici olarak güncelle\n"
-"diff          - HEAD ve indeks arasındaki diff'i (ayrımları) görüntüle\n"
-"add untracked - izlenmeyen dosyaların içeriğini hazırlanan değişiklik setine "
-"ekle\n"
-
-msgid "missing --"
-msgstr "-- eksik"
-
-#, perl-format
-msgid "unknown --patch mode: %s"
-msgstr "bilinmeyen --patch kipi: %s"
-
-#, perl-format
-msgid "invalid argument %s, expecting --"
-msgstr "geçersiz argüman %s, -- bekleniyor"
 
 msgid "local zone differs from GMT by a non-minute interval\n"
 msgstr "yerel dilim GMT'den bir dakikadan az bir aralıkla ayrımlı\n"
@@ -22169,7 +22144,7 @@ msgstr "(body) Cc: %s, '%s' satırından ekleniyor\n"
 
 #, perl-format
 msgid "(%s) Could not execute '%s'"
-msgstr "(%s) '%s' çalıştırılamadı"
+msgstr "(%s) '%s' yürütülemedi"
 
 #, perl-format
 msgid "(%s) Adding %s: %s from: '%s'\n"

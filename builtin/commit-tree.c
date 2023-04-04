@@ -5,6 +5,7 @@
  */
 #include "cache.h"
 #include "config.h"
+#include "hex.h"
 #include "object-store.h"
 #include "repository.h"
 #include "commit.h"
@@ -35,14 +36,6 @@ static void new_parent(struct commit *parent, struct commit_list **parents_p)
 		parents_p = &parents->next;
 	}
 	commit_list_insert(parent, parents_p);
-}
-
-static int commit_tree_config(const char *var, const char *value, void *cb)
-{
-	int status = git_gpg_config(var, value, NULL);
-	if (status)
-		return status;
-	return git_default_config(var, value, cb);
 }
 
 static int parse_parent_arg_callback(const struct option *opt,
@@ -121,7 +114,7 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	git_config(commit_tree_config, NULL);
+	git_config(git_default_config, NULL);
 
 	if (argc < 2 || !strcmp(argv[1], "-h"))
 		usage_with_options(commit_tree_usage, options);

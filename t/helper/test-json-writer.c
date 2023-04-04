@@ -1,5 +1,4 @@
 #include "test-tool.h"
-#include "cache.h"
 #include "json-writer.h"
 
 static const char *expect_obj1 = "{\"a\":\"abc\",\"b\":42,\"c\":true}";

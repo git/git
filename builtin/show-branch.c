@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "config.h"
+#include "hex.h"
 #include "pretty.h"
 #include "refs.h"
 #include "builtin.h"
@@ -956,5 +957,6 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		if (shown_merge_point && --extra < 0)
 			break;
 	}
+	free(head);
 	return 0;
 }

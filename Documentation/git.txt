@@ -13,8 +13,7 @@ SYNOPSIS
     [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]
     [-p|--paginate|-P|--no-pager] [--no-replace-objects] [--bare]
     [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]
-    [--super-prefix=<path>] [--config-env=<name>=<envvar>]
-    <command> [<args>]
+    [--config-env=<name>=<envvar>] <command> [<args>]
 
 DESCRIPTION
 -----------
@@ -168,11 +167,6 @@ If you just want to run git as if it was started in `<path>` then use
 	Set the Git namespace.  See linkgit:gitnamespaces[7] for more
 	details.  Equivalent to setting the `GIT_NAMESPACE` environment
 	variable.
-
---super-prefix=<path>::
-	Currently for internal use only.  Set a prefix which gives a path from
-	above a repository down to its root.  One use is to give submodules
-	context about the superproject that invoked it.
 
 --bare::
 	Treat the repository as a bare repository.  If GIT_DIR
@@ -619,7 +613,7 @@ The file parameters can point at the user's working file
 (e.g. `new-file` in "git-diff-files"), `/dev/null` (e.g. `old-file`
 when a new file is added), or a temporary file (e.g. `old-file` in the
 index).  `GIT_EXTERNAL_DIFF` should not worry about unlinking the
-temporary file --- it is removed when `GIT_EXTERNAL_DIFF` exits.
+temporary file -- it is removed when `GIT_EXTERNAL_DIFF` exits.
 +
 For a path that is unmerged, `GIT_EXTERNAL_DIFF` is called with 1
 parameter, <path>.

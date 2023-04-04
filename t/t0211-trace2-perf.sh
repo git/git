@@ -203,7 +203,7 @@ test_expect_success 'stopwatch timer test/test1' '
 	have_timer_event "main" "timer" "test" "test1" 5 actual
 '
 
-test_expect_success 'stopwatch timer test/test2' '
+test_expect_success PTHREAD 'stopwatch timer test/test2' '
 	test_when_finished "rm trace.perf actual" &&
 	test_config_global trace2.perfBrief 1 &&
 	test_config_global trace2.perfTarget "$(pwd)/trace.perf" &&
@@ -249,7 +249,7 @@ test_expect_success 'global counter test/test1' '
 	have_counter_event "main" "counter" "test" "test1" 15 actual
 '
 
-test_expect_success 'global counter test/test2' '
+test_expect_success PTHREAD 'global counter test/test2' '
 	test_when_finished "rm trace.perf actual" &&
 	test_config_global trace2.perfBrief 1 &&
 	test_config_global trace2.perfTarget "$(pwd)/trace.perf" &&

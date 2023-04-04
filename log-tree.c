@@ -2,6 +2,7 @@
 #include "commit-reach.h"
 #include "config.h"
 #include "diff.h"
+#include "hex.h"
 #include "object-store.h"
 #include "repository.h"
 #include "tmp-objdir.h"
@@ -12,6 +13,7 @@
 #include "merge-ort.h"
 #include "reflog-walk.h"
 #include "refs.h"
+#include "replace-object.h"
 #include "string-list.h"
 #include "color.h"
 #include "gpg-interface.h"
@@ -196,7 +198,8 @@ static int add_ref_decoration(const char *refname, const struct object_id *oid,
 	return 0;
 }
 
-static int add_graft_decoration(const struct commit_graft *graft, void *cb_data)
+static int add_graft_decoration(const struct commit_graft *graft,
+				void *cb_data UNUSED)
 {
 	struct commit *commit = lookup_commit(the_repository, &graft->oid);
 	if (!commit)

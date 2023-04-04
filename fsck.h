@@ -1,6 +1,7 @@
 #ifndef GIT_FSCK_H
 #define GIT_FSCK_H
 
+#include "object.h"
 #include "oidset.h"
 
 enum fsck_msg_type {
@@ -59,6 +60,10 @@ enum fsck_msg_type {
 	FUNC(GITMODULES_URL, ERROR) \
 	FUNC(GITMODULES_PATH, ERROR) \
 	FUNC(GITMODULES_UPDATE, ERROR) \
+	FUNC(GITATTRIBUTES_MISSING, ERROR) \
+	FUNC(GITATTRIBUTES_LARGE, ERROR) \
+	FUNC(GITATTRIBUTES_LINE_LENGTH, ERROR) \
+	FUNC(GITATTRIBUTES_BLOB, ERROR) \
 	/* warnings */ \
 	FUNC(EMPTY_NAME, WARN) \
 	FUNC(FULL_PATHNAME, WARN) \
@@ -133,6 +138,8 @@ struct fsck_options {
 	struct oidset skiplist;
 	struct oidset gitmodules_found;
 	struct oidset gitmodules_done;
+	struct oidset gitattributes_found;
+	struct oidset gitattributes_done;
 	kh_oid_map_t *object_names;
 };
 
@@ -140,18 +147,24 @@ struct fsck_options {
 	.skiplist = OIDSET_INIT, \
 	.gitmodules_found = OIDSET_INIT, \
 	.gitmodules_done = OIDSET_INIT, \
+	.gitattributes_found = OIDSET_INIT, \
+	.gitattributes_done = OIDSET_INIT, \
 	.error_func = fsck_error_function \
 }
 #define FSCK_OPTIONS_STRICT { \
 	.strict = 1, \
 	.gitmodules_found = OIDSET_INIT, \
 	.gitmodules_done = OIDSET_INIT, \
+	.gitattributes_found = OIDSET_INIT, \
+	.gitattributes_done = OIDSET_INIT, \
 	.error_func = fsck_error_function, \
 }
 #define FSCK_OPTIONS_MISSING_GITMODULES { \
 	.strict = 1, \
 	.gitmodules_found = OIDSET_INIT, \
 	.gitmodules_done = OIDSET_INIT, \
+	.gitattributes_found = OIDSET_INIT, \
+	.gitattributes_done = OIDSET_INIT, \
 	.error_func = fsck_error_cb_print_missing_gitmodules, \
 }
 
@@ -170,6 +183,14 @@ int fsck_walk(struct object *obj, void *data, struct fsck_options *options);
  */
 int fsck_object(struct object *obj, void *data, unsigned long size,
 	struct fsck_options *options);
+
+/*
+ * Same as fsck_object(), but for when the caller doesn't have an object
+ * struct.
+ */
+int fsck_buffer(const struct object_id *oid, enum object_type,
+		void *data, unsigned long size,
+		struct fsck_options *options);
 
 /*
  * fsck a tag, and pass info about it back to the caller. This is

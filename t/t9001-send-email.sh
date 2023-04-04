@@ -2334,6 +2334,12 @@ test_expect_success $PREREQ 'test that send-email works outside a repo' '
 		"$(pwd)/0001-add-main.patch"
 '
 
+test_expect_success $PREREQ 'send-email relays -v 3 to format-patch' '
+	test_when_finished "rm -f out" &&
+	git send-email --dry-run -v 3 -1 >out &&
+	grep "PATCH v3" out
+'
+
 test_expect_success $PREREQ 'test that sendmail config is rejected' '
 	test_config sendmail.program sendmail &&
 	test_must_fail git send-email \

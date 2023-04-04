@@ -219,7 +219,7 @@ see which of the "local changes" that you made were carried forward by running
 `git diff-index --cached $M`.  Note that this does not
 necessarily match what `git diff-index --cached $H` would have
 produced before such a two tree merge.  This is because of cases
-18 and 19 --- if you already had the changes in $M (e.g. maybe
+18 and 19 -- if you already had the changes in $M (e.g. maybe
 you picked it up via e-mail in a patch form), `git diff-index
 --cached $H` would have told you about the change before this
 merge, but it would not show in `git diff-index --cached $M`

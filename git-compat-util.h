@@ -97,8 +97,14 @@ struct strbuf;
 # define BARF_UNLESS_AN_ARRAY(arr)						\
 	BUILD_ASSERT_OR_ZERO(!__builtin_types_compatible_p(__typeof__(arr), \
 							   __typeof__(&(arr)[0])))
+# define BARF_UNLESS_COPYABLE(dst, src) \
+	BUILD_ASSERT_OR_ZERO(__builtin_types_compatible_p(__typeof__(*(dst)), \
+							  __typeof__(*(src))))
 #else
 # define BARF_UNLESS_AN_ARRAY(arr) 0
+# define BARF_UNLESS_COPYABLE(dst, src) \
+	BUILD_ASSERT_OR_ZERO(0 ? ((*(dst) = *(src)), 0) : \
+				 sizeof(*(dst)) == sizeof(*(src)))
 #endif
 /*
  * ARRAY_SIZE - get the number of elements in a visible array
@@ -333,6 +339,25 @@ static inline const char *precompose_string_if_needed(const char *in)
 int compat_mkdir_wo_trailing_slash(const char*, mode_t);
 #endif
 
+#ifdef time
+#undef time
+#endif
+static inline time_t git_time(time_t *tloc)
+{
+	struct timeval tv;
+
+	/*
+	 * Avoid time(NULL), which can disagree with gettimeofday(2)
+	 * and filesystem timestamps.
+	 */
+	gettimeofday(&tv, NULL);
+
+	if (tloc)
+		*tloc = tv.tv_sec;
+	return tv.tv_sec;
+}
+#define time git_time
+
 #ifdef NO_STRUCT_ITIMERVAL
 struct itimerval {
 	struct timeval it_interval;
@@ -341,11 +366,13 @@ struct itimerval {
 #endif
 
 #ifdef NO_SETITIMER
-static inline int setitimer(int which UNUSED,
-			    const struct itimerval *value UNUSED,
-			    struct itimerval *newvalue UNUSED) {
+static inline int git_setitimer(int which UNUSED,
+				const struct itimerval *value UNUSED,
+				struct itimerval *newvalue UNUSED) {
 	return 0; /* pretend success */
 }
+#undef setitimer
+#define setitimer(which,value,ovalue) git_setitimer(which,value,ovalue)
 #endif
 
 #ifndef NO_LIBGEN_H
@@ -1020,6 +1047,14 @@ static inline unsigned long cast_size_t_to_ulong(size_t a)
 	return (unsigned long)a;
 }
 
+static inline int cast_size_t_to_int(size_t a)
+{
+	if (a > INT_MAX)
+		die("number too large to represent as int on this platform: %"PRIuMAX,
+		    (uintmax_t)a);
+	return (int)a;
+}
+
 /*
  * Limit size of IO chunks, because huge chunks only cause pain.  OS X
  * 64-bit is buggy, returning EINVAL if len >= INT_MAX; and even in
@@ -1092,7 +1127,7 @@ int xstrncmpz(const char *s, const char *t, size_t len);
 #define REALLOC_ARRAY(x, alloc) (x) = xrealloc((x), st_mult(sizeof(*(x)), (alloc)))
 
 #define COPY_ARRAY(dst, src, n) copy_array((dst), (src), (n), sizeof(*(dst)) + \
-	BUILD_ASSERT_OR_ZERO(sizeof(*(dst)) == sizeof(*(src))))
+	BARF_UNLESS_COPYABLE((dst), (src)))
 static inline void copy_array(void *dst, const void *src, size_t n, size_t size)
 {
 	if (n)
@@ -1100,12 +1135,17 @@ static inline void copy_array(void *dst, const void *src, size_t n, size_t size)
 }
 
 #define MOVE_ARRAY(dst, src, n) move_array((dst), (src), (n), sizeof(*(dst)) + \
-	BUILD_ASSERT_OR_ZERO(sizeof(*(dst)) == sizeof(*(src))))
+	BARF_UNLESS_COPYABLE((dst), (src)))
 static inline void move_array(void *dst, const void *src, size_t n, size_t size)
 {
 	if (n)
 		memmove(dst, src, st_mult(size, n));
 }
+
+#define DUP_ARRAY(dst, src, n) do { \
+	size_t dup_array_n_ = (n); \
+	COPY_ARRAY(ALLOC_ARRAY((dst), dup_array_n_), (src), dup_array_n_); \
+} while (0)
 
 /*
  * These functions help you allocate structs with flex arrays, and copy
@@ -1204,6 +1244,7 @@ extern const unsigned char tolower_trans_tbl[256];
 #undef isxdigit
 
 extern const unsigned char sane_ctype[256];
+extern const signed char hexval_table[256];
 #define GIT_SPACE 0x01
 #define GIT_DIGIT 0x02
 #define GIT_ALPHA 0x04
@@ -1263,6 +1304,25 @@ static inline int skip_iprefix(const char *str, const char *prefix,
 			return 1;
 		}
 	} while (tolower(*str++) == tolower(*prefix++));
+	return 0;
+}
+
+/*
+ * Like skip_prefix_mem, but compare case-insensitively. Note that the
+ * comparison is done via tolower(), so it is strictly ASCII (no multi-byte
+ * characters or locale-specific conversions).
+ */
+static inline int skip_iprefix_mem(const char *buf, size_t len,
+				   const char *prefix,
+				   const char **out, size_t *outlen)
+{
+	do {
+		if (!*prefix) {
+			*out = buf;
+			*outlen = len;
+			return 1;
+		}
+	} while (len-- > 0 && tolower(*buf++) == tolower(*prefix++));
 	return 0;
 }
 
@@ -1335,6 +1395,11 @@ static inline int regexec_buf(const regex_t *preg, const char *buf, size_t size,
 	pmatch[0].rm_eo = size;
 	return regexec(preg, buf, nmatch, pmatch, eflags | REG_STARTEND);
 }
+
+#ifdef USE_ENHANCED_BASIC_REGULAR_EXPRESSIONS
+int git_regcomp(regex_t *preg, const char *pattern, int cflags);
+#define regcomp git_regcomp
+#endif
 
 #ifndef DIR_HAS_BSD_GROUP_SEMANTICS
 # define FORCE_DIR_SET_GID S_ISGID
@@ -1471,14 +1536,19 @@ int open_nofollow(const char *path, int flags);
 #endif
 
 #ifndef _POSIX_THREAD_SAFE_FUNCTIONS
-static inline void flockfile(FILE *fh UNUSED)
+static inline void git_flockfile(FILE *fh UNUSED)
 {
 	; /* nothing */
 }
-static inline void funlockfile(FILE *fh UNUSED)
+static inline void git_funlockfile(FILE *fh UNUSED)
 {
 	; /* nothing */
 }
+#undef flockfile
+#undef funlockfile
+#undef getc_unlocked
+#define flockfile(fh) git_flockfile(fh)
+#define funlockfile(fh) git_funlockfile(fh)
 #define getc_unlocked(fh) getc(fh)
 #endif
 

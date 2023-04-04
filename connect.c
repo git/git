@@ -1,6 +1,7 @@
 #include "git-compat-util.h"
 #include "cache.h"
 #include "config.h"
+#include "hex.h"
 #include "pkt-line.h"
 #include "quote.h"
 #include "refs.h"
@@ -15,6 +16,7 @@
 #include "version.h"
 #include "protocol.h"
 #include "alias.h"
+#include "bundle-uri.h"
 
 static char *server_capabilities_v1;
 static struct strvec server_capabilities_v2 = STRVEC_INIT;
@@ -29,7 +31,8 @@ static int check_ref(const char *name, unsigned int flags)
 		return 0;
 
 	/* REF_NORMAL means that we don't want the magic fake tag refs */
-	if ((flags & REF_NORMAL) && check_refname_format(name, 0))
+	if ((flags & REF_NORMAL) && check_refname_format(name,
+							 REFNAME_ALLOW_ONELEVEL))
 		return 0;
 
 	/* REF_HEADS means that we want regular branch heads */
@@ -66,7 +69,7 @@ static NORETURN void die_initial_contact(int unexpected)
 }
 
 /* Checks if the server supports the capability 'c' */
-int server_supports_v2(const char *c, int die_on_error)
+int server_supports_v2(const char *c)
 {
 	int i;
 
@@ -76,11 +79,13 @@ int server_supports_v2(const char *c, int die_on_error)
 		    (!*out || *out == '='))
 			return 1;
 	}
-
-	if (die_on_error)
-		die(_("server doesn't support '%s'"), c);
-
 	return 0;
+}
+
+void ensure_server_supports_v2(const char *c)
+{
+	if (!server_supports_v2(c))
+		die(_("server doesn't support '%s'"), c);
 }
 
 int server_feature_v2(const char *c, const char **v)
@@ -477,7 +482,7 @@ static void send_capabilities(int fd_out, struct packet_reader *reader)
 {
 	const char *hash_name;
 
-	if (server_supports_v2("agent", 0))
+	if (server_supports_v2("agent"))
 		packet_write_fmt(fd_out, "agent=%s", git_user_agent_sanitized());
 
 	if (server_feature_v2("object-format", &hash_name)) {
@@ -489,6 +494,49 @@ static void send_capabilities(int fd_out, struct packet_reader *reader)
 	} else {
 		reader->hash_algo = &hash_algos[GIT_HASH_SHA1];
 	}
+}
+
+int get_remote_bundle_uri(int fd_out, struct packet_reader *reader,
+			  struct bundle_list *bundles, int stateless_rpc)
+{
+	int line_nr = 1;
+
+	/* Assert bundle-uri support */
+	ensure_server_supports_v2("bundle-uri");
+
+	/* (Re-)send capabilities */
+	send_capabilities(fd_out, reader);
+
+	/* Send command */
+	packet_write_fmt(fd_out, "command=bundle-uri\n");
+	packet_delim(fd_out);
+
+	packet_flush(fd_out);
+
+	/* Process response from server */
+	while (packet_reader_read(reader) == PACKET_READ_NORMAL) {
+		const char *line = reader->line;
+		line_nr++;
+
+		if (!bundle_uri_parse_line(bundles, line))
+			continue;
+
+		return error(_("error on bundle-uri response line %d: %s"),
+			     line_nr, line);
+	}
+
+	if (reader->status != PACKET_READ_FLUSH)
+		return error(_("expected flush after bundle-uri listing"));
+
+	/*
+	 * Might die(), but obscure enough that that's OK, e.g. in
+	 * serve.c we'll call BUG() on its equivalent (the
+	 * PACKET_READ_RESPONSE_END check).
+	 */
+	check_stateless_delimiter(stateless_rpc, reader,
+				  _("expected response end packet after ref listing"));
+
+	return 0;
 }
 
 struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
@@ -504,17 +552,18 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 		&transport_options->unborn_head_target : NULL;
 	*list = NULL;
 
-	if (server_supports_v2("ls-refs", 1))
-		packet_write_fmt(fd_out, "command=ls-refs\n");
+	ensure_server_supports_v2("ls-refs");
+	packet_write_fmt(fd_out, "command=ls-refs\n");
 
 	/* Send capabilities */
 	send_capabilities(fd_out, reader);
 
-	if (server_options && server_options->nr &&
-	    server_supports_v2("server-option", 1))
+	if (server_options && server_options->nr) {
+		ensure_server_supports_v2("server-option");
 		for (i = 0; i < server_options->nr; i++)
 			packet_write_fmt(fd_out, "server-option=%s",
 					 server_options->items[i].string);
+	}
 
 	packet_delim(fd_out);
 	/* When pushing we don't want to request the peeled tags */
@@ -1359,6 +1408,7 @@ static void fill_ssh_args(struct child_process *conn, const char *ssh_host,
  * the connection failed).
  */
 struct child_process *git_connect(int fd[2], const char *url,
+				  const char *name,
 				  const char *prog, int flags)
 {
 	char *hostandport, *path;
@@ -1368,10 +1418,11 @@ struct child_process *git_connect(int fd[2], const char *url,
 
 	/*
 	 * NEEDSWORK: If we are trying to use protocol v2 and we are planning
-	 * to perform a push, then fallback to v0 since the client doesn't know
-	 * how to push yet using v2.
+	 * to perform any operation that doesn't involve upload-pack (i.e., a
+	 * fetch, ls-remote, etc), then fallback to v0 since we don't know how
+	 * to do anything else (like push or remote archive) via v2.
 	 */
-	if (version == protocol_v2 && !strcmp("git-receive-pack", prog))
+	if (version == protocol_v2 && strcmp("git-upload-pack", name))
 		version = protocol_v0;
 
 	/* Without this we cannot rely on waitpid() to tell

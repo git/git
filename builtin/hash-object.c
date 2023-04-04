@@ -6,6 +6,7 @@
  */
 #include "builtin.h"
 #include "config.h"
+#include "hex.h"
 #include "object-store.h"
 #include "blob.h"
 #include "quote.h"
@@ -27,6 +28,7 @@ static int hash_literally(struct object_id *oid, int fd, const char *type, unsig
 	else
 		ret = write_object_file_literally(buf.buf, buf.len, type, oid,
 						 flags);
+	close(fd);
 	strbuf_release(&buf);
 	return ret;
 }

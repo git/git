@@ -4,6 +4,7 @@
 #include "blob.h"
 #include "diff.h"
 #include "diffcore.h"
+#include "hex.h"
 #include "quote.h"
 #include "xdiff-interface.h"
 #include "xdiff/xmacros.h"
@@ -372,7 +373,7 @@ struct combine_diff_state {
 static void consume_hunk(void *state_,
 			 long ob, long on,
 			 long nb, long nn,
-			 const char *funcline, long funclen)
+			 const char *func UNUSED, long funclen UNUSED)
 {
 	struct combine_diff_state *state = state_;
 

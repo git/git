@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='basic git merge-index / git-merge-one-file tests'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup diverging branches' '

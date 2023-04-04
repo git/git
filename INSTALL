@@ -120,7 +120,7 @@ Issues of note:
 	  for everyday use (e.g. "bisect", "request-pull").
 
 	- "Perl" version 5.8 or later is needed to use some of the
-	  features (e.g. preparing a partial commit using "git add -i/-p",
+	  features (e.g. sending patches using "git send-email",
 	  interacting with svn repositories with "git svn").  If you can
 	  live without these, use NO_PERL.  Note that recent releases of
 	  Redhat/Fedora are reported to ship Perl binary package with some
@@ -133,17 +133,13 @@ Issues of note:
 	  you are using libcurl older than 7.34.0.  Otherwise you can use
 	  NO_OPENSSL without losing git-imap-send.
 
-	  By default, git uses OpenSSL for SHA1 but it will use its own
-	  library (inspired by Mozilla's) with either NO_OPENSSL or
-	  BLK_SHA1.
-
 	- "libcurl" library is used for fetching and pushing
 	  repositories over http:// or https://, as well as by
 	  git-imap-send if the curl version is >= 7.34.0. If you do
 	  not need that functionality, use NO_CURL to build without
 	  it.
 
-	  Git requires version "7.19.4" or later of "libcurl" to build
+	  Git requires version "7.19.5" or later of "libcurl" to build
 	  without NO_CURL. This version requirement may be bumped in
 	  the future.
 

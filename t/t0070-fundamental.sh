@@ -6,6 +6,7 @@ test_description='check that the most basic functions work
 Verify wrappers and compatibility functions.
 '
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'character classes (isspace, isalpha etc.)' '

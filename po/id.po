@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2022-09-28 14:31+0700\n"
-"PO-Revision-Date: 2022-09-28 14:50+0700\n"
+"POT-Creation-Date: 2023-03-02 15:18+0700\n"
+"PO-Revision-Date: 2023-03-02 17:52+0700\n"
 "Last-Translator: Bagas Sanjaya <bagasdotme@gmail.com>\n"
 "Language-Team: Indonesian\n"
 "Language: id\n"
@@ -26,19 +26,19 @@ msgstr "Huh (%s)?"
 msgid "could not read index"
 msgstr "tidak dapat membaca indeks"
 
-#: add-interactive.c git-add--interactive.perl
+#: add-interactive.c
 msgid "binary"
 msgstr "biner"
 
-#: add-interactive.c git-add--interactive.perl
+#: add-interactive.c
 msgid "nothing"
 msgstr "tidak ada"
 
-#: add-interactive.c git-add--interactive.perl
+#: add-interactive.c
 msgid "unchanged"
 msgstr "tak berubah"
 
-#: add-interactive.c git-add--interactive.perl
+#: add-interactive.c
 msgid "Update"
 msgstr "Perbarui"
 
@@ -51,15 +51,15 @@ msgstr "tidak dapat menggelar '%s'"
 msgid "could not write index"
 msgstr "tidak dapat menulis indeks"
 
-#: add-interactive.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-interactive.c
+#, c-format
 msgid "updated %d path\n"
 msgid_plural "updated %d paths\n"
 msgstr[0] "%d jalur diperbarui\n"
 msgstr[1] "%d jalur diperbarui\n"
 
-#: add-interactive.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-interactive.c
+#, c-format
 msgid "note: %s is untracked now.\n"
 msgstr "catatan: %s sekarang tak terlacak.\n"
 
@@ -68,7 +68,7 @@ msgstr "catatan: %s sekarang tak terlacak.\n"
 msgid "make_cache_entry failed for path '%s'"
 msgstr "make_cache_entry gagal untuk jalur '%s'"
 
-#: add-interactive.c git-add--interactive.perl
+#: add-interactive.c
 msgid "Revert"
 msgstr "Kembalikan"
 
@@ -76,24 +76,24 @@ msgstr "Kembalikan"
 msgid "Could not parse HEAD^{tree}"
 msgstr "Tidak dapat menguraikan HEAD^{tree}"
 
-#: add-interactive.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-interactive.c
+#, c-format
 msgid "reverted %d path\n"
 msgid_plural "reverted %d paths\n"
 msgstr[0] "%d jalur dikembalikan\n"
 msgstr[1] "%d jalur dikembalikan\n"
 
-#: add-interactive.c git-add--interactive.perl
+#: add-interactive.c
 #, c-format
 msgid "No untracked files.\n"
 msgstr "Tidak ada berkas tak terlacak.\n"
 
-#: add-interactive.c git-add--interactive.perl
+#: add-interactive.c
 msgid "Add untracked"
 msgstr "Tambahkan tak terlacak"
 
-#: add-interactive.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-interactive.c
+#, c-format
 msgid "added %d path\n"
 msgid_plural "added %d paths\n"
 msgstr[0] "%d jalur ditambahkan\n"
@@ -104,21 +104,21 @@ msgstr[1] "%d jalur ditambahkan\n"
 msgid "ignoring unmerged: %s"
 msgstr "mengabaikan tak tergabung: %s"
 
-#: add-interactive.c add-patch.c git-add--interactive.perl
+#: add-interactive.c add-patch.c
 #, c-format
 msgid "Only binary files changed.\n"
 msgstr "Hanya berkas biner yang berubah.\n"
 
-#: add-interactive.c add-patch.c git-add--interactive.perl
+#: add-interactive.c add-patch.c
 #, c-format
 msgid "No changes.\n"
 msgstr "Tidak ada perubahan.\n"
 
-#: add-interactive.c git-add--interactive.perl
+#: add-interactive.c
 msgid "Patch update"
 msgstr "Pembaruan tambalan"
 
-#: add-interactive.c git-add--interactive.perl
+#: add-interactive.c
 msgid "Review diff"
 msgstr "Tinjau diff"
 
@@ -186,25 +186,25 @@ msgstr "pilih item bernomor"
 msgid "(empty) select nothing"
 msgstr "(empty) tidak pilih apapun"
 
-#: add-interactive.c builtin/clean.c git-add--interactive.perl
+#: add-interactive.c builtin/clean.c
 msgid "*** Commands ***"
 msgstr "*** Perintah ***"
 
-#: add-interactive.c builtin/clean.c git-add--interactive.perl
+#: add-interactive.c builtin/clean.c
 msgid "What now"
 msgstr "Apa sekarang"
 
-#: add-interactive.c git-add--interactive.perl
+#: add-interactive.c
 msgid "staged"
 msgstr "tergelar"
 
-#: add-interactive.c git-add--interactive.perl
+#: add-interactive.c
 msgid "unstaged"
 msgstr "tak tergelar"
 
 #: add-interactive.c apply.c builtin/am.c builtin/bugreport.c builtin/clone.c
-#: builtin/diagnose.c builtin/fetch.c builtin/merge.c builtin/pull.c
-#: builtin/submodule--helper.c git-add--interactive.perl
+#: builtin/diagnose.c builtin/fetch.c builtin/hook.c builtin/merge.c
+#: builtin/pull.c builtin/submodule--helper.c
 msgid "path"
 msgstr "jalur"
 
@@ -212,28 +212,28 @@ msgstr "jalur"
 msgid "could not refresh index"
 msgstr "tidak dapat menyegarkan indeks"
 
-#: add-interactive.c builtin/clean.c git-add--interactive.perl
+#: add-interactive.c builtin/clean.c
 #, c-format
 msgid "Bye.\n"
 msgstr "Sampai jumpa.\n"
 
-#: add-patch.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-patch.c
+#, c-format
 msgid "Stage mode change [y,n,q,a,d%s,?]? "
 msgstr "Gelar perubahan mode [y,n,q,a,d%s,?]? "
 
-#: add-patch.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-patch.c
+#, c-format
 msgid "Stage deletion [y,n,q,a,d%s,?]? "
 msgstr "Gelar penghapusan [y,n,q,a,d%s,?]? "
 
-#: add-patch.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-patch.c
+#, c-format
 msgid "Stage addition [y,n,q,a,d%s,?]? "
 msgstr "Gelar penambahan [y,n,q,a,d%s,?]? "
 
-#: add-patch.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-patch.c
+#, c-format
 msgid "Stage this hunk [y,n,q,a,d%s,?]? "
 msgstr "Gelar bingkah ini [y,n,q,a,d%s,?]? "
 
@@ -259,23 +259,23 @@ msgstr ""
 "a - gelar bingkah ini dan semua bingkah selanjutnya dalam berkas\n"
 "d - jangan gelar bingkah ini atau bingkah selanjutnya dalam berkas\n"
 
-#: add-patch.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-patch.c
+#, c-format
 msgid "Stash mode change [y,n,q,a,d%s,?]? "
 msgstr "Stase perubahan mode [y,n,q,a,d%s,?]? "
 
-#: add-patch.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-patch.c
+#, c-format
 msgid "Stash deletion [y,n,q,a,d%s,?]? "
 msgstr "Stase penghapusan [y,n,q,a,d%s,?]? "
 
-#: add-patch.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-patch.c
+#, c-format
 msgid "Stash addition [y,n,q,a,d%s,?]? "
 msgstr "Stase penambahan [y,n,q,a,d%s,?]? "
 
-#: add-patch.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-patch.c
+#, c-format
 msgid "Stash this hunk [y,n,q,a,d%s,?]? "
 msgstr "Stase bingkah ini [y,n,q,a,d%s,?]? "
 
@@ -301,23 +301,23 @@ msgstr ""
 "a - stase bingkah ini dan semua bingkah selanjutnya dalam berkas\n"
 "d - jangan stase bingkah ini atau bingkah selanjutnya dalam berkas\n"
 
-#: add-patch.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-patch.c
+#, c-format
 msgid "Unstage mode change [y,n,q,a,d%s,?]? "
 msgstr "Batal gelar perubahan mode [y,n,q,a,d%s,?]? "
 
-#: add-patch.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-patch.c
+#, c-format
 msgid "Unstage deletion [y,n,q,a,d%s,?]? "
 msgstr "Batal gelar penghapusan [y,n,q,a,d%s,?]? "
 
-#: add-patch.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-patch.c
+#, c-format
 msgid "Unstage addition [y,n,q,a,d%s,?]? "
 msgstr "Batal gelar penambahan [y,n,q,a,d%s,?]? "
 
-#: add-patch.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-patch.c
+#, c-format
 msgid "Unstage this hunk [y,n,q,a,d%s,?]? "
 msgstr "Batal gelar bingkah ini [y,n,q,a,d%s,?]? "
 
@@ -343,23 +343,23 @@ msgstr ""
 "a - batal gelar bingkah ini dan semua bingkah selanjutnya dalam berkas\n"
 "d - jangan batal gelar bingkah ini atau bingkah selanjutnya dalam berkas\n"
 
-#: add-patch.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-patch.c
+#, c-format
 msgid "Apply mode change to index [y,n,q,a,d%s,?]? "
 msgstr "Terapkan perubahan mode ke indeks [y,n,q,a,d%s,?]? "
 
-#: add-patch.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-patch.c
+#, c-format
 msgid "Apply deletion to index [y,n,q,a,d%s,?]? "
 msgstr "Terapkan penghapusan ke indeks [y,n,q,a,d%s,?]? "
 
-#: add-patch.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-patch.c
+#, c-format
 msgid "Apply addition to index [y,n,q,a,d%s,?]? "
 msgstr "Terapkan penambahan ke indeks [y,n,q,a,d%s,?]? "
 
-#: add-patch.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-patch.c
+#, c-format
 msgid "Apply this hunk to index [y,n,q,a,d%s,?]? "
 msgstr "Terapkan bingkah ini ke indeks [y,n,q,a,d%s,?]? "
 
@@ -385,23 +385,23 @@ msgstr ""
 "a - terapkan bingkah ini dan semua bingkah selanjutnya dalam berkas\n"
 "d - jangan terapkan bingkah ini atau bingkah selanjutnya dalam berkas\n"
 
-#: add-patch.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-patch.c
+#, c-format
 msgid "Discard mode change from worktree [y,n,q,a,d%s,?]? "
 msgstr "Buang perubahan mode dari pohon kerja [y,n,q,a,d%s,?]? "
 
-#: add-patch.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-patch.c
+#, c-format
 msgid "Discard deletion from worktree [y,n,q,a,d%s,?]? "
 msgstr "Buang penghapusan dari pohon kerja [y,n,q,a,d%s,?]? "
 
-#: add-patch.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-patch.c
+#, c-format
 msgid "Discard addition from worktree [y,n,q,a,d%s,?]? "
 msgstr "Buang penambahan dari pohon kerja [y,n,q,a,d%s,?]? "
 
-#: add-patch.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-patch.c
+#, c-format
 msgid "Discard this hunk from worktree [y,n,q,a,d%s,?]? "
 msgstr "Buang bingkah ini dari pohon kerja [y,n,q,a,d%s,?]? "
 
@@ -427,23 +427,23 @@ msgstr ""
 "a - buang hunk ini dan semua bingkah selanjutnya dalam berkas\n"
 "d - jangan buang hunk ini atau bingkah selanjutnya dalam berkas\n"
 
-#: add-patch.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-patch.c
+#, c-format
 msgid "Discard mode change from index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Buang perubahan mode dari indeks dan pohon kerja [y,n,q,a,d%s,?]? "
 
-#: add-patch.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-patch.c
+#, c-format
 msgid "Discard deletion from index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Buang penghapusan dari indeks dan pohon kerja [y,n,q,a,d%s,?]? "
 
-#: add-patch.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-patch.c
+#, c-format
 msgid "Discard addition from index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Buang penambahan dari indeks dan pohon kerja [y,n,q,a,d%s,?]? "
 
-#: add-patch.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-patch.c
+#, c-format
 msgid "Discard this hunk from index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Buang bingkah ini dari indeks dan pohon kerja [y,n,q,a,d%s,?]? "
 
@@ -461,23 +461,23 @@ msgstr ""
 "a - buang bingkah ini dan semua bingkah selanjutnya dalam berkas\n"
 "d - jangan buang bingkah ini atau bingkah selanjutnya dalam berkas\n"
 
-#: add-patch.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-patch.c
+#, c-format
 msgid "Apply mode change to index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Terapkan perubahan mode pada indeks dan pohon kerja [y,n,q,a,d%s,?]? "
 
-#: add-patch.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-patch.c
+#, c-format
 msgid "Apply deletion to index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Terapkan penghapusan pada indeks dan pohon kerja [y,n,q,a,d%s,?]? "
 
-#: add-patch.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-patch.c
+#, c-format
 msgid "Apply addition to index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Terapkan penambahan pada indeks dan pohon kerja [y,n,q,a,d%s,?]? "
 
-#: add-patch.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-patch.c
+#, c-format
 msgid "Apply this hunk to index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Terapkan bingkah ini pada indeks dan pohon kerja [y,n,q,a,d%s,?]? "
 
@@ -495,23 +495,23 @@ msgstr ""
 "a - terapkan bingkah ini dan semua bingkah selanjutnya dalam berkas\n"
 "d - jangan terapkan bingkah ini atau bingkah selanjutnya dalam berkas\n"
 
-#: add-patch.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-patch.c
+#, c-format
 msgid "Apply mode change to worktree [y,n,q,a,d%s,?]? "
 msgstr "Terapkan perubahan mode pada pohon kerja [y,n,q,a,d%s,?]?"
 
-#: add-patch.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-patch.c
+#, c-format
 msgid "Apply deletion to worktree [y,n,q,a,d%s,?]? "
 msgstr "Terapkan penghapusan pada pohon kerja [y,n,q,a,d%s,?]?"
 
-#: add-patch.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-patch.c
+#, c-format
 msgid "Apply addition to worktree [y,n,q,a,d%s,?]? "
 msgstr "Terapkan penambahan pada pohon kerja [y,n,q,a,d%s,?]?"
 
-#: add-patch.c git-add--interactive.perl
-#, c-format, perl-format
+#: add-patch.c
+#, c-format
 msgid "Apply this hunk to worktree [y,n,q,a,d%s,?]? "
 msgstr "Terapkan bingkah ini pada pohon kerja [y,n,q,a,d%s,?]?"
 
@@ -581,7 +581,7 @@ msgstr ""
 "tidak berakhir dengan:\n"
 "%.*s"
 
-#: add-patch.c git-add--interactive.perl
+#: add-patch.c
 msgid "Manual hunk edit mode -- see bottom for a quick guide.\n"
 msgstr "Mode sunting bingkah manual -- lihat dibawah untuk panduan cepat.\n"
 
@@ -598,9 +598,7 @@ msgstr ""
 "Untuk menghapus baris '%c', hapuslahnya.\n"
 "Baris yang diawali dengan %c akan dihapus.\n"
 
-#. #-#-#-#-#  git-add--interactive.perl.po  #-#-#-#-#
-#. TRANSLATORS: 'it' refers to the patch mentioned in the previous messages.
-#: add-patch.c git-add--interactive.perl
+#: add-patch.c
 msgid ""
 "If it does not apply cleanly, you will be given an opportunity to\n"
 "edit again.  If all lines of the hunk are removed, then the edit is\n"
@@ -618,21 +616,13 @@ msgstr "tidak dapat menguraikan kepala bingkah"
 msgid "'git apply --cached' failed"
 msgstr "'git apply --cached' gagal"
 
-#. #-#-#-#-#  add-patch.c.po  #-#-#-#-#
 #. TRANSLATORS: do not translate [y/n]
 #. The program will only accept that input at this point.
 #. Consider translating (saying "no" discards!) as
 #. (saying "n" for "no" discards!) if the translation
 #. of the word "no" does not start with n.
 #.
-#. #-#-#-#-#  git-add--interactive.perl.po  #-#-#-#-#
-#. TRANSLATORS: do not translate [y/n]
-#. The program will only accept that input
-#. at this point.
-#. Consider translating (saying "no" discards!) as
-#. (saying "n" for "no" discards!) if the translation
-#. of the word "no" does not start with n.
-#: add-patch.c git-add--interactive.perl
+#: add-patch.c
 msgid ""
 "Your edited hunk does not apply. Edit again (saying \"no\" discards!) [y/n]? "
 msgstr ""
@@ -643,11 +633,11 @@ msgstr ""
 msgid "The selected hunks do not apply to the index!"
 msgstr "Bingkah yang dipilih tidak diterapkan pada indeks!"
 
-#: add-patch.c git-add--interactive.perl
+#: add-patch.c
 msgid "Apply them to the worktree anyway? "
 msgstr "Tetap terapkan pada pohon kerja? "
 
-#: add-patch.c git-add--interactive.perl
+#: add-patch.c
 msgid "Nothing was applied.\n"
 msgstr "Tidak ada yang diterapkan.\n"
 
@@ -685,11 +675,11 @@ msgstr "Tidak ada bingkah selanjutnya"
 msgid "No other hunks to goto"
 msgstr "Tidak ada bingkah lainnya untuk dikunjungi"
 
-#: add-patch.c git-add--interactive.perl
+#: add-patch.c
 msgid "go to which hunk (<ret> to see more)? "
 msgstr "pergi ke bingkah yang mana (<ret> untuk lihat lebih)? "
 
-#: add-patch.c git-add--interactive.perl
+#: add-patch.c
 msgid "go to which hunk? "
 msgstr "pergi ke bingkah yang mana?"
 
@@ -709,7 +699,7 @@ msgstr[1] "Maaf, hanya %d bingkah yang tersedia."
 msgid "No other hunks to search"
 msgstr "Tidak ada bingkah lainnya untuk dicari"
 
-#: add-patch.c git-add--interactive.perl
+#: add-patch.c
 msgid "search for regex? "
 msgstr "cari untuk regex? "
 
@@ -899,6 +889,11 @@ msgstr "baris perintah diakhiri dengan \\"
 #: alias.c
 msgid "unclosed quote"
 msgstr "tanda kutip tak ditutup"
+
+#: alias.c builtin/cat-file.c builtin/notes.c builtin/prune-packed.c
+#: builtin/receive-pack.c builtin/tag.c
+msgid "too many arguments"
+msgstr "terlalu banyak argumen"
 
 #: apply.c
 #, c-format
@@ -1303,7 +1298,7 @@ msgstr ""
 msgid "unable to add cache entry for %s"
 msgstr "tidak dapat menambahkan entri tembolok untuk %s"
 
-#: apply.c builtin/bisect--helper.c builtin/gc.c
+#: apply.c builtin/bisect.c builtin/gc.c
 #, c-format
 msgid "failed to write to '%s'"
 msgstr "gagal menulis ke '%s'"
@@ -1364,7 +1359,7 @@ msgid "No valid patches in input (allow with \"--allow-empty\")"
 msgstr ""
 "Tidak ada tambalan valid dalam masukan (perbolehkan dengan \"--allow-empty\")"
 
-#: apply.c
+#: apply.c t/helper/test-cache-tree.c
 msgid "unable to read index file"
 msgstr "tidak dapa membaca berkas indeks"
 
@@ -1599,7 +1594,7 @@ msgstr "tidak ada referensi seperti: %.*s"
 msgid "not a valid object name: %s"
 msgstr "bukan nama objek valid: %s"
 
-#: archive.c
+#: archive.c t/helper/test-cache-tree.c
 #, c-format
 msgid "not a tree object: %s"
 msgstr "bukan objek pohon: %s"
@@ -1641,7 +1636,7 @@ msgstr "fmt"
 msgid "archive format"
 msgstr "format arsip"
 
-#: archive.c builtin/log.c
+#: archive.c builtin/log.c parse-options.h
 msgid "prefix"
 msgstr "prefiks"
 
@@ -1650,7 +1645,7 @@ msgid "prepend prefix to each pathname in the archive"
 msgstr "tambahkan prefiks di depan setiap nama jalur dalam arsip"
 
 #: archive.c builtin/blame.c builtin/commit-tree.c builtin/config.c
-#: builtin/fast-export.c builtin/grep.c builtin/hash-object.c
+#: builtin/fast-export.c builtin/gc.c builtin/grep.c builtin/hash-object.c
 #: builtin/ls-files.c builtin/notes.c builtin/read-tree.c parse-options.h
 msgid "file"
 msgstr "berkas"
@@ -1674,6 +1669,15 @@ msgstr "baca .gitattributes dalam direktori kerja"
 #: archive.c
 msgid "report archived files on stderr"
 msgstr "laporkan berkas terarsip ke error standar"
+
+#: archive.c builtin/clone.c builtin/fetch.c builtin/pack-objects.c
+#: builtin/pull.c
+msgid "time"
+msgstr "waktu"
+
+#: archive.c
+msgid "set modification time of archive entries"
+msgstr "setel waktu modifikasi entri arsip"
 
 #: archive.c
 msgid "set compression level"
@@ -1731,6 +1735,15 @@ msgid "%.*s is not a valid attribute name"
 msgstr "%.*s bukan sebuah nama atribut valid"
 
 #: attr.c
+msgid "unable to add additional attribute"
+msgstr "Tidak dapat menambahkan atribut tambahan"
+
+#: attr.c
+#, c-format
+msgid "ignoring overly long attributes line %d"
+msgstr "mengabaikan baris atribut ke-%d yang terlalu panjang"
+
+#: attr.c
 #, c-format
 msgid "%s not allowed: %s:%d"
 msgstr "%s tidak diperbolehkan: %s:%d"
@@ -1742,6 +1755,21 @@ msgid ""
 msgstr ""
 "Pola negatif diabaikan di atribut git\n"
 "Gunakan '\\!' untuk tanda seru awal literal."
+
+#: attr.c
+#, c-format
+msgid "cannot fstat gitattributes file '%s'"
+msgstr "tidak dapat menulis berkas gitattributes '%s'"
+
+#: attr.c
+#, c-format
+msgid "ignoring overly large gitattributes file '%s'"
+msgstr "mengabaikan berkas gitattributes yang terlalu besar '%s'"
+
+#: attr.c
+#, c-format
+msgid "ignoring overly large gitattributes blob '%s'"
+msgstr "mengabaikan blob gitattributes '%s' yang terlalu besar"
 
 #: bisect.c
 #, c-format
@@ -1876,8 +1904,8 @@ msgstr ""
 "--reverse dan --first-parent bersama-sama butuh komit terbaru yang disebutkan"
 
 #: blame.c builtin/commit.c builtin/log.c builtin/merge.c
-#: builtin/pack-objects.c builtin/shortlog.c bundle.c midx.c pack-bitmap.c
-#: ref-filter.c remote.c sequencer.c submodule.c
+#: builtin/pack-objects.c builtin/shortlog.c midx.c pack-bitmap.c ref-filter.c
+#: remote.c sequencer.c submodule.c
 msgid "revision walk setup failed"
 msgstr "persiapan jalan revisi gagal"
 
@@ -2067,11 +2095,11 @@ msgstr "submodul '%s': tidak dapat menemukan submodul"
 #: branch.c
 #, c-format
 msgid ""
-"You may try updating the submodules using 'git checkout %s && git submodule "
-"update --init'"
+"You may try updating the submodules using 'git checkout --no-recurse-"
+"submodules %s && git submodule update --init'"
 msgstr ""
-"Anda dapat mencoba memperbarui submodul dengan 'git checkout %s && git "
-"submodule update --init'"
+"Anda dapat mencoba memperbarui submodul dengan 'git checkout --no-recurse-"
+"submodules %s && git submodule update --init'"
 
 #: branch.c
 #, c-format
@@ -2114,6 +2142,14 @@ msgstr "hapus '%s'\n"
 #: builtin/add.c
 msgid "Unstaged changes after refreshing the index:"
 msgstr "Perubahan tak tergelar setelah menyegarkan indeks:"
+
+#: builtin/add.c
+msgid ""
+"the add.interactive.useBuiltin setting has been removed!\n"
+"See its entry in 'git help config' for details."
+msgstr ""
+"setelan add.interactive.useBuiltin sudah dihapus!\n"
+"Selengkapnya lihat entrinya di 'git help config'."
 
 #: builtin/add.c builtin/rev-parse.c
 msgid "Could not read the index"
@@ -2585,7 +2621,7 @@ msgstr ""
 "Sepertinya Anda telah memindahkan HEAD sejak kegagalan 'am' terakhir.\n"
 "Tidak memutar ulang ke ORIG_HEAD"
 
-#: builtin/am.c builtin/bisect--helper.c worktree.c
+#: builtin/am.c builtin/bisect.c worktree.c
 #, c-format
 msgid "failed to read '%s'"
 msgstr "gagal membaca '%s'"
@@ -2606,6 +2642,10 @@ msgstr "git am [<opsi>] (--continue | --skip | --abort)"
 #: builtin/am.c
 msgid "run interactively"
 msgstr "jalankan secara interaktif"
+
+#: builtin/am.c
+msgid "bypass pre-applypatch and applypatch-msg hooks"
+msgstr "lewati kail pre-applypatch dan applypatch-msg"
 
 #: builtin/am.c
 msgid "historical option -- no-op"
@@ -2798,112 +2838,106 @@ msgstr "git archive: kesalahan protokol"
 msgid "git archive: expected a flush"
 msgstr "git archive: sebuah bilasan diharapkan"
 
-#: builtin/bisect--helper.c
-msgid "git bisect--helper --bisect-reset [<commit>]"
-msgstr "git bisect--helper --bisect-reset [<komit>]"
-
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 msgid ""
-"git bisect--helper --bisect-start [--term-{new,bad}=<term> --term-{old,good}"
-"=<term>] [--no-checkout] [--first-parent] [<bad> [<good>...]] [--] "
-"[<paths>...]"
+"git bisect start [--term-{new,bad}=<term> --term-{old,good}=<term>]    [--no-"
+"checkout] [--first-parent] [<bad> [<good>...]] [--]    [<pathspec>...]"
 msgstr ""
-"git bisect--helper --bisect-start [--term-{new,bad}=<istilah> --term-{old,"
-"good}=<istilah>] [--no-checkout] [--first-parent] [<jelek> [<bagus>...]] "
-"[--] [<jalur>...]"
+"git bisect start [--term-{new,bad}=<istilah> --term-{old, good}=<istilah>] "
+"[--no-checkout] [--first-parent] [<jelek> [<bagus>...]] [--] [<jalur>...]"
 
-#: builtin/bisect--helper.c
-msgid "git bisect--helper --bisect-state (bad|new) [<rev>]"
-msgstr "git bisect--helper --bisect-state (bad|new) [<revisi>]"
+#: builtin/bisect.c
+msgid "git bisect (good|bad) [<rev>...]"
+msgstr "git bisect (good|bad) [<revisi>...]"
 
-#: builtin/bisect--helper.c
-msgid "git bisect--helper --bisect-state (good|old) [<rev>...]"
-msgstr "git bisect--helper --bisect-state (good|old) [<revisi>...]"
+#: builtin/bisect.c
+msgid "git bisect skip [(<rev>|<range>)...]"
+msgstr "git bisect skip [(<revisi>|<rentang>)...]"
 
-#: builtin/bisect--helper.c
-msgid "git bisect--helper --bisect-replay <filename>"
-msgstr "git bisect--helper --bisect-replay <nama berkas>"
+#: builtin/bisect.c
+msgid "git bisect reset [<commit>]"
+msgstr "git bisect reset [<komit>]"
 
-#: builtin/bisect--helper.c
-msgid "git bisect--helper --bisect-skip [(<rev>|<range>)...]"
-msgstr "git bisect--helper --bisect-skip [(<revisi>|<rentang>)...]"
+#: builtin/bisect.c
+msgid "git bisect replay <logfile>"
+msgstr "git bisect replay <berkas log>"
 
-#: builtin/bisect--helper.c
-msgid "git bisect--helper --bisect-run <cmd>..."
-msgstr "git bisect--helper --bisect-run <perintah>..."
+#: builtin/bisect.c
+msgid "git bisect run <cmd>..."
+msgstr "git bisect run <perintah>..."
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
 msgid "cannot open file '%s' in mode '%s'"
 msgstr "tidak dapat membuka berkas '%s' dalam mode '%s'"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
 msgid "could not write to file '%s'"
 msgstr "tidak dapat menulis ke berkas '%s'"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
 msgid "cannot open file '%s' for reading"
 msgstr "tidak dapat membuka berkas '%s' untuk dibaca"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
 msgid "'%s' is not a valid term"
 msgstr "'%s' bukan istilah yang valid"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
 msgid "can't use the builtin command '%s' as a term"
 msgstr "tidak dapat menggunakan perintah bawaan '%s' sebagai istilah"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
 msgid "can't change the meaning of the term '%s'"
 msgstr "tidak dapat mengubah makna istilah '%s'"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 msgid "please use two different terms"
 msgstr "mohon gunakan dua istilah yang berbeda"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
 msgid "We are not bisecting.\n"
 msgstr "Kami tidak sedang membagi dua.\n"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
 msgid "'%s' is not a valid commit"
 msgstr "'%s' bukan sebuah komit yang valid"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
 msgid ""
 "could not check out original HEAD '%s'. Try 'git bisect reset <commit>'."
 msgstr ""
 "tidak dapat men-checkout HEAD asli '%s'. Coba 'git bisect reset <komit>'."
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
 msgid "Bad bisect_write argument: %s"
 msgstr "argument bisect_write jelek: %s"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
 msgid "couldn't get the oid of the rev '%s'"
 msgstr "tidak dapat mendapatkan oid revisi '%s'"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
 msgid "couldn't open the file '%s'"
 msgstr "tidak dapat membuka berkas '%s'"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
 msgid "Invalid command: you're currently in a %s/%s bisect"
 msgstr "Perintah tidak valid: sekarang Anda berada dalam pembagian dua %s/%s"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
 msgid ""
 "You need to give me at least one %s and %s revision.\n"
@@ -2912,7 +2946,7 @@ msgstr ""
 "Anda perlu berikan saya setidaknya satu revisi %s dan %s.\n"
 "Untuk itu Anda dapat menggunakan \"git bisect %s\" dan \"git bisect %s\"."
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
 msgid ""
 "You need to start by \"git bisect start\".\n"
@@ -2923,7 +2957,7 @@ msgstr ""
 "Lalu Anda perlu berikan saya setidaknya satu revisi %s dan %s.\n"
 "Untuk itu Anda dapat menggunakan \"git bisect %s\" dan \"git bisect %s\"."
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
 msgid "bisecting only with a %s commit"
 msgstr "membagi dua hanya dengan sebuah komit %s"
@@ -2932,30 +2966,30 @@ msgstr "membagi dua hanya dengan sebuah komit %s"
 #. translation. The program will only accept English input
 #. at this point.
 #.
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 msgid "Are you sure [Y/n]? "
 msgstr "Anda yakin [Y/n]?"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 msgid "status: waiting for both good and bad commits\n"
 msgstr "status: menunggu komit bagus dan jelek\n"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
 msgid "status: waiting for bad commit, %d good commit known\n"
 msgid_plural "status: waiting for bad commit, %d good commits known\n"
 msgstr[0] "status: menunggu komit jelek, %d komit bagus diketahui\n"
 msgstr[1] "status: menunggu komit jelek, %d komit bagus diketahui\n"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 msgid "status: waiting for good commit(s), bad commit known\n"
 msgstr "status: menunggu komit bagus, komit jelek diketahui\n"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 msgid "no terms defined"
 msgstr "tidak ada istilah yang didefinisikan"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
 msgid ""
 "Your current terms are %s for the old state\n"
@@ -2964,7 +2998,7 @@ msgstr ""
 "Istilah Anda saat ini adalah %s untuk keadaan lama\n"
 "dan %s untuk keadaan baru.\n"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
 msgid ""
 "invalid argument %s for 'git bisect terms'.\n"
@@ -2973,52 +3007,48 @@ msgstr ""
 "argumen %s tidak valid untuk 'git bisect terms'.\n"
 "Opsi yang didukung adalah: --term-good|--term-old dan --term-bad|--term-new."
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 msgid "revision walk setup failed\n"
 msgstr "setup jalan revisi gagal\n"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
 msgid "could not open '%s' for appending"
 msgstr "tidak dapat membuka '%s' untuk menambahkan"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 msgid "'' is not a valid term"
 msgstr "'' bukan istilah yang valid"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
 msgid "unrecognized option: '%s'"
 msgstr "opsi tidak dikenal: '%s'"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
 msgid "'%s' does not appear to be a valid revision"
 msgstr "'%s' sepertinya bukan revisi valid"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 msgid "bad HEAD - I need a HEAD"
 msgstr "HEAD jelek - saya butuh HEAD"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
 msgid "checking out '%s' failed. Try 'git bisect start <valid-branch>'."
 msgstr "gagal men-checkout '%s'. Coba 'git bisect start <cabang valid>'."
 
-#: builtin/bisect--helper.c
-msgid "won't bisect on cg-seek'ed tree"
-msgstr "tidak akan membagi dua pada pohon yang di-cg-seek"
-
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 msgid "bad HEAD - strange symbolic ref"
 msgstr "HEAD jelek - referensi simbolik aneh"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
 msgid "invalid ref: '%s'"
 msgstr "referensi tidak valid: '%s'"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 msgid "You need to start by \"git bisect start\"\n"
 msgstr "Anda perlu memulai dengan \"git bisect start\"\n"
 
@@ -3026,166 +3056,129 @@ msgstr "Anda perlu memulai dengan \"git bisect start\"\n"
 #. translation. The program will only accept English input
 #. at this point.
 #.
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 msgid "Do you want me to do it for you [Y/n]? "
 msgstr "Anda ingin saya melakukannya untuk Anda [Y/n]"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 msgid "Please call `--bisect-state` with at least one argument"
 msgstr "Mohon panggil `--bisect-state` dengan setidaknya satu argumen"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
 msgid "'git bisect %s' can take only one argument."
 msgstr "'git bisect %s' hanya dapat mengambil satu argumen."
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
 msgid "Bad rev input: %s"
 msgstr "Masukan revisi jelek: %s"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
 msgid "Bad rev input (not a commit): %s"
 msgstr "Masukan revisi jelek (bukan sebuah komit): %s"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 msgid "We are not bisecting."
 msgstr "Kami tidak sedang membagi dua."
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
 msgid "'%s'?? what are you talking about?"
 msgstr "'%s'?? Anda bilang tentang apa?"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
 msgid "cannot read file '%s' for replaying"
 msgstr "tidak dapat membuka berkas '%s' untuk memainkan ulang"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
 msgid "running %s\n"
 msgstr "menjalankan %s\n"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 msgid "bisect run failed: no command provided."
 msgstr "bisect run gagal: tidak ada perintah yang diberikan"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
-msgid "unable to verify '%s' on good revision"
-msgstr "tidak dapat memverifikasi '%s' pada revisi bagus"
+msgid "unable to verify %s on good revision"
+msgstr "tidak dapat memverifikasi %s pada revisi bagus"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
 msgid "bogus exit code %d for good revision"
 msgstr "kode keluar gadungan %d untuk revisi bagu"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
-msgid "bisect run failed: exit code %d from '%s' is < 0 or >= 128"
-msgstr "bisect run gagal: kode keluar %d dari '%s' < 0 atau >= 128"
+msgid "bisect run failed: exit code %d from %s is < 0 or >= 128"
+msgstr "bisect run gagal: kode keluar %d dari %s < 0 atau >= 128"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
 msgid "cannot open file '%s' for writing"
 msgstr "tidak dapat membuka berkas '%s' untuk ditulis"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 msgid "bisect run cannot continue any more"
 msgstr "bisect run tidak dapat dilanjutkan lagi"
 
-#: builtin/bisect--helper.c
-#, c-format
+#: builtin/bisect.c
 msgid "bisect run success"
 msgstr "bisect run sukses"
 
-#: builtin/bisect--helper.c
-#, c-format
+#: builtin/bisect.c
 msgid "bisect found first bad commit"
 msgstr "pembagian dua menemukan komit jelek pertama"
 
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 #, c-format
-msgid ""
-"bisect run failed: 'git bisect--helper --bisect-state %s' exited with error "
-"code %d"
-msgstr ""
-"bisect run gagal: 'git bisect--helper --bisect-state %s' keluar dengan kode "
-"keluar %d"
+msgid "bisect run failed: 'git bisect %s' exited with error code %d"
+msgstr "bisect run gagal: 'git bisect %s' keluar dengan kode keluar %d"
 
-#: builtin/bisect--helper.c
-msgid "reset the bisection state"
-msgstr "setel ulang keadaan pembagian dua"
+#: builtin/bisect.c
+#, c-format
+msgid "'%s' requires either no argument or a commit"
+msgstr "'%s' perlu baik tanpa argumen atau sebuah komit"
 
-#: builtin/bisect--helper.c
-msgid "check whether bad or good terms exist"
-msgstr "periksa apakah ada istilah jelek atau bagus"
+#: builtin/bisect.c
+#, c-format
+msgid "'%s' requires 0 or 1 argument"
+msgstr "%s perlu sebuah argumen"
 
-#: builtin/bisect--helper.c
-msgid "print out the bisect terms"
-msgstr "cetak istilah pembagian dua"
+#: builtin/bisect.c
+#, c-format
+msgid "'%s' requires 0 arguments"
+msgstr "'%s' butuh tanpa argumen"
 
-#: builtin/bisect--helper.c
-msgid "start the bisect session"
-msgstr "mulai sesi pembagian dua"
-
-#: builtin/bisect--helper.c
-msgid "find the next bisection commit"
-msgstr "temukan komit pembagian dua berikutnya"
-
-#: builtin/bisect--helper.c
-msgid "mark the state of ref (or refs)"
-msgstr "tandai keadaan referensi"
-
-#: builtin/bisect--helper.c
-msgid "list the bisection steps so far"
-msgstr "daftar langkah pembagian dua sejauh ini"
-
-#: builtin/bisect--helper.c
-msgid "replay the bisection process from the given file"
-msgstr "mainkan ulang proses pembagian dua dari berkas yang diberikan"
-
-#: builtin/bisect--helper.c
-msgid "skip some commits for checkout"
-msgstr "lewati beberapa komit untuk checkout"
-
-#: builtin/bisect--helper.c
-msgid "visualize the bisection"
-msgstr "visualisasikan pembagian dua"
-
-#: builtin/bisect--helper.c
-msgid "use <cmd>... to automatically bisect"
-msgstr "gunakan <cmd>... untuk bagi dua otomatis."
-
-#: builtin/bisect--helper.c
-msgid "no log for BISECT_WRITE"
-msgstr "tidak ada log untuk BISECT_WRITE"
-
-#: builtin/bisect--helper.c
-msgid "--bisect-reset requires either no argument or a commit"
-msgstr "--bisect-reset butuh baik tanpa argumen atau sebuah komit"
-
-#: builtin/bisect--helper.c
-msgid "--bisect-terms requires 0 or 1 argument"
-msgstr "--bisect-terms butuh 0 atau 1 argumen"
-
-#: builtin/bisect--helper.c
-msgid "--bisect-next requires 0 arguments"
-msgstr "--bisect-next butuh 0 argumen"
-
-#: builtin/bisect--helper.c
-msgid "--bisect-log requires 0 arguments"
-msgstr "--bisect-log butuh 0 argumen"
-
-#: builtin/bisect--helper.c
+#: builtin/bisect.c
 msgid "no logfile given"
 msgstr "tidak ada berkas log yang diberikan"
+
+#: builtin/bisect.c
+#, c-format
+msgid "'%s' failed: no command provided."
+msgstr "'%s' gagal: tidak ada perintah yang diberikan."
+
+#: builtin/bisect.c
+msgid "need a command"
+msgstr "butuh sebuah perintah"
+
+#: builtin/bisect.c builtin/cat-file.c
+#, c-format
+msgid "unknown command: '%s'"
+msgstr "perintah tidak dikenal: '%s'"
 
 #: builtin/blame.c
 msgid "git blame [<options>] [<rev-opts>] [<rev>] [--] <file>"
 msgstr "git blame [<opsi>] [<opsi revisi>] [<revisi>] [--] <berkas>"
+
+#: builtin/blame.c
+msgid "git annotate [<options>] [<rev-opts>] [<rev>] [--] <file>"
+msgstr "git annotate [<opsi>] [<opsi revisi>] [<revisi>] [--] <berkas>"
 
 #: builtin/blame.c
 msgid "<rev-opts> are documented in git-rev-list(1)"
@@ -3427,10 +3420,6 @@ msgid "cannot use -a with -d"
 msgstr "tidak dapat gunakan -a dengan -d"
 
 #: builtin/branch.c
-msgid "Couldn't look up commit object for HEAD"
-msgstr "Tidak dapat mencari objek komit untuk HEAD"
-
-#: builtin/branch.c
 #, c-format
 msgid "Cannot delete branch '%s' checked out at '%s'"
 msgstr "Tidak dapat menghapus cabang '%s' yang ter-checkout pada '%s'"
@@ -3479,17 +3468,19 @@ msgid "Branch %s is being bisected at %s"
 msgstr "Cabang %s sedang dibagi dua pada %s"
 
 #: builtin/branch.c
-msgid "cannot copy the current branch while not on any."
-msgstr "tidak dapat menyalin cabang saat ini ketika tidak ada."
-
-#: builtin/branch.c
-msgid "cannot rename the current branch while not on any."
-msgstr "tidak dapat mengganti nama cabang saat ini ketika tidak ada."
-
-#: builtin/branch.c
 #, c-format
 msgid "Invalid branch name: '%s'"
 msgstr "Nama cabang tidak valid: '%s'"
+
+#: builtin/branch.c
+#, c-format
+msgid "No commit on branch '%s' yet."
+msgstr "Belum ada komit pada cabang '%s'."
+
+#: builtin/branch.c
+#, c-format
+msgid "No branch named '%s'."
+msgstr "Tidak ada cabang bernama '%s'."
 
 #: builtin/branch.c
 msgid "Branch rename failed"
@@ -3699,14 +3690,12 @@ msgid "cannot edit description of more than one branch"
 msgstr "tidak dapat menyunting deskripsi lebih dari satu cabang"
 
 #: builtin/branch.c
-#, c-format
-msgid "No commit on branch '%s' yet."
-msgstr "Belum ada komit pada cabang '%s'."
+msgid "cannot copy the current branch while not on any."
+msgstr "tidak dapat menyalin cabang saat ini ketika tidak ada."
 
 #: builtin/branch.c
-#, c-format
-msgid "No branch named '%s'."
-msgstr "Tidak ada cabang bernama '%s'."
+msgid "cannot rename the current branch while not on any."
+msgstr "tidak dapat mengganti nama cabang saat ini ketika tidak ada."
 
 #: builtin/branch.c
 msgid "too many branches for a copy operation"
@@ -3794,11 +3783,12 @@ msgstr ""
 
 #: builtin/bugreport.c
 msgid ""
-"git bugreport [-o|--output-directory <file>] [-s|--suffix <format>] [--"
-"diagnose[=<mode>]"
+"git bugreport [(-o | --output-directory) <path>] [(-s | --suffix) <format>]\n"
+"              [--diagnose[=<mode>]]"
 msgstr ""
-"git bugreport [-o|--output-directory <berkas>] [-s|--suffix <format>] [--"
-"diagnose[=<mode>]]"
+"git bugreport [(-o | --output-directory) <berkas>] [(-s |-- suffix) "
+"<format>]\n"
+"              [--diagnose[=<mode>]]"
 
 #: builtin/bugreport.c
 msgid ""
@@ -3881,20 +3871,30 @@ msgid "Created new report at '%s'.\n"
 msgstr "Laporan baru dibuat pada '%s'.\n"
 
 #: builtin/bundle.c
-msgid "git bundle create [<options>] <file> <git-rev-list args>"
-msgstr "git bundle create [<opsi>] <berkas> <argumen git-rev-list>"
+msgid ""
+"git bundle create [-q | --quiet | --progress | --all-progress] [--all-"
+"progress-implied]\n"
+"                  [--version=<version>] <file> <git-rev-list-args>"
+msgstr ""
+"git bundle create [-q | --quiet | --progress | --all-progress] [-all-"
+"progress-implied]\n"
+"                  [--version=<versi>] <berkas> <argumen git-rev-list>"
 
 #: builtin/bundle.c
-msgid "git bundle verify [<options>] <file>"
-msgstr "git bundle verify [<opsi>] <berkas>"
+msgid "git bundle verify [-q | --quiet] <file>"
+msgstr "git bundle verify [-q | --quiet] <berkas>"
 
 #: builtin/bundle.c
 msgid "git bundle list-heads <file> [<refname>...]"
 msgstr "git bundle list-heads <berkas> [<nama referensi>...]"
 
 #: builtin/bundle.c
-msgid "git bundle unbundle <file> [<refname>...]"
-msgstr "git bundle unbundle <berkas> [<nama referensi>...]"
+msgid "git bundle unbundle [--progress] <file> [<refname>...]"
+msgstr "git bundle unbundle [--progress] <berkas> [<nama referensi>...]"
+
+#: builtin/bundle.c
+msgid "need a <file> argument"
+msgstr "butuh sebuah argumen <berkas>"
 
 #: builtin/bundle.c builtin/pack-objects.c
 msgid "do not show progress meter"
@@ -3966,11 +3966,6 @@ msgid "%s takes no arguments"
 msgstr "%s tidak mengambil argumen"
 
 #: builtin/cat-file.c
-#, c-format
-msgid "unknown command: '%s'"
-msgstr "perintah tidak dikenal: '%s'"
-
-#: builtin/cat-file.c
 msgid "only one batch option may be specified"
 msgstr "hanya satu opsi setumpuk yang mungkin disebutkan"
 
@@ -3991,12 +3986,12 @@ msgid ""
 "git cat-file (--batch | --batch-check | --batch-command) [--batch-all-"
 "objects]\n"
 "             [--buffer] [--follow-symlinks] [--unordered]\n"
-"             [--textconv | --filters]"
+"             [--textconv | --filters] [-z]"
 msgstr ""
 "git cat-file (--batch | --batch-check | --batch-command) [--batch-all-"
 "objects]\n"
 "             [--buffer] [--follow-symlinks] [--unordered]\n"
-"             [--textconv | --filters]"
+"             [--textconv | --filters] [-z]"
 
 #: builtin/cat-file.c
 msgid ""
@@ -4138,11 +4133,6 @@ msgstr "<revisi> diperlukan dengan '%s'"
 msgid "<object> required with '-%c'"
 msgstr "<objek> diperlukan dengan '-%c'"
 
-#: builtin/cat-file.c builtin/notes.c builtin/prune-packed.c
-#: builtin/receive-pack.c builtin/tag.c
-msgid "too many arguments"
-msgstr "terlalu banyak argumen"
-
 #: builtin/cat-file.c
 #, c-format
 msgid "only two arguments allowed in <type> <object> mode, not %d"
@@ -4150,12 +4140,19 @@ msgstr ""
 "hanya dua argumen yang diperbolehkan di dalam mode <tipe> <objek>, bukan %d"
 
 #: builtin/check-attr.c
-msgid "git check-attr [-a | --all | <attr>...] [--] <pathname>..."
-msgstr "git check-attr [-a | --all | <atribut>...] [--] <nama jalur>..."
+msgid ""
+"git check-attr [--source <tree-ish>] [-a | --all | <attr>...] [--] "
+"<pathname>..."
+msgstr ""
+"git check-attr [source <mirip-pohon> [-a | --all | <atribut>...] [--] <nama "
+"jalur>..."
 
 #: builtin/check-attr.c
-msgid "git check-attr --stdin [-z] [-a | --all | <attr>...]"
-msgstr "git check-attr --stdin [-z] [-a | --all | <attribut>...]"
+msgid ""
+"git check-attr --stdin [-z] [--source <tree-ish>] [-a | --all | <attr>...]"
+msgstr ""
+"git check-attr --stdin [-z] [--source <mirip-pohon>] [-a | --all | "
+"<attribut>...]"
 
 #: builtin/check-attr.c
 msgid "report all attributes set on file"
@@ -4172,6 +4169,14 @@ msgstr "baca nama berkas dari masukan standar"
 #: builtin/check-attr.c builtin/check-ignore.c
 msgid "terminate input and output records by a NUL character"
 msgstr "akhiri masukan dan keluarkan rekaman oleh sebuah karakter NUL"
+
+#: builtin/check-attr.c
+msgid "<tree-ish>"
+msgstr "<mirip-pohon>"
+
+#: builtin/check-attr.c
+msgid "which tree-ish to check attributes at"
+msgstr "mirip-pohon mana yang diperiksa atributnya"
 
 #: builtin/check-ignore.c builtin/checkout.c builtin/gc.c builtin/worktree.c
 msgid "suppress progress reporting"
@@ -4810,9 +4815,11 @@ msgstr "gunakan mode hamparan"
 
 #: builtin/clean.c
 msgid ""
-"git clean [-d] [-f] [-i] [-n] [-q] [-e <pattern>] [-x | -X] [--] <paths>..."
+"git clean [-d] [-f] [-i] [-n] [-q] [-e <pattern>] [-x | -X] [--] "
+"[<pathspec>...]"
 msgstr ""
-"git clean [-d] [-f] [-i] [-n] [-q] [-e <pola>] [-x | -X] [--] <jalur>..."
+"git clean [-d] [-f] [-i] [-n] [-q] [-e <pola>] [-x | -X] [--] [<spek "
+"jalur>...]"
 
 #: builtin/clean.c
 #, c-format
@@ -4852,7 +4859,7 @@ msgstr "Menolak menghapus direktori kerja saat ini\n"
 msgid "Would refuse to remove current working directory\n"
 msgstr "Akan menolak menghapus direktori kerja saat ini\n"
 
-#: builtin/clean.c git-add--interactive.perl
+#: builtin/clean.c
 #, c-format
 msgid ""
 "Prompt help:\n"
@@ -4865,7 +4872,7 @@ msgstr ""
 "foo        - pilih item berdasarkan prefiks unik\n"
 "           - (kosong) tidak pilih apa-apa\n"
 
-#: builtin/clean.c git-add--interactive.perl
+#: builtin/clean.c
 #, c-format
 msgid ""
 "Prompt help:\n"
@@ -4886,8 +4893,8 @@ msgstr ""
 "*          - pilih semua item\n"
 "           - (kosong) selesai memilih\n"
 
-#: builtin/clean.c git-add--interactive.perl
-#, c-format, perl-format
+#: builtin/clean.c
+#, c-format
 msgid "Huh (%s)?\n"
 msgstr "Huh (%s)?\n"
 
@@ -5078,10 +5085,6 @@ msgstr "kedalaman"
 msgid "create a shallow clone of that depth"
 msgstr "buat klon dangkal sedalam kedalaman tersebut"
 
-#: builtin/clone.c builtin/fetch.c builtin/pack-objects.c builtin/pull.c
-msgid "time"
-msgstr "waktu"
-
 #: builtin/clone.c
 msgid "create a shallow clone since a specific time"
 msgstr "buat klon dangkal sejak waktu yang disebutkan"
@@ -5181,6 +5184,11 @@ msgstr "%s ada dan bukan direktori"
 msgid "failed to start iterator over '%s'"
 msgstr "gagal memulai iterator pada '%s'"
 
+#: builtin/clone.c
+#, c-format
+msgid "symlink '%s' exists, refusing to clone with --local"
+msgstr "tautan simbolik '%s' ada, menolak mengkloning dengan --local"
+
 #: builtin/clone.c compat/precompose_utf8.c
 #, c-format
 msgid "failed to unlink '%s'"
@@ -5261,11 +5269,6 @@ msgstr "Terlalu banyak argumen."
 #: builtin/clone.c scalar.c
 msgid "You must specify a repository to clone."
 msgstr "Anda harus sebutkan repositori untuk diklon."
-
-#: builtin/clone.c
-#, c-format
-msgid "options '%s' and '%s %s' cannot be used together"
-msgstr "opsi '%s' dan '%s %s' tidak dapat digunakan bersamaan"
 
 #: builtin/clone.c
 msgid ""
@@ -5377,6 +5380,10 @@ msgid "failed to fetch objects from bundle URI '%s'"
 msgstr "gagal mengambil objek dari URI bundel '%s'"
 
 #: builtin/clone.c
+msgid "failed to fetch advertised bundles"
+msgstr "gagal mengambil bundel yang diiklankan"
+
+#: builtin/clone.c
 msgid "remote transport reported error"
 msgstr "transportasi remote melaporkan kesalahan"
 
@@ -5423,22 +5430,28 @@ msgstr "--command harus menjadi argumen pertama"
 
 #: builtin/commit-graph.c
 msgid ""
-"git commit-graph verify [--object-dir <objdir>] [--shallow] [--[no-]progress]"
+"git commit-graph verify [--object-dir <dir>] [--shallow] [--[no-]progress]"
 msgstr ""
-"git commit-graph verify [--object-dir <direktori objek>] [--shallow] [--"
+"git commit-graph verify [--object-dir <direktori>] [--shallow] [--"
 "[no-]progress]"
 
 #: builtin/commit-graph.c
 msgid ""
-"git commit-graph write [--object-dir <objdir>] [--append] [--"
-"split[=<strategy>]] [--reachable|--stdin-packs|--stdin-commits] [--changed-"
-"paths] [--[no-]max-new-filters <n>] [--[no-]progress] <split options>"
+"git commit-graph write [--object-dir <dir>] [--append]\n"
+"                       [--split[=<strategy>]] [--reachable | --stdin-packs | "
+"--stdin-commits]\n"
+"                       [--changed-paths] [--[no-]max-new-filters <n>] [--"
+"[no-]progress]\n"
+"                       <split options>"
 msgstr ""
-"git commit-graph write [--object-dir <direktori objek>] [--append] [--"
-"split[=<strategi>]] [--reachable|--stdin-packs|--stdin-commits] [--changed-"
-"paths] [--[no-]max-new-filters <n>] [--[-no-]progrss] <opsi pemisah>"
+"git commit-graph write [--object-dir <direktori>] [--append]\n"
+"                       [--split[=<strategi>]] [--reachable | --stdin-packs | "
+"--stdin-commits]\n"
+"                       [--changed-paths] [--[no-]max-new-filters <n>] [--[-"
+"no-]progress]\n"
+"                       <opsi pemisahan>"
 
-#: builtin/commit-graph.c builtin/fetch.c builtin/log.c
+#: builtin/commit-graph.c builtin/fetch.c builtin/log.c builtin/repack.c
 msgid "dir"
 msgstr "direktori"
 
@@ -5526,12 +5539,16 @@ msgid "Collecting commits from input"
 msgstr "Mengumpulkan komit dari masukan"
 
 #: builtin/commit-tree.c
+msgid "git commit-tree <tree> [(-p <parent>)...]"
+msgstr "git commit-tree <pohon> [(-p <induk>)...]"
+
+#: builtin/commit-tree.c
 msgid ""
-"git commit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...] [(-F "
-"<file>)...] <tree>"
+"git commit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...]\n"
+"                [(-F <file>)...] <tree>"
 msgstr ""
-"git commit-tree [(-p <induk>)...] [-S[<id kunci>]] [(-m <pesan>)...] [(-F "
-"<berkas>)...] <pohon>"
+"git commit-tree [(-p <induk>)...] [-S[<id kunci>]] [(-m <pesan>)...]\n"
+"                [(-F <berkas>)...] <pohon>"
 
 #: builtin/commit-tree.c
 #, c-format
@@ -5588,12 +5605,31 @@ msgid "git commit-tree: failed to read"
 msgstr "git commit-tree: gagal membaca"
 
 #: builtin/commit.c
-msgid "git commit [<options>] [--] <pathspec>..."
-msgstr "git commit [<opsi>] [--] <spek jalur>..."
+msgid ""
+"git commit [-a | --interactive | --patch] [-s] [-v] [-u<mode>] [--amend]\n"
+"           [--dry-run] [(-c | -C | --squash) <commit> | --fixup [(amend|"
+"reword):]<commit>)]\n"
+"           [-F <file> | -m <msg>] [--reset-author] [--allow-empty]\n"
+"           [--allow-empty-message] [--no-verify] [-e] [--author=<author>]\n"
+"           [--date=<date>] [--cleanup=<mode>] [--[no-]status]\n"
+"           [-i | -o] [--pathspec-from-file=<file> [--pathspec-file-nul]]\n"
+"           [(--trailer <token>[(=|:)<value>])...] [-S[<keyid>]]\n"
+"           [--] [<pathspec>...]"
+msgstr ""
+"git commit [-a | --interactive | --patch] [-s] [-v] [-u<mode>] [--amend]\n"
+"           [--dry-run] [(-c | -C | --squash) <komit> | --fixup [(amend|"
+"reword):]<komit>)]\n"
+"           [-F <berkas> | -m <pesan>] [--reset-author] [--allow-empty]\n"
+"           [--allow-empty-message] [--no-verify] [-e] [--"
+"author=<pengarang>]\n"
+"           [--date=<tanggal>] [--cleanup=<mode>] [--[no-]status]\n"
+"           [-i | -o] [--pathspec-from-file=<berkas> [--pathspec-file-nul]]\n"
+"           [(--trailer <token>[(=|:)<nilai>])...] [-S[<id kunci>]]\n"
+"           [--] [<spek jalur>...]"
 
 #: builtin/commit.c
-msgid "git status [<options>] [--] <pathspec>..."
-msgstr "git status [<opsi>] [--] <spek jalur>..."
+msgid "git status [<options>] [--] [<pathspec>...]"
+msgstr "git status [<opsi>] [--] [<spek jalur>...]"
 
 #: builtin/commit.c
 msgid ""
@@ -5724,7 +5760,7 @@ msgstr ""
 "tidak dapat memilih karakter komentar yang tidak terpakai\n"
 "dalam pesan komit saat ini"
 
-#: builtin/commit.c
+#: builtin/commit.c builtin/merge-tree.c
 #, c-format
 msgid "could not lookup commit %s"
 msgstr "tidak dapat mencari komit %s"
@@ -6032,7 +6068,7 @@ msgstr "tangal"
 msgid "override date for commit"
 msgstr "timpa tanggal komit"
 
-#: builtin/commit.c parse-options.h ref-filter.h
+#: builtin/commit.c builtin/merge-tree.c parse-options.h ref-filter.h
 msgid "commit"
 msgstr "komit"
 
@@ -6186,7 +6222,7 @@ msgstr ""
 msgid "git config [<options>]"
 msgstr "git config [<opsi>]"
 
-#: builtin/config.c builtin/env--helper.c
+#: builtin/config.c
 #, c-format
 msgid "unrecognized --type argument, %s"
 msgstr "argumen --type tidak dikenal %s"
@@ -6215,7 +6251,7 @@ msgstr "gunakan berkas konfigurasi repositori"
 msgid "use per-worktree config file"
 msgstr "gunakan berkas konfigurasi per pohon kerja"
 
-#: builtin/config.c
+#: builtin/config.c builtin/gc.c
 msgid "use given config file"
 msgstr "gunakan berkas konfigurasi yang diberikan"
 
@@ -6295,11 +6331,11 @@ msgstr "temukan setelan warna: slot [stdout-is-tty]"
 msgid "Type"
 msgstr "Tipe"
 
-#: builtin/config.c builtin/env--helper.c builtin/hash-object.c
+#: builtin/config.c builtin/hash-object.c
 msgid "type"
 msgstr "tipe"
 
-#: builtin/config.c builtin/env--helper.c
+#: builtin/config.c
 msgid "value is given this type"
 msgstr "Nilai diberikan tipe ini"
 
@@ -6354,7 +6390,7 @@ msgstr ""
 "perlihatkan cakupan konfigurasi (pohon kerja, lokal, global, sistem, "
 "perintah)"
 
-#: builtin/config.c builtin/env--helper.c
+#: builtin/config.c
 msgid "value"
 msgstr "nilai"
 
@@ -6439,7 +6475,7 @@ msgstr "--blob hanya dapat digunakan di dalam repositori git"
 msgid "--worktree can only be used inside a git repository"
 msgstr "--worktree hanya dapat digunakan di dalam repositori git"
 
-#: builtin/config.c
+#: builtin/config.c builtin/gc.c
 msgid "$HOME not set"
 msgstr "$HOME tak disetel"
 
@@ -6553,12 +6589,20 @@ msgstr ""
 "tidak dapat mendapatkan kunci penyimpanan kredensial dalam %d milidetik"
 
 #: builtin/describe.c
-msgid "git describe [<options>] [<commit-ish>...]"
-msgstr "git describe [<opsi>] [<mirip-komit>...]"
+msgid ""
+"git describe [--all] [--tags] [--contains] [--abbrev=<n>] [<commit-ish>...]"
+msgstr ""
+"git describe [--all] [--tags] [--contains] [--abbrev=<n>] [<mirip-komit>...]"
 
 #: builtin/describe.c
-msgid "git describe [<options>] --dirty"
-msgstr "git describe [<opsi>] --dirty"
+msgid ""
+"git describe [--all] [--tags] [--contains] [--abbrev=<n>] --dirty[=<mark>]"
+msgstr ""
+"git describe [--all] [--tags] [--contains] [--abbrev=<n>] --dirty[=<penanda>]"
+
+#: builtin/describe.c
+msgid "git describe <blob>"
+msgstr "git describe <blob>"
 
 #: builtin/describe.c
 msgid "head"
@@ -6713,11 +6757,11 @@ msgstr "opsi '%s' dan mirip-komit tidak dapat digunakan bersamaan"
 
 #: builtin/diagnose.c
 msgid ""
-"git diagnose [-o|--output-directory <path>] [-s|--suffix <format>] [--"
-"mode=<mode>]"
+"git diagnose [(-o | --output-directory) <path>] [(-s | --suffix) <format>]\n"
+"             [--mode=<mode>]"
 msgstr ""
-"git diagnose [-o|--output-directory <jalur>] [-s|--suffix <format>] [--"
-"mode=<mode>]"
+"git diagnose [(-o | --output-directory) <jalur>] [(-s | --suffix) <format>]\n"
+"             [--mode=<mode>]"
 
 #: builtin/diagnose.c
 msgid "specify a destination for the diagnostics archive"
@@ -6739,6 +6783,10 @@ msgstr "--merge-base hanya bekerja dengan dua komit"
 #, c-format
 msgid "'%s': not a regular file or symlink"
 msgstr "'%s': bukan berkas reguler atau tautan simbolik"
+
+#: builtin/diff.c
+msgid "no merge given, only parents."
+msgstr "tidak ada penggabungan yang diberikan, hanya induk."
 
 #: builtin/diff.c
 #, c-format
@@ -6884,34 +6932,6 @@ msgstr "tidak ada <alat> yang diberikan untuk --tool=<alat>"
 #: builtin/difftool.c
 msgid "no <cmd> given for --extcmd=<cmd>"
 msgstr "tidak ada <perintah> yang diberikan untuk --extcmd=<perintah>"
-
-#: builtin/env--helper.c
-msgid "git env--helper --type=[bool|ulong] <options> <env-var>"
-msgstr "git env--helper --type=[bool|ulong] <opsi> <variabel lingkungan>"
-
-#: builtin/env--helper.c
-msgid "default for git_env_*(...) to fall back on"
-msgstr "asali untuk git_env_*(...) agar kembali"
-
-#: builtin/env--helper.c
-msgid "be quiet only use git_env_*() value as exit code"
-msgstr "jadi diam; hanya gunakan nilai git_env_*() sebagai kode keluar"
-
-#: builtin/env--helper.c
-#, c-format
-msgid "option `--default' expects a boolean value with `--type=bool`, not `%s`"
-msgstr ""
-"opsi `--default' mengharapkan sebuah nilai boolean dengan `--type=bool`, "
-"bukan `%s`"
-
-#: builtin/env--helper.c
-#, c-format
-msgid ""
-"option `--default' expects an unsigned long value with `--type=ulong`, not `"
-"%s`"
-msgstr ""
-"opsi `--default' mengharapkan sebuah nilai unsigned long dengan `--"
-"type=ulong`, bukan `%s`"
 
 #: builtin/fast-export.c
 msgid "git fast-export [<rev-list-opts>]"
@@ -7421,6 +7441,11 @@ msgid "--unshallow on a complete repository does not make sense"
 msgstr "--unshallow pada repositori penuh tidak masuk akal"
 
 #: builtin/fetch.c
+#, c-format
+msgid "failed to fetch bundles from '%s'"
+msgstr "gagal mengambil bundel dari '%s'"
+
+#: builtin/fetch.c
 msgid "fetch --all does not take a repository argument"
 msgstr "fetch --all tidak mengambil argumen repositori"
 
@@ -7552,8 +7577,8 @@ msgid "print only refs which don't contain the commit"
 msgstr "hanya cetak referensi yang tidak berisi komit"
 
 #: builtin/for-each-repo.c
-msgid "git for-each-repo --config=<config> <command-args>"
-msgstr "git for-each-repo --config=<konfigurasi> <argumen perintah>"
+msgid "git for-each-repo --config=<config> [--] <arguments>"
+msgstr "git for-each-repo --config=<konfigurasi> [--] <argumen perintah>"
 
 #: builtin/for-each-repo.c
 msgid "config"
@@ -7770,8 +7795,16 @@ msgid "%s: invalid sha1 pointer in resolve-undo"
 msgstr "%s: penunjuk sha1 tidak valid di resolve-undo"
 
 #: builtin/fsck.c
-msgid "git fsck [<options>] [<object>...]"
-msgstr "git fsck [<opsi>] [<objek>...]"
+msgid ""
+"git fsck [--tags] [--root] [--unreachable] [--cache] [--no-reflogs]\n"
+"         [--[no-]full] [--strict] [--verbose] [--lost-found]\n"
+"         [--[no-]dangling] [--[no-]progress] [--connectivity-only]\n"
+"         [--[no-]name-objects] [<object>...]"
+msgstr ""
+"git fsck [--tags] [--root] [--unreachable] [--cache] [--no-reflogs]\n"
+"         [--[no-]full] [--strict] [--verbose] [--lost-found]\n"
+"         [--[no-]dangling] [--[no-]progress] [--connectivity-only]\n"
+"         [--[no-]name-objects] [<objek>...]"
 
 #: builtin/fsck.c
 msgid "show unreachable objects"
@@ -7842,14 +7875,6 @@ msgstr "git fsmonitor--daemon start [<opsi>]"
 #: builtin/fsmonitor--daemon.c
 msgid "git fsmonitor--daemon run [<options>]"
 msgstr "git fsmonitor--daemon run [<opsi>]"
-
-#: builtin/fsmonitor--daemon.c
-msgid "git fsmonitor--daemon stop"
-msgstr "git fsmonitor--daemon stop"
-
-#: builtin/fsmonitor--daemon.c
-msgid "git fsmonitor--daemon status"
-msgstr "git fsmonitor--daemon status"
 
 #: builtin/fsmonitor--daemon.c
 #, c-format
@@ -7952,7 +7977,7 @@ msgstr ""
 msgid "invalid 'ipc-threads' value (%d)"
 msgstr "nilai 'ipc-threads' tidak valid (%d)"
 
-#: builtin/fsmonitor--daemon.c
+#: builtin/fsmonitor--daemon.c t/helper/test-cache-tree.c
 #, c-format
 msgid "Unhandled subcommand '%s'"
 msgstr "Subperintah tidak tertangani '%s'"
@@ -8157,8 +8182,23 @@ msgid "use at most one of --auto and --schedule=<frequency>"
 msgstr "gunakan paling banyak satu dari --auto dan --schedule=<frekuensi>"
 
 #: builtin/gc.c
-msgid "failed to run 'git config'"
-msgstr "gagal menjalankan 'git config'"
+#, c-format
+msgid "unable to add '%s' value of '%s'"
+msgstr "tidak dapat menambahkan nilai '%s' dari '%s'"
+
+#: builtin/gc.c
+msgid "return success even if repository was not registered"
+msgstr "kembalikan sukses bahkan jika repositori tidak terdaftar"
+
+#: builtin/gc.c
+#, c-format
+msgid "unable to unset '%s' value of '%s'"
+msgstr "tidak dapat membatal-setel nilai '%s' dari '%s'"
+
+#: builtin/gc.c
+#, c-format
+msgid "repository '%s' is not registered"
+msgstr "repositori '%s' tidak terdaftar"
 
 #: builtin/gc.c
 #, c-format
@@ -8537,11 +8577,15 @@ msgstr "baik --cached dan pohon diberikan"
 
 #: builtin/hash-object.c
 msgid ""
-"git hash-object [-t <type>] [-w] [--path=<file> | --no-filters] [--stdin] "
-"[--] <file>..."
+"git hash-object [-t <type>] [-w] [--path=<file> | --no-filters]\n"
+"                [--stdin [--literally]] [--] <file>..."
 msgstr ""
-"git hash-object [-t <tipe>] [-w] [--path=<berkas> | --no-filters] [--stdin] "
-"[--] <berkas>..."
+"git hash-object [-t <tipe>] [-w] [--path=<berkas> | --no-filters]\n"
+"                [--stdin [--literally]] [--] <berkas>..."
+
+#: builtin/hash-object.c
+msgid "git hash-object [-t <type>] [-w] --stdin-paths [--no-filters]"
+msgstr "git hash-object [-t <tipe>] [-w] --stdin-paths [--no-filters]"
 
 #: builtin/hash-object.c
 msgid "object type"
@@ -8709,12 +8753,20 @@ msgid "'git help config' for more information"
 msgstr "'git help config' untuk informasi lebih lanjut"
 
 #: builtin/hook.c
-msgid "git hook run [--ignore-missing] <hook-name> [-- <hook-args>]"
-msgstr "git hook run [--ignore-missing] <nama kait> [-- <argumen kait>]"
+msgid ""
+"git hook run [--ignore-missing] [--to-stdin=<path>] <hook-name> [-- <hook-"
+"args>]"
+msgstr ""
+"git hook run [--ignore-missing] [--to-stdin=<jalur>] <nama kait> [-- "
+"<argumen kait>]"
 
 #: builtin/hook.c
 msgid "silently ignore missing requested <hook-name>"
 msgstr "diam-diam abaikan <nama kait> yang diminta yang hilang"
+
+#: builtin/hook.c
+msgid "file to read into hooks' stdin"
+msgstr "gagal membaca masukan standar kait"
 
 #: builtin/index-pack.c
 #, c-format
@@ -9080,11 +9132,15 @@ msgstr "Repositori Git kosong dinisialisasi di %s%s\n"
 
 #: builtin/init-db.c
 msgid ""
-"git init [-q | --quiet] [--bare] [--template=<template-directory>] [--"
-"shared[=<permissions>]] [<directory>]"
+"git init [-q | --quiet] [--bare] [--template=<template-directory>]\n"
+"         [--separate-git-dir <git-dir>] [--object-format=<format>]\n"
+"         [-b <branch-name> | --initial-branch=<branch-name>]\n"
+"         [--shared[=<permissions>]] [<directory>]"
 msgstr ""
-"git init [-q | --quiet] [--bare] [--template=<direktori-templat>][--"
-"shared[=<perizinan>]] [<direktori>]"
+"git init [-q | --quiet] [--bare] [--template=<direktori templat>]\n"
+"         [--separate-git-dir <direktori git>] [--object-format=<format>]\n"
+"         [-b <nama cabang> | --initial-branch=<nama cabang>]\n"
+"         [--shared[=<perizinan>]] [<direktori>]"
 
 #: builtin/init-db.c
 msgid "permissions"
@@ -9137,11 +9193,13 @@ msgstr "--separate-git-dir tidak kompatibel dengan repositori bare"
 
 #: builtin/interpret-trailers.c
 msgid ""
-"git interpret-trailers [--in-place] [--trim-empty] [(--trailer "
-"<token>[(=|:)<value>])...] [<file>...]"
+"git interpret-trailers [--in-place] [--trim-empty]\n"
+"                       [(--trailer <token>[(=|:)<value>])...]\n"
+"                       [--parse] [<file>...]"
 msgstr ""
-"git interpret-trailers [--in-place] [--trim-empty] [(--trailer "
-"<token>[(=|:)<nilai>])...] [<berkas>...]"
+"git interpret-trailers [--in-place] [--trim-empty]\n"
+"                       [(--trailer <token>[(=|:)<nilai>])...]\n"
+"                       [--parse] [<berkas>...]"
 
 #: builtin/interpret-trailers.c
 msgid "edit files in place"
@@ -9771,12 +9829,12 @@ msgstr ""
 #: builtin/ls-remote.c
 msgid ""
 "git ls-remote [--heads] [--tags] [--refs] [--upload-pack=<exec>]\n"
-"              [-q | --quiet] [--exit-code] [--get-url]\n"
-"              [--symref] [<repository> [<refs>...]]"
+"              [-q | --quiet] [--exit-code] [--get-url] [--sort=<key>]\n"
+"              [--symref] [<repository> [<patterns>...]]"
 msgstr ""
 "git ls-remote [--heads] [--tags] [--refs] [--upload-pack=<exec>]\n"
-"              [-q | --quiet] [--exit-code] [--get-url]\n"
-"              [--symref] [<repositori> [<referensi>...]]"
+"              [-q | --quiet] [--exit-code] [--get-url] [--sort=<kunci>]\n"
+"              [--symref] [<repositori> [<pola>...]]"
 
 #: builtin/ls-remote.c
 msgid "do not print remote URL"
@@ -9948,12 +10006,12 @@ msgid "git merge-base [-a | --all] --octopus <commit>..."
 msgstr "git merge-base [-a | --all] --octopus <komit>..."
 
 #: builtin/merge-base.c
-msgid "git merge-base --independent <commit>..."
-msgstr "git merge-base --independent <komit>..."
-
-#: builtin/merge-base.c
 msgid "git merge-base --is-ancestor <commit> <commit>"
 msgstr "git merge-base --is-ancestor <komit> <komit>"
+
+#: builtin/merge-base.c
+msgid "git merge-base --independent <commit>..."
+msgstr "git merge-base --independent <komit>..."
 
 #: builtin/merge-base.c
 msgid "git merge-base --fork-point <ref> [<commit>]"
@@ -10095,8 +10153,30 @@ msgid "allow merging unrelated histories"
 msgstr "perbolehkan penggabungan riwayat yang tak terkait"
 
 #: builtin/merge-tree.c
+msgid "perform multiple merges, one per line of input"
+msgstr "lakukan banyak penggabungan, satu per baris masukan"
+
+#: builtin/merge-tree.c
+msgid "specify a merge-base for the merge"
+msgstr "harus menyebutkan sebuah dasar penggabungan untuk penggabungan"
+
+#: builtin/merge-tree.c
 msgid "--trivial-merge is incompatible with all other options"
 msgstr "--trivial-merge tidak kompatibel dengan semua opsi lainnya"
+
+#: builtin/merge-tree.c
+msgid "--merge-base is incompatible with --stdin"
+msgstr "--merge-base tidak kompatibel dengan --stdin"
+
+#: builtin/merge-tree.c builtin/notes.c
+#, c-format
+msgid "malformed input line: '%s'."
+msgstr "baris masukan jelek: '%s'."
+
+#: builtin/merge-tree.c
+#, c-format
+msgid "merging cannot continue; got unclean result of %d"
+msgstr "penggabungan tidak dapat berlanjut; dapat hasil kotor dari %d"
 
 #: builtin/merge.c
 msgid "git merge [<options>] [<commit>...]"
@@ -10680,7 +10760,7 @@ msgstr "%s, source=%s, destination=%s"
 msgid "Renaming %s to %s\n"
 msgstr "Mengganti nama %s ke %s\n"
 
-#: builtin/mv.c builtin/remote.c builtin/repack.c
+#: builtin/mv.c builtin/remote.c
 #, c-format
 msgid "renaming '%s' failed"
 msgstr "gagal mengganti nama '%s'"
@@ -10883,11 +10963,6 @@ msgstr "gagal membaca objek '%s'."
 #, c-format
 msgid "cannot read note data from non-blob object '%s'."
 msgstr "gagal membaca data catatan dari objek bukan blob '%s'."
-
-#: builtin/notes.c
-#, c-format
-msgid "malformed input line: '%s'."
-msgstr "baris masukan jelek: '%s'."
 
 #: builtin/notes.c
 #, c-format
@@ -11130,15 +11205,14 @@ msgid "unknown subcommand: `%s'"
 msgstr "subperintah tidak dikenal: `%s'"
 
 #: builtin/pack-objects.c
-msgid ""
-"git pack-objects --stdout [<options>...] [< <ref-list> | < <object-list>]"
+msgid "git pack-objects --stdout [<options>] [< <ref-list> | < <object-list>]"
 msgstr ""
-"git pack-objects --stdout [<opsi>...] [< <daftar referensi>| < <daftar-"
+"git pack-objects --stdout [<opsi>...] [< <daftar referensi> | < <daftar-"
 "objek>]"
 
 #: builtin/pack-objects.c
 msgid ""
-"git pack-objects [<options>...] <base-name> [< <ref-list> | < <object-list>]"
+"git pack-objects [<options>] <base-name> [< <ref-list> | < <object-list>]"
 msgstr ""
 "git pack-objects [<opsi>...] <nama dasar> [< <daftar referensi> | < <daftar-"
 "objek>]"
@@ -11620,8 +11694,8 @@ msgstr ""
 "<git@vger.kernel.org>. Terima kasih.\n"
 
 #: builtin/pack-refs.c
-msgid "git pack-refs [<options>]"
-msgstr "git pack-refs [<opsi>]"
+msgid "git pack-refs [--all] [--no-prune]"
+msgstr "git pack-refs [--all] [--no-prune]"
 
 #: builtin/pack-refs.c
 msgid "pack everything"
@@ -11630,6 +11704,22 @@ msgstr "pak semuanya"
 #: builtin/pack-refs.c
 msgid "prune loose refs (default)"
 msgstr "pangkas referensi longgar (asali)"
+
+#: builtin/patch-id.c
+msgid "git patch-id [--stable | --unstable | --verbatim]"
+msgstr "git patch-id [--stable | --unstable | --verbatim]"
+
+#: builtin/patch-id.c
+msgid "use the unstable patch-id algorithm"
+msgstr "gunakan algoritma id tambalan tidak stabil"
+
+#: builtin/patch-id.c
+msgid "use the stable patch-id algorithm"
+msgstr "gunakan algoritma id tambalan stabil"
+
+#: builtin/patch-id.c
+msgid "don't strip whitespace from the patch"
+msgstr "jangan kupas spasi dari tambalan"
 
 #: builtin/prune.c
 msgid "git prune [-n] [-v] [--progress] [--expire <time>] [--] [<head>...]"
@@ -11895,14 +11985,13 @@ msgstr ""
 #: builtin/push.c
 msgid ""
 "\n"
-"To avoid automatically configuring upstream branches when their name\n"
-"doesn't match the local branch, see option 'simple' of branch."
-"autoSetupMerge\n"
+"To avoid automatically configuring an upstream branch when its name\n"
+"won't match the local branch, see option 'simple' of branch.autoSetupMerge\n"
 "in 'git help config'.\n"
 msgstr ""
 "\n"
 "Untuk menghindari konfigurasi cabang hulu otomatis ketika namanya\n"
-"tidak cocok dengan cabang lokal, lihat opsi 'simple' dari branch."
+"tidak akan cocok dengan cabang lokal, lihat opsi 'simple' dari branch."
 "autoSetupMerge\n"
 "di 'git help config'.\n"
 
@@ -12068,6 +12157,14 @@ msgstr "Mendorong ke %s\n"
 msgid "failed to push some refs to '%s'"
 msgstr "gagal dorong beberapa referensi ke '%s'"
 
+#: builtin/push.c
+msgid ""
+"recursing into submodule with push.recurseSubmodules=only; using on-demand "
+"instead"
+msgstr ""
+"mengulangi ke dalam submodul dengan push.recurseSubmodules=only; menggunakan "
+"on-demand sebagai gantinya"
+
 #: builtin/push.c builtin/send-pack.c submodule-config.c
 #, c-format
 msgid "invalid value for '%s'"
@@ -12149,7 +12246,7 @@ msgstr "minta transaksi atomik pada sisi remote"
 msgid "--delete doesn't make sense without any refs"
 msgstr "--delete tidak masuk akal tanpa referensi"
 
-#: builtin/push.c
+#: builtin/push.c t/helper/test-bundle-uri.c
 #, c-format
 msgid "bad repository '%s'"
 msgstr "repositori jelek '%s'"
@@ -12242,14 +12339,15 @@ msgstr "butuh dua rentang komit"
 
 #: builtin/read-tree.c
 msgid ""
-"git read-tree [(-m [--trivial] [--aggressive] | --reset | --prefix=<prefix>) "
-"[-u | -i]] [--no-sparse-checkout] [--index-output=<file>] (--empty | <tree-"
-"ish1> [<tree-ish2> [<tree-ish3>]])"
+"git read-tree [(-m [--trivial] [--aggressive] | --reset | --"
+"prefix=<prefix>)\n"
+"              [-u | -i]] [--index-output=<file>] [--no-sparse-checkout]\n"
+"              (--empty | <tree-ish1> [<tree-ish2> [<tree-ish3>]])"
 msgstr ""
 "git read-tree [(-m [--trivial] [--aggressive] | --reset | --"
-"prefix=<prefiks>) [-u | -i]] [--no-sparse-checkout] [--index-"
-"output=<berkas>] (--empty | <mirip-pohon 1> [<mirip-pohon 2> <mirip-pohon "
-"3>])"
+"prefix=<awalan>)\n"
+"              [-u | -i]] [--index-output=<berkas>] [--no-sparse-checkout]\n"
+"              (--empty | <mirip pohon 1> [<mirip pohon 2> [mirip pohon 3]])"
 
 #: builtin/read-tree.c
 msgid "write resulting index to <file>"
@@ -12368,8 +12466,8 @@ msgstr "%s butuh tulang belakang penggabungan"
 
 #: builtin/rebase.c
 #, c-format
-msgid "could not get 'onto': '%s'"
-msgstr "tidak dapat mendapatkan 'ke': '%s'"
+msgid "invalid onto: '%s'"
+msgstr "kepada tidak valid: '%s'"
 
 #: builtin/rebase.c
 #, c-format
@@ -12424,6 +12522,10 @@ msgstr ""
 #, c-format
 msgid "could not switch to %s"
 msgstr "tidak dapat mengganti ke %s"
+
+#: builtin/rebase.c
+msgid "apply options and merge options cannot be used together"
+msgstr "opsi apply dan opsi merge tidak dapat digunakan bersamaan"
 
 #: builtin/rebase.c
 #, c-format
@@ -12710,8 +12812,20 @@ msgid "--strategy requires --merge or --interactive"
 msgstr "--strategy butuh --merge atau --interactive"
 
 #: builtin/rebase.c
-msgid "apply options and merge options cannot be used together"
-msgstr "opsi apply dan opsi merge tidak dapat digunakan bersamaan"
+msgid ""
+"apply options are incompatible with rebase.autosquash.  Consider adding --no-"
+"autosquash"
+msgstr ""
+"opsi penerapan tidak kompatibel dengan rebase.autosquash. "
+"Pertimbangkanmenambahkan --no-autosquash"
+
+#: builtin/rebase.c
+msgid ""
+"apply options are incompatible with rebase.updateRefs.  Consider adding --no-"
+"update-refs"
+msgstr ""
+"opsi penerapan tidak kompatibel dengan rebase.updateRefs. "
+"Pertimbangkanmenambahkan --no-update-refs"
 
 #: builtin/rebase.c
 #, c-format
@@ -12742,8 +12856,8 @@ msgid "No such ref: %s"
 msgstr "Tidak ada referensi seperti: %s"
 
 #: builtin/rebase.c
-msgid "Could not resolve HEAD to a revision"
-msgstr "Tidak dapat menguraikan HEAD ke sebuah revisi"
+msgid "Could not resolve HEAD to a commit"
+msgstr "tidak dapat menguraikan komit HEAD ke sebuah komit"
 
 #: builtin/rebase.c
 #, c-format
@@ -13558,6 +13672,11 @@ msgid "could not close refs snapshot tempfile"
 msgstr "tidak dapat menutup berkas sementara jepretan referensi"
 
 #: builtin/repack.c
+#, c-format
+msgid "could not remove stale bitmap: %s"
+msgstr "tidak dapt memindahkan bitmap basi: %s"
+
+#: builtin/repack.c
 msgid "pack everything in a single pack"
 msgstr "pak semuanya dalam satu pak"
 
@@ -13656,6 +13775,10 @@ msgid "write a multi-pack index of the resulting packs"
 msgstr "tulis indeks multipak dari pak yang dihasilkan"
 
 #: builtin/repack.c
+msgid "pack prefix to store a pack containing pruned objects"
+msgstr "awalan pak untuk menyimpan pak berisi objek terpangkas"
+
+#: builtin/repack.c
 msgid "cannot delete packs in a precious-objects repo"
 msgstr "tidak dapat menghapus pak dalam repositori objek berharga"
 
@@ -13670,10 +13793,15 @@ msgstr "nama berkas paket %s tidak diawali dengan %s"
 
 #: builtin/repack.c
 #, c-format
-msgid "missing required file: %s"
-msgstr "berkas yang diperlukan hilang: %s"
+msgid "renaming pack to '%s' failed"
+msgstr "gagal mengganti nama pak ke '%s'"
 
 #: builtin/repack.c
+#, c-format
+msgid "pack-objects did not write a '%s' file for pack %s-%s"
+msgstr "pack-objects tidak menulis berkas '%s' untuk pak %s-%s"
+
+#: builtin/repack.c sequencer.c
 #, c-format
 msgid "could not unlink: %s"
 msgstr "tidak dapat membatal taut: %s"
@@ -13917,8 +14045,10 @@ msgid "only one pattern can be given with -l"
 msgstr "hanya satu pola yang dapat diberikan dengan -l"
 
 #: builtin/rerere.c
-msgid "git rerere [clear | forget <path>... | status | remaining | diff | gc]"
-msgstr "git rerere [clear | forge <jalur>... | status | remaining | diff | gc]"
+msgid ""
+"git rerere [clear | forget <pathspec>... | diff | status | remaining | gc]"
+msgstr ""
+"git rerere [clear | forget <spek jalur>... | diff | status | remaining | gc]"
 
 #: builtin/rerere.c
 msgid "register clean resolutions in index"
@@ -14176,6 +14306,18 @@ msgstr "--prefix butuh sebuah argumen"
 msgid "unknown mode for --abbrev-ref: %s"
 msgstr "mode untuk --abbrev-ref tidak dikenal: %s"
 
+#: builtin/rev-parse.c revision.c
+msgid "--exclude-hidden cannot be used together with --branches"
+msgstr "--exclude-hidden tidak dapat digunakan bersamaan dengan --branches"
+
+#: builtin/rev-parse.c revision.c
+msgid "--exclude-hidden cannot be used together with --tags"
+msgstr "--exclude-hidden tidak dapat digunakan bersamaan dengan --tags"
+
+#: builtin/rev-parse.c revision.c
+msgid "--exclude-hidden cannot be used together with --remotes"
+msgstr "--exclude-hidden tidak dapat digunakan dengan --remotes"
+
 #: builtin/rev-parse.c setup.c
 msgid "this operation must be run in a work tree"
 msgstr "operasi ini harus dijalankan di dalam pohon kerja"
@@ -14186,20 +14328,28 @@ msgid "unknown mode for --show-object-format: %s"
 msgstr "mode untuk --show-object-format tidak dikenal: %s"
 
 #: builtin/revert.c
-msgid "git revert [<options>] <commit-ish>..."
-msgstr "git revert [<opsi>] <mirip-komit>..."
+msgid ""
+"git revert [--[no-]edit] [-n] [-m <parent-number>] [-s] [-S[<keyid>]] "
+"<commit>..."
+msgstr ""
+"git revert [--[no-]edit] [-n] [-m <nomor induk>] [-s] [-S[<id kunci>]] "
+"<komit>..."
 
 #: builtin/revert.c
-msgid "git revert <subcommand>"
-msgstr "git revert <subperintah>"
+msgid "git revert (--continue | --skip | --abort | --quit)"
+msgstr "git revert (--continue | --skip | --abort | --quit)"
 
 #: builtin/revert.c
-msgid "git cherry-pick [<options>] <commit-ish>..."
-msgstr "git cherry-pick [<opsi>] <mirip-komit>..."
+msgid ""
+"git cherry-pick [--edit] [-n] [-m <parent-number>] [-s] [-x] [--ff]\n"
+"                [-S[<keyid>]] <commit>..."
+msgstr ""
+"git cherry-pick [--edit] [-n] [-m <nomor induk>] [-s] [-x] [--ff]\n"
+"                [-S[<id kunci>]] <komit>..."
 
 #: builtin/revert.c
-msgid "git cherry-pick <subcommand>"
-msgstr "git cherry-pick <subperintah>"
+msgid "git cherry-pick (--continue | --skip | --abort | --quit)"
+msgstr "git cherry-pick (--continue | --skip | --abort | --quit)"
 
 #: builtin/revert.c
 #, c-format
@@ -14280,8 +14430,14 @@ msgid "cherry-pick failed"
 msgstr "pemetikan ceri gagal"
 
 #: builtin/rm.c
-msgid "git rm [<options>] [--] <file>..."
-msgstr "git rm [<opsi>] [--] <berkas>..."
+msgid ""
+"git rm [-f | --force] [-n] [-r] [--cached] [--ignore-unmatch]\n"
+"       [--quiet] [--pathspec-from-file=<file> [--pathspec-file-nul]]\n"
+"       [--] [<pathspec>...]"
+msgstr ""
+"git rm [-f | --force] [-n] [-r] [--cached] [--ignore-unmatch]\n"
+"       [--quiet] [--pathspec-from-file=<berkas> [--pathspec-file-nul]]\n"
+"       [--] [<spek jalur>...]"
 
 #: builtin/rm.c
 msgid ""
@@ -14369,11 +14525,13 @@ msgid ""
 "git send-pack [--mirror] [--dry-run] [--force]\n"
 "              [--receive-pack=<git-receive-pack>]\n"
 "              [--verbose] [--thin] [--atomic]\n"
+"              [--[no-]signed | --signed=(true|false|if-asked)]\n"
 "              [<host>:]<directory> (--all | <ref>...)"
 msgstr ""
 "git send-pack [--mirror] [--dry-run] [--force]\n"
 "              [--receive-pack=<git-receive-pack>\n"
-"]              [--verbose] [--thin] [--atomic]\n"
+"              [--verbose] [--thin] [--atomic]\n"
+"              [--[no-]signed | --signed=(true|false|if-asked)]\n"
 "              [<tuan rumah>:]<direktori> (--all | <referensi>...)"
 
 #: builtin/send-pack.c
@@ -14405,8 +14563,9 @@ msgid "using multiple --group options with stdin is not supported"
 msgstr "menggunakan banyak opsi --group dengan masukan standar tidak didukung"
 
 #: builtin/shortlog.c
-msgid "using --group=trailer with stdin is not supported"
-msgstr "mengguanakn --group=trailer dengan stdin tidak didukung"
+#, c-format
+msgid "using %s with stdin is not supported"
+msgstr "menggunakan %s dengan masukan standar tidak didukung"
 
 #: builtin/shortlog.c
 #, c-format
@@ -14454,12 +14613,14 @@ msgid ""
 "git show-branch [-a | --all] [-r | --remotes] [--topo-order | --date-order]\n"
 "                [--current] [--color[=<when>] | --no-color] [--sparse]\n"
 "                [--more=<n> | --list | --independent | --merge-base]\n"
-"                [--no-name | --sha1-name] [--topics] [(<rev> | <glob>)...]"
+"                [--no-name | --sha1-name] [--topics]\n"
+"                [(<rev> | <glob>)...]"
 msgstr ""
 "git show-branch [-a | --all] [-r | --remotes] [--topo-order | --date-order]\n"
 "                [--current] [--color[=<kapan>] | --no-color] [--sparse]\n"
 "                [--more=<n> | --list | --independent | --merge-base]\n"
-"                [--no-name | --sha1-name] [--topics] [(<revisi> | <glob>)...]"
+"                [--no-name | --sha1-name] [--topics]\n"
+"                [(<revisi> | <glob>)...]"
 
 #: builtin/show-branch.c
 msgid "git show-branch (-g | --reflog)[=<n>[,<base>]] [--list] [<ref>]"
@@ -14589,11 +14750,13 @@ msgstr "algoritma hash tidak dikenal"
 
 #: builtin/show-ref.c
 msgid ""
-"git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference] [-s | --"
-"hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [<pattern>...]"
+"git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference]\n"
+"             [-s | --hash[=<n>]] [--abbrev[=<n>]] [--tags]\n"
+"             [--heads] [--] [<pattern>...]"
 msgstr ""
-"git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference] [-s | --"
-"hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [<pola>...]"
+"git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference]\n"
+"             [-s | --hash[=<n>]] [--abbrev[=<n>]] [--tags]\n"
+"             [--heads] [--] [<pola>...]"
 
 #: builtin/show-ref.c
 msgid "git show-ref --exclude-existing[=<pattern>]"
@@ -14634,8 +14797,10 @@ msgstr ""
 "lokal"
 
 #: builtin/sparse-checkout.c
-msgid "git sparse-checkout (init|list|set|add|reapply|disable) <options>"
-msgstr "git sparse-checkout (init|list|set|add|reapply|disable) <opsi>"
+msgid ""
+"git sparse-checkout (init | list | set | add | reapply | disable) [<options>]"
+msgstr ""
+"git sparse-checkout (init | list | set | add | reapply | disable) [<opsi>]"
 
 #: builtin/sparse-checkout.c
 msgid "this worktree is not sparse"
@@ -14787,76 +14952,66 @@ msgid "error while refreshing working directory"
 msgstr "kesalahan saat menyegarkan direktori kerja"
 
 #: builtin/stash.c
-msgid "git stash list [<options>]"
-msgstr "git stash list [<opsi>]"
+msgid "git stash list [<log-options>]"
+msgstr "git stash list [<opsi log>]"
 
 #: builtin/stash.c
-msgid "git stash show [<options>] [<stash>]"
-msgstr "git stash show [<opsi>] [<stase>]"
+msgid ""
+"git stash show [-u | --include-untracked | --only-untracked] [<diff-"
+"options>] [<stash>]"
+msgstr ""
+"git stash show [-u | --include-untracked | --only-untracked] [<opsi diff>] "
+"[<stase>]"
 
 #: builtin/stash.c
-msgid "git stash drop [-q|--quiet] [<stash>]"
-msgstr "git stash drop [-q|--quiet] [<stase>]"
+msgid "git stash drop [-q | --quiet] [<stash>]"
+msgstr "git stash drop [-q | --quiet] [<stase>]"
 
 #: builtin/stash.c
-msgid "git stash ( pop | apply ) [--index] [-q|--quiet] [<stash>]"
-msgstr "git stash ( pop | apply ) [--index] [-q|--quiet] [<stase>]"
+msgid "git stash pop [--index] [-q | --quiet] [<stash>]"
+msgstr "git stash pop [--index] [-q | --quiet] [<stase>]"
+
+#: builtin/stash.c
+msgid "git stash apply [--index] [-q | --quiet] [<stash>]"
+msgstr "git stash apply [--index] [-q | --quiet] [<stase>]"
 
 #: builtin/stash.c
 msgid "git stash branch <branchname> [<stash>]"
 msgstr "git stash branch <nama cabang> [<stase>]"
 
 #: builtin/stash.c
+msgid "git stash store [(-m | --message) <message>] [-q | --quiet] <commit>"
+msgstr "git stash store [(-m | --message) <pesan>] [-q|--quiet] <komit>"
+
+#: builtin/stash.c
 msgid ""
-"git stash [push [-p|--patch] [-S|--staged] [-k|--[no-]keep-index] [-q|--"
-"quiet]\n"
-"          [-u|--include-untracked] [-a|--all] [-m|--message <message>]\n"
+"git stash [push [-p | --patch] [-S | --staged] [-k | --[no-]keep-index] [-q "
+"| --quiet]\n"
+"          [-u | --include-untracked] [-a | --all] [(-m | --message) "
+"<message>]\n"
 "          [--pathspec-from-file=<file> [--pathspec-file-nul]]\n"
 "          [--] [<pathspec>...]]"
 msgstr ""
-"git stash [push [-p|--patch] [-S|--staged] [-k|--[no-]keep-index]\n"
-"          [-q|--quiet] [-u|--include-untracked] [-a|--all]\n"
-"          [-m|--message <pesan>] [--pathspec-from-file=<berkas>\n"
-"          [--pathspec-file-nul]] [--] [<spek jalur>...]]"
+"git stash [push [-p | --patch] [-S | --staged] [-k | --[no-]keep-index] [-q "
+"| --quiet]\n"
+"          [-u | --include-untracked] [-a | --all] [(-m | --message) "
+"<pesan>]\n"
+"          [--pathspec-from-file=<berkas> [--pathspec-file-nul]]\n"
+"          [--] [<spek jalur>...]]"
 
 #: builtin/stash.c
 msgid ""
-"git stash save [-p|--patch] [-S|--staged] [-k|--[no-]keep-index] [-q|--"
-"quiet]\n"
-"          [-u|--include-untracked] [-a|--all] [<message>]"
+"git stash save [-p | --patch] [-S | --staged] [-k | --[no-]keep-index] [-q | "
+"--quiet]\n"
+"          [-u | --include-untracked] [-a | --all] [<message>]"
 msgstr ""
-"git stash save [-p|--patch] [-S|--staged] [-k|--[no-]keep-index]\n"
-"          [-q|--quiet] [-u|--include-untracked] [-a|--all] [<pesan>]"
+"git stash save [-p | --patch] [-S | --staged] [-k | --[no-]keep-index] [-q | "
+"--quiet]\n"
+"          [-u | --include-untracked] [-a | --all] [<pesan>]"
 
 #: builtin/stash.c
-msgid "git stash pop [--index] [-q|--quiet] [<stash>]"
-msgstr "git stash pop [--index] [-q|--quiet] [<stase>]"
-
-#: builtin/stash.c
-msgid "git stash apply [--index] [-q|--quiet] [<stash>]"
-msgstr "git stash apply [--index] [-q|--quiet] [<stase>]"
-
-#: builtin/stash.c
-msgid "git stash store [-m|--message <message>] [-q|--quiet] <commit>"
-msgstr "git stash store [-m|--message <pesan>] [-q|--quiet] <komit>"
-
-#: builtin/stash.c
-msgid ""
-"git stash [push [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
-"          [-u|--include-untracked] [-a|--all] [-m|--message <message>]\n"
-"          [--] [<pathspec>...]]"
-msgstr ""
-"git stash [push [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
-"          [-u|--include-untracked] [-a|--all] [-m|--message <pesan>]\n"
-"          [--] [<spek jalur>...]"
-
-#: builtin/stash.c
-msgid ""
-"git stash save [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
-"               [-u|--include-untracked] [-a|--all] [<message>]"
-msgstr ""
-"git stash save [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
-"               [-u|--include-untracked] [-a|--all] [<pesan>]"
+msgid "git stash create [<message>]"
+msgstr "git stash create [<pesan>]"
 
 #: builtin/stash.c
 #, c-format
@@ -15565,10 +15720,6 @@ msgid "don't fetch new objects from the remote site"
 msgstr "jangan ambil objek baru dari situs remote"
 
 #: builtin/submodule--helper.c
-msgid "path into the working tree"
-msgstr "jalur ke dalam pohon kerja"
-
-#: builtin/submodule--helper.c
 msgid "use the 'checkout' update strategy (default)"
 msgstr "gunakan strategi pembaruan 'checkout' (asali)"
 
@@ -15614,32 +15765,8 @@ msgstr ""
 "[--] [<jalur>...]"
 
 #: builtin/submodule--helper.c
-msgid "recurse into submodules"
-msgstr "rekursi ke dalam submodul"
-
-#: builtin/submodule--helper.c
 msgid "git submodule absorbgitdirs [<options>] [<path>...]"
 msgstr "git submodule absorbgitdirs [<opsi>] [<jalur>...]"
-
-#: builtin/submodule--helper.c
-msgid "check if it is safe to write to the .gitmodules file"
-msgstr "periksa apakah itu aman untuk menulis ke berkas .gitmodules"
-
-#: builtin/submodule--helper.c
-msgid "unset the config in the .gitmodules file"
-msgstr "batal setel konfigurasi dalam berkas .gitmodules"
-
-#: builtin/submodule--helper.c
-msgid "git submodule--helper config <name> [<value>]"
-msgstr "git submodule--helper config <nama> [<nilai>]"
-
-#: builtin/submodule--helper.c
-msgid "git submodule--helper config --unset <name>"
-msgstr "git submodule--helper config --unset <nama>"
-
-#: builtin/submodule--helper.c
-msgid "please make sure that the .gitmodules file is in the working tree"
-msgstr "mohom pastikan berkas .gitmodules di dalam pohon kerja"
 
 #: builtin/submodule--helper.c
 msgid "suppress output for setting url of a submodule"
@@ -15737,6 +15864,10 @@ msgid "unable to checkout submodule '%s'"
 msgstr "Tidak dapat men-checkout submodul '%s'"
 
 #: builtin/submodule--helper.c
+msgid "please make sure that the .gitmodules file is in the working tree"
+msgstr "mohom pastikan berkas .gitmodules di dalam pohon kerja"
+
+#: builtin/submodule--helper.c
 #, c-format
 msgid "Failed to add submodule '%s'"
 msgstr "Tidak dapat menambahkan submodul '%s'"
@@ -15798,23 +15929,21 @@ msgstr "URL repo: '%s' harus absolut atau diawali dengan ./|../"
 msgid "'%s' is not a valid submodule name"
 msgstr "'%s' bukan nama submodul yang valid"
 
-#: builtin/submodule--helper.c git.c
-#, c-format
-msgid "%s doesn't support --super-prefix"
-msgstr "%s tidak mendukung --super-prefix"
-
 #: builtin/submodule--helper.c
-#, c-format
-msgid "'%s' is not a valid submodule--helper subcommand"
-msgstr "'%s' bukan subperintah submodule--helper valid"
+msgid "git submodule--helper <command>"
+msgstr "git submodule--helper <nama>"
 
 #: builtin/symbolic-ref.c
-msgid "git symbolic-ref [<options>] <name> [<ref>]"
-msgstr "git symbolic-ref [<opsi>] <nama> [<referensi>]"
+msgid "git symbolic-ref [-m <reason>] <name> <ref>"
+msgstr "git symbolic-ref [-m <alasan>] <nama> <referensi>"
 
 #: builtin/symbolic-ref.c
-msgid "git symbolic-ref -d [-q] <name>"
-msgstr "git symbolic-ref -d [-q] <nama>"
+msgid "git symbolic-ref [-q] [--short] [--no-recurse] <name>"
+msgstr "git symbolic-ref [-q] [--short] [--no-recurse] <nama>"
+
+#: builtin/symbolic-ref.c
+msgid "git symbolic-ref --delete [-q] <name>"
+msgstr "git symbolic-ref --delete [-q] <nama>"
 
 #: builtin/symbolic-ref.c
 msgid "suppress error message for non-symbolic (detached) refs"
@@ -15828,6 +15957,10 @@ msgstr "hapus referensi simbolik"
 msgid "shorten ref output"
 msgstr "pendekkan keluaran referensi"
 
+#: builtin/symbolic-ref.c
+msgid "recursively dereference (default)"
+msgstr "derefensi secara rekursif (asali)"
+
 #: builtin/symbolic-ref.c builtin/update-ref.c
 msgid "reason"
 msgstr "alasan"
@@ -15838,11 +15971,11 @@ msgstr "alasan pembaruan"
 
 #: builtin/tag.c
 msgid ""
-"git tag [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>]\n"
-"        <tagname> [<head>]"
+"git tag [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>] [-e]\n"
+"        <tagname> [<commit> | <object>]"
 msgstr ""
-"git tag [-a | -s | -u <id kunci>] [-f] [-m <pesan | -F <berkas>]\n"
-"        <nama tag> [<kepala>]"
+"git tag [-a | -s | -u <id kunci>] [-f] [-m <pesan> | -F <berkas>] [-e]\n"
+"        <nama tag> [<komit> | <objek>]"
 
 #: builtin/tag.c
 msgid "git tag -d <tagname>..."
@@ -15850,15 +15983,15 @@ msgstr "git tag -d <nama tag>..."
 
 #: builtin/tag.c
 msgid ""
-"git tag -l [-n[<num>]] [--contains <commit>] [--no-contains <commit>] [--"
-"points-at <object>]\n"
-"        [--format=<format>] [--merged <commit>] [--no-merged <commit>] "
-"[<pattern>...]"
+"git tag [-n[<num>]] -l [--contains <commit>] [--no-contains <commit>]\n"
+"        [--points-at <object>] [--column[=<options>] | --no-column]\n"
+"        [--create-reflog] [--sort=<key>] [--format=<format>]\n"
+"        [--merged <commit>] [--no-merged <commit>] [<pattern>...]"
 msgstr ""
-"git tag -l [-n[<angka>]] [--contains <komit>] [--no-contains <komit>] [--"
-"points-at <objek>]\n"
-"        [--format=<format>] [--merged <komit>] [--no-merged <komit>] "
-"[<pola>...]"
+"git tag [-n[<angka>]] -l [--contains <komit>] [--no-contains <komit>]\n"
+"        [--points-at <objeck>] [--column[=<opsi>] | --no-column]\n"
+"        [--create-reflog] [--sort=<kunci>] [--format=<format>]\n"
+"        [--merged <komit>] [--no-merged <komit>] [<pola>...]"
 
 #: builtin/tag.c
 msgid "git tag -v [--format=<format>] <tagname>..."
@@ -16340,8 +16473,12 @@ msgid "update the info files from scratch"
 msgstr "perbarui berkas info dari awal"
 
 #: builtin/upload-pack.c
-msgid "git upload-pack [<options>] <dir>"
-msgstr "git upload-pack [<opsi>] <direktori>"
+msgid ""
+"git-upload-pack [--[no-]strict] [--timeout=<n>] [--stateless-rpc]\n"
+"                [--advertise-refs] <directory>"
+msgstr ""
+"git-upload-pack [--[no-]strict] [--timeout=<n>] [--stateless-rpc]\n"
+"                [--advertise-refs] <direktori>"
 
 #: builtin/upload-pack.c t/helper/test-serve-v2.c
 msgid "quit after a single request/response exchange"
@@ -16360,8 +16497,8 @@ msgid "interrupt transfer after <n> seconds of inactivity"
 msgstr "interupsi transfer setelah <n> detik niraktivitas"
 
 #: builtin/verify-commit.c
-msgid "git verify-commit [-v | --verbose] <commit>..."
-msgstr "git verify-commit [-v | --verbose] <komit>..."
+msgid "git verify-commit [-v | --verbose] [--raw] <commit>..."
+msgstr "git verify-commit [-v | --verbose] [--raw] <komit>..."
 
 #: builtin/verify-commit.c
 msgid "print commit contents"
@@ -16372,8 +16509,8 @@ msgid "print raw gpg status output"
 msgstr "cetak keluaran status gpg mentah"
 
 #: builtin/verify-pack.c
-msgid "git verify-pack [-v | --verbose] [-s | --stat-only] <pack>..."
-msgstr "git verify-pack [-v | --verbose] [-s | --stat-only] <pak>..."
+msgid "git verify-pack [-v | --verbose] [-s | --stat-only] [--] <pack>.idx..."
+msgstr "git verify-pack [-v | --verbose] [-s | --stat-only] [--] <pak>.idx..."
 
 #: builtin/verify-pack.c
 msgid "verbose"
@@ -16384,44 +16521,48 @@ msgid "show statistics only"
 msgstr "hanya perlihatkan statistik"
 
 #: builtin/verify-tag.c
-msgid "git verify-tag [-v | --verbose] [--format=<format>] <tag>..."
-msgstr "git verify-tag [-v | --verbose] [--format=<format>] <tag>..."
+msgid "git verify-tag [-v | --verbose] [--format=<format>] [--raw] <tag>..."
+msgstr "git verify-tag [-v | --verbose] [--format=<format>] [--raw] <tag>..."
 
 #: builtin/verify-tag.c
 msgid "print tag contents"
 msgstr "cetak isi tag"
 
 #: builtin/worktree.c
-msgid "git worktree add [<options>] <path> [<commit-ish>]"
-msgstr "git worktree add [<opsi>] <jalur> [<mirip komit>]"
+msgid ""
+"git worktree add [-f] [--detach] [--checkout] [--lock [--reason <string>]]\n"
+"                 [-b <new-branch>] <path> [<commit-ish>]"
+msgstr ""
+"git worktree add [-f] [--detach] [--checkout] [--lock [--reason <untai>]]\n"
+"                 [-b <cabang baru>] <jalur> [<mirip komit>]"
 
 #: builtin/worktree.c
-msgid "git worktree list [<options>]"
-msgstr "git worktree list [<opsi>]"
+msgid "git worktree list [-v | --porcelain [-z]]"
+msgstr "git worktree list [-v | --porcelain [-z]"
 
 #: builtin/worktree.c
-msgid "git worktree lock [<options>] <path>"
-msgstr "git worktree lock [<opsi>] <jalur>"
+msgid "git worktree lock [--reason <string>] <worktree>"
+msgstr "git worktree lock [--reason <untai>] <pohon kerja>"
 
 #: builtin/worktree.c
 msgid "git worktree move <worktree> <new-path>"
 msgstr "git worktree move <pohon kerja> <jalur baru>"
 
 #: builtin/worktree.c
-msgid "git worktree prune [<options>]"
-msgstr "git worktree prune [<opsi>]"
+msgid "git worktree prune [-n] [-v] [--expire <expire>]"
+msgstr "git worktree prune [-n] [-v] [--expire <kadaluarsa>]"
 
 #: builtin/worktree.c
-msgid "git worktree remove [<options>] <worktree>"
-msgstr "git worktree remove [<opsi>] <pohon kerja>"
+msgid "git worktree remove [-f] <worktree>"
+msgstr "git worktree remove [-f] <pohon kerja>"
 
 #: builtin/worktree.c
 msgid "git worktree repair [<path>...]"
 msgstr "git worktree repair [<jalur>...]"
 
 #: builtin/worktree.c
-msgid "git worktree unlock <path>"
-msgstr "git worktree unlock <jalur>"
+msgid "git worktree unlock <worktree>"
+msgstr "git worktree unlock <worktree>"
 
 #: builtin/worktree.c
 #, c-format
@@ -16713,6 +16854,16 @@ msgid "core.fsyncMethod = batch is unsupported on this platform"
 msgstr "core.fsyncMethod = batch tidak didukung pada platform ini"
 
 #: bundle-uri.c
+#, c-format
+msgid "could not parse bundle list key %s with value '%s'"
+msgstr "tidak dapat mengurai kunci daftar bundel %s dengan nilai '%s'"
+
+#: bundle-uri.c
+#, c-format
+msgid "bundle list at '%s' has no mode"
+msgstr "daftar bundel pada '%s' tidak punya mode"
+
+#: bundle-uri.c
 msgid "failed to create temporary file"
 msgstr "tidak dapat membuat berkas sementara"
 
@@ -16722,18 +16873,53 @@ msgstr "tidak cukup kemampuan"
 
 #: bundle-uri.c
 #, c-format
+msgid "file downloaded from '%s' is not a bundle"
+msgstr "berkas yang diunduh dari '%s' bukan sebuah bundel"
+
+#: bundle-uri.c
+msgid "failed to store maximum creation token"
+msgstr "gagal menyimpan token pembuatan maksimum"
+
+#: bundle-uri.c
+#, c-format
+msgid "unrecognized bundle mode from URI '%s'"
+msgstr "mode bundel tidak dikenal dari URI '%s'"
+
+#: bundle-uri.c
+#, c-format
+msgid "exceeded bundle URI recursion limit (%d)"
+msgstr "batas rekursi URI bundel (%d) terlewati"
+
+#: bundle-uri.c
+#, c-format
 msgid "failed to download bundle from URI '%s'"
 msgstr "gagal mengunduh bundel dari URI '%s'"
 
 #: bundle-uri.c
 #, c-format
-msgid "file at URI '%s' is not a bundle"
-msgstr "berkas pada URI '%s' bukan sebuah bundle"
+msgid "file at URI '%s' is not a bundle or bundle list"
+msgstr "berkas pada URI '%s' bukan sebuah bundel atau daftar bundel"
 
 #: bundle-uri.c
 #, c-format
-msgid "failed to unbundle bundle from URI '%s'"
-msgstr "gagal membongkar bundel dari URI '%s'"
+msgid "bundle-uri: unexpected argument: '%s'"
+msgstr "bundle-uri: argumen tidak diharapkan: '%s'"
+
+#: bundle-uri.c
+msgid "bundle-uri: expected flush after arguments"
+msgstr "bundle-uri: bilasan diharapkan setelah argumen"
+
+#: bundle-uri.c
+msgid "bundle-uri: got an empty line"
+msgstr "bundle-uri: dapat satu baris kosong"
+
+#: bundle-uri.c
+msgid "bundle-uri: line is not of the form 'key=value'"
+msgstr "bundle-uri: baris bukan berbentuk 'kunci=nilai'"
+
+#: bundle-uri.c
+msgid "bundle-uri: line has empty key or value"
+msgstr "bundle-uri: baris berisi kunci atau nilai kosong"
 
 #: bundle.c
 #, c-format
@@ -16762,6 +16948,14 @@ msgstr "Repositori kekurangan komit prasyarat berikut:"
 #: bundle.c
 msgid "need a repository to verify a bundle"
 msgstr "perlu sebuah repositori untuk verifikasi bundel"
+
+#: bundle.c
+msgid ""
+"some prerequisite commits exist in the object store, but are not connected "
+"to the repository's history"
+msgstr ""
+"beberapa komit prasyarat ada pada penyimpanan objek, tetapi tidak terhubung "
+"ke riwayat repositori"
 
 #: bundle.c
 #, c-format
@@ -17496,7 +17690,7 @@ msgid "Chunk-based file formats"
 msgstr "Berkas format berbasis bingkah"
 
 #: command-list.h
-msgid "Git commit graph format"
+msgid "Git commit-graph format"
 msgstr "Format grafik komit Git"
 
 #: command-list.h
@@ -17929,6 +18123,11 @@ msgstr "kasus tak tertangani di 'has_worktree_moved': %d"
 msgid "health thread wait failed [GLE %ld]"
 msgstr "antri utas kesehatan gagal [GLE %ld]"
 
+#: compat/fsmonitor/fsm-ipc-darwin.c
+#, c-format
+msgid "Invalid path: %s"
+msgstr "Jalur tidak valid: %s"
+
 #: compat/fsmonitor/fsm-listen-darwin.c
 msgid "Unable to create FSEventStream."
 msgstr "tidak dapat membuat FSEventStream."
@@ -17967,12 +18166,32 @@ msgstr "GetOverlappedResult gagal pada '%s' [GLE %ld]"
 msgid "could not read directory changes [GLE %ld]"
 msgstr "tidak dapat membaca perubahan direktori [GLE %ld]"
 
-#: compat/fsmonitor/fsm-settings-win32.c
+#: compat/fsmonitor/fsm-path-utils-darwin.c
+#, c-format
+msgid "opendir('%s') failed"
+msgstr "opendir('%s') gagal"
+
+#: compat/fsmonitor/fsm-path-utils-darwin.c
+#, c-format
+msgid "lstat('%s') failed"
+msgstr "lstat('%s') gagal"
+
+#: compat/fsmonitor/fsm-path-utils-darwin.c
+#, c-format
+msgid "strbuf_readlink('%s') failed"
+msgstr "strbuf_readlink('%s') gagal"
+
+#: compat/fsmonitor/fsm-path-utils-darwin.c
+#, c-format
+msgid "closedir('%s') failed"
+msgstr "closedir('%s') gagal"
+
+#: compat/fsmonitor/fsm-path-utils-win32.c
 #, c-format
 msgid "[GLE %ld] unable to open for read '%ls'"
 msgstr "[GLE %ld] tidak dapat membuka untuk dibaca '%ls'"
 
-#: compat/fsmonitor/fsm-settings-win32.c
+#: compat/fsmonitor/fsm-path-utils-win32.c
 #, c-format
 msgid "[GLE %ld] unable to get protocol information for '%ls'"
 msgstr "[GLE %ld] tidak dapat mendapatkan informasi protokol untuk '%ls'"
@@ -18535,16 +18754,25 @@ msgstr "format objek tidak dikenal '%s' disebutkan oleh peladen"
 
 #: connect.c
 #, c-format
+msgid "error on bundle-uri response line %d: %s"
+msgstr "kesalahan pada baris tanggapan bundle-uri ke-%d: %s"
+
+#: connect.c
+msgid "expected flush after bundle-uri listing"
+msgstr "bilasan diharapkan setelah pendaftaran bundle-uri"
+
+#: connect.c
+msgid "expected response end packet after ref listing"
+msgstr "jawaban akhir paket diharapkan setelah penyebutan referensi"
+
+#: connect.c
+#, c-format
 msgid "invalid ls-refs response: %s"
 msgstr "jawaban ls-refs tidak valid: %s"
 
 #: connect.c
 msgid "expected flush after ref listing"
 msgstr "bilasan diharapkan setelah penyebutan referensi"
-
-#: connect.c
-msgid "expected response end packet after ref listing"
-msgstr "jawaban akhir paket diharapkan setelah penyebutan referensi"
 
 #: connect.c
 #, c-format
@@ -19983,10 +20211,11 @@ msgstr "repositori virtual '%s' tidka kompatibel dengan fsmonitor"
 #: fsmonitor-settings.c
 #, c-format
 msgid ""
-"repository '%s' is incompatible with fsmonitor due to lack of Unix sockets"
+"socket directory '%s' is incompatible with fsmonitor due to lack of Unix "
+"sockets support"
 msgstr ""
-"repositori '%s' tidak kompatibel dengan fsmonitor karena kekurangan soket "
-"Unix"
+"direktori soket '%s' tidak kompatibel dengan fsmonitor karena kekurangan "
+"dukungan soket Unix"
 
 #: git.c
 msgid ""
@@ -19995,16 +20224,14 @@ msgid ""
 "           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--"
 "bare]\n"
 "           [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]\n"
-"           [--super-prefix=<path>] [--config-env=<name>=<envvar>]\n"
-"           <command> [<args>]"
+"           [--config-env=<name>=<envvar>] <command> [<args>]"
 msgstr ""
 "git [-v| --version] [-h | --help] [-C <jalur>] [-c <nama>=<nilai>]\n"
 "           [--exec-path[=<jalur>]] [--html-path] [--man-path] [--info-path]\n"
 "           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--"
 "bare]\n"
 "           [--git-dir=<jalur>] [--work-tree=<jalur>] [--namespace=<nama>]\n"
-"           [--super-prefix=<jalur>] [--config-env=<nama>=<variabel "
-"lingkungan>]\n"
+"           [--config-env=<nama>=<variabel lingkungan>]\n"
 "           <perintah> [<argumen>]"
 
 #: git.c
@@ -20033,11 +20260,6 @@ msgstr "tidak ada direktori yang diberikan untuk opsi '%s'\n"
 #, c-format
 msgid "no namespace given for --namespace\n"
 msgstr "tidak ada ruang nama yang diberikan untuk --namespace\n"
-
-#: git.c
-#, c-format
-msgid "no prefix given for --super-prefix\n"
-msgstr "tidak ada prefiks yang diberikan untuk --super-prefix\n"
 
 #: git.c
 #, c-format
@@ -20177,8 +20399,13 @@ msgid "gpg.ssh.defaultKeyCommand failed: %s %s"
 msgstr "gpg.ssh.defaultKeyCommand gagal: %s %s"
 
 #: gpg-interface.c
-msgid "gpg failed to sign the data"
-msgstr "gpg gagal menandatangani data"
+#, c-format
+msgid ""
+"gpg failed to sign the data:\n"
+"%s"
+msgstr ""
+"gpg gagal menandatangani data:\n"
+"%s"
 
 #: gpg-interface.c
 msgid "user.signingKey needs to be set for ssh signing"
@@ -20380,8 +20607,8 @@ msgstr[1] ""
 "Perintah paling mirip adalah"
 
 #: help.c
-msgid "git version [<options>]"
-msgstr "git version [<opsi>]"
+msgid "git version [--build-options]"
+msgstr "git version [--build-options]"
 
 #: help.c
 #, c-format
@@ -21493,11 +21720,6 @@ msgid "%s: ignoring alternate object stores, nesting too deep"
 msgstr "%s: mengabaikan penyimpanan objek alternatif, bersarang terlalu dalam"
 
 #: object-file.c
-#, c-format
-msgid "unable to normalize object directory: %s"
-msgstr "tidak dapat menormalisasikan direktori objek: %s"
-
-#: object-file.c
 msgid "unable to fdopen alternates lockfile"
 msgstr "tidak dapat men-fdopen berkas kunci alternatif"
 
@@ -21572,6 +21794,11 @@ msgstr "sampah pada ujung berkas objek '%s'"
 
 #: object-file.c
 #, c-format
+msgid "unable to open loose object %s"
+msgstr "tidak dapat membuka objek longgar %s"
+
+#: object-file.c
+#, c-format
 msgid "unable to parse %s header"
 msgstr "tidak dapat menguraikan kepala %s"
 
@@ -21591,18 +21818,13 @@ msgstr "kepala untuk %s terlalu panjang, melebihi %d bita"
 
 #: object-file.c
 #, c-format
-msgid "failed to read object %s"
-msgstr "gagal membaca objek %s"
+msgid "loose object %s (stored in %s) is corrupt"
+msgstr "objek longgar %s (disimpan di %s) rusak"
 
 #: object-file.c
 #, c-format
 msgid "replacement %s not found for %s"
 msgstr "pengganti %s tidak ditemukan untuk %s"
-
-#: object-file.c
-#, c-format
-msgid "loose object %s (stored in %s) is corrupt"
-msgstr "objek longgar %s (disimpan di %s) rusak"
 
 #: object-file.c
 #, c-format
@@ -21618,10 +21840,6 @@ msgstr "tidak dapat menulis berkas %s"
 #, c-format
 msgid "unable to set permission to '%s'"
 msgstr "tidak dapat menyetel perizinan ke '%s'"
-
-#: object-file.c
-msgid "file write error"
-msgstr "kesalahan menulis berkas"
 
 #: object-file.c
 msgid "error when closing loose object file"
@@ -21683,12 +21901,13 @@ msgid "cannot read object for %s"
 msgstr "tidak dapat membaca objek untuk %s"
 
 #: object-file.c
-msgid "corrupt commit"
-msgstr "komit rusak"
+#, c-format
+msgid "object fails fsck: %s"
+msgstr "fsck objek gagal: %s"
 
 #: object-file.c
-msgid "corrupt tag"
-msgstr "tag rusak"
+msgid "refusing to create malformed object"
+msgstr "menolak membuat objek jelek"
 
 #: object-file.c
 #, c-format
@@ -22001,11 +22220,6 @@ msgstr "offset XOR tidak valid di indeks pak bitmap"
 #: pack-bitmap.c
 msgid "cannot fstat bitmap file"
 msgstr "tidak dapat fstat berkas bitmap"
-
-#: pack-bitmap.c
-#, c-format
-msgid "ignoring extra bitmap file: '%s'"
-msgstr "mengabaikan berkas bitmap tambahan: '%s'"
 
 #: pack-bitmap.c
 msgid "checksum doesn't match in MIDX and bitmap"
@@ -22335,6 +22549,10 @@ msgid "use <n> digits to display object names"
 msgstr "gunakan <n> digit untuk menampilkan nama objek"
 
 #: parse-options.h
+msgid "prefixed path to initial superproject"
+msgstr "jalur terprefiks ke superproyek awal"
+
+#: parse-options.h
 msgid "how to strip spaces and #comments from message"
 msgstr "bagaimana cara mengupas spasi dan #komentar dari pesan"
 
@@ -22519,6 +22737,11 @@ msgstr ""
 #, c-format
 msgid "promisor remote name cannot begin with '/': %s"
 msgstr "nama remote penjanji tidak dapat diawali dengan '/': %s"
+
+#: promisor-remote.c
+#, c-format
+msgid "could not fetch %s from promisor remote"
+msgstr "tidak dapat mengambil %s dari remote penjanji"
 
 #: protocol-caps.c
 msgid "object-info: expected flush after arguments"
@@ -22932,6 +23155,16 @@ msgstr "di depan %d, di belakang %d"
 
 #: ref-filter.c
 #, c-format
+msgid "%%(%.*s) does not take arguments"
+msgstr "%%(%.*s) tidak mengambil argumen"
+
+#: ref-filter.c
+#, c-format
+msgid "unrecognized %%(%.*s) argument: %s"
+msgstr "argumen %%(%.*s) tidak dikenal: %s"
+
+#: ref-filter.c
+#, c-format
 msgid "expected format: %%(color:<color>)"
 msgstr "format yang diharapkan: %%(color:<warna>)"
 
@@ -22949,26 +23182,6 @@ msgstr "Nilai bilangan bulat diharapkan refname:lstrip=%s"
 #, c-format
 msgid "Integer value expected refname:rstrip=%s"
 msgstr "Nilai bilangan bulat diharapkan refname:rstrip=%s"
-
-#: ref-filter.c
-#, c-format
-msgid "unrecognized %%(%s) argument: %s"
-msgstr "argumen %%(%s) tidak dikenal: %s"
-
-#: ref-filter.c
-#, c-format
-msgid "%%(objecttype) does not take arguments"
-msgstr "%%(objecttype) tidak mengambil argumen"
-
-#: ref-filter.c
-#, c-format
-msgid "%%(deltabase) does not take arguments"
-msgstr "%%(deltabase) tidak mengambil argumen"
-
-#: ref-filter.c
-#, c-format
-msgid "%%(body) does not take arguments"
-msgstr "%%(body) tidak mengambil argumen"
 
 #: ref-filter.c
 #, c-format
@@ -22992,11 +23205,6 @@ msgstr "nilai positif '%s' diharapkan di %%(%s)"
 
 #: ref-filter.c
 #, c-format
-msgid "unrecognized email option: %s"
-msgstr "opsi surel tidak dikenal: %s"
-
-#: ref-filter.c
-#, c-format
 msgid "expected format: %%(align:<width>,<position>)"
 msgstr "format diharapkan: %%(align:<lebar>,<posisi>)"
 
@@ -23012,13 +23220,13 @@ msgstr "lebar tidak dikenal: %s"
 
 #: ref-filter.c
 #, c-format
-msgid "positive width expected with the %%(align) atom"
-msgstr "lebar positif diharapkan dengan atom %%(align)"
+msgid "unrecognized %%(%s) argument: %s"
+msgstr "argumen %%(%s) tidak dikenal: %s"
 
 #: ref-filter.c
 #, c-format
-msgid "%%(rest) does not take arguments"
-msgstr "%%(rest) tidak mengambil argumen"
+msgid "positive width expected with the %%(align) atom"
+msgstr "lebar positif diharapkan dengan atom %%(align)"
 
 #: ref-filter.c
 #, c-format
@@ -23821,6 +24029,15 @@ msgstr "gagal menemukan pohon %s"
 
 #: revision.c
 #, c-format
+msgid "unsupported section for hidden refs: %s"
+msgstr "seksi tidak didukung untuk referensi tersembunyi: %s"
+
+#: revision.c
+msgid "--exclude-hidden= passed more than once"
+msgstr "--exclude-hidden= dilewatkan lebih dari sekali"
+
+#: revision.c
+#, c-format
 msgid "resolve-undo records `%s` which is missing"
 msgstr "resolve-undo merekam `%s` yang dimana hilang"
 
@@ -24004,6 +24221,16 @@ msgstr "scalar reconfigure [--all | <pendaftaran>]"
 #: scalar.c
 msgid "--all or <enlistment>, but not both"
 msgstr "--all atau <pendaftaran>, tetapi bukan kedua-duanya"
+
+#: scalar.c
+#, c-format
+msgid "could not remove stale scalar.repo '%s'"
+msgstr "tidak dapat menghapus scalar.repo basi '%s'"
+
+#: scalar.c
+#, c-format
+msgid "removing stale scalar.repo '%s'"
+msgstr "menghapus scalar.repo basi '%s'"
 
 #: scalar.c
 #, c-format
@@ -24529,6 +24756,28 @@ msgstr "git %s: gagal menyegarkan indeks"
 
 #: sequencer.c
 #, c-format
+msgid "'%s' is not a valid label"
+msgstr "'%s' bukan label valid"
+
+#: sequencer.c
+#, c-format
+msgid "'%s' is not a valid refname"
+msgstr "'%s' bukan nama referensi valid"
+
+#: sequencer.c
+#, c-format
+msgid "update-ref requires a fully qualified refname e.g. refs/heads/%s"
+msgstr ""
+"update-ref memerlukan nama referensi terkualifikasi penuh, misalnya refs/"
+"heads/%s"
+
+#: sequencer.c
+#, c-format
+msgid "invalid command '%.*s'"
+msgstr "perintah tidak valid '%.*s'"
+
+#: sequencer.c
+#, c-format
 msgid "%s does not accept arguments: '%s'"
 msgstr "%s tidak menerima argumen: '%s'"
 
@@ -24763,17 +25012,17 @@ msgid "illegal label name: '%.*s'"
 msgstr "nama label ilegal: '%.*s'"
 
 #: sequencer.c
+#, c-format
+msgid "could not resolve '%s'"
+msgstr "tidak dapat menguraikan '%s'"
+
+#: sequencer.c
 msgid "writing fake root commit"
 msgstr "menulis komit akar palsu"
 
 #: sequencer.c
 msgid "writing squash-onto"
 msgstr "menulis squash-onto"
-
-#: sequencer.c
-#, c-format
-msgid "could not resolve '%s'"
-msgstr "tidak dapat menguraikan '%s'"
 
 #: sequencer.c
 msgid "cannot merge without a current revision"
@@ -25502,100 +25751,129 @@ msgstr "ls-tree kembalikan kode kembali %d yang tak diharapkan"
 msgid "failed to lstat '%s'"
 msgstr "gagal men-lstat '%s'"
 
+#: t/helper/test-bundle-uri.c
+msgid "no remote configured to get bundle URIs from"
+msgstr "tidak ada remote yang dikonfigurasi untuk mendapatkan URI bundel"
+
+#: t/helper/test-bundle-uri.c
+#, c-format
+msgid "remote '%s' has no configured URL"
+msgstr "remote '%s' tidak punya URL terkonfigurasi"
+
+#: t/helper/test-bundle-uri.c
+msgid "could not get the bundle-uri list"
+msgstr "tidak dapat mendapatkan daftar bundle-uri"
+
+#: t/helper/test-cache-tree.c
+msgid "test-tool cache-tree <options> (control|prime|update)"
+msgstr "test-tool cache-tree <opsi> (control|prime|update)"
+
+#: t/helper/test-cache-tree.c
+msgid "clear the cache tree before each iteration"
+msgstr "bersihkan pohon tembolok sebelum setiap iterasi"
+
+#: t/helper/test-cache-tree.c
+msgid "number of entries in the cache tree to invalidate (default 0)"
+msgstr "jumlah entri di dalam pohon tembolok untuk dinirvalidasi (asali 0)"
+
 #: t/helper/test-fast-rebase.c
 msgid "unhandled options"
-msgstr ""
+msgstr "opsi tak tertangani"
 
 #: t/helper/test-fast-rebase.c
 msgid "error preparing revisions"
-msgstr ""
+msgstr "kesalahan menyiapkan revisi"
 
 #: t/helper/test-reach.c
 #, c-format
 msgid "commit %s is not marked reachable"
-msgstr ""
+msgstr "komit %s tidak ditandai sebagai dapat dicapai"
 
 #: t/helper/test-reach.c
 msgid "too many commits marked reachable"
-msgstr ""
+msgstr "terlalu banyak komit yang ditandai sebagai dapat dicapai"
 
 #: t/helper/test-serve-v2.c
 msgid "test-tool serve-v2 [<options>]"
-msgstr ""
+msgstr "test-tool serve-v2 [<opsi>]"
 
 #: t/helper/test-serve-v2.c
 msgid "exit immediately after advertising capabilities"
-msgstr ""
+msgstr "langsung keluar setelah mengiklankan kemampuan"
 
 #: t/helper/test-simple-ipc.c
 msgid "test-helper simple-ipc is-active    [<name>] [<options>]"
-msgstr ""
+msgstr "test-helper simple-ipc is-active    [<nama>] [<opsi>]"
 
 #: t/helper/test-simple-ipc.c
 msgid "test-helper simple-ipc run-daemon   [<name>] [<threads>]"
-msgstr ""
+msgstr "test-helper simple-ipc run-daemon   [<nama>] [<utas>]"
 
 #: t/helper/test-simple-ipc.c
 msgid "test-helper simple-ipc start-daemon [<name>] [<threads>] [<max-wait>]"
 msgstr ""
+"test-helper simple-ipc start-daemon [<nama>] [<utas>] [<tunggu maksimum>]"
 
 #: t/helper/test-simple-ipc.c
 msgid "test-helper simple-ipc stop-daemon  [<name>] [<max-wait>]"
-msgstr ""
+msgstr "test-helper simple-ipc stop-daemon  [<nama> [<tunggu maksimum>]"
 
 #: t/helper/test-simple-ipc.c
 msgid "test-helper simple-ipc send         [<name>] [<token>]"
-msgstr ""
+msgstr "test-helper simple-ipc send         [<nama>] [<token>]"
 
 #: t/helper/test-simple-ipc.c
 msgid "test-helper simple-ipc sendbytes    [<name>] [<bytecount>] [<byte>]"
 msgstr ""
+"test-helper simple-ipc sendbytes    [<nama>] [<hitungan bita>] [<bita>]"
 
 #: t/helper/test-simple-ipc.c
 msgid ""
 "test-helper simple-ipc multiple     [<name>] [<threads>] [<bytecount>] "
 "[<batchsize>]"
 msgstr ""
+"test-helper simple-ipc multiple     [<nama>] [<utas>] [<hitungan bita>] "
+"[<ukuran batch>]"
 
 #: t/helper/test-simple-ipc.c
 msgid "name or pathname of unix domain socket"
-msgstr ""
+msgstr "nama atau nama jalur soket domain unix"
 
 #: t/helper/test-simple-ipc.c
 msgid "named-pipe name"
-msgstr ""
+msgstr "nama pipa bernama"
 
 #: t/helper/test-simple-ipc.c
 msgid "number of threads in server thread pool"
-msgstr ""
+msgstr "jumlah utas pada kolam utas peladen"
 
 #: t/helper/test-simple-ipc.c
 msgid "seconds to wait for daemon to start or stop"
-msgstr ""
+msgstr "waktu menunggu daemon dimulai atau dihentikan (dalam detik)"
 
 #: t/helper/test-simple-ipc.c
 msgid "number of bytes"
-msgstr ""
+msgstr "jumlah bita"
 
 #: t/helper/test-simple-ipc.c
 msgid "number of requests per thread"
-msgstr ""
+msgstr "jumlah permintaan tiap utas"
 
 #: t/helper/test-simple-ipc.c
 msgid "byte"
-msgstr ""
+msgstr "bita"
 
 #: t/helper/test-simple-ipc.c
 msgid "ballast character"
-msgstr ""
+msgstr "karakter pemberat"
 
 #: t/helper/test-simple-ipc.c
 msgid "token"
-msgstr ""
+msgstr "token"
 
 #: t/helper/test-simple-ipc.c
 msgid "command token to send to the server"
-msgstr ""
+msgstr "token perintah untuk dikirim ke peladen"
 
 #: trailer.c
 #, c-format
@@ -25926,6 +26204,14 @@ msgstr "Membatalkan."
 #: transport.c
 msgid "failed to push all needed submodules"
 msgstr "gagal mendorong semua submodul yang dibutuhkan"
+
+#: transport.c
+msgid "bundle-uri operation not supported by protocol"
+msgstr "operasi bundle-uri tidak didukung oleh protokol"
+
+#: transport.c
+msgid "could not retrieve server-advertised bundle-uri list"
+msgstr "tidak dapat menerima daftar bundle-uri teriklankan server"
 
 #: tree-walk.c
 msgid "too-short tree object"
@@ -26831,13 +27117,22 @@ msgstr "Berkas yang diabaikan"
 #: wt-status.c
 #, c-format
 msgid ""
-"It took %.2f seconds to enumerate untracked files. 'status -uno'\n"
-"may speed it up, but you have to be careful not to forget to add\n"
-"new files yourself (see 'git help status')."
+"It took %.2f seconds to enumerate untracked files,\n"
+"but the results were cached, and subsequent runs may be faster."
 msgstr ""
-"Butuh %.2f detik untuk menghitung berkas tak terlacak. 'status -uno'\n"
-"mungkin bisa mempercepat, tapi Anda harus berhati-hati jangan sampai lupa\n"
-"untuk tambahkan berkas baru sendiri (lihat 'git help status')."
+"Butuh %.2f detik untuk mengenumerasikan berkas tak terlacak,\n"
+"tapi hasilnya ditembolokkan, dan invokasi berikutnya mungkin\n"
+"lebih cepat."
+
+#: wt-status.c
+#, c-format
+msgid "It took %.2f seconds to enumerate untracked files."
+msgstr "Butuh %.2f detik untuk mengenumerasikan berkas tak terlacak."
+
+#: wt-status.c
+msgid "See 'git help status' for information on how to improve this."
+msgstr ""
+"Lihat 'git help status' untuk informasi bagaimana meningkatkankeadaan ini."
 
 #: wt-status.c
 #, c-format
@@ -27015,241 +27310,6 @@ msgstr "Anda perlu menjalankan perintah ini dari level atas dari pohon kerja."
 #: git-sh-setup.sh
 msgid "Unable to determine absolute path of git directory"
 msgstr "Tidak dapat menentukan jalur absolut direktori git"
-
-#. TRANSLATORS: you can adjust this to align "git add -i" status menu
-#: git-add--interactive.perl
-#, perl-format
-msgid "%12s %12s %s"
-msgstr ""
-
-#: git-add--interactive.perl
-#, perl-format
-msgid "touched %d path\n"
-msgid_plural "touched %d paths\n"
-msgstr[0] ""
-msgstr[1] ""
-
-#: git-add--interactive.perl
-msgid ""
-"If the patch applies cleanly, the edited hunk will immediately be\n"
-"marked for staging."
-msgstr ""
-
-#: git-add--interactive.perl
-msgid ""
-"If the patch applies cleanly, the edited hunk will immediately be\n"
-"marked for stashing."
-msgstr ""
-
-#: git-add--interactive.perl
-msgid ""
-"If the patch applies cleanly, the edited hunk will immediately be\n"
-"marked for unstaging."
-msgstr ""
-
-#: git-add--interactive.perl
-msgid ""
-"If the patch applies cleanly, the edited hunk will immediately be\n"
-"marked for applying."
-msgstr ""
-
-#: git-add--interactive.perl
-msgid ""
-"If the patch applies cleanly, the edited hunk will immediately be\n"
-"marked for discarding."
-msgstr ""
-
-#: git-add--interactive.perl
-#, perl-format
-msgid "failed to open hunk edit file for writing: %s"
-msgstr ""
-
-#: git-add--interactive.perl
-#, perl-format
-msgid ""
-"---\n"
-"To remove '%s' lines, make them ' ' lines (context).\n"
-"To remove '%s' lines, delete them.\n"
-"Lines starting with %s will be removed.\n"
-msgstr ""
-
-#: git-add--interactive.perl
-#, perl-format
-msgid "failed to open hunk edit file for reading: %s"
-msgstr ""
-
-#: git-add--interactive.perl
-msgid ""
-"y - stage this hunk\n"
-"n - do not stage this hunk\n"
-"q - quit; do not stage this hunk or any of the remaining ones\n"
-"a - stage this hunk and all later hunks in the file\n"
-"d - do not stage this hunk or any of the later hunks in the file"
-msgstr ""
-
-#: git-add--interactive.perl
-msgid ""
-"y - stash this hunk\n"
-"n - do not stash this hunk\n"
-"q - quit; do not stash this hunk or any of the remaining ones\n"
-"a - stash this hunk and all later hunks in the file\n"
-"d - do not stash this hunk or any of the later hunks in the file"
-msgstr ""
-
-#: git-add--interactive.perl
-msgid ""
-"y - unstage this hunk\n"
-"n - do not unstage this hunk\n"
-"q - quit; do not unstage this hunk or any of the remaining ones\n"
-"a - unstage this hunk and all later hunks in the file\n"
-"d - do not unstage this hunk or any of the later hunks in the file"
-msgstr ""
-
-#: git-add--interactive.perl
-msgid ""
-"y - apply this hunk to index\n"
-"n - do not apply this hunk to index\n"
-"q - quit; do not apply this hunk or any of the remaining ones\n"
-"a - apply this hunk and all later hunks in the file\n"
-"d - do not apply this hunk or any of the later hunks in the file"
-msgstr ""
-
-#: git-add--interactive.perl
-msgid ""
-"y - discard this hunk from worktree\n"
-"n - do not discard this hunk from worktree\n"
-"q - quit; do not discard this hunk or any of the remaining ones\n"
-"a - discard this hunk and all later hunks in the file\n"
-"d - do not discard this hunk or any of the later hunks in the file"
-msgstr ""
-
-#: git-add--interactive.perl
-msgid ""
-"y - discard this hunk from index and worktree\n"
-"n - do not discard this hunk from index and worktree\n"
-"q - quit; do not discard this hunk or any of the remaining ones\n"
-"a - discard this hunk and all later hunks in the file\n"
-"d - do not discard this hunk or any of the later hunks in the file"
-msgstr ""
-
-#: git-add--interactive.perl
-msgid ""
-"y - apply this hunk to index and worktree\n"
-"n - do not apply this hunk to index and worktree\n"
-"q - quit; do not apply this hunk or any of the remaining ones\n"
-"a - apply this hunk and all later hunks in the file\n"
-"d - do not apply this hunk or any of the later hunks in the file"
-msgstr ""
-
-#: git-add--interactive.perl
-msgid ""
-"y - apply this hunk to worktree\n"
-"n - do not apply this hunk to worktree\n"
-"q - quit; do not apply this hunk or any of the remaining ones\n"
-"a - apply this hunk and all later hunks in the file\n"
-"d - do not apply this hunk or any of the later hunks in the file"
-msgstr ""
-
-#: git-add--interactive.perl
-msgid ""
-"g - select a hunk to go to\n"
-"/ - search for a hunk matching the given regex\n"
-"j - leave this hunk undecided, see next undecided hunk\n"
-"J - leave this hunk undecided, see next hunk\n"
-"k - leave this hunk undecided, see previous undecided hunk\n"
-"K - leave this hunk undecided, see previous hunk\n"
-"s - split the current hunk into smaller hunks\n"
-"e - manually edit the current hunk\n"
-"? - print help\n"
-msgstr ""
-
-#: git-add--interactive.perl
-msgid "The selected hunks do not apply to the index!\n"
-msgstr ""
-
-#: git-add--interactive.perl
-#, perl-format
-msgid "ignoring unmerged: %s\n"
-msgstr ""
-
-#: git-add--interactive.perl
-msgid "No other hunks to goto\n"
-msgstr ""
-
-#: git-add--interactive.perl
-#, perl-format
-msgid "Invalid number: '%s'\n"
-msgstr ""
-
-#: git-add--interactive.perl
-#, perl-format
-msgid "Sorry, only %d hunk available.\n"
-msgid_plural "Sorry, only %d hunks available.\n"
-msgstr[0] ""
-msgstr[1] ""
-
-#: git-add--interactive.perl
-msgid "No other hunks to search\n"
-msgstr ""
-
-#: git-add--interactive.perl
-#, perl-format
-msgid "Malformed search regexp %s: %s\n"
-msgstr ""
-
-#: git-add--interactive.perl
-msgid "No hunk matches the given pattern\n"
-msgstr ""
-
-#: git-add--interactive.perl
-msgid "No previous hunk\n"
-msgstr ""
-
-#: git-add--interactive.perl
-msgid "No next hunk\n"
-msgstr ""
-
-#: git-add--interactive.perl
-msgid "Sorry, cannot split this hunk\n"
-msgstr ""
-
-#: git-add--interactive.perl
-#, perl-format
-msgid "Split into %d hunk.\n"
-msgid_plural "Split into %d hunks.\n"
-msgstr[0] ""
-msgstr[1] ""
-
-#: git-add--interactive.perl
-msgid "Sorry, cannot edit this hunk\n"
-msgstr ""
-
-#. TRANSLATORS: please do not translate the command names
-#. 'status', 'update', 'revert', etc.
-#: git-add--interactive.perl
-msgid ""
-"status        - show paths with changes\n"
-"update        - add working tree state to the staged set of changes\n"
-"revert        - revert staged set of changes back to the HEAD version\n"
-"patch         - pick hunks and update selectively\n"
-"diff          - view diff between HEAD and index\n"
-"add untracked - add contents of untracked files to the staged set of "
-"changes\n"
-msgstr ""
-
-#: git-add--interactive.perl
-msgid "missing --"
-msgstr ""
-
-#: git-add--interactive.perl
-#, perl-format
-msgid "unknown --patch mode: %s"
-msgstr ""
-
-#: git-add--interactive.perl
-#, perl-format
-msgid "invalid argument %s, expecting --"
-msgstr ""
 
 #: git-send-email.perl
 msgid "local zone differs from GMT by a non-minute interval\n"

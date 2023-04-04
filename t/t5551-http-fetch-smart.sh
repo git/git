@@ -1,12 +1,18 @@
 #!/bin/sh
 
-test_description='test smart fetching over http via http-backend'
+: ${HTTP_PROTO:=HTTP/1.1}
+test_description="test smart fetching over http via http-backend ($HTTP_PROTO)"
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-httpd.sh
+test "$HTTP_PROTO" = "HTTP/2" && enable_http2
 start_httpd
+
+test_expect_success HTTP2 'enable client-side http/2' '
+	git config --global http.version HTTP/2
+'
 
 test_expect_success 'setup repository' '
 	git config push.default matching &&
@@ -27,35 +33,71 @@ test_expect_success 'create http-accessible bare repository' '
 setup_askpass_helper
 
 test_expect_success 'clone http repository' '
-	cat >exp <<-\EOF &&
-	> GET /smart/repo.git/info/refs?service=git-upload-pack HTTP/1.1
-	> Accept: */*
-	> Accept-Encoding: ENCODINGS
-	> Accept-Language: ko-KR, *;q=0.9
-	> Pragma: no-cache
-	< HTTP/1.1 200 OK
-	< Pragma: no-cache
-	< Cache-Control: no-cache, max-age=0, must-revalidate
-	< Content-Type: application/x-git-upload-pack-advertisement
-	> POST /smart/repo.git/git-upload-pack HTTP/1.1
-	> Accept-Encoding: ENCODINGS
-	> Content-Type: application/x-git-upload-pack-request
-	> Accept: application/x-git-upload-pack-result
-	> Accept-Language: ko-KR, *;q=0.9
-	> Content-Length: xxx
-	< HTTP/1.1 200 OK
-	< Pragma: no-cache
-	< Cache-Control: no-cache, max-age=0, must-revalidate
-	< Content-Type: application/x-git-upload-pack-result
+	if test_have_prereq HTTP2 && test "$HTTPD_PROTO" = "https"
+	then
+		# ALPN lets us immediately use HTTP/2; likewise, POSTs with
+		# bodies can use it because they do not need to upgrade
+		INITIAL_PROTO=HTTP/2
+	else
+		# either we are not using HTTP/2, or the initial
+		# request is sent via HTTP/1.1 and asks for upgrade
+		INITIAL_PROTO=HTTP/1.1
+	fi &&
+
+	cat >exp.raw <<-EOF &&
+	> GET /smart/repo.git/info/refs?service=git-upload-pack $INITIAL_PROTO
+	> accept: */*
+	> accept-encoding: ENCODINGS
+	> accept-language: ko-KR, *;q=0.9
+	> pragma: no-cache
+	{V2} > git-protocol: version=2
+	< $HTTP_PROTO 200 OK
+	< pragma: no-cache
+	< cache-control: no-cache, max-age=0, must-revalidate
+	< content-type: application/x-git-upload-pack-advertisement
+	> POST /smart/repo.git/git-upload-pack $INITIAL_PROTO
+	> accept-encoding: ENCODINGS
+	> content-type: application/x-git-upload-pack-request
+	> accept: application/x-git-upload-pack-result
+	> accept-language: ko-KR, *;q=0.9
+	{V2} > git-protocol: version=2
+	> content-length: xxx
+	< $INITIAL_PROTO 200 OK
+	< pragma: no-cache
+	< cache-control: no-cache, max-age=0, must-revalidate
+	< content-type: application/x-git-upload-pack-result
+	{V2} > POST /smart/repo.git/git-upload-pack $INITIAL_PROTO
+	{V2} > accept-encoding: ENCODINGS
+	{V2} > content-type: application/x-git-upload-pack-request
+	{V2} > accept: application/x-git-upload-pack-result
+	{V2} > accept-language: ko-KR, *;q=0.9
+	{V2} > git-protocol: version=2
+	{V2} > content-length: xxx
+	{V2} < $INITIAL_PROTO 200 OK
+	{V2} < pragma: no-cache
+	{V2} < cache-control: no-cache, max-age=0, must-revalidate
+	{V2} < content-type: application/x-git-upload-pack-result
 	EOF
 
-	GIT_TRACE_CURL=true GIT_TEST_PROTOCOL_VERSION=0 LANGUAGE="ko_KR.UTF-8" \
+	if test "$GIT_TEST_PROTOCOL_VERSION" = 0
+	then
+		sed "/^{V2}/d" <exp.raw >exp
+	else
+		sed "s/^{V2} //" <exp.raw >exp
+	fi &&
+
+	GIT_TRACE_CURL=true LANGUAGE="ko_KR.UTF-8" \
 		git clone --quiet $HTTPD_URL/smart/repo.git clone 2>err &&
 	test_cmp file clone/file &&
 	tr '\''\015'\'' Q <err |
+	perl -pe '\''
+		s/(Send|Recv) header: ([A-Za-z0-9-]+):/
+		"$1 header: " . lc($2) . ":"
+		/e;
+	'\'' |
 	sed -e "
 		s/Q\$//
-		/^[*] /d
+		/^[^<=]/d
 		/^== Info:/d
 		/^=> Send header, /d
 		/^=> Send header:$/d
@@ -65,6 +107,8 @@ test_expect_success 'clone http repository' '
 		s/= Recv header://
 		/^<= Recv data/d
 		/^=> Send data/d
+		/^<= Recv SSL data/d
+		/^=> Send SSL data/d
 		/^$/d
 		/^< $/d
 
@@ -72,36 +116,35 @@ test_expect_success 'clone http repository' '
 			s/^/> /
 		}
 
-		/^> User-Agent: /d
-		/^> Host: /d
+		/^< HTTP/ {
+			s/200$/200 OK/
+		}
+		/^< HTTP\\/1.1 101/d
+		/^[><] connection: /d
+		/^[><] upgrade: /d
+		/^> http2-settings: /d
+
+		/^> user-agent: /d
+		/^> host: /d
 		/^> POST /,$ {
 			/^> Accept: [*]\\/[*]/d
 		}
-		s/^> Content-Length: .*/> Content-Length: xxx/
+		s/^> content-length: .*/> content-length: xxx/
 		/^> 00..want /d
 		/^> 00.*done/d
 
-		/^< Server: /d
-		/^< Expires: /d
-		/^< Date: /d
-		/^< Content-Length: /d
-		/^< Transfer-Encoding: /d
+		/^< server: /d
+		/^< expires: /d
+		/^< date: /d
+		/^< content-length: /d
+		/^< transfer-encoding: /d
 	" >actual &&
 
-	# NEEDSWORK: If the overspecification of the expected result is reduced, we
-	# might be able to run this test in all protocol versions.
-	if test "$GIT_TEST_PROTOCOL_VERSION" = 0
-	then
-		sed -e "s/^> Accept-Encoding: .*/> Accept-Encoding: ENCODINGS/" \
-				actual >actual.smudged &&
-		test_cmp exp actual.smudged &&
+	sed -e "s/^> accept-encoding: .*/> accept-encoding: ENCODINGS/" \
+			actual >actual.smudged &&
+	test_cmp exp actual.smudged &&
 
-		grep "Accept-Encoding:.*gzip" actual >actual.gzip &&
-		test_line_count = 2 actual.gzip &&
-
-		grep "Accept-Language: ko-KR, *" actual >actual.language &&
-		test_line_count = 2 actual.language
-	fi
+	grep "accept-encoding:.*gzip" actual >actual.gzip
 '
 
 test_expect_success 'fetch changes via http' '
@@ -113,19 +156,9 @@ test_expect_success 'fetch changes via http' '
 '
 
 test_expect_success 'used upload-pack service' '
-	cat >exp <<-\EOF &&
-	GET  /smart/repo.git/info/refs?service=git-upload-pack HTTP/1.1 200
-	POST /smart/repo.git/git-upload-pack HTTP/1.1 200
-	GET  /smart/repo.git/info/refs?service=git-upload-pack HTTP/1.1 200
-	POST /smart/repo.git/git-upload-pack HTTP/1.1 200
-	EOF
-
-	# NEEDSWORK: If the overspecification of the expected result is reduced, we
-	# might be able to run this test in all protocol versions.
-	if test "$GIT_TEST_PROTOCOL_VERSION" = 0
-	then
-		check_access_log exp
-	fi
+	strip_access_log >log &&
+	grep "GET  /smart/repo.git/info/refs?service=git-upload-pack HTTP/[0-9.]* 200" log &&
+	grep "POST /smart/repo.git/git-upload-pack HTTP/[0-9.]* 200" log
 '
 
 test_expect_success 'follow redirects (301)' '
@@ -274,21 +307,23 @@ test_expect_success 'cookies stored in http.cookiefile when http.savecookies set
 	127.0.0.1	FALSE	/smart_cookies/	FALSE	0	othername	othervalue
 	EOF
 	sort >expect_cookies.txt <<-\EOF &&
-
 	127.0.0.1	FALSE	/smart_cookies/	FALSE	0	othername	othervalue
+	127.0.0.1	FALSE	/smart_cookies/repo.git/	FALSE	0	name	value
 	127.0.0.1	FALSE	/smart_cookies/repo.git/info/	FALSE	0	name	value
 	EOF
 	git config http.cookiefile cookies.txt &&
 	git config http.savecookies true &&
-	git ls-remote $HTTPD_URL/smart_cookies/repo.git main &&
 
-	# NEEDSWORK: If the overspecification of the expected result is reduced, we
-	# might be able to run this test in all protocol versions.
-	if test "$GIT_TEST_PROTOCOL_VERSION" = 0
-	then
-		tail -3 cookies.txt | sort >cookies_tail.txt &&
-		test_cmp expect_cookies.txt cookies_tail.txt
-	fi
+	test_when_finished "
+		git --git-dir=\"\$HTTPD_DOCUMENT_ROOT_PATH/repo.git\" \
+			tag -d cookie-tag
+	" &&
+	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/repo.git" \
+		tag -m "foo" cookie-tag &&
+	git fetch $HTTPD_URL/smart_cookies/repo.git cookie-tag &&
+
+	grep "^[^#]" cookies.txt | sort >cookies_stripped.txt &&
+	test_cmp expect_cookies.txt cookies_stripped.txt
 '
 
 test_expect_success 'transfer.hiderefs works over smart-http' '
@@ -347,7 +382,10 @@ test_expect_success CMDLINE_LIMIT \
 test_expect_success 'large fetch-pack requests can be sent using chunked encoding' '
 	GIT_TRACE_CURL=true git -c http.postbuffer=65536 \
 		clone --bare "$HTTPD_URL/smart/repo.git" split.git 2>err &&
-	grep "^=> Send header: Transfer-Encoding: chunked" err
+	{
+		test_have_prereq HTTP2 ||
+		grep "^=> Send header: Transfer-Encoding: chunked" err
+	}
 '
 
 test_expect_success 'test allowreachablesha1inwant' '
@@ -578,6 +616,92 @@ test_expect_success 'passing hostname resolution information works' '
 	BOGUS_HTTPD_URL=$HTTPD_PROTO://$BOGUS_HOST:$LIB_HTTPD_PORT &&
 	test_must_fail git ls-remote "$BOGUS_HTTPD_URL/smart/repo.git" >/dev/null &&
 	git -c "http.curloptResolve=$BOGUS_HOST:$LIB_HTTPD_PORT:127.0.0.1" ls-remote "$BOGUS_HTTPD_URL/smart/repo.git" >/dev/null
+'
+
+# here user%40host is the URL-encoded version of user@host,
+# which is our intentionally-odd username to catch parsing errors
+url_user=$HTTPD_URL_USER/auth/smart/repo.git
+url_userpass=$HTTPD_URL_USER_PASS/auth/smart/repo.git
+url_userblank=$HTTPD_PROTO://user%40host:@$HTTPD_DEST/auth/smart/repo.git
+message="URL .*:<redacted>@.* uses plaintext credentials"
+
+test_expect_success 'clone warns or fails when using username:password' '
+	test_when_finished "rm -rf attempt*" &&
+
+	git -c transfer.credentialsInUrl=allow \
+		clone $url_userpass attempt1 2>err &&
+	! grep "$message" err &&
+
+	git -c transfer.credentialsInUrl=warn \
+		clone $url_userpass attempt2 2>err &&
+	grep "warning: $message" err >warnings &&
+	test_line_count -ge 1 warnings &&
+
+	test_must_fail git -c transfer.credentialsInUrl=die \
+		clone $url_userpass attempt3 2>err &&
+	grep "fatal: $message" err >warnings &&
+	test_line_count -ge 1 warnings &&
+
+	test_must_fail git -c transfer.credentialsInUrl=die \
+		clone $url_userblank attempt4 2>err &&
+	grep "fatal: $message" err >warnings &&
+	test_line_count -ge 1 warnings
+'
+
+test_expect_success 'clone does not detect username:password when it is https://username@domain:port/' '
+	test_when_finished "rm -rf attempt1" &&
+
+	# we are relying on lib-httpd for url construction, so document our
+	# assumptions
+	case "$HTTPD_URL_USER" in
+	*:[0-9]*) : ok ;;
+	*) BUG "httpd url does not have port: $HTTPD_URL_USER"
+	esac &&
+
+	git -c transfer.credentialsInUrl=warn clone $url_user attempt1 2>err &&
+	! grep "uses plaintext credentials" err
+'
+
+test_expect_success 'fetch warns or fails when using username:password' '
+	git -c transfer.credentialsInUrl=allow fetch $url_userpass 2>err &&
+	! grep "$message" err &&
+
+	git -c transfer.credentialsInUrl=warn fetch $url_userpass 2>err &&
+	grep "warning: $message" err >warnings &&
+	test_line_count -ge 1 warnings &&
+
+	test_must_fail git -c transfer.credentialsInUrl=die \
+		fetch $url_userpass 2>err &&
+	grep "fatal: $message" err >warnings &&
+	test_line_count -ge 1 warnings &&
+
+	test_must_fail git -c transfer.credentialsInUrl=die \
+		fetch $url_userblank 2>err &&
+	grep "fatal: $message" err >warnings &&
+	test_line_count -ge 1 warnings
+'
+
+
+test_expect_success 'push warns or fails when using username:password' '
+	git -c transfer.credentialsInUrl=allow push $url_userpass 2>err &&
+	! grep "$message" err &&
+
+	git -c transfer.credentialsInUrl=warn push $url_userpass 2>err &&
+	grep "warning: $message" err >warnings &&
+
+	test_must_fail git -c transfer.credentialsInUrl=die \
+		push $url_userpass 2>err &&
+	grep "fatal: $message" err >warnings &&
+	test_line_count -ge 1 warnings
+'
+
+test_expect_success 'no empty path components' '
+	# In the URL, add a trailing slash, and see if git appends yet another
+	# slash.
+	git clone $HTTPD_URL/smart/repo.git/ clone-with-slash &&
+
+	strip_access_log >log &&
+	! grep "//" log
 '
 
 test_done

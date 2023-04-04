@@ -86,6 +86,11 @@ cases, write an untracked file and use `--add-file` instead.
 	Look for attributes in .gitattributes files in the working tree
 	as well (see <<ATTRIBUTES>>).
 
+--mtime=<time>::
+	Set modification time of archive entries.  Without this option
+	the committer time is used if `<tree-ish>` is a commit or tag,
+	and the current time if it is a tree.
+
 <extra>::
 	This can be any options that the archiver backend understands.
 	See next section.

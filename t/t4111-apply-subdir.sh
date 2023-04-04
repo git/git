@@ -2,6 +2,7 @@
 
 test_description='patching from inconvenient places'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '

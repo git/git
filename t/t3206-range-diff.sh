@@ -33,6 +33,26 @@ test_expect_success 'setup' '
 	u3 sha256:736c4bc
 	u4 sha256:673e77d
 
+	# topic (abbrev=10)
+	t1_abbrev sha1:4de457d2c0
+	t2_abbrev sha1:fccce22f8c
+	t3_abbrev sha1:147e64ef53
+	t4_abbrev sha1:a63e992599
+	t1_abbrev sha256:b89f8b9092
+	t2_abbrev sha256:5f12aadf34
+	t3_abbrev sha256:ea8b273a6c
+	t4_abbrev sha256:14b73361fc
+
+	# unmodified (abbrev=10)
+	u1_abbrev sha1:35b9b25f76
+	u2_abbrev sha1:de345ab3de
+	u3_abbrev sha1:9af6654000
+	u4_abbrev sha1:2901f773f3
+	u1_abbrev sha256:e3731be242
+	u2_abbrev sha256:14fadf8cee
+	u3_abbrev sha256:736c4bcb44
+	u4_abbrev sha256:673e77d589
+
 	# reordered
 	r1 sha1:aca177a
 	r2 sha1:14ad629
@@ -150,6 +170,18 @@ test_expect_success 'simple B...C (unmodified)' '
 test_expect_success 'simple A B C (unmodified)' '
 	git range-diff --no-color main topic unmodified >actual &&
 	# same "expect" as above
+	test_cmp expect actual
+'
+
+test_expect_success 'simple A..B A..C (unmodified) with --abbrev' '
+	git range-diff --no-color --abbrev=10 main..topic main..unmodified \
+		>actual &&
+	cat >expect <<-EOF &&
+	1:  $(test_oid t1_abbrev) = 1:  $(test_oid u1_abbrev) s/5/A/
+	2:  $(test_oid t2_abbrev) = 2:  $(test_oid u2_abbrev) s/4/A/
+	3:  $(test_oid t3_abbrev) = 3:  $(test_oid u3_abbrev) s/11/B/
+	4:  $(test_oid t4_abbrev) = 4:  $(test_oid u4_abbrev) s/12/B/
+	EOF
 	test_cmp expect actual
 '
 

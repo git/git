@@ -80,9 +80,7 @@ void CFRunLoopRun(void);
 void CFRunLoopStop(CFRunLoopRef run_loop);
 CFRunLoopRef CFRunLoopGetCurrent(void);
 extern CFStringRef kCFRunLoopDefaultMode;
-void FSEventStreamScheduleWithRunLoop(FSEventStreamRef stream,
-				      CFRunLoopRef run_loop,
-				      CFStringRef run_loop_mode);
+void FSEventStreamSetDispatchQueue(FSEventStreamRef stream, dispatch_queue_t q);
 unsigned char FSEventStreamStart(FSEventStreamRef stream);
 void FSEventStreamStop(FSEventStreamRef stream);
 void FSEventStreamInvalidate(FSEventStreamRef stream);

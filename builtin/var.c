@@ -5,18 +5,19 @@
  */
 #include "builtin.h"
 #include "config.h"
+#include "ident.h"
 #include "refs.h"
 
 static const char var_usage[] = "git var (-l | <variable>)";
 
 static const char *editor(int flag)
 {
-	const char *pgm = git_editor();
+	return git_editor();
+}
 
-	if (!pgm && flag & IDENT_STRICT)
-		die("Terminal is dumb, but EDITOR unset");
-
-	return pgm;
+static const char *sequence_editor(int flag)
+{
+	return git_sequence_editor();
 }
 
 static const char *pager(int flag)
@@ -41,6 +42,7 @@ static struct git_var git_vars[] = {
 	{ "GIT_COMMITTER_IDENT", git_committer_info },
 	{ "GIT_AUTHOR_IDENT",   git_author_info },
 	{ "GIT_EDITOR", editor },
+	{ "GIT_SEQUENCE_EDITOR", sequence_editor },
 	{ "GIT_PAGER", pager },
 	{ "GIT_DEFAULT_BRANCH", default_branch },
 	{ "", NULL },
@@ -56,18 +58,15 @@ static void list_vars(void)
 			printf("%s=%s\n", ptr->name, val);
 }
 
-static const char *read_var(const char *var)
+static const struct git_var *get_git_var(const char *var)
 {
 	struct git_var *ptr;
-	const char *val;
-	val = NULL;
 	for (ptr = git_vars; ptr->read; ptr++) {
 		if (strcmp(var, ptr->name) == 0) {
-			val = ptr->read(IDENT_STRICT);
-			break;
+			return ptr;
 		}
 	}
-	return val;
+	return NULL;
 }
 
 static int show_config(const char *var, const char *value, void *cb)
@@ -81,7 +80,9 @@ static int show_config(const char *var, const char *value, void *cb)
 
 int cmd_var(int argc, const char **argv, const char *prefix)
 {
-	const char *val = NULL;
+	const struct git_var *git_var;
+	const char *val;
+
 	if (argc != 2)
 		usage(var_usage);
 
@@ -91,9 +92,14 @@ int cmd_var(int argc, const char **argv, const char *prefix)
 		return 0;
 	}
 	git_config(git_default_config, NULL);
-	val = read_var(argv[1]);
-	if (!val)
+
+	git_var = get_git_var(argv[1]);
+	if (!git_var)
 		usage(var_usage);
+
+	val = git_var->read(IDENT_STRICT);
+	if (!val)
+		return 1;
 
 	printf("%s\n", val);
 

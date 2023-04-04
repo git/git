@@ -1,6 +1,7 @@
-#include "builtin.h"
+#include "git-compat-util.h"
 #include "config.h"
 #include "commit.h"
+#include "hex.h"
 #include "refs.h"
 #include "object-store.h"
 #include "pkt-line.h"
@@ -16,6 +17,7 @@
 #include "gpg-interface.h"
 #include "cache.h"
 #include "shallow.h"
+#include "parse-options.h"
 
 int option_parse_push_signed(const struct option *opt,
 			     const char *arg, int unset)

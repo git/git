@@ -1,7 +1,6 @@
 #ifndef TRACE_H
 #define TRACE_H
 
-#include "git-compat-util.h"
 #include "strbuf.h"
 
 /**
@@ -93,7 +92,7 @@ extern struct trace_key trace_default_key;
 extern struct trace_key trace_perf_key;
 extern struct trace_key trace_setup_key;
 
-void trace_repo_setup(const char *prefix);
+void trace_repo_setup(void);
 
 /**
  * Checks whether the trace key is enabled. Used to prevent expensive

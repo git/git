@@ -7,12 +7,6 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
-if test_have_prereq !ADD_I_USE_BUILTIN,!PERL
-then
-	skip_all='skipping add -i (scripted) tests, perl not available'
-	test_done
-fi
-
 diff_cmp () {
 	for x
 	do
@@ -45,6 +39,21 @@ force_color () {
 		"$@"
 	)
 }
+
+test_expect_success 'warn about add.interactive.useBuiltin' '
+	cat >expect <<-\EOF &&
+	warning: the add.interactive.useBuiltin setting has been removed!
+	See its entry in '\''git help config'\'' for details.
+	No changes.
+	EOF
+
+	for v in = =true =false
+	do
+		git -c "add.interactive.useBuiltin$v" add -p >out 2>actual &&
+		test_must_be_empty out &&
+		test_cmp expect actual || return 1
+	done
+'
 
 test_expect_success 'setup (initial)' '
 	echo content >file &&
@@ -296,9 +305,11 @@ test_expect_success FILEMODE 'stage mode and hunk' '
 	echo content >>file &&
 	chmod +x file &&
 	printf "y\\ny\\n" | git add -p &&
-	git diff --cached file | grep "new mode" &&
-	git diff --cached file | grep "+content" &&
-	test -z "$(git diff file)"
+	git diff --cached file >out &&
+	grep "new mode" out &&
+	grep "+content" out &&
+	git diff file >out &&
+	test_must_be_empty out
 '
 
 # end of tests disabled when filemode is not usable
@@ -547,15 +558,7 @@ test_expect_success 'split hunk "add -p (edit)"' '
 	! grep "^+15" actual
 '
 
-test_expect_success 'setup ADD_I_USE_BUILTIN check' '
-	result=success &&
-	if ! test_have_prereq ADD_I_USE_BUILTIN
-	then
-		result=failure
-	fi
-'
-
-test_expect_$result 'split hunk "add -p (no, yes, edit)"' '
+test_expect_success 'split hunk "add -p (no, yes, edit)"' '
 	test_write_lines 5 10 20 21 30 31 40 50 60 >test &&
 	git reset &&
 	# test sequence is s(plit), n(o), y(es), e(dit)
@@ -579,7 +582,7 @@ test_expect_success 'split hunk with incomplete line at end' '
 	test_must_fail git grep --cached before
 '
 
-test_expect_$result 'edit, adding lines to the first hunk' '
+test_expect_success 'edit, adding lines to the first hunk' '
 	test_write_lines 10 11 20 30 40 50 51 60 >test &&
 	git reset &&
 	tr _ " " >patch <<-EOF &&
@@ -1066,6 +1069,27 @@ test_expect_success 'show help from add--helper' '
 	test_write_lines h | force_color git add -i >actual.colored &&
 	test_decode_color <actual.colored >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'reset -p with unmerged files' '
+	test_when_finished "git checkout --force main" &&
+	test_commit one conflict &&
+	git checkout -B side HEAD^ &&
+	test_commit two conflict &&
+	test_must_fail git merge one &&
+
+	# this is a noop with only an unmerged entry
+	git reset -p &&
+
+	# add files that sort before and after unmerged entry
+	echo a >a &&
+	echo z >z &&
+	git add a z &&
+
+	# confirm that we can reset those files
+	printf "%s\n" y y | git reset -p &&
+	git diff-index --cached --diff-filter=u HEAD >staged &&
+	test_must_be_empty staged
 '
 
 test_done

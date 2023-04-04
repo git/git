@@ -1,5 +1,7 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "commit.h"
+#include "hex.h"
 #include "strbuf.h"
 #include "tag.h"
 #include "diff.h"
@@ -354,8 +356,8 @@ static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
 	if (bitmap_git->pack || bitmap_git->midx) {
 		struct strbuf buf = STRBUF_INIT;
 		get_midx_filename(&buf, midx->object_dir);
-		/* ignore extra bitmap file; we can only handle one */
-		warning(_("ignoring extra bitmap file: '%s'"), buf.buf);
+		trace2_data_string("bitmap", the_repository,
+				   "ignoring extra midx bitmap file", buf.buf);
 		close(fd);
 		strbuf_release(&buf);
 		return -1;
@@ -411,9 +413,6 @@ static int open_pack_bitmap_1(struct bitmap_index *bitmap_git, struct packed_git
 	struct stat st;
 	char *bitmap_name;
 
-	if (open_pack_index(packfile))
-		return -1;
-
 	bitmap_name = pack_bitmap_filename(packfile);
 	fd = git_open(bitmap_name);
 
@@ -432,8 +431,8 @@ static int open_pack_bitmap_1(struct bitmap_index *bitmap_git, struct packed_git
 	}
 
 	if (bitmap_git->pack || bitmap_git->midx) {
-		/* ignore extra bitmap file; we can only handle one */
-		warning(_("ignoring extra bitmap file: '%s'"), packfile->pack_name);
+		trace2_data_string("bitmap", the_repository,
+				   "ignoring extra bitmap file", packfile->pack_name);
 		close(fd);
 		return -1;
 	}
@@ -458,6 +457,8 @@ static int open_pack_bitmap_1(struct bitmap_index *bitmap_git, struct packed_git
 		return -1;
 	}
 
+	trace2_data_string("bitmap", the_repository, "opened bitmap file",
+			   packfile->pack_name);
 	return 0;
 }
 
@@ -525,11 +526,16 @@ static int open_pack_bitmap(struct repository *r,
 	struct packed_git *p;
 	int ret = -1;
 
-	assert(!bitmap_git->map);
-
 	for (p = get_all_packs(r); p; p = p->next) {
-		if (open_pack_bitmap_1(bitmap_git, p) == 0)
+		if (open_pack_bitmap_1(bitmap_git, p) == 0) {
 			ret = 0;
+			/*
+			 * The only reason to keep looking is to report
+			 * duplicates.
+			 */
+			if (!trace2_is_enabled())
+				break;
+		}
 	}
 
 	return ret;
@@ -553,11 +559,20 @@ static int open_midx_bitmap(struct repository *r,
 static int open_bitmap(struct repository *r,
 		       struct bitmap_index *bitmap_git)
 {
+	int found;
+
 	assert(!bitmap_git->map);
 
-	if (!open_midx_bitmap(r, bitmap_git))
-		return 0;
-	return open_pack_bitmap(r, bitmap_git);
+	found = !open_midx_bitmap(r, bitmap_git);
+
+	/*
+	 * these will all be skipped if we opened a midx bitmap; but run it
+	 * anyway if tracing is enabled to report the duplicates
+	 */
+	if (!found || trace2_is_enabled())
+		found |= !open_pack_bitmap(r, bitmap_git);
+
+	return found ? 0 : -1;
 }
 
 struct bitmap_index *prepare_bitmap_git(struct repository *r)
@@ -938,7 +953,8 @@ static void show_object(struct object *object, const char *name, void *data_)
 	bitmap_set(data->base, bitmap_pos);
 }
 
-static void show_commit(struct commit *commit, void *data)
+static void show_commit(struct commit *commit UNUSED,
+			void *data UNUSED)
 {
 }
 
@@ -1927,7 +1943,8 @@ static void test_bitmap_type(struct bitmap_test_data *tdata,
 		    type_name(bitmap_type));
 }
 
-static void test_show_object(struct object *object, const char *name,
+static void test_show_object(struct object *object,
+			     const char *name UNUSED,
 			     void *data)
 {
 	struct bitmap_test_data *tdata = data;
