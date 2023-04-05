@@ -6518,7 +6518,18 @@ static void diff_flush_patch_all_file_pairs(struct diff_options *o)
 	if (o->additional_path_headers)
 		create_filepairs_for_header_only_notifications(o);
 
+	struct timespec start_time, current_time;
+    clock_gettime(CLOCK_MONOTONIC, &start_time);
+    const int TIMEOUT_SEC = 5;
 	for (i = 0; i < q->nr; i++) {
+		clock_gettime(CLOCK_MONOTONIC, &current_time);
+        double elapsed_time = (double)(current_time.tv_sec - start_time.tv_sec) +
+                              (double)(current_time.tv_nsec - start_time.tv_nsec) / 1e9;
+        if (elapsed_time >= TIMEOUT_SEC) {
+            fprintf(stderr, "Diff operation timed out on patches: %d/%d\n", i, q->nr);
+			break;
+		}
+
 		struct diff_filepair *p = q->queue[i];
 		if (check_pair_status(p))
 			diff_flush_patch(p, o);

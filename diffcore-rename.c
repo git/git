@@ -1578,7 +1578,17 @@ void diffcore_rename_extended(struct diff_options *options,
 	}
 
 	CALLOC_ARRAY(mx, st_mult(NUM_CANDIDATE_PER_DST, num_destinations));
+	struct timespec start_time, current_time;
+    clock_gettime(CLOCK_MONOTONIC, &start_time);
+    const int TIMEOUT_SEC = 5;
 	for (dst_cnt = i = 0; i < rename_dst_nr; i++) {
+		clock_gettime(CLOCK_MONOTONIC, &current_time);
+        double elapsed_time = (double)(current_time.tv_sec - start_time.tv_sec) +
+                              (double)(current_time.tv_nsec - start_time.tv_nsec) / 1e9;
+        if (elapsed_time >= TIMEOUT_SEC) {
+            fprintf(stderr, "rename operation timed out on rename: %d/%d\n", i, rename_dst_nr);
+			break;
+		}
 		struct diff_filespec *two = rename_dst[i].p->two;
 		struct diff_score *m;
 
