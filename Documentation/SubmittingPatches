@@ -543,7 +543,7 @@ trigger a new CI build to ensure all tests pass.
 [[mua]]
 == MUA specific hints
 
-Some of patches I receive or pick up from the list share common
+Some of the patches I receive or pick up from the list share common
 patterns of breakage.  Please make sure your MUA is set up
 properly not to corrupt whitespaces.
 
