@@ -19,6 +19,7 @@
 #include "pathspec.h"
 #include "help.h"
 #include "prompt.h"
+#include "advice.h"
 
 static int force = -1; /* unset */
 static int interactive;
