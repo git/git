@@ -66,6 +66,20 @@ Performance, Internal Implementation, Development Support etc.
  * Code clean-up to include and/or uninclude parse-options.h file as
    needed.
 
+ * The code path that reports what "git fetch" did to each ref has
+   been cleaned up.
+
+ * Assorted config API updates.
+
+ * A few configuration variables to tell the cURL library that
+   different types of ssl-cert and ssl-key are in use have been added.
+
+ * Split key function and data structure definitions out of cache.h to
+   new header files and adjust the users.
+
+ * "git fetch --all" does not have to download and handle the same
+   bundleURI over and over, which has been corrected.
+
 
 Fixes since v2.40
 -----------------
@@ -155,6 +169,12 @@ Fixes since v2.40
    output are for and what they mean.
    (merge 15364d2a3c jk/document-rev-list-object-name later to maint).
 
+ * Fix unnecessary truncation of generation numbers used in-core.
+   (merge d3af1c193d ps/ahead-behind-truncation-fix later to maint).
+
+ * Code clean-up around the use of the_repository.
+   (merge 4a93b899c1 ab/remove-implicit-use-of-the-repository later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f7111175df as/doc-markup-fix later to maint).
    (merge 90ff7c9898 fc/test-aggregation-clean-up later to maint).
@@ -167,3 +187,5 @@ Fixes since v2.40
    (merge 2da2cc9b28 ob/rollback-after-commit-lock-failure later to maint).
    (merge 54dbd0933b ob/sequencer-save-head-simplify later to maint).
    (merge a93cbe8d78 ar/test-cleanup-unused-file-creation later to maint).
+   (merge cc48ddd937 jk/chainlint-fixes later to maint).
+   (merge 4833b08426 ow/ref-format-remove-unused-member later to maint).
