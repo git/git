@@ -2,6 +2,7 @@
 #include "cache.h"
 #include "hex.h"
 #include "oidmap.h"
+#include "setup.h"
 #include "strbuf.h"
 
 /* key is an oid and value is a name (could be a refname for example) */

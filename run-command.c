@@ -1,6 +1,8 @@
 #include "cache.h"
 #include "run-command.h"
+#include "environment.h"
 #include "exec-cmd.h"
+#include "gettext.h"
 #include "sigchain.h"
 #include "strvec.h"
 #include "thread-utils.h"

@@ -1,6 +1,7 @@
 #include "test-tool.h"
 #include "cache.h"
 #include "hex.h"
+#include "setup.h"
 #include "tree.h"
 
 int cmd__match_trees(int ac UNUSED, const char **av)

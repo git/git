@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "gettext.h"
 #include "hex.h"
 #include "walker.h"
 #include "repository.h"

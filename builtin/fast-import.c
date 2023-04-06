@@ -1,5 +1,8 @@
 #include "builtin.h"
+#include "abspath.h"
 #include "cache.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "repository.h"
 #include "config.h"
@@ -21,6 +24,7 @@
 #include "commit-reach.h"
 #include "khash.h"
 #include "date.h"
+#include "wrapper.h"
 
 #define PACK_ID_BITS 16
 #define MAX_PACK_ID ((1<<PACK_ID_BITS)-1)

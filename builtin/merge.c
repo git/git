@@ -8,8 +8,11 @@
 
 #define USE_THE_INDEX_VARIABLE
 #include "cache.h"
+#include "abspath.h"
 #include "alloc.h"
 #include "config.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "parse-options.h"
 #include "builtin.h"
@@ -46,6 +49,7 @@
 #include "commit-reach.h"
 #include "wt-status.h"
 #include "commit-graph.h"
+#include "wrapper.h"
 
 #define DEFAULT_TWOHEAD (1<<0)
 #define DEFAULT_OCTOPUS (1<<1)

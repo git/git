@@ -7,6 +7,8 @@
 #include "cache.h"
 #include "bulk-checkin.h"
 #include "config.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "lockfile.h"
 #include "quote.h"
@@ -18,8 +20,10 @@
 #include "parse-options.h"
 #include "pathspec.h"
 #include "dir.h"
+#include "setup.h"
 #include "split-index.h"
 #include "fsmonitor.h"
+#include "write-or-die.h"
 
 /*
  * Default to not allowing changes to the list of files. The

@@ -1,9 +1,9 @@
 #include "test-tool.h"
-#include "cache.h"
 #include "commit-graph.h"
 #include "repository.h"
 #include "object-store.h"
 #include "bloom.h"
+#include "setup.h"
 
 int cmd__read_graph(int argc UNUSED, const char **argv UNUSED)
 {

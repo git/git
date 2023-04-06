@@ -7,8 +7,10 @@
 #include "cache.h"
 #include "parse-options.h"
 #include "fsmonitor-ipc.h"
+#include "setup.h"
 #include "thread-utils.h"
 #include "trace2.h"
+#include "wrapper.h"
 
 #ifndef HAVE_FSMONITOR_DAEMON_BACKEND
 int cmd__fsmonitor_client(int argc UNUSED, const char **argv UNUSED)

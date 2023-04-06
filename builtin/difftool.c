@@ -13,10 +13,13 @@
  */
 #define USE_THE_INDEX_VARIABLE
 #include "cache.h"
+#include "abspath.h"
 #include "config.h"
 #include "builtin.h"
 #include "run-command.h"
+#include "environment.h"
 #include "exec-cmd.h"
+#include "gettext.h"
 #include "hex.h"
 #include "parse-options.h"
 #include "strvec.h"
@@ -25,6 +28,8 @@
 #include "object-store.h"
 #include "dir.h"
 #include "entry.h"
+#include "setup.h"
+#include "wrapper.h"
 
 static int trust_exit_code;
 

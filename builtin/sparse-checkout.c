@@ -2,6 +2,8 @@
 #include "cache.h"
 #include "config.h"
 #include "dir.h"
+#include "environment.h"
+#include "gettext.h"
 #include "parse-options.h"
 #include "pathspec.h"
 #include "repository.h"
@@ -14,6 +16,7 @@
 #include "unpack-trees.h"
 #include "wt-status.h"
 #include "quote.h"
+#include "setup.h"
 #include "sparse-index.h"
 #include "worktree.h"
 

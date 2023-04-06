@@ -6,6 +6,7 @@
 #include "tar.h"
 #include "builtin.h"
 #include "quote.h"
+#include "wrapper.h"
 
 static const char builtin_get_tar_commit_id_usage[] =
 "git get-tar-commit-id";

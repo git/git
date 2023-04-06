@@ -6,9 +6,12 @@
  * This handles basic git object files - packing, unpacking,
  * creation etc.
  */
-#include "git-compat-util.h"
+#include "cache.h"
+#include "abspath.h"
 #include "alloc.h"
 #include "config.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "string-list.h"
 #include "lockfile.h"
@@ -34,8 +37,10 @@
 #include "packfile.h"
 #include "object-store.h"
 #include "promisor-remote.h"
+#include "setup.h"
 #include "submodule.h"
 #include "fsck.h"
+#include "wrapper.h"
 
 /* The maximum size for an object header. */
 #define MAX_HEADER_LEN 32

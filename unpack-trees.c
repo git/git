@@ -3,6 +3,8 @@
 #include "repository.h"
 #include "config.h"
 #include "dir.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "tree.h"
 #include "tree-walk.h"
@@ -20,6 +22,7 @@
 #include "promisor-remote.h"
 #include "entry.h"
 #include "parallel-checkout.h"
+#include "setup.h"
 
 /*
  * Error messages expected by scripts out of plumbing commands such as

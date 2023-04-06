@@ -2,6 +2,7 @@
 #include "tree-walk.h"
 #include "alloc.h"
 #include "dir.h"
+#include "gettext.h"
 #include "hex.h"
 #include "object-store.h"
 #include "tree.h"

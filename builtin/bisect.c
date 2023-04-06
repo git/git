@@ -1,5 +1,7 @@
 #include "builtin.h"
 #include "cache.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "parse-options.h"
 #include "bisect.h"
@@ -10,6 +12,7 @@
 #include "prompt.h"
 #include "quote.h"
 #include "revision.h"
+#include "wrapper.h"
 
 static GIT_PATH_FUNC(git_path_bisect_terms, "BISECT_TERMS")
 static GIT_PATH_FUNC(git_path_bisect_expected_rev, "BISECT_EXPECTED_REV")

@@ -5,8 +5,11 @@
  *		 2006 Junio Hamano
  */
 #include "git-compat-util.h"
+#include "abspath.h"
 #include "alloc.h"
 #include "config.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "refs.h"
 #include "object-store.h"
@@ -37,6 +40,7 @@
 #include "commit-reach.h"
 #include "range-diff.h"
 #include "tmp-objdir.h"
+#include "write-or-die.h"
 
 #define MAIL_DEFAULT_WRAP 72
 #define COVER_FROM_AUTO_MAX_SUBJECT_LEN 100

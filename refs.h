@@ -1,7 +1,6 @@
 #ifndef REFS_H
 #define REFS_H
 
-#include "cache.h"
 #include "commit.h"
 
 struct object_id;

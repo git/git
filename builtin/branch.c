@@ -8,9 +8,11 @@
 #include "cache.h"
 #include "config.h"
 #include "color.h"
+#include "environment.h"
 #include "refs.h"
 #include "commit.h"
 #include "builtin.h"
+#include "gettext.h"
 #include "remote.h"
 #include "parse-options.h"
 #include "branch.h"
@@ -24,6 +26,7 @@
 #include "worktree.h"
 #include "help.h"
 #include "commit-reach.h"
+#include "wrapper.h"
 
 static const char * const builtin_branch_usage[] = {
 	N_("git branch [<options>] [-r | -a] [--merged] [--no-merged]"),

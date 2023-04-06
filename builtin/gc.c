@@ -11,6 +11,8 @@
  */
 
 #include "builtin.h"
+#include "abspath.h"
+#include "environment.h"
 #include "hex.h"
 #include "repository.h"
 #include "config.h"
@@ -32,7 +34,10 @@
 #include "refs.h"
 #include "remote.h"
 #include "exec-cmd.h"
+#include "gettext.h"
 #include "hook.h"
+#include "setup.h"
+#include "wrapper.h"
 
 #define FAILED_RUN "failed to run %s"
 

@@ -3,6 +3,8 @@
  */
 #include "cache.h"
 #include "config.h"
+#include "gettext.h"
+#include "environment.h"
 #include "hex.h"
 #include "repository.h"
 #include "refs.h"

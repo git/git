@@ -2,6 +2,7 @@
 #include "config.h"
 #include "hex.h"
 #include "object-store.h"
+#include "wrapper.h"
 
 static char *create_temp_file(struct object_id *oid)
 {

@@ -5,6 +5,7 @@
  */
 #include "cache.h"
 #include "alloc.h"
+#include "gettext.h"
 #include "hex.h"
 #include "repository.h"
 #include "config.h"
@@ -22,10 +23,12 @@
 #include "quote.h"
 #include "dir.h"
 #include "pathspec.h"
+#include "setup.h"
 #include "submodule.h"
 #include "submodule-config.h"
 #include "object-store.h"
 #include "packfile.h"
+#include "write-or-die.h"
 
 static const char *grep_prefix;
 

@@ -17,6 +17,8 @@
 #include "diff.h"
 #include "diffcore.h"
 #include "dir.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "ll-merge.h"
 #include "lockfile.h"
@@ -29,6 +31,7 @@
 #include "tag.h"
 #include "tree-walk.h"
 #include "unpack-trees.h"
+#include "wrapper.h"
 #include "xdiff-interface.h"
 
 struct merge_options_internal {

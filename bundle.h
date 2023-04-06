@@ -2,7 +2,6 @@
 #define BUNDLE_H
 
 #include "strvec.h"
-#include "cache.h"
 #include "string-list.h"
 #include "list-objects-filter-options.h"
 

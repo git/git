@@ -1,6 +1,8 @@
 #define USE_THE_INDEX_VARIABLE
 #include "cache.h"
 #include "config.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "lockfile.h"
 #include "commit.h"
@@ -13,6 +15,7 @@
 #include "revision.h"
 #include "diff.h"
 #include "hashmap.h"
+#include "setup.h"
 #include "strvec.h"
 #include "run-command.h"
 #include "object-store.h"

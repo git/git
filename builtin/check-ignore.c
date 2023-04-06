@@ -3,10 +3,12 @@
 #include "cache.h"
 #include "config.h"
 #include "dir.h"
+#include "gettext.h"
 #include "quote.h"
 #include "pathspec.h"
 #include "parse-options.h"
 #include "submodule.h"
+#include "write-or-die.h"
 
 static int quiet, verbose, stdin_paths, show_non_matching, no_index;
 static const char * const check_ignore_usage[] = {

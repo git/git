@@ -2,6 +2,7 @@
 #include "test-tool.h"
 #include "cache.h"
 #include "lockfile.h"
+#include "setup.h"
 
 int cmd__write_cache(int argc, const char **argv)
 {

@@ -2,6 +2,8 @@
 #include "cache.h"
 #include "config.h"
 #include "branch.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "refs.h"
 #include "refspec.h"

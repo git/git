@@ -11,6 +11,7 @@
 #include "quote.h"
 #include "dir.h"
 #include "builtin.h"
+#include "gettext.h"
 #include "strbuf.h"
 #include "tree.h"
 #include "cache-tree.h"
@@ -19,6 +20,7 @@
 #include "string-list.h"
 #include "pathspec.h"
 #include "run-command.h"
+#include "setup.h"
 #include "submodule.h"
 #include "submodule-config.h"
 

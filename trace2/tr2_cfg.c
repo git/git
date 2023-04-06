@@ -1,5 +1,7 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
+#include "strbuf.h"
+#include "trace2.h"
 #include "trace2/tr2_cfg.h"
 #include "trace2/tr2_sysenv.h"
 

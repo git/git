@@ -1,5 +1,7 @@
 #include "builtin.h"
 #include "alloc.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "repository.h"
 #include "config.h"
@@ -40,6 +42,7 @@
 #include "promisor-remote.h"
 #include "pack-mtimes.h"
 #include "parse-options.h"
+#include "wrapper.h"
 
 /*
  * Objects we are going to pack are collected in the `to_pack` structure.

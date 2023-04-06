@@ -18,6 +18,8 @@
 #include "tree.h"
 #include "commit.h"
 #include "blob.h"
+#include "environment.h"
+#include "gettext.h"
 #include "resolve-undo.h"
 #include "run-command.h"
 #include "strbuf.h"
@@ -31,6 +33,7 @@
 #include "csum-file.h"
 #include "promisor-remote.h"
 #include "hook.h"
+#include "wrapper.h"
 
 /* Mask for the name length in ce_flags in the on-disk index */
 

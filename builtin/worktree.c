@@ -1,8 +1,11 @@
 #include "cache.h"
+#include "abspath.h"
 #include "checkout.h"
 #include "config.h"
 #include "builtin.h"
 #include "dir.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "parse-options.h"
 #include "strvec.h"
@@ -14,6 +17,7 @@
 #include "submodule.h"
 #include "utf8.h"
 #include "worktree.h"
+#include "wrapper.h"
 #include "quote.h"
 
 #define BUILTIN_WORKTREE_ADD_USAGE \

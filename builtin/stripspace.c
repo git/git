@@ -1,8 +1,11 @@
 #include "builtin.h"
 #include "cache.h"
 #include "config.h"
+#include "gettext.h"
 #include "parse-options.h"
+#include "setup.h"
 #include "strbuf.h"
+#include "write-or-die.h"
 
 static void comment_lines(struct strbuf *buf)
 {

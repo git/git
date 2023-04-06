@@ -1,10 +1,14 @@
-#include "git-compat-util.h"
+#include "cache.h"
+#include "abspath.h"
 #include "alloc.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "refs.h"
 #include "string-list.h"
 #include "utf8.h"
 #include "date.h"
+#include "wrapper.h"
 
 int starts_with(const char *str, const char *prefix)
 {

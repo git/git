@@ -1,7 +1,10 @@
 #include "cache.h"
 #include "pkt-line.h"
+#include "gettext.h"
 #include "hex.h"
 #include "run-command.h"
+#include "wrapper.h"
+#include "write-or-die.h"
 
 char packet_buffer[LARGE_PACKET_MAX];
 static const char *packet_trace_prefix = "git";

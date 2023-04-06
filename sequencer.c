@@ -1,6 +1,9 @@
 #include "cache.h"
+#include "abspath.h"
 #include "alloc.h"
 #include "config.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "lockfile.h"
 #include "dir.h"
@@ -38,6 +41,7 @@
 #include "rebase-interactive.h"
 #include "reset.h"
 #include "branch.h"
+#include "wrapper.h"
 
 #define GIT_REFLOG_ACTION "GIT_REFLOG_ACTION"
 

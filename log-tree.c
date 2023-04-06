@@ -2,6 +2,7 @@
 #include "commit-reach.h"
 #include "config.h"
 #include "diff.h"
+#include "environment.h"
 #include "hex.h"
 #include "object-store.h"
 #include "repository.h"
@@ -22,6 +23,7 @@
 #include "help.h"
 #include "range-diff.h"
 #include "strmap.h"
+#include "write-or-die.h"
 
 static struct decoration name_decoration = { "object names" };
 static int decoration_loaded;

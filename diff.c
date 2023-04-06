@@ -2,8 +2,11 @@
  * Copyright (C) 2005 Junio C Hamano
  */
 #include "cache.h"
+#include "abspath.h"
 #include "alloc.h"
 #include "config.h"
+#include "environment.h"
+#include "gettext.h"
 #include "tempfile.h"
 #include "quote.h"
 #include "diff.h"
@@ -30,7 +33,9 @@
 #include "help.h"
 #include "promisor-remote.h"
 #include "dir.h"
+#include "setup.h"
 #include "strmap.h"
+#include "wrapper.h"
 
 #ifdef NO_FAST_WORKING_DIRECTORY
 #define FAST_WORKING_DIRECTORY 0

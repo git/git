@@ -2,6 +2,8 @@
 #include "alloc.h"
 #include "config.h"
 #include "delta.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "pack.h"
 #include "csum-file.h"
@@ -18,6 +20,8 @@
 #include "object-store.h"
 #include "replace-object.h"
 #include "promisor-remote.h"
+#include "setup.h"
+#include "wrapper.h"
 
 static const char index_pack_usage[] =
 "git index-pack [-v] [-o <index-file>] [--keep | --keep=<msg>] [--[no-]rev-index] [--verify] [--strict] (<pack-file> | --stdin [--fix-thin] [<pack-file>])";

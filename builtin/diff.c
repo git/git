@@ -11,6 +11,7 @@
 #include "color.h"
 #include "commit.h"
 #include "blob.h"
+#include "gettext.h"
 #include "tag.h"
 #include "diff.h"
 #include "diff-merges.h"
@@ -18,6 +19,7 @@
 #include "revision.h"
 #include "log-tree.h"
 #include "builtin.h"
+#include "setup.h"
 #include "submodule.h"
 #include "oid-array.h"
 

@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "environment.h"
 #include "tag.h"
 #include "object-store.h"
 #include "commit.h"
@@ -8,6 +9,7 @@
 #include "gpg-interface.h"
 #include "hex.h"
 #include "packfile.h"
+#include "wrapper.h"
 
 const char *tag_type = "tag";
 

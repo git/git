@@ -6,6 +6,9 @@
 
 #define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
+#include "abspath.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "run-command.h"
 #include "exec-cmd.h"
@@ -30,6 +33,7 @@
 #include "rebase-interactive.h"
 #include "reset.h"
 #include "hook.h"
+#include "wrapper.h"
 
 static char const * const builtin_rebase_usage[] = {
 	N_("git rebase [-i] [options] [--exec <cmd>] "

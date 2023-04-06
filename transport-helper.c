@@ -4,6 +4,8 @@
 #include "run-command.h"
 #include "commit.h"
 #include "diff.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "revision.h"
 #include "remote.h"
@@ -15,6 +17,7 @@
 #include "refspec.h"
 #include "transport-internal.h"
 #include "protocol.h"
+#include "wrapper.h"
 
 static int debug;
 

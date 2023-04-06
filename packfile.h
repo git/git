@@ -1,11 +1,13 @@
 #ifndef PACKFILE_H
 #define PACKFILE_H
 
-#include "cache.h"
+#include "object.h"
 #include "oidset.h"
 
 /* in object-store.h */
 struct packed_git;
+struct pack_entry;
+struct pack_window;
 struct object_info;
 
 /*

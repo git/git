@@ -10,6 +10,7 @@
 #include "cache.h"
 #include "config.h"
 #include "builtin.h"
+#include "gettext.h"
 #include "hex.h"
 #include "notes.h"
 #include "object-store.h"
@@ -24,6 +25,7 @@
 #include "notes-merge.h"
 #include "notes-utils.h"
 #include "worktree.h"
+#include "write-or-die.h"
 
 static const char * const git_notes_usage[] = {
 	N_("git notes [--ref <notes-ref>] [list [<object>]]"),

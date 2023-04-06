@@ -452,174 +452,6 @@ static inline enum object_type object_type(unsigned int mode)
 		OBJ_BLOB;
 }
 
-/* Double-check local_repo_env below if you add to this list. */
-#define GIT_DIR_ENVIRONMENT "GIT_DIR"
-#define GIT_COMMON_DIR_ENVIRONMENT "GIT_COMMON_DIR"
-#define GIT_NAMESPACE_ENVIRONMENT "GIT_NAMESPACE"
-#define GIT_WORK_TREE_ENVIRONMENT "GIT_WORK_TREE"
-#define GIT_PREFIX_ENVIRONMENT "GIT_PREFIX"
-#define DEFAULT_GIT_DIR_ENVIRONMENT ".git"
-#define DB_ENVIRONMENT "GIT_OBJECT_DIRECTORY"
-#define INDEX_ENVIRONMENT "GIT_INDEX_FILE"
-#define GRAFT_ENVIRONMENT "GIT_GRAFT_FILE"
-#define GIT_SHALLOW_FILE_ENVIRONMENT "GIT_SHALLOW_FILE"
-#define TEMPLATE_DIR_ENVIRONMENT "GIT_TEMPLATE_DIR"
-#define CONFIG_ENVIRONMENT "GIT_CONFIG"
-#define CONFIG_DATA_ENVIRONMENT "GIT_CONFIG_PARAMETERS"
-#define CONFIG_COUNT_ENVIRONMENT "GIT_CONFIG_COUNT"
-#define EXEC_PATH_ENVIRONMENT "GIT_EXEC_PATH"
-#define CEILING_DIRECTORIES_ENVIRONMENT "GIT_CEILING_DIRECTORIES"
-#define NO_REPLACE_OBJECTS_ENVIRONMENT "GIT_NO_REPLACE_OBJECTS"
-#define GIT_REPLACE_REF_BASE_ENVIRONMENT "GIT_REPLACE_REF_BASE"
-#define GITATTRIBUTES_FILE ".gitattributes"
-#define INFOATTRIBUTES_FILE "info/attributes"
-#define ATTRIBUTE_MACRO_PREFIX "[attr]"
-#define GITMODULES_FILE ".gitmodules"
-#define GITMODULES_INDEX ":.gitmodules"
-#define GITMODULES_HEAD "HEAD:.gitmodules"
-#define GIT_NOTES_REF_ENVIRONMENT "GIT_NOTES_REF"
-#define GIT_NOTES_DEFAULT_REF "refs/notes/commits"
-#define GIT_NOTES_DISPLAY_REF_ENVIRONMENT "GIT_NOTES_DISPLAY_REF"
-#define GIT_NOTES_REWRITE_REF_ENVIRONMENT "GIT_NOTES_REWRITE_REF"
-#define GIT_NOTES_REWRITE_MODE_ENVIRONMENT "GIT_NOTES_REWRITE_MODE"
-#define GIT_LITERAL_PATHSPECS_ENVIRONMENT "GIT_LITERAL_PATHSPECS"
-#define GIT_GLOB_PATHSPECS_ENVIRONMENT "GIT_GLOB_PATHSPECS"
-#define GIT_NOGLOB_PATHSPECS_ENVIRONMENT "GIT_NOGLOB_PATHSPECS"
-#define GIT_ICASE_PATHSPECS_ENVIRONMENT "GIT_ICASE_PATHSPECS"
-#define GIT_QUARANTINE_ENVIRONMENT "GIT_QUARANTINE_PATH"
-#define GIT_OPTIONAL_LOCKS_ENVIRONMENT "GIT_OPTIONAL_LOCKS"
-#define GIT_TEXT_DOMAIN_DIR_ENVIRONMENT "GIT_TEXTDOMAINDIR"
-
-/*
- * Environment variable used in handshaking the wire protocol.
- * Contains a colon ':' separated list of keys with optional values
- * 'key[=value]'.  Presence of unknown keys and values must be
- * ignored.
- */
-#define GIT_PROTOCOL_ENVIRONMENT "GIT_PROTOCOL"
-/* HTTP header used to handshake the wire protocol */
-#define GIT_PROTOCOL_HEADER "Git-Protocol"
-
-/*
- * This environment variable is expected to contain a boolean indicating
- * whether we should or should not treat:
- *
- *   GIT_DIR=foo.git git ...
- *
- * as if GIT_WORK_TREE=. was given. It's not expected that users will make use
- * of this, but we use it internally to communicate to sub-processes that we
- * are in a bare repo. If not set, defaults to true.
- */
-#define GIT_IMPLICIT_WORK_TREE_ENVIRONMENT "GIT_IMPLICIT_WORK_TREE"
-
-/*
- * Repository-local GIT_* environment variables; these will be cleared
- * when git spawns a sub-process that runs inside another repository.
- * The array is NULL-terminated, which makes it easy to pass in the "env"
- * parameter of a run-command invocation, or to do a simple walk.
- */
-extern const char * const local_repo_env[];
-
-void setup_git_env(const char *git_dir);
-
-/*
- * Returns true iff we have a configured git repository (either via
- * setup_git_directory, or in the environment via $GIT_DIR).
- */
-int have_git_dir(void);
-
-extern int is_bare_repository_cfg;
-int is_bare_repository(void);
-int is_inside_git_dir(void);
-extern char *git_work_tree_cfg;
-int is_inside_work_tree(void);
-const char *get_git_dir(void);
-const char *get_git_common_dir(void);
-const char *get_object_directory(void);
-char *get_index_file(void);
-char *get_graft_file(struct repository *r);
-void set_git_dir(const char *path, int make_realpath);
-int get_common_dir_noenv(struct strbuf *sb, const char *gitdir);
-int get_common_dir(struct strbuf *sb, const char *gitdir);
-const char *get_git_namespace(void);
-const char *strip_namespace(const char *namespaced_ref);
-const char *get_git_work_tree(void);
-
-/*
- * Return true if the given path is a git directory; note that this _just_
- * looks at the directory itself. If you want to know whether "foo/.git"
- * is a repository, you must feed that path, not just "foo".
- */
-int is_git_directory(const char *path);
-
-/*
- * Return 1 if the given path is the root of a git repository or
- * submodule, else 0. Will not return 1 for bare repositories with the
- * exception of creating a bare repository in "foo/.git" and calling
- * is_git_repository("foo").
- *
- * If we run into read errors, we err on the side of saying "yes, it is",
- * as we usually consider sub-repos precious, and would prefer to err on the
- * side of not disrupting or deleting them.
- */
-int is_nonbare_repository_dir(struct strbuf *path);
-
-#define READ_GITFILE_ERR_STAT_FAILED 1
-#define READ_GITFILE_ERR_NOT_A_FILE 2
-#define READ_GITFILE_ERR_OPEN_FAILED 3
-#define READ_GITFILE_ERR_READ_FAILED 4
-#define READ_GITFILE_ERR_INVALID_FORMAT 5
-#define READ_GITFILE_ERR_NO_PATH 6
-#define READ_GITFILE_ERR_NOT_A_REPO 7
-#define READ_GITFILE_ERR_TOO_LARGE 8
-void read_gitfile_error_die(int error_code, const char *path, const char *dir);
-const char *read_gitfile_gently(const char *path, int *return_error_code);
-#define read_gitfile(path) read_gitfile_gently((path), NULL)
-const char *resolve_gitdir_gently(const char *suspect, int *return_error_code);
-#define resolve_gitdir(path) resolve_gitdir_gently((path), NULL)
-
-void set_git_work_tree(const char *tree);
-
-#define ALTERNATE_DB_ENVIRONMENT "GIT_ALTERNATE_OBJECT_DIRECTORIES"
-
-void setup_work_tree(void);
-/*
- * Find the commondir and gitdir of the repository that contains the current
- * working directory, without changing the working directory or other global
- * state. The result is appended to commondir and gitdir.  If the discovered
- * gitdir does not correspond to a worktree, then 'commondir' and 'gitdir' will
- * both have the same result appended to the buffer.  The return value is
- * either 0 upon success and non-zero if no repository was found.
- */
-int discover_git_directory(struct strbuf *commondir,
-			   struct strbuf *gitdir);
-const char *setup_git_directory_gently(int *);
-const char *setup_git_directory(void);
-char *prefix_path(const char *prefix, int len, const char *path);
-char *prefix_path_gently(const char *prefix, int len, int *remaining, const char *path);
-
-/*
- * Concatenate "prefix" (if len is non-zero) and "path", with no
- * connecting characters (so "prefix" should end with a "/").
- * Unlike prefix_path, this should be used if the named file does
- * not have to interact with index entry; i.e. name of a random file
- * on the filesystem.
- *
- * The return value is always a newly allocated string (even if the
- * prefix was empty).
- */
-char *prefix_filename(const char *prefix, const char *path);
-
-/* Likewise, but path=="-" always yields "-" */
-char *prefix_filename_except_for_dash(const char *prefix, const char *path);
-
-int check_filename(const char *prefix, const char *name);
-void verify_filename(const char *prefix,
-		     const char *name,
-		     int diagnose_misspelt_rev);
-void verify_non_filename(const char *prefix, const char *name);
-int path_inside_repo(const char *prefix, const char *path);
-
 #define INIT_DB_QUIET 0x0001
 #define INIT_DB_EXIST_OK 0x0002
 
@@ -627,9 +459,6 @@ int init_db(const char *git_dir, const char *real_git_dir,
 	    const char *template_dir, int hash_algo,
 	    const char *initial_branch, unsigned int flags);
 void initialize_repository_version(int hash_algo, int reinit);
-
-void sanitize_stdfds(void);
-int daemonize(void);
 
 /* Initialize and use the cache information */
 struct lock_file;
@@ -855,229 +684,7 @@ void set_alternate_index_output(const char *);
 extern int verify_index_checksum;
 extern int verify_ce_order;
 
-/* Environment bits from configuration mechanism */
-extern int trust_executable_bit;
-extern int trust_ctime;
-extern int check_stat;
 extern int quote_path_fully;
-extern int has_symlinks;
-extern int minimum_abbrev, default_abbrev;
-extern int ignore_case;
-extern int assume_unchanged;
-extern int prefer_symlink_refs;
-extern int warn_ambiguous_refs;
-extern int warn_on_object_refname_ambiguity;
-extern char *apply_default_whitespace;
-extern char *apply_default_ignorewhitespace;
-extern const char *git_attributes_file;
-extern const char *git_hooks_path;
-extern int zlib_compression_level;
-extern int pack_compression_level;
-extern size_t packed_git_window_size;
-extern size_t packed_git_limit;
-extern size_t delta_base_cache_limit;
-extern unsigned long big_file_threshold;
-extern unsigned long pack_size_limit_cfg;
-
-/*
- * Accessors for the core.sharedrepository config which lazy-load the value
- * from the config (if not already set). The "reset" function can be
- * used to unset "set" or cached value, meaning that the value will be loaded
- * fresh from the config file on the next call to get_shared_repository().
- */
-void set_shared_repository(int value);
-int get_shared_repository(void);
-void reset_shared_repository(void);
-
-/*
- * These values are used to help identify parts of a repository to fsync.
- * FSYNC_COMPONENT_NONE identifies data that will not be a persistent part of the
- * repository and so shouldn't be fsynced.
- */
-enum fsync_component {
-	FSYNC_COMPONENT_NONE,
-	FSYNC_COMPONENT_LOOSE_OBJECT		= 1 << 0,
-	FSYNC_COMPONENT_PACK			= 1 << 1,
-	FSYNC_COMPONENT_PACK_METADATA		= 1 << 2,
-	FSYNC_COMPONENT_COMMIT_GRAPH		= 1 << 3,
-	FSYNC_COMPONENT_INDEX			= 1 << 4,
-	FSYNC_COMPONENT_REFERENCE		= 1 << 5,
-};
-
-#define FSYNC_COMPONENTS_OBJECTS (FSYNC_COMPONENT_LOOSE_OBJECT | \
-				  FSYNC_COMPONENT_PACK)
-
-#define FSYNC_COMPONENTS_DERIVED_METADATA (FSYNC_COMPONENT_PACK_METADATA | \
-					   FSYNC_COMPONENT_COMMIT_GRAPH)
-
-#define FSYNC_COMPONENTS_DEFAULT ((FSYNC_COMPONENTS_OBJECTS | \
-				   FSYNC_COMPONENTS_DERIVED_METADATA) & \
-				  ~FSYNC_COMPONENT_LOOSE_OBJECT)
-
-#define FSYNC_COMPONENTS_COMMITTED (FSYNC_COMPONENTS_OBJECTS | \
-				    FSYNC_COMPONENT_REFERENCE)
-
-#define FSYNC_COMPONENTS_ADDED (FSYNC_COMPONENTS_COMMITTED | \
-				FSYNC_COMPONENT_INDEX)
-
-#define FSYNC_COMPONENTS_ALL (FSYNC_COMPONENT_LOOSE_OBJECT | \
-			      FSYNC_COMPONENT_PACK | \
-			      FSYNC_COMPONENT_PACK_METADATA | \
-			      FSYNC_COMPONENT_COMMIT_GRAPH | \
-			      FSYNC_COMPONENT_INDEX | \
-			      FSYNC_COMPONENT_REFERENCE)
-
-#ifndef FSYNC_COMPONENTS_PLATFORM_DEFAULT
-#define FSYNC_COMPONENTS_PLATFORM_DEFAULT FSYNC_COMPONENTS_DEFAULT
-#endif
-
-/*
- * A bitmask indicating which components of the repo should be fsynced.
- */
-extern enum fsync_component fsync_components;
-extern int fsync_object_files;
-extern int use_fsync;
-
-enum fsync_method {
-	FSYNC_METHOD_FSYNC,
-	FSYNC_METHOD_WRITEOUT_ONLY,
-	FSYNC_METHOD_BATCH,
-};
-
-extern enum fsync_method fsync_method;
-extern int core_preload_index;
-extern int precomposed_unicode;
-extern int protect_hfs;
-extern int protect_ntfs;
-
-extern int core_apply_sparse_checkout;
-extern int core_sparse_checkout_cone;
-extern int sparse_expect_files_outside_of_patterns;
-
-/*
- * Returns the boolean value of $GIT_OPTIONAL_LOCKS (or the default value).
- */
-int use_optional_locks(void);
-
-/*
- * The character that begins a commented line in user-editable file
- * that is subject to stripspace.
- */
-extern char comment_line_char;
-extern int auto_comment_line_char;
-
-enum log_refs_config {
-	LOG_REFS_UNSET = -1,
-	LOG_REFS_NONE = 0,
-	LOG_REFS_NORMAL,
-	LOG_REFS_ALWAYS
-};
-extern enum log_refs_config log_all_ref_updates;
-
-enum rebase_setup_type {
-	AUTOREBASE_NEVER = 0,
-	AUTOREBASE_LOCAL,
-	AUTOREBASE_REMOTE,
-	AUTOREBASE_ALWAYS
-};
-
-enum push_default_type {
-	PUSH_DEFAULT_NOTHING = 0,
-	PUSH_DEFAULT_MATCHING,
-	PUSH_DEFAULT_SIMPLE,
-	PUSH_DEFAULT_UPSTREAM,
-	PUSH_DEFAULT_CURRENT,
-	PUSH_DEFAULT_UNSPECIFIED
-};
-
-extern enum rebase_setup_type autorebase;
-extern enum push_default_type push_default;
-
-enum object_creation_mode {
-	OBJECT_CREATION_USES_HARDLINKS = 0,
-	OBJECT_CREATION_USES_RENAMES = 1
-};
-
-extern enum object_creation_mode object_creation_mode;
-
-extern char *notes_ref_name;
-
-extern int grafts_replace_parents;
-
-/*
- * GIT_REPO_VERSION is the version we write by default. The
- * _READ variant is the highest number we know how to
- * handle.
- */
-#define GIT_REPO_VERSION 0
-#define GIT_REPO_VERSION_READ 1
-extern int repository_format_precious_objects;
-extern int repository_format_worktree_config;
-
-/*
- * You _have_ to initialize a `struct repository_format` using
- * `= REPOSITORY_FORMAT_INIT` before calling `read_repository_format()`.
- */
-struct repository_format {
-	int version;
-	int precious_objects;
-	char *partial_clone; /* value of extensions.partialclone */
-	int worktree_config;
-	int is_bare;
-	int hash_algo;
-	int sparse_index;
-	char *work_tree;
-	struct string_list unknown_extensions;
-	struct string_list v1_only_extensions;
-};
-
-/*
- * Always use this to initialize a `struct repository_format`
- * to a well-defined, default state before calling
- * `read_repository()`.
- */
-#define REPOSITORY_FORMAT_INIT \
-{ \
-	.version = -1, \
-	.is_bare = -1, \
-	.hash_algo = GIT_HASH_SHA1, \
-	.unknown_extensions = STRING_LIST_INIT_DUP, \
-	.v1_only_extensions = STRING_LIST_INIT_DUP, \
-}
-
-/*
- * Read the repository format characteristics from the config file "path" into
- * "format" struct. Returns the numeric version. On error, or if no version is
- * found in the configuration, -1 is returned, format->version is set to -1,
- * and all other fields in the struct are set to the default configuration
- * (REPOSITORY_FORMAT_INIT). Always initialize the struct using
- * REPOSITORY_FORMAT_INIT before calling this function.
- */
-int read_repository_format(struct repository_format *format, const char *path);
-
-/*
- * Free the memory held onto by `format`, but not the struct itself.
- * (No need to use this after `read_repository_format()` fails.)
- */
-void clear_repository_format(struct repository_format *format);
-
-/*
- * Verify that the repository described by repository_format is something we
- * can read. If it is, return 0. Otherwise, return -1, and "err" will describe
- * any errors encountered.
- */
-int verify_repository_format(const struct repository_format *format,
-			     struct strbuf *err);
-
-/*
- * Check the repository format version in the path found in get_git_dir(),
- * and die if it is a version we don't understand. Generally one would
- * set_git_dir() before calling this, and use it only for "are we in a valid
- * repo?".
- *
- * If successful and fmt is not NULL, fill fmt with data.
- */
-void check_repository_format(struct repository_format *fmt);
 
 #define MTIME_CHANGED	0x0001
 #define CTIME_CHANGED	0x0002
@@ -1104,28 +711,6 @@ void check_repository_format(struct repository_format *fmt);
  */
 const char *repo_find_unique_abbrev(struct repository *r, const struct object_id *oid, int len);
 int repo_find_unique_abbrev_r(struct repository *r, char *hex, const struct object_id *oid, int len);
-
-/* set default permissions by passing mode arguments to open(2) */
-int git_mkstemps_mode(char *pattern, int suffix_len, int mode);
-int git_mkstemp_mode(char *pattern, int mode);
-
-/*
- * NOTE NOTE NOTE!!
- *
- * PERM_UMASK, OLD_PERM_GROUP and OLD_PERM_EVERYBODY enumerations must
- * not be changed. Old repositories have core.sharedrepository written in
- * numeric format, and therefore these values are preserved for compatibility
- * reasons.
- */
-enum sharedrepo {
-	PERM_UMASK          = 0,
-	OLD_PERM_GROUP      = 1,
-	OLD_PERM_EVERYBODY  = 2,
-	PERM_GROUP          = 0660,
-	PERM_EVERYBODY      = 0664
-};
-int git_config_perm(const char *var, const char *value);
-int adjust_shared_perm(const char *path);
 
 /*
  * Create the directory containing the named path, using care to be
@@ -1161,68 +746,6 @@ enum scld_error safe_create_leading_directories_const(const char *path);
 enum scld_error safe_create_leading_directories_no_share(char *path);
 
 int mkdir_in_gitdir(const char *path);
-char *interpolate_path(const char *path, int real_home);
-/* NEEDSWORK: remove this synonym once in-flight topics have migrated */
-#define expand_user_path interpolate_path
-const char *enter_repo(const char *path, int strict);
-static inline int is_absolute_path(const char *path)
-{
-	return is_dir_sep(path[0]) || has_dos_drive_prefix(path);
-}
-int is_directory(const char *);
-char *strbuf_realpath(struct strbuf *resolved, const char *path,
-		      int die_on_error);
-char *strbuf_realpath_forgiving(struct strbuf *resolved, const char *path,
-				int die_on_error);
-char *real_pathdup(const char *path, int die_on_error);
-const char *absolute_path(const char *path);
-char *absolute_pathdup(const char *path);
-const char *remove_leading_path(const char *in, const char *prefix);
-const char *relative_path(const char *in, const char *prefix, struct strbuf *sb);
-int normalize_path_copy_len(char *dst, const char *src, int *prefix_len);
-int normalize_path_copy(char *dst, const char *src);
-int longest_ancestor_length(const char *path, struct string_list *prefixes);
-char *strip_path_suffix(const char *path, const char *suffix);
-int daemon_avoid_alias(const char *path);
-
-/*
- * These functions match their is_hfs_dotgit() counterparts; see utf8.h for
- * details.
- */
-int is_ntfs_dotgit(const char *name);
-int is_ntfs_dotgitmodules(const char *name);
-int is_ntfs_dotgitignore(const char *name);
-int is_ntfs_dotgitattributes(const char *name);
-int is_ntfs_dotmailmap(const char *name);
-
-/*
- * Returns true iff "str" could be confused as a command-line option when
- * passed to a sub-program like "ssh". Note that this has nothing to do with
- * shell-quoting, which should be handled separately; we're assuming here that
- * the string makes it verbatim to the sub-program.
- */
-int looks_like_command_line_option(const char *str);
-
-/**
- * Return a newly allocated string with the evaluation of
- * "$XDG_CONFIG_HOME/$subdir/$filename" if $XDG_CONFIG_HOME is non-empty, otherwise
- * "$HOME/.config/$subdir/$filename". Return NULL upon error.
- */
-char *xdg_config_home_for(const char *subdir, const char *filename);
-
-/**
- * Return a newly allocated string with the evaluation of
- * "$XDG_CONFIG_HOME/git/$filename" if $XDG_CONFIG_HOME is non-empty, otherwise
- * "$HOME/.config/git/$filename". Return NULL upon error.
- */
-char *xdg_config_home(const char *filename);
-
-/**
- * Return a newly allocated string with the evaluation of
- * "$XDG_CACHE_HOME/git/$filename" if $XDG_CACHE_HOME is non-empty, otherwise
- * "$HOME/.cache/git/$filename". Return NULL upon error.
- */
-char *xdg_cache_home(const char *filename);
 
 int git_open_cloexec(const char *name, int flags);
 #define git_open(name) git_open_cloexec(name, O_RDONLY)
@@ -1378,8 +901,6 @@ int repo_interpret_branch_name(struct repository *r,
 			       struct strbuf *buf,
 			       const struct interpret_branch_name_options *options);
 
-int validate_headref(const char *ref);
-
 int base_name_compare(const char *name1, size_t len1, int mode1,
 		      const char *name2, size_t len2, int mode2);
 int df_name_compare(const char *name1, size_t len1, int mode1,
@@ -1439,21 +960,6 @@ struct pack_entry {
 };
 
 /*
- * Create a temporary file rooted in the object database directory, or
- * die on failure. The filename is taken from "pattern", which should have the
- * usual "XXXXXX" trailer, and the resulting filename is written into the
- * "template" buffer. Returns the open descriptor.
- */
-int odb_mkstemp(struct strbuf *temp_filename, const char *pattern);
-
-/*
- * Create a pack .keep file named "name" (which should generally be the output
- * of odb_pack_name). Returns a file descriptor opened for writing, or -1 on
- * error.
- */
-int odb_pack_keep(const char *name);
-
-/*
  * Set this to 0 to prevent oid_object_info_extended() from fetching missing
  * blobs. This has a difference only if extensions.partialClone is set.
  *
@@ -1464,61 +970,14 @@ extern int fetch_if_missing;
 /* Dumb servers support */
 int update_server_info(int);
 
-const char *get_log_output_encoding(void);
-const char *get_commit_output_encoding(void);
-
-extern const char *git_commit_encoding;
-extern const char *git_log_output_encoding;
 extern const char *git_mailmap_file;
 extern const char *git_mailmap_blob;
-
-/* IO helper functions */
-void maybe_flush_or_die(FILE *, const char *);
-__attribute__((format (printf, 2, 3)))
-void fprintf_or_die(FILE *, const char *fmt, ...);
-void fwrite_or_die(FILE *f, const void *buf, size_t count);
-void fflush_or_die(FILE *f);
 
 #define COPY_READ_ERROR (-2)
 #define COPY_WRITE_ERROR (-3)
 int copy_fd(int ifd, int ofd);
 int copy_file(const char *dst, const char *src, int mode);
 int copy_file_with_time(const char *dst, const char *src, int mode);
-
-void write_or_die(int fd, const void *buf, size_t count);
-void fsync_or_die(int fd, const char *);
-int fsync_component(enum fsync_component component, int fd);
-void fsync_component_or_die(enum fsync_component component, int fd, const char *msg);
-
-static inline int batch_fsync_enabled(enum fsync_component component)
-{
-	return (fsync_components & component) && (fsync_method == FSYNC_METHOD_BATCH);
-}
-
-ssize_t read_in_full(int fd, void *buf, size_t count);
-ssize_t write_in_full(int fd, const void *buf, size_t count);
-ssize_t pread_in_full(int fd, void *buf, size_t count, off_t offset);
-
-static inline ssize_t write_str_in_full(int fd, const char *str)
-{
-	return write_in_full(fd, str, strlen(str));
-}
-
-/**
- * Open (and truncate) the file at path, write the contents of buf to it,
- * and close it. Dies if any errors are encountered.
- */
-void write_file_buf(const char *path, const char *buf, size_t len);
-
-/**
- * Like write_file_buf(), but format the contents into a buffer first.
- * Additionally, write_file() will append a newline if one is not already
- * present, making it convenient to write text files:
- *
- *   write_file(path, "counter: %d", ctr);
- */
-__attribute__((format (printf, 2, 3)))
-void write_file(const char *path, const char *fmt, ...);
 
 /* pager.c */
 void setup_pager(void);
@@ -1529,10 +988,6 @@ void term_clear_line(void);
 int decimal_width(uintmax_t);
 int check_pager_config(const char *cmd);
 void prepare_pager_args(struct child_process *, const char *pager);
-
-extern const char *editor_program;
-extern const char *askpass_program;
-extern const char *excludes_file;
 
 /* base85 */
 int decode_85(char *dst, const char *line, int linelen);
@@ -1585,15 +1040,6 @@ int ws_blank_line(const char *line, int len);
 void overlay_tree_on_index(struct index_state *istate,
 			   const char *tree_name, const char *prefix);
 
-/* setup.c */
-struct startup_info {
-	int have_repository;
-	const char *prefix;
-	const char *original_cwd;
-};
-extern struct startup_info *startup_info;
-extern const char *tmp_original_cwd;
-
 /* merge.c */
 struct commit_list;
 int try_merge_command(struct repository *r,
@@ -1636,22 +1082,5 @@ int stat_validity_check(struct stat_validity *sv, const char *path);
 void stat_validity_update(struct stat_validity *sv, int fd);
 
 int versioncmp(const char *s1, const char *s2);
-
-/*
- * Create a directory and (if share is nonzero) adjust its permissions
- * according to the shared_repository setting. Only use this for
- * directories under $GIT_DIR.  Don't use it for working tree
- * directories.
- */
-void safe_create_dir(const char *dir, int share);
-
-/*
- * Should we print an ellipsis after an abbreviated SHA-1 value
- * when doing diff-raw output or indicating a detached HEAD?
- */
-int print_sha1_ellipsis(void);
-
-/* Return 1 if the file is empty or does not exists, 0 otherwise. */
-int is_empty_or_missing_file(const char *filename);
 
 #endif /* CACHE_H */

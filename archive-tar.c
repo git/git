@@ -4,12 +4,14 @@
 #include "git-compat-util.h"
 #include "alloc.h"
 #include "config.h"
+#include "gettext.h"
 #include "hex.h"
 #include "tar.h"
 #include "archive.h"
 #include "object-store.h"
 #include "streaming.h"
 #include "run-command.h"
+#include "write-or-die.h"
 
 #define RECORDSIZE	(512)
 #define BLOCKSIZE	(RECORDSIZE * 20)

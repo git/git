@@ -5,11 +5,13 @@
 #include "config.h"
 #include "builtin.h"
 #include "exec-cmd.h"
+#include "gettext.h"
 #include "parse-options.h"
 #include "run-command.h"
 #include "config-list.h"
 #include "help.h"
 #include "alias.h"
+#include "setup.h"
 
 #ifndef DEFAULT_HELP_FORMAT
 #define DEFAULT_HELP_FORMAT "man"

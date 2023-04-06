@@ -6,6 +6,8 @@
  * Copyright (C) 2008 Linus Torvalds
  */
 #include "cache.h"
+#include "environment.h"
+#include "gettext.h"
 #include "thread-utils.h"
 #include "trace2.h"
 #include "sparse-index.h"

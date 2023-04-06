@@ -7,6 +7,8 @@
 #include "builtin.h"
 #include "cache.h"
 #include "config.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "tree.h"
 #include "cache-tree.h"

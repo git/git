@@ -4,6 +4,8 @@
 #include "object.h"
 #include "csum-file.h"
 
+struct packed_git;
+struct pack_window;
 struct repository;
 
 /*

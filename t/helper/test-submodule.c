@@ -1,8 +1,8 @@
 #include "test-tool.h"
 #include "test-tool-utils.h"
-#include "cache.h"
 #include "parse-options.h"
 #include "remote.h"
+#include "setup.h"
 #include "submodule-config.h"
 #include "submodule.h"
 

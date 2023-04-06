@@ -9,6 +9,8 @@
 #include "config.h"
 #include "builtin.h"
 #include "diff.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "ident.h"
 #include "parse-options.h"
@@ -21,6 +23,7 @@
 #include "replace-object.h"
 #include "promisor-remote.h"
 #include "mailmap.h"
+#include "write-or-die.h"
 
 enum batch_mode {
 	BATCH_MODE_CONTENTS,

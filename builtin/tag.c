@@ -9,6 +9,8 @@
 #include "cache.h"
 #include "config.h"
 #include "builtin.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "refs.h"
 #include "object-store.h"
@@ -22,6 +24,7 @@
 #include "column.h"
 #include "ref-filter.h"
 #include "date.h"
+#include "write-or-die.h"
 
 static const char * const git_tag_usage[] = {
 	N_("git tag [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>] [-e]\n"

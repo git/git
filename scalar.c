@@ -3,6 +3,7 @@
  */
 
 #include "cache.h"
+#include "abspath.h"
 #include "gettext.h"
 #include "parse-options.h"
 #include "config.h"
@@ -14,6 +15,7 @@
 #include "dir.h"
 #include "packfile.h"
 #include "help.h"
+#include "setup.h"
 
 static void setup_enlistment_directory(int argc, const char **argv,
 				       const char * const *usagestr,

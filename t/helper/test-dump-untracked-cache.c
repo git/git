@@ -3,6 +3,7 @@
 #include "cache.h"
 #include "dir.h"
 #include "hex.h"
+#include "setup.h"
 
 static int compare_untracked(const void *a_, const void *b_)
 {

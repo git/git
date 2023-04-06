@@ -8,6 +8,7 @@
  */
 
 #include "cache.h"
+#include "abspath.h"
 #include "alloc.h"
 #include "config.h"
 #include "object-store.h"
@@ -15,6 +16,8 @@
 #include "delta.h"
 #include "diff.h"
 #include "dir.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "xdiff-interface.h"
 #include "ll-merge.h"
@@ -24,6 +27,8 @@
 #include "rerere.h"
 #include "apply.h"
 #include "entry.h"
+#include "setup.h"
+#include "wrapper.h"
 
 struct gitdiff_data {
 	struct strbuf *root;

@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "fsmonitor.h"
+#include "gettext.h"
 #include "simple-ipc.h"
 #include "fsmonitor-ipc.h"
 #include "run-command.h"

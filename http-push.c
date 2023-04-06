@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "environment.h"
 #include "hex.h"
 #include "repository.h"
 #include "commit.h"
@@ -11,6 +12,7 @@
 #include "exec-cmd.h"
 #include "remote.h"
 #include "list-objects.h"
+#include "setup.h"
 #include "sigchain.h"
 #include "strvec.h"
 #include "packfile.h"

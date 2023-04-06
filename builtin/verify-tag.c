@@ -8,6 +8,7 @@
 #include "cache.h"
 #include "config.h"
 #include "builtin.h"
+#include "gettext.h"
 #include "tag.h"
 #include "run-command.h"
 #include "parse-options.h"

@@ -1,6 +1,9 @@
 #define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
+#include "abspath.h"
 #include "alloc.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "repository.h"
 #include "cache.h"
@@ -9,6 +12,7 @@
 #include "quote.h"
 #include "pathspec.h"
 #include "dir.h"
+#include "setup.h"
 #include "submodule.h"
 #include "submodule-config.h"
 #include "string-list.h"

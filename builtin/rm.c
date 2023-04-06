@@ -11,9 +11,11 @@
 #include "lockfile.h"
 #include "dir.h"
 #include "cache-tree.h"
+#include "gettext.h"
 #include "tree-walk.h"
 #include "parse-options.h"
 #include "string-list.h"
+#include "setup.h"
 #include "submodule.h"
 #include "pathspec.h"
 

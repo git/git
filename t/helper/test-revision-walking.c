@@ -9,10 +9,10 @@
  */
 
 #include "test-tool.h"
-#include "cache.h"
 #include "commit.h"
 #include "diff.h"
 #include "revision.h"
+#include "setup.h"
 
 static void print_commit(struct commit *commit)
 {

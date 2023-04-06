@@ -1,6 +1,6 @@
 #include "test-tool.h"
-#include "cache.h"
 #include "config.h"
+#include "setup.h"
 #include "string-list.h"
 
 /*

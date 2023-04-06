@@ -2,6 +2,8 @@
 #include "tag.h"
 #include "commit.h"
 #include "commit-graph.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "repository.h"
 #include "object-store.h"
@@ -21,6 +23,7 @@
 #include "refs.h"
 #include "commit-reach.h"
 #include "run-command.h"
+#include "setup.h"
 #include "shallow.h"
 #include "hook.h"
 

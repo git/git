@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "config.h"
+#include "gettext.h"
 #include "hex.h"
 #include "object-store.h"
 #include "attr.h"
@@ -10,6 +11,7 @@
 #include "sub-process.h"
 #include "utf8.h"
 #include "ll-merge.h"
+#include "wrapper.h"
 
 /*
  * convert.c - convert a file when checking it out and checking it in.

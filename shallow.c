@@ -1,4 +1,4 @@
-#include "git-compat-util.h"
+#include "cache.h"
 #include "alloc.h"
 #include "hex.h"
 #include "repository.h"
@@ -17,6 +17,7 @@
 #include "list-objects.h"
 #include "commit-reach.h"
 #include "shallow.h"
+#include "wrapper.h"
 
 void set_alternate_shallow_file(struct repository *r, const char *path, int override)
 {

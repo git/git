@@ -1,6 +1,9 @@
 #define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
+#include "abspath.h"
 #include "config.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "parse-options.h"
 #include "refs.h"
@@ -15,6 +18,7 @@
 #include "entry.h"
 #include "rerere.h"
 #include "revision.h"
+#include "setup.h"
 #include "log-tree.h"
 #include "diffcore.h"
 #include "exec-cmd.h"

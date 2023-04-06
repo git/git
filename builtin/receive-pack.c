@@ -1,6 +1,9 @@
 #include "builtin.h"
+#include "abspath.h"
 #include "repository.h"
 #include "config.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "lockfile.h"
 #include "pack.h"
@@ -32,6 +35,7 @@
 #include "worktree.h"
 #include "shallow.h"
 #include "parse-options.h"
+#include "wrapper.h"
 
 static const char * const receive_pack_usage[] = {
 	N_("git receive-pack <git-dir>"),

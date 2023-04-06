@@ -1,6 +1,8 @@
 #include "cache.h"
 #include "lockfile.h"
 #include "bundle.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "object-store.h"
 #include "repository.h"
@@ -14,6 +16,7 @@
 #include "strvec.h"
 #include "list-objects-filter-options.h"
 #include "connected.h"
+#include "write-or-die.h"
 
 static const char v2_bundle_signature[] = "# v2 git bundle\n";
 static const char v3_bundle_signature[] = "# v3 git bundle\n";

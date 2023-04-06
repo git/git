@@ -1,4 +1,6 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "repository.h"
 #include "refs.h"

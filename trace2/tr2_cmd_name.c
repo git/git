@@ -1,4 +1,5 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "strbuf.h"
 #include "trace2/tr2_cmd_name.h"
 
 #define TR2_ENVVAR_PARENT_NAME "GIT_TRACE2_PARENT_NAME"

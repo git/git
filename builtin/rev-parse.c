@@ -5,9 +5,12 @@
  */
 #define USE_THE_INDEX_VARIABLE
 #include "cache.h"
+#include "abspath.h"
 #include "alloc.h"
 #include "config.h"
 #include "commit.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "refs.h"
 #include "quote.h"
@@ -15,6 +18,7 @@
 #include "parse-options.h"
 #include "diff.h"
 #include "revision.h"
+#include "setup.h"
 #include "split-index.h"
 #include "submodule.h"
 #include "commit-reach.h"

@@ -1,4 +1,5 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "gettext.h"
 #include "hex.h"
 #include "object-store.h"
 #include "run-command.h"

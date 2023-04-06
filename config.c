@@ -5,12 +5,14 @@
  * Copyright (C) Johannes Schindelin, 2005
  *
  */
-#include "git-compat-util.h"
+#include "cache.h"
+#include "abspath.h"
 #include "alloc.h"
 #include "date.h"
 #include "branch.h"
 #include "config.h"
 #include "environment.h"
+#include "gettext.h"
 #include "ident.h"
 #include "repository.h"
 #include "lockfile.h"
@@ -25,7 +27,10 @@
 #include "color.h"
 #include "replace-object.h"
 #include "refs.h"
+#include "setup.h"
 #include "worktree.h"
+#include "wrapper.h"
+#include "write-or-die.h"
 
 struct config_source {
 	struct config_source *prev;

@@ -7,6 +7,7 @@
 #define USE_THE_INDEX_VARIABLE
 #include "cache.h"
 #include "config.h"
+#include "gettext.h"
 #include "hex.h"
 #include "lockfile.h"
 #include "object.h"
@@ -18,6 +19,7 @@
 #include "builtin.h"
 #include "parse-options.h"
 #include "resolve-undo.h"
+#include "setup.h"
 #include "submodule.h"
 #include "submodule-config.h"
 

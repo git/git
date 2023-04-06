@@ -1,6 +1,7 @@
-#include "git-compat-util.h"
+#include "cache.h"
 #include "alloc.h"
 #include "config.h"
+#include "environment.h"
 #include "hex.h"
 #include "transport.h"
 #include "hook.h"
@@ -26,6 +27,7 @@
 #include "object-store.h"
 #include "color.h"
 #include "bundle-uri.h"
+#include "wrapper.h"
 
 static int transport_use_color = -1;
 static char transport_colors[][COLOR_MAXLEN] = {

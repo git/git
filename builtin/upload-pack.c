@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "builtin.h"
 #include "exec-cmd.h"
+#include "gettext.h"
 #include "pkt-line.h"
 #include "parse-options.h"
 #include "protocol.h"

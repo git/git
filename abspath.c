@@ -1,4 +1,6 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "abspath.h"
+#include "strbuf.h"
 
 /*
  * Do not use this for inspecting *tracked* content.  When path is a

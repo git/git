@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "alloc.h"
+#include "gettext.h"
 #include "hex.h"
 #include "pkt-line.h"
 #include "fetch-pack.h"

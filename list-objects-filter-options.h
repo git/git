@@ -1,6 +1,7 @@
 #ifndef LIST_OBJECTS_FILTER_OPTIONS_H
 #define LIST_OBJECTS_FILTER_OPTIONS_H
 
+#include "gettext.h"
 #include "object.h"
 #include "string-list.h"
 #include "strbuf.h"

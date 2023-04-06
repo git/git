@@ -1,6 +1,7 @@
-#include "git-compat-util.h"
+#include "cache.h"
 #include "alloc.h"
 #include "commit.h"
+#include "gettext.h"
 #include "hex.h"
 #include "strbuf.h"
 #include "tag.h"
