@@ -557,7 +557,7 @@ static int run_status(FILE *fp, const char *index_file, const char *prefix, int 
 	s->index_file = index_file;
 	s->fp = fp;
 	s->nowarn = nowarn;
-	s->is_initial = get_oid(s->reference, &oid) ? 1 : 0;
+	s->is_initial = repo_get_oid(the_repository, s->reference, &oid) ? 1 : 0;
 	if (!s->is_initial)
 		oidcpy(&s->oid_commit, &oid);
 	s->status_format = status_format;
@@ -712,15 +712,15 @@ static void prepare_amend_commit(struct commit *commit, struct strbuf *sb,
 {
 	const char *buffer, *subject, *fmt;
 
-	buffer = get_commit_buffer(commit, NULL);
+	buffer = repo_get_commit_buffer(the_repository, commit, NULL);
 	find_commit_subject(buffer, &subject);
 	/*
 	 * If we amend the 'amend!' commit then we don't want to
 	 * duplicate the subject line.
 	 */
 	fmt = starts_with(subject, "amend!") ? "%b" : "%B";
-	format_commit_message(commit, fmt, sb, ctx);
-	unuse_commit_buffer(commit, buffer);
+	repo_format_commit_message(the_repository, commit, fmt, sb, ctx);
+	repo_unuse_commit_buffer(the_repository, commit, buffer);
 }
 
 static int prepare_to_commit(const char *index_file, const char *prefix,
@@ -760,8 +760,9 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 			if (!c)
 				die(_("could not lookup commit %s"), squash_message);
 			ctx.output_encoding = get_commit_output_encoding();
-			format_commit_message(c, "squash! %s\n\n", &sb,
-					      &ctx);
+			repo_format_commit_message(the_repository, c,
+						   "squash! %s\n\n", &sb,
+						   &ctx);
 		}
 	}
 
@@ -795,7 +796,8 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 			die(_("could not lookup commit %s"), fixup_commit);
 		ctx.output_encoding = get_commit_output_encoding();
 		fmt = xstrfmt("%s! %%s\n\n", fixup_prefix);
-		format_commit_message(commit, fmt, &sb, &ctx);
+		repo_format_commit_message(the_repository, commit, fmt, &sb,
+					   &ctx);
 		free(fmt);
 		hook_arg1 = "message";
 
@@ -1000,7 +1002,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		if (amend)
 			parent = "HEAD^1";
 
-		if (get_oid(parent, &oid)) {
+		if (repo_get_oid(the_repository, parent, &oid)) {
 			int i, ita_nr = 0;
 
 			/* TODO: audit for interaction with sparse-index. */
@@ -1135,7 +1137,8 @@ static const char *find_author_by_nickname(const char *name)
 		struct pretty_print_context ctx = {0};
 		ctx.date_mode.type = DATE_NORMAL;
 		strbuf_release(&buf);
-		format_commit_message(commit, "%aN <%aE>", &buf, &ctx);
+		repo_format_commit_message(the_repository, commit,
+					   "%aN <%aE>", &buf, &ctx);
 		release_revisions(&revs);
 		return strbuf_detach(&buf, NULL);
 	}
@@ -1183,7 +1186,7 @@ static const char *read_commit_message(const char *name)
 	if (!commit)
 		die(_("could not lookup commit %s"), name);
 	out_enc = get_commit_output_encoding();
-	return logmsg_reencode(commit, NULL, out_enc);
+	return repo_logmsg_reencode(the_repository, commit, NULL, out_enc);
 }
 
 /*
@@ -1567,7 +1570,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	else
 		fd = -1;
 
-	s.is_initial = get_oid(s.reference, &oid) ? 1 : 0;
+	s.is_initial = repo_get_oid(the_repository, s.reference, &oid) ? 1 : 0;
 	if (!s.is_initial)
 		oidcpy(&s.oid_commit, &oid);
 
@@ -1710,11 +1713,11 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	status_format = STATUS_FORMAT_NONE; /* Ignore status.short */
 	s.colopts = 0;
 
-	if (get_oid("HEAD", &oid))
+	if (repo_get_oid(the_repository, "HEAD", &oid))
 		current_head = NULL;
 	else {
 		current_head = lookup_commit_or_die(&oid, "HEAD");
-		if (parse_commit(current_head))
+		if (repo_parse_commit(the_repository, current_head))
 			die(_("could not parse HEAD commit"));
 	}
 	verbose = -1; /* unspecified */

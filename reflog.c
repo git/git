@@ -28,7 +28,8 @@ static int tree_is_complete(const struct object_id *oid)
 	if (!tree->buffer) {
 		enum object_type type;
 		unsigned long size;
-		void *data = read_object_file(oid, &type, &size);
+		void *data = repo_read_object_file(the_repository, oid, &type,
+						   &size);
 		if (!data) {
 			tree->object.flags |= INCOMPLETE;
 			return 0;
@@ -39,7 +40,7 @@ static int tree_is_complete(const struct object_id *oid)
 	init_tree_desc(&desc, tree->buffer, tree->size);
 	complete = 1;
 	while (tree_entry(&desc, &entry)) {
-		if (!has_object_file(&entry.oid) ||
+		if (!repo_has_object_file(the_repository, &entry.oid) ||
 		    (S_ISDIR(entry.mode) && !tree_is_complete(&entry.oid))) {
 			tree->object.flags |= INCOMPLETE;
 			complete = 0;
@@ -186,7 +187,7 @@ static void mark_reachable(struct expire_reflog_policy_cb *cb)
 		struct commit *commit = pop_commit(&pending);
 		if (commit->object.flags & REACHABLE)
 			continue;
-		if (parse_commit(commit))
+		if (repo_parse_commit(the_repository, commit))
 			continue;
 		commit->object.flags |= REACHABLE;
 		if (commit->date < expire_limit) {

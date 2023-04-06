@@ -427,7 +427,8 @@ static int fill_bitmap_commit(struct bb_commit *ent,
 		if (!found)
 			return -1;
 		bitmap_set(ent->bitmap, pos);
-		prio_queue_put(tree_queue, get_commit_tree(c));
+		prio_queue_put(tree_queue,
+			       repo_get_commit_tree(the_repository, c));
 
 		for (p = c->parents; p; p = p->next) {
 			pos = find_object_pos(&p->item->object.oid, &found);

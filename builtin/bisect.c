@@ -236,7 +236,7 @@ static int bisect_reset(const char *commit)
 	} else {
 		struct object_id oid;
 
-		if (get_oid_commit(commit, &oid))
+		if (repo_get_oid_commit(the_repository, commit, &oid))
 			return error(_("'%s' is not a valid commit"), commit);
 		strbuf_addstr(&branch, commit);
 	}
@@ -267,7 +267,8 @@ static void log_commit(FILE *fp, char *fmt, const char *state,
 	struct strbuf commit_msg = STRBUF_INIT;
 	char *label = xstrfmt(fmt, state);
 
-	format_commit_message(commit, "%s", &commit_msg, &pp);
+	repo_format_commit_message(the_repository, commit, "%s", &commit_msg,
+				   &pp);
 
 	fprintf(fp, "# %s: [%s] %s\n", label, oid_to_hex(&commit->object.oid),
 		commit_msg.buf);
@@ -294,7 +295,7 @@ static int bisect_write(const char *state, const char *rev,
 		goto finish;
 	}
 
-	if (get_oid(rev, &oid)) {
+	if (repo_get_oid(the_repository, rev, &oid)) {
 		res = error(_("couldn't get the oid of the rev '%s'"), rev);
 		goto finish;
 	}
@@ -569,7 +570,7 @@ static int prepare_revs(struct bisect_terms *terms, struct rev_info *revs)
 	 * sets up a revision walk.
 	 */
 	reset_revision_walk();
-	init_revisions(revs, NULL);
+	repo_init_revisions(the_repository, revs, NULL);
 	setup_revisions(0, NULL, revs, NULL);
 	for_each_glob_ref_in(add_bisect_ref, bad, "refs/bisect/", &cb);
 	cb.object_flags = UNINTERESTING;
@@ -605,8 +606,8 @@ static int bisect_skipped_commits(struct bisect_terms *terms)
 
 	while ((commit = get_revision(&revs)) != NULL) {
 		strbuf_reset(&commit_name);
-		format_commit_message(commit, "%s",
-				      &commit_name, &pp);
+		repo_format_commit_message(the_repository, commit, "%s",
+					   &commit_name, &pp);
 		fprintf(fp, "# possible first %s commit: [%s] %s\n",
 			terms->term_bad, oid_to_hex(&commit->object.oid),
 			commit_name.buf);
@@ -635,7 +636,8 @@ static int bisect_successful(struct bisect_terms *terms)
 
 	read_ref(bad_ref, &oid);
 	commit = lookup_commit_reference_by_name(bad_ref);
-	format_commit_message(commit, "%s", &commit_name, &pp);
+	repo_format_commit_message(the_repository, commit, "%s", &commit_name,
+				   &pp);
 
 	res = append_to_file(git_path_bisect_log(), "# first %s commit: [%s] %s\n",
 			    terms->term_bad, oid_to_hex(&commit->object.oid),
@@ -777,7 +779,7 @@ static enum bisect_error bisect_start(struct bisect_terms *terms, int argc,
 	 */
 	head = resolve_ref_unsafe("HEAD", 0, &head_oid, &flags);
 	if (!head)
-		if (get_oid("HEAD", &head_oid))
+		if (repo_get_oid(the_repository, "HEAD", &head_oid))
 			return error(_("bad HEAD - I need a HEAD"));
 
 	/*
@@ -803,11 +805,11 @@ static enum bisect_error bisect_start(struct bisect_terms *terms, int argc,
 		}
 	} else {
 		/* Get the rev from where we start. */
-		if (!get_oid(head, &head_oid) &&
+		if (!repo_get_oid(the_repository, head, &head_oid) &&
 		    !starts_with(head, "refs/heads/")) {
 			strbuf_reset(&start_head);
 			strbuf_addstr(&start_head, oid_to_hex(&head_oid));
-		} else if (!get_oid(head, &head_oid) &&
+		} else if (!repo_get_oid(the_repository, head, &head_oid) &&
 			   skip_prefix(head, "refs/heads/", &head)) {
 			strbuf_addstr(&start_head, head);
 		} else {
@@ -830,7 +832,7 @@ static enum bisect_error bisect_start(struct bisect_terms *terms, int argc,
 		write_file(git_path_bisect_first_parent(), "\n");
 
 	if (no_checkout) {
-		if (get_oid(start_head.buf, &oid) < 0) {
+		if (repo_get_oid(the_repository, start_head.buf, &oid) < 0) {
 			res = error(_("invalid ref: '%s'"), start_head.buf);
 			goto finish;
 		}
@@ -935,11 +937,12 @@ static enum bisect_error bisect_state(struct bisect_terms *terms, int argc,
 
 	if (argc == 0) {
 		const char *head = "BISECT_HEAD";
-		enum get_oid_result res_head = get_oid(head, &oid);
+		enum get_oid_result res_head = repo_get_oid(the_repository,
+							    head, &oid);
 
 		if (res_head == MISSING_OBJECT) {
 			head = "HEAD";
-			res_head = get_oid(head, &oid);
+			res_head = repo_get_oid(the_repository, head, &oid);
 		}
 
 		if (res_head)
@@ -955,7 +958,7 @@ static enum bisect_error bisect_state(struct bisect_terms *terms, int argc,
 	for (; argc; argc--, argv++) {
 		struct commit *commit;
 
-		if (get_oid(*argv, &oid)){
+		if (repo_get_oid(the_repository, *argv, &oid)){
 			error(_("Bad rev input: %s"), *argv);
 			oid_array_clear(&revs);
 			return BISECT_FAILED;
@@ -1094,7 +1097,7 @@ static enum bisect_error bisect_skip(struct bisect_terms *terms, int argc,
 			struct rev_info revs;
 			struct commit *commit;
 
-			init_revisions(&revs, NULL);
+			repo_init_revisions(the_repository, &revs, NULL);
 			setup_revisions(2, argv + i - 1, &revs, NULL);
 
 			if (prepare_revision_walk(&revs))

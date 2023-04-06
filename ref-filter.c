@@ -1111,9 +1111,11 @@ static const char *do_grab_oid(const char *field, const struct object_id *oid,
 	case O_FULL:
 		return oid_to_hex(oid);
 	case O_LENGTH:
-		return find_unique_abbrev(oid, atom->u.oid.length);
+		return repo_find_unique_abbrev(the_repository, oid,
+					       atom->u.oid.length);
 	case O_SHORT:
-		return find_unique_abbrev(oid, DEFAULT_ABBREV);
+		return repo_find_unique_abbrev(the_repository, oid,
+					       DEFAULT_ABBREV);
 	default:
 		BUG("unknown %%(%s) option", field);
 	}
@@ -2844,7 +2846,7 @@ int parse_opt_merge_filter(const struct option *opt, const char *arg, int unset)
 
 	BUG_ON_OPT_NEG(unset);
 
-	if (get_oid(arg, &oid))
+	if (repo_get_oid(the_repository, arg, &oid))
 		die(_("malformed object name %s"), arg);
 
 	merge_commit = lookup_commit_reference_gently(the_repository, &oid, 0);

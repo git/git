@@ -56,7 +56,7 @@ static int show_reference(struct repository *r, const char *refname,
 			struct object_id object;
 			enum object_type obj_type, repl_type;
 
-			if (get_oid(refname, &object))
+			if (repo_get_oid(r, refname, &object))
 				return error(_("failed to resolve '%s' as a valid ref"), refname);
 
 			obj_type = oid_object_info(r, &object, NULL);
@@ -114,7 +114,7 @@ static int for_each_replace_name(const char **argv, each_replace_name_fn fn)
 	base_len = ref.len;
 
 	for (p = argv; *p; p++) {
-		if (get_oid(*p, &oid)) {
+		if (repo_get_oid(the_repository, *p, &oid)) {
 			error("failed to resolve '%s' as a valid ref", *p);
 			had_error = 1;
 			continue;
@@ -208,10 +208,10 @@ static int replace_object(const char *object_ref, const char *replace_ref, int f
 {
 	struct object_id object, repl;
 
-	if (get_oid(object_ref, &object))
+	if (repo_get_oid(the_repository, object_ref, &object))
 		return error(_("failed to resolve '%s' as a valid ref"),
 			     object_ref);
-	if (get_oid(replace_ref, &repl))
+	if (repo_get_oid(the_repository, replace_ref, &repl))
 		return error(_("failed to resolve '%s' as a valid ref"),
 			     replace_ref);
 
@@ -322,7 +322,7 @@ static int edit_and_replace(const char *object_ref, int force, int raw)
 	struct object_id old_oid, new_oid, prev;
 	struct strbuf ref = STRBUF_INIT;
 
-	if (get_oid(object_ref, &old_oid) < 0)
+	if (repo_get_oid(the_repository, object_ref, &old_oid) < 0)
 		return error(_("not a valid object name: '%s'"), object_ref);
 
 	type = oid_object_info(the_repository, &old_oid, NULL);
@@ -377,7 +377,7 @@ static int replace_parents(struct strbuf *buf, int argc, const char **argv)
 		struct object_id oid;
 		struct commit *commit;
 
-		if (get_oid(argv[i], &oid) < 0) {
+		if (repo_get_oid(the_repository, argv[i], &oid) < 0) {
 			strbuf_release(&new_parents);
 			return error(_("not a valid object name: '%s'"),
 				     argv[i]);
@@ -424,7 +424,7 @@ static int check_one_mergetag(struct commit *commit,
 	/* iterate over new parents */
 	for (i = 1; i < mergetag_data->argc; i++) {
 		struct object_id oid;
-		if (get_oid(mergetag_data->argv[i], &oid) < 0)
+		if (repo_get_oid(the_repository, mergetag_data->argv[i], &oid) < 0)
 			return error(_("not a valid object name: '%s'"),
 				     mergetag_data->argv[i]);
 		if (oideq(get_tagged_oid(tag), &oid))
@@ -454,15 +454,15 @@ static int create_graft(int argc, const char **argv, int force, int gentle)
 	const char *buffer;
 	unsigned long size;
 
-	if (get_oid(old_ref, &old_oid) < 0)
+	if (repo_get_oid(the_repository, old_ref, &old_oid) < 0)
 		return error(_("not a valid object name: '%s'"), old_ref);
 	commit = lookup_commit_reference(the_repository, &old_oid);
 	if (!commit)
 		return error(_("could not parse %s"), old_ref);
 
-	buffer = get_commit_buffer(commit, &size);
+	buffer = repo_get_commit_buffer(the_repository, commit, &size);
 	strbuf_add(&buf, buffer, size);
-	unuse_commit_buffer(commit, buffer);
+	repo_unuse_commit_buffer(the_repository, commit, buffer);
 
 	if (replace_parents(&buf, argc - 1, &argv[1]) < 0) {
 		strbuf_release(&buf);

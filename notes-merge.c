@@ -327,7 +327,7 @@ static void write_note_to_worktree(const struct object_id *obj,
 {
 	enum object_type type;
 	unsigned long size;
-	void *buf = read_object_file(note, &type, &size);
+	void *buf = repo_read_object_file(the_repository, note, &type, &size);
 
 	if (!buf)
 		die("cannot read note %s for object %s",
@@ -567,7 +567,7 @@ int notes_merge(struct notes_merge_options *o,
 	trace_printf("\tlocal commit: %.7s\n", oid_to_hex(&local_oid));
 
 	/* Dereference o->remote_ref into remote_oid */
-	if (get_oid(o->remote_ref, &remote_oid)) {
+	if (repo_get_oid(the_repository, o->remote_ref, &remote_oid)) {
 		/*
 		 * Failed to get remote_oid. If o->remote_ref looks like an
 		 * unborn ref, perform the merge using an empty notes tree.
@@ -601,7 +601,7 @@ int notes_merge(struct notes_merge_options *o,
 	assert(local && remote);
 
 	/* Find merge bases */
-	bases = get_merge_bases(local, remote);
+	bases = repo_get_merge_bases(the_repository, local, remote);
 	if (!bases) {
 		base_oid = null_oid();
 		base_tree_oid = the_hash_algo->empty_tree;
@@ -679,7 +679,8 @@ int notes_merge_commit(struct notes_merge_options *o,
 	DIR *dir;
 	struct dirent *e;
 	struct strbuf path = STRBUF_INIT;
-	const char *buffer = get_commit_buffer(partial_commit, NULL);
+	const char *buffer = repo_get_commit_buffer(the_repository,
+						    partial_commit, NULL);
 	const char *msg = strstr(buffer, "\n\n");
 	int baselen;
 
@@ -726,7 +727,7 @@ int notes_merge_commit(struct notes_merge_options *o,
 
 	create_notes_commit(o->repo, partial_tree, partial_commit->parents, msg,
 			    strlen(msg), result_oid);
-	unuse_commit_buffer(partial_commit, buffer);
+	repo_unuse_commit_buffer(the_repository, partial_commit, buffer);
 	if (o->verbosity >= 4)
 		printf("Finalized notes merge commit: %s\n",
 			oid_to_hex(result_oid));

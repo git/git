@@ -229,7 +229,7 @@ static int show_tree_default(const struct object_id *oid, struct strbuf *base,
 		return early;
 
 	printf("%06o %s %s\t", mode, type_name(object_type(mode)),
-	       find_unique_abbrev(oid, options->abbrev));
+	       repo_find_unique_abbrev(the_repository, oid, options->abbrev));
 	show_tree_common_default_long(options, base, pathname, base->len);
 	return recurse;
 }
@@ -260,7 +260,8 @@ static int show_tree_long(const struct object_id *oid, struct strbuf *base,
 	}
 
 	printf("%06o %s %s %7s\t", mode, type_name(type),
-	       find_unique_abbrev(oid, options->abbrev), size_text);
+	       repo_find_unique_abbrev(the_repository, oid, options->abbrev),
+	       size_text);
 	show_tree_common_default_long(options, base, pathname, base->len);
 	return recurse;
 }
@@ -311,7 +312,7 @@ static int show_tree_object(const struct object_id *oid, struct strbuf *base,
 	if (early >= 0)
 		return early;
 
-	str = find_unique_abbrev(oid, options->abbrev);
+	str = repo_find_unique_abbrev(the_repository, oid, options->abbrev);
 	if (options->null_termination) {
 		fputs(str, stdout);
 		fputc('\0', stdout);
@@ -434,7 +435,7 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 			ls_tree_usage, ls_tree_options);
 	if (argc < 1)
 		usage_with_options(ls_tree_usage, ls_tree_options);
-	if (get_oid(argv[0], &oid))
+	if (repo_get_oid(the_repository, argv[0], &oid))
 		die("Not a valid object name %s", argv[0]);
 
 	/*

@@ -1110,7 +1110,7 @@ static int compute_summary_module_list(struct object_id *head_oid,
 		strvec_pushv(&diff_args, info->argv);
 
 	git_config(git_diff_basic_config, NULL);
-	init_revisions(&rev, info->prefix);
+	repo_init_revisions(the_repository, &rev, info->prefix);
 	rev.abbrev = 0;
 	precompose_argv_prefix(diff_args.nr, diff_args.v, NULL);
 	setup_revisions(diff_args.nr, diff_args.v, &rev, &opt);
@@ -1176,7 +1176,7 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 	if (!summary_limit)
 		return 0;
 
-	if (!get_oid(argc ? argv[0] : "HEAD", &head_oid)) {
+	if (!repo_get_oid(the_repository, argc ? argv[0] : "HEAD", &head_oid)) {
 		if (argc) {
 			argv++;
 			argc--;
@@ -1189,7 +1189,7 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 			argc--;
 		}
 	} else {
-		if (get_oid("HEAD", &head_oid))
+		if (repo_get_oid(the_repository, "HEAD", &head_oid))
 			die(_("could not fetch a revision for HEAD"));
 	}
 

@@ -26,7 +26,8 @@
 
 static const char *short_commit_name(struct commit *commit)
 {
-	return find_unique_abbrev(&commit->object.oid, DEFAULT_ABBREV);
+	return repo_find_unique_abbrev(the_repository, &commit->object.oid,
+				       DEFAULT_ABBREV);
 }
 
 static struct commit *peel_committish(const char *name)
@@ -34,10 +35,11 @@ static struct commit *peel_committish(const char *name)
 	struct object *obj;
 	struct object_id oid;
 
-	if (get_oid(name, &oid))
+	if (repo_get_oid(the_repository, name, &oid))
 		return NULL;
 	obj = parse_object(the_repository, &oid);
-	return (struct commit *)peel_to_type(name, 0, obj, OBJ_COMMIT);
+	return (struct commit *)repo_peel_to_type(the_repository, name, 0, obj,
+						  OBJ_COMMIT);
 }
 
 static char *get_author(const char *message)
@@ -64,7 +66,8 @@ static struct commit *create_commit(struct tree *tree,
 	struct commit_extra_header *extra;
 	struct strbuf msg = STRBUF_INIT;
 	const char *out_enc = get_commit_output_encoding();
-	const char *message = logmsg_reencode(based_on, NULL, out_enc);
+	const char *message = repo_logmsg_reencode(the_repository, based_on,
+						   NULL, out_enc);
 	const char *orig_message = NULL;
 	const char *exclude_gpgsig[] = { "gpgsig", NULL };
 
@@ -120,7 +123,7 @@ int cmd__fast_rebase(int argc, const char **argv)
 	strbuf_addf(&branch_name, "refs/heads/%s", argv[4]);
 
 	/* Sanity check */
-	if (get_oid("HEAD", &head))
+	if (repo_get_oid(the_repository, "HEAD", &head))
 		die(_("Cannot read HEAD"));
 	assert(oideq(&onto->object.oid, &head));
 
@@ -155,7 +158,7 @@ int cmd__fast_rebase(int argc, const char **argv)
 	memset(&result, 0, sizeof(result));
 	merge_opt.show_rename_progress = 1;
 	merge_opt.branch1 = "HEAD";
-	head_tree = get_commit_tree(onto);
+	head_tree = repo_get_commit_tree(the_repository, onto);
 	result.tree = head_tree;
 	last_commit = onto;
 	while ((commit = get_revision(&revs))) {
@@ -166,8 +169,8 @@ int cmd__fast_rebase(int argc, const char **argv)
 		assert(commit->parents && !commit->parents->next);
 		base = commit->parents->item;
 
-		next_tree = get_commit_tree(commit);
-		base_tree = get_commit_tree(base);
+		next_tree = repo_get_commit_tree(the_repository, commit);
+		base_tree = repo_get_commit_tree(the_repository, base);
 
 		merge_opt.branch2 = short_commit_name(commit);
 		merge_opt.ancestor = xstrfmt("parent of %s", merge_opt.branch2);

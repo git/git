@@ -417,9 +417,9 @@ static void find_non_local_tags(const struct ref *refs,
 		 */
 		if (ends_with(ref->name, "^{}")) {
 			if (item &&
-			    !has_object_file_with_flags(&ref->old_oid, quick_flags) &&
+			    !repo_has_object_file_with_flags(the_repository, &ref->old_oid, quick_flags) &&
 			    !oidset_contains(&fetch_oids, &ref->old_oid) &&
-			    !has_object_file_with_flags(&item->oid, quick_flags) &&
+			    !repo_has_object_file_with_flags(the_repository, &item->oid, quick_flags) &&
 			    !oidset_contains(&fetch_oids, &item->oid))
 				clear_item(item);
 			item = NULL;
@@ -433,7 +433,7 @@ static void find_non_local_tags(const struct ref *refs,
 		 * fetch.
 		 */
 		if (item &&
-		    !has_object_file_with_flags(&item->oid, quick_flags) &&
+		    !repo_has_object_file_with_flags(the_repository, &item->oid, quick_flags) &&
 		    !oidset_contains(&fetch_oids, &item->oid))
 			clear_item(item);
 
@@ -454,7 +454,7 @@ static void find_non_local_tags(const struct ref *refs,
 	 * checked to see if it needs fetching.
 	 */
 	if (item &&
-	    !has_object_file_with_flags(&item->oid, quick_flags) &&
+	    !repo_has_object_file_with_flags(the_repository, &item->oid, quick_flags) &&
 	    !oidset_contains(&fetch_oids, &item->oid))
 		clear_item(item);
 
@@ -1014,7 +1014,8 @@ static int update_local_ref(struct ref *ref,
 
 	if (fetch_show_forced_updates) {
 		uint64_t t_before = getnanotime();
-		fast_forward = in_merge_bases(current, updated);
+		fast_forward = repo_in_merge_bases(the_repository, current,
+						   updated);
 		forced_updates_ms += (getnanotime() - t_before) / 1000000;
 	} else {
 		fast_forward = 1;
@@ -1347,8 +1348,8 @@ static int check_exist_and_connected(struct ref *ref_map)
 	 * we need all direct targets to exist.
 	 */
 	for (r = rm; r; r = r->next) {
-		if (!has_object_file_with_flags(&r->old_oid,
-						OBJECT_INFO_SKIP_FETCH_OBJECT))
+		if (!repo_has_object_file_with_flags(the_repository, &r->old_oid,
+						     OBJECT_INFO_SKIP_FETCH_OBJECT))
 			return -1;
 	}
 
@@ -1495,7 +1496,7 @@ static void add_negotiation_tips(struct git_transport_options *smart_options)
 		int old_nr;
 		if (!has_glob_specials(s)) {
 			struct object_id oid;
-			if (get_oid(s, &oid))
+			if (repo_get_oid(the_repository, s, &oid))
 				die(_("%s is not a valid object"), s);
 			if (!has_object(the_repository, &oid, 0))
 				die(_("the object %s does not exist"), s);
@@ -2023,7 +2024,7 @@ static inline void fetch_one_setup_partial(struct remote *remote)
 	 * If no prior partial clone/fetch and the current fetch DID NOT
 	 * request a partial-fetch, do a normal fetch.
 	 */
-	if (!has_promisor_remote() && !filter_options.choice)
+	if (!repo_has_promisor_remote(the_repository) && !filter_options.choice)
 		return;
 
 	/*
@@ -2279,7 +2280,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 			printf("%s\n", oid_to_hex(oid));
 		oidset_clear(&acked_commits);
 	} else if (remote) {
-		if (filter_options.choice || has_promisor_remote())
+		if (filter_options.choice || repo_has_promisor_remote(the_repository))
 			fetch_one_setup_partial(remote);
 		result = fetch_one(remote, argc, argv, prune_tags_ok, stdin_refspecs);
 	} else {

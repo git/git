@@ -1082,7 +1082,7 @@ static int push_refs_with_export(struct transport *transport,
 		struct object_id oid;
 
 		private = apply_refspecs(&data->rs, ref->name);
-		if (private && !get_oid(private, &oid)) {
+		if (private && !repo_get_oid(the_repository, private, &oid)) {
 			strbuf_addf(&buf, "^%s", private);
 			string_list_append_nodup(&revlist_args,
 						 strbuf_detach(&buf, NULL));

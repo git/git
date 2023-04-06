@@ -269,9 +269,10 @@ static void record_person_from_buf(int which, struct string_list *people,
 static void record_person(int which, struct string_list *people,
 			  struct commit *commit)
 {
-	const char *buffer = get_commit_buffer(commit, NULL);
+	const char *buffer = repo_get_commit_buffer(the_repository, commit,
+						    NULL);
 	record_person_from_buf(which, people, buffer);
-	unuse_commit_buffer(commit, buffer);
+	repo_unuse_commit_buffer(the_repository, commit, buffer);
 }
 
 static int cmp_string_list_util_as_integral(const void *a_, const void *b_)
@@ -382,7 +383,8 @@ static void shortlog(const char *name,
 		if (subjects.nr > limit)
 			continue;
 
-		format_commit_message(commit, "%s", &sb, &ctx);
+		repo_format_commit_message(the_repository, commit, "%s", &sb,
+					   &ctx);
 		strbuf_ltrim(&sb);
 
 		if (!sb.len)
@@ -517,7 +519,8 @@ static void fmt_merge_msg_sigs(struct strbuf *out)
 		struct object_id *oid = origins.items[i].util;
 		enum object_type type;
 		unsigned long size;
-		char *buf = read_object_file(oid, &type, &size);
+		char *buf = repo_read_object_file(the_repository, oid, &type,
+						  &size);
 		char *origbuf = buf;
 		unsigned long len = size;
 		struct signature_check sigc = { NULL };
@@ -603,7 +606,9 @@ static void find_merge_parents(struct merge_parents *result,
 		 * util field yet.
 		 */
 		obj = parse_object(the_repository, &oid);
-		parent = (struct commit *)peel_to_type(NULL, 0, obj, OBJ_COMMIT);
+		parent = (struct commit *)repo_peel_to_type(the_repository,
+							    NULL, 0, obj,
+							    OBJ_COMMIT);
 		if (!parent)
 			continue;
 		commit_list_insert(parent, &parents);

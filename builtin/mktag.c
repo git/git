@@ -52,7 +52,8 @@ static int verify_object_in_tag(struct object_id *tagged_oid, int *tagged_type)
 	void *buffer;
 	const struct object_id *repl;
 
-	buffer = read_object_file(tagged_oid, &type, &size);
+	buffer = repo_read_object_file(the_repository, tagged_oid, &type,
+				       &size);
 	if (!buffer)
 		die(_("could not read tagged object '%s'"),
 		    oid_to_hex(tagged_oid));

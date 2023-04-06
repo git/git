@@ -90,7 +90,7 @@ static int reset_index(const char *ref, const struct object_id *oid, int reset_t
 
 	if (reset_type == KEEP) {
 		struct object_id head_oid;
-		if (get_oid("HEAD", &head_oid))
+		if (repo_get_oid(the_repository, "HEAD", &head_oid))
 			return error(_("You do not have a valid HEAD."));
 		if (!fill_tree_descriptor(the_repository, desc + nr, &head_oid))
 			return error(_("Failed to find tree of HEAD."));
@@ -125,7 +125,7 @@ static void print_new_head_line(struct commit *commit)
 	struct strbuf buf = STRBUF_INIT;
 
 	printf(_("HEAD is now at %s"),
-		find_unique_abbrev(&commit->object.oid, DEFAULT_ABBREV));
+		repo_find_unique_abbrev(the_repository, &commit->object.oid, DEFAULT_ABBREV));
 
 	pp_commit_easy(CMIT_FMT_ONELINE, commit, &buf);
 	if (buf.len > 0)
@@ -261,8 +261,8 @@ static void parse_args(struct pathspec *pathspec,
 		 * has to be unambiguous. If there is a single argument, it
 		 * can not be a tree
 		 */
-		else if ((!argv[1] && !get_oid_committish(argv[0], &unused)) ||
-			 (argv[1] && !get_oid_treeish(argv[0], &unused))) {
+		else if ((!argv[1] && !repo_get_oid_committish(the_repository, argv[0], &unused)) ||
+			 (argv[1] && !repo_get_oid_treeish(the_repository, argv[0], &unused))) {
 			/*
 			 * Ok, argv[0] looks like a commit/tree; it should not
 			 * be a filename.
@@ -289,9 +289,9 @@ static int reset_refs(const char *rev, const struct object_id *oid)
 	struct object_id *orig = NULL, oid_orig,
 		*old_orig = NULL, oid_old_orig;
 
-	if (!get_oid("ORIG_HEAD", &oid_old_orig))
+	if (!repo_get_oid(the_repository, "ORIG_HEAD", &oid_old_orig))
 		old_orig = &oid_old_orig;
-	if (!get_oid("HEAD", &oid_orig)) {
+	if (!repo_get_oid(the_repository, "HEAD", &oid_orig)) {
 		orig = &oid_orig;
 		set_reflog_message(&msg, "updating ORIG_HEAD", NULL);
 		update_ref(msg.buf, "ORIG_HEAD", orig, old_orig, 0,
@@ -367,13 +367,14 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		die(_("the option '%s' requires '%s'"), "--pathspec-file-nul", "--pathspec-from-file");
 	}
 
-	unborn = !strcmp(rev, "HEAD") && get_oid("HEAD", &oid);
+	unborn = !strcmp(rev, "HEAD") && repo_get_oid(the_repository, "HEAD",
+						      &oid);
 	if (unborn) {
 		/* reset on unborn branch: treat as reset to empty tree */
 		oidcpy(&oid, the_hash_algo->empty_tree);
 	} else if (!pathspec.nr && !patch_mode) {
 		struct commit *commit;
-		if (get_oid_committish(rev, &oid))
+		if (repo_get_oid_committish(the_repository, rev, &oid))
 			die(_("Failed to resolve '%s' as a valid revision."), rev);
 		commit = lookup_commit_reference(the_repository, &oid);
 		if (!commit)
@@ -381,7 +382,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		oidcpy(&oid, &commit->object.oid);
 	} else {
 		struct tree *tree;
-		if (get_oid_treeish(rev, &oid))
+		if (repo_get_oid_treeish(the_repository, rev, &oid))
 			die(_("Failed to resolve '%s' as a valid tree."), rev);
 		tree = parse_tree_indirect(&oid);
 		if (!tree)
@@ -466,7 +467,8 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 			char *ref = NULL;
 			int err;
 
-			dwim_ref(rev, strlen(rev), &dummy, &ref, 0);
+			repo_dwim_ref(the_repository, rev, strlen(rev),
+				      &dummy, &ref, 0);
 			if (ref && !starts_with(ref, "refs/"))
 				FREE_AND_NULL(ref);
 

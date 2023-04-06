@@ -363,7 +363,8 @@ static void start_put(struct transfer_request *request)
 	ssize_t size;
 	git_zstream stream;
 
-	unpacked = read_object_file(&request->obj->oid, &type, &len);
+	unpacked = repo_read_object_file(the_repository, &request->obj->oid,
+					 &type, &len);
 	hdrlen = format_object_header(hdr, sizeof(hdr), type, len);
 
 	/* Set it up */
@@ -1332,7 +1333,8 @@ static int get_delta(struct rev_info *revs, struct remote_lock *lock)
 	int count = 0;
 
 	while ((commit = get_revision(revs)) != NULL) {
-		p = process_tree(get_commit_tree(commit), p);
+		p = process_tree(repo_get_commit_tree(the_repository, commit),
+				 p);
 		commit->object.flags |= LOCAL;
 		if (!(commit->object.flags & UNINTERESTING))
 			count += add_send_request(&commit->object, lock);
@@ -1427,7 +1429,7 @@ static void one_remote_ref(const char *refname)
 	 * Fetch a copy of the object if it doesn't exist locally - it
 	 * may be required for updating server info later.
 	 */
-	if (repo->can_update_info_refs && !has_object_file(&ref->old_oid)) {
+	if (repo->can_update_info_refs && !repo_has_object_file(the_repository, &ref->old_oid)) {
 		obj = lookup_unknown_object(the_repository, &ref->old_oid);
 		fprintf(stderr,	"  fetch %s for %s\n",
 			oid_to_hex(&ref->old_oid), refname);
@@ -1571,7 +1573,7 @@ static int verify_merge_base(struct object_id *head_oid, struct ref *remote)
 	struct commit *branch = lookup_commit_or_die(&remote->old_oid,
 						     remote->name);
 
-	return in_merge_bases(branch, head);
+	return repo_in_merge_bases(the_repository, branch, head);
 }
 
 static int delete_remote_branch(const char *pattern, int force)
@@ -1628,14 +1630,14 @@ static int delete_remote_branch(const char *pattern, int force)
 			return error("Remote HEAD symrefs too deep");
 		if (is_null_oid(&head_oid))
 			return error("Unable to resolve remote HEAD");
-		if (!has_object_file(&head_oid))
+		if (!repo_has_object_file(the_repository, &head_oid))
 			return error("Remote HEAD resolves to object %s\nwhich does not exist locally, perhaps you need to fetch?", oid_to_hex(&head_oid));
 
 		/* Remote branch must resolve to a known object */
 		if (is_null_oid(&remote_ref->old_oid))
 			return error("Unable to resolve remote branch %s",
 				     remote_ref->name);
-		if (!has_object_file(&remote_ref->old_oid))
+		if (!repo_has_object_file(the_repository, &remote_ref->old_oid))
 			return error("Remote branch %s resolves to object %s\nwhich does not exist locally, perhaps you need to fetch?", remote_ref->name, oid_to_hex(&remote_ref->old_oid));
 
 		/* Remote branch must be an ancestor of remote HEAD */
@@ -1855,7 +1857,7 @@ int cmd_main(int argc, const char **argv)
 		if (!force_all &&
 		    !is_null_oid(&ref->old_oid) &&
 		    !ref->force) {
-			if (!has_object_file(&ref->old_oid) ||
+			if (!repo_has_object_file(the_repository, &ref->old_oid) ||
 			    !ref_newer(&ref->peer_ref->new_oid,
 				       &ref->old_oid)) {
 				/*

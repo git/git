@@ -310,7 +310,7 @@ static void export_blob(const struct object_id *oid)
 		object = (struct object *)lookup_blob(the_repository, oid);
 		eaten = 0;
 	} else {
-		buf = read_object_file(oid, &type, &size);
+		buf = repo_read_object_file(the_repository, oid, &type, &size);
 		if (!buf)
 			die("could not read blob %s", oid_to_hex(oid));
 		if (check_object_signature(the_repository, oid, buf, size,
@@ -632,7 +632,7 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 	rev->diffopt.output_format = DIFF_FORMAT_CALLBACK;
 
 	parse_commit_or_die(commit);
-	commit_buffer = get_commit_buffer(commit, NULL);
+	commit_buffer = repo_get_commit_buffer(the_repository, commit, NULL);
 	author = strstr(commit_buffer, "\nauthor ");
 	if (!author)
 		die("could not find author in commit %s",
@@ -713,7 +713,7 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 			  ? strlen(message) : 0),
 	       reencoded ? reencoded : message ? message : "");
 	free(reencoded);
-	unuse_commit_buffer(commit, commit_buffer);
+	repo_unuse_commit_buffer(the_repository, commit, commit_buffer);
 
 	for (i = 0, p = commit->parents; p; p = p->next) {
 		struct object *obj = &p->item->object;
@@ -780,7 +780,8 @@ static void handle_tag(const char *name, struct tag *tag)
 		return;
 	}
 
-	buf = read_object_file(&tag->object.oid, &type, &size);
+	buf = repo_read_object_file(the_repository, &tag->object.oid, &type,
+				    &size);
 	if (!buf)
 		die("could not read tag %s", oid_to_hex(&tag->object.oid));
 	message = memmem(buf, size, "\n\n", 2);
@@ -931,7 +932,8 @@ static void get_tags_and_duplicates(struct rev_cmdline_info *info)
 		if (e->flags & UNINTERESTING)
 			continue;
 
-		if (dwim_ref(e->name, strlen(e->name), &oid, &full_name, 0) != 1)
+		if (repo_dwim_ref(the_repository, e->name, strlen(e->name),
+				  &oid, &full_name, 0) != 1)
 			continue;
 
 		if (refspecs.nr) {

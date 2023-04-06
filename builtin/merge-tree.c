@@ -70,7 +70,9 @@ static void *result(struct merge_list *entry, unsigned long *size)
 	const char *path = entry->path;
 
 	if (!entry->stage)
-		return read_object_file(&entry->blob->object.oid, &type, size);
+		return repo_read_object_file(the_repository,
+					     &entry->blob->object.oid, &type,
+					     size);
 	base = NULL;
 	if (entry->stage == 1) {
 		base = entry->blob;
@@ -93,8 +95,9 @@ static void *origin(struct merge_list *entry, unsigned long *size)
 	enum object_type type;
 	while (entry) {
 		if (entry->stage == 2)
-			return read_object_file(&entry->blob->object.oid,
-						&type, size);
+			return repo_read_object_file(the_repository,
+						     &entry->blob->object.oid,
+						     &type, size);
 		entry = entry->link;
 	}
 	return NULL;
@@ -444,16 +447,17 @@ static int real_merge(struct merge_tree_options *o,
 			die(_("could not lookup commit %s"), merge_base);
 
 		opt.ancestor = merge_base;
-		base_tree = get_commit_tree(base_commit);
-		parent1_tree = get_commit_tree(parent1);
-		parent2_tree = get_commit_tree(parent2);
+		base_tree = repo_get_commit_tree(the_repository, base_commit);
+		parent1_tree = repo_get_commit_tree(the_repository, parent1);
+		parent2_tree = repo_get_commit_tree(the_repository, parent2);
 		merge_incore_nonrecursive(&opt, base_tree, parent1_tree, parent2_tree, &result);
 	} else {
 		/*
 		 * Get the merge bases, in reverse order; see comment above
 		 * merge_incore_recursive in merge-ort.h
 		 */
-		merge_bases = get_merge_bases(parent1, parent2);
+		merge_bases = repo_get_merge_bases(the_repository, parent1,
+						   parent2);
 		if (!merge_bases && !o->allow_unrelated_histories)
 			die(_("refusing to merge unrelated histories"));
 		merge_bases = reverse_commit_list(merge_bases);

@@ -11,7 +11,7 @@ static char *create_temp_file(struct object_id *oid)
 	unsigned long size;
 	int fd;
 
-	buf = read_object_file(oid, &type, &size);
+	buf = repo_read_object_file(the_repository, oid, &type, &size);
 	if (!buf || type != OBJ_BLOB)
 		die("unable to read blob object %s", oid_to_hex(oid));
 
@@ -30,7 +30,7 @@ int cmd_unpack_file(int argc, const char **argv, const char *prefix UNUSED)
 
 	if (argc != 2 || !strcmp(argv[1], "-h"))
 		usage("git unpack-file <blob>");
-	if (get_oid(argv[1], &oid))
+	if (repo_get_oid(the_repository, argv[1], &oid))
 		die("Not a valid object name %s", argv[1]);
 
 	git_config(git_default_config, NULL);

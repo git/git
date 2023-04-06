@@ -1823,7 +1823,7 @@ const char *refs_resolve_ref_unsafe(struct ref_store *refs,
 			return NULL;
 
 		/*
-		 * dwim_ref() uses REF_ISBROKEN to distinguish between
+		 * repo_dwim_ref() uses REF_ISBROKEN to distinguish between
 		 * missing refs and refs that were present but invalid,
 		 * to complain about the latter to stderr.
 		 *

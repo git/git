@@ -49,7 +49,7 @@ int cmd_merge_recursive(int argc, const char **argv, const char *prefix UNUSED)
 		}
 		if (bases_count < ARRAY_SIZE(bases)-1) {
 			struct object_id *oid = xmalloc(sizeof(struct object_id));
-			if (get_oid(argv[i], oid))
+			if (repo_get_oid(the_repository, argv[i], oid))
 				die(_("could not parse object '%s'"), argv[i]);
 			bases[bases_count++] = oid;
 		}
@@ -70,9 +70,9 @@ int cmd_merge_recursive(int argc, const char **argv, const char *prefix UNUSED)
 	o.branch1 = argv[++i];
 	o.branch2 = argv[++i];
 
-	if (get_oid(o.branch1, &h1))
+	if (repo_get_oid(the_repository, o.branch1, &h1))
 		die(_("could not resolve ref '%s'"), o.branch1);
-	if (get_oid(o.branch2, &h2))
+	if (repo_get_oid(the_repository, o.branch2, &h2))
 		die(_("could not resolve ref '%s'"), o.branch2);
 
 	o.branch1 = better1 = better_branch_name(o.branch1);

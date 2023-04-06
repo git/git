@@ -27,14 +27,14 @@ static void show_one(const char *refname, const struct object_id *oid)
 	const char *hex;
 	struct object_id peeled;
 
-	if (!has_object_file(oid))
+	if (!repo_has_object_file(the_repository, oid))
 		die("git show-ref: bad ref %s (%s)", refname,
 		    oid_to_hex(oid));
 
 	if (quiet)
 		return;
 
-	hex = find_unique_abbrev(oid, abbrev);
+	hex = repo_find_unique_abbrev(the_repository, oid, abbrev);
 	if (hash_only)
 		printf("%s\n", hex);
 	else
@@ -44,7 +44,7 @@ static void show_one(const char *refname, const struct object_id *oid)
 		return;
 
 	if (!peel_iterated_oid(oid, &peeled)) {
-		hex = find_unique_abbrev(&peeled, abbrev);
+		hex = repo_find_unique_abbrev(the_repository, &peeled, abbrev);
 		printf("%s %s^{}\n", hex, refname);
 	}
 }

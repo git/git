@@ -371,7 +371,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	 */
 	if (!force) {
 		struct object_id oid;
-		if (get_oid("HEAD", &oid))
+		if (repo_get_oid(the_repository, "HEAD", &oid))
 			oidclr(&oid);
 		if (check_local_mod(&oid, index_only))
 			exit(1);

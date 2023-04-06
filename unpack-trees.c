@@ -459,7 +459,7 @@ static int check_updates(struct unpack_trees_options *o,
 	if (should_update_submodules())
 		load_gitmodules_file(index, &state);
 
-	if (has_promisor_remote())
+	if (repo_has_promisor_remote(the_repository))
 		/*
 		 * Prefetch the objects that are to be checked out in the loop
 		 * below.

@@ -676,7 +676,7 @@ static int show_tag_object(const struct object_id *oid, struct rev_info *rev)
 {
 	unsigned long size;
 	enum object_type type;
-	char *buf = read_object_file(oid, &type, &size);
+	char *buf = repo_read_object_file(the_repository, oid, &type, &size);
 	int offset = 0;
 
 	if (!buf)
@@ -1218,7 +1218,8 @@ static char *find_branch_name(struct rev_info *rev)
 		return NULL;
 	ref = rev->cmdline.rev[positive].name;
 	tip_oid = &rev->cmdline.rev[positive].item->oid;
-	if (dwim_ref(ref, strlen(ref), &branch_oid, &full_ref, 0) &&
+	if (repo_dwim_ref(the_repository, ref, strlen(ref), &branch_oid,
+			  &full_ref, 0) &&
 	    skip_prefix(full_ref, "refs/heads/", &v) &&
 	    oideq(tip_oid, &branch_oid))
 		branch = xstrdup(v);
@@ -1328,10 +1329,11 @@ static void make_cover_letter(struct rev_info *rev, int use_separate_file,
 	log_write_email_headers(rev, head, &pp.after_subject, &need_8bit_cte, 0);
 
 	for (i = 0; !need_8bit_cte && i < nr; i++) {
-		const char *buf = get_commit_buffer(list[i], NULL);
+		const char *buf = repo_get_commit_buffer(the_repository,
+							 list[i], NULL);
 		if (has_non_ascii(buf))
 			need_8bit_cte = 1;
-		unuse_commit_buffer(list[i], buf);
+		repo_unuse_commit_buffer(the_repository, list[i], buf);
 	}
 
 	if (!branch_name)
@@ -1384,7 +1386,7 @@ static void make_cover_letter(struct rev_info *rev, int use_separate_file,
 			.other_arg = &other_arg
 		};
 
-		diff_setup(&opts);
+		repo_diff_setup(the_repository, &opts);
 		opts.file = rev->diffopt.file;
 		opts.use_color = rev->diffopt.use_color;
 		diff_setup_done(&opts);
@@ -1656,14 +1658,16 @@ static struct commit *get_base_commit(const char *base_commit,
 			struct commit *commit;
 			struct object_id oid;
 
-			if (get_oid(upstream, &oid)) {
+			if (repo_get_oid(the_repository, upstream, &oid)) {
 				if (die_on_failure)
 					die(_("failed to resolve '%s' as a valid ref"), upstream);
 				else
 					return NULL;
 			}
 			commit = lookup_commit_or_die(&oid, "upstream base");
-			base_list = get_merge_bases_many(commit, total, list);
+			base_list = repo_get_merge_bases_many(the_repository,
+							      commit, total,
+							      list);
 			/* There should be one and only one merge base. */
 			if (!base_list || base_list->next) {
 				if (die_on_failure) {
@@ -1697,7 +1701,9 @@ static struct commit *get_base_commit(const char *base_commit,
 	while (rev_nr > 1) {
 		for (i = 0; i < rev_nr / 2; i++) {
 			struct commit_list *merge_base;
-			merge_base = get_merge_bases(rev[2 * i], rev[2 * i + 1]);
+			merge_base = repo_get_merge_bases(the_repository,
+							  rev[2 * i],
+							  rev[2 * i + 1]);
 			if (!merge_base || merge_base->next) {
 				if (die_on_failure) {
 					die(_("failed to find exact merge base"));
@@ -1715,7 +1721,7 @@ static struct commit *get_base_commit(const char *base_commit,
 		rev_nr = DIV_ROUND_UP(rev_nr, 2);
 	}
 
-	if (!in_merge_bases(base, rev[0])) {
+	if (!repo_in_merge_bases(the_repository, base, rev[0])) {
 		if (die_on_failure) {
 			die(_("base commit should be the ancestor of revision list"));
 		} else {
@@ -2414,7 +2420,7 @@ done:
 static int add_pending_commit(const char *arg, struct rev_info *revs, int flags)
 {
 	struct object_id oid;
-	if (get_oid(arg, &oid) == 0) {
+	if (repo_get_oid(the_repository, arg, &oid) == 0) {
 		struct commit *commit = lookup_commit_reference(the_repository,
 								&oid);
 		if (commit) {
@@ -2436,12 +2442,12 @@ static void print_commit(char sign, struct commit *commit, int verbose,
 {
 	if (!verbose) {
 		fprintf(file, "%c %s\n", sign,
-		       find_unique_abbrev(&commit->object.oid, abbrev));
+		       repo_find_unique_abbrev(the_repository, &commit->object.oid, abbrev));
 	} else {
 		struct strbuf buf = STRBUF_INIT;
 		pp_commit_easy(CMIT_FMT_ONELINE, commit, &buf);
 		fprintf(file, "%c %s %s\n", sign,
-		       find_unique_abbrev(&commit->object.oid, abbrev),
+		       repo_find_unique_abbrev(the_repository, &commit->object.oid, abbrev),
 		       buf.buf);
 		strbuf_release(&buf);
 	}

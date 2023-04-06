@@ -327,7 +327,8 @@ static void add_pending_object_with_path(struct rev_info *revs,
 	if (revs->reflog_info && obj->type == OBJ_COMMIT) {
 		struct strbuf buf = STRBUF_INIT;
 		size_t namelen = strlen(name);
-		int len = interpret_branch_name(name, namelen, &buf, &options);
+		int len = repo_interpret_branch_name(the_repository, name,
+						     namelen, &buf, &options);
 
 		if (0 < len && len < namelen && buf.len)
 			strbuf_addstr(&buf, name + len);
@@ -357,7 +358,7 @@ void add_head_to_pending(struct rev_info *revs)
 {
 	struct object_id oid;
 	struct object *obj;
-	if (get_oid("HEAD", &oid))
+	if (repo_get_oid(the_repository, "HEAD", &oid))
 		return;
 	obj = parse_object(revs->repo, &oid);
 	if (!obj)
@@ -780,8 +781,8 @@ static int check_maybe_different_in_bloom_filter(struct rev_info *revs,
 static int rev_compare_tree(struct rev_info *revs,
 			    struct commit *parent, struct commit *commit, int nth_parent)
 {
-	struct tree *t1 = get_commit_tree(parent);
-	struct tree *t2 = get_commit_tree(commit);
+	struct tree *t1 = repo_get_commit_tree(the_repository, parent);
+	struct tree *t2 = repo_get_commit_tree(the_repository, commit);
 	int bloom_ret = 1;
 
 	if (!t1)
@@ -827,7 +828,7 @@ static int rev_compare_tree(struct rev_info *revs,
 
 static int rev_same_tree_as_empty(struct rev_info *revs, struct commit *commit)
 {
-	struct tree *t1 = get_commit_tree(commit);
+	struct tree *t1 = repo_get_commit_tree(the_repository, commit);
 
 	if (!t1)
 		return 0;
@@ -965,7 +966,7 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 	if (!revs->prune)
 		return;
 
-	if (!get_commit_tree(commit))
+	if (!repo_get_commit_tree(the_repository, commit))
 		return;
 
 	if (!commit->parents) {
@@ -1871,7 +1872,7 @@ static int add_parents_only(struct rev_info *revs, const char *arg_, int flags,
 		flags ^= UNINTERESTING | BOTTOM;
 		arg++;
 	}
-	if (get_oid_committish(arg, &oid))
+	if (repo_get_oid_committish(the_repository, arg, &oid))
 		return 0;
 	while (1) {
 		it = get_reference(revs, arg, &oid, 0);
@@ -1952,15 +1953,15 @@ static void prepare_show_merge(struct rev_info *revs)
 	int i, prune_num = 1; /* counting terminating NULL */
 	struct index_state *istate = revs->repo->index;
 
-	if (get_oid("HEAD", &oid))
+	if (repo_get_oid(the_repository, "HEAD", &oid))
 		die("--merge without HEAD?");
 	head = lookup_commit_or_die(&oid, "HEAD");
-	if (get_oid("MERGE_HEAD", &oid))
+	if (repo_get_oid(the_repository, "MERGE_HEAD", &oid))
 		die("--merge without MERGE_HEAD?");
 	other = lookup_commit_or_die(&oid, "MERGE_HEAD");
 	add_pending_object(revs, &head->object, "HEAD");
 	add_pending_object(revs, &other->object, "MERGE_HEAD");
-	bases = get_merge_bases(head, other);
+	bases = repo_get_merge_bases(the_repository, head, other);
 	add_rev_cmdline_list(revs, bases, REV_CMD_MERGE_BASE, UNINTERESTING | BOTTOM);
 	add_pending_commit_list(revs, bases, UNINTERESTING | BOTTOM);
 	free_commit_list(bases);
@@ -2055,7 +2056,7 @@ static int handle_dotdot_1(const char *arg, char *dotdot,
 		if (!a || !b)
 			return dotdot_missing(arg, dotdot, revs, symmetric);
 
-		exclude = get_merge_bases(a, b);
+		exclude = repo_get_merge_bases(the_repository, a, b);
 		add_rev_cmdline_list(revs, exclude, REV_CMD_MERGE_BASE,
 				     flags_exclude);
 		add_pending_commit_list(revs, exclude, flags_exclude);
@@ -3881,7 +3882,7 @@ static int commit_match(struct commit *commit, struct rev_info *opt)
 	 * in it.
 	 */
 	encoding = get_log_output_encoding();
-	message = logmsg_reencode(commit, NULL, encoding);
+	message = repo_logmsg_reencode(the_repository, commit, NULL, encoding);
 
 	/* Copy the commit to temporary if we are using "fake" headers */
 	if (buf.len)
@@ -3917,7 +3918,7 @@ static int commit_match(struct commit *commit, struct rev_info *opt)
 		retval = grep_buffer(&opt->grep_filter,
 				     (char *)message, strlen(message));
 	strbuf_release(&buf);
-	unuse_commit_buffer(commit, message);
+	repo_unuse_commit_buffer(the_repository, commit, message);
 	return retval;
 }
 

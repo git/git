@@ -87,7 +87,8 @@ void *read_blob_entry(const struct cache_entry *ce, size_t *size)
 {
 	enum object_type type;
 	unsigned long ul;
-	void *blob_data = read_object_file(&ce->oid, &type, &ul);
+	void *blob_data = repo_read_object_file(the_repository, &ce->oid,
+						&type, &ul);
 
 	*size = ul;
 	if (blob_data) {

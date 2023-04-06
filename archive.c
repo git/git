@@ -61,7 +61,8 @@ static void format_subst(const struct commit *commit,
 		strbuf_add(&fmt, b + 8, c - b - 8);
 
 		strbuf_add(buf, src, b - src);
-		format_commit_message(commit, fmt.buf, buf, ctx);
+		repo_format_commit_message(the_repository, commit, fmt.buf,
+					   buf, ctx);
 		len -= c + 1 - src;
 		src  = c + 1;
 	}
@@ -86,7 +87,7 @@ static void *object_file_to_archive(const struct archiver_args *args,
 			       (args->tree ? &args->tree->object.oid : NULL), oid);
 
 	path += args->baselen;
-	buffer = read_object_file(oid, type, sizep);
+	buffer = repo_read_object_file(the_repository, oid, type, sizep);
 	if (buffer && S_ISREG(mode)) {
 		struct strbuf buf = STRBUF_INIT;
 		size_t size = 0;
@@ -457,13 +458,14 @@ static void parse_treeish_arg(const char **argv,
 		const char *colon = strchrnul(name, ':');
 		int refnamelen = colon - name;
 
-		if (!dwim_ref(name, refnamelen, &oid, &ref, 0))
+		if (!repo_dwim_ref(the_repository, name, refnamelen, &oid, &ref, 0))
 			die(_("no such ref: %.*s"), refnamelen, name);
 	} else {
-		dwim_ref(name, strlen(name), &oid, &ref, 0);
+		repo_dwim_ref(the_repository, name, strlen(name), &oid, &ref,
+			      0);
 	}
 
-	if (get_oid(name, &oid))
+	if (repo_get_oid(the_repository, name, &oid))
 		die(_("not a valid object name: %s"), name);
 
 	commit = lookup_commit_reference_gently(ar_args->repo, &oid, 1);

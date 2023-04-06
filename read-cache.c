@@ -265,7 +265,7 @@ static int ce_compare_link(const struct cache_entry *ce, size_t expected_size)
 	if (strbuf_readlink(&sb, ce->name, expected_size))
 		return -1;
 
-	buffer = read_object_file(&ce->oid, &type, &size);
+	buffer = repo_read_object_file(the_repository, &ce->oid, &type, &size);
 	if (buffer) {
 		if (size == sb.len)
 			match = memcmp(buffer, sb.buf, size);
@@ -2630,7 +2630,7 @@ int repo_index_has_changes(struct repository *repo,
 
 	if (tree)
 		cmp = tree->object.oid;
-	if (tree || !get_oid_tree("HEAD", &cmp)) {
+	if (tree || !repo_get_oid_tree(repo, "HEAD", &cmp)) {
 		struct diff_options opt;
 
 		repo_diff_setup(repo, &opt);
@@ -2959,7 +2959,7 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 	}
 
 	if (!istate->version)
-		istate->version = get_index_format_default(the_repository);
+		istate->version = get_index_format_default(r);
 
 	/* demote version 3 to version 2 when the latter suffices */
 	if (istate->version == 3 || istate->version == 2)
@@ -3570,7 +3570,8 @@ void *read_blob_data_from_index(struct index_state *istate,
 	}
 	if (pos < 0)
 		return NULL;
-	data = read_object_file(&istate->cache[pos]->oid, &type, &sz);
+	data = repo_read_object_file(the_repository, &istate->cache[pos]->oid,
+				     &type, &sz);
 	if (!data || type != OBJ_BLOB) {
 		free(data);
 		return NULL;

@@ -959,7 +959,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 	for (i = 0; i < argc; i++) {
 		const char *arg = argv[i];
 		struct object_id oid;
-		if (!get_oid(arg, &oid)) {
+		if (!repo_get_oid(the_repository, arg, &oid)) {
 			struct object *obj = lookup_object(the_repository,
 							   &oid);
 

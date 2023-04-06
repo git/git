@@ -500,8 +500,8 @@ static int got_oid(struct upload_pack_data *data,
 {
 	if (get_oid_hex(hex, oid))
 		die("git upload-pack: expected SHA1 object, got '%s'", hex);
-	if (!has_object_file_with_flags(oid,
-					OBJECT_INFO_QUICK | OBJECT_INFO_SKIP_FETCH_OBJECT))
+	if (!repo_has_object_file_with_flags(the_repository, oid,
+					     OBJECT_INFO_QUICK | OBJECT_INFO_SKIP_FETCH_OBJECT))
 		return -1;
 	return do_got_oid(data, oid);
 }
@@ -1601,8 +1601,8 @@ static int process_haves(struct upload_pack_data *data, struct oid_array *common
 	for (i = 0; i < data->haves.nr; i++) {
 		const struct object_id *oid = &data->haves.oid[i];
 
-		if (!has_object_file_with_flags(oid,
-						OBJECT_INFO_QUICK | OBJECT_INFO_SKIP_FETCH_OBJECT))
+		if (!repo_has_object_file_with_flags(the_repository, oid,
+						     OBJECT_INFO_QUICK | OBJECT_INFO_SKIP_FETCH_OBJECT))
 			continue;
 
 		oid_array_append(common, oid);

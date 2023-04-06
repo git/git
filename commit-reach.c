@@ -165,7 +165,8 @@ struct commit_list *get_octopus_merge_bases(struct commit_list *in)
 
 		for (j = ret; j; j = j->next) {
 			struct commit_list *bases;
-			bases = get_merge_bases(i->item, j->item);
+			bases = repo_get_merge_bases(the_repository, i->item,
+						     j->item);
 			if (!new_commits)
 				new_commits = bases;
 			else
@@ -450,7 +451,7 @@ int repo_is_descendant_of(struct repository *r,
 	if (!with_commit)
 		return 1;
 
-	if (generation_numbers_enabled(the_repository)) {
+	if (generation_numbers_enabled(r)) {
 		struct commit_list *from_list = NULL;
 		int result;
 		commit_list_insert(commit, &from_list);
@@ -587,7 +588,7 @@ int ref_newer(const struct object_id *new_oid, const struct object_id *old_oid)
 		return 0;
 	new_commit = (struct commit *) o;
 
-	if (parse_commit(new_commit) < 0)
+	if (repo_parse_commit(the_repository, new_commit) < 0)
 		return 0;
 
 	commit_list_insert(old_commit, &old_commit_list);
@@ -751,7 +752,7 @@ int can_all_from_reach_with_flag(struct object_array *from,
 		}
 
 		list[nr_commits] = (struct commit *)from_one;
-		if (parse_commit(list[nr_commits]) ||
+		if (repo_parse_commit(the_repository, list[nr_commits]) ||
 		    commit_graph_generation(list[nr_commits]) < min_generation) {
 			result = 0;
 			goto cleanup;
@@ -786,7 +787,7 @@ int can_all_from_reach_with_flag(struct object_array *from,
 				if (!(parent->item->object.flags & assign_flag)) {
 					parent->item->object.flags |= assign_flag;
 
-					if (parse_commit(parent->item) ||
+					if (repo_parse_commit(the_repository, parent->item) ||
 					    parent->item->date < min_commit_date ||
 					    commit_graph_generation(parent->item) < min_generation)
 						continue;
@@ -832,7 +833,7 @@ int can_all_from_reach(struct commit_list *from, struct commit_list *to,
 	while (from_iter) {
 		add_object_array(&from_iter->item->object, NULL, &from_objs);
 
-		if (!parse_commit(from_iter->item)) {
+		if (!repo_parse_commit(the_repository, from_iter->item)) {
 			timestamp_t generation;
 			if (from_iter->item->date < min_commit_date)
 				min_commit_date = from_iter->item->date;
@@ -846,7 +847,7 @@ int can_all_from_reach(struct commit_list *from, struct commit_list *to,
 	}
 
 	while (to_iter) {
-		if (!parse_commit(to_iter->item)) {
+		if (!repo_parse_commit(the_repository, to_iter->item)) {
 			timestamp_t generation;
 			if (to_iter->item->date < min_commit_date)
 				min_commit_date = to_iter->item->date;
@@ -896,7 +897,7 @@ struct commit_list *get_reachable_subset(struct commit **from, int nr_from,
 		timestamp_t generation;
 		struct commit *c = *item;
 
-		parse_commit(c);
+		repo_parse_commit(the_repository, c);
 		generation = commit_graph_generation(c);
 		if (generation < min_generation)
 			min_generation = generation;
@@ -911,7 +912,7 @@ struct commit_list *get_reachable_subset(struct commit **from, int nr_from,
 		struct commit *c = *item;
 		if (!(c->object.flags & PARENT2)) {
 			c->object.flags |= PARENT2;
-			parse_commit(c);
+			repo_parse_commit(the_repository, c);
 
 			prio_queue_put(&queue, *item);
 		}
@@ -930,7 +931,7 @@ struct commit_list *get_reachable_subset(struct commit **from, int nr_from,
 		for (parents = current->parents; parents; parents = parents->next) {
 			struct commit *p = parents->item;
 
-			parse_commit(p);
+			repo_parse_commit(the_repository, p);
 
 			if (commit_graph_generation(p) < min_generation)
 				continue;

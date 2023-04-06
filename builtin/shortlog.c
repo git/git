@@ -176,10 +176,11 @@ static void insert_records_from_trailers(struct shortlog *log,
 		return;
 
 	/*
-	 * Using format_commit_message("%B") would be simpler here, but
+	 * Using repo_format_commit_message("%B") would be simpler here, but
 	 * this saves us copying the message.
 	 */
-	commit_buffer = logmsg_reencode(commit, NULL, ctx->output_encoding);
+	commit_buffer = repo_logmsg_reencode(the_repository, commit, NULL,
+					     ctx->output_encoding);
 	body = strstr(commit_buffer, "\n\n");
 	if (!body)
 		return;
@@ -202,7 +203,7 @@ static void insert_records_from_trailers(struct shortlog *log,
 	trailer_iterator_release(&iter);
 
 	strbuf_release(&ident);
-	unuse_commit_buffer(commit, commit_buffer);
+	repo_unuse_commit_buffer(the_repository, commit, commit_buffer);
 }
 
 static int shortlog_needs_dedup(const struct shortlog *log)
@@ -222,7 +223,8 @@ static void insert_records_from_format(struct shortlog *log,
 	for_each_string_list_item(item, &log->format) {
 		strbuf_reset(&buf);
 
-		format_commit_message(commit, item->string, &buf, ctx);
+		repo_format_commit_message(the_repository, commit,
+					   item->string, &buf, ctx);
 
 		if (!shortlog_needs_dedup(log) || strset_add(dups, buf.buf))
 			insert_one_record(log, buf.buf, oneline);
@@ -248,7 +250,8 @@ void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 		if (log->user_format)
 			pretty_print_commit(&ctx, commit, &oneline);
 		else
-			format_commit_message(commit, "%s", &oneline, &ctx);
+			repo_format_commit_message(the_repository, commit,
+						   "%s", &oneline, &ctx);
 	}
 	oneline_str = oneline.len ? oneline.buf : "<none>";
 

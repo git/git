@@ -1031,7 +1031,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	if (file_exists(git_path_merge_head(the_repository)))
 		die_conclude_merge();
 
-	if (get_oid("HEAD", &orig_head))
+	if (repo_get_oid(the_repository, "HEAD", &orig_head))
 		oidclr(&orig_head);
 
 	if (opt_rebase) {
@@ -1056,7 +1056,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	if (opt_dry_run)
 		return 0;
 
-	if (get_oid("HEAD", &curr_head))
+	if (repo_get_oid(the_repository, "HEAD", &curr_head))
 		oidclr(&curr_head);
 
 	if (!is_null_oid(&orig_head) && !is_null_oid(&curr_head) &&

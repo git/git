@@ -363,7 +363,7 @@ static void show_ru_info(struct index_state *istate)
 			if (!ui->mode[i])
 				continue;
 			printf("%s%06o %s %d\t", tag_resolve_undo, ui->mode[i],
-			       find_unique_abbrev(&ui->oid[i], abbrev),
+			       repo_find_unique_abbrev(the_repository, &ui->oid[i], abbrev),
 			       i + 1);
 			write_name(path);
 		}
@@ -578,7 +578,7 @@ void overlay_tree_on_index(struct index_state *istate,
 	read_tree_fn_t fn = NULL;
 	int err;
 
-	if (get_oid(tree_name, &oid))
+	if (repo_get_oid(the_repository, tree_name, &oid))
 		die("tree-ish %s not found.", tree_name);
 	tree = parse_tree_indirect(&oid);
 	if (!tree)

@@ -285,7 +285,7 @@ static uint64_t total_ram(void)
 
 static uint64_t estimate_repack_memory(struct packed_git *pack)
 {
-	unsigned long nr_objects = approximate_object_count();
+	unsigned long nr_objects = repo_approximate_object_count(the_repository);
 	size_t os_cache, heap;
 
 	if (!pack || !nr_objects)
@@ -700,7 +700,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 			strvec_push(&prune, prune_expire);
 			if (quiet)
 				strvec_push(&prune, "--no-progress");
-			if (has_promisor_remote())
+			if (repo_has_promisor_remote(the_repository))
 				strvec_push(&prune,
 					    "--exclude-promisor-objects");
 			prune_cmd.git_cmd = 1;
@@ -821,7 +821,7 @@ static int dfs_on_ref(const char *refname UNUSED,
 	commit = lookup_commit(the_repository, oid);
 	if (!commit)
 		return 0;
-	if (parse_commit(commit) ||
+	if (repo_parse_commit(the_repository, commit) ||
 	    commit_graph_position(commit) != COMMIT_NOT_FROM_GRAPH)
 		return 0;
 
@@ -838,7 +838,7 @@ static int dfs_on_ref(const char *refname UNUSED,
 		commit = pop_commit(&stack);
 
 		for (parent = commit->parents; parent; parent = parent->next) {
-			if (parse_commit(parent->item) ||
+			if (repo_parse_commit(the_repository, parent->item) ||
 			    commit_graph_position(parent->item) != COMMIT_NOT_FROM_GRAPH ||
 			    parent->item->object.flags & SEEN)
 				continue;

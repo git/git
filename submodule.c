@@ -66,7 +66,7 @@ int is_writing_gitmodules_ok(void)
 {
 	struct object_id oid;
 	return file_exists(GITMODULES_FILE) ||
-		(get_oid(GITMODULES_INDEX, &oid) < 0 && get_oid(GITMODULES_HEAD, &oid) < 0);
+		(repo_get_oid(the_repository, GITMODULES_INDEX, &oid) < 0 && repo_get_oid(the_repository, GITMODULES_HEAD, &oid) < 0);
 }
 
 /*
@@ -1625,7 +1625,7 @@ get_fetch_task_from_changed(struct submodule_parallel_fetch *spf,
 		if (!task->repo) {
 			strbuf_addf(err, _("Could not access submodule '%s' at commit %s\n"),
 				    cs_data->path,
-				    find_unique_abbrev(cs_data->super_oid, DEFAULT_ABBREV));
+				    repo_find_unique_abbrev(the_repository, cs_data->super_oid, DEFAULT_ABBREV));
 
 			fetch_task_release(task);
 			free(task);
@@ -1636,8 +1636,8 @@ get_fetch_task_from_changed(struct submodule_parallel_fetch *spf,
 			strbuf_addf(err,
 				    _("Fetching submodule %s%s at commit %s\n"),
 				    spf->prefix, task->sub->path,
-				    find_unique_abbrev(cs_data->super_oid,
-						       DEFAULT_ABBREV));
+				    repo_find_unique_abbrev(the_repository, cs_data->super_oid,
+							    DEFAULT_ABBREV));
 
 		spf->changed_count++;
 		/*

@@ -339,7 +339,7 @@ static int save_state(struct object_id *stash)
 	else if (!len)		/* no changes */
 		goto out;
 	strbuf_setlen(&buffer, buffer.len-1);
-	if (get_oid(buffer.buf, stash))
+	if (repo_get_oid(the_repository, buffer.buf, stash))
 		die(_("not a valid object: %s"), buffer.buf);
 	rc = 0;
 out:
@@ -519,7 +519,8 @@ static void merge_name(const char *remote, struct strbuf *msg)
 	if (!remote_head)
 		die(_("'%s' does not point to a commit"), remote);
 
-	if (dwim_ref(remote, strlen(remote), &branch_head, &found_ref, 0) > 0) {
+	if (repo_dwim_ref(the_repository, remote, strlen(remote), &branch_head,
+			  &found_ref, 0) > 0) {
 		if (starts_with(found_ref, "refs/heads/")) {
 			strbuf_addf(msg, "%s\t\tbranch '%s' of .\n",
 				    oid_to_hex(&branch_head), remote);
@@ -1530,7 +1531,8 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	if (!remoteheads)
 		; /* already up-to-date */
 	else if (!remoteheads->next)
-		common = get_merge_bases(head_commit, remoteheads->item);
+		common = repo_get_merge_bases(the_repository, head_commit,
+					      remoteheads->item);
 	else {
 		struct commit_list *list = remoteheads;
 		commit_list_insert(head_commit, &list);
@@ -1566,10 +1568,10 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 
 		if (verbosity >= 0) {
 			printf(_("Updating %s..%s\n"),
-			       find_unique_abbrev(&head_commit->object.oid,
-						  DEFAULT_ABBREV),
-			       find_unique_abbrev(&remoteheads->item->object.oid,
-						  DEFAULT_ABBREV));
+			       repo_find_unique_abbrev(the_repository, &head_commit->object.oid,
+						       DEFAULT_ABBREV),
+			       repo_find_unique_abbrev(the_repository, &remoteheads->item->object.oid,
+						       DEFAULT_ABBREV));
 		}
 		commit = remoteheads->item;
 		if (!commit) {
@@ -1609,7 +1611,8 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			 * Must first ensure that index matches HEAD before
 			 * attempting a trivial merge.
 			 */
-			struct tree *head_tree = get_commit_tree(head_commit);
+			struct tree *head_tree = repo_get_commit_tree(the_repository,
+								      head_commit);
 			struct strbuf sb = STRBUF_INIT;
 
 			if (repo_index_has_changes(the_repository, head_tree,
@@ -1648,7 +1651,9 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			 * merge_bases again, otherwise "git merge HEAD^
 			 * HEAD^^" would be missed.
 			 */
-			common_one = get_merge_bases(head_commit, j->item);
+			common_one = repo_get_merge_bases(the_repository,
+							  head_commit,
+							  j->item);
 			if (!oideq(&common_one->item->object.oid, &j->item->object.oid)) {
 				up_to_date = 0;
 				break;

@@ -46,7 +46,7 @@ static int parse_parent_arg_callback(const struct option *opt,
 
 	BUG_ON_OPT_NEG_NOARG(unset, arg);
 
-	if (get_oid_commit(arg, &oid))
+	if (repo_get_oid_commit(the_repository, arg, &oid))
 		die(_("not a valid object name %s"), arg);
 
 	assert_oid_type(&oid, OBJ_COMMIT);
@@ -124,7 +124,7 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 	if (argc != 1)
 		die(_("must give exactly one tree"));
 
-	if (get_oid_tree(argv[0], &tree_oid))
+	if (repo_get_oid_tree(the_repository, argv[0], &tree_oid))
 		die(_("not a valid object name %s"), argv[0]);
 
 	if (!buffer.len) {

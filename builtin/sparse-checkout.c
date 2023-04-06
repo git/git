@@ -469,7 +469,7 @@ static int sparse_checkout_init(int argc, const char **argv, const char *prefix)
 		return update_working_directory(NULL);
 	}
 
-	if (get_oid("HEAD", &oid)) {
+	if (repo_get_oid(the_repository, "HEAD", &oid)) {
 		FILE *fp;
 
 		/* assume we are in a fresh repo, but update the sparse-checkout file */
