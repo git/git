@@ -3091,7 +3091,7 @@ static int git_config_copy_or_rename_section_in_file(const char *config_filename
 	char *filename_buf = NULL;
 	struct lock_file lock = LOCK_INIT;
 	int out_fd;
-	char buf[1024];
+	struct strbuf buf = STRBUF_INIT;
 	FILE *config_file = NULL;
 	struct stat st;
 	struct strbuf copystr = STRBUF_INIT;
@@ -3132,14 +3132,14 @@ static int git_config_copy_or_rename_section_in_file(const char *config_filename
 		goto out;
 	}
 
-	while (fgets(buf, sizeof(buf), config_file)) {
+	while (!strbuf_getwholeline(&buf, config_file, '\n')) {
 		unsigned i;
 		int length;
 		int is_section = 0;
-		char *output = buf;
-		for (i = 0; buf[i] && isspace(buf[i]); i++)
+		char *output = buf.buf;
+		for (i = 0; buf.buf[i] && isspace(buf.buf[i]); i++)
 			; /* do nothing */
-		if (buf[i] == '[') {
+		if (buf.buf[i] == '[') {
 			/* it's a section */
 			int offset;
 			is_section = 1;
@@ -3158,7 +3158,7 @@ static int git_config_copy_or_rename_section_in_file(const char *config_filename
 				strbuf_reset(&copystr);
 			}
 
-			offset = section_name_match(&buf[i], old_name);
+			offset = section_name_match(&buf.buf[i], old_name);
 			if (offset > 0) {
 				ret++;
 				if (new_name == NULL) {
@@ -3233,6 +3233,7 @@ out:
 out_no_rollback:
 	free(filename_buf);
 	config_store_data_clear(&store);
+	strbuf_release(&buf);
 	return ret;
 }
 
