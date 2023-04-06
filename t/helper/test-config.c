@@ -32,6 +32,9 @@
  * iterate -> iterate over all values using git_config(), and print some
  *            data for each
  *
+ * git_config_int -> iterate over all values using git_config() and print the
+ *                   integer value for the entered key or die
+ *
  * Examples:
  *
  * To print the value with highest priority for key "foo.bAr Baz.rock":
@@ -53,6 +56,17 @@ static int iterate_cb(const char *var, const char *value, void *data UNUSED)
 	printf("lno=%d\n", current_config_line());
 	printf("scope=%s\n", config_scope_name(current_config_scope()));
 
+	return 0;
+}
+
+static int parse_int_cb(const char *var, const char *value, void *data)
+{
+	const char *key_to_match = data;
+
+	if (!strcmp(key_to_match, var)) {
+		int parsed = git_config_int(value, value);
+		printf("%d\n", parsed);
+	}
 	return 0;
 }
 
@@ -195,6 +209,9 @@ int cmd__config(int argc, const char **argv)
 		}
 	} else if (!strcmp(argv[1], "iterate")) {
 		git_config(iterate_cb, NULL);
+		goto exit0;
+	} else if (argc == 3 && !strcmp(argv[1], "git_config_int")) {
+		git_config(parse_int_cb, (void *) argv[2]);
 		goto exit0;
 	}
 

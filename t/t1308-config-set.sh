@@ -161,6 +161,10 @@ test_expect_success 'find integer value for a key' '
 	check_config get_int lamb.chop 65
 '
 
+test_expect_success 'parse integer value during iteration' '
+	check_config git_config_int lamb.chop 65
+'
+
 test_expect_success 'find string value for a key' '
 	check_config get_string case.baz hask &&
 	check_config expect_code 1 get_string case.ba "Value not found for \"case.ba\""
@@ -173,6 +177,11 @@ test_expect_success 'check line error when NULL string is queried' '
 
 test_expect_success 'find integer if value is non parse-able' '
 	check_config expect_code 128 get_int lamb.head
+'
+
+test_expect_success 'non parse-able integer value during iteration' '
+	check_config expect_code 128 git_config_int lamb.head 2>result &&
+	grep "fatal: bad numeric config value .* in file \.git/config" result
 '
 
 test_expect_success 'find bool value for the entered key' '
