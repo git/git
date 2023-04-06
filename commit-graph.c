@@ -1566,7 +1566,7 @@ static timestamp_t get_generation_from_graph_data(struct commit *c, void *data)
 static void set_generation_v2(struct commit *c, timestamp_t t, void *data)
 {
 	struct commit_graph_data *g = commit_graph_data_at(c);
-	g->generation = (uint32_t)t;
+	g->generation = t;
 }
 
 static void compute_generation_numbers(struct write_commit_graph_context *ctx)
