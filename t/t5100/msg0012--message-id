@@ -5,4 +5,4 @@ docutils заменён на python-docutils
 python-docutils. В то время как сам rest2web не нужен.
 
 Signed-off-by: Dmitriy Blinov <bda@mnsspb.ru>
-Message-Id: <1226501681-24923-1-git-send-email-bda@mnsspb.ru>
+Message-ID: <1226501681-24923-1-git-send-email-bda@mnsspb.ru>
