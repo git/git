@@ -57,7 +57,7 @@ static int dump_cache_tree(struct cache_tree *it,
 	return errs;
 }
 
-int cmd__dump_cache_tree(int ac, const char **av)
+int cmd__dump_cache_tree(int ac UNUSED, const char **av UNUSED)
 {
 	struct index_state istate;
 	struct cache_tree *another = cache_tree();

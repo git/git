@@ -214,21 +214,6 @@ int parse_opt_noop_cb(const struct option *opt, const char *arg, int unset)
 }
 
 /**
- * Report that the option is unknown, so that other code can handle
- * it. This can be used as a callback together with
- * OPTION_LOWLEVEL_CALLBACK to allow an option to be documented in the
- * "-h" output even if it's not being handled directly by
- * parse_options().
- */
-enum parse_opt_result parse_opt_unknown_cb(struct parse_opt_ctx_t *ctx,
-					   const struct option *opt,
-					   const char *arg, int unset)
-{
-	BUG_ON_OPT_ARG(arg);
-	return PARSE_OPT_UNKNOWN;
-}
-
-/**
  * Recreates the command-line option in the strbuf.
  */
 static int recreate_opt(struct strbuf *sb, const struct option *opt,

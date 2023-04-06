@@ -59,6 +59,8 @@ int cmd_remote_fd(int argc, const char **argv, const char *prefix)
 	int output_fd = -1;
 	char *end;
 
+	BUG_ON_NON_EMPTY_PREFIX(prefix);
+
 	if (argc != 3)
 		usage(usage_msg);
 

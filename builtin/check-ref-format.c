@@ -60,6 +60,8 @@ int cmd_check_ref_format(int argc, const char **argv, const char *prefix)
 	char *to_free = NULL;
 	int ret = 1;
 
+	BUG_ON_NON_EMPTY_PREFIX(prefix);
+
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage(builtin_check_ref_format_usage);
 

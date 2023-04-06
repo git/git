@@ -3,13 +3,13 @@
 #include "hex.h"
 #include "oidtree.h"
 
-static enum cb_next print_oid(const struct object_id *oid, void *data)
+static enum cb_next print_oid(const struct object_id *oid, void *data UNUSED)
 {
 	puts(oid_to_hex(oid));
 	return CB_CONTINUE;
 }
 
-int cmd__oidtree(int argc, const char **argv)
+int cmd__oidtree(int argc UNUSED, const char **argv UNUSED)
 {
 	struct oidtree ot;
 	struct strbuf line = STRBUF_INIT;

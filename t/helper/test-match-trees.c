@@ -3,7 +3,7 @@
 #include "hex.h"
 #include "tree.h"
 
-int cmd__match_trees(int ac, const char **av)
+int cmd__match_trees(int ac UNUSED, const char **av)
 {
 	struct object_id hash1, hash2, shifted;
 	struct tree *one, *two;
