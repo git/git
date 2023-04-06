@@ -158,6 +158,7 @@ enum atom_type {
 	ATOM_THEN,
 	ATOM_ELSE,
 	ATOM_REST,
+	ATOM_AHEADBEHIND,
 };
 
 /*
@@ -600,6 +601,22 @@ static int rest_atom_parser(struct ref_format *format,
 	return 0;
 }
 
+static int ahead_behind_atom_parser(struct ref_format *format, struct used_atom *atom,
+				    const char *arg, struct strbuf *err)
+{
+	struct string_list_item *item;
+
+	if (!arg)
+		return strbuf_addf_ret(err, -1, _("expected format: %%(ahead-behind:<committish>)"));
+
+	item = string_list_append(&format->bases, arg);
+	item->util = lookup_commit_reference_by_name(arg);
+	if (!item->util)
+		die("failed to find '%s'", arg);
+
+	return 0;
+}
+
 static int head_atom_parser(struct ref_format *format UNUSED,
 			    struct used_atom *atom,
 			    const char *arg, struct strbuf *err)
@@ -660,6 +677,7 @@ static struct {
 	[ATOM_THEN] = { "then", SOURCE_NONE },
 	[ATOM_ELSE] = { "else", SOURCE_NONE },
 	[ATOM_REST] = { "rest", SOURCE_NONE, FIELD_STR, rest_atom_parser },
+	[ATOM_AHEADBEHIND] = { "ahead-behind", SOURCE_OTHER, FIELD_STR, ahead_behind_atom_parser },
 	/*
 	 * Please update $__git_ref_fieldlist in git-completion.bash
 	 * when you add new atoms
@@ -1866,6 +1884,7 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 	struct object *obj;
 	int i;
 	struct object_info empty = OBJECT_INFO_INIT;
+	int ahead_behind_atoms = 0;
 
 	CALLOC_ARRAY(ref->value, used_atom_cnt);
 
@@ -1995,6 +2014,16 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 				v->s = xstrdup(ref->rest);
 			else
 				v->s = xstrdup("");
+			continue;
+		} else if (atom_type == ATOM_AHEADBEHIND) {
+			if (ref->counts) {
+				const struct ahead_behind_count *count;
+				count = ref->counts[ahead_behind_atoms++];
+				v->s = xstrfmt("%d %d", count->ahead, count->behind);
+			} else {
+				/* Not a commit. */
+				v->s = xstrdup("");
+			}
 			continue;
 		} else
 			continue;
@@ -2346,6 +2375,7 @@ static void free_array_item(struct ref_array_item *item)
 			free((char *)item->value[i].s);
 		free(item->value);
 	}
+	free(item->counts);
 	free(item);
 }
 
@@ -2374,6 +2404,8 @@ void ref_array_clear(struct ref_array *array)
 		free_worktrees(ref_to_worktree_map.worktrees);
 		ref_to_worktree_map.worktrees = NULL;
 	}
+
+	FREE_AND_NULL(array->counts);
 }
 
 #define EXCLUDE_REACHED 0
@@ -2382,33 +2414,22 @@ static void reach_filter(struct ref_array *array,
 			 struct commit_list *check_reachable,
 			 int include_reached)
 {
-	struct rev_info revs;
 	int i, old_nr;
 	struct commit **to_clear;
-	struct commit_list *cr;
 
 	if (!check_reachable)
 		return;
 
 	CALLOC_ARRAY(to_clear, array->nr);
-
-	repo_init_revisions(the_repository, &revs, NULL);
-
 	for (i = 0; i < array->nr; i++) {
 		struct ref_array_item *item = array->items[i];
-		add_pending_object(&revs, &item->commit->object, item->refname);
 		to_clear[i] = item->commit;
 	}
 
-	for (cr = check_reachable; cr; cr = cr->next) {
-		struct commit *merge_commit = cr->item;
-		merge_commit->object.flags |= UNINTERESTING;
-		add_pending_object(&revs, &merge_commit->object, "");
-	}
-
-	revs.limited = 1;
-	if (prepare_revision_walk(&revs))
-		die(_("revision walk setup failed"));
+	tips_reachable_from_bases(the_repository,
+				  check_reachable,
+				  to_clear, array->nr,
+				  UNINTERESTING);
 
 	old_nr = array->nr;
 	array->nr = 0;
@@ -2432,8 +2453,48 @@ static void reach_filter(struct ref_array *array,
 		clear_commit_marks(merge_commit, ALL_REV_FLAGS);
 	}
 
-	release_revisions(&revs);
 	free(to_clear);
+}
+
+void filter_ahead_behind(struct repository *r,
+			 struct ref_format *format,
+			 struct ref_array *array)
+{
+	struct commit **commits;
+	size_t commits_nr = format->bases.nr + array->nr;
+
+	if (!format->bases.nr || !array->nr)
+		return;
+
+	ALLOC_ARRAY(commits, commits_nr);
+	for (size_t i = 0; i < format->bases.nr; i++)
+		commits[i] = format->bases.items[i].util;
+
+	ALLOC_ARRAY(array->counts, st_mult(format->bases.nr, array->nr));
+
+	commits_nr = format->bases.nr;
+	array->counts_nr = 0;
+	for (size_t i = 0; i < array->nr; i++) {
+		const char *name = array->items[i]->refname;
+		commits[commits_nr] = lookup_commit_reference_by_name(name);
+
+		if (!commits[commits_nr])
+			continue;
+
+		CALLOC_ARRAY(array->items[i]->counts, format->bases.nr);
+		for (size_t j = 0; j < format->bases.nr; j++) {
+			struct ahead_behind_count *count;
+			count = &array->counts[array->counts_nr++];
+			count->tip_index = commits_nr;
+			count->base_index = j;
+
+			array->items[i]->counts[j] = count;
+		}
+		commits_nr++;
+	}
+
+	ahead_behind(r, commits, commits_nr, array->counts, array->counts_nr);
+	free(commits);
 }
 
 /*

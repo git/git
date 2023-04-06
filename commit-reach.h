@@ -104,4 +104,44 @@ struct commit_list *get_reachable_subset(struct commit **from, int nr_from,
 					 struct commit **to, int nr_to,
 					 unsigned int reachable_flag);
 
+struct ahead_behind_count {
+	/**
+	 * As input, the *_index members indicate which positions in
+	 * the 'tips' array correspond to the tip and base of this
+	 * comparison.
+	 */
+	size_t tip_index;
+	size_t base_index;
+
+	/**
+	 * These values store the computed counts for each side of the
+	 * symmetric difference:
+	 *
+	 * 'ahead' stores the number of commits reachable from the tip
+	 * and not reachable from the base.
+	 *
+	 * 'behind' stores the number of commits reachable from the base
+	 * and not reachable from the tip.
+	 */
+	unsigned int ahead;
+	unsigned int behind;
+};
+
+/*
+ * Given an array of commits and an array of ahead_behind_count pairs,
+ * compute the ahead/behind counts for each pair.
+ */
+void ahead_behind(struct repository *r,
+		  struct commit **commits, size_t commits_nr,
+		  struct ahead_behind_count *counts, size_t counts_nr);
+
+/*
+ * For all tip commits, add 'mark' to their flags if and only if they
+ * are reachable from one of the commits in 'bases'.
+ */
+void tips_reachable_from_bases(struct repository *r,
+			       struct commit_list *bases,
+			       struct commit **tips, size_t tips_nr,
+			       int mark);
+
 #endif

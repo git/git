@@ -4,6 +4,7 @@
 #include "oid-array.h"
 #include "refs.h"
 #include "commit.h"
+#include "string-list.h"
 
 /* Quoting styles */
 #define QUOTE_NONE 0
@@ -23,6 +24,7 @@
 
 struct atom_value;
 struct ref_sorting;
+struct ahead_behind_count;
 struct option;
 
 enum ref_sorting_order {
@@ -40,6 +42,8 @@ struct ref_array_item {
 	const char *symref;
 	struct commit *commit;
 	struct atom_value *value;
+	struct ahead_behind_count **counts;
+
 	char refname[FLEX_ARRAY];
 };
 
@@ -47,6 +51,9 @@ struct ref_array {
 	int nr, alloc;
 	struct ref_array_item **items;
 	struct rev_info *revs;
+
+	struct ahead_behind_count *counts;
+	size_t counts_nr;
 };
 
 struct ref_filter {
@@ -80,9 +87,15 @@ struct ref_format {
 
 	/* Internal state to ref-filter */
 	int need_color_reset_at_eol;
+
+	/* List of bases for ahead-behind counts. */
+	struct string_list bases;
 };
 
-#define REF_FORMAT_INIT { .use_color = -1 }
+#define REF_FORMAT_INIT {             \
+	.use_color = -1,              \
+	.bases = STRING_LIST_INIT_DUP, \
+}
 
 /*  Macros for checking --merged and --no-merged options */
 #define _OPT_MERGED_NO_MERGED(option, filter, h) \
@@ -142,5 +155,16 @@ void pretty_print_ref(const char *name, const struct object_id *oid,
 struct ref_array_item *ref_array_push(struct ref_array *array,
 				      const char *refname,
 				      const struct object_id *oid);
+
+/*
+ * If the provided format includes ahead-behind atoms, then compute the
+ * ahead-behind values for the array of filtered references. Must be
+ * called after filter_refs() but before outputting the formatted refs.
+ *
+ * If this is not called, then any ahead-behind atoms will be blank.
+ */
+void filter_ahead_behind(struct repository *r,
+			 struct ref_format *format,
+			 struct ref_array *array);
 
 #endif /*  REF_FILTER_H  */

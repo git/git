@@ -9,7 +9,8 @@ SYNOPSIS
 --------
 [verse]
 'git for-each-ref' [--count=<count>] [--shell|--perl|--python|--tcl]
-		   [(--sort=<key>)...] [--format=<format>] [<pattern>...]
+		   [(--sort=<key>)...] [--format=<format>]
+		   [ --stdin | <pattern>... ]
 		   [--points-at=<object>]
 		   [--merged[=<object>]] [--no-merged[=<object>]]
 		   [--contains[=<object>]] [--no-contains[=<object>]]
@@ -31,6 +32,10 @@ OPTIONS
 	match against at least one pattern, either using fnmatch(3) or
 	literally, in the latter case matching completely or from the
 	beginning up to a slash.
+
+--stdin::
+	If `--stdin` is supplied, then the list of patterns is read from
+	standard input instead of from the argument list.
 
 --count=<count>::
 	By default the command shows all refs that match
@@ -216,6 +221,11 @@ worktreepath::
 	The absolute path to the worktree in which the ref is checked
 	out, if it is checked out in any linked worktree. Empty string
 	otherwise.
+
+ahead-behind:<committish>::
+	Two integers, separated by a space, demonstrating the number of
+	commits ahead and behind, respectively, when comparing the output
+	ref to the `<committish>` specified in the format.
 
 In addition to the above, for commit and tag objects, the header
 field names (`tree`, `parent`, `object`, `type`, and `tag`) can
