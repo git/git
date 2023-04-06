@@ -58,6 +58,8 @@ test_expect_success 'setup default config' '
 		skin = false
 		nose = 1
 		horns
+	[value]
+		less
 	EOF
 '
 
@@ -116,6 +118,45 @@ test_expect_success 'find value with the highest priority' '
 	check_config get_value case.baz "hask"
 '
 
+test_expect_success 'return value for an existing key' '
+	test-tool config get lamb.chop >out 2>err &&
+	test_must_be_empty out &&
+	test_must_be_empty err
+'
+
+test_expect_success 'return value for value-less key' '
+	test-tool config get value.less >out 2>err &&
+	test_must_be_empty out &&
+	test_must_be_empty err
+'
+
+test_expect_success 'return value for a missing key' '
+	cat >expect <<-\EOF &&
+	Value not found for "missing.key"
+	EOF
+	test_expect_code 1 test-tool config get missing.key >actual 2>err &&
+	test_cmp actual expect &&
+	test_must_be_empty err
+'
+
+test_expect_success 'return value for a bad key: CONFIG_INVALID_KEY' '
+	cat >expect <<-\EOF &&
+	Key "fails.iskeychar.-" is invalid
+	EOF
+	test_expect_code 1 test-tool config get fails.iskeychar.- >actual 2>err &&
+	test_cmp actual expect &&
+	test_must_be_empty out
+'
+
+test_expect_success 'return value for a bad key: CONFIG_NO_SECTION_OR_NAME' '
+	cat >expect <<-\EOF &&
+	Key "keynosection" has no section
+	EOF
+	test_expect_code 1 test-tool config get keynosection >actual 2>err &&
+	test_cmp actual expect &&
+	test_must_be_empty out
+'
+
 test_expect_success 'find integer value for a key' '
 	check_config get_int lamb.chop 65
 '
@@ -145,6 +186,71 @@ test_expect_success 'find bool value for the entered key' '
 test_expect_success 'find multiple values' '
 	check_config get_value_multi case.baz sam bat hask
 '
+
+test_NULL_in_multi () {
+	local op="$1" &&
+	local file="$2" &&
+
+	test_expect_success "$op: NULL value in config${file:+ in $file}" '
+		config="$file" &&
+		if test -z "$config"
+		then
+			config=.git/config &&
+			test_when_finished "mv $config.old $config" &&
+			mv "$config" "$config".old
+		fi &&
+
+		# Value-less in the middle of a list
+		cat >"$config" <<-\EOF &&
+		[a]key=x
+		[a]key
+		[a]key=y
+		EOF
+		case "$op" in
+		*_multi)
+			cat >expect <<-\EOF
+			x
+			(NULL)
+			y
+			EOF
+			;;
+		*)
+			cat >expect <<-\EOF
+			y
+			EOF
+			;;
+		esac &&
+		test-tool config "$op" a.key $file >actual &&
+		test_cmp expect actual &&
+
+		# Value-less at the end of a least
+		cat >"$config" <<-\EOF &&
+		[a]key=x
+		[a]key=y
+		[a]key
+		EOF
+		case "$op" in
+		*_multi)
+			cat >expect <<-\EOF
+			x
+			y
+			(NULL)
+			EOF
+			;;
+		*)
+			cat >expect <<-\EOF
+			(NULL)
+			EOF
+			;;
+		esac &&
+		test-tool config "$op" a.key $file >actual &&
+		test_cmp expect actual
+	'
+}
+
+test_NULL_in_multi "get_value_multi"
+test_NULL_in_multi "configset_get_value" "my.config"
+test_NULL_in_multi "configset_get_value_multi" "my.config"
 
 test_expect_success 'find value from a configset' '
 	cat >config2 <<-\EOF &&
@@ -207,7 +313,7 @@ test_expect_success 'proper error on error in default config files' '
 	cp .git/config .git/config.old &&
 	test_when_finished "mv .git/config.old .git/config" &&
 	echo "[" >>.git/config &&
-	echo "fatal: bad config line 34 in file .git/config" >expect &&
+	echo "fatal: bad config line 36 in file .git/config" >expect &&
 	test_expect_code 128 test-tool config get_value foo.bar 2>actual &&
 	test_cmp expect actual
 '
