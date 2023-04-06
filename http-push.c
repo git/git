@@ -602,7 +602,7 @@ static void finish_request(struct transfer_request *request)
 }
 
 static int is_running_queue;
-static int fill_active_slot(void *unused)
+static int fill_active_slot(void *data UNUSED)
 {
 	struct transfer_request *request;
 

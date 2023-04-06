@@ -3,16 +3,6 @@
 #include "mailmap.h"
 #include "object-store.h"
 
-#define DEBUG_MAILMAP 0
-#if DEBUG_MAILMAP
-#define debug_mm(...) fprintf(stderr, __VA_ARGS__)
-#define debug_str(X) ((X) ? (X) : "(none)")
-#else
-__attribute__((format (printf, 1, 2)))
-static inline void debug_mm(const char *format, ...) {}
-static inline const char *debug_str(const char *s) { return s; }
-#endif
-
 const char *git_mailmap_file;
 const char *git_mailmap_blob;
 
@@ -30,23 +20,17 @@ struct mailmap_entry {
 	struct string_list namemap;
 };
 
-static void free_mailmap_info(void *p, const char *s)
+static void free_mailmap_info(void *p, const char *s UNUSED)
 {
 	struct mailmap_info *mi = (struct mailmap_info *)p;
-	debug_mm("mailmap: -- complex: '%s' -> '%s' <%s>\n",
-		 s, debug_str(mi->name), debug_str(mi->email));
 	free(mi->name);
 	free(mi->email);
 	free(mi);
 }
 
-static void free_mailmap_entry(void *p, const char *s)
+static void free_mailmap_entry(void *p, const char *s UNUSED)
 {
 	struct mailmap_entry *me = (struct mailmap_entry *)p;
-	debug_mm("mailmap: removing entries for <%s>, with %"PRIuMAX" sub-entries\n",
-		 s, (uintmax_t)me->namemap.nr);
-	debug_mm("mailmap: - simple: '%s' <%s>\n",
-		 debug_str(me->name), debug_str(me->email));
 
 	free(me->name);
 	free(me->email);
@@ -93,8 +77,6 @@ static void add_mapping(struct string_list *map,
 	}
 
 	if (!old_name) {
-		debug_mm("mailmap: adding (simple) entry for '%s'\n", old_email);
-
 		/* Replace current name and new email for simple entry */
 		if (new_name) {
 			free(me->name);
@@ -106,15 +88,10 @@ static void add_mapping(struct string_list *map,
 		}
 	} else {
 		struct mailmap_info *mi = xcalloc(1, sizeof(struct mailmap_info));
-		debug_mm("mailmap: adding (complex) entry for '%s'\n", old_email);
 		mi->name = xstrdup_or_null(new_name);
 		mi->email = xstrdup_or_null(new_email);
 		string_list_insert(&me->namemap, old_name)->util = mi;
 	}
-
-	debug_mm("mailmap:  '%s' <%s> -> '%s' <%s>\n",
-		 debug_str(old_name), old_email,
-		 debug_str(new_name), debug_str(new_email));
 }
 
 static char *parse_name_and_email(char *buffer, char **name,
@@ -250,11 +227,8 @@ int read_mailmap(struct string_list *map)
 
 void clear_mailmap(struct string_list *map)
 {
-	debug_mm("mailmap: clearing %"PRIuMAX" entries...\n",
-		 (uintmax_t)map->nr);
 	map->strdup_strings = 1;
 	string_list_clear_func(map, free_mailmap_entry);
-	debug_mm("mailmap: cleared\n");
 }
 
 /*
@@ -315,10 +289,6 @@ int map_user(struct string_list *map,
 	struct string_list_item *item;
 	struct mailmap_entry *me;
 
-	debug_mm("map_user: map '%.*s' <%.*s>\n",
-		 (int)*namelen, debug_str(*name),
-		 (int)*emaillen, debug_str(*email));
-
 	item = lookup_prefix(map, *email, *emaillen);
 	if (item) {
 		me = (struct mailmap_entry *)item->util;
@@ -336,10 +306,8 @@ int map_user(struct string_list *map,
 	}
 	if (item) {
 		struct mailmap_info *mi = (struct mailmap_info *)item->util;
-		if (mi->name == NULL && mi->email == NULL) {
-			debug_mm("map_user:  -- (no simple mapping)\n");
+		if (mi->name == NULL && mi->email == NULL)
 			return 0;
-		}
 		if (mi->email) {
 				*email = mi->email;
 				*emaillen = strlen(*email);
@@ -348,11 +316,7 @@ int map_user(struct string_list *map,
 				*name = mi->name;
 				*namelen = strlen(*name);
 		}
-		debug_mm("map_user:  to '%.*s' <%.*s>\n",
-			 (int)*namelen, debug_str(*name),
-			 (int)*emaillen, debug_str(*email));
 		return 1;
 	}
-	debug_mm("map_user:  --\n");
 	return 0;
 }
