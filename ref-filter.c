@@ -599,7 +599,6 @@ static int rest_atom_parser(struct ref_format *format,
 {
 	if (arg)
 		return err_no_arg(err, "rest");
-	format->use_rest = 1;
 	return 0;
 }
 
