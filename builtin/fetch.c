@@ -1967,7 +1967,12 @@ static int fetch_multiple(struct string_list *list, int max_children)
 			return errcode;
 	}
 
-	strvec_pushl(&argv, "fetch", "--append", "--no-auto-gc",
+	/*
+	 * Cancel out the fetch.bundleURI config when running subprocesses,
+	 * to avoid fetching from the same bundle list multiple times.
+	 */
+	strvec_pushl(&argv, "-c", "fetch.bundleURI=",
+		     "fetch", "--append", "--no-auto-gc",
 		     "--no-write-commit-graph", NULL);
 	add_options_to_argv(&argv);
 
