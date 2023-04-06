@@ -3027,9 +3027,10 @@ void git_config_set_multivar(const char *key, const char *value,
 					flags);
 }
 
-static int section_name_match (const char *buf, const char *name)
+static size_t section_name_match (const char *buf, const char *name)
 {
-	int i = 0, j = 0, dot = 0;
+	size_t i = 0, j = 0;
+	int dot = 0;
 	if (buf[i] != '[')
 		return 0;
 	for (i = 1; buf[i] && buf[i] != ']'; i++) {
@@ -3133,15 +3134,14 @@ static int git_config_copy_or_rename_section_in_file(const char *config_filename
 	}
 
 	while (!strbuf_getwholeline(&buf, config_file, '\n')) {
-		unsigned i;
-		int length;
+		size_t i, length;
 		int is_section = 0;
 		char *output = buf.buf;
 		for (i = 0; buf.buf[i] && isspace(buf.buf[i]); i++)
 			; /* do nothing */
 		if (buf.buf[i] == '[') {
 			/* it's a section */
-			int offset;
+			size_t offset;
 			is_section = 1;
 
 			/*
