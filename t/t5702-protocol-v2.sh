@@ -269,6 +269,17 @@ test_expect_success 'clone propagates unborn HEAD from non-empty repo' '
 	grep "warning: remote HEAD refers to nonexistent ref" stderr
 '
 
+test_expect_success 'clone propagates object-format from empty repo' '
+	test_when_finished "rm -fr src256 dst256" &&
+
+	echo sha256 >expect &&
+	git init --object-format=sha256 src256 &&
+	git clone src256 dst256 &&
+	git -C dst256 rev-parse --show-object-format >actual &&
+
+	test_cmp expect actual
+'
+
 test_expect_success 'bare clone propagates unborn HEAD from non-empty repo' '
 	test_when_finished "rm -rf file_unborn_parent file_unborn_child.git" &&
 
