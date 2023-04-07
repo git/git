@@ -243,8 +243,16 @@ main () {
 			test -n "$allow_addmerge" || die_incompatible_opt "$opt" "$arg_command"
 			arg_addmerge_squash=
 			;;
-		-S*|--gpg-sign=*|--no-gpg-sign)
+		-S|--gpg-sign|--no-gpg-sign)
 			arg_gpgsign="${opt}"
+			case $1 in
+				-*)
+					;;
+				*)
+					arg_gpgsign=${opt}${1}
+					shift
+					;;
+			esac
 			;;
 		--)
 			break
@@ -1093,10 +1101,10 @@ cmd_merge () {
 
 	if test -n "$arg_addmerge_message"
 	then
-		git merge --no-ff -Xsubtree="$arg_prefix" \
+		git merge --no-ff $arg_gpgsign -Xsubtree="$arg_prefix" \
 			--message="$arg_addmerge_message" "$rev"
 	else
-		git merge --no-ff -Xsubtree="$arg_prefix" $rev
+		git merge --no-ff $arg_gpgsign -Xsubtree="$arg_prefix" $rev
 	fi
 }
 
