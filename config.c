@@ -676,6 +676,16 @@ static int config_parse_pair(const char *key, const char *value,
 	return ret;
 }
 
+
+/* for values read from `git_config_from_parameters()` */
+static void kvi_from_param(struct key_value_info *out)
+{
+	out->filename = NULL;
+	out->linenr = -1;
+	out->origin_type = CONFIG_ORIGIN_CMDLINE;
+	out->scope = CONFIG_SCOPE_COMMAND;
+}
+
 int git_config_parse_parameter(const char *text,
 			       config_fn_t fn, void *data)
 {
@@ -1056,6 +1066,15 @@ static int do_event(struct config_source *cs, enum config_event_t type,
 	data->previous_offset = offset;
 
 	return 0;
+}
+
+static void kvi_from_source(struct config_source *cs,
+			    struct key_value_info *out)
+{
+	out->filename = strintern(cs->name);
+	out->linenr = cs->linenr;
+	out->origin_type = cs->origin_type;
+	out->linenr = cs->linenr;
 }
 
 static int git_parse_source(struct config_source *cs, config_fn_t fn,
@@ -2418,16 +2437,11 @@ static int configset_add_value(struct config_reader *reader,
 	if (!reader->source)
 		BUG("configset_add_value has no source");
 	if (reader->source->name) {
-		kv_info->filename = strintern(reader->source->name);
-		kv_info->linenr = reader->source->linenr;
-		kv_info->origin_type = reader->source->origin_type;
-	} else {
-		/* for values read from `git_config_from_parameters()` */
-		kv_info->filename = NULL;
-		kv_info->linenr = -1;
-		kv_info->origin_type = CONFIG_ORIGIN_CMDLINE;
+		kvi_from_source(reader->source, kv_info);
+		kv_info->scope = reader->parsing_scope;
 	}
-	kv_info->scope = reader->parsing_scope;
+	else
+		kvi_from_param(kv_info);
 	si->util = kv_info;
 
 	return 0;
