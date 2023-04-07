@@ -156,6 +156,10 @@ in another worktree linked to the same repository.
 --ignore-case::
 	Sorting and filtering branches are case insensitive.
 
+--omit-empty::
+	Do not print a newline after formatted refs where the format expands
+	to the empty string.
+
 --column[=<options>]::
 --no-column::
 	Display branch listing in columns. See configuration variable
