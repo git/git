@@ -372,8 +372,6 @@ int git_config_parse_parameter(const char *, config_fn_t fn, void *data);
 
 enum config_scope current_config_scope(void);
 const char *current_config_origin_type(void);
-const char *current_config_name(void);
-int current_config_line(void);
 
 /*
  * Match and parse a config key of the form:

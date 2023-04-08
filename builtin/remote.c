@@ -646,7 +646,7 @@ struct push_default_info
 };
 
 static int config_read_push_default(const char *key, const char *value,
-	struct key_value_info *kvi UNUSED, void *cb)
+	struct key_value_info *kvi, void *cb)
 {
 	struct push_default_info* info = cb;
 	if (strcmp(key, "remote.pushdefault") ||
@@ -655,8 +655,8 @@ static int config_read_push_default(const char *key, const char *value,
 
 	info->scope = current_config_scope();
 	strbuf_reset(&info->origin);
-	strbuf_addstr(&info->origin, current_config_name());
-	info->linenr = current_config_line();
+	strbuf_addstr(&info->origin, kvi->filename);
+	info->linenr = kvi->linenr;
 
 	return 0;
 }

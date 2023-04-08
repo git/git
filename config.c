@@ -3970,14 +3970,6 @@ static int reader_config_name(struct config_reader *reader, const char **out)
 	return 0;
 }
 
-const char *current_config_name(void)
-{
-	const char *name;
-	if (reader_config_name(&the_reader, &name))
-		BUG("current_config_name called outside config callback");
-	return name ? name : "";
-}
-
 enum config_scope current_config_scope(void)
 {
 	if (the_reader.config_kvi)
@@ -3990,14 +3982,6 @@ enum config_scope current_config_scope(void)
 		 * so leave this untouched for now.
 		 */
 		return CONFIG_SCOPE_UNKNOWN;
-}
-
-int current_config_line(void)
-{
-	if (the_reader.config_kvi)
-		return the_reader.config_kvi->linenr;
-	else
-		BUG("current_config_line called outside config callback");
 }
 
 int lookup_config(const char **mapping, int nr_mapping, const char *var)
