@@ -618,7 +618,7 @@ static int kvi_fn(config_fn_t fn, const char *key, const char *value,
 {
 	int ret;
 	config_reader_push_kvi(&the_reader, kvi);
-	ret = fn(key, value, data);
+	ret = fn(key, value, kvi, data);
 	config_reader_pop_kvi(&the_reader);
 	return ret;
 }
