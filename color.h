@@ -93,7 +93,6 @@ extern int color_stdout_is_tty;
  * if you are just going to change to git_default_config, too.
  */
 int git_color_config(const char *var, const char *value, void *cb);
-int git_color_default_config(const char *var, const char *value, void *cb);
 
 /*
  * Parse a config option, which can be a boolean or one of
