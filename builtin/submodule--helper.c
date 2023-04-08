@@ -2192,6 +2192,7 @@ static int update_clone_task_finished(int result,
 }
 
 static int git_update_clone_config(const char *var, const char *value,
+				   const struct config_context *ctx UNUSED,
 				   void *cb)
 {
 	int *max_jobs = cb;

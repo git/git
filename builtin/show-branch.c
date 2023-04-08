@@ -559,7 +559,8 @@ static void append_one_rev(const char *av)
 	die("bad sha1 reference %s", av);
 }
 
-static int git_show_branch_config(const char *var, const char *value, void *cb)
+static int git_show_branch_config(const char *var, const char *value,
+				  const struct config_context *ctx, void *cb)
 {
 	if (!strcmp(var, "showbranch.default")) {
 		if (!value)
@@ -582,7 +583,7 @@ static int git_show_branch_config(const char *var, const char *value, void *cb)
 	if (git_color_config(var, value, cb) < 0)
 		return -1;
 
-	return git_default_config(var, value, cb);
+	return git_default_config(var, value, ctx, cb);
 }
 
 static int omit_in_dense(struct commit *commit, struct commit **rev, int n)

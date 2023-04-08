@@ -110,8 +110,29 @@ struct config_options {
 	} error_action;
 };
 
+/* Config source metadata for a given config key-value pair */
+struct key_value_info {
+	const char *filename;
+	int linenr;
+	enum config_origin_type origin_type;
+	enum config_scope scope;
+};
+#define KVI_INIT { \
+	.filename = NULL, \
+	.linenr = -1, \
+	.origin_type = CONFIG_ORIGIN_UNKNOWN, \
+	.scope = CONFIG_SCOPE_UNKNOWN, \
+}
+
+/* Captures additional information that a config callback can use. */
+struct config_context {
+	/* Config source metadata for key and value. */
+	const struct key_value_info *kvi;
+};
+#define CONFIG_CONTEXT_INIT { 0 }
+
 /**
- * A config callback function takes three parameters:
+ * A config callback function takes four parameters:
  *
  * - the name of the parsed variable. This is in canonical "flat" form: the
  *   section, subsection, and variable segments will be separated by dots,
@@ -122,15 +143,22 @@ struct config_options {
  *   value specified, the value will be NULL (typically this means it
  *   should be interpreted as boolean true).
  *
+ * - the 'config context', that is, additional information about the config
+ *   iteration operation provided by the config machinery. For example, this
+ *   includes information about the config source being parsed (e.g. the
+ *   filename).
+ *
  * - a void pointer passed in by the caller of the config API; this can
  *   contain callback-specific data
  *
  * A config callback should return 0 for success, or -1 if the variable
  * could not be parsed properly.
  */
-typedef int (*config_fn_t)(const char *, const char *, void *);
+typedef int (*config_fn_t)(const char *, const char *,
+			   const struct config_context *, void *);
 
-int git_default_config(const char *, const char *, void *);
+int git_default_config(const char *, const char *,
+		       const struct config_context *, void *);
 
 /**
  * Read a specific file in git-config format.
@@ -666,13 +694,6 @@ int git_config_get_expiry(const char *key, const char **output);
 
 /* parse either "this many days" integer, or "5.days.ago" approxidate */
 int git_config_get_expiry_in_days(const char *key, timestamp_t *, timestamp_t now);
-
-struct key_value_info {
-	const char *filename;
-	int linenr;
-	enum config_origin_type origin_type;
-	enum config_scope scope;
-};
 
 /**
  * First prints the error message specified by the caller in `err` and then

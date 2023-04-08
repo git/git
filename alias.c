@@ -12,7 +12,8 @@ struct config_alias_data {
 	struct string_list *list;
 };
 
-static int config_alias_cb(const char *key, const char *value, void *d)
+static int config_alias_cb(const char *key, const char *value,
+			   const struct config_context *ctx UNUSED, void *d)
 {
 	struct config_alias_data *data = d;
 	const char *p;

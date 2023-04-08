@@ -42,7 +42,9 @@
  *
  */
 
-static int iterate_cb(const char *var, const char *value, void *data UNUSED)
+static int iterate_cb(const char *var, const char *value,
+		      const struct config_context *ctx UNUSED,
+		      void *data UNUSED)
 {
 	static int nr;
 
@@ -59,7 +61,8 @@ static int iterate_cb(const char *var, const char *value, void *data UNUSED)
 	return 0;
 }
 
-static int parse_int_cb(const char *var, const char *value, void *data)
+static int parse_int_cb(const char *var, const char *value,
+			const struct config_context *ctx UNUSED, void *data)
 {
 	const char *key_to_match = data;
 
@@ -70,7 +73,9 @@ static int parse_int_cb(const char *var, const char *value, void *data)
 	return 0;
 }
 
-static int early_config_cb(const char *var, const char *value, void *vdata)
+static int early_config_cb(const char *var, const char *value,
+			   const struct config_context *ctx UNUSED,
+			   void *vdata)
 {
 	const char *key = vdata;
 

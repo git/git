@@ -94,7 +94,9 @@ static combine_notes_fn parse_combine_notes_fn(const char *v)
 		return NULL;
 }
 
-static int notes_rewrite_config(const char *k, const char *v, void *cb)
+static int notes_rewrite_config(const char *k, const char *v,
+				const struct config_context *ctx UNUSED,
+				void *cb)
 {
 	struct notes_rewrite_cfg *c = cb;
 	if (starts_with(k, "notes.rewrite.") && !strcmp(k+14, c->cmd)) {
