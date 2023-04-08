@@ -137,7 +137,7 @@ static int git_fetch_config(const char *k, const char *v,
 	}
 
 	if (!strcmp(k, "submodule.fetchjobs")) {
-		fetch_config->submodule_fetch_jobs = parse_submodule_fetchjobs(k, v);
+		fetch_config->submodule_fetch_jobs = parse_submodule_fetchjobs(k, v, ctx->kvi);
 		return 0;
 	} else if (!strcmp(k, "fetch.recursesubmodules")) {
 		fetch_config->recurse_submodules = parse_fetch_recurse_submodules_arg(k, v);
@@ -145,7 +145,7 @@ static int git_fetch_config(const char *k, const char *v,
 	}
 
 	if (!strcmp(k, "fetch.parallel")) {
-		fetch_config->parallel = git_config_int(k, v);
+		fetch_config->parallel = git_config_int(k, v, ctx->kvi);
 		if (fetch_config->parallel < 0)
 			die(_("fetch.parallel cannot be negative"));
 		if (!fetch_config->parallel)

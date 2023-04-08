@@ -249,22 +249,26 @@ int git_parse_maybe_bool(const char *);
  * Parse the string to an integer, including unit factors. Dies on error;
  * otherwise, returns the parsed result.
  */
-int git_config_int(const char *, const char *);
+int git_config_int(const char *, const char *, const struct key_value_info *);
 
-int64_t git_config_int64(const char *, const char *);
+int64_t git_config_int64(const char *, const char *,
+			 const struct key_value_info *);
 
 /**
  * Identical to `git_config_int`, but for unsigned longs.
  */
-unsigned long git_config_ulong(const char *, const char *);
+unsigned long git_config_ulong(const char *, const char *,
+			       const struct key_value_info *);
 
-ssize_t git_config_ssize_t(const char *, const char *);
+ssize_t git_config_ssize_t(const char *, const char *,
+			   const struct key_value_info *);
 
 /**
  * Same as `git_config_bool`, except that integers are returned as-is, and
  * an `is_bool` flag is unset.
  */
-int git_config_bool_or_int(const char *, const char *, int *);
+int git_config_bool_or_int(const char *, const char *,
+			   const struct key_value_info *, int *);
 
 /**
  * Parse a string into a boolean value, respecting keywords like "true" and
@@ -529,7 +533,8 @@ int git_configset_get(struct config_set *cs, const char *key);
  * touching `value`. The caller should not free or modify `value`, as it
  * is owned by the cache.
  */
-int git_configset_get_value(struct config_set *cs, const char *key, const char **dest);
+int git_configset_get_value(struct config_set *cs, const char *key,
+			    const char **dest, struct key_value_info *kvi);
 
 int git_configset_get_string(struct config_set *cs, const char *key, char **dest);
 int git_configset_get_int(struct config_set *cs, const char *key, int *dest);

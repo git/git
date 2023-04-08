@@ -545,7 +545,7 @@ static struct cmdnames aliases;
 #define AUTOCORRECT_IMMEDIATELY (-1)
 
 static int git_unknown_cmd_config(const char *var, const char *value,
-				  const struct config_context *ctx UNUSED,
+				  const struct config_context *ctx,
 				  void *cb UNUSED)
 {
 	const char *p;
@@ -560,7 +560,7 @@ static int git_unknown_cmd_config(const char *var, const char *value,
 		} else if (!strcmp(value, "prompt")) {
 			autocorrect = AUTOCORRECT_PROMPT;
 		} else {
-			int v = git_config_int(var, value);
+			int v = git_config_int(var, value, ctx->kvi);
 			autocorrect = (v < 0)
 				? AUTOCORRECT_IMMEDIATELY : v;
 		}

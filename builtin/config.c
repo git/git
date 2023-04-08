@@ -262,13 +262,14 @@ static int format_config(struct strbuf *buf, const char *key_,
 
 		if (type == TYPE_INT)
 			strbuf_addf(buf, "%"PRId64,
-				    git_config_int64(key_, value_ ? value_ : ""));
+				    git_config_int64(key_, value_ ? value_ : "", kvi));
 		else if (type == TYPE_BOOL)
 			strbuf_addstr(buf, git_config_bool(key_, value_) ?
 				      "true" : "false");
 		else if (type == TYPE_BOOL_OR_INT) {
 			int is_bool, v;
-			v = git_config_bool_or_int(key_, value_, &is_bool);
+			v = git_config_bool_or_int(key_, value_, kvi,
+						   &is_bool);
 			if (is_bool)
 				strbuf_addstr(buf, v ? "true" : "false");
 			else
@@ -424,7 +425,8 @@ free_strings:
 	return ret;
 }
 
-static char *normalize_value(const char *key, const char *value)
+static char *normalize_value(const char *key, const char *value,
+			     struct key_value_info *kvi)
 {
 	if (!value)
 		return NULL;
@@ -439,12 +441,12 @@ static char *normalize_value(const char *key, const char *value)
 		 */
 		return xstrdup(value);
 	if (type == TYPE_INT)
-		return xstrfmt("%"PRId64, git_config_int64(key, value));
+		return xstrfmt("%"PRId64, git_config_int64(key, value, kvi));
 	if (type == TYPE_BOOL)
 		return xstrdup(git_config_bool(key, value) ?  "true" : "false");
 	if (type == TYPE_BOOL_OR_INT) {
 		int is_bool, v;
-		v = git_config_bool_or_int(key, value, &is_bool);
+		v = git_config_bool_or_int(key, value, kvi, &is_bool);
 		if (!is_bool)
 			return xstrfmt("%d", v);
 		else
@@ -674,6 +676,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	char *value = NULL;
 	int flags = 0;
 	int ret = 0;
+	struct key_value_info default_kvi = KVI_INIT;
 
 	given_config_source.file = xstrdup_or_null(getenv(CONFIG_ENVIRONMENT));
 
@@ -891,7 +894,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	else if (actions == ACTION_SET) {
 		check_write();
 		check_argc(argc, 2, 2);
-		value = normalize_value(argv[0], argv[1]);
+		value = normalize_value(argv[0], argv[1], &default_kvi);
 		ret = git_config_set_in_file_gently(given_config_source.file, argv[0], value);
 		if (ret == CONFIG_NOTHING_SET)
 			error(_("cannot overwrite multiple values with a single value\n"
@@ -900,7 +903,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	else if (actions == ACTION_SET_ALL) {
 		check_write();
 		check_argc(argc, 2, 3);
-		value = normalize_value(argv[0], argv[1]);
+		value = normalize_value(argv[0], argv[1], &default_kvi);
 		ret = git_config_set_multivar_in_file_gently(given_config_source.file,
 							     argv[0], value, argv[2],
 							     flags);
@@ -908,7 +911,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	else if (actions == ACTION_ADD) {
 		check_write();
 		check_argc(argc, 2, 2);
-		value = normalize_value(argv[0], argv[1]);
+		value = normalize_value(argv[0], argv[1], &default_kvi);
 		ret = git_config_set_multivar_in_file_gently(given_config_source.file,
 							     argv[0], value,
 							     CONFIG_REGEX_NONE,
@@ -917,7 +920,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	else if (actions == ACTION_REPLACE_ALL) {
 		check_write();
 		check_argc(argc, 2, 3);
-		value = normalize_value(argv[0], argv[1]);
+		value = normalize_value(argv[0], argv[1], &default_kvi);
 		ret = git_config_set_multivar_in_file_gently(given_config_source.file,
 							     argv[0], value, argv[2],
 							     flags | CONFIG_FLAGS_MULTI_REPLACE);
