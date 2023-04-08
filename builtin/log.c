@@ -569,7 +569,7 @@ static int git_log_config(const char *var, const char *value,
 	if (!strcmp(var, "format.subjectprefix"))
 		return git_config_string(&fmt_patch_subject_prefix, var, value);
 	if (!strcmp(var, "format.filenamemaxlength")) {
-		fmt_patch_name_max = git_config_int(var, value);
+		fmt_patch_name_max = git_config_int(var, value, kvi);
 		return 0;
 	}
 	if (!strcmp(var, "format.encodeemailheaders")) {

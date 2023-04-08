@@ -411,14 +411,14 @@ static int tar_filter_config(const char *var, const char *value,
 }
 
 static int git_tar_config(const char *var, const char *value,
-			  struct key_value_info *kvi UNUSED, void *cb)
+			  struct key_value_info *kvi, void *cb)
 {
 	if (!strcmp(var, "tar.umask")) {
 		if (value && !strcmp(value, "user")) {
 			tar_umask = umask(0);
 			umask(tar_umask);
 		} else {
-			tar_umask = git_config_int(var, value);
+			tar_umask = git_config_int(var, value, kvi);
 		}
 		return 0;
 	}

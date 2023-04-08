@@ -2878,7 +2878,7 @@ static int git_config_string_dup(char **dest,
 }
 
 static int populate_opts_cb(const char *key, const char *value,
-			    struct key_value_info *kvi UNUSED, void *data)
+			    struct key_value_info *kvi, void *data)
 {
 	struct replay_opts *opts = data;
 	int error_flag = 1;
@@ -2886,26 +2886,26 @@ static int populate_opts_cb(const char *key, const char *value,
 	if (!value)
 		error_flag = 0;
 	else if (!strcmp(key, "options.no-commit"))
-		opts->no_commit = git_config_bool_or_int(key, value, &error_flag);
+		opts->no_commit = git_config_bool_or_int(key, value, kvi, &error_flag);
 	else if (!strcmp(key, "options.edit"))
-		opts->edit = git_config_bool_or_int(key, value, &error_flag);
+		opts->edit = git_config_bool_or_int(key, value, kvi, &error_flag);
 	else if (!strcmp(key, "options.allow-empty"))
 		opts->allow_empty =
-			git_config_bool_or_int(key, value, &error_flag);
+			git_config_bool_or_int(key, value, kvi, &error_flag);
 	else if (!strcmp(key, "options.allow-empty-message"))
 		opts->allow_empty_message =
-			git_config_bool_or_int(key, value, &error_flag);
+			git_config_bool_or_int(key, value, kvi, &error_flag);
 	else if (!strcmp(key, "options.keep-redundant-commits"))
 		opts->keep_redundant_commits =
-			git_config_bool_or_int(key, value, &error_flag);
+			git_config_bool_or_int(key, value, kvi, &error_flag);
 	else if (!strcmp(key, "options.signoff"))
-		opts->signoff = git_config_bool_or_int(key, value, &error_flag);
+		opts->signoff = git_config_bool_or_int(key, value, kvi, &error_flag);
 	else if (!strcmp(key, "options.record-origin"))
-		opts->record_origin = git_config_bool_or_int(key, value, &error_flag);
+		opts->record_origin = git_config_bool_or_int(key, value, kvi, &error_flag);
 	else if (!strcmp(key, "options.allow-ff"))
-		opts->allow_ff = git_config_bool_or_int(key, value, &error_flag);
+		opts->allow_ff = git_config_bool_or_int(key, value, kvi, &error_flag);
 	else if (!strcmp(key, "options.mainline"))
-		opts->mainline = git_config_int(key, value);
+		opts->mainline = git_config_int(key, value, kvi);
 	else if (!strcmp(key, "options.strategy"))
 		git_config_string_dup(&opts->strategy, key, value);
 	else if (!strcmp(key, "options.gpg-sign"))
@@ -2915,7 +2915,7 @@ static int populate_opts_cb(const char *key, const char *value,
 		opts->xopts[opts->xopts_nr++] = xstrdup(value);
 	} else if (!strcmp(key, "options.allow-rerere-auto"))
 		opts->allow_rerere_auto =
-			git_config_bool_or_int(key, value, &error_flag) ?
+			git_config_bool_or_int(key, value, kvi, &error_flag) ?
 				RERERE_AUTOUPDATE : RERERE_NOAUTOUPDATE;
 	else if (!strcmp(key, "options.default-msg-cleanup")) {
 		opts->explicit_cleanup = 1;

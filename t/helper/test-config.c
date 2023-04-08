@@ -52,7 +52,7 @@ static int iterate_cb(const char *var, const char *value,
 
 	printf("key=%s\n", var);
 	printf("value=%s\n", value ? value : "(null)");
-	printf("origin=%s\n", current_config_origin_type());
+	printf("origin=%s\n", config_origin_type_name(kvi->origin_type));
 	printf("name=%s\n", kvi->filename ? kvi->filename : "");
 	printf("lno=%d\n", kvi->linenr);
 	printf("scope=%s\n", config_scope_name(kvi->scope));
@@ -61,12 +61,12 @@ static int iterate_cb(const char *var, const char *value,
 }
 
 static int parse_int_cb(const char *var, const char *value,
-			struct key_value_info *kvi UNUSED, void *data)
+			struct key_value_info *kvi, void *data)
 {
 	const char *key_to_match = data;
 
 	if (!strcmp(key_to_match, var)) {
-		int parsed = git_config_int(value, value);
+		int parsed = git_config_int(value, value, kvi);
 		printf("%d\n", parsed);
 	}
 	return 0;
@@ -179,7 +179,7 @@ int cmd__config(int argc, const char **argv)
 				goto exit2;
 			}
 		}
-		if (!git_configset_get_value(&cs, argv[2], &v)) {
+		if (!git_configset_get_value(&cs, argv[2], &v, NULL)) {
 			if (!v)
 				printf("(NULL)\n");
 			else

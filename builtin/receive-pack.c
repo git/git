@@ -154,12 +154,12 @@ static int receive_pack_config(const char *var, const char *value,
 	}
 
 	if (strcmp(var, "receive.unpacklimit") == 0) {
-		receive_unpack_limit = git_config_int(var, value);
+		receive_unpack_limit = git_config_int(var, value, kvi);
 		return 0;
 	}
 
 	if (strcmp(var, "transfer.unpacklimit") == 0) {
-		transfer_unpack_limit = git_config_int(var, value);
+		transfer_unpack_limit = git_config_int(var, value, kvi);
 		return 0;
 	}
 
@@ -227,7 +227,7 @@ static int receive_pack_config(const char *var, const char *value,
 		return git_config_string(&cert_nonce_seed, var, value);
 
 	if (strcmp(var, "receive.certnonceslop") == 0) {
-		nonce_stamp_slop_limit = git_config_ulong(var, value);
+		nonce_stamp_slop_limit = git_config_ulong(var, value, kvi);
 		return 0;
 	}
 
@@ -242,12 +242,12 @@ static int receive_pack_config(const char *var, const char *value,
 	}
 
 	if (strcmp(var, "receive.keepalive") == 0) {
-		keepalive_in_sec = git_config_int(var, value);
+		keepalive_in_sec = git_config_int(var, value, kvi);
 		return 0;
 	}
 
 	if (strcmp(var, "receive.maxinputsize") == 0) {
-		max_input_size = git_config_int64(var, value);
+		max_input_size = git_config_int64(var, value, kvi);
 		return 0;
 	}
 
