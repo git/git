@@ -204,10 +204,10 @@ static void show_config_origin(struct key_value_info *kvi, struct strbuf *buf)
 	strbuf_addch(buf, term);
 }
 
-static void show_config_scope(struct strbuf *buf)
+static void show_config_scope(struct key_value_info *kvi, struct strbuf *buf)
 {
 	const char term = end_nul ? '\0' : '\t';
-	const char *scope = config_scope_name(current_config_scope());
+	const char *scope = config_scope_name(kvi->scope);
 
 	strbuf_addstr(buf, N_(scope));
 	strbuf_addch(buf, term);
@@ -219,7 +219,7 @@ static int show_all_config(const char *key_, const char *value_,
 	if (show_origin || show_scope) {
 		struct strbuf buf = STRBUF_INIT;
 		if (show_scope)
-			show_config_scope(&buf);
+			show_config_scope(kvi, &buf);
 		if (show_origin)
 			show_config_origin(kvi, &buf);
 		/* Use fwrite as "buf" can contain \0's if "end_null" is set. */
@@ -243,7 +243,7 @@ static int format_config(struct strbuf *buf, const char *key_, const char *value
 			 struct key_value_info *kvi)
 {
 	if (show_scope)
-		show_config_scope(buf);
+		show_config_scope(kvi, buf);
 	if (show_origin)
 		show_config_origin(kvi, buf);
 	if (show_keys)

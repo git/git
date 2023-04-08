@@ -653,7 +653,7 @@ static int config_read_push_default(const char *key, const char *value,
 	    !value || strcmp(value, info->old_name))
 		return 0;
 
-	info->scope = current_config_scope();
+	info->scope = kvi->scope;
 	strbuf_reset(&info->origin);
 	strbuf_addstr(&info->origin, kvi->filename);
 	info->linenr = kvi->linenr;
