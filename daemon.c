@@ -1,10 +1,14 @@
 #include "cache.h"
+#include "abspath.h"
 #include "alloc.h"
 #include "config.h"
+#include "environment.h"
 #include "pkt-line.h"
 #include "run-command.h"
+#include "setup.h"
 #include "strbuf.h"
 #include "string-list.h"
+#include "wrapper.h"
 
 #ifdef NO_INITGROUPS
 #define initgroups(x, y) (0) /* nothing */

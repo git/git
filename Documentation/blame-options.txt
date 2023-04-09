@@ -64,11 +64,11 @@ include::line-range-format.txt[]
 	manual page.
 
 --contents <file>::
-	When <rev> is not specified, the command annotates the
-	changes starting backwards from the working tree copy.
-	This flag makes the command pretend as if the working
-	tree copy has the contents of the named file (specify
-	`-` to make the command read from the standard input).
+	Pretend the file being annotated has a commit with the
+	contents from the named file and a parent of <rev>,
+	defaulting to HEAD when no <rev> is specified. You may
+	specify '-' to make the command read from the standard
+	input for the file contents.
 
 --date <format>::
 	Specifies the format used to output dates. If --date is not

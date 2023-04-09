@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "builtin.h"
 #include "config.h"
+#include "gettext.h"
 #include "hook.h"
 #include "parse-options.h"
 #include "strbuf.h"

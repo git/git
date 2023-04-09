@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "gettext.h"
 #include "pack-revindex.h"
 #include "object-store.h"
 #include "packfile.h"

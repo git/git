@@ -1,9 +1,11 @@
 /*
  * Copyright (c) 2011, Google Inc.
  */
-#include "git-compat-util.h"
+#include "cache.h"
 #include "alloc.h"
 #include "bulk-checkin.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "lockfile.h"
 #include "repository.h"
@@ -126,7 +128,7 @@ static int already_written(struct bulk_checkin_packfile *state, struct object_id
 	int i;
 
 	/* The object may already exist in the repository */
-	if (has_object_file(oid))
+	if (repo_has_object_file(the_repository, oid))
 		return 1;
 
 	/* Might want to keep the list sorted */

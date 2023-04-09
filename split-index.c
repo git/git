@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "alloc.h"
+#include "gettext.h"
 #include "split-index.h"
 #include "ewah/ewok.h"
 

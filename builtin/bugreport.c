@@ -1,4 +1,6 @@
 #include "builtin.h"
+#include "abspath.h"
+#include "gettext.h"
 #include "parse-options.h"
 #include "strbuf.h"
 #include "help.h"
@@ -6,7 +8,8 @@
 #include "hook.h"
 #include "hook-list.h"
 #include "diagnose.h"
-
+#include "setup.h"
+#include "wrapper.h"
 
 static void get_system_info(struct strbuf *sys_info)
 {

@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "config.h"
+#include "gettext.h"
 #include "revision.h"
 #include "reachable.h"
 #include "worktree.h"

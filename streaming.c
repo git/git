@@ -2,11 +2,13 @@
  * Copyright (c) 2011, Google Inc.
  */
 #include "cache.h"
+#include "environment.h"
 #include "streaming.h"
 #include "repository.h"
 #include "object-store.h"
 #include "replace-object.h"
 #include "packfile.h"
+#include "wrapper.h"
 
 typedef int (*open_istream_fn)(struct git_istream *,
 			       struct repository *,

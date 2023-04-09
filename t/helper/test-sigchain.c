@@ -13,7 +13,7 @@ X(two)
 X(three)
 #undef X
 
-int cmd__sigchain(int argc, const char **argv)
+int cmd__sigchain(int argc UNUSED, const char **argv UNUSED)
 {
 	sigchain_push(SIGTERM, one);
 	sigchain_push(SIGTERM, two);

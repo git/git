@@ -1,6 +1,7 @@
-#include "../git-compat-util.h"
+#include "../cache.h"
 #include "../alloc.h"
 #include "../config.h"
+#include "../gettext.h"
 #include "../hex.h"
 #include "../refs.h"
 #include "refs-internal.h"
@@ -8,6 +9,7 @@
 #include "../iterator.h"
 #include "../lockfile.h"
 #include "../chdir-notify.h"
+#include "../write-or-die.h"
 
 enum mmap_strategy {
 	/*

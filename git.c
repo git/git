@@ -1,10 +1,13 @@
 #include "builtin.h"
 #include "config.h"
+#include "environment.h"
 #include "exec-cmd.h"
+#include "gettext.h"
 #include "help.h"
 #include "run-command.h"
 #include "alias.h"
 #include "replace-object.h"
+#include "setup.h"
 #include "shallow.h"
 
 #define RUN_SETUP		(1<<0)

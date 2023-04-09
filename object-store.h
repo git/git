@@ -216,7 +216,7 @@ struct raw_object_store {
 	/*
 	 * A fast, rough count of the number of objects in the repository.
 	 * These two fields are not meant for direct access. Use
-	 * approximate_object_count() instead.
+	 * repo_approximate_object_count() instead.
 	 */
 	unsigned long approximate_object_count;
 	unsigned approximate_object_count_valid : 1;
@@ -245,9 +245,6 @@ void *repo_read_object_file(struct repository *r,
 			    const struct object_id *oid,
 			    enum object_type *type,
 			    unsigned long *size);
-#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
-#define read_object_file(oid, type, size) repo_read_object_file(the_repository, oid, type, size)
-#endif
 
 /* Read and unpack an object file into memory, write memory to an object file */
 int oid_object_info(struct repository *r, const struct object_id *, unsigned long *);
@@ -387,10 +384,6 @@ int has_object(struct repository *r, const struct object_id *oid,
 int repo_has_object_file(struct repository *r, const struct object_id *oid);
 int repo_has_object_file_with_flags(struct repository *r,
 				    const struct object_id *oid, int flags);
-#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
-#define has_object_file(oid) repo_has_object_file(the_repository, oid)
-#define has_object_file_with_flags(oid, flags) repo_has_object_file_with_flags(the_repository, oid, flags)
-#endif
 
 /*
  * Return true iff an alternate object database has a loose object
@@ -413,7 +406,7 @@ void assert_oid_type(const struct object_id *oid, enum object_type expect);
 
 /*
  * Enabling the object read lock allows multiple threads to safely call the
- * following functions in parallel: repo_read_object_file(), read_object_file(),
+ * following functions in parallel: repo_read_object_file(),
  * read_object_with_reference(), oid_object_info() and oid_object_info_extended().
  *
  * obj_read_lock() and obj_read_unlock() may also be used to protect other

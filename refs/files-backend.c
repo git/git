@@ -1,5 +1,7 @@
 #include "../cache.h"
 #include "../config.h"
+#include "../environment.h"
+#include "../gettext.h"
 #include "../hex.h"
 #include "../refs.h"
 #include "refs-internal.h"
@@ -12,7 +14,10 @@
 #include "../object.h"
 #include "../dir.h"
 #include "../chdir-notify.h"
-#include "worktree.h"
+#include "../setup.h"
+#include "../worktree.h"
+#include "../wrapper.h"
+#include "../write-or-die.h"
 
 /*
  * This backend uses the following flags in `ref_update::flags` for

@@ -1,7 +1,6 @@
 #include "git-compat-util.h"
 #include "alloc.h"
 #include "line-range.h"
-#include "cache.h"
 #include "hex.h"
 #include "tag.h"
 #include "blob.h"
@@ -16,6 +15,7 @@
 #include "graph.h"
 #include "userdiff.h"
 #include "line-log.h"
+#include "setup.h"
 #include "strvec.h"
 #include "bloom.h"
 

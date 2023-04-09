@@ -1,11 +1,14 @@
 #include "cache.h"
 #include "commit.h"
+#include "environment.h"
+#include "gettext.h"
 #include "sequencer.h"
 #include "rebase-interactive.h"
 #include "strbuf.h"
 #include "commit-slab.h"
 #include "config.h"
 #include "dir.h"
+#include "wrapper.h"
 
 static const char edit_todo_list_advice[] =
 N_("You can fix this with 'git rebase --edit-todo' "
@@ -187,7 +190,7 @@ int todo_list_check(struct todo_list *old_todo, struct todo_list *new_todo)
 		struct commit *commit = item->commit;
 		if (commit && !*commit_seen_at(&commit_seen, commit)) {
 			strbuf_addf(&missing, " - %s %.*s\n",
-				    find_unique_abbrev(&commit->object.oid, DEFAULT_ABBREV),
+				    repo_find_unique_abbrev(the_repository, &commit->object.oid, DEFAULT_ABBREV),
 				    item->arg_len,
 				    todo_item_get_arg(old_todo, item));
 			*commit_seen_at(&commit_seen, commit) = 1;

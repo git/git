@@ -1,9 +1,11 @@
 #include "builtin.h"
 #include "config.h"
+#include "gettext.h"
 #include "ident.h"
 #include "mailmap.h"
 #include "parse-options.h"
 #include "string-list.h"
+#include "write-or-die.h"
 
 static int use_stdin;
 static const char * const check_mailmap_usage[] = {

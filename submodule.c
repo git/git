@@ -1,4 +1,5 @@
-#include "git-compat-util.h"
+#include "cache.h"
+#include "abspath.h"
 #include "alloc.h"
 #include "repository.h"
 #include "config.h"
@@ -7,6 +8,8 @@
 #include "dir.h"
 #include "diff.h"
 #include "commit.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "revision.h"
 #include "run-command.h"
@@ -23,6 +26,7 @@
 #include "parse-options.h"
 #include "object-store.h"
 #include "commit-reach.h"
+#include "setup.h"
 #include "shallow.h"
 
 static int config_update_recurse_submodules = RECURSE_SUBMODULES_OFF;
@@ -66,7 +70,7 @@ int is_writing_gitmodules_ok(void)
 {
 	struct object_id oid;
 	return file_exists(GITMODULES_FILE) ||
-		(get_oid(GITMODULES_INDEX, &oid) < 0 && get_oid(GITMODULES_HEAD, &oid) < 0);
+		(repo_get_oid(the_repository, GITMODULES_INDEX, &oid) < 0 && repo_get_oid(the_repository, GITMODULES_HEAD, &oid) < 0);
 }
 
 /*
@@ -275,8 +279,7 @@ int is_tree_submodule_active(struct repository *repo,
 	free(key);
 
 	/* submodule.active is set */
-	sl = repo_config_get_value_multi(repo, "submodule.active");
-	if (sl) {
+	if (!repo_config_get_string_multi(repo, "submodule.active", &sl)) {
 		struct pathspec ps;
 		struct strvec args = STRVEC_INIT;
 		const struct string_list_item *item;
@@ -1626,7 +1629,7 @@ get_fetch_task_from_changed(struct submodule_parallel_fetch *spf,
 		if (!task->repo) {
 			strbuf_addf(err, _("Could not access submodule '%s' at commit %s\n"),
 				    cs_data->path,
-				    find_unique_abbrev(cs_data->super_oid, DEFAULT_ABBREV));
+				    repo_find_unique_abbrev(the_repository, cs_data->super_oid, DEFAULT_ABBREV));
 
 			fetch_task_release(task);
 			free(task);
@@ -1637,8 +1640,8 @@ get_fetch_task_from_changed(struct submodule_parallel_fetch *spf,
 			strbuf_addf(err,
 				    _("Fetching submodule %s%s at commit %s\n"),
 				    spf->prefix, task->sub->path,
-				    find_unique_abbrev(cs_data->super_oid,
-						       DEFAULT_ABBREV));
+				    repo_find_unique_abbrev(the_repository, cs_data->super_oid,
+							    DEFAULT_ABBREV));
 
 		spf->changed_count++;
 		/*

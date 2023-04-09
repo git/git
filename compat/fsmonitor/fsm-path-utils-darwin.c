@@ -1,5 +1,6 @@
 #include "fsmonitor.h"
 #include "fsmonitor-path-utils.h"
+#include "gettext.h"
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>

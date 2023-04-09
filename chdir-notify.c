@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "abspath.h"
 #include "chdir-notify.h"
 #include "list.h"
 #include "strbuf.h"

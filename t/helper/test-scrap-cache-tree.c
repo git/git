@@ -2,10 +2,11 @@
 #include "test-tool.h"
 #include "cache.h"
 #include "lockfile.h"
+#include "setup.h"
 #include "tree.h"
 #include "cache-tree.h"
 
-int cmd__scrap_cache_tree(int ac, const char **av)
+int cmd__scrap_cache_tree(int ac UNUSED, const char **av UNUSED)
 {
 	struct lock_file index_lock = LOCK_INIT;
 

@@ -344,7 +344,7 @@ void partial_clone_register(
 	char *filter_name;
 
 	/* Check if it is already registered */
-	if ((promisor_remote = promisor_remote_find(remote))) {
+	if ((promisor_remote = repo_promisor_remote_find(the_repository, remote))) {
 		if (promisor_remote->partial_clone_filter)
 			/*
 			 * Remote is already registered and a filter is already
@@ -372,14 +372,15 @@ void partial_clone_register(
 	free(filter_name);
 
 	/* Make sure the config info are reset */
-	promisor_remote_reinit();
+	repo_promisor_remote_reinit(the_repository);
 }
 
 void partial_clone_get_default_filter_spec(
 	struct list_objects_filter_options *filter_options,
 	const char *remote)
 {
-	struct promisor_remote *promisor = promisor_remote_find(remote);
+	struct promisor_remote *promisor = repo_promisor_remote_find(the_repository,
+								     remote);
 	struct strbuf errbuf = STRBUF_INIT;
 
 	/*

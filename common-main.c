@@ -1,6 +1,8 @@
 #include "cache.h"
 #include "exec-cmd.h"
+#include "gettext.h"
 #include "attr.h"
+#include "setup.h"
 
 /*
  * Many parts of Git have subprograms communicate via pipe, expect the

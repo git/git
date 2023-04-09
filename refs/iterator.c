@@ -3,7 +3,7 @@
  * documentation about the design and use of reference iterators.
  */
 
-#include "cache.h"
+#include "git-compat-util.h"
 #include "refs.h"
 #include "refs/refs-internal.h"
 #include "iterator.h"

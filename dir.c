@@ -6,9 +6,12 @@
  *		 Junio Hamano, 2005-2006
  */
 #include "git-compat-util.h"
+#include "abspath.h"
 #include "alloc.h"
 #include "config.h"
 #include "dir.h"
+#include "environment.h"
+#include "gettext.h"
 #include "object-store.h"
 #include "attr.h"
 #include "refs.h"
@@ -18,7 +21,9 @@
 #include "varint.h"
 #include "ewah/ewok.h"
 #include "fsmonitor.h"
+#include "setup.h"
 #include "submodule-config.h"
+#include "wrapper.h"
 
 /*
  * Tells read_directory_recursive how a file or directory should be treated.
@@ -268,7 +273,7 @@ static int do_read_blob(const struct object_id *oid, struct oid_stat *oid_stat,
 	*size_out = 0;
 	*data_out = NULL;
 
-	data = read_object_file(oid, &type, &sz);
+	data = repo_read_object_file(the_repository, oid, &type, &sz);
 	if (!data || type != OBJ_BLOB) {
 		free(data);
 		return -1;

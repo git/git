@@ -25,8 +25,11 @@
 #include "config.h"
 #include "credential.h"
 #include "exec-cmd.h"
+#include "gettext.h"
 #include "run-command.h"
 #include "parse-options.h"
+#include "setup.h"
+#include "wrapper.h"
 #if defined(NO_OPENSSL) && !defined(HAVE_OPENSSL_CSPRNG)
 typedef void *SSL;
 #endif

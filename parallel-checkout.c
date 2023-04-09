@@ -2,6 +2,7 @@
 #include "alloc.h"
 #include "config.h"
 #include "entry.h"
+#include "gettext.h"
 #include "hex.h"
 #include "parallel-checkout.h"
 #include "pkt-line.h"
@@ -11,6 +12,7 @@
 #include "streaming.h"
 #include "thread-utils.h"
 #include "trace2.h"
+#include "wrapper.h"
 
 struct pc_worker {
 	struct child_process cp;

@@ -1,6 +1,6 @@
 #include "test-tool.h"
-#include "cache.h"
 #include "config.h"
+#include "setup.h"
 #include "string-list.h"
 
 /*
@@ -13,6 +13,8 @@
  *
  * get_value_multi -> prints all values for the entered key in increasing order
  *		     of priority
+ *
+ * get -> print return value for the entered key
  *
  * get_int -> print integer value for the entered key or die
  *
@@ -29,6 +31,9 @@
  *
  * iterate -> iterate over all values using git_config(), and print some
  *            data for each
+ *
+ * git_config_int -> iterate over all values using git_config() and print the
+ *                   integer value for the entered key or die
  *
  * Examples:
  *
@@ -51,6 +56,17 @@ static int iterate_cb(const char *var, const char *value, void *data UNUSED)
 	printf("lno=%d\n", current_config_line());
 	printf("scope=%s\n", config_scope_name(current_config_scope()));
 
+	return 0;
+}
+
+static int parse_int_cb(const char *var, const char *value, void *data)
+{
+	const char *key_to_match = data;
+
+	if (!strcmp(key_to_match, var)) {
+		int parsed = git_config_int(value, value);
+		printf("%d\n", parsed);
+	}
 	return 0;
 }
 
@@ -95,8 +111,7 @@ int cmd__config(int argc, const char **argv)
 			goto exit1;
 		}
 	} else if (argc == 3 && !strcmp(argv[1], "get_value_multi")) {
-		strptr = git_config_get_value_multi(argv[2]);
-		if (strptr) {
+		if (!git_config_get_value_multi(argv[2], &strptr)) {
 			for (i = 0; i < strptr->nr; i++) {
 				v = strptr->items[i].string;
 				if (!v)
@@ -109,6 +124,26 @@ int cmd__config(int argc, const char **argv)
 			printf("Value not found for \"%s\"\n", argv[2]);
 			goto exit1;
 		}
+	} else if (argc == 3 && !strcmp(argv[1], "get")) {
+		int ret;
+
+		if (!(ret = git_config_get(argv[2])))
+			goto exit0;
+		else if (ret == 1)
+			printf("Value not found for \"%s\"\n", argv[2]);
+		else if (ret == -CONFIG_INVALID_KEY)
+			printf("Key \"%s\" is invalid\n", argv[2]);
+		else if (ret == -CONFIG_NO_SECTION_OR_NAME)
+			printf("Key \"%s\" has no section\n", argv[2]);
+		else
+			/*
+			 * A normal caller should just check "ret <
+			 * 0", but for our own tests let's BUG() if
+			 * our whitelist of git_config_parse_key()
+			 * return values isn't exhaustive.
+			 */
+			BUG("Key \"%s\" has unknown return %d", argv[2], ret);
+		goto exit1;
 	} else if (argc == 3 && !strcmp(argv[1], "get_int")) {
 		if (!git_config_get_int(argv[2], &val)) {
 			printf("%d\n", val);
@@ -159,8 +194,7 @@ int cmd__config(int argc, const char **argv)
 				goto exit2;
 			}
 		}
-		strptr = git_configset_get_value_multi(&cs, argv[2]);
-		if (strptr) {
+		if (!git_configset_get_value_multi(&cs, argv[2], &strptr)) {
 			for (i = 0; i < strptr->nr; i++) {
 				v = strptr->items[i].string;
 				if (!v)
@@ -175,6 +209,9 @@ int cmd__config(int argc, const char **argv)
 		}
 	} else if (!strcmp(argv[1], "iterate")) {
 		git_config(iterate_cb, NULL);
+		goto exit0;
+	} else if (argc == 3 && !strcmp(argv[1], "git_config_int")) {
+		git_config(parse_int_cb, (void *) argv[2]);
 		goto exit0;
 	}
 

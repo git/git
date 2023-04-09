@@ -8,8 +8,10 @@
  * are.
  */
 #include "cache.h"
+#include "abspath.h"
 #include "branch.h"
 #include "environment.h"
+#include "gettext.h"
 #include "repository.h"
 #include "config.h"
 #include "refs.h"
@@ -20,7 +22,10 @@
 #include "replace-object.h"
 #include "tmp-objdir.h"
 #include "chdir-notify.h"
+#include "setup.h"
 #include "shallow.h"
+#include "wrapper.h"
+#include "write-or-die.h"
 
 int trust_executable_bit = 1;
 int trust_ctime = 1;

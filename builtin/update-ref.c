@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "config.h"
+#include "gettext.h"
 #include "refs.h"
 #include "builtin.h"
 #include "parse-options.h"
@@ -116,7 +117,7 @@ static int parse_next_oid(const char **next, const char *end,
 		(*next)++;
 		*next = parse_arg(*next, &arg);
 		if (arg.len) {
-			if (get_oid(arg.buf, oid))
+			if (repo_get_oid(the_repository, arg.buf, oid))
 				goto invalid;
 		} else {
 			/* Without -z, an empty value means all zeros: */
@@ -134,7 +135,7 @@ static int parse_next_oid(const char **next, const char *end,
 		*next += arg.len;
 
 		if (arg.len) {
-			if (get_oid(arg.buf, oid))
+			if (repo_get_oid(the_repository, arg.buf, oid))
 				goto invalid;
 		} else if (flags & PARSE_SHA1_ALLOW_EMPTY) {
 			/* With -z, treat an empty value as all zeros: */
@@ -549,7 +550,7 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 		refname = argv[0];
 		value = argv[1];
 		oldval = argv[2];
-		if (get_oid(value, &oid))
+		if (repo_get_oid(the_repository, value, &oid))
 			die("%s: not a valid SHA1", value);
 	}
 
@@ -560,7 +561,7 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 			 * must not already exist:
 			 */
 			oidclr(&oldoid);
-		else if (get_oid(oldval, &oldoid))
+		else if (repo_get_oid(the_repository, oldval, &oldoid))
 			die("%s: not a valid old SHA1", oldval);
 	}
 

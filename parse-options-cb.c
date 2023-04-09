@@ -4,6 +4,8 @@
 #include "cache.h"
 #include "commit.h"
 #include "color.h"
+#include "environment.h"
+#include "gettext.h"
 #include "string-list.h"
 #include "strvec.h"
 #include "oid-array.h"
@@ -91,7 +93,7 @@ int parse_opt_commits(const struct option *opt, const char *arg, int unset)
 
 	if (!arg)
 		return -1;
-	if (get_oid(arg, &oid))
+	if (repo_get_oid(the_repository, arg, &oid))
 		return error("malformed object name %s", arg);
 	commit = lookup_commit_reference(the_repository, &oid);
 	if (!commit)
@@ -110,7 +112,7 @@ int parse_opt_commit(const struct option *opt, const char *arg, int unset)
 
 	if (!arg)
 		return -1;
-	if (get_oid(arg, &oid))
+	if (repo_get_oid(the_repository, arg, &oid))
 		return error("malformed object name %s", arg);
 	commit = lookup_commit_reference(the_repository, &oid);
 	if (!commit)
@@ -129,7 +131,7 @@ int parse_opt_object_name(const struct option *opt, const char *arg, int unset)
 	}
 	if (!arg)
 		return -1;
-	if (get_oid(arg, &oid))
+	if (repo_get_oid(the_repository, arg, &oid))
 		return error(_("malformed object name '%s'"), arg);
 	oid_array_append(opt->value, &oid);
 	return 0;
@@ -146,7 +148,7 @@ int parse_opt_object_id(const struct option *opt, const char *arg, int unset)
 	}
 	if (!arg)
 		return -1;
-	if (get_oid(arg, &oid))
+	if (repo_get_oid(the_repository, arg, &oid))
 		return error(_("malformed object name '%s'"), arg);
 	*target = oid;
 	return 0;
@@ -211,21 +213,6 @@ int parse_opt_string_list(const struct option *opt, const char *arg, int unset)
 int parse_opt_noop_cb(const struct option *opt, const char *arg, int unset)
 {
 	return 0;
-}
-
-/**
- * Report that the option is unknown, so that other code can handle
- * it. This can be used as a callback together with
- * OPTION_LOWLEVEL_CALLBACK to allow an option to be documented in the
- * "-h" output even if it's not being handled directly by
- * parse_options().
- */
-enum parse_opt_result parse_opt_unknown_cb(struct parse_opt_ctx_t *ctx,
-					   const struct option *opt,
-					   const char *arg, int unset)
-{
-	BUG_ON_OPT_ARG(arg);
-	return PARSE_OPT_UNKNOWN;
 }
 
 /**

@@ -7,10 +7,14 @@
 #include "../strbuf.h"
 #include "../run-command.h"
 #include "../cache.h"
+#include "../abspath.h"
 #include "../alloc.h"
 #include "win32/lazyload.h"
 #include "../config.h"
+#include "../environment.h"
+#include "../wrapper.h"
 #include "dir.h"
+#include "gettext.h"
 #define SECURITY_WIN32
 #include <sspi.h>
 

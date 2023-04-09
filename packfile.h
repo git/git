@@ -1,11 +1,13 @@
 #ifndef PACKFILE_H
 #define PACKFILE_H
 
-#include "cache.h"
+#include "object.h"
 #include "oidset.h"
 
 /* in object-store.h */
 struct packed_git;
+struct pack_entry;
+struct pack_window;
 struct object_info;
 
 /*
@@ -65,7 +67,6 @@ struct packed_git *get_all_packs(struct repository *r);
  * for speed.
  */
 unsigned long repo_approximate_object_count(struct repository *r);
-#define approximate_object_count() repo_approximate_object_count(the_repository)
 
 struct packed_git *find_sha1_pack(const unsigned char *sha1,
 				  struct packed_git *packs);

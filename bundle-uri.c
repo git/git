@@ -1,6 +1,8 @@
 #include "cache.h"
 #include "bundle-uri.h"
 #include "bundle.h"
+#include "environment.h"
+#include "gettext.h"
 #include "object-store.h"
 #include "refs.h"
 #include "run-command.h"
@@ -791,6 +793,15 @@ int fetch_bundle_uri(struct repository *r, const char *uri,
 	};
 
 	init_bundle_list(&list);
+
+	/*
+	 * Do not fetch a NULL or empty bundle URI. An empty bundle URI
+	 * could signal that a configured bundle URI has been disabled.
+	 */
+	if (!uri || !*uri) {
+		result = 0;
+		goto cleanup;
+	}
 
 	/* If a bundle is added to this global list, then it is required. */
 	list.mode = BUNDLE_MODE_ALL;

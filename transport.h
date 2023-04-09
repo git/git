@@ -1,7 +1,6 @@
 #ifndef TRANSPORT_H
 #define TRANSPORT_H
 
-#include "cache.h"
 #include "run-command.h"
 #include "remote.h"
 #include "list-objects-filter-options.h"

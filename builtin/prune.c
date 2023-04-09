@@ -1,6 +1,8 @@
 #include "cache.h"
 #include "commit.h"
 #include "diff.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "revision.h"
 #include "builtin.h"
@@ -172,7 +174,7 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 		struct object_id oid;
 		const char *name = *argv++;
 
-		if (!get_oid(name, &oid)) {
+		if (!repo_get_oid(the_repository, name, &oid)) {
 			struct object *object = parse_object_or_die(&oid,
 								    name);
 			add_pending_object(&revs, object, "");

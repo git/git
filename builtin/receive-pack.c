@@ -1,6 +1,9 @@
 #include "builtin.h"
+#include "abspath.h"
 #include "repository.h"
 #include "config.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "lockfile.h"
 #include "pack.h"
@@ -32,6 +35,7 @@
 #include "worktree.h"
 #include "shallow.h"
 #include "parse-options.h"
+#include "wrapper.h"
 
 static const char * const receive_pack_usage[] = {
 	N_("git receive-pack <git-dir>"),
@@ -1345,7 +1349,7 @@ static int head_has_history(void)
 {
 	struct object_id oid;
 
-	return !get_oid("HEAD", &oid);
+	return !repo_get_oid(the_repository, "HEAD", &oid);
 }
 
 static const char *push_to_deploy(unsigned char *sha1,
@@ -1494,7 +1498,7 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 		}
 	}
 
-	if (!is_null_oid(new_oid) && !has_object_file(new_oid)) {
+	if (!is_null_oid(new_oid) && !repo_has_object_file(the_repository, new_oid)) {
 		error("unpack should have generated %s, "
 		      "but I can't find it!", oid_to_hex(new_oid));
 		ret = "bad pack";
@@ -1548,7 +1552,7 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 		}
 		old_commit = (struct commit *)old_object;
 		new_commit = (struct commit *)new_object;
-		if (!in_merge_bases(old_commit, new_commit)) {
+		if (!repo_in_merge_bases(the_repository, old_commit, new_commit)) {
 			rp_error("denying non-fast-forward %s"
 				 " (you should pull first)", name);
 			ret = "non-fast-forward";
@@ -1681,11 +1685,11 @@ static void check_aliased_update_internal(struct command *cmd,
 	rp_error("refusing inconsistent update between symref '%s' (%s..%s) and"
 		 " its target '%s' (%s..%s)",
 		 cmd->ref_name,
-		 find_unique_abbrev(&cmd->old_oid, DEFAULT_ABBREV),
-		 find_unique_abbrev(&cmd->new_oid, DEFAULT_ABBREV),
+		 repo_find_unique_abbrev(the_repository, &cmd->old_oid, DEFAULT_ABBREV),
+		 repo_find_unique_abbrev(the_repository, &cmd->new_oid, DEFAULT_ABBREV),
 		 dst_cmd->ref_name,
-		 find_unique_abbrev(&dst_cmd->old_oid, DEFAULT_ABBREV),
-		 find_unique_abbrev(&dst_cmd->new_oid, DEFAULT_ABBREV));
+		 repo_find_unique_abbrev(the_repository, &dst_cmd->old_oid, DEFAULT_ABBREV),
+		 repo_find_unique_abbrev(the_repository, &dst_cmd->new_oid, DEFAULT_ABBREV));
 
 	cmd->error_string = dst_cmd->error_string =
 		"inconsistent aliased update";

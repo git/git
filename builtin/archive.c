@@ -5,6 +5,7 @@
 #include "cache.h"
 #include "builtin.h"
 #include "archive.h"
+#include "gettext.h"
 #include "transport.h"
 #include "parse-options.h"
 #include "pkt-line.h"

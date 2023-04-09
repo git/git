@@ -1,4 +1,6 @@
 #include "cache.h"
+#include "abspath.h"
+#include "gettext.h"
 #include "simple-ipc.h"
 #include "strbuf.h"
 #include "pkt-line.h"

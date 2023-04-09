@@ -1018,6 +1018,40 @@ test_expect_success 'creationToken heuristic with failed downloads (fetch)' '
 	test_cmp expect refs
 '
 
+test_expect_success 'bundles are downloaded once during fetch --all' '
+	test_when_finished rm -rf download-* trace*.txt fetch-mult &&
+
+	cat >"$HTTPD_DOCUMENT_ROOT_PATH/bundle-list" <<-EOF &&
+	[bundle]
+		version = 1
+		mode = all
+		heuristic = creationToken
+
+	[bundle "bundle-1"]
+		uri = bundle-1.bundle
+		creationToken = 1
+
+	[bundle "bundle-2"]
+		uri = bundle-2.bundle
+		creationToken = 2
+
+	[bundle "bundle-3"]
+		uri = bundle-3.bundle
+		creationToken = 3
+	EOF
+
+	git clone --single-branch --branch=left \
+		--bundle-uri="$HTTPD_URL/bundle-list" \
+		"$HTTPD_URL/smart/fetch.git" fetch-mult &&
+	git -C fetch-mult remote add dup1 "$HTTPD_URL/smart/fetch.git" &&
+	git -C fetch-mult remote add dup2 "$HTTPD_URL/smart/fetch.git" &&
+
+	GIT_TRACE2_EVENT="$(pwd)/trace-mult.txt" \
+		git -C fetch-mult fetch --all &&
+	grep "\"child_start\".*\"git-remote-https\",\"$HTTPD_URL/bundle-list\"" \
+		trace-mult.txt >bundle-fetches &&
+	test_line_count = 1 bundle-fetches
+'
 # Do not add tests here unless they use the HTTP server, as they will
 # not run unless the HTTP dependencies exist.
 

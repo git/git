@@ -3,6 +3,8 @@
 #include "repository.h"
 #include "config.h"
 #include "dir.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "tree.h"
 #include "tree-walk.h"
@@ -20,6 +22,7 @@
 #include "promisor-remote.h"
 #include "entry.h"
 #include "parallel-checkout.h"
+#include "setup.h"
 
 /*
  * Error messages expected by scripts out of plumbing commands such as
@@ -459,7 +462,7 @@ static int check_updates(struct unpack_trees_options *o,
 	if (should_update_submodules())
 		load_gitmodules_file(index, &state);
 
-	if (has_promisor_remote())
+	if (repo_has_promisor_remote(the_repository))
 		/*
 		 * Prefetch the objects that are to be checked out in the loop
 		 * below.
@@ -1926,6 +1929,8 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		 * avoid having to create a new one.
 		 */
 		o->internal.result.split_index = o->src_index->split_index;
+		if (o->src_index->cache_changed & SPLIT_INDEX_ORDERED)
+			o->internal.result.cache_changed |= SPLIT_INDEX_ORDERED;
 		o->internal.result.split_index->refcount++;
 	} else {
 		o->internal.result.split_index =

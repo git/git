@@ -8,6 +8,7 @@
 #include "cache.h"
 #include "config.h"
 #include "builtin.h"
+#include "gettext.h"
 #include "object-store.h"
 #include "repository.h"
 #include "commit.h"
@@ -39,7 +40,7 @@ static int verify_commit(const char *name, unsigned flags)
 	struct object_id oid;
 	struct object *obj;
 
-	if (get_oid(name, &oid))
+	if (repo_get_oid(the_repository, name, &oid))
 		return error("commit '%s' not found.", name);
 
 	obj = parse_object(the_repository, &oid);

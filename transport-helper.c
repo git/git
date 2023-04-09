@@ -4,6 +4,8 @@
 #include "run-command.h"
 #include "commit.h"
 #include "diff.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "revision.h"
 #include "remote.h"
@@ -15,6 +17,7 @@
 #include "refspec.h"
 #include "transport-internal.h"
 #include "protocol.h"
+#include "wrapper.h"
 
 static int debug;
 
@@ -1082,7 +1085,7 @@ static int push_refs_with_export(struct transport *transport,
 		struct object_id oid;
 
 		private = apply_refspecs(&data->rs, ref->name);
-		if (private && !get_oid(private, &oid)) {
+		if (private && !repo_get_oid(the_repository, private, &oid)) {
 			strbuf_addf(&buf, "^%s", private);
 			string_list_append_nodup(&revlist_args,
 						 strbuf_detach(&buf, NULL));

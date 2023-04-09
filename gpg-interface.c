@@ -1,6 +1,7 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "commit.h"
 #include "config.h"
+#include "gettext.h"
 #include "run-command.h"
 #include "strbuf.h"
 #include "dir.h"
@@ -9,6 +10,7 @@
 #include "sigchain.h"
 #include "tempfile.h"
 #include "alias.h"
+#include "wrapper.h"
 
 static int git_gpg_config(const char *, const char *, void *);
 
@@ -1048,7 +1050,7 @@ static int sign_buffer_ssh(struct strbuf *buffer, struct strbuf *signature,
 		ssh_signing_key_file = strbuf_detach(&key_file->filename, NULL);
 	} else {
 		/* We assume a file */
-		ssh_signing_key_file = expand_user_path(signing_key, 1);
+		ssh_signing_key_file = interpolate_path(signing_key, 1);
 	}
 
 	buffer_file = mks_tempfile_t(".git_signing_buffer_tmpXXXXXX");

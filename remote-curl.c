@@ -1,6 +1,8 @@
 #include "git-compat-util.h"
 #include "alloc.h"
 #include "config.h"
+#include "environment.h"
+#include "gettext.h"
 #include "hex.h"
 #include "remote.h"
 #include "connect.h"
@@ -16,9 +18,11 @@
 #include "credential.h"
 #include "oid-array.h"
 #include "send-pack.h"
+#include "setup.h"
 #include "protocol.h"
 #include "quote.h"
 #include "transport.h"
+#include "write-or-die.h"
 
 static struct remote *remote;
 /* always ends with a trailing slash */

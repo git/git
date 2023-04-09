@@ -6,6 +6,7 @@
 
 #include "cache.h"
 #include "date.h"
+#include "gettext.h"
 
 /*
  * This is like mktime, but without normalization of tm_wday and tm_yday.

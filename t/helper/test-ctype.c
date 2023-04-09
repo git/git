@@ -47,7 +47,7 @@ static int is_in(const char *s, int ch)
 	"\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f" \
 	"\x7f"
 
-int cmd__ctype(int argc, const char **argv)
+int cmd__ctype(int argc UNUSED, const char **argv UNUSED)
 {
 	TEST_CLASS(isdigit, DIGIT);
 	TEST_CLASS(isspace, " \n\r\t");

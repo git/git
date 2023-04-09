@@ -3,7 +3,7 @@
 #include "object.h"
 #include "decorate.h"
 
-int cmd__example_decorate(int argc, const char **argv)
+int cmd__example_decorate(int argc UNUSED, const char **argv UNUSED)
 {
 	struct decoration n;
 	struct object_id one_oid = { {1} };

@@ -1,7 +1,6 @@
 #ifndef REFS_H
 #define REFS_H
 
-#include "cache.h"
 #include "commit.h"
 
 struct object_id;
@@ -159,12 +158,6 @@ int expand_ref(struct repository *r, const char *str, int len, struct object_id 
 int repo_dwim_ref(struct repository *r, const char *str, int len,
 		  struct object_id *oid, char **ref, int nonfatal_dangling_mark);
 int repo_dwim_log(struct repository *r, const char *str, int len, struct object_id *oid, char **ref);
-static inline int dwim_ref(const char *str, int len, struct object_id *oid,
-			   char **ref, int nonfatal_dangling_mark)
-{
-	return repo_dwim_ref(the_repository, str, len, oid, ref,
-			     nonfatal_dangling_mark);
-}
 int dwim_log(const char *str, int len, struct object_id *oid, char **ref);
 
 /*

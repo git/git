@@ -4,11 +4,13 @@
 #include "archive.h"
 #include "dir.h"
 #include "help.h"
+#include "gettext.h"
 #include "hex.h"
 #include "strvec.h"
 #include "object-store.h"
 #include "packfile.h"
 #include "parse-options.h"
+#include "write-or-die.h"
 
 struct archive_dir {
 	const char *path;

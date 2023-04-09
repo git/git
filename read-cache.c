@@ -18,6 +18,8 @@
 #include "tree.h"
 #include "commit.h"
 #include "blob.h"
+#include "environment.h"
+#include "gettext.h"
 #include "resolve-undo.h"
 #include "run-command.h"
 #include "strbuf.h"
@@ -31,6 +33,7 @@
 #include "csum-file.h"
 #include "promisor-remote.h"
 #include "hook.h"
+#include "wrapper.h"
 
 /* Mask for the name length in ce_flags in the on-disk index */
 
@@ -265,7 +268,7 @@ static int ce_compare_link(const struct cache_entry *ce, size_t expected_size)
 	if (strbuf_readlink(&sb, ce->name, expected_size))
 		return -1;
 
-	buffer = read_object_file(&ce->oid, &type, &size);
+	buffer = repo_read_object_file(the_repository, &ce->oid, &type, &size);
 	if (buffer) {
 		if (size == sb.len)
 			match = memcmp(buffer, sb.buf, size);
@@ -2630,7 +2633,7 @@ int repo_index_has_changes(struct repository *repo,
 
 	if (tree)
 		cmp = tree->object.oid;
-	if (tree || !get_oid_tree("HEAD", &cmp)) {
+	if (tree || !repo_get_oid_tree(repo, "HEAD", &cmp)) {
 		struct diff_options opt;
 
 		repo_diff_setup(repo, &opt);
@@ -2903,6 +2906,16 @@ static int record_ieot(void)
 	return !git_config_get_index_threads(&val) && val != 1;
 }
 
+enum write_extensions {
+	WRITE_NO_EXTENSION =              0,
+	WRITE_SPLIT_INDEX_EXTENSION =     1<<0,
+	WRITE_CACHE_TREE_EXTENSION =      1<<1,
+	WRITE_RESOLVE_UNDO_EXTENSION =    1<<2,
+	WRITE_UNTRACKED_CACHE_EXTENSION = 1<<3,
+	WRITE_FSMONITOR_EXTENSION =       1<<4,
+};
+#define WRITE_ALL_EXTENSIONS ((enum write_extensions)-1)
+
 /*
  * On success, `tempfile` is closed. If it is the temporary file
  * of a `struct lock_file`, we will therefore effectively perform
@@ -2911,7 +2924,7 @@ static int record_ieot(void)
  * rely on it.
  */
 static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
-			  int strip_extensions, unsigned flags)
+			  enum write_extensions write_extensions, unsigned flags)
 {
 	uint64_t start = getnanotime();
 	struct hashfile *f;
@@ -2949,7 +2962,7 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 	}
 
 	if (!istate->version)
-		istate->version = get_index_format_default(the_repository);
+		istate->version = get_index_format_default(r);
 
 	/* demote version 3 to version 2 when the latter suffices */
 	if (istate->version == 3 || istate->version == 2)
@@ -3084,8 +3097,8 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 			return -1;
 	}
 
-	if (!strip_extensions && istate->split_index &&
-	    !is_null_oid(&istate->split_index->base_oid)) {
+	if (write_extensions & WRITE_SPLIT_INDEX_EXTENSION &&
+	    istate->split_index) {
 		struct strbuf sb = STRBUF_INIT;
 
 		if (istate->sparse_index)
@@ -3099,7 +3112,8 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 		if (err)
 			return -1;
 	}
-	if (!strip_extensions && !drop_cache_tree && istate->cache_tree) {
+	if (write_extensions & WRITE_CACHE_TREE_EXTENSION &&
+	    !drop_cache_tree && istate->cache_tree) {
 		struct strbuf sb = STRBUF_INIT;
 
 		cache_tree_write(&sb, istate->cache_tree);
@@ -3109,7 +3123,8 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 		if (err)
 			return -1;
 	}
-	if (!strip_extensions && istate->resolve_undo) {
+	if (write_extensions & WRITE_RESOLVE_UNDO_EXTENSION &&
+	    istate->resolve_undo) {
 		struct strbuf sb = STRBUF_INIT;
 
 		resolve_undo_write(&sb, istate->resolve_undo);
@@ -3120,7 +3135,8 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 		if (err)
 			return -1;
 	}
-	if (!strip_extensions && istate->untracked) {
+	if (write_extensions & WRITE_UNTRACKED_CACHE_EXTENSION &&
+	    istate->untracked) {
 		struct strbuf sb = STRBUF_INIT;
 
 		write_untracked_extension(&sb, istate->untracked);
@@ -3131,7 +3147,8 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 		if (err)
 			return -1;
 	}
-	if (!strip_extensions && istate->fsmonitor_last_update) {
+	if (write_extensions & WRITE_FSMONITOR_EXTENSION &&
+	    istate->fsmonitor_last_update) {
 		struct strbuf sb = STRBUF_INIT;
 
 		write_fsmonitor_extension(&sb, istate);
@@ -3205,8 +3222,10 @@ static int commit_locked_index(struct lock_file *lk)
 		return commit_lock_file(lk);
 }
 
-static int do_write_locked_index(struct index_state *istate, struct lock_file *lock,
-				 unsigned flags)
+static int do_write_locked_index(struct index_state *istate,
+				 struct lock_file *lock,
+				 unsigned flags,
+				 enum write_extensions write_extensions)
 {
 	int ret;
 	int was_full = istate->sparse_index == INDEX_EXPANDED;
@@ -3224,7 +3243,7 @@ static int do_write_locked_index(struct index_state *istate, struct lock_file *l
 	 */
 	trace2_region_enter_printf("index", "do_write_index", the_repository,
 				   "%s", get_lock_file_path(lock));
-	ret = do_write_index(istate, lock->tempfile, 0, flags);
+	ret = do_write_index(istate, lock->tempfile, write_extensions, flags);
 	trace2_region_leave_printf("index", "do_write_index", the_repository,
 				   "%s", get_lock_file_path(lock));
 
@@ -3253,7 +3272,7 @@ static int write_split_index(struct index_state *istate,
 {
 	int ret;
 	prepare_to_write_split_index(istate);
-	ret = do_write_locked_index(istate, lock, flags);
+	ret = do_write_locked_index(istate, lock, flags, WRITE_ALL_EXTENSIONS);
 	finish_writing_split_index(istate);
 	return ret;
 }
@@ -3328,7 +3347,7 @@ static int write_shared_index(struct index_state *istate,
 
 	trace2_region_enter_printf("index", "shared/do_write_index",
 				   the_repository, "%s", get_tempfile_path(*temp));
-	ret = do_write_index(si->base, *temp, 1, flags);
+	ret = do_write_index(si->base, *temp, WRITE_NO_EXTENSION, flags);
 	trace2_region_leave_printf("index", "shared/do_write_index",
 				   the_repository, "%s", get_tempfile_path(*temp));
 
@@ -3405,9 +3424,8 @@ int write_locked_index(struct index_state *istate, struct lock_file *lock,
 	if ((!si && !test_split_index_env) ||
 	    alternate_index_output ||
 	    (istate->cache_changed & ~EXTMASK)) {
-		if (si)
-			oidclr(&si->base_oid);
-		ret = do_write_locked_index(istate, lock, flags);
+		ret = do_write_locked_index(istate, lock, flags,
+					    ~WRITE_SPLIT_INDEX_EXTENSION);
 		goto out;
 	}
 
@@ -3433,8 +3451,8 @@ int write_locked_index(struct index_state *istate, struct lock_file *lock,
 		/* Same initial permissions as the main .git/index file */
 		temp = mks_tempfile_sm(git_path("sharedindex_XXXXXX"), 0, 0666);
 		if (!temp) {
-			oidclr(&si->base_oid);
-			ret = do_write_locked_index(istate, lock, flags);
+			ret = do_write_locked_index(istate, lock, flags,
+						    ~WRITE_SPLIT_INDEX_EXTENSION);
 			goto out;
 		}
 		ret = write_shared_index(istate, &temp, flags);
@@ -3555,7 +3573,8 @@ void *read_blob_data_from_index(struct index_state *istate,
 	}
 	if (pos < 0)
 		return NULL;
-	data = read_object_file(&istate->cache[pos]->oid, &type, &sz);
+	data = repo_read_object_file(the_repository, &istate->cache[pos]->oid,
+				     &type, &sz);
 	if (!data || type != OBJ_BLOB) {
 		free(data);
 		return NULL;
