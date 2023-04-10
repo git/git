@@ -483,24 +483,6 @@ static int read_basic_state(struct rebase_options *opts)
 		opts->gpg_sign_opt = xstrdup(buf.buf);
 	}
 
-	if (file_exists(state_dir_path("strategy", opts))) {
-		strbuf_reset(&buf);
-		if (!read_oneliner(&buf, state_dir_path("strategy", opts),
-				   READ_ONELINER_WARN_MISSING))
-			return -1;
-		free(opts->strategy);
-		opts->strategy = xstrdup(buf.buf);
-	}
-
-	if (file_exists(state_dir_path("strategy_opts", opts))) {
-		strbuf_reset(&buf);
-		if (!read_oneliner(&buf, state_dir_path("strategy_opts", opts),
-				   READ_ONELINER_WARN_MISSING))
-			return -1;
-		free(opts->strategy_opts);
-		opts->strategy_opts = xstrdup(buf.buf);
-	}
-
 	strbuf_release(&buf);
 
 	return 0;
@@ -518,12 +500,6 @@ static int rebase_write_basic_state(struct rebase_options *opts)
 		write_file(state_dir_path("quiet", opts), "%s", "");
 	if (opts->flags & REBASE_VERBOSE)
 		write_file(state_dir_path("verbose", opts), "%s", "");
-	if (opts->strategy)
-		write_file(state_dir_path("strategy", opts), "%s",
-			   opts->strategy);
-	if (opts->strategy_opts)
-		write_file(state_dir_path("strategy_opts", opts), "%s",
-			   opts->strategy_opts);
 	if (opts->allow_rerere_autoupdate > 0)
 		write_file(state_dir_path("allow_rerere_autoupdate", opts),
 			   "-%s-rerere-autoupdate",
