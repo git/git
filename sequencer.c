@@ -2925,7 +2925,7 @@ static void parse_strategy_opts(struct replay_opts *opts, char *raw_opts)
 
 	count = split_cmdline(strategy_opts_string, &argv);
 	if (count < 0)
-		die(_("could not split '%s': %s"), strategy_opts_string,
+		BUG("could not split '%s': %s", strategy_opts_string,
 			    split_cmdline_strerror(count));
 	for (i = 0; i < count; i++) {
 		const char *arg = argv[i];
@@ -3049,12 +3049,13 @@ done_rebase_i:
 
 static void write_strategy_opts(struct replay_opts *opts)
 {
-	int i;
 	struct strbuf buf = STRBUF_INIT;
 
-	for (i = 0; i < opts->xopts.nr; ++i)
-		strbuf_addf(&buf, " --%s", opts->xopts.v[i]);
-
+	/*
+	 * Quote strategy options so that they can be read correctly
+	 * by split_cmdline().
+	 */
+	quote_cmdline(&buf, opts->xopts.v);
 	write_file(rebase_path_strategy_opts(), "%s\n", buf.buf);
 	strbuf_release(&buf);
 }

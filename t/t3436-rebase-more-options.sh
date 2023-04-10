@@ -40,30 +40,6 @@ test_expect_success 'setup' '
 	EOF
 '
 
-test_expect_success 'bad -X <strategy-option> arguments: unclosed quote' '
-	test_when_finished "test_might_fail git rebase --abort" &&
-	cat >expect <<-\EOF &&
-	fatal: could not split '\''--bad'\'': unclosed quote
-	EOF
-	GIT_SEQUENCE_EDITOR="echo break >" \
-		git rebase -i -X"bad argument\"" side main &&
-	test_expect_code 128 git rebase --continue >out 2>actual &&
-	test_must_be_empty out &&
-	test_cmp expect actual
-'
-
-test_expect_success 'bad -X <strategy-option> arguments: bad escape' '
-	test_when_finished "test_might_fail git rebase --abort" &&
-	cat >expect <<-\EOF &&
-	fatal: could not split '\''--bad'\'': cmdline ends with \
-	EOF
-	GIT_SEQUENCE_EDITOR="echo break >" \
-		git rebase -i -X"bad escape \\" side main &&
-	test_expect_code 128 git rebase --continue >out 2>actual &&
-	test_must_be_empty out &&
-	test_cmp expect actual
-'
-
 test_expect_success '--ignore-whitespace works with apply backend' '
 	test_must_fail git rebase --apply main side &&
 	git rebase --abort &&

@@ -3,6 +3,7 @@
 #include "alloc.h"
 #include "config.h"
 #include "gettext.h"
+#include "strbuf.h"
 #include "string-list.h"
 
 struct config_alias_data {
@@ -44,6 +45,23 @@ void list_aliases(struct string_list *list)
 	struct config_alias_data data = { NULL, NULL, list };
 
 	read_early_config(config_alias_cb, &data);
+}
+
+void quote_cmdline(struct strbuf *buf, const char **argv)
+{
+	for (const char **argp = argv; *argp; argp++) {
+		if (argp != argv)
+			strbuf_addch(buf, ' ');
+		strbuf_addch(buf, '"');
+		for (const char *p = *argp; *p; p++) {
+			const char c = *p;
+
+			if (c == '"' || c =='\\')
+				strbuf_addch(buf, '\\');
+			strbuf_addch(buf, c);
+		}
+		strbuf_addch(buf, '"');
+	}
 }
 
 #define SPLIT_CMDLINE_BAD_ENDING 1
