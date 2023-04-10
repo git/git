@@ -2913,7 +2913,7 @@ static int populate_opts_cb(const char *key, const char *value, void *data)
 	return 0;
 }
 
-void parse_strategy_opts(struct replay_opts *opts, char *raw_opts)
+static void parse_strategy_opts(struct replay_opts *opts, char *raw_opts)
 {
 	int i;
 	int count;

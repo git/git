@@ -117,7 +117,8 @@ struct rebase_options {
 	struct string_list exec;
 	int allow_empty_message;
 	int rebase_merges, rebase_cousins;
-	char *strategy, *strategy_opts;
+	char *strategy;
+	struct string_list strategy_opts;
 	struct strbuf git_format_patch_opt;
 	int reschedule_failed_exec;
 	int reapply_cherry_picks;
@@ -143,6 +144,7 @@ struct rebase_options {
 		.config_autosquash = -1,                \
 		.update_refs = -1,                      \
 		.config_update_refs = -1,               \
+		.strategy_opts = STRING_LIST_INIT_NODUP,\
 	}
 
 static struct replay_opts get_replay_opts(const struct rebase_options *opts)
@@ -176,8 +178,8 @@ static struct replay_opts get_replay_opts(const struct rebase_options *opts)
 		replay.default_strategy = NULL;
 	}
 
-	if (opts->strategy_opts)
-		parse_strategy_opts(&replay, opts->strategy_opts);
+	for (size_t i = 0; i < opts->strategy_opts.nr; i++)
+		strvec_push(&replay.xopts, opts->strategy_opts.items[i].string);
 
 	if (opts->squash_onto) {
 		oidcpy(&replay.squash_onto, opts->squash_onto);
@@ -1013,7 +1015,6 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	int ignore_whitespace = 0;
 	const char *gpg_sign = NULL;
 	const char *rebase_merges = NULL;
-	struct string_list strategy_options = STRING_LIST_INIT_NODUP;
 	struct object_id squash_onto;
 	char *squash_onto_name = NULL;
 	char *keep_base_onto_name = NULL;
@@ -1122,7 +1123,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			 N_("use 'merge-base --fork-point' to refine upstream")),
 		OPT_STRING('s', "strategy", &options.strategy,
 			   N_("strategy"), N_("use the given merge strategy")),
-		OPT_STRING_LIST('X', "strategy-option", &strategy_options,
+		OPT_STRING_LIST('X', "strategy-option", &options.strategy_opts,
 				N_("option"),
 				N_("pass the argument through to the merge "
 				   "strategy")),
@@ -1436,23 +1437,13 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	} else {
 		/* REBASE_MERGE */
 		if (ignore_whitespace) {
-			string_list_append(&strategy_options,
+			string_list_append(&options.strategy_opts,
 					   "ignore-space-change");
 		}
 	}
 
-	if (strategy_options.nr) {
-		int i;
-
-		if (!options.strategy)
-			options.strategy = "ort";
-
-		strbuf_reset(&buf);
-		for (i = 0; i < strategy_options.nr; i++)
-			strbuf_addf(&buf, " --%s",
-				    strategy_options.items[i].string);
-		options.strategy_opts = xstrdup(buf.buf);
-	}
+	if (options.strategy_opts.nr && !options.strategy)
+		options.strategy = "ort";
 
 	if (options.strategy) {
 		options.strategy = xstrdup(options.strategy);
@@ -1827,10 +1818,9 @@ cleanup:
 	free(options.gpg_sign_opt);
 	string_list_clear(&options.exec, 0);
 	free(options.strategy);
-	free(options.strategy_opts);
+	string_list_clear(&options.strategy_opts, 0);
 	strbuf_release(&options.git_format_patch_opt);
 	free(squash_onto_name);
 	free(keep_base_onto_name);
-	string_list_clear(&strategy_options, 0);
 	return !!ret;
 }
