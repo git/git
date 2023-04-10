@@ -2055,4 +2055,32 @@ test_expect_success 'grep sparse directory within submodules' '
 	test_cmp actual expect
 '
 
+test_expect_success 'write-tree on all' '
+	init_repos &&
+
+	write_script edit-contents <<-\EOF &&
+	echo text >>"$1"
+	EOF
+
+	run_on_all ../edit-contents deep/a &&
+	run_on_all git update-index deep/a &&
+	test_all_match git write-tree &&
+
+	run_on_all mkdir -p folder1 &&
+	run_on_all cp a folder1/a &&
+	run_on_all ../edit-contents folder1/a &&
+	run_on_all git update-index folder1/a &&
+	test_all_match git write-tree
+'
+
+test_expect_success 'sparse-index is not expanded: write-tree' '
+	init_repos &&
+
+	ensure_not_expanded write-tree &&
+
+	echo "test1" >>sparse-index/a &&
+	git -C sparse-index update-index a &&
+	ensure_not_expanded write-tree
+'
+
 test_done

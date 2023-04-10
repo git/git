@@ -125,5 +125,6 @@ test_perf_on_all git checkout-index -f --all
 test_perf_on_all git update-index --add --remove $SPARSE_CONE/a
 test_perf_on_all "git rm -f $SPARSE_CONE/a && git checkout HEAD -- $SPARSE_CONE/a"
 test_perf_on_all git grep --cached bogus -- "f2/f1/f1/*"
+test_perf_on_all git write-tree
 
 test_done

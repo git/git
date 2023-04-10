@@ -41,6 +41,9 @@ int cmd_write_tree(int argc, const char **argv, const char *cmd_prefix)
 	argc = parse_options(argc, argv, cmd_prefix, write_tree_options,
 			     write_tree_usage, 0);
 
+	prepare_repo_settings(the_repository);
+	the_repository->settings.command_requires_full_index = 0;
+
 	ret = write_index_as_tree(&oid, &the_index, get_index_file(), flags,
 				  tree_prefix);
 	switch (ret) {
