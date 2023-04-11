@@ -13,6 +13,7 @@
 #include "notes.h"
 #include "notes-merge.h"
 #include "strbuf.h"
+#include "trace.h"
 #include "notes-utils.h"
 #include "commit-reach.h"
 #include "wrapper.h"

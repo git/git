@@ -26,6 +26,7 @@
 #include "setup.h"
 #include "submodule.h"
 #include "submodule-config.h"
+#include "trace2.h"
 #include "tree.h"
 #include "tree-walk.h"
 #include "unpack-trees.h"

@@ -22,6 +22,7 @@
 #include "string-list.h"
 #include "oid-array.h"
 #include "sigchain.h"
+#include "trace2.h"
 #include "transport-internal.h"
 #include "protocol.h"
 #include "object-store.h"

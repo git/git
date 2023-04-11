@@ -31,6 +31,8 @@
 #include "promisor-remote.h"
 #include "commit-graph.h"
 #include "shallow.h"
+#include "trace.h"
+#include "trace2.h"
 #include "worktree.h"
 #include "bundle-uri.h"
 

@@ -9,6 +9,7 @@
 #include "sigchain.h"
 #include "pkt-line.h"
 #include "sub-process.h"
+#include "trace.h"
 #include "utf8.h"
 #include "ll-merge.h"
 #include "wrapper.h"

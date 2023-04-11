@@ -12,6 +12,7 @@
 #include "version.h"
 #include "pkt-line.h"
 #include "gettext.h"
+#include "trace.h"
 #include "transport.h"
 #include "packfile.h"
 #include "protocol.h"

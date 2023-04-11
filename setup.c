@@ -10,6 +10,7 @@
 #include "chdir-notify.h"
 #include "promisor-remote.h"
 #include "quote.h"
+#include "trace2.h"
 
 static int inside_git_dir = -1;
 static int inside_work_tree = -1;

@@ -4,6 +4,7 @@
 #include "cache.h"
 #include "dir.h"
 #include "fsmonitor-settings.h"
+#include "trace.h"
 
 extern struct trace_key trace_fsmonitor;
 

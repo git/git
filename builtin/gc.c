@@ -37,6 +37,7 @@
 #include "gettext.h"
 #include "hook.h"
 #include "setup.h"
+#include "trace2.h"
 #include "wrapper.h"
 
 #define FAILED_RUN "failed to run %s"

@@ -3,6 +3,7 @@
 #include "chdir-notify.h"
 #include "list.h"
 #include "strbuf.h"
+#include "trace.h"
 
 struct chdir_notify_entry {
 	const char *name;

@@ -9,6 +9,7 @@
 #include "hex.h"
 #include "setup.h"
 #include "tag.h"
+#include "trace2.h"
 #include "blame.h"
 #include "alloc.h"
 #include "commit-slab.h"

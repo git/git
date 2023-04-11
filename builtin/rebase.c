@@ -32,6 +32,7 @@
 #include "sequencer.h"
 #include "rebase-interactive.h"
 #include "reset.h"
+#include "trace2.h"
 #include "hook.h"
 #include "wrapper.h"
 

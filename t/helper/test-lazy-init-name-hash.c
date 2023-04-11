@@ -4,6 +4,7 @@
 #include "environment.h"
 #include "parse-options.h"
 #include "setup.h"
+#include "trace.h"
 
 static int single;
 static int multi;

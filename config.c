@@ -28,6 +28,7 @@
 #include "replace-object.h"
 #include "refs.h"
 #include "setup.h"
+#include "trace2.h"
 #include "worktree.h"
 #include "wrapper.h"
 #include "write-or-die.h"

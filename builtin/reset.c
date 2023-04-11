@@ -29,6 +29,8 @@
 #include "setup.h"
 #include "submodule.h"
 #include "submodule-config.h"
+#include "trace.h"
+#include "trace2.h"
 #include "dir.h"
 #include "add-interactive.h"
 

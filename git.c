@@ -9,6 +9,8 @@
 #include "replace-object.h"
 #include "setup.h"
 #include "shallow.h"
+#include "trace.h"
+#include "trace2.h"
 
 #define RUN_SETUP		(1<<0)
 #define RUN_SETUP_GENTLY	(1<<1)

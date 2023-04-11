@@ -21,6 +21,7 @@
 #include "setup.h"
 #include "protocol.h"
 #include "quote.h"
+#include "trace2.h"
 #include "transport.h"
 #include "write-or-die.h"
 

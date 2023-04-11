@@ -23,6 +23,7 @@
 #include "resolve-undo.h"
 #include "run-command.h"
 #include "strbuf.h"
+#include "trace2.h"
 #include "varint.h"
 #include "split-index.h"
 #include "utf8.h"

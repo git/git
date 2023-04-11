@@ -12,6 +12,7 @@
 #include "win32/lazyload.h"
 #include "../config.h"
 #include "../environment.h"
+#include "../trace2.h"
 #include "../wrapper.h"
 #include "dir.h"
 #include "gettext.h"

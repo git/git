@@ -13,6 +13,7 @@
 #include "unpack-trees.h"
 #include "refs.h"
 #include "submodule.h"
+#include "trace.h"
 #include "dir.h"
 #include "fsmonitor.h"
 #include "commit-reach.h"

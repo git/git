@@ -31,6 +31,7 @@
 #include "worktree.h"
 #include "setup.h"
 #include "strvec.h"
+#include "trace2.h"
 #include "commit-reach.h"
 #include "commit-graph.h"
 #include "prio-queue.h"

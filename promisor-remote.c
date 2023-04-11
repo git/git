@@ -4,6 +4,7 @@
 #include "object-store.h"
 #include "promisor-remote.h"
 #include "config.h"
+#include "trace2.h"
 #include "transport.h"
 #include "strvec.h"
 #include "packfile.h"

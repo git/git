@@ -32,6 +32,8 @@
 #include "object-store.h"
 #include "protocol.h"
 #include "commit-reach.h"
+#include "trace.h"
+#include "trace2.h"
 #include "worktree.h"
 #include "shallow.h"
 #include "wrapper.h"

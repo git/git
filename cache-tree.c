@@ -11,6 +11,8 @@
 #include "replace-object.h"
 #include "promisor-remote.h"
 #include "sparse-index.h"
+#include "trace.h"
+#include "trace2.h"
 
 #ifndef DEBUG_CACHE_TREE
 #define DEBUG_CACHE_TREE 0

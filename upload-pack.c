@@ -22,6 +22,7 @@
 #include "version.h"
 #include "string-list.h"
 #include "strvec.h"
+#include "trace2.h"
 #include "prio-queue.h"
 #include "protocol.h"
 #include "quote.h"

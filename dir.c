@@ -23,6 +23,7 @@
 #include "fsmonitor.h"
 #include "setup.h"
 #include "submodule-config.h"
+#include "trace2.h"
 #include "wrapper.h"
 
 /*

@@ -18,6 +18,8 @@
 #include "column.h"
 #include "setup.h"
 #include "strbuf.h"
+#include "trace.h"
+#include "trace2.h"
 #include "utf8.h"
 #include "worktree.h"
 #include "lockfile.h"

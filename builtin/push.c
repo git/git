@@ -16,6 +16,7 @@
 #include "submodule.h"
 #include "submodule-config.h"
 #include "send-pack.h"
+#include "trace2.h"
 #include "color.h"
 
 static const char * const push_usage[] = {

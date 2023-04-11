@@ -15,6 +15,7 @@
 #include "commit.h"
 #include "object.h"
 #include "tag.h"
+#include "trace.h"
 #include "tree-walk.h"
 #include "tree.h"
 #include "object-store.h"

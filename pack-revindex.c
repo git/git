@@ -3,6 +3,7 @@
 #include "pack-revindex.h"
 #include "object-store.h"
 #include "packfile.h"
+#include "trace2.h"
 #include "config.h"
 #include "midx.h"
 
