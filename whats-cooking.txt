@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Apr 2023, #02; Thu, 6)
-X-master-at: 0607f793cbe0af16aee6d2480056d891835884bd
-X-next-at: 4ca3ef321147b456561d0c3a4c90cbb38891a488
+Subject: What's cooking in git.git (Apr 2023, #03; Tue, 11)
+X-master-at: 9857273be005833c71e2d16ba48e193113e12276
+X-next-at: 15816b0a8ae864e36a03af255e1d048f21d56b4d
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Apr 2023, #02; Thu, 6)
+What's cooking in git.git (Apr 2023, #03; Tue, 11)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -15,11 +15,6 @@ considered "accepted" at all and may be annotated with an URL to a
 message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity.
-
-We are in the middle of the 4th week of an 10-week cycle which is
-expected to last til the end of May.  With quite a many topics that
-have been cooking in 'next' already graduated to 'master', it is a
-good time to rewind the tip of 'next', which I'll be doing shortly.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -52,284 +47,167 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ab/config-multi-and-nonbool (2023-03-28) 9 commits
-  (merged to 'next' on 2023-03-30 at bcfe99b43d)
- + for-each-repo: with bad config, don't conflate <path> and <cmd>
- + config API: add "string" version of *_value_multi(), fix segfaults
- + config API users: test for *_get_value_multi() segfaults
- + for-each-repo: error on bad --config
- + config API: have *_multi() return an "int" and take a "dest"
- + versioncmp.c: refactor config reading next commit
- + config API: add and use a "git_config_get()" family of functions
- + config tests: add "NULL" tests for *_get_value_multi()
- + config tests: cover blind spots in git_die_config() tests
+* ar/adjust-tests-for-the-index-fallout (2023-03-31) 2 commits
+  (merged to 'next' on 2023-04-06 at 8a9dfa25d4)
+ + t2107: fix mention of the_index.cache_changed
+ + t3060: fix mention of function prune_index
 
- Assorted config API updates.
- source: <cover-v8-0.9-00000000000-20230328T140126Z-avarab@gmail.com>
+ Comment updates.
+ source: <20230331143604.82040-2-rybak.a.v@gmail.com>
 
-
-* ab/remove-implicit-use-of-the-repository (2023-03-28) 17 commits
-  (merged to 'next' on 2023-03-30 at e0abe2d872)
- + libs: use "struct repository *" argument, not "the_repository"
- + post-cocci: adjust comments for recent repo_* migration
- + cocci: apply the "revision.h" part of "the_repository.pending"
- + cocci: apply the "rerere.h" part of "the_repository.pending"
- + cocci: apply the "refs.h" part of "the_repository.pending"
- + cocci: apply the "promisor-remote.h" part of "the_repository.pending"
- + cocci: apply the "packfile.h" part of "the_repository.pending"
- + cocci: apply the "pretty.h" part of "the_repository.pending"
- + cocci: apply the "object-store.h" part of "the_repository.pending"
- + cocci: apply the "diff.h" part of "the_repository.pending"
- + cocci: apply the "commit.h" part of "the_repository.pending"
- + cocci: apply the "commit-reach.h" part of "the_repository.pending"
- + cocci: apply the "cache.h" part of "the_repository.pending"
- + cocci: add missing "the_repository" macros to "pending"
- + cocci: sort "the_repository" rules by header
- + cocci: fix incorrect & verbose "the_repository" rules
- + cocci: remove dead rule from "the_repository.pending.cocci"
- (this branch is used by en/header-split-cache-h.)
-
- Code clean-up around the use of the_repository.
- source: <cover-v2-00.17-00000000000-20230328T110946Z-avarab@gmail.com>
-
-
-* ds/ahead-behind (2023-03-20) 9 commits
-  (merged to 'next' on 2023-03-23 at a607895174)
- + commit-reach: add tips_reachable_from_bases()
- + for-each-ref: add ahead-behind format atom
- + commit-reach: implement ahead_behind() logic
- + commit-graph: introduce `ensure_generations_valid()`
- + commit-graph: return generation from memory
- + commit-graph: simplify compute_generation_numbers()
- + commit-graph: refactor compute_topological_levels()
- + for-each-ref: explicitly test no matches
- + for-each-ref: add --stdin option
- (this branch is used by ps/ahead-behind-truncation-fix.)
-
- "git for-each-ref" learns '%(ahead-behind:<base>)' that computes the
- distances from a single reference point in the history with bunch
- of commits in bulk.
- source: <pull.1489.v4.git.1679311615.gitgitgadget@gmail.com>
-
-
-* ds/fetch-bundle-uri-with-all (2023-03-31) 1 commit
-  (merged to 'next' on 2023-03-31 at a9f787341d)
- + fetch: download bundles once, even with --all
-
- "git fetch --all" does not have to download and handle the same
- bundleURI over and over, which has been corrected.
- source: <pull.1508.git.1680278344173.gitgitgadget@gmail.com>
-
-
-* en/header-split-cleanup (2023-03-21) 16 commits
-  (merged to 'next' on 2023-03-30 at b69ff46cad)
- + csum-file.h: remove unnecessary inclusion of cache.h
- + write-or-die.h: move declarations for write-or-die.c functions from cache.h
- + treewide: remove cache.h inclusion due to setup.h changes
- + setup.h: move declarations for setup.c functions from cache.h
- + treewide: remove cache.h inclusion due to environment.h changes
- + environment.h: move declarations for environment.c functions from cache.h
- + treewide: remove unnecessary includes of cache.h
- + wrapper.h: move declarations for wrapper.c functions from cache.h
- + path.h: move function declarations for path.c functions from cache.h
- + cache.h: remove expand_user_path()
- + abspath.h: move absolute path functions from cache.h
- + environment: move comment_line_char from cache.h
- + treewide: remove unnecessary cache.h inclusion from several sources
- + treewide: remove unnecessary inclusion of gettext.h
- + treewide: be explicit about dependence on gettext.h
- + treewide: remove unnecessary cache.h inclusion from a few headers
- (this branch is used by en/header-split-cache-h.)
-
- Split key function and data structure definitions out of cache.h to
- new header files and adjust the users.
- source: <pull.1493.v2.git.1679379968.gitgitgadget@gmail.com>
-
-
-* gc/config-parsing-cleanup (2023-03-28) 8 commits
-  (merged to 'next' on 2023-03-30 at e7ea626edf)
- + config.c: rename "struct config_source cf"
- + config: report cached filenames in die_bad_number()
- + config.c: remove current_parsing_scope
- + config.c: remove current_config_kvi
- + config.c: plumb the_reader through callbacks
- + config.c: create config_reader and the_reader
- + config.c: don't assign to "cf_global" directly
- + config.c: plumb config_source through static fns
-
- Config API clean-up to reduce its dependence on static variables
- source: <pull.1463.v3.git.git.1680025914.gitgitgadget@gmail.com>
-
-
-* jk/chainlint-fixes (2023-03-30) 5 commits
-  (merged to 'next' on 2023-03-30 at 52f229b710)
- + tests: skip test_eval_ in internal chain-lint
- + tests: drop here-doc check from internal chain-linter
- + tests: diagnose unclosed here-doc in chainlint.pl
- + tests: replace chainlint subshell with a function
- + tests: run internal chain-linter under "make test"
-
- Test framework fix.
- source: <20230330192712.GA27719@coredump.intra.peff.net>
-
-
-* jk/document-pack-redundant-deprecation (2023-03-30) 1 commit
-  (merged to 'next' on 2023-03-30 at e9d10e27a4)
- + pack-redundant: document deprecation
-
- Document that we have marked "pack-redundant" as deprecated.
- source: <20230328190641.GF18558@coredump.intra.peff.net>
-
-
-* jk/unused-post-2.40 (2023-03-17) 4 commits
-  (merged to 'next' on 2023-03-30 at 10aeb0d4ae)
- + transport: mark unused parameters in fetch_refs_from_bundle()
- + http: mark unused parameter in fill_active_slot() callbacks
- + http: drop unused parameter from start_object_request()
- + mailmap: drop debugging code
-
- More "-Wunused-parameters" code clean-up.
- source: <ZBS77VYL9ZrxKtCN@coredump.intra.peff.net>
-
-
-* jk/unused-post-2.40-part2 (2023-03-28) 7 commits
-  (merged to 'next' on 2023-03-29 at 7aeee1b6c6)
- + parse-options: drop parse_opt_unknown_cb()
- + t/helper: mark unused argv/argc arguments
- + mark "argv" as unused when we check argc
- + builtins: mark unused prefix parameters
- + builtins: annotate always-empty prefix parameters
- + builtins: always pass prefix to parse_options()
- + fast-import: fix file access when run from subdir
-
- Code clean-up for "-Wunused-parameter" build.
- source: <20230328205253.GA1753925@coredump.intra.peff.net>
-
-
-* ow/ref-format-remove-unused-member (2023-03-30) 1 commit
-  (merged to 'next' on 2023-03-30 at 898a5df956)
- + ref-filter: remove unused ref_format member
-
- Code clean-up.
- source: <20230330112133.4437-2-oystwa@gmail.com>
-
-
-* ps/ahead-behind-truncation-fix (2023-03-27) 1 commit
-  (merged to 'next' on 2023-03-31 at 60bc243011)
- + commit-graph: fix truncated generation numbers
- (this branch uses ds/ahead-behind.)
-
- Fix unnecessary truncation of generation numbers used in-core.
- source: <f8a0a869e8b0882f05cac49d78f49ba3553d3c44.1679904401.git.ps@pks.im>
-
-
-* ps/fetch-ref-update-reporting (2023-03-20) 6 commits
-  (merged to 'next' on 2023-03-30 at e5df1cae0b)
- + fetch: centralize printing of reference updates
- + fetch: centralize logic to print remote URL
- + fetch: centralize handling of per-reference format
- + fetch: pass the full local reference name to `format_display`
- + fetch: move output format into `display_state`
- + fetch: move reference width calculation into `display_state`
-
- Clean-up of the code path that reports what "git fetch" did to each
- ref.
- source: <cover.1679315383.git.ps@pks.im>
-
-
-* sm/ssl-key-type-config (2023-03-23) 1 commit
-  (merged to 'next' on 2023-03-30 at 773716fc60)
- + http: add support for different sslcert and sslkey types.
-
- Add a few configuration variables to tell the cURL library that
- different types of ssl-cert and ssl-key are in use.
- source: <pull.1474.v2.git.git.1679327330032.gitgitgadget@gmail.com>
-
---------------------------------------------------
-[New Topics]
 
 * dw/doc-submittingpatches-grammofix (2023-04-05) 1 commit
-  (merged to 'next' on 2023-04-05 at 2691fad020)
+  (merged to 'next' on 2023-04-06 at 1c48670236)
  + SubmittingPatches: clarify MUA discussion with "the"
 
- Originally merged to 'next' on 2023-04-05
-
  Grammofix.
-
- Will merge to 'master'.
  source: <ZC0yey+S+OD/S2tt@trent-reznor>
 
 
 * fc/doc-manpage-base-url-fix (2023-04-05) 1 commit
- - doc: remove manpage-base-url workaround
+  (merged to 'next' on 2023-04-07 at c764614b80)
+ + doc: remove manpage-base-url workaround
 
  Modernize manpage generation toolchain.
-
- Will merge to 'next'.
  source: <20230322000815.132128-1-felipe.contreras@gmail.com>
 
 
 * jc/clone-object-format-from-void (2023-04-05) 1 commit
- - clone: propagate object-format when cloning from void
+  (merged to 'next' on 2023-04-07 at 78eb68f3fa)
+ + clone: propagate object-format when cloning from void
 
  "git clone" from an empty repository learned to propagate the
  choice of the hash algorithm from the source repository to the
  newly created repository.
-
- Will merge to 'next'.
  source: <xmqq355euj2i.fsf@gitster.g>
 
 
-* rj/sendemail-validate-series-hook (2023-04-05) 1 commit
- - hooks: add sendemail-validate-series
+* jc/spell-id-in-both-caps-in-message-id (2023-04-03) 1 commit
+  (merged to 'next' on 2023-04-06 at 17f4690220)
+ + e-mail workflow: Message-ID is spelled with ID in both capital letters
 
- "git send-email" learns a new hook that takes the entire set of
- patch files from its standard input to validate them in one go,
- instead of getting called once per each file.
-
- Comments?
- source: <20230405231305.96996-1-robin@jarry.cc>
-
-
-* tk/mergetool-gui-default-config (2023-04-05) 1 commit
- - mergetool: new config guiDefault supports auto-toggling gui by DISPLAY
-
- "git mergetool" and "git difftool" learns a new configuration
- guiDefault to optionally favor configured guitool over non-gui-tool
- automatically when $DISPLAY is set.
-
- Will merge to 'next'.
- source: <pull.1381.v4.git.1679153263217.gitgitgadget@gmail.com>
-
-
-* cm/branch-delete-error-message-update (2023-04-06) 1 commit
- - branch: improve error log on branch not found by checking remotes refs
-
- "git branch -d origin/master" would say "no such branch", but it is
- likely a missed "-r" if refs/remotes/origin/master exists.  The
- command has been taught to give such a hint in its error message.
-
- Will merge to 'next'?
- source: <pull.1476.v3.git.git.1680695000257.gitgitgadget@gmail.com>
-
-
-* fc/remove-header-workarounds-for-asciidoc (2023-04-05) 1 commit
- - doc: asciidoc: remove custom header macro
-
- Doc toolchain update to remove old workaround for AsciiDoc.
-
- Will merge to 'next'?
- source: <20230323221523.52472-1-felipe.contreras@gmail.com>
+ Consistently spell "Message-ID" as such, not "Message-Id".
+ source: <xmqqsfhgnmqg.fsf@gitster.g>
 
 
 * jk/use-perl-path-consistently (2023-04-06) 1 commit
- - t/lib-httpd: pass PERL_PATH to CGI scripts
+  (merged to 'next' on 2023-04-07 at 3aa36fcb80)
+ + t/lib-httpd: pass PERL_PATH to CGI scripts
 
  Tests had a few places where we ignored PERL_PATH and blindly used
  /usr/bin/perl, which have been corrected.
+ source: <20230406093602.GD2215039@coredump.intra.peff.net>
+
+
+* jx/cap-object-info-uninitialized-fix (2023-04-03) 1 commit
+  (merged to 'next' on 2023-04-06 at 5a8b6068f3)
+ + object-info: init request_info before reading arg
+
+ Correct use of an uninitialized structure member.
+ source: <20230402130557.17662-1-worldhello.net@gmail.com>
+
+
+* ws/sparse-check-rules (2023-03-27) 2 commits
+  (merged to 'next' on 2023-04-06 at 3fd16233c7)
+ + builtin/sparse-checkout: add check-rules command
+ + builtin/sparse-checkout: remove NEED_WORK_TREE flag
+
+ "git sparse-checkout" command learns a debugging aid for the sparse
+ rule definitions.
+ source: <pull.1488.v2.git.1679903703.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[New Topics]
+
+* la/mfc-markup-fix (2023-04-06) 1 commit
+  (merged to 'next' on 2023-04-10 at 05415e1c90)
+ + MyFirstContribution: render literal *
+
+ Documentation mark-up fix.
+
+ Will merge to 'master'.
+ source: <pull.1510.git.1680661709616.gitgitgadget@gmail.com>
+
+
+* ar/t2024-checkout-output-fix (2023-04-10) 1 commit
+ - t2024: fix loose/strict local base branch DWIM test
+
+ Test fix.
 
  Will merge to 'next'.
- source: <20230406093602.GD2215039@coredump.intra.peff.net>
+ source: <20230408205450.569548-1-rybak.a.v@gmail.com>
+
+
+* fc/doc-stop-using-manversion (2023-04-10) 1 commit
+ - doc: simplify man version
+
+ Doc build simplification.
+
+ Will merge to 'next'?
+ source: <20230408001829.11031-1-felipe.contreras@gmail.com>
+
+
+* rn/sparse-diff-index (2023-04-10) 1 commit
+ - diff-index: enable sparse index
+
+ "git diff-index" command has been taught to work better with the
+ sparse index.
+
+ Comments?
+ source: <20230408112342.404318-1-nanth.raghul@gmail.com>
+
+
+* rs/get-tar-commit-id-use-defined-const (2023-04-10) 1 commit
+ - get-tar-commit-id: use TYPEFLAG_GLOBAL_HEADER instead of magic value
+
+ Code clean-up to replace a hardcoded constant with a CPP macro.
+
+ Will merge to 'next'.
+ source: <79497392-0296-2ae3-2560-1f90c1a309b5@web.de>
+
+
+* rs/remove-approxidate-relative (2023-04-10) 1 commit
+ - date: remove approxidate_relative()
+
+ The approxidate() API has been simplified by losing an extra
+ function that did the same thing as another one.
+
+ Will merge to 'next'.
+ source: <f5b9a290-7cec-7a83-660b-e15494d2cdc8@web.de>
+
+
+* rs/userdiff-multibyte-regex (2023-04-07) 1 commit
+ - userdiff: support regexec(3) with multi-byte support
+
+ The userdiff regexp patterns for various filetypes that are built
+ into the system have been updated to avoid triggering regexp errors
+ from UTF-8 aware regex engines.
+
+ Will merge to 'next'.
+ source: <7327ac06-d5da-ec53-543e-78e7729e78bb@web.de>
+
+
+* es/recurse-submodules-option-is-a-bool (2023-04-10) 1 commit
+ - usage: clarify --recurse-submodules as a boolean
+
+ The "--[no-]recurse-submodules" option of "git checkout" and others
+ supported an undocumented syntax --recurse-submodules=<value> where
+ the value can spell a Boolean in various ways.  The support for the
+ syntax is being dropped.
+
+ Comments?
+ source: <ZDSTFwMFO7vbj/du@google.com>
+
+
+* gc/better-error-when-local-clone-fails-with-symlink (2023-04-11) 1 commit
+ - clone: error specifically with --local and symlinked objects
+
+ "git clone --local" stops copying from an original repository that
+ has symbolic links inside its $GIT_DIR; an error message when that
+ happens has been updated.
+
+ Will merge to 'next'.
+ source: <pull.1488.v2.git.git.1681165130765.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -418,27 +296,60 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
-* ow/ref-filter-omit-empty (2023-04-06) 1 commit
- - branch, for-each-ref: add option to omit empty lines
+* rj/sendemail-validate-series-hook (2023-04-05) 1 commit
+ - hooks: add sendemail-validate-series
+
+ "git send-email" learns a new hook that takes the entire set of
+ patch files from its standard input to validate them in one go,
+ instead of getting called once per each file.
+
+ Comments?
+ source: <20230405231305.96996-1-robin@jarry.cc>
+
+
+* tk/mergetool-gui-default-config (2023-04-05) 1 commit
+  (merged to 'next' on 2023-04-10 at 228432526c)
+ + mergetool: new config guiDefault supports auto-toggling gui by DISPLAY
+
+ "git mergetool" and "git difftool" learns a new configuration
+ guiDefault to optionally favor configured guitool over non-gui-tool
+ automatically when $DISPLAY is set.
+
+ Will merge to 'master'.
+ source: <pull.1381.v4.git.1679153263217.gitgitgadget@gmail.com>
+
+
+* cm/branch-delete-error-message-update (2023-04-06) 1 commit
+  (merged to 'next' on 2023-04-10 at 09c987c822)
+ + branch: improve error log on branch not found by checking remotes refs
+
+ "git branch -d origin/master" would say "no such branch", but it is
+ likely a missed "-r" if refs/remotes/origin/master exists.  The
+ command has been taught to give such a hint in its error message.
+
+ Will merge to 'master'.
+ source: <pull.1476.v3.git.git.1680695000257.gitgitgadget@gmail.com>
+
+
+* fc/remove-header-workarounds-for-asciidoc (2023-04-05) 1 commit
+  (merged to 'next' on 2023-04-10 at f08eab44f2)
+ + doc: asciidoc: remove custom header macro
+
+ Doc toolchain update to remove old workaround for AsciiDoc.
+
+ Will merge to 'master'.
+ source: <20230323221523.52472-1-felipe.contreras@gmail.com>
+
+
+* ow/ref-filter-omit-empty (2023-04-07) 1 commit
+ - branch, for-each-ref, tag: add option to omit empty lines
 
  "git branch --format=..." and "git format-patch --format=..."
  learns "--omit-empty" to hide refs that whose formatting result
  becomes an empty string from the output.
 
- Looking good.
- source: <20230406170837.10060-3-oystwa@gmail.com>
-
-
-* jc/spell-id-in-both-caps-in-message-id (2023-04-03) 1 commit
-  (merged to 'next' on 2023-04-04 at 4cfa5997eb)
- + e-mail workflow: Message-ID is spelled with ID in both capital letters
-
- Originally merged to 'next' on 2023-04-04
-
- Consistently spell "Message-ID" as such, not "Message-Id".
-
- Will merge to 'master'.
- source: <xmqqsfhgnmqg.fsf@gitster.g>
+ Will merge to 'next'?
+ source: <20230407175316.6404-1-oystwa@gmail.com>
 
 
 * rn/sparse-describe (2023-04-03) 1 commit
@@ -448,19 +359,6 @@ Release tarballs are available at:
 
  Will merge to 'next'?
  source: <20230403164749.246001-1-nanth.raghul@gmail.com>
-
-
-* ar/adjust-tests-for-the-index-fallout (2023-03-31) 2 commits
-  (merged to 'next' on 2023-04-04 at 48861fc381)
- + t2107: fix mention of the_index.cache_changed
- + t3060: fix mention of function prune_index
-
- Originally merged to 'next' on 2023-04-04
-
- Comment updates.
-
- Will merge to 'master'.
- source: <20230331143604.82040-2-rybak.a.v@gmail.com>
 
 
 * ah/format-patch-thread-doc (2023-04-03) 1 commit
@@ -484,11 +382,10 @@ Release tarballs are available at:
  source: <20230403223338.468025-1-rybak.a.v@gmail.com>
 
 
-* en/header-split-cache-h (2023-04-04) 25 commits
+* en/header-split-cache-h (2023-04-11) 24 commits
  - mailmap, quote: move declarations of global vars to correct unit
  - treewide: reduce includes of cache.h in other headers
  - treewide: remove double forward declaration of read_in_full
- - strbuf: move forward declarations to beginning of file
  - cache.h: remove unnecessary includes
  - treewide: remove cache.h inclusion due to pager.h changes
  - pager.h: move declarations for pager.c functions from cache.h
@@ -513,28 +410,17 @@ Release tarballs are available at:
 
  Header clean-up.
 
- Will merge to 'next'?
- source: <pull.1509.v2.git.1680571348.gitgitgadget@gmail.com>
-
-
-* jx/cap-object-info-uninitialized-fix (2023-04-03) 1 commit
-  (merged to 'next' on 2023-04-05 at d56fe6eedc)
- + object-info: init request_info before reading arg
-
- Originally merged to 'next' on 2023-04-05
-
- Correct use of an uninitialized structure member.
-
- Will merge to 'master'.
- source: <20230402130557.17662-1-worldhello.net@gmail.com>
+ Will merge to 'next'.
+ source: <pull.1509.v3.git.1681182060.gitgitgadget@gmail.com>
 
 
 * sl/sparse-write-tree (2023-04-04) 1 commit
- - write-tree: integrate with sparse index
+  (merged to 'next' on 2023-04-10 at 0cd39c23b1)
+ + write-tree: integrate with sparse index
 
  "git write-tree" learns to work better with sparse-index.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20230404003539.1578245-1-cheskaqiqi@gmail.com>
 
 
@@ -547,20 +433,6 @@ Release tarballs are available at:
  Expecting a reroll.
  cf. <b9cf67e4-22a7-2ff0-8310-9223bea10d6d@jeffhostetler.com>
  source: <pull.1503.git.1679678090412.gitgitgadget@gmail.com>
-
-
-* ws/sparse-check-rules (2023-03-27) 2 commits
-  (merged to 'next' on 2023-04-04 at 17a29244a6)
- + builtin/sparse-checkout: add check-rules command
- + builtin/sparse-checkout: remove NEED_WORK_TREE flag
-
- Originally merged to 'next' on 2023-04-04
-
- "git sparse-checkout" command learns a debugging aid for the sparse
- rule definitions.
-
- Will merge to 'master'.
- source: <pull.1488.v2.git.1679903703.gitgitgadget@gmail.com>
 
 
 * mh/credential-password-expiry-wincred (2023-04-03) 1 commit
@@ -612,19 +484,17 @@ Release tarballs are available at:
 
 
 * tb/pack-bitmap-index-seek (2023-03-20) 6 commits
-  (merged to 'next' on 2023-03-21 at b579e226b5)
- + pack-bitmap.c: factor out `bitmap_index_seek_commit()`
- + pack-bitmap.c: use `bitmap_index_seek()` where possible
- + pack-bitmap.c: factor out manual `map_pos` manipulation
- + pack-bitmap.c: drop unnecessary 'inline's
- + pack-bitmap.c: hide bitmap internals in `read_be32()`
- + pack-bitmap.c: hide bitmap internals in `read_u8()`
-
- Originally merged to 'next' on 2023-03-21
+ - pack-bitmap.c: factor out `bitmap_index_seek_commit()`
+ - pack-bitmap.c: use `bitmap_index_seek()` where possible
+ - pack-bitmap.c: factor out manual `map_pos` manipulation
+ - pack-bitmap.c: drop unnecessary 'inline's
+ - pack-bitmap.c: hide bitmap internals in `read_be32()`
+ - pack-bitmap.c: hide bitmap internals in `read_u8()`
 
  Clean-up the pack-bitmap codepath.
 
- On hold.  There is a BUG() on data errors.
+ Kicked back to 'seen' out of 'next'.
+ There is a BUG() on data errors that needs to be fixed.
  source: <cover.1679342296.git.me@ttaylorr.com>
 
 
@@ -658,16 +528,19 @@ Release tarballs are available at:
  source: <pull.1469.v2.git.git.1679729764851.gitgitgadget@gmail.com>
 
 
-* pw/rebase-cleanup-merge-strategy-option-handling (2023-04-05) 5 commits
- - rebase: remove a couple of redundant strategy tests
- - rebase -m: fix serialization of strategy options
- - rebase -m: cleanup --strategy-option handling
- - sequencer: use struct strvec to store merge strategy options
- - rebase: stop reading and writing unnecessary strategy state
+* pw/rebase-cleanup-merge-strategy-option-handling (2023-04-10) 5 commits
+  (merged to 'next' on 2023-04-11 at a3b1fd5ec7)
+ + rebase: remove a couple of redundant strategy tests
+ + rebase -m: fix serialization of strategy options
+ + rebase -m: cleanup --strategy-option handling
+ + sequencer: use struct strvec to store merge strategy options
+ + rebase: stop reading and writing unnecessary strategy state
 
  Clean-up of the code path that deals with merge strategy option
  handling in "git rebase".
- source: <cover.1680708043.git.phillip.wood@dunelm.org.uk>
+
+ Will merge to 'master'.
+ source: <cover.1681117706.git.phillip.wood@dunelm.org.uk>
 
 
 * sl/diff-files-sparse (2023-03-22) 2 commits
