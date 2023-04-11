@@ -28,18 +28,6 @@
 #define DTYPE(de)	DT_UNKNOWN
 #endif
 
-/* unknown mode (impossible combination S_IFIFO|S_IFCHR) */
-#define S_IFINVALID     0030000
-
-/*
- * A "directory link" is a link to another git directory.
- *
- * The value 0160000 is not normally a valid mode, and
- * also just happens to be S_IFDIR + S_IFLNK
- */
-#define S_IFGITLINK	0160000
-#define S_ISGITLINK(m)	(((m) & S_IFMT) == S_IFGITLINK)
-
 /*
  * Some mode bits are also used internally for computations.
  *
@@ -155,8 +143,6 @@ struct cache_entry {
 #error "CE_EXTENDED_FLAGS out of range"
 #endif
 
-#define S_ISSPARSEDIR(m) ((m) == S_IFDIR)
-
 /* Forward structure decls */
 struct pathspec;
 struct child_process;
@@ -197,17 +183,6 @@ static inline unsigned create_ce_flags(unsigned stage)
 #define ce_mark_uptodate(ce) ((ce)->ce_flags |= CE_UPTODATE)
 #define ce_intent_to_add(ce) ((ce)->ce_flags & CE_INTENT_TO_ADD)
 
-#define ce_permissions(mode) (((mode) & 0100) ? 0755 : 0644)
-static inline unsigned int create_ce_mode(unsigned int mode)
-{
-	if (S_ISLNK(mode))
-		return S_IFLNK;
-	if (S_ISSPARSEDIR(mode))
-		return S_IFDIR;
-	if (S_ISDIR(mode) || S_ISGITLINK(mode))
-		return S_IFGITLINK;
-	return S_IFREG | ce_permissions(mode);
-}
 static inline unsigned int ce_mode_from_stat(const struct cache_entry *ce,
 					     unsigned int mode)
 {
@@ -233,16 +208,6 @@ static inline int ce_to_dtype(const struct cache_entry *ce)
 		return DT_LNK;
 	else
 		return DT_UNKNOWN;
-}
-static inline unsigned int canon_mode(unsigned int mode)
-{
-	if (S_ISREG(mode))
-		return S_IFREG | ce_permissions(mode);
-	if (S_ISLNK(mode))
-		return S_IFLNK;
-	if (S_ISDIR(mode))
-		return S_IFDIR;
-	return S_IFGITLINK;
 }
 
 static inline int ce_path_match(struct index_state *istate,
@@ -413,13 +378,6 @@ void prefetch_cache_entries(const struct index_state *istate,
 #ifdef USE_THE_INDEX_VARIABLE
 extern struct index_state the_index;
 #endif
-
-static inline enum object_type object_type(unsigned int mode)
-{
-	return S_ISDIR(mode) ? OBJ_TREE :
-		S_ISGITLINK(mode) ? OBJ_COMMIT :
-		OBJ_BLOB;
-}
 
 #define INIT_DB_QUIET 0x0001
 #define INIT_DB_EXIST_OK 0x0002
