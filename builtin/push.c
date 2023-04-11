@@ -2,6 +2,7 @@
  * "git push"
  */
 #include "cache.h"
+#include "advice.h"
 #include "branch.h"
 #include "config.h"
 #include "environment.h"

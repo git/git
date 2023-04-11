@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "builtin.h"
+#include "advice.h"
 #include "commit.h"
 #include "gettext.h"
 #include "tag.h"

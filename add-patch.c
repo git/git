@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "add-interactive.h"
+#include "advice.h"
 #include "alloc.h"
 #include "environment.h"
 #include "gettext.h"

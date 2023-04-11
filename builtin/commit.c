@@ -7,6 +7,7 @@
 
 #define USE_THE_INDEX_VARIABLE
 #include "cache.h"
+#include "advice.h"
 #include "config.h"
 #include "lockfile.h"
 #include "cache-tree.h"

@@ -7,6 +7,7 @@
  */
 
 #include "cache.h"
+#include "advice.h"
 #include "config.h"
 #include "builtin.h"
 #include "environment.h"

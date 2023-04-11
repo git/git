@@ -7,6 +7,7 @@
  */
 #include "cache.h"
 #include "abspath.h"
+#include "advice.h"
 #include "alloc.h"
 #include "date.h"
 #include "branch.h"

@@ -5,7 +5,6 @@
 #include "strbuf.h"
 #include "hashmap.h"
 #include "list.h"
-#include "advice.h"
 #include "gettext.h"
 #include "convert.h"
 #include "string-list.h"

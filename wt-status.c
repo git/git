@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "advice.h"
 #include "wt-status.h"
 #include "object.h"
 #include "dir.h"
