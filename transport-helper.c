@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "transport.h"
 #include "quote.h"
 #include "run-command.h"
