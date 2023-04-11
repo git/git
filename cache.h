@@ -4,14 +4,10 @@
 #include "git-compat-util.h"
 #include "strbuf.h"
 #include "hashmap.h"
-#include "list.h"
 #include "gettext.h"
 #include "string-list.h"
-#include "hash.h"
-#include "path.h"
 #include "pathspec.h"
 #include "object.h"
-#include "repository.h"
 #include "statinfo.h"
 
 #if defined(DT_UNKNOWN) && !defined(NO_D_TYPE_IN_DIRENT)
