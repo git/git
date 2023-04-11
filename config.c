@@ -18,6 +18,7 @@
 #include "ident.h"
 #include "repository.h"
 #include "lockfile.h"
+#include "mailmap.h"
 #include "exec-cmd.h"
 #include "strbuf.h"
 #include "quote.h"

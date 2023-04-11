@@ -599,8 +599,6 @@ void set_alternate_index_output(const char *);
 extern int verify_index_checksum;
 extern int verify_ce_order;
 
-extern int quote_path_fully;
-
 #define MTIME_CHANGED	0x0001
 #define CTIME_CHANGED	0x0002
 #define OWNER_CHANGED	0x0004
@@ -654,9 +652,6 @@ struct pack_entry {
 
 /* Dumb servers support */
 int update_server_info(int);
-
-extern const char *git_mailmap_file;
-extern const char *git_mailmap_blob;
 
 #define COPY_READ_ERROR (-2)
 #define COPY_WRITE_ERROR (-3)
