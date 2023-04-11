@@ -15,6 +15,7 @@
 #include "hook.h"
 #include "ll-merge.h"
 #include "lockfile.h"
+#include "mem-pool.h"
 #include "merge-recursive.h"
 #include "object-store.h"
 #include "parse-options.h"

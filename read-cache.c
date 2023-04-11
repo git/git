@@ -21,6 +21,7 @@
 #include "blob.h"
 #include "environment.h"
 #include "gettext.h"
+#include "mem-pool.h"
 #include "resolve-undo.h"
 #include "run-command.h"
 #include "strbuf.h"

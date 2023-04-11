@@ -13,7 +13,6 @@
 #include "object.h"
 #include "repository.h"
 #include "statinfo.h"
-#include "mem-pool.h"
 
 typedef struct git_zstream {
 	z_stream z;
