@@ -11,7 +11,6 @@
 #include "path.h"
 #include "pathspec.h"
 #include "object.h"
-#include "oid-array.h"
 #include "repository.h"
 #include "statinfo.h"
 #include "mem-pool.h"

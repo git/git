@@ -29,6 +29,7 @@
 #include "string-list.h"
 #include "strvec.h"
 #include "graph.h"
+#include "oid-array.h"
 #include "packfile.h"
 #include "parse-options.h"
 #include "help.h"

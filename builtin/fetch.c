@@ -12,6 +12,7 @@
 #include "refspec.h"
 #include "object-store.h"
 #include "oidset.h"
+#include "oid-array.h"
 #include "commit.h"
 #include "builtin.h"
 #include "string-list.h"

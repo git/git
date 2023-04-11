@@ -15,6 +15,7 @@
 #include "refs.h"
 #include "dir.h"
 #include "object-store.h"
+#include "oid-array.h"
 #include "tree.h"
 #include "commit.h"
 #include "blob.h"

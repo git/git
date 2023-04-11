@@ -19,6 +19,7 @@
 #include "packfile.h"
 #include "pack-revindex.h"
 #include "object-store.h"
+#include "oid-array.h"
 #include "replace-object.h"
 #include "promisor-remote.h"
 #include "setup.h"

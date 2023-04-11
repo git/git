@@ -12,6 +12,7 @@
 #include "hash-lookup.h"
 #include "commit-graph.h"
 #include "object-store.h"
+#include "oid-array.h"
 #include "alloc.h"
 #include "hashmap.h"
 #include "replace-object.h"
