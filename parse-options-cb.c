@@ -1,7 +1,6 @@
 #include "git-compat-util.h"
 #include "parse-options.h"
 #include "branch.h"
-#include "cache.h"
 #include "commit.h"
 #include "color.h"
 #include "environment.h"

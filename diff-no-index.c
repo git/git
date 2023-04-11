@@ -4,7 +4,7 @@
  * Copyright (c) 2008 by Junio C Hamano
  */
 
-#include "cache.h"
+#include "git-compat-util.h"
 #include "abspath.h"
 #include "color.h"
 #include "commit.h"

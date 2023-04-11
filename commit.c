@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "tag.h"
 #include "commit.h"
 #include "commit-graph.h"

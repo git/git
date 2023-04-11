@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "lockfile.h"
 #include "bundle.h"
 #include "environment.h"

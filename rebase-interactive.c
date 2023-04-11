@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "commit.h"
 #include "environment.h"
 #include "gettext.h"
