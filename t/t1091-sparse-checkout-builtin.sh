@@ -555,7 +555,7 @@ test_expect_success 'cone mode: set with core.ignoreCase=true' '
 	check_files repo a folder1
 '
 
-test_expect_success 'interaction with submodules' '
+test_expect_success 'setup submodules' '
 	git clone repo super &&
 	(
 		cd super &&
@@ -566,9 +566,20 @@ test_expect_success 'interaction with submodules' '
 		git commit -m "add submodule" &&
 		git sparse-checkout init --cone &&
 		git sparse-checkout set folder1
-	) &&
+	)
+'
+
+test_expect_success 'interaction with submodules' '
 	check_files super a folder1 modules &&
 	check_files super/modules/child a deep folder1 folder2
+'
+
+test_expect_success 'check-rules interaction with submodules' '
+	git -C super ls-tree --name-only -r HEAD >all-files &&
+	git -C super sparse-checkout check-rules >check-rules-matches <all-files &&
+
+	test_i18ngrep ! "modules/" check-rules-matches &&
+	test_i18ngrep "folder1/" check-rules-matches
 '
 
 test_expect_success 'different sparse-checkouts with worktrees' '
@@ -881,5 +892,157 @@ test_expect_success 'by default, non-cone mode will warn on individual files' '
 
 	grep "pass a leading slash before paths.*if you want a single file" warning
 '
+
+test_expect_success 'setup bare repo' '
+	git clone --bare "file://$(pwd)/repo" bare
+'
+test_expect_success 'list fails outside work tree' '
+	test_must_fail git -C bare sparse-checkout list 2>err &&
+	test_i18ngrep "this operation must be run in a work tree" err
+'
+
+test_expect_success 'add fails outside work tree' '
+	test_must_fail git -C bare sparse-checkout add deeper 2>err &&
+	test_i18ngrep "this operation must be run in a work tree" err
+'
+
+test_expect_success 'set fails outside work tree' '
+	test_must_fail git -C bare sparse-checkout set deeper 2>err &&
+	test_i18ngrep "this operation must be run in a work tree" err
+'
+
+test_expect_success 'init fails outside work tree' '
+	test_must_fail git -C bare sparse-checkout init 2>err &&
+	test_i18ngrep "this operation must be run in a work tree" err
+'
+
+test_expect_success 'reapply fails outside work tree' '
+	test_must_fail git -C bare sparse-checkout reapply 2>err &&
+	test_i18ngrep "this operation must be run in a work tree" err
+'
+
+test_expect_success 'disable fails outside work tree' '
+	test_must_fail git -C bare sparse-checkout disable 2>err &&
+	test_i18ngrep "this operation must be run in a work tree" err
+'
+
+test_expect_success 'setup clean' '
+	git -C repo clean -fdx
+'
+
+test_expect_success 'check-rules cone mode' '
+	cat >rules <<-\EOF &&
+	folder1
+	deep/deeper1/deepest
+	EOF
+
+	git -C bare ls-tree -r --name-only HEAD >all-files &&
+	git -C bare sparse-checkout check-rules --cone \
+		--rules-file ../rules >check-rules-file <all-files &&
+
+	git -C repo sparse-checkout set --cone --stdin <rules&&
+	git -C repo ls-files -t >out &&
+	sed -n "/^S /!s/^. //p" out >ls-files &&
+
+	git -C repo sparse-checkout check-rules >check-rules-default <all-files &&
+
+	test_i18ngrep "deep/deeper1/deepest/a" check-rules-file &&
+	test_i18ngrep ! "deep/deeper2" check-rules-file &&
+
+	test_cmp check-rules-file ls-files &&
+	test_cmp check-rules-file check-rules-default
+'
+
+test_expect_success 'check-rules non-cone mode' '
+	cat >rules <<-\EOF &&
+	deep/deeper1/deepest/a
+	EOF
+
+	git -C bare ls-tree -r --name-only HEAD >all-files &&
+	git -C bare sparse-checkout check-rules --no-cone --rules-file ../rules\
+		>check-rules-file <all-files &&
+
+	cat rules | git -C repo sparse-checkout set --no-cone --stdin &&
+	git -C repo ls-files -t >out &&
+	sed -n "/^S /!s/^. //p" out >ls-files &&
+
+	git -C repo sparse-checkout check-rules >check-rules-default <all-files &&
+
+	cat >expect <<-\EOF &&
+	deep/deeper1/deepest/a
+	EOF
+
+	test_cmp expect check-rules-file &&
+	test_cmp check-rules-file ls-files &&
+	test_cmp check-rules-file check-rules-default
+'
+
+test_expect_success 'check-rules cone mode is default' '
+	cat >rules <<-\EOF &&
+	folder1
+	EOF
+
+	cat >all-files <<-\EOF &&
+	toplevel
+	folder2/file
+	folder1/file
+	EOF
+
+	cat >expect <<-\EOF &&
+	toplevel
+	folder1/file
+	EOF
+
+	git -C repo sparse-checkout set --no-cone &&
+	git -C repo sparse-checkout check-rules \
+		--rules-file ../rules >actual <all-files &&
+
+	git -C bare sparse-checkout check-rules \
+		--rules-file ../rules >actual-bare <all-files &&
+
+	test_cmp expect actual &&
+	test_cmp expect actual-bare
+'
+
+test_expect_success 'check-rules quoting' '
+	cat >rules <<-EOF &&
+	"folder\" a"
+	EOF
+	cat >files <<-EOF &&
+	"folder\" a/file"
+	"folder\" b/file"
+	EOF
+	cat >expect <<-EOF &&
+	"folder\" a/file"
+	EOF
+	git sparse-checkout check-rules --cone \
+		--rules-file rules >actual <files &&
+
+	test_cmp expect actual
+'
+
+test_expect_success 'check-rules null termination' '
+	cat >rules <<-EOF &&
+	"folder\" a"
+	EOF
+
+	lf_to_nul >files <<-EOF &&
+	folder" a/a
+	folder" a/b
+	folder" b/fileQ
+	EOF
+
+	cat >expect <<-EOF &&
+	folder" a/aQfolder" a/bQ
+	EOF
+
+	git sparse-checkout check-rules --cone -z \
+		--rules-file rules >actual.nul <files &&
+	nul_to_q <actual.nul >actual &&
+	echo >>actual &&
+
+	test_cmp expect actual
+'
+
 
 test_done
