@@ -32,6 +32,7 @@
 #include "entry.h"
 #include "ll-merge.h"
 #include "mem-pool.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "oid-array.h"
 #include "promisor-remote.h"

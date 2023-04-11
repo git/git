@@ -27,6 +27,7 @@
 #include "diffcore.h"
 #include "unpack-trees.h"
 #include "branch.h"
+#include "object-name.h"
 #include "sequencer.h"
 #include "revision.h"
 #include "merge-recursive.h"

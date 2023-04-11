@@ -2,6 +2,7 @@
 #define ARCHIVE_H
 
 #include "cache.h"
+#include "object-name.h"
 #include "pathspec.h"
 
 struct repository;

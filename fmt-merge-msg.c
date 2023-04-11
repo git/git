@@ -3,6 +3,7 @@
 #include "config.h"
 #include "environment.h"
 #include "refs.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "diff.h"
 #include "diff-merges.h"

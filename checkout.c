@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "object-name.h"
 #include "remote.h"
 #include "refspec.h"
 #include "checkout.h"

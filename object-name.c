@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "object-name.h"
 #include "advice.h"
 #include "config.h"
 #include "environment.h"

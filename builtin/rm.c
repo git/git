@@ -13,6 +13,7 @@
 #include "cache-tree.h"
 #include "gettext.h"
 #include "tree-walk.h"
+#include "object-name.h"
 #include "parse-options.h"
 #include "string-list.h"
 #include "setup.h"

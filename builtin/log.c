@@ -12,6 +12,7 @@
 #include "gettext.h"
 #include "hex.h"
 #include "refs.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "color.h"
 #include "commit.h"

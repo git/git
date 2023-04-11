@@ -4,6 +4,7 @@
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
+#include "object-name.h"
 #include "refs.h"
 #include "string-list.h"
 #include "utf8.h"

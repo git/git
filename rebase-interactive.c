@@ -8,6 +8,7 @@
 #include "commit-slab.h"
 #include "config.h"
 #include "dir.h"
+#include "object-name.h"
 #include "wrapper.h"
 
 static const char edit_todo_list_advice[] =

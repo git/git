@@ -16,6 +16,7 @@
 #include "refs/refs-internal.h"
 #include "run-command.h"
 #include "hook.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "object.h"
 #include "tag.h"

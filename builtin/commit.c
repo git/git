@@ -27,6 +27,7 @@
 #include "log-tree.h"
 #include "strbuf.h"
 #include "utf8.h"
+#include "object-name.h"
 #include "parse-options.h"
 #include "string-list.h"
 #include "rerere.h"

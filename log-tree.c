@@ -4,6 +4,7 @@
 #include "diff.h"
 #include "environment.h"
 #include "hex.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "repository.h"
 #include "tmp-objdir.h"

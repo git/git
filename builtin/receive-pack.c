@@ -29,6 +29,7 @@
 #include "tmp-objdir.h"
 #include "oidset.h"
 #include "packfile.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "protocol.h"
 #include "commit-reach.h"

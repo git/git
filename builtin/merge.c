@@ -15,6 +15,7 @@
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
+#include "object-name.h"
 #include "parse-options.h"
 #include "builtin.h"
 #include "lockfile.h"

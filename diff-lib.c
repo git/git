@@ -8,6 +8,7 @@
 #include "diffcore.h"
 #include "gettext.h"
 #include "hex.h"
+#include "object-name.h"
 #include "revision.h"
 #include "cache-tree.h"
 #include "unpack-trees.h"

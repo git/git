@@ -4,6 +4,7 @@
 #include "dir.h"
 #include "environment.h"
 #include "gettext.h"
+#include "object-name.h"
 #include "parse-options.h"
 #include "pathspec.h"
 #include "repository.h"

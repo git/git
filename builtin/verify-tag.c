@@ -11,6 +11,7 @@
 #include "gettext.h"
 #include "tag.h"
 #include "run-command.h"
+#include "object-name.h"
 #include "parse-options.h"
 #include "gpg-interface.h"
 #include "ref-filter.h"

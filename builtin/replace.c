@@ -17,6 +17,7 @@
 #include "refs.h"
 #include "parse-options.h"
 #include "run-command.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "replace-object.h"
 #include "repository.h"

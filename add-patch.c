@@ -4,6 +4,7 @@
 #include "alloc.h"
 #include "environment.h"
 #include "gettext.h"
+#include "object-name.h"
 #include "strbuf.h"
 #include "run-command.h"
 #include "strvec.h"

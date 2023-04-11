@@ -26,6 +26,7 @@
 #include "trace2.h"
 #include "transport-internal.h"
 #include "protocol.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "color.h"
 #include "bundle-uri.h"

@@ -8,6 +8,7 @@
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
+#include "object-name.h"
 #include "revision.h"
 #include "diffcore.h"
 #include "quote.h"

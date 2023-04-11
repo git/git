@@ -6,6 +6,7 @@
 #include "parse-options.h"
 #include "refs.h"
 #include "wildmatch.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "oid-array.h"
 #include "repository.h"

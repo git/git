@@ -6,6 +6,7 @@
 #include "config.h"
 #include "gettext.h"
 #include "hex.h"
+#include "object-name.h"
 #include "parse-options.h"
 #include "ref-filter.h"
 #include "setup.h"

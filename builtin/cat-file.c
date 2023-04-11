@@ -20,6 +20,7 @@
 #include "tree-walk.h"
 #include "oid-array.h"
 #include "packfile.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "replace-object.h"
 #include "promisor-remote.h"

@@ -13,6 +13,7 @@
 #include "dir.h"
 #include "builtin.h"
 #include "gettext.h"
+#include "object-name.h"
 #include "strbuf.h"
 #include "tree.h"
 #include "cache-tree.h"

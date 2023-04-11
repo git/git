@@ -28,6 +28,7 @@
 #include "line-log.h"
 #include "dir.h"
 #include "progress.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "blame.h"
 #include "refs.h"

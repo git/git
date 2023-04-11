@@ -26,6 +26,7 @@
 #include "setup.h"
 #include "submodule.h"
 #include "submodule-config.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "packfile.h"
 #include "write-or-die.h"

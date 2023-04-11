@@ -24,6 +24,7 @@
 #include "diffcore.h"
 #include "tree.h"
 #include "branch.h"
+#include "object-name.h"
 #include "parse-options.h"
 #include "unpack-trees.h"
 #include "cache-tree.h"

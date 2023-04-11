@@ -9,6 +9,7 @@
 #include "submodule-config.h"
 #include "submodule.h"
 #include "strbuf.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "parse-options.h"
 #include "tree-walk.h"

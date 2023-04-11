@@ -3,6 +3,7 @@
 #include "commit.h"
 #include "gettext.h"
 #include "refs.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "repository.h"
 #include "diff.h"

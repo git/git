@@ -12,6 +12,7 @@
 #include "builtin.h"
 #include "gettext.h"
 #include "hex.h"
+#include "object-name.h"
 #include "parse-options.h"
 #include "exec-cmd.h"
 #include "run-command.h"

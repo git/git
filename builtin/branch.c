@@ -13,6 +13,7 @@
 #include "commit.h"
 #include "builtin.h"
 #include "gettext.h"
+#include "object-name.h"
 #include "remote.h"
 #include "parse-options.h"
 #include "branch.h"

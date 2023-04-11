@@ -7,6 +7,7 @@
 #include "diffcore.h"
 #include "environment.h"
 #include "hex.h"
+#include "object-name.h"
 #include "quote.h"
 #include "xdiff-interface.h"
 #include "xdiff/xmacros.h"

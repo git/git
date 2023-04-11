@@ -17,6 +17,7 @@
 #include "strvec.h"
 #include "commit-slab.h"
 #include "commit-reach.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "dir.h"
 

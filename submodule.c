@@ -24,6 +24,7 @@
 #include "remote.h"
 #include "worktree.h"
 #include "parse-options.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "commit-reach.h"
 #include "setup.h"

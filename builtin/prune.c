@@ -11,6 +11,7 @@
 #include "progress.h"
 #include "prune-packed.h"
 #include "replace-object.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "shallow.h"
 

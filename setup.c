@@ -2,6 +2,7 @@
 #include "abspath.h"
 #include "environment.h"
 #include "gettext.h"
+#include "object-name.h"
 #include "repository.h"
 #include "config.h"
 #include "dir.h"

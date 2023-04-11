@@ -2,6 +2,7 @@
 #include "environment.h"
 #include "gettext.h"
 #include "range-diff.h"
+#include "object-name.h"
 #include "string-list.h"
 #include "run-command.h"
 #include "strvec.h"

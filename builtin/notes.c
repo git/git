@@ -13,6 +13,7 @@
 #include "gettext.h"
 #include "hex.h"
 #include "notes.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "repository.h"
 #include "blob.h"
