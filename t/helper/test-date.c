@@ -1,5 +1,4 @@
 #include "test-tool.h"
-#include "cache.h"
 #include "date.h"
 #include "trace.h"
 
