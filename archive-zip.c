@@ -5,6 +5,7 @@
 #include "config.h"
 #include "archive.h"
 #include "gettext.h"
+#include "git-zlib.h"
 #include "hex.h"
 #include "streaming.h"
 #include "utf8.h"

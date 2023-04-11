@@ -2,7 +2,8 @@
  * zlib wrappers to make sure we don't silently miss errors
  * at init time.
  */
-#include "cache.h"
+#include "git-compat-util.h"
+#include "git-zlib.h"
 
 static const char *zerr_to_string(int status)
 {

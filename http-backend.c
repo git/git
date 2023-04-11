@@ -2,6 +2,7 @@
 #include "alloc.h"
 #include "config.h"
 #include "environment.h"
+#include "git-zlib.h"
 #include "hex.h"
 #include "repository.h"
 #include "refs.h"

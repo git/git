@@ -1,7 +1,10 @@
 #ifndef HTTP_H
 #define HTTP_H
 
+struct packed_git;
+
 #include "cache.h"
+#include "git-zlib.h"
 
 #include <curl/curl.h>
 #include <curl/easy.h>
