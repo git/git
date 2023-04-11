@@ -5,6 +5,7 @@
  */
 #include "builtin.h"
 #include "config.h"
+#include "editor.h"
 #include "ident.h"
 #include "refs.h"
 

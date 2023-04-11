@@ -10,6 +10,7 @@
 #include "cache.h"
 #include "config.h"
 #include "builtin.h"
+#include "editor.h"
 #include "gettext.h"
 #include "hex.h"
 #include "notes.h"

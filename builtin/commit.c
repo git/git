@@ -13,6 +13,7 @@
 #include "cache-tree.h"
 #include "color.h"
 #include "dir.h"
+#include "editor.h"
 #include "environment.h"
 #include "builtin.h"
 #include "diff.h"

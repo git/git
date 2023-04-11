@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "config.h"
+#include "editor.h"
 #include "run-command.h"
 #include "sigchain.h"
 #include "alias.h"

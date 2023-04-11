@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "config.h"
 #include "color.h"
+#include "editor.h"
 #include "gettext.h"
 #include "hex.h"
 

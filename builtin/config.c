@@ -3,6 +3,7 @@
 #include "alloc.h"
 #include "config.h"
 #include "color.h"
+#include "editor.h"
 #include "environment.h"
 #include "gettext.h"
 #include "ident.h"

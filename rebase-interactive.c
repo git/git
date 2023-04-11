@@ -1,5 +1,6 @@
 #include "git-compat-util.h"
 #include "commit.h"
+#include "editor.h"
 #include "environment.h"
 #include "gettext.h"
 #include "sequencer.h"

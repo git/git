@@ -8,6 +8,7 @@
 #include "cache.h"
 #include "config.h"
 #include "color.h"
+#include "editor.h"
 #include "environment.h"
 #include "refs.h"
 #include "commit.h"
