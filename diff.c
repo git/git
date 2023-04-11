@@ -31,6 +31,7 @@
 #include "graph.h"
 #include "oid-array.h"
 #include "packfile.h"
+#include "pager.h"
 #include "parse-options.h"
 #include "help.h"
 #include "promisor-remote.h"

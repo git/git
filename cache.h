@@ -145,7 +145,6 @@ struct cache_entry {
 
 /* Forward structure decls */
 struct pathspec;
-struct child_process;
 struct tree;
 
 /*
@@ -621,8 +620,6 @@ int df_name_compare(const char *name1, size_t len1, int mode1,
 int name_compare(const char *name1, size_t len1, const char *name2, size_t len2);
 int cache_name_stage_compare(const char *name1, int len1, int stage1, const char *name2, int len2, int stage2);
 
-const char *git_pager(int stdout_is_tty);
-
 struct cache_def {
 	struct strbuf path;
 	int flags;
@@ -670,16 +667,6 @@ extern const char *git_mailmap_blob;
 int copy_fd(int ifd, int ofd);
 int copy_file(const char *dst, const char *src, int mode);
 int copy_file_with_time(const char *dst, const char *src, int mode);
-
-/* pager.c */
-void setup_pager(void);
-int pager_in_use(void);
-extern int pager_use_color;
-int term_columns(void);
-void term_clear_line(void);
-int decimal_width(uintmax_t);
-int check_pager_config(const char *cmd);
-void prepare_pager_args(struct child_process *, const char *pager);
 
 /* base85 */
 int decode_85(char *dst, const char *line, int linelen);

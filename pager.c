@@ -1,9 +1,12 @@
 #include "cache.h"
 #include "config.h"
 #include "editor.h"
+#include "pager.h"
 #include "run-command.h"
 #include "sigchain.h"
 #include "alias.h"
+
+int pager_use_color = 1;
 
 #ifndef DEFAULT_PAGER
 #define DEFAULT_PAGER "less"

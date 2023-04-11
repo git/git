@@ -2,6 +2,7 @@
 #include "config.h"
 #include "column.h"
 #include "string-list.h"
+#include "pager.h"
 #include "parse-options.h"
 #include "run-command.h"
 #include "utf8.h"

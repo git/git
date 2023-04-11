@@ -40,6 +40,7 @@
 #include "apply.h"
 #include "string-list.h"
 #include "packfile.h"
+#include "pager.h"
 #include "repository.h"
 #include "pretty.h"
 #include "wrapper.h"

@@ -28,6 +28,7 @@
 #include "strvec.h"
 #include "utf8.h"
 #include "packfile.h"
+#include "pager.h"
 #include "list-objects-filter-options.h"
 #include "commit-reach.h"
 #include "branch.h"

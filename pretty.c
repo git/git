@@ -7,6 +7,7 @@
 #include "hex.h"
 #include "utf8.h"
 #include "diff.h"
+#include "pager.h"
 #include "revision.h"
 #include "string-list.h"
 #include "mailmap.h"

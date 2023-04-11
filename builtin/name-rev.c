@@ -9,6 +9,7 @@
 #include "tag.h"
 #include "refs.h"
 #include "object-name.h"
+#include "pager.h"
 #include "parse-options.h"
 #include "prio-queue.h"
 #include "hash-lookup.h"

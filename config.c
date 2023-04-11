@@ -25,6 +25,7 @@
 #include "string-list.h"
 #include "object-name.h"
 #include "object-store.h"
+#include "pager.h"
 #include "utf8.h"
 #include "dir.h"
 #include "color.h"

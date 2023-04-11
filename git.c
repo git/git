@@ -4,6 +4,7 @@
 #include "exec-cmd.h"
 #include "gettext.h"
 #include "help.h"
+#include "pager.h"
 #include "run-command.h"
 #include "alias.h"
 #include "replace-object.h"

@@ -12,6 +12,7 @@
 #include "object-name.h"
 #include "object-store.h"
 #include "object.h"
+#include "pager.h"
 #include "commit.h"
 #include "sequencer.h"
 #include "tag.h"

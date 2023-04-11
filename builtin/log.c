@@ -15,6 +15,7 @@
 #include "object-file.h"
 #include "object-name.h"
 #include "object-store.h"
+#include "pager.h"
 #include "color.h"
 #include "commit.h"
 #include "diff.h"

@@ -5,6 +5,7 @@
 #include "editor.h"
 #include "environment.h"
 #include "gettext.h"
+#include "pager.h"
 #include "strbuf.h"
 #include "strvec.h"
 #include "run-command.h"
