@@ -21,6 +21,7 @@
 #include "object-store.h"
 #include "midx.h"
 #include "commit-graph.h"
+#include "pack-revindex.h"
 #include "promisor-remote.h"
 #include "wrapper.h"
 

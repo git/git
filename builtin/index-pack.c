@@ -17,6 +17,7 @@
 #include "streaming.h"
 #include "thread-utils.h"
 #include "packfile.h"
+#include "pack-revindex.h"
 #include "object-store.h"
 #include "replace-object.h"
 #include "promisor-remote.h"

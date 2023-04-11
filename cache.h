@@ -7,7 +7,6 @@
 #include "list.h"
 #include "gettext.h"
 #include "string-list.h"
-#include "pack-revindex.h"
 #include "hash.h"
 #include "path.h"
 #include "pathspec.h"
