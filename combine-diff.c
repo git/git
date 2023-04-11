@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "object-store.h"
 #include "commit.h"
+#include "convert.h"
 #include "blob.h"
 #include "diff.h"
 #include "diffcore.h"

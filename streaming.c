@@ -2,6 +2,7 @@
  * Copyright (c) 2011, Google Inc.
  */
 #include "cache.h"
+#include "convert.h"
 #include "environment.h"
 #include "streaming.h"
 #include "repository.h"

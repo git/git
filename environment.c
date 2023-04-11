@@ -10,6 +10,7 @@
 #include "cache.h"
 #include "abspath.h"
 #include "branch.h"
+#include "convert.h"
 #include "environment.h"
 #include "gettext.h"
 #include "repository.h"

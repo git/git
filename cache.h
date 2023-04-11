@@ -6,7 +6,6 @@
 #include "hashmap.h"
 #include "list.h"
 #include "gettext.h"
-#include "convert.h"
 #include "string-list.h"
 #include "pack-revindex.h"
 #include "hash.h"

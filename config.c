@@ -12,6 +12,7 @@
 #include "date.h"
 #include "branch.h"
 #include "config.h"
+#include "convert.h"
 #include "environment.h"
 #include "gettext.h"
 #include "ident.h"

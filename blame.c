@@ -3,6 +3,7 @@
 #include "object-store.h"
 #include "cache-tree.h"
 #include "mergesort.h"
+#include "convert.h"
 #include "diff.h"
 #include "diffcore.h"
 #include "gettext.h"

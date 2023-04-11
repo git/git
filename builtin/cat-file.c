@@ -7,6 +7,7 @@
 #include "cache.h"
 #include "alloc.h"
 #include "config.h"
+#include "convert.h"
 #include "builtin.h"
 #include "diff.h"
 #include "environment.h"
