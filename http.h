@@ -3,7 +3,6 @@
 
 struct packed_git;
 
-#include "cache.h"
 #include "git-zlib.h"
 
 #include <curl/curl.h>
