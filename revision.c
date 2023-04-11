@@ -5,6 +5,7 @@
 #include "gettext.h"
 #include "hex.h"
 #include "object-name.h"
+#include "object-file.h"
 #include "object-store.h"
 #include "tag.h"
 #include "blob.h"

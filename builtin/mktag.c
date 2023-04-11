@@ -4,6 +4,7 @@
 #include "parse-options.h"
 #include "tag.h"
 #include "replace-object.h"
+#include "object-file.h"
 #include "object-store.h"
 #include "fsck.h"
 #include "config.h"

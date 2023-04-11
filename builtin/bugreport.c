@@ -8,6 +8,7 @@
 #include "hook.h"
 #include "hook-list.h"
 #include "diagnose.h"
+#include "object-file.h"
 #include "setup.h"
 #include "wrapper.h"
 

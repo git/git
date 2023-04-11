@@ -8,6 +8,7 @@
 #include "hex.h"
 #include "lockfile.h"
 #include "dir.h"
+#include "object-file.h"
 #include "object-name.h"
 #include "object-store.h"
 #include "object.h"

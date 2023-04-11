@@ -13,6 +13,7 @@
 #include "dir.h"
 #include "environment.h"
 #include "gettext.h"
+#include "object-file.h"
 #include "object-store.h"
 #include "attr.h"
 #include "refs.h"

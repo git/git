@@ -14,6 +14,7 @@
 #include "cache-tree.h"
 #include "refs.h"
 #include "dir.h"
+#include "object-file.h"
 #include "object-store.h"
 #include "oid-array.h"
 #include "tree.h"

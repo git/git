@@ -21,6 +21,7 @@
 #include "cache-tree.h"
 #include "unpack-trees.h"
 #include "lockfile.h"
+#include "object-file.h"
 #include "object-name.h"
 #include "parse-options.h"
 #include "commit.h"

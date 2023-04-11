@@ -35,6 +35,7 @@
 #include "help.h"
 #include "promisor-remote.h"
 #include "dir.h"
+#include "object-file.h"
 #include "object-name.h"
 #include "setup.h"
 #include "strmap.h"

@@ -18,6 +18,7 @@
 #include "thread-utils.h"
 #include "packfile.h"
 #include "pack-revindex.h"
+#include "object-file.h"
 #include "object-store.h"
 #include "oid-array.h"
 #include "replace-object.h"

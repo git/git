@@ -4,6 +4,7 @@
 #include "chdir-notify.h"
 #include "dir.h"
 #include "environment.h"
+#include "object-file.h"
 #include "sigchain.h"
 #include "string-list.h"
 #include "strbuf.h"

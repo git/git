@@ -1,6 +1,7 @@
 #include "builtin.h"
 #include "abspath.h"
 #include "gettext.h"
+#include "object-file.h"
 #include "parse-options.h"
 #include "diagnose.h"
 

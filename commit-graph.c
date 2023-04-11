@@ -11,6 +11,7 @@
 #include "revision.h"
 #include "hash-lookup.h"
 #include "commit-graph.h"
+#include "object-file.h"
 #include "object-store.h"
 #include "oid-array.h"
 #include "alloc.h"

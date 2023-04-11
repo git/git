@@ -18,6 +18,7 @@
 #include "trace.h"
 #include "tree-walk.h"
 #include "tree.h"
+#include "object-file.h"
 #include "object-store.h"
 #include "midx.h"
 #include "commit-graph.h"

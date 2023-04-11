@@ -6,6 +6,7 @@
 #include "pack-revindex.h"
 #include "progress.h"
 #include "packfile.h"
+#include "object-file.h"
 #include "object-store.h"
 
 struct idx_entry {

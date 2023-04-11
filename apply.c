@@ -23,6 +23,7 @@
 #include "ll-merge.h"
 #include "lockfile.h"
 #include "object-name.h"
+#include "object-file.h"
 #include "parse-options.h"
 #include "quote.h"
 #include "rerere.h"

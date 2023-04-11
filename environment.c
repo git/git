@@ -19,6 +19,7 @@
 #include "fmt-merge-msg.h"
 #include "commit.h"
 #include "strvec.h"
+#include "object-file.h"
 #include "object-store.h"
 #include "replace-object.h"
 #include "tmp-objdir.h"

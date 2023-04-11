@@ -13,6 +13,7 @@
 #include "ll-merge.h"
 #include "attr.h"
 #include "pathspec.h"
+#include "object-file.h"
 #include "object-store.h"
 #include "hash-lookup.h"
 #include "strmap.h"

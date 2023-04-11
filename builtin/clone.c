@@ -21,6 +21,7 @@
 #include "fetch-pack.h"
 #include "refs.h"
 #include "refspec.h"
+#include "object-file.h"
 #include "object-store.h"
 #include "tree.h"
 #include "tree-walk.h"

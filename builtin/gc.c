@@ -25,6 +25,7 @@
 #include "commit.h"
 #include "commit-graph.h"
 #include "packfile.h"
+#include "object-file.h"
 #include "object-store.h"
 #include "pack.h"
 #include "pack-objects.h"

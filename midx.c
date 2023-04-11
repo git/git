@@ -8,6 +8,7 @@
 #include "hex.h"
 #include "lockfile.h"
 #include "packfile.h"
+#include "object-file.h"
 #include "object-store.h"
 #include "hash-lookup.h"
 #include "midx.h"

@@ -25,6 +25,7 @@
 #include "strvec.h"
 #include "strbuf.h"
 #include "lockfile.h"
+#include "object-file.h"
 #include "object-store.h"
 #include "dir.h"
 #include "entry.h"
