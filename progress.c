@@ -9,7 +9,7 @@
  */
 
 #define GIT_TEST_PROGRESS_ONLY
-#include "cache.h"
+#include "git-compat-util.h"
 #include "pager.h"
 #include "progress.h"
 #include "strbuf.h"
