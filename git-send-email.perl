@@ -1537,7 +1537,7 @@ sub send_message {
 To: $to${ccline}
 Subject: $subject
 Date: $date
-Message-Id: $message_id
+Message-ID: $message_id
 ";
 	if ($use_xmailer) {
 		$header .= "X-Mailer: git-send-email $gitversion\n";
@@ -1832,7 +1832,7 @@ sub process_file {
 				$has_mime_version = 1;
 				push @xh, $_;
 			}
-			elsif (/^Message-Id: (.*)/i) {
+			elsif (/^Message-ID: (.*)/i) {
 				$message_id = $1;
 			}
 			elsif (/^Content-Transfer-Encoding: (.*)/i) {

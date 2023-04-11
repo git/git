@@ -99,7 +99,7 @@ To omit patch numbers from the subject, use `-N`.
 
 If given `--thread`, `git-format-patch` will generate `In-Reply-To` and
 `References` headers to make the second and subsequent patch mails appear
-as replies to the first mail; this also generates a `Message-Id` header to
+as replies to the first mail; this also generates a `Message-ID` header to
 reference.
 
 OPTIONS
@@ -163,7 +163,7 @@ include::diff-options.txt[]
 --no-thread::
 	Controls addition of `In-Reply-To` and `References` headers to
 	make the second and subsequent mails appear as replies to the
-	first.  Also controls generation of the `Message-Id` header to
+	first.  Also controls generation of the `Message-ID` header to
 	reference.
 +
 The optional <style> argument can be either `shallow` or `deep`.
