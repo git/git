@@ -20812,34 +20812,3 @@ msgstr ""
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr ""
-
-#, fuzzy
-#~ msgid "use patterns in <file> instead of the current ones."
-#~ msgstr "шукати в індексі замість робочого дерева"
-
-#, c-format
-#~ msgid "unknown option \"%s\""
-#~ msgstr "невідома опція \"%s\""
-
-#~ msgid "could not lock HEAD"
-#~ msgstr "неможливо зафіксувати HEAD"
-
-#, perl-format
-#~ msgid "failed to open hunk edit file for writing: %s"
-#~ msgstr "не вдалося відкрити файл редагування шматка для запису: %s"
-
-#, perl-format
-#~ msgid "failed to open hunk edit file for reading: %s"
-#~ msgstr "не вдалося відкрити файл редагування шматка для читання: %s"
-
-#, perl-format
-#~ msgid "ignoring unmerged: %s\n"
-#~ msgstr "ігноруються незлиті записи: %s\n"
-
-#, perl-format
-#~ msgid "Invalid number: '%s'\n"
-#~ msgstr "Неприпустиме число \"%s\"\n"
-
-#, perl-format
-#~ msgid "invalid argument %s, expecting --"
-#~ msgstr "неприпустимий аргумент %s, очікується --"
