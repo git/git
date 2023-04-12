@@ -3083,6 +3083,8 @@ static int section_name_is_ok(const char *name)
 	return 1;
 }
 
+#define GIT_CONFIG_MAX_LINE_LEN (512 * 1024)
+
 /* if new_name == NULL, the section is removed instead */
 static int git_config_copy_or_rename_section_in_file(const char *config_filename,
 				      const char *old_name,
@@ -3097,6 +3099,7 @@ static int git_config_copy_or_rename_section_in_file(const char *config_filename
 	struct stat st;
 	struct strbuf copystr = STRBUF_INIT;
 	struct config_store_data store;
+	uint32_t line_nr = 0;
 
 	memset(&store, 0, sizeof(store));
 
@@ -3137,6 +3140,16 @@ static int git_config_copy_or_rename_section_in_file(const char *config_filename
 		size_t i, length;
 		int is_section = 0;
 		char *output = buf.buf;
+
+		line_nr++;
+
+		if (buf.len >= GIT_CONFIG_MAX_LINE_LEN) {
+			ret = error(_("refusing to work with overly long line "
+				      "in '%s' on line %"PRIuMAX),
+				    config_filename, (uintmax_t)line_nr);
+			goto out;
+		}
+
 		for (i = 0; buf.buf[i] && isspace(buf.buf[i]); i++)
 			; /* do nothing */
 		if (buf.buf[i] == '[') {
