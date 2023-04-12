@@ -283,7 +283,7 @@ cleanup:
 	return ret;
 }
 
-int load_pack_revindex(struct packed_git *p)
+int load_pack_revindex(struct repository *r, struct packed_git *p)
 {
 	if (p->revindex || p->revindex_data)
 		return 0;
@@ -356,7 +356,7 @@ int offset_to_pack_pos(struct packed_git *p, off_t ofs, uint32_t *pos)
 {
 	unsigned lo, hi;
 
-	if (load_pack_revindex(p) < 0)
+	if (load_pack_revindex(the_repository, p) < 0)
 		return -1;
 
 	lo = 0;
