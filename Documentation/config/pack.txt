@@ -171,6 +171,12 @@ pack.writeBitmapLookupTable::
 	beneficial in repositories that have relatively large bitmap
 	indexes. Defaults to false.
 
+pack.readReverseIndex::
+	When true, git will read any .rev file(s) that may be available
+	(see: linkgit:gitformat-pack[5]). When false, the reverse index
+	will be generated from scratch and stored in memory. Defaults to
+	true.
+
 pack.writeReverseIndex::
 	When true, git will write a corresponding .rev file (see:
 	linkgit:gitformat-pack[5])

@@ -291,7 +291,10 @@ int load_pack_revindex(struct repository *r, struct packed_git *p)
 	if (p->revindex || p->revindex_data)
 		return 0;
 
-	if (!load_pack_revindex_from_disk(p))
+	prepare_repo_settings(r);
+
+	if (r->settings.pack_read_reverse_index &&
+	    !load_pack_revindex_from_disk(p))
 		return 0;
 	else if (!create_pack_revindex_in_memory(p))
 		return 0;

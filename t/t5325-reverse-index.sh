@@ -96,6 +96,17 @@ test_expect_success 'reverse index is not generated when available on disk' '
 		--batch-check="%(objectsize:disk)" <tip
 '
 
+test_expect_success 'reverse index is ignored when pack.readReverseIndex is false' '
+	test_index_pack true &&
+	test_path_is_file $rev &&
+
+	test_config pack.readReverseIndex false &&
+
+	git rev-parse HEAD >tip &&
+	GIT_TEST_REV_INDEX_DIE_ON_DISK=1 git cat-file \
+		--batch-check="%(objectsize:disk)" <tip
+'
+
 test_expect_success 'revindex in-memory vs on-disk' '
 	git init repo &&
 	test_when_finished "rm -fr repo" &&
