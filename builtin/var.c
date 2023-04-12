@@ -69,13 +69,14 @@ static const struct git_var *get_git_var(const char *var)
 	return NULL;
 }
 
-static int show_config(const char *var, const char *value, void *cb)
+static int show_config(const char *var, const char *value,
+		       struct key_value_info *kvi, void *cb)
 {
 	if (value)
 		printf("%s=%s\n", var, value);
 	else
 		printf("%s\n", var);
-	return git_default_config(var, value, cb);
+	return git_default_config(var, value,kvi, cb);
 }
 
 int cmd_var(int argc, const char **argv, const char *prefix UNUSED)

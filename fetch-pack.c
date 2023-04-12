@@ -1858,7 +1858,8 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 	return ref;
 }
 
-static int fetch_pack_config_cb(const char *var, const char *value, void *cb)
+static int fetch_pack_config_cb(const char *var, const char *value,
+				struct key_value_info *kvi, void *cb)
 {
 	if (strcmp(var, "fetch.fsck.skiplist") == 0) {
 		const char *path;
@@ -1880,7 +1881,7 @@ static int fetch_pack_config_cb(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	return git_default_config(var, value, cb);
+	return git_default_config(var, value,kvi, cb);
 }
 
 static void fetch_pack_config(void)

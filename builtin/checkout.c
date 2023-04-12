@@ -1182,7 +1182,8 @@ static int switch_branches(const struct checkout_opts *opts,
 	return ret || writeout_error;
 }
 
-static int git_checkout_config(const char *var, const char *value, void *cb)
+static int git_checkout_config(const char *var, const char *value,
+			       struct key_value_info *kvi, void *cb)
 {
 	struct checkout_opts *opts = cb;
 
@@ -1198,7 +1199,7 @@ static int git_checkout_config(const char *var, const char *value, void *cb)
 	if (starts_with(var, "submodule."))
 		return git_default_submodule_config(var, value, NULL);
 
-	return git_xmerge_config(var, value, NULL);
+	return git_xmerge_config(var, value,kvi, NULL);
 }
 
 static void setup_new_branch_info_and_source_tree(

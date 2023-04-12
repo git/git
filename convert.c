@@ -1011,7 +1011,9 @@ static int apply_filter(const char *path, const char *src, size_t len,
 	return 0;
 }
 
-static int read_convert_config(const char *var, const char *value, void *cb UNUSED)
+static int read_convert_config(const char *var, const char *value,
+			       struct key_value_info *kvi UNUSED,
+			       void *cb UNUSED)
 {
 	const char *key, *name;
 	size_t namelen;

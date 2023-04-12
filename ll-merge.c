@@ -252,6 +252,7 @@ static struct ll_merge_driver *ll_user_merge, **ll_user_merge_tail;
 static const char *default_ll_merge;
 
 static int read_merge_config(const char *var, const char *value,
+			     struct key_value_info *kvi UNUSED,
 			     void *cb UNUSED)
 {
 	struct ll_merge_driver *fn;

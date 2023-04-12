@@ -39,6 +39,7 @@ static void wait_for_pager_signal(int signo)
 }
 
 static int core_pager_config(const char *var, const char *value,
+			     struct key_value_info *kvi UNUSED,
 			     void *data UNUSED)
 {
 	if (!strcmp(var, "core.pager"))
@@ -224,7 +225,9 @@ struct pager_command_config_data {
 	char *value;
 };
 
-static int pager_command_config(const char *var, const char *value, void *vdata)
+static int pager_command_config(const char *var, const char *value,
+				struct key_value_info *kvi UNUSED,
+				void *vdata)
 {
 	struct pager_command_config_data *data = vdata;
 	const char *cmd;

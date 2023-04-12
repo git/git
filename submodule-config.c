@@ -424,7 +424,8 @@ struct parse_config_parameter {
  * config store (.git/config, etc).  Callers are responsible for
  * checking for overrides in the main config store when appropriate.
  */
-static int parse_config(const char *var, const char *value, void *data)
+static int parse_config(const char *var, const char *value,
+			struct key_value_info *kvi UNUSED, void *data)
 {
 	struct parse_config_parameter *me = data;
 	struct submodule *submodule;
@@ -673,7 +674,8 @@ out:
 	}
 }
 
-static int gitmodules_cb(const char *var, const char *value, void *data)
+static int gitmodules_cb(const char *var, const char *value,
+			 struct key_value_info *kvi UNUSED, void *data)
 {
 	struct repository *repo = data;
 	struct parse_config_parameter parameter;
@@ -801,7 +803,9 @@ void submodule_free(struct repository *r)
 		submodule_cache_clear(r->submodule_cache);
 }
 
-static int config_print_callback(const char *var, const char *value, void *cb_data)
+static int config_print_callback(const char *var, const char *value,
+				 struct key_value_info *kvi UNUSED,
+				 void *cb_data)
 {
 	char *wanted_key = cb_data;
 
@@ -843,7 +847,9 @@ struct fetch_config {
 	int *recurse_submodules;
 };
 
-static int gitmodules_fetch_config(const char *var, const char *value, void *cb)
+static int gitmodules_fetch_config(const char *var, const char *value,
+				   struct key_value_info *kvi UNUSED,
+				   void *cb)
 {
 	struct fetch_config *config = cb;
 	if (!strcmp(var, "submodule.fetchjobs")) {
@@ -871,6 +877,7 @@ void fetch_config_from_gitmodules(int *max_children, int *recurse_submodules)
 }
 
 static int gitmodules_update_clone_config(const char *var, const char *value,
+					  struct key_value_info *kvi UNUSED,
 					  void *cb)
 {
 	int *max_jobs = cb;

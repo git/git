@@ -82,6 +82,7 @@ static struct option *add_common_options(struct option *prev)
 }
 
 static int git_multi_pack_index_write_config(const char *var, const char *value,
+					     struct key_value_info *kvi UNUSED,
 					     void *cb UNUSED)
 {
 	if (!strcmp(var, "pack.writebitmaphashcache")) {

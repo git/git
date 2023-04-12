@@ -46,6 +46,7 @@ static int credential_from_potentially_partial_url(struct credential *c,
 						   const char *url);
 
 static int credential_config_callback(const char *var, const char *value,
+				      struct key_value_info *kvi UNUSED,
 				      void *data)
 {
 	struct credential *c = data;

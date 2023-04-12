@@ -307,7 +307,8 @@ int xdiff_compare_lines(const char *l1, long s1,
 
 int git_xmerge_style = -1;
 
-int git_xmerge_config(const char *var, const char *value, void *cb)
+int git_xmerge_config(const char *var, const char *value,
+		      struct key_value_info *kvi, void *cb)
 {
 	if (!strcmp(var, "merge.conflictstyle")) {
 		if (!value)
@@ -327,5 +328,5 @@ int git_xmerge_config(const char *var, const char *value, void *cb)
 			    value, var);
 		return 0;
 	}
-	return git_default_config(var, value, cb);
+	return git_default_config(var, value,kvi, cb);
 }

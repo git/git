@@ -1569,7 +1569,8 @@ struct exclude_hidden_refs_cb {
 	const char *section;
 };
 
-static int hide_refs_config(const char *var, const char *value, void *cb_data)
+static int hide_refs_config(const char *var, const char *value,
+			    struct key_value_info *kvi UNUSED, void *cb_data)
 {
 	struct exclude_hidden_refs_cb *cb = cb_data;
 	cb->exclusions->hidden_refs_configured = 1;

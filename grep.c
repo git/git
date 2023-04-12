@@ -54,7 +54,8 @@ define_list_config_array_extra(color_grep_slots, {"match"});
  * Read the configuration file once and store it in
  * the grep_defaults template.
  */
-int grep_config(const char *var, const char *value, void *cb)
+int grep_config(const char *var, const char *value,
+		struct key_value_info *kvi UNUSED, void *cb)
 {
 	struct grep_opt *opt = cb;
 	const char *slot;

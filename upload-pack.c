@@ -1298,7 +1298,9 @@ static int parse_object_filter_config(const char *var, const char *value,
 	return 0;
 }
 
-static int upload_pack_config(const char *var, const char *value, void *cb_data)
+static int upload_pack_config(const char *var, const char *value,
+			      struct key_value_info *kvi UNUSED,
+			      void *cb_data)
 {
 	struct upload_pack_data *data = cb_data;
 
@@ -1339,7 +1341,9 @@ static int upload_pack_config(const char *var, const char *value, void *cb_data)
 	return parse_hide_refs_config(var, value, "uploadpack", &data->hidden_refs);
 }
 
-static int upload_pack_protected_config(const char *var, const char *value, void *cb_data)
+static int upload_pack_protected_config(const char *var, const char *value,
+					struct key_value_info *kvi UNUSED,
+					void *cb_data)
 {
 	struct upload_pack_data *data = cb_data;
 

@@ -359,7 +359,8 @@ static enum rebase_type config_get_rebase(int *rebase_unspecified)
 /**
  * Read config variables.
  */
-static int git_pull_config(const char *var, const char *value, void *cb)
+static int git_pull_config(const char *var, const char *value,
+			   struct key_value_info *kvi, void *cb)
 {
 	if (!strcmp(var, "rebase.autostash")) {
 		config_autostash = git_config_bool(var, value);
@@ -372,7 +373,7 @@ static int git_pull_config(const char *var, const char *value, void *cb)
 		check_trust_level = 0;
 	}
 
-	return git_default_config(var, value, cb);
+	return git_default_config(var, value,kvi, cb);
 }
 
 /**

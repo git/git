@@ -237,6 +237,7 @@ const char *fsck_describe_object(struct fsck_options *options,
  * git_config() callback for use by fsck-y tools that want to support
  * fsck.<msg> fsck.skipList etc.
  */
-int git_fsck_config(const char *var, const char *value, void *cb);
+int git_fsck_config(const char *var, const char *value,
+		    struct key_value_info *kvi, void *cb);
 
 #endif

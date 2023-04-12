@@ -616,6 +616,7 @@ static void dos_time(timestamp_t *timestamp, int *dos_date, int *dos_time)
 }
 
 static int archive_zip_config(const char *var, const char *value,
+			      struct key_value_info *kvi UNUSED,
 			      void *data UNUSED)
 {
 	return userdiff_config(var, value);

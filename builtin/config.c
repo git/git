@@ -214,7 +214,7 @@ static void show_config_scope(struct strbuf *buf)
 }
 
 static int show_all_config(const char *key_, const char *value_,
-			   void *cb UNUSED)
+			   struct key_value_info *kvi UNUSED, void *cb UNUSED)
 {
 	if (show_origin || show_scope) {
 		struct strbuf buf = STRBUF_INIT;
@@ -298,7 +298,8 @@ static int format_config(struct strbuf *buf, const char *key_, const char *value
 	return 0;
 }
 
-static int collect_config(const char *key_, const char *value_, void *cb)
+static int collect_config(const char *key_, const char *value_,
+			  struct key_value_info *kvi UNUSED, void *cb)
 {
 	struct strbuf_list *values = cb;
 
@@ -466,6 +467,7 @@ static const char *get_colorbool_slot;
 static char parsed_color[COLOR_MAXLEN];
 
 static int git_get_color_config(const char *var, const char *value,
+				struct key_value_info *kvi UNUSED,
 				void *cb UNUSED)
 {
 	if (!strcmp(var, get_color_slot)) {
@@ -498,6 +500,7 @@ static int get_colorbool_found;
 static int get_diff_color_found;
 static int get_color_ui_found;
 static int git_get_colorbool_config(const char *var, const char *value,
+				    struct key_value_info *kvi UNUSED,
 				    void *data UNUSED)
 {
 	if (!strcmp(var, get_colorbool_slot))
@@ -555,7 +558,8 @@ struct urlmatch_current_candidate_value {
 	struct strbuf value;
 };
 
-static int urlmatch_collect_fn(const char *var, const char *value, void *cb)
+static int urlmatch_collect_fn(const char *var, const char *value,
+			       struct key_value_info *kvi UNUSED, void *cb)
 {
 	struct string_list *values = cb;
 	struct string_list_item *item = string_list_insert(values, var);

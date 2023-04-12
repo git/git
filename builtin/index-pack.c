@@ -1578,7 +1578,8 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 	strbuf_release(&pack_name);
 }
 
-static int git_index_pack_config(const char *k, const char *v, void *cb)
+static int git_index_pack_config(const char *k, const char *v,
+				 struct key_value_info *kvi, void *cb)
 {
 	struct pack_idx_option *opts = cb;
 
@@ -1605,7 +1606,7 @@ static int git_index_pack_config(const char *k, const char *v, void *cb)
 		else
 			opts->flags &= ~WRITE_REV;
 	}
-	return git_default_config(k, v, cb);
+	return git_default_config(k, v,kvi, cb);
 }
 
 static int cmp_uint32(const void *a_, const void *b_)

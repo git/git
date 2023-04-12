@@ -62,6 +62,7 @@ const char *fmt_name(enum want_ident);
 int committer_ident_sufficiently_given(void);
 int author_ident_sufficiently_given(void);
 
-int git_ident_config(const char *, const char *, void *);
+int git_ident_config(const char *, const char *,
+		     struct key_value_info *UNUSED, void *);
 
 #endif

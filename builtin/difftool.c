@@ -38,14 +38,15 @@ static const char *const builtin_difftool_usage[] = {
 	NULL
 };
 
-static int difftool_config(const char *var, const char *value, void *cb)
+static int difftool_config(const char *var, const char *value,
+			   struct key_value_info *kvi, void *cb)
 {
 	if (!strcmp(var, "difftool.trustexitcode")) {
 		trust_exit_code = git_config_bool(var, value);
 		return 0;
 	}
 
-	return git_default_config(var, value, cb);
+	return git_default_config(var, value,kvi, cb);
 }
 
 static int print_tool_help(void)

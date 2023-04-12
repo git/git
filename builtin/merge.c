@@ -620,7 +620,8 @@ static void parse_branch_merge_options(char *bmo)
 	free(argv);
 }
 
-static int git_merge_config(const char *k, const char *v, void *cb)
+static int git_merge_config(const char *k, const char *v,
+			    struct key_value_info *kvi, void *cb)
 {
 	int status;
 	const char *str;
@@ -665,10 +666,10 @@ static int git_merge_config(const char *k, const char *v, void *cb)
 		return 0;
 	}
 
-	status = fmt_merge_msg_config(k, v, cb);
+	status = fmt_merge_msg_config(k, v,kvi, cb);
 	if (status)
 		return status;
-	return git_diff_ui_config(k, v, cb);
+	return git_diff_ui_config(k, v,kvi, cb);
 }
 
 static int read_tree_trivial(struct object_id *common, struct object_id *head,

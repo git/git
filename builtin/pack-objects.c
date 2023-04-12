@@ -3134,7 +3134,8 @@ static void prepare_pack(int window, int depth)
 	free(delta_list);
 }
 
-static int git_pack_config(const char *k, const char *v, void *cb)
+static int git_pack_config(const char *k, const char *v,
+			   struct key_value_info *kvi, void *cb)
 {
 	if (!strcmp(k, "pack.window")) {
 		window = git_config_int(k, v);
@@ -3226,7 +3227,7 @@ static int git_pack_config(const char *k, const char *v, void *cb)
 		ex->uri = xstrdup(pack_end + 1);
 		oidmap_put(&configured_exclusions, ex);
 	}
-	return git_default_config(k, v, cb);
+	return git_default_config(k, v,kvi, cb);
 }
 
 /* Counters for trace2 output when in --stdin-packs mode. */

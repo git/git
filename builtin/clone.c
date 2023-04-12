@@ -775,7 +775,8 @@ static int checkout(int submodule_progress, int filter_submodules)
 	return err;
 }
 
-static int git_clone_config(const char *k, const char *v, void *cb)
+static int git_clone_config(const char *k, const char *v,
+			    struct key_value_info *kvi, void *cb)
 {
 	if (!strcmp(k, "clone.defaultremotename")) {
 		free(remote_name);
@@ -786,10 +787,11 @@ static int git_clone_config(const char *k, const char *v, void *cb)
 	if (!strcmp(k, "clone.filtersubmodules"))
 		config_filter_submodules = git_config_bool(k, v);
 
-	return git_default_config(k, v, cb);
+	return git_default_config(k, v,kvi, cb);
 }
 
-static int write_one_config(const char *key, const char *value, void *data)
+static int write_one_config(const char *key, const char *value,
+			    struct key_value_info *kvi UNUSED, void *data)
 {
 	/*
 	 * give git_clone_config a chance to write config values back to the

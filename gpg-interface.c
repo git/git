@@ -12,7 +12,8 @@
 #include "alias.h"
 #include "wrapper.h"
 
-static int git_gpg_config(const char *, const char *, void *);
+static int git_gpg_config(const char *, const char *, struct key_value_info *,
+			  void *);
 
 static void gpg_interface_lazy_init(void)
 {
@@ -718,7 +719,8 @@ void set_signing_key(const char *key)
 	configured_signing_key = xstrdup(key);
 }
 
-static int git_gpg_config(const char *var, const char *value, void *cb UNUSED)
+static int git_gpg_config(const char *var, const char *value,
+			  struct key_value_info *kvi UNUSED, void *cb UNUSED)
 {
 	struct gpg_format *fmt = NULL;
 	char *fmtname = NULL;

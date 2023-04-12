@@ -142,7 +142,8 @@ struct key_value_info {
  */
 typedef int (*config_fn_t)(const char *, const char *, struct key_value_info *, void *);
 
-int git_default_config(const char *, const char *, void *);
+int git_default_config(const char *, const char *, struct key_value_info *,
+		       void *);
 
 /**
  * Read a specific file in git-config format.

@@ -99,7 +99,9 @@ static void promisor_remote_move_to_tail(struct promisor_remote_config *config,
 	config->promisors_tail = &r->next;
 }
 
-static int promisor_remote_config(const char *var, const char *value, void *data)
+static int promisor_remote_config(const char *var, const char *value,
+				  struct key_value_info *kvi UNUSED,
+				  void *data)
 {
 	struct promisor_remote_config *config = data;
 	const char *name;

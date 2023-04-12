@@ -1402,7 +1402,8 @@ static int parse_status_slot(const char *slot)
 	return LOOKUP_CONFIG(color_status_slots, slot);
 }
 
-static int git_status_config(const char *k, const char *v, void *cb)
+static int git_status_config(const char *k, const char *v,
+			     struct key_value_info *kvi, void *cb)
 {
 	struct wt_status *s = cb;
 	const char *slot_name;
@@ -1602,7 +1603,8 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
-static int git_commit_config(const char *k, const char *v, void *cb)
+static int git_commit_config(const char *k, const char *v,
+			     struct key_value_info *kvi, void *cb)
 {
 	struct wt_status *s = cb;
 

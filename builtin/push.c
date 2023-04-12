@@ -506,7 +506,8 @@ static void set_push_cert_flags(int *flags, int v)
 }
 
 
-static int git_push_config(const char *k, const char *v, void *cb)
+static int git_push_config(const char *k, const char *v,
+			   struct key_value_info *kvi, void *cb)
 {
 	const char *slot_name;
 	int *flags = cb;
@@ -573,7 +574,7 @@ static int git_push_config(const char *k, const char *v, void *cb)
 		return 0;
 	}
 
-	return git_default_config(k, v, NULL);
+	return git_default_config(k, v,kvi, NULL);
 }
 
 int cmd_push(int argc, const char **argv, const char *prefix)
