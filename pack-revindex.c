@@ -205,6 +205,9 @@ static int load_revindex_from_disk(char *revindex_name,
 	size_t revindex_size;
 	struct revindex_header *hdr;
 
+	if (git_env_bool(GIT_TEST_REV_INDEX_DIE_ON_DISK, 0))
+		die("dying as requested by '%s'", GIT_TEST_REV_INDEX_DIE_ON_DISK);
+
 	fd = git_open(revindex_name);
 
 	if (fd < 0) {
