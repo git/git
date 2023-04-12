@@ -115,6 +115,8 @@ git_status_config
 git_commit_config
 |
 git_default_core_config
+|
+grep_config
 )
   (const char *C1, const char *C2,
 +  struct key_value_info *kvi,

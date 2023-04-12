@@ -440,8 +440,10 @@ typedef uintmax_t timestamp_t;
 #endif
 
 #ifndef platform_core_config
+struct key_value_info;
 static inline int noop_core_config(const char *var UNUSED,
 				   const char *value UNUSED,
+				   struct key_value_info *kvi UNUSED,
 				   void *cb UNUSED)
 {
 	return 0;

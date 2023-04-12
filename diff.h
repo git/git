@@ -532,6 +532,7 @@ void free_diffstat_info(struct diffstat_t *diffstat);
 int parse_long_opt(const char *opt, const char **argv,
 		   const char **optarg);
 
+struct key_value_info;
 int git_diff_basic_config(const char *var, const char *value,
 			  struct key_value_info *kvi, void *cb);
 int git_diff_heuristic_config(const char *var, const char *value, void *cb);

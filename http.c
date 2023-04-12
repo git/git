@@ -533,7 +533,7 @@ static int http_options(const char *var, const char *value,
 	}
 
 	/* Fall back on the default ones */
-	return git_default_config(var, value, cb);
+	return git_default_config(var, value, kvi, cb);
 }
 
 static int curl_empty_auth_enabled(void)

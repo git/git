@@ -147,7 +147,6 @@ struct config_include_data {
 	void *data;
 	const struct config_options *opts;
 	struct git_config_source *config_source;
-	struct config_reader *config_reader;
 
 	/*
 	 * All remote URLs discovered when reading all config files.
@@ -434,10 +433,9 @@ static int include_condition_is_true(struct key_value_info *kvi,
 static int kvi_fn(config_fn_t fn, const char *key, const char *value,
 		  struct key_value_info *kvi, void *data);
 static int git_config_include(const char *var, const char *value,
-			      struct key_value_info *kvi UNUSED, void *data)
+			      struct key_value_info *kvi, void *data)
 {
 	struct config_include_data *inc = data;
-	struct key_value_info *kvi = inc->config_reader->config_kvi;
 	const char *cond, *key;
 	size_t cond_len;
 	int ret;
@@ -1832,7 +1830,7 @@ static int git_default_core_config(const char *var, const char *value,
 	}
 
 	/* Add other config variables here and to Documentation/config.txt. */
-	return platform_core_config(var, value, cb);
+	return platform_core_config(var, value, kvi, cb);
 }
 
 static int git_default_sparse_config(const char *var, const char *value)
@@ -2253,7 +2251,6 @@ int config_with_options(config_fn_t fn, void *data,
 		inc.data = data;
 		inc.opts = opts;
 		inc.config_source = config_source;
-		inc.config_reader = &the_reader;
 		fn = git_config_include;
 		data = &inc;
 	}

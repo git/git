@@ -791,14 +791,14 @@ static int git_clone_config(const char *k, const char *v,
 }
 
 static int write_one_config(const char *key, const char *value,
-			    struct key_value_info *kvi UNUSED, void *data)
+			    struct key_value_info *kvi, void *data)
 {
 	/*
 	 * give git_clone_config a chance to write config values back to the
 	 * environment, since git_config_set_multivar_gently only deals with
 	 * config-file writes
 	 */
-	int apply_failed = git_clone_config(key, value, data);
+	int apply_failed = git_clone_config(key, value, kvi, data);
 	if (apply_failed)
 		return apply_failed;
 
