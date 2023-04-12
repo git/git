@@ -1,7 +1,9 @@
-This directory provides examples of Coccinelle (http://coccinelle.lip6.fr/)
-semantic patches that might be useful to developers.
+= coccinelle
 
-There are two types of semantic patches:
+This directory provides Coccinelle (http://coccinelle.lip6.fr/) semantic patches
+that might be useful to developers.
+
+==  Types of semantic patches
 
  * Using the semantic transformation to check for bad patterns in the code;
    The target 'make coccicheck' is designed to check for these patterns and
@@ -42,7 +44,7 @@ There are two types of semantic patches:
    This allows to expose plans of pending large scale refactorings without
    impacting the bad pattern checks.
 
-Git-specific tips & things to know about how we run "spatch":
+== Git-specific tips & things to know about how we run "spatch":
 
  * The "make coccicheck" will piggy-back on
    "COMPUTE_HEADER_DEPENDENCIES". If you've built a given object file
