@@ -67,6 +67,11 @@ Language:	tr (Turkish)
 Repository:	https://github.com/bitigchi/git-po/
 Leader:		Emir SARI <bitigchi@me.com>
 
+Language:	uk (Ukrainian)
+Repository:	https://github.com/arkid15r/git-ukrainian-l10n/
+Leader:		Arkadii Yakovets <ark@cho.red>
+Members:	Kateryna Golovanova <kate@kgthreads.com>
+
 Language:	vi (Vietnamese)
 Repository:	https://github.com/vnwildman/git/
 Leader:		Trần Ngọc Quân <vnwildman AT gmail.com>
