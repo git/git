@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='on-disk reverse index'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # The below tests want control over the 'pack.writeReverseIndex' setting
