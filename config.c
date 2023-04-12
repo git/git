@@ -59,33 +59,6 @@ struct config_source {
 };
 #define CONFIG_SOURCE_INIT { 0 }
 
-struct config_reader {
-	struct key_value_info *config_kvi;
-};
-/*
- * Where possible, prefer to accept "struct config_reader" as an arg than to use
- * "the_reader". "the_reader" should only be used if that is infeasible, e.g. in
- * a public function.
- */
-static struct config_reader the_reader;
-
-static inline void config_reader_push_kvi(struct config_reader *reader,
-					  struct key_value_info *kvi)
-{
-	kvi->prev = reader->config_kvi;
-	reader->config_kvi = kvi;
-}
-
-static inline struct key_value_info *config_reader_pop_kvi(struct config_reader *reader)
-{
-	struct key_value_info *ret;
-	if (!reader->config_kvi)
-		BUG("tried to pop config_kvi, but we weren't reading config");
-	ret = reader->config_kvi;
-	reader->config_kvi = reader->config_kvi->prev;
-	return ret;
-}
-
 static int pack_compression_seen;
 static int zlib_compression_seen;
 
@@ -429,8 +402,6 @@ static int include_condition_is_true(struct key_value_info *kvi,
 	return 0;
 }
 
-static int kvi_fn(config_fn_t fn, const char *key, const char *value,
-		  struct key_value_info *kvi, void *data);
 static int git_config_include(const char *var, const char *value,
 			      struct key_value_info *kvi, void *data)
 {
@@ -443,7 +414,7 @@ static int git_config_include(const char *var, const char *value,
 	 * Pass along all values, including "include" directives; this makes it
 	 * possible to query information on the includes themselves.
 	 */
-	ret = kvi_fn(inc->fn, var, value, kvi, inc->data);
+	ret = inc->fn(var, value, kvi, inc->data);
 	if (ret < 0)
 		return ret;
 
@@ -614,16 +585,6 @@ out_free_ret_1:
 	return -CONFIG_INVALID_KEY;
 }
 
-static int kvi_fn(config_fn_t fn, const char *key, const char *value,
-		  struct key_value_info *kvi, void *data)
-{
-	int ret;
-	config_reader_push_kvi(&the_reader, kvi);
-	ret = fn(key, value, kvi, data);
-	config_reader_pop_kvi(&the_reader);
-	return ret;
-}
-
 static int config_parse_pair(const char *key, const char *value,
 			     struct key_value_info *kvi,
 			     config_fn_t fn, void *data)
@@ -636,7 +597,7 @@ static int config_parse_pair(const char *key, const char *value,
 	if (git_config_parse_key(key, &canonical_name, NULL))
 		return -1;
 
-	ret = (kvi_fn(fn, canonical_name, value, kvi, data) < 0) ? -1 : 0;
+	ret = (fn(canonical_name, value, kvi, data) < 0) ? -1 : 0;
 	free(canonical_name);
 	return ret;
 }
@@ -937,7 +898,7 @@ static int get_value(struct config_source *cs, struct key_value_info *kvi,
 	 */
 	cs->linenr--;
 	kvi->linenr = cs->linenr;
-	ret = kvi_fn(fn, name->buf, value, kvi, data);
+	ret = fn(name->buf, value, kvi, data);
 	if (ret >= 0)
 		cs->linenr++;
 	return ret;
@@ -2289,8 +2250,8 @@ static void configset_iter(struct config_set *set, config_fn_t fn, void *data)
 		values = &entry->value_list;
 		kvi = values->items[value_index].util;
 
-		if (kvi_fn(fn, entry->key, values->items[value_index].string,
-			   kvi, data) < 0)
+		if (fn(entry->key, values->items[value_index].string, kvi,
+		       data) < 0)
 			git_die_config_linenr(entry->key, kvi->filename,
 					      kvi->linenr);
 	}
@@ -2368,9 +2329,8 @@ static int configset_find_element(struct config_set *set, const char *key,
 	return 0;
 }
 
-static int configset_add_value(struct config_reader *reader,
-			       struct config_set *set, const char *key,
-			       const char *value)
+static int configset_add_value(struct config_set *set, const char *key,
+			       const char *value, struct key_value_info *kvi)
 {
 	struct config_set_element *e;
 	struct string_list_item *si;
@@ -2399,7 +2359,7 @@ static int configset_add_value(struct config_reader *reader,
 	l_item->e = e;
 	l_item->value_index = e->value_list.nr - 1;
 
-	memcpy(kv_info, reader->config_kvi, sizeof(struct key_value_info));
+	memcpy(kv_info, kvi, sizeof(struct key_value_info));
 	si->util = kv_info;
 
 	return 0;
@@ -2447,26 +2407,19 @@ void git_configset_clear(struct config_set *set)
 	set->list.items = NULL;
 }
 
-struct configset_add_data {
-	struct config_set *config_set;
-	struct config_reader *config_reader;
-};
 #define CONFIGSET_ADD_INIT { 0 }
 
 static int config_set_callback(const char *key, const char *value,
-			       struct key_value_info *kvi UNUSED, void *cb)
+			       struct key_value_info *kvi, void *cb)
 {
-	struct configset_add_data *data = cb;
-	configset_add_value(data->config_reader, data->config_set, key, value);
+	struct config_set *set = cb;
+	configset_add_value(set, key, value, kvi);
 	return 0;
 }
 
 int git_configset_add_file(struct config_set *set, const char *filename)
 {
-	struct configset_add_data data = CONFIGSET_ADD_INIT;
-	data.config_reader = &the_reader;
-	data.config_set = set;
-	return git_config_from_file(config_set_callback, filename, &data);
+	return git_config_from_file(config_set_callback, filename, set);
 }
 
 int git_configset_get_value(struct config_set *set, const char *key,
@@ -2632,7 +2585,6 @@ int git_configset_get_pathname(struct config_set *set, const char *key, const ch
 static void repo_read_config(struct repository *repo)
 {
 	struct config_options opts = { 0 };
-	struct configset_add_data data = CONFIGSET_ADD_INIT;
 
 	opts.respect_includes = 1;
 	opts.commondir = repo->commondir;
@@ -2644,10 +2596,8 @@ static void repo_read_config(struct repository *repo)
 		git_configset_clear(repo->config);
 
 	git_configset_init(repo->config);
-	data.config_set = repo->config;
-	data.config_reader = &the_reader;
 
-	if (config_with_options(config_set_callback, &data, NULL, &opts) < 0)
+	if (config_with_options(config_set_callback, repo->config, NULL, &opts) < 0)
 		/*
 		 * config_with_options() normally returns only
 		 * zero, as most errors are fatal, and
@@ -2786,12 +2736,9 @@ static void read_protected_config(void)
 		.ignore_worktree = 1,
 		.system_gently = 1,
 	};
-	struct configset_add_data data = CONFIGSET_ADD_INIT;
 
 	git_configset_init(&protected_config);
-	data.config_set = &protected_config;
-	data.config_reader = &the_reader;
-	config_with_options(config_set_callback, &data, NULL, &opts);
+	config_with_options(config_set_callback, &protected_config, NULL, &opts);
 }
 
 void git_protected_config(config_fn_t fn, void *data)

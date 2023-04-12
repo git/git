@@ -119,7 +119,6 @@ struct key_value_info {
 	enum config_origin_type origin_type;
 	enum config_scope scope;
 	const char *path;
- 	struct key_value_info *prev;
 };
 
 /**
