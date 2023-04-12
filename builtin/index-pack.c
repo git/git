@@ -1753,6 +1753,7 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	fsck_options.walk = mark_link;
 
 	reset_pack_idx_option(&opts);
+	opts.flags |= WRITE_REV;
 	git_config(git_index_pack_config, &opts);
 	if (prefix && chdir(prefix))
 		die(_("Cannot come back to cwd"));

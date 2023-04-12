@@ -14,6 +14,7 @@ packdir=.git/objects/pack
 test_expect_success 'setup' '
 	test_commit base &&
 
+	test_config pack.writeReverseIndex false &&
 	pack=$(git pack-objects --all $packdir/pack) &&
 	rev=$packdir/pack-$pack.rev &&
 

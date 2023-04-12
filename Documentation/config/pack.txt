@@ -182,4 +182,4 @@ pack.writeReverseIndex::
 	linkgit:gitformat-pack[5])
 	for each new packfile that it writes in all places except for
 	linkgit:git-fast-import[1] and in the bulk checkin mechanism.
-	Defaults to false.
+	Defaults to true.
