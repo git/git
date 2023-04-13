@@ -12,10 +12,12 @@
 #include "version.h"
 #include "pkt-line.h"
 #include "gettext.h"
+#include "trace.h"
 #include "transport.h"
 #include "packfile.h"
 #include "protocol.h"
 #include "string-list.h"
+#include "object-file.h"
 #include "object-store.h"
 
 static struct trace_key trace_curl = TRACE_KEY_INIT(CURL);

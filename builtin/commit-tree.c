@@ -7,6 +7,7 @@
 #include "config.h"
 #include "gettext.h"
 #include "hex.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "repository.h"
 #include "commit.h"

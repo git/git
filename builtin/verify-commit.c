@@ -9,6 +9,7 @@
 #include "config.h"
 #include "builtin.h"
 #include "gettext.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "repository.h"
 #include "commit.h"

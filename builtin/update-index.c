@@ -15,6 +15,7 @@
 #include "cache-tree.h"
 #include "tree-walk.h"
 #include "builtin.h"
+#include "object-file.h"
 #include "refs.h"
 #include "resolve-undo.h"
 #include "parse-options.h"

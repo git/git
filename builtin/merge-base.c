@@ -7,6 +7,7 @@
 #include "refs.h"
 #include "diff.h"
 #include "revision.h"
+#include "object-name.h"
 #include "parse-options.h"
 #include "repository.h"
 #include "commit-reach.h"

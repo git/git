@@ -4,46 +4,11 @@
 #include "git-compat-util.h"
 #include "strbuf.h"
 #include "hashmap.h"
-#include "list.h"
-#include "advice.h"
 #include "gettext.h"
-#include "convert.h"
-#include "trace.h"
-#include "trace2.h"
 #include "string-list.h"
-#include "pack-revindex.h"
-#include "hash.h"
-#include "path.h"
 #include "pathspec.h"
 #include "object.h"
-#include "oid-array.h"
-#include "repository.h"
 #include "statinfo.h"
-#include "mem-pool.h"
-
-typedef struct git_zstream {
-	z_stream z;
-	unsigned long avail_in;
-	unsigned long avail_out;
-	unsigned long total_in;
-	unsigned long total_out;
-	unsigned char *next_in;
-	unsigned char *next_out;
-} git_zstream;
-
-void git_inflate_init(git_zstream *);
-void git_inflate_init_gzip_only(git_zstream *);
-void git_inflate_end(git_zstream *);
-int git_inflate(git_zstream *, int flush);
-
-void git_deflate_init(git_zstream *, int level);
-void git_deflate_init_gzip(git_zstream *, int level);
-void git_deflate_init_raw(git_zstream *, int level);
-void git_deflate_end(git_zstream *);
-int git_deflate_abort(git_zstream *);
-int git_deflate_end_gently(git_zstream *);
-int git_deflate(git_zstream *, int flush);
-unsigned long git_deflate_bound(git_zstream *, unsigned long);
 
 #if defined(DT_UNKNOWN) && !defined(NO_D_TYPE_IN_DIRENT)
 #define DTYPE(de)	((de)->d_type)
@@ -58,18 +23,6 @@ unsigned long git_deflate_bound(git_zstream *, unsigned long);
 #define DT_LNK		3
 #define DTYPE(de)	DT_UNKNOWN
 #endif
-
-/* unknown mode (impossible combination S_IFIFO|S_IFCHR) */
-#define S_IFINVALID     0030000
-
-/*
- * A "directory link" is a link to another git directory.
- *
- * The value 0160000 is not normally a valid mode, and
- * also just happens to be S_IFDIR + S_IFLNK
- */
-#define S_IFGITLINK	0160000
-#define S_ISGITLINK(m)	(((m) & S_IFMT) == S_IFGITLINK)
 
 /*
  * Some mode bits are also used internally for computations.
@@ -186,11 +139,8 @@ struct cache_entry {
 #error "CE_EXTENDED_FLAGS out of range"
 #endif
 
-#define S_ISSPARSEDIR(m) ((m) == S_IFDIR)
-
 /* Forward structure decls */
 struct pathspec;
-struct child_process;
 struct tree;
 
 /*
@@ -228,17 +178,6 @@ static inline unsigned create_ce_flags(unsigned stage)
 #define ce_mark_uptodate(ce) ((ce)->ce_flags |= CE_UPTODATE)
 #define ce_intent_to_add(ce) ((ce)->ce_flags & CE_INTENT_TO_ADD)
 
-#define ce_permissions(mode) (((mode) & 0100) ? 0755 : 0644)
-static inline unsigned int create_ce_mode(unsigned int mode)
-{
-	if (S_ISLNK(mode))
-		return S_IFLNK;
-	if (S_ISSPARSEDIR(mode))
-		return S_IFDIR;
-	if (S_ISDIR(mode) || S_ISGITLINK(mode))
-		return S_IFGITLINK;
-	return S_IFREG | ce_permissions(mode);
-}
 static inline unsigned int ce_mode_from_stat(const struct cache_entry *ce,
 					     unsigned int mode)
 {
@@ -264,16 +203,6 @@ static inline int ce_to_dtype(const struct cache_entry *ce)
 		return DT_LNK;
 	else
 		return DT_UNKNOWN;
-}
-static inline unsigned int canon_mode(unsigned int mode)
-{
-	if (S_ISREG(mode))
-		return S_IFREG | ce_permissions(mode);
-	if (S_ISLNK(mode))
-		return S_IFLNK;
-	if (S_ISDIR(mode))
-		return S_IFDIR;
-	return S_IFGITLINK;
 }
 
 static inline int ce_path_match(struct index_state *istate,
@@ -444,13 +373,6 @@ void prefetch_cache_entries(const struct index_state *istate,
 #ifdef USE_THE_INDEX_VARIABLE
 extern struct index_state the_index;
 #endif
-
-static inline enum object_type object_type(unsigned int mode)
-{
-	return S_ISDIR(mode) ? OBJ_TREE :
-		S_ISGITLINK(mode) ? OBJ_COMMIT :
-		OBJ_BLOB;
-}
 
 #define INIT_DB_QUIET 0x0001
 #define INIT_DB_EXIST_OK 0x0002
@@ -626,13 +548,6 @@ int has_racy_timestamp(struct index_state *istate);
 int ie_match_stat(struct index_state *, const struct cache_entry *, struct stat *, unsigned int);
 int ie_modified(struct index_state *, const struct cache_entry *, struct stat *, unsigned int);
 
-#define HASH_WRITE_OBJECT 1
-#define HASH_FORMAT_CHECK 2
-#define HASH_RENORMALIZE  4
-#define HASH_SILENT 8
-int index_fd(struct index_state *istate, struct object_id *oid, int fd, struct stat *st, enum object_type type, const char *path, unsigned flags);
-int index_path(struct index_state *istate, struct object_id *oid, const char *path, struct stat *st, unsigned flags);
-
 /*
  * Record to sd the data from st that we use to check whether a file
  * might have changed.
@@ -684,8 +599,6 @@ void set_alternate_index_output(const char *);
 extern int verify_index_checksum;
 extern int verify_ce_order;
 
-extern int quote_path_fully;
-
 #define MTIME_CHANGED	0x0001
 #define CTIME_CHANGED	0x0002
 #define OWNER_CHANGED	0x0004
@@ -694,234 +607,12 @@ extern int quote_path_fully;
 #define DATA_CHANGED    0x0020
 #define TYPE_CHANGED    0x0040
 
-/*
- * Return an abbreviated sha1 unique within this repository's object database.
- * The result will be at least `len` characters long, and will be NUL
- * terminated.
- *
- * The non-`_r` version returns a static buffer which remains valid until 4
- * more calls to repo_find_unique_abbrev are made.
- *
- * The `_r` variant writes to a buffer supplied by the caller, which must be at
- * least `GIT_MAX_HEXSZ + 1` bytes. The return value is the number of bytes
- * written (excluding the NUL terminator).
- *
- * Note that while this version avoids the static buffer, it is not fully
- * reentrant, as it calls into other non-reentrant git code.
- */
-const char *repo_find_unique_abbrev(struct repository *r, const struct object_id *oid, int len);
-int repo_find_unique_abbrev_r(struct repository *r, char *hex, const struct object_id *oid, int len);
-
-/*
- * Create the directory containing the named path, using care to be
- * somewhat safe against races. Return one of the scld_error values to
- * indicate success/failure. On error, set errno to describe the
- * problem.
- *
- * SCLD_VANISHED indicates that one of the ancestor directories of the
- * path existed at one point during the function call and then
- * suddenly vanished, probably because another process pruned the
- * directory while we were working.  To be robust against this kind of
- * race, callers might want to try invoking the function again when it
- * returns SCLD_VANISHED.
- *
- * safe_create_leading_directories() temporarily changes path while it
- * is working but restores it before returning.
- * safe_create_leading_directories_const() doesn't modify path, even
- * temporarily. Both these variants adjust the permissions of the
- * created directories to honor core.sharedRepository, so they are best
- * suited for files inside the git dir. For working tree files, use
- * safe_create_leading_directories_no_share() instead, as it ignores
- * the core.sharedRepository setting.
- */
-enum scld_error {
-	SCLD_OK = 0,
-	SCLD_FAILED = -1,
-	SCLD_PERMS = -2,
-	SCLD_EXISTS = -3,
-	SCLD_VANISHED = -4
-};
-enum scld_error safe_create_leading_directories(char *path);
-enum scld_error safe_create_leading_directories_const(const char *path);
-enum scld_error safe_create_leading_directories_no_share(char *path);
-
-int mkdir_in_gitdir(const char *path);
-
-int git_open_cloexec(const char *name, int flags);
-#define git_open(name) git_open_cloexec(name, O_RDONLY)
-
-/**
- * unpack_loose_header() initializes the data stream needed to unpack
- * a loose object header.
- *
- * Returns:
- *
- * - ULHR_OK on success
- * - ULHR_BAD on error
- * - ULHR_TOO_LONG if the header was too long
- *
- * It will only parse up to MAX_HEADER_LEN bytes unless an optional
- * "hdrbuf" argument is non-NULL. This is intended for use with
- * OBJECT_INFO_ALLOW_UNKNOWN_TYPE to extract the bad type for (error)
- * reporting. The full header will be extracted to "hdrbuf" for use
- * with parse_loose_header(), ULHR_TOO_LONG will still be returned
- * from this function to indicate that the header was too long.
- */
-enum unpack_loose_header_result {
-	ULHR_OK,
-	ULHR_BAD,
-	ULHR_TOO_LONG,
-};
-enum unpack_loose_header_result unpack_loose_header(git_zstream *stream,
-						    unsigned char *map,
-						    unsigned long mapsize,
-						    void *buffer,
-						    unsigned long bufsiz,
-						    struct strbuf *hdrbuf);
-
-/**
- * parse_loose_header() parses the starting "<type> <len>\0" of an
- * object. If it doesn't follow that format -1 is returned. To check
- * the validity of the <type> populate the "typep" in the "struct
- * object_info". It will be OBJ_BAD if the object type is unknown. The
- * parsed <len> can be retrieved via "oi->sizep", and from there
- * passed to unpack_loose_rest().
- */
-struct object_info;
-int parse_loose_header(const char *hdr, struct object_info *oi);
-
-/**
- * With in-core object data in "buf", rehash it to make sure the
- * object name actually matches "oid" to detect object corruption.
- *
- * A negative value indicates an error, usually that the OID is not
- * what we expected, but it might also indicate another error.
- */
-int check_object_signature(struct repository *r, const struct object_id *oid,
-			   void *map, unsigned long size,
-			   enum object_type type);
-
-/**
- * A streaming version of check_object_signature().
- * Try reading the object named with "oid" using
- * the streaming interface and rehash it to do the same.
- */
-int stream_object_signature(struct repository *r, const struct object_id *oid);
-
-int finalize_object_file(const char *tmpfile, const char *filename);
-
-/* Helper to check and "touch" a file */
-int check_and_freshen_file(const char *fn, int freshen);
-
-/* Convert to/from hex/sha1 representation */
-#define MINIMUM_ABBREV minimum_abbrev
-#define DEFAULT_ABBREV default_abbrev
-
-/* used when the code does not know or care what the default abbrev is */
-#define FALLBACK_DEFAULT_ABBREV 7
-
-struct object_context {
-	unsigned short mode;
-	/*
-	 * symlink_path is only used by get_tree_entry_follow_symlinks,
-	 * and only for symlinks that point outside the repository.
-	 */
-	struct strbuf symlink_path;
-	/*
-	 * If GET_OID_RECORD_PATH is set, this will record path (if any)
-	 * found when resolving the name. The caller is responsible for
-	 * releasing the memory.
-	 */
-	char *path;
-};
-
-int repo_get_oid(struct repository *r, const char *str, struct object_id *oid);
-__attribute__((format (printf, 2, 3)))
-int get_oidf(struct object_id *oid, const char *fmt, ...);
-int repo_get_oid_commit(struct repository *r, const char *str, struct object_id *oid);
-int repo_get_oid_committish(struct repository *r, const char *str, struct object_id *oid);
-int repo_get_oid_tree(struct repository *r, const char *str, struct object_id *oid);
-int repo_get_oid_treeish(struct repository *r, const char *str, struct object_id *oid);
-int repo_get_oid_blob(struct repository *r, const char *str, struct object_id *oid);
-int repo_get_oid_mb(struct repository *r, const char *str, struct object_id *oid);
-void maybe_die_on_misspelt_object_name(struct repository *repo,
-				       const char *name,
-				       const char *prefix);
-enum get_oid_result get_oid_with_context(struct repository *repo, const char *str,
-					 unsigned flags, struct object_id *oid,
-					 struct object_context *oc);
-
-typedef int each_abbrev_fn(const struct object_id *oid, void *);
-int repo_for_each_abbrev(struct repository *r, const char *prefix, each_abbrev_fn, void *);
-
-int set_disambiguate_hint_config(const char *var, const char *value);
-
-/*
- * This reads short-hand syntax that not only evaluates to a commit
- * object name, but also can act as if the end user spelled the name
- * of the branch from the command line.
- *
- * - "@{-N}" finds the name of the Nth previous branch we were on, and
- *   places the name of the branch in the given buf and returns the
- *   number of characters parsed if successful.
- *
- * - "<branch>@{upstream}" finds the name of the other ref that
- *   <branch> is configured to merge with (missing <branch> defaults
- *   to the current branch), and places the name of the branch in the
- *   given buf and returns the number of characters parsed if
- *   successful.
- *
- * If the input is not of the accepted format, it returns a negative
- * number to signal an error.
- *
- * If the input was ok but there are not N branch switches in the
- * reflog, it returns 0.
- */
-#define INTERPRET_BRANCH_LOCAL (1<<0)
-#define INTERPRET_BRANCH_REMOTE (1<<1)
-#define INTERPRET_BRANCH_HEAD (1<<2)
-struct interpret_branch_name_options {
-	/*
-	 * If "allowed" is non-zero, it is a treated as a bitfield of allowable
-	 * expansions: local branches ("refs/heads/"), remote branches
-	 * ("refs/remotes/"), or "HEAD". If no "allowed" bits are set, any expansion is
-	 * allowed, even ones to refs outside of those namespaces.
-	 */
-	unsigned allowed;
-
-	/*
-	 * If ^{upstream} or ^{push} (or equivalent) is requested, and the
-	 * branch in question does not have such a reference, return -1 instead
-	 * of die()-ing.
-	 */
-	unsigned nonfatal_dangling_mark : 1;
-};
-int repo_interpret_branch_name(struct repository *r,
-			       const char *str, int len,
-			       struct strbuf *buf,
-			       const struct interpret_branch_name_options *options);
-
 int base_name_compare(const char *name1, size_t len1, int mode1,
 		      const char *name2, size_t len2, int mode2);
 int df_name_compare(const char *name1, size_t len1, int mode1,
 		    const char *name2, size_t len2, int mode2);
 int name_compare(const char *name1, size_t len1, const char *name2, size_t len2);
 int cache_name_stage_compare(const char *name1, int len1, int stage1, const char *name2, int len2, int stage2);
-
-void *read_object_with_reference(struct repository *r,
-				 const struct object_id *oid,
-				 enum object_type required_type,
-				 unsigned long *size,
-				 struct object_id *oid_ret);
-
-struct object *repo_peel_to_type(struct repository *r,
-				 const char *name, int namelen,
-				 struct object *o, enum object_type);
-
-const char *git_editor(void);
-const char *git_sequence_editor(void);
-const char *git_pager(int stdout_is_tty);
-int is_terminal_dumb(void);
 
 struct cache_def {
 	struct strbuf path;
@@ -959,35 +650,14 @@ struct pack_entry {
 	struct packed_git *p;
 };
 
-/*
- * Set this to 0 to prevent oid_object_info_extended() from fetching missing
- * blobs. This has a difference only if extensions.partialClone is set.
- *
- * Its default value is 1.
- */
-extern int fetch_if_missing;
-
 /* Dumb servers support */
 int update_server_info(int);
-
-extern const char *git_mailmap_file;
-extern const char *git_mailmap_blob;
 
 #define COPY_READ_ERROR (-2)
 #define COPY_WRITE_ERROR (-3)
 int copy_fd(int ifd, int ofd);
 int copy_file(const char *dst, const char *src, int mode);
 int copy_file_with_time(const char *dst, const char *src, int mode);
-
-/* pager.c */
-void setup_pager(void);
-int pager_in_use(void);
-extern int pager_use_color;
-int term_columns(void);
-void term_clear_line(void);
-int decimal_width(uintmax_t);
-int check_pager_config(const char *cmd);
-void prepare_pager_args(struct child_process *, const char *pager);
 
 /* base85 */
 int decode_85(char *dst, const char *line, int linelen);

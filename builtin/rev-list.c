@@ -10,6 +10,8 @@
 #include "list-objects-filter.h"
 #include "list-objects-filter-options.h"
 #include "object.h"
+#include "object-name.h"
+#include "object-file.h"
 #include "object-store.h"
 #include "pack.h"
 #include "pack-bitmap.h"

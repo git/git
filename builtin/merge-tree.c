@@ -8,6 +8,7 @@
 #include "commit.h"
 #include "commit-reach.h"
 #include "merge-ort.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "parse-options.h"
 #include "repository.h"

@@ -12,6 +12,7 @@
 #include "progress.h"
 #include "replace-object.h"
 #include "tag.h"
+#include "trace2.h"
 
 #define BUILTIN_COMMIT_GRAPH_VERIFY_USAGE \
 	N_("git commit-graph verify [--object-dir <dir>] [--shallow] [--[no-]progress]")

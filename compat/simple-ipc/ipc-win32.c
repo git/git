@@ -5,6 +5,8 @@
 #include "strbuf.h"
 #include "pkt-line.h"
 #include "thread-utils.h"
+#include "trace.h"
+#include "trace2.h"
 #include "accctrl.h"
 #include "aclapi.h"
 

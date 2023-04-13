@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "alloc.h"
 #include "repository.h"
 #include "config.h"
@@ -17,6 +17,7 @@
 #include "remote.h"
 #include "run-command.h"
 #include "connect.h"
+#include "trace2.h"
 #include "transport.h"
 #include "version.h"
 #include "oid-array.h"

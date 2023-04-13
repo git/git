@@ -8,6 +8,7 @@
 #include "builtin.h"
 #include "color.h"
 #include "strvec.h"
+#include "object-name.h"
 #include "parse-options.h"
 #include "dir.h"
 #include "commit-slab.h"

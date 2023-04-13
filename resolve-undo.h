@@ -1,7 +1,12 @@
 #ifndef RESOLVE_UNDO_H
 #define RESOLVE_UNDO_H
 
-#include "cache.h"
+struct cache_entry;
+struct index_state;
+struct pathspec;
+struct string_list;
+
+#include "hash.h"
 
 struct resolve_undo_info {
 	unsigned int mode[3];

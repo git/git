@@ -7,11 +7,13 @@
 
 #define USE_THE_INDEX_VARIABLE
 #include "cache.h"
+#include "advice.h"
 #include "config.h"
 #include "lockfile.h"
 #include "cache-tree.h"
 #include "color.h"
 #include "dir.h"
+#include "editor.h"
 #include "environment.h"
 #include "builtin.h"
 #include "diff.h"
@@ -26,6 +28,7 @@
 #include "log-tree.h"
 #include "strbuf.h"
 #include "utf8.h"
+#include "object-name.h"
 #include "parse-options.h"
 #include "string-list.h"
 #include "rerere.h"

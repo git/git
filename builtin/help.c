@@ -6,6 +6,7 @@
 #include "builtin.h"
 #include "exec-cmd.h"
 #include "gettext.h"
+#include "pager.h"
 #include "parse-options.h"
 #include "run-command.h"
 #include "config-list.h"

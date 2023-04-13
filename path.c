@@ -18,6 +18,7 @@
 #include "object-store.h"
 #include "lockfile.h"
 #include "exec-cmd.h"
+#include "wrapper.h"
 
 static int get_st_mode_bits(const char *path, int *mode)
 {

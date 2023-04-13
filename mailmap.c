@@ -1,7 +1,8 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "environment.h"
 #include "string-list.h"
 #include "mailmap.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "setup.h"
 

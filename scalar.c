@@ -2,7 +2,7 @@
  * The Scalar command-line interface.
  */
 
-#include "cache.h"
+#include "git-compat-util.h"
 #include "abspath.h"
 #include "gettext.h"
 #include "parse-options.h"
@@ -16,6 +16,7 @@
 #include "packfile.h"
 #include "help.h"
 #include "setup.h"
+#include "trace2.h"
 
 static void setup_enlistment_directory(int argc, const char **argv,
 				       const char * const *usagestr,

@@ -7,6 +7,7 @@
 #include "thread-utils.h"
 #include "version.h"
 #include "trace.h"
+#include "trace2.h"
 #include "trace2/tr2_cfg.h"
 #include "trace2/tr2_cmd_name.h"
 #include "trace2/tr2_ctr.h"

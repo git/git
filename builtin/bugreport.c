@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "abspath.h"
+#include "editor.h"
 #include "gettext.h"
 #include "parse-options.h"
 #include "strbuf.h"
@@ -8,6 +9,7 @@
 #include "hook.h"
 #include "hook-list.h"
 #include "diagnose.h"
+#include "object-file.h"
 #include "setup.h"
 #include "wrapper.h"
 

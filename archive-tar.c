@@ -5,6 +5,7 @@
 #include "alloc.h"
 #include "config.h"
 #include "gettext.h"
+#include "git-zlib.h"
 #include "hex.h"
 #include "tar.h"
 #include "archive.h"

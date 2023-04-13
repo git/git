@@ -1,8 +1,10 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "object-name.h"
 #include "remote.h"
 #include "refspec.h"
 #include "checkout.h"
 #include "config.h"
+#include "strbuf.h"
 
 struct tracking_name_data {
 	/* const */ char *src_ref;
