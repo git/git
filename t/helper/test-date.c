@@ -81,7 +81,7 @@ static void parse_approxidate(const char **argv)
 {
 	for (; *argv; argv++) {
 		timestamp_t t;
-		t = approxidate_relative(*argv);
+		t = approxidate(*argv);
 		printf("%s -> %s\n", *argv, show_date(t, 0, DATE_MODE(ISO8601)));
 	}
 }
@@ -90,7 +90,7 @@ static void parse_approx_timestamp(const char **argv)
 {
 	for (; *argv; argv++) {
 		timestamp_t t;
-		t = approxidate_relative(*argv);
+		t = approxidate(*argv);
 		printf("%s -> %"PRItime"\n", *argv, t);
 	}
 }
