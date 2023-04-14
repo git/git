@@ -336,4 +336,29 @@ test_expect_success '--geometric --with-midx with no local objects' '
 	test_dir_is_empty member/$packdir
 '
 
+test_expect_success '--geometric with same pack in main and alternate ODB' '
+	test_when_finished "rm -fr shared member" &&
+
+	# Create a repository with a single packfile that acts as alternate
+	# object database.
+	git init shared &&
+	test_commit -C shared "shared-objects" &&
+	git -C shared repack -ad &&
+
+	# We create the member repository as an exact copy so that it has the
+	# same packfile.
+	cp -r shared member &&
+	test-tool path-utils real_path shared/.git/objects >member/.git/objects/info/alternates &&
+	find shared/.git/objects -type f >expected-files &&
+
+	# Verify that we can repack objects as expected without observing any
+	# error. Having the same packfile in both ODBs used to cause an error
+	# in git-pack-objects(1).
+	git -C member repack --geometric 2 2>err &&
+	test_must_be_empty err &&
+	# Nothing should have changed.
+	find shared/.git/objects -type f >actual-files &&
+	test_cmp expected-files actual-files
+'
+
 test_done

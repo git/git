@@ -3344,7 +3344,9 @@ static void read_packs_list_from_stdin(void)
 	}
 
 	string_list_sort(&include_packs);
+	string_list_remove_duplicates(&include_packs, 0);
 	string_list_sort(&exclude_packs);
+	string_list_remove_duplicates(&exclude_packs, 0);
 
 	for (p = get_all_packs(the_repository); p; p = p->next) {
 		const char *pack_name = pack_basename(p);
