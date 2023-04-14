@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Apr 2023, #03; Tue, 11)
+Subject: What's cooking in git.git (Apr 2023, #04; Fri, 14)
 X-master-at: 9857273be005833c71e2d16ba48e193113e12276
-X-next-at: 15816b0a8ae864e36a03af255e1d048f21d56b4d
+X-next-at: 2798986c608c3adb1834690c0b9fd90882561004
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Apr 2023, #03; Tue, 11)
+What's cooking in git.git (Apr 2023, #04; Fri, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -45,186 +45,126 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* ar/adjust-tests-for-the-index-fallout (2023-03-31) 2 commits
-  (merged to 'next' on 2023-04-06 at 8a9dfa25d4)
- + t2107: fix mention of the_index.cache_changed
- + t3060: fix mention of function prune_index
-
- Comment updates.
- source: <20230331143604.82040-2-rybak.a.v@gmail.com>
-
-
-* dw/doc-submittingpatches-grammofix (2023-04-05) 1 commit
-  (merged to 'next' on 2023-04-06 at 1c48670236)
- + SubmittingPatches: clarify MUA discussion with "the"
-
- Grammofix.
- source: <ZC0yey+S+OD/S2tt@trent-reznor>
-
-
-* fc/doc-manpage-base-url-fix (2023-04-05) 1 commit
-  (merged to 'next' on 2023-04-07 at c764614b80)
- + doc: remove manpage-base-url workaround
-
- Modernize manpage generation toolchain.
- source: <20230322000815.132128-1-felipe.contreras@gmail.com>
-
-
-* jc/clone-object-format-from-void (2023-04-05) 1 commit
-  (merged to 'next' on 2023-04-07 at 78eb68f3fa)
- + clone: propagate object-format when cloning from void
-
- "git clone" from an empty repository learned to propagate the
- choice of the hash algorithm from the source repository to the
- newly created repository.
- source: <xmqq355euj2i.fsf@gitster.g>
-
-
-* jc/spell-id-in-both-caps-in-message-id (2023-04-03) 1 commit
-  (merged to 'next' on 2023-04-06 at 17f4690220)
- + e-mail workflow: Message-ID is spelled with ID in both capital letters
-
- Consistently spell "Message-ID" as such, not "Message-Id".
- source: <xmqqsfhgnmqg.fsf@gitster.g>
-
-
-* jk/use-perl-path-consistently (2023-04-06) 1 commit
-  (merged to 'next' on 2023-04-07 at 3aa36fcb80)
- + t/lib-httpd: pass PERL_PATH to CGI scripts
-
- Tests had a few places where we ignored PERL_PATH and blindly used
- /usr/bin/perl, which have been corrected.
- source: <20230406093602.GD2215039@coredump.intra.peff.net>
-
-
-* jx/cap-object-info-uninitialized-fix (2023-04-03) 1 commit
-  (merged to 'next' on 2023-04-06 at 5a8b6068f3)
- + object-info: init request_info before reading arg
-
- Correct use of an uninitialized structure member.
- source: <20230402130557.17662-1-worldhello.net@gmail.com>
-
-
-* ws/sparse-check-rules (2023-03-27) 2 commits
-  (merged to 'next' on 2023-04-06 at 3fd16233c7)
- + builtin/sparse-checkout: add check-rules command
- + builtin/sparse-checkout: remove NEED_WORK_TREE flag
-
- "git sparse-checkout" command learns a debugging aid for the sparse
- rule definitions.
- source: <pull.1488.v2.git.1679903703.gitgitgadget@gmail.com>
-
---------------------------------------------------
 [New Topics]
 
-* la/mfc-markup-fix (2023-04-06) 1 commit
-  (merged to 'next' on 2023-04-10 at 05415e1c90)
- + MyFirstContribution: render literal *
+* gc/doc-cocci-updates (2023-04-12) 2 commits
+ - cocci: codify authoring and reviewing practices
+ - cocci: add headings to and reword README
 
- Documentation mark-up fix.
+ Update documentation regarding Coccinelle patches.
 
- Will merge to 'master'.
- source: <pull.1510.git.1680661709616.gitgitgadget@gmail.com>
+ Comments?
+ source: <pull.1495.git.git.1681329955.gitgitgadget@gmail.com>
 
 
-* ar/t2024-checkout-output-fix (2023-04-10) 1 commit
- - t2024: fix loose/strict local base branch DWIM test
+* jk/protocol-cap-parse-fix (2023-04-14) 7 commits
+ - v0 protocol: use size_t for capability length/offset
+ - t5512: test "ls-remote --heads --symref" filtering with v0 and v2
+ - t5512: allow any protocol version for filtered symref test
+ - t5512: add v2 support for "ls-remote --symref" test
+ - v0 protocol: fix sha1/sha256 confusion for capabilities^{}
+ - t5512: stop referring to "v1" protocol
+ - v0 protocol: fix infinite loop when parsing multi-valued capabilities
 
- Test fix.
+ The code to parse capability list for v0 on-wire protocol fell into
+ an infinite loop when a capability appears multiple times, which
+ has been corrected.
 
  Will merge to 'next'.
- source: <20230408205450.569548-1-rybak.a.v@gmail.com>
+ source: <20230414212404.GA639653@coredump.intra.peff.net>
 
 
-* fc/doc-stop-using-manversion (2023-04-10) 1 commit
- - doc: simplify man version
+* kh/doc-interpret-trailers-updates (2023-04-12) 4 commits
+ - doc: interpret-trailers: fix example
+ - doc: interpret-trailers: don’t use deprecated config
+ - doc: interpret-trailers: use input redirection
+ - doc: interpret-trailers: don’t use heredoc in examples
 
- Doc build simplification.
+ Doc update.
+
+ Expecting a reroll.
+ cf. <xmqqcz487qds.fsf@gitster.g>, <xmqqjzyg7qdw.fsf@gitster.g>
+ source: <cover.1681326818.git.code@khaugsbakk.name>
+
+
+* ps/fix-geom-repack-with-alternates (2023-04-14) 10 commits
+ - repack: disable writing bitmaps when doing a local repack
+ - repack: honor `-l` when calculating pack geometry
+ - t/helper: allow chmtime to print verbosely without modifying mtime
+ - pack-objects: extend test coverage of `--stdin-packs` with alternates
+ - pack-objects: fix error when same packfile is included and excluded
+ - pack-objects: fix error when packing same pack twice
+ - pack-objects: split out `--stdin-packs` tests into separate file
+ - repack: fix generating multi-pack-index with only non-local packs
+ - repack: fix trying to use preferred pack in alternates
+ - midx: fix segfault with no packs and invalid preferred pack
+
+ Geometric repacking ("git repack --geometric=<n>") in a repository
+ that borrows from an alternate object database had various corner
+ case bugs, which have been corrected.
+
+ Will merge to 'next'.
+ source: <cover.1681452028.git.ps@pks.im>
+
+
+* rj/send-email-validate-hook-count-messages (2023-04-14) 1 commit
+ - send-email: export patch counters in validate environment
+
+ The sendemail-validate validate hook learned to pass the total
+ number of input files and where in the sequence each invocation is
+ via environment variables.
+
+ Will merge to 'next'.
+ source: <20230414155249.667180-1-robin@jarry.cc>
+
+
+* tb/pack-revindex-on-disk (2023-04-13) 7 commits
+ - t: invert `GIT_TEST_WRITE_REV_INDEX`
+ - config: enable `pack.writeReverseIndex` by default
+ - pack-revindex: introduce `pack.readReverseIndex`
+ - pack-revindex: introduce GIT_TEST_REV_INDEX_DIE_ON_DISK
+ - pack-revindex: make `load_pack_revindex` take a repository
+ - t5325: mark as leak-free
+ - pack-write.c: plug a leak in stage_tmp_packfiles()
+
+ The on-disk reverse index that allows mapping from the pack offset
+ to the object name for the object stored at the offset has been
+ enabled by default.
 
  Will merge to 'next'?
- source: <20230408001829.11031-1-felipe.contreras@gmail.com>
+ source: <cover.1681338013.git.me@ttaylorr.com>
 
 
-* rn/sparse-diff-index (2023-04-10) 1 commit
- - diff-index: enable sparse index
+* fc/doc-use-datestamp-in-commit (2023-04-14) 3 commits
+ - doc: set actual revdate for manpages
+ - Merge branch 'fc/doc-stop-using-manversion' into fc/doc-use-datestamp-in-commit
+ - Merge branch 'fc/remove-header-workarounds-for-asciidoc' into fc/doc-use-datestamp-in-commit
+ (this branch uses fc/doc-stop-using-manversion and fc/remove-header-workarounds-for-asciidoc.)
 
- "git diff-index" command has been taught to work better with the
- sparse index.
-
- Comments?
- source: <20230408112342.404318-1-nanth.raghul@gmail.com>
-
-
-* rs/get-tar-commit-id-use-defined-const (2023-04-10) 1 commit
- - get-tar-commit-id: use TYPEFLAG_GLOBAL_HEADER instead of magic value
-
- Code clean-up to replace a hardcoded constant with a CPP macro.
-
- Will merge to 'next'.
- source: <79497392-0296-2ae3-2560-1f90c1a309b5@web.de>
+ source: <20230413074722.71260-1-felipe.contreras@gmail.com>
 
 
-* rs/remove-approxidate-relative (2023-04-10) 1 commit
- - date: remove approxidate_relative()
+* pb/complete-and-document-auto-merge-and-friends (2023-04-14) 5 commits
+ - completion: complete AUTO_MERGE
+ - Documentation: document AUTO_MERGE
+ - git-merge.txt: modernize word choice in "True merge" section
+ - completion: complete REVERT_HEAD and BISECT_HEAD
+ - revisions.txt: document more special refs
 
- The approxidate() API has been simplified by losing an extra
- function that did the same thing as another one.
-
- Will merge to 'next'.
- source: <f5b9a290-7cec-7a83-660b-e15494d2cdc8@web.de>
-
-
-* rs/userdiff-multibyte-regex (2023-04-07) 1 commit
- - userdiff: support regexec(3) with multi-byte support
-
- The userdiff regexp patterns for various filetypes that are built
- into the system have been updated to avoid triggering regexp errors
- from UTF-8 aware regex engines.
-
- Will merge to 'next'.
- source: <7327ac06-d5da-ec53-543e-78e7729e78bb@web.de>
+ source: <pull.1515.git.1681495119.gitgitgadget@gmail.com>
 
 
-* es/recurse-submodules-option-is-a-bool (2023-04-10) 1 commit
- - usage: clarify --recurse-submodules as a boolean
+* tb/ban-strtok (2023-04-14) 5 commits
+ - banned.h: mark `strtok()`, `strtok_r()` as banned
+ - t/helper/test-json-writer.c: avoid using `strtok()`
+ - t/helper/test-oidmap.c: avoid using `strtok()`
+ - t/helper/test-hashmap.c: avoid using `strtok()`
+ - string-list: introduce `string_list_split_in_place_multi()`
 
- The "--[no-]recurse-submodules" option of "git checkout" and others
- supported an undocumented syntax --recurse-submodules=<value> where
- the value can spell a Boolean in various ways.  The support for the
- syntax is being dropped.
-
- Comments?
- source: <ZDSTFwMFO7vbj/du@google.com>
-
-
-* gc/better-error-when-local-clone-fails-with-symlink (2023-04-11) 1 commit
- - clone: error specifically with --local and symlinked objects
-
- "git clone --local" stops copying from an original repository that
- has symbolic links inside its $GIT_DIR; an error message when that
- happens has been updated.
-
- Will merge to 'next'.
- source: <pull.1488.v2.git.git.1681165130765.gitgitgadget@gmail.com>
+ source: <cover.1681428696.git.me@ttaylorr.com>
 
 --------------------------------------------------
 [Stalled]
-
-* ed/fsmonitor-inotify (2022-12-13) 6 commits
- - fsmonitor: update doc for Linux
- - fsmonitor: test updates
- - fsmonitor: enable fsmonitor for Linux
- - fsmonitor: implement filesystem change listener for Linux
- - fsmonitor: determine if filesystem is local or remote
- - fsmonitor: prepare to share code between Mac OS and Linux
-
- Bundled fsmonitor for Linux using inotify API.
-
- What's the status of this one?
- source: <pull.1352.v5.git.git.1670882286.gitgitgadget@gmail.com>
-
 
 * ja/worktree-orphan (2023-01-13) 4 commits
  - worktree add: add hint to direct users towards --orphan
@@ -296,15 +236,104 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
-* rj/sendemail-validate-series-hook (2023-04-05) 1 commit
- - hooks: add sendemail-validate-series
+* la/mfc-markup-fix (2023-04-06) 1 commit
+  (merged to 'next' on 2023-04-10 at 05415e1c90)
+ + MyFirstContribution: render literal *
 
- "git send-email" learns a new hook that takes the entire set of
- patch files from its standard input to validate them in one go,
- instead of getting called once per each file.
+ Documentation mark-up fix.
 
- Comments?
- source: <20230405231305.96996-1-robin@jarry.cc>
+ Will merge to 'master'.
+ source: <pull.1510.git.1680661709616.gitgitgadget@gmail.com>
+
+
+* ar/t2024-checkout-output-fix (2023-04-10) 1 commit
+  (merged to 'next' on 2023-04-13 at a35a043d6c)
+ + t2024: fix loose/strict local base branch DWIM test
+
+ Test fix.
+
+ Will merge to 'master'.
+ source: <20230408205450.569548-1-rybak.a.v@gmail.com>
+
+
+* fc/doc-stop-using-manversion (2023-04-10) 1 commit
+  (merged to 'next' on 2023-04-14 at 0800fe5ab4)
+ + doc: simplify man version
+ (this branch is used by fc/doc-use-datestamp-in-commit.)
+
+ Doc build simplification.
+
+ Will merge to 'master'.
+ source: <20230408001829.11031-1-felipe.contreras@gmail.com>
+
+
+* rn/sparse-diff-index (2023-04-10) 1 commit
+ - diff-index: enable sparse index
+
+ "git diff-index" command has been taught to work better with the
+ sparse index.
+
+ Expecting a reroll.
+ cf. <62821012-4fc3-5ad8-695c-70f7ab14a8c9@github.com>
+ source: <20230408112342.404318-1-nanth.raghul@gmail.com>
+
+
+* rs/get-tar-commit-id-use-defined-const (2023-04-10) 1 commit
+  (merged to 'next' on 2023-04-13 at ad62b4545a)
+ + get-tar-commit-id: use TYPEFLAG_GLOBAL_HEADER instead of magic value
+
+ Code clean-up to replace a hardcoded constant with a CPP macro.
+
+ Will merge to 'master'.
+ source: <79497392-0296-2ae3-2560-1f90c1a309b5@web.de>
+
+
+* rs/remove-approxidate-relative (2023-04-10) 1 commit
+  (merged to 'next' on 2023-04-13 at bd7df5f98c)
+ + date: remove approxidate_relative()
+
+ The approxidate() API has been simplified by losing an extra
+ function that did the same thing as another one.
+
+ Will merge to 'master'.
+ source: <f5b9a290-7cec-7a83-660b-e15494d2cdc8@web.de>
+
+
+* rs/userdiff-multibyte-regex (2023-04-07) 1 commit
+  (merged to 'next' on 2023-04-13 at 348908c03c)
+ + userdiff: support regexec(3) with multi-byte support
+
+ The userdiff regexp patterns for various filetypes that are built
+ into the system have been updated to avoid triggering regexp errors
+ from UTF-8 aware regex engines.
+
+ Will merge to 'master'.
+ source: <7327ac06-d5da-ec53-543e-78e7729e78bb@web.de>
+
+
+* es/recurse-submodules-option-is-a-bool (2023-04-10) 1 commit
+ - usage: clarify --recurse-submodules as a boolean
+
+ The "--[no-]recurse-submodules" option of "git checkout" and others
+ supported an undocumented syntax --recurse-submodules=<value> where
+ the value can spell a Boolean in various ways.  The support for the
+ syntax is being dropped.
+
+ Expecting a reroll.
+ cf. <ZDSTFwMFO7vbj/du@google.com>
+ source: <ZDSTFwMFO7vbj/du@google.com>
+
+
+* gc/better-error-when-local-clone-fails-with-symlink (2023-04-11) 1 commit
+  (merged to 'next' on 2023-04-13 at fff15efe05)
+ + clone: error specifically with --local and symlinked objects
+
+ "git clone --local" stops copying from an original repository that
+ has symbolic links inside its $GIT_DIR; an error message when that
+ happens has been updated.
+
+ Will merge to 'master'.
+ source: <pull.1488.v2.git.git.1681165130765.gitgitgadget@gmail.com>
 
 
 * tk/mergetool-gui-default-config (2023-04-05) 1 commit
@@ -334,6 +363,7 @@ Release tarballs are available at:
 * fc/remove-header-workarounds-for-asciidoc (2023-04-05) 1 commit
   (merged to 'next' on 2023-04-10 at f08eab44f2)
  + doc: asciidoc: remove custom header macro
+ (this branch is used by fc/doc-use-datestamp-in-commit.)
 
  Doc toolchain update to remove old workaround for AsciiDoc.
 
@@ -341,30 +371,35 @@ Release tarballs are available at:
  source: <20230323221523.52472-1-felipe.contreras@gmail.com>
 
 
-* ow/ref-filter-omit-empty (2023-04-07) 1 commit
- - branch, for-each-ref, tag: add option to omit empty lines
+* ow/ref-filter-omit-empty (2023-04-13) 1 commit
+  (merged to 'next' on 2023-04-14 at 2798986c60)
+ + branch, for-each-ref, tag: add option to omit empty lines
 
  "git branch --format=..." and "git format-patch --format=..."
  learns "--omit-empty" to hide refs that whose formatting result
  becomes an empty string from the output.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <20230407175316.6404-1-oystwa@gmail.com>
 
 
 * rn/sparse-describe (2023-04-03) 1 commit
- - describe: enable sparse index for describe
+  (merged to 'next' on 2023-04-14 at 9699cfad2c)
+ + describe: enable sparse index for describe
 
  "git describe --dirty" learns to work better with sparse-index.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <20230403164749.246001-1-nanth.raghul@gmail.com>
 
 
 * ah/format-patch-thread-doc (2023-04-03) 1 commit
- - format-patch: correct documentation of --thread without an argument
+  (merged to 'next' on 2023-04-14 at acf141a832)
+ + format-patch: correct documentation of --thread without an argument
 
  Doc update.
+
+ Will merge to 'master'.
  source: <20230403040724.642513-1-alexhenrie24@gmail.com>
 
 
@@ -378,39 +413,41 @@ Release tarballs are available at:
 
  Test cleanup.
 
- Will merge to 'next'?
+ Expecting a reroll.
+ cf. <6d572a02-0e20-1cf6-db6c-7306ac912049@gmail.com>
  source: <20230403223338.468025-1-rybak.a.v@gmail.com>
 
 
 * en/header-split-cache-h (2023-04-11) 24 commits
- - mailmap, quote: move declarations of global vars to correct unit
- - treewide: reduce includes of cache.h in other headers
- - treewide: remove double forward declaration of read_in_full
- - cache.h: remove unnecessary includes
- - treewide: remove cache.h inclusion due to pager.h changes
- - pager.h: move declarations for pager.c functions from cache.h
- - treewide: remove cache.h inclusion due to editor.h changes
- - editor: move editor-related functions and declarations into common file
- - treewide: remove cache.h inclusion due to object.h changes
- - object.h: move some inline functions and defines from cache.h
- - treewide: remove cache.h inclusion due to object-file.h changes
- - object-file.h: move declarations for object-file.c functions from cache.h
- - treewide: remove cache.h inclusion due to git-zlib changes
- - git-zlib: move declarations for git-zlib functions from cache.h
- - treewide: remove cache.h inclusion due to object-name.h changes
- - object-name.h: move declarations for object-name.c functions from cache.h
- - treewide: remove unnecessary cache.h inclusion
- - treewide: be explicit about dependence on mem-pool.h
- - treewide: be explicit about dependence on oid-array.h
- - treewide: be explicit about dependence on pack-revindex.h
- - treewide: be explicit about dependence on convert.h
- - treewide: be explicit about dependence on advice.h
- - treewide: be explicit about dependence on trace.h & trace2.h
- - Merge branch 'ab/remove-implicit-use-of-the-repository' into en/header-split-cache-h
+  (merged to 'next' on 2023-04-13 at b9afefff0b)
+ + mailmap, quote: move declarations of global vars to correct unit
+ + treewide: reduce includes of cache.h in other headers
+ + treewide: remove double forward declaration of read_in_full
+ + cache.h: remove unnecessary includes
+ + treewide: remove cache.h inclusion due to pager.h changes
+ + pager.h: move declarations for pager.c functions from cache.h
+ + treewide: remove cache.h inclusion due to editor.h changes
+ + editor: move editor-related functions and declarations into common file
+ + treewide: remove cache.h inclusion due to object.h changes
+ + object.h: move some inline functions and defines from cache.h
+ + treewide: remove cache.h inclusion due to object-file.h changes
+ + object-file.h: move declarations for object-file.c functions from cache.h
+ + treewide: remove cache.h inclusion due to git-zlib changes
+ + git-zlib: move declarations for git-zlib functions from cache.h
+ + treewide: remove cache.h inclusion due to object-name.h changes
+ + object-name.h: move declarations for object-name.c functions from cache.h
+ + treewide: remove unnecessary cache.h inclusion
+ + treewide: be explicit about dependence on mem-pool.h
+ + treewide: be explicit about dependence on oid-array.h
+ + treewide: be explicit about dependence on pack-revindex.h
+ + treewide: be explicit about dependence on convert.h
+ + treewide: be explicit about dependence on advice.h
+ + treewide: be explicit about dependence on trace.h & trace2.h
+ + Merge branch 'ab/remove-implicit-use-of-the-repository' into en/header-split-cache-h
 
  Header clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1509.v3.git.1681182060.gitgitgadget@gmail.com>
 
 
@@ -476,10 +513,13 @@ Release tarballs are available at:
 
 
 * rs/archive-from-subdirectory-fixes (2023-03-24) 1 commit
- - archive: improve support for running in subdirectory
+  (merged to 'next' on 2023-04-14 at 950f9ed807)
+ + archive: improve support for running in subdirectory
 
  "git archive" run from a subdirectory mishandled attributes and
  paths outside the current directory.
+
+ Will merge to 'master'.
  source: <7c33b01b-7b2a-25fa-9a66-1e65cd12bc84@web.de>
 
 
@@ -549,36 +589,9 @@ Release tarballs are available at:
 
  Teach "diff-files" not to expand sparse-index unless needed.
 
- Comments?
+ Expecting a reroll.
+ cf. <c382017a-8c65-24ba-5092-6b46428d8b9b@github.com>
  source: <20230322161820.3609-1-cheskaqiqi@gmail.com>
-
-
-* my/wildmatch-cleanups (2023-02-27) 5 commits
- . wildmatch: more cleanups after killing uchar
- . wildmatch: use char instead of uchar
- . wildmatch: remove NEGATE_CLASS(2) macros with trivial refactoring
- . wildmatch: remove IS*() macros
- . git-compat-util: add isblank() and isgraph()
-
- Code clean-up.
-
- Ejected as it conflicts with pw/wildmatch-fixes topic.
- source: <20230226115021.1681834-1-masahiroy@kernel.org>
-
-
-* cw/forbid-use-of-gitlink-outside-submodules (2023-02-28) 6 commits
- . add: reject nested repositories
- . tests: remove duplicate .gitmodules path
- . tests: use `git submodule add` and fix expected status
- . tests: use `git submodule add` and fix expected diffs
- . tests: Use `git submodule add` instead of `git add`
- . t4041, t4060: modernize test style
-
- Forbid "git add dir" from adding a gitlink to the index.
-
- Comments?
- Seems to break tests when merged to 'seen'.
- source: <20230228185253.2356546-1-calvinwan@google.com>
 
 
 * tk/pull-conflict-suggest-rebase-merge-not-rebase-true (2023-02-13) 1 commit
@@ -605,7 +618,7 @@ Release tarballs are available at:
  Error messages given when working on an unborn branch that is
  checked out in another worktree have been improved.
 
- Kicked out of 'next' to replace with an updated version.
+ Will merge to 'next'?
  source: <f8e6447e-5cd3-98fa-f567-39e1c60dacb0@gmail.com>
 
 
@@ -678,3 +691,58 @@ Release tarballs are available at:
  cf. <CAFySSZDk05m6gU5-V1R+y3YnQ5PPduVW54+_gjBwD0rmacsLsw@mail.gmail.com>
  cf. <230307.865ybc273g.gmgdl@evledraar.gmail.com>
  source: <20230302215237.1473444-1-calvinwan@google.com>
+
+--------------------------------------------------
+[Discarded]
+
+* ed/fsmonitor-inotify (2022-12-13) 6 commits
+ . fsmonitor: update doc for Linux
+ . fsmonitor: test updates
+ . fsmonitor: enable fsmonitor for Linux
+ . fsmonitor: implement filesystem change listener for Linux
+ . fsmonitor: determine if filesystem is local or remote
+ . fsmonitor: prepare to share code between Mac OS and Linux
+
+ Bundled fsmonitor for Linux using inotify API.
+
+ Seems to break asan job at CI when merged to 'seen'.
+ cf. <xmqqzg7d8xn2.fsf@gitster.g>
+ source: <pull.1352.v5.git.git.1670882286.gitgitgadget@gmail.com>
+
+
+* rj/sendemail-validate-series-hook (2023-04-05) 1 commit
+ . hooks: add sendemail-validate-series
+
+ "git send-email" learns a new hook that takes the entire set of
+ patch files from its standard input to validate them in one go,
+ instead of getting called once per each file.
+
+ Superseded by the rj/send-email-validate-hook-count-messages topic.
+ source: <20230405231305.96996-1-robin@jarry.cc>
+
+
+* my/wildmatch-cleanups (2023-02-27) 5 commits
+ . wildmatch: more cleanups after killing uchar
+ . wildmatch: use char instead of uchar
+ . wildmatch: remove NEGATE_CLASS(2) macros with trivial refactoring
+ . wildmatch: remove IS*() macros
+ . git-compat-util: add isblank() and isgraph()
+
+ Code clean-up.
+
+ Discarded without prejudice after more than 6 weeks of inactivity.
+ source: <20230226115021.1681834-1-masahiroy@kernel.org>
+
+
+* cw/forbid-use-of-gitlink-outside-submodules (2023-02-28) 6 commits
+ . add: reject nested repositories
+ . tests: remove duplicate .gitmodules path
+ . tests: use `git submodule add` and fix expected status
+ . tests: use `git submodule add` and fix expected diffs
+ . tests: Use `git submodule add` instead of `git add`
+ . t4041, t4060: modernize test style
+
+ Forbid "git add dir" from adding a gitlink to the index.
+
+ Discarded without prejudice after more than 6 weeks of inactivity.
+ source: <20230228185253.2356546-1-calvinwan@google.com>
