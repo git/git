@@ -271,9 +271,7 @@ test_expect_success 'ls-remote with filtered symref (refname)' '
 	ref: refs/heads/main	HEAD
 	$rev	HEAD
 	EOF
-	# Protocol v2 supports sending symrefs for refs other than HEAD, so use
-	# protocol v0 here.
-	GIT_TEST_PROTOCOL_VERSION=0 git ls-remote --symref . HEAD >actual &&
+	git ls-remote --symref . HEAD >actual &&
 	test_cmp expect actual
 '
 
