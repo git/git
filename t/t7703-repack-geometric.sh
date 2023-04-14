@@ -281,4 +281,36 @@ test_expect_success '--geometric with pack.packSizeLimit' '
 	)
 '
 
+test_expect_success '--geometric --write-midx with packfiles in main and alternate ODB' '
+	test_when_finished "rm -fr shared member" &&
+
+	# Create a shared repository that will serve as the alternate object
+	# database for the member linked to it. It has got some objects on its
+	# own that are packed into a single packfile.
+	git init shared &&
+	test_commit -C shared common-object &&
+	git -C shared repack -ad &&
+
+	# We create member so that its alternates file points to the shared
+	# repository. We then create a commit in it so that git-repack(1) has
+	# something to repack.
+	# of the shared object database.
+	git clone --shared shared member &&
+	test_commit -C member unique-object &&
+	git -C member repack --geometric=2 --write-midx 2>err &&
+	test_must_be_empty err &&
+
+	# We should see that a new packfile was generated.
+	find shared/.git/objects/pack -type f -name "*.pack" >packs &&
+	test_line_count = 1 packs &&
+
+	# We should also see a multi-pack-index. This multi-pack-index should
+	# never refer to any packfiles in the alternate object database.
+	test_path_is_file member/.git/objects/pack/multi-pack-index &&
+	test-tool read-midx member/.git/objects >packs.midx &&
+	grep "^pack-.*\.idx$" packs.midx | sort >actual &&
+	basename member/.git/objects/pack/pack-*.idx >expect &&
+	test_cmp expect actual
+'
+
 test_done

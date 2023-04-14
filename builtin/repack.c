@@ -444,8 +444,10 @@ static void split_pack_geometry(struct pack_geometry *geometry, int factor)
 	geometry->split = split;
 }
 
-static struct packed_git *get_largest_active_pack(struct pack_geometry *geometry)
+static struct packed_git *get_preferred_pack(struct pack_geometry *geometry)
 {
+	uint32_t i;
+
 	if (!geometry) {
 		/*
 		 * No geometry means either an all-into-one repack (in which
@@ -460,7 +462,21 @@ static struct packed_git *get_largest_active_pack(struct pack_geometry *geometry
 	}
 	if (geometry->split == geometry->pack_nr)
 		return NULL;
-	return geometry->pack[geometry->pack_nr - 1];
+
+	/*
+	 * The preferred pack is the largest pack above the split line. In
+	 * other words, it is the largest pack that does not get rolled up in
+	 * the geometric repack.
+	 */
+	for (i = geometry->pack_nr; i > geometry->split; i--)
+		/*
+		 * A pack that is not local would never be included in a
+		 * multi-pack index. We thus skip over any non-local packs.
+		 */
+		if (geometry->pack[i - 1]->pack_local)
+			return geometry->pack[i - 1];
+
+	return NULL;
 }
 
 static void clear_pack_geometry(struct pack_geometry *geometry)
@@ -587,7 +603,7 @@ static int write_midx_included_packs(struct string_list *include,
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	struct string_list_item *item;
-	struct packed_git *largest = get_largest_active_pack(geometry);
+	struct packed_git *preferred = get_preferred_pack(geometry);
 	FILE *in;
 	int ret;
 
@@ -608,9 +624,9 @@ static int write_midx_included_packs(struct string_list *include,
 	if (write_bitmaps)
 		strvec_push(&cmd.args, "--bitmap");
 
-	if (largest)
+	if (preferred)
 		strvec_pushf(&cmd.args, "--preferred-pack=%s",
-			     pack_basename(largest));
+			     pack_basename(preferred));
 
 	if (refs_snapshot)
 		strvec_pushf(&cmd.args, "--refs-snapshot=%s", refs_snapshot);
