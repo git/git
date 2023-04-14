@@ -358,8 +358,8 @@ test_expect_success 'ls-remote --sort fails gracefully outside repository' '
 test_expect_success 'ls-remote patterns work with all protocol versions' '
 	git for-each-ref --format="%(objectname)	%(refname)" \
 		refs/heads/main refs/remotes/origin/main >expect &&
-	git -c protocol.version=1 ls-remote . main >actual.v1 &&
-	test_cmp expect actual.v1 &&
+	git -c protocol.version=0 ls-remote . main >actual.v0 &&
+	test_cmp expect actual.v0 &&
 	git -c protocol.version=2 ls-remote . main >actual.v2 &&
 	test_cmp expect actual.v2
 '
@@ -367,8 +367,8 @@ test_expect_success 'ls-remote patterns work with all protocol versions' '
 test_expect_success 'ls-remote prefixes work with all protocol versions' '
 	git for-each-ref --format="%(objectname)	%(refname)" \
 		refs/heads/ refs/tags/ >expect &&
-	git -c protocol.version=1 ls-remote --heads --tags . >actual.v1 &&
-	test_cmp expect actual.v1 &&
+	git -c protocol.version=0 ls-remote --heads --tags . >actual.v0 &&
+	test_cmp expect actual.v0 &&
 	git -c protocol.version=2 ls-remote --heads --tags . >actual.v2 &&
 	test_cmp expect actual.v2
 '
