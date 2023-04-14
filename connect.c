@@ -263,7 +263,8 @@ static int process_dummy_ref(const struct packet_reader *reader)
 		return 0;
 	name++;
 
-	return oideq(null_oid(), &oid) && !strcmp(name, "capabilities^{}");
+	return oideq(reader->hash_algo->null_oid, &oid) &&
+		!strcmp(name, "capabilities^{}");
 }
 
 static void check_no_capabilities(const char *line, int len)
