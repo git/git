@@ -189,4 +189,52 @@ test_expect_success 'pack-objects --stdin with same packfile excluded and includ
 	)
 '
 
+test_expect_success 'pack-objects --stdin with packfiles from alternate object database' '
+	test_when_finished "rm -fr shared member" &&
+
+	# Set up a shared repository with a single packfile.
+	git init shared &&
+	test_commit -C shared "shared-objects" &&
+	git -C shared repack -ad &&
+	basename shared/.git/objects/pack/pack-*.pack >packfile &&
+
+	# Set up a repository that is connected to the shared repository. This
+	# repository has no objects on its own, but we still expect to be able
+	# to pack objects from its alternate.
+	git clone --shared shared member &&
+	git -C member pack-objects --stdin-packs generated-pack <packfile &&
+	test_cmp shared/.git/objects/pack/pack-*.pack member/generated-pack-*.pack
+'
+
+test_expect_success 'pack-objects --stdin with packfiles from main and alternate object database' '
+	test_when_finished "rm -fr shared member" &&
+
+	# Set up a shared repository with a single packfile.
+	git init shared &&
+	test_commit -C shared "shared-commit" &&
+	git -C shared repack -ad &&
+
+	# Set up a repository that is connected to the shared repository. This
+	# repository has a second packfile so that we can verify that it is
+	# possible to write packs that include packfiles from different object
+	# databases.
+	git clone --shared shared member &&
+	test_commit -C member "local-commit" &&
+	git -C member repack -dl &&
+
+	{
+		basename shared/.git/objects/pack/pack-*.pack &&
+		basename member/.git/objects/pack/pack-*.pack
+	} >packfiles &&
+
+	{
+		packed_objects shared/.git/objects/pack/pack-*.idx &&
+		packed_objects member/.git/objects/pack/pack-*.idx
+	} | sort >expected-objects &&
+
+	git -C member pack-objects --stdin-packs generated-pack <packfiles &&
+	packed_objects member/generated-pack-*.idx >actual-objects &&
+	test_cmp expected-objects actual-objects
+'
+
 test_done
