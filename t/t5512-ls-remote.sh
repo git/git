@@ -244,22 +244,25 @@ test_expect_success 'protocol v2 supports hiderefs' '
 
 test_expect_success 'ls-remote --symref' '
 	git fetch origin &&
-	echo "ref: refs/heads/main	HEAD" >expect &&
+	echo "ref: refs/heads/main	HEAD" >expect.v2 &&
 	generate_references \
 		HEAD \
-		refs/heads/main >>expect &&
+		refs/heads/main >>expect.v2 &&
+	echo "ref: refs/remotes/origin/main	refs/remotes/origin/HEAD" >>expect.v2 &&
 	oid=$(git rev-parse HEAD) &&
-	echo "$oid	refs/remotes/origin/HEAD" >>expect &&
+	echo "$oid	refs/remotes/origin/HEAD" >>expect.v2 &&
 	generate_references \
 		refs/remotes/origin/main \
 		refs/tags/mark \
 		refs/tags/mark1.1 \
 		refs/tags/mark1.10 \
-		refs/tags/mark1.2 >>expect &&
-	# Protocol v2 supports sending symrefs for refs other than HEAD, so use
-	# protocol v0 here.
-	GIT_TEST_PROTOCOL_VERSION=0 git ls-remote --symref >actual &&
-	test_cmp expect actual
+		refs/tags/mark1.2 >>expect.v2 &&
+	# v0 does not show non-HEAD symrefs
+	grep -v "ref: refs/remotes" <expect.v2 >expect.v0 &&
+	git -c protocol.version=0 ls-remote --symref >actual.v0 &&
+	test_cmp expect.v0 actual.v0 &&
+	git -c protocol.version=2 ls-remote --symref >actual.v2 &&
+	test_cmp expect.v2 actual.v2
 '
 
 test_expect_success 'ls-remote with filtered symref (refname)' '
