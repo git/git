@@ -2326,6 +2326,37 @@ test_expect_success $PREREQ 'invoke hook' '
 	)
 '
 
+expected_file_counter_output () {
+	total=$1
+	count=0
+	while test $count -ne $total
+	do
+		count=$((count + 1)) &&
+		echo "$count/$total" || return
+	done
+}
+
+test_expect_success $PREREQ '--validate hook allows counting of messages' '
+	test_when_finished "rm -rf my-hooks.log" &&
+	test_config core.hooksPath "my-hooks" &&
+	mkdir -p my-hooks &&
+
+	write_script my-hooks/sendemail-validate <<-\EOF &&
+		num=$GIT_SENDEMAIL_FILE_COUNTER &&
+		tot=$GIT_SENDEMAIL_FILE_TOTAL &&
+		echo "$num/$tot" >>my-hooks.log || exit 1
+	EOF
+
+	>my-hooks.log &&
+	expected_file_counter_output 4 >expect &&
+	git send-email \
+		--from="Example <from@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		--validate -3 --cover-letter --force &&
+	test_cmp expect my-hooks.log
+'
+
 test_expect_success $PREREQ 'test that send-email works outside a repo' '
 	nongit git send-email \
 		--from="Example <nobody@example.com>" \
