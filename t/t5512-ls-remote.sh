@@ -275,30 +275,18 @@ test_expect_success 'ls-remote with filtered symref (refname)' '
 	test_cmp expect actual
 '
 
-test_expect_failure 'ls-remote with filtered symref (--heads)' '
+test_expect_success 'ls-remote with filtered symref (--heads)' '
 	git symbolic-ref refs/heads/foo refs/tags/mark &&
-	cat >expect <<-EOF &&
+	cat >expect.v2 <<-EOF &&
 	ref: refs/tags/mark	refs/heads/foo
 	$rev	refs/heads/foo
 	$rev	refs/heads/main
 	EOF
-	# Protocol v2 supports sending symrefs for refs other than HEAD, so use
-	# protocol v0 here.
-	GIT_TEST_PROTOCOL_VERSION=0 git ls-remote --symref --heads . >actual &&
-	test_cmp expect actual
-'
-
-test_expect_success 'ls-remote --symref omits filtered-out matches' '
-	cat >expect <<-EOF &&
-	$rev	refs/heads/foo
-	$rev	refs/heads/main
-	EOF
-	# Protocol v2 supports sending symrefs for refs other than HEAD, so use
-	# protocol v0 here.
-	GIT_TEST_PROTOCOL_VERSION=0 git ls-remote --symref --heads . >actual &&
-	test_cmp expect actual &&
-	GIT_TEST_PROTOCOL_VERSION=0 git ls-remote --symref . "refs/heads/*" >actual &&
-	test_cmp expect actual
+	grep -v "^ref: refs/tags/" <expect.v2 >expect.v0 &&
+	git -c protocol.version=0 ls-remote --symref --heads . >actual.v0 &&
+	test_cmp expect.v0 actual.v0 &&
+	git -c protocol.version=2 ls-remote --symref --heads . >actual.v2 &&
+	test_cmp expect.v2 actual.v2
 '
 
 test_expect_success 'indicate no refs in v0 standards-compliant empty remote' '
