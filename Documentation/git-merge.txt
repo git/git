@@ -194,7 +194,7 @@ happens:
    versions: stage 1 stores the version from the common ancestor,
    stage 2 from `HEAD`, and stage 3 from `MERGE_HEAD` (you
    can inspect the stages with `git ls-files -u`).  The working
-   tree files contain the result of the "merge" program; i.e. 3-way
+   tree files contain the result of the merge operation; i.e. 3-way
    merge results with familiar conflict markers `<<<` `===` `>>>`.
 5. No other changes are made.  In particular, the local
    modifications you had before you started merge will stay the
