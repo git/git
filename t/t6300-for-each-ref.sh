@@ -1374,6 +1374,14 @@ test_expect_success 'for-each-ref --ignore-case ignores case' '
 	test_cmp expect actual
 '
 
+test_expect_success 'for-each-ref --omit-empty works' '
+	git for-each-ref --format="%(refname)" >actual &&
+	test_line_count -gt 1 actual &&
+	git for-each-ref --format="%(if:equals=refs/heads/main)%(refname)%(then)%(refname)%(end)" --omit-empty >actual &&
+	echo refs/heads/main >expect &&
+	test_cmp expect actual
+'
+
 test_expect_success 'for-each-ref --ignore-case works on multiple sort keys' '
 	# name refs numerically to avoid case-insensitive filesystem conflicts
 	nr=0 &&

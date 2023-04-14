@@ -2046,6 +2046,22 @@ test_expect_success '--format should list tags as per format given' '
 	test_cmp expect actual
 '
 
+test_expect_success '--format --omit-empty works' '
+	cat >expect <<-\EOF &&
+	refname : refs/tags/v1.0
+
+	refname : refs/tags/v1.1.3
+	EOF
+	git tag -l --format="%(if:notequals=refs/tags/v1.0.1)%(refname)%(then)refname : %(refname)%(end)" "v1*" >actual &&
+	test_cmp expect actual &&
+	cat >expect <<-\EOF &&
+	refname : refs/tags/v1.0
+	refname : refs/tags/v1.1.3
+	EOF
+	git tag -l --omit-empty --format="%(if:notequals=refs/tags/v1.0.1)%(refname)%(then)refname : %(refname)%(end)" "v1*" >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'git tag -l with --format="%(rest)" must fail' '
 	test_must_fail git tag -l --format="%(rest)" "v1*"
 '
