@@ -321,7 +321,8 @@ static int geometry_cmp(const void *va, const void *vb)
 }
 
 static void init_pack_geometry(struct pack_geometry **geometry_p,
-			       struct string_list *existing_kept_packs)
+			       struct string_list *existing_kept_packs,
+			       const struct pack_objects_args *args)
 {
 	struct packed_git *p;
 	struct pack_geometry *geometry;
@@ -331,6 +332,14 @@ static void init_pack_geometry(struct pack_geometry **geometry_p,
 	geometry = *geometry_p;
 
 	for (p = get_all_packs(the_repository); p; p = p->next) {
+		if (args->local && !p->pack_local)
+			/*
+			 * When asked to only repack local packfiles we skip
+			 * over any packfiles that are borrowed from alternate
+			 * object directories.
+			 */
+			continue;
+
 		if (!pack_kept_objects) {
 			/*
 			 * Any pack that has its pack_keep bit set will appear
@@ -898,7 +907,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	if (geometric_factor) {
 		if (pack_everything)
 			die(_("options '%s' and '%s' cannot be used together"), "--geometric", "-A/-a");
-		init_pack_geometry(&geometry, &existing_kept_packs);
+		init_pack_geometry(&geometry, &existing_kept_packs, &po_args);
 		split_pack_geometry(geometry, geometric_factor);
 	}
 

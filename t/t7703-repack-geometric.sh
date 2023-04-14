@@ -10,6 +10,12 @@ objdir=.git/objects
 packdir=$objdir/pack
 midx=$objdir/pack/multi-pack-index
 
+packed_objects () {
+	git show-index <"$1" >tmp-object-list &&
+	cut -d' ' -f2 tmp-object-list | sort &&
+	rm tmp-object-list
+ }
+
 test_expect_success '--geometric with no packs' '
 	git init geometric &&
 	test_when_finished "rm -fr geometric" &&
@@ -359,6 +365,57 @@ test_expect_success '--geometric with same pack in main and alternate ODB' '
 	# Nothing should have changed.
 	find shared/.git/objects -type f >actual-files &&
 	test_cmp expected-files actual-files
+'
+
+test_expect_success '--geometric -l with non-intact geometric sequence across ODBs' '
+	test_when_finished "rm -fr shared member" &&
+
+	git init shared &&
+	test_commit_bulk -C shared --start=1 1 &&
+
+	git clone --shared shared member &&
+	test_commit_bulk -C member --start=2 1 &&
+
+	# Verify that our assumptions actually hold: both generated packfiles
+	# should have three objects and should be non-equal.
+	packed_objects shared/.git/objects/pack/pack-*.idx >shared-objects &&
+	packed_objects member/.git/objects/pack/pack-*.idx >member-objects &&
+	test_line_count = 3 shared-objects &&
+	test_line_count = 3 member-objects &&
+	! test_cmp shared-objects member-objects &&
+
+	# Perform the geometric repack. With `-l`, we should only see the local
+	# packfile and thus arrive at the conclusion that the geometric
+	# sequence is intact. We thus expect no changes.
+	#
+	# Note that we are tweaking mtimes of the packfiles so that we can
+	# verify they did not change. This is done in order to detect the case
+	# where we do repack objects, but the resulting packfile is the same.
+	test-tool chmtime --verbose =0 member/.git/objects/pack/* >expected-member-packs &&
+	git -C member repack --geometric=2 -l -d &&
+	test-tool chmtime --verbose member/.git/objects/pack/* >actual-member-packs &&
+	test_cmp expected-member-packs actual-member-packs &&
+
+	{
+		packed_objects shared/.git/objects/pack/pack-*.idx &&
+		packed_objects member/.git/objects/pack/pack-*.idx
+	} | sort >expected-objects &&
+
+	# On the other hand, when doing a non-local geometric repack we should
+	# see both packfiles and thus repack them. We expect that the shared
+	# object database was not changed.
+	test-tool chmtime --verbose =0 shared/.git/objects/pack/* >expected-shared-packs &&
+	git -C member repack --geometric=2 -d &&
+	test-tool chmtime --verbose shared/.git/objects/pack/* >actual-shared-packs &&
+	test_cmp expected-shared-packs actual-shared-packs &&
+
+	# Furthermore, we expect that the member repository now has a single
+	# packfile that contains the combined shared and non-shared objects.
+	ls member/.git/objects/pack/pack-*.idx >actual &&
+	test_line_count = 1 actual &&
+	packed_objects member/.git/objects/pack/pack-*.idx >actual-objects &&
+	test_line_count = 6 actual-objects &&
+	test_cmp expected-objects actual-objects
 '
 
 test_done
