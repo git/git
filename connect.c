@@ -597,6 +597,7 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 
 const char *parse_feature_value(const char *feature_list, const char *feature, int *lenp, int *offset)
 {
+	const char *orig_start = feature_list;
 	int len;
 
 	if (!feature_list)
@@ -616,7 +617,7 @@ const char *parse_feature_value(const char *feature_list, const char *feature, i
 				if (lenp)
 					*lenp = 0;
 				if (offset)
-					*offset = found + len - feature_list;
+					*offset = found + len - orig_start;
 				return value;
 			}
 			/* feature with a value (e.g., "agent=git/1.2.3") */
@@ -628,7 +629,7 @@ const char *parse_feature_value(const char *feature_list, const char *feature, i
 				if (lenp)
 					*lenp = end;
 				if (offset)
-					*offset = value + end - feature_list;
+					*offset = value + end - orig_start;
 				return value;
 			}
 			/*

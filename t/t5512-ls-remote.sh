@@ -15,6 +15,19 @@ generate_references () {
 	done
 }
 
+test_expect_success 'set up fake upload-pack' '
+	# This can be used to simulate an upload-pack that just shows the
+	# contents of the "input" file (prepared with the test-tool pkt-line
+	# helper), and does not do any negotiation (since ls-remote does not
+	# need it).
+	write_script cat-input <<-\EOF
+	# send our initial advertisement/response
+	cat input
+	# soak up the flush packet from the client
+	cat
+	EOF
+'
+
 test_expect_success 'dies when no remote found' '
 	test_must_fail git ls-remote
 '
@@ -358,6 +371,45 @@ test_expect_success 'ls-remote prefixes work with all protocol versions' '
 	test_cmp expect actual.v1 &&
 	git -c protocol.version=2 ls-remote --heads --tags . >actual.v2 &&
 	test_cmp expect actual.v2
+'
+
+test_expect_success 'v0 clients can handle multiple symrefs' '
+	# Modern versions of Git will not return multiple symref capabilities
+	# for v0, so we have to hard-code the response. Note that we will
+	# always use both v0 and object-format=sha1 here, as the hard-coded
+	# response reflects a server that only supports those.
+	oid=1234567890123456789012345678901234567890 &&
+	symrefs="symref=refs/remotes/origin/HEAD:refs/remotes/origin/main" &&
+	symrefs="$symrefs symref=HEAD:refs/heads/main" &&
+
+	# Likewise we want to make sure our parser is not fooled by the string
+	# "symref" appearing as part of an earlier cap. But there is no way to
+	# do that via upload-pack, as arbitrary strings can appear only in a
+	# "symref" value itself (where we skip past the values as a whole)
+	# and "agent" (which always appears after "symref", so putting our
+	# parser in a confused state is less interesting).
+	caps="some other caps including a-fake-symref-cap" &&
+
+	test-tool pkt-line pack >input.q <<-EOF &&
+	$oid HEADQ$caps $symrefs
+	$oid refs/heads/main
+	$oid refs/remotes/origin/HEAD
+	$oid refs/remotes/origin/main
+	0000
+	EOF
+	q_to_nul <input.q >input &&
+
+	cat >expect <<-EOF &&
+	ref: refs/heads/main	HEAD
+	$oid	HEAD
+	$oid	refs/heads/main
+	ref: refs/remotes/origin/main	refs/remotes/origin/HEAD
+	$oid	refs/remotes/origin/HEAD
+	$oid	refs/remotes/origin/main
+	EOF
+
+	git ls-remote --symref --upload-pack=./cat-input . >actual &&
+	test_cmp expect actual
 '
 
 test_done
