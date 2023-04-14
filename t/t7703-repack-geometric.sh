@@ -313,4 +313,27 @@ test_expect_success '--geometric --write-midx with packfiles in main and alterna
 	test_cmp expect actual
 '
 
+test_expect_success '--geometric --with-midx with no local objects' '
+	test_when_finished "rm -fr shared member" &&
+
+	# Create a repository with a single packfile that acts as alternate
+	# object database.
+	git init shared &&
+	test_commit -C shared "shared-objects" &&
+	git -C shared repack -ad &&
+
+	# Create a second repository linked to the first one and perform a
+	# geometric repack on it.
+	git clone --shared shared member &&
+	git -C member repack --geometric 2 --write-midx 2>err &&
+	test_must_be_empty err &&
+
+	# Assert that we wrote neither a new packfile nor a multi-pack-index.
+	# We should not have a packfile because the single packfile in the
+	# alternate object database does not invalidate the geometric sequence.
+	# And we should not have a multi-pack-index because these only index
+	# local packfiles, and there are none.
+	test_dir_is_empty member/$packdir
+'
+
 test_done
