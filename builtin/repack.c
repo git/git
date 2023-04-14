@@ -885,6 +885,18 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	if (write_bitmaps && !(pack_everything & ALL_INTO_ONE) && !write_midx)
 		die(_(incremental_bitmap_conflict_error));
 
+	if (write_bitmaps && po_args.local && has_alt_odb(the_repository)) {
+		/*
+		 * When asked to do a local repack, but we have
+		 * packfiles that are inherited from an alternate, then
+		 * we cannot guarantee that the multi-pack-index would
+		 * have full coverage of all objects. We thus disable
+		 * writing bitmaps in that case.
+		 */
+		warning(_("disabling bitmap writing, as some objects are not being packed"));
+		write_bitmaps = 0;
+	}
+
 	if (write_midx && write_bitmaps) {
 		struct strbuf path = STRBUF_INIT;
 

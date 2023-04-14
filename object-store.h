@@ -56,6 +56,7 @@ KHASH_INIT(odb_path_map, const char * /* key: odb_path */,
 	struct object_directory *, 1, fspathhash, fspatheq)
 
 void prepare_alt_odb(struct repository *r);
+int has_alt_odb(struct repository *r);
 char *compute_alternate_path(const char *path, struct strbuf *err);
 struct object_directory *find_odb(struct repository *r, const char *obj_dir);
 typedef int alt_odb_fn(struct object_directory *, void *);
