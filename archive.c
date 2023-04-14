@@ -174,6 +174,29 @@ static int write_archive_entry(const struct object_id *oid, const char *base,
 		args->convert = check_attr_export_subst(check);
 	}
 
+	if (args->prefix) {
+		static struct strbuf new_path = STRBUF_INIT;
+		static struct strbuf buf = STRBUF_INIT;
+		const char *rel;
+
+		rel = relative_path(path_without_prefix, args->prefix, &buf);
+
+		/*
+		 * We don't add an entry for the current working
+		 * directory when we are at the root; skip it also when
+		 * we're in a subdirectory or submodule.  Skip entries
+		 * higher up as well.
+		 */
+		if (!strcmp(rel, "./") || starts_with(rel, "../"))
+			return S_ISDIR(mode) ? READ_TREE_RECURSIVE : 0;
+
+		/* rel can refer to path, so don't edit it in place */
+		strbuf_reset(&new_path);
+		strbuf_add(&new_path, args->base, args->baselen);
+		strbuf_addstr(&new_path, rel);
+		strbuf_swap(&path, &new_path);
+	}
+
 	if (args->verbose)
 		fprintf(stderr, "%.*s\n", (int)path.len, path.buf);
 
@@ -409,6 +432,27 @@ static int reject_entry(const struct object_id *oid UNUSED,
 	return ret;
 }
 
+static int reject_outside(const struct object_id *oid UNUSED,
+			  struct strbuf *base, const char *filename,
+			  unsigned mode, void *context)
+{
+	struct archiver_args *args = context;
+	struct strbuf buf = STRBUF_INIT;
+	struct strbuf path = STRBUF_INIT;
+	int ret = 0;
+
+	if (S_ISDIR(mode))
+		return READ_TREE_RECURSIVE;
+
+	strbuf_addbuf(&path, base);
+	strbuf_addstr(&path, filename);
+	if (starts_with(relative_path(path.buf, args->prefix, &buf), "../"))
+		ret = -1;
+	strbuf_release(&buf);
+	strbuf_release(&path);
+	return ret;
+}
+
 static int path_exists(struct archiver_args *args, const char *path)
 {
 	const char *paths[] = { path, NULL };
@@ -416,8 +460,13 @@ static int path_exists(struct archiver_args *args, const char *path)
 	int ret;
 
 	ctx.args = args;
-	parse_pathspec(&ctx.pathspec, 0, 0, "", paths);
+	parse_pathspec(&ctx.pathspec, 0, PATHSPEC_PREFER_CWD,
+		       args->prefix, paths);
 	ctx.pathspec.recursive = 1;
+	if (args->prefix && read_tree(args->repo, args->tree, &ctx.pathspec,
+				      reject_outside, args))
+		die(_("pathspec '%s' matches files outside the "
+		      "current directory"), path);
 	ret = read_tree(args->repo, args->tree,
 			&ctx.pathspec,
 			reject_entry, &ctx);
@@ -433,9 +482,8 @@ static void parse_pathspec_arg(const char **pathspec,
 	 * Also if pathspec patterns are dependent, we're in big
 	 * trouble as we test each one separately
 	 */
-	parse_pathspec(&ar_args->pathspec, 0,
-		       PATHSPEC_PREFER_FULL,
-		       "", pathspec);
+	parse_pathspec(&ar_args->pathspec, 0, PATHSPEC_PREFER_CWD,
+		       ar_args->prefix, pathspec);
 	ar_args->pathspec.recursive = 1;
 	if (pathspec) {
 		while (*pathspec) {
@@ -447,8 +495,7 @@ static void parse_pathspec_arg(const char **pathspec,
 }
 
 static void parse_treeish_arg(const char **argv,
-		struct archiver_args *ar_args, const char *prefix,
-		int remote)
+			      struct archiver_args *ar_args, int remote)
 {
 	const char *name = argv[0];
 	const struct object_id *commit_oid;
@@ -488,20 +535,6 @@ static void parse_treeish_arg(const char **argv,
 	if (!tree)
 		die(_("not a tree object: %s"), oid_to_hex(&oid));
 
-	if (prefix) {
-		struct object_id tree_oid;
-		unsigned short mode;
-		int err;
-
-		err = get_tree_entry(ar_args->repo,
-				     &tree->object.oid,
-				     prefix, &tree_oid,
-				     &mode);
-		if (err || !S_ISDIR(mode))
-			die(_("current working directory is untracked"));
-
-		tree = parse_tree_indirect(&tree_oid);
-	}
 	ar_args->refname = ref;
 	ar_args->tree = tree;
 	ar_args->commit_oid = commit_oid;
@@ -719,7 +752,7 @@ int write_archive(int argc, const char **argv, const char *prefix,
 		setup_git_directory();
 	}
 
-	parse_treeish_arg(argv, &args, prefix, remote);
+	parse_treeish_arg(argv, &args, remote);
 	parse_pathspec_arg(argv + 1, &args);
 
 	rc = ar->write_archive(ar, &args);
