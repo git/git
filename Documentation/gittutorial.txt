@@ -109,7 +109,6 @@ summary of the situation with 'git status':
 $ git status
 On branch master
 Changes to be committed:
-Your branch is up to date with 'origin/master'.
   (use "git restore --staged <file>..." to unstage)
 
 	modified:   file1
