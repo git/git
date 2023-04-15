@@ -1171,21 +1171,21 @@ between your last version and now, if it's something significant. You do not
 need the exact same body in your second cover letter; focus on explaining to
 reviewers the changes you've made that may not be as visible.
 
-You will also need to go and find the Message-Id of your previous cover letter.
+You will also need to go and find the Message-ID of your previous cover letter.
 You can either note it when you send the first series, from the output of `git
 send-email`, or you can look it up on the
 https://lore.kernel.org/git[mailing list]. Find your cover letter in the
-archives, click on it, then click "permalink" or "raw" to reveal the Message-Id
+archives, click on it, then click "permalink" or "raw" to reveal the Message-ID
 header. It should match:
 
 ----
-Message-Id: <foo.12345.author@example.com>
+Message-ID: <foo.12345.author@example.com>
 ----
 
-Your Message-Id is `<foo.12345.author@example.com>`. This example will be used
-below as well; make sure to replace it with the correct Message-Id for your
-**previous cover letter** - that is, if you're sending v2, use the Message-Id
-from v1; if you're sending v3, use the Message-Id from v2.
+Your Message-ID is `<foo.12345.author@example.com>`. This example will be used
+below as well; make sure to replace it with the correct Message-ID for your
+**previous cover letter** - that is, if you're sending v2, use the Message-ID
+from v1; if you're sending v3, use the Message-ID from v2.
 
 While you're looking at the email, you should also note who is CC'd, as it's
 common practice in the mailing list to keep all CCs on a thread. You can add

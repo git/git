@@ -46,6 +46,11 @@ UI, Workflows & Features
    outlived its usefulness long ago and is nominated for future
    removal.  Now we escalate to give an error.
 
+ * "git clone" from an empty repository learned to propagate the
+   choice of the hash algorithm from the source repository to the
+   newly created repository.
+
+
 Performance, Internal Implementation, Development Support etc.
 
  * Code clean-up to clarify directory traversal API.
@@ -79,6 +84,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * "git fetch --all" does not have to download and handle the same
    bundleURI over and over, which has been corrected.
+
+ * "git sparse-checkout" command learns a debugging aid for the sparse
+   rule definitions.
 
 
 Fixes since v2.40
@@ -175,6 +183,16 @@ Fixes since v2.40
  * Code clean-up around the use of the_repository.
    (merge 4a93b899c1 ab/remove-implicit-use-of-the-repository later to maint).
 
+ * Consistently spell "Message-ID" as such, not "Message-Id".
+   (merge ba4324c4e1 jc/spell-id-in-both-caps-in-message-id later to maint).
+
+ * Correct use of an uninitialized structure member.
+   (merge dc12ee77ab jx/cap-object-info-uninitialized-fix later to maint).
+
+ * Tests had a few places where we ignored PERL_PATH and blindly used
+   /usr/bin/perl, which have been corrected.
+   (merge c1917156a0 jk/use-perl-path-consistently later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f7111175df as/doc-markup-fix later to maint).
    (merge 90ff7c9898 fc/test-aggregation-clean-up later to maint).
@@ -189,3 +207,4 @@ Fixes since v2.40
    (merge a93cbe8d78 ar/test-cleanup-unused-file-creation later to maint).
    (merge cc48ddd937 jk/chainlint-fixes later to maint).
    (merge 4833b08426 ow/ref-format-remove-unused-member later to maint).
+   (merge d0ea2ca1cf dw/doc-submittingpatches-grammofix later to maint).
