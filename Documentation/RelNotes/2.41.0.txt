@@ -50,6 +50,17 @@ UI, Workflows & Features
    choice of the hash algorithm from the source repository to the
    newly created repository.
 
+ * "git mergetool" and "git difftool" learns a new configuration
+   guiDefault to optionally favor configured guitool over non-gui-tool
+   automatically when $DISPLAY is set.
+
+ * "git branch -d origin/master" would say "no such branch", but it is
+   likely a missed "-r" if refs/remotes/origin/master exists.  The
+   command has been taught to give such a hint in its error message.
+
+ * Clean-up of the code path that deals with merge strategy option
+   handling in "git rebase".
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -87,6 +98,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * "git sparse-checkout" command learns a debugging aid for the sparse
    rule definitions.
+
+ * "git write-tree" learns to work better with sparse-index.
+
 
 
 Fixes since v2.40
@@ -192,6 +206,12 @@ Fixes since v2.40
  * Tests had a few places where we ignored PERL_PATH and blindly used
    /usr/bin/perl, which have been corrected.
    (merge c1917156a0 jk/use-perl-path-consistently later to maint).
+
+ * Documentation mark-up fix.
+   (merge 78b6369e67 la/mfc-markup-fix later to maint).
+
+ * Doc toolchain update to remove old workaround for AsciiDoc.
+   (merge 8806120de6 fc/remove-header-workarounds-for-asciidoc later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge f7111175df as/doc-markup-fix later to maint).
