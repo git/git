@@ -185,4 +185,9 @@ test_expect_success 'fsck catches invalid checksum' '
 		"invalid checksum"
 '
 
+test_expect_success 'fsck catches invalid row position' '
+	corrupt_rev_and_verify 14 "\07" \
+		"invalid rev-index position"
+'
+
 test_done
