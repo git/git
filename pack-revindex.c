@@ -212,7 +212,8 @@ static int load_revindex_from_disk(char *revindex_name,
 	fd = git_open(revindex_name);
 
 	if (fd < 0) {
-		ret = -1;
+		/* "No file" means return 1. */
+		ret = 1;
 		goto cleanup;
 	}
 	if (fstat(fd, &st)) {
@@ -264,7 +265,7 @@ cleanup:
 	return ret;
 }
 
-static int load_pack_revindex_from_disk(struct packed_git *p)
+int load_pack_revindex_from_disk(struct packed_git *p)
 {
 	char *revindex_name;
 	int ret;

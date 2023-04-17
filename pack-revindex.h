@@ -52,6 +52,14 @@ struct repository;
 int load_pack_revindex(struct repository *r, struct packed_git *p);
 
 /*
+ * Specifically load a pack revindex from disk.
+ *
+ * Returns 0 on success, 1 on "no .rev file", and -1 when there is an
+ * error parsing the .rev file.
+ */
+int load_pack_revindex_from_disk(struct packed_git *p);
+
+/*
  * verify_pack_revindex verifies that the on-disk rev-index for the given
  * pack-file is the same that would be created if written from scratch.
  *

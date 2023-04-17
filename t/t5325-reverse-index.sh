@@ -190,4 +190,19 @@ test_expect_success 'fsck catches invalid row position' '
 		"invalid rev-index position"
 '
 
+test_expect_success 'fsck catches invalid header: magic number' '
+	corrupt_rev_and_verify 1 "\07" \
+		"reverse-index file .* has unknown signature"
+'
+
+test_expect_success 'fsck catches invalid header: version' '
+	corrupt_rev_and_verify 7 "\02" \
+		"reverse-index file .* has unsupported version"
+'
+
+test_expect_success 'fsck catches invalid header: hash function' '
+	corrupt_rev_and_verify 11 "\03" \
+		"reverse-index file .* has unsupported hash id"
+'
+
 test_done
