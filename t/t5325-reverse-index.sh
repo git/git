@@ -131,4 +131,18 @@ test_expect_success 'revindex in-memory vs on-disk' '
 		test_cmp on-disk in-core
 	)
 '
+
+test_expect_success 'fsck succeeds on good rev-index' '
+	test_when_finished rm -fr repo &&
+	git init repo &&
+	(
+		cd repo &&
+
+		test_commit commit &&
+		git -c pack.writeReverseIndex=true repack -ad &&
+		git fsck 2>err &&
+		test_must_be_empty err
+	)
+'
+
 test_done

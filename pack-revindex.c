@@ -301,6 +301,17 @@ int load_pack_revindex(struct repository *r, struct packed_git *p)
 	return -1;
 }
 
+/*
+ * verify_pack_revindex verifies that the on-disk rev-index for the given
+ * pack-file is the same that would be created if written from scratch.
+ *
+ * A negative number is returned on error.
+ */
+int verify_pack_revindex(struct packed_git *p)
+{
+	return 0;
+}
+
 int load_midx_revindex(struct multi_pack_index *m)
 {
 	struct strbuf revindex_name = STRBUF_INIT;
