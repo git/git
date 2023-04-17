@@ -145,4 +145,44 @@ test_expect_success 'fsck succeeds on good rev-index' '
 	)
 '
 
+test_expect_success 'set up rev-index corruption tests' '
+	git init corrupt &&
+	(
+		cd corrupt &&
+
+		test_commit commit &&
+		git -c pack.writeReverseIndex=true repack -ad &&
+
+		revfile=$(ls .git/objects/pack/pack-*.rev) &&
+		chmod a+w $revfile &&
+		cp $revfile $revfile.bak
+	)
+'
+
+corrupt_rev_and_verify () {
+	(
+		pos="$1" &&
+		value="$2" &&
+		error="$3" &&
+
+		cd corrupt &&
+		revfile=$(ls .git/objects/pack/pack-*.rev) &&
+
+		# Reset to original rev-file.
+		cp $revfile.bak $revfile &&
+
+		printf "$value" | dd of=$revfile bs=1 seek="$pos" conv=notrunc &&
+		test_must_fail git fsck 2>err &&
+		grep "$error" err
+	)
+}
+
+test_expect_success 'fsck catches invalid checksum' '
+	revfile=$(ls corrupt/.git/objects/pack/pack-*.rev) &&
+	orig_size=$(wc -c <$revfile) &&
+	hashpos=$((orig_size - 10)) &&
+	corrupt_rev_and_verify $hashpos bogus \
+		"invalid checksum"
+'
+
 test_done

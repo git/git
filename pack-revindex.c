@@ -5,6 +5,7 @@
 #include "packfile.h"
 #include "config.h"
 #include "midx.h"
+#include "csum-file.h"
 
 struct revindex_entry {
 	off_t offset;
@@ -309,6 +310,15 @@ int load_pack_revindex(struct repository *r, struct packed_git *p)
  */
 int verify_pack_revindex(struct packed_git *p)
 {
+	/* Do not bother checking if not initialized. */
+	if (!p->revindex_map)
+		return 0;
+
+	if (!hashfile_checksum_valid((const unsigned char *)p->revindex_map, p->revindex_size)) {
+		error(_("invalid checksum"));
+		return -1;
+	}
+
 	return 0;
 }
 
