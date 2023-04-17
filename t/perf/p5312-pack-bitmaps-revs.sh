@@ -12,8 +12,7 @@ test_lookup_pack_bitmap () {
 	test_perf_large_repo
 
 	test_expect_success 'setup bitmap config' '
-		git config pack.writebitmaps true &&
-		git config pack.writeReverseIndex true
+		git config pack.writebitmaps true
 	'
 
 	# we need to create the tag up front such that it is covered by the repack and
