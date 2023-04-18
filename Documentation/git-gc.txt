@@ -77,9 +77,10 @@ be performed as well.
 	instance running on this repository.
 
 --keep-largest-pack::
-	All packs except the largest pack and those marked with a
-	`.keep` files are consolidated into a single pack. When this
-	option is used, `gc.bigPackThreshold` is ignored.
+	All packs except the largest non-cruft pack, any packs marked
+	with a `.keep` file, and any cruft pack(s) are consolidated into
+	a single pack. When this option is used, `gc.bigPackThreshold`
+	is ignored.
 
 AGGRESSIVE
 ----------

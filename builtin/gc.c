@@ -219,7 +219,7 @@ static struct packed_git *find_base_packs(struct string_list *packs,
 	struct packed_git *p, *base = NULL;
 
 	for (p = get_all_packs(the_repository); p; p = p->next) {
-		if (!p->pack_local)
+		if (!p->pack_local || p->is_cruft)
 			continue;
 		if (limit) {
 			if (p->pack_size >= limit)

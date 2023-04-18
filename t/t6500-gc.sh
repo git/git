@@ -298,6 +298,49 @@ test_expect_success 'feature.experimental=false avoids cruft packs by default' '
 	)
 '
 
+test_expect_success '--keep-largest-pack ignores cruft packs' '
+	test_when_finished "rm -fr repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		# Generate a pack for reachable objects (of which there
+		# are 3), and one for unreachable objects (of which
+		# there are 6).
+		prepare_cruft_history &&
+		git gc --cruft &&
+
+		mtimes="$(find .git/objects/pack -type f -name "pack-*.mtimes")" &&
+		sz="$(test_file_size "${mtimes%.mtimes}.pack")" &&
+
+		# Ensure that the cruft pack gets removed (due to
+		# `--prune=now`) despite it being the largest pack.
+		git -c gc.bigPackThreshold=$sz gc --cruft --prune=now &&
+
+		assert_no_cruft_packs
+	)
+'
+
+test_expect_success 'gc.bigPackThreshold ignores cruft packs' '
+	test_when_finished "rm -fr repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		# Generate a pack for reachable objects (of which there
+		# are 3), and one for unreachable objects (of which
+		# there are 6).
+		prepare_cruft_history &&
+		git gc --cruft &&
+
+		# Ensure that the cruft pack gets removed (due to
+		# `--prune=now`) despite it being the largest pack.
+		git gc --cruft --prune=now --keep-largest-pack &&
+
+		assert_no_cruft_packs
+	)
+'
+
 run_and_wait_for_auto_gc () {
 	# We read stdout from gc for the side effect of waiting until the
 	# background gc process exits, closing its fd 9.  Furthermore, the
