@@ -85,12 +85,13 @@ success of the resolution after the custom tool has exited.
 	the default merge tool will be read from the configured
 	`merge.guitool` variable instead of `merge.tool`. If
 	`merge.guitool` is not set, we will fallback to the tool
-	configured under `merge.tool`.
+	configured under `merge.tool`. This may be autoselected using
+	the configuration variable `mergetool.guiDefault`.
 
 --no-gui::
-	This overrides a previous `-g` or `--gui` setting and reads the
-	default merge tool will be read from the configured `merge.tool`
-	variable.
+	This overrides a previous `-g` or `--gui` setting or
+	`mergetool.guiDefault` configuration and reads the default merge
+	tool from the configured `merge.tool` variable.
 
 -O<orderfile>::
 	Process files in the order specified in the
