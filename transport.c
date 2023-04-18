@@ -320,7 +320,7 @@ static struct ref *handshake(struct transport *transport, int for_push,
 	struct git_transport_data *data = transport->data;
 	struct ref *refs = NULL;
 	struct packet_reader reader;
-	int sid_len;
+	size_t sid_len;
 	const char *server_sid;
 
 	connect_setup(transport, for_push);

@@ -15,6 +15,19 @@ generate_references () {
 	done
 }
 
+test_expect_success 'set up fake upload-pack' '
+	# This can be used to simulate an upload-pack that just shows the
+	# contents of the "input" file (prepared with the test-tool pkt-line
+	# helper), and does not do any negotiation (since ls-remote does not
+	# need it).
+	write_script cat-input <<-\EOF
+	# send our initial advertisement/response
+	cat input
+	# soak up the flush packet from the client
+	cat
+	EOF
+'
+
 test_expect_success 'dies when no remote found' '
 	test_must_fail git ls-remote
 '
@@ -231,22 +244,25 @@ test_expect_success 'protocol v2 supports hiderefs' '
 
 test_expect_success 'ls-remote --symref' '
 	git fetch origin &&
-	echo "ref: refs/heads/main	HEAD" >expect &&
+	echo "ref: refs/heads/main	HEAD" >expect.v2 &&
 	generate_references \
 		HEAD \
-		refs/heads/main >>expect &&
+		refs/heads/main >>expect.v2 &&
+	echo "ref: refs/remotes/origin/main	refs/remotes/origin/HEAD" >>expect.v2 &&
 	oid=$(git rev-parse HEAD) &&
-	echo "$oid	refs/remotes/origin/HEAD" >>expect &&
+	echo "$oid	refs/remotes/origin/HEAD" >>expect.v2 &&
 	generate_references \
 		refs/remotes/origin/main \
 		refs/tags/mark \
 		refs/tags/mark1.1 \
 		refs/tags/mark1.10 \
-		refs/tags/mark1.2 >>expect &&
-	# Protocol v2 supports sending symrefs for refs other than HEAD, so use
-	# protocol v0 here.
-	GIT_TEST_PROTOCOL_VERSION=0 git ls-remote --symref >actual &&
-	test_cmp expect actual
+		refs/tags/mark1.2 >>expect.v2 &&
+	# v0 does not show non-HEAD symrefs
+	grep -v "ref: refs/remotes" <expect.v2 >expect.v0 &&
+	git -c protocol.version=0 ls-remote --symref >actual.v0 &&
+	test_cmp expect.v0 actual.v0 &&
+	git -c protocol.version=2 ls-remote --symref >actual.v2 &&
+	test_cmp expect.v2 actual.v2
 '
 
 test_expect_success 'ls-remote with filtered symref (refname)' '
@@ -255,76 +271,41 @@ test_expect_success 'ls-remote with filtered symref (refname)' '
 	ref: refs/heads/main	HEAD
 	$rev	HEAD
 	EOF
-	# Protocol v2 supports sending symrefs for refs other than HEAD, so use
-	# protocol v0 here.
-	GIT_TEST_PROTOCOL_VERSION=0 git ls-remote --symref . HEAD >actual &&
+	git ls-remote --symref . HEAD >actual &&
 	test_cmp expect actual
 '
 
-test_expect_failure 'ls-remote with filtered symref (--heads)' '
+test_expect_success 'ls-remote with filtered symref (--heads)' '
 	git symbolic-ref refs/heads/foo refs/tags/mark &&
-	cat >expect <<-EOF &&
+	cat >expect.v2 <<-EOF &&
 	ref: refs/tags/mark	refs/heads/foo
 	$rev	refs/heads/foo
 	$rev	refs/heads/main
 	EOF
-	# Protocol v2 supports sending symrefs for refs other than HEAD, so use
-	# protocol v0 here.
-	GIT_TEST_PROTOCOL_VERSION=0 git ls-remote --symref --heads . >actual &&
-	test_cmp expect actual
+	grep -v "^ref: refs/tags/" <expect.v2 >expect.v0 &&
+	git -c protocol.version=0 ls-remote --symref --heads . >actual.v0 &&
+	test_cmp expect.v0 actual.v0 &&
+	git -c protocol.version=2 ls-remote --symref --heads . >actual.v2 &&
+	test_cmp expect.v2 actual.v2
 '
 
-test_expect_success 'ls-remote --symref omits filtered-out matches' '
-	cat >expect <<-EOF &&
-	$rev	refs/heads/foo
-	$rev	refs/heads/main
+test_expect_success 'indicate no refs in v0 standards-compliant empty remote' '
+	# Git does not produce an output like this, but it does match the
+	# standard and is produced by other implementations like JGit. So
+	# hard-code the case we care about.
+	#
+	# The actual capabilities do not matter; there are none that would
+	# change how ls-remote behaves.
+	oid=0000000000000000000000000000000000000000 &&
+	test-tool pkt-line pack >input.q <<-EOF &&
+	$oid capabilities^{}Qcaps-go-here
+	0000
 	EOF
-	# Protocol v2 supports sending symrefs for refs other than HEAD, so use
-	# protocol v0 here.
-	GIT_TEST_PROTOCOL_VERSION=0 git ls-remote --symref --heads . >actual &&
-	test_cmp expect actual &&
-	GIT_TEST_PROTOCOL_VERSION=0 git ls-remote --symref . "refs/heads/*" >actual &&
-	test_cmp expect actual
-'
+	q_to_nul <input.q >input &&
 
-test_lazy_prereq GIT_DAEMON '
-	test_bool_env GIT_TEST_GIT_DAEMON true
-'
-
-# This test spawns a daemon, so run it only if the user would be OK with
-# testing with git-daemon.
-test_expect_success PIPE,JGIT,GIT_DAEMON 'indicate no refs in standards-compliant empty remote' '
-	test_set_port JGIT_DAEMON_PORT &&
-	JGIT_DAEMON_PID= &&
-	git init --bare empty.git &&
-	>empty.git/git-daemon-export-ok &&
-	mkfifo jgit_daemon_output &&
-	{
-		jgit daemon --port="$JGIT_DAEMON_PORT" . >jgit_daemon_output &
-		JGIT_DAEMON_PID=$!
-	} &&
-	test_when_finished kill "$JGIT_DAEMON_PID" &&
-	{
-		read line &&
-		case $line in
-		Exporting*)
-			;;
-		*)
-			echo "Expected: Exporting" &&
-			false;;
-		esac &&
-		read line &&
-		case $line in
-		"Listening on"*)
-			;;
-		*)
-			echo "Expected: Listening on" &&
-			false;;
-		esac
-	} <jgit_daemon_output &&
 	# --exit-code asks the command to exit with 2 when no
 	# matching refs are found.
-	test_expect_code 2 git ls-remote --exit-code git://localhost:$JGIT_DAEMON_PORT/empty.git
+	test_expect_code 2 git ls-remote --exit-code --upload-pack=./cat-input .
 '
 
 test_expect_success 'ls-remote works outside repository' '
@@ -345,8 +326,8 @@ test_expect_success 'ls-remote --sort fails gracefully outside repository' '
 test_expect_success 'ls-remote patterns work with all protocol versions' '
 	git for-each-ref --format="%(objectname)	%(refname)" \
 		refs/heads/main refs/remotes/origin/main >expect &&
-	git -c protocol.version=1 ls-remote . main >actual.v1 &&
-	test_cmp expect actual.v1 &&
+	git -c protocol.version=0 ls-remote . main >actual.v0 &&
+	test_cmp expect actual.v0 &&
 	git -c protocol.version=2 ls-remote . main >actual.v2 &&
 	test_cmp expect actual.v2
 '
@@ -354,10 +335,49 @@ test_expect_success 'ls-remote patterns work with all protocol versions' '
 test_expect_success 'ls-remote prefixes work with all protocol versions' '
 	git for-each-ref --format="%(objectname)	%(refname)" \
 		refs/heads/ refs/tags/ >expect &&
-	git -c protocol.version=1 ls-remote --heads --tags . >actual.v1 &&
-	test_cmp expect actual.v1 &&
+	git -c protocol.version=0 ls-remote --heads --tags . >actual.v0 &&
+	test_cmp expect actual.v0 &&
 	git -c protocol.version=2 ls-remote --heads --tags . >actual.v2 &&
 	test_cmp expect actual.v2
+'
+
+test_expect_success 'v0 clients can handle multiple symrefs' '
+	# Modern versions of Git will not return multiple symref capabilities
+	# for v0, so we have to hard-code the response. Note that we will
+	# always use both v0 and object-format=sha1 here, as the hard-coded
+	# response reflects a server that only supports those.
+	oid=1234567890123456789012345678901234567890 &&
+	symrefs="symref=refs/remotes/origin/HEAD:refs/remotes/origin/main" &&
+	symrefs="$symrefs symref=HEAD:refs/heads/main" &&
+
+	# Likewise we want to make sure our parser is not fooled by the string
+	# "symref" appearing as part of an earlier cap. But there is no way to
+	# do that via upload-pack, as arbitrary strings can appear only in a
+	# "symref" value itself (where we skip past the values as a whole)
+	# and "agent" (which always appears after "symref", so putting our
+	# parser in a confused state is less interesting).
+	caps="some other caps including a-fake-symref-cap" &&
+
+	test-tool pkt-line pack >input.q <<-EOF &&
+	$oid HEADQ$caps $symrefs
+	$oid refs/heads/main
+	$oid refs/remotes/origin/HEAD
+	$oid refs/remotes/origin/main
+	0000
+	EOF
+	q_to_nul <input.q >input &&
+
+	cat >expect <<-EOF &&
+	ref: refs/heads/main	HEAD
+	$oid	HEAD
+	$oid	refs/heads/main
+	ref: refs/remotes/origin/main	refs/remotes/origin/HEAD
+	$oid	refs/remotes/origin/HEAD
+	$oid	refs/remotes/origin/main
+	EOF
+
+	git ls-remote --symref --upload-pack=./cat-input . >actual &&
+	test_cmp expect actual
 '
 
 test_done

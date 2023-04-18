@@ -22,7 +22,7 @@
 
 static char *server_capabilities_v1;
 static struct strvec server_capabilities_v2 = STRVEC_INIT;
-static const char *next_server_feature_value(const char *feature, int *len, int *offset);
+static const char *next_server_feature_value(const char *feature, size_t *len, size_t *offset);
 
 static int check_ref(const char *name, unsigned int flags)
 {
@@ -205,10 +205,10 @@ reject:
 static void annotate_refs_with_symref_info(struct ref *ref)
 {
 	struct string_list symref = STRING_LIST_INIT_DUP;
-	int offset = 0;
+	size_t offset = 0;
 
 	while (1) {
-		int len;
+		size_t len;
 		const char *val;
 
 		val = next_server_feature_value("symref", &len, &offset);
@@ -231,7 +231,7 @@ static void annotate_refs_with_symref_info(struct ref *ref)
 static void process_capabilities(struct packet_reader *reader, int *linelen)
 {
 	const char *feat_val;
-	int feat_len;
+	size_t feat_len;
 	const char *line = reader->line;
 	int nul_location = strlen(line);
 	if (nul_location == *linelen)
@@ -263,7 +263,8 @@ static int process_dummy_ref(const struct packet_reader *reader)
 		return 0;
 	name++;
 
-	return oideq(null_oid(), &oid) && !strcmp(name, "capabilities^{}");
+	return oideq(reader->hash_algo->null_oid, &oid) &&
+		!strcmp(name, "capabilities^{}");
 }
 
 static void check_no_capabilities(const char *line, int len)
@@ -595,9 +596,10 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 	return list;
 }
 
-const char *parse_feature_value(const char *feature_list, const char *feature, int *lenp, int *offset)
+const char *parse_feature_value(const char *feature_list, const char *feature, size_t *lenp, size_t *offset)
 {
-	int len;
+	const char *orig_start = feature_list;
+	size_t len;
 
 	if (!feature_list)
 		return NULL;
@@ -616,19 +618,19 @@ const char *parse_feature_value(const char *feature_list, const char *feature, i
 				if (lenp)
 					*lenp = 0;
 				if (offset)
-					*offset = found + len - feature_list;
+					*offset = found + len - orig_start;
 				return value;
 			}
 			/* feature with a value (e.g., "agent=git/1.2.3") */
 			else if (*value == '=') {
-				int end;
+				size_t end;
 
 				value++;
 				end = strcspn(value, " \t\n");
 				if (lenp)
 					*lenp = end;
 				if (offset)
-					*offset = value + end - feature_list;
+					*offset = value + end - orig_start;
 				return value;
 			}
 			/*
@@ -643,8 +645,8 @@ const char *parse_feature_value(const char *feature_list, const char *feature, i
 
 int server_supports_hash(const char *desired, int *feature_supported)
 {
-	int offset = 0;
-	int len;
+	size_t offset = 0;
+	size_t len;
 	const char *hash;
 
 	hash = next_server_feature_value("object-format", &len, &offset);
@@ -668,12 +670,12 @@ int parse_feature_request(const char *feature_list, const char *feature)
 	return !!parse_feature_value(feature_list, feature, NULL, NULL);
 }
 
-static const char *next_server_feature_value(const char *feature, int *len, int *offset)
+static const char *next_server_feature_value(const char *feature, size_t *len, size_t *offset)
 {
 	return parse_feature_value(server_capabilities_v1, feature, len, offset);
 }
 
-const char *server_feature_value(const char *feature, int *len)
+const char *server_feature_value(const char *feature, size_t *len)
 {
 	return parse_feature_value(server_capabilities_v1, feature, len, NULL);
 }
