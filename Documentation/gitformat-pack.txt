@@ -611,8 +611,8 @@ result of repeatedly resetting the objects' mtimes to the present time.
 
 If you are GC-ing repositories in a mixed version environment, consider omitting
 the `--cruft` option when using linkgit:git-repack[1] and linkgit:git-gc[1], and
-leaving the `gc.cruftPacks` configuration unset until all writers understand
-cruft packs.
+setting the `gc.cruftPacks` configuration to "false" until all writers
+understand cruft packs.
 
 === Alternatives
 

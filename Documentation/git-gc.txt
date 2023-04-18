@@ -54,9 +54,10 @@ other housekeeping tasks (e.g. rerere, working trees, reflog...) will
 be performed as well.
 
 
---cruft::
+--[no-]cruft::
 	When expiring unreachable objects, pack them separately into a
-	cruft pack instead of storing them as loose objects.
+	cruft pack instead of storing them as loose objects. `--cruft`
+	is on by default.
 
 --prune=<date>::
 	Prune loose objects older than date (default is 2 weeks ago,
