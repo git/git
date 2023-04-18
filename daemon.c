@@ -4,6 +4,7 @@
 #include "config.h"
 #include "environment.h"
 #include "pkt-line.h"
+#include "protocol.h"
 #include "run-command.h"
 #include "setup.h"
 #include "strbuf.h"
