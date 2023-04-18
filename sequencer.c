@@ -359,9 +359,7 @@ void replay_opts_release(struct replay_opts *opts)
 	free(opts->reflog_action);
 	free(opts->default_strategy);
 	free(opts->strategy);
-	for (size_t i = 0; i < opts->xopts_nr; i++)
-		free(opts->xopts[i]);
-	free(opts->xopts);
+	strvec_clear (&opts->xopts);
 	strbuf_release(&opts->current_fixups);
 	if (opts->revs)
 		release_revisions(opts->revs);
@@ -699,8 +697,8 @@ static int do_recursive_merge(struct repository *r,
 	next_tree = next ? repo_get_commit_tree(r, next) : empty_tree(r);
 	base_tree = base ? repo_get_commit_tree(r, base) : empty_tree(r);
 
-	for (i = 0; i < opts->xopts_nr; i++)
-		parse_merge_opt(&o, opts->xopts[i]);
+	for (i = 0; i < opts->xopts.nr; i++)
+		parse_merge_opt(&o, opts->xopts.v[i]);
 
 	if (!opts->strategy || !strcmp(opts->strategy, "ort")) {
 		memset(&result, 0, sizeof(result));
@@ -2336,7 +2334,7 @@ static int do_pick_commit(struct repository *r,
 		commit_list_insert(base, &common);
 		commit_list_insert(next, &remotes);
 		res |= try_merge_command(r, opts->strategy,
-					 opts->xopts_nr, (const char **)opts->xopts,
+					 opts->xopts.nr, opts->xopts.v,
 					common, oid_to_hex(&head), remotes);
 		free_commit_list(common);
 		free_commit_list(remotes);
@@ -2909,8 +2907,7 @@ static int populate_opts_cb(const char *key, const char *value, void *data)
 	else if (!strcmp(key, "options.gpg-sign"))
 		git_config_string_dup(&opts->gpg_sign, key, value);
 	else if (!strcmp(key, "options.strategy-option")) {
-		ALLOC_GROW(opts->xopts, opts->xopts_nr + 1, opts->xopts_alloc);
-		opts->xopts[opts->xopts_nr++] = xstrdup(value);
+		strvec_push(&opts->xopts, value);
 	} else if (!strcmp(key, "options.allow-rerere-auto"))
 		opts->allow_rerere_auto =
 			git_config_bool_or_int(key, value, &error_flag) ?
@@ -2927,27 +2924,27 @@ static int populate_opts_cb(const char *key, const char *value, void *data)
 	return 0;
 }
 
-void parse_strategy_opts(struct replay_opts *opts, char *raw_opts)
+static void parse_strategy_opts(struct replay_opts *opts, char *raw_opts)
 {
 	int i;
 	int count;
+	const char **argv;
 	char *strategy_opts_string = raw_opts;
 
 	if (*strategy_opts_string == ' ')
 		strategy_opts_string++;
 
-	count = split_cmdline(strategy_opts_string,
-			      (const char ***)&opts->xopts);
+	count = split_cmdline(strategy_opts_string, &argv);
 	if (count < 0)
-		die(_("could not split '%s': %s"), strategy_opts_string,
+		BUG("could not split '%s': %s", strategy_opts_string,
 			    split_cmdline_strerror(count));
-	opts->xopts_nr = count;
-	for (i = 0; i < opts->xopts_nr; i++) {
-		const char *arg = opts->xopts[i];
+	for (i = 0; i < count; i++) {
+		const char *arg = argv[i];
 
 		skip_prefix(arg, "--", &arg);
-		opts->xopts[i] = xstrdup(arg);
+		strvec_push(&opts->xopts, arg);
 	}
+	free(argv);
 }
 
 static void read_strategy_opts(struct replay_opts *opts, struct strbuf *buf)
@@ -2955,7 +2952,6 @@ static void read_strategy_opts(struct replay_opts *opts, struct strbuf *buf)
 	strbuf_reset(buf);
 	if (!read_oneliner(buf, rebase_path_strategy(), 0))
 		return;
-	free(opts->strategy);
 	opts->strategy = strbuf_detach(buf, NULL);
 	if (!read_oneliner(buf, rebase_path_strategy_opts(), 0))
 		return;
@@ -3064,12 +3060,13 @@ done_rebase_i:
 
 static void write_strategy_opts(struct replay_opts *opts)
 {
-	int i;
 	struct strbuf buf = STRBUF_INIT;
 
-	for (i = 0; i < opts->xopts_nr; ++i)
-		strbuf_addf(&buf, " --%s", opts->xopts[i]);
-
+	/*
+	 * Quote strategy options so that they can be read correctly
+	 * by split_cmdline().
+	 */
+	quote_cmdline(&buf, opts->xopts.v);
 	write_file(rebase_path_strategy_opts(), "%s\n", buf.buf);
 	strbuf_release(&buf);
 }
@@ -3092,7 +3089,7 @@ int write_basic_state(struct replay_opts *opts, const char *head_name,
 		write_file(rebase_path_verbose(), "%s", "");
 	if (opts->strategy)
 		write_file(rebase_path_strategy(), "%s\n", opts->strategy);
-	if (opts->xopts_nr > 0)
+	if (opts->xopts.nr > 0)
 		write_strategy_opts(opts);
 
 	if (opts->allow_rerere_auto == RERERE_AUTOUPDATE)
@@ -3461,13 +3458,10 @@ static int save_opts(struct replay_opts *opts)
 	if (opts->gpg_sign)
 		res |= git_config_set_in_file_gently(opts_file,
 					"options.gpg-sign", opts->gpg_sign);
-	if (opts->xopts) {
-		int i;
-		for (i = 0; i < opts->xopts_nr; i++)
-			res |= git_config_set_multivar_in_file_gently(opts_file,
-					"options.strategy-option",
-					opts->xopts[i], "^$", 0);
-	}
+	for (size_t i = 0; i < opts->xopts.nr; i++)
+		res |= git_config_set_multivar_in_file_gently(opts_file,
+				"options.strategy-option",
+				opts->xopts.v[i], "^$", 0);
 	if (opts->allow_rerere_auto)
 		res |= git_config_set_in_file_gently(opts_file,
 				"options.allow-rerere-auto",
@@ -3879,7 +3873,7 @@ static int do_merge(struct repository *r,
 	struct commit *head_commit, *merge_commit, *i;
 	struct commit_list *bases, *j;
 	struct commit_list *to_merge = NULL, **tail = &to_merge;
-	const char *strategy = !opts->xopts_nr &&
+	const char *strategy = !opts->xopts.nr &&
 		(!opts->strategy ||
 		 !strcmp(opts->strategy, "recursive") ||
 		 !strcmp(opts->strategy, "ort")) ?
@@ -4063,9 +4057,9 @@ static int do_merge(struct repository *r,
 			strvec_push(&cmd.args, "octopus");
 		else {
 			strvec_push(&cmd.args, strategy);
-			for (k = 0; k < opts->xopts_nr; k++)
+			for (k = 0; k < opts->xopts.nr; k++)
 				strvec_pushf(&cmd.args,
-					     "-X%s", opts->xopts[k]);
+					     "-X%s", opts->xopts.v[k]);
 		}
 		if (!(flags & TODO_EDIT_MERGE_MSG))
 			strvec_push(&cmd.args, "--no-edit");

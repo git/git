@@ -2,6 +2,7 @@
 #define SEQUENCER_H
 
 #include "strbuf.h"
+#include "strvec.h"
 #include "wt-status.h"
 
 struct commit;
@@ -60,8 +61,7 @@ struct replay_opts {
 	/* Merge strategy */
 	char *default_strategy;  /* from config options */
 	char *strategy;
-	char **xopts;
-	size_t xopts_nr, xopts_alloc;
+	struct strvec xopts;
 
 	/* Reflog */
 	char *reflog_action;
@@ -80,7 +80,12 @@ struct replay_opts {
 	/* Private use */
 	const char *reflog_message;
 };
-#define REPLAY_OPTS_INIT { .edit = -1, .action = -1, .current_fixups = STRBUF_INIT }
+#define REPLAY_OPTS_INIT {			\
+	.edit = -1,				\
+	.action = -1,				\
+	.current_fixups = STRBUF_INIT,		\
+	.xopts = STRVEC_INIT,			\
+}
 
 /*
  * Note that ordering matters in this enum. Not only must it match the mapping
@@ -247,7 +252,6 @@ int read_oneliner(struct strbuf *buf,
 	const char *path, unsigned flags);
 int read_author_script(const char *path, char **name, char **email, char **date,
 		       int allow_missing);
-void parse_strategy_opts(struct replay_opts *opts, char *raw_opts);
 int write_basic_state(struct replay_opts *opts, const char *head_name,
 		      struct commit *onto, const struct object_id *orig_head);
 void sequencer_post_commit_cleanup(struct repository *r, int verbose);

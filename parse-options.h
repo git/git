@@ -287,6 +287,15 @@ struct option {
 	.help = (h), \
 	.callback = &parse_opt_string_list, \
 }
+#define OPT_STRVEC(s, l, v, a, h) { \
+	.type = OPTION_CALLBACK, \
+	.short_name = (s), \
+	.long_name = (l), \
+	.value = (v), \
+	.argh = (a), \
+	.help = (h), \
+	.callback = &parse_opt_strvec, \
+}
 #define OPT_UYN(s, l, v, h) { \
 	.type = OPTION_CALLBACK, \
 	.short_name = (s), \
@@ -480,6 +489,7 @@ int parse_opt_commits(const struct option *, const char *, int);
 int parse_opt_commit(const struct option *, const char *, int);
 int parse_opt_tertiary(const struct option *, const char *, int);
 int parse_opt_string_list(const struct option *, const char *, int);
+int parse_opt_strvec(const struct option *, const char *, int);
 int parse_opt_noop_cb(const struct option *, const char *, int);
 int parse_opt_passthru(const struct option *, const char *, int);
 int parse_opt_passthru_argv(const struct option *, const char *, int);
