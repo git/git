@@ -210,93 +210,55 @@ prepare_cruft_history () {
 	git reset HEAD^^
 }
 
-assert_cruft_packs () {
-	find .git/objects/pack -name "*.mtimes" >mtimes &&
-	sed -e 's/\.mtimes$/\.pack/g' mtimes >packs &&
-
-	test_file_not_empty packs &&
-	while read pack
-	do
-		test_path_is_file "$pack" || return 1
-	done <packs
-}
-
 assert_no_cruft_packs () {
 	find .git/objects/pack -name "*.mtimes" >mtimes &&
 	test_must_be_empty mtimes
 }
 
-test_expect_success 'gc --cruft generates a cruft pack' '
-	test_when_finished "rm -fr crufts" &&
-	git init crufts &&
-	(
-		cd crufts &&
+for argv in \
+	"gc --cruft" \
+	"-c gc.cruftPacks=true gc" \
+	"-c feature.experimental=true gc" \
+	"-c gc.cruftPacks=true -c feature.experimental=false gc"
+do
+	test_expect_success "git $argv generates a cruft pack" '
+		test_when_finished "rm -fr repo" &&
+		git init repo &&
+		(
+			cd repo &&
 
-		prepare_cruft_history &&
-		git gc --cruft &&
-		assert_cruft_packs
-	)
-'
+			prepare_cruft_history &&
+			git $argv &&
 
-test_expect_success 'gc.cruftPacks=true generates a cruft pack' '
-	test_when_finished "rm -fr crufts" &&
-	git init crufts &&
-	(
-		cd crufts &&
+			find .git/objects/pack -name "*.mtimes" >mtimes &&
+			sed -e 's/\.mtimes$/\.pack/g' mtimes >packs &&
 
-		prepare_cruft_history &&
-		git -c gc.cruftPacks=true gc &&
-		assert_cruft_packs
-	)
-'
+			test_file_not_empty packs &&
+			while read pack
+			do
+				test_path_is_file "$pack" || return 1
+			done <packs
+		)
+	'
+done
 
-test_expect_success 'feature.experimental=true generates a cruft pack' '
-	git init crufts &&
-	test_when_finished "rm -fr crufts" &&
-	(
-		cd crufts &&
+for argv in \
+	"-c feature.expiremental=true -c gc.cruftPacks=false gc" \
+	"-c feature.experimental=false gc"
+do
+	test_expect_success "git $argv does not generate a cruft pack" '
+		test_when_finished "rm -fr repo" &&
+		git init repo &&
+		(
+			cd repo &&
 
-		prepare_cruft_history &&
-		git -c feature.experimental=true gc &&
-		assert_cruft_packs
-	)
-'
+			prepare_cruft_history &&
+			git $argv &&
 
-test_expect_success 'feature.experimental=false allows explicit cruft packs' '
-	git init crufts &&
-	test_when_finished "rm -fr crufts" &&
-	(
-		cd crufts &&
-
-		prepare_cruft_history &&
-		git -c gc.cruftPacks=true -c feature.experimental=false gc &&
-		assert_cruft_packs
-	)
-'
-
-test_expect_success 'feature.experimental=true can be overridden' '
-	git init crufts &&
-	test_when_finished "rm -fr crufts" &&
-	(
-		cd crufts &&
-
-		prepare_cruft_history &&
-		git -c feature.expiremental=true -c gc.cruftPacks=false gc &&
-		assert_no_cruft_packs
-	)
-'
-
-test_expect_success 'feature.experimental=false avoids cruft packs by default' '
-	git init crufts &&
-	test_when_finished "rm -fr crufts" &&
-	(
-		cd crufts &&
-
-		prepare_cruft_history &&
-		git -c feature.experimental=false gc &&
-		assert_no_cruft_packs
-	)
-'
+			assert_no_cruft_packs
+		)
+	'
+done
 
 test_expect_success '--keep-largest-pack ignores cruft packs' '
 	test_when_finished "rm -fr repo" &&
