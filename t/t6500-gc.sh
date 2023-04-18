@@ -218,6 +218,7 @@ assert_no_cruft_packs () {
 for argv in \
 	"gc --cruft" \
 	"-c gc.cruftPacks=true gc" \
+	"-c gc.cruftPacks=false gc --cruft" \
 	"-c feature.experimental=true gc" \
 	"-c gc.cruftPacks=true -c feature.experimental=false gc"
 do
@@ -243,6 +244,9 @@ do
 done
 
 for argv in \
+	"gc" \
+	"-c gc.cruftPacks=false gc" \
+	"-c gc.cruftPacks=true gc --no-cruft" \
 	"-c feature.expiremental=true -c gc.cruftPacks=false gc" \
 	"-c feature.experimental=false gc"
 do
