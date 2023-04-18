@@ -1331,17 +1331,17 @@ static int write_midx_internal(const char *object_dir,
 	}
 
 	if (preferred_pack_name) {
-		int found = 0;
+		ctx.preferred_pack_idx = -1;
+
 		for (i = 0; i < ctx.nr; i++) {
 			if (!cmp_idx_or_pack_name(preferred_pack_name,
 						  ctx.info[i].pack_name)) {
 				ctx.preferred_pack_idx = i;
-				found = 1;
 				break;
 			}
 		}
 
-		if (!found)
+		if (ctx.preferred_pack_idx == -1)
 			warning(_("unknown preferred pack: '%s'"),
 				preferred_pack_name);
 	} else if (ctx.nr &&
