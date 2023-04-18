@@ -483,14 +483,11 @@ $ git checkout -b foo  # or "git switch -c foo"  <1>
 $ git branch foo                                 <2>
 $ git tag foo                                    <3>
 ------------
-
 <1> creates a new branch `foo`, which refers to commit `f`, and then
     updates `HEAD` to refer to branch `foo`. In other words, we'll no longer
     be in detached `HEAD` state after this command.
-
 <2> similarly creates a new branch `foo`, which refers to commit `f`,
     but leaves `HEAD` detached.
-
 <3> creates a new tag `foo`, which refers to commit `f`,
     leaving `HEAD` detached.
 
@@ -529,7 +526,6 @@ $ git checkout master~2 Makefile  <2>
 $ rm -f hello.c
 $ git checkout hello.c            <3>
 ------------
-+
 <1> switch branch
 <2> take a file out of another commit
 <3> restore `hello.c` from the index
