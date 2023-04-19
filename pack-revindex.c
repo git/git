@@ -207,6 +207,9 @@ static int load_revindex_from_disk(char *revindex_name,
 	size_t revindex_size;
 	struct revindex_header *hdr;
 
+	if (git_env_bool(GIT_TEST_REV_INDEX_DIE_ON_DISK, 0))
+		die("dying as requested by '%s'", GIT_TEST_REV_INDEX_DIE_ON_DISK);
+
 	fd = git_open(revindex_name);
 
 	if (fd < 0) {
@@ -285,12 +288,15 @@ cleanup:
 	return ret;
 }
 
-int load_pack_revindex(struct packed_git *p)
+int load_pack_revindex(struct repository *r, struct packed_git *p)
 {
 	if (p->revindex || p->revindex_data)
 		return 0;
 
-	if (!load_pack_revindex_from_disk(p))
+	prepare_repo_settings(r);
+
+	if (r->settings.pack_read_reverse_index &&
+	    !load_pack_revindex_from_disk(p))
 		return 0;
 	else if (!create_pack_revindex_in_memory(p))
 		return 0;
@@ -358,7 +364,7 @@ int offset_to_pack_pos(struct packed_git *p, off_t ofs, uint32_t *pos)
 {
 	unsigned lo, hi;
 
-	if (load_pack_revindex(p) < 0)
+	if (load_pack_revindex(the_repository, p) < 0)
 		return -1;
 
 	lo = 0;

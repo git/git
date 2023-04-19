@@ -1,17 +1,20 @@
 #!/bin/sh
 
 test_description='on-disk reverse index'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # The below tests want control over the 'pack.writeReverseIndex' setting
 # themselves to assert various combinations of it with other options.
-sane_unset GIT_TEST_WRITE_REV_INDEX
+sane_unset GIT_TEST_NO_WRITE_REV_INDEX
 
 packdir=.git/objects/pack
 
 test_expect_success 'setup' '
 	test_commit base &&
 
+	test_config pack.writeReverseIndex false &&
 	pack=$(git pack-objects --all $packdir/pack) &&
 	rev=$packdir/pack-$pack.rev &&
 
@@ -91,6 +94,17 @@ test_expect_success 'reverse index is not generated when available on disk' '
 
 	git rev-parse HEAD >tip &&
 	GIT_TEST_REV_INDEX_DIE_IN_MEMORY=1 git cat-file \
+		--batch-check="%(objectsize:disk)" <tip
+'
+
+test_expect_success 'reverse index is ignored when pack.readReverseIndex is false' '
+	test_index_pack true &&
+	test_path_is_file $rev &&
+
+	test_config pack.readReverseIndex false &&
+
+	git rev-parse HEAD >tip &&
+	GIT_TEST_REV_INDEX_DIE_ON_DISK=1 git cat-file \
 		--batch-check="%(objectsize:disk)" <tip
 '
 
