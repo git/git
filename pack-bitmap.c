@@ -381,7 +381,7 @@ static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
 		goto cleanup;
 	}
 
-	if (load_midx_revindex(bitmap_git->midx) < 0) {
+	if (load_midx_revindex(bitmap_git->midx)) {
 		warning(_("multi-pack bitmap is missing required reverse index"));
 		goto cleanup;
 	}
@@ -2142,7 +2142,7 @@ uint32_t *create_bitmap_mapping(struct bitmap_index *bitmap_git,
 
 	if (!bitmap_is_midx(bitmap_git))
 		load_reverse_index(r, bitmap_git);
-	else if (load_midx_revindex(bitmap_git->midx) < 0)
+	else if (load_midx_revindex(bitmap_git->midx))
 		BUG("rebuild_existing_bitmaps: missing required rev-cache "
 		    "extension");
 
