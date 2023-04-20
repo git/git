@@ -17,6 +17,7 @@ static int drivers_alloc;
 		.cflags = REG_EXTENDED, \
 	}, \
 	.word_regex = wrx "|[^[:space:]]|[\xc0-\xff][\x80-\xbf]+", \
+	.word_regex_multi_byte = wrx "|[^[:space:]]", \
 }
 #define IPATTERN(lang, rx, wrx) { \
 	.name = lang, \
@@ -26,6 +27,7 @@ static int drivers_alloc;
 		.cflags = REG_EXTENDED | REG_ICASE, \
 	}, \
 	.word_regex = wrx "|[^[:space:]]|[\xc0-\xff][\x80-\xbf]+", \
+	.word_regex_multi_byte = wrx "|[^[:space:]]", \
 }
 
 /*
@@ -294,7 +296,7 @@ PATTERNS("scheme",
 	 /* All other words should be delimited by spaces or parentheses */
 	 "|([^][)(}{[ \t])+"),
 PATTERNS("tex", "^(\\\\((sub)*section|chapter|part)\\*{0,1}\\{.*)$",
-	 "\\\\[a-zA-Z@]+|\\\\.|[a-zA-Z0-9\x80-\xff]+"),
+	 "\\\\[a-zA-Z@]+|\\\\.|([a-zA-Z0-9]|[^\x01-\x7f])+"),
 { "default", NULL, NULL, -1, { NULL, 0 } },
 };
 #undef PATTERNS
@@ -328,6 +330,25 @@ static int userdiff_find_by_namelen_cb(struct userdiff_driver *driver,
 		return 1; /* tell the caller to stop iterating */
 	}
 	return 0;
+}
+
+static int regexec_supports_multi_byte_chars(void)
+{
+	static const char not_space[] = "[^[:space:]]";
+	static const char utf8_multi_byte_char[] = "\xc2\xa3";
+	regex_t re;
+	regmatch_t match;
+	static int result = -1;
+
+	if (result != -1)
+		return result;
+	if (regcomp(&re, not_space, REG_EXTENDED))
+		BUG("invalid regular expression: %s", not_space);
+	result = !regexec(&re, utf8_multi_byte_char, 1, &match, 0) &&
+		match.rm_so == 0 &&
+		match.rm_eo == strlen(utf8_multi_byte_char);
+	regfree(&re);
+	return result;
 }
 
 static struct userdiff_driver *userdiff_find_by_namelen(const char *name, size_t len)
@@ -405,7 +426,13 @@ int userdiff_config(const char *k, const char *v)
 struct userdiff_driver *userdiff_find_by_name(const char *name)
 {
 	int len = strlen(name);
-	return userdiff_find_by_namelen(name, len);
+	struct userdiff_driver *driver = userdiff_find_by_namelen(name, len);
+	if (driver && driver->word_regex_multi_byte) {
+		if (regexec_supports_multi_byte_chars())
+			driver->word_regex = driver->word_regex_multi_byte;
+		driver->word_regex_multi_byte = NULL;
+	}
+	return driver;
 }
 
 struct userdiff_driver *userdiff_find_by_path(struct index_state *istate,
