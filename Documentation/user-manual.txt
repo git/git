@@ -1343,6 +1343,33 @@ $ git diff -3 file.txt		# diff against stage 3
 $ git diff --theirs file.txt	# same as the above.
 -------------------------------------------------
 
+When using the 'ort' merge strategy (the default), before updating the working
+tree with the result of the merge, Git writes a special ref named AUTO_MERGE
+reflecting the state of the tree it is about to write. Conflicted paths that
+could not be automatically merged are written to this tree with conflict
+markers, just as in the working tree. AUTO_MERGE can thus be used with
+linkgit:git-diff[1] to show the changes you've made so far to resolve
+conflicts. Using the same example as above, after resolving the conflict we
+get:
+
+-------------------------------------------------
+$ git diff AUTO_MERGE
+diff --git a/file.txt b/file.txt
+index cd10406..8bf5ae7 100644
+--- a/file.txt
++++ b/file.txt
+@@ -1,5 +1 @@
+-<<<<<<< HEAD:file.txt
+-Hello world
+-=======
+-Goodbye
+->>>>>>> 77976da35a11db4580b80ae27e8d65caf5208086:file.txt
++Goodbye world
+-------------------------------------------------
+
+Notice that the diff shows we deleted the conflict markers and both versions,
+and wrote "Goodbye world" instead.
+
 The linkgit:git-log[1] and linkgit:gitk[1] commands also provide special help
 for merges:
 
