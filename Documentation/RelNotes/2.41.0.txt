@@ -61,6 +61,10 @@ UI, Workflows & Features
  * Clean-up of the code path that deals with merge strategy option
    handling in "git rebase".
 
+ * "git clone --local" stops copying from an original repository that
+   has symbolic links inside its $GIT_DIR; an error message when that
+   happens has been updated.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -213,6 +217,18 @@ Fixes since v2.40
  * Doc toolchain update to remove old workaround for AsciiDoc.
    (merge 8806120de6 fc/remove-header-workarounds-for-asciidoc later to maint).
 
+ * The userdiff regexp patterns for various filetypes that are built
+   into the system have been updated to avoid triggering regexp errors
+   from UTF-8 aware regex engines.
+   (merge be39144954 rs/userdiff-multibyte-regex later to maint).
+
+ * The approxidate() API has been simplified by losing an extra
+   function that did the same thing as another one.
+   (merge 8a7f0b666f rs/remove-approxidate-relative later to maint).
+
+ * Code clean-up to replace a hardcoded constant with a CPP macro.
+   (merge c870de6502 rs/get-tar-commit-id-use-defined-const later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f7111175df as/doc-markup-fix later to maint).
    (merge 90ff7c9898 fc/test-aggregation-clean-up later to maint).
@@ -228,3 +244,4 @@ Fixes since v2.40
    (merge cc48ddd937 jk/chainlint-fixes later to maint).
    (merge 4833b08426 ow/ref-format-remove-unused-member later to maint).
    (merge d0ea2ca1cf dw/doc-submittingpatches-grammofix later to maint).
+   (merge fd72637423 ar/t2024-checkout-output-fix later to maint).
