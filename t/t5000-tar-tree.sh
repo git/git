@@ -426,6 +426,19 @@ test_expect_success 'catch non-matching pathspec' '
 	test_must_fail git archive -v HEAD -- "*.abc" >/dev/null
 '
 
+test_expect_success 'reject paths outside the current directory' '
+	test_must_fail git -C a/bin archive HEAD .. >/dev/null 2>err &&
+	grep "outside the current directory" err
+'
+
+test_expect_success 'allow pathspecs that resolve to the current directory' '
+	git -C a/bin archive -v HEAD ../bin >/dev/null 2>actual &&
+	cat >expect <<-\EOF &&
+	sh
+	EOF
+	test_cmp expect actual
+'
+
 # Pull the size and date of each entry in a tarfile using the system tar.
 #
 # We'll pull out only the year from the date; that avoids any question of
