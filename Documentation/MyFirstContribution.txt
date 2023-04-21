@@ -1164,7 +1164,7 @@ After you run this command, `format-patch` will output the patches to the `psuh/
 directory, alongside the v1 patches. Using a single directory makes it easy to
 refer to the old v1 patches while proofreading the v2 patches, but you will need
 to be careful to send out only the v2 patches. We will use a pattern like
-"psuh/v2-*.patch" (not "psuh/*.patch", which would match v1 and v2 patches).
+`psuh/v2-*.patch` (not `psuh/*.patch`, which would match v1 and v2 patches).
 
 Edit your cover letter again. Now is a good time to mention what's different
 between your last version and now, if it's something significant. You do not

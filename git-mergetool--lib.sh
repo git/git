@@ -97,7 +97,42 @@ merge_mode () {
 	test "$TOOL_MODE" = merge
 }
 
+get_gui_default () {
+	if diff_mode
+	then
+		GUI_DEFAULT_KEY="difftool.guiDefault"
+	else
+		GUI_DEFAULT_KEY="mergetool.guiDefault"
+	fi
+	GUI_DEFAULT_CONFIG_LCASE=$(git config --default false --get "$GUI_DEFAULT_KEY" | tr 'A-Z' 'a-z')
+	if test "$GUI_DEFAULT_CONFIG_LCASE" = "auto"
+	then
+		if test -n "$DISPLAY"
+		then
+			GUI_DEFAULT=true
+		else
+			GUI_DEFAULT=false
+		fi
+	else
+		GUI_DEFAULT=$(git config --default false --bool --get "$GUI_DEFAULT_KEY")
+		subshell_exit_status=$?
+		if test $subshell_exit_status -ne 0
+		then
+			exit $subshell_exit_status
+		fi
+	fi
+	echo $GUI_DEFAULT
+}
+
 gui_mode () {
+	if test -z "$GIT_MERGETOOL_GUI"
+	then
+		GIT_MERGETOOL_GUI=$(get_gui_default)
+		if test $? -ne 0
+		then
+			exit 2
+		fi
+	fi
 	test "$GIT_MERGETOOL_GUI" = true
 }
 
@@ -467,6 +502,11 @@ get_merge_tool () {
 	is_guessed=false
 	# Check if a merge tool has been configured
 	merge_tool=$(get_configured_merge_tool)
+	subshell_exit_status=$?
+	if test $subshell_exit_status -gt "1"
+	then
+		exit $subshell_exit_status
+	fi
 	# Try to guess an appropriate merge tool if no tool has been set.
 	if test -z "$merge_tool"
 	then

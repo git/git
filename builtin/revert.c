@@ -45,20 +45,6 @@ static const char * const *revert_or_cherry_pick_usage(struct replay_opts *opts)
 	return opts->action == REPLAY_REVERT ? revert_usage : cherry_pick_usage;
 }
 
-static int option_parse_x(const struct option *opt,
-			  const char *arg, int unset)
-{
-	struct replay_opts **opts_ptr = opt->value;
-	struct replay_opts *opts = *opts_ptr;
-
-	if (unset)
-		return 0;
-
-	ALLOC_GROW(opts->xopts, opts->xopts_nr + 1, opts->xopts_alloc);
-	opts->xopts[opts->xopts_nr++] = xstrdup(arg);
-	return 0;
-}
-
 static int option_parse_m(const struct option *opt,
 			  const char *arg, int unset)
 {
@@ -116,8 +102,8 @@ static int run_sequencer(int argc, const char **argv, const char *prefix,
 			     N_("select mainline parent"), option_parse_m),
 		OPT_RERERE_AUTOUPDATE(&opts->allow_rerere_auto),
 		OPT_STRING(0, "strategy", &opts->strategy, N_("strategy"), N_("merge strategy")),
-		OPT_CALLBACK('X', "strategy-option", &opts, N_("option"),
-			N_("option for merge strategy"), option_parse_x),
+		OPT_STRVEC('X', "strategy-option", &opts->xopts, N_("option"),
+			N_("option for merge strategy")),
 		{ OPTION_STRING, 'S', "gpg-sign", &opts->gpg_sign, N_("key-id"),
 		  N_("GPG sign commit"), PARSE_OPT_OPTARG, NULL, (intptr_t) "" },
 		OPT_END()
@@ -178,7 +164,7 @@ static int run_sequencer(int argc, const char **argv, const char *prefix,
 				"--signoff", opts->signoff,
 				"--mainline", opts->mainline,
 				"--strategy", opts->strategy ? 1 : 0,
-				"--strategy-option", opts->xopts ? 1 : 0,
+				"--strategy-option", opts->xopts.nr ? 1 : 0,
 				"-x", opts->record_origin,
 				"--ff", opts->allow_ff,
 				"--rerere-autoupdate", opts->allow_rerere_auto == RERERE_AUTOUPDATE,

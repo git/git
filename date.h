@@ -68,7 +68,6 @@ int parse_expiry_date(const char *date, timestamp_t *timestamp);
 void datestamp(struct strbuf *out);
 #define approxidate(s) approxidate_careful((s), NULL)
 timestamp_t approxidate_careful(const char *, int *);
-timestamp_t approxidate_relative(const char *date);
 int date_overflows(timestamp_t date);
 time_t tm_to_time_t(const struct tm *tm);
 #endif
