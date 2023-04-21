@@ -470,6 +470,11 @@ test_expect_success 'thread' '
 	check_threading expect.thread --thread main
 '
 
+test_expect_success '--thread overrides format.thread=deep' '
+	test_config format.thread deep &&
+	check_threading expect.thread --thread main
+'
+
 cat >expect.in-reply-to <<EOF
 ---
 Message-ID: <0>
