@@ -43,6 +43,7 @@ helper_test_clean() {
 	reject $1 https example.com store-user
 	reject $1 https example.com user1
 	reject $1 https example.com user2
+	reject $1 https example.com user4
 	reject $1 http path.tld user
 	reject $1 https timeout.tld user
 	reject $1 https sso.tld
@@ -294,6 +295,35 @@ helper_test_timeout() {
 		--
 		askpass: Username for '\''https://timeout.tld'\'':
 		askpass: Password for '\''https://askpass-username@timeout.tld'\'':
+		EOF
+	'
+}
+
+helper_test_oauth_refresh_token() {
+	HELPER=$1
+
+	test_expect_success "helper ($HELPER) stores oauth_refresh_token" '
+		check approve $HELPER <<-\EOF
+		protocol=https
+		host=example.com
+		username=user4
+		password=pass
+		oauth_refresh_token=xyzzy
+		EOF
+	'
+
+	test_expect_success "helper ($HELPER) gets oauth_refresh_token" '
+		check fill $HELPER <<-\EOF
+		protocol=https
+		host=example.com
+		username=user4
+		--
+		protocol=https
+		host=example.com
+		username=user4
+		password=pass
+		oauth_refresh_token=xyzzy
+		--
 		EOF
 	'
 }
