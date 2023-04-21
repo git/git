@@ -388,9 +388,7 @@ test_expect_success 'B: accept branch name "TEMP_TAG"' '
 
 	INPUT_END
 
-	test_when_finished "rm -f .git/TEMP_TAG
-		git gc
-		git prune" &&
+	test_when_finished "rm -f .git/TEMP_TAG && git gc --prune=now" &&
 	git fast-import <input &&
 	test $(test-tool ref-store main resolve-ref TEMP_TAG 0 | cut -f1 -d " " ) != "$ZERO_OID" &&
 	test $(git rev-parse main) = $(git rev-parse TEMP_TAG^)
@@ -406,8 +404,7 @@ test_expect_success 'B: accept empty committer' '
 	INPUT_END
 
 	test_when_finished "git update-ref -d refs/heads/empty-committer-1
-		git gc
-		git prune" &&
+		git gc --prune=now" &&
 	git fast-import <input &&
 	out=$(git fsck) &&
 	echo "$out" &&
@@ -452,8 +449,7 @@ test_expect_success 'B: accept and fixup committer with no name' '
 	INPUT_END
 
 	test_when_finished "git update-ref -d refs/heads/empty-committer-2
-		git gc
-		git prune" &&
+		git gc --prune=now" &&
 	git fast-import <input &&
 	out=$(git fsck) &&
 	echo "$out" &&
@@ -1778,8 +1774,7 @@ test_expect_success 'P: verbatim SHA gitlinks' '
 	INPUT_END
 
 	git branch -D sub &&
-	git gc &&
-	git prune &&
+	git gc --prune=now &&
 	git fast-import <input &&
 	test $(git rev-parse --verify subuse2) = $(git rev-parse --verify subuse1)
 '

@@ -810,7 +810,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 				N_("same as -a, pack unreachable cruft objects separately"),
 				   PACK_CRUFT),
 		OPT_STRING(0, "cruft-expiration", &cruft_expiration, N_("approxidate"),
-				N_("with -C, expire objects older than this")),
+				N_("with --cruft, expire objects older than this")),
 		OPT_BOOL('d', NULL, &delete_redundant,
 				N_("remove redundant packs, and run git-prune-packed")),
 		OPT_BOOL('f', NULL, &po_args.no_reuse_delta,
