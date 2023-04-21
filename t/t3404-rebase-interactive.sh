@@ -1288,6 +1288,12 @@ test_expect_success 'rebase -i commits that overwrite untracked files (pick)' '
 	test_must_fail git rebase --continue &&
 	test_cmp_rev HEAD F &&
 	rm file6 &&
+	test_path_is_missing .git/rebase-merge/author-script &&
+	echo changed >file1 &&
+	git add file1 &&
+	test_must_fail git rebase --continue 2>err &&
+	grep "error: you have staged changes in your working tree" err &&
+	git reset --hard HEAD &&
 	git rebase --continue &&
 	test_cmp_rev HEAD I
 '
@@ -1306,6 +1312,7 @@ test_expect_success 'rebase -i commits that overwrite untracked files (squash)' 
 	test_must_fail git rebase --continue &&
 	test_cmp_rev HEAD F &&
 	rm file6 &&
+	test_path_is_missing .git/rebase-merge/author-script &&
 	git rebase --continue &&
 	test $(git cat-file commit HEAD | sed -ne \$p) = I &&
 	git reset --hard original-branch2
@@ -1324,6 +1331,7 @@ test_expect_success 'rebase -i commits that overwrite untracked files (no ff)' '
 	test_must_fail git rebase --continue &&
 	test $(git cat-file commit HEAD | sed -ne \$p) = F &&
 	rm file6 &&
+	test_path_is_missing .git/rebase-merge/author-script &&
 	git rebase --continue &&
 	test $(git cat-file commit HEAD | sed -ne \$p) = I
 '

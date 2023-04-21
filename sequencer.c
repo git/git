@@ -1055,7 +1055,7 @@ static int run_git_commit(const char *defmsg,
 
 	if (is_rebase_i(opts) &&
 	    ((opts->committer_date_is_author_date && !opts->ignore_date) ||
-	     !(!defmsg && (flags & AMEND_MSG))) &&
+	     !(flags & AMEND_MSG)) &&
 	    read_env_script(&cmd.env)) {
 		const char *gpg_opt = gpg_sign_opt_quoted(opts);
 
@@ -2216,8 +2216,6 @@ static int do_pick_commit(struct repository *r,
 	if (opts->allow_ff && !is_fixup(command) &&
 	    ((parent && oideq(&parent->object.oid, &head)) ||
 	     (!parent && unborn))) {
-		if (is_rebase_i(opts))
-			write_author_script(msg.message);
 		res = fast_forward_to(r, &commit->object.oid, &head, unborn,
 			opts);
 		if (res || command != TODO_REWORD)
@@ -2324,9 +2322,10 @@ static int do_pick_commit(struct repository *r,
 		 command == TODO_REVERT) {
 		res = do_recursive_merge(r, base, next, base_label, next_label,
 					 &head, &msgbuf, opts);
-		if (res < 0)
+		if (res < 0) {
+			unlink(rebase_path_author_script());
 			goto leave;
-
+		}
 		res |= write_message(msgbuf.buf, msgbuf.len,
 				     git_path_merge_msg(r), 0);
 	} else {
@@ -4141,6 +4140,7 @@ static int do_merge(struct repository *r,
 	if (ret < 0) {
 		error(_("could not even attempt to merge '%.*s'"),
 		      merge_arg_len, arg);
+		unlink(rebase_path_author_script());
 		goto leave_merge;
 	}
 	/*
