@@ -650,7 +650,7 @@ int check_signature(struct signature_check *sigc,
 	gpg_interface_lazy_init();
 
 	sigc->result = 'N';
-	sigc->trust_level = -1;
+	sigc->trust_level = TRUST_UNDEFINED;
 
 	fmt = get_format_by_sig(signature);
 	if (!fmt)
