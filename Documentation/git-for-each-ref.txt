@@ -98,6 +98,10 @@ OPTIONS
 --ignore-case::
 	Sorting and filtering refs are case insensitive.
 
+--omit-empty::
+	Do not print a newline after formatted refs where the format expands
+	to the empty string.
+
 FIELD NAMES
 -----------
 
