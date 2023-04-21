@@ -167,16 +167,21 @@ test_expect_success 'failed `merge -C` writes patch (may be rescheduled, too)' '
 	test_must_fail git rebase -ir HEAD &&
 	grep "^merge -C .* G$" .git/rebase-merge/done &&
 	grep "^merge -C .* G$" .git/rebase-merge/git-rebase-todo &&
-	test_path_is_file .git/rebase-merge/patch &&
+	test_path_is_missing .git/rebase-merge/patch &&
 	test_path_is_missing .git/rebase-merge/author-script &&
+	test_path_is_missing .git/MERGE_MSG &&
+	test_path_is_missing .git/rebase-merge/message &&
+	test_path_is_missing .git/rebase-merge/stopped-sha &&
 
 	: fail because of merge conflict &&
-	rm G.t .git/rebase-merge/patch &&
 	git reset --hard conflicting-G &&
 	test_must_fail git rebase --continue &&
 	! grep "^merge -C .* G$" .git/rebase-merge/git-rebase-todo &&
 	test_path_is_file .git/rebase-merge/patch &&
-	test_path_is_file .git/rebase-merge/author-script
+	test_path_is_file .git/rebase-merge/author-script &&
+	test_path_is_file .git/MERGE_MSG &&
+	test_path_is_file .git/rebase-merge/message &&
+	test_path_is_file .git/rebase-merge/stopped-sha
 '
 
 test_expect_success 'failed `merge <branch>` does not crash' '

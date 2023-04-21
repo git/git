@@ -1289,6 +1289,10 @@ test_expect_success 'rebase -i commits that overwrite untracked files (pick)' '
 	test_cmp_rev HEAD F &&
 	rm file6 &&
 	test_path_is_missing .git/rebase-merge/author-script &&
+	test_path_is_missing .git/rebase-merge/patch &&
+	test_path_is_missing .git/MERGE_MSG &&
+	test_path_is_missing .git/rebase-merge/message &&
+	test_path_is_missing .git/rebase-merge/stopped-sha &&
 	echo changed >file1 &&
 	git add file1 &&
 	test_must_fail git rebase --continue 2>err &&
@@ -1313,6 +1317,10 @@ test_expect_success 'rebase -i commits that overwrite untracked files (squash)' 
 	test_cmp_rev HEAD F &&
 	rm file6 &&
 	test_path_is_missing .git/rebase-merge/author-script &&
+	test_path_is_missing .git/rebase-merge/patch &&
+	test_path_is_missing .git/MERGE_MSG &&
+	test_path_is_missing .git/rebase-merge/message &&
+	test_path_is_missing .git/rebase-merge/stopped-sha &&
 	git rebase --continue &&
 	test $(git cat-file commit HEAD | sed -ne \$p) = I &&
 	git reset --hard original-branch2
@@ -1332,6 +1340,10 @@ test_expect_success 'rebase -i commits that overwrite untracked files (no ff)' '
 	test $(git cat-file commit HEAD | sed -ne \$p) = F &&
 	rm file6 &&
 	test_path_is_missing .git/rebase-merge/author-script &&
+	test_path_is_missing .git/rebase-merge/patch &&
+	test_path_is_missing .git/MERGE_MSG &&
+	test_path_is_missing .git/rebase-merge/message &&
+	test_path_is_missing .git/rebase-merge/stopped-sha &&
 	git rebase --continue &&
 	test $(git cat-file commit HEAD | sed -ne \$p) = I
 '
