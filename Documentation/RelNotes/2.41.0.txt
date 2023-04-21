@@ -65,6 +65,10 @@ UI, Workflows & Features
    has symbolic links inside its $GIT_DIR; an error message when that
    happens has been updated.
 
+ * "git branch --format=..." and "git format-patch --format=..."
+   learns "--omit-empty" to hide refs that whose formatting result
+   becomes an empty string from the output.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -228,6 +232,13 @@ Fixes since v2.40
 
  * Code clean-up to replace a hardcoded constant with a CPP macro.
    (merge c870de6502 rs/get-tar-commit-id-use-defined-const later to maint).
+
+ * Doc build simplification.
+   (merge 9a09ed3229 fc/doc-stop-using-manversion later to maint).
+
+ * "git archive" run from a subdirectory mishandled attributes and
+   paths outside the current directory.
+   (merge 92b1dd1b9e rs/archive-from-subdirectory-fixes later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge f7111175df as/doc-markup-fix later to maint).
