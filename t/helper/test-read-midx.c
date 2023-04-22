@@ -5,6 +5,7 @@
 #include "repository.h"
 #include "object-store.h"
 #include "pack-bitmap.h"
+#include "packfile.h"
 #include "setup.h"
 
 static int read_midx_file(const char *object_dir, int show_objects)
