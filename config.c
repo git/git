@@ -35,6 +35,7 @@
 #include "setup.h"
 #include "trace2.h"
 #include "worktree.h"
+#include "ws.h"
 #include "wrapper.h"
 #include "write-or-die.h"
 

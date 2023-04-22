@@ -41,6 +41,7 @@
 #include "object-name.h"
 #include "setup.h"
 #include "strmap.h"
+#include "ws.h"
 #include "wrapper.h"
 
 #ifdef NO_FAST_WORKING_DIRECTORY
