@@ -30,6 +30,7 @@
 #include "apply.h"
 #include "entry.h"
 #include "setup.h"
+#include "symlinks.h"
 #include "wrapper.h"
 
 struct gitdiff_data {

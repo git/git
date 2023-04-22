@@ -23,6 +23,7 @@
 #include "dir.h"
 #include "setup.h"
 #include "split-index.h"
+#include "symlinks.h"
 #include "fsmonitor.h"
 #include "write-or-die.h"
 

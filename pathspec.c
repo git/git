@@ -8,6 +8,7 @@
 #include "attr.h"
 #include "setup.h"
 #include "strvec.h"
+#include "symlinks.h"
 #include "quote.h"
 
 /*

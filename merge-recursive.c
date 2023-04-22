@@ -30,6 +30,7 @@
 #include "string-list.h"
 #include "submodule-config.h"
 #include "submodule.h"
+#include "symlinks.h"
 #include "tag.h"
 #include "tree-walk.h"
 #include "unpack-trees.h"

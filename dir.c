@@ -25,6 +25,7 @@
 #include "fsmonitor.h"
 #include "setup.h"
 #include "submodule-config.h"
+#include "symlinks.h"
 #include "trace2.h"
 #include "wrapper.h"
 

@@ -593,28 +593,6 @@ int df_name_compare(const char *name1, size_t len1, int mode1,
 int name_compare(const char *name1, size_t len1, const char *name2, size_t len2);
 int cache_name_stage_compare(const char *name1, int len1, int stage1, const char *name2, int len2, int stage2);
 
-struct cache_def {
-	struct strbuf path;
-	int flags;
-	int track_flags;
-	int prefix_len_stat_func;
-};
-#define CACHE_DEF_INIT { \
-	.path = STRBUF_INIT, \
-}
-static inline void cache_def_clear(struct cache_def *cache)
-{
-	strbuf_release(&cache->path);
-}
-
-int has_symlink_leading_path(const char *name, int len);
-int threaded_has_symlink_leading_path(struct cache_def *, const char *, int);
-int check_leading_path(const char *name, int len, int warn_on_lstat_err);
-int has_dirs_only_path(const char *name, int len, int prefix_len);
-void invalidate_lstat_cache(void);
-void schedule_dir_for_removal(const char *name, int len);
-void remove_scheduled_dirs(void);
-
 struct pack_window {
 	struct pack_window *next;
 	unsigned char *base;

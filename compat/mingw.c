@@ -13,6 +13,7 @@
 #include "../config.h"
 #include "../environment.h"
 #include "../trace2.h"
+#include "../symlinks.h"
 #include "../wrapper.h"
 #include "dir.h"
 #include "gettext.h"

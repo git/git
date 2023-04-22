@@ -11,6 +11,7 @@
 #include "progress.h"
 #include "thread-utils.h"
 #include "repository.h"
+#include "symlinks.h"
 #include "trace2.h"
 
 /*
