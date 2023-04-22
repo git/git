@@ -557,11 +557,6 @@ extern int verify_ce_order;
 #define DATA_CHANGED    0x0020
 #define TYPE_CHANGED    0x0040
 
-int base_name_compare(const char *name1, size_t len1, int mode1,
-		      const char *name2, size_t len2, int mode2);
-int df_name_compare(const char *name1, size_t len1, int mode1,
-		    const char *name2, size_t len2, int mode2);
-int name_compare(const char *name1, size_t len1, const char *name2, size_t len2);
 int cmp_cache_name_compare(const void *a_, const void *b_);
 
 /* add */
