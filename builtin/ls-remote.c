@@ -3,6 +3,7 @@
 #include "gettext.h"
 #include "hex.h"
 #include "transport.h"
+#include "pkt-line.h"
 #include "ref-filter.h"
 #include "remote.h"
 #include "refs.h"
