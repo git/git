@@ -3,6 +3,7 @@
 
 #include "object.h"
 
+struct pathspec;
 struct repository;
 struct strbuf;
 

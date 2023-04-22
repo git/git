@@ -1,6 +1,7 @@
 #include "git-compat-util.h"
 #include "alloc.h"
 #include "gettext.h"
+#include "hash.h"
 #include "hex.h"
 #include "strvec.h"
 #include "refs.h"

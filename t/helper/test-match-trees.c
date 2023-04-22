@@ -3,6 +3,7 @@
 #include "hex.h"
 #include "match-trees.h"
 #include "object-name.h"
+#include "repository.h"
 #include "setup.h"
 #include "tree.h"
 

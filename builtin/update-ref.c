@@ -1,11 +1,13 @@
 #include "cache.h"
 #include "config.h"
 #include "gettext.h"
+#include "hash.h"
 #include "refs.h"
 #include "builtin.h"
 #include "object-name.h"
 #include "parse-options.h"
 #include "quote.h"
+#include "repository.h"
 #include "strvec.h"
 
 static const char * const git_update_ref_usage[] = {

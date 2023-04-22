@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "dir.h"
+#include "hash.h"
 #include "resolve-undo.h"
 #include "string-list.h"
 

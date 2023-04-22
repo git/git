@@ -19,6 +19,7 @@
 #include "dir.h"
 #include "builtin.h"
 #include "parse-options.h"
+#include "repository.h"
 #include "resolve-undo.h"
 #include "setup.h"
 #include "submodule.h"

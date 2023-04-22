@@ -14,6 +14,7 @@
 #include "strvec.h"
 #include "branch.h"
 #include "refs.h"
+#include "repository.h"
 #include "run-command.h"
 #include "hook.h"
 #include "sigchain.h"

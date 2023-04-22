@@ -3,6 +3,7 @@
 #include "gettext.h"
 #include "simple-ipc.h"
 #include "fsmonitor-ipc.h"
+#include "repository.h"
 #include "run-command.h"
 #include "strbuf.h"
 #include "trace2.h"

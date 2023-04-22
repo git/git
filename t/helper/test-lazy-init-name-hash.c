@@ -3,6 +3,7 @@
 #include "cache.h"
 #include "environment.h"
 #include "parse-options.h"
+#include "repository.h"
 #include "setup.h"
 #include "trace.h"
 

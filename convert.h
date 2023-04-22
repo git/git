@@ -4,7 +4,7 @@
 #ifndef CONVERT_H
 #define CONVERT_H
 
-#include "hash.h"
+#include "hash-ll.h"
 #include "string-list.h"
 
 struct index_state;

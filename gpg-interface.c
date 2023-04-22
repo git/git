@@ -7,6 +7,7 @@
 #include "dir.h"
 #include "ident.h"
 #include "gpg-interface.h"
+#include "path.h"
 #include "sigchain.h"
 #include "tempfile.h"
 #include "alias.h"

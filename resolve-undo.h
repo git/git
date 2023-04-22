@@ -6,7 +6,7 @@ struct index_state;
 struct pathspec;
 struct string_list;
 
-#include "hash.h"
+#include "hash-ll.h"
 
 struct resolve_undo_info {
 	unsigned int mode[3];

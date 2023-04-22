@@ -8,6 +8,7 @@
 #include "gettext.h"
 #include "pager.h"
 #include "parse-options.h"
+#include "path.h"
 #include "run-command.h"
 #include "config-list.h"
 #include "help.h"

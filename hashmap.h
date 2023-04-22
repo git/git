@@ -1,7 +1,7 @@
 #ifndef HASHMAP_H
 #define HASHMAP_H
 
-#include "hash.h"
+#include "hash-ll.h"
 
 /*
  * Generic implementation of hash-based key-value mappings.

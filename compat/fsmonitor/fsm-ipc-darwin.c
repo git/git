@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "config.h"
 #include "hex.h"
+#include "repository.h"
 #include "strbuf.h"
 #include "fsmonitor.h"
 #include "fsmonitor-ipc.h"

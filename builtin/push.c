@@ -15,6 +15,7 @@
 #include "transport.h"
 #include "parse-options.h"
 #include "pkt-line.h"
+#include "repository.h"
 #include "submodule.h"
 #include "submodule-config.h"
 #include "send-pack.h"

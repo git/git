@@ -3,6 +3,7 @@
 #include "alloc.h"
 #include "config.h"
 #include "environment.h"
+#include "path.h"
 #include "pkt-line.h"
 #include "protocol.h"
 #include "run-command.h"
