@@ -15,6 +15,7 @@
 #include "cache.h"
 #include "abspath.h"
 #include "config.h"
+#include "copy.h"
 #include "builtin.h"
 #include "run-command.h"
 #include "environment.h"

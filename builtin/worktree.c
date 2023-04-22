@@ -2,6 +2,7 @@
 #include "abspath.h"
 #include "checkout.h"
 #include "config.h"
+#include "copy.h"
 #include "builtin.h"
 #include "dir.h"
 #include "environment.h"

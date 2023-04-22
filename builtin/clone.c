@@ -13,6 +13,7 @@
 #include "abspath.h"
 #include "advice.h"
 #include "config.h"
+#include "copy.h"
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"

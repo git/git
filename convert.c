@@ -2,6 +2,7 @@
 #include "advice.h"
 #include "config.h"
 #include "convert.h"
+#include "copy.h"
 #include "gettext.h"
 #include "hex.h"
 #include "object-store.h"

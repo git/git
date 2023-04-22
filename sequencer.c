@@ -3,6 +3,7 @@
 #include "advice.h"
 #include "alloc.h"
 #include "config.h"
+#include "copy.h"
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
