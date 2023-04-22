@@ -4,6 +4,7 @@
 #include "cache.h"
 #include "abspath.h"
 #include "alloc.h"
+#include "base85.h"
 #include "config.h"
 #include "convert.h"
 #include "environment.h"

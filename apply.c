@@ -10,6 +10,7 @@
 #include "cache.h"
 #include "abspath.h"
 #include "alloc.h"
+#include "base85.h"
 #include "config.h"
 #include "object-store.h"
 #include "blob.h"
