@@ -23,6 +23,7 @@
 #include "shallow.h"
 #include "json-writer.h"
 #include "trace2.h"
+#include "tree.h"
 #include "chunk-format.h"
 #include "wrapper.h"
 

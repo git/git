@@ -13,6 +13,7 @@
 #include "xdiff/xmacros.h"
 #include "log-tree.h"
 #include "refs.h"
+#include "tree.h"
 #include "userdiff.h"
 #include "oid-array.h"
 #include "revision.h"

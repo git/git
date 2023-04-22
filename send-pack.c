@@ -1,6 +1,7 @@
 #include "git-compat-util.h"
 #include "config.h"
 #include "commit.h"
+#include "date.h"
 #include "gettext.h"
 #include "hex.h"
 #include "refs.h"

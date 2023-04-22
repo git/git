@@ -6,6 +6,7 @@
 #include "cache.h"
 #include "alloc.h"
 #include "config.h"
+#include "date.h"
 #include "diff.h"
 #include "diffcore.h"
 #include "hex.h"

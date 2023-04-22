@@ -15,6 +15,7 @@
 #include "dir.h"
 #include "oid-array.h"
 #include "packfile.h"
+#include "pretty.h"
 #include "object-store.h"
 #include "repository.h"
 #include "setup.h"

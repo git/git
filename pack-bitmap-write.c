@@ -18,6 +18,7 @@
 #include "commit-reach.h"
 #include "prio-queue.h"
 #include "trace2.h"
+#include "tree.h"
 
 struct bitmapped_commit {
 	struct commit *commit;
