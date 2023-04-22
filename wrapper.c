@@ -5,6 +5,7 @@
 #include "abspath.h"
 #include "config.h"
 #include "gettext.h"
+#include "strbuf.h"
 #include "trace2.h"
 #include "wrapper.h"
 

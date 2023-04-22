@@ -2,6 +2,7 @@
 #include "cache.h"
 #include "mem-pool.h"
 #include "mergesort.h"
+#include "strbuf.h"
 
 static uint32_t minstd_rand(uint32_t *state)
 {

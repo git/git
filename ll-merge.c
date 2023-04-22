@@ -12,6 +12,7 @@
 #include "run-command.h"
 #include "ll-merge.h"
 #include "quote.h"
+#include "strbuf.h"
 #include "wrapper.h"
 
 struct ll_merge_driver;

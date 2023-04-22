@@ -3,6 +3,7 @@
 #include "hex.h"
 #include "oidtree.h"
 #include "setup.h"
+#include "strbuf.h"
 
 static enum cb_next print_oid(const struct object_id *oid, void *data)
 {

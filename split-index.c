@@ -3,6 +3,7 @@
 #include "gettext.h"
 #include "mem-pool.h"
 #include "split-index.h"
+#include "strbuf.h"
 #include "ewah/ewok.h"
 
 struct split_index *init_split_index(struct index_state *istate)

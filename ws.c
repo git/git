@@ -5,6 +5,7 @@
  */
 #include "cache.h"
 #include "attr.h"
+#include "strbuf.h"
 
 static struct whitespace_rule {
 	const char *rule_name;

@@ -3,6 +3,7 @@
 #include "hex.h"
 #include "oid-array.h"
 #include "setup.h"
+#include "strbuf.h"
 
 static int print_oid(const struct object_id *oid, void *data)
 {
