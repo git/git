@@ -4,8 +4,6 @@
 #include "git-compat-util.h"
 #include "strbuf.h"
 #include "hashmap.h"
-#include "gettext.h"
-#include "string-list.h"
 #include "pathspec.h"
 #include "object.h"
 #include "statinfo.h"
