@@ -19,6 +19,7 @@
 #include "revision.h"
 #include "utf8.h"
 #include "version.h"
+#include "versioncmp.h"
 #include "trailer.h"
 #include "wt-status.h"
 #include "commit-slab.h"
