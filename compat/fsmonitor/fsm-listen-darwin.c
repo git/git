@@ -23,7 +23,7 @@
 #endif
 #endif
 
-#include "cache.h"
+#include "git-compat-util.h"
 #include "fsmonitor.h"
 #include "fsm-listen.h"
 #include "fsmonitor--daemon.h"
