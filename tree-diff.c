@@ -5,6 +5,7 @@
 #include "diff.h"
 #include "diffcore.h"
 #include "tree.h"
+#include "tree-walk.h"
 
 /*
  * Some mode bits are also used internally for computations.

@@ -4,7 +4,6 @@
 #ifndef DIFF_H
 #define DIFF_H
 
-#include "tree-walk.h"
 #include "pathspec.h"
 #include "oidset.h"
 #include "strbuf.h"
