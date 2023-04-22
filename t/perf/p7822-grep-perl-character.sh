@@ -8,6 +8,13 @@ etc.) we will test the patterns under those numbers of threads.
 
 . ./perf-lib.sh
 
+# setting a LOCALE is needed, but not yet supported by :
+#. "$TEST_DIRECTORY"/lib-gettext.sh
+
+# Invoke like:
+#
+# LC_ALL=is_IS.utf8 ./p7822-grep-perl-character.sh
+
 test_perf_large_repo
 test_checkout_worktree
 
@@ -27,13 +34,13 @@ do
 	if ! test_have_prereq PERF_GREP_ENGINES_THREADS
 	then
 		test_perf "grep -P '$pattern'" --prereq PCRE "
-			git -P grep -f pat || :
+			git grep -P -f pat || :
 		"
 	else
 		for threads in $GIT_PERF_GREP_THREADS
 		do
 			test_perf "grep -P '$pattern' with $threads threads" --prereq PTHREADS,PCRE "
-				git -c grep.threads=$threads -P grep -f pat || :
+				git -c grep.threads=$threads grep -P -f pat || :
 			"
 		done
 	fi

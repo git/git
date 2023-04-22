@@ -4,6 +4,9 @@
 #ifdef USE_LIBPCRE2
 #define PCRE2_CODE_UNIT_WIDTH 8
 #include <pcre2.h>
+#if (PCRE2_MAJOR >= 10 && PCRE2_MINOR >= 43) || PCRE2_MAJOR >= 11
+#define GIT_PCRE2_VERSION_10_43_OR_HIGHER
+#endif
 #if (PCRE2_MAJOR >= 10 && PCRE2_MINOR >= 36) || PCRE2_MAJOR >= 11
 #define GIT_PCRE2_VERSION_10_36_OR_HIGHER
 #endif
@@ -178,6 +181,8 @@ struct grep_opt {
 
 	void (*output)(struct grep_opt *opt, const void *data, size_t size);
 	void *output_priv;
+
+	unsigned perl_digit:1;
 };
 
 #define GREP_OPT_INIT { \
