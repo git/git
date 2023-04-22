@@ -14,6 +14,7 @@
 #include "remote.h"
 #include "dir.h"
 #include "oid-array.h"
+#include "oidtree.h"
 #include "packfile.h"
 #include "pretty.h"
 #include "object-store.h"
