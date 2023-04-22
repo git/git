@@ -1,6 +1,7 @@
 #include "test-tool.h"
 #include "cache.h"
 #include "hex.h"
+#include "match-trees.h"
 #include "object-name.h"
 #include "setup.h"
 #include "tree.h"

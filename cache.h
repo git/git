@@ -603,10 +603,6 @@ int add_files_to_cache(const char *prefix, const struct pathspec *pathspec, int 
 /* diff.c */
 extern int diff_auto_refresh_index;
 
-/* match-trees.c */
-void shift_tree(struct repository *, const struct object_id *, const struct object_id *, struct object_id *, int);
-void shift_tree_by(struct repository *, const struct object_id *, const struct object_id *, struct object_id *, const char *);
-
 /*
  * whitespace rules.
  * used by both diff and apply
