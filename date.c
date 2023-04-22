@@ -4,7 +4,7 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 
-#include "cache.h"
+#include "git-compat-util.h"
 #include "date.h"
 #include "gettext.h"
 #include "pager.h"

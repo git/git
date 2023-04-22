@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "copy.h"
 #include "path.h"
 #include "wrapper.h"

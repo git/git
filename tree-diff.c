@@ -1,7 +1,7 @@
 /*
  * Helper functions for tree diff generation
  */
-#include "cache.h"
+#include "git-compat-util.h"
 #include "diff.h"
 #include "diffcore.h"
 #include "tree.h"

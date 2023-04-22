@@ -1,5 +1,4 @@
 #include "test-tool.h"
-#include "cache.h"
 #include "parse-options.h"
 #include "strbuf.h"
 #include "string-list.h"

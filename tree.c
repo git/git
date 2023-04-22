@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "cache-tree.h"
 #include "hex.h"
 #include "tree.h"

@@ -1,5 +1,4 @@
 #include "test-tool.h"
-#include "cache.h"
 #include "mem-pool.h"
 #include "mergesort.h"
 #include "strbuf.h"

@@ -7,7 +7,7 @@
  * even if you might want to know where the git directory etc
  * are.
  */
-#include "cache.h"
+#include "git-compat-util.h"
 #include "abspath.h"
 #include "branch.h"
 #include "convert.h"
