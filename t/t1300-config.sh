@@ -1462,24 +1462,25 @@ test_expect_success 'git config ignores pairs exceeding count' '
 	GIT_CONFIG_COUNT=1 \
 		GIT_CONFIG_KEY_0="pair.one" GIT_CONFIG_VALUE_0="value" \
 		GIT_CONFIG_KEY_1="pair.two" GIT_CONFIG_VALUE_1="value" \
-		git config --get-regexp "pair.*" >actual &&
+		git config --get-regexp "pair.*" >actual 2>error &&
 	cat >expect <<-EOF &&
 	pair.one value
 	EOF
-	test_cmp expect actual
+	test_cmp expect actual &&
+	test_must_be_empty error
 '
 
 test_expect_success 'git config ignores pairs with zero count' '
 	test_must_fail env \
 		GIT_CONFIG_COUNT=0 GIT_CONFIG_KEY_0="pair.one" GIT_CONFIG_VALUE_0="value" \
-		git config pair.one >error &&
+		git config pair.one 2>error &&
 	test_must_be_empty error
 '
 
 test_expect_success 'git config ignores pairs with empty count' '
 	test_must_fail env \
 		GIT_CONFIG_COUNT= GIT_CONFIG_KEY_0="pair.one" GIT_CONFIG_VALUE_0="value" \
-		git config pair.one >error &&
+		git config pair.one 2>error &&
 	test_must_be_empty error
 '
 
