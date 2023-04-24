@@ -270,5 +270,5 @@ int string_list_split(struct string_list *list, const char *string,
  * list->strdup_strings must *not* be set.
  */
 int string_list_split_in_place(struct string_list *list, char *string,
-			       int delim, int maxsplit);
+			       const char *delim, int maxsplit);
 #endif /* STRING_LIST_H */
