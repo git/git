@@ -539,7 +539,7 @@ int send_pack(struct send_pack_args *args,
 		die(_("the receiving end does not support this repository's hash algorithm"));
 
 	if (args->push_cert != SEND_PACK_PUSH_CERT_NEVER) {
-		int len;
+		size_t len;
 		push_cert_nonce = server_feature_value("push-cert", &len);
 		if (push_cert_nonce) {
 			reject_invalid_nonce(push_cert_nonce, len);

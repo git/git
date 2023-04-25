@@ -1100,7 +1100,7 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 	struct ref *ref = copy_ref_list(orig_ref);
 	struct object_id oid;
 	const char *agent_feature;
-	int agent_len;
+	size_t agent_len;
 	struct fetch_negotiator negotiator_alloc;
 	struct fetch_negotiator *negotiator;
 
@@ -1118,7 +1118,7 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 		agent_supported = 1;
 		if (agent_len)
 			print_verbose(args, _("Server version is %.*s"),
-				      agent_len, agent_feature);
+				      (int)agent_len, agent_feature);
 	}
 
 	if (!server_supports("session-id"))
