@@ -3,6 +3,7 @@
 #include "hex.h"
 #include "object.h"
 #include "replace-object.h"
+#include "object-file.h"
 #include "object-store.h"
 #include "blob.h"
 #include "tree.h"

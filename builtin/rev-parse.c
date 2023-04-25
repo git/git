@@ -15,6 +15,7 @@
 #include "refs.h"
 #include "quote.h"
 #include "builtin.h"
+#include "object-name.h"
 #include "parse-options.h"
 #include "diff.h"
 #include "revision.h"

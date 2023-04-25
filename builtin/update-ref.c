@@ -3,6 +3,7 @@
 #include "gettext.h"
 #include "refs.h"
 #include "builtin.h"
+#include "object-name.h"
 #include "parse-options.h"
 #include "quote.h"
 #include "strvec.h"

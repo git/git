@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
 #include "environment.h"
 #include "gettext.h"
@@ -8,6 +8,7 @@
 #include "sideband.h"
 #include "repository.h"
 #include "object-store.h"
+#include "oid-array.h"
 #include "tag.h"
 #include "object.h"
 #include "commit.h"
@@ -22,6 +23,7 @@
 #include "version.h"
 #include "string-list.h"
 #include "strvec.h"
+#include "trace2.h"
 #include "prio-queue.h"
 #include "protocol.h"
 #include "quote.h"
@@ -30,6 +32,7 @@
 #include "commit-graph.h"
 #include "commit-reach.h"
 #include "shallow.h"
+#include "wrapper.h"
 #include "write-or-die.h"
 
 /* Remember to update object flag allocation in object.h */

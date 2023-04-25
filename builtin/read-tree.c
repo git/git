@@ -11,6 +11,7 @@
 #include "hex.h"
 #include "lockfile.h"
 #include "object.h"
+#include "object-name.h"
 #include "tree.h"
 #include "tree-walk.h"
 #include "cache-tree.h"

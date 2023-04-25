@@ -1,8 +1,10 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "abspath.h"
 #include "chdir-notify.h"
 #include "list.h"
+#include "path.h"
 #include "strbuf.h"
+#include "trace.h"
 
 struct chdir_notify_entry {
 	const char *name;

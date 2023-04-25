@@ -1,7 +1,8 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
 #include "environment.h"
 #include "protocol.h"
+#include "trace2.h"
 
 static enum protocol_version parse_protocol_version(const char *value)
 {

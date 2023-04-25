@@ -1,5 +1,4 @@
 #include "git-compat-util.h"
-#include "cache.h"
 #include "config.h"
 #include "environment.h"
 #include "gettext.h"
@@ -14,6 +13,7 @@
 #include "string-list.h"
 #include "oid-array.h"
 #include "transport.h"
+#include "trace2.h"
 #include "strbuf.h"
 #include "version.h"
 #include "protocol.h"

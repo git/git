@@ -1,9 +1,10 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "abspath.h"
 #include "alloc.h"
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
+#include "object-name.h"
 #include "refs.h"
 #include "string-list.h"
 #include "utf8.h"
@@ -1177,34 +1178,6 @@ int strbuf_normalize_path(struct strbuf *src)
 	strbuf_swap(src, &dst);
 	strbuf_release(&dst);
 	return 0;
-}
-
-int strbuf_edit_interactively(struct strbuf *buffer, const char *path,
-			      const char *const *env)
-{
-	char *path2 = NULL;
-	int fd, res = 0;
-
-	if (!is_absolute_path(path))
-		path = path2 = xstrdup(git_path("%s", path));
-
-	fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
-	if (fd < 0)
-		res = error_errno(_("could not open '%s' for writing"), path);
-	else if (write_in_full(fd, buffer->buf, buffer->len) < 0) {
-		res = error_errno(_("could not write to '%s'"), path);
-		close(fd);
-	} else if (close(fd) < 0)
-		res = error_errno(_("could not close '%s'"), path);
-	else {
-		strbuf_reset(buffer);
-		if (launch_editor(path, buffer, env) < 0)
-			res = error_errno(_("could not edit '%s'"), path);
-		unlink(path);
-	}
-
-	free(path2);
-	return res;
 }
 
 void strbuf_strip_file_from_path(struct strbuf *sb)

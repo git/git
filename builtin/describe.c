@@ -11,6 +11,7 @@
 #include "refs.h"
 #include "builtin.h"
 #include "exec-cmd.h"
+#include "object-name.h"
 #include "parse-options.h"
 #include "revision.h"
 #include "diff.h"

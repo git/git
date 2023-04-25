@@ -11,6 +11,7 @@
 #include "refs.h"
 #include "builtin.h"
 #include "exec-cmd.h"
+#include "object-file.h"
 #include "parse-options.h"
 #include "setup.h"
 #include "worktree.h"

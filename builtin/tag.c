@@ -7,12 +7,15 @@
  */
 
 #include "cache.h"
+#include "advice.h"
 #include "config.h"
 #include "builtin.h"
+#include "editor.h"
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
 #include "refs.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "tag.h"
 #include "run-command.h"

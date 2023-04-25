@@ -1,5 +1,6 @@
 #include "../../cache.h"
 #include "../../json-writer.h"
+#include "../../trace2.h"
 #include "lazyload.h"
 #include <Psapi.h>
 #include <tlHelp32.h>

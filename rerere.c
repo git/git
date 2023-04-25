@@ -1,4 +1,4 @@
-#include "git-compat-util.h"
+#include "cache.h"
 #include "abspath.h"
 #include "alloc.h"
 #include "config.h"
@@ -13,6 +13,7 @@
 #include "ll-merge.h"
 #include "attr.h"
 #include "pathspec.h"
+#include "object-file.h"
 #include "object-store.h"
 #include "hash-lookup.h"
 #include "strmap.h"

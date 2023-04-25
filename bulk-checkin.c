@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2011, Google Inc.
  */
-#include "cache.h"
+#include "git-compat-util.h"
 #include "alloc.h"
 #include "bulk-checkin.h"
 #include "environment.h"
@@ -15,7 +15,9 @@
 #include "string-list.h"
 #include "tmp-objdir.h"
 #include "packfile.h"
+#include "object-file.h"
 #include "object-store.h"
+#include "wrapper.h"
 
 static int odb_transaction_nesting;
 

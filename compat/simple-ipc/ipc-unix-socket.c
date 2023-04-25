@@ -1,9 +1,10 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "gettext.h"
 #include "simple-ipc.h"
 #include "strbuf.h"
 #include "pkt-line.h"
 #include "thread-utils.h"
+#include "trace2.h"
 #include "unix-socket.h"
 #include "unix-stream-server.h"
 

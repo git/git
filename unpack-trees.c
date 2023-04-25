@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "advice.h"
 #include "strvec.h"
 #include "repository.h"
 #include "config.h"
@@ -17,6 +18,7 @@
 #include "sparse-index.h"
 #include "submodule.h"
 #include "submodule-config.h"
+#include "trace2.h"
 #include "fsmonitor.h"
 #include "object-store.h"
 #include "promisor-remote.h"

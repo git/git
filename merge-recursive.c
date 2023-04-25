@@ -22,6 +22,8 @@
 #include "hex.h"
 #include "ll-merge.h"
 #include "lockfile.h"
+#include "object-file.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "repository.h"
 #include "revision.h"
