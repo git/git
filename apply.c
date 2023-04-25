@@ -4586,7 +4586,7 @@ static int write_out_one_reject(struct apply_state *state, struct patch *patch)
 	FILE *rej;
 	char namebuf[PATH_MAX];
 	struct fragment *frag;
-	int cnt = 0;
+	int fd, cnt = 0;
 	struct strbuf sb = STRBUF_INIT;
 
 	for (cnt = 0, frag = patch->fragments; frag; frag = frag->next) {
@@ -4626,7 +4626,17 @@ static int write_out_one_reject(struct apply_state *state, struct patch *patch)
 	memcpy(namebuf, patch->new_name, cnt);
 	memcpy(namebuf + cnt, ".rej", 5);
 
-	rej = fopen(namebuf, "w");
+	fd = open(namebuf, O_CREAT | O_EXCL | O_WRONLY, 0666);
+	if (fd < 0) {
+		if (errno != EEXIST)
+			return error_errno(_("cannot open %s"), namebuf);
+		if (unlink(namebuf))
+			return error_errno(_("cannot unlink '%s'"), namebuf);
+		fd = open(namebuf, O_CREAT | O_EXCL | O_WRONLY, 0666);
+		if (fd < 0)
+			return error_errno(_("cannot open %s"), namebuf);
+	}
+	rej = fdopen(fd, "w");
 	if (!rej)
 		return error_errno(_("cannot open %s"), namebuf);
 
