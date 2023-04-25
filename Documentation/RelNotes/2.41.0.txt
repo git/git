@@ -69,6 +69,10 @@ UI, Workflows & Features
    learns "--omit-empty" to hide refs that whose formatting result
    becomes an empty string from the output.
 
+ * The sendemail-validate validate hook learned to pass the total
+   number of input files and where in the sequence each invocation is
+   via environment variables.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -239,6 +243,15 @@ Fixes since v2.40
  * "git archive" run from a subdirectory mishandled attributes and
    paths outside the current directory.
    (merge 92b1dd1b9e rs/archive-from-subdirectory-fixes later to maint).
+
+ * The code to parse capability list for v0 on-wire protocol fell into
+   an infinite loop when a capability appears multiple times, which
+   has been corrected.
+
+ * Geometric repacking ("git repack --geometric=<n>") in a repository
+   that borrows from an alternate object database had various corner
+   case bugs, which have been corrected.
+   (merge d85cd18777 ps/fix-geom-repack-with-alternates later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge f7111175df as/doc-markup-fix later to maint).
