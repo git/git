@@ -9,6 +9,7 @@
  */
 #define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
+#include "advice.h"
 #include "config.h"
 #include "environment.h"
 #include "gettext.h"
@@ -23,12 +24,15 @@
 #include "diffcore.h"
 #include "tree.h"
 #include "branch.h"
+#include "object-name.h"
 #include "parse-options.h"
 #include "unpack-trees.h"
 #include "cache-tree.h"
 #include "setup.h"
 #include "submodule.h"
 #include "submodule-config.h"
+#include "trace.h"
+#include "trace2.h"
 #include "dir.h"
 #include "add-interactive.h"
 

@@ -1,8 +1,10 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "gettext.h"
 #include "pack-revindex.h"
+#include "object-file.h"
 #include "object-store.h"
 #include "packfile.h"
+#include "trace2.h"
 #include "config.h"
 #include "midx.h"
 

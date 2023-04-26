@@ -12,6 +12,7 @@
 #include "../dir-iterator.h"
 #include "../lockfile.h"
 #include "../object.h"
+#include "../object-file.h"
 #include "../dir.h"
 #include "../chdir-notify.h"
 #include "../setup.h"

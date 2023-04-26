@@ -11,6 +11,7 @@
 #include "progress.h"
 #include "thread-utils.h"
 #include "repository.h"
+#include "trace2.h"
 
 /*
  * Mostly randomly chosen maximum thread counts: we

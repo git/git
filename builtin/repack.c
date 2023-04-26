@@ -325,7 +325,8 @@ static int geometry_cmp(const void *va, const void *vb)
 }
 
 static void init_pack_geometry(struct pack_geometry **geometry_p,
-			       struct string_list *existing_kept_packs)
+			       struct string_list *existing_kept_packs,
+			       const struct pack_objects_args *args)
 {
 	struct packed_git *p;
 	struct pack_geometry *geometry;
@@ -335,6 +336,14 @@ static void init_pack_geometry(struct pack_geometry **geometry_p,
 	geometry = *geometry_p;
 
 	for (p = get_all_packs(the_repository); p; p = p->next) {
+		if (args->local && !p->pack_local)
+			/*
+			 * When asked to only repack local packfiles we skip
+			 * over any packfiles that are borrowed from alternate
+			 * object directories.
+			 */
+			continue;
+
 		if (!pack_kept_objects) {
 			/*
 			 * Any pack that has its pack_keep bit set will appear
@@ -448,8 +457,10 @@ static void split_pack_geometry(struct pack_geometry *geometry, int factor)
 	geometry->split = split;
 }
 
-static struct packed_git *get_largest_active_pack(struct pack_geometry *geometry)
+static struct packed_git *get_preferred_pack(struct pack_geometry *geometry)
 {
+	uint32_t i;
+
 	if (!geometry) {
 		/*
 		 * No geometry means either an all-into-one repack (in which
@@ -464,7 +475,21 @@ static struct packed_git *get_largest_active_pack(struct pack_geometry *geometry
 	}
 	if (geometry->split == geometry->pack_nr)
 		return NULL;
-	return geometry->pack[geometry->pack_nr - 1];
+
+	/*
+	 * The preferred pack is the largest pack above the split line. In
+	 * other words, it is the largest pack that does not get rolled up in
+	 * the geometric repack.
+	 */
+	for (i = geometry->pack_nr; i > geometry->split; i--)
+		/*
+		 * A pack that is not local would never be included in a
+		 * multi-pack index. We thus skip over any non-local packs.
+		 */
+		if (geometry->pack[i - 1]->pack_local)
+			return geometry->pack[i - 1];
+
+	return NULL;
 }
 
 static void clear_pack_geometry(struct pack_geometry *geometry)
@@ -558,6 +583,17 @@ static void midx_included_packs(struct string_list *include,
 		for (i = geometry->split; i < geometry->pack_nr; i++) {
 			struct packed_git *p = geometry->pack[i];
 
+			/*
+			 * The multi-pack index never refers to packfiles part
+			 * of an alternate object database, so we skip these.
+			 * While git-multi-pack-index(1) would silently ignore
+			 * them anyway, this allows us to skip executing the
+			 * command completely when we have only non-local
+			 * packfiles.
+			 */
+			if (!p->pack_local)
+				continue;
+
 			strbuf_addstr(&buf, pack_basename(p));
 			strbuf_strip_suffix(&buf, ".pack");
 			strbuf_addstr(&buf, ".idx");
@@ -591,7 +627,7 @@ static int write_midx_included_packs(struct string_list *include,
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	struct string_list_item *item;
-	struct packed_git *largest = get_largest_active_pack(geometry);
+	struct packed_git *preferred = get_preferred_pack(geometry);
 	FILE *in;
 	int ret;
 
@@ -612,9 +648,9 @@ static int write_midx_included_packs(struct string_list *include,
 	if (write_bitmaps)
 		strvec_push(&cmd.args, "--bitmap");
 
-	if (largest)
+	if (preferred)
 		strvec_pushf(&cmd.args, "--preferred-pack=%s",
-			     pack_basename(largest));
+			     pack_basename(preferred));
 
 	if (refs_snapshot)
 		strvec_pushf(&cmd.args, "--refs-snapshot=%s", refs_snapshot);
@@ -853,6 +889,18 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	if (write_bitmaps && !(pack_everything & ALL_INTO_ONE) && !write_midx)
 		die(_(incremental_bitmap_conflict_error));
 
+	if (write_bitmaps && po_args.local && has_alt_odb(the_repository)) {
+		/*
+		 * When asked to do a local repack, but we have
+		 * packfiles that are inherited from an alternate, then
+		 * we cannot guarantee that the multi-pack-index would
+		 * have full coverage of all objects. We thus disable
+		 * writing bitmaps in that case.
+		 */
+		warning(_("disabling bitmap writing, as some objects are not being packed"));
+		write_bitmaps = 0;
+	}
+
 	if (write_midx && write_bitmaps) {
 		struct strbuf path = STRBUF_INIT;
 
@@ -875,7 +923,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	if (geometric_factor) {
 		if (pack_everything)
 			die(_("options '%s' and '%s' cannot be used together"), "--geometric", "-A/-a");
-		init_pack_geometry(&geometry, &existing_kept_packs);
+		init_pack_geometry(&geometry, &existing_kept_packs, &po_args);
 		split_pack_geometry(geometry, geometric_factor);
 	}
 

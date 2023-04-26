@@ -1,6 +1,7 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "color.h"
 #include "config.h"
+#include "editor.h"
 #include "gettext.h"
 #include "sideband.h"
 #include "help.h"

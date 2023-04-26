@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "transport.h"
 #include "quote.h"
 #include "run-command.h"
@@ -7,6 +7,7 @@
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
+#include "object-name.h"
 #include "revision.h"
 #include "remote.h"
 #include "string-list.h"

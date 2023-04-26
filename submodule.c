@@ -24,10 +24,13 @@
 #include "remote.h"
 #include "worktree.h"
 #include "parse-options.h"
+#include "object-file.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "commit-reach.h"
 #include "setup.h"
 #include "shallow.h"
+#include "trace2.h"
 
 static int config_update_recurse_submodules = RECURSE_SUBMODULES_OFF;
 static int initialized_fetch_ref_tips;

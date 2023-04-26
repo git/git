@@ -26,8 +26,11 @@
 #include "setup.h"
 #include "submodule.h"
 #include "submodule-config.h"
+#include "object-file.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "packfile.h"
+#include "pager.h"
 #include "write-or-die.h"
 
 static const char *grep_prefix;

@@ -14,6 +14,7 @@
 #include "setup.h"
 #include "submodule-config.h"
 #include "sparse-index.h"
+#include "trace2.h"
 #include "promisor-remote.h"
 
 /* The main repository */

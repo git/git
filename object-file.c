@@ -10,6 +10,7 @@
 #include "abspath.h"
 #include "alloc.h"
 #include "config.h"
+#include "convert.h"
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
@@ -35,6 +36,7 @@
 #include "mergesort.h"
 #include "quote.h"
 #include "packfile.h"
+#include "object-file.h"
 #include "object-store.h"
 #include "promisor-remote.h"
 #include "setup.h"
@@ -949,6 +951,12 @@ void prepare_alt_odb(struct repository *r)
 
 	read_info_alternates(r, r->objects->odb->path, 0);
 	r->objects->loaded_alternates = 1;
+}
+
+int has_alt_odb(struct repository *r)
+{
+	prepare_alt_odb(r);
+	return !!r->objects->odb->next;
 }
 
 /* Returns 1 if we have successfully freshened the file, 0 otherwise. */

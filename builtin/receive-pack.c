@@ -29,9 +29,12 @@
 #include "tmp-objdir.h"
 #include "oidset.h"
 #include "packfile.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "protocol.h"
 #include "commit-reach.h"
+#include "trace.h"
+#include "trace2.h"
 #include "worktree.h"
 #include "shallow.h"
 #include "parse-options.h"
@@ -2093,7 +2096,7 @@ static struct command *read_head_info(struct packet_reader *reader,
 			const char *feature_list = reader->line + linelen + 1;
 			const char *hash = NULL;
 			const char *client_sid;
-			int len = 0;
+			size_t len = 0;
 			if (parse_feature_request(feature_list, "report-status"))
 				report_status = 1;
 			if (parse_feature_request(feature_list, "report-status-v2"))

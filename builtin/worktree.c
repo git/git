@@ -7,6 +7,8 @@
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
+#include "object-file.h"
+#include "object-name.h"
 #include "parse-options.h"
 #include "strvec.h"
 #include "branch.h"

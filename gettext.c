@@ -102,6 +102,8 @@ static void init_gettext_charset(const char *domain)
 		setlocale(LC_CTYPE, "C");
 }
 
+int git_gettext_enabled = 0;
+
 void git_setup_gettext(void)
 {
 	const char *podir = getenv(GIT_TEXT_DOMAIN_DIR_ENVIRONMENT);
@@ -120,6 +122,8 @@ void git_setup_gettext(void)
 	setlocale(LC_TIME, "");
 	init_gettext_charset("git");
 	textdomain("git");
+
+	git_gettext_enabled = 1;
 
 	free(p);
 }

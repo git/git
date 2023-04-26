@@ -21,6 +21,8 @@
 #include "cache-tree.h"
 #include "unpack-trees.h"
 #include "lockfile.h"
+#include "object-file.h"
+#include "object-name.h"
 #include "parse-options.h"
 #include "commit.h"
 #include "diff.h"
@@ -32,6 +34,7 @@
 #include "sequencer.h"
 #include "rebase-interactive.h"
 #include "reset.h"
+#include "trace2.h"
 #include "hook.h"
 #include "wrapper.h"
 

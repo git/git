@@ -6,6 +6,7 @@
 
 #include "cache.h"
 #include "config.h"
+#include "convert.h"
 #include "attr.h"
 #include "xdiff-interface.h"
 #include "run-command.h"

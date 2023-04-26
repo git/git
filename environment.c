@@ -10,6 +10,7 @@
 #include "cache.h"
 #include "abspath.h"
 #include "branch.h"
+#include "convert.h"
 #include "environment.h"
 #include "gettext.h"
 #include "repository.h"
@@ -18,12 +19,14 @@
 #include "fmt-merge-msg.h"
 #include "commit.h"
 #include "strvec.h"
+#include "object-file.h"
 #include "object-store.h"
 #include "replace-object.h"
 #include "tmp-objdir.h"
 #include "chdir-notify.h"
 #include "setup.h"
 #include "shallow.h"
+#include "trace.h"
 #include "wrapper.h"
 #include "write-or-die.h"
 
@@ -56,7 +59,6 @@ size_t packed_git_window_size = DEFAULT_PACKED_GIT_WINDOW_SIZE;
 size_t packed_git_limit = DEFAULT_PACKED_GIT_LIMIT;
 size_t delta_base_cache_limit = 96 * 1024 * 1024;
 unsigned long big_file_threshold = 512 * 1024 * 1024;
-int pager_use_color = 1;
 const char *editor_program;
 const char *askpass_program;
 const char *excludes_file;

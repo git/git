@@ -3,6 +3,7 @@
 #include "gettext.h"
 #include "hex.h"
 #include "lockfile.h"
+#include "object-name.h"
 #include "refs.h"
 #include "reset.h"
 #include "run-command.h"

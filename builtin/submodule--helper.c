@@ -24,6 +24,8 @@
 #include "revision.h"
 #include "diffcore.h"
 #include "diff.h"
+#include "object-file.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "advice.h"
 #include "branch.h"

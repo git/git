@@ -1,10 +1,12 @@
 /*
  * Copyright (c) 2011, Google Inc.
  */
-#include "cache.h"
+#include "git-compat-util.h"
+#include "convert.h"
 #include "environment.h"
 #include "streaming.h"
 #include "repository.h"
+#include "object-file.h"
 #include "object-store.h"
 #include "replace-object.h"
 #include "packfile.h"

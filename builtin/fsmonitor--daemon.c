@@ -14,6 +14,7 @@
 #include "simple-ipc.h"
 #include "khash.h"
 #include "pkt-line.h"
+#include "trace2.h"
 
 static const char * const builtin_fsmonitor__daemon_usage[] = {
 	N_("git fsmonitor--daemon start [<options>]"),

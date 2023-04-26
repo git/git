@@ -126,4 +126,19 @@ test_expect_success SYMLINKS 'symlink escape when deleting file' '
 	test_path_is_file .git/delete-me
 '
 
+test_expect_success SYMLINKS '--reject removes .rej symlink if it exists' '
+	test_when_finished "git reset --hard && git clean -dfx" &&
+
+	test_commit file &&
+	echo modified >file.t &&
+	git diff -- file.t >patch &&
+	echo modified-again >file.t &&
+
+	ln -s foo file.t.rej &&
+	test_must_fail git apply patch --reject 2>err &&
+	test_i18ngrep "Rejected hunk" err &&
+	test_path_is_missing foo &&
+	test_path_is_file file.t.rej
+'
+
 test_done

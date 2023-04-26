@@ -12,14 +12,14 @@ int finish_connect(struct child_process *conn);
 int git_connection_is_socket(struct child_process *conn);
 int server_supports(const char *feature);
 int parse_feature_request(const char *features, const char *feature);
-const char *server_feature_value(const char *feature, int *len_ret);
+const char *server_feature_value(const char *feature, size_t *len_ret);
 int url_is_local_not_ssh(const char *url);
 
 struct packet_reader;
 enum protocol_version discover_version(struct packet_reader *reader);
 
 int server_supports_hash(const char *desired, int *feature_supported);
-const char *parse_feature_value(const char *feature_list, const char *feature, int *lenp, int *offset);
+const char *parse_feature_value(const char *feature_list, const char *feature, size_t *lenp, size_t *offset);
 int server_supports_v2(const char *c);
 void ensure_server_supports_v2(const char *c);
 int server_feature_v2(const char *c, const char **v);

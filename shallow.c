@@ -17,6 +17,7 @@
 #include "list-objects.h"
 #include "commit-reach.h"
 #include "shallow.h"
+#include "trace.h"
 #include "wrapper.h"
 
 void set_alternate_shallow_file(struct repository *r, const char *path, int override)

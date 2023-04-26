@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "alloc.h"
 #include "repository.h"
 #include "config.h"
@@ -17,6 +17,7 @@
 #include "remote.h"
 #include "run-command.h"
 #include "connect.h"
+#include "trace2.h"
 #include "transport.h"
 #include "version.h"
 #include "oid-array.h"
@@ -1099,7 +1100,7 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 	struct ref *ref = copy_ref_list(orig_ref);
 	struct object_id oid;
 	const char *agent_feature;
-	int agent_len;
+	size_t agent_len;
 	struct fetch_negotiator negotiator_alloc;
 	struct fetch_negotiator *negotiator;
 
@@ -1117,7 +1118,7 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 		agent_supported = 1;
 		if (agent_len)
 			print_verbose(args, _("Server version is %.*s"),
-				      agent_len, agent_feature);
+				      (int)agent_len, agent_feature);
 	}
 
 	if (!server_supports("session-id"))

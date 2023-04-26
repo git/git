@@ -20,6 +20,7 @@
 #include "hex.h"
 #include "lockfile.h"
 #include "merge-ort.h"
+#include "object-name.h"
 #include "refs.h"
 #include "revision.h"
 #include "sequencer.h"

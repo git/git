@@ -29,9 +29,11 @@
 #define FORMAT_PRESERVING(n) __attribute__((format_arg(n)))
 
 #ifndef NO_GETTEXT
+extern int git_gettext_enabled;
 void git_setup_gettext(void);
 int gettext_width(const char *s);
 #else
+#define git_gettext_enabled (0)
 static inline void git_setup_gettext(void)
 {
 }
@@ -45,12 +47,16 @@ static inline FORMAT_PRESERVING(1) const char *_(const char *msgid)
 {
 	if (!*msgid)
 		return "";
+	if (!git_gettext_enabled)
+		return msgid;
 	return gettext(msgid);
 }
 
 static inline FORMAT_PRESERVING(1) FORMAT_PRESERVING(2)
 const char *Q_(const char *msgid, const char *plu, unsigned long n)
 {
+	if (!git_gettext_enabled)
+		return n == 1 ? msgid : plu;
 	return ngettext(msgid, plu, n);
 }
 
