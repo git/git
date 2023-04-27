@@ -483,14 +483,11 @@ $ git checkout -b foo  # or "git switch -c foo"  <1>
 $ git branch foo                                 <2>
 $ git tag foo                                    <3>
 ------------
-
 <1> creates a new branch `foo`, which refers to commit `f`, and then
     updates `HEAD` to refer to branch `foo`. In other words, we'll no longer
     be in detached `HEAD` state after this command.
-
 <2> similarly creates a new branch `foo`, which refers to commit `f`,
     but leaves `HEAD` detached.
-
 <3> creates a new tag `foo`, which refers to commit `f`,
     leaving `HEAD` detached.
 
@@ -519,84 +516,89 @@ to checkout these paths out of the index.
 EXAMPLES
 --------
 
-. The following sequence checks out the `master` branch, reverts
-  the `Makefile` to two revisions back, deletes `hello.c` by
-  mistake, and gets it back from the index.
-+
+=== 1. Paths
+
+The following sequence checks out the `master` branch, reverts
+the `Makefile` to two revisions back, deletes `hello.c` by
+mistake, and gets it back from the index.
+
 ------------
 $ git checkout master             <1>
 $ git checkout master~2 Makefile  <2>
 $ rm -f hello.c
 $ git checkout hello.c            <3>
 ------------
-+
 <1> switch branch
 <2> take a file out of another commit
 <3> restore `hello.c` from the index
-+
+
 If you want to check out _all_ C source files out of the index,
 you can say
-+
+
 ------------
 $ git checkout -- '*.c'
 ------------
-+
+
 Note the quotes around `*.c`.  The file `hello.c` will also be
 checked out, even though it is no longer in the working tree,
 because the file globbing is used to match entries in the index
 (not in the working tree by the shell).
-+
+
 If you have an unfortunate branch that is named `hello.c`, this
 step would be confused as an instruction to switch to that branch.
 You should instead write:
-+
+
 ------------
 $ git checkout -- hello.c
 ------------
 
-. After working in the wrong branch, switching to the correct
-  branch would be done using:
-+
+=== 2. Merge
+
+After working in the wrong branch, switching to the correct
+branch would be done using:
+
 ------------
 $ git checkout mytopic
 ------------
-+
+
 However, your "wrong" branch and correct `mytopic` branch may
 differ in files that you have modified locally, in which case
 the above checkout would fail like this:
-+
+
 ------------
 $ git checkout mytopic
 error: You have local changes to 'frotz'; not switching branches.
 ------------
-+
+
 You can give the `-m` flag to the command, which would try a
 three-way merge:
-+
+
 ------------
 $ git checkout -m mytopic
 Auto-merging frotz
 ------------
-+
+
 After this three-way merge, the local modifications are _not_
 registered in your index file, so `git diff` would show you what
 changes you made since the tip of the new branch.
 
-. When a merge conflict happens during switching branches with
-  the `-m` option, you would see something like this:
-+
+=== 3. Merge conflict
+
+When a merge conflict happens during switching branches with
+the `-m` option, you would see something like this:
+
 ------------
 $ git checkout -m mytopic
 Auto-merging frotz
 ERROR: Merge conflict in frotz
 fatal: merge program failed
 ------------
-+
+
 At this point, `git diff` shows the changes cleanly merged as in
 the previous example, as well as the changes in the conflicted
 files.  Edit and resolve the conflict and mark it resolved with
 `git add` as usual:
-+
+
 ------------
 $ edit frotz
 $ git add frotz
