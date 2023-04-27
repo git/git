@@ -143,6 +143,15 @@ static timestamp_t parse_commit_date(const char *buf, const char *tail)
 	/*
 	 * We know there is at least one digit (or dash), so we'll begin
 	 * parsing there and stop at worst case at eol.
+	 *
+	 * Note that we may feed parse_timestamp() extra characters here if the
+	 * commit is malformed, and it will parse as far as it can. For
+	 * example, "123foo456" would return "123". That might be questionable
+	 * (versus returning "0"), but it would help in a hypothetical case
+	 * like "123456+0100", where the whitespace from the timezone is
+	 * missing. Since such syntactic errors may be baked into history and
+	 * hard to correct now, let's err on trying to make our best guess
+	 * here, rather than insist on perfect syntax.
 	 */
 	return parse_timestamp(dateptr, NULL, 10);
 }
