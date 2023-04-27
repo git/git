@@ -1,5 +1,6 @@
 #include "test-tool.h"
 #include "json-writer.h"
+#include "string-list.h"
 
 static const char *expect_obj1 = "{\"a\":\"abc\",\"b\":42,\"c\":true}";
 static const char *expect_obj2 = "{\"a\":-1,\"b\":2147483647,\"c\":0}";
@@ -394,35 +395,41 @@ static int unit_tests(void)
 	return 0;
 }
 
-static void get_s(int line_nr, char **s_in)
+struct line {
+	struct string_list *parts;
+	size_t consumed_nr;
+	int nr;
+};
+
+static void get_s(struct line *line, char **s_in)
 {
-	*s_in = strtok(NULL, " ");
-	if (!*s_in)
-		die("line[%d]: expected: <s>", line_nr);
+	if (line->consumed_nr > line->parts->nr)
+		die("line[%d]: expected: <s>", line->nr);
+	*s_in = line->parts->items[line->consumed_nr++].string;
 }
 
-static void get_i(int line_nr, intmax_t *s_in)
+static void get_i(struct line *line, intmax_t *s_in)
 {
 	char *s;
 	char *endptr;
 
-	get_s(line_nr, &s);
+	get_s(line, &s);
 
 	*s_in = strtol(s, &endptr, 10);
 	if (*endptr || errno == ERANGE)
-		die("line[%d]: invalid integer value", line_nr);
+		die("line[%d]: invalid integer value", line->nr);
 }
 
-static void get_d(int line_nr, double *s_in)
+static void get_d(struct line *line, double *s_in)
 {
 	char *s;
 	char *endptr;
 
-	get_s(line_nr, &s);
+	get_s(line, &s);
 
 	*s_in = strtod(s, &endptr);
 	if (*endptr || errno == ERANGE)
-		die("line[%d]: invalid float value", line_nr);
+		die("line[%d]: invalid float value", line->nr);
 }
 
 static int pretty;
@@ -453,6 +460,7 @@ static char *get_trimmed_line(char *buf, int buf_size)
 
 static int scripted(void)
 {
+	struct string_list parts = STRING_LIST_INIT_NODUP;
 	struct json_writer jw = JSON_WRITER_INIT;
 	char buf[MAX_LINE_LENGTH];
 	char *line;
@@ -470,66 +478,77 @@ static int scripted(void)
 		die("expected first line to be 'object' or 'array'");
 
 	while ((line = get_trimmed_line(buf, MAX_LINE_LENGTH)) != NULL) {
+		struct line state = { 0 };
 		char *verb;
 		char *key;
 		char *s_value;
 		intmax_t i_value;
 		double d_value;
 
-		line_nr++;
+		state.parts = &parts;
+		state.nr = ++line_nr;
 
-		verb = strtok(line, " ");
+		/* break line into command and zero or more tokens */
+		string_list_setlen(&parts, 0);
+		string_list_split_in_place(&parts, line, " ", -1);
+		string_list_remove_empty_items(&parts, 0);
+
+		/* ignore empty lines */
+		if (!parts.nr || !*parts.items[0].string)
+			continue;
+
+		verb = parts.items[state.consumed_nr++].string;
 
 		if (!strcmp(verb, "end")) {
 			jw_end(&jw);
 		}
 		else if (!strcmp(verb, "object-string")) {
-			get_s(line_nr, &key);
-			get_s(line_nr, &s_value);
+			get_s(&state, &key);
+			get_s(&state, &s_value);
 			jw_object_string(&jw, key, s_value);
 		}
 		else if (!strcmp(verb, "object-int")) {
-			get_s(line_nr, &key);
-			get_i(line_nr, &i_value);
+			get_s(&state, &key);
+			get_i(&state, &i_value);
 			jw_object_intmax(&jw, key, i_value);
 		}
 		else if (!strcmp(verb, "object-double")) {
-			get_s(line_nr, &key);
-			get_i(line_nr, &i_value);
-			get_d(line_nr, &d_value);
+			get_s(&state, &key);
+			get_i(&state, &i_value);
+			get_d(&state, &d_value);
 			jw_object_double(&jw, key, i_value, d_value);
 		}
 		else if (!strcmp(verb, "object-true")) {
-			get_s(line_nr, &key);
+			get_s(&state, &key);
 			jw_object_true(&jw, key);
 		}
 		else if (!strcmp(verb, "object-false")) {
-			get_s(line_nr, &key);
+			get_s(&state, &key);
 			jw_object_false(&jw, key);
 		}
 		else if (!strcmp(verb, "object-null")) {
-			get_s(line_nr, &key);
+			get_s(&state, &key);
 			jw_object_null(&jw, key);
 		}
 		else if (!strcmp(verb, "object-object")) {
-			get_s(line_nr, &key);
+			get_s(&state, &key);
 			jw_object_inline_begin_object(&jw, key);
 		}
 		else if (!strcmp(verb, "object-array")) {
-			get_s(line_nr, &key);
+			get_s(&state, &key);
 			jw_object_inline_begin_array(&jw, key);
 		}
 		else if (!strcmp(verb, "array-string")) {
-			get_s(line_nr, &s_value);
+			get_s(&state, &s_value);
 			jw_array_string(&jw, s_value);
 		}
 		else if (!strcmp(verb, "array-int")) {
-			get_i(line_nr, &i_value);
+			get_i(&state, &i_value);
 			jw_array_intmax(&jw, i_value);
 		}
 		else if (!strcmp(verb, "array-double")) {
-			get_i(line_nr, &i_value);
-			get_d(line_nr, &d_value);
+			get_i(&state, &i_value);
+			get_d(&state, &d_value);
 			jw_array_double(&jw, i_value, d_value);
 		}
 		else if (!strcmp(verb, "array-true"))
@@ -552,6 +571,7 @@ static int scripted(void)
 	printf("%s\n", jw.json.buf);
 
 	jw_release(&jw);
+	string_list_clear(&parts, 0);
 	return 0;
 }
 

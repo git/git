@@ -964,7 +964,7 @@ void string_list_add_refs_from_colon_sep(struct string_list *list,
 	char *globs_copy = xstrdup(globs);
 	int i;
 
-	string_list_split_in_place(&split, globs_copy, ':', -1);
+	string_list_split_in_place(&split, globs_copy, ":", -1);
 	string_list_remove_empty_items(&split, 0);
 
 	for (i = 0; i < split.nr; i++)

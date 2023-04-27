@@ -18,6 +18,10 @@
 #define strncpy(x,y,n) BANNED(strncpy)
 #undef strncat
 #define strncat(x,y,n) BANNED(strncat)
+#undef strtok
+#define strtok(x,y) BANNED(strtok)
+#undef strtok_r
+#define strtok_r(x,y,z) BANNED(strtok_r)
 
 #undef sprintf
 #undef vsprintf

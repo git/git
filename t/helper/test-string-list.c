@@ -62,7 +62,7 @@ int cmd__string_list(int argc, const char **argv)
 		struct string_list list = STRING_LIST_INIT_NODUP;
 		int i;
 		char *s = xstrdup(argv[2]);
-		int delim = *argv[3];
+		const char *delim = argv[3];
 		int maxsplit = atoi(argv[4]);
 
 		i = string_list_split_in_place(&list, s, delim, maxsplit);
@@ -111,7 +111,7 @@ int cmd__string_list(int argc, const char **argv)
 		 */
 		if (sb.len && sb.buf[sb.len - 1] == '\n')
 			strbuf_setlen(&sb, sb.len - 1);
-		string_list_split_in_place(&list, sb.buf, '\n', -1);
+		string_list_split_in_place(&list, sb.buf, "\n", -1);
 
 		string_list_sort(&list);
 

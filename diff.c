@@ -139,7 +139,7 @@ static int parse_dirstat_params(struct diff_options *options, const char *params
 	int i;
 
 	if (*params_copy)
-		string_list_split_in_place(&params, params_copy, ',', -1);
+		string_list_split_in_place(&params, params_copy, ",", -1);
 	for (i = 0; i < params.nr; i++) {
 		const char *p = params.items[i].string;
 		if (!strcmp(p, "changes")) {

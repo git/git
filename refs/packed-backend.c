@@ -651,7 +651,7 @@ static struct snapshot *create_snapshot(struct packed_ref_store *refs)
 					 snapshot->buf,
 					 snapshot->eof - snapshot->buf);
 
-		string_list_split_in_place(&traits, p, ' ', -1);
+		string_list_split_in_place(&traits, p, " ", -1);
 
 		if (unsorted_string_list_has_string(&traits, "fully-peeled"))
 			snapshot->peeled = PEELED_FULLY;

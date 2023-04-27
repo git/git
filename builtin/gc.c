@@ -1685,11 +1685,11 @@ static int get_schedule_cmd(const char **cmd, int *is_available)
 	if (is_available)
 		*is_available = 0;
 
-	string_list_split_in_place(&list, testing, ',', -1);
+	string_list_split_in_place(&list, testing, ",", -1);
 	for_each_string_list_item(item, &list) {
 		struct string_list pair = STRING_LIST_INIT_NODUP;
 
-		if (string_list_split_in_place(&pair, item->string, ':', 2) != 2)
+		if (string_list_split_in_place(&pair, item->string, ":", 2) != 2)
 			continue;
 
 		if (!strcmp(*cmd, pair.items[0].string)) {
