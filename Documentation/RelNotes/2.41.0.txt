@@ -113,6 +113,11 @@ Performance, Internal Implementation, Development Support etc.
 
  * "git write-tree" learns to work better with sparse-index.
 
+ * The on-disk reverse index that allows mapping from the pack offset
+   to the object name for the object stored at the offset has been
+   enabled by default.
+
+ * "git fsck" learned to validate the on-disk pack reverse index files.
 
 
 Fixes since v2.40
