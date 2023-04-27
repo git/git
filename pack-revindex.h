@@ -34,11 +34,13 @@
 #define RIDX_SIGNATURE 0x52494458 /* "RIDX" */
 #define RIDX_VERSION 1
 
-#define GIT_TEST_WRITE_REV_INDEX "GIT_TEST_WRITE_REV_INDEX"
+#define GIT_TEST_NO_WRITE_REV_INDEX "GIT_TEST_NO_WRITE_REV_INDEX"
 #define GIT_TEST_REV_INDEX_DIE_IN_MEMORY "GIT_TEST_REV_INDEX_DIE_IN_MEMORY"
+#define GIT_TEST_REV_INDEX_DIE_ON_DISK "GIT_TEST_REV_INDEX_DIE_ON_DISK"
 
 struct packed_git;
 struct multi_pack_index;
+struct repository;
 
 /*
  * load_pack_revindex populates the revindex's internal data-structures for the
@@ -47,7 +49,7 @@ struct multi_pack_index;
  * If a '.rev' file is present it is mmap'd, and pointers are assigned into it
  * (instead of using the in-memory variant).
  */
-int load_pack_revindex(struct packed_git *p);
+int load_pack_revindex(struct repository *r, struct packed_git *p);
 
 /*
  * load_midx_revindex loads the '.rev' file corresponding to the given
