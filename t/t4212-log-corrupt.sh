@@ -9,7 +9,7 @@ test_expect_success 'setup' '
 	test_commit foo &&
 
 	git cat-file commit HEAD >ok.commit &&
-	sed "/^author /s/>/>-<>/" <ok.commit >broken_email.commit &&
+	sed "s/>/>-<>/" <ok.commit >broken_email.commit &&
 
 	git hash-object --literally -w -t commit broken_email.commit >broken_email.hash &&
 	git update-ref refs/heads/broken_email $(cat broken_email.hash)
@@ -42,6 +42,11 @@ test_expect_success 'git log --format with broken author email' '
 
 	test_cmp expect.out actual.out &&
 	test_must_be_empty actual.err
+'
+
+test_expect_success '--until handles broken email' '
+	git rev-list --until=1980-01-01 broken_email >actual &&
+	test_must_be_empty actual
 '
 
 munge_author_date () {
