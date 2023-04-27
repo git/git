@@ -116,10 +116,34 @@ static timestamp_t parse_commit_date(const char *buf, const char *tail)
 	dateptr = eol;
 	while (dateptr > buf && dateptr[-1] != '>')
 		dateptr--;
-	if (dateptr == buf || dateptr == eol)
+	if (dateptr == buf)
 		return 0;
 
-	/* dateptr < eol && *eol == '\n', so parsing will stop at eol */
+	/*
+	 * Trim leading whitespace, but make sure we have at least one
+	 * non-whitespace character, as parse_timestamp() will otherwise walk
+	 * right past the newline we found in "eol" when skipping whitespace
+	 * itself.
+	 *
+	 * In theory it would be sufficient to allow any character not matched
+	 * by isspace(), but there's a catch: our isspace() does not
+	 * necessarily match the behavior of parse_timestamp(), as the latter
+	 * is implemented by system routines which match more exotic control
+	 * codes, or even locale-dependent sequences.
+	 *
+	 * Since we expect the timestamp to be a number, we can check for that.
+	 * Anything else (e.g., a non-numeric token like "foo") would just
+	 * cause parse_timestamp() to return 0 anyway.
+	 */
+	while (dateptr < eol && isspace(*dateptr))
+		dateptr++;
+	if (!isdigit(*dateptr) && *dateptr != '-')
+		return 0;
+
+	/*
+	 * We know there is at least one digit (or dash), so we'll begin
+	 * parsing there and stop at worst case at eol.
+	 */
 	return parse_timestamp(dateptr, NULL, 10);
 }
 
