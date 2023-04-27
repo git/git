@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Apr 2023, #07; Tue, 25)
-X-master-at: 2807bd2c10606e590886543afe4e4f208dddd489
-X-next-at: 96c395b00cfdcc2a001874b3e5d6fadf5fd01d38
+Subject: What's cooking in git.git (Apr 2023, #08; Thu, 27)
+X-master-at: f85cd430b12b0d3e4f1a30ef3239a1b73d5f6331
+X-next-at: f1e218fcd8619b15a0125c091d4134e60ed764f1
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Apr 2023, #07; Tue, 25)
+What's cooking in git.git (Apr 2023, #08; Thu, 27)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -50,215 +50,92 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ah/format-patch-thread-doc (2023-04-03) 1 commit
-  (merged to 'next' on 2023-04-14 at acf141a832)
- + format-patch: correct documentation of --thread without an argument
+* ds/fsck-pack-revindex (2023-04-17) 5 commits
+  (merged to 'next' on 2023-04-19 at 6fb9527bf5)
+ + fsck: validate .rev file header
+ + fsck: check rev-index position values
+ + fsck: check rev-index checksums
+ + fsck: create scaffolding for rev-index checks
+ + Merge branch 'tb/pack-revindex-on-disk' into ds/fsck-pack-revindex
+ (this branch uses tb/pack-revindex-on-disk.)
 
- Doc update.
- source: <20230403040724.642513-1-alexhenrie24@gmail.com>
-
-
-* en/header-split-cache-h (2023-04-18) 25 commits
-  (merged to 'next' on 2023-04-18 at 55b4d95cac)
- + protocol.h: move definition of DEFAULT_GIT_PORT from cache.h
-  (merged to 'next' on 2023-04-13 at b9afefff0b)
- + mailmap, quote: move declarations of global vars to correct unit
- + treewide: reduce includes of cache.h in other headers
- + treewide: remove double forward declaration of read_in_full
- + cache.h: remove unnecessary includes
- + treewide: remove cache.h inclusion due to pager.h changes
- + pager.h: move declarations for pager.c functions from cache.h
- + treewide: remove cache.h inclusion due to editor.h changes
- + editor: move editor-related functions and declarations into common file
- + treewide: remove cache.h inclusion due to object.h changes
- + object.h: move some inline functions and defines from cache.h
- + treewide: remove cache.h inclusion due to object-file.h changes
- + object-file.h: move declarations for object-file.c functions from cache.h
- + treewide: remove cache.h inclusion due to git-zlib changes
- + git-zlib: move declarations for git-zlib functions from cache.h
- + treewide: remove cache.h inclusion due to object-name.h changes
- + object-name.h: move declarations for object-name.c functions from cache.h
- + treewide: remove unnecessary cache.h inclusion
- + treewide: be explicit about dependence on mem-pool.h
- + treewide: be explicit about dependence on oid-array.h
- + treewide: be explicit about dependence on pack-revindex.h
- + treewide: be explicit about dependence on convert.h
- + treewide: be explicit about dependence on advice.h
- + treewide: be explicit about dependence on trace.h & trace2.h
- + Merge branch 'ab/remove-implicit-use-of-the-repository' into en/header-split-cache-h
- (this branch is used by en/header-split-cache-h-part-2.)
-
- Header clean-up.
- source: <pull.1509.v3.git.1681182060.gitgitgadget@gmail.com>
+ "git fsck" learned to validate the on-disk pack reverse index files.
+ source: <pull.1512.git.1681748502.gitgitgadget@gmail.com>
 
 
-* fc/doc-stop-using-manversion (2023-04-10) 1 commit
-  (merged to 'next' on 2023-04-14 at 0800fe5ab4)
- + doc: simplify man version
- (this branch is used by fc/doc-use-datestamp-in-commit.)
+* fc/doc-checkout-markup-updates (2023-04-18) 2 commits
+  (merged to 'next' on 2023-04-20 at 62782d75c4)
+ + doc: git-checkout: reorganize examples
+ + doc: git-checkout: trivial callout cleanup
 
- Doc build simplification.
- source: <20230408001829.11031-1-felipe.contreras@gmail.com>
-
-
-* jk/protocol-cap-parse-fix (2023-04-14) 7 commits
-  (merged to 'next' on 2023-04-17 at fd9bf05656)
- + v0 protocol: use size_t for capability length/offset
- + t5512: test "ls-remote --heads --symref" filtering with v0 and v2
- + t5512: allow any protocol version for filtered symref test
- + t5512: add v2 support for "ls-remote --symref" test
- + v0 protocol: fix sha1/sha256 confusion for capabilities^{}
- + t5512: stop referring to "v1" protocol
- + v0 protocol: fix infinite loop when parsing multi-valued capabilities
-
- The code to parse capability list for v0 on-wire protocol fell into
- an infinite loop when a capability appears multiple times, which
- has been corrected.
- source: <20230414212404.GA639653@coredump.intra.peff.net>
+ Doc mark-up update.
+ source: <20230418070048.2209469-1-felipe.contreras@gmail.com>
 
 
-* ow/ref-filter-omit-empty (2023-04-13) 1 commit
-  (merged to 'next' on 2023-04-14 at 2798986c60)
- + branch, for-each-ref, tag: add option to omit empty lines
+* fc/doc-use-datestamp-in-commit (2023-04-14) 3 commits
+  (merged to 'next' on 2023-04-20 at 3b6ccb62ec)
+ + doc: set actual revdate for manpages
+ + Merge branch 'fc/doc-stop-using-manversion' into fc/doc-use-datestamp-in-commit
+ + Merge branch 'fc/remove-header-workarounds-for-asciidoc' into fc/doc-use-datestamp-in-commit
 
- "git branch --format=..." and "git format-patch --format=..."
- learns "--omit-empty" to hide refs that whose formatting result
- becomes an empty string from the output.
- source: <20230407175316.6404-1-oystwa@gmail.com>
-
-
-* ps/fix-geom-repack-with-alternates (2023-04-14) 10 commits
-  (merged to 'next' on 2023-04-18 at de56e80363)
- + repack: disable writing bitmaps when doing a local repack
- + repack: honor `-l` when calculating pack geometry
- + t/helper: allow chmtime to print verbosely without modifying mtime
- + pack-objects: extend test coverage of `--stdin-packs` with alternates
- + pack-objects: fix error when same packfile is included and excluded
- + pack-objects: fix error when packing same pack twice
- + pack-objects: split out `--stdin-packs` tests into separate file
- + repack: fix generating multi-pack-index with only non-local packs
- + repack: fix trying to use preferred pack in alternates
- + midx: fix segfault with no packs and invalid preferred pack
-
- Geometric repacking ("git repack --geometric=<n>") in a repository
- that borrows from an alternate object database had various corner
- case bugs, which have been corrected.
- source: <cover.1681452028.git.ps@pks.im>
+ Instead of the time the formatter was run, show the timestamp
+ recorded in the commit in the documentation.
+ source: <20230413074722.71260-1-felipe.contreras@gmail.com>
 
 
-* rj/send-email-validate-hook-count-messages (2023-04-14) 1 commit
-  (merged to 'next' on 2023-04-18 at 0c3db0bd3b)
- + send-email: export patch counters in validate environment
+* tb/pack-revindex-on-disk (2023-04-13) 7 commits
+  (merged to 'next' on 2023-04-19 at d6b90b44cf)
+ + t: invert `GIT_TEST_WRITE_REV_INDEX`
+ + config: enable `pack.writeReverseIndex` by default
+ + pack-revindex: introduce `pack.readReverseIndex`
+ + pack-revindex: introduce GIT_TEST_REV_INDEX_DIE_ON_DISK
+ + pack-revindex: make `load_pack_revindex` take a repository
+ + t5325: mark as leak-free
+ + pack-write.c: plug a leak in stage_tmp_packfiles()
+ (this branch is used by ds/fsck-pack-revindex.)
 
- The sendemail-validate validate hook learned to pass the total
- number of input files and where in the sequence each invocation is
- via environment variables.
- source: <20230414155249.667180-1-robin@jarry.cc>
-
-
-* rn/sparse-describe (2023-04-03) 1 commit
-  (merged to 'next' on 2023-04-14 at 9699cfad2c)
- + describe: enable sparse index for describe
-
- "git describe --dirty" learns to work better with sparse-index.
- source: <20230403164749.246001-1-nanth.raghul@gmail.com>
-
-
-* rs/archive-from-subdirectory-fixes (2023-03-24) 1 commit
-  (merged to 'next' on 2023-04-14 at 950f9ed807)
- + archive: improve support for running in subdirectory
-
- "git archive" run from a subdirectory mishandled attributes and
- paths outside the current directory.
- source: <7c33b01b-7b2a-25fa-9a66-1e65cd12bc84@web.de>
+ The on-disk reverse index that allows mapping from the pack offset
+ to the object name for the object stored at the offset has been
+ enabled by default.
+ source: <cover.1681338013.git.me@ttaylorr.com>
 
 --------------------------------------------------
 [New Topics]
 
-* ek/completion-use-read-r-to-read-literally (2023-04-20) 1 commit
-  (merged to 'next' on 2023-04-24 at 25bf3b808b)
- + completion: suppress unwanted unescaping of `read`
+* hx/negotiator-non-recursive (2023-04-26) 2 commits
+ - negotiator/skipping: fix some problems in mark_common()
+ - negotiator/default: avoid stack overflow
 
- The completion script used to use bare "read" without the "-r"
- option to read the contents of various state files, which risked
- getting confused with backslashes in them.  This has been
- corrected.
+ The implementation of the default "negotiator", used to find common
+ ancestor over the network for object tranfer, used to be recursive;
+ it was updated to be iterative to conserve stackspace usage.
 
- Will merge to 'master'.
- source: <20230420223800.1698197-1-myoga.murase@gmail.com>
-
-
-* pw/rebase-i-after-failure (2023-04-21) 6 commits
- - rebase -i: fix adding failed command to the todo list
- - rebase: fix rewritten list for failed pick
- - rebase --continue: refuse to commit after failed command
- - sequencer: factor out part of pick_commits()
- - rebase -i: remove patch file after conflict resolution
- - rebase -i: move unlink() calls
-
- Various fixes to the behaviour of "rebase -i" when the command got
- interrupted by conflicting changes.
-
- Needs review.
- source: <pull.1492.v2.git.1682089074.gitgitgadget@gmail.com>
+ Comments?
+ source: <cover.1682513384.git.hanxin.hx@bytedance.com>
 
 
-* jk/blame-fake-commit-label (2023-04-24) 1 commit
- - blame: use different author name for fake commit generated by --contents
+* jc/doc-clarify-git-default-hash-variable (2023-04-26) 1 commit
+ - doc: GIT_DEFAULT_HASH is and will be ignored during "clone"
 
- The output given by "git blame" that attributes a line to contents
- taken from the file specified by the "--contents" option shows it
- differently from a line attributed to the working tree file.
-
- Will merge to 'next'.
- source: <20230424193508.2245566-1-jacob.e.keller@intel.com>
-
-
-* jk/misc-null-check-fixes (2023-04-24) 2 commits
- - fetch_bundle_uri(): drop pointless NULL check
- - notes: clean up confusing NULL checks in init_notes()
-
- Code clean-up.
-
- Will merge to 'next'.
- source: <20230422135455.GA3942740@coredump.intra.peff.net>
-
-
-* jk/parse-commit-with-malformed-ident (2023-04-25) 4 commits
- - parse_commit(): describe more date-parsing failure modes
- - parse_commit(): handle broken whitespace-only timestamp
- - parse_commit(): parse timestamp from end of line
- - t4212: avoid putting git on left-hand side of pipe
-
- The commit object parser has been taught to be a bit more lenient
- to parse timestamps on the author/committer line with a malformed
- author/committer ident.
+ The documentation was misleading about the interaction between
+ GIT_DEFAULT_HASH and "git clone", which has been clarified to
+ stress that the variable is to be ignored by the command.
 
  Will merge to 'next'?
- Protecting against mischieves using \f and \v may be worth doing.
- source: <20230425055244.GA4014505@coredump.intra.peff.net>
+ source: <xmqqzg6uvfpo.fsf_-_@gitster.g>
 
 
-* sl/sparse-write-tree-part-2 (2023-04-24) 1 commit
- - write-tree: optimize sparse integration
+* mh/fix-detect-compilers-with-nondigit-versions (2023-04-26) 1 commit
+ - Handle some compiler versions containing a dash
 
- Fix-up to a topic already graduated to 'master'.
+ The detect-compilers script to help auto-tweaking the build system
+ had trouble working with compilers whose version number has extra
+ suffixes.  The script has been taught that certain suffixes (like
+ "-win32" in "gcc 10-win32") can be safely stripped as they share
+ the same features and bugs with the version without the suffix.
 
- Iffy.
- source: <20230423071243.1863977-1-cheskaqiqi@gmail.com>
-
-
-* tb/pack-bitmap-traversal-with-boundary (2023-04-25) 3 commits
- - pack-bitmap.c: use commit boundary during bitmap traversal
- - pack-bitmap.c: extract `fill_in_bitmap()`
- - revision: support tracking uninteresting commits
-
- The object traversal using reachability bitmap done by
- "pack-object" has been tweaked to take advantage of the fact that
- using "boundary" commits as representative of all the uninteresting
- ones can save quite a lot of object enumeration.
-
- source: <cover.1682380788.git.me@ttaylorr.com>
+ Will merge to 'next'.
+ source: <20230426004843.3391826-1-mh@glandium.org>
 
 --------------------------------------------------
 [Stalled]
@@ -324,20 +201,6 @@ Release tarballs are available at:
  cf. <CAMMLpeTPEoKVTbfc17w+Y9qn7jOGmQi_Ux0Y3sFW5QTgGWJ=SA@mail.gmail.com>
  cf. <CABPp-BGqAxKnxDRVN4cYMteLp33hvto07R3=TJBT5WubJT4+Og@mail.gmail.com>
  source: <pull.1474.git.1675614276549.gitgitgadget@gmail.com>
-
-
-* tl/notes-separator (2023-04-25) 6 commits
- - notes.c: introduce "--[no-]stripspace" option
- - notes.c: append separator instead of insert by pos
- - notes.c: introduce '--separator=<paragraph-break>' option
- - t3321: add test cases about the notes stripspace behavior
- - notes.c: use designated initializers for clarity
- - notes.c: cleanup 'strbuf_grow' call in 'append_edit'
-
- 'git notes append' was taught '--separator' to specify string to insert
- between paragraphs.
-
- source: <cover.1682429602.git.dyroneteng@gmail.com>
 
 
 * ab/tag-object-type-errors (2022-11-22) 5 commits
@@ -430,6 +293,108 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* tl/notes-separator (2023-04-25) 6 commits
+ - notes.c: introduce "--[no-]stripspace" option
+ - notes.c: append separator instead of insert by pos
+ - notes.c: introduce '--separator=<paragraph-break>' option
+ - t3321: add test cases about the notes stripspace behavior
+ - notes.c: use designated initializers for clarity
+ - notes.c: cleanup 'strbuf_grow' call in 'append_edit'
+
+ 'git notes append' was taught '--separator' to specify string to insert
+ between paragraphs.
+
+ Will merge to 'next'?
+ Looking good.
+ source: <cover.1682429602.git.dyroneteng@gmail.com>
+
+
+* ek/completion-use-read-r-to-read-literally (2023-04-20) 1 commit
+  (merged to 'next' on 2023-04-24 at 25bf3b808b)
+ + completion: suppress unwanted unescaping of `read`
+
+ The completion script used to use bare "read" without the "-r"
+ option to read the contents of various state files, which risked
+ getting confused with backslashes in them.  This has been
+ corrected.
+
+ Will merge to 'master'.
+ source: <20230420223800.1698197-1-myoga.murase@gmail.com>
+
+
+* pw/rebase-i-after-failure (2023-04-21) 6 commits
+ - rebase -i: fix adding failed command to the todo list
+ - rebase: fix rewritten list for failed pick
+ - rebase --continue: refuse to commit after failed command
+ - sequencer: factor out part of pick_commits()
+ - rebase -i: remove patch file after conflict resolution
+ - rebase -i: move unlink() calls
+
+ Various fixes to the behaviour of "rebase -i" when the command got
+ interrupted by conflicting changes.
+
+ Needs review.
+ source: <pull.1492.v2.git.1682089074.gitgitgadget@gmail.com>
+
+
+* jk/blame-fake-commit-label (2023-04-24) 1 commit
+  (merged to 'next' on 2023-04-26 at 85226d9501)
+ + blame: use different author name for fake commit generated by --contents
+
+ The output given by "git blame" that attributes a line to contents
+ taken from the file specified by the "--contents" option shows it
+ differently from a line attributed to the working tree file.
+
+ Will merge to 'master'.
+ source: <20230424193508.2245566-1-jacob.e.keller@intel.com>
+
+
+* jk/misc-null-check-fixes (2023-04-24) 2 commits
+  (merged to 'next' on 2023-04-26 at 9500384e9d)
+ + fetch_bundle_uri(): drop pointless NULL check
+ + notes: clean up confusing NULL checks in init_notes()
+
+ Code clean-up.
+
+ Will merge to 'master'.
+ source: <20230422135455.GA3942740@coredump.intra.peff.net>
+
+
+* jk/parse-commit-with-malformed-ident (2023-04-27) 4 commits
+ - parse_commit(): describe more date-parsing failure modes
+ - parse_commit(): handle broken whitespace-only timestamp
+ - parse_commit(): parse timestamp from end of line
+ - t4212: avoid putting git on left-hand side of pipe
+
+ The commit object parser has been taught to be a bit more lenient
+ to parse timestamps on the author/committer line with a malformed
+ author/committer ident.
+
+ Will merge to 'next'.
+ source: <20230427081330.GA1461786@coredump.intra.peff.net>
+
+
+* sl/sparse-write-tree-part-2 (2023-04-24) 1 commit
+ - write-tree: optimize sparse integration
+
+ Fix-up to a topic already graduated to 'master'.
+
+ Iffy.
+ source: <20230423071243.1863977-1-cheskaqiqi@gmail.com>
+
+
+* tb/pack-bitmap-traversal-with-boundary (2023-04-25) 3 commits
+ - pack-bitmap.c: use commit boundary during bitmap traversal
+ - pack-bitmap.c: extract `fill_in_bitmap()`
+ - revision: support tracking uninteresting commits
+
+ The object traversal using reachability bitmap done by
+ "pack-object" has been tweaked to take advantage of the fact that
+ using "boundary" commits as representative of all the uninteresting
+ ones can save quite a lot of object enumeration.
+ source: <cover.1682380788.git.me@ttaylorr.com>
+
+
 * ar/config-count-tests-updates (2023-04-24) 3 commits
  - t1300: add tests for missing keys
  - t1300: check stderr for "ignores pairs" tests
@@ -467,17 +432,6 @@ Release tarballs are available at:
  source: <pull.1517.v2.git.1682194649.gitgitgadget@gmail.com>
 
 
-* fc/doc-checkout-markup-updates (2023-04-18) 2 commits
-  (merged to 'next' on 2023-04-20 at 62782d75c4)
- + doc: git-checkout: reorganize examples
- + doc: git-checkout: trivial callout cleanup
-
- Doc mark-up update.
-
- Will merge to 'master'.
- source: <20230418070048.2209469-1-felipe.contreras@gmail.com>
-
-
 * jk/gpg-trust-level-fix (2023-04-19) 1 commit
   (merged to 'next' on 2023-04-21 at eb8413dc9d)
  + gpg-interface: set trust level of missing key to "undefined"
@@ -490,7 +444,7 @@ Release tarballs are available at:
  source: <20230419012957.GA503941@coredump.intra.peff.net>
 
 
-* ps/fetch-output-format (2023-04-19) 8 commits
+* ps/fetch-output-format (2023-04-27) 8 commits
  - fetch: introduce machine-parseable "porcelain" output format
  - fetch: introduce new `--output-format` option
  - fetch: move option related variables into main function
@@ -502,9 +456,7 @@ Release tarballs are available at:
 
  "git fetch" learned the "--output-format" option that emits what it
  did in a machine-parseable format.
-
- Needs review.
- source: <cover.1681906948.git.ps@pks.im>
+ source: <cover.1682593865.git.ps@pks.im>
 
 
 * en/ort-finalize-after-0-merges-fix (2023-04-24) 1 commit
@@ -528,21 +480,6 @@ Release tarballs are available at:
  - cocci: remove 'unused.cocci'
 
  source: <20230420205350.600760-1-szeder.dev@gmail.com>
-
-
-* ds/fsck-pack-revindex (2023-04-17) 5 commits
-  (merged to 'next' on 2023-04-19 at 6fb9527bf5)
- + fsck: validate .rev file header
- + fsck: check rev-index position values
- + fsck: check rev-index checksums
- + fsck: create scaffolding for rev-index checks
- + Merge branch 'tb/pack-revindex-on-disk' into ds/fsck-pack-revindex
- (this branch uses tb/pack-revindex-on-disk.)
-
- "git fsck" learned to validate the on-disk pack reverse index files.
-
- Will merge to 'master'.
- source: <pull.1512.git.1681748502.gitgitgadget@gmail.com>
 
 
 * tb/enable-cruft-packs-by-default (2023-04-18) 10 commits
@@ -618,38 +555,6 @@ Release tarballs are available at:
  source: <cover.1681326818.git.code@khaugsbakk.name>
 
 
-* tb/pack-revindex-on-disk (2023-04-13) 7 commits
-  (merged to 'next' on 2023-04-19 at d6b90b44cf)
- + t: invert `GIT_TEST_WRITE_REV_INDEX`
- + config: enable `pack.writeReverseIndex` by default
- + pack-revindex: introduce `pack.readReverseIndex`
- + pack-revindex: introduce GIT_TEST_REV_INDEX_DIE_ON_DISK
- + pack-revindex: make `load_pack_revindex` take a repository
- + t5325: mark as leak-free
- + pack-write.c: plug a leak in stage_tmp_packfiles()
- (this branch is used by ds/fsck-pack-revindex.)
-
- The on-disk reverse index that allows mapping from the pack offset
- to the object name for the object stored at the offset has been
- enabled by default.
-
- Will merge to 'master'.
- source: <cover.1681338013.git.me@ttaylorr.com>
-
-
-* fc/doc-use-datestamp-in-commit (2023-04-14) 3 commits
-  (merged to 'next' on 2023-04-20 at 3b6ccb62ec)
- + doc: set actual revdate for manpages
- + Merge branch 'fc/doc-stop-using-manversion' into fc/doc-use-datestamp-in-commit
- + Merge branch 'fc/remove-header-workarounds-for-asciidoc' into fc/doc-use-datestamp-in-commit
-
- Instead of the time the formatter was run, show the timestamp
- recorded in the commit in the documentation.
-
- Will merge to 'master'.
- source: <20230413074722.71260-1-felipe.contreras@gmail.com>
-
-
 * pb/complete-and-document-auto-merge-and-friends (2023-04-14) 5 commits
   (merged to 'next' on 2023-04-20 at 2728a01622)
  + completion: complete AUTO_MERGE
@@ -666,15 +571,18 @@ Release tarballs are available at:
  source: <pull.1515.git.1681495119.gitgitgadget@gmail.com>
 
 
-* tb/ban-strtok (2023-04-24) 6 commits
- - banned.h: mark `strtok()` and `strtok_r()` as banned
- - t/helper/test-json-writer.c: avoid using `strtok()`
- - t/helper/test-oidmap.c: avoid using `strtok()`
- - t/helper/test-hashmap.c: avoid using `strtok()`
- - string-list: introduce `string_list_setlen()`
- - string-list: multi-delimiter `string_list_split_in_place()`
+* tb/ban-strtok (2023-04-27) 6 commits
+  (merged to 'next' on 2023-04-27 at cbbfa4a609)
+ + banned.h: mark `strtok()` and `strtok_r()` as banned
+ + t/helper/test-json-writer.c: avoid using `strtok()`
+ + t/helper/test-oidmap.c: avoid using `strtok()`
+ + t/helper/test-hashmap.c: avoid using `strtok()`
+ + string-list: introduce `string_list_setlen()`
+ + string-list: multi-delimiter `string_list_split_in_place()`
 
  Mark strtok() and strtok_r() to be banned.
+
+ Will merge to 'master'.
  source: <cover.1682374789.git.me@ttaylorr.com>
 
 
