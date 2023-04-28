@@ -2240,6 +2240,8 @@ static int do_pick_commit(struct repository *r,
 	 */
 
 	if (command == TODO_REVERT) {
+		const char *orig_subject;
+
 		base = commit;
 		base_label = msg.label;
 		next = parent;
@@ -2247,6 +2249,18 @@ static int do_pick_commit(struct repository *r,
 		if (opts->commit_use_reference) {
 			strbuf_addstr(&msgbuf,
 				"# *** SAY WHY WE ARE REVERTING ON THE TITLE LINE ***");
+		} else if (skip_prefix(msg.subject, "Revert \"", &orig_subject)) {
+			if (skip_prefix(orig_subject, "Revert \"", &orig_subject)) {
+				/*
+				 * This prevents the generation of somewhat unintuitive (even if
+				 * not incorrect) 'Reapply "Revert "' titles from legacy double
+				 * reverts. Fixing up deeper recursions is left to the user.
+				 */
+				strbuf_addstr(&msgbuf, "Revert \"Reapply \"");
+			} else {
+				strbuf_addstr(&msgbuf, "Reapply \"");
+			}
+			strbuf_addstr(&msgbuf, orig_subject);
 		} else {
 			strbuf_addstr(&msgbuf, "Revert \"");
 			strbuf_addstr(&msgbuf, msg.subject);
