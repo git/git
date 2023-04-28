@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Apr 2023, #08; Thu, 27)
-X-master-at: f85cd430b12b0d3e4f1a30ef3239a1b73d5f6331
-X-next-at: f1e218fcd8619b15a0125c091d4134e60ed764f1
+Subject: What's cooking in git.git (Apr 2023, #09; Fri, 28)
+X-master-at: 48d89b51b3bb8a60580c36731b96a7206ce1e5b9
+X-next-at: e96c925001b196247b94383a62a3b9781b57df80
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Apr 2023, #08; Thu, 27)
+What's cooking in git.git (Apr 2023, #09; Fri, 28)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -15,9 +15,6 @@ considered "accepted" at all and may be annotated with an URL to a
 message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity.
-
-A set of new maintenance releases to address some security issues
-have been made; all the integration tracks also have the same fixes.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -50,92 +47,77 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ds/fsck-pack-revindex (2023-04-17) 5 commits
-  (merged to 'next' on 2023-04-19 at 6fb9527bf5)
- + fsck: validate .rev file header
- + fsck: check rev-index position values
- + fsck: check rev-index checksums
- + fsck: create scaffolding for rev-index checks
- + Merge branch 'tb/pack-revindex-on-disk' into ds/fsck-pack-revindex
- (this branch uses tb/pack-revindex-on-disk.)
+* jk/gpg-trust-level-fix (2023-04-19) 1 commit
+  (merged to 'next' on 2023-04-21 at eb8413dc9d)
+ + gpg-interface: set trust level of missing key to "undefined"
 
- "git fsck" learned to validate the on-disk pack reverse index files.
- source: <pull.1512.git.1681748502.gitgitgadget@gmail.com>
+ The "%GT" placeholder for the "--format" option of "git log" and
+ friends caused BUG() to trigger on a commit signed with an unknown
+ key, which has been corrected.
+ source: <20230419012957.GA503941@coredump.intra.peff.net>
 
 
-* fc/doc-checkout-markup-updates (2023-04-18) 2 commits
-  (merged to 'next' on 2023-04-20 at 62782d75c4)
- + doc: git-checkout: reorganize examples
- + doc: git-checkout: trivial callout cleanup
-
- Doc mark-up update.
- source: <20230418070048.2209469-1-felipe.contreras@gmail.com>
-
-
-* fc/doc-use-datestamp-in-commit (2023-04-14) 3 commits
-  (merged to 'next' on 2023-04-20 at 3b6ccb62ec)
- + doc: set actual revdate for manpages
- + Merge branch 'fc/doc-stop-using-manversion' into fc/doc-use-datestamp-in-commit
- + Merge branch 'fc/remove-header-workarounds-for-asciidoc' into fc/doc-use-datestamp-in-commit
-
- Instead of the time the formatter was run, show the timestamp
- recorded in the commit in the documentation.
- source: <20230413074722.71260-1-felipe.contreras@gmail.com>
-
-
-* tb/pack-revindex-on-disk (2023-04-13) 7 commits
-  (merged to 'next' on 2023-04-19 at d6b90b44cf)
- + t: invert `GIT_TEST_WRITE_REV_INDEX`
- + config: enable `pack.writeReverseIndex` by default
- + pack-revindex: introduce `pack.readReverseIndex`
- + pack-revindex: introduce GIT_TEST_REV_INDEX_DIE_ON_DISK
- + pack-revindex: make `load_pack_revindex` take a repository
- + t5325: mark as leak-free
+* tb/enable-cruft-packs-by-default (2023-04-18) 10 commits
+  (merged to 'next' on 2023-04-21 at 068bf86fc3)
+ + repository.h: drop unused `gc_cruft_packs`
+ + builtin/gc.c: make `gc.cruftPacks` enabled by default
+ + t/t9300-fast-import.sh: prepare for `gc --cruft` by default
+ + t/t6500-gc.sh: add additional test cases
+ + t/t6500-gc.sh: refactor cruft pack tests
+ + t/t6501-freshen-objects.sh: prepare for `gc --cruft` by default
+ + t/t5304-prune.sh: prepare for `gc --cruft` by default
+ + builtin/gc.c: ignore cruft packs with `--keep-largest-pack`
+ + builtin/repack.c: fix incorrect reference to '-C'
  + pack-write.c: plug a leak in stage_tmp_packfiles()
- (this branch is used by ds/fsck-pack-revindex.)
 
- The on-disk reverse index that allows mapping from the pack offset
- to the object name for the object stored at the offset has been
- enabled by default.
- source: <cover.1681338013.git.me@ttaylorr.com>
+ When "gc" needs to retain unreachable objects, packing them into
+ cruft packs (instead of exploding them into loose object files) has
+ been offered as a more efficient option for some time.  Now the use
+ of cruft packs has been made the default and no longer considered
+ an experimental feature.
+ source: <cover.1681850424.git.me@ttaylorr.com>
 
 --------------------------------------------------
 [New Topics]
 
-* hx/negotiator-non-recursive (2023-04-26) 2 commits
- - negotiator/skipping: fix some problems in mark_common()
- - negotiator/default: avoid stack overflow
+* ah/doc-attributes-text (2023-04-28) 1 commit
+ - docs: rewrite the documentation of the text and eol attributes
 
- The implementation of the default "negotiator", used to find common
- ancestor over the network for object tranfer, used to be recursive;
- it was updated to be iterative to conserve stackspace usage.
+ Doc update to clarify how text and eol attributes interact to
+ specify the end-of-line conversion.
 
- Comments?
- source: <cover.1682513384.git.hanxin.hx@bytedance.com>
+ Needs review.
+ source: <20230428042221.871095-1-alexhenrie24@gmail.com>
 
 
-* jc/doc-clarify-git-default-hash-variable (2023-04-26) 1 commit
- - doc: GIT_DEFAULT_HASH is and will be ignored during "clone"
+* jw/send-email-update-gmail-insn (2023-04-28) 1 commit
+ - send-email docs: Remove mention of discontinued gmail feature
 
- The documentation was misleading about the interaction between
- GIT_DEFAULT_HASH and "git clone", which has been clarified to
- stress that the variable is to be ignored by the command.
-
- Will merge to 'next'?
- source: <xmqqzg6uvfpo.fsf_-_@gitster.g>
-
-
-* mh/fix-detect-compilers-with-nondigit-versions (2023-04-26) 1 commit
- - Handle some compiler versions containing a dash
-
- The detect-compilers script to help auto-tweaking the build system
- had trouble working with compilers whose version number has extra
- suffixes.  The script has been taught that certain suffixes (like
- "-win32" in "gcc 10-win32") can be safely stripped as they share
- the same features and bugs with the version without the suffix.
+ Doc update to drop use of deprecated app-specific password against
+ gmail.
 
  Will merge to 'next'.
- source: <20230426004843.3391826-1-mh@glandium.org>
+ source: <20221001104609.18453-1-j.witteveen@gmail.com>
+
+
+* ob/messages-capitalize-exception (2023-04-28) 1 commit
+ - messages: capitalization and punctuation exceptions
+ (this branch uses ob/sequencer-i18n-fix.)
+
+ Message update.
+
+ Will merge to 'next'.
+ source: <20230428125649.1719796-1-oswald.buddenhagen@gmx.de>
+
+
+* ob/sequencer-i18n-fix (2023-04-28) 1 commit
+ - sequencer: actually translate report in do_exec()
+ (this branch is used by ob/messages-capitalize-exception.)
+
+ Message update.
+
+ Will merge to 'next'.
+ source: <20230428125649.1719796-2-oswald.buddenhagen@gmx.de>
 
 --------------------------------------------------
 [Stalled]
@@ -293,7 +275,44 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
-* tl/notes-separator (2023-04-25) 6 commits
+* hx/negotiator-non-recursive (2023-04-26) 2 commits
+ - negotiator/skipping: fix some problems in mark_common()
+ - negotiator/default: avoid stack overflow
+
+ The implementation of the default "negotiator", used to find common
+ ancestor over the network for object tranfer, used to be recursive;
+ it was updated to be iterative to conserve stackspace usage.
+
+ Comments?
+ source: <cover.1682513384.git.hanxin.hx@bytedance.com>
+
+
+* jc/doc-clarify-git-default-hash-variable (2023-04-26) 1 commit
+ - doc: GIT_DEFAULT_HASH is and will be ignored during "clone"
+
+ The documentation was misleading about the interaction between
+ GIT_DEFAULT_HASH and "git clone", which has been clarified to
+ stress that the variable is to be ignored by the command.
+
+ Will merge to 'next'?
+ source: <xmqqzg6uvfpo.fsf_-_@gitster.g>
+
+
+* mh/fix-detect-compilers-with-nondigit-versions (2023-04-26) 1 commit
+  (merged to 'next' on 2023-04-28 at c0c54291c2)
+ + Handle some compiler versions containing a dash
+
+ The detect-compilers script to help auto-tweaking the build system
+ had trouble working with compilers whose version number has extra
+ suffixes.  The script has been taught that certain suffixes (like
+ "-win32" in "gcc 10-win32") can be safely stripped as they share
+ the same features and bugs with the version without the suffix.
+
+ Will merge to 'master'.
+ source: <20230426004843.3391826-1-mh@glandium.org>
+
+
+* tl/notes-separator (2023-04-28) 6 commits
  - notes.c: introduce "--[no-]stripspace" option
  - notes.c: append separator instead of insert by pos
  - notes.c: introduce '--separator=<paragraph-break>' option
@@ -306,7 +325,7 @@ Release tarballs are available at:
 
  Will merge to 'next'?
  Looking good.
- source: <cover.1682429602.git.dyroneteng@gmail.com>
+ source: <cover.1682671758.git.dyroneteng@gmail.com>
 
 
 * ek/completion-use-read-r-to-read-literally (2023-04-20) 1 commit
@@ -361,16 +380,17 @@ Release tarballs are available at:
 
 
 * jk/parse-commit-with-malformed-ident (2023-04-27) 4 commits
- - parse_commit(): describe more date-parsing failure modes
- - parse_commit(): handle broken whitespace-only timestamp
- - parse_commit(): parse timestamp from end of line
- - t4212: avoid putting git on left-hand side of pipe
+  (merged to 'next' on 2023-04-28 at cb6ea0412a)
+ + parse_commit(): describe more date-parsing failure modes
+ + parse_commit(): handle broken whitespace-only timestamp
+ + parse_commit(): parse timestamp from end of line
+ + t4212: avoid putting git on left-hand side of pipe
 
  The commit object parser has been taught to be a bit more lenient
  to parse timestamps on the author/committer line with a malformed
  author/committer ident.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20230427081330.GA1461786@coredump.intra.peff.net>
 
 
@@ -432,18 +452,6 @@ Release tarballs are available at:
  source: <pull.1517.v2.git.1682194649.gitgitgadget@gmail.com>
 
 
-* jk/gpg-trust-level-fix (2023-04-19) 1 commit
-  (merged to 'next' on 2023-04-21 at eb8413dc9d)
- + gpg-interface: set trust level of missing key to "undefined"
-
- The "%GT" placeholder for the "--format" option of "git log" and
- friends caused BUG() to trigger on a commit signed with an unknown
- key, which has been corrected.
-
- Will merge to 'master'.
- source: <20230419012957.GA503941@coredump.intra.peff.net>
-
-
 * ps/fetch-output-format (2023-04-27) 8 commits
  - fetch: introduce machine-parseable "porcelain" output format
  - fetch: introduce new `--output-format` option
@@ -482,29 +490,6 @@ Release tarballs are available at:
  source: <20230420205350.600760-1-szeder.dev@gmail.com>
 
 
-* tb/enable-cruft-packs-by-default (2023-04-18) 10 commits
-  (merged to 'next' on 2023-04-21 at 068bf86fc3)
- + repository.h: drop unused `gc_cruft_packs`
- + builtin/gc.c: make `gc.cruftPacks` enabled by default
- + t/t9300-fast-import.sh: prepare for `gc --cruft` by default
- + t/t6500-gc.sh: add additional test cases
- + t/t6500-gc.sh: refactor cruft pack tests
- + t/t6501-freshen-objects.sh: prepare for `gc --cruft` by default
- + t/t5304-prune.sh: prepare for `gc --cruft` by default
- + builtin/gc.c: ignore cruft packs with `--keep-largest-pack`
- + builtin/repack.c: fix incorrect reference to '-C'
- + pack-write.c: plug a leak in stage_tmp_packfiles()
-
- When "gc" needs to retain unreachable objects, packing them into
- cruft packs (instead of exploding them into loose object files) has
- been offered as a more efficient option for some time.  Now the use
- of cruft packs has been made the default and no longer considered
- an experimental feature.
-
- Will merge to 'master'.
- source: <cover.1681850424.git.me@ttaylorr.com>
-
-
 * ms/send-email-feed-header-to-validate-hook (2023-04-19) 2 commits
  - send-email: expose header information to git-send-email's sendemail-validate hook
  - send-email: refactor header generation functions
@@ -531,15 +516,12 @@ Release tarballs are available at:
  source: <20230417093255.31079-1-jacobabel@nullpo.dev>
 
 
-* gc/doc-cocci-updates (2023-04-12) 2 commits
+* gc/doc-cocci-updates (2023-04-27) 2 commits
  - cocci: codify authoring and reviewing practices
  - cocci: add headings to and reword README
 
  Update documentation regarding Coccinelle patches.
-
- Expecting review response.
- cf. <xmqqmt3by5sc.fsf@gitster.g>
- source: <pull.1495.git.git.1681329955.gitgitgadget@gmail.com>
+ source: <pull.1495.v2.git.git.1682634143.gitgitgadget@gmail.com>
 
 
 * kh/doc-interpret-trailers-updates (2023-04-12) 4 commits
