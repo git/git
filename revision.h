@@ -87,7 +87,7 @@ struct rev_cmdline_info {
 struct ref_exclusions {
 	/*
 	 * Excluded refs is a list of wildmatch patterns. If any of the
-	 * patterns matches, the reference will be excluded.
+	 * patterns match, the reference will be excluded.
 	 */
 	struct string_list excluded_refs;
 
