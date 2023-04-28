@@ -73,6 +73,12 @@ UI, Workflows & Features
    number of input files and where in the sequence each invocation is
    via environment variables.
 
+ * When "gc" needs to retain unreachable objects, packing them into
+   cruft packs (instead of exploding them into loose object files) has
+   been offered as a more efficient option for some time.  Now the use
+   of cruft packs has been made the default and no longer considered
+   an experimental feature.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -257,6 +263,11 @@ Fixes since v2.40
    that borrows from an alternate object database had various corner
    case bugs, which have been corrected.
    (merge d85cd18777 ps/fix-geom-repack-with-alternates later to maint).
+
+ * The "%GT" placeholder for the "--format" option of "git log" and
+   friends caused BUG() to trigger on a commit signed with an unknown
+   key, which has been corrected.
+   (merge 7891e46585 jk/gpg-trust-level-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge f7111175df as/doc-markup-fix later to maint).
