@@ -314,13 +314,13 @@ static void write_mtimes_trailer(struct hashfile *f, const unsigned char *hash)
 	hashwrite(f, hash, the_hash_algo->rawsz);
 }
 
-static const char *write_mtimes_file(struct packing_data *to_pack,
-				     struct pack_idx_entry **objects,
-				     uint32_t nr_objects,
-				     const unsigned char *hash)
+static char *write_mtimes_file(struct packing_data *to_pack,
+			       struct pack_idx_entry **objects,
+			       uint32_t nr_objects,
+			       const unsigned char *hash)
 {
 	struct strbuf tmp_file = STRBUF_INIT;
-	const char *mtimes_name;
+	char *mtimes_name;
 	struct hashfile *f;
 	int fd;
 
@@ -546,7 +546,7 @@ void stage_tmp_packfiles(struct strbuf *name_buffer,
 			 char **idx_tmp_name)
 {
 	const char *rev_tmp_name = NULL;
-	const char *mtimes_tmp_name = NULL;
+	char *mtimes_tmp_name = NULL;
 
 	if (adjust_shared_perm(pack_tmp_name))
 		die_errno("unable to make temporary pack file readable");
@@ -572,6 +572,7 @@ void stage_tmp_packfiles(struct strbuf *name_buffer,
 		rename_tmp_packfile(name_buffer, mtimes_tmp_name, "mtimes");
 
 	free((char *)rev_tmp_name);
+	free(mtimes_tmp_name);
 }
 
 void write_promisor_file(const char *promisor_name, struct ref **sought, int nr_sought)

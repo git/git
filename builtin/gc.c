@@ -50,7 +50,7 @@ static const char * const builtin_gc_usage[] = {
 
 static int pack_refs = 1;
 static int prune_reflogs = 1;
-static int cruft_packs = -1;
+static int cruft_packs = 1;
 static int aggressive_depth = 50;
 static int aggressive_window = 250;
 static int gc_auto_threshold = 6700;
@@ -221,7 +221,7 @@ static struct packed_git *find_base_packs(struct string_list *packs,
 	struct packed_git *p, *base = NULL;
 
 	for (p = get_all_packs(the_repository); p; p = p->next) {
-		if (!p->pack_local)
+		if (!p->pack_local || p->is_cruft)
 			continue;
 		if (limit) {
 			if (p->pack_size >= limit)
@@ -609,10 +609,6 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 
 	if (prune_expire && parse_expiry_date(prune_expire, &dummy))
 		die(_("failed to parse prune expiry value %s"), prune_expire);
-
-	prepare_repo_settings(the_repository);
-	if (cruft_packs < 0)
-		cruft_packs = the_repository->settings.gc_cruft_packs;
 
 	if (aggressive) {
 		strvec_push(&repack, "-f");
