@@ -101,14 +101,21 @@ static const char * const git_notes_get_ref_usage[] = {
 static const char note_template[] =
 	N_("Write/edit the notes for the following object:");
 
+enum notes_stripspace {
+	UNSPECIFIED = -1,
+	NO_STRIPSPACE = 0,
+	STRIPSPACE = 1,
+};
+
 struct note_msg {
-	int stripspace;
+	enum notes_stripspace stripspace;
 	struct strbuf buf;
 };
 
 struct note_data {
 	int given;
 	int use_editor;
+	int stripspace;
 	char *edit_path;
 	struct strbuf buf;
 	struct note_msg **messages;
@@ -213,7 +220,8 @@ static void prepare_note_data(const struct object_id *object, struct note_data *
 		if (launch_editor(d->edit_path, &d->buf, NULL)) {
 			die(_("please supply the note contents using either -m or -F option"));
 		}
-		strbuf_stripspace(&d->buf, 1);
+		if (d->stripspace)
+			strbuf_stripspace(&d->buf, 1);
 	}
 }
 
@@ -247,7 +255,9 @@ static void concat_messages(struct note_data *d)
 			append_separator(&d->buf);
 		strbuf_add(&msg, d->messages[i]->buf.buf, d->messages[i]->buf.len);
 		strbuf_addbuf(&d->buf, &msg);
-		if (d->messages[i]->stripspace)
+		if ((d->stripspace == UNSPECIFIED &&
+		     d->messages[i]->stripspace == STRIPSPACE) ||
+		    d->stripspace == STRIPSPACE)
 			strbuf_stripspace(&d->buf, 0);
 		strbuf_reset(&msg);
 	}
@@ -265,7 +275,7 @@ static int parse_msg_arg(const struct option *opt, const char *arg, int unset)
 	strbuf_addstr(&msg->buf, arg);
 	ALLOC_GROW_BY(d->messages, d->msg_nr, 1, d->msg_alloc);
 	d->messages[d->msg_nr - 1] = msg;
-	msg->stripspace = 1;
+	msg->stripspace = STRIPSPACE;
 	return 0;
 }
 
@@ -285,7 +295,7 @@ static int parse_file_arg(const struct option *opt, const char *arg, int unset)
 
 	ALLOC_GROW_BY(d->messages, d->msg_nr, 1, d->msg_alloc);
 	d->messages[d->msg_nr - 1] = msg;
-	msg->stripspace = 1;
+	msg->stripspace = STRIPSPACE;
 	return 0;
 }
 
@@ -318,7 +328,7 @@ static int parse_reuse_arg(const struct option *opt, const char *arg, int unset)
 	msg->buf.len = len;
 	ALLOC_GROW_BY(d->messages, d->msg_nr, 1, d->msg_alloc);
 	d->messages[d->msg_nr - 1] = msg;
-	msg->stripspace = 0;
+	msg->stripspace = NO_STRIPSPACE;
 	return 0;
 }
 
@@ -452,7 +462,7 @@ static int add(int argc, const char **argv, const char *prefix)
 	struct notes_tree *t;
 	struct object_id object, new_note;
 	const struct object_id *note;
-	struct note_data d = { .buf = STRBUF_INIT };
+	struct note_data d = { .buf = STRBUF_INIT, .stripspace = UNSPECIFIED };
 
 	struct option options[] = {
 		OPT_CALLBACK_F('m', "message", &d, N_("message"),
@@ -472,6 +482,8 @@ static int add(int argc, const char **argv, const char *prefix)
 		OPT__FORCE(&force, N_("replace existing notes"), PARSE_OPT_NOCOMPLETE),
 		OPT_STRING(0, "separator", &separator, N_("separator"),
 			N_("insert <paragraph-break> between paragraphs")),
+		OPT_BOOL(0, "stripspace", &d.stripspace,
+			N_("remove unnecessary whitespace")),
 		OPT_END()
 	};
 
@@ -625,7 +637,7 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 	const struct object_id *note;
 	char *logmsg;
 	const char * const *usage;
-	struct note_data d = { .buf = STRBUF_INIT };
+	struct note_data d = { .buf = STRBUF_INIT, .stripspace = UNSPECIFIED };
 	struct option options[] = {
 		OPT_CALLBACK_F('m', "message", &d, N_("message"),
 			N_("note contents as a string"), PARSE_OPT_NONEG,
@@ -643,6 +655,8 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 			N_("allow storing empty note")),
 		OPT_STRING(0, "separator", &separator, N_("separator"),
 			N_("insert <paragraph-break> between paragraphs")),
+		OPT_BOOL(0, "stripspace", &d.stripspace,
+			N_("remove unnecessary whitespace")),
 		OPT_END()
 	};
 	int edit = !strcmp(argv[0], "edit");
