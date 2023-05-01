@@ -3626,7 +3626,7 @@ static int do_exec(struct repository *r, const char *command_line)
 			  "  git rebase --continue\n"
 			  "\n"),
 			command_line,
-			dirty ? N_("and made changes to the index and/or the "
+			dirty ? _("and made changes to the index and/or the "
 				"working tree\n") : "");
 		if (status == 127)
 			/* command not found */
