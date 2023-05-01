@@ -322,16 +322,30 @@ $ git interpret-trailers --trailer 'Cc: Alice <alice@example.com>' --trailer 'Re
   'Signed-off-by: ' already, and show how it works:
 +
 ------------
+$ cat msg1.txt
+subject
+
+message
 $ git config trailer.sign.key "Signed-off-by: "
 $ git config trailer.sign.ifmissing add
 $ git config trailer.sign.ifexists doNothing
 $ git config trailer.sign.cmd 'echo "$(git config user.name) <$(git config user.email)>"'
-$ git interpret-trailers </dev/null
+$ git interpret-trailers --trailer sign <msg1.txt
+subject
+
+message
 
 Signed-off-by: Bob <bob@example.com>
-$ cat msg.txt
+$ cat msg2.txt
+subject
+
+message
+
 Signed-off-by: Alice <alice@example.com>
-$ git interpret-trailers <msg.txt
+$ git interpret-trailers --trailer sign <msg2.txt
+subject
+
+message
 
 Signed-off-by: Alice <alice@example.com>
 ------------
