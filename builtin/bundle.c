@@ -4,6 +4,8 @@
 #include "setup.h"
 #include "strvec.h"
 #include "parse-options.h"
+#include "pkt-line.h"
+#include "repository.h"
 #include "cache.h"
 #include "bundle.h"
 

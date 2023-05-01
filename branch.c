@@ -9,6 +9,7 @@
 #include "refs.h"
 #include "refspec.h"
 #include "remote.h"
+#include "repository.h"
 #include "sequencer.h"
 #include "commit.h"
 #include "worktree.h"

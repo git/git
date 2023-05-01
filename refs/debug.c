@@ -1,6 +1,7 @@
 #include "git-compat-util.h"
 #include "hex.h"
 #include "refs-internal.h"
+#include "string-list.h"
 #include "trace.h"
 
 static struct trace_key trace_refs = TRACE_KEY_INIT(REFS);

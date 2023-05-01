@@ -18,6 +18,7 @@
 #include "cache-tree.h"
 #include "string-list.h"
 #include "parse-options.h"
+#include "repository.h"
 #include "setup.h"
 #include "submodule.h"
 #include "entry.h"

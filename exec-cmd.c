@@ -3,6 +3,7 @@
 #include "environment.h"
 #include "exec-cmd.h"
 #include "gettext.h"
+#include "path.h"
 #include "quote.h"
 #include "strvec.h"
 #include "trace.h"

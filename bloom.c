@@ -6,6 +6,7 @@
 #include "hashmap.h"
 #include "commit-graph.h"
 #include "commit.h"
+#include "commit-slab.h"
 
 define_commit_slab(bloom_filter_slab, struct bloom_filter);
 

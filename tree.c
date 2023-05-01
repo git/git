@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "cache-tree.h"
 #include "hex.h"
 #include "tree.h"
@@ -94,14 +94,72 @@ int read_tree(struct repository *r,
 	return ret;
 }
 
-int cmp_cache_name_compare(const void *a_, const void *b_)
+int base_name_compare(const char *name1, size_t len1, int mode1,
+		      const char *name2, size_t len2, int mode2)
 {
-	const struct cache_entry *ce1, *ce2;
+	unsigned char c1, c2;
+	size_t len = len1 < len2 ? len1 : len2;
+	int cmp;
 
-	ce1 = *((const struct cache_entry **)a_);
-	ce2 = *((const struct cache_entry **)b_);
-	return cache_name_stage_compare(ce1->name, ce1->ce_namelen, ce_stage(ce1),
-				  ce2->name, ce2->ce_namelen, ce_stage(ce2));
+	cmp = memcmp(name1, name2, len);
+	if (cmp)
+		return cmp;
+	c1 = name1[len];
+	c2 = name2[len];
+	if (!c1 && S_ISDIR(mode1))
+		c1 = '/';
+	if (!c2 && S_ISDIR(mode2))
+		c2 = '/';
+	return (c1 < c2) ? -1 : (c1 > c2) ? 1 : 0;
+}
+
+/*
+ * df_name_compare() is identical to base_name_compare(), except it
+ * compares conflicting directory/file entries as equal. Note that
+ * while a directory name compares as equal to a regular file, they
+ * then individually compare _differently_ to a filename that has
+ * a dot after the basename (because '\0' < '.' < '/').
+ *
+ * This is used by routines that want to traverse the git namespace
+ * but then handle conflicting entries together when possible.
+ */
+int df_name_compare(const char *name1, size_t len1, int mode1,
+		    const char *name2, size_t len2, int mode2)
+{
+	unsigned char c1, c2;
+	size_t len = len1 < len2 ? len1 : len2;
+	int cmp;
+
+	cmp = memcmp(name1, name2, len);
+	if (cmp)
+		return cmp;
+	/* Directories and files compare equal (same length, same name) */
+	if (len1 == len2)
+		return 0;
+	c1 = name1[len];
+	if (!c1 && S_ISDIR(mode1))
+		c1 = '/';
+	c2 = name2[len];
+	if (!c2 && S_ISDIR(mode2))
+		c2 = '/';
+	if (c1 == '/' && !c2)
+		return 0;
+	if (c2 == '/' && !c1)
+		return 0;
+	return c1 - c2;
+}
+
+int name_compare(const char *name1, size_t len1, const char *name2, size_t len2)
+{
+	size_t min_len = (len1 < len2) ? len1 : len2;
+	int cmp = memcmp(name1, name2, min_len);
+	if (cmp)
+		return cmp;
+	if (len1 < len2)
+		return -1;
+	if (len1 > len2)
+		return 1;
+	return 0;
 }
 
 struct tree *lookup_tree(struct repository *r, const struct object_id *oid)

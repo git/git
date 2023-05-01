@@ -10,6 +10,7 @@
 #include "cache.h"
 #include "abspath.h"
 #include "alloc.h"
+#include "base85.h"
 #include "config.h"
 #include "object-store.h"
 #include "blob.h"
@@ -30,6 +31,8 @@
 #include "apply.h"
 #include "entry.h"
 #include "setup.h"
+#include "symlinks.h"
+#include "ws.h"
 #include "wrapper.h"
 
 struct gitdiff_data {

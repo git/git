@@ -2,13 +2,10 @@
 #define COMMIT_H
 
 #include "object.h"
-#include "tree.h"
-#include "strbuf.h"
-#include "decorate.h"
-#include "gpg-interface.h"
-#include "string-list.h"
-#include "pretty.h"
-#include "commit-slab.h"
+
+struct signature_check;
+struct strbuf;
+struct tree;
 
 #define COMMIT_NOT_FROM_GRAPH 0xFFFFFFFF
 #define GENERATION_NUMBER_INFINITY ((1ULL << 63) - 1)

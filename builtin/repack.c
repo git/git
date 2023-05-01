@@ -7,6 +7,7 @@
 #include "hex.h"
 #include "parse-options.h"
 #include "run-command.h"
+#include "server-info.h"
 #include "sigchain.h"
 #include "strbuf.h"
 #include "string-list.h"

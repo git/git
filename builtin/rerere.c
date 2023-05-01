@@ -4,6 +4,7 @@
 #include "dir.h"
 #include "gettext.h"
 #include "parse-options.h"
+#include "repository.h"
 #include "string-list.h"
 #include "rerere.h"
 #include "wrapper.h"

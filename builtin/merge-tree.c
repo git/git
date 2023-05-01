@@ -16,6 +16,7 @@
 #include "exec-cmd.h"
 #include "merge-blobs.h"
 #include "quote.h"
+#include "tree.h"
 
 static int line_termination = '\n';
 

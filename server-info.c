@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "alloc.h"
 #include "dir.h"
 #include "environment.h"
@@ -11,6 +11,7 @@
 #include "packfile.h"
 #include "object-file.h"
 #include "object-store.h"
+#include "server-info.h"
 #include "strbuf.h"
 #include "wrapper.h"
 

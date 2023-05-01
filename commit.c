@@ -26,6 +26,7 @@
 #include "run-command.h"
 #include "setup.h"
 #include "shallow.h"
+#include "tree.h"
 #include "hook.h"
 
 static struct commit_extra_header *read_commit_extra_header_lines(const char *buf, size_t len, const char **);

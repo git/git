@@ -7,6 +7,7 @@
 #include "gettext.h"
 #include "object-name.h"
 #include "quote.h"
+#include "repository.h"
 #include "setup.h"
 #include "parse-options.h"
 #include "write-or-die.h"

@@ -33,6 +33,7 @@
 #include "object-store.h"
 #include "protocol.h"
 #include "commit-reach.h"
+#include "server-info.h"
 #include "trace.h"
 #include "trace2.h"
 #include "worktree.h"
