@@ -2021,15 +2021,29 @@ foreach my $t (@files) {
 	}
 }
 
+# Execute a command and return its output lines as an array.
+sub execute_cmd {
+	my ($prefix, $cmd, $file) = @_;
+	my @lines = ();
+	open my $fh, "-|", "$cmd \Q$file\E"
+		or die sprintf(__("(%s) Could not execute '%s'"), $prefix, $cmd);
+	while (my $line = <$fh>) {
+		last if $line =~ /^$/;
+		push @lines, $line;
+	}
+	close $fh
+	    or die sprintf(__("(%s) failed to close pipe to '%s'"), $prefix, $cmd);
+	return @lines;
+}
+
 # Execute a command (e.g. $to_cmd) to get a list of email addresses
 # and return a results array
 sub recipients_cmd {
 	my ($prefix, $what, $cmd, $file) = @_;
-
+	my @lines = ();
 	my @addresses = ();
-	open my $fh, "-|", "$cmd \Q$file\E"
-	    or die sprintf(__("(%s) Could not execute '%s'"), $prefix, $cmd);
-	while (my $address = <$fh>) {
+	@lines = execute_cmd($prefix, $cmd, $file);
+	for my $address (@lines) {
 		$address =~ s/^\s*//g;
 		$address =~ s/\s*$//g;
 		$address = sanitize_address($address);
@@ -2038,8 +2052,6 @@ sub recipients_cmd {
 		printf(__("(%s) Adding %s: %s from: '%s'\n"),
 		       $prefix, $what, $address, $cmd) unless $quiet;
 		}
-	close $fh
-	    or die sprintf(__("(%s) failed to close pipe to '%s'"), $prefix, $cmd);
 	return @addresses;
 }
 
