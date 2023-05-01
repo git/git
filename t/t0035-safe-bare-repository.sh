@@ -7,13 +7,26 @@ TEST_PASSES_SANITIZE_LEAK=true
 
 pwd="$(pwd)"
 
-expect_accepted () {
-	git "$@" rev-parse --git-dir
+expect_accepted_implicit () {
+	test_when_finished 'rm "$pwd/trace.perf"' &&
+	GIT_TRACE2_PERF="$pwd/trace.perf" git "$@" rev-parse --git-dir &&
+	# Note: we're intentionally only checking that the bare repo has a
+	# directory *prefix* of $pwd
+	grep -F "implicit-bare-repository:$pwd" "$pwd/trace.perf"
+}
+
+expect_accepted_explicit () {
+	test_when_finished 'rm "$pwd/trace.perf"' &&
+	GIT_DIR="$1" GIT_TRACE2_PERF="$pwd/trace.perf" git rev-parse --git-dir &&
+	! grep -F "implicit-bare-repository:$pwd" "$pwd/trace.perf"
 }
 
 expect_rejected () {
-	test_must_fail git "$@" rev-parse --git-dir 2>err &&
-	grep -F "cannot use bare repository" err
+	test_when_finished 'rm "$pwd/trace.perf"' &&
+	test_env GIT_TRACE2_PERF="$pwd/trace.perf" \
+		test_must_fail git "$@" rev-parse --git-dir 2>err &&
+	grep -F "cannot use bare repository" err &&
+	grep -F "implicit-bare-repository:$pwd" "$pwd/trace.perf"
 }
 
 test_expect_success 'setup bare repo in worktree' '
@@ -22,12 +35,13 @@ test_expect_success 'setup bare repo in worktree' '
 '
 
 test_expect_success 'safe.bareRepository unset' '
-	expect_accepted -C outer-repo/bare-repo
+	test_unconfig --global safe.bareRepository &&
+	expect_accepted_implicit -C outer-repo/bare-repo
 '
 
 test_expect_success 'safe.bareRepository=all' '
 	test_config_global safe.bareRepository all &&
-	expect_accepted -C outer-repo/bare-repo
+	expect_accepted_implicit -C outer-repo/bare-repo
 '
 
 test_expect_success 'safe.bareRepository=explicit' '
@@ -47,7 +61,7 @@ test_expect_success 'safe.bareRepository in the repository' '
 
 test_expect_success 'safe.bareRepository on the command line' '
 	test_config_global safe.bareRepository explicit &&
-	expect_accepted -C outer-repo/bare-repo \
+	expect_accepted_implicit -C outer-repo/bare-repo \
 		-c safe.bareRepository=all
 '
 
@@ -58,6 +72,10 @@ test_expect_success 'safe.bareRepository in included file' '
 	EOF
 	git config --global --add include.path "$(pwd)/gitconfig-include" &&
 	expect_rejected -C outer-repo/bare-repo
+'
+
+test_expect_success 'no trace when GIT_DIR is explicitly provided' '
+	expect_accepted_explicit "$pwd/outer-repo/bare-repo"
 '
 
 test_done
