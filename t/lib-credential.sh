@@ -270,6 +270,35 @@ helper_test() {
 		password=
 		EOF
 	'
+
+	: ${GIT_TEST_LONG_CRED_BUFFER:=1024}
+	# 23 bytes accounts for "wwwauth[]=basic realm=" plus NUL
+	LONG_VALUE_LEN=$((GIT_TEST_LONG_CRED_BUFFER - 23))
+	LONG_VALUE=$(perl -e 'print "a" x shift' $LONG_VALUE_LEN)
+
+	test_expect_success "helper ($HELPER) not confused by long header" '
+		check approve $HELPER <<-\EOF &&
+		protocol=https
+		host=victim.example.com
+		username=user
+		password=to-be-stolen
+		EOF
+
+		check fill $HELPER <<-EOF
+		protocol=https
+		host=badguy.example.com
+		wwwauth[]=basic realm=${LONG_VALUE}host=victim.example.com
+		--
+		protocol=https
+		host=badguy.example.com
+		username=askpass-username
+		password=askpass-password
+		wwwauth[]=basic realm=${LONG_VALUE}host=victim.example.com
+		--
+		askpass: Username for '\''https://badguy.example.com'\'':
+		askpass: Password for '\''https://askpass-username@badguy.example.com'\'':
+		EOF
+	'
 }
 
 helper_test_timeout() {
