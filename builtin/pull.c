@@ -1047,7 +1047,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 		if (!opt_autostash)
 			require_clean_work_tree(the_repository,
 				N_("pull with rebase"),
-				_("please commit or stash them."), 1, 0);
+				_("Please commit or stash them."), 1, 0);
 
 		if (get_rebase_fork_point(&rebase_fork_point, repo, *refspecs))
 			oidclr(&rebase_fork_point);
