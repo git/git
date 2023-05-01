@@ -2026,14 +2026,22 @@ foreach my $t (@files) {
 	}
 }
 
-# Execute a command and return its output lines as an array.
+# Execute a command and return its output lines as an array.  Blank
+# lines which do not appear at the end of the output are reported as
+# errors.
 sub execute_cmd {
 	my ($prefix, $cmd, $file) = @_;
 	my @lines = ();
+	my $seen_blank_line = 0;
 	open my $fh, "-|", "$cmd \Q$file\E"
 		or die sprintf(__("(%s) Could not execute '%s'"), $prefix, $cmd);
 	while (my $line = <$fh>) {
-		last if $line =~ /^$/;
+		die sprintf(__("(%s) Malformed output from '%s'"), $prefix, $cmd)
+		    if $seen_blank_line;
+		if ($line =~ /^$/) {
+			$seen_blank_line = $line =~ /^$/;
+			next;
+		}
 		push @lines, $line;
 	}
 	close $fh
