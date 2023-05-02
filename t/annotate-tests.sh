@@ -72,6 +72,13 @@ test_expect_success 'blame 1 author' '
 	check_count A 2
 '
 
+test_expect_success 'blame working copy' '
+	test_when_finished "git restore file" &&
+	echo "1A quick brown fox jumps over the" >file &&
+	echo "another lazy dog" >>file &&
+	check_count A 1 "Not Committed Yet" 1
+'
+
 test_expect_success 'blame with --contents' '
 	check_count --contents=file A 2
 '
@@ -79,7 +86,7 @@ test_expect_success 'blame with --contents' '
 test_expect_success 'blame with --contents changed' '
 	echo "1A quick brown fox jumps over the" >contents &&
 	echo "another lazy dog" >>contents &&
-	check_count --contents=contents A 1 "Not Committed Yet" 1
+	check_count --contents=contents A 1 "External file (--contents)" 1
 '
 
 test_expect_success 'blame in a bare repo without starting commit' '
@@ -109,7 +116,7 @@ test_expect_success 'blame 2 authors' '
 '
 
 test_expect_success 'blame with --contents and revision' '
-	check_count -h testTag --contents=file A 2 "Not Committed Yet" 2
+	check_count -h testTag --contents=file A 2 "External file (--contents)" 2
 '
 
 test_expect_success 'setup B1 lines (branch1)' '
