@@ -27,6 +27,8 @@ static int is_in(const char *s, int ch)
 		if (is_in(s, i) != t(i))	\
 			report_error(#t, i);	\
 	}					\
+	if (t(EOF))				\
+		report_error(#t, EOF);		\
 }
 
 #define DIGIT "0123456789"
