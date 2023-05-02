@@ -869,20 +869,20 @@ static int check_pack_rev_indexes(struct repository *r, int show_progress)
 	int res = 0;
 
 	if (show_progress) {
-		for (struct packed_git *p = get_all_packs(the_repository); p; p = p->next)
+		for (struct packed_git *p = get_all_packs(r); p; p = p->next)
 			pack_count++;
 		progress = start_delayed_progress("Verifying reverse pack-indexes", pack_count);
 		pack_count = 0;
 	}
 
-	for (struct packed_git *p = get_all_packs(the_repository); p; p = p->next) {
+	for (struct packed_git *p = get_all_packs(r); p; p = p->next) {
 		int load_error = load_pack_revindex_from_disk(p);
 
 		if (load_error < 0) {
 			error(_("unable to load rev-index for pack '%s'"), p->pack_name);
 			res = ERROR_PACK_REV_INDEX;
 		} else if (!load_error &&
-			   !load_pack_revindex(the_repository, p) &&
+			   !load_pack_revindex(r, p) &&
 			   verify_pack_revindex(p)) {
 			error(_("invalid rev-index for pack '%s'"), p->pack_name);
 			res = ERROR_PACK_REV_INDEX;
