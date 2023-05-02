@@ -27,6 +27,7 @@
 #include "run-command.h"
 #include "worktree.h"
 #include "pack-revindex.h"
+#include "pack-bitmap.h"
 
 #define REACHABLE 0x0001
 #define SEEN      0x0002
@@ -57,6 +58,7 @@ static int name_objects;
 #define ERROR_COMMIT_GRAPH 020
 #define ERROR_MULTI_PACK_INDEX 040
 #define ERROR_PACK_REV_INDEX 0100
+#define ERROR_BITMAP 0200
 
 static const char *describe_object(const struct object_id *oid)
 {
@@ -1056,6 +1058,8 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 	}
 
 	errors_found |= check_pack_rev_indexes(the_repository, show_progress);
+	if (verify_bitmap_files(the_repository))
+		errors_found |= ERROR_BITMAP;
 
 	check_connectivity();
 
