@@ -86,29 +86,37 @@ static int clear_marks(const char *refname, const struct object_id *oid,
 }
 
 /*
- * Mark this SEEN commit and all its SEEN ancestors as COMMON.
+ * Mark this SEEN commit and all its parsed SEEN ancestors as COMMON.
  */
 static void mark_common(struct data *data, struct commit *seen_commit)
 {
 	struct prio_queue queue = { NULL };
 	struct commit *c;
 
+	if (seen_commit->object.flags & COMMON)
+		return;
+
 	prio_queue_put(&queue, seen_commit);
+	seen_commit->object.flags |= COMMON;
 	while ((c = prio_queue_get(&queue))) {
 		struct commit_list *p;
-		if (c->object.flags & COMMON)
-			return;
-		c->object.flags |= COMMON;
+
 		if (!(c->object.flags & POPPED))
 			data->non_common_revs--;
 
 		if (!c->object.parsed)
-			return;
+			continue;
 		for (p = c->parents; p; p = p->next) {
-			if (p->item->object.flags & SEEN)
-				prio_queue_put(&queue, p->item);
+			if (!(p->item->object.flags & SEEN) ||
+			    (p->item->object.flags & COMMON))
+				continue;
+
+			p->item->object.flags |= COMMON;
+			prio_queue_put(&queue, p->item);
 		}
 	}
+
+	clear_prio_queue(&queue);
 }
 
 /*
