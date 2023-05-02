@@ -79,6 +79,10 @@ UI, Workflows & Features
    of cruft packs has been made the default and no longer considered
    an experimental feature.
 
+ * The output given by "git blame" that attributes a line to contents
+   taken from the file specified by the "--contents" option shows it
+   differently from a line attributed to the working tree file.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -124,6 +128,8 @@ Performance, Internal Implementation, Development Support etc.
    enabled by default.
 
  * "git fsck" learned to validate the on-disk pack reverse index files.
+
+ * strtok() and strtok_r() are banned in this codebase.
 
 
 Fixes since v2.40
@@ -268,6 +274,15 @@ Fixes since v2.40
    friends caused BUG() to trigger on a commit signed with an unknown
    key, which has been corrected.
    (merge 7891e46585 jk/gpg-trust-level-fix later to maint).
+
+ * The completion script used to use bare "read" without the "-r"
+   option to read the contents of various state files, which risked
+   getting confused with backslashes in them.  This has been
+   corrected.
+   (merge 197152098a ek/completion-use-read-r-to-read-literally later to maint).
+
+ * A small API fix to the ort merge strategy backend.
+   (merge 000c4ceca7 en/ort-finalize-after-0-merges-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge f7111175df as/doc-markup-fix later to maint).
