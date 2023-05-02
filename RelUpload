@@ -1,6 +1,6 @@
 #!/bin/sh
 
-kup=../kup/kup
+: ${kup=../kup/kup}
 
 for s in git-*.sig
 do

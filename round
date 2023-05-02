@@ -41,7 +41,8 @@ do
 		;;
 	sparse)
 		Meta/Make -j16 -- NO_REGEX=NoThanks SPARSE_FLAGS=-Wsparse-error "$t" &&
-		Meta/Make -j16 -- NO_REGEX=NoThanks clean >/dev/null 2>&1
+		Meta/Make -j16 -- NO_REGEX=NoThanks clean >/dev/null 2>&1 &&
+		rm -f compat/regex/regex.o
 		;;
 	*)
 		Meta/Make -j16 "$t"
