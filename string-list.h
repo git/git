@@ -134,6 +134,16 @@ typedef void (*string_list_clear_func_t)(void *p, const char *str);
 /** Call a custom clear function on each util pointer */
 void string_list_clear_func(struct string_list *list, string_list_clear_func_t clearfunc);
 
+/*
+ * Set the length of a string_list to `nr`, provided that (a) `list`
+ * does not own its own storage, and (b) that `nr` is no larger than
+ * `list->nr`.
+ *
+ * Useful when "shrinking" `list` to write over existing entries that
+ * are no longer used without reallocating.
+ */
+void string_list_setlen(struct string_list *list, size_t nr);
+
 /**
  * Apply `func` to each item. If `func` returns nonzero, the
  * iteration aborts and the return value is propagated.
@@ -270,5 +280,5 @@ int string_list_split(struct string_list *list, const char *string,
  * list->strdup_strings must *not* be set.
  */
 int string_list_split_in_place(struct string_list *list, char *string,
-			       int delim, int maxsplit);
+			       const char *delim, int maxsplit);
 #endif /* STRING_LIST_H */
