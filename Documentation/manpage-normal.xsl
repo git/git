@@ -8,6 +8,9 @@
 <xsl:param name="man.output.quietly" select="1"/>
 <xsl:param name="refentry.meta.get.quietly" select="1"/>
 
+<!-- unset maximum length of title -->
+<xsl:param name="man.th.title.max.length"/>
+
 <!-- convert asciidoc callouts to man page format -->
 <xsl:template match="co">
 	<xsl:value-of select="concat('\fB(',substring-after(@id,'-'),')\fR')"/>
