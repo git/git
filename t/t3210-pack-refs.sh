@@ -124,6 +124,27 @@ test_expect_success 'test --no-exclude refs clears excluded refs' '
 	! test -f .git/refs/heads/dont_pack3 &&
 	! test -f .git/refs/heads/dont_pack4'
 
+test_expect_success 'test only included refs are packed' '
+	git branch pack_this1 &&
+	git branch pack_this2 &&
+	git tag dont_pack5 &&
+	git pack-refs --include "refs/heads/pack_this*" &&
+	test -f .git/refs/tags/dont_pack5 &&
+	! test -f .git/refs/heads/pack_this1 &&
+	! test -f .git/refs/heads/pack_this2'
+
+test_expect_success 'test --no-include refs clears included refs' '
+	git branch pack1 &&
+	git branch pack2 &&
+	git pack-refs --include "refs/heads/pack*" --no-include &&
+	test -f .git/refs/heads/pack1 &&
+	test -f .git/refs/heads/pack2'
+
+test_expect_success 'test --exclude takes precedence over --include' '
+	git branch dont_pack5 &&
+	git pack-refs --include "refs/heads/pack*" --exclude "refs/heads/pack*" &&
+	test -f .git/refs/heads/dont_pack5'
+
 test_expect_success \
 	'see if up-to-date packed refs are preserved' \
 	'git branch q &&

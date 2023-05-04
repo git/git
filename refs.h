@@ -66,6 +66,7 @@ struct worktree;
 struct pack_refs_opts {
 	unsigned int flags;
 	struct ref_exclusions *exclusions;
+	struct string_list *includes;
 };
 
 const char *refs_resolve_ref_unsafe(struct ref_store *refs,
