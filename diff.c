@@ -2971,6 +2971,19 @@ static int dirstat_compare(const void *_a, const void *_b)
 	return strcmp(a->name, b->name);
 }
 
+static void conclude_dirstat(struct diff_options *options,
+			     struct dirstat_dir *dir,
+			     unsigned long changed)
+{
+	/* This can happen even with many files, if everything was renames */
+	if (!changed)
+		return;
+
+	/* Show all directories with more than x% of the changes */
+	QSORT(dir->files, dir->nr, dirstat_compare);
+	gather_dirstat(options, dir, changed, "", 0);
+}
+
 static void show_dirstat(struct diff_options *options)
 {
 	int i;
@@ -3060,13 +3073,7 @@ found_damage:
 		dir.nr++;
 	}
 
-	/* This can happen even with many files, if everything was renames */
-	if (!changed)
-		return;
-
-	/* Show all directories with more than x% of the changes */
-	QSORT(dir.files, dir.nr, dirstat_compare);
-	gather_dirstat(options, &dir, changed, "", 0);
+	conclude_dirstat(options, &dir, changed);
 }
 
 static void show_dirstat_by_line(struct diffstat_t *data, struct diff_options *options)
@@ -3104,13 +3111,7 @@ static void show_dirstat_by_line(struct diffstat_t *data, struct diff_options *o
 		dir.nr++;
 	}
 
-	/* This can happen even with many files, if everything was renames */
-	if (!changed)
-		return;
-
-	/* Show all directories with more than x% of the changes */
-	QSORT(dir.files, dir.nr, dirstat_compare);
-	gather_dirstat(options, &dir, changed, "", 0);
+	conclude_dirstat(options, &dir, changed);
 }
 
 static void free_diffstat_file(struct diffstat_file *f)
