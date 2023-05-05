@@ -49,7 +49,10 @@ token: value
 ------------------------------------------------
 
 This means that the trimmed <token> and <value> will be separated by
-`': '` (one colon followed by one space).
+`': '` (one colon followed by one space). For convenience, the <token> can be a
+shortened string key (e.g., "sign") instead of the full string which should
+appear before the separator on the output (e.g., "Signed-off-by"). This can be
+configured using the 'trailer.<token>.key' configuration variable.
 
 By default the new trailer will appear at the end of all the existing
 trailers. If there is no existing trailer, the new trailer will appear
