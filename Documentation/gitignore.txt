@@ -146,7 +146,9 @@ The purpose of gitignore files is to ensure that certain files
 not tracked by Git remain untracked.
 
 To stop tracking a file that is currently tracked, use
-'git rm --cached'.
+'git rm --cached' to remove the file from the index. The filename
+can then be added to the `.gitignore` file to stop the file from
+being reintroduced in later commits.
 
 Git does not follow symbolic links when accessing a `.gitignore` file in
 the working tree. This keeps behavior consistent when the file is
