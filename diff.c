@@ -2975,13 +2975,18 @@ static void conclude_dirstat(struct diff_options *options,
 			     struct dirstat_dir *dir,
 			     unsigned long changed)
 {
-	/* This can happen even with many files, if everything was renames */
-	if (!changed)
-		return;
+	struct dirstat_file *to_free = dir->files;
 
-	/* Show all directories with more than x% of the changes */
-	QSORT(dir->files, dir->nr, dirstat_compare);
-	gather_dirstat(options, dir, changed, "", 0);
+	if (!changed) {
+		/* This can happen even with many files, if everything was renames */
+		;
+	} else {
+		/* Show all directories with more than x% of the changes */
+		QSORT(dir->files, dir->nr, dirstat_compare);
+		gather_dirstat(options, dir, changed, "", 0);
+	}
+
+	free(to_free);
 }
 
 static void show_dirstat(struct diff_options *options)
