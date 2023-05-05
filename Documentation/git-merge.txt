@@ -233,83 +233,81 @@ HOW CONFLICTS ARE PRESENTED
 
 During a merge, the working tree files are updated to reflect the result
 of the merge.  Among the changes made to the common ancestor's version,
-non-overlapping ones (that is, you changed an area of the file while the
-other side left that area intact, or vice versa) are incorporated in the
-final result verbatim.  When both sides made changes to the same area,
+non-overlapping ones, where only one side changed an area, are incorporated
+in the final result as-is.  When both sides made changes to the same area,
 however, Git cannot randomly pick one side over the other, and asks you to
-resolve it by leaving what both sides did to that area.
+resolve it.  Git adds changes from both sides, and optionally the
+original content from the common ancestor, surrounded by conflict markers.
 
-By default, Git uses the same style as the one used by the "merge" program
-from the RCS suite to present such a conflicted hunk, like this:
+By default, Git presents conflicted hunks like this:
 
 ------------
 Here are lines that are either unchanged from the common
 ancestor, or cleanly resolved because only one side changed,
-or cleanly resolved because both sides changed the same way.
-<<<<<<< yours:sample.txt
-Conflict resolution is hard;
-let's go shopping.
+or cleanly resolved because both sides changed identically.
+<<<<<<< HEAD
+Git makes conflict resolution straightforward.
 =======
 Git makes conflict resolution easy.
->>>>>>> theirs:sample.txt
+>>>>>>> main
 And here is another line that is cleanly resolved or unmodified.
 ------------
 
-The area where a pair of conflicting changes happened is marked with markers
-`<<<<<<<`, `=======`, and `>>>>>>>`.  The part before the `=======`
-is typically your side, and the part afterwards is typically their side.
+The area where a pair of conflicting changes happened is marked with
+conflict markers: `<<<<<<<`, `=======`, and `>>>>>>>`.  The part before the
+`=======` is typically from the target (where you’re merging into), and the
+part afterwards is typically from the source (where you’re merging from).
 
-The default format does not show what the original said in the conflicting
-area.  You cannot tell how many lines are deleted and replaced with
-Barbie's remark on your side.  The only thing you can tell is that your
-side wants to say it is hard and you'd prefer to go shopping, while the
-other side wants to claim it is easy.
+The default format does not show what the original version contained in the
+conflicting area.  You cannot tell how many lines have been deleted and
+replaced on either side. The only thing you can tell is that the target side
+says "straightforward", while the source side says "easy".
 
-An alternative style can be used by setting the "merge.conflictStyle"
-configuration variable to either "diff3" or "zdiff3".  In "diff3"
-style, the above conflict may look like this:
+You can use an alternative conflict marker style by setting the
+`merge.conflictStyle` configuration variable to either "diff3" or "zdiff3".
+Both of these styles show the original version of the conflicted area, which
+may help you find a better resolution.
+
+In the "diff3" style, the above conflict looks like this:
 
 ------------
 Here are lines that are either unchanged from the common
 ancestor, or cleanly resolved because only one side changed,
-<<<<<<< yours:sample.txt
-or cleanly resolved because both sides changed the same way.
-Conflict resolution is hard;
-let's go shopping.
-||||||| base:sample.txt
+<<<<<<< HEAD
 or cleanly resolved because both sides changed identically.
+Git makes conflict resolution straightforward.
+||||||| 81821ce
+or cleanly resolved because both sides changed the same way.
 Conflict resolution is hard.
 =======
-or cleanly resolved because both sides changed the same way.
+or cleanly resolved because both sides changed identically.
 Git makes conflict resolution easy.
->>>>>>> theirs:sample.txt
+>>>>>>> main
 And here is another line that is cleanly resolved or unmodified.
 ------------
 
-while in "zdiff3" style, it may look like this:
+while in the "zdiff3" style, it looks like this:
 
 ------------
 Here are lines that are either unchanged from the common
 ancestor, or cleanly resolved because only one side changed,
-or cleanly resolved because both sides changed the same way.
-<<<<<<< yours:sample.txt
-Conflict resolution is hard;
-let's go shopping.
-||||||| base:sample.txt
 or cleanly resolved because both sides changed identically.
+<<<<<<< HEAD
+Git makes conflict resolution straightforward.
+||||||| 81821ce
+or cleanly resolved because both sides changed the same way.
 Conflict resolution is hard.
 =======
 Git makes conflict resolution easy.
->>>>>>> theirs:sample.txt
+>>>>>>> main
 And here is another line that is cleanly resolved or unmodified.
 ------------
 
-In addition to the `<<<<<<<`, `=======`, and `>>>>>>>` markers, it uses
-another `|||||||` marker that is followed by the original text.  You can
-tell that the original just stated a fact, and your side simply gave in to
-that statement and gave up, while the other side tried to have a more
-positive attitude.  You can sometimes come up with a better resolution by
-viewing the original.
+The original commit SHA and text are shown after another conflict marker:
+`|||||||`. This region lets you now see that both sides made the edit from
+"the same way" to "identically", as well as editing the following line.  The
+"diff3" style keeps all changed lines within the markers, whilst the
+"zdiff3" style moves the commonly edited line before the marker.
 
 
 HOW TO RESOLVE CONFLICTS
