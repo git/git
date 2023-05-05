@@ -43,6 +43,7 @@ helper_test_clean() {
 	reject $1 https example.com store-user
 	reject $1 https example.com user1
 	reject $1 https example.com user2
+	reject $1 https example.com user3
 	reject $1 http path.tld user
 	reject $1 https timeout.tld user
 	reject $1 https sso.tld
@@ -294,6 +295,35 @@ helper_test_timeout() {
 		--
 		askpass: Username for '\''https://timeout.tld'\'':
 		askpass: Password for '\''https://askpass-username@timeout.tld'\'':
+		EOF
+	'
+}
+
+helper_test_password_expiry_utc() {
+	HELPER=$1
+
+	test_expect_success "helper ($HELPER) stores password_expiry_utc" '
+		check approve $HELPER <<-\EOF
+		protocol=https
+		host=example.com
+		username=user3
+		password=pass
+		password_expiry_utc=9999999999
+		EOF
+	'
+
+	test_expect_success "helper ($HELPER) gets password_expiry_utc" '
+		check fill $HELPER <<-\EOF
+		protocol=https
+		host=example.com
+		username=user3
+		--
+		protocol=https
+		host=example.com
+		username=user3
+		password=pass
+		password_expiry_utc=9999999999
+		--
 		EOF
 	'
 }
