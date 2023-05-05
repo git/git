@@ -14,7 +14,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Help parsing or adding 'trailers' lines, that look similar to RFC 822 e-mail
+Parse or add 'trailer' lines that look similar to RFC 822 e-mail
 headers, at the end of the otherwise free-form part of a commit
 message.
 
@@ -249,10 +249,10 @@ for the same <token>, 'trailer.<token>.cmd' is used and
 'trailer.<token>.command' is ignored.
 
 trailer.<token>.cmd::
-	This option can be used to specify a shell command that will be called:
+	This option can be used to specify a shell command that will be called
 	once to automatically add a trailer with the specified <token>, and then
-	each time a '--trailer <token>=<value>' argument to modify the <value> of
-	the trailer that this option would produce.
+	called each time a '--trailer <token>=<value>' argument is specified to
+	modify the <value> of the trailer that this option would produce.
 +
 When the specified command is first called to add a trailer
 with the specified <token>, the behavior is as if a special
