@@ -141,6 +141,7 @@ struct credential {
 	char *protocol;
 	char *host;
 	char *path;
+	char *oauth_refresh_token;
 	timestamp_t password_expiry_utc;
 };
 
