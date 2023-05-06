@@ -280,7 +280,7 @@ $ cat msg.txt
 subject
 
 message
-$ cat msg.txt | git interpret-trailers --trailer 'sign: Alice <alice@example.com>' --trailer 'sign: Bob <bob@example.com>'
+$ git interpret-trailers --trailer 'sign: Alice <alice@example.com>' --trailer 'sign: Bob <bob@example.com>' <msg.txt
 subject
 
 message
@@ -322,17 +322,30 @@ $ git interpret-trailers --trailer 'Cc: Alice <alice@example.com>' --trailer 'Re
   'Signed-off-by: ' already, and show how it works:
 +
 ------------
+$ cat msg1.txt
+subject
+
+message
 $ git config trailer.sign.key "Signed-off-by: "
 $ git config trailer.sign.ifmissing add
 $ git config trailer.sign.ifexists doNothing
-$ git config trailer.sign.command 'echo "$(git config user.name) <$(git config user.email)>"'
-$ git interpret-trailers <<EOF
-> EOF
+$ git config trailer.sign.cmd 'echo "$(git config user.name) <$(git config user.email)>"'
+$ git interpret-trailers --trailer sign <msg1.txt
+subject
+
+message
 
 Signed-off-by: Bob <bob@example.com>
-$ git interpret-trailers <<EOF
-> Signed-off-by: Alice <alice@example.com>
-> EOF
+$ cat msg2.txt
+subject
+
+message
+
+Signed-off-by: Alice <alice@example.com>
+$ git interpret-trailers --trailer sign <msg2.txt
+subject
+
+message
 
 Signed-off-by: Alice <alice@example.com>
 ------------
@@ -357,15 +370,14 @@ Fix #42
 $ cat ~/bin/glog-find-author
 #!/bin/sh
 test -n "$1" && git log --author="$1" --pretty="%an <%ae>" -1 || true
+$ cat msg.txt
+subject
+
+message
 $ git config trailer.help.key "Helped-by: "
 $ git config trailer.help.ifExists "addIfDifferentNeighbor"
 $ git config trailer.help.cmd "~/bin/glog-find-author"
-$ git interpret-trailers --trailer="help:Junio" --trailer="help:Couder" <<EOF
-> subject
->
-> message
->
-> EOF
+$ git interpret-trailers --trailer="help:Junio" --trailer="help:Couder" <msg.txt
 subject
 
 message
@@ -382,15 +394,14 @@ Helped-by: Christian Couder <christian.couder@gmail.com>
 $ cat ~/bin/glog-grep
 #!/bin/sh
 test -n "$1" && git log --grep "$1" --pretty=reference -1 || true
+$ cat msg.txt
+subject
+
+message
 $ git config trailer.ref.key "Reference-to: "
 $ git config trailer.ref.ifExists "replace"
 $ git config trailer.ref.cmd "~/bin/glog-grep"
-$ git interpret-trailers --trailer="ref:Add copyright notices." <<EOF
-> subject
->
-> message
->
-> EOF
+$ git interpret-trailers --trailer="ref:Add copyright notices." <msg.txt
 subject
 
 message
@@ -402,17 +413,20 @@ Reference-to: 8bc9a0c769 (Add copyright notices., 2005-04-07)
   commit that is related, and show how it works:
 +
 ------------
+$ cat msg.txt
+subject
+
+message
+
+see: HEAD~2
+$ cat ~/bin/glog-ref
+#!/bin/sh
+git log -1 --oneline --format="%h (%s)" --abbrev-commit --abbrev=14
 $ git config trailer.see.key "See-also: "
 $ git config trailer.see.ifExists "replace"
 $ git config trailer.see.ifMissing "doNothing"
-$ git config trailer.see.command "git log -1 --oneline --format=\"%h (%s)\" --abbrev-commit --abbrev=14 \$ARG"
-$ git interpret-trailers <<EOF
-> subject
-> 
-> message
-> 
-> see: HEAD~2
-> EOF
+$ git config trailer.see.cmd "glog-ref"
+$ git interpret-trailers --trailer=see <msg.txt
 subject
 
 message
@@ -427,22 +441,21 @@ See-also: fe3187489d69c4 (subject of related commit)
   to add a 'git-version' trailer:
 +
 ------------
-$ sed -e 's/ Z$/ /' >commit_template.txt <<EOF
-> ***subject***
-> 
-> ***message***
-> 
-> Fixes: Z
-> Cc: Z
-> Reviewed-by: Z
-> Signed-off-by: Z
-> EOF
+$ cat temp.txt
+***subject***
+
+***message***
+
+Fixes: Z
+Cc: Z
+Reviewed-by: Z
+Signed-off-by: Z
+$ sed -e 's/ Z$/ /' temp.txt > commit_template.txt
 $ git config commit.template commit_template.txt
-$ cat >.git/hooks/commit-msg <<EOF
-> #!/bin/sh
-> git interpret-trailers --trim-empty --trailer "git-version: \$(git describe)" "\$1" > "\$1.new"
-> mv "\$1.new" "\$1"
-> EOF
+$ cat .git/hooks/commit-msg
+#!/bin/sh
+git interpret-trailers --trim-empty --trailer "git-version: \$(git describe)" "\$1" > "\$1.new"
+mv "\$1.new" "\$1"
 $ chmod +x .git/hooks/commit-msg
 ------------
 
