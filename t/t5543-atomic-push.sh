@@ -117,7 +117,10 @@ test_expect_success 'atomic push fails if one branch fails' '
 		test_commit five &&
 		git checkout main &&
 		test_commit six &&
-		test_must_fail git push --atomic --all up
+		test_must_fail git push --atomic --all up >output-all 2>&1 &&
+		# --all and --branches have the same behavior when be combined with --atomic
+		test_must_fail git push --atomic --branches up >output-branches 2>&1 &&
+		test_cmp output-all output-branches
 	) &&
 	test_refs main HEAD@{7} &&
 	test_refs second HEAD@{4}
