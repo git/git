@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <io.h>
 #include <fcntl.h>
+#include <wincred.h>
 
 /* common helpers */
 
@@ -31,64 +32,6 @@ static void *xmalloc(size_t size)
 	if (!ret)
 		 die("Out of memory");
 	return ret;
-}
-
-/* MinGW doesn't have wincred.h, so we need to define stuff */
-
-typedef struct _CREDENTIAL_ATTRIBUTEW {
-	LPWSTR Keyword;
-	DWORD  Flags;
-	DWORD  ValueSize;
-	LPBYTE Value;
-} CREDENTIAL_ATTRIBUTEW, *PCREDENTIAL_ATTRIBUTEW;
-
-typedef struct _CREDENTIALW {
-	DWORD                  Flags;
-	DWORD                  Type;
-	LPWSTR                 TargetName;
-	LPWSTR                 Comment;
-	FILETIME               LastWritten;
-	DWORD                  CredentialBlobSize;
-	LPBYTE                 CredentialBlob;
-	DWORD                  Persist;
-	DWORD                  AttributeCount;
-	PCREDENTIAL_ATTRIBUTEW Attributes;
-	LPWSTR                 TargetAlias;
-	LPWSTR                 UserName;
-} CREDENTIALW, *PCREDENTIALW;
-
-#define CRED_TYPE_GENERIC 1
-#define CRED_PERSIST_LOCAL_MACHINE 2
-#define CRED_MAX_ATTRIBUTES 64
-
-typedef BOOL (WINAPI *CredWriteWT)(PCREDENTIALW, DWORD);
-typedef BOOL (WINAPI *CredEnumerateWT)(LPCWSTR, DWORD, DWORD *,
-    PCREDENTIALW **);
-typedef VOID (WINAPI *CredFreeT)(PVOID);
-typedef BOOL (WINAPI *CredDeleteWT)(LPCWSTR, DWORD, DWORD);
-
-static HMODULE advapi;
-static CredWriteWT CredWriteW;
-static CredEnumerateWT CredEnumerateW;
-static CredFreeT CredFree;
-static CredDeleteWT CredDeleteW;
-
-static void load_cred_funcs(void)
-{
-	/* load DLLs */
-	advapi = LoadLibraryExA("advapi32.dll", NULL,
-				LOAD_LIBRARY_SEARCH_SYSTEM32);
-	if (!advapi)
-		die("failed to load advapi32.dll");
-
-	/* get function pointers */
-	CredWriteW = (CredWriteWT)GetProcAddress(advapi, "CredWriteW");
-	CredEnumerateW = (CredEnumerateWT)GetProcAddress(advapi,
-	    "CredEnumerateW");
-	CredFree = (CredFreeT)GetProcAddress(advapi, "CredFree");
-	CredDeleteW = (CredDeleteWT)GetProcAddress(advapi, "CredDeleteW");
-	if (!CredWriteW || !CredEnumerateW || !CredFree || !CredDeleteW)
-		die("failed to load functions");
 }
 
 static WCHAR *wusername, *password, *protocol, *host, *path, target[1024],
@@ -333,8 +276,6 @@ int main(int argc, char *argv[])
 	_setmode(_fileno(stdout), _O_BINARY);
 
 	read_credential();
-
-	load_cred_funcs();
 
 	if (!protocol || !(host || path))
 		return 0;
