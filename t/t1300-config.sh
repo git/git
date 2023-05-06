@@ -98,6 +98,23 @@ test_expect_success 'subsections are not canonicalized by git-config' '
 	test_cmp_config two section.SubSection.key
 '
 
+test_missing_key () {
+	local key="$1" &&
+	local title="$2" &&
+	test_expect_success "value for $title is not printed" '
+		test_must_fail git config "$key" >out 2>err &&
+		test_must_be_empty out &&
+		test_must_be_empty err
+	'
+}
+
+test_missing_key 'missingsection.missingkey' 'missing section and missing key'
+test_missing_key 'missingsection.penguin' 'missing section and existing key'
+test_missing_key 'section.missingkey' 'existing section and missing key'
+test_missing_key 'section.MissingSubSection.missingkey' 'missing subsection and missing key'
+test_missing_key 'section.SubSection.missingkey' 'existing subsection and missing key'
+test_missing_key 'section.MissingSubSection.key' 'missing subsection and existing key'
+
 cat > .git/config <<\EOF
 [alpha]
 bar = foo
@@ -1488,35 +1505,29 @@ test_expect_success 'git config ignores pairs without count' '
 	test_must_be_empty error
 '
 
-test_expect_success 'git config ignores pairs with zero count' '
-	test_must_fail env \
-		GIT_CONFIG_COUNT=0 \
-		GIT_CONFIG_KEY_0="pair.one" GIT_CONFIG_VALUE_0="value" \
-		git config pair.one
-'
-
 test_expect_success 'git config ignores pairs exceeding count' '
 	GIT_CONFIG_COUNT=1 \
 		GIT_CONFIG_KEY_0="pair.one" GIT_CONFIG_VALUE_0="value" \
 		GIT_CONFIG_KEY_1="pair.two" GIT_CONFIG_VALUE_1="value" \
-		git config --get-regexp "pair.*" >actual &&
+		git config --get-regexp "pair.*" >actual 2>error &&
 	cat >expect <<-EOF &&
 	pair.one value
 	EOF
-	test_cmp expect actual
+	test_cmp expect actual &&
+	test_must_be_empty error
 '
 
 test_expect_success 'git config ignores pairs with zero count' '
 	test_must_fail env \
 		GIT_CONFIG_COUNT=0 GIT_CONFIG_KEY_0="pair.one" GIT_CONFIG_VALUE_0="value" \
-		git config pair.one >error &&
+		git config pair.one 2>error &&
 	test_must_be_empty error
 '
 
 test_expect_success 'git config ignores pairs with empty count' '
 	test_must_fail env \
 		GIT_CONFIG_COUNT= GIT_CONFIG_KEY_0="pair.one" GIT_CONFIG_VALUE_0="value" \
-		git config pair.one >error &&
+		git config pair.one 2>error &&
 	test_must_be_empty error
 '
 
