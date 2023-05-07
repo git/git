@@ -670,6 +670,7 @@ ifeq ($(uname_S),MINGW)
 	DEFAULT_HELP_FORMAT = html
 	HAVE_PLATFORM_PROCINFO = YesPlease
 	CSPRNG_METHOD = rtlgenrandom
+	LAZY_LOAD_LIBCURL = YesDoThatPlease
 	BASIC_LDFLAGS += -municode -Wl,--tsaware
 	COMPAT_CFLAGS += -DNOGDI -Icompat -Icompat/win32
 	COMPAT_CFLAGS += -DSTRIP_EXTENSION=\".exe\"
