@@ -169,17 +169,26 @@ static curl_easy_setopt_pointer_type curl_easy_setopt_pointer_func;
 typedef CURLcode (*curl_easy_setopt_off_t_type)(CURL *curl, CURLoption opt, curl_off_t value);
 static curl_easy_setopt_off_t_type curl_easy_setopt_off_t_func;
 
+static char ssl_backend[64];
+
 static void lazy_load_curl(void)
 {
 	static int initialized;
-	void *libcurl;
+	void *libcurl = NULL;
 	func_t curl_easy_getinfo_func, curl_easy_setopt_func;
 
 	if (initialized)
 		return;
 
 	initialized = 1;
-	libcurl = load_library(LIBCURL_FILE_NAME("libcurl"));
+	if (ssl_backend[0]) {
+		char dll_name[64 + 16];
+		snprintf(dll_name, sizeof(dll_name) - 1,
+			 LIBCURL_FILE_NAME("libcurl-%s"), ssl_backend);
+		libcurl = load_library(dll_name);
+	}
+	if (!libcurl)
+		libcurl = load_library(LIBCURL_FILE_NAME("libcurl"));
 	if (!libcurl)
 		die("failed to load library '%s'", LIBCURL_FILE_NAME("libcurl"));
 
@@ -236,6 +245,9 @@ CURLcode curl_global_init(long flags)
 
 CURLsslset curl_global_sslset(curl_sslbackend id, const char *name, const curl_ssl_backend ***avail)
 {
+	if (name && strlen(name) < sizeof(ssl_backend))
+		strlcpy(ssl_backend, name, sizeof(ssl_backend));
+
 	lazy_load_curl();
 	return curl_global_sslset_func(id, name, avail);
 }
