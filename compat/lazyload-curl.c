@@ -1,6 +1,8 @@
 #include "../git-compat-util.h"
 #include "../git-curl-compat.h"
+#ifndef WIN32
 #include <dlfcn.h>
+#endif
 
 /*
  * The ABI version of libcurl is encoded in its shared libraries' file names.
@@ -11,6 +13,7 @@
 
 typedef void (*func_t)(void);
 
+#ifndef WIN32
 #ifdef __APPLE__
 #define LIBCURL_FILE_NAME(base) base "." LIBCURL_ABI_VERSION ".dylib"
 #else
@@ -35,6 +38,55 @@ static func_t load_function(void *handle, const char *name)
 	*(void **)&f = dlsym(handle, name);
 	return f;
 }
+#else
+#define LIBCURL_FILE_NAME(base) base "-" LIBCURL_ABI_VERSION ".dll"
+
+static void *load_library(const char *name)
+{
+	size_t name_size = strlen(name) + 1;
+	const char *path = getenv("PATH");
+	char dll_path[MAX_PATH];
+
+	while (path && *path) {
+		const char *sep = strchrnul(path, ';');
+		size_t len = sep - path;
+
+		if (len && len + name_size < sizeof(dll_path)) {
+			memcpy(dll_path, path, len);
+			dll_path[len] = '/';
+			memcpy(dll_path + len + 1, name, name_size);
+
+			if (!access(dll_path, R_OK)) {
+				wchar_t wpath[MAX_PATH];
+				int wlen = MultiByteToWideChar(CP_UTF8, 0, dll_path, -1, wpath, ARRAY_SIZE(wpath));
+				void *res = wlen ? (void *)LoadLibraryExW(wpath, NULL, 0) : NULL;
+				if (!res) {
+					DWORD err = GetLastError();
+					char buf[1024];
+
+					if (!FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM |
+							    FORMAT_MESSAGE_ARGUMENT_ARRAY |
+							    FORMAT_MESSAGE_IGNORE_INSERTS,
+							    NULL, err, LANG_NEUTRAL,
+							    buf, sizeof(buf) - 1, NULL))
+						xsnprintf(buf, sizeof(buf), "last error: %ld", err);
+					error("LoadLibraryExW() failed with: %s", buf);
+				}
+				return res;
+			}
+		}
+
+		path = *sep ? sep + 1 : NULL;
+	}
+
+	return NULL;
+}
+
+static func_t load_function(void *handle, const char *name)
+{
+	return (func_t)GetProcAddress((HANDLE)handle, name);
+}
+#endif
 
 typedef struct curl_version_info_data *(*curl_version_info_type)(CURLversion version);
 static curl_version_info_type curl_version_info_func;
