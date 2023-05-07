@@ -1,6 +1,8 @@
 #include "../git-compat-util.h"
 #include "../git-curl-compat.h"
+#ifndef WIN32
 #include <dlfcn.h>
+#endif
 
 /*
  * The ABI version of libcurl is encoded in its shared libraries' file names.
@@ -11,6 +13,7 @@
 
 typedef void (*func_t)(void);
 
+#ifndef WIN32
 #ifdef __APPLE__
 #define LIBCURL_FILE_NAME(base) base "." LIBCURL_ABI_VERSION ".dylib"
 #else
@@ -35,6 +38,39 @@ static func_t load_function(void *handle, const char *name)
 	*(void **)&f = dlsym(handle, name);
 	return f;
 }
+#else
+#define LIBCURL_FILE_NAME(base) base "-" LIBCURL_ABI_VERSION ".dll"
+
+static void *load_library(const char *name)
+{
+	size_t name_size = strlen(name) + 1;
+	const char *path = getenv("PATH");
+	char dll_path[MAX_PATH];
+
+	while (path && *path) {
+		const char *sep = strchrnul(path, ';');
+		size_t len = sep - path;
+
+		if (len && len + name_size < sizeof(dll_path)) {
+			memcpy(dll_path, path, len);
+			dll_path[len] = '/';
+			memcpy(dll_path + len + 1, name, name_size);
+
+			if (!access(dll_path, R_OK))
+				return (void *)LoadLibraryExA(dll_path, NULL, 0);
+		}
+
+		path = *sep ? sep + 1 : NULL;
+	}
+
+	return NULL;
+}
+
+static func_t load_function(void *handle, const char *name)
+{
+	return (func_t)GetProcAddress((HANDLE)handle, name);
+}
+#endif
 
 typedef char *(*curl_easy_escape_type)(CURL *handle, const char *string, int length);
 static curl_easy_escape_type curl_easy_escape_func;
