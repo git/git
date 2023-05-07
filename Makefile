@@ -1651,7 +1651,11 @@ else
 		# The `CURL_STATICLIB` constant must be defined to avoid seeing the functions
 		# declared as DLL imports
 		CURL_CFLAGS = -DCURL_STATICLIB
+ifneq ($(uname_S),MINGW)
+ifneq ($(uname_S),Windows)
 		CURL_LIBCURL = -ldl
+endif
+endif
         else
                 ifndef CURL_LDFLAGS
 			CURL_LDFLAGS = $(eval CURL_LDFLAGS := $$(shell $$(CURL_CONFIG) --libs))$(CURL_LDFLAGS)
