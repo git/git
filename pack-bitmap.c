@@ -1077,6 +1077,126 @@ static struct bitmap *fill_in_bitmap(struct bitmap_index *bitmap_git,
 	return base;
 }
 
+struct bitmap_boundary_cb {
+	struct bitmap_index *bitmap_git;
+	struct bitmap *base;
+
+	struct object_array boundary;
+};
+
+static void show_boundary_commit(struct commit *commit, void *_data)
+{
+	struct bitmap_boundary_cb *data = _data;
+
+	if (commit->object.flags & BOUNDARY)
+		add_object_array(&commit->object, "", &data->boundary);
+
+	if (commit->object.flags & UNINTERESTING) {
+		if (bitmap_walk_contains(data->bitmap_git, data->base,
+					 &commit->object.oid))
+			return;
+
+		add_commit_to_bitmap(data->bitmap_git, &data->base, commit);
+	}
+}
+
+static void show_boundary_object(struct object *object,
+				 const char *name, void *data)
+{
+	BUG("should not be called");
+}
+
+static struct bitmap *find_boundary_objects(struct bitmap_index *bitmap_git,
+					    struct rev_info *revs,
+					    struct object_list *roots)
+{
+	struct bitmap_boundary_cb cb;
+	struct object_list *root;
+	unsigned int i;
+	unsigned int tmp_blobs, tmp_trees, tmp_tags;
+	int any_missing = 0;
+
+	cb.bitmap_git = bitmap_git;
+	cb.base = bitmap_new();
+	object_array_init(&cb.boundary);
+
+	revs->ignore_missing_links = 1;
+
+	/*
+	 * OR in any existing reachability bitmaps among `roots` into
+	 * `cb.base`.
+	 */
+	for (root = roots; root; root = root->next) {
+		struct object *object = root->item;
+		if (object->type != OBJ_COMMIT ||
+		    bitmap_walk_contains(bitmap_git, cb.base, &object->oid))
+			continue;
+
+		if (add_commit_to_bitmap(bitmap_git, &cb.base,
+					 (struct commit *)object))
+			continue;
+
+		any_missing = 1;
+	}
+
+	if (!any_missing)
+		goto cleanup;
+
+	tmp_blobs = revs->blob_objects;
+	tmp_trees = revs->tree_objects;
+	tmp_tags = revs->blob_objects;
+	revs->blob_objects = 0;
+	revs->tree_objects = 0;
+	revs->tag_objects = 0;
+
+	/*
+	 * We didn't have complete coverage of the roots. First setup a
+	 * revision walk to (a) OR in any bitmaps that are UNINTERESTING
+	 * between the tips and boundary, and (b) record the boundary.
+	 */
+	trace2_region_enter("pack-bitmap", "boundary-prepare", the_repository);
+	if (prepare_revision_walk(revs))
+		die("revision walk setup failed");
+	trace2_region_leave("pack-bitmap", "boundary-prepare", the_repository);
+
+	trace2_region_enter("pack-bitmap", "boundary-traverse", the_repository);
+	revs->boundary = 1;
+	traverse_commit_list_filtered(revs,
+				      show_boundary_commit,
+				      show_boundary_object,
+				      &cb, NULL);
+	revs->boundary = 0;
+	trace2_region_leave("pack-bitmap", "boundary-traverse", the_repository);
+
+	revs->blob_objects = tmp_blobs;
+	revs->tree_objects = tmp_trees;
+	revs->tag_objects = tmp_tags;
+
+	reset_revision_walk();
+	clear_object_flags(UNINTERESTING);
+
+	/*
+	 * Then add the boundary commit(s) as fill-in traversal tips.
+	 */
+	trace2_region_enter("pack-bitmap", "boundary-fill-in", the_repository);
+	for (i = 0; i < cb.boundary.nr; i++) {
+		struct object *obj = cb.boundary.objects[i].item;
+		if (bitmap_walk_contains(bitmap_git, cb.base, &obj->oid))
+			obj->flags |= SEEN;
+		else
+			add_pending_object(revs, obj, "");
+	}
+	if (revs->pending.nr)
+		cb.base = fill_in_bitmap(bitmap_git, revs, cb.base, NULL);
+	trace2_region_leave("pack-bitmap", "boundary-fill-in", the_repository);
+
+cleanup:
+	object_array_clear(&cb.boundary);
+	revs->ignore_missing_links = 0;
+
+	return cb.base;
+}
+
 static struct bitmap *find_objects(struct bitmap_index *bitmap_git,
 				   struct rev_info *revs,
 				   struct object_list *roots,
@@ -1142,8 +1262,21 @@ static struct bitmap *find_objects(struct bitmap_index *bitmap_git,
 		}
 	}
 
-	if (needs_walk)
+	if (needs_walk) {
+		/*
+		 * This fill-in traversal may walk over some objects
+		 * again, since we have already traversed in order to
+		 * find the boundary.
+		 *
+		 * But this extra walk should be extremely cheap, since
+		 * all commit objects are loaded into memory, and
+		 * because we skip walking to parents that are
+		 * UNINTERESTING, since it will be marked in the haves
+		 * bitmap already (or it has an on-disk bitmap, since
+		 * OR-ing it in covers all of its ancestors).
+		 */
 		base = fill_in_bitmap(bitmap_git, revs, base, seen);
+	}
 
 	return base;
 }
@@ -1535,6 +1668,7 @@ struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs,
 					 int filter_provided_objects)
 {
 	unsigned int i;
+	int use_boundary_traversal;
 
 	struct object_list *wants = NULL;
 	struct object_list *haves = NULL;
@@ -1585,13 +1719,21 @@ struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs,
 			object_list_insert(object, &wants);
 	}
 
-	/*
-	 * if we have a HAVES list, but none of those haves is contained
-	 * in the packfile that has a bitmap, we don't have anything to
-	 * optimize here
-	 */
-	if (haves && !in_bitmapped_pack(bitmap_git, haves))
-		goto cleanup;
+	use_boundary_traversal = git_env_bool(GIT_TEST_PACK_USE_BITMAP_BOUNDARY_TRAVERSAL, -1);
+	if (use_boundary_traversal < 0) {
+		prepare_repo_settings(revs->repo);
+		use_boundary_traversal = revs->repo->settings.pack_use_bitmap_boundary_traversal;
+	}
+
+	if (!use_boundary_traversal) {
+		/*
+		 * if we have a HAVES list, but none of those haves is contained
+		 * in the packfile that has a bitmap, we don't have anything to
+		 * optimize here
+		 */
+		if (haves && !in_bitmapped_pack(bitmap_git, haves))
+			goto cleanup;
+	}
 
 	/* if we don't want anything, we're done here */
 	if (!wants)
@@ -1605,16 +1747,30 @@ struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs,
 	if (load_bitmap(revs->repo, bitmap_git) < 0)
 		goto cleanup;
 
-	object_array_clear(&revs->pending);
+	if (!use_boundary_traversal)
+		object_array_clear(&revs->pending);
 
 	if (haves) {
-		revs->ignore_missing_links = 1;
-		haves_bitmap = find_objects(bitmap_git, revs, haves, NULL);
-		reset_revision_walk();
-		revs->ignore_missing_links = 0;
+		if (use_boundary_traversal) {
+			trace2_region_enter("pack-bitmap", "haves/boundary", the_repository);
+			haves_bitmap = find_boundary_objects(bitmap_git, revs, haves);
+			trace2_region_leave("pack-bitmap", "haves/boundary", the_repository);
+		} else {
+			trace2_region_enter("pack-bitmap", "haves/classic", the_repository);
+			revs->ignore_missing_links = 1;
+			haves_bitmap = find_objects(bitmap_git, revs, haves, NULL);
+			reset_revision_walk();
+			revs->ignore_missing_links = 0;
+			trace2_region_leave("pack-bitmap", "haves/classic", the_repository);
+		}
 
 		if (!haves_bitmap)
 			BUG("failed to perform bitmap walk");
+	}
+
+	if (use_boundary_traversal) {
+		object_array_clear(&revs->pending);
+		reset_revision_walk();
 	}
 
 	wants_bitmap = find_objects(bitmap_git, revs, wants, haves_bitmap);

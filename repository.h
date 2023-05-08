@@ -37,6 +37,7 @@ struct repo_settings {
 	int command_requires_full_index;
 	int sparse_index;
 	int pack_read_reverse_index;
+	int pack_use_bitmap_boundary_traversal;
 
 	struct fsmonitor_settings *fsmonitor; /* lazily loaded */
 
