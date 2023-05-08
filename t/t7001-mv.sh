@@ -192,7 +192,7 @@ test_expect_success "Michael Cassar's test case" '
 
 	T=$(git write-tree) &&
 	git ls-tree -r $T >out &&
-	verbose grep partA/outline.txt out
+	grep partA/outline.txt out
 '
 
 rm -fr papers partA path?
