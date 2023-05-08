@@ -1043,6 +1043,40 @@ static int add_commit_to_bitmap(struct bitmap_index *bitmap_git,
 	return 1;
 }
 
+static struct bitmap *fill_in_bitmap(struct bitmap_index *bitmap_git,
+				     struct rev_info *revs,
+				     struct bitmap *base,
+				     struct bitmap *seen)
+{
+	struct include_data incdata;
+	struct bitmap_show_data show_data;
+
+	if (!base)
+		base = bitmap_new();
+
+	incdata.bitmap_git = bitmap_git;
+	incdata.base = base;
+	incdata.seen = seen;
+
+	revs->include_check = should_include;
+	revs->include_check_obj = should_include_obj;
+	revs->include_check_data = &incdata;
+
+	if (prepare_revision_walk(revs))
+		die(_("revision walk setup failed"));
+
+	show_data.bitmap_git = bitmap_git;
+	show_data.base = base;
+
+	traverse_commit_list(revs, show_commit, show_object, &show_data);
+
+	revs->include_check = NULL;
+	revs->include_check_obj = NULL;
+	revs->include_check_data = NULL;
+
+	return base;
+}
+
 static struct bitmap *find_objects(struct bitmap_index *bitmap_git,
 				   struct rev_info *revs,
 				   struct object_list *roots,
@@ -1108,35 +1142,8 @@ static struct bitmap *find_objects(struct bitmap_index *bitmap_git,
 		}
 	}
 
-	if (needs_walk) {
-		struct include_data incdata;
-		struct bitmap_show_data show_data;
-
-		if (!base)
-			base = bitmap_new();
-
-		incdata.bitmap_git = bitmap_git;
-		incdata.base = base;
-		incdata.seen = seen;
-
-		revs->include_check = should_include;
-		revs->include_check_obj = should_include_obj;
-		revs->include_check_data = &incdata;
-
-		if (prepare_revision_walk(revs))
-			die(_("revision walk setup failed"));
-
-		show_data.bitmap_git = bitmap_git;
-		show_data.base = base;
-
-		traverse_commit_list(revs,
-				     show_commit, show_object,
-				     &show_data);
-
-		revs->include_check = NULL;
-		revs->include_check_obj = NULL;
-		revs->include_check_data = NULL;
-	}
+	if (needs_walk)
+		base = fill_in_bitmap(bitmap_git, revs, base, seen);
 
 	return base;
 }
