@@ -9,6 +9,7 @@
 #include "config.h"
 #include "environment.h"
 #include "gettext.h"
+#include "hash.h"
 #include "hex.h"
 #include "lockfile.h"
 #include "quote.h"
@@ -21,8 +22,10 @@
 #include "parse-options.h"
 #include "pathspec.h"
 #include "dir.h"
+#include "repository.h"
 #include "setup.h"
 #include "split-index.h"
+#include "symlinks.h"
 #include "fsmonitor.h"
 #include "write-or-die.h"
 

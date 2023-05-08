@@ -2,15 +2,15 @@
 #define OBJECT_STORE_H
 
 #include "object.h"
-#include "oidmap.h"
 #include "list.h"
-#include "oid-array.h"
-#include "strbuf.h"
 #include "thread-utils.h"
 #include "khash.h"
 #include "dir.h"
-#include "oidtree.h"
 #include "oidset.h"
+
+struct oidmap;
+struct oidtree;
+struct strbuf;
 
 struct object_directory {
 	struct object_directory *next;

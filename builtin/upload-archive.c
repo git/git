@@ -6,6 +6,7 @@
 #include "archive.h"
 #include "pkt-line.h"
 #include "sideband.h"
+#include "repository.h"
 #include "run-command.h"
 #include "strvec.h"
 

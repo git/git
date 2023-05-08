@@ -9,6 +9,7 @@
 #include "builtin.h"
 #include "submodule.h"
 #include "repository.h"
+#include "tree.h"
 
 static struct rev_info log_tree_opt;
 

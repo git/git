@@ -27,6 +27,7 @@
 #define __AC_KHASH_H
 
 #include "hashmap.h"
+#include "hash.h"
 
 #define AC_VERSION_KHASH_H "0.2.8"
 

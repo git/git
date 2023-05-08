@@ -7,6 +7,7 @@
 #include "pretty.h"
 #include "diff.h"
 #include "commit-slab-decl.h"
+#include "decorate.h"
 #include "ident.h"
 #include "list-objects-filter-options.h"
 

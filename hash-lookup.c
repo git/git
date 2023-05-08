@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "hash.h"
 #include "hash-lookup.h"
 
 static uint32_t take2(const struct object_id *oid, size_t ofs)

@@ -6,9 +6,21 @@
 
 /* in object-store.h */
 struct packed_git;
-struct pack_entry;
-struct pack_window;
 struct object_info;
+
+struct pack_window {
+	struct pack_window *next;
+	unsigned char *base;
+	off_t offset;
+	size_t len;
+	unsigned int last_used;
+	unsigned int inuse_cnt;
+};
+
+struct pack_entry {
+	off_t offset;
+	struct packed_git *p;
+};
 
 /*
  * Generate the filename to be used for a pack file with checksum "sha1" and

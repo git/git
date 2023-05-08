@@ -2,6 +2,7 @@
 #include "abspath.h"
 #include "alloc.h"
 #include "config.h"
+#include "copy.h"
 #include "gettext.h"
 #include "hex.h"
 #include "lockfile.h"

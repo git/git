@@ -22,6 +22,7 @@
 #include "setup.h"
 #include "submodule.h"
 #include "oid-array.h"
+#include "tree.h"
 
 #define DIFF_NO_INDEX_EXPLICIT 1
 #define DIFF_NO_INDEX_IMPLICIT 2

@@ -7,6 +7,7 @@
 #include "quote.h"
 #include "pathspec.h"
 #include "parse-options.h"
+#include "repository.h"
 #include "submodule.h"
 #include "write-or-die.h"
 

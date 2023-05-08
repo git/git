@@ -2,6 +2,7 @@
 #include "config.h"
 #include "json-writer.h"
 #include "quote.h"
+#include "repository.h"
 #include "run-command.h"
 #include "sigchain.h"
 #include "thread-utils.h"

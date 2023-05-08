@@ -5,6 +5,7 @@
 #include "gettext.h"
 #include "sequencer.h"
 #include "rebase-interactive.h"
+#include "repository.h"
 #include "strbuf.h"
 #include "commit-slab.h"
 #include "config.h"

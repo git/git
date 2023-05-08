@@ -3,6 +3,7 @@
 #include "branch.h"
 #include "commit.h"
 #include "color.h"
+#include "date.h"
 #include "environment.h"
 #include "gettext.h"
 #include "object-name.h"

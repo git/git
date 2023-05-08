@@ -2,6 +2,7 @@
 #include "alloc.h"
 #include "repository.h"
 #include "config.h"
+#include "date.h"
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"

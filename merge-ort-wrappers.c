@@ -1,7 +1,9 @@
 #include "cache.h"
 #include "gettext.h"
+#include "hash.h"
 #include "merge-ort.h"
 #include "merge-ort-wrappers.h"
+#include "tree.h"
 
 #include "commit.h"
 

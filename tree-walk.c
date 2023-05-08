@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "tree-walk.h"
 #include "alloc.h"
 #include "dir.h"

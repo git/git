@@ -23,12 +23,13 @@
 #endif
 #endif
 
-#include "cache.h"
+#include "git-compat-util.h"
 #include "fsmonitor.h"
 #include "fsm-listen.h"
 #include "fsmonitor--daemon.h"
 #include "fsmonitor-path-utils.h"
 #include "gettext.h"
+#include "string-list.h"
 
 struct fsm_listen_data
 {

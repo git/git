@@ -1,6 +1,7 @@
 #include "git-compat-util.h"
 #include "config.h"
 #include "json-writer.h"
+#include "repository.h"
 #include "run-command.h"
 #include "version.h"
 #include "trace2/tr2_dst.h"

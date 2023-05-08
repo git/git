@@ -2,6 +2,7 @@
 #include "object-name.h"
 #include "remote.h"
 #include "refspec.h"
+#include "repository.h"
 #include "checkout.h"
 #include "config.h"
 #include "strbuf.h"

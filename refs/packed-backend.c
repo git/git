@@ -2,6 +2,7 @@
 #include "../alloc.h"
 #include "../config.h"
 #include "../gettext.h"
+#include "../hash.h"
 #include "../hex.h"
 #include "../refs.h"
 #include "refs-internal.h"
