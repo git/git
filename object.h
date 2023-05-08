@@ -57,6 +57,8 @@ struct object_array {
 
 #define OBJECT_ARRAY_INIT { 0 }
 
+void object_array_init(struct object_array *array);
+
 /*
  * object flag allocation:
  * revision.h:               0---------10         15             23------27
