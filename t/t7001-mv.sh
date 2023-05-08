@@ -5,8 +5,7 @@ test_description='git mv in subdirs'
 . "$TEST_DIRECTORY"/lib-diff-data.sh
 
 index_at_path () {
-	entry=$(git ls-files --stage "$@") &&
-	echo "$entry" | cut -f 1
+	git ls-files --format='%(objectmode) %(objectname) %(stage)' "$@"
 }
 
 test_expect_success 'mv -f refreshes updated index entry' '
