@@ -96,6 +96,7 @@ struct commit *lookup_commit_reference_by_name(const char *name)
 static timestamp_t parse_commit_date(const char *buf, const char *tail)
 {
 	const char *dateptr;
+	const char *eol;
 
 	if (buf + 6 >= tail)
 		return 0;
@@ -107,16 +108,56 @@ static timestamp_t parse_commit_date(const char *buf, const char *tail)
 		return 0;
 	if (memcmp(buf, "committer", 9))
 		return 0;
-	while (buf < tail && *buf++ != '>')
-		/* nada */;
-	if (buf >= tail)
+
+	/*
+	 * Jump to end-of-line so that we can walk backwards to find the
+	 * end-of-email ">". This is more forgiving of malformed cases
+	 * because unexpected characters tend to be in the name and email
+	 * fields.
+	 */
+	eol = memchr(buf, '\n', tail - buf);
+	if (!eol)
 		return 0;
-	dateptr = buf;
-	while (buf < tail && *buf++ != '\n')
-		/* nada */;
-	if (buf >= tail)
+	dateptr = eol;
+	while (dateptr > buf && dateptr[-1] != '>')
+		dateptr--;
+	if (dateptr == buf)
 		return 0;
-	/* dateptr < buf && buf[-1] == '\n', so parsing will stop at buf-1 */
+
+	/*
+	 * Trim leading whitespace, but make sure we have at least one
+	 * non-whitespace character, as parse_timestamp() will otherwise walk
+	 * right past the newline we found in "eol" when skipping whitespace
+	 * itself.
+	 *
+	 * In theory it would be sufficient to allow any character not matched
+	 * by isspace(), but there's a catch: our isspace() does not
+	 * necessarily match the behavior of parse_timestamp(), as the latter
+	 * is implemented by system routines which match more exotic control
+	 * codes, or even locale-dependent sequences.
+	 *
+	 * Since we expect the timestamp to be a number, we can check for that.
+	 * Anything else (e.g., a non-numeric token like "foo") would just
+	 * cause parse_timestamp() to return 0 anyway.
+	 */
+	while (dateptr < eol && isspace(*dateptr))
+		dateptr++;
+	if (!isdigit(*dateptr) && *dateptr != '-')
+		return 0;
+
+	/*
+	 * We know there is at least one digit (or dash), so we'll begin
+	 * parsing there and stop at worst case at eol.
+	 *
+	 * Note that we may feed parse_timestamp() extra characters here if the
+	 * commit is malformed, and it will parse as far as it can. For
+	 * example, "123foo456" would return "123". That might be questionable
+	 * (versus returning "0"), but it would help in a hypothetical case
+	 * like "123456+0100", where the whitespace from the timezone is
+	 * missing. Since such syntactic errors may be baked into history and
+	 * hard to correct now, let's err on trying to make our best guess
+	 * here, rather than insist on perfect syntax.
+	 */
 	return parse_timestamp(dateptr, NULL, 10);
 }
 
