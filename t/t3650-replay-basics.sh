@@ -80,4 +80,20 @@ test_expect_success 'using replay on bare repo to rebase with a conflict' '
 	test_expect_code 1 git -C bare replay --onto topic1 B..conflict
 '
 
+test_expect_success 'using replay with (for now) disallowed revision specific option --not' '
+	test_must_fail git replay --onto main topic2 --not topic1
+'
+
+test_expect_success 'using replay on bare repo with (for now) disallowed revision specific option --first-parent' '
+	test_must_fail git -C bare replay --onto main --first-parent topic1..topic2
+'
+
+test_expect_success 'using replay with disallowed pathspec' '
+	test_must_fail git replay --onto main topic1..topic2 A.t
+'
+
+test_expect_success 'using replay on bare repo with disallowed pathspec' '
+	test_must_fail git -C bare replay --onto main topic1..topic2 -- A.t
+'
+
 test_done

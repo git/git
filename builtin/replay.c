@@ -119,7 +119,7 @@ int cmd_replay(int argc, const char **argv, const char *prefix)
 	struct commit *commit;
 	struct merge_options merge_opt;
 	struct merge_result result;
-	int ret = 0;
+	int ret = 0, i;
 
 	const char * const replay_usage[] = {
 		N_("git replay --onto <newbase> <revision-range>..."),
@@ -135,6 +135,20 @@ int cmd_replay(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, replay_options, replay_usage,
 			     PARSE_OPT_KEEP_ARGV0 | PARSE_OPT_KEEP_UNKNOWN_OPT);
 
+	/*
+	 * TODO: For now, we reject any unknown or invalid option,
+	 * including revision related ones, like --not,
+	 * --first-parent, etc that would be allowed and eaten by
+	 * setup_revisions() below. In the future we should definitely
+	 * accept those that make sense and add related tests and doc
+	 * though.
+	 */
+	for (i = 0; i < argc; i++)
+		if (argv[i][0] == '-') {
+			error(_("invalid option: %s"), argv[i]);
+			usage_with_options(replay_usage, replay_options);
+		}
+
 	if (!onto_name) {
 		error(_("option --onto is mandatory"));
 		usage_with_options(replay_usage, replay_options);
@@ -148,6 +162,17 @@ int cmd_replay(int argc, const char **argv, const char *prefix)
 	if (argc > 1) {
 		ret = error(_("unrecognized argument: %s"), argv[1]);
 		goto cleanup;
+	}
+
+	/*
+	 * TODO: For now, we reject any pathspec. (They are allowed
+	 * and eaten by setup_revisions() above.) In the future we
+	 * should definitely accept them and add related tests and doc
+	 * though.
+	 */
+	if (revs.prune_data.nr) {
+		error(_("invalid pathspec: %s"), revs.prune_data.items[0].match);
+		usage_with_options(replay_usage, replay_options);
 	}
 
 	/* requirements/overrides for revs */
