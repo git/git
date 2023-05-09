@@ -39,6 +39,7 @@ struct credential {
 	char *path;
 	char *username;
 	char *password;
+	char *password_expiry_utc;
 };
 
 #define CREDENTIAL_INIT { 0 }
@@ -53,6 +54,21 @@ struct credential_operation {
 #define CREDENTIAL_OP_END { NULL, NULL }
 
 /* ----------------- Secret Service functions ----------------- */
+
+static const SecretSchema schema = {
+	"org.git.Password",
+	/* Ignore schema name for backwards compatibility with previous versions */
+	SECRET_SCHEMA_DONT_MATCH_NAME,
+	{
+		{  "user", SECRET_SCHEMA_ATTRIBUTE_STRING },
+		{  "object", SECRET_SCHEMA_ATTRIBUTE_STRING },
+		{  "protocol", SECRET_SCHEMA_ATTRIBUTE_STRING },
+		{  "port", SECRET_SCHEMA_ATTRIBUTE_INTEGER },
+		{  "server", SECRET_SCHEMA_ATTRIBUTE_STRING },
+		{  "password_expiry_utc", SECRET_SCHEMA_ATTRIBUTE_INTEGER },
+		{  NULL, 0 },
+	}
+};
 
 static char *make_label(struct credential *c)
 {
@@ -78,6 +94,9 @@ static GHashTable *make_attr_list(struct credential *c)
 		g_hash_table_insert(al, "port", g_strdup_printf("%hu", c->port));
 	if (c->path)
 		g_hash_table_insert(al, "object", g_strdup(c->path));
+	if (c->password_expiry_utc)
+		g_hash_table_insert(al, "password_expiry_utc",
+			g_strdup(c->password_expiry_utc));
 
 	return al;
 }
@@ -101,7 +120,7 @@ static int keyring_get(struct credential *c)
 
 	attributes = make_attr_list(c);
 	items = secret_service_search_sync(service,
-					   SECRET_SCHEMA_COMPAT_NETWORK,
+					   &schema,
 					   attributes,
 					   SECRET_SEARCH_LOAD_SECRETS | SECRET_SEARCH_UNLOCK,
 					   NULL,
@@ -126,6 +145,12 @@ static int keyring_get(struct credential *c)
 		if (s) {
 			g_free(c->username);
 			c->username = g_strdup(s);
+		}
+
+		s = g_hash_table_lookup(attributes, "password_expiry_utc");
+		if (s) {
+			g_free(c->password_expiry_utc);
+			c->password_expiry_utc = g_strdup(s);
 		}
 
 		s = secret_value_get_text(secret);
@@ -162,7 +187,7 @@ static int keyring_store(struct credential *c)
 
 	label = make_label(c);
 	attributes = make_attr_list(c);
-	secret_password_storev_sync(SECRET_SCHEMA_COMPAT_NETWORK,
+	secret_password_storev_sync(&schema,
 				    attributes,
 				    NULL,
 				    label,
@@ -198,7 +223,7 @@ static int keyring_erase(struct credential *c)
 		return EXIT_FAILURE;
 
 	attributes = make_attr_list(c);
-	secret_password_clearv_sync(SECRET_SCHEMA_COMPAT_NETWORK,
+	secret_password_clearv_sync(&schema,
 				    attributes,
 				    NULL,
 				    &error);
@@ -238,6 +263,7 @@ static void credential_clear(struct credential *c)
 	g_free(c->path);
 	g_free(c->username);
 	g_free(c->password);
+	g_free(c->password_expiry_utc);
 
 	credential_init(c);
 }
@@ -284,6 +310,9 @@ static int credential_read(struct credential *c)
 		} else if (!strcmp(key, "username")) {
 			g_free(c->username);
 			c->username = g_strdup(value);
+		} else if (!strcmp(key, "password_expiry_utc")) {
+			g_free(c->password_expiry_utc);
+			c->password_expiry_utc = g_strdup(value);
 		} else if (!strcmp(key, "password")) {
 			g_free(c->password);
 			c->password = g_strdup(value);
@@ -311,9 +340,11 @@ static void credential_write_item(FILE *fp, const char *key, const char *value)
 
 static void credential_write(const struct credential *c)
 {
-	/* only write username/password, if set */
+	/* only write username/password/expiry, if set */
 	credential_write_item(stdout, "username", c->username);
 	credential_write_item(stdout, "password", c->password);
+	credential_write_item(stdout, "password_expiry_utc",
+		c->password_expiry_utc);
 }
 
 static void usage(const char *name)

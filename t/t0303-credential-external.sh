@@ -52,6 +52,8 @@ else
 	helper_test_timeout "$GIT_TEST_CREDENTIAL_HELPER_TIMEOUT"
 fi
 
+helper_test_password_expiry_utc "$GIT_TEST_CREDENTIAL_HELPER"
+
 # clean afterwards so that we are good citizens
 # and don't leave cruft in the helper's storage, which
 # might be long-term system storage

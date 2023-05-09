@@ -31,6 +31,8 @@ test_atexit 'git credential-cache exit'
 helper_test cache
 helper_test_oauth_refresh_token cache
 
+helper_test_password_expiry_utc cache
+
 test_expect_success 'socket defaults to ~/.cache/git/credential/socket' '
 	test_when_finished "
 		git credential-cache exit &&
