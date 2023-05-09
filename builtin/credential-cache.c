@@ -1,6 +1,7 @@
 #include "builtin.h"
 #include "gettext.h"
 #include "parse-options.h"
+#include "path.h"
 #include "wrapper.h"
 #include "write-or-die.h"
 

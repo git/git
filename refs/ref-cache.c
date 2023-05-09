@@ -1,6 +1,8 @@
 #include "../git-compat-util.h"
 #include "../alloc.h"
+#include "../hash.h"
 #include "../refs.h"
+#include "../repository.h"
 #include "refs-internal.h"
 #include "ref-cache.h"
 #include "../iterator.h"

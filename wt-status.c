@@ -22,6 +22,7 @@
 #include "strbuf.h"
 #include "trace.h"
 #include "trace2.h"
+#include "tree.h"
 #include "utf8.h"
 #include "worktree.h"
 #include "lockfile.h"

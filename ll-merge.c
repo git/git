@@ -4,7 +4,7 @@
  * Copyright (c) 2007 Junio C Hamano
  */
 
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
 #include "convert.h"
 #include "attr.h"
@@ -12,6 +12,7 @@
 #include "run-command.h"
 #include "ll-merge.h"
 #include "quote.h"
+#include "strbuf.h"
 #include "wrapper.h"
 
 struct ll_merge_driver;

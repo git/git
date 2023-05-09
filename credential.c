@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "abspath.h"
 #include "config.h"
 #include "credential.h"
@@ -8,6 +8,7 @@
 #include "url.h"
 #include "prompt.h"
 #include "sigchain.h"
+#include "strbuf.h"
 #include "urlmatch.h"
 #include "git-compat-util.h"
 

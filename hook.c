@@ -2,6 +2,7 @@
 #include "advice.h"
 #include "gettext.h"
 #include "hook.h"
+#include "path.h"
 #include "run-command.h"
 #include "config.h"
 #include "strbuf.h"

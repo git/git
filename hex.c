@@ -1,4 +1,5 @@
 #include "git-compat-util.h"
+#include "hash.h"
 #include "hex.h"
 
 const signed char hexval_table[256] = {

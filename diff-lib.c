@@ -14,6 +14,7 @@
 #include "unpack-trees.h"
 #include "refs.h"
 #include "submodule.h"
+#include "symlinks.h"
 #include "trace.h"
 #include "dir.h"
 #include "fsmonitor.h"

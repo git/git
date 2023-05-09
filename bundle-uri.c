@@ -1,6 +1,7 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "bundle-uri.h"
 #include "bundle.h"
+#include "copy.h"
 #include "environment.h"
 #include "gettext.h"
 #include "object-store.h"

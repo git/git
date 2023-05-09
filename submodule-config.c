@@ -12,6 +12,7 @@
 #include "object-name.h"
 #include "object-store.h"
 #include "parse-options.h"
+#include "thread-utils.h"
 #include "tree-walk.h"
 
 /*

@@ -6,7 +6,7 @@
  * This handles basic git object files - packing, unpacking,
  * creation etc.
  */
-#include "cache.h"
+#include "git-compat-util.h"
 #include "abspath.h"
 #include "alloc.h"
 #include "config.h"
@@ -38,6 +38,7 @@
 #include "packfile.h"
 #include "object-file.h"
 #include "object-store.h"
+#include "oidtree.h"
 #include "promisor-remote.h"
 #include "setup.h"
 #include "submodule.h"

@@ -4,6 +4,7 @@
 #include "cache.h"
 #include "abspath.h"
 #include "alloc.h"
+#include "base85.h"
 #include "config.h"
 #include "convert.h"
 #include "environment.h"
@@ -40,6 +41,7 @@
 #include "object-name.h"
 #include "setup.h"
 #include "strmap.h"
+#include "ws.h"
 #include "wrapper.h"
 
 #ifdef NO_FAST_WORKING_DIRECTORY

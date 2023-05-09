@@ -4,6 +4,7 @@
 #include "grep.h"
 #include "hex.h"
 #include "object-store.h"
+#include "pretty.h"
 #include "userdiff.h"
 #include "xdiff-interface.h"
 #include "diff.h"

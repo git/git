@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "object-store.h"
 #include "commit.h"
 #include "convert.h"
@@ -13,6 +13,7 @@
 #include "xdiff/xmacros.h"
 #include "log-tree.h"
 #include "refs.h"
+#include "tree.h"
 #include "userdiff.h"
 #include "oid-array.h"
 #include "revision.h"

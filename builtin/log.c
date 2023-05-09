@@ -44,6 +44,7 @@
 #include "commit-reach.h"
 #include "range-diff.h"
 #include "tmp-objdir.h"
+#include "tree.h"
 #include "write-or-die.h"
 
 #define MAIL_DEFAULT_WRAP 72

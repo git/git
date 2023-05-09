@@ -1,9 +1,10 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
-#include "hash.h"
+#include "hash-ll.h"
 
 struct buffer_slab;
+struct repository;
 
 struct parsed_object_pool {
 	struct object **obj_hash;

@@ -18,6 +18,7 @@
 #include "sparse-index.h"
 #include "submodule.h"
 #include "submodule-config.h"
+#include "symlinks.h"
 #include "trace2.h"
 #include "fsmonitor.h"
 #include "object-store.h"

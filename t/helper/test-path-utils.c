@@ -2,6 +2,7 @@
 #include "cache.h"
 #include "abspath.h"
 #include "environment.h"
+#include "path.h"
 #include "setup.h"
 #include "string-list.h"
 #include "trace.h"

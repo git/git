@@ -2,7 +2,7 @@
 #define MERGE_ORT_H
 
 #include "merge-recursive.h"
-#include "hash.h"
+#include "hash-ll.h"
 
 struct commit;
 struct tree;

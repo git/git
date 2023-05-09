@@ -31,6 +31,7 @@
 #include "hex.h"
 #include "entry.h"
 #include "ll-merge.h"
+#include "match-trees.h"
 #include "mem-pool.h"
 #include "object-name.h"
 #include "object-store.h"

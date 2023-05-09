@@ -7,7 +7,7 @@
  * even if you might want to know where the git directory etc
  * are.
  */
-#include "cache.h"
+#include "git-compat-util.h"
 #include "abspath.h"
 #include "branch.h"
 #include "convert.h"
@@ -67,7 +67,6 @@ int read_replace_refs = 1;
 enum eol core_eol = EOL_UNSET;
 int global_conv_flags_eol = CONV_EOL_RNDTRP_WARN;
 char *check_roundtrip_encoding = "SHIFT-JIS";
-unsigned whitespace_rule_cfg = WS_DEFAULT_RULE;
 enum branch_track git_branch_track = BRANCH_TRACK_REMOTE;
 enum rebase_setup_type autorebase = AUTOREBASE_NEVER;
 enum push_default_type push_default = PUSH_DEFAULT_UNSPECIFIED;
