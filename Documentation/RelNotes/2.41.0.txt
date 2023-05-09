@@ -131,6 +131,12 @@ Performance, Internal Implementation, Development Support etc.
 
  * strtok() and strtok_r() are banned in this codebase.
 
+ * The detect-compilers script to help auto-tweaking the build system
+   had trouble working with compilers whose version number has extra
+   suffixes.  The script has been taught that certain suffixes (like
+   "-win32" in "gcc 10-win32") can be safely stripped as they share
+   the same features and bugs with the version without the suffix.
+
 
 Fixes since v2.40
 -----------------
@@ -284,6 +290,14 @@ Fixes since v2.40
  * A small API fix to the ort merge strategy backend.
    (merge 000c4ceca7 en/ort-finalize-after-0-merges-fix later to maint).
 
+ * The commit object parser has been taught to be a bit more lenient
+   to parse timestamps on the author/committer line with a malformed
+   author/committer ident.
+   (merge 90ef0f14eb jk/parse-commit-with-malformed-ident later to maint).
+
+ * Retitle a test script with an overly narrow name.
+   (merge 8bb19c14fb ob/t3501-retitle later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f7111175df as/doc-markup-fix later to maint).
    (merge 90ff7c9898 fc/test-aggregation-clean-up later to maint).
@@ -300,3 +314,5 @@ Fixes since v2.40
    (merge 4833b08426 ow/ref-format-remove-unused-member later to maint).
    (merge d0ea2ca1cf dw/doc-submittingpatches-grammofix later to maint).
    (merge fd72637423 ar/t2024-checkout-output-fix later to maint).
+   (merge d45cbe3fe0 ob/sequencer-i18n-fix later to maint).
+   (merge b734fe49fd ob/messages-capitalize-exception later to maint).
