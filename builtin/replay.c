@@ -15,6 +15,8 @@
 #include "refs.h"
 #include "revision.h"
 #include "strmap.h"
+#include <oidset.h>
+#include <tree.h>
 
 static const char *short_commit_name(struct commit *commit)
 {
