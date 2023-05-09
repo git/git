@@ -152,7 +152,7 @@ test_expect_success 'do not complain about existing broken links (commit)' '
 	EOF
 	commit=$(git hash-object -t commit -w broken-commit) &&
 	git gc --no-cruft -q 2>stderr &&
-	verbose git cat-file -e $commit &&
+	git cat-file -e $commit &&
 	test_must_be_empty stderr
 '
 

@@ -16,7 +16,7 @@ add_blob() {
 	before=$(git count-objects | sed "s/ .*//") &&
 	BLOB=$(echo aleph_0 | git hash-object -w --stdin) &&
 	BLOB_FILE=.git/objects/$(echo $BLOB | sed "s/^../&\//") &&
-	verbose test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
+	test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
 	test_path_is_file $BLOB_FILE &&
 	test-tool chmtime =+0 $BLOB_FILE
 }
@@ -51,11 +51,11 @@ test_expect_success 'prune stale packs' '
 test_expect_success 'prune --expire' '
 	add_blob &&
 	git prune --expire=1.hour.ago &&
-	verbose test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
+	test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
 	test_path_is_file $BLOB_FILE &&
 	test-tool chmtime =-86500 $BLOB_FILE &&
 	git prune --expire 1.day &&
-	verbose test $before = $(git count-objects | sed "s/ .*//") &&
+	test $before = $(git count-objects | sed "s/ .*//") &&
 	test_path_is_missing $BLOB_FILE
 '
 
@@ -63,11 +63,11 @@ test_expect_success 'gc: implicit prune --expire' '
 	add_blob &&
 	test-tool chmtime =-$((2*$week-30)) $BLOB_FILE &&
 	git gc --no-cruft &&
-	verbose test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
+	test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
 	test_path_is_file $BLOB_FILE &&
 	test-tool chmtime =-$((2*$week+1)) $BLOB_FILE &&
 	git gc --no-cruft &&
-	verbose test $before = $(git count-objects | sed "s/ .*//") &&
+	test $before = $(git count-objects | sed "s/ .*//") &&
 	test_path_is_missing $BLOB_FILE
 '
 
@@ -138,7 +138,7 @@ test_expect_success 'gc --no-prune' '
 	test-tool chmtime =-$((5001*$day)) $BLOB_FILE &&
 	git config gc.pruneExpire 2.days.ago &&
 	git gc --no-prune --no-cruft &&
-	verbose test 1 = $(git count-objects | sed "s/ .*//") &&
+	test 1 = $(git count-objects | sed "s/ .*//") &&
 	test_path_is_file $BLOB_FILE
 '
 
@@ -192,10 +192,10 @@ test_expect_success 'gc: prune old objects after local clone' '
 	git clone --no-hardlinks . aclone &&
 	(
 		cd aclone &&
-		verbose test 1 = $(git count-objects | sed "s/ .*//") &&
+		test 1 = $(git count-objects | sed "s/ .*//") &&
 		test_path_is_file $BLOB_FILE &&
 		git gc --prune --no-cruft &&
-		verbose test 0 = $(git count-objects | sed "s/ .*//") &&
+		test 0 = $(git count-objects | sed "s/ .*//") &&
 		test_path_is_missing $BLOB_FILE
 	)
 '

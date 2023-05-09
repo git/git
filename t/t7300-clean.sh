@@ -120,7 +120,7 @@ test_expect_success 'git clean with relative prefix' '
 		grep part3 |
 		sed -n -e "s|^Would remove ||p"
 	) &&
-	verbose test "$would_clean" = ../src/part3.c
+	test "$would_clean" = ../src/part3.c
 '
 
 test_expect_success 'git clean with absolute path' '
@@ -133,7 +133,7 @@ test_expect_success 'git clean with absolute path' '
 		grep part3 |
 		sed -n -e "s|^Would remove ||p"
 	) &&
-	verbose test "$would_clean" = ../src/part3.c
+	test "$would_clean" = ../src/part3.c
 '
 
 test_expect_success 'git clean with out of work tree relative path' '
