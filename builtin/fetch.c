@@ -106,8 +106,14 @@ static int fetch_write_commit_graph = -1;
 static int stdin_refspecs = 0;
 static int negotiate_only;
 
+struct fetch_config {
+	enum display_format display_format;
+};
+
 static int git_fetch_config(const char *k, const char *v, void *cb)
 {
+	struct fetch_config *fetch_config = cb;
+
 	if (!strcmp(k, "fetch.prune")) {
 		fetch_prune_config = git_config_bool(k, v);
 		return 0;
@@ -144,6 +150,18 @@ static int git_fetch_config(const char *k, const char *v, void *cb)
 		if (!fetch_parallel_config)
 			fetch_parallel_config = online_cpus();
 		return 0;
+	}
+
+	if (!strcmp(k, "fetch.output")) {
+		if (!v)
+			return config_error_nonbool(k);
+		else if (!strcasecmp(v, "full"))
+			fetch_config->display_format = DISPLAY_FORMAT_FULL;
+		else if (!strcasecmp(v, "compact"))
+			fetch_config->display_format = DISPLAY_FORMAT_COMPACT;
+		else
+			die(_("invalid value for '%s': '%s'"),
+			    "fetch.output", v);
 	}
 
 	return git_default_config(k, v, cb);
@@ -802,14 +820,13 @@ static int refcol_width(const struct ref *ref_map, int compact_format)
 }
 
 static void display_state_init(struct display_state *display_state, struct ref *ref_map,
-			       const char *raw_url)
+			       const char *raw_url, enum display_format format)
 {
-	const char *format = "full";
 	int i;
 
 	memset(display_state, 0, sizeof(*display_state));
-
 	strbuf_init(&display_state->buf, 0);
+	display_state->format = format;
 
 	if (raw_url)
 		display_state->url = transport_anonymize_url(raw_url);
@@ -825,15 +842,6 @@ static void display_state_init(struct display_state *display_state, struct ref *
 
 	if (verbosity < 0)
 		return;
-
-	git_config_get_string_tmp("fetch.output", &format);
-	if (!strcasecmp(format, "full"))
-		display_state->format = DISPLAY_FORMAT_FULL;
-	else if (!strcasecmp(format, "compact"))
-		display_state->format = DISPLAY_FORMAT_COMPACT;
-	else
-		die(_("invalid value for '%s': '%s'"),
-		    "fetch.output", format);
 
 	switch (display_state->format) {
 	case DISPLAY_FORMAT_FULL:
@@ -1608,7 +1616,8 @@ static int backfill_tags(struct display_state *display_state,
 }
 
 static int do_fetch(struct transport *transport,
-		    struct refspec *rs)
+		    struct refspec *rs,
+		    enum display_format display_format)
 {
 	struct ref_transaction *transaction = NULL;
 	struct ref *ref_map = NULL;
@@ -1694,7 +1703,7 @@ static int do_fetch(struct transport *transport,
 	if (retcode)
 		goto cleanup;
 
-	display_state_init(&display_state, ref_map, transport->url);
+	display_state_init(&display_state, ref_map, transport->url, display_format);
 
 	if (atomic_fetch) {
 		transaction = ref_transaction_begin(&err);
@@ -2077,7 +2086,8 @@ static inline void fetch_one_setup_partial(struct remote *remote)
 }
 
 static int fetch_one(struct remote *remote, int argc, const char **argv,
-		     int prune_tags_ok, int use_stdin_refspecs)
+		     int prune_tags_ok, int use_stdin_refspecs,
+		     enum display_format display_format)
 {
 	struct refspec rs = REFSPEC_INIT_FETCH;
 	int i;
@@ -2144,7 +2154,7 @@ static int fetch_one(struct remote *remote, int argc, const char **argv,
 	sigchain_push_common(unlock_pack_on_signal);
 	atexit(unlock_pack_atexit);
 	sigchain_push(SIGPIPE, SIG_IGN);
-	exit_code = do_fetch(gtransport, &rs);
+	exit_code = do_fetch(gtransport, &rs, display_format);
 	sigchain_pop(SIGPIPE);
 	refspec_clear(&rs);
 	transport_disconnect(gtransport);
@@ -2154,6 +2164,9 @@ static int fetch_one(struct remote *remote, int argc, const char **argv,
 
 int cmd_fetch(int argc, const char **argv, const char *prefix)
 {
+	struct fetch_config config = {
+		.display_format = DISPLAY_FORMAT_FULL,
+	};
 	int i;
 	const char *bundle_uri;
 	struct string_list list = STRING_LIST_INIT_DUP;
@@ -2173,7 +2186,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		free(anon);
 	}
 
-	git_config(git_fetch_config, NULL);
+	git_config(git_fetch_config, &config);
 	if (the_repository->gitdir) {
 		prepare_repo_settings(the_repository);
 		the_repository->settings.command_requires_full_index = 0;
@@ -2310,7 +2323,8 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	} else if (remote) {
 		if (filter_options.choice || repo_has_promisor_remote(the_repository))
 			fetch_one_setup_partial(remote);
-		result = fetch_one(remote, argc, argv, prune_tags_ok, stdin_refspecs);
+		result = fetch_one(remote, argc, argv, prune_tags_ok, stdin_refspecs,
+				   config.display_format);
 	} else {
 		int max_children = max_jobs;
 
