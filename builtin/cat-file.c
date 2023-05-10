@@ -25,6 +25,7 @@
 #include "object-store.h"
 #include "replace-object.h"
 #include "promisor-remote.h"
+#include "quote.h"
 #include "mailmap.h"
 #include "write-or-die.h"
 
@@ -470,8 +471,17 @@ static void batch_object_write(const char *obj_name,
 						       &data->oid, &data->info,
 						       OBJECT_INFO_LOOKUP_REPLACE);
 		if (ret < 0) {
+			struct strbuf quoted = STRBUF_INIT;
+
+			if (opt->nul_terminated &&
+			    obj_name) {
+				quote_c_style(obj_name, &quoted, NULL, 0);
+				obj_name = quoted.buf;
+			}
+
 			printf("%s missing\n",
 			       obj_name ? obj_name : oid_to_hex(&data->oid));
+			strbuf_release(&quoted);
 			fflush(stdout);
 			return;
 		}
@@ -518,6 +528,13 @@ static void batch_one_object(const char *obj_name,
 	result = get_oid_with_context(the_repository, obj_name,
 				      flags, &data->oid, &ctx);
 	if (result != FOUND) {
+		struct strbuf quoted = STRBUF_INIT;
+
+		if (opt->nul_terminated) {
+			quote_c_style(obj_name, &quoted, NULL, 0);
+			obj_name = quoted.buf;
+		}
+
 		switch (result) {
 		case MISSING_OBJECT:
 			printf("%s missing\n", obj_name);
@@ -542,6 +559,8 @@ static void batch_one_object(const char *obj_name,
 			       result);
 			break;
 		}
+
+		strbuf_release(&quoted);
 		fflush(stdout);
 		return;
 	}
