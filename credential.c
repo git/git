@@ -25,6 +25,7 @@ void credential_clear(struct credential *c)
 	free(c->path);
 	free(c->username);
 	free(c->password);
+	free(c->oauth_refresh_token);
 	string_list_clear(&c->helpers, 0);
 	strvec_clear(&c->wwwauth_headers);
 
@@ -246,6 +247,9 @@ int credential_read(struct credential *c, FILE *fp)
 			c->password_expiry_utc = parse_timestamp(value, NULL, 10);
 			if (c->password_expiry_utc == 0 || errno == ERANGE)
 				c->password_expiry_utc = TIME_MAX;
+		} else if (!strcmp(key, "oauth_refresh_token")) {
+			free(c->oauth_refresh_token);
+			c->oauth_refresh_token = xstrdup(value);
 		} else if (!strcmp(key, "url")) {
 			credential_from_url(c, value);
 		} else if (!strcmp(key, "quit")) {
@@ -281,6 +285,7 @@ void credential_write(const struct credential *c, FILE *fp)
 	credential_write_item(fp, "path", c->path, 0);
 	credential_write_item(fp, "username", c->username, 0);
 	credential_write_item(fp, "password", c->password, 0);
+	credential_write_item(fp, "oauth_refresh_token", c->oauth_refresh_token, 0);
 	if (c->password_expiry_utc != TIME_MAX) {
 		char *s = xstrfmt("%"PRItime, c->password_expiry_utc);
 		credential_write_item(fp, "password_expiry_utc", s, 0);
@@ -406,6 +411,7 @@ void credential_reject(struct credential *c)
 
 	FREE_AND_NULL(c->username);
 	FREE_AND_NULL(c->password);
+	FREE_AND_NULL(c->oauth_refresh_token);
 	c->password_expiry_utc = TIME_MAX;
 	c->approved = 0;
 }
