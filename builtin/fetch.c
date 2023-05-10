@@ -1879,6 +1879,8 @@ static void add_options_to_argv(struct strvec *argv)
 		strvec_push(argv, "--keep");
 	if (recurse_submodules == RECURSE_SUBMODULES_ON)
 		strvec_push(argv, "--recurse-submodules");
+	else if (recurse_submodules == RECURSE_SUBMODULES_OFF)
+		strvec_push(argv, "--no-recurse-submodules");
 	else if (recurse_submodules == RECURSE_SUBMODULES_ON_DEMAND)
 		strvec_push(argv, "--recurse-submodules=on-demand");
 	if (tags == TAGS_SET)
