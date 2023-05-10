@@ -249,16 +249,27 @@ static WCHAR *utf8_to_utf16_dup(const char *str)
 	return wstr;
 }
 
+#define KB (1024)
+
 static void read_credential(void)
 {
-	char buf[1024];
+	size_t alloc = 100 * KB;
+	char *buf = calloc(alloc, sizeof(*buf));
 
-	while (fgets(buf, sizeof(buf), stdin)) {
+	while (fgets(buf, alloc, stdin)) {
 		char *v;
-		int len = strlen(buf);
+		size_t len = strlen(buf);
+		int ends_in_newline = 0;
 		/* strip trailing CR / LF */
-		while (len && strchr("\r\n", buf[len - 1]))
+		if (len && buf[len - 1] == '\n') {
 			buf[--len] = 0;
+			ends_in_newline = 1;
+		}
+		if (len && buf[len - 1] == '\r')
+			buf[--len] = 0;
+
+		if (!ends_in_newline)
+			die("bad input: %s", buf);
 
 		if (!*buf)
 			break;
@@ -284,6 +295,8 @@ static void read_credential(void)
 		 * learn new lines, and the helpers are updated to match.
 		 */
 	}
+
+	free(buf);
 }
 
 int main(int argc, char *argv[])
