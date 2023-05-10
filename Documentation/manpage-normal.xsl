@@ -8,4 +8,7 @@
 <xsl:param name="man.output.quietly" select="1"/>
 <xsl:param name="refentry.meta.get.quietly" select="1"/>
 
+<!-- unset maximum length of title -->
+<xsl:param name="man.th.title.max.length"/>
+
 </xsl:stylesheet>
