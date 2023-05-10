@@ -83,6 +83,14 @@ UI, Workflows & Features
    taken from the file specified by the "--contents" option shows it
    differently from a line attributed to the working tree file.
 
+ * "git send-email" learned to give the e-mail headers to the validate
+   hook by passing an extra argument from the command line.
+
+ * The credential subsystem learns to help OAuth framework.
+
+ * The titles of manual pages used to be chomped at an unreasonably
+   short limit, which has been removed.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -136,6 +144,21 @@ Performance, Internal Implementation, Development Support etc.
    suffixes.  The script has been taught that certain suffixes (like
    "-win32" in "gcc 10-win32") can be safely stripped as they share
    the same features and bugs with the version without the suffix.
+
+ * ctype tests have been taught to test EOF, too.
+
+ * The implementation of credential helpers used fgets() over fixed
+   size buffers to read protocol messages, causing the remainder of
+   the folded long line to trigger unexpected behaviour, which has
+   been corrected.
+
+ * The implementation of the default "negotiator", used to find common
+   ancestor over the network for object tranfer, used to be recursive;
+   it was updated to be iterative to conserve stackspace usage.
+
+ * Our custom callout formatter is no longer used in the documentation
+   formatting toolchain, as the upstream default ones give better
+   output these days.
 
 
 Fixes since v2.40
@@ -298,6 +321,10 @@ Fixes since v2.40
  * Retitle a test script with an overly narrow name.
    (merge 8bb19c14fb ob/t3501-retitle later to maint).
 
+ * Doc update to clarify how text and eol attributes interact to
+   specify the end-of-line conversion.
+   (merge 6696077ace ah/doc-attributes-text later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f7111175df as/doc-markup-fix later to maint).
    (merge 90ff7c9898 fc/test-aggregation-clean-up later to maint).
@@ -316,3 +343,6 @@ Fixes since v2.40
    (merge fd72637423 ar/t2024-checkout-output-fix later to maint).
    (merge d45cbe3fe0 ob/sequencer-i18n-fix later to maint).
    (merge b734fe49fd ob/messages-capitalize-exception later to maint).
+   (merge ad353d7e77 ma/gittutorial-fixes later to maint).
+   (merge a5855fd8d4 ar/test-cleanup-unused-file-creation-part2 later to maint).
+   (merge 0c5308af30 sd/doc-gitignore-and-rm-cached later to maint).
