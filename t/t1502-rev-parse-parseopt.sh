@@ -302,14 +302,14 @@ test_expect_success 'test --parseopt help output: "wrapped" options normal "or:"
 	|EOF
 	END_EXPECT
 
-	test_must_fail git rev-parse --parseopt -- -h >out <spec >actual &&
+	test_must_fail git rev-parse --parseopt -- -h <spec >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'test --parseopt invalid opt-spec' '
 	test_write_lines x -- "=, x" >spec &&
 	echo "fatal: missing opt-spec before option flags" >expect &&
-	test_must_fail git rev-parse --parseopt -- >out <spec 2>err &&
+	test_must_fail git rev-parse --parseopt -- <spec 2>err &&
 	test_cmp expect err
 '
 
@@ -339,7 +339,7 @@ test_expect_success 'test --parseopt help output: multi-line blurb after empty l
 	|EOF
 	END_EXPECT
 
-	test_must_fail git rev-parse --parseopt -- -h >out <spec >actual &&
+	test_must_fail git rev-parse --parseopt -- -h <spec >actual &&
 	test_cmp expect actual
 '
 
