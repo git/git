@@ -61,6 +61,141 @@ test_expect_success 'fetch compact output' '
 	test_cmp expect actual
 '
 
+test_expect_success 'fetch porcelain output' '
+	test_when_finished "rm -rf porcelain" &&
+
+	# Set up a bunch of references that we can use to demonstrate different
+	# kinds of flag symbols in the output format.
+	MAIN_OLD=$(git rev-parse HEAD) &&
+	git branch "fast-forward" &&
+	git branch "deleted-branch" &&
+	git checkout -b force-updated &&
+	test_commit --no-tag force-update-old &&
+	FORCE_UPDATED_OLD=$(git rev-parse HEAD) &&
+	git checkout main &&
+
+	# Clone and pre-seed the repositories. We fetch references into two
+	# namespaces so that we can test that rejected and force-updated
+	# references are reported properly.
+	refspecs="refs/heads/*:refs/unforced/* +refs/heads/*:refs/forced/*" &&
+	git clone . porcelain &&
+	git -C porcelain fetch origin $refspecs &&
+
+	# Now that we have set up the client repositories we can change our
+	# local references.
+	git branch new-branch &&
+	git branch -d deleted-branch &&
+	git checkout fast-forward &&
+	test_commit --no-tag fast-forward-new &&
+	FAST_FORWARD_NEW=$(git rev-parse HEAD) &&
+	git checkout force-updated &&
+	git reset --hard HEAD~ &&
+	test_commit --no-tag force-update-new &&
+	FORCE_UPDATED_NEW=$(git rev-parse HEAD) &&
+
+	cat >expect <<-EOF &&
+	- $MAIN_OLD $ZERO_OID refs/forced/deleted-branch
+	- $MAIN_OLD $ZERO_OID refs/unforced/deleted-branch
+	  $MAIN_OLD $FAST_FORWARD_NEW refs/unforced/fast-forward
+	! $FORCE_UPDATED_OLD $FORCE_UPDATED_NEW refs/unforced/force-updated
+	* $ZERO_OID $MAIN_OLD refs/unforced/new-branch
+	  $MAIN_OLD $FAST_FORWARD_NEW refs/forced/fast-forward
+	+ $FORCE_UPDATED_OLD $FORCE_UPDATED_NEW refs/forced/force-updated
+	* $ZERO_OID $MAIN_OLD refs/forced/new-branch
+	  $MAIN_OLD $FAST_FORWARD_NEW refs/remotes/origin/fast-forward
+	+ $FORCE_UPDATED_OLD $FORCE_UPDATED_NEW refs/remotes/origin/force-updated
+	* $ZERO_OID $MAIN_OLD refs/remotes/origin/new-branch
+	EOF
+
+	# Execute a dry-run fetch first. We do this to assert that the dry-run
+	# and non-dry-run fetches produces the same output. Execution of the
+	# fetch is expected to fail as we have a rejected reference update.
+	test_must_fail git -C porcelain fetch \
+		--porcelain --dry-run --prune origin $refspecs >actual &&
+	test_cmp expect actual &&
+
+	# And now we perform a non-dry-run fetch.
+	test_must_fail git -C porcelain fetch \
+		--porcelain --prune origin $refspecs >actual 2>stderr &&
+	test_cmp expect actual &&
+	test_must_be_empty stderr
+'
+
+test_expect_success 'fetch porcelain with multiple remotes' '
+	test_when_finished "rm -rf porcelain" &&
+
+	git switch --create multiple-remotes &&
+	git clone . porcelain &&
+	git -C porcelain remote add second-remote "$PWD" &&
+	git -C porcelain fetch second-remote &&
+
+	test_commit --no-tag multi-commit &&
+	old_commit=$(git rev-parse HEAD~) &&
+	new_commit=$(git rev-parse HEAD) &&
+
+	cat >expect <<-EOF &&
+	  $old_commit $new_commit refs/remotes/origin/multiple-remotes
+	  $old_commit $new_commit refs/remotes/second-remote/multiple-remotes
+	EOF
+
+	git -C porcelain fetch --porcelain --all >actual 2>stderr &&
+	test_cmp expect actual &&
+	test_must_be_empty stderr
+'
+
+test_expect_success 'fetch porcelain refuses to work with submodules' '
+	test_when_finished "rm -rf porcelain" &&
+
+	cat >expect <<-EOF &&
+	fatal: options ${SQ}--porcelain${SQ} and ${SQ}--recurse-submodules${SQ} cannot be used together
+	EOF
+
+	git init porcelain &&
+	test_must_fail git -C porcelain fetch --porcelain --recurse-submodules=yes 2>stderr &&
+	test_cmp expect stderr &&
+
+	test_must_fail git -C porcelain fetch --porcelain --recurse-submodules=on-demand 2>stderr &&
+	test_cmp expect stderr
+'
+
+test_expect_success 'fetch porcelain overrides fetch.output config' '
+	test_when_finished "rm -rf porcelain" &&
+
+	git switch --create config-override &&
+	git clone . porcelain &&
+	test_commit new-commit &&
+	old_commit=$(git rev-parse HEAD~) &&
+	new_commit=$(git rev-parse HEAD) &&
+
+	cat >expect <<-EOF &&
+	  $old_commit $new_commit refs/remotes/origin/config-override
+	* $ZERO_OID $new_commit refs/tags/new-commit
+	EOF
+
+	git -C porcelain -c fetch.output=compact fetch --porcelain >stdout 2>stderr &&
+	test_must_be_empty stderr &&
+	test_cmp expect stdout
+'
+
+test_expect_success 'fetch --no-porcelain overrides previous --porcelain' '
+	test_when_finished "rm -rf no-porcelain" &&
+
+	git switch --create no-porcelain &&
+	git clone . no-porcelain &&
+	test_commit --no-tag no-porcelain &&
+	old_commit=$(git rev-parse --short HEAD~) &&
+	new_commit=$(git rev-parse --short HEAD) &&
+
+	cat >expect <<-EOF &&
+	From $(test-tool path-utils real_path .)/.
+	   $old_commit..$new_commit  no-porcelain -> origin/no-porcelain
+	EOF
+
+	git -C no-porcelain fetch --porcelain --no-porcelain >stdout 2>stderr &&
+	test_cmp expect stderr &&
+	test_must_be_empty stdout
+'
+
 test_expect_success 'fetch output with HEAD' '
 	test_when_finished "rm -rf head" &&
 	git clone . head &&
@@ -88,6 +223,30 @@ test_expect_success 'fetch output with HEAD' '
 	git -C head fetch origin HEAD:foo >actual.out 2>actual.err &&
 	test_must_be_empty actual.out &&
 	test_cmp expect actual.err
+'
+
+test_expect_success 'fetch porcelain output with HEAD' '
+	test_when_finished "rm -rf head" &&
+	git clone . head &&
+	COMMIT_ID=$(git rev-parse HEAD) &&
+
+	git -C head fetch --porcelain --dry-run origin HEAD >actual &&
+	cat >expect <<-EOF &&
+	* $ZERO_OID $COMMIT_ID FETCH_HEAD
+	EOF
+	test_cmp expect actual &&
+
+	git -C head fetch --porcelain origin HEAD >actual &&
+	test_cmp expect actual &&
+
+	git -C head fetch --porcelain --dry-run origin HEAD:foo >actual &&
+	cat >expect <<-EOF &&
+	* $ZERO_OID $COMMIT_ID refs/heads/foo
+	EOF
+	test_cmp expect actual &&
+
+	git -C head fetch --porcelain origin HEAD:foo >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'fetch output with object ID' '
