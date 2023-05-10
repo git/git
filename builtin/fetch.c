@@ -50,11 +50,17 @@ enum {
 	TAGS_SET = 2
 };
 
+enum display_format {
+	DISPLAY_FORMAT_UNKNOWN = 0,
+	DISPLAY_FORMAT_FULL,
+	DISPLAY_FORMAT_COMPACT,
+};
+
 struct display_state {
 	struct strbuf buf;
 
 	int refcol_width;
-	int compact_format;
+	enum display_format format;
 
 	char *url;
 	int url_len, shown_url;
@@ -822,14 +828,22 @@ static void display_state_init(struct display_state *display_state, struct ref *
 
 	git_config_get_string_tmp("fetch.output", &format);
 	if (!strcasecmp(format, "full"))
-		display_state->compact_format = 0;
+		display_state->format = DISPLAY_FORMAT_FULL;
 	else if (!strcasecmp(format, "compact"))
-		display_state->compact_format = 1;
+		display_state->format = DISPLAY_FORMAT_COMPACT;
 	else
 		die(_("invalid value for '%s': '%s'"),
 		    "fetch.output", format);
 
-	display_state->refcol_width = refcol_width(ref_map, display_state->compact_format);
+	switch (display_state->format) {
+	case DISPLAY_FORMAT_FULL:
+	case DISPLAY_FORMAT_COMPACT:
+		display_state->refcol_width = refcol_width(ref_map,
+							   display_state->format == DISPLAY_FORMAT_COMPACT);
+		break;
+	default:
+		BUG("unexpected display format %d", display_state->format);
+	}
 }
 
 static void display_state_release(struct display_state *display_state)
@@ -899,30 +913,41 @@ static void display_ref_update(struct display_state *display_state, char code,
 			       const char *remote, const char *local,
 			       int summary_width)
 {
-	int width;
-
 	if (verbosity < 0)
 		return;
 
 	strbuf_reset(&display_state->buf);
 
-	if (!display_state->shown_url) {
-		strbuf_addf(&display_state->buf, _("From %.*s\n"),
-			    display_state->url_len, display_state->url);
-		display_state->shown_url = 1;
+	switch (display_state->format) {
+	case DISPLAY_FORMAT_FULL:
+	case DISPLAY_FORMAT_COMPACT: {
+		int width;
+
+		if (!display_state->shown_url) {
+			strbuf_addf(&display_state->buf, _("From %.*s\n"),
+				    display_state->url_len, display_state->url);
+			display_state->shown_url = 1;
+		}
+
+		width = (summary_width + strlen(summary) - gettext_width(summary));
+		remote = prettify_refname(remote);
+		local = prettify_refname(local);
+
+		strbuf_addf(&display_state->buf, " %c %-*s ", code, width, summary);
+
+		if (display_state->format != DISPLAY_FORMAT_COMPACT)
+			print_remote_to_local(display_state, remote, local);
+		else
+			print_compact(display_state, remote, local);
+
+		if (error)
+			strbuf_addf(&display_state->buf, "  (%s)", error);
+
+		break;
 	}
-
-	width = (summary_width + strlen(summary) - gettext_width(summary));
-	remote = prettify_refname(remote);
-	local = prettify_refname(local);
-
-	strbuf_addf(&display_state->buf, " %c %-*s ", code, width, summary);
-	if (!display_state->compact_format)
-		print_remote_to_local(display_state, remote, local);
-	else
-		print_compact(display_state, remote, local);
-	if (error)
-		strbuf_addf(&display_state->buf, "  (%s)", error);
+	default:
+		BUG("unexpected display format %d", display_state->format);
+	};
 	strbuf_addch(&display_state->buf, '\n');
 
 	fputs(display_state->buf.buf, stderr);
