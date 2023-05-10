@@ -753,40 +753,51 @@ out:
 	return ret;
 }
 
-static int refcol_width(const struct ref *ref, int compact_format)
+static int refcol_width(const struct ref *ref_map, int compact_format)
 {
-	int max, rlen, llen, len;
+	const struct ref *ref;
+	int max, width = 10;
 
-	/* uptodate lines are only shown on high verbosity level */
-	if (verbosity <= 0 && oideq(&ref->peer_ref->old_oid, &ref->old_oid))
-		return 0;
-
-	max    = term_columns();
-	rlen   = utf8_strwidth(prettify_refname(ref->name));
-
-	llen   = utf8_strwidth(prettify_refname(ref->peer_ref->name));
-
-	/*
-	 * rough estimation to see if the output line is too long and
-	 * should not be counted (we can't do precise calculation
-	 * anyway because we don't know if the error explanation part
-	 * will be printed in update_local_ref)
-	 */
-	if (compact_format) {
-		llen = 0;
+	max = term_columns();
+	if (compact_format)
 		max = max * 2 / 3;
-	}
-	len = 21 /* flag and summary */ + rlen + 4 /* -> */ + llen;
-	if (len >= max)
-		return 0;
 
-	return rlen;
+	for (ref = ref_map; ref; ref = ref->next) {
+		int rlen, llen = 0, len;
+
+		if (ref->status == REF_STATUS_REJECT_SHALLOW ||
+		    !ref->peer_ref ||
+		    !strcmp(ref->name, "HEAD"))
+			continue;
+
+		/* uptodate lines are only shown on high verbosity level */
+		if (verbosity <= 0 && oideq(&ref->peer_ref->old_oid, &ref->old_oid))
+			continue;
+
+		rlen = utf8_strwidth(prettify_refname(ref->name));
+		if (!compact_format)
+			llen = utf8_strwidth(prettify_refname(ref->peer_ref->name));
+
+		/*
+		 * rough estimation to see if the output line is too long and
+		 * should not be counted (we can't do precise calculation
+		 * anyway because we don't know if the error explanation part
+		 * will be printed in update_local_ref)
+		 */
+		len = 21 /* flag and summary */ + rlen + 4 /* -> */ + llen;
+		if (len >= max)
+			continue;
+
+		if (width < rlen)
+			width = rlen;
+	}
+
+	return width;
 }
 
 static void display_state_init(struct display_state *display_state, struct ref *ref_map,
 			       const char *raw_url)
 {
-	struct ref *rm;
 	const char *format = "full";
 	int i;
 
@@ -818,25 +829,7 @@ static void display_state_init(struct display_state *display_state, struct ref *
 		die(_("invalid value for '%s': '%s'"),
 		    "fetch.output", format);
 
-	display_state->refcol_width = 10;
-	for (rm = ref_map; rm; rm = rm->next) {
-		int width;
-
-		if (rm->status == REF_STATUS_REJECT_SHALLOW ||
-		    !rm->peer_ref ||
-		    !strcmp(rm->name, "HEAD"))
-			continue;
-
-		width = refcol_width(rm, display_state->compact_format);
-
-		/*
-		 * Not precise calculation for compact mode because '*' can
-		 * appear on the left hand side of '->' and shrink the column
-		 * back.
-		 */
-		if (display_state->refcol_width < width)
-			display_state->refcol_width = width;
-	}
+	display_state->refcol_width = refcol_width(ref_map, display_state->compact_format);
 }
 
 static void display_state_release(struct display_state *display_state)
