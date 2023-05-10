@@ -7,6 +7,30 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
+test_expect_success 'fetch with invalid output format configuration' '
+	test_when_finished "rm -rf clone" &&
+	git clone . clone &&
+
+	test_must_fail git -C clone -c fetch.output fetch origin 2>actual.err &&
+	cat >expect <<-EOF &&
+	error: missing value for ${SQ}fetch.output${SQ}
+	fatal: unable to parse ${SQ}fetch.output${SQ} from command-line config
+	EOF
+	test_cmp expect actual.err &&
+
+	test_must_fail git -C clone -c fetch.output= fetch origin 2>actual.err &&
+	cat >expect <<-EOF &&
+	fatal: invalid value for ${SQ}fetch.output${SQ}: ${SQ}${SQ}
+	EOF
+	test_cmp expect actual.err &&
+
+	test_must_fail git -C clone -c fetch.output=garbage fetch origin 2>actual.err &&
+	cat >expect <<-EOF &&
+	fatal: invalid value for ${SQ}fetch.output${SQ}: ${SQ}garbage${SQ}
+	EOF
+	test_cmp expect actual.err
+'
+
 test_expect_success 'fetch aligned output' '
 	git clone . full-output &&
 	test_commit looooooooooooong-tag &&
