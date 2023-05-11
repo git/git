@@ -18,17 +18,22 @@ Add or parse 'trailer' lines that look similar to RFC 822 e-mail
 headers, at the end of the otherwise free-form part of a commit
 message.
 
-This command reads some patches or commit messages from either the
-<file> arguments or the standard input if no <file> is specified. If
-`--parse` is specified, the output consists of the parsed trailers.
-
+This command reads commit messages from either the
+<file> arguments or the standard input if no <file> is specified.
+If `--parse` is specified, the output consists of the parsed trailers.
 Otherwise, this command applies the arguments passed using the
-`--trailer` option, if any, to the commit message part of each input
-file. The result is emitted on the standard output.
+`--trailer` option, if any, to each input file. The result is emitted on the
+standard output.
+
+This command can also operate on the output of linkgit:git-format-patch[1],
+which is more elaborate than a plain commit message. Namely, such output
+includes a commit message (as above), a "---" divider line, and a patch part.
+For these inputs, the divider and patch parts are ignored, unless `--no-divider`
+is specified.
 
 Some configuration variables control the way the `--trailer` arguments
-are applied to each commit message and the way any existing trailer in
-the commit message is changed. They also make it possible to
+are applied to each input and the way any existing trailer in
+the input is changed. They also make it possible to
 automatically add some trailers.
 
 By default, a '<token>=<value>' or '<token>:<value>' argument given
@@ -36,7 +41,7 @@ using `--trailer` will be appended after the existing trailers only if
 the last trailer has a different (<token>, <value>) pair (or if there
 is no existing trailer). The <token> and <value> parts will be trimmed
 to remove starting and trailing whitespace, and the resulting trimmed
-<token> and <value> will appear in the message like this:
+<token> and <value> will appear in the output like this:
 
 ------------------------------------------------
 token: value
@@ -47,19 +52,17 @@ This means that the trimmed <token> and <value> will be separated by
 
 By default the new trailer will appear at the end of all the existing
 trailers. If there is no existing trailer, the new trailer will appear
-after the commit message part of the output, and, if there is no line
-with only spaces at the end of the commit message part, one blank line
-will be added before the new trailer.
+at the end of the input. A blank line will be added before the new
+trailer if there isn't one already.
 
-Existing trailers are extracted from the input message by looking for
+Existing trailers are extracted from the input by looking for
 a group of one or more lines that (i) is all trailers, or (ii) contains at
 least one Git-generated or user-configured trailer and consists of at
 least 25% trailers.
 The group must be preceded by one or more empty (or whitespace-only) lines.
-The group must either be at the end of the message or be the last
+The group must either be at the end of the input or be the last
 non-whitespace lines before a line that starts with '---' (followed by a
-space or the end of the line). Such three minus signs start the patch
-part of the message. See also `--no-divider` below.
+space or the end of the line).
 
 When reading trailers, there can be no whitespace before or inside the
 token, but any number of regular space and tab characters are allowed
