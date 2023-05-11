@@ -16,7 +16,18 @@ DESCRIPTION
 -----------
 Add or parse 'trailer' lines that look similar to RFC 822 e-mail
 headers, at the end of the otherwise free-form part of a commit
-message.
+message. For example, in the following commit message
+
+------------------------------------------------
+subject
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+
+Signed-off-by: Alice <alice@example.com>
+Signed-off-by: Bob <bob@example.com>
+------------------------------------------------
+
+the last two lines starting with "Signed-off-by" are trailers.
 
 This command reads commit messages from either the
 <file> arguments or the standard input if no <file> is specified.
@@ -71,7 +82,12 @@ When reading trailers, there can be no whitespace before or inside the
 between the <token> and the separator. There can be whitespaces before,
 inside or after the <value>. The <value> may be split over multiple lines
 with each subsequent line starting with at least one whitespace, like
-the "folding" in RFC 822.
+the "folding" in RFC 822. Example:
+
+------------------------------------------------
+token: This is a very long value, with spaces and
+  newlines in it.
+------------------------------------------------
 
 Note that trailers do not follow (nor are they intended to follow) many of the
 rules for RFC 822 headers. For example they do not follow the encoding rule.
