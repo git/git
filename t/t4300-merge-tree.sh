@@ -334,4 +334,22 @@ test_expect_success 'turn tree to file' '
 	test_cmp expect actual
 '
 
+test_expect_success 'merge-tree respects core.useReplaceRefs=false' '
+	test_commit merge-to &&
+	test_commit valid base &&
+	git reset --hard HEAD^ &&
+	test_commit malicious base &&
+
+	test_when_finished "git replace -d $(git rev-parse valid^0)" &&
+	git replace valid^0 malicious^0 &&
+
+	tree=$(git -c core.useReplaceRefs=true merge-tree --write-tree merge-to valid) &&
+	merged=$(git cat-file -p $tree:base) &&
+	test malicious = $merged &&
+
+	tree=$(git -c core.useReplaceRefs=false merge-tree --write-tree merge-to valid) &&
+	merged=$(git cat-file -p $tree:base) &&
+	test valid = $merged
+'
+
 test_done
