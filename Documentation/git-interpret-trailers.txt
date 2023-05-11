@@ -48,7 +48,9 @@ token: value
 ------------------------------------------------
 
 This means that the trimmed <token> and <value> will be separated by
-`': '` (one colon followed by one space).
+`': '` (one colon followed by one space). If the <token> should have a different
+string representation than itself, then the 'key' can be configured with
+'trailer.<token>.key'.
 
 By default the new trailer will appear at the end of all the existing
 trailers. If there is no existing trailer, the new trailer will appear
