@@ -71,9 +71,8 @@ inside or after the value. The value may be split over multiple lines
 with each subsequent line starting with at least one whitespace, like
 the "folding" in RFC 822.
 
-Note that 'trailers' do not follow and are not intended to follow many
-rules for RFC 822 headers. For example they do not follow
-the encoding rules and probably many other rules.
+Note that trailers do not follow (nor are they intended to follow) many of the
+rules for RFC 822 headers. For example they do not follow the encoding rule.
 
 OPTIONS
 -------
