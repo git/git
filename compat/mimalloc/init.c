@@ -302,7 +302,11 @@ static bool _mi_heap_init(void) {
     _mi_memcpy_aligned(tld, &tld_empty, sizeof(*tld));
     _mi_memcpy_aligned(heap, &_mi_heap_empty, sizeof(*heap));
     heap->thread_id = _mi_thread_id();
+    #if defined(_WIN32) && !defined(MI_SHARED_LIB)
+    _mi_random_init_weak(&heap->random); // match mi_heap_main_init()
+    #else
     _mi_random_init(&heap->random);
+    #endif
     heap->cookie  = _mi_heap_random_next(heap) | 1;
     heap->keys[0] = _mi_heap_random_next(heap);
     heap->keys[1] = _mi_heap_random_next(heap);
