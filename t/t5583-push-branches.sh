@@ -1,4 +1,4 @@
-#!bin/sh
+#!/bin/sh
 
 test_description='check the consisitency of behavior of --all and --branches'
 
