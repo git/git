@@ -116,8 +116,9 @@ static struct flag_definition pack_flags[] = { FLAG_DEF(PACK_REFS_PRUNE),
 static int cmd_pack_refs(struct ref_store *refs, const char **argv)
 {
 	unsigned int flags = arg_flags(*argv++, "flags", pack_flags);
+	struct pack_refs_opts pack_opts = { .flags = flags };
 
-	return refs_pack_refs(refs, flags);
+	return refs_pack_refs(refs, &pack_opts);
 }
 
 static int cmd_create_symref(struct ref_store *refs, const char **argv)
