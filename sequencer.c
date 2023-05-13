@@ -2453,7 +2453,6 @@ void todo_list_release(struct todo_list *todo_list)
 static struct todo_item *append_new_todo(struct todo_list *todo_list)
 {
 	ALLOC_GROW(todo_list->items, todo_list->nr + 1, todo_list->alloc);
-	todo_list->total_nr++;
 	return todo_list->items + todo_list->nr++;
 }
 
@@ -2609,7 +2608,7 @@ int todo_list_parse_insn_buffer(struct repository *r, char *buf,
 	char *p = buf, *next_p;
 	int i, res = 0, fixup_okay = file_exists(rebase_path_done());
 
-	todo_list->current = todo_list->nr = 0;
+	todo_list->current = todo_list->nr = todo_list->total_nr = 0;
 
 	for (i = 1; *p; i++, p = next_p) {
 		char *eol = strchrnul(p, '\n');
@@ -2629,6 +2628,9 @@ int todo_list_parse_insn_buffer(struct repository *r, char *buf,
 			item->arg_len = (int)(eol - p);
 			item->commit = NULL;
 		}
+
+		if (item->command != TODO_COMMENT)
+			todo_list->total_nr++;
 
 		if (fixup_okay)
 			; /* do nothing */
@@ -6096,7 +6098,8 @@ int complete_action(struct repository *r, struct replay_opts *opts, unsigned fla
 	todo_list_to_strbuf(r, &new_todo, &buf2, -1, 0);
 	strbuf_swap(&new_todo.buf, &buf2);
 	strbuf_release(&buf2);
-	new_todo.total_nr -= new_todo.nr;
+	/* Nothing is done yet, and we're reparsing, so let's reset the count */
+	new_todo.total_nr = 0;
 	if (todo_list_parse_insn_buffer(r, new_todo.buf.buf, &new_todo) < 0)
 		BUG("invalid todo list after expanding IDs:\n%s",
 		    new_todo.buf.buf);
