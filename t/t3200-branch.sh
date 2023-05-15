@@ -239,6 +239,21 @@ test_expect_success 'git branch -M baz bam should succeed when baz is checked ou
 	git worktree prune
 '
 
+test_expect_success 'git branch -M fails if updating any linked working tree fails' '
+	git worktree add -b baz bazdir1 &&
+	git worktree add -f bazdir2 baz &&
+	touch .git/worktrees/bazdir1/HEAD.lock &&
+	test_must_fail git branch -M baz bam &&
+	test $(git -C bazdir2 rev-parse --abbrev-ref HEAD) = bam &&
+	git branch -M bam baz &&
+	rm .git/worktrees/bazdir1/HEAD.lock &&
+	touch .git/worktrees/bazdir2/HEAD.lock &&
+	test_must_fail git branch -M baz bam &&
+	test $(git -C bazdir1 rev-parse --abbrev-ref HEAD) = bam &&
+	rm -rf bazdir1 bazdir2 &&
+	git worktree prune
+'
+
 test_expect_success 'git branch -M baz bam should succeed within a worktree in which baz is checked out' '
 	git checkout -b baz &&
 	git worktree add -f bazdir baz &&
@@ -281,6 +296,20 @@ test_expect_success 'git branch -M and -C fail on detached HEAD' '
 	echo "fatal: cannot copy the current branch while not on any." >expect &&
 	test_must_fail git branch -C must-fail 2>err &&
 	test_cmp expect err
+'
+
+test_expect_success 'git branch -m should work with orphan branches' '
+	test_when_finished git checkout - &&
+	test_when_finished git worktree remove -f wt &&
+	git worktree add wt --detach &&
+	# rename orphan in another worktreee
+	git -C wt checkout --orphan orphan-foo-wt &&
+	git branch -m orphan-foo-wt orphan-bar-wt &&
+	test orphan-bar-wt=$(git -C orphan-worktree branch --show-current) &&
+	# rename orphan in the current worktree
+	git checkout --orphan orphan-foo &&
+	git branch -m orphan-foo orphan-bar &&
+	test orphan-bar=$(git branch --show-current)
 '
 
 test_expect_success 'git branch -d on orphan HEAD (merged)' '
