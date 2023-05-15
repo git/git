@@ -204,6 +204,15 @@ representing the status of a single ref. Each line is of the form:
  <flag> <summary> <from> -> <to> [<reason>]
 -------------------------------
 
+When using `--porcelain`, the output format is intended to be
+machine-parseable. In contrast to the human-readable output formats it
+thus prints to standard output instead of standard error. Each line is
+of the form:
+
+-------------------------------
+<flag> <old-object-id> <new-object-id> <local-reference>
+-------------------------------
+
 The status of up-to-date refs is shown only if the --verbose option is
 used.
 
