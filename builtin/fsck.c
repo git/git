@@ -27,6 +27,7 @@
 #include "run-command.h"
 #include "worktree.h"
 #include "pack-revindex.h"
+#include "pack-bitmap.h"
 
 #define REACHABLE 0x0001
 #define SEEN      0x0002
@@ -57,6 +58,7 @@ static int name_objects;
 #define ERROR_COMMIT_GRAPH 020
 #define ERROR_MULTI_PACK_INDEX 040
 #define ERROR_PACK_REV_INDEX 0100
+#define ERROR_BITMAP 0200
 
 static const char *describe_object(const struct object_id *oid)
 {
@@ -867,20 +869,20 @@ static int check_pack_rev_indexes(struct repository *r, int show_progress)
 	int res = 0;
 
 	if (show_progress) {
-		for (struct packed_git *p = get_all_packs(the_repository); p; p = p->next)
+		for (struct packed_git *p = get_all_packs(r); p; p = p->next)
 			pack_count++;
 		progress = start_delayed_progress("Verifying reverse pack-indexes", pack_count);
 		pack_count = 0;
 	}
 
-	for (struct packed_git *p = get_all_packs(the_repository); p; p = p->next) {
+	for (struct packed_git *p = get_all_packs(r); p; p = p->next) {
 		int load_error = load_pack_revindex_from_disk(p);
 
 		if (load_error < 0) {
 			error(_("unable to load rev-index for pack '%s'"), p->pack_name);
 			res = ERROR_PACK_REV_INDEX;
 		} else if (!load_error &&
-			   !load_pack_revindex(the_repository, p) &&
+			   !load_pack_revindex(r, p) &&
 			   verify_pack_revindex(p)) {
 			error(_("invalid rev-index for pack '%s'"), p->pack_name);
 			res = ERROR_PACK_REV_INDEX;
@@ -1056,6 +1058,8 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 	}
 
 	errors_found |= check_pack_rev_indexes(the_repository, show_progress);
+	if (verify_bitmap_files(the_repository))
+		errors_found |= ERROR_BITMAP;
 
 	check_connectivity();
 

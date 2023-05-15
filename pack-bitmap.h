@@ -111,4 +111,6 @@ int bitmap_is_midx(struct bitmap_index *bitmap_git);
 const struct string_list *bitmap_preferred_tips(struct repository *r);
 int bitmap_is_preferred_refname(struct repository *r, const char *refname);
 
+int verify_bitmap_files(struct repository *r);
+
 #endif

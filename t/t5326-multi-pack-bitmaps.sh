@@ -434,4 +434,48 @@ test_expect_success 'tagged commits are selected for bitmapping' '
 	)
 '
 
+corrupt_file () {
+	chmod a+w "$1" &&
+	printf "bogus" | dd of="$1" bs=1 seek="12" conv=notrunc
+}
+
+test_expect_success 'git fsck correctly identifies good and bad bitmaps' '
+	git init valid &&
+	test_when_finished rm -rf valid &&
+
+	test_commit_bulk 20 &&
+	git repack -adbf &&
+
+	# Move pack-bitmap aside so it is not deleted
+	# in next repack.
+	packbitmap=$(ls .git/objects/pack/pack-*.bitmap) &&
+	mv "$packbitmap" "$packbitmap.bak" &&
+
+	test_commit_bulk 10 &&
+	git repack -b --write-midx &&
+	midxbitmap=$(ls .git/objects/pack/multi-pack-index-*.bitmap) &&
+
+	# Copy MIDX bitmap to backup. Copy pack bitmap from backup.
+	cp "$midxbitmap" "$midxbitmap.bak" &&
+	cp "$packbitmap.bak" "$packbitmap" &&
+
+	# fsck works at first
+	git fsck 2>err &&
+	test_must_be_empty err &&
+
+	corrupt_file "$packbitmap" &&
+	test_must_fail git fsck 2>err &&
+	grep "bitmap file '\''$packbitmap'\'' has invalid checksum" err &&
+
+	cp "$packbitmap.bak" "$packbitmap" &&
+	corrupt_file "$midxbitmap" &&
+	test_must_fail git fsck 2>err &&
+	grep "bitmap file '\''$midxbitmap'\'' has invalid checksum" err &&
+
+	corrupt_file "$packbitmap" &&
+	test_must_fail git fsck 2>err &&
+	grep "bitmap file '\''$midxbitmap'\'' has invalid checksum" err &&
+	grep "bitmap file '\''$packbitmap'\'' has invalid checksum" err
+'
+
 test_done
