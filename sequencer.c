@@ -660,11 +660,12 @@ void append_conflicts_hint(struct index_state *istate,
 	}
 
 	strbuf_addch(msgbuf, '\n');
-	strbuf_commented_addf(msgbuf, "Conflicts:\n");
+	strbuf_commented_addf(msgbuf, comment_line_char, "Conflicts:\n");
 	for (i = 0; i < istate->cache_nr;) {
 		const struct cache_entry *ce = istate->cache[i++];
 		if (ce_stage(ce)) {
-			strbuf_commented_addf(msgbuf, "\t%s\n", ce->name);
+			strbuf_commented_addf(msgbuf, comment_line_char,
+					      "\t%s\n", ce->name);
 			while (i < istate->cache_nr &&
 			       !strcmp(ce->name, istate->cache[i]->name))
 				i++;
@@ -1143,7 +1144,8 @@ void cleanup_message(struct strbuf *msgbuf,
 	    cleanup_mode == COMMIT_MSG_CLEANUP_SCISSORS)
 		strbuf_setlen(msgbuf, wt_status_locate_end(msgbuf->buf, msgbuf->len));
 	if (cleanup_mode != COMMIT_MSG_CLEANUP_NONE)
-		strbuf_stripspace(msgbuf, cleanup_mode == COMMIT_MSG_CLEANUP_ALL);
+		strbuf_stripspace(msgbuf,
+		  cleanup_mode == COMMIT_MSG_CLEANUP_ALL ? comment_line_char : '\0');
 }
 
 /*
@@ -1174,7 +1176,8 @@ int template_untouched(const struct strbuf *sb, const char *template_file,
 	if (!template_file || strbuf_read_file(&tmpl, template_file, 0) <= 0)
 		return 0;
 
-	strbuf_stripspace(&tmpl, cleanup_mode == COMMIT_MSG_CLEANUP_ALL);
+	strbuf_stripspace(&tmpl,
+	  cleanup_mode == COMMIT_MSG_CLEANUP_ALL ? comment_line_char : '\0');
 	if (!skip_prefix(sb->buf, tmpl.buf, &start))
 		start = sb->buf;
 	strbuf_release(&tmpl);
@@ -1546,7 +1549,8 @@ static int try_to_commit(struct repository *r,
 		cleanup = opts->default_msg_cleanup;
 
 	if (cleanup != COMMIT_MSG_CLEANUP_NONE)
-		strbuf_stripspace(msg, cleanup == COMMIT_MSG_CLEANUP_ALL);
+		strbuf_stripspace(msg,
+		  cleanup == COMMIT_MSG_CLEANUP_ALL ? comment_line_char : '\0');
 	if ((flags & EDIT_MSG) && message_is_empty(msg, cleanup)) {
 		res = 1; /* run 'git commit' to display error message */
 		goto out;
@@ -1840,7 +1844,7 @@ static void add_commented_lines(struct strbuf *buf, const void *str, size_t len)
 		s += count;
 		len -= count;
 	}
-	strbuf_add_commented_lines(buf, s, len);
+	strbuf_add_commented_lines(buf, s, len, comment_line_char);
 }
 
 /* Does the current fixup chain contain a squash command? */
@@ -1939,7 +1943,7 @@ static int append_squash_message(struct strbuf *buf, const char *body,
 	strbuf_addf(buf, _(nth_commit_msg_fmt),
 		    ++opts->current_fixup_count + 1);
 	strbuf_addstr(buf, "\n\n");
-	strbuf_add_commented_lines(buf, body, commented_len);
+	strbuf_add_commented_lines(buf, body, commented_len, comment_line_char);
 	/* buf->buf may be reallocated so store an offset into the buffer */
 	fixup_off = buf->len;
 	strbuf_addstr(buf, body + commented_len);
@@ -2029,7 +2033,8 @@ static int update_squash_messages(struct repository *r,
 			      _(first_commit_msg_str));
 		strbuf_addstr(&buf, "\n\n");
 		if (is_fixup_flag(command, flag))
-			strbuf_add_commented_lines(&buf, body, strlen(body));
+			strbuf_add_commented_lines(&buf, body, strlen(body),
+						   comment_line_char);
 		else
 			strbuf_addstr(&buf, body);
 
@@ -2048,7 +2053,8 @@ static int update_squash_messages(struct repository *r,
 		strbuf_addf(&buf, _(skip_nth_commit_msg_fmt),
 			    ++opts->current_fixup_count + 1);
 		strbuf_addstr(&buf, "\n\n");
-		strbuf_add_commented_lines(&buf, body, strlen(body));
+		strbuf_add_commented_lines(&buf, body, strlen(body),
+					   comment_line_char);
 	} else
 		return error(_("unknown command: %d"), command);
 	repo_unuse_commit_buffer(r, commit, message);

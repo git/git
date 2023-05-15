@@ -6,6 +6,8 @@
 #include "statinfo.h"
 #include "strbuf.h"
 
+struct repository;
+
 /**
  * The directory listing API is used to enumerate paths in the work tree,
  * optionally taking `.git/info/exclude` and `.gitignore` files per directory
