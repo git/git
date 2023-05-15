@@ -1016,6 +1016,25 @@ static void populate_excluded_jump_list(struct packed_ref_iterator *iter,
 		return;
 
 	for (pattern = excluded_patterns; *pattern; pattern++) {
+		/*
+		 * We also can't feed any excludes from hidden refs
+		 * config sections, since later rules may override
+		 * previous ones. For example, with rules "refs/foo" and
+		 * "!refs/foo/bar", we should show "refs/foo/bar" (and
+		 * everything underneath it), but the earlier exclusion
+		 * would cause us to skip all of "refs/foo". We likewise
+		 * don't implement the namespace stripping required for
+		 * '^' rules.
+		 *
+		 * Both are possible to do, but complicated, so avoid
+		 * populating the jump list at all if we see either of
+		 * these patterns.
+		 */
+		if (**pattern == '!' || **pattern == '^')
+			return;
+	}
+
+	for (pattern = excluded_patterns; *pattern; pattern++) {
 		struct jump_list_entry *e;
 
 		/*
