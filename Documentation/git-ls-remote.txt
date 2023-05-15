@@ -96,8 +96,34 @@ OPTIONS
 	separator (so `bar` matches `refs/heads/bar` but not
 	`refs/heads/foobar`).
 
+OUTPUT
+------
+
+The output is in the format:
+
+------------
+<oid> TAB <ref> LF
+------------
+
+When showing an annotated tag, unless `--refs` is given, two such
+lines are shown: one with the refname for the tag itself as `<ref>`,
+and another with `<ref>` followed by `^{}`. The `<oid>` on the latter
+line shows the name of the object the tag points at.
+
 EXAMPLES
 --------
+
+* List all references (including symbolics and pseudorefs), peeling
+  tags:
++
+----
+$ git ls-remote
+27d43aaaf50ef0ae014b88bba294f93658016a2e	HEAD
+950264636c68591989456e3ba0a5442f93152c1a	refs/heads/main
+d9ab777d41f92a8c1684c91cfb02053d7dd1046b	refs/heads/next
+d4ca2e3147b409459955613c152220f4db848ee1	refs/tags/v2.40.0
+73876f4861cd3d187a4682290ab75c9dccadbc56	refs/tags/v2.40.0^{}
+----
 
 * List all references matching given patterns:
 +
