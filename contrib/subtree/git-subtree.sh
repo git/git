@@ -34,8 +34,8 @@ git subtree pull  --prefix=<prefix> <repository> <ref>
 git subtree push  --prefix=<prefix> <repository> <refspec>
 --
 h,help        show the help
-q             quiet
-d             show debug messages
+q,quiet       quiet
+d,debug       show debug messages
 P,prefix=     the name of the subdir to split out
  options for 'split' (also: 'push')
 annotate=     add a prefix to commit message of new commits
