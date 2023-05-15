@@ -2210,12 +2210,13 @@ static int for_each_fullref_in_pattern(struct ref_filter *filter,
 	if (!filter->name_patterns[0]) {
 		/* no patterns; we have to look at everything */
 		return refs_for_each_fullref_in(get_main_ref_store(the_repository),
-						 "", NULL, cb, cb_data);
+						 "", filter->exclude.v, cb, cb_data);
 	}
 
 	return refs_for_each_fullref_in_prefixes(get_main_ref_store(the_repository),
 						 NULL, filter->name_patterns,
-						 NULL, cb, cb_data);
+						 filter->exclude.v,
+						 cb, cb_data);
 }
 
 /*
