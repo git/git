@@ -1,4 +1,4 @@
-#include "../../cache.h"
+#include "../../git-compat-util.h"
 #include "../../hashmap.h"
 #include "../win32.h"
 #include "fscache.h"
