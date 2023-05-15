@@ -87,8 +87,10 @@ git send-email --dump-aliases
 
   Automating:
     --identity              <str>  * Use the sendemail.<id> options.
-    --to-cmd                <str>  * Email To: via `<str> \$patch_path`
-    --cc-cmd                <str>  * Email Cc: via `<str> \$patch_path`
+    --to-cmd                <str>  * Email To: via `<str> \$patch_path`.
+    --cc-cmd                <str>  * Email Cc: via `<str> \$patch_path`.
+    --header-cmd            <str>  * Add headers via `<str> \$patch_path`.
+    --no-header-cmd                * Disable any header command in use.
     --suppress-cc           <str>  * author, self, sob, cc, cccmd, body, bodycc, misc-by, all.
     --[no-]cc-cover                * Email Cc: addresses in the cover letter.
     --[no-]to-cover                * Email To: addresses in the cover letter.
@@ -202,7 +204,7 @@ my (@to,@cc,@xh,$envelope_sender,
 	$author,$sender,$smtp_authpass,$annotate,$compose,$time);
 # Things we either get from config, *or* are overridden on the
 # command-line.
-my ($no_cc, $no_to, $no_bcc, $no_identity);
+my ($no_cc, $no_to, $no_bcc, $no_identity, $no_header_cmd);
 my (@config_to, @getopt_to);
 my (@config_cc, @getopt_cc);
 my (@config_bcc, @getopt_bcc);
@@ -269,7 +271,7 @@ sub do_edit {
 # Variables with corresponding config settings
 my ($suppress_from, $signed_off_by_cc);
 my ($cover_cc, $cover_to);
-my ($to_cmd, $cc_cmd);
+my ($to_cmd, $cc_cmd, $header_cmd);
 my ($smtp_server, $smtp_server_port, @smtp_server_options);
 my ($smtp_authuser, $smtp_encryption, $smtp_ssl_cert_path);
 my ($batch_size, $relogin_delay);
@@ -318,6 +320,7 @@ my %config_settings = (
     "tocmd" => \$to_cmd,
     "cc" => \@config_cc,
     "cccmd" => \$cc_cmd,
+    "headercmd" => \$header_cmd,
     "aliasfiletype" => \$aliasfiletype,
     "bcc" => \@config_bcc,
     "suppresscc" => \@suppress_cc,
@@ -519,6 +522,8 @@ my %options = (
 		    "compose" => \$compose,
 		    "quiet" => \$quiet,
 		    "cc-cmd=s" => \$cc_cmd,
+		    "header-cmd=s" => \$header_cmd,
+		    "no-header-cmd" => \$no_header_cmd,
 		    "suppress-from!" => \$suppress_from,
 		    "no-suppress-from" => sub {$suppress_from = 0},
 		    "suppress-cc=s" => \@suppress_cc,
@@ -1783,16 +1788,16 @@ sub pre_process_file {
 	$subject = $initial_subject;
 	$message = "";
 	$message_num++;
-	# First unfold multiline header fields
+	# Retrieve and unfold header fields.
+	my @header_lines = ();
 	while(<$fh>) {
 		last if /^\s*$/;
-		if (/^\s+\S/ and @header) {
-			chomp($header[$#header]);
-			s/^\s+/ /;
-			$header[$#header] .= $_;
-	    } else {
-			push(@header, $_);
-		}
+		push(@header_lines, $_);
+	}
+	@header = unfold_headers(@header_lines);
+	# Add computed headers, if applicable.
+	unless ($no_header_cmd || ! $header_cmd) {
+		push @header, invoke_header_cmd($header_cmd, $t);
 	}
 	# Now parse the header
 	foreach(@header) {
@@ -2033,15 +2038,64 @@ foreach my $t (@files) {
 	}
 }
 
+# Execute a command and return its output lines as an array.  Blank
+# lines which do not appear at the end of the output are reported as
+# errors.
+sub execute_cmd {
+	my ($prefix, $cmd, $file) = @_;
+	my @lines = ();
+	my $seen_blank_line = 0;
+	open my $fh, "-|", "$cmd \Q$file\E"
+		or die sprintf(__("(%s) Could not execute '%s'"), $prefix, $cmd);
+	while (my $line = <$fh>) {
+		die sprintf(__("(%s) Malformed output from '%s'"), $prefix, $cmd)
+		    if $seen_blank_line;
+		if ($line =~ /^$/) {
+			$seen_blank_line = $line =~ /^$/;
+			next;
+		}
+		push @lines, $line;
+	}
+	close $fh
+	    or die sprintf(__("(%s) failed to close pipe to '%s'"), $prefix, $cmd);
+	return @lines;
+}
+
+# Process headers lines, unfolding multiline headers as defined by RFC
+# 2822.
+sub unfold_headers {
+	my @headers;
+	foreach(@_) {
+		last if /^\s*$/;
+		if (/^\s+\S/ and @headers) {
+			chomp($headers[$#headers]);
+			s/^\s+/ /;
+			$headers[$#headers] .= $_;
+		} else {
+			push(@headers, $_);
+		}
+	}
+	return @headers;
+}
+
+# Invoke the provided CMD with FILE as an argument, which should
+# output RFC 2822 email headers. Fold multiline headers and return the
+# headers as an array.
+sub invoke_header_cmd {
+	my ($cmd, $file) = @_;
+	my @lines = execute_cmd("header-cmd", $header_cmd, $file);
+	return unfold_headers(@lines);
+}
+
 # Execute a command (e.g. $to_cmd) to get a list of email addresses
 # and return a results array
 sub recipients_cmd {
 	my ($prefix, $what, $cmd, $file, $quiet) = @_;
-
+	my @lines = ();
 	my @addresses = ();
-	open my $fh, "-|", "$cmd \Q$file\E"
-	    or die sprintf(__("(%s) Could not execute '%s'"), $prefix, $cmd);
-	while (my $address = <$fh>) {
+
+	@lines = execute_cmd($prefix, $cmd, $file);
+	for my $address (@lines) {
 		$address =~ s/^\s*//g;
 		$address =~ s/\s*$//g;
 		$address = sanitize_address($address);
@@ -2050,8 +2104,6 @@ sub recipients_cmd {
 		printf(__("(%s) Adding %s: %s from: '%s'\n"),
 		       $prefix, $what, $address, $cmd) unless $quiet;
 		}
-	close $fh
-	    or die sprintf(__("(%s) failed to close pipe to '%s'"), $prefix, $cmd);
 	return @addresses;
 }
 

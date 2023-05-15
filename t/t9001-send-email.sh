@@ -374,12 +374,15 @@ test_expect_success $PREREQ,!AUTOIDENT 'broken implicit ident aborts send-email'
 	)
 '
 
-test_expect_success $PREREQ 'setup tocmd and cccmd scripts' '
+test_expect_success $PREREQ 'setup cmd scripts' '
 	write_script tocmd-sed <<-\EOF &&
 	sed -n -e "s/^tocmd--//p" "$1"
 	EOF
-	write_script cccmd-sed <<-\EOF
+	write_script cccmd-sed <<-\EOF &&
 	sed -n -e "s/^cccmd--//p" "$1"
+	EOF
+	write_script headercmd-sed <<-\EOF
+	sed -n -e "s/^headercmd--//p" "$1"
 	EOF
 '
 
@@ -408,6 +411,70 @@ test_expect_success $PREREQ 'cccmd works' '
 		cccmd.patch \
 		&&
 	grep "^	cccmd@example.com" msgtxt1
+'
+
+test_expect_success $PREREQ 'headercmd works' '
+	clean_fake_sendmail &&
+	cp $patches headercmd.patch &&
+	echo "headercmd--X-Debbugs-CC: dummy@example.com" >>headercmd.patch &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--header-cmd=./headercmd-sed \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		headercmd.patch \
+		&&
+	grep "^X-Debbugs-CC: dummy@example.com" msgtxt1
+'
+
+test_expect_success $PREREQ '--no-header-cmd works' '
+	clean_fake_sendmail &&
+	cp $patches headercmd.patch &&
+	echo "headercmd--X-Debbugs-CC: dummy@example.com" >>headercmd.patch &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--header-cmd=./headercmd-sed \
+		--no-header-cmd \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		headercmd.patch \
+		&&
+	! grep "^X-Debbugs-CC: dummy@example.com" msgtxt1
+'
+
+test_expect_success $PREREQ 'multiline fields are correctly unfolded' '
+	clean_fake_sendmail &&
+	cp $patches headercmd.patch &&
+	write_script headercmd-multiline <<-\EOF &&
+	echo "X-Debbugs-CC: someone@example.com
+FoldedField: This is a tale
+ best told using
+ multiple lines."
+	EOF
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--header-cmd=./headercmd-multiline \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		headercmd.patch &&
+	grep "^FoldedField: This is a tale best told using multiple lines.$" msgtxt1
+'
+
+# Blank lines in the middle of the output of a command are invalid.
+test_expect_success $PREREQ 'malform output reported on blank lines in command output' '
+	clean_fake_sendmail &&
+	cp $patches headercmd.patch &&
+	write_script headercmd-malformed-output <<-\EOF &&
+	echo "X-Debbugs-CC: someone@example.com
+
+SomeOtherField: someone-else@example.com"
+	EOF
+	! git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--header-cmd=./headercmd-malformed-output \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		headercmd.patch
 '
 
 test_expect_success $PREREQ 'reject long lines' '
