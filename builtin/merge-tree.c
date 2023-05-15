@@ -17,6 +17,7 @@
 #include "merge-blobs.h"
 #include "quote.h"
 #include "tree.h"
+#include "config.h"
 
 static int line_termination = '\n';
 
@@ -627,6 +628,8 @@ int cmd_merge_tree(int argc, const char **argv, const char *prefix)
 
 	if (argc != expected_remaining_argc)
 		usage_with_options(merge_tree_usage, mt_options);
+
+	git_config(git_default_config, NULL);
 
 	/* Do the relevant type of merge */
 	if (o.mode == MODE_REAL)
