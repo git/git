@@ -4,6 +4,10 @@ test_description='git mv in subdirs'
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-diff-data.sh
 
+index_at_path () {
+	git ls-files --format='%(objectmode) %(objectname) %(stage)' "$@"
+}
+
 test_expect_success 'mv -f refreshes updated index entry' '
 	echo test >bar &&
 	git add bar &&
@@ -187,7 +191,8 @@ test_expect_success "Michael Cassar's test case" '
 	git mv papers/unsorted/Thesis.pdf papers/all-papers/moo-blah.pdf &&
 
 	T=$(git write-tree) &&
-	git ls-tree -r $T | verbose grep partA/outline.txt
+	git ls-tree -r $T >out &&
+	grep partA/outline.txt out
 '
 
 rm -fr papers partA path?
@@ -260,12 +265,12 @@ test_expect_success 'git mv should not change sha1 of moved cache entry' '
 	git init &&
 	echo 1 >dirty &&
 	git add dirty &&
-	entry="$(git ls-files --stage dirty | cut -f 1)" &&
+	entry="$(index_at_path dirty)" &&
 	git mv dirty dirty2 &&
-	test "$entry" = "$(git ls-files --stage dirty2 | cut -f 1)" &&
+	test "$entry" = "$(index_at_path dirty2)" &&
 	echo 2 >dirty2 &&
 	git mv dirty2 dirty &&
-	test "$entry" = "$(git ls-files --stage dirty | cut -f 1)"
+	test "$entry" = "$(index_at_path dirty)"
 '
 
 rm -f dirty dirty2
@@ -342,7 +347,7 @@ test_expect_success 'git mv cannot move a submodule in a file' '
 '
 
 test_expect_success 'git mv moves a submodule with a .git directory and no .gitmodules' '
-	entry="$(git ls-files --stage sub | cut -f 1)" &&
+	entry="$(index_at_path sub)" &&
 	git rm .gitmodules &&
 	(
 		cd sub &&
@@ -353,7 +358,7 @@ test_expect_success 'git mv moves a submodule with a .git directory and no .gitm
 	mkdir mod &&
 	git mv sub mod/sub &&
 	test_path_is_missing sub &&
-	test "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" &&
+	test "$entry" = "$(index_at_path mod/sub)" &&
 	git -C mod/sub status &&
 	git update-index --refresh &&
 	git diff-files --quiet
@@ -363,7 +368,7 @@ test_expect_success 'git mv moves a submodule with a .git directory and .gitmodu
 	rm -rf mod &&
 	git reset --hard &&
 	git submodule update &&
-	entry="$(git ls-files --stage sub | cut -f 1)" &&
+	entry="$(index_at_path sub)" &&
 	(
 		cd sub &&
 		rm -f .git &&
@@ -373,7 +378,7 @@ test_expect_success 'git mv moves a submodule with a .git directory and .gitmodu
 	mkdir mod &&
 	git mv sub mod/sub &&
 	test_path_is_missing sub &&
-	test "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" &&
+	test "$entry" = "$(index_at_path mod/sub)" &&
 	git -C mod/sub status &&
 	echo mod/sub >expected &&
 	git config -f .gitmodules submodule.sub.path >actual &&
@@ -386,11 +391,11 @@ test_expect_success 'git mv moves a submodule with gitfile' '
 	rm -rf mod &&
 	git reset --hard &&
 	git submodule update &&
-	entry="$(git ls-files --stage sub | cut -f 1)" &&
+	entry="$(index_at_path sub)" &&
 	mkdir mod &&
 	git -C mod mv ../sub/ . &&
 	test_path_is_missing sub &&
-	test "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" &&
+	test "$entry" = "$(index_at_path mod/sub)" &&
 	git -C mod/sub status &&
 	echo mod/sub >expected &&
 	git config -f .gitmodules submodule.sub.path >actual &&
@@ -404,12 +409,12 @@ test_expect_success 'mv does not complain when no .gitmodules file is found' '
 	git reset --hard &&
 	git submodule update &&
 	git rm .gitmodules &&
-	entry="$(git ls-files --stage sub | cut -f 1)" &&
+	entry="$(index_at_path sub)" &&
 	mkdir mod &&
 	git mv sub mod/sub 2>actual.err &&
 	test_must_be_empty actual.err &&
 	test_path_is_missing sub &&
-	test "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" &&
+	test "$entry" = "$(index_at_path mod/sub)" &&
 	git -C mod/sub status &&
 	git update-index --refresh &&
 	git diff-files --quiet
@@ -420,7 +425,7 @@ test_expect_success 'mv will error out on a modified .gitmodules file unless sta
 	git reset --hard &&
 	git submodule update &&
 	git config -f .gitmodules foo.bar true &&
-	entry="$(git ls-files --stage sub | cut -f 1)" &&
+	entry="$(index_at_path sub)" &&
 	mkdir mod &&
 	test_must_fail git mv sub mod/sub 2>actual.err &&
 	test_file_not_empty actual.err &&
@@ -430,7 +435,7 @@ test_expect_success 'mv will error out on a modified .gitmodules file unless sta
 	git mv sub mod/sub 2>actual.err &&
 	test_must_be_empty actual.err &&
 	test_path_is_missing sub &&
-	test "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" &&
+	test "$entry" = "$(index_at_path mod/sub)" &&
 	git -C mod/sub status &&
 	git update-index --refresh &&
 	git diff-files --quiet
@@ -442,13 +447,13 @@ test_expect_success 'mv issues a warning when section is not found in .gitmodule
 	git submodule update &&
 	git config -f .gitmodules --remove-section submodule.sub &&
 	git add .gitmodules &&
-	entry="$(git ls-files --stage sub | cut -f 1)" &&
+	entry="$(index_at_path sub)" &&
 	echo "warning: Could not find section in .gitmodules where path=sub" >expect.err &&
 	mkdir mod &&
 	git mv sub mod/sub 2>actual.err &&
 	test_cmp expect.err actual.err &&
 	test_path_is_missing sub &&
-	test "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" &&
+	test "$entry" = "$(index_at_path mod/sub)" &&
 	git -C mod/sub status &&
 	git update-index --refresh &&
 	git diff-files --quiet
