@@ -91,6 +91,28 @@ UI, Workflows & Features
  * The titles of manual pages used to be chomped at an unreasonably
    short limit, which has been removed.
 
+ * Error messages given when working on an unborn branch that is
+   checked out in another worktree have been improved.
+
+ * The documentation was misleading about the interaction between
+   GIT_DEFAULT_HASH and "git clone", which has been clarified to
+   stress that the variable is to be ignored by the command.
+
+ * "git send-email" learned "--header-cmd=<cmd>" that can inject
+   arbitrary e-mail header lines to the outgoing messages.
+
+ * "git fsck" learned to detect bit-flip breakages in the reachability
+   bitmap files.
+
+ * The "--stdin" option of "git name-rev" has been replaced with
+   the "--annotate-stdin" option more than a year ago.  We stop
+   advertising it in the "git name-rev -h" output.
+
+ * "git push --all" gained an alias "git push --branches".
+
+ * "git fetch" learned the "--porcelain" option that emits what it did
+   in a machine-parseable format.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -159,6 +181,14 @@ Performance, Internal Implementation, Development Support etc.
  * Our custom callout formatter is no longer used in the documentation
    formatting toolchain, as the upstream default ones give better
    output these days.
+
+ * The tracing mechanism learned to notice and report when
+   auto-discovered bare repositories are being used, as allowing so
+   without explicitly stating the user intends to do so (with setting
+   GIT_DIR for example) can be used with social engineering as an
+   attack vector.
+
+ * "git diff-files" learned not to expand sparse-index unless needed.
 
 
 Fixes since v2.40
@@ -325,6 +355,16 @@ Fixes since v2.40
    specify the end-of-line conversion.
    (merge 6696077ace ah/doc-attributes-text later to maint).
 
+ * Gitk updates from GfW project.
+   (merge 99e70f3077 js/gitk-fixes-from-gfw later to maint).
+
+ * "git diff --dirstat" leaked memory, which has been plugged.
+   (merge 83973981eb jc/dirstat-plug-leaks later to maint).
+
+ * "git merge-tree" reads the basic configuration, which can be used
+    by git forges to disable replace-refs feature.
+   (merge b6551feadf ds/merge-tree-use-config later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f7111175df as/doc-markup-fix later to maint).
    (merge 90ff7c9898 fc/test-aggregation-clean-up later to maint).
@@ -346,3 +386,6 @@ Fixes since v2.40
    (merge ad353d7e77 ma/gittutorial-fixes later to maint).
    (merge a5855fd8d4 ar/test-cleanup-unused-file-creation-part2 later to maint).
    (merge 0c5308af30 sd/doc-gitignore-and-rm-cached later to maint).
+   (merge cbb83daeaf kh/doc-interpret-trailers-updates later to maint).
+   (merge 3d77fbb664 ar/config-count-tests-updates later to maint).
+   (merge b7cf25c8f4 jc/t9800-fix-use-of-show-s-raw later to maint).
