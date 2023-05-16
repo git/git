@@ -23,6 +23,7 @@
 #include "xdiff-interface.h"
 #include "ll-merge.h"
 #include "lockfile.h"
+#include "name-hash.h"
 #include "object-name.h"
 #include "object-file.h"
 #include "parse-options.h"

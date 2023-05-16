@@ -23,6 +23,7 @@
 #include "ll-merge.h"
 #include "lockfile.h"
 #include "match-trees.h"
+#include "name-hash.h"
 #include "object-file.h"
 #include "object-name.h"
 #include "object-store.h"

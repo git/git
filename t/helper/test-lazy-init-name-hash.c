@@ -2,6 +2,7 @@
 #include "test-tool.h"
 #include "cache.h"
 #include "environment.h"
+#include "name-hash.h"
 #include "parse-options.h"
 #include "repository.h"
 #include "setup.h"
