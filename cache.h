@@ -245,12 +245,6 @@ struct index_state {
 void index_state_init(struct index_state *istate, struct repository *r);
 void release_index(struct index_state *istate);
 
-/* Name hashing */
-int test_lazy_init_name_hash(struct index_state *istate, int try_threaded);
-void add_name_hash(struct index_state *istate, struct cache_entry *ce);
-void remove_name_hash(struct index_state *istate, struct cache_entry *ce);
-void free_name_hash(struct index_state *istate);
-
 /* Cache entry creation and cleanup */
 
 /*
@@ -377,9 +371,6 @@ int repo_index_has_changes(struct repository *repo,
 
 int verify_path(const char *path, unsigned mode);
 int strcmp_offset(const char *s1, const char *s2, size_t *first_change);
-int index_dir_exists(struct index_state *istate, const char *name, int namelen);
-void adjust_dirname_case(struct index_state *istate, char *name);
-struct cache_entry *index_file_exists(struct index_state *istate, const char *name, int namelen, int igncase);
 
 /*
  * Searches for an entry defined by name and namelen in the given index.

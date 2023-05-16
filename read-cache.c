@@ -25,6 +25,7 @@
 #include "environment.h"
 #include "gettext.h"
 #include "mem-pool.h"
+#include "name-hash.h"
 #include "object-name.h"
 #include "resolve-undo.h"
 #include "revision.h"

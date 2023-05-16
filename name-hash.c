@@ -8,6 +8,7 @@
 #include "cache.h"
 #include "environment.h"
 #include "gettext.h"
+#include "name-hash.h"
 #include "thread-utils.h"
 #include "trace.h"
 #include "trace2.h"

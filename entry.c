@@ -5,6 +5,7 @@
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
+#include "name-hash.h"
 #include "streaming.h"
 #include "submodule.h"
 #include "symlinks.h"

@@ -2,6 +2,7 @@
 #include "alloc.h"
 #include "environment.h"
 #include "gettext.h"
+#include "name-hash.h"
 #include "repository.h"
 #include "sparse-index.h"
 #include "tree.h"

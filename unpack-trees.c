@@ -7,6 +7,7 @@
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
+#include "name-hash.h"
 #include "tree.h"
 #include "tree-walk.h"
 #include "cache-tree.h"
