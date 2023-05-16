@@ -38,6 +38,7 @@
 #include "oid-array.h"
 #include "promisor-remote.h"
 #include "revision.h"
+#include "sparse-index.h"
 #include "strmap.h"
 #include "submodule-config.h"
 #include "submodule.h"

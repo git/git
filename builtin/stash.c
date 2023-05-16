@@ -20,6 +20,7 @@
 #include "rerere.h"
 #include "revision.h"
 #include "setup.h"
+#include "sparse-index.h"
 #include "log-tree.h"
 #include "diffcore.h"
 #include "exec-cmd.h"

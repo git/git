@@ -22,6 +22,7 @@
 #include "repository.h"
 #include "resolve-undo.h"
 #include "setup.h"
+#include "sparse-index.h"
 #include "submodule.h"
 #include "submodule-config.h"
 

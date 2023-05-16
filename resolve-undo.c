@@ -2,6 +2,7 @@
 #include "dir.h"
 #include "hash.h"
 #include "resolve-undo.h"
+#include "sparse-index.h"
 #include "string-list.h"
 
 /* The only error case is to run out of memory in string-list */

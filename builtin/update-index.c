@@ -24,6 +24,7 @@
 #include "dir.h"
 #include "repository.h"
 #include "setup.h"
+#include "sparse-index.h"
 #include "split-index.h"
 #include "symlinks.h"
 #include "fsmonitor.h"

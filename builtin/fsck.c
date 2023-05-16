@@ -25,6 +25,7 @@
 #include "replace-object.h"
 #include "resolve-undo.h"
 #include "run-command.h"
+#include "sparse-index.h"
 #include "worktree.h"
 #include "pack-revindex.h"
 

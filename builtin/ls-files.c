@@ -23,6 +23,7 @@
 #include "pathspec.h"
 #include "run-command.h"
 #include "setup.h"
+#include "sparse-index.h"
 #include "submodule.h"
 #include "submodule-config.h"
 

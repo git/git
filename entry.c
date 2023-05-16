@@ -6,6 +6,7 @@
 #include "gettext.h"
 #include "hex.h"
 #include "name-hash.h"
+#include "sparse-index.h"
 #include "streaming.h"
 #include "submodule.h"
 #include "symlinks.h"

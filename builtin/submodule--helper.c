@@ -13,6 +13,7 @@
 #include "pathspec.h"
 #include "dir.h"
 #include "setup.h"
+#include "sparse-index.h"
 #include "submodule.h"
 #include "submodule-config.h"
 #include "string-list.h"
