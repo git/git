@@ -27,6 +27,7 @@
 #include "mem-pool.h"
 #include "name-hash.h"
 #include "object-name.h"
+#include "preload-index.h"
 #include "resolve-undo.h"
 #include "revision.h"
 #include "run-command.h"

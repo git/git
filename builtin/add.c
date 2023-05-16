@@ -17,6 +17,7 @@
 #include "cache-tree.h"
 #include "run-command.h"
 #include "parse-options.h"
+#include "preload-index.h"
 #include "diff.h"
 #include "diffcore.h"
 #include "revision.h"

@@ -8,6 +8,7 @@
 #include "fsmonitor.h"
 #include "gettext.h"
 #include "config.h"
+#include "preload-index.h"
 #include "progress.h"
 #include "thread-utils.h"
 #include "repository.h"

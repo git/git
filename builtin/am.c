@@ -29,6 +29,7 @@
 #include "unpack-trees.h"
 #include "branch.h"
 #include "object-name.h"
+#include "preload-index.h"
 #include "sequencer.h"
 #include "revision.h"
 #include "merge-recursive.h"

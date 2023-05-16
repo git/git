@@ -220,9 +220,6 @@ int repo_hold_locked_index(struct repository *repo,
 			   struct lock_file *lf,
 			   int flags);
 
-int repo_read_index_preload(struct repository *,
-			    const struct pathspec *pathspec,
-			    unsigned refresh_flags);
 int repo_read_index_unmerged(struct repository *);
 /*
  * Opportunistically update the index but do not complain if we can't.

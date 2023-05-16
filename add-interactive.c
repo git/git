@@ -5,6 +5,7 @@
 #include "diffcore.h"
 #include "gettext.h"
 #include "hex.h"
+#include "preload-index.h"
 #include "revision.h"
 #include "refs.h"
 #include "string-list.h"

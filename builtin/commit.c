@@ -30,6 +30,7 @@
 #include "utf8.h"
 #include "object-name.h"
 #include "parse-options.h"
+#include "preload-index.h"
 #include "string-list.h"
 #include "rerere.h"
 #include "unpack-trees.h"
