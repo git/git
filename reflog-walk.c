@@ -3,6 +3,7 @@
 #include "commit.h"
 #include "refs.h"
 #include "diff.h"
+#include "repository.h"
 #include "revision.h"
 #include "string-list.h"
 #include "reflog-walk.h"

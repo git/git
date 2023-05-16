@@ -5,6 +5,7 @@
 #include "parse-options.h"
 #include "diff.h"
 #include "gettext.h"
+#include "repository.h"
 #include "revision.h"
 #include "rerere.h"
 #include "dir.h"

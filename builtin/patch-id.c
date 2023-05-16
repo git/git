@@ -2,6 +2,7 @@
 #include "config.h"
 #include "diff.h"
 #include "gettext.h"
+#include "hash.h"
 #include "hex.h"
 #include "parse-options.h"
 

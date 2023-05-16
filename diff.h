@@ -4,9 +4,11 @@
 #ifndef DIFF_H
 #define DIFF_H
 
+#include "hash-ll.h"
 #include "pathspec.h"
-#include "oidset.h"
 #include "strbuf.h"
+
+struct oidset;
 
 /**
  * The diff API is for programs that compare two sets of files (e.g. two trees,
