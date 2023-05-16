@@ -69,6 +69,12 @@ struct recent_data {
 	int ignore_in_core_kept_packs;
 };
 
+static int obj_is_recent(const struct object_id *oid, timestamp_t mtime,
+			 struct recent_data *data)
+{
+	return mtime > data->timestamp;
+}
+
 static void add_recent_object(const struct object_id *oid,
 			      struct packed_git *pack,
 			      off_t offset,
@@ -78,7 +84,7 @@ static void add_recent_object(const struct object_id *oid,
 	struct object *obj;
 	enum object_type type;
 
-	if (mtime <= data->timestamp)
+	if (!obj_is_recent(oid, mtime, data))
 		return;
 
 	/*
