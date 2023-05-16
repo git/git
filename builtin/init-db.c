@@ -231,9 +231,36 @@ static int create_default_files(const char *template_path,
 	 * We must make sure command-line options continue to override any
 	 * values we might have just re-read from the config.
 	 */
-	is_bare_repository_cfg = init_is_bare_repository || !work_tree;
 	if (init_shared_repository != -1)
 		set_shared_repository(init_shared_repository);
+	/*
+	 * TODO: heed core.bare from config file in templates if no
+	 *       command-line override given
+	 */
+	is_bare_repository_cfg = init_is_bare_repository || !work_tree;
+	/* TODO (continued):
+	 *
+	 * Unfortunately, the line above is equivalent to
+	 *    is_bare_repository_cfg = !work_tree;
+	 * which ignores the config entirely even if no `--[no-]bare`
+	 * command line option was present.
+	 *
+	 * To see why, note that before this function, there was this call:
+	 *    init_is_bare_repository = is_bare_repository()
+	 * expanding the right hand side:
+	 *                 = is_bare_repository_cfg && !get_git_work_tree()
+	 *                 = is_bare_repository_cfg && !work_tree
+	 * note that the last simplification above is valid because nothing
+	 * calls repo_init() or set_git_work_tree() between any of the
+	 * relevant calls in the code, and thus the !get_git_work_tree()
+	 * calls will return the same result each time.  So, what we are
+	 * interested in computing is the right hand side of the line of
+	 * code just above this comment:
+	 *     init_is_bare_repository || !work_tree
+	 *        = is_bare_repository_cfg && !work_tree || !work_tree
+	 *        = !work_tree
+	 * because "A && !B || !B == !B" for all boolean values of A & B.
+	 */
 
 	/*
 	 * We would have created the above under user's umask -- under
