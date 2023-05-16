@@ -24,6 +24,7 @@
 #include "replace-object.h"
 #include "repository.h"
 #include "tag.h"
+#include "wildmatch.h"
 
 static const char * const git_replace_usage[] = {
 	N_("git replace [-f] <object> <replacement>"),

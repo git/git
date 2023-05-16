@@ -35,6 +35,7 @@
 #include "entry.h"
 #include "setup.h"
 #include "symlinks.h"
+#include "wildmatch.h"
 #include "ws.h"
 #include "wrapper.h"
 

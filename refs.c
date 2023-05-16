@@ -29,6 +29,7 @@
 #include "sigchain.h"
 #include "date.h"
 #include "commit.h"
+#include "wildmatch.h"
 #include "wrapper.h"
 
 /*

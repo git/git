@@ -4,6 +4,7 @@
 #include "repository.h"
 #include "revision.h"
 #include "reachable.h"
+#include "wildmatch.h"
 #include "worktree.h"
 #include "reflog.h"
 #include "parse-options.h"

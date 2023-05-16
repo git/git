@@ -46,6 +46,7 @@
 #include "list-objects-filter-options.h"
 #include "resolve-undo.h"
 #include "parse-options.h"
+#include "wildmatch.h"
 
 volatile show_early_output_fn_t show_early_output;
 

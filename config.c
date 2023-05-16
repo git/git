@@ -36,6 +36,7 @@
 #include "setup.h"
 #include "strvec.h"
 #include "trace2.h"
+#include "wildmatch.h"
 #include "worktree.h"
 #include "ws.h"
 #include "wrapper.h"

@@ -12,6 +12,7 @@
 #include "strvec.h"
 #include "symlinks.h"
 #include "quote.h"
+#include "wildmatch.h"
 
 /*
  * Finds which of the given pathspecs match items in the index.
