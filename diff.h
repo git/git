@@ -694,4 +694,6 @@ void print_stat_summary(FILE *fp, int files,
 			int insertions, int deletions);
 void setup_diff_pager(struct diff_options *);
 
+extern int diff_auto_refresh_index;
+
 #endif /* DIFF_H */
