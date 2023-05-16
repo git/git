@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2005 Junio C Hamano
  */
-#include "cache.h"
+#include "git-compat-util.h"
 #include "quote.h"
 #include "commit.h"
 #include "diff.h"

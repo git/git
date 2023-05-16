@@ -6,7 +6,6 @@
 #include "gettext.h"
 #include "hex.h"
 #include "repository.h"
-#include "cache.h"
 #include "config.h"
 #include "parse-options.h"
 #include "quote.h"

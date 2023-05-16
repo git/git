@@ -5,13 +5,12 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
-#include "cache.h"
+#include "builtin.h"
 #include "repository.h"
 #include "config.h"
 #include "convert.h"
 #include "quote.h"
 #include "dir.h"
-#include "builtin.h"
 #include "gettext.h"
 #include "object-name.h"
 #include "strbuf.h"

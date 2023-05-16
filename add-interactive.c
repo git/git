@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "add-interactive.h"
 #include "color.h"
 #include "config.h"

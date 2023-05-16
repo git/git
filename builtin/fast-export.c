@@ -4,7 +4,6 @@
  * Copyright (C) 2007 Johannes E. Schindelin
  */
 #include "builtin.h"
-#include "cache.h"
 #include "config.h"
 #include "gettext.h"
 #include "hex.h"

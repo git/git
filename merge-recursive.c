@@ -3,7 +3,7 @@
  * Fredrik Kuivinen.
  * The thieves were Alex Riesen and Johannes Schindelin, in June/July 2006
  */
-#include "cache.h"
+#include "git-compat-util.h"
 #include "merge-recursive.h"
 
 #include "advice.h"

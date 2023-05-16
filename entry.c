@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "blob.h"
 #include "object-store.h"
 #include "dir.h"

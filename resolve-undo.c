@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "dir.h"
 #include "hash.h"
 #include "read-cache.h"

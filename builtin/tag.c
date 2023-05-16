@@ -6,10 +6,9 @@
  * Based on git-tag.sh and mktag.c by Linus Torvalds.
  */
 
-#include "cache.h"
+#include "builtin.h"
 #include "advice.h"
 #include "config.h"
-#include "builtin.h"
 #include "editor.h"
 #include "environment.h"
 #include "gettext.h"

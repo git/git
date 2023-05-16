@@ -4129,13 +4129,11 @@ Note that terminology has changed since that revision.  For example, the
 README in that revision uses the word "changeset" to describe what we
 now call a <<def_commit_object,commit>>.
 
-Also, we do not call it "cache" any more, but rather "index"; however, the
-file is still called `cache.h`.  Remark: Not much reason to change it now,
-especially since there is no good single name for it anyway, because it is
-basically _the_ header file which is included by _all_ of Git's C sources.
+Also, we do not call it "cache" any more, but rather "index"; however,
+the file is still called `read-cache.h`.
 
 If you grasp the ideas in that initial commit, you should check out a
-more recent version and skim `cache.h`, `object.h` and `commit.h`.
+more recent version and skim `read-cache-ll.h`, `object.h` and `commit.h`.
 
 In the early days, Git (in the tradition of UNIX) was a bunch of programs
 which were extremely simple, and which you used in scripts, piping the
@@ -4146,11 +4144,11 @@ many of these parts have become builtins, and some of the core has been
 and to avoid code duplication.
 
 By now, you know what the index is (and find the corresponding data
-structures in `cache.h`), and that there are just a couple of object types
-(blobs, trees, commits and tags) which inherit their common structure from
-`struct object`, which is their first member (and thus, you can cast e.g.
-`(struct object *)commit` to achieve the _same_ as `&commit->object`, i.e.
-get at the object name and flags).
+structures in `read-cache-ll.h`), and that there are just a couple of
+object types (blobs, trees, commits and tags) which inherit their
+common structure from `struct object`, which is their first member
+(and thus, you can cast e.g.  `(struct object *)commit` to achieve the
+_same_ as `&commit->object`, i.e.  get at the object name and flags).
 
 Now is a good point to take a break to let this information sink in.
 

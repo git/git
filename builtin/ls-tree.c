@@ -3,7 +3,7 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
-#include "cache.h"
+#include "builtin.h"
 #include "config.h"
 #include "gettext.h"
 #include "hex.h"
@@ -13,7 +13,6 @@
 #include "tree.h"
 #include "commit.h"
 #include "quote.h"
-#include "builtin.h"
 #include "parse-options.h"
 #include "pathspec.h"
 

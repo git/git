@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2008 Linus Torvalds
  */
-#include "cache.h"
+#include "git-compat-util.h"
 #include "pathspec.h"
 #include "dir.h"
 #include "environment.h"

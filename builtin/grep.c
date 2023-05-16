@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2006 Junio C Hamano
  */
-#include "cache.h"
+#include "builtin.h"
 #include "alloc.h"
 #include "gettext.h"
 #include "hex.h"
@@ -14,7 +14,6 @@
 #include "commit.h"
 #include "tag.h"
 #include "tree-walk.h"
-#include "builtin.h"
 #include "parse-options.h"
 #include "string-list.h"
 #include "run-command.h"

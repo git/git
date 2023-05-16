@@ -6,7 +6,7 @@
  */
 
 #define USE_THE_INDEX_VARIABLE
-#include "cache.h"
+#include "builtin.h"
 #include "advice.h"
 #include "config.h"
 #include "lockfile.h"
@@ -15,7 +15,6 @@
 #include "dir.h"
 #include "editor.h"
 #include "environment.h"
-#include "builtin.h"
 #include "diff.h"
 #include "diffcore.h"
 #include "commit.h"

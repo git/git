@@ -8,9 +8,8 @@
  * git-tag.sh and mktag.c by Linus Torvalds.
  */
 
-#include "cache.h"
-#include "config.h"
 #include "builtin.h"
+#include "config.h"
 #include "editor.h"
 #include "environment.h"
 #include "gettext.h"
