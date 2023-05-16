@@ -13,7 +13,7 @@
 #include "gettext.h"
 #include "hex.h"
 #include "hook.h"
-#include "ll-merge.h"
+#include "merge-ll.h"
 #include "lockfile.h"
 #include "mem-pool.h"
 #include "merge-recursive.h"

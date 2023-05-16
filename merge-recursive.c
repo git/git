@@ -20,7 +20,7 @@
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
-#include "ll-merge.h"
+#include "merge-ll.h"
 #include "lockfile.h"
 #include "match-trees.h"
 #include "name-hash.h"

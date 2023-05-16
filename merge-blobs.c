@@ -1,7 +1,7 @@
 #include "git-compat-util.h"
 #include "run-command.h"
 #include "xdiff-interface.h"
-#include "ll-merge.h"
+#include "merge-ll.h"
 #include "blob.h"
 #include "merge-blobs.h"
 #include "object-store.h"

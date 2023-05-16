@@ -12,7 +12,7 @@
 #include "diffcore.h"
 #include "hex.h"
 #include "xdiff-interface.h"
-#include "ll-merge.h"
+#include "merge-ll.h"
 #include "dir.h"
 #include "notes.h"
 #include "notes-merge.h"
