@@ -2188,4 +2188,13 @@ test_expect_success 'Does --[no-]contains stop at commits? Yes!' '
 	test_cmp expected actual
 '
 
+test_expect_success 'If tag is created then tag message file is unlinked' '
+	test_when_finished "git tag -d foo" &&
+	write_script fakeeditor <<-\EOF &&
+	echo Message >.git/TAG_EDITMSG
+	EOF
+	GIT_EDITOR=./fakeeditor git tag -a foo &&
+	test_path_is_missing .git/TAG_EDITMSG
+'
+
 test_done
