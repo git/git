@@ -3,7 +3,7 @@
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "commit.h"
 #include "tag.h"
 #include "diff.h"

@@ -5,7 +5,7 @@
 #include "gettext.h"
 #include "hex.h"
 #include "refs.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "pkt-line.h"
 #include "sideband.h"
 #include "run-command.h"

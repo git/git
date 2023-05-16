@@ -13,7 +13,7 @@
 #include "list-objects.h"
 #include "packfile.h"
 #include "worktree.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "pack-bitmap.h"
 #include "pack-mtimes.h"
 

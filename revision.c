@@ -6,7 +6,7 @@
 #include "hex.h"
 #include "object-name.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "tag.h"
 #include "blob.h"
 #include "tree.h"

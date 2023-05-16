@@ -20,7 +20,7 @@
 #include "packfile.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "path.h"
 #include "read-cache-ll.h"
 #include "replace-object.h"

@@ -1,6 +1,7 @@
 #include "builtin.h"
 #include "commit.h"
 #include "diff.h"
+#include "dir.h"
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
@@ -13,7 +14,7 @@
 #include "replace-object.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "shallow.h"
 
 static const char * const prune_usage[] = {

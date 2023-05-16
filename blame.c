@@ -1,6 +1,6 @@
 #include "git-compat-util.h"
 #include "refs.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "cache-tree.h"
 #include "mergesort.h"
 #include "convert.h"

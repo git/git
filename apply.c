@@ -12,7 +12,7 @@
 #include "alloc.h"
 #include "base85.h"
 #include "config.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "blob.h"
 #include "delta.h"
 #include "diff.h"

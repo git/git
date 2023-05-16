@@ -29,7 +29,7 @@
 #include "diff.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "advice.h"
 #include "branch.h"
 #include "list-objects-filter-options.h"

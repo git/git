@@ -1,6 +1,6 @@
 #include "git-compat-util.h"
 #include "blob.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "dir.h"
 #include "environment.h"
 #include "gettext.h"

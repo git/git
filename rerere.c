@@ -17,7 +17,7 @@
 #include "path.h"
 #include "pathspec.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "hash-lookup.h"
 #include "strmap.h"
 #include "wrapper.h"

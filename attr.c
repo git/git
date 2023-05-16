@@ -19,7 +19,7 @@
 #include "quote.h"
 #include "read-cache-ll.h"
 #include "revision.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "setup.h"
 #include "thread-utils.h"
 #include "tree-walk.h"

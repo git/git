@@ -15,7 +15,7 @@
 #include "hex.h"
 #include "refs.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "path.h"
 #include "tag.h"
 #include "run-command.h"

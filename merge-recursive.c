@@ -26,7 +26,7 @@
 #include "name-hash.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "path.h"
 #include "repository.h"
 #include "revision.h"

@@ -27,7 +27,7 @@
 #include "submodule-config.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "packfile.h"
 #include "pager.h"
 #include "path.h"

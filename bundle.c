@@ -4,7 +4,7 @@
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "repository.h"
 #include "object.h"
 #include "commit.h"
