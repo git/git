@@ -554,7 +554,9 @@ int cmp_cache_name_compare(const void *a_, const void *b_);
  * return 0 if success, 1 - if addition of a file failed and
  * ADD_FILES_IGNORE_ERRORS was specified in flags
  */
-int add_files_to_cache(const char *prefix, const struct pathspec *pathspec, int flags);
+int add_files_to_cache(struct repository *repo, const char *prefix,
+		       const struct pathspec *pathspec, int include_sparse,
+		       int flags);
 
 /* diff.c */
 extern int diff_auto_refresh_index;
