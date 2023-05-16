@@ -18,6 +18,7 @@
 #include "packfile.h"
 #include "pretty.h"
 #include "object-store.h"
+#include "read-cache-ll.h"
 #include "repository.h"
 #include "setup.h"
 #include "submodule.h"

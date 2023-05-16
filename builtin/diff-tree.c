@@ -8,6 +8,7 @@
 #include "log-tree.h"
 #include "builtin.h"
 #include "submodule.h"
+#include "read-cache-ll.h"
 #include "repository.h"
 #include "tree.h"
 

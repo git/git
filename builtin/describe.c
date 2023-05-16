@@ -13,6 +13,7 @@
 #include "exec-cmd.h"
 #include "object-name.h"
 #include "parse-options.h"
+#include "read-cache-ll.h"
 #include "revision.h"
 #include "diff.h"
 #include "hashmap.h"

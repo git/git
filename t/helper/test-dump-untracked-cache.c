@@ -3,6 +3,7 @@
 #include "cache.h"
 #include "dir.h"
 #include "hex.h"
+#include "read-cache-ll.h"
 #include "repository.h"
 #include "setup.h"
 

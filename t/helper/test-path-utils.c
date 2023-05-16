@@ -3,6 +3,7 @@
 #include "abspath.h"
 #include "environment.h"
 #include "path.h"
+#include "read-cache-ll.h"
 #include "setup.h"
 #include "string-list.h"
 #include "trace.h"

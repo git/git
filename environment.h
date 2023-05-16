@@ -1,9 +1,8 @@
 #ifndef ENVIRONMENT_H
 #define ENVIRONMENT_H
 
-#include "strvec.h"
-
 struct repository;
+struct strvec;
 
 /*
  * The character that begins a commented line in user-editable file

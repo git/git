@@ -2,6 +2,7 @@
 #include "test-tool.h"
 #include "cache.h"
 #include "hex.h"
+#include "read-cache-ll.h"
 #include "repository.h"
 #include "setup.h"
 #include "split-index.h"

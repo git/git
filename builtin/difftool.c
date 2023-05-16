@@ -23,6 +23,7 @@
 #include "gettext.h"
 #include "hex.h"
 #include "parse-options.h"
+#include "read-cache-ll.h"
 #include "sparse-index.h"
 #include "strvec.h"
 #include "strbuf.h"

@@ -28,6 +28,7 @@
 #include "object-name.h"
 #include "object-store.h"
 #include "commit-reach.h"
+#include "read-cache-ll.h"
 #include "setup.h"
 #include "shallow.h"
 #include "trace2.h"

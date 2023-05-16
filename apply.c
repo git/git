@@ -28,6 +28,7 @@
 #include "object-file.h"
 #include "parse-options.h"
 #include "quote.h"
+#include "read-cache.h"
 #include "rerere.h"
 #include "apply.h"
 #include "entry.h"

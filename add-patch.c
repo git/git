@@ -6,6 +6,7 @@
 #include "environment.h"
 #include "gettext.h"
 #include "object-name.h"
+#include "read-cache-ll.h"
 #include "strbuf.h"
 #include "run-command.h"
 #include "strvec.h"

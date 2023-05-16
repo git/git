@@ -6,6 +6,7 @@
 #include "gettext.h"
 #include "hex.h"
 #include "preload-index.h"
+#include "read-cache-ll.h"
 #include "revision.h"
 #include "refs.h"
 #include "string-list.h"

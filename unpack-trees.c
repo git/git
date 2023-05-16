@@ -15,6 +15,7 @@
 #include "progress.h"
 #include "refs.h"
 #include "attr.h"
+#include "read-cache.h"
 #include "split-index.h"
 #include "sparse-index.h"
 #include "submodule.h"

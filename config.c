@@ -33,6 +33,7 @@
 #include "replace-object.h"
 #include "refs.h"
 #include "setup.h"
+#include "strvec.h"
 #include "trace2.h"
 #include "worktree.h"
 #include "ws.h"

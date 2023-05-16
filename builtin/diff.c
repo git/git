@@ -17,6 +17,7 @@
 #include "diff-merges.h"
 #include "diffcore.h"
 #include "preload-index.h"
+#include "read-cache-ll.h"
 #include "revision.h"
 #include "log-tree.h"
 #include "builtin.h"

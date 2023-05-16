@@ -3,6 +3,7 @@
 #include "gettext.h"
 #include "hash.h"
 #include "mem-pool.h"
+#include "read-cache-ll.h"
 #include "split-index.h"
 #include "strbuf.h"
 #include "ewah/ewok.h"
