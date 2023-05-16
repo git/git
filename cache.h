@@ -555,7 +555,4 @@ int checkout_fast_forward(struct repository *r,
 			  const struct object_id *to,
 			  int overwrite_ignore);
 
-
-int sane_execvp(const char *file, char *const argv[]);
-
 #endif /* CACHE_H */
