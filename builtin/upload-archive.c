@@ -1,7 +1,6 @@
 /*
  * Copyright (c) 2006 Franck Bui-Huu
  */
-#include "cache.h"
 #include "builtin.h"
 #include "archive.h"
 #include "pkt-line.h"

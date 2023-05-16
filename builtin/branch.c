@@ -5,14 +5,13 @@
  * Based on git-branch.sh by Junio C Hamano.
  */
 
-#include "cache.h"
+#include "builtin.h"
 #include "config.h"
 #include "color.h"
 #include "editor.h"
 #include "environment.h"
 #include "refs.h"
 #include "commit.h"
-#include "builtin.h"
 #include "gettext.h"
 #include "object-name.h"
 #include "remote.h"

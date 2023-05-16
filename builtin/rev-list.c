@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "builtin.h"
 #include "config.h"
 #include "commit.h"
 #include "diff.h"
@@ -15,7 +15,6 @@
 #include "object-store.h"
 #include "pack.h"
 #include "pack-bitmap.h"
-#include "builtin.h"
 #include "log-tree.h"
 #include "graph.h"
 #include "bisect.h"

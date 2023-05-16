@@ -5,7 +5,7 @@
  *
  * Copyright (C) 2008 Linus Torvalds
  */
-#include "cache.h"
+#include "git-compat-util.h"
 #include "environment.h"
 #include "gettext.h"
 #include "name-hash.h"

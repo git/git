@@ -1,7 +1,6 @@
 #ifndef FSMONITOR_H
 #define FSMONITOR_H
 
-#include "cache.h"
 #include "dir.h"
 #include "fsmonitor-settings.h"
 #include "object.h"

@@ -3,12 +3,11 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
-#include "cache.h"
+#include "builtin.h"
 #include "abspath.h"
 #include "config.h"
 #include "environment.h"
 #include "gettext.h"
-#include "builtin.h"
 #include "object-file.h"
 #include "parse-options.h"
 #include "path.h"

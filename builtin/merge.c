@@ -7,7 +7,7 @@
  */
 
 #define USE_THE_INDEX_VARIABLE
-#include "cache.h"
+#include "builtin.h"
 #include "abspath.h"
 #include "advice.h"
 #include "alloc.h"
@@ -18,7 +18,6 @@
 #include "hex.h"
 #include "object-name.h"
 #include "parse-options.h"
-#include "builtin.h"
 #include "lockfile.h"
 #include "run-command.h"
 #include "hook.h"

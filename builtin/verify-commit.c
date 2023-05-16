@@ -5,9 +5,8 @@
  *
  * Based on git-verify-tag
  */
-#include "cache.h"
-#include "config.h"
 #include "builtin.h"
+#include "config.h"
 #include "gettext.h"
 #include "object-name.h"
 #include "object-store.h"

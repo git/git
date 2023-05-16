@@ -1,7 +1,7 @@
 /*
  * "git fetch"
  */
-#include "cache.h"
+#include "builtin.h"
 #include "advice.h"
 #include "config.h"
 #include "gettext.h"
@@ -15,7 +15,6 @@
 #include "oidset.h"
 #include "oid-array.h"
 #include "commit.h"
-#include "builtin.h"
 #include "string-list.h"
 #include "remote.h"
 #include "transport.h"

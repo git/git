@@ -1,7 +1,7 @@
 /*
  * "git push"
  */
-#include "cache.h"
+#include "builtin.h"
 #include "advice.h"
 #include "branch.h"
 #include "config.h"
@@ -10,7 +10,6 @@
 #include "refs.h"
 #include "refspec.h"
 #include "run-command.h"
-#include "builtin.h"
 #include "remote.h"
 #include "transport.h"
 #include "parse-options.h"

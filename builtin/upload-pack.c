@@ -1,4 +1,3 @@
-#include "cache.h"
 #include "builtin.h"
 #include "exec-cmd.h"
 #include "gettext.h"

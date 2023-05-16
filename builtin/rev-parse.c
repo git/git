@@ -4,7 +4,7 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 #define USE_THE_INDEX_VARIABLE
-#include "cache.h"
+#include "builtin.h"
 #include "abspath.h"
 #include "alloc.h"
 #include "config.h"
@@ -14,7 +14,6 @@
 #include "hex.h"
 #include "refs.h"
 #include "quote.h"
-#include "builtin.h"
 #include "object-name.h"
 #include "parse-options.h"
 #include "diff.h"

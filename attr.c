@@ -6,7 +6,7 @@
  * an insanely large number of attributes.
  */
 
-#include "cache.h"
+#include "git-compat-util.h"
 #include "alloc.h"
 #include "config.h"
 #include "environment.h"

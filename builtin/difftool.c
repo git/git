@@ -12,11 +12,10 @@
  * Copyright (C) 2016 Johannes Schindelin
  */
 #define USE_THE_INDEX_VARIABLE
-#include "cache.h"
+#include "builtin.h"
 #include "abspath.h"
 #include "config.h"
 #include "copy.h"
-#include "builtin.h"
 #include "run-command.h"
 #include "environment.h"
 #include "exec-cmd.h"

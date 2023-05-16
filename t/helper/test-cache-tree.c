@@ -1,6 +1,5 @@
 #define USE_THE_INDEX_VARIABLE
 #include "test-tool.h"
-#include "cache.h"
 #include "gettext.h"
 #include "hex.h"
 #include "tree.h"

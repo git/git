@@ -110,7 +110,7 @@ char *git_work_tree_cfg;
 static char *git_namespace;
 
 /*
- * Repository-local GIT_* environment variables; see cache.h for details.
+ * Repository-local GIT_* environment variables; see environment.h for details.
  */
 const char * const local_repo_env[] = {
 	ALTERNATE_DB_ENVIRONMENT,

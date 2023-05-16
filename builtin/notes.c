@@ -7,9 +7,8 @@
  * and builtin/tag.c by Kristian Høgsberg and Carlos Rica.
  */
 
-#include "cache.h"
-#include "config.h"
 #include "builtin.h"
+#include "config.h"
 #include "editor.h"
 #include "gettext.h"
 #include "hex.h"
