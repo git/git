@@ -25,6 +25,7 @@
 #include "oidset.h"
 #include "packfile.h"
 #include "object-store.h"
+#include "path.h"
 #include "connected.h"
 #include "fetch-negotiator.h"
 #include "fsck.h"

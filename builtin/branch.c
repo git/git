@@ -18,6 +18,7 @@
 #include "parse-options.h"
 #include "branch.h"
 #include "diff.h"
+#include "path.h"
 #include "revision.h"
 #include "string-list.h"
 #include "column.h"

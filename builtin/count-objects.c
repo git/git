@@ -9,6 +9,7 @@
 #include "dir.h"
 #include "environment.h"
 #include "gettext.h"
+#include "path.h"
 #include "repository.h"
 #include "parse-options.h"
 #include "quote.h"

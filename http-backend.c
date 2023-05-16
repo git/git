@@ -4,6 +4,7 @@
 #include "environment.h"
 #include "git-zlib.h"
 #include "hex.h"
+#include "path.h"
 #include "repository.h"
 #include "refs.h"
 #include "pkt-line.h"

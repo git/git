@@ -6,6 +6,7 @@
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
+#include "path.h"
 #include "pretty.h"
 #include "setup.h"
 #include "refs.h"

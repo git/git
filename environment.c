@@ -21,6 +21,7 @@
 #include "strvec.h"
 #include "object-file.h"
 #include "object-store.h"
+#include "path.h"
 #include "replace-object.h"
 #include "tmp-objdir.h"
 #include "chdir-notify.h"

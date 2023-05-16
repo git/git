@@ -19,6 +19,7 @@
 #include "commit-reach.h"
 #include "object-name.h"
 #include "object-store.h"
+#include "path.h"
 #include "dir.h"
 
 static struct oid_array good_revs;

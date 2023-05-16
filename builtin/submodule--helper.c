@@ -9,6 +9,7 @@
 #include "config.h"
 #include "parse-options.h"
 #include "quote.h"
+#include "path.h"
 #include "pathspec.h"
 #include "preload-index.h"
 #include "dir.h"

@@ -27,6 +27,7 @@
 #include "object-file.h"
 #include "object-name.h"
 #include "object-store.h"
+#include "path.h"
 #include "repository.h"
 #include "revision.h"
 #include "sparse-index.h"

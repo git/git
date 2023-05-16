@@ -12,6 +12,7 @@
 #include "commit.h"
 #include "delta.h"
 #include "pack.h"
+#include "path.h"
 #include "refs.h"
 #include "csum-file.h"
 #include "quote.h"

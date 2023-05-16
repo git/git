@@ -4,6 +4,7 @@
 #include "setup.h"
 #include "worktree.h"
 #include "object-store.h"
+#include "path.h"
 #include "repository.h"
 
 struct flag_definition {

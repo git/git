@@ -20,6 +20,7 @@
 #include "strvec.h"
 #include "blob.h"
 #include "thread-utils.h"
+#include "path.h"
 #include "quote.h"
 #include "remote.h"
 #include "worktree.h"

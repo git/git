@@ -15,6 +15,7 @@
 #include "pack-bitmap.h"
 #include "hash-lookup.h"
 #include "pack-objects.h"
+#include "path.h"
 #include "commit-reach.h"
 #include "prio-queue.h"
 #include "trace2.h"

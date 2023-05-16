@@ -16,6 +16,7 @@
 #include "name-hash.h"
 #include "object-file.h"
 #include "object-store.h"
+#include "path.h"
 #include "attr.h"
 #include "refs.h"
 #include "wildmatch.h"

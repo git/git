@@ -6,6 +6,7 @@
 #include "gettext.h"
 #include "hex.h"
 #include "parse-options.h"
+#include "path.h"
 #include "run-command.h"
 #include "server-info.h"
 #include "sigchain.h"

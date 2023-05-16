@@ -9,6 +9,7 @@
 #include "commit.h"
 #include "tag.h"
 #include "packfile.h"
+#include "path.h"
 #include "object-file.h"
 #include "object-store.h"
 #include "server-info.h"

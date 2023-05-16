@@ -14,6 +14,7 @@
 #include "object-file.h"
 #include "object-store.h"
 #include "oid-array.h"
+#include "path.h"
 #include "alloc.h"
 #include "hashmap.h"
 #include "replace-object.h"

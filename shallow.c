@@ -11,6 +11,7 @@
 #include "remote.h"
 #include "refs.h"
 #include "oid-array.h"
+#include "path.h"
 #include "diff.h"
 #include "revision.h"
 #include "commit-slab.h"

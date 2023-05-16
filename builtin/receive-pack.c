@@ -31,6 +31,7 @@
 #include "packfile.h"
 #include "object-name.h"
 #include "object-store.h"
+#include "path.h"
 #include "protocol.h"
 #include "commit-reach.h"
 #include "server-info.h"

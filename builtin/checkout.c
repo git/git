@@ -20,6 +20,7 @@
 #include "object-name.h"
 #include "object-store.h"
 #include "parse-options.h"
+#include "path.h"
 #include "preload-index.h"
 #include "read-cache.h"
 #include "refs.h"

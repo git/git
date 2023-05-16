@@ -14,6 +14,7 @@
 #include "resolve-undo.h"
 #include "ll-merge.h"
 #include "attr.h"
+#include "path.h"
 #include "pathspec.h"
 #include "object-file.h"
 #include "object-store.h"
