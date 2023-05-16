@@ -564,4 +564,6 @@ enum start_bg_result start_bg_command(struct child_process *cmd,
 				      void *cb_data,
 				      unsigned int timeout_sec);
 
+int sane_execvp(const char *file, char *const argv[]);
+
 #endif
