@@ -4,6 +4,7 @@
 #include "gettext.h"
 #include "hex.h"
 #include "lockfile.h"
+#include "merge.h"
 #include "commit.h"
 #include "run-command.h"
 #include "resolve-undo.h"
