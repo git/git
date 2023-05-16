@@ -21,7 +21,7 @@
 #include "gettext.h"
 #include "hex.h"
 #include "xdiff-interface.h"
-#include "ll-merge.h"
+#include "merge-ll.h"
 #include "lockfile.h"
 #include "name-hash.h"
 #include "object-name.h"

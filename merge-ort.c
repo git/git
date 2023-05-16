@@ -30,7 +30,7 @@
 #include "gettext.h"
 #include "hex.h"
 #include "entry.h"
-#include "ll-merge.h"
+#include "merge-ll.h"
 #include "match-trees.h"
 #include "mem-pool.h"
 #include "object-name.h"
