@@ -12,6 +12,7 @@
 #include "blob.h"
 #include "tree.h"
 #include "commit.h"
+#include "path.h"
 #include "quote.h"
 #include "parse-options.h"
 #include "pathspec.h"

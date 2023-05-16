@@ -12,6 +12,7 @@
 #include "setup.h"
 #include "string-list.h"
 #include "chdir-notify.h"
+#include "path.h"
 #include "promisor-remote.h"
 #include "quote.h"
 #include "trace2.h"

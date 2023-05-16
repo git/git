@@ -16,6 +16,7 @@
 #include "hex.h"
 #include "refs.h"
 #include "parse-options.h"
+#include "path.h"
 #include "run-command.h"
 #include "object-file.h"
 #include "object-name.h"

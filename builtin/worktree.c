@@ -10,6 +10,7 @@
 #include "object-file.h"
 #include "object-name.h"
 #include "parse-options.h"
+#include "path.h"
 #include "strvec.h"
 #include "branch.h"
 #include "read-cache-ll.h"

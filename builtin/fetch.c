@@ -28,6 +28,7 @@
 #include "utf8.h"
 #include "packfile.h"
 #include "pager.h"
+#include "path.h"
 #include "pkt-line.h"
 #include "list-objects-filter-options.h"
 #include "commit-reach.h"

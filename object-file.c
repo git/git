@@ -39,6 +39,7 @@
 #include "object-file.h"
 #include "object-store.h"
 #include "oidtree.h"
+#include "path.h"
 #include "promisor-remote.h"
 #include "setup.h"
 #include "submodule.h"

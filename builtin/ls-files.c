@@ -19,6 +19,7 @@
 #include "parse-options.h"
 #include "resolve-undo.h"
 #include "string-list.h"
+#include "path.h"
 #include "pathspec.h"
 #include "read-cache.h"
 #include "run-command.h"

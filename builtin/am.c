@@ -41,6 +41,7 @@
 #include "string-list.h"
 #include "packfile.h"
 #include "pager.h"
+#include "path.h"
 #include "repository.h"
 #include "pretty.h"
 #include "wrapper.h"

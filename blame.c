@@ -8,6 +8,7 @@
 #include "diffcore.h"
 #include "gettext.h"
 #include "hex.h"
+#include "path.h"
 #include "read-cache.h"
 #include "setup.h"
 #include "tag.h"

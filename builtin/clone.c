@@ -39,6 +39,7 @@
 #include "setup.h"
 #include "connected.h"
 #include "packfile.h"
+#include "path.h"
 #include "pkt-line.h"
 #include "list-objects-filter-options.h"
 #include "hook.h"

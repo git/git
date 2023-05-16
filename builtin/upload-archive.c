@@ -3,6 +3,7 @@
  */
 #include "builtin.h"
 #include "archive.h"
+#include "path.h"
 #include "pkt-line.h"
 #include "sideband.h"
 #include "repository.h"

@@ -1,8 +1,6 @@
 #ifndef REPOSITORY_H
 #define REPOSITORY_H
 
-#include "path.h"
-
 struct config_set;
 struct fsmonitor_settings;
 struct git_hash_algo;

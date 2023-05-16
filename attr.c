@@ -14,6 +14,7 @@
 #include "attr.h"
 #include "dir.h"
 #include "gettext.h"
+#include "path.h"
 #include "utf8.h"
 #include "quote.h"
 #include "read-cache-ll.h"

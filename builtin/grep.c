@@ -30,6 +30,7 @@
 #include "object-store.h"
 #include "packfile.h"
 #include "pager.h"
+#include "path.h"
 #include "read-cache-ll.h"
 #include "write-or-die.h"
 

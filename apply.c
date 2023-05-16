@@ -27,6 +27,7 @@
 #include "object-name.h"
 #include "object-file.h"
 #include "parse-options.h"
+#include "path.h"
 #include "quote.h"
 #include "read-cache.h"
 #include "rerere.h"

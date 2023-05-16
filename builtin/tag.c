@@ -16,6 +16,7 @@
 #include "refs.h"
 #include "object-name.h"
 #include "object-store.h"
+#include "path.h"
 #include "tag.h"
 #include "run-command.h"
 #include "parse-options.h"

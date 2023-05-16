@@ -10,6 +10,7 @@
 #include "config.h"
 #include "object.h"
 #include "lockfile.h"
+#include "path.h"
 #include "read-cache-ll.h"
 #include "remote.h"
 #include "setup.h"

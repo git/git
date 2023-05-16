@@ -26,6 +26,7 @@
 #include "branch.h"
 #include "object-name.h"
 #include "parse-options.h"
+#include "path.h"
 #include "unpack-trees.h"
 #include "cache-tree.h"
 #include "setup.h"

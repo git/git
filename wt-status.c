@@ -9,6 +9,7 @@
 #include "gettext.h"
 #include "hex.h"
 #include "object-name.h"
+#include "path.h"
 #include "revision.h"
 #include "diffcore.h"
 #include "quote.h"

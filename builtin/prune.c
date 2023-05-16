@@ -7,6 +7,7 @@
 #include "revision.h"
 #include "reachable.h"
 #include "parse-options.h"
+#include "path.h"
 #include "progress.h"
 #include "prune-packed.h"
 #include "replace-object.h"

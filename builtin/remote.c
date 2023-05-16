@@ -2,6 +2,7 @@
 #include "config.h"
 #include "gettext.h"
 #include "parse-options.h"
+#include "path.h"
 #include "transport.h"
 #include "remote.h"
 #include "string-list.h"

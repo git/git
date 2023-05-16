@@ -30,6 +30,7 @@
 #include "object-store.h"
 #include "pack.h"
 #include "pack-objects.h"
+#include "path.h"
 #include "blob.h"
 #include "tree.h"
 #include "promisor-remote.h"

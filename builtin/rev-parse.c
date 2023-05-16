@@ -16,6 +16,7 @@
 #include "quote.h"
 #include "object-name.h"
 #include "parse-options.h"
+#include "path.h"
 #include "diff.h"
 #include "read-cache-ll.h"
 #include "revision.h"

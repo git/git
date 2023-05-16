@@ -11,6 +11,7 @@
 #include "strvec.h"
 #include "run-command.h"
 #include "oid-array.h"
+#include "path.h"
 #include "prompt.h"
 #include "quote.h"
 #include "revision.h"

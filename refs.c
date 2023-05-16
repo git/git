@@ -19,6 +19,7 @@
 #include "object-name.h"
 #include "object-store.h"
 #include "object.h"
+#include "path.h"
 #include "tag.h"
 #include "submodule.h"
 #include "worktree.h"

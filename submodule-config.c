@@ -4,6 +4,7 @@
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
+#include "path.h"
 #include "repository.h"
 #include "config.h"
 #include "submodule-config.h"

@@ -27,6 +27,7 @@
 #include "refspec.h"
 #include "commit.h"
 #include "diffcore.h"
+#include "path.h"
 #include "revision.h"
 #include "unpack-trees.h"
 #include "cache-tree.h"

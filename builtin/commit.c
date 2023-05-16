@@ -29,6 +29,7 @@
 #include "utf8.h"
 #include "object-name.h"
 #include "parse-options.h"
+#include "path.h"
 #include "preload-index.h"
 #include "read-cache.h"
 #include "string-list.h"
