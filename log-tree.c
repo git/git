@@ -16,6 +16,7 @@
 #include "reflog-walk.h"
 #include "refs.h"
 #include "replace-object.h"
+#include "revision.h"
 #include "string-list.h"
 #include "color.h"
 #include "gpg-interface.h"

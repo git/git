@@ -9,6 +9,7 @@
 #include "submodule.h"
 #include "read-cache-ll.h"
 #include "repository.h"
+#include "revision.h"
 #include "tree.h"
 
 static struct rev_info log_tree_opt;
