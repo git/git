@@ -488,19 +488,6 @@ int has_racy_timestamp(struct index_state *istate);
 int ie_match_stat(struct index_state *, const struct cache_entry *, struct stat *, unsigned int);
 int ie_modified(struct index_state *, const struct cache_entry *, struct stat *, unsigned int);
 
-/*
- * Record to sd the data from st that we use to check whether a file
- * might have changed.
- */
-void fill_stat_data(struct stat_data *sd, struct stat *st);
-
-/*
- * Return 0 if st is consistent with a file not having been changed
- * since sd was filled.  If there are differences, return a
- * combination of MTIME_CHANGED, CTIME_CHANGED, OWNER_CHANGED,
- * INODE_CHANGED, and DATA_CHANGED.
- */
-int match_stat_data(const struct stat_data *sd, struct stat *st);
 int match_stat_data_racy(const struct index_state *istate,
 			 const struct stat_data *sd, struct stat *st);
 
@@ -539,14 +526,6 @@ void set_alternate_index_output(const char *);
 extern int verify_index_checksum;
 extern int verify_ce_order;
 
-#define MTIME_CHANGED	0x0001
-#define CTIME_CHANGED	0x0002
-#define OWNER_CHANGED	0x0004
-#define MODE_CHANGED    0x0008
-#define INODE_CHANGED   0x0010
-#define DATA_CHANGED    0x0020
-#define TYPE_CHANGED    0x0040
-
 int cmp_cache_name_compare(const void *a_, const void *b_);
 
 /* add */
@@ -578,32 +557,5 @@ int checkout_fast_forward(struct repository *r,
 
 
 int sane_execvp(const char *file, char *const argv[]);
-
-/*
- * A struct to encapsulate the concept of whether a file has changed
- * since we last checked it. This uses criteria similar to those used
- * for the index.
- */
-struct stat_validity {
-	struct stat_data *sd;
-};
-
-void stat_validity_clear(struct stat_validity *sv);
-
-/*
- * Returns 1 if the path is a regular file (or a symlink to a regular
- * file) and matches the saved stat_validity, 0 otherwise.  A missing
- * or inaccessible file is considered a match if the struct was just
- * initialized, or if the previous update found an inaccessible file.
- */
-int stat_validity_check(struct stat_validity *sv, const char *path);
-
-/*
- * Update the stat_validity from a file opened at descriptor fd. If
- * the file is missing, inaccessible, or not a regular file, then
- * future calls to stat_validity_check will match iff one of those
- * conditions continues to be true.
- */
-void stat_validity_update(struct stat_validity *sv, int fd);
 
 #endif /* CACHE_H */
