@@ -1,11 +1,16 @@
 #include "cache.h"
 #include "run-command.h"
+#include "environment.h"
 #include "exec-cmd.h"
+#include "gettext.h"
 #include "sigchain.h"
 #include "strvec.h"
+#include "symlinks.h"
 #include "thread-utils.h"
 #include "strbuf.h"
 #include "string-list.h"
+#include "trace.h"
+#include "trace2.h"
 #include "quote.h"
 #include "config.h"
 #include "packfile.h"
@@ -341,19 +346,19 @@ static void child_close_pair(int fd[2])
 	child_close(fd[1]);
 }
 
-static void child_error_fn(const char *err, va_list params)
+static void child_error_fn(const char *err UNUSED, va_list params UNUSED)
 {
 	const char msg[] = "error() should not be called in child\n";
 	xwrite(2, msg, sizeof(msg) - 1);
 }
 
-static void child_warn_fn(const char *err, va_list params)
+static void child_warn_fn(const char *err UNUSED, va_list params UNUSED)
 {
 	const char msg[] = "warn() should not be called in child\n";
 	xwrite(2, msg, sizeof(msg) - 1);
 }
 
-static void NORETURN child_die_fn(const char *err, va_list params)
+static void NORETURN child_die_fn(const char *err UNUSED, va_list params UNUSED)
 {
 	const char msg[] = "die() should not be called in child\n";
 	xwrite(2, msg, sizeof(msg) - 1);

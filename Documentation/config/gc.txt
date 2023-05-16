@@ -43,11 +43,11 @@ gc.autoDetach::
 	if the system supports it. Default is true.
 
 gc.bigPackThreshold::
-	If non-zero, all packs larger than this limit are kept when
-	`git gc` is run. This is very similar to `--keep-largest-pack`
-	except that all packs that meet the threshold are kept, not
-	just the largest pack. Defaults to zero. Common unit suffixes of
-	'k', 'm', or 'g' are supported.
+	If non-zero, all non-cruft packs larger than this limit are kept
+	when `git gc` is run. This is very similar to
+	`--keep-largest-pack` except that all non-cruft packs that meet
+	the threshold are kept, not just the largest pack. Defaults to
+	zero. Common unit suffixes of 'k', 'm', or 'g' are supported.
 +
 Note that if the number of kept packs is more than gc.autoPackLimit,
 this configuration variable is ignored, all packs except the base pack
@@ -84,7 +84,7 @@ gc.packRefs::
 gc.cruftPacks::
 	Store unreachable objects in a cruft pack (see
 	linkgit:git-repack[1]) instead of as loose objects. The default
-	is `false`.
+	is `true`.
 
 gc.pruneExpire::
 	When 'git gc' is run, it will call 'prune --expire 2.weeks.ago'

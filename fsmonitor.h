@@ -4,6 +4,7 @@
 #include "cache.h"
 #include "dir.h"
 #include "fsmonitor-settings.h"
+#include "trace.h"
 
 extern struct trace_key trace_fsmonitor;
 
@@ -86,7 +87,7 @@ static inline void mark_fsmonitor_valid(struct index_state *istate, struct cache
 	    !(ce->ce_flags & CE_FSMONITOR_VALID)) {
 		if (S_ISGITLINK(ce->ce_mode))
 			return;
-		istate->cache_changed = 1;
+		istate->cache_changed |= FSMONITOR_CHANGED;
 		ce->ce_flags |= CE_FSMONITOR_VALID;
 		trace_printf_key(&trace_fsmonitor, "mark_fsmonitor_clean '%s'", ce->name);
 	}

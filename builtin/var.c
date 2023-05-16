@@ -5,6 +5,9 @@
  */
 #include "builtin.h"
 #include "config.h"
+#include "editor.h"
+#include "ident.h"
+#include "pager.h"
 #include "refs.h"
 
 static const char var_usage[] = "git var (-l | <variable>)";
@@ -77,7 +80,7 @@ static int show_config(const char *var, const char *value, void *cb)
 	return git_default_config(var, value, cb);
 }
 
-int cmd_var(int argc, const char **argv, const char *prefix)
+int cmd_var(int argc, const char **argv, const char *prefix UNUSED)
 {
 	const struct git_var *git_var;
 	const char *val;

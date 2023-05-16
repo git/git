@@ -9,10 +9,15 @@
 #include "config.h"
 #include "diff.h"
 #include "dir.h"
+#include "environment.h"
+#include "gettext.h"
+#include "hex.h"
 #include "hook.h"
 #include "ll-merge.h"
 #include "lockfile.h"
+#include "mem-pool.h"
 #include "merge-recursive.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "parse-options.h"
 #include "refs.h"
@@ -20,8 +25,11 @@
 #include "resolve-undo.h"
 #include "revision.h"
 #include "run-command.h"
+#include "setup.h"
 #include "submodule.h"
 #include "submodule-config.h"
+#include "symlinks.h"
+#include "trace2.h"
 #include "tree.h"
 #include "tree-walk.h"
 #include "unpack-trees.h"
@@ -75,7 +83,7 @@ struct checkout_opts {
 	const char *ignore_unmerged_opt;
 	int ignore_unmerged;
 	int pathspec_file_nul;
-	const char *pathspec_from_file;
+	char *pathspec_from_file;
 
 	const char *new_branch;
 	const char *new_branch_force;
@@ -432,8 +440,8 @@ static int checkout_worktree(const struct checkout_opts *opts,
 					      "Updated %d paths from %s",
 					      nr_checkouts),
 				   nr_checkouts,
-				   find_unique_abbrev(&opts->source_tree->object.oid,
-						      DEFAULT_ABBREV));
+				   repo_find_unique_abbrev(the_repository, &opts->source_tree->object.oid,
+							   DEFAULT_ABBREV));
 		else if (!nr_unmerged || nr_checkouts)
 			fprintf_ln(stderr, Q_("Updated %d path from the index",
 					      "Updated %d paths from the index",
@@ -489,15 +497,28 @@ static int checkout_paths(const struct checkout_opts *opts,
 		die(_("'%s' must be used when '%s' is not specified"),
 		    "--worktree", "--source");
 
-	if (opts->checkout_index && !opts->checkout_worktree &&
-	    opts->writeout_stage)
-		die(_("'%s' or '%s' cannot be used with %s"),
-		    "--ours", "--theirs", "--staged");
+	/*
+	 * Reject --staged option to the restore command when combined with
+	 * merge-related options. Use the accept_ref flag to distinguish it
+	 * from the checkout command, which does not accept --staged anyway.
+	 *
+	 * `restore --ours|--theirs --worktree --staged` could mean resolving
+	 * conflicted paths to one side in both the worktree and the index,
+	 * but does not currently.
+	 *
+	 * `restore --merge|--conflict=<style>` already recreates conflicts
+	 * in both the worktree and the index, so adding --staged would be
+	 * meaningless.
+	 */
+	if (!opts->accept_ref && opts->checkout_index) {
+		if (opts->writeout_stage)
+			die(_("'%s' or '%s' cannot be used with %s"),
+			    "--ours", "--theirs", "--staged");
 
-	if (opts->checkout_index && !opts->checkout_worktree &&
-	    opts->merge)
-		die(_("'%s' or '%s' cannot be used with %s"),
-		    "--merge", "--conflict", "--staged");
+		if (opts->merge)
+			die(_("'%s' or '%s' cannot be used with %s"),
+			    "--merge", "--conflict", "--staged");
+	}
 
 	if (opts->patch_mode) {
 		enum add_p_mode patch_mode;
@@ -640,14 +661,16 @@ static void describe_detached_head(const char *msg, struct commit *commit)
 {
 	struct strbuf sb = STRBUF_INIT;
 
-	if (!parse_commit(commit))
+	if (!repo_parse_commit(the_repository, commit))
 		pp_commit_easy(CMIT_FMT_ONELINE, commit, &sb);
 	if (print_sha1_ellipsis()) {
 		fprintf(stderr, "%s %s... %s\n", msg,
-			find_unique_abbrev(&commit->object.oid, DEFAULT_ABBREV), sb.buf);
+			repo_find_unique_abbrev(the_repository, &commit->object.oid, DEFAULT_ABBREV),
+			sb.buf);
 	} else {
 		fprintf(stderr, "%s %s %s\n", msg,
-			find_unique_abbrev(&commit->object.oid, DEFAULT_ABBREV), sb.buf);
+			repo_find_unique_abbrev(the_repository, &commit->object.oid, DEFAULT_ABBREV),
+			sb.buf);
 	}
 	strbuf_release(&sb);
 }
@@ -701,7 +724,8 @@ static void setup_branch_path(struct branch_info *branch)
 	 * If this is a ref, resolve it; otherwise, look up the OID for our
 	 * expression.  Failure here is okay.
 	 */
-	if (!dwim_ref(branch->name, strlen(branch->name), &branch->oid, &branch->refname, 0))
+	if (!repo_dwim_ref(the_repository, branch->name, strlen(branch->name),
+			   &branch->oid, &branch->refname, 0))
 		repo_get_oid_committish(the_repository, branch->name, &branch->oid);
 
 	strbuf_branchname(&buf, branch->name, INTERPRET_BRANCH_LOCAL);
@@ -753,7 +777,8 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			BUG("'switch --orphan' should never accept a commit as starting point");
 		new_tree = parse_tree_indirect(the_hash_algo->empty_tree);
 	} else
-		new_tree = get_commit_tree(new_branch_info->commit);
+		new_tree = repo_get_commit_tree(the_repository,
+						new_branch_info->commit);
 	if (opts->discard_changes) {
 		ret = reset_tree(new_tree, opts, 1, writeout_error, new_branch_info);
 		if (ret)
@@ -815,7 +840,8 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			 */
 			if (!old_branch_info->commit)
 				return 1;
-			old_tree = get_commit_tree(old_branch_info->commit);
+			old_tree = repo_get_commit_tree(the_repository,
+							old_branch_info->commit);
 
 			if (repo_index_has_changes(the_repository, old_tree, &sb))
 				die(_("cannot continue with staged changes in "
@@ -1004,7 +1030,7 @@ static void describe_one_orphan(struct strbuf *sb, struct commit *commit)
 	strbuf_addstr(sb, "  ");
 	strbuf_add_unique_abbrev(sb, &commit->object.oid, DEFAULT_ABBREV);
 	strbuf_addch(sb, ' ');
-	if (!parse_commit(commit))
+	if (!repo_parse_commit(the_repository, commit))
 		pp_commit_easy(CMIT_FMT_ONELINE, commit, sb);
 	strbuf_addch(sb, '\n');
 }
@@ -1060,7 +1086,7 @@ static void suggest_reattach(struct commit *commit, struct rev_info *revs)
 			" git branch <new-branch-name> %s\n\n",
 			/* Give ngettext() the count */
 			lost),
-			find_unique_abbrev(&commit->object.oid, DEFAULT_ABBREV));
+			repo_find_unique_abbrev(the_repository, &commit->object.oid, DEFAULT_ABBREV));
 }
 
 /*
@@ -1204,7 +1230,8 @@ static void setup_new_branch_info_and_source_tree(
 		*source_tree = parse_tree_indirect(rev);
 	} else {
 		parse_commit_or_die(new_branch_info->commit);
-		*source_tree = get_commit_tree(new_branch_info->commit);
+		*source_tree = repo_get_commit_tree(the_repository,
+						    new_branch_info->commit);
 	}
 }
 
@@ -1322,7 +1349,7 @@ static int parse_branchname_arg(int argc, const char **argv,
 	if (!strcmp(arg, "-"))
 		arg = "@{-1}";
 
-	if (get_oid_mb(arg, rev)) {
+	if (repo_get_oid_mb(the_repository, arg, rev)) {
 		/*
 		 * Either case (3) or (4), with <something> not being
 		 * a commit, or an attempt to use case (1) with an
@@ -1419,7 +1446,8 @@ static void die_expecting_a_branch(const struct branch_info *branch_info)
 	char *to_free;
 	int code;
 
-	if (dwim_ref(branch_info->name, strlen(branch_info->name), &oid, &to_free, 0) == 1) {
+	if (repo_dwim_ref(the_repository, branch_info->name,
+			  strlen(branch_info->name), &oid, &to_free, 0) == 1) {
 		const char *ref = to_free;
 
 		if (skip_prefix(ref, "refs/tags/", &ref))
@@ -1748,7 +1776,7 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 	} else if (!opts->accept_ref && opts->from_treeish) {
 		struct object_id rev;
 
-		if (get_oid_mb(opts->from_treeish, &rev))
+		if (repo_get_oid_mb(the_repository, opts->from_treeish, &rev))
 			die(_("could not resolve %s"), opts->from_treeish);
 
 		setup_new_branch_info_and_source_tree(new_branch_info,
@@ -1876,6 +1904,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 			    options, checkout_usage, &new_branch_info);
 	branch_info_release(&new_branch_info);
 	clear_pathspec(&opts.pathspec);
+	free(opts.pathspec_from_file);
 	FREE_AND_NULL(options);
 	return ret;
 }

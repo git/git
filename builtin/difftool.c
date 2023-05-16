@@ -13,17 +13,25 @@
  */
 #define USE_THE_INDEX_VARIABLE
 #include "cache.h"
+#include "abspath.h"
 #include "config.h"
+#include "copy.h"
 #include "builtin.h"
 #include "run-command.h"
+#include "environment.h"
 #include "exec-cmd.h"
+#include "gettext.h"
+#include "hex.h"
 #include "parse-options.h"
 #include "strvec.h"
 #include "strbuf.h"
 #include "lockfile.h"
+#include "object-file.h"
 #include "object-store.h"
 #include "dir.h"
 #include "entry.h"
+#include "setup.h"
+#include "wrapper.h"
 
 static int trust_exit_code;
 
@@ -295,7 +303,8 @@ static char *get_symlink(const struct object_id *oid, const char *path)
 	} else {
 		enum object_type type;
 		unsigned long size;
-		data = read_object_file(oid, &type, &size);
+		data = repo_read_object_file(the_repository, oid, &type,
+					     &size);
 		if (!data)
 			die(_("could not read object %s for symlink %s"),
 				oid_to_hex(oid), path);
@@ -684,7 +693,7 @@ static int run_file_diff(int prompt, const char *prefix,
 
 int cmd_difftool(int argc, const char **argv, const char *prefix)
 {
-	int use_gui_tool = 0, dir_diff = 0, prompt = -1, symlinks = 0,
+	int use_gui_tool = -1, dir_diff = 0, prompt = -1, symlinks = 0,
 	    tool_help = 0, no_index = 0;
 	static char *difftool_cmd = NULL, *extcmd = NULL;
 	struct option builtin_difftool_options[] = {
@@ -734,13 +743,21 @@ int cmd_difftool(int argc, const char **argv, const char *prefix)
 	} else if (dir_diff)
 		die(_("options '%s' and '%s' cannot be used together"), "--dir-diff", "--no-index");
 
-	die_for_incompatible_opt3(use_gui_tool, "--gui",
+	die_for_incompatible_opt3(use_gui_tool == 1, "--gui",
 				  !!difftool_cmd, "--tool",
 				  !!extcmd, "--extcmd");
 
-	if (use_gui_tool)
+	/*
+	 * Explicitly specified GUI option is forwarded to git-mergetool--lib.sh;
+	 * empty or unset means "use the difftool.guiDefault config or default to
+	 * false".
+	 */
+	if (use_gui_tool == 1)
 		setenv("GIT_MERGETOOL_GUI", "true", 1);
-	else if (difftool_cmd) {
+	else if (use_gui_tool == 0)
+		setenv("GIT_MERGETOOL_GUI", "false", 1);
+
+	if (difftool_cmd) {
 		if (*difftool_cmd)
 			setenv("GIT_DIFF_TOOL", difftool_cmd, 1);
 		else

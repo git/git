@@ -3,8 +3,14 @@
 #include "cache.h"
 #include "config.h"
 #include "attr.h"
+#include "environment.h"
+#include "gettext.h"
+#include "object-name.h"
 #include "quote.h"
+#include "repository.h"
+#include "setup.h"
 #include "parse-options.h"
+#include "write-or-die.h"
 
 static int all_attrs;
 static int cached_attrs;

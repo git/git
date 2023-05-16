@@ -1,6 +1,7 @@
-#define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "cache.h"
+#include "gettext.h"
+#include "hex.h"
 #include "repository.h"
 #include "config.h"
 #include "commit.h"
@@ -18,10 +19,15 @@
 #include "streaming.h"
 #include "decorate.h"
 #include "packfile.h"
+#include "object-file.h"
+#include "object-name.h"
 #include "object-store.h"
+#include "replace-object.h"
 #include "resolve-undo.h"
 #include "run-command.h"
 #include "worktree.h"
+#include "pack-revindex.h"
+#include "pack-bitmap.h"
 
 #define REACHABLE 0x0001
 #define SEEN      0x0002
@@ -51,6 +57,8 @@ static int name_objects;
 #define ERROR_REFS 010
 #define ERROR_COMMIT_GRAPH 020
 #define ERROR_MULTI_PACK_INDEX 040
+#define ERROR_PACK_REV_INDEX 0100
+#define ERROR_BITMAP 0200
 
 static const char *describe_object(const struct object_id *oid)
 {
@@ -233,17 +241,17 @@ static void mark_unreachable_referents(const struct object_id *oid)
 }
 
 static int mark_loose_unreachable_referents(const struct object_id *oid,
-					    const char *path,
-					    void *data)
+					    const char *path UNUSED,
+					    void *data UNUSED)
 {
 	mark_unreachable_referents(oid);
 	return 0;
 }
 
 static int mark_packed_unreachable_referents(const struct object_id *oid,
-					     struct packed_git *pack,
-					     uint32_t pos,
-					     void *data)
+					     struct packed_git *pack UNUSED,
+					     uint32_t pos UNUSED,
+					     void *data UNUSED)
 {
 	mark_unreachable_referents(oid);
 	return 0;
@@ -661,14 +669,15 @@ static int fsck_loose(const struct object_id *oid, const char *path, void *data)
 	return 0; /* keep checking other objects, even if we saw an error */
 }
 
-static int fsck_cruft(const char *basename, const char *path, void *data)
+static int fsck_cruft(const char *basename, const char *path,
+		      void *data UNUSED)
 {
 	if (!starts_with(basename, "tmp_obj_"))
 		fprintf_ln(stderr, _("bad sha1 file: %s"), path);
 	return 0;
 }
 
-static int fsck_subdir(unsigned int nr, const char *path, void *data)
+static int fsck_subdir(unsigned int nr, const char *path UNUSED, void *data)
 {
 	struct for_each_loose_cb *cb_data = data;
 	struct progress *progress = cb_data->progress;
@@ -732,19 +741,19 @@ static int fsck_head_link(const char *head_ref_name,
 	return 0;
 }
 
-static int fsck_cache_tree(struct cache_tree *it)
+static int fsck_cache_tree(struct cache_tree *it, const char *index_path)
 {
 	int i;
 	int err = 0;
 
 	if (verbose)
-		fprintf_ln(stderr, _("Checking cache tree"));
+		fprintf_ln(stderr, _("Checking cache tree of %s"), index_path);
 
 	if (0 <= it->entry_count) {
 		struct object *obj = parse_object(the_repository, &it->oid);
 		if (!obj) {
-			error(_("%s: invalid sha1 pointer in cache-tree"),
-			      oid_to_hex(&it->oid));
+			error(_("%s: invalid sha1 pointer in cache-tree of %s"),
+			      oid_to_hex(&it->oid), index_path);
 			errors_found |= ERROR_REFS;
 			return 1;
 		}
@@ -755,11 +764,12 @@ static int fsck_cache_tree(struct cache_tree *it)
 			err |= objerror(obj, _("non-tree in cache-tree"));
 	}
 	for (i = 0; i < it->subtree_nr; i++)
-		err |= fsck_cache_tree(it->down[i]->cache_tree);
+		err |= fsck_cache_tree(it->down[i]->cache_tree, index_path);
 	return err;
 }
 
-static int fsck_resolve_undo(struct index_state *istate)
+static int fsck_resolve_undo(struct index_state *istate,
+			     const char *index_path)
 {
 	struct string_list_item *item;
 	struct string_list *resolve_undo = istate->resolve_undo;
@@ -782,8 +792,9 @@ static int fsck_resolve_undo(struct index_state *istate)
 
 			obj = parse_object(the_repository, &ru->oid[i]);
 			if (!obj) {
-				error(_("%s: invalid sha1 pointer in resolve-undo"),
-				      oid_to_hex(&ru->oid[i]));
+				error(_("%s: invalid sha1 pointer in resolve-undo of %s"),
+				      oid_to_hex(&ru->oid[i]),
+				      index_path);
 				errors_found |= ERROR_REFS;
 				continue;
 			}
@@ -796,6 +807,38 @@ static int fsck_resolve_undo(struct index_state *istate)
 	return 0;
 }
 
+static void fsck_index(struct index_state *istate, const char *index_path,
+		       int is_main_index)
+{
+	unsigned int i;
+
+	/* TODO: audit for interaction with sparse-index. */
+	ensure_full_index(istate);
+	for (i = 0; i < istate->cache_nr; i++) {
+		unsigned int mode;
+		struct blob *blob;
+		struct object *obj;
+
+		mode = istate->cache[i]->ce_mode;
+		if (S_ISGITLINK(mode))
+			continue;
+		blob = lookup_blob(the_repository,
+				   &istate->cache[i]->oid);
+		if (!blob)
+			continue;
+		obj = &blob->object;
+		obj->flags |= USED;
+		fsck_put_object_name(&fsck_walk_options, &obj->oid,
+				     "%s:%s",
+				     is_main_index ? "" : index_path,
+				     istate->cache[i]->name);
+		mark_object_reachable(obj);
+	}
+	if (istate->cache_tree)
+		fsck_cache_tree(istate->cache_tree, index_path);
+	fsck_resolve_undo(istate, index_path);
+}
+
 static void mark_object_for_connectivity(const struct object_id *oid)
 {
 	struct object *obj = lookup_unknown_object(the_repository, oid);
@@ -803,20 +846,52 @@ static void mark_object_for_connectivity(const struct object_id *oid)
 }
 
 static int mark_loose_for_connectivity(const struct object_id *oid,
-				       const char *path,
-				       void *data)
+				       const char *path UNUSED,
+				       void *data UNUSED)
 {
 	mark_object_for_connectivity(oid);
 	return 0;
 }
 
 static int mark_packed_for_connectivity(const struct object_id *oid,
-					struct packed_git *pack,
-					uint32_t pos,
-					void *data)
+					struct packed_git *pack UNUSED,
+					uint32_t pos UNUSED,
+					void *data UNUSED)
 {
 	mark_object_for_connectivity(oid);
 	return 0;
+}
+
+static int check_pack_rev_indexes(struct repository *r, int show_progress)
+{
+	struct progress *progress = NULL;
+	uint32_t pack_count = 0;
+	int res = 0;
+
+	if (show_progress) {
+		for (struct packed_git *p = get_all_packs(r); p; p = p->next)
+			pack_count++;
+		progress = start_delayed_progress("Verifying reverse pack-indexes", pack_count);
+		pack_count = 0;
+	}
+
+	for (struct packed_git *p = get_all_packs(r); p; p = p->next) {
+		int load_error = load_pack_revindex_from_disk(p);
+
+		if (load_error < 0) {
+			error(_("unable to load rev-index for pack '%s'"), p->pack_name);
+			res = ERROR_PACK_REV_INDEX;
+		} else if (!load_error &&
+			   !load_pack_revindex(r, p) &&
+			   verify_pack_revindex(p)) {
+			error(_("invalid rev-index for pack '%s'"), p->pack_name);
+			res = ERROR_PACK_REV_INDEX;
+		}
+		display_progress(progress, ++pack_count);
+	}
+	stop_progress(&progress);
+
+	return res;
 }
 
 static char const * const fsck_usage[] = {
@@ -923,7 +998,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 	for (i = 0; i < argc; i++) {
 		const char *arg = argv[i];
 		struct object_id oid;
-		if (!get_oid(arg, &oid)) {
+		if (!repo_get_oid(the_repository, arg, &oid)) {
 			struct object *obj = lookup_object(the_repository,
 							   &oid);
 
@@ -956,33 +1031,35 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 	}
 
 	if (keep_cache_objects) {
+		struct worktree **worktrees, **p;
+
 		verify_index_checksum = 1;
 		verify_ce_order = 1;
-		repo_read_index(the_repository);
-		/* TODO: audit for interaction with sparse-index. */
-		ensure_full_index(&the_index);
-		for (i = 0; i < the_index.cache_nr; i++) {
-			unsigned int mode;
-			struct blob *blob;
-			struct object *obj;
 
-			mode = the_index.cache[i]->ce_mode;
-			if (S_ISGITLINK(mode))
-				continue;
-			blob = lookup_blob(the_repository,
-					   &the_index.cache[i]->oid);
-			if (!blob)
-				continue;
-			obj = &blob->object;
-			obj->flags |= USED;
-			fsck_put_object_name(&fsck_walk_options, &obj->oid,
-					     ":%s", the_index.cache[i]->name);
-			mark_object_reachable(obj);
+		worktrees = get_worktrees();
+		for (p = worktrees; *p; p++) {
+			struct worktree *wt = *p;
+			struct index_state istate =
+				INDEX_STATE_INIT(the_repository);
+			char *path;
+
+			/*
+			 * Make a copy since the buffer is reusable
+			 * and may get overwritten by other calls
+			 * while we're examining the index.
+			 */
+			path = xstrdup(worktree_git_path(wt, "index"));
+			read_index_from(&istate, path, get_worktree_git_dir(wt));
+			fsck_index(&istate, path, wt->is_current);
+			discard_index(&istate);
+			free(path);
 		}
-		if (the_index.cache_tree)
-			fsck_cache_tree(the_index.cache_tree);
-		fsck_resolve_undo(&the_index);
+		free_worktrees(worktrees);
 	}
+
+	errors_found |= check_pack_rev_indexes(the_repository, show_progress);
+	if (verify_bitmap_files(the_repository))
+		errors_found |= ERROR_BITMAP;
 
 	check_connectivity();
 

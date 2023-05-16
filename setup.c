@@ -1,11 +1,18 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "abspath.h"
+#include "environment.h"
+#include "gettext.h"
+#include "object-name.h"
 #include "repository.h"
 #include "config.h"
 #include "dir.h"
+#include "setup.h"
 #include "string-list.h"
 #include "chdir-notify.h"
 #include "promisor-remote.h"
 #include "quote.h"
+#include "trace2.h"
+#include "wrapper.h"
 
 static int inside_git_dir = -1;
 static int inside_work_tree = -1;
@@ -1345,6 +1352,7 @@ static enum discovery_result setup_git_directory_gently_1(struct strbuf *dir,
 		}
 
 		if (is_git_directory(dir->buf)) {
+			trace2_data_string("setup", NULL, "implicit-bare-repository", dir->buf);
 			if (get_allowed_bare_repo() == ALLOWED_BARE_REPO_EXPLICIT)
 				return GIT_DIR_DISALLOWED_BARE;
 			if (!ensure_valid_ownership(NULL, NULL, dir->buf, report))

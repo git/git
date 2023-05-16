@@ -1,12 +1,18 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "dir.h"
+#include "environment.h"
+#include "gettext.h"
+#include "hex.h"
 #include "repository.h"
 #include "config.h"
 #include "submodule-config.h"
 #include "submodule.h"
 #include "strbuf.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "parse-options.h"
+#include "thread-utils.h"
 #include "tree-walk.h"
 
 /*
@@ -535,7 +541,7 @@ static int gitmodule_oid_from_commit(const struct object_id *treeish_name,
 	}
 
 	strbuf_addf(rev, "%s:.gitmodules", oid_to_hex(treeish_name));
-	if (get_oid(rev->buf, gitmodules_oid) >= 0)
+	if (repo_get_oid(the_repository, rev->buf, gitmodules_oid) >= 0)
 		ret = 1;
 
 	return ret;
@@ -588,7 +594,8 @@ static const struct submodule *config_from(struct submodule_cache *cache,
 	if (submodule)
 		goto out;
 
-	config = read_object_file(&oid, &type, &config_size);
+	config = repo_read_object_file(the_repository, &oid, &type,
+				       &config_size);
 	if (!config || type != OBJ_BLOB)
 		goto out;
 

@@ -1,10 +1,14 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
+#include "environment.h"
+#include "gettext.h"
+#include "hex.h"
 #include "refs.h"
 #include "pkt-line.h"
 #include "sideband.h"
 #include "repository.h"
 #include "object-store.h"
+#include "oid-array.h"
 #include "tag.h"
 #include "object.h"
 #include "commit.h"
@@ -19,6 +23,7 @@
 #include "version.h"
 #include "string-list.h"
 #include "strvec.h"
+#include "trace2.h"
 #include "prio-queue.h"
 #include "protocol.h"
 #include "quote.h"
@@ -27,6 +32,8 @@
 #include "commit-graph.h"
 #include "commit-reach.h"
 #include "shallow.h"
+#include "wrapper.h"
+#include "write-or-die.h"
 
 /* Remember to update object flag allocation in object.h */
 #define THEY_HAVE	(1u << 11)
@@ -499,8 +506,8 @@ static int got_oid(struct upload_pack_data *data,
 {
 	if (get_oid_hex(hex, oid))
 		die("git upload-pack: expected SHA1 object, got '%s'", hex);
-	if (!has_object_file_with_flags(oid,
-					OBJECT_INFO_QUICK | OBJECT_INFO_SKIP_FETCH_OBJECT))
+	if (!repo_has_object_file_with_flags(the_repository, oid,
+					     OBJECT_INFO_QUICK | OBJECT_INFO_SKIP_FETCH_OBJECT))
 		return -1;
 	return do_got_oid(data, oid);
 }
@@ -1063,7 +1070,7 @@ static void receive_needs(struct upload_pack_data *data,
 		const char *features;
 		struct object_id oid_buf;
 		const char *arg;
-		int feature_len;
+		size_t feature_len;
 
 		reset_timeout(data->timeout);
 		if (packet_reader_read(reader) != PACKET_READ_NORMAL)
@@ -1600,8 +1607,8 @@ static int process_haves(struct upload_pack_data *data, struct oid_array *common
 	for (i = 0; i < data->haves.nr; i++) {
 		const struct object_id *oid = &data->haves.oid[i];
 
-		if (!has_object_file_with_flags(oid,
-						OBJECT_INFO_QUICK | OBJECT_INFO_SKIP_FETCH_OBJECT))
+		if (!repo_has_object_file_with_flags(the_repository, oid,
+						     OBJECT_INFO_QUICK | OBJECT_INFO_SKIP_FETCH_OBJECT))
 			continue;
 
 		oid_array_append(common, oid);
@@ -1699,7 +1706,7 @@ enum fetch_state {
 	FETCH_DONE,
 };
 
-int upload_pack_v2(struct repository *r, struct packet_reader *request)
+int upload_pack_v2(struct repository *r UNUSED, struct packet_reader *request)
 {
 	enum fetch_state state = FETCH_PROCESS_ARGS;
 	struct upload_pack_data data;
@@ -1775,26 +1782,26 @@ int upload_pack_advertise(struct repository *r,
 
 		strbuf_addstr(value, "shallow wait-for-done");
 
-		if (!repo_config_get_bool(the_repository,
+		if (!repo_config_get_bool(r,
 					 "uploadpack.allowfilter",
 					 &allow_filter_value) &&
 		    allow_filter_value)
 			strbuf_addstr(value, " filter");
 
-		if (!repo_config_get_bool(the_repository,
+		if (!repo_config_get_bool(r,
 					 "uploadpack.allowrefinwant",
 					 &allow_ref_in_want) &&
 		    allow_ref_in_want)
 			strbuf_addstr(value, " ref-in-want");
 
 		if (git_env_bool("GIT_TEST_SIDEBAND_ALL", 0) ||
-		    (!repo_config_get_bool(the_repository,
+		    (!repo_config_get_bool(r,
 					   "uploadpack.allowsidebandall",
 					   &allow_sideband_all_value) &&
 		     allow_sideband_all_value))
 			strbuf_addstr(value, " sideband-all");
 
-		if (!repo_config_get_string(the_repository,
+		if (!repo_config_get_string(r,
 					    "uploadpack.blobpackfileuri",
 					    &str) &&
 		    str) {

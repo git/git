@@ -155,7 +155,7 @@ static int cmd_dropcaches(void)
 
 #endif
 
-int cmd__drop_caches(int argc, const char **argv)
+int cmd__drop_caches(int argc UNUSED, const char **argv UNUSED)
 {
 	cmd_sync();
 	return cmd_dropcaches();

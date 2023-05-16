@@ -339,6 +339,25 @@ static inline const char *precompose_string_if_needed(const char *in)
 int compat_mkdir_wo_trailing_slash(const char*, mode_t);
 #endif
 
+#ifdef time
+#undef time
+#endif
+static inline time_t git_time(time_t *tloc)
+{
+	struct timeval tv;
+
+	/*
+	 * Avoid time(NULL), which can disagree with gettimeofday(2)
+	 * and filesystem timestamps.
+	 */
+	gettimeofday(&tv, NULL);
+
+	if (tloc)
+		*tloc = tv.tv_sec;
+	return tv.tv_sec;
+}
+#define time git_time
+
 #ifdef NO_STRUCT_ITIMERVAL
 struct itimerval {
 	struct timeval it_interval;
@@ -859,12 +878,6 @@ int git_lstat(const char *, struct stat *);
 #define pread git_pread
 ssize_t git_pread(int fd, void *buf, size_t count, off_t offset);
 #endif
-/*
- * Forward decl that will remind us if its twin in cache.h changes.
- * This function is used in compat/pread.c.  But we can't include
- * cache.h there.
- */
-ssize_t read_in_full(int fd, void *buf, size_t count);
 
 #ifdef NO_SETENV
 #define setenv gitsetenv
@@ -1225,6 +1238,7 @@ extern const unsigned char tolower_trans_tbl[256];
 #undef isxdigit
 
 extern const unsigned char sane_ctype[256];
+extern const signed char hexval_table[256];
 #define GIT_SPACE 0x01
 #define GIT_DIGIT 0x02
 #define GIT_ALPHA 0x04
@@ -1284,6 +1298,25 @@ static inline int skip_iprefix(const char *str, const char *prefix,
 			return 1;
 		}
 	} while (tolower(*str++) == tolower(*prefix++));
+	return 0;
+}
+
+/*
+ * Like skip_prefix_mem, but compare case-insensitively. Note that the
+ * comparison is done via tolower(), so it is strictly ASCII (no multi-byte
+ * characters or locale-specific conversions).
+ */
+static inline int skip_iprefix_mem(const char *buf, size_t len,
+				   const char *prefix,
+				   const char **out, size_t *outlen)
+{
+	do {
+		if (!*prefix) {
+			*out = buf;
+			*outlen = len;
+			return 1;
+		}
+	} while (len-- > 0 && tolower(*buf++) == tolower(*prefix++));
 	return 0;
 }
 

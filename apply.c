@@ -8,20 +8,32 @@
  */
 
 #include "cache.h"
+#include "abspath.h"
+#include "alloc.h"
+#include "base85.h"
 #include "config.h"
 #include "object-store.h"
 #include "blob.h"
 #include "delta.h"
 #include "diff.h"
 #include "dir.h"
+#include "environment.h"
+#include "gettext.h"
+#include "hex.h"
 #include "xdiff-interface.h"
 #include "ll-merge.h"
 #include "lockfile.h"
+#include "object-name.h"
+#include "object-file.h"
 #include "parse-options.h"
 #include "quote.h"
 #include "rerere.h"
 #include "apply.h"
 #include "entry.h"
+#include "setup.h"
+#include "symlinks.h"
+#include "ws.h"
+#include "wrapper.h"
 
 struct gitdiff_data {
 	struct strbuf *root;
@@ -3201,7 +3213,8 @@ static int apply_binary(struct apply_state *state,
 		unsigned long size;
 		char *result;
 
-		result = read_object_file(&oid, &type, &size);
+		result = repo_read_object_file(the_repository, &oid, &type,
+					       &size);
 		if (!result)
 			return error(_("the necessary postimage %s for "
 				       "'%s' cannot be read"),
@@ -3264,7 +3277,8 @@ static int read_blob_object(struct strbuf *buf, const struct object_id *oid, uns
 		unsigned long sz;
 		char *result;
 
-		result = read_object_file(oid, &type, &sz);
+		result = repo_read_object_file(the_repository, oid, &type,
+					       &sz);
 		if (!result)
 			return -1;
 		/* XXX read_sha1_file NUL-terminates */
@@ -3492,7 +3506,8 @@ static int resolve_to(struct image *image, const struct object_id *result_id)
 
 	clear_image(image);
 
-	image->buf = read_object_file(result_id, &type, &size);
+	image->buf = repo_read_object_file(the_repository, result_id, &type,
+					   &size);
 	if (!image->buf || type != OBJ_BLOB)
 		die("unable to read blob object %s", oid_to_hex(result_id));
 	image->len = size;
@@ -3610,7 +3625,7 @@ static int try_threeway(struct apply_state *state,
 	/* Preimage the patch was prepared for */
 	if (patch->is_new)
 		write_object_file("", 0, OBJ_BLOB, &pre_oid);
-	else if (get_oid(patch->old_oid_prefix, &pre_oid) ||
+	else if (repo_get_oid(the_repository, patch->old_oid_prefix, &pre_oid) ||
 		 read_blob_object(&buf, &pre_oid, patch->old_mode))
 		return error(_("repository lacks the necessary blob to perform 3-way merge."));
 
@@ -4127,7 +4142,7 @@ static int build_fake_ancestor(struct apply_state *state, struct patch *list)
 			else
 				return error(_("sha1 information is lacking or "
 					       "useless for submodule %s"), name);
-		} else if (!get_oid_blob(patch->old_oid_prefix, &oid)) {
+		} else if (!repo_get_oid_blob(the_repository, patch->old_oid_prefix, &oid)) {
 			; /* ok */
 		} else if (!patch->lines_added && !patch->lines_deleted) {
 			/* mode-only change: update the current */
@@ -4576,7 +4591,7 @@ static int write_out_one_reject(struct apply_state *state, struct patch *patch)
 	FILE *rej;
 	char namebuf[PATH_MAX];
 	struct fragment *frag;
-	int cnt = 0;
+	int fd, cnt = 0;
 	struct strbuf sb = STRBUF_INIT;
 
 	for (cnt = 0, frag = patch->fragments; frag; frag = frag->next) {
@@ -4616,7 +4631,17 @@ static int write_out_one_reject(struct apply_state *state, struct patch *patch)
 	memcpy(namebuf, patch->new_name, cnt);
 	memcpy(namebuf + cnt, ".rej", 5);
 
-	rej = fopen(namebuf, "w");
+	fd = open(namebuf, O_CREAT | O_EXCL | O_WRONLY, 0666);
+	if (fd < 0) {
+		if (errno != EEXIST)
+			return error_errno(_("cannot open %s"), namebuf);
+		if (unlink(namebuf))
+			return error_errno(_("cannot unlink '%s'"), namebuf);
+		fd = open(namebuf, O_CREAT | O_EXCL | O_WRONLY, 0666);
+		if (fd < 0)
+			return error_errno(_("cannot open %s"), namebuf);
+	}
+	rej = fdopen(fd, "w");
 	if (!rej)
 		return error_errno(_("cannot open %s"), namebuf);
 

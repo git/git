@@ -4,10 +4,18 @@
  * (C) Copyright 2006 Linus Torvalds
  *		 2006 Junio Hamano
  */
-#include "cache.h"
+#include "git-compat-util.h"
+#include "abspath.h"
+#include "alloc.h"
 #include "config.h"
+#include "environment.h"
+#include "gettext.h"
+#include "hex.h"
 #include "refs.h"
+#include "object-file.h"
+#include "object-name.h"
 #include "object-store.h"
+#include "pager.h"
 #include "color.h"
 #include "commit.h"
 #include "diff.h"
@@ -15,6 +23,7 @@
 #include "revision.h"
 #include "log-tree.h"
 #include "builtin.h"
+#include "oid-array.h"
 #include "tag.h"
 #include "reflog-walk.h"
 #include "patch-ids.h"
@@ -35,6 +44,8 @@
 #include "commit-reach.h"
 #include "range-diff.h"
 #include "tmp-objdir.h"
+#include "tree.h"
+#include "write-or-die.h"
 
 #define MAIL_DEFAULT_WRAP 72
 #define COVER_FROM_AUTO_MAX_SUBJECT_LEN 100
@@ -56,6 +67,7 @@ static int stdout_mboxrd;
 static const char *fmt_patch_subject_prefix = "PATCH";
 static int fmt_patch_name_max = FORMAT_PATCH_NAME_MAX_DEFAULT;
 static const char *fmt_pretty;
+static int format_no_prefix;
 
 static const char * const builtin_log_usage[] = {
 	N_("git log [<options>] [<revision-range>] [[--] <path>...]"),
@@ -182,10 +194,10 @@ static void set_default_decoration_filter(struct decoration_filter *decoration_f
 	int i;
 	char *value = NULL;
 	struct string_list *include = decoration_filter->include_ref_pattern;
-	const struct string_list *config_exclude =
-			git_config_get_value_multi("log.excludeDecoration");
+	const struct string_list *config_exclude;
 
-	if (config_exclude) {
+	if (!git_config_get_string_multi("log.excludeDecoration",
+					 &config_exclude)) {
 		struct string_list_item *item;
 		for_each_string_list_item(item, config_exclude)
 			string_list_append(decoration_filter->exclude_ref_config_pattern,
@@ -436,7 +448,7 @@ static void log_show_early(struct rev_info *revs, struct commit_list *list)
 	setitimer(ITIMER_REAL, &early_output_timer, NULL);
 }
 
-static void early_output(int signal)
+static void early_output(int signal UNUSED)
 {
 	show_early_output = log_show_early;
 }
@@ -601,8 +613,6 @@ static int git_log_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	if (git_gpg_config(var, value, cb) < 0)
-		return -1;
 	return git_diff_ui_config(var, value, cb);
 }
 
@@ -675,7 +685,7 @@ static int show_tag_object(const struct object_id *oid, struct rev_info *rev)
 {
 	unsigned long size;
 	enum object_type type;
-	char *buf = read_object_file(oid, &type, &size);
+	char *buf = repo_read_object_file(the_repository, oid, &type, &size);
 	int offset = 0;
 
 	if (!buf)
@@ -1084,6 +1094,19 @@ static int git_format_config(const char *var, const char *value, void *cb)
 		stdout_mboxrd = git_config_bool(var, value);
 		return 0;
 	}
+	if (!strcmp(var, "format.noprefix")) {
+		format_no_prefix = 1;
+		return 0;
+	}
+
+	/*
+	 * ignore some porcelain config which would otherwise be parsed by
+	 * git_diff_ui_config(), via git_log_config(); we can't just avoid
+	 * diff_ui_config completely, because we do care about some ui options
+	 * like color.
+	 */
+	if (!strcmp(var, "diff.noprefix"))
+		return 0;
 
 	return git_log_config(var, value, cb);
 }
@@ -1204,7 +1227,8 @@ static char *find_branch_name(struct rev_info *rev)
 		return NULL;
 	ref = rev->cmdline.rev[positive].name;
 	tip_oid = &rev->cmdline.rev[positive].item->oid;
-	if (dwim_ref(ref, strlen(ref), &branch_oid, &full_ref, 0) &&
+	if (repo_dwim_ref(the_repository, ref, strlen(ref), &branch_oid,
+			  &full_ref, 0) &&
 	    skip_prefix(full_ref, "refs/heads/", &v) &&
 	    oideq(tip_oid, &branch_oid))
 		branch = xstrdup(v);
@@ -1314,10 +1338,11 @@ static void make_cover_letter(struct rev_info *rev, int use_separate_file,
 	log_write_email_headers(rev, head, &pp.after_subject, &need_8bit_cte, 0);
 
 	for (i = 0; !need_8bit_cte && i < nr; i++) {
-		const char *buf = get_commit_buffer(list[i], NULL);
+		const char *buf = repo_get_commit_buffer(the_repository,
+							 list[i], NULL);
 		if (has_non_ascii(buf))
 			need_8bit_cte = 1;
-		unuse_commit_buffer(list[i], buf);
+		repo_unuse_commit_buffer(the_repository, list[i], buf);
 	}
 
 	if (!branch_name)
@@ -1370,7 +1395,7 @@ static void make_cover_letter(struct rev_info *rev, int use_separate_file,
 			.other_arg = &other_arg
 		};
 
-		diff_setup(&opts);
+		repo_diff_setup(the_repository, &opts);
 		opts.file = rev->diffopt.file;
 		opts.use_color = rev->diffopt.use_color;
 		diff_setup_done(&opts);
@@ -1642,14 +1667,16 @@ static struct commit *get_base_commit(const char *base_commit,
 			struct commit *commit;
 			struct object_id oid;
 
-			if (get_oid(upstream, &oid)) {
+			if (repo_get_oid(the_repository, upstream, &oid)) {
 				if (die_on_failure)
 					die(_("failed to resolve '%s' as a valid ref"), upstream);
 				else
 					return NULL;
 			}
 			commit = lookup_commit_or_die(&oid, "upstream base");
-			base_list = get_merge_bases_many(commit, total, list);
+			base_list = repo_get_merge_bases_many(the_repository,
+							      commit, total,
+							      list);
 			/* There should be one and only one merge base. */
 			if (!base_list || base_list->next) {
 				if (die_on_failure) {
@@ -1683,7 +1710,9 @@ static struct commit *get_base_commit(const char *base_commit,
 	while (rev_nr > 1) {
 		for (i = 0; i < rev_nr / 2; i++) {
 			struct commit_list *merge_base;
-			merge_base = get_merge_bases(rev[2 * i], rev[2 * i + 1]);
+			merge_base = repo_get_merge_bases(the_repository,
+							  rev[2 * i],
+							  rev[2 * i + 1]);
 			if (!merge_base || merge_base->next) {
 				if (die_on_failure) {
 					die(_("failed to find exact merge base"));
@@ -1701,7 +1730,7 @@ static struct commit *get_base_commit(const char *base_commit,
 		rev_nr = DIV_ROUND_UP(rev_nr, 2);
 	}
 
-	if (!in_merge_bases(base, rev[0])) {
+	if (!repo_in_merge_bases(the_repository, base, rev[0])) {
 		if (die_on_failure) {
 			die(_("base commit should be the ancestor of revision list"));
 		} else {
@@ -1993,6 +2022,9 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	s_r_opt.def = "HEAD";
 	s_r_opt.revarg_opt = REVARG_COMMITTISH;
 
+	if (format_no_prefix)
+		diff_set_noprefix(&rev.diffopt);
+
 	if (default_attach) {
 		rev.mime_boundary = default_attach;
 		rev.no_inline = 1;
@@ -2097,6 +2129,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 
 	/* Always generate a patch */
 	rev.diffopt.output_format |= DIFF_FORMAT_PATCH;
+	rev.always_show_header = 1;
 
 	rev.zero_commit = zero_commit;
 	rev.patch_name_max = fmt_patch_name_max;
@@ -2396,7 +2429,7 @@ done:
 static int add_pending_commit(const char *arg, struct rev_info *revs, int flags)
 {
 	struct object_id oid;
-	if (get_oid(arg, &oid) == 0) {
+	if (repo_get_oid(the_repository, arg, &oid) == 0) {
 		struct commit *commit = lookup_commit_reference(the_repository,
 								&oid);
 		if (commit) {
@@ -2418,12 +2451,12 @@ static void print_commit(char sign, struct commit *commit, int verbose,
 {
 	if (!verbose) {
 		fprintf(file, "%c %s\n", sign,
-		       find_unique_abbrev(&commit->object.oid, abbrev));
+		       repo_find_unique_abbrev(the_repository, &commit->object.oid, abbrev));
 	} else {
 		struct strbuf buf = STRBUF_INIT;
 		pp_commit_easy(CMIT_FMT_ONELINE, commit, &buf);
 		fprintf(file, "%c %s %s\n", sign,
-		       find_unique_abbrev(&commit->object.oid, abbrev),
+		       repo_find_unique_abbrev(the_repository, &commit->object.oid, abbrev),
 		       buf.buf);
 		strbuf_release(&buf);
 	}

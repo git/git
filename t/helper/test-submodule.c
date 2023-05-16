@@ -1,8 +1,9 @@
 #include "test-tool.h"
 #include "test-tool-utils.h"
-#include "cache.h"
 #include "parse-options.h"
 #include "remote.h"
+#include "repository.h"
+#include "setup.h"
 #include "submodule-config.h"
 #include "submodule.h"
 
@@ -174,7 +175,7 @@ static int cmd__submodule_config_unset(int argc, const char **argv)
 	usage_with_options(usage, options);
 }
 
-static int cmd__submodule_config_writeable(int argc, const char **argv)
+static int cmd__submodule_config_writeable(int argc, const char **argv UNUSED)
 {
 	struct option options[] = {
 		OPT_END()

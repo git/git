@@ -1,5 +1,9 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "advice.h"
+#include "alloc.h"
 #include "config.h"
+#include "environment.h"
+#include "hex.h"
 #include "transport.h"
 #include "hook.h"
 #include "pkt-line.h"
@@ -10,6 +14,7 @@
 #include "walker.h"
 #include "bundle.h"
 #include "dir.h"
+#include "gettext.h"
 #include "refs.h"
 #include "refspec.h"
 #include "branch.h"
@@ -18,11 +23,14 @@
 #include "string-list.h"
 #include "oid-array.h"
 #include "sigchain.h"
+#include "trace2.h"
 #include "transport-internal.h"
 #include "protocol.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "color.h"
 #include "bundle-uri.h"
+#include "wrapper.h"
 
 static int transport_use_color = -1;
 static char transport_colors[][COLOR_MAXLEN] = {
@@ -167,7 +175,8 @@ static struct ref *get_refs_from_bundle(struct transport *transport,
 }
 
 static int fetch_refs_from_bundle(struct transport *transport,
-			       int nr_heads, struct ref **to_fetch)
+				  int nr_heads UNUSED,
+				  struct ref **to_fetch UNUSED)
 {
 	struct bundle_transport_data *data = transport->data;
 	struct strvec extra_index_pack_args = STRVEC_INIT;
@@ -276,8 +285,12 @@ static int connect_setup(struct transport *transport, int for_push)
 	}
 
 	data->conn = git_connect(data->fd, transport->url,
-				 for_push ? data->options.receivepack :
-				 data->options.uploadpack,
+				 for_push ?
+					"git-receive-pack" :
+					"git-upload-pack",
+				 for_push ?
+					data->options.receivepack :
+					data->options.uploadpack,
 				 flags);
 
 	return 0;
@@ -307,7 +320,7 @@ static struct ref *handshake(struct transport *transport, int for_push,
 	struct git_transport_data *data = transport->data;
 	struct ref *refs = NULL;
 	struct packet_reader reader;
-	int sid_len;
+	size_t sid_len;
 	const char *server_sid;
 
 	connect_setup(transport, for_push);
@@ -776,7 +789,8 @@ static int print_one_push_status(struct ref *ref, const char *dest, int count,
 static int measure_abbrev(const struct object_id *oid, int sofar)
 {
 	char hex[GIT_MAX_HEXSZ + 1];
-	int w = find_unique_abbrev_r(hex, oid, DEFAULT_ABBREV);
+	int w = repo_find_unique_abbrev_r(the_repository, hex, oid,
+					  DEFAULT_ABBREV);
 
 	return (w < sofar) ? sofar : w;
 }
@@ -911,7 +925,7 @@ static int connect_git(struct transport *transport, const char *name,
 {
 	struct git_transport_data *data = transport->data;
 	data->conn = git_connect(data->fd, transport->url,
-				 executable, 0);
+				 name, executable, 0);
 	fd[0] = data->fd[0];
 	fd[1] = data->fd[1];
 	return 0;

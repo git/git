@@ -1,5 +1,10 @@
 #include "cache.h"
+#include "advice.h"
 #include "config.h"
+#include "convert.h"
+#include "copy.h"
+#include "gettext.h"
+#include "hex.h"
 #include "object-store.h"
 #include "attr.h"
 #include "run-command.h"
@@ -7,8 +12,10 @@
 #include "sigchain.h"
 #include "pkt-line.h"
 #include "sub-process.h"
+#include "trace.h"
 #include "utf8.h"
 #include "ll-merge.h"
+#include "wrapper.h"
 
 /*
  * convert.c - convert a file when checking it out and checking it in.

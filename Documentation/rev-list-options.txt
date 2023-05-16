@@ -195,10 +195,11 @@ respectively, and they must begin with `refs/` when applied to `--glob`
 or `--all`. If a trailing '/{asterisk}' is intended, it must be given
 explicitly.
 
---exclude-hidden=[receive|uploadpack]::
-	Do not include refs that would be hidden by `git-receive-pack` or
-	`git-upload-pack` by consulting the appropriate `receive.hideRefs` or
-	`uploadpack.hideRefs` configuration along with `transfer.hideRefs` (see
+--exclude-hidden=[fetch|receive|uploadpack]::
+	Do not include refs that would be hidden by `git-fetch`,
+	`git-receive-pack` or `git-upload-pack` by consulting the appropriate
+	`fetch.hideRefs`, `receive.hideRefs` or `uploadpack.hideRefs`
+	configuration along with `transfer.hideRefs` (see
 	linkgit:git-config[1]). This option affects the next pseudo-ref option
 	`--all` or `--glob` and is cleared after processing them.
 
@@ -889,7 +890,7 @@ ifdef::git-rev-list[]
 	Print the object IDs of any object referenced by the listed
 	commits.  `--objects foo ^bar` thus means ``send me
 	all object IDs which I need to download if I have the commit
-	object _bar_ but not _foo_''.
+	object _bar_ but not _foo_''. See also `--object-names` below.
 
 --in-commit-order::
 	Print tree and blob ids in order of the commits. The tree
@@ -919,7 +920,12 @@ ifdef::git-rev-list[]
 
 --object-names::
 	Only useful with `--objects`; print the names of the object IDs
-	that are found. This is the default behavior.
+	that are found. This is the default behavior. Note that the
+	"name" of each object is ambiguous, and mostly intended as a
+	hint for packing objects. In particular: no distinction is made between
+	the names of tags, trees, and blobs; path names may be modified
+	to remove newlines; and if an object would appear multiple times
+	with different names, only one name is shown.
 
 --no-object-names::
 	Only useful with `--objects`; does not print the names of the object

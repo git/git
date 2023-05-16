@@ -1,5 +1,6 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
+#include "repository.h"
 #include "run-command.h"
 #include "quote.h"
 #include "version.h"

@@ -2,14 +2,19 @@
  *
  * Copyright (C) 2005 Junio C Hamano
  */
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "diff.h"
 #include "diffcore.h"
 #include "object-store.h"
 #include "hashmap.h"
+#include "mem-pool.h"
+#include "oid-array.h"
 #include "progress.h"
 #include "promisor-remote.h"
+#include "string-list.h"
 #include "strmap.h"
+#include "trace2.h"
 
 /* Table of rename/copy destinations */
 
@@ -981,7 +986,7 @@ static int find_basename_matches(struct diff_options *options,
 			strintmap_set(&dests, base, i);
 	}
 
-	if (options->repo == the_repository && has_promisor_remote()) {
+	if (options->repo == the_repository && repo_has_promisor_remote(the_repository)) {
 		dpf_options.missing_object_cb = basename_prefetch;
 		dpf_options.missing_object_data = &prefetch_options;
 	}
@@ -1567,7 +1572,7 @@ void diffcore_rename_extended(struct diff_options *options,
 
 	/* Finish setting up dpf_options */
 	prefetch_options.skip_unmodified = skip_unmodified;
-	if (options->repo == the_repository && has_promisor_remote()) {
+	if (options->repo == the_repository && repo_has_promisor_remote(the_repository)) {
 		dpf_options.missing_object_cb = inexact_prefetch;
 		dpf_options.missing_object_data = &prefetch_options;
 	}

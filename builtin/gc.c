@@ -11,6 +11,10 @@
  */
 
 #include "builtin.h"
+#include "abspath.h"
+#include "date.h"
+#include "environment.h"
+#include "hex.h"
 #include "repository.h"
 #include "config.h"
 #include "tempfile.h"
@@ -22,6 +26,7 @@
 #include "commit.h"
 #include "commit-graph.h"
 #include "packfile.h"
+#include "object-file.h"
 #include "object-store.h"
 #include "pack.h"
 #include "pack-objects.h"
@@ -31,7 +36,11 @@
 #include "refs.h"
 #include "remote.h"
 #include "exec-cmd.h"
+#include "gettext.h"
 #include "hook.h"
+#include "setup.h"
+#include "trace2.h"
+#include "wrapper.h"
 
 #define FAILED_RUN "failed to run %s"
 
@@ -42,7 +51,7 @@ static const char * const builtin_gc_usage[] = {
 
 static int pack_refs = 1;
 static int prune_reflogs = 1;
-static int cruft_packs = -1;
+static int cruft_packs = 1;
 static int aggressive_depth = 50;
 static int aggressive_window = 250;
 static int gc_auto_threshold = 6700;
@@ -213,7 +222,7 @@ static struct packed_git *find_base_packs(struct string_list *packs,
 	struct packed_git *p, *base = NULL;
 
 	for (p = get_all_packs(the_repository); p; p = p->next) {
-		if (!p->pack_local)
+		if (!p->pack_local || p->is_cruft)
 			continue;
 		if (limit) {
 			if (p->pack_size >= limit)
@@ -284,7 +293,7 @@ static uint64_t total_ram(void)
 
 static uint64_t estimate_repack_memory(struct packed_git *pack)
 {
-	unsigned long nr_objects = approximate_object_count();
+	unsigned long nr_objects = repo_approximate_object_count(the_repository);
 	size_t os_cache, heap;
 
 	if (!pack || !nr_objects)
@@ -602,10 +611,6 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	if (prune_expire && parse_expiry_date(prune_expire, &dummy))
 		die(_("failed to parse prune expiry value %s"), prune_expire);
 
-	prepare_repo_settings(the_repository);
-	if (cruft_packs < 0)
-		cruft_packs = the_repository->settings.gc_cruft_packs;
-
 	if (aggressive) {
 		strvec_push(&repack, "-f");
 		if (aggressive_depth > 0)
@@ -699,7 +704,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 			strvec_push(&prune, prune_expire);
 			if (quiet)
 				strvec_push(&prune, "--no-progress");
-			if (has_promisor_remote())
+			if (repo_has_promisor_remote(the_repository))
 				strvec_push(&prune,
 					    "--exclude-promisor-objects");
 			prune_cmd.git_cmd = 1;
@@ -820,7 +825,7 @@ static int dfs_on_ref(const char *refname UNUSED,
 	commit = lookup_commit(the_repository, oid);
 	if (!commit)
 		return 0;
-	if (parse_commit(commit) ||
+	if (repo_parse_commit(the_repository, commit) ||
 	    commit_graph_position(commit) != COMMIT_NOT_FROM_GRAPH)
 		return 0;
 
@@ -837,7 +842,7 @@ static int dfs_on_ref(const char *refname UNUSED,
 		commit = pop_commit(&stack);
 
 		for (parent = commit->parents; parent; parent = parent->next) {
-			if (parse_commit(parent->item) ||
+			if (repo_parse_commit(the_repository, parent->item) ||
 			    commit_graph_position(parent->item) != COMMIT_NOT_FROM_GRAPH ||
 			    parent->item->object.flags & SEEN)
 				continue;
@@ -976,9 +981,9 @@ struct write_loose_object_data {
 
 static int loose_object_auto_limit = 100;
 
-static int loose_object_count(const struct object_id *oid,
-			       const char *path,
-			       void *data)
+static int loose_object_count(const struct object_id *oid UNUSED,
+			      const char *path UNUSED,
+			      void *data)
 {
 	int *count = (int*)data;
 	if (++(*count) >= loose_object_auto_limit)
@@ -1003,15 +1008,15 @@ static int loose_object_auto_condition(void)
 					     NULL, NULL, &count);
 }
 
-static int bail_on_loose(const struct object_id *oid,
-			 const char *path,
-			 void *data)
+static int bail_on_loose(const struct object_id *oid UNUSED,
+			 const char *path UNUSED,
+			 void *data UNUSED)
 {
 	return 1;
 }
 
 static int write_loose_object_to_stdin(const struct object_id *oid,
-				       const char *path,
+				       const char *path UNUSED,
 				       void *data)
 {
 	struct write_loose_object_data *d = (struct write_loose_object_data *)data;
@@ -1493,7 +1498,6 @@ static int maintenance_register(int argc, const char **argv, const char *prefix)
 	};
 	int found = 0;
 	const char *key = "maintenance.repo";
-	char *config_value;
 	char *maintpath = get_maintpath();
 	struct string_list_item *item;
 	const struct string_list *list;
@@ -1508,13 +1512,10 @@ static int maintenance_register(int argc, const char **argv, const char *prefix)
 	git_config_set("maintenance.auto", "false");
 
 	/* Set maintenance strategy, if unset */
-	if (!git_config_get_string("maintenance.strategy", &config_value))
-		free(config_value);
-	else
+	if (git_config_get("maintenance.strategy"))
 		git_config_set("maintenance.strategy", "incremental");
 
-	list = git_config_get_value_multi(key);
-	if (list) {
+	if (!git_config_get_string_multi(key, &list)) {
 		for_each_string_list_item(item, list) {
 			if (!strcmp(maintpath, item->string)) {
 				found = 1;
@@ -1580,11 +1581,10 @@ static int maintenance_unregister(int argc, const char **argv, const char *prefi
 	if (config_file) {
 		git_configset_init(&cs);
 		git_configset_add_file(&cs, config_file);
-		list = git_configset_get_value_multi(&cs, key);
-	} else {
-		list = git_config_get_value_multi(key);
 	}
-	if (list) {
+	if (!(config_file
+	      ? git_configset_get_string_multi(&cs, key, &list)
+	      : git_config_get_string_multi(key, &list))) {
 		for_each_string_list_item(item, list) {
 			if (!strcmp(maintpath, item->string)) {
 				found = 1;
@@ -1686,11 +1686,11 @@ static int get_schedule_cmd(const char **cmd, int *is_available)
 	if (is_available)
 		*is_available = 0;
 
-	string_list_split_in_place(&list, testing, ',', -1);
+	string_list_split_in_place(&list, testing, ",", -1);
 	for_each_string_list_item(item, &list) {
 		struct string_list pair = STRING_LIST_INIT_NODUP;
 
-		if (string_list_split_in_place(&pair, item->string, ':', 2) != 2)
+		if (string_list_split_in_place(&pair, item->string, ":", 2) != 2)
 			continue;
 
 		if (!strcmp(*cmd, pair.items[0].string)) {

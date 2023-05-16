@@ -3,8 +3,12 @@
  *
  * Copyright (c) 2007 Junio C Hamano
  */
-#include "cache.h"
+#include "git-compat-util.h"
 #include "attr.h"
+#include "strbuf.h"
+#include "ws.h"
+
+unsigned whitespace_rule_cfg = WS_DEFAULT_RULE;
 
 static struct whitespace_rule {
 	const char *rule_name;

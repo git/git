@@ -1,10 +1,13 @@
 #include "test-tool.h"
-#include "cache.h"
 #include "config.h"
+#include "hash.h"
+#include "object-name.h"
+#include "repository.h"
+#include "setup.h"
 #include "submodule-config.h"
 #include "submodule.h"
 
-static void die_usage(int argc, const char **argv, const char *msg)
+static void die_usage(int argc UNUSED, const char **argv, const char *msg)
 {
 	fprintf(stderr, "%s\n", msg);
 	fprintf(stderr, "Usage: %s [<commit> <submodulepath>] ...\n", argv[0]);
@@ -42,7 +45,7 @@ int cmd__submodule_config(int argc, const char **argv)
 
 		if (commit[0] == '\0')
 			oidclr(&commit_oid);
-		else if (get_oid(commit, &commit_oid) < 0)
+		else if (repo_get_oid(the_repository, commit, &commit_oid) < 0)
 			die_usage(argc, argv, "Commit not found.");
 
 		if (lookup_name) {

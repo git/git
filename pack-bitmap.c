@@ -1,5 +1,8 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "commit.h"
+#include "gettext.h"
+#include "hex.h"
 #include "strbuf.h"
 #include "tag.h"
 #include "diff.h"
@@ -12,6 +15,8 @@
 #include "pack-objects.h"
 #include "packfile.h"
 #include "repository.h"
+#include "trace2.h"
+#include "object-file.h"
 #include "object-store.h"
 #include "list-objects-filter-options.h"
 #include "midx.h"
@@ -376,7 +381,7 @@ static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
 		goto cleanup;
 	}
 
-	if (load_midx_revindex(bitmap_git->midx) < 0) {
+	if (load_midx_revindex(bitmap_git->midx)) {
 		warning(_("multi-pack bitmap is missing required reverse index"));
 		goto cleanup;
 	}
@@ -460,7 +465,7 @@ static int open_pack_bitmap_1(struct bitmap_index *bitmap_git, struct packed_git
 	return 0;
 }
 
-static int load_reverse_index(struct bitmap_index *bitmap_git)
+static int load_reverse_index(struct repository *r, struct bitmap_index *bitmap_git)
 {
 	if (bitmap_is_midx(bitmap_git)) {
 		uint32_t i;
@@ -474,23 +479,23 @@ static int load_reverse_index(struct bitmap_index *bitmap_git)
 		 * since we will need to make use of them in pack-objects.
 		 */
 		for (i = 0; i < bitmap_git->midx->num_packs; i++) {
-			ret = load_pack_revindex(bitmap_git->midx->packs[i]);
+			ret = load_pack_revindex(r, bitmap_git->midx->packs[i]);
 			if (ret)
 				return ret;
 		}
 		return 0;
 	}
-	return load_pack_revindex(bitmap_git->pack);
+	return load_pack_revindex(r, bitmap_git->pack);
 }
 
-static int load_bitmap(struct bitmap_index *bitmap_git)
+static int load_bitmap(struct repository *r, struct bitmap_index *bitmap_git)
 {
 	assert(bitmap_git->map);
 
 	bitmap_git->bitmaps = kh_init_oid_map();
 	bitmap_git->ext_index.positions = kh_init_oid_pos();
 
-	if (load_reverse_index(bitmap_git))
+	if (load_reverse_index(r, bitmap_git))
 		goto failed;
 
 	if (!(bitmap_git->commits = read_bitmap_1(bitmap_git)) ||
@@ -577,7 +582,7 @@ struct bitmap_index *prepare_bitmap_git(struct repository *r)
 {
 	struct bitmap_index *bitmap_git = xcalloc(1, sizeof(*bitmap_git));
 
-	if (!open_bitmap(r, bitmap_git) && !load_bitmap(bitmap_git))
+	if (!open_bitmap(r, bitmap_git) && !load_bitmap(r, bitmap_git))
 		return bitmap_git;
 
 	free_bitmap_index(bitmap_git);
@@ -586,9 +591,10 @@ struct bitmap_index *prepare_bitmap_git(struct repository *r)
 
 struct bitmap_index *prepare_midx_bitmap_git(struct multi_pack_index *midx)
 {
+	struct repository *r = the_repository;
 	struct bitmap_index *bitmap_git = xcalloc(1, sizeof(*bitmap_git));
 
-	if (!open_midx_bitmap_1(bitmap_git, midx) && !load_bitmap(bitmap_git))
+	if (!open_midx_bitmap_1(bitmap_git, midx) && !load_bitmap(r, bitmap_git))
 		return bitmap_git;
 
 	free_bitmap_index(bitmap_git);
@@ -951,7 +957,8 @@ static void show_object(struct object *object, const char *name, void *data_)
 	bitmap_set(data->base, bitmap_pos);
 }
 
-static void show_commit(struct commit *commit, void *data)
+static void show_commit(struct commit *commit UNUSED,
+			void *data UNUSED)
 {
 }
 
@@ -1588,7 +1595,7 @@ struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs,
 	 * from disk. this is the point of no return; after this the rev_list
 	 * becomes invalidated and we must perform the revwalk through bitmaps
 	 */
-	if (load_bitmap(bitmap_git) < 0)
+	if (load_bitmap(revs->repo, bitmap_git) < 0)
 		goto cleanup;
 
 	object_array_clear(&revs->pending);
@@ -1738,6 +1745,7 @@ int reuse_partial_packfile_from_bitmap(struct bitmap_index *bitmap_git,
 				       uint32_t *entries,
 				       struct bitmap **reuse_out)
 {
+	struct repository *r = the_repository;
 	struct packed_git *pack;
 	struct bitmap *result = bitmap_git->result;
 	struct bitmap *reuse;
@@ -1748,7 +1756,7 @@ int reuse_partial_packfile_from_bitmap(struct bitmap_index *bitmap_git,
 
 	assert(result);
 
-	load_reverse_index(bitmap_git);
+	load_reverse_index(r, bitmap_git);
 
 	if (bitmap_is_midx(bitmap_git))
 		pack = bitmap_git->midx->packs[midx_preferred_pack(bitmap_git)];
@@ -1940,7 +1948,8 @@ static void test_bitmap_type(struct bitmap_test_data *tdata,
 		    type_name(bitmap_type));
 }
 
-static void test_show_object(struct object *object, const char *name,
+static void test_show_object(struct object *object,
+			     const char *name UNUSED,
 			     void *data)
 {
 	struct bitmap_test_data *tdata = data;
@@ -2127,12 +2136,13 @@ int rebuild_bitmap(const uint32_t *reposition,
 uint32_t *create_bitmap_mapping(struct bitmap_index *bitmap_git,
 				struct packing_data *mapping)
 {
+	struct repository *r = the_repository;
 	uint32_t i, num_objects;
 	uint32_t *reposition;
 
 	if (!bitmap_is_midx(bitmap_git))
-		load_reverse_index(bitmap_git);
-	else if (load_midx_revindex(bitmap_git->midx) < 0)
+		load_reverse_index(r, bitmap_git);
+	else if (load_midx_revindex(bitmap_git->midx))
 		BUG("rebuild_existing_bitmaps: missing required rev-cache "
 		    "extension");
 
@@ -2314,7 +2324,11 @@ int bitmap_is_midx(struct bitmap_index *bitmap_git)
 
 const struct string_list *bitmap_preferred_tips(struct repository *r)
 {
-	return repo_config_get_value_multi(r, "pack.preferbitmaptips");
+	const struct string_list *dest;
+
+	if (!repo_config_get_string_multi(r, "pack.preferbitmaptips", &dest))
+		return dest;
+	return NULL;
 }
 
 int bitmap_is_preferred_refname(struct repository *r, const char *refname)
@@ -2331,4 +2345,49 @@ int bitmap_is_preferred_refname(struct repository *r, const char *refname)
 	}
 
 	return 0;
+}
+
+static int verify_bitmap_file(const char *name)
+{
+	struct stat st;
+	unsigned char *data;
+	int fd = git_open(name);
+	int res = 0;
+
+	/* It is OK to not have the file. */
+	if (fd < 0 || fstat(fd, &st)) {
+		if (fd >= 0)
+			close(fd);
+		return 0;
+	}
+
+	data = xmmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	close(fd);
+	if (!hashfile_checksum_valid(data, st.st_size))
+		res = error(_("bitmap file '%s' has invalid checksum"),
+			    name);
+
+	munmap(data, st.st_size);
+	return res;
+}
+
+int verify_bitmap_files(struct repository *r)
+{
+	int res = 0;
+
+	for (struct multi_pack_index *m = get_multi_pack_index(r);
+	     m; m = m->next) {
+		char *midx_bitmap_name = midx_bitmap_filename(m);
+		res |= verify_bitmap_file(midx_bitmap_name);
+		free(midx_bitmap_name);
+	}
+
+	for (struct packed_git *p = get_all_packs(r);
+	     p; p = p->next) {
+		char *pack_bitmap_name = pack_bitmap_filename(p);
+		res |= verify_bitmap_file(pack_bitmap_name);
+		free(pack_bitmap_name);
+	}
+
+	return res;
 }

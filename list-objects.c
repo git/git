@@ -1,6 +1,8 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "tag.h"
 #include "commit.h"
+#include "gettext.h"
+#include "hex.h"
 #include "tree.h"
 #include "blob.h"
 #include "diff.h"
@@ -64,7 +66,7 @@ static void process_blob(struct traversal_context *ctx,
 	 * of missing objects.
 	 */
 	if (ctx->revs->exclude_promisor_objects &&
-	    !has_object_file(&obj->oid) &&
+	    !repo_has_object_file(the_repository, &obj->oid) &&
 	    is_promisor_object(&obj->oid))
 		return;
 
@@ -227,7 +229,8 @@ static void mark_edge_parents_uninteresting(struct commit *commit,
 		struct commit *parent = parents->item;
 		if (!(parent->object.flags & UNINTERESTING))
 			continue;
-		mark_tree_uninteresting(revs->repo, get_commit_tree(parent));
+		mark_tree_uninteresting(revs->repo,
+					repo_get_commit_tree(the_repository, parent));
 		if (revs->edge_hint && !(parent->object.flags & SHOWN)) {
 			parent->object.flags |= SHOWN;
 			show_edge(parent);
@@ -244,7 +247,8 @@ static void add_edge_parents(struct commit *commit,
 
 	for (parents = commit->parents; parents; parents = parents->next) {
 		struct commit *parent = parents->item;
-		struct tree *tree = get_commit_tree(parent);
+		struct tree *tree = repo_get_commit_tree(the_repository,
+							 parent);
 
 		if (!tree)
 			continue;
@@ -275,7 +279,8 @@ void mark_edges_uninteresting(struct rev_info *revs,
 
 		for (list = revs->commits; list; list = list->next) {
 			struct commit *commit = list->item;
-			struct tree *tree = get_commit_tree(commit);
+			struct tree *tree = repo_get_commit_tree(the_repository,
+								 commit);
 
 			if (commit->object.flags & UNINTERESTING)
 				tree->object.flags |= UNINTERESTING;
@@ -291,7 +296,7 @@ void mark_edges_uninteresting(struct rev_info *revs,
 			struct commit *commit = list->item;
 			if (commit->object.flags & UNINTERESTING) {
 				mark_tree_uninteresting(revs->repo,
-							get_commit_tree(commit));
+							repo_get_commit_tree(the_repository, commit));
 				if (revs->edge_hint_aggressive && !(commit->object.flags & SHOWN)) {
 					commit->object.flags |= SHOWN;
 					show_edge(commit);
@@ -309,7 +314,7 @@ void mark_edges_uninteresting(struct rev_info *revs,
 			if (obj->type != OBJ_COMMIT || !(obj->flags & UNINTERESTING))
 				continue;
 			mark_tree_uninteresting(revs->repo,
-						get_commit_tree(commit));
+						repo_get_commit_tree(the_repository, commit));
 			if (!(obj->flags & SHOWN)) {
 				obj->flags |= SHOWN;
 				show_edge(commit);
@@ -376,8 +381,9 @@ static void do_traverse(struct traversal_context *ctx)
 		 */
 		if (!ctx->revs->tree_objects)
 			; /* do not bother loading tree */
-		else if (get_commit_tree(commit)) {
-			struct tree *tree = get_commit_tree(commit);
+		else if (repo_get_commit_tree(the_repository, commit)) {
+			struct tree *tree = repo_get_commit_tree(the_repository,
+								 commit);
 			tree->object.flags |= NOT_USER_GIVEN;
 			add_pending_tree(ctx->revs, tree);
 		} else if (commit->object.parsed) {

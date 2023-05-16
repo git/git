@@ -142,6 +142,7 @@ prepare_httpd() {
 	install_script error-smart-http.sh
 	install_script error.sh
 	install_script apply-one-time-perl.sh
+	install_script nph-custom-auth.sh
 
 	ln -s "$LIB_HTTPD_MODULE_PATH" "$HTTPD_ROOT_PATH/modules"
 
@@ -227,8 +228,12 @@ test_http_push_nonff () {
 		git commit -a -m path2 --amend &&
 
 		test_must_fail git push -v origin >output 2>&1 &&
-		(cd "$REMOTE_REPO" &&
-		 test $HEAD = $(git rev-parse --verify HEAD))
+		(
+			cd "$REMOTE_REPO" &&
+			echo "$HEAD" >expect &&
+			git rev-parse --verify HEAD >actual &&
+			test_cmp expect actual
+		)
 	'
 
 	test_expect_success 'non-fast-forward push show ref status' '

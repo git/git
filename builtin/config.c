@@ -1,11 +1,19 @@
 #include "builtin.h"
-#include "cache.h"
+#include "abspath.h"
+#include "alloc.h"
 #include "config.h"
 #include "color.h"
+#include "editor.h"
+#include "environment.h"
+#include "gettext.h"
+#include "ident.h"
 #include "parse-options.h"
 #include "urlmatch.h"
+#include "path.h"
 #include "quote.h"
+#include "setup.h"
 #include "worktree.h"
+#include "wrapper.h"
 
 static const char *const builtin_config_usage[] = {
 	N_("git config [<options>]"),

@@ -1,4 +1,7 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "gettext.h"
+#include "hex.h"
+#include "strbuf.h"
 #include "urlmatch.h"
 
 #define URL_ALPHA "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"

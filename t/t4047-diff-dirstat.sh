@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='diff --dirstat tests'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # set up two commits where the second commit has these files

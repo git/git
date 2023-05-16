@@ -1,5 +1,7 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
+#include "gettext.h"
+#include "hex.h"
 #include "utf8.h"
 #include "strbuf.h"
 #include "mailinfo.h"
@@ -597,7 +599,7 @@ static int check_header(struct mailinfo *mi,
 		ret = 1;
 		goto check_header_out;
 	}
-	if (parse_header(line, "Message-Id", mi, &sb)) {
+	if (parse_header(line, "Message-ID", mi, &sb)) {
 		if (mi->add_message_id)
 			mi->message_id = strbuf_detach(&sb, NULL);
 		ret = 1;
@@ -829,7 +831,7 @@ static int handle_commit_msg(struct mailinfo *mi, struct strbuf *line)
 	if (patchbreak(line)) {
 		if (mi->message_id)
 			strbuf_addf(&mi->log_message,
-				    "Message-Id: %s\n", mi->message_id);
+				    "Message-ID: %s\n", mi->message_id);
 		return 1;
 	}
 

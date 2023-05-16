@@ -1,8 +1,11 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "attr.h"
 #include "object.h"
 #include "blob.h"
 #include "commit.h"
+#include "gettext.h"
+#include "hex.h"
 #include "tag.h"
 #include "tree.h"
 #include "delta.h"
@@ -506,8 +509,9 @@ void propagate_island_marks(struct commit *commit)
 		struct commit_list *p;
 		struct island_bitmap *root_marks = kh_value(island_marks, pos);
 
-		parse_commit(commit);
-		set_island_marks(&get_commit_tree(commit)->object, root_marks);
+		repo_parse_commit(the_repository, commit);
+		set_island_marks(&repo_get_commit_tree(the_repository, commit)->object,
+				 root_marks);
 		for (p = commit->parents; p; p = p->next)
 			set_island_marks(&p->item->object, root_marks);
 	}

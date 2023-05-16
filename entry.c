@@ -2,12 +2,17 @@
 #include "blob.h"
 #include "object-store.h"
 #include "dir.h"
+#include "environment.h"
+#include "gettext.h"
+#include "hex.h"
 #include "streaming.h"
 #include "submodule.h"
+#include "symlinks.h"
 #include "progress.h"
 #include "fsmonitor.h"
 #include "entry.h"
 #include "parallel-checkout.h"
+#include "wrapper.h"
 
 static void create_directories(const char *path, int path_len,
 			       const struct checkout *state)
@@ -86,7 +91,8 @@ void *read_blob_entry(const struct cache_entry *ce, size_t *size)
 {
 	enum object_type type;
 	unsigned long ul;
-	void *blob_data = read_object_file(&ce->oid, &type, &ul);
+	void *blob_data = repo_read_object_file(the_repository, &ce->oid,
+						&type, &ul);
 
 	*size = ul;
 	if (blob_data) {

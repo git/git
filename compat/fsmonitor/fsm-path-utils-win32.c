@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "fsmonitor.h"
 #include "fsmonitor-path-utils.h"
+#include "gettext.h"
 
 /*
  * Check remote working directory protocol.

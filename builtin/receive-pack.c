@@ -1,6 +1,10 @@
 #include "builtin.h"
+#include "abspath.h"
 #include "repository.h"
 #include "config.h"
+#include "environment.h"
+#include "gettext.h"
+#include "hex.h"
 #include "lockfile.h"
 #include "pack.h"
 #include "refs.h"
@@ -25,11 +29,17 @@
 #include "tmp-objdir.h"
 #include "oidset.h"
 #include "packfile.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "protocol.h"
 #include "commit-reach.h"
+#include "server-info.h"
+#include "trace.h"
+#include "trace2.h"
 #include "worktree.h"
 #include "shallow.h"
+#include "parse-options.h"
+#include "wrapper.h"
 
 static const char * const receive_pack_usage[] = {
 	N_("git receive-pack <git-dir>"),
@@ -133,10 +143,6 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 {
 	int status = parse_hide_refs_config(var, value, "receive", &hidden_refs);
 
-	if (status)
-		return status;
-
-	status = git_gpg_config(var, value, NULL);
 	if (status)
 		return status;
 
@@ -1347,7 +1353,7 @@ static int head_has_history(void)
 {
 	struct object_id oid;
 
-	return !get_oid("HEAD", &oid);
+	return !repo_get_oid(the_repository, "HEAD", &oid);
 }
 
 static const char *push_to_deploy(unsigned char *sha1,
@@ -1463,8 +1469,10 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 		find_shared_symref(worktrees, "HEAD", name);
 
 	/* only refs/... are allowed */
-	if (!starts_with(name, "refs/") || check_refname_format(name + 5, 0)) {
-		rp_error("refusing to create funny ref '%s' remotely", name);
+	if (!starts_with(name, "refs/") ||
+	    check_refname_format(name + 5, is_null_oid(new_oid) ?
+				 REFNAME_ALLOW_ONELEVEL : 0)) {
+		rp_error("refusing to update funny ref '%s' remotely", name);
 		ret = "funny refname";
 		goto out;
 	}
@@ -1494,7 +1502,7 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 		}
 	}
 
-	if (!is_null_oid(new_oid) && !has_object_file(new_oid)) {
+	if (!is_null_oid(new_oid) && !repo_has_object_file(the_repository, new_oid)) {
 		error("unpack should have generated %s, "
 		      "but I can't find it!", oid_to_hex(new_oid));
 		ret = "bad pack";
@@ -1548,7 +1556,7 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 		}
 		old_commit = (struct commit *)old_object;
 		new_commit = (struct commit *)new_object;
-		if (!in_merge_bases(old_commit, new_commit)) {
+		if (!repo_in_merge_bases(the_repository, old_commit, new_commit)) {
 			rp_error("denying non-fast-forward %s"
 				 " (you should pull first)", name);
 			ret = "non-fast-forward";
@@ -1681,11 +1689,11 @@ static void check_aliased_update_internal(struct command *cmd,
 	rp_error("refusing inconsistent update between symref '%s' (%s..%s) and"
 		 " its target '%s' (%s..%s)",
 		 cmd->ref_name,
-		 find_unique_abbrev(&cmd->old_oid, DEFAULT_ABBREV),
-		 find_unique_abbrev(&cmd->new_oid, DEFAULT_ABBREV),
+		 repo_find_unique_abbrev(the_repository, &cmd->old_oid, DEFAULT_ABBREV),
+		 repo_find_unique_abbrev(the_repository, &cmd->new_oid, DEFAULT_ABBREV),
 		 dst_cmd->ref_name,
-		 find_unique_abbrev(&dst_cmd->old_oid, DEFAULT_ABBREV),
-		 find_unique_abbrev(&dst_cmd->new_oid, DEFAULT_ABBREV));
+		 repo_find_unique_abbrev(the_repository, &dst_cmd->old_oid, DEFAULT_ABBREV),
+		 repo_find_unique_abbrev(the_repository, &dst_cmd->new_oid, DEFAULT_ABBREV));
 
 	cmd->error_string = dst_cmd->error_string =
 		"inconsistent aliased update";
@@ -2089,7 +2097,7 @@ static struct command *read_head_info(struct packet_reader *reader,
 			const char *feature_list = reader->line + linelen + 1;
 			const char *hash = NULL;
 			const char *client_sid;
-			int len = 0;
+			size_t len = 0;
 			if (parse_feature_request(feature_list, "report-status"))
 				report_status = 1;
 			if (parse_feature_request(feature_list, "report-status-v2"))
@@ -2184,7 +2192,7 @@ static const char *parse_pack_header(struct pack_header *hdr)
 	}
 }
 
-static const char *pack_lockfile;
+static struct tempfile *pack_lockfile;
 
 static void push_header_arg(struct strvec *args, struct pack_header *hdr)
 {
@@ -2251,6 +2259,7 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 			return "unpack-objects abnormal exit";
 	} else {
 		char hostname[HOST_NAME_MAX + 1];
+		char *lockfile;
 
 		strvec_pushl(&child.args, "index-pack", "--stdin", NULL);
 		push_header_arg(&child.args, &hdr);
@@ -2280,8 +2289,14 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 		status = start_command(&child);
 		if (status)
 			return "index-pack fork failed";
-		pack_lockfile = index_pack_lockfile(child.out, NULL);
+
+		lockfile = index_pack_lockfile(child.out, NULL);
+		if (lockfile) {
+			pack_lockfile = register_tempfile(lockfile);
+			free(lockfile);
+		}
 		close(child.out);
+
 		status = finish_command(&child);
 		if (status)
 			return "index-pack abnormal exit";
@@ -2568,8 +2583,7 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 		use_keepalive = KEEPALIVE_ALWAYS;
 		execute_commands(commands, unpack_status, &si,
 				 &push_options);
-		if (pack_lockfile)
-			unlink_or_warn(pack_lockfile);
+		delete_tempfile(&pack_lockfile);
 		sigchain_push(SIGPIPE, SIG_IGN);
 		if (report_status_v2)
 			report_v2(commands, unpack_status);

@@ -3,6 +3,8 @@
 #include "color.h"
 #include "config.h"
 #include "diffcore.h"
+#include "gettext.h"
+#include "hex.h"
 #include "revision.h"
 #include "refs.h"
 #include "string-list.h"
@@ -10,6 +12,7 @@
 #include "dir.h"
 #include "run-command.h"
 #include "prompt.h"
+#include "tree.h"
 
 static void init_color(struct repository *r, struct add_i_state *s,
 		       const char *section_and_slot, char *dst,
@@ -551,7 +554,7 @@ static int get_modified_files(struct repository *r,
 		opt.def = is_initial ?
 			empty_tree_oid_hex() : oid_to_hex(&head_oid);
 
-		init_revisions(&rev, NULL);
+		repo_init_revisions(r, &rev, NULL);
 		setup_revisions(0, NULL, &rev, &opt);
 
 		rev.diffopt.output_format = DIFF_FORMAT_CALLBACK;

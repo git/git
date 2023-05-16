@@ -330,7 +330,7 @@ test_expect_success 'initial import time from top change time' '
 	test_when_finished cleanup_git &&
 	(
 		cd "$git" &&
-		gittime=$(git show -s --raw --pretty=format:%at HEAD) &&
+		gittime=$(git show -s --pretty=format:%at HEAD) &&
 		echo $p4time $gittime &&
 		test $p4time = $gittime
 	)

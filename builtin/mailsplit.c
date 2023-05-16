@@ -6,6 +6,7 @@
  */
 #include "cache.h"
 #include "builtin.h"
+#include "gettext.h"
 #include "string-list.h"
 #include "strbuf.h"
 
@@ -276,6 +277,8 @@ int cmd_mailsplit(int argc, const char **argv, const char *prefix)
 	const char *dir = NULL;
 	const char **argp;
 	static const char *stdin_only[] = { "-", NULL };
+
+	BUG_ON_NON_EMPTY_PREFIX(prefix);
 
 	for (argp = argv+1; *argp; argp++) {
 		const char *arg = *argp;

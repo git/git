@@ -197,6 +197,8 @@ static int command_loop(const char *child)
 
 int cmd_remote_ext(int argc, const char **argv, const char *prefix)
 {
+	BUG_ON_NON_EMPTY_PREFIX(prefix);
+
 	if (argc != 3)
 		usage(usage_msg);
 

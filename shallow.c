@@ -1,4 +1,6 @@
 #include "cache.h"
+#include "alloc.h"
+#include "hex.h"
 #include "repository.h"
 #include "tempfile.h"
 #include "lockfile.h"
@@ -15,6 +17,8 @@
 #include "list-objects.h"
 #include "commit-reach.h"
 #include "shallow.h"
+#include "trace.h"
+#include "wrapper.h"
 
 void set_alternate_shallow_file(struct repository *r, const char *path, int override)
 {
@@ -30,7 +34,7 @@ int register_shallow(struct repository *r, const struct object_id *oid)
 {
 	struct commit_graft *graft =
 		xmalloc(sizeof(struct commit_graft));
-	struct commit *commit = lookup_commit(the_repository, oid);
+	struct commit *commit = lookup_commit(r, oid);
 
 	oidcpy(&graft->oid, oid);
 	graft->nr_parent = -1;
@@ -247,7 +251,7 @@ struct commit_list *get_shallow_commits_by_rev_list(int ac, const char **av,
 		struct commit *c = p->item;
 		struct commit_list *parent;
 
-		if (parse_commit(c))
+		if (repo_parse_commit(the_repository, c))
 			die("unable to parse commit %s",
 			    oid_to_hex(&c->object.oid));
 
@@ -301,7 +305,7 @@ static int write_one_shallow(const struct commit_graft *graft, void *cb_data)
 	if (graft->nr_parent != -1)
 		return 0;
 	if (data->flags & QUICK) {
-		if (!has_object_file(&graft->oid))
+		if (!repo_has_object_file(the_repository, &graft->oid))
 			return 0;
 	} else if (data->flags & SEEN_ONLY) {
 		struct commit *c = lookup_commit(the_repository, &graft->oid);
@@ -466,7 +470,7 @@ void prepare_shallow_info(struct shallow_info *info, struct oid_array *sa)
 	ALLOC_ARRAY(info->ours, sa->nr);
 	ALLOC_ARRAY(info->theirs, sa->nr);
 	for (i = 0; i < sa->nr; i++) {
-		if (has_object_file(sa->oid + i)) {
+		if (repo_has_object_file(the_repository, sa->oid + i)) {
 			struct commit_graft *graft;
 			graft = lookup_commit_graft(the_repository,
 						    &sa->oid[i]);
@@ -494,7 +498,7 @@ void remove_nonexistent_theirs_shallow(struct shallow_info *info)
 	for (i = dst = 0; i < info->nr_theirs; i++) {
 		if (i != dst)
 			info->theirs[dst] = info->theirs[i];
-		if (has_object_file(oid + info->theirs[i]))
+		if (repo_has_object_file(the_repository, oid + info->theirs[i]))
 			dst++;
 	}
 	info->nr_theirs = dst;
@@ -583,7 +587,7 @@ static void paint_down(struct paint_info *info, const struct object_id *oid,
 		if (c->object.flags & BOTTOM)
 			continue;
 
-		if (parse_commit(c))
+		if (repo_parse_commit(the_repository, c))
 			die("unable to parse commit %s",
 			    oid_to_hex(&c->object.oid));
 
@@ -791,7 +795,7 @@ static void post_assign_shallow(struct shallow_info *info,
 		for (j = 0; j < bitmap_nr; j++)
 			if (bitmap[0][j] &&
 			    /* Step 7, reachability test at commit level */
-			    !in_merge_bases_many(c, ca.nr, ca.commits)) {
+			    !repo_in_merge_bases_many(the_repository, c, ca.nr, ca.commits)) {
 				update_refstatus(ref_status, info->ref->nr, *bitmap);
 				dst++;
 				break;
@@ -819,9 +823,10 @@ int delayed_reachability_test(struct shallow_info *si, int c)
 			si->nr_commits = ca.nr;
 		}
 
-		si->reachable[c] = in_merge_bases_many(commit,
-						       si->nr_commits,
-						       si->commits);
+		si->reachable[c] = repo_in_merge_bases_many(the_repository,
+							    commit,
+							    si->nr_commits,
+							    si->commits);
 		si->need_reachability_test[c] = 0;
 	}
 	return si->reachable[c];

@@ -1,7 +1,6 @@
 #ifndef REPOSITORY_H
 #define REPOSITORY_H
 
-#include "git-compat-util.h"
 #include "path.h"
 
 struct config_set;
@@ -34,10 +33,10 @@ struct repo_settings {
 	int commit_graph_generation_version;
 	int commit_graph_read_changed_paths;
 	int gc_write_commit_graph;
-	int gc_cruft_packs;
 	int fetch_write_commit_graph;
 	int command_requires_full_index;
 	int sparse_index;
+	int pack_read_reverse_index;
 
 	struct fsmonitor_settings *fsmonitor; /* lazily loaded */
 

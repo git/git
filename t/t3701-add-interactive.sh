@@ -7,12 +7,6 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
-if test_have_prereq !PERL
-then
-	skip_all='skipping add -i (scripted) tests, perl not available'
-	test_done
-fi
-
 diff_cmp () {
 	for x
 	do
@@ -311,9 +305,11 @@ test_expect_success FILEMODE 'stage mode and hunk' '
 	echo content >>file &&
 	chmod +x file &&
 	printf "y\\ny\\n" | git add -p &&
-	git diff --cached file | grep "new mode" &&
-	git diff --cached file | grep "+content" &&
-	test -z "$(git diff file)"
+	git diff --cached file >out &&
+	grep "new mode" out &&
+	grep "+content" out &&
+	git diff file >out &&
+	test_must_be_empty out
 '
 
 # end of tests disabled when filemode is not usable
@@ -1073,6 +1069,27 @@ test_expect_success 'show help from add--helper' '
 	test_write_lines h | force_color git add -i >actual.colored &&
 	test_decode_color <actual.colored >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'reset -p with unmerged files' '
+	test_when_finished "git checkout --force main" &&
+	test_commit one conflict &&
+	git checkout -B side HEAD^ &&
+	test_commit two conflict &&
+	test_must_fail git merge one &&
+
+	# this is a noop with only an unmerged entry
+	git reset -p &&
+
+	# add files that sort before and after unmerged entry
+	echo a >a &&
+	echo z >z &&
+	git add a z &&
+
+	# confirm that we can reset those files
+	printf "%s\n" y y | git reset -p &&
+	git diff-index --cached --diff-filter=u HEAD >staged &&
+	test_must_be_empty staged
 '
 
 test_done

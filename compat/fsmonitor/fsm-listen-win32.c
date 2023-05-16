@@ -3,6 +3,8 @@
 #include "fsmonitor.h"
 #include "fsm-listen.h"
 #include "fsmonitor--daemon.h"
+#include "gettext.h"
+#include "trace2.h"
 
 /*
  * The documentation of ReadDirectoryChangesW() states that the maximum

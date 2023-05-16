@@ -1,5 +1,8 @@
 #include "builtin.h"
-#include "cache.h"
+#include "alloc.h"
+#include "environment.h"
+#include "gettext.h"
+#include "hex.h"
 #include "repository.h"
 #include "config.h"
 #include "attr.h"
@@ -30,13 +33,17 @@
 #include "strvec.h"
 #include "list.h"
 #include "packfile.h"
+#include "object-file.h"
 #include "object-store.h"
+#include "replace-object.h"
 #include "dir.h"
 #include "midx.h"
 #include "trace2.h"
 #include "shallow.h"
 #include "promisor-remote.h"
 #include "pack-mtimes.h"
+#include "parse-options.h"
+#include "wrapper.h"
 
 /*
  * Objects we are going to pack are collected in the `to_pack` structure.
@@ -288,11 +295,13 @@ static void *get_delta(struct object_entry *entry)
 	void *buf, *base_buf, *delta_buf;
 	enum object_type type;
 
-	buf = read_object_file(&entry->idx.oid, &type, &size);
+	buf = repo_read_object_file(the_repository, &entry->idx.oid, &type,
+				    &size);
 	if (!buf)
 		die(_("unable to read %s"), oid_to_hex(&entry->idx.oid));
-	base_buf = read_object_file(&DELTA(entry)->idx.oid, &type,
-				    &base_size);
+	base_buf = repo_read_object_file(the_repository,
+					 &DELTA(entry)->idx.oid, &type,
+					 &base_size);
 	if (!base_buf)
 		die("unable to read %s",
 		    oid_to_hex(&DELTA(entry)->idx.oid));
@@ -454,7 +463,9 @@ static unsigned long write_no_reuse_object(struct hashfile *f, struct object_ent
 				       &size, NULL)) != NULL)
 			buf = NULL;
 		else {
-			buf = read_object_file(&entry->idx.oid, &type, &size);
+			buf = repo_read_object_file(the_repository,
+						    &entry->idx.oid, &type,
+						    &size);
 			if (!buf)
 				die(_("unable to read %s"),
 				    oid_to_hex(&entry->idx.oid));
@@ -1590,7 +1601,7 @@ static int add_object_entry(const struct object_id *oid, enum object_type type,
 
 static int add_object_entry_from_bitmap(const struct object_id *oid,
 					enum object_type type,
-					int flags, uint32_t name_hash,
+					int flags UNUSED, uint32_t name_hash,
 					struct packed_git *pack, off_t offset)
 {
 	display_progress(progress_state, ++nr_seen);
@@ -1665,7 +1676,7 @@ static struct pbase_tree_cache *pbase_tree_get(const struct object_id *oid)
 	/* Did not find one.  Either we got a bogus request or
 	 * we need to read and perhaps cache.
 	 */
-	data = read_object_file(oid, &type, &size);
+	data = repo_read_object_file(the_repository, oid, &type, &size);
 	if (!data)
 		return NULL;
 	if (type != OBJ_TREE) {
@@ -2074,7 +2085,7 @@ static void check_object(struct object_entry *entry, uint32_t object_index)
 
 	if (oid_object_info_extended(the_repository, &entry->idx.oid, &oi,
 				     OBJECT_INFO_SKIP_FETCH_OBJECT | OBJECT_INFO_LOOKUP_REPLACE) < 0) {
-		if (has_promisor_remote()) {
+		if (repo_has_promisor_remote(the_repository)) {
 			prefetch_to_pack(object_index);
 			if (oid_object_info_extended(the_repository, &entry->idx.oid, &oi,
 						     OBJECT_INFO_SKIP_FETCH_OBJECT | OBJECT_INFO_LOOKUP_REPLACE) < 0)
@@ -2525,7 +2536,9 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 	/* Load data if not already done */
 	if (!trg->data) {
 		packing_data_lock(&to_pack);
-		trg->data = read_object_file(&trg_entry->idx.oid, &type, &sz);
+		trg->data = repo_read_object_file(the_repository,
+						  &trg_entry->idx.oid, &type,
+						  &sz);
 		packing_data_unlock(&to_pack);
 		if (!trg->data)
 			die(_("object %s cannot be read"),
@@ -2538,7 +2551,9 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 	}
 	if (!src->data) {
 		packing_data_lock(&to_pack);
-		src->data = read_object_file(&src_entry->idx.oid, &type, &sz);
+		src->data = repo_read_object_file(the_repository,
+						  &src_entry->idx.oid, &type,
+						  &sz);
 		packing_data_unlock(&to_pack);
 		if (!src->data) {
 			if (src_entry->preferred_base) {
@@ -3260,13 +3275,14 @@ static int add_object_entry_from_pack(const struct object_id *oid,
 	return 0;
 }
 
-static void show_commit_pack_hint(struct commit *commit, void *_data)
+static void show_commit_pack_hint(struct commit *commit UNUSED,
+				  void *data UNUSED)
 {
 	/* nothing to do; commits don't have a namehash */
 }
 
 static void show_object_pack_hint(struct object *object, const char *name,
-				  void *_data)
+				  void *data UNUSED)
 {
 	struct object_entry *oe = packlist_find(&to_pack, &object->oid);
 	if (!oe)
@@ -3344,16 +3360,16 @@ static void read_packs_list_from_stdin(void)
 	}
 
 	string_list_sort(&include_packs);
+	string_list_remove_duplicates(&include_packs, 0);
 	string_list_sort(&exclude_packs);
+	string_list_remove_duplicates(&exclude_packs, 0);
 
 	for (p = get_all_packs(the_repository); p; p = p->next) {
 		const char *pack_name = pack_basename(p);
 
-		item = string_list_lookup(&include_packs, pack_name);
-		if (!item)
-			item = string_list_lookup(&exclude_packs, pack_name);
-
-		if (item)
+		if ((item = string_list_lookup(&include_packs, pack_name)))
+			item->util = p;
+		if ((item = string_list_lookup(&exclude_packs, pack_name)))
 			item->util = p;
 	}
 
@@ -3464,7 +3480,7 @@ static void add_cruft_object_entry(const struct object_id *oid, enum object_type
 	return;
 }
 
-static void show_cruft_object(struct object *obj, const char *name, void *data)
+static void show_cruft_object(struct object *obj, const char *name, void *data UNUSED)
 {
 	/*
 	 * if we did not record it earlier, it's at least as old as our
@@ -3484,7 +3500,7 @@ static void show_cruft_commit(struct commit *commit, void *data)
 	show_cruft_object((struct object*)commit, NULL, data);
 }
 
-static int cruft_include_check_obj(struct object *obj, void *data)
+static int cruft_include_check_obj(struct object *obj, void *data UNUSED)
 {
 	return !has_object_kept_pack(&obj->oid, IN_CORE_KEEP_PACKS);
 }
@@ -3663,7 +3679,7 @@ static void read_object_list_from_stdin(void)
 	}
 }
 
-static void show_commit(struct commit *commit, void *data)
+static void show_commit(struct commit *commit, void *data UNUSED)
 {
 	add_object_entry(&commit->object.oid, OBJ_COMMIT, NULL, 0);
 
@@ -3674,7 +3690,8 @@ static void show_commit(struct commit *commit, void *data)
 		propagate_island_marks(commit);
 }
 
-static void show_object(struct object *obj, const char *name, void *data)
+static void show_object(struct object *obj, const char *name,
+			void *data UNUSED)
 {
 	add_preferred_base_object(name);
 	add_object_entry(&obj->oid, obj->type, name, 0);
@@ -3761,7 +3778,7 @@ static void show_edge(struct commit *commit)
 static int add_object_in_unpacked_pack(const struct object_id *oid,
 				       struct packed_git *pack,
 				       uint32_t pos,
-				       void *_data)
+				       void *data UNUSED)
 {
 	if (cruft) {
 		off_t offset;
@@ -3795,7 +3812,7 @@ static void add_objects_in_unpacked_packs(void)
 }
 
 static int add_loose_object(const struct object_id *oid, const char *path,
-			    void *data)
+			    void *data UNUSED)
 {
 	enum object_type type = oid_object_info(the_repository, oid, NULL);
 
@@ -3946,13 +3963,13 @@ static int get_object_list_from_bitmap(struct rev_info *revs)
 }
 
 static void record_recent_object(struct object *obj,
-				 const char *name,
-				 void *data)
+				 const char *name UNUSED,
+				 void *data UNUSED)
 {
 	oid_array_append(&recent_objects, &obj->oid);
 }
 
-static void record_recent_commit(struct commit *commit, void *data)
+static void record_recent_commit(struct commit *commit, void *data UNUSED)
 {
 	oid_array_append(&recent_objects, &commit->object.oid);
 }
@@ -4277,9 +4294,10 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	}
 
 	reset_pack_idx_option(&pack_idx_opts);
+	pack_idx_opts.flags |= WRITE_REV;
 	git_config(git_pack_config, NULL);
-	if (git_env_bool(GIT_TEST_WRITE_REV_INDEX, 0))
-		pack_idx_opts.flags |= WRITE_REV;
+	if (git_env_bool(GIT_TEST_NO_WRITE_REV_INDEX, 0))
+		pack_idx_opts.flags &= ~WRITE_REV;
 
 	progress = isatty(2);
 	argc = parse_options(argc, argv, prefix, pack_objects_options,

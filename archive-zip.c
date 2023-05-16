@@ -1,13 +1,17 @@
 /*
  * Copyright (c) 2006 Rene Scharfe
  */
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
 #include "archive.h"
+#include "gettext.h"
+#include "git-zlib.h"
+#include "hex.h"
 #include "streaming.h"
 #include "utf8.h"
 #include "object-store.h"
 #include "userdiff.h"
+#include "write-or-die.h"
 #include "xdiff-interface.h"
 #include "date.h"
 

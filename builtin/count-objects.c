@@ -7,6 +7,8 @@
 #include "cache.h"
 #include "config.h"
 #include "dir.h"
+#include "environment.h"
+#include "gettext.h"
 #include "repository.h"
 #include "builtin.h"
 #include "parse-options.h"
@@ -57,7 +59,8 @@ static void loose_garbage(const char *path)
 		report_garbage(PACKDIR_FILE_GARBAGE, path);
 }
 
-static int count_loose(const struct object_id *oid, const char *path, void *data)
+static int count_loose(const struct object_id *oid, const char *path,
+		       void *data UNUSED)
 {
 	struct stat st;
 
@@ -72,7 +75,8 @@ static int count_loose(const struct object_id *oid, const char *path, void *data
 	return 0;
 }
 
-static int count_cruft(const char *basename, const char *path, void *data)
+static int count_cruft(const char *basename UNUSED, const char *path,
+		       void *data UNUSED)
 {
 	loose_garbage(path);
 	return 0;

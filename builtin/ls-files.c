@@ -8,9 +8,12 @@
 #include "cache.h"
 #include "repository.h"
 #include "config.h"
+#include "convert.h"
 #include "quote.h"
 #include "dir.h"
 #include "builtin.h"
+#include "gettext.h"
+#include "object-name.h"
 #include "strbuf.h"
 #include "tree.h"
 #include "cache-tree.h"
@@ -19,6 +22,7 @@
 #include "string-list.h"
 #include "pathspec.h"
 #include "run-command.h"
+#include "setup.h"
 #include "submodule.h"
 #include "submodule-config.h"
 
@@ -89,12 +93,15 @@ static void write_name(const char *name)
 
 static void write_name_to_buf(struct strbuf *sb, const char *name)
 {
-	const char *rel = relative_path(name, prefix_len ? prefix : NULL, sb);
+	struct strbuf buf = STRBUF_INIT;
+	const char *rel = relative_path(name, prefix_len ? prefix : NULL, &buf);
 
 	if (line_terminator)
 		quote_c_style(rel, sb, NULL, 0);
 	else
 		strbuf_addstr(sb, rel);
+
+	strbuf_release(&buf);
 }
 
 static const char *get_tag(const struct cache_entry *ce, const char *tag)
@@ -360,7 +367,7 @@ static void show_ru_info(struct index_state *istate)
 			if (!ui->mode[i])
 				continue;
 			printf("%s%06o %s %d\t", tag_resolve_undo, ui->mode[i],
-			       find_unique_abbrev(&ui->oid[i], abbrev),
+			       repo_find_unique_abbrev(the_repository, &ui->oid[i], abbrev),
 			       i + 1);
 			write_name(path);
 		}
@@ -575,7 +582,7 @@ void overlay_tree_on_index(struct index_state *istate,
 	read_tree_fn_t fn = NULL;
 	int err;
 
-	if (get_oid(tree_name, &oid))
+	if (repo_get_oid(the_repository, tree_name, &oid))
 		die("tree-ish %s not found.", tree_name);
 	tree = parse_tree_indirect(&oid);
 	if (!tree)

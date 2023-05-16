@@ -14,9 +14,6 @@ feature.experimental::
 +
 * `fetch.negotiationAlgorithm=skipping` may improve fetch negotiation times by
 skipping more commits at a time, reducing the number of round trips.
-+
-* `gc.cruftPacks=true` reduces disk space used by unreachable objects during
-garbage collection, preventing loose object explosions.
 
 feature.manyFiles::
 	Enable config options that optimize for repos with many files in the

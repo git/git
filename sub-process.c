@@ -1,6 +1,7 @@
 /*
  * Generic implementation of background process infrastructure.
  */
+#include "git-compat-util.h"
 #include "sub-process.h"
 #include "sigchain.h"
 #include "pkt-line.h"

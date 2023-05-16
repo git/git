@@ -1,17 +1,20 @@
 #!/bin/sh
 
 test_description='on-disk reverse index'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # The below tests want control over the 'pack.writeReverseIndex' setting
 # themselves to assert various combinations of it with other options.
-sane_unset GIT_TEST_WRITE_REV_INDEX
+sane_unset GIT_TEST_NO_WRITE_REV_INDEX
 
 packdir=.git/objects/pack
 
 test_expect_success 'setup' '
 	test_commit base &&
 
+	test_config pack.writeReverseIndex false &&
 	pack=$(git pack-objects --all $packdir/pack) &&
 	rev=$packdir/pack-$pack.rev &&
 
@@ -94,6 +97,17 @@ test_expect_success 'reverse index is not generated when available on disk' '
 		--batch-check="%(objectsize:disk)" <tip
 '
 
+test_expect_success 'reverse index is ignored when pack.readReverseIndex is false' '
+	test_index_pack true &&
+	test_path_is_file $rev &&
+
+	test_config pack.readReverseIndex false &&
+
+	git rev-parse HEAD >tip &&
+	GIT_TEST_REV_INDEX_DIE_ON_DISK=1 git cat-file \
+		--batch-check="%(objectsize:disk)" <tip
+'
+
 test_expect_success 'revindex in-memory vs on-disk' '
 	git init repo &&
 	test_when_finished "rm -fr repo" &&
@@ -117,4 +131,78 @@ test_expect_success 'revindex in-memory vs on-disk' '
 		test_cmp on-disk in-core
 	)
 '
+
+test_expect_success 'fsck succeeds on good rev-index' '
+	test_when_finished rm -fr repo &&
+	git init repo &&
+	(
+		cd repo &&
+
+		test_commit commit &&
+		git -c pack.writeReverseIndex=true repack -ad &&
+		git fsck 2>err &&
+		test_must_be_empty err
+	)
+'
+
+test_expect_success 'set up rev-index corruption tests' '
+	git init corrupt &&
+	(
+		cd corrupt &&
+
+		test_commit commit &&
+		git -c pack.writeReverseIndex=true repack -ad &&
+
+		revfile=$(ls .git/objects/pack/pack-*.rev) &&
+		chmod a+w $revfile &&
+		cp $revfile $revfile.bak
+	)
+'
+
+corrupt_rev_and_verify () {
+	(
+		pos="$1" &&
+		value="$2" &&
+		error="$3" &&
+
+		cd corrupt &&
+		revfile=$(ls .git/objects/pack/pack-*.rev) &&
+
+		# Reset to original rev-file.
+		cp $revfile.bak $revfile &&
+
+		printf "$value" | dd of=$revfile bs=1 seek="$pos" conv=notrunc &&
+		test_must_fail git fsck 2>err &&
+		grep "$error" err
+	)
+}
+
+test_expect_success 'fsck catches invalid checksum' '
+	revfile=$(ls corrupt/.git/objects/pack/pack-*.rev) &&
+	orig_size=$(wc -c <$revfile) &&
+	hashpos=$((orig_size - 10)) &&
+	corrupt_rev_and_verify $hashpos bogus \
+		"invalid checksum"
+'
+
+test_expect_success 'fsck catches invalid row position' '
+	corrupt_rev_and_verify 14 "\07" \
+		"invalid rev-index position"
+'
+
+test_expect_success 'fsck catches invalid header: magic number' '
+	corrupt_rev_and_verify 1 "\07" \
+		"reverse-index file .* has unknown signature"
+'
+
+test_expect_success 'fsck catches invalid header: version' '
+	corrupt_rev_and_verify 7 "\02" \
+		"reverse-index file .* has unsupported version"
+'
+
+test_expect_success 'fsck catches invalid header: hash function' '
+	corrupt_rev_and_verify 11 "\03" \
+		"reverse-index file .* has unsupported hash id"
+'
+
 test_done

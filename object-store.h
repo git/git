@@ -1,16 +1,16 @@
 #ifndef OBJECT_STORE_H
 #define OBJECT_STORE_H
 
-#include "cache.h"
-#include "oidmap.h"
+#include "object.h"
 #include "list.h"
-#include "oid-array.h"
-#include "strbuf.h"
 #include "thread-utils.h"
 #include "khash.h"
 #include "dir.h"
-#include "oidtree.h"
 #include "oidset.h"
+
+struct oidmap;
+struct oidtree;
+struct strbuf;
 
 struct object_directory {
 	struct object_directory *next;
@@ -56,6 +56,7 @@ KHASH_INIT(odb_path_map, const char * /* key: odb_path */,
 	struct object_directory *, 1, fspathhash, fspatheq)
 
 void prepare_alt_odb(struct repository *r);
+int has_alt_odb(struct repository *r);
 char *compute_alternate_path(const char *path, struct strbuf *err);
 struct object_directory *find_odb(struct repository *r, const char *obj_dir);
 typedef int alt_odb_fn(struct object_directory *, void *);
@@ -216,7 +217,7 @@ struct raw_object_store {
 	/*
 	 * A fast, rough count of the number of objects in the repository.
 	 * These two fields are not meant for direct access. Use
-	 * approximate_object_count() instead.
+	 * repo_approximate_object_count() instead.
 	 */
 	unsigned long approximate_object_count;
 	unsigned approximate_object_count_valid : 1;
@@ -245,9 +246,6 @@ void *repo_read_object_file(struct repository *r,
 			    const struct object_id *oid,
 			    enum object_type *type,
 			    unsigned long *size);
-#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
-#define read_object_file(oid, type, size) repo_read_object_file(the_repository, oid, type, size)
-#endif
 
 /* Read and unpack an object file into memory, write memory to an object file */
 int oid_object_info(struct repository *r, const struct object_id *, unsigned long *);
@@ -283,103 +281,6 @@ int pretend_object_file(void *, unsigned long, enum object_type,
 			struct object_id *oid);
 
 int force_object_loose(const struct object_id *oid, time_t mtime);
-
-/*
- * Open the loose object at path, check its hash, and return the contents,
- * use the "oi" argument to assert things about the object, or e.g. populate its
- * type, and size. If the object is a blob, then "contents" may return NULL,
- * to allow streaming of large blobs.
- *
- * Returns 0 on success, negative on error (details may be written to stderr).
- */
-int read_loose_object(const char *path,
-		      const struct object_id *expected_oid,
-		      struct object_id *real_oid,
-		      void **contents,
-		      struct object_info *oi);
-
-/* Retry packed storage after checking packed and loose storage */
-#define HAS_OBJECT_RECHECK_PACKED 1
-
-/*
- * Returns 1 if the object exists. This function will not lazily fetch objects
- * in a partial clone.
- */
-int has_object(struct repository *r, const struct object_id *oid,
-	       unsigned flags);
-
-/*
- * These macros and functions are deprecated. If checking existence for an
- * object that is likely to be missing and/or whose absence is relatively
- * inconsequential (or is consequential but the caller is prepared to handle
- * it), use has_object(), which has better defaults (no lazy fetch in a partial
- * clone and no rechecking of packed storage). In the unlikely event that a
- * caller needs to assert existence of an object that it fully expects to
- * exist, and wants to trigger a lazy fetch in a partial clone, use
- * oid_object_info_extended() with a NULL struct object_info.
- *
- * These functions can be removed once all callers have migrated to
- * has_object() and/or oid_object_info_extended().
- */
-int repo_has_object_file(struct repository *r, const struct object_id *oid);
-int repo_has_object_file_with_flags(struct repository *r,
-				    const struct object_id *oid, int flags);
-#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
-#define has_object_file(oid) repo_has_object_file(the_repository, oid)
-#define has_object_file_with_flags(oid, flags) repo_has_object_file_with_flags(the_repository, oid, flags)
-#endif
-
-/*
- * Return true iff an alternate object database has a loose object
- * with the specified name.  This function does not respect replace
- * references.
- */
-int has_loose_object_nonlocal(const struct object_id *);
-
-int has_loose_object(const struct object_id *);
-
-/**
- * format_object_header() is a thin wrapper around s xsnprintf() that
- * writes the initial "<type> <obj-len>" part of the loose object
- * header. It returns the size that snprintf() returns + 1.
- */
-int format_object_header(char *str, size_t size, enum object_type type,
-			 size_t objsize);
-
-void assert_oid_type(const struct object_id *oid, enum object_type expect);
-
-/*
- * Enabling the object read lock allows multiple threads to safely call the
- * following functions in parallel: repo_read_object_file(), read_object_file(),
- * read_object_with_reference(), oid_object_info() and oid_object_info_extended().
- *
- * obj_read_lock() and obj_read_unlock() may also be used to protect other
- * section which cannot execute in parallel with object reading. Since the used
- * lock is a recursive mutex, these sections can even contain calls to object
- * reading functions. However, beware that in these cases zlib inflation won't
- * be performed in parallel, losing performance.
- *
- * TODO: oid_object_info_extended()'s call stack has a recursive behavior. If
- * any of its callees end up calling it, this recursive call won't benefit from
- * parallel inflation.
- */
-void enable_obj_read_lock(void);
-void disable_obj_read_lock(void);
-
-extern int obj_read_use_lock;
-extern pthread_mutex_t obj_read_mutex;
-
-static inline void obj_read_lock(void)
-{
-	if(obj_read_use_lock)
-		pthread_mutex_lock(&obj_read_mutex);
-}
-
-static inline void obj_read_unlock(void)
-{
-	if(obj_read_use_lock)
-		pthread_mutex_unlock(&obj_read_mutex);
-}
 
 struct object_info {
 	/* Request */
@@ -443,6 +344,99 @@ struct object_info {
 int oid_object_info_extended(struct repository *r,
 			     const struct object_id *,
 			     struct object_info *, unsigned flags);
+
+/*
+ * Open the loose object at path, check its hash, and return the contents,
+ * use the "oi" argument to assert things about the object, or e.g. populate its
+ * type, and size. If the object is a blob, then "contents" may return NULL,
+ * to allow streaming of large blobs.
+ *
+ * Returns 0 on success, negative on error (details may be written to stderr).
+ */
+int read_loose_object(const char *path,
+		      const struct object_id *expected_oid,
+		      struct object_id *real_oid,
+		      void **contents,
+		      struct object_info *oi);
+
+/* Retry packed storage after checking packed and loose storage */
+#define HAS_OBJECT_RECHECK_PACKED 1
+
+/*
+ * Returns 1 if the object exists. This function will not lazily fetch objects
+ * in a partial clone.
+ */
+int has_object(struct repository *r, const struct object_id *oid,
+	       unsigned flags);
+
+/*
+ * These macros and functions are deprecated. If checking existence for an
+ * object that is likely to be missing and/or whose absence is relatively
+ * inconsequential (or is consequential but the caller is prepared to handle
+ * it), use has_object(), which has better defaults (no lazy fetch in a partial
+ * clone and no rechecking of packed storage). In the unlikely event that a
+ * caller needs to assert existence of an object that it fully expects to
+ * exist, and wants to trigger a lazy fetch in a partial clone, use
+ * oid_object_info_extended() with a NULL struct object_info.
+ *
+ * These functions can be removed once all callers have migrated to
+ * has_object() and/or oid_object_info_extended().
+ */
+int repo_has_object_file(struct repository *r, const struct object_id *oid);
+int repo_has_object_file_with_flags(struct repository *r,
+				    const struct object_id *oid, int flags);
+
+/*
+ * Return true iff an alternate object database has a loose object
+ * with the specified name.  This function does not respect replace
+ * references.
+ */
+int has_loose_object_nonlocal(const struct object_id *);
+
+int has_loose_object(const struct object_id *);
+
+/**
+ * format_object_header() is a thin wrapper around s xsnprintf() that
+ * writes the initial "<type> <obj-len>" part of the loose object
+ * header. It returns the size that snprintf() returns + 1.
+ */
+int format_object_header(char *str, size_t size, enum object_type type,
+			 size_t objsize);
+
+void assert_oid_type(const struct object_id *oid, enum object_type expect);
+
+/*
+ * Enabling the object read lock allows multiple threads to safely call the
+ * following functions in parallel: repo_read_object_file(),
+ * read_object_with_reference(), oid_object_info() and oid_object_info_extended().
+ *
+ * obj_read_lock() and obj_read_unlock() may also be used to protect other
+ * section which cannot execute in parallel with object reading. Since the used
+ * lock is a recursive mutex, these sections can even contain calls to object
+ * reading functions. However, beware that in these cases zlib inflation won't
+ * be performed in parallel, losing performance.
+ *
+ * TODO: oid_object_info_extended()'s call stack has a recursive behavior. If
+ * any of its callees end up calling it, this recursive call won't benefit from
+ * parallel inflation.
+ */
+void enable_obj_read_lock(void);
+void disable_obj_read_lock(void);
+
+extern int obj_read_use_lock;
+extern pthread_mutex_t obj_read_mutex;
+
+static inline void obj_read_lock(void)
+{
+	if(obj_read_use_lock)
+		pthread_mutex_lock(&obj_read_mutex);
+}
+
+static inline void obj_read_unlock(void)
+{
+	if(obj_read_use_lock)
+		pthread_mutex_unlock(&obj_read_mutex);
+}
 
 /*
  * Iterate over the files in the loose-object parts of the object

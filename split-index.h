@@ -1,7 +1,7 @@
 #ifndef SPLIT_INDEX_H
 #define SPLIT_INDEX_H
 
-#include "cache.h"
+#include "hash-ll.h"
 
 struct index_state;
 struct strbuf;

@@ -1,6 +1,6 @@
 #include "test-tool.h"
-#include "cache.h"
 #include "parse-options.h"
+#include "strbuf.h"
 #include "string-list.h"
 #include "trace2.h"
 
@@ -263,14 +263,14 @@ int cmd__parse_options_flags(int argc, const char **argv)
 	return parse_options_flags__cmd(argc, argv, test_flags);
 }
 
-static int subcmd_one(int argc, const char **argv, const char *prefix)
+static int subcmd_one(int argc, const char **argv, const char *prefix UNUSED)
 {
 	printf("fn: subcmd_one\n");
 	print_args(argc, argv);
 	return 0;
 }
 
-static int subcmd_two(int argc, const char **argv, const char *prefix)
+static int subcmd_two(int argc, const char **argv, const char *prefix UNUSED)
 {
 	printf("fn: subcmd_two\n");
 	print_args(argc, argv);

@@ -1,9 +1,12 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "environment.h"
+#include "hex.h"
 #include "repository.h"
 #include "pack.h"
 #include "pack-revindex.h"
 #include "progress.h"
 #include "packfile.h"
+#include "object-file.h"
 #include "object-store.h"
 
 struct idx_entry {

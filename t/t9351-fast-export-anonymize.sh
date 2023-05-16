@@ -25,6 +25,7 @@ test_expect_success 'setup simple repo' '
 test_expect_success 'export anonymized stream' '
 	git fast-export --anonymize --all \
 		--anonymize-map=retain-me \
+		--anonymize-map=xyzzy:should-not-appear \
 		--anonymize-map=xyzzy:custom-name \
 		--anonymize-map=other \
 		>stream
@@ -41,6 +42,7 @@ test_expect_success 'stream omits path names' '
 
 test_expect_success 'stream contains user-specified names' '
 	grep retain-me stream &&
+	! grep should-not-appear stream &&
 	grep custom-name stream
 '
 

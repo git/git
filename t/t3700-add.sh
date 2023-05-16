@@ -106,24 +106,32 @@ test_expect_success '.gitignore test setup' '
 
 test_expect_success '.gitignore is honored' '
 	git add . &&
-	! (git ls-files | grep "\\.ig")
+	git ls-files >files &&
+	sed -n "/\\.ig/p" <files >actual &&
+	test_must_be_empty actual
 '
 
 test_expect_success 'error out when attempting to add ignored ones without -f' '
 	test_must_fail git add a.?? &&
-	! (git ls-files | grep "\\.ig")
+	git ls-files >files &&
+	sed -n "/\\.ig/p" <files >actual &&
+	test_must_be_empty actual
 '
 
 test_expect_success 'error out when attempting to add ignored ones without -f' '
 	test_must_fail git add d.?? &&
-	! (git ls-files | grep "\\.ig")
+	git ls-files >files &&
+	sed -n "/\\.ig/p" <files >actual &&
+	test_must_be_empty actual
 '
 
 test_expect_success 'error out when attempting to add ignored ones but add others' '
 	touch a.if &&
 	test_must_fail git add a.?? &&
-	! (git ls-files | grep "\\.ig") &&
-	(git ls-files | grep a.if)
+	git ls-files >files &&
+	sed -n "/\\.ig/p" <files >actual &&
+	test_must_be_empty actual &&
+	grep a.if files
 '
 
 test_expect_success 'add ignored ones with -f' '

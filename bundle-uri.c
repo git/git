@@ -1,6 +1,9 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "bundle-uri.h"
 #include "bundle.h"
+#include "copy.h"
+#include "environment.h"
+#include "gettext.h"
 #include "object-store.h"
 #include "refs.h"
 #include "run-command.h"
@@ -792,6 +795,15 @@ int fetch_bundle_uri(struct repository *r, const char *uri,
 
 	init_bundle_list(&list);
 
+	/*
+	 * Do not fetch an empty bundle URI. An empty bundle URI
+	 * could signal that a configured bundle URI has been disabled.
+	 */
+	if (!*uri) {
+		result = 0;
+		goto cleanup;
+	}
+
 	/* If a bundle is added to this global list, then it is required. */
 	list.mode = BUNDLE_MODE_ALL;
 
@@ -884,7 +896,7 @@ int bundle_uri_command(struct repository *r,
 	 * Read all "bundle.*" config lines to the client as key=value
 	 * packet lines.
 	 */
-	git_config(config_to_packet_line, &writer);
+	repo_config(r, config_to_packet_line, &writer);
 
 	packet_writer_flush(&writer);
 

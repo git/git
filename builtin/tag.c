@@ -7,9 +7,15 @@
  */
 
 #include "cache.h"
+#include "advice.h"
 #include "config.h"
 #include "builtin.h"
+#include "editor.h"
+#include "environment.h"
+#include "gettext.h"
+#include "hex.h"
 #include "refs.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "tag.h"
 #include "run-command.h"
@@ -21,6 +27,7 @@
 #include "column.h"
 #include "ref-filter.h"
 #include "date.h"
+#include "write-or-die.h"
 
 static const char * const git_tag_usage[] = {
 	N_("git tag [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>] [-e]\n"
@@ -37,6 +44,7 @@ static const char * const git_tag_usage[] = {
 static unsigned int colopts;
 static int force_sign_annotate;
 static int config_sign_tag = -1; /* unspecified */
+static int omit_empty = 0;
 
 static int list_tags(struct ref_filter *filter, struct ref_sorting *sorting,
 		     struct ref_format *format)
@@ -66,6 +74,7 @@ static int list_tags(struct ref_filter *filter, struct ref_sorting *sorting,
 		die(_("unable to parse format string"));
 	filter->with_commit_tag_algo = 1;
 	filter_refs(&array, filter, FILTER_REFS_TAGS);
+	filter_ahead_behind(the_repository, format, &array);
 	ref_array_sort(sorting, &array);
 
 	for (i = 0; i < array.nr; i++) {
@@ -74,7 +83,8 @@ static int list_tags(struct ref_filter *filter, struct ref_sorting *sorting,
 		if (format_ref_array_item(array.items[i], format, &output, &err))
 			die("%s", err.buf);
 		fwrite(output.buf, 1, output.len, stdout);
-		putchar('\n');
+		if (output.len || !omit_empty)
+			putchar('\n');
 	}
 
 	strbuf_release(&err);
@@ -137,7 +147,7 @@ static int delete_tags(const char **argv)
 		if (!ref_exists(name))
 			printf(_("Deleted tag '%s' (was %s)\n"),
 				item->string + 10,
-				find_unique_abbrev(oid, DEFAULT_ABBREV));
+				repo_find_unique_abbrev(the_repository, oid, DEFAULT_ABBREV));
 
 		free(oid);
 	}
@@ -180,8 +190,6 @@ static const char tag_template_nocleanup[] =
 
 static int git_tag_config(const char *var, const char *value, void *cb)
 {
-	int status;
-
 	if (!strcmp(var, "tag.gpgsign")) {
 		config_sign_tag = git_config_bool(var, value);
 		return 0;
@@ -194,9 +202,6 @@ static int git_tag_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	status = git_gpg_config(var, value, cb);
-	if (status)
-		return status;
 	if (!strcmp(var, "tag.forcesignannotated")) {
 		force_sign_annotate = git_config_bool(var, value);
 		return 0;
@@ -215,7 +220,7 @@ static void write_tag_body(int fd, const struct object_id *oid)
 	struct strbuf payload = STRBUF_INIT;
 	struct strbuf signature = STRBUF_INIT;
 
-	orig = buf = read_object_file(oid, &type, &size);
+	orig = buf = repo_read_object_file(the_repository, oid, &type, &size);
 	if (!buf)
 		return;
 	if (parse_signature(buf, size, &payload, &signature)) {
@@ -366,7 +371,7 @@ static void create_reflog_msg(const struct object_id *oid, struct strbuf *sb)
 		strbuf_addstr(sb, "object of unknown type");
 		break;
 	case OBJ_COMMIT:
-		if ((buf = read_object_file(oid, &type, &size))) {
+		if ((buf = repo_read_object_file(the_repository, oid, &type, &size))) {
 			subject_len = find_commit_subject(buf, &subject_start);
 			strbuf_insert(sb, sb->len, subject_start, subject_len);
 		} else {
@@ -433,7 +438,8 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	int create_reflog = 0;
 	int annotate = 0, force = 0;
 	int cmdmode = 0, create_tag_object = 0;
-	const char *msgfile = NULL, *keyid = NULL;
+	char *msgfile = NULL;
+	const char *keyid = NULL;
 	struct msg_arg msg = { .buf = STRBUF_INIT };
 	struct ref_transaction *transaction;
 	struct strbuf err = STRBUF_INIT;
@@ -473,6 +479,8 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 		OPT_WITHOUT(&filter.no_commit, N_("print only tags that don't contain the commit")),
 		OPT_MERGED(&filter, N_("print only tags that are merged")),
 		OPT_NO_MERGED(&filter, N_("print only tags that are not merged")),
+		OPT_BOOL(0, "omit-empty",  &omit_empty,
+			N_("do not output a newline after empty formatted refs")),
 		OPT_REF_SORT(&sorting_options),
 		{
 			OPTION_CALLBACK, 0, "points-at", &filter.points_at, N_("object"),
@@ -593,7 +601,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	if (argc > 2)
 		die(_("too many arguments"));
 
-	if (get_oid(object_ref, &object))
+	if (repo_get_oid(the_repository, object_ref, &object))
 		die(_("Failed to resolve '%s' as a valid ref."), object_ref);
 
 	if (strbuf_check_tag_ref(&ref, tag))
@@ -634,7 +642,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	ref_transaction_free(transaction);
 	if (force && !is_null_oid(&prev) && !oideq(&prev, &object))
 		printf(_("Updated tag '%s' (was %s)\n"), tag,
-		       find_unique_abbrev(&prev, DEFAULT_ABBREV));
+		       repo_find_unique_abbrev(the_repository, &prev, DEFAULT_ABBREV));
 
 cleanup:
 	ref_sorting_release(sorting);
@@ -643,5 +651,6 @@ cleanup:
 	strbuf_release(&reflog_msg);
 	strbuf_release(&msg.buf);
 	strbuf_release(&err);
+	free(msgfile);
 	return ret;
 }

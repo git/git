@@ -1,8 +1,12 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "tag.h"
 #include "commit.h"
 #include "commit-graph.h"
+#include "environment.h"
+#include "gettext.h"
+#include "hex.h"
 #include "repository.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "pkt-line.h"
 #include "utf8.h"
@@ -20,7 +24,9 @@
 #include "refs.h"
 #include "commit-reach.h"
 #include "run-command.h"
+#include "setup.h"
 #include "shallow.h"
+#include "tree.h"
 #include "hook.h"
 
 static struct commit_extra_header *read_commit_extra_header_lines(const char *buf, size_t len, const char **);
@@ -80,10 +86,10 @@ struct commit *lookup_commit_reference_by_name(const char *name)
 	struct object_id oid;
 	struct commit *commit;
 
-	if (get_oid_committish(name, &oid))
+	if (repo_get_oid_committish(the_repository, name, &oid))
 		return NULL;
 	commit = lookup_commit_reference(the_repository, &oid);
-	if (parse_commit(commit))
+	if (repo_parse_commit(the_repository, commit))
 		return NULL;
 	return commit;
 }
@@ -91,6 +97,7 @@ struct commit *lookup_commit_reference_by_name(const char *name)
 static timestamp_t parse_commit_date(const char *buf, const char *tail)
 {
 	const char *dateptr;
+	const char *eol;
 
 	if (buf + 6 >= tail)
 		return 0;
@@ -102,16 +109,56 @@ static timestamp_t parse_commit_date(const char *buf, const char *tail)
 		return 0;
 	if (memcmp(buf, "committer", 9))
 		return 0;
-	while (buf < tail && *buf++ != '>')
-		/* nada */;
-	if (buf >= tail)
+
+	/*
+	 * Jump to end-of-line so that we can walk backwards to find the
+	 * end-of-email ">". This is more forgiving of malformed cases
+	 * because unexpected characters tend to be in the name and email
+	 * fields.
+	 */
+	eol = memchr(buf, '\n', tail - buf);
+	if (!eol)
 		return 0;
-	dateptr = buf;
-	while (buf < tail && *buf++ != '\n')
-		/* nada */;
-	if (buf >= tail)
+	dateptr = eol;
+	while (dateptr > buf && dateptr[-1] != '>')
+		dateptr--;
+	if (dateptr == buf)
 		return 0;
-	/* dateptr < buf && buf[-1] == '\n', so parsing will stop at buf-1 */
+
+	/*
+	 * Trim leading whitespace, but make sure we have at least one
+	 * non-whitespace character, as parse_timestamp() will otherwise walk
+	 * right past the newline we found in "eol" when skipping whitespace
+	 * itself.
+	 *
+	 * In theory it would be sufficient to allow any character not matched
+	 * by isspace(), but there's a catch: our isspace() does not
+	 * necessarily match the behavior of parse_timestamp(), as the latter
+	 * is implemented by system routines which match more exotic control
+	 * codes, or even locale-dependent sequences.
+	 *
+	 * Since we expect the timestamp to be a number, we can check for that.
+	 * Anything else (e.g., a non-numeric token like "foo") would just
+	 * cause parse_timestamp() to return 0 anyway.
+	 */
+	while (dateptr < eol && isspace(*dateptr))
+		dateptr++;
+	if (!isdigit(*dateptr) && *dateptr != '-')
+		return 0;
+
+	/*
+	 * We know there is at least one digit (or dash), so we'll begin
+	 * parsing there and stop at worst case at eol.
+	 *
+	 * Note that we may feed parse_timestamp() extra characters here if the
+	 * commit is malformed, and it will parse as far as it can. For
+	 * example, "123foo456" would return "123". That might be questionable
+	 * (versus returning "0"), but it would help in a hypothetical case
+	 * like "123456+0100", where the whitespace from the timezone is
+	 * missing. Since such syntactic errors may be baked into history and
+	 * hard to correct now, let's err on trying to make our best guess
+	 * here, rather than insist on perfect syntax.
+	 */
 	return parse_timestamp(dateptr, NULL, 10);
 }
 
@@ -382,7 +429,7 @@ struct tree *repo_get_commit_tree(struct repository *r,
 
 struct object_id *get_commit_tree_oid(const struct commit *commit)
 {
-	struct tree *tree = get_commit_tree(commit);
+	struct tree *tree = repo_get_commit_tree(the_repository, commit);
 	return tree ? &tree->object.oid : NULL;
 }
 
@@ -555,7 +602,7 @@ int repo_parse_commit_gently(struct repository *r,
 
 void parse_commit_or_die(struct commit *item)
 {
-	if (parse_commit(item))
+	if (repo_parse_commit(the_repository, item))
 		die("unable to parse commit %s",
 		    item ? oid_to_hex(&item->object.oid) : "(null)");
 }
@@ -688,7 +735,7 @@ struct commit *pop_most_recent_commit(struct commit_list **list,
 
 	while (parents) {
 		struct commit *commit = parents->item;
-		if (!parse_commit(commit) && !(commit->object.flags & mark)) {
+		if (!repo_parse_commit(the_repository, commit) && !(commit->object.flags & mark)) {
 			commit->object.flags |= mark;
 			commit_list_insert_by_date(commit, list);
 		}
@@ -762,7 +809,8 @@ define_commit_slab(author_date_slab, timestamp_t);
 void record_author_date(struct author_date_slab *author_date,
 			struct commit *commit)
 {
-	const char *buffer = get_commit_buffer(commit, NULL);
+	const char *buffer = repo_get_commit_buffer(the_repository, commit,
+						    NULL);
 	struct ident_split ident;
 	const char *ident_line;
 	size_t ident_len;
@@ -782,7 +830,7 @@ void record_author_date(struct author_date_slab *author_date,
 	*(author_date_slab_at(author_date, commit)) = date;
 
 fail_exit:
-	unuse_commit_buffer(commit, buffer);
+	repo_unuse_commit_buffer(the_repository, commit, buffer);
 }
 
 int compare_commits_by_author_date(const void *a_, const void *b_,
@@ -801,7 +849,8 @@ int compare_commits_by_author_date(const void *a_, const void *b_,
 	return 0;
 }
 
-int compare_commits_by_gen_then_commit_date(const void *a_, const void *b_, void *unused)
+int compare_commits_by_gen_then_commit_date(const void *a_, const void *b_,
+					    void *unused UNUSED)
 {
 	const struct commit *a = a_, *b = b_;
 	const timestamp_t generation_a = commit_graph_generation(a),
@@ -821,7 +870,8 @@ int compare_commits_by_gen_then_commit_date(const void *a_, const void *b_, void
 	return 0;
 }
 
-int compare_commits_by_commit_date(const void *a_, const void *b_, void *unused)
+int compare_commits_by_commit_date(const void *a_, const void *b_,
+				   void *unused UNUSED)
 {
 	const struct commit *a = a_, *b = b_;
 	/* newer commits with larger date first */
@@ -963,7 +1013,7 @@ static void add_one_commit(struct object_id *oid, struct rev_collect *revs)
 	commit = lookup_commit(the_repository, oid);
 	if (!commit ||
 	    (commit->object.flags & TMP_MARK) ||
-	    parse_commit(commit))
+	    repo_parse_commit(the_repository, commit))
 		return;
 
 	ALLOC_GROW(revs->commit, revs->nr + 1, revs->alloc);
@@ -995,7 +1045,8 @@ struct commit *get_fork_point(const char *refname, struct commit *commit)
 	struct commit *ret = NULL;
 	char *full_refname;
 
-	switch (dwim_ref(refname, strlen(refname), &oid, &full_refname, 0)) {
+	switch (repo_dwim_ref(the_repository, refname, strlen(refname), &oid,
+			      &full_refname, 0)) {
 	case 0:
 		die("No such ref: '%s'", refname);
 	case 1:
@@ -1014,7 +1065,8 @@ struct commit *get_fork_point(const char *refname, struct commit *commit)
 	for (i = 0; i < revs.nr; i++)
 		revs.commit[i]->object.flags &= ~TMP_MARK;
 
-	bases = get_merge_bases_many(commit, revs.nr, revs.commit);
+	bases = repo_get_merge_bases_many(the_repository, commit, revs.nr,
+					  revs.commit);
 
 	/*
 	 * There should be one and only one merge base, when we found
@@ -1095,10 +1147,11 @@ int parse_signed_commit(const struct commit *commit,
 			const struct git_hash_algo *algop)
 {
 	unsigned long size;
-	const char *buffer = get_commit_buffer(commit, &size);
+	const char *buffer = repo_get_commit_buffer(the_repository, commit,
+						    &size);
 	int ret = parse_buffer_signed_by_header(buffer, size, payload, signature, algop);
 
-	unuse_commit_buffer(commit, buffer);
+	repo_unuse_commit_buffer(the_repository, commit, buffer);
 	return ret;
 }
 
@@ -1209,7 +1262,8 @@ static void handle_signed_tag(struct commit *parent, struct commit_extra_header 
 	desc = merge_remote_util(parent);
 	if (!desc || !desc->obj)
 		return;
-	buf = read_object_file(&desc->obj->oid, &type, &size);
+	buf = repo_read_object_file(the_repository, &desc->obj->oid, &type,
+				    &size);
 	if (!buf || type != OBJ_TAG)
 		goto free_return;
 	if (!parse_signature(buf, size, &payload, &signature))
@@ -1271,7 +1325,8 @@ void verify_merge_signature(struct commit *commit, int verbosity,
 
 	ret = check_commit_signature(commit, &signature_check);
 
-	find_unique_abbrev_r(hex, &commit->object.oid, DEFAULT_ABBREV);
+	repo_find_unique_abbrev_r(the_repository, hex, &commit->object.oid,
+				  DEFAULT_ABBREV);
 	switch (signature_check.result) {
 	case 'G':
 		if (ret || (check_trust && signature_check.trust_level < TRUST_MARGINAL))
@@ -1316,9 +1371,10 @@ struct commit_extra_header *read_commit_extra_headers(struct commit *commit,
 {
 	struct commit_extra_header *extra = NULL;
 	unsigned long size;
-	const char *buffer = get_commit_buffer(commit, &size);
+	const char *buffer = repo_get_commit_buffer(the_repository, commit,
+						    &size);
 	extra = read_commit_extra_header_lines(buffer, size, exclude);
-	unuse_commit_buffer(commit, buffer);
+	repo_unuse_commit_buffer(the_repository, commit, buffer);
 	return extra;
 }
 
@@ -1632,10 +1688,11 @@ struct commit *get_merge_parent(const char *name)
 	struct object *obj;
 	struct commit *commit;
 	struct object_id oid;
-	if (get_oid(name, &oid))
+	if (repo_get_oid(the_repository, name, &oid))
 		return NULL;
 	obj = parse_object(the_repository, &oid);
-	commit = (struct commit *)peel_to_type(name, 0, obj, OBJ_COMMIT);
+	commit = (struct commit *)repo_peel_to_type(the_repository, name, 0,
+						    obj, OBJ_COMMIT);
 	if (commit && !merge_remote_util(commit))
 		set_merge_remote_desc(commit, name, obj);
 	return commit;

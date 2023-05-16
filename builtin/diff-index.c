@@ -5,6 +5,7 @@
 #include "commit.h"
 #include "revision.h"
 #include "builtin.h"
+#include "setup.h"
 #include "submodule.h"
 
 static const char diff_cache_usage[] =

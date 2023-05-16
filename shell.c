@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "quote.h"
 #include "exec-cmd.h"
 #include "strbuf.h"

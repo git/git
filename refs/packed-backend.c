@@ -1,11 +1,17 @@
 #include "../cache.h"
+#include "../alloc.h"
 #include "../config.h"
+#include "../gettext.h"
+#include "../hash.h"
+#include "../hex.h"
 #include "../refs.h"
 #include "refs-internal.h"
 #include "packed-backend.h"
 #include "../iterator.h"
 #include "../lockfile.h"
 #include "../chdir-notify.h"
+#include "../wrapper.h"
+#include "../write-or-die.h"
 
 enum mmap_strategy {
 	/*
@@ -646,7 +652,7 @@ static struct snapshot *create_snapshot(struct packed_ref_store *refs)
 					 snapshot->buf,
 					 snapshot->eof - snapshot->buf);
 
-		string_list_split_in_place(&traits, p, ' ', -1);
+		string_list_split_in_place(&traits, p, " ", -1);
 
 		if (unsorted_string_list_has_string(&traits, "fully-peeled"))
 			snapshot->peeled = PEELED_FULLY;

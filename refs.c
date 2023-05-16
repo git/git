@@ -2,15 +2,21 @@
  * The backend-independent part of the reference module.
  */
 
-#include "cache.h"
+#include "git-compat-util.h"
+#include "advice.h"
+#include "alloc.h"
 #include "config.h"
+#include "environment.h"
 #include "hashmap.h"
+#include "gettext.h"
+#include "hex.h"
 #include "lockfile.h"
 #include "iterator.h"
 #include "refs.h"
 #include "refs/refs-internal.h"
 #include "run-command.h"
 #include "hook.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "object.h"
 #include "tag.h"
@@ -18,9 +24,11 @@
 #include "worktree.h"
 #include "strvec.h"
 #include "repository.h"
+#include "setup.h"
 #include "sigchain.h"
 #include "date.h"
 #include "commit.h"
+#include "wrapper.h"
 
 /*
  * List of all available backends
@@ -1821,7 +1829,7 @@ const char *refs_resolve_ref_unsafe(struct ref_store *refs,
 			return NULL;
 
 		/*
-		 * dwim_ref() uses REF_ISBROKEN to distinguish between
+		 * repo_dwim_ref() uses REF_ISBROKEN to distinguish between
 		 * missing refs and refs that were present but invalid,
 		 * to complain about the latter to stderr.
 		 *

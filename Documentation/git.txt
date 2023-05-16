@@ -546,9 +546,9 @@ double-quotes and respecting backslash escapes. E.g., the value
 
 `GIT_DEFAULT_HASH`::
 	If this variable is set, the default hash algorithm for new
-	repositories will be set to this value. This value is currently
-	ignored when cloning; the setting of the remote repository
-	is used instead. The default is "sha1". THIS VARIABLE IS
+	repositories will be set to this value. This value is
+	ignored when cloning and the setting of the remote repository
+	is always used. The default is "sha1". THIS VARIABLE IS
 	EXPERIMENTAL! See `--object-format` in linkgit:git-init[1].
 
 Git Commits

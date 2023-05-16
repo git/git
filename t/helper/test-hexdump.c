@@ -4,7 +4,7 @@
 /*
  * Read stdin and print a hexdump to stdout.
  */
-int cmd__hexdump(int argc, const char **argv)
+int cmd__hexdump(int argc UNUSED, const char **argv UNUSED)
 {
 	char buf[1024];
 	ssize_t i, len;

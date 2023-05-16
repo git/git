@@ -183,6 +183,18 @@ test_expect_success 'write midx with --stdin-packs' '
 
 compare_results_with_midx "mixed mode (one pack + extra)"
 
+test_expect_success 'write with no objects and preferred pack' '
+	test_when_finished "rm -rf empty" &&
+	git init empty &&
+	test_must_fail git -C empty multi-pack-index write \
+		--stdin-packs --preferred-pack=does-not-exist </dev/null 2>err &&
+	cat >expect <<-EOF &&
+	warning: unknown preferred pack: ${SQ}does-not-exist${SQ}
+	error: no pack files to index.
+	EOF
+	test_cmp expect err
+'
+
 test_expect_success 'write progress off for redirected stderr' '
 	git multi-pack-index --object-dir=$objdir write 2>err &&
 	test_line_count = 0 err

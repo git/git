@@ -75,6 +75,11 @@ then
 		merge_tool="$GIT_DIFF_TOOL"
 	else
 		merge_tool="$(get_merge_tool)"
+		subshell_exit_status=$?
+		if test $subshell_exit_status -gt 1
+		then
+			exit $subshell_exit_status
+		fi
 	fi
 fi
 

@@ -70,7 +70,8 @@ create_NNO_MIX_files () {
 				cp CRLF        ${pfx}_CRLF.txt &&
 				cp CRLF_mix_LF ${pfx}_CRLF_mix_LF.txt &&
 				cp LF_mix_CR   ${pfx}_LF_mix_CR.txt &&
-				cp CRLF_nul    ${pfx}_CRLF_nul.txt
+				cp CRLF_nul    ${pfx}_CRLF_nul.txt ||
+				return 1
 			done
 		done
 	done
@@ -101,7 +102,8 @@ commit_check_warn () {
 	do
 		fname=${pfx}_$f.txt &&
 		cp $f $fname &&
-		git -c core.autocrlf=$crlf add $fname 2>"${pfx}_$f.err"
+		git -c core.autocrlf=$crlf add $fname 2>"${pfx}_$f.err" ||
+		return 1
 	done &&
 	git commit -m "core.autocrlf $crlf" &&
 	check_warning "$lfname" ${pfx}_LF.err &&
@@ -121,15 +123,19 @@ commit_chk_wrnNNO () {
 	lfmixcr=$1 ; shift
 	crlfnul=$1 ; shift
 	pfx=NNO_attr_${attr}_aeol_${aeol}_${crlf}
-	#Commit files on top of existing file
-	create_gitattributes "$attr" $aeol &&
-	for f in LF CRLF CRLF_mix_LF LF_mix_CR CRLF_nul
-	do
-		fname=${pfx}_$f.txt &&
-		cp $f $fname &&
-		printf Z >>"$fname" &&
-		git -c core.autocrlf=$crlf add $fname 2>"${pfx}_$f.err"
-	done
+
+	test_expect_success 'setup commit NNO files' '
+		#Commit files on top of existing file
+		create_gitattributes "$attr" $aeol &&
+		for f in LF CRLF CRLF_mix_LF LF_mix_CR CRLF_nul
+		do
+			fname=${pfx}_$f.txt &&
+			cp $f $fname &&
+			printf Z >>"$fname" &&
+			git -c core.autocrlf=$crlf add $fname 2>"${pfx}_$f.err" ||
+			return 1
+		done
+	'
 
 	test_expect_success "commit NNO files crlf=$crlf attr=$attr LF" '
 		check_warning "$lfwarn" ${pfx}_LF.err
@@ -163,15 +169,19 @@ commit_MIX_chkwrn () {
 	lfmixcr=$1 ; shift
 	crlfnul=$1 ; shift
 	pfx=MIX_attr_${attr}_aeol_${aeol}_${crlf}
-	#Commit file with CLRF_mix_LF on top of existing file
-	create_gitattributes "$attr" $aeol &&
-	for f in LF CRLF CRLF_mix_LF LF_mix_CR CRLF_nul
-	do
-		fname=${pfx}_$f.txt &&
-		cp CRLF_mix_LF $fname &&
-		printf Z >>"$fname" &&
-		git -c core.autocrlf=$crlf add $fname 2>"${pfx}_$f.err"
-	done
+
+	test_expect_success 'setup commit file with mixed EOL' '
+		#Commit file with CLRF_mix_LF on top of existing file
+		create_gitattributes "$attr" $aeol &&
+		for f in LF CRLF CRLF_mix_LF LF_mix_CR CRLF_nul
+		do
+			fname=${pfx}_$f.txt &&
+			cp CRLF_mix_LF $fname &&
+			printf Z >>"$fname" &&
+			git -c core.autocrlf=$crlf add $fname 2>"${pfx}_$f.err" ||
+			return 1
+		done
+	'
 
 	test_expect_success "commit file with mixed EOL onto LF crlf=$crlf attr=$attr" '
 		check_warning "$lfwarn" ${pfx}_LF.err
@@ -289,17 +299,17 @@ checkout_files () {
 	lfmixcrlf=$1 ; shift
 	lfmixcr=$1 ; shift
 	crlfnul=$1 ; shift
-	create_gitattributes "$attr" $ident $aeol &&
-	git config core.autocrlf $crlf &&
+	test_expect_success "setup config for checkout attr=$attr ident=$ident aeol=$aeol core.autocrlf=$crlf" '
+		create_gitattributes "$attr" $ident $aeol &&
+		git config core.autocrlf $crlf
+	'
 	pfx=eol_${ceol}_crlf_${crlf}_attr_${attr}_ &&
 	for f in LF CRLF LF_mix_CR CRLF_mix_LF LF_nul
 	do
-		rm crlf_false_attr__$f.txt &&
-		if test -z "$ceol"; then
-			git checkout -- crlf_false_attr__$f.txt
-		else
-			git -c core.eol=$ceol checkout -- crlf_false_attr__$f.txt
-		fi
+		test_expect_success "setup $f checkout ${ceol:+ with -c core.eol=$ceol}"  '
+			rm -f crlf_false_attr__$f.txt &&
+			git ${ceol:+-c core.eol=$ceol} checkout -- crlf_false_attr__$f.txt
+		'
 	done
 
 	test_expect_success "ls-files --eol attr=$attr $ident aeol=$aeol core.autocrlf=$crlf core.eol=$ceol" '

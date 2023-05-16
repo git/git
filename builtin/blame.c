@@ -5,10 +5,14 @@
  * See COPYING for licensing conditions
  */
 
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "config.h"
 #include "color.h"
 #include "builtin.h"
+#include "environment.h"
+#include "gettext.h"
+#include "hex.h"
 #include "repository.h"
 #include "commit.h"
 #include "diff.h"
@@ -24,10 +28,14 @@
 #include "line-log.h"
 #include "dir.h"
 #include "progress.h"
+#include "object-name.h"
 #include "object-store.h"
+#include "pager.h"
 #include "blame.h"
 #include "refs.h"
+#include "setup.h"
 #include "tag.h"
+#include "write-or-die.h"
 
 static char blame_usage[] = N_("git blame [<options>] [<rev-opts>] [<rev>] [--] <file>");
 static char annotate_usage[] = N_("git annotate [<options>] [<rev-opts>] [<rev>] [--] <file>");
@@ -199,13 +207,13 @@ static void get_commit_info(struct commit *commit,
 	const char *message;
 
 	encoding = get_log_output_encoding();
-	message = logmsg_reencode(commit, NULL, encoding);
+	message = repo_logmsg_reencode(the_repository, commit, NULL, encoding);
 	get_ac_line(message, "\nauthor ",
 		    &ret->author, &ret->author_mail,
 		    &ret->author_time, &ret->author_tz);
 
 	if (!detailed) {
-		unuse_commit_buffer(commit, message);
+		repo_unuse_commit_buffer(the_repository, commit, message);
 		return;
 	}
 
@@ -219,7 +227,7 @@ static void get_commit_info(struct commit *commit,
 	else
 		strbuf_addf(&ret->summary, "(%s)", oid_to_hex(&commit->object.oid));
 
-	unuse_commit_buffer(commit, message);
+	repo_unuse_commit_buffer(the_repository, commit, message);
 }
 
 /*
@@ -601,8 +609,9 @@ static int read_ancestry(const char *graft_file)
 
 static int update_auto_abbrev(int auto_abbrev, struct blame_origin *suspect)
 {
-	const char *uniq = find_unique_abbrev(&suspect->commit->object.oid,
-					      auto_abbrev);
+	const char *uniq = repo_find_unique_abbrev(the_repository,
+						   &suspect->commit->object.oid,
+						   auto_abbrev);
 	int len = strlen(uniq);
 	if (auto_abbrev < len)
 		return len;
@@ -802,7 +811,7 @@ static int is_a_rev(const char *name)
 {
 	struct object_id oid;
 
-	if (get_oid(name, &oid))
+	if (repo_get_oid(the_repository, name, &oid))
 		return 0;
 	return OBJ_NONE < oid_object_info(the_repository, &oid, NULL);
 }
@@ -845,7 +854,7 @@ static void build_ignorelist(struct blame_scoreboard *sb,
 						    peel_to_commit_oid, sb);
 	}
 	for_each_string_list_item(i, ignore_rev_list) {
-		if (get_oid_committish(i->string, &oid) ||
+		if (repo_get_oid_committish(the_repository, i->string, &oid) ||
 		    peel_to_commit_oid(&oid, sb))
 			die(_("cannot find revision %s to ignore"), i->string);
 		oidset_insert(&sb->ignore_list, &oid);

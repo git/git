@@ -2,12 +2,13 @@
 #define REVISION_H
 
 #include "commit.h"
-#include "parse-options.h"
 #include "grep.h"
 #include "notes.h"
 #include "pretty.h"
 #include "diff.h"
 #include "commit-slab-decl.h"
+#include "decorate.h"
+#include "ident.h"
 #include "list-objects-filter-options.h"
 
 /**
@@ -61,6 +62,8 @@ struct string_list;
 struct saved_parents;
 struct bloom_key;
 struct bloom_filter_settings;
+struct option;
+struct parse_opt_ctx_t;
 define_shared_commit_slab(revision_sources, char *);
 
 struct rev_cmdline_info {
@@ -415,9 +418,6 @@ struct rev_info {
 void repo_init_revisions(struct repository *r,
 			 struct rev_info *revs,
 			 const char *prefix);
-#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
-#define init_revisions(revs, prefix) repo_init_revisions(the_repository, revs, prefix)
-#endif
 
 /**
  * Parse revision information, filling in the `rev_info` structure, and

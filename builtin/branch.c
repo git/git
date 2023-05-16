@@ -8,9 +8,13 @@
 #include "cache.h"
 #include "config.h"
 #include "color.h"
+#include "editor.h"
+#include "environment.h"
 #include "refs.h"
 #include "commit.h"
 #include "builtin.h"
+#include "gettext.h"
+#include "object-name.h"
 #include "remote.h"
 #include "parse-options.h"
 #include "branch.h"
@@ -24,6 +28,7 @@
 #include "worktree.h"
 #include "help.h"
 #include "commit-reach.h"
+#include "wrapper.h"
 
 static const char * const builtin_branch_usage[] = {
 	N_("git branch [<options>] [-r | -a] [--merged] [--no-merged]"),
@@ -41,6 +46,7 @@ static const char *head;
 static struct object_id head_oid;
 static int recurse_submodules = 0;
 static int submodule_propagate_branches = 0;
+static int omit_empty = 0;
 
 static int branch_use_color = -1;
 static char branch_colors[][COLOR_MAXLEN] = {
@@ -150,17 +156,18 @@ static int branch_merged(int kind, const char *name,
 	if (!reference_rev)
 		reference_rev = head_rev;
 
-	merged = reference_rev ? in_merge_bases(rev, reference_rev) : 0;
+	merged = reference_rev ? repo_in_merge_bases(the_repository, rev,
+						     reference_rev) : 0;
 
 	/*
 	 * After the safety valve is fully redefined to "check with
 	 * upstream, if any, otherwise with HEAD", we should just
-	 * return the result of the in_merge_bases() above without
+	 * return the result of the repo_in_merge_bases() above without
 	 * any of the following code, but during the transition period,
 	 * a gentle reminder is in order.
 	 */
 	if ((head_rev != reference_rev) &&
-	    (head_rev ? in_merge_bases(rev, head_rev) : 0) != merged) {
+	    (head_rev ? repo_in_merge_bases(the_repository, rev, head_rev) : 0) != merged) {
 		if (merged)
 			warning(_("deleting branch '%s' that has been merged to\n"
 				"         '%s', but not yet merged to HEAD."),
@@ -216,10 +223,11 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 	struct string_list refs_to_delete = STRING_LIST_INIT_DUP;
 	struct string_list_item *item;
 	int branch_name_pos;
+	const char *fmt_remotes = "refs/remotes/%s";
 
 	switch (kinds) {
 	case FILTER_REFS_REMOTES:
-		fmt = "refs/remotes/%s";
+		fmt = fmt_remotes;
 		/* For subsequent UI messages */
 		remote_branch = 1;
 		allowed_interpret = INTERPRET_BRANCH_REMOTE;
@@ -263,9 +271,25 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 					| RESOLVE_REF_ALLOW_BAD_NAME,
 					&oid, &flags);
 		if (!target) {
-			error(remote_branch
-			      ? _("remote-tracking branch '%s' not found.")
-			      : _("branch '%s' not found."), bname.buf);
+			if (remote_branch) {
+				error(_("remote-tracking branch '%s' not found."), bname.buf);
+			} else {
+				char *virtual_name = mkpathdup(fmt_remotes, bname.buf);
+				char *virtual_target = resolve_refdup(virtual_name,
+							RESOLVE_REF_READING
+							| RESOLVE_REF_NO_RECURSE
+							| RESOLVE_REF_ALLOW_BAD_NAME,
+							&oid, &flags);
+				FREE_AND_NULL(virtual_name);
+
+				if (virtual_target)
+					error(_("branch '%s' not found.\n"
+						"Did you forget --remote?"),
+						bname.buf);
+				else
+					error(_("branch '%s' not found."), bname.buf);
+				FREE_AND_NULL(virtual_target);
+			}
 			ret = 1;
 			continue;
 		}
@@ -280,7 +304,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 		item = string_list_append(&refs_to_delete, name);
 		item->util = xstrdup((flags & REF_ISBROKEN) ? "broken"
 				    : (flags & REF_ISSYMREF) ? target
-				    : find_unique_abbrev(&oid, DEFAULT_ABBREV));
+				    : repo_find_unique_abbrev(the_repository, &oid, DEFAULT_ABBREV));
 
 	next:
 		free(target);
@@ -448,6 +472,7 @@ static void print_ref_list(struct ref_filter *filter, struct ref_sorting *sortin
 	if (verify_ref_format(format))
 		die(_("unable to parse format string"));
 
+	filter_ahead_behind(the_repository, format, &array);
 	ref_array_sort(sorting, &array);
 
 	for (i = 0; i < array.nr; i++) {
@@ -461,7 +486,8 @@ static void print_ref_list(struct ref_filter *filter, struct ref_sorting *sortin
 			string_list_append(output, out.buf);
 		} else {
 			fwrite(out.buf, 1, out.len, stdout);
-			putchar('\n');
+			if (out.len || !omit_empty)
+				putchar('\n');
 		}
 	}
 
@@ -486,9 +512,9 @@ static void print_current_branch_name(void)
 		die(_("HEAD (%s) points outside of refs/heads/"), refname);
 }
 
-static void reject_rebase_or_bisect_branch(const char *target)
+static void reject_rebase_or_bisect_branch(struct worktree **worktrees,
+					   const char *target)
 {
-	struct worktree **worktrees = get_worktrees();
 	int i;
 
 	for (i = 0; worktrees[i]; i++) {
@@ -505,9 +531,41 @@ static void reject_rebase_or_bisect_branch(const char *target)
 			die(_("Branch %s is being bisected at %s"),
 			    target, wt->path);
 	}
-
-	free_worktrees(worktrees);
 }
+
+/*
+ * Update all per-worktree HEADs pointing at the old ref to point the new ref.
+ * This will be used when renaming a branch. Returns 0 if successful, non-zero
+ * otherwise.
+ */
+static int replace_each_worktree_head_symref(struct worktree **worktrees,
+					     const char *oldref, const char *newref,
+					     const char *logmsg)
+{
+	int ret = 0;
+	int i;
+
+	for (i = 0; worktrees[i]; i++) {
+		struct ref_store *refs;
+
+		if (worktrees[i]->is_detached)
+			continue;
+		if (!worktrees[i]->head_ref)
+			continue;
+		if (strcmp(oldref, worktrees[i]->head_ref))
+			continue;
+
+		refs = get_worktree_ref_store(worktrees[i]);
+		if (refs_create_symref(refs, "HEAD", newref, logmsg))
+			ret = error(_("HEAD of working tree %s is not updated"),
+				    worktrees[i]->path);
+	}
+
+	return ret;
+}
+
+#define IS_HEAD 1
+#define IS_ORPHAN 2
 
 static void copy_or_rename_branch(const char *oldname, const char *newname, int copy, int force)
 {
@@ -515,7 +573,8 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 	struct strbuf oldsection = STRBUF_INIT, newsection = STRBUF_INIT;
 	const char *interpreted_oldname = NULL;
 	const char *interpreted_newname = NULL;
-	int recovery = 0;
+	int recovery = 0, oldref_usage = 0;
+	struct worktree **worktrees = get_worktrees();
 
 	if (strbuf_check_branch_ref(&oldref, oldname)) {
 		/*
@@ -528,8 +587,19 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 			die(_("Invalid branch name: '%s'"), oldname);
 	}
 
-	if ((copy || strcmp(head, oldname)) && !ref_exists(oldref.buf)) {
-		if (copy && !strcmp(head, oldname))
+	for (int i = 0; worktrees[i]; i++) {
+		struct worktree *wt = worktrees[i];
+
+		if (wt->head_ref && !strcmp(oldref.buf, wt->head_ref)) {
+			oldref_usage |= IS_HEAD;
+			if (is_null_oid(&wt->head_oid))
+				oldref_usage |= IS_ORPHAN;
+			break;
+		}
+	}
+
+	if ((copy || !(oldref_usage & IS_HEAD)) && !ref_exists(oldref.buf)) {
+		if (oldref_usage & IS_HEAD)
 			die(_("No commit on branch '%s' yet."), oldname);
 		else
 			die(_("No branch named '%s'."), oldname);
@@ -544,7 +614,7 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 	else
 		validate_new_branchname(newname, &newref, force);
 
-	reject_rebase_or_bisect_branch(oldref.buf);
+	reject_rebase_or_bisect_branch(worktrees, oldref.buf);
 
 	if (!skip_prefix(oldref.buf, "refs/heads/", &interpreted_oldname) ||
 	    !skip_prefix(newref.buf, "refs/heads/", &interpreted_newname)) {
@@ -558,8 +628,7 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 		strbuf_addf(&logmsg, "Branch: renamed %s to %s",
 			    oldref.buf, newref.buf);
 
-	if (!copy &&
-	    (!head || strcmp(oldname, head) || !is_null_oid(&head_oid)) &&
+	if (!copy && !(oldref_usage & IS_ORPHAN) &&
 	    rename_ref(oldref.buf, newref.buf, logmsg.buf))
 		die(_("Branch rename failed"));
 	if (copy && copy_existing_ref(oldref.buf, newref.buf, logmsg.buf))
@@ -574,8 +643,9 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 				interpreted_oldname);
 	}
 
-	if (!copy &&
-	    replace_each_worktree_head_symref(oldref.buf, newref.buf, logmsg.buf))
+	if (!copy && (oldref_usage & IS_HEAD) &&
+	    replace_each_worktree_head_symref(worktrees, oldref.buf, newref.buf,
+					      logmsg.buf))
 		die(_("Branch renamed to %s, but HEAD is not updated!"), newname);
 
 	strbuf_release(&logmsg);
@@ -590,6 +660,7 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 	strbuf_release(&newref);
 	strbuf_release(&oldsection);
 	strbuf_release(&newsection);
+	free_worktrees(worktrees);
 }
 
 static GIT_PATH_FUNC(edit_description, "EDIT_DESCRIPTION")
@@ -670,6 +741,8 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		OPT_BIT('D', NULL, &delete, N_("delete branch (even if not merged)"), 2),
 		OPT_BIT('m', "move", &rename, N_("move/rename a branch and its reflog"), 1),
 		OPT_BIT('M', NULL, &rename, N_("move/rename a branch, even if target exists"), 2),
+		OPT_BOOL(0, "omit-empty",  &omit_empty,
+			N_("do not output a newline after empty formatted refs")),
 		OPT_BIT('c', "copy", &copy, N_("copy a branch and its reflog"), 1),
 		OPT_BIT('C', NULL, &copy, N_("copy a branch, even if target exists"), 2),
 		OPT_BOOL('l', "list", &list, N_("list branch names")),
@@ -806,7 +879,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 
 		strbuf_addf(&branch_ref, "refs/heads/%s", branch_name);
 		if (!ref_exists(branch_ref.buf))
-			error((!argc || !strcmp(head, branch_name))
+			error((!argc || branch_checked_out(branch_ref.buf))
 			      ? _("No commit on branch '%s' yet.")
 			      : _("No branch named '%s'."),
 			      branch_name);
@@ -851,7 +924,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		}
 
 		if (!ref_exists(branch->refname)) {
-			if (!argc || !strcmp(head, branch->name))
+			if (!argc || branch_checked_out(branch->refname))
 				die(_("No commit on branch '%s' yet."), branch->name);
 			die(_("branch '%s' does not exist"), branch->name);
 		}

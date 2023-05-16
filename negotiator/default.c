@@ -1,9 +1,10 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "default.h"
 #include "../commit.h"
 #include "../fetch-negotiator.h"
 #include "../prio-queue.h"
 #include "../refs.h"
+#include "../repository.h"
 #include "../tag.h"
 
 /* Remember to update object flag allocation in object.h */
@@ -25,7 +26,7 @@ static void rev_list_push(struct negotiation_state *ns,
 	if (!(commit->object.flags & mark)) {
 		commit->object.flags |= mark;
 
-		if (parse_commit(commit))
+		if (repo_parse_commit(the_repository, commit))
 			return;
 
 		prio_queue_put(&ns->rev_list, commit);
@@ -55,30 +56,49 @@ static int clear_marks(const char *refname, const struct object_id *oid,
 static void mark_common(struct negotiation_state *ns, struct commit *commit,
 		int ancestors_only, int dont_parse)
 {
-	if (commit != NULL && !(commit->object.flags & COMMON)) {
-		struct object *o = (struct object *)commit;
+	struct prio_queue queue = { NULL };
 
-		if (!ancestors_only)
-			o->flags |= COMMON;
+	if (!commit || (commit->object.flags & COMMON))
+		return;
+
+	prio_queue_put(&queue, commit);
+	if (!ancestors_only) {
+		commit->object.flags |= COMMON;
+
+		if ((commit->object.flags & SEEN) && !(commit->object.flags & POPPED))
+			ns->non_common_revs--;
+	}
+	while ((commit = prio_queue_get(&queue))) {
+		struct object *o = (struct object *)commit;
 
 		if (!(o->flags & SEEN))
 			rev_list_push(ns, commit, SEEN);
 		else {
 			struct commit_list *parents;
 
-			if (!ancestors_only && !(o->flags & POPPED))
-				ns->non_common_revs--;
 			if (!o->parsed && !dont_parse)
-				if (parse_commit(commit))
-					return;
+				if (repo_parse_commit(the_repository, commit))
+					continue;
 
 			for (parents = commit->parents;
 					parents;
-					parents = parents->next)
-				mark_common(ns, parents->item, 0,
-					    dont_parse);
+					parents = parents->next) {
+				struct commit *p = parents->item;
+
+				if (p->object.flags & COMMON)
+					continue;
+
+				p->object.flags |= COMMON;
+
+				if ((p->object.flags & SEEN) && !(p->object.flags & POPPED))
+					ns->non_common_revs--;
+
+				prio_queue_put(&queue, parents->item);
+			}
 		}
 	}
+
+	clear_prio_queue(&queue);
 }
 
 /*
@@ -96,7 +116,7 @@ static const struct object_id *get_rev(struct negotiation_state *ns)
 			return NULL;
 
 		commit = prio_queue_get(&ns->rev_list);
-		parse_commit(commit);
+		repo_parse_commit(the_repository, commit);
 		parents = commit->parents;
 
 		commit->object.flags |= POPPED;

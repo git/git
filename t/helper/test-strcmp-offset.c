@@ -1,7 +1,7 @@
 #include "test-tool.h"
 #include "cache.h"
 
-int cmd__strcmp_offset(int argc, const char **argv)
+int cmd__strcmp_offset(int argc UNUSED, const char **argv)
 {
 	int result;
 	size_t offset;

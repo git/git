@@ -1,5 +1,9 @@
 #include "builtin.h"
+#include "abspath.h"
 #include "cache.h"
+#include "environment.h"
+#include "gettext.h"
+#include "hex.h"
 #include "repository.h"
 #include "config.h"
 #include "lockfile.h"
@@ -15,11 +19,14 @@
 #include "dir.h"
 #include "run-command.h"
 #include "packfile.h"
+#include "object-file.h"
+#include "object-name.h"
 #include "object-store.h"
 #include "mem-pool.h"
 #include "commit-reach.h"
 #include "khash.h"
 #include "date.h"
+#include "wrapper.h"
 
 #define PACK_ID_BITS 16
 #define MAX_PACK_ID ((1<<PACK_ID_BITS)-1)
@@ -175,6 +182,7 @@ static FILE *pack_edges;
 static unsigned int show_stats = 1;
 static int global_argc;
 static const char **global_argv;
+static const char *global_prefix;
 
 /* Memory pools */
 static struct mem_pool fi_mem_pool = {
@@ -436,7 +444,7 @@ static void set_checkpoint_signal(void)
 
 #else
 
-static void checkpoint_signal(int signo)
+static void checkpoint_signal(int signo UNUSED)
 {
 	checkpoint_requested = 1;
 }
@@ -1265,7 +1273,7 @@ static void load_tree(struct tree_entry *root)
 			die("Can't load tree %s", oid_to_hex(oid));
 	} else {
 		enum object_type type;
-		buf = read_object_file(oid, &type, &size);
+		buf = repo_read_object_file(the_repository, oid, &type, &size);
 		if (!buf || type != OBJ_TREE)
 			die("Can't load tree %s", oid_to_hex(oid));
 	}
@@ -1625,7 +1633,7 @@ static int update_branch(struct branch *b)
 		if (!old_cmit || !new_cmit)
 			return error("Branch %s is missing commits.", b->name);
 
-		if (!in_merge_bases(old_cmit, new_cmit)) {
+		if (!repo_in_merge_bases(the_repository, old_cmit, new_cmit)) {
 			warning("Not updating %s"
 				" (new tip %s does not contain %s)",
 				b->name, oid_to_hex(&b->oid),
@@ -2486,7 +2494,7 @@ static void note_change_n(const char *p, struct branch *b, unsigned char *old_fa
 		if (commit_oe->type != OBJ_COMMIT)
 			die("Mark :%" PRIuMAX " not a commit", commit_mark);
 		oidcpy(&commit_oid, &commit_oe->idx.oid);
-	} else if (!get_oid(p, &commit_oid)) {
+	} else if (!repo_get_oid(the_repository, p, &commit_oid)) {
 		unsigned long size;
 		char *buf = read_object_with_reference(the_repository,
 						       &commit_oid,
@@ -2599,7 +2607,7 @@ static int parse_objectish(struct branch *b, const char *objectish)
 			} else
 				parse_from_existing(b);
 		}
-	} else if (!get_oid(objectish, &b->oid)) {
+	} else if (!repo_get_oid(the_repository, objectish, &b->oid)) {
 		parse_from_existing(b);
 		if (is_null_oid(&b->oid))
 			b->delete = 1;
@@ -2654,7 +2662,7 @@ static struct hash_list *parse_merge(unsigned int *count)
 			if (oe->type != OBJ_COMMIT)
 				die("Mark :%" PRIuMAX " not a commit", idnum);
 			oidcpy(&n->oid, &oe->idx.oid);
-		} else if (!get_oid(from, &n->oid)) {
+		} else if (!repo_get_oid(the_repository, from, &n->oid)) {
 			unsigned long size;
 			char *buf = read_object_with_reference(the_repository,
 							       &n->oid,
@@ -2827,7 +2835,7 @@ static void parse_new_tag(const char *arg)
 		oe = find_mark(marks, from_mark);
 		type = oe->type;
 		oidcpy(&oid, &oe->idx.oid);
-	} else if (!get_oid(from, &oid)) {
+	} else if (!repo_get_oid(the_repository, from, &oid)) {
 		struct object_entry *oe = find_object(&oid);
 		if (!oe) {
 			type = oid_object_info(the_repository, &oid, NULL);
@@ -2936,7 +2944,7 @@ static void cat_blob(struct object_entry *oe, struct object_id *oid)
 	char *buf;
 
 	if (!oe || oe->pack_id == MAX_PACK_ID) {
-		buf = read_object_file(oid, &type, &size);
+		buf = repo_read_object_file(the_repository, oid, &type, &size);
 	} else {
 		type = oe->type;
 		buf = gfi_unpack_entry(oe, &size);
@@ -3044,7 +3052,8 @@ static struct object_entry *dereference(struct object_entry *oe,
 		buf = gfi_unpack_entry(oe, &size);
 	} else {
 		enum object_type unused;
-		buf = read_object_file(oid, &unused, &size);
+		buf = repo_read_object_file(the_repository, oid, &unused,
+					    &size);
 	}
 	if (!buf)
 		die("Can't load object %s", oid_to_hex(oid));
@@ -3245,7 +3254,7 @@ static void parse_alias(void)
 static char* make_fast_import_path(const char *path)
 {
 	if (!relative_marks_paths || is_absolute_path(path))
-		return xstrdup(path);
+		return prefix_filename(global_prefix, path);
 	return git_pathdup("info/fast-import/%s", path);
 }
 
@@ -3316,9 +3325,11 @@ static void option_cat_blob_fd(const char *fd)
 
 static void option_export_pack_edges(const char *edges)
 {
+	char *fn = prefix_filename(global_prefix, edges);
 	if (pack_edges)
 		fclose(pack_edges);
-	pack_edges = xfopen(edges, "a");
+	pack_edges = xfopen(fn, "a");
+	free(fn);
 }
 
 static void option_rewrite_submodules(const char *arg, struct string_list *list)
@@ -3333,11 +3344,13 @@ static void option_rewrite_submodules(const char *arg, struct string_list *list)
 	f++;
 	CALLOC_ARRAY(ms, 1);
 
+	f = prefix_filename(global_prefix, f);
 	fp = fopen(f, "r");
 	if (!fp)
 		die_errno("cannot read '%s'", f);
 	read_mark_file(&ms, fp, insert_oid_entry);
 	fclose(fp);
+	free(f);
 
 	string_list_insert(list, s)->util = ms;
 }
@@ -3551,6 +3564,7 @@ int cmd_fast_import(int argc, const char **argv, const char *prefix)
 
 	global_argc = argc;
 	global_argv = argv;
+	global_prefix = prefix;
 
 	rc_free = mem_pool_alloc(&fi_mem_pool, cmd_save * sizeof(*rc_free));
 	for (i = 0; i < (cmd_save - 1); i++)

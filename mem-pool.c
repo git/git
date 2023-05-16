@@ -2,7 +2,7 @@
  * Memory Pool implementation logic.
  */
 
-#include "cache.h"
+#include "git-compat-util.h"
 #include "mem-pool.h"
 
 #define BLOCK_GROWTH_SIZE (1024 * 1024 - sizeof(struct mp_block))

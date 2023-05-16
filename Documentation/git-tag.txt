@@ -131,6 +131,10 @@ options for details.
 --ignore-case::
 	Sorting and filtering tags are case insensitive.
 
+--omit-empty::
+	Do not print a newline after formatted refs where the format expands
+	to the empty string.
+
 --column[=<options>]::
 --no-column::
 	Display tag listing in columns. See configuration variable

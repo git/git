@@ -1,5 +1,9 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "config.h"
+#include "environment.h"
+#include "git-zlib.h"
+#include "hex.h"
 #include "repository.h"
 #include "refs.h"
 #include "pkt-line.h"
@@ -14,6 +18,8 @@
 #include "object-store.h"
 #include "protocol.h"
 #include "date.h"
+#include "wrapper.h"
+#include "write-or-die.h"
 
 static const char content_type[] = "Content-Type";
 static const char content_length[] = "Content-Length";
@@ -524,7 +530,7 @@ static int show_text_ref(const char *name, const struct object_id *oid,
 	return 0;
 }
 
-static void get_info_refs(struct strbuf *hdr, char *arg)
+static void get_info_refs(struct strbuf *hdr, char *arg UNUSED)
 {
 	const char *service_name = get_parameter("service");
 	struct strbuf buf = STRBUF_INIT;
@@ -578,7 +584,7 @@ static int show_head_ref(const char *refname, const struct object_id *oid,
 	return 0;
 }
 
-static void get_head(struct strbuf *hdr, char *arg)
+static void get_head(struct strbuf *hdr, char *arg UNUSED)
 {
 	struct strbuf buf = STRBUF_INIT;
 
@@ -588,7 +594,7 @@ static void get_head(struct strbuf *hdr, char *arg)
 	strbuf_release(&buf);
 }
 
-static void get_info_packs(struct strbuf *hdr, char *arg)
+static void get_info_packs(struct strbuf *hdr, char *arg UNUSED)
 {
 	size_t objdirlen = strlen(get_object_directory());
 	struct strbuf buf = STRBUF_INIT;
@@ -736,7 +742,7 @@ static int bad_request(struct strbuf *hdr, const struct service_cmd *c)
 	return 0;
 }
 
-int cmd_main(int argc, const char **argv)
+int cmd_main(int argc UNUSED, const char **argv UNUSED)
 {
 	char *method = getenv("REQUEST_METHOD");
 	const char *proto_header;

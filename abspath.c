@@ -1,4 +1,6 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "abspath.h"
+#include "strbuf.h"
 
 /*
  * Do not use this for inspecting *tracked* content.  When path is a
@@ -279,4 +281,11 @@ char *prefix_filename(const char *pfx, const char *arg)
 	convert_slashes(path.buf + pfx_len);
 #endif
 	return strbuf_detach(&path, NULL);
+}
+
+char *prefix_filename_except_for_dash(const char *pfx, const char *arg)
+{
+	if (!strcmp(arg, "-"))
+		return xstrdup(arg);
+	return prefix_filename(pfx, arg);
 }
