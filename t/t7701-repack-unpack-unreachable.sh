@@ -113,6 +113,37 @@ test_expect_success 'do not bother loosening old objects' '
 	test_must_fail git cat-file -p $obj2
 '
 
+test_expect_success 'gc.recentObjectsHook' '
+	obj1=$(echo one | git hash-object -w --stdin) &&
+	obj2=$(echo two | git hash-object -w --stdin) &&
+	obj3=$(echo three | git hash-object -w --stdin) &&
+	pack1=$(echo $obj1 | git pack-objects .git/objects/pack/pack) &&
+	pack2=$(echo $obj2 | git pack-objects .git/objects/pack/pack) &&
+	pack3=$(echo $obj3 | git pack-objects .git/objects/pack/pack) &&
+	git prune-packed &&
+
+	git cat-file -p $obj1 &&
+	git cat-file -p $obj2 &&
+	git cat-file -p $obj3 &&
+
+	git tag -a -m tag obj2-tag $obj2 &&
+	obj2_tag="$(git rev-parse obj2-tag)" &&
+
+	write_script precious-objects <<-EOF &&
+	echo $obj2_tag
+	EOF
+	git config gc.recentObjectsHook ./precious-objects &&
+
+	test-tool chmtime =-86400 .git/objects/pack/pack-$pack2.pack &&
+	test-tool chmtime =-86400 .git/objects/pack/pack-$pack3.pack &&
+	git repack -A -d --unpack-unreachable=1.hour.ago &&
+
+	git cat-file -p $obj1 &&
+	git cat-file -p $obj2 &&
+	git cat-file -p $obj2_tag &&
+	test_must_fail git cat-file -p $obj3
+'
+
 test_expect_success 'keep packed objects found only in index' '
 	echo my-unique-content >file &&
 	git add file &&

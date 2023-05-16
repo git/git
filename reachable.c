@@ -16,6 +16,8 @@
 #include "object-store.h"
 #include "pack-bitmap.h"
 #include "pack-mtimes.h"
+#include "config.h"
+#include "run-command.h"
 
 struct connectivity_progress {
 	struct progress *progress;
@@ -67,12 +69,75 @@ struct recent_data {
 	timestamp_t timestamp;
 	report_recent_object_fn *cb;
 	int ignore_in_core_kept_packs;
+
+	struct oidset extra_recent_oids;
+	int extra_recent_oids_loaded;
 };
+
+static int run_one_gc_recent_objects_hook(struct oidset *set,
+					    const char *args)
+{
+	struct child_process cmd = CHILD_PROCESS_INIT;
+	struct strbuf buf = STRBUF_INIT;
+	FILE *out;
+	int ret = 0;
+
+	cmd.use_shell = 1;
+	cmd.out = -1;
+
+	strvec_push(&cmd.args, args);
+
+	if (start_command(&cmd))
+		return -1;
+
+	out = xfdopen(cmd.out, "r");
+	while (strbuf_getline(&buf, out) != EOF) {
+		struct object_id oid;
+		const char *rest;
+
+		if (parse_oid_hex(buf.buf, &oid, &rest) || *rest) {
+			ret = error(_("invalid extra cruft tip: '%s'"), buf.buf);
+			break;
+		}
+
+		oidset_insert(set, &oid);
+	}
+
+	fclose(out);
+	ret |= finish_command(&cmd);
+
+	strbuf_release(&buf);
+	return ret;
+}
+
+static void load_gc_recent_objects(struct recent_data *data)
+{
+	const struct string_list *programs;
+	int ret = 0;
+	size_t i;
+
+	data->extra_recent_oids_loaded = 1;
+
+	if (git_config_get_string_multi("gc.recentobjectshook", &programs))
+		return;
+
+	for (i = 0; i < programs->nr; i++) {
+		ret = run_one_gc_recent_objects_hook(&data->extra_recent_oids,
+						       programs->items[i].string);
+		if (ret)
+			die(_("unable to enumerate additional cruft tips"));
+	}
+}
 
 static int obj_is_recent(const struct object_id *oid, timestamp_t mtime,
 			 struct recent_data *data)
 {
-	return mtime > data->timestamp;
+	if (mtime > data->timestamp)
+		return 1;
+
+	if (!data->extra_recent_oids_loaded)
+		load_gc_recent_objects(data);
+	return oidset_contains(&data->extra_recent_oids, oid);
 }
 
 static void add_recent_object(const struct object_id *oid,
@@ -199,16 +264,24 @@ int add_unseen_recent_objects_to_traversal(struct rev_info *revs,
 	data.cb = cb;
 	data.ignore_in_core_kept_packs = ignore_in_core_kept_packs;
 
+	oidset_init(&data.extra_recent_oids, 0);
+	data.extra_recent_oids_loaded = 0;
+
 	r = for_each_loose_object(add_recent_loose, &data,
 				  FOR_EACH_OBJECT_LOCAL_ONLY);
 	if (r)
-		return r;
+		goto done;
 
 	flags = FOR_EACH_OBJECT_LOCAL_ONLY | FOR_EACH_OBJECT_PACK_ORDER;
 	if (ignore_in_core_kept_packs)
 		flags |= FOR_EACH_OBJECT_SKIP_IN_CORE_KEPT_PACKS;
 
-	return for_each_packed_object(add_recent_packed, &data, flags);
+	r = for_each_packed_object(add_recent_packed, &data, flags);
+
+done:
+	oidset_clear(&data.extra_recent_oids);
+
+	return r;
 }
 
 static int mark_object_seen(const struct object_id *oid,

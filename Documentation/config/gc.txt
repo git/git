@@ -130,6 +130,19 @@ or rebase occurring.  Since these changes are not part of the current
 project most users will want to expire them sooner, which is why the
 default is more aggressive than `gc.reflogExpire`.
 
+gc.recentObjectsHook::
+	When considering the recency of an object (e.g., when generating
+	a cruft pack or storing unreachable objects as loose), use the
+	shell to execute the specified command(s). Interpret their
+	output as object IDs which Git will consider as "recent",
+	regardless of their age.
++
+Output must contain exactly one hex object ID per line, and nothing
+else. Objects which cannot be found in the repository are ignored.
+Multiple hooks are supported, but all must exit successfully, else the
+operation (either generating a cruft pack or unpacking unreachable
+objects) will be halted.
+
 gc.rerereResolved::
 	Records of conflicted merge you resolved earlier are
 	kept for this many days when 'git rerere gc' is run.

@@ -350,4 +350,18 @@ test_expect_success 'old reachable-from-recent retained with bitmaps' '
 	test_must_fail git cat-file -e $to_drop
 '
 
+test_expect_success 'gc.recentObjectsHook' '
+	add_blob &&
+	test-tool chmtime =-86500 $BLOB_FILE &&
+
+	write_script precious-objects <<-EOF &&
+	echo $BLOB
+	EOF
+	test_config gc.recentObjectsHook ./precious-objects &&
+
+	git prune --expire=now &&
+
+	git cat-file -p $BLOB
+'
+
 test_done
