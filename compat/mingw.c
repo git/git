@@ -948,7 +948,7 @@ ssize_t mingw_write(int fd, const void *buf, size_t len)
 		if (GetFileType(h) == FILE_TYPE_PIPE)
 			errno = EPIPE;
 		else {
-			wchar_t path[MAX_PATH];
+			wchar_t path[MAX_LONG_PATH];
 			DWORD ret = GetFinalPathNameByHandleW(h, path,
 							ARRAY_SIZE(path), 0);
 			UINT drive_type = ret > 0 && ret < ARRAY_SIZE(path) ?
