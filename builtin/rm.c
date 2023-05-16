@@ -19,6 +19,7 @@
 #include "repository.h"
 #include "string-list.h"
 #include "setup.h"
+#include "sparse-index.h"
 #include "submodule.h"
 #include "pathspec.h"
 

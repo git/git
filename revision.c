@@ -32,6 +32,7 @@
 #include "packfile.h"
 #include "worktree.h"
 #include "setup.h"
+#include "sparse-index.h"
 #include "strvec.h"
 #include "trace2.h"
 #include "commit-reach.h"

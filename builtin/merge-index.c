@@ -3,6 +3,7 @@
 #include "hex.h"
 #include "repository.h"
 #include "run-command.h"
+#include "sparse-index.h"
 
 static const char *pgm;
 static int one_shot, quiet;
