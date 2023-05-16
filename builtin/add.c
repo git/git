@@ -21,6 +21,7 @@
 #include "diff.h"
 #include "diffcore.h"
 #include "read-cache.h"
+#include "repository.h"
 #include "revision.h"
 #include "bulk-checkin.h"
 #include "strvec.h"

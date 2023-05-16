@@ -7,6 +7,7 @@
 #include "gettext.h"
 #include "object-name.h"
 #include "read-cache-ll.h"
+#include "repository.h"
 #include "strbuf.h"
 #include "run-command.h"
 #include "strvec.h"

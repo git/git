@@ -9,6 +9,7 @@
 #include "diff-merges.h"
 #include "commit.h"
 #include "preload-index.h"
+#include "repository.h"
 #include "revision.h"
 #include "submodule.h"
 

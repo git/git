@@ -7,6 +7,7 @@
 #include "diffcore.h"
 #include "xdiff-interface.h"
 #include "kwset.h"
+#include "oidset.h"
 #include "pretty.h"
 #include "quote.h"
 

@@ -7,6 +7,7 @@
 #include "diff.h"
 #include "environment.h"
 #include "gettext.h"
+#include "hash.h"
 #include "hex.h"
 #include "object-name.h"
 #include "path.h"

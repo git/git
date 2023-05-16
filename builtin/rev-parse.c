@@ -11,6 +11,7 @@
 #include "commit.h"
 #include "environment.h"
 #include "gettext.h"
+#include "hash.h"
 #include "hex.h"
 #include "refs.h"
 #include "quote.h"
