@@ -322,15 +322,6 @@ void prefetch_cache_entries(const struct index_state *istate,
 extern struct index_state the_index;
 #endif
 
-#define INIT_DB_QUIET 0x0001
-#define INIT_DB_EXIST_OK 0x0002
-
-int init_db(const char *git_dir, const char *real_git_dir,
-	    const char *template_dir, int hash_algo,
-	    const char *initial_branch, int init_shared_repository,
-	    unsigned int flags);
-void initialize_repository_version(int hash_algo, int reinit);
-
 /* Initialize and use the cache information */
 struct lock_file;
 void preload_index(struct index_state *index,
