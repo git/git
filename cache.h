@@ -527,15 +527,4 @@ int add_files_to_cache(struct repository *repo, const char *prefix,
 void overlay_tree_on_index(struct index_state *istate,
 			   const char *tree_name, const char *prefix);
 
-/* merge.c */
-struct commit_list;
-int try_merge_command(struct repository *r,
-		const char *strategy, size_t xopts_nr,
-		const char **xopts, struct commit_list *common,
-		const char *head_arg, struct commit_list *remotes);
-int checkout_fast_forward(struct repository *r,
-			  const struct object_id *from,
-			  const struct object_id *to,
-			  int overwrite_ignore);
-
 #endif /* CACHE_H */

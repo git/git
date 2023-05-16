@@ -25,6 +25,7 @@
 #include "diff.h"
 #include "revision.h"
 #include "rerere.h"
+#include "merge.h"
 #include "merge-ort.h"
 #include "merge-ort-wrappers.h"
 #include "refs.h"

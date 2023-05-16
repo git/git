@@ -37,6 +37,7 @@
 #include "color.h"
 #include "rerere.h"
 #include "help.h"
+#include "merge.h"
 #include "merge-recursive.h"
 #include "merge-ort-wrappers.h"
 #include "resolve-undo.h"
