@@ -312,10 +312,6 @@ typedef int (*must_prefetch_predicate)(const struct cache_entry *);
 void prefetch_cache_entries(const struct index_state *istate,
 			    must_prefetch_predicate must_prefetch);
 
-#ifdef USE_THE_INDEX_VARIABLE
-extern struct index_state the_index;
-#endif
-
 /* Initialize and use the cache information */
 struct lock_file;
 int do_read_index(struct index_state *istate, const char *path,
