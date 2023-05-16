@@ -318,9 +318,6 @@ extern struct index_state the_index;
 
 /* Initialize and use the cache information */
 struct lock_file;
-void preload_index(struct index_state *index,
-		   const struct pathspec *pathspec,
-		   unsigned int refresh_flags);
 int do_read_index(struct index_state *istate, const char *path,
 		  int must_exist); /* for testting only! */
 int read_index_from(struct index_state *, const char *path,

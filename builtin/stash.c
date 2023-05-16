@@ -17,6 +17,7 @@
 #include "run-command.h"
 #include "dir.h"
 #include "entry.h"
+#include "preload-index.h"
 #include "rerere.h"
 #include "revision.h"
 #include "setup.h"

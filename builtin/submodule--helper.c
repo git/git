@@ -11,6 +11,7 @@
 #include "parse-options.h"
 #include "quote.h"
 #include "pathspec.h"
+#include "preload-index.h"
 #include "dir.h"
 #include "setup.h"
 #include "sparse-index.h"
