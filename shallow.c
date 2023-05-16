@@ -17,6 +17,7 @@
 #include "list-objects.h"
 #include "commit-reach.h"
 #include "shallow.h"
+#include "statinfo.h"
 #include "trace.h"
 #include "wrapper.h"
 
