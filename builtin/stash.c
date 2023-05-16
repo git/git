@@ -18,6 +18,7 @@
 #include "dir.h"
 #include "entry.h"
 #include "preload-index.h"
+#include "read-cache.h"
 #include "rerere.h"
 #include "revision.h"
 #include "setup.h"

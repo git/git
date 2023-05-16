@@ -13,6 +13,7 @@
 #include "parse-options.h"
 #include "strvec.h"
 #include "branch.h"
+#include "read-cache-ll.h"
 #include "refs.h"
 #include "repository.h"
 #include "run-command.h"

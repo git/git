@@ -16,6 +16,7 @@
 #include "gettext.h"
 #include "utf8.h"
 #include "quote.h"
+#include "read-cache-ll.h"
 #include "revision.h"
 #include "object-store.h"
 #include "setup.h"

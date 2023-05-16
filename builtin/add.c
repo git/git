@@ -20,6 +20,7 @@
 #include "preload-index.h"
 #include "diff.h"
 #include "diffcore.h"
+#include "read-cache.h"
 #include "revision.h"
 #include "bulk-checkin.h"
 #include "strvec.h"

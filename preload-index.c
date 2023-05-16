@@ -10,6 +10,7 @@
 #include "config.h"
 #include "preload-index.h"
 #include "progress.h"
+#include "read-cache.h"
 #include "thread-utils.h"
 #include "repository.h"
 #include "symlinks.h"

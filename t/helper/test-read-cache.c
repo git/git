@@ -2,6 +2,7 @@
 #include "test-tool.h"
 #include "cache.h"
 #include "config.h"
+#include "read-cache-ll.h"
 #include "repository.h"
 #include "setup.h"
 #include "wrapper.h"

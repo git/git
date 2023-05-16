@@ -1,5 +1,6 @@
 #include "test-tool.h"
 #include "cache.h"
+#include "read-cache-ll.h"
 
 int cmd__strcmp_offset(int argc UNUSED, const char **argv)
 {

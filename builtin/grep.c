@@ -31,6 +31,7 @@
 #include "object-store.h"
 #include "packfile.h"
 #include "pager.h"
+#include "read-cache-ll.h"
 #include "write-or-die.h"
 
 static const char *grep_prefix;

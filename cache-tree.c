@@ -9,6 +9,7 @@
 #include "bulk-checkin.h"
 #include "object-file.h"
 #include "object-store.h"
+#include "read-cache-ll.h"
 #include "replace-object.h"
 #include "promisor-remote.h"
 #include "sparse-index.h"

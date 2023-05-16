@@ -37,6 +37,7 @@
 #include "object-store.h"
 #include "oid-array.h"
 #include "promisor-remote.h"
+#include "read-cache-ll.h"
 #include "revision.h"
 #include "sparse-index.h"
 #include "strmap.h"

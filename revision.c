@@ -31,6 +31,7 @@
 #include "bisect.h"
 #include "packfile.h"
 #include "worktree.h"
+#include "read-cache.h"
 #include "setup.h"
 #include "sparse-index.h"
 #include "strvec.h"

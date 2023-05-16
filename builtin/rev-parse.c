@@ -18,6 +18,7 @@
 #include "object-name.h"
 #include "parse-options.h"
 #include "diff.h"
+#include "read-cache-ll.h"
 #include "revision.h"
 #include "setup.h"
 #include "split-index.h"

@@ -20,6 +20,7 @@
 #include "oid-array.h"
 #include "remote.h"
 #include "dir.h"
+#include "read-cache-ll.h"
 #include "rebase.h"
 #include "refs.h"
 #include "refspec.h"

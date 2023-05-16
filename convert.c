@@ -9,6 +9,7 @@
 #include "attr.h"
 #include "run-command.h"
 #include "quote.h"
+#include "read-cache-ll.h"
 #include "sigchain.h"
 #include "pkt-line.h"
 #include "sub-process.h"

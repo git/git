@@ -6,6 +6,7 @@
 #include "gettext.h"
 #include "pathspec.h"
 #include "attr.h"
+#include "read-cache.h"
 #include "repository.h"
 #include "setup.h"
 #include "strvec.h"

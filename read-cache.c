@@ -28,6 +28,7 @@
 #include "name-hash.h"
 #include "object-name.h"
 #include "preload-index.h"
+#include "read-cache.h"
 #include "resolve-undo.h"
 #include "revision.h"
 #include "run-command.h"

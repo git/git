@@ -14,6 +14,7 @@
 #include "dir.h"
 #include "gettext.h"
 #include "parse-options.h"
+#include "read-cache-ll.h"
 #include "repository.h"
 #include "setup.h"
 #include "string-list.h"

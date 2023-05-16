@@ -5,6 +5,7 @@
 #include "hex.h"
 #include "tree.h"
 #include "cache-tree.h"
+#include "read-cache-ll.h"
 #include "repository.h"
 #include "setup.h"
 

@@ -16,6 +16,7 @@
 #include "tree-walk.h"
 #include "object-name.h"
 #include "parse-options.h"
+#include "read-cache.h"
 #include "repository.h"
 #include "string-list.h"
 #include "setup.h"

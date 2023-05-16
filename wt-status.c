@@ -18,6 +18,7 @@
 #include "refs.h"
 #include "submodule.h"
 #include "column.h"
+#include "read-cache.h"
 #include "setup.h"
 #include "strbuf.h"
 #include "trace.h"

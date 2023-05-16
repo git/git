@@ -22,6 +22,7 @@
 #include "parse-options.h"
 #include "pathspec.h"
 #include "dir.h"
+#include "read-cache.h"
 #include "repository.h"
 #include "setup.h"
 #include "sparse-index.h"

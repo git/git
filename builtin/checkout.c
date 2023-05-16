@@ -21,6 +21,7 @@
 #include "object-store.h"
 #include "parse-options.h"
 #include "preload-index.h"
+#include "read-cache.h"
 #include "refs.h"
 #include "remote.h"
 #include "resolve-undo.h"

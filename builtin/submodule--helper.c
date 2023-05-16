@@ -13,6 +13,7 @@
 #include "pathspec.h"
 #include "preload-index.h"
 #include "dir.h"
+#include "read-cache.h"
 #include "setup.h"
 #include "sparse-index.h"
 #include "submodule.h"

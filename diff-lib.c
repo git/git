@@ -9,6 +9,7 @@
 #include "gettext.h"
 #include "hex.h"
 #include "object-name.h"
+#include "read-cache.h"
 #include "revision.h"
 #include "cache-tree.h"
 #include "unpack-trees.h"

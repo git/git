@@ -10,6 +10,7 @@
 #include "environment.h"
 #include "gettext.h"
 #include "path.h"
+#include "strbuf.h"
 #include "utf8.h"
 #include "precompose_utf8.h"
 
