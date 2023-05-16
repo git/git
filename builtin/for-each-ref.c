@@ -5,6 +5,7 @@
 #include "object.h"
 #include "parse-options.h"
 #include "ref-filter.h"
+#include "strbuf.h"
 #include "strvec.h"
 #include "commit-reach.h"
 

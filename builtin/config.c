@@ -13,6 +13,7 @@
 #include "path.h"
 #include "quote.h"
 #include "setup.h"
+#include "strbuf.h"
 #include "worktree.h"
 #include "wrapper.h"
 
