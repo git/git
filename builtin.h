@@ -2,8 +2,6 @@
 #define BUILTIN_H
 
 #include "git-compat-util.h"
-#include "strbuf.h"
-#include "commit.h"
 
 /*
  * builtin API
