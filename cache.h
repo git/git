@@ -327,7 +327,8 @@ extern struct index_state the_index;
 
 int init_db(const char *git_dir, const char *real_git_dir,
 	    const char *template_dir, int hash_algo,
-	    const char *initial_branch, unsigned int flags);
+	    const char *initial_branch, int init_shared_repository,
+	    unsigned int flags);
 void initialize_repository_version(int hash_algo, int reinit);
 
 /* Initialize and use the cache information */
