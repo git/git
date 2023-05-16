@@ -11,7 +11,7 @@
 #include "rebase.h"
 #include "refs.h"
 #include "refspec.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "strvec.h"
 #include "commit-reach.h"
 #include "progress.h"

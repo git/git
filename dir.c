@@ -15,7 +15,7 @@
 #include "gettext.h"
 #include "name-hash.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "path.h"
 #include "attr.h"
 #include "refs.h"

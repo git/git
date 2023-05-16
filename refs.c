@@ -17,7 +17,7 @@
 #include "run-command.h"
 #include "hook.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "object.h"
 #include "path.h"
 #include "tag.h"

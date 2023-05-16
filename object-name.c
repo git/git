@@ -17,7 +17,7 @@
 #include "oidtree.h"
 #include "packfile.h"
 #include "pretty.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "read-cache-ll.h"
 #include "repository.h"
 #include "setup.h"

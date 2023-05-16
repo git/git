@@ -5,7 +5,7 @@
 #include "gettext.h"
 #include "hex.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "trace2.h"
 #include "tree.h"
 #include "pathspec.h"

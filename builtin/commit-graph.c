@@ -9,7 +9,7 @@
 #include "parse-options.h"
 #include "repository.h"
 #include "commit-graph.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "progress.h"
 #include "replace-object.h"
 #include "tag.h"

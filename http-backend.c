@@ -16,7 +16,7 @@
 #include "url.h"
 #include "strvec.h"
 #include "packfile.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "protocol.h"
 #include "date.h"
 #include "wrapper.h"

@@ -21,7 +21,7 @@
 #include "packfile.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "mem-pool.h"
 #include "commit-reach.h"
 #include "khash.h"

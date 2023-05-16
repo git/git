@@ -11,7 +11,7 @@
 #include "submodule.h"
 #include "strbuf.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "parse-options.h"
 #include "thread-utils.h"
 #include "tree-walk.h"

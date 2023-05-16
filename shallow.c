@@ -4,7 +4,7 @@
 #include "repository.h"
 #include "tempfile.h"
 #include "lockfile.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "commit.h"
 #include "tag.h"
 #include "pkt-line.h"

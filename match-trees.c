@@ -1,9 +1,10 @@
 #include "git-compat-util.h"
 #include "hex.h"
 #include "match-trees.h"
+#include "strbuf.h"
 #include "tree.h"
 #include "tree-walk.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 
 static int score_missing(unsigned mode)
 {

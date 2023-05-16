@@ -23,7 +23,7 @@
 #include "symlinks.h"
 #include "trace2.h"
 #include "fsmonitor.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "promisor-remote.h"
 #include "entry.h"
 #include "parallel-checkout.h"

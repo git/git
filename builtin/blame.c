@@ -29,7 +29,7 @@
 #include "dir.h"
 #include "progress.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "pager.h"
 #include "blame.h"
 #include "refs.h"

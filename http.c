@@ -18,7 +18,7 @@
 #include "protocol.h"
 #include "string-list.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 
 static struct trace_key trace_curl = TRACE_KEY_INIT(CURL);
 static int trace_curl_data = 1;

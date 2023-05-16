@@ -18,7 +18,7 @@
 #include "mem-pool.h"
 #include "merge-recursive.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "parse-options.h"
 #include "path.h"
 #include "preload-index.h"
