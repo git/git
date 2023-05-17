@@ -73,7 +73,6 @@ struct display_state {
 	int url_len, shown_url;
 };
 
-static int fetch_prune_config = -1; /* unspecified */
 static int fetch_show_forced_updates = 1;
 static uint64_t forced_updates_ms = 0;
 static int prefetch = 0;
@@ -108,6 +107,7 @@ static struct string_list negotiation_tip = STRING_LIST_INIT_NODUP;
 
 struct fetch_config {
 	enum display_format display_format;
+	int prune;
 };
 
 static int git_fetch_config(const char *k, const char *v, void *cb)
@@ -115,7 +115,7 @@ static int git_fetch_config(const char *k, const char *v, void *cb)
 	struct fetch_config *fetch_config = cb;
 
 	if (!strcmp(k, "fetch.prune")) {
-		fetch_prune_config = git_config_bool(k, v);
+		fetch_config->prune = git_config_bool(k, v);
 		return 0;
 	}
 
@@ -2047,8 +2047,8 @@ static int fetch_one(struct remote *remote, int argc, const char **argv,
 		/* no command line request */
 		if (0 <= remote->prune)
 			prune = remote->prune;
-		else if (0 <= fetch_prune_config)
-			prune = fetch_prune_config;
+		else if (0 <= config->prune)
+			prune = config->prune;
 		else
 			prune = PRUNE_BY_DEFAULT;
 	}
@@ -2108,6 +2108,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 {
 	struct fetch_config config = {
 		.display_format = DISPLAY_FORMAT_FULL,
+		.prune = -1,
 	};
 	const char *submodule_prefix = "";
 	const char *bundle_uri;
