@@ -638,6 +638,9 @@ static int first_valid_ref(const char *refname,
  *
  * - Checks whether any valid local branches exist.
  *
+ * - Emits a warning if there exist any valid branches but HEAD does not point
+ *   to a valid reference.
+ *
  * Returns 1 if any of the previous checks are true, otherwise returns 0.
  */
 static int can_use_local_refs(const struct add_opts *opts)
@@ -645,6 +648,23 @@ static int can_use_local_refs(const struct add_opts *opts)
 	if (head_ref(first_valid_ref, NULL)) {
 		return 1;
 	} else if (for_each_branch_ref(first_valid_ref, NULL)) {
+		if (!opts->quiet) {
+			struct strbuf path = STRBUF_INIT;
+			struct strbuf contents = STRBUF_INIT;
+
+			strbuf_add_real_path(&path, get_worktree_git_dir(NULL));
+			strbuf_addstr(&path, "/HEAD");
+			strbuf_read_file(&contents, path.buf, 64);
+			strbuf_stripspace(&contents, 0);
+			strbuf_strip_suffix(&contents, "\n");
+
+			warning(_("HEAD points to an invalid (or orphaned) reference.\n"
+				  "HEAD path: '%s'\n"
+				  "HEAD contents: '%s'"),
+				  path.buf, contents.buf);
+			strbuf_release(&path);
+			strbuf_release(&contents);
+		}
 		return 1;
 	}
 	return 0;
@@ -666,16 +686,12 @@ static int can_use_local_refs(const struct add_opts *opts)
 static int can_use_remote_refs(const struct add_opts *opts)
 {
 	if (!guess_remote) {
-		if (!opts->quiet)
-			fprintf_ln(stderr, WORKTREE_ADD_DWIM_ORPHAN_INFER_TEXT);
 		return 0;
 	} else if (for_each_remote_ref(first_valid_ref, NULL)) {
 		return 1;
 	} else if (!opts->force && remote_get(NULL)) {
 		die(_("No local or remote refs exist despite at least one remote\n"
 		      "present, stopping; use 'add -f' to overide or fetch a remote first"));
-	} else if (!opts->quiet) {
-		fprintf_ln(stderr, WORKTREE_ADD_DWIM_ORPHAN_INFER_TEXT);
 	}
 	return 0;
 }
@@ -828,8 +844,12 @@ static int add(int ac, const char **av, const char *prefix)
 		int n;
 		const char *s = worktree_basename(path, &n);
 		new_branch = xstrndup(s, n);
-	} else if (opts.orphan || opts.detach) {
+	} else if (opts.orphan) {
 		// No-op
+	} else if (opts.detach) {
+		// Check HEAD
+		if (!strcmp(branch, "HEAD"))
+			can_use_local_refs(&opts);
 	} else if (ac < 2 && new_branch) {
 		// DWIM: Infer --orphan when repo has no refs.
 		opts.orphan = dwim_orphan(&opts, !!opt_track, 0);
@@ -854,6 +874,10 @@ static int add(int ac, const char **av, const char *prefix)
 				branch = remote;
 			}
 		}
+
+		if (!strcmp(branch, "HEAD"))
+			can_use_local_refs(&opts);
+
 	}
 
 	if (!opts.orphan && !lookup_commit_reference_by_name(branch)) {

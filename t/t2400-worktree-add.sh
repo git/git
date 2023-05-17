@@ -722,6 +722,7 @@ test_dwim_orphan () {
 	local use_quiet=0 &&
 	local remote=0 &&
 	local remote_ref=0 &&
+	local use_detach=0 &&
 	local use_new_branch=0 &&
 
 	local outcome="$1" &&
@@ -746,6 +747,10 @@ test_dwim_orphan () {
 	"fatal_orphan_bad_combo")
 		success=0 &&
 		outcome_text='"add" error inferred "--orphan" gives illegal opts combo'
+		;;
+	"warn_bad_head")
+		success=0 &&
+		outcome_text='"add" error, warn on bad HEAD, hint use orphan'
 		;;
 	*)
 		echo "test_dwim_orphan(): invalid outcome: '$outcome'" >&2 &&
@@ -818,7 +823,7 @@ test_dwim_orphan () {
 			context="$context, invalid (or orphan) HEAD"
 			;;
 
-		# Whether the code path is tested with the base add command or -b
+		# Whether the code path is tested with the base add command, -b, or --detach
 		"no_-b")
 			use_new_branch=0 &&
 			context="$context, no --branch"
@@ -826,6 +831,10 @@ test_dwim_orphan () {
 		"-b")
 			use_new_branch=1 &&
 			context="$context, --branch"
+			;;
+		"detach")
+			use_detach=1 &&
+			context="$context, --detach"
 			;;
 
 		# Whether to check that all output is suppressed (except errors)
@@ -887,6 +896,9 @@ test_dwim_orphan () {
 	if [ $use_new_branch -eq 1 ]
 	then
 		args="$args -b foo"
+	elif [ $use_detach -eq 1 ]
+	then
+		args="$args --detach"
 	else
 		context="DWIM (no --branch), $context"
 	fi &&
@@ -1023,6 +1035,10 @@ do
 		test_dwim_orphan 'infer' $dwim_test_args -b no_local_ref remote no_remote_ref no_guess_remote
 		test_dwim_orphan 'infer' $dwim_test_args -b no_local_ref remote no_remote_ref guess_remote
 		test_dwim_orphan 'infer' $dwim_test_args -b no_local_ref remote remote_ref guess_remote
+
+		test_dwim_orphan 'warn_bad_head' $dwim_test_args no_-b local_ref bad_head
+		test_dwim_orphan 'warn_bad_head' $dwim_test_args -b local_ref bad_head
+		test_dwim_orphan 'warn_bad_head' $dwim_test_args detach local_ref bad_head
 	done
 
 	test_dwim_orphan 'fatal_orphan_bad_combo' $quiet_mode no_-b no_checkout
