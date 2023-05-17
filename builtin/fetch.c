@@ -73,7 +73,6 @@ struct display_state {
 	int url_len, shown_url;
 };
 
-static int fetch_show_forced_updates = 1;
 static uint64_t forced_updates_ms = 0;
 static int prefetch = 0;
 static int prune = -1; /* unspecified */
@@ -108,6 +107,7 @@ struct fetch_config {
 	enum display_format display_format;
 	int prune;
 	int prune_tags;
+	int show_forced_updates;
 };
 
 static int git_fetch_config(const char *k, const char *v, void *cb)
@@ -125,7 +125,7 @@ static int git_fetch_config(const char *k, const char *v, void *cb)
 	}
 
 	if (!strcmp(k, "fetch.showforcedupdates")) {
-		fetch_show_forced_updates = git_config_bool(k, v);
+		fetch_config->show_forced_updates = git_config_bool(k, v);
 		return 0;
 	}
 
@@ -891,7 +891,8 @@ static int update_local_ref(struct ref *ref,
 			    struct ref_transaction *transaction,
 			    struct display_state *display_state,
 			    const struct ref *remote_ref,
-			    int summary_width)
+			    int summary_width,
+			    const struct fetch_config *config)
 {
 	struct commit *current = NULL, *updated;
 	int fast_forward = 0;
@@ -972,7 +973,7 @@ static int update_local_ref(struct ref *ref,
 		return r;
 	}
 
-	if (fetch_show_forced_updates) {
+	if (config->show_forced_updates) {
 		uint64_t t_before = getnanotime();
 		fast_forward = repo_in_merge_bases(the_repository, current,
 						   updated);
@@ -1125,7 +1126,8 @@ static int store_updated_refs(struct display_state *display_state,
 			      const char *remote_name,
 			      int connectivity_checked,
 			      struct ref_transaction *transaction, struct ref *ref_map,
-			      struct fetch_head *fetch_head)
+			      struct fetch_head *fetch_head,
+			      const struct fetch_config *config)
 {
 	int rc = 0;
 	struct strbuf note = STRBUF_INIT;
@@ -1241,7 +1243,7 @@ static int store_updated_refs(struct display_state *display_state,
 
 			if (ref) {
 				rc |= update_local_ref(ref, transaction, display_state,
-						       rm, summary_width);
+						       rm, summary_width, config);
 				free(ref);
 			} else if (write_fetch_head || dry_run) {
 				/*
@@ -1265,7 +1267,7 @@ static int store_updated_refs(struct display_state *display_state,
 		      "branches"), remote_name);
 
 	if (advice_enabled(ADVICE_FETCH_SHOW_FORCED_UPDATES)) {
-		if (!fetch_show_forced_updates) {
+		if (!config->show_forced_updates) {
 			warning(_(warn_show_forced_updates));
 		} else if (forced_updates_ms > FORCED_UPDATES_DELAY_WARNING_IN_MS) {
 			warning(_(warn_time_show_forced_updates),
@@ -1326,7 +1328,8 @@ static int fetch_and_consume_refs(struct display_state *display_state,
 				  struct transport *transport,
 				  struct ref_transaction *transaction,
 				  struct ref *ref_map,
-				  struct fetch_head *fetch_head)
+				  struct fetch_head *fetch_head,
+				  const struct fetch_config *config)
 {
 	int connectivity_checked = 1;
 	int ret;
@@ -1349,7 +1352,7 @@ static int fetch_and_consume_refs(struct display_state *display_state,
 	trace2_region_enter("fetch", "consume_refs", the_repository);
 	ret = store_updated_refs(display_state, transport->remote->name,
 				 connectivity_checked, transaction, ref_map,
-				 fetch_head);
+				 fetch_head, config);
 	trace2_region_leave("fetch", "consume_refs", the_repository);
 
 out:
@@ -1520,7 +1523,8 @@ static int backfill_tags(struct display_state *display_state,
 			 struct transport *transport,
 			 struct ref_transaction *transaction,
 			 struct ref *ref_map,
-			 struct fetch_head *fetch_head)
+			 struct fetch_head *fetch_head,
+			 const struct fetch_config *config)
 {
 	int retcode, cannot_reuse;
 
@@ -1541,7 +1545,8 @@ static int backfill_tags(struct display_state *display_state,
 	transport_set_option(transport, TRANS_OPT_FOLLOWTAGS, NULL);
 	transport_set_option(transport, TRANS_OPT_DEPTH, "0");
 	transport_set_option(transport, TRANS_OPT_DEEPEN_RELATIVE, NULL);
-	retcode = fetch_and_consume_refs(display_state, transport, transaction, ref_map, fetch_head);
+	retcode = fetch_and_consume_refs(display_state, transport, transaction, ref_map,
+					 fetch_head, config);
 
 	if (gsecondary) {
 		transport_disconnect(gsecondary);
@@ -1668,7 +1673,8 @@ static int do_fetch(struct transport *transport,
 			retcode = 1;
 	}
 
-	if (fetch_and_consume_refs(&display_state, transport, transaction, ref_map, &fetch_head)) {
+	if (fetch_and_consume_refs(&display_state, transport, transaction, ref_map,
+				   &fetch_head, config)) {
 		retcode = 1;
 		goto cleanup;
 	}
@@ -1691,7 +1697,7 @@ static int do_fetch(struct transport *transport,
 			 * the transaction and don't commit anything.
 			 */
 			if (backfill_tags(&display_state, transport, transaction, tags_ref_map,
-					  &fetch_head))
+					  &fetch_head, config))
 				retcode = 1;
 		}
 
@@ -2110,6 +2116,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		.display_format = DISPLAY_FORMAT_FULL,
 		.prune = -1,
 		.prune_tags = -1,
+		.show_forced_updates = 1,
 	};
 	const char *submodule_prefix = "";
 	const char *bundle_uri;
@@ -2207,7 +2214,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 			 N_("run 'maintenance --auto' after fetching")),
 		OPT_BOOL(0, "auto-gc", &enable_auto_gc,
 			 N_("run 'maintenance --auto' after fetching")),
-		OPT_BOOL(0, "show-forced-updates", &fetch_show_forced_updates,
+		OPT_BOOL(0, "show-forced-updates", &config.show_forced_updates,
 			 N_("check for forced-updates on all updated branches")),
 		OPT_BOOL(0, "write-commit-graph", &fetch_write_commit_graph,
 			 N_("write the commit-graph after fetching")),
