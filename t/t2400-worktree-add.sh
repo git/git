@@ -326,6 +326,7 @@ test_expect_success 'add -B' '
 '
 
 test_expect_success 'add --quiet' '
+	test_when_finished "git worktree remove -f -f another-worktree" &&
 	git worktree add --quiet another-worktree main 2>actual &&
 	test_must_be_empty actual
 '
