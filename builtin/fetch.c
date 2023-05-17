@@ -86,7 +86,6 @@ static int write_fetch_head = 1;
 static int verbosity, deepen_relative, set_upstream, refetch;
 static int progress = -1;
 static int tags = TAGS_DEFAULT, update_shallow, deepen;
-static int submodule_fetch_jobs_config = -1;
 static int atomic_fetch;
 static enum transport_family family;
 static const char *depth;
@@ -108,6 +107,7 @@ struct fetch_config {
 	int show_forced_updates;
 	int recurse_submodules;
 	int parallel;
+	int submodule_fetch_jobs;
 };
 
 static int git_fetch_config(const char *k, const char *v, void *cb)
@@ -136,7 +136,7 @@ static int git_fetch_config(const char *k, const char *v, void *cb)
 	}
 
 	if (!strcmp(k, "submodule.fetchjobs")) {
-		submodule_fetch_jobs_config = parse_submodule_fetchjobs(k, v);
+		fetch_config->submodule_fetch_jobs = parse_submodule_fetchjobs(k, v);
 		return 0;
 	} else if (!strcmp(k, "fetch.recursesubmodules")) {
 		fetch_config->recurse_submodules = parse_fetch_recurse_submodules_arg(k, v);
@@ -2119,6 +2119,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		.show_forced_updates = 1,
 		.recurse_submodules = RECURSE_SUBMODULES_DEFAULT,
 		.parallel = 1,
+		.submodule_fetch_jobs = -1,
 	};
 	const char *submodule_prefix = "";
 	const char *bundle_uri;
@@ -2268,8 +2269,8 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	}
 
 	if (config.recurse_submodules != RECURSE_SUBMODULES_OFF) {
-		int *sfjc = submodule_fetch_jobs_config == -1
-			    ? &submodule_fetch_jobs_config : NULL;
+		int *sfjc = config.submodule_fetch_jobs == -1
+			    ? &config.submodule_fetch_jobs : NULL;
 		int *rs = config.recurse_submodules == RECURSE_SUBMODULES_DEFAULT
 			  ? &config.recurse_submodules : NULL;
 
@@ -2432,7 +2433,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		int max_children = max_jobs;
 
 		if (max_children < 0)
-			max_children = submodule_fetch_jobs_config;
+			max_children = config.submodule_fetch_jobs;
 		if (max_children < 0)
 			max_children = config.parallel;
 
