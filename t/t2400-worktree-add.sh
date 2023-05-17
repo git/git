@@ -312,6 +312,10 @@ test_wt_add_excl () {
 test_wt_add_excl -b poodle -B poodle bamboo main
 test_wt_add_excl -b poodle --detach bamboo main
 test_wt_add_excl -B poodle --detach bamboo main
+test_wt_add_excl --orphan --detach bamboo
+test_wt_add_excl --orphan --no-checkout bamboo
+test_wt_add_excl --orphan bamboo main
+test_wt_add_excl --orphan -b bamboo wtdir/ main
 
 test_expect_success '"add -B" fails if the branch is checked out' '
 	git rev-parse newmain >before &&
@@ -339,6 +343,62 @@ test_expect_success 'add --quiet -b' '
 	test_when_finished "git worktree remove -f -f another-worktree" &&
 	git worktree add --quiet -b quietnewbranch another-worktree 2>actual &&
 	test_must_be_empty actual
+'
+
+test_expect_success '"add --orphan"' '
+	test_when_finished "git worktree remove -f -f orphandir" &&
+	git worktree add --orphan -b neworphan orphandir &&
+	echo refs/heads/neworphan >expected &&
+	git -C orphandir symbolic-ref HEAD >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success '"add --orphan (no -b)"' '
+	test_when_finished "git worktree remove -f -f neworphan" &&
+	git worktree add --orphan neworphan &&
+	echo refs/heads/neworphan >expected &&
+	git -C neworphan symbolic-ref HEAD >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success '"add --orphan --quiet"' '
+	test_when_finished "git worktree remove -f -f orphandir" &&
+	git worktree add --quiet --orphan -b neworphan orphandir 2>log.actual &&
+	test_must_be_empty log.actual &&
+	echo refs/heads/neworphan >expected &&
+	git -C orphandir symbolic-ref HEAD >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success '"add --orphan" fails if the branch already exists' '
+	test_when_finished "git branch -D existingbranch" &&
+	git worktree add -b existingbranch orphandir main &&
+	git worktree remove orphandir &&
+	test_must_fail git worktree add --orphan -b existingbranch orphandir
+'
+
+test_expect_success '"add --orphan" with empty repository' '
+	test_when_finished "rm -rf empty_repo" &&
+	echo refs/heads/newbranch >expected &&
+	GIT_DIR="empty_repo" git init --bare &&
+	git -C empty_repo worktree add --orphan -b newbranch worktreedir &&
+	git -C empty_repo/worktreedir symbolic-ref HEAD >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success '"add" worktree with orphan branch and lock' '
+	git worktree add --lock --orphan -b orphanbr orphan-with-lock &&
+	test_when_finished "git worktree unlock orphan-with-lock || :" &&
+	test -f .git/worktrees/orphan-with-lock/locked
+'
+
+test_expect_success '"add" worktree with orphan branch, lock, and reason' '
+	lock_reason="why not" &&
+	git worktree add --detach --lock --reason "$lock_reason" orphan-with-lock-reason main &&
+	test_when_finished "git worktree unlock orphan-with-lock-reason || :" &&
+	test -f .git/worktrees/orphan-with-lock-reason/locked &&
+	echo "$lock_reason" >expect &&
+	test_cmp expect .git/worktrees/orphan-with-lock-reason/locked
 '
 
 test_expect_success 'local clone from linked checkout' '
@@ -456,6 +516,14 @@ setup_remote_repo () {
 		git fetch --all
 	)
 }
+
+test_expect_success '"add" <path> <remote/branch> w/ no HEAD' '
+	test_when_finished rm -rf repo_upstream repo_local foo &&
+	setup_remote_repo repo_upstream repo_local &&
+	git -C repo_local config --bool core.bare true &&
+	git -C repo_local branch -D main &&
+	git -C repo_local worktree add ./foo repo_upstream/foo
+'
 
 test_expect_success '--no-track avoids setting up tracking' '
 	test_when_finished rm -rf repo_upstream repo_local foo &&

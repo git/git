@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git worktree add' [-f] [--detach] [--checkout] [--lock [--reason <string>]]
-		   [(-b | -B) <new-branch>] <path> [<commit-ish>]
+		   [--orphan] [(-b | -B) <new-branch>] <path> [<commit-ish>]
 'git worktree list' [-v | --porcelain [-z]]
 'git worktree lock' [--reason <string>] <worktree>
 'git worktree move' <worktree> <new-path>
@@ -221,6 +221,10 @@ This can also be set up as the default behaviour by using the
 --dry-run::
 	With `prune`, do not remove anything; just report what it would
 	remove.
+
+--orphan::
+	With `add`, make the new worktree and index empty, associating
+	the worktree with a new orphan/unborn branch named `<new-branch>`.
 
 --porcelain::
 	With `list`, output in an easy-to-parse format for scripts.

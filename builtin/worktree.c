@@ -22,7 +22,8 @@
 
 #define BUILTIN_WORKTREE_ADD_USAGE \
 	N_("git worktree add [-f] [--detach] [--checkout] [--lock [--reason <string>]]\n" \
-	   "                 [(-b | -B) <new-branch>] <path> [<commit-ish>]")
+	   "                 [--orphan] [(-b | -B) <new-branch>] <path> [<commit-ish>]")
+
 #define BUILTIN_WORKTREE_LIST_USAGE \
 	N_("git worktree list [-v | --porcelain [-z]]")
 #define BUILTIN_WORKTREE_LOCK_USAGE \
@@ -95,6 +96,7 @@ struct add_opts {
 	int detach;
 	int quiet;
 	int checkout;
+	int orphan;
 	const char *keep_locked;
 };
 
@@ -368,6 +370,22 @@ static int checkout_worktree(const struct add_opts *opts,
 	return run_command(&cp);
 }
 
+static int make_worktree_orphan(const char * ref, const struct add_opts *opts,
+				struct strvec *child_env)
+{
+	struct strbuf symref = STRBUF_INIT;
+	struct child_process cp = CHILD_PROCESS_INIT;
+
+	validate_new_branchname(ref, &symref, 0);
+	strvec_pushl(&cp.args, "symbolic-ref", "HEAD", symref.buf, NULL);
+	if (opts->quiet)
+		strvec_push(&cp.args, "--quiet");
+	strvec_pushv(&cp.env, child_env->v);
+	strbuf_release(&symref);
+	cp.git_cmd = 1;
+	return run_command(&cp);
+}
+
 static int add_worktree(const char *path, const char *refname,
 			const struct add_opts *opts)
 {
@@ -397,7 +415,7 @@ static int add_worktree(const char *path, const char *refname,
 			die_if_checked_out(symref.buf, 0);
 	}
 	commit = lookup_commit_reference_by_name(refname);
-	if (!commit)
+	if (!commit && !opts->orphan)
 		die(_("invalid reference: %s"), refname);
 
 	name = worktree_basename(path, &len);
@@ -486,10 +504,10 @@ static int add_worktree(const char *path, const char *refname,
 	strvec_pushf(&child_env, "%s=%s", GIT_WORK_TREE_ENVIRONMENT, path);
 	cp.git_cmd = 1;
 
-	if (!is_branch)
+	if (!is_branch && commit) {
 		strvec_pushl(&cp.args, "update-ref", "HEAD",
 			     oid_to_hex(&commit->object.oid), NULL);
-	else {
+	} else {
 		strvec_pushl(&cp.args, "symbolic-ref", "HEAD",
 			     symref.buf, NULL);
 		if (opts->quiet)
@@ -499,6 +517,10 @@ static int add_worktree(const char *path, const char *refname,
 	strvec_pushv(&cp.env, child_env.v);
 	ret = run_command(&cp);
 	if (ret)
+		goto done;
+
+	if (opts->orphan &&
+	    (ret = make_worktree_orphan(refname, opts, &child_env)))
 		goto done;
 
 	if (opts->checkout &&
@@ -520,7 +542,7 @@ done:
 	 * Hook failure does not warrant worktree deletion, so run hook after
 	 * is_junk is cleared, but do return appropriate code when hook fails.
 	 */
-	if (!ret && opts->checkout) {
+	if (!ret && opts->checkout && !opts->orphan) {
 		struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT;
 
 		strvec_pushl(&opt.env, "GIT_DIR", "GIT_WORK_TREE", NULL);
@@ -568,7 +590,7 @@ static void print_preparing_worktree_line(int detach,
 		else {
 			struct commit *commit = lookup_commit_reference_by_name(branch);
 			if (!commit)
-				die(_("invalid reference: %s"), branch);
+				BUG(_("unreachable: invalid reference: %s"), branch);
 			fprintf_ln(stderr, _("Preparing worktree (detached HEAD %s)"),
 				  repo_find_unique_abbrev(the_repository, &commit->object.oid, DEFAULT_ABBREV));
 		}
@@ -620,6 +642,7 @@ static int add(int ac, const char **av, const char *prefix)
 			   N_("create a new branch")),
 		OPT_STRING('B', NULL, &new_branch_force, N_("branch"),
 			   N_("create or reset a branch")),
+		OPT_BOOL(0, "orphan", &opts.orphan, N_("create unborn/orphaned branch")),
 		OPT_BOOL('d', "detach", &opts.detach, N_("detach HEAD at named commit")),
 		OPT_BOOL(0, "checkout", &opts.checkout, N_("populate the new working tree")),
 		OPT_BOOL(0, "lock", &keep_locked, N_("keep the new working tree locked")),
@@ -640,6 +663,17 @@ static int add(int ac, const char **av, const char *prefix)
 	ac = parse_options(ac, av, prefix, options, git_worktree_add_usage, 0);
 	if (!!opts.detach + !!new_branch + !!new_branch_force > 1)
 		die(_("options '%s', '%s', and '%s' cannot be used together"), "-b", "-B", "--detach");
+	if (opts.detach && opts.orphan)
+		die(_("options '%s', and '%s' cannot be used together"),
+		    "--orphan", "--detach");
+	if (opts.orphan && opt_track)
+		die(_("'%s' and '%s' cannot be used together"), "--orphan", "--track");
+	if (opts.orphan && !opts.checkout)
+		die(_("'%s' and '%s' cannot be used together"), "--orphan",
+		    "--no-checkout");
+	if (opts.orphan && ac == 2)
+		die(_("'%s' and '%s' cannot be used together"), "--orphan",
+		    _("<commit-ish>"));
 	if (lock_reason && !keep_locked)
 		die(_("the option '%s' requires '%s'"), "--reason", "--lock");
 	if (lock_reason)
@@ -668,13 +702,17 @@ static int add(int ac, const char **av, const char *prefix)
 		strbuf_release(&symref);
 	}
 
-	if (ac < 2 && !new_branch && !opts.detach) {
+	if (opts.orphan && !new_branch) {
+		int n;
+		const char *s = worktree_basename(path, &n);
+		new_branch = xstrndup(s, n);
+	} else if (new_branch || opts.detach || opts.orphan) {
+		// No-op
+	} else if (ac < 2) {
 		const char *s = dwim_branch(path, &new_branch);
 		if (s)
 			branch = s;
-	}
-
-	if (ac == 2 && !new_branch && !opts.detach) {
+	} else if (ac == 2) {
 		struct object_id oid;
 		struct commit *commit;
 		const char *remote;
@@ -688,10 +726,17 @@ static int add(int ac, const char **av, const char *prefix)
 			}
 		}
 	}
+
+	if (!opts.orphan && !lookup_commit_reference_by_name(branch)) {
+		die(_("invalid reference: %s"), branch);
+	}
+
 	if (!opts.quiet)
 		print_preparing_worktree_line(opts.detach, branch, new_branch, !!new_branch_force);
 
-	if (new_branch) {
+	if (opts.orphan) {
+		branch = new_branch;
+	} else if (new_branch) {
 		struct child_process cp = CHILD_PROCESS_INIT;
 		cp.git_cmd = 1;
 		strvec_push(&cp.args, "branch");
