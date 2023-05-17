@@ -334,6 +334,13 @@ test_expect_success 'add --quiet' '
 	test_must_be_empty actual
 '
 
+test_expect_success 'add --quiet -b' '
+	test_when_finished "git branch -D quietnewbranch" &&
+	test_when_finished "git worktree remove -f -f another-worktree" &&
+	git worktree add --quiet -b quietnewbranch another-worktree 2>actual &&
+	test_must_be_empty actual
+'
+
 test_expect_success 'local clone from linked checkout' '
 	git clone --local here here-clone &&
 	( cd here-clone && git fsck )
@@ -530,6 +537,35 @@ test_expect_success 'git worktree add --guess-remote sets up tracking' '
 		cd foo &&
 		test_branch_upstream foo repo_a foo &&
 		test_cmp_rev refs/remotes/repo_a/foo refs/heads/foo
+	)
+'
+test_expect_success 'git worktree add --guess-remote sets up tracking (quiet)' '
+	test_when_finished rm -rf repo_a repo_b foo &&
+	setup_remote_repo repo_a repo_b &&
+	(
+		cd repo_b &&
+		git worktree add --quiet --guess-remote ../foo 2>actual &&
+		test_must_be_empty actual
+	) &&
+	(
+		cd foo &&
+		test_branch_upstream foo repo_a foo &&
+		test_cmp_rev refs/remotes/repo_a/foo refs/heads/foo
+	)
+'
+
+test_expect_success 'git worktree --no-guess-remote (quiet)' '
+	test_when_finished rm -rf repo_a repo_b foo &&
+	setup_remote_repo repo_a repo_b &&
+	(
+		cd repo_b &&
+		git worktree add --quiet --no-guess-remote ../foo
+	) &&
+	(
+		cd foo &&
+		test_must_fail git config "branch.foo.remote" &&
+		test_must_fail git config "branch.foo.merge" &&
+		test_cmp_rev ! refs/remotes/repo_a/foo refs/heads/foo
 	)
 '
 
