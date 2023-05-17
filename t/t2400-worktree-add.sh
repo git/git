@@ -298,17 +298,20 @@ test_expect_success '"add" no auto-vivify with --detach and <branch> omitted' '
 	test_must_fail git -C mish/mash symbolic-ref HEAD
 '
 
-test_expect_success '"add" -b/-B mutually exclusive' '
-	test_must_fail git worktree add -b poodle -B poodle bamboo main
-'
+# Helper function to test mutually exclusive options.
+#
+# Note: Quoted arguments containing spaces are not supported.
+test_wt_add_excl () {
+	local opts="$*" &&
+	test_expect_success "'worktree add' with '$opts' has mutually exclusive options" '
+		test_must_fail git worktree add $opts 2>actual &&
+		grep -E "fatal:( options)? .* cannot be used together" actual
+	'
+}
 
-test_expect_success '"add" -b/--detach mutually exclusive' '
-	test_must_fail git worktree add -b poodle --detach bamboo main
-'
-
-test_expect_success '"add" -B/--detach mutually exclusive' '
-	test_must_fail git worktree add -B poodle --detach bamboo main
-'
+test_wt_add_excl -b poodle -B poodle bamboo main
+test_wt_add_excl -b poodle --detach bamboo main
+test_wt_add_excl -B poodle --detach bamboo main
 
 test_expect_success '"add -B" fails if the branch is checked out' '
 	git rev-parse newmain >before &&
