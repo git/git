@@ -95,6 +95,16 @@ exist, a new branch based on `HEAD` is automatically created as if
 `-b <branch>` was given.  If `<branch>` does exist, it will be checked out
 in the new worktree, if it's not checked out anywhere else, otherwise the
 command will refuse to create the worktree (unless `--force` is used).
++
+If `<commit-ish>` is omitted, neither `--detach`, or `--orphan` is
+used, and there are no valid local branches (or remote branches if
+`--guess-remote` is specified) then, as a convenience, the new worktree is
+associated with a new orphan branch named `<branch>` (after
+`$(basename <path>)` if neither `-b` or `-B` is used) as if `--orphan` was
+passed to the command. In the event the repository has a remote and
+`--guess-remote` is used, but no remote or local branches exist, then the
+command fails with a warning reminding the user to fetch from their remote
+first (or override by using `-f/--force`).
 
 list::
 

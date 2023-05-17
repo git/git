@@ -12,6 +12,7 @@
 #include "strvec.h"
 #include "branch.h"
 #include "refs.h"
+#include "remote.h"
 #include "run-command.h"
 #include "hook.h"
 #include "sigchain.h"
@@ -39,6 +40,9 @@
 	N_("git worktree repair [<path>...]")
 #define BUILTIN_WORKTREE_UNLOCK_USAGE \
 	N_("git worktree unlock <worktree>")
+
+#define WORKTREE_ADD_DWIM_ORPHAN_INFER_TEXT \
+	_("No possible source branch, inferring '--orphan'")
 
 #define WORKTREE_ADD_ORPHAN_WITH_DASH_B_HINT_TEXT \
 	_("If you meant to create a worktree containing a new orphan branch\n" \
@@ -613,6 +617,107 @@ static void print_preparing_worktree_line(int detach,
 	}
 }
 
+/**
+ * Callback to short circuit iteration over refs on the first reference
+ * corresponding to a valid oid.
+ *
+ * Returns 0 on failure and non-zero on success.
+ */
+static int first_valid_ref(const char *refname,
+			   const struct object_id *oid,
+			   int flags,
+			   void *cb_data)
+{
+	return 1;
+}
+
+/**
+ * Verifies HEAD and determines whether there exist any valid local references.
+ *
+ * - Checks whether HEAD points to a valid reference.
+ *
+ * - Checks whether any valid local branches exist.
+ *
+ * Returns 1 if any of the previous checks are true, otherwise returns 0.
+ */
+static int can_use_local_refs(const struct add_opts *opts)
+{
+	if (head_ref(first_valid_ref, NULL)) {
+		return 1;
+	} else if (for_each_branch_ref(first_valid_ref, NULL)) {
+		return 1;
+	}
+	return 0;
+}
+
+/**
+ * Reports whether the necessary flags were set and whether the repository has
+ * remote references to attempt DWIM tracking of upstream branches.
+ *
+ * 1. Checks that `--guess-remote` was used or `worktree.guessRemote = true`.
+ *
+ * 2. Checks whether any valid remote branches exist.
+ *
+ * 3. Checks that there exists at least one remote and emits a warning/error
+ *    if both checks 1. and 2. are false (can be bypassed with `--force`).
+ *
+ * Returns 1 if checks 1. and 2. are true, otherwise 0.
+ */
+static int can_use_remote_refs(const struct add_opts *opts)
+{
+	if (!guess_remote) {
+		if (!opts->quiet)
+			fprintf_ln(stderr, WORKTREE_ADD_DWIM_ORPHAN_INFER_TEXT);
+		return 0;
+	} else if (for_each_remote_ref(first_valid_ref, NULL)) {
+		return 1;
+	} else if (!opts->force && remote_get(NULL)) {
+		die(_("No local or remote refs exist despite at least one remote\n"
+		      "present, stopping; use 'add -f' to overide or fetch a remote first"));
+	} else if (!opts->quiet) {
+		fprintf_ln(stderr, WORKTREE_ADD_DWIM_ORPHAN_INFER_TEXT);
+	}
+	return 0;
+}
+
+/**
+ * Determines whether `--orphan` should be inferred in the evaluation of
+ * `worktree add path/` or `worktree add -b branch path/` and emits an error
+ * if the supplied arguments would produce an illegal combination when the
+ * `--orphan` flag is included.
+ *
+ * `opts` and `opt_track` contain the other options & flags supplied to the
+ * command.
+ *
+ * remote determines whether to check `can_use_remote_refs()` or not. This
+ * is primarily to differentiate between the basic `add` DWIM and `add -b`.
+ *
+ * Returns 1 when inferring `--orphan`, 0 otherwise, and emits an error when
+ * `--orphan` is inferred but doing so produces an illegal combination of
+ * options and flags. Additionally produces an error when remote refs are
+ * checked and the repo is in a state that looks like the user added a remote
+ * but forgot to fetch (and did not override the warning with -f).
+ */
+static int dwim_orphan(const struct add_opts *opts, int opt_track, int remote)
+{
+	if (can_use_local_refs(opts)) {
+		return 0;
+	} else if (remote && can_use_remote_refs(opts)) {
+		return 0;
+	} else if (!opts->quiet) {
+		fprintf_ln(stderr, WORKTREE_ADD_DWIM_ORPHAN_INFER_TEXT);
+	}
+
+	if (opt_track) {
+		die(_("'%s' and '%s' cannot be used together"), "--orphan",
+		    "--track");
+	} else if (!opts->checkout) {
+		die(_("'%s' and '%s' cannot be used together"), "--orphan",
+		    "--no-checkout");
+	}
+	return 1;
+}
+
 static const char *dwim_branch(const char *path, const char **new_branch)
 {
 	int n;
@@ -723,12 +828,19 @@ static int add(int ac, const char **av, const char *prefix)
 		int n;
 		const char *s = worktree_basename(path, &n);
 		new_branch = xstrndup(s, n);
-	} else if (new_branch || opts.detach || opts.orphan) {
+	} else if (opts.orphan || opts.detach) {
 		// No-op
+	} else if (ac < 2 && new_branch) {
+		// DWIM: Infer --orphan when repo has no refs.
+		opts.orphan = dwim_orphan(&opts, !!opt_track, 0);
 	} else if (ac < 2) {
+		// DWIM: Guess branch name from path.
 		const char *s = dwim_branch(path, &new_branch);
 		if (s)
 			branch = s;
+
+		// DWIM: Infer --orphan when repo has no refs.
+		opts.orphan = (!s) && dwim_orphan(&opts, !!opt_track, 1);
 	} else if (ac == 2) {
 		struct object_id oid;
 		struct commit *commit;

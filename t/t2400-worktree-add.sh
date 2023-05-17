@@ -705,6 +705,332 @@ test_expect_success 'git worktree --no-guess-remote option overrides config' '
 	)
 '
 
+test_dwim_orphan () {
+	local info_text="No possible source branch, inferring '--orphan'" &&
+	local fetch_error_text="fatal: No local or remote refs exist despite at least one remote" &&
+	local orphan_hint="hint: If you meant to create a worktree containing a new orphan branch" &&
+	local invalid_ref_regex="^fatal: invalid reference:\s\+.*" &&
+	local bad_combo_regex="^fatal: '[a-z-]\+' and '[a-z-]\+' cannot be used together" &&
+
+	local git_ns="repo" &&
+	local dashc_args="-C $git_ns" &&
+	local use_cd=0 &&
+
+	local bad_head=0 &&
+	local empty_repo=1 &&
+	local local_ref=0 &&
+	local use_quiet=0 &&
+	local remote=0 &&
+	local remote_ref=0 &&
+	local use_new_branch=0 &&
+
+	local outcome="$1" &&
+	local outcome_text &&
+	local success &&
+	shift &&
+	local args="" &&
+	local context="" &&
+	case "$outcome" in
+	"infer")
+		success=1 &&
+		outcome_text='"add" DWIM infer --orphan'
+		;;
+	"no_infer")
+		success=1 &&
+		outcome_text='"add" DWIM doesnt infer --orphan'
+		;;
+	"fetch_error")
+		success=0 &&
+		outcome_text='"add" error need fetch'
+		;;
+	"fatal_orphan_bad_combo")
+		success=0 &&
+		outcome_text='"add" error inferred "--orphan" gives illegal opts combo'
+		;;
+	*)
+		echo "test_dwim_orphan(): invalid outcome: '$outcome'" >&2 &&
+		return 1
+		;;
+	esac &&
+	while [ $# -gt 0 ]
+	do
+		case "$1" in
+		# How and from where to create the worktree
+		"-C_repo")
+			use_cd=0 &&
+			git_ns="repo" &&
+			dashc_args="-C $git_ns" &&
+			context="$context, 'git -C repo'"
+			;;
+		"-C_wt")
+			use_cd=0 &&
+			git_ns="wt" &&
+			dashc_args="-C $git_ns" &&
+			context="$context, 'git -C wt'"
+			;;
+		"cd_repo")
+			use_cd=1 &&
+			git_ns="repo" &&
+			dashc_args="" &&
+			context="$context, 'cd repo && git'"
+			;;
+		"cd_wt")
+			use_cd=1 &&
+			git_ns="wt" &&
+			dashc_args="" &&
+			context="$context, 'cd wt && git'"
+			;;
+
+		# Bypass the "pull first" warning
+		"force")
+			args="$args --force" &&
+			context="$context, --force"
+			;;
+
+		# Try to use remote refs when DWIM
+		"guess_remote")
+			args="$args --guess-remote" &&
+			context="$context, --guess-remote"
+			;;
+		"no_guess_remote")
+			args="$args --no-guess-remote" &&
+			context="$context, --no-guess-remote"
+			;;
+
+		# Whether there is at least one local branch present
+		"local_ref")
+			empty_repo=0 &&
+			local_ref=1 &&
+			context="$context, >=1 local branches"
+			;;
+		"no_local_ref")
+			empty_repo=0 &&
+			context="$context, 0 local branches"
+			;;
+
+		# Whether the HEAD points at a valid ref (skip this opt when no refs)
+		"good_head")
+			# requires: local_ref
+			context="$context, valid HEAD"
+			;;
+		"bad_head")
+			bad_head=1 &&
+			context="$context, invalid (or orphan) HEAD"
+			;;
+
+		# Whether the code path is tested with the base add command or -b
+		"no_-b")
+			use_new_branch=0 &&
+			context="$context, no --branch"
+			;;
+		"-b")
+			use_new_branch=1 &&
+			context="$context, --branch"
+			;;
+
+		# Whether to check that all output is suppressed (except errors)
+		# or that the output is as expected
+		"quiet")
+			use_quiet=1 &&
+			args="$args --quiet" &&
+			context="$context, --quiet"
+			;;
+		"no_quiet")
+			use_quiet=0 &&
+			context="$context, no --quiet (expect output)"
+			;;
+
+		# Whether there is at least one remote attached to the repo
+		"remote")
+			empty_repo=0 &&
+			remote=1 &&
+			context="$context, >=1 remotes"
+			;;
+		"no_remote")
+			empty_repo=0 &&
+			remote=0 &&
+			context="$context, 0 remotes"
+			;;
+
+		# Whether there is at least one valid remote ref
+		"remote_ref")
+			# requires: remote
+			empty_repo=0 &&
+			remote_ref=1 &&
+			context="$context, >=1 fetched remote branches"
+			;;
+		"no_remote_ref")
+			empty_repo=0 &&
+			remote_ref=0 &&
+			context="$context, 0 fetched remote branches"
+			;;
+
+		# Options or flags that become illegal when --orphan is inferred
+		"no_checkout")
+			args="$args --no-checkout" &&
+			context="$context, --no-checkout"
+			;;
+		"track")
+			args="$args --track" &&
+			context="$context, --track"
+			;;
+
+		# All other options are illegal
+		*)
+			echo "test_dwim_orphan(): invalid arg: '$1'" >&2 &&
+			return 1
+			;;
+		esac &&
+		shift
+	done &&
+	context="${context#', '}" &&
+	if [ $use_new_branch -eq 1 ]
+	then
+		args="$args -b foo"
+	else
+		context="DWIM (no --branch), $context"
+	fi &&
+	if [ $empty_repo -eq 1 ]
+	then
+		context="empty repo, $context"
+	fi &&
+	args="$args ../foo" &&
+	context="${context%', '}" &&
+	test_expect_success "$outcome_text w/ $context" '
+		test_when_finished "rm -rf repo" &&
+		git init repo &&
+		if [ $local_ref -eq 1 ] && [ "$git_ns" = "repo" ]
+		then
+			(cd repo && test_commit commit) &&
+			if [ $bad_head -eq 1 ]
+			then
+				git -C repo symbolic-ref HEAD refs/heads/badbranch
+			fi
+		elif [ $local_ref -eq 1 ] && [ "$git_ns" = "wt" ]
+		then
+			test_when_finished "git -C repo worktree remove -f ../wt" &&
+			git -C repo worktree add --orphan -b main ../wt &&
+			(cd wt && test_commit commit) &&
+			if [ $bad_head -eq 1 ]
+			then
+				git -C wt symbolic-ref HEAD refs/heads/badbranch
+			fi
+		elif [ $local_ref -eq 0 ] && [ "$git_ns" = "wt" ]
+		then
+			test_when_finished "git -C repo worktree remove -f ../wt" &&
+			git -C repo worktree add --orphan -b orphanbranch ../wt
+		fi &&
+
+		if [ $remote -eq 1 ]
+		then
+			test_when_finished "rm -rf upstream" &&
+			git init upstream &&
+			(cd upstream && test_commit commit) &&
+			git -C upstream switch -c foo &&
+			git -C repo remote add upstream ../upstream
+		fi &&
+
+		if [ $remote_ref -eq 1 ]
+		then
+			git -C repo fetch
+		fi &&
+		if [ $success -eq 1 ]
+		then
+			test_when_finished git -C repo worktree remove ../foo
+		fi &&
+		(
+			if [ $use_cd -eq 1 ]
+			then
+				cd $git_ns
+			fi &&
+			if [ "$outcome" = "infer" ]
+			then
+				git $dashc_args worktree add $args 2>actual &&
+				if [ $use_quiet -eq 1 ]
+				then
+					test_must_be_empty actual
+				else
+					grep "$info_text" actual
+				fi
+			elif [ "$outcome" = "no_infer" ]
+			then
+				git $dashc_args worktree add $args 2>actual &&
+				if [ $use_quiet -eq 1 ]
+				then
+					test_must_be_empty actual
+				else
+					! grep "$info_text" actual
+				fi
+			elif [ "$outcome" = "fetch_error" ]
+			then
+				test_must_fail git $dashc_args worktree add $args 2>actual &&
+				grep "$fetch_error_text" actual
+			elif [ "$outcome" = "fatal_orphan_bad_combo" ]
+			then
+				test_must_fail git $dashc_args worktree add $args 2>actual &&
+				if [ $use_quiet -eq 1 ]
+				then
+					! grep "$info_text" actual
+				else
+					grep "$info_text" actual
+				fi &&
+				grep "$bad_combo_regex" actual
+			elif [ "$outcome" = "warn_bad_head" ]
+			then
+				test_must_fail git $dashc_args worktree add $args 2>actual &&
+				if [ $use_quiet -eq 1 ]
+				then
+					grep "$invalid_ref_regex" actual &&
+					! grep "$orphan_hint" actual
+				else
+					headpath=$(git $dashc_args rev-parse --sq --path-format=absolute --git-path HEAD) &&
+					headcontents=$(cat "$headpath") &&
+					grep "HEAD points to an invalid (or orphaned) reference" actual &&
+					grep "HEAD path:\s*.$headpath." actual &&
+					grep "HEAD contents:\s*.$headcontents." actual &&
+					grep "$orphan_hint" actual &&
+					! grep "$info_text" actual
+				fi &&
+				grep "$invalid_ref_regex" actual
+			else
+				# Unreachable
+				false
+			fi
+		) &&
+		if [ $success -ne 1 ]
+		then
+			test_path_is_missing foo
+		fi
+	'
+}
+
+for quiet_mode in "no_quiet" "quiet"
+do
+	for changedir_type in "cd_repo" "cd_wt" "-C_repo" "-C_wt"
+	do
+		dwim_test_args="$quiet_mode $changedir_type"
+		test_dwim_orphan 'infer' $dwim_test_args no_-b
+		test_dwim_orphan 'no_infer' $dwim_test_args no_-b local_ref good_head
+		test_dwim_orphan 'infer' $dwim_test_args no_-b no_local_ref no_remote no_remote_ref no_guess_remote
+		test_dwim_orphan 'infer' $dwim_test_args no_-b no_local_ref remote no_remote_ref no_guess_remote
+		test_dwim_orphan 'fetch_error' $dwim_test_args no_-b no_local_ref remote no_remote_ref guess_remote
+		test_dwim_orphan 'infer' $dwim_test_args no_-b no_local_ref remote no_remote_ref guess_remote force
+		test_dwim_orphan 'no_infer' $dwim_test_args no_-b no_local_ref remote remote_ref guess_remote
+
+		test_dwim_orphan 'infer' $dwim_test_args -b
+		test_dwim_orphan 'no_infer' $dwim_test_args -b local_ref good_head
+		test_dwim_orphan 'infer' $dwim_test_args -b no_local_ref no_remote no_remote_ref no_guess_remote
+		test_dwim_orphan 'infer' $dwim_test_args -b no_local_ref remote no_remote_ref no_guess_remote
+		test_dwim_orphan 'infer' $dwim_test_args -b no_local_ref remote no_remote_ref guess_remote
+		test_dwim_orphan 'infer' $dwim_test_args -b no_local_ref remote remote_ref guess_remote
+	done
+
+	test_dwim_orphan 'fatal_orphan_bad_combo' $quiet_mode no_-b no_checkout
+	test_dwim_orphan 'fatal_orphan_bad_combo' $quiet_mode no_-b track
+	test_dwim_orphan 'fatal_orphan_bad_combo' $quiet_mode -b no_checkout
+	test_dwim_orphan 'fatal_orphan_bad_combo' $quiet_mode -b track
+done
+
 post_checkout_hook () {
 	test_when_finished "rm -rf .git/hooks" &&
 	mkdir .git/hooks &&
