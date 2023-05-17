@@ -953,11 +953,10 @@ static int update_local_ref(struct ref *ref,
 		 * Base this on the remote's ref name, as it's
 		 * more likely to follow a standard layout.
 		 */
-		const char *name = remote_ref ? remote_ref->name : "";
-		if (starts_with(name, "refs/tags/")) {
+		if (starts_with(remote_ref->name, "refs/tags/")) {
 			msg = "storing tag";
 			what = _("[new tag]");
-		} else if (starts_with(name, "refs/heads/")) {
+		} else if (starts_with(remote_ref->name, "refs/heads/")) {
 			msg = "storing head";
 			what = _("[new branch]");
 		} else {
