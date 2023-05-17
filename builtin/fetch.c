@@ -79,7 +79,6 @@ static int prefetch = 0;
 static int prune = -1; /* unspecified */
 #define PRUNE_BY_DEFAULT 0 /* do we prune by default? */
 
-static int fetch_prune_tags_config = -1; /* unspecified */
 static int prune_tags = -1; /* unspecified */
 #define PRUNE_TAGS_BY_DEFAULT 0 /* do we prune tags by default? */
 
@@ -108,6 +107,7 @@ static struct string_list negotiation_tip = STRING_LIST_INIT_NODUP;
 struct fetch_config {
 	enum display_format display_format;
 	int prune;
+	int prune_tags;
 };
 
 static int git_fetch_config(const char *k, const char *v, void *cb)
@@ -120,7 +120,7 @@ static int git_fetch_config(const char *k, const char *v, void *cb)
 	}
 
 	if (!strcmp(k, "fetch.prunetags")) {
-		fetch_prune_tags_config = git_config_bool(k, v);
+		fetch_config->prune_tags = git_config_bool(k, v);
 		return 0;
 	}
 
@@ -2057,8 +2057,8 @@ static int fetch_one(struct remote *remote, int argc, const char **argv,
 		/* no command line request */
 		if (0 <= remote->prune_tags)
 			prune_tags = remote->prune_tags;
-		else if (0 <= fetch_prune_tags_config)
-			prune_tags = fetch_prune_tags_config;
+		else if (0 <= config->prune_tags)
+			prune_tags = config->prune_tags;
 		else
 			prune_tags = PRUNE_TAGS_BY_DEFAULT;
 	}
@@ -2109,6 +2109,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	struct fetch_config config = {
 		.display_format = DISPLAY_FORMAT_FULL,
 		.prune = -1,
+		.prune_tags = -1,
 	};
 	const char *submodule_prefix = "";
 	const char *bundle_uri;
