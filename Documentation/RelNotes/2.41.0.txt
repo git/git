@@ -3,7 +3,7 @@ Git v2.41 Release Notes
 
 UI, Workflows & Features
 
- * Allow information carried on the WWW-AUthenticate header to be
+ * Allow information carried on the WWW-Authenticate header to be
    passed to the credential helpers.
 
  * A new "fetch.hideRefs" option can be used to exclude specified refs
@@ -112,6 +112,10 @@ UI, Workflows & Features
 
  * "git fetch" learned the "--porcelain" option that emits what it did
    in a machine-parseable format.
+
+ * "git --attr-source=<tree> cmd $args" is a new way to have any
+   command to read attributes not from the working tree but from the
+   given tree object.
 
 
 Performance, Internal Implementation, Development Support etc.
