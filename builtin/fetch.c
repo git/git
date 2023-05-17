@@ -97,7 +97,6 @@ static struct string_list deepen_not = STRING_LIST_INIT_NODUP;
 static struct strbuf default_rla = STRBUF_INIT;
 static struct transport *gtransport;
 static struct transport *gsecondary;
-static int recurse_submodules = RECURSE_SUBMODULES_DEFAULT;
 static struct refspec refmap = REFSPEC_INIT_FETCH;
 static struct list_objects_filter_options filter_options = LIST_OBJECTS_FILTER_INIT;
 static struct string_list server_options = STRING_LIST_INIT_DUP;
@@ -108,6 +107,7 @@ struct fetch_config {
 	int prune;
 	int prune_tags;
 	int show_forced_updates;
+	int recurse_submodules;
 };
 
 static int git_fetch_config(const char *k, const char *v, void *cb)
@@ -132,14 +132,14 @@ static int git_fetch_config(const char *k, const char *v, void *cb)
 	if (!strcmp(k, "submodule.recurse")) {
 		int r = git_config_bool(k, v) ?
 			RECURSE_SUBMODULES_ON : RECURSE_SUBMODULES_OFF;
-		recurse_submodules = r;
+		fetch_config->recurse_submodules = r;
 	}
 
 	if (!strcmp(k, "submodule.fetchjobs")) {
 		submodule_fetch_jobs_config = parse_submodule_fetchjobs(k, v);
 		return 0;
 	} else if (!strcmp(k, "fetch.recursesubmodules")) {
-		recurse_submodules = parse_fetch_recurse_submodules_arg(k, v);
+		fetch_config->recurse_submodules = parse_fetch_recurse_submodules_arg(k, v);
 		return 0;
 	}
 
@@ -1210,7 +1210,7 @@ static int store_updated_refs(struct display_state *display_state,
 				ref->force = rm->peer_ref->force;
 			}
 
-			if (recurse_submodules != RECURSE_SUBMODULES_OFF &&
+			if (config->recurse_submodules != RECURSE_SUBMODULES_OFF &&
 			    (!rm->peer_ref || !oideq(&ref->old_oid, &ref->new_oid))) {
 				check_for_new_submodule_commits(&rm->old_oid);
 			}
@@ -1849,11 +1849,11 @@ static void add_options_to_argv(struct strvec *argv,
 		strvec_push(argv, "--force");
 	if (keep)
 		strvec_push(argv, "--keep");
-	if (recurse_submodules == RECURSE_SUBMODULES_ON)
+	if (config->recurse_submodules == RECURSE_SUBMODULES_ON)
 		strvec_push(argv, "--recurse-submodules");
-	else if (recurse_submodules == RECURSE_SUBMODULES_OFF)
+	else if (config->recurse_submodules == RECURSE_SUBMODULES_OFF)
 		strvec_push(argv, "--no-recurse-submodules");
-	else if (recurse_submodules == RECURSE_SUBMODULES_ON_DEMAND)
+	else if (config->recurse_submodules == RECURSE_SUBMODULES_ON_DEMAND)
 		strvec_push(argv, "--recurse-submodules=on-demand");
 	if (tags == TAGS_SET)
 		strvec_push(argv, "--tags");
@@ -2117,6 +2117,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		.prune = -1,
 		.prune_tags = -1,
 		.show_forced_updates = 1,
+		.recurse_submodules = RECURSE_SUBMODULES_DEFAULT,
 	};
 	const char *submodule_prefix = "";
 	const char *bundle_uri;
@@ -2245,7 +2246,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 			     builtin_fetch_options, builtin_fetch_usage, 0);
 
 	if (recurse_submodules_cli != RECURSE_SUBMODULES_DEFAULT)
-		recurse_submodules = recurse_submodules_cli;
+		config.recurse_submodules = recurse_submodules_cli;
 
 	if (negotiate_only) {
 		switch (recurse_submodules_cli) {
@@ -2256,7 +2257,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 			 * submodules. Skip it by setting recurse_submodules to
 			 * RECURSE_SUBMODULES_OFF.
 			 */
-			recurse_submodules = RECURSE_SUBMODULES_OFF;
+			config.recurse_submodules = RECURSE_SUBMODULES_OFF;
 			break;
 
 		default:
@@ -2265,11 +2266,11 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		}
 	}
 
-	if (recurse_submodules != RECURSE_SUBMODULES_OFF) {
+	if (config.recurse_submodules != RECURSE_SUBMODULES_OFF) {
 		int *sfjc = submodule_fetch_jobs_config == -1
 			    ? &submodule_fetch_jobs_config : NULL;
-		int *rs = recurse_submodules == RECURSE_SUBMODULES_DEFAULT
-			  ? &recurse_submodules : NULL;
+		int *rs = config.recurse_submodules == RECURSE_SUBMODULES_DEFAULT
+			  ? &config.recurse_submodules : NULL;
 
 		fetch_config_from_gitmodules(sfjc, rs);
 	}
@@ -2283,7 +2284,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 			 * Reference updates in submodules would be ambiguous
 			 * in porcelain mode, so we reject this combination.
 			 */
-			recurse_submodules = RECURSE_SUBMODULES_OFF;
+			config.recurse_submodules = RECURSE_SUBMODULES_OFF;
 			break;
 
 		default:
@@ -2425,7 +2426,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	 * the fetched history from each remote, so there is no need
 	 * to fetch submodules from here.
 	 */
-	if (!result && remote && (recurse_submodules != RECURSE_SUBMODULES_OFF)) {
+	if (!result && remote && (config.recurse_submodules != RECURSE_SUBMODULES_OFF)) {
 		struct strvec options = STRVEC_INIT;
 		int max_children = max_jobs;
 
@@ -2438,7 +2439,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		result = fetch_submodules(the_repository,
 					  &options,
 					  submodule_prefix,
-					  recurse_submodules,
+					  config.recurse_submodules,
 					  recurse_submodules_default,
 					  verbosity < 0,
 					  max_children);
