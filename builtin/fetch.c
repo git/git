@@ -87,7 +87,6 @@ static int verbosity, deepen_relative, set_upstream, refetch;
 static int progress = -1;
 static int tags = TAGS_DEFAULT, update_shallow, deepen;
 static int submodule_fetch_jobs_config = -1;
-static int fetch_parallel_config = 1;
 static int atomic_fetch;
 static enum transport_family family;
 static const char *depth;
@@ -108,6 +107,7 @@ struct fetch_config {
 	int prune_tags;
 	int show_forced_updates;
 	int recurse_submodules;
+	int parallel;
 };
 
 static int git_fetch_config(const char *k, const char *v, void *cb)
@@ -144,11 +144,11 @@ static int git_fetch_config(const char *k, const char *v, void *cb)
 	}
 
 	if (!strcmp(k, "fetch.parallel")) {
-		fetch_parallel_config = git_config_int(k, v);
-		if (fetch_parallel_config < 0)
+		fetch_config->parallel = git_config_int(k, v);
+		if (fetch_config->parallel < 0)
 			die(_("fetch.parallel cannot be negative"));
-		if (!fetch_parallel_config)
-			fetch_parallel_config = online_cpus();
+		if (!fetch_config->parallel)
+			fetch_config->parallel = online_cpus();
 		return 0;
 	}
 
@@ -2118,6 +2118,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		.prune_tags = -1,
 		.show_forced_updates = 1,
 		.recurse_submodules = RECURSE_SUBMODULES_DEFAULT,
+		.parallel = 1,
 	};
 	const char *submodule_prefix = "";
 	const char *bundle_uri;
@@ -2411,7 +2412,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 			      "from one remote"));
 
 		if (max_children < 0)
-			max_children = fetch_parallel_config;
+			max_children = config.parallel;
 
 		/* TODO should this also die if we have a previous partial-clone? */
 		result = fetch_multiple(&list, max_children, &config);
@@ -2433,7 +2434,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		if (max_children < 0)
 			max_children = submodule_fetch_jobs_config;
 		if (max_children < 0)
-			max_children = fetch_parallel_config;
+			max_children = config.parallel;
 
 		add_options_to_argv(&options, &config);
 		result = fetch_submodules(the_repository,
