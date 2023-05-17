@@ -120,6 +120,7 @@ struct upload_pack_data {
 	unsigned allow_ref_in_want : 1;				/* v2 only */
 	unsigned allow_sideband_all : 1;			/* v2 only */
 	unsigned advertise_sid : 1;
+	unsigned sent_capabilities : 1;
 };
 
 static void upload_pack_data_init(struct upload_pack_data *data)
@@ -1206,18 +1207,17 @@ static void format_session_id(struct strbuf *buf, struct upload_pack_data *d) {
 		strbuf_addf(buf, " session-id=%s", trace2_session_id());
 }
 
-static int send_ref(const char *refname, const struct object_id *oid,
-		    int flag UNUSED, void *cb_data)
+static void write_v0_ref(struct upload_pack_data *data,
+			const char *refname, const char *refname_nons,
+			const struct object_id *oid)
 {
 	static const char *capabilities = "multi_ack thin-pack side-band"
 		" side-band-64k ofs-delta shallow deepen-since deepen-not"
 		" deepen-relative no-progress include-tag multi_ack_detailed";
-	const char *refname_nons = strip_namespace(refname);
 	struct object_id peeled;
-	struct upload_pack_data *data = cb_data;
 
 	if (mark_our_ref(refname_nons, refname, oid, &data->hidden_refs))
-		return 0;
+		return;
 
 	if (capabilities) {
 		struct strbuf symref_info = STRBUF_INIT;
@@ -1240,12 +1240,20 @@ static int send_ref(const char *refname, const struct object_id *oid,
 			     git_user_agent_sanitized());
 		strbuf_release(&symref_info);
 		strbuf_release(&session_id);
+		data->sent_capabilities = 1;
 	} else {
 		packet_fwrite_fmt(stdout, "%s %s\n", oid_to_hex(oid), refname_nons);
 	}
 	capabilities = NULL;
 	if (!peel_iterated_oid(oid, &peeled))
 		packet_fwrite_fmt(stdout, "%s %s^{}\n", oid_to_hex(&peeled), refname_nons);
+	return;
+}
+
+static int send_ref(const char *refname, const struct object_id *oid,
+		    int flag UNUSED, void *cb_data)
+{
+	write_v0_ref(cb_data, refname, strip_namespace(refname), oid);
 	return 0;
 }
 
@@ -1379,6 +1387,10 @@ void upload_pack(const int advertise_refs, const int stateless_rpc,
 			data.no_done = 1;
 		head_ref_namespaced(send_ref, &data);
 		for_each_namespaced_ref(send_ref, &data);
+		if (!data.sent_capabilities) {
+			const char *refname = "capabilities^{}";
+			write_v0_ref(&data, refname, refname, null_oid());
+		}
 		/*
 		 * fflush stdout before calling advertise_shallow_grafts because send_ref
 		 * uses stdio.
