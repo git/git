@@ -401,6 +401,43 @@ test_expect_success '"add" worktree with orphan branch, lock, and reason' '
 	test_cmp expect .git/worktrees/orphan-with-lock-reason/locked
 '
 
+# Note: Quoted arguments containing spaces are not supported.
+test_wt_add_orphan_hint () {
+	local context="$1" &&
+	local use_branch=$2 &&
+	shift 2 &&
+	local opts="$*" &&
+	test_expect_success "'worktree add' show orphan hint in bad/orphan HEAD w/ $context" '
+		test_when_finished "rm -rf repo" &&
+		git init repo &&
+		(cd repo && test_commit commit) &&
+		git -C repo switch --orphan noref &&
+		test_must_fail git -C repo worktree add $opts foobar/ 2>actual &&
+		! grep "error: unknown switch" actual &&
+		grep "hint: If you meant to create a worktree containing a new orphan branch" actual &&
+		if [ $use_branch -eq 1 ]
+		then
+			grep -E "^hint:\s+git worktree add --orphan -b \S+ \S+\s*$" actual
+		else
+			grep -E "^hint:\s+git worktree add --orphan \S+\s*$" actual
+		fi
+
+	'
+}
+
+test_wt_add_orphan_hint 'no opts' 0
+test_wt_add_orphan_hint '-b' 1 -b foobar_branch
+test_wt_add_orphan_hint '-B' 1 -B foobar_branch
+
+test_expect_success "'worktree add' doesn't show orphan hint in bad/orphan HEAD w/ --quiet" '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(cd repo && test_commit commit) &&
+	test_must_fail git -C repo worktree add --quiet foobar_branch foobar/ 2>actual &&
+	! grep "error: unknown switch" actual &&
+	! grep "hint: If you meant to create a worktree containing a new orphan branch" actual
+'
+
 test_expect_success 'local clone from linked checkout' '
 	git clone --local here here-clone &&
 	( cd here-clone && git fsck )

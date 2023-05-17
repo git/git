@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "abspath.h"
+#include "advice.h"
 #include "checkout.h"
 #include "config.h"
 #include "builtin.h"
@@ -38,6 +39,20 @@
 	N_("git worktree repair [<path>...]")
 #define BUILTIN_WORKTREE_UNLOCK_USAGE \
 	N_("git worktree unlock <worktree>")
+
+#define WORKTREE_ADD_ORPHAN_WITH_DASH_B_HINT_TEXT \
+	_("If you meant to create a worktree containing a new orphan branch\n" \
+	"(branch with no commits) for this repository, you can do so\n" \
+	"using the --orphan flag:\n" \
+	"\n" \
+	"	git worktree add --orphan -b %s %s\n")
+
+#define WORKTREE_ADD_ORPHAN_NO_DASH_B_HINT_TEXT \
+	_("If you meant to create a worktree containing a new orphan branch\n" \
+	"(branch with no commits) for this repository, you can do so\n" \
+	"using the --orphan flag:\n" \
+	"\n" \
+	"	git worktree add --orphan %s\n")
 
 static const char * const git_worktree_usage[] = {
 	BUILTIN_WORKTREE_ADD_USAGE,
@@ -634,6 +649,7 @@ static int add(int ac, const char **av, const char *prefix)
 	const char *opt_track = NULL;
 	const char *lock_reason = NULL;
 	int keep_locked = 0;
+	int used_new_branch_options;
 	struct option options[] = {
 		OPT__FORCE(&opts.force,
 			   N_("checkout <branch> even if already checked out in other worktree"),
@@ -686,6 +702,7 @@ static int add(int ac, const char **av, const char *prefix)
 
 	path = prefix_filename(prefix, av[0]);
 	branch = ac < 2 ? "HEAD" : av[1];
+	used_new_branch_options = new_branch || new_branch_force;
 
 	if (!strcmp(branch, "-"))
 		branch = "@{-1}";
@@ -728,6 +745,15 @@ static int add(int ac, const char **av, const char *prefix)
 	}
 
 	if (!opts.orphan && !lookup_commit_reference_by_name(branch)) {
+		int attempt_hint = !opts.quiet && (ac < 2);
+		if (attempt_hint && used_new_branch_options) {
+			advise_if_enabled(ADVICE_WORKTREE_ADD_ORPHAN,
+				WORKTREE_ADD_ORPHAN_WITH_DASH_B_HINT_TEXT,
+				new_branch, path);
+		} else if (attempt_hint) {
+			advise_if_enabled(ADVICE_WORKTREE_ADD_ORPHAN,
+				WORKTREE_ADD_ORPHAN_NO_DASH_B_HINT_TEXT, path);
+		}
 		die(_("invalid reference: %s"), branch);
 	}
 
