@@ -1553,7 +1553,7 @@ static int backfill_tags(struct display_state *display_state,
 
 static int do_fetch(struct transport *transport,
 		    struct refspec *rs,
-		    enum display_format display_format)
+		    const struct fetch_config *config)
 {
 	struct ref_transaction *transaction = NULL;
 	struct ref *ref_map = NULL;
@@ -1639,7 +1639,8 @@ static int do_fetch(struct transport *transport,
 	if (retcode)
 		goto cleanup;
 
-	display_state_init(&display_state, ref_map, transport->url, display_format);
+	display_state_init(&display_state, ref_map, transport->url,
+			   config->display_format);
 
 	if (atomic_fetch) {
 		transaction = ref_transaction_begin(&err);
@@ -1828,7 +1829,7 @@ static int add_remote_or_group(const char *name, struct string_list *list)
 }
 
 static void add_options_to_argv(struct strvec *argv,
-				enum display_format format)
+				const struct fetch_config *config)
 {
 	if (dry_run)
 		strvec_push(argv, "--dry-run");
@@ -1864,7 +1865,7 @@ static void add_options_to_argv(struct strvec *argv,
 		strvec_push(argv, "--ipv6");
 	if (!write_fetch_head)
 		strvec_push(argv, "--no-write-fetch-head");
-	if (format == DISPLAY_FORMAT_PORCELAIN)
+	if (config->display_format == DISPLAY_FORMAT_PORCELAIN)
 		strvec_pushf(argv, "--porcelain");
 }
 
@@ -1874,7 +1875,7 @@ struct parallel_fetch_state {
 	const char **argv;
 	struct string_list *remotes;
 	int next, result;
-	enum display_format format;
+	const struct fetch_config *config;
 };
 
 static int fetch_next_remote(struct child_process *cp,
@@ -1894,7 +1895,7 @@ static int fetch_next_remote(struct child_process *cp,
 	strvec_push(&cp->args, remote);
 	cp->git_cmd = 1;
 
-	if (verbosity >= 0 && state->format != DISPLAY_FORMAT_PORCELAIN)
+	if (verbosity >= 0 && state->config->display_format != DISPLAY_FORMAT_PORCELAIN)
 		printf(_("Fetching %s\n"), remote);
 
 	return 1;
@@ -1927,7 +1928,7 @@ static int fetch_finished(int result, struct strbuf *out,
 }
 
 static int fetch_multiple(struct string_list *list, int max_children,
-			  enum display_format format)
+			  const struct fetch_config *config)
 {
 	int i, result = 0;
 	struct strvec argv = STRVEC_INIT;
@@ -1945,10 +1946,10 @@ static int fetch_multiple(struct string_list *list, int max_children,
 	strvec_pushl(&argv, "-c", "fetch.bundleURI=",
 		     "fetch", "--append", "--no-auto-gc",
 		     "--no-write-commit-graph", NULL);
-	add_options_to_argv(&argv, format);
+	add_options_to_argv(&argv, config);
 
 	if (max_children != 1 && list->nr != 1) {
-		struct parallel_fetch_state state = { argv.v, list, 0, 0, format };
+		struct parallel_fetch_state state = { argv.v, list, 0, 0, config };
 		const struct run_process_parallel_opts opts = {
 			.tr2_category = "fetch",
 			.tr2_label = "parallel/fetch",
@@ -1972,7 +1973,7 @@ static int fetch_multiple(struct string_list *list, int max_children,
 
 			strvec_pushv(&cmd.args, argv.v);
 			strvec_push(&cmd.args, name);
-			if (verbosity >= 0 && format != DISPLAY_FORMAT_PORCELAIN)
+			if (verbosity >= 0 && config->display_format != DISPLAY_FORMAT_PORCELAIN)
 				printf(_("Fetching %s\n"), name);
 			cmd.git_cmd = 1;
 			if (run_command(&cmd)) {
@@ -2028,7 +2029,7 @@ static inline void fetch_one_setup_partial(struct remote *remote)
 
 static int fetch_one(struct remote *remote, int argc, const char **argv,
 		     int prune_tags_ok, int use_stdin_refspecs,
-		     enum display_format display_format)
+		     const struct fetch_config *config)
 {
 	struct refspec rs = REFSPEC_INIT_FETCH;
 	int i;
@@ -2095,7 +2096,7 @@ static int fetch_one(struct remote *remote, int argc, const char **argv,
 	sigchain_push_common(unlock_pack_on_signal);
 	atexit(unlock_pack_atexit);
 	sigchain_push(SIGPIPE, SIG_IGN);
-	exit_code = do_fetch(gtransport, &rs, display_format);
+	exit_code = do_fetch(gtransport, &rs, config);
 	sigchain_pop(SIGPIPE);
 	refspec_clear(&rs);
 	transport_disconnect(gtransport);
@@ -2383,7 +2384,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		if (filter_options.choice || repo_has_promisor_remote(the_repository))
 			fetch_one_setup_partial(remote);
 		result = fetch_one(remote, argc, argv, prune_tags_ok, stdin_refspecs,
-				   config.display_format);
+				   &config);
 	} else {
 		int max_children = max_jobs;
 
@@ -2403,7 +2404,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 			max_children = fetch_parallel_config;
 
 		/* TODO should this also die if we have a previous partial-clone? */
-		result = fetch_multiple(&list, max_children, config.display_format);
+		result = fetch_multiple(&list, max_children, &config);
 	}
 
 	/*
@@ -2424,7 +2425,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		if (max_children < 0)
 			max_children = fetch_parallel_config;
 
-		add_options_to_argv(&options, config.display_format);
+		add_options_to_argv(&options, &config);
 		result = fetch_submodules(the_repository,
 					  &options,
 					  submodule_prefix,
