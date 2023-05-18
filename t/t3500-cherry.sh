@@ -16,46 +16,43 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 GIT_AUTHOR_EMAIL=bogus_email_address
 export GIT_AUTHOR_EMAIL
 
-test_expect_success \
-    'prepare repository with topic branch, and check cherry finds the 2 patches from there' \
-    'echo First > A &&
-     git update-index --add A &&
-     test_tick &&
-     git commit -m "Add A." &&
+test_expect_success 'prepare repository with topic branch, and check cherry finds the 2 patches from there' '
+	echo First > A &&
+	git update-index --add A &&
+	test_tick &&
+	git commit -m "Add A." &&
 
-     git checkout -b my-topic-branch &&
+	git checkout -b my-topic-branch &&
 
-     echo Second > B &&
-     git update-index --add B &&
-     test_tick &&
-     git commit -m "Add B." &&
+	echo Second > B &&
+	git update-index --add B &&
+	test_tick &&
+	git commit -m "Add B." &&
 
-     echo AnotherSecond > C &&
-     git update-index --add C &&
-     test_tick &&
-     git commit -m "Add C." &&
+	echo AnotherSecond > C &&
+	git update-index --add C &&
+	test_tick &&
+	git commit -m "Add C." &&
 
-     git checkout -f main &&
-     rm -f B C &&
+	git checkout -f main &&
+	rm -f B C &&
 
-     echo Third >> A &&
-     git update-index A &&
-     test_tick &&
-     git commit -m "Modify A." &&
+	echo Third >> A &&
+	git update-index A &&
+	test_tick &&
+	git commit -m "Modify A." &&
 
-     expr "$(echo $(git cherry main my-topic-branch) )" : "+ [^ ]* + .*"
+	expr "$(echo $(git cherry main my-topic-branch) )" : "+ [^ ]* + .*"
 '
 
-test_expect_success \
-    'check that cherry with limit returns only the top patch'\
-    'expr "$(echo $(git cherry main my-topic-branch my-topic-branch^1) )" : "+ [^ ]*"
+test_expect_success 'check that cherry with limit returns only the top patch' '
+	expr "$(echo $(git cherry main my-topic-branch my-topic-branch^1) )" : "+ [^ ]*"
 '
 
-test_expect_success \
-    'cherry-pick one of the 2 patches, and check cherry recognized one and only one as new' \
-    'git cherry-pick my-topic-branch^0 &&
-     echo $(git cherry main my-topic-branch) &&
-     expr "$(echo $(git cherry main my-topic-branch) )" : "+ [^ ]* - .*"
+test_expect_success 'cherry-pick one of the 2 patches, and check cherry recognized one and only one as new' '
+	git cherry-pick my-topic-branch^0 &&
+	echo $(git cherry main my-topic-branch) &&
+	expr "$(echo $(git cherry main my-topic-branch) )" : "+ [^ ]* - .*"
 '
 
 test_expect_success 'cherry ignores whitespace' '
