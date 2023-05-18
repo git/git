@@ -26,7 +26,7 @@ TEST_PASSES_SANITIZE_LEAK=true
 . "$TEST_DIRECTORY"/lib-read-tree.sh
 
 read_tree_twoway () {
-    git read-tree -m "$1" "$2" && git ls-files --stage
+	git read-tree -m "$1" "$2" && git ls-files --stage
 }
 
 compare_change () {
