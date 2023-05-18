@@ -24,17 +24,17 @@ test_mode_in_index () {
 	esac
 }
 
-test_expect_success \
-    'Test of git add' \
-    'touch foo && git add foo'
+test_expect_success 'Test of git add' '
+	touch foo && git add foo
+'
 
-test_expect_success \
-    'Post-check that foo is in the index' \
-    'git ls-files foo | grep foo'
+test_expect_success 'Post-check that foo is in the index' '
+	git ls-files foo | grep foo
+'
 
-test_expect_success \
-    'Test that "git add -- -q" works' \
-    'touch -- -q && git add -- -q'
+test_expect_success 'Test that "git add -- -q" works' '
+	touch -- -q && git add -- -q
+'
 
 BATCH_CONFIGURATION='-c core.fsync=loose-object -c core.fsyncmethod=batch'
 
@@ -284,14 +284,14 @@ test_expect_success POSIXPERM,SANITY 'git add (add.ignore-errors = false)' '
 rm -f foo2
 
 test_expect_success POSIXPERM,SANITY '--no-ignore-errors overrides config' '
-       git config add.ignore-errors 1 &&
-       git reset --hard &&
-       date >foo1 &&
-       date >foo2 &&
-       chmod 0 foo2 &&
-       test_must_fail git add --verbose --no-ignore-errors . &&
-       ! ( git ls-files foo1 | grep foo1 ) &&
-       git config add.ignore-errors 0
+	git config add.ignore-errors 1 &&
+	git reset --hard &&
+	date >foo1 &&
+	date >foo2 &&
+	chmod 0 foo2 &&
+	test_must_fail git add --verbose --no-ignore-errors . &&
+	! ( git ls-files foo1 | grep foo1 ) &&
+	git config add.ignore-errors 0
 '
 rm -f foo2
 
