@@ -2415,6 +2415,7 @@ done:
 	strbuf_release(&rdiff_title);
 	strbuf_release(&sprefix);
 	free(to_free);
+	free(rev.message_id);
 	if (rev.ref_message_ids)
 		string_list_clear(rev.ref_message_ids, 0);
 	free(rev.ref_message_ids);
