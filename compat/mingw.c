@@ -3025,7 +3025,7 @@ static enum symlink_type check_symlink_attr(struct index_state *index, const cha
 	if (!check)
 		check = attr_check_initl("symlink", NULL);
 
-	git_check_attr(index, NULL, link, check);
+	git_check_attr(index, link, check);
 
 	value = check->items[0].value;
 	if (ATTR_UNSET(value))
