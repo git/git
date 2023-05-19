@@ -99,13 +99,18 @@ OPTIONS
 EXAMPLES
 --------
 
+* List all references matching given patterns:
++
 ----
 $ git ls-remote http://www.kernel.org/pub/scm/git/git.git master seen rc
 5fe978a5381f1fbad26a80e682ddd2a401966740	refs/heads/master
 c781a84b5204fb294c9ccc79f8b3baceeb32c061	refs/heads/seen
+----
 
-$ git remote add korg http://www.kernel.org/pub/scm/git/git.git
-$ git ls-remote --tags korg v\*
+* List only tags matching a given wildcard pattern:
++
+----
+$ git ls-remote --tags http://www.kernel.org/pub/scm/git/git.git v\*
 485a869c64a68cc5795dd99689797c5900f4716d	refs/tags/v2.39.2
 cbf04937d5b9fcf0a76c28f69e6294e9e3ecd7e6	refs/tags/v2.39.2^{}
 d4ca2e3147b409459955613c152220f4db848ee1	refs/tags/v2.40.0
