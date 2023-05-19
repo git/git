@@ -48,7 +48,7 @@ UI, Workflows & Features
 
  * "git clone" from an empty repository learned to propagate the
    choice of the hash algorithm from the source repository to the
-   newly created repository.
+   newly created repository over any one of the v0/v1/v2 protocol.
 
  * "git mergetool" and "git difftool" learns a new configuration
    guiDefault to optionally favor configured guitool over non-gui-tool
