@@ -350,7 +350,7 @@ static void read_branches_file(struct remote_state *remote_state,
 }
 
 static int handle_config(const char *key, const char *value,
-			 const struct config_context *ctx UNUSED, void *cb)
+			 const struct config_context *ctx, void *cb)
 {
 	const char *name;
 	size_t namelen;
@@ -358,6 +358,7 @@ static int handle_config(const char *key, const char *value,
 	struct remote *remote;
 	struct branch *branch;
 	struct remote_state *remote_state = cb;
+	const struct key_value_info *kvi = ctx->kvi;
 
 	if (parse_config_key(key, "branch", &name, &namelen, &subkey) >= 0) {
 		/* There is no subsection. */
@@ -415,8 +416,8 @@ static int handle_config(const char *key, const char *value,
 	}
 	remote = make_remote(remote_state, name, namelen);
 	remote->origin = REMOTE_CONFIG;
-	if (current_config_scope() == CONFIG_SCOPE_LOCAL ||
-	    current_config_scope() == CONFIG_SCOPE_WORKTREE)
+	if (kvi->scope == CONFIG_SCOPE_LOCAL ||
+	    kvi->scope == CONFIG_SCOPE_WORKTREE)
 		remote->configured_in_repo = 1;
 	if (!strcmp(subkey, "mirror"))
 		remote->mirror = git_config_bool(key, value);
