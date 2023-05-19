@@ -74,8 +74,7 @@ OPTIONS
 	that is the common ancestor of all the branches.  This
 	flag tells the command to go <n> more common commits
 	beyond that.  When <n> is negative, display only the
-	<reference>s given, without showing the commit ancestry
-	tree.
+	<ref>s given, without showing the commit ancestry tree.
 
 --list::
 	Synonym to `--more=-1`
@@ -88,8 +87,8 @@ OPTIONS
 	the case of three or more commits.
 
 --independent::
-	Among the <reference>s given, display only the ones that
-	cannot be reached from any other <reference>.
+	Among the <ref>s given, display only the ones that cannot be
+	reached from any other <ref>.
 
 --no-name::
 	Do not show naming strings for each commit.
@@ -132,10 +131,11 @@ are mutually exclusive.
 
 OUTPUT
 ------
-Given N <references>, the first N lines are the one-line
-description from their commit message.  The branch head that is
-pointed at by $GIT_DIR/HEAD is prefixed with an asterisk `*`
-character while other heads are prefixed with a `!` character.
+
+Given N <ref>s, the first N lines are the one-line description from
+their commit message. The branch head that is pointed at by
+$GIT_DIR/HEAD is prefixed with an asterisk `*` character while other
+heads are prefixed with a `!` character.
 
 Following these N lines, one-line log for each commit is
 displayed, indented N places.  If a commit is on the I-th
