@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (May 2023, #05; Tue, 16)
-X-master-at: 0df2c180904f6b709766f9c24669a9d01543f915
-X-next-at: b87f41e99e62330abb8a140c6bb46d61a0bfd809
+Subject: What's cooking in git.git (May 2023, #06; Fri, 19)
+X-master-at: 9e49351c3060e1fa6e0d2de64505b7becf157f28
+X-next-at: 5a3d083765c8d12722317bbf4686ddbaa5521b92
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (May 2023, #05; Tue, 16)
+What's cooking in git.git (May 2023, #06; Fri, 19)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,8 +16,9 @@ message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity.
 
-Git 2.41-rc0 has been tagged.  Hopefully we will merge a few more
-topics by -rc1 and then go into pre-release feature freeze.
+Git 2.41-rc1 has been tagged.  Thanks for catching and fixing a few
+regressions that escaped to the 'master' front so quickly, everybody.
+
 Starting next week, until early June, my availability may be
 sporadic, but this time I won't be completely away from the keyboard
 to require an interrim maintainer.
@@ -53,293 +54,81 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ar/config-count-tests-updates (2023-04-24) 3 commits
-  (merged to 'next' on 2023-05-06 at c585a56132)
- + t1300: add tests for missing keys
- + t1300: check stderr for "ignores pairs" tests
- + t1300: drop duplicate test
+* bc/clone-empty-repo-via-protocol-v0 (2023-05-17) 1 commit
+  (merged to 'next' on 2023-05-17 at d320de7ee9)
+ + upload-pack: advertise capabilities when cloning empty repos
 
- Test updates.
- source: <20230423134649.431783-1-rybak.a.v@gmail.com>
+ The server side of "git clone" now advertises the necessary hints
+ to clients to help them to clone from an empty repository and learn
+ object hash algorithm and the (unborn) branch pointed at by HEAD,
+ even over the older v0/v1 protocol.
+ source: <20230517192443.1149190-2-sandals@crustytoothpaste.net>
 
-
-* ar/test-cleanup-unused-file-creation (2023-05-09) 1 commit
-  (merged to 'next' on 2023-05-09 at 7734f3d690)
- + test: rev-parse-upstream: add missing cmp
-
- Test fix.
- source: <20230509000246.1760327-1-felipe.contreras@gmail.com>
-
-
-* ds/fsck-bitmap (2023-05-02) 2 commits
-  (merged to 'next' on 2023-05-09 at c2148408a2)
- + fsck: use local repository
- + fsck: verify checksums of all .bitmap files
-
- "git fsck" learned to detect bit-flip breakages in the reachability
- bitmap files.
- source: <pull.1526.v2.git.1683034042.gitgitgadget@gmail.com>
-
-
-* ds/merge-tree-use-config (2023-05-10) 1 commit
-  (merged to 'next' on 2023-05-11 at e0dab53028)
- + merge-tree: load default git config
-
- Allow git forges to disable replace-refs feature while running "git
- merge-tree".
- source: <pull.1530.git.1683745654800.gitgitgadget@gmail.com>
-
-
-* fc/doc-use-datestamp-in-commit (2023-05-05) 2 commits
-  (merged to 'next' on 2023-05-06 at 1eda43b03f)
- + doc-diff: drop SOURCE_DATE_EPOCH override
- + doc: doc-diff: specify date
-
- An earlier change broke "doc-diff", which has been corrected.
- source: <20230503232349.59997-1-felipe.contreras@gmail.com>
- source: <20230505211610.GA3197168@coredump.intra.peff.net>
-
-
-* gc/trace-bare-repo-setup (2023-05-01) 1 commit
-  (merged to 'next' on 2023-05-06 at 72b977d2f9)
- + setup: trace bare repository setups
-
- The tracing mechanism learned to notice and report when
- auto-discovered bare repositories are being used, as allowing so
- without explicitly stating the user intends to do so (with setting
- GIT_DIR for example) can be used with social engineering as an
- attack vector.
- source: <e98be8e7f703fc741e06d9208545abc8c24d1a4a.1682962110.git.steadmon@google.com>
-
-
-* jc/dirstat-plug-leaks (2023-05-05) 2 commits
-  (merged to 'next' on 2023-05-09 at 2df7cf06e4)
- + diff: plug leaks in dirstat
- + diff: refactor common tail part of dirstat computation
- (this branch is used by jc/diff-s-with-other-options.)
-
- "git diff --dirstat" leaked memory, which has been plugged.
- source: <20230505211917.2746751-1-gitster@pobox.com>
-
-
-* jc/doc-clarify-git-default-hash-variable (2023-04-26) 1 commit
-  (merged to 'next' on 2023-05-06 at 7bae4db4cc)
- + doc: GIT_DEFAULT_HASH is and will be ignored during "clone"
-
- The documentation was misleading about the interaction between
- GIT_DEFAULT_HASH and "git clone", which has been clarified to
- stress that the variable is to be ignored by the command.
- source: <xmqqzg6uvfpo.fsf_-_@gitster.g>
-
-
-* jc/name-rev-deprecate-stdin-further (2023-05-06) 1 commit
-  (merged to 'next' on 2023-05-09 at 0db4f08e32)
- + name-rev: make --stdin hidden
-
- The "--stdin" option of "git name-rev" has been replaced with
- the "--annotate-stdin" option more than a year ago.  We stop
- advertising it in the "git name-rev -h" output.
- source: <pull.1225.v3.git.git.1683346451239.gitgitgadget@gmail.com>
-
-
-* jc/t9800-fix-use-of-show-s-raw (2023-05-06) 1 commit
-  (merged to 'next' on 2023-05-09 at f4d7a7d671)
- + t9800: correct misuse of 'show -s --raw' in a test
-
- A test fix.
- source: <xmqqild5rvvw.fsf@gitster.g>
-
-
-* jk/test-verbose-no-more (2023-05-08) 3 commits
-  (merged to 'next' on 2023-05-09 at 897bfd0a6b)
- + t: drop "verbose" helper function
- + t7001: use "ls-files --format" instead of "cut"
- + t7001: avoid git on upstream of pipe
-
- Retire "verbose" helper function from the test framework.
- source: <20230508185953.GA2108869@coredump.intra.peff.net>
-
-
-* js/gitk-fixes-from-gfw (2023-05-08) 3 commits
-  (merged to 'next' on 2023-05-08 at adb334deec)
- + Merge gitk changes into js/gitk-fixes-from-gfw
- + gitk: escape file paths before piping to git log
- + gitk: prevent overly long command lines
-
- Gitk updates from GfW project.
- source: <pull.1469.git.1674559397.gitgitgadget@gmail.com>
-
-
-* js/subtree-fully-spelt-quiet-and-debug-options (2023-05-08) 1 commit
-  (merged to 'next' on 2023-05-10 at 2980db981e)
- + subtree: support long global flags
-
- "git subtree" (in contrib/) update.
- source: <pull.1514.git.1683428988693.gitgitgadget@gmail.com>
-
-
-* kh/doc-interpret-trailers-updates (2023-05-01) 4 commits
-  (merged to 'next' on 2023-05-06 at 4e9a640131)
- + doc: interpret-trailers: fix example
- + doc: interpret-trailers: don’t use deprecated config
- + doc: interpret-trailers: use input redirection
- + doc: interpret-trailers: don’t use heredoc in examples
-
- Doc update.
- source: <cover.1682970213.git.code@khaugsbakk.name>
-
-
-* mc/send-email-header-cmd (2023-05-01) 3 commits
-  (merged to 'next' on 2023-05-06 at 04514468b6)
- + send-email: detect empty blank lines in command output
- + send-email: add --header-cmd, --no-header-cmd options
- + send-email: extract execute_cmd from recipients_cmd
-
- "git send-email" learned "--header-cmd=<cmd>" that can inject
- arbitrary e-mail header lines to the outgoing messages.
- source: <20230501143848.19674-1-maxim.cournoyer@gmail.com>
-
-
-* ps/fetch-output-format (2023-05-10) 9 commits
-  (merged to 'next' on 2023-05-12 at 4126a008a5)
- + fetch: introduce machine-parseable "porcelain" output format
- + fetch: move option related variables into main function
- + fetch: lift up parsing of "fetch.output" config variable
- + fetch: introduce `display_format` enum
- + fetch: refactor calculation of the display table width
- + fetch: print left-hand side when fetching HEAD:foo
- + fetch: add a test to exercise invalid output formats
- + fetch: split out tests for output format
- + fetch: fix `--no-recurse-submodules` with multi-remote fetches
-
- "git fetch" learned the "--porcelain" option that emits what it did
- in a machine-parseable format.
- source: <cover.1683721293.git.ps@pks.im>
-
-
-* rj/branch-unborn-in-other-worktrees (2023-03-27) 5 commits
-  (merged to 'next' on 2023-05-06 at c61e9b0672)
- + branch: avoid unnecessary worktrees traversals
- + branch: rename orphan branches in any worktree
- + branch: description for orphan branch errors
- + branch: use get_worktrees() in copy_or_rename_branch()
- + branch: test for failures while renaming branches
-
- Error messages given when working on an unborn branch that is
- checked out in another worktree have been improved.
- source: <f8e6447e-5cd3-98fa-f567-39e1c60dacb0@gmail.com>
-
-
-* sg/retire-unused-cocci (2023-04-20) 1 commit
-  (merged to 'next' on 2023-05-12 at 77cc27c837)
- + cocci: remove 'unused.cocci'
-
- Retire a rather expensive-to-run Coccinelle check patch.
- source: <20230420205350.600760-1-szeder.dev@gmail.com>
-
-
-* sl/diff-files-sparse (2023-05-09) 2 commits
-  (merged to 'next' on 2023-05-12 at 486be95d1b)
- + diff-files: integrate with sparse index
- + t1092: add tests for `git diff-files`
-
- Teach "diff-files" not to expand sparse-index unless needed.
- cf. <f51a8d77-c480-f021-38c4-78a9d75cdd11@github.com>
- source: <20230509194241.469477-1-cheskaqiqi@gmail.com>
-
-
-* tl/push-branches-is-an-alias-for-all (2023-05-12) 2 commits
-  (merged to 'next' on 2023-05-12 at 536aaf0bd9)
- + t5583: fix shebang line
-  (merged to 'next' on 2023-05-09 at 1d8c3e5dcf)
- + push: introduce '--branches' option
-
- "git push --all" gained an alias "git push --branches".
- source: <20230506113408.61529-2-tenglong.tl@alibaba-inc.com>
- source: <pull.1532.git.1683904156670.gitgitgadget@gmail.com>
-
---------------------------------------------------
-[New Topics]
 
 * cg/doc-http-lowspeed-limit (2023-05-14) 1 commit
- - doc/git-config: add unit for http.lowSpeedLimit
+  (merged to 'next' on 2023-05-19 at 5b48044bf5)
+ + doc/git-config: add unit for http.lowSpeedLimit
 
  Doc update.
-
- Will merge to 'next'.
  source: <pull.1507.git.git.1683970203084.gitgitgadget@gmail.com>
 
 
-* kh/keep-tag-editmsg-upon-failure (2023-05-16) 3 commits
- - tag: keep the message file in case ref transaction fails
- - t/t7004-tag: add regression test for successful tag creation
- - doc: tag: document `TAG_EDITMSG`
+* jc/attr-source-tree (2023-05-06) 1 commit
+  (merged to 'next' on 2023-05-10 at cb94f4fba6)
+ + attr: teach "--attr-source=<tree>" global option to "git"
 
- "git tag" learned to leave the "$GIT_DIR/TAG_EDITMSG" file when the
- command failed, so that the user can salvage what they typed.
-
- Will merge to 'next'.
- source: <cover.1684258780.git.code@khaugsbakk.name>
-
-
-* sa/doc-ls-remote (2023-05-15) 6 commits
- - ls-remote doc: document the output format
- - ls-remote doc: explain what each example does
- - ls-remote doc: show peeled tags in examples
- - ls-remote doc: remove redundant --tags example
- - show-branch doc: say <ref>, not <reference>
- - show-ref doc: update for internal consistency
-
- Doc update.
-
- Expecting a minor and hopefully final reroll.
- source: <pull.1471.v3.git.git.1684152793.gitgitgadget@gmail.com>
-
-
-* tb/refs-exclusion-and-packed-refs (2023-05-15) 16 commits
- - ls-refs.c: avoid enumerating hidden refs where possible
- - upload-pack.c: avoid enumerating hidden refs where possible
- - builtin/receive-pack.c: avoid enumerating hidden references
- - refs.h: let `for_each_namespaced_ref()` take excluded patterns
- - refs/packed-backend.c: ignore complicated hidden refs rules
- - revision.h: store hidden refs in a `strvec`
- - refs/packed-backend.c: add trace2 counters for jump list
- - refs/packed-backend.c: implement jump lists to avoid excluded pattern(s)
- - refs/packed-backend.c: refactor `find_reference_location()`
- - refs: plumb `exclude_patterns` argument throughout
- - builtin/for-each-ref.c: add `--exclude` option
- - ref-filter.c: parameterize match functions over patterns
- - ref-filter: add `ref_filter_clear()`
- - ref-filter: clear reachable list pointers after freeing
- - ref-filter.h: provide `REF_FILTER_INIT`
- - refs.c: rename `ref_filter`
-
- Enumerating refs in the packed-refs file, while excluding refs that
- match certain patterns, has been optimized.
-
- Will merge to 'next'?
- source: <cover.1684178576.git.me@ttaylorr.com>
-
-
-* zh/ls-files-format-atoms (2023-05-14) 2 commits
- - ls-files: add %(objectsize) atom to format option
- - ls-files: add %(objecttype) atom to format option
-
- Some atoms that can be used in "--format=<format>" for "git ls-tree"
- were not supported by "git ls-files", even though they were relevant
- in the context of the latter.
- source: <pull.1533.git.1683969100.gitgitgadget@gmail.com>
+ "git --attr-source=<tree> cmd $args" is a new way to have any
+ command to read attributes not from the working tree but from the
+ given tree object.
+ source: <pull.1470.v6.git.git.1683346530487.gitgitgadget@gmail.com>
 
 
 * jc/do-not-negate-test-helpers (2023-05-16) 3 commits
- - test: do not negate test_path_is_* to assert absense
- - t2021: do not negate test_path_is_dir
- - tests: do not negate test_path_exists
+  (merged to 'next' on 2023-05-19 at 9c0221a2db)
+ + test: do not negate test_path_is_* to assert absense
+ + t2021: do not negate test_path_is_dir
+ + tests: do not negate test_path_exists
 
  Small fixes.
-
- Will merge to 'next'.
  source: <20230516022646.648123-1-gitster@pobox.com>
+
+
+* jc/send-email-pre-process-fix (2023-05-17) 2 commits
+  (merged to 'next' on 2023-05-18 at 38a2de93b3)
+ + t9001: mark the script as no longer leak checker clean
+  (merged to 'next' on 2023-05-17 at fa1900a383)
+ + send-email: clear the $message_id after validation
+
+ When "git send-email" that uses the validate hook is fed a message
+ without and then with Message-ID, it failed to auto-assign a unique
+ Message-ID to the former and instead reused the Message-ID from the
+ latter, which has been corrected.  This was a fix for a recent
+ regression caught before the release, so no need to mention it in
+ the release notes.
+ source: <xmqqzg62oe9c.fsf@gitster.g>
+
+
+* jk/http-test-cgipassauth-unavailable-in-older-apache (2023-05-18) 1 commit
+  (merged to 'next' on 2023-05-18 at 3f132b7071)
+ + t/lib-httpd: make CGIPassAuth support conditional
+
+ We started unconditionally testing with CGIPassAuth directive but
+ it is unavailable in older Apache that ships with CentOS 7 that has
+ about a year of shelf-life still left.  The test has conditionally
+ been disabled when running with an ancient Apache.  This was a fix
+ for a recent regression caught before the release, so no need to
+ mention it in the release notes.
+ source: <20230518192102.GA1514485@coredump.intra.peff.net>
+
+
+* js/rebase-count-fixes (2023-05-14) 2 commits
+  (merged to 'next' on 2023-05-19 at 6503a9a17b)
+ + rebase -r: fix the total number shown in the progress
+ + rebase --update-refs: fix loops
+
+ A few bugs in the sequencer machinery that results in miscounting
+ the steps have been corrected.
+ source: <pull.1531.v2.git.1683965487.gitgitgadget@gmail.com>
 
 
 * tb/run-command-needs-alloc-h (2023-05-16) 1 commit
@@ -348,9 +137,82 @@ Release tarballs are available at:
 
  Fix the build problem with NO_PTHREADS defined, a fallout from
  recent header file shuffling.
-
- Will merge to 'master'.
  source: <ZGP2tw0USsj9oecZ@nand.local>
+
+--------------------------------------------------
+[New Topics]
+
+* mh/credential-libsecret-attrs (2023-05-17) 1 commit
+ - credential/libsecret: store new attributes
+
+ The way authentication related data other than passwords (e.g.
+ oath token and password expiration data) are stored in libsecret
+ keyrings has been rethought.
+
+ Needs review.
+ source: <pull.1469.v4.git.git.1684306540947.gitgitgadget@gmail.com>
+
+
+* ps/fetch-cleanups (2023-05-17) 9 commits
+ - fetch: use `fetch_config` to store "submodule.fetchJobs" value
+ - fetch: use `fetch_config` to store "fetch.parallel" value
+ - fetch: use `fetch_config` to store "fetch.recurseSubmodules" value
+ - fetch: use `fetch_config` to store "fetch.showForcedUpdates" value
+ - fetch: use `fetch_config` to store "fetch.pruneTags" value
+ - fetch: use `fetch_config` to store "fetch.prune" value
+ - fetch: pass through `fetch_config` directly
+ - fetch: drop unneeded NULL-check for `remote_ref`
+ - fetch: drop unused DISPLAY_FORMAT_UNKNOWN enum value
+
+ Code clean-up.
+
+ Needs review.
+ source: <cover.1684324059.git.ps@pks.im>
+
+
+* sl/diff-tree-sparse (2023-05-18) 1 commit
+ - diff-tree: integrate with sparse index
+
+ "git diff-tree" has been taught to take advantage of the
+ sparse-index feature.
+
+ Comments?
+ source: <20230518154454.475487-1-cheskaqiqi@gmail.com>
+
+
+* jk/format-patch-message-id-unleak (2023-05-19) 2 commits
+ - format-patch: free elements of rev.ref_message_ids list
+ - format-patch: free rev.message_id when exiting
+
+ Leakfix.
+
+ Will merge to 'next'.
+ source: <20230519000239.GA1975039@coredump.intra.peff.net>
+
+
+* jc/test-modernization (2023-05-19) 20 commits
+ - t7101-reset-empty-subdirs: modernize test format
+ - t6050-replace: modernize test format
+ - t5306-pack-nobase: modernize test format
+ - t5303-pack-corruption-resilience: modernize test format
+ - t5301-sliding-window: modernize test format
+ - t5300-pack-object: modernize test format
+ - t4206-log-follow-harder-copies: modernize test format
+ - t4202-log: modernize test format
+ - t4004-diff-rename-symlink: modernize test format
+ - t4003-diff-rename-1: modernize test format
+ - t4002-diff-basic: modernize test format
+ - t3903-stash: modernize test format
+ - t3700-add: modernize test format
+ - t3500-cherry: modernize test format
+ - t1006-cat-file: modernize test format
+ - t1002-read-tree-m-u-2way: modernize test format
+ - t1001-read-tree-m-2way: modernize test format
+ - t3210-pack-refs: modernize test format
+ - t0030-stripspace: modernize test format
+ - t0000-basic: modernize test format
+
+ source: <pull.1513.git.git.1684440205.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -375,24 +237,6 @@ Release tarballs are available at:
  Expecting a reroll.
  cf. <62821012-4fc3-5ad8-695c-70f7ab14a8c9@github.com>
  source: <20230408112342.404318-1-nanth.raghul@gmail.com>
-
-
-* ja/worktree-orphan (2023-04-17) 8 commits
- - worktree add: emit warn when there is a bad HEAD
- - worktree add: extend DWIM to infer --orphan
- - worktree add: introduce "try --orphan" hint
- - worktree add: add --orphan flag
- - t2400: add tests to verify --quiet
- - t2400: refactor "worktree add" opt exclusion tests
- - t2400: print captured git output when finished
- - worktree add: include -B in usage docs
-
- 'git worktree add' learned how to create a worktree based on an
- orphaned branch with `--orphan`.
-
- Expecting a reroll.
- cf. <m7crhly2j3k76whydbtdwhvzghvoql436g3lqtst4v3ahv75aa@wq5zjepgrxz5>
- source: <20230417093255.31079-1-jacobabel@nullpo.dev>
 
 
 * es/recurse-submodules-option-is-a-bool (2023-04-10) 1 commit
@@ -522,6 +366,84 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* ja/worktree-orphan (2023-05-17) 8 commits
+ - worktree add: emit warn when there is a bad HEAD
+ - worktree add: extend DWIM to infer --orphan
+ - worktree add: introduce "try --orphan" hint
+ - worktree add: add --orphan flag
+ - t2400: add tests to verify --quiet
+ - t2400: refactor "worktree add" opt exclusion tests
+ - t2400: cleanup created worktree in test
+ - worktree add: include -B in usage docs
+
+ 'git worktree add' learned how to create a worktree based on an
+ orphaned branch with `--orphan`.
+ source: <20230517214711.12467-1-jacobabel@nullpo.dev>
+
+
+* kh/keep-tag-editmsg-upon-failure (2023-05-16) 3 commits
+  (merged to 'next' on 2023-05-19 at fc0fe3173d)
+ + tag: keep the message file in case ref transaction fails
+ + t/t7004-tag: add regression test for successful tag creation
+ + doc: tag: document `TAG_EDITMSG`
+
+ "git tag" learned to leave the "$GIT_DIR/TAG_EDITMSG" file when the
+ command failed, so that the user can salvage what they typed.
+
+ Will cook in 'next'.
+ source: <cover.1684258780.git.code@khaugsbakk.name>
+
+
+* sa/doc-ls-remote (2023-05-19) 6 commits
+  (merged to 'next' on 2023-05-20 at d577bf75a0)
+ + ls-remote doc: document the output format
+ + ls-remote doc: explain what each example does
+ + ls-remote doc: show peeled tags in examples
+ + ls-remote doc: remove redundant --tags example
+ + show-branch doc: say <ref>, not <reference>
+ + show-ref doc: update for internal consistency
+
+ Doc update.
+
+ Will cook in 'next'.
+ source: <pull.1471.v4.git.git.1684469874.gitgitgadget@gmail.com>
+
+
+* tb/refs-exclusion-and-packed-refs (2023-05-15) 16 commits
+ - ls-refs.c: avoid enumerating hidden refs where possible
+ - upload-pack.c: avoid enumerating hidden refs where possible
+ - builtin/receive-pack.c: avoid enumerating hidden references
+ - refs.h: let `for_each_namespaced_ref()` take excluded patterns
+ - refs/packed-backend.c: ignore complicated hidden refs rules
+ - revision.h: store hidden refs in a `strvec`
+ - refs/packed-backend.c: add trace2 counters for jump list
+ - refs/packed-backend.c: implement jump lists to avoid excluded pattern(s)
+ - refs/packed-backend.c: refactor `find_reference_location()`
+ - refs: plumb `exclude_patterns` argument throughout
+ - builtin/for-each-ref.c: add `--exclude` option
+ - ref-filter.c: parameterize match functions over patterns
+ - ref-filter: add `ref_filter_clear()`
+ - ref-filter: clear reachable list pointers after freeing
+ - ref-filter.h: provide `REF_FILTER_INIT`
+ - refs.c: rename `ref_filter`
+
+ Enumerating refs in the packed-refs file, while excluding refs that
+ match certain patterns, has been optimized.
+
+ Will merge to 'next'?
+ source: <cover.1684178576.git.me@ttaylorr.com>
+
+
+* zh/ls-files-format-atoms (2023-05-14) 2 commits
+ - ls-files: add %(objectsize) atom to format option
+ - ls-files: add %(objecttype) atom to format option
+
+ Some atoms that can be used in "--format=<format>" for "git ls-tree"
+ were not supported by "git ls-files", even though they were relevant
+ in the context of the latter.
+ source: <pull.1533.git.1683969100.gitgitgadget@gmail.com>
+
+
 * tc/cat-file-z-use-cquote (2023-05-10) 1 commit
  - cat-file: quote-format name in error when using -z
 
@@ -531,17 +453,6 @@ Release tarballs are available at:
 
  Redesign.
  source: <20230510190116.795641-2-toon@iotcl.com>
-
-
-* js/rebase-count-fixes (2023-05-14) 2 commits
- - rebase -r: fix the total number shown in the progress
- - rebase --update-refs: fix loops
-
- A few bugs in the sequencer machinery that results in miscounting
- the steps have been corrected.
-
- Will merge to 'next'.
- source: <pull.1531.v2.git.1683965487.gitgitgadget@gmail.com>
 
 
 * en/header-split-cache-h-part-3 (2023-05-16) 29 commits
@@ -626,7 +537,7 @@ Release tarballs are available at:
  "git pack-refs" learns "--include" and "--exclude" to tweak the ref
  hierarchy to be packed using pattern matching.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <pull.1501.v4.git.git.1683927282.gitgitgadget@gmail.com>
 
 
@@ -641,14 +552,15 @@ Release tarballs are available at:
 
 
 * jc/diff-s-with-other-options (2023-05-05) 1 commit
- - diff: fix interaction between the "-s" option and other options
+  (merged to 'next' on 2023-05-20 at dda3826a68)
+ + diff: fix interaction between the "-s" option and other options
 
  The "-s" (silent, squelch) option of the "diff" family of commands
  did not interact with other options that specify the output format
  well.  This has been cleaned up so that it will clear all the
  formatting options given before.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <20230505165952.335256-1-gitster@pobox.com>
 
 
@@ -661,26 +573,6 @@ Release tarballs are available at:
  Expecting a hopefully final reroll.
  Looking much better, except for minor cosmetic issues.
  source: <20230428083528.1699221-1-oswald.buddenhagen@gmx.de>
-
-
-* jc/attr-source-tree (2023-05-06) 1 commit
-  (merged to 'next' on 2023-05-10 at cb94f4fba6)
- + attr: teach "--attr-source=<tree>" global option to "git"
-
- "git --attr-source=<tree> cmd $args" is a new way to have any
- command to read attributes not from the working tree but from the
- given tree object.
-
- Will merge to 'master'.
- source: <pull.1470.v6.git.git.1683346530487.gitgitgadget@gmail.com>
-
-
-* bc/clone-empty-repo-via-protocol-v0 (2023-05-01) 1 commit
- - upload-pack: advertise capabilities when cloning empty repos
-
- Expecting a minor and hopefully final update.
- cf. <20230501224038.GA1174291@coredump.intra.peff.net>
- source: <20230501170018.1410567-2-sandals@crustytoothpaste.net>
 
 
 * cw/strbuf-cleanup (2023-05-12) 7 commits
@@ -696,7 +588,7 @@ Release tarballs are available at:
  Move functions that are not about pure string manipulation out of
  strbuf.[ch]
 
- Will merge to 'master'.
+ Will cook in 'next'.
  source: <20230512171429.2202982-1-calvinwan@google.com>
 
 
@@ -712,7 +604,7 @@ Release tarballs are available at:
  'git notes append' was taught '--separator' to specify string to insert
  between paragraphs.
 
- Will merge to 'master'.
+ On hold.
  source: <cover.1682671758.git.dyroneteng@gmail.com>
 
 
@@ -738,7 +630,7 @@ Release tarballs are available at:
 
  Fix-up to a topic already graduated to 'master'.
 
- Will merge to 'next'?
+ Will merge to 'next' and then to 'master'.
  source: <20230508202140.464363-1-cheskaqiqi@gmail.com>
 
 
@@ -755,12 +647,13 @@ Release tarballs are available at:
 
 
 * gc/doc-cocci-updates (2023-04-27) 2 commits
- - cocci: codify authoring and reviewing practices
- - cocci: add headings to and reword README
+  (merged to 'next' on 2023-05-20 at 3fe237c1a8)
+ + cocci: codify authoring and reviewing practices
+ + cocci: add headings to and reword README
 
  Update documentation regarding Coccinelle patches.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <pull.1495.v2.git.git.1682634143.gitgitgadget@gmail.com>
 
 
