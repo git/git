@@ -369,6 +369,10 @@ Fixes since v2.40
     by git forges to disable replace-refs feature.
    (merge b6551feadf ds/merge-tree-use-config later to maint).
 
+ * A few bugs in the sequencer machinery that results in miscounting
+   the steps have been corrected.
+   (merge 170eea9750 js/rebase-count-fixes later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f7111175df as/doc-markup-fix later to maint).
    (merge 90ff7c9898 fc/test-aggregation-clean-up later to maint).
