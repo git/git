@@ -78,7 +78,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2023-05-18 19:26+0200\n"
+"POT-Creation-Date: 2023-05-20 12:25+0200\n"
 "PO-Revision-Date: 2023-05-18 18:50+0200\n"
 "Last-Translator: Cédric Malard <c.malard-git@valdun.net>\n"
 "Language-Team: Jean-Noël Avila <jn.avila@free.fr>\n"
@@ -1559,6 +1559,9 @@ msgstr "fichier gitattributes trop gros ignoré '%s'"
 #, c-format
 msgid "ignoring overly large gitattributes blob '%s'"
 msgstr "blob gitattributes trop gros ignoré '%s'"
+
+msgid "bad --attr-source or GIT_ATTR_SOURCE"
+msgstr "mauvais --attr-source ou GIT_ATTR_SOURCE"
 
 #, c-format
 msgid "Badly quoted content in file '%s': %s"
@@ -16687,6 +16690,10 @@ msgid "no config key given for --config-env\n"
 msgstr "aucune clé de configuration fournie pour --config-env\n"
 
 #, c-format
+msgid "no attribute source given for --attr-source\n"
+msgstr "aucune source d'attribut fournie pour --attr-source\n"
+
+#, c-format
 msgid "unknown option: %s\n"
 msgstr "option inconnue : %s\n"
 
@@ -22862,13 +22869,6 @@ msgstr "%s sauté avec un suffix de sauvegarde '%s'.\n"
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "Souhaitez-vous réellement envoyer %s ?[y|N] : "
-
-#~ msgid "bad --attr-source or GIT_ATTR_SOURCE"
-#~ msgstr "mauvais --attr-source ou GIT_ATTR_SOURCE"
-
-#, c-format
-#~ msgid "no attribute source given for --attr-source\n"
-#~ msgstr "aucune source d'attribut fournie pour --attr-source\n"
 
 #~ msgid "current working directory is untracked"
 #~ msgstr "l'arbre de travail actuel est non-suivi"
