@@ -246,8 +246,9 @@ significantly since the entire buffer is allocated even for small
 pushes.
 
 http.lowSpeedLimit, http.lowSpeedTime::
-	If the HTTP transfer speed is less than 'http.lowSpeedLimit'
-	for longer than 'http.lowSpeedTime' seconds, the transfer is aborted.
+	If the HTTP transfer speed, in bytes per second, is less than
+	'http.lowSpeedLimit' for longer than 'http.lowSpeedTime' seconds,
+	the transfer is aborted.
 	Can be overridden by the `GIT_HTTP_LOW_SPEED_LIMIT` and
 	`GIT_HTTP_LOW_SPEED_TIME` environment variables.
 

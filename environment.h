@@ -55,6 +55,7 @@ const char *getenv_safe(struct strvec *argv, const char *name);
 #define GIT_QUARANTINE_ENVIRONMENT "GIT_QUARANTINE_PATH"
 #define GIT_OPTIONAL_LOCKS_ENVIRONMENT "GIT_OPTIONAL_LOCKS"
 #define GIT_TEXT_DOMAIN_DIR_ENVIRONMENT "GIT_TEXTDOMAINDIR"
+#define GIT_ATTR_SOURCE_ENVIRONMENT "GIT_ATTR_SOURCE"
 
 /*
  * Environment variable used in handshaking the wire protocol.

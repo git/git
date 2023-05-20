@@ -4,7 +4,7 @@ test_description='git send-email'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
-TEST_PASSES_SANITIZE_LEAK=true
+# no longer TEST_PASSES_SANITIZE_LEAK=true - format-patch --thread leaks
 . ./test-lib.sh
 
 # May be altered later in the test
@@ -47,7 +47,7 @@ clean_fake_sendmail () {
 
 test_expect_success $PREREQ 'Extract patches' '
 	patches=$(git format-patch -s --cc="One <one@example.com>" --cc=two@example.com -n HEAD^1) &&
-	threaded_patches=$(git format-patch -o threaded -s --in-reply-to="format" HEAD^1)
+	threaded_patches=$(git format-patch -o threaded --thread=shallow -s --in-reply-to="format" HEAD^1)
 '
 
 # Test no confirm early to ensure remaining tests will not hang
@@ -653,6 +653,21 @@ test_expect_success $PREREQ "--validate hook supports header argument" '
 		--smtp-server="$(pwd)/fake.sendmail" \
 		--validate \
 		outdir/000?-*.patch
+'
+
+test_expect_success $PREREQ 'clear message-id before parsing a new message' '
+	clean_fake_sendmail &&
+	echo true | write_script my-hooks/sendemail-validate &&
+	test_config core.hooksPath my-hooks &&
+	GIT_SEND_EMAIL_NOTTY=1 \
+	git send-email --validate --to=recipient@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		$patches $threaded_patches &&
+	id0=$(grep "^Message-ID: " $threaded_patches) &&
+	id1=$(grep "^Message-ID: " msgtxt1) &&
+	id2=$(grep "^Message-ID: " msgtxt2) &&
+	test "z$id0" = "z$id2" &&
+	test "z$id1" != "z$id2"
 '
 
 for enc in 7bit 8bit quoted-printable base64

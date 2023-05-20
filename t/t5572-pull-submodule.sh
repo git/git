@@ -121,7 +121,7 @@ test_expect_success "fetch.recurseSubmodules option triggers recursive fetch (bu
 	sub_oid=$(git -C child rev-parse HEAD) &&
 	git -C super/sub cat-file -e $sub_oid &&
 	# Check that the submodule worktree did not update
-	! test_path_is_file super/sub/merge_strategy_5.t
+	test_path_is_missing super/sub/merge_strategy_5.t
 '
 
 test_expect_success "fetch.recurseSubmodules takes precedence over submodule.recurse" '
@@ -134,7 +134,7 @@ test_expect_success "fetch.recurseSubmodules takes precedence over submodule.rec
 	sub_oid=$(git -C child rev-parse HEAD) &&
 	git -C super/sub cat-file -e $sub_oid &&
 	# Check that the submodule worktree did not update
-	! test_path_is_file super/sub/merge_strategy_6.t
+	test_path_is_missing super/sub/merge_strategy_6.t
 '
 
 test_expect_success 'pull --rebase --recurse-submodules (remote superproject submodule changes, local submodule changes)' '

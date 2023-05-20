@@ -212,6 +212,11 @@ If you just want to run git as if it was started in `<path>` then use
 	nohelpers (exclude helper commands), alias and config
 	(retrieve command list from config variable completion.commands)
 
+--attr-source=<tree-ish>::
+	Read gitattributes from <tree-ish> instead of the worktree. See
+	linkgit:gitattributes[5]. This is equivalent to setting the
+	`GIT_ATTR_SOURCE` environment variable.
+
 GIT COMMANDS
 ------------
 
@@ -685,6 +690,9 @@ for further details.
 	Setting and exporting this environment variable to any value
 	tells Git not to verify the SSL certificate when fetching or
 	pushing over HTTPS.
+
+`GIT_ATTR_SOURCE`::
+	Sets the treeish that gitattributes will be read from.
 
 `GIT_ASKPASS`::
 	If this environment variable is set, then Git commands which need to

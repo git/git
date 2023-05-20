@@ -1788,6 +1788,7 @@ sub pre_process_file {
 	$subject = $initial_subject;
 	$message = "";
 	$message_num++;
+	undef $message_id;
 	# Retrieve and unfold header fields.
 	my @header_lines = ();
 	while(<$fh>) {

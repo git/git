@@ -16,6 +16,7 @@
 #include "packfile.h"
 #include "hook.h"
 #include "compat/nonblock.h"
+#include "alloc.h"
 
 void child_process_init(struct child_process *child)
 {
