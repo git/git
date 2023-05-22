@@ -85,6 +85,36 @@ test_bloom_filters_not_used () {
 	test_cmp log_wo_bloom log_w_bloom
 }
 
+get_bdat_offset () {
+	perl -0777 -ne \
+		'print unpack("N", "$1") if /BDAT\0\0\0\0(....)/ or exit 1' \
+		.git/objects/info/commit-graph
+}
+
+test_expect_success 'incompatible bloom filter versions are not used' '
+	cp .git/objects/info/commit-graph old-commit-graph &&
+	test_when_finished "mv old-commit-graph .git/objects/info/commit-graph" &&
+
+	BDAT_OFFSET=$(get_bdat_offset) &&
+
+	# Write an arbitrary number to the least significant byte of the
+	# version field in the BDAT chunk
+	cat old-commit-graph >new-commit-graph &&
+	printf "\aa" |
+		dd of=new-commit-graph bs=1 count=1 \
+			seek=$((BDAT_OFFSET + 3)) conv=notrunc &&
+	mv new-commit-graph .git/objects/info/commit-graph &&
+	test_bloom_filters_not_used "-- A" &&
+
+	# But the correct version number works
+	cat old-commit-graph >new-commit-graph &&
+	printf "\01" |
+		dd of=new-commit-graph bs=1 count=1 \
+			seek=$((BDAT_OFFSET + 3)) conv=notrunc &&
+	mv new-commit-graph .git/objects/info/commit-graph &&
+	test_bloom_filters_used "-- A"
+'
+
 for path in A A/B A/B/C A/file1 A/B/file2 A/B/C/file3 file4 file5 file5_renamed file_to_be_deleted
 do
 	for option in "" \
