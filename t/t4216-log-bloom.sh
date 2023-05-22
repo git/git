@@ -48,7 +48,7 @@ graph_read_expect () {
 	header: 43475048 1 $(test_oid oid_version) $NUM_CHUNKS 0
 	num_commits: $1
 	chunks: oid_fanout oid_lookup commit_metadata generation_data bloom_indexes bloom_data
-	options: bloom(1,10,7) read_generation_data
+	options: bloom(2,10,7) read_generation_data
 	EOF
 	test-tool read-graph >actual &&
 	test_cmp expect actual
@@ -108,7 +108,7 @@ test_expect_success 'incompatible bloom filter versions are not used' '
 
 	# But the correct version number works
 	cat old-commit-graph >new-commit-graph &&
-	printf "\01" |
+	printf "\02" |
 		dd of=new-commit-graph bs=1 count=1 \
 			seek=$((BDAT_OFFSET + 3)) conv=notrunc &&
 	mv new-commit-graph .git/objects/info/commit-graph &&
@@ -209,10 +209,10 @@ test_expect_success 'persist filter settings' '
 		GIT_TEST_BLOOM_SETTINGS_NUM_HASHES=9 \
 		GIT_TEST_BLOOM_SETTINGS_BITS_PER_ENTRY=15 \
 		git commit-graph write --reachable --changed-paths &&
-	grep "{\"hash_version\":1,\"num_hashes\":9,\"bits_per_entry\":15,\"max_changed_paths\":512" trace2.txt &&
+	grep "{\"hash_version\":2,\"num_hashes\":9,\"bits_per_entry\":15,\"max_changed_paths\":512" trace2.txt &&
 	GIT_TRACE2_EVENT="$(pwd)/trace2-auto.txt" \
 		git commit-graph write --reachable --changed-paths &&
-	grep "{\"hash_version\":1,\"num_hashes\":9,\"bits_per_entry\":15,\"max_changed_paths\":512" trace2-auto.txt
+	grep "{\"hash_version\":2,\"num_hashes\":9,\"bits_per_entry\":15,\"max_changed_paths\":512" trace2-auto.txt
 '
 
 test_max_changed_paths () {
