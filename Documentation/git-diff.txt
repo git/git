@@ -102,7 +102,11 @@ If --merge-base is given, use the merge base of the two commits for the
 Just in case you are doing something exotic, it should be
 noted that all of the <commit> in the above description, except
 in the `--merge-base` case and in the last two forms that use `..`
-notations, can be any <tree>.
+notations, can be any <tree>. A tree of interest is the one pointed to
+by the special ref `AUTO_MERGE`, which is written by the 'ort' merge
+strategy upon hitting merge conflicts (see linkgit:git-merge[1]).
+Comparing the working tree with `AUTO_MERGE` shows changes you've made
+so far to resolve textual conflicts (see the examples below).
 
 For a more complete list of ways to spell <commit>, see
 "SPECIFYING REVISIONS" section in linkgit:gitrevisions[7].
@@ -152,6 +156,7 @@ Various ways to check your working tree::
 $ git diff            <1>
 $ git diff --cached   <2>
 $ git diff HEAD       <3>
+$ git diff AUTO_MERGE <4>
 ------------
 +
 <1> Changes in the working tree not yet staged for the next commit.
@@ -159,6 +164,8 @@ $ git diff HEAD       <3>
     would be committing if you run `git commit` without `-a` option.
 <3> Changes in the working tree since your last commit; what you
     would be committing if you run `git commit -a`
+<4> Changes in the working tree you've made to resolve textual
+    conflicts so far.
 
 Comparing with arbitrary commits::
 +

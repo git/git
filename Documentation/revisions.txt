@@ -33,7 +33,8 @@ characters and to avoid word splitting.
 +
   . If '$GIT_DIR/<refname>' exists, that is what you mean (this is usually
     useful only for `HEAD`, `FETCH_HEAD`, `ORIG_HEAD`, `MERGE_HEAD`,
-    `REBASE_HEAD`, `REVERT_HEAD`, `CHERRY_PICK_HEAD` and `BISECT_HEAD`);
+    `REBASE_HEAD`, `REVERT_HEAD`, `CHERRY_PICK_HEAD`, `BISECT_HEAD`
+    and `AUTO_MERGE`);
 
   . otherwise, 'refs/<refname>' if it exists;
 
@@ -71,6 +72,10 @@ characters and to avoid word splitting.
   `BISECT_HEAD`:::
     records the current commit to be tested when you run `git bisect
     --no-checkout`.
+  `AUTO_MERGE`:::
+    records a tree object corresponding to the state the
+    'ort' merge strategy wrote to the working tree when a merge operation
+    resulted in conflicts.
 
 +
 Note that any of the 'refs/*' cases above may come either from
