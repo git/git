@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (May 2023, #06; Fri, 19)
+Subject: What's cooking in git.git (May 2023, #07; Tue, 23)
 X-master-at: 9e49351c3060e1fa6e0d2de64505b7becf157f28
-X-next-at: 5a3d083765c8d12722317bbf4686ddbaa5521b92
+X-next-at: 44b9e1ab91dfc375ef6b0af3df56e45cb118eef8
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (May 2023, #06; Fri, 19)
+What's cooking in git.git (May 2023, #07; Tue, 23)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -52,167 +52,47 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* bc/clone-empty-repo-via-protocol-v0 (2023-05-17) 1 commit
-  (merged to 'next' on 2023-05-17 at d320de7ee9)
- + upload-pack: advertise capabilities when cloning empty repos
-
- The server side of "git clone" now advertises the necessary hints
- to clients to help them to clone from an empty repository and learn
- object hash algorithm and the (unborn) branch pointed at by HEAD,
- even over the older v0/v1 protocol.
- source: <20230517192443.1149190-2-sandals@crustytoothpaste.net>
-
-
-* cg/doc-http-lowspeed-limit (2023-05-14) 1 commit
-  (merged to 'next' on 2023-05-19 at 5b48044bf5)
- + doc/git-config: add unit for http.lowSpeedLimit
-
- Doc update.
- source: <pull.1507.git.git.1683970203084.gitgitgadget@gmail.com>
-
-
-* jc/attr-source-tree (2023-05-06) 1 commit
-  (merged to 'next' on 2023-05-10 at cb94f4fba6)
- + attr: teach "--attr-source=<tree>" global option to "git"
-
- "git --attr-source=<tree> cmd $args" is a new way to have any
- command to read attributes not from the working tree but from the
- given tree object.
- source: <pull.1470.v6.git.git.1683346530487.gitgitgadget@gmail.com>
-
-
-* jc/do-not-negate-test-helpers (2023-05-16) 3 commits
-  (merged to 'next' on 2023-05-19 at 9c0221a2db)
- + test: do not negate test_path_is_* to assert absense
- + t2021: do not negate test_path_is_dir
- + tests: do not negate test_path_exists
-
- Small fixes.
- source: <20230516022646.648123-1-gitster@pobox.com>
-
-
-* jc/send-email-pre-process-fix (2023-05-17) 2 commits
-  (merged to 'next' on 2023-05-18 at 38a2de93b3)
- + t9001: mark the script as no longer leak checker clean
-  (merged to 'next' on 2023-05-17 at fa1900a383)
- + send-email: clear the $message_id after validation
-
- When "git send-email" that uses the validate hook is fed a message
- without and then with Message-ID, it failed to auto-assign a unique
- Message-ID to the former and instead reused the Message-ID from the
- latter, which has been corrected.  This was a fix for a recent
- regression caught before the release, so no need to mention it in
- the release notes.
- source: <xmqqzg62oe9c.fsf@gitster.g>
-
-
-* jk/http-test-cgipassauth-unavailable-in-older-apache (2023-05-18) 1 commit
-  (merged to 'next' on 2023-05-18 at 3f132b7071)
- + t/lib-httpd: make CGIPassAuth support conditional
-
- We started unconditionally testing with CGIPassAuth directive but
- it is unavailable in older Apache that ships with CentOS 7 that has
- about a year of shelf-life still left.  The test has conditionally
- been disabled when running with an ancient Apache.  This was a fix
- for a recent regression caught before the release, so no need to
- mention it in the release notes.
- source: <20230518192102.GA1514485@coredump.intra.peff.net>
-
-
-* js/rebase-count-fixes (2023-05-14) 2 commits
-  (merged to 'next' on 2023-05-19 at 6503a9a17b)
- + rebase -r: fix the total number shown in the progress
- + rebase --update-refs: fix loops
-
- A few bugs in the sequencer machinery that results in miscounting
- the steps have been corrected.
- source: <pull.1531.v2.git.1683965487.gitgitgadget@gmail.com>
-
-
-* tb/run-command-needs-alloc-h (2023-05-16) 1 commit
-  (merged to 'next' on 2023-05-16 at b87f41e99e)
- + run-command.c: fix missing include under `NO_PTHREADS`
-
- Fix the build problem with NO_PTHREADS defined, a fallout from
- recent header file shuffling.
- source: <ZGP2tw0USsj9oecZ@nand.local>
-
---------------------------------------------------
 [New Topics]
 
-* mh/credential-libsecret-attrs (2023-05-17) 1 commit
- - credential/libsecret: store new attributes
+* jc/test-modernization-2 (2023-05-23) 10 commits
+ - t9400-git-cvsserver-server: modernize test format
+ - t9200-git-cvsexportcommit: modernize test format
+ - t9104-git-svn-follow-parent: modernize test format
+ - t9100-git-svn-basic: modernize test format
+ - t7700-repack: modernize test format
+ - t7600-merge: modernize test format
+ - t7508-status: modernize test format
+ - t7201-co: modernize test format
+ - t7111-reset-table: modernize test format
+ - t7110-reset-merge: modernize test format
+ (this branch uses jc/test-modernization.)
 
- The way authentication related data other than passwords (e.g.
- oath token and password expiration data) are stored in libsecret
- keyrings has been rethought.
+ Test style updates.
+
+ source: <pull.1514.git.git.1684599239.gitgitgadget@gmail.com>
+
+
+* jt/path-filter-fix (2023-05-23) 2 commits
+ - commit-graph: fix murmur3, bump filter ver. to 2
+ - t4216: test wrong bloom filter version rejection
+
+ The Bloom filter used for path limited history traversal was broken
+ on systems whose "char" is unsigned; update the implementation and
+ bump the format version to 2.
 
  Needs review.
- source: <pull.1469.v4.git.git.1684306540947.gitgitgadget@gmail.com>
+ source: <cover.1684790529.git.jonathantanmy@google.com>
 
 
-* ps/fetch-cleanups (2023-05-17) 9 commits
- - fetch: use `fetch_config` to store "submodule.fetchJobs" value
- - fetch: use `fetch_config` to store "fetch.parallel" value
- - fetch: use `fetch_config` to store "fetch.recurseSubmodules" value
- - fetch: use `fetch_config` to store "fetch.showForcedUpdates" value
- - fetch: use `fetch_config` to store "fetch.pruneTags" value
- - fetch: use `fetch_config` to store "fetch.prune" value
- - fetch: pass through `fetch_config` directly
- - fetch: drop unneeded NULL-check for `remote_ref`
- - fetch: drop unused DISPLAY_FORMAT_UNKNOWN enum value
+* tk/cherry-pick-sequence-requires-clean-worktree (2023-05-23) 1 commit
+ - cherry-pick: refuse cherry-pick sequence if index is dirty
 
- Code clean-up.
+ "git cherry-pick A" that replays a single commit stopped before
+ clobbering local modification, but "git cherry-pick A..B" did not,
+ which has been corrected.
 
  Needs review.
- source: <cover.1684324059.git.ps@pks.im>
-
-
-* sl/diff-tree-sparse (2023-05-18) 1 commit
- - diff-tree: integrate with sparse index
-
- "git diff-tree" has been taught to take advantage of the
- sparse-index feature.
-
- Comments?
- source: <20230518154454.475487-1-cheskaqiqi@gmail.com>
-
-
-* jk/format-patch-message-id-unleak (2023-05-19) 2 commits
- - format-patch: free elements of rev.ref_message_ids list
- - format-patch: free rev.message_id when exiting
-
- Leakfix.
-
- Will merge to 'next'.
- source: <20230519000239.GA1975039@coredump.intra.peff.net>
-
-
-* jc/test-modernization (2023-05-19) 20 commits
- - t7101-reset-empty-subdirs: modernize test format
- - t6050-replace: modernize test format
- - t5306-pack-nobase: modernize test format
- - t5303-pack-corruption-resilience: modernize test format
- - t5301-sliding-window: modernize test format
- - t5300-pack-object: modernize test format
- - t4206-log-follow-harder-copies: modernize test format
- - t4202-log: modernize test format
- - t4004-diff-rename-symlink: modernize test format
- - t4003-diff-rename-1: modernize test format
- - t4002-diff-basic: modernize test format
- - t3903-stash: modernize test format
- - t3700-add: modernize test format
- - t3500-cherry: modernize test format
- - t1006-cat-file: modernize test format
- - t1002-read-tree-m-u-2way: modernize test format
- - t1001-read-tree-m-2way: modernize test format
- - t3210-pack-refs: modernize test format
- - t0030-stripspace: modernize test format
- - t0000-basic: modernize test format
-
- source: <pull.1513.git.git.1684440205.gitgitgadget@gmail.com>
+ source: <pull.1535.git.1684830767336.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -366,6 +246,82 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* mh/credential-libsecret-attrs (2023-05-17) 1 commit
+ - credential/libsecret: store new attributes
+
+ The way authentication related data other than passwords (e.g.
+ oath token and password expiration data) are stored in libsecret
+ keyrings has been rethought.
+
+ Needs review.
+ source: <pull.1469.v4.git.git.1684306540947.gitgitgadget@gmail.com>
+
+
+* ps/fetch-cleanups (2023-05-17) 9 commits
+ - fetch: use `fetch_config` to store "submodule.fetchJobs" value
+ - fetch: use `fetch_config` to store "fetch.parallel" value
+ - fetch: use `fetch_config` to store "fetch.recurseSubmodules" value
+ - fetch: use `fetch_config` to store "fetch.showForcedUpdates" value
+ - fetch: use `fetch_config` to store "fetch.pruneTags" value
+ - fetch: use `fetch_config` to store "fetch.prune" value
+ - fetch: pass through `fetch_config` directly
+ - fetch: drop unneeded NULL-check for `remote_ref`
+ - fetch: drop unused DISPLAY_FORMAT_UNKNOWN enum value
+
+ Code clean-up.
+
+ Needs review.
+ source: <cover.1684324059.git.ps@pks.im>
+
+
+* sl/diff-tree-sparse (2023-05-18) 1 commit
+ - diff-tree: integrate with sparse index
+
+ "git diff-tree" has been taught to take advantage of the
+ sparse-index feature.
+
+ Will merge to 'next'.
+ cf. <2a2b7223-bb5d-65f9-95bb-9be45d329c87@github.com>
+ source: <20230518154454.475487-1-cheskaqiqi@gmail.com>
+
+
+* jk/format-patch-message-id-unleak (2023-05-19) 2 commits
+  (merged to 'next' on 2023-05-23 at 44b9e1ab91)
+ + format-patch: free elements of rev.ref_message_ids list
+ + format-patch: free rev.message_id when exiting
+
+ Leakfix.
+
+ Will cook in 'next'.
+ source: <20230519000239.GA1975039@coredump.intra.peff.net>
+
+
+* jc/test-modernization (2023-05-19) 20 commits
+ - t7101-reset-empty-subdirs: modernize test format
+ - t6050-replace: modernize test format
+ - t5306-pack-nobase: modernize test format
+ - t5303-pack-corruption-resilience: modernize test format
+ - t5301-sliding-window: modernize test format
+ - t5300-pack-object: modernize test format
+ - t4206-log-follow-harder-copies: modernize test format
+ - t4202-log: modernize test format
+ - t4004-diff-rename-symlink: modernize test format
+ - t4003-diff-rename-1: modernize test format
+ - t4002-diff-basic: modernize test format
+ - t3903-stash: modernize test format
+ - t3700-add: modernize test format
+ - t3500-cherry: modernize test format
+ - t1006-cat-file: modernize test format
+ - t1002-read-tree-m-u-2way: modernize test format
+ - t1001-read-tree-m-2way: modernize test format
+ - t3210-pack-refs: modernize test format
+ - t0030-stripspace: modernize test format
+ - t0000-basic: modernize test format
+ (this branch is used by jc/test-modernization-2.)
+
+ source: <pull.1513.git.git.1684440205.gitgitgadget@gmail.com>
+
+
 * ja/worktree-orphan (2023-05-17) 8 commits
  - worktree add: emit warn when there is a bad HEAD
  - worktree add: extend DWIM to infer --orphan
@@ -434,14 +390,15 @@ Release tarballs are available at:
  source: <cover.1684178576.git.me@ttaylorr.com>
 
 
-* zh/ls-files-format-atoms (2023-05-14) 2 commits
- - ls-files: add %(objectsize) atom to format option
- - ls-files: add %(objecttype) atom to format option
+* zh/ls-files-format-atoms (2023-05-23) 1 commit
+ - ls-files: aligin format atoms wtih ls-tree
 
  Some atoms that can be used in "--format=<format>" for "git ls-tree"
  were not supported by "git ls-files", even though they were relevant
  in the context of the latter.
- source: <pull.1533.git.1683969100.gitgitgadget@gmail.com>
+
+ Will merge to 'next'.
+ source: <pull.1533.v2.git.1684832418299.gitgitgadget@gmail.com>
 
 
 * tc/cat-file-z-use-cquote (2023-05-10) 1 commit
@@ -530,14 +487,15 @@ Release tarballs are available at:
 
 
 * jc/pack-ref-exclude-include (2023-05-12) 3 commits
- - pack-refs: teach pack-refs --include option
- - pack-refs: teach --exclude option to exclude refs from being packed
- - docs: clarify git-pack-refs --all will pack all refs
+  (merged to 'next' on 2023-05-23 at 37333a2d00)
+ + pack-refs: teach pack-refs --include option
+ + pack-refs: teach --exclude option to exclude refs from being packed
+ + docs: clarify git-pack-refs --all will pack all refs
 
  "git pack-refs" learns "--include" and "--exclude" to tweak the ref
  hierarchy to be packed using pattern matching.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <pull.1501.v4.git.git.1683927282.gitgitgadget@gmail.com>
 
 
@@ -626,11 +584,12 @@ Release tarballs are available at:
 
 
 * sl/sparse-write-tree-part-2 (2023-05-08) 1 commit
- - t1092: update a write-tree test
+  (merged to 'next' on 2023-05-23 at 317fd52454)
+ + t1092: update a write-tree test
 
  Fix-up to a topic already graduated to 'master'.
 
- Will merge to 'next' and then to 'master'.
+ Will merge to 'master'.
  source: <20230508202140.464363-1-cheskaqiqi@gmail.com>
 
 
@@ -657,20 +616,20 @@ Release tarballs are available at:
  source: <pull.1495.v2.git.git.1682634143.gitgitgadget@gmail.com>
 
 
-* pb/complete-and-document-auto-merge-and-friends (2023-04-14) 5 commits
-  (merged to 'next' on 2023-04-20 at 2728a01622)
- + completion: complete AUTO_MERGE
- + Documentation: document AUTO_MERGE
- + git-merge.txt: modernize word choice in "True merge" section
- + completion: complete REVERT_HEAD and BISECT_HEAD
- + revisions.txt: document more special refs
+* pb/complete-and-document-auto-merge-and-friends (2023-05-23) 6 commits
+ - completion: complete AUTO_MERGE
+ - Documentation: document AUTO_MERGE
+ - git-merge.txt: modernize word choice in "True merge" section
+ - completion: complete REVERT_HEAD and BISECT_HEAD
+ - revisions.txt: document more special refs
+ - revisions.txt: use description list for special refs
 
  Document more pseudo-refs and teach the command line completion
  machinery to complete AUTO_MERGE.
 
- On hold, waiting for a fix-up.
- cf. <a10648d5-8cba-4c7c-a303-b5b0dcdd3310@gmail.com>
- source: <pull.1515.git.1681495119.gitgitgadget@gmail.com>
+ Kicked back to 'seen' and replaced.
+ Needs review/ack.
+ source: <pull.1515.v2.git.1684783741.gitgitgadget@gmail.com>
 
 
 * mh/credential-password-expiry-libsecret (2023-05-05) 1 commit
