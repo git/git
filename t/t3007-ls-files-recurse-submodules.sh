@@ -309,17 +309,28 @@ test_expect_success '--recurse-submodules parses submodule repo config' '
 test_expect_success '--recurse-submodules parses submodule worktree config' '
 	test_when_finished "git -C submodule config --unset extensions.worktreeConfig" &&
 	test_when_finished "git -C submodule config --worktree --unset feature.experimental" &&
-	test_when_finished "git config --unset extensions.worktreeConfig" &&
 
 	git -C submodule config extensions.worktreeConfig true &&
 	git -C submodule config --worktree feature.experimental "invalid non-boolean value" &&
 
-	# NEEDSWORK: the extensions.worktreeConfig is set globally based on super
-	# project, so we need to enable it in the super project.
-	git config extensions.worktreeConfig true &&
-
 	test_must_fail git ls-files --recurse-submodules 2>err &&
 	grep "bad boolean config value" err
+'
+
+test_expect_success '--recurse-submodules submodules ignore super project worktreeConfig extension' '
+	test_when_finished "git config --unset extensions.worktreeConfig" &&
+
+	# Enable worktree config in both super project & submodule, set an
+	# invalid config in the submodule worktree config, then disable worktree
+	# config in the submodule. The invalid worktree config should not be
+	# picked up.
+	git config extensions.worktreeConfig true &&
+	git -C submodule config extensions.worktreeConfig true &&
+	git -C submodule config --worktree feature.experimental "invalid non-boolean value" &&
+	git -C submodule config --unset extensions.worktreeConfig &&
+
+	git ls-files --recurse-submodules 2>err &&
+	! grep "bad boolean config value" err
 '
 
 test_incompatible_with_recurse_submodules () {

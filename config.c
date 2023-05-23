@@ -2193,6 +2193,7 @@ int git_config_system(void)
 
 static int do_git_config_sequence(struct config_reader *reader,
 				  const struct config_options *opts,
+				  const struct repository *repo,
 				  config_fn_t fn, void *data)
 {
 	int ret = 0;
@@ -2241,7 +2242,7 @@ static int do_git_config_sequence(struct config_reader *reader,
 
 	config_reader_set_scope(reader, CONFIG_SCOPE_WORKTREE);
 	if (!opts->ignore_worktree && worktree_config &&
-	    repository_format_worktree_config &&
+	    repo && repo->repository_format_worktree_config &&
 	    !access_or_die(worktree_config, R_OK, 0)) {
 		ret += git_config_from_file(fn, worktree_config, data);
 	}
@@ -2277,7 +2278,7 @@ int config_with_options(config_fn_t fn, void *data,
 		data = &inc;
 	}
 
-	if (config_source)
+	if (config_source && config_source->scope != CONFIG_SCOPE_UNKNOWN)
 		config_reader_set_scope(&the_reader, config_source->scope);
 
 	/*
@@ -2294,7 +2295,9 @@ int config_with_options(config_fn_t fn, void *data,
 		ret = git_config_from_blob_ref(fn, repo, config_source->blob,
 						data);
 	} else {
-		ret = do_git_config_sequence(&the_reader, opts, fn, data);
+		struct repository *repo = config_source && config_source->repo ?
+			config_source->repo : the_repository;
+		ret = do_git_config_sequence(&the_reader, opts, repo, fn, data);
 	}
 
 	if (inc.remote_urls) {
@@ -2667,10 +2670,13 @@ static void repo_read_config(struct repository *repo)
 {
 	struct config_options opts = { 0 };
 	struct configset_add_data data = CONFIGSET_ADD_INIT;
+	struct git_config_source config_source = { 0 };
 
 	opts.respect_includes = 1;
 	opts.commondir = repo->commondir;
 	opts.git_dir = repo->gitdir;
+
+	config_source.repo = repo;
 
 	if (!repo->config)
 		CALLOC_ARRAY(repo->config, 1);
@@ -2681,7 +2687,7 @@ static void repo_read_config(struct repository *repo)
 	data.config_set = repo->config;
 	data.config_reader = &the_reader;
 
-	if (config_with_options(config_set_callback, &data, NULL, &opts) < 0)
+	if (config_with_options(config_set_callback, &data, &config_source, &opts) < 0)
 		/*
 		 * config_with_options() normally returns only
 		 * zero, as most errors are fatal, and
@@ -3337,7 +3343,7 @@ int repo_config_set_worktree_gently(struct repository *r,
 				    const char *key, const char *value)
 {
 	/* Only use worktree-specific config if it is already enabled. */
-	if (repository_format_worktree_config) {
+	if (r->repository_format_worktree_config) {
 		char *file = repo_git_path(r, "config.worktree");
 		int ret = git_config_set_multivar_in_file_gently(
 					file, key, value, NULL, 0);
