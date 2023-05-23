@@ -2200,14 +2200,24 @@ static int do_git_config_sequence(struct config_reader *reader,
 	char *xdg_config = NULL;
 	char *user_config = NULL;
 	char *repo_config;
+	char *worktree_config;
 	enum config_scope prev_parsing_scope = reader->parsing_scope;
 
-	if (opts->commondir)
+	/*
+	 * Ensure that either:
+	 * - the git_dir and commondir are both set, or
+	 * - the git_dir and commondir are both NULL
+	 */
+	if (!opts->git_dir != !opts->commondir)
+		BUG("only one of commondir and git_dir is non-NULL");
+
+	if (opts->commondir) {
 		repo_config = mkpathdup("%s/config", opts->commondir);
-	else if (opts->git_dir)
-		BUG("git_dir without commondir");
-	else
+		worktree_config = mkpathdup("%s/config.worktree", opts->git_dir);
+	} else {
 		repo_config = NULL;
+		worktree_config = NULL;
+	}
 
 	config_reader_set_scope(reader, CONFIG_SCOPE_SYSTEM);
 	if (git_config_system() && system_config &&
@@ -2230,11 +2240,10 @@ static int do_git_config_sequence(struct config_reader *reader,
 		ret += git_config_from_file(fn, repo_config, data);
 
 	config_reader_set_scope(reader, CONFIG_SCOPE_WORKTREE);
-	if (!opts->ignore_worktree && repository_format_worktree_config) {
-		char *path = git_pathdup("config.worktree");
-		if (!access_or_die(path, R_OK, 0))
-			ret += git_config_from_file(fn, path, data);
-		free(path);
+	if (!opts->ignore_worktree && worktree_config &&
+	    repository_format_worktree_config &&
+	    !access_or_die(worktree_config, R_OK, 0)) {
+		ret += git_config_from_file(fn, worktree_config, data);
 	}
 
 	config_reader_set_scope(reader, CONFIG_SCOPE_COMMAND);
@@ -2246,6 +2255,7 @@ static int do_git_config_sequence(struct config_reader *reader,
 	free(xdg_config);
 	free(user_config);
 	free(repo_config);
+	free(worktree_config);
 	return ret;
 }
 
