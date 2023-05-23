@@ -47,6 +47,16 @@ test_expect_success 'cherry-pick persists data on failure' '
 	test_path_is_file .git/sequencer/opts
 '
 
+test_expect_success 'cherry-pick sequence refuses to run on dirty index' '
+	pristine_detach initial &&
+	touch localindexchange &&
+	git add localindexchange &&
+	echo picking &&
+	test_must_fail git cherry-pick initial..picked &&
+	test_path_is_missing .git/sequencer &&
+	test_must_fail git cherry-pick --abort
+'
+
 test_expect_success 'cherry-pick mid-cherry-pick-sequence' '
 	pristine_detach initial &&
 	test_must_fail git cherry-pick base..anotherpick &&
