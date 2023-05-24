@@ -2180,4 +2180,46 @@ test_expect_success 'sparse index is not expanded: diff-files' '
 	ensure_not_expanded diff-files -- "deep/*"
 '
 
+test_expect_success 'diff-tree' '
+	init_repos &&
+
+	# Test change inside sparse cone
+	tree1=$(git -C sparse-index rev-parse HEAD^{tree}) &&
+	tree2=$(git -C sparse-index rev-parse update-deep^{tree}) &&
+	test_all_match git diff-tree $tree1 $tree2 &&
+	test_all_match git diff-tree $tree1 $tree2 -- deep/a &&
+	test_all_match git diff-tree HEAD update-deep &&
+	test_all_match git diff-tree HEAD update-deep -- deep/a &&
+
+	# Test change outside sparse cone
+	tree3=$(git -C sparse-index rev-parse update-folder1^{tree}) &&
+	test_all_match git diff-tree $tree1 $tree3 &&
+	test_all_match git diff-tree $tree1 $tree3 -- folder1/a &&
+	test_all_match git diff-tree HEAD update-folder1 &&
+	test_all_match git diff-tree HEAD update-folder1 -- folder1/a &&
+
+	# Check that SKIP_WORKTREE files are not materialized
+	test_path_is_missing sparse-checkout/folder1/a &&
+	test_path_is_missing sparse-index/folder1/a &&
+	test_path_is_missing sparse-checkout/folder2/a &&
+	test_path_is_missing sparse-index/folder2/a
+'
+
+test_expect_success 'sparse-index is not expanded: diff-tree' '
+	init_repos &&
+
+	tree1=$(git -C sparse-index rev-parse HEAD^{tree}) &&
+	tree2=$(git -C sparse-index rev-parse update-deep^{tree}) &&
+	tree3=$(git -C sparse-index rev-parse update-folder1^{tree}) &&
+
+	ensure_not_expanded diff-tree $tree1 $tree2 &&
+	ensure_not_expanded diff-tree $tree1 $tree2 -- deep/a &&
+	ensure_not_expanded diff-tree HEAD update-deep &&
+	ensure_not_expanded diff-tree HEAD update-deep -- deep/a &&
+	ensure_not_expanded diff-tree $tree1 $tree3 &&
+	ensure_not_expanded diff-tree $tree1 $tree3 -- folder1/a &&
+	ensure_not_expanded diff-tree HEAD update-folder1 &&
+	ensure_not_expanded diff-tree HEAD update-folder1 -- folder1/a
+'
+
 test_done
