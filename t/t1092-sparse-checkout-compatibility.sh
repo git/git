@@ -2089,22 +2089,32 @@ test_expect_success 'grep sparse directory within submodules' '
 	test_cmp actual expect
 '
 
-test_expect_success 'write-tree on all' '
+test_expect_success 'write-tree' '
 	init_repos &&
+
+	test_all_match git write-tree &&
 
 	write_script edit-contents <<-\EOF &&
 	echo text >>"$1"
 	EOF
 
+	# make a change inside the sparse cone
 	run_on_all ../edit-contents deep/a &&
-	run_on_all git update-index deep/a &&
+	test_all_match git update-index deep/a &&
 	test_all_match git write-tree &&
+	test_all_match git status --porcelain=v2 &&
 
+	# make a change outside the sparse cone
 	run_on_all mkdir -p folder1 &&
 	run_on_all cp a folder1/a &&
 	run_on_all ../edit-contents folder1/a &&
-	run_on_all git update-index folder1/a &&
-	test_all_match git write-tree
+	test_all_match git update-index folder1/a &&
+	test_all_match git write-tree &&
+	test_all_match git status --porcelain=v2 &&
+
+	# check that SKIP_WORKTREE files are not materialized
+	test_path_is_missing sparse-checkout/folder2/a &&
+	test_path_is_missing sparse-index/folder2/a
 '
 
 test_expect_success 'sparse-index is not expanded: write-tree' '
