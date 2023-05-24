@@ -115,15 +115,23 @@ test_expect_success '--skip after failed fixup cleans commit message' '
 	test_when_finished "test_might_fail git rebase --abort" &&
 	git checkout -b with-conflicting-fixup &&
 	test_commit wants-fixup &&
-	test_commit "fixup! wants-fixup" wants-fixup.t 1 wants-fixup-1 &&
-	test_commit "fixup! wants-fixup" wants-fixup.t 2 wants-fixup-2 &&
-	test_commit "fixup! wants-fixup" wants-fixup.t 3 wants-fixup-3 &&
+	test_commit "fixup 1" wants-fixup.t 1 wants-fixup-1 &&
+	test_commit "fixup 2" wants-fixup.t 2 wants-fixup-2 &&
+	test_commit "fixup 3" wants-fixup.t 3 wants-fixup-3 &&
 	test_must_fail env FAKE_LINES="1 fixup 2 squash 4" \
 		git rebase -i HEAD~4 &&
 
 	: now there is a conflict, and comments in the commit message &&
-	git show HEAD >out &&
-	grep "fixup! wants-fixup" out &&
+	test_commit_message HEAD <<-\EOF &&
+	# This is a combination of 2 commits.
+	# This is the 1st commit message:
+
+	wants-fixup
+
+	# The commit message #2 will be skipped:
+
+	# fixup 1
+	EOF
 
 	: skip and continue &&
 	echo "cp \"\$1\" .git/copy.txt" | write_script copy-editor.sh &&
@@ -133,33 +141,49 @@ test_expect_success '--skip after failed fixup cleans commit message' '
 	test_path_is_missing .git/copy.txt &&
 
 	: now the comments in the commit message should have been cleaned up &&
-	git show HEAD >out &&
-	! grep "fixup! wants-fixup" out &&
+	test_commit_message HEAD -m wants-fixup &&
 
 	: now, let us ensure that "squash" is handled correctly &&
 	git reset --hard wants-fixup-3 &&
-	test_must_fail env FAKE_LINES="1 squash 4 squash 2 squash 4" \
+	test_must_fail env FAKE_LINES="1 squash 2 squash 1 squash 3 squash 1" \
 		git rebase -i HEAD~4 &&
 
-	: the first squash failed, but there are two more in the chain &&
+	: the second squash failed, but there are two more in the chain &&
 	(test_set_editor "$PWD/copy-editor.sh" &&
 	 test_must_fail git rebase --skip) &&
 
 	: not the final squash, no need to edit the commit message &&
 	test_path_is_missing .git/copy.txt &&
 
-	: The first squash was skipped, therefore: &&
-	git show HEAD >out &&
-	test_i18ngrep "# This is a combination of 2 commits" out &&
-	test_i18ngrep "# This is the commit message #2:" out &&
+	: The first and third squashes succeeded, therefore: &&
+	test_commit_message HEAD <<-\EOF &&
+	# This is a combination of 3 commits.
+	# This is the 1st commit message:
+
+	wants-fixup
+
+	# This is the commit message #2:
+
+	fixup 1
+
+	# This is the commit message #3:
+
+	fixup 2
+	EOF
 
 	(test_set_editor "$PWD/copy-editor.sh" && git rebase --skip) &&
-	git show HEAD >out &&
-	test_i18ngrep ! "# This is a combination" out &&
+	test_commit_message HEAD <<-\EOF &&
+	wants-fixup
+
+	fixup 1
+
+	fixup 2
+	EOF
 
 	: Final squash failed, but there was still a squash &&
-	test_i18ngrep "# This is a combination of 2 commits" .git/copy.txt &&
-	test_i18ngrep "# This is the commit message #2:" .git/copy.txt
+	head -n1 .git/copy.txt >first-line &&
+	test_i18ngrep "# This is a combination of 3 commits" first-line &&
+	test_i18ngrep "# This is the commit message #3:" .git/copy.txt
 '
 
 test_expect_success 'setup rerere database' '
