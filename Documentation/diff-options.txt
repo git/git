@@ -35,8 +35,11 @@ endif::git-diff[]
 
 -s::
 --no-patch::
-	Suppress diff output. Useful for commands like `git show` that
-	show the patch by default, or to cancel the effect of `--patch`.
+	Suppress all output from the diff machinery.  Useful for
+	commands like `git show` that show the patch by default to
+	squelch their output, or to cancel the effect of options like
+	`--patch`, `--stat` earlier on the command line in an alias.
+
 endif::git-format-patch[]
 
 ifdef::git-log[]
