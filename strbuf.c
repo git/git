@@ -1,12 +1,9 @@
 #include "git-compat-util.h"
-#include "abspath.h"
 #include "alloc.h"
-#include "environment.h"
 #include "gettext.h"
 #include "hex.h"
-#include "object-name.h"
-#include "refs.h"
 #include "repository.h"
+#include "strbuf.h"
 #include "string-list.h"
 #include "utf8.h"
 #include "date.h"
@@ -365,7 +362,8 @@ static void add_lines(struct strbuf *out,
 	strbuf_complete_line(out);
 }
 
-void strbuf_add_commented_lines(struct strbuf *out, const char *buf, size_t size)
+void strbuf_add_commented_lines(struct strbuf *out, const char *buf,
+				size_t size, char comment_line_char)
 {
 	static char prefix1[3];
 	static char prefix2[2];
@@ -377,7 +375,8 @@ void strbuf_add_commented_lines(struct strbuf *out, const char *buf, size_t size
 	add_lines(out, prefix1, prefix2, buf, size);
 }
 
-void strbuf_commented_addf(struct strbuf *sb, const char *fmt, ...)
+void strbuf_commented_addf(struct strbuf *sb, char comment_line_char,
+			   const char *fmt, ...)
 {
 	va_list params;
 	struct strbuf buf = STRBUF_INIT;
@@ -387,7 +386,7 @@ void strbuf_commented_addf(struct strbuf *sb, const char *fmt, ...)
 	strbuf_vaddf(&buf, fmt, params);
 	va_end(params);
 
-	strbuf_add_commented_lines(sb, buf.buf, buf.len);
+	strbuf_add_commented_lines(sb, buf.buf, buf.len, comment_line_char);
 	if (incomplete_line)
 		sb->buf[--sb->len] = '\0';
 
@@ -811,25 +810,6 @@ void strbuf_addstr_xml_quoted(struct strbuf *buf, const char *s)
 	}
 }
 
-int is_rfc3986_reserved_or_unreserved(char ch)
-{
-	if (is_rfc3986_unreserved(ch))
-		return 1;
-	switch (ch) {
-		case '!': case '*': case '\'': case '(': case ')': case ';':
-		case ':': case '@': case '&': case '=': case '+': case '$':
-		case ',': case '/': case '?': case '#': case '[': case ']':
-			return 1;
-	}
-	return 0;
-}
-
-int is_rfc3986_unreserved(char ch)
-{
-	return isalnum(ch) ||
-		ch == '-' || ch == '_' || ch == '.' || ch == '~';
-}
-
 static void strbuf_add_urlencode(struct strbuf *sb, const char *s, size_t len,
 				 char_predicate allow_unencoded_fn)
 {
@@ -898,42 +878,6 @@ void strbuf_humanise_bytes(struct strbuf *buf, off_t bytes)
 void strbuf_humanise_rate(struct strbuf *buf, off_t bytes)
 {
 	strbuf_humanise(buf, bytes, 1);
-}
-
-void strbuf_add_absolute_path(struct strbuf *sb, const char *path)
-{
-	if (!*path)
-		die("The empty string is not a valid path");
-	if (!is_absolute_path(path)) {
-		struct stat cwd_stat, pwd_stat;
-		size_t orig_len = sb->len;
-		char *cwd = xgetcwd();
-		char *pwd = getenv("PWD");
-		if (pwd && strcmp(pwd, cwd) &&
-		    !stat(cwd, &cwd_stat) &&
-		    (cwd_stat.st_dev || cwd_stat.st_ino) &&
-		    !stat(pwd, &pwd_stat) &&
-		    pwd_stat.st_dev == cwd_stat.st_dev &&
-		    pwd_stat.st_ino == cwd_stat.st_ino)
-			strbuf_addstr(sb, pwd);
-		else
-			strbuf_addstr(sb, cwd);
-		if (sb->len > orig_len && !is_dir_sep(sb->buf[sb->len - 1]))
-			strbuf_addch(sb, '/');
-		free(cwd);
-	}
-	strbuf_addstr(sb, path);
-}
-
-void strbuf_add_real_path(struct strbuf *sb, const char *path)
-{
-	if (sb->len) {
-		struct strbuf resolved = STRBUF_INIT;
-		strbuf_realpath(&resolved, path, 1);
-		strbuf_addbuf(sb, &resolved);
-		strbuf_release(&resolved);
-	} else
-		strbuf_realpath(sb, path, 1);
 }
 
 int printf_ln(const char *fmt, ...)
@@ -1080,21 +1024,6 @@ void strbuf_addftime(struct strbuf *sb, const char *fmt, const struct tm *tm,
 	strbuf_setlen(sb, sb->len + len);
 }
 
-void strbuf_repo_add_unique_abbrev(struct strbuf *sb, struct repository *repo,
-				   const struct object_id *oid, int abbrev_len)
-{
-	int r;
-	strbuf_grow(sb, GIT_MAX_HEXSZ + 1);
-	r = repo_find_unique_abbrev_r(repo, sb->buf + sb->len, oid, abbrev_len);
-	strbuf_setlen(sb, sb->len + r);
-}
-
-void strbuf_add_unique_abbrev(struct strbuf *sb, const struct object_id *oid,
-			      int abbrev_len)
-{
-	strbuf_repo_add_unique_abbrev(sb, the_repository, oid, abbrev_len);
-}
-
 /*
  * Returns the length of a line, without trailing spaces.
  *
@@ -1124,10 +1053,10 @@ static size_t cleanup(char *line, size_t len)
  *
  * If last line does not have a newline at the end, one is added.
  *
- * Enable skip_comments to skip every line starting with comment
- * character.
+ * Pass a non-NUL comment_line_char to skip every line starting
+ * with it.
  */
-void strbuf_stripspace(struct strbuf *sb, int skip_comments)
+void strbuf_stripspace(struct strbuf *sb, char comment_line_char)
 {
 	size_t empties = 0;
 	size_t i, j, len, newlen;
@@ -1140,7 +1069,8 @@ void strbuf_stripspace(struct strbuf *sb, int skip_comments)
 		eol = memchr(sb->buf + i, '\n', sb->len - i);
 		len = eol ? eol - (sb->buf + i) + 1 : sb->len - i;
 
-		if (skip_comments && len && sb->buf[i] == comment_line_char) {
+		if (comment_line_char && len &&
+		    sb->buf[i] == comment_line_char) {
 			newlen = 0;
 			continue;
 		}
@@ -1159,26 +1089,6 @@ void strbuf_stripspace(struct strbuf *sb, int skip_comments)
 	}
 
 	strbuf_setlen(sb, j);
-}
-
-int strbuf_normalize_path(struct strbuf *src)
-{
-	struct strbuf dst = STRBUF_INIT;
-
-	strbuf_grow(&dst, src->len);
-	if (normalize_path_copy(dst.buf, src->buf) < 0) {
-		strbuf_release(&dst);
-		return -1;
-	}
-
-	/*
-	 * normalize_path does not tell us the new length, so we have to
-	 * compute it by looking for the new NUL it placed
-	 */
-	strbuf_setlen(&dst, strlen(dst.buf));
-	strbuf_swap(src, &dst);
-	strbuf_release(&dst);
-	return 0;
 }
 
 void strbuf_strip_file_from_path(struct strbuf *sb)
