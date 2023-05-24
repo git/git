@@ -25,6 +25,9 @@
 #include "setup.h"
 #include "submodule.h"
 #include "submodule-config.h"
+#include "object-store.h"
+#include "hex.h"
+
 
 static int abbrev;
 static int show_deleted;
@@ -241,6 +244,24 @@ static void show_submodule(struct repository *superproject,
 	repo_clear(&subrepo);
 }
 
+static void expand_objectsize(struct strbuf *line, const struct object_id *oid,
+			      const enum object_type type, unsigned int padded)
+{
+	if (type == OBJ_BLOB) {
+		unsigned long size;
+		if (oid_object_info(the_repository, oid, &size) < 0)
+			die(_("could not get object info about '%s'"),
+			    oid_to_hex(oid));
+		if (padded)
+			strbuf_addf(line, "%7"PRIuMAX, (uintmax_t)size);
+		else
+			strbuf_addf(line, "%"PRIuMAX, (uintmax_t)size);
+	} else if (padded) {
+		strbuf_addf(line, "%7s", "-");
+	} else {
+		strbuf_addstr(line, "-");
+	}
+}
 struct show_index_data {
 	const char *pathname;
 	struct index_state *istate;
@@ -272,6 +293,12 @@ static size_t expand_show_index(struct strbuf *sb, const char *start,
 		strbuf_addf(sb, "%06o", data->ce->ce_mode);
 	else if (skip_prefix(start, "(objectname)", &p))
 		strbuf_add_unique_abbrev(sb, &data->ce->oid, abbrev);
+	else if (skip_prefix(start, "(objecttype)", &p))
+		strbuf_addstr(sb, type_name(object_type(data->ce->ce_mode)));
+	else if (skip_prefix(start, "(objectsize:padded)", &p))
+		expand_objectsize(sb, &data->ce->oid, object_type(data->ce->ce_mode), 1);
+	else if (skip_prefix(start, "(objectsize)", &p))
+		expand_objectsize(sb, &data->ce->oid, object_type(data->ce->ce_mode), 0);
 	else if (skip_prefix(start, "(stage)", &p))
 		strbuf_addf(sb, "%d", ce_stage(data->ce));
 	else if (skip_prefix(start, "(eolinfo:index)", &p))
