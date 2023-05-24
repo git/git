@@ -31,6 +31,12 @@ both will discard uncommitted changes in your working directory.
 See "Reset, restore and revert" in linkgit:git[1] for the differences
 between the three commands.
 
+The command generates the subject 'Revert "<title>"' for the resulting
+commit, assuming the original commit's subject is '<title>'.  Reverting
+such a reversion commit in turn yields the subject 'Reapply "<title>"'.
+These can of course be modified in the editor when the reason for
+reverting is described.
+
 OPTIONS
 -------
 <commit>...::
