@@ -37,17 +37,6 @@ OPTIONS
 --quiet::
 	Be quiet.
 
---curl::
-	Use libcurl to communicate with the IMAP server, unless tunneling
-	into it.  Ignored if Git was built without the USE_CURL_FOR_IMAP_SEND
-	option set.
-
---no-curl::
-	Talk to the IMAP server using git's own IMAP routines instead of
-	using libcurl.  Ignored if Git was built with the NO_OPENSSL option
-	set.
-
-
 CONFIGURATION
 -------------
 
