@@ -447,6 +447,33 @@ test_expect_success FUNNYNAMES '--batch-check, -z with newline in input' '
 	test_cmp expect actual
 '
 
+test_expect_success '--batch-check, -z with newline in non-existent named object' '
+	printf "HEAD:newline${LF}missing" >in &&
+	git cat-file --batch-check -z <in >actual &&
+
+	printf "\"HEAD:newline\\\\nmissing\" missing\n" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success FUNNYNAMES '--batch-check, -z with missing object having newline in name' '
+	git init missing-object-newline &&
+	(
+		cd missing-object-newline &&
+		file="newline${LF}embedded" &&
+		echo_without_newline "hello" > $file &&
+		git add "$file" &&
+		git commit -m "file with newline embedded" &&
+		test_tick &&
+
+		sha1=$(git rev-parse HEAD:"$file") &&
+		rm .git/objects/$(test_oid_to_path $sha1) &&
+		printf "HEAD:$file" >in &&
+		git cat-file --batch-check -z <in >actual &&
+		printf "\"HEAD:newline\\\\nembedded\" missing\n" >expect &&
+		test_cmp expect actual
+	)
+'
+
 batch_command_multiple_info="info $hello_sha1
 info $tree_sha1
 info $commit_sha1
