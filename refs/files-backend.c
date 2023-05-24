@@ -1194,7 +1194,7 @@ static int should_pack_ref(const char *refname,
 	if (!ref_resolves_to_object(refname, the_repository, oid, ref_flags))
 		return 0;
 
-	if (ref_excluded(opts->exclusions, refname))
+	if (ref_excluded(opts->visibility, refname))
 		return 0;
 
 	for_each_string_list_item(item, opts->includes)

@@ -84,7 +84,7 @@ struct rev_cmdline_info {
 	} *rev;
 };
 
-struct ref_exclusions {
+struct ref_visibility {
 	/*
 	 * Excluded refs is a list of wildmatch patterns. If any of the
 	 * patterns match, the reference will be excluded.
@@ -106,9 +106,9 @@ struct ref_exclusions {
 };
 
 /**
- * Initialize a `struct ref_exclusions` with a macro.
+ * Initialize a `struct ref_visibility` with a macro.
  */
-#define REF_EXCLUSIONS_INIT { \
+#define REF_VISIBILITY_INIT { \
 	.excluded_refs = STRING_LIST_INIT_DUP, \
 	.hidden_refs = STRING_LIST_INIT_DUP, \
 }
@@ -135,7 +135,7 @@ struct rev_info {
 	struct list_objects_filter_options filter;
 
 	/* excluding from --branches, --refs, etc. expansion */
-	struct ref_exclusions ref_excludes;
+	struct ref_visibility refs_visible;
 
 	/* Basic information */
 	const char *prefix;
@@ -487,11 +487,11 @@ void show_object_with_name(FILE *, struct object *, const char *);
  * Helpers to check if a reference should be excluded.
  */
 
-int ref_excluded(const struct ref_exclusions *exclusions, const char *path);
-void init_ref_exclusions(struct ref_exclusions *);
-void clear_ref_exclusions(struct ref_exclusions *);
-void add_ref_exclusion(struct ref_exclusions *, const char *exclude);
-void exclude_hidden_refs(struct ref_exclusions *, const char *section);
+int ref_excluded(const struct ref_visibility *exclusions, const char *path);
+void init_ref_visibility(struct ref_visibility *);
+void clear_ref_visibility(struct ref_visibility *);
+void add_ref_exclusion(struct ref_visibility *, const char *exclude);
+void exclude_hidden_refs(struct ref_visibility *, const char *section);
 
 /**
  * This function can be used if you want to add commit objects as revision
