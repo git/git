@@ -196,7 +196,6 @@ extern char *notes_ref_name;
 extern int grafts_replace_parents;
 
 extern int repository_format_precious_objects;
-extern int repository_format_worktree_config;
 
 /*
  * Create a temporary file rooted in the object database directory, or

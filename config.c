@@ -2196,6 +2196,7 @@ int git_config_system(void)
 
 static int do_git_config_sequence(struct config_reader *reader,
 				  const struct config_options *opts,
+				  const struct repository *repo,
 				  config_fn_t fn, void *data)
 {
 	int ret = 0;
@@ -2203,14 +2204,24 @@ static int do_git_config_sequence(struct config_reader *reader,
 	char *xdg_config = NULL;
 	char *user_config = NULL;
 	char *repo_config;
+	char *worktree_config;
 	enum config_scope prev_parsing_scope = reader->parsing_scope;
 
-	if (opts->commondir)
+	/*
+	 * Ensure that either:
+	 * - the git_dir and commondir are both set, or
+	 * - the git_dir and commondir are both NULL
+	 */
+	if (!opts->git_dir != !opts->commondir)
+		BUG("only one of commondir and git_dir is non-NULL");
+
+	if (opts->commondir) {
 		repo_config = mkpathdup("%s/config", opts->commondir);
-	else if (opts->git_dir)
-		BUG("git_dir without commondir");
-	else
+		worktree_config = mkpathdup("%s/config.worktree", opts->git_dir);
+	} else {
 		repo_config = NULL;
+		worktree_config = NULL;
+	}
 
 	config_reader_set_scope(reader, CONFIG_SCOPE_SYSTEM);
 	if (git_config_system() && system_config &&
@@ -2233,11 +2244,10 @@ static int do_git_config_sequence(struct config_reader *reader,
 		ret += git_config_from_file(fn, repo_config, data);
 
 	config_reader_set_scope(reader, CONFIG_SCOPE_WORKTREE);
-	if (!opts->ignore_worktree && repository_format_worktree_config) {
-		char *path = git_pathdup("config.worktree");
-		if (!access_or_die(path, R_OK, 0))
-			ret += git_config_from_file(fn, path, data);
-		free(path);
+	if (!opts->ignore_worktree && worktree_config &&
+	    repo && repo->repository_format_worktree_config &&
+	    !access_or_die(worktree_config, R_OK, 0)) {
+		ret += git_config_from_file(fn, worktree_config, data);
 	}
 
 	config_reader_set_scope(reader, CONFIG_SCOPE_COMMAND);
@@ -2249,6 +2259,7 @@ static int do_git_config_sequence(struct config_reader *reader,
 	free(xdg_config);
 	free(user_config);
 	free(repo_config);
+	free(worktree_config);
 	return ret;
 }
 
@@ -2270,7 +2281,7 @@ int config_with_options(config_fn_t fn, void *data,
 		data = &inc;
 	}
 
-	if (config_source)
+	if (config_source && config_source->scope != CONFIG_SCOPE_UNKNOWN)
 		config_reader_set_scope(&the_reader, config_source->scope);
 
 	/*
@@ -2287,7 +2298,9 @@ int config_with_options(config_fn_t fn, void *data,
 		ret = git_config_from_blob_ref(fn, repo, config_source->blob,
 						data);
 	} else {
-		ret = do_git_config_sequence(&the_reader, opts, fn, data);
+		struct repository *repo = config_source && config_source->repo ?
+			config_source->repo : the_repository;
+		ret = do_git_config_sequence(&the_reader, opts, repo, fn, data);
 	}
 
 	if (inc.remote_urls) {
@@ -2660,10 +2673,13 @@ static void repo_read_config(struct repository *repo)
 {
 	struct config_options opts = { 0 };
 	struct configset_add_data data = CONFIGSET_ADD_INIT;
+	struct git_config_source config_source = { 0 };
 
 	opts.respect_includes = 1;
 	opts.commondir = repo->commondir;
 	opts.git_dir = repo->gitdir;
+
+	config_source.repo = repo;
 
 	if (!repo->config)
 		CALLOC_ARRAY(repo->config, 1);
@@ -2674,7 +2690,7 @@ static void repo_read_config(struct repository *repo)
 	data.config_set = repo->config;
 	data.config_reader = &the_reader;
 
-	if (config_with_options(config_set_callback, &data, NULL, &opts) < 0)
+	if (config_with_options(config_set_callback, &data, &config_source, &opts) < 0)
 		/*
 		 * config_with_options() normally returns only
 		 * zero, as most errors are fatal, and
@@ -3330,7 +3346,7 @@ int repo_config_set_worktree_gently(struct repository *r,
 				    const char *key, const char *value)
 {
 	/* Only use worktree-specific config if it is already enabled. */
-	if (repository_format_worktree_config) {
+	if (r->repository_format_worktree_config) {
 		char *file = repo_git_path(r, "config.worktree");
 		int ret = git_config_set_multivar_in_file_gently(
 					file, key, value, NULL, 0);

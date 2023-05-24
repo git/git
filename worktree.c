@@ -807,7 +807,7 @@ int init_worktree_config(struct repository *r)
 	 * If the extension is already enabled, then we can skip the
 	 * upgrade process.
 	 */
-	if (repository_format_worktree_config)
+	if (r->repository_format_worktree_config)
 		return 0;
 	if ((res = git_config_set_gently("extensions.worktreeConfig", "true")))
 		return error(_("failed to set extensions.worktreeConfig setting"));
@@ -847,7 +847,7 @@ int init_worktree_config(struct repository *r)
 	 * Ensure that we use worktree config for the remaining lifetime
 	 * of the current process.
 	 */
-	repository_format_worktree_config = 1;
+	r->repository_format_worktree_config = 1;
 
 cleanup:
 	git_configset_clear(&cs);
