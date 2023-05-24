@@ -594,6 +594,10 @@ static int git_log_config(const char *var, const char *value, void *cb)
 	}
 	if (!strcmp(var, "log.diffmerges"))
 		return diff_merges_config(value);
+	if (!strcmp(var, "log.diffmergeshide"))
+		return diff_merges_hide_config(git_config_bool(var, value));
+	if (!strcmp(var, "log.diffmerges-m-imply-p"))
+		return diff_merges_m_imply_p_config(git_config_bool(var, value));
 	if (!strcmp(var, "log.showroot")) {
 		default_show_root = git_config_bool(var, value);
 		return 0;
