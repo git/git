@@ -2030,6 +2030,50 @@ test_expect_success 'sparse index is not expanded: rm' '
 	ensure_not_expanded rm -r deep
 '
 
+test_expect_success 'sparse index is not expanded: diff-index' '
+	init_repos &&
+
+	echo "new" >>sparse-index/g &&
+	git -C sparse-index add g &&
+	git -C sparse-index commit -m "dummy" &&
+	ensure_not_expanded diff-index HEAD~1 &&
+
+	echo "text" >>sparse-index/deep/a &&
+
+	ensure_not_expanded diff-index HEAD deep/a &&
+	ensure_not_expanded diff-index HEAD deep/*
+'
+test_expect_success 'diff-index pathspec expands index when necessary' '
+	init_repos &&
+
+	echo "text" >>sparse-index/deep/a &&
+
+	# pathspec that should expand index
+	! ensure_not_expanded diff-index "*/a" &&
+	! ensure_not_expanded diff-index "**a"
+'
+
+test_expect_success 'diff-index with pathspec outside sparse definition' '
+	init_repos &&
+
+	test_sparse_match test_must_fail git diff-index HEAD folder2/a
+'
+
+test_expect_success 'match all: diff-index' '
+	init_repos &&
+
+	test_all_match git diff-index HEAD &&
+	write_script edit-contents <<-\EOF &&
+	echo text >>$1
+	EOF
+	run_on_all ../edit-contents g &&
+	run_on_all git add g &&
+	run_on_all git commit -m "two" &&
+	run_on_all rm g &&
+	test_all_match git diff-index HEAD &&
+	test_all_match git diff-index --cached HEAD~1
+'
+
 test_expect_success 'grep with and --cached' '
 	init_repos &&
 
