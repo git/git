@@ -1533,20 +1533,34 @@ static void add_rev_cmdline_list(struct rev_info *revs,
 	}
 }
 
-int ref_excluded(const struct ref_visibility *visibility, const char *path)
+static int ref_matched(struct string_list refs, const char *path)
 {
-	const char *stripped_path = strip_namespace(path);
 	struct string_list_item *item;
 
-	for_each_string_list_item(item, &visibility->excluded_refs) {
+	for_each_string_list_item(item, &refs)
 		if (!wildmatch(item->string, path, 0))
 			return 1;
-	}
-
-	if (ref_is_hidden(stripped_path, path, &visibility->hidden_refs))
-		return 1;
 
 	return 0;
+}
+
+int ref_excluded(const struct ref_visibility *visibility, const char *path)
+{
+	if (ref_is_hidden(strip_namespace(path), path, &visibility->hidden_refs))
+		return 1;
+
+	return ref_matched(visibility->excluded_refs, path);
+}
+
+int ref_visible(const struct ref_visibility *visibility, const char *path)
+{
+	if (ref_is_hidden(strip_namespace(path), path, &visibility->hidden_refs))
+		return 0;
+
+	if (ref_matched(visibility->excluded_refs, path))
+		return 0;
+
+	return ref_matched(visibility->included_refs, path);
 }
 
 void init_ref_visibility(struct ref_visibility *visibility)
@@ -1558,6 +1572,7 @@ void init_ref_visibility(struct ref_visibility *visibility)
 void clear_ref_visibility(struct ref_visibility *visibility)
 {
 	string_list_clear(&visibility->excluded_refs, 0);
+	string_list_clear(&visibility->included_refs, 0);
 	string_list_clear(&visibility->hidden_refs, 0);
 	visibility->hidden_refs_configured = 0;
 }
@@ -1565,6 +1580,11 @@ void clear_ref_visibility(struct ref_visibility *visibility)
 void add_ref_exclusion(struct ref_visibility *visibility, const char *exclude)
 {
 	string_list_append(&visibility->excluded_refs, exclude);
+}
+
+void add_ref_inclusion(struct ref_visibility *visibility, const char *include)
+{
+	string_list_append(&visibility->included_refs, include);
 }
 
 struct exclude_hidden_refs_cb {

@@ -92,6 +92,12 @@ struct ref_visibility {
 	struct string_list excluded_refs;
 
 	/*
+	 * Included refs is a list of wildmatch patterns. If any of the
+	 * patterns match, the reference will be included.
+	 */
+	struct string_list included_refs;
+
+	/*
 	 * Hidden refs is a list of patterns that is to be hidden via
 	 * `ref_is_hidden()`.
 	 */
@@ -110,6 +116,7 @@ struct ref_visibility {
  */
 #define REF_VISIBILITY_INIT { \
 	.excluded_refs = STRING_LIST_INIT_DUP, \
+	.included_refs = STRING_LIST_INIT_DUP, \
 	.hidden_refs = STRING_LIST_INIT_DUP, \
 }
 
@@ -485,12 +492,22 @@ void show_object_with_name(FILE *, struct object *, const char *);
 
 /**
  * Helpers to check if a reference should be excluded.
+ *
+ * ref_excluded() checks if a ref has been explicitly excluded either
+ * because it is hidden, or it was added via an add_ref_exclusion() call.
+ *
+ * ref_visible() checks if a ref is visible by taking into account whether a ref
+ * has been included via an add_ref_inclusion() call, but also whether it has
+ * been excluded via add_ref_exclusion(). Exclusions take precedence. If a ref
+ * is hidden, it will also be treated as not visible.
+ *
  */
-
-int ref_excluded(const struct ref_visibility *exclusions, const char *path);
+int ref_excluded(const struct ref_visibility *visibility, const char *path);
+int ref_visible(const struct ref_visibility *visibility, const char *path);
 void init_ref_visibility(struct ref_visibility *);
 void clear_ref_visibility(struct ref_visibility *);
 void add_ref_exclusion(struct ref_visibility *, const char *exclude);
+void add_ref_inclusion(struct ref_visibility *, const char *include);
 void exclude_hidden_refs(struct ref_visibility *, const char *section);
 
 /**
