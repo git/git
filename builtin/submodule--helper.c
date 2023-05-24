@@ -2027,13 +2027,16 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "submodule.%s.url", sub->name);
 	if (repo_config_get_string_tmp(the_repository, sb.buf, &url)) {
-		if (starts_with_dot_slash(sub->url) ||
-		    starts_with_dot_dot_slash(sub->url)) {
+		if (sub->url && (starts_with_dot_slash(sub->url) ||
+				 starts_with_dot_dot_slash(sub->url))) {
 			url = resolve_relative_url(sub->url, NULL, 0);
 			need_free_url = 1;
 		} else
 			url = sub->url;
 	}
+
+	if (!url)
+		die(_("cannot clone submodule '%s' without a URL"), sub->name);
 
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "%s/.git", ce->name);
