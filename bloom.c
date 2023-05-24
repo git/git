@@ -82,10 +82,10 @@ uint32_t murmur3_seeded(uint32_t seed, const char *data, size_t len)
 
 	uint32_t k;
 	for (i = 0; i < len4; i++) {
-		uint32_t byte1 = (uint32_t)data[4*i];
-		uint32_t byte2 = ((uint32_t)data[4*i + 1]) << 8;
-		uint32_t byte3 = ((uint32_t)data[4*i + 2]) << 16;
-		uint32_t byte4 = ((uint32_t)data[4*i + 3]) << 24;
+		uint32_t byte1 = (uint32_t)(unsigned char)data[4*i];
+		uint32_t byte2 = ((uint32_t)(unsigned char)data[4*i + 1]) << 8;
+		uint32_t byte3 = ((uint32_t)(unsigned char)data[4*i + 2]) << 16;
+		uint32_t byte4 = ((uint32_t)(unsigned char)data[4*i + 3]) << 24;
 		k = byte1 | byte2 | byte3 | byte4;
 		k *= c1;
 		k = rotate_left(k, r1);
@@ -99,13 +99,13 @@ uint32_t murmur3_seeded(uint32_t seed, const char *data, size_t len)
 
 	switch (len & (sizeof(uint32_t) - 1)) {
 	case 3:
-		k1 ^= ((uint32_t)tail[2]) << 16;
+		k1 ^= ((uint32_t)(unsigned char)tail[2]) << 16;
 		/*-fallthrough*/
 	case 2:
-		k1 ^= ((uint32_t)tail[1]) << 8;
+		k1 ^= ((uint32_t)(unsigned char)tail[1]) << 8;
 		/*-fallthrough*/
 	case 1:
-		k1 ^= ((uint32_t)tail[0]) << 0;
+		k1 ^= ((uint32_t)(unsigned char)tail[0]) << 0;
 		k1 *= c1;
 		k1 = rotate_left(k1, r1);
 		k1 *= c2;

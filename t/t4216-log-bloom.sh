@@ -48,7 +48,7 @@ graph_read_expect () {
 	header: 43475048 1 $(test_oid oid_version) $NUM_CHUNKS 0
 	num_commits: $1
 	chunks: oid_fanout oid_lookup commit_metadata generation_data bloom_indexes bloom_data
-	options: bloom(1,10,7) read_generation_data
+	options: bloom(2,10,7) read_generation_data
 	EOF
 	test-tool read-graph >actual &&
 	test_cmp expect actual
@@ -84,6 +84,36 @@ test_bloom_filters_not_used () {
 	! grep -q "statistics:{\"filter_not_present\":" "$TRASH_DIRECTORY/trace.perf" &&
 	test_cmp log_wo_bloom log_w_bloom
 }
+
+get_bdat_offset () {
+	perl -0777 -ne \
+		'print unpack("N", "$1") if /BDAT\0\0\0\0(....)/ or exit 1' \
+		.git/objects/info/commit-graph
+}
+
+test_expect_success 'incompatible bloom filter versions are not used' '
+	cp .git/objects/info/commit-graph old-commit-graph &&
+	test_when_finished "mv old-commit-graph .git/objects/info/commit-graph" &&
+
+	BDAT_OFFSET=$(get_bdat_offset) &&
+
+	# Write an arbitrary number to the least significant byte of the
+	# version field in the BDAT chunk
+	cat old-commit-graph >new-commit-graph &&
+	printf "\aa" |
+		dd of=new-commit-graph bs=1 count=1 \
+			seek=$((BDAT_OFFSET + 3)) conv=notrunc &&
+	mv new-commit-graph .git/objects/info/commit-graph &&
+	test_bloom_filters_not_used "-- A" &&
+
+	# But the correct version number works
+	cat old-commit-graph >new-commit-graph &&
+	printf "\02" |
+		dd of=new-commit-graph bs=1 count=1 \
+			seek=$((BDAT_OFFSET + 3)) conv=notrunc &&
+	mv new-commit-graph .git/objects/info/commit-graph &&
+	test_bloom_filters_used "-- A"
+'
 
 for path in A A/B A/B/C A/file1 A/B/file2 A/B/C/file3 file4 file5 file5_renamed file_to_be_deleted
 do
@@ -179,10 +209,10 @@ test_expect_success 'persist filter settings' '
 		GIT_TEST_BLOOM_SETTINGS_NUM_HASHES=9 \
 		GIT_TEST_BLOOM_SETTINGS_BITS_PER_ENTRY=15 \
 		git commit-graph write --reachable --changed-paths &&
-	grep "{\"hash_version\":1,\"num_hashes\":9,\"bits_per_entry\":15,\"max_changed_paths\":512" trace2.txt &&
+	grep "{\"hash_version\":2,\"num_hashes\":9,\"bits_per_entry\":15,\"max_changed_paths\":512" trace2.txt &&
 	GIT_TRACE2_EVENT="$(pwd)/trace2-auto.txt" \
 		git commit-graph write --reachable --changed-paths &&
-	grep "{\"hash_version\":1,\"num_hashes\":9,\"bits_per_entry\":15,\"max_changed_paths\":512" trace2-auto.txt
+	grep "{\"hash_version\":2,\"num_hashes\":9,\"bits_per_entry\":15,\"max_changed_paths\":512" trace2-auto.txt
 '
 
 test_max_changed_paths () {
