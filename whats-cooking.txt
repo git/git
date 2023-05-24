@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (May 2023, #07; Tue, 23)
-X-master-at: 9e49351c3060e1fa6e0d2de64505b7becf157f28
-X-next-at: 44b9e1ab91dfc375ef6b0af3df56e45cb118eef8
+Subject: What's cooking in git.git (May 2023, #08; Thu, 25)
+X-master-at: 79bdd48716a4c455bdc8ffd91d57a18d5cd55baa
+X-next-at: 9c6817b8e7dd4f282c873014c94d11929874b708
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (May 2023, #07; Tue, 23)
+What's cooking in git.git (May 2023, #08; Thu, 25)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,12 +16,10 @@ message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity.
 
-Git 2.41-rc1 has been tagged.  Thanks for catching and fixing a few
-regressions that escaped to the 'master' front so quickly, everybody.
+Git 2.41-rc2 has been tagged.
 
-Starting next week, until early June, my availability may be
-sporadic, but this time I won't be completely away from the keyboard
-to require an interrim maintainer.
+Until early June, I am on half-vacation, and my bandwidth may be
+limited and availability rather sporadic.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -52,47 +50,45 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* sl/sparse-write-tree-part-2 (2023-05-08) 1 commit
+  (merged to 'next' on 2023-05-23 at 317fd52454)
+ + t1092: update a write-tree test
+
+ Fix-up to a topic already graduated to 'master'.
+ source: <20230508202140.464363-1-cheskaqiqi@gmail.com>
+
+--------------------------------------------------
 [New Topics]
 
-* jc/test-modernization-2 (2023-05-23) 10 commits
- - t9400-git-cvsserver-server: modernize test format
- - t9200-git-cvsexportcommit: modernize test format
- - t9104-git-svn-follow-parent: modernize test format
- - t9100-git-svn-basic: modernize test format
- - t7700-repack: modernize test format
- - t7600-merge: modernize test format
- - t7508-status: modernize test format
- - t7201-co: modernize test format
- - t7111-reset-table: modernize test format
- - t7110-reset-merge: modernize test format
- (this branch uses jc/test-modernization.)
+* vd/worktree-config-is-per-repository (2023-05-24) 2 commits
+ - repository: move 'repository_format_worktree_config' to repo scope
+ - config: use gitdir to get worktree config
 
- Test style updates.
+ The value of config.worktree is per-repository, but has been kept
+ in a singleton global variable per process. This has been OK as
+ most Git operations interacted with a single repository at a time,
+ but not right for operations like recursive "grep" that want to
+ access multiple repositories from a single process without forking.
 
- source: <pull.1514.git.git.1684599239.gitgitgadget@gmail.com>
-
-
-* jt/path-filter-fix (2023-05-23) 2 commits
- - commit-graph: fix murmur3, bump filter ver. to 2
- - t4216: test wrong bloom filter version rejection
-
- The Bloom filter used for path limited history traversal was broken
- on systems whose "char" is unsigned; update the implementation and
- bump the format version to 2.
+ The global variable has been eliminated and made into a member in
+ the per-repository data structure.
 
  Needs review.
- source: <cover.1684790529.git.jonathantanmy@google.com>
+ source: <pull.1536.git.1684883872.gitgitgadget@gmail.com>
 
 
-* tk/cherry-pick-sequence-requires-clean-worktree (2023-05-23) 1 commit
- - cherry-pick: refuse cherry-pick sequence if index is dirty
+* tb/submodule-null-deref-fix (2023-05-25) 1 commit
+ - builtin/submodule--helper.c: handle missing submodule URLs
 
- "git cherry-pick A" that replays a single commit stopped before
- clobbering local modification, but "git cherry-pick A..B" did not,
- which has been corrected.
+ "git submodule" code trusted the data coming from the config (and
+ the in-tree .gitmodules file) too much without validating, leading
+ to NULL dereference if the user mucks with a repository (e.g.
+ submodule.<name>.url is removed).  This has been corrected.
 
- Needs review.
- source: <pull.1535.git.1684830767336.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <ae6cf3fa461b85e346f034371dae56a2790dfa20.1684957882.git.me@ttaylorr.com>
 
 --------------------------------------------------
 [Stalled]
@@ -246,6 +242,48 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* jc/test-modernization-2 (2023-05-23) 10 commits
+ - t9400-git-cvsserver-server: modernize test format
+ - t9200-git-cvsexportcommit: modernize test format
+ - t9104-git-svn-follow-parent: modernize test format
+ - t9100-git-svn-basic: modernize test format
+ - t7700-repack: modernize test format
+ - t7600-merge: modernize test format
+ - t7508-status: modernize test format
+ - t7201-co: modernize test format
+ - t7111-reset-table: modernize test format
+ - t7110-reset-merge: modernize test format
+ (this branch uses jc/test-modernization.)
+
+ Test style updates.
+ source: <pull.1514.git.git.1684599239.gitgitgadget@gmail.com>
+
+
+* jt/path-filter-fix (2023-05-23) 2 commits
+ - commit-graph: fix murmur3, bump filter ver. to 2
+ - t4216: test wrong bloom filter version rejection
+
+ The Bloom filter used for path limited history traversal was broken
+ on systems whose "char" is unsigned; update the implementation and
+ bump the format version to 2.
+
+ Needs a more careful transition?
+ cf. <def26c71-0fbb-58a3-f1cd-f8e532b67503@github.com>
+ source: <cover.1684790529.git.jonathantanmy@google.com>
+
+
+* tk/cherry-pick-sequence-requires-clean-worktree (2023-05-23) 1 commit
+ - cherry-pick: refuse cherry-pick sequence if index is dirty
+
+ "git cherry-pick A" that replays a single commit stopped before
+ clobbering local modification, but "git cherry-pick A..B" did not,
+ which has been corrected.
+
+ Expecting a reroll.
+ cf. <pull.1535.git.1684830767336.gitgitgadget@gmail.com>
+ source: <pull.1535.git.1684830767336.gitgitgadget@gmail.com>
+
+
 * mh/credential-libsecret-attrs (2023-05-17) 1 commit
  - credential/libsecret: store new attributes
 
@@ -275,12 +313,13 @@ Release tarballs are available at:
 
 
 * sl/diff-tree-sparse (2023-05-18) 1 commit
- - diff-tree: integrate with sparse index
+  (merged to 'next' on 2023-05-24 at 5d4f2dec4d)
+ + diff-tree: integrate with sparse index
 
  "git diff-tree" has been taught to take advantage of the
  sparse-index feature.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  cf. <2a2b7223-bb5d-65f9-95bb-9be45d329c87@github.com>
  source: <20230518154454.475487-1-cheskaqiqi@gmail.com>
 
@@ -391,13 +430,14 @@ Release tarballs are available at:
 
 
 * zh/ls-files-format-atoms (2023-05-23) 1 commit
- - ls-files: aligin format atoms wtih ls-tree
+  (merged to 'next' on 2023-05-24 at 116b11effb)
+ + ls-files: align format atoms with ls-tree
 
  Some atoms that can be used in "--format=<format>" for "git ls-tree"
  were not supported by "git ls-files", even though they were relevant
  in the context of the latter.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <pull.1533.v2.git.1684832418299.gitgitgadget@gmail.com>
 
 
@@ -581,16 +621,6 @@ Release tarballs are available at:
  cf. <xmqqsfcthrpb.fsf@gitster.g>
  cf. <1fd54422-b66a-c2e4-7cd7-934ea01190ad@gmail.com>
  source: <pull.1492.v2.git.1682089074.gitgitgadget@gmail.com>
-
-
-* sl/sparse-write-tree-part-2 (2023-05-08) 1 commit
-  (merged to 'next' on 2023-05-23 at 317fd52454)
- + t1092: update a write-tree test
-
- Fix-up to a topic already graduated to 'master'.
-
- Will merge to 'master'.
- source: <20230508202140.464363-1-cheskaqiqi@gmail.com>
 
 
 * tb/pack-bitmap-traversal-with-boundary (2023-05-08) 3 commits
