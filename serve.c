@@ -1,6 +1,7 @@
 #include "git-compat-util.h"
 #include "repository.h"
 #include "config.h"
+#include "hash-ll.h"
 #include "pkt-line.h"
 #include "version.h"
 #include "ls-refs.h"

@@ -270,6 +270,25 @@ static inline void oid_set_algo(struct object_id *oid, const struct git_hash_alg
 	oid->algo = hash_algo_by_ptr(algop);
 }
 
+/*
+ * Converts a cryptographic hash (e.g. SHA-1) into an int-sized hash code
+ * for use in hash tables. Cryptographic hashes are supposed to have
+ * uniform distribution, so in contrast to `memhash()`, this just copies
+ * the first `sizeof(int)` bytes without shuffling any bits. Note that
+ * the results will be different on big-endian and little-endian
+ * platforms, so they should not be stored or transferred over the net.
+ */
+static inline unsigned int oidhash(const struct object_id *oid)
+{
+	/*
+	 * Equivalent to 'return *(unsigned int *)oid->hash;', but safe on
+	 * platforms that don't support unaligned reads.
+	 */
+	unsigned int hash;
+	memcpy(&hash, oid->hash, sizeof(hash));
+	return hash;
+}
+
 const char *empty_tree_oid_hex(void);
 const char *empty_blob_oid_hex(void);
 

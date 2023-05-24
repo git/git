@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2005 Junio C Hamano
  */
-#include "cache.h"
+#include "git-compat-util.h"
 #include "abspath.h"
 #include "alloc.h"
 #include "base85.h"
@@ -20,13 +20,13 @@
 #include "attr.h"
 #include "run-command.h"
 #include "utf8.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "userdiff.h"
 #include "submodule-config.h"
 #include "submodule.h"
 #include "hashmap.h"
 #include "mem-pool.h"
-#include "ll-merge.h"
+#include "merge-ll.h"
 #include "string-list.h"
 #include "strvec.h"
 #include "graph.h"
@@ -39,6 +39,7 @@
 #include "dir.h"
 #include "object-file.h"
 #include "object-name.h"
+#include "read-cache-ll.h"
 #include "setup.h"
 #include "strmap.h"
 #include "ws.h"

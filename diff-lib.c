@@ -1,18 +1,21 @@
 /*
  * Copyright (C) 2005 Junio C Hamano
  */
-#include "cache.h"
+#include "git-compat-util.h"
 #include "quote.h"
 #include "commit.h"
 #include "diff.h"
 #include "diffcore.h"
 #include "gettext.h"
+#include "hash.h"
 #include "hex.h"
 #include "object-name.h"
+#include "read-cache.h"
 #include "revision.h"
 #include "cache-tree.h"
 #include "unpack-trees.h"
 #include "refs.h"
+#include "repository.h"
 #include "submodule.h"
 #include "symlinks.h"
 #include "trace.h"

@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "abspath.h"
 #include "config.h"
 #include "dir.h"
@@ -6,11 +6,13 @@
 #include "gettext.h"
 #include "pathspec.h"
 #include "attr.h"
+#include "read-cache.h"
 #include "repository.h"
 #include "setup.h"
 #include "strvec.h"
 #include "symlinks.h"
 #include "quote.h"
+#include "wildmatch.h"
 
 /*
  * Finds which of the given pathspecs match items in the index.

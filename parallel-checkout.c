@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "alloc.h"
 #include "config.h"
 #include "entry.h"
@@ -8,6 +8,7 @@
 #include "parallel-checkout.h"
 #include "pkt-line.h"
 #include "progress.h"
+#include "read-cache-ll.h"
 #include "run-command.h"
 #include "sigchain.h"
 #include "streaming.h"

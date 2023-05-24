@@ -6,7 +6,7 @@
  * an insanely large number of attributes.
  */
 
-#include "cache.h"
+#include "git-compat-util.h"
 #include "alloc.h"
 #include "config.h"
 #include "environment.h"
@@ -14,10 +14,12 @@
 #include "attr.h"
 #include "dir.h"
 #include "gettext.h"
+#include "path.h"
 #include "utf8.h"
 #include "quote.h"
+#include "read-cache-ll.h"
 #include "revision.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "setup.h"
 #include "thread-utils.h"
 #include "tree-walk.h"

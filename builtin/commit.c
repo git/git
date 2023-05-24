@@ -6,7 +6,7 @@
  */
 
 #define USE_THE_INDEX_VARIABLE
-#include "cache.h"
+#include "builtin.h"
 #include "advice.h"
 #include "config.h"
 #include "lockfile.h"
@@ -15,7 +15,6 @@
 #include "dir.h"
 #include "editor.h"
 #include "environment.h"
-#include "builtin.h"
 #include "diff.h"
 #include "diffcore.h"
 #include "commit.h"
@@ -30,6 +29,9 @@
 #include "utf8.h"
 #include "object-name.h"
 #include "parse-options.h"
+#include "path.h"
+#include "preload-index.h"
+#include "read-cache.h"
 #include "string-list.h"
 #include "rerere.h"
 #include "unpack-trees.h"
@@ -38,6 +40,7 @@
 #include "gpg-interface.h"
 #include "column.h"
 #include "sequencer.h"
+#include "sparse-index.h"
 #include "mailmap.h"
 #include "help.h"
 #include "commit-reach.h"
@@ -447,7 +450,8 @@ static const char *prepare_index(const char **argv, const char *prefix,
 	if (all || (also && pathspec.nr)) {
 		repo_hold_locked_index(the_repository, &index_lock,
 				       LOCK_DIE_ON_ERROR);
-		add_files_to_cache(also ? prefix : NULL, &pathspec, 0);
+		add_files_to_cache(the_repository, also ? prefix : NULL,
+				   &pathspec, 0, 0);
 		refresh_cache_or_die(refresh_flags);
 		cache_tree_update(&the_index, WRITE_TREE_SILENT);
 		if (write_locked_index(&the_index, &index_lock, 0))

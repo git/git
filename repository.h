@@ -1,8 +1,6 @@
 #ifndef REPOSITORY_H
 #define REPOSITORY_H
 
-#include "path.h"
-
 struct config_set;
 struct fsmonitor_settings;
 struct git_hash_algo;
@@ -169,6 +167,9 @@ struct repository {
 };
 
 extern struct repository *the_repository;
+#ifdef USE_THE_INDEX_VARIABLE
+extern struct index_state the_index;
+#endif
 
 /*
  * Define a custom repository layout. Any field can be NULL, which
@@ -220,9 +221,6 @@ int repo_hold_locked_index(struct repository *repo,
 			   struct lock_file *lf,
 			   int flags);
 
-int repo_read_index_preload(struct repository *,
-			    const struct pathspec *pathspec,
-			    unsigned refresh_flags);
 int repo_read_index_unmerged(struct repository *);
 /*
  * Opportunistically update the index but do not complain if we can't.

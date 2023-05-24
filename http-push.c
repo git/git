@@ -18,7 +18,7 @@
 #include "tree.h"
 #include "tree-walk.h"
 #include "packfile.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "commit-reach.h"
 
 #ifdef EXPAT_NEEDS_XMLPARSE_H

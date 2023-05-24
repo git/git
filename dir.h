@@ -1,6 +1,7 @@
 #ifndef DIR_H
 #define DIR_H
 
+#include "hash-ll.h"
 #include "hashmap.h"
 #include "pathspec.h"
 #include "statinfo.h"

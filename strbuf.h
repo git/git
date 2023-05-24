@@ -80,10 +80,6 @@ struct strbuf {
 extern char strbuf_slopbuf[];
 #define STRBUF_INIT  { .buf = strbuf_slopbuf }
 
-/*
- * Predeclare this here, since cache.h includes this file before it defines the
- * struct.
- */
 struct object_id;
 
 /**

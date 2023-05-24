@@ -444,7 +444,7 @@ For C programs:
  - The first #include in C files, except in platform specific compat/
    implementations and sha1dc/, must be either "git-compat-util.h" or
    one of the approved headers that includes it first for you.  (The
-   approved headers currently include "cache.h", "builtin.h",
+   approved headers currently include "builtin.h",
    "t/helper/test-tool.h", "xdiff/xinclude.h", or
    "reftable/system.h").  You do not have to include more than one of
    these.

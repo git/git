@@ -4,7 +4,7 @@
 #include "environment.h"
 #include "refs.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "diff.h"
 #include "diff-merges.h"
 #include "hex.h"
@@ -15,6 +15,7 @@
 #include "fmt-merge-msg.h"
 #include "commit-reach.h"
 #include "gpg-interface.h"
+#include "wildmatch.h"
 
 static int use_branch_desc;
 static int suppress_dest_pattern_seen;

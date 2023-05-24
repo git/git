@@ -6,17 +6,17 @@
  * Based on git-tag.sh and mktag.c by Linus Torvalds.
  */
 
-#include "cache.h"
+#include "builtin.h"
 #include "advice.h"
 #include "config.h"
-#include "builtin.h"
 #include "editor.h"
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
 #include "refs.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "object-store-ll.h"
+#include "path.h"
 #include "tag.h"
 #include "run-command.h"
 #include "parse-options.h"

@@ -12,15 +12,16 @@
 
 #define USE_THE_INDEX_VARIABLE
 #include "test-tool.h"
-#include "cache.h"
 #include "cache-tree.h"
 #include "commit.h"
 #include "environment.h"
 #include "gettext.h"
+#include "hash.h"
 #include "hex.h"
 #include "lockfile.h"
 #include "merge-ort.h"
 #include "object-name.h"
+#include "read-cache-ll.h"
 #include "refs.h"
 #include "revision.h"
 #include "sequencer.h"

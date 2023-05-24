@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2006 Junio C Hamano
  */
-#include "cache.h"
+#include "builtin.h"
 #include "alloc.h"
 #include "gettext.h"
 #include "hex.h"
@@ -14,7 +14,6 @@
 #include "commit.h"
 #include "tag.h"
 #include "tree-walk.h"
-#include "builtin.h"
 #include "parse-options.h"
 #include "string-list.h"
 #include "run-command.h"
@@ -28,9 +27,11 @@
 #include "submodule-config.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "packfile.h"
 #include "pager.h"
+#include "path.h"
+#include "read-cache-ll.h"
 #include "write-or-die.h"
 
 static const char *grep_prefix;

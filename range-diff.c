@@ -13,6 +13,7 @@
 #include "commit.h"
 #include "pager.h"
 #include "pretty.h"
+#include "repository.h"
 #include "userdiff.h"
 #include "apply.h"
 #include "revision.h"
