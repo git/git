@@ -225,7 +225,7 @@ static int run_sequencer(int argc, const char **argv, const char *prefix,
 		return sequencer_rollback(the_repository, opts);
 	if (cmd == 's')
 		return sequencer_skip(the_repository, opts);
-	return sequencer_pick_revisions(the_repository, opts);
+	return sequencer_pick_revisions(the_repository, opts, me);
 }
 
 int cmd_revert(int argc, const char **argv, const char *prefix)

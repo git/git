@@ -3177,7 +3177,7 @@ static int walk_revs_populate_todo(struct todo_list *todo_list,
 	return 0;
 }
 
-static int create_seq_dir(struct repository *r)
+static int create_seq_dir(struct repository *r, const char *requested_action)
 {
 	enum replay_action action;
 	const char *in_progress_error = NULL;
@@ -3209,6 +3209,9 @@ static int create_seq_dir(struct repository *r)
 				advise_skip ? "--skip | " : "");
 		return -1;
 	}
+	if (require_clean_work_tree(r, requested_action,
+				    _("Please commit or stash them."), 1, 1))
+		return -1;
 	if (mkdir(git_path_seq_dir(), 0777) < 0)
 		return error_errno(_("could not create sequencer directory '%s'"),
 				   git_path_seq_dir());
@@ -5190,7 +5193,8 @@ static int single_pick(struct repository *r,
 }
 
 int sequencer_pick_revisions(struct repository *r,
-			     struct replay_opts *opts)
+			     struct replay_opts *opts,
+			     const char *action)
 {
 	struct todo_list todo_list = TODO_LIST_INIT;
 	struct object_id oid;
@@ -5244,12 +5248,12 @@ int sequencer_pick_revisions(struct repository *r,
 
 	/*
 	 * Start a new cherry-pick/ revert sequence; but
-	 * first, make sure that an existing one isn't in
-	 * progress
+	 * first, make sure that the index is clean and that
+	 * an existing one isn't in progress.
 	 */
 
 	if (walk_revs_populate_todo(&todo_list, opts) ||
-			create_seq_dir(r) < 0)
+			create_seq_dir(r, action) < 0)
 		return -1;
 	if (repo_get_oid(r, "HEAD", &oid) && (opts->action == REPLAY_REVERT))
 		return error(_("can't revert as initial commit"));

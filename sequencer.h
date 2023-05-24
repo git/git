@@ -159,7 +159,8 @@ void todo_list_filter_update_refs(struct repository *r,
 /* Call this to setup defaults before parsing command line options */
 void sequencer_init_config(struct replay_opts *opts);
 int sequencer_pick_revisions(struct repository *repo,
-			     struct replay_opts *opts);
+			     struct replay_opts *opts,
+			     const char *action);
 int sequencer_continue(struct repository *repo, struct replay_opts *opts);
 int sequencer_rollback(struct repository *repo, struct replay_opts *opts);
 int sequencer_skip(struct repository *repo, struct replay_opts *opts);
