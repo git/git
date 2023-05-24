@@ -5,7 +5,7 @@
  * Copyright (C) Johannes Schindelin, 2005
  *
  */
-#include "cache.h"
+#include "git-compat-util.h"
 #include "abspath.h"
 #include "advice.h"
 #include "alloc.h"
@@ -35,6 +35,7 @@
 #include "setup.h"
 #include "trace2.h"
 #include "worktree.h"
+#include "ws.h"
 #include "wrapper.h"
 #include "write-or-die.h"
 

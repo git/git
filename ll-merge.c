@@ -4,7 +4,7 @@
  * Copyright (c) 2007 Junio C Hamano
  */
 
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
 #include "convert.h"
 #include "attr.h"
@@ -12,6 +12,7 @@
 #include "run-command.h"
 #include "ll-merge.h"
 #include "quote.h"
+#include "strbuf.h"
 #include "wrapper.h"
 
 struct ll_merge_driver;
@@ -393,7 +394,7 @@ enum ll_merge_result ll_merge(mmbuffer_t *result_buf,
 		normalize_file(theirs, path, istate);
 	}
 
-	git_check_attr(istate, NULL, path, check);
+	git_check_attr(istate, path, check);
 	ll_driver_name = check->items[0].value;
 	if (check->items[1].value) {
 		marker_size = atoi(check->items[1].value);
@@ -421,7 +422,7 @@ int ll_merge_marker_size(struct index_state *istate, const char *path)
 
 	if (!check)
 		check = attr_check_initl("conflict-marker-size", NULL);
-	git_check_attr(istate, NULL, path, check);
+	git_check_attr(istate, path, check);
 	if (check->items[0].value) {
 		marker_size = atoi(check->items[0].value);
 		if (marker_size <= 0)

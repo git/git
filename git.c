@@ -9,6 +9,7 @@
 #include "alias.h"
 #include "replace-object.h"
 #include "setup.h"
+#include "attr.h"
 #include "shallow.h"
 #include "trace.h"
 #include "trace2.h"
@@ -314,6 +315,21 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 			} else {
 				exit(list_cmds(cmd));
 			}
+		} else if (!strcmp(cmd, "--attr-source")) {
+			if (*argc < 2) {
+				fprintf(stderr, _("no attribute source given for --attr-source\n" ));
+				usage(git_usage_string);
+			}
+			setenv(GIT_ATTR_SOURCE_ENVIRONMENT, (*argv)[1], 1);
+			if (envchanged)
+				*envchanged = 1;
+			(*argv)++;
+			(*argc)--;
+		} else if (skip_prefix(cmd, "--attr-source=", &cmd)) {
+			set_git_attr_source(cmd);
+			setenv(GIT_ATTR_SOURCE_ENVIRONMENT, cmd, 1);
+			if (envchanged)
+				*envchanged = 1;
 		} else {
 			fprintf(stderr, _("unknown option: %s\n"), cmd);
 			usage(git_usage_string);

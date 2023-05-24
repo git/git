@@ -191,6 +191,20 @@ enable_http2 () {
 	test_set_prereq HTTP2
 }
 
+enable_cgipassauth () {
+	# We are looking for 2.4.13 or more recent. Since we only support
+	# 2.4 and up, no need to check for older major/minor.
+	if test "$HTTPD_VERSION_MAJOR" = 2 &&
+	   test "$HTTPD_VERSION_MINOR" = 4 &&
+	   test "$(echo $HTTPD_VERSION | cut -d. -f3)" -lt 13
+	then
+		echo >&4 "apache $HTTPD_VERSION too old for CGIPassAuth"
+		return
+	fi
+	HTTPD_PARA="$HTTPD_PARA -DUSE_CGIPASSAUTH"
+	test_set_prereq CGIPASSAUTH
+}
+
 start_httpd() {
 	prepare_httpd >&3 2>&4
 

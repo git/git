@@ -4,6 +4,8 @@
 #include "reflog.h"
 #include "refs.h"
 #include "revision.h"
+#include "tree.h"
+#include "tree-walk.h"
 #include "worktree.h"
 
 /* Remember to update object flag allocation in object.h */

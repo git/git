@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "diagnose.h"
 #include "compat/disk.h"
 #include "archive.h"

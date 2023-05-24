@@ -1,7 +1,7 @@
 #ifndef HEX_H
 #define HEX_H
 
-#include "hash.h"
+#include "hash-ll.h"
 
 extern const signed char hexval_table[256];
 static inline unsigned int hexval(unsigned char c)

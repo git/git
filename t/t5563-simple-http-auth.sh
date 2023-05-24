@@ -5,6 +5,12 @@ test_description='test http auth header and credential helper interop'
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-httpd.sh
 
+enable_cgipassauth
+if ! test_have_prereq CGIPASSAUTH
+then
+	skip_all="no CGIPassAuth support"
+	test_done
+fi
 start_httpd
 
 test_expect_success 'setup_credential_helper' '

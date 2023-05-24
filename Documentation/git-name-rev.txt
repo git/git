@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git name-rev' [--tags] [--refs=<pattern>]
-	       ( --all | --stdin | <commit-ish>... )
+	       ( --all | --annotate-stdin | <commit-ish>... )
 
 DESCRIPTION
 -----------
@@ -46,7 +46,8 @@ OPTIONS
 	Transform stdin by substituting all the 40-character SHA-1
 	hexes (say $hex) with "$hex ($rev_name)".  When used with
 	--name-only, substitute with "$rev_name", omitting $hex
-	altogether.
+	altogether. This option was called `--stdin` in older versions
+	of Git.
 +
 For example:
 +
@@ -69,10 +70,6 @@ An abbreviated revision 2ae0a9cb82 will not be substituted.
 The full name after substitution is master,
 while its tree object is 70d105cc79e63b81cfdcb08a15297c23e60b07ad
 -----------
-
---stdin::
-	This option is deprecated in favor of 'git name-rev --annotate-stdin'.
-	They are functionally equivalent.
 
 --name-only::
 	Instead of printing both the SHA-1 and the name, print only
@@ -107,7 +104,7 @@ Now you are wiser, because you know that it happened 940 revisions before v0.99.
 Another nice thing you can do is:
 
 ------------
-% git log | git name-rev --stdin
+% git log | git name-rev --annotate-stdin
 ------------
 
 GIT

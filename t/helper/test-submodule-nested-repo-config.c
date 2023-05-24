@@ -1,4 +1,5 @@
 #include "test-tool.h"
+#include "repository.h"
 #include "setup.h"
 #include "submodule-config.h"
 

@@ -595,10 +595,29 @@ processed by rebase.
 sendemail-validate
 ~~~~~~~~~~~~~~~~~~
 
-This hook is invoked by linkgit:git-send-email[1].  It takes a single parameter,
-the name of the file that holds the e-mail to be sent.  Exiting with a
-non-zero status causes `git send-email` to abort before sending any
-e-mails.
+This hook is invoked by linkgit:git-send-email[1].
+
+It takes these command line arguments. They are,
+1. the name of the file which holds the contents of the email to be sent.
+2. The name of the file which holds the SMTP headers of the email.
+
+The SMTP headers are passed in the exact same way as they are passed to the
+user's Mail Transport Agent (MTA). In effect, the email given to the user's
+MTA, is the contents of $2 followed by the contents of $1.
+
+An example of a few common headers is shown below. Take notice of the
+capitalization and multi-line tab structure.
+
+  From: Example <from@example.com>
+  To: to@example.com
+  Cc: cc@example.com,
+	  A <author@example.com>,
+	  One <one@example.com>,
+	  two@example.com
+  Subject: PATCH-STRING
+
+Exiting with a non-zero status causes `git send-email` to abort
+before sending any e-mails.
 
 The following environment variables are set when executing the hook.
 

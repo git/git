@@ -4,40 +4,9 @@
 #include "git-compat-util.h"
 #include "strbuf.h"
 #include "hashmap.h"
-#include "gettext.h"
-#include "string-list.h"
 #include "pathspec.h"
 #include "object.h"
 #include "statinfo.h"
-
-#if defined(DT_UNKNOWN) && !defined(NO_D_TYPE_IN_DIRENT)
-#define DTYPE(de)	((de)->d_type)
-#else
-#undef DT_UNKNOWN
-#undef DT_DIR
-#undef DT_REG
-#undef DT_LNK
-#define DT_UNKNOWN	0
-#define DT_DIR		1
-#define DT_REG		2
-#define DT_LNK		3
-#define DTYPE(de)	DT_UNKNOWN
-#endif
-
-/*
- * Some mode bits are also used internally for computations.
- *
- * They *must* not overlap with any valid modes, and they *must* not be emitted
- * to outside world - i.e. appear on disk or network. In other words, it's just
- * temporary fields, which we internally use, but they have to stay in-house.
- *
- * ( such approach is valid, as standard S_IF* fits into 16 bits, and in Git
- *   codebase mode is `unsigned int` which is assumed to be at least 32 bits )
- */
-
-/* used internally in tree-diff */
-#define S_DIFFTREE_IFXMIN_NEQ	0x80000000
-
 
 /*
  * Basic data structures for the directory cache
@@ -586,64 +555,7 @@ extern int verify_ce_order;
 #define DATA_CHANGED    0x0020
 #define TYPE_CHANGED    0x0040
 
-int base_name_compare(const char *name1, size_t len1, int mode1,
-		      const char *name2, size_t len2, int mode2);
-int df_name_compare(const char *name1, size_t len1, int mode1,
-		    const char *name2, size_t len2, int mode2);
-int name_compare(const char *name1, size_t len1, const char *name2, size_t len2);
-int cache_name_stage_compare(const char *name1, int len1, int stage1, const char *name2, int len2, int stage2);
-
-struct cache_def {
-	struct strbuf path;
-	int flags;
-	int track_flags;
-	int prefix_len_stat_func;
-};
-#define CACHE_DEF_INIT { \
-	.path = STRBUF_INIT, \
-}
-static inline void cache_def_clear(struct cache_def *cache)
-{
-	strbuf_release(&cache->path);
-}
-
-int has_symlink_leading_path(const char *name, int len);
-int threaded_has_symlink_leading_path(struct cache_def *, const char *, int);
-int check_leading_path(const char *name, int len, int warn_on_lstat_err);
-int has_dirs_only_path(const char *name, int len, int prefix_len);
-void invalidate_lstat_cache(void);
-void schedule_dir_for_removal(const char *name, int len);
-void remove_scheduled_dirs(void);
-
-struct pack_window {
-	struct pack_window *next;
-	unsigned char *base;
-	off_t offset;
-	size_t len;
-	unsigned int last_used;
-	unsigned int inuse_cnt;
-};
-
-struct pack_entry {
-	off_t offset;
-	struct packed_git *p;
-};
-
-/* Dumb servers support */
-int update_server_info(int);
-
-#define COPY_READ_ERROR (-2)
-#define COPY_WRITE_ERROR (-3)
-int copy_fd(int ifd, int ofd);
-int copy_file(const char *dst, const char *src, int mode);
-int copy_file_with_time(const char *dst, const char *src, int mode);
-
-/* base85 */
-int decode_85(char *dst, const char *line, int linelen);
-void encode_85(char *buf, const unsigned char *data, int bytes);
-
-/* pkt-line.c */
-void packet_trace_identity(const char *prog);
+int cmp_cache_name_compare(const void *a_, const void *b_);
 
 /* add */
 /*
@@ -654,36 +566,6 @@ int add_files_to_cache(const char *prefix, const struct pathspec *pathspec, int 
 
 /* diff.c */
 extern int diff_auto_refresh_index;
-
-/* match-trees.c */
-void shift_tree(struct repository *, const struct object_id *, const struct object_id *, struct object_id *, int);
-void shift_tree_by(struct repository *, const struct object_id *, const struct object_id *, struct object_id *, const char *);
-
-/*
- * whitespace rules.
- * used by both diff and apply
- * last two digits are tab width
- */
-#define WS_BLANK_AT_EOL         0100
-#define WS_SPACE_BEFORE_TAB     0200
-#define WS_INDENT_WITH_NON_TAB  0400
-#define WS_CR_AT_EOL           01000
-#define WS_BLANK_AT_EOF        02000
-#define WS_TAB_IN_INDENT       04000
-#define WS_TRAILING_SPACE      (WS_BLANK_AT_EOL|WS_BLANK_AT_EOF)
-#define WS_DEFAULT_RULE (WS_TRAILING_SPACE|WS_SPACE_BEFORE_TAB|8)
-#define WS_TAB_WIDTH_MASK        077
-/* All WS_* -- when extended, adapt diff.c emit_symbol */
-#define WS_RULE_MASK           07777
-extern unsigned whitespace_rule_cfg;
-unsigned whitespace_rule(struct index_state *, const char *);
-unsigned parse_whitespace_rule(const char *);
-unsigned ws_check(const char *line, int len, unsigned ws_rule);
-void ws_check_emit(const char *line, int len, unsigned ws_rule, FILE *stream, const char *set, const char *reset, const char *ws);
-char *whitespace_error_string(unsigned ws);
-void ws_fix_copy(struct strbuf *, const char *, int, unsigned, int *);
-int ws_blank_line(const char *line, int len);
-#define ws_tab_width(rule)     ((rule) & WS_TAB_WIDTH_MASK)
 
 /* ls-files */
 void overlay_tree_on_index(struct index_state *istate,
@@ -729,7 +611,5 @@ int stat_validity_check(struct stat_validity *sv, const char *path);
  * conditions continues to be true.
  */
 void stat_validity_update(struct stat_validity *sv, int fd);
-
-int versioncmp(const char *s1, const char *s2);
 
 #endif /* CACHE_H */

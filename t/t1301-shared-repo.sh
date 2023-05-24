@@ -89,7 +89,7 @@ do
 		rm -f .git/info/refs &&
 		git update-server-info &&
 		actual="$(test_modebits .git/info/refs)" &&
-		verbose test "x$actual" = "x-$y"
+		test "x$actual" = "x-$y"
 
 	'
 
@@ -99,7 +99,7 @@ do
 		rm -f .git/info/refs &&
 		git update-server-info &&
 		actual="$(test_modebits .git/info/refs)" &&
-		verbose test "x$actual" = "x-$x"
+		test "x$actual" = "x-$x"
 
 	'
 

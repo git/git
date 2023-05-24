@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <io.h>
 #include <fcntl.h>
+#include <wincred.h>
 
 /* common helpers */
 
@@ -33,65 +34,8 @@ static void *xmalloc(size_t size)
 	return ret;
 }
 
-/* MinGW doesn't have wincred.h, so we need to define stuff */
-
-typedef struct _CREDENTIAL_ATTRIBUTEW {
-	LPWSTR Keyword;
-	DWORD  Flags;
-	DWORD  ValueSize;
-	LPBYTE Value;
-} CREDENTIAL_ATTRIBUTEW, *PCREDENTIAL_ATTRIBUTEW;
-
-typedef struct _CREDENTIALW {
-	DWORD                  Flags;
-	DWORD                  Type;
-	LPWSTR                 TargetName;
-	LPWSTR                 Comment;
-	FILETIME               LastWritten;
-	DWORD                  CredentialBlobSize;
-	LPBYTE                 CredentialBlob;
-	DWORD                  Persist;
-	DWORD                  AttributeCount;
-	PCREDENTIAL_ATTRIBUTEW Attributes;
-	LPWSTR                 TargetAlias;
-	LPWSTR                 UserName;
-} CREDENTIALW, *PCREDENTIALW;
-
-#define CRED_TYPE_GENERIC 1
-#define CRED_PERSIST_LOCAL_MACHINE 2
-#define CRED_MAX_ATTRIBUTES 64
-
-typedef BOOL (WINAPI *CredWriteWT)(PCREDENTIALW, DWORD);
-typedef BOOL (WINAPI *CredEnumerateWT)(LPCWSTR, DWORD, DWORD *,
-    PCREDENTIALW **);
-typedef VOID (WINAPI *CredFreeT)(PVOID);
-typedef BOOL (WINAPI *CredDeleteWT)(LPCWSTR, DWORD, DWORD);
-
-static HMODULE advapi;
-static CredWriteWT CredWriteW;
-static CredEnumerateWT CredEnumerateW;
-static CredFreeT CredFree;
-static CredDeleteWT CredDeleteW;
-
-static void load_cred_funcs(void)
-{
-	/* load DLLs */
-	advapi = LoadLibraryExA("advapi32.dll", NULL,
-				LOAD_LIBRARY_SEARCH_SYSTEM32);
-	if (!advapi)
-		die("failed to load advapi32.dll");
-
-	/* get function pointers */
-	CredWriteW = (CredWriteWT)GetProcAddress(advapi, "CredWriteW");
-	CredEnumerateW = (CredEnumerateWT)GetProcAddress(advapi,
-	    "CredEnumerateW");
-	CredFree = (CredFreeT)GetProcAddress(advapi, "CredFree");
-	CredDeleteW = (CredDeleteWT)GetProcAddress(advapi, "CredDeleteW");
-	if (!CredWriteW || !CredEnumerateW || !CredFree || !CredDeleteW)
-		die("failed to load functions");
-}
-
-static WCHAR *wusername, *password, *protocol, *host, *path, target[1024];
+static WCHAR *wusername, *password, *protocol, *host, *path, target[1024],
+	*password_expiry_utc;
 
 static void write_item(const char *what, LPCWSTR wbuf, int wlen)
 {
@@ -183,6 +127,7 @@ static void get_credential(void)
 	CREDENTIALW **creds;
 	DWORD num_creds;
 	int i;
+	CREDENTIAL_ATTRIBUTEW *attr;
 
 	if (!CredEnumerateW(L"git:*", 0, &num_creds, &creds))
 		return;
@@ -195,6 +140,14 @@ static void get_credential(void)
 			write_item("password",
 				(LPCWSTR)creds[i]->CredentialBlob,
 				creds[i]->CredentialBlobSize / sizeof(WCHAR));
+			for (int j = 0; j < creds[i]->AttributeCount; j++) {
+				attr = creds[i]->Attributes + j;
+				if (!wcscmp(attr->Keyword, L"git_password_expiry_utc")) {
+					write_item("password_expiry_utc", (LPCWSTR)attr->Value,
+					attr->ValueSize / sizeof(WCHAR));
+					break;
+				}
+			}
 			break;
 		}
 
@@ -204,6 +157,7 @@ static void get_credential(void)
 static void store_credential(void)
 {
 	CREDENTIALW cred;
+	CREDENTIAL_ATTRIBUTEW expiry_attr;
 
 	if (!wusername || !password)
 		return;
@@ -217,6 +171,14 @@ static void store_credential(void)
 	cred.Persist = CRED_PERSIST_LOCAL_MACHINE;
 	cred.AttributeCount = 0;
 	cred.Attributes = NULL;
+	if (password_expiry_utc != NULL) {
+		expiry_attr.Keyword = L"git_password_expiry_utc";
+		expiry_attr.Value = (LPVOID)password_expiry_utc;
+		expiry_attr.ValueSize = (wcslen(password_expiry_utc)) * sizeof(WCHAR);
+		expiry_attr.Flags = 0;
+		cred.Attributes = &expiry_attr;
+		cred.AttributeCount = 1;
+	}
 	cred.TargetAlias = NULL;
 	cred.UserName = wusername;
 
@@ -249,16 +211,27 @@ static WCHAR *utf8_to_utf16_dup(const char *str)
 	return wstr;
 }
 
+#define KB (1024)
+
 static void read_credential(void)
 {
-	char buf[1024];
+	size_t alloc = 100 * KB;
+	char *buf = calloc(alloc, sizeof(*buf));
 
-	while (fgets(buf, sizeof(buf), stdin)) {
+	while (fgets(buf, alloc, stdin)) {
 		char *v;
-		int len = strlen(buf);
+		size_t len = strlen(buf);
+		int ends_in_newline = 0;
 		/* strip trailing CR / LF */
-		while (len && strchr("\r\n", buf[len - 1]))
+		if (len && buf[len - 1] == '\n') {
 			buf[--len] = 0;
+			ends_in_newline = 1;
+		}
+		if (len && buf[len - 1] == '\r')
+			buf[--len] = 0;
+
+		if (!ends_in_newline)
+			die("bad input: %s", buf);
 
 		if (!*buf)
 			break;
@@ -278,12 +251,16 @@ static void read_credential(void)
 			wusername = utf8_to_utf16_dup(v);
 		} else if (!strcmp(buf, "password"))
 			password = utf8_to_utf16_dup(v);
+		else if (!strcmp(buf, "password_expiry_utc"))
+			password_expiry_utc = utf8_to_utf16_dup(v);
 		/*
 		 * Ignore other lines; we don't know what they mean, but
 		 * this future-proofs us when later versions of git do
 		 * learn new lines, and the helpers are updated to match.
 		 */
 	}
+
+	free(buf);
 }
 
 int main(int argc, char *argv[])
@@ -292,15 +269,13 @@ int main(int argc, char *argv[])
 	    "usage: git credential-wincred <get|store|erase>\n";
 
 	if (!argv[1])
-		die(usage);
+		die("%s", usage);
 
 	/* git use binary pipes to avoid CRLF-issues */
 	_setmode(_fileno(stdin), _O_BINARY);
 	_setmode(_fileno(stdout), _O_BINARY);
 
 	read_credential();
-
-	load_cred_funcs();
 
 	if (!protocol || !(host || path))
 		return 0;

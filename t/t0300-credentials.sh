@@ -214,6 +214,24 @@ test_expect_success 'credential_approve stores password expiry' '
 	EOF
 '
 
+test_expect_success 'credential_approve stores oauth refresh token' '
+	check approve useless <<-\EOF
+	protocol=http
+	host=example.com
+	username=foo
+	password=bar
+	oauth_refresh_token=xyzzy
+	--
+	--
+	useless: store
+	useless: protocol=http
+	useless: host=example.com
+	useless: username=foo
+	useless: password=bar
+	useless: oauth_refresh_token=xyzzy
+	EOF
+'
+
 test_expect_success 'do not bother storing password-less credential' '
 	check approve useless <<-\EOF
 	protocol=http
@@ -808,7 +826,7 @@ test_expect_success 'credential config with partial URLs' '
 
 	git -c credential.$partial.helper=yep \
 		-c credential.with%0anewline.username=uh-oh \
-		credential fill <stdin >stdout 2>stderr &&
+		credential fill <stdin 2>stderr &&
 	test_i18ngrep "skipping credential lookup for key" stderr
 '
 

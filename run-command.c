@@ -5,6 +5,7 @@
 #include "gettext.h"
 #include "sigchain.h"
 #include "strvec.h"
+#include "symlinks.h"
 #include "thread-utils.h"
 #include "strbuf.h"
 #include "string-list.h"
@@ -15,6 +16,7 @@
 #include "packfile.h"
 #include "hook.h"
 #include "compat/nonblock.h"
+#include "alloc.h"
 
 void child_process_init(struct child_process *child)
 {

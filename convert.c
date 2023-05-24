@@ -2,6 +2,7 @@
 #include "advice.h"
 #include "config.h"
 #include "convert.h"
+#include "copy.h"
 #include "gettext.h"
 #include "hex.h"
 #include "object-store.h"
@@ -1314,7 +1315,7 @@ void convert_attrs(struct index_state *istate,
 		git_config(read_convert_config, NULL);
 	}
 
-	git_check_attr(istate, NULL, path, check);
+	git_check_attr(istate, path, check);
 	ccheck = check->items;
 	ca->crlf_action = git_path_check_crlf(ccheck + 4);
 	if (ca->crlf_action == CRLF_UNDEFINED)

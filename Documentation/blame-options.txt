@@ -64,11 +64,9 @@ include::line-range-format.txt[]
 	manual page.
 
 --contents <file>::
-	Pretend the file being annotated has a commit with the
-	contents from the named file and a parent of <rev>,
-	defaulting to HEAD when no <rev> is specified. You may
-	specify '-' to make the command read from the standard
-	input for the file contents.
+	Annotate using the contents from the named file, starting from <rev>
+	if it is specified, and HEAD otherwise. You may specify '-' to make
+	the command read from the standard input for the file contents.
 
 --date <format>::
 	Specifies the format used to output dates. If --date is not

@@ -6,6 +6,7 @@
 #include "cache.h"
 #include "alloc.h"
 #include "config.h"
+#include "date.h"
 #include "diff.h"
 #include "diffcore.h"
 #include "hex.h"
@@ -30,6 +31,7 @@
 #include "trace2.h"
 #include "varint.h"
 #include "split-index.h"
+#include "symlinks.h"
 #include "utf8.h"
 #include "fsmonitor.h"
 #include "thread-utils.h"
@@ -498,75 +500,8 @@ int ie_modified(struct index_state *istate,
 	return 0;
 }
 
-int base_name_compare(const char *name1, size_t len1, int mode1,
-		      const char *name2, size_t len2, int mode2)
-{
-	unsigned char c1, c2;
-	size_t len = len1 < len2 ? len1 : len2;
-	int cmp;
-
-	cmp = memcmp(name1, name2, len);
-	if (cmp)
-		return cmp;
-	c1 = name1[len];
-	c2 = name2[len];
-	if (!c1 && S_ISDIR(mode1))
-		c1 = '/';
-	if (!c2 && S_ISDIR(mode2))
-		c2 = '/';
-	return (c1 < c2) ? -1 : (c1 > c2) ? 1 : 0;
-}
-
-/*
- * df_name_compare() is identical to base_name_compare(), except it
- * compares conflicting directory/file entries as equal. Note that
- * while a directory name compares as equal to a regular file, they
- * then individually compare _differently_ to a filename that has
- * a dot after the basename (because '\0' < '.' < '/').
- *
- * This is used by routines that want to traverse the git namespace
- * but then handle conflicting entries together when possible.
- */
-int df_name_compare(const char *name1, size_t len1, int mode1,
-		    const char *name2, size_t len2, int mode2)
-{
-	unsigned char c1, c2;
-	size_t len = len1 < len2 ? len1 : len2;
-	int cmp;
-
-	cmp = memcmp(name1, name2, len);
-	if (cmp)
-		return cmp;
-	/* Directories and files compare equal (same length, same name) */
-	if (len1 == len2)
-		return 0;
-	c1 = name1[len];
-	if (!c1 && S_ISDIR(mode1))
-		c1 = '/';
-	c2 = name2[len];
-	if (!c2 && S_ISDIR(mode2))
-		c2 = '/';
-	if (c1 == '/' && !c2)
-		return 0;
-	if (c2 == '/' && !c1)
-		return 0;
-	return c1 - c2;
-}
-
-int name_compare(const char *name1, size_t len1, const char *name2, size_t len2)
-{
-	size_t min_len = (len1 < len2) ? len1 : len2;
-	int cmp = memcmp(name1, name2, min_len);
-	if (cmp)
-		return cmp;
-	if (len1 < len2)
-		return -1;
-	if (len1 > len2)
-		return 1;
-	return 0;
-}
-
-int cache_name_stage_compare(const char *name1, int len1, int stage1, const char *name2, int len2, int stage2)
+static int cache_name_stage_compare(const char *name1, int len1, int stage1,
+				    const char *name2, int len2, int stage2)
 {
 	int cmp;
 
@@ -579,6 +514,16 @@ int cache_name_stage_compare(const char *name1, int len1, int stage1, const char
 	if (stage1 > stage2)
 		return 1;
 	return 0;
+}
+
+int cmp_cache_name_compare(const void *a_, const void *b_)
+{
+	const struct cache_entry *ce1, *ce2;
+
+	ce1 = *((const struct cache_entry **)a_);
+	ce2 = *((const struct cache_entry **)b_);
+	return cache_name_stage_compare(ce1->name, ce1->ce_namelen, ce_stage(ce1),
+				  ce2->name, ce2->ce_namelen, ce_stage(ce2));
 }
 
 static int index_name_stage_pos(struct index_state *istate,

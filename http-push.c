@@ -15,6 +15,8 @@
 #include "setup.h"
 #include "sigchain.h"
 #include "strvec.h"
+#include "tree.h"
+#include "tree-walk.h"
 #include "packfile.h"
 #include "object-store.h"
 #include "commit-reach.h"

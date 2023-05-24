@@ -10,6 +10,7 @@
 #include "git-compat-util.h"
 #include "progress.h"
 #include "csum-file.h"
+#include "hash.h"
 #include "wrapper.h"
 
 static void verify_buffer_or_die(struct hashfile *f,
