@@ -5,6 +5,7 @@
 #include "color.h"
 #include "editor.h"
 #include "environment.h"
+#include "repository.h"
 #include "gettext.h"
 #include "ident.h"
 #include "parse-options.h"
@@ -717,7 +718,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		given_config_source.scope = CONFIG_SCOPE_LOCAL;
 	} else if (use_worktree_config) {
 		struct worktree **worktrees = get_worktrees();
-		if (repository_format_worktree_config)
+		if (the_repository->repository_format_worktree_config)
 			given_config_source.file = git_pathdup("config.worktree");
 		else if (worktrees[0] && worktrees[1])
 			die(_("--worktree cannot be used with multiple "
