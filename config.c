@@ -199,6 +199,7 @@ struct config_include_data {
 	void *data;
 	const struct config_options *opts;
 	struct git_config_source *config_source;
+	struct repository *repo;
 	struct config_reader *config_reader;
 
 	/*
@@ -415,7 +416,8 @@ static void populate_remote_urls(struct config_include_data *inc)
 
 	inc->remote_urls = xmalloc(sizeof(*inc->remote_urls));
 	string_list_init_dup(inc->remote_urls);
-	config_with_options(add_remote_url, inc->remote_urls, inc->config_source, &opts);
+	config_with_options(add_remote_url, inc->remote_urls,
+			    inc->config_source, inc->repo, &opts);
 
 	config_reader_set_scope(inc->config_reader, store_scope);
 }
@@ -2261,6 +2263,7 @@ static int do_git_config_sequence(struct config_reader *reader,
 
 int config_with_options(config_fn_t fn, void *data,
 			struct git_config_source *config_source,
+			struct repository *repo,
 			const struct config_options *opts)
 {
 	struct config_include_data inc = CONFIG_INCLUDE_INIT;
@@ -2271,6 +2274,7 @@ int config_with_options(config_fn_t fn, void *data,
 		inc.fn = fn;
 		inc.data = data;
 		inc.opts = opts;
+		inc.repo = repo;
 		inc.config_source = config_source;
 		inc.config_reader = &the_reader;
 		fn = git_config_include;
@@ -2289,8 +2293,6 @@ int config_with_options(config_fn_t fn, void *data,
 	} else if (config_source && config_source->file) {
 		ret = git_config_from_file(fn, config_source->file, data);
 	} else if (config_source && config_source->blob) {
-		struct repository *repo = config_source->repo ?
-			config_source->repo : the_repository;
 		ret = git_config_from_blob_ref(fn, repo, config_source->blob,
 						data);
 	} else {
@@ -2353,7 +2355,7 @@ void read_early_config(config_fn_t cb, void *data)
 		opts.git_dir = gitdir.buf;
 	}
 
-	config_with_options(cb, data, NULL, &opts);
+	config_with_options(cb, data, NULL, NULL, &opts);
 
 	strbuf_release(&commondir);
 	strbuf_release(&gitdir);
@@ -2373,7 +2375,7 @@ void read_very_early_config(config_fn_t cb, void *data)
 	opts.ignore_cmdline = 1;
 	opts.system_gently = 1;
 
-	config_with_options(cb, data, NULL, &opts);
+	config_with_options(cb, data, NULL, NULL, &opts);
 }
 
 RESULT_MUST_BE_USED
@@ -2681,7 +2683,7 @@ static void repo_read_config(struct repository *repo)
 	data.config_set = repo->config;
 	data.config_reader = &the_reader;
 
-	if (config_with_options(config_set_callback, &data, NULL, &opts) < 0)
+	if (config_with_options(config_set_callback, &data, NULL, repo, &opts) < 0)
 		/*
 		 * config_with_options() normally returns only
 		 * zero, as most errors are fatal, and
@@ -2825,7 +2827,7 @@ static void read_protected_config(void)
 	git_configset_init(&protected_config);
 	data.config_set = &protected_config;
 	data.config_reader = &the_reader;
-	config_with_options(config_set_callback, &data, NULL, &opts);
+	config_with_options(config_set_callback, &data, NULL, NULL, &opts);
 }
 
 void git_protected_config(config_fn_t fn, void *data)

@@ -375,7 +375,8 @@ static int get_value(const char *key_, const char *regex_, unsigned flags)
 	}
 
 	config_with_options(collect_config, &values,
-			    &given_config_source, &config_options);
+			    &given_config_source, the_repository,
+			    &config_options);
 
 	if (!values.nr && default_value) {
 		struct strbuf *item;
@@ -486,7 +487,8 @@ static void get_color(const char *var, const char *def_color)
 	get_color_found = 0;
 	parsed_color[0] = '\0';
 	config_with_options(git_get_color_config, NULL,
-			    &given_config_source, &config_options);
+			    &given_config_source, the_repository,
+			    &config_options);
 
 	if (!get_color_found && def_color) {
 		if (color_parse(def_color, parsed_color) < 0)
@@ -518,7 +520,8 @@ static int get_colorbool(const char *var, int print)
 	get_diff_color_found = -1;
 	get_color_ui_found = -1;
 	config_with_options(git_get_colorbool_config, NULL,
-			    &given_config_source, &config_options);
+			    &given_config_source, the_repository,
+			    &config_options);
 
 	if (get_colorbool_found < 0) {
 		if (!strcmp(get_colorbool_slot, "color.diff"))
@@ -607,7 +610,8 @@ static int get_urlmatch(const char *var, const char *url)
 	}
 
 	config_with_options(urlmatch_config_entry, &config,
-			    &given_config_source, &config_options);
+			    &given_config_source, the_repository,
+			    &config_options);
 
 	ret = !values.nr;
 
@@ -827,7 +831,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	if (actions == ACTION_LIST) {
 		check_argc(argc, 0, 0);
 		if (config_with_options(show_all_config, NULL,
-					&given_config_source,
+					&given_config_source, the_repository,
 					&config_options) < 0) {
 			if (given_config_source.file)
 				die_errno(_("unable to read config file '%s'"),
