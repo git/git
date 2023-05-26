@@ -118,13 +118,11 @@ static int cmd_pack_refs(struct ref_store *refs, const char **argv)
 {
 	unsigned int flags = arg_flags(*argv++, "flags", pack_flags);
 	static struct ref_visibility visibility = REF_VISIBILITY_INIT;
-	static struct string_list included_refs = STRING_LIST_INIT_NODUP;
 	struct pack_refs_opts pack_opts = { .flags = flags,
-					    .visibility = &visibility,
-					    .includes = &included_refs };
+					    .visibility = &visibility };
 
 	if (pack_opts.flags & PACK_REFS_ALL)
-		string_list_append(pack_opts.includes, "*");
+		add_ref_inclusion(&visibility, "*");
 
 	return refs_pack_refs(refs, &pack_opts);
 }
