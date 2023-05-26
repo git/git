@@ -69,7 +69,7 @@ msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
 "POT-Creation-Date: 2023-05-20 14:03+0200\n"
-"PO-Revision-Date: 2023-05-20 19:00-0600\n"
+"PO-Revision-Date: 2023-05-26 19:00-0600\n"
 "Last-Translator: Jordi Mas i Hernàndez <jmas@softcatala.org>\n"
 "Language-Team: Catalan\n"
 "Language: ca\n"
@@ -1525,11 +1525,11 @@ msgstr "no es pot fer fstat gitattributes al fitxer «%s»"
 
 #, c-format
 msgid "ignoring overly large gitattributes file '%s'"
-msgstr "s'ignorarà el fitxer «%s» gitattributes per massa gran"
+msgstr "s'ignorarà el fitxer «%s» gitattributes per ser massa gran"
 
 #, c-format
 msgid "ignoring overly large gitattributes blob '%s'"
-msgstr "s'ignorarà la blob «%s» gitattributes per massa gran"
+msgstr "s'ignorarà el blob «%s» gitattributes per ser massa gran"
 
 msgid "bad --attr-source or GIT_ATTR_SOURCE"
 msgstr "--attr-source incorrecte o GIT_ATTR_SOURCE"
@@ -2720,7 +2720,7 @@ msgid "show raw timestamp (Default: off)"
 msgstr "mostra la marca de temps en cru (per defecte: desactivat)"
 
 msgid "show long commit SHA1 (Default: off)"
-msgstr "mostra l'SHA1 de comissió llarg (per defecte: desactivat)"
+msgstr "mostra l'SHA1 de la comissió en format llarg (per defecte: desactivat)"
 
 msgid "suppress author name and timestamp (Default: off)"
 msgstr "omet el nom d'autor i la marca de temps (per defecte: desactivat)"
@@ -5289,7 +5289,7 @@ msgid "writing to stdin is not supported"
 msgstr "no s'admet escriure a stdin"
 
 msgid "writing config blobs is not supported"
-msgstr "no s'ha admet l'escriptura de blobs de configuració"
+msgstr "no s'admet l'escriptura de blobs de configuració"
 
 #, c-format
 msgid ""
