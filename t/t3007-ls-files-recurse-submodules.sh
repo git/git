@@ -299,6 +299,24 @@ test_expect_success '--recurse-submodules does not support --error-unmatch' '
 	test_i18ngrep "does not support --error-unmatch" actual
 '
 
+test_expect_success '--recurse-submodules parses submodule repo config' '
+	test_config -C submodule index.sparse "invalid non-boolean value" &&
+	test_must_fail git ls-files --recurse-submodules 2>err &&
+	grep "bad boolean config value" err
+'
+
+test_expect_success '--recurse-submodules parses submodule worktree config' '
+	test_config -C submodule extensions.worktreeConfig true &&
+	test_config -C submodule --worktree index.sparse "invalid non-boolean value" &&
+
+	# NEEDSWORK: the extensions.worktreeConfig is set globally based on
+	# superproject, so we need to enable it in the superproject.
+	test_config extensions.worktreeConfig true &&
+
+	test_must_fail git ls-files --recurse-submodules 2>err &&
+	grep "bad boolean config value" err
+'
+
 test_incompatible_with_recurse_submodules () {
 	test_expect_success "--recurse-submodules and $1 are incompatible" "
 		test_must_fail git ls-files --recurse-submodules $1 2>actual &&
