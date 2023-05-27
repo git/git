@@ -28,12 +28,12 @@
 #include "worktree.h"
 #include "write-or-die.h"
 
-static char *separator = "\n";
+static const char *separator = "\n";
 static const char * const git_notes_usage[] = {
 	N_("git notes [--ref <notes-ref>] [list [<object>]]"),
-	N_("git notes [--ref <notes-ref>] add [-f] [--allow-empty] [--separator=<paragraph-break>] [-m <msg> | -F <file> | (-c | -C) <object>] [<object>]"),
+	N_("git notes [--ref <notes-ref>] add [-f] [--allow-empty] [--[no-]separator|--separator=<paragraph-break>] [--[no-]stripspace] [-m <msg> | -F <file> | (-c | -C) <object>] [<object>]"),
 	N_("git notes [--ref <notes-ref>] copy [-f] <from-object> <to-object>"),
-	N_("git notes [--ref <notes-ref>] append [--allow-empty] [--separator=<paragraph-break>] [-m <msg> | -F <file> | (-c | -C) <object>] [<object>]"),
+	N_("git notes [--ref <notes-ref>] append [--allow-empty] [--[no-]separator|--separator=<paragraph-break>] [--[no-]stripspace] [-m <msg> | -F <file> | (-c | -C) <object>] [<object>]"),
 	N_("git notes [--ref <notes-ref>] edit [--allow-empty] [<object>]"),
 	N_("git notes [--ref <notes-ref>] show [<object>]"),
 	N_("git notes [--ref <notes-ref>] merge [-v | -q] [-s <strategy>] <notes-ref>"),
@@ -239,8 +239,11 @@ static void write_note_data(struct note_data *d, struct object_id *oid)
 
 static void append_separator(struct strbuf *message)
 {
-	size_t sep_len = strlen(separator);
-	if (sep_len && separator[sep_len - 1] == '\n')
+	size_t sep_len = 0;
+
+	if (!separator)
+		return;
+	else if ((sep_len = strlen(separator)) && separator[sep_len - 1] == '\n')
 		strbuf_addstr(message, separator);
 	else
 		strbuf_addf(message, "%s%s", separator, "\n");
@@ -249,8 +252,8 @@ static void append_separator(struct strbuf *message)
 static void concat_messages(struct note_data *d)
 {
 	struct strbuf msg = STRBUF_INIT;
-
 	size_t i;
+
 	for (i = 0; i < d->msg_nr ; i++) {
 		if (d->buf.len)
 			append_separator(&d->buf);
@@ -339,6 +342,16 @@ static int parse_reedit_arg(const struct option *opt, const char *arg, int unset
 	BUG_ON_OPT_NEG(unset);
 	d->use_editor = 1;
 	return parse_reuse_arg(opt, arg, unset);
+}
+
+static int parse_separator_arg(const struct option *opt, const char *arg,
+			       int unset)
+{
+	if (unset)
+		*(const char **)opt->value = NULL;
+	else
+		*(const char **)opt->value = arg ? arg : "\n";
+	return 0;
 }
 
 static int notes_copy_from_stdin(int force, const char *rewrite_cmd)
@@ -481,8 +494,10 @@ static int add(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "allow-empty", &allow_empty,
 			N_("allow storing empty note")),
 		OPT__FORCE(&force, N_("replace existing notes"), PARSE_OPT_NOCOMPLETE),
-		OPT_STRING(0, "separator", &separator, N_("separator"),
-			N_("insert <paragraph-break> between paragraphs")),
+		OPT_CALLBACK_F(0, "separator", &separator,
+			N_("<paragraph-break>"),
+			N_("insert <paragraph-break> between paragraphs"),
+			PARSE_OPT_OPTARG, parse_separator_arg),
 		OPT_BOOL(0, "stripspace", &d.stripspace,
 			N_("remove unnecessary whitespace")),
 		OPT_END()
@@ -654,8 +669,10 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 			parse_reuse_arg),
 		OPT_BOOL(0, "allow-empty", &allow_empty,
 			N_("allow storing empty note")),
-		OPT_STRING(0, "separator", &separator, N_("separator"),
-			N_("insert <paragraph-break> between paragraphs")),
+		OPT_CALLBACK_F(0, "separator", &separator,
+			N_("<paragraph-break>"),
+			N_("insert <paragraph-break> between paragraphs"),
+			PARSE_OPT_OPTARG, parse_separator_arg),
 		OPT_BOOL(0, "stripspace", &d.stripspace,
 			N_("remove unnecessary whitespace")),
 		OPT_END()

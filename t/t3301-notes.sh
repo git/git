@@ -382,6 +382,7 @@ test_expect_success 'create note with combination of -m and -F' '
 '
 
 test_expect_success 'create note with combination of -m and -F and --separator' '
+	test_when_finished git notes remove HEAD &&
 	cat >expect-combine_m_and_F <<-\EOF &&
 	foo
 	-------
@@ -395,7 +396,22 @@ test_expect_success 'create note with combination of -m and -F and --separator' 
 	EOF
 	echo "xyzzy" >note_a &&
 	echo "zyxxy" >note_b &&
-	git notes add -m "foo" -F note_a -m "bar" -F note_b -m "baz" --separator "-------" &&
+	git notes add -m "foo" -F note_a -m "bar" -F note_b -m "baz" --separator="-------" &&
+	git notes show >actual &&
+	test_cmp expect-combine_m_and_F actual
+'
+
+test_expect_success 'create note with combination of -m and -F and --no-separator' '
+	cat >expect-combine_m_and_F <<-\EOF &&
+	foo
+	xyzzy
+	bar
+	zyxxy
+	baz
+	EOF
+	echo "xyzzy" >note_a &&
+	echo "zyxxy" >note_b &&
+	git notes add -m "foo" -F note_a -m "bar" -F note_b -m "baz" --no-separator &&
 	git notes show >actual &&
 	test_cmp expect-combine_m_and_F actual
 '
@@ -541,7 +557,7 @@ test_expect_success 'listing non-existing notes fails' '
 	test_must_be_empty actual
 '
 
-test_expect_success 'append: specify an empty separator' '
+test_expect_success 'append: specify a separator with an empty arg' '
 	test_when_finished git notes remove HEAD &&
 	cat >expect <<-\EOF &&
 	notes-1
@@ -551,6 +567,33 @@ test_expect_success 'append: specify an empty separator' '
 
 	git notes add -m "notes-1" &&
 	git notes append --separator="" -m "notes-2" &&
+	git notes show >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'append: specify a separator without arg' '
+	test_when_finished git notes remove HEAD &&
+	cat >expect <<-\EOF &&
+	notes-1
+
+	notes-2
+	EOF
+
+	git notes add -m "notes-1" &&
+	git notes append --separator -m "notes-2" &&
+	git notes show >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'append: specify as --no-separator' '
+	test_when_finished git notes remove HEAD &&
+	cat >expect <<-\EOF &&
+	notes-1
+	notes-2
+	EOF
+
+	git notes add -m "notes-1" &&
+	git notes append --no-separator -m "notes-2" &&
 	git notes show >actual &&
 	test_cmp expect actual
 '
@@ -615,7 +658,7 @@ test_expect_success 'append note with combination of -m and -F and --separator' 
 
 	echo "f-notes-1" >note_a &&
 	echo "f-notes-2" >note_b &&
-	git notes append -m "m-notes-1" -F note_a -m "m-notes-2" -F note_b -m "m-notes-3" --separator "-------" &&
+	git notes append -m "m-notes-1" -F note_a -m "m-notes-2" -F note_b -m "m-notes-3" --separator="-------" &&
 	git notes show >actual &&
 	test_cmp expect-combine_m_and_F actual
 '
