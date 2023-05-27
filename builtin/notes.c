@@ -229,13 +229,13 @@ static void write_note_data(struct note_data *d, struct object_id *oid)
 	}
 }
 
-static void insert_separator(struct strbuf *message, size_t pos)
+static void append_separator(struct strbuf *message)
 {
 	size_t sep_len = strlen(separator);
 	if (sep_len && separator[sep_len - 1] == '\n')
-		strbuf_insertstr(message, pos, separator);
+		strbuf_addstr(message, separator);
 	else
-		strbuf_insertf(message, pos, "%s%s", separator, "\n");
+		strbuf_addf(message, "%s%s", separator, "\n");
 }
 
 static void concat_messages(struct note_data *d)
@@ -245,7 +245,7 @@ static void concat_messages(struct note_data *d)
 	size_t i;
 	for (i = 0; i < d->msg_nr ; i++) {
 		if (d->buf.len)
-			insert_separator(&d->buf, d->buf.len);
+			append_separator(&d->buf);
 		strbuf_add(&msg, d->messages[i]->buf.buf, d->messages[i]->buf.len);
 		strbuf_addbuf(&d->buf, &msg);
 		if (d->messages[i]->stripspace)
@@ -680,14 +680,17 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 		/* Append buf to previous note contents */
 		unsigned long size;
 		enum object_type type;
-		char *prev_buf = repo_read_object_file(the_repository, note,
-						       &type, &size);
+		struct strbuf buf = STRBUF_INIT;
+		char *prev_buf = repo_read_object_file(the_repository, note, &type, &size);
 
-		if (d.buf.len && prev_buf && size)
-			insert_separator(&d.buf, 0);
 		if (prev_buf && size)
-			strbuf_insert(&d.buf, 0, prev_buf, size);
+			strbuf_add(&buf, prev_buf, size);
+		if (d.buf.len && prev_buf && size)
+			append_separator(&buf);
+		strbuf_insert(&d.buf, 0, buf.buf, buf.len);
+
 		free(prev_buf);
+		strbuf_release(&buf);
 	}
 
 	if (d.buf.len || allow_empty) {
