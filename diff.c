@@ -4723,11 +4723,26 @@ unsigned diff_filter_bit(char status)
 
 int diff_check_follow_pathspec(struct pathspec *ps, int die_on_error)
 {
+	unsigned forbidden_magic;
+
 	if (ps->nr != 1) {
 		if (die_on_error)
 			die(_("--follow requires exactly one pathspec"));
 		return 0;
 	}
+
+	forbidden_magic = ps->items[0].magic & ~(PATHSPEC_FROMTOP |
+						 PATHSPEC_LITERAL);
+	if (forbidden_magic) {
+		if (die_on_error) {
+			struct strbuf sb = STRBUF_INIT;
+			pathspec_magic_names(forbidden_magic, &sb);
+			die(_("pathspec magic not supported by --follow: %s"),
+			    sb.buf);
+		}
+		return 0;
+	}
+
 	return 1;
 }
 
