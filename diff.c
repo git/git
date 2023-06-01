@@ -4721,6 +4721,16 @@ unsigned diff_filter_bit(char status)
 	return filter_bit[(int) status];
 }
 
+int diff_check_follow_pathspec(struct pathspec *ps, int die_on_error)
+{
+	if (ps->nr != 1) {
+		if (die_on_error)
+			die(_("--follow requires exactly one pathspec"));
+		return 0;
+	}
+	return 1;
+}
+
 void diff_setup_done(struct diff_options *options)
 {
 	unsigned check_mask = DIFF_FORMAT_NAME |
@@ -4828,8 +4838,8 @@ void diff_setup_done(struct diff_options *options)
 
 	options->diff_path_counter = 0;
 
-	if (options->flags.follow_renames && options->pathspec.nr != 1)
-		die(_("--follow requires exactly one pathspec"));
+	if (options->flags.follow_renames)
+		diff_check_follow_pathspec(&options->pathspec, 1);
 
 	if (!options->use_color || external_diff())
 		options->color_moved = 0;
