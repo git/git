@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (May 2023, #08; Thu, 25)
-X-master-at: 79bdd48716a4c455bdc8ffd91d57a18d5cd55baa
-X-next-at: 9c6817b8e7dd4f282c873014c94d11929874b708
+Subject: What's cooking in git.git (Jun 2023, #01; Thu, 1)
+X-master-at: fe86abd7511a9a6862d5706c6fa1d9b57a63ba09
+X-next-at: fafddb0af996d6ce627478acb5b2d2c3799d3a0a
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (May 2023, #08; Thu, 25)
+What's cooking in git.git (Jun 2023, #01; Thu, 1)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,10 +16,7 @@ message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity.
 
-Git 2.41-rc2 has been tagged.
-
-Until early June, I am on half-vacation, and my bandwidth may be
-limited and availability rather sporadic.
+Git 2.41 (final) has been tagged.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -50,45 +47,38 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* sl/sparse-write-tree-part-2 (2023-05-08) 1 commit
-  (merged to 'next' on 2023-05-23 at 317fd52454)
- + t1092: update a write-tree test
-
- Fix-up to a topic already graduated to 'master'.
- source: <20230508202140.464363-1-cheskaqiqi@gmail.com>
-
---------------------------------------------------
 [New Topics]
 
-* vd/worktree-config-is-per-repository (2023-05-24) 2 commits
- - repository: move 'repository_format_worktree_config' to repo scope
- - config: use gitdir to get worktree config
+* ds/disable-replace-refs (2023-06-01) 3 commits
+ - repository: create read_replace_refs setting
+ - replace-objects: create wrapper around setting
+ - repository: create disable_replace_refs()
+ (this branch uses tb/pack-bitmap-traversal-with-boundary.)
 
- The value of config.worktree is per-repository, but has been kept
- in a singleton global variable per process. This has been OK as
- most Git operations interacted with a single repository at a time,
- but not right for operations like recursive "grep" that want to
- access multiple repositories from a single process without forking.
+ Introduce a mechanism to disable replace refs globally and per
+ repository.
 
- The global variable has been eliminated and made into a member in
- the per-repository data structure.
-
- Needs review.
- source: <pull.1536.git.1684883872.gitgitgadget@gmail.com>
+ Will merge to 'next'???
+ What's the doneness of the base topic?
+ source: <pull.1537.git.1685126617.gitgitgadget@gmail.com>
 
 
-* tb/submodule-null-deref-fix (2023-05-25) 1 commit
- - builtin/submodule--helper.c: handle missing submodule URLs
+* tz/test-fix-pthreads-prereq (2023-05-26) 1 commit
+ - trace2 tests: fix PTHREADS prereq
 
- "git submodule" code trusted the data coming from the config (and
- the in-tree .gitmodules file) too much without validating, leading
- to NULL dereference if the user mucks with a repository (e.g.
- submodule.<name>.url is removed).  This has been corrected.
+ Test fix.
 
- Will merge to 'next'?
- source: <ae6cf3fa461b85e346f034371dae56a2790dfa20.1684957882.git.me@ttaylorr.com>
+ Will merge to 'next'.
+ source: <20230525031218.3554586-1-tmz@pobox.com>
+
+
+* tz/test-ssh-verifytime-fix (2023-05-26) 1 commit
+ - t/lib-gpg: fix ssh-keygen -Y check-novalidate with openssh-9.0
+
+ Test fix.
+
+ Will merge to 'next'.
+ source: <20230525031026.3554406-1-tmz@pobox.com>
 
 --------------------------------------------------
 [Stalled]
@@ -242,6 +232,38 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* vd/worktree-config-is-per-repository (2023-05-26) 3 commits
+ - repository: move 'repository_format_worktree_config' to repo scope
+ - config: pass 'repo' directly to 'config_with_options()'
+ - config: use gitdir to get worktree config
+
+ The value of config.worktree is per-repository, but has been kept
+ in a singleton global variable per process. This has been OK as
+ most Git operations interacted with a single repository at a time,
+ but not right for operations like recursive "grep" that want to
+ access multiple repositories from a single process without forking.
+
+ The global variable has been eliminated and made into a member in
+ the per-repository data structure.
+
+ Will merge to 'next'???
+ cf. <3145f4f3-7bd4-8a1b-4943-11b7d22b60c6@github.com>
+ cf. <kl6lr0qwno2q.fsf@chooglen-macbookpro.roam.corp.google.com>
+ source: <pull.1536.v2.git.1685064781.gitgitgadget@gmail.com>
+
+
+* tb/submodule-null-deref-fix (2023-05-25) 1 commit
+ - builtin/submodule--helper.c: handle missing submodule URLs
+
+ "git submodule" code trusted the data coming from the config (and
+ the in-tree .gitmodules file) too much without validating, leading
+ to NULL dereference if the user mucks with a repository (e.g.
+ submodule.<name>.url is removed).  This has been corrected.
+
+ Will merge to 'next'?
+ source: <ae6cf3fa461b85e346f034371dae56a2790dfa20.1684957882.git.me@ttaylorr.com>
+
+
 * jc/test-modernization-2 (2023-05-23) 10 commits
  - t9400-git-cvsserver-server: modernize test format
  - t9200-git-cvsexportcommit: modernize test format
@@ -272,16 +294,15 @@ Release tarballs are available at:
  source: <cover.1684790529.git.jonathantanmy@google.com>
 
 
-* tk/cherry-pick-sequence-requires-clean-worktree (2023-05-23) 1 commit
+* tk/cherry-pick-sequence-requires-clean-worktree (2023-06-01) 1 commit
  - cherry-pick: refuse cherry-pick sequence if index is dirty
 
  "git cherry-pick A" that replays a single commit stopped before
  clobbering local modification, but "git cherry-pick A..B" did not,
  which has been corrected.
 
- Expecting a reroll.
- cf. <pull.1535.git.1684830767336.gitgitgadget@gmail.com>
- source: <pull.1535.git.1684830767336.gitgitgadget@gmail.com>
+ cf. <999f12b2-38d6-f446-e763-4985116ad37d@gmail.com>
+ source: <pull.1535.v2.git.1685264889088.gitgitgadget@gmail.com>
 
 
 * mh/credential-libsecret-attrs (2023-05-17) 1 commit
@@ -308,7 +329,8 @@ Release tarballs are available at:
 
  Code clean-up.
 
- Needs review.
+ Will merge to 'next'.
+ cf. <20230519002128.GD2442034@coredump.intra.peff.net>
  source: <cover.1684324059.git.ps@pks.im>
 
 
@@ -627,11 +649,14 @@ Release tarballs are available at:
  - pack-bitmap.c: use commit boundary during bitmap traversal
  - pack-bitmap.c: extract `fill_in_bitmap()`
  - object: add object_array initializer helper function
+ (this branch is used by ds/disable-replace-refs.)
 
  The object traversal using reachability bitmap done by
  "pack-object" has been tweaked to take advantage of the fact that
  using "boundary" commits as representative of all the uninteresting
  ones can save quite a lot of object enumeration.
+
+ Comments?
  source: <cover.1683567065.git.me@ttaylorr.com>
 
 
