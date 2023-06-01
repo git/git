@@ -246,9 +246,6 @@ jobs:
       fail-fast: false
       matrix:
         vector:
-          - jobname: linux-clang
-            cc: clang
-            pool: ubuntu-latest
           - jobname: linux-sha256
             cc: clang
             pool: ubuntu-latest
