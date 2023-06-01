@@ -65,9 +65,9 @@ UI, Workflows & Features
    has symbolic links inside its $GIT_DIR; an error message when that
    happens has been updated.
 
- * "git branch --format=..." and "git format-patch --format=..."
-   learns "--omit-empty" to hide refs that whose formatting result
-   becomes an empty string from the output.
+ * The "--format=..." option of "git for-each-ref", "git branch", and
+   "git tag" commands learn "--omit-empty" to hide refs whose
+   formatting results in an empty string from the output.
 
  * The sendemail-validate validate hook learned to pass the total
    number of input files and where in the sequence each invocation is
