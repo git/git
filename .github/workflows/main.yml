@@ -273,10 +273,7 @@ jobs:
           - jobname: linux-leaks
             cc: gcc
             pool: ubuntu-latest
-          - jobname: linux-asan
-            cc: clang
-            pool: ubuntu-latest
-          - jobname: linux-ubsan
+          - jobname: linux-asan-ubsan
             cc: clang
             pool: ubuntu-latest
     env:
