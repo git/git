@@ -274,10 +274,10 @@ jobs:
             cc: gcc
             pool: ubuntu-latest
           - jobname: linux-asan
-            cc: gcc
+            cc: clang
             pool: ubuntu-latest
           - jobname: linux-ubsan
-            cc: gcc
+            cc: clang
             pool: ubuntu-latest
     env:
       CC: ${{matrix.vector.cc}}
