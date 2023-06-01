@@ -92,8 +92,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git Turkish Localization Project\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2023-03-03 11:32+0300\n"
-"PO-Revision-Date: 2023-03-03 11:40+0300\n"
+"POT-Creation-Date: 2023-05-20 12:55+0300\n"
+"PO-Revision-Date: 2023-05-20 14:00+0300\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish (https://github.com/bitigchi/git-po/)\n"
 "Language: tr\n"
@@ -741,6 +741,23 @@ msgstr "Birleştirme öncesinde değişikliklerinizi işleyin."
 msgid "Exiting because of unfinished merge."
 msgstr "Tamamlanmamış birleştirmeden dolayı çıkılıyor."
 
+msgid ""
+"Diverging branches can't be fast-forwarded, you need to either:\n"
+"\n"
+"\tgit merge --no-ff\n"
+"\n"
+"or:\n"
+"\n"
+"\tgit rebase\n"
+msgstr ""
+"Iraksak dallar ileri sarılamaz; şunlardan birini yapmanız gerekiyor:\n"
+"\n"
+"\tgit merge --no-ff\n"
+"\n"
+"veya\n"
+"\n"
+"\tgit rebase\n"
+
 msgid "Not possible to fast-forward, aborting."
 msgstr "İleri sarma olanaklı değil, iptal ediliyor."
 
@@ -1183,6 +1200,10 @@ msgid "cannot open %s"
 msgstr "%s açılamıyor"
 
 #, c-format
+msgid "cannot unlink '%s'"
+msgstr "'%s' bağlantısı kesilemiyor"
+
+#, c-format
 msgid "Hunk #%d applied cleanly."
 msgstr "Parça #%d sorunsuzca uygulandı."
 
@@ -1366,8 +1387,12 @@ msgid "cannot read '%s'"
 msgstr "'%s' okunamıyor"
 
 #, c-format
+msgid "pathspec '%s' matches files outside the current directory"
+msgstr "yol belirteci '%s', geçerli dizinin dışındaki dosyalarla eşleşiyor"
+
+#, c-format
 msgid "pathspec '%s' did not match any files"
-msgstr "yol belirteci '%s' hiçbir dosya ile eşleşmedi"
+msgstr "yol belirteci '%s', hiçbir dosya ile eşleşmedi"
 
 #, c-format
 msgid "no such ref: %.*s"
@@ -1380,9 +1405,6 @@ msgstr "geçerli bir nesne adı değil: %s"
 #, c-format
 msgid "not a tree object: %s"
 msgstr "bir ağaç nesnesi değil: %s"
-
-msgid "current working directory is untracked"
-msgstr "geçerli çalışma dizini izlenmiyor"
 
 #, c-format
 msgid "File not found: %s"
@@ -1510,6 +1532,9 @@ msgstr "pek büyük gitattributes dosyası '%s' dosyası yok sayılıyor"
 msgid "ignoring overly large gitattributes blob '%s'"
 msgstr "pek büyük gitattributes ikili nesnesi '%s' yok sayılıyor"
 
+msgid "bad --attr-source or GIT_ATTR_SOURCE"
+msgstr "hatalı --attr-source veya GIT_ATTR_SOURCE"
+
 #, c-format
 msgid "Badly quoted content in file '%s': %s"
 msgstr "'%s' dosyasında hatalı tırnağa alınmış içerik: %s"
@@ -1614,9 +1639,6 @@ msgstr[1] "İkili arama: Şundan sonra sınanacak %d revizyon kaldı: %s\n"
 
 msgid "--contents and --reverse do not blend well."
 msgstr "--contents ve --reverse birlikte pek iyi gitmiyor."
-
-msgid "cannot use --contents with final commit object name"
-msgstr "--contents son işleme nesnesi adı ile kullanılamıyor"
 
 msgid "--reverse and --first-parent together require specified latest commit"
 msgstr ""
@@ -1799,10 +1821,6 @@ msgstr "'%s' altmodülü: '%s' dalı oluşturulamıyor"
 #, c-format
 msgid "'%s' is already checked out at '%s'"
 msgstr "'%s' çıkışı '%s' konumunda halihazırda yapılmış"
-
-#, c-format
-msgid "HEAD of working tree %s is not updated"
-msgstr "%s çalışma ağacının HEAD'i güncellenmemiş"
 
 msgid "git add [<options>] [--] <pathspec>..."
 msgstr "git add [<seçenekler>] [--] <yol-blrtç>..."
@@ -2838,6 +2856,14 @@ msgid "remote-tracking branch '%s' not found."
 msgstr "Uzak izleme dalı '%s' bulunamadı."
 
 #, c-format
+msgid ""
+"branch '%s' not found.\n"
+"Did you forget --remote?"
+msgstr ""
+"'%s' dalı bulunamadı.\n"
+"--remote yazmayı mı unuttunuz?"
+
+#, c-format
 msgid "branch '%s' not found."
 msgstr "'%s' dalı bulunamadı."
 
@@ -2866,6 +2892,10 @@ msgstr "%s dalı %s konumunda yeniden temellendiriliyor"
 #, c-format
 msgid "Branch %s is being bisected at %s"
 msgstr "%s dalı %s konumunda ikili aranıyor"
+
+#, c-format
+msgid "HEAD of working tree %s is not updated"
+msgstr "%s çalışma ağacının HEAD'i güncellenmemiş"
 
 #, c-format
 msgid "Invalid branch name: '%s'"
@@ -2966,6 +2996,9 @@ msgstr "bir dalı ve onun başvuru günlüğünü taşı/yeniden adlandır"
 
 msgid "move/rename a branch, even if target exists"
 msgstr "bir dalı taşı/yeniden adlandır, hedef var olsa bile"
+
+msgid "do not output a newline after empty formatted refs"
+msgstr "boş biçimli başvurulardan sonra bir yenisatır çıktılama"
 
 msgid "copy a branch and its reflog"
 msgstr "bir dalı ve onun başvuru günlüğünü kopyala"
@@ -3185,13 +3218,11 @@ msgid "Created new report at '%s'.\n"
 msgstr "Hata raporu '%s' dosyasına yazıldı.\n"
 
 msgid ""
-"git bundle create [-q | --quiet | --progress | --all-progress] [--all-"
-"progress-implied]\n"
+"git bundle create [-q | --quiet | --progress]\n"
 "                  [--version=<version>] <file> <git-rev-list-args>"
 msgstr ""
-"git bundle create [-q | --quiet | --progress | --all-progress] [--all-"
-"progress-implied]\n"
-"                  [--version=<sürüm>] <dosya> <git-rev-liste-argümanları>"
+"git bundle create [-q | --quiet | --progress]\n"
+"                  [--version=<sürüm>] <dosya> <git-rev-listesi-argümanları>"
 
 msgid "git bundle verify [-q | --quiet] <file>"
 msgstr "git bundle verify [-q | --quiet] <dosya>"
@@ -3211,11 +3242,11 @@ msgstr "ilerleme çubuğunu gösterme"
 msgid "show progress meter"
 msgstr "ilerleme çubuğunu göster"
 
-msgid "show progress meter during object writing phase"
-msgstr "ilerleme çubuğunu nesne yazımı aşaması sırasında göster"
+msgid "historical; same as --progress"
+msgstr "eski seçenek; --progress ile aynı"
 
-msgid "similar to --all-progress when progress meter is shown"
-msgstr "ilerleme çubuğu gösterildiğinde --all-progress'e benzer"
+msgid "historical; does nothing"
+msgstr "eski seçenek; bir şey yapmaz"
 
 msgid "specify bundle format version"
 msgstr "demet biçim sürümünü belirt"
@@ -4219,6 +4250,10 @@ msgstr "'%s' dosyasının bilgileri alınamadı"
 #, c-format
 msgid "%s exists and is not a directory"
 msgstr "%s var ve bir dizin değil"
+
+#, c-format
+msgid "'%s' is a symlink, refusing to clone with --local"
+msgstr "'%s' bir sembolik bağlantı; --local ile klonlama reddediliyor"
 
 #, c-format
 msgid "failed to start iterator over '%s'"
@@ -5733,6 +5768,174 @@ msgstr "git fetch --all [<seçenekler>]"
 msgid "fetch.parallel cannot be negative"
 msgstr "fetch.parallel negatif olamaz"
 
+msgid "couldn't find remote ref HEAD"
+msgstr "uzak HEAD başvurusu bulunamadı"
+
+#, c-format
+msgid "From %.*s\n"
+msgstr "Şu konumdan: %.*s\n"
+
+#, c-format
+msgid "object %s not found"
+msgstr "%s nesnesi bulunamadı"
+
+msgid "[up to date]"
+msgstr "[güncel]"
+
+msgid "[rejected]"
+msgstr "[reddedildi]"
+
+msgid "can't fetch into checked-out branch"
+msgstr "çıkış yapılmış dala getirilemiyor"
+
+msgid "[tag update]"
+msgstr "[etiket güncellemesi]"
+
+msgid "unable to update local ref"
+msgstr "yerel başvuru güncellenemiyor"
+
+msgid "would clobber existing tag"
+msgstr "var olan etiketi değiştirecektir"
+
+msgid "[new tag]"
+msgstr "[yeni etiket]"
+
+msgid "[new branch]"
+msgstr "[yeni dal]"
+
+msgid "[new ref]"
+msgstr "[yeni başvuru]"
+
+msgid "forced update"
+msgstr "zorlanmış güncelleme"
+
+msgid "non-fast-forward"
+msgstr "ileri sarım değil"
+
+#, c-format
+msgid "cannot open '%s'"
+msgstr "'%s' açılamıyor"
+
+msgid ""
+"fetch normally indicates which branches had a forced update,\n"
+"but that check has been disabled; to re-enable, use '--show-forced-updates'\n"
+"flag or run 'git config fetch.showForcedUpdates true'"
+msgstr ""
+"Getirme, normalde hangi dallarda zorla güncelleme yapıldığını belirtir;\n"
+"ancak bu denetleme kapatılmış; yeniden açmak için '--show-forced-updates'\n"
+"bayrağını kullanın veya 'git config fetch.showForcedUpdates true' çalıştırın"
+
+#, c-format
+msgid ""
+"it took %.2f seconds to check forced updates; you can use\n"
+"'--no-show-forced-updates' or run 'git config fetch.showForcedUpdates "
+"false'\n"
+"to avoid this check\n"
+msgstr ""
+"Zorla güncellemeleri denetleme %.2f saniye sürdü. '--no-show-forced-"
+"updates'\n"
+"kullanarak veya 'git config fetch.showForcedUpdates false' çalıştırarak\n"
+"bu denetlemeden kaçınabilirsiniz.\n"
+
+#, c-format
+msgid "%s did not send all necessary objects\n"
+msgstr "%s tüm gerekli nesneleri göndermedi\n"
+
+#, c-format
+msgid "rejected %s because shallow roots are not allowed to be updated"
+msgstr "%s reddedildi; çünkü sığ köklerin güncellenmesine izin verilmiyor"
+
+#, c-format
+msgid ""
+"some local refs could not be updated; try running\n"
+" 'git remote prune %s' to remove any old, conflicting branches"
+msgstr ""
+"bazı yerel başvurular güncellenemedi; 'git remote prune %s'\n"
+"kullanarak eski ve çakışan dalları kaldırmayı deneyin"
+
+#, c-format
+msgid "   (%s will become dangling)"
+msgstr "   (%s sarkacak)"
+
+#, c-format
+msgid "   (%s has become dangling)"
+msgstr "   (%s sarkmaya başladı)"
+
+msgid "[deleted]"
+msgstr "[silindi]"
+
+msgid "(none)"
+msgstr "(hiçbiri)"
+
+#, c-format
+msgid "refusing to fetch into branch '%s' checked out at '%s'"
+msgstr "'%s' dalına getirme reddediliyor, '%s' konumunda çıkış yapıldı"
+
+#, c-format
+msgid "option \"%s\" value \"%s\" is not valid for %s"
+msgstr "\"%s\" seçeneği \"%s\" değeri %s için geçerli değil"
+
+#, c-format
+msgid "option \"%s\" is ignored for %s\n"
+msgstr "\"%s\" seçeneği %s için yok sayılıyor\n"
+
+#, c-format
+msgid "%s is not a valid object"
+msgstr "%s geçerli bir nesne değil"
+
+#, c-format
+msgid "the object %s does not exist"
+msgstr "%s diye bir nesne yok"
+
+msgid "multiple branches detected, incompatible with --set-upstream"
+msgstr "birden çok dal algılandı, --set-upstream ile uyumsuz"
+
+#, c-format
+msgid ""
+"could not set upstream of HEAD to '%s' from '%s' when it does not point to "
+"any branch."
+msgstr ""
+"HEAD'in üst kaynağı '%s' olarak '%s' konumundan ayarlanamadı; çünkü herhangi "
+"bir dala işaret etmiyor."
+
+msgid "not setting upstream for a remote remote-tracking branch"
+msgstr "bir uzak konum uzak izleme dalı için üstkaynak ayarlanmıyor"
+
+msgid "not setting upstream for a remote tag"
+msgstr "bir uzak konum etiketi için üstkaynak ayarlanmıyor"
+
+msgid "unknown branch type"
+msgstr "bilinmeyen dal türü"
+
+msgid ""
+"no source branch found;\n"
+"you need to specify exactly one branch with the --set-upstream option"
+msgstr ""
+"Kaynak dal bulunamadı;\n"
+"--set-upstream seçeneği ile tam olarak bir dal belirtmeniz gerekiyor"
+
+#, c-format
+msgid "Fetching %s\n"
+msgstr "%s getiriliyor\n"
+
+#, c-format
+msgid "could not fetch %s"
+msgstr "%s getirilemedi"
+
+#, c-format
+msgid "could not fetch '%s' (exit code: %d)\n"
+msgstr "'%s' getirilemedi (çıkış kodu: %d)\n"
+
+msgid ""
+"no remote repository specified; please specify either a URL or a\n"
+"remote name from which new revisions should be fetched"
+msgstr ""
+"Bir uzak dal belirtilmedi; lütfen yeni revizyonların\n"
+"getirileceği bir URL veya uzak konum adı belirtin"
+
+msgid "you need to specify a tag name"
+msgstr "bir etiket adı belirtmeniz gerekiyor"
+
 msgid "fetch from all remotes"
 msgstr "tüm uzak konumlardan getir"
 
@@ -5841,174 +6044,6 @@ msgstr "getirdikten sonra işleme grafiğini yaz"
 
 msgid "accept refspecs from stdin"
 msgstr "başvuru belirteçlerini stdin'den oku"
-
-msgid "couldn't find remote ref HEAD"
-msgstr "uzak HEAD başvurusu bulunamadı"
-
-#, c-format
-msgid "object %s not found"
-msgstr "%s nesnesi bulunamadı"
-
-msgid "[up to date]"
-msgstr "[güncel]"
-
-msgid "[rejected]"
-msgstr "[reddedildi]"
-
-msgid "can't fetch into checked-out branch"
-msgstr "çıkış yapılmış dala getirilemiyor"
-
-msgid "[tag update]"
-msgstr "[etiket güncellemesi]"
-
-msgid "unable to update local ref"
-msgstr "yerel başvuru güncellenemiyor"
-
-msgid "would clobber existing tag"
-msgstr "var olan etiketi değiştirecektir"
-
-msgid "[new tag]"
-msgstr "[yeni etiket]"
-
-msgid "[new branch]"
-msgstr "[yeni dal]"
-
-msgid "[new ref]"
-msgstr "[yeni başvuru]"
-
-msgid "forced update"
-msgstr "zorlanmış güncelleme"
-
-msgid "non-fast-forward"
-msgstr "ileri sarım değil"
-
-#, c-format
-msgid "cannot open '%s'"
-msgstr "'%s' açılamıyor"
-
-msgid ""
-"fetch normally indicates which branches had a forced update,\n"
-"but that check has been disabled; to re-enable, use '--show-forced-updates'\n"
-"flag or run 'git config fetch.showForcedUpdates true'"
-msgstr ""
-"Getirme, normalde hangi dallarda zorla güncelleme yapıldığını belirtir;\n"
-"ancak bu denetleme kapatılmış; yeniden açmak için '--show-forced-updates'\n"
-"bayrağını kullanın veya 'git config fetch.showForcedUpdates true' çalıştırın"
-
-#, c-format
-msgid ""
-"it took %.2f seconds to check forced updates; you can use\n"
-"'--no-show-forced-updates' or run 'git config fetch.showForcedUpdates "
-"false'\n"
-"to avoid this check\n"
-msgstr ""
-"Zorla güncellemeleri denetleme %.2f saniye sürdü. '--no-show-forced-"
-"updates'\n"
-"kullanarak veya 'git config fetch.showForcedUpdates false' çalıştırarak\n"
-"bu denetlemeden kaçınabilirsiniz.\n"
-
-#, c-format
-msgid "%s did not send all necessary objects\n"
-msgstr "%s tüm gerekli nesneleri göndermedi\n"
-
-#, c-format
-msgid "rejected %s because shallow roots are not allowed to be updated"
-msgstr "%s reddedildi; çünkü sığ köklerin güncellenmesine izin verilmiyor"
-
-#, c-format
-msgid "From %.*s\n"
-msgstr "Şu konumdan: %.*s\n"
-
-#, c-format
-msgid ""
-"some local refs could not be updated; try running\n"
-" 'git remote prune %s' to remove any old, conflicting branches"
-msgstr ""
-"bazı yerel başvurular güncellenemedi; 'git remote prune %s'\n"
-"kullanarak eski ve çakışan dalları kaldırmayı deneyin"
-
-#, c-format
-msgid "   (%s will become dangling)"
-msgstr "   (%s sarkacak)"
-
-#, c-format
-msgid "   (%s has become dangling)"
-msgstr "   (%s sarkmaya başladı)"
-
-msgid "[deleted]"
-msgstr "[silindi]"
-
-msgid "(none)"
-msgstr "(hiçbiri)"
-
-#, c-format
-msgid "refusing to fetch into branch '%s' checked out at '%s'"
-msgstr "'%s' dalına getirme reddediliyor, '%s' konumunda çıkış yapıldı"
-
-#, c-format
-msgid "option \"%s\" value \"%s\" is not valid for %s"
-msgstr "\"%s\" seçeneği \"%s\" değeri %s için geçerli değil"
-
-#, c-format
-msgid "option \"%s\" is ignored for %s\n"
-msgstr "\"%s\" seçeneği %s için yok sayılıyor\n"
-
-#, c-format
-msgid "%s is not a valid object"
-msgstr "%s geçerli bir nesne değil"
-
-#, c-format
-msgid "the object %s does not exist"
-msgstr "%s diye bir nesne yok"
-
-msgid "multiple branches detected, incompatible with --set-upstream"
-msgstr "birden çok dal algılandı, --set-upstream ile uyumsuz"
-
-#, c-format
-msgid ""
-"could not set upstream of HEAD to '%s' from '%s' when it does not point to "
-"any branch."
-msgstr ""
-"HEAD'in üst kaynağı '%s' olarak '%s' konumundan ayarlanamadı; çünkü herhangi "
-"bir dala işaret etmiyor."
-
-msgid "not setting upstream for a remote remote-tracking branch"
-msgstr "bir uzak konum uzak izleme dalı için üstkaynak ayarlanmıyor"
-
-msgid "not setting upstream for a remote tag"
-msgstr "bir uzak konum etiketi için üstkaynak ayarlanmıyor"
-
-msgid "unknown branch type"
-msgstr "bilinmeyen dal türü"
-
-msgid ""
-"no source branch found;\n"
-"you need to specify exactly one branch with the --set-upstream option"
-msgstr ""
-"Kaynak dal bulunamadı;\n"
-"--set-upstream seçeneği ile tam olarak bir dal belirtmeniz gerekiyor"
-
-#, c-format
-msgid "Fetching %s\n"
-msgstr "%s getiriliyor\n"
-
-#, c-format
-msgid "could not fetch %s"
-msgstr "%s getirilemedi"
-
-#, c-format
-msgid "could not fetch '%s' (exit code: %d)\n"
-msgstr "'%s' getirilemedi (çıkış kodu: %d)\n"
-
-msgid ""
-"no remote repository specified; please specify either a URL or a\n"
-"remote name from which new revisions should be fetched"
-msgstr ""
-"Bir uzak dal belirtilmedi; lütfen yeni revizyonların\n"
-"getirileceği bir URL veya uzak konum adı belirtin"
-
-msgid "you need to specify a tag name"
-msgstr "bir etiket adı belirtmeniz gerekiyor"
 
 msgid "--negotiate-only needs one or more --negotiation-tip=*"
 msgstr "--negotiate-only'e bir veya daha çok --negotiation-tip=* gerekiyor"
@@ -6125,6 +6160,12 @@ msgstr "yalnızca işlemeyi içeren başvuruları yazdır"
 msgid "print only refs which don't contain the commit"
 msgstr "yalnızca işlemeyi içermeyen başvuruları yazdır"
 
+msgid "read reference patterns from stdin"
+msgstr "başvuru dizgilerini stdin'den oku"
+
+msgid "unknown arguments supplied with --stdin"
+msgstr "--stdin ile bilinmeyen argümanlar verilmiş"
+
 msgid "git for-each-repo --config=<config> [--] <arguments>"
 msgstr "git for-each-repo --config=<yapılandırma> [--] <argümanlar>"
 
@@ -6136,6 +6177,10 @@ msgstr "bir depo yolları listesi tutan yapılandırma anahtarı"
 
 msgid "missing --config=<config>"
 msgstr "--config=<yapılandırma> eksik"
+
+#, c-format
+msgid "got bad config --config=%s"
+msgstr "hatayı yapılandırma alındı, --config=%s"
 
 msgid "unknown"
 msgstr "bilinmeyen"
@@ -6283,19 +6328,28 @@ msgstr "%s: ayrık HEAD bir şeye işaret etmiyor"
 msgid "notice: %s points to an unborn branch (%s)"
 msgstr "Uyarı: %s henüz doğmamış bir dala işaret ediyor (%s)"
 
-msgid "Checking cache tree"
-msgstr "Önbellek ağacı denetleniyor"
+#, c-format
+msgid "Checking cache tree of %s"
+msgstr "%s ögesinin önbellek ağacı denetleniyor"
 
 #, c-format
-msgid "%s: invalid sha1 pointer in cache-tree"
-msgstr "%s: cache-tree içinde geçersiz sha1 işaretçisi"
+msgid "%s: invalid sha1 pointer in cache-tree of %s"
+msgstr "%s: %s ögesinin cache-tree'si içinde geçersiz sha1 işaretçisi"
 
 msgid "non-tree in cache-tree"
 msgstr "cache-tree içinde ağaç olmayan öge"
 
 #, c-format
-msgid "%s: invalid sha1 pointer in resolve-undo"
-msgstr "%s: resolve-undo içinde geçersiz sha1 işaretçisi"
+msgid "%s: invalid sha1 pointer in resolve-undo of %s"
+msgstr "%s: %s ögesinin resolve-undo'su içinde geçersiz sha1 işaretçisi"
+
+#, c-format
+msgid "unable to load rev-index for pack '%s'"
+msgstr "'%s' paketi için rev-index yüklenemiyor"
+
+#, c-format
+msgid "invalid rev-index for pack '%s'"
+msgstr "'%s' paketi için geçersiz rev-index"
 
 msgid ""
 "git fsck [--tags] [--root] [--unreachable] [--cache] [--no-reflogs]\n"
@@ -9139,6 +9193,12 @@ msgstr "desteklenmeyen indeks sürümü %s"
 msgid "bad index version '%s'"
 msgstr "hatalı indeks sürümü '%s'"
 
+msgid "show progress meter during object writing phase"
+msgstr "ilerleme çubuğunu nesne yazımı aşaması sırasında göster"
+
+msgid "similar to --all-progress when progress meter is shown"
+msgstr "ilerleme çubuğu gösterildiğinde --all-progress'e benzer"
+
 msgid "<version>[,<offset>]"
 msgstr "<sürüm>[,<ofset>]"
 
@@ -9329,6 +9389,9 @@ msgstr ""
 "<git@vger.kernel.org> adresine bir e-posta atarak\n"
 "bize haber verin. Sağ olun.\n"
 
+msgid "refusing to run without --i-still-use-this"
+msgstr "--i-still-use-this olmadan çalıştırma reddediliyor"
+
 msgid "git pack-refs [--all] [--no-prune]"
 msgstr "git pack-refs [--all] [--no-prune]"
 
@@ -9499,7 +9562,7 @@ msgstr "İndekse eklenen değişikliklerle henüz doğmamış bir dal güncellen
 msgid "pull with rebase"
 msgstr "yeniden temellendirme ile çekim"
 
-msgid "please commit or stash them."
+msgid "Please commit or stash them."
 msgstr "Lütfen onları işleyin veya zulalayın."
 
 #, c-format
@@ -9735,8 +9798,8 @@ msgstr "'%s' için geçersiz değer"
 msgid "repository"
 msgstr "depo"
 
-msgid "push all refs"
-msgstr "tüm başvuruları it"
+msgid "push all branches"
+msgstr "tüm dalları it"
 
 msgid "mirror all refs"
 msgstr "tüm başvuruları yansıla"
@@ -9744,11 +9807,11 @@ msgstr "tüm başvuruları yansıla"
 msgid "delete refs"
 msgstr "başvuruları sil"
 
-msgid "push tags (can't be used with --all or --mirror)"
-msgstr "etiketleri it (--all veya --mirror ile kullanılamaz)"
+msgid "push tags (can't be used with --all or --branches or --mirror)"
+msgstr "etiketleri it (--all, --branches  veya --mirror ile kullanılamaz)"
 
 msgid "force updates"
-msgstr "zorla güncelle"
+msgstr "güncellemeleri zorla"
 
 msgid "<refname>:<expect>"
 msgstr "<bşvr-adı>:<bekle>"
@@ -10009,6 +10072,10 @@ msgstr ""
 "Bunun sonucu olarak git onları yeniden temellendiremiyor."
 
 #, c-format
+msgid "Unknown rebase-merges mode: %s"
+msgstr "Bilinmeyen rebase-merges kipi: %s"
+
+#, c-format
 msgid "could not switch to %s"
 msgstr "şuraya geçilemedi: %s"
 
@@ -10021,6 +10088,15 @@ msgid ""
 "\"ask\"."
 msgstr ""
 "Tanımlanamayan boş tür '%s'; geçerli türler: \"drop\", \"keep\" ve \"ask\"."
+
+msgid ""
+"--rebase-merges with an empty string argument is deprecated and will stop "
+"working in a future version of Git. Use --rebase-merges without an argument "
+"instead, which does the same thing."
+msgstr ""
+"bir boş dizi argümanıyla --rebase-merges yapmak artık kullanılmıyor ve "
+"Git'in ileriki bir sürümünde tümüyle kaldırılacak. Bunun yerine, aynı şeyi "
+"yapan argümansız bir --rebase-merges kullanın."
 
 #, c-format
 msgid ""
@@ -10243,18 +10319,21 @@ msgstr ""
 msgid "switch `C' expects a numerical value"
 msgstr "'C' anahtarı sayısal bir değer bekliyor"
 
-#, c-format
-msgid "Unknown mode: %s"
-msgstr "Bilinmeyen kip: %s"
-
 msgid "--strategy requires --merge or --interactive"
 msgstr "--strategy, --merge veya --interactive gerektiriyor"
 
 msgid ""
-"apply options are incompatible with rebase.autosquash.  Consider adding --no-"
+"apply options are incompatible with rebase.autoSquash.  Consider adding --no-"
 "autosquash"
 msgstr ""
-"uygulama seçenekleri, rebase.autosquash ile uyumlu değil. --no-autosquash "
+"seçenekleri uygula, rebase.autoSquash ile uyumlu değil. --no-autosquash "
+"eklemeyi düşünün"
+
+msgid ""
+"apply options are incompatible with rebase.rebaseMerges.  Consider adding --"
+"no-rebase-merges"
+msgstr ""
+"seçenekleri uygula, rebase.rebaseMerges ile uyumlu değil. --no-rebase-merges "
 "eklemeyi düşünün"
 
 msgid ""
@@ -10300,9 +10379,6 @@ msgstr "'%s': tam olarak bir birleştirme temeli gerekiyor"
 #, c-format
 msgid "Does not point to a valid commit '%s'"
 msgstr "'%s' geçerli bir işlemeye işaret etmiyor"
-
-msgid "Please commit or stash them."
-msgstr "Lütfen onları işleyin veya zulalayın."
 
 msgid "HEAD is up to date."
 msgstr "HEAD güncel."
@@ -10965,8 +11041,8 @@ msgstr "-a ile aynı, ulaşılamayan süprüntü nesneleri ayrı paketle"
 msgid "approxidate"
 msgstr "yaklaşık tarih"
 
-msgid "with -C, expire objects older than this"
-msgstr "-C ile, bundan daha eski nesneleri yürürlükten kaldır"
+msgid "with --cruft, expire objects older than this"
+msgstr "--cruft ile, bundan daha eski nesneleri yürürlükten kaldır"
 
 msgid "remove redundant packs, and run git-prune-packed"
 msgstr "gereksiz paketleri kaldır ve 'git-prune-packed' çalıştır"
@@ -11634,6 +11710,9 @@ msgstr ""
 msgid "remote name"
 msgstr "uzak konum adı"
 
+msgid "push all refs"
+msgstr "tüm başvuruları it"
+
 msgid "use stateless RPC protocol"
 msgstr "durumsuz RPC protokolünü kullan"
 
@@ -11834,9 +11913,11 @@ msgid "show refs from stdin that aren't in local repository"
 msgstr "stdin'den yerel bir depoda olmayan başvuruları göster"
 
 msgid ""
-"git sparse-checkout (init | list | set | add | reapply | disable) [<options>]"
+"git sparse-checkout (init | list | set | add | reapply | disable | check-"
+"rules) [<options>]"
 msgstr ""
-"git sparse-checkout (init | list | set | add | reapply | disable) [<sçnklr>]"
+"git sparse-checkout (init | list | set | add | reapply | disable | check-"
+"rules) [<seçenekler>]"
 
 msgid "this worktree is not sparse"
 msgstr "bu çalışma ağacı aralıklı değil"
@@ -11957,6 +12038,23 @@ msgstr ""
 
 msgid "error while refreshing working directory"
 msgstr "çalışma dizini yenilenirken hata"
+
+msgid ""
+"git sparse-checkout check-rules [-z] [--skip-checks][--[no-]cone] [--rules-"
+"file <file>]"
+msgstr ""
+"git sparse-checkout check-rules [-z] [--skip-checks][--[no-]cone] [--rules-"
+"file <dosya>]"
+
+msgid "terminate input and output files by a NUL character"
+msgstr "girdi ve çıktı dosyalarını bir NUL karakteri ile sonlandır"
+
+msgid "when used with --rules-file interpret patterns as cone mode patterns"
+msgstr ""
+"--rules-file ile kullanıldığında dizgileri koni kipi dizgileri olarak yorumla"
+
+msgid "use patterns in <file> instead of the current ones."
+msgstr "geçerli dizgiler yerine <dosya> içindekileri kullan."
 
 msgid "git stash list [<log-options>]"
 msgstr "git stash list [<günlük-seçenekleri>]"
@@ -14778,8 +14876,8 @@ msgstr "kısaltma uzunluğu erim dışında: %d"
 msgid "bad zlib compression level %d"
 msgstr "hatalı zlib sıkıştırma düzeyi %d"
 
-msgid "core.commentChar should only be one character"
-msgstr "core.commentChar yalnızca bir karakter olmalı"
+msgid "core.commentChar should only be one ASCII character"
+msgstr "core.commentChar yalnızca bir ASCII karakter olmalı"
 
 #, c-format
 msgid "ignoring unknown core.fsyncMethod value '%s'"
@@ -14888,6 +14986,10 @@ msgstr "'%s', '%s' olarak ayarlanamadı"
 #, c-format
 msgid "invalid section name: %s"
 msgstr "geçersiz bölüm adı: %s"
+
+#, c-format
+msgid "refusing to work with overly long line in '%s' on line %<PRIuMAX>"
+msgstr "'%s' içindeki haddinden uzun %<PRIuMAX>. satırla çalışma reddediliyor"
 
 #, c-format
 msgid "missing value for '%s'"
@@ -15559,6 +15661,9 @@ msgstr "çıktının her satırının başına ek bir önek ekle"
 msgid "do not show any source or destination prefix"
 msgstr "hiçbir kaynak ve hedef önekini gösterme"
 
+msgid "use default prefixes a/ and b/"
+msgstr "a/ ve b/ ögelerinin öntanımlı öneklerini kullan"
+
 msgid "show context between diff hunks up to the specified number of lines"
 msgstr "diff parçaları arasındaki bağlamı belirtilen satır sayısı kadar göster"
 
@@ -15856,6 +15961,14 @@ msgstr "git dizini '%s' konumundan '%s' konumuna göç ettirilemedi"
 msgid "hint: Waiting for your editor to close the file...%c"
 msgstr "İpucu: Düzenleyicinizin dosyayı kapatması bekleniyor...%c"
 
+#, c-format
+msgid "could not write to '%s'"
+msgstr "şuraya yazılamadı: '%s'"
+
+#, c-format
+msgid "could not edit '%s'"
+msgstr "'%s' düzenlenemedi"
+
 msgid "Filtering content"
 msgstr "İçerik süzülüyor"
 
@@ -16149,6 +16262,10 @@ msgstr "-c bir yapılandırma dizisi bekliyor\n"
 #, c-format
 msgid "no config key given for --config-env\n"
 msgstr "--config-env için bir yapılandırma anahtarı verilmedi\n"
+
+#, c-format
+msgid "no attribute source given for --attr-source\n"
+msgstr "--attr-source için öznitelik kaynağı verilmedi\n"
 
 #, c-format
 msgid "unknown option: %s\n"
@@ -17823,6 +17940,10 @@ msgid "unable to get disk usage of '%s'"
 msgstr "'%s' ögesinin disk kullanımı alınamadı"
 
 #, c-format
+msgid "bitmap file '%s' has invalid checksum"
+msgstr "biteşlem dosyası '%s', geçersiz sağlama toplamına iye"
+
+#, c-format
 msgid "mtimes file %s is too small"
 msgstr "mtimes dosyası %s pek küçük"
 
@@ -17861,6 +17982,13 @@ msgstr "%s reverse-index dosyasının sürümü %<PRIu32> desteklenmiyor"
 #, c-format
 msgid "reverse-index file %s has unsupported hash id %<PRIu32>"
 msgstr "%s reverse-index dosyasının sağlama numarası %<PRIu32> desteklenmiyor"
+
+msgid "invalid checksum"
+msgstr "geçersiz sağlama toplamı"
+
+#, c-format
+msgid "invalid rev-index position at %<PRIu64>: %<PRIu32> != %<PRIu32>"
+msgstr "%<PRIu64> konumunda geçersiz rev-index konumu: %<PRIu32> != %<PRIu32>"
 
 msgid "cannot both write and verify reverse index"
 msgstr "ters indeks dosyası hem yazılıp hem doğrulanamıyor"
@@ -18573,6 +18701,10 @@ msgid "positive width expected with the %%(align) atom"
 msgstr "pozitif genişlik %%(align) ögeciği ile birlikte bekleniyordu"
 
 #, c-format
+msgid "expected format: %%(ahead-behind:<committish>)"
+msgstr "beklenen biçim: %%(ahead-behind:<işlememsi>)"
+
+#, c-format
 msgid "malformed field name: %.*s"
 msgstr "hatalı oluşturulmuş alan adı: %.*s"
 
@@ -19194,10 +19326,6 @@ msgid "no remembered resolution for '%s'"
 msgstr "'%s' için hatırlanan çözüm yok"
 
 #, c-format
-msgid "cannot unlink '%s'"
-msgstr "'%s' bağlantısı kesilemiyor"
-
-#, c-format
 msgid "Updated preimage for '%s'"
 msgstr "'%s' için öngörüntü güncellendi"
 
@@ -19529,10 +19657,6 @@ msgstr ""
 #, c-format
 msgid "could not lock '%s'"
 msgstr "'%s' kilitlenemedi"
-
-#, c-format
-msgid "could not write to '%s'"
-msgstr "şuraya yazılamadı: '%s'"
 
 #, c-format
 msgid "could not write eol to '%s'"
@@ -19894,9 +20018,6 @@ msgstr "\"git cherry-pick (--continue | %s--abort | --quit)\" deneyin"
 msgid "could not create sequencer directory '%s'"
 msgstr "ardıştırıcı dizini '%s' oluşturulamadı"
 
-msgid "could not lock HEAD"
-msgstr "HEAD kilitlenemedi"
-
 msgid "no cherry-pick or revert in progress"
 msgstr "süren bir seç-al veya geri al yok"
 
@@ -19991,20 +20112,20 @@ msgstr ""
 "\tgit rebase --continue\n"
 "\n"
 
-msgid "and made changes to the index and/or the working tree\n"
-msgstr "ve indekse ve/veya çalışma ağacına değişiklikler yapıldı\n"
+msgid "and made changes to the index and/or the working tree.\n"
+msgstr "ve indekse ve/veya çalışma ağacına değişiklikler yapıldı.\n"
 
 #, c-format
 msgid ""
 "execution succeeded: %s\n"
-"but left changes to the index and/or the working tree\n"
+"but left changes to the index and/or the working tree.\n"
 "Commit or stash your changes, and then run\n"
 "\n"
 "  git rebase --continue\n"
 "\n"
 msgstr ""
-"Yürütme başarılı oldu: %s,\n"
-"ancak indeksinize ve/veya çalışma ağacınıza değişiklikler bıraktı\n"
+"Yürütme başarılı oldu: %s;\n"
+"ancak indeksinize ve/veya çalışma ağacınıza değişiklikler bıraktı.\n"
 "Değişikliklerinizi işleyin veya zulalayın, ardından şunu çalıştırın:\n"
 "\n"
 "\tgit rebase --continue\n"
@@ -20436,10 +20557,6 @@ msgid "%u byte/s"
 msgid_plural "%u bytes/s"
 msgstr[0] "%u bayt/sn"
 msgstr[1] "%u bayt/sn"
-
-#, c-format
-msgid "could not edit '%s'"
-msgstr "'%s' düzenlenemedi"
 
 #, c-format
 msgid "ignoring suspicious submodule name: %s"
@@ -22147,12 +22264,16 @@ msgid "(%s) Could not execute '%s'"
 msgstr "(%s) '%s' yürütülemedi"
 
 #, perl-format
-msgid "(%s) Adding %s: %s from: '%s'\n"
-msgstr "(%s) %s: %s, '%s' konumundan ekleniyor\n"
+msgid "(%s) Malformed output from '%s'"
+msgstr "(%s) '%s' ögesinden hatalı oluşturulmuş çıktı"
 
 #, perl-format
 msgid "(%s) failed to close pipe to '%s'"
-msgstr "(%s) şuraya olan veri yolu kapatılamadı: '%s'"
+msgstr "(%s) şuraya olan veriyolu kapatılamadı: '%s'"
+
+#, perl-format
+msgid "(%s) Adding %s: %s from: '%s'\n"
+msgstr "(%s) %s: %s, '%s' konumundan ekleniyor\n"
 
 msgid "cannot send message as 7bit"
 msgstr "ileti 7 bit olarak gönderilemiyor"
