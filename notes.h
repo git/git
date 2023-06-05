@@ -286,8 +286,9 @@ void disable_display_notes(struct display_notes_opt *opt, int *show_notes);
  * If 'opt' is not NULL, then it specifies additional settings for the
  * displaying:
  *
- * - suppress_default_notes indicates that the notes from
- *   core.notesRef and notes.displayRef should not be loaded.
+ * - use_default_notes: less than `0` is "unset", which means that the
+ *   default notes are shown iff no other notes are given. Otherwise,
+ *   treat it like a boolean.
  *
  * - extra_notes_refs may contain a list of globs (in the same style
  *   as notes.displayRef) where notes should be loaded from.
