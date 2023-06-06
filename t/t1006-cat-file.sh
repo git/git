@@ -109,26 +109,12 @@ strlen () {
     echo_without_newline "$1" | wc -c | sed -e 's/^ *//'
 }
 
-maybe_remove_timestamp () {
-	if test -z "$2"; then
-		echo_without_newline "$1"
-	else
-		echo_without_newline "$(printf '%s\n' "$1" | remove_timestamp)"
-	fi
-}
-
-remove_timestamp () {
-	sed -e 's/ [0-9][0-9]* [-+][0-9][0-9][0-9][0-9]$//'
-}
-
-
 run_tests () {
     type=$1
     sha1=$2
     size=$3
     content=$4
     pretty_content=$5
-    no_ts=$6
 
     batch_output="$sha1 $type $size
 $content"
@@ -163,21 +149,21 @@ $content"
 
     test -z "$content" ||
     test_expect_success "Content of $type is correct" '
-	maybe_remove_timestamp "$content" $no_ts >expect &&
-	maybe_remove_timestamp "$(git cat-file $type $sha1)" $no_ts >actual &&
+	echo_without_newline "$content" >expect &&
+	git cat-file $type $sha1 >actual &&
 	test_cmp expect actual
     '
 
     test_expect_success "Pretty content of $type is correct" '
-	maybe_remove_timestamp "$pretty_content" $no_ts >expect &&
-	maybe_remove_timestamp "$(git cat-file -p $sha1)" $no_ts >actual &&
+	echo_without_newline "$pretty_content" >expect &&
+	git cat-file -p $sha1 >actual &&
 	test_cmp expect actual
     '
 
     test -z "$content" ||
     test_expect_success "--batch output of $type is correct" '
-	maybe_remove_timestamp "$batch_output" $no_ts >expect &&
-	maybe_remove_timestamp "$(echo $sha1 | git cat-file --batch)" $no_ts >actual &&
+	echo "$batch_output" >expect &&
+	echo $sha1 | git cat-file --batch >actual &&
 	test_cmp expect actual
     '
 
@@ -191,9 +177,8 @@ $content"
     do
 	test -z "$content" ||
 		test_expect_success "--batch-command $opt output of $type content is correct" '
-		maybe_remove_timestamp "$batch_output" $no_ts >expect &&
-		maybe_remove_timestamp "$(test_write_lines "contents $sha1" |
-		git cat-file --batch-command $opt)" $no_ts >actual &&
+		echo "$batch_output" >expect &&
+		test_write_lines "contents $sha1" | git cat-file --batch-command $opt >actual &&
 		test_cmp expect actual
 	'
 
@@ -228,10 +213,9 @@ $content"
     test_expect_success "--batch without type ($type)" '
 	{
 		echo "$size" &&
-		maybe_remove_timestamp "$content" $no_ts
+		echo "$content"
 	} >expect &&
-	echo $sha1 | git cat-file --batch="%(objectsize)" >actual.full &&
-	maybe_remove_timestamp "$(cat actual.full)" $no_ts >actual &&
+	echo $sha1 | git cat-file --batch="%(objectsize)" >actual &&
 	test_cmp expect actual
     '
 
@@ -239,10 +223,9 @@ $content"
     test_expect_success "--batch without size ($type)" '
 	{
 		echo "$type" &&
-		maybe_remove_timestamp "$content" $no_ts
+		echo "$content"
 	} >expect &&
-	echo $sha1 | git cat-file --batch="%(objecttype)" >actual.full &&
-	maybe_remove_timestamp "$(cat actual.full)" $no_ts >actual &&
+	echo $sha1 | git cat-file --batch="%(objecttype)" >actual &&
 	test_cmp expect actual
     '
 }
@@ -284,7 +267,7 @@ test_expect_success '--batch-check without %(rest) considers whole line' '
 
 tree_sha1=$(git write-tree)
 tree_size=$(($(test_oid rawsz) + 13))
-tree_pretty_content="100644 blob $hello_sha1	hello"
+tree_pretty_content="100644 blob $hello_sha1	hello${LF}"
 
 run_tests 'tree' $tree_sha1 $tree_size "" "$tree_pretty_content"
 
@@ -292,12 +275,12 @@ commit_message="Initial commit"
 commit_sha1=$(echo_without_newline "$commit_message" | git commit-tree $tree_sha1)
 commit_size=$(($(test_oid hexsz) + 137))
 commit_content="tree $tree_sha1
-author $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> 0 +0000
-committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 0 +0000
+author $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> $GIT_AUTHOR_DATE
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
 
 $commit_message"
 
-run_tests 'commit' $commit_sha1 $commit_size "$commit_content" "$commit_content" 1
+run_tests 'commit' $commit_sha1 $commit_size "$commit_content" "$commit_content"
 
 tag_header_without_timestamp="object $hello_sha1
 type blob
@@ -311,7 +294,7 @@ $tag_description"
 tag_sha1=$(echo_without_newline "$tag_content" | git hash-object -t tag --stdin -w)
 tag_size=$(strlen "$tag_content")
 
-run_tests 'tag' $tag_sha1 $tag_size "$tag_content" "$tag_content" 1
+run_tests 'tag' $tag_sha1 $tag_size "$tag_content" "$tag_content"
 
 test_expect_success \
     "Reach a blob from a tag pointing to it" \
@@ -400,13 +383,16 @@ deadbeef missing
  missing"
 
 test_expect_success '--batch with multiple sha1s gives correct format' '
-	test "$(maybe_remove_timestamp "$batch_output" 1)" = "$(maybe_remove_timestamp "$(echo_without_newline "$batch_input" | git cat-file --batch)" 1)"
+	echo "$batch_output" >expect &&
+	echo_without_newline "$batch_input" | git cat-file --batch >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success '--batch, -z with multiple sha1s gives correct format' '
 	echo_without_newline_nul "$batch_input" >in &&
-	test "$(maybe_remove_timestamp "$batch_output" 1)" = \
-	"$(maybe_remove_timestamp "$(git cat-file --batch -z <in)" 1)"
+	echo "$batch_output" >expect &&
+	git cat-file --batch -z <in >actual &&
+	test_cmp expect actual
 '
 
 batch_check_input="$hello_sha1
@@ -480,7 +466,7 @@ contents deadbeef
 flush"
 
 test_expect_success '--batch-command with multiple command calls gives correct format' '
-	remove_timestamp >expect <<-EOF &&
+	cat >expect <<-EOF &&
 	$hello_sha1 blob $hello_size
 	$hello_content
 	$commit_sha1 commit $commit_size
@@ -491,15 +477,13 @@ test_expect_success '--batch-command with multiple command calls gives correct f
 	EOF
 
 	echo "$batch_command_multiple_contents" >in &&
-	git cat-file --batch-command --buffer <in >actual_raw &&
+	git cat-file --batch-command --buffer <in >actual &&
 
-	remove_timestamp <actual_raw >actual &&
 	test_cmp expect actual &&
 
 	echo "$batch_command_multiple_contents" | tr "\n" "\0" >in &&
-	git cat-file --batch-command --buffer -z <in >actual_raw &&
+	git cat-file --batch-command --buffer -z <in >actual &&
 
-	remove_timestamp <actual_raw >actual &&
 	test_cmp expect actual
 '
 
