@@ -40,6 +40,8 @@
  *
  */
 
+struct repository;
+
 struct dir_entry {
 	unsigned int len;
 	char name[FLEX_ARRAY]; /* more */
