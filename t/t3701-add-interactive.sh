@@ -738,6 +738,21 @@ test_expect_success 'colors can be overridden' '
 	test_cmp expect actual
 '
 
+test_expect_success 'colors can be skipped with color.ui=false' '
+	git reset --hard &&
+	test_when_finished "git rm -f color-test" &&
+	test_write_lines context old more-context >color-test &&
+	git add color-test &&
+	test_write_lines context new more-context another-one >color-test &&
+
+	test_write_lines help quit >input &&
+	force_color git \
+		-c color.ui=false \
+		add -i >actual.raw <input &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp actual.raw actual
+'
+
 test_expect_success 'colorized diffs respect diff.wsErrorHighlight' '
 	git reset --hard &&
 
