@@ -296,9 +296,11 @@ tag_size=$(strlen "$tag_content")
 
 run_tests 'tag' $tag_sha1 $tag_size "$tag_content" "$tag_content"
 
-test_expect_success \
-    "Reach a blob from a tag pointing to it" \
-    "test '$hello_content' = \"\$(git cat-file blob $tag_sha1)\""
+test_expect_success "Reach a blob from a tag pointing to it" '
+	echo_without_newline "$hello_content" >expect &&
+	git cat-file blob $tag_sha1 >actual &&
+	test_cmp expect actual
+'
 
 for batch in batch batch-check batch-command
 do
@@ -334,30 +336,47 @@ do
 done
 
 test_expect_success "--batch-check for a non-existent named object" '
-    test "foobar42 missing
-foobar84 missing" = \
-    "$( ( echo foobar42 && echo_without_newline foobar84 ) | git cat-file --batch-check)"
+	cat >expect <<-EOF &&
+	foobar42 missing
+	foobar84 missing
+	EOF
+
+	printf "foobar42\nfoobar84" >in &&
+	git cat-file --batch-check <in >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success "--batch-check for a non-existent hash" '
-    test "0000000000000000000000000000000000000042 missing
-0000000000000000000000000000000000000084 missing" = \
-    "$( ( echo 0000000000000000000000000000000000000042 &&
-	 echo_without_newline 0000000000000000000000000000000000000084 ) |
-       git cat-file --batch-check)"
+	cat >expect <<-EOF &&
+	0000000000000000000000000000000000000042 missing
+	0000000000000000000000000000000000000084 missing
+	EOF
+
+	printf "0000000000000000000000000000000000000042\n0000000000000000000000000000000000000084" >in &&
+	git cat-file --batch-check <in >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success "--batch for an existent and a non-existent hash" '
-    test "$tag_sha1 tag $tag_size
-$tag_content
-0000000000000000000000000000000000000000 missing" = \
-    "$( ( echo $tag_sha1 &&
-	 echo_without_newline 0000000000000000000000000000000000000000 ) |
-       git cat-file --batch)"
+	cat >expect <<-EOF &&
+	$tag_sha1 tag $tag_size
+	$tag_content
+	0000000000000000000000000000000000000000 missing
+	EOF
+
+	printf "$tag_sha1\n0000000000000000000000000000000000000000" >in &&
+	git cat-file --batch <in >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success "--batch-check for an empty line" '
-    test " missing" = "$(echo | git cat-file --batch-check)"
+	cat >expect <<-EOF &&
+	 missing
+	EOF
+
+	echo >in &&
+	git cat-file --batch-check <in >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'empty --batch-check notices missing object' '
@@ -384,7 +403,8 @@ deadbeef missing
 
 test_expect_success '--batch with multiple sha1s gives correct format' '
 	echo "$batch_output" >expect &&
-	echo_without_newline "$batch_input" | git cat-file --batch >actual &&
+	echo_without_newline "$batch_input" >in &&
+	git cat-file --batch <in >actual &&
 	test_cmp expect actual
 '
 
@@ -411,13 +431,17 @@ deadbeef missing
  missing"
 
 test_expect_success "--batch-check with multiple sha1s gives correct format" '
-    test "$batch_check_output" = \
-    "$(echo_without_newline "$batch_check_input" | git cat-file --batch-check)"
+	echo "$batch_check_output" >expect &&
+	echo_without_newline "$batch_check_input" >in &&
+	git cat-file --batch-check <in >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success "--batch-check, -z with multiple sha1s gives correct format" '
-    echo_without_newline_nul "$batch_check_input" >in &&
-    test "$batch_check_output" = "$(git cat-file --batch-check -z <in)"
+	echo "$batch_check_output" >expect &&
+	echo_without_newline_nul "$batch_check_input" >in &&
+	git cat-file --batch-check -z <in >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success FUNNYNAMES '--batch-check, -z with newline in input' '
