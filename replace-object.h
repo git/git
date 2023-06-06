@@ -48,4 +48,12 @@ static inline const struct object_id *lookup_replace_object(struct repository *r
 	return do_lookup_replace_object(r, oid);
 }
 
+/*
+ * Some commands override config and environment settings for using
+ * replace references. Use this method to disable the setting and ensure
+ * those other settings will not override this choice. This applies
+ * globally to all in-process repositories.
+ */
+void disable_replace_refs(void);
+
 #endif /* REPLACE_OBJECT_H */

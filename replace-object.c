@@ -84,3 +84,8 @@ const struct object_id *do_lookup_replace_object(struct repository *r,
 	}
 	die(_("replace depth too high for object %s"), oid_to_hex(oid));
 }
+
+void disable_replace_refs(void)
+{
+	read_replace_refs = 0;
+}
