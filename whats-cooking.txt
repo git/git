@@ -1,22 +1,21 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jun 2023, #01; Thu, 1)
+Subject: What's cooking in git.git (Jun 2023, #02; Tue, 6)
 X-master-at: fe86abd7511a9a6862d5706c6fa1d9b57a63ba09
 X-next-at: fafddb0af996d6ce627478acb5b2d2c3799d3a0a
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jun 2023, #01; Thu, 1)
+What's cooking in git.git (Jun 2023, #02; Tue, 6)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
 prefixed with '+' are in 'next' (being in 'next' is a sign that a
-topic is stable enough to be used and are candidate to be in a future
-release).  Commits prefixed with '-' are only in 'seen', and aren't
-considered "accepted" at all and may be annotated with an URL to a
-message that raises issues but they are no means exhaustive.  A
+topic is stable enough to be used and are candidate to be in a
+future release).  Commits prefixed with '-' are only in 'seen', and
+aren't considered "accepted" at all and may be annotated with an URL
+to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
-no activity.
-
-Git 2.41 (final) has been tagged.
+no activity (of course they can be resubmit when new interests
+arise).
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -49,36 +48,86 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
-* ds/disable-replace-refs (2023-06-01) 3 commits
- - repository: create read_replace_refs setting
- - replace-objects: create wrapper around setting
- - repository: create disable_replace_refs()
- (this branch uses tb/pack-bitmap-traversal-with-boundary.)
+* jk/ci-use-clang-for-sanitizer-jobs (2023-06-03) 3 commits
+ - ci: drop linux-clang job
+ - ci: run ASan/UBSan in a single job
+ - ci: use clang for ASan/UBSan checks
 
- Introduce a mechanism to disable replace refs globally and per
- repository.
-
- Will merge to 'next'???
- What's the doneness of the base topic?
- source: <pull.1537.git.1685126617.gitgitgadget@gmail.com>
-
-
-* tz/test-fix-pthreads-prereq (2023-05-26) 1 commit
- - trace2 tests: fix PTHREADS prereq
-
- Test fix.
+ Clang's sanitizer implementation seems to work better than GCC's.
 
  Will merge to 'next'.
- source: <20230525031218.3554586-1-tmz@pobox.com>
+ source: <20230601180220.GA4167745@coredump.intra.peff.net>
 
 
-* tz/test-ssh-verifytime-fix (2023-05-26) 1 commit
- - t/lib-gpg: fix ssh-keygen -Y check-novalidate with openssh-9.0
+* jk/log-follow-with-non-literal-pathspec (2023-06-03) 3 commits
+ - diff: detect pathspec magic not supported by --follow
+ - diff: factor out --follow pathspec check
+ - pathspec: factor out magic-to-name function
 
- Test fix.
+ "git [-c log.follow=true] log [--follow] ':(glob)f**'" used to barf.
+
+ Will merge to 'next'?
+ source: <20230601173724.GA4158369@coredump.intra.peff.net>
+
+
+* kh/use-default-notes-doc (2023-06-06) 2 commits
+ - notes: move the documentation to the struct
+ - notes: update documentation for `use_default_notes`
+
+ Will merge to 'next'?
+ source: <cover.1685958731.git.code@khaugsbakk.name>
+
+
+* ps/cat-file-null-output (2023-06-03) 5 commits
+ - cat-file: new option '-Z' delimits output with NUL characters
+ - cat-file: simplify reading from standard input
+ - strbuf: provide CRLF-aware helper to read until a specified delimiter
+ - t1006: modernize test style to use `test_cmp`
+ - t1006: don't strip timestamps from expected results
+
+ "git cat-file --batch" and friends learned "-Z" that uses NUL
+ delimiter for both input and output.
+
+ Will merge to 'next'?
+ source: <cover.1685710884.git.ps@pks.im>
+
+
+* tl/quote-problematic-arg-for-clarity (2023-06-03) 1 commit
+ - surround %s with quotes when failed to lookup commit
+
+ Error message fix.
 
  Will merge to 'next'.
- source: <20230525031026.3554406-1-tmz@pobox.com>
+ source: <1f7c62a8870433792076fae30d6c4dc4b61a00d8.1685366301.git.dyroneteng@gmail.com>
+
+
+* ds/add-i-color-configuration-fix (2023-06-06) 1 commit
+ - add: check color.ui for interactive add
+
+ The reimplemented "git add -i" did not honor color.ui configuration.
+
+ Will merge to 'next'?
+ source: <pull.1541.git.1685994164018.gitgitgadget@gmail.com>
+
+
+* ks/ref-filter-signature (2023-06-06) 2 commits
+ - ref-filter: add new "signature" atom
+ - t/lib-gpg: introduce new prereq GPG2
+
+ The "git for-each-ref" family of commands learned placeholders
+ related to GPG signature verification.
+
+ Needs review.
+ source: <20230604185815.15761-1-five231003@gmail.com>
+
+
+* mh/commit-reach-get-reachable-plug-leak (2023-06-04) 1 commit
+ - commit-reach: fix memory leak in get_reachable_subset()
+
+ Plug memory leak.
+
+ Will merge to 'next'.
+ source: <20230603002819.1122129-1-mh@glandium.org>
 
 --------------------------------------------------
 [Stalled]
@@ -232,6 +281,37 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* ds/disable-replace-refs (2023-06-03) 3 commits
+ - repository: create read_replace_refs setting
+ - replace-objects: create wrapper around setting
+ - repository: create disable_replace_refs()
+ (this branch uses tb/pack-bitmap-traversal-with-boundary.)
+
+ Introduce a mechanism to disable replace refs globally and per
+ repository.
+
+ Will merge to 'next'.
+ source: <pull.1537.v2.git.1685716157.gitgitgadget@gmail.com>
+
+
+* tz/test-fix-pthreads-prereq (2023-05-26) 1 commit
+ - trace2 tests: fix PTHREADS prereq
+
+ Test fix.
+
+ Will merge to 'next'.
+ source: <20230525031218.3554586-1-tmz@pobox.com>
+
+
+* tz/test-ssh-verifytime-fix (2023-05-26) 1 commit
+ - t/lib-gpg: fix ssh-keygen -Y check-novalidate with openssh-9.0
+
+ Test fix.
+
+ Will merge to 'next'.
+ source: <20230525031026.3554406-1-tmz@pobox.com>
+
+
 * vd/worktree-config-is-per-repository (2023-05-26) 3 commits
  - repository: move 'repository_format_worktree_config' to repo scope
  - config: pass 'repo' directly to 'config_with_options()'
@@ -281,17 +361,19 @@ Release tarballs are available at:
  source: <pull.1514.git.git.1684599239.gitgitgadget@gmail.com>
 
 
-* jt/path-filter-fix (2023-05-23) 2 commits
- - commit-graph: fix murmur3, bump filter ver. to 2
- - t4216: test wrong bloom filter version rejection
+* jt/path-filter-fix (2023-06-03) 3 commits
+ . commit-graph: new filter ver. that fixes murmur3
+ . repo-settings: introduce commitgraph.changedPathsVersion
+ . t4216: test changed path filters with high bit paths
 
  The Bloom filter used for path limited history traversal was broken
  on systems whose "char" is unsigned; update the implementation and
  bump the format version to 2.
 
+ Seems to break its own test when merged to 'seen'.
  Needs a more careful transition?
  cf. <def26c71-0fbb-58a3-f1cd-f8e532b67503@github.com>
- source: <cover.1684790529.git.jonathantanmy@google.com>
+ source: <cover.1685574402.git.jonathantanmy@google.com>
 
 
 * tk/cherry-pick-sequence-requires-clean-worktree (2023-06-01) 1 commit
@@ -463,17 +545,6 @@ Release tarballs are available at:
  source: <pull.1533.v2.git.1684832418299.gitgitgadget@gmail.com>
 
 
-* tc/cat-file-z-use-cquote (2023-05-10) 1 commit
- - cat-file: quote-format name in error when using -z
-
- "cat-file" in the batch mode that is fed NUL-terminated pathnames
- learned to cquote them in its error output (otherwise, a funny
- pathname with LF in it would break the lines in the output stream).
-
- Redesign.
- source: <20230510190116.795641-2-toon@iotcl.com>
-
-
 * en/header-split-cache-h-part-3 (2023-05-16) 29 commits
  - fsmonitor-ll.h: split this header out of fsmonitor.h
  - hash-ll, hashmap: move oidhash() to hash-ll
@@ -527,8 +598,7 @@ Release tarballs are available at:
  source: <pull.1506.v2.git.git.1683839975.gitgitgadget@gmail.com>
 
 
-* cc/git-replay (2023-05-09) 16 commits
- - SQUASH???
+* cc/git-replay (2023-06-03) 15 commits
  - replay: stop assuming replayed branches do not diverge
  - replay: add --contained to rebase contained branches
  - replay: add --advance or 'cherry-pick' mode
@@ -545,7 +615,7 @@ Release tarballs are available at:
  - replay: introduce new builtin
  - t6429: remove switching aspects of fast-rebase
 
- source: <20230509175347.1714141-1-christian.couder@gmail.com>
+ source: <20230602102533.876905-1-christian.couder@gmail.com>
 
 
 * jc/pack-ref-exclude-include (2023-05-12) 3 commits
@@ -656,7 +726,7 @@ Release tarballs are available at:
  using "boundary" commits as representative of all the uninteresting
  ones can save quite a lot of object enumeration.
 
- Comments?
+ Will merge to 'next'.
  source: <cover.1683567065.git.me@ttaylorr.com>
 
 
@@ -702,75 +772,12 @@ Release tarballs are available at:
 --------------------------------------------------
 [Discarded]
 
-* ed/fsmonitor-inotify (2022-12-13) 6 commits
- . fsmonitor: update doc for Linux
- . fsmonitor: test updates
- . fsmonitor: enable fsmonitor for Linux
- . fsmonitor: implement filesystem change listener for Linux
- . fsmonitor: determine if filesystem is local or remote
- . fsmonitor: prepare to share code between Mac OS and Linux
+* tc/cat-file-z-use-cquote (2023-05-10) 1 commit
+ . cat-file: quote-format name in error when using -z
 
- Bundled fsmonitor for Linux using inotify API.
+ "cat-file" in the batch mode that is fed NUL-terminated pathnames
+ learned to cquote them in its error output (otherwise, a funny
+ pathname with LF in it would break the lines in the output stream).
 
- Seems to break asan job at CI when merged to 'seen'.
- cf. <xmqqzg7d8xn2.fsf@gitster.g>
- source: <pull.1352.v5.git.git.1670882286.gitgitgadget@gmail.com>
-
-
-* my/wildmatch-cleanups (2023-02-27) 5 commits
- . wildmatch: more cleanups after killing uchar
- . wildmatch: use char instead of uchar
- . wildmatch: remove NEGATE_CLASS(2) macros with trivial refactoring
- . wildmatch: remove IS*() macros
- . git-compat-util: add isblank() and isgraph()
-
- Code clean-up.
-
- Discarded without prejudice after more than 6 weeks of inactivity.
- source: <20230226115021.1681834-1-masahiroy@kernel.org>
-
-
-* cw/forbid-use-of-gitlink-outside-submodules (2023-02-28) 6 commits
- . add: reject nested repositories
- . tests: remove duplicate .gitmodules path
- . tests: use `git submodule add` and fix expected status
- . tests: use `git submodule add` and fix expected diffs
- . tests: Use `git submodule add` instead of `git add`
- . t4041, t4060: modernize test style
-
- Forbid "git add dir" from adding a gitlink to the index.
-
- Discarded without prejudice after more than 6 weeks of inactivity.
- source: <20230228185253.2356546-1-calvinwan@google.com>
-
-
-* nw/for-each-ref-signature (2023-03-13) 1 commit
- . ref-filter: add new "signature" atom
-
- "git (for-each-ref|branch|tag) --format=<format>" learns the "%(signature)"
- placeholder and friends.
-
- Breaks CI.
- cf. <xmqqpm9bosjw.fsf@gitster.g>
- source: <20230311210607.64927-2-nsengiyumvawilberforce@gmail.com>
-
-
-* fc/asciidoc-code-block-hack (2023-05-04) 2 commits
- . doc: manpage: remove ancient workaround
- . doc: git-svn: use listing instead of verse
-
- Documentation toolchain lost an ancient workaround that is no
- longer needed.
-
- The contributor is no longer with the project.
- source: <20230504035517.329765-1-felipe.contreras@gmail.com>
-
-
-* fc/doc-revisions-markup-fix (2023-05-04) 2 commits
- . doc: revisions: add a bunch of missing quotes
- . doc: revisions: fix missing escape
-
- Doc cleanup.
-
- The contributor is no longer with the project.
- source: <20230504163421.100400-1-felipe.contreras@gmail.com>
+ Superseded by the ps/cat-file-null-output topic.
+ source: <20230510190116.795641-2-toon@iotcl.com>
