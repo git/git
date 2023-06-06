@@ -89,7 +89,8 @@ done
 for opt in --buffer \
 	--follow-symlinks \
 	--batch-all-objects \
-	-z
+	-z \
+	-Z
 do
 	test_expect_success "usage: bad option combination: $opt without batch mode" '
 		test_incompatible_usage git cat-file $opt &&
@@ -392,17 +393,18 @@ deadbeef
 
 "
 
-batch_output="$hello_sha1 blob $hello_size
-$hello_content
-$commit_sha1 commit $commit_size
-$commit_content
-$tag_sha1 tag $tag_size
-$tag_content
-deadbeef missing
- missing"
+printf "%s\0" \
+	"$hello_sha1 blob $hello_size" \
+	"$hello_content" \
+	"$commit_sha1 commit $commit_size" \
+	"$commit_content" \
+	"$tag_sha1 tag $tag_size" \
+	"$tag_content" \
+	"deadbeef missing" \
+	" missing" >batch_output
 
 test_expect_success '--batch with multiple sha1s gives correct format' '
-	echo "$batch_output" >expect &&
+	tr "\0" "\n" <batch_output >expect &&
 	echo_without_newline "$batch_input" >in &&
 	git cat-file --batch <in >actual &&
 	test_cmp expect actual
@@ -410,9 +412,15 @@ test_expect_success '--batch with multiple sha1s gives correct format' '
 
 test_expect_success '--batch, -z with multiple sha1s gives correct format' '
 	echo_without_newline_nul "$batch_input" >in &&
-	echo "$batch_output" >expect &&
+	tr "\0" "\n" <batch_output >expect &&
 	git cat-file --batch -z <in >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success '--batch, -Z with multiple sha1s gives correct format' '
+	echo_without_newline_nul "$batch_input" >in &&
+	git cat-file --batch -Z <in >actual &&
+	test_cmp batch_output actual
 '
 
 batch_check_input="$hello_sha1
@@ -423,37 +431,52 @@ deadbeef
 
 "
 
-batch_check_output="$hello_sha1 blob $hello_size
-$tree_sha1 tree $tree_size
-$commit_sha1 commit $commit_size
-$tag_sha1 tag $tag_size
-deadbeef missing
- missing"
+printf "%s\0" \
+	"$hello_sha1 blob $hello_size" \
+	"$tree_sha1 tree $tree_size" \
+	"$commit_sha1 commit $commit_size" \
+	"$tag_sha1 tag $tag_size" \
+	"deadbeef missing" \
+	" missing" >batch_check_output
 
 test_expect_success "--batch-check with multiple sha1s gives correct format" '
-	echo "$batch_check_output" >expect &&
+	tr "\0" "\n" <batch_check_output >expect &&
 	echo_without_newline "$batch_check_input" >in &&
 	git cat-file --batch-check <in >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success "--batch-check, -z with multiple sha1s gives correct format" '
-	echo "$batch_check_output" >expect &&
+	tr "\0" "\n" <batch_check_output >expect &&
 	echo_without_newline_nul "$batch_check_input" >in &&
 	git cat-file --batch-check -z <in >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success FUNNYNAMES '--batch-check, -z with newline in input' '
+test_expect_success "--batch-check, -Z with multiple sha1s gives correct format" '
+	echo_without_newline_nul "$batch_check_input" >in &&
+	git cat-file --batch-check -Z <in >actual &&
+	test_cmp batch_check_output actual
+'
+
+test_expect_success FUNNYNAMES 'setup with newline in input' '
 	touch -- "newline${LF}embedded" &&
 	git add -- "newline${LF}embedded" &&
 	git commit -m "file with newline embedded" &&
 	test_tick &&
 
-	printf "HEAD:newline${LF}embedded" >in &&
-	git cat-file --batch-check -z <in >actual &&
+	printf "HEAD:newline${LF}embedded" >in
+'
 
+test_expect_success FUNNYNAMES '--batch-check, -z with newline in input' '
+	git cat-file --batch-check -z <in >actual &&
 	echo "$(git rev-parse "HEAD:newline${LF}embedded") blob 0" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success FUNNYNAMES '--batch-check, -Z with newline in input' '
+	git cat-file --batch-check -Z <in >actual &&
+	printf "%s\0" "$(git rev-parse "HEAD:newline${LF}embedded") blob 0" >expect &&
 	test_cmp expect actual
 '
 
@@ -480,7 +503,13 @@ test_expect_success '--batch-command with multiple info calls gives correct form
 	echo "$batch_command_multiple_info" | tr "\n" "\0" >in &&
 	git cat-file --batch-command --buffer -z <in >actual &&
 
-	test_cmp expect actual
+	test_cmp expect actual &&
+
+	echo "$batch_command_multiple_info" | tr "\n" "\0" >in &&
+	tr "\n" "\0" <expect >expect_nul &&
+	git cat-file --batch-command --buffer -Z <in >actual &&
+
+	test_cmp expect_nul actual
 '
 
 batch_command_multiple_contents="contents $hello_sha1
@@ -490,15 +519,15 @@ contents deadbeef
 flush"
 
 test_expect_success '--batch-command with multiple command calls gives correct format' '
-	cat >expect <<-EOF &&
-	$hello_sha1 blob $hello_size
-	$hello_content
-	$commit_sha1 commit $commit_size
-	$commit_content
-	$tag_sha1 tag $tag_size
-	$tag_content
-	deadbeef missing
-	EOF
+	printf "%s\0" \
+		"$hello_sha1 blob $hello_size" \
+		"$hello_content" \
+		"$commit_sha1 commit $commit_size" \
+		"$commit_content" \
+		"$tag_sha1 tag $tag_size" \
+		"$tag_content" \
+		"deadbeef missing" >expect_nul &&
+	tr "\0" "\n" <expect_nul >expect &&
 
 	echo "$batch_command_multiple_contents" >in &&
 	git cat-file --batch-command --buffer <in >actual &&
@@ -508,7 +537,12 @@ test_expect_success '--batch-command with multiple command calls gives correct f
 	echo "$batch_command_multiple_contents" | tr "\n" "\0" >in &&
 	git cat-file --batch-command --buffer -z <in >actual &&
 
-	test_cmp expect actual
+	test_cmp expect actual &&
+
+	echo "$batch_command_multiple_contents" | tr "\n" "\0" >in &&
+	git cat-file --batch-command --buffer -Z <in >actual &&
+
+	test_cmp expect_nul actual
 '
 
 test_expect_success 'setup blobs which are likely to delta' '
@@ -848,6 +882,13 @@ test_expect_success 'git cat-file --batch-check --follow-symlinks works for brok
 	test_cmp expect actual
 '
 
+test_expect_success 'git cat-file --batch-check --follow-symlinks -Z works for broken in-repo, same-dir links' '
+	printf "HEAD:broken-same-dir-link\0" >in &&
+	printf "dangling 25\0HEAD:broken-same-dir-link\0" >expect &&
+	git cat-file --batch-check --follow-symlinks -Z <in >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'git cat-file --batch-check --follow-symlinks works for same-dir links-to-links' '
 	echo HEAD:link-to-link | git cat-file --batch-check --follow-symlinks >actual &&
 	test_cmp found actual
@@ -859,6 +900,15 @@ test_expect_success 'git cat-file --batch-check --follow-symlinks works for pare
 	echo notdir 29 >expect &&
 	echo HEAD:dir/parent-dir-link/nope >>expect &&
 	echo HEAD:dir/parent-dir-link/nope | git cat-file --batch-check --follow-symlinks >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git cat-file --batch-check --follow-symlinks -Z works for parent-dir links' '
+	echo HEAD:dir/parent-dir-link | git cat-file --batch-check --follow-symlinks >actual &&
+	test_cmp found actual &&
+	printf "notdir 29\0HEAD:dir/parent-dir-link/nope\0" >expect &&
+	printf "HEAD:dir/parent-dir-link/nope\0" >in &&
+	git cat-file --batch-check --follow-symlinks -Z <in >actual &&
 	test_cmp expect actual
 '
 
@@ -973,6 +1023,13 @@ test_expect_success 'git cat-file --batch-check --follow-symlink breaks loops' '
 	echo loop 10 >expect &&
 	echo HEAD:loop1 >>expect &&
 	echo HEAD:loop1 | git cat-file --batch-check --follow-symlinks >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git cat-file --batch-check --follow-symlink -Z breaks loops' '
+	printf "loop 10\0HEAD:loop1\0" >expect &&
+	printf "HEAD:loop1\0" >in &&
+	git cat-file --batch-check --follow-symlinks -Z <in >actual &&
 	test_cmp expect actual
 '
 
