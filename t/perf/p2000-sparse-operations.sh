@@ -131,5 +131,6 @@ test_perf_on_all git describe --dirty
 test_perf_on_all 'echo >>new && git describe --dirty'
 test_perf_on_all git diff-files
 test_perf_on_all git diff-files -- $SPARSE_CONE/a
+test_perf_on_all "git worktree add ../temp && git worktree remove ../temp"
 
 test_done
