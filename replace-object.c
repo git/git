@@ -89,3 +89,8 @@ void disable_replace_refs(void)
 {
 	read_replace_refs = 0;
 }
+
+int replace_refs_enabled(struct repository *r)
+{
+	return read_replace_refs;
+}
