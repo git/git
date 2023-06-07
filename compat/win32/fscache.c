@@ -8,6 +8,7 @@
 #include "config.h"
 #include "../../mem-pool.h"
 #include "ntifs.h"
+#include "wsl.h"
 
 static volatile long initialized;
 static DWORD dwTlsIndex;
@@ -215,6 +216,10 @@ static struct fsentry *fseentry_create_entry(struct fscache *cache,
 			     &(fse->u.s.st_mtim));
 	filetime_to_timespec((FILETIME *)&(fdata->CreationTime),
 			     &(fse->u.s.st_ctim));
+	if (fdata->EaSize > 0 && are_wsl_compatible_mode_bits_enabled()) {
+		copy_wsl_mode_bits_from_disk(fdata->FileName,
+			fdata->FileNameLength / sizeof(wchar_t), &fse->st_mode);
+	}
 
 	return fse;
 }
