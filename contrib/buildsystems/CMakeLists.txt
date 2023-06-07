@@ -274,6 +274,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 		compat/win32/syslog.c
 		compat/win32/trace2_win32_process_info.c
 		compat/win32/dirent.c
+		compat/win32/wsl.c
 		compat/strdup.c)
 	set(NO_UNIX_SOCKETS 1)
 
