@@ -478,4 +478,39 @@ test_expect_success 'git fsck correctly identifies good and bad bitmaps' '
 	grep "bitmap file '\''$packbitmap'\'' has invalid checksum" err
 '
 
+test_expect_success 'corrupt MIDX with bitmap causes fallback' '
+	git init corrupt-midx-bitmap &&
+	(
+		cd corrupt-midx-bitmap &&
+
+		test_commit first &&
+		git repack -d &&
+		test_commit second &&
+		git repack -d &&
+
+		git multi-pack-index write --bitmap &&
+		checksum=$(midx_checksum $objdir) &&
+		for f in $midx $midx-$checksum.bitmap
+		do
+			mv $f $f.bak || return 1
+		done &&
+
+		# pack everything together, invalidating the MIDX
+		git repack -ad &&
+		# then restore the now-stale MIDX
+		for f in $midx $midx-$checksum.bitmap
+		do
+			mv $f.bak $f || return 1
+		done &&
+
+		git rev-list --count --objects --use-bitmap-index HEAD >out 2>err &&
+		# should attempt opening the broken pack twice (once
+		# from the attempt to load it via the stale bitmap, and
+		# again when attempting to load it from the stale MIDX)
+		# before falling back to the non-MIDX case
+		test 2 -eq $(grep -c "could not open pack" err) &&
+		test 6 -eq $(cat out)
+	)
+'
+
 test_done
