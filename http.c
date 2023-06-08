@@ -1732,7 +1732,7 @@ static int handle_curl_result(struct slot_results *results)
 	else if (results->http_code == 401) {
 		if (http_auth.username && http_auth.password) {
 			credential_reject(&http_auth);
-			return HTTP_NOAUTH;
+			return HTTP_REAUTH;
 		} else {
 			http_auth_methods &= ~CURLAUTH_GSSNEGOTIATE;
 			if (results->auth_avail) {
@@ -2125,6 +2125,7 @@ static int http_request_reauth(const char *url,
 			       struct http_get_options *options)
 {
 	int ret = http_request(url, result, target, options);
+	int reauth = 0;
 
 	if (ret != HTTP_OK && ret != HTTP_REAUTH)
 		return ret;
@@ -2140,6 +2141,9 @@ static int http_request_reauth(const char *url,
 	if (ret != HTTP_REAUTH)
 		return ret;
 
+	credential_fill(&http_auth);
+
+reauth:
 	/*
 	 * The previous request may have put cruft into our output stream; we
 	 * should clear it out before making our next request.
@@ -2163,9 +2167,21 @@ static int http_request_reauth(const char *url,
 		BUG("Unknown http_request target");
 	}
 
-	credential_fill(&http_auth);
+	ret = http_request(url, result, target, options);
+	if (ret == HTTP_REAUTH && reauth == 0) {
+		reauth++;
+		char* old_username = xstrdup(http_auth.username);
+		char* old_password = xstrdup(http_auth.password);
+		credential_fill(&http_auth);
+		int credential_changed = strcmp(old_username, http_auth.username)
+			|| strcmp(old_password, http_auth.password);
+		free(old_username);
+		free(old_password);
+		if (credential_changed)
+			goto reauth;
+	}
 
-	return http_request(url, result, target, options);
+	return ret;
 }
 
 int http_get_strbuf(const char *url,
