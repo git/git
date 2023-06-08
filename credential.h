@@ -134,7 +134,9 @@ struct credential {
 		 configured:1,
 		 quit:1,
 		 use_http_path:1,
-		 username_from_proto:1;
+		 username_from_proto:1,
+		 /* Whether the user has been prompted for username or password. */
+		 getpass:1;
 
 	char *username;
 	char *password;

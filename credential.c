@@ -379,6 +379,7 @@ void credential_fill(struct credential *c)
 			    c->helpers.items[i].string);
 	}
 
+	c->getpass = 1;
 	credential_getpass(c);
 	if (!c->username && !c->password)
 		die("unable to get password from user");
