@@ -111,6 +111,9 @@ test_expect_success 'access using basic auth invalid credentials' '
 	protocol=http
 	host=$HTTPD_DEST
 	wwwauth[]=Basic realm="example.com"
+	protocol=http
+	host=$HTTPD_DEST
+	wwwauth[]=Basic realm="example.com"
 	EOF
 
 	expect_credential_query erase <<-EOF

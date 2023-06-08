@@ -589,14 +589,8 @@ test_expect_success 'http auth forgets bogus credentials' '
 		echo "password=bogus"
 	} | git credential approve &&
 
-	# we expect this to use the bogus values and fail, never even
-	# prompting the user...
-	set_askpass user@host pass@host &&
-	test_must_fail git ls-remote "$HTTPD_URL/auth/smart/repo.git" >/dev/null &&
-	expect_askpass none &&
-
-	# ...but now we should have forgotten the bad value, causing
-	# us to prompt the user again.
+	# we expect this to use the bogus values and fail, forget the bad value,
+	# then prompt the user
 	set_askpass user@host pass@host &&
 	git ls-remote "$HTTPD_URL/auth/smart/repo.git" >/dev/null &&
 	expect_askpass both user@host
