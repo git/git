@@ -890,7 +890,7 @@ static int query_matches_negative_refspec(struct refspec *rs, struct refspec_ite
 {
 	int i, matched_negative = 0;
 	int find_src = !query->src;
-	struct string_list reversed = STRING_LIST_INIT_NODUP;
+	struct string_list reversed = STRING_LIST_INIT_DUP;
 	const char *needle = find_src ? query->dst : query->src;
 
 	/*
