@@ -638,9 +638,10 @@ void dwim_and_setup_tracking(struct repository *r, const char *new_ref,
 			     const char *orig_ref, enum branch_track track,
 			     int quiet)
 {
-	char *real_orig_ref;
+	char *real_orig_ref = NULL;
 	dwim_branch_start(r, orig_ref, track, &real_orig_ref, NULL);
 	setup_tracking(new_ref, real_orig_ref, track, quiet);
+	free(real_orig_ref);
 }
 
 /**
