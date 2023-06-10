@@ -141,7 +141,7 @@ static void show_rev(int type, const struct object_id *oid, const char *name)
 	if ((symbolic || abbrev_ref) && name) {
 		if (symbolic == SHOW_SYMBOLIC_FULL || abbrev_ref) {
 			struct object_id discard;
-			char *full;
+			char *full, *to_free = NULL;
 
 			switch (repo_dwim_ref(the_repository, name,
 					      strlen(name), &discard, &full,
@@ -156,9 +156,11 @@ static void show_rev(int type, const struct object_id *oid, const char *name)
 				 */
 				break;
 			case 1: /* happy */
-				if (abbrev_ref)
+				if (abbrev_ref) {
+					to_free = full;
 					full = shorten_unambiguous_ref(full,
 						abbrev_ref_strict);
+				}
 				show_with_type(type, full);
 				break;
 			default: /* ambiguous */
@@ -166,6 +168,7 @@ static void show_rev(int type, const struct object_id *oid, const char *name)
 				break;
 			}
 			free(full);
+			free(to_free);
 		} else {
 			show_with_type(type, name);
 		}
