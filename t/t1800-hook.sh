@@ -164,7 +164,7 @@ test_expect_success 'git hook run a hook with a bad shebang' '
 	# TODO: We should emit the same (or at least a more similar)
 	# error on MINGW (essentially Git for Windows) and all other
 	# platforms.. See the OS-specific code in start_command()
-	grep -E "^(error|fatal): cannot (exec|run|spawn) .*bad-hooks/test-hook" err
+	grep -E "^(error|fatal): cannot (exec|spawn) .*bad-hooks/test-hook" err
 '
 
 test_expect_success 'stdin to hooks' '
