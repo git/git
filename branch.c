@@ -233,7 +233,7 @@ static int inherit_tracking(struct tracking *tracking, const char *orig_ref)
 		return -1;
 	}
 
-	tracking->remote = xstrdup(branch->remote_name);
+	tracking->remote = branch->remote_name;
 	for (i = 0; i < branch->merge_nr; i++)
 		string_list_append(tracking->srcs, branch->merge_name[i]);
 	return 0;
