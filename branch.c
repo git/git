@@ -480,9 +480,12 @@ static int check_tracking_branch(struct remote *remote, void *cb_data)
 {
 	char *tracking_branch = cb_data;
 	struct refspec_item query;
+	int res;
 	memset(&query, 0, sizeof(struct refspec_item));
 	query.dst = tracking_branch;
-	return !remote_find_tracking(remote, &query);
+	res = !remote_find_tracking(remote, &query);
+	free(query.src);
+	return res;
 }
 
 static int validate_remote_tracking_branch(char *ref)
