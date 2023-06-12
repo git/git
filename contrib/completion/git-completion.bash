@@ -1759,7 +1759,8 @@ __git_diff_common_options="--stat --numstat --shortstat --summary
 			--patch --no-patch --cc --combined-all-paths
 			--anchored= --compact-summary --ignore-matching-lines=
 			--irreversible-delete --line-prefix --no-stat
-			--output=
+			--output= --output-indicator-context=
+			--output-indicator-new= --output-indicator-old=
 "
 
 # Options for diff/difftool
