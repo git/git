@@ -1753,7 +1753,7 @@ __git_diff_common_options="--stat --numstat --shortstat --summary
 			--diff-algorithm=
 			--submodule --submodule= --ignore-submodules
 			--indent-heuristic --no-indent-heuristic
-			--textconv --no-textconv
+			--textconv --no-textconv --break-rewrites
 			--patch --no-patch
 			--anchored=
 "
