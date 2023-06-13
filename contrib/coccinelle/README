@@ -1,7 +1,9 @@
-This directory provides examples of Coccinelle (http://coccinelle.lip6.fr/)
-semantic patches that might be useful to developers.
+= coccinelle
 
-There are two types of semantic patches:
+This directory provides Coccinelle (http://coccinelle.lip6.fr/) semantic patches
+that might be useful to developers.
+
+==  Types of semantic patches
 
  * Using the semantic transformation to check for bad patterns in the code;
    The target 'make coccicheck' is designed to check for these patterns and
@@ -42,7 +44,7 @@ There are two types of semantic patches:
    This allows to expose plans of pending large scale refactorings without
    impacting the bad pattern checks.
 
-Git-specific tips & things to know about how we run "spatch":
+== Git-specific tips & things to know about how we run "spatch":
 
  * The "make coccicheck" will piggy-back on
    "COMPUTE_HEADER_DEPENDENCIES". If you've built a given object file
@@ -90,3 +92,33 @@ Git-specific tips & things to know about how we run "spatch":
 
    The absolute times will differ for you, but the relative speedup
    from caching should be on that order.
+
+== Authoring and reviewing coccinelle changes
+
+* When a .cocci is made, both the Git changes and .cocci file should be
+  reviewed. When reviewing such a change, do your best to understand the .cocci
+  changes (e.g. by asking the author to explain the change) and be explicit
+  about your understanding of the changes. This helps us decide whether input
+  from coccinelle experts is needed or not. If you aren't sure of the cocci
+  changes, indicate what changes you actively endorse and leave an Acked-by
+  (instead of Reviewed-by).
+
+* Authors should consider that reviewers may not be coccinelle experts, thus the
+  the .cocci changes may not be self-evident. A plain text description of the
+  changes is strongly encouraged, especially when using more esoteric features
+  of the language.
+
+* .cocci rules should target only the problem it is trying to solve; "collateral
+  damage" is not allowed. Reviewers should look out and flag overly-broad rules.
+
+* Consider the cost-benefit ratio of .cocci changes. In particular, consider the
+  effect on the runtime of "make coccicheck", and how often your .cocci check
+  will catch something valuable. As a rule of thumb, rules that can bail early
+  if a file doesn't have a particular token will have a small impact on runtime,
+  and vice-versa.
+
+* .cocci files used for refactoring should be temporarily kept in-tree to aid
+  the refactoring of out-of-tree code (e.g. in-flight topics). Periodically
+  evaluate the cost-benefit ratio to determine when the file should be removed.
+  For example, consider how many out-of-tree users are left and how much this
+  slows down "make coccicheck".
