@@ -1,0 +1,39 @@
+Git v2.42 Release Notes
+=======================
+
+UI, Workflows & Features
+
+ * "git pack-refs" learns "--include" and "--exclude" to tweak the ref
+   hierarchy to be packed using pattern matching.
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * "git diff-tree" has been taught to take advantage of the
+   sparse-index feature.
+
+
+Fixes since v2.41
+-----------------
+
+ * "git tag" learned to leave the "$GIT_DIR/TAG_EDITMSG" file when the
+   command failed, so that the user can salvage what they typed.
+   (merge 08c12ec1d0 kh/keep-tag-editmsg-upon-failure later to maint).
+
+ * The "-s" (silent, squelch) option of the "diff" family of commands
+   did not interact with other options that specify the output format
+   well.  This has been cleaned up so that it will clear all the
+   formatting options given before.
+   (merge 9d484b92ed jc/diff-s-with-other-options later to maint).
+
+ * Update documentation regarding Coccinelle patches.
+   (merge 3bd0097cfc gc/doc-cocci-updates later to maint).
+
+ * Some atoms that can be used in "--format=<format>" for "git ls-tree"
+   were not supported by "git ls-files", even though they were relevant
+   in the context of the latter.
+   (merge 4d28c4f75f zh/ls-files-format-atoms later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge 51f9d2e563 sa/doc-ls-remote later to maint).
+   (merge c6d26a9dda jk/format-patch-message-id-unleak later to maint).
