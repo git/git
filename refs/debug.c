@@ -123,10 +123,10 @@ static int debug_initial_transaction_commit(struct ref_store *refs,
 	return res;
 }
 
-static int debug_pack_refs(struct ref_store *ref_store, unsigned int flags)
+static int debug_pack_refs(struct ref_store *ref_store, struct pack_refs_opts *opts)
 {
 	struct debug_ref_store *drefs = (struct debug_ref_store *)ref_store;
-	int res = drefs->refs->be->pack_refs(drefs->refs, flags);
+	int res = drefs->refs->be->pack_refs(drefs->refs, opts);
 	trace_printf_key(&trace_refs, "pack_refs: %d\n", res);
 	return res;
 }

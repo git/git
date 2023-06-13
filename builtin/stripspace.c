@@ -1,6 +1,7 @@
 #include "builtin.h"
 #include "cache.h"
 #include "config.h"
+#include "environment.h"
 #include "gettext.h"
 #include "parse-options.h"
 #include "setup.h"
@@ -13,7 +14,7 @@ static void comment_lines(struct strbuf *buf)
 	size_t len;
 
 	msg = strbuf_detach(buf, &len);
-	strbuf_add_commented_lines(buf, msg, len);
+	strbuf_add_commented_lines(buf, msg, len, comment_line_char);
 	free(msg);
 }
 
@@ -58,7 +59,8 @@ int cmd_stripspace(int argc, const char **argv, const char *prefix)
 		die_errno("could not read the input");
 
 	if (mode == STRIP_DEFAULT || mode == STRIP_COMMENTS)
-		strbuf_stripspace(&buf, mode == STRIP_COMMENTS);
+		strbuf_stripspace(&buf,
+			  mode == STRIP_COMMENTS ? comment_line_char : '\0');
 	else
 		comment_lines(&buf);
 

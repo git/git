@@ -4936,6 +4936,7 @@ static int diff_opt_stat(const struct option *opt, const char *value, int unset)
 	} else
 		BUG("%s should not get here", opt->long_name);
 
+	options->output_format &= ~DIFF_FORMAT_NO_OUTPUT;
 	options->output_format |= DIFF_FORMAT_DIFFSTAT;
 	options->stat_name_width = name_width;
 	options->stat_graph_width = graph_width;
@@ -4955,6 +4956,7 @@ static int parse_dirstat_opt(struct diff_options *options, const char *params)
 	 * The caller knows a dirstat-related option is given from the command
 	 * line; allow it to say "return this_function();"
 	 */
+	options->output_format &= ~DIFF_FORMAT_NO_OUTPUT;
 	options->output_format |= DIFF_FORMAT_DIRSTAT;
 	return 1;
 }
@@ -5154,6 +5156,7 @@ static int diff_opt_compact_summary(const struct option *opt,
 		options->flags.stat_with_summary = 0;
 	} else {
 		options->flags.stat_with_summary = 1;
+		options->output_format &= ~DIFF_FORMAT_NO_OUTPUT;
 		options->output_format |= DIFF_FORMAT_DIFFSTAT;
 	}
 	return 0;
@@ -5499,9 +5502,8 @@ struct option *add_diff_options(const struct option *opts,
 		OPT_BITOP('p', "patch", &options->output_format,
 			  N_("generate patch"),
 			  DIFF_FORMAT_PATCH, DIFF_FORMAT_NO_OUTPUT),
-		OPT_BIT_F('s', "no-patch", &options->output_format,
-			  N_("suppress diff output"),
-			  DIFF_FORMAT_NO_OUTPUT, PARSE_OPT_NONEG),
+		OPT_SET_INT('s', "no-patch", &options->output_format,
+			    N_("suppress diff output"), DIFF_FORMAT_NO_OUTPUT),
 		OPT_BITOP('u', NULL, &options->output_format,
 			  N_("generate patch"),
 			  DIFF_FORMAT_PATCH, DIFF_FORMAT_NO_OUTPUT),
@@ -5510,9 +5512,9 @@ struct option *add_diff_options(const struct option *opts,
 			       PARSE_OPT_NONEG | PARSE_OPT_OPTARG, diff_opt_unified),
 		OPT_BOOL('W', "function-context", &options->flags.funccontext,
 			 N_("generate diffs with <n> lines context")),
-		OPT_BIT_F(0, "raw", &options->output_format,
+		OPT_BITOP(0, "raw", &options->output_format,
 			  N_("generate the diff in raw format"),
-			  DIFF_FORMAT_RAW, PARSE_OPT_NONEG),
+			  DIFF_FORMAT_RAW, DIFF_FORMAT_NO_OUTPUT),
 		OPT_BITOP(0, "patch-with-raw", &options->output_format,
 			  N_("synonym for '-p --raw'"),
 			  DIFF_FORMAT_PATCH | DIFF_FORMAT_RAW,
@@ -5521,12 +5523,12 @@ struct option *add_diff_options(const struct option *opts,
 			  N_("synonym for '-p --stat'"),
 			  DIFF_FORMAT_PATCH | DIFF_FORMAT_DIFFSTAT,
 			  DIFF_FORMAT_NO_OUTPUT),
-		OPT_BIT_F(0, "numstat", &options->output_format,
+		OPT_BITOP(0, "numstat", &options->output_format,
 			  N_("machine friendly --stat"),
-			  DIFF_FORMAT_NUMSTAT, PARSE_OPT_NONEG),
-		OPT_BIT_F(0, "shortstat", &options->output_format,
+			  DIFF_FORMAT_NUMSTAT, DIFF_FORMAT_NO_OUTPUT),
+		OPT_BITOP(0, "shortstat", &options->output_format,
 			  N_("output only the last line of --stat"),
-			  DIFF_FORMAT_SHORTSTAT, PARSE_OPT_NONEG),
+			  DIFF_FORMAT_SHORTSTAT, DIFF_FORMAT_NO_OUTPUT),
 		OPT_CALLBACK_F('X', "dirstat", options, N_("<param1,param2>..."),
 			       N_("output the distribution of relative amount of changes for each sub-directory"),
 			       PARSE_OPT_NONEG | PARSE_OPT_OPTARG,
@@ -5542,9 +5544,9 @@ struct option *add_diff_options(const struct option *opts,
 		OPT_BIT_F(0, "check", &options->output_format,
 			  N_("warn if changes introduce conflict markers or whitespace errors"),
 			  DIFF_FORMAT_CHECKDIFF, PARSE_OPT_NONEG),
-		OPT_BIT_F(0, "summary", &options->output_format,
+		OPT_BITOP(0, "summary", &options->output_format,
 			  N_("condensed summary such as creations, renames and mode changes"),
-			  DIFF_FORMAT_SUMMARY, PARSE_OPT_NONEG),
+			  DIFF_FORMAT_SUMMARY, DIFF_FORMAT_NO_OUTPUT),
 		OPT_BIT_F(0, "name-only", &options->output_format,
 			  N_("show only names of changed files"),
 			  DIFF_FORMAT_NAME, PARSE_OPT_NONEG),

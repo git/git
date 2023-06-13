@@ -1406,7 +1406,7 @@ static void make_cover_letter(struct rev_info *rev, int use_separate_file,
 	}
 }
 
-static const char *clean_message_id(const char *msg_id)
+static char *clean_message_id(const char *msg_id)
 {
 	char ch;
 	const char *a, *z, *m;
@@ -1424,7 +1424,7 @@ static const char *clean_message_id(const char *msg_id)
 	if (!z)
 		die(_("insane in-reply-to: %s"), msg_id);
 	if (++z == m)
-		return a;
+		return xstrdup(a);
 	return xmemdupz(a, z - a);
 }
 
@@ -2310,11 +2310,11 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 
 	if (in_reply_to || thread || cover_letter) {
 		rev.ref_message_ids = xmalloc(sizeof(*rev.ref_message_ids));
-		string_list_init_nodup(rev.ref_message_ids);
+		string_list_init_dup(rev.ref_message_ids);
 	}
 	if (in_reply_to) {
-		const char *msgid = clean_message_id(in_reply_to);
-		string_list_append(rev.ref_message_ids, msgid);
+		char *msgid = clean_message_id(in_reply_to);
+		string_list_append_nodup(rev.ref_message_ids, msgid);
 	}
 	rev.numbered_files = just_numbers;
 	rev.patch_suffix = fmt_patch_suffix;
@@ -2370,8 +2370,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 				    && (!cover_letter || rev.nr > 1))
 					free(rev.message_id);
 				else
-					string_list_append(rev.ref_message_ids,
-							   rev.message_id);
+					string_list_append_nodup(rev.ref_message_ids,
+								 rev.message_id);
 			}
 			gen_message_id(&rev, oid_to_hex(&commit->object.oid));
 		}
@@ -2420,6 +2420,7 @@ done:
 	strbuf_release(&rdiff_title);
 	strbuf_release(&sprefix);
 	free(to_free);
+	free(rev.message_id);
 	if (rev.ref_message_ids)
 		string_list_clear(rev.ref_message_ids, 0);
 	free(rev.ref_message_ids);
