@@ -271,11 +271,10 @@ static const char message_advice_nested_tag[] =
 static void create_tag(const struct object_id *object, const char *object_ref,
 		       const char *tag,
 		       struct strbuf *buf, struct create_tag_options *opt,
-		       struct object_id *prev, struct object_id *result)
+		       struct object_id *prev, struct object_id *result, char *path)
 {
 	enum object_type type;
 	struct strbuf header = STRBUF_INIT;
-	char *path = NULL;
 
 	type = oid_object_info(the_repository, object, NULL);
 	if (type <= OBJ_NONE)
@@ -299,7 +298,6 @@ static void create_tag(const struct object_id *object, const char *object_ref,
 		int fd;
 
 		/* write the template message before editing: */
-		path = git_pathdup("TAG_EDITMSG");
 		fd = xopen(path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
 
 		if (opt->message_given) {
@@ -340,10 +338,6 @@ static void create_tag(const struct object_id *object, const char *object_ref,
 			fprintf(stderr, _("The tag message has been left in %s\n"),
 				path);
 		exit(128);
-	}
-	if (path) {
-		unlink_or_warn(path);
-		free(path);
 	}
 }
 
@@ -495,6 +489,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	};
 	int ret = 0;
 	const char *only_in_list = NULL;
+	char *path = NULL;
 
 	setup_ref_filter_porcelain_msg();
 
@@ -629,7 +624,9 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	if (create_tag_object) {
 		if (force_sign_annotate && !annotate)
 			opt.sign = 1;
-		create_tag(&object, object_ref, tag, &buf, &opt, &prev, &object);
+		path = git_pathdup("TAG_EDITMSG");
+		create_tag(&object, object_ref, tag, &buf, &opt, &prev, &object,
+			   path);
 	}
 
 	transaction = ref_transaction_begin(&err);
@@ -637,8 +634,17 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	    ref_transaction_update(transaction, ref.buf, &object, &prev,
 				   create_reflog ? REF_FORCE_CREATE_REFLOG : 0,
 				   reflog_msg.buf, &err) ||
-	    ref_transaction_commit(transaction, &err))
+	    ref_transaction_commit(transaction, &err)) {
+		if (path)
+			fprintf(stderr,
+				_("The tag message has been left in %s\n"),
+				path);
 		die("%s", err.buf);
+	}
+	if (path) {
+		unlink_or_warn(path);
+		free(path);
+	}
 	ref_transaction_free(transaction);
 	if (force && !is_null_oid(&prev) && !oideq(&prev, &object))
 		printf(_("Updated tag '%s' (was %s)\n"), tag,
