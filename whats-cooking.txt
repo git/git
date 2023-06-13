@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jun 2023, #02; Tue, 6)
+Subject: What's cooking in git.git (Jun 2023, #03; Mon, 12)
 X-master-at: fe86abd7511a9a6862d5706c6fa1d9b57a63ba09
-X-next-at: fafddb0af996d6ce627478acb5b2d2c3799d3a0a
+X-next-at: 0019c0ddb0f4de1640983ab94f7f6608e68b7c17
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jun 2023, #02; Tue, 6)
+What's cooking in git.git (Jun 2023, #03; Mon, 12)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,6 +16,12 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
+
+Sorry for being rather quiet for a few weeks.  I was visiting Japan,
+attending a couple of memorial services, and then got sick and was
+in bed for about a week X-<.  It makes you feel really old when a
+friend from your highschool days passes away.  I think I've caught
+up with the list traffic, but stale topics may want to be re-sent.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -48,86 +54,130 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
-* jk/ci-use-clang-for-sanitizer-jobs (2023-06-03) 3 commits
- - ci: drop linux-clang job
- - ci: run ASan/UBSan in a single job
- - ci: use clang for ASan/UBSan checks
+* as/dtype-compilation-fix (2023-06-12) 1 commit
+ - statinfo.h: move DTYPE defines from dir.h
 
- Clang's sanitizer implementation seems to work better than GCC's.
+ Compilation fix for platforms without D_TYPE in struct dirent.
 
- Will merge to 'next'.
- source: <20230601180220.GA4167745@coredump.intra.peff.net>
+ Will merge to 'next'. 
+ source: <20230606205935.3183276-1-asedeno@google.com>
 
 
-* jk/log-follow-with-non-literal-pathspec (2023-06-03) 3 commits
- - diff: detect pathspec magic not supported by --follow
- - diff: factor out --follow pathspec check
- - pathspec: factor out magic-to-name function
+* la/docs-typofixes (2023-06-12) 1 commit
+ - docs: typofixes
 
- "git [-c log.follow=true] log [--follow] ':(glob)f**'" used to barf.
-
- Will merge to 'next'?
- source: <20230601173724.GA4158369@coredump.intra.peff.net>
-
-
-* kh/use-default-notes-doc (2023-06-06) 2 commits
- - notes: move the documentation to the struct
- - notes: update documentation for `use_default_notes`
-
- Will merge to 'next'?
- source: <cover.1685958731.git.code@khaugsbakk.name>
-
-
-* ps/cat-file-null-output (2023-06-03) 5 commits
- - cat-file: new option '-Z' delimits output with NUL characters
- - cat-file: simplify reading from standard input
- - strbuf: provide CRLF-aware helper to read until a specified delimiter
- - t1006: modernize test style to use `test_cmp`
- - t1006: don't strip timestamps from expected results
-
- "git cat-file --batch" and friends learned "-Z" that uses NUL
- delimiter for both input and output.
-
- Will merge to 'next'?
- source: <cover.1685710884.git.ps@pks.im>
-
-
-* tl/quote-problematic-arg-for-clarity (2023-06-03) 1 commit
- - surround %s with quotes when failed to lookup commit
-
- Error message fix.
+ Typofixes.
 
  Will merge to 'next'.
- source: <1f7c62a8870433792076fae30d6c4dc4b61a00d8.1685366301.git.dyroneteng@gmail.com>
+ source: <pull.1542.v2.git.1686166007816.gitgitgadget@gmail.com>
 
 
-* ds/add-i-color-configuration-fix (2023-06-06) 1 commit
- - add: check color.ui for interactive add
+* mh/mingw-case-sensitive-build (2023-06-12) 1 commit
+ - mingw: use lowercase includes for some Windows headers
 
- The reimplemented "git add -i" did not honor color.ui configuration.
-
- Will merge to 'next'?
- source: <pull.1541.git.1685994164018.gitgitgadget@gmail.com>
-
-
-* ks/ref-filter-signature (2023-06-06) 2 commits
- - ref-filter: add new "signature" atom
- - t/lib-gpg: introduce new prereq GPG2
-
- The "git for-each-ref" family of commands learned placeholders
- related to GPG signature verification.
+ Names of MinGW header files are spelled in mixed case in some
+ source files, but the build host can be using case sensitive
+ filesystem with header files with their name spelled in all
+ lowercase.
 
  Needs review.
- source: <20230604185815.15761-1-five231003@gmail.com>
+ source: <20230604211934.1365289-1-mh@glandium.org>
 
 
-* mh/commit-reach-get-reachable-plug-leak (2023-06-04) 1 commit
- - commit-reach: fix memory leak in get_reachable_subset()
+* pb/complete-diff-options (2023-06-12) 25 commits
+ - diff.c: mention completion above add_diff_options
+ - completion: complete --remerge-diff
+ - completion: complete --diff-merges, its options and --no-diff-merges
+ - completion: move --pickaxe-{all,regex} to __git_diff_common_options
+ - completion: complete --ws-error-highlight
+ - completion: complete --unified
+ - completion: complete --patch-with-raw
+ - completion: complete --output-indicator-{context,new,old}
+ - completion: complete --output
+ - completion: complete --no-stat
+ - completion: complete --no-relative
+ - completion: complete --line-prefix
+ - completion: complete --ita-invisible-in-index and --ita-visible-in-index
+ - completion: complete --irreversible-delete
+ - completion: complete --ignore-matching-lines
+ - completion: complete --function-context
+ - completion: complete --find-renames
+ - completion: complete --find-object
+ - completion: complete --find-copies
+ - completion: complete --default-prefix
+ - completion: complete --compact-summary
+ - completion: complete --combined-all-paths
+ - completion: complete --cc
+ - completion: complete --break-rewrites
+ - completion: add comments describing __git_diff_* globals
 
- Plug memory leak.
+ Completion updates.
+
+ Expecting a reroll.
+ cf. <5cba334c-4d75-0dac-20c6-9e3def1f224a@gmail.com>
+ source: <pull.1543.v2.git.1686574374.gitgitgadget@gmail.com>
+
+
+* rj/leakfixes (2023-06-12) 6 commits
+ - branch: fix a leak in setup_tracking
+ - branch: fix a leak in check_tracking_branch
+ - branch: fix a leak in inherit_tracking
+ - branch: fix a leak in dwim_and_setup_tracking
+ - remote: fix a leak in query_matches_negative_refspec
+ - config: fix a leak in git_config_copy_or_rename_section_in_file
+
+ Leakfixes (subset)
 
  Will merge to 'next'.
- source: <20230603002819.1122129-1-mh@glandium.org>
+ source: <9eb931e7-dd18-8ce8-4d4a-cf3d85066189@gmail.com>
+
+
+* rs/run-command-exec-error-on-noent (2023-06-12) 2 commits
+ - run-command: report exec error even on ENOENT
+ - t1800: loosen matching of error message for bad shebang
+
+ Simplify error message when run-command fails to start a command.
+
+ Will merge to 'next'.
+ source: <14e1be60-3765-0ba5-00f5-2848bb57bf53@web.de>
+
+
+* sl/worktree-sparse (2023-06-12) 1 commit
+ - worktree: integrate with sparse-index
+
+ "git worktree" learned to work better with sparse index feature.
+
+ Will merge to 'next'.
+ source: <20230606172633.669916-1-cheskaqiqi@gmail.com>
+
+
+* tb/collect-pack-filenames-fix (2023-06-12) 1 commit
+ - builtin/repack.c: only collect fully-formed packs
+
+ Avoid breakage of "git pack-objects --cruft" due to inconsistency
+ between the way the code enumerates packfiles in the repository.
+
+ Will merge to 'next'?
+ source: <20230607101617.ges6tnMry4E52lDGld43QgtNUsIS4YQq6w-t71hEfkQ@z>
+
+
+* tb/open-midx-bitmap-fallback (2023-06-12) 1 commit
+ - pack-bitmap.c: gracefully degrade on failure to load MIDX'd pack
+
+ Gracefully deal with a stale MIDX file that lists a packfile that
+ no longer exists.
+
+ Will merge to 'next'.
+ source: <f123b68cb8a277fbf105b1789a84b9405a499b79.1686178854.git.me@ttaylorr.com>
+
+
+* tz/lib-gpg-prereq-fix (2023-06-12) 1 commit
+ - t/lib-gpg: require GPGSSH for GPGSSH_VERIFYTIME prereq
+
+ Test update.
+
+ Will merge to 'next'.
+ source: <20230606214707.55739-1-tmz@pobox.com>
 
 --------------------------------------------------
 [Stalled]
@@ -281,7 +331,90 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
-* ds/disable-replace-refs (2023-06-03) 3 commits
+* jk/ci-use-clang-for-sanitizer-jobs (2023-06-03) 3 commits
+ - ci: drop linux-clang job
+ - ci: run ASan/UBSan in a single job
+ - ci: use clang for ASan/UBSan checks
+
+ Clang's sanitizer implementation seems to work better than GCC's.
+
+ Will merge to 'next'.
+ source: <20230601180220.GA4167745@coredump.intra.peff.net>
+
+
+* jk/log-follow-with-non-literal-pathspec (2023-06-03) 3 commits
+ - diff: detect pathspec magic not supported by --follow
+ - diff: factor out --follow pathspec check
+ - pathspec: factor out magic-to-name function
+
+ "git [-c log.follow=true] log [--follow] ':(glob)f**'" used to barf.
+
+ Will merge to 'next'.
+ source: <20230601173724.GA4158369@coredump.intra.peff.net>
+
+
+* kh/use-default-notes-doc (2023-06-06) 2 commits
+ - notes: move the documentation to the struct
+ - notes: update documentation for `use_default_notes`
+
+ Will merge to 'next'.
+ source: <cover.1685958731.git.code@khaugsbakk.name>
+
+
+* ps/cat-file-null-output (2023-06-12) 5 commits
+ - cat-file: add option '-Z' that delimits input and output with NUL
+ - cat-file: simplify reading from standard input
+ - strbuf: provide CRLF-aware helper to read until a specified delimiter
+ - t1006: modernize test style to use `test_cmp`
+ - t1006: don't strip timestamps from expected results
+
+ "git cat-file --batch" and friends learned "-Z" that uses NUL
+ delimiter for both input and output.
+
+ Will merge to 'next'.
+ source: <cover.1686028409.git.ps@pks.im>
+
+
+* tl/quote-problematic-arg-for-clarity (2023-06-03) 1 commit
+ - surround %s with quotes when failed to lookup commit
+
+ Error message fix.
+
+ Will merge to 'next'.
+ source: <1f7c62a8870433792076fae30d6c4dc4b61a00d8.1685366301.git.dyroneteng@gmail.com>
+
+
+* ds/add-i-color-configuration-fix (2023-06-12) 2 commits
+ - add: test use of brackets when color is disabled
+ - add: check color.ui for interactive add
+
+ The reimplemented "git add -i" did not honor color.ui configuration.
+
+ Will merge to 'next'.
+ source: <pull.1541.v2.git.1686061219078.gitgitgadget@gmail.com>
+
+
+* ks/ref-filter-signature (2023-06-06) 2 commits
+ - ref-filter: add new "signature" atom
+ - t/lib-gpg: introduce new prereq GPG2
+
+ The "git for-each-ref" family of commands learned placeholders
+ related to GPG signature verification.
+
+ Needs review.
+ source: <20230604185815.15761-1-five231003@gmail.com>
+
+
+* mh/commit-reach-get-reachable-plug-leak (2023-06-04) 1 commit
+ - commit-reach: fix memory leak in get_reachable_subset()
+
+ Plug memory leak.
+
+ Will merge to 'next'.
+ source: <20230603002819.1122129-1-mh@glandium.org>
+
+
+* ds/disable-replace-refs (2023-06-12) 3 commits
  - repository: create read_replace_refs setting
  - replace-objects: create wrapper around setting
  - repository: create disable_replace_refs()
@@ -291,7 +424,7 @@ Release tarballs are available at:
  repository.
 
  Will merge to 'next'.
- source: <pull.1537.v2.git.1685716157.gitgitgadget@gmail.com>
+ source: <pull.1537.v3.git.1686057877.gitgitgadget@gmail.com>
 
 
 * tz/test-fix-pthreads-prereq (2023-05-26) 1 commit
@@ -326,7 +459,7 @@ Release tarballs are available at:
  The global variable has been eliminated and made into a member in
  the per-repository data structure.
 
- Will merge to 'next'???
+ Will merge to 'next'.
  cf. <3145f4f3-7bd4-8a1b-4943-11b7d22b60c6@github.com>
  cf. <kl6lr0qwno2q.fsf@chooglen-macbookpro.roam.corp.google.com>
  source: <pull.1536.v2.git.1685064781.gitgitgadget@gmail.com>
@@ -340,7 +473,7 @@ Release tarballs are available at:
  to NULL dereference if the user mucks with a repository (e.g.
  submodule.<name>.url is removed).  This has been corrected.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <ae6cf3fa461b85e346f034371dae56a2790dfa20.1684957882.git.me@ttaylorr.com>
 
 
@@ -358,22 +491,23 @@ Release tarballs are available at:
  (this branch uses jc/test-modernization.)
 
  Test style updates.
+
+ Will merge to 'next'.
  source: <pull.1514.git.git.1684599239.gitgitgadget@gmail.com>
 
 
-* jt/path-filter-fix (2023-06-03) 3 commits
- . commit-graph: new filter ver. that fixes murmur3
- . repo-settings: introduce commitgraph.changedPathsVersion
- . t4216: test changed path filters with high bit paths
+* jt/path-filter-fix (2023-06-12) 4 commits
+ - commit-graph: new filter ver. that fixes murmur3
+ - repo-settings: introduce commitgraph.changedPathsVersion
+ - t4216: test changed path filters with high bit paths
+ - gitformat-commit-graph: describe version 2 of BDAT
 
  The Bloom filter used for path limited history traversal was broken
  on systems whose "char" is unsigned; update the implementation and
  bump the format version to 2.
 
- Seems to break its own test when merged to 'seen'.
- Needs a more careful transition?
- cf. <def26c71-0fbb-58a3-f1cd-f8e532b67503@github.com>
- source: <cover.1685574402.git.jonathantanmy@google.com>
+ Will merge to 'next'?
+ source: <cover.1686251688.git.jonathantanmy@google.com>
 
 
 * tk/cherry-pick-sequence-requires-clean-worktree (2023-06-01) 1 commit
@@ -383,6 +517,7 @@ Release tarballs are available at:
  clobbering local modification, but "git cherry-pick A..B" did not,
  which has been corrected.
 
+ Expecting a reroll.
  cf. <999f12b2-38d6-f446-e763-4985116ad37d@gmail.com>
  source: <pull.1535.v2.git.1685264889088.gitgitgadget@gmail.com>
 
@@ -423,7 +558,7 @@ Release tarballs are available at:
  "git diff-tree" has been taught to take advantage of the
  sparse-index feature.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  cf. <2a2b7223-bb5d-65f9-95bb-9be45d329c87@github.com>
  source: <20230518154454.475487-1-cheskaqiqi@gmail.com>
 
@@ -435,7 +570,7 @@ Release tarballs are available at:
 
  Leakfix.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20230519000239.GA1975039@coredump.intra.peff.net>
 
 
@@ -462,6 +597,7 @@ Release tarballs are available at:
  - t0000-basic: modernize test format
  (this branch is used by jc/test-modernization-2.)
 
+ Will merge to 'next'.
  source: <pull.1513.git.git.1684440205.gitgitgadget@gmail.com>
 
 
@@ -477,6 +613,8 @@ Release tarballs are available at:
 
  'git worktree add' learned how to create a worktree based on an
  orphaned branch with `--orphan`.
+
+ Will merge to 'next'.
  source: <20230517214711.12467-1-jacobabel@nullpo.dev>
 
 
@@ -489,7 +627,7 @@ Release tarballs are available at:
  "git tag" learned to leave the "$GIT_DIR/TAG_EDITMSG" file when the
  command failed, so that the user can salvage what they typed.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <cover.1684258780.git.code@khaugsbakk.name>
 
 
@@ -504,11 +642,11 @@ Release tarballs are available at:
 
  Doc update.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <pull.1471.v4.git.git.1684469874.gitgitgadget@gmail.com>
 
 
-* tb/refs-exclusion-and-packed-refs (2023-05-15) 16 commits
+* tb/refs-exclusion-and-packed-refs (2023-06-12) 16 commits
  - ls-refs.c: avoid enumerating hidden refs where possible
  - upload-pack.c: avoid enumerating hidden refs where possible
  - builtin/receive-pack.c: avoid enumerating hidden references
@@ -529,8 +667,7 @@ Release tarballs are available at:
  Enumerating refs in the packed-refs file, while excluding refs that
  match certain patterns, has been optimized.
 
- Will merge to 'next'?
- source: <cover.1684178576.git.me@ttaylorr.com>
+ source: <cover.1686134440.git.me@ttaylorr.com>
 
 
 * zh/ls-files-format-atoms (2023-05-23) 1 commit
@@ -541,7 +678,7 @@ Release tarballs are available at:
  were not supported by "git ls-files", even though they were relevant
  in the context of the latter.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <pull.1533.v2.git.1684832418299.gitgitgadget@gmail.com>
 
 
@@ -577,10 +714,12 @@ Release tarballs are available at:
  - Merge branch 'en/header-split-cache-h-part-2' into en/header-split-cache-h-part-3
 
  Header files cleanup.
+
+ Will merge to 'next'.
  source: <pull.1525.v3.git.1684218848.gitgitgadget@gmail.com>
 
 
-* la/doc-interpret-trailers (2023-05-11) 9 commits
+* la/doc-interpret-trailers (2023-06-12) 9 commits
  - doc: trailer: add more examples in DESCRIPTION
  - doc: trailer: mention 'key' in DESCRIPTION
  - doc: trailer.<token>.command: emphasize deprecation
@@ -593,9 +732,8 @@ Release tarballs are available at:
 
  Doc update.
 
- On hold. Looking good.
- Want to be rebased once kh/doc-interpret-trailers-updates lands.
- source: <pull.1506.v2.git.git.1683839975.gitgitgadget@gmail.com>
+ Will merge to 'next'.
+ source: <pull.1506.v3.git.git.1686017304.gitgitgadget@gmail.com>
 
 
 * cc/git-replay (2023-06-03) 15 commits
@@ -627,18 +765,20 @@ Release tarballs are available at:
  "git pack-refs" learns "--include" and "--exclude" to tweak the ref
  hierarchy to be packed using pattern matching.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <pull.1501.v4.git.git.1683927282.gitgitgadget@gmail.com>
 
 
-* tb/gc-recent-object-hook (2023-05-15) 2 commits
+* tb/gc-recent-object-hook (2023-06-12) 2 commits
  - gc: introduce `gc.recentObjectsHook`
  - reachable.c: extract `obj_is_recent()`
 
  "git pack-objects" learned to invoke a new hook program that
  enumerates extra objects to be used as anchoring points to keep
  otherwise unreachable objects in cruft packs.
- source: <cover.1684196634.git.me@ttaylorr.com>
+
+ Will merge to 'next'.
+ source: <cover.1686178684.git.me@ttaylorr.com>
 
 
 * jc/diff-s-with-other-options (2023-05-05) 1 commit
@@ -650,7 +790,7 @@ Release tarballs are available at:
  well.  This has been cleaned up so that it will clear all the
  formatting options given before.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20230505165952.335256-1-gitster@pobox.com>
 
 
@@ -665,21 +805,19 @@ Release tarballs are available at:
  source: <20230428083528.1699221-1-oswald.buddenhagen@gmx.de>
 
 
-* cw/strbuf-cleanup (2023-05-12) 7 commits
-  (merged to 'next' on 2023-05-15 at 31d08296f2)
- + strbuf: remove global variable
- + strbuf: clarify dependency
- + path: move related function to path
- + object-name: move related functions to object-name
- + credential-store: move related functions to credential-store file
- + abspath: move related functions to abspath
- + strbuf: clarify API boundary
+* cw/strbuf-cleanup (2023-06-12) 7 commits
+ - strbuf: remove global variable
+ - path: move related function to path
+ - object-name: move related functions to object-name
+ - credential-store: move related functions to credential-store file
+ - abspath: move related functions to abspath
+ - strbuf: clarify dependency
+ - strbuf: clarify API boundary
 
  Move functions that are not about pure string manipulation out of
  strbuf.[ch]
 
- Will cook in 'next'.
- source: <20230512171429.2202982-1-calvinwan@google.com>
+ source: <20230606194720.2053551-1-calvinwan@google.com>
 
 
 * tl/notes-separator (2023-04-28) 6 commits
@@ -737,7 +875,7 @@ Release tarballs are available at:
 
  Update documentation regarding Coccinelle patches.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <pull.1495.v2.git.git.1682634143.gitgitgadget@gmail.com>
 
 
@@ -752,8 +890,7 @@ Release tarballs are available at:
  Document more pseudo-refs and teach the command line completion
  machinery to complete AUTO_MERGE.
 
- Kicked back to 'seen' and replaced.
- Needs review/ack.
+ Will merge to 'next'.
  source: <pull.1515.v2.git.1684783741.gitgitgadget@gmail.com>
 
 
