@@ -372,75 +372,75 @@ test_expect_success 'checkout specific path while in subdirectory' '
 '
 
 test_expect_success 'checkout w/--track sets up tracking' '
-    git config branch.autosetupmerge false &&
-    git checkout main &&
-    git checkout --track -b track1 &&
-    test "$(git config branch.track1.remote)" &&
-    test "$(git config branch.track1.merge)"
+	git config branch.autosetupmerge false &&
+	git checkout main &&
+	git checkout --track -b track1 &&
+	test "$(git config branch.track1.remote)" &&
+	test "$(git config branch.track1.merge)"
 '
 
 test_expect_success 'checkout w/autosetupmerge=always sets up tracking' '
-    test_when_finished git config branch.autosetupmerge false &&
-    git config branch.autosetupmerge always &&
-    git checkout main &&
-    git checkout -b track2 &&
-    test "$(git config branch.track2.remote)" &&
-    test "$(git config branch.track2.merge)"
+	test_when_finished git config branch.autosetupmerge false &&
+	git config branch.autosetupmerge always &&
+	git checkout main &&
+	git checkout -b track2 &&
+	test "$(git config branch.track2.remote)" &&
+	test "$(git config branch.track2.merge)"
 '
 
 test_expect_success 'checkout w/--track from non-branch HEAD fails' '
-    git checkout main^0 &&
-    test_must_fail git symbolic-ref HEAD &&
-    test_must_fail git checkout --track -b track &&
-    test_must_fail git rev-parse --verify track &&
-    test_must_fail git symbolic-ref HEAD &&
-    test "z$(git rev-parse main^0)" = "z$(git rev-parse HEAD)"
+	git checkout main^0 &&
+	test_must_fail git symbolic-ref HEAD &&
+	test_must_fail git checkout --track -b track &&
+	test_must_fail git rev-parse --verify track &&
+	test_must_fail git symbolic-ref HEAD &&
+	test "z$(git rev-parse main^0)" = "z$(git rev-parse HEAD)"
 '
 
 test_expect_success 'checkout w/--track from tag fails' '
-    git checkout main^0 &&
-    test_must_fail git symbolic-ref HEAD &&
-    test_must_fail git checkout --track -b track frotz &&
-    test_must_fail git rev-parse --verify track &&
-    test_must_fail git symbolic-ref HEAD &&
-    test "z$(git rev-parse main^0)" = "z$(git rev-parse HEAD)"
+	git checkout main^0 &&
+	test_must_fail git symbolic-ref HEAD &&
+	test_must_fail git checkout --track -b track frotz &&
+	test_must_fail git rev-parse --verify track &&
+	test_must_fail git symbolic-ref HEAD &&
+	test "z$(git rev-parse main^0)" = "z$(git rev-parse HEAD)"
 '
 
 test_expect_success 'detach a symbolic link HEAD' '
-    git checkout main &&
-    git config --bool core.prefersymlinkrefs yes &&
-    git checkout side &&
-    git checkout main &&
-    it=$(git symbolic-ref HEAD) &&
-    test "z$it" = zrefs/heads/main &&
-    here=$(git rev-parse --verify refs/heads/main) &&
-    git checkout side^ &&
-    test "z$(git rev-parse --verify refs/heads/main)" = "z$here"
+	git checkout main &&
+	git config --bool core.prefersymlinkrefs yes &&
+	git checkout side &&
+	git checkout main &&
+	it=$(git symbolic-ref HEAD) &&
+	test "z$it" = zrefs/heads/main &&
+	here=$(git rev-parse --verify refs/heads/main) &&
+	git checkout side^ &&
+	test "z$(git rev-parse --verify refs/heads/main)" = "z$here"
 '
 
 test_expect_success 'checkout with --track fakes a sensible -b <name>' '
-    git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*" &&
-    git update-ref refs/remotes/origin/koala/bear renamer &&
+	git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*" &&
+	git update-ref refs/remotes/origin/koala/bear renamer &&
 
-    git checkout --track origin/koala/bear &&
-    test "refs/heads/koala/bear" = "$(git symbolic-ref HEAD)" &&
-    test "$(git rev-parse HEAD)" = "$(git rev-parse renamer)" &&
+	git checkout --track origin/koala/bear &&
+	test "refs/heads/koala/bear" = "$(git symbolic-ref HEAD)" &&
+	test "$(git rev-parse HEAD)" = "$(git rev-parse renamer)" &&
 
-    git checkout main && git branch -D koala/bear &&
+	git checkout main && git branch -D koala/bear &&
 
-    git checkout --track refs/remotes/origin/koala/bear &&
-    test "refs/heads/koala/bear" = "$(git symbolic-ref HEAD)" &&
-    test "$(git rev-parse HEAD)" = "$(git rev-parse renamer)" &&
+	git checkout --track refs/remotes/origin/koala/bear &&
+	test "refs/heads/koala/bear" = "$(git symbolic-ref HEAD)" &&
+	test "$(git rev-parse HEAD)" = "$(git rev-parse renamer)" &&
 
-    git checkout main && git branch -D koala/bear &&
+	git checkout main && git branch -D koala/bear &&
 
-    git checkout --track remotes/origin/koala/bear &&
-    test "refs/heads/koala/bear" = "$(git symbolic-ref HEAD)" &&
-    test "$(git rev-parse HEAD)" = "$(git rev-parse renamer)"
+	git checkout --track remotes/origin/koala/bear &&
+	test "refs/heads/koala/bear" = "$(git symbolic-ref HEAD)" &&
+	test "$(git rev-parse HEAD)" = "$(git rev-parse renamer)"
 '
 
 test_expect_success 'checkout with --track, but without -b, fails with too short tracked name' '
-    test_must_fail git checkout --track renamer
+	test_must_fail git checkout --track renamer
 '
 
 setup_conflicting_index () {
