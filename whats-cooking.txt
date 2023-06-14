@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jun 2023, #03; Mon, 12)
-X-master-at: fe86abd7511a9a6862d5706c6fa1d9b57a63ba09
-X-next-at: 0019c0ddb0f4de1640983ab94f7f6608e68b7c17
+Subject: What's cooking in git.git (Jun 2023, #04; Wed, 14)
+X-master-at: d7d8841f67f29e6ecbad85a11805c907d0f00d5d
+X-next-at: 91eec092e0048861e489d5248932fabb011982fc
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jun 2023, #03; Mon, 12)
+What's cooking in git.git (Jun 2023, #04; Wed, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,12 +16,6 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
-
-Sorry for being rather quiet for a few weeks.  I was visiting Japan,
-attending a couple of memorial services, and then got sick and was
-in bed for about a week X-<.  It makes you feel really old when a
-friend from your highschool days passes away.  I think I've caught
-up with the list traffic, but stale topics may want to be re-sent.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -54,130 +48,132 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
-* as/dtype-compilation-fix (2023-06-12) 1 commit
- - statinfo.h: move DTYPE defines from dir.h
+* jc/notes-separator-fix (2023-06-13) 1 commit
+  (merged to 'next' on 2023-06-14 at 3321da32a9)
+ + notes: do not access before the beginning of an array
+ (this branch uses tl/notes-separator.)
 
- Compilation fix for platforms without D_TYPE in struct dirent.
+ Fix to tl/notes-separator topic.
 
- Will merge to 'next'. 
- source: <20230606205935.3183276-1-asedeno@google.com>
-
-
-* la/docs-typofixes (2023-06-12) 1 commit
- - docs: typofixes
-
- Typofixes.
-
- Will merge to 'next'.
- source: <pull.1542.v2.git.1686166007816.gitgitgadget@gmail.com>
+ Will merge to 'master'.
+ source: <cover.1682671758.git.dyroneteng@gmail.com>
 
 
-* mh/mingw-case-sensitive-build (2023-06-12) 1 commit
- - mingw: use lowercase includes for some Windows headers
+* js/doc-unit-tests (2023-06-13) 1 commit
+ - unit tests: Add a project plan document
 
- Names of MinGW header files are spelled in mixed case in some
- source files, but the build host can be using case sensitive
- filesystem with header files with their name spelled in all
- lowercase.
+ Process to add some form of low-level unit tests has started.
 
- Needs review.
- source: <20230604211934.1365289-1-mh@glandium.org>
+ Comments?  Filling in blanks?
+ source: <8afdb215d7e10ca16a2ce8226b4127b3d8a2d971.1686352386.git.steadmon@google.com>
 
 
-* pb/complete-diff-options (2023-06-12) 25 commits
- - diff.c: mention completion above add_diff_options
- - completion: complete --remerge-diff
- - completion: complete --diff-merges, its options and --no-diff-merges
- - completion: move --pickaxe-{all,regex} to __git_diff_common_options
- - completion: complete --ws-error-highlight
- - completion: complete --unified
- - completion: complete --patch-with-raw
- - completion: complete --output-indicator-{context,new,old}
- - completion: complete --output
- - completion: complete --no-stat
- - completion: complete --no-relative
- - completion: complete --line-prefix
- - completion: complete --ita-invisible-in-index and --ita-visible-in-index
- - completion: complete --irreversible-delete
- - completion: complete --ignore-matching-lines
- - completion: complete --function-context
- - completion: complete --find-renames
- - completion: complete --find-object
- - completion: complete --find-copies
- - completion: complete --default-prefix
- - completion: complete --compact-summary
- - completion: complete --combined-all-paths
- - completion: complete --cc
- - completion: complete --break-rewrites
- - completion: add comments describing __git_diff_* globals
+* jt/doc-use-octal-with-printf (2023-06-13) 1 commit
+ - CodingGuidelines: use octal escapes, not hex
 
- Completion updates.
-
- Expecting a reroll.
- cf. <5cba334c-4d75-0dac-20c6-9e3def1f224a@gmail.com>
- source: <pull.1543.v2.git.1686574374.gitgitgadget@gmail.com>
-
-
-* rj/leakfixes (2023-06-12) 6 commits
- - branch: fix a leak in setup_tracking
- - branch: fix a leak in check_tracking_branch
- - branch: fix a leak in inherit_tracking
- - branch: fix a leak in dwim_and_setup_tracking
- - remote: fix a leak in query_matches_negative_refspec
- - config: fix a leak in git_config_copy_or_rename_section_in_file
-
- Leakfixes (subset)
+ Suggest to refrain from using hex literals that are non-portable
+ when writing printf(1) format strings.
 
  Will merge to 'next'.
- source: <9eb931e7-dd18-8ce8-4d4a-cf3d85066189@gmail.com>
+ source: <20230614001558.277755-1-jonathantanmy@google.com>
 
 
-* rs/run-command-exec-error-on-noent (2023-06-12) 2 commits
- - run-command: report exec error even on ENOENT
- - t1800: loosen matching of error message for bad shebang
+* js/defeat-ignore-submodules-config-with-explicit-addition (2023-06-14) 1 commit
+ - diff-lib: honor override_submodule_config flag bit
 
- Simplify error message when run-command fails to start a command.
-
- Will merge to 'next'.
- source: <14e1be60-3765-0ba5-00f5-2848bb57bf53@web.de>
-
-
-* sl/worktree-sparse (2023-06-12) 1 commit
- - worktree: integrate with sparse-index
-
- "git worktree" learned to work better with sparse index feature.
+ Even when diff.ignoreSubmodules tells us to ignore submodule
+ changes, "git commit" with an index that already records changes to
+ submodules should include the submodule changes in the resulting
+ commit, but it did not.
 
  Will merge to 'next'.
- source: <20230606172633.669916-1-cheskaqiqi@gmail.com>
+ source: <20230614164856.3186012-2-sokcevic@google.com>
+
+--------------------------------------------------
+[Graduated to 'master']
+
+* gc/doc-cocci-updates (2023-04-27) 2 commits
+  (merged to 'next' on 2023-05-20 at 3fe237c1a8)
+ + cocci: codify authoring and reviewing practices
+ + cocci: add headings to and reword README
+
+ Update documentation regarding Coccinelle patches.
+ source: <pull.1495.v2.git.git.1682634143.gitgitgadget@gmail.com>
 
 
-* tb/collect-pack-filenames-fix (2023-06-12) 1 commit
- - builtin/repack.c: only collect fully-formed packs
+* jc/diff-s-with-other-options (2023-05-05) 1 commit
+  (merged to 'next' on 2023-05-20 at dda3826a68)
+ + diff: fix interaction between the "-s" option and other options
 
- Avoid breakage of "git pack-objects --cruft" due to inconsistency
- between the way the code enumerates packfiles in the repository.
-
- Will merge to 'next'?
- source: <20230607101617.ges6tnMry4E52lDGld43QgtNUsIS4YQq6w-t71hEfkQ@z>
-
-
-* tb/open-midx-bitmap-fallback (2023-06-12) 1 commit
- - pack-bitmap.c: gracefully degrade on failure to load MIDX'd pack
-
- Gracefully deal with a stale MIDX file that lists a packfile that
- no longer exists.
-
- Will merge to 'next'.
- source: <f123b68cb8a277fbf105b1789a84b9405a499b79.1686178854.git.me@ttaylorr.com>
+ The "-s" (silent, squelch) option of the "diff" family of commands
+ did not interact with other options that specify the output format
+ well.  This has been cleaned up so that it will clear all the
+ formatting options given before.
+ source: <20230505165952.335256-1-gitster@pobox.com>
 
 
-* tz/lib-gpg-prereq-fix (2023-06-12) 1 commit
- - t/lib-gpg: require GPGSSH for GPGSSH_VERIFYTIME prereq
+* jc/pack-ref-exclude-include (2023-05-12) 3 commits
+  (merged to 'next' on 2023-05-23 at 37333a2d00)
+ + pack-refs: teach pack-refs --include option
+ + pack-refs: teach --exclude option to exclude refs from being packed
+ + docs: clarify git-pack-refs --all will pack all refs
 
- Test update.
+ "git pack-refs" learns "--include" and "--exclude" to tweak the ref
+ hierarchy to be packed using pattern matching.
+ source: <pull.1501.v4.git.git.1683927282.gitgitgadget@gmail.com>
 
- Will merge to 'next'.
- source: <20230606214707.55739-1-tmz@pobox.com>
+
+* jk/format-patch-message-id-unleak (2023-05-19) 2 commits
+  (merged to 'next' on 2023-05-23 at 44b9e1ab91)
+ + format-patch: free elements of rev.ref_message_ids list
+ + format-patch: free rev.message_id when exiting
+
+ Leakfix.
+ source: <20230519000239.GA1975039@coredump.intra.peff.net>
+
+
+* kh/keep-tag-editmsg-upon-failure (2023-05-16) 3 commits
+  (merged to 'next' on 2023-05-19 at fc0fe3173d)
+ + tag: keep the message file in case ref transaction fails
+ + t/t7004-tag: add regression test for successful tag creation
+ + doc: tag: document `TAG_EDITMSG`
+
+ "git tag" learned to leave the "$GIT_DIR/TAG_EDITMSG" file when the
+ command failed, so that the user can salvage what they typed.
+ source: <cover.1684258780.git.code@khaugsbakk.name>
+
+
+* sa/doc-ls-remote (2023-05-19) 6 commits
+  (merged to 'next' on 2023-05-20 at d577bf75a0)
+ + ls-remote doc: document the output format
+ + ls-remote doc: explain what each example does
+ + ls-remote doc: show peeled tags in examples
+ + ls-remote doc: remove redundant --tags example
+ + show-branch doc: say <ref>, not <reference>
+ + show-ref doc: update for internal consistency
+
+ Doc update.
+ source: <pull.1471.v4.git.git.1684469874.gitgitgadget@gmail.com>
+
+
+* sl/diff-tree-sparse (2023-05-18) 1 commit
+  (merged to 'next' on 2023-05-24 at 5d4f2dec4d)
+ + diff-tree: integrate with sparse index
+
+ "git diff-tree" has been taught to take advantage of the
+ sparse-index feature.
+ cf. <2a2b7223-bb5d-65f9-95bb-9be45d329c87@github.com>
+ source: <20230518154454.475487-1-cheskaqiqi@gmail.com>
+
+
+* zh/ls-files-format-atoms (2023-05-23) 1 commit
+  (merged to 'next' on 2023-05-24 at 116b11effb)
+ + ls-files: align format atoms with ls-tree
+
+ Some atoms that can be used in "--format=<format>" for "git ls-tree"
+ were not supported by "git ls-files", even though they were relevant
+ in the context of the latter.
+ source: <pull.1533.v2.git.1684832418299.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -331,66 +327,200 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* as/dtype-compilation-fix (2023-06-12) 1 commit
+ - statinfo.h: move DTYPE defines from dir.h
+
+ Compilation fix for platforms without D_TYPE in struct dirent.
+
+ Will merge to 'next'.
+ source: <20230606205935.3183276-1-asedeno@google.com>
+
+
+* la/docs-typofixes (2023-06-12) 1 commit
+ - docs: typofixes
+
+ Typofixes.
+
+ Will merge to 'next'.
+ source: <pull.1542.v2.git.1686166007816.gitgitgadget@gmail.com>
+
+
+* mh/mingw-case-sensitive-build (2023-06-12) 1 commit
+ - mingw: use lowercase includes for some Windows headers
+
+ Names of MinGW header files are spelled in mixed case in some
+ source files, but the build host can be using case sensitive
+ filesystem with header files with their name spelled in all
+ lowercase.
+
+ Needs review.
+ source: <20230604211934.1365289-1-mh@glandium.org>
+
+
+* pb/complete-diff-options (2023-06-12) 25 commits
+ - diff.c: mention completion above add_diff_options
+ - completion: complete --remerge-diff
+ - completion: complete --diff-merges, its options and --no-diff-merges
+ - completion: move --pickaxe-{all,regex} to __git_diff_common_options
+ - completion: complete --ws-error-highlight
+ - completion: complete --unified
+ - completion: complete --patch-with-raw
+ - completion: complete --output-indicator-{context,new,old}
+ - completion: complete --output
+ - completion: complete --no-stat
+ - completion: complete --no-relative
+ - completion: complete --line-prefix
+ - completion: complete --ita-invisible-in-index and --ita-visible-in-index
+ - completion: complete --irreversible-delete
+ - completion: complete --ignore-matching-lines
+ - completion: complete --function-context
+ - completion: complete --find-renames
+ - completion: complete --find-object
+ - completion: complete --find-copies
+ - completion: complete --default-prefix
+ - completion: complete --compact-summary
+ - completion: complete --combined-all-paths
+ - completion: complete --cc
+ - completion: complete --break-rewrites
+ - completion: add comments describing __git_diff_* globals
+
+ Completion updates.
+
+ Expecting a reroll.
+ cf. <5cba334c-4d75-0dac-20c6-9e3def1f224a@gmail.com>
+ source: <pull.1543.v2.git.1686574374.gitgitgadget@gmail.com>
+
+
+* rj/leakfixes (2023-06-12) 6 commits
+ - branch: fix a leak in setup_tracking
+ - branch: fix a leak in check_tracking_branch
+ - branch: fix a leak in inherit_tracking
+ - branch: fix a leak in dwim_and_setup_tracking
+ - remote: fix a leak in query_matches_negative_refspec
+ - config: fix a leak in git_config_copy_or_rename_section_in_file
+
+ Leakfixes (subset)
+
+ Will merge to 'next'.
+ source: <9eb931e7-dd18-8ce8-4d4a-cf3d85066189@gmail.com>
+
+
+* rs/run-command-exec-error-on-noent (2023-06-12) 2 commits
+ - run-command: report exec error even on ENOENT
+ - t1800: loosen matching of error message for bad shebang
+
+ Simplify error message when run-command fails to start a command.
+
+ Will merge to 'next'.
+ source: <14e1be60-3765-0ba5-00f5-2848bb57bf53@web.de>
+
+
+* sl/worktree-sparse (2023-06-12) 1 commit
+ - worktree: integrate with sparse-index
+
+ "git worktree" learned to work better with sparse index feature.
+
+ Will merge to 'next'.
+ source: <20230606172633.669916-1-cheskaqiqi@gmail.com>
+
+
+* tb/collect-pack-filenames-fix (2023-06-12) 1 commit
+ - builtin/repack.c: only collect fully-formed packs
+
+ Avoid breakage of "git pack-objects --cruft" due to inconsistency
+ between the way the code enumerates packfiles in the repository.
+
+ Will merge to 'next'?
+ source: <20230607101617.ges6tnMry4E52lDGld43QgtNUsIS4YQq6w-t71hEfkQ@z>
+
+
+* tb/open-midx-bitmap-fallback (2023-06-12) 1 commit
+ - pack-bitmap.c: gracefully degrade on failure to load MIDX'd pack
+
+ Gracefully deal with a stale MIDX file that lists a packfile that
+ no longer exists.
+
+ Will merge to 'next'.
+ source: <f123b68cb8a277fbf105b1789a84b9405a499b79.1686178854.git.me@ttaylorr.com>
+
+
+* tz/lib-gpg-prereq-fix (2023-06-12) 1 commit
+ - t/lib-gpg: require GPGSSH for GPGSSH_VERIFYTIME prereq
+
+ Test update.
+
+ Will merge to 'next'.
+ source: <20230606214707.55739-1-tmz@pobox.com>
+
+
 * jk/ci-use-clang-for-sanitizer-jobs (2023-06-03) 3 commits
- - ci: drop linux-clang job
- - ci: run ASan/UBSan in a single job
- - ci: use clang for ASan/UBSan checks
+  (merged to 'next' on 2023-06-12 at f6d4c5aac6)
+ + ci: drop linux-clang job
+ + ci: run ASan/UBSan in a single job
+ + ci: use clang for ASan/UBSan checks
 
  Clang's sanitizer implementation seems to work better than GCC's.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20230601180220.GA4167745@coredump.intra.peff.net>
 
 
 * jk/log-follow-with-non-literal-pathspec (2023-06-03) 3 commits
- - diff: detect pathspec magic not supported by --follow
- - diff: factor out --follow pathspec check
- - pathspec: factor out magic-to-name function
+  (merged to 'next' on 2023-06-13 at 6c864e2f8a)
+ + diff: detect pathspec magic not supported by --follow
+ + diff: factor out --follow pathspec check
+ + pathspec: factor out magic-to-name function
 
  "git [-c log.follow=true] log [--follow] ':(glob)f**'" used to barf.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20230601173724.GA4158369@coredump.intra.peff.net>
 
 
 * kh/use-default-notes-doc (2023-06-06) 2 commits
- - notes: move the documentation to the struct
- - notes: update documentation for `use_default_notes`
+  (merged to 'next' on 2023-06-13 at ebfbf7a376)
+ + notes: move the documentation to the struct
+ + notes: update documentation for `use_default_notes`
 
- Will merge to 'next'.
+ Doc update.
+
+ Will merge to 'master'.
  source: <cover.1685958731.git.code@khaugsbakk.name>
 
 
 * ps/cat-file-null-output (2023-06-12) 5 commits
- - cat-file: add option '-Z' that delimits input and output with NUL
- - cat-file: simplify reading from standard input
- - strbuf: provide CRLF-aware helper to read until a specified delimiter
- - t1006: modernize test style to use `test_cmp`
- - t1006: don't strip timestamps from expected results
+  (merged to 'next' on 2023-06-14 at f879ffcbf0)
+ + cat-file: add option '-Z' that delimits input and output with NUL
+ + cat-file: simplify reading from standard input
+ + strbuf: provide CRLF-aware helper to read until a specified delimiter
+ + t1006: modernize test style to use `test_cmp`
+ + t1006: don't strip timestamps from expected results
 
  "git cat-file --batch" and friends learned "-Z" that uses NUL
  delimiter for both input and output.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1686028409.git.ps@pks.im>
 
 
 * tl/quote-problematic-arg-for-clarity (2023-06-03) 1 commit
- - surround %s with quotes when failed to lookup commit
+  (merged to 'next' on 2023-06-12 at 68851799e5)
+ + surround %s with quotes when failed to lookup commit
 
  Error message fix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <1f7c62a8870433792076fae30d6c4dc4b61a00d8.1685366301.git.dyroneteng@gmail.com>
 
 
 * ds/add-i-color-configuration-fix (2023-06-12) 2 commits
- - add: test use of brackets when color is disabled
- - add: check color.ui for interactive add
+  (merged to 'next' on 2023-06-14 at 91eec092e0)
+ + add: test use of brackets when color is disabled
+ + add: check color.ui for interactive add
 
  The reimplemented "git add -i" did not honor color.ui configuration.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1541.v2.git.1686061219078.gitgitgadget@gmail.com>
 
 
@@ -406,49 +536,54 @@ Release tarballs are available at:
 
 
 * mh/commit-reach-get-reachable-plug-leak (2023-06-04) 1 commit
- - commit-reach: fix memory leak in get_reachable_subset()
+  (merged to 'next' on 2023-06-12 at 7c58973941)
+ + commit-reach: fix memory leak in get_reachable_subset()
 
  Plug memory leak.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20230603002819.1122129-1-mh@glandium.org>
 
 
 * ds/disable-replace-refs (2023-06-12) 3 commits
- - repository: create read_replace_refs setting
- - replace-objects: create wrapper around setting
- - repository: create disable_replace_refs()
+  (merged to 'next' on 2023-06-14 at 82ba5a6ffa)
+ + repository: create read_replace_refs setting
+ + replace-objects: create wrapper around setting
+ + repository: create disable_replace_refs()
  (this branch uses tb/pack-bitmap-traversal-with-boundary.)
 
  Introduce a mechanism to disable replace refs globally and per
  repository.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1537.v3.git.1686057877.gitgitgadget@gmail.com>
 
 
 * tz/test-fix-pthreads-prereq (2023-05-26) 1 commit
- - trace2 tests: fix PTHREADS prereq
+  (merged to 'next' on 2023-06-12 at 82d9529f2c)
+ + trace2 tests: fix PTHREADS prereq
 
  Test fix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20230525031218.3554586-1-tmz@pobox.com>
 
 
 * tz/test-ssh-verifytime-fix (2023-05-26) 1 commit
- - t/lib-gpg: fix ssh-keygen -Y check-novalidate with openssh-9.0
+  (merged to 'next' on 2023-06-12 at 3abad605d6)
+ + t/lib-gpg: fix ssh-keygen -Y check-novalidate with openssh-9.0
 
  Test fix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20230525031026.3554406-1-tmz@pobox.com>
 
 
 * vd/worktree-config-is-per-repository (2023-05-26) 3 commits
- - repository: move 'repository_format_worktree_config' to repo scope
- - config: pass 'repo' directly to 'config_with_options()'
- - config: use gitdir to get worktree config
+  (merged to 'next' on 2023-06-13 at 339d281663)
+ + repository: move 'repository_format_worktree_config' to repo scope
+ + config: pass 'repo' directly to 'config_with_options()'
+ + config: use gitdir to get worktree config
 
  The value of config.worktree is per-repository, but has been kept
  in a singleton global variable per process. This has been OK as
@@ -459,44 +594,46 @@ Release tarballs are available at:
  The global variable has been eliminated and made into a member in
  the per-repository data structure.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <3145f4f3-7bd4-8a1b-4943-11b7d22b60c6@github.com>
  cf. <kl6lr0qwno2q.fsf@chooglen-macbookpro.roam.corp.google.com>
  source: <pull.1536.v2.git.1685064781.gitgitgadget@gmail.com>
 
 
 * tb/submodule-null-deref-fix (2023-05-25) 1 commit
- - builtin/submodule--helper.c: handle missing submodule URLs
+  (merged to 'next' on 2023-06-13 at 5eb6a7948d)
+ + builtin/submodule--helper.c: handle missing submodule URLs
 
  "git submodule" code trusted the data coming from the config (and
  the in-tree .gitmodules file) too much without validating, leading
  to NULL dereference if the user mucks with a repository (e.g.
  submodule.<name>.url is removed).  This has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <ae6cf3fa461b85e346f034371dae56a2790dfa20.1684957882.git.me@ttaylorr.com>
 
 
 * jc/test-modernization-2 (2023-05-23) 10 commits
- - t9400-git-cvsserver-server: modernize test format
- - t9200-git-cvsexportcommit: modernize test format
- - t9104-git-svn-follow-parent: modernize test format
- - t9100-git-svn-basic: modernize test format
- - t7700-repack: modernize test format
- - t7600-merge: modernize test format
- - t7508-status: modernize test format
- - t7201-co: modernize test format
- - t7111-reset-table: modernize test format
- - t7110-reset-merge: modernize test format
+  (merged to 'next' on 2023-06-13 at e3ab8eea9a)
+ + t9400-git-cvsserver-server: modernize test format
+ + t9200-git-cvsexportcommit: modernize test format
+ + t9104-git-svn-follow-parent: modernize test format
+ + t9100-git-svn-basic: modernize test format
+ + t7700-repack: modernize test format
+ + t7600-merge: modernize test format
+ + t7508-status: modernize test format
+ + t7201-co: modernize test format
+ + t7111-reset-table: modernize test format
+ + t7110-reset-merge: modernize test format
  (this branch uses jc/test-modernization.)
 
  Test style updates.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1514.git.git.1684599239.gitgitgadget@gmail.com>
 
 
-* jt/path-filter-fix (2023-06-12) 4 commits
+* jt/path-filter-fix (2023-06-13) 4 commits
  - commit-graph: new filter ver. that fixes murmur3
  - repo-settings: introduce commitgraph.changedPathsVersion
  - t4216: test changed path filters with high bit paths
@@ -507,7 +644,7 @@ Release tarballs are available at:
  bump the format version to 2.
 
  Will merge to 'next'?
- source: <cover.1686251688.git.jonathantanmy@google.com>
+ source: <cover.1686677910.git.jonathantanmy@google.com>
 
 
 * tk/cherry-pick-sequence-requires-clean-worktree (2023-06-01) 1 commit
@@ -534,116 +671,68 @@ Release tarballs are available at:
 
 
 * ps/fetch-cleanups (2023-05-17) 9 commits
- - fetch: use `fetch_config` to store "submodule.fetchJobs" value
- - fetch: use `fetch_config` to store "fetch.parallel" value
- - fetch: use `fetch_config` to store "fetch.recurseSubmodules" value
- - fetch: use `fetch_config` to store "fetch.showForcedUpdates" value
- - fetch: use `fetch_config` to store "fetch.pruneTags" value
- - fetch: use `fetch_config` to store "fetch.prune" value
- - fetch: pass through `fetch_config` directly
- - fetch: drop unneeded NULL-check for `remote_ref`
- - fetch: drop unused DISPLAY_FORMAT_UNKNOWN enum value
+  (merged to 'next' on 2023-06-12 at d15d335893)
+ + fetch: use `fetch_config` to store "submodule.fetchJobs" value
+ + fetch: use `fetch_config` to store "fetch.parallel" value
+ + fetch: use `fetch_config` to store "fetch.recurseSubmodules" value
+ + fetch: use `fetch_config` to store "fetch.showForcedUpdates" value
+ + fetch: use `fetch_config` to store "fetch.pruneTags" value
+ + fetch: use `fetch_config` to store "fetch.prune" value
+ + fetch: pass through `fetch_config` directly
+ + fetch: drop unneeded NULL-check for `remote_ref`
+ + fetch: drop unused DISPLAY_FORMAT_UNKNOWN enum value
 
  Code clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <20230519002128.GD2442034@coredump.intra.peff.net>
  source: <cover.1684324059.git.ps@pks.im>
 
 
-* sl/diff-tree-sparse (2023-05-18) 1 commit
-  (merged to 'next' on 2023-05-24 at 5d4f2dec4d)
- + diff-tree: integrate with sparse index
-
- "git diff-tree" has been taught to take advantage of the
- sparse-index feature.
-
- Will merge to 'master'.
- cf. <2a2b7223-bb5d-65f9-95bb-9be45d329c87@github.com>
- source: <20230518154454.475487-1-cheskaqiqi@gmail.com>
-
-
-* jk/format-patch-message-id-unleak (2023-05-19) 2 commits
-  (merged to 'next' on 2023-05-23 at 44b9e1ab91)
- + format-patch: free elements of rev.ref_message_ids list
- + format-patch: free rev.message_id when exiting
-
- Leakfix.
-
- Will merge to 'master'.
- source: <20230519000239.GA1975039@coredump.intra.peff.net>
-
-
 * jc/test-modernization (2023-05-19) 20 commits
- - t7101-reset-empty-subdirs: modernize test format
- - t6050-replace: modernize test format
- - t5306-pack-nobase: modernize test format
- - t5303-pack-corruption-resilience: modernize test format
- - t5301-sliding-window: modernize test format
- - t5300-pack-object: modernize test format
- - t4206-log-follow-harder-copies: modernize test format
- - t4202-log: modernize test format
- - t4004-diff-rename-symlink: modernize test format
- - t4003-diff-rename-1: modernize test format
- - t4002-diff-basic: modernize test format
- - t3903-stash: modernize test format
- - t3700-add: modernize test format
- - t3500-cherry: modernize test format
- - t1006-cat-file: modernize test format
- - t1002-read-tree-m-u-2way: modernize test format
- - t1001-read-tree-m-2way: modernize test format
- - t3210-pack-refs: modernize test format
- - t0030-stripspace: modernize test format
- - t0000-basic: modernize test format
+  (merged to 'next' on 2023-06-13 at a61e7b7248)
+ + t7101-reset-empty-subdirs: modernize test format
+ + t6050-replace: modernize test format
+ + t5306-pack-nobase: modernize test format
+ + t5303-pack-corruption-resilience: modernize test format
+ + t5301-sliding-window: modernize test format
+ + t5300-pack-object: modernize test format
+ + t4206-log-follow-harder-copies: modernize test format
+ + t4202-log: modernize test format
+ + t4004-diff-rename-symlink: modernize test format
+ + t4003-diff-rename-1: modernize test format
+ + t4002-diff-basic: modernize test format
+ + t3903-stash: modernize test format
+ + t3700-add: modernize test format
+ + t3500-cherry: modernize test format
+ + t1006-cat-file: modernize test format
+ + t1002-read-tree-m-u-2way: modernize test format
+ + t1001-read-tree-m-2way: modernize test format
+ + t3210-pack-refs: modernize test format
+ + t0030-stripspace: modernize test format
+ + t0000-basic: modernize test format
  (this branch is used by jc/test-modernization-2.)
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1513.git.git.1684440205.gitgitgadget@gmail.com>
 
 
 * ja/worktree-orphan (2023-05-17) 8 commits
- - worktree add: emit warn when there is a bad HEAD
- - worktree add: extend DWIM to infer --orphan
- - worktree add: introduce "try --orphan" hint
- - worktree add: add --orphan flag
- - t2400: add tests to verify --quiet
- - t2400: refactor "worktree add" opt exclusion tests
- - t2400: cleanup created worktree in test
- - worktree add: include -B in usage docs
+  (merged to 'next' on 2023-06-14 at 25d508496b)
+ + worktree add: emit warn when there is a bad HEAD
+ + worktree add: extend DWIM to infer --orphan
+ + worktree add: introduce "try --orphan" hint
+ + worktree add: add --orphan flag
+ + t2400: add tests to verify --quiet
+ + t2400: refactor "worktree add" opt exclusion tests
+ + t2400: cleanup created worktree in test
+ + worktree add: include -B in usage docs
 
  'git worktree add' learned how to create a worktree based on an
  orphaned branch with `--orphan`.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20230517214711.12467-1-jacobabel@nullpo.dev>
-
-
-* kh/keep-tag-editmsg-upon-failure (2023-05-16) 3 commits
-  (merged to 'next' on 2023-05-19 at fc0fe3173d)
- + tag: keep the message file in case ref transaction fails
- + t/t7004-tag: add regression test for successful tag creation
- + doc: tag: document `TAG_EDITMSG`
-
- "git tag" learned to leave the "$GIT_DIR/TAG_EDITMSG" file when the
- command failed, so that the user can salvage what they typed.
-
- Will merge to 'master'.
- source: <cover.1684258780.git.code@khaugsbakk.name>
-
-
-* sa/doc-ls-remote (2023-05-19) 6 commits
-  (merged to 'next' on 2023-05-20 at d577bf75a0)
- + ls-remote doc: document the output format
- + ls-remote doc: explain what each example does
- + ls-remote doc: show peeled tags in examples
- + ls-remote doc: remove redundant --tags example
- + show-branch doc: say <ref>, not <reference>
- + show-ref doc: update for internal consistency
-
- Doc update.
-
- Will merge to 'master'.
- source: <pull.1471.v4.git.git.1684469874.gitgitgadget@gmail.com>
 
 
 * tb/refs-exclusion-and-packed-refs (2023-06-12) 16 commits
@@ -666,73 +755,62 @@ Release tarballs are available at:
 
  Enumerating refs in the packed-refs file, while excluding refs that
  match certain patterns, has been optimized.
-
  source: <cover.1686134440.git.me@ttaylorr.com>
 
 
-* zh/ls-files-format-atoms (2023-05-23) 1 commit
-  (merged to 'next' on 2023-05-24 at 116b11effb)
- + ls-files: align format atoms with ls-tree
-
- Some atoms that can be used in "--format=<format>" for "git ls-tree"
- were not supported by "git ls-files", even though they were relevant
- in the context of the latter.
-
- Will merge to 'master'.
- source: <pull.1533.v2.git.1684832418299.gitgitgadget@gmail.com>
-
-
 * en/header-split-cache-h-part-3 (2023-05-16) 29 commits
- - fsmonitor-ll.h: split this header out of fsmonitor.h
- - hash-ll, hashmap: move oidhash() to hash-ll
- - object-store-ll.h: split this header out of object-store.h
- - khash: name the structs that khash declares
- - merge-ll: rename from ll-merge
- - git-compat-util.h: remove unneccessary include of wildmatch.h
- - builtin.h: remove unneccessary includes
- - list-objects-filter-options.h: remove unneccessary include
- - diff.h: remove unnecessary include of oidset.h
- - repository: remove unnecessary include of path.h
- - log-tree: replace include of revision.h with simple forward declaration
- - cache.h: remove this no-longer-used header
- - read-cache*.h: move declarations for read-cache.c functions from cache.h
- - repository.h: move declaration of the_index from cache.h
- - merge.h: move declarations for merge.c from cache.h
- - diff.h: move declaration for global in diff.c from cache.h
- - preload-index.h: move declarations for preload-index.c from elsewhere
- - sparse-index.h: move declarations for sparse-index.c from cache.h
- - name-hash.h: move declarations for name-hash.c from cache.h
- - run-command.h: move declarations for run-command.c from cache.h
- - statinfo: move stat_{data,validity} functions from cache/read-cache
- - read-cache: move shared add/checkout/commit code
- - add: modify add_files_to_cache() to avoid globals
- - read-cache: move shared commit and ls-files code
- - setup: adopt shared init-db & clone code
- - init-db, clone: change unnecessary global into passed parameter
- - init-db: remove unnecessary global variable
- - init-db: document existing bug with core.bare in template config
- - Merge branch 'en/header-split-cache-h-part-2' into en/header-split-cache-h-part-3
+  (merged to 'next' on 2023-06-13 at 56bcca52ac)
+ + fsmonitor-ll.h: split this header out of fsmonitor.h
+ + hash-ll, hashmap: move oidhash() to hash-ll
+ + object-store-ll.h: split this header out of object-store.h
+ + khash: name the structs that khash declares
+ + merge-ll: rename from ll-merge
+ + git-compat-util.h: remove unneccessary include of wildmatch.h
+ + builtin.h: remove unneccessary includes
+ + list-objects-filter-options.h: remove unneccessary include
+ + diff.h: remove unnecessary include of oidset.h
+ + repository: remove unnecessary include of path.h
+ + log-tree: replace include of revision.h with simple forward declaration
+ + cache.h: remove this no-longer-used header
+ + read-cache*.h: move declarations for read-cache.c functions from cache.h
+ + repository.h: move declaration of the_index from cache.h
+ + merge.h: move declarations for merge.c from cache.h
+ + diff.h: move declaration for global in diff.c from cache.h
+ + preload-index.h: move declarations for preload-index.c from elsewhere
+ + sparse-index.h: move declarations for sparse-index.c from cache.h
+ + name-hash.h: move declarations for name-hash.c from cache.h
+ + run-command.h: move declarations for run-command.c from cache.h
+ + statinfo: move stat_{data,validity} functions from cache/read-cache
+ + read-cache: move shared add/checkout/commit code
+ + add: modify add_files_to_cache() to avoid globals
+ + read-cache: move shared commit and ls-files code
+ + setup: adopt shared init-db & clone code
+ + init-db, clone: change unnecessary global into passed parameter
+ + init-db: remove unnecessary global variable
+ + init-db: document existing bug with core.bare in template config
+ + Merge branch 'en/header-split-cache-h-part-2' into en/header-split-cache-h-part-3
 
  Header files cleanup.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1525.v3.git.1684218848.gitgitgadget@gmail.com>
 
 
 * la/doc-interpret-trailers (2023-06-12) 9 commits
- - doc: trailer: add more examples in DESCRIPTION
- - doc: trailer: mention 'key' in DESCRIPTION
- - doc: trailer.<token>.command: emphasize deprecation
- - doc: trailer: use angle brackets for <token> and <value>
- - doc: trailer: remove redundant phrasing
- - doc: trailer: examples: avoid the word "message" by itself
- - doc: trailer: drop "commit message part" phrasing
- - doc: trailer: swap verb order
- - doc: trailer: fix grammar
+  (merged to 'next' on 2023-06-14 at 64a59e71b3)
+ + doc: trailer: add more examples in DESCRIPTION
+ + doc: trailer: mention 'key' in DESCRIPTION
+ + doc: trailer.<token>.command: emphasize deprecation
+ + doc: trailer: use angle brackets for <token> and <value>
+ + doc: trailer: remove redundant phrasing
+ + doc: trailer: examples: avoid the word "message" by itself
+ + doc: trailer: drop "commit message part" phrasing
+ + doc: trailer: swap verb order
+ + doc: trailer: fix grammar
 
  Doc update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1506.v3.git.git.1686017304.gitgitgadget@gmail.com>
 
 
@@ -756,19 +834,6 @@ Release tarballs are available at:
  source: <20230602102533.876905-1-christian.couder@gmail.com>
 
 
-* jc/pack-ref-exclude-include (2023-05-12) 3 commits
-  (merged to 'next' on 2023-05-23 at 37333a2d00)
- + pack-refs: teach pack-refs --include option
- + pack-refs: teach --exclude option to exclude refs from being packed
- + docs: clarify git-pack-refs --all will pack all refs
-
- "git pack-refs" learns "--include" and "--exclude" to tweak the ref
- hierarchy to be packed using pattern matching.
-
- Will merge to 'master'.
- source: <pull.1501.v4.git.git.1683927282.gitgitgadget@gmail.com>
-
-
 * tb/gc-recent-object-hook (2023-06-12) 2 commits
  - gc: introduce `gc.recentObjectsHook`
  - reachable.c: extract `obj_is_recent()`
@@ -779,19 +844,6 @@ Release tarballs are available at:
 
  Will merge to 'next'.
  source: <cover.1686178684.git.me@ttaylorr.com>
-
-
-* jc/diff-s-with-other-options (2023-05-05) 1 commit
-  (merged to 'next' on 2023-05-20 at dda3826a68)
- + diff: fix interaction between the "-s" option and other options
-
- The "-s" (silent, squelch) option of the "diff" family of commands
- did not interact with other options that specify the output format
- well.  This has been cleaned up so that it will clear all the
- formatting options given before.
-
- Will merge to 'master'.
- source: <20230505165952.335256-1-gitster@pobox.com>
 
 
 * ob/revert-of-revert (2023-05-05) 1 commit
@@ -816,7 +868,6 @@ Release tarballs are available at:
 
  Move functions that are not about pure string manipulation out of
  strbuf.[ch]
-
  source: <20230606194720.2053551-1-calvinwan@google.com>
 
 
@@ -828,11 +879,12 @@ Release tarballs are available at:
  + t3321: add test cases about the notes stripspace behavior
  + notes.c: use designated initializers for clarity
  + notes.c: cleanup 'strbuf_grow' call in 'append_edit'
+ (this branch is used by jc/notes-separator-fix.)
 
  'git notes append' was taught '--separator' to specify string to insert
  between paragraphs.
 
- On hold.
+ Will merge to 'next' together with its fix-up.
  source: <cover.1682671758.git.dyroneteng@gmail.com>
 
 
@@ -854,9 +906,9 @@ Release tarballs are available at:
 
 
 * tb/pack-bitmap-traversal-with-boundary (2023-05-08) 3 commits
- - pack-bitmap.c: use commit boundary during bitmap traversal
- - pack-bitmap.c: extract `fill_in_bitmap()`
- - object: add object_array initializer helper function
+ + pack-bitmap.c: use commit boundary during bitmap traversal
+ + pack-bitmap.c: extract `fill_in_bitmap()`
+ + object: add object_array initializer helper function
  (this branch is used by ds/disable-replace-refs.)
 
  The object traversal using reachability bitmap done by
@@ -868,29 +920,19 @@ Release tarballs are available at:
  source: <cover.1683567065.git.me@ttaylorr.com>
 
 
-* gc/doc-cocci-updates (2023-04-27) 2 commits
-  (merged to 'next' on 2023-05-20 at 3fe237c1a8)
- + cocci: codify authoring and reviewing practices
- + cocci: add headings to and reword README
-
- Update documentation regarding Coccinelle patches.
-
- Will merge to 'master'.
- source: <pull.1495.v2.git.git.1682634143.gitgitgadget@gmail.com>
-
-
 * pb/complete-and-document-auto-merge-and-friends (2023-05-23) 6 commits
- - completion: complete AUTO_MERGE
- - Documentation: document AUTO_MERGE
- - git-merge.txt: modernize word choice in "True merge" section
- - completion: complete REVERT_HEAD and BISECT_HEAD
- - revisions.txt: document more special refs
- - revisions.txt: use description list for special refs
+  (merged to 'next' on 2023-06-13 at 46ca10d88d)
+ + completion: complete AUTO_MERGE
+ + Documentation: document AUTO_MERGE
+ + git-merge.txt: modernize word choice in "True merge" section
+ + completion: complete REVERT_HEAD and BISECT_HEAD
+ + revisions.txt: document more special refs
+ + revisions.txt: use description list for special refs
 
  Document more pseudo-refs and teach the command line completion
  machinery to complete AUTO_MERGE.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1515.v2.git.1684783741.gitgitgadget@gmail.com>
 
 
@@ -905,16 +947,3 @@ Release tarballs are available at:
  The database gets littered with entries whose expiration dates only differ.
  cf. <CAGJzqskMwOJkriH6serqdwAVYi+fftEL8ohJd-suP6v+OxB_bg@mail.gmail.com>
  source: <pull.1469.v3.git.git.1683270298313.gitgitgadget@gmail.com>
-
---------------------------------------------------
-[Discarded]
-
-* tc/cat-file-z-use-cquote (2023-05-10) 1 commit
- . cat-file: quote-format name in error when using -z
-
- "cat-file" in the batch mode that is fed NUL-terminated pathnames
- learned to cquote them in its error output (otherwise, a funny
- pathname with LF in it would break the lines in the output stream).
-
- Superseded by the ps/cat-file-null-output topic.
- source: <20230510190116.795641-2-toon@iotcl.com>
