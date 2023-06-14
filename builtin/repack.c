@@ -838,7 +838,8 @@ static void prepare_pack_filtered_cmd(struct child_process *cmd,
 }
 
 static void finish_pack_filtered_cmd(struct child_process *cmd,
-				     struct string_list *names)
+				     struct string_list *names,
+				     const char *destination)
 {
 	if (cmd->in == -1) {
 		/* No packed objects; cmd was never started */
@@ -848,7 +849,7 @@ static void finish_pack_filtered_cmd(struct child_process *cmd,
 
 	close(cmd->in);
 
-	if (finish_pack_objects_cmd(cmd, names, NULL, NULL))
+	if (finish_pack_objects_cmd(cmd, names, destination, NULL))
 		die(_("could not finish pack-objects to pack filtered objects"));
 }
 
@@ -877,6 +878,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	const char *cruft_expiration = NULL;
 	const char *expire_to = NULL;
 	struct child_process pack_filtered_cmd = CHILD_PROCESS_INIT;
+	const char *filter_to = NULL;
 
 	struct option builtin_repack_options[] = {
 		OPT_BIT('a', NULL, &pack_everything,
@@ -930,6 +932,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 			   N_("write a multi-pack index of the resulting packs")),
 		OPT_STRING(0, "expire-to", &expire_to, N_("dir"),
 			   N_("pack prefix to store a pack containing pruned objects")),
+		OPT_STRING(0, "filter-to", &filter_to, N_("dir"),
+			   N_("pack prefix to store a pack containing filtered out objects")),
 		OPT_END()
 	};
 
@@ -1073,8 +1077,11 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		strvec_push(&cmd.args, "--incremental");
 	}
 
-	if (po_args.filter)
-		prepare_pack_filtered_cmd(&pack_filtered_cmd, &po_args, packtmp);
+	if (po_args.filter) {
+		if (!filter_to)
+			filter_to = packtmp;
+		prepare_pack_filtered_cmd(&pack_filtered_cmd, &po_args, filter_to);
+	}
 
 	if (geometry)
 		cmd.in = -1;
@@ -1169,7 +1176,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	}
 
 	if (po_args.filter)
-		finish_pack_filtered_cmd(&pack_filtered_cmd, &names);
+		finish_pack_filtered_cmd(&pack_filtered_cmd, &names, filter_to);
 
 	string_list_sort(&names);
 
