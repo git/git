@@ -53,6 +53,7 @@ struct pack_objects_args {
 	const char *depth;
 	const char *threads;
 	const char *max_pack_size;
+	const char *filter;
 	int no_reuse_delta;
 	int no_reuse_object;
 	int quiet;
@@ -167,6 +168,10 @@ static void prepare_pack_objects(struct child_process *cmd,
 		strvec_pushf(&cmd->args, "--threads=%s", args->threads);
 	if (args->max_pack_size)
 		strvec_pushf(&cmd->args, "--max-pack-size=%s", args->max_pack_size);
+	if (args->filter) {
+		strvec_pushf(&cmd->args, "--filter=%s", args->filter);
+		strvec_pushf(&cmd->args, "--print-filtered");
+	}
 	if (args->no_reuse_delta)
 		strvec_pushf(&cmd->args, "--no-reuse-delta");
 	if (args->no_reuse_object)
@@ -703,13 +708,21 @@ static void remove_redundant_bitmaps(struct string_list *include,
 	strbuf_release(&path);
 }
 
+static void pack_filtered(const char *oid_hex, struct child_process *cmd)
+{
+	write_oid_hex_cmd(oid_hex, cmd,
+			  _("could not start pack-objects to pack filtered objects"));
+}
+
 static int finish_pack_objects_cmd(struct child_process *cmd,
 				   struct string_list *names,
-				   const char *destination)
+				   const char *destination,
+				   struct child_process *pack_filtered_cmd)
 {
 	int local = 1;
 	FILE *out;
 	struct strbuf line = STRBUF_INIT;
+	int filtered_start = 0;
 
 	if (destination) {
 		const char *scratch;
@@ -720,9 +733,20 @@ static int finish_pack_objects_cmd(struct child_process *cmd,
 	while (strbuf_getline_lf(&line, out) != EOF) {
 		struct string_list_item *item;
 
+		if (!filtered_start && pack_filtered_cmd && !strcmp(line.buf, "------")) {
+			filtered_start = 1;
+			continue;
+		}
+
 		if (line.len != the_hash_algo->hexsz)
 			die(_("repack: Expecting full hex object ID lines only "
 			      "from pack-objects."));
+
+		if (pack_filtered_cmd && filtered_start) {
+			pack_filtered(line.buf, pack_filtered_cmd);
+			continue;
+		}
+
 		/*
 		 * Avoid putting packs written outside of the repository in the
 		 * list of names.
@@ -791,8 +815,43 @@ static int write_cruft_pack(const struct pack_objects_args *args,
 		fprintf(in, "%s.pack\n", item->string);
 	fclose(in);
 
-	return finish_pack_objects_cmd(&cmd, names, destination);
+	return finish_pack_objects_cmd(&cmd, names, destination, NULL);
 }
+
+/*
+ * Prepare the command that will pack objects that have been filtered
+ * out from the original pack, so that they will end up in a separate
+ * pack.
+ */
+static void prepare_pack_filtered_cmd(struct child_process *cmd,
+				      const struct pack_objects_args *args,
+				      const char *destination)
+{
+	/* We need to copy args to modify it */
+	struct pack_objects_args new_args = *args;
+
+	/* No need to filter again */
+	new_args.filter = NULL;
+
+	prepare_pack_objects(cmd, &new_args, destination);
+	cmd->in = -1;
+}
+
+static void finish_pack_filtered_cmd(struct child_process *cmd,
+				     struct string_list *names)
+{
+	if (cmd->in == -1) {
+		/* No packed objects; cmd was never started */
+		child_process_clear(cmd);
+		return;
+	}
+
+	close(cmd->in);
+
+	if (finish_pack_objects_cmd(cmd, names, NULL, NULL))
+		die(_("could not finish pack-objects to pack filtered objects"));
+}
+
 
 int cmd_repack(int argc, const char **argv, const char *prefix)
 {
@@ -817,6 +876,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	int write_midx = 0;
 	const char *cruft_expiration = NULL;
 	const char *expire_to = NULL;
+	struct child_process pack_filtered_cmd = CHILD_PROCESS_INIT;
 
 	struct option builtin_repack_options[] = {
 		OPT_BIT('a', NULL, &pack_everything,
@@ -858,6 +918,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 				N_("limits the maximum number of threads")),
 		OPT_STRING(0, "max-pack-size", &po_args.max_pack_size, N_("bytes"),
 				N_("maximum size of each packfile")),
+		OPT_STRING(0, "filter", &po_args.filter, N_("args"),
+				N_("object filtering")),
 		OPT_BOOL(0, "pack-kept-objects", &pack_kept_objects,
 				N_("repack objects in packs marked with .keep")),
 		OPT_STRING_LIST(0, "keep-pack", &keep_pack_list, N_("name"),
@@ -1011,6 +1073,9 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		strvec_push(&cmd.args, "--incremental");
 	}
 
+	if (po_args.filter)
+		prepare_pack_filtered_cmd(&pack_filtered_cmd, &po_args, packtmp);
+
 	if (geometry)
 		cmd.in = -1;
 	else
@@ -1034,7 +1099,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		fclose(in);
 	}
 
-	ret = finish_pack_objects_cmd(&cmd, &names, NULL);
+	ret = finish_pack_objects_cmd(&cmd, &names, NULL,
+				      po_args.filter ? &pack_filtered_cmd : NULL);
 	if (ret)
 		goto cleanup;
 
@@ -1101,6 +1167,9 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 				goto cleanup;
 		}
 	}
+
+	if (po_args.filter)
+		finish_pack_filtered_cmd(&pack_filtered_cmd, &names);
 
 	string_list_sort(&names);
 
