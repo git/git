@@ -239,7 +239,7 @@ static void write_note_data(struct note_data *d, struct object_id *oid)
 
 static void append_separator(struct strbuf *message)
 {
-	if (separator[strlen(separator) - 1] == '\n')
+	if (*separator && separator[strlen(separator) - 1] == '\n')
 		strbuf_addstr(message, separator);
 	else
 		strbuf_addf(message, "%s%s", separator, "\n");
