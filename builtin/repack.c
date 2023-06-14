@@ -182,6 +182,17 @@ static void prepare_pack_objects(struct child_process *cmd,
 	cmd->out = -1;
 }
 
+static void write_oid_hex_cmd(const char *oid_hex,
+			      struct child_process *cmd,
+			      const char *err_msg)
+{
+	if (cmd->in == -1 && start_command(cmd))
+		die("%s", err_msg);
+
+	xwrite(cmd->in, oid_hex, the_hash_algo->hexsz);
+	xwrite(cmd->in, "\n", 1);
+}
+
 /*
  * Write oid to the given struct child_process's stdin, starting it first if
  * necessary.
@@ -192,13 +203,8 @@ static int write_oid(const struct object_id *oid,
 {
 	struct child_process *cmd = data;
 
-	if (cmd->in == -1) {
-		if (start_command(cmd))
-			die(_("could not start pack-objects to repack promisor objects"));
-	}
-
-	xwrite(cmd->in, oid_to_hex(oid), the_hash_algo->hexsz);
-	xwrite(cmd->in, "\n", 1);
+	write_oid_hex_cmd(oid_to_hex(oid), cmd,
+			  _("could not start pack-objects to repack promisor objects"));
 	return 0;
 }
 
