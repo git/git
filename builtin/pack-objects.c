@@ -267,6 +267,12 @@ static struct oidmap configured_exclusions;
 static struct oidset excluded_by_config;
 
 /*
+ * Objects omitted by filter
+ */
+static int print_filtered_out;
+static struct oidset *omitted_by_filter;
+
+/*
  * stats
  */
 static uint32_t written, written_delta;
@@ -4065,11 +4071,18 @@ static void get_object_list(struct rev_info *revs, int ac, const char **av)
 		die(_("revision walk setup failed"));
 	mark_edges_uninteresting(revs, show_edge, sparse);
 
+	if (print_filtered_out) {
+		omitted_by_filter = xmalloc(sizeof(*omitted_by_filter));
+		oidset_init(omitted_by_filter, 0);
+	}
+
 	if (!fn_show_object)
 		fn_show_object = show_object;
-	traverse_commit_list(revs,
-			     show_commit, fn_show_object,
-			     NULL);
+	traverse_commit_list_filtered(revs,
+				      show_commit,
+				      fn_show_object,
+				      NULL,
+				      omitted_by_filter);
 
 	if (unpack_unreachable_expiration) {
 		revs->ignore_missing_links = 1;
@@ -4163,6 +4176,23 @@ static int option_parse_cruft_expiration(const struct option *opt,
 			cruft_expiration = approxidate(arg);
 	}
 	return 0;
+}
+
+static void print_omitted_by_filter(void)
+{
+	struct oidset_iter iter;
+	const struct object_id *oid;
+
+	fprintf_ln(stdout, "%s", "------");
+	fprintf_ln(stderr, "%s", _("Printing objects omitted by filter"));
+
+	oidset_iter_init(omitted_by_filter, &iter);
+
+	while ((oid = oidset_iter_next(&iter)))
+		fprintf_ln(stdout, "%s", oid_to_hex(oid));
+
+	oidset_clear(omitted_by_filter);
+	FREE_AND_NULL(omitted_by_filter);
 }
 
 int cmd_pack_objects(int argc, const char **argv, const char *prefix)
@@ -4278,6 +4308,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		OPT_STRING_LIST(0, "uri-protocol", &uri_protocols,
 				N_("protocol"),
 				N_("exclude any configured uploadpack.blobpackfileuri with this protocol")),
+		OPT_BOOL(0, "print-filtered", &print_filtered_out,
+			 N_("print filtered out objects to stdout")),
 		OPT_END(),
 	};
 
@@ -4394,6 +4426,12 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	if (stdin_packs && use_internal_rev_list)
 		die(_("cannot use internal rev list with --stdin-packs"));
 
+	if (print_filtered_out && !filter_options.choice)
+		die(_("cannot use --print-filtered without --filter"));
+
+	if (print_filtered_out && pack_to_stdout)
+		die(_("cannot use --print-filtered with --stdout"));
+
 	if (cruft) {
 		if (use_internal_rev_list)
 			die(_("cannot use internal rev list with --cruft"));
@@ -4508,6 +4546,9 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			     " pack-reused %"PRIu32),
 			   written, written_delta, reused, reused_delta,
 			   reuse_packfile_objects);
+
+	if (omitted_by_filter)
+		print_omitted_by_filter();
 
 cleanup:
 	list_objects_filter_release(&filter_options);
