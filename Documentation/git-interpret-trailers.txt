@@ -83,12 +83,12 @@ OPTIONS
 
 --trim-empty::
 	If the <value> part of any trailer contains only whitespace,
-	the whole trailer will be removed from the resulting message.
+	the whole trailer will be removed from the output.
 	This applies to existing trailers as well as new trailers.
 
 --trailer <token>[(=|:)<value>]::
 	Specify a (<token>, <value>) pair that should be applied as a
-	trailer to the input messages. See the description of this
+	trailer to the inputs. See the description of this
 	command.
 
 --where <placement>::
@@ -102,7 +102,7 @@ OPTIONS
 --if-exists <action>::
 --no-if-exists::
 	Specify what action will be performed when there is already at
-	least one trailer with the same <token> in the message.  A setting
+	least one trailer with the same <token> in the input.  A setting
 	provided with '--if-exists' overrides all configuration variables
 	and applies to all '--trailer' options until the next occurrence of
 	'--if-exists' or '--no-if-exists'. Possible actions are `addIfDifferent`,
@@ -111,7 +111,7 @@ OPTIONS
 --if-missing <action>::
 --no-if-missing::
 	Specify what action will be performed when there is no other
-	trailer with the same <token> in the message.  A setting
+	trailer with the same <token> in the input.  A setting
 	provided with '--if-missing' overrides all configuration variables
 	and applies to all '--trailer' options until the next occurrence of
 	'--if-missing' or '--no-if-missing'. Possible actions are `doNothing`
@@ -178,7 +178,7 @@ first trailer with the same <token>.
 trailer.ifexists::
 	This option makes it possible to choose what action will be
 	performed when there is already at least one trailer with the
-	same <token> in the message.
+	same <token> in the input.
 +
 The valid values for this option are: `addIfDifferentNeighbor` (this
 is the default), `addIfDifferent`, `add`, `replace` or `doNothing`.
@@ -188,10 +188,10 @@ trailer with the same (<token>, <value>) pair is above or below the line
 where the new trailer will be added.
 +
 With `addIfDifferent`, a new trailer will be added only if no trailer
-with the same (<token>, <value>) pair is already in the message.
+with the same (<token>, <value>) pair is already in the input.
 +
 With `add`, a new trailer will be added, even if some trailers with
-the same (<token>, <value>) pair are already in the message.
+the same (<token>, <value>) pair are already in the input.
 +
 With `replace`, an existing trailer with the same <token> will be
 deleted and the new trailer will be added. The deleted trailer will be
@@ -199,12 +199,12 @@ the closest one (with the same <token>) to the place where the new one
 will be added.
 +
 With `doNothing`, nothing will be done; that is no new trailer will be
-added if there is already one with the same <token> in the message.
+added if there is already one with the same <token> in the input.
 
 trailer.ifmissing::
 	This option makes it possible to choose what action will be
 	performed when there is not yet any trailer with the same
-	<token> in the message.
+	<token> in the input.
 +
 The valid values for this option are: `add` (this is the default) and
 `doNothing`.
@@ -276,37 +276,37 @@ EXAMPLES
 --------
 
 * Configure a 'sign' trailer with a 'Signed-off-by' key, and then
-  add two of these trailers to a message:
+  add two of these trailers to a commit message file:
 +
 ------------
 $ git config trailer.sign.key "Signed-off-by"
 $ cat msg.txt
 subject
 
-message
+body text
 $ git interpret-trailers --trailer 'sign: Alice <alice@example.com>' --trailer 'sign: Bob <bob@example.com>' <msg.txt
 subject
 
-message
+body text
 
 Signed-off-by: Alice <alice@example.com>
 Signed-off-by: Bob <bob@example.com>
 ------------
 
-* Use the `--in-place` option to edit a message file in place:
+* Use the `--in-place` option to edit a commit message file in place:
 +
 ------------
 $ cat msg.txt
 subject
 
-message
+body text
 
 Signed-off-by: Bob <bob@example.com>
 $ git interpret-trailers --trailer 'Acked-by: Alice <alice@example.com>' --in-place msg.txt
 $ cat msg.txt
 subject
 
-message
+body text
 
 Signed-off-by: Bob <bob@example.com>
 Acked-by: Alice <alice@example.com>
@@ -329,7 +329,7 @@ $ git interpret-trailers --trailer 'Cc: Alice <alice@example.com>' --trailer 'Re
 $ cat msg1.txt
 subject
 
-message
+body text
 $ git config trailer.sign.key "Signed-off-by: "
 $ git config trailer.sign.ifmissing add
 $ git config trailer.sign.ifexists doNothing
@@ -337,19 +337,19 @@ $ git config trailer.sign.cmd 'echo "$(git config user.name) <$(git config user.
 $ git interpret-trailers --trailer sign <msg1.txt
 subject
 
-message
+body text
 
 Signed-off-by: Bob <bob@example.com>
 $ cat msg2.txt
 subject
 
-message
+body text
 
 Signed-off-by: Alice <alice@example.com>
 $ git interpret-trailers --trailer sign <msg2.txt
 subject
 
-message
+body text
 
 Signed-off-by: Alice <alice@example.com>
 ------------
@@ -377,14 +377,14 @@ test -n "$1" && git log --author="$1" --pretty="%an <%ae>" -1 || true
 $ cat msg.txt
 subject
 
-message
+body text
 $ git config trailer.help.key "Helped-by: "
 $ git config trailer.help.ifExists "addIfDifferentNeighbor"
 $ git config trailer.help.cmd "~/bin/glog-find-author"
 $ git interpret-trailers --trailer="help:Junio" --trailer="help:Couder" <msg.txt
 subject
 
-message
+body text
 
 Helped-by: Junio C Hamano <gitster@pobox.com>
 Helped-by: Christian Couder <christian.couder@gmail.com>
@@ -401,14 +401,14 @@ test -n "$1" && git log --grep "$1" --pretty=reference -1 || true
 $ cat msg.txt
 subject
 
-message
+body text
 $ git config trailer.ref.key "Reference-to: "
 $ git config trailer.ref.ifExists "replace"
 $ git config trailer.ref.cmd "~/bin/glog-grep"
 $ git interpret-trailers --trailer="ref:Add copyright notices." <msg.txt
 subject
 
-message
+body text
 
 Reference-to: 8bc9a0c769 (Add copyright notices., 2005-04-07)
 ------------
@@ -420,7 +420,7 @@ Reference-to: 8bc9a0c769 (Add copyright notices., 2005-04-07)
 $ cat msg.txt
 subject
 
-message
+body text
 
 see: HEAD~2
 $ cat ~/bin/glog-ref
@@ -433,7 +433,7 @@ $ git config trailer.see.cmd "glog-ref"
 $ git interpret-trailers --trailer=see <msg.txt
 subject
 
-message
+body text
 
 See-also: fe3187489d69c4 (subject of related commit)
 ------------
