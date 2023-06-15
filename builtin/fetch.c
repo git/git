@@ -58,7 +58,6 @@ enum {
 };
 
 enum display_format {
-	DISPLAY_FORMAT_UNKNOWN = 0,
 	DISPLAY_FORMAT_FULL,
 	DISPLAY_FORMAT_COMPACT,
 	DISPLAY_FORMAT_PORCELAIN,
@@ -74,14 +73,11 @@ struct display_state {
 	int url_len, shown_url;
 };
 
-static int fetch_prune_config = -1; /* unspecified */
-static int fetch_show_forced_updates = 1;
 static uint64_t forced_updates_ms = 0;
 static int prefetch = 0;
 static int prune = -1; /* unspecified */
 #define PRUNE_BY_DEFAULT 0 /* do we prune by default? */
 
-static int fetch_prune_tags_config = -1; /* unspecified */
 static int prune_tags = -1; /* unspecified */
 #define PRUNE_TAGS_BY_DEFAULT 0 /* do we prune tags by default? */
 
@@ -90,8 +86,6 @@ static int write_fetch_head = 1;
 static int verbosity, deepen_relative, set_upstream, refetch;
 static int progress = -1;
 static int tags = TAGS_DEFAULT, update_shallow, deepen;
-static int submodule_fetch_jobs_config = -1;
-static int fetch_parallel_config = 1;
 static int atomic_fetch;
 static enum transport_family family;
 static const char *depth;
@@ -101,7 +95,6 @@ static struct string_list deepen_not = STRING_LIST_INIT_NODUP;
 static struct strbuf default_rla = STRBUF_INIT;
 static struct transport *gtransport;
 static struct transport *gsecondary;
-static int recurse_submodules = RECURSE_SUBMODULES_DEFAULT;
 static struct refspec refmap = REFSPEC_INIT_FETCH;
 static struct list_objects_filter_options filter_options = LIST_OBJECTS_FILTER_INIT;
 static struct string_list server_options = STRING_LIST_INIT_DUP;
@@ -109,6 +102,12 @@ static struct string_list negotiation_tip = STRING_LIST_INIT_NODUP;
 
 struct fetch_config {
 	enum display_format display_format;
+	int prune;
+	int prune_tags;
+	int show_forced_updates;
+	int recurse_submodules;
+	int parallel;
+	int submodule_fetch_jobs;
 };
 
 static int git_fetch_config(const char *k, const char *v, void *cb)
@@ -116,40 +115,40 @@ static int git_fetch_config(const char *k, const char *v, void *cb)
 	struct fetch_config *fetch_config = cb;
 
 	if (!strcmp(k, "fetch.prune")) {
-		fetch_prune_config = git_config_bool(k, v);
+		fetch_config->prune = git_config_bool(k, v);
 		return 0;
 	}
 
 	if (!strcmp(k, "fetch.prunetags")) {
-		fetch_prune_tags_config = git_config_bool(k, v);
+		fetch_config->prune_tags = git_config_bool(k, v);
 		return 0;
 	}
 
 	if (!strcmp(k, "fetch.showforcedupdates")) {
-		fetch_show_forced_updates = git_config_bool(k, v);
+		fetch_config->show_forced_updates = git_config_bool(k, v);
 		return 0;
 	}
 
 	if (!strcmp(k, "submodule.recurse")) {
 		int r = git_config_bool(k, v) ?
 			RECURSE_SUBMODULES_ON : RECURSE_SUBMODULES_OFF;
-		recurse_submodules = r;
+		fetch_config->recurse_submodules = r;
 	}
 
 	if (!strcmp(k, "submodule.fetchjobs")) {
-		submodule_fetch_jobs_config = parse_submodule_fetchjobs(k, v);
+		fetch_config->submodule_fetch_jobs = parse_submodule_fetchjobs(k, v);
 		return 0;
 	} else if (!strcmp(k, "fetch.recursesubmodules")) {
-		recurse_submodules = parse_fetch_recurse_submodules_arg(k, v);
+		fetch_config->recurse_submodules = parse_fetch_recurse_submodules_arg(k, v);
 		return 0;
 	}
 
 	if (!strcmp(k, "fetch.parallel")) {
-		fetch_parallel_config = git_config_int(k, v);
-		if (fetch_parallel_config < 0)
+		fetch_config->parallel = git_config_int(k, v);
+		if (fetch_config->parallel < 0)
 			die(_("fetch.parallel cannot be negative"));
-		if (!fetch_parallel_config)
-			fetch_parallel_config = online_cpus();
+		if (!fetch_config->parallel)
+			fetch_config->parallel = online_cpus();
 		return 0;
 	}
 
@@ -892,7 +891,8 @@ static int update_local_ref(struct ref *ref,
 			    struct ref_transaction *transaction,
 			    struct display_state *display_state,
 			    const struct ref *remote_ref,
-			    int summary_width)
+			    int summary_width,
+			    const struct fetch_config *config)
 {
 	struct commit *current = NULL, *updated;
 	int fast_forward = 0;
@@ -954,11 +954,10 @@ static int update_local_ref(struct ref *ref,
 		 * Base this on the remote's ref name, as it's
 		 * more likely to follow a standard layout.
 		 */
-		const char *name = remote_ref ? remote_ref->name : "";
-		if (starts_with(name, "refs/tags/")) {
+		if (starts_with(remote_ref->name, "refs/tags/")) {
 			msg = "storing tag";
 			what = _("[new tag]");
-		} else if (starts_with(name, "refs/heads/")) {
+		} else if (starts_with(remote_ref->name, "refs/heads/")) {
 			msg = "storing head";
 			what = _("[new branch]");
 		} else {
@@ -974,7 +973,7 @@ static int update_local_ref(struct ref *ref,
 		return r;
 	}
 
-	if (fetch_show_forced_updates) {
+	if (config->show_forced_updates) {
 		uint64_t t_before = getnanotime();
 		fast_forward = repo_in_merge_bases(the_repository, current,
 						   updated);
@@ -1127,7 +1126,8 @@ static int store_updated_refs(struct display_state *display_state,
 			      const char *remote_name,
 			      int connectivity_checked,
 			      struct ref_transaction *transaction, struct ref *ref_map,
-			      struct fetch_head *fetch_head)
+			      struct fetch_head *fetch_head,
+			      const struct fetch_config *config)
 {
 	int rc = 0;
 	struct strbuf note = STRBUF_INIT;
@@ -1210,7 +1210,7 @@ static int store_updated_refs(struct display_state *display_state,
 				ref->force = rm->peer_ref->force;
 			}
 
-			if (recurse_submodules != RECURSE_SUBMODULES_OFF &&
+			if (config->recurse_submodules != RECURSE_SUBMODULES_OFF &&
 			    (!rm->peer_ref || !oideq(&ref->old_oid, &ref->new_oid))) {
 				check_for_new_submodule_commits(&rm->old_oid);
 			}
@@ -1243,7 +1243,7 @@ static int store_updated_refs(struct display_state *display_state,
 
 			if (ref) {
 				rc |= update_local_ref(ref, transaction, display_state,
-						       rm, summary_width);
+						       rm, summary_width, config);
 				free(ref);
 			} else if (write_fetch_head || dry_run) {
 				/*
@@ -1267,7 +1267,7 @@ static int store_updated_refs(struct display_state *display_state,
 		      "branches"), remote_name);
 
 	if (advice_enabled(ADVICE_FETCH_SHOW_FORCED_UPDATES)) {
-		if (!fetch_show_forced_updates) {
+		if (!config->show_forced_updates) {
 			warning(_(warn_show_forced_updates));
 		} else if (forced_updates_ms > FORCED_UPDATES_DELAY_WARNING_IN_MS) {
 			warning(_(warn_time_show_forced_updates),
@@ -1328,7 +1328,8 @@ static int fetch_and_consume_refs(struct display_state *display_state,
 				  struct transport *transport,
 				  struct ref_transaction *transaction,
 				  struct ref *ref_map,
-				  struct fetch_head *fetch_head)
+				  struct fetch_head *fetch_head,
+				  const struct fetch_config *config)
 {
 	int connectivity_checked = 1;
 	int ret;
@@ -1351,7 +1352,7 @@ static int fetch_and_consume_refs(struct display_state *display_state,
 	trace2_region_enter("fetch", "consume_refs", the_repository);
 	ret = store_updated_refs(display_state, transport->remote->name,
 				 connectivity_checked, transaction, ref_map,
-				 fetch_head);
+				 fetch_head, config);
 	trace2_region_leave("fetch", "consume_refs", the_repository);
 
 out:
@@ -1522,7 +1523,8 @@ static int backfill_tags(struct display_state *display_state,
 			 struct transport *transport,
 			 struct ref_transaction *transaction,
 			 struct ref *ref_map,
-			 struct fetch_head *fetch_head)
+			 struct fetch_head *fetch_head,
+			 const struct fetch_config *config)
 {
 	int retcode, cannot_reuse;
 
@@ -1543,7 +1545,8 @@ static int backfill_tags(struct display_state *display_state,
 	transport_set_option(transport, TRANS_OPT_FOLLOWTAGS, NULL);
 	transport_set_option(transport, TRANS_OPT_DEPTH, "0");
 	transport_set_option(transport, TRANS_OPT_DEEPEN_RELATIVE, NULL);
-	retcode = fetch_and_consume_refs(display_state, transport, transaction, ref_map, fetch_head);
+	retcode = fetch_and_consume_refs(display_state, transport, transaction, ref_map,
+					 fetch_head, config);
 
 	if (gsecondary) {
 		transport_disconnect(gsecondary);
@@ -1555,7 +1558,7 @@ static int backfill_tags(struct display_state *display_state,
 
 static int do_fetch(struct transport *transport,
 		    struct refspec *rs,
-		    enum display_format display_format)
+		    const struct fetch_config *config)
 {
 	struct ref_transaction *transaction = NULL;
 	struct ref *ref_map = NULL;
@@ -1641,7 +1644,8 @@ static int do_fetch(struct transport *transport,
 	if (retcode)
 		goto cleanup;
 
-	display_state_init(&display_state, ref_map, transport->url, display_format);
+	display_state_init(&display_state, ref_map, transport->url,
+			   config->display_format);
 
 	if (atomic_fetch) {
 		transaction = ref_transaction_begin(&err);
@@ -1669,7 +1673,8 @@ static int do_fetch(struct transport *transport,
 			retcode = 1;
 	}
 
-	if (fetch_and_consume_refs(&display_state, transport, transaction, ref_map, &fetch_head)) {
+	if (fetch_and_consume_refs(&display_state, transport, transaction, ref_map,
+				   &fetch_head, config)) {
 		retcode = 1;
 		goto cleanup;
 	}
@@ -1692,7 +1697,7 @@ static int do_fetch(struct transport *transport,
 			 * the transaction and don't commit anything.
 			 */
 			if (backfill_tags(&display_state, transport, transaction, tags_ref_map,
-					  &fetch_head))
+					  &fetch_head, config))
 				retcode = 1;
 		}
 
@@ -1830,7 +1835,7 @@ static int add_remote_or_group(const char *name, struct string_list *list)
 }
 
 static void add_options_to_argv(struct strvec *argv,
-				enum display_format format)
+				const struct fetch_config *config)
 {
 	if (dry_run)
 		strvec_push(argv, "--dry-run");
@@ -1844,11 +1849,11 @@ static void add_options_to_argv(struct strvec *argv,
 		strvec_push(argv, "--force");
 	if (keep)
 		strvec_push(argv, "--keep");
-	if (recurse_submodules == RECURSE_SUBMODULES_ON)
+	if (config->recurse_submodules == RECURSE_SUBMODULES_ON)
 		strvec_push(argv, "--recurse-submodules");
-	else if (recurse_submodules == RECURSE_SUBMODULES_OFF)
+	else if (config->recurse_submodules == RECURSE_SUBMODULES_OFF)
 		strvec_push(argv, "--no-recurse-submodules");
-	else if (recurse_submodules == RECURSE_SUBMODULES_ON_DEMAND)
+	else if (config->recurse_submodules == RECURSE_SUBMODULES_ON_DEMAND)
 		strvec_push(argv, "--recurse-submodules=on-demand");
 	if (tags == TAGS_SET)
 		strvec_push(argv, "--tags");
@@ -1866,7 +1871,7 @@ static void add_options_to_argv(struct strvec *argv,
 		strvec_push(argv, "--ipv6");
 	if (!write_fetch_head)
 		strvec_push(argv, "--no-write-fetch-head");
-	if (format == DISPLAY_FORMAT_PORCELAIN)
+	if (config->display_format == DISPLAY_FORMAT_PORCELAIN)
 		strvec_pushf(argv, "--porcelain");
 }
 
@@ -1876,7 +1881,7 @@ struct parallel_fetch_state {
 	const char **argv;
 	struct string_list *remotes;
 	int next, result;
-	enum display_format format;
+	const struct fetch_config *config;
 };
 
 static int fetch_next_remote(struct child_process *cp,
@@ -1896,7 +1901,7 @@ static int fetch_next_remote(struct child_process *cp,
 	strvec_push(&cp->args, remote);
 	cp->git_cmd = 1;
 
-	if (verbosity >= 0 && state->format != DISPLAY_FORMAT_PORCELAIN)
+	if (verbosity >= 0 && state->config->display_format != DISPLAY_FORMAT_PORCELAIN)
 		printf(_("Fetching %s\n"), remote);
 
 	return 1;
@@ -1929,7 +1934,7 @@ static int fetch_finished(int result, struct strbuf *out,
 }
 
 static int fetch_multiple(struct string_list *list, int max_children,
-			  enum display_format format)
+			  const struct fetch_config *config)
 {
 	int i, result = 0;
 	struct strvec argv = STRVEC_INIT;
@@ -1947,10 +1952,10 @@ static int fetch_multiple(struct string_list *list, int max_children,
 	strvec_pushl(&argv, "-c", "fetch.bundleURI=",
 		     "fetch", "--append", "--no-auto-gc",
 		     "--no-write-commit-graph", NULL);
-	add_options_to_argv(&argv, format);
+	add_options_to_argv(&argv, config);
 
 	if (max_children != 1 && list->nr != 1) {
-		struct parallel_fetch_state state = { argv.v, list, 0, 0, format };
+		struct parallel_fetch_state state = { argv.v, list, 0, 0, config };
 		const struct run_process_parallel_opts opts = {
 			.tr2_category = "fetch",
 			.tr2_label = "parallel/fetch",
@@ -1974,7 +1979,7 @@ static int fetch_multiple(struct string_list *list, int max_children,
 
 			strvec_pushv(&cmd.args, argv.v);
 			strvec_push(&cmd.args, name);
-			if (verbosity >= 0 && format != DISPLAY_FORMAT_PORCELAIN)
+			if (verbosity >= 0 && config->display_format != DISPLAY_FORMAT_PORCELAIN)
 				printf(_("Fetching %s\n"), name);
 			cmd.git_cmd = 1;
 			if (run_command(&cmd)) {
@@ -2030,7 +2035,7 @@ static inline void fetch_one_setup_partial(struct remote *remote)
 
 static int fetch_one(struct remote *remote, int argc, const char **argv,
 		     int prune_tags_ok, int use_stdin_refspecs,
-		     enum display_format display_format)
+		     const struct fetch_config *config)
 {
 	struct refspec rs = REFSPEC_INIT_FETCH;
 	int i;
@@ -2048,8 +2053,8 @@ static int fetch_one(struct remote *remote, int argc, const char **argv,
 		/* no command line request */
 		if (0 <= remote->prune)
 			prune = remote->prune;
-		else if (0 <= fetch_prune_config)
-			prune = fetch_prune_config;
+		else if (0 <= config->prune)
+			prune = config->prune;
 		else
 			prune = PRUNE_BY_DEFAULT;
 	}
@@ -2058,8 +2063,8 @@ static int fetch_one(struct remote *remote, int argc, const char **argv,
 		/* no command line request */
 		if (0 <= remote->prune_tags)
 			prune_tags = remote->prune_tags;
-		else if (0 <= fetch_prune_tags_config)
-			prune_tags = fetch_prune_tags_config;
+		else if (0 <= config->prune_tags)
+			prune_tags = config->prune_tags;
 		else
 			prune_tags = PRUNE_TAGS_BY_DEFAULT;
 	}
@@ -2097,7 +2102,7 @@ static int fetch_one(struct remote *remote, int argc, const char **argv,
 	sigchain_push_common(unlock_pack_on_signal);
 	atexit(unlock_pack_atexit);
 	sigchain_push(SIGPIPE, SIG_IGN);
-	exit_code = do_fetch(gtransport, &rs, display_format);
+	exit_code = do_fetch(gtransport, &rs, config);
 	sigchain_pop(SIGPIPE);
 	refspec_clear(&rs);
 	transport_disconnect(gtransport);
@@ -2109,6 +2114,12 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 {
 	struct fetch_config config = {
 		.display_format = DISPLAY_FORMAT_FULL,
+		.prune = -1,
+		.prune_tags = -1,
+		.show_forced_updates = 1,
+		.recurse_submodules = RECURSE_SUBMODULES_DEFAULT,
+		.parallel = 1,
+		.submodule_fetch_jobs = -1,
 	};
 	const char *submodule_prefix = "";
 	const char *bundle_uri;
@@ -2206,7 +2217,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 			 N_("run 'maintenance --auto' after fetching")),
 		OPT_BOOL(0, "auto-gc", &enable_auto_gc,
 			 N_("run 'maintenance --auto' after fetching")),
-		OPT_BOOL(0, "show-forced-updates", &fetch_show_forced_updates,
+		OPT_BOOL(0, "show-forced-updates", &config.show_forced_updates,
 			 N_("check for forced-updates on all updated branches")),
 		OPT_BOOL(0, "write-commit-graph", &fetch_write_commit_graph,
 			 N_("write the commit-graph after fetching")),
@@ -2237,7 +2248,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 			     builtin_fetch_options, builtin_fetch_usage, 0);
 
 	if (recurse_submodules_cli != RECURSE_SUBMODULES_DEFAULT)
-		recurse_submodules = recurse_submodules_cli;
+		config.recurse_submodules = recurse_submodules_cli;
 
 	if (negotiate_only) {
 		switch (recurse_submodules_cli) {
@@ -2248,7 +2259,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 			 * submodules. Skip it by setting recurse_submodules to
 			 * RECURSE_SUBMODULES_OFF.
 			 */
-			recurse_submodules = RECURSE_SUBMODULES_OFF;
+			config.recurse_submodules = RECURSE_SUBMODULES_OFF;
 			break;
 
 		default:
@@ -2257,11 +2268,11 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		}
 	}
 
-	if (recurse_submodules != RECURSE_SUBMODULES_OFF) {
-		int *sfjc = submodule_fetch_jobs_config == -1
-			    ? &submodule_fetch_jobs_config : NULL;
-		int *rs = recurse_submodules == RECURSE_SUBMODULES_DEFAULT
-			  ? &recurse_submodules : NULL;
+	if (config.recurse_submodules != RECURSE_SUBMODULES_OFF) {
+		int *sfjc = config.submodule_fetch_jobs == -1
+			    ? &config.submodule_fetch_jobs : NULL;
+		int *rs = config.recurse_submodules == RECURSE_SUBMODULES_DEFAULT
+			  ? &config.recurse_submodules : NULL;
 
 		fetch_config_from_gitmodules(sfjc, rs);
 	}
@@ -2275,7 +2286,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 			 * Reference updates in submodules would be ambiguous
 			 * in porcelain mode, so we reject this combination.
 			 */
-			recurse_submodules = RECURSE_SUBMODULES_OFF;
+			config.recurse_submodules = RECURSE_SUBMODULES_OFF;
 			break;
 
 		default:
@@ -2385,7 +2396,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		if (filter_options.choice || repo_has_promisor_remote(the_repository))
 			fetch_one_setup_partial(remote);
 		result = fetch_one(remote, argc, argv, prune_tags_ok, stdin_refspecs,
-				   config.display_format);
+				   &config);
 	} else {
 		int max_children = max_jobs;
 
@@ -2402,10 +2413,10 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 			      "from one remote"));
 
 		if (max_children < 0)
-			max_children = fetch_parallel_config;
+			max_children = config.parallel;
 
 		/* TODO should this also die if we have a previous partial-clone? */
-		result = fetch_multiple(&list, max_children, config.display_format);
+		result = fetch_multiple(&list, max_children, &config);
 	}
 
 	/*
@@ -2417,20 +2428,20 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	 * the fetched history from each remote, so there is no need
 	 * to fetch submodules from here.
 	 */
-	if (!result && remote && (recurse_submodules != RECURSE_SUBMODULES_OFF)) {
+	if (!result && remote && (config.recurse_submodules != RECURSE_SUBMODULES_OFF)) {
 		struct strvec options = STRVEC_INIT;
 		int max_children = max_jobs;
 
 		if (max_children < 0)
-			max_children = submodule_fetch_jobs_config;
+			max_children = config.submodule_fetch_jobs;
 		if (max_children < 0)
-			max_children = fetch_parallel_config;
+			max_children = config.parallel;
 
-		add_options_to_argv(&options, config.display_format);
+		add_options_to_argv(&options, &config);
 		result = fetch_submodules(the_repository,
 					  &options,
 					  submodule_prefix,
-					  recurse_submodules,
+					  config.recurse_submodules,
 					  recurse_submodules_default,
 					  verbosity < 0,
 					  max_children);
