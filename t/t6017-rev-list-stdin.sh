@@ -48,7 +48,9 @@ test_expect_success setup '
 			git add file-$i &&
 			test_tick &&
 			git commit -m side-$i || exit
-		done
+		done &&
+
+		git update-ref refs/heads/-dashed-branch HEAD
 	)
 '
 
@@ -60,6 +62,12 @@ check side-1 ^side-7 -- file-2
 check side-3 ^side-4 -- file-3
 check side-3 ^side-2
 check side-3 ^side-2 -- file-1
+check --all
+check --all --not --branches
+check --glob=refs/heads
+check --glob=refs/heads --
+check --glob=refs/heads -- file-1
+check --end-of-options -dashed-branch
 
 test_expect_success 'not only --stdin' '
 	cat >expect <<-EOF &&
@@ -76,6 +84,47 @@ test_expect_success 'not only --stdin' '
 	git log --pretty=tformat:%s --name-only --stdin main -- file-1 \
 		<input >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'pseudo-opt with missing value' '
+	cat >input <<-EOF &&
+	--glob
+	refs/heads
+	EOF
+
+	cat >expect <<-EOF &&
+	fatal: Option ${SQ}--glob${SQ} requires a value
+	EOF
+
+	test_must_fail git rev-list --stdin <input 2>error &&
+	test_cmp expect error
+'
+
+test_expect_success 'pseudo-opt with invalid value' '
+	cat >input <<-EOF &&
+	--no-walk=garbage
+	EOF
+
+	cat >expect <<-EOF &&
+	error: invalid argument to --no-walk
+	fatal: invalid option ${SQ}--no-walk=garbage${SQ} in --stdin mode
+	EOF
+
+	test_must_fail git rev-list --stdin <input 2>error &&
+	test_cmp expect error
+'
+
+test_expect_success 'unknown option without --end-of-options' '
+	cat >input <<-EOF &&
+	-dashed-branch
+	EOF
+
+	cat >expect <<-EOF &&
+	fatal: invalid option ${SQ}-dashed-branch${SQ} in --stdin mode
+	EOF
+
+	test_must_fail git rev-list --stdin <input 2>error &&
+	test_cmp expect error
 '
 
 test_done
