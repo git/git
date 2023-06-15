@@ -2795,16 +2795,17 @@ static void read_revisions_from_stdin(struct rev_info *revs,
 
 	strbuf_init(&sb, 1000);
 	while (strbuf_getline(&sb, stdin) != EOF) {
-		int len = sb.len;
-		if (!len)
+		if (!sb.len)
 			break;
-		if (sb.buf[0] == '-') {
-			if (len == 2 && sb.buf[1] == '-') {
-				seen_dashdash = 1;
-				break;
-			}
-			die("options not supported in --stdin mode");
+
+		if (!strcmp(sb.buf, "--")) {
+			seen_dashdash = 1;
+			break;
 		}
+
+		if (sb.buf[0] == '-')
+			die("options not supported in --stdin mode");
+
 		if (handle_revision_arg(sb.buf, revs, 0,
 					REVARG_CANNOT_BE_FILENAME))
 			die("bad revision '%s'", sb.buf);
