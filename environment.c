@@ -43,7 +43,6 @@ int is_bare_repository_cfg = -1; /* unspecified */
 int warn_ambiguous_refs = 1;
 int warn_on_object_refname_ambiguity = 1;
 int repository_format_precious_objects;
-int repository_format_worktree_config;
 const char *git_commit_encoding;
 const char *git_log_output_encoding;
 char *apply_default_whitespace;

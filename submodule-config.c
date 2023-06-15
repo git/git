@@ -660,7 +660,6 @@ static void config_from_gitmodules(config_fn_t fn, struct repository *repo, void
 			config_source.file = file;
 		} else if (repo_get_oid(repo, GITMODULES_INDEX, &oid) >= 0 ||
 			   repo_get_oid(repo, GITMODULES_HEAD, &oid) >= 0) {
-			config_source.repo = repo;
 			config_source.blob = oidstr = xstrdup(oid_to_hex(&oid));
 			if (repo != the_repository)
 				add_submodule_odb_by_path(repo->objects->odb->path);
@@ -668,7 +667,7 @@ static void config_from_gitmodules(config_fn_t fn, struct repository *repo, void
 			goto out;
 		}
 
-		config_with_options(fn, data, &config_source, &opts);
+		config_with_options(fn, data, &config_source, repo, &opts);
 
 out:
 		free(oidstr);
