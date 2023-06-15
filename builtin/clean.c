@@ -9,11 +9,12 @@
 #define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "abspath.h"
-#include "cache.h"
 #include "config.h"
 #include "dir.h"
 #include "gettext.h"
 #include "parse-options.h"
+#include "path.h"
+#include "read-cache-ll.h"
 #include "repository.h"
 #include "setup.h"
 #include "string-list.h"

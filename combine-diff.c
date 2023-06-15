@@ -1,5 +1,5 @@
 #include "git-compat-util.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "commit.h"
 #include "convert.h"
 #include "blob.h"

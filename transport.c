@@ -27,7 +27,7 @@
 #include "transport-internal.h"
 #include "protocol.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "color.h"
 #include "bundle-uri.h"
 #include "wrapper.h"

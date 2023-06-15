@@ -3,7 +3,7 @@
 #include "hex.h"
 #include "tree.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "blob.h"
 #include "commit.h"
 #include "tag.h"

@@ -9,7 +9,7 @@
 #include "lockfile.h"
 #include "packfile.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "hash-lookup.h"
 #include "midx.h"
 #include "progress.h"

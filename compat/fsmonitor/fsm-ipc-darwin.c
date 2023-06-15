@@ -2,9 +2,10 @@
 #include "config.h"
 #include "gettext.h"
 #include "hex.h"
+#include "path.h"
 #include "repository.h"
 #include "strbuf.h"
-#include "fsmonitor.h"
+#include "fsmonitor-ll.h"
 #include "fsmonitor-ipc.h"
 #include "fsmonitor-path-utils.h"
 
