@@ -44,6 +44,8 @@ helper_test_clean() {
 	reject $1 https example.com user1
 	reject $1 https example.com user2
 	reject $1 https example.com user4
+	reject $1 https example.com user-distinct-pass
+	reject $1 https example.com user-overwrite
 	reject $1 http path.tld user
 	reject $1 https timeout.tld user
 	reject $1 https sso.tld
@@ -167,6 +169,49 @@ helper_test() {
 		EOF
 	'
 
+	test_expect_success "helper ($HELPER) overwrites on store" '
+		check approve $HELPER <<-\EOF &&
+		protocol=https
+		host=example.com
+		username=user-overwrite
+		password=pass1
+		EOF
+		check approve $HELPER <<-\EOF &&
+		protocol=https
+		host=example.com
+		username=user-overwrite
+		password=pass2
+		EOF
+		check fill $HELPER <<-\EOF &&
+		protocol=https
+		host=example.com
+		username=user-overwrite
+		--
+		protocol=https
+		host=example.com
+		username=user-overwrite
+		password=pass2
+		EOF
+		check reject $HELPER <<-\EOF &&
+		protocol=https
+		host=example.com
+		username=user-overwrite
+		password=pass2
+		EOF
+		check fill $HELPER <<-\EOF
+		protocol=https
+		host=example.com
+		username=user-overwrite
+		--
+		protocol=https
+		host=example.com
+		username=user-overwrite
+		password=askpass-password
+		--
+		askpass: Password for '\''https://user-overwrite@example.com'\'':
+		EOF
+	'
+
 	test_expect_success "helper ($HELPER) can forget host" '
 		check reject $HELPER <<-\EOF &&
 		protocol=https
@@ -218,6 +263,31 @@ helper_test() {
 		host=example.com
 		username=user2
 		password=pass2
+		EOF
+	'
+
+	test_expect_success "helper ($HELPER) does not erase a password distinct from input" '
+		check approve $HELPER <<-\EOF &&
+		protocol=https
+		host=example.com
+		username=user-distinct-pass
+		password=pass1
+		EOF
+		check reject $HELPER <<-\EOF &&
+		protocol=https
+		host=example.com
+		username=user-distinct-pass
+		password=pass2
+		EOF
+		check fill $HELPER <<-\EOF
+		protocol=https
+		host=example.com
+		username=user-distinct-pass
+		--
+		protocol=https
+		host=example.com
+		username=user-distinct-pass
+		password=pass1
 		EOF
 	'
 
