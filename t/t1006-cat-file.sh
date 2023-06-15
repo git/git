@@ -351,30 +351,30 @@ do
 done
 
 test_expect_success "--batch-check for a non-existent named object" '
-    test "foobar42 missing
+	test "foobar42 missing
 foobar84 missing" = \
-    "$( ( echo foobar42 && echo_without_newline foobar84 ) | git cat-file --batch-check)"
+	"$( ( echo foobar42 && echo_without_newline foobar84 ) | git cat-file --batch-check)"
 '
 
 test_expect_success "--batch-check for a non-existent hash" '
-    test "0000000000000000000000000000000000000042 missing
+	test "0000000000000000000000000000000000000042 missing
 0000000000000000000000000000000000000084 missing" = \
     "$( ( echo 0000000000000000000000000000000000000042 &&
 	 echo_without_newline 0000000000000000000000000000000000000084 ) |
-       git cat-file --batch-check)"
+	git cat-file --batch-check)"
 '
 
 test_expect_success "--batch for an existent and a non-existent hash" '
-    test "$tag_sha1 tag $tag_size
+	test "$tag_sha1 tag $tag_size
 $tag_content
 0000000000000000000000000000000000000000 missing" = \
-    "$( ( echo $tag_sha1 &&
-	 echo_without_newline 0000000000000000000000000000000000000000 ) |
-       git cat-file --batch)"
+	"$( ( echo $tag_sha1 &&
+	echo_without_newline 0000000000000000000000000000000000000000 ) |
+	git cat-file --batch)"
 '
 
 test_expect_success "--batch-check for an empty line" '
-    test " missing" = "$(echo | git cat-file --batch-check)"
+	test " missing" = "$(echo | git cat-file --batch-check)"
 '
 
 test_expect_success 'empty --batch-check notices missing object' '
@@ -425,13 +425,13 @@ deadbeef missing
  missing"
 
 test_expect_success "--batch-check with multiple sha1s gives correct format" '
-    test "$batch_check_output" = \
-    "$(echo_without_newline "$batch_check_input" | git cat-file --batch-check)"
+	test "$batch_check_output" = \
+	"$(echo_without_newline "$batch_check_input" | git cat-file --batch-check)"
 '
 
 test_expect_success "--batch-check, -z with multiple sha1s gives correct format" '
-    echo_without_newline_nul "$batch_check_input" >in &&
-    test "$batch_check_output" = "$(git cat-file --batch-check -z <in)"
+	echo_without_newline_nul "$batch_check_input" >in &&
+	test "$batch_check_output" = "$(git cat-file --batch-check -z <in)"
 '
 
 test_expect_success FUNNYNAMES '--batch-check, -z with newline in input' '
