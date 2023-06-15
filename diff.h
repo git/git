@@ -541,6 +541,13 @@ void repo_diff_setup(struct repository *, struct diff_options *);
 struct option *add_diff_options(const struct option *, struct diff_options *);
 int diff_opt_parse(struct diff_options *, const char **, int, const char *);
 void diff_setup_done(struct diff_options *);
+
+/*
+ * Returns true if the pathspec can work with --follow mode. If die_on_error is
+ * set, die() with a specific error message rather than returning false.
+ */
+int diff_check_follow_pathspec(struct pathspec *ps, int die_on_error);
+
 int git_config_rename(const char *var, const char *value);
 
 #define DIFF_DETECT_RENAME	1
