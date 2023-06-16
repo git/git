@@ -118,7 +118,7 @@ for example:
    myuser:$5$.NqmNH1vwfzGpV8B$znZIcumu1tNLATgV2l6e1/mY8RzhUDHMOaVOeL1cxV3
 ------
 You can use the 'htpasswd' facility that comes with Apache to make these
-files, but only with the -d option (or -B if your system suports it).
+files, but only with the -d option (or -B if your system supports it).
 
 Preferably use the system specific utility that manages password hash
 creation in your platform (e.g. mkpasswd in Linux, encrypt in OpenBSD or
