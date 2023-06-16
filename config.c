@@ -3890,6 +3890,7 @@ out_no_rollback:
 	free(filename_buf);
 	config_store_data_clear(&store);
 	strbuf_release(&buf);
+	strbuf_release(&copystr);
 	return ret;
 }
 
