@@ -307,7 +307,6 @@ enum child_errcode {
 	CHILD_ERR_DUP2,
 	CHILD_ERR_CLOSE,
 	CHILD_ERR_SIGPROCMASK,
-	CHILD_ERR_ENOENT,
 	CHILD_ERR_SILENT,
 	CHILD_ERR_ERRNO
 };
@@ -389,9 +388,6 @@ static void child_err_spew(struct child_process *cmd, struct child_err *cerr)
 		break;
 	case CHILD_ERR_SIGPROCMASK:
 		error_errno("sigprocmask failed restoring signals");
-		break;
-	case CHILD_ERR_ENOENT:
-		error_errno("cannot run %s", cmd->args.v[0]);
 		break;
 	case CHILD_ERR_SILENT:
 		break;
@@ -846,13 +842,9 @@ fail_pipe:
 			execve(argv.v[0], (char *const *) argv.v,
 			       (char *const *) childenv);
 
-		if (errno == ENOENT) {
-			if (cmd->silent_exec_failure)
-				child_die(CHILD_ERR_SILENT);
-			child_die(CHILD_ERR_ENOENT);
-		} else {
-			child_die(CHILD_ERR_ERRNO);
-		}
+		if (cmd->silent_exec_failure && errno == ENOENT)
+			child_die(CHILD_ERR_SILENT);
+		child_die(CHILD_ERR_ERRNO);
 	}
 	atfork_parent(&as);
 	if (cmd->pid < 0)
