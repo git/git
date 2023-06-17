@@ -156,9 +156,12 @@ static void show_rev(int type, const struct object_id *oid, const char *name)
 				 */
 				break;
 			case 1: /* happy */
-				if (abbrev_ref)
+				if (abbrev_ref) {
+					char *old = full;
 					full = shorten_unambiguous_ref(full,
 						abbrev_ref_strict);
+					free(old);
+				}
 				show_with_type(type, full);
 				break;
 			default: /* ambiguous */
