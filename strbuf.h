@@ -372,6 +372,14 @@ size_t strbuf_expand_dict_cb(struct strbuf *sb,
 			     void *context);
 
 /**
+ * If the string pointed to by `formatp` contains a percent sign ("%"),
+ * advance it to point to the character following the next one and
+ * return 1, otherwise return 0.  Append the substring before that
+ * percent sign to `sb`, or the whole string if there is none.
+ */
+int strbuf_expand_step(struct strbuf *sb, const char **formatp);
+
+/**
  * Append the contents of one strbuf to another, quoting any
  * percent signs ("%") into double-percents ("%%") in the
  * destination. This is useful for literal data to be fed to either
