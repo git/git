@@ -274,7 +274,7 @@ static void show_ce_fmt(struct repository *repo, const struct cache_entry *ce,
 
 		if (skip_prefix(format, "%", &format))
 			strbuf_addch(&sb, '%');
-		else if ((len = strbuf_expand_literal_cb(&sb, format, NULL)))
+		else if ((len = strbuf_expand_literal(&sb, format)))
 			format += len;
 		else if (*format != '(')
 			die(_("bad ls-files format: element '%s' "

@@ -108,7 +108,7 @@ static int show_tree_fmt(const struct object_id *oid, struct strbuf *base,
 
 		if (skip_prefix(format, "%", &format))
 			strbuf_addch(&sb, '%');
-		else if ((len = strbuf_expand_literal_cb(&sb, format, NULL)))
+		else if ((len = strbuf_expand_literal(&sb, format)))
 			format += len;
 		else if (*format != '(')
 			die(_("bad ls-tree format: element '%s' "

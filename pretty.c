@@ -1262,7 +1262,7 @@ static struct strbuf *expand_separator(struct strbuf *sb,
 
 		if (skip_prefix(format, "%", &format))
 			strbuf_addch(sb, '%');
-		else if ((len = strbuf_expand_literal_cb(sb, format, NULL)))
+		else if ((len = strbuf_expand_literal(sb, format)))
 			format += len;
 		else
 			strbuf_addch(sb, '%');
@@ -1395,7 +1395,7 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 	char **slot;
 
 	/* these are independent of the commit */
-	res = strbuf_expand_literal_cb(sb, placeholder, NULL);
+	res = strbuf_expand_literal(sb, placeholder);
 	if (res)
 		return res;
 

@@ -427,9 +427,7 @@ int strbuf_expand_step(struct strbuf *sb, const char **formatp)
 	return 1;
 }
 
-size_t strbuf_expand_literal_cb(struct strbuf *sb,
-				const char *placeholder,
-				void *context UNUSED)
+size_t strbuf_expand_literal(struct strbuf *sb, const char *placeholder)
 {
 	int ch;
 
