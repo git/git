@@ -333,7 +333,7 @@ static void setup_tracking(const char *new_ref, const char *orig_ref,
 		if (!skip_prefix(tracking.srcs->items[0].string,
 				 "refs/heads/", &tracked_branch) ||
 		    strcmp(tracked_branch, new_ref))
-			return;
+			goto cleanup;
 	}
 
 	if (tracking.srcs->nr < 1)
