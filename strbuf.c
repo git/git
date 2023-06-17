@@ -427,26 +427,6 @@ int strbuf_expand_step(struct strbuf *sb, const char **formatp)
 	return 1;
 }
 
-void strbuf_expand(struct strbuf *sb, const char *format, expand_fn_t fn,
-		   void *context)
-{
-	while (strbuf_expand_step(sb, &format)) {
-		size_t consumed;
-
-		if (*format == '%') {
-			strbuf_addch(sb, '%');
-			format++;
-			continue;
-		}
-
-		consumed = fn(sb, format, context);
-		if (consumed)
-			format += consumed;
-		else
-			strbuf_addch(sb, '%');
-	}
-}
-
 size_t strbuf_expand_literal_cb(struct strbuf *sb,
 				const char *placeholder,
 				void *context UNUSED)

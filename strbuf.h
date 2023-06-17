@@ -318,40 +318,9 @@ const char *strbuf_join_argv(struct strbuf *buf, int argc,
 			     const char **argv, char delim);
 
 /**
- * This function can be used to expand a format string containing
- * placeholders. To that end, it parses the string and calls the specified
- * function for every percent sign found.
- *
- * The callback function is given a pointer to the character after the `%`
- * and a pointer to the struct strbuf.  It is expected to add the expanded
- * version of the placeholder to the strbuf, e.g. to add a newline
- * character if the letter `n` appears after a `%`.  The function returns
- * the length of the placeholder recognized and `strbuf_expand()` skips
- * over it.
- *
- * The format `%%` is automatically expanded to a single `%` as a quoting
- * mechanism; callers do not need to handle the `%` placeholder themselves,
- * and the callback function will not be invoked for this placeholder.
- *
- * All other characters (non-percent and not skipped ones) are copied
- * verbatim to the strbuf.  If the callback returned zero, meaning that the
- * placeholder is unknown, then the percent sign is copied, too.
- *
- * In order to facilitate caching and to make it possible to give
- * parameters to the callback, `strbuf_expand()` passes a context
- * pointer with any kind of data.
- */
-typedef size_t (*expand_fn_t) (struct strbuf *sb,
-			       const char *placeholder,
-			       void *context);
-void strbuf_expand(struct strbuf *sb,
-		   const char *format,
-		   expand_fn_t fn,
-		   void *context);
-
-/**
- * Used as callback for `strbuf_expand` to only expand literals
- * (i.e. %n and %xNN). The context argument is ignored.
+ * Used with `strbuf_expand_step` to expand the literals %n and %x
+ * followed by two hexadecimal digits. Returns the number of recognized
+ * characters. The context argument is ignored.
  */
 size_t strbuf_expand_literal_cb(struct strbuf *sb,
 				const char *placeholder,
