@@ -1250,6 +1250,17 @@ static int format_trailer_match_cb(const struct strbuf *key, void *ud)
 	return 0;
 }
 
+static struct strbuf *expand_separator(struct strbuf *sb,
+				       const char *argval, size_t arglen)
+{
+	char *fmt = xstrndup(argval, arglen);
+
+	strbuf_reset(sb);
+	strbuf_expand(sb, fmt, strbuf_expand_literal_cb, NULL);
+	free(fmt);
+	return sb;
+}
+
 int format_set_trailers_options(struct process_trailer_options *opts,
 				struct string_list *filter_list,
 				struct strbuf *sepbuf,
@@ -1278,21 +1289,9 @@ int format_set_trailers_options(struct process_trailer_options *opts,
 			opts->filter_data = filter_list;
 			opts->only_trailers = 1;
 		} else if (match_placeholder_arg_value(*arg, "separator", arg, &argval, &arglen)) {
-			char *fmt;
-
-			strbuf_reset(sepbuf);
-			fmt = xstrndup(argval, arglen);
-			strbuf_expand(sepbuf, fmt, strbuf_expand_literal_cb, NULL);
-			free(fmt);
-			opts->separator = sepbuf;
+			opts->separator = expand_separator(sepbuf, argval, arglen);
 		} else if (match_placeholder_arg_value(*arg, "key_value_separator", arg, &argval, &arglen)) {
-			char *fmt;
-
-			strbuf_reset(kvsepbuf);
-			fmt = xstrndup(argval, arglen);
-			strbuf_expand(kvsepbuf, fmt, strbuf_expand_literal_cb, NULL);
-			free(fmt);
-			opts->key_value_separator = kvsepbuf;
+			opts->key_value_separator = expand_separator(kvsepbuf, argval, arglen);
 		} else if (!match_placeholder_bool_arg(*arg, "only", arg, &opts->only_trailers) &&
 			   !match_placeholder_bool_arg(*arg, "unfold", arg, &opts->unfold) &&
 			   !match_placeholder_bool_arg(*arg, "keyonly", arg, &opts->key_only) &&
