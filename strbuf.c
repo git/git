@@ -468,22 +468,6 @@ size_t strbuf_expand_literal_cb(struct strbuf *sb,
 	return 0;
 }
 
-size_t strbuf_expand_dict_cb(struct strbuf *sb, const char *placeholder,
-		void *context)
-{
-	struct strbuf_expand_dict_entry *e = context;
-	size_t len;
-
-	for (; e->placeholder && (len = strlen(e->placeholder)); e++) {
-		if (!strncmp(placeholder, e->placeholder, len)) {
-			if (e->value)
-				strbuf_addstr(sb, e->value);
-			return len;
-		}
-	}
-	return 0;
-}
-
 void strbuf_addbuf_percentquote(struct strbuf *dst, const struct strbuf *src)
 {
 	size_t i, len = src->len;

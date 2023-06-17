@@ -358,20 +358,6 @@ size_t strbuf_expand_literal_cb(struct strbuf *sb,
 				void *context);
 
 /**
- * Used as callback for `strbuf_expand()`, expects an array of
- * struct strbuf_expand_dict_entry as context, i.e. pairs of
- * placeholder and replacement string.  The array needs to be
- * terminated by an entry with placeholder set to NULL.
- */
-struct strbuf_expand_dict_entry {
-	const char *placeholder;
-	const char *value;
-};
-size_t strbuf_expand_dict_cb(struct strbuf *sb,
-			     const char *placeholder,
-			     void *context);
-
-/**
  * If the string pointed to by `formatp` contains a percent sign ("%"),
  * advance it to point to the character following the next one and
  * return 1, otherwise return 0.  Append the substring before that

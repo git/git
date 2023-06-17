@@ -192,23 +192,14 @@ static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
 			const struct ll_merge_options *opts,
 			int marker_size)
 {
-	char temp[4][50];
+	char temp[3][50];
 	struct strbuf cmd = STRBUF_INIT;
-	struct strbuf_expand_dict_entry dict[6];
-	struct strbuf path_sq = STRBUF_INIT;
+	const char *format = fn->cmdline;
 	struct child_process child = CHILD_PROCESS_INIT;
 	int status, fd, i;
 	struct stat st;
 	enum ll_merge_result ret;
 	assert(opts);
-
-	sq_quote_buf(&path_sq, path);
-	dict[0].placeholder = "O"; dict[0].value = temp[0];
-	dict[1].placeholder = "A"; dict[1].value = temp[1];
-	dict[2].placeholder = "B"; dict[2].value = temp[2];
-	dict[3].placeholder = "L"; dict[3].value = temp[3];
-	dict[4].placeholder = "P"; dict[4].value = path_sq.buf;
-	dict[5].placeholder = NULL; dict[5].value = NULL;
 
 	if (!fn->cmdline)
 		die("custom merge driver %s lacks command line.", fn->name);
@@ -218,9 +209,23 @@ static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
 	create_temp(orig, temp[0], sizeof(temp[0]));
 	create_temp(src1, temp[1], sizeof(temp[1]));
 	create_temp(src2, temp[2], sizeof(temp[2]));
-	xsnprintf(temp[3], sizeof(temp[3]), "%d", marker_size);
 
-	strbuf_expand(&cmd, fn->cmdline, strbuf_expand_dict_cb, &dict);
+	while (strbuf_expand_step(&cmd, &format)) {
+		if (skip_prefix(format, "%", &format))
+			strbuf_addch(&cmd, '%');
+		else if (skip_prefix(format, "O", &format))
+			strbuf_addstr(&cmd, temp[0]);
+		else if (skip_prefix(format, "A", &format))
+			strbuf_addstr(&cmd, temp[1]);
+		else if (skip_prefix(format, "B", &format))
+			strbuf_addstr(&cmd, temp[2]);
+		else if (skip_prefix(format, "L", &format))
+			strbuf_addf(&cmd, "%d", marker_size);
+		else if (skip_prefix(format, "P", &format))
+			sq_quote_buf(&cmd, path);
+		else
+			strbuf_addch(&cmd, '%');
+	}
 
 	child.use_shell = 1;
 	strvec_push(&child.args, cmd.buf);
@@ -242,7 +247,6 @@ static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
 	for (i = 0; i < 3; i++)
 		unlink_or_warn(temp[i]);
 	strbuf_release(&cmd);
-	strbuf_release(&path_sq);
 	ret = (status > 0) ? LL_MERGE_CONFLICT : status;
 	return ret;
 }
