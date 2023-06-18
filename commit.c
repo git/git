@@ -7,7 +7,7 @@
 #include "hex.h"
 #include "repository.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "pkt-line.h"
 #include "utf8.h"
 #include "diff.h"

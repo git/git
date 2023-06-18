@@ -1,14 +1,15 @@
 #define USE_THE_INDEX_VARIABLE
-#include "cache.h"
+#include "builtin.h"
 #include "config.h"
 #include "diff.h"
 #include "commit.h"
 #include "gettext.h"
 #include "hex.h"
 #include "log-tree.h"
-#include "builtin.h"
 #include "submodule.h"
+#include "read-cache-ll.h"
 #include "repository.h"
+#include "revision.h"
 #include "tree.h"
 
 static struct rev_info log_tree_opt;

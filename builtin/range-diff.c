@@ -1,10 +1,10 @@
-#include "cache.h"
 #include "builtin.h"
 #include "gettext.h"
 #include "object-name.h"
 #include "parse-options.h"
 #include "range-diff.h"
 #include "config.h"
+#include "repository.h"
 #include "revision.h"
 
 static const char * const builtin_range_diff_usage[] = {

@@ -20,7 +20,8 @@
 #include "commit.h"
 #include "strvec.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "object-store-ll.h"
+#include "path.h"
 #include "replace-object.h"
 #include "tmp-objdir.h"
 #include "chdir-notify.h"
@@ -110,7 +111,7 @@ char *git_work_tree_cfg;
 static char *git_namespace;
 
 /*
- * Repository-local GIT_* environment variables; see cache.h for details.
+ * Repository-local GIT_* environment variables; see environment.h for details.
  */
 const char * const local_repo_env[] = {
 	ALTERNATE_DB_ENVIRONMENT,

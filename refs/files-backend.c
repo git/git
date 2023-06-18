@@ -1,4 +1,4 @@
-#include "../cache.h"
+#include "../git-compat-util.h"
 #include "../config.h"
 #include "../copy.h"
 #include "../environment.h"
@@ -15,6 +15,7 @@
 #include "../lockfile.h"
 #include "../object.h"
 #include "../object-file.h"
+#include "../path.h"
 #include "../dir.h"
 #include "../chdir-notify.h"
 #include "../setup.h"

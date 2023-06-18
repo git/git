@@ -3,7 +3,7 @@
 
 #include "oidmap.h"
 #include "repository.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 
 /*
  * Do replace refs need to be checked this run?  This variable is

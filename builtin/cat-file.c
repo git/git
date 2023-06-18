@@ -4,11 +4,10 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 #define USE_THE_INDEX_VARIABLE
-#include "cache.h"
+#include "builtin.h"
 #include "alloc.h"
 #include "config.h"
 #include "convert.h"
-#include "builtin.h"
 #include "diff.h"
 #include "environment.h"
 #include "gettext.h"
@@ -22,7 +21,7 @@
 #include "packfile.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "replace-object.h"
 #include "promisor-remote.h"
 #include "mailmap.h"

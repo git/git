@@ -1,11 +1,8 @@
-#ifndef CACHE_H
-#define CACHE_H
+#ifndef READ_CACHE_LL_H
+#define READ_CACHE_LL_H
 
-#include "git-compat-util.h"
-#include "strbuf.h"
+#include "hash-ll.h"
 #include "hashmap.h"
-#include "pathspec.h"
-#include "object.h"
 #include "statinfo.h"
 
 /*
@@ -126,42 +123,6 @@ static inline unsigned create_ce_flags(unsigned stage)
 #define ce_mark_uptodate(ce) ((ce)->ce_flags |= CE_UPTODATE)
 #define ce_intent_to_add(ce) ((ce)->ce_flags & CE_INTENT_TO_ADD)
 
-static inline unsigned int ce_mode_from_stat(const struct cache_entry *ce,
-					     unsigned int mode)
-{
-	extern int trust_executable_bit, has_symlinks;
-	if (!has_symlinks && S_ISREG(mode) &&
-	    ce && S_ISLNK(ce->ce_mode))
-		return ce->ce_mode;
-	if (!trust_executable_bit && S_ISREG(mode)) {
-		if (ce && S_ISREG(ce->ce_mode))
-			return ce->ce_mode;
-		return create_ce_mode(0666);
-	}
-	return create_ce_mode(mode);
-}
-static inline int ce_to_dtype(const struct cache_entry *ce)
-{
-	unsigned ce_mode = ntohl(ce->ce_mode);
-	if (S_ISREG(ce_mode))
-		return DT_REG;
-	else if (S_ISDIR(ce_mode) || S_ISGITLINK(ce_mode))
-		return DT_DIR;
-	else if (S_ISLNK(ce_mode))
-		return DT_LNK;
-	else
-		return DT_UNKNOWN;
-}
-
-static inline int ce_path_match(struct index_state *istate,
-				const struct cache_entry *ce,
-				const struct pathspec *pathspec,
-				char *seen)
-{
-	return match_pathspec(istate, pathspec, ce->name, ce_namelen(ce), 0, seen,
-			      S_ISDIR(ce->ce_mode) || S_ISGITLINK(ce->ce_mode));
-}
-
 #define cache_entry_size(len) (offsetof(struct cache_entry,name) + (len) + 1)
 
 #define SOMETHING_CHANGED	(1 << 0) /* unclassified changes go here */
@@ -245,12 +206,6 @@ struct index_state {
 void index_state_init(struct index_state *istate, struct repository *r);
 void release_index(struct index_state *istate);
 
-/* Name hashing */
-int test_lazy_init_name_hash(struct index_state *istate, int try_threaded);
-void add_name_hash(struct index_state *istate, struct cache_entry *ce);
-void remove_name_hash(struct index_state *istate, struct cache_entry *ce);
-void free_name_hash(struct index_state *istate);
-
 /* Cache entry creation and cleanup */
 
 /*
@@ -318,30 +273,13 @@ typedef int (*must_prefetch_predicate)(const struct cache_entry *);
 void prefetch_cache_entries(const struct index_state *istate,
 			    must_prefetch_predicate must_prefetch);
 
-#ifdef USE_THE_INDEX_VARIABLE
-extern struct index_state the_index;
-#endif
-
-#define INIT_DB_QUIET 0x0001
-#define INIT_DB_EXIST_OK 0x0002
-
-int init_db(const char *git_dir, const char *real_git_dir,
-	    const char *template_dir, int hash_algo,
-	    const char *initial_branch, unsigned int flags);
-void initialize_repository_version(int hash_algo, int reinit);
-
 /* Initialize and use the cache information */
 struct lock_file;
-void preload_index(struct index_state *index,
-		   const struct pathspec *pathspec,
-		   unsigned int refresh_flags);
 int do_read_index(struct index_state *istate, const char *path,
 		  int must_exist); /* for testting only! */
 int read_index_from(struct index_state *, const char *path,
 		    const char *gitdir);
 int is_index_unborn(struct index_state *);
-
-void ensure_full_index(struct index_state *istate);
 
 /* For use with `write_locked_index()`. */
 #define COMMIT_LOCK		(1 << 0)
@@ -385,9 +323,6 @@ int repo_index_has_changes(struct repository *repo,
 
 int verify_path(const char *path, unsigned mode);
 int strcmp_offset(const char *s1, const char *s2, size_t *first_change);
-int index_dir_exists(struct index_state *istate, const char *name, int namelen);
-void adjust_dirname_case(struct index_state *istate, char *name);
-struct cache_entry *index_file_exists(struct index_state *istate, const char *name, int namelen, int igncase);
 
 /*
  * Searches for an entry defined by name and namelen in the given index.
@@ -496,19 +431,6 @@ int has_racy_timestamp(struct index_state *istate);
 int ie_match_stat(struct index_state *, const struct cache_entry *, struct stat *, unsigned int);
 int ie_modified(struct index_state *, const struct cache_entry *, struct stat *, unsigned int);
 
-/*
- * Record to sd the data from st that we use to check whether a file
- * might have changed.
- */
-void fill_stat_data(struct stat_data *sd, struct stat *st);
-
-/*
- * Return 0 if st is consistent with a file not having been changed
- * since sd was filled.  If there are differences, return a
- * combination of MTIME_CHANGED, CTIME_CHANGED, OWNER_CHANGED,
- * INODE_CHANGED, and DATA_CHANGED.
- */
-int match_stat_data(const struct stat_data *sd, struct stat *st);
 int match_stat_data_racy(const struct index_state *istate,
 			 const struct stat_data *sd, struct stat *st);
 
@@ -547,69 +469,13 @@ void set_alternate_index_output(const char *);
 extern int verify_index_checksum;
 extern int verify_ce_order;
 
-#define MTIME_CHANGED	0x0001
-#define CTIME_CHANGED	0x0002
-#define OWNER_CHANGED	0x0004
-#define MODE_CHANGED    0x0008
-#define INODE_CHANGED   0x0010
-#define DATA_CHANGED    0x0020
-#define TYPE_CHANGED    0x0040
-
 int cmp_cache_name_compare(const void *a_, const void *b_);
 
-/* add */
-/*
- * return 0 if success, 1 - if addition of a file failed and
- * ADD_FILES_IGNORE_ERRORS was specified in flags
- */
-int add_files_to_cache(const char *prefix, const struct pathspec *pathspec, int flags);
+int add_files_to_cache(struct repository *repo, const char *prefix,
+		       const struct pathspec *pathspec, int include_sparse,
+		       int flags);
 
-/* diff.c */
-extern int diff_auto_refresh_index;
-
-/* ls-files */
 void overlay_tree_on_index(struct index_state *istate,
 			   const char *tree_name, const char *prefix);
 
-/* merge.c */
-struct commit_list;
-int try_merge_command(struct repository *r,
-		const char *strategy, size_t xopts_nr,
-		const char **xopts, struct commit_list *common,
-		const char *head_arg, struct commit_list *remotes);
-int checkout_fast_forward(struct repository *r,
-			  const struct object_id *from,
-			  const struct object_id *to,
-			  int overwrite_ignore);
-
-
-int sane_execvp(const char *file, char *const argv[]);
-
-/*
- * A struct to encapsulate the concept of whether a file has changed
- * since we last checked it. This uses criteria similar to those used
- * for the index.
- */
-struct stat_validity {
-	struct stat_data *sd;
-};
-
-void stat_validity_clear(struct stat_validity *sv);
-
-/*
- * Returns 1 if the path is a regular file (or a symlink to a regular
- * file) and matches the saved stat_validity, 0 otherwise.  A missing
- * or inaccessible file is considered a match if the struct was just
- * initialized, or if the previous update found an inaccessible file.
- */
-int stat_validity_check(struct stat_validity *sv, const char *path);
-
-/*
- * Update the stat_validity from a file opened at descriptor fd. If
- * the file is missing, inaccessible, or not a regular file, then
- * future calls to stat_validity_check will match iff one of those
- * conditions continues to be true.
- */
-void stat_validity_update(struct stat_validity *sv, int fd);
-
-#endif /* CACHE_H */
+#endif /* READ_CACHE_LL_H */
