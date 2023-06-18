@@ -118,14 +118,17 @@ test_expect_success '"add" worktree creating new branch' '
 	)
 '
 
-test_expect_success 'die the same branch is already checked out' '
+test_expect_success 'die if the same branch is already checked out' '
 	(
 		cd here &&
-		test_must_fail git checkout newmain
+		test_must_fail git checkout newmain &&
+		test_must_fail git checkout -B newmain &&
+		test_must_fail git switch newmain &&
+		test_must_fail git switch -C newmain
 	)
 '
 
-test_expect_success SYMLINKS 'die the same branch is already checked out (symlink)' '
+test_expect_success SYMLINKS 'die if the same branch is already checked out (symlink)' '
 	head=$(git -C there rev-parse --git-path HEAD) &&
 	ref=$(git -C there symbolic-ref HEAD) &&
 	rm "$head" &&
@@ -133,17 +136,34 @@ test_expect_success SYMLINKS 'die the same branch is already checked out (symlin
 	test_must_fail git -C here checkout newmain
 '
 
-test_expect_success 'not die the same branch is already checked out' '
+test_expect_success 'allow creating multiple worktrees for same branch with force' '
+	git worktree add --force anothernewmain newmain
+'
+
+test_expect_success 'allow checkout/reset from the conflicted branch' '
 	(
 		cd here &&
-		git worktree add --force anothernewmain newmain
+		git checkout -b conflictedmain newmain &&
+		git checkout -B conflictedmain newmain &&
+		git switch -C conflictedmain newmain
 	)
 '
 
-test_expect_success 'not die on re-checking out current branch' '
+test_expect_success 'and not die on re-checking out current branch even if conflicted' '
 	(
 		cd there &&
-		git checkout newmain
+		git checkout newmain &&
+		git switch newmain
+	)
+'
+
+test_expect_success 'unless using force without --ignore-other-worktrees' '
+	(
+		cd there &&
+		test_must_fail git checkout -B newmain &&
+		test_must_fail git switch -C newmain &&
+		git checkout --ignore-other-worktrees -B newmain &&
+		git switch --ignore-other-worktrees -C newmain
 	)
 '
 
