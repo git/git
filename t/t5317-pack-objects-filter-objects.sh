@@ -438,6 +438,33 @@ test_expect_success 'verify sparse:oid=oid-ish' '
 	test_cmp expected observed
 '
 
+# Test pack-objects with --print-filtered option
+
+test_expect_success 'pack-objects fails w/ both --print-filtered and --stdout' '
+	test_must_fail git -C r1 pack-objects --revs --stdout \
+		--filter=blob:none --print-filtered >filter.out <<-EOF
+	HEAD
+	EOF
+'
+
+test_expect_success 'pack-objects w/ --print-filtered and a pack name' '
+	git -C r1 pack-objects --revs --filter=blob:none \
+		--print-filtered filtered-pack >filter.out <<-EOF &&
+	HEAD
+	EOF
+
+	# Check that the second line contains "------"
+	head -n 2 filter.out | tail -n 1 >actual &&
+	echo "------" >expected &&
+	test_cmp expected actual &&
+
+	# Remove the first two lines and check there are all the blobs
+	tail -n +3 filter.out | sort >actual &&
+	git -C r1 cat-file --batch-check --batch-all-objects | grep blob |
+		sed -e "s/ blob.*//" | sort >expected &&
+	test_cmp expected actual
+'
+
 # Delete some loose objects and use pack-objects, but WITHOUT any filtering.
 # This models previously omitted objects that we did not receive.
 

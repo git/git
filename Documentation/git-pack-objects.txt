@@ -298,12 +298,22 @@ So does `git bundle` (see linkgit:git-bundle[1]) when it creates a bundle.
 	nevertheless.
 
 --filter=<filter-spec>::
-	Requires `--stdout`.  Omits certain objects (usually blobs) from
-	the resulting packfile.  See linkgit:git-rev-list[1] for valid
+	Omits certain objects (usually blobs) from the resulting
+	packfile.  See linkgit:git-rev-list[1] for valid
 	`<filter-spec>` forms.
 
 --no-filter::
 	Turns off any previous `--filter=` argument.
+
+--print-filtered::
+	Requires `--filter=`. Prints on stdout, one per line, the
+	object IDs of the objects that are filtered out from the
+	resulting packfile by the filter. This is incompatible with
+	`--stdout`. As <SHA-1> hashes are already written to stdout
+	based on the resulting pack contents (see the `base-name`
+	argument), a line containing only six `-` characters is
+	written after those <SHA-1> hashes, before the filtered object
+	IDs.
 
 --missing=<missing-action>::
 	A debug option to help with future "partial clone" development.
