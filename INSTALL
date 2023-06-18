@@ -129,13 +129,13 @@ Issues of note:
 	  itself, e.g. Digest::MD5, File::Spec, File::Temp, Net::Domain,
 	  Net::SMTP, and Time::HiRes.
 
-	- git-imap-send needs the OpenSSL library to talk IMAP over SSL if
-	  you are using libcurl older than 7.34.0.  Otherwise you can use
-	  NO_OPENSSL without losing git-imap-send.
+	- git-imap-send needs libcurl 7.34.0 or newer, in addition
+	  OpenSSL is needed if using the "imap.tunnel" open to tunnel
+	  over SSL. Define NO_OPENSSL to omit the OpenSSL prerequisite.
 
 	- "libcurl" library is used for fetching and pushing
 	  repositories over http:// or https://, as well as by
-	  git-imap-send if the curl version is >= 7.34.0. If you do
+	  git-imap-send. If you do
 	  not need that functionality, use NO_CURL to build without
 	  it.
 
