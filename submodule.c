@@ -238,21 +238,12 @@ int git_default_submodule_config(const char *var, const char *value,
 	return 0;
 }
 
-int option_parse_recurse_submodules_worktree_updater(const struct option *opt,
-						     const char *arg, int unset)
+void set_config_update_recurse_submodules(int value)
 {
-	if (unset) {
-		config_update_recurse_submodules = RECURSE_SUBMODULES_OFF;
-		return 0;
-	}
-	if (arg)
-		config_update_recurse_submodules =
-			parse_update_recurse_submodules_arg(opt->long_name,
-							    arg);
-	else
-		config_update_recurse_submodules = RECURSE_SUBMODULES_ON;
-
-	return 0;
+	if (value < 0 || value > 1)
+		BUG("config_update_recurse_submodules is a boolean");
+	config_update_recurse_submodules = value ? RECURSE_SUBMODULES_ON
+						 : RECURSE_SUBMODULES_OFF;
 }
 
 /*
