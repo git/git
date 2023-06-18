@@ -38,19 +38,22 @@ static struct credential_cache_entry *lookup_credential(const struct credential 
 	int i;
 	for (i = 0; i < entries_nr; i++) {
 		struct credential *e = &entries[i].item;
-		if (credential_match(c, e))
+		if (credential_match(c, e, 0))
 			return &entries[i];
 	}
 	return NULL;
 }
 
-static void remove_credential(const struct credential *c)
+static void remove_credential(const struct credential *c, int match_password)
 {
 	struct credential_cache_entry *e;
 
-	e = lookup_credential(c);
-	if (e)
-		e->expiration = 0;
+	int i;
+	for (i = 0; i < entries_nr; i++) {
+		e = &entries[i];
+		if (credential_match(c, &e->item, match_password))
+			e->expiration = 0;
+	}
 }
 
 static timestamp_t check_expirations(void)
@@ -151,14 +154,14 @@ static void serve_one_client(FILE *in, FILE *out)
 		exit(0);
 	}
 	else if (!strcmp(action.buf, "erase"))
-		remove_credential(&c);
+		remove_credential(&c, 1);
 	else if (!strcmp(action.buf, "store")) {
 		if (timeout < 0)
 			warning("cache client didn't specify a timeout");
 		else if (!c.username || !c.password)
 			warning("cache client gave us a partial credential");
 		else {
-			remove_credential(&c);
+			remove_credential(&c, 0);
 			cache_credential(&c, timeout);
 		}
 	}
