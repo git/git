@@ -122,6 +122,7 @@ TECH_DOCS += technical/scalar
 TECH_DOCS += technical/send-pack-pipeline
 TECH_DOCS += technical/shallow
 TECH_DOCS += technical/trivial-merge
+TECH_DOCS += technical/unit-tests
 SP_ARTICLES += $(TECH_DOCS)
 SP_ARTICLES += technical/api-index
 
