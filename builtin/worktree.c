@@ -1408,5 +1408,9 @@ int cmd_worktree(int ac, const char **av, const char *prefix)
 		prefix = "";
 
 	ac = parse_options(ac, av, prefix, options, git_worktree_usage, 0);
+
+	prepare_repo_settings(the_repository);
+	the_repository->settings.command_requires_full_index = 0;
+
 	return fn(ac, av, prefix);
 }
