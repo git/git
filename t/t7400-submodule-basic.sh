@@ -1351,6 +1351,22 @@ test_expect_success 'clone active submodule without submodule url set' '
 	)
 '
 
+test_expect_success 'update submodules without url set in .gitconfig' '
+	test_when_finished "rm -rf multisuper_clone" &&
+	git clone file://"$pwd"/multisuper multisuper_clone &&
+
+	git -C multisuper_clone submodule init &&
+	for s in sub0 sub1 sub2 sub3
+	do
+		key=submodule.$s.url &&
+		git -C multisuper_clone config --local --unset $key &&
+		git -C multisuper_clone config --file .gitmodules --unset $key || return 1
+	done &&
+
+	test_must_fail git -C multisuper_clone submodule update 2>err &&
+	grep "cannot clone submodule .sub[0-3]. without a URL" err
+'
+
 test_expect_success 'clone --recurse-submodules with a pathspec works' '
 	test_when_finished "rm -rf multisuper_clone" &&
 	cat >expected <<-\EOF &&
