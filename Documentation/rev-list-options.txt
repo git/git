@@ -236,10 +236,11 @@ ifndef::git-rev-list[]
 endif::git-rev-list[]
 
 --stdin::
-	In addition to the '<commit>' listed on the command
-	line, read them from the standard input. If a `--` separator is
-	seen, stop reading commits and start reading paths to limit the
-	result.
+	In addition to getting arguments from the command line, read
+	them for standard input as well. This accepts commits and
+	pseudo-options like `--all` and `--glob=`. When a `--` separator
+	is seen, the following input is treated as paths and used to
+	limit the result.
 
 ifdef::git-rev-list[]
 --quiet::
