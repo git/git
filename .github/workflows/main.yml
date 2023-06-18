@@ -246,9 +246,6 @@ jobs:
       fail-fast: false
       matrix:
         vector:
-          - jobname: linux-clang
-            cc: clang
-            pool: ubuntu-latest
           - jobname: linux-sha256
             cc: clang
             pool: ubuntu-latest
@@ -273,11 +270,8 @@ jobs:
           - jobname: linux-leaks
             cc: gcc
             pool: ubuntu-latest
-          - jobname: linux-asan
-            cc: gcc
-            pool: ubuntu-latest
-          - jobname: linux-ubsan
-            cc: gcc
+          - jobname: linux-asan-ubsan
+            cc: clang
             pool: ubuntu-latest
     env:
       CC: ${{matrix.vector.cc}}
