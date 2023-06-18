@@ -145,7 +145,7 @@ FIELD NAMES
 -----------
 
 Various values from structured fields can be used to interpolate
-into the resulting output. For each outputing line, the following
+into the resulting output. For each outputting line, the following
 names can be used:
 
 objectmode::

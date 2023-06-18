@@ -687,7 +687,7 @@ Writing Documentation:
    Do: [-q | --quiet]
    Don't: [-q|--quiet]
 
- Don't use spacing around "|" tokens when they're used to seperate the
+ Don't use spacing around "|" tokens when they're used to separate the
  alternate arguments of an option:
     Do: --track[=(direct|inherit)]
     Don't: --track[=(direct | inherit)]
