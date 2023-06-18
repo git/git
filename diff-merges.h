@@ -11,6 +11,10 @@ struct rev_info;
 
 int diff_merges_config(const char *value);
 
+int diff_merges_hide_config(int hide);
+
+int diff_merges_m_imply_p_config(int on);
+
 void diff_merges_suppress_m_parsing(void);
 
 int diff_merges_parse_opts(struct rev_info *revs, const char **argv);
