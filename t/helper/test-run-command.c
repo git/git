@@ -49,6 +49,20 @@ static int no_job(struct child_process *cp UNUSED,
 	return 0;
 }
 
+static void on_stderr_output(struct strbuf *out,
+			size_t offset,
+			void *pp_cb UNUSED,
+			void *pp_task_cb UNUSED)
+{
+	struct string_list list = STRING_LIST_INIT_DUP;
+	struct string_list_item *item;
+
+	string_list_split(&list, out->buf + offset, '\n', -1);
+	for_each_string_list_item(item, &list)
+		fprintf(stderr, "on_stderr_output: %s\n", item->string);
+	string_list_clear(&list, 0);
+}
+
 static int task_finished(int result UNUSED,
 			 struct strbuf *err,
 			 void *pp_cb UNUSED,
@@ -434,6 +448,12 @@ int cmd__run_command(int argc, const char **argv)
 		argv += 1;
 		argc -= 1;
 		opts.ungroup = 1;
+	}
+
+	if (!strcmp(argv[1], "--on-stderr-output")) {
+		argv += 1;
+		argc -= 1;
+		opts.on_stderr_output = on_stderr_output;
 	}
 
 	jobs = atoi(argv[2]);
