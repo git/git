@@ -7,6 +7,8 @@
 #include "statinfo.h"
 #include "strbuf.h"
 
+struct repository;
+
 /**
  * The directory listing API is used to enumerate paths in the work tree,
  * optionally taking `.git/info/exclude` and `.gitignore` files per directory
@@ -40,6 +42,8 @@
  * - Call `dir_clear()` when the contained elements are no longer in use.
  *
  */
+
+struct repository;
 
 struct dir_entry {
 	unsigned int len;
