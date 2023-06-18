@@ -41,7 +41,8 @@ struct batch_options {
 	int all_objects;
 	int unordered;
 	int transform_mode; /* may be 'w' or 'c' for --filters or --textconv */
-	int nul_terminated;
+	char input_delim;
+	char output_delim;
 	const char *format;
 };
 
@@ -436,11 +437,12 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 	}
 }
 
-static void print_default_format(struct strbuf *scratch, struct expand_data *data)
+static void print_default_format(struct strbuf *scratch, struct expand_data *data,
+				 struct batch_options *opt)
 {
-	strbuf_addf(scratch, "%s %s %"PRIuMAX"\n", oid_to_hex(&data->oid),
+	strbuf_addf(scratch, "%s %s %"PRIuMAX"%c", oid_to_hex(&data->oid),
 		    type_name(data->type),
-		    (uintmax_t)data->size);
+		    (uintmax_t)data->size, opt->output_delim);
 }
 
 /*
@@ -469,8 +471,8 @@ static void batch_object_write(const char *obj_name,
 						       &data->oid, &data->info,
 						       OBJECT_INFO_LOOKUP_REPLACE);
 		if (ret < 0) {
-			printf("%s missing\n",
-			       obj_name ? obj_name : oid_to_hex(&data->oid));
+			printf("%s missing%c",
+			       obj_name ? obj_name : oid_to_hex(&data->oid), opt->output_delim);
 			fflush(stdout);
 			return;
 		}
@@ -491,17 +493,17 @@ static void batch_object_write(const char *obj_name,
 	strbuf_reset(scratch);
 
 	if (!opt->format) {
-		print_default_format(scratch, data);
+		print_default_format(scratch, data, opt);
 	} else {
 		strbuf_expand(scratch, opt->format, expand_format, data);
-		strbuf_addch(scratch, '\n');
+		strbuf_addch(scratch, opt->output_delim);
 	}
 
 	batch_write(opt, scratch->buf, scratch->len);
 
 	if (opt->batch_mode == BATCH_MODE_CONTENTS) {
 		print_object_or_die(opt, data);
-		batch_write(opt, "\n", 1);
+		batch_write(opt, &opt->output_delim, 1);
 	}
 }
 
@@ -519,22 +521,25 @@ static void batch_one_object(const char *obj_name,
 	if (result != FOUND) {
 		switch (result) {
 		case MISSING_OBJECT:
-			printf("%s missing\n", obj_name);
+			printf("%s missing%c", obj_name, opt->output_delim);
 			break;
 		case SHORT_NAME_AMBIGUOUS:
-			printf("%s ambiguous\n", obj_name);
+			printf("%s ambiguous%c", obj_name, opt->output_delim);
 			break;
 		case DANGLING_SYMLINK:
-			printf("dangling %"PRIuMAX"\n%s\n",
-			       (uintmax_t)strlen(obj_name), obj_name);
+			printf("dangling %"PRIuMAX"%c%s%c",
+			       (uintmax_t)strlen(obj_name),
+			       opt->output_delim, obj_name, opt->output_delim);
 			break;
 		case SYMLINK_LOOP:
-			printf("loop %"PRIuMAX"\n%s\n",
-			       (uintmax_t)strlen(obj_name), obj_name);
+			printf("loop %"PRIuMAX"%c%s%c",
+			       (uintmax_t)strlen(obj_name),
+			       opt->output_delim, obj_name, opt->output_delim);
 			break;
 		case NOT_DIR:
-			printf("notdir %"PRIuMAX"\n%s\n",
-			       (uintmax_t)strlen(obj_name), obj_name);
+			printf("notdir %"PRIuMAX"%c%s%c",
+			       (uintmax_t)strlen(obj_name),
+			       opt->output_delim, obj_name, opt->output_delim);
 			break;
 		default:
 			BUG("unknown get_sha1_with_context result %d\n",
@@ -546,9 +551,9 @@ static void batch_one_object(const char *obj_name,
 	}
 
 	if (ctx.mode == 0) {
-		printf("symlink %"PRIuMAX"\n%s\n",
+		printf("symlink %"PRIuMAX"%c%s%c",
 		       (uintmax_t)ctx.symlink_path.len,
-		       ctx.symlink_path.buf);
+		       opt->output_delim, ctx.symlink_path.buf, opt->output_delim);
 		fflush(stdout);
 		return;
 	}
@@ -693,19 +698,11 @@ static void batch_objects_command(struct batch_options *opt,
 	struct queued_cmd *queued_cmd = NULL;
 	size_t alloc = 0, nr = 0;
 
-	while (1) {
-		int i, ret;
+	while (strbuf_getdelim_strip_crlf(&input, stdin, opt->input_delim) != EOF) {
+		int i;
 		const struct parse_cmd *cmd = NULL;
 		const char *p = NULL, *cmd_end;
 		struct queued_cmd call = {0};
-
-		if (opt->nul_terminated)
-			ret = strbuf_getline_nul(&input, stdin);
-		else
-			ret = strbuf_getline(&input, stdin);
-
-		if (ret)
-			break;
 
 		if (!input.len)
 			die(_("empty command in input"));
@@ -850,16 +847,7 @@ static int batch_objects(struct batch_options *opt)
 		goto cleanup;
 	}
 
-	while (1) {
-		int ret;
-		if (opt->nul_terminated)
-			ret = strbuf_getline_nul(&input, stdin);
-		else
-			ret = strbuf_getline(&input, stdin);
-
-		if (ret == EOF)
-			break;
-
+	while (strbuf_getdelim_strip_crlf(&input, stdin, opt->input_delim) != EOF) {
 		if (data.split_on_whitespace) {
 			/*
 			 * Split at first whitespace, tying off the beginning
@@ -928,6 +916,8 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 	const char *exp_type = NULL, *obj_name = NULL;
 	struct batch_options batch = {0};
 	int unknown_type = 0;
+	int input_nul_terminated = 0;
+	int nul_terminated = 0;
 
 	const char * const usage[] = {
 		N_("git cat-file <type> <object>"),
@@ -935,7 +925,7 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 		N_("git cat-file (-t | -s) [--allow-unknown-type] <object>"),
 		N_("git cat-file (--batch | --batch-check | --batch-command) [--batch-all-objects]\n"
 		   "             [--buffer] [--follow-symlinks] [--unordered]\n"
-		   "             [--textconv | --filters] [-z]"),
+		   "             [--textconv | --filters] [-Z]"),
 		N_("git cat-file (--textconv | --filters)\n"
 		   "             [<rev>:<path|tree-ish> | --path=<path|tree-ish> <rev>]"),
 		NULL
@@ -964,7 +954,9 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 			N_("like --batch, but don't emit <contents>"),
 			PARSE_OPT_OPTARG | PARSE_OPT_NONEG,
 			batch_option_callback),
-		OPT_BOOL('z', NULL, &batch.nul_terminated, N_("stdin is NUL-terminated")),
+		OPT_BOOL_F('z', NULL, &input_nul_terminated, N_("stdin is NUL-terminated"),
+			PARSE_OPT_HIDDEN),
+		OPT_BOOL('Z', NULL, &nul_terminated, N_("stdin and stdout is NUL-terminated")),
 		OPT_CALLBACK_F(0, "batch-command", &batch, N_("format"),
 			N_("read commands from stdin"),
 			PARSE_OPT_OPTARG | PARSE_OPT_NONEG,
@@ -1023,9 +1015,18 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 	else if (batch.all_objects)
 		usage_msg_optf(_("'%s' requires a batch mode"), usage, options,
 			       "--batch-all-objects");
-	else if (batch.nul_terminated)
+	else if (input_nul_terminated)
 		usage_msg_optf(_("'%s' requires a batch mode"), usage, options,
 			       "-z");
+	else if (nul_terminated)
+		usage_msg_optf(_("'%s' requires a batch mode"), usage, options,
+			       "-Z");
+
+	batch.input_delim = batch.output_delim = '\n';
+	if (input_nul_terminated)
+		batch.input_delim = '\0';
+	if (nul_terminated)
+		batch.input_delim = batch.output_delim = '\0';
 
 	/* Batch defaults */
 	if (batch.buffer_output < 0)
