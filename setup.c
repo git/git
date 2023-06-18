@@ -655,11 +655,10 @@ static int check_repository_format_gently(const char *gitdir, struct repository_
 	}
 
 	repository_format_precious_objects = candidate->precious_objects;
-	repository_format_worktree_config = candidate->worktree_config;
 	string_list_clear(&candidate->unknown_extensions, 0);
 	string_list_clear(&candidate->v1_only_extensions, 0);
 
-	if (repository_format_worktree_config) {
+	if (candidate->worktree_config) {
 		/*
 		 * pick up core.bare and core.worktree from per-worktree
 		 * config if present
@@ -1428,6 +1427,9 @@ int discover_git_directory(struct strbuf *commondir,
 		return -1;
 	}
 
+	the_repository->repository_format_worktree_config =
+		candidate.worktree_config;
+
 	/* take ownership of candidate.partial_clone */
 	the_repository->repository_format_partial_clone =
 		candidate.partial_clone;
@@ -1565,6 +1567,8 @@ const char *setup_git_directory_gently(int *nongit_ok)
 		}
 		if (startup_info->have_repository) {
 			repo_set_hash_algo(the_repository, repo_fmt.hash_algo);
+			the_repository->repository_format_worktree_config =
+				repo_fmt.worktree_config;
 			/* take ownership of repo_fmt.partial_clone */
 			the_repository->repository_format_partial_clone =
 				repo_fmt.partial_clone;
@@ -1656,6 +1660,8 @@ void check_repository_format(struct repository_format *fmt)
 	check_repository_format_gently(get_git_dir(), fmt, NULL);
 	startup_info->have_repository = 1;
 	repo_set_hash_algo(the_repository, fmt->hash_algo);
+	the_repository->repository_format_worktree_config =
+		fmt->worktree_config;
 	the_repository->repository_format_partial_clone =
 		xstrdup_or_null(fmt->partial_clone);
 	clear_repository_format(&repo_fmt);
