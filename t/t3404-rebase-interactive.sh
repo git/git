@@ -1276,20 +1276,37 @@ test_expect_success 'todo count' '
 '
 
 test_expect_success 'rebase -i commits that overwrite untracked files (pick)' '
-	git checkout --force branch2 &&
+	git checkout --force A &&
 	git clean -f &&
+	cat >todo <<-EOF &&
+	exec >file2
+	pick $(git rev-parse B) B
+	pick $(git rev-parse C) C
+	pick $(git rev-parse D) D
+	exec cat .git/rebase-merge/done >actual
+	EOF
 	(
-		set_fake_editor &&
-		FAKE_LINES="edit 1 2" git rebase -i A
+		set_replace_editor todo &&
+		test_must_fail git rebase -i A
 	) &&
-	test_cmp_rev HEAD F &&
-	test_path_is_missing file6 &&
-	>file6 &&
-	test_must_fail git rebase --continue &&
-	test_cmp_rev HEAD F &&
-	rm file6 &&
+	test_cmp_rev HEAD B &&
+	head -n3 todo >expect &&
+	test_cmp expect .git/rebase-merge/done &&
+	rm file2 &&
+	test_path_is_missing .git/rebase-merge/author-script &&
+	test_path_is_missing .git/rebase-merge/patch &&
+	test_path_is_missing .git/MERGE_MSG &&
+	test_path_is_missing .git/rebase-merge/message &&
+	test_path_is_missing .git/rebase-merge/stopped-sha &&
+	echo changed >file1 &&
+	git add file1 &&
+	test_must_fail git rebase --continue 2>err &&
+	grep "error: you have staged changes in your working tree" err &&
+	git reset --hard HEAD &&
 	git rebase --continue &&
-	test_cmp_rev HEAD I
+	test_cmp_rev HEAD D &&
+	tail -n3 todo >>expect &&
+	test_cmp expect actual
 '
 
 test_expect_success 'rebase -i commits that overwrite untracked files (squash)' '
@@ -1306,6 +1323,11 @@ test_expect_success 'rebase -i commits that overwrite untracked files (squash)' 
 	test_must_fail git rebase --continue &&
 	test_cmp_rev HEAD F &&
 	rm file6 &&
+	test_path_is_missing .git/rebase-merge/author-script &&
+	test_path_is_missing .git/rebase-merge/patch &&
+	test_path_is_missing .git/MERGE_MSG &&
+	test_path_is_missing .git/rebase-merge/message &&
+	test_path_is_missing .git/rebase-merge/stopped-sha &&
 	git rebase --continue &&
 	test $(git cat-file commit HEAD | sed -ne \$p) = I &&
 	git reset --hard original-branch2
@@ -1324,6 +1346,11 @@ test_expect_success 'rebase -i commits that overwrite untracked files (no ff)' '
 	test_must_fail git rebase --continue &&
 	test $(git cat-file commit HEAD | sed -ne \$p) = F &&
 	rm file6 &&
+	test_path_is_missing .git/rebase-merge/author-script &&
+	test_path_is_missing .git/rebase-merge/patch &&
+	test_path_is_missing .git/MERGE_MSG &&
+	test_path_is_missing .git/rebase-merge/message &&
+	test_path_is_missing .git/rebase-merge/stopped-sha &&
 	git rebase --continue &&
 	test $(git cat-file commit HEAD | sed -ne \$p) = I
 '
