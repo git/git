@@ -533,24 +533,29 @@ static int pathspec_item_cmp(const void *a_, const void *b_)
 	return strcmp(a->match, b->match);
 }
 
-static void NORETURN unsupported_magic(const char *pattern,
-				       unsigned magic)
+void pathspec_magic_names(unsigned magic, struct strbuf *out)
 {
-	struct strbuf sb = STRBUF_INIT;
 	int i;
 	for (i = 0; i < ARRAY_SIZE(pathspec_magic); i++) {
 		const struct pathspec_magic *m = pathspec_magic + i;
 		if (!(magic & m->bit))
 			continue;
-		if (sb.len)
-			strbuf_addstr(&sb, ", ");
+		if (out->len)
+			strbuf_addstr(out, ", ");
 
 		if (m->mnemonic)
-			strbuf_addf(&sb, _("'%s' (mnemonic: '%c')"),
+			strbuf_addf(out, _("'%s' (mnemonic: '%c')"),
 				    m->name, m->mnemonic);
 		else
-			strbuf_addf(&sb, "'%s'", m->name);
+			strbuf_addf(out, "'%s'", m->name);
 	}
+}
+
+static void NORETURN unsupported_magic(const char *pattern,
+				       unsigned magic)
+{
+	struct strbuf sb = STRBUF_INIT;
+	pathspec_magic_names(magic, &sb);
 	/*
 	 * We may want to substitute "this command" with a command
 	 * name. E.g. when "git add -p" or "git add -i" dies when running
