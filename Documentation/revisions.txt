@@ -30,10 +30,11 @@ characters and to avoid word splitting.
   explicitly say 'heads/master' to tell Git which one you mean.
   When ambiguous, a '<refname>' is disambiguated by taking the
   first match in the following rules:
-
++
   . If '$GIT_DIR/<refname>' exists, that is what you mean (this is usually
-    useful only for `HEAD`, `FETCH_HEAD`, `ORIG_HEAD`, `MERGE_HEAD`
-    and `CHERRY_PICK_HEAD`);
+    useful only for `HEAD`, `FETCH_HEAD`, `ORIG_HEAD`, `MERGE_HEAD`,
+    `REBASE_HEAD`, `REVERT_HEAD`, `CHERRY_PICK_HEAD`, `BISECT_HEAD`
+    and `AUTO_MERGE`);
 
   . otherwise, 'refs/<refname>' if it exists;
 
@@ -44,19 +45,38 @@ characters and to avoid word splitting.
   . otherwise, 'refs/remotes/<refname>' if it exists;
 
   . otherwise, 'refs/remotes/<refname>/HEAD' if it exists.
+
 +
-`HEAD` names the commit on which you based the changes in the working tree.
-`FETCH_HEAD` records the branch which you fetched from a remote repository
-with your last `git fetch` invocation.
-`ORIG_HEAD` is created by commands that move your `HEAD` in a drastic
-way (`git am`, `git merge`, `git rebase`, `git reset`),
-to record the position of the `HEAD` before their operation, so that
-you can easily change the tip of the branch back to the state before you ran
-them.
-`MERGE_HEAD` records the commit(s) which you are merging into your branch
-when you run `git merge`.
-`CHERRY_PICK_HEAD` records the commit which you are cherry-picking
-when you run `git cherry-pick`.
+  `HEAD`:::
+    names the commit on which you based the changes in the working tree.
+  `FETCH_HEAD`:::
+    records the branch which you fetched from a remote repository with
+    your last `git fetch` invocation.
+  `ORIG_HEAD`:::
+    is created by commands that move your `HEAD` in a drastic way (`git
+    am`, `git merge`, `git rebase`, `git reset`), to record the position
+    of the `HEAD` before their operation, so that you can easily change
+    the tip of the branch back to the state before you ran them.
+  `MERGE_HEAD`:::
+    records the commit(s) which you are merging into your branch when you
+    run `git merge`.
+  `REBASE_HEAD`:::
+    during a rebase, records the commit at which the operation is
+    currently stopped, either because of conflicts or an `edit` command in
+    an interactive rebase.
+  `REVERT_HEAD`:::
+    records the commit which you are reverting when you run `git revert`.
+  `CHERRY_PICK_HEAD`:::
+    records the commit which you are cherry-picking when you run `git
+    cherry-pick`.
+  `BISECT_HEAD`:::
+    records the current commit to be tested when you run `git bisect
+    --no-checkout`.
+  `AUTO_MERGE`:::
+    records a tree object corresponding to the state the
+    'ort' merge strategy wrote to the working tree when a merge operation
+    resulted in conflicts.
+
 +
 Note that any of the 'refs/*' cases above may come either from
 the `$GIT_DIR/refs` directory or from the `$GIT_DIR/packed-refs` file.
