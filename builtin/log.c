@@ -866,7 +866,7 @@ static void log_setup_revisions_tweak(struct rev_info *rev,
 				      struct setup_revision_opt *opt)
 {
 	if (rev->diffopt.flags.default_follow_renames &&
-	    rev->prune_data.nr == 1)
+	    diff_check_follow_pathspec(&rev->prune_data, 0))
 		rev->diffopt.flags.follow_renames = 1;
 
 	if (rev->first_parent_only)
