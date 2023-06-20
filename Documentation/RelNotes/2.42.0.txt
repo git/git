@@ -12,6 +12,9 @@ Performance, Internal Implementation, Development Support etc.
  * "git diff-tree" has been taught to take advantage of the
    sparse-index feature.
 
+ * Clang's sanitizer implementation seems to work better than GCC's.
+   (merge d88d727143 jk/ci-use-clang-for-sanitizer-jobs later to maint).
+
 
 Fixes since v2.41
 -----------------
@@ -34,6 +37,38 @@ Fixes since v2.41
    in the context of the latter.
    (merge 4d28c4f75f zh/ls-files-format-atoms later to maint).
 
+ * Document more pseudo-refs and teach the command line completion
+   machinery to complete AUTO_MERGE.
+   (merge 982ff3a649 pb/complete-and-document-auto-merge-and-friends later to maint).
+
+ * "git submodule" code trusted the data coming from the config (and
+   the in-tree .gitmodules file) too much without validating, leading
+   to NULL dereference if the user mucks with a repository (e.g.
+   submodule.<name>.url is removed).  This has been corrected.
+   (merge fbc806acd1 tb/submodule-null-deref-fix later to maint).
+
+ * The value of config.worktree is per-repository, but has been kept
+   in a singleton global variable per process. This has been OK as
+   most Git operations interacted with a single repository at a time,
+   but not right for operations like recursive "grep" that want to
+   access multiple repositories from a single process without forking.
+
+   The global variable has been eliminated and made into a member in
+   the per-repository data structure.
+   (merge 3867f6d650 vd/worktree-config-is-per-repository later to maint).
+
+ * "git [-c log.follow=true] log [--follow] ':(glob)f**'" used to barf.
+   (merge 8260bc5902 jk/log-follow-with-non-literal-pathspec later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 51f9d2e563 sa/doc-ls-remote later to maint).
    (merge c6d26a9dda jk/format-patch-message-id-unleak later to maint).
+   (merge f7e063f326 ps/fetch-cleanups later to maint).
+   (merge e4cf013468 tl/quote-problematic-arg-for-clarity later to maint).
+   (merge 20025fdfc7 tz/test-ssh-verifytime-fix later to maint).
+   (merge e48a21df65 tz/test-fix-pthreads-prereq later to maint).
+   (merge 68b51172e3 mh/commit-reach-get-reachable-plug-leak later to maint).
+   (merge aeee1408ce kh/use-default-notes-doc later to maint).
+   (merge 3b8724bce6 jc/test-modernization later to maint).
+   (merge 447a3b7331 jc/test-modernization-2 later to maint).
+   (merge d57fa7fc73 la/doc-interpret-trailers later to maint).
