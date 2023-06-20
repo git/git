@@ -1014,7 +1014,7 @@ test_expect_success 'validate object ID for a known tree' '
 '
 
 test_expect_success 'showing tree with git ls-tree' '
-    git ls-tree $tree >current
+	git ls-tree $tree >current
 '
 
 test_expect_success 'git ls-tree output for a known tree' '

@@ -208,7 +208,7 @@ test_expect_success 'unpack with OFS_DELTA' '
 '
 
 test_expect_success 'unpack with OFS_DELTA (core.fsyncmethod=batch)' '
-       check_unpack test-3-${packname_3} obj-list "$BATCH_CONFIGURATION"
+	check_unpack test-3-${packname_3} obj-list "$BATCH_CONFIGURATION"
 '
 
 test_expect_success 'compare delta flavors' '
@@ -263,97 +263,97 @@ test_expect_success 'survive missing objects/pack directory' '
 	)
 '
 
-test_expect_success \
-    'verify pack' \
-    'git verify-pack	test-1-${packname_1}.idx \
-			test-2-${packname_2}.idx \
-			test-3-${packname_3}.idx'
+test_expect_success 'verify pack' '
+	git verify-pack test-1-${packname_1}.idx \
+		test-2-${packname_2}.idx \
+		test-3-${packname_3}.idx
+'
 
-test_expect_success \
-    'verify pack -v' \
-    'git verify-pack -v	test-1-${packname_1}.idx \
-			test-2-${packname_2}.idx \
-			test-3-${packname_3}.idx'
+test_expect_success 'verify pack -v' '
+	git verify-pack -v test-1-${packname_1}.idx \
+		test-2-${packname_2}.idx \
+		test-3-${packname_3}.idx
+'
 
-test_expect_success \
-    'verify-pack catches mismatched .idx and .pack files' \
-    'cat test-1-${packname_1}.idx >test-3.idx &&
-     cat test-2-${packname_2}.pack >test-3.pack &&
-     if git verify-pack test-3.idx
-     then false
-     else :;
-     fi'
+test_expect_success 'verify-pack catches mismatched .idx and .pack files' '
+	cat test-1-${packname_1}.idx >test-3.idx &&
+	cat test-2-${packname_2}.pack >test-3.pack &&
+	if git verify-pack test-3.idx
+	then false
+	else :;
+	fi
+'
 
-test_expect_success \
-    'verify-pack catches a corrupted pack signature' \
-    'cat test-1-${packname_1}.pack >test-3.pack &&
-     echo | dd of=test-3.pack count=1 bs=1 conv=notrunc seek=2 &&
-     if git verify-pack test-3.idx
-     then false
-     else :;
-     fi'
+test_expect_success 'verify-pack catches a corrupted pack signature' '
+	cat test-1-${packname_1}.pack >test-3.pack &&
+	echo | dd of=test-3.pack count=1 bs=1 conv=notrunc seek=2 &&
+	if git verify-pack test-3.idx
+	then false
+	else :;
+	fi
+'
 
-test_expect_success \
-    'verify-pack catches a corrupted pack version' \
-    'cat test-1-${packname_1}.pack >test-3.pack &&
-     echo | dd of=test-3.pack count=1 bs=1 conv=notrunc seek=7 &&
-     if git verify-pack test-3.idx
-     then false
-     else :;
-     fi'
+test_expect_success 'verify-pack catches a corrupted pack version' '
+	cat test-1-${packname_1}.pack >test-3.pack &&
+	echo | dd of=test-3.pack count=1 bs=1 conv=notrunc seek=7 &&
+	if git verify-pack test-3.idx
+	then false
+	else :;
+	fi
+'
 
-test_expect_success \
-    'verify-pack catches a corrupted type/size of the 1st packed object data' \
-    'cat test-1-${packname_1}.pack >test-3.pack &&
-     echo | dd of=test-3.pack count=1 bs=1 conv=notrunc seek=12 &&
-     if git verify-pack test-3.idx
-     then false
-     else :;
-     fi'
+test_expect_success 'verify-pack catches a corrupted type/size of the 1st packed object data' '
+	cat test-1-${packname_1}.pack >test-3.pack &&
+	echo | dd of=test-3.pack count=1 bs=1 conv=notrunc seek=12 &&
+	if git verify-pack test-3.idx
+	then false
+	else :;
+	fi
+'
 
-test_expect_success \
-    'verify-pack catches a corrupted sum of the index file itself' \
-    'l=$(wc -c <test-3.idx) &&
-     l=$(expr $l - 20) &&
-     cat test-1-${packname_1}.pack >test-3.pack &&
-     printf "%20s" "" | dd of=test-3.idx count=20 bs=1 conv=notrunc seek=$l &&
-     if git verify-pack test-3.pack
-     then false
-     else :;
-     fi'
+test_expect_success 'verify-pack catches a corrupted sum of the index file itself' '
+	l=$(wc -c <test-3.idx) &&
+	l=$(expr $l - 20) &&
+	cat test-1-${packname_1}.pack >test-3.pack &&
+	printf "%20s" "" | dd of=test-3.idx count=20 bs=1 conv=notrunc seek=$l &&
+	if git verify-pack test-3.pack
+	then false
+	else :;
+	fi
+'
 
-test_expect_success \
-    'build pack index for an existing pack' \
-    'cat test-1-${packname_1}.pack >test-3.pack &&
-     git index-pack -o tmp.idx test-3.pack &&
-     cmp tmp.idx test-1-${packname_1}.idx &&
+test_expect_success 'build pack index for an existing pack' '
+	cat test-1-${packname_1}.pack >test-3.pack &&
+	git index-pack -o tmp.idx test-3.pack &&
+	cmp tmp.idx test-1-${packname_1}.idx &&
 
-     git index-pack --promisor=message test-3.pack &&
-     cmp test-3.idx test-1-${packname_1}.idx &&
-     echo message >expect &&
-     test_cmp expect test-3.promisor &&
+	git index-pack --promisor=message test-3.pack &&
+	cmp test-3.idx test-1-${packname_1}.idx &&
+	echo message >expect &&
+	test_cmp expect test-3.promisor &&
 
-     cat test-2-${packname_2}.pack >test-3.pack &&
-     git index-pack -o tmp.idx test-2-${packname_2}.pack &&
-     cmp tmp.idx test-2-${packname_2}.idx &&
+	cat test-2-${packname_2}.pack >test-3.pack &&
+	git index-pack -o tmp.idx test-2-${packname_2}.pack &&
+	cmp tmp.idx test-2-${packname_2}.idx &&
 
-     git index-pack test-3.pack &&
-     cmp test-3.idx test-2-${packname_2}.idx &&
+	git index-pack test-3.pack &&
+	cmp test-3.idx test-2-${packname_2}.idx &&
 
-     cat test-3-${packname_3}.pack >test-3.pack &&
-     git index-pack -o tmp.idx test-3-${packname_3}.pack &&
-     cmp tmp.idx test-3-${packname_3}.idx &&
+	cat test-3-${packname_3}.pack >test-3.pack &&
+	git index-pack -o tmp.idx test-3-${packname_3}.pack &&
+	cmp tmp.idx test-3-${packname_3}.idx &&
 
-     git index-pack test-3.pack &&
-     cmp test-3.idx test-3-${packname_3}.idx &&
+	git index-pack test-3.pack &&
+	cmp test-3.idx test-3-${packname_3}.idx &&
 
-     cat test-1-${packname_1}.pack >test-4.pack &&
-     rm -f test-4.keep &&
-     git index-pack --keep=why test-4.pack &&
-     cmp test-1-${packname_1}.idx test-4.idx &&
-     test -f test-4.keep &&
+	cat test-1-${packname_1}.pack >test-4.pack &&
+	rm -f test-4.keep &&
+	git index-pack --keep=why test-4.pack &&
+	cmp test-1-${packname_1}.idx test-4.idx &&
+	test -f test-4.keep &&
 
-     :'
+	:
+'
 
 test_expect_success 'unpacking with --strict' '
 
