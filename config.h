@@ -3,6 +3,7 @@
 
 #include "hashmap.h"
 #include "string-list.h"
+#include "repository.h"
 
 
 /**
@@ -49,8 +50,6 @@ const char *config_scope_name(enum config_scope scope);
 struct git_config_source {
 	unsigned int use_stdin:1;
 	const char *file;
-	/* The repository if blob is not NULL; leave blank for the_repository */
-	struct repository *repo;
 	const char *blob;
 	enum config_scope scope;
 };
@@ -196,6 +195,7 @@ void git_config(config_fn_t fn, void *);
  */
 int config_with_options(config_fn_t fn, void *,
 			struct git_config_source *config_source,
+			struct repository *repo,
 			const struct config_options *opts);
 
 /**
