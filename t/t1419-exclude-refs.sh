@@ -119,4 +119,13 @@ test_expect_success 'meta-characters are discarded' '
 	assert_no_jumps perf
 '
 
+test_expect_success 'complex hidden ref rules are discarded' '
+	for_each_ref__exclude refs/heads refs/heads/foo "!refs/heads/foo/1" \
+		>actual 2>perf &&
+	for_each_ref >expect &&
+
+	test_cmp expect actual &&
+	assert_no_jumps
+'
+
 test_done
