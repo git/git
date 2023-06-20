@@ -2171,6 +2171,15 @@ static int filter_pattern_match(struct ref_filter *filter, const char *refname)
 			     filter->ignore_case);
 }
 
+static int filter_exclude_match(struct ref_filter *filter, const char *refname)
+{
+	if (!filter->exclude.nr)
+		return 0;
+	if (filter->match_as_path)
+		return match_name_as_path(filter, filter->exclude.v, refname);
+	return match_pattern(filter->exclude.v, refname, filter->ignore_case);
+}
+
 /*
  * This is the same as for_each_fullref_in(), but it tries to iterate
  * only over the patterns we'll care about. Note that it _doesn't_ do a full
@@ -2336,6 +2345,9 @@ static int ref_filter_handler(const char *refname, const struct object_id *oid, 
 		return 0;
 
 	if (!filter_pattern_match(filter, refname))
+		return 0;
+
+	if (filter_exclude_match(filter, refname))
 		return 0;
 
 	if (filter->points_at.nr && !match_points_at(&filter->points_at, oid, refname))
@@ -2877,6 +2889,7 @@ void ref_filter_init(struct ref_filter *filter)
 
 void ref_filter_clear(struct ref_filter *filter)
 {
+	strvec_clear(&filter->exclude);
 	oid_array_clear(&filter->points_at);
 	free_commit_list(filter->with_commit);
 	free_commit_list(filter->no_commit);
