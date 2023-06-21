@@ -1,16 +1,14 @@
 /*
  * Copyright (C) 2008 Linus Torvalds
  */
-#include "git-compat-util.h"
+#include "cache.h"
 #include "pathspec.h"
 #include "dir.h"
 #include "environment.h"
 #include "fsmonitor.h"
 #include "gettext.h"
 #include "config.h"
-#include "preload-index.h"
 #include "progress.h"
-#include "read-cache.h"
 #include "thread-utils.h"
 #include "repository.h"
 #include "symlinks.h"

@@ -2,8 +2,9 @@
  * Another stupid program, this one parsing the headers of an
  * email to figure out authorship and subject
  */
-#include "builtin.h"
+#include "cache.h"
 #include "abspath.h"
+#include "builtin.h"
 #include "environment.h"
 #include "gettext.h"
 #include "utf8.h"

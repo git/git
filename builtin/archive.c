@@ -2,6 +2,7 @@
  * Copyright (c) 2006 Franck Bui-Huu
  * Copyright (c) 2006 Rene Scharfe
  */
+#include "cache.h"
 #include "builtin.h"
 #include "archive.h"
 #include "gettext.h"

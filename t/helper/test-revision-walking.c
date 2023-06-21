@@ -11,7 +11,6 @@
 #include "test-tool.h"
 #include "commit.h"
 #include "diff.h"
-#include "repository.h"
 #include "revision.h"
 #include "setup.h"
 

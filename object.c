@@ -1,4 +1,4 @@
-#include "git-compat-util.h"
+#include "cache.h"
 #include "gettext.h"
 #include "hex.h"
 #include "object.h"
@@ -6,7 +6,6 @@
 #include "object-file.h"
 #include "object-store.h"
 #include "blob.h"
-#include "statinfo.h"
 #include "tree.h"
 #include "commit.h"
 #include "tag.h"

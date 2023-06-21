@@ -12,7 +12,6 @@
 #include "url.h"
 #include "string-list.h"
 #include "oid-array.h"
-#include "path.h"
 #include "transport.h"
 #include "trace2.h"
 #include "strbuf.h"

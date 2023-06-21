@@ -625,6 +625,8 @@ static inline int git_has_dir_sep(const char *path)
 
 #include "compat/bswap.h"
 
+#include "wildmatch.h"
+
 struct strbuf;
 
 /* General helper functions */

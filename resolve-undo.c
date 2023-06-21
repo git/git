@@ -1,9 +1,7 @@
-#include "git-compat-util.h"
+#include "cache.h"
 #include "dir.h"
 #include "hash.h"
-#include "read-cache.h"
 #include "resolve-undo.h"
-#include "sparse-index.h"
 #include "string-list.h"
 
 /* The only error case is to run out of memory in string-list */

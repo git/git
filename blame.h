@@ -2,7 +2,6 @@
 #define BLAME_H
 
 #include "commit.h"
-#include "oidset.h"
 #include "xdiff-interface.h"
 #include "revision.h"
 #include "prio-queue.h"

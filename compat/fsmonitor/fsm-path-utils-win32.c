@@ -1,8 +1,7 @@
-#include "git-compat-util.h"
-#include "fsmonitor-ll.h"
+#include "cache.h"
+#include "fsmonitor.h"
 #include "fsmonitor-path-utils.h"
 #include "gettext.h"
-#include "trace.h"
 
 /*
  * Check remote working directory protocol.

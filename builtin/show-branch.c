@@ -1,4 +1,4 @@
-#include "builtin.h"
+#include "cache.h"
 #include "config.h"
 #include "environment.h"
 #include "gettext.h"
@@ -6,6 +6,7 @@
 #include "hex.h"
 #include "pretty.h"
 #include "refs.h"
+#include "builtin.h"
 #include "color.h"
 #include "strvec.h"
 #include "object-name.h"
@@ -14,7 +15,6 @@
 #include "dir.h"
 #include "commit-slab.h"
 #include "date.h"
-#include "wildmatch.h"
 
 static const char* show_branch_usage[] = {
     N_("git show-branch [-a | --all] [-r | --remotes] [--topo-order | --date-order]\n"

@@ -10,7 +10,7 @@
 #include "attr.h"
 #include "xdiff-interface.h"
 #include "run-command.h"
-#include "merge-ll.h"
+#include "ll-merge.h"
 #include "quote.h"
 #include "strbuf.h"
 #include "wrapper.h"

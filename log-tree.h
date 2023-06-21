@@ -1,7 +1,7 @@
 #ifndef LOG_TREE_H
 #define LOG_TREE_H
 
-struct rev_info;
+#include "revision.h"
 
 struct log_info {
 	struct commit *commit, *parent;

@@ -1,4 +1,4 @@
-#include "git-compat-util.h"
+#include "cache.h"
 #include "run-command.h"
 #include "environment.h"
 #include "exec-cmd.h"

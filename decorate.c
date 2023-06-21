@@ -3,6 +3,7 @@
  * data.
  */
 #include "git-compat-util.h"
+#include "hashmap.h"
 #include "object.h"
 #include "decorate.h"
 

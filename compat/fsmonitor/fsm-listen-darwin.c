@@ -24,13 +24,12 @@
 #endif
 
 #include "git-compat-util.h"
-#include "fsmonitor-ll.h"
+#include "fsmonitor.h"
 #include "fsm-listen.h"
 #include "fsmonitor--daemon.h"
 #include "fsmonitor-path-utils.h"
 #include "gettext.h"
 #include "string-list.h"
-#include "trace.h"
 
 struct fsm_listen_data
 {

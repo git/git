@@ -5,12 +5,11 @@
 
 #define PRECOMPOSE_UNICODE_C
 
-#include "git-compat-util.h"
+#include "cache.h"
 #include "config.h"
 #include "environment.h"
 #include "gettext.h"
 #include "path.h"
-#include "strbuf.h"
 #include "utf8.h"
 #include "precompose_utf8.h"
 

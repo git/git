@@ -4,7 +4,6 @@
 #include "git-compat-util.h"
 #include "diff.h"
 #include "diffcore.h"
-#include "hash.h"
 #include "tree.h"
 #include "tree-walk.h"
 

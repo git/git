@@ -10,13 +10,12 @@
 #include "gettext.h"
 #include "hex.h"
 #include "object-file.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "blob.h"
 #include "quote.h"
 #include "parse-options.h"
 #include "exec-cmd.h"
 #include "setup.h"
-#include "strbuf.h"
 #include "write-or-die.h"
 
 /*

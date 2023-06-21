@@ -9,7 +9,7 @@
 #include "hex.h"
 #include "streaming.h"
 #include "utf8.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "userdiff.h"
 #include "write-or-die.h"
 #include "xdiff-interface.h"

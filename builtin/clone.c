@@ -23,7 +23,7 @@
 #include "refs.h"
 #include "refspec.h"
 #include "object-file.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "tree.h"
 #include "tree-walk.h"
 #include "unpack-trees.h"
@@ -39,7 +39,6 @@
 #include "setup.h"
 #include "connected.h"
 #include "packfile.h"
-#include "path.h"
 #include "pkt-line.h"
 #include "list-objects-filter-options.h"
 #include "hook.h"
@@ -931,7 +930,6 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	int submodule_progress;
 	int filter_submodules = 0;
 	int hash_algo;
-	const int do_not_override_repo_unix_permissions = -1;
 
 	struct transport_ls_refs_options transport_ls_refs_options =
 		TRANSPORT_LS_REFS_OPTIONS_INIT;
@@ -1099,7 +1097,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	}
 
 	init_db(git_dir, real_git_dir, option_template, GIT_HASH_UNKNOWN, NULL,
-		do_not_override_repo_unix_permissions, INIT_DB_QUIET);
+		INIT_DB_QUIET);
 
 	if (real_git_dir) {
 		free((char *)git_dir);

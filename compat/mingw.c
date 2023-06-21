@@ -6,6 +6,7 @@
 #include <wchar.h>
 #include "../strbuf.h"
 #include "../run-command.h"
+#include "../cache.h"
 #include "../abspath.h"
 #include "../alloc.h"
 #include "win32/lazyload.h"

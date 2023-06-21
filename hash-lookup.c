@@ -1,7 +1,6 @@
-#include "git-compat-util.h"
+#include "cache.h"
 #include "hash.h"
 #include "hash-lookup.h"
-#include "read-cache-ll.h"
 
 static uint32_t take2(const struct object_id *oid, size_t ofs)
 {

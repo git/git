@@ -1,8 +1,9 @@
 /*
  * Builtin help command
  */
-#include "builtin.h"
+#include "cache.h"
 #include "config.h"
+#include "builtin.h"
 #include "exec-cmd.h"
 #include "gettext.h"
 #include "pager.h"

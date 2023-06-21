@@ -11,7 +11,7 @@
 #include "hex.h"
 #include "repository.h"
 #include "packfile.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 
 #define BLKSIZE 512
 

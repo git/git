@@ -1,4 +1,4 @@
-#include "../../git-compat-util.h"
+#include "../../cache.h"
 #include "../../json-writer.h"
 #include "../../repository.h"
 #include "../../trace2.h"

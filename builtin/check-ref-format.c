@@ -2,8 +2,9 @@
  * GIT - The information manager from hell
  */
 
-#include "builtin.h"
+#include "cache.h"
 #include "refs.h"
+#include "builtin.h"
 #include "setup.h"
 #include "strbuf.h"
 

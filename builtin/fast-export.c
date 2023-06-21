@@ -4,13 +4,14 @@
  * Copyright (C) 2007 Johannes E. Schindelin
  */
 #include "builtin.h"
+#include "cache.h"
 #include "config.h"
 #include "gettext.h"
 #include "hex.h"
 #include "refs.h"
 #include "refspec.h"
 #include "object-file.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "commit.h"
 #include "object.h"
 #include "tag.h"

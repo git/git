@@ -6,7 +6,6 @@
 #include "gettext.h"
 #include "hex.h"
 #include "object-name.h"
-#include "path.h"
 #include "refs.h"
 #include "refspec.h"
 #include "remote.h"

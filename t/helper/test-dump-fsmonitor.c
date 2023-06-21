@@ -1,5 +1,5 @@
 #include "test-tool.h"
-#include "read-cache-ll.h"
+#include "cache.h"
 #include "repository.h"
 #include "setup.h"
 

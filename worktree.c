@@ -3,7 +3,6 @@
 #include "alloc.h"
 #include "environment.h"
 #include "gettext.h"
-#include "path.h"
 #include "repository.h"
 #include "refs.h"
 #include "setup.h"
