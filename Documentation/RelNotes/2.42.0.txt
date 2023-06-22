@@ -6,6 +6,9 @@ UI, Workflows & Features
  * "git pack-refs" learns "--include" and "--exclude" to tweak the ref
    hierarchy to be packed using pattern matching.
 
+ * 'git worktree add' learned how to create a worktree based on an
+   orphaned branch with `--orphan`.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -14,6 +17,11 @@ Performance, Internal Implementation, Development Support etc.
 
  * Clang's sanitizer implementation seems to work better than GCC's.
    (merge d88d727143 jk/ci-use-clang-for-sanitizer-jobs later to maint).
+
+ * The object traversal using reachability bitmap done by
+   "pack-object" has been tweaked to take advantage of the fact that
+   using "boundary" commits as representative of all the uninteresting
+   ones can save quite a lot of object enumeration.
 
 
 Fixes since v2.41
@@ -60,6 +68,24 @@ Fixes since v2.41
  * "git [-c log.follow=true] log [--follow] ':(glob)f**'" used to barf.
    (merge 8260bc5902 jk/log-follow-with-non-literal-pathspec later to maint).
 
+ * Introduce a mechanism to disable replace refs globally and per
+   repository.
+   (merge 9c7d1b057f ds/disable-replace-refs later to maint).
+
+ * "git cat-file --batch" and friends learned "-Z" that uses NUL
+   delimiter for both input and output.
+   (merge f79e18849b ps/cat-file-null-output later to maint).
+
+ * The reimplemented "git add -i" did not honor color.ui configuration.
+   (merge 6f74648cea ds/add-i-color-configuration-fix later to maint).
+
+ * Compilation fix for platforms without D_TYPE in struct dirent.
+   (merge 03bf92b9bf as/dtype-compilation-fix later to maint).
+
+ * Suggest to refrain from using hex literals that are non-portable
+   when writing printf(1) format strings.
+   (merge f0b68f0546 jt/doc-use-octal-with-printf later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 51f9d2e563 sa/doc-ls-remote later to maint).
    (merge c6d26a9dda jk/format-patch-message-id-unleak later to maint).
@@ -72,3 +98,5 @@ Fixes since v2.41
    (merge 3b8724bce6 jc/test-modernization later to maint).
    (merge 447a3b7331 jc/test-modernization-2 later to maint).
    (merge d57fa7fc73 la/doc-interpret-trailers later to maint).
+   (merge 548afb0d9a la/docs-typofixes later to maint).
+   (merge 3744ffcbcd rs/doc-ls-tree-hex-literal later to maint).
