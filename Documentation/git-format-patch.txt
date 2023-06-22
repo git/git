@@ -245,7 +245,7 @@ populated with placeholder text.
 	or "--reroll-count=4rev2" are allowed), but the downside of
 	using such a reroll-count is that the range-diff/interdiff
 	with the previous version does not state exactly which
-	version the new interation is compared against.
+	version the new iteration is compared against.
 
 --to=<email>::
 	Add a `To:` header to the email headers. This is in addition
