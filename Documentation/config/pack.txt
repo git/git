@@ -123,6 +123,23 @@ pack.useBitmaps::
 	true. You should not generally need to turn this off unless
 	you are debugging pack bitmaps.
 
+pack.useBitmapBoundaryTraversal::
+	When true, Git will use an experimental algorithm for computing
+	reachability queries with bitmaps. Instead of building up
+	complete bitmaps for all of the negated tips and then OR-ing
+	them together, consider negated tips with existing bitmaps as
+	additive (i.e. OR-ing them into the result if they exist,
+	ignoring them otherwise), and build up a bitmap at the boundary
+	instead.
++
+When using this algorithm, Git may include too many objects as a result
+of not opening up trees belonging to certain UNINTERESTING commits. This
+inexactness matches the non-bitmap traversal algorithm.
++
+In many cases, this can provide a speed-up over the exact algorithm,
+particularly when there is poor bitmap coverage of the negated side of
+the query.
+
 pack.useSparse::
 	When true, git will default to using the '--sparse' option in
 	'git pack-objects' when the '--revs' option is present. This
