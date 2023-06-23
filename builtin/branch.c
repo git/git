@@ -832,6 +832,8 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	if (list)
 		setup_auto_pager("branch", 1);
 
+	UNLEAK(sorting_options);
+
 	if (delete) {
 		if (!argc)
 			die(_("branch name required"));

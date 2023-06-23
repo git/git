@@ -3841,6 +3841,7 @@ static int git_config_copy_or_rename_section_in_file(const char *config_filename
 						output[0] = '\t';
 					}
 				} else {
+					strbuf_release(&copystr);
 					copystr = store_create_section(new_name, &store);
 				}
 			}
@@ -3887,6 +3888,7 @@ out_no_rollback:
 	free(filename_buf);
 	config_store_data_clear(&store);
 	strbuf_release(&buf);
+	strbuf_release(&copystr);
 	return ret;
 }
 

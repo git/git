@@ -37,7 +37,7 @@ static int find_tracked_branch(struct remote *remote, void *priv)
 	if (!remote_find_tracking(remote, &tracking->spec)) {
 		switch (++tracking->matches) {
 		case 1:
-			string_list_append(tracking->srcs, tracking->spec.src);
+			string_list_append_nodup(tracking->srcs, tracking->spec.src);
 			tracking->remote = remote->name;
 			break;
 		case 2:
@@ -233,7 +233,7 @@ static int inherit_tracking(struct tracking *tracking, const char *orig_ref)
 		return -1;
 	}
 
-	tracking->remote = xstrdup(branch->remote_name);
+	tracking->remote = branch->remote_name;
 	for (i = 0; i < branch->merge_nr; i++)
 		string_list_append(tracking->srcs, branch->merge_name[i]);
 	return 0;
@@ -333,7 +333,7 @@ static void setup_tracking(const char *new_ref, const char *orig_ref,
 		if (!skip_prefix(tracking.srcs->items[0].string,
 				 "refs/heads/", &tracked_branch) ||
 		    strcmp(tracked_branch, new_ref))
-			return;
+			goto cleanup;
 	}
 
 	if (tracking.srcs->nr < 1)
@@ -480,9 +480,12 @@ static int check_tracking_branch(struct remote *remote, void *cb_data)
 {
 	char *tracking_branch = cb_data;
 	struct refspec_item query;
+	int res;
 	memset(&query, 0, sizeof(struct refspec_item));
 	query.dst = tracking_branch;
-	return !remote_find_tracking(remote, &query);
+	res = !remote_find_tracking(remote, &query);
+	free(query.src);
+	return res;
 }
 
 static int validate_remote_tracking_branch(char *ref)
@@ -638,9 +641,10 @@ void dwim_and_setup_tracking(struct repository *r, const char *new_ref,
 			     const char *orig_ref, enum branch_track track,
 			     int quiet)
 {
-	char *real_orig_ref;
+	char *real_orig_ref = NULL;
 	dwim_branch_start(r, orig_ref, track, &real_orig_ref, NULL);
 	setup_tracking(new_ref, real_orig_ref, track, quiet);
+	free(real_orig_ref);
 }
 
 /**
