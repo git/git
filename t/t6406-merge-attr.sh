@@ -168,7 +168,7 @@ test_expect_success 'custom merge backend' '
 	rm -f $o $a $b
 '
 
-test_expect_success 'custom merge driver that is killed with a signal' '
+test_expect_success !WINDOWS 'custom merge driver that is killed with a signal' '
 	test_when_finished "rm -f output please-abort" &&
 
 	git reset --hard anchor &&
