@@ -387,9 +387,11 @@ static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
 	}
 
 	for (i = 0; i < bitmap_git->midx->num_packs; i++) {
-		if (prepare_midx_pack(the_repository, bitmap_git->midx, i))
-			die(_("could not open pack %s"),
-			    bitmap_git->midx->pack_names[i]);
+		if (prepare_midx_pack(the_repository, bitmap_git->midx, i)) {
+			warning(_("could not open pack %s"),
+				bitmap_git->midx->pack_names[i]);
+			goto cleanup;
+		}
 	}
 
 	preferred = bitmap_git->midx->packs[midx_preferred_pack(bitmap_git)];
