@@ -1,13 +1,13 @@
 #include "builtin.h"
 #include "abspath.h"
-#include "cache.h"
 #include "config.h"
 #include "environment.h"
 #include "gettext.h"
 #include "parse-options.h"
 #include "midx.h"
+#include "strbuf.h"
 #include "trace2.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 
 #define BUILTIN_MIDX_WRITE_USAGE \
 	N_("git multi-pack-index [<options>] write [--preferred-pack=<pack>]" \

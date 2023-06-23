@@ -4,17 +4,17 @@
  * Copyright (c) 2006 Junio C Hamano
  */
 
-#include "cache.h"
+#include "builtin.h"
 #include "config.h"
 #include "dir.h"
 #include "environment.h"
 #include "gettext.h"
+#include "path.h"
 #include "repository.h"
-#include "builtin.h"
 #include "parse-options.h"
 #include "quote.h"
 #include "packfile.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 
 static unsigned long garbage;
 static off_t size_garbage;

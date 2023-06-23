@@ -1,6 +1,7 @@
 #ifndef REMOTE_H
 #define REMOTE_H
 
+#include "hash-ll.h"
 #include "hashmap.h"
 #include "refspec.h"
 

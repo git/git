@@ -8,6 +8,7 @@
 #include "gettext.h"
 #include "hex.h"
 #include "object-name.h"
+#include "repository.h"
 #include "revision.h"
 #include "remote.h"
 #include "string-list.h"

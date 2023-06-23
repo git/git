@@ -37,4 +37,6 @@ struct pattern_list;
  */
 void expand_index(struct index_state *istate, struct pattern_list *pl);
 
+void ensure_full_index(struct index_state *istate);
+
 #endif

@@ -24,6 +24,7 @@
 #include "object-file.h"
 #include "object-name.h"
 #include "parse-options.h"
+#include "path.h"
 #include "commit.h"
 #include "diff.h"
 #include "wt-status.h"

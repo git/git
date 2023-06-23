@@ -1,8 +1,6 @@
 #ifndef HASHMAP_H
 #define HASHMAP_H
 
-#include "hash-ll.h"
-
 /*
  * Generic implementation of hash-based key-value mappings.
  *
@@ -119,25 +117,6 @@ unsigned int strihash(const char *buf);
 unsigned int memhash(const void *buf, size_t len);
 unsigned int memihash(const void *buf, size_t len);
 unsigned int memihash_cont(unsigned int hash_seed, const void *buf, size_t len);
-
-/*
- * Converts a cryptographic hash (e.g. SHA-1) into an int-sized hash code
- * for use in hash tables. Cryptographic hashes are supposed to have
- * uniform distribution, so in contrast to `memhash()`, this just copies
- * the first `sizeof(int)` bytes without shuffling any bits. Note that
- * the results will be different on big-endian and little-endian
- * platforms, so they should not be stored or transferred over the net.
- */
-static inline unsigned int oidhash(const struct object_id *oid)
-{
-	/*
-	 * Equivalent to 'return *(unsigned int *)oid->hash;', but safe on
-	 * platforms that don't support unaligned reads.
-	 */
-	unsigned int hash;
-	memcpy(&hash, oid->hash, sizeof(hash));
-	return hash;
-}
 
 /*
  * struct hashmap_entry is an opaque structure representing an entry in the

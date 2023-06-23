@@ -3,17 +3,17 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
-#include "cache.h"
+#include "builtin.h"
 #include "config.h"
 #include "gettext.h"
 #include "hex.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "blob.h"
 #include "tree.h"
 #include "commit.h"
+#include "path.h"
 #include "quote.h"
-#include "builtin.h"
 #include "parse-options.h"
 #include "pathspec.h"
 
