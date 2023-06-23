@@ -1422,14 +1422,6 @@ int discover_git_directory(struct strbuf *commondir,
 		return -1;
 	}
 
-	the_repository->repository_format_worktree_config =
-		candidate.worktree_config;
-
-	/* take ownership of candidate.partial_clone */
-	the_repository->repository_format_partial_clone =
-		candidate.partial_clone;
-	candidate.partial_clone = NULL;
-
 	clear_repository_format(&candidate);
 	return 0;
 }
