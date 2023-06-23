@@ -257,8 +257,8 @@ test_expect_success 'partial clone with transfer.fsckobjects=1 works with submod
 	test_commit -C submodule mycommit &&
 
 	test_create_repo src_with_sub &&
-	test_config -C src_with_sub uploadpack.allowfilter 1 &&
-	test_config -C src_with_sub uploadpack.allowanysha1inwant 1 &&
+	git -C src_with_sub config uploadpack.allowfilter 1 &&
+	git -C src_with_sub config uploadpack.allowanysha1inwant 1 &&
 
 	test_config_global protocol.file.allow always &&
 
@@ -267,6 +267,12 @@ test_expect_success 'partial clone with transfer.fsckobjects=1 works with submod
 
 	git -c transfer.fsckobjects=1 \
 		clone --filter="blob:none" "file://$(pwd)/src_with_sub" dst &&
+	test_when_finished rm -rf dst
+'
+
+test_expect_success 'lazily fetched .gitmodules works' '
+	git clone --filter="blob:none" --no-checkout "file://$(pwd)/src_with_sub" dst &&
+	git -C dst fetch &&
 	test_when_finished rm -rf dst
 '
 
