@@ -18799,7 +18799,7 @@ msgid "could not lock HEAD"
 msgstr "не удалось заблокировать HEAD"
 
 msgid "no cherry-pick or revert in progress"
-msgstr "копирование или обращение изменений коммита уже выполняются"
+msgstr "копирование или обращение изменений коммита не выполняются"
 
 msgid "cannot resolve HEAD"
 msgstr "не удалось определить HEAD"
