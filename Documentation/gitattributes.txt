@@ -1132,7 +1132,10 @@ size (see below).
 The merge driver is expected to leave the result of the merge in
 the file named with `%A` by overwriting it, and exit with zero
 status if it managed to merge them cleanly, or non-zero if there
-were conflicts.
+were conflicts.  When the driver crashes (e.g. killed by SEGV),
+it is expected to exit with non-zero status that are higher than
+128, and in such a case, the merge results in a failure (which is
+different from producing a conflict).
 
 The `merge.*.recursive` variable specifies what other merge
 driver to use when the merge driver is called for an internal
