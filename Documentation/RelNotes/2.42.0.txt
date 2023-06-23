@@ -9,6 +9,10 @@ UI, Workflows & Features
  * 'git worktree add' learned how to create a worktree based on an
    orphaned branch with `--orphan`.
 
+ * "git pack-objects" learned to invoke a new hook program that
+   enumerates extra objects to be used as anchoring points to keep
+   otherwise unreachable objects in cruft packs.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -22,6 +26,10 @@ Performance, Internal Implementation, Development Support etc.
    "pack-object" has been tweaked to take advantage of the fact that
    using "boundary" commits as representative of all the uninteresting
    ones can save quite a lot of object enumeration.
+
+ * discover_git_directory() no longer touches the_repository.
+
+ * "git worktree" learned to work better with sparse index feature.
 
 
 Fixes since v2.41
@@ -86,6 +94,19 @@ Fixes since v2.41
    when writing printf(1) format strings.
    (merge f0b68f0546 jt/doc-use-octal-with-printf later to maint).
 
+ * Simplify error message when run-command fails to start a command.
+   (merge 6d224ac286 rs/run-command-exec-error-on-noent later to maint).
+
+ * Gracefully deal with a stale MIDX file that lists a packfile that
+   no longer exists.
+   (merge 06f3867865 tb/open-midx-bitmap-fallback later to maint).
+
+ * Even when diff.ignoreSubmodules tells us to ignore submodule
+   changes, "git commit" with an index that already records changes to
+   submodules should include the submodule changes in the resulting
+   commit, but it did not.
+   (merge 5768478edc js/defeat-ignore-submodules-config-with-explicit-addition later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 51f9d2e563 sa/doc-ls-remote later to maint).
    (merge c6d26a9dda jk/format-patch-message-id-unleak later to maint).
@@ -100,3 +121,6 @@ Fixes since v2.41
    (merge d57fa7fc73 la/doc-interpret-trailers later to maint).
    (merge 548afb0d9a la/docs-typofixes later to maint).
    (merge 3744ffcbcd rs/doc-ls-tree-hex-literal later to maint).
+   (merge 6c26da8404 mh/credential-erase-improvements later to maint).
+   (merge 78e56cff69 tz/lib-gpg-prereq-fix later to maint).
+   (merge 80d32e84b5 rj/leakfixes later to maint).
