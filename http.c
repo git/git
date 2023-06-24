@@ -746,7 +746,8 @@ static void redact_sensitive_info_header(struct strbuf *header)
 	 *   h2h3 [<header-name>: <header-val>]
 	 */
 	if (trace_curl_redact &&
-	    skip_iprefix(header->buf, "h2h3 [", &sensitive_header)) {
+	    (skip_iprefix(header->buf, "h2h3 [", &sensitive_header) ||
+	     skip_iprefix(header->buf, "h2 [", &sensitive_header))) {
 		if (redact_sensitive_header(header, sensitive_header - header->buf)) {
 			/* redaction ate our closing bracket */
 			strbuf_addch(header, ']');
