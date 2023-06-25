@@ -944,6 +944,8 @@ struct commit_list *get_reachable_subset(struct commit **from, int nr_from,
 		}
 	}
 
+	clear_prio_queue(&queue);
+
 	clear_commit_marks_many(nr_to, to, PARENT1);
 	clear_commit_marks_many(nr_from, from, PARENT2);
 

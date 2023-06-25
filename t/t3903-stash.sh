@@ -1211,19 +1211,19 @@ test_expect_success 'stash with file including $IFS character' '
 '
 
 test_expect_success 'stash with pathspec matching multiple paths' '
-       echo original >file &&
-       echo original >other-file &&
-       git commit -m "two" file other-file &&
-       echo modified >file &&
-       echo modified >other-file &&
-       git stash push -- "*file" &&
-       echo original >expect &&
-       test_cmp expect file &&
-       test_cmp expect other-file &&
-       git stash pop &&
-       echo modified >expect &&
-       test_cmp expect file &&
-       test_cmp expect other-file
+	echo original >file &&
+	echo original >other-file &&
+	git commit -m "two" file other-file &&
+	echo modified >file &&
+	echo modified >other-file &&
+	git stash push -- "*file" &&
+	echo original >expect &&
+	test_cmp expect file &&
+	test_cmp expect other-file &&
+	git stash pop &&
+	echo modified >expect &&
+	test_cmp expect file &&
+	test_cmp expect other-file
 '
 
 test_expect_success 'stash push -p with pathspec shows no changes only once' '

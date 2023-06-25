@@ -41,51 +41,51 @@ test_expect_success 'init and fetch a moved directory' '
 	'
 
 test_expect_success 'init and fetch from one svn-remote' '
-        git config svn-remote.svn.url "$svnrepo" &&
-        git config --add svn-remote.svn.fetch \
-          trunk:refs/remotes/svn/trunk &&
-        git config --add svn-remote.svn.fetch \
-          thunk:refs/remotes/svn/thunk &&
-        git svn fetch -i svn/thunk &&
+	git config svn-remote.svn.url "$svnrepo" &&
+	git config --add svn-remote.svn.fetch \
+		trunk:refs/remotes/svn/trunk &&
+	git config --add svn-remote.svn.fetch \
+		thunk:refs/remotes/svn/thunk &&
+	git svn fetch -i svn/thunk &&
 	test "$(git rev-parse --verify refs/remotes/svn/trunk)" \
-	   = "$(git rev-parse --verify refs/remotes/svn/thunk~1)" &&
+		= "$(git rev-parse --verify refs/remotes/svn/thunk~1)" &&
 	git cat-file blob refs/remotes/svn/thunk:readme >actual &&
 	test "$(sed -n -e "3p" actual)" = goodbye
-        '
+'
 
 test_expect_success 'follow deleted parent' '
-        (svn_cmd cp -m "resurrecting trunk as junk" \
-               "$svnrepo"/trunk@2 "$svnrepo"/junk ||
-         svn cp -m "resurrecting trunk as junk" \
-               -r2 "$svnrepo"/trunk "$svnrepo"/junk) &&
-        git config --add svn-remote.svn.fetch \
-          junk:refs/remotes/svn/junk &&
-        git svn fetch -i svn/thunk &&
-        git svn fetch -i svn/junk &&
+	(svn_cmd cp -m "resurrecting trunk as junk" \
+		"$svnrepo"/trunk@2 "$svnrepo"/junk ||
+	 svn cp -m "resurrecting trunk as junk" \
+		-r2 "$svnrepo"/trunk "$svnrepo"/junk) &&
+	git config --add svn-remote.svn.fetch \
+		junk:refs/remotes/svn/junk &&
+	git svn fetch -i svn/thunk &&
+	git svn fetch -i svn/junk &&
 	test -z "$(git diff svn/junk svn/trunk)" &&
 	test "$(git merge-base svn/junk svn/trunk)" \
-	   = "$(git rev-parse svn/trunk)"
-        '
+		= "$(git rev-parse svn/trunk)"
+'
 
 test_expect_success 'follow larger parent' '
-        mkdir -p import/trunk/thunk/bump/thud &&
-        echo hi > import/trunk/thunk/bump/thud/file &&
-        svn import -m "import a larger parent" import "$svnrepo"/larger-parent &&
-        svn cp -m "hi" "$svnrepo"/larger-parent "$svnrepo"/another-larger &&
-        git svn init --minimize-url -i larger \
-	  "$svnrepo"/larger-parent/trunk/thunk/bump/thud &&
-        git svn fetch -i larger &&
+	mkdir -p import/trunk/thunk/bump/thud &&
+	echo hi > import/trunk/thunk/bump/thud/file &&
+	svn import -m "import a larger parent" import "$svnrepo"/larger-parent &&
+	svn cp -m "hi" "$svnrepo"/larger-parent "$svnrepo"/another-larger &&
+	git svn init --minimize-url -i larger \
+		"$svnrepo"/larger-parent/trunk/thunk/bump/thud &&
+	git svn fetch -i larger &&
 	git svn init --minimize-url -i larger-parent \
-	  "$svnrepo"/another-larger/trunk/thunk/bump/thud &&
+		"$svnrepo"/another-larger/trunk/thunk/bump/thud &&
 	git svn fetch -i larger-parent &&
-        git rev-parse --verify refs/remotes/larger &&
-        git rev-parse --verify \
-	   refs/remotes/larger-parent &&
+	git rev-parse --verify refs/remotes/larger &&
+	git rev-parse --verify \
+		refs/remotes/larger-parent &&
 	test "$(git merge-base \
 		 refs/remotes/larger-parent \
 		 refs/remotes/larger)" = \
-	     "$(git rev-parse refs/remotes/larger)"
-        '
+		"$(git rev-parse refs/remotes/larger)"
+'
 
 test_expect_success 'follow higher-level parent' '
 	svn mkdir -m "follow higher-level parent" "$svnrepo"/blob &&

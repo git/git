@@ -49,6 +49,7 @@ struct string_list;
 	ADVICE_UPDATE_SPARSE_PATH,
 	ADVICE_WAITING_FOR_EDITOR,
 	ADVICE_SKIPPED_CHERRY_PICKS,
+	ADVICE_WORKTREE_ADD_ORPHAN,
 };
 
 int git_default_advice_config(const char *var, const char *value);

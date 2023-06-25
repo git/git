@@ -2180,4 +2180,83 @@ test_expect_success 'sparse index is not expanded: diff-files' '
 	ensure_not_expanded diff-files -- "deep/*"
 '
 
+test_expect_success 'diff-tree' '
+	init_repos &&
+
+	# Test change inside sparse cone
+	tree1=$(git -C sparse-index rev-parse HEAD^{tree}) &&
+	tree2=$(git -C sparse-index rev-parse update-deep^{tree}) &&
+	test_all_match git diff-tree $tree1 $tree2 &&
+	test_all_match git diff-tree $tree1 $tree2 -- deep/a &&
+	test_all_match git diff-tree HEAD update-deep &&
+	test_all_match git diff-tree HEAD update-deep -- deep/a &&
+
+	# Test change outside sparse cone
+	tree3=$(git -C sparse-index rev-parse update-folder1^{tree}) &&
+	test_all_match git diff-tree $tree1 $tree3 &&
+	test_all_match git diff-tree $tree1 $tree3 -- folder1/a &&
+	test_all_match git diff-tree HEAD update-folder1 &&
+	test_all_match git diff-tree HEAD update-folder1 -- folder1/a &&
+
+	# Check that SKIP_WORKTREE files are not materialized
+	test_path_is_missing sparse-checkout/folder1/a &&
+	test_path_is_missing sparse-index/folder1/a &&
+	test_path_is_missing sparse-checkout/folder2/a &&
+	test_path_is_missing sparse-index/folder2/a
+'
+
+test_expect_success 'sparse-index is not expanded: diff-tree' '
+	init_repos &&
+
+	tree1=$(git -C sparse-index rev-parse HEAD^{tree}) &&
+	tree2=$(git -C sparse-index rev-parse update-deep^{tree}) &&
+	tree3=$(git -C sparse-index rev-parse update-folder1^{tree}) &&
+
+	ensure_not_expanded diff-tree $tree1 $tree2 &&
+	ensure_not_expanded diff-tree $tree1 $tree2 -- deep/a &&
+	ensure_not_expanded diff-tree HEAD update-deep &&
+	ensure_not_expanded diff-tree HEAD update-deep -- deep/a &&
+	ensure_not_expanded diff-tree $tree1 $tree3 &&
+	ensure_not_expanded diff-tree $tree1 $tree3 -- folder1/a &&
+	ensure_not_expanded diff-tree HEAD update-folder1 &&
+	ensure_not_expanded diff-tree HEAD update-folder1 -- folder1/a
+'
+
+test_expect_success 'worktree' '
+	init_repos &&
+
+	write_script edit-contents <<-\EOF &&
+	echo text >>"$1"
+	EOF
+
+	for repo in full-checkout sparse-checkout sparse-index
+	do
+		worktree=${repo}-wt &&
+		git -C $repo worktree add ../$worktree &&
+
+		# Compare worktree content with "ls"
+		(cd $repo && ls) >worktree_contents &&
+		(cd $worktree && ls) >new_worktree_contents &&
+		test_cmp worktree_contents new_worktree_contents &&
+
+		# Compare index content with "ls-files --sparse"
+		git -C $repo ls-files --sparse >index_contents &&
+		git -C $worktree ls-files --sparse >new_index_contents &&
+		test_cmp index_contents new_index_contents &&
+
+		git -C $repo worktree remove ../$worktree || return 1
+	done &&
+
+	test_all_match git worktree add .worktrees/hotfix &&
+	run_on_all ../edit-contents .worktrees/hotfix/deep/a &&
+	test_all_match test_must_fail git worktree remove .worktrees/hotfix
+'
+
+test_expect_success 'worktree is not expanded' '
+	init_repos &&
+
+	ensure_not_expanded worktree add .worktrees/hotfix &&
+	ensure_not_expanded worktree remove .worktrees/hotfix
+'
+
 test_done

@@ -721,16 +721,21 @@ static int strbuf_getdelim(struct strbuf *sb, FILE *fp, int term)
 	return 0;
 }
 
-int strbuf_getline(struct strbuf *sb, FILE *fp)
+int strbuf_getdelim_strip_crlf(struct strbuf *sb, FILE *fp, int term)
 {
-	if (strbuf_getwholeline(sb, fp, '\n'))
+	if (strbuf_getwholeline(sb, fp, term))
 		return EOF;
-	if (sb->buf[sb->len - 1] == '\n') {
+	if (term == '\n' && sb->buf[sb->len - 1] == '\n') {
 		strbuf_setlen(sb, sb->len - 1);
 		if (sb->len && sb->buf[sb->len - 1] == '\r')
 			strbuf_setlen(sb, sb->len - 1);
 	}
 	return 0;
+}
+
+int strbuf_getline(struct strbuf *sb, FILE *fp)
+{
+	return strbuf_getdelim_strip_crlf(sb, fp, '\n');
 }
 
 int strbuf_getline_lf(struct strbuf *sb, FILE *fp)

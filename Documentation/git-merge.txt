@@ -194,9 +194,13 @@ happens:
    versions: stage 1 stores the version from the common ancestor,
    stage 2 from `HEAD`, and stage 3 from `MERGE_HEAD` (you
    can inspect the stages with `git ls-files -u`).  The working
-   tree files contain the result of the "merge" program; i.e. 3-way
+   tree files contain the result of the merge operation; i.e. 3-way
    merge results with familiar conflict markers `<<<` `===` `>>>`.
-5. No other changes are made.  In particular, the local
+5. A special ref `AUTO_MERGE` is written, pointing to a tree
+   corresponding to the current content of the working tree (including
+   conflict markers for textual conflicts).  Note that this ref is only
+   written when the 'ort' merge strategy is used (the default).
+6. No other changes are made.  In particular, the local
    modifications you had before you started merge will stay the
    same and the index entries for them stay as they were,
    i.e. matching `HEAD`.
@@ -336,7 +340,8 @@ You can work through the conflict with a number of tools:
 
  * Look at the diffs.  `git diff` will show a three-way diff,
    highlighting changes from both the `HEAD` and `MERGE_HEAD`
-   versions.
+   versions. `git diff AUTO_MERGE` will show what changes you've
+   made so far to resolve textual conflicts.
 
  * Look at the diffs from each branch. `git log --merge -p <path>`
    will show diffs first for the `HEAD` version and then the

@@ -38,6 +38,41 @@ test_expect_success 'git ls-files --format objectname v.s. -s' '
 	test_cmp expect actual
 '
 
+test_expect_success 'git ls-files --format objecttype' '
+	git ls-files --format="%(objectname)" o1.txt o4.txt o6.txt >objectname &&
+	git cat-file --batch-check="%(objecttype)" >expect <objectname &&
+	git ls-files --format="%(objecttype)" o1.txt o4.txt o6.txt >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git ls-files --format objectsize' '
+	cat>expect <<-\EOF &&
+26
+29
+27
+26
+-
+26
+	EOF
+	git ls-files --format="%(objectsize)" >actual &&
+
+	test_cmp expect actual
+'
+
+test_expect_success 'git ls-files --format objectsize:padded' '
+	cat>expect <<-\EOF &&
+     26
+     29
+     27
+     26
+      -
+     26
+	EOF
+	git ls-files --format="%(objectsize:padded)" >actual &&
+
+	test_cmp expect actual
+'
+
 test_expect_success 'git ls-files --format v.s. --eol' '
 	git ls-files --eol >tmp &&
 	sed -e "s/	/ /g" -e "s/  */ /g" tmp >expect 2>err &&

@@ -5,6 +5,7 @@
 
 test_description='git status'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
@@ -1519,8 +1520,8 @@ test_expect_success '"status.branch=true" weaker than "--no-branch"' '
 '
 
 test_expect_success '"status.branch=true" weaker than "--porcelain"' '
-       git -c status.branch=true status --porcelain >actual &&
-       test_cmp expected_nobranch actual
+	git -c status.branch=true status --porcelain >actual &&
+	test_cmp expected_nobranch actual
 '
 
 test_expect_success '"status.branch=false" same as "--no-branch"' '

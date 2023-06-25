@@ -86,9 +86,9 @@ OPTIONS
 --format=<format>::
 	A string that interpolates `%(fieldname)` from the result
 	being shown. It also interpolates `%%` to `%`, and
-	`%xx` where `xx` are hex digits interpolates to character
-	with hex code `xx`; for example `%00` interpolates to
-	`\0` (NUL), `%09` to `\t` (TAB) and `%0a` to `\n` (LF).
+	`%xNN` where `NN` are hex digits interpolates to character
+	with hex code `NN`; for example `%x00` interpolates to
+	`\0` (NUL), `%x09` to `\t` (TAB) and `%x0a` to `\n` (LF).
 	When specified, `--format` cannot be combined with other
 	format-altering options, including `--long`, `--name-only`
 	and `--object-only`.
@@ -145,7 +145,7 @@ FIELD NAMES
 -----------
 
 Various values from structured fields can be used to interpolate
-into the resulting output. For each outputing line, the following
+into the resulting output. For each outputting line, the following
 names can be used:
 
 objectmode::

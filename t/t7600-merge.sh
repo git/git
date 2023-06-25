@@ -639,41 +639,41 @@ test_expect_success 'merge log message' '
 test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c1 with c0, c2, c0, and c1' '
-       git reset --hard c1 &&
-       test_tick &&
-       git merge c0 c2 c0 c1 &&
-       verify_merge file result.1-5 &&
-       verify_parents $c1 $c2
+	git reset --hard c1 &&
+	test_tick &&
+	git merge c0 c2 c0 c1 &&
+	verify_merge file result.1-5 &&
+	verify_parents $c1 $c2
 '
 
 test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c1 with c0, c2, c0, and c1' '
-       git reset --hard c1 &&
-       test_tick &&
-       git merge c0 c2 c0 c1 &&
-       verify_merge file result.1-5 &&
-       verify_parents $c1 $c2
+	git reset --hard c1 &&
+	test_tick &&
+	git merge c0 c2 c0 c1 &&
+	verify_merge file result.1-5 &&
+	verify_parents $c1 $c2
 '
 
 test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c1 with c1 and c2' '
-       git reset --hard c1 &&
-       test_tick &&
-       git merge c1 c2 &&
-       verify_merge file result.1-5 &&
-       verify_parents $c1 $c2
+	git reset --hard c1 &&
+	test_tick &&
+	git merge c1 c2 &&
+	verify_merge file result.1-5 &&
+	verify_parents $c1 $c2
 '
 
 test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge fast-forward in a dirty tree' '
-       git reset --hard c0 &&
-       mv file file1 &&
-       cat file1 >file &&
-       rm -f file1 &&
-       git merge c2
+	git reset --hard c0 &&
+	mv file file1 &&
+	cat file1 >file &&
+	rm -f file1 &&
+	git merge c2
 '
 
 test_debug 'git log --graph --decorate --oneline --all'

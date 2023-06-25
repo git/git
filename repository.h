@@ -37,6 +37,16 @@ struct repo_settings {
 	int command_requires_full_index;
 	int sparse_index;
 	int pack_read_reverse_index;
+	int pack_use_bitmap_boundary_traversal;
+
+	/*
+	 * Does this repository have core.useReplaceRefs=true (on by
+	 * default)? This provides a repository-scoped version of this
+	 * config, though it could be disabled process-wide via some Git
+	 * builtins or the --no-replace-objects option. See
+	 * replace_refs_enabled() for more details.
+	 */
+	int read_replace_refs;
 
 	struct fsmonitor_settings *fsmonitor; /* lazily loaded */
 
@@ -163,6 +173,7 @@ struct repository {
 	struct promisor_remote_config *promisor_remote_config;
 
 	/* Configurations */
+	int repository_format_worktree_config;
 
 	/* Indicate if a repository has a different 'commondir' from 'gitdir' */
 	unsigned different_commondir:1;

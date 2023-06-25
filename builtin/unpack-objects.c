@@ -609,7 +609,7 @@ int cmd_unpack_objects(int argc, const char **argv, const char *prefix UNUSED)
 	int i;
 	struct object_id oid;
 
-	read_replace_refs = 0;
+	disable_replace_refs();
 
 	git_config(git_default_config, NULL);
 

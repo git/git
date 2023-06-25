@@ -10,9 +10,9 @@ TEST_PASSES_SANITIZE_LEAK=true
 
 
 test_expect_success 'creating initial commits' '
-    test_commit E file1 &&
-    test_commit D file1 &&
-    test_commit C file1
+	test_commit E file1 &&
+	test_commit D file1 &&
+	test_commit C file1
 '
 
 while read W1 I1 H1 T opt W2 I2 H2
@@ -74,13 +74,13 @@ B C C C keep   B C C
 EOF
 
 test_expect_success 'setting up branches to test with unmerged entries' '
-    git reset --hard C &&
-    git branch branch1 &&
-    git branch branch2 &&
-    git checkout branch1 &&
-    test_commit B1 file1 &&
-    git checkout branch2 &&
-    test_commit B file1
+	git reset --hard C &&
+	git branch branch1 &&
+	git branch branch2 &&
+	git checkout branch1 &&
+	test_commit B1 file1 &&
+	git checkout branch2 &&
+	test_commit B file1
 '
 
 while read W1 I1 H1 T opt W2 I2 H2

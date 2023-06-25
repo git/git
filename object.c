@@ -356,6 +356,12 @@ void object_list_free(struct object_list **list)
  */
 static char object_array_slopbuf[1];
 
+void object_array_init(struct object_array *array)
+{
+	struct object_array blank = OBJECT_ARRAY_INIT;
+	memcpy(array, &blank, sizeof(*array));
+}
+
 void add_object_array_with_path(struct object *obj, const char *name,
 				struct object_array *array,
 				unsigned mode, const char *path)

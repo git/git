@@ -187,6 +187,21 @@ test_expect_success 'git config log.follow does not die with no paths' '
 	git log --
 '
 
+test_expect_success 'git log --follow rejects unsupported pathspec magic' '
+	test_must_fail git log --follow ":(top,glob,icase)ichi" 2>stderr &&
+	# check full error message; we want to be sure we mention both
+	# of the rejected types (glob,icase), but not the allowed one (top)
+	echo "fatal: pathspec magic not supported by --follow: ${SQ}glob${SQ}, ${SQ}icase${SQ}" >expect &&
+	test_cmp expect stderr
+'
+
+test_expect_success 'log.follow disabled with unsupported pathspec magic' '
+	test_config log.follow true &&
+	git log --format=%s ":(glob,icase)ichi" >actual &&
+	echo third >expect &&
+	test_cmp expect actual
+'
+
 test_expect_success 'git config log.follow is overridden by --no-follow' '
 	test_config log.follow true &&
 	git log --no-follow --pretty="format:%s" ichi >actual &&
@@ -2343,10 +2358,10 @@ test_expect_success 'log --decorate does not include things outside filter' '
 '
 
 test_expect_success 'log --end-of-options' '
-       git update-ref refs/heads/--source HEAD &&
-       git log --end-of-options --source >actual &&
-       git log >expect &&
-       test_cmp expect actual
+	git update-ref refs/heads/--source HEAD &&
+	git log --end-of-options --source >actual &&
+	git log >expect &&
+	test_cmp expect actual
 '
 
 test_expect_success 'set up commits with different authors' '

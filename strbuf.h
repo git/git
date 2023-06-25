@@ -476,6 +476,18 @@ int strbuf_readlink(struct strbuf *sb, const char *path, size_t hint);
 ssize_t strbuf_write(struct strbuf *sb, FILE *stream);
 
 /**
+ * Read from a FILE * until the specified terminator is encountered,
+ * overwriting the existing contents of the strbuf.
+ *
+ * Reading stops after the terminator or at EOF.  The terminator is
+ * removed from the buffer before returning.  If the terminator is LF
+ * and if it is preceded by a CR, then the whole CRLF is stripped.
+ * Returns 0 unless there was nothing left before EOF, in which case
+ * it returns `EOF`.
+ */
+int strbuf_getdelim_strip_crlf(struct strbuf *sb, FILE *fp, int term);
+
+/**
  * Read a line from a FILE *, overwriting the existing contents of
  * the strbuf.  The strbuf_getline*() family of functions share
  * this signature, but have different line termination conventions.
