@@ -1750,7 +1750,7 @@ __git_diff_common_options="--stat --numstat --shortstat --summary
 			--raw --word-diff --word-diff-regex=
 			--dirstat --dirstat= --dirstat-by-file
 			--dirstat-by-file= --cumulative
-			--diff-algorithm=
+			--diff-algorithm= --default-prefix
 			--submodule --submodule= --ignore-submodules
 			--indent-heuristic --no-indent-heuristic
 			--textconv --no-textconv --break-rewrites
