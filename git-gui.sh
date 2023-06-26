@@ -2274,7 +2274,9 @@ proc do_git_gui {} {
 
 # Get the system-specific explorer app/command.
 proc get_explorer {} {
-	if {[is_Cygwin] || [is_Windows]} {
+	if {[is_Cygwin]} {
+		set explorer "/bin/cygstart.exe --explore"
+	} elseif {[is_Windows]} {
 		set explorer "explorer.exe"
 	} elseif {[is_MacOSX]} {
 		set explorer "open"
