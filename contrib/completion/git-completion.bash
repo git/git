@@ -1756,7 +1756,7 @@ __git_diff_common_options="--stat --numstat --shortstat --summary
 			--indent-heuristic --no-indent-heuristic
 			--textconv --no-textconv --break-rewrites
 			--patch --no-patch --cc --combined-all-paths
-			--anchored= --compact-summary
+			--anchored= --compact-summary --ignore-matching-lines=
 "
 
 # Options for diff/difftool
