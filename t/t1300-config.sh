@@ -1676,8 +1676,8 @@ test_expect_success 'urlmatch with --show-scope' '
 	EOF
 
 	cat >expect <<-EOF &&
-	unknown	http.cookiefile /tmp/cookie.txt
-	unknown	http.sslverify false
+	local	http.cookiefile /tmp/cookie.txt
+	local	http.sslverify false
 	EOF
 	git config --get-urlmatch --show-scope HTTP https://weak.example.com >actual &&
 	test_cmp expect actual
@@ -2071,7 +2071,9 @@ test_expect_success '--show-origin blob ref' '
 '
 
 test_expect_success '--show-origin with --default' '
-	test_must_fail git config --show-origin --default foo some.key
+	git config --show-origin --default foo some.key >actual &&
+	echo "command line:	foo" >expect &&
+	test_cmp expect actual
 '
 
 test_expect_success '--show-scope with --list' '
@@ -2144,7 +2146,7 @@ test_expect_success '--show-scope with --show-origin' '
 
 test_expect_success '--show-scope with --default' '
 	git config --show-scope --default foo some.key >actual &&
-	echo "unknown	foo" >expect &&
+	echo "command	foo" >expect &&
 	test_cmp expect actual
 '
 
