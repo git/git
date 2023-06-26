@@ -1745,7 +1745,7 @@ __git_diff_common_options="--stat --numstat --shortstat --summary
 			--find-copies-harder --ignore-cr-at-eol
 			--text --ignore-space-at-eol --ignore-space-change
 			--ignore-all-space --ignore-blank-lines --exit-code
-			--quiet --ext-diff --no-ext-diff
+			--quiet --ext-diff --no-ext-diff --unified=
 			--no-prefix --src-prefix= --dst-prefix=
 			--inter-hunk-context= --function-context
 			--patience --histogram --minimal
