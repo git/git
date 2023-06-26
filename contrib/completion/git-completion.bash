@@ -1763,6 +1763,7 @@ __git_diff_common_options="--stat --numstat --shortstat --summary
 # Options for diff/difftool
 __git_diff_difftool_options="--cached --staged --pickaxe-all --pickaxe-regex
 			--base --ours --theirs --no-index --relative --merge-base
+			--ita-invisible-in-index --ita-visible-in-index
 			$__git_diff_common_options"
 
 _git_diff ()
