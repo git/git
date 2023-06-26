@@ -1763,10 +1763,12 @@ __git_diff_common_options="--stat --numstat --shortstat --summary
 			--irreversible-delete --line-prefix --no-stat
 			--output= --output-indicator-context=
 			--output-indicator-new= --output-indicator-old=
+			--ws-error-highlight=
+			--pickaxe-all --pickaxe-regex
 "
 
 # Options for diff/difftool
-__git_diff_difftool_options="--cached --staged --pickaxe-all --pickaxe-regex
+__git_diff_difftool_options="--cached --staged
 			--base --ours --theirs --no-index --merge-base
 			--ita-invisible-in-index --ita-visible-in-index
 			$__git_diff_common_options"
@@ -2115,7 +2117,6 @@ _git_log ()
 			--expand-tabs --expand-tabs= --no-expand-tabs
 			$merge
 			$__git_diff_common_options
-			--pickaxe-all --pickaxe-regex
 			"
 		return
 		;;
