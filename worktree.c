@@ -835,7 +835,7 @@ int init_worktree_config(struct repository *r)
 	 * Relocate that value to avoid breaking all worktrees with this
 	 * upgrade to worktree config.
 	 */
-	if (!git_configset_get_value(&cs, "core.worktree", &core_worktree)) {
+	if (!git_configset_get_value(&cs, "core.worktree", &core_worktree, NULL)) {
 		if ((res = move_config_setting("core.worktree", core_worktree,
 					       common_config_file,
 					       main_worktree_file)))
