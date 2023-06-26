@@ -110,7 +110,8 @@ struct fetch_config {
 	int submodule_fetch_jobs;
 };
 
-static int git_fetch_config(const char *k, const char *v, void *cb)
+static int git_fetch_config(const char *k, const char *v,
+			    const struct config_context *ctx, void *cb)
 {
 	struct fetch_config *fetch_config = cb;
 
@@ -164,7 +165,7 @@ static int git_fetch_config(const char *k, const char *v, void *cb)
 			    "fetch.output", v);
 	}
 
-	return git_default_config(k, v, cb);
+	return git_default_config(k, v, ctx, cb);
 }
 
 static int parse_refmap_arg(const struct option *opt, const char *arg, int unset)
@@ -1799,7 +1800,9 @@ struct remote_group_data {
 	struct string_list *list;
 };
 
-static int get_remote_group(const char *key, const char *value, void *priv)
+static int get_remote_group(const char *key, const char *value,
+			    const struct config_context *ctx UNUSED,
+			    void *priv)
 {
 	struct remote_group_data *g = priv;
 

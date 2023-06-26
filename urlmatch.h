@@ -71,7 +71,8 @@ struct urlmatch_config {
 	.vars = STRING_LIST_INIT_DUP, \
 }
 
-int urlmatch_config_entry(const char *var, const char *value, void *cb);
+int urlmatch_config_entry(const char *var, const char *value,
+			  const struct config_context *ctx, void *cb);
 void urlmatch_config_release(struct urlmatch_config *config);
 
 #endif /* URL_MATCH_H */
