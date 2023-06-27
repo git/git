@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jun 2023, #06; Fri, 23)
-X-master-at: 6ff334181cfb6485d3ba50843038209a2a253907
-X-next-at: 577bbd8c9fd2f098bfa6e5dc606afb1b1ce7a55e
+Subject: What's cooking in git.git (Jun 2023, #07; Tue, 27)
+X-master-at: a9e066fa63149291a55f383cfa113d8bdbdaa6b3
+X-next-at: ea14687e91835d59149e0866d2a4cde22a5e5c3a
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jun 2023, #06; Fri, 23)
+What's cooking in git.git (Jun 2023, #07; Tue, 27)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,246 +48,93 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* as/dtype-compilation-fix (2023-06-12) 1 commit
-  (merged to 'next' on 2023-06-16 at 267100947e)
- + statinfo.h: move DTYPE defines from dir.h
+* jk/commit-use-no-divider-with-interpret-trailers (2023-06-16) 1 commit
+  (merged to 'next' on 2023-06-20 at 08e5f2a6b5)
+ + commit: pass --no-divider to interpret-trailers
 
- Compilation fix for platforms without D_TYPE in struct dirent.
- source: <20230606205935.3183276-1-asedeno@google.com>
-
-
-* ds/add-i-color-configuration-fix (2023-06-12) 2 commits
-  (merged to 'next' on 2023-06-15 at 377b9f9a00)
- + add: test use of brackets when color is disabled
- + add: check color.ui for interactive add
-
- The reimplemented "git add -i" did not honor color.ui configuration.
- source: <pull.1541.v2.git.1686061219078.gitgitgadget@gmail.com>
+ When "git commit --trailer=..." invokes the interpret-trailers
+ machinery, it knows what it feeds to interpret-trailers is a full
+ log message without any patch, but failed to express that by
+ passing the "--no-divider" option, which has been corrected.
+ source: <20230617042624.GA562686@coredump.intra.peff.net>
 
 
-* ds/disable-replace-refs (2023-06-12) 3 commits
-  (merged to 'next' on 2023-06-15 at e7baddb745)
- + repository: create read_replace_refs setting
- + replace-objects: create wrapper around setting
- + repository: create disable_replace_refs()
- (this branch uses tb/pack-bitmap-traversal-with-boundary.)
+* jk/redact-h2h3-headers-fix (2023-06-17) 1 commit
+  (merged to 'next' on 2023-06-20 at c1247fd527)
+ + http: handle both "h2" and "h2h3" in curl info lines
 
- Introduce a mechanism to disable replace refs globally and per
- repository.
- source: <pull.1537.v3.git.1686057877.gitgitgadget@gmail.com>
+ Curl library recently changed how http2 traces are shown and broke
+ the code to redact sensitive info header, which has been fixed.
 
-
-* gc/discover-not-setup (2023-06-16) 1 commit
-  (merged to 'next' on 2023-06-16 at 27d1cd2a1b)
- + setup.c: don't setup in discover_git_directory()
-
- discover_git_directory() no longer touches the_repository.
- source: <pull.1526.git.git.1686771358484.gitgitgadget@gmail.com>
+ The GitHub Actions CI has been broken for recent macOS jobs, so
+ this topic has been fast-tracked to help them.
+ source: <20230617051559.GD562686@coredump.intra.peff.net>
 
 
-* ja/worktree-orphan (2023-05-17) 8 commits
-  (merged to 'next' on 2023-06-15 at 16bb552b79)
- + worktree add: emit warn when there is a bad HEAD
- + worktree add: extend DWIM to infer --orphan
- + worktree add: introduce "try --orphan" hint
- + worktree add: add --orphan flag
- + t2400: add tests to verify --quiet
- + t2400: refactor "worktree add" opt exclusion tests
- + t2400: cleanup created worktree in test
- + worktree add: include -B in usage docs
+* tb/collect-pack-filenames-fix (2023-06-12) 1 commit
+  (merged to 'next' on 2023-06-20 at abcc6892c8)
+ + builtin/repack.c: only collect fully-formed packs
 
- Originally merged to 'next' on 2023-06-14
-
- 'git worktree add' learned how to create a worktree based on an
- orphaned branch with `--orphan`.
- source: <20230517214711.12467-1-jacobabel@nullpo.dev>
-
-
-* js/defeat-ignore-submodules-config-with-explicit-addition (2023-06-14) 1 commit
-  (merged to 'next' on 2023-06-16 at bfc01bd5e2)
- + diff-lib: honor override_submodule_config flag bit
-
- Even when diff.ignoreSubmodules tells us to ignore submodule
- changes, "git commit" with an index that already records changes to
- submodules should include the submodule changes in the resulting
- commit, but it did not.
- source: <20230614164856.3186012-2-sokcevic@google.com>
-
-
-* jt/doc-use-octal-with-printf (2023-06-14) 1 commit
-  (merged to 'next' on 2023-06-16 at ebb72b9bd8)
- + CodingGuidelines: use octal escapes, not hex
-
- Suggest to refrain from using hex literals that are non-portable
- when writing printf(1) format strings.
- source: <20230614213145.475607-1-jonathantanmy@google.com>
-
-
-* la/docs-typofixes (2023-06-12) 1 commit
-  (merged to 'next' on 2023-06-16 at 56ddcb16e6)
- + docs: typofixes
-
- Typofixes.
- source: <pull.1542.v2.git.1686166007816.gitgitgadget@gmail.com>
-
-
-* mh/credential-erase-improvements (2023-06-15) 2 commits
-  (merged to 'next' on 2023-06-16 at 5a3ed25303)
- + credential: erase all matching credentials
- + credential: avoid erasing distinct password
-
- Will merge to 'master'.
- cf. <20230615212116.GA39325@coredump.intra.peff.net>
- source: <pull.1525.v4.git.git.1686856773.gitgitgadget@gmail.com>
-
-
-* ps/cat-file-null-output (2023-06-12) 5 commits
-  (merged to 'next' on 2023-06-15 at e841ad2be5)
- + cat-file: add option '-Z' that delimits input and output with NUL
- + cat-file: simplify reading from standard input
- + strbuf: provide CRLF-aware helper to read until a specified delimiter
- + t1006: modernize test style to use `test_cmp`
- + t1006: don't strip timestamps from expected results
-
- "git cat-file --batch" and friends learned "-Z" that uses NUL
- delimiter for both input and output.
- source: <cover.1686028409.git.ps@pks.im>
-
-
-* rj/leakfixes (2023-06-17) 11 commits
-  (merged to 'next' on 2023-06-17 at 49e54a88e2)
- + tests: mark as passing with SANITIZE=leak
- + config: fix a leak in git_config_copy_or_rename_section_in_file
- + branch: fix a leak in cmd_branch
- + branch: fix a leak in setup_tracking
- + rev-parse: fix a leak with --abbrev-ref
-  (merged to 'next' on 2023-06-16 at d9330ea230)
- + branch: fix a leak in setup_tracking
- + branch: fix a leak in check_tracking_branch
- + branch: fix a leak in inherit_tracking
- + branch: fix a leak in dwim_and_setup_tracking
- + remote: fix a leak in query_matches_negative_refspec
- + config: fix a leak in git_config_copy_or_rename_section_in_file
-
- Leakfixes
- source: <71b49be1-eeef-2f60-38f1-cfcbe4c8252f@gmail.com>
- source: <9eb931e7-dd18-8ce8-4d4a-cf3d85066189@gmail.com>
-
-
-* rs/doc-ls-tree-hex-literal (2023-06-15) 1 commit
-  (merged to 'next' on 2023-06-16 at 472c7f55c9)
- + ls-tree: fix documentation of %x format placeholder
-
- Doc update.
- source: <23e54256-9ad5-e978-d0b8-abb511232fd1@web.de>
-
-
-* rs/run-command-exec-error-on-noent (2023-06-12) 2 commits
-  (merged to 'next' on 2023-06-16 at 6bb4425334)
- + run-command: report exec error even on ENOENT
- + t1800: loosen matching of error message for bad shebang
-
- Simplify error message when run-command fails to start a command.
- source: <14e1be60-3765-0ba5-00f5-2848bb57bf53@web.de>
-
-
-* sl/worktree-sparse (2023-06-12) 1 commit
-  (merged to 'next' on 2023-06-16 at ca0a7edcc5)
- + worktree: integrate with sparse-index
-
- "git worktree" learned to work better with sparse index feature.
- source: <20230606172633.669916-1-cheskaqiqi@gmail.com>
-
-
-* tb/gc-recent-object-hook (2023-06-12) 2 commits
-  (merged to 'next' on 2023-06-16 at 2d8d8ea2ef)
- + gc: introduce `gc.recentObjectsHook`
- + reachable.c: extract `obj_is_recent()`
-
- "git pack-objects" learned to invoke a new hook program that
- enumerates extra objects to be used as anchoring points to keep
- otherwise unreachable objects in cruft packs.
- source: <cover.1686178684.git.me@ttaylorr.com>
-
-
-* tb/open-midx-bitmap-fallback (2023-06-12) 1 commit
-  (merged to 'next' on 2023-06-16 at 6546fee734)
- + pack-bitmap.c: gracefully degrade on failure to load MIDX'd pack
-
- Gracefully deal with a stale MIDX file that lists a packfile that
- no longer exists.
- source: <f123b68cb8a277fbf105b1789a84b9405a499b79.1686178854.git.me@ttaylorr.com>
-
-
-* tb/pack-bitmap-traversal-with-boundary (2023-05-08) 3 commits
- + pack-bitmap.c: use commit boundary during bitmap traversal
- + pack-bitmap.c: extract `fill_in_bitmap()`
- + object: add object_array initializer helper function
- (this branch is used by ds/disable-replace-refs.)
-
- Originally merged to 'next' on 2023-06-15
-
- The object traversal using reachability bitmap done by
- "pack-object" has been tweaked to take advantage of the fact that
- using "boundary" commits as representative of all the uninteresting
- ones can save quite a lot of object enumeration.
- source: <cover.1683567065.git.me@ttaylorr.com>
-
-
-* tz/lib-gpg-prereq-fix (2023-06-12) 1 commit
-  (merged to 'next' on 2023-06-16 at 19770e970a)
- + t/lib-gpg: require GPGSSH for GPGSSH_VERIFYTIME prereq
-
- Test update.
- source: <20230606214707.55739-1-tmz@pobox.com>
+ Avoid breakage of "git pack-objects --cruft" due to inconsistency
+ between the way the code enumerates packfiles in the repository.
+ source: <20230607101617.ges6tnMry4E52lDGld43QgtNUsIS4YQq6w-t71hEfkQ@z>
 
 --------------------------------------------------
 [New Topics]
 
-* ds/remove-idx-before-pack (2023-06-20) 1 commit
-  (merged to 'next' on 2023-06-23 at fa97bf0e41)
- + packfile: delete .idx files before .pack files
+* mh/credential-erase-improvements-more (2023-06-24) 2 commits
+ - credential/wincred: erase matching creds only
+ - credential/libsecret: erase matching creds only
 
- We create .pack and then .idx, we consider only packfiles that have
- .idx usable (those with only .pack are not ready yet), so we should
- remove .idx before removing .pack for consistency.
-
- Will merge to 'master'.
- source: <pull.1547.git.1687287675248.gitgitgadget@gmail.com>
+ Needs review.
+ source: <pull.1529.git.git.1687596777147.gitgitgadget@gmail.com>
 
 
-* bc/more-git-var (2023-06-22) 3 commits
- - var: add config file locations
- - var: add attributes files locations
- - var: add support for listing the shell
+* tb/gc-recent-object-hook (2023-06-24) 1 commit
+  (merged to 'next' on 2023-06-24 at e8c295841b)
+ + t7701: make annotated tag unreachable
 
- Add more "git var" for toolsmiths to learn various locations Git is
- configured with either via the configuration or hardcoded defaults.
-
- Expecting a reroll.
- source: <20230622195059.320593-1-sandals@crustytoothpaste.net>
-
-
-* jc/doc-hash-object-types (2023-06-22) 1 commit
- - docs: add "git hash-object -t" option's possible values
-
- Doc update.
-
- Expecting a reroll.
- cf. <62B7F5FF-F85D-47C0-B553-F57B991D0BCC@gmail.com>
- source: <pull.1533.git.git.1687394795009.gitgitgadget@gmail.com>
-
-
-* jc/abort-ll-merge-with-a-signal (2023-06-23) 1 commit
-  (merged to 'next' on 2023-06-23 at 9c9c37e95e)
- + ll-merge: killing the external merge driver aborts the merge
-
- When the external merge driver is killed by a signal, its output
- should not be trusted as a resolution with conflicts that is
- proposed by the driver, but the code did.
+ Test update.
 
  Will merge to 'master'.
- source: <xmqq4jmzc91e.fsf_-_@gitster.g>
+ source: <259b1b559114ab1a9a0bd7f1ad29a4cba2612ae0.1687617197.git.me@ttaylorr.com>
+
+
+* gc/config-context (2023-06-26) 12 commits
+ - config: pass source to config_parser_event_fn_t
+ - config: add kvi.path, use it to evaluate includes
+ - config.c: remove config_reader from configsets
+ - config: pass kvi to die_bad_number()
+ - trace2: plumb config kvi
+ - config.c: pass ctx with CLI config
+ - builtin/config.c: test misuse of format_config()
+ - config: pass ctx with config files
+ - config.c: pass ctx in configsets
+ - config: add ctx arg to config_fn_t
+ - urlmatch.h: use config_fn_t type
+ - config: inline git_color_default_config
+
+ source: <pull.1497.v4.git.git.1687803083.gitgitgadget@gmail.com>
+
+
+* gc/config-partial-submodule-kvi-fix (2023-06-26) 1 commit
+ - config: don't BUG when both kvi and source are set
+
+ source: <pull.1535.git.git.1687801297404.gitgitgadget@gmail.com>
+
+
+* pw/apply-too-large (2023-06-26) 1 commit
+ - apply: improve error messages when reading patch
+
+ source: <pull.1552.git.1687772253869.gitgitgadget@gmail.com>
+
+
+* pw/diff-no-index-from-named-pipes (2023-06-27) 3 commits
+ . diff --no-index: support reading from named pipes
+ . t4054: test diff --no-index with stdin
+ . diff --no-index: die on error reading stdin
+
+ source: <cover.1687874975.git.phillip.wood@dunelm.org.uk>
 
 --------------------------------------------------
 [Stalled]
@@ -426,6 +273,70 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* ds/remove-idx-before-pack (2023-06-20) 1 commit
+  (merged to 'next' on 2023-06-23 at fa97bf0e41)
+ + packfile: delete .idx files before .pack files
+
+ We create .pack and then .idx, we consider only packfiles that have
+ .idx usable (those with only .pack are not ready yet), so we should
+ remove .idx before removing .pack for consistency.
+
+ Will merge to 'master'.
+ source: <pull.1547.git.1687287675248.gitgitgadget@gmail.com>
+
+
+* bc/more-git-var (2023-06-27) 8 commits
+  (merged to 'next' on 2023-06-27 at ea14687e91)
+ + var: add config file locations
+ + var: add attributes files locations
+ + attr: expose and rename accessor functions
+ + var: adjust memory allocation for strings
+ + var: format variable structure with C99 initializers
+ + var: add support for listing the shell
+ + t: add a function to check executable bit
+ + var: mark unused parameters in git_var callbacks
+<<
+* bc/more-git-var (2023-06-27) 8 commits
+ . var: add config file locations
+ . var: add attributes files locations
+ . attr: expose and rename accessor functions
+ . var: adjust memory allocation for strings
+ . var: format variable structure with C99 initializers
+ . var: add support for listing the shell
+ . t: add a function to check executable bit
+ . var: mark unused parameters in git_var callbacks
+>>
+
+ Add more "git var" for toolsmiths to learn various locations Git is
+ configured with either via the configuration or hardcoded defaults.
+
+ Will merge to 'master'.
+ source: <20230627161902.754472-1-sandals@crustytoothpaste.net>
+
+
+* jc/doc-hash-object-types (2023-06-23) 1 commit
+ - docs: add git hash-object -t option's possible values
+
+ Doc update.
+
+ Will merge to 'next'.
+ source: <pull.1533.v2.git.git.1687555504551.gitgitgadget@gmail.com>
+
+
+* jc/abort-ll-merge-with-a-signal (2023-06-23) 2 commits
+  (merged to 'next' on 2023-06-24 at 685eb5d25c)
+ + t6406: skip "external merge driver getting killed by a signal" test on Windows
+  (merged to 'next' on 2023-06-23 at 9c9c37e95e)
+ + ll-merge: killing the external merge driver aborts the merge
+
+ When the external merge driver is killed by a signal, its output
+ should not be trusted as a resolution with conflicts that is
+ proposed by the driver, but the code did.
+
+ Will merge to 'master'.
+ source: <xmqq4jmzc91e.fsf_-_@gitster.g>
+
+
 * cc/repack-sift-filtered-objects-to-separate-pack (2023-06-14) 9 commits
  - gc: add `gc.repackFilterTo` config option
  - repack: implement `--filter-to` for storing filtered out objects
@@ -445,39 +356,16 @@ Release tarballs are available at:
 
 
 * ps/revision-stdin-with-options (2023-06-15) 3 commits
- - revision: handle pseudo-opts in `--stdin` mode
- - revision: small readability improvement for reading from stdin
- - revision: reorder `read_revisions_from_stdin()`
+  (merged to 'next' on 2023-06-26 at eda3e4d0b5)
+ + revision: handle pseudo-opts in `--stdin` mode
+ + revision: small readability improvement for reading from stdin
+ + revision: reorder `read_revisions_from_stdin()`
 
  The set-up code for the get_revision() API now allows feeding
  options like --all and --not in the --stdin mode.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <cover.1686839572.git.ps@pks.im>
-
-
-* jk/commit-use-no-divider-with-interpret-trailers (2023-06-16) 1 commit
-  (merged to 'next' on 2023-06-20 at 08e5f2a6b5)
- + commit: pass --no-divider to interpret-trailers
-
- When "git commit --trailer=..." invokes the interpret-trailers
- machinery, it knows what it feeds to interpret-trailers is a full
- log message without any patch, but failed to express that by
- passing the "--no-divider" option, which has been corrected.
-
- Will merge to 'master'.
- source: <20230617042624.GA562686@coredump.intra.peff.net>
-
-
-* jk/redact-h2h3-headers-fix (2023-06-17) 1 commit
-  (merged to 'next' on 2023-06-20 at c1247fd527)
- + http: handle both "h2" and "h2h3" in curl info lines
-
- Curl library recently changed how http2 traces are shown and broke
- the code to redact sensitive info header, which has been fixed.
-
- Will merge to 'master'.
- source: <20230617051559.GD562686@coredump.intra.peff.net>
 
 
 * rs/strbuf-expand-step (2023-06-18) 5 commits
@@ -488,6 +376,8 @@ Release tarballs are available at:
  - pretty: factor out expand_separator()
 
  Code clean-up around strbuf_expand() API.
+
+ Will merge to 'next'.
  source: <767baa64-20a6-daf2-d34b-d81f72363749@web.de>
 
 
@@ -512,14 +402,13 @@ Release tarballs are available at:
  source: <20230604211934.1365289-1-mh@glandium.org>
 
 
-* pb/complete-diff-options (2023-06-12) 25 commits
+* pb/complete-diff-options (2023-06-26) 24 commits
  - diff.c: mention completion above add_diff_options
  - completion: complete --remerge-diff
  - completion: complete --diff-merges, its options and --no-diff-merges
  - completion: move --pickaxe-{all,regex} to __git_diff_common_options
  - completion: complete --ws-error-highlight
  - completion: complete --unified
- - completion: complete --patch-with-raw
  - completion: complete --output-indicator-{context,new,old}
  - completion: complete --output
  - completion: complete --no-stat
@@ -541,20 +430,8 @@ Release tarballs are available at:
 
  Completion updates.
 
- Expecting a reroll.
- cf. <5cba334c-4d75-0dac-20c6-9e3def1f224a@gmail.com>
- source: <pull.1543.v2.git.1686574374.gitgitgadget@gmail.com>
-
-
-* tb/collect-pack-filenames-fix (2023-06-12) 1 commit
-  (merged to 'next' on 2023-06-20 at abcc6892c8)
- + builtin/repack.c: only collect fully-formed packs
-
- Avoid breakage of "git pack-objects --cruft" due to inconsistency
- between the way the code enumerates packfiles in the repository.
-
- Will merge to 'master'.
- source: <20230607101617.ges6tnMry4E52lDGld43QgtNUsIS4YQq6w-t71hEfkQ@z>
+ Will merge to 'next'.
+ source: <pull.1543.v3.git.1687796688.gitgitgadget@gmail.com>
 
 
 * ks/ref-filter-signature (2023-06-06) 2 commits
@@ -708,6 +585,8 @@ Release tarballs are available at:
 
  Move functions that are not about pure string manipulation out of
  strbuf.[ch]
+
+ Will merge to 'next'.
  source: <20230606194720.2053551-1-calvinwan@google.com>
 
 
