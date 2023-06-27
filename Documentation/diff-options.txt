@@ -43,66 +43,86 @@ endif::git-diff[]
 endif::git-format-patch[]
 
 ifdef::git-log[]
---diff-merges=(off|none|on|first-parent|1|separate|m|combined|c|dense-combined|cc|remerge|r)::
+-m::
+	Show diffs for merge commits in the default format.
+	Shortcut for '--diff-merges=on,hide' unless
+	`log.diffMerges-m-imply-p` configuration is active, in which
+	case it's a shortcut for '--diff-merges=on -p'.
+
+-c::
+	Shortcut for '--diff-merges=combined -p'.
+
+--cc::
+	Shortcut for '--diff-merges=dense-combined -p'.
+
+--remerge-diff::
+	Shortcut for '--diff-merges=remerge -p'.
+
 --no-diff-merges::
-	Specify diff format to be used for merge commits. Default is
+	Synonym for '--diff-merges=off'.
+
+--diff-merges=(<format>|<flag>)[,(<format>|<flag>),...]::
+	Specify diff format and flags to be used for merge commits. Default is
 	{diff-merges-default} unless `--first-parent` is in use, in which case
 	`first-parent` is the default.
 +
---diff-merges=(off|none):::
---no-diff-merges:::
+The last format specified has precedence, whereas flags are
+cumulative. Comma-separated list is handy to provide flag(s) along
+with format, e.g.: `--diff-merges=first-parent,hide` is handy form of
+`--diff-merges=first-parent --diff-merges=hide`.
++
+The following formats are supported:
++
+--
+off, none::
 	Disable output of diffs for merge commits. Useful to override
 	implied value.
 +
---diff-merges=on:::
---diff-merges=m:::
--m:::
-	This option makes diff output for merge commits to be shown in
-	the default format. `-m` will produce the output only if `-p`
-	is given as well. The default format could be changed using
+on, m::
+	Make diff output for merge commits to be shown in the default
+	format. The default format could be changed using
 	`log.diffMerges` configuration parameter, which default value
 	is `separate`.
 +
---diff-merges=first-parent:::
---diff-merges=1:::
-	This option makes merge commits show the full diff with
-	respect to the first parent only.
+first-parent, 1::
+	Show full diff with respect to first parent. This is the same
+	format as `--patch` produces for non-merge commits.
 +
---diff-merges=separate:::
-	This makes merge commits show the full diff with respect to
-	each of the parents. Separate log entry and diff is generated
-	for each parent.
+separate::
+	Show full diff with respect to each of parents.
+	Separate log entry and diff is generated for each parent.
 +
---diff-merges=remerge:::
---diff-merges=r:::
---remerge-diff:::
-	With this option, two-parent merge commits are remerged to
-	create a temporary tree object -- potentially containing files
-	with conflict markers and such.  A diff is then shown between
-	that temporary tree and the actual merge commit.
+remerge, r::
+	Remerge two-parent merge commits to create a temporary tree
+	object--potentially containing files with conflict markers
+	and such.  A diff is then shown between that temporary tree
+	and the actual merge commit.
 +
 The output emitted when this option is used is subject to change, and
 so is its interaction with other options (unless explicitly
 documented).
 +
---diff-merges=combined:::
---diff-merges=c:::
--c:::
-	With this option, diff output for a merge commit shows the
-	differences from each of the parents to the merge result
-	simultaneously instead of showing pairwise diff between a
-	parent and the result one at a time. Furthermore, it lists
-	only files which were modified from all parents. `-c` implies
-	`-p`.
+combined, c::
+	Show differences from each of the parents to the merge
+	result simultaneously instead of showing pairwise diff between
+	a parent and the result one at a time. Furthermore, it lists
+	only files which were modified from all parents.
 +
---diff-merges=dense-combined:::
---diff-merges=cc:::
---cc:::
-	With this option the output produced by
-	`--diff-merges=combined` is further compressed by omitting
-	uninteresting hunks whose contents in the parents have only
-	two variants and the merge result picks one of them without
-	modification.  `--cc` implies `-p`.
+dense-combined, cc::
+	Further compress output produced by `--diff-merges=combined`
+	by omitting uninteresting hunks whose contents in the parents
+	have only two variants and the merge result picks one of them
+	without modification.
+--
++
+The following flags are supported:
++
+--
+[no-]hide::
+	Hide diff for merge commits unless `-p` options is given as
+	well. The default `no-hide` could be changed using
+	`log.diffMerges` configuration parameter.
+--
 
 --combined-all-paths::
 	This flag causes combined diffs (used for merge commits) to

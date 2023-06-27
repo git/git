@@ -334,6 +334,7 @@ log --first-parent --diff-merges=off -p master
 log -p --first-parent master
 log -p --diff-merges=first-parent master
 log --diff-merges=first-parent master
+log --diff-merges=first-parent --diff-merges=hide master
 log -m -p --first-parent master
 log -m -p master
 log --cc -m -p master
@@ -460,7 +461,18 @@ EOF
 test_expect_success 'log -m matches pure log' '
 	git log master >result &&
 	process_diffs result >expected &&
-	git log -m >result &&
+	git log -m master >result &&
+	process_diffs result >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'log --diff-merges=on matches -m only with --diff-merges=hide' '
+	git log -m master >result &&
+	process_diffs result >expected &&
+	git log --diff-merges=on master >result &&
+	process_diffs result >actual &&
+	! test_cmp expected actual &&
+	git log --diff-merges=on --diff-merges=hide master >result &&
 	process_diffs result >actual &&
 	test_cmp expected actual
 '
@@ -469,6 +481,14 @@ test_expect_success 'log --diff-merges=on matches --diff-merges=separate' '
 	git log -p --diff-merges=separate master >result &&
 	process_diffs result >expected &&
 	git log -p --diff-merges=on master >result &&
+	process_diffs result >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'log --diff-merges=<V1>,<V2>' '
+	git log --diff-merges=1,hide master >result &&
+	process_diffs result >expected &&
+	git log --diff-merges=1 --diff-merges=hide master >result &&
 	process_diffs result >actual &&
 	test_cmp expected actual
 '
@@ -492,6 +512,55 @@ test_expect_success 'git config log.diffMerges first-parent vs -m' '
 	process_diffs result >expected &&
 	test_config log.diffMerges first-parent &&
 	git log -p -m master >result &&
+	process_diffs result >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'git config log.diffMerges hide: has effect' '
+	git log --diff-merges=on master >result &&
+	process_diffs result >no-hide &&
+	test_config log.diffMerges hide &&
+	git log --diff-merges=on master >result &&
+	process_diffs result >hide &&
+	! test_cmp no-hide hide
+'
+
+test_expect_success 'git config log.diffMerges no-hide: is the default' '
+	git log --diff-merges=on master >result &&
+	process_diffs result >default &&
+	test_config log.diffMerges no-hide &&
+	git log --diff-merges=on master >result &&
+	process_diffs result >no-hide &&
+	test_cmp default no-hide
+'
+
+# As "-m" is synonym for "--diff-merges=hide --diff-merges=on", the
+# "log.diffMerges=hide" configuration should have no effect on "-m"
+test_expect_success 'git config log.diffMerges hide: has no effect on -m' '
+	git log -m master >result &&
+	process_diffs result >expected &&
+	test_config log.diffMerges hide &&
+	git log -m master >result &&
+	process_diffs result >actual &&
+	test_cmp expected actual
+'
+
+# As "--cc" implies "-p", the "log.diffMerges=hide" configuration
+# should have no effect on "--cc"
+test_expect_success 'git config log.diffMerges hide: has no effect on --cc' '
+	git log --cc master >result &&
+	process_diffs result >expected &&
+	test_config log.diffMerges hide &&
+	git log --cc master >result &&
+	process_diffs result >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'git config log.diffMerges-m-imply-p has proper effect' '
+	git log -m -p master >result &&
+	process_diffs result >expected &&
+	test_config log.diffMerges-m-imply-p true &&
+	git log -m master >result &&
 	process_diffs result >actual &&
 	test_cmp expected actual
 '
