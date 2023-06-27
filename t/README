@@ -1102,6 +1102,12 @@ see test-lib-functions.sh for the full list and their options.
    the symbolic link in the file system and a part that does; then only
    the latter part need be protected by a SYMLINKS prerequisite (see below).
 
+ - test_path_is_executable
+
+   This tests whether a file is executable and prints an error message
+   if not. This must be used only under the POSIXPERM prerequisite
+   (see below).
+
  - test_oid_init
 
    This function loads facts and useful object IDs related to the hash
