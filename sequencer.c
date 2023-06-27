@@ -3171,38 +3171,48 @@ static int walk_revs_populate_todo(struct todo_list *todo_list,
 	return 0;
 }
 
-static int create_seq_dir(struct repository *r)
+static const char *cherry_pick_action_name(enum replay_action action) {
+	switch (action) {
+	case REPLAY_REVERT:
+		return "revert";
+		break;
+	case REPLAY_PICK:
+		return "cherry-pick";
+		break;
+	default:
+		BUG("unexpected action in cherry_pick_action_name");
+	}
+}
+
+static int create_seq_dir(struct repository *r, enum replay_action requested_action)
 {
-	enum replay_action action;
+	enum replay_action in_progress_action;
+	const char *in_progress_action_name = NULL;
 	const char *in_progress_error = NULL;
 	const char *in_progress_advice = NULL;
+	const char *requested_action_name = NULL;
 	unsigned int advise_skip =
 		refs_ref_exists(get_main_ref_store(r), "REVERT_HEAD") ||
 		refs_ref_exists(get_main_ref_store(r), "CHERRY_PICK_HEAD");
 
-	if (!sequencer_get_last_command(r, &action)) {
-		switch (action) {
-		case REPLAY_REVERT:
-			in_progress_error = _("revert is already in progress");
-			in_progress_advice =
-			_("try \"git revert (--continue | %s--abort | --quit)\"");
-			break;
-		case REPLAY_PICK:
-			in_progress_error = _("cherry-pick is already in progress");
-			in_progress_advice =
-			_("try \"git cherry-pick (--continue | %s--abort | --quit)\"");
-			break;
-		default:
-			BUG("unexpected action in create_seq_dir");
-		}
+	if (!sequencer_get_last_command(r, &in_progress_action)) {
+		in_progress_action_name = cherry_pick_action_name(in_progress_action);
+		in_progress_error = _("%s is already in progress");
+		in_progress_advice =
+		_("try \"git %s (--continue | %s--abort | --quit)\"");
 	}
 	if (in_progress_error) {
-		error("%s", in_progress_error);
+		error(in_progress_error, in_progress_action_name);
 		if (advice_enabled(ADVICE_SEQUENCER_IN_USE))
 			advise(in_progress_advice,
+				in_progress_action_name,
 				advise_skip ? "--skip | " : "");
 		return -1;
 	}
+	requested_action_name = cherry_pick_action_name(requested_action);
+	if (require_clean_index(r, requested_action_name,
+				    _("Please commit or stash them."), 1, 1))
+		return -1;
 	if (mkdir(git_path_seq_dir(), 0777) < 0)
 		return error_errno(_("could not create sequencer directory '%s'"),
 				   git_path_seq_dir());
@@ -5238,12 +5248,11 @@ int sequencer_pick_revisions(struct repository *r,
 
 	/*
 	 * Start a new cherry-pick/ revert sequence; but
-	 * first, make sure that an existing one isn't in
-	 * progress
+	 * first, make sure that the index is clean and that
+	 * an existing one isn't in progress.
 	 */
-
 	if (walk_revs_populate_todo(&todo_list, opts) ||
-			create_seq_dir(r) < 0)
+			create_seq_dir(r, opts->action) < 0)
 		return -1;
 	if (repo_get_oid(r, "HEAD", &oid) && (opts->action == REPLAY_REVERT))
 		return error(_("can't revert as initial commit"));
