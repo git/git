@@ -832,7 +832,8 @@ static struct ref_iterator_vtable files_ref_iterator_vtable = {
 
 static struct ref_iterator *files_ref_iterator_begin(
 		struct ref_store *ref_store,
-		const char *prefix, unsigned int flags)
+		const char *prefix, const char **exclude_patterns,
+		unsigned int flags)
 {
 	struct files_ref_store *refs;
 	struct ref_iterator *loose_iter, *packed_iter, *overlay_iter;
@@ -877,7 +878,7 @@ static struct ref_iterator *files_ref_iterator_begin(
 	 * the packed and loose references.
 	 */
 	packed_iter = refs_ref_iterator_begin(
-			refs->packed_ref_store, prefix, 0,
+			refs->packed_ref_store, prefix, exclude_patterns, 0,
 			DO_FOR_EACH_INCLUDE_BROKEN);
 
 	overlay_iter = overlay_ref_iterator_begin(loose_iter, packed_iter);
