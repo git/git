@@ -54,6 +54,8 @@ struct credential_operation {
 
 #define CREDENTIAL_OP_END { NULL, NULL }
 
+static void credential_clear(struct credential *c);
+
 /* ----------------- Secret Service functions ----------------- */
 
 static const SecretSchema schema = {
@@ -237,6 +239,7 @@ static int keyring_erase(struct credential *c)
 {
 	GHashTable *attributes = NULL;
 	GError *error = NULL;
+	struct credential existing = CREDENTIAL_INIT;
 
 	/*
 	 * Sanity check that we actually have something to match
@@ -248,6 +251,20 @@ static int keyring_erase(struct credential *c)
 	 */
 	if (!c->protocol && !c->host && !c->path && !c->username)
 		return EXIT_FAILURE;
+
+	if (c->password) {
+		existing.host = g_strdup(c->host);
+		existing.path = g_strdup(c->path);
+		existing.port = c->port;
+		existing.protocol = g_strdup(c->protocol);
+		existing.username = g_strdup(c->username);
+		keyring_get(&existing);
+		if (existing.password && strcmp(c->password, existing.password)) {
+			credential_clear(&existing);
+			return EXIT_SUCCESS;
+		}
+		credential_clear(&existing);
+	}
 
 	attributes = make_attr_list(c);
 	secret_password_clearv_sync(&schema,
