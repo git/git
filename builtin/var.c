@@ -12,17 +12,17 @@
 
 static const char var_usage[] = "git var (-l | <variable>)";
 
-static const char *editor(int flag)
+static const char *editor(int ident_flag UNUSED)
 {
 	return git_editor();
 }
 
-static const char *sequence_editor(int flag)
+static const char *sequence_editor(int ident_flag UNUSED)
 {
 	return git_sequence_editor();
 }
 
-static const char *pager(int flag)
+static const char *pager(int ident_flag UNUSED)
 {
 	const char *pgm = git_pager(1);
 
@@ -31,7 +31,7 @@ static const char *pager(int flag)
 	return pgm;
 }
 
-static const char *default_branch(int flag)
+static const char *default_branch(int ident_flag UNUSED)
 {
 	return git_default_branch_name(1);
 }
