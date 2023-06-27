@@ -36,6 +36,11 @@ static const char *default_branch(int ident_flag UNUSED)
 	return git_default_branch_name(1);
 }
 
+static const char *shell_path(int ident_flag UNUSED)
+{
+	return SHELL_PATH;
+}
+
 struct git_var {
 	const char *name;
 	const char *(*read)(int);
@@ -47,6 +52,7 @@ static struct git_var git_vars[] = {
 	{ "GIT_SEQUENCE_EDITOR", sequence_editor },
 	{ "GIT_PAGER", pager },
 	{ "GIT_DEFAULT_BRANCH", default_branch },
+	{ "GIT_SHELL_PATH", shell_path },
 	{ "", NULL },
 };
 

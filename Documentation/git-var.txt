@@ -71,6 +71,9 @@ endif::git-default-pager[]
 GIT_DEFAULT_BRANCH::
     The name of the first branch created in newly initialized repositories.
 
+GIT_SHELL_PATH::
+    The path of the binary providing the POSIX shell for commands which use the shell.
+
 SEE ALSO
 --------
 linkgit:git-commit-tree[1]

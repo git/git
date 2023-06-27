@@ -147,6 +147,21 @@ test_expect_success 'get GIT_SEQUENCE_EDITOR with configuration and environment 
 	)
 '
 
+test_expect_success POSIXPERM 'GIT_SHELL_PATH points to a valid executable' '
+	shellpath=$(git var GIT_SHELL_PATH) &&
+	test_path_is_executable "$shellpath"
+'
+
+# We know in this environment that our shell will be one of a few fixed values
+# that all end in "sh".
+test_expect_success MINGW 'GIT_SHELL_PATH points to a suitable shell' '
+	shellpath=$(git var GIT_SHELL_PATH) &&
+	case "$shellpath" in
+	*sh) ;;
+	*) return 1;;
+	esac
+'
+
 # For git var -l, we check only a representative variable;
 # testing the whole output would make our test too brittle with
 # respect to unrelated changes in the test suite's environment.
