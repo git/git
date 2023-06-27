@@ -4,7 +4,7 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 #define USE_THE_INDEX_VARIABLE
-#include "cache.h"
+#include "builtin.h"
 #include "bulk-checkin.h"
 #include "config.h"
 #include "environment.h"
@@ -15,15 +15,16 @@
 #include "quote.h"
 #include "cache-tree.h"
 #include "tree-walk.h"
-#include "builtin.h"
 #include "object-file.h"
 #include "refs.h"
 #include "resolve-undo.h"
 #include "parse-options.h"
 #include "pathspec.h"
 #include "dir.h"
+#include "read-cache.h"
 #include "repository.h"
 #include "setup.h"
+#include "sparse-index.h"
 #include "split-index.h"
 #include "symlinks.h"
 #include "fsmonitor.h"

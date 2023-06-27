@@ -5,7 +5,7 @@
 #include "environment.h"
 #include "hex.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "repository.h"
 #include "tmp-objdir.h"
 #include "commit.h"
@@ -16,6 +16,7 @@
 #include "reflog-walk.h"
 #include "refs.h"
 #include "replace-object.h"
+#include "revision.h"
 #include "string-list.h"
 #include "color.h"
 #include "gpg-interface.h"
@@ -25,6 +26,7 @@
 #include "range-diff.h"
 #include "strmap.h"
 #include "tree.h"
+#include "wildmatch.h"
 #include "write-or-die.h"
 
 static struct decoration name_decoration = { "object names" };

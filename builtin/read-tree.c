@@ -5,7 +5,7 @@
  */
 
 #define USE_THE_INDEX_VARIABLE
-#include "cache.h"
+#include "builtin.h"
 #include "config.h"
 #include "gettext.h"
 #include "hex.h"
@@ -17,11 +17,11 @@
 #include "cache-tree.h"
 #include "unpack-trees.h"
 #include "dir.h"
-#include "builtin.h"
 #include "parse-options.h"
 #include "repository.h"
 #include "resolve-undo.h"
 #include "setup.h"
+#include "sparse-index.h"
 #include "submodule.h"
 #include "submodule-config.h"
 

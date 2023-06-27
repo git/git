@@ -5,13 +5,12 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
-#include "cache.h"
+#include "builtin.h"
 #include "repository.h"
 #include "config.h"
 #include "convert.h"
 #include "quote.h"
 #include "dir.h"
-#include "builtin.h"
 #include "gettext.h"
 #include "object-name.h"
 #include "strbuf.h"
@@ -20,9 +19,12 @@
 #include "parse-options.h"
 #include "resolve-undo.h"
 #include "string-list.h"
+#include "path.h"
 #include "pathspec.h"
+#include "read-cache.h"
 #include "run-command.h"
 #include "setup.h"
+#include "sparse-index.h"
 #include "submodule.h"
 #include "submodule-config.h"
 #include "object-store.h"
@@ -541,143 +543,6 @@ static int get_common_prefix_len(const char *common_prefix)
 		common_prefix_len--;
 
 	return common_prefix_len;
-}
-
-static int read_one_entry_opt(struct index_state *istate,
-			      const struct object_id *oid,
-			      struct strbuf *base,
-			      const char *pathname,
-			      unsigned mode, int opt)
-{
-	int len;
-	struct cache_entry *ce;
-
-	if (S_ISDIR(mode))
-		return READ_TREE_RECURSIVE;
-
-	len = strlen(pathname);
-	ce = make_empty_cache_entry(istate, base->len + len);
-
-	ce->ce_mode = create_ce_mode(mode);
-	ce->ce_flags = create_ce_flags(1);
-	ce->ce_namelen = base->len + len;
-	memcpy(ce->name, base->buf, base->len);
-	memcpy(ce->name + base->len, pathname, len+1);
-	oidcpy(&ce->oid, oid);
-	return add_index_entry(istate, ce, opt);
-}
-
-static int read_one_entry(const struct object_id *oid, struct strbuf *base,
-			  const char *pathname, unsigned mode,
-			  void *context)
-{
-	struct index_state *istate = context;
-	return read_one_entry_opt(istate, oid, base, pathname,
-				  mode,
-				  ADD_CACHE_OK_TO_ADD|ADD_CACHE_SKIP_DFCHECK);
-}
-
-/*
- * This is used when the caller knows there is no existing entries at
- * the stage that will conflict with the entry being added.
- */
-static int read_one_entry_quick(const struct object_id *oid, struct strbuf *base,
-				const char *pathname, unsigned mode,
-				void *context)
-{
-	struct index_state *istate = context;
-	return read_one_entry_opt(istate, oid, base, pathname,
-				  mode, ADD_CACHE_JUST_APPEND);
-}
-
-/*
- * Read the tree specified with --with-tree option
- * (typically, HEAD) into stage #1 and then
- * squash them down to stage #0.  This is used for
- * --error-unmatch to list and check the path patterns
- * that were given from the command line.  We are not
- * going to write this index out.
- */
-void overlay_tree_on_index(struct index_state *istate,
-			   const char *tree_name, const char *prefix)
-{
-	struct tree *tree;
-	struct object_id oid;
-	struct pathspec pathspec;
-	struct cache_entry *last_stage0 = NULL;
-	int i;
-	read_tree_fn_t fn = NULL;
-	int err;
-
-	if (repo_get_oid(the_repository, tree_name, &oid))
-		die("tree-ish %s not found.", tree_name);
-	tree = parse_tree_indirect(&oid);
-	if (!tree)
-		die("bad tree-ish %s", tree_name);
-
-	/* Hoist the unmerged entries up to stage #3 to make room */
-	/* TODO: audit for interaction with sparse-index. */
-	ensure_full_index(istate);
-	for (i = 0; i < istate->cache_nr; i++) {
-		struct cache_entry *ce = istate->cache[i];
-		if (!ce_stage(ce))
-			continue;
-		ce->ce_flags |= CE_STAGEMASK;
-	}
-
-	if (prefix) {
-		static const char *(matchbuf[1]);
-		matchbuf[0] = NULL;
-		parse_pathspec(&pathspec, PATHSPEC_ALL_MAGIC,
-			       PATHSPEC_PREFER_CWD, prefix, matchbuf);
-	} else
-		memset(&pathspec, 0, sizeof(pathspec));
-
-	/*
-	 * See if we have cache entry at the stage.  If so,
-	 * do it the original slow way, otherwise, append and then
-	 * sort at the end.
-	 */
-	for (i = 0; !fn && i < istate->cache_nr; i++) {
-		const struct cache_entry *ce = istate->cache[i];
-		if (ce_stage(ce) == 1)
-			fn = read_one_entry;
-	}
-
-	if (!fn)
-		fn = read_one_entry_quick;
-	err = read_tree(the_repository, tree, &pathspec, fn, istate);
-	clear_pathspec(&pathspec);
-	if (err)
-		die("unable to read tree entries %s", tree_name);
-
-	/*
-	 * Sort the cache entry -- we need to nuke the cache tree, though.
-	 */
-	if (fn == read_one_entry_quick) {
-		cache_tree_free(&istate->cache_tree);
-		QSORT(istate->cache, istate->cache_nr, cmp_cache_name_compare);
-	}
-
-	for (i = 0; i < istate->cache_nr; i++) {
-		struct cache_entry *ce = istate->cache[i];
-		switch (ce_stage(ce)) {
-		case 0:
-			last_stage0 = ce;
-			/* fallthru */
-		default:
-			continue;
-		case 1:
-			/*
-			 * If there is stage #0 entry for this, we do not
-			 * need to show it.  We use CE_UPDATE bit to mark
-			 * such an entry.
-			 */
-			if (last_stage0 &&
-			    !strcmp(last_stage0->name, ce->name))
-				ce->ce_flags |= CE_UPDATE;
-		}
-	}
 }
 
 static const char * const ls_files_usage[] = {

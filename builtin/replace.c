@@ -8,22 +8,23 @@
  * git-tag.sh and mktag.c by Linus Torvalds.
  */
 
-#include "cache.h"
-#include "config.h"
 #include "builtin.h"
+#include "config.h"
 #include "editor.h"
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
 #include "refs.h"
 #include "parse-options.h"
+#include "path.h"
 #include "run-command.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "replace-object.h"
 #include "repository.h"
 #include "tag.h"
+#include "wildmatch.h"
 
 static const char * const git_replace_usage[] = {
 	N_("git replace [-f] <object> <replacement>"),

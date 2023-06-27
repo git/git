@@ -7,7 +7,7 @@
  */
 
 #define USE_THE_INDEX_VARIABLE
-#include "cache.h"
+#include "builtin.h"
 #include "abspath.h"
 #include "advice.h"
 #include "alloc.h"
@@ -18,7 +18,6 @@
 #include "hex.h"
 #include "object-name.h"
 #include "parse-options.h"
-#include "builtin.h"
 #include "lockfile.h"
 #include "run-command.h"
 #include "hook.h"
@@ -28,6 +27,7 @@
 #include "refspec.h"
 #include "commit.h"
 #include "diffcore.h"
+#include "path.h"
 #include "revision.h"
 #include "unpack-trees.h"
 #include "cache-tree.h"
@@ -37,6 +37,7 @@
 #include "color.h"
 #include "rerere.h"
 #include "help.h"
+#include "merge.h"
 #include "merge-recursive.h"
 #include "merge-ort-wrappers.h"
 #include "resolve-undo.h"

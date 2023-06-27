@@ -1,5 +1,4 @@
 #include "builtin.h"
-#include "cache.h"
 #include "copy.h"
 #include "environment.h"
 #include "gettext.h"
@@ -12,6 +11,7 @@
 #include "strvec.h"
 #include "run-command.h"
 #include "oid-array.h"
+#include "path.h"
 #include "prompt.h"
 #include "quote.h"
 #include "revision.h"

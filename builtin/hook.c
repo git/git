@@ -1,4 +1,3 @@
-#include "cache.h"
 #include "builtin.h"
 #include "config.h"
 #include "gettext.h"
