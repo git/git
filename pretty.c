@@ -1251,6 +1251,27 @@ static int format_trailer_match_cb(const struct strbuf *key, void *ud)
 	return 0;
 }
 
+static struct strbuf *expand_separator(struct strbuf *sb,
+				       const char *argval, size_t arglen)
+{
+	char *fmt = xstrndup(argval, arglen);
+	const char *format = fmt;
+
+	strbuf_reset(sb);
+	while (strbuf_expand_step(sb, &format)) {
+		size_t len;
+
+		if (skip_prefix(format, "%", &format))
+			strbuf_addch(sb, '%');
+		else if ((len = strbuf_expand_literal(sb, format)))
+			format += len;
+		else
+			strbuf_addch(sb, '%');
+	}
+	free(fmt);
+	return sb;
+}
+
 int format_set_trailers_options(struct process_trailer_options *opts,
 				struct string_list *filter_list,
 				struct strbuf *sepbuf,
@@ -1279,21 +1300,9 @@ int format_set_trailers_options(struct process_trailer_options *opts,
 			opts->filter_data = filter_list;
 			opts->only_trailers = 1;
 		} else if (match_placeholder_arg_value(*arg, "separator", arg, &argval, &arglen)) {
-			char *fmt;
-
-			strbuf_reset(sepbuf);
-			fmt = xstrndup(argval, arglen);
-			strbuf_expand(sepbuf, fmt, strbuf_expand_literal_cb, NULL);
-			free(fmt);
-			opts->separator = sepbuf;
+			opts->separator = expand_separator(sepbuf, argval, arglen);
 		} else if (match_placeholder_arg_value(*arg, "key_value_separator", arg, &argval, &arglen)) {
-			char *fmt;
-
-			strbuf_reset(kvsepbuf);
-			fmt = xstrndup(argval, arglen);
-			strbuf_expand(kvsepbuf, fmt, strbuf_expand_literal_cb, NULL);
-			free(fmt);
-			opts->key_value_separator = kvsepbuf;
+			opts->key_value_separator = expand_separator(kvsepbuf, argval, arglen);
 		} else if (!match_placeholder_bool_arg(*arg, "only", arg, &opts->only_trailers) &&
 			   !match_placeholder_bool_arg(*arg, "unfold", arg, &opts->unfold) &&
 			   !match_placeholder_bool_arg(*arg, "keyonly", arg, &opts->key_only) &&
@@ -1387,7 +1396,7 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 	char **slot;
 
 	/* these are independent of the commit */
-	res = strbuf_expand_literal_cb(sb, placeholder, NULL);
+	res = strbuf_expand_literal(sb, placeholder);
 	if (res)
 		return res;
 
@@ -1805,7 +1814,7 @@ static size_t format_and_pad_commit(struct strbuf *sb, /* in UTF-8 */
 
 static size_t format_commit_item(struct strbuf *sb, /* in UTF-8 */
 				 const char *placeholder,
-				 void *context)
+				 struct format_commit_context *context)
 {
 	size_t consumed, orig_len;
 	enum {
@@ -1844,7 +1853,7 @@ static size_t format_commit_item(struct strbuf *sb, /* in UTF-8 */
 	}
 
 	orig_len = sb->len;
-	if (((struct format_commit_context *)context)->flush_type != no_flush)
+	if ((context)->flush_type != no_flush)
 		consumed = format_and_pad_commit(sb, placeholder, context);
 	else
 		consumed = format_commit_one(sb, placeholder, context);
@@ -1863,30 +1872,6 @@ static size_t format_commit_item(struct strbuf *sb, /* in UTF-8 */
 	return consumed + 1;
 }
 
-static size_t userformat_want_item(struct strbuf *sb UNUSED,
-				   const char *placeholder,
-				   void *context)
-{
-	struct userformat_want *w = context;
-
-	if (*placeholder == '+' || *placeholder == '-' || *placeholder == ' ')
-		placeholder++;
-
-	switch (*placeholder) {
-	case 'N':
-		w->notes = 1;
-		break;
-	case 'S':
-		w->source = 1;
-		break;
-	case 'd':
-	case 'D':
-		w->decorate = 1;
-		break;
-	}
-	return 0;
-}
-
 void userformat_find_requirements(const char *fmt, struct userformat_want *w)
 {
 	struct strbuf dummy = STRBUF_INIT;
@@ -1896,7 +1881,26 @@ void userformat_find_requirements(const char *fmt, struct userformat_want *w)
 			return;
 		fmt = user_format;
 	}
-	strbuf_expand(&dummy, fmt, userformat_want_item, w);
+	while (strbuf_expand_step(&dummy, &fmt)) {
+		if (skip_prefix(fmt, "%", &fmt))
+			continue;
+
+		if (*fmt == '+' || *fmt == '-' || *fmt == ' ')
+			fmt++;
+
+		switch (*fmt) {
+		case 'N':
+			w->notes = 1;
+			break;
+		case 'S':
+			w->source = 1;
+			break;
+		case 'd':
+		case 'D':
+			w->decorate = 1;
+			break;
+		}
+	}
 	strbuf_release(&dummy);
 }
 
@@ -1914,7 +1918,16 @@ void repo_format_commit_message(struct repository *r,
 	const char *output_enc = pretty_ctx->output_encoding;
 	const char *utf8 = "UTF-8";
 
-	strbuf_expand(sb, format, format_commit_item, &context);
+	while (strbuf_expand_step(sb, &format)) {
+		size_t len;
+
+		if (skip_prefix(format, "%", &format))
+			strbuf_addch(sb, '%');
+		else if ((len = format_commit_item(sb, format, &context)))
+			format += len;
+		else
+			strbuf_addch(sb, '%');
+	}
 	rewrap_message_tail(sb, &context, 0, 0, 0);
 
 	/*

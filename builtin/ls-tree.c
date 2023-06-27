@@ -55,63 +55,6 @@ struct ls_tree_options {
 	const char *format;
 };
 
-struct show_tree_data {
-	struct ls_tree_options *options;
-	unsigned mode;
-	enum object_type type;
-	const struct object_id *oid;
-	const char *pathname;
-	struct strbuf *base;
-};
-
-static size_t expand_show_tree(struct strbuf *sb, const char *start,
-			       void *context)
-{
-	struct show_tree_data *data = context;
-	struct ls_tree_options *options = data->options;
-	const char *end;
-	const char *p;
-	unsigned int errlen;
-	size_t len = strbuf_expand_literal_cb(sb, start, NULL);
-
-	if (len)
-		return len;
-	if (*start != '(')
-		die(_("bad ls-tree format: element '%s' does not start with '('"), start);
-
-	end = strchr(start + 1, ')');
-	if (!end)
-		die(_("bad ls-tree format: element '%s' does not end in ')'"), start);
-
-	len = end - start + 1;
-	if (skip_prefix(start, "(objectmode)", &p)) {
-		strbuf_addf(sb, "%06o", data->mode);
-	} else if (skip_prefix(start, "(objecttype)", &p)) {
-		strbuf_addstr(sb, type_name(data->type));
-	} else if (skip_prefix(start, "(objectsize:padded)", &p)) {
-		expand_objectsize(sb, data->oid, data->type, 1);
-	} else if (skip_prefix(start, "(objectsize)", &p)) {
-		expand_objectsize(sb, data->oid, data->type, 0);
-	} else if (skip_prefix(start, "(objectname)", &p)) {
-		strbuf_add_unique_abbrev(sb, data->oid, options->abbrev);
-	} else if (skip_prefix(start, "(path)", &p)) {
-		const char *name = data->base->buf;
-		const char *prefix = options->chomp_prefix ? options->ls_tree_prefix : NULL;
-		struct strbuf sbuf = STRBUF_INIT;
-		size_t baselen = data->base->len;
-
-		strbuf_addstr(data->base, data->pathname);
-		name = relative_path(data->base->buf, prefix, &sbuf);
-		quote_c_style(name, sb, NULL, 0);
-		strbuf_setlen(data->base, baselen);
-		strbuf_release(&sbuf);
-	} else {
-		errlen = (unsigned long)len;
-		die(_("bad ls-tree format: %%%.*s"), errlen, start);
-	}
-	return len;
-}
-
 static int show_recursive(struct ls_tree_options *options, const char *base,
 			  size_t baselen, const char *pathname)
 {
@@ -150,14 +93,7 @@ static int show_tree_fmt(const struct object_id *oid, struct strbuf *base,
 	int recurse = 0;
 	struct strbuf sb = STRBUF_INIT;
 	enum object_type type = object_type(mode);
-	struct show_tree_data cb_data = {
-		.options = options,
-		.mode = mode,
-		.type = type,
-		.oid = oid,
-		.pathname = pathname,
-		.base = base,
-	};
+	const char *format = options->format;
 
 	if (type == OBJ_TREE && show_recursive(options, base->buf, base->len, pathname))
 		recurse = READ_TREE_RECURSIVE;
@@ -166,7 +102,46 @@ static int show_tree_fmt(const struct object_id *oid, struct strbuf *base,
 	if (type == OBJ_BLOB && (options->ls_options & LS_TREE_ONLY))
 		return 0;
 
-	strbuf_expand(&sb, options->format, expand_show_tree, &cb_data);
+	while (strbuf_expand_step(&sb, &format)) {
+		const char *end;
+		size_t len;
+
+		if (skip_prefix(format, "%", &format))
+			strbuf_addch(&sb, '%');
+		else if ((len = strbuf_expand_literal(&sb, format)))
+			format += len;
+		else if (*format != '(')
+			die(_("bad ls-tree format: element '%s' "
+			      "does not start with '('"), format);
+		else if (!(end = strchr(format + 1, ')')))
+			die(_("bad ls-tree format: element '%s' "
+			      "does not end in ')'"), format);
+		else if (skip_prefix(format, "(objectmode)", &format))
+			strbuf_addf(&sb, "%06o", mode);
+		else if (skip_prefix(format, "(objecttype)", &format))
+			strbuf_addstr(&sb, type_name(type));
+		else if (skip_prefix(format, "(objectsize:padded)", &format))
+			expand_objectsize(&sb, oid, type, 1);
+		else if (skip_prefix(format, "(objectsize)", &format))
+			expand_objectsize(&sb, oid, type, 0);
+		else if (skip_prefix(format, "(objectname)", &format))
+			strbuf_add_unique_abbrev(&sb, oid, options->abbrev);
+		else if (skip_prefix(format, "(path)", &format)) {
+			const char *name;
+			const char *prefix = options->chomp_prefix ?
+					     options->ls_tree_prefix : NULL;
+			struct strbuf sbuf = STRBUF_INIT;
+			size_t baselen = base->len;
+
+			strbuf_addstr(base, pathname);
+			name = relative_path(base->buf, prefix, &sbuf);
+			quote_c_style(name, &sb, NULL, 0);
+			strbuf_setlen(base, baselen);
+			strbuf_release(&sbuf);
+		} else
+			die(_("bad ls-tree format: %%%.*s"),
+			    (int)(end - format + 1), format);
+	}
 	strbuf_addch(&sb, options->null_termination ? '\0' : '\n');
 	fwrite(sb.buf, sb.len, 1, stdout);
 	strbuf_release(&sb);
