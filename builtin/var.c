@@ -4,6 +4,7 @@
  * Copyright (C) Eric Biederman, 2005
  */
 #include "builtin.h"
+#include "attr.h"
 #include "config.h"
 #include "editor.h"
 #include "ident.h"
@@ -51,6 +52,26 @@ static char *shell_path(int ident_flag UNUSED)
 	return xstrdup(SHELL_PATH);
 }
 
+static char *git_attr_val_system(int ident_flag UNUSED)
+{
+	if (git_attr_system_is_enabled()) {
+		char *file = xstrdup(git_attr_system_file());
+		normalize_path_copy(file, file);
+		return file;
+	}
+	return NULL;
+}
+
+static char *git_attr_val_global(int ident_flag UNUSED)
+{
+	char *file = xstrdup(git_attr_global_file());
+	if (file) {
+		normalize_path_copy(file, file);
+		return file;
+	}
+	return NULL;
+}
+
 struct git_var {
 	const char *name;
 	char *(*read)(int);
@@ -83,6 +104,14 @@ static struct git_var git_vars[] = {
 	{
 		.name = "GIT_SHELL_PATH",
 		.read = shell_path,
+	},
+	{
+		.name = "GIT_ATTR_SYSTEM",
+		.read = git_attr_val_system,
+	},
+	{
+		.name = "GIT_ATTR_GLOBAL",
+		.read = git_attr_val_global,
 	},
 	{
 		.name = "",

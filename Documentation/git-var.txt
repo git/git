@@ -74,6 +74,12 @@ GIT_DEFAULT_BRANCH::
 GIT_SHELL_PATH::
     The path of the binary providing the POSIX shell for commands which use the shell.
 
+GIT_ATTR_SYSTEM::
+    The path to the system linkgit:gitattributes[5] file, if one is enabled.
+
+GIT_ATTR_GLOBAL::
+    The path to the global (per-user) linkgit:gitattributes[5] file.
+
 SEE ALSO
 --------
 linkgit:git-commit-tree[1]
