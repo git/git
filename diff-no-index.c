@@ -41,7 +41,7 @@ static int read_directory_contents(const char *path, struct string_list *list)
  */
 static const char file_from_standard_input[] = "-";
 
-static int get_mode(const char *path, int *mode)
+static int get_mode(const char *path, int is_pipe, int *mode)
 {
 	struct stat st;
 
@@ -51,7 +51,7 @@ static int get_mode(const char *path, int *mode)
 	else if (!strcasecmp(path, "nul"))
 		*mode = 0;
 #endif
-	else if (path == file_from_standard_input)
+	else if (is_pipe)
 		*mode = create_ce_mode(0666);
 	else if (lstat(path, &st))
 		return error("Could not access '%s'", path);
@@ -60,23 +60,28 @@ static int get_mode(const char *path, int *mode)
 	return 0;
 }
 
-static int populate_from_stdin(struct diff_filespec *s)
+static void populate_from_pipe(struct diff_filespec *s, int is_stdin)
 {
 	struct strbuf buf = STRBUF_INIT;
 	size_t size = 0;
+	int fd = 0;
 
-	if (strbuf_read(&buf, 0, 0) < 0)
-		return error_errno("error while reading from stdin");
+	if (!is_stdin)
+		fd = xopen(s->path, O_RDONLY);
+	if (strbuf_read(&buf, fd, 0) < 0)
+		die_errno("error while reading from stdin");
+	if (!is_stdin)
+		close(fd);
 
 	s->should_munmap = 0;
 	s->data = strbuf_detach(&buf, &size);
 	s->size = size;
 	s->should_free = 1;
 	s->is_stdin = 1;
-	return 0;
 }
 
-static struct diff_filespec *noindex_filespec(const char *name, int mode)
+static struct diff_filespec *noindex_filespec(const char *name, int is_pipe,
+					      int mode)
 {
 	struct diff_filespec *s;
 
@@ -84,17 +89,19 @@ static struct diff_filespec *noindex_filespec(const char *name, int mode)
 		name = "/dev/null";
 	s = alloc_filespec(name);
 	fill_filespec(s, null_oid(), 0, mode);
-	if (name == file_from_standard_input)
-		populate_from_stdin(s);
+	if (is_pipe)
+		populate_from_pipe(s, name == file_from_standard_input);
 	return s;
 }
 
 static int queue_diff(struct diff_options *o,
-		      const char *name1, const char *name2)
+		      const char *name1, int is_pipe1,
+		      const char *name2, int is_pipe2)
 {
 	int mode1 = 0, mode2 = 0;
 
-	if (get_mode(name1, &mode1) || get_mode(name2, &mode2))
+	if (get_mode(name1, is_pipe1, &mode1) ||
+	    get_mode(name2, is_pipe2, &mode2))
 		return -1;
 
 	if (mode1 && mode2 && S_ISDIR(mode1) != S_ISDIR(mode2)) {
@@ -102,14 +109,14 @@ static int queue_diff(struct diff_options *o,
 
 		if (S_ISDIR(mode1)) {
 			/* 2 is file that is created */
-			d1 = noindex_filespec(NULL, 0);
-			d2 = noindex_filespec(name2, mode2);
+			d1 = noindex_filespec(NULL, 0, 0);
+			d2 = noindex_filespec(name2, is_pipe2, mode2);
 			name2 = NULL;
 			mode2 = 0;
 		} else {
 			/* 1 is file that is deleted */
-			d1 = noindex_filespec(name1, mode1);
-			d2 = noindex_filespec(NULL, 0);
+			d1 = noindex_filespec(name1, is_pipe1, mode1);
+			d2 = noindex_filespec(NULL, 0, 0);
 			name1 = NULL;
 			mode1 = 0;
 		}
@@ -174,7 +181,7 @@ static int queue_diff(struct diff_options *o,
 				n2 = buffer2.buf;
 			}
 
-			ret = queue_diff(o, n1, n2);
+			ret = queue_diff(o, n1, 0, n2, 0);
 		}
 		string_list_clear(&p1, 0);
 		string_list_clear(&p2, 0);
@@ -190,8 +197,8 @@ static int queue_diff(struct diff_options *o,
 			SWAP(name1, name2);
 		}
 
-		d1 = noindex_filespec(name1, mode1);
-		d2 = noindex_filespec(name2, mode2);
+		d1 = noindex_filespec(name1, is_pipe1, mode1);
+		d2 = noindex_filespec(name2, is_pipe2, mode2);
 		diff_queue(&diff_queued_diff, d1, d2);
 		return 0;
 	}
@@ -214,18 +221,11 @@ static void append_basename(struct strbuf *path, const char *dir, const char *fi
  * Note that we append the basename of F to D/, so "diff a/b/file D"
  * becomes "diff a/b/file D/file", not "diff a/b/file D/a/b/file".
  */
-static void fixup_paths(const char **path, struct strbuf *replacement)
+static void fixup_paths(const char **path, int *is_dir, struct strbuf *replacement)
 {
-	unsigned int isdir0, isdir1;
-
-	if (path[0] == file_from_standard_input ||
-	    path[1] == file_from_standard_input)
+	if (is_dir[0] == is_dir[1])
 		return;
-	isdir0 = is_directory(path[0]);
-	isdir1 = is_directory(path[1]);
-	if (isdir0 == isdir1)
-		return;
-	if (isdir0) {
+	if (is_dir[0]) {
 		append_basename(replacement, path[0], path[1]);
 		path[0] = replacement->buf;
 	} else {
@@ -247,6 +247,8 @@ int diff_no_index(struct rev_info *revs,
 	int ret = 1;
 	const char *paths[2];
 	char *to_free[ARRAY_SIZE(paths)] = { 0 };
+	int is_dir[ARRAY_SIZE(paths)] = { 0 };
+	int is_pipe[ARRAY_SIZE(paths)] = { 0 };
 	struct strbuf replacement = STRBUF_INIT;
 	const char *prefix = revs->prefix;
 	struct option no_index_options[] = {
@@ -268,18 +270,30 @@ int diff_no_index(struct rev_info *revs,
 	FREE_AND_NULL(options);
 	for (i = 0; i < 2; i++) {
 		const char *p = argv[i];
-		if (!strcmp(p, "-"))
+		if (!strcmp(p, "-")) {
 			/*
 			 * stdin should be spelled as "-"; if you have
 			 * path that is "-", spell it as "./-".
 			 */
 			p = file_from_standard_input;
-		else if (prefix)
-			p = to_free[i] = prefix_filename(prefix, p);
+			is_pipe[i] = 1;
+		} else {
+			struct stat st;
+
+			if (prefix)
+				p = to_free[i] = prefix_filename(prefix, p);
+			if (stat(p, &st))
+				;
+			else if (S_ISDIR(st.st_mode))
+				is_dir[i] = 1;
+			else if (S_ISFIFO(st.st_mode))
+				is_pipe[i] = 1;
+		}
 		paths[i] = p;
 	}
 
-	fixup_paths(paths, &replacement);
+	if (!is_pipe[0] && !is_pipe[1])
+		fixup_paths(paths, is_dir, &replacement);
 
 	revs->diffopt.skip_stat_unmatch = 1;
 	if (!revs->diffopt.output_format)
@@ -296,7 +310,8 @@ int diff_no_index(struct rev_info *revs,
 	setup_diff_pager(&revs->diffopt);
 	revs->diffopt.flags.exit_with_status = 1;
 
-	if (queue_diff(&revs->diffopt, paths[0], paths[1]))
+	if (queue_diff(&revs->diffopt,
+		       paths[0], is_pipe[0], paths[1], is_pipe[1]))
 		goto out;
 	diff_set_mnemonic_prefix(&revs->diffopt, "1/", "2/");
 	diffcore_std(&revs->diffopt);
