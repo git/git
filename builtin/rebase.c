@@ -773,7 +773,8 @@ static void parse_rebase_merges_value(struct rebase_options *options, const char
 		die(_("Unknown rebase-merges mode: %s"), value);
 }
 
-static int rebase_config(const char *var, const char *value, void *data)
+static int rebase_config(const char *var, const char *value,
+			 const struct config_context *ctx, void *data)
 {
 	struct rebase_options *opts = data;
 
@@ -832,7 +833,7 @@ static int rebase_config(const char *var, const char *value, void *data)
 		return git_config_string(&opts->default_backend, var, value);
 	}
 
-	return git_default_config(var, value, data);
+	return git_default_config(var, value, ctx, data);
 }
 
 static int checkout_up_to_date(struct rebase_options *options)
