@@ -12,47 +12,57 @@
 
 static const char var_usage[] = "git var (-l | <variable>)";
 
-static const char *editor(int ident_flag UNUSED)
+static char *committer(int ident_flag)
 {
-	return git_editor();
+	return xstrdup_or_null(git_committer_info(ident_flag));
 }
 
-static const char *sequence_editor(int ident_flag UNUSED)
+static char *author(int ident_flag)
 {
-	return git_sequence_editor();
+	return xstrdup_or_null(git_author_info(ident_flag));
 }
 
-static const char *pager(int ident_flag UNUSED)
+static char *editor(int ident_flag UNUSED)
+{
+	return xstrdup_or_null(git_editor());
+}
+
+static char *sequence_editor(int ident_flag UNUSED)
+{
+	return xstrdup_or_null(git_sequence_editor());
+}
+
+static char *pager(int ident_flag UNUSED)
 {
 	const char *pgm = git_pager(1);
 
 	if (!pgm)
 		pgm = "cat";
-	return pgm;
+	return xstrdup(pgm);
 }
 
-static const char *default_branch(int ident_flag UNUSED)
+static char *default_branch(int ident_flag UNUSED)
 {
-	return git_default_branch_name(1);
+	return xstrdup_or_null(git_default_branch_name(1));
 }
 
-static const char *shell_path(int ident_flag UNUSED)
+static char *shell_path(int ident_flag UNUSED)
 {
-	return SHELL_PATH;
+	return xstrdup(SHELL_PATH);
 }
 
 struct git_var {
 	const char *name;
-	const char *(*read)(int);
+	char *(*read)(int);
 };
 static struct git_var git_vars[] = {
 	{
 		.name = "GIT_COMMITTER_IDENT",
-		.read = git_committer_info,
+		.read = committer,
 	},
 	{
 		.name = "GIT_AUTHOR_IDENT",
-		.read = git_author_info,
+		.read = author,
 	},
 	{
 		.name = "GIT_EDITOR",
@@ -83,11 +93,13 @@ static struct git_var git_vars[] = {
 static void list_vars(void)
 {
 	struct git_var *ptr;
-	const char *val;
+	char *val;
 
 	for (ptr = git_vars; ptr->read; ptr++)
-		if ((val = ptr->read(0)))
+		if ((val = ptr->read(0))) {
 			printf("%s=%s\n", ptr->name, val);
+			free(val);
+		}
 }
 
 static const struct git_var *get_git_var(const char *var)
@@ -113,7 +125,7 @@ static int show_config(const char *var, const char *value, void *cb)
 int cmd_var(int argc, const char **argv, const char *prefix UNUSED)
 {
 	const struct git_var *git_var;
-	const char *val;
+	char *val;
 
 	if (argc != 2)
 		usage(var_usage);
@@ -134,6 +146,7 @@ int cmd_var(int argc, const char **argv, const char *prefix UNUSED)
 		return 1;
 
 	printf("%s\n", val);
+	free(val);
 
 	return 0;
 }
