@@ -173,6 +173,17 @@ test_fail_interactive_rebase () {
 	)
 }
 
+test_expect_success 'git rebase with failed pick' '
+	test_fail_interactive_rebase "exec_>bar pick 1" --onto C A E &&
+	rm bar &&
+	git rebase --continue &&
+	echo rebase >expected.args &&
+	cat >expected.data <<-EOF &&
+	$(git rev-parse E) $(git rev-parse HEAD)
+	EOF
+	verify_hook_input
+'
+
 test_expect_success 'git rebase -i (unchanged)' '
 	git reset --hard D &&
 	clear_hook_input &&
