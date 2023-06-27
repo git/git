@@ -46,14 +46,38 @@ struct git_var {
 	const char *(*read)(int);
 };
 static struct git_var git_vars[] = {
-	{ "GIT_COMMITTER_IDENT", git_committer_info },
-	{ "GIT_AUTHOR_IDENT",   git_author_info },
-	{ "GIT_EDITOR", editor },
-	{ "GIT_SEQUENCE_EDITOR", sequence_editor },
-	{ "GIT_PAGER", pager },
-	{ "GIT_DEFAULT_BRANCH", default_branch },
-	{ "GIT_SHELL_PATH", shell_path },
-	{ "", NULL },
+	{
+		.name = "GIT_COMMITTER_IDENT",
+		.read = git_committer_info,
+	},
+	{
+		.name = "GIT_AUTHOR_IDENT",
+		.read = git_author_info,
+	},
+	{
+		.name = "GIT_EDITOR",
+		.read = editor,
+	},
+	{
+		.name = "GIT_SEQUENCE_EDITOR",
+		.read = sequence_editor,
+	},
+	{
+		.name = "GIT_PAGER",
+		.read = pager,
+	},
+	{
+		.name = "GIT_DEFAULT_BRANCH",
+		.read = default_branch,
+	},
+	{
+		.name = "GIT_SHELL_PATH",
+		.read = shell_path,
+	},
+	{
+		.name = "",
+		.read = NULL,
+	},
 };
 
 static void list_vars(void)
