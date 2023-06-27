@@ -223,4 +223,29 @@ test_expect_success "diff --no-index treats '-' as stdin" '
 	test_write_lines 1 | git diff --no-index -- a/1 - >actual &&
 	test_must_be_empty actual
 '
+
+test_expect_success PIPE,SYMLINKS 'diff --no-index reads from pipes' '
+	mkfifo old &&
+	mkfifo new &&
+	ln -s new new-link &&
+	{
+		(test_write_lines a b c >old) &
+		(test_write_lines a x c >new) &
+	} &&
+
+	cat >expect <<-EOF &&
+	diff --git a/old b/new-link
+	--- a/old
+	+++ b/new-link
+	@@ -1,3 +1,3 @@
+	 a
+	-b
+	+x
+	 c
+	EOF
+
+	test_expect_code 1 git diff --no-index old new-link >actual &&
+	test_cmp expect actual
+'
+
 test_done
