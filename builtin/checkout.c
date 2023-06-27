@@ -87,6 +87,7 @@ struct checkout_opts {
 	int ignore_unmerged;
 	int pathspec_file_nul;
 	char *pathspec_from_file;
+	int recurse_submodules;
 
 	const char *new_branch;
 	const char *new_branch_force;
@@ -1595,9 +1596,8 @@ static struct option *add_common_options(struct checkout_opts *opts,
 {
 	struct option options[] = {
 		OPT__QUIET(&opts->quiet, N_("suppress progress reporting")),
-		OPT_CALLBACK_F(0, "recurse-submodules", NULL,
-			    "checkout", "control recursive updating of submodules",
-			    PARSE_OPT_OPTARG, option_parse_recurse_submodules_worktree_updater),
+		OPT_BOOL(0, "recurse-submodules", &opts->recurse_submodules,
+			 N_("control recursive updating of submodules")),
 		OPT_BOOL(0, "progress", &opts->show_progress, N_("force progress reporting")),
 		OPT_BOOL('m', "merge", &opts->merge, N_("perform a 3-way merge with the new branch")),
 		OPT_STRING(0, "conflict", &opts->conflict_style, N_("style"),
@@ -1605,6 +1605,11 @@ static struct option *add_common_options(struct checkout_opts *opts,
 		OPT_END()
 	};
 	struct option *newopts = parse_options_concat(prevopts, options);
+	/*
+	 * we only want to act on --recurse-submodules if it was set explicitly,
+	 * so put it into unset third state.
+	 */
+	opts->recurse_submodules = -1;
 	free(prevopts);
 	return newopts;
 }
@@ -1686,6 +1691,9 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 
 	argc = parse_options(argc, argv, prefix, options,
 			     usagestr, parseopt_flags);
+
+	if (opts->recurse_submodules >= 0)
+		set_config_update_recurse_submodules(opts->recurse_submodules);
 
 	if (opts->show_progress < 0) {
 		if (opts->quiet)
