@@ -80,6 +80,20 @@ GIT_ATTR_SYSTEM::
 GIT_ATTR_GLOBAL::
     The path to the global (per-user) linkgit:gitattributes[5] file.
 
+GIT_CONFIG_SYSTEM::
+    The path to the system configuration file, if one is enabled.
+
+GIT_CONFIG_GLOBAL::
+    The path to the global (per-user) configuration files, if any.
+
+Most path values contain only one value. However, some can contain multiple
+values, which are separated by newlines, and are listed in order from highest to
+lowest priority.  Callers should be prepared for any such path value to contain
+multiple items.
+
+Note that paths are printed even if they do not exist, but not if they are
+disabled by other environment variables.
+
 SEE ALSO
 --------
 linkgit:git-commit-tree[1]

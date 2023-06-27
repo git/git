@@ -182,6 +182,49 @@ test_expect_success 'GIT_ATTR_GLOBAL points to the correct location' '
 	)
 '
 
+test_expect_success 'GIT_CONFIG_SYSTEM points to the correct location' '
+	TRASHDIR="$(test-tool path-utils normalize_path_copy "$(pwd)")" &&
+	test_must_fail env GIT_CONFIG_NOSYSTEM=1 git var GIT_CONFIG_SYSTEM &&
+	(
+		sane_unset GIT_CONFIG_NOSYSTEM &&
+		systempath=$(git var GIT_CONFIG_SYSTEM) &&
+		test "$systempath" != "" &&
+		systempath=$(GIT_CONFIG_SYSTEM=/dev/null git var GIT_CONFIG_SYSTEM) &&
+		if test_have_prereq MINGW
+		then
+			test "$systempath" = "nul"
+		else
+			test "$systempath" = "/dev/null"
+		fi &&
+		systempath=$(GIT_CONFIG_SYSTEM="$TRASHDIR/gitconfig" git var GIT_CONFIG_SYSTEM) &&
+		test "$systempath" = "$TRASHDIR/gitconfig"
+	)
+'
+
+test_expect_success 'GIT_CONFIG_GLOBAL points to the correct location' '
+	TRASHDIR="$(test-tool path-utils normalize_path_copy "$(pwd)")" &&
+	HOME="$TRASHDIR" XDG_CONFIG_HOME="$TRASHDIR/foo" git var GIT_CONFIG_GLOBAL >actual &&
+	echo "$TRASHDIR/foo/git/config" >expected &&
+	echo "$TRASHDIR/.gitconfig" >>expected &&
+	test_cmp expected actual &&
+	(
+		sane_unset XDG_CONFIG_HOME &&
+		HOME="$TRASHDIR" git var GIT_CONFIG_GLOBAL >actual &&
+		echo "$TRASHDIR/.config/git/config" >expected &&
+		echo "$TRASHDIR/.gitconfig" >>expected &&
+		test_cmp expected actual &&
+		globalpath=$(GIT_CONFIG_GLOBAL=/dev/null git var GIT_CONFIG_GLOBAL) &&
+		if test_have_prereq MINGW
+		then
+			test "$globalpath" = "nul"
+		else
+			test "$globalpath" = "/dev/null"
+		fi &&
+		globalpath=$(GIT_CONFIG_GLOBAL="$TRASHDIR/gitconfig" git var GIT_CONFIG_GLOBAL) &&
+		test "$globalpath" = "$TRASHDIR/gitconfig"
+	)
+'
+
 # For git var -l, we check only a representative variable;
 # testing the whole output would make our test too brittle with
 # respect to unrelated changes in the test suite's environment.
@@ -197,6 +240,28 @@ test_expect_success 'git var -l lists config' '
 	echo false >expect &&
 	sed -n s/core\\.bare=//p <actual >actual.bare &&
 	test_cmp expect actual.bare
+'
+
+test_expect_success 'git var -l lists multiple global configs' '
+	TRASHDIR="$(test-tool path-utils normalize_path_copy "$(pwd)")" &&
+	HOME="$TRASHDIR" XDG_CONFIG_HOME="$TRASHDIR/foo" git var -l >actual &&
+	grep "^GIT_CONFIG_GLOBAL=" actual >filtered &&
+	echo "GIT_CONFIG_GLOBAL=$TRASHDIR/foo/git/config" >expected &&
+	echo "GIT_CONFIG_GLOBAL=$TRASHDIR/.gitconfig" >>expected &&
+	test_cmp expected filtered
+'
+
+test_expect_success 'git var -l does not split multiline editors' '
+	(
+		GIT_EDITOR="!f() {
+			echo Hello!
+		}; f" &&
+		export GIT_EDITOR &&
+		echo "GIT_EDITOR=$GIT_EDITOR" >expected &&
+		git var -l >var &&
+		sed -n -e "/^GIT_EDITOR/,\$p" var | head -n 3 >actual &&
+		test_cmp expected actual
+	)
 '
 
 test_expect_success 'listing and asking for variables are exclusive' '

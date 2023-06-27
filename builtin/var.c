@@ -72,9 +72,45 @@ static char *git_attr_val_global(int ident_flag UNUSED)
 	return NULL;
 }
 
+static char *git_config_val_system(int ident_flag UNUSED)
+{
+	if (git_config_system()) {
+		char *file = git_system_config();
+		normalize_path_copy(file, file);
+		return file;
+	}
+	return NULL;
+}
+
+static char *git_config_val_global(int ident_flag UNUSED)
+{
+	struct strbuf buf = STRBUF_INIT;
+	char *user, *xdg;
+	size_t unused;
+
+	git_global_config(&user, &xdg);
+	if (xdg && *xdg) {
+		normalize_path_copy(xdg, xdg);
+		strbuf_addf(&buf, "%s\n", xdg);
+	}
+	if (user && *user) {
+		normalize_path_copy(user, user);
+		strbuf_addf(&buf, "%s\n", user);
+	}
+	free(xdg);
+	free(user);
+	strbuf_trim_trailing_newline(&buf);
+	if (buf.len == 0) {
+		strbuf_release(&buf);
+		return NULL;
+	}
+	return strbuf_detach(&buf, &unused);
+}
+
 struct git_var {
 	const char *name;
 	char *(*read)(int);
+	int multivalued;
 };
 static struct git_var git_vars[] = {
 	{
@@ -114,6 +150,15 @@ static struct git_var git_vars[] = {
 		.read = git_attr_val_global,
 	},
 	{
+		.name = "GIT_CONFIG_SYSTEM",
+		.read = git_config_val_system,
+	},
+	{
+		.name = "GIT_CONFIG_GLOBAL",
+		.read = git_config_val_global,
+		.multivalued = 1,
+	},
+	{
 		.name = "",
 		.read = NULL,
 	},
@@ -126,7 +171,17 @@ static void list_vars(void)
 
 	for (ptr = git_vars; ptr->read; ptr++)
 		if ((val = ptr->read(0))) {
-			printf("%s=%s\n", ptr->name, val);
+			if (ptr->multivalued && *val) {
+				struct string_list list = STRING_LIST_INIT_DUP;
+				int i;
+
+				string_list_split(&list, val, '\n', -1);
+				for (i = 0; i < list.nr; i++)
+					printf("%s=%s\n", ptr->name, list.items[i].string);
+				string_list_clear(&list, 0);
+			} else {
+				printf("%s=%s\n", ptr->name, val);
+			}
 			free(val);
 		}
 }
