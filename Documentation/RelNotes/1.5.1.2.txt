@@ -27,7 +27,7 @@ Fixes since v1.5.1.1
     delete branches through push.
 
   - git-blame on a very long working tree path had buffer
-    overrun problem.
+    overrun problem. 
 
   - git-apply did not like to be fed two patches in a row that created
     and then modified the same file.
