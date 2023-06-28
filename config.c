@@ -73,18 +73,8 @@ struct config_reader {
 	 *
 	 * The "source" variable will be non-NULL only when we are actually
 	 * parsing a real config source (file, blob, cmdline, etc).
-	 *
-	 * The "config_kvi" variable will be non-NULL only when we are feeding
-	 * cached config from a configset into a callback.
-	 *
-	 * They cannot be non-NULL at the same time. If they are both NULL, then
-	 * we aren't parsing anything (and depending on the function looking at
-	 * the variables, it's either a bug for it to be called in the first
-	 * place, or it's a function which can be reused for non-config
-	 * purposes, and should fall back to some sane behavior).
 	 */
 	struct config_source *source;
-	struct key_value_info *config_kvi;
 };
 /*
  * Where possible, prefer to accept "struct config_reader" as an arg than to use
@@ -96,8 +86,6 @@ static struct config_reader the_reader;
 static inline void config_reader_push_source(struct config_reader *reader,
 					     struct config_source *top)
 {
-	if (reader->config_kvi)
-		BUG("source should not be set while iterating a config set");
 	top->prev = reader->source;
 	reader->source = top;
 }
@@ -110,12 +98,6 @@ static inline struct config_source *config_reader_pop_source(struct config_reade
 	ret = reader->source;
 	reader->source = reader->source->prev;
 	return ret;
-}
-
-static inline void config_reader_set_kvi(struct config_reader *reader,
-					 struct key_value_info *kvi)
-{
-	reader->config_kvi = kvi;
 }
 
 static int pack_compression_seen;
@@ -1346,80 +1328,78 @@ int git_parse_ssize_t(const char *value, ssize_t *ret)
 	return 1;
 }
 
-static int reader_config_name(struct config_reader *reader, const char **out);
-static int reader_origin_type(struct config_reader *reader,
-			      enum config_origin_type *type);
 NORETURN
-static void die_bad_number(struct config_reader *reader, const char *name,
-			   const char *value)
+static void die_bad_number(const char *name, const char *value,
+			   const struct key_value_info *kvi)
 {
 	const char *error_type = (errno == ERANGE) ?
 		N_("out of range") : N_("invalid unit");
 	const char *bad_numeric = N_("bad numeric config value '%s' for '%s': %s");
-	const char *config_name = NULL;
-	enum config_origin_type config_origin = CONFIG_ORIGIN_UNKNOWN;
+
+	if (!kvi)
+		BUG("kvi should not be NULL");
 
 	if (!value)
 		value = "";
 
-	/* Ignoring the return value is okay since we handle missing values. */
-	reader_config_name(reader, &config_name);
-	reader_origin_type(reader, &config_origin);
-
-	if (!config_name)
+	if (!kvi->filename)
 		die(_(bad_numeric), value, name, _(error_type));
 
-	switch (config_origin) {
+	switch (kvi->origin_type) {
 	case CONFIG_ORIGIN_BLOB:
 		die(_("bad numeric config value '%s' for '%s' in blob %s: %s"),
-		    value, name, config_name, _(error_type));
+		    value, name, kvi->filename, _(error_type));
 	case CONFIG_ORIGIN_FILE:
 		die(_("bad numeric config value '%s' for '%s' in file %s: %s"),
-		    value, name, config_name, _(error_type));
+		    value, name, kvi->filename, _(error_type));
 	case CONFIG_ORIGIN_STDIN:
 		die(_("bad numeric config value '%s' for '%s' in standard input: %s"),
 		    value, name, _(error_type));
 	case CONFIG_ORIGIN_SUBMODULE_BLOB:
 		die(_("bad numeric config value '%s' for '%s' in submodule-blob %s: %s"),
-		    value, name, config_name, _(error_type));
+		    value, name, kvi->filename, _(error_type));
 	case CONFIG_ORIGIN_CMDLINE:
 		die(_("bad numeric config value '%s' for '%s' in command line %s: %s"),
-		    value, name, config_name, _(error_type));
+		    value, name, kvi->filename, _(error_type));
 	default:
 		die(_("bad numeric config value '%s' for '%s' in %s: %s"),
-		    value, name, config_name, _(error_type));
+		    value, name, kvi->filename, _(error_type));
 	}
 }
 
-int git_config_int(const char *name, const char *value)
+int git_config_int(const char *name, const char *value,
+		   const struct key_value_info *kvi)
 {
 	int ret;
 	if (!git_parse_int(value, &ret))
-		die_bad_number(&the_reader, name, value);
+		die_bad_number(name, value, kvi);
 	return ret;
 }
 
-int64_t git_config_int64(const char *name, const char *value)
+int64_t git_config_int64(const char *name, const char *value,
+			 const struct key_value_info *kvi)
 {
 	int64_t ret;
 	if (!git_parse_int64(value, &ret))
-		die_bad_number(&the_reader, name, value);
+		die_bad_number(name, value, kvi);
 	return ret;
 }
 
-unsigned long git_config_ulong(const char *name, const char *value)
+unsigned long git_config_ulong(const char *name, const char *value,
+			       const struct key_value_info *kvi)
 {
 	unsigned long ret;
 	if (!git_parse_ulong(value, &ret))
-		die_bad_number(&the_reader, name, value);
+		die_bad_number(name, value, kvi);
 	return ret;
 }
 
-ssize_t git_config_ssize_t(const char *name, const char *value)
+ssize_t git_config_ssize_t(const char *name, const char *value,
+			   const struct key_value_info *kvi)
 {
 	ssize_t ret;
 	if (!git_parse_ssize_t(value, &ret))
-		die_bad_number(&the_reader, name, value);
+		die_bad_number(name, value, kvi);
 	return ret;
 }
 
@@ -1524,7 +1504,8 @@ int git_parse_maybe_bool(const char *value)
 	return -1;
 }
 
-int git_config_bool_or_int(const char *name, const char *value, int *is_bool)
+int git_config_bool_or_int(const char *name, const char *value,
+			   const struct key_value_info *kvi, int *is_bool)
 {
 	int v = git_parse_maybe_bool_text(value);
 	if (0 <= v) {
@@ -1532,7 +1513,7 @@ int git_config_bool_or_int(const char *name, const char *value, int *is_bool)
 		return v;
 	}
 	*is_bool = 0;
-	return git_config_int(name, value);
+	return git_config_int(name, value, kvi);
 }
 
 int git_config_bool(const char *name, const char *value)
@@ -1658,7 +1639,7 @@ static int git_default_core_config(const char *var, const char *value,
 		else if (!git_parse_maybe_bool_text(value))
 			default_abbrev = the_hash_algo->hexsz;
 		else {
-			int abbrev = git_config_int(var, value);
+			int abbrev = git_config_int(var, value, ctx->kvi);
 			if (abbrev < minimum_abbrev || abbrev > the_hash_algo->hexsz)
 				return error(_("abbrev length out of range: %d"), abbrev);
 			default_abbrev = abbrev;
@@ -1670,7 +1651,7 @@ static int git_default_core_config(const char *var, const char *value,
 		return set_disambiguate_hint_config(var, value);
 
 	if (!strcmp(var, "core.loosecompression")) {
-		int level = git_config_int(var, value);
+		int level = git_config_int(var, value, ctx->kvi);
 		if (level == -1)
 			level = Z_DEFAULT_COMPRESSION;
 		else if (level < 0 || level > Z_BEST_COMPRESSION)
@@ -1681,7 +1662,7 @@ static int git_default_core_config(const char *var, const char *value,
 	}
 
 	if (!strcmp(var, "core.compression")) {
-		int level = git_config_int(var, value);
+		int level = git_config_int(var, value, ctx->kvi);
 		if (level == -1)
 			level = Z_DEFAULT_COMPRESSION;
 		else if (level < 0 || level > Z_BEST_COMPRESSION)
@@ -1695,7 +1676,7 @@ static int git_default_core_config(const char *var, const char *value,
 
 	if (!strcmp(var, "core.packedgitwindowsize")) {
 		int pgsz_x2 = getpagesize() * 2;
-		packed_git_window_size = git_config_ulong(var, value);
+		packed_git_window_size = git_config_ulong(var, value, ctx->kvi);
 
 		/* This value must be multiple of (pagesize * 2) */
 		packed_git_window_size /= pgsz_x2;
@@ -1706,17 +1687,17 @@ static int git_default_core_config(const char *var, const char *value,
 	}
 
 	if (!strcmp(var, "core.bigfilethreshold")) {
-		big_file_threshold = git_config_ulong(var, value);
+		big_file_threshold = git_config_ulong(var, value, ctx->kvi);
 		return 0;
 	}
 
 	if (!strcmp(var, "core.packedgitlimit")) {
-		packed_git_limit = git_config_ulong(var, value);
+		packed_git_limit = git_config_ulong(var, value, ctx->kvi);
 		return 0;
 	}
 
 	if (!strcmp(var, "core.deltabasecachelimit")) {
-		delta_base_cache_limit = git_config_ulong(var, value);
+		delta_base_cache_limit = git_config_ulong(var, value, ctx->kvi);
 		return 0;
 	}
 
@@ -1995,12 +1976,12 @@ int git_default_config(const char *var, const char *value,
 	}
 
 	if (!strcmp(var, "pack.packsizelimit")) {
-		pack_size_limit_cfg = git_config_ulong(var, value);
+		pack_size_limit_cfg = git_config_ulong(var, value, ctx->kvi);
 		return 0;
 	}
 
 	if (!strcmp(var, "pack.compression")) {
-		int level = git_config_int(var, value);
+		int level = git_config_int(var, value, ctx->kvi);
 		if (level == -1)
 			level = Z_DEFAULT_COMPRESSION;
 		else if (level < 0 || level > Z_BEST_COMPRESSION)
@@ -2344,13 +2325,11 @@ static void configset_iter(struct config_reader *reader, struct config_set *set,
 		value_index = list->items[i].value_index;
 		values = &entry->value_list;
 
-		config_reader_set_kvi(reader, values->items[value_index].util);
 		ctx.kvi = values->items[value_index].util;
 		if (fn(entry->key, values->items[value_index].string, &ctx, data) < 0)
 			git_die_config_linenr(entry->key,
 					      ctx.kvi->filename,
 					      ctx.kvi->linenr);
-		config_reader_set_kvi(reader, NULL);
 	}
 }
 
@@ -2536,11 +2515,12 @@ int git_configset_add_file(struct config_set *set, const char *filename)
 	return git_config_from_file(config_set_callback, filename, &data);
 }
 
-int git_configset_get_value(struct config_set *set, const char *key, const char **value)
+int git_configset_get_value(struct config_set *set, const char *key,
+			    const char **value, struct key_value_info *kvi)
 {
 	const struct string_list *values = NULL;
 	int ret;
-
+	struct string_list_item item;
 	/*
 	 * Follows "last one wins" semantic, i.e., if there are multiple matches for the
 	 * queried key in the files of the configset, the value returned will be the last
@@ -2550,7 +2530,10 @@ int git_configset_get_value(struct config_set *set, const char *key, const char 
 		return ret;
 
 	assert(values->nr > 0);
-	*value = values->items[values->nr - 1].string;
+	item = values->items[values->nr - 1];
+	*value = item.string;
+	if (kvi)
+		*kvi = *((struct key_value_info *)item.util);
 	return 0;
 }
 
@@ -2603,7 +2586,7 @@ int git_configset_get(struct config_set *set, const char *key)
 int git_configset_get_string(struct config_set *set, const char *key, char **dest)
 {
 	const char *value;
-	if (!git_configset_get_value(set, key, &value))
+	if (!git_configset_get_value(set, key, &value, NULL))
 		return git_config_string((const char **)dest, key, value);
 	else
 		return 1;
@@ -2613,7 +2596,7 @@ static int git_configset_get_string_tmp(struct config_set *set, const char *key,
 					const char **dest)
 {
 	const char *value;
-	if (!git_configset_get_value(set, key, &value)) {
+	if (!git_configset_get_value(set, key, &value, NULL)) {
 		if (!value)
 			return config_error_nonbool(key);
 		*dest = value;
@@ -2626,8 +2609,10 @@ static int git_configset_get_string_tmp(struct config_set *set, const char *key,
 int git_configset_get_int(struct config_set *set, const char *key, int *dest)
 {
 	const char *value;
-	if (!git_configset_get_value(set, key, &value)) {
-		*dest = git_config_int(key, value);
+	struct key_value_info kvi;
+
+	if (!git_configset_get_value(set, key, &value, &kvi)) {
+		*dest = git_config_int(key, value, &kvi);
 		return 0;
 	} else
 		return 1;
@@ -2636,8 +2621,10 @@ int git_configset_get_int(struct config_set *set, const char *key, int *dest)
 int git_configset_get_ulong(struct config_set *set, const char *key, unsigned long *dest)
 {
 	const char *value;
-	if (!git_configset_get_value(set, key, &value)) {
-		*dest = git_config_ulong(key, value);
+	struct key_value_info kvi;
+
+	if (!git_configset_get_value(set, key, &value, &kvi)) {
+		*dest = git_config_ulong(key, value, &kvi);
 		return 0;
 	} else
 		return 1;
@@ -2646,7 +2633,7 @@ int git_configset_get_ulong(struct config_set *set, const char *key, unsigned lo
 int git_configset_get_bool(struct config_set *set, const char *key, int *dest)
 {
 	const char *value;
-	if (!git_configset_get_value(set, key, &value)) {
+	if (!git_configset_get_value(set, key, &value, NULL)) {
 		*dest = git_config_bool(key, value);
 		return 0;
 	} else
@@ -2657,8 +2644,10 @@ int git_configset_get_bool_or_int(struct config_set *set, const char *key,
 				int *is_bool, int *dest)
 {
 	const char *value;
-	if (!git_configset_get_value(set, key, &value)) {
-		*dest = git_config_bool_or_int(key, value, is_bool);
+	struct key_value_info kvi;
+
+	if (!git_configset_get_value(set, key, &value, &kvi)) {
+		*dest = git_config_bool_or_int(key, value, &kvi, is_bool);
 		return 0;
 	} else
 		return 1;
@@ -2667,7 +2656,7 @@ int git_configset_get_bool_or_int(struct config_set *set, const char *key,
 int git_configset_get_maybe_bool(struct config_set *set, const char *key, int *dest)
 {
 	const char *value;
-	if (!git_configset_get_value(set, key, &value)) {
+	if (!git_configset_get_value(set, key, &value, NULL)) {
 		*dest = git_parse_maybe_bool(value);
 		if (*dest == -1)
 			return -1;
@@ -2679,7 +2668,7 @@ int git_configset_get_maybe_bool(struct config_set *set, const char *key, int *d
 int git_configset_get_pathname(struct config_set *set, const char *key, const char **dest)
 {
 	const char *value;
-	if (!git_configset_get_value(set, key, &value))
+	if (!git_configset_get_value(set, key, &value, NULL))
 		return git_config_pathname(dest, key, value);
 	else
 		return 1;
@@ -2749,7 +2738,7 @@ int repo_config_get_value(struct repository *repo,
 			  const char *key, const char **value)
 {
 	git_config_check_init(repo);
-	return git_configset_get_value(repo->config, key, value);
+	return git_configset_get_value(repo->config, key, value, NULL);
 }
 
 int repo_config_get_value_multi(struct repository *repo, const char *key,
@@ -3989,18 +3978,6 @@ int parse_config_key(const char *var,
 	return 0;
 }
 
-static int reader_origin_type(struct config_reader *reader,
-			      enum config_origin_type *type)
-{
-	if (the_reader.config_kvi)
-		*type = reader->config_kvi->origin_type;
-	else if(the_reader.source)
-		*type = reader->source->origin_type;
-	else
-		return 1;
-	return 0;
-}
-
 const char *config_origin_type_name(enum config_origin_type type)
 {
 	switch (type) {
@@ -4037,17 +4014,6 @@ const char *config_scope_name(enum config_scope scope)
 	default:
 		return "unknown";
 	}
-}
-
-static int reader_config_name(struct config_reader *reader, const char **out)
-{
-	if (the_reader.config_kvi)
-		*out = reader->config_kvi->filename;
-	else if (the_reader.source)
-		*out = reader->source->name;
-	else
-		return 1;
-	return 0;
 }
 
 int lookup_config(const char **mapping, int nr_mapping, const char *var)
