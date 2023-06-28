@@ -137,6 +137,7 @@ static void send_possibly_unborn_head(struct ls_refs_data *data)
 }
 
 static int ls_refs_config(const char *var, const char *value,
+			  const struct config_context *ctx UNUSED,
 			  void *cb_data)
 {
 	struct ls_refs_data *data = cb_data;

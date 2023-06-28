@@ -209,7 +209,8 @@ struct config_include_data {
 };
 #define CONFIG_INCLUDE_INIT { 0 }
 
-static int git_config_include(const char *var, const char *value, void *data);
+static int git_config_include(const char *var, const char *value,
+			      const struct config_context *ctx, void *data);
 
 #define MAX_INCLUDE_DEPTH 10
 static const char include_depth_advice[] = N_(
@@ -388,7 +389,8 @@ static int include_by_branch(const char *cond, size_t cond_len)
 	return ret;
 }
 
-static int add_remote_url(const char *var, const char *value, void *data)
+static int add_remote_url(const char *var, const char *value,
+			  const struct config_context *ctx UNUSED, void *data)
 {
 	struct string_list *remote_urls = data;
 	const char *remote_name;
@@ -423,6 +425,7 @@ static void populate_remote_urls(struct config_include_data *inc)
 }
 
 static int forbid_remote_url(const char *var, const char *value UNUSED,
+			     const struct config_context *ctx UNUSED,
 			     void *data UNUSED)
 {
 	const char *remote_name;
@@ -486,7 +489,9 @@ static int include_condition_is_true(struct config_source *cs,
 	return 0;
 }
 
-static int git_config_include(const char *var, const char *value, void *data)
+static int git_config_include(const char *var, const char *value,
+			      const struct config_context *ctx,
+			      void *data)
 {
 	struct config_include_data *inc = data;
 	struct config_source *cs = inc->config_reader->source;
@@ -498,7 +503,7 @@ static int git_config_include(const char *var, const char *value, void *data)
 	 * Pass along all values, including "include" directives; this makes it
 	 * possible to query information on the includes themselves.
 	 */
-	ret = inc->fn(var, value, inc->data);
+	ret = inc->fn(var, value, NULL, inc->data);
 	if (ret < 0)
 		return ret;
 
@@ -680,7 +685,7 @@ static int config_parse_pair(const char *key, const char *value,
 	if (git_config_parse_key(key, &canonical_name, NULL))
 		return -1;
 
-	ret = (fn(canonical_name, value, data) < 0) ? -1 : 0;
+	ret = (fn(canonical_name, value, NULL, data) < 0) ? -1 : 0;
 	free(canonical_name);
 	return ret;
 }
@@ -968,7 +973,7 @@ static int get_value(struct config_source *cs, config_fn_t fn, void *data,
 	 * accurate line number in error messages.
 	 */
 	cs->linenr--;
-	ret = fn(name->buf, value, data);
+	ret = fn(name->buf, value, NULL, data);
 	if (ret >= 0)
 		cs->linenr++;
 	return ret;
@@ -1562,7 +1567,8 @@ int git_config_color(char *dest, const char *var, const char *value)
 	return 0;
 }
 
-static int git_default_core_config(const char *var, const char *value, void *cb)
+static int git_default_core_config(const char *var, const char *value,
+				   const struct config_context *ctx, void *cb)
 {
 	/* This needs a better name */
 	if (!strcmp(var, "core.filemode")) {
@@ -1842,7 +1848,7 @@ static int git_default_core_config(const char *var, const char *value, void *cb)
 	}
 
 	/* Add other config variables here and to Documentation/config.txt. */
-	return platform_core_config(var, value, cb);
+	return platform_core_config(var, value, ctx, cb);
 }
 
 static int git_default_sparse_config(const char *var, const char *value)
@@ -1944,15 +1950,16 @@ static int git_default_mailmap_config(const char *var, const char *value)
 	return 0;
 }
 
-int git_default_config(const char *var, const char *value, void *cb)
+int git_default_config(const char *var, const char *value,
+		       const struct config_context *ctx, void *cb)
 {
 	if (starts_with(var, "core."))
-		return git_default_core_config(var, value, cb);
+		return git_default_core_config(var, value, ctx, cb);
 
 	if (starts_with(var, "user.") ||
 	    starts_with(var, "author.") ||
 	    starts_with(var, "committer."))
-		return git_ident_config(var, value, cb);
+		return git_ident_config(var, value, ctx, cb);
 
 	if (starts_with(var, "i18n."))
 		return git_default_i18n_config(var, value);
@@ -2318,7 +2325,7 @@ static void configset_iter(struct config_reader *reader, struct config_set *set,
 
 		config_reader_set_kvi(reader, values->items[value_index].util);
 
-		if (fn(entry->key, values->items[value_index].string, data) < 0)
+		if (fn(entry->key, values->items[value_index].string, NULL, data) < 0)
 			git_die_config_linenr(entry->key,
 					      reader->config_kvi->filename,
 					      reader->config_kvi->linenr);
@@ -2496,7 +2503,9 @@ struct configset_add_data {
 };
 #define CONFIGSET_ADD_INIT { 0 }
 
-static int config_set_callback(const char *key, const char *value, void *cb)
+static int config_set_callback(const char *key, const char *value,
+			       const struct config_context *ctx UNUSED,
+			       void *cb)
 {
 	struct configset_add_data *data = cb;
 	configset_add_value(data->config_reader, data->config_set, key, value);
@@ -3106,7 +3115,8 @@ static int store_aux_event(enum config_event_t type,
 	return 0;
 }
 
-static int store_aux(const char *key, const char *value, void *cb)
+static int store_aux(const char *key, const char *value,
+		     const struct config_context *ctx UNUSED, void *cb)
 {
 	struct config_store_data *store = cb;
 

@@ -564,7 +564,8 @@ static int cmd_log_walk(struct rev_info *rev)
 	return retval;
 }
 
-static int git_log_config(const char *var, const char *value, void *cb)
+static int git_log_config(const char *var, const char *value,
+			  const struct config_context *ctx, void *cb)
 {
 	const char *slot_name;
 
@@ -613,7 +614,7 @@ static int git_log_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	return git_diff_ui_config(var, value, cb);
+	return git_diff_ui_config(var, value, ctx, cb);
 }
 
 int cmd_whatchanged(int argc, const char **argv, const char *prefix)
@@ -979,7 +980,8 @@ static enum cover_from_description parse_cover_from_description(const char *arg)
 		die(_("%s: invalid cover from description mode"), arg);
 }
 
-static int git_format_config(const char *var, const char *value, void *cb)
+static int git_format_config(const char *var, const char *value,
+			     const struct config_context *ctx, void *cb)
 {
 	if (!strcmp(var, "format.headers")) {
 		if (!value)
@@ -1108,7 +1110,7 @@ static int git_format_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "diff.noprefix"))
 		return 0;
 
-	return git_log_config(var, value, cb);
+	return git_log_config(var, value, ctx, cb);
 }
 
 static const char *output_directory = NULL;

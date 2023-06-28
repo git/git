@@ -56,6 +56,7 @@ static void save_user_format(struct rev_info *rev, const char *cp, int is_tforma
 }
 
 static int git_pretty_formats_config(const char *var, const char *value,
+				     const struct config_context *ctx UNUSED,
 				     void *cb UNUSED)
 {
 	struct cmt_fmt_map *commit_format = NULL;
