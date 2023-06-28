@@ -264,74 +264,57 @@ static void expand_objectsize(struct strbuf *line, const struct object_id *oid,
 		strbuf_addstr(line, "-");
 	}
 }
-struct show_index_data {
-	const char *pathname;
-	struct index_state *istate;
-	const struct cache_entry *ce;
-};
-
-static size_t expand_show_index(struct strbuf *sb, const char *start,
-				void *context)
-{
-	struct show_index_data *data = context;
-	const char *end;
-	const char *p;
-	size_t len = strbuf_expand_literal_cb(sb, start, NULL);
-	struct stat st;
-
-	if (len)
-		return len;
-	if (*start != '(')
-		die(_("bad ls-files format: element '%s' "
-		      "does not start with '('"), start);
-
-	end = strchr(start + 1, ')');
-	if (!end)
-		die(_("bad ls-files format: element '%s' "
-		      "does not end in ')'"), start);
-
-	len = end - start + 1;
-	if (skip_prefix(start, "(objectmode)", &p))
-		strbuf_addf(sb, "%06o", data->ce->ce_mode);
-	else if (skip_prefix(start, "(objectname)", &p))
-		strbuf_add_unique_abbrev(sb, &data->ce->oid, abbrev);
-	else if (skip_prefix(start, "(objecttype)", &p))
-		strbuf_addstr(sb, type_name(object_type(data->ce->ce_mode)));
-	else if (skip_prefix(start, "(objectsize:padded)", &p))
-		expand_objectsize(sb, &data->ce->oid, object_type(data->ce->ce_mode), 1);
-	else if (skip_prefix(start, "(objectsize)", &p))
-		expand_objectsize(sb, &data->ce->oid, object_type(data->ce->ce_mode), 0);
-	else if (skip_prefix(start, "(stage)", &p))
-		strbuf_addf(sb, "%d", ce_stage(data->ce));
-	else if (skip_prefix(start, "(eolinfo:index)", &p))
-		strbuf_addstr(sb, S_ISREG(data->ce->ce_mode) ?
-			      get_cached_convert_stats_ascii(data->istate,
-			      data->ce->name) : "");
-	else if (skip_prefix(start, "(eolinfo:worktree)", &p))
-		strbuf_addstr(sb, !lstat(data->pathname, &st) &&
-			      S_ISREG(st.st_mode) ?
-			      get_wt_convert_stats_ascii(data->pathname) : "");
-	else if (skip_prefix(start, "(eolattr)", &p))
-		strbuf_addstr(sb, get_convert_attr_ascii(data->istate,
-			      data->pathname));
-	else if (skip_prefix(start, "(path)", &p))
-		write_name_to_buf(sb, data->pathname);
-	else
-		die(_("bad ls-files format: %%%.*s"), (int)len, start);
-
-	return len;
-}
 
 static void show_ce_fmt(struct repository *repo, const struct cache_entry *ce,
 			const char *format, const char *fullname) {
-	struct show_index_data data = {
-		.pathname = fullname,
-		.istate = repo->index,
-		.ce = ce,
-	};
 	struct strbuf sb = STRBUF_INIT;
 
-	strbuf_expand(&sb, format, expand_show_index, &data);
+	while (strbuf_expand_step(&sb, &format)) {
+		const char *end;
+		size_t len;
+		struct stat st;
+
+		if (skip_prefix(format, "%", &format))
+			strbuf_addch(&sb, '%');
+		else if ((len = strbuf_expand_literal(&sb, format)))
+			format += len;
+		else if (*format != '(')
+			die(_("bad ls-files format: element '%s' "
+			      "does not start with '('"), format);
+		else if (!(end = strchr(format + 1, ')')))
+			die(_("bad ls-files format: element '%s' "
+			      "does not end in ')'"), format);
+		else if (skip_prefix(format, "(objectmode)", &format))
+			strbuf_addf(&sb, "%06o", ce->ce_mode);
+		else if (skip_prefix(format, "(objectname)", &format))
+			strbuf_add_unique_abbrev(&sb, &ce->oid, abbrev);
+		else if (skip_prefix(format, "(objecttype)", &format))
+			strbuf_addstr(&sb, type_name(object_type(ce->ce_mode)));
+		else if (skip_prefix(format, "(objectsize:padded)", &format))
+			expand_objectsize(&sb, &ce->oid,
+					  object_type(ce->ce_mode), 1);
+		else if (skip_prefix(format, "(objectsize)", &format))
+			expand_objectsize(&sb, &ce->oid,
+					  object_type(ce->ce_mode), 0);
+		else if (skip_prefix(format, "(stage)", &format))
+			strbuf_addf(&sb, "%d", ce_stage(ce));
+		else if (skip_prefix(format, "(eolinfo:index)", &format))
+			strbuf_addstr(&sb, S_ISREG(ce->ce_mode) ?
+				      get_cached_convert_stats_ascii(repo->index,
+				      ce->name) : "");
+		else if (skip_prefix(format, "(eolinfo:worktree)", &format))
+			strbuf_addstr(&sb, !lstat(fullname, &st) &&
+				      S_ISREG(st.st_mode) ?
+				      get_wt_convert_stats_ascii(fullname) : "");
+		else if (skip_prefix(format, "(eolattr)", &format))
+			strbuf_addstr(&sb, get_convert_attr_ascii(repo->index,
+								 fullname));
+		else if (skip_prefix(format, "(path)", &format))
+			write_name_to_buf(&sb, fullname);
+		else
+			die(_("bad ls-files format: %%%.*s"),
+			    (int)(end - format + 1), format);
+	}
 	strbuf_addch(&sb, line_terminator);
 	fwrite(sb.buf, sb.len, 1, stdout);
 	strbuf_release(&sb);
