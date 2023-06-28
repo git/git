@@ -5520,6 +5520,10 @@ static int diff_opt_rotate_to(const struct option *opt, const char *arg, int uns
 	return 0;
 }
 
+/*
+ * Consider adding new flags to __git_diff_common_options
+ * in contrib/completion/git-completion.bash
+ */
 struct option *add_diff_options(const struct option *opts,
 				struct diff_options *options)
 {
