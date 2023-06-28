@@ -2601,7 +2601,7 @@ test_expect_success 'git config - variable name - submodule and __git_compute_fi
 	EOF
 '
 
-test_expect_success 'git config - variable name - submodule names' '
+test_expect_success 'git config - variable name - __git_compute_second_level_config_vars_for_section' '
 	test_completion "git config submodule.sub." <<-\EOF
 	submodule.sub.url Z
 	submodule.sub.update Z
