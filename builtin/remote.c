@@ -646,17 +646,19 @@ struct push_default_info
 };
 
 static int config_read_push_default(const char *key, const char *value,
-	const struct config_context *ctx UNUSED, void *cb)
+	const struct config_context *ctx, void *cb)
 {
+	const struct key_value_info *kvi = ctx->kvi;
+
 	struct push_default_info* info = cb;
 	if (strcmp(key, "remote.pushdefault") ||
 	    !value || strcmp(value, info->old_name))
 		return 0;
 
-	info->scope = current_config_scope();
+	info->scope = kvi->scope;
 	strbuf_reset(&info->origin);
-	strbuf_addstr(&info->origin, current_config_name());
-	info->linenr = current_config_line();
+	strbuf_addstr(&info->origin, config_origin_type_name(kvi->origin_type));
+	info->linenr = kvi->linenr;
 
 	return 0;
 }
