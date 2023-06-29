@@ -21,11 +21,12 @@ static int use_branch_desc;
 static int suppress_dest_pattern_seen;
 static struct string_list suppress_dest_patterns = STRING_LIST_INIT_DUP;
 
-int fmt_merge_msg_config(const char *key, const char *value, void *cb)
+int fmt_merge_msg_config(const char *key, const char *value,
+			 const struct config_context *ctx, void *cb)
 {
 	if (!strcmp(key, "merge.log") || !strcmp(key, "merge.summary")) {
 		int is_bool;
-		merge_log_config = git_config_bool_or_int(key, value, &is_bool);
+		merge_log_config = git_config_bool_or_int(key, value, ctx->kvi, &is_bool);
 		if (!is_bool && merge_log_config < 0)
 			return error("%s: negative length %s", key, value);
 		if (is_bool && merge_log_config)
@@ -41,7 +42,7 @@ int fmt_merge_msg_config(const char *key, const char *value, void *cb)
 			string_list_append(&suppress_dest_patterns, value);
 		suppress_dest_pattern_seen = 1;
 	} else {
-		return git_default_config(key, value, cb);
+		return git_default_config(key, value, ctx, cb);
 	}
 	return 0;
 }

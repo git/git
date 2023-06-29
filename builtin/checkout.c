@@ -1189,7 +1189,8 @@ static int switch_branches(const struct checkout_opts *opts,
 	return ret || writeout_error;
 }
 
-static int git_checkout_config(const char *var, const char *value, void *cb)
+static int git_checkout_config(const char *var, const char *value,
+			       const struct config_context *ctx, void *cb)
 {
 	struct checkout_opts *opts = cb;
 
@@ -1205,7 +1206,7 @@ static int git_checkout_config(const char *var, const char *value, void *cb)
 	if (starts_with(var, "submodule."))
 		return git_default_submodule_config(var, value, NULL);
 
-	return git_xmerge_config(var, value, NULL);
+	return git_xmerge_config(var, value, ctx, NULL);
 }
 
 static void setup_new_branch_info_and_source_tree(
@@ -1692,8 +1693,13 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 	}
 
 	if (opts->conflict_style) {
+		struct key_value_info kvi = KVI_INIT;
+		struct config_context ctx = {
+			.kvi = &kvi,
+		};
 		opts->merge = 1; /* implied */
-		git_xmerge_config("merge.conflictstyle", opts->conflict_style, NULL);
+		git_xmerge_config("merge.conflictstyle", opts->conflict_style,
+				  &ctx, NULL);
 	}
 	if (opts->force) {
 		opts->discard_changes = 1;
