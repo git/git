@@ -9,6 +9,7 @@
 
 #include "builtin.h"
 #include "config.h"
+#include "alloc.h"
 #include "editor.h"
 #include "environment.h"
 #include "gettext.h"
@@ -30,11 +31,12 @@
 #include "worktree.h"
 #include "write-or-die.h"
 
+static const char *separator = "\n";
 static const char * const git_notes_usage[] = {
 	N_("git notes [--ref <notes-ref>] [list [<object>]]"),
-	N_("git notes [--ref <notes-ref>] add [-f] [--allow-empty] [-m <msg> | -F <file> | (-c | -C) <object>] [<object>]"),
+	N_("git notes [--ref <notes-ref>] add [-f] [--allow-empty] [--[no-]separator|--separator=<paragraph-break>] [--[no-]stripspace] [-m <msg> | -F <file> | (-c | -C) <object>] [<object>]"),
 	N_("git notes [--ref <notes-ref>] copy [-f] <from-object> <to-object>"),
-	N_("git notes [--ref <notes-ref>] append [--allow-empty] [-m <msg> | -F <file> | (-c | -C) <object>] [<object>]"),
+	N_("git notes [--ref <notes-ref>] append [--allow-empty] [--[no-]separator|--separator=<paragraph-break>] [--[no-]stripspace] [-m <msg> | -F <file> | (-c | -C) <object>] [<object>]"),
 	N_("git notes [--ref <notes-ref>] edit [--allow-empty] [<object>]"),
 	N_("git notes [--ref <notes-ref>] show [<object>]"),
 	N_("git notes [--ref <notes-ref>] merge [-v | -q] [-s <strategy>] <notes-ref>"),
@@ -102,11 +104,26 @@ static const char * const git_notes_get_ref_usage[] = {
 static const char note_template[] =
 	N_("Write/edit the notes for the following object:");
 
+enum notes_stripspace {
+	UNSPECIFIED = -1,
+	NO_STRIPSPACE = 0,
+	STRIPSPACE = 1,
+};
+
+struct note_msg {
+	enum notes_stripspace stripspace;
+	struct strbuf buf;
+};
+
 struct note_data {
 	int given;
 	int use_editor;
+	int stripspace;
 	char *edit_path;
 	struct strbuf buf;
+	struct note_msg **messages;
+	size_t msg_nr;
+	size_t msg_alloc;
 };
 
 static void free_note_data(struct note_data *d)
@@ -116,6 +133,12 @@ static void free_note_data(struct note_data *d)
 		free(d->edit_path);
 	}
 	strbuf_release(&d->buf);
+
+	while (d->msg_nr--) {
+		strbuf_release(&d->messages[d->msg_nr]->buf);
+		free(d->messages[d->msg_nr]);
+	}
+	free(d->messages);
 }
 
 static int list_each_note(const struct object_id *object_oid,
@@ -201,7 +224,8 @@ static void prepare_note_data(const struct object_id *object, struct note_data *
 		if (launch_editor(d->edit_path, &d->buf, NULL)) {
 			die(_("please supply the note contents using either -m or -F option"));
 		}
-		strbuf_stripspace(&d->buf, comment_line_char);
+		if (d->stripspace)
+			strbuf_stripspace(&d->buf, comment_line_char);
 	}
 }
 
@@ -217,66 +241,102 @@ static void write_note_data(struct note_data *d, struct object_id *oid)
 	}
 }
 
+static void append_separator(struct strbuf *message)
+{
+	size_t sep_len = 0;
+
+	if (!separator)
+		return;
+	else if ((sep_len = strlen(separator)) && separator[sep_len - 1] == '\n')
+		strbuf_addstr(message, separator);
+	else
+		strbuf_addf(message, "%s%s", separator, "\n");
+}
+
+static void concat_messages(struct note_data *d)
+{
+	struct strbuf msg = STRBUF_INIT;
+	size_t i;
+
+	for (i = 0; i < d->msg_nr ; i++) {
+		if (d->buf.len)
+			append_separator(&d->buf);
+		strbuf_add(&msg, d->messages[i]->buf.buf, d->messages[i]->buf.len);
+		strbuf_addbuf(&d->buf, &msg);
+		if ((d->stripspace == UNSPECIFIED &&
+		     d->messages[i]->stripspace == STRIPSPACE) ||
+		    d->stripspace == STRIPSPACE)
+			strbuf_stripspace(&d->buf, 0);
+		strbuf_reset(&msg);
+	}
+	strbuf_release(&msg);
+}
+
 static int parse_msg_arg(const struct option *opt, const char *arg, int unset)
 {
 	struct note_data *d = opt->value;
+	struct note_msg *msg = xmalloc(sizeof(*msg));
 
 	BUG_ON_OPT_NEG(unset);
 
-	strbuf_grow(&d->buf, strlen(arg) + 2);
-	if (d->buf.len)
-		strbuf_addch(&d->buf, '\n');
-	strbuf_addstr(&d->buf, arg);
-	strbuf_stripspace(&d->buf, '\0');
-
-	d->given = 1;
+	strbuf_init(&msg->buf, strlen(arg));
+	strbuf_addstr(&msg->buf, arg);
+	ALLOC_GROW_BY(d->messages, d->msg_nr, 1, d->msg_alloc);
+	d->messages[d->msg_nr - 1] = msg;
+	msg->stripspace = STRIPSPACE;
 	return 0;
 }
 
 static int parse_file_arg(const struct option *opt, const char *arg, int unset)
 {
 	struct note_data *d = opt->value;
+	struct note_msg *msg = xmalloc(sizeof(*msg));
 
 	BUG_ON_OPT_NEG(unset);
 
-	if (d->buf.len)
-		strbuf_addch(&d->buf, '\n');
+	strbuf_init(&msg->buf , 0);
 	if (!strcmp(arg, "-")) {
-		if (strbuf_read(&d->buf, 0, 1024) < 0)
+		if (strbuf_read(&msg->buf, 0, 1024) < 0)
 			die_errno(_("cannot read '%s'"), arg);
-	} else if (strbuf_read_file(&d->buf, arg, 1024) < 0)
+	} else if (strbuf_read_file(&msg->buf, arg, 1024) < 0)
 		die_errno(_("could not open or read '%s'"), arg);
-	strbuf_stripspace(&d->buf, '\0');
 
-	d->given = 1;
+	ALLOC_GROW_BY(d->messages, d->msg_nr, 1, d->msg_alloc);
+	d->messages[d->msg_nr - 1] = msg;
+	msg->stripspace = STRIPSPACE;
 	return 0;
 }
 
 static int parse_reuse_arg(const struct option *opt, const char *arg, int unset)
 {
 	struct note_data *d = opt->value;
-	char *buf;
+	struct note_msg *msg = xmalloc(sizeof(*msg));
+	char *value;
 	struct object_id object;
 	enum object_type type;
 	unsigned long len;
 
 	BUG_ON_OPT_NEG(unset);
 
-	if (d->buf.len)
-		strbuf_addch(&d->buf, '\n');
-
+	strbuf_init(&msg->buf, 0);
 	if (repo_get_oid(the_repository, arg, &object))
 		die(_("failed to resolve '%s' as a valid ref."), arg);
-	if (!(buf = repo_read_object_file(the_repository, &object, &type, &len)))
+	if (!(value = repo_read_object_file(the_repository, &object, &type, &len)))
 		die(_("failed to read object '%s'."), arg);
 	if (type != OBJ_BLOB) {
-		free(buf);
+		strbuf_release(&msg->buf);
+		free(value);
+		free(msg);
 		die(_("cannot read note data from non-blob object '%s'."), arg);
 	}
-	strbuf_add(&d->buf, buf, len);
-	free(buf);
 
-	d->given = 1;
+	strbuf_add(&msg->buf, value, len);
+	free(value);
+
+	msg->buf.len = len;
+	ALLOC_GROW_BY(d->messages, d->msg_nr, 1, d->msg_alloc);
+	d->messages[d->msg_nr - 1] = msg;
+	msg->stripspace = NO_STRIPSPACE;
 	return 0;
 }
 
@@ -286,6 +346,16 @@ static int parse_reedit_arg(const struct option *opt, const char *arg, int unset
 	BUG_ON_OPT_NEG(unset);
 	d->use_editor = 1;
 	return parse_reuse_arg(opt, arg, unset);
+}
+
+static int parse_separator_arg(const struct option *opt, const char *arg,
+			       int unset)
+{
+	if (unset)
+		*(const char **)opt->value = NULL;
+	else
+		*(const char **)opt->value = arg ? arg : "\n";
+	return 0;
 }
 
 static int notes_copy_from_stdin(int force, const char *rewrite_cmd)
@@ -410,7 +480,8 @@ static int add(int argc, const char **argv, const char *prefix)
 	struct notes_tree *t;
 	struct object_id object, new_note;
 	const struct object_id *note;
-	struct note_data d = { 0, 0, NULL, STRBUF_INIT };
+	struct note_data d = { .buf = STRBUF_INIT, .stripspace = UNSPECIFIED };
+
 	struct option options[] = {
 		OPT_CALLBACK_F('m', "message", &d, N_("message"),
 			N_("note contents as a string"), PARSE_OPT_NONEG,
@@ -427,6 +498,12 @@ static int add(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "allow-empty", &allow_empty,
 			N_("allow storing empty note")),
 		OPT__FORCE(&force, N_("replace existing notes"), PARSE_OPT_NOCOMPLETE),
+		OPT_CALLBACK_F(0, "separator", &separator,
+			N_("<paragraph-break>"),
+			N_("insert <paragraph-break> between paragraphs"),
+			PARSE_OPT_OPTARG, parse_separator_arg),
+		OPT_BOOL(0, "stripspace", &d.stripspace,
+			N_("remove unnecessary whitespace")),
 		OPT_END()
 	};
 
@@ -437,6 +514,10 @@ static int add(int argc, const char **argv, const char *prefix)
 		error(_("too many arguments"));
 		usage_with_options(git_notes_add_usage, options);
 	}
+
+	if (d.msg_nr)
+		concat_messages(&d);
+	d.given = !!d.buf.len;
 
 	object_ref = argc > 1 ? argv[1] : "HEAD";
 
@@ -576,7 +657,7 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 	const struct object_id *note;
 	char *logmsg;
 	const char * const *usage;
-	struct note_data d = { 0, 0, NULL, STRBUF_INIT };
+	struct note_data d = { .buf = STRBUF_INIT, .stripspace = UNSPECIFIED };
 	struct option options[] = {
 		OPT_CALLBACK_F('m', "message", &d, N_("message"),
 			N_("note contents as a string"), PARSE_OPT_NONEG,
@@ -592,6 +673,12 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 			parse_reuse_arg),
 		OPT_BOOL(0, "allow-empty", &allow_empty,
 			N_("allow storing empty note")),
+		OPT_CALLBACK_F(0, "separator", &separator,
+			N_("<paragraph-break>"),
+			N_("insert <paragraph-break> between paragraphs"),
+			PARSE_OPT_OPTARG, parse_separator_arg),
+		OPT_BOOL(0, "stripspace", &d.stripspace,
+			N_("remove unnecessary whitespace")),
 		OPT_END()
 	};
 	int edit = !strcmp(argv[0], "edit");
@@ -604,6 +691,10 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 		error(_("too many arguments"));
 		usage_with_options(usage, options);
 	}
+
+	if (d.msg_nr)
+		concat_messages(&d);
+	d.given = !!d.buf.len;
 
 	if (d.given && edit)
 		fprintf(stderr, _("The -m/-F/-c/-C options have been deprecated "
@@ -624,15 +715,17 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 		/* Append buf to previous note contents */
 		unsigned long size;
 		enum object_type type;
-		char *prev_buf = repo_read_object_file(the_repository, note,
-						       &type, &size);
+		struct strbuf buf = STRBUF_INIT;
+		char *prev_buf = repo_read_object_file(the_repository, note, &type, &size);
 
-		strbuf_grow(&d.buf, size + 1);
-		if (d.buf.len && prev_buf && size)
-			strbuf_insertstr(&d.buf, 0, "\n");
 		if (prev_buf && size)
-			strbuf_insert(&d.buf, 0, prev_buf, size);
+			strbuf_add(&buf, prev_buf, size);
+		if (d.buf.len && prev_buf && size)
+			append_separator(&buf);
+		strbuf_insert(&d.buf, 0, buf.buf, buf.len);
+
 		free(prev_buf);
+		strbuf_release(&buf);
 	}
 
 	if (d.buf.len || allow_empty) {
