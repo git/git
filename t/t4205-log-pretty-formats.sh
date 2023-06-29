@@ -1012,10 +1012,25 @@ test_expect_success '%(describe:tags) vs git describe --tags' '
 
 test_expect_success '%(describe:abbrev=...) vs git describe --abbrev=...' '
 	test_when_finished "git tag -d tagname" &&
+
+	# Case 1: We have commits between HEAD and the most recent tag
+	#	  reachable from it
+	test_commit --no-tag file &&
+	git describe --abbrev=15 >expect &&
+	git log -1 --format="%(describe:abbrev=15)" >actual &&
+	test_cmp expect actual &&
+
+	# Make sure the hash used is at least 15 digits long
+	sed -e "s/^.*-g\([0-9a-f]*\)$/\1/" <actual >hexpart &&
+	test 16 -le $(wc -c <hexpart) &&
+
+	# Case 2: We have a tag at HEAD, describe directly gives the
+	#	  name of the tag
 	git tag -a -m tagged tagname &&
 	git describe --abbrev=15 >expect &&
 	git log -1 --format="%(describe:abbrev=15)" >actual &&
-	test_cmp expect actual
+	test_cmp expect actual &&
+	test tagname = $(cat actual)
 '
 
 test_expect_success 'log --pretty with space stealing' '
