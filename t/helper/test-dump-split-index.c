@@ -1,7 +1,8 @@
 #define USE_THE_INDEX_VARIABLE
 #include "test-tool.h"
-#include "cache.h"
 #include "hex.h"
+#include "read-cache-ll.h"
+#include "repository.h"
 #include "setup.h"
 #include "split-index.h"
 #include "ewah/ewok.h"

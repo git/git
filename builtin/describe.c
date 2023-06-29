@@ -1,5 +1,5 @@
 #define USE_THE_INDEX_VARIABLE
-#include "cache.h"
+#include "builtin.h"
 #include "config.h"
 #include "environment.h"
 #include "gettext.h"
@@ -9,19 +9,20 @@
 #include "tag.h"
 #include "blob.h"
 #include "refs.h"
-#include "builtin.h"
 #include "exec-cmd.h"
 #include "object-name.h"
 #include "parse-options.h"
+#include "read-cache-ll.h"
 #include "revision.h"
 #include "diff.h"
 #include "hashmap.h"
 #include "setup.h"
 #include "strvec.h"
 #include "run-command.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "list-objects.h"
 #include "commit-slab.h"
+#include "wildmatch.h"
 
 #define MAX_TAGS	(FLAG_BITS - 1)
 

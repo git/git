@@ -6,6 +6,7 @@
 #include "hex.h"
 #include "object-name.h"
 #include "refs.h"
+#include "path.h"
 #include "repository.h"
 #include "string-list.h"
 #include "utf8.h"

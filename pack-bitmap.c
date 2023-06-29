@@ -17,7 +17,7 @@
 #include "repository.h"
 #include "trace2.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "list-objects-filter-options.h"
 #include "midx.h"
 #include "config.h"

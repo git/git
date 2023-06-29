@@ -1,5 +1,4 @@
 #include "builtin.h"
-#include "cache.h"
 #include "gettext.h"
 #include "hex.h"
 #include "transport.h"
@@ -8,6 +7,7 @@
 #include "remote.h"
 #include "refs.h"
 #include "parse-options.h"
+#include "wildmatch.h"
 
 static const char * const ls_remote_usage[] = {
 	N_("git ls-remote [--heads] [--tags] [--refs] [--upload-pack=<exec>]\n"

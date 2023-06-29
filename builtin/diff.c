@@ -4,7 +4,7 @@
  * Copyright (c) 2006 Junio C Hamano
  */
 #define USE_THE_INDEX_VARIABLE
-#include "cache.h"
+#include "builtin.h"
 #include "config.h"
 #include "ewah/ewok.h"
 #include "lockfile.h"
@@ -16,9 +16,10 @@
 #include "diff.h"
 #include "diff-merges.h"
 #include "diffcore.h"
+#include "preload-index.h"
+#include "read-cache-ll.h"
 #include "revision.h"
 #include "log-tree.h"
-#include "builtin.h"
 #include "setup.h"
 #include "submodule.h"
 #include "oid-array.h"

@@ -5,7 +5,6 @@
  */
 #define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
-#include "cache.h"
 #include "config.h"
 #include "environment.h"
 #include "gettext.h"

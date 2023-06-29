@@ -16,7 +16,9 @@
 #include "parse-options.h"
 #include "entry.h"
 #include "parallel-checkout.h"
+#include "read-cache-ll.h"
 #include "setup.h"
+#include "sparse-index.h"
 
 #define CHECKOUT_ALL 4
 static int nul_term_line;

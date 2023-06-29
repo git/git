@@ -7,7 +7,7 @@
 #include "progress.h"
 #include "packfile.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 
 struct idx_entry {
 	off_t                offset;

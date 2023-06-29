@@ -1,5 +1,5 @@
 #include "test-tool.h"
-#include "cache.h"
+#include "read-cache-ll.h"
 
 int cmd__index_version(int argc UNUSED, const char **argv UNUSED)
 {

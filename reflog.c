@@ -1,6 +1,6 @@
 #include "git-compat-util.h"
 #include "gettext.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "reflog.h"
 #include "refs.h"
 #include "revision.h"
