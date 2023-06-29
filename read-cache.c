@@ -2330,6 +2330,7 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 	if (fd < 0) {
 		if (!must_exist && errno == ENOENT) {
 			set_new_index_sparsity(istate);
+			istate->initialized = 1;
 			return 0;
 		}
 		die_errno(_("%s: index file open failed"), path);
