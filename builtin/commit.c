@@ -1002,11 +1002,8 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		struct object_id oid;
 		const char *parent = "HEAD";
 
-		if (!the_index.cache_nr) {
-			discard_index(&the_index);
-			if (repo_read_index(the_repository) < 0)
-				die(_("Cannot read index"));
-		}
+		if (!the_index.initialized && repo_read_index(the_repository) < 0)
+			die(_("Cannot read index"));
 
 		if (amend)
 			parent = "HEAD^1";

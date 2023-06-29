@@ -2236,6 +2236,7 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 	if (fd < 0) {
 		if (!must_exist && errno == ENOENT) {
 			set_new_index_sparsity(istate);
+			istate->initialized = 1;
 			return 0;
 		}
 		die_errno(_("%s: index file open failed"), path);
@@ -2405,12 +2406,14 @@ int read_index_from(struct index_state *istate, const char *path,
 
 	base_oid_hex = oid_to_hex(&split_index->base_oid);
 	base_path = xstrfmt("%s/sharedindex.%s", gitdir, base_oid_hex);
-	trace2_region_enter_printf("index", "shared/do_read_index",
-				   the_repository, "%s", base_path);
-	ret = do_read_index(split_index->base, base_path, 0);
-	trace2_region_leave_printf("index", "shared/do_read_index",
-				   the_repository, "%s", base_path);
-	if (!ret) {
+	if (file_exists(base_path)) {
+		trace2_region_enter_printf("index", "shared/do_read_index",
+					the_repository, "%s", base_path);
+
+		ret = do_read_index(split_index->base, base_path, 0);
+		trace2_region_leave_printf("index", "shared/do_read_index",
+					the_repository, "%s", base_path);
+	} else {
 		char *path_copy = xstrdup(path);
 		char *base_path2 = xstrfmt("%s/sharedindex.%s",
 					   dirname(path_copy), base_oid_hex);
