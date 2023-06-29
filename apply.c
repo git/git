@@ -414,9 +414,10 @@ static void say_patch_name(FILE *output, const char *fmt, struct patch *patch)
 
 static int read_patch_file(struct strbuf *sb, int fd)
 {
-	if (strbuf_read(sb, fd, 0) < 0 || sb->len >= MAX_APPLY_SIZE)
-		return error_errno("git apply: failed to read");
-
+	if (strbuf_read(sb, fd, 0) < 0)
+		return error_errno(_("failed to read patch"));
+	else if (sb->len >= MAX_APPLY_SIZE)
+		return error(_("patch too large"));
 	/*
 	 * Make sure that we have some slop in the buffer
 	 * so that we can do speculative "memcmp" etc, and
