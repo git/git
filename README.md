@@ -2,7 +2,8 @@
 
 ![DarkGit Logo](./images/darkgit-logo.png)
 
-Welcome to **DarkGit**, the dedicated Version Control System (VCS) for [DarkWebAI-Hub](your_darkwebai_hub_link). DarkGit is designed to facilitate seamless collaboration and efficient management of AI, Machine Learning, Neural Networks, and other codes in the DarkWebAI-Hub community.
+Welcome to **DarkGit**, the dedicated Version Control System (VCS) for [DarkWebAI-Hub](your_darkwebai_hub_link). DarkGit is designed to facilitate seamless collaboration and efficient management of AI, Machine Learning, Neural Networks, and other codes in the DarkWebAI-Hub community. 
+Darkgit is intended to be used on the Tor network, with better encryption and hashing features ensures that darkgit users remain anonymous
 
 ## 🎯 Our Mission
 
@@ -49,7 +50,7 @@ Join the DarkWebAI-Hub community and engage in discussions and collaboration.
 
 ## 📜 License
 
-DarkGit is licensed under the MIT License. See [LICENSE](#) for details.
+DarkGit is licensed under the MIT License and based of the original git source code. See [LICENSE](#) for details.
 
 ## 👏 Acknowledgments
 
