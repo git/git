@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jun 2023, #07; Tue, 27)
-X-master-at: a9e066fa63149291a55f383cfa113d8bdbdaa6b3
-X-next-at: ea14687e91835d59149e0866d2a4cde22a5e5c3a
+Subject: What's cooking in git.git (Jun 2023, #08; Fri, 30)
+X-master-at: 9748a6820043d5815bee770ffa51647e0adc2cf0
+X-next-at: 5b50783d6bcd27d89ccdda9a4ecfff0d938a98eb
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jun 2023, #07; Tue, 27)
+What's cooking in git.git (Jun 2023, #08; Fri, 30)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,46 +48,61 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* jk/commit-use-no-divider-with-interpret-trailers (2023-06-16) 1 commit
-  (merged to 'next' on 2023-06-20 at 08e5f2a6b5)
- + commit: pass --no-divider to interpret-trailers
+* ds/remove-idx-before-pack (2023-06-20) 1 commit
+  (merged to 'next' on 2023-06-23 at fa97bf0e41)
+ + packfile: delete .idx files before .pack files
 
- When "git commit --trailer=..." invokes the interpret-trailers
- machinery, it knows what it feeds to interpret-trailers is a full
- log message without any patch, but failed to express that by
- passing the "--no-divider" option, which has been corrected.
- source: <20230617042624.GA562686@coredump.intra.peff.net>
-
-
-* jk/redact-h2h3-headers-fix (2023-06-17) 1 commit
-  (merged to 'next' on 2023-06-20 at c1247fd527)
- + http: handle both "h2" and "h2h3" in curl info lines
-
- Curl library recently changed how http2 traces are shown and broke
- the code to redact sensitive info header, which has been fixed.
-
- The GitHub Actions CI has been broken for recent macOS jobs, so
- this topic has been fast-tracked to help them.
- source: <20230617051559.GD562686@coredump.intra.peff.net>
+ We create .pack and then .idx, we consider only packfiles that have
+ .idx usable (those with only .pack are not ready yet), so we should
+ remove .idx before removing .pack for consistency.
+ source: <pull.1547.git.1687287675248.gitgitgadget@gmail.com>
 
 
-* tb/collect-pack-filenames-fix (2023-06-12) 1 commit
-  (merged to 'next' on 2023-06-20 at abcc6892c8)
- + builtin/repack.c: only collect fully-formed packs
+* en/header-split-cache-h-part-3 (2023-06-21) 28 commits
+  (merged to 'next' on 2023-06-23 at 84ad22bf36)
+ + fsmonitor-ll.h: split this header out of fsmonitor.h
+ + hash-ll, hashmap: move oidhash() to hash-ll
+ + object-store-ll.h: split this header out of object-store.h
+ + khash: name the structs that khash declares
+ + merge-ll: rename from ll-merge
+ + git-compat-util.h: remove unneccessary include of wildmatch.h
+ + builtin.h: remove unneccessary includes
+ + list-objects-filter-options.h: remove unneccessary include
+ + diff.h: remove unnecessary include of oidset.h
+ + repository: remove unnecessary include of path.h
+ + log-tree: replace include of revision.h with simple forward declaration
+ + cache.h: remove this no-longer-used header
+ + read-cache*.h: move declarations for read-cache.c functions from cache.h
+ + repository.h: move declaration of the_index from cache.h
+ + merge.h: move declarations for merge.c from cache.h
+ + diff.h: move declaration for global in diff.c from cache.h
+ + preload-index.h: move declarations for preload-index.c from elsewhere
+ + sparse-index.h: move declarations for sparse-index.c from cache.h
+ + name-hash.h: move declarations for name-hash.c from cache.h
+ + run-command.h: move declarations for run-command.c from cache.h
+ + statinfo: move stat_{data,validity} functions from cache/read-cache
+ + read-cache: move shared add/checkout/commit code
+ + add: modify add_files_to_cache() to avoid globals
+ + read-cache: move shared commit and ls-files code
+ + setup: adopt shared init-db & clone code
+ + init-db, clone: change unnecessary global into passed parameter
+ + init-db: remove unnecessary global variable
+ + init-db: document existing bug with core.bare in template config
 
- Avoid breakage of "git pack-objects --cruft" due to inconsistency
- between the way the code enumerates packfiles in the repository.
- source: <20230607101617.ges6tnMry4E52lDGld43QgtNUsIS4YQq6w-t71hEfkQ@z>
+ Header files cleanup.
+ source: <pull.1525.v3.git.1684218848.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[New Topics]
 
-* mh/credential-erase-improvements-more (2023-06-24) 2 commits
- - credential/wincred: erase matching creds only
- - credential/libsecret: erase matching creds only
+* jc/abort-ll-merge-with-a-signal (2023-06-23) 2 commits
+  (merged to 'next' on 2023-06-24 at 685eb5d25c)
+ + t6406: skip "external merge driver getting killed by a signal" test on Windows
+  (merged to 'next' on 2023-06-23 at 9c9c37e95e)
+ + ll-merge: killing the external merge driver aborts the merge
 
- Needs review.
- source: <pull.1529.git.git.1687596777147.gitgitgadget@gmail.com>
+ When the external merge driver is killed by a signal, its output
+ should not be trusted as a resolution with conflicts that is
+ proposed by the driver, but the code did.
+ source: <xmqq4jmzc91e.fsf_-_@gitster.g>
 
 
 * tb/gc-recent-object-hook (2023-06-24) 1 commit
@@ -95,46 +110,65 @@ Release tarballs are available at:
  + t7701: make annotated tag unreachable
 
  Test update.
-
- Will merge to 'master'.
  source: <259b1b559114ab1a9a0bd7f1ad29a4cba2612ae0.1687617197.git.me@ttaylorr.com>
 
+--------------------------------------------------
+[New Topics]
 
-* gc/config-context (2023-06-26) 12 commits
- - config: pass source to config_parser_event_fn_t
- - config: add kvi.path, use it to evaluate includes
- - config.c: remove config_reader from configsets
- - config: pass kvi to die_bad_number()
- - trace2: plumb config kvi
- - config.c: pass ctx with CLI config
- - builtin/config.c: test misuse of format_config()
- - config: pass ctx with config files
- - config.c: pass ctx in configsets
- - config: add ctx arg to config_fn_t
- - urlmatch.h: use config_fn_t type
- - config: inline git_color_default_config
+* jk/cherry-pick-revert-status (2023-06-27) 1 commit
+  (merged to 'next' on 2023-06-28 at 4a0d88ef7a)
+ + fix cherry-pick/revert status when doing multiple commits
 
- source: <pull.1497.v4.git.git.1687803083.gitgitgadget@gmail.com>
+ During a cherry-pick or revert session that works on multiple
+ commits, "git status" did not give correct information, which has
+ been corrected.
+
+ Will merge to 'master'.
+ source: <20230627224230.1951135-1-jacob.e.keller@intel.com>
 
 
-* gc/config-partial-submodule-kvi-fix (2023-06-26) 1 commit
- - config: don't BUG when both kvi and source are set
+* ks/t4205-test-describe-with-abbrev-fix (2023-06-29) 1 commit
+  (merged to 'next' on 2023-06-29 at 5fc309dc75)
+ + t4205: correctly test %(describe:abbrev=...)
 
- source: <pull.1535.git.git.1687801297404.gitgitgadget@gmail.com>
+ Test update.
 
-
-* pw/apply-too-large (2023-06-26) 1 commit
- - apply: improve error messages when reading patch
-
- source: <pull.1552.git.1687772253869.gitgitgadget@gmail.com>
+ Will merge to 'master'.
+ source: <20230629133841.18784-2-five231003@gmail.com>
 
 
-* pw/diff-no-index-from-named-pipes (2023-06-27) 3 commits
- . diff --no-index: support reading from named pipes
- . t4054: test diff --no-index with stdin
- . diff --no-index: die on error reading stdin
+* jk/fsck-indices-in-worktrees (2023-06-29) 1 commit
+  (merged to 'next' on 2023-06-29 at 9d245b3681)
+ + fsck: avoid misleading variable name
 
- source: <cover.1687874975.git.phillip.wood@dunelm.org.uk>
+ Code clarification.
+
+ Will merge to 'master'.
+ source: <20230629181333.87465-1-ericsunshine@charter.net>
+
+
+* js/empty-index-fixes (2023-06-29) 3 commits
+  (merged to 'next' on 2023-06-29 at cdfd131900)
+ + commit -a -m: allow the top-level tree to become empty again
+ + split-index: accept that a base index can be empty
+ + do_read_index(): always mark index as initialized unless erroring out
+
+ A few places failed to differenciate the case where the index is
+ truly empty (nothing added) and we haven't yet read from the
+ on-disk index file, which have been corrected.
+
+ Will merge to 'master'.
+ source: <pull.1554.git.1688044991.gitgitgadget@gmail.com>
+
+
+* vd/adjust-mfow-doc-to-updated-headers (2023-06-29) 1 commit
+ - docs: include "trace.h" in MyFirstObjectWalk.txt
+
+ Code snippets in a tutorial document no longer compiled after
+ recent header shuffling, which have been corrected.
+
+ Will merge to 'next'?
+ source: <20230629185238.58961-1-vinayakdev.sci@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -273,16 +307,68 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
-* ds/remove-idx-before-pack (2023-06-20) 1 commit
-  (merged to 'next' on 2023-06-23 at fa97bf0e41)
- + packfile: delete .idx files before .pack files
+* mh/credential-erase-improvements-more (2023-06-24) 2 commits
+ - credential/wincred: erase matching creds only
+ - credential/libsecret: erase matching creds only
 
- We create .pack and then .idx, we consider only packfiles that have
- .idx usable (those with only .pack are not ready yet), so we should
- remove .idx before removing .pack for consistency.
+ Needs review.
+ source: <pull.1529.git.git.1687596777147.gitgitgadget@gmail.com>
+
+
+* gc/config-context (2023-06-28) 11 commits
+  (merged to 'next' on 2023-06-28 at 38632f3daf)
+ + config: pass source to config_parser_event_fn_t
+ + config: add kvi.path, use it to evaluate includes
+ + config.c: remove config_reader from configsets
+ + config: pass kvi to die_bad_number()
+ + trace2: plumb config kvi
+ + config.c: pass ctx with CLI config
+ + config: pass ctx with config files
+ + config.c: pass ctx in configsets
+ + config: add ctx arg to config_fn_t
+ + urlmatch.h: use config_fn_t type
+ + config: inline git_color_default_config
+
+ Reduce reliance on a global state in the config reading API.
 
  Will merge to 'master'.
- source: <pull.1547.git.1687287675248.gitgitgadget@gmail.com>
+ source: <pull.1497.v5.git.git.1687980390.gitgitgadget@gmail.com>
+
+
+* gc/config-partial-submodule-kvi-fix (2023-06-26) 1 commit
+  (merged to 'next' on 2023-06-28 at 1fb30a34e3)
+ + config: don't BUG when both kvi and source are set
+
+ Partially revert a sanity check that the rest of the config code
+ was not ready, to avoid triggering it in a corner case.
+
+ Will merge to 'master'.
+ source: <pull.1535.git.git.1687801297404.gitgitgadget@gmail.com>
+
+
+* pw/apply-too-large (2023-06-26) 1 commit
+  (merged to 'next' on 2023-06-28 at c0460d682c)
+ + apply: improve error messages when reading patch
+
+ "git apply" punts when it is fed too large a patch input; the error
+ message it gives when it happens has been clarified.
+
+ Will merge to 'master'.
+ source: <pull.1552.git.1687772253869.gitgitgadget@gmail.com>
+
+
+* pw/diff-no-index-from-named-pipes (2023-06-27) 3 commits
+ - diff --no-index: support reading from named pipes
+ - t4054: test diff --no-index with stdin
+ - diff --no-index: die on error reading stdin
+
+ "git diff --no-index" learned to read from named pipes as if they
+ were regular files, to allow "git diff <(process) <(substitution)"
+ some shells support.
+
+ Expecting a reroll.
+ cf. <457ff920-865e-f018-1d79-f3cb1121d199@gmail.com>
+ source: <cover.1687874975.git.phillip.wood@dunelm.org.uk>
 
 
 * bc/more-git-var (2023-06-27) 8 commits
@@ -295,17 +381,6 @@ Release tarballs are available at:
  + var: add support for listing the shell
  + t: add a function to check executable bit
  + var: mark unused parameters in git_var callbacks
-<<
-* bc/more-git-var (2023-06-27) 8 commits
- . var: add config file locations
- . var: add attributes files locations
- . attr: expose and rename accessor functions
- . var: adjust memory allocation for strings
- . var: format variable structure with C99 initializers
- . var: add support for listing the shell
- . t: add a function to check executable bit
- . var: mark unused parameters in git_var callbacks
->>
 
  Add more "git var" for toolsmiths to learn various locations Git is
  configured with either via the configuration or hardcoded defaults.
@@ -314,27 +389,14 @@ Release tarballs are available at:
  source: <20230627161902.754472-1-sandals@crustytoothpaste.net>
 
 
-* jc/doc-hash-object-types (2023-06-23) 1 commit
- - docs: add git hash-object -t option's possible values
+* jc/doc-hash-object-types (2023-06-28) 1 commit
+  (merged to 'next' on 2023-06-28 at adff1700c2)
+ + docs: add git hash-object -t option's possible values
 
  Doc update.
 
- Will merge to 'next'.
- source: <pull.1533.v2.git.git.1687555504551.gitgitgadget@gmail.com>
-
-
-* jc/abort-ll-merge-with-a-signal (2023-06-23) 2 commits
-  (merged to 'next' on 2023-06-24 at 685eb5d25c)
- + t6406: skip "external merge driver getting killed by a signal" test on Windows
-  (merged to 'next' on 2023-06-23 at 9c9c37e95e)
- + ll-merge: killing the external merge driver aborts the merge
-
- When the external merge driver is killed by a signal, its output
- should not be trusted as a resolution with conflicts that is
- proposed by the driver, but the code did.
-
  Will merge to 'master'.
- source: <xmqq4jmzc91e.fsf_-_@gitster.g>
+ source: <pull.1533.v3.git.git.1688004473941.gitgitgadget@gmail.com>
 
 
 * cc/repack-sift-filtered-objects-to-separate-pack (2023-06-14) 9 commits
@@ -369,15 +431,16 @@ Release tarballs are available at:
 
 
 * rs/strbuf-expand-step (2023-06-18) 5 commits
- - strbuf: simplify strbuf_expand_literal_cb()
- - replace strbuf_expand() with strbuf_expand_step()
- - replace strbuf_expand_dict_cb() with strbuf_expand_step()
- - strbuf: factor out strbuf_expand_step()
- - pretty: factor out expand_separator()
+  (merged to 'next' on 2023-06-28 at 1918915b71)
+ + strbuf: simplify strbuf_expand_literal_cb()
+ + replace strbuf_expand() with strbuf_expand_step()
+ + replace strbuf_expand_dict_cb() with strbuf_expand_step()
+ + strbuf: factor out strbuf_expand_step()
+ + pretty: factor out expand_separator()
 
  Code clean-up around strbuf_expand() API.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <767baa64-20a6-daf2-d34b-d81f72363749@web.de>
 
 
@@ -403,34 +466,35 @@ Release tarballs are available at:
 
 
 * pb/complete-diff-options (2023-06-26) 24 commits
- - diff.c: mention completion above add_diff_options
- - completion: complete --remerge-diff
- - completion: complete --diff-merges, its options and --no-diff-merges
- - completion: move --pickaxe-{all,regex} to __git_diff_common_options
- - completion: complete --ws-error-highlight
- - completion: complete --unified
- - completion: complete --output-indicator-{context,new,old}
- - completion: complete --output
- - completion: complete --no-stat
- - completion: complete --no-relative
- - completion: complete --line-prefix
- - completion: complete --ita-invisible-in-index and --ita-visible-in-index
- - completion: complete --irreversible-delete
- - completion: complete --ignore-matching-lines
- - completion: complete --function-context
- - completion: complete --find-renames
- - completion: complete --find-object
- - completion: complete --find-copies
- - completion: complete --default-prefix
- - completion: complete --compact-summary
- - completion: complete --combined-all-paths
- - completion: complete --cc
- - completion: complete --break-rewrites
- - completion: add comments describing __git_diff_* globals
+  (merged to 'next' on 2023-06-28 at ccff93557d)
+ + diff.c: mention completion above add_diff_options
+ + completion: complete --remerge-diff
+ + completion: complete --diff-merges, its options and --no-diff-merges
+ + completion: move --pickaxe-{all,regex} to __git_diff_common_options
+ + completion: complete --ws-error-highlight
+ + completion: complete --unified
+ + completion: complete --output-indicator-{context,new,old}
+ + completion: complete --output
+ + completion: complete --no-stat
+ + completion: complete --no-relative
+ + completion: complete --line-prefix
+ + completion: complete --ita-invisible-in-index and --ita-visible-in-index
+ + completion: complete --irreversible-delete
+ + completion: complete --ignore-matching-lines
+ + completion: complete --function-context
+ + completion: complete --find-renames
+ + completion: complete --find-object
+ + completion: complete --find-copies
+ + completion: complete --default-prefix
+ + completion: complete --compact-summary
+ + completion: complete --combined-all-paths
+ + completion: complete --cc
+ + completion: complete --break-rewrites
+ + completion: add comments describing __git_diff_* globals
 
  Completion updates.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1543.v3.git.1687796688.gitgitgadget@gmail.com>
 
 
@@ -506,43 +570,6 @@ Release tarballs are available at:
  source: <cover.1687270849.git.me@ttaylorr.com>
 
 
-* en/header-split-cache-h-part-3 (2023-06-21) 28 commits
-  (merged to 'next' on 2023-06-23 at 84ad22bf36)
- + fsmonitor-ll.h: split this header out of fsmonitor.h
- + hash-ll, hashmap: move oidhash() to hash-ll
- + object-store-ll.h: split this header out of object-store.h
- + khash: name the structs that khash declares
- + merge-ll: rename from ll-merge
- + git-compat-util.h: remove unneccessary include of wildmatch.h
- + builtin.h: remove unneccessary includes
- + list-objects-filter-options.h: remove unneccessary include
- + diff.h: remove unnecessary include of oidset.h
- + repository: remove unnecessary include of path.h
- + log-tree: replace include of revision.h with simple forward declaration
- + cache.h: remove this no-longer-used header
- + read-cache*.h: move declarations for read-cache.c functions from cache.h
- + repository.h: move declaration of the_index from cache.h
- + merge.h: move declarations for merge.c from cache.h
- + diff.h: move declaration for global in diff.c from cache.h
- + preload-index.h: move declarations for preload-index.c from elsewhere
- + sparse-index.h: move declarations for sparse-index.c from cache.h
- + name-hash.h: move declarations for name-hash.c from cache.h
- + run-command.h: move declarations for run-command.c from cache.h
- + statinfo: move stat_{data,validity} functions from cache/read-cache
- + read-cache: move shared add/checkout/commit code
- + add: modify add_files_to_cache() to avoid globals
- + read-cache: move shared commit and ls-files code
- + setup: adopt shared init-db & clone code
- + init-db, clone: change unnecessary global into passed parameter
- + init-db: remove unnecessary global variable
- + init-db: document existing bug with core.bare in template config
-
- Header files cleanup.
-
- Will merge to 'master'.
- source: <pull.1525.v3.git.1684218848.gitgitgadget@gmail.com>
-
-
 * cc/git-replay (2023-06-03) 15 commits
  - replay: stop assuming replayed branches do not diverge
  - replay: add --contained to rebase contained branches
@@ -575,32 +602,36 @@ Release tarballs are available at:
 
 
 * cw/strbuf-cleanup (2023-06-12) 7 commits
- - strbuf: remove global variable
- - path: move related function to path
- - object-name: move related functions to object-name
- - credential-store: move related functions to credential-store file
- - abspath: move related functions to abspath
- - strbuf: clarify dependency
- - strbuf: clarify API boundary
+  (merged to 'next' on 2023-06-28 at c158b004a8)
+ + strbuf: remove global variable
+ + path: move related function to path
+ + object-name: move related functions to object-name
+ + credential-store: move related functions to credential-store file
+ + abspath: move related functions to abspath
+ + strbuf: clarify dependency
+ + strbuf: clarify API boundary
 
  Move functions that are not about pure string manipulation out of
  strbuf.[ch]
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20230606194720.2053551-1-calvinwan@google.com>
 
 
 * tl/notes-separator (2023-06-21) 7 commits
- - notes: introduce "--no-separator" option
- - notes.c: introduce "--[no-]stripspace" option
- - notes.c: append separator instead of insert by pos
- - notes.c: introduce '--separator=<paragraph-break>' option
- - t3321: add test cases about the notes stripspace behavior
- - notes.c: use designated initializers for clarity
- - notes.c: cleanup 'strbuf_grow' call in 'append_edit'
+  (merged to 'next' on 2023-06-28 at 74fa459f4d)
+ + notes: introduce "--no-separator" option
+ + notes.c: introduce "--[no-]stripspace" option
+ + notes.c: append separator instead of insert by pos
+ + notes.c: introduce '--separator=<paragraph-break>' option
+ + t3321: add test cases about the notes stripspace behavior
+ + notes.c: use designated initializers for clarity
+ + notes.c: cleanup 'strbuf_grow' call in 'append_edit'
 
  'git notes append' was taught '--separator' to specify string to insert
  between paragraphs.
+
+ Will merge to 'master'.
  source: <cover.1685174011.git.dyroneteng@gmail.com>
 
 
@@ -619,51 +650,3 @@ Release tarballs are available at:
  cf. <xmqqsfcthrpb.fsf@gitster.g>
  cf. <1fd54422-b66a-c2e4-7cd7-934ea01190ad@gmail.com>
  source: <pull.1492.v2.git.1682089074.gitgitgadget@gmail.com>
-
---------------------------------------------------
-[Discarded]
-
-* mh/credential-password-expiry-libsecret (2023-05-05) 1 commit
- . credential/libsecret: support password_expiry_utc
-
- Originally merged to 'next' on 2023-05-09
-
- The libsecret credential helper learns to handle the password
- expiry time information.
-
- Superseded by mh/credential-libsecret-attrs.
- cf. <CAGJzqskMwOJkriH6serqdwAVYi+fftEL8ohJd-suP6v+OxB_bg@mail.gmail.com>
- source: <pull.1469.v3.git.git.1683270298313.gitgitgadget@gmail.com>
-
-
-* tb/pack-bitmap-index-seek (2023-03-20) 6 commits
- . pack-bitmap.c: factor out `bitmap_index_seek_commit()`
- . pack-bitmap.c: use `bitmap_index_seek()` where possible
- . pack-bitmap.c: factor out manual `map_pos` manipulation
- . pack-bitmap.c: drop unnecessary 'inline's
- . pack-bitmap.c: hide bitmap internals in `read_be32()`
- . pack-bitmap.c: hide bitmap internals in `read_u8()`
-
- Clean-up the pack-bitmap codepath.
-
- Retracted for now.
- cf. <ZJCI6FHtbuOKPlV1@nand.local>
- source: <cover.1679342296.git.me@ttaylorr.com>
-
-
-* js/cmake-wo-cache-h (2023-06-15) 1 commit
- . cmake: adapt to `cache.h` being no more
-
- Build fix in en/header-split-cache-h-part-3 topic.
-
- Ejected out of 'next' and made into a part of en/header-split-cache-h-part-3
- source: <pull.1525.v3.git.1684218848.gitgitgadget@gmail.com>
-
-
-* jc/notes-separator-fix (2023-06-13) 7 commits
- . notes: do not access before the beginning of an array
-
- Fix to tl/notes-separator topic.
-
- Discarded as the updated base topic should not require it anymore.
- source: <cover.1682671758.git.dyroneteng@gmail.com>
