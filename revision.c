@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "alloc.h"
 #include "config.h"
 #include "environment.h"
@@ -6,7 +6,7 @@
 #include "hex.h"
 #include "object-name.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "tag.h"
 #include "blob.h"
 #include "tree.h"
@@ -31,7 +31,9 @@
 #include "bisect.h"
 #include "packfile.h"
 #include "worktree.h"
+#include "read-cache.h"
 #include "setup.h"
+#include "sparse-index.h"
 #include "strvec.h"
 #include "trace2.h"
 #include "commit-reach.h"
@@ -44,6 +46,7 @@
 #include "list-objects-filter-options.h"
 #include "resolve-undo.h"
 #include "parse-options.h"
+#include "wildmatch.h"
 
 volatile show_early_output_fn_t show_early_output;
 

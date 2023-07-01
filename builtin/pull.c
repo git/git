@@ -6,12 +6,12 @@
  * Fetch one or more remote refs and merge it/them into the current HEAD.
  */
 #define USE_THE_INDEX_VARIABLE
-#include "cache.h"
+#include "builtin.h"
 #include "advice.h"
 #include "config.h"
-#include "builtin.h"
 #include "gettext.h"
 #include "hex.h"
+#include "merge.h"
 #include "object-name.h"
 #include "parse-options.h"
 #include "exec-cmd.h"
@@ -19,6 +19,8 @@
 #include "oid-array.h"
 #include "remote.h"
 #include "dir.h"
+#include "path.h"
+#include "read-cache-ll.h"
 #include "rebase.h"
 #include "refs.h"
 #include "refspec.h"

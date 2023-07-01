@@ -3,8 +3,10 @@
 #include "refs.h"
 #include "setup.h"
 #include "worktree.h"
-#include "object-store.h"
+#include "object-store-ll.h"
+#include "path.h"
 #include "repository.h"
+#include "strbuf.h"
 #include "revision.h"
 
 struct flag_definition {

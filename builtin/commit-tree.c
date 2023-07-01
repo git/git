@@ -3,16 +3,15 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
-#include "cache.h"
+#include "builtin.h"
 #include "config.h"
 #include "gettext.h"
 #include "hex.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "repository.h"
 #include "commit.h"
 #include "tree.h"
-#include "builtin.h"
 #include "utf8.h"
 #include "gpg-interface.h"
 #include "parse-options.h"

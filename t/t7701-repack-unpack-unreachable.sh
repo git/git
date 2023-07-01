@@ -126,8 +126,18 @@ test_expect_success 'gc.recentObjectsHook' '
 	git cat-file -p $obj2 &&
 	git cat-file -p $obj3 &&
 
-	git tag -a -m tag obj2-tag $obj2 &&
-	obj2_tag="$(git rev-parse obj2-tag)" &&
+	# make an unreachable annotated tag object to ensure we rescue objects
+	# which are reachable from non-pruned unreachable objects
+	obj2_tag="$(git mktag <<-EOF
+	object $obj2
+	type blob
+	tag obj2-tag
+	tagger T A Gger <tagger@example.com> 1234567890 -0000
+	EOF
+	)" &&
+
+	obj2_tag_pack="$(echo $obj2_tag | git pack-objects .git/objects/pack/pack)" &&
+	git prune-packed &&
 
 	write_script precious-objects <<-EOF &&
 	echo $obj2_tag
@@ -136,6 +146,7 @@ test_expect_success 'gc.recentObjectsHook' '
 
 	test-tool chmtime =-86400 .git/objects/pack/pack-$pack2.pack &&
 	test-tool chmtime =-86400 .git/objects/pack/pack-$pack3.pack &&
+	test-tool chmtime =-86400 .git/objects/pack/pack-$obj2_tag_pack.pack &&
 	git repack -A -d --unpack-unreachable=1.hour.ago &&
 
 	git cat-file -p $obj1 &&

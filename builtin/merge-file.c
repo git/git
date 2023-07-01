@@ -1,6 +1,5 @@
 #include "builtin.h"
 #include "abspath.h"
-#include "cache.h"
 #include "config.h"
 #include "gettext.h"
 #include "setup.h"

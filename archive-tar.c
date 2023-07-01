@@ -9,7 +9,7 @@
 #include "hex.h"
 #include "tar.h"
 #include "archive.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "streaming.h"
 #include "run-command.h"
 #include "write-or-die.h"

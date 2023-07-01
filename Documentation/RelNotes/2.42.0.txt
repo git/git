@@ -31,6 +31,10 @@ Performance, Internal Implementation, Development Support etc.
 
  * "git worktree" learned to work better with sparse index feature.
 
+ * When the external merge driver is killed by a signal, its output
+   should not be trusted as a resolution with conflicts that is
+   proposed by the driver, but the code did.
+
 
 Fixes since v2.41
 -----------------
@@ -106,6 +110,21 @@ Fixes since v2.41
    submodules should include the submodule changes in the resulting
    commit, but it did not.
    (merge 5768478edc js/defeat-ignore-submodules-config-with-explicit-addition later to maint).
+
+ * When "git commit --trailer=..." invokes the interpret-trailers
+   machinery, it knows what it feeds to interpret-trailers is a full
+   log message without any patch, but failed to express that by
+   passing the "--no-divider" option, which has been corrected.
+   (merge be3d654343 jk/commit-use-no-divider-with-interpret-trailers later to maint).
+
+ * Avoid breakage of "git pack-objects --cruft" due to inconsistency
+   between the way the code enumerates packfiles in the repository.
+   (merge 73320e49ad tb/collect-pack-filenames-fix later to maint).
+
+ * We create .pack and then .idx, we consider only packfiles that have
+   .idx usable (those with only .pack are not ready yet), so we should
+   remove .idx before removing .pack for consistency.
+   (merge 0dd1324a73 ds/remove-idx-before-pack later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 51f9d2e563 sa/doc-ls-remote later to maint).

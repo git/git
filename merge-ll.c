@@ -10,7 +10,7 @@
 #include "attr.h"
 #include "xdiff-interface.h"
 #include "run-command.h"
-#include "ll-merge.h"
+#include "merge-ll.h"
 #include "quote.h"
 #include "strbuf.h"
 #include "wrapper.h"
@@ -243,7 +243,14 @@ static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
 		unlink_or_warn(temp[i]);
 	strbuf_release(&cmd);
 	strbuf_release(&path_sq);
-	ret = (status > 0) ? LL_MERGE_CONFLICT : status;
+
+	if (!status)
+		ret = LL_MERGE_OK;
+	else if (status <= 128)
+		ret = LL_MERGE_CONFLICT;
+	else
+		/* died due to a signal: WTERMSIG(status) + 128 */
+		ret = LL_MERGE_ERROR;
 	return ret;
 }
 

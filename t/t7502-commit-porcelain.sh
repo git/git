@@ -466,6 +466,25 @@ test_expect_success 'commit --trailer with -c and command' '
 	test_cmp expected actual
 '
 
+test_expect_success 'commit --trailer not confused by --- separator' '
+	cat >msg <<-\EOF &&
+	subject
+
+	body with dashes
+	---
+	in it
+	EOF
+	git commit --allow-empty --trailer="my-trailer: value" -F msg &&
+	{
+		cat msg &&
+		echo &&
+		echo "my-trailer: value"
+	} >expected &&
+	git cat-file commit HEAD >commit.msg &&
+	sed -e "1,/^\$/d" commit.msg >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'multiple -m' '
 
 	>negative &&

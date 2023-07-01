@@ -1,9 +1,9 @@
 /*
  * Copyright (c) 2006 Franck Bui-Huu
  */
-#include "cache.h"
 #include "builtin.h"
 #include "archive.h"
+#include "path.h"
 #include "pkt-line.h"
 #include "sideband.h"
 #include "repository.h"

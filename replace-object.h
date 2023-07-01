@@ -3,7 +3,7 @@
 
 #include "oidmap.h"
 #include "repository.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 
 struct replace_object {
 	struct oidmap_entry original;

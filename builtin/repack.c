@@ -6,6 +6,7 @@
 #include "gettext.h"
 #include "hex.h"
 #include "parse-options.h"
+#include "path.h"
 #include "run-command.h"
 #include "server-info.h"
 #include "sigchain.h"
@@ -15,7 +16,7 @@
 #include "midx.h"
 #include "packfile.h"
 #include "prune-packed.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "promisor-remote.h"
 #include "shallow.h"
 #include "pack.h"
@@ -95,8 +96,8 @@ static int repack_config(const char *var, const char *value, void *cb)
 }
 
 /*
- * Adds all packs hex strings to either fname_nonkept_list or
- * fname_kept_list based on whether each pack has a corresponding
+ * Adds all packs hex strings (pack-$HASH) to either fname_nonkept_list
+ * or fname_kept_list based on whether each pack has a corresponding
  * .keep file or not.  Packs without a .keep file are not to be kept
  * if we are going to pack everything into one file.
  */
@@ -107,6 +108,7 @@ static void collect_pack_filenames(struct string_list *fname_nonkept_list,
 	DIR *dir;
 	struct dirent *e;
 	char *fname;
+	struct strbuf buf = STRBUF_INIT;
 
 	if (!(dir = opendir(packdir)))
 		return;
@@ -115,11 +117,15 @@ static void collect_pack_filenames(struct string_list *fname_nonkept_list,
 		size_t len;
 		int i;
 
-		if (!strip_suffix(e->d_name, ".pack", &len))
+		if (!strip_suffix(e->d_name, ".idx", &len))
 			continue;
 
+		strbuf_reset(&buf);
+		strbuf_add(&buf, e->d_name, len);
+		strbuf_addstr(&buf, ".pack");
+
 		for (i = 0; i < extra_keep->nr; i++)
-			if (!fspathcmp(e->d_name, extra_keep->items[i].string))
+			if (!fspathcmp(buf.buf, extra_keep->items[i].string))
 				break;
 
 		fname = xmemdupz(e->d_name, len);
@@ -136,6 +142,7 @@ static void collect_pack_filenames(struct string_list *fname_nonkept_list,
 		}
 	}
 	closedir(dir);
+	strbuf_release(&buf);
 
 	string_list_sort(fname_kept_list);
 }
