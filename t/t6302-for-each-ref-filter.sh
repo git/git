@@ -45,6 +45,8 @@ test_expect_success 'check signed tags with --points-at' '
 	sed -e "s/Z$//" >expect <<-\EOF &&
 	refs/heads/side Z
 	refs/tags/annotated-tag four
+	refs/tags/doubly-annotated-tag An annotated tag
+	refs/tags/doubly-signed-tag A signed tag
 	refs/tags/four Z
 	refs/tags/signed-tag four
 	EOF

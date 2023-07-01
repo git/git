@@ -2332,10 +2332,7 @@ static int for_each_fullref_in_pattern(struct ref_filter *filter,
  * of oids. If the given ref is a tag, check if the given tag points
  * at one of the oids in the given oid array.
  * NEEDSWORK:
- * 1. Only a single level of indirection is obtained, we might want to
- * change this to account for multiple levels (e.g. annotated tags
- * pointing to annotated tags pointing to a commit.)
- * 2. As the refs are cached we might know what refname peels to without
+ * As the refs are cached we might know what refname peels to without
  * the need to parse the object via parse_object(). peel_ref() might be a
  * more efficient alternative to obtain the pointee.
  */
@@ -2343,18 +2340,19 @@ static const struct object_id *match_points_at(struct oid_array *points_at,
 					       const struct object_id *oid,
 					       const char *refname)
 {
-	const struct object_id *tagged_oid = NULL;
 	struct object *obj;
 
 	if (oid_array_lookup(points_at, oid) >= 0)
 		return oid;
 	obj = parse_object(the_repository, oid);
+	while (obj && obj->type == OBJ_TAG) {
+		oid = get_tagged_oid((struct tag *)obj);
+		if (oid_array_lookup(points_at, oid) >= 0)
+			return oid;
+		obj = parse_object(the_repository, oid);
+	}
 	if (!obj)
 		die(_("malformed object at '%s'"), refname);
-	if (obj->type == OBJ_TAG)
-		tagged_oid = get_tagged_oid((struct tag *)obj);
-	if (tagged_oid && oid_array_lookup(points_at, tagged_oid) >= 0)
-		return tagged_oid;
 	return NULL;
 }
 
