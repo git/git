@@ -2,6 +2,10 @@
 
 test_description='unpack-trees error messages'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 
@@ -18,7 +22,7 @@ test_expect_success 'setup' '
 	git add two three four five &&
 	git commit -m Second &&
 
-	git checkout master &&
+	git checkout main &&
 	echo other >two &&
 	echo other >three &&
 	echo other >four &&
@@ -37,14 +41,15 @@ EOF
 
 test_expect_success 'untracked files overwritten by merge (fast and non-fast forward)' '
 	test_must_fail git merge branch 2>out &&
-	test_i18ncmp out expect &&
+	test_cmp out expect &&
 	git commit --allow-empty -m empty &&
 	(
 		GIT_MERGE_VERBOSITY=0 &&
 		export GIT_MERGE_VERBOSITY &&
 		test_must_fail git merge branch 2>out2
 	) &&
-	test_i18ncmp out2 expect &&
+	echo "Merge with strategy ${GIT_TEST_MERGE_ALGORITHM:-ort} failed." >>expect &&
+	test_cmp out2 expect &&
 	git reset --hard HEAD^
 '
 
@@ -65,7 +70,7 @@ test_expect_success 'untracked files or local changes ovewritten by merge' '
 	git add three &&
 	git add four &&
 	test_must_fail git merge branch 2>out &&
-	test_i18ncmp out expect
+	test_cmp out expect
 '
 
 cat >expect <<\EOF
@@ -83,11 +88,11 @@ test_expect_success 'cannot switch branches because of local changes' '
 	echo two >rep/two &&
 	git add rep/one rep/two &&
 	git commit -m Fourth &&
-	git checkout master &&
+	git checkout main &&
 	echo uno >rep/one &&
 	echo dos >rep/two &&
 	test_must_fail git checkout branch 2>out &&
-	test_i18ncmp out expect
+	test_cmp out expect
 '
 
 cat >expect <<\EOF
@@ -101,7 +106,7 @@ EOF
 test_expect_success 'not uptodate file porcelain checkout error' '
 	git add rep/one rep/two &&
 	test_must_fail git checkout branch 2>out &&
-	test_i18ncmp out expect
+	test_cmp out expect
 '
 
 cat >expect <<\EOF
@@ -128,11 +133,11 @@ test_expect_success 'not_uptodate_dir porcelain checkout error' '
 	>rep2 &&
 	git add rep rep2 &&
 	git commit -m "added test as a file" &&
-	git checkout master &&
+	git checkout main &&
 	>rep/untracked-file &&
 	>rep2/untracked-file &&
 	test_must_fail git checkout branch 2>out &&
-	test_i18ncmp out ../expect
+	test_cmp out ../expect
 '
 
 test_done

@@ -2,15 +2,18 @@
 
 test_description='CRLF merge conflict across text=auto change
 
-* [master] remove .gitattributes
+* [main] remove .gitattributes
  ! [side] add line from b
 --
  + [side] add line from b
-*  [master] remove .gitattributes
-*  [master^] add line from a
-*  [master~2] normalize file
+*  [main] remove .gitattributes
+*  [main^] add line from a
+*  [main~2] normalize file
 *+ [side^] Initial
 '
+
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -64,7 +67,7 @@ test_expect_success setup '
 	git commit -m "add line from b" &&
 	git tag b &&
 
-	git checkout master
+	git checkout main
 '
 
 test_expect_success 'set up fuzz_conflict() helper' '
@@ -195,10 +198,36 @@ test_expect_success 'Test delete/normalize conflict' '
 	git reset --hard initial &&
 	git rm file &&
 	git commit -m "remove file" &&
-	git checkout master &&
+	git checkout main &&
 	git reset --hard a^ &&
 	git merge side &&
 	test_path_is_missing file
+'
+
+test_expect_success 'rename/delete vs. renormalization' '
+	git init subrepo &&
+	(
+		cd subrepo &&
+		echo foo >oldfile &&
+		git add oldfile &&
+		git commit -m original &&
+
+		git branch rename &&
+		git branch nuke &&
+
+		git checkout rename &&
+		git mv oldfile newfile &&
+		git commit -m renamed &&
+
+		git checkout nuke &&
+		git rm oldfile &&
+		git commit -m deleted &&
+
+		git checkout rename^0 &&
+		test_must_fail git -c merge.renormalize=true merge nuke >out &&
+
+		grep "rename/delete" out
+	)
 '
 
 test_done

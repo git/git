@@ -6,6 +6,10 @@ Branch name arguments are usually names which are taken to be inside of
 refs/heads/, but we interpret some magic syntax like @{-1}, @{upstream}, etc.
 This script aims to check the behavior of those corner cases.
 '
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 expect_branch() {
@@ -28,7 +32,7 @@ test_expect_success 'update branch via @{-1}' '
 	git branch previous one &&
 
 	git checkout previous &&
-	git checkout master &&
+	git checkout main &&
 
 	git branch -f @{-1} two &&
 	expect_branch previous two
@@ -54,11 +58,21 @@ test_expect_success 'create branch with pseudo-qualified name' '
 	expect_branch refs/heads/refs/heads/qualified two
 '
 
+test_expect_success 'force-copy a branch to itself via @{-1} is no-op' '
+	git branch -t copiable main &&
+	git checkout copiable &&
+	git checkout - &&
+	git branch -C @{-1} copiable &&
+	git config --get-all branch.copiable.merge >actual &&
+	echo refs/heads/main >expect &&
+	test_cmp expect actual
+'
+
 test_expect_success 'delete branch via @{-1}' '
 	git branch previous-del &&
 
 	git checkout previous-del &&
-	git checkout master &&
+	git checkout main &&
 
 	git branch -D @{-1} &&
 	expect_deleted previous-del
@@ -98,7 +112,7 @@ test_expect_success 'disallow deleting remote branch via @{-1}' '
 	git update-ref refs/remotes/origin/previous one &&
 
 	git checkout -b origin/previous two &&
-	git checkout master &&
+	git checkout main &&
 
 	test_must_fail git branch -r -D @{-1} &&
 	expect_branch refs/remotes/origin/previous one &&
@@ -128,6 +142,30 @@ test_expect_success 'checkout does not treat remote @{upstream} as a branch' '
 
 	git checkout @{upstream} &&
 	expect_branch HEAD one
+'
+
+test_expect_success 'edit-description via @{-1}' '
+	git checkout -b desc-branch &&
+	git checkout -b non-desc-branch &&
+	write_script editor <<-\EOF &&
+		echo "Branch description" >"$1"
+	EOF
+	EDITOR=./editor git branch --edit-description @{-1} &&
+	test_must_fail git config branch.non-desc-branch.description &&
+	git config branch.desc-branch.description >actual &&
+	printf "Branch description\n\n" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'modify branch upstream via "@{-1}" and "@{-1}@{upstream}"' '
+	git checkout -b upstream-branch &&
+	git checkout -b upstream-other -t upstream-branch &&
+	git branch --set-upstream-to upstream-other @{-1} &&
+	git config branch.upstream-branch.merge >actual &&
+	echo "refs/heads/upstream-other" >expect &&
+	test_cmp expect actual &&
+	git branch --unset-upstream @{-1}@{upstream} &&
+	test_must_fail git config branch.upstream-other.merge
 '
 
 test_done

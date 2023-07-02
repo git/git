@@ -1,6 +1,11 @@
 #include "test-tool.h"
-#include "cache.h"
+#include "abspath.h"
+#include "environment.h"
+#include "path.h"
+#include "read-cache-ll.h"
+#include "setup.h"
 #include "string-list.h"
+#include "trace.h"
 #include "utf8.h"
 
 /*
@@ -8,7 +13,8 @@
  * GIT_CEILING_DIRECTORIES.  If the path is unusable for some reason,
  * die with an explanation.
  */
-static int normalize_ceiling_entry(struct string_list_item *item, void *unused)
+static int normalize_ceiling_entry(struct string_list_item *item,
+				   void *data UNUSED)
 {
 	char *ceil = item->string;
 
@@ -172,9 +178,22 @@ static struct test_data dirname_data[] = {
 	{ NULL,              NULL     }
 };
 
-static int is_dotgitmodules(const char *path)
+static int check_dotfile(const char *x, const char **argv,
+			 int (*is_hfs)(const char *),
+			 int (*is_ntfs)(const char *))
 {
-	return is_hfs_dotgitmodules(path) || is_ntfs_dotgitmodules(path);
+	int res = 0, expect = 1;
+	for (; *argv; argv++) {
+		if (!strcmp("--not", *argv))
+			expect = !expect;
+		else if (expect != (is_hfs(*argv) || is_ntfs(*argv)))
+			res = error("'%s' is %s.git%s", *argv,
+				    expect ? "not " : "", x);
+		else
+			fprintf(stderr, "ok: '%s' is %s.git%s\n",
+				*argv, expect ? "" : "not ", x);
+	}
+	return !!res;
 }
 
 static int cmp_by_st_size(const void *a, const void *b)
@@ -283,9 +302,8 @@ int cmd__path_utils(int argc, const char **argv)
 	if (argc == 3 && !strcmp(argv[1], "normalize_path_copy")) {
 		char *buf = xmallocz(strlen(argv[2]));
 		int rv = normalize_path_copy(buf, argv[2]);
-		if (rv)
-			buf = "++failed++";
-		puts(buf);
+		puts(rv ? "++failed++" : buf);
+		free(buf);
 		return 0;
 	}
 
@@ -343,7 +361,10 @@ int cmd__path_utils(int argc, const char **argv)
 		int nongit_ok;
 		setup_git_directory_gently(&nongit_ok);
 		while (argc > 3) {
-			puts(prefix_path(prefix, prefix_len, argv[3]));
+			char *pfx = prefix_path(prefix, prefix_len, argv[3]);
+
+			puts(pfx);
+			free(pfx);
 			argc--;
 			argv++;
 		}
@@ -353,6 +374,7 @@ int cmd__path_utils(int argc, const char **argv)
 	if (argc == 4 && !strcmp(argv[1], "strip_path_suffix")) {
 		char *prefix = strip_path_suffix(argv[2], argv[3]);
 		printf("%s\n", prefix ? prefix : "(null)");
+		free(prefix);
 		return 0;
 	}
 
@@ -382,17 +404,24 @@ int cmd__path_utils(int argc, const char **argv)
 		return test_function(dirname_data, posix_dirname, argv[1]);
 
 	if (argc > 2 && !strcmp(argv[1], "is_dotgitmodules")) {
-		int res = 0, expect = 1, i;
-		for (i = 2; i < argc; i++)
-			if (!strcmp("--not", argv[i]))
-				expect = !expect;
-			else if (expect != is_dotgitmodules(argv[i]))
-				res = error("'%s' is %s.gitmodules", argv[i],
-					    expect ? "not " : "");
-			else
-				fprintf(stderr, "ok: '%s' is %s.gitmodules\n",
-					argv[i], expect ? "" : "not ");
-		return !!res;
+		return check_dotfile("modules", argv + 2,
+				     is_hfs_dotgitmodules,
+				     is_ntfs_dotgitmodules);
+	}
+	if (argc > 2 && !strcmp(argv[1], "is_dotgitignore")) {
+		return check_dotfile("ignore", argv + 2,
+				     is_hfs_dotgitignore,
+				     is_ntfs_dotgitignore);
+	}
+	if (argc > 2 && !strcmp(argv[1], "is_dotgitattributes")) {
+		return check_dotfile("attributes", argv + 2,
+				     is_hfs_dotgitattributes,
+				     is_ntfs_dotgitattributes);
+	}
+	if (argc > 2 && !strcmp(argv[1], "is_dotmailmap")) {
+		return check_dotfile("mailmap", argv + 2,
+				     is_hfs_dotmailmap,
+				     is_ntfs_dotmailmap);
 	}
 
 	if (argc > 2 && !strcmp(argv[1], "file-size")) {

@@ -1,0 +1,6 @@
+class RIGHT
+{
+    static int ONE;
+    static int TWO;
+    static int ChangeMe;
+}

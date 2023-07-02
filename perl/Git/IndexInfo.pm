@@ -1,6 +1,6 @@
 package Git::IndexInfo;
 use strict;
-use warnings;
+use warnings $ENV{GIT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
 use Git qw/command_input_pipe command_close_pipe/;
 
 sub new {

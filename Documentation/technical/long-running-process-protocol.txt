@@ -3,7 +3,7 @@ Long-running process protocol
 
 This protocol is used when Git needs to communicate with an external
 process throughout the entire life of a single Git command. All
-communication is in pkt-line format (see technical/protocol-common.txt)
+communication is in pkt-line format (see linkgit:gitprotocol-common[5])
 over standard input and standard output.
 
 Handshake

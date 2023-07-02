@@ -110,7 +110,7 @@ test_expect_success 'git clean with prefix' '
 
 '
 
-test_expect_success C_LOCALE_OUTPUT 'git clean with relative prefix' '
+test_expect_success 'git clean with relative prefix' '
 
 	mkdir -p build docs &&
 	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
@@ -120,10 +120,10 @@ test_expect_success C_LOCALE_OUTPUT 'git clean with relative prefix' '
 		grep part3 |
 		sed -n -e "s|^Would remove ||p"
 	) &&
-	verbose test "$would_clean" = ../src/part3.c
+	test "$would_clean" = ../src/part3.c
 '
 
-test_expect_success C_LOCALE_OUTPUT 'git clean with absolute path' '
+test_expect_success 'git clean with absolute path' '
 
 	mkdir -p build docs &&
 	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
@@ -133,7 +133,7 @@ test_expect_success C_LOCALE_OUTPUT 'git clean with absolute path' '
 		grep part3 |
 		sed -n -e "s|^Would remove ||p"
 	) &&
-	verbose test "$would_clean" = ../src/part3.c
+	test "$would_clean" = ../src/part3.c
 '
 
 test_expect_success 'git clean with out of work tree relative path' '
@@ -407,7 +407,7 @@ test_expect_success 'clean.requireForce and -f' '
 
 '
 
-test_expect_success C_LOCALE_OUTPUT 'core.excludesfile' '
+test_expect_success 'core.excludesfile' '
 
 	echo excludes >excludes &&
 	echo included >included &&
@@ -480,6 +480,7 @@ test_expect_success 'should not clean submodules' '
 		git init &&
 		test_commit msg hello.world
 	) &&
+	test_config_global protocol.file.allow always &&
 	git submodule add ./repo/.git sub1 &&
 	git commit -m "sub1" &&
 	git branch before_sub2 &&
@@ -744,6 +745,48 @@ test_expect_success 'clean untracked paths by pathspec' '
 	git -C untracked clean -f dir/file.txt &&
 	ls untracked/dir >actual &&
 	test_must_be_empty actual
+'
+
+test_expect_success 'avoid traversing into ignored directories' '
+	test_when_finished rm -f output error trace.* &&
+	test_create_repo avoid-traversing-deep-hierarchy &&
+	(
+		cd avoid-traversing-deep-hierarchy &&
+
+		mkdir -p untracked/subdir/with/a &&
+		>untracked/subdir/with/a/random-file.txt &&
+
+		GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
+		git clean -ffdxn -e untracked
+	) &&
+
+	# Make sure we only visited into the top-level directory, and did
+	# not traverse into the "untracked" subdirectory since it was excluded
+	grep data.*read_directo.*directories-visited trace.output |
+		cut -d "|" -f 9 >trace.relevant &&
+	cat >trace.expect <<-EOF &&
+	 ..directories-visited:1
+	EOF
+	test_cmp trace.expect trace.relevant
+'
+
+test_expect_success 'traverse into directories that may have ignored entries' '
+	test_when_finished rm -f output &&
+	test_create_repo need-to-traverse-into-hierarchy &&
+	(
+		cd need-to-traverse-into-hierarchy &&
+		mkdir -p modules/foobar/src/generated &&
+		> modules/foobar/src/generated/code.c &&
+		> modules/foobar/Makefile &&
+		echo "/modules/**/src/generated/" >.gitignore &&
+
+		git clean -fX modules/foobar >../output &&
+
+		grep Removing ../output &&
+
+		test_path_is_missing modules/foobar/src/generated/code.c &&
+		test_path_is_file modules/foobar/Makefile
+	)
 '
 
 test_done

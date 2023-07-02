@@ -1,5 +1,8 @@
 #include "builtin.h"
-#include "cache.h"
+#include "abspath.h"
+#include "environment.h"
+#include "gettext.h"
+#include "hex.h"
 #include "repository.h"
 #include "config.h"
 #include "lockfile.h"
@@ -9,16 +12,21 @@
 #include "commit.h"
 #include "delta.h"
 #include "pack.h"
+#include "path.h"
 #include "refs.h"
 #include "csum-file.h"
 #include "quote.h"
 #include "dir.h"
 #include "run-command.h"
 #include "packfile.h"
-#include "object-store.h"
+#include "object-file.h"
+#include "object-name.h"
+#include "object-store-ll.h"
 #include "mem-pool.h"
 #include "commit-reach.h"
 #include "khash.h"
+#include "date.h"
+#include "wrapper.h"
 
 #define PACK_ID_BITS 16
 #define MAX_PACK_ID ((1<<PACK_ID_BITS)-1)
@@ -45,7 +53,7 @@ struct object_entry {
 		depth : DEPTH_BITS;
 };
 
-static int object_entry_hashcmp(const void *map_data,
+static int object_entry_hashcmp(const void *map_data UNUSED,
 				const struct hashmap_entry *eptr,
 				const struct hashmap_entry *entry_or_key,
 				const void *keydata)
@@ -150,7 +158,7 @@ struct recent_command {
 	char *buf;
 };
 
-typedef void (*mark_set_inserter_t)(struct mark_set *s, struct object_id *oid, uintmax_t mark);
+typedef void (*mark_set_inserter_t)(struct mark_set **s, struct object_id *oid, uintmax_t mark);
 typedef void (*each_mark_fn_t)(uintmax_t mark, void *obj, void *cbp);
 
 /* Configured limits on output */
@@ -174,10 +182,12 @@ static FILE *pack_edges;
 static unsigned int show_stats = 1;
 static int global_argc;
 static const char **global_argv;
+static const char *global_prefix;
 
 /* Memory pools */
-static struct mem_pool fi_mem_pool =  {NULL, 2*1024*1024 -
-				       sizeof(struct mp_block), 0 };
+static struct mem_pool fi_mem_pool = {
+	.block_alloc = 2*1024*1024 - sizeof(struct mp_block),
+};
 
 /* Atom management */
 static unsigned int atom_table_sz = 4451;
@@ -205,7 +215,9 @@ static int import_marks_file_done;
 static int relative_marks_paths;
 
 /* Our last blob */
-static struct last_object last_blob = { STRBUF_INIT, 0, 0, 0 };
+static struct last_object last_blob = {
+	.data = STRBUF_INIT,
+ };
 
 /* Tree management */
 static unsigned int tree_entry_alloc = 1000;
@@ -231,7 +243,10 @@ static struct tag *last_tag;
 static whenspec_type whenspec = WHENSPEC_RAW;
 static struct strbuf command_buf = STRBUF_INIT;
 static int unread_command_buf;
-static struct recent_command cmd_hist = {&cmd_hist, &cmd_hist, NULL};
+static struct recent_command cmd_hist = {
+	.prev = &cmd_hist,
+	.next = &cmd_hist,
+};
 static struct recent_command *cmd_tail = &cmd_hist;
 static struct recent_command *rc_free;
 static unsigned int cmd_save = 100;
@@ -401,16 +416,18 @@ static void dump_marks(void);
 
 static NORETURN void die_nicely(const char *err, va_list params)
 {
+	va_list cp;
 	static int zombie;
-	char message[2 * PATH_MAX];
+	report_fn die_message_fn = get_die_message_routine();
 
-	vsnprintf(message, sizeof(message), err, params);
-	fputs("fatal: ", stderr);
-	fputs(message, stderr);
-	fputc('\n', stderr);
+	va_copy(cp, params);
+	die_message_fn(err, params);
 
 	if (!zombie) {
+		char message[2 * PATH_MAX];
+
 		zombie = 1;
+		vsnprintf(message, sizeof(message), err, cp);
 		write_crash_report(message);
 		end_packfile();
 		unkeep_all_packs();
@@ -427,7 +444,7 @@ static void set_checkpoint_signal(void)
 
 #else
 
-static void checkpoint_signal(int signo)
+static void checkpoint_signal(int signo UNUSED)
 {
 	checkpoint_requested = 1;
 }
@@ -526,13 +543,15 @@ static unsigned int hc_str(const char *s, size_t len)
 	return r;
 }
 
-static void insert_mark(struct mark_set *s, uintmax_t idnum, struct object_entry *oe)
+static void insert_mark(struct mark_set **top, uintmax_t idnum, struct object_entry *oe)
 {
+	struct mark_set *s = *top;
+
 	while ((idnum >> s->shift) >= 1024) {
 		s = mem_pool_calloc(&fi_mem_pool, 1, sizeof(struct mark_set));
-		s->shift = marks->shift + 10;
-		s->data.sets[0] = marks;
-		marks = s;
+		s->shift = (*top)->shift + 10;
+		s->data.sets[0] = *top;
+		*top = s;
 	}
 	while (s->shift) {
 		uintmax_t i = idnum >> s->shift;
@@ -854,7 +873,7 @@ static void end_packfile(void)
 		struct tag *t;
 
 		close_pack_windows(pack_data);
-		finalize_hashfile(pack_file, cur_pack_oid.hash, 0);
+		finalize_hashfile(pack_file, cur_pack_oid.hash, FSYNC_COMPONENT_PACK, 0);
 		fixup_pack_header_footer(pack_data->pack_fd, pack_data->hash,
 					 pack_data->pack_name, object_count,
 					 cur_pack_oid.hash, pack_size);
@@ -933,18 +952,18 @@ static int store_object(
 	git_hash_ctx c;
 	git_zstream s;
 
-	hdrlen = xsnprintf((char *)hdr, sizeof(hdr), "%s %lu",
-			   type_name(type), (unsigned long)dat->len) + 1;
+	hdrlen = format_object_header((char *)hdr, sizeof(hdr), type,
+				      dat->len);
 	the_hash_algo->init_fn(&c);
 	the_hash_algo->update_fn(&c, hdr, hdrlen);
 	the_hash_algo->update_fn(&c, dat->buf, dat->len);
-	the_hash_algo->final_fn(oid.hash, &c);
+	the_hash_algo->final_oid_fn(&oid, &c);
 	if (oidout)
 		oidcpy(oidout, &oid);
 
 	e = insert_object(&oid);
 	if (mark)
-		insert_mark(marks, mark, e);
+		insert_mark(&marks, mark, e);
 	if (e->idx.offset) {
 		duplicate_count_by_type[type]++;
 		return 1;
@@ -1087,7 +1106,7 @@ static void stream_blob(uintmax_t len, struct object_id *oidout, uintmax_t mark)
 	hashfile_checkpoint(pack_file, &checkpoint);
 	offset = checkpoint.offset;
 
-	hdrlen = xsnprintf((char *)out_buf, out_sz, "blob %" PRIuMAX, len) + 1;
+	hdrlen = format_object_header((char *)out_buf, out_sz, OBJ_BLOB, len);
 
 	the_hash_algo->init_fn(&c);
 	the_hash_algo->update_fn(&c, out_buf, hdrlen);
@@ -1134,7 +1153,7 @@ static void stream_blob(uintmax_t len, struct object_id *oidout, uintmax_t mark)
 		}
 	}
 	git_deflate_end(&s);
-	the_hash_algo->final_fn(oid.hash, &c);
+	the_hash_algo->final_oid_fn(&oid, &c);
 
 	if (oidout)
 		oidcpy(oidout, &oid);
@@ -1142,7 +1161,7 @@ static void stream_blob(uintmax_t len, struct object_id *oidout, uintmax_t mark)
 	e = insert_object(&oid);
 
 	if (mark)
-		insert_mark(marks, mark, e);
+		insert_mark(&marks, mark, e);
 
 	if (e->idx.offset) {
 		duplicate_count_by_type[OBJ_BLOB]++;
@@ -1254,7 +1273,7 @@ static void load_tree(struct tree_entry *root)
 			die("Can't load tree %s", oid_to_hex(oid));
 	} else {
 		enum object_type type;
-		buf = read_object_file(oid, &type, &size);
+		buf = repo_read_object_file(the_repository, oid, &type, &size);
 		if (!buf || type != OBJ_TREE)
 			die("Can't load tree %s", oid_to_hex(oid));
 	}
@@ -1274,8 +1293,8 @@ static void load_tree(struct tree_entry *root)
 		e->versions[0].mode = e->versions[1].mode;
 		e->name = to_atom(c, strlen(c));
 		c += e->name->str_len + 1;
-		hashcpy(e->versions[0].oid.hash, (unsigned char *)c);
-		hashcpy(e->versions[1].oid.hash, (unsigned char *)c);
+		oidread(&e->versions[0].oid, (unsigned char *)c);
+		oidread(&e->versions[1].oid, (unsigned char *)c);
 		c += the_hash_algo->rawsz;
 	}
 	free(buf);
@@ -1614,7 +1633,7 @@ static int update_branch(struct branch *b)
 		if (!old_cmit || !new_cmit)
 			return error("Branch %s is missing commits.", b->name);
 
-		if (!in_merge_bases(old_cmit, new_cmit)) {
+		if (!repo_in_merge_bases(the_repository, old_cmit, new_cmit)) {
 			warning("Not updating %s"
 				" (new tip %s does not contain %s)",
 				b->name, oid_to_hex(&b->oid),
@@ -1717,7 +1736,7 @@ static void dump_marks(void)
 	}
 }
 
-static void insert_object_entry(struct mark_set *s, struct object_id *oid, uintmax_t mark)
+static void insert_object_entry(struct mark_set **s, struct object_id *oid, uintmax_t mark)
 {
 	struct object_entry *e;
 	e = find_object(oid);
@@ -1734,12 +1753,12 @@ static void insert_object_entry(struct mark_set *s, struct object_id *oid, uintm
 	insert_mark(s, mark, e);
 }
 
-static void insert_oid_entry(struct mark_set *s, struct object_id *oid, uintmax_t mark)
+static void insert_oid_entry(struct mark_set **s, struct object_id *oid, uintmax_t mark)
 {
 	insert_mark(s, mark, xmemdupz(oid, sizeof(*oid)));
 }
 
-static void read_mark_file(struct mark_set *s, FILE *f, mark_set_inserter_t inserter)
+static void read_mark_file(struct mark_set **s, FILE *f, mark_set_inserter_t inserter)
 {
 	char line[512];
 	while (fgets(line, sizeof(line), f)) {
@@ -1772,7 +1791,7 @@ static void read_marks(void)
 		goto done; /* Marks file does not exist */
 	else
 		die_errno("cannot read '%s'", import_marks_file);
-	read_mark_file(marks, f, insert_object_entry);
+	read_mark_file(&marks, f, insert_object_entry);
 	fclose(f);
 done:
 	import_marks_file_done = 1;
@@ -2475,11 +2494,11 @@ static void note_change_n(const char *p, struct branch *b, unsigned char *old_fa
 		if (commit_oe->type != OBJ_COMMIT)
 			die("Mark :%" PRIuMAX " not a commit", commit_mark);
 		oidcpy(&commit_oid, &commit_oe->idx.oid);
-	} else if (!get_oid(p, &commit_oid)) {
+	} else if (!repo_get_oid(the_repository, p, &commit_oid)) {
 		unsigned long size;
 		char *buf = read_object_with_reference(the_repository,
 						       &commit_oid,
-						       commit_type, &size,
+						       OBJ_COMMIT, &size,
 						       &commit_oid);
 		if (!buf || size < the_hash_algo->hexsz + 6)
 			die("Not a valid commit: %s", p);
@@ -2551,7 +2570,7 @@ static void parse_from_existing(struct branch *b)
 		char *buf;
 
 		buf = read_object_with_reference(the_repository,
-						 &b->oid, commit_type, &size,
+						 &b->oid, OBJ_COMMIT, &size,
 						 &b->oid);
 		parse_from_commit(b, buf, size);
 		free(buf);
@@ -2588,7 +2607,7 @@ static int parse_objectish(struct branch *b, const char *objectish)
 			} else
 				parse_from_existing(b);
 		}
-	} else if (!get_oid(objectish, &b->oid)) {
+	} else if (!repo_get_oid(the_repository, objectish, &b->oid)) {
 		parse_from_existing(b);
 		if (is_null_oid(&b->oid))
 			b->delete = 1;
@@ -2643,11 +2662,11 @@ static struct hash_list *parse_merge(unsigned int *count)
 			if (oe->type != OBJ_COMMIT)
 				die("Mark :%" PRIuMAX " not a commit", idnum);
 			oidcpy(&n->oid, &oe->idx.oid);
-		} else if (!get_oid(from, &n->oid)) {
+		} else if (!repo_get_oid(the_repository, from, &n->oid)) {
 			unsigned long size;
 			char *buf = read_object_with_reference(the_repository,
 							       &n->oid,
-							       commit_type,
+							       OBJ_COMMIT,
 							       &size, &n->oid);
 			if (!buf || size < the_hash_algo->hexsz + 6)
 				die("Not a valid commit: %s", from);
@@ -2816,7 +2835,7 @@ static void parse_new_tag(const char *arg)
 		oe = find_mark(marks, from_mark);
 		type = oe->type;
 		oidcpy(&oid, &oe->idx.oid);
-	} else if (!get_oid(from, &oid)) {
+	} else if (!repo_get_oid(the_repository, from, &oid)) {
 		struct object_entry *oe = find_object(&oid);
 		if (!oe) {
 			type = oid_object_info(the_repository, &oid, NULL);
@@ -2925,7 +2944,7 @@ static void cat_blob(struct object_entry *oe, struct object_id *oid)
 	char *buf;
 
 	if (!oe || oe->pack_id == MAX_PACK_ID) {
-		buf = read_object_file(oid, &type, &size);
+		buf = repo_read_object_file(the_repository, oid, &type, &size);
 	} else {
 		type = oe->type;
 		buf = gfi_unpack_entry(oe, &size);
@@ -3033,7 +3052,8 @@ static struct object_entry *dereference(struct object_entry *oe,
 		buf = gfi_unpack_entry(oe, &size);
 	} else {
 		enum object_type unused;
-		buf = read_object_file(oid, &unused, &size);
+		buf = repo_read_object_file(the_repository, oid, &unused,
+					    &size);
 	}
 	if (!buf)
 		die("Can't load object %s", oid_to_hex(oid));
@@ -3228,13 +3248,13 @@ static void parse_alias(void)
 		die(_("Expected 'to' command, got %s"), command_buf.buf);
 	e = find_object(&b.oid);
 	assert(e);
-	insert_mark(marks, next_mark, e);
+	insert_mark(&marks, next_mark, e);
 }
 
 static char* make_fast_import_path(const char *path)
 {
 	if (!relative_marks_paths || is_absolute_path(path))
-		return xstrdup(path);
+		return prefix_filename(global_prefix, path);
 	return git_pathdup("info/fast-import/%s", path);
 }
 
@@ -3305,9 +3325,11 @@ static void option_cat_blob_fd(const char *fd)
 
 static void option_export_pack_edges(const char *edges)
 {
+	char *fn = prefix_filename(global_prefix, edges);
 	if (pack_edges)
 		fclose(pack_edges);
-	pack_edges = xfopen(edges, "a");
+	pack_edges = xfopen(fn, "a");
+	free(fn);
 }
 
 static void option_rewrite_submodules(const char *arg, struct string_list *list)
@@ -3320,14 +3342,17 @@ static void option_rewrite_submodules(const char *arg, struct string_list *list)
 		die(_("Expected format name:filename for submodule rewrite option"));
 	*f = '\0';
 	f++;
-	ms = xcalloc(1, sizeof(*ms));
-	string_list_insert(list, s)->util = ms;
+	CALLOC_ARRAY(ms, 1);
 
+	f = prefix_filename(global_prefix, f);
 	fp = fopen(f, "r");
 	if (!fp)
 		die_errno("cannot read '%s'", f);
-	read_mark_file(ms, fp, insert_oid_entry);
+	read_mark_file(&ms, fp, insert_oid_entry);
 	fclose(fp);
+	free(f);
+
+	string_list_insert(list, s)->util = ms;
 }
 
 static int parse_one_option(const char *option)
@@ -3396,7 +3421,6 @@ static int parse_one_feature(const char *feature, int from_stream)
 		option_rewrite_submodules(arg, &sub_marks_to);
 	} else if (skip_prefix(feature, "rewrite-submodules-from=", &arg)) {
 		option_rewrite_submodules(arg, &sub_marks_from);
-	} else if (skip_prefix(feature, "rewrite-submodules-from=", &arg)) {
 	} else if (!strcmp(feature, "get-mark")) {
 		; /* Don't die - this feature is supported */
 	} else if (!strcmp(feature, "cat-blob")) {
@@ -3454,7 +3478,7 @@ static void git_pack_config(void)
 		pack_idx_opts.version = indexversion_value;
 		if (pack_idx_opts.version > 2)
 			git_die_config("pack.indexversion",
-					"bad pack.indexversion=%"PRIu32, pack_idx_opts.version);
+					"bad pack.indexVersion=%"PRIu32, pack_idx_opts.version);
 	}
 	if (!git_config_get_ulong("pack.packsizelimit", &packsizelimit_value))
 		max_packsize = packsizelimit_value;
@@ -3517,9 +3541,9 @@ int cmd_fast_import(int argc, const char **argv, const char *prefix)
 
 	alloc_objects(object_entry_alloc);
 	strbuf_init(&command_buf, 0);
-	atom_table = xcalloc(atom_table_sz, sizeof(struct atom_str*));
-	branch_table = xcalloc(branch_table_sz, sizeof(struct branch*));
-	avail_tree_table = xcalloc(avail_tree_table_sz, sizeof(struct avail_tree_content*));
+	CALLOC_ARRAY(atom_table, atom_table_sz);
+	CALLOC_ARRAY(branch_table, branch_table_sz);
+	CALLOC_ARRAY(avail_tree_table, avail_tree_table_sz);
 	marks = mem_pool_calloc(&fi_mem_pool, 1, sizeof(struct mark_set));
 
 	hashmap_init(&object_table, object_entry_hashcmp, NULL, 0);
@@ -3540,6 +3564,7 @@ int cmd_fast_import(int argc, const char **argv, const char *prefix)
 
 	global_argc = argc;
 	global_argv = argv;
+	global_prefix = prefix;
 
 	rc_free = mem_pool_alloc(&fi_mem_pool, cmd_save * sizeof(*rc_free));
 	for (i = 0; i < (cmd_save - 1); i++)

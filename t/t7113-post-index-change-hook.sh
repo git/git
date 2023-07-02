@@ -2,6 +2,10 @@
 
 test_description='post index change hook'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -13,8 +17,7 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'test status, add, commit, others trigger hook without flags set' '
-	mkdir -p .git/hooks &&
-	write_script .git/hooks/post-index-change <<-\EOF &&
+	test_hook post-index-change <<-\EOF &&
 		if test "$1" -eq 1; then
 			echo "Invalid combination of flags passed to hook; updated_workdir is set." >testfailure
 			exit 1
@@ -59,7 +62,7 @@ test_expect_success 'test status, add, commit, others trigger hook without flags
 '
 
 test_expect_success 'test checkout and reset trigger the hook' '
-	write_script .git/hooks/post-index-change <<-\EOF &&
+	test_hook post-index-change <<-\EOF &&
 		if test "$1" -eq 1 && test "$2" -eq 1; then
 			echo "Invalid combination of flags passed to hook; updated_workdir and updated_skipworktree are both set." >testfailure
 			exit 1
@@ -85,7 +88,7 @@ test_expect_success 'test checkout and reset trigger the hook' '
 	EOF
 	: force index to be dirty &&
 	test-tool chmtime +60 dir1/file1.txt &&
-	git checkout master &&
+	git checkout main &&
 	test_path_is_file testsuccess && rm -f testsuccess &&
 	test_path_is_missing testfailure &&
 	test-tool chmtime +60 dir1/file1.txt &&
@@ -102,7 +105,7 @@ test_expect_success 'test checkout and reset trigger the hook' '
 '
 
 test_expect_success 'test reset --mixed and update-index triggers the hook' '
-	write_script .git/hooks/post-index-change <<-\EOF &&
+	test_hook post-index-change <<-\EOF &&
 		if test "$1" -eq 1 && test "$2" -eq 1; then
 			echo "Invalid combination of flags passed to hook; updated_workdir and updated_skipworktree are both set." >testfailure
 			exit 1

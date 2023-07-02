@@ -1,0 +1,3 @@
+echo 'fatal: reword option of --fixup is mutually exclusive with' '--patch/--interactive/--all/--include/--only' > expect &&
+test_must_fail git commit --fixup=reword:HEAD~ $1 2 > actual &&
+test_cmp expect actual

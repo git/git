@@ -98,10 +98,10 @@ test_expect_success 'migrate --minimize on old inited layout' '
 	rm -rf "$GIT_DIR"/svn &&
 	for i in $(cat fetch.out)
 	do
-		path=$(expr $i : "\([^:]*\):.*$")
-		ref=$(expr $i : "[^:]*:\(refs/remotes/.*\)$")
-		if test -z "$ref"; then continue; fi
-		if test -n "$path"; then path="/$path"; fi
+		path=${i%%:*} &&
+		ref=${i#*:} &&
+		if test "$ref" = "${ref#refs/remotes/}"; then continue; fi &&
+		if test -n "$path"; then path="/$path"; fi &&
 		mkdir -p "$GIT_DIR"/svn/$ref/info/ &&
 		echo "$svnrepo"$path >"$GIT_DIR"/svn/$ref/info/url ||
 		return 1

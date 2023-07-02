@@ -24,21 +24,21 @@ test_perf_default_repo
 test_expect_success "setup repo" '
 	if git rev-parse --verify refs/heads/p0006-ballast^{commit}
 	then
-		echo Assuming synthetic repo from many-files.sh
-		git branch br_base            master
-		git branch br_ballast         p0006-ballast^
-		git branch br_ballast_alias   p0006-ballast^
-		git branch br_ballast_plus_1  p0006-ballast
-		git config --local core.sparsecheckout 1
+		echo Assuming synthetic repo from many-files.sh &&
+		git branch br_base            master &&
+		git branch br_ballast         p0006-ballast^ &&
+		git branch br_ballast_alias   p0006-ballast^ &&
+		git branch br_ballast_plus_1  p0006-ballast &&
+		git config --local core.sparsecheckout 1 &&
 		cat >.git/info/sparse-checkout <<-EOF
 		/*
 		!ballast/*
 		EOF
 	else
-		echo Assuming non-synthetic repo...
-		git branch br_base            $(git rev-list HEAD | tail -n 1)
-		git branch br_ballast         HEAD^ || error "no ancestor commit from current head"
-		git branch br_ballast_alias   HEAD^
+		echo Assuming non-synthetic repo... &&
+		git branch br_base            $(git rev-list HEAD | tail -n 1) &&
+		git branch br_ballast         HEAD^ || error "no ancestor commit from current head" &&
+		git branch br_ballast_alias   HEAD^ &&
 		git branch br_ballast_plus_1  HEAD
 	fi &&
 	git checkout -q br_ballast &&
@@ -46,7 +46,15 @@ test_expect_success "setup repo" '
 '
 
 test_perf "read-tree br_base br_ballast ($nr_files)" '
-	git read-tree -m br_base br_ballast -n
+	git read-tree -n -m br_base br_ballast
+'
+
+test_perf "read-tree br_ballast_plus_1 ($nr_files)" '
+	# Run read-tree 100 times for clearer performance results & comparisons
+	for i in  $(test_seq 100)
+	do
+		git read-tree -n -m br_ballast_plus_1 || return 1
+	done
 '
 
 test_perf "switch between br_base br_ballast ($nr_files)" '

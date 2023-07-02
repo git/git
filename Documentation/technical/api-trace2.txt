@@ -5,7 +5,7 @@ information to stderr or a file.  The Trace2 feature is inactive unless
 explicitly enabled by enabling one or more Trace2 Targets.
 
 The Trace2 API is intended to replace the existing (Trace1)
-printf-style tracing provided by the existing `GIT_TRACE` and
+`printf()`-style tracing provided by the existing `GIT_TRACE` and
 `GIT_TRACE_PERFORMANCE` facilities.  During initial implementation,
 Trace2 and Trace1 may operate in parallel.
 
@@ -24,8 +24,8 @@ for example.
 
 Trace2 is controlled using `trace2.*` config values in the system and
 global config files and `GIT_TRACE2*` environment variables.  Trace2 does
-not read from repo local or worktree config files or respect `-c`
-command line config settings.
+not read from repo local or worktree config files, nor does it respect
+`-c` command line config settings.
 
 == Trace2 Targets
 
@@ -34,8 +34,8 @@ Format details are given in a later section.
 
 === The Normal Format Target
 
-The normal format target is a tradition printf format and similar
-to GIT_TRACE format.  This format is enabled with the `GIT_TRACE2`
+The normal format target is a traditional `printf()` format and similar
+to the `GIT_TRACE` format.  This format is enabled with the `GIT_TRACE2`
 environment variable or the `trace2.normalTarget` system or global
 config setting.
 
@@ -69,8 +69,8 @@ $ cat ~/log.normal
 === The Performance Format Target
 
 The performance format target (PERF) is a column-based format to
-replace GIT_TRACE_PERFORMANCE and is suitable for development and
-testing, possibly to complement tools like gprof.  This format is
+replace `GIT_TRACE_PERFORMANCE` and is suitable for development and
+testing, possibly to complement tools like `gprof`.  This format is
 enabled with the `GIT_TRACE2_PERF` environment variable or the
 `trace2.perfTarget` system or global config setting.
 
@@ -128,7 +128,7 @@ yields
 
 ------------
 $ cat ~/log.event
-{"event":"version","sid":"sid":"20190408T191610.507018Z-H9b68c35f-P000059a8","thread":"main","time":"2019-01-16T17:28:42.620713Z","file":"common-main.c","line":38,"evt":"2","exe":"2.20.1.155.g426c96fcdb"}
+{"event":"version","sid":"20190408T191610.507018Z-H9b68c35f-P000059a8","thread":"main","time":"2019-01-16T17:28:42.620713Z","file":"common-main.c","line":38,"evt":"3","exe":"2.20.1.155.g426c96fcdb"}
 {"event":"start","sid":"20190408T191610.507018Z-H9b68c35f-P000059a8","thread":"main","time":"2019-01-16T17:28:42.621027Z","file":"common-main.c","line":39,"t_abs":0.001173,"argv":["git","version"]}
 {"event":"cmd_name","sid":"20190408T191610.507018Z-H9b68c35f-P000059a8","thread":"main","time":"2019-01-16T17:28:42.621122Z","file":"git.c","line":432,"name":"version","hierarchy":"version"}
 {"event":"exit","sid":"20190408T191610.507018Z-H9b68c35f-P000059a8","thread":"main","time":"2019-01-16T17:28:42.621236Z","file":"git.c","line":662,"t_abs":0.001227,"code":0}
@@ -148,20 +148,18 @@ filename collisions).
 
 == Trace2 API
 
-All public Trace2 functions and macros are defined in `trace2.h` and
-`trace2.c`.  All public symbols are prefixed with `trace2_`.
+The Trace2 public API is defined and documented in `trace2.h`; refer to it for
+more information.  All public functions and macros are prefixed
+with `trace2_` and are implemented in `trace2.c`.
 
 There are no public Trace2 data structures.
 
 The Trace2 code also defines a set of private functions and data types
 in the `trace2/` directory.  These symbols are prefixed with `tr2_`
-and should only be used by functions in `trace2.c`.
+and should only be used by functions in `trace2.c` (or other private
+source files in `trace2/`).
 
-== Conventions for Public Functions and Macros
-
-The functions defined by the Trace2 API are declared and documented
-in `trace2.h`.  It defines the API functions and wrapper macros for
-Trace2.
+=== Conventions for Public Functions and Macros
 
 Some functions have a `_fl()` suffix to indicate that they take `file`
 and `line-number` arguments.
@@ -170,54 +168,9 @@ Some functions have a `_va_fl()` suffix to indicate that they also
 take a `va_list` argument.
 
 Some functions have a `_printf_fl()` suffix to indicate that they also
-take a varargs argument.
+take a `printf()` style format with a variable number of arguments.
 
-There are CPP wrapper macros and ifdefs to hide most of these details.
-See `trace2.h` for more details.  The following discussion will only
-describe the simplified forms.
-
-== Public API
-
-All Trace2 API functions send a message to all of the active
-Trace2 Targets.  This section describes the set of available
-messages.
-
-It helps to divide these functions into groups for discussion
-purposes.
-
-=== Basic Command Messages
-
-These are concerned with the lifetime of the overall git process.
-e.g: `void trace2_initialize_clock()`, `void trace2_initialize()`,
-`int trace2_is_enabled()`, `void trace2_cmd_start(int argc, const char **argv)`.
-
-=== Command Detail Messages
-
-These are concerned with describing the specific Git command
-after the command line, config, and environment are inspected.
-e.g: `void trace2_cmd_name(const char *name)`,
-`void trace2_cmd_mode(const char *mode)`.
-
-=== Child Process Messages
-
-These are concerned with the various spawned child processes,
-including shell scripts, git commands, editors, pagers, and hooks.
-
-e.g: `void trace2_child_start(struct child_process *cmd)`.
-
-=== Git Thread Messages
-
-These messages are concerned with Git thread usage.
-
-e.g: `void trace2_thread_start(const char *thread_name)`.
-
-=== Region and Data Messages
-
-These are concerned with recording performance data
-over regions or spans of code. e.g:
-`void trace2_region_enter(const char *category, const char *label, const struct repository *repo)`.
-
-Refer to trace2.h for details about all trace2 functions.
+CPP wrapper macros are defined to hide most of these details.
 
 == Trace2 Target Formats
 
@@ -234,7 +187,7 @@ Events are written as lines of the form:
 	is the event name.
 
 `<event-message>`::
-	is a free-form printf message intended for human consumption.
+	is a free-form `printf()` message intended for human consumption.
 +
 Note that this may contain embedded LF or CRLF characters that are
 not escaped, so the event may spill across multiple lines.
@@ -300,7 +253,7 @@ This field is in anticipation of in-proc submodules in the future.
 	indicate a broad category, such as "index" or "status".
 
 `<perf-event-message>`::
-	is a free-form printf message intended for human consumption.
+	is a free-form `printf()` message intended for human consumption.
 
 ------------
 15:33:33.532712 wt-status.c:2310                  | d0 | main                     | region_enter | r1  |  0.126064 |           | status     | label:print
@@ -391,19 +344,19 @@ only present on the "start" and "atexit" events.
 {
 	"event":"version",
 	...
-	"evt":"2",		       # EVENT format version
+	"evt":"3",		       # EVENT format version
 	"exe":"2.20.1.155.g426c96fcdb" # git version
 }
 ------------
 
-`"discard"`::
+`"too_many_files"`::
 	This event is written to the git-trace2-discard sentinel file if there
 	are too many files in the target trace directory (see the
 	trace2.maxFiles config option).
 +
 ------------
 {
-	"event":"discard",
+	"event":"too_many_files",
 	...
 }
 ------------
@@ -465,8 +418,8 @@ completed.)
 ------------
 
 `"error"`::
-	This event is emitted when one of the `error()`, `die()`,
-	or `usage()` functions are called.
+	This event is emitted when one of the `BUG()`, `bug()`, `error()`,
+	`die()`, `warning()`, or `usage()` functions are called.
 +
 ------------
 {
@@ -490,6 +443,20 @@ about specific error arguments.
 	"event":"cmd_path",
 	...
 	"path":"C:/work/gfw/git.exe"
+}
+------------
+
+`"cmd_ancestry"`::
+	This event contains the text command name for the parent (and earlier
+	generations of parents) of the current process, in an array ordered from
+	nearest parent to furthest great-grandparent. It may not be implemented
+	on all platforms.
++
+------------
+{
+	"event":"cmd_ancestry",
+	...
+	"ancestry":["bash","tmux: server","systemd"]
 }
 ------------
 
@@ -519,7 +486,7 @@ these special values are used:
 ------------
 
 `"cmd_mode"`::
-	This event, when present, describes the command variant This
+	This event, when present, describes the command variant. This
 	event may be emitted more than once.
 +
 ------------
@@ -574,7 +541,7 @@ with "?".
 
 `"child_exit"`::
 	This event is generated after the current process has returned
-	from the waitpid() and collected the exit information from the
+	from the `waitpid()` and collected the exit information from the
 	child.
 +
 ------------
@@ -595,9 +562,49 @@ process may be a shell script which doesn't have a session-id.)
 +
 Note that the `t_rel` field contains the observed run time in seconds
 for the child process (starting before the fork/exec/spawn and
-stopping after the waitpid() and includes OS process creation overhead).
+stopping after the `waitpid()` and includes OS process creation overhead).
 So this time will be slightly larger than the atexit time reported by
 the child process itself.
+
+`"child_ready"`::
+	This event is generated after the current process has started
+	a background process and released all handles to it.
++
+------------
+{
+	"event":"child_ready",
+	...
+	"child_id":2,
+	"pid":14708,	 # child PID
+	"ready":"ready", # child ready state
+	"t_rel":0.110605 # observed run-time of child process
+}
+------------
++
+Note that the session-id of the child process is not available to
+the current/spawning process, so the child's PID is reported here as
+a hint for post-processing.  (But it is only a hint because the child
+process may be a shell script which doesn't have a session-id.)
++
+This event is generated after the child is started in the background
+and given a little time to boot up and start working.  If the child
+starts up normally while the parent is still waiting, the "ready"
+field will have the value "ready".
+If the child is too slow to start and the parent times out, the field
+will have the value "timeout".
+If the child starts but the parent is unable to probe it, the field
+will have the value "error".
++
+After the parent process emits this event, it will release all of its
+handles to the child process and treat the child as a background
+daemon.  So even if the child does eventually finish booting up,
+the parent will not emit an updated event.
++
+Note that the `t_rel` field contains the observed run time in seconds
+when the parent released the child process into the background.
+The child is assumed to be a long-running daemon process and may
+outlive the parent process.  So the parent's child event times should
+not be compared to the child's atexit times.
 
 `"exec"`::
 	This event is generated before git attempts to `exec()`
@@ -631,8 +638,8 @@ The "exec_id" field is a command-unique id and is only useful if the
 
 `"thread_start"`::
 	This event is generated when a thread is started.  It is
-	generated from *within* the new thread's thread-proc (for TLS
-	reasons).
+	generated from *within* the new thread's thread-proc (because
+	it needs to access data in the thread's thread-local storage).
 +
 ------------
 {
@@ -644,7 +651,7 @@ The "exec_id" field is a command-unique id and is only useful if the
 
 `"thread_exit"`::
 	This event is generated when a thread exits.  It is generated
-	from *within* the thread's thread-proc (for TLS reasons).
+	from *within* the thread's thread-proc.
 +
 ------------
 {
@@ -663,6 +670,7 @@ The "exec_id" field is a command-unique id and is only useful if the
 {
 	"event":"def_param",
 	...
+	"scope":"global",
 	"param":"core.abbrev",
 	"value":"7"
 }
@@ -760,6 +768,73 @@ The "value" field may be an integer or a string.
 	"value":["bash.exe","bash.exe"]
 }
 ------------
+
+`"th_timer"`::
+	This event logs the amount of time that a stopwatch timer was
+	running in the thread.  This event is generated when a thread
+	exits for timers that requested per-thread events.
++
+------------
+{
+	"event":"th_timer",
+	...
+	"category":"my_category",
+	"name":"my_timer",
+	"intervals":5,         # number of time it was started/stopped
+	"t_total":0.052741,    # total time in seconds it was running
+	"t_min":0.010061,      # shortest interval
+	"t_max":0.011648       # longest interval
+}
+------------
+
+`"timer"`::
+	This event logs the amount of time that a stopwatch timer was
+	running aggregated across all threads.  This event is generated
+	when the process exits.
++
+------------
+{
+	"event":"timer",
+	...
+	"category":"my_category",
+	"name":"my_timer",
+	"intervals":5,         # number of time it was started/stopped
+	"t_total":0.052741,    # total time in seconds it was running
+	"t_min":0.010061,      # shortest interval
+	"t_max":0.011648       # longest interval
+}
+------------
+
+`"th_counter"`::
+	This event logs the value of a counter variable in a thread.
+	This event is generated when a thread exits for counters that
+	requested per-thread events.
++
+------------
+{
+	"event":"th_counter",
+	...
+	"category":"my_category",
+	"name":"my_counter",
+	"count":23
+}
+------------
+
+`"counter"`::
+	This event logs the value of a counter variable across all threads.
+	This event is generated when the process exits.  The total value
+	reported here is the sum across all threads.
++
+------------
+{
+	"event":"counter",
+	...
+	"category":"my_category",
+	"name":"my_counter",
+	"count":23
+}
+------------
+
 
 == Example Trace2 API Usage
 
@@ -895,7 +970,7 @@ atexit elapsed:3.868970 code:0
 
 Regions::
 
-	Regions can be use to time an interesting section of code.
+	Regions can be used to time an interesting section of code.
 +
 ----------------
 void wt_status_collect(struct wt_status *s)
@@ -1049,9 +1124,9 @@ Thread Events::
 
 	Thread messages added to a thread-proc.
 +
-For example, the multithreaded preload-index code can be
+For example, the multi-threaded preload-index code can be
 instrumented with a region around the thread pool and then
-per-thread start and exit events within the threadproc.
+per-thread start and exit events within the thread-proc.
 +
 ----------------
 static void *preload_thread(void *_data)
@@ -1151,7 +1226,100 @@ worked on 508 items at offset 2032.  Thread "th04" worked on 508 items
 at offset 508.
 +
 This example also shows that thread names are assigned in a racy manner
-as each thread starts and allocates TLS storage.
+as each thread starts.
+
+Config (def param) Events::
+
+	  Dump "interesting" config values to trace2 log.
++
+We can optionally emit configuration events, see
+`trace2.configparams` in linkgit:git-config[1] for how to enable
+it.
++
+----------------
+$ git config --system color.ui never
+$ git config --global color.ui always
+$ git config --local color.ui auto
+$ git config --list --show-scope | grep 'color.ui'
+system  color.ui=never
+global  color.ui=always
+local   color.ui=auto
+----------------
++
+Then, mark the config `color.ui` as "interesting" config with
+`GIT_TRACE2_CONFIG_PARAMS`:
++
+----------------
+$ export GIT_TRACE2_PERF_BRIEF=1
+$ export GIT_TRACE2_PERF=~/log.perf
+$ export GIT_TRACE2_CONFIG_PARAMS=color.ui
+$ git version
+...
+$ cat ~/log.perf
+d0 | main                     | version      |     |           |           |              | ...
+d0 | main                     | start        |     |  0.001642 |           |              | /usr/local/bin/git version
+d0 | main                     | cmd_name     |     |           |           |              | version (version)
+d0 | main                     | def_param    |     |           |           | scope:system | color.ui:never
+d0 | main                     | def_param    |     |           |           | scope:global | color.ui:always
+d0 | main                     | def_param    |     |           |           | scope:local  | color.ui:auto
+d0 | main                     | data         | r0  |  0.002100 |  0.002100 | fsync        | fsync/writeout-only:0
+d0 | main                     | data         | r0  |  0.002126 |  0.002126 | fsync        | fsync/hardware-flush:0
+d0 | main                     | exit         |     |  0.000470 |           |              | code:0
+d0 | main                     | atexit       |     |  0.000477 |           |              | code:0
+----------------
+
+Stopwatch Timer Events::
+
+	Measure the time spent in a function call or span of code
+	that might be called from many places within the code
+	throughout the life of the process.
++
+----------------
+static void expensive_function(void)
+{
+	trace2_timer_start(TRACE2_TIMER_ID_TEST1);
+	...
+	sleep_millisec(1000); // Do something expensive
+	...
+	trace2_timer_stop(TRACE2_TIMER_ID_TEST1);
+}
+
+static int ut_100timer(int argc, const char **argv)
+{
+	...
+
+	expensive_function();
+
+	// Do something else 1...
+
+	expensive_function();
+
+	// Do something else 2...
+
+	expensive_function();
+
+	return 0;
+}
+----------------
++
+In this example, we measure the total time spent in
+`expensive_function()` regardless of when it is called
+in the overall flow of the program.
++
+----------------
+$ export GIT_TRACE2_PERF_BRIEF=1
+$ export GIT_TRACE2_PERF=~/log.perf
+$ t/helper/test-tool trace2 100timer 3 1000
+...
+$ cat ~/log.perf
+d0 | main                     | version      |     |           |           |              | ...
+d0 | main                     | start        |     |  0.001453 |           |              | t/helper/test-tool trace2 100timer 3 1000
+d0 | main                     | cmd_name     |     |           |           |              | trace2 (trace2)
+d0 | main                     | exit         |     |  3.003667 |           |              | code:0
+d0 | main                     | timer        |     |           |           | test         | name:test1 intervals:3 total:3.001686 min:1.000254 max:1.000929
+d0 | main                     | atexit       |     |  3.003796 |           |              | code:0
+----------------
+
 
 == Future Work
 
@@ -1160,11 +1328,11 @@ as each thread starts and allocates TLS storage.
 There are a few issues to resolve before we can completely
 switch to Trace2.
 
-* Updating existing tests that assume GIT_TRACE format messages.
+* Updating existing tests that assume `GIT_TRACE` format messages.
 
-* How to best handle custom GIT_TRACE_<key> messages?
+* How to best handle custom `GIT_TRACE_<key>` messages?
 
-** The GIT_TRACE_<key> mechanism allows each <key> to write to a
+** The `GIT_TRACE_<key>` mechanism allows each <key> to write to a
 different file (in addition to just stderr).
 
 ** Do we want to maintain that ability or simply write to the existing

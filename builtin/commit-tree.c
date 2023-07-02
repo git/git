@@ -3,20 +3,23 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
-#include "cache.h"
+#include "builtin.h"
 #include "config.h"
-#include "object-store.h"
+#include "gettext.h"
+#include "hex.h"
+#include "object-name.h"
+#include "object-store-ll.h"
 #include "repository.h"
 #include "commit.h"
 #include "tree.h"
-#include "builtin.h"
 #include "utf8.h"
 #include "gpg-interface.h"
 #include "parse-options.h"
 
 static const char * const commit_tree_usage[] = {
-	N_("git commit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...] "
-		"[(-F <file>)...] <tree>"),
+	N_("git commit-tree <tree> [(-p <parent>)...]"),
+	N_("git commit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...]\n"
+	   "                [(-F <file>)...] <tree>"),
 	NULL
 };
 
@@ -36,14 +39,6 @@ static void new_parent(struct commit *parent, struct commit_list **parents_p)
 	commit_list_insert(parent, parents_p);
 }
 
-static int commit_tree_config(const char *var, const char *value, void *cb)
-{
-	int status = git_gpg_config(var, value, NULL);
-	if (status)
-		return status;
-	return git_default_config(var, value, cb);
-}
-
 static int parse_parent_arg_callback(const struct option *opt,
 		const char *arg, int unset)
 {
@@ -52,7 +47,7 @@ static int parse_parent_arg_callback(const struct option *opt,
 
 	BUG_ON_OPT_NEG_NOARG(unset, arg);
 
-	if (get_oid_commit(arg, &oid))
+	if (repo_get_oid_commit(the_repository, arg, &oid))
 		die(_("not a valid object name %s"), arg);
 
 	assert_oid_type(&oid, OBJ_COMMIT);
@@ -88,9 +83,7 @@ static int parse_file_arg_callback(const struct option *opt,
 	if (!strcmp(arg, "-"))
 		fd = 0;
 	else {
-		fd = open(arg, O_RDONLY);
-		if (fd < 0)
-			die_errno(_("git commit-tree: failed to open '%s'"), arg);
+		fd = xopen(arg, O_RDONLY);
 	}
 	if (strbuf_read(buf, fd, 0) < 0)
 		die_errno(_("git commit-tree: failed to read '%s'"), arg);
@@ -122,7 +115,7 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	git_config(commit_tree_config, NULL);
+	git_config(git_default_config, NULL);
 
 	if (argc < 2 || !strcmp(argv[1], "-h"))
 		usage_with_options(commit_tree_usage, options);
@@ -132,7 +125,7 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 	if (argc != 1)
 		die(_("must give exactly one tree"));
 
-	if (get_oid_tree(argv[0], &tree_oid))
+	if (repo_get_oid_tree(the_repository, argv[0], &tree_oid))
 		die(_("not a valid object name %s"), argv[0]);
 
 	if (!buffer.len) {

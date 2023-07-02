@@ -13,11 +13,11 @@ test_expect_success 'setup repo' '
 	infodir=".git/objects/info" &&
 	graphdir="$infodir/commit-graphs" &&
 	test_oid_cache <<-EOM
-	shallow sha1:1760
-	shallow sha256:2064
+	shallow sha1:2132
+	shallow sha256:2436
 
-	base sha1:1376
-	base sha256:1496
+	base sha1:1408
+	base sha256:1528
 
 	oid_version sha1:1
 	oid_version sha256:2
@@ -30,10 +30,16 @@ graph_read_expect() {
 	then
 		NUM_BASE=$2
 	fi
+	OPTIONS=
+	if test -z "$3"
+	then
+		OPTIONS=" read_generation_data"
+	fi
 	cat >expect <<- EOF
-	header: 43475048 1 $(test_oid oid_version) 3 $NUM_BASE
+	header: 43475048 1 $(test_oid oid_version) 4 $NUM_BASE
 	num_commits: $1
-	chunks: oid_fanout oid_lookup commit_metadata
+	chunks: oid_fanout oid_lookup commit_metadata generation_data
+	options:$OPTIONS
 	EOF
 	test-tool read-graph >output &&
 	test_cmp expect output
@@ -55,8 +61,8 @@ test_expect_success 'create commits and write commit-graph' '
 '
 
 graph_git_two_modes() {
-	git -c core.commitGraph=true $1 >output
-	git -c core.commitGraph=false $1 >expect
+	git ${2:+ -C "$2"} -c core.commitGraph=true $1 >output &&
+	git ${2:+ -C "$2"} -c core.commitGraph=false $1 >expect &&
 	test_cmp expect output
 }
 
@@ -64,12 +70,13 @@ graph_git_behavior() {
 	MSG=$1
 	BRANCH=$2
 	COMPARE=$3
+	DIR=$4
 	test_expect_success "check normal git operations: $MSG" '
-		graph_git_two_modes "log --oneline $BRANCH" &&
-		graph_git_two_modes "log --topo-order $BRANCH" &&
-		graph_git_two_modes "log --graph $COMPARE..$BRANCH" &&
-		graph_git_two_modes "branch -vv" &&
-		graph_git_two_modes "merge-base -a $BRANCH $COMPARE"
+		graph_git_two_modes "log --oneline $BRANCH" "$DIR" &&
+		graph_git_two_modes "log --topo-order $BRANCH" "$DIR" &&
+		graph_git_two_modes "log --graph $COMPARE..$BRANCH" "$DIR" &&
+		graph_git_two_modes "branch -vv" "$DIR" &&
+		graph_git_two_modes "merge-base -a $BRANCH $COMPARE" "$DIR"
 	'
 }
 
@@ -187,7 +194,10 @@ test_expect_success 'create fork and chain across alternate' '
 	)
 '
 
-graph_git_behavior 'alternate: commit 13 vs 6' commits/13 commits/6
+if test -d fork
+then
+	graph_git_behavior 'alternate: commit 13 vs 6' commits/13 origin/commits/6 "fork"
+fi
 
 test_expect_success 'test merge stragety constants' '
 	git clone . merge-2 &&
@@ -426,5 +436,216 @@ done <<\EOF
 0666 -r--r--r--
 0600 -r--------
 EOF
+
+test_expect_success '--split=replace with partial Bloom data' '
+	rm -rf $graphdir $infodir/commit-graph &&
+	git reset --hard commits/3 &&
+	git rev-list -1 HEAD~2 >a &&
+	git rev-list -1 HEAD~1 >b &&
+	git commit-graph write --split=no-merge --stdin-commits --changed-paths <a &&
+	git commit-graph write --split=no-merge --stdin-commits <b &&
+	git commit-graph write --split=replace --stdin-commits --changed-paths <c &&
+	ls $graphdir/graph-*.graph >graph-files &&
+	test_line_count = 1 graph-files &&
+	verify_chain_files_exist $graphdir
+'
+
+test_expect_success 'prevent regression for duplicate commits across layers' '
+	git init dup &&
+	git -C dup commit --allow-empty -m one &&
+	git -C dup -c core.commitGraph=false commit-graph write --split=no-merge --reachable 2>err &&
+	test_i18ngrep "attempting to write a commit-graph" err &&
+	git -C dup commit-graph write --split=no-merge --reachable &&
+	git -C dup commit --allow-empty -m two &&
+	git -C dup commit-graph write --split=no-merge --reachable &&
+	git -C dup commit --allow-empty -m three &&
+	git -C dup commit-graph write --split --reachable &&
+	git -C dup commit-graph verify
+'
+
+NUM_FIRST_LAYER_COMMITS=64
+NUM_SECOND_LAYER_COMMITS=16
+NUM_THIRD_LAYER_COMMITS=7
+NUM_FOURTH_LAYER_COMMITS=8
+NUM_FIFTH_LAYER_COMMITS=16
+SECOND_LAYER_SEQUENCE_START=$(($NUM_FIRST_LAYER_COMMITS + 1))
+SECOND_LAYER_SEQUENCE_END=$(($SECOND_LAYER_SEQUENCE_START + $NUM_SECOND_LAYER_COMMITS - 1))
+THIRD_LAYER_SEQUENCE_START=$(($SECOND_LAYER_SEQUENCE_END + 1))
+THIRD_LAYER_SEQUENCE_END=$(($THIRD_LAYER_SEQUENCE_START + $NUM_THIRD_LAYER_COMMITS - 1))
+FOURTH_LAYER_SEQUENCE_START=$(($THIRD_LAYER_SEQUENCE_END + 1))
+FOURTH_LAYER_SEQUENCE_END=$(($FOURTH_LAYER_SEQUENCE_START + $NUM_FOURTH_LAYER_COMMITS - 1))
+FIFTH_LAYER_SEQUENCE_START=$(($FOURTH_LAYER_SEQUENCE_END + 1))
+FIFTH_LAYER_SEQUENCE_END=$(($FIFTH_LAYER_SEQUENCE_START + $NUM_FIFTH_LAYER_COMMITS - 1))
+
+# Current split graph chain:
+#
+#     16 commits (No GDAT)
+# ------------------------
+#     64 commits (GDAT)
+#
+test_expect_success 'setup repo for mixed generation commit-graph-chain' '
+	graphdir=".git/objects/info/commit-graphs" &&
+	test_oid_cache <<-EOF &&
+	oid_version sha1:1
+	oid_version sha256:2
+	EOF
+	git init mixed &&
+	(
+		cd mixed &&
+		git config core.commitGraph true &&
+		git config gc.writeCommitGraph false &&
+		for i in $(test_seq $NUM_FIRST_LAYER_COMMITS)
+		do
+			test_commit $i &&
+			git branch commits/$i || return 1
+		done &&
+		git -c commitGraph.generationVersion=2 commit-graph write --reachable --split &&
+		graph_read_expect $NUM_FIRST_LAYER_COMMITS &&
+		test_line_count = 1 $graphdir/commit-graph-chain &&
+		for i in $(test_seq $SECOND_LAYER_SEQUENCE_START $SECOND_LAYER_SEQUENCE_END)
+		do
+			test_commit $i &&
+			git branch commits/$i || return 1
+		done &&
+		git -c commitGraph.generationVersion=1 commit-graph write --reachable --split=no-merge &&
+		test_line_count = 2 $graphdir/commit-graph-chain &&
+		test-tool read-graph >output &&
+		cat >expect <<-EOF &&
+		header: 43475048 1 $(test_oid oid_version) 4 1
+		num_commits: $NUM_SECOND_LAYER_COMMITS
+		chunks: oid_fanout oid_lookup commit_metadata
+		options:
+		EOF
+		test_cmp expect output &&
+		git commit-graph verify &&
+		cat $graphdir/commit-graph-chain
+	)
+'
+
+# The new layer will be added without generation data chunk as it was not
+# present on the layer underneath it.
+#
+#      7 commits (No GDAT)
+# ------------------------
+#     16 commits (No GDAT)
+# ------------------------
+#     64 commits (GDAT)
+#
+test_expect_success 'do not write generation data chunk if not present on existing tip' '
+	git clone mixed mixed-no-gdat &&
+	(
+		cd mixed-no-gdat &&
+		for i in $(test_seq $THIRD_LAYER_SEQUENCE_START $THIRD_LAYER_SEQUENCE_END)
+		do
+			test_commit $i &&
+			git branch commits/$i || return 1
+		done &&
+		git commit-graph write --reachable --split=no-merge &&
+		test_line_count = 3 $graphdir/commit-graph-chain &&
+		test-tool read-graph >output &&
+		cat >expect <<-EOF &&
+		header: 43475048 1 $(test_oid oid_version) 4 2
+		num_commits: $NUM_THIRD_LAYER_COMMITS
+		chunks: oid_fanout oid_lookup commit_metadata
+		options:
+		EOF
+		test_cmp expect output &&
+		git commit-graph verify
+	)
+'
+
+# Number of commits in each layer of the split-commit graph before merge:
+#
+#      8 commits (No GDAT)
+# ------------------------
+#      7 commits (No GDAT)
+# ------------------------
+#     16 commits (No GDAT)
+# ------------------------
+#     64 commits (GDAT)
+#
+# The top two layers are merged and do not have generation data chunk as layer below them does
+# not have generation data chunk.
+#
+#     15 commits (No GDAT)
+# ------------------------
+#     16 commits (No GDAT)
+# ------------------------
+#     64 commits (GDAT)
+#
+test_expect_success 'do not write generation data chunk if the topmost remaining layer does not have generation data chunk' '
+	git clone mixed-no-gdat mixed-merge-no-gdat &&
+	(
+		cd mixed-merge-no-gdat &&
+		for i in $(test_seq $FOURTH_LAYER_SEQUENCE_START $FOURTH_LAYER_SEQUENCE_END)
+		do
+			test_commit $i &&
+			git branch commits/$i || return 1
+		done &&
+		git commit-graph write --reachable --split --size-multiple 1 &&
+		test_line_count = 3 $graphdir/commit-graph-chain &&
+		test-tool read-graph >output &&
+		cat >expect <<-EOF &&
+		header: 43475048 1 $(test_oid oid_version) 4 2
+		num_commits: $(($NUM_THIRD_LAYER_COMMITS + $NUM_FOURTH_LAYER_COMMITS))
+		chunks: oid_fanout oid_lookup commit_metadata
+		options:
+		EOF
+		test_cmp expect output &&
+		git commit-graph verify
+	)
+'
+
+# Number of commits in each layer of the split-commit graph before merge:
+#
+#     16 commits (No GDAT)
+# ------------------------
+#     15 commits (No GDAT)
+# ------------------------
+#     16 commits (No GDAT)
+# ------------------------
+#     64 commits (GDAT)
+#
+# The top three layers are merged and has generation data chunk as the topmost remaining layer
+# has generation data chunk.
+#
+#     47 commits (GDAT)
+# ------------------------
+#     64 commits (GDAT)
+#
+test_expect_success 'write generation data chunk if topmost remaining layer has generation data chunk' '
+	git clone mixed-merge-no-gdat mixed-merge-gdat &&
+	(
+		cd mixed-merge-gdat &&
+		for i in $(test_seq $FIFTH_LAYER_SEQUENCE_START $FIFTH_LAYER_SEQUENCE_END)
+		do
+			test_commit $i &&
+			git branch commits/$i || return 1
+		done &&
+		git commit-graph write --reachable --split --size-multiple 1 &&
+		test_line_count = 2 $graphdir/commit-graph-chain &&
+		test-tool read-graph >output &&
+		cat >expect <<-EOF &&
+		header: 43475048 1 $(test_oid oid_version) 5 1
+		num_commits: $(($NUM_SECOND_LAYER_COMMITS + $NUM_THIRD_LAYER_COMMITS + $NUM_FOURTH_LAYER_COMMITS + $NUM_FIFTH_LAYER_COMMITS))
+		chunks: oid_fanout oid_lookup commit_metadata generation_data
+		options: read_generation_data
+		EOF
+		test_cmp expect output
+	)
+'
+
+test_expect_success 'write generation data chunk when commit-graph chain is replaced' '
+	git clone mixed mixed-replace &&
+	(
+		cd mixed-replace &&
+		git commit-graph write --reachable --split=replace &&
+		test_path_is_file $graphdir/commit-graph-chain &&
+		test_line_count = 1 $graphdir/commit-graph-chain &&
+		verify_chain_files_exist $graphdir &&
+		graph_read_expect $(($NUM_FIRST_LAYER_COMMITS + $NUM_SECOND_LAYER_COMMITS)) &&
+		git commit-graph verify
+	)
+'
 
 test_done

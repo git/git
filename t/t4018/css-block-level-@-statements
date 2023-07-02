@@ -1,0 +1,10 @@
+@keyframes RIGHT {
+    from {
+        background : #000;
+        border : 10px ChangeMe #C6C6C6;
+    }
+    to {
+        background : #fff;
+        border : 10px solid #C6C6C6;
+    }
+}

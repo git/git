@@ -8,6 +8,7 @@ test_description='git checkout-index on filesystem w/o symlinks test.
 This tests that git checkout-index creates a symbolic link as a plain
 file if core.symlinks is false.'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success \
@@ -21,8 +22,10 @@ test_expect_success \
 git checkout-index symlink &&
 test -f symlink'
 
-test_expect_success \
-'the file must be the blob we added during the setup' '
-test "$(git hash-object -t blob symlink)" = $l'
+test_expect_success 'the file must be the blob we added during the setup' '
+	echo "$l" >expect &&
+	git hash-object -t blob symlink >actual &&
+	test_cmp expect actual
+'
 
 test_done

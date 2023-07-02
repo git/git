@@ -1,9 +1,15 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "tree-walk.h"
+#include "alloc.h"
 #include "dir.h"
-#include "object-store.h"
+#include "gettext.h"
+#include "hex.h"
+#include "object-file.h"
+#include "object-store-ll.h"
+#include "trace2.h"
 #include "tree.h"
 #include "pathspec.h"
+#include "json-writer.h"
 
 static const char *get_mode(const char *str, unsigned int *modep)
 {
@@ -46,17 +52,20 @@ static int decode_tree_entry(struct tree_desc *desc, const char *buf, unsigned l
 
 	/* Initialize the descriptor entry */
 	desc->entry.path = path;
-	desc->entry.mode = canon_mode(mode);
+	desc->entry.mode = (desc->flags & TREE_DESC_RAW_MODES) ? mode : canon_mode(mode);
 	desc->entry.pathlen = len - 1;
-	hashcpy(desc->entry.oid.hash, (const unsigned char *)path + len);
+	oidread(&desc->entry.oid, (const unsigned char *)path + len);
 
 	return 0;
 }
 
-static int init_tree_desc_internal(struct tree_desc *desc, const void *buffer, unsigned long size, struct strbuf *err)
+static int init_tree_desc_internal(struct tree_desc *desc, const void *buffer,
+				   unsigned long size, struct strbuf *err,
+				   enum tree_desc_flags flags)
 {
 	desc->buffer = buffer;
 	desc->size = size;
+	desc->flags = flags;
 	if (size)
 		return decode_tree_entry(desc, buffer, size, err);
 	return 0;
@@ -65,15 +74,16 @@ static int init_tree_desc_internal(struct tree_desc *desc, const void *buffer, u
 void init_tree_desc(struct tree_desc *desc, const void *buffer, unsigned long size)
 {
 	struct strbuf err = STRBUF_INIT;
-	if (init_tree_desc_internal(desc, buffer, size, &err))
+	if (init_tree_desc_internal(desc, buffer, size, &err, 0))
 		die("%s", err.buf);
 	strbuf_release(&err);
 }
 
-int init_tree_desc_gently(struct tree_desc *desc, const void *buffer, unsigned long size)
+int init_tree_desc_gently(struct tree_desc *desc, const void *buffer, unsigned long size,
+			  enum tree_desc_flags flags)
 {
 	struct strbuf err = STRBUF_INIT;
-	int result = init_tree_desc_internal(desc, buffer, size, &err);
+	int result = init_tree_desc_internal(desc, buffer, size, &err, flags);
 	if (result)
 		error("%s", err.buf);
 	strbuf_release(&err);
@@ -88,7 +98,7 @@ void *fill_tree_descriptor(struct repository *r,
 	void *buf = NULL;
 
 	if (oid) {
-		buf = read_object_with_reference(r, oid, tree_type, &size, NULL);
+		buf = read_object_with_reference(r, oid, OBJ_TREE, &size, NULL);
 		if (!buf)
 			die("unable to read tree %s", oid_to_hex(oid));
 	}
@@ -167,6 +177,25 @@ int tree_entry_gently(struct tree_desc *desc, struct name_entry *entry)
 	return 1;
 }
 
+static int traverse_trees_atexit_registered;
+static int traverse_trees_count;
+static int traverse_trees_cur_depth;
+static int traverse_trees_max_depth;
+
+static void trace2_traverse_trees_statistics_atexit(void)
+{
+	struct json_writer jw = JSON_WRITER_INIT;
+
+	jw_object_begin(&jw, 0);
+	jw_object_intmax(&jw, "traverse_trees_count", traverse_trees_count);
+	jw_object_intmax(&jw, "traverse_trees_max_depth", traverse_trees_max_depth);
+	jw_end(&jw);
+
+	trace2_data_json("traverse_trees", the_repository, "statistics", &jw);
+
+	jw_release(&jw);
+}
+
 void setup_traverse_info(struct traverse_info *info, const char *base)
 {
 	size_t pathlen = strlen(base);
@@ -180,6 +209,11 @@ void setup_traverse_info(struct traverse_info *info, const char *base)
 	info->namelen = pathlen;
 	if (pathlen)
 		info->prev = &dummy;
+
+	if (trace2_is_enabled() && !traverse_trees_atexit_registered) {
+		atexit(trace2_traverse_trees_statistics_atexit);
+		traverse_trees_atexit_registered = 1;
+	}
 }
 
 char *make_traverse_path(char *path, size_t pathlen,
@@ -416,6 +450,12 @@ int traverse_trees(struct index_state *istate,
 	int interesting = 1;
 	char *traverse_path;
 
+	traverse_trees_count++;
+	traverse_trees_cur_depth++;
+
+	if (traverse_trees_cur_depth > traverse_trees_max_depth)
+		traverse_trees_max_depth = traverse_trees_cur_depth;
+
 	if (n >= ARRAY_SIZE(entry))
 		BUG("traverse_trees() called with too many trees (%d)", n);
 
@@ -515,6 +555,8 @@ int traverse_trees(struct index_state *istate,
 	free(traverse_path);
 	info->traverse_path = NULL;
 	strbuf_release(&base);
+
+	traverse_trees_cur_depth--;
 	return error;
 }
 
@@ -572,7 +614,7 @@ int get_tree_entry(struct repository *r,
 	unsigned long size;
 	struct object_id root;
 
-	tree = read_object_with_reference(r, tree_oid, tree_type, &size, &root);
+	tree = read_object_with_reference(r, tree_oid, OBJ_TREE, &size, &root);
 	if (!tree)
 		return -1;
 
@@ -644,7 +686,7 @@ enum get_oid_result get_tree_entry_follow_symlinks(struct repository *r,
 			unsigned long size;
 			tree = read_object_with_reference(r,
 							  &current_tree_oid,
-							  tree_type, &size,
+							  OBJ_TREE, &size,
 							  &root);
 			if (!tree)
 				goto done;

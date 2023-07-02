@@ -1,18 +1,23 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
 #include "json-writer.h"
 #include "quote.h"
+#include "repository.h"
 #include "run-command.h"
 #include "sigchain.h"
 #include "thread-utils.h"
 #include "version.h"
+#include "trace.h"
+#include "trace2.h"
 #include "trace2/tr2_cfg.h"
 #include "trace2/tr2_cmd_name.h"
+#include "trace2/tr2_ctr.h"
 #include "trace2/tr2_dst.h"
 #include "trace2/tr2_sid.h"
 #include "trace2/tr2_sysenv.h"
 #include "trace2/tr2_tgt.h"
 #include "trace2/tr2_tls.h"
+#include "trace2/tr2_tmr.h"
 
 static int trace2_enabled;
 
@@ -52,7 +57,7 @@ static struct tr2_tgt *tr2_tgt_builtins[] =
  * Force (rather than lazily) initialize any of the requested
  * builtin TRACE2 targets at startup (and before we've seen an
  * actual TRACE2 event call) so we can see if we need to setup
- * the TR2 and TLS machinery.
+ * private data structures and thread-local storage.
  *
  * Return the number of builtin targets enabled.
  */
@@ -83,6 +88,39 @@ static void tr2_tgt_disable_builtins(void)
 		tgt_j->pfn_term();
 }
 
+/*
+ * The signature of this function must match the pfn_timer
+ * method in the targets.  (Think of this is an apply operation
+ * across the set of active targets.)
+ */
+static void tr2_tgt_emit_a_timer(const struct tr2_timer_metadata *meta,
+				 const struct tr2_timer *timer,
+				 int is_final_data)
+{
+	struct tr2_tgt *tgt_j;
+	int j;
+
+	for_each_wanted_builtin (j, tgt_j)
+		if (tgt_j->pfn_timer)
+			tgt_j->pfn_timer(meta, timer, is_final_data);
+}
+
+/*
+ * The signature of this function must match the pfn_counter
+ * method in the targets.
+ */
+static void tr2_tgt_emit_a_counter(const struct tr2_counter_metadata *meta,
+				   const struct tr2_counter *counter,
+				   int is_final_data)
+{
+	struct tr2_tgt *tgt_j;
+	int j;
+
+	for_each_wanted_builtin (j, tgt_j)
+		if (tgt_j->pfn_counter)
+			tgt_j->pfn_counter(meta, counter, is_final_data);
+}
+
 static int tr2main_exit_code;
 
 /*
@@ -109,6 +147,32 @@ static void tr2main_atexit_handler(void)
 	 * the trace output if someone calls die(), for example.
 	 */
 	tr2tls_pop_unwind_self();
+
+	/*
+	 * Some timers want per-thread details.  If the main thread
+	 * used one of those timers, emit the details now (before
+	 * we emit the aggregate timer values).
+	 *
+	 * Likewise for counters.
+	 */
+	tr2_emit_per_thread_timers(tr2_tgt_emit_a_timer);
+	tr2_emit_per_thread_counters(tr2_tgt_emit_a_counter);
+
+	/*
+	 * Add stopwatch timer and counter data for the main thread to
+	 * the final totals.  And then emit the final values.
+	 *
+	 * Technically, we shouldn't need to hold the lock to update
+	 * and output the final_timer_block and final_counter_block
+	 * (since all other threads should be dead by now), but it
+	 * doesn't hurt anything.
+	 */
+	tr2tls_lock();
+	tr2_update_final_timers();
+	tr2_update_final_counters();
+	tr2_emit_final_timers(tr2_tgt_emit_a_timer);
+	tr2_emit_final_counters(tr2_tgt_emit_a_counter);
+	tr2tls_unlock();
 
 	for_each_wanted_builtin (j, tgt_j)
 		if (tgt_j->pfn_atexit)
@@ -202,18 +266,17 @@ void trace2_cmd_start_fl(const char *file, int line, const char **argv)
 					    argv);
 }
 
-int trace2_cmd_exit_fl(const char *file, int line, int code)
+void trace2_cmd_exit_fl(const char *file, int line, int code)
 {
 	struct tr2_tgt *tgt_j;
 	int j;
 	uint64_t us_now;
 	uint64_t us_elapsed_absolute;
 
-	code &= 0xff;
-
 	if (!trace2_enabled)
-		return code;
+		return;
 
+	trace_git_fsync_stats();
 	trace2_collect_process_info(TRACE2_PROCESS_INFO_EXIT);
 
 	tr2main_exit_code = code;
@@ -225,8 +288,6 @@ int trace2_cmd_exit_fl(const char *file, int line, int code)
 		if (tgt_j->pfn_exit_fl)
 			tgt_j->pfn_exit_fl(file, line, us_elapsed_absolute,
 					   code);
-
-	return code;
 }
 
 void trace2_cmd_error_va_fl(const char *file, int line, const char *fmt,
@@ -258,6 +319,19 @@ void trace2_cmd_path_fl(const char *file, int line, const char *pathname)
 	for_each_wanted_builtin (j, tgt_j)
 		if (tgt_j->pfn_command_path_fl)
 			tgt_j->pfn_command_path_fl(file, line, pathname);
+}
+
+void trace2_cmd_ancestry_fl(const char *file, int line, const char **parent_names)
+{
+	struct tr2_tgt *tgt_j;
+	int j;
+
+	if (!trace2_enabled)
+		return;
+
+	for_each_wanted_builtin (j, tgt_j)
+		if (tgt_j->pfn_command_ancestry_fl)
+			tgt_j->pfn_command_ancestry_fl(file, line, parent_names);
 }
 
 void trace2_cmd_name_fl(const char *file, int line, const char *name)
@@ -381,6 +455,37 @@ void trace2_child_exit_fl(const char *file, int line, struct child_process *cmd,
 						 us_elapsed_child);
 }
 
+void trace2_child_ready_fl(const char *file, int line,
+			   struct child_process *cmd,
+			   const char *ready)
+{
+	struct tr2_tgt *tgt_j;
+	int j;
+	uint64_t us_now;
+	uint64_t us_elapsed_absolute;
+	uint64_t us_elapsed_child;
+
+	if (!trace2_enabled)
+		return;
+
+	us_now = getnanotime() / 1000;
+	us_elapsed_absolute = tr2tls_absolute_elapsed(us_now);
+
+	if (cmd->trace2_child_us_start)
+		us_elapsed_child = us_now - cmd->trace2_child_us_start;
+	else
+		us_elapsed_child = 0;
+
+	for_each_wanted_builtin (j, tgt_j)
+		if (tgt_j->pfn_child_ready_fl)
+			tgt_j->pfn_child_ready_fl(file, line,
+						  us_elapsed_absolute,
+						  cmd->trace2_child_id,
+						  cmd->pid,
+						  ready,
+						  us_elapsed_child);
+}
+
 int trace2_exec_fl(const char *file, int line, const char *exe,
 		   const char **argv)
 {
@@ -425,7 +530,7 @@ void trace2_exec_result_fl(const char *file, int line, int exec_id, int code)
 				file, line, us_elapsed_absolute, exec_id, code);
 }
 
-void trace2_thread_start_fl(const char *file, int line, const char *thread_name)
+void trace2_thread_start_fl(const char *file, int line, const char *thread_base_name)
 {
 	struct tr2_tgt *tgt_j;
 	int j;
@@ -447,14 +552,14 @@ void trace2_thread_start_fl(const char *file, int line, const char *thread_name)
 		 */
 		trace2_region_enter_printf_fl(file, line, NULL, NULL, NULL,
 					      "thread-proc on main: %s",
-					      thread_name);
+					      thread_base_name);
 		return;
 	}
 
 	us_now = getnanotime() / 1000;
 	us_elapsed_absolute = tr2tls_absolute_elapsed(us_now);
 
-	tr2tls_create_self(thread_name, us_now);
+	tr2tls_create_self(thread_base_name, us_now);
 
 	for_each_wanted_builtin (j, tgt_j)
 		if (tgt_j->pfn_thread_start_fl)
@@ -499,6 +604,25 @@ void trace2_thread_exit_fl(const char *file, int line)
 	 */
 	tr2tls_pop_unwind_self();
 	us_elapsed_thread = tr2tls_region_elasped_self(us_now);
+
+	/*
+	 * Some timers want per-thread details.  If this thread used
+	 * one of those timers, emit the details now.
+	 *
+	 * Likewise for counters.
+	 */
+	tr2_emit_per_thread_timers(tr2_tgt_emit_a_timer);
+	tr2_emit_per_thread_counters(tr2_tgt_emit_a_counter);
+
+	/*
+	 * Add stopwatch timer and counter data from the current
+	 * (non-main) thread to the final totals.  (We'll accumulate
+	 * data for the main thread later during "atexit".)
+	 */
+	tr2tls_lock();
+	tr2_update_final_timers();
+	tr2_update_final_counters();
+	tr2tls_unlock();
 
 	for_each_wanted_builtin (j, tgt_j)
 		if (tgt_j->pfn_thread_exit_fl)
@@ -597,20 +721,6 @@ void trace2_region_enter_printf_fl(const char *file, int line,
 	va_end(ap);
 }
 
-#ifndef HAVE_VARIADIC_MACROS
-void trace2_region_enter_printf(const char *category, const char *label,
-				const struct repository *repo, const char *fmt,
-				...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	trace2_region_enter_printf_va_fl(NULL, 0, category, label, repo, fmt,
-					 ap);
-	va_end(ap);
-}
-#endif
-
 void trace2_region_leave_printf_va_fl(const char *file, int line,
 				      const char *category, const char *label,
 				      const struct repository *repo,
@@ -672,20 +782,6 @@ void trace2_region_leave_printf_fl(const char *file, int line,
 					 ap);
 	va_end(ap);
 }
-
-#ifndef HAVE_VARIADIC_MACROS
-void trace2_region_leave_printf(const char *category, const char *label,
-				const struct repository *repo, const char *fmt,
-				...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	trace2_region_leave_printf_va_fl(NULL, 0, category, label, repo, fmt,
-					 ap);
-	va_end(ap);
-}
-#endif
 
 void trace2_data_string_fl(const char *file, int line, const char *category,
 			   const struct repository *repo, const char *key,
@@ -782,13 +878,40 @@ void trace2_printf_fl(const char *file, int line, const char *fmt, ...)
 	va_end(ap);
 }
 
-#ifndef HAVE_VARIADIC_MACROS
-void trace2_printf(const char *fmt, ...)
+void trace2_timer_start(enum trace2_timer_id tid)
 {
-	va_list ap;
+	if (!trace2_enabled)
+		return;
 
-	va_start(ap, fmt);
-	trace2_printf_va_fl(NULL, 0, fmt, ap);
-	va_end(ap);
+	if (tid < 0 || tid >= TRACE2_NUMBER_OF_TIMERS)
+		BUG("trace2_timer_start: invalid timer id: %d", tid);
+
+	tr2_start_timer(tid);
 }
-#endif
+
+void trace2_timer_stop(enum trace2_timer_id tid)
+{
+	if (!trace2_enabled)
+		return;
+
+	if (tid < 0 || tid >= TRACE2_NUMBER_OF_TIMERS)
+		BUG("trace2_timer_stop: invalid timer id: %d", tid);
+
+	tr2_stop_timer(tid);
+}
+
+void trace2_counter_add(enum trace2_counter_id cid, uint64_t value)
+{
+	if (!trace2_enabled)
+		return;
+
+	if (cid < 0 || cid >= TRACE2_NUMBER_OF_COUNTERS)
+		BUG("trace2_counter_add: invalid counter id: %d", cid);
+
+	tr2_counter_increment(cid, value);
+}
+
+const char *trace2_session_id(void)
+{
+	return tr2_sid_get();
+}

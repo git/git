@@ -2,6 +2,10 @@
 
 test_description='test cherry-picking with --ff option'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -24,7 +28,7 @@ test_expect_success setup '
 '
 
 test_expect_success 'cherry-pick using --ff fast forwards' '
-	git checkout master &&
+	git checkout main &&
 	git reset --hard first &&
 	test_tick &&
 	git cherry-pick --ff second &&
@@ -32,7 +36,7 @@ test_expect_success 'cherry-pick using --ff fast forwards' '
 '
 
 test_expect_success 'cherry-pick not using --ff does not fast forwards' '
-	git checkout master &&
+	git checkout main &&
 	git reset --hard first &&
 	test_tick &&
 	git cherry-pick second &&
@@ -49,7 +53,7 @@ test_expect_success 'cherry-pick not using --ff does not fast forwards' '
 # (This has been taken from t3502-cherry-pick-merge.sh)
 #
 test_expect_success 'merge setup' '
-	git checkout master &&
+	git checkout main &&
 	git reset --hard first &&
 	echo new line >A &&
 	git add A &&
@@ -62,7 +66,7 @@ test_expect_success 'merge setup' '
 	test_tick &&
 	git commit -m "add line to B" B &&
 	git tag B &&
-	git checkout master &&
+	git checkout main &&
 	git merge side &&
 	git tag C &&
 	git checkout -b new A

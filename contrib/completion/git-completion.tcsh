@@ -80,8 +80,9 @@ else
 	COMP_CWORD=\$((\${#COMP_WORDS[@]}-1))
 fi
 
-# Call _git() or _gitk() of the bash script, based on the first argument
-_\${1}
+# Call __git_wrap__git_main() or __git_wrap__gitk_main() of the bash script,
+# based on the first argument
+__git_wrap__\${1}_main
 
 IFS=\$'\n'
 if [ \${#COMPREPLY[*]} -eq 0 ]; then

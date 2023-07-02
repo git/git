@@ -15,7 +15,7 @@ static const char *error_name(int error_number)
 
 /*
  * usage:
- * tool-test dir-iterator [--follow-symlinks] [--pedantic] directory_path
+ * tool-test dir-iterator [--pedantic] directory_path
  */
 int cmd__dir_iterator(int argc, const char **argv)
 {
@@ -24,9 +24,7 @@ int cmd__dir_iterator(int argc, const char **argv)
 	int iter_status;
 
 	for (++argv, --argc; *argv && starts_with(*argv, "--"); ++argv, --argc) {
-		if (strcmp(*argv, "--follow-symlinks") == 0)
-			flags |= DIR_ITERATOR_FOLLOW_SYMLINKS;
-		else if (strcmp(*argv, "--pedantic") == 0)
+		if (strcmp(*argv, "--pedantic") == 0)
 			flags |= DIR_ITERATOR_PEDANTIC;
 		else
 			die("invalid option '%s'", *argv);

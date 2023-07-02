@@ -2,6 +2,10 @@
 
 test_description='git rebase - test patch id computation'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 scramble () {
@@ -24,7 +28,7 @@ test_expect_success 'setup' '
 
 test_expect_success 'setup: 500 lines' '
 	rm -f .gitattributes &&
-	git checkout -q -f master &&
+	git checkout -q -f main &&
 	git reset --hard root &&
 	test_seq 500 >file &&
 	git add file &&
@@ -40,32 +44,75 @@ test_expect_success 'setup: 500 lines' '
 	git add newfile &&
 	git commit -q -m "add small file" &&
 
-	git cherry-pick master >/dev/null 2>&1
-'
+	git cherry-pick main >/dev/null 2>&1 &&
 
-test_expect_success 'setup attributes' '
-	echo "file binary" >.gitattributes
+	git branch -f squashed main &&
+	git checkout -q -f squashed &&
+	git reset -q --soft HEAD~2 &&
+	git commit -q -m squashed &&
+
+	git branch -f mode main &&
+	git checkout -q -f mode &&
+	test_chmod +x file &&
+	git commit -q -a --amend &&
+
+	git branch -f modeother other &&
+	git checkout -q -f modeother &&
+	test_chmod +x file &&
+	git commit -q -a --amend
 '
 
 test_expect_success 'detect upstream patch' '
-	git checkout -q master &&
+	git checkout -q main^{} &&
 	scramble file &&
 	git add file &&
 	git commit -q -m "change big file again" &&
 	git checkout -q other^{} &&
-	git rebase master &&
-	git rev-list master...HEAD~ >revs &&
+	git rebase main &&
+	git rev-list main...HEAD~ >revs &&
+	test_must_be_empty revs
+'
+
+test_expect_success 'detect upstream patch binary' '
+	echo "file binary" >.gitattributes &&
+	git checkout -q other^{} &&
+	git rebase main &&
+	git rev-list main...HEAD~ >revs &&
+	test_must_be_empty revs &&
+	test_when_finished "rm .gitattributes"
+'
+
+test_expect_success 'detect upstream patch modechange' '
+	git checkout -q modeother^{} &&
+	git rebase mode &&
+	git rev-list mode...HEAD~ >revs &&
 	test_must_be_empty revs
 '
 
 test_expect_success 'do not drop patch' '
-	git branch -f squashed master &&
-	git checkout -q -f squashed &&
-	git reset -q --soft HEAD~2 &&
-	git commit -q -m squashed &&
 	git checkout -q other^{} &&
 	test_must_fail git rebase squashed &&
-	git rebase --quit
+	test_when_finished "git rebase --abort"
+'
+
+test_expect_success 'do not drop patch binary' '
+	echo "file binary" >.gitattributes &&
+	git checkout -q other^{} &&
+	test_must_fail git rebase squashed &&
+	test_when_finished "git rebase --abort" &&
+	test_when_finished "rm .gitattributes"
+'
+
+test_expect_success 'do not drop patch modechange' '
+	git checkout -q modeother^{} &&
+	git rebase other &&
+	cat >expected <<-\EOF &&
+	diff --git a/file b/file
+	old mode 100644
+	new mode 100755
+	EOF
+	git diff HEAD~ >modediff &&
+	test_cmp expected modediff
 '
 
 test_done

@@ -5,7 +5,11 @@
 
 test_description='Various diff formatting options'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-diff.sh
 
 test_expect_success setup '
 
@@ -15,8 +19,8 @@ test_expect_success setup '
 
 	mkdir dir &&
 	mkdir dir2 &&
-	for i in 1 2 3; do echo $i; done >file0 &&
-	for i in A B; do echo $i; done >dir/sub &&
+	test_write_lines 1 2 3 >file0 &&
+	test_write_lines A B >dir/sub &&
 	cat file0 >file2 &&
 	git add file0 file2 dir/sub &&
 	git commit -m Initial &&
@@ -28,8 +32,8 @@ test_expect_success setup '
 	GIT_COMMITTER_DATE="2006-06-26 00:01:00 +0000" &&
 	export GIT_AUTHOR_DATE GIT_COMMITTER_DATE &&
 
-	for i in 4 5 6; do echo $i; done >>file0 &&
-	for i in C D; do echo $i; done >>dir/sub &&
+	test_write_lines 4 5 6 >>file0 &&
+	test_write_lines C D >>dir/sub &&
 	rm -f file2 &&
 	git update-index --remove file0 file2 dir/sub &&
 	git commit -m "Second${LF}${LF}This is the second commit." &&
@@ -38,9 +42,9 @@ test_expect_success setup '
 	GIT_COMMITTER_DATE="2006-06-26 00:02:00 +0000" &&
 	export GIT_AUTHOR_DATE GIT_COMMITTER_DATE &&
 
-	for i in A B C; do echo $i; done >file1 &&
+	test_write_lines A B C >file1 &&
 	git add file1 &&
-	for i in E F; do echo $i; done >>dir/sub &&
+	test_write_lines E F >>dir/sub &&
 	git update-index dir/sub &&
 	git commit -m Third &&
 
@@ -49,8 +53,8 @@ test_expect_success setup '
 	export GIT_AUTHOR_DATE GIT_COMMITTER_DATE &&
 
 	git checkout side &&
-	for i in A B C; do echo $i; done >>file0 &&
-	for i in 1 2; do echo $i; done >>dir/sub &&
+	test_write_lines A B C >>file0 &&
+	test_write_lines 1 2 >>dir/sub &&
 	cat dir/sub >file3 &&
 	git add file3 &&
 	git update-index file0 dir/sub &&
@@ -61,14 +65,14 @@ test_expect_success setup '
 	export GIT_AUTHOR_DATE GIT_COMMITTER_DATE &&
 
 	git checkout master &&
-	git pull -s ours . side &&
+	git pull -s ours --no-rebase . side &&
 
 	GIT_AUTHOR_DATE="2006-06-26 00:05:00 +0000" &&
 	GIT_COMMITTER_DATE="2006-06-26 00:05:00 +0000" &&
 	export GIT_AUTHOR_DATE GIT_COMMITTER_DATE &&
 
-	for i in A B C; do echo $i; done >>file0 &&
-	for i in 1 2; do echo $i; done >>dir/sub &&
+	test_write_lines A B C >>file0 &&
+	test_write_lines 1 2 >>dir/sub &&
 	git update-index file0 dir/sub &&
 
 	mkdir dir3 &&
@@ -82,7 +86,7 @@ test_expect_success setup '
 	GIT_COMMITTER_DATE="2006-06-26 00:06:00 +0000" &&
 	export GIT_AUTHOR_DATE GIT_COMMITTER_DATE &&
 	git checkout -b rearrange initial &&
-	for i in B A; do echo $i; done >dir/sub &&
+	test_write_lines B A >dir/sub &&
 	git add dir/sub &&
 	git commit -m "Rearranged lines in dir/sub" &&
 	git checkout master &&
@@ -174,6 +178,7 @@ process_diffs () {
 V=$(git version | sed -e 's/^git version //' -e 's/\./\\./g')
 while read magic cmd
 do
+	status=success
 	case "$magic" in
 	'' | '#'*)
 		continue ;;
@@ -182,6 +187,10 @@ do
 		label="$magic-$cmd"
 		case "$magic" in
 		noellipses) ;;
+		failure)
+			status=failure
+			magic=
+			label="$cmd" ;;
 		*)
 			BUG "unknown magic $magic" ;;
 		esac ;;
@@ -194,7 +203,7 @@ do
 	expect="$TEST_DIRECTORY/t4013/diff.$test"
 	actual="$pfx-diff.$test"
 
-	test_expect_success "git $cmd # magic is ${magic:-(not used)}" '
+	test_expect_$status "git $cmd # magic is ${magic:-(not used)}" '
 		{
 			echo "$ git $cmd"
 			case "$magic" in
@@ -213,7 +222,7 @@ do
 			process_diffs "$expect" >expect &&
 			case $cmd in
 			*format-patch* | *-stat*)
-				test_i18ncmp expect actual;;
+				test_cmp expect actual;;
 			*)
 				test_cmp expect actual;;
 			esac &&
@@ -284,6 +293,7 @@ diff-tree --stat initial mode
 diff-tree --summary initial mode
 
 diff-tree master
+diff-tree -m master
 diff-tree -p master
 diff-tree -p -m master
 diff-tree -c master
@@ -322,8 +332,14 @@ log --no-diff-merges -p --first-parent master
 log --diff-merges=off -p --first-parent master
 log --first-parent --diff-merges=off -p master
 log -p --first-parent master
+log -p --diff-merges=first-parent master
+log --diff-merges=first-parent master
 log -m -p --first-parent master
 log -m -p master
+log --cc -m -p master
+log -c -m -p master
+log -m --raw master
+log -m --stat master
 log -SF master
 log -S F master
 log -SF -p master
@@ -333,8 +349,11 @@ log -SF master --max-count=2
 log -GF master
 log -GF -p master
 log -GF -p --pickaxe-all master
+log -IA -IB -I1 -I2 -p master
 log --decorate --all
 log --decorate=full --all
+log --decorate --clear-decorations --all
+log --decorate=full --clear-decorations --all
 
 rev-list --parents HEAD
 rev-list --children HEAD
@@ -438,6 +457,58 @@ diff-tree --stat --compact-summary initial mode
 diff-tree -R --stat --compact-summary initial mode
 EOF
 
+test_expect_success 'log -m matches pure log' '
+	git log master >result &&
+	process_diffs result >expected &&
+	git log -m >result &&
+	process_diffs result >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'log --diff-merges=on matches --diff-merges=separate' '
+	git log -p --diff-merges=separate master >result &&
+	process_diffs result >expected &&
+	git log -p --diff-merges=on master >result &&
+	process_diffs result >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'deny wrong log.diffMerges config' '
+	test_config log.diffMerges wrong-value &&
+	test_expect_code 128 git log
+'
+
+test_expect_success 'git config log.diffMerges first-parent' '
+	git log -p --diff-merges=first-parent master >result &&
+	process_diffs result >expected &&
+	test_config log.diffMerges first-parent &&
+	git log -p --diff-merges=on master >result &&
+	process_diffs result >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'git config log.diffMerges first-parent vs -m' '
+	git log -p --diff-merges=first-parent master >result &&
+	process_diffs result >expected &&
+	test_config log.diffMerges first-parent &&
+	git log -p -m master >result &&
+	process_diffs result >actual &&
+	test_cmp expected actual
+'
+
+# -m in "git diff-index" means "match missing", that differs
+# from its meaning in "git diff". Let's check it in diff-index.
+# The line in the output for removed file should disappear when
+# we provide -m in diff-index.
+test_expect_success 'git diff-index -m' '
+	rm -f file1 &&
+	git diff-index HEAD >without-m &&
+	lines_count=$(wc -l <without-m) &&
+	git diff-index -m HEAD >with-m &&
+	git restore file1 &&
+	test_line_count = $((lines_count - 1)) with-m
+'
+
 test_expect_success 'log -S requires an argument' '
 	test_must_fail git log -S
 '
@@ -471,6 +542,120 @@ test_expect_success 'diff-tree --stdin with log formatting' '
 	EOF
 	git rev-list master | git diff-tree --stdin --format=%s -s >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'diff-tree --stdin with pathspec' '
+	cat >expect <<-EOF &&
+	Third
+
+	dir/sub
+	Second
+
+	dir/sub
+	EOF
+	git rev-list master^ |
+	git diff-tree -r --stdin --name-only --format=%s dir >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'show A B ... -- <pathspec>' '
+	# side touches dir/sub, file0, and file3
+	# master^ touches dir/sub, and file1
+	# master^^ touches dir/sub, file0, and file2
+	git show --name-only --format="<%s>" side master^ master^^ -- dir >actual &&
+	cat >expect <<-\EOF &&
+	<Side>
+
+	dir/sub
+	<Third>
+
+	dir/sub
+	<Second>
+
+	dir/sub
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'diff -I<regex>: setup' '
+	git checkout master &&
+	test_seq 50 >file0 &&
+	git commit -m "Set up -I<regex> test file" file0 &&
+	test_seq 50 | sed -e "s/13/ten and three/" -e "/7\$/d" >file0 &&
+	echo >>file0
+'
+test_expect_success 'diff -I<regex>' '
+	git diff --ignore-blank-lines -I"ten.*e" -I"^[124-9]" >actual &&
+	cat >expect <<-\EOF &&
+	diff --git a/file0 b/file0
+	--- a/file0
+	+++ b/file0
+	@@ -34,7 +31,6 @@
+	 34
+	 35
+	 36
+	-37
+	 38
+	 39
+	 40
+	EOF
+	compare_diff_patch expect actual
+'
+
+test_expect_success 'diff -I<regex> --stat' '
+	git diff --stat --ignore-blank-lines -I"ten.*e" -I"^[124-9]" >actual &&
+	cat >expect <<-\EOF &&
+	 file0 | 1 -
+	 1 file changed, 1 deletion(-)
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'diff -I<regex>: detect malformed regex' '
+	test_expect_code 129 git diff --ignore-matching-lines="^[124-9" 2>error &&
+	test_i18ngrep "invalid regex given to -I: " error
+'
+
+# check_prefix <patch> <src> <dst>
+# check only lines with paths to avoid dependency on exact oid/contents
+check_prefix () {
+	grep -E '^(diff|---|\+\+\+) ' "$1" >actual.paths &&
+	cat >expect <<-EOF &&
+	diff --git $2 $3
+	--- $2
+	+++ $3
+	EOF
+	test_cmp expect actual.paths
+}
+
+test_expect_success 'diff-files does not respect diff.noprefix' '
+	git -c diff.noprefix diff-files -p >actual &&
+	check_prefix actual a/file0 b/file0
+'
+
+test_expect_success 'diff-files respects --no-prefix' '
+	git diff-files -p --no-prefix >actual &&
+	check_prefix actual file0 file0
+'
+
+test_expect_success 'diff respects diff.noprefix' '
+	git -c diff.noprefix diff >actual &&
+	check_prefix actual file0 file0
+'
+
+test_expect_success 'diff --default-prefix overrides diff.noprefix' '
+	git -c diff.noprefix diff --default-prefix >actual &&
+	check_prefix actual a/file0 b/file0
+'
+
+test_expect_success 'diff respects diff.mnemonicprefix' '
+	git -c diff.mnemonicprefix diff >actual &&
+	check_prefix actual i/file0 w/file0
+'
+
+test_expect_success 'diff --default-prefix overrides diff.mnemonicprefix' '
+	git -c diff.mnemonicprefix diff --default-prefix >actual &&
+	check_prefix actual a/file0 b/file0
 '
 
 test_done

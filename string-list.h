@@ -86,21 +86,24 @@ typedef int (*compare_strings_fn)(const char *, const char *);
  */
 struct string_list {
 	struct string_list_item *items;
-	unsigned int nr, alloc;
+	size_t nr;
+	size_t alloc;
 	unsigned int strdup_strings:1;
 	compare_strings_fn cmp; /* NULL uses strcmp() */
 };
 
-#define STRING_LIST_INIT_NODUP { NULL, 0, 0, 0, NULL }
-#define STRING_LIST_INIT_DUP   { NULL, 0, 0, 1, NULL }
+#define STRING_LIST_INIT_NODUP { 0 }
+#define STRING_LIST_INIT_DUP   { .strdup_strings = 1 }
 
 /* General functions which work with both sorted and unsorted lists. */
 
 /**
- * Initialize the members of the string_list, set `strdup_strings`
- * member according to the value of the second parameter.
+ * Initialize the members of a string_list pointer in the same way as
+ * the corresponding `STRING_LIST_INIT_NODUP` and
+ * `STRING_LIST_INIT_DUP` macros.
  */
-void string_list_init(struct string_list *list, int strdup_strings);
+void string_list_init_nodup(struct string_list *list);
+void string_list_init_dup(struct string_list *list);
 
 /** Callback function type for for_each_string_list */
 typedef int (*string_list_each_func_t)(struct string_list_item *, void *);
@@ -131,6 +134,16 @@ typedef void (*string_list_clear_func_t)(void *p, const char *str);
 /** Call a custom clear function on each util pointer */
 void string_list_clear_func(struct string_list *list, string_list_clear_func_t clearfunc);
 
+/*
+ * Set the length of a string_list to `nr`, provided that (a) `list`
+ * does not own its own storage, and (b) that `nr` is no larger than
+ * `list->nr`.
+ *
+ * Useful when "shrinking" `list` to write over existing entries that
+ * are no longer used without reallocating.
+ */
+void string_list_setlen(struct string_list *list, size_t nr);
+
 /**
  * Apply `func` to each item. If `func` returns nonzero, the
  * iteration aborts and the return value is propagated.
@@ -138,7 +151,12 @@ void string_list_clear_func(struct string_list *list, string_list_clear_func_t c
 int for_each_string_list(struct string_list *list,
 			 string_list_each_func_t func, void *cb_data);
 
-/** Iterate over each item, as a macro. */
+/**
+ * Iterate over each item, as a macro.
+ *
+ * Be sure that 'list' is non-NULL. The macro cannot perform NULL
+ * checks due to -Werror=address errors.
+ */
 #define for_each_string_list_item(item,list)            \
 	for (item = (list)->items;                      \
 	     item && item < (list)->items + (list)->nr; \
@@ -262,5 +280,5 @@ int string_list_split(struct string_list *list, const char *string,
  * list->strdup_strings must *not* be set.
  */
 int string_list_split_in_place(struct string_list *list, char *string,
-			       int delim, int maxsplit);
+			       const char *delim, int maxsplit);
 #endif /* STRING_LIST_H */

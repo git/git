@@ -2,6 +2,7 @@
 
 test_description='behavior of diff when reading objects in a partial clone'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'git show batches blobs' '
@@ -77,6 +78,7 @@ test_expect_success 'diff skips same-OID blobs' '
 
 test_expect_success 'when fetching missing objects, diff skips GITLINKs' '
 	test_when_finished "rm -rf sub server client trace" &&
+	test_config_global protocol.file.allow always &&
 
 	test_create_repo sub &&
 	test_commit -C sub first &&
@@ -149,7 +151,7 @@ test_expect_success 'diff does not fetch anything if inexact rename detection is
 
 	# Ensure no fetches.
 	GIT_TRACE_PACKET="$(pwd)/trace" git -C client diff --raw -M HEAD^ HEAD &&
-	! test_path_exists trace
+	test_path_is_missing trace
 '
 
 test_expect_success 'diff --break-rewrites fetches only if necessary, and batches blobs if it does' '
@@ -169,7 +171,7 @@ test_expect_success 'diff --break-rewrites fetches only if necessary, and batche
 
 	# Ensure no fetches.
 	GIT_TRACE_PACKET="$(pwd)/trace" git -C client diff --raw -M HEAD^ HEAD &&
-	! test_path_exists trace &&
+	test_path_is_missing trace &&
 
 	# But with --break-rewrites, ensure that there is exactly 1 negotiation
 	# by checking that there is only 1 "done" line sent. ("done" marks the

@@ -1,12 +1,10 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "json-writer.h"
 
 void jw_init(struct json_writer *jw)
 {
-	strbuf_init(&jw->json, 0);
-	strbuf_init(&jw->open_stack, 0);
-	jw->need_comma = 0;
-	jw->pretty = 0;
+	struct json_writer blank = JSON_WRITER_INIT;
+	memcpy(jw, &blank, sizeof(*jw));;
 }
 
 void jw_release(struct json_writer *jw)

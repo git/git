@@ -1,11 +1,17 @@
 #!/bin/sh
 
 test_description='test GIT_CEILING_DIRECTORIES'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_prefix() {
-	test_expect_success "$1" \
-	"test '$2' = \"\$(git rev-parse --show-prefix)\""
+	local expect="$2" &&
+	test_expect_success "$1: git rev-parse --show-prefix is '$2'" '
+		echo "$expect" >expect &&
+		git rev-parse --show-prefix >actual &&
+		test_cmp expect actual
+	'
 }
 
 test_fail() {

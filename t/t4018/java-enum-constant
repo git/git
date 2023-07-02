@@ -1,0 +1,6 @@
+private enum RIGHT {
+    ONE,
+    TWO,
+    THREE,
+    ChangeMe
+}

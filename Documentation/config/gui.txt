@@ -11,7 +11,7 @@ gui.displayUntracked::
 	in the file list. The default is "true".
 
 gui.encoding::
-	Specifies the default encoding to use for displaying of
+	Specifies the default character encoding to use for displaying of
 	file contents in linkgit:git-gui[1] and linkgit:gitk[1].
 	It can be overridden by setting the 'encoding' attribute
 	for relevant files (see linkgit:gitattributes[5]).

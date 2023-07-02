@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='test protocol whitelisting with submodules'
+test_description='test protocol filtering with submodules'
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-proto-disable.sh
 
@@ -36,7 +36,7 @@ test_expect_success 'update of ext not allowed' '
 	test_must_fail git -C dst submodule update ext-module
 '
 
-test_expect_success 'user can override whitelist' '
+test_expect_success 'user can filter protocols with GIT_ALLOW_PROTOCOL' '
 	GIT_ALLOW_PROTOCOL=ext git -C dst submodule update ext-module
 '
 

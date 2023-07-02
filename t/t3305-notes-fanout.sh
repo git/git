@@ -2,13 +2,14 @@
 
 test_description='Test that adding/removing many notes triggers automatic fanout restructuring'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 path_has_fanout() {
 	path=$1 &&
 	fanout=$2 &&
 	after_last_slash=$(($(test_oid hexsz) - $fanout * 2)) &&
-	echo $path | grep -q "^\([0-9a-f]\{2\}/\)\{$fanout\}[0-9a-f]\{$after_last_slash\}$"
+	echo $path | grep -q -E "^([0-9a-f]{2}/){$fanout}[0-9a-f]{$after_last_slash}$"
 }
 
 touched_one_note_with_fanout() {
@@ -23,7 +24,7 @@ touched_one_note_with_fanout() {
 all_notes_have_fanout() {
 	notes_commit=$1 &&
 	fanout=$2 &&
-	git ls-tree -r --name-only $notes_commit 2>/dev/null |
+	git ls-tree -r --name-only $notes_commit |
 	while read path
 	do
 		path_has_fanout $path $fanout || return 1
@@ -51,13 +52,14 @@ test_expect_success 'creating many notes with git-notes' '
 '
 
 test_expect_success 'many notes created correctly with git-notes' '
-	git log | grep "^    " > output &&
+	git log >output.raw &&
+	grep "^    " output.raw >output &&
 	i=$num_notes &&
 	while test $i -gt 0
 	do
 		echo "    commit #$i" &&
 		echo "    note #$i" &&
-		i=$(($i - 1));
+		i=$(($i - 1)) || return 1
 	done > expect &&
 	test_cmp expect output
 '
@@ -90,13 +92,13 @@ test_expect_success 'stable fanout 0 is followed by stable fanout 1' '
 test_expect_success 'deleting most notes with git-notes' '
 	remove_notes=285 &&
 	i=0 &&
-	git rev-list HEAD |
+	git rev-list HEAD >revs &&
 	while test $i -lt $remove_notes && read sha1
 	do
 		i=$(($i + 1)) &&
 		test_tick &&
-		git notes remove "$sha1" 2>/dev/null || return 1
-	done
+		git notes remove "$sha1" || return 1
+	done <revs
 '
 
 test_expect_success 'most notes deleted correctly with git-notes' '
@@ -106,7 +108,7 @@ test_expect_success 'most notes deleted correctly with git-notes' '
 	do
 		echo "    commit #$i" &&
 		echo "    note #$i" &&
-		i=$(($i - 1));
+		i=$(($i - 1)) || return 1
 	done > expect &&
 	test_cmp expect output
 '

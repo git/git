@@ -1,0 +1,4 @@
+(define* (some-func x y z) RIGHT
+  (let ((a x)
+        (b y))
+        (ChangeMe a b)))

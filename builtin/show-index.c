@@ -1,7 +1,10 @@
 #include "builtin.h"
-#include "cache.h"
+#include "gettext.h"
+#include "hash.h"
+#include "hex.h"
 #include "pack.h"
 #include "parse-options.h"
+#include "repository.h"
 
 static const char *const show_index_usage[] = {
 	"git show-index [--object-format=<hash-algorithm>]",
@@ -71,9 +74,11 @@ int cmd_show_index(int argc, const char **argv, const char *prefix)
 			uint32_t off;
 		} *entries;
 		ALLOC_ARRAY(entries, nr);
-		for (i = 0; i < nr; i++)
+		for (i = 0; i < nr; i++) {
 			if (fread(entries[i].oid.hash, hashsz, 1, stdin) != 1)
 				die("unable to read sha1 %u/%u", i, nr);
+			entries[i].oid.algo = hash_algo_by_ptr(the_hash_algo);
+		}
 		for (i = 0; i < nr; i++)
 			if (fread(&entries[i].crc, 4, 1, stdin) != 1)
 				die("unable to read crc %u/%u", i, nr);

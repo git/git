@@ -85,6 +85,8 @@ diff.ignoreSubmodules::
 	and 'git status' when `status.submoduleSummary` is set unless it is
 	overridden by using the --ignore-submodules command-line option.
 	The 'git submodule' commands are not affected by this setting.
+	By default this is set to untracked so that any untracked
+	submodules are ignored.
 
 diff.mnemonicPrefix::
 	If set, 'git diff' uses a prefix pair that is different from the
@@ -116,9 +118,10 @@ diff.orderFile::
 	relative to the top of the working tree.
 
 diff.renameLimit::
-	The number of files to consider when performing the copy/rename
-	detection; equivalent to the 'git diff' option `-l`. This setting
-	has no effect if rename detection is turned off.
+	The number of files to consider in the exhaustive portion of
+	copy/rename detection; equivalent to the 'git diff' option
+	`-l`.  If not set, the default value is currently 1000.  This
+	setting has no effect if rename detection is turned off.
 
 diff.renames::
 	Whether and how Git detects renames.  If set to "false",
@@ -174,21 +177,6 @@ diff.<driver>.wordRegex::
 diff.<driver>.cachetextconv::
 	Set this option to true to make the diff driver cache the text
 	conversion outputs.  See linkgit:gitattributes[5] for details.
-
-diff.tool::
-	Controls which diff tool is used by linkgit:git-difftool[1].
-	This variable overrides the value configured in `merge.tool`.
-	The list below shows the valid built-in values.
-	Any other value is treated as a custom diff tool and requires
-	that a corresponding difftool.<tool>.cmd variable is defined.
-
-diff.guitool::
-	Controls which diff tool is used by linkgit:git-difftool[1] when
-	the -g/--gui flag is specified. This variable overrides the value
-	configured in `merge.guitool`. The list below shows the valid
-	built-in values. Any other value is treated as a custom diff tool
-	and requires that a corresponding difftool.<guitool>.cmd variable
-	is defined.
 
 include::../mergetools-diff.txt[]
 

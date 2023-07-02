@@ -2,6 +2,10 @@
 
 test_description='test multi-tree read-tree without merging'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-read-tree.sh
 
@@ -22,7 +26,7 @@ test_expect_success setup '
 '
 
 test_expect_success 'multi-read' '
-	read_tree_must_succeed initial master side &&
+	read_tree_must_succeed initial main side &&
 	test_write_lines a b/c >expect &&
 	git ls-files >actual &&
 	test_cmp expect actual

@@ -1,11 +1,36 @@
 #!/bin/sh
 
 test_description='test log -L'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'setup (import history)' '
 	git fast-import < "$TEST_DIRECTORY"/t4211/history.export &&
 	git reset --hard
+'
+
+test_expect_success 'basic command line parsing' '
+	# This may fail due to "no such path a.c in commit", or
+	# "-L is incompatible with pathspec", depending on the
+	# order the error is checked.  Either is acceptable.
+	test_must_fail git log -L1,1:a.c -- a.c &&
+
+	# -L requires there is no pathspec
+	test_must_fail git log -L1,1:b.c -- b.c 2>error &&
+	test_i18ngrep "cannot be used with pathspec" error &&
+
+	# This would fail because --follow wants a single path, but
+	# we may fail due to incompatibility between -L/--follow in
+	# the future.  Either is acceptable.
+	test_must_fail git log -L1,1:b.c --follow &&
+	test_must_fail git log --follow -L1,1:b.c &&
+
+	# This would fail because -L wants no pathspec, but
+	# we may fail due to incompatibility between -L/--follow in
+	# the future.  Either is acceptable.
+	test_must_fail git log --follow -L1,1:b.c -- b.c
 '
 
 canned_test_1 () {
@@ -112,7 +137,7 @@ test_expect_success 'range_set_union' '
 	test_seq 1000 > c.c &&
 	git add c.c &&
 	git commit -m "modify many lines" &&
-	git log $(for x in $(test_seq 200); do echo -L $((2*x)),+1:c.c; done)
+	git log $(for x in $(test_seq 200); do echo -L $((2*x)),+1:c.c || return 1; done)
 '
 
 test_expect_success '-s shows only line-log commits' '
@@ -287,6 +312,28 @@ test_expect_success 'parent oids with parent rewriting' '
 test_expect_success 'line-log with --before' '
 	echo $root_oid >expect &&
 	git log --format=%h --no-patch -L:func2:file.c --before=$first_tick >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'setup tests for zero-width regular expressions' '
+	cat >expect <<-EOF
+	Modify func1() in file.c
+	Add func1() and func2() in file.c
+	EOF
+'
+
+test_expect_success 'zero-width regex $ matches any function name' '
+	git log --format="%s" --no-patch "-L:$:file.c" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'zero-width regex ^ matches any function name' '
+	git log --format="%s" --no-patch "-L:^:file.c" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'zero-width regex .* matches any function name' '
+	git log --format="%s" --no-patch "-L:.*:file.c" >actual &&
 	test_cmp expect actual
 '
 

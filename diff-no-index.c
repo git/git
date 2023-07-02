@@ -4,16 +4,17 @@
  * Copyright (c) 2008 by Junio C Hamano
  */
 
-#include "cache.h"
+#include "git-compat-util.h"
+#include "abspath.h"
 #include "color.h"
 #include "commit.h"
 #include "blob.h"
 #include "tag.h"
 #include "diff.h"
 #include "diffcore.h"
+#include "gettext.h"
 #include "revision.h"
 #include "log-tree.h"
-#include "builtin.h"
 #include "parse-options.h"
 #include "string-list.h"
 #include "dir.h"
@@ -26,9 +27,8 @@ static int read_directory_contents(const char *path, struct string_list *list)
 	if (!(dir = opendir(path)))
 		return error("Could not open directory %s", path);
 
-	while ((e = readdir(dir)))
-		if (!is_dot_or_dotdot(e->d_name))
-			string_list_insert(list, e->d_name);
+	while ((e = readdir_skip_dot_and_dotdot(dir)))
+		string_list_insert(list, e->d_name);
 
 	closedir(dir);
 	return 0;
@@ -83,7 +83,7 @@ static struct diff_filespec *noindex_filespec(const char *name, int mode)
 	if (!name)
 		name = "/dev/null";
 	s = alloc_filespec(name);
-	fill_filespec(s, &null_oid, 0, mode);
+	fill_filespec(s, null_oid(), 0, mode);
 	if (name == file_from_standard_input)
 		populate_from_stdin(s);
 	return s;
@@ -244,7 +244,9 @@ int diff_no_index(struct rev_info *revs,
 		  int argc, const char **argv)
 {
 	int i, no_index;
+	int ret = 1;
 	const char *paths[2];
+	char *to_free[ARRAY_SIZE(paths)] = { 0 };
 	struct strbuf replacement = STRBUF_INIT;
 	const char *prefix = revs->prefix;
 	struct option no_index_options[] = {
@@ -254,8 +256,7 @@ int diff_no_index(struct rev_info *revs,
 	};
 	struct option *options;
 
-	options = parse_options_concat(no_index_options,
-				       revs->diffopt.parseopts);
+	options = add_diff_options(no_index_options, &revs->diffopt);
 	argc = parse_options(argc, argv, revs->prefix, options,
 			     diff_no_index_usage, 0);
 	if (argc != 2) {
@@ -266,7 +267,7 @@ int diff_no_index(struct rev_info *revs,
 	}
 	FREE_AND_NULL(options);
 	for (i = 0; i < 2; i++) {
-		const char *p = argv[argc - 2 + i];
+		const char *p = argv[i];
 		if (!strcmp(p, "-"))
 			/*
 			 * stdin should be spelled as "-"; if you have
@@ -274,7 +275,7 @@ int diff_no_index(struct rev_info *revs,
 			 */
 			p = file_from_standard_input;
 		else if (prefix)
-			p = prefix_filename(prefix, p);
+			p = to_free[i] = prefix_filename(prefix, p);
 		paths[i] = p;
 	}
 
@@ -296,16 +297,20 @@ int diff_no_index(struct rev_info *revs,
 	revs->diffopt.flags.exit_with_status = 1;
 
 	if (queue_diff(&revs->diffopt, paths[0], paths[1]))
-		return 1;
+		goto out;
 	diff_set_mnemonic_prefix(&revs->diffopt, "1/", "2/");
 	diffcore_std(&revs->diffopt);
 	diff_flush(&revs->diffopt);
-
-	strbuf_release(&replacement);
 
 	/*
 	 * The return code for --no-index imitates diff(1):
 	 * 0 = no changes, 1 = changes, else error
 	 */
-	return diff_result_code(&revs->diffopt, 0);
+	ret = diff_result_code(&revs->diffopt, 0);
+
+out:
+	for (i = 0; i < ARRAY_SIZE(to_free); i++)
+		free(to_free[i]);
+	strbuf_release(&replacement);
+	return ret;
 }

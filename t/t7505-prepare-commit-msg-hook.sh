@@ -2,6 +2,9 @@
 
 test_description='prepare-commit-msg hook'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'set up commits for rebasing' '
@@ -13,9 +16,9 @@ test_expect_success 'set up commits for rebasing' '
 	test_commit rebase-b b bb &&
 	for i in $(test_seq 1 13)
 	do
-		test_commit rebase-$i c $i
+		test_commit rebase-$i c $i || return 1
 	done &&
-	git checkout master &&
+	git checkout main &&
 
 	cat >rebase-todo <<-EOF
 	pick $(git rev-parse rebase-a)
@@ -44,25 +47,19 @@ test_expect_success 'with no hook' '
 
 '
 
-# set up fake editor for interactive editing
-cat > fake-editor <<'EOF'
-#!/bin/sh
-exit 0
-EOF
-chmod +x fake-editor
+test_expect_success 'setup fake editor for interactive editing' '
+	write_script fake-editor <<-\EOF &&
+	exit 0
+	EOF
 
-## Not using test_set_editor here so we can easily ensure the editor variable
-## is only set for the editor tests
-FAKE_EDITOR="$(pwd)/fake-editor"
-export FAKE_EDITOR
+	## Not using test_set_editor here so we can easily ensure the editor variable
+	## is only set for the editor tests
+	FAKE_EDITOR="$(pwd)/fake-editor" &&
+	export FAKE_EDITOR
+'
 
-# now install hook that always succeeds and adds a message
-HOOKDIR="$(git rev-parse --git-dir)/hooks"
-HOOK="$HOOKDIR/prepare-commit-msg"
-mkdir -p "$HOOKDIR"
-echo "#!$SHELL_PATH" > "$HOOK"
-cat >> "$HOOK" <<'EOF'
-
+test_expect_success 'setup prepare-commit-msg hook' '
+	test_hook --setup prepare-commit-msg <<\EOF
 GIT_DIR=$(git rev-parse --git-dir)
 if test -d "$GIT_DIR/rebase-merge"
 then
@@ -100,7 +97,7 @@ else
 fi
 exit 0
 EOF
-chmod +x "$HOOK"
+'
 
 echo dummy template > "$(git rev-parse --git-dir)/template"
 
@@ -190,7 +187,7 @@ test_expect_success 'with hook (-c)' '
 
 test_expect_success 'with hook (merge)' '
 
-	test_when_finished "git checkout -f master" &&
+	test_when_finished "git checkout -f main" &&
 	git checkout -B other HEAD@{1} &&
 	echo "more" >>file &&
 	git add file &&
@@ -202,7 +199,7 @@ test_expect_success 'with hook (merge)' '
 
 test_expect_success 'with hook and editor (merge)' '
 
-	test_when_finished "git checkout -f master" &&
+	test_when_finished "git checkout -f main" &&
 	git checkout -B other HEAD@{1} &&
 	echo "more" >>file &&
 	git add file &&
@@ -215,10 +212,10 @@ test_expect_success 'with hook and editor (merge)' '
 test_rebase () {
 	expect=$1 &&
 	mode=$2 &&
-	test_expect_$expect C_LOCALE_OUTPUT "with hook (rebase ${mode:--i})" '
+	test_expect_$expect "with hook (rebase ${mode:--i})" '
 		test_when_finished "\
 			git rebase --abort
-			git checkout -f master
+			git checkout -f main
 			git branch -D tmp" &&
 		git checkout -b tmp rebase-me &&
 		GIT_SEQUENCE_EDITOR="cp rebase-todo" &&
@@ -247,30 +244,30 @@ test_rebase () {
 }
 
 test_rebase success
-test_have_prereq !REBASE_P || test_rebase success -p
 
 test_expect_success 'with hook (cherry-pick)' '
-	test_when_finished "git checkout -f master" &&
+	test_when_finished "git checkout -f main" &&
 	git checkout -B other b &&
 	git cherry-pick rebase-1 &&
 	test "$(git log -1 --pretty=format:%s)" = "message (no editor)"
 '
 
 test_expect_success 'with hook and editor (cherry-pick)' '
-	test_when_finished "git checkout -f master" &&
+	test_when_finished "git checkout -f main" &&
 	git checkout -B other b &&
 	git cherry-pick -e rebase-1 &&
 	test "$(git log -1 --pretty=format:%s)" = merge
 '
 
-cat > "$HOOK" <<'EOF'
-#!/bin/sh
-exit 1
-EOF
+test_expect_success 'setup: commit-msg hook that always fails' '
+	test_hook --setup --clobber prepare-commit-msg <<-\EOF
+	exit 1
+	EOF
+'
 
 test_expect_success 'with failing hook' '
 
-	test_when_finished "git checkout -f master" &&
+	test_when_finished "git checkout -f main" &&
 	head=$(git rev-parse HEAD) &&
 	echo "more" >> file &&
 	git add file &&
@@ -280,7 +277,7 @@ test_expect_success 'with failing hook' '
 
 test_expect_success 'with failing hook (--no-verify)' '
 
-	test_when_finished "git checkout -f master" &&
+	test_when_finished "git checkout -f main" &&
 	head=$(git rev-parse HEAD) &&
 	echo "more" >> file &&
 	git add file &&
@@ -290,13 +287,13 @@ test_expect_success 'with failing hook (--no-verify)' '
 
 test_expect_success 'with failing hook (merge)' '
 
-	test_when_finished "git checkout -f master" &&
+	test_when_finished "git checkout -f main" &&
 	git checkout -B other HEAD@{1} &&
 	echo "more" >> file &&
 	git add file &&
-	rm -f "$HOOK" &&
+	test_hook --remove prepare-commit-msg &&
 	git commit -m other &&
-	write_script "$HOOK" <<-EOF &&
+	test_hook --setup prepare-commit-msg <<-\EOF &&
 	exit 1
 	EOF
 	git checkout - &&
@@ -304,8 +301,8 @@ test_expect_success 'with failing hook (merge)' '
 
 '
 
-test_expect_success C_LOCALE_OUTPUT 'with failing hook (cherry-pick)' '
-	test_when_finished "git checkout -f master" &&
+test_expect_success 'with failing hook (cherry-pick)' '
+	test_when_finished "git checkout -f main" &&
 	git checkout -B other b &&
 	test_must_fail git cherry-pick rebase-1 2>actual &&
 	test $(grep -c prepare-commit-msg actual) = 1

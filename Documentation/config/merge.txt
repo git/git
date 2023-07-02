@@ -4,7 +4,14 @@ merge.conflictStyle::
 	shows a `<<<<<<<` conflict marker, changes made by one side,
 	a `=======` marker, changes made by the other side, and then
 	a `>>>>>>>` marker.  An alternate style, "diff3", adds a `|||||||`
-	marker and the original text before the `=======` marker.
+	marker and the original text before the `=======` marker.  The
+	"merge" style tends to produce smaller conflict regions than diff3,
+	both because of the exclusion of the original text, and because
+	when a subset of lines match on the two sides they are just pulled
+	out of the conflict region.  Another alternate style, "zdiff3", is
+	similar to diff3 but removes matching lines on the two sides from
+	the conflict region when those matching lines appear near either
+	the beginning or end of a conflict region.
 
 merge.defaultToUpstream::
 	If merge is called without any commit argument, merge the upstream
@@ -14,7 +21,7 @@ merge.defaultToUpstream::
 	branches at the remote named by `branch.<current branch>.remote`
 	are consulted, and then they are mapped via `remote.<remote>.fetch`
 	to their corresponding remote-tracking branches, and the tips of
-	these tracking branches are merged.
+	these tracking branches are merged. Defaults to true.
 
 merge.ff::
 	By default, Git does not create an extra merge commit when merging
@@ -33,10 +40,12 @@ merge.verifySignatures::
 include::fmt-merge-msg.txt[]
 
 merge.renameLimit::
-	The number of files to consider when performing rename detection
-	during a merge; if not specified, defaults to the value of
-	diff.renameLimit. This setting has no effect if rename detection
-	is turned off.
+	The number of files to consider in the exhaustive portion of
+	rename detection during a merge.  If not specified, defaults
+	to the value of diff.renameLimit.  If neither
+	merge.renameLimit nor diff.renameLimit are specified,
+	currently defaults to 7000.  This setting has no effect if
+	rename detection is turned off.
 
 merge.renames::
 	Whether Git detects renames.  If set to "false", rename detection

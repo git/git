@@ -5,6 +5,7 @@
 
 test_description='Test run command'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 cat >hello-script <<-EOF
@@ -129,18 +130,39 @@ World
 EOF
 
 test_expect_success 'run_command runs in parallel with more jobs available than tasks' '
-	test-tool run-command run-command-parallel 5 sh -c "printf \"%s\n%s\n\" Hello World" 2>actual &&
+	test-tool run-command run-command-parallel 5 sh -c "printf \"%s\n%s\n\" Hello World" >out 2>actual &&
+	test_must_be_empty out &&
 	test_cmp expect actual
+'
+
+test_expect_success 'run_command runs ungrouped in parallel with more jobs available than tasks' '
+	test-tool run-command --ungroup run-command-parallel 5 sh -c "printf \"%s\n%s\n\" Hello World" >out 2>err &&
+	test_line_count = 8 out &&
+	test_line_count = 4 err
 '
 
 test_expect_success 'run_command runs in parallel with as many jobs as tasks' '
-	test-tool run-command run-command-parallel 4 sh -c "printf \"%s\n%s\n\" Hello World" 2>actual &&
+	test-tool run-command run-command-parallel 4 sh -c "printf \"%s\n%s\n\" Hello World" >out 2>actual &&
+	test_must_be_empty out &&
 	test_cmp expect actual
 '
 
+test_expect_success 'run_command runs ungrouped in parallel with as many jobs as tasks' '
+	test-tool run-command --ungroup run-command-parallel 4 sh -c "printf \"%s\n%s\n\" Hello World" >out 2>err &&
+	test_line_count = 8 out &&
+	test_line_count = 4 err
+'
+
 test_expect_success 'run_command runs in parallel with more tasks than jobs available' '
-	test-tool run-command run-command-parallel 3 sh -c "printf \"%s\n%s\n\" Hello World" 2>actual &&
+	test-tool run-command run-command-parallel 3 sh -c "printf \"%s\n%s\n\" Hello World" >out 2>actual &&
+	test_must_be_empty out &&
 	test_cmp expect actual
+'
+
+test_expect_success 'run_command runs ungrouped in parallel with more tasks than jobs available' '
+	test-tool run-command --ungroup run-command-parallel 3 sh -c "printf \"%s\n%s\n\" Hello World" >out 2>err &&
+	test_line_count = 8 out &&
+	test_line_count = 4 err
 '
 
 cat >expect <<-EOF
@@ -153,8 +175,15 @@ asking for a quick stop
 EOF
 
 test_expect_success 'run_command is asked to abort gracefully' '
-	test-tool run-command run-command-abort 3 false 2>actual &&
+	test-tool run-command run-command-abort 3 false >out 2>actual &&
+	test_must_be_empty out &&
 	test_cmp expect actual
+'
+
+test_expect_success 'run_command is asked to abort gracefully (ungroup)' '
+	test-tool run-command --ungroup run-command-abort 3 false >out 2>err &&
+	test_must_be_empty out &&
+	test_line_count = 6 err
 '
 
 cat >expect <<-EOF
@@ -162,8 +191,15 @@ no further jobs available
 EOF
 
 test_expect_success 'run_command outputs ' '
-	test-tool run-command run-command-no-jobs 3 sh -c "printf \"%s\n%s\n\" Hello World" 2>actual &&
+	test-tool run-command run-command-no-jobs 3 sh -c "printf \"%s\n%s\n\" Hello World" >out 2>actual &&
+	test_must_be_empty out &&
 	test_cmp expect actual
+'
+
+test_expect_success 'run_command outputs (ungroup) ' '
+	test-tool run-command --ungroup run-command-no-jobs 3 sh -c "printf \"%s\n%s\n\" Hello World" >out 2>err &&
+	test_must_be_empty out &&
+	test_cmp expect err
 '
 
 test_trace () {

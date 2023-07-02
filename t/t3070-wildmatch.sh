@@ -2,6 +2,7 @@
 
 test_description='wildmatch tests'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 should_create_test_file() {
@@ -187,7 +188,7 @@ match() {
 		file=$(cat .git/expected_test_file) &&
 		if should_create_test_file "$file"
 		then
-			dirs=${file%/*}
+			dirs=${file%/*} &&
 			if test "$file" != "$dirs"
 			then
 				mkdir -p -- "$dirs" &&
@@ -429,5 +430,16 @@ match 0 1 0 1 'A' '[B-a]'
 match 1 1 1 1 'a' '[B-a]'
 match 0 1 0 1 'z' '[Z-y]'
 match 1 1 1 1 'Z' '[Z-y]'
+
+test_expect_success 'matching does not exhibit exponential behavior' '
+	{
+		test-tool wildmatch wildmatch \
+			aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab \
+			"*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a" &
+		pid=$!
+	} &&
+	sleep 2 &&
+	! kill $!
+'
 
 test_done

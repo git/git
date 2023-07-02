@@ -5,6 +5,10 @@
 
 test_description='per path merge controlled by merge attribute'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -19,10 +23,10 @@ test_expect_success setup '
 	git branch side &&
 	for f in text binary union
 	do
-		echo Master >>$f && git add $f || return 1
+		echo Main >>$f && git add $f || return 1
 	done &&
 	test_tick &&
-	git commit -m Master &&
+	git commit -m Main &&
 
 	git checkout side &&
 	for f in text binary union
@@ -52,6 +56,12 @@ test_expect_success setup '
 	) >"$ours+"
 	cat "$ours+" >"$ours"
 	rm -f "$ours+"
+
+	if test -f ./please-abort
+	then
+		echo >>./please-abort killing myself
+		kill -9 $$
+	fi
 	exit "$exit"
 	EOF
 	chmod +x ./custom-merge
@@ -59,12 +69,12 @@ test_expect_success setup '
 
 test_expect_success merge '
 
-	{
-		echo "binary -merge"
-		echo "union merge=union"
-	} >.gitattributes &&
+	cat >.gitattributes <<-\EOF &&
+	binary -merge
+	union merge=union
+	EOF
 
-	if git merge master
+	if git merge main
 	then
 		echo Gaah, should have conflicted
 		false
@@ -87,7 +97,7 @@ test_expect_success 'check merge result in working tree' '
 	grep "<<<<<<<" text &&
 	cmp binary-orig binary &&
 	! grep "<<<<<<<" union &&
-	grep Master union &&
+	grep Main union &&
 	grep Side union
 
 '
@@ -115,13 +125,13 @@ test_expect_success 'custom merge backend' '
 	git config --replace-all \
 	merge.custom.name "custom merge driver for testing" &&
 
-	git merge master &&
+	git merge main &&
 
 	cmp binary union &&
 	sed -e 1,3d text >check-1 &&
-	o=$(git unpack-file master^:text) &&
+	o=$(git unpack-file main^:text) &&
 	a=$(git unpack-file side^:text) &&
-	b=$(git unpack-file master:text) &&
+	b=$(git unpack-file main:text) &&
 	sh -c "./custom-merge $o $a $b 0 text" &&
 	sed -e 1,3d $a >check-2 &&
 	cmp check-1 check-2 &&
@@ -136,7 +146,7 @@ test_expect_success 'custom merge backend' '
 	git config --replace-all \
 	merge.custom.name "custom merge driver for testing" &&
 
-	if git merge master
+	if git merge main
 	then
 		echo "Eh? should have conflicted"
 		false
@@ -146,9 +156,9 @@ test_expect_success 'custom merge backend' '
 
 	cmp binary union &&
 	sed -e 1,3d text >check-1 &&
-	o=$(git unpack-file master^:text) &&
+	o=$(git unpack-file main^:text) &&
 	a=$(git unpack-file anchor:text) &&
-	b=$(git unpack-file master:text) &&
+	b=$(git unpack-file main:text) &&
 	sh -c "./custom-merge $o $a $b 0 text" &&
 	sed -e 1,3d $a >check-2 &&
 	cmp check-1 check-2 &&
@@ -158,9 +168,26 @@ test_expect_success 'custom merge backend' '
 	rm -f $o $a $b
 '
 
+test_expect_success !WINDOWS 'custom merge driver that is killed with a signal' '
+	test_when_finished "rm -f output please-abort" &&
+
+	git reset --hard anchor &&
+	git config --replace-all \
+	merge.custom.driver "./custom-merge %O %A %B 0 %P" &&
+	git config --replace-all \
+	merge.custom.name "custom merge driver for testing" &&
+
+	>./please-abort &&
+	echo "* merge=custom" >.gitattributes &&
+	test_must_fail git merge main &&
+	git ls-files -u >output &&
+	git diff --name-only HEAD >>output &&
+	test_must_be_empty output
+'
+
 test_expect_success 'up-to-date merge without common ancestor' '
-	test_create_repo repo1 &&
-	test_create_repo repo2 &&
+	git init repo1 &&
+	git init repo2 &&
 	test_tick &&
 	(
 		cd repo1 &&
@@ -176,7 +203,7 @@ test_expect_success 'up-to-date merge without common ancestor' '
 	test_tick &&
 	(
 		cd repo1 &&
-		git fetch ../repo2 master &&
+		git fetch ../repo2 main &&
 		git merge --allow-unrelated-histories FETCH_HEAD
 	)
 '
@@ -201,7 +228,30 @@ test_expect_success 'custom merge does not lock index' '
 	# By packaging the command in test_when_finished, we get both
 	# the correctness check and the clean-up.
 	test_when_finished "kill \$(cat sleep.pid)" &&
-	git merge master
+	git merge main
+'
+
+test_expect_success 'binary files with union attribute' '
+	git checkout -b bin-main &&
+	printf "base\0" >bin.txt &&
+	echo "bin.txt merge=union" >.gitattributes &&
+	git add bin.txt .gitattributes &&
+	git commit -m base &&
+
+	printf "one\0" >bin.txt &&
+	git commit -am one &&
+
+	git checkout -b bin-side HEAD^ &&
+	printf "two\0" >bin.txt &&
+	git commit -am two &&
+
+	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+	then
+		test_must_fail git merge bin-main >output
+	else
+		test_must_fail git merge bin-main 2>output
+	fi &&
+	grep -i "warning.*cannot merge.*HEAD vs. bin-main" output
 '
 
 test_done

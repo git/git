@@ -50,7 +50,7 @@ Fixes since v1.6.0.2
   if the working tree is currently dirty.
 
 * "git for-each-ref --format=%(subject)" fixed for commits with no
-  no newline in the message body.
+  newline in the message body.
 
 * "git remote" fixed to protect printf from user input.
 

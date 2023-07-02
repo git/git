@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='checkout handling of ambiguous (branch/tag) refs'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup ambiguous refs' '
@@ -14,7 +16,7 @@ test_expect_success 'setup ambiguous refs' '
 '
 
 test_expect_success 'checkout ambiguous ref succeeds' '
-	git checkout ambiguity >stdout 2>stderr
+	git checkout ambiguity 2>stderr
 '
 
 test_expect_success 'checkout produces ambiguity warning' '
@@ -35,7 +37,7 @@ test_expect_success 'checkout reports switch to branch' '
 '
 
 test_expect_success 'checkout vague ref succeeds' '
-	git checkout vagueness >stdout 2>stderr &&
+	git checkout vagueness 2>stderr &&
 	test_set_prereq VAGUENESS_SUCCESS
 '
 

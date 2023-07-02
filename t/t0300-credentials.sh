@@ -35,6 +35,16 @@ test_expect_success 'setup helper scripts' '
 	test -z "$pass" || echo password=$pass
 	EOF
 
+	write_script git-credential-verbatim-with-expiry <<-\EOF &&
+	user=$1; shift
+	pass=$1; shift
+	pexpiry=$1; shift
+	. ./dump
+	test -z "$user" || echo username=$user
+	test -z "$pass" || echo password=$pass
+	test -z "$pexpiry" || echo password_expiry_utc=$pexpiry
+	EOF
+
 	PATH="$PWD:$PATH"
 '
 
@@ -109,6 +119,43 @@ test_expect_success 'credential_fill continues through partial response' '
 	EOF
 '
 
+test_expect_success 'credential_fill populates password_expiry_utc' '
+	check fill "verbatim-with-expiry one two 9999999999" <<-\EOF
+	protocol=http
+	host=example.com
+	--
+	protocol=http
+	host=example.com
+	username=one
+	password=two
+	password_expiry_utc=9999999999
+	--
+	verbatim-with-expiry: get
+	verbatim-with-expiry: protocol=http
+	verbatim-with-expiry: host=example.com
+	EOF
+'
+
+test_expect_success 'credential_fill ignores expired password' '
+	check fill "verbatim-with-expiry one two 5" "verbatim three four" <<-\EOF
+	protocol=http
+	host=example.com
+	--
+	protocol=http
+	host=example.com
+	username=three
+	password=four
+	--
+	verbatim-with-expiry: get
+	verbatim-with-expiry: protocol=http
+	verbatim-with-expiry: host=example.com
+	verbatim: get
+	verbatim: protocol=http
+	verbatim: host=example.com
+	verbatim: username=one
+	EOF
+'
+
 test_expect_success 'credential_fill passes along metadata' '
 	check fill "verbatim one two" <<-\EOF
 	protocol=ftp
@@ -149,6 +196,42 @@ test_expect_success 'credential_approve calls all helpers' '
 	EOF
 '
 
+test_expect_success 'credential_approve stores password expiry' '
+	check approve useless <<-\EOF
+	protocol=http
+	host=example.com
+	username=foo
+	password=bar
+	password_expiry_utc=9999999999
+	--
+	--
+	useless: store
+	useless: protocol=http
+	useless: host=example.com
+	useless: username=foo
+	useless: password=bar
+	useless: password_expiry_utc=9999999999
+	EOF
+'
+
+test_expect_success 'credential_approve stores oauth refresh token' '
+	check approve useless <<-\EOF
+	protocol=http
+	host=example.com
+	username=foo
+	password=bar
+	oauth_refresh_token=xyzzy
+	--
+	--
+	useless: store
+	useless: protocol=http
+	useless: host=example.com
+	useless: username=foo
+	useless: password=bar
+	useless: oauth_refresh_token=xyzzy
+	EOF
+'
+
 test_expect_success 'do not bother storing password-less credential' '
 	check approve useless <<-\EOF
 	protocol=http
@@ -159,6 +242,17 @@ test_expect_success 'do not bother storing password-less credential' '
 	EOF
 '
 
+test_expect_success 'credential_approve does not store expired password' '
+	check approve useless <<-\EOF
+	protocol=http
+	host=example.com
+	username=foo
+	password=bar
+	password_expiry_utc=5
+	--
+	--
+	EOF
+'
 
 test_expect_success 'credential_reject calls all helpers' '
 	check reject useless "verbatim one two" <<-\EOF
@@ -178,6 +272,24 @@ test_expect_success 'credential_reject calls all helpers' '
 	verbatim: host=example.com
 	verbatim: username=foo
 	verbatim: password=bar
+	EOF
+'
+
+test_expect_success 'credential_reject erases credential regardless of expiry' '
+	check reject useless <<-\EOF
+	protocol=http
+	host=example.com
+	username=foo
+	password=bar
+	password_expiry_utc=5
+	--
+	--
+	useless: erase
+	useless: protocol=http
+	useless: host=example.com
+	useless: username=foo
+	useless: password=bar
+	useless: password_expiry_utc=5
 	EOF
 '
 
@@ -263,6 +375,32 @@ test_expect_success 'internal getpass does not ask for known username' '
 	--
 	askpass: Password for '\''http://foo@example.com'\'':
 	EOF
+'
+
+test_expect_success 'git-credential respects core.askPass' '
+	write_script alternate-askpass <<-\EOF &&
+	echo >&2 "alternate askpass invoked"
+	echo alternate-value
+	EOF
+	test_config core.askpass "$PWD/alternate-askpass" &&
+	(
+		# unset GIT_ASKPASS set by lib-credential.sh which would
+		# override our config, but do so in a subshell so that we do
+		# not interfere with other tests
+		sane_unset GIT_ASKPASS &&
+		check fill <<-\EOF
+		protocol=http
+		host=example.com
+		--
+		protocol=http
+		host=example.com
+		username=alternate-value
+		password=alternate-value
+		--
+		alternate askpass invoked
+		alternate askpass invoked
+		EOF
+	)
 '
 
 HELPER="!f() {
@@ -552,7 +690,7 @@ test_expect_success 'helpers can abort the process' '
 	quit: host=example.com
 	fatal: credential helper '\''quit'\'' told us to quit
 	EOF
-	test_i18ncmp expect stderr
+	test_cmp expect stderr
 '
 
 test_expect_success 'empty helper spec resets helper list' '
@@ -580,7 +718,7 @@ test_expect_success 'url parser rejects embedded newlines' '
 	warning: url contains a newline in its path component: https://one.example.com?%0ahost=two.example.com/
 	fatal: credential url cannot be parsed: https://one.example.com?%0ahost=two.example.com/
 	EOF
-	test_i18ncmp expect stderr
+	test_cmp expect stderr
 '
 
 test_expect_success 'host-less URLs are parsed as empty host' '
@@ -607,7 +745,7 @@ test_expect_success 'credential system refuses to work with missing host' '
 	cat >expect <<-\EOF &&
 	fatal: refusing to work with credential missing host field
 	EOF
-	test_i18ncmp expect stderr
+	test_cmp expect stderr
 '
 
 test_expect_success 'credential system refuses to work with missing protocol' '
@@ -617,7 +755,7 @@ test_expect_success 'credential system refuses to work with missing protocol' '
 	cat >expect <<-\EOF &&
 	fatal: refusing to work with credential missing protocol field
 	EOF
-	test_i18ncmp expect stderr
+	test_cmp expect stderr
 '
 
 # usage: check_host_and_path <url> <expected-host> <expected-path>
@@ -688,7 +826,7 @@ test_expect_success 'credential config with partial URLs' '
 
 	git -c credential.$partial.helper=yep \
 		-c credential.with%0anewline.username=uh-oh \
-		credential fill <stdin >stdout 2>stderr &&
+		credential fill <stdin 2>stderr &&
 	test_i18ngrep "skipping credential lookup for key" stderr
 '
 

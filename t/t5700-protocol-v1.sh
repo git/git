@@ -8,6 +8,9 @@ TEST_NO_CREATE_REPO=1
 GIT_TEST_PROTOCOL_VERSION=0
 export GIT_TEST_PROTOCOL_VERSION
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # Test protocol v1 with 'git://' transport
@@ -41,7 +44,7 @@ test_expect_success 'fetch with git:// using protocol v1' '
 	GIT_TRACE_PACKET=1 git -C daemon_child -c protocol.version=1 \
 		fetch 2>log &&
 
-	git -C daemon_child log -1 --format=%s origin/master >actual &&
+	git -C daemon_child log -1 --format=%s origin/main >actual &&
 	git -C "$daemon_parent" log -1 --format=%s >expect &&
 	test_cmp expect actual &&
 
@@ -69,7 +72,7 @@ test_expect_success 'push with git:// using protocol v1' '
 	test_commit -C daemon_child three &&
 
 	# Push to another branch, as the target repository has the
-	# master branch checked out and we cannot push into it.
+	# main branch checked out and we cannot push into it.
 	GIT_TRACE_PACKET=1 git -C daemon_child -c protocol.version=1 \
 		push origin HEAD:client_branch 2>log &&
 
@@ -110,7 +113,7 @@ test_expect_success 'fetch with file:// using protocol v1' '
 	GIT_TRACE_PACKET=1 git -C file_child -c protocol.version=1 \
 		fetch 2>log &&
 
-	git -C file_child log -1 --format=%s origin/master >actual &&
+	git -C file_child log -1 --format=%s origin/main >actual &&
 	git -C file_parent log -1 --format=%s >expect &&
 	test_cmp expect actual &&
 
@@ -134,7 +137,7 @@ test_expect_success 'push with file:// using protocol v1' '
 	test_commit -C file_child three &&
 
 	# Push to another branch, as the target repository has the
-	# master branch checked out and we cannot push into it.
+	# main branch checked out and we cannot push into it.
 	GIT_TRACE_PACKET=1 git -C file_child -c protocol.version=1 \
 		push origin HEAD:client_branch 2>log &&
 
@@ -144,6 +147,21 @@ test_expect_success 'push with file:// using protocol v1' '
 
 	# Server responded using protocol v1
 	grep "push< version 1" log
+'
+
+test_expect_success 'cloning branchless tagless but not refless remote' '
+	rm -rf server client &&
+
+	git -c init.defaultbranch=main init server &&
+	echo foo >server/foo.txt &&
+	git -C server add foo.txt &&
+	git -C server commit -m "message" &&
+	git -C server update-ref refs/notbranch/alsonottag HEAD &&
+	git -C server checkout --detach &&
+	git -C server branch -D main &&
+	git -C server symbolic-ref HEAD refs/heads/nonexistentbranch &&
+
+	git -c protocol.version=1 clone "file://$(pwd)/server" client
 '
 
 # Test protocol v1 with 'ssh://' transport
@@ -188,7 +206,7 @@ test_expect_success 'fetch with ssh:// using protocol v1' '
 		fetch 2>log &&
 	expect_ssh git-upload-pack &&
 
-	git -C ssh_child log -1 --format=%s origin/master >actual &&
+	git -C ssh_child log -1 --format=%s origin/main >actual &&
 	git -C ssh_parent log -1 --format=%s >expect &&
 	test_cmp expect actual &&
 
@@ -213,7 +231,7 @@ test_expect_success 'push with ssh:// using protocol v1' '
 	test_commit -C ssh_child three &&
 
 	# Push to another branch, as the target repository has the
-	# master branch checked out and we cannot push into it.
+	# main branch checked out and we cannot push into it.
 	GIT_TRACE_PACKET=1 git -C ssh_child -c protocol.version=1 \
 		push origin HEAD:client_branch 2>log &&
 	expect_ssh git-receive-pack &&
@@ -226,15 +244,28 @@ test_expect_success 'push with ssh:// using protocol v1' '
 	grep "push< version 1" log
 '
 
+test_expect_success 'clone propagates object-format from empty repo' '
+	test_when_finished "rm -fr src256 dst256" &&
+
+	echo sha256 >expect &&
+	git init --object-format=sha256 src256 &&
+	git clone --no-local src256 dst256 &&
+	git -C dst256 rev-parse --show-object-format >actual &&
+
+	test_cmp expect actual
+'
+
 # Test protocol v1 with 'http://' transport
 #
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 
-test_expect_success 'create repo to be served by http:// transport' '
+test_expect_success 'create repos to be served by http:// transport' '
 	git init "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" &&
 	git -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" config http.receivepack true &&
-	test_commit -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" one
+	test_commit -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" one &&
+	git init --object-format=sha256 "$HTTPD_DOCUMENT_ROOT_PATH/sha256" &&
+	git -C "$HTTPD_DOCUMENT_ROOT_PATH/sha256" config http.receivepack true
 '
 
 test_expect_success 'clone with http:// using protocol v1' '
@@ -251,13 +282,27 @@ test_expect_success 'clone with http:// using protocol v1' '
 	grep "git< version 1" log
 '
 
+test_expect_success 'clone with http:// using protocol v1 with empty SHA-256 repo' '
+	GIT_TRACE_PACKET=1 GIT_TRACE_CURL=1 git -c protocol.version=1 \
+		clone "$HTTPD_URL/smart/sha256" sha256 2>log &&
+
+	echo sha256 >expect &&
+	git -C sha256 rev-parse --show-object-format >actual &&
+	test_cmp expect actual &&
+
+	# Client requested to use protocol v1
+	grep "Git-Protocol: version=1" log &&
+	# Server responded using protocol v1
+	grep "git< version 1" log
+'
+
 test_expect_success 'fetch with http:// using protocol v1' '
 	test_commit -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" two &&
 
 	GIT_TRACE_PACKET=1 git -C http_child -c protocol.version=1 \
 		fetch 2>log &&
 
-	git -C http_child log -1 --format=%s origin/master >actual &&
+	git -C http_child log -1 --format=%s origin/main >actual &&
 	git -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" log -1 --format=%s >expect &&
 	test_cmp expect actual &&
 
@@ -281,7 +326,7 @@ test_expect_success 'push with http:// using protocol v1' '
 	test_commit -C http_child three &&
 
 	# Push to another branch, as the target repository has the
-	# master branch checked out and we cannot push into it.
+	# main branch checked out and we cannot push into it.
 	GIT_TRACE_PACKET=1 git -C http_child -c protocol.version=1 \
 		push origin HEAD:client_branch && #2>log &&
 

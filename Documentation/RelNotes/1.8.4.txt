@@ -365,7 +365,7 @@ details).
    (merge 2fbd4f9 mh/maint-lockfile-overflow later to maint).
 
  * Invocations of "git checkout" used internally by "git rebase" were
-   counted as "checkout", and affected later "git checkout -" to the
+   counted as "checkout", and affected later "git checkout -", which took
    the user to an unexpected place.
    (merge 3bed291 rr/rebase-checkout-reflog later to maint).
 

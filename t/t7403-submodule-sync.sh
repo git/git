@@ -8,9 +8,15 @@ test_description='git submodule sync
 These tests exercise the "git submodule sync" subcommand.
 '
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '
+	git config --global protocol.file.allow always &&
+
 	echo file >file &&
 	git add file &&
 	test_tick &&
@@ -78,7 +84,7 @@ test_expect_success 'change submodule url' '
 	(
 		cd super &&
 		cd submodule &&
-		git checkout master &&
+		git checkout main &&
 		git pull
 	) &&
 	mv submodule moved-submodule &&
@@ -112,7 +118,7 @@ test_expect_success '"git submodule sync" should update submodule URLs' '
 	)" &&
 	(
 		cd super-clone/submodule &&
-		git checkout master &&
+		git checkout main &&
 		git pull
 	) &&
 	(
@@ -140,7 +146,7 @@ test_expect_success '"git submodule sync --recursive" should update all submodul
 	)" &&
 	(
 		cd super-clone/submodule/sub-submodule &&
-		git checkout master &&
+		git checkout main &&
 		git pull
 	)
 '
@@ -168,7 +174,7 @@ test_expect_success '"git submodule sync" should update submodule URLs - subdire
 	)" &&
 	(
 		cd super-clone/submodule &&
-		git checkout master &&
+		git checkout main &&
 		git pull
 	) &&
 	(
@@ -199,7 +205,7 @@ test_expect_success '"git submodule sync --recursive" should update all submodul
 	)" &&
 	(
 		cd super-clone/submodule/sub-submodule &&
-		git checkout master &&
+		git checkout main &&
 		git pull
 	)
 '

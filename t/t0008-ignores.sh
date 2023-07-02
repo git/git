@@ -2,6 +2,8 @@
 
 test_description=check-ignore
 
+TEST_PASSES_SANITIZE_LEAK=true
+TEST_CREATE_REPO_NO_TEMPLATE=1
 . ./test-lib.sh
 
 init_vars () {
@@ -34,7 +36,7 @@ expect_from_stdin () {
 test_stderr () {
 	expected="$1"
 	expect_in stderr "$1" &&
-	test_i18ncmp "$HOME/expected-stderr" "$HOME/stderr"
+	test_cmp "$HOME/expected-stderr" "$HOME/stderr"
 }
 
 broken_c_unquote () {
@@ -199,7 +201,7 @@ test_expect_success 'setup' '
 	do
 		: >$dir/not-ignored &&
 		: >$dir/ignored-and-untracked &&
-		: >$dir/ignored-but-in-index
+		: >$dir/ignored-but-in-index || return 1
 	done &&
 	git add -f ignored-but-in-index a/ignored-but-in-index &&
 	cat <<-\EOF >a/.gitignore &&
@@ -224,7 +226,8 @@ test_expect_success 'setup' '
 		!globaltwo
 		globalthree
 	EOF
-	cat <<-\EOF >>.git/info/exclude
+	mkdir .git/info &&
+	cat <<-\EOF >.git/info/exclude
 		per-repo
 	EOF
 '
@@ -542,9 +545,9 @@ test_expect_success_multi 'submodule from subdirectory' '' '
 
 test_expect_success 'global ignore not yet enabled' '
 	expect_from_stdin <<-\EOF &&
-		.git/info/exclude:7:per-repo	per-repo
+		.git/info/exclude:1:per-repo	per-repo
 		a/.gitignore:2:*three	a/globalthree
-		.git/info/exclude:7:per-repo	a/per-repo
+		.git/info/exclude:1:per-repo	a/per-repo
 	EOF
 	test_check_ignore "-v globalone per-repo a/globalthree a/per-repo not-ignored a/globaltwo"
 '
@@ -565,10 +568,10 @@ test_expect_success 'global ignore with -v' '
 	enable_global_excludes &&
 	expect_from_stdin <<-EOF &&
 		$global_excludes:1:globalone	globalone
-		.git/info/exclude:7:per-repo	per-repo
+		.git/info/exclude:1:per-repo	per-repo
 		$global_excludes:3:globalthree	globalthree
 		a/.gitignore:2:*three	a/globalthree
-		.git/info/exclude:7:per-repo	a/per-repo
+		.git/info/exclude:1:per-repo	a/per-repo
 		$global_excludes:2:!globaltwo	globaltwo
 	EOF
 	test_check_ignore "-v globalone per-repo globalthree a/globalthree a/per-repo not-ignored globaltwo"
@@ -802,6 +805,49 @@ test_expect_success 'existing directory and file' '
 	grep top-level-dir actual
 '
 
+test_expect_success 'exact prefix matching (with root)' '
+	test_when_finished rm -r a &&
+	mkdir -p a/git a/git-foo &&
+	touch a/git/foo a/git-foo/bar &&
+	echo /git/ >a/.gitignore &&
+	git check-ignore a/git a/git/foo a/git-foo a/git-foo/bar >actual &&
+	cat >expect <<-\EOF &&
+	a/git
+	a/git/foo
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'exact prefix matching (without root)' '
+	test_when_finished rm -r a &&
+	mkdir -p a/git a/git-foo &&
+	touch a/git/foo a/git-foo/bar &&
+	echo git/ >a/.gitignore &&
+	git check-ignore a/git a/git/foo a/git-foo a/git-foo/bar >actual &&
+	cat >expect <<-\EOF &&
+	a/git
+	a/git/foo
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'directories and ** matches' '
+	cat >.gitignore <<-\EOF &&
+	data/**
+	!data/**/
+	!data/**/*.txt
+	EOF
+	git check-ignore file \
+		data/file data/data1/file1 data/data1/file1.txt \
+		data/data2/file2 data/data2/file2.txt >actual &&
+	cat >expect <<-\EOF &&
+	data/file
+	data/data1/file1
+	data/data2/file2
+	EOF
+	test_cmp expect actual
+'
+
 ############################################################################
 #
 # test whitespace handling
@@ -863,6 +909,40 @@ test_expect_success 'info/exclude trumps core.excludesfile' '
 
 	git status --porcelain usually-ignored >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success SYMLINKS 'set up ignore file for symlink tests' '
+	echo "*" >ignore &&
+	rm -f .gitignore .git/info/exclude
+'
+
+test_expect_success SYMLINKS 'symlinks respected in core.excludesFile' '
+	test_when_finished "rm symlink" &&
+	ln -s ignore symlink &&
+	test_config core.excludesFile "$(pwd)/symlink" &&
+	echo file >expect &&
+	git check-ignore file >actual 2>err &&
+	test_cmp expect actual &&
+	test_must_be_empty err
+'
+
+test_expect_success SYMLINKS 'symlinks respected in info/exclude' '
+	test_when_finished "rm .git/info/exclude" &&
+	ln -s ../../ignore .git/info/exclude &&
+	echo file >expect &&
+	git check-ignore file >actual 2>err &&
+	test_cmp expect actual &&
+	test_must_be_empty err
+'
+
+test_expect_success SYMLINKS 'symlinks not respected in-tree' '
+	test_when_finished "rm .gitignore" &&
+	ln -s ignore .gitignore &&
+	mkdir subdir &&
+	ln -s ignore subdir/.gitignore &&
+	test_must_fail git check-ignore subdir/file >actual 2>err &&
+	test_must_be_empty actual &&
+	test_i18ngrep "unable to access.*gitignore" err
 '
 
 test_done

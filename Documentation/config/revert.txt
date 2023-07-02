@@ -1,0 +1,3 @@
+revert.reference::
+	Setting this variable to true makes `git revert` behave
+	as if the `--reference` option is given.

@@ -79,7 +79,7 @@ Design Details
   upload-pack negotiation.
 +
 This uses the existing capability discovery mechanism.
-See "filter" in Documentation/technical/pack-protocol.txt.
+See "filter" in linkgit:gitprotocol-pack[5].
 
 - Clients pass a "filter-spec" to clone and fetch which is passed to the
   server to request filtering during packfile construction.
@@ -181,6 +181,9 @@ Fetching Missing Objects
   currently fetches all objects referred to by the requested objects, even
   though they are not necessary.
 
+- Fetching with `--refetch` will request a complete new filtered packfile from
+  the remote, which can be used to change a filter without needing to
+  dynamically fetch missing objects.
 
 Using many promisor remotes
 ---------------------------
@@ -242,8 +245,7 @@ remote in a specific order.
   repository and can satisfy all such requests.
 
 - Repack essentially treats promisor and non-promisor packfiles as 2
-  distinct partitions and does not mix them.  Repack currently only works
-  on non-promisor packfiles and loose objects.
+  distinct partitions and does not mix them.
 
 - Dynamic object fetching invokes fetch-pack once *for each item*
   because most algorithms stumble upon a missing object and need to have
@@ -272,9 +274,6 @@ to use those promisor remotes in that order."
 +
 The user might want to work in a triangular work flow with multiple
 promisor remotes that each have an incomplete view of the repository.
-
-- Allow repack to work on promisor packfiles (while keeping them distinct
-  from non-promisor packfiles).
 
 - Allow non-pathname-based filters to make use of packfile bitmaps (when
   present).  This was just an omission during the initial implementation.

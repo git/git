@@ -5,6 +5,10 @@
 
 test_description='git branch assorted tests'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-rebase.sh
 
@@ -12,6 +16,7 @@ test_expect_success 'prepare a trivial repository' '
 	echo Hello >A &&
 	git update-index --add A &&
 	git commit -m "Initial commit." &&
+	git branch -M main &&
 	echo World >>A &&
 	git update-index --add A &&
 	git commit -m "Second commit." &&
@@ -27,8 +32,8 @@ test_expect_success 'branch -h in broken repository' '
 	mkdir broken &&
 	(
 		cd broken &&
-		git init &&
-		>.git/refs/heads/master &&
+		git init -b main &&
+		>.git/refs/heads/main &&
 		test_expect_code 129 git branch -h >usage 2>&1
 	) &&
 	test_i18ngrep "[Uu]sage" broken/usage
@@ -38,12 +43,29 @@ test_expect_success 'git branch abc should create a branch' '
 	git branch abc && test_path_is_file .git/refs/heads/abc
 '
 
+test_expect_success 'git branch abc should fail when abc exists' '
+	test_must_fail git branch abc
+'
+
+test_expect_success 'git branch --force abc should fail when abc is checked out' '
+	test_when_finished git switch main &&
+	git switch abc &&
+	test_must_fail git branch --force abc HEAD~1
+'
+
+test_expect_success 'git branch --force abc should succeed when abc exists' '
+	git rev-parse HEAD~1 >expect &&
+	git branch --force abc HEAD~1 &&
+	git rev-parse abc >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'git branch a/b/c should create a branch' '
 	git branch a/b/c && test_path_is_file .git/refs/heads/a/b/c
 '
 
-test_expect_success 'git branch mb master... should create a branch' '
-	git branch mb master... && test_path_is_file .git/refs/heads/mb
+test_expect_success 'git branch mb main... should create a branch' '
+	git branch mb main... && test_path_is_file .git/refs/heads/mb
 '
 
 test_expect_success 'git branch HEAD should fail' '
@@ -51,7 +73,7 @@ test_expect_success 'git branch HEAD should fail' '
 '
 
 cat >expect <<EOF
-$ZERO_OID $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	branch: Created from master
+$ZERO_OID $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	branch: Created from main
 EOF
 test_expect_success 'git branch --create-reflog d/e/f should create a branch and a log' '
 	GIT_COMMITTER_DATE="2005-05-26 23:30" \
@@ -110,7 +132,7 @@ test_expect_success 'git branch -m n/n n should work' '
 
 test_expect_success 'git branch -m bbb should rename checked out branch' '
 	test_when_finished git branch -D bbb &&
-	test_when_finished git checkout master &&
+	test_when_finished git checkout main &&
 	git checkout -b aaa &&
 	git commit --allow-empty -m "a new commit" &&
 	git rev-parse aaa@{0} >expect &&
@@ -124,7 +146,7 @@ test_expect_success 'git branch -m bbb should rename checked out branch' '
 
 test_expect_success 'renaming checked out branch works with d/f conflict' '
 	test_when_finished "git branch -D foo/bar || git branch -D foo" &&
-	test_when_finished git checkout master &&
+	test_when_finished git checkout main &&
 	git checkout -b foo &&
 	git branch -m foo/bar &&
 	git symbolic-ref HEAD >actual &&
@@ -164,6 +186,13 @@ test_expect_success 'git branch -M foo bar should fail when bar is checked out' 
 	test_must_fail git branch -M bar foo
 '
 
+test_expect_success 'git branch -M foo bar should fail when bar is checked out in worktree' '
+	git branch -f bar &&
+	test_when_finished "git worktree remove wt && git branch -D wt" &&
+	git worktree add wt &&
+	test_must_fail git branch -M bar wt
+'
+
 test_expect_success 'git branch -M baz bam should succeed when baz is checked out' '
 	git checkout -b baz &&
 	git branch bam &&
@@ -173,19 +202,19 @@ test_expect_success 'git branch -M baz bam should succeed when baz is checked ou
 
 test_expect_success 'git branch -M baz bam should add entries to .git/logs/HEAD' '
 	msg="Branch: renamed refs/heads/baz to refs/heads/bam" &&
-	grep " 0\{40\}.*$msg$" .git/logs/HEAD &&
-	grep "^0\{40\}.*$msg$" .git/logs/HEAD
+	grep " $ZERO_OID.*$msg$" .git/logs/HEAD &&
+	grep "^$ZERO_OID.*$msg$" .git/logs/HEAD
 '
 
 test_expect_success 'git branch -M should leave orphaned HEAD alone' '
-	git init orphan &&
+	git init -b main orphan &&
 	(
 		cd orphan &&
 		test_commit initial &&
 		git checkout --orphan lonely &&
 		grep lonely .git/HEAD &&
 		test_path_is_missing .git/refs/head/lonely &&
-		git branch -M master mistress &&
+		git branch -M main mistress &&
 		grep lonely .git/HEAD
 	)
 '
@@ -201,7 +230,7 @@ test_expect_success 'resulting reflog can be shown by log -g' '
 '
 
 test_expect_success 'git branch -M baz bam should succeed when baz is checked out as linked working tree' '
-	git checkout master &&
+	git checkout main &&
 	git worktree add -b baz bazdir &&
 	git worktree add -f bazdir2 baz &&
 	git branch -M baz bam &&
@@ -211,33 +240,113 @@ test_expect_success 'git branch -M baz bam should succeed when baz is checked ou
 	git worktree prune
 '
 
+test_expect_success 'git branch -M fails if updating any linked working tree fails' '
+	git worktree add -b baz bazdir1 &&
+	git worktree add -f bazdir2 baz &&
+	touch .git/worktrees/bazdir1/HEAD.lock &&
+	test_must_fail git branch -M baz bam &&
+	test $(git -C bazdir2 rev-parse --abbrev-ref HEAD) = bam &&
+	git branch -M bam baz &&
+	rm .git/worktrees/bazdir1/HEAD.lock &&
+	touch .git/worktrees/bazdir2/HEAD.lock &&
+	test_must_fail git branch -M baz bam &&
+	test $(git -C bazdir1 rev-parse --abbrev-ref HEAD) = bam &&
+	rm -rf bazdir1 bazdir2 &&
+	git worktree prune
+'
+
 test_expect_success 'git branch -M baz bam should succeed within a worktree in which baz is checked out' '
 	git checkout -b baz &&
 	git worktree add -f bazdir baz &&
 	(
 		cd bazdir &&
 		git branch -M baz bam &&
-		test $(git rev-parse --abbrev-ref HEAD) = bam
+		echo bam >expect &&
+		git rev-parse --abbrev-ref HEAD >actual &&
+		test_cmp expect actual
 	) &&
-	test $(git rev-parse --abbrev-ref HEAD) = bam &&
+	echo bam >expect &&
+	git rev-parse --abbrev-ref HEAD >actual &&
+	test_cmp expect actual &&
 	rm -r bazdir &&
 	git worktree prune
 '
 
-test_expect_success 'git branch -M master should work when master is checked out' '
-	git checkout master &&
-	git branch -M master
+test_expect_success 'git branch -M main should work when main is checked out' '
+	git checkout main &&
+	git branch -M main
 '
 
-test_expect_success 'git branch -M master master should work when master is checked out' '
-	git checkout master &&
-	git branch -M master master
+test_expect_success 'git branch -M main main should work when main is checked out' '
+	git checkout main &&
+	git branch -M main main
 '
 
-test_expect_success 'git branch -M master2 master2 should work when master is checked out' '
-	git checkout master &&
-	git branch master2 &&
-	git branch -M master2 master2
+test_expect_success 'git branch -M topic topic should work when main is checked out' '
+	git checkout main &&
+	git branch topic &&
+	git branch -M topic topic
+'
+
+test_expect_success 'git branch -M and -C fail on detached HEAD' '
+	git checkout HEAD^{} &&
+	test_when_finished git checkout - &&
+	echo "fatal: cannot rename the current branch while not on any." >expect &&
+	test_must_fail git branch -M must-fail 2>err &&
+	test_cmp expect err &&
+	echo "fatal: cannot copy the current branch while not on any." >expect &&
+	test_must_fail git branch -C must-fail 2>err &&
+	test_cmp expect err
+'
+
+test_expect_success 'git branch -m should work with orphan branches' '
+	test_when_finished git checkout - &&
+	test_when_finished git worktree remove -f wt &&
+	git worktree add wt --detach &&
+	# rename orphan in another worktreee
+	git -C wt checkout --orphan orphan-foo-wt &&
+	git branch -m orphan-foo-wt orphan-bar-wt &&
+	test orphan-bar-wt=$(git -C orphan-worktree branch --show-current) &&
+	# rename orphan in the current worktree
+	git checkout --orphan orphan-foo &&
+	git branch -m orphan-foo orphan-bar &&
+	test orphan-bar=$(git branch --show-current)
+'
+
+test_expect_success 'git branch -d on orphan HEAD (merged)' '
+	test_when_finished git checkout main &&
+	git checkout --orphan orphan &&
+	test_when_finished "rm -rf .git/objects/commit-graph*" &&
+	git commit-graph write --reachable &&
+	git branch --track to-delete main &&
+	git branch -d to-delete
+'
+
+test_expect_success 'git branch -d on orphan HEAD (merged, graph)' '
+	test_when_finished git checkout main &&
+	git checkout --orphan orphan &&
+	git branch --track to-delete main &&
+	git branch -d to-delete
+'
+
+test_expect_success 'git branch -d on orphan HEAD (unmerged)' '
+	test_when_finished git checkout main &&
+	git checkout --orphan orphan &&
+	test_when_finished "git branch -D to-delete" &&
+	git branch to-delete main &&
+	test_must_fail git branch -d to-delete 2>err &&
+	grep "not fully merged" err
+'
+
+test_expect_success 'git branch -d on orphan HEAD (unmerged, graph)' '
+	test_when_finished git checkout main &&
+	git checkout --orphan orphan &&
+	test_when_finished "git branch -D to-delete" &&
+	git branch to-delete main &&
+	test_when_finished "rm -rf .git/objects/commit-graph*" &&
+	git commit-graph write --reachable &&
+	test_must_fail git branch -d to-delete 2>err &&
+	grep "not fully merged" err
 '
 
 test_expect_success 'git branch -v -d t should work' '
@@ -278,6 +387,7 @@ test_expect_success 'deleting checked-out branch from repo that is a submodule' 
 	git init repo1 &&
 	git init repo1/sub &&
 	test_commit -C repo1/sub x &&
+	test_config_global protocol.file.allow always &&
 	git -C repo1 submodule add ./sub &&
 	git -C repo1 commit -m "adding sub" &&
 
@@ -289,11 +399,11 @@ test_expect_success 'deleting checked-out branch from repo that is a submodule' 
 test_expect_success 'bare main worktree has HEAD at branch deleted by secondary worktree' '
 	test_when_finished "rm -rf nonbare base secondary" &&
 
-	git init nonbare &&
+	git init -b main nonbare &&
 	test_commit -C nonbare x &&
 	git clone --bare nonbare bare &&
-	git -C bare worktree add --detach ../secondary master &&
-	git -C secondary branch -D master
+	git -C bare worktree add --detach ../secondary main &&
+	git -C secondary branch -D main
 '
 
 test_expect_success 'git branch --list -v with --abbrev' '
@@ -305,7 +415,9 @@ test_expect_success 'git branch --list -v with --abbrev' '
 
 	git branch -v --list --no-abbrev t >actual.noabbrev &&
 	git branch -v --list --abbrev=0 t >actual.0abbrev &&
+	git -c core.abbrev=no branch -v --list t >actual.noabbrev-conf &&
 	test_cmp actual.noabbrev actual.0abbrev &&
+	test_cmp actual.noabbrev actual.noabbrev-conf &&
 
 	git branch -v --list --abbrev=36 t >actual.36abbrev &&
 	# how many hexdigits are used?
@@ -324,8 +436,8 @@ test_expect_success 'git branch --list -v with --abbrev' '
 test_expect_success 'git branch --column' '
 	COLUMNS=81 git branch --column=column >actual &&
 	cat >expect <<\EOF &&
-  a/b/c     bam       foo       l       * master    mb        o/o       q
-  abc       bar       j/k       m/m       master2   n         o/p       r
+  a/b/c   bam     foo     l     * main    n       o/p     r
+  abc     bar     j/k     m/m     mb      o/o     q       topic
 EOF
 	test_cmp expect actual
 '
@@ -345,14 +457,14 @@ test_expect_success 'git branch --column with an extremely long branch name' '
   j/k
   l
   m/m
-* master
-  master2
+* main
   mb
   n
   o/o
   o/p
   q
   r
+  topic
   $long
 EOF
 	test_cmp expect actual
@@ -365,8 +477,8 @@ test_expect_success 'git branch with column.*' '
 	git config --unset column.branch &&
 	git config --unset column.ui &&
 	cat >expect <<\EOF &&
-  a/b/c   bam   foo   l   * master    mb   o/o   q
-  abc     bar   j/k   m/m   master2   n    o/p   r
+  a/b/c   bam   foo   l   * main   n     o/p   r
+  abc     bar   j/k   m/m   mb     o/o   q     topic
 EOF
 	test_cmp expect actual
 '
@@ -377,7 +489,7 @@ test_expect_success 'git branch --column -v should fail' '
 
 test_expect_success 'git branch -v with column.ui ignored' '
 	git config column.ui column &&
-	COLUMNS=80 git branch -v | cut -c -10 | sed "s/ *$//" >actual &&
+	COLUMNS=80 git branch -v | cut -c -8 | sed "s/ *$//" >actual &&
 	git config --unset column.ui &&
 	cat >expect <<\EOF &&
   a/b/c
@@ -388,14 +500,14 @@ test_expect_success 'git branch -v with column.ui ignored' '
   j/k
   l
   m/m
-* master
-  master2
+* main
   mb
   n
   o/o
   o/p
   q
   r
+  topic
 EOF
 	test_cmp expect actual
 '
@@ -427,8 +539,8 @@ test_expect_success 'config information was renamed, too' '
 '
 
 test_expect_success 'git branch -m correctly renames multiple config sections' '
-	test_when_finished "git checkout master" &&
-	git checkout -b source master &&
+	test_when_finished "git checkout main" &&
+	git checkout -b source main &&
 
 	# Assert that a config file with multiple config sections has
 	# those sections preserved...
@@ -587,20 +699,20 @@ test_expect_success 'git branch -C c1 c2 should never touch HEAD' '
 	! grep "$msg$" .git/logs/HEAD
 '
 
-test_expect_success 'git branch -C master should work when master is checked out' '
-	git checkout master &&
-	git branch -C master
+test_expect_success 'git branch -C main should work when main is checked out' '
+	git checkout main &&
+	git branch -C main
 '
 
-test_expect_success 'git branch -C master master should work when master is checked out' '
-	git checkout master &&
-	git branch -C master master
+test_expect_success 'git branch -C main main should work when main is checked out' '
+	git checkout main &&
+	git branch -C main main
 '
 
-test_expect_success 'git branch -C master5 master5 should work when master is checked out' '
-	git checkout master &&
-	git branch master5 &&
-	git branch -C master5 master5
+test_expect_success 'git branch -C main5 main5 should work when main is checked out' '
+	git checkout main &&
+	git branch main5 &&
+	git branch -C main5 main5
 '
 
 test_expect_success 'git branch -C ab cd should overwrite existing config for cd' '
@@ -620,8 +732,8 @@ test_expect_success 'git branch -C ab cd should overwrite existing config for cd
 test_expect_success 'git branch -c correctly copies multiple config sections' '
 	FOO=1 &&
 	export FOO &&
-	test_when_finished "git checkout master" &&
-	git checkout -b source2 master &&
+	test_when_finished "git checkout main" &&
+	git checkout -b source2 main &&
 
 	# Assert that a config file with multiple config sections has
 	# those sections preserved...
@@ -689,7 +801,7 @@ test_expect_success 'deleting a symref' '
 	git branch -d symref >actual &&
 	test_path_is_file .git/refs/heads/target &&
 	test_path_is_missing .git/refs/heads/symref &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'deleting a dangling symref' '
@@ -698,7 +810,7 @@ test_expect_success 'deleting a dangling symref' '
 	echo "Deleted branch dangling-symref (was nowhere)." >expect &&
 	git branch -d dangling-symref >actual &&
 	test_path_is_missing .git/refs/heads/dangling-symref &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'deleting a self-referential symref' '
@@ -707,15 +819,15 @@ test_expect_success 'deleting a self-referential symref' '
 	echo "Deleted branch self-reference (was refs/heads/self-reference)." >expect &&
 	git branch -d self-reference >actual &&
 	test_path_is_missing .git/refs/heads/self-reference &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'renaming a symref is not allowed' '
-	git symbolic-ref refs/heads/master2 refs/heads/master &&
-	test_must_fail git branch -m master2 master3 &&
-	git symbolic-ref refs/heads/master2 &&
-	test_path_is_file .git/refs/heads/master &&
-	test_path_is_missing .git/refs/heads/master3
+	git symbolic-ref refs/heads/topic refs/heads/main &&
+	test_must_fail git branch -m topic new-topic &&
+	git symbolic-ref refs/heads/topic &&
+	test_path_is_file .git/refs/heads/main &&
+	test_path_is_missing .git/refs/heads/new-topic
 '
 
 test_expect_success SYMLINKS 'git branch -m u v should fail when the reflog for u is a symlink' '
@@ -725,30 +837,52 @@ test_expect_success SYMLINKS 'git branch -m u v should fail when the reflog for 
 	test_must_fail git branch -m u v
 '
 
+test_expect_success SYMLINKS 'git branch -m with symlinked .git/refs' '
+	test_when_finished "rm -rf subdir" &&
+	git init --bare subdir &&
+
+	rm -rfv subdir/refs subdir/objects subdir/packed-refs &&
+	ln -s ../.git/refs subdir/refs &&
+	ln -s ../.git/objects subdir/objects &&
+	ln -s ../.git/packed-refs subdir/packed-refs &&
+
+	git -C subdir rev-parse --absolute-git-dir >subdir.dir &&
+	git rev-parse --absolute-git-dir >our.dir &&
+	! test_cmp subdir.dir our.dir &&
+
+	git -C subdir log &&
+	git -C subdir branch rename-src &&
+	git rev-parse rename-src >expect &&
+	git -C subdir branch -m rename-src rename-dest &&
+	git rev-parse rename-dest >actual &&
+	test_cmp expect actual &&
+	git branch -D rename-dest
+'
+
 test_expect_success 'test tracking setup via --track' '
 	git config remote.local.url . &&
 	git config remote.local.fetch refs/heads/*:refs/remotes/local/* &&
-	(git show-ref -q refs/remotes/local/master || git fetch local) &&
-	git branch --track my1 local/master &&
+	(git show-ref -q refs/remotes/local/main || git fetch local) &&
+	git branch --track my1 local/main &&
 	test $(git config branch.my1.remote) = local &&
-	test $(git config branch.my1.merge) = refs/heads/master
+	test $(git config branch.my1.merge) = refs/heads/main
 '
 
 test_expect_success 'test tracking setup (non-wildcard, matching)' '
 	git config remote.local.url . &&
-	git config remote.local.fetch refs/heads/master:refs/remotes/local/master &&
-	(git show-ref -q refs/remotes/local/master || git fetch local) &&
-	git branch --track my4 local/master &&
+	git config remote.local.fetch refs/heads/main:refs/remotes/local/main &&
+	(git show-ref -q refs/remotes/local/main || git fetch local) &&
+	git branch --track my4 local/main &&
 	test $(git config branch.my4.remote) = local &&
-	test $(git config branch.my4.merge) = refs/heads/master
+	test $(git config branch.my4.merge) = refs/heads/main
 '
 
 test_expect_success 'tracking setup fails on non-matching refspec' '
 	git config remote.local.url . &&
 	git config remote.local.fetch refs/heads/*:refs/remotes/local/* &&
-	(git show-ref -q refs/remotes/local/master || git fetch local) &&
+	(git show-ref -q refs/remotes/local/main || git fetch local) &&
 	git config remote.local.fetch refs/heads/s:refs/remotes/local/s &&
-	test_must_fail git branch --track my5 local/master &&
+	test_must_fail git branch --track my5 local/main &&
 	test_must_fail git config branch.my5.remote &&
 	test_must_fail git config branch.my5.merge
 '
@@ -757,21 +891,21 @@ test_expect_success 'test tracking setup via config' '
 	git config branch.autosetupmerge true &&
 	git config remote.local.url . &&
 	git config remote.local.fetch refs/heads/*:refs/remotes/local/* &&
-	(git show-ref -q refs/remotes/local/master || git fetch local) &&
-	git branch my3 local/master &&
+	(git show-ref -q refs/remotes/local/main || git fetch local) &&
+	git branch my3 local/main &&
 	test $(git config branch.my3.remote) = local &&
-	test $(git config branch.my3.merge) = refs/heads/master
+	test $(git config branch.my3.merge) = refs/heads/main
 '
 
 test_expect_success 'test overriding tracking setup via --no-track' '
 	git config branch.autosetupmerge true &&
 	git config remote.local.url . &&
 	git config remote.local.fetch refs/heads/*:refs/remotes/local/* &&
-	(git show-ref -q refs/remotes/local/master || git fetch local) &&
-	git branch --no-track my2 local/master &&
+	(git show-ref -q refs/remotes/local/main || git fetch local) &&
+	git branch --no-track my2 local/main &&
 	git config branch.autosetupmerge false &&
 	! test "$(git config branch.my2.remote)" = local &&
-	! test "$(git config branch.my2.merge)" = refs/heads/master
+	! test "$(git config branch.my2.merge)" = refs/heads/main
 '
 
 test_expect_success 'no tracking without .fetch entries' '
@@ -802,7 +936,7 @@ test_expect_success 'test deleting branch without config' '
 	sha1=$(git rev-parse my7 | cut -c 1-7) &&
 	echo "Deleted branch my7 (was $sha1)." >expect &&
 	git branch -d my7 >actual 2>&1 &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'deleting currently checked out branch fails' '
@@ -834,35 +968,70 @@ test_expect_success 'branch from tag w/--track causes failure' '
 	test_must_fail git branch --track my11 foobar
 '
 
+test_expect_success 'simple tracking works when remote branch name matches' '
+	test_when_finished "rm -rf otherserver" &&
+	git init otherserver &&
+	test_commit -C otherserver my_commit 1 &&
+	git -C otherserver branch feature &&
+	test_config branch.autosetupmerge simple &&
+	test_config remote.otherserver.url otherserver &&
+	test_config remote.otherserver.fetch refs/heads/*:refs/remotes/otherserver/* &&
+	git fetch otherserver &&
+	git branch feature otherserver/feature &&
+	test_cmp_config otherserver branch.feature.remote &&
+	test_cmp_config refs/heads/feature branch.feature.merge
+'
+
+test_expect_success 'simple tracking skips when remote branch name does not match' '
+	test_config branch.autosetupmerge simple &&
+	test_config remote.local.url . &&
+	test_config remote.local.fetch refs/heads/*:refs/remotes/local/* &&
+	git fetch local &&
+	git branch my-other local/main &&
+	test_cmp_config "" --default "" branch.my-other.remote &&
+	test_cmp_config "" --default "" branch.my-other.merge
+'
+
+test_expect_success 'simple tracking skips when remote ref is not a branch' '
+	test_config branch.autosetupmerge simple &&
+	test_config remote.localtags.url . &&
+	test_config remote.localtags.fetch refs/tags/*:refs/remotes/localtags/* &&
+	git tag mytag12 main &&
+	git fetch localtags &&
+	git branch mytag12 localtags/mytag12 &&
+	test_cmp_config "" --default "" branch.mytag12.remote &&
+	test_cmp_config "" --default "" branch.mytag12.merge
+'
+
 test_expect_success '--set-upstream-to fails on multiple branches' '
 	echo "fatal: too many arguments to set new upstream" >expect &&
-	test_must_fail git branch --set-upstream-to master a b c 2>err &&
-	test_i18ncmp expect err
+	test_must_fail git branch --set-upstream-to main a b c 2>err &&
+	test_cmp expect err
 '
 
 test_expect_success '--set-upstream-to fails on detached HEAD' '
 	git checkout HEAD^{} &&
 	test_when_finished git checkout - &&
-	echo "fatal: could not set upstream of HEAD to master when it does not point to any branch." >expect &&
-	test_must_fail git branch --set-upstream-to master 2>err &&
-	test_i18ncmp expect err
+	echo "fatal: could not set upstream of HEAD to main when it does not point to any branch." >expect &&
+	test_must_fail git branch --set-upstream-to main 2>err &&
+	test_cmp expect err
 '
 
 test_expect_success '--set-upstream-to fails on a missing dst branch' '
 	echo "fatal: branch '"'"'does-not-exist'"'"' does not exist" >expect &&
-	test_must_fail git branch --set-upstream-to master does-not-exist 2>err &&
-	test_i18ncmp expect err
+	test_must_fail git branch --set-upstream-to main does-not-exist 2>err &&
+	test_cmp expect err
 '
 
 test_expect_success '--set-upstream-to fails on a missing src branch' '
-	test_must_fail git branch --set-upstream-to does-not-exist master 2>err &&
+	test_must_fail git branch --set-upstream-to does-not-exist main 2>err &&
 	test_i18ngrep "the requested upstream branch '"'"'does-not-exist'"'"' does not exist" err
 '
 
 test_expect_success '--set-upstream-to fails on a non-ref' '
-	echo "fatal: Cannot setup tracking information; starting point '"'"'HEAD^{}'"'"' is not a branch." >expect &&
+	echo "fatal: cannot set up tracking information; starting point '"'"'HEAD^{}'"'"' is not a branch" >expect &&
 	test_must_fail git branch --set-upstream-to HEAD^{} 2>err &&
-	test_i18ncmp expect err
+	test_cmp expect err
 '
 
 test_expect_success '--set-upstream-to fails on locked config' '
@@ -874,26 +1043,26 @@ test_expect_success '--set-upstream-to fails on locked config' '
 '
 
 test_expect_success 'use --set-upstream-to modify HEAD' '
-	test_config branch.master.remote foo &&
-	test_config branch.master.merge foo &&
+	test_config branch.main.remote foo &&
+	test_config branch.main.merge foo &&
 	git branch my12 &&
 	git branch --set-upstream-to my12 &&
-	test "$(git config branch.master.remote)" = "." &&
-	test "$(git config branch.master.merge)" = "refs/heads/my12"
+	test "$(git config branch.main.remote)" = "." &&
+	test "$(git config branch.main.merge)" = "refs/heads/my12"
 '
 
 test_expect_success 'use --set-upstream-to modify a particular branch' '
 	git branch my13 &&
-	git branch --set-upstream-to master my13 &&
+	git branch --set-upstream-to main my13 &&
 	test_when_finished "git branch --unset-upstream my13" &&
 	test "$(git config branch.my13.remote)" = "." &&
-	test "$(git config branch.my13.merge)" = "refs/heads/master"
+	test "$(git config branch.my13.merge)" = "refs/heads/main"
 '
 
 test_expect_success '--unset-upstream should fail if given a non-existent branch' '
 	echo "fatal: Branch '"'"'i-dont-exist'"'"' has no upstream information" >expect &&
 	test_must_fail git branch --unset-upstream i-dont-exist 2>err &&
-	test_i18ncmp expect err
+	test_cmp expect err
 '
 
 test_expect_success '--unset-upstream should fail if config is locked' '
@@ -906,22 +1075,22 @@ test_expect_success '--unset-upstream should fail if config is locked' '
 
 test_expect_success 'test --unset-upstream on HEAD' '
 	git branch my14 &&
-	test_config branch.master.remote foo &&
-	test_config branch.master.merge foo &&
+	test_config branch.main.remote foo &&
+	test_config branch.main.merge foo &&
 	git branch --set-upstream-to my14 &&
 	git branch --unset-upstream &&
-	test_must_fail git config branch.master.remote &&
-	test_must_fail git config branch.master.merge &&
+	test_must_fail git config branch.main.remote &&
+	test_must_fail git config branch.main.merge &&
 	# fail for a branch without upstream set
-	echo "fatal: Branch '"'"'master'"'"' has no upstream information" >expect &&
+	echo "fatal: Branch '"'"'main'"'"' has no upstream information" >expect &&
 	test_must_fail git branch --unset-upstream 2>err &&
-	test_i18ncmp expect err
+	test_cmp expect err
 '
 
 test_expect_success '--unset-upstream should fail on multiple branches' '
 	echo "fatal: too many arguments to unset upstream" >expect &&
 	test_must_fail git branch --unset-upstream a b c 2>err &&
-	test_i18ncmp expect err
+	test_cmp expect err
 '
 
 test_expect_success '--unset-upstream should fail on detached HEAD' '
@@ -929,71 +1098,85 @@ test_expect_success '--unset-upstream should fail on detached HEAD' '
 	test_when_finished git checkout - &&
 	echo "fatal: could not unset upstream of HEAD when it does not point to any branch." >expect &&
 	test_must_fail git branch --unset-upstream 2>err &&
-	test_i18ncmp expect err
+	test_cmp expect err
 '
 
 test_expect_success 'test --unset-upstream on a particular branch' '
 	git branch my15 &&
-	git branch --set-upstream-to master my14 &&
+	git branch --set-upstream-to main my14 &&
 	git branch --unset-upstream my14 &&
 	test_must_fail git config branch.my14.remote &&
 	test_must_fail git config branch.my14.merge
 '
 
 test_expect_success 'disabled option --set-upstream fails' '
-	test_must_fail git branch --set-upstream origin/master
+	test_must_fail git branch --set-upstream origin/main
 '
 
-test_expect_success '--set-upstream-to notices an error to set branch as own upstream' '
+test_expect_success '--set-upstream-to notices an error to set branch as own upstream' "
 	git branch --set-upstream-to refs/heads/my13 my13 2>actual &&
 	cat >expect <<-\EOF &&
-	warning: Not setting branch my13 as its own upstream.
+	warning: not setting branch 'my13' as its own upstream
 	EOF
 	test_expect_code 1 git config branch.my13.remote &&
 	test_expect_code 1 git config branch.my13.merge &&
-	test_i18ncmp expect actual
-'
+	test_cmp expect actual
+"
 
 # Keep this test last, as it changes the current branch
 cat >expect <<EOF
-$ZERO_OID $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	branch: Created from master
+$ZERO_OID $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	branch: Created from main
 EOF
 test_expect_success 'git checkout -b g/h/i -l should create a branch and a log' '
 	GIT_COMMITTER_DATE="2005-05-26 23:30" \
-	git checkout -b g/h/i -l master &&
+	git checkout -b g/h/i -l main &&
 	test_path_is_file .git/refs/heads/g/h/i &&
 	test_path_is_file .git/logs/refs/heads/g/h/i &&
 	test_cmp expect .git/logs/refs/heads/g/h/i
 '
 
 test_expect_success 'checkout -b makes reflog by default' '
-	git checkout master &&
+	git checkout main &&
 	git config --unset core.logAllRefUpdates &&
 	git checkout -b alpha &&
 	git rev-parse --verify alpha@{0}
 '
 
 test_expect_success 'checkout -b does not make reflog when core.logAllRefUpdates = false' '
-	git checkout master &&
+	git checkout main &&
 	git config core.logAllRefUpdates false &&
 	git checkout -b beta &&
 	test_must_fail git rev-parse --verify beta@{0}
 '
 
 test_expect_success 'checkout -b with -l makes reflog when core.logAllRefUpdates = false' '
-	git checkout master &&
+	git checkout main &&
 	git checkout -lb gamma &&
 	git config --unset core.logAllRefUpdates &&
 	git rev-parse --verify gamma@{0}
 '
 
-test_expect_success 'avoid ambiguous track' '
+test_expect_success 'avoid ambiguous track and advise' '
 	git config branch.autosetupmerge true &&
 	git config remote.ambi1.url lalala &&
-	git config remote.ambi1.fetch refs/heads/lalala:refs/heads/master &&
+	git config remote.ambi1.fetch refs/heads/lalala:refs/heads/main &&
 	git config remote.ambi2.url lilili &&
-	git config remote.ambi2.fetch refs/heads/lilili:refs/heads/master &&
-	test_must_fail git branch all1 master &&
+	git config remote.ambi2.fetch refs/heads/lilili:refs/heads/main &&
+	cat <<-EOF >expected &&
+	fatal: not tracking: ambiguous information for ref '\''refs/heads/main'\''
+	hint: There are multiple remotes whose fetch refspecs map to the remote
+	hint: tracking ref '\''refs/heads/main'\'':
+	hint:   ambi1
+	hint:   ambi2
+	hint: ''
+	hint: This is typically a configuration error.
+	hint: ''
+	hint: To support setting up tracking branches, ensure that
+	hint: different remotes'\'' fetch refspecs map into different
+	hint: tracking namespaces.
+	EOF
+	test_must_fail git branch all1 main 2>actual &&
+	test_cmp expected actual &&
 	test -z "$(git config branch.all1.merge)"
 '
 
@@ -1049,10 +1232,10 @@ test_expect_success 'autosetuprebase local on a tracked remote branch' '
 	git config remote.local.url . &&
 	git config remote.local.fetch refs/heads/*:refs/remotes/local/* &&
 	git config branch.autosetuprebase local &&
-	(git show-ref -q refs/remotes/local/master || git fetch local) &&
-	git branch --track myr5 local/master &&
+	(git show-ref -q refs/remotes/local/main || git fetch local) &&
+	git branch --track myr5 local/main &&
 	test "$(git config branch.myr5.remote)" = local &&
-	test "$(git config branch.myr5.merge)" = refs/heads/master &&
+	test "$(git config branch.myr5.merge)" = refs/heads/main &&
 	! test "$(git config branch.myr5.rebase)" = true
 '
 
@@ -1060,10 +1243,10 @@ test_expect_success 'autosetuprebase never on a tracked remote branch' '
 	git config remote.local.url . &&
 	git config remote.local.fetch refs/heads/*:refs/remotes/local/* &&
 	git config branch.autosetuprebase never &&
-	(git show-ref -q refs/remotes/local/master || git fetch local) &&
-	git branch --track myr6 local/master &&
+	(git show-ref -q refs/remotes/local/main || git fetch local) &&
+	git branch --track myr6 local/main &&
 	test "$(git config branch.myr6.remote)" = local &&
-	test "$(git config branch.myr6.merge)" = refs/heads/master &&
+	test "$(git config branch.myr6.merge)" = refs/heads/main &&
 	! test "$(git config branch.myr6.rebase)" = true
 '
 
@@ -1071,10 +1254,10 @@ test_expect_success 'autosetuprebase remote on a tracked remote branch' '
 	git config remote.local.url . &&
 	git config remote.local.fetch refs/heads/*:refs/remotes/local/* &&
 	git config branch.autosetuprebase remote &&
-	(git show-ref -q refs/remotes/local/master || git fetch local) &&
-	git branch --track myr7 local/master &&
+	(git show-ref -q refs/remotes/local/main || git fetch local) &&
+	git branch --track myr7 local/main &&
 	test "$(git config branch.myr7.remote)" = local &&
-	test "$(git config branch.myr7.merge)" = refs/heads/master &&
+	test "$(git config branch.myr7.merge)" = refs/heads/main &&
 	test "$(git config branch.myr7.rebase)" = true
 '
 
@@ -1082,10 +1265,10 @@ test_expect_success 'autosetuprebase always on a tracked remote branch' '
 	git config remote.local.url . &&
 	git config remote.local.fetch refs/heads/*:refs/remotes/local/* &&
 	git config branch.autosetuprebase remote &&
-	(git show-ref -q refs/remotes/local/master || git fetch local) &&
-	git branch --track myr8 local/master &&
+	(git show-ref -q refs/remotes/local/main || git fetch local) &&
+	git branch --track myr8 local/main &&
 	test "$(git config branch.myr8.remote)" = local &&
-	test "$(git config branch.myr8.merge)" = refs/heads/master &&
+	test "$(git config branch.myr8.merge)" = refs/heads/main &&
 	test "$(git config branch.myr8.rebase)" = true
 '
 
@@ -1093,10 +1276,10 @@ test_expect_success 'autosetuprebase unconfigured on a tracked remote branch' '
 	git config --unset branch.autosetuprebase &&
 	git config remote.local.url . &&
 	git config remote.local.fetch refs/heads/*:refs/remotes/local/* &&
-	(git show-ref -q refs/remotes/local/master || git fetch local) &&
-	git branch --track myr9 local/master &&
+	(git show-ref -q refs/remotes/local/main || git fetch local) &&
+	git branch --track myr9 local/main &&
 	test "$(git config branch.myr9.remote)" = local &&
-	test "$(git config branch.myr9.merge)" = refs/heads/master &&
+	test "$(git config branch.myr9.merge)" = refs/heads/main &&
 	test "z$(git config branch.myr9.rebase)" = z
 '
 
@@ -1114,7 +1297,7 @@ test_expect_success 'autosetuprebase unconfigured on a tracked local branch' '
 test_expect_success 'autosetuprebase unconfigured on untracked local branch' '
 	git config remote.local.url . &&
 	git config remote.local.fetch refs/heads/*:refs/remotes/local/* &&
-	(git show-ref -q refs/remotes/local/master || git fetch local) &&
+	(git show-ref -q refs/remotes/local/main || git fetch local) &&
 	git branch --no-track myr11 mybase2 &&
 	test "z$(git config branch.myr11.remote)" = z &&
 	test "z$(git config branch.myr11.merge)" = z &&
@@ -1124,8 +1307,8 @@ test_expect_success 'autosetuprebase unconfigured on untracked local branch' '
 test_expect_success 'autosetuprebase unconfigured on untracked remote branch' '
 	git config remote.local.url . &&
 	git config remote.local.fetch refs/heads/*:refs/remotes/local/* &&
-	(git show-ref -q refs/remotes/local/master || git fetch local) &&
-	git branch --no-track myr12 local/master &&
+	(git show-ref -q refs/remotes/local/main || git fetch local) &&
+	git branch --no-track myr12 local/main &&
 	test "z$(git config branch.myr12.remote)" = z &&
 	test "z$(git config branch.myr12.merge)" = z &&
 	test "z$(git config branch.myr12.rebase)" = z
@@ -1135,7 +1318,7 @@ test_expect_success 'autosetuprebase never on an untracked local branch' '
 	git config branch.autosetuprebase never &&
 	git config remote.local.url . &&
 	git config remote.local.fetch refs/heads/*:refs/remotes/local/* &&
-	(git show-ref -q refs/remotes/local/master || git fetch local) &&
+	(git show-ref -q refs/remotes/local/main || git fetch local) &&
 	git branch --no-track myr13 mybase2 &&
 	test "z$(git config branch.myr13.remote)" = z &&
 	test "z$(git config branch.myr13.merge)" = z &&
@@ -1146,7 +1329,7 @@ test_expect_success 'autosetuprebase local on an untracked local branch' '
 	git config branch.autosetuprebase local &&
 	git config remote.local.url . &&
 	git config remote.local.fetch refs/heads/*:refs/remotes/local/* &&
-	(git show-ref -q refs/remotes/local/master || git fetch local) &&
+	(git show-ref -q refs/remotes/local/main || git fetch local) &&
 	git branch --no-track myr14 mybase2 &&
 	test "z$(git config branch.myr14.remote)" = z &&
 	test "z$(git config branch.myr14.merge)" = z &&
@@ -1157,7 +1340,7 @@ test_expect_success 'autosetuprebase remote on an untracked local branch' '
 	git config branch.autosetuprebase remote &&
 	git config remote.local.url . &&
 	git config remote.local.fetch refs/heads/*:refs/remotes/local/* &&
-	(git show-ref -q refs/remotes/local/master || git fetch local) &&
+	(git show-ref -q refs/remotes/local/main || git fetch local) &&
 	git branch --no-track myr15 mybase2 &&
 	test "z$(git config branch.myr15.remote)" = z &&
 	test "z$(git config branch.myr15.merge)" = z &&
@@ -1168,7 +1351,7 @@ test_expect_success 'autosetuprebase always on an untracked local branch' '
 	git config branch.autosetuprebase always &&
 	git config remote.local.url . &&
 	git config remote.local.fetch refs/heads/*:refs/remotes/local/* &&
-	(git show-ref -q refs/remotes/local/master || git fetch local) &&
+	(git show-ref -q refs/remotes/local/main || git fetch local) &&
 	git branch --no-track myr16 mybase2 &&
 	test "z$(git config branch.myr16.remote)" = z &&
 	test "z$(git config branch.myr16.merge)" = z &&
@@ -1179,8 +1362,8 @@ test_expect_success 'autosetuprebase never on an untracked remote branch' '
 	git config branch.autosetuprebase never &&
 	git config remote.local.url . &&
 	git config remote.local.fetch refs/heads/*:refs/remotes/local/* &&
-	(git show-ref -q refs/remotes/local/master || git fetch local) &&
-	git branch --no-track myr17 local/master &&
+	(git show-ref -q refs/remotes/local/main || git fetch local) &&
+	git branch --no-track myr17 local/main &&
 	test "z$(git config branch.myr17.remote)" = z &&
 	test "z$(git config branch.myr17.merge)" = z &&
 	test "z$(git config branch.myr17.rebase)" = z
@@ -1190,8 +1373,8 @@ test_expect_success 'autosetuprebase local on an untracked remote branch' '
 	git config branch.autosetuprebase local &&
 	git config remote.local.url . &&
 	git config remote.local.fetch refs/heads/*:refs/remotes/local/* &&
-	(git show-ref -q refs/remotes/local/master || git fetch local) &&
-	git branch --no-track myr18 local/master &&
+	(git show-ref -q refs/remotes/local/main || git fetch local) &&
+	git branch --no-track myr18 local/main &&
 	test "z$(git config branch.myr18.remote)" = z &&
 	test "z$(git config branch.myr18.merge)" = z &&
 	test "z$(git config branch.myr18.rebase)" = z
@@ -1201,8 +1384,8 @@ test_expect_success 'autosetuprebase remote on an untracked remote branch' '
 	git config branch.autosetuprebase remote &&
 	git config remote.local.url . &&
 	git config remote.local.fetch refs/heads/*:refs/remotes/local/* &&
-	(git show-ref -q refs/remotes/local/master || git fetch local) &&
-	git branch --no-track myr19 local/master &&
+	(git show-ref -q refs/remotes/local/main || git fetch local) &&
+	git branch --no-track myr19 local/main &&
 	test "z$(git config branch.myr19.remote)" = z &&
 	test "z$(git config branch.myr19.merge)" = z &&
 	test "z$(git config branch.myr19.rebase)" = z
@@ -1212,8 +1395,8 @@ test_expect_success 'autosetuprebase always on an untracked remote branch' '
 	git config branch.autosetuprebase always &&
 	git config remote.local.url . &&
 	git config remote.local.fetch refs/heads/*:refs/remotes/local/* &&
-	(git show-ref -q refs/remotes/local/master || git fetch local) &&
-	git branch --no-track myr20 local/master &&
+	(git show-ref -q refs/remotes/local/main || git fetch local) &&
+	git branch --no-track myr20 local/main &&
 	test "z$(git config branch.myr20.remote)" = z &&
 	test "z$(git config branch.myr20.merge)" = z &&
 	test "z$(git config branch.myr20.rebase)" = z
@@ -1221,7 +1404,7 @@ test_expect_success 'autosetuprebase always on an untracked remote branch' '
 
 test_expect_success 'autosetuprebase always on detached HEAD' '
 	git config branch.autosetupmerge always &&
-	test_when_finished git checkout master &&
+	test_when_finished git checkout main &&
 	git checkout HEAD^0 &&
 	git branch my11 &&
 	test -z "$(git config branch.my11.remote)" &&
@@ -1249,24 +1432,40 @@ test_expect_success 'attempt to delete a branch without base and unmerged to HEA
 test_expect_success 'attempt to delete a branch merged to its base' '
 	# we are on my9 which is the initial commit; traditionally
 	# we would not have allowed deleting my8 that is not merged
-	# to my9, but it is set to track master that already has my8
-	git config branch.my8.merge refs/heads/master &&
+	# to my9, but it is set to track main that already has my8
+	git config branch.my8.merge refs/heads/main &&
 	git branch -d my8
 '
 
 test_expect_success 'attempt to delete a branch merged to its base' '
-	git checkout master &&
+	git checkout main &&
 	echo Third >>A &&
 	git commit -m "Third commit" A &&
 	git branch -t my10 my9 &&
 	git branch -f my10 HEAD^ &&
-	# we are on master which is at the third commit, and my10
+	# we are on main which is at the third commit, and my10
 	# is behind us, so traditionally we would have allowed deleting
 	# it; but my10 is set to track my9 that is further behind.
 	test_must_fail git branch -d my10
 '
 
+test_expect_success 'branch --delete --force removes dangling branch' '
+	git checkout main &&
+	test_commit unstable &&
+	hash=$(git rev-parse HEAD) &&
+	objpath=$(echo $hash | sed -e "s|^..|.git/objects/&/|") &&
+	git branch --no-track dangling &&
+	mv $objpath $objpath.x &&
+	test_when_finished "mv $objpath.x $objpath" &&
+	git branch --delete --force dangling &&
+	git for-each-ref refs/heads/dangling >actual &&
+	test_must_be_empty actual
+'
+
 test_expect_success 'use --edit-description' '
+	EDITOR=: git branch --edit-description &&
+	test_expect_code 1 git config branch.main.description &&
+
 	write_script editor <<-\EOF &&
 		echo "New contents" >"$1"
 	EOF
@@ -1287,7 +1486,7 @@ test_expect_success 'detect typo in branch name when using --edit-description' '
 '
 
 test_expect_success 'refuse --edit-description on unborn branch for now' '
-	test_when_finished "git checkout master" &&
+	test_when_finished "git checkout main" &&
 	write_script editor <<-\EOF &&
 		echo "New contents" >"$1"
 	EOF
@@ -1301,18 +1500,18 @@ test_expect_success '--merged catches invalid object names' '
 
 test_expect_success '--list during rebase' '
 	test_when_finished "reset_rebase" &&
-	git checkout master &&
+	git checkout main &&
 	FAKE_LINES="1 edit 2" &&
 	export FAKE_LINES &&
 	set_fake_editor &&
 	git rebase -i HEAD~2 &&
 	git branch --list >actual &&
-	test_i18ngrep "rebasing master" actual
+	test_i18ngrep "rebasing main" actual
 '
 
 test_expect_success '--list during rebase from detached HEAD' '
-	test_when_finished "reset_rebase && git checkout master" &&
-	git checkout master^0 &&
+	test_when_finished "reset_rebase && git checkout main" &&
+	git checkout main^0 &&
 	oid=$(git rev-parse --short HEAD) &&
 	FAKE_LINES="1 edit 2" &&
 	export FAKE_LINES &&
@@ -1324,17 +1523,17 @@ test_expect_success '--list during rebase from detached HEAD' '
 
 test_expect_success 'tracking with unexpected .fetch refspec' '
 	rm -rf a b c d &&
-	git init a &&
+	git init -b main a &&
 	(
 		cd a &&
 		test_commit a
 	) &&
-	git init b &&
+	git init -b main b &&
 	(
 		cd b &&
 		test_commit b
 	) &&
-	git init c &&
+	git init -b main c &&
 	(
 		cd c &&
 		test_commit c &&
@@ -1342,23 +1541,23 @@ test_expect_success 'tracking with unexpected .fetch refspec' '
 		git remote add b ../b &&
 		git fetch --all
 	) &&
-	git init d &&
+	git init -b main d &&
 	(
 		cd d &&
 		git remote add c ../c &&
 		git config remote.c.fetch "+refs/remotes/*:refs/remotes/*" &&
 		git fetch c &&
-		git branch --track local/a/master remotes/a/master &&
-		test "$(git config branch.local/a/master.remote)" = "c" &&
-		test "$(git config branch.local/a/master.merge)" = "refs/remotes/a/master" &&
+		git branch --track local/a/main remotes/a/main &&
+		test "$(git config branch.local/a/main.remote)" = "c" &&
+		test "$(git config branch.local/a/main.merge)" = "refs/remotes/a/main" &&
 		git rev-parse --verify a >expect &&
-		git rev-parse --verify local/a/master >actual &&
+		git rev-parse --verify local/a/main >actual &&
 		test_cmp expect actual
 	)
 '
 
 test_expect_success 'configured committerdate sort' '
-	git init sort &&
+	git init -b main sort &&
 	(
 		cd sort &&
 		git config branch.sort committerdate &&
@@ -1371,7 +1570,7 @@ test_expect_success 'configured committerdate sort' '
 		test_commit b &&
 		git branch >actual &&
 		cat >expect <<-\EOF &&
-		  master
+		  main
 		  a
 		  c
 		* b
@@ -1389,7 +1588,7 @@ test_expect_success 'option override configured sort' '
 		  a
 		* b
 		  c
-		  master
+		  main
 		EOF
 		test_cmp expect actual
 	)
@@ -1399,8 +1598,51 @@ test_expect_success 'invalid sort parameter in configuration' '
 	(
 		cd sort &&
 		git config branch.sort "v:notvalid" &&
-		test_must_fail git branch
+
+		# this works in the "listing" mode, so bad sort key
+		# is a dying offence.
+		test_must_fail git branch &&
+
+		# these do not need to use sorting, and should all
+		# succeed
+		git branch newone main &&
+		git branch -c newone newerone &&
+		git branch -m newone newestone &&
+		git branch -d newerone newestone
 	)
+'
+
+test_expect_success 'tracking info copied with --track=inherit' '
+	git branch --track=inherit foo2 my1 &&
+	test_cmp_config local branch.foo2.remote &&
+	test_cmp_config refs/heads/main branch.foo2.merge
+'
+
+test_expect_success 'tracking info copied with autoSetupMerge=inherit' '
+	test_unconfig branch.autoSetupMerge &&
+	# default config does not copy tracking info
+	git branch foo-no-inherit my1 &&
+	test_cmp_config "" --default "" branch.foo-no-inherit.remote &&
+	test_cmp_config "" --default "" branch.foo-no-inherit.merge &&
+	# with autoSetupMerge=inherit, we copy tracking info from my1
+	test_config branch.autoSetupMerge inherit &&
+	git branch foo3 my1 &&
+	test_cmp_config local branch.foo3.remote &&
+	test_cmp_config refs/heads/main branch.foo3.merge &&
+	# no tracking info to inherit from main
+	git branch main2 main &&
+	test_cmp_config "" --default "" branch.main2.remote &&
+	test_cmp_config "" --default "" branch.main2.merge
+'
+
+test_expect_success '--track overrides branch.autoSetupMerge' '
+	test_config branch.autoSetupMerge inherit &&
+	git branch --track=direct foo4 my1 &&
+	test_cmp_config . branch.foo4.remote &&
+	test_cmp_config refs/heads/my1 branch.foo4.merge &&
+	git branch --no-track foo5 my1 &&
+	test_cmp_config "" --default "" branch.foo5.remote &&
+	test_cmp_config "" --default "" branch.foo5.merge
 '
 
 test_done

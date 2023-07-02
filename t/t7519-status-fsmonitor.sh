@@ -26,7 +26,7 @@ dirty_repo () {
 }
 
 write_integration_script () {
-	write_script .git/hooks/fsmonitor-test<<-\EOF
+	test_hook --setup --clobber fsmonitor-test<<-\EOF
 	if test "$#" -ne 2
 	then
 		echo "$0: exactly 2 arguments expected"
@@ -55,8 +55,39 @@ test_lazy_prereq UNTRACKED_CACHE '
 	test $ret -ne 1
 '
 
+# Test that we detect and disallow repos that are incompatible with FSMonitor.
+test_expect_success 'incompatible bare repo' '
+	test_when_finished "rm -rf ./bare-clone actual expect" &&
+	git init --bare bare-clone &&
+
+	test_must_fail \
+		git -C ./bare-clone -c core.fsmonitor=foo \
+			update-index --fsmonitor 2>actual &&
+	grep "bare repository .* is incompatible with fsmonitor" actual &&
+
+	test_must_fail \
+		git -C ./bare-clone -c core.fsmonitor=true \
+			update-index --fsmonitor 2>actual &&
+	grep "bare repository .* is incompatible with fsmonitor" actual
+'
+
+test_expect_success FSMONITOR_DAEMON 'run fsmonitor-daemon in bare repo' '
+	test_when_finished "rm -rf ./bare-clone actual" &&
+	git init --bare bare-clone &&
+	test_must_fail git -C ./bare-clone fsmonitor--daemon run 2>actual &&
+	grep "bare repository .* is incompatible with fsmonitor" actual
+'
+
+test_expect_success MINGW,FSMONITOR_DAEMON 'run fsmonitor-daemon in virtual repo' '
+	test_when_finished "rm -rf ./fake-virtual-clone actual" &&
+	git init fake-virtual-clone &&
+	test_must_fail git -C ./fake-virtual-clone \
+			   -c core.virtualfilesystem=true \
+			   fsmonitor--daemon run 2>actual &&
+	grep "virtual repository .* is incompatible with fsmonitor" actual
+'
+
 test_expect_success 'setup' '
-	mkdir -p .git/hooks &&
 	: >tracked &&
 	: >modified &&
 	mkdir dir1 &&
@@ -73,6 +104,7 @@ test_expect_success 'setup' '
 	expect*
 	actual*
 	marker*
+	trace2*
 	EOF
 '
 
@@ -107,7 +139,7 @@ EOF
 
 # test that "update-index --fsmonitor-valid" sets the fsmonitor valid bit
 test_expect_success 'update-index --fsmonitor-valid" sets the fsmonitor valid bit' '
-	write_script .git/hooks/fsmonitor-test<<-\EOF &&
+	test_hook fsmonitor-test<<-\EOF &&
 		printf "last_update_token\0"
 	EOF
 	git update-index --fsmonitor &&
@@ -168,7 +200,7 @@ EOF
 
 # test that newly added files are marked valid
 test_expect_success 'newly added files are marked valid' '
-	write_script .git/hooks/fsmonitor-test<<-\EOF &&
+	test_hook --setup --clobber fsmonitor-test<<-\EOF &&
 		printf "last_update_token\0"
 	EOF
 	git add new &&
@@ -209,7 +241,7 @@ EOF
 
 # test that *only* files returned by the integration script get flagged as invalid
 test_expect_success '*only* files returned by the integration script get flagged as invalid' '
-	write_script .git/hooks/fsmonitor-test<<-\EOF &&
+	test_hook --clobber fsmonitor-test<<-\EOF &&
 	printf "last_update_token\0"
 	printf "dir1/modified\0"
 	EOF
@@ -230,13 +262,13 @@ test_expect_success 'refresh_index() invalidates fsmonitor cache' '
 	dirty_repo &&
 	write_integration_script &&
 	git add . &&
-	write_script .git/hooks/fsmonitor-test<<-\EOF &&
+	test_hook --clobber fsmonitor-test<<-\EOF &&
 	EOF
 	git commit -m "to reset" &&
 	git reset HEAD~1 &&
 	git status >actual &&
 	git -c core.fsmonitor= status >expect &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 # test fsmonitor with and without preloadIndex
@@ -247,7 +279,7 @@ do
 		git config core.preloadIndex $preload_val &&
 		if test $preload_val = true
 		then
-			GIT_TEST_PRELOAD_INDEX=$preload_val; export GIT_TEST_PRELOAD_INDEX
+			GIT_TEST_PRELOAD_INDEX=$preload_val && export GIT_TEST_PRELOAD_INDEX
 		else
 			sane_unset GIT_TEST_PRELOAD_INDEX
 		fi
@@ -273,13 +305,13 @@ do
 			git add dir2/new &&
 			git status >actual &&
 			git -c core.fsmonitor= status >expect &&
-			test_i18ncmp expect actual
+			test_cmp expect actual
 		'
 
 		# Make sure it's actually skipping the check for modified and untracked
 		# (if enabled) files unless it is told about them.
 		test_expect_success "status doesn't detect unreported modifications" '
-			write_script .git/hooks/fsmonitor-test<<-\EOF &&
+			test_hook --clobber fsmonitor-test<<-\EOF &&
 			printf "last_update_token\0"
 			:>marker
 			EOF
@@ -321,20 +353,26 @@ test_expect_success UNTRACKED_CACHE 'ignore .git changes when invalidating UNTR'
 	test_create_repo dot-git &&
 	(
 		cd dot-git &&
-		mkdir -p .git/hooks &&
 		: >tracked &&
+		test-tool chmtime =-60 tracked &&
 		: >modified &&
+		test-tool chmtime =-60 modified &&
 		mkdir dir1 &&
 		: >dir1/tracked &&
+		test-tool chmtime =-60 dir1/tracked &&
 		: >dir1/modified &&
+		test-tool chmtime =-60 dir1/modified &&
 		mkdir dir2 &&
 		: >dir2/tracked &&
+		test-tool chmtime =-60 dir2/tracked &&
 		: >dir2/modified &&
+		test-tool chmtime =-60 dir2/modified &&
 		write_integration_script &&
 		git config core.fsmonitor .git/hooks/fsmonitor-test &&
 		git update-index --untracked-cache &&
 		git update-index --fsmonitor &&
-		GIT_TRACE_UNTRACKED_STATS="$TRASH_DIRECTORY/trace-before" \
+		git status &&
+		GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace-before" \
 		git status &&
 		test-tool dump-untracked-cache >../before
 	) &&
@@ -346,12 +384,12 @@ test_expect_success UNTRACKED_CACHE 'ignore .git changes when invalidating UNTR'
 	EOF
 	(
 		cd dot-git &&
-		GIT_TRACE_UNTRACKED_STATS="$TRASH_DIRECTORY/trace-after" \
+		GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace-after" \
 		git status &&
 		test-tool dump-untracked-cache >../after
 	) &&
-	grep "directory invalidation" trace-before >>before &&
-	grep "directory invalidation" trace-after >>after &&
+	grep "directory-invalidation" trace-before | cut -d"|" -f 9 >>before &&
+	grep "directory-invalidation" trace-after  | cut -d"|" -f 9 >>after &&
 	# UNTR extension unchanged, dir invalidation count unchanged
 	test_cmp before after
 '
@@ -380,6 +418,62 @@ test_expect_success 'status succeeds after staging/unstaging' '
 		git config core.fsmonitor "$TEST_DIRECTORY/t7519/fsmonitor-env" &&
 		FSMONITOR_LIST="$removed" git restore -S $removed &&
 		FSMONITOR_LIST="$removed" git status
+	)
+'
+
+# Usage:
+# check_sparse_index_behavior [!]
+# If "!" is supplied, then we verify that we do not call ensure_full_index
+# during a call to 'git status'. Otherwise, we verify that we _do_ call it.
+check_sparse_index_behavior () {
+	git -C full status --porcelain=v2 >expect &&
+	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
+		git -C sparse status --porcelain=v2 >actual &&
+	test_region $1 index ensure_full_index trace2.txt &&
+	test_region fsm_hook query trace2.txt &&
+	test_cmp expect actual &&
+	rm trace2.txt
+}
+
+test_expect_success 'status succeeds with sparse index' '
+	(
+		sane_unset GIT_TEST_SPLIT_INDEX &&
+
+		git clone . full &&
+		git clone --sparse . sparse &&
+		git -C sparse sparse-checkout init --cone --sparse-index &&
+		git -C sparse sparse-checkout set dir1 dir2 &&
+
+		test_hook --clobber fsmonitor-test <<-\EOF &&
+			printf "last_update_token\0"
+		EOF
+		git -C full config core.fsmonitor ../.git/hooks/fsmonitor-test &&
+		git -C sparse config core.fsmonitor ../.git/hooks/fsmonitor-test &&
+		check_sparse_index_behavior ! &&
+
+		test_hook --clobber fsmonitor-test <<-\EOF &&
+			printf "last_update_token\0"
+			printf "dir1/modified\0"
+		EOF
+		check_sparse_index_behavior ! &&
+
+		git -C sparse sparse-checkout add dir1a &&
+
+		for repo in full sparse
+		do
+			cp -r $repo/dir1 $repo/dir1a &&
+			git -C $repo add dir1a &&
+			git -C $repo commit -m "add dir1a" || return 1
+		done &&
+		git -C sparse sparse-checkout set dir1 dir2 &&
+
+		# This one modifies outside the sparse-checkout definition
+		# and hence we expect to expand the sparse-index.
+		test_hook --clobber fsmonitor-test <<-\EOF &&
+			printf "last_update_token\0"
+			printf "dir1a/modified\0"
+		EOF
+		check_sparse_index_behavior
 	)
 '
 

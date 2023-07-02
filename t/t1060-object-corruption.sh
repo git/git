@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='see how we handle various forms of corruption'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # convert "1234abcd" to ".git/objects/12/34abcd"
@@ -135,6 +137,13 @@ test_expect_success 'internal tree objects are not "missing"' '
 		commit=$(echo foo | git commit-tree $empty_tree) &&
 		git rev-list --objects $commit
 	)
+'
+
+test_expect_success 'partial clone of corrupted repository' '
+	test_config -C misnamed uploadpack.allowFilter true &&
+	git clone --no-local --no-checkout --filter=blob:none \
+		misnamed corrupt-partial && \
+	test_must_fail git -C corrupt-partial checkout --force
 '
 
 test_done

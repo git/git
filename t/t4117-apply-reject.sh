@@ -10,25 +10,16 @@ test_description='git apply with rejects
 . ./test-lib.sh
 
 test_expect_success setup '
-	for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21
-	do
-		echo $i
-	done >file1 &&
+	test_write_lines 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 >file1 &&
 	cat file1 >saved.file1 &&
 	git update-index --add file1 &&
 	git commit -m initial &&
 
-	for i in 1 2 A B 4 5 6 7 8 9 10 11 12 C 13 14 15 16 17 18 19 20 D 21
-	do
-		echo $i
-	done >file1 &&
+	test_write_lines 1 2 A B 4 5 6 7 8 9 10 11 12 C 13 14 15 16 17 18 19 20 D 21 >file1 &&
 	git diff >patch.1 &&
 	cat file1 >clean &&
 
-	for i in 1 E 2 3 4 5 6 7 8 9 10 11 12 C 13 14 15 16 17 18 19 20 F 21
-	do
-		echo $i
-	done >expected &&
+	test_write_lines 1 E 2 3 4 5 6 7 8 9 10 11 12 C 13 14 15 16 17 18 19 20 F 21 >expected &&
 
 	mv file1 file2 &&
 	git update-index --add --remove file1 file2 &&
@@ -38,10 +29,7 @@ test_expect_success setup '
 	mv saved.file1 file1 &&
 	git update-index --add --remove file1 file2 &&
 
-	for i in 1 E 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 F 21
-	do
-		echo $i
-	done >file1 &&
+	test_write_lines 1 E 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 F 21 >file1 &&
 
 	cat file1 >saved.file1
 '

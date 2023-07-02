@@ -5,6 +5,9 @@
 
 test_description='git rebase --merge --skip tests'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 . "$TEST_DIRECTORY"/lib-rebase.sh
@@ -17,6 +20,7 @@ test_expect_success setup '
 	git add hello &&
 	git commit -m "hello" &&
 	git branch skip-reference &&
+	git tag hello &&
 
 	echo world >> hello &&
 	git commit -a -m "hello world" &&
@@ -33,7 +37,8 @@ test_expect_success setup '
 	test_tick &&
 	GIT_AUTHOR_NAME="Another Author" \
 		GIT_AUTHOR_EMAIL="another.author@example.com" \
-		git commit --amend --no-edit -m amended-goodbye &&
+		git commit --amend --no-edit -m amended-goodbye \
+			--reset-author &&
 	test_tick &&
 	git tag amended-goodbye &&
 
@@ -48,7 +53,7 @@ test_expect_success setup '
 	'
 
 test_expect_success 'rebase with git am -3 (default)' '
-	test_must_fail git rebase master
+	test_must_fail git rebase --apply main
 '
 
 test_expect_success 'rebase --skip can not be used with other options' '
@@ -64,7 +69,7 @@ test_expect_success 'rebase moves back to skip-reference' '
 	test refs/heads/skip-reference = $(git symbolic-ref HEAD) &&
 	git branch post-rebase &&
 	git reset --hard pre-rebase &&
-	test_must_fail git rebase master &&
+	test_must_fail git rebase main &&
 	echo "hello" > hello &&
 	git add hello &&
 	git rebase --continue &&
@@ -75,7 +80,7 @@ test_expect_success 'rebase moves back to skip-reference' '
 test_expect_success 'checkout skip-merge' 'git checkout -f skip-merge'
 
 test_expect_success 'rebase with --merge' '
-	test_must_fail git rebase --merge master
+	test_must_fail git rebase --merge main
 '
 
 test_expect_success 'rebase --skip with --merge' '
@@ -91,6 +96,13 @@ test_expect_success 'moved back to branch correctly' '
 '
 
 test_debug 'gitk --all & sleep 1'
+
+test_expect_success 'skipping final pick removes .git/MERGE_MSG' '
+	test_must_fail git rebase --onto hello reverted-goodbye^ \
+		reverted-goodbye &&
+	git rebase --skip &&
+	test_path_is_missing .git/MERGE_MSG
+'
 
 test_expect_success 'correct advice upon picking empty commit' '
 	test_when_finished "git rebase --abort" &&

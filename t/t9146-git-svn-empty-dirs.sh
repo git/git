@@ -3,12 +3,13 @@
 # Copyright (c) 2009 Eric Wong
 
 test_description='git svn creates empty directories'
+
 . ./lib-git-svn.sh
 
 test_expect_success 'initialize repo' '
 	for i in a b c d d/e d/e/f "weird file name"
 	do
-		svn_cmd mkdir -m "mkdir $i" "$svnrepo"/"$i"
+		svn_cmd mkdir -m "mkdir $i" "$svnrepo"/"$i" || return 1
 	done
 '
 
@@ -102,7 +103,7 @@ test_expect_success 'git svn mkdirs -r works' '
 test_expect_success 'initialize trunk' '
 	for i in trunk trunk/a trunk/"weird file name"
 	do
-		svn_cmd mkdir -m "mkdir $i" "$svnrepo"/"$i"
+		svn_cmd mkdir -m "mkdir $i" "$svnrepo"/"$i" || return 1
 	done
 '
 

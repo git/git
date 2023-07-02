@@ -2,6 +2,7 @@
 
 test_description='apply empty'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -9,10 +10,9 @@ test_expect_success setup '
 	git add empty &&
 	test_tick &&
 	git commit -m initial &&
-	for i in a b c d e
-	do
-		echo $i
-	done >empty &&
+	git commit --allow-empty -m "empty commit" &&
+	git format-patch --always HEAD~ >empty.patch &&
+	test_write_lines a b c d e >empty &&
 	cat empty >expect &&
 	git diff |
 	sed -e "/^diff --git/d" \
@@ -25,30 +25,42 @@ test_expect_success setup '
 '
 
 test_expect_success 'apply empty' '
-	git reset --hard &&
 	rm -f missing &&
+	test_when_finished "git reset --hard" &&
 	git apply patch0 &&
 	test_cmp expect empty
 '
 
+test_expect_success 'apply empty patch fails' '
+	test_when_finished "git reset --hard" &&
+	test_must_fail git apply empty.patch &&
+	test_must_fail git apply - </dev/null
+'
+
+test_expect_success 'apply with --allow-empty succeeds' '
+	test_when_finished "git reset --hard" &&
+	git apply --allow-empty empty.patch &&
+	git apply --allow-empty - </dev/null
+'
+
 test_expect_success 'apply --index empty' '
-	git reset --hard &&
 	rm -f missing &&
+	test_when_finished "git reset --hard" &&
 	git apply --index patch0 &&
 	test_cmp expect empty &&
 	git diff --exit-code
 '
 
 test_expect_success 'apply create' '
-	git reset --hard &&
 	rm -f missing &&
+	test_when_finished "git reset --hard" &&
 	git apply patch1 &&
 	test_cmp expect missing
 '
 
 test_expect_success 'apply --index create' '
-	git reset --hard &&
 	rm -f missing &&
+	test_when_finished "git reset --hard" &&
 	git apply --index patch1 &&
 	test_cmp expect missing &&
 	git diff --exit-code

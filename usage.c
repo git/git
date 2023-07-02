@@ -4,9 +4,11 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 #include "git-compat-util.h"
-#include "cache.h"
+#include "gettext.h"
+#include "trace2.h"
+#include "wrapper.h"
 
-void vreportf(const char *prefix, const char *err, va_list params)
+static void vreportf(const char *prefix, const char *err, va_list params)
 {
 	char msg[4096];
 	char *p, *pend = msg + sizeof(msg);
@@ -33,7 +35,7 @@ void vreportf(const char *prefix, const char *err, va_list params)
 
 static NORETURN void usage_builtin(const char *err, va_list params)
 {
-	vreportf("usage: ", err, params);
+	vreportf(_("usage: "), err, params);
 
 	/*
 	 * When we detect a usage error *before* the command dispatch in
@@ -55,33 +57,37 @@ static NORETURN void usage_builtin(const char *err, va_list params)
 	exit(129);
 }
 
+static void die_message_builtin(const char *err, va_list params)
+{
+	trace2_cmd_error_va(err, params);
+	vreportf(_("fatal: "), err, params);
+}
+
+/*
+ * We call trace2_cmd_error_va() in the below functions first and
+ * expect it to va_copy 'params' before using it (because an 'ap' can
+ * only be walked once).
+ */
 static NORETURN void die_builtin(const char *err, va_list params)
 {
-	/*
-	 * We call this trace2 function first and expect it to va_copy 'params'
-	 * before using it (because an 'ap' can only be walked once).
-	 */
-	trace2_cmd_error_va(err, params);
+	report_fn die_message_fn = get_die_message_routine();
 
-	vreportf("fatal: ", err, params);
-
+	die_message_fn(err, params);
 	exit(128);
 }
 
 static void error_builtin(const char *err, va_list params)
 {
-	/*
-	 * We call this trace2 function first and expect it to va_copy 'params'
-	 * before using it (because an 'ap' can only be walked once).
-	 */
 	trace2_cmd_error_va(err, params);
 
-	vreportf("error: ", err, params);
+	vreportf(_("error: "), err, params);
 }
 
 static void warn_builtin(const char *warn, va_list params)
 {
-	vreportf("warning: ", warn, params);
+	trace2_cmd_error_va(warn, params);
+
+	vreportf(_("warning: "), warn, params);
 }
 
 static int die_is_recursing_builtin(void)
@@ -108,33 +114,39 @@ static int die_is_recursing_builtin(void)
 
 /* If we are in a dlopen()ed .so write to a global variable would segfault
  * (ugh), so keep things static. */
-static NORETURN_PTR void (*usage_routine)(const char *err, va_list params) = usage_builtin;
-static NORETURN_PTR void (*die_routine)(const char *err, va_list params) = die_builtin;
-static void (*error_routine)(const char *err, va_list params) = error_builtin;
-static void (*warn_routine)(const char *err, va_list params) = warn_builtin;
+static NORETURN_PTR report_fn usage_routine = usage_builtin;
+static NORETURN_PTR report_fn die_routine = die_builtin;
+static report_fn die_message_routine = die_message_builtin;
+static report_fn error_routine = error_builtin;
+static report_fn warn_routine = warn_builtin;
 static int (*die_is_recursing)(void) = die_is_recursing_builtin;
 
-void set_die_routine(NORETURN_PTR void (*routine)(const char *err, va_list params))
+void set_die_routine(NORETURN_PTR report_fn routine)
 {
 	die_routine = routine;
 }
 
-void set_error_routine(void (*routine)(const char *err, va_list params))
+report_fn get_die_message_routine(void)
+{
+	return die_message_routine;
+}
+
+void set_error_routine(report_fn routine)
 {
 	error_routine = routine;
 }
 
-void (*get_error_routine(void))(const char *err, va_list params)
+report_fn get_error_routine(void)
 {
 	return error_routine;
 }
 
-void set_warn_routine(void (*routine)(const char *warn, va_list params))
+void set_warn_routine(report_fn routine)
 {
 	warn_routine = routine;
 }
 
-void (*get_warn_routine(void))(const char *warn, va_list params)
+report_fn get_warn_routine(void)
 {
 	return warn_routine;
 }
@@ -212,6 +224,29 @@ void NORETURN die_errno(const char *fmt, ...)
 	va_end(params);
 }
 
+#undef die_message
+int die_message(const char *err, ...)
+{
+	va_list params;
+
+	va_start(params, err);
+	die_message_routine(err, params);
+	va_end(params);
+	return 128;
+}
+
+#undef die_message_errno
+int die_message_errno(const char *fmt, ...)
+{
+	char buf[1024];
+	va_list params;
+
+	va_start(params, fmt);
+	die_message_routine(fmt_with_err(buf, sizeof(buf), fmt), params);
+	va_end(params);
+	return 128;
+}
+
 #undef error_errno
 int error_errno(const char *fmt, ...)
 {
@@ -257,39 +292,62 @@ void warning(const char *warn, ...)
 /* Only set this, ever, from t/helper/, when verifying that bugs are caught. */
 int BUG_exit_code;
 
-static NORETURN void BUG_vfl(const char *file, int line, const char *fmt, va_list params)
+static void BUG_vfl_common(const char *file, int line, const char *fmt,
+			   va_list params)
 {
 	char prefix[256];
 
 	/* truncation via snprintf is OK here */
-	if (file)
-		snprintf(prefix, sizeof(prefix), "BUG: %s:%d: ", file, line);
-	else
-		snprintf(prefix, sizeof(prefix), "BUG: ");
+	snprintf(prefix, sizeof(prefix), "BUG: %s:%d: ", file, line);
 
 	vreportf(prefix, fmt, params);
+}
+
+static NORETURN void BUG_vfl(const char *file, int line, const char *fmt, va_list params)
+{
+	va_list params_copy;
+	static int in_bug;
+
+	va_copy(params_copy, params);
+	BUG_vfl_common(file, line, fmt, params);
+
+	if (in_bug)
+		abort();
+	in_bug = 1;
+
+	trace2_cmd_error_va(fmt, params_copy);
+
 	if (BUG_exit_code)
 		exit(BUG_exit_code);
 	abort();
 }
 
-#ifdef HAVE_VARIADIC_MACROS
 NORETURN void BUG_fl(const char *file, int line, const char *fmt, ...)
 {
 	va_list ap;
+
+	bug_called_must_BUG = 0;
+
 	va_start(ap, fmt);
 	BUG_vfl(file, line, fmt, ap);
 	va_end(ap);
 }
-#else
-NORETURN void BUG(const char *fmt, ...)
+
+int bug_called_must_BUG;
+void bug_fl(const char *file, int line, const char *fmt, ...)
 {
 	va_list ap;
+
+	bug_called_must_BUG = 1;
+
 	va_start(ap, fmt);
-	BUG_vfl(NULL, 0, fmt, ap);
+	BUG_vfl_common(file, line, fmt, ap);
+	va_end(ap);
+
+	va_start(ap, fmt);
+	trace2_cmd_error_va(fmt, ap);
 	va_end(ap);
 }
-#endif
 
 #ifdef SUPPRESS_ANNOTATED_LEAKS
 void unleak_memory(const void *ptr, size_t len)

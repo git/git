@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='git pack-object --include-tag'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 TRASH=$(pwd)
@@ -111,7 +114,7 @@ test_expect_success 'check unpacked result (have all objects)' '
 
 test_expect_success 'single-branch clone can transfer tag' '
 	rm -rf clone.git &&
-	git clone --no-local --single-branch -b master . clone.git &&
+	git clone --no-local --single-branch -b main . clone.git &&
 	git -C clone.git fsck
 '
 

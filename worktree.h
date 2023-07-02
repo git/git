@@ -1,7 +1,6 @@
 #ifndef WORKTREE_H
 #define WORKTREE_H
 
-#include "cache.h"
 #include "refs.h"
 
 struct strbuf;
@@ -11,11 +10,13 @@ struct worktree {
 	char *id;
 	char *head_ref;		/* NULL if HEAD is broken or detached */
 	char *lock_reason;	/* private - use worktree_lock_reason */
+	char *prune_reason;     /* private - use worktree_prune_reason */
 	struct object_id head_oid;
 	int is_detached;
 	int is_bare;
 	int is_current;
 	int lock_reason_valid; /* private */
+	int prune_reason_valid; /* private */
 };
 
 /*
@@ -73,6 +74,27 @@ int is_main_worktree(const struct worktree *wt);
  */
 const char *worktree_lock_reason(struct worktree *wt);
 
+/*
+ * Return the reason string if the given worktree should be pruned, otherwise
+ * NULL if it should not be pruned. `expire` defines a grace period to prune
+ * the worktree when its path does not exist.
+ */
+const char *worktree_prune_reason(struct worktree *wt, timestamp_t expire);
+
+/*
+ * Return true if worktree entry should be pruned, along with the reason for
+ * pruning. Otherwise, return false and the worktree's path in `wtpath`, or
+ * NULL if it cannot be determined. Caller is responsible for freeing
+ * returned path.
+ *
+ * `expire` defines a grace period to prune the worktree when its path
+ * does not exist.
+ */
+int should_prune_worktree(const char *id,
+			  struct strbuf *reason,
+			  char **wtpath,
+			  timestamp_t expire);
+
 #define WT_VALIDATE_WORKTREE_MISSING_OK (1 << 0)
 
 /*
@@ -120,10 +142,17 @@ void free_worktrees(struct worktree **);
 /*
  * Check if a per-worktree symref points to a ref in the main worktree
  * or any linked worktree, and return the worktree that holds the ref,
- * or NULL otherwise. The result may be destroyed by the next call.
+ * or NULL otherwise.
  */
-const struct worktree *find_shared_symref(const char *symref,
+const struct worktree *find_shared_symref(struct worktree **worktrees,
+					  const char *symref,
 					  const char *target);
+
+/*
+ * Returns true if a symref points to a ref in a worktree.
+ */
+int is_shared_symref(const struct worktree *wt,
+		     const char *symref, const char *target);
 
 /*
  * Similar to head_ref() for all HEADs _except_ one from the current
@@ -143,27 +172,31 @@ const char *worktree_git_path(const struct worktree *wt,
 	__attribute__((format (printf, 2, 3)));
 
 /*
- * Parse a worktree ref (i.e. with prefix main-worktree/ or
- * worktrees/) and return the position of the worktree's name and
- * length (or NULL and zero if it's main worktree), and ref.
- *
- * All name, name_length and ref arguments could be NULL.
- */
-int parse_worktree_ref(const char *worktree_ref, const char **name,
-		       int *name_length, const char **ref);
-
-/*
  * Return a refname suitable for access from the current ref store.
  */
 void strbuf_worktree_ref(const struct worktree *wt,
 			 struct strbuf *sb,
 			 const char *refname);
 
-/*
- * Return a refname suitable for access from the current ref
- * store. The result will be destroyed at the next call.
+/**
+ * Enable worktree config for the first time. This will make the following
+ * adjustments:
+ *
+ * 1. Add extensions.worktreeConfig=true in the common config file.
+ *
+ * 2. If the common config file has a core.worktree value, then that value
+ *    is moved to the main worktree's config.worktree file.
+ *
+ * 3. If the common config file has a core.bare enabled, then that value
+ *    is moved to the main worktree's config.worktree file.
+ *
+ * If extensions.worktreeConfig is already true, then this method
+ * terminates early without any of the above steps. The existing config
+ * arrangement is assumed to be intentional.
+ *
+ * Returns 0 on success. Reports an error message and returns non-zero
+ * if any of these steps fail.
  */
-const char *worktree_ref(const struct worktree *wt,
-			 const char *refname);
+int init_worktree_config(struct repository *r);
 
 #endif

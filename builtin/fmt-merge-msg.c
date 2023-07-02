@@ -1,7 +1,9 @@
 #include "builtin.h"
 #include "config.h"
 #include "fmt-merge-msg.h"
+#include "gettext.h"
 #include "parse-options.h"
+#include "wrapper.h"
 
 static const char * const fmt_merge_msg_usage[] = {
 	N_("git fmt-merge-msg [-m <message>] [--log[=<n>] | --no-log] [--file <file>]"),
@@ -12,6 +14,7 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 {
 	const char *inpath = NULL;
 	const char *message = NULL;
+	char *into_name = NULL;
 	int shortlog_len = -1;
 	struct option options[] = {
 		{ OPTION_INTEGER, 0, "log", &shortlog_len, N_("n"),
@@ -23,6 +26,8 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 		  DEFAULT_MERGE_LOG_LEN },
 		OPT_STRING('m', "message", &message, N_("text"),
 			N_("use <text> as start of message")),
+		OPT_STRING(0, "into-name", &into_name, N_("name"),
+			   N_("use <name> instead of the real target branch")),
 		OPT_FILENAME('F', "file", &inpath, N_("file to read from")),
 		OPT_END()
 	};
@@ -56,6 +61,7 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 	opts.add_title = !message;
 	opts.credit_people = 1;
 	opts.shortlog_len = shortlog_len;
+	opts.into_name = into_name;
 
 	ret = fmt_merge_msg(&input, &output, &opts);
 	if (ret)

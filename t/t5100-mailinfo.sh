@@ -122,7 +122,7 @@ test_expect_success 'mailinfo unescapes with --mboxrd' '
 	do
 		git mailinfo mboxrd/msg mboxrd/patch \
 		  <mboxrd/$i >mboxrd/out &&
-		test_cmp "$DATA/${i}mboxrd" mboxrd/msg
+		test_cmp "$DATA/${i}mboxrd" mboxrd/msg || return 1
 	done &&
 	sp=" " &&
 	echo "From " >expect &&
@@ -201,13 +201,13 @@ test_expect_success 'mailinfo -b double [PATCH]' '
 	test z"$subj" = z"Subject: message"
 '
 
-test_expect_failure 'mailinfo -b trailing [PATCH]' '
+test_expect_success 'mailinfo -b trailing [PATCH]' '
 	subj="$(echo "Subject: [other] [PATCH] message" |
 		git mailinfo -b /dev/null /dev/null)" &&
 	test z"$subj" = z"Subject: [other] message"
 '
 
-test_expect_failure 'mailinfo -b separated double [PATCH]' '
+test_expect_success 'mailinfo -b separated double [PATCH]' '
 	subj="$(echo "Subject: [PATCH] [other] [PATCH] message" |
 		git mailinfo -b /dev/null /dev/null)" &&
 	test z"$subj" = z"Subject: [other] message"
@@ -226,6 +226,46 @@ test_expect_success 'mailinfo handles unusual header whitespace' '
 
 	EOF
 	test_cmp expect actual
+'
+
+check_quoted_cr_mail () {
+	mail="$1" && shift &&
+	git mailinfo -u "$@" "$mail.msg" "$mail.patch" \
+		<"$mail" >"$mail.info" 2>"$mail.err" &&
+	test_cmp "$mail-expected.msg" "$mail.msg" &&
+	test_cmp "$mail-expected.patch" "$mail.patch" &&
+	test_cmp "$DATA/quoted-cr-info" "$mail.info"
+}
+
+test_expect_success 'split base64 email with quoted-cr' '
+	mkdir quoted-cr &&
+	git mailsplit -oquoted-cr "$DATA/quoted-cr.mbox" >quoted-cr/last &&
+	test $(cat quoted-cr/last) = 2
+'
+
+test_expect_success 'mailinfo warn CR in base64 encoded email' '
+	sed -e "s/%%$//" -e "s/%%/$(printf \\015)/g" "$DATA/quoted-cr-msg" \
+		>quoted-cr/0001-expected.msg &&
+	sed "s/%%/$(printf \\015)/g" "$DATA/quoted-cr-msg" \
+		>quoted-cr/0002-expected.msg &&
+	sed -e "s/%%$//" -e "s/%%/$(printf \\015)/g" "$DATA/quoted-cr-patch" \
+		>quoted-cr/0001-expected.patch &&
+	sed "s/%%/$(printf \\015)/g" "$DATA/quoted-cr-patch" \
+		>quoted-cr/0002-expected.patch &&
+	check_quoted_cr_mail quoted-cr/0001 &&
+	test_must_be_empty quoted-cr/0001.err &&
+	check_quoted_cr_mail quoted-cr/0002 &&
+	grep "quoted CRLF detected" quoted-cr/0002.err &&
+	check_quoted_cr_mail quoted-cr/0001 --quoted-cr=nowarn &&
+	test_must_be_empty quoted-cr/0001.err &&
+	check_quoted_cr_mail quoted-cr/0002 --quoted-cr=nowarn &&
+	test_must_be_empty quoted-cr/0002.err &&
+	cp quoted-cr/0001-expected.msg quoted-cr/0002-expected.msg &&
+	cp quoted-cr/0001-expected.patch quoted-cr/0002-expected.patch &&
+	check_quoted_cr_mail quoted-cr/0001 --quoted-cr=strip &&
+	test_must_be_empty quoted-cr/0001.err &&
+	check_quoted_cr_mail quoted-cr/0002 --quoted-cr=strip &&
+	test_must_be_empty quoted-cr/0002.err
 '
 
 test_done

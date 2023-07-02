@@ -1,11 +1,21 @@
 #include "builtin.h"
-#include "cache.h"
+#include "abspath.h"
+#include "alloc.h"
 #include "config.h"
 #include "color.h"
+#include "editor.h"
+#include "environment.h"
+#include "repository.h"
+#include "gettext.h"
+#include "ident.h"
 #include "parse-options.h"
 #include "urlmatch.h"
+#include "path.h"
 #include "quote.h"
+#include "setup.h"
+#include "strbuf.h"
 #include "worktree.h"
+#include "wrapper.h"
 
 static const char *const builtin_config_usage[] = {
 	N_("git config [<options>]"),
@@ -14,6 +24,7 @@ static const char *const builtin_config_usage[] = {
 
 static char *key;
 static regex_t *key_regexp;
+static const char *value_pattern;
 static regex_t *regexp;
 static int show_keys;
 static int omit_values;
@@ -34,6 +45,7 @@ static int respect_includes_opt = -1;
 static struct config_options config_options;
 static int show_origin;
 static int show_scope;
+static int fixed_value;
 
 #define ACTION_GET (1<<0)
 #define ACTION_GET_ALL (1<<1)
@@ -133,22 +145,23 @@ static struct option builtin_config_options[] = {
 	OPT_STRING('f', "file", &given_config_source.file, N_("file"), N_("use given config file")),
 	OPT_STRING(0, "blob", &given_config_source.blob, N_("blob-id"), N_("read config from given blob object")),
 	OPT_GROUP(N_("Action")),
-	OPT_BIT(0, "get", &actions, N_("get value: name [value-regex]"), ACTION_GET),
-	OPT_BIT(0, "get-all", &actions, N_("get all values: key [value-regex]"), ACTION_GET_ALL),
-	OPT_BIT(0, "get-regexp", &actions, N_("get values for regexp: name-regex [value-regex]"), ACTION_GET_REGEXP),
+	OPT_BIT(0, "get", &actions, N_("get value: name [value-pattern]"), ACTION_GET),
+	OPT_BIT(0, "get-all", &actions, N_("get all values: key [value-pattern]"), ACTION_GET_ALL),
+	OPT_BIT(0, "get-regexp", &actions, N_("get values for regexp: name-regex [value-pattern]"), ACTION_GET_REGEXP),
 	OPT_BIT(0, "get-urlmatch", &actions, N_("get value specific for the URL: section[.var] URL"), ACTION_GET_URLMATCH),
-	OPT_BIT(0, "replace-all", &actions, N_("replace all matching variables: name value [value_regex]"), ACTION_REPLACE_ALL),
+	OPT_BIT(0, "replace-all", &actions, N_("replace all matching variables: name value [value-pattern]"), ACTION_REPLACE_ALL),
 	OPT_BIT(0, "add", &actions, N_("add a new variable: name value"), ACTION_ADD),
-	OPT_BIT(0, "unset", &actions, N_("remove a variable: name [value-regex]"), ACTION_UNSET),
-	OPT_BIT(0, "unset-all", &actions, N_("remove all matches: name [value-regex]"), ACTION_UNSET_ALL),
+	OPT_BIT(0, "unset", &actions, N_("remove a variable: name [value-pattern]"), ACTION_UNSET),
+	OPT_BIT(0, "unset-all", &actions, N_("remove all matches: name [value-pattern]"), ACTION_UNSET_ALL),
 	OPT_BIT(0, "rename-section", &actions, N_("rename section: old-name new-name"), ACTION_RENAME_SECTION),
 	OPT_BIT(0, "remove-section", &actions, N_("remove a section: name"), ACTION_REMOVE_SECTION),
 	OPT_BIT('l', "list", &actions, N_("list all"), ACTION_LIST),
+	OPT_BOOL(0, "fixed-value", &fixed_value, N_("use string equality when comparing values to 'value-pattern'")),
 	OPT_BIT('e', "edit", &actions, N_("open an editor"), ACTION_EDIT),
 	OPT_BIT(0, "get-color", &actions, N_("find the color configured: slot [default]"), ACTION_GET_COLOR),
 	OPT_BIT(0, "get-colorbool", &actions, N_("find the color setting: slot [stdout-is-tty]"), ACTION_GET_COLORBOOL),
 	OPT_GROUP(N_("Type")),
-	OPT_CALLBACK('t', "type", &type, "", N_("value is given this type"), option_parse_type),
+	OPT_CALLBACK('t', "type", &type, N_("type"), N_("value is given this type"), option_parse_type),
 	OPT_CALLBACK_VALUE(0, "bool", &type, N_("value is \"true\" or \"false\""), TYPE_BOOL),
 	OPT_CALLBACK_VALUE(0, "int", &type, N_("value is decimal number"), TYPE_INT),
 	OPT_CALLBACK_VALUE(0, "bool-or-int", &type, N_("value is --bool or --int"), TYPE_BOOL_OR_INT),
@@ -204,7 +217,8 @@ static void show_config_scope(struct strbuf *buf)
 	strbuf_addch(buf, term);
 }
 
-static int show_all_config(const char *key_, const char *value_, void *cb)
+static int show_all_config(const char *key_, const char *value_,
+			   void *cb UNUSED)
 {
 	if (show_origin || show_scope) {
 		struct strbuf buf = STRBUF_INIT;
@@ -296,6 +310,8 @@ static int collect_config(const char *key_, const char *value_, void *cb)
 		return 0;
 	if (use_key_regexp && regexec(key_regexp, key_, 0, NULL, 0))
 		return 0;
+	if (fixed_value && strcmp(value_pattern, (value_?value_:"")))
+		return 0;
 	if (regexp != NULL &&
 	    (do_not_match ^ !!regexec(regexp, (value_?value_:""), 0, NULL, 0)))
 		return 0;
@@ -306,7 +322,7 @@ static int collect_config(const char *key_, const char *value_, void *cb)
 	return format_config(&values->items[values->nr++], key_, value_);
 }
 
-static int get_value(const char *key_, const char *regex_)
+static int get_value(const char *key_, const char *regex_, unsigned flags)
 {
 	int ret = CONFIG_GENERIC_ERROR;
 	struct strbuf_list values = {NULL};
@@ -343,7 +359,9 @@ static int get_value(const char *key_, const char *regex_)
 		}
 	}
 
-	if (regex_) {
+	if (regex_ && (flags & CONFIG_FLAGS_FIXED_VALUE))
+		value_pattern = regex_;
+	else if (regex_) {
 		if (regex_[0] == '!') {
 			do_not_match = 1;
 			regex_++;
@@ -359,7 +377,8 @@ static int get_value(const char *key_, const char *regex_)
 	}
 
 	config_with_options(collect_config, &values,
-			    &given_config_source, &config_options);
+			    &given_config_source, the_repository,
+			    &config_options);
 
 	if (!values.nr && default_value) {
 		struct strbuf *item;
@@ -451,7 +470,8 @@ static const char *get_color_slot;
 static const char *get_colorbool_slot;
 static char parsed_color[COLOR_MAXLEN];
 
-static int git_get_color_config(const char *var, const char *value, void *cb)
+static int git_get_color_config(const char *var, const char *value,
+				void *cb UNUSED)
 {
 	if (!strcmp(var, get_color_slot)) {
 		if (!value)
@@ -469,7 +489,8 @@ static void get_color(const char *var, const char *def_color)
 	get_color_found = 0;
 	parsed_color[0] = '\0';
 	config_with_options(git_get_color_config, NULL,
-			    &given_config_source, &config_options);
+			    &given_config_source, the_repository,
+			    &config_options);
 
 	if (!get_color_found && def_color) {
 		if (color_parse(def_color, parsed_color) < 0)
@@ -483,7 +504,7 @@ static int get_colorbool_found;
 static int get_diff_color_found;
 static int get_color_ui_found;
 static int git_get_colorbool_config(const char *var, const char *value,
-		void *cb)
+				    void *data UNUSED)
 {
 	if (!strcmp(var, get_colorbool_slot))
 		get_colorbool_found = git_config_colorbool(var, value);
@@ -501,7 +522,8 @@ static int get_colorbool(const char *var, int print)
 	get_diff_color_found = -1;
 	get_color_ui_found = -1;
 	config_with_options(git_get_colorbool_config, NULL,
-			    &given_config_source, &config_options);
+			    &given_config_source, the_repository,
+			    &config_options);
 
 	if (get_colorbool_found < 0) {
 		if (!strcmp(get_colorbool_slot, "color.diff"))
@@ -568,7 +590,7 @@ static int get_urlmatch(const char *var, const char *url)
 	int ret;
 	char *section_tail;
 	struct string_list_item *item;
-	struct urlmatch_config config = { STRING_LIST_INIT_DUP };
+	struct urlmatch_config config = URLMATCH_CONFIG_INIT;
 	struct string_list values = STRING_LIST_INIT_DUP;
 
 	config.collect_fn = urlmatch_collect_fn;
@@ -590,7 +612,8 @@ static int get_urlmatch(const char *var, const char *url)
 	}
 
 	config_with_options(urlmatch_config_entry, &config,
-			    &given_config_source, &config_options);
+			    &given_config_source, the_repository,
+			    &config_options);
 
 	ret = !values.nr;
 
@@ -605,7 +628,7 @@ static int get_urlmatch(const char *var, const char *url)
 
 		strbuf_release(&matched->value);
 	}
-	string_list_clear(&config.vars, 1);
+	urlmatch_config_release(&config);
 	string_list_clear(&values, 1);
 	free(config.url.url);
 
@@ -630,7 +653,9 @@ static char *default_user_config(void)
 int cmd_config(int argc, const char **argv, const char *prefix)
 {
 	int nongit = !startup_info->have_repository;
-	char *value;
+	char *value = NULL;
+	int flags = 0;
+	int ret = 0;
 
 	given_config_source.file = xstrdup_or_null(getenv(CONFIG_ENVIRONMENT));
 
@@ -663,9 +688,9 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	}
 
 	if (use_global_config) {
-		char *user_config = expand_user_path("~/.gitconfig", 0);
-		char *xdg_config = xdg_config_home("config");
+		char *user_config, *xdg_config;
 
+		git_global_config(&user_config, &xdg_config);
 		if (!user_config)
 			/*
 			 * It is unknown if HOME/.gitconfig exists, so
@@ -687,14 +712,14 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		}
 	}
 	else if (use_system_config) {
-		given_config_source.file = git_etc_gitconfig();
+		given_config_source.file = git_system_config();
 		given_config_source.scope = CONFIG_SCOPE_SYSTEM;
 	} else if (use_local_config) {
 		given_config_source.file = git_pathdup("config");
 		given_config_source.scope = CONFIG_SCOPE_LOCAL;
 	} else if (use_worktree_config) {
 		struct worktree **worktrees = get_worktrees();
-		if (repository_format_worktree_config)
+		if (the_repository->repository_format_worktree_config)
 			given_config_source.file = git_pathdup("config.worktree");
 		else if (worktrees[0] && worktrees[1])
 			die(_("--worktree cannot be used with multiple "
@@ -766,13 +791,49 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		usage_builtin_config();
 	}
 
+	/* check usage of --fixed-value */
+	if (fixed_value) {
+		int allowed_usage = 0;
+
+		switch (actions) {
+		/* git config --get <name> <value-pattern> */
+		case ACTION_GET:
+		/* git config --get-all <name> <value-pattern> */
+		case ACTION_GET_ALL:
+		/* git config --get-regexp <name-pattern> <value-pattern> */
+		case ACTION_GET_REGEXP:
+		/* git config --unset <name> <value-pattern> */
+		case ACTION_UNSET:
+		/* git config --unset-all <name> <value-pattern> */
+		case ACTION_UNSET_ALL:
+			allowed_usage = argc > 1 && !!argv[1];
+			break;
+
+		/* git config <name> <value> <value-pattern> */
+		case ACTION_SET_ALL:
+		/* git config --replace-all <name> <value> <value-pattern> */
+		case ACTION_REPLACE_ALL:
+			allowed_usage = argc > 2 && !!argv[2];
+			break;
+
+		/* other options don't allow --fixed-value */
+		}
+
+		if (!allowed_usage) {
+			error(_("--fixed-value only applies with 'value-pattern'"));
+			usage_builtin_config();
+		}
+
+		flags |= CONFIG_FLAGS_FIXED_VALUE;
+	}
+
 	if (actions & PAGING_ACTIONS)
 		setup_auto_pager("config", 1);
 
 	if (actions == ACTION_LIST) {
 		check_argc(argc, 0, 0);
 		if (config_with_options(show_all_config, NULL,
-					&given_config_source,
+					&given_config_source, the_repository,
 					&config_options) < 0) {
 			if (given_config_source.file)
 				die_errno(_("unable to read config file '%s'"),
@@ -810,57 +871,54 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		free(config_file);
 	}
 	else if (actions == ACTION_SET) {
-		int ret;
 		check_write();
 		check_argc(argc, 2, 2);
 		value = normalize_value(argv[0], argv[1]);
-		UNLEAK(value);
 		ret = git_config_set_in_file_gently(given_config_source.file, argv[0], value);
 		if (ret == CONFIG_NOTHING_SET)
 			error(_("cannot overwrite multiple values with a single value\n"
 			"       Use a regexp, --add or --replace-all to change %s."), argv[0]);
-		return ret;
 	}
 	else if (actions == ACTION_SET_ALL) {
 		check_write();
 		check_argc(argc, 2, 3);
 		value = normalize_value(argv[0], argv[1]);
-		UNLEAK(value);
-		return git_config_set_multivar_in_file_gently(given_config_source.file,
-							      argv[0], value, argv[2], 0);
+		ret = git_config_set_multivar_in_file_gently(given_config_source.file,
+							     argv[0], value, argv[2],
+							     flags);
 	}
 	else if (actions == ACTION_ADD) {
 		check_write();
 		check_argc(argc, 2, 2);
 		value = normalize_value(argv[0], argv[1]);
-		UNLEAK(value);
-		return git_config_set_multivar_in_file_gently(given_config_source.file,
-							      argv[0], value,
-							      CONFIG_REGEX_NONE, 0);
+		ret = git_config_set_multivar_in_file_gently(given_config_source.file,
+							     argv[0], value,
+							     CONFIG_REGEX_NONE,
+							     flags);
 	}
 	else if (actions == ACTION_REPLACE_ALL) {
 		check_write();
 		check_argc(argc, 2, 3);
 		value = normalize_value(argv[0], argv[1]);
-		UNLEAK(value);
-		return git_config_set_multivar_in_file_gently(given_config_source.file,
-							      argv[0], value, argv[2], 1);
+		ret = git_config_set_multivar_in_file_gently(given_config_source.file,
+							     argv[0], value, argv[2],
+							     flags | CONFIG_FLAGS_MULTI_REPLACE);
 	}
 	else if (actions == ACTION_GET) {
 		check_argc(argc, 1, 2);
-		return get_value(argv[0], argv[1]);
+		return get_value(argv[0], argv[1], flags);
 	}
 	else if (actions == ACTION_GET_ALL) {
 		do_all = 1;
 		check_argc(argc, 1, 2);
-		return get_value(argv[0], argv[1]);
+		return get_value(argv[0], argv[1], flags);
 	}
 	else if (actions == ACTION_GET_REGEXP) {
 		show_keys = 1;
 		use_key_regexp = 1;
 		do_all = 1;
 		check_argc(argc, 1, 2);
-		return get_value(argv[0], argv[1]);
+		return get_value(argv[0], argv[1], flags);
 	}
 	else if (actions == ACTION_GET_URLMATCH) {
 		check_argc(argc, 2, 2);
@@ -871,7 +929,8 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		check_argc(argc, 1, 2);
 		if (argc == 2)
 			return git_config_set_multivar_in_file_gently(given_config_source.file,
-								      argv[0], NULL, argv[1], 0);
+								      argv[0], NULL, argv[1],
+								      flags);
 		else
 			return git_config_set_in_file_gently(given_config_source.file,
 							     argv[0], NULL);
@@ -880,29 +939,32 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		check_write();
 		check_argc(argc, 1, 2);
 		return git_config_set_multivar_in_file_gently(given_config_source.file,
-							      argv[0], NULL, argv[1], 1);
+							      argv[0], NULL, argv[1],
+							      flags | CONFIG_FLAGS_MULTI_REPLACE);
 	}
 	else if (actions == ACTION_RENAME_SECTION) {
-		int ret;
 		check_write();
 		check_argc(argc, 2, 2);
 		ret = git_config_rename_section_in_file(given_config_source.file,
 							argv[0], argv[1]);
 		if (ret < 0)
 			return ret;
-		if (ret == 0)
+		else if (!ret)
 			die(_("no such section: %s"), argv[0]);
+		else
+			ret = 0;
 	}
 	else if (actions == ACTION_REMOVE_SECTION) {
-		int ret;
 		check_write();
 		check_argc(argc, 1, 1);
 		ret = git_config_rename_section_in_file(given_config_source.file,
 							argv[0], NULL);
 		if (ret < 0)
 			return ret;
-		if (ret == 0)
+		else if (!ret)
 			die(_("no such section: %s"), argv[0]);
+		else
+			ret = 0;
 	}
 	else if (actions == ACTION_GET_COLOR) {
 		check_argc(argc, 1, 2);
@@ -915,5 +977,6 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		return get_colorbool(argv[0], argc == 2);
 	}
 
-	return 0;
+	free(value);
+	return ret;
 }

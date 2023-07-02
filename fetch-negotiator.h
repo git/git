@@ -53,7 +53,15 @@ struct fetch_negotiator {
 	void *data;
 };
 
+/*
+ * Initialize a negotiator based on the repository settings.
+ */
 void fetch_negotiator_init(struct repository *r,
 			   struct fetch_negotiator *negotiator);
+
+/*
+ * Initialize a noop negotiator.
+ */
+void fetch_negotiator_init_noop(struct fetch_negotiator *negotiator);
 
 #endif

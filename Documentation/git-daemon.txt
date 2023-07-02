@@ -32,8 +32,8 @@ that service if it is enabled.
 It verifies that the directory has the magic file "git-daemon-export-ok", and
 it will refuse to export any Git directory that hasn't explicitly been marked
 for export this way (unless the `--export-all` parameter is specified). If you
-pass some directory paths as 'git daemon' arguments, you can further restrict
-the offers to a whitelist comprising of those.
+pass some directory paths as 'git daemon' arguments, the offers are limited to
+repositories within those directories.
 
 By default, only `upload-pack` service is enabled, which serves
 'git fetch-pack' and 'git ls-remote' clients, which are invoked
@@ -50,7 +50,7 @@ OPTIONS
 	Match paths exactly (i.e. don't allow "/foo/repo" when the real path is
 	"/foo/repo.git" or "/foo/repo/.git") and don't do user-relative paths.
 	'git daemon' will refuse to start when this option is enabled and no
-	whitelist is specified.
+	directory arguments are provided.
 
 --base-path=<path>::
 	Remap all the path requests as relative to the given path.
@@ -73,7 +73,7 @@ OPTIONS
 	%IP for the server's IP address, %P for the port number,
 	and %D for the absolute path of the named repository.
 	After interpolation, the path is validated against the directory
-	whitelist.
+	list.
 
 --export-all::
 	Allow pulling from all directories that look like Git repositories
@@ -218,9 +218,11 @@ standard output to be sent to the requestor as an error message when
 it declines the service.
 
 <directory>::
-	A directory to add to the whitelist of allowed directories. Unless
-	--strict-paths is specified this will also include subdirectories
-	of each named directory.
+	The remaining arguments provide a list of directories. If any
+	directories are specified, then the `git-daemon` process will
+	serve a requested directory only if it is contained in one of
+	these directories. If `--strict-paths` is specified, then the
+	requested directory must match one of these directories exactly.
 
 SERVICES
 --------
@@ -264,9 +266,8 @@ git		9418/tcp		# Git Version Control System
 
 'git daemon' as inetd server::
 	To set up 'git daemon' as an inetd service that handles any
-	repository under the whitelisted set of directories, /pub/foo
-	and /pub/bar, place an entry like the following into
-	/etc/inetd all on one line:
+	repository within `/pub/foo` or `/pub/bar`, place an entry like
+	the following into `/etc/inetd` all on one line:
 +
 ------------------------------------------------
 	git stream tcp nowait nobody  /usr/bin/git

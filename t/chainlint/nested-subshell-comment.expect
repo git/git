@@ -6,6 +6,6 @@
 		# minor numbers of cows (or do they?)
 		baz &&
 		snaff
-?!AMP?!>>	)
+	) ?!AMP?!
 	fuzzy
->)
+)

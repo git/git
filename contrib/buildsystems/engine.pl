@@ -351,7 +351,7 @@ sub handleLinkLine
         } elsif ("$part" eq "-lexpat") {
             push(@libs, "libexpat.lib");
         } elsif ("$part" eq "-liconv") {
-            push(@libs, "libiconv.lib");
+            push(@libs, "iconv.lib");
         } elsif ($part =~ /^[-\/]/) {
             push(@lflags, $part);
         } elsif ($part =~ /\.(a|lib)$/) {

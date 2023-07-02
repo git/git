@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='basic tests for fast-export --anonymize'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'setup simple repo' '
@@ -15,12 +18,14 @@ test_expect_success 'setup simple repo' '
 	git update-index --add --cacheinfo 160000,$fake_commit,link1 &&
 	git update-index --add --cacheinfo 160000,$fake_commit,link2 &&
 	git commit -m "add gitlink" &&
-	git tag -m "annotated tag" mytag
+	git tag -m "annotated tag" mytag &&
+	git tag -m "annotated tag with long message" longtag
 '
 
 test_expect_success 'export anonymized stream' '
 	git fast-export --anonymize --all \
 		--anonymize-map=retain-me \
+		--anonymize-map=xyzzy:should-not-appear \
 		--anonymize-map=xyzzy:custom-name \
 		--anonymize-map=other \
 		>stream
@@ -37,6 +42,7 @@ test_expect_success 'stream omits path names' '
 
 test_expect_success 'stream contains user-specified names' '
 	grep retain-me stream &&
+	! grep should-not-appear stream &&
 	grep custom-name stream
 '
 
@@ -51,8 +57,9 @@ test_expect_success 'stream retains other as refname' '
 '
 
 test_expect_success 'stream omits other refnames' '
-	! grep master stream &&
-	! grep mytag stream
+	! grep main stream &&
+	! grep mytag stream &&
+	! grep longtag stream
 '
 
 test_expect_success 'stream omits identities' '
@@ -85,7 +92,7 @@ test_expect_success 'repo has original shape and timestamps' '
 	shape () {
 		git log --format="%m %ct" --left-right --boundary "$@"
 	} &&
-	(cd .. && shape master...other) >expect &&
+	(cd .. && shape main...other) >expect &&
 	shape $main_branch...$other_branch >actual &&
 	test_cmp expect actual
 '
@@ -115,9 +122,9 @@ test_expect_success 'identical gitlinks got identical oid' '
 	test_line_count = 1 commits
 '
 
-test_expect_success 'tag points to branch tip' '
+test_expect_success 'all tags point to branch tip' '
 	git rev-parse $other_branch >expect &&
-	git for-each-ref --format="%(*objectname)" | grep . >actual &&
+	git for-each-ref --format="%(*objectname)" | grep . | uniq >actual &&
 	test_cmp expect actual
 '
 

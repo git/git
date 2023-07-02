@@ -1,0 +1,91 @@
+name: check-whitespace
+
+# Get the repository with all commits to ensure that we can analyze
+# all of the commits contributed via the Pull Request.
+# Process `git log --check` output to extract just the check errors.
+# Exit with failure upon white-space issues.
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+# Avoid unnecessary builds. Unlike the main CI jobs, these are not
+# ci-configurable (but could be).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-whitespace:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: git log --check
+      id: check_out
+      run: |
+        baseSha=${{github.event.pull_request.base.sha}}
+        problems=()
+        commit=
+        commitText=
+        commitTextmd=
+        goodparent=
+        while read dash sha etc
+        do
+          case "${dash}" in
+          "---")
+            if test -z "${commit}"
+            then
+              goodparent=${sha}
+            fi
+            commit="${sha}"
+            commitText="${sha} ${etc}"
+            commitTextmd="[${sha}](https://github.com/${{ github.repository }}/commit/${sha}) ${etc}"
+            ;;
+          "")
+            ;;
+          *)
+            if test -n "${commit}"
+            then
+              problems+=("1) --- ${commitTextmd}")
+              echo ""
+              echo "--- ${commitText}"
+              commit=
+            fi
+            case "${dash}" in
+            *:[1-9]*:) # contains file and line number information
+              dashend=${dash#*:}
+              problems+=("[${dash}](https://github.com/${{ github.repository }}/blob/${{github.event.pull_request.head.ref}}/${dash%%:*}#L${dashend%:}) ${sha} ${etc}")
+              ;;
+            *)
+              problems+=("\`${dash} ${sha} ${etc}\`")
+              ;;
+            esac
+            echo "${dash} ${sha} ${etc}"
+            ;;
+          esac
+        done <<< $(git log --check --pretty=format:"---% h% s" ${baseSha}..)
+
+        if test ${#problems[*]} -gt 0
+        then
+          if test -z "${commit}"
+          then
+            goodparent=${baseSha: 0:7}
+          fi
+          echo "🛑 Please review the Summary output for further information."
+          echo "### :x: A whitespace issue was found in one or more of the commits." >$GITHUB_STEP_SUMMARY
+          echo "" >>$GITHUB_STEP_SUMMARY
+          echo "Run these commands to correct the problem:" >>$GITHUB_STEP_SUMMARY
+          echo "1. \`git rebase --whitespace=fix ${goodparent}\`" >>$GITHUB_STEP_SUMMARY
+          echo "1. \`git push --force\`" >>$GITHUB_STEP_SUMMARY
+          echo " " >>$GITHUB_STEP_SUMMARY
+          echo "Errors:" >>$GITHUB_STEP_SUMMARY
+          for i in "${problems[@]}"
+          do
+            echo "${i}" >>$GITHUB_STEP_SUMMARY
+          done
+
+          exit 2
+        fi

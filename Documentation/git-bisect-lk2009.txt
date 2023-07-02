@@ -473,7 +473,7 @@ Z-Z
 -------------
 
 2) starting from the "good" ends of the graph, associate to each
-commit the number of ancestors it has plus one
+   commit the number of ancestors it has plus one
 
 For example with the following graph where H is the "bad" commit and A
 and D are some parents of some "good" commits:
@@ -514,7 +514,7 @@ D---E
 -------------
 
 4) the best bisection point is the commit with the highest associated
-number
+   number
 
 So in the above example the best bisection point is commit C.
 
@@ -580,8 +580,8 @@ good or a bad commit does not give more or less information).
 
 Let's also suppose that we have a cleaned up graph like one after step
 1) in the bisection algorithm above. This means that we can measure
-the information we get in terms of number of commit we can remove from
-the graph..
+   the information we get in terms of number of commit we can remove
+   from the graph..
 
 And let's take a commit X in the graph.
 
@@ -689,18 +689,18 @@ roughly the following steps:
 6) sort the commit by decreasing associated value
 
 7) if the first commit has not been skipped, we can return it and stop
-here
+   here
 
 8) otherwise filter out all the skipped commits in the sorted list
 
 9) use a pseudo random number generator (PRNG) to generate a random
-number between 0 and 1
+   number between 0 and 1
 
 10) multiply this random number with its square root to bias it toward
-0
+    0
 
 11) multiply the result by the number of commits in the filtered list
-to get an index into this list
+    to get an index into this list
 
 12) return the commit at the computed index
 
@@ -1347,8 +1347,8 @@ author to given a talk and for publishing this paper.
 References
 ----------
 
-- [[[1]]] https://www.nist.gov/sites/default/files/documents/director/planning/report02-3.pdf['The Economic Impacts of Inadequate Infratructure for Software Testing'.  Nist Planning Report 02-3], see Executive Summary and Chapter 8.
-- [[[2]]] http://www.oracle.com/technetwork/java/codeconvtoc-136057.html['Code Conventions for the Java Programming Language'. Sun Microsystems.]
+- [[[1]]] https://web.archive.org/web/20091206032101/http://www.nist.gov/public_affairs/releases/n02-10.htm['Software Errors Cost U.S. Economy $59.5 Billion Annually'. Nist News Release.] See also https://www.nist.gov/system/files/documents/director/planning/report02-3.pdf['The Economic Impacts of Inadequate Infratructure for Software Testing'.  Nist Planning Report 02-3], Executive Summary and Chapter 8.
+- [[[2]]] https://www.oracle.com/java/technologies/javase/codeconventions-introduction.html['Code Conventions for the Java Programming Language: 1. Introduction'. Sun Microsystems.]
 - [[[3]]] https://en.wikipedia.org/wiki/Software_maintenance['Software maintenance'. Wikipedia.]
 - [[[4]]] https://lore.kernel.org/git/7vps5xsbwp.fsf_-_@assigned-by-dhcp.cox.net/[Junio C Hamano. 'Automated bisect success story'.]
 - [[[5]]] https://lwn.net/Articles/317154/[Christian Couder. 'Fully automated bisecting with "git bisect run"'. LWN.net.]

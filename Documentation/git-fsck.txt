@@ -12,7 +12,7 @@ SYNOPSIS
 'git fsck' [--tags] [--root] [--unreachable] [--cache] [--no-reflogs]
 	 [--[no-]full] [--strict] [--verbose] [--lost-found]
 	 [--[no-]dangling] [--[no-]progress] [--connectivity-only]
-	 [--[no-]name-objects] [<object>*]
+	 [--[no-]name-objects] [<object>...]
 
 DESCRIPTION
 -----------
@@ -107,6 +107,8 @@ care about this output and want to speed it up further.
 CONFIGURATION
 -------------
 
+include::includes/cmd-config-section-all.txt[]
+
 include::config/fsck.txt[]
 
 DISCUSSION
@@ -129,14 +131,6 @@ using 'git commit-graph verify'. See linkgit:git-commit-graph[1].
 Extracted Diagnostics
 ---------------------
 
-expect dangling commits - potential heads - due to lack of head information::
-	You haven't specified any nodes as heads so it won't be
-	possible to differentiate between un-parented commits and
-	root nodes.
-
-missing sha1 directory '<dir>'::
-	The directory holding the sha1 objects is missing.
-
 unreachable <type> <object>::
 	The <type> object <object>, isn't actually referred to directly
 	or indirectly in any of the trees or commits seen. This can
@@ -157,6 +151,18 @@ hash mismatch <object>::
 	The database has an object whose hash doesn't match the
 	object database value.
 	This indicates a serious data integrity problem.
+
+
+FSCK MESSAGES
+-------------
+
+The following lists the types of errors `git fsck` detects and what
+each error means, with their default severity.  The severity of the
+error, other than those that are marked as "(FATAL)", can be tweaked
+by setting the corresponding `fsck.<msg-id>` configuration variable.
+
+include::fsck-msgids.txt[]
+
 
 Environment Variables
 ---------------------

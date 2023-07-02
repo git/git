@@ -2,75 +2,99 @@
 
 test_description='git mv in subdirs'
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-diff-data.sh
 
-test_expect_success \
-    'prepare reference tree' \
-    'mkdir path0 path1 &&
-     cp "$TEST_DIRECTORY"/../COPYING path0/COPYING &&
-     git add path0/COPYING &&
-     git commit -m add -a'
+index_at_path () {
+	git ls-files --format='%(objectmode) %(objectname) %(stage)' "$@"
+}
 
-test_expect_success \
-    'moving the file out of subdirectory' \
-    'cd path0 && git mv COPYING ../path1/COPYING'
+test_expect_success 'mv -f refreshes updated index entry' '
+	echo test >bar &&
+	git add bar &&
+	git commit -m test &&
+
+	echo foo >foo &&
+	git add foo &&
+
+	# Wait one second to ensure ctime of rename will differ from original
+	# file creation ctime.
+	sleep 1 &&
+	git mv -f foo bar &&
+	git reset --merge HEAD &&
+
+	# Verify the index has been reset
+	git diff-files >out &&
+	test_must_be_empty out
+'
+
+test_expect_success 'prepare reference tree' '
+	mkdir path0 path1 &&
+	COPYING_test_data >path0/COPYING &&
+	git add path0/COPYING &&
+	git commit -m add -a
+'
+
+test_expect_success 'moving the file out of subdirectory' '
+	git -C path0 mv COPYING ../path1/COPYING
+'
 
 # in path0 currently
-test_expect_success \
-    'commiting the change' \
-    'cd .. && git commit -m move-out -a'
+test_expect_success 'commiting the change' '
+	git commit -m move-out -a
+'
 
-test_expect_success \
-    'checking the commit' \
-    'git diff-tree -r -M --name-status  HEAD^ HEAD >actual &&
-    grep "^R100..*path0/COPYING..*path1/COPYING" actual'
+test_expect_success 'checking the commit' '
+	git diff-tree -r -M --name-status  HEAD^ HEAD >actual &&
+	grep "^R100..*path0/COPYING..*path1/COPYING" actual
+'
 
-test_expect_success \
-    'moving the file back into subdirectory' \
-    'cd path0 && git mv ../path1/COPYING COPYING'
+test_expect_success 'moving the file back into subdirectory' '
+	git -C path0 mv ../path1/COPYING COPYING
+'
 
 # in path0 currently
-test_expect_success \
-    'commiting the change' \
-    'cd .. && git commit -m move-in -a'
+test_expect_success 'commiting the change' '
+	git commit -m move-in -a
+'
 
-test_expect_success \
-    'checking the commit' \
-    'git diff-tree -r -M --name-status  HEAD^ HEAD >actual &&
-    grep "^R100..*path1/COPYING..*path0/COPYING" actual'
+test_expect_success 'checking the commit' '
+	git diff-tree -r -M --name-status  HEAD^ HEAD >actual &&
+	grep "^R100..*path1/COPYING..*path0/COPYING" actual
+'
 
-test_expect_success \
-    'mv --dry-run does not move file' \
-    'git mv -n path0/COPYING MOVED &&
-     test -f path0/COPYING &&
-     test ! -f MOVED'
+test_expect_success 'mv --dry-run does not move file' '
+	git mv -n path0/COPYING MOVED &&
+	test_path_is_file path0/COPYING &&
+	test_path_is_missing MOVED
+'
 
-test_expect_success \
-    'checking -k on non-existing file' \
-    'git mv -k idontexist path0'
+test_expect_success 'checking -k on non-existing file' '
+	git mv -k idontexist path0
+'
 
-test_expect_success \
-    'checking -k on untracked file' \
-    'touch untracked1 &&
-     git mv -k untracked1 path0 &&
-     test -f untracked1 &&
-     test ! -f path0/untracked1'
+test_expect_success 'checking -k on untracked file' '
+	>untracked1 &&
+	git mv -k untracked1 path0 &&
+	test_path_is_file untracked1 &&
+	test_path_is_missing path0/untracked1
+'
 
-test_expect_success \
-    'checking -k on multiple untracked files' \
-    'touch untracked2 &&
-     git mv -k untracked1 untracked2 path0 &&
-     test -f untracked1 &&
-     test -f untracked2 &&
-     test ! -f path0/untracked1 &&
-     test ! -f path0/untracked2'
+test_expect_success 'checking -k on multiple untracked files' '
+	>untracked2 &&
+	git mv -k untracked1 untracked2 path0 &&
+	test_path_is_file untracked1 &&
+	test_path_is_file untracked2 &&
+	test_path_is_missing path0/untracked1 &&
+	test_path_is_missing path0/untracked2
+'
 
-test_expect_success \
-    'checking -f on untracked file with existing target' \
-    'touch path0/untracked1 &&
-     test_must_fail git mv -f untracked1 path0 &&
-     test ! -f .git/index.lock &&
-     test -f untracked1 &&
-     test -f path0/untracked1'
+test_expect_success 'checking -f on untracked file with existing target' '
+	>path0/untracked1 &&
+	test_must_fail git mv -f untracked1 path0 &&
+	test_path_is_missing .git/index.lock &&
+	test_path_is_file untracked1 &&
+	test_path_is_file path0/untracked1
+'
 
 # clean up the mess in case bad things happen
 rm -f idontexist untracked1 untracked2 \
@@ -78,94 +102,97 @@ rm -f idontexist untracked1 untracked2 \
      .git/index.lock
 rmdir path1
 
-test_expect_success \
-    'moving to absent target with trailing slash' \
-    'test_must_fail git mv path0/COPYING no-such-dir/ &&
-     test_must_fail git mv path0/COPYING no-such-dir// &&
-     git mv path0/ no-such-dir/ &&
-     test_path_is_dir no-such-dir'
+test_expect_success 'moving to absent target with trailing slash' '
+	test_must_fail git mv path0/COPYING no-such-dir/ &&
+	test_must_fail git mv path0/COPYING no-such-dir// &&
+	git mv path0/ no-such-dir/ &&
+	test_path_is_dir no-such-dir
+'
 
-test_expect_success \
-    'clean up' \
-    'git reset --hard'
+test_expect_success 'clean up' '
+	git reset --hard
+'
 
-test_expect_success \
-    'moving to existing untracked target with trailing slash' \
-    'mkdir path1 &&
-     git mv path0/ path1/ &&
-     test_path_is_dir path1/path0/'
+test_expect_success 'moving to existing untracked target with trailing slash' '
+	mkdir path1 &&
+	git mv path0/ path1/ &&
+	test_path_is_dir path1/path0/
+'
 
-test_expect_success \
-    'moving to existing tracked target with trailing slash' \
-    'mkdir path2 &&
-     >path2/file && git add path2/file &&
-     git mv path1/path0/ path2/ &&
-     test_path_is_dir path2/path0/'
+test_expect_success 'moving to existing tracked target with trailing slash' '
+	mkdir path2 &&
+	>path2/file && git add path2/file &&
+	git mv path1/path0/ path2/ &&
+	test_path_is_dir path2/path0/
+'
 
-test_expect_success \
-    'clean up' \
-    'git reset --hard'
+test_expect_success 'clean up' '
+	git reset --hard
+'
 
-test_expect_success \
-    'adding another file' \
-    'cp "$TEST_DIRECTORY"/../README.md path0/README &&
-     git add path0/README &&
-     git commit -m add2 -a'
+test_expect_success 'adding another file' '
+	COPYING_test_data | tr A-Za-z N-ZA-Mn-za-m >path0/README &&
+	git add path0/README &&
+	git commit -m add2 -a
+'
 
-test_expect_success \
-    'moving whole subdirectory' \
-    'git mv path0 path2'
+test_expect_success 'moving whole subdirectory' '
+	git mv path0 path2
+'
 
-test_expect_success \
-    'commiting the change' \
-    'git commit -m dir-move -a'
+test_expect_success 'commiting the change' '
+	git commit -m dir-move -a
+'
 
-test_expect_success \
-    'checking the commit' \
-    'git diff-tree -r -M --name-status  HEAD^ HEAD >actual &&
-     grep "^R100..*path0/COPYING..*path2/COPYING" actual &&
-     grep "^R100..*path0/README..*path2/README" actual'
+test_expect_success 'checking the commit' '
+	git diff-tree -r -M --name-status  HEAD^ HEAD >actual &&
+	grep "^R100..*path0/COPYING..*path2/COPYING" actual &&
+	grep "^R100..*path0/README..*path2/README" actual
+'
 
-test_expect_success \
-    'succeed when source is a prefix of destination' \
-    'git mv path2/COPYING path2/COPYING-renamed'
+test_expect_success 'succeed when source is a prefix of destination' '
+	git mv path2/COPYING path2/COPYING-renamed
+'
 
-test_expect_success \
-    'moving whole subdirectory into subdirectory' \
-    'git mv path2 path1'
+test_expect_success 'moving whole subdirectory into subdirectory' '
+	git mv path2 path1
+'
 
-test_expect_success \
-    'commiting the change' \
-    'git commit -m dir-move -a'
+test_expect_success 'commiting the change' '
+	git commit -m dir-move -a
+'
 
-test_expect_success \
-    'checking the commit' \
-    'git diff-tree -r -M --name-status  HEAD^ HEAD >actual &&
-     grep "^R100..*path2/COPYING..*path1/path2/COPYING" actual &&
-     grep "^R100..*path2/README..*path1/path2/README" actual'
+test_expect_success 'checking the commit' '
+	git diff-tree -r -M --name-status  HEAD^ HEAD >actual &&
+	grep "^R100..*path2/COPYING..*path1/path2/COPYING" actual &&
+	grep "^R100..*path2/README..*path1/path2/README" actual
+'
 
-test_expect_success \
-    'do not move directory over existing directory' \
-    'mkdir path0 && mkdir path0/path2 && test_must_fail git mv path2 path0'
+test_expect_success 'do not move directory over existing directory' '
+	mkdir path0 &&
+	mkdir path0/path2 &&
+	test_must_fail git mv path2 path0
+'
 
-test_expect_success \
-    'move into "."' \
-    'git mv path1/path2/ .'
+test_expect_success 'move into "."' '
+	git mv path1/path2/ .
+'
 
 test_expect_success "Michael Cassar's test case" '
 	rm -fr .git papers partA &&
 	git init &&
 	mkdir -p papers/unsorted papers/all-papers partA &&
-	echo a > papers/unsorted/Thesis.pdf &&
-	echo b > partA/outline.txt &&
-	echo c > papers/unsorted/_another &&
+	echo a >papers/unsorted/Thesis.pdf &&
+	echo b >partA/outline.txt &&
+	echo c >papers/unsorted/_another &&
 	git add papers partA &&
 	T1=$(git write-tree) &&
 
 	git mv papers/unsorted/Thesis.pdf papers/all-papers/moo-blah.pdf &&
 
 	T=$(git write-tree) &&
-	git ls-tree -r $T | verbose grep partA/outline.txt
+	git ls-tree -r $T >out &&
+	grep partA/outline.txt out
 '
 
 rm -fr papers partA path?
@@ -181,43 +208,42 @@ test_expect_success "Sergey Vlasov's test case" '
 	git mv ab a
 '
 
-test_expect_success 'absolute pathname' '(
+test_expect_success 'absolute pathname' '
+	(
+		rm -fr mine &&
+		mkdir mine &&
+		cd mine &&
+		test_create_repo one &&
+		cd one &&
+		mkdir sub &&
+		>sub/file &&
+		git add sub/file &&
 
-	rm -fr mine &&
-	mkdir mine &&
-	cd mine &&
-	test_create_repo one &&
-	cd one &&
-	mkdir sub &&
-	>sub/file &&
-	git add sub/file &&
+		git mv sub "$(pwd)/in" &&
+		test_path_is_missing sub &&
+		test_path_is_dir in &&
+		git ls-files --error-unmatch in/file
+	)
+'
 
-	git mv sub "$(pwd)/in" &&
-	! test -d sub &&
-	test -d in &&
-	git ls-files --error-unmatch in/file
+test_expect_success 'absolute pathname outside should fail' '
+	(
+		rm -fr mine &&
+		mkdir mine &&
+		cd mine &&
+		out=$(pwd) &&
+		test_create_repo one &&
+		cd one &&
+		mkdir sub &&
+		>sub/file &&
+		git add sub/file &&
 
-
-)'
-
-test_expect_success 'absolute pathname outside should fail' '(
-
-	rm -fr mine &&
-	mkdir mine &&
-	cd mine &&
-	out=$(pwd) &&
-	test_create_repo one &&
-	cd one &&
-	mkdir sub &&
-	>sub/file &&
-	git add sub/file &&
-
-	test_must_fail git mv sub "$out/out" &&
-	test -d sub &&
-	! test -d ../in &&
-	git ls-files --error-unmatch sub/file
-
-)'
+		test_must_fail git mv sub "$out/out" &&
+		test_path_is_dir sub &&
+		test_path_is_missing ../in &&
+		git ls-files --error-unmatch sub/file
+	)
+'
 
 test_expect_success 'git mv to move multiple sources into a directory' '
 	rm -fr .git && git init &&
@@ -227,23 +253,24 @@ test_expect_success 'git mv to move multiple sources into a directory' '
 	git add dir/?.txt &&
 	git mv dir/a.txt dir/b.txt other &&
 	git ls-files >actual &&
-	{ echo other/a.txt; echo other/b.txt; } >expect &&
+	cat >expect <<-\EOF &&
+	other/a.txt
+	other/b.txt
+	EOF
 	test_cmp expect actual
 '
 
 test_expect_success 'git mv should not change sha1 of moved cache entry' '
-
 	rm -fr .git &&
 	git init &&
 	echo 1 >dirty &&
 	git add dirty &&
-	entry="$(git ls-files --stage dirty | cut -f 1)" &&
+	entry="$(index_at_path dirty)" &&
 	git mv dirty dirty2 &&
-	[ "$entry" = "$(git ls-files --stage dirty2 | cut -f 1)" ] &&
+	test "$entry" = "$(index_at_path dirty2)" &&
 	echo 2 >dirty2 &&
 	git mv dirty2 dirty &&
-	[ "$entry" = "$(git ls-files --stage dirty | cut -f 1)" ]
-
+	test "$entry" = "$(index_at_path dirty)"
 '
 
 rm -f dirty dirty2
@@ -266,7 +293,6 @@ test_expect_success 'git mv error on conflicted file' '
 '
 
 test_expect_success 'git mv should overwrite symlink to a file' '
-
 	rm -fr .git &&
 	git init &&
 	echo 1 >moved &&
@@ -274,18 +300,16 @@ test_expect_success 'git mv should overwrite symlink to a file' '
 	git add moved &&
 	test_must_fail git mv moved symlink &&
 	git mv -f moved symlink &&
-	! test -e moved &&
-	test -f symlink &&
+	test_path_is_missing moved &&
+	test_path_is_file symlink &&
 	test "$(cat symlink)" = 1 &&
 	git update-index --refresh &&
 	git diff-files --quiet
-
 '
 
 rm -f moved symlink
 
 test_expect_success 'git mv should overwrite file with a symlink' '
-
 	rm -fr .git &&
 	git init &&
 	echo 1 >moved &&
@@ -293,20 +317,19 @@ test_expect_success 'git mv should overwrite file with a symlink' '
 	git add moved &&
 	test_must_fail git mv symlink moved &&
 	git mv -f symlink moved &&
-	! test -e symlink &&
+	test_path_is_missing symlink &&
 	git update-index --refresh &&
 	git diff-files --quiet
-
 '
 
 test_expect_success SYMLINKS 'check moved symlink' '
-
-	test -h moved
+	test_path_is_symlink moved
 '
 
 rm -f moved symlink
 
 test_expect_success 'setup submodule' '
+	test_config_global protocol.file.allow always &&
 	git commit -m initial &&
 	git reset --hard &&
 	git submodule add ./. sub &&
@@ -324,7 +347,7 @@ test_expect_success 'git mv cannot move a submodule in a file' '
 '
 
 test_expect_success 'git mv moves a submodule with a .git directory and no .gitmodules' '
-	entry="$(git ls-files --stage sub | cut -f 1)" &&
+	entry="$(index_at_path sub)" &&
 	git rm .gitmodules &&
 	(
 		cd sub &&
@@ -334,12 +357,9 @@ test_expect_success 'git mv moves a submodule with a .git directory and no .gitm
 	) &&
 	mkdir mod &&
 	git mv sub mod/sub &&
-	! test -e sub &&
-	[ "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" ] &&
-	(
-		cd mod/sub &&
-		git status
-	) &&
+	test_path_is_missing sub &&
+	test "$entry" = "$(index_at_path mod/sub)" &&
+	git -C mod/sub status &&
 	git update-index --refresh &&
 	git diff-files --quiet
 '
@@ -348,7 +368,7 @@ test_expect_success 'git mv moves a submodule with a .git directory and .gitmodu
 	rm -rf mod &&
 	git reset --hard &&
 	git submodule update &&
-	entry="$(git ls-files --stage sub | cut -f 1)" &&
+	entry="$(index_at_path sub)" &&
 	(
 		cd sub &&
 		rm -f .git &&
@@ -357,12 +377,9 @@ test_expect_success 'git mv moves a submodule with a .git directory and .gitmodu
 	) &&
 	mkdir mod &&
 	git mv sub mod/sub &&
-	! test -e sub &&
-	[ "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" ] &&
-	(
-		cd mod/sub &&
-		git status
-	) &&
+	test_path_is_missing sub &&
+	test "$entry" = "$(index_at_path mod/sub)" &&
+	git -C mod/sub status &&
 	echo mod/sub >expected &&
 	git config -f .gitmodules submodule.sub.path >actual &&
 	test_cmp expected actual &&
@@ -374,18 +391,12 @@ test_expect_success 'git mv moves a submodule with gitfile' '
 	rm -rf mod &&
 	git reset --hard &&
 	git submodule update &&
-	entry="$(git ls-files --stage sub | cut -f 1)" &&
+	entry="$(index_at_path sub)" &&
 	mkdir mod &&
-	(
-		cd mod &&
-		git mv ../sub/ .
-	) &&
-	! test -e sub &&
-	[ "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" ] &&
-	(
-		cd mod/sub &&
-		git status
-	) &&
+	git -C mod mv ../sub/ . &&
+	test_path_is_missing sub &&
+	test "$entry" = "$(index_at_path mod/sub)" &&
+	git -C mod/sub status &&
 	echo mod/sub >expected &&
 	git config -f .gitmodules submodule.sub.path >actual &&
 	test_cmp expected actual &&
@@ -398,16 +409,13 @@ test_expect_success 'mv does not complain when no .gitmodules file is found' '
 	git reset --hard &&
 	git submodule update &&
 	git rm .gitmodules &&
-	entry="$(git ls-files --stage sub | cut -f 1)" &&
+	entry="$(index_at_path sub)" &&
 	mkdir mod &&
 	git mv sub mod/sub 2>actual.err &&
 	test_must_be_empty actual.err &&
-	! test -e sub &&
-	[ "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" ] &&
-	(
-		cd mod/sub &&
-		git status
-	) &&
+	test_path_is_missing sub &&
+	test "$entry" = "$(index_at_path mod/sub)" &&
+	git -C mod/sub status &&
 	git update-index --refresh &&
 	git diff-files --quiet
 '
@@ -417,21 +425,18 @@ test_expect_success 'mv will error out on a modified .gitmodules file unless sta
 	git reset --hard &&
 	git submodule update &&
 	git config -f .gitmodules foo.bar true &&
-	entry="$(git ls-files --stage sub | cut -f 1)" &&
+	entry="$(index_at_path sub)" &&
 	mkdir mod &&
 	test_must_fail git mv sub mod/sub 2>actual.err &&
-	test -s actual.err &&
-	test -e sub &&
+	test_file_not_empty actual.err &&
+	test_path_exists sub &&
 	git diff-files --quiet -- sub &&
 	git add .gitmodules &&
 	git mv sub mod/sub 2>actual.err &&
 	test_must_be_empty actual.err &&
-	! test -e sub &&
-	[ "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" ] &&
-	(
-		cd mod/sub &&
-		git status
-	) &&
+	test_path_is_missing sub &&
+	test "$entry" = "$(index_at_path mod/sub)" &&
+	git -C mod/sub status &&
 	git update-index --refresh &&
 	git diff-files --quiet
 '
@@ -442,17 +447,14 @@ test_expect_success 'mv issues a warning when section is not found in .gitmodule
 	git submodule update &&
 	git config -f .gitmodules --remove-section submodule.sub &&
 	git add .gitmodules &&
-	entry="$(git ls-files --stage sub | cut -f 1)" &&
+	entry="$(index_at_path sub)" &&
 	echo "warning: Could not find section in .gitmodules where path=sub" >expect.err &&
 	mkdir mod &&
 	git mv sub mod/sub 2>actual.err &&
-	test_i18ncmp expect.err actual.err &&
-	! test -e sub &&
-	[ "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" ] &&
-	(
-		cd mod/sub &&
-		git status
-	) &&
+	test_cmp expect.err actual.err &&
+	test_path_is_missing sub &&
+	test "$entry" = "$(index_at_path mod/sub)" &&
+	git -C mod/sub status &&
 	git update-index --refresh &&
 	git diff-files --quiet
 '
@@ -463,7 +465,7 @@ test_expect_success 'mv --dry-run does not touch the submodule or .gitmodules' '
 	git submodule update &&
 	mkdir mod &&
 	git mv -n sub mod/sub 2>actual.err &&
-	test -f sub/.git &&
+	test_path_is_file sub/.git &&
 	git diff-index --exit-code HEAD &&
 	git update-index --refresh &&
 	git diff-files --quiet -- sub .gitmodules
@@ -477,10 +479,10 @@ test_expect_success 'checking out a commit before submodule moved needs manual u
 	git status -s sub2 >actual &&
 	echo "?? sub2/" >expected &&
 	test_cmp expected actual &&
-	! test -f sub/.git &&
-	test -f sub2/.git &&
+	test_path_is_missing sub/.git &&
+	test_path_is_file sub2/.git &&
 	git submodule update &&
-	test -f sub/.git &&
+	test_path_is_file sub/.git &&
 	rm -rf sub2 &&
 	git diff-index --exit-code HEAD &&
 	git update-index --refresh &&
@@ -513,17 +515,20 @@ test_expect_success 'moving a submodule in nested directories' '
 '
 
 test_expect_success 'moving nested submodules' '
+	test_config_global protocol.file.allow always &&
 	git commit -am "cleanup commit" &&
 	mkdir sub_nested_nested &&
-	(cd sub_nested_nested &&
-		touch nested_level2 &&
+	(
+		cd sub_nested_nested &&
+		>nested_level2 &&
 		git init &&
 		git add . &&
 		git commit -m "nested level 2"
 	) &&
 	mkdir sub_nested &&
-	(cd sub_nested &&
-		touch nested_level1 &&
+	(
+		cd sub_nested &&
+		>nested_level1 &&
 		git init &&
 		git add . &&
 		git commit -m "nested level 1" &&

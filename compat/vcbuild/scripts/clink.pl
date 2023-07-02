@@ -45,7 +45,7 @@ while (@ARGV) {
 		push(@args, "zlib.lib");
 	    }
 	} elsif ("$arg" eq "-liconv") {
-		push(@args, "libiconv.lib");
+		push(@args, "iconv.lib");
 	} elsif ("$arg" eq "-lcrypto") {
 		push(@args, "libcrypto.lib");
 	} elsif ("$arg" eq "-lssl") {

@@ -169,6 +169,8 @@ static int command_loop(const char *child)
 
 	while (1) {
 		size_t i;
+		const char *arg;
+
 		if (!fgets(buffer, MAXCOMMAND - 1, stdin)) {
 			if (ferror(stdin))
 				die("Command input error");
@@ -182,10 +184,10 @@ static int command_loop(const char *child)
 		if (!strcmp(buffer, "capabilities")) {
 			printf("*connect\n\n");
 			fflush(stdout);
-		} else if (!strncmp(buffer, "connect ", 8)) {
+		} else if (skip_prefix(buffer, "connect ", &arg)) {
 			printf("\n");
 			fflush(stdout);
-			return run_child(child, buffer + 8);
+			return run_child(child, arg);
 		} else {
 			fprintf(stderr, "Bad command");
 			return 1;
@@ -195,6 +197,8 @@ static int command_loop(const char *child)
 
 int cmd_remote_ext(int argc, const char **argv, const char *prefix)
 {
+	BUG_ON_NON_EMPTY_PREFIX(prefix);
+
 	if (argc != 3)
 		usage(usage_msg);
 

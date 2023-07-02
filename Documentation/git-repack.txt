@@ -9,7 +9,7 @@ git-repack - Pack unpacked objects in a repository
 SYNOPSIS
 --------
 [verse]
-'git repack' [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [-b] [--window=<n>] [--depth=<n>] [--threads=<n>] [--keep-pack=<pack-name>]
+'git repack' [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [-b] [-m] [--window=<n>] [--depth=<n>] [--threads=<n>] [--keep-pack=<pack-name>] [--write-midx]
 
 DESCRIPTION
 -----------
@@ -63,6 +63,23 @@ to the new separate pack will be written.
 	Also run  'git prune-packed' to remove redundant
 	loose object files.
 
+--cruft::
+	Same as `-a`, unless `-d` is used. Then any unreachable objects
+	are packed into a separate cruft pack. Unreachable objects can
+	be pruned using the normal expiry rules with the next `git gc`
+	invocation (see linkgit:git-gc[1]). Incompatible with `-k`.
+
+--cruft-expiration=<approxidate>::
+	Expire unreachable objects older than `<approxidate>`
+	immediately instead of waiting for the next `git gc` invocation.
+	Only useful with `--cruft -d`.
+
+--expire-to=<dir>::
+	Write a cruft pack containing pruned objects (if any) to the
+	directory `<dir>`. This option is useful for keeping a copy of
+	any pruned objects in a separate directory as a backup. Only
+	useful with `--cruft -d`.
+
 -l::
 	Pass the `--local` option to 'git pack-objects'. See
 	linkgit:git-pack-objects[1].
@@ -76,8 +93,9 @@ to the new separate pack will be written.
 	linkgit:git-pack-objects[1].
 
 -q::
-	Pass the `-q` option to 'git pack-objects'. See
-	linkgit:git-pack-objects[1].
+--quiet::
+	Show no progress over the standard error stream and pass the `-q`
+	option to 'git pack-objects'. See linkgit:git-pack-objects[1].
 
 -n::
 	Do not update the server information with
@@ -121,15 +139,18 @@ depth is 4095.
 	If specified, multiple packfiles may be created, which also
 	prevents the creation of a bitmap index.
 	The default is unlimited, unless the config variable
-	`pack.packSizeLimit` is set.
+	`pack.packSizeLimit` is set. Note that this option may result in
+	a larger and slower repository; see the discussion in
+	`pack.packSizeLimit`.
 
 -b::
 --write-bitmap-index::
 	Write a reachability bitmap index as part of the repack. This
-	only makes sense when used with `-a` or `-A`, as the bitmaps
+	only makes sense when used with `-a`, `-A` or `-m`, as the bitmaps
 	must be able to refer to all reachable objects. This option
-	overrides the setting of `repack.writeBitmaps`.  This option
-	has no effect if multiple packfiles are created.
+	overrides the setting of `repack.writeBitmaps`. This option
+	has no effect if multiple packfiles are created, unless writing a
+	MIDX (in which case a multi-pack bitmap is created).
 
 --pack-kept-objects::
 	Include objects in `.keep` files when repacking.  Note that we
@@ -165,8 +186,43 @@ depth is 4095.
 	Pass the `--delta-islands` option to `git-pack-objects`, see
 	linkgit:git-pack-objects[1].
 
-Configuration
+-g=<factor>::
+--geometric=<factor>::
+	Arrange resulting pack structure so that each successive pack
+	contains at least `<factor>` times the number of objects as the
+	next-largest pack.
++
+`git repack` ensures this by determining a "cut" of packfiles that need
+to be repacked into one in order to ensure a geometric progression. It
+picks the smallest set of packfiles such that as many of the larger
+packfiles (by count of objects contained in that pack) may be left
+intact.
++
+Unlike other repack modes, the set of objects to pack is determined
+uniquely by the set of packs being "rolled-up"; in other words, the
+packs determined to need to be combined in order to restore a geometric
+progression.
++
+When `--unpacked` is specified, loose objects are implicitly included in
+this "roll-up", without respect to their reachability. This is subject
+to change in the future. This option (implying a drastically different
+repack mode) is not guaranteed to work with all other combinations of
+option to `git repack`.
++
+When writing a multi-pack bitmap, `git repack` selects the largest resulting
+pack as the preferred pack for object selection by the MIDX (see
+linkgit:git-multi-pack-index[1]).
+
+-m::
+--write-midx::
+	Write a multi-pack index (see linkgit:git-multi-pack-index[1])
+	containing the non-redundant packs.
+
+CONFIGURATION
 -------------
+
+Various configuration variables affect packing, see
+linkgit:git-config[1] (search for "pack" and "delta").
 
 By default, the command passes `--delta-base-offset` option to
 'git pack-objects'; this typically results in slightly smaller packs,
@@ -177,6 +233,10 @@ need to set the configuration variable `repack.UseDeltaBaseOffset` to
 "false" and repack. Access from old Git versions over the native protocol
 is unaffected by this option as the conversion is performed on the fly
 as needed in that case.
+
+Delta compression is not used on objects larger than the
+`core.bigFileThreshold` configuration variable and on files with the
+attribute `delta` set to false.
 
 SEE ALSO
 --------

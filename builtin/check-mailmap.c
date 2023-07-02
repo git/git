@@ -1,8 +1,12 @@
 #include "builtin.h"
 #include "config.h"
+#include "gettext.h"
+#include "ident.h"
 #include "mailmap.h"
 #include "parse-options.h"
+#include "strbuf.h"
 #include "string-list.h"
+#include "write-or-die.h"
 
 static int use_stdin;
 static const char * const check_mailmap_usage[] = {
@@ -47,7 +51,7 @@ int cmd_check_mailmap(int argc, const char **argv, const char *prefix)
 	if (argc == 0 && !use_stdin)
 		die(_("no contacts specified"));
 
-	read_mailmap(&mailmap, NULL);
+	read_mailmap(&mailmap);
 
 	for (i = 0; i < argc; ++i)
 		check_mailmap(&mailmap, argv[i]);

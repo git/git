@@ -1,8 +1,10 @@
 #include "builtin.h"
-#include "cache.h"
 #include "config.h"
+#include "gettext.h"
 #include "parse-options.h"
+#include "setup.h"
 #include "strbuf.h"
+#include "write-or-die.h"
 
 static void comment_lines(struct strbuf *buf)
 {
@@ -15,8 +17,8 @@ static void comment_lines(struct strbuf *buf)
 }
 
 static const char * const stripspace_usage[] = {
-	N_("git stripspace [-s | --strip-comments]"),
-	N_("git stripspace [-c | --comment-lines]"),
+	"git stripspace [-s | --strip-comments]",
+	"git stripspace [-c | --comment-lines]",
 	NULL
 };
 

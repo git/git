@@ -1,8 +1,11 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "object-name.h"
 #include "remote.h"
 #include "refspec.h"
+#include "repository.h"
 #include "checkout.h"
 #include "config.h"
+#include "strbuf.h"
 
 struct tracking_name_data {
 	/* const */ char *src_ref;
@@ -14,7 +17,7 @@ struct tracking_name_data {
 	struct object_id *default_dst_oid;
 };
 
-#define TRACKING_NAME_DATA_INIT { NULL, NULL, NULL, 0, NULL, NULL, NULL }
+#define TRACKING_NAME_DATA_INIT { 0 }
 
 static int check_tracking_name(struct remote *remote, void *cb_data)
 {
@@ -23,7 +26,7 @@ static int check_tracking_name(struct remote *remote, void *cb_data)
 	memset(&query, 0, sizeof(struct refspec_item));
 	query.src = cb->src_ref;
 	if (remote_find_tracking(remote, &query) ||
-	    get_oid(query.dst, cb->dst_oid)) {
+	    repo_get_oid(the_repository, query.dst, cb->dst_oid)) {
 		free(query.dst);
 		return 0;
 	}

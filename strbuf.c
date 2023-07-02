@@ -1,7 +1,17 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "abspath.h"
+#include "alloc.h"
+#include "environment.h"
+#include "gettext.h"
+#include "hex.h"
+#include "object-name.h"
 #include "refs.h"
+#include "path.h"
+#include "repository.h"
 #include "string-list.h"
 #include "utf8.h"
+#include "date.h"
+#include "wrapper.h"
 
 int starts_with(const char *str, const char *prefix)
 {
@@ -52,8 +62,8 @@ char strbuf_slopbuf[1];
 
 void strbuf_init(struct strbuf *sb, size_t hint)
 {
-	sb->alloc = sb->len = 0;
-	sb->buf = strbuf_slopbuf;
+	struct strbuf blank = STRBUF_INIT;
+	memcpy(sb, &blank, sizeof(*sb));
 	if (hint)
 		strbuf_grow(sb, hint);
 }
@@ -209,6 +219,8 @@ void strbuf_list_free(struct strbuf **sbs)
 {
 	struct strbuf **s = sbs;
 
+	if (!s)
+		return;
 	while (*s) {
 		strbuf_release(*s);
 		free(*s++);
@@ -433,7 +445,7 @@ void strbuf_expand(struct strbuf *sb, const char *format, expand_fn_t fn,
 
 size_t strbuf_expand_literal_cb(struct strbuf *sb,
 				const char *placeholder,
-				void *context)
+				void *context UNUSED)
 {
 	int ch;
 
@@ -710,16 +722,21 @@ static int strbuf_getdelim(struct strbuf *sb, FILE *fp, int term)
 	return 0;
 }
 
-int strbuf_getline(struct strbuf *sb, FILE *fp)
+int strbuf_getdelim_strip_crlf(struct strbuf *sb, FILE *fp, int term)
 {
-	if (strbuf_getwholeline(sb, fp, '\n'))
+	if (strbuf_getwholeline(sb, fp, term))
 		return EOF;
-	if (sb->buf[sb->len - 1] == '\n') {
+	if (term == '\n' && sb->buf[sb->len - 1] == '\n') {
 		strbuf_setlen(sb, sb->len - 1);
 		if (sb->len && sb->buf[sb->len - 1] == '\r')
 			strbuf_setlen(sb, sb->len - 1);
 	}
 	return 0;
+}
+
+int strbuf_getline(struct strbuf *sb, FILE *fp)
+{
+	return strbuf_getdelim_strip_crlf(sb, fp, '\n');
 }
 
 int strbuf_getline_lf(struct strbuf *sb, FILE *fp)
@@ -872,9 +889,9 @@ static void strbuf_humanise(struct strbuf *buf, off_t bytes,
 		strbuf_addf(buf,
 				humanise_rate == 0 ?
 					/* TRANSLATORS: IEC 80000-13:2008 byte */
-					Q_("%u byte", "%u bytes", (unsigned)bytes) :
+					Q_("%u byte", "%u bytes", bytes) :
 					/* TRANSLATORS: IEC 80000-13:2008 byte/second */
-					Q_("%u byte/s", "%u bytes/s", (unsigned)bytes),
+					Q_("%u byte/s", "%u bytes/s", bytes),
 				(unsigned)bytes);
 	}
 }
@@ -1004,7 +1021,12 @@ void strbuf_addftime(struct strbuf *sb, const char *fmt, const struct tm *tm,
 
 	/*
 	 * There is no portable way to pass timezone information to
-	 * strftime, so we handle %z and %Z here.
+	 * strftime, so we handle %z and %Z here. Likewise '%s', because
+	 * going back to an epoch time requires knowing the zone.
+	 *
+	 * Note that tz_offset is in the "[-+]HHMM" decimal form; this is what
+	 * we want for %z, but the computation for %s has to convert to number
+	 * of seconds.
 	 */
 	for (;;) {
 		const char *percent = strchrnul(fmt, '%');
@@ -1015,6 +1037,13 @@ void strbuf_addftime(struct strbuf *sb, const char *fmt, const struct tm *tm,
 		switch (*fmt) {
 		case '%':
 			strbuf_addstr(&munged_fmt, "%%");
+			fmt++;
+			break;
+		case 's':
+			strbuf_addf(&munged_fmt, "%"PRItime,
+				    (timestamp_t)tm_to_time_t(tm) -
+				    3600 * (tz_offset / 100) -
+				    60 * (tz_offset % 100));
 			fmt++;
 			break;
 		case 'z':
@@ -1057,13 +1086,19 @@ void strbuf_addftime(struct strbuf *sb, const char *fmt, const struct tm *tm,
 	strbuf_setlen(sb, sb->len + len);
 }
 
-void strbuf_add_unique_abbrev(struct strbuf *sb, const struct object_id *oid,
-			      int abbrev_len)
+void strbuf_repo_add_unique_abbrev(struct strbuf *sb, struct repository *repo,
+				   const struct object_id *oid, int abbrev_len)
 {
 	int r;
 	strbuf_grow(sb, GIT_MAX_HEXSZ + 1);
-	r = find_unique_abbrev_r(sb->buf + sb->len, oid, abbrev_len);
+	r = repo_find_unique_abbrev_r(repo, sb->buf + sb->len, oid, abbrev_len);
 	strbuf_setlen(sb, sb->len + r);
+}
+
+void strbuf_add_unique_abbrev(struct strbuf *sb, const struct object_id *oid,
+			      int abbrev_len)
+{
+	strbuf_repo_add_unique_abbrev(sb, the_repository, oid, abbrev_len);
 }
 
 /*
@@ -1152,30 +1187,8 @@ int strbuf_normalize_path(struct strbuf *src)
 	return 0;
 }
 
-int strbuf_edit_interactively(struct strbuf *buffer, const char *path,
-			      const char *const *env)
+void strbuf_strip_file_from_path(struct strbuf *sb)
 {
-	char *path2 = NULL;
-	int fd, res = 0;
-
-	if (!is_absolute_path(path))
-		path = path2 = xstrdup(git_path("%s", path));
-
-	fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
-	if (fd < 0)
-		res = error_errno(_("could not open '%s' for writing"), path);
-	else if (write_in_full(fd, buffer->buf, buffer->len) < 0) {
-		res = error_errno(_("could not write to '%s'"), path);
-		close(fd);
-	} else if (close(fd) < 0)
-		res = error_errno(_("could not close '%s'"), path);
-	else {
-		strbuf_reset(buffer);
-		if (launch_editor(path, buffer, env) < 0)
-			res = error_errno(_("could not edit '%s'"), path);
-		unlink(path);
-	}
-
-	free(path2);
-	return res;
+	char *path_sep = find_last_dir_sep(sb->buf);
+	strbuf_setlen(sb, path_sep ? path_sep - sb->buf + 1 : 0);
 }

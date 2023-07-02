@@ -751,6 +751,17 @@ default font sizes or lineheights are changed (e.g. via adding extra
 CSS stylesheet in `@stylesheets`), it may be appropriate to change
 these values.
 
+email-privacy::
+	Redact e-mail addresses from the generated HTML, etc. content.
+	This obscures e-mail addresses retrieved from the author/committer
+	and comment sections of the Git log.
+	It is meant to hinder web crawlers that harvest and abuse addresses.
+	Such crawlers may not respect robots.txt.
+	Note that users and user tools also see the addresses as redacted.
+	If Gitweb is not the final step in a workflow then subsequent steps
+	may misbehave because of the redacted information they receive.
+	Disabled by default.
+
 highlight::
 	Server-side syntax highlight support in "blob" view.  It requires
 	`$highlight_bin` program to be available (see the description of

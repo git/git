@@ -68,7 +68,7 @@ Note that the "object" file isn't fit for feeding straight to zlib; it
 has the git packed object header, which is variable-length. We want to
 strip that off so we can start playing with the zlib data directly. You
 can either work your way through it manually (the format is described in
-link:../technical/pack-format.html[Documentation/technical/pack-format.txt]),
+linkgit:gitformat-pack[5]),
 or you can walk through it in a debugger. I did the latter, creating a
 valid pack like:
 

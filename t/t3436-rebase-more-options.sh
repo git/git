@@ -28,7 +28,7 @@ test_expect_success 'setup' '
 	test_commit commit2 foo foo2 &&
 	test_commit commit3 foo foo3 &&
 
-	git checkout --orphan master &&
+	git checkout --orphan main &&
 	rm foo &&
 	test_write_lines "line 1" "        line 2" "line 3" >file &&
 	git commit -am "add file" &&
@@ -65,8 +65,8 @@ test_expect_success '--ignore-whitespace is remembered when continuing' '
 '
 
 test_ctime_is_atime () {
-	git log $1 --format=%ai >authortime &&
-	git log $1 --format=%ci >committertime &&
+	git log $1 --format="$GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> %ai" >authortime &&
+	git log $1 --format="%cn <%ce> %ci" >committertime &&
 	test_cmp authortime committertime
 }
 
@@ -79,6 +79,20 @@ test_expect_success '--committer-date-is-author-date works with apply backend' '
 test_expect_success '--committer-date-is-author-date works with merge backend' '
 	GIT_AUTHOR_DATE="@1234 +0300" git commit --amend --reset-author &&
 	git rebase -m --committer-date-is-author-date HEAD^ &&
+	test_ctime_is_atime -1
+'
+
+test_expect_success '--committer-date-is-author-date works when rewording' '
+	GIT_AUTHOR_DATE="@1234 +0300" git commit --amend --reset-author &&
+	(
+		set_fake_editor &&
+		FAKE_COMMIT_MESSAGE=edited \
+			FAKE_LINES="reword 1" \
+			git rebase -i --committer-date-is-author-date HEAD^
+	) &&
+	test_write_lines edited "" >expect &&
+	git log --format="%B" -1 >actual &&
+	test_cmp expect actual &&
 	test_ctime_is_atime -1
 '
 
@@ -153,6 +167,21 @@ test_expect_success '--reset-author-date with --committer-date-is-author-date wo
 	git rebase --continue &&
 	test_ctime_is_atime -2 &&
 	test_atime_is_ignored -2
+'
+
+test_expect_success 'reset-author-date with --committer-date-is-author-date works when rewording' '
+	GIT_AUTHOR_DATE="@1234 +0300" git commit --amend --reset-author &&
+	(
+		set_fake_editor &&
+		FAKE_COMMIT_MESSAGE=edited \
+			FAKE_LINES="reword 1" \
+			git rebase -i --committer-date-is-author-date \
+				--reset-author-date HEAD^
+	) &&
+	test_write_lines edited "" >expect &&
+	git log --format="%B" -1 >actual &&
+	test_cmp expect actual &&
+	test_atime_is_ignored -1
 '
 
 test_expect_success '--reset-author-date --committer-date-is-author-date works when forking merge' '

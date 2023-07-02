@@ -227,6 +227,7 @@ int mingw_rmdir(const char *path);
 
 int mingw_open (const char *filename, int oflags, ...);
 #define open mingw_open
+#undef OPEN_RETURNS_EINTR
 
 int mingw_fgetc(FILE *stream);
 #define fgetc mingw_fgetc
@@ -327,6 +328,12 @@ int mingw_rename(const char*, const char*);
 int mingw_getpagesize(void);
 #define getpagesize mingw_getpagesize
 #endif
+
+int win32_fsync_no_flush(int fd);
+#define fsync_no_flush win32_fsync_no_flush
+
+#define FSYNC_COMPONENTS_PLATFORM_DEFAULT (FSYNC_COMPONENTS_DEFAULT | FSYNC_COMPONENT_LOOSE_OBJECT)
+#define FSYNC_METHOD_DEFAULT (FSYNC_METHOD_BATCH)
 
 struct rlimit {
 	unsigned int rlim_cur;
@@ -451,6 +458,13 @@ char *mingw_query_user_email(void);
 #else
 #include <inttypes.h>
 #endif
+
+/**
+ * Verifies that the specified path is owned by the user running the
+ * current process.
+ */
+int is_path_owned_by_current_sid(const char *path, struct strbuf *report);
+#define is_path_owned_by_current_user is_path_owned_by_current_sid
 
 /**
  * Verifies that the given path is a valid one on Windows.
@@ -606,7 +620,7 @@ int main(int argc, const char **argv);
  * Call this function to open a new MinTTY (this assumes you are in Git for
  * Windows' SDK) with a GDB that attaches to the current process right away.
  */
-extern void open_in_gdb(void);
+void open_in_gdb(void);
 
 /*
  * Used by Pthread API implementation for Windows

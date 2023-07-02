@@ -1,9 +1,12 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
 #include "commit.h"
+#include "environment.h"
+#include "gettext.h"
 #include "refs.h"
 #include "notes-utils.h"
 #include "repository.h"
+#include "strbuf.h"
 
 void create_notes_commit(struct repository *r,
 			 struct notes_tree *t,
@@ -23,7 +26,7 @@ void create_notes_commit(struct repository *r,
 		struct object_id parent_oid;
 		if (!read_ref(t->ref, &parent_oid)) {
 			struct commit *parent = lookup_commit(r, &parent_oid);
-			if (parse_commit(parent))
+			if (repo_parse_commit(r, parent))
 				die("Failed to find/parse commit %s", t->ref);
 			commit_list_insert(parent, &parents);
 		}
@@ -129,7 +132,7 @@ struct notes_rewrite_cfg *init_copy_notes_for_rewrite(const char *cmd)
 	c->cmd = cmd;
 	c->enabled = 1;
 	c->combine = combine_notes_concatenate;
-	c->refs = xcalloc(1, sizeof(struct string_list));
+	CALLOC_ARRAY(c->refs, 1);
 	c->refs->strdup_strings = 1;
 	c->refs_from_env = 0;
 	c->mode_from_env = 0;

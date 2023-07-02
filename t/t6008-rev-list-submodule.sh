@@ -5,6 +5,10 @@
 
 test_description='git rev-list involving submodules that this repo has'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -23,7 +27,7 @@ test_expect_success 'setup' '
 
 	: > super-file &&
 	git add super-file &&
-	git submodule add "$(pwd)" sub &&
+	git -c protocol.file.allow=always submodule add "$(pwd)" sub &&
 	git symbolic-ref HEAD refs/heads/super &&
 	test_tick &&
 	git commit -m super-initial &&
@@ -36,7 +40,7 @@ test_expect_success 'setup' '
 '
 
 test_expect_success "Ilari's test" '
-	git rev-list --objects super master ^super^
+	git rev-list --objects super main ^super^
 '
 
 test_done

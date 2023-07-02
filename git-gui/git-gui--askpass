@@ -26,8 +26,21 @@ pack .m -side top -fill x -padx 20 -pady 20 -expand 1
 entry .e -textvariable answer -width 50
 pack .e -side top -fill x -padx 10 -pady 10
 
+proc on_show_input_changed {args} {
+	global show_input
+	if {$show_input} {
+		.e configure -show ""
+	} else {
+		.e configure -show "*"
+	}
+}
+trace add variable show_input write "on_show_input_changed"
+
+set show_input 0
+
 if {!$yesno} {
-	.e configure -show "*"
+	checkbutton .cb_show -text "Show input" -variable show_input
+	pack .cb_show -side top -anchor nw
 }
 
 frame .b

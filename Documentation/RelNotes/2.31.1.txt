@@ -1,0 +1,27 @@
+Git 2.31.1 Release Notes
+========================
+
+Fixes since v2.31
+-----------------
+
+ * The fsmonitor interface read from its input without making sure
+   there is something to read from.  This bug is new in 2.31
+   timeframe.
+
+ * The data structure used by fsmonitor interface was not properly
+   duplicated during an in-core merge, leading to use-after-free etc.
+
+ * "git bisect" reimplemented more in C during 2.30 timeframe did not
+   take an annotated tag as a good/bad endpoint well.  This regression
+   has been corrected.
+
+ * Fix macros that can silently inject unintended null-statements.
+
+ * CALLOC_ARRAY() macro replaces many uses of xcalloc().
+
+ * Update insn in Makefile comments to run fuzz-all target.
+
+ * Fix a corner case bug in "git mv" on case insensitive systems,
+   which was introduced in 2.29 timeframe.
+
+Also contains various documentation updates and code clean-ups.

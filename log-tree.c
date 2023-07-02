@@ -1,14 +1,22 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "commit-reach.h"
 #include "config.h"
 #include "diff.h"
-#include "object-store.h"
+#include "environment.h"
+#include "hex.h"
+#include "object-name.h"
+#include "object-store-ll.h"
 #include "repository.h"
+#include "tmp-objdir.h"
 #include "commit.h"
 #include "tag.h"
 #include "graph.h"
 #include "log-tree.h"
+#include "merge-ort.h"
 #include "reflog-walk.h"
 #include "refs.h"
+#include "replace-object.h"
+#include "revision.h"
 #include "string-list.h"
 #include "color.h"
 #include "gpg-interface.h"
@@ -16,6 +24,10 @@
 #include "line-log.h"
 #include "help.h"
 #include "range-diff.h"
+#include "strmap.h"
+#include "tree.h"
+#include "wildmatch.h"
+#include "write-or-die.h"
 
 static struct decoration name_decoration = { "object names" };
 static int decoration_loaded;
@@ -84,7 +96,7 @@ static int match_ref_pattern(const char *refname,
 			     const struct string_list_item *item)
 {
 	int matched = 0;
-	if (item->util == NULL) {
+	if (!item->util) {
 		if (!wildmatch(item->string, refname, 0))
 			matched = 1;
 	} else {
@@ -131,18 +143,22 @@ static int ref_filter_match(const char *refname,
 }
 
 static int add_ref_decoration(const char *refname, const struct object_id *oid,
-			      int flags, void *cb_data)
+			      int flags UNUSED,
+			      void *cb_data)
 {
+	int i;
 	struct object *obj;
-	enum decoration_type type = DECORATION_NONE;
+	enum object_type objtype;
+	enum decoration_type deco_type = DECORATION_NONE;
 	struct decoration_filter *filter = (struct decoration_filter *)cb_data;
+	const char *git_replace_ref_base = ref_namespace[NAMESPACE_REPLACE].ref;
 
 	if (filter && !ref_filter_match(refname, filter))
 		return 0;
 
 	if (starts_with(refname, git_replace_ref_base)) {
 		struct object_id original_oid;
-		if (!read_replace_refs)
+		if (!replace_refs_enabled(the_repository))
 			return 0;
 		if (get_oid_hex(refname + strlen(git_replace_ref_base),
 				&original_oid)) {
@@ -155,34 +171,41 @@ static int add_ref_decoration(const char *refname, const struct object_id *oid,
 		return 0;
 	}
 
-	obj = parse_object(the_repository, oid);
-	if (!obj)
+	objtype = oid_object_info(the_repository, oid, NULL);
+	if (objtype < 0)
 		return 0;
+	obj = lookup_object_by_type(the_repository, oid, objtype);
 
-	if (starts_with(refname, "refs/heads/"))
-		type = DECORATION_REF_LOCAL;
-	else if (starts_with(refname, "refs/remotes/"))
-		type = DECORATION_REF_REMOTE;
-	else if (starts_with(refname, "refs/tags/"))
-		type = DECORATION_REF_TAG;
-	else if (!strcmp(refname, "refs/stash"))
-		type = DECORATION_REF_STASH;
-	else if (!strcmp(refname, "HEAD"))
-		type = DECORATION_REF_HEAD;
+	for (i = 0; i < ARRAY_SIZE(ref_namespace); i++) {
+		struct ref_namespace_info *info = &ref_namespace[i];
 
-	add_name_decoration(type, refname, obj);
+		if (!info->decoration)
+			continue;
+		if (info->exact) {
+			if (!strcmp(refname, info->ref)) {
+				deco_type = info->decoration;
+				break;
+			}
+		} else if (starts_with(refname, info->ref)) {
+			deco_type = info->decoration;
+			break;
+		}
+	}
+
+	add_name_decoration(deco_type, refname, obj);
 	while (obj->type == OBJ_TAG) {
+		if (!obj->parsed)
+			parse_object(the_repository, &obj->oid);
 		obj = ((struct tag *)obj)->tagged;
 		if (!obj)
 			break;
-		if (!obj->parsed)
-			parse_object(the_repository, &obj->oid);
 		add_name_decoration(DECORATION_REF_TAG, refname, obj);
 	}
 	return 0;
 }
 
-static int add_graft_decoration(const struct commit_graft *graft, void *cb_data)
+static int add_graft_decoration(const struct commit_graft *graft,
+				void *cb_data UNUSED)
 {
 	struct commit *commit = lookup_commit(the_repository, &graft->oid);
 	if (!commit)
@@ -219,7 +242,8 @@ static void show_parents(struct commit *commit, int abbrev, FILE *file)
 	struct commit_list *p;
 	for (p = commit->parents; p ; p = p->next) {
 		struct commit *parent = p->item;
-		fprintf(file, " %s", find_unique_abbrev(&parent->object.oid, abbrev));
+		fprintf(file, " %s",
+			repo_find_unique_abbrev(the_repository, &parent->object.oid, abbrev));
 	}
 }
 
@@ -227,7 +251,8 @@ static void show_children(struct rev_info *opt, struct commit *commit, int abbre
 {
 	struct commit_list *p = lookup_decoration(&opt->children, &commit->object);
 	for ( ; p; p = p->next) {
-		fprintf(opt->diffopt.file, " %s", find_unique_abbrev(&p->item->object.oid, abbrev));
+		fprintf(opt->diffopt.file, " %s",
+			repo_find_unique_abbrev(the_repository, &p->item->object.oid, abbrev));
 	}
 }
 
@@ -367,10 +392,16 @@ void fmt_output_subject(struct strbuf *filename,
 	const char *suffix = info->patch_suffix;
 	int nr = info->nr;
 	int start_len = filename->len;
-	int max_len = start_len + FORMAT_PATCH_NAME_MAX - (strlen(suffix) + 1);
+	int max_len = start_len + info->patch_name_max - (strlen(suffix) + 1);
 
-	if (0 < info->reroll_count)
-		strbuf_addf(filename, "v%d-", info->reroll_count);
+	if (info->reroll_count) {
+		struct strbuf temp = STRBUF_INIT;
+
+		strbuf_addf(&temp, "v%s", info->reroll_count);
+		format_sanitized_subject(filename, temp.buf, temp.len);
+		strbuf_addstr(filename, "-");
+		strbuf_release(&temp);
+	}
 	strbuf_addf(filename, "%04d-%s", nr, subject);
 
 	if (max_len < filename->len)
@@ -385,7 +416,8 @@ void fmt_output_commit(struct strbuf *filename,
 	struct pretty_print_context ctx = {0};
 	struct strbuf subject = STRBUF_INIT;
 
-	format_commit_message(commit, "%f", &subject, &ctx);
+	repo_format_commit_message(the_repository, commit, "%f", &subject,
+				   &ctx);
 	fmt_output_subject(filename, subject.buf, info);
 	strbuf_release(&subject);
 }
@@ -413,14 +445,14 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 {
 	const char *extra_headers = opt->extra_headers;
 	const char *name = oid_to_hex(opt->zero_commit ?
-				      &null_oid : &commit->object.oid);
+				      null_oid() : &commit->object.oid);
 
 	*need_8bit_cte_p = 0; /* unknown */
 
 	fprintf(opt->diffopt.file, "From %s Mon Sep 17 00:00:00 2001\n", name);
 	graph_show_oneline(opt->graph);
 	if (opt->message_id) {
-		fprintf(opt->diffopt.file, "Message-Id: <%s>\n", opt->message_id);
+		fprintf(opt->diffopt.file, "Message-ID: <%s>\n", opt->message_id);
 		graph_show_oneline(opt->graph);
 	}
 	if (opt->ref_message_ids && opt->ref_message_ids->nr > 0) {
@@ -502,15 +534,16 @@ static void show_signature(struct rev_info *opt, struct commit *commit)
 	struct signature_check sigc = { 0 };
 	int status;
 
-	if (parse_signed_commit(commit, &payload, &signature) <= 0)
+	if (parse_signed_commit(commit, &payload, &signature, the_hash_algo) <= 0)
 		goto out;
 
-	status = check_signature(payload.buf, payload.len, signature.buf,
-				 signature.len, &sigc);
-	if (status && !sigc.gpg_output)
+	sigc.payload_type = SIGNATURE_PAYLOAD_COMMIT;
+	sigc.payload = strbuf_detach(&payload, &sigc.payload_len);
+	status = check_signature(&sigc, signature.buf, signature.len);
+	if (status && !sigc.output)
 		show_sig_lines(opt, status, "No signature\n");
 	else
-		show_sig_lines(opt, status, sigc.gpg_output);
+		show_sig_lines(opt, status, sigc.output);
 	signature_check_clear(&sigc);
 
  out:
@@ -548,10 +581,11 @@ static int show_one_mergetag(struct commit *commit,
 	struct strbuf verify_message;
 	struct signature_check sigc = { 0 };
 	int status, nth;
-	size_t payload_size;
+	struct strbuf payload = STRBUF_INIT;
+	struct strbuf signature = STRBUF_INIT;
 
 	hash_object_file(the_hash_algo, extra->value, extra->len,
-			 type_name(OBJ_TAG), &oid);
+			 OBJ_TAG, &oid);
 	tag = lookup_tag(the_repository, &oid);
 	if (!tag)
 		return -1; /* error message already given */
@@ -571,15 +605,14 @@ static int show_one_mergetag(struct commit *commit,
 		strbuf_addf(&verify_message,
 			    "parent #%d, tagged '%s'\n", nth + 1, tag->tag);
 
-	payload_size = parse_signature(extra->value, extra->len);
 	status = -1;
-	if (extra->len > payload_size) {
+	if (parse_signature(extra->value, extra->len, &payload, &signature)) {
 		/* could have a good signature */
-		status = check_signature(extra->value, payload_size,
-					 extra->value + payload_size,
-					 extra->len - payload_size, &sigc);
-		if (sigc.gpg_output)
-			strbuf_addstr(&verify_message, sigc.gpg_output);
+		sigc.payload_type = SIGNATURE_PAYLOAD_TAG;
+		sigc.payload = strbuf_detach(&payload, &sigc.payload_len);
+		status = check_signature(&sigc, signature.buf, signature.len);
+		if (sigc.output)
+			strbuf_addstr(&verify_message, sigc.output);
 		else
 			strbuf_addstr(&verify_message, "No signature\n");
 		signature_check_clear(&sigc);
@@ -588,6 +621,8 @@ static int show_one_mergetag(struct commit *commit,
 
 	show_sig_lines(opt, status, verify_message.buf);
 	strbuf_release(&verify_message);
+	strbuf_release(&payload);
+	strbuf_release(&signature);
 	return 0;
 }
 
@@ -621,7 +656,8 @@ void show_log(struct rev_info *opt)
 
 		if (!opt->graph)
 			put_revision_mark(opt, commit);
-		fputs(find_unique_abbrev(&commit->object.oid, abbrev_commit), opt->diffopt.file);
+		fputs(repo_find_unique_abbrev(the_repository, &commit->object.oid, abbrev_commit),
+		      opt->diffopt.file);
 		if (opt->print_parents)
 			show_parents(commit, abbrev_commit, opt->diffopt.file);
 		if (opt->children.name)
@@ -683,8 +719,8 @@ void show_log(struct rev_info *opt)
 
 		if (!opt->graph)
 			put_revision_mark(opt, commit);
-		fputs(find_unique_abbrev(&commit->object.oid,
-					 abbrev_commit),
+		fputs(repo_find_unique_abbrev(the_repository, &commit->object.oid,
+					      abbrev_commit),
 		      opt->diffopt.file);
 		if (opt->print_parents)
 			show_parents(commit, abbrev_commit, opt->diffopt.file);
@@ -692,7 +728,7 @@ void show_log(struct rev_info *opt)
 			show_children(opt, commit, abbrev_commit);
 		if (parent)
 			fprintf(opt->diffopt.file, " (from %s)",
-			       find_unique_abbrev(&parent->object.oid, abbrev_commit));
+			       repo_find_unique_abbrev(the_repository, &parent->object.oid, abbrev_commit));
 		fputs(diff_get_color_opt(&opt->diffopt, DIFF_RESET), opt->diffopt.file);
 		show_decorations(opt, commit);
 		if (opt->commit_format == CMIT_FMT_ONELINE) {
@@ -808,6 +844,11 @@ void show_log(struct rev_info *opt)
 	if (cmit_fmt_is_mail(ctx.fmt) && opt->rdiff1) {
 		struct diff_queue_struct dq;
 		struct diff_options opts;
+		struct range_diff_options range_diff_opts = {
+			.creation_factor = opt->creation_factor,
+			.dual_color = 1,
+			.diffopt = &opts
+		};
 
 		memcpy(&dq, &diff_queued_diff, sizeof(diff_queued_diff));
 		DIFF_QUEUE_CLEAR(&diff_queued_diff);
@@ -818,12 +859,11 @@ void show_log(struct rev_info *opt)
 		 * Pass minimum required diff-options to range-diff; others
 		 * can be added later if deemed desirable.
 		 */
-		diff_setup(&opts);
+		repo_diff_setup(the_repository, &opts);
 		opts.file = opt->diffopt.file;
 		opts.use_color = opt->diffopt.use_color;
 		diff_setup_done(&opts);
-		show_range_diff(opt->rdiff1, opt->rdiff2,
-				opt->creation_factor, 1, &opts, NULL);
+		show_range_diff(opt->rdiff1, opt->rdiff2, &range_diff_opts);
 
 		memcpy(&diff_queued_diff, &dq, sizeof(diff_queued_diff));
 	}
@@ -834,7 +874,7 @@ int log_tree_diff_flush(struct rev_info *opt)
 	opt->shown_dashes = 0;
 	diffcore_std(&opt->diffopt);
 
-	if (diff_queue_is_empty()) {
+	if (diff_queue_is_empty(&opt->diffopt)) {
 		int saved_fmt = opt->diffopt.output_format;
 		opt->diffopt.output_format = DIFF_FORMAT_NO_OUTPUT;
 		diff_flush(&opt->diffopt);
@@ -885,7 +925,108 @@ int log_tree_diff_flush(struct rev_info *opt)
 
 static int do_diff_combined(struct rev_info *opt, struct commit *commit)
 {
-	diff_tree_combined_merge(commit, opt->dense_combined_merges, opt);
+	diff_tree_combined_merge(commit, opt);
+	return !opt->loginfo;
+}
+
+static void setup_additional_headers(struct diff_options *o,
+				     struct strmap *all_headers)
+{
+	struct hashmap_iter iter;
+	struct strmap_entry *entry;
+
+	/*
+	 * Make o->additional_path_headers contain the subset of all_headers
+	 * that match o->pathspec.  If there aren't any that match o->pathspec,
+	 * then make o->additional_path_headers be NULL.
+	 */
+
+	if (!o->pathspec.nr) {
+		o->additional_path_headers = all_headers;
+		return;
+	}
+
+	o->additional_path_headers = xmalloc(sizeof(struct strmap));
+	strmap_init_with_options(o->additional_path_headers, NULL, 0);
+	strmap_for_each_entry(all_headers, &iter, entry) {
+		if (match_pathspec(the_repository->index, &o->pathspec,
+				   entry->key, strlen(entry->key),
+				   0 /* prefix */, NULL /* seen */,
+				   0 /* is_dir */))
+			strmap_put(o->additional_path_headers,
+				   entry->key, entry->value);
+	}
+	if (!strmap_get_size(o->additional_path_headers)) {
+		strmap_clear(o->additional_path_headers, 0);
+		FREE_AND_NULL(o->additional_path_headers);
+	}
+}
+
+static void cleanup_additional_headers(struct diff_options *o)
+{
+	if (!o->pathspec.nr) {
+		o->additional_path_headers = NULL;
+		return;
+	}
+	if (!o->additional_path_headers)
+		return;
+
+	strmap_clear(o->additional_path_headers, 0);
+	FREE_AND_NULL(o->additional_path_headers);
+}
+
+static int do_remerge_diff(struct rev_info *opt,
+			   struct commit_list *parents,
+			   struct object_id *oid)
+{
+	struct merge_options o;
+	struct commit_list *bases;
+	struct merge_result res = {0};
+	struct pretty_print_context ctx = {0};
+	struct commit *parent1 = parents->item;
+	struct commit *parent2 = parents->next->item;
+	struct strbuf parent1_desc = STRBUF_INIT;
+	struct strbuf parent2_desc = STRBUF_INIT;
+
+	/* Setup merge options */
+	init_merge_options(&o, the_repository);
+	o.show_rename_progress = 0;
+	o.record_conflict_msgs_as_headers = 1;
+	o.msg_header_prefix = "remerge";
+
+	ctx.abbrev = DEFAULT_ABBREV;
+	repo_format_commit_message(the_repository, parent1, "%h (%s)",
+				   &parent1_desc, &ctx);
+	repo_format_commit_message(the_repository, parent2, "%h (%s)",
+				   &parent2_desc, &ctx);
+	o.branch1 = parent1_desc.buf;
+	o.branch2 = parent2_desc.buf;
+
+	/* Parse the relevant commits and get the merge bases */
+	parse_commit_or_die(parent1);
+	parse_commit_or_die(parent2);
+	bases = repo_get_merge_bases(the_repository, parent1, parent2);
+
+	/* Re-merge the parents */
+	merge_incore_recursive(&o, bases, parent1, parent2, &res);
+
+	/* Show the diff */
+	setup_additional_headers(&opt->diffopt, res.path_messages);
+	diff_tree_oid(&res.tree->object.oid, oid, "", &opt->diffopt);
+	log_tree_diff_flush(opt);
+
+	/* Cleanup */
+	cleanup_additional_headers(&opt->diffopt);
+	strbuf_release(&parent1_desc);
+	strbuf_release(&parent2_desc);
+	merge_finalize(&o, &res);
+
+	/* Clean up the contents of the temporary object directory */
+	if (opt->remerge_objdir)
+		tmp_objdir_discard_objects(opt->remerge_objdir);
+	else
+		BUG("did a remerge diff without remerge_objdir?!?");
+
 	return !opt->loginfo;
 }
 
@@ -899,15 +1040,21 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 	int showed_log;
 	struct commit_list *parents;
 	struct object_id *oid;
+	int is_merge;
+	int all_need_diff = opt->diff || opt->diffopt.flags.exit_with_status;
 
-	if (!opt->diff && !opt->diffopt.flags.exit_with_status)
+	if (!all_need_diff && !opt->merges_need_diff)
 		return 0;
 
 	parse_commit_or_die(commit);
 	oid = get_commit_tree_oid(commit);
 
-	/* Root commit? */
 	parents = get_saved_parents(opt, commit);
+	is_merge = parents && parents->next;
+	if (!is_merge && !all_need_diff)
+		return 0;
+
+	/* Root commit? */
 	if (!parents) {
 		if (opt->show_root_diff) {
 			diff_root_tree_oid(oid, "", &opt->diffopt);
@@ -916,16 +1063,28 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 		return !opt->loginfo;
 	}
 
-	/* More than one parent? */
-	if (parents->next) {
-		if (opt->ignore_merges)
-			return 0;
-		else if (opt->combine_merges)
-			return do_diff_combined(opt, commit);
-		else if (!opt->first_parent_only) {
-			/* If we show multiple diffs, show the parent info */
-			log->parent = parents->item;
+	if (is_merge) {
+		int octopus = (parents->next->next != NULL);
+
+		if (opt->remerge_diff) {
+			if (octopus) {
+				show_log(opt);
+				fprintf(opt->diffopt.file,
+					"diff: warning: Skipping remerge-diff "
+					"for octopus merges.\n");
+				return 1;
+			}
+			return do_remerge_diff(opt, parents, oid);
 		}
+		if (opt->combine_merges)
+			return do_diff_combined(opt, commit);
+		if (opt->separate_merges) {
+			if (!opt->first_parent_merges) {
+				/* Show parent info for multiple diffs */
+				log->parent = parents->item;
+			}
+		} else
+			return 0;
 	}
 
 	showed_log = 0;
@@ -941,7 +1100,7 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 
 		/* Set up the log info for the next parent, if any.. */
 		parents = parents->next;
-		if (!parents || opt->first_parent_only)
+		if (!parents || opt->first_parent_merges)
 			break;
 		log->parent = parents->item;
 		opt->loginfo = log;
@@ -952,13 +1111,16 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 int log_tree_commit(struct rev_info *opt, struct commit *commit)
 {
 	struct log_info log;
-	int shown, close_file = opt->diffopt.close_file;
+	int shown;
+	/* maybe called by e.g. cmd_log_walk(), maybe stand-alone */
+	int no_free = opt->diffopt.no_free;
 
 	log.commit = commit;
 	log.parent = NULL;
 	opt->loginfo = &log;
-	opt->diffopt.close_file = 0;
+	opt->diffopt.no_free = 1;
 
+	/* NEEDSWORK: no restoring of no_free?  Why? */
 	if (opt->line_level_traverse)
 		return line_log_print(opt, commit);
 
@@ -974,7 +1136,7 @@ int log_tree_commit(struct rev_info *opt, struct commit *commit)
 		fprintf(opt->diffopt.file, "\n%s\n", opt->break_bar);
 	opt->loginfo = NULL;
 	maybe_flush_or_die(opt->diffopt.file, "stdout");
-	if (close_file)
-		fclose(opt->diffopt.file);
+	opt->diffopt.no_free = no_free;
+	diff_free(&opt->diffopt);
 	return shown;
 }

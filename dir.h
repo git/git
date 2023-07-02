@@ -1,8 +1,10 @@
 #ifndef DIR_H
 #define DIR_H
 
-#include "cache.h"
+#include "hash-ll.h"
 #include "hashmap.h"
+#include "pathspec.h"
+#include "statinfo.h"
 #include "strbuf.h"
 
 /**
@@ -188,6 +190,7 @@ struct untracked_cache {
 	struct oid_stat ss_info_exclude;
 	struct oid_stat ss_excludes_file;
 	const char *exclude_per_dir;
+	char *exclude_per_dir_to_free;
 	struct strbuf ident;
 	/*
 	 * dir_struct#flags must match dir_flags or the untracked
@@ -210,17 +213,6 @@ struct untracked_cache {
  * of whether or not the traversal recursively descends into subdirectories.
  */
 struct dir_struct {
-
-	/* The number of members in `entries[]` array. */
-	int nr;
-
-	/* Internal use; keeps track of allocation of `entries[]` array.*/
-	int alloc;
-
-	/* The number of members in `ignored[]` array. */
-	int ignored_nr;
-
-	int ignored_alloc;
 
 	/* bit-field of options */
 	enum {
@@ -286,57 +278,86 @@ struct dir_struct {
 		DIR_SKIP_NESTED_GIT = 1<<9
 	} flags;
 
+	/* The number of members in `entries[]` array. */
+	int nr; /* output only */
+
+	/* The number of members in `ignored[]` array. */
+	int ignored_nr; /* output only */
+
 	/* An array of `struct dir_entry`, each element of which describes a path. */
-	struct dir_entry **entries;
+	struct dir_entry **entries; /* output only */
 
 	/**
 	 * used for ignored paths with the `DIR_SHOW_IGNORED_TOO` and
 	 * `DIR_COLLECT_IGNORED` flags.
 	 */
-	struct dir_entry **ignored;
+	struct dir_entry **ignored; /* output only */
+
+	/* Enable/update untracked file cache if set */
+	struct untracked_cache *untracked;
 
 	/**
-	 * The name of the file to be read in each directory for excluded files
-	 * (typically `.gitignore`).
+	 * Deprecated: ls-files is the only allowed caller; all other callers
+	 * should leave this as NULL; it pre-dated the
+	 * setup_standard_excludes() mechanism that replaces this.
+	 *
+	 * This field tracks the name of the file to be read in each directory
+	 * for excluded files (typically `.gitignore`).
 	 */
 	const char *exclude_per_dir;
 
-	/*
-	 * We maintain three groups of exclude pattern lists:
-	 *
-	 * EXC_CMDL lists patterns explicitly given on the command line.
-	 * EXC_DIRS lists patterns obtained from per-directory ignore files.
-	 * EXC_FILE lists patterns from fallback ignore files, e.g.
-	 *   - .git/info/exclude
-	 *   - core.excludesfile
-	 *
-	 * Each group contains multiple exclude lists, a single list
-	 * per source.
-	 */
+	struct dir_struct_internal {
+		/* Keeps track of allocation of `entries[]` array.*/
+		int alloc;
+
+		/* Keeps track of allocation of `ignored[]` array. */
+		int ignored_alloc;
+
+		/*
+		 * We maintain three groups of exclude pattern lists:
+		 *
+		 * EXC_CMDL lists patterns explicitly given on the command line.
+		 * EXC_DIRS lists patterns obtained from per-directory ignore
+		 *          files.
+		 * EXC_FILE lists patterns from fallback ignore files, e.g.
+		 *   - .git/info/exclude
+		 *   - core.excludesfile
+		 *
+		 * Each group contains multiple exclude lists, a single list
+		 * per source.
+		 */
 #define EXC_CMDL 0
 #define EXC_DIRS 1
 #define EXC_FILE 2
-	struct exclude_list_group exclude_list_group[3];
+		struct exclude_list_group exclude_list_group[3];
 
-	/*
-	 * Temporary variables which are used during loading of the
-	 * per-directory exclude lists.
-	 *
-	 * exclude_stack points to the top of the exclude_stack, and
-	 * basebuf contains the full path to the current
-	 * (sub)directory in the traversal. Exclude points to the
-	 * matching exclude struct if the directory is excluded.
-	 */
-	struct exclude_stack *exclude_stack;
-	struct path_pattern *pattern;
-	struct strbuf basebuf;
+		/*
+		 * Temporary variables which are used during loading of the
+		 * per-directory exclude lists.
+		 *
+		 * exclude_stack points to the top of the exclude_stack, and
+		 * basebuf contains the full path to the current
+		 * (sub)directory in the traversal. Exclude points to the
+		 * matching exclude struct if the directory is excluded.
+		 */
+		struct exclude_stack *exclude_stack;
+		struct path_pattern *pattern;
+		struct strbuf basebuf;
 
-	/* Enable untracked file cache if set */
-	struct untracked_cache *untracked;
-	struct oid_stat ss_info_exclude;
-	struct oid_stat ss_excludes_file;
-	unsigned unmanaged_exclude_files;
+		/* Additional metadata related to 'untracked' */
+		struct oid_stat ss_info_exclude;
+		struct oid_stat ss_excludes_file;
+		unsigned unmanaged_exclude_files;
+
+		/* Stats about the traversal */
+		unsigned visited_paths;
+		unsigned visited_directories;
+	} internal;
 };
+
+#define DIR_INIT { 0 }
+
+struct dirent *readdir_skip_dot_and_dotdot(DIR *dirp);
 
 /*Count the number of slashes for string s*/
 int count_slashes(const char *s);
@@ -354,14 +375,8 @@ int count_slashes(const char *s);
 int simple_length(const char *match);
 int no_wildcard(const char *string);
 char *common_prefix(const struct pathspec *pathspec);
-int match_pathspec(const struct index_state *istate,
-		   const struct pathspec *pathspec,
-		   const char *name, int namelen,
-		   int prefix, char *seen, int is_dir);
 int report_path_error(const char *ps_matched, const struct pathspec *pathspec);
 int within_depth(const char *name, int namelen, int depth, int max_depth);
-
-void dir_init(struct dir_struct *dir);
 
 int fill_directory(struct dir_struct *dir,
 		   struct index_state *istate,
@@ -388,6 +403,14 @@ enum pattern_match_result path_matches_pattern_list(const char *pathname,
 				const char *basename, int *dtype,
 				struct pattern_list *pl,
 				struct index_state *istate);
+
+int init_sparse_checkout_patterns(struct index_state *state);
+
+int path_in_sparse_checkout(const char *path,
+			    struct index_state *istate);
+int path_in_cone_mode_sparse_checkout(const char *path,
+				      struct index_state *istate);
+
 struct dir_entry *dir_add_ignored(struct dir_struct *dir,
 				  struct index_state *istate,
 				  const char *pathname, int len);
@@ -400,7 +423,7 @@ int match_basename(const char *, int,
 		   const char *, int, int, unsigned);
 int match_pathname(const char *, int,
 		   const char *, int,
-		   const char *, int, int, unsigned);
+		   const char *, int, int);
 
 struct path_pattern *last_matching_pattern(struct dir_struct *dir,
 					   struct index_state *istate,
@@ -420,7 +443,8 @@ int hashmap_contains_parent(struct hashmap *map,
 struct pattern_list *add_pattern_list(struct dir_struct *dir,
 				      int group_type, const char *src);
 int add_patterns_from_file_to_list(const char *fname, const char *base, int baselen,
-				   struct pattern_list *pl, struct  index_state *istate);
+				   struct pattern_list *pl, struct index_state *istate,
+				   unsigned flags);
 void add_patterns_from_file(struct dir_struct *, const char *fname);
 int add_patterns_from_blob_to_list(struct object_id *oid,
 				   const char *base, int baselen,
@@ -446,8 +470,21 @@ static inline int is_dot_or_dotdot(const char *name)
 
 int is_empty_dir(const char *dir);
 
+/*
+ * Retrieve the "humanish" basename of the given Git URL.
+ *
+ * For example:
+ * 	/path/to/repo.git => "repo"
+ * 	host.xz:foo/.git => "foo"
+ * 	http://example.com/user/bar.baz => "bar.baz"
+ */
+char *git_url_basename(const char *repo, int is_bundle, int is_bare);
+void strip_dir_trailing_slashes(char *dir);
+
 void setup_standard_excludes(struct dir_struct *dir);
 
+char *get_sparse_checkout_filename(void);
+int get_sparse_checkout_patterns(struct pattern_list *pl);
 
 /* Constants for remove_dir_recursively: */
 
@@ -467,6 +504,9 @@ void setup_standard_excludes(struct dir_struct *dir);
 /* Remove the contents of path, but leave path itself. */
 #define REMOVE_DIR_KEEP_TOPLEVEL 04
 
+/* Remove the_original_cwd too */
+#define REMOVE_DIR_PURGE_ORIGINAL_CWD 0x08
+
 /*
  * Remove path and its contents, recursively. flags is a combination
  * of the above REMOVE_DIR_* constants. Return 0 on success.
@@ -476,11 +516,17 @@ void setup_standard_excludes(struct dir_struct *dir);
  */
 int remove_dir_recursively(struct strbuf *path, int flag);
 
-/* tries to remove the path with empty directories along it, ignores ENOENT */
+/*
+ * Tries to remove the path, along with leading empty directories so long as
+ * those empty directories are not startup_info->original_cwd.  Ignores
+ * ENOENT.
+ */
 int remove_path(const char *path);
 
 int fspathcmp(const char *a, const char *b);
+int fspatheq(const char *a, const char *b);
 int fspathncmp(const char *a, const char *b, size_t count);
+unsigned int fspathhash(const char *str);
 
 /*
  * The prefix part of pattern must not contains wildcards.
@@ -490,21 +536,12 @@ int git_fnmatch(const struct pathspec_item *item,
 		const char *pattern, const char *string,
 		int prefix);
 
-int submodule_path_match(const struct index_state *istate,
+int submodule_path_match(struct index_state *istate,
 			 const struct pathspec *ps,
 			 const char *submodule_name,
 			 char *seen);
 
-static inline int ce_path_match(const struct index_state *istate,
-				const struct cache_entry *ce,
-				const struct pathspec *pathspec,
-				char *seen)
-{
-	return match_pathspec(istate, pathspec, ce->name, ce_namelen(ce), 0, seen,
-			      S_ISDIR(ce->ce_mode) || S_ISGITLINK(ce->ce_mode));
-}
-
-static inline int dir_path_match(const struct index_state *istate,
+static inline int dir_path_match(struct index_state *istate,
 				 const struct dir_entry *ent,
 				 const struct pathspec *pathspec,
 				 int prefix, char *seen)
@@ -541,4 +578,68 @@ void connect_work_tree_and_git_dir(const char *work_tree,
 void relocate_gitdir(const char *path,
 		     const char *old_git_dir,
 		     const char *new_git_dir);
+
+/**
+ * The "enum path_matches_kind" determines how path_match_flags() will
+ * behave. The flags come in sets, and one (and only one) must be
+ * provided out of each "set":
+ *
+ * PATH_MATCH_NATIVE:
+ *	Path separator is is_dir_sep()
+ * PATH_MATCH_XPLATFORM:
+ *	Path separator is is_xplatform_dir_sep()
+ *
+ * Do we use is_dir_sep() to check for a directory separator
+ * (*_NATIVE), or do we always check for '/' or '\' (*_XPLATFORM). The
+ * "*_NATIVE" version on Windows is the same as "*_XPLATFORM",
+ * everywhere else "*_NATIVE" means "only /".
+ *
+ * PATH_MATCH_STARTS_WITH_DOT_SLASH:
+ *	Match a path starting with "./"
+ * PATH_MATCH_STARTS_WITH_DOT_DOT_SLASH:
+ *	Match a path starting with "../"
+ *
+ * The "/" in the above is adjusted based on the "*_NATIVE" and
+ * "*_XPLATFORM" flags.
+ */
+enum path_match_flags {
+	PATH_MATCH_NATIVE = 1 << 0,
+	PATH_MATCH_XPLATFORM = 1 << 1,
+	PATH_MATCH_STARTS_WITH_DOT_SLASH = 1 << 2,
+	PATH_MATCH_STARTS_WITH_DOT_DOT_SLASH = 1 << 3,
+};
+#define PATH_MATCH_KINDS_MASK (PATH_MATCH_STARTS_WITH_DOT_SLASH | \
+	PATH_MATCH_STARTS_WITH_DOT_DOT_SLASH)
+#define PATH_MATCH_PLATFORM_MASK (PATH_MATCH_NATIVE | PATH_MATCH_XPLATFORM)
+
+/**
+ * path_match_flags() checks if a given "path" matches a given "enum
+ * path_match_flags" criteria.
+ */
+int path_match_flags(const char *const path, const enum path_match_flags f);
+
+/**
+ * starts_with_dot_slash_native(): convenience wrapper for
+ * path_match_flags() with PATH_MATCH_STARTS_WITH_DOT_SLASH and
+ * PATH_MATCH_NATIVE.
+ */
+static inline int starts_with_dot_slash_native(const char *const path)
+{
+	const enum path_match_flags what = PATH_MATCH_STARTS_WITH_DOT_SLASH;
+
+	return path_match_flags(path, what | PATH_MATCH_NATIVE);
+}
+
+/**
+ * starts_with_dot_slash_native(): convenience wrapper for
+ * path_match_flags() with PATH_MATCH_STARTS_WITH_DOT_DOT_SLASH and
+ * PATH_MATCH_NATIVE.
+ */
+static inline int starts_with_dot_dot_slash_native(const char *const path)
+{
+	const enum path_match_flags what = PATH_MATCH_STARTS_WITH_DOT_DOT_SLASH;
+
+	return path_match_flags(path, what | PATH_MATCH_NATIVE);
+}
+
 #endif

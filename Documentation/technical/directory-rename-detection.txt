@@ -2,9 +2,9 @@ Directory rename detection
 ==========================
 
 Rename detection logic in diffcore-rename that checks for renames of
-individual files is aggregated and analyzed in merge-recursive for cases
-where combinations of renames indicate that a full directory has been
-renamed.
+individual files is also aggregated there and then analyzed in either
+merge-ort or merge-recursive for cases where combinations of renames
+indicate that a full directory has been renamed.
 
 Scope of abilities
 ------------------
@@ -18,7 +18,8 @@ It is perhaps easiest to start with an example:
 More interesting possibilities exist, though, such as:
 
   * one side of history renames x -> z, and the other renames some file to
-    x/e, causing the need for the merge to do a transitive rename.
+    x/e, causing the need for the merge to do a transitive rename so that
+    the rename ends up at z/e.
 
   * one side of history renames x -> z, but also renames all files within x.
     For example, x/a -> z/alpha, x/b -> z/bravo, etc.
@@ -35,7 +36,7 @@ More interesting possibilities exist, though, such as:
     directory itself contained inner directories that were renamed to yet
     other locations).
 
-  * combinations of the above; see t/t6043-merge-rename-directories.sh for
+  * combinations of the above; see t/t6423-merge-rename-directories.sh for
     various interesting cases.
 
 Limitations -- applicability of directory renames
@@ -62,18 +63,18 @@ directory rename detection applies:
 Limitations -- detailed rules and testcases
 -------------------------------------------
 
-t/t6043-merge-rename-directories.sh contains extensive tests and commentary
+t/t6423-merge-rename-directories.sh contains extensive tests and commentary
 which generate and explore the rules listed above.  It also lists a few
 additional rules:
 
   a) If renames split a directory into two or more others, the directory
      with the most renames, "wins".
 
-  b) Avoid directory-rename-detection for a path, if that path is the
-     source of a rename on either side of a merge.
-
-  c) Only apply implicit directory renames to directories if the other side
+  b) Only apply implicit directory renames to directories if the other side
      of history is the one doing the renaming.
+
+  c) Do not perform directory rename detection for directories which had no
+     new paths added to them.
 
 Limitations -- support in different commands
 --------------------------------------------
@@ -87,9 +88,11 @@ directory rename detection support in:
     Folks have requested in the past that `git diff` detect directory
     renames and somehow simplify its output.  It is not clear whether this
     would be desirable or how the output should be simplified, so this was
-    simply not implemented.  Further, to implement this, directory rename
-    detection logic would need to move from merge-recursive to
-    diffcore-rename.
+    simply not implemented.  Also, while diffcore-rename has most of the
+    logic for detecting directory renames, some of the logic is still found
+    within merge-ort and merge-recursive.  Fully supporting directory
+    rename detection in diffs would require copying or moving the remaining
+    bits of logic to the diff machinery.
 
   * am
 

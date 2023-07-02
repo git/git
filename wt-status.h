@@ -77,9 +77,8 @@ enum wt_status_format {
 	STATUS_FORMAT_UNSPECIFIED
 };
 
-#define HEAD_DETACHED_AT _("HEAD detached at ")
-#define HEAD_DETACHED_FROM _("HEAD detached from ")
 #define SPARSE_CHECKOUT_DISABLED -1
+#define SPARSE_CHECKOUT_SPARSE_INDEX -2
 
 struct wt_status_state {
 	int merge_in_progress;
@@ -151,7 +150,14 @@ void wt_status_add_cut_line(FILE *fp);
 void wt_status_prepare(struct repository *r, struct wt_status *s);
 void wt_status_print(struct wt_status *s);
 void wt_status_collect(struct wt_status *s);
+/*
+ * Frees the buffers allocated by wt_status_collect.
+ */
 void wt_status_collect_free_buffers(struct wt_status *s);
+/*
+ * Frees the buffers of the wt_status_state.
+ */
+void wt_status_state_free_buffers(struct wt_status_state *s);
 void wt_status_get_state(struct repository *repo,
 			 struct wt_status_state *state,
 			 int get_detached_from);

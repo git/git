@@ -77,11 +77,11 @@
 
 struct tempfile {
 	volatile struct volatile_list_head list;
-	volatile sig_atomic_t active;
 	volatile int fd;
 	FILE *volatile fp;
 	volatile pid_t owner;
 	struct strbuf filename;
+	char *directory;
 };
 
 /*
@@ -199,6 +199,18 @@ static inline struct tempfile *xmks_tempfile(const char *filename_template)
 }
 
 /*
+ * Attempt to create a temporary directory in $TMPDIR and to create and
+ * open a file in that new directory. Derive the directory name from the
+ * template in the manner of mkdtemp(). Arrange for directory and file
+ * to be deleted if the program exits before they are deleted
+ * explicitly. On success return a tempfile whose "filename" member
+ * contains the full path of the file and its "fd" member is open for
+ * writing the file. On error return NULL and set errno appropriately.
+ */
+struct tempfile *mks_tempfile_dt(const char *directory_template,
+				 const char *filename);
+
+/*
  * Associate a stdio stream with the temporary file (which must still
  * be open). Return `NULL` (*without* deleting the file) on error. The
  * stream is closed automatically when `close_tempfile_gently()` is called or
@@ -208,7 +220,7 @@ FILE *fdopen_tempfile(struct tempfile *tempfile, const char *mode);
 
 static inline int is_tempfile_active(struct tempfile *tempfile)
 {
-	return tempfile && tempfile->active;
+	return !!tempfile;
 }
 
 /*

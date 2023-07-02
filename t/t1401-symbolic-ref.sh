@@ -1,23 +1,27 @@
 #!/bin/sh
 
 test_description='basic symbolic-ref tests'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # If the tests munging HEAD fail, they can break detection of
 # the git repo, meaning that further tests will operate on
 # the surrounding git repo instead of the trash directory.
 reset_to_sane() {
-	echo ref: refs/heads/foo >.git/HEAD
+	rm -rf .git &&
+	"$TAR" xf .git.tar
 }
 
-test_expect_success 'symbolic-ref writes HEAD' '
+test_expect_success 'setup' '
 	git symbolic-ref HEAD refs/heads/foo &&
-	echo ref: refs/heads/foo >expect &&
-	test_cmp expect .git/HEAD
+	test_commit file &&
+	"$TAR" cf .git.tar .git/
 '
 
-test_expect_success 'symbolic-ref reads HEAD' '
-	echo refs/heads/foo >expect &&
+test_expect_success 'symbolic-ref read/write roundtrip' '
+	git symbolic-ref HEAD refs/heads/read-write-roundtrip &&
+	echo refs/heads/read-write-roundtrip >expect &&
 	git symbolic-ref HEAD >actual &&
 	test_cmp expect actual
 '
@@ -25,12 +29,14 @@ test_expect_success 'symbolic-ref reads HEAD' '
 test_expect_success 'symbolic-ref refuses non-ref for HEAD' '
 	test_must_fail git symbolic-ref HEAD foo
 '
+
 reset_to_sane
 
 test_expect_success 'symbolic-ref refuses bare sha1' '
-	echo content >file && git add file && git commit -m one &&
-	test_must_fail git symbolic-ref HEAD $(git rev-parse HEAD)
+	rev=$(git rev-parse HEAD) &&
+	test_must_fail git symbolic-ref HEAD "$rev"
 '
+
 reset_to_sane
 
 test_expect_success 'HEAD cannot be removed' '
@@ -42,16 +48,16 @@ reset_to_sane
 test_expect_success 'symbolic-ref can be deleted' '
 	git symbolic-ref NOTHEAD refs/heads/foo &&
 	git symbolic-ref -d NOTHEAD &&
-	test_path_is_file .git/refs/heads/foo &&
-	test_path_is_missing .git/NOTHEAD
+	git rev-parse refs/heads/foo &&
+	test_must_fail git symbolic-ref NOTHEAD
 '
 reset_to_sane
 
 test_expect_success 'symbolic-ref can delete dangling symref' '
 	git symbolic-ref NOTHEAD refs/heads/missing &&
 	git symbolic-ref -d NOTHEAD &&
-	test_path_is_missing .git/refs/heads/missing &&
-	test_path_is_missing .git/NOTHEAD
+	test_must_fail git rev-parse refs/heads/missing &&
+	test_must_fail git symbolic-ref NOTHEAD
 '
 reset_to_sane
 
@@ -157,6 +163,64 @@ test_expect_success 'symbolic-ref can resolve d/f name (ENOTDIR)' '
 	git update-ref refs/heads/outer/inner $head &&
 	echo refs/heads/outer >expect &&
 	git symbolic-ref HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'symbolic-ref refuses invalid target for non-HEAD' '
+	test_must_fail git symbolic-ref refs/heads/invalid foo..bar
+'
+
+test_expect_success 'symbolic-ref allows top-level target for non-HEAD' '
+	git symbolic-ref refs/heads/top-level FETCH_HEAD &&
+	git update-ref FETCH_HEAD HEAD &&
+	test_cmp_rev top-level HEAD
+'
+
+test_expect_success 'symbolic-ref pointing at another' '
+	git update-ref refs/heads/maint-2.37 HEAD &&
+	git symbolic-ref refs/heads/maint refs/heads/maint-2.37 &&
+	git checkout maint &&
+
+	git symbolic-ref HEAD >actual &&
+	echo refs/heads/maint-2.37 >expect &&
+	test_cmp expect actual &&
+
+	git symbolic-ref --no-recurse HEAD >actual &&
+	echo refs/heads/maint >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'symbolic-ref --short handles complex utf8 case' '
+	name="测试-加-增加-加-增加" &&
+	git symbolic-ref TEST_SYMREF "refs/heads/$name" &&
+	# In the real world, we saw problems with this case only
+	# when the locale includes UTF-8. Set it here to try to make things as
+	# hard as possible for us to pass, but in practice we should do the
+	# right thing regardless (and of course some platforms may not even
+	# have this locale).
+	LC_ALL=en_US.UTF-8 git symbolic-ref --short TEST_SYMREF >actual &&
+	echo "$name" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'symbolic-ref --short handles name with suffix' '
+	git symbolic-ref TEST_SYMREF "refs/remotes/origin/HEAD" &&
+	git symbolic-ref --short TEST_SYMREF >actual &&
+	echo "origin" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'symbolic-ref --short handles almost-matching name' '
+	git symbolic-ref TEST_SYMREF "refs/headsXfoo" &&
+	git symbolic-ref --short TEST_SYMREF >actual &&
+	echo "headsXfoo" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'symbolic-ref --short handles name with percent' '
+	git symbolic-ref TEST_SYMREF "refs/heads/%foo" &&
+	git symbolic-ref --short TEST_SYMREF >actual &&
+	echo "%foo" >expect &&
 	test_cmp expect actual
 '
 

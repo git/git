@@ -2,7 +2,11 @@
 
 test_description='recursive merge corner cases involving criss-cross merges'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-merge.sh
 
 #
 #  L1  L2
@@ -15,19 +19,13 @@ test_description='recursive merge corner cases involving criss-cross merges'
 #
 
 test_expect_success 'setup basic criss-cross + rename with no modifications' '
-	test_create_repo basic-rename &&
+	git init basic-rename &&
 	(
 		cd basic-rename &&
 
 		ten="0 1 2 3 4 5 6 7 8 9" &&
-		for i in $ten
-		do
-			echo line $i in a sample file
-		done >one &&
-		for i in $ten
-		do
-			echo line $i in another sample file
-		done >two &&
+		printf "line %d in a sample file\n" $ten >one &&
+		printf "line %d in another sample file\n" $ten >two &&
 		git add one two &&
 		test_tick && git commit -m initial &&
 
@@ -87,19 +85,13 @@ test_expect_success 'merge simple rename+criss-cross with no modifications' '
 #
 
 test_expect_success 'setup criss-cross + rename merges with basic modification' '
-	test_create_repo rename-modify &&
+	git init rename-modify &&
 	(
 		cd rename-modify &&
 
 		ten="0 1 2 3 4 5 6 7 8 9" &&
-		for i in $ten
-		do
-			echo line $i in a sample file
-		done >one &&
-		for i in $ten
-		do
-			echo line $i in another sample file
-		done >two &&
+		printf "line %d in a sample file\n" $ten >one &&
+		printf "line %d in another sample file\n" $ten >two &&
 		git add one two &&
 		test_tick && git commit -m initial &&
 
@@ -168,7 +160,7 @@ test_expect_success 'merge criss-cross + rename merges with basic modification' 
 #
 
 test_expect_success 'setup differently handled merges of rename/add conflict' '
-	test_create_repo rename-add &&
+	git init rename-add &&
 	(
 		cd rename-add &&
 
@@ -332,7 +324,7 @@ test_expect_success 'git detects differently handled merges conflict, swapped' '
 # Merging commits D & E should result in modify/delete conflict.
 
 test_expect_success 'setup criss-cross + modify/delete resolved differently' '
-	test_create_repo modify-delete &&
+	git init modify-delete &&
 	(
 		cd modify-delete &&
 
@@ -384,7 +376,7 @@ test_expect_success 'git detects conflict merging criss-cross+modify/delete' '
 		test_line_count = 2 out &&
 
 		git rev-parse >expect       \
-			master:file  B:file &&
+			main:file    B:file &&
 		git rev-parse   >actual      \
 			:1:file      :2:file &&
 		test_cmp expect actual
@@ -406,7 +398,7 @@ test_expect_success 'git detects conflict merging criss-cross+modify/delete, rev
 		test_line_count = 2 out &&
 
 		git rev-parse >expect       \
-			master:file  B:file &&
+			main:file    B:file &&
 		git rev-parse   >actual      \
 			:1:file      :3:file &&
 		test_cmp expect actual
@@ -507,7 +499,7 @@ test_expect_success 'git detects conflict merging criss-cross+modify/delete, rev
 #
 
 test_expect_success 'setup differently handled merges of directory/file conflict' '
-	test_create_repo directory-file &&
+	git init directory-file &&
 	(
 		cd directory-file &&
 
@@ -537,9 +529,15 @@ test_expect_success 'setup differently handled merges of directory/file conflict
 
 		git checkout B^0 &&
 		test_must_fail git merge C^0 &&
-		git clean -fd &&
-		git rm -rf a/ &&
-		git rm a &&
+		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		then
+			git rm -rf a/ &&
+			git rm a~HEAD
+		else
+			git clean -fd &&
+			git rm -rf a/ &&
+			git rm a
+		fi &&
 		git cat-file -p B:a >a2 &&
 		git add a2 &&
 		git commit -m D2 &&
@@ -558,7 +556,12 @@ test_expect_success 'setup differently handled merges of directory/file conflict
 
 		git checkout C^0 &&
 		test_must_fail git merge B^0 &&
-		git clean -fd &&
+		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		then
+			git rm a~B^0
+		else
+			git clean -fd
+		fi &&
 		git rm -rf a/ &&
 		test_write_lines 1 2 3 4 5 6 7 8 >a &&
 		git add a &&
@@ -567,9 +570,15 @@ test_expect_success 'setup differently handled merges of directory/file conflict
 
 		git checkout C^0 &&
 		test_must_fail git merge B^0 &&
-		git clean -fd &&
-		git rm -rf a/ &&
-		git rm a &&
+		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		then
+			git rm -rf a/ &&
+			git rm a~B^0
+		else
+			git clean -fd &&
+			git rm -rf a/ &&
+			git rm a
+		fi &&
 		test_write_lines 1 2 3 4 5 6 7 8 >a2 &&
 		git add a2 &&
 		git commit -m E4 &&
@@ -587,18 +596,34 @@ test_expect_success 'merge of D1 & E1 fails but has appropriate contents' '
 
 		test_must_fail git merge -s recursive E1^0 &&
 
-		git ls-files -s >out &&
-		test_line_count = 2 out &&
-		git ls-files -u >out &&
-		test_line_count = 1 out &&
-		git ls-files -o >out &&
-		test_line_count = 1 out &&
+		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		then
+			git ls-files -s >out &&
+			test_line_count = 3 out &&
+			git ls-files -u >out &&
+			test_line_count = 2 out &&
+			git ls-files -o >out &&
+			test_line_count = 1 out &&
 
-		git rev-parse >expect    \
-			A:ignore-me  B:a &&
-		git rev-parse   >actual   \
-			:0:ignore-me :2:a &&
-		test_cmp expect actual
+			git rev-parse >expect    \
+				A:ignore-me  B:a  D1:a &&
+			git rev-parse   >actual   \
+				:0:ignore-me :1:a :2:a &&
+			test_cmp expect actual
+		else
+			git ls-files -s >out &&
+			test_line_count = 2 out &&
+			git ls-files -u >out &&
+			test_line_count = 1 out &&
+			git ls-files -o >out &&
+			test_line_count = 1 out &&
+
+			git rev-parse >expect    \
+				A:ignore-me  B:a &&
+			git rev-parse   >actual   \
+				:0:ignore-me :2:a &&
+			test_cmp expect actual
+		fi
 	)
 '
 
@@ -612,18 +637,34 @@ test_expect_success 'merge of E1 & D1 fails but has appropriate contents' '
 
 		test_must_fail git merge -s recursive D1^0 &&
 
-		git ls-files -s >out &&
-		test_line_count = 2 out &&
-		git ls-files -u >out &&
-		test_line_count = 1 out &&
-		git ls-files -o >out &&
-		test_line_count = 1 out &&
+		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		then
+			git ls-files -s >out &&
+			test_line_count = 3 out &&
+			git ls-files -u >out &&
+			test_line_count = 2 out &&
+			git ls-files -o >out &&
+			test_line_count = 1 out &&
 
-		git rev-parse >expect    \
-			A:ignore-me  B:a &&
-		git rev-parse   >actual   \
-			:0:ignore-me :3:a &&
-		test_cmp expect actual
+			git rev-parse >expect    \
+				A:ignore-me  B:a  D1:a &&
+			git rev-parse   >actual   \
+				:0:ignore-me :1:a :3:a &&
+			test_cmp expect actual
+		else
+			git ls-files -s >out &&
+			test_line_count = 2 out &&
+			git ls-files -u >out &&
+			test_line_count = 1 out &&
+			git ls-files -o >out &&
+			test_line_count = 1 out &&
+
+			git rev-parse >expect    \
+				A:ignore-me  B:a &&
+			git rev-parse   >actual   \
+				:0:ignore-me :3:a &&
+			test_cmp expect actual
+		fi
 	)
 '
 
@@ -637,17 +678,32 @@ test_expect_success 'merge of D1 & E2 fails but has appropriate contents' '
 
 		test_must_fail git merge -s recursive E2^0 &&
 
-		git ls-files -s >out &&
-		test_line_count = 4 out &&
-		git ls-files -u >out &&
-		test_line_count = 3 out &&
-		git ls-files -o >out &&
-		test_line_count = 2 out &&
+		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		then
+			git ls-files -s >out &&
+			test_line_count = 5 out &&
+			git ls-files -u >out &&
+			test_line_count = 4 out &&
+			git ls-files -o >out &&
+			test_line_count = 1 out &&
 
-		git rev-parse >expect    \
-			B:a   E2:a/file  C:a/file   A:ignore-me &&
-		git rev-parse   >actual   \
-			:2:a  :3:a/file  :1:a/file  :0:ignore-me &&
+			git rev-parse >expect    \
+				B:a       D1:a      E2:a/file  C:a/file   A:ignore-me &&
+			git rev-parse   >actual   \
+				:1:a~HEAD :2:a~HEAD :3:a/file  :1:a/file  :0:ignore-me
+		else
+			git ls-files -s >out &&
+			test_line_count = 4 out &&
+			git ls-files -u >out &&
+			test_line_count = 3 out &&
+			git ls-files -o >out &&
+			test_line_count = 2 out &&
+
+			git rev-parse >expect    \
+				B:a    E2:a/file  C:a/file   A:ignore-me &&
+			git rev-parse   >actual   \
+				:2:a   :3:a/file  :1:a/file  :0:ignore-me
+		fi &&
 		test_cmp expect actual &&
 
 		test_path_is_file a~HEAD
@@ -664,17 +720,32 @@ test_expect_success 'merge of E2 & D1 fails but has appropriate contents' '
 
 		test_must_fail git merge -s recursive D1^0 &&
 
-		git ls-files -s >out &&
-		test_line_count = 4 out &&
-		git ls-files -u >out &&
-		test_line_count = 3 out &&
-		git ls-files -o >out &&
-		test_line_count = 2 out &&
+		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		then
+			git ls-files -s >out &&
+			test_line_count = 5 out &&
+			git ls-files -u >out &&
+			test_line_count = 4 out &&
+			git ls-files -o >out &&
+			test_line_count = 1 out &&
 
-		git rev-parse >expect    \
-			B:a   E2:a/file  C:a/file   A:ignore-me &&
-		git rev-parse   >actual   \
-			:3:a  :2:a/file  :1:a/file  :0:ignore-me &&
+			git rev-parse >expect    \
+				B:a       D1:a      E2:a/file  C:a/file   A:ignore-me &&
+			git rev-parse   >actual   \
+				:1:a~D1^0 :3:a~D1^0 :2:a/file  :1:a/file  :0:ignore-me
+		else
+			git ls-files -s >out &&
+			test_line_count = 4 out &&
+			git ls-files -u >out &&
+			test_line_count = 3 out &&
+			git ls-files -o >out &&
+			test_line_count = 2 out &&
+
+			git rev-parse >expect    \
+				B:a   E2:a/file  C:a/file   A:ignore-me &&
+			git rev-parse   >actual   \
+				:3:a  :2:a/file  :1:a/file  :0:ignore-me
+		fi &&
 		test_cmp expect actual &&
 
 		test_path_is_file a~D1^0
@@ -706,7 +777,7 @@ test_expect_success 'merge of D1 & E3 succeeds' '
 	)
 '
 
-test_expect_success 'merge of D1 & E4 notifies user a and a2 are related' '
+test_expect_merge_algorithm failure success 'merge of D1 & E4 puts merge of a and a2 in both a and a2' '
 	test_when_finished "git -C directory-file reset --hard" &&
 	test_when_finished "git -C directory-file clean -fdqx" &&
 	(
@@ -724,7 +795,7 @@ test_expect_success 'merge of D1 & E4 notifies user a and a2 are related' '
 		test_line_count = 1 out &&
 
 		git rev-parse >expect                  \
-			A:ignore-me  B:a   D1:a  E4:a2 &&
+			A:ignore-me  B:a   E4:a2  E4:a2 &&
 		git rev-parse   >actual                \
 			:0:ignore-me :1:a~Temporary\ merge\ branch\ 2  :2:a  :3:a2 &&
 		test_cmp expect actual
@@ -796,7 +867,7 @@ test_expect_failure 'merge of D2 & E4 merges a2s & reports conflict for a/file' 
 # but that may cancel out at the final merge stage".
 
 test_expect_success 'setup rename/rename(1to2)/modify followed by what looks like rename/rename(2to1)/modify' '
-	test_create_repo rename-squared-squared &&
+	git init rename-squared-squared &&
 	(
 		cd rename-squared-squared &&
 
@@ -873,7 +944,7 @@ test_expect_success 'handle rename/rename(1to2)/modify followed by what looks li
 # content merge handled.
 
 test_expect_success 'setup criss-cross + rename/rename/add-source + modify/modify' '
-	test_create_repo rename-rename-add-source &&
+	git init rename-rename-add-source &&
 	(
 		cd rename-rename-add-source &&
 
@@ -961,7 +1032,7 @@ test_expect_failure 'detect rename/rename/add-source for virtual merge-base' '
 # base of B & C needs to not delete B:c for that to work, though...
 
 test_expect_success 'setup criss-cross+rename/rename/add-dest + simple modify' '
-	test_create_repo rename-rename-add-dest &&
+	git init rename-rename-add-dest &&
 	(
 		cd rename-rename-add-dest &&
 
@@ -1040,7 +1111,7 @@ test_expect_success 'virtual merge base handles rename/rename(1to2)/add-dest' '
 # git detect it?
 
 test_expect_success 'setup symlink modify/modify' '
-	test_create_repo symlink-modify-modify &&
+	git init symlink-modify-modify &&
 	(
 		cd symlink-modify-modify &&
 
@@ -1069,7 +1140,7 @@ test_expect_success 'setup symlink modify/modify' '
 	)
 '
 
-test_expect_failure 'check symlink modify/modify' '
+test_expect_merge_algorithm failure success 'check symlink modify/modify' '
 	(
 		cd symlink-modify-modify &&
 
@@ -1107,7 +1178,7 @@ test_expect_failure 'check symlink modify/modify' '
 # git detect it?
 
 test_expect_success 'setup symlink add/add' '
-	test_create_repo symlink-add-add &&
+	git init symlink-add-add &&
 	(
 		cd symlink-add-add &&
 
@@ -1135,7 +1206,7 @@ test_expect_success 'setup symlink add/add' '
 	)
 '
 
-test_expect_failure 'check symlink add/add' '
+test_expect_merge_algorithm failure success 'check symlink add/add' '
 	(
 		cd symlink-add-add &&
 
@@ -1173,11 +1244,11 @@ test_expect_failure 'check symlink add/add' '
 # git detect it?
 
 test_expect_success 'setup submodule modify/modify' '
-	test_create_repo submodule-modify-modify &&
+	git init submodule-modify-modify &&
 	(
 		cd submodule-modify-modify &&
 
-		test_create_repo submod &&
+		git init submod &&
 		(
 			cd submod &&
 			touch file-A &&
@@ -1223,7 +1294,7 @@ test_expect_success 'setup submodule modify/modify' '
 	)
 '
 
-test_expect_failure 'check submodule modify/modify' '
+test_expect_merge_algorithm failure success 'check submodule modify/modify' '
 	(
 		cd submodule-modify-modify &&
 
@@ -1261,11 +1332,11 @@ test_expect_failure 'check submodule modify/modify' '
 # git detect it?
 
 test_expect_success 'setup submodule add/add' '
-	test_create_repo submodule-add-add &&
+	git init submodule-add-add &&
 	(
 		cd submodule-add-add &&
 
-		test_create_repo submod &&
+		git init submod &&
 		(
 			cd submod &&
 			touch file-A &&
@@ -1311,7 +1382,7 @@ test_expect_success 'setup submodule add/add' '
 	)
 '
 
-test_expect_failure 'check submodule add/add' '
+test_expect_merge_algorithm failure success 'check submodule add/add' '
 	(
 		cd submodule-add-add &&
 
@@ -1348,11 +1419,11 @@ test_expect_failure 'check submodule add/add' '
 # This is an obvious add/add conflict for 'path'.  Can git detect it?
 
 test_expect_success 'setup conflicting entry types (submodule vs symlink)' '
-	test_create_repo submodule-symlink-add-add &&
+	git init submodule-symlink-add-add &&
 	(
 		cd submodule-symlink-add-add &&
 
-		test_create_repo path &&
+		git init path &&
 		(
 			cd path &&
 			touch file-B &&
@@ -1386,7 +1457,7 @@ test_expect_success 'setup conflicting entry types (submodule vs symlink)' '
 	)
 '
 
-test_expect_failure 'check conflicting entry types (submodule vs symlink)' '
+test_expect_merge_algorithm failure success 'check conflicting entry types (submodule vs symlink)' '
 	(
 		cd submodule-symlink-add-add &&
 
@@ -1423,7 +1494,7 @@ test_expect_failure 'check conflicting entry types (submodule vs symlink)' '
 # This is an obvious add/add mode conflict.  Can git detect it?
 
 test_expect_success 'setup conflicting modes for regular file' '
-	test_create_repo regular-file-mode-conflict &&
+	git init regular-file-mode-conflict &&
 	(
 		cd regular-file-mode-conflict &&
 
@@ -1473,12 +1544,12 @@ test_expect_failure 'check conflicting modes for regular file' '
 # Setup:
 #          L1---L2
 #         /  \ /  \
-#   master    X    ?
+#     main    X    ?
 #         \  / \  /
 #          R1---R2
 #
 # Where:
-#   master has two files, named 'b' and 'a'
+#   main has two files, named 'b' and 'a'
 #   branches L1 and R1 both modify each of the two files in conflicting ways
 #
 #   L2 is a merge of R1 into L1; more on it later.
@@ -1500,15 +1571,12 @@ test_expect_failure 'check conflicting modes for regular file' '
 #   to ensure that we handle it as well as practical.
 
 test_expect_success 'setup nested conflicts' '
-	test_create_repo nested_conflicts &&
+	git init nested_conflicts &&
 	(
 		cd nested_conflicts &&
 
 		# Create some related files now
-		for i in $(test_seq 1 10)
-		do
-			echo Random base content line $i
-		done >initial &&
+		printf "Random base content line %d\n" $(test_seq 1 10) >initial &&
 
 		cp initial b_L1 &&
 		cp initial b_R1 &&
@@ -1583,7 +1651,7 @@ test_expect_success 'check nested conflicts' '
 		cd nested_conflicts &&
 
 		git clean -f &&
-		MASTER=$(git rev-parse --short master) &&
+		MAIN=$(git rev-parse --short main) &&
 		git checkout L2^0 &&
 
 		# Merge must fail; there is a conflict
@@ -1599,24 +1667,24 @@ test_expect_success 'check nested conflicts' '
 		test_line_count = 1 out &&
 
 		# Create a and b from virtual merge base X
-		git cat-file -p master:a >base &&
+		git cat-file -p main:a >base &&
 		git cat-file -p L1:a >ours &&
 		git cat-file -p R1:a >theirs &&
 		test_must_fail git merge-file --diff3 \
 			-L "Temporary merge branch 1" \
-			-L "$MASTER"  \
+			-L "$MAIN"  \
 			-L "Temporary merge branch 2" \
 			ours  \
 			base  \
 			theirs &&
 		sed -e "s/^\([<|=>]\)/\1\1/" ours >vmb_a &&
 
-		git cat-file -p master:b >base &&
+		git cat-file -p main:b >base &&
 		git cat-file -p L1:b >ours &&
 		git cat-file -p R1:b >theirs &&
 		test_must_fail git merge-file --diff3 \
 			-L "Temporary merge branch 1" \
-			-L "$MASTER"  \
+			-L "$MAIN"  \
 			-L "Temporary merge branch 2" \
 			ours  \
 			base  \
@@ -1668,12 +1736,12 @@ test_expect_success 'check nested conflicts' '
 # Setup:
 #          L1---L2---L3
 #         /  \ /  \ /  \
-#   master    X1   X2   ?
+#     main    X1   X2   ?
 #         \  / \  / \  /
 #          R1---R2---R3
 #
 # Where:
-#   master has one file named 'content'
+#   main has one file named 'content'
 #   branches L1 and R1 both modify each of the two files in conflicting ways
 #
 #   L<n> (n>1) is a merge of R<n-1> into L<n-1>
@@ -1689,15 +1757,12 @@ test_expect_success 'check nested conflicts' '
 #   have three levels of conflict markers.  Can we distinguish all three?
 
 test_expect_success 'setup virtual merge base with nested conflicts' '
-	test_create_repo virtual_merge_base_has_nested_conflicts &&
+	git init virtual_merge_base_has_nested_conflicts &&
 	(
 		cd virtual_merge_base_has_nested_conflicts &&
 
 		# Create some related files now
-		for i in $(test_seq 1 10)
-		do
-			echo Random base content line $i
-		done >content &&
+		printf "Random base content line %d\n" $(test_seq 1 10) >content &&
 
 		# Setup original commit
 		git add content &&
@@ -1754,7 +1819,7 @@ test_expect_success 'check virtual merge base with nested conflicts' '
 	(
 		cd virtual_merge_base_has_nested_conflicts &&
 
-		MASTER=$(git rev-parse --short master) &&
+		MAIN=$(git rev-parse --short main) &&
 		git checkout L3^0 &&
 
 		# Merge must fail; there is a conflict
@@ -1777,13 +1842,13 @@ test_expect_success 'check virtual merge base with nested conflicts' '
 		# Imitate X1 merge base, except without long enough conflict
 		# markers because a subsequent sed will modify them.  Put
 		# result into vmb.
-		git cat-file -p master:content >base &&
+		git cat-file -p main:content >base &&
 		git cat-file -p L:content >left &&
 		git cat-file -p R:content >right &&
 		cp left merged-once &&
 		test_must_fail git merge-file --diff3 \
 			-L "Temporary merge branch 1" \
-			-L "$MASTER"  \
+			-L "$MAIN"  \
 			-L "Temporary merge branch 2" \
 			merged-once \
 			base        \

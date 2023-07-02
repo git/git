@@ -2,56 +2,64 @@
 
 test_description='test main ref store api'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 RUN="test-tool ref-store main"
 
-test_expect_success 'pack_refs(PACK_REFS_ALL | PACK_REFS_PRUNE)' '
-	test_commit one &&
+
+test_expect_success 'setup' '
+	test_commit one
+'
+
+test_expect_success REFFILES 'pack_refs(PACK_REFS_ALL | PACK_REFS_PRUNE)' '
 	N=`find .git/refs -type f | wc -l` &&
 	test "$N" != 0 &&
-	$RUN pack-refs 3 &&
-	N=`find .git/refs -type f | wc -l`
+	$RUN pack-refs PACK_REFS_PRUNE,PACK_REFS_ALL &&
+	N=`find .git/refs -type f` &&
+	test -z "$N"
 '
 
-test_expect_success 'peel_ref(new-tag)' '
-	git rev-parse HEAD >expected &&
-	git tag -a -m new-tag new-tag HEAD &&
-	$RUN peel-ref refs/tags/new-tag >actual &&
-	test_cmp expected actual
-'
-
-test_expect_success 'create_symref(FOO, refs/heads/master)' '
-	$RUN create-symref FOO refs/heads/master nothing &&
-	echo refs/heads/master >expected &&
+test_expect_success 'create_symref(FOO, refs/heads/main)' '
+	$RUN create-symref FOO refs/heads/main nothing &&
+	echo refs/heads/main >expected &&
 	git symbolic-ref FOO >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'delete_refs(FOO, refs/tags/new-tag)' '
+	git tag -a -m new-tag new-tag HEAD &&
 	git rev-parse FOO -- &&
 	git rev-parse refs/tags/new-tag -- &&
-	m=$(git rev-parse master) &&
-	REF_NO_DEREF=1 &&
-	$RUN delete-refs $REF_NO_DEREF nothing FOO refs/tags/new-tag &&
+	m=$(git rev-parse main) &&
+	$RUN delete-refs REF_NO_DEREF nothing FOO refs/tags/new-tag &&
 	test_must_fail git rev-parse --symbolic-full-name FOO &&
 	test_must_fail git rev-parse FOO -- &&
 	test_must_fail git rev-parse refs/tags/new-tag --
 '
 
-test_expect_success 'rename_refs(master, new-master)' '
-	git rev-parse master >expected &&
-	$RUN rename-ref refs/heads/master refs/heads/new-master &&
-	git rev-parse new-master >actual &&
+# In reftable, we keep the reflogs around for deleted refs.
+test_expect_success !REFFILES 'delete-reflog(FOO, refs/tags/new-tag)' '
+	$RUN delete-reflog FOO &&
+	$RUN delete-reflog refs/tags/new-tag
+'
+
+test_expect_success 'rename_refs(main, new-main)' '
+	git rev-parse main >expected &&
+	$RUN rename-ref refs/heads/main refs/heads/new-main &&
+	git rev-parse new-main >actual &&
 	test_cmp expected actual &&
-	test_commit recreate-master
+	test_commit recreate-main
 '
 
 test_expect_success 'for_each_ref(refs/heads/)' '
 	$RUN for-each-ref refs/heads/ | cut -d" " -f 2- >actual &&
 	cat >expected <<-\EOF &&
-	master 0x0
-	new-master 0x0
+	main 0x0
+	new-main 0x0
 	EOF
 	test_cmp expected actual
 '
@@ -62,23 +70,23 @@ test_expect_success 'for_each_ref() is sorted' '
 	test_cmp expected actual
 '
 
-test_expect_success 'resolve_ref(new-master)' '
-	SHA1=`git rev-parse new-master` &&
-	echo "$SHA1 refs/heads/new-master 0x0" >expected &&
-	$RUN resolve-ref refs/heads/new-master 0 >actual &&
+test_expect_success 'resolve_ref(new-main)' '
+	SHA1=`git rev-parse new-main` &&
+	echo "$SHA1 refs/heads/new-main 0x0" >expected &&
+	$RUN resolve-ref refs/heads/new-main 0 >actual &&
 	test_cmp expected actual
 '
 
-test_expect_success 'verify_ref(new-master)' '
-	$RUN verify-ref refs/heads/new-master
+test_expect_success 'verify_ref(new-main)' '
+	$RUN verify-ref refs/heads/new-main
 '
 
 test_expect_success 'for_each_reflog()' '
 	$RUN for-each-reflog | sort -k2 | cut -d" " -f 2- >actual &&
 	cat >expected <<-\EOF &&
 	HEAD 0x1
-	refs/heads/master 0x0
-	refs/heads/new-master 0x0
+	refs/heads/main 0x0
+	refs/heads/new-main 0x0
 	EOF
 	test_cmp expected actual
 '
@@ -86,13 +94,13 @@ test_expect_success 'for_each_reflog()' '
 test_expect_success 'for_each_reflog_ent()' '
 	$RUN for-each-reflog-ent HEAD >actual &&
 	head -n1 actual | grep one &&
-	tail -n2 actual | head -n1 | grep recreate-master
+	tail -n1 actual | grep recreate-main
 '
 
 test_expect_success 'for_each_reflog_ent_reverse()' '
 	$RUN for-each-reflog-ent-reverse HEAD >actual &&
-	head -n1 actual | grep recreate-master &&
-	tail -n2 actual | head -n1 | grep one
+	head -n1 actual | grep recreate-main &&
+	tail -n1 actual | grep one
 '
 
 test_expect_success 'reflog_exists(HEAD)' '
@@ -101,12 +109,12 @@ test_expect_success 'reflog_exists(HEAD)' '
 
 test_expect_success 'delete_reflog(HEAD)' '
 	$RUN delete-reflog HEAD &&
-	! test -f .git/logs/HEAD
+	test_must_fail git reflog exists HEAD
 '
 
-test_expect_success 'create-reflog(HEAD)' '
-	$RUN create-reflog HEAD 1 &&
-	test -f .git/logs/HEAD
+test_expect_success REFFILES 'create-reflog(HEAD)' '
+	$RUN create-reflog HEAD &&
+	git reflog exists HEAD
 '
 
 test_expect_success 'delete_ref(refs/heads/foo)' '

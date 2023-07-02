@@ -17,8 +17,8 @@ sub get_times {
 		my $rt = ((defined $1 ? $1 : 0.0)*60+$2)*60+$3;
 		return ($rt, $4, $5);
 	# size
-	} elsif ($line =~ /^\d+$/) {
-		return $&;
+	} elsif ($line =~ /^\s*(\d+)$/) {
+		return $1;
 	} else {
 		die "bad input line: $line";
 	}
@@ -58,6 +58,7 @@ sub usage {
   Options:
     --codespeed          * Format output for Codespeed
     --reponame    <str>  * Send given reponame to codespeed
+    --results-dir <str>  * Directory where test results are located
     --sort-by     <str>  * Sort output (only "regression" criteria is supported)
     --subsection  <str>  * Use results from given subsection
 
@@ -91,11 +92,13 @@ sub sane_backticks {
 
 my (@dirs, %dirnames, %dirabbrevs, %prefixes, @tests,
     $codespeed, $sortby, $subsection, $reponame);
+my $resultsdir = "test-results";
 
 Getopt::Long::Configure qw/ require_order /;
 
 my $rc = GetOptions("codespeed"     => \$codespeed,
 		    "reponame=s"    => \$reponame,
+		    "results-dir=s" => \$resultsdir,
 		    "sort-by=s"     => \$sortby,
 		    "subsection=s"  => \$subsection);
 usage() unless $rc;
@@ -136,8 +139,6 @@ shift @ARGV if scalar @ARGV and $ARGV[0] eq "--";
 if (not @tests) {
 	@tests = glob "p????-*.sh";
 }
-
-my $resultsdir = "test-results";
 
 if (! $subsection and
     exists $ENV{GIT_PERF_SUBSECTION} and

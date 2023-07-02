@@ -17,6 +17,7 @@ This test script tries to verify the sanity of summary subcommand of git submodu
 # various reasons, one of them being that there are lots of commands taking place
 # outside of 'test_expect_success' block, which is no longer in good-style.
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 add_file () {
@@ -190,7 +191,7 @@ test_expect_success 'typechanged submodule(submodule->blob), --cached' "
 	  < Add foo5
 
 	EOF
-	test_i18ncmp expected actual
+	test_cmp expected actual
 "
 
 test_expect_success 'typechanged submodule(submodule->blob), --files' "
@@ -200,7 +201,7 @@ test_expect_success 'typechanged submodule(submodule->blob), --files' "
 	  > Add foo5
 
 	EOF
-	test_i18ncmp expected actual
+	test_cmp expected actual
 "
 
 rm -rf sm1 &&
@@ -211,7 +212,7 @@ test_expect_success 'typechanged submodule(submodule->blob)' "
 	* sm1 $head4(submodule)->$head5(blob):
 
 	EOF
-	test_i18ncmp expected actual
+	test_cmp expected actual
 "
 
 rm -f sm1 &&
@@ -224,7 +225,7 @@ test_expect_success 'nonexistent commit' "
 	  Warn: sm1 doesn't contain commit $head4_full
 
 	EOF
-	test_i18ncmp expected actual
+	test_cmp expected actual
 "
 
 commit_file
@@ -235,7 +236,7 @@ test_expect_success 'typechanged submodule(blob->submodule)' "
 	  > Add foo7
 
 	EOF
-	test_i18ncmp expected actual
+	test_cmp expected actual
 "
 
 commit_file sm1 &&
@@ -292,7 +293,7 @@ test_expect_success 'given commit' "
 
 test_expect_success '--for-status' "
 	git submodule summary --for-status HEAD^ >actual &&
-	test_i18ncmp - actual <<-EOF
+	test_cmp - actual <<-EOF
 	* sm1 $head6...0000000:
 
 	* sm2 0000000...$head7 (2):

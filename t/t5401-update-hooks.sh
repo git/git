@@ -15,58 +15,50 @@ test_expect_success setup '
 	git update-index a &&
 	tree1=$(git write-tree) &&
 	commit1=$(echo modify | git commit-tree $tree1 -p $commit0) &&
-	git update-ref refs/heads/master $commit0 &&
+	git update-ref refs/heads/main $commit0 &&
 	git update-ref refs/heads/tofail $commit1 &&
 	git clone --bare ./. victim.git &&
 	GIT_DIR=victim.git git update-ref refs/heads/tofail $commit1 &&
-	git update-ref refs/heads/master $commit1 &&
-	git update-ref refs/heads/tofail $commit0
+	git update-ref refs/heads/main $commit1 &&
+	git update-ref refs/heads/tofail $commit0 &&
+
+	test_hook --setup -C victim.git pre-receive <<-\EOF &&
+	printf %s "$@" >>$GIT_DIR/pre-receive.args
+	cat - >$GIT_DIR/pre-receive.stdin
+	echo STDOUT pre-receive
+	echo STDERR pre-receive >&2
+	EOF
+
+	test_hook --setup -C victim.git update <<-\EOF &&
+	echo "$@" >>$GIT_DIR/update.args
+	read x; printf %s "$x" >$GIT_DIR/update.stdin
+	echo STDOUT update $1
+	echo STDERR update $1 >&2
+	test "$1" = refs/heads/main || exit
+	EOF
+
+	test_hook --setup -C victim.git post-receive <<-\EOF &&
+	printf %s "$@" >>$GIT_DIR/post-receive.args
+	cat - >$GIT_DIR/post-receive.stdin
+	echo STDOUT post-receive
+	echo STDERR post-receive >&2
+	EOF
+
+	test_hook --setup -C victim.git post-update <<-\EOF
+	echo "$@" >>$GIT_DIR/post-update.args
+	read x; printf %s "$x" >$GIT_DIR/post-update.stdin
+	echo STDOUT post-update
+	echo STDERR post-update >&2
+	EOF
 '
-
-cat >victim.git/hooks/pre-receive <<'EOF'
-#!/bin/sh
-printf %s "$@" >>$GIT_DIR/pre-receive.args
-cat - >$GIT_DIR/pre-receive.stdin
-echo STDOUT pre-receive
-echo STDERR pre-receive >&2
-EOF
-chmod u+x victim.git/hooks/pre-receive
-
-cat >victim.git/hooks/update <<'EOF'
-#!/bin/sh
-echo "$@" >>$GIT_DIR/update.args
-read x; printf %s "$x" >$GIT_DIR/update.stdin
-echo STDOUT update $1
-echo STDERR update $1 >&2
-test "$1" = refs/heads/master || exit
-EOF
-chmod u+x victim.git/hooks/update
-
-cat >victim.git/hooks/post-receive <<'EOF'
-#!/bin/sh
-printf %s "$@" >>$GIT_DIR/post-receive.args
-cat - >$GIT_DIR/post-receive.stdin
-echo STDOUT post-receive
-echo STDERR post-receive >&2
-EOF
-chmod u+x victim.git/hooks/post-receive
-
-cat >victim.git/hooks/post-update <<'EOF'
-#!/bin/sh
-echo "$@" >>$GIT_DIR/post-update.args
-read x; printf %s "$x" >$GIT_DIR/post-update.stdin
-echo STDOUT post-update
-echo STDERR post-update >&2
-EOF
-chmod u+x victim.git/hooks/post-update
 
 test_expect_success push '
 	test_must_fail git send-pack --force ./victim.git \
-		master tofail >send.out 2>send.err
+		main tofail >send.out 2>send.err
 '
 
 test_expect_success 'updated as expected' '
-	test $(GIT_DIR=victim.git git rev-parse master) = $commit1 &&
+	test $(GIT_DIR=victim.git git rev-parse main) = $commit1 &&
 	test $(GIT_DIR=victim.git git rev-parse tofail) = $commit1
 '
 
@@ -82,24 +74,24 @@ test_expect_success 'hooks ran' '
 '
 
 test_expect_success 'pre-receive hook input' '
-	(echo $commit0 $commit1 refs/heads/master &&
+	(echo $commit0 $commit1 refs/heads/main &&
 	 echo $commit1 $commit0 refs/heads/tofail
 	) | test_cmp - victim.git/pre-receive.stdin
 '
 
 test_expect_success 'update hook arguments' '
-	(echo refs/heads/master $commit0 $commit1 &&
+	(echo refs/heads/main $commit0 $commit1 &&
 	 echo refs/heads/tofail $commit1 $commit0
 	) | test_cmp - victim.git/update.args
 '
 
 test_expect_success 'post-receive hook input' '
-	echo $commit0 $commit1 refs/heads/master |
+	echo $commit0 $commit1 refs/heads/main |
 	test_cmp - victim.git/post-receive.stdin
 '
 
 test_expect_success 'post-update hook arguments' '
-	echo refs/heads/master |
+	echo refs/heads/main |
 	test_cmp - victim.git/post-update.args
 '
 
@@ -120,8 +112,8 @@ test_expect_success 'send-pack produced no output' '
 cat <<EOF >expect
 remote: STDOUT pre-receive
 remote: STDERR pre-receive
-remote: STDOUT update refs/heads/master
-remote: STDERR update refs/heads/master
+remote: STDOUT update refs/heads/main
+remote: STDERR update refs/heads/main
 remote: STDOUT update refs/heads/tofail
 remote: STDERR update refs/heads/tofail
 remote: error: hook declined to update refs/heads/tofail
@@ -136,14 +128,14 @@ test_expect_success 'send-pack stderr contains hook messages' '
 '
 
 test_expect_success 'pre-receive hook that forgets to read its input' '
-	write_script victim.git/hooks/pre-receive <<-\EOF &&
+	test_hook --clobber -C victim.git pre-receive <<-\EOF &&
 	exit 0
 	EOF
 	rm -f victim.git/hooks/update victim.git/hooks/post-update &&
 
 	for v in $(test_seq 100 999)
 	do
-		git branch branch_$v master || return
+		git branch branch_$v main || return
 	done &&
 	git push ./victim.git "+refs/heads/*:refs/heads/*"
 '

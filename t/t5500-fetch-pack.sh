@@ -5,6 +5,9 @@
 
 test_description='Testing multi_ack pack fetching'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # Test fetch-pack/upload-pack pair.
@@ -92,7 +95,7 @@ test_expect_success 'setup' '
 	while [ $cur -le 10 ]; do
 		add A$cur $(eval echo \$A$prev) &&
 		prev=$cur &&
-		cur=$(($cur+1))
+		cur=$(($cur+1)) || return 1
 	done &&
 	add B1 $A1 &&
 	git update-ref refs/heads/A "$ATIP" &&
@@ -109,7 +112,7 @@ test_expect_success 'post 1st pull setup' '
 	while [ $cur -le 65 ]; do
 		add B$cur $(eval echo \$B$prev) &&
 		prev=$cur &&
-		cur=$(($cur+1))
+		cur=$(($cur+1)) || return 1
 	done
 '
 
@@ -404,17 +407,18 @@ test_expect_success 'in_vain not triggered before first ACK' '
 '
 
 test_expect_success 'in_vain resetted upon ACK' '
+	test_when_finished rm -f log trace2 &&
 	rm -rf myserver myclient &&
 	git init myserver &&
 
-	# Linked list of commits on master. The first is common; the rest are
+	# Linked list of commits on main. The first is common; the rest are
 	# not.
-	test_commit -C myserver first_master_commit &&
+	test_commit -C myserver first_main_commit &&
 	git clone "file://$(pwd)/myserver" myclient &&
 	test_commit_bulk -C myclient 255 &&
 
 	# Another linked list of commits on anotherbranch with no connection to
-	# master. The first is common; the rest are not.
+	# main. The first is common; the rest are not.
 	git -C myserver checkout --orphan anotherbranch &&
 	test_commit -C myserver first_anotherbranch_commit &&
 	git -C myclient fetch origin anotherbranch:refs/heads/anotherbranch &&
@@ -422,14 +426,15 @@ test_expect_success 'in_vain resetted upon ACK' '
 	test_commit_bulk -C myclient 255 &&
 
 	# The new commit that the client wants to fetch.
-	git -C myserver checkout master &&
+	git -C myserver checkout main &&
 	test_commit -C myserver to_fetch &&
 
 	# The client will send (as "have"s) all 256 commits in anotherbranch
 	# first. The 256th commit is common between the client and the server,
 	# and should reset in_vain. This allows negotiation to continue until
 	# the client reports that first_anotherbranch_commit is common.
-	git -C myclient fetch --progress origin master 2>log &&
+	GIT_TRACE2_EVENT="$(pwd)/trace2" git -C myclient fetch --progress origin main 2>log &&
+	grep \"key\":\"total_rounds\",\"value\":\"6\" trace2 &&
 	test_i18ngrep "Total 3 " log
 '
 
@@ -461,11 +466,11 @@ test_expect_success 'fetch creating new shallow root' '
 test_expect_success 'setup tests for the --stdin parameter' '
 	for head in C D E F
 	do
-		add $head
+		add $head || return 1
 	done &&
 	for head in A B C D E F
 	do
-		git tag $head $head
+		git tag $head $head || return 1
 	done &&
 	cat >input <<-\EOF &&
 	refs/heads/C
@@ -544,7 +549,7 @@ test_expect_success 'test lonely missing ref' '
 		cd client &&
 		test_must_fail git fetch-pack --no-progress .. refs/heads/xyzzy 2>../error-m
 	) &&
-	test_i18ncmp expect-error error-m
+	test_cmp expect-error error-m
 '
 
 test_expect_success 'test missing ref after existing' '
@@ -552,7 +557,7 @@ test_expect_success 'test missing ref after existing' '
 		cd client &&
 		test_must_fail git fetch-pack --no-progress .. refs/heads/A refs/heads/xyzzy 2>../error-em
 	) &&
-	test_i18ncmp expect-error error-em
+	test_cmp expect-error error-em
 '
 
 test_expect_success 'test missing ref before existing' '
@@ -560,7 +565,7 @@ test_expect_success 'test missing ref before existing' '
 		cd client &&
 		test_must_fail git fetch-pack --no-progress .. refs/heads/xyzzy refs/heads/A 2>../error-me
 	) &&
-	test_i18ncmp expect-error error-me
+	test_cmp expect-error error-me
 '
 
 test_expect_success 'test --all, --depth, and explicit head' '
@@ -637,7 +642,7 @@ test_expect_success 'shallow fetch with tags does not break the repository' '
 		mkdir repo2 &&
 		cd repo2 &&
 		git init &&
-		git fetch --depth=2 ../.git master:branch &&
+		git fetch --depth=2 ../.git main:branch &&
 		git fsck
 	)
 '
@@ -662,7 +667,7 @@ test_expect_success 'fetch-pack can fetch a raw sha1 that is advertised as a ref
 
 	git init client &&
 	git -C client fetch-pack ../server \
-		$(git -C server rev-parse refs/heads/master)
+		$(git -C server rev-parse refs/heads/main)
 '
 
 test_expect_success 'fetch-pack can fetch a raw sha1 overlapping a named ref' '
@@ -688,7 +693,7 @@ test_expect_success 'fetch-pack cannot fetch a raw sha1 that is not advertised a
 	# Some protocol versions (e.g. 2) support fetching
 	# unadvertised objects, so restrict this test to v0.
 	test_must_fail env GIT_TEST_PROTOCOL_VERSION=0 git -C client fetch-pack ../server \
-		$(git -C server rev-parse refs/heads/master^) 2>err &&
+		$(git -C server rev-parse refs/heads/main^) 2>err &&
 	test_i18ngrep "Server does not allow request for unadvertised object" err
 '
 
@@ -822,7 +827,7 @@ test_expect_success 'clone shallow since ...' '
 
 test_expect_success 'fetch shallow since ...' '
 	git -C shallow11 fetch --shallow-since "200000000 +0700" origin &&
-	git -C shallow11 log --pretty=tformat:%s origin/master >actual &&
+	git -C shallow11 log --pretty=tformat:%s origin/main >actual &&
 	cat >expected <<-\EOF &&
 	three
 	two
@@ -863,7 +868,7 @@ test_expect_success 'shallow since with commit graph and already-seen commit' '
 	(
 	cd shallow-since-graph &&
 	test_commit base &&
-	test_commit master &&
+	test_commit main &&
 	git checkout -b other HEAD^ &&
 	test_commit other &&
 	git commit-graph write --reachable &&
@@ -874,7 +879,7 @@ test_expect_success 'shallow since with commit graph and already-seen commit' '
 	$(echo "object-format=$(test_oid algo)" | packetize)
 	00010013deepen-since 1
 	$(echo "want $(git rev-parse other)" | packetize)
-	$(echo "have $(git rev-parse master)" | packetize)
+	$(echo "have $(git rev-parse main)" | packetize)
 	0000
 	EOF
 	)
@@ -896,7 +901,7 @@ test_expect_success 'shallow clone exclude tag two' '
 
 test_expect_success 'fetch exclude tag one' '
 	git -C shallow12 fetch --shallow-exclude one origin &&
-	git -C shallow12 log --pretty=tformat:%s origin/master >actual &&
+	git -C shallow12 log --pretty=tformat:%s origin/main >actual &&
 	test_write_lines three two >expected &&
 	test_cmp expected actual
 '
@@ -910,11 +915,11 @@ test_expect_success 'fetching deepen' '
 	test_commit three &&
 	git clone --depth 1 "file://$(pwd)/." deepen &&
 	test_commit four &&
-	git -C deepen log --pretty=tformat:%s master >actual &&
+	git -C deepen log --pretty=tformat:%s main >actual &&
 	echo three >expected &&
 	test_cmp expected actual &&
 	git -C deepen fetch --deepen=1 &&
-	git -C deepen log --pretty=tformat:%s origin/master >actual &&
+	git -C deepen log --pretty=tformat:%s origin/main >actual &&
 	cat >expected <<-\EOF &&
 	four
 	three
@@ -924,7 +929,8 @@ test_expect_success 'fetching deepen' '
 	)
 '
 
-test_expect_success 'use ref advertisement to prune "have" lines sent' '
+test_negotiation_algorithm_default () {
+	test_when_finished rm -rf clientv0 clientv2 &&
 	rm -rf server client &&
 	git init server &&
 	test_commit -C server both_have_1 &&
@@ -943,7 +949,7 @@ test_expect_success 'use ref advertisement to prune "have" lines sent' '
 	rm -f trace &&
 	cp -r client clientv0 &&
 	GIT_TRACE_PACKET="$(pwd)/trace" git -C clientv0 \
-		fetch origin server_has both_have_2 &&
+		"$@" fetch origin server_has both_have_2 &&
 	grep "have $(git -C client rev-parse client_has)" trace &&
 	grep "have $(git -C client rev-parse both_have_2)" trace &&
 	! grep "have $(git -C client rev-parse both_have_2^)" trace &&
@@ -951,10 +957,27 @@ test_expect_success 'use ref advertisement to prune "have" lines sent' '
 	rm -f trace &&
 	cp -r client clientv2 &&
 	GIT_TRACE_PACKET="$(pwd)/trace" git -C clientv2 -c protocol.version=2 \
-		fetch origin server_has both_have_2 &&
+		"$@" fetch origin server_has both_have_2 &&
 	grep "have $(git -C client rev-parse client_has)" trace &&
 	grep "have $(git -C client rev-parse both_have_2)" trace &&
 	! grep "have $(git -C client rev-parse both_have_2^)" trace
+}
+
+test_expect_success 'use ref advertisement to prune "have" lines sent' '
+	test_negotiation_algorithm_default
+'
+
+test_expect_success 'same as last but with config overrides' '
+	test_negotiation_algorithm_default \
+		-c feature.experimental=true \
+		-c fetch.negotiationAlgorithm=consecutive
+'
+
+test_expect_success 'ensure bogus fetch.negotiationAlgorithm yields error' '
+	test_when_finished rm -rf clientv0 &&
+	cp -r client clientv0 &&
+	test_must_fail git -C clientv0 --fetch.negotiationAlgorithm=bogus \
+		       fetch origin server_has both_have_2
 '
 
 test_expect_success 'filtering by size' '

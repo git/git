@@ -61,6 +61,9 @@ launch_merge_tool () {
 		export BASE
 		eval $GIT_DIFFTOOL_EXTCMD '"$LOCAL"' '"$REMOTE"'
 	else
+		initialize_merge_tool "$merge_tool"
+		# ignore the error from the above --- run_merge_tool
+		# will diagnose unusable tool by itself
 		run_merge_tool "$merge_tool"
 	fi
 }
@@ -72,6 +75,11 @@ then
 		merge_tool="$GIT_DIFF_TOOL"
 	else
 		merge_tool="$(get_merge_tool)"
+		subshell_exit_status=$?
+		if test $subshell_exit_status -gt 1
+		then
+			exit $subshell_exit_status
+		fi
 	fi
 fi
 
@@ -79,6 +87,9 @@ if test -n "$GIT_DIFFTOOL_DIRDIFF"
 then
 	LOCAL="$1"
 	REMOTE="$2"
+	initialize_merge_tool "$merge_tool"
+	# ignore the error from the above --- run_merge_tool
+	# will diagnose unusable tool by itself
 	run_merge_tool "$merge_tool" false
 else
 	# Launch the merge tool on each path provided by 'git diff'

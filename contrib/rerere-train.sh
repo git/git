@@ -75,7 +75,7 @@ do
 		continue
 	fi
 	git checkout -q "$parent1^0"
-	if git merge $other_parents >/dev/null 2>&1
+	if git merge --no-gpg-sign $other_parents >/dev/null 2>&1
 	then
 		# Cleanly merges
 		continue
@@ -86,12 +86,12 @@ do
 	fi
 	if test -s "$GIT_DIR/MERGE_RR"
 	then
-		git show -s --pretty=format:"Learning from %h %s" "$commit"
+		git --no-pager show -s --format="Learning from %h %s" "$commit"
 		git rerere
 		git checkout -q $commit -- .
 		git rerere
 	fi
-	git reset -q --hard
+	git reset -q --hard  # Might nuke untracked files...
 done
 
 if test -z "$branch"

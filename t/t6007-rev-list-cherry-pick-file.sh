@@ -2,6 +2,9 @@
 
 test_description='test git rev-list --cherry-pick -- file'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 # A---B---D---F
@@ -31,7 +34,7 @@ test_expect_success setup '
 	test_tick &&
 	git commit -m "E" &&
 	git tag E &&
-	git checkout master &&
+	git checkout main &&
 	git checkout branch foo &&
 	test_tick &&
 	git commit -m "B" &&
@@ -55,7 +58,7 @@ EOF
 
 test_expect_success '--left-right' '
 	git rev-list --left-right B...C > actual &&
-	git name-rev --stdin --name-only --refs="*tags/*" \
+	git name-rev --annotate-stdin --name-only --refs="*tags/*" \
 		< actual > actual.named &&
 	test_cmp expect actual.named
 '
@@ -75,14 +78,14 @@ EOF
 
 test_expect_success '--cherry-pick bar does not come up empty' '
 	git rev-list --left-right --cherry-pick B...C -- bar > actual &&
-	git name-rev --stdin --name-only --refs="*tags/*" \
+	git name-rev --annotate-stdin --name-only --refs="*tags/*" \
 		< actual > actual.named &&
 	test_cmp expect actual.named
 '
 
 test_expect_success 'bar does not come up empty' '
 	git rev-list --left-right B...C -- bar > actual &&
-	git name-rev --stdin --name-only --refs="*tags/*" \
+	git name-rev --annotate-stdin --name-only --refs="*tags/*" \
 		< actual > actual.named &&
 	test_cmp expect actual.named
 '
@@ -94,14 +97,14 @@ EOF
 
 test_expect_success '--cherry-pick bar does not come up empty (II)' '
 	git rev-list --left-right --cherry-pick F...E -- bar > actual &&
-	git name-rev --stdin --name-only --refs="*tags/*" \
+	git name-rev --annotate-stdin --name-only --refs="*tags/*" \
 		< actual > actual.named &&
 	test_cmp expect actual.named
 '
 
 test_expect_success 'name-rev multiple --refs combine inclusive' '
 	git rev-list --left-right --cherry-pick F...E -- bar >actual &&
-	git name-rev --stdin --name-only --refs="*tags/F" --refs="*tags/E" \
+	git name-rev --annotate-stdin --name-only --refs="*tags/F" --refs="*tags/E" \
 		<actual >actual.named &&
 	test_cmp expect actual.named
 '
@@ -113,7 +116,7 @@ EOF
 test_expect_success 'name-rev --refs excludes non-matched patterns' '
 	git rev-list --left-right --right-only --cherry-pick F...E -- bar >>expect &&
 	git rev-list --left-right --cherry-pick F...E -- bar >actual &&
-	git name-rev --stdin --name-only --refs="*tags/F" \
+	git name-rev --annotate-stdin --name-only --refs="*tags/F" \
 		<actual >actual.named &&
 	test_cmp expect actual.named
 '
@@ -125,14 +128,14 @@ EOF
 test_expect_success 'name-rev --exclude excludes matched patterns' '
 	git rev-list --left-right --right-only --cherry-pick F...E -- bar >>expect &&
 	git rev-list --left-right --cherry-pick F...E -- bar >actual &&
-	git name-rev --stdin --name-only --refs="*tags/*" --exclude="*E" \
+	git name-rev --annotate-stdin --name-only --refs="*tags/*" --exclude="*E" \
 		<actual >actual.named &&
 	test_cmp expect actual.named
 '
 
 test_expect_success 'name-rev --no-refs clears the refs list' '
 	git rev-list --left-right --cherry-pick F...E -- bar >expect &&
-	git name-rev --stdin --name-only --refs="*tags/F" --refs="*tags/E" --no-refs --refs="*tags/G" \
+	git name-rev --annotate-stdin --name-only --refs="*tags/F" --refs="*tags/E" --no-refs --refs="*tags/G" \
 		<expect >actual &&
 	test_cmp expect actual
 '
@@ -146,7 +149,7 @@ EOF
 
 test_expect_success '--cherry-mark' '
 	git rev-list --cherry-mark F...E -- bar > actual &&
-	git name-rev --stdin --name-only --refs="*tags/*" \
+	git name-rev --annotate-stdin --name-only --refs="*tags/*" \
 		< actual > actual.named &&
 	test_cmp expect actual.named
 '
@@ -160,7 +163,7 @@ EOF
 
 test_expect_success '--cherry-mark --left-right' '
 	git rev-list --cherry-mark --left-right F...E -- bar > actual &&
-	git name-rev --stdin --name-only --refs="*tags/*" \
+	git name-rev --annotate-stdin --name-only --refs="*tags/*" \
 		< actual > actual.named &&
 	test_cmp expect actual.named
 '
@@ -171,14 +174,14 @@ EOF
 
 test_expect_success '--cherry-pick --right-only' '
 	git rev-list --cherry-pick --right-only F...E -- bar > actual &&
-	git name-rev --stdin --name-only --refs="*tags/*" \
+	git name-rev --annotate-stdin --name-only --refs="*tags/*" \
 		< actual > actual.named &&
 	test_cmp expect actual.named
 '
 
 test_expect_success '--cherry-pick --left-only' '
 	git rev-list --cherry-pick --left-only E...F -- bar > actual &&
-	git name-rev --stdin --name-only --refs="*tags/*" \
+	git name-rev --annotate-stdin --name-only --refs="*tags/*" \
 		< actual > actual.named &&
 	test_cmp expect actual.named
 '
@@ -190,7 +193,7 @@ EOF
 
 test_expect_success '--cherry' '
 	git rev-list --cherry F...E -- bar > actual &&
-	git name-rev --stdin --name-only --refs="*tags/*" \
+	git name-rev --annotate-stdin --name-only --refs="*tags/*" \
 		< actual > actual.named &&
 	test_cmp expect actual.named
 '
@@ -233,7 +236,7 @@ test_expect_success '--cherry-pick with independent, but identical branches' '
 	test_tick &&
 	git commit -m "independent, too" foo &&
 	test -z "$(git rev-list --left-right --cherry-pick \
-		HEAD...master -- foo)"
+		HEAD...main -- foo)"
 '
 
 cat >expect <<EOF
@@ -243,6 +246,18 @@ EOF
 test_expect_success '--count --left-right' '
 	git rev-list --count --left-right C...D > actual &&
 	test_cmp expect actual
+'
+
+test_expect_success '--cherry-pick with duplicates on each side' '
+	git checkout -b dup-orig &&
+	test_commit dup-base &&
+	git revert dup-base &&
+	git cherry-pick dup-base &&
+	git checkout -b dup-side HEAD~3 &&
+	test_tick &&
+	git cherry-pick -3 dup-orig &&
+	git rev-list --cherry-pick dup-orig...dup-side >actual &&
+	test_must_be_empty actual
 '
 
 # Corrupt the object store deliberately to make sure

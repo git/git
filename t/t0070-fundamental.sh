@@ -6,6 +6,7 @@ test_description='check that the most basic functions work
 Verify wrappers and compatibility functions.
 '
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'character classes (isspace, isalpha etc.)' '
@@ -32,6 +33,24 @@ test_expect_success 'git_mkstemps_mode does not fail if fd 0 is not open' '
 test_expect_success 'check for a bug in the regex routines' '
 	# if this test fails, re-build git with NO_REGEX=1
 	test-tool regex --bug
+'
+
+test_expect_success 'incomplete sideband messages are reassembled' '
+	test-tool pkt-line send-split-sideband >split-sideband &&
+	test-tool pkt-line receive-sideband <split-sideband 2>err &&
+	grep "Hello, world" err
+'
+
+test_expect_success 'eof on sideband message is reported' '
+	printf 1234 >input &&
+	test-tool pkt-line receive-sideband <input 2>err &&
+	test_i18ngrep "unexpected disconnect" err
+'
+
+test_expect_success 'missing sideband designator is reported' '
+	printf 0004 >input &&
+	test-tool pkt-line receive-sideband <input 2>err &&
+	test_i18ngrep "missing sideband" err
 '
 
 test_done

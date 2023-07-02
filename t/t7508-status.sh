@@ -5,6 +5,7 @@
 
 test_description='git status'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
@@ -37,11 +38,11 @@ test_expect_success 'create upstream branch' '
 	git checkout -b upstream &&
 	test_commit upstream1 &&
 	test_commit upstream2 &&
-	# leave the first commit on master as root because several
+	# leave the first commit on main as root because several
 	# tests depend on this case; for our upstream we only
 	# care about commit counts anyway, so a totally divergent
 	# history is OK
-	git checkout --orphan master
+	git checkout --orphan main
 '
 
 test_expect_success 'setup' '
@@ -88,7 +89,7 @@ EOF
 
 test_expect_success 'status --column' '
 	cat >expect <<\EOF &&
-# On branch master
+# On branch main
 # Your branch and '\''upstream'\'' have diverged,
 # and have 1 and 2 different commits each, respectively.
 #   (use "git pull" to merge the remote branch into yours)
@@ -109,17 +110,17 @@ test_expect_success 'status --column' '
 #
 EOF
 	COLUMNS=50 git -c status.displayCommentPrefix=true status --column="column dense" >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success 'status --column status.displayCommentPrefix=false' '
 	strip_comments expect &&
 	COLUMNS=49 git -c status.displayCommentPrefix=false status --column="column dense" >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 cat >expect <<\EOF
-# On branch master
+# On branch main
 # Your branch and 'upstream' have diverged,
 # and have 1 and 2 different commits each, respectively.
 #   (use "git pull" to merge the remote branch into yours)
@@ -144,19 +145,19 @@ EOF
 
 test_expect_success 'status with status.displayCommentPrefix=true' '
 	git -c status.displayCommentPrefix=true status >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success 'status with status.displayCommentPrefix=false' '
 	strip_comments expect &&
 	git -c status.displayCommentPrefix=false status >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success 'status -v' '
 	(cat expect && git diff --cached) >expect-with-v &&
 	git status -v >output &&
-	test_i18ncmp expect-with-v output
+	test_cmp expect-with-v output
 '
 
 test_expect_success 'status -v -v' '
@@ -167,7 +168,7 @@ test_expect_success 'status -v -v' '
 	 echo "Changes not staged for commit:" &&
 	 git -c diff.mnemonicprefix=true diff) >expect-with-v &&
 	git status -v -v >output &&
-	test_i18ncmp expect-with-v output
+	test_cmp expect-with-v output
 '
 
 test_expect_success 'setup fake editor' '
@@ -193,7 +194,7 @@ test_expect_success 'commit ignores status.displayCommentPrefix=false in COMMIT_
 '
 
 cat >expect <<\EOF
-On branch master
+On branch main
 Your branch and 'upstream' have diverged,
 and have 1 and 2 different commits each, respectively.
 
@@ -214,7 +215,7 @@ EOF
 test_expect_success 'status (advice.statusHints false)' '
 	test_config advice.statusHints false &&
 	git status >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 
 '
 
@@ -266,7 +267,7 @@ test_expect_success 'status with gitignore' '
 	test_cmp expect output &&
 
 	cat >expect <<\EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -296,7 +297,7 @@ Ignored files:
 
 EOF
 	git status --ignored >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success 'status with gitignore (nothing untracked)' '
@@ -331,7 +332,7 @@ test_expect_success 'status with gitignore (nothing untracked)' '
 	test_cmp expect output &&
 
 	cat >expect <<\EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -358,7 +359,7 @@ Ignored files:
 
 EOF
 	git status --ignored >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 cat >.gitignore <<\EOF
@@ -368,7 +369,7 @@ output*
 EOF
 
 cat >expect <<\EOF
-## master...upstream [ahead 1, behind 2]
+## main...upstream [ahead 1, behind 2]
  M dir1/modified
 A  dir2/added
 ?? dir1/untracked
@@ -380,7 +381,7 @@ EOF
 test_expect_success 'status -s -b' '
 
 	git status -s -b >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 
 '
 
@@ -390,7 +391,7 @@ test_expect_success 'status -s -z -b' '
 	git status -s -z -b >output &&
 	nul_to_q <output >output.q &&
 	mv output.q output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success 'setup dir3' '
@@ -401,7 +402,7 @@ test_expect_success 'setup dir3' '
 
 test_expect_success 'status -uno' '
 	cat >expect <<EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -418,18 +419,18 @@ Changes not staged for commit:
 Untracked files not listed (use -u option to show untracked files)
 EOF
 	git status -uno >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success 'status (status.showUntrackedFiles no)' '
 	test_config status.showuntrackedfiles no &&
 	git status >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success 'status -uno (advice.statusHints false)' '
 	cat >expect <<EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different commits each, respectively.
 
@@ -443,7 +444,7 @@ Untracked files not listed
 EOF
 	test_config advice.statusHints false &&
 	git status -uno >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 cat >expect << EOF
@@ -463,7 +464,7 @@ test_expect_success 'status -s (status.showUntrackedFiles no)' '
 
 test_expect_success 'status -unormal' '
 	cat >expect <<EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -487,13 +488,13 @@ Untracked files:
 
 EOF
 	git status -unormal >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success 'status (status.showUntrackedFiles normal)' '
 	test_config status.showuntrackedfiles normal &&
 	git status >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 cat >expect <<EOF
@@ -518,7 +519,7 @@ test_expect_success 'status -s (status.showUntrackedFiles normal)' '
 
 test_expect_success 'status -uall' '
 	cat >expect <<EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -543,13 +544,13 @@ Untracked files:
 
 EOF
 	git status -uall >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success 'status (status.showUntrackedFiles all)' '
 	test_config status.showuntrackedfiles all &&
 	git status >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success 'teardown dir3' '
@@ -578,7 +579,7 @@ test_expect_success 'status -s (status.showUntrackedFiles all)' '
 
 test_expect_success 'status with relative paths' '
 	cat >expect <<\EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -601,7 +602,7 @@ Untracked files:
 
 EOF
 	(cd dir1 && git status) >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 cat >expect <<\EOF
@@ -646,7 +647,7 @@ test_expect_success 'setup unique colors' '
 
 test_expect_success TTY 'status with color.ui' '
 	cat >expect <<\EOF &&
-On branch <GREEN>master<RESET>
+On branch <GREEN>main<RESET>
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -670,13 +671,13 @@ Untracked files:
 EOF
 	test_config color.ui auto &&
 	test_terminal git status | test_decode_color >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success TTY 'status with color.status' '
 	test_config color.status auto &&
 	test_terminal git status | test_decode_color >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 cat >expect <<\EOF
@@ -706,7 +707,7 @@ test_expect_success TTY 'status -s with color.status' '
 '
 
 cat >expect <<\EOF
-## <YELLOW>master<RESET>...<CYAN>upstream<RESET> [ahead <YELLOW>1<RESET>, behind <CYAN>2<RESET>]
+## <YELLOW>main<RESET>...<CYAN>upstream<RESET> [ahead <YELLOW>1<RESET>, behind <CYAN>2<RESET>]
  <RED>M<RESET> dir1/modified
 <GREEN>A<RESET>  dir2/added
 <BLUE>??<RESET> dir1/untracked
@@ -718,7 +719,7 @@ EOF
 test_expect_success TTY 'status -s -b with color.status' '
 
 	test_terminal git status -s -b | test_decode_color >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 
 '
 
@@ -757,7 +758,7 @@ test_expect_success 'status --porcelain respects -b' '
 
 	git status --porcelain -b >output &&
 	{
-		echo "## master...upstream [ahead 1, behind 2]" &&
+		echo "## main...upstream [ahead 1, behind 2]" &&
 		cat expect
 	} >tmp &&
 	mv tmp expect &&
@@ -769,7 +770,7 @@ test_expect_success 'status --porcelain respects -b' '
 
 test_expect_success 'status without relative paths' '
 	cat >expect <<\EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -793,7 +794,7 @@ Untracked files:
 EOF
 	test_config status.relativePaths false &&
 	(cd dir1 && git status) >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 
 '
 
@@ -843,7 +844,7 @@ test_expect_success 'status -s without relative paths' '
 
 test_expect_success 'dry-run of partial commit excluding new file in index' '
 	cat >expect <<EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -860,7 +861,7 @@ Untracked files:
 
 EOF
 	git commit --dry-run dir1/modified >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 cat >expect <<EOF
@@ -882,7 +883,7 @@ test_expect_success 'status shows detached HEAD properly after checking out non-
 	git clone upstream downstream &&
 	git -C downstream checkout @{u} &&
 	git -C downstream status >actual &&
-	test_i18ngrep "HEAD detached at [0-9a-f]\\+" actual
+	grep -E "HEAD detached at [0-9a-f]+" actual
 '
 
 test_expect_success 'setup status submodule summary' '
@@ -897,7 +898,7 @@ test_expect_success 'setup status submodule summary' '
 
 test_expect_success 'status submodule summary is disabled by default' '
 	cat >expect <<EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -921,13 +922,13 @@ Untracked files:
 
 EOF
 	git status >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 # we expect the same as the previous test
 test_expect_success 'status --untracked-files=all does not show submodule' '
 	git status --untracked-files=all >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 cat >expect <<EOF
@@ -954,7 +955,7 @@ head=$(cd sm && git rev-parse --short=7 --verify HEAD)
 
 test_expect_success 'status submodule summary' '
 	cat >expect <<EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -984,13 +985,13 @@ Untracked files:
 EOF
 	git config status.submodulesummary 10 &&
 	git status >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success 'status submodule summary with status.displayCommentPrefix=false' '
 	strip_comments expect &&
 	git -c status.displayCommentPrefix=false status >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success 'commit with submodule summary ignores status.displayCommentPrefix' '
@@ -1013,7 +1014,7 @@ test_expect_success 'status -s submodule summary' '
 
 test_expect_success 'status submodule summary (clean submodule): commit' '
 	cat >expect <<EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 2 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -1035,9 +1036,9 @@ EOF
 	git commit -m "commit submodule" &&
 	git config status.submodulesummary 10 &&
 	test_must_fail git commit --dry-run >output &&
-	test_i18ncmp expect output &&
+	test_cmp expect output &&
 	git status >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 cat >expect <<EOF
@@ -1061,7 +1062,7 @@ test_expect_success 'status -z implies porcelain' '
 
 test_expect_success 'commit --dry-run submodule summary (--amend)' '
 	cat >expect <<EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 2 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -1091,7 +1092,7 @@ Untracked files:
 EOF
 	git config status.submodulesummary 10 &&
 	git commit --dry-run --amend >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success POSIXPERM,SANITY 'status succeeds in a read-only repository' '
@@ -1113,7 +1114,7 @@ touch .gitmodules
 
 test_expect_success '--ignore-submodules=untracked suppresses submodules with untracked content' '
 	cat > expect << EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 2 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -1143,17 +1144,17 @@ Untracked files:
 EOF
 	echo modified  sm/untracked &&
 	git status --ignore-submodules=untracked >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success '.gitmodules ignore=untracked suppresses submodules with untracked content' '
 	test_config diff.ignoreSubmodules dirty &&
 	git status >output &&
-	test_i18ncmp expect output &&
+	test_cmp expect output &&
 	git config --add -f .gitmodules submodule.subname.ignore untracked &&
 	git config --add -f .gitmodules submodule.subname.path sm &&
 	git status >output &&
-	test_i18ncmp expect output &&
+	test_cmp expect output &&
 	git config -f .gitmodules  --remove-section submodule.subname
 '
 
@@ -1163,14 +1164,14 @@ test_expect_success '.git/config ignore=untracked suppresses submodules with unt
 	git config --add submodule.subname.ignore untracked &&
 	git config --add submodule.subname.path sm &&
 	git status >output &&
-	test_i18ncmp expect output &&
+	test_cmp expect output &&
 	git config --remove-section submodule.subname &&
 	git config --remove-section -f .gitmodules submodule.subname
 '
 
 test_expect_success '--ignore-submodules=dirty suppresses submodules with untracked content' '
 	git status --ignore-submodules=dirty >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success '.gitmodules ignore=dirty suppresses submodules with untracked content' '
@@ -1180,7 +1181,7 @@ test_expect_success '.gitmodules ignore=dirty suppresses submodules with untrack
 	git config --add -f .gitmodules submodule.subname.ignore dirty &&
 	git config --add -f .gitmodules submodule.subname.path sm &&
 	git status >output &&
-	test_i18ncmp expect output &&
+	test_cmp expect output &&
 	git config -f .gitmodules  --remove-section submodule.subname
 '
 
@@ -1190,7 +1191,7 @@ test_expect_success '.git/config ignore=dirty suppresses submodules with untrack
 	git config --add submodule.subname.ignore dirty &&
 	git config --add submodule.subname.path sm &&
 	git status >output &&
-	test_i18ncmp expect output &&
+	test_cmp expect output &&
 	git config --remove-section submodule.subname &&
 	git config -f .gitmodules  --remove-section submodule.subname
 '
@@ -1198,14 +1199,14 @@ test_expect_success '.git/config ignore=dirty suppresses submodules with untrack
 test_expect_success '--ignore-submodules=dirty suppresses submodules with modified content' '
 	echo modified >sm/foo &&
 	git status --ignore-submodules=dirty >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success '.gitmodules ignore=dirty suppresses submodules with modified content' '
 	git config --add -f .gitmodules submodule.subname.ignore dirty &&
 	git config --add -f .gitmodules submodule.subname.path sm &&
 	git status >output &&
-	test_i18ncmp expect output &&
+	test_cmp expect output &&
 	git config -f .gitmodules  --remove-section submodule.subname
 '
 
@@ -1215,14 +1216,14 @@ test_expect_success '.git/config ignore=dirty suppresses submodules with modifie
 	git config --add submodule.subname.ignore dirty &&
 	git config --add submodule.subname.path sm &&
 	git status >output &&
-	test_i18ncmp expect output &&
+	test_cmp expect output &&
 	git config --remove-section submodule.subname &&
 	git config -f .gitmodules  --remove-section submodule.subname
 '
 
 test_expect_success "--ignore-submodules=untracked doesn't suppress submodules with modified content" '
 	cat > expect << EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 2 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -1253,14 +1254,14 @@ Untracked files:
 
 EOF
 	git status --ignore-submodules=untracked > output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success ".gitmodules ignore=untracked doesn't suppress submodules with modified content" '
 	git config --add -f .gitmodules submodule.subname.ignore untracked &&
 	git config --add -f .gitmodules submodule.subname.path sm &&
 	git status >output &&
-	test_i18ncmp expect output &&
+	test_cmp expect output &&
 	git config -f .gitmodules  --remove-section submodule.subname
 '
 
@@ -1270,7 +1271,7 @@ test_expect_success ".git/config ignore=untracked doesn't suppress submodules wi
 	git config --add submodule.subname.ignore untracked &&
 	git config --add submodule.subname.path sm &&
 	git status >output &&
-	test_i18ncmp expect output &&
+	test_cmp expect output &&
 	git config --remove-section submodule.subname &&
 	git config -f .gitmodules  --remove-section submodule.subname
 '
@@ -1279,7 +1280,7 @@ head2=$(cd sm && git commit -q -m "2nd commit" foo && git rev-parse --short=7 --
 
 test_expect_success "--ignore-submodules=untracked doesn't suppress submodule summary" '
 	cat > expect << EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 2 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -1314,14 +1315,14 @@ Untracked files:
 
 EOF
 	git status --ignore-submodules=untracked > output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success ".gitmodules ignore=untracked doesn't suppress submodule summary" '
 	git config --add -f .gitmodules submodule.subname.ignore untracked &&
 	git config --add -f .gitmodules submodule.subname.path sm &&
 	git status >output &&
-	test_i18ncmp expect output &&
+	test_cmp expect output &&
 	git config -f .gitmodules  --remove-section submodule.subname
 '
 
@@ -1331,20 +1332,20 @@ test_expect_success ".git/config ignore=untracked doesn't suppress submodule sum
 	git config --add submodule.subname.ignore untracked &&
 	git config --add submodule.subname.path sm &&
 	git status >output &&
-	test_i18ncmp expect output &&
+	test_cmp expect output &&
 	git config --remove-section submodule.subname &&
 	git config -f .gitmodules  --remove-section submodule.subname
 '
 
 test_expect_success "--ignore-submodules=dirty doesn't suppress submodule summary" '
 	git status --ignore-submodules=dirty > output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 test_expect_success ".gitmodules ignore=dirty doesn't suppress submodule summary" '
 	git config --add -f .gitmodules submodule.subname.ignore dirty &&
 	git config --add -f .gitmodules submodule.subname.path sm &&
 	git status >output &&
-	test_i18ncmp expect output &&
+	test_cmp expect output &&
 	git config -f .gitmodules  --remove-section submodule.subname
 '
 
@@ -1354,13 +1355,13 @@ test_expect_success ".git/config ignore=dirty doesn't suppress submodule summary
 	git config --add submodule.subname.ignore dirty &&
 	git config --add submodule.subname.path sm &&
 	git status >output &&
-	test_i18ncmp expect output &&
+	test_cmp expect output &&
 	git config --remove-section submodule.subname &&
 	git config -f .gitmodules  --remove-section submodule.subname
 '
 
 cat > expect << EOF
-; On branch master
+; On branch main
 ; Your branch and 'upstream' have diverged,
 ; and have 2 and 2 different commits each, respectively.
 ;   (use "git pull" to merge the remote branch into yours)
@@ -1398,7 +1399,7 @@ EOF
 test_expect_success "status (core.commentchar with submodule summary)" '
 	test_config core.commentchar ";" &&
 	git -c status.displayCommentPrefix=true status >output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success "status (core.commentchar with two chars with submodule summary)" '
@@ -1408,7 +1409,7 @@ test_expect_success "status (core.commentchar with two chars with submodule summ
 
 test_expect_success "--ignore-submodules=all suppresses submodule summary" '
 	cat > expect << EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 2 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -1429,12 +1430,12 @@ Untracked files:
 no changes added to commit (use "git add" and/or "git commit -a")
 EOF
 	git status --ignore-submodules=all > output &&
-	test_i18ncmp expect output
+	test_cmp expect output
 '
 
 test_expect_success '.gitmodules ignore=all suppresses unstaged submodule summary' '
 	cat > expect << EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 2 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -1460,7 +1461,7 @@ EOF
 	git config --add -f .gitmodules submodule.subname.ignore all &&
 	git config --add -f .gitmodules submodule.subname.path sm &&
 	git status > output &&
-	test_i18ncmp expect output &&
+	test_cmp expect output &&
 	git config -f .gitmodules  --remove-section submodule.subname
 '
 
@@ -1470,7 +1471,7 @@ test_expect_success '.git/config ignore=all suppresses unstaged submodule summar
 	git config --add submodule.subname.ignore all &&
 	git config --add submodule.subname.path sm &&
 	git status > output &&
-	test_i18ncmp expect output &&
+	test_cmp expect output &&
 	git config --remove-section submodule.subname &&
 	git config -f .gitmodules  --remove-section submodule.subname
 '
@@ -1519,8 +1520,8 @@ test_expect_success '"status.branch=true" weaker than "--no-branch"' '
 '
 
 test_expect_success '"status.branch=true" weaker than "--porcelain"' '
-       git -c status.branch=true status --porcelain >actual &&
-       test_cmp expected_nobranch actual
+	git -c status.branch=true status --porcelain >actual &&
+	test_cmp expected_nobranch actual
 '
 
 test_expect_success '"status.branch=false" same as "--no-branch"' '
@@ -1554,7 +1555,7 @@ test_expect_success 'git commit --dry-run will show a staged but ignored submodu
 	git reset HEAD^ &&
 	git add sm &&
 	cat >expect << EOF &&
-On branch master
+On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 2 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
@@ -1571,7 +1572,7 @@ Changes not staged for commit:
 Untracked files not listed (use -u option to show untracked files)
 EOF
 	git commit -uno --dry-run >output &&
-	test_i18ncmp expect output &&
+	test_cmp expect output &&
 	git status -s --ignore-submodules=dirty >output &&
 	test_i18ngrep "^M. sm" output
 '
@@ -1647,13 +1648,103 @@ test_expect_success '"Initial commit" should not be noted in commit template' '
 '
 
 test_expect_success '--no-optional-locks prevents index update' '
-	test-tool chmtime =1234567890 .git/index &&
+	test_set_magic_mtime .git/index &&
 	git --no-optional-locks status &&
-	test-tool chmtime --get .git/index >out &&
-	grep ^1234567890 out &&
+	test_is_magic_mtime .git/index &&
 	git status &&
-	test-tool chmtime --get .git/index >out &&
-	! grep ^1234567890 out
+	! test_is_magic_mtime .git/index
+'
+
+test_expect_success 'racy timestamps will be fixed for clean worktree' '
+	echo content >racy-dirty &&
+	echo content >racy-racy &&
+	git add racy* &&
+	git commit -m "racy test files" &&
+	# let status rewrite the index, if necessary; after that we expect
+	# no more index writes unless caused by racy timestamps; note that
+	# timestamps may already be racy now (depending on previous tests)
+	git status &&
+	test_set_magic_mtime .git/index &&
+	git status &&
+	! test_is_magic_mtime .git/index
+'
+
+test_expect_success 'racy timestamps will be fixed for dirty worktree' '
+	echo content2 >racy-dirty &&
+	git status &&
+	test_set_magic_mtime .git/index &&
+	git status &&
+	! test_is_magic_mtime .git/index
+'
+
+test_expect_success 'setup slow status advice' '
+	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main git init slowstatus &&
+	(
+		cd slowstatus &&
+		cat >.gitignore <<-\EOF &&
+		/actual
+		/expected
+		/out
+		EOF
+		git add .gitignore &&
+		git commit -m "Add .gitignore" &&
+		git config advice.statusuoption true
+	)
+'
+
+test_expect_success 'slow status advice when core.untrackedCache and fsmonitor are unset' '
+	(
+		cd slowstatus &&
+		git config core.untrackedCache false &&
+		git config core.fsmonitor false &&
+		GIT_TEST_UF_DELAY_WARNING=1 git status >actual &&
+		cat >expected <<-\EOF &&
+		On branch main
+
+		It took 3.25 seconds to enumerate untracked files.
+		See '\''git help status'\'' for information on how to improve this.
+
+		nothing to commit, working tree clean
+		EOF
+		test_cmp expected actual
+	)
+'
+
+test_expect_success 'slow status advice when core.untrackedCache true, but not fsmonitor' '
+	(
+		cd slowstatus &&
+		git config core.untrackedCache true &&
+		git config core.fsmonitor false &&
+		GIT_TEST_UF_DELAY_WARNING=1 git status >actual &&
+		cat >expected <<-\EOF &&
+		On branch main
+
+		It took 3.25 seconds to enumerate untracked files.
+		See '\''git help status'\'' for information on how to improve this.
+
+		nothing to commit, working tree clean
+		EOF
+		test_cmp expected actual
+	)
+'
+
+test_expect_success 'slow status advice when core.untrackedCache true, and fsmonitor' '
+	(
+		cd slowstatus &&
+		git config core.untrackedCache true &&
+		git config core.fsmonitor true &&
+		GIT_TEST_UF_DELAY_WARNING=1 git status >actual &&
+		cat >expected <<-\EOF &&
+		On branch main
+
+		It took 3.25 seconds to enumerate untracked files,
+		but the results were cached, and subsequent runs may be faster.
+		See '\''git help status'\'' for information on how to improve this.
+
+		nothing to commit, working tree clean
+		EOF
+		test_cmp expected actual
+	)
 '
 
 test_done

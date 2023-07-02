@@ -9,7 +9,7 @@ git-receive-pack - Receive what is pushed into the repository
 SYNOPSIS
 --------
 [verse]
-'git-receive-pack' <directory>
+'git receive-pack' <git-dir>
 
 DESCRIPTION
 -----------
@@ -38,8 +38,13 @@ its behavior, see linkgit:git-config[1].
 
 OPTIONS
 -------
-<directory>::
+<git-dir>::
 	The repository to sync into.
+
+--http-backend-info-refs::
+	Used by linkgit:git-http-backend[1] to serve up
+	`$GIT_URL/info/refs?service=git-receive-pack` requests. See
+	`--http-backend-info-refs` in linkgit:git-upload-pack[1].
 
 PRE-RECEIVE HOOK
 ----------------

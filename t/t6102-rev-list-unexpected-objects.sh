@@ -2,6 +2,7 @@
 
 test_description='git rev-list should handle unexpected object types'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup well-formed objects' '
@@ -16,8 +17,13 @@ test_expect_success 'setup unexpected non-blob entry' '
 	broken_tree="$(git hash-object -w --literally -t tree broken-tree)"
 '
 
-test_expect_failure 'traverse unexpected non-blob entry (lone)' '
-	test_must_fail git rev-list --objects $broken_tree
+test_expect_success 'TODO (should fail!): traverse unexpected non-blob entry (lone)' '
+	sed "s/Z$//" >expect <<-EOF &&
+	$broken_tree Z
+	$tree foo
+	EOF
+	git rev-list --objects $broken_tree >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'traverse unexpected non-blob entry (seen)' '
@@ -115,7 +121,7 @@ test_expect_success 'setup unexpected non-blob tag' '
 	tag=$(git hash-object -w --literally -t tag broken-tag)
 '
 
-test_expect_failure 'traverse unexpected non-blob tag (lone)' '
+test_expect_success 'traverse unexpected non-blob tag (lone)' '
 	test_must_fail git rev-list --objects $tag
 '
 

@@ -1,0 +1,6 @@
+include.path::
+includeIf.<condition>.path::
+	Special variables to include other configuration files. See
+	the "CONFIGURATION FILE" section in the main
+	linkgit:git-config[1] documentation,
+	specifically the "Includes" and "Conditional Includes" subsections.

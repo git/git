@@ -1,17 +1,21 @@
 #!/bin/sh
 
 test_description='merge: handle file mode'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'set up mode change in one branch' '
 	: >file1 &&
 	git add file1 &&
 	git commit -m initial &&
-	git checkout -b a1 master &&
+	git checkout -b a1 main &&
 	: >dummy &&
 	git add dummy &&
 	git commit -m a &&
-	git checkout -b b1 master &&
+	git checkout -b b1 main &&
 	test_chmod +x file1 &&
 	git add file1 &&
 	git commit -m b1
@@ -39,19 +43,19 @@ do_one_mode resolve b1 a1
 
 test_expect_success 'set up mode change in both branches' '
 	git reset --hard HEAD &&
-	git checkout -b a2 master &&
+	git checkout -b a2 main &&
 	: >file2 &&
 	H=$(git hash-object file2) &&
 	test_chmod +x file2 &&
 	git commit -m a2 &&
-	git checkout -b b2 master &&
+	git checkout -b b2 main &&
 	: >file2 &&
 	git add file2 &&
 	git commit -m b2 &&
-	{
-		echo "100755 $H 2	file2"
-		echo "100644 $H 3	file2"
-	} >expect
+	cat >expect <<-EOF
+	100755 $H 2	file2
+	100644 $H 3	file2
+	EOF
 '
 
 do_both_modes () {
@@ -76,7 +80,7 @@ do_both_modes resolve
 
 test_expect_success 'set up delete/modechange scenario' '
 	git reset --hard &&
-	git checkout -b deletion master &&
+	git checkout -b deletion main &&
 	git rm file1 &&
 	git commit -m deletion
 '

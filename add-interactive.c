@@ -1,8 +1,14 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "add-interactive.h"
 #include "color.h"
 #include "config.h"
 #include "diffcore.h"
+#include "gettext.h"
+#include "hash.h"
+#include "hex.h"
+#include "preload-index.h"
+#include "read-cache-ll.h"
+#include "repository.h"
 #include "revision.h"
 #include "refs.h"
 #include "string-list.h"
@@ -10,12 +16,13 @@
 #include "dir.h"
 #include "run-command.h"
 #include "prompt.h"
+#include "tree.h"
 
 static void init_color(struct repository *r, struct add_i_state *s,
-		       const char *slot_name, char *dst,
+		       const char *section_and_slot, char *dst,
 		       const char *default_color)
 {
-	char *key = xstrfmt("color.interactive.%s", slot_name);
+	char *key = xstrfmt("color.%s", section_and_slot);
 	const char *value;
 
 	if (!s->use_color)
@@ -40,19 +47,26 @@ void init_add_i_state(struct add_i_state *s, struct repository *r)
 			git_config_colorbool("color.interactive", value);
 	s->use_color = want_color(s->use_color);
 
-	init_color(r, s, "header", s->header_color, GIT_COLOR_BOLD);
-	init_color(r, s, "help", s->help_color, GIT_COLOR_BOLD_RED);
-	init_color(r, s, "prompt", s->prompt_color, GIT_COLOR_BOLD_BLUE);
-	init_color(r, s, "error", s->error_color, GIT_COLOR_BOLD_RED);
-	init_color(r, s, "reset", s->reset_color, GIT_COLOR_RESET);
-	init_color(r, s, "fraginfo", s->fraginfo_color,
+	init_color(r, s, "interactive.header", s->header_color, GIT_COLOR_BOLD);
+	init_color(r, s, "interactive.help", s->help_color, GIT_COLOR_BOLD_RED);
+	init_color(r, s, "interactive.prompt", s->prompt_color,
+		   GIT_COLOR_BOLD_BLUE);
+	init_color(r, s, "interactive.error", s->error_color,
+		   GIT_COLOR_BOLD_RED);
+
+	init_color(r, s, "diff.frag", s->fraginfo_color,
 		   diff_get_color(s->use_color, DIFF_FRAGINFO));
-	init_color(r, s, "context", s->context_color,
-		diff_get_color(s->use_color, DIFF_CONTEXT));
-	init_color(r, s, "old", s->file_old_color,
+	init_color(r, s, "diff.context", s->context_color, "fall back");
+	if (!strcmp(s->context_color, "fall back"))
+		init_color(r, s, "diff.plain", s->context_color,
+			   diff_get_color(s->use_color, DIFF_CONTEXT));
+	init_color(r, s, "diff.old", s->file_old_color,
 		diff_get_color(s->use_color, DIFF_FILE_OLD));
-	init_color(r, s, "new", s->file_new_color,
+	init_color(r, s, "diff.new", s->file_new_color,
 		diff_get_color(s->use_color, DIFF_FILE_NEW));
+
+	strlcpy(s->reset_color,
+		s->use_color ? GIT_COLOR_RESET : "", COLOR_MAXLEN);
 
 	FREE_AND_NULL(s->interactive_diff_filter);
 	git_config_get_string("interactive.difffilter",
@@ -63,6 +77,8 @@ void init_add_i_state(struct add_i_state *s, struct repository *r)
 			      &s->interactive_diff_algorithm);
 
 	git_config_get_bool("interactive.singlekey", &s->use_single_key);
+	if (s->use_single_key)
+		setbuf(stdin, NULL);
 }
 
 void clear_add_i_state(struct add_i_state *s)
@@ -95,8 +111,12 @@ struct prefix_item_list {
 	int *selected; /* for multi-selections */
 	size_t min_length, max_length;
 };
-#define PREFIX_ITEM_LIST_INIT \
-	{ STRING_LIST_INIT_DUP, STRING_LIST_INIT_NODUP, NULL, 1, 4 }
+#define PREFIX_ITEM_LIST_INIT { \
+	.items = STRING_LIST_INIT_DUP, \
+	.sorted = STRING_LIST_INIT_NODUP, \
+	.min_length = 1, \
+	.max_length = 4, \
+}
 
 static void prefix_item_list_clear(struct prefix_item_list *list)
 {
@@ -194,7 +214,8 @@ static ssize_t find_unique(const char *string, struct prefix_item_list *list)
 	else if (index + 1 < list->sorted.nr &&
 		 starts_with(list->sorted.items[index + 1].string, string))
 		return -1;
-	else if (index < list->sorted.nr)
+	else if (index < list->sorted.nr &&
+		 starts_with(list->sorted.items[index].string, string))
 		item = list->sorted.items[index].util;
 	else
 		return -1;
@@ -364,7 +385,7 @@ static ssize_t list_and_choose(struct add_i_state *s,
 
 			if (from < 0 || from >= items->items.nr ||
 			    (singleton && from + 1 != to)) {
-				color_fprintf_ln(stdout, s->error_color,
+				color_fprintf_ln(stderr, s->error_color,
 						 _("Huh (%s)?"), p);
 				break;
 			} else if (singleton) {
@@ -405,7 +426,7 @@ struct file_item {
 
 static void add_file_item(struct string_list *files, const char *name)
 {
-	struct file_item *item = xcalloc(sizeof(*item), 1);
+	struct file_item *item = xcalloc(1, sizeof(*item));
 
 	string_list_append(files, name)->util = item;
 }
@@ -416,7 +437,7 @@ struct pathname_entry {
 	struct file_item *item;
 };
 
-static int pathname_entry_cmp(const void *unused_cmp_data,
+static int pathname_entry_cmp(const void *cmp_data UNUSED,
 			      const struct hashmap_entry *he1,
 			      const struct hashmap_entry *he2,
 			      const void *name)
@@ -468,7 +489,7 @@ static void collect_changes_cb(struct diff_queue_struct *q,
 
 			add_file_item(s->files, name);
 
-			entry = xcalloc(sizeof(*entry), 1);
+			CALLOC_ARRAY(entry, 1);
 			hashmap_entry_init(&entry->ent, hash);
 			entry->name = s->files->items[s->files->nr - 1].string;
 			entry->item = s->files->items[s->files->nr - 1].util;
@@ -516,8 +537,8 @@ static int get_modified_files(struct repository *r,
 	struct collection_status s = { 0 };
 	int i;
 
-	if (discard_index(r->index) < 0 ||
-	    repo_read_index_preload(r, ps, 0) < 0)
+	discard_index(r->index);
+	if (repo_read_index_preload(r, ps, 0) < 0)
 		return error(_("could not read index"));
 
 	prefix_item_list_clear(files);
@@ -537,7 +558,7 @@ static int get_modified_files(struct repository *r,
 		opt.def = is_initial ?
 			empty_tree_oid_hex() : oid_to_hex(&head_oid);
 
-		init_revisions(&rev, NULL);
+		repo_init_revisions(r, &rev, NULL);
 		setup_revisions(0, NULL, &rev, &opt);
 
 		rev.diffopt.output_format = DIFF_FORMAT_CALLBACK;
@@ -554,10 +575,9 @@ static int get_modified_files(struct repository *r,
 			run_diff_files(&rev, 0);
 		}
 
-		if (ps)
-			clear_pathspec(&rev.prune_data);
+		release_revisions(&rev);
 	}
-	hashmap_free_entries(&s.file_map, struct pathname_entry, ent);
+	hashmap_clear_and_free(&s.file_map, struct pathname_entry, ent);
 	if (unmerged_count)
 		*unmerged_count = s.unmerged_count;
 	if (binary_count)
@@ -684,8 +704,16 @@ static int run_update(struct add_i_state *s, const struct pathspec *ps,
 
 	for (i = 0; i < files->items.nr; i++) {
 		const char *name = files->items.items[i].string;
-		if (files->selected[i] &&
-		    add_file_to_index(s->r->index, name, 0) < 0) {
+		struct stat st;
+
+		if (!files->selected[i])
+			continue;
+		if (lstat(name, &st) && is_missing_file_error(errno)) {
+			if (remove_file_from_index(s->r->index, name) < 0) {
+				res = error(_("could not stage '%s'"), name);
+				break;
+			}
+		} else if (add_file_to_index(s->r->index, name, 0) < 0) {
 			res = error(_("could not stage '%s'"), name);
 			break;
 		}
@@ -703,7 +731,7 @@ static int run_update(struct add_i_state *s, const struct pathspec *ps,
 }
 
 static void revert_from_diff(struct diff_queue_struct *q,
-			     struct diff_options *opt, void *data)
+			     struct diff_options *opt, void *data UNUSED)
 {
 	int i, add_flags = ADD_CACHE_OK_TO_ADD | ADD_CACHE_OK_TO_REPLACE;
 
@@ -785,14 +813,14 @@ static int run_revert(struct add_i_state *s, const struct pathspec *ps,
 	diffopt.flags.override_submodule_config = 1;
 	diffopt.repo = s->r;
 
-	if (do_diff_cache(&oid, &diffopt))
+	if (do_diff_cache(&oid, &diffopt)) {
+		diff_free(&diffopt);
 		res = -1;
-	else {
+	} else {
 		diffcore_std(&diffopt);
 		diff_flush(&diffopt);
 	}
 	free(paths);
-	clear_pathspec(&diffopt.pathspec);
 
 	if (!res && write_locked_index(s->r->index, &index_lock,
 				       COMMIT_LOCK) < 0)
@@ -976,18 +1004,17 @@ static int run_diff(struct add_i_state *s, const struct pathspec *ps,
 	count = list_and_choose(s, files, opts);
 	opts->flags = 0;
 	if (count > 0) {
-		struct strvec args = STRVEC_INIT;
+		struct child_process cmd = CHILD_PROCESS_INIT;
 
-		strvec_pushl(&args, "git", "diff", "-p", "--cached",
+		strvec_pushl(&cmd.args, "git", "diff", "-p", "--cached",
 			     oid_to_hex(!is_initial ? &oid :
 					s->r->hash_algo->empty_tree),
 			     "--", NULL);
 		for (i = 0; i < files->items.nr; i++)
 			if (files->selected[i])
-				strvec_push(&args,
+				strvec_push(&cmd.args,
 					    files->items.items[i].string);
-		res = run_command_v_opt(args.v, 0);
-		strvec_clear(&args);
+		res = run_command(&cmd);
 	}
 
 	putchar('\n');
@@ -1112,7 +1139,7 @@ int run_add_i(struct repository *r, const struct pathspec *ps)
 	int res = 0;
 
 	for (i = 0; i < ARRAY_SIZE(command_list); i++) {
-		struct command_item *util = xcalloc(sizeof(*util), 1);
+		struct command_item *util = xcalloc(1, sizeof(*util));
 		util->command = command_list[i].command;
 		string_list_append(&commands.items, command_list[i].string)
 			->util = util;
@@ -1131,13 +1158,13 @@ int run_add_i(struct repository *r, const struct pathspec *ps)
 	print_file_item_data.color = data.color;
 	print_file_item_data.reset = data.reset;
 
-	strbuf_addstr(&header, "      ");
+	strbuf_addstr(&header, "     ");
 	strbuf_addf(&header, print_file_item_data.modified_fmt,
 		    _("staged"), _("unstaged"), _("path"));
 	opts.list_opts.header = header.buf;
 
-	if (discard_index(r->index) < 0 ||
-	    repo_read_index(r) < 0 ||
+	discard_index(r->index);
+	if (repo_read_index(r) < 0 ||
 	    repo_refresh_and_write_index(r, REFRESH_QUIET, 0, 1,
 					 NULL, NULL, NULL) < 0)
 		warning(_("could not refresh index"));

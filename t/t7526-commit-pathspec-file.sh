@@ -2,6 +2,7 @@
 
 test_description='commit --pathspec-from-file'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_tick
@@ -140,19 +141,19 @@ test_expect_success 'error conditions' '
 	>empty_list &&
 
 	test_must_fail git commit --pathspec-from-file=list --interactive -m "Commit" 2>err &&
-	test_i18ngrep -e "--pathspec-from-file is incompatible with --interactive/--patch" err &&
+	test_i18ngrep -e "options .--pathspec-from-file. and .--interactive/--patch. cannot be used together" err &&
 
 	test_must_fail git commit --pathspec-from-file=list --patch -m "Commit" 2>err &&
-	test_i18ngrep -e "--pathspec-from-file is incompatible with --interactive/--patch" err &&
+	test_i18ngrep -e "options .--pathspec-from-file. and .--interactive/--patch. cannot be used together" err &&
 
 	test_must_fail git commit --pathspec-from-file=list --all -m "Commit" 2>err &&
-	test_i18ngrep -e "--pathspec-from-file with -a does not make sense" err &&
+	test_i18ngrep -e "options .--pathspec-from-file. and .-a. cannot be used together" err &&
 
 	test_must_fail git commit --pathspec-from-file=list -m "Commit" -- fileA.t 2>err &&
-	test_i18ngrep -e "--pathspec-from-file is incompatible with pathspec arguments" err &&
+	test_i18ngrep -e ".--pathspec-from-file. and pathspec arguments cannot be used together" err &&
 
 	test_must_fail git commit --pathspec-file-nul -m "Commit" 2>err &&
-	test_i18ngrep -e "--pathspec-file-nul requires --pathspec-from-file" err &&
+	test_i18ngrep -e "the option .--pathspec-file-nul. requires .--pathspec-from-file." err &&
 
 	test_must_fail git commit --pathspec-from-file=empty_list --include -m "Commit" 2>err &&
 	test_i18ngrep -e "No paths with --include/--only does not make sense." err &&

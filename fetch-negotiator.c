@@ -18,9 +18,13 @@ void fetch_negotiator_init(struct repository *r,
 		noop_negotiator_init(negotiator);
 		return;
 
-	case FETCH_NEGOTIATION_DEFAULT:
-	default:
+	case FETCH_NEGOTIATION_CONSECUTIVE:
 		default_negotiator_init(negotiator);
 		return;
 	}
+}
+
+void fetch_negotiator_init_noop(struct fetch_negotiator *negotiator)
+{
+	noop_negotiator_init(negotiator);
 }

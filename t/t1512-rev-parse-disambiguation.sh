@@ -20,7 +20,91 @@ one tagged as v1.0.0.  They all have one regular file each.
 
 '
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
+
+test_cmp_failed_rev_parse () {
+	dir=$1
+	rev=$2
+
+	cat >expect &&
+	test_must_fail git -C "$dir" rev-parse "$rev" 2>actual.raw &&
+	sed "s/\($rev\)[0-9a-f]*/\1.../" <actual.raw >actual &&
+	test_cmp expect actual
+}
+
+test_expect_success 'ambiguous blob output' '
+	git init --bare blob.prefix &&
+	(
+		cd blob.prefix &&
+
+		# Both start with "dead..", under both SHA-1 and SHA-256
+		echo brocdnra | git hash-object -w --stdin &&
+		echo brigddsv | git hash-object -w --stdin &&
+
+		# Both start with "beef.."
+		echo 1agllotbh | git hash-object -w --stdin &&
+		echo 1bbfctrkc | git hash-object -w --stdin
+	) &&
+
+	test_must_fail git -C blob.prefix rev-parse dead &&
+	test_cmp_failed_rev_parse blob.prefix beef <<-\EOF
+	error: short object ID beef... is ambiguous
+	hint: The candidates are:
+	hint:   beef... blob
+	hint:   beef... blob
+	fatal: ambiguous argument '\''beef...'\'': unknown revision or path not in the working tree.
+	Use '\''--'\'' to separate paths from revisions, like this:
+	'\''git <command> [<revision>...] -- [<file>...]'\''
+	EOF
+'
+
+test_expect_success 'ambiguous loose bad object parsed as OBJ_BAD' '
+	git init --bare blob.bad &&
+	(
+		cd blob.bad &&
+
+		# Both have the prefix "bad0"
+		echo xyzfaowcoh | git hash-object -t bad -w --stdin --literally &&
+		echo xyzhjpyvwl | git hash-object -t bad -w --stdin --literally
+	) &&
+
+	test_cmp_failed_rev_parse blob.bad bad0 <<-\EOF
+	error: short object ID bad0... is ambiguous
+	fatal: invalid object type
+	EOF
+'
+
+test_expect_success POSIXPERM 'ambigous zlib corrupt loose blob' '
+	git init --bare blob.corrupt &&
+	(
+		cd blob.corrupt &&
+
+		# Both have the prefix "cafe"
+		echo bnkxmdwz | git hash-object -w --stdin &&
+		oid=$(echo bmwsjxzi | git hash-object -w --stdin) &&
+
+		oidf=objects/$(test_oid_to_path "$oid") &&
+		chmod 755 $oidf &&
+		echo broken >$oidf
+	) &&
+
+	test_cmp_failed_rev_parse blob.corrupt cafe <<-\EOF
+	error: short object ID cafe... is ambiguous
+	error: inflate: data stream error (incorrect header check)
+	error: unable to unpack cafe... header
+	error: inflate: data stream error (incorrect header check)
+	error: unable to unpack cafe... header
+	hint: The candidates are:
+	hint:   cafe... [bad object]
+	hint:   cafe... blob
+	fatal: ambiguous argument '\''cafe...'\'': unknown revision or path not in the working tree.
+	Use '\''--'\'' to separate paths from revisions, like this:
+	'\''git <command> [<revision>...] -- [<file>...]'\''
+	EOF
+'
 
 if ! test_have_prereq SHA1
 then
@@ -31,10 +115,7 @@ fi
 test_expect_success 'blob and tree' '
 	test_tick &&
 	(
-		for i in 0 1 2 3 4 5 6 7 8 9
-		do
-			echo $i
-		done &&
+		test_write_lines 0 1 2 3 4 5 6 7 8 9 &&
 		echo &&
 		echo b1rwzyc3
 	) >a0blgqsjc &&
@@ -48,7 +129,7 @@ test_expect_success 'blob and tree' '
 
 test_expect_success 'warn ambiguity when no candidate matches type hint' '
 	test_must_fail git rev-parse --verify 000000000^{commit} 2>actual &&
-	test_i18ngrep "short SHA1 000000000 is ambiguous" actual
+	test_i18ngrep "short object ID 000000000 is ambiguous" actual
 '
 
 test_expect_success 'disambiguate tree-ish' '
@@ -201,10 +282,7 @@ test_expect_success 'more history' '
 	git checkout v1.0.0^0 &&
 	git mv a0blgqsjc f5518nwu &&
 
-	for i in h62xsjeu j08bekfvt kg7xflhm
-	do
-		echo $i
-	done >>f5518nwu &&
+	test_write_lines h62xsjeu j08bekfvt kg7xflhm >>f5518nwu &&
 	git add f5518nwu &&
 
 	test_tick &&
@@ -212,7 +290,7 @@ test_expect_success 'more history' '
 	side=$(git rev-parse HEAD) &&
 
 	# commit 000000000066
-	git checkout master &&
+	git checkout main &&
 
 	# If you use recursive, merge will fail and you will need to
 	# clean up a0blgqsjc as well.  If you use resolve, merge will
@@ -311,39 +389,39 @@ test_expect_success 'ambiguous short sha1 ref' '
 	grep "refname.*${REF}.*ambiguous" err
 '
 
-test_expect_success C_LOCALE_OUTPUT 'ambiguity errors are not repeated (raw)' '
+test_expect_success 'ambiguity errors are not repeated (raw)' '
 	test_must_fail git rev-parse 00000 2>stderr &&
 	grep "is ambiguous" stderr >errors &&
 	test_line_count = 1 errors
 '
 
-test_expect_success C_LOCALE_OUTPUT 'ambiguity errors are not repeated (treeish)' '
+test_expect_success 'ambiguity errors are not repeated (treeish)' '
 	test_must_fail git rev-parse 00000:foo 2>stderr &&
 	grep "is ambiguous" stderr >errors &&
 	test_line_count = 1 errors
 '
 
-test_expect_success C_LOCALE_OUTPUT 'ambiguity errors are not repeated (peel)' '
+test_expect_success 'ambiguity errors are not repeated (peel)' '
 	test_must_fail git rev-parse 00000^{commit} 2>stderr &&
 	grep "is ambiguous" stderr >errors &&
 	test_line_count = 1 errors
 '
 
-test_expect_success C_LOCALE_OUTPUT 'ambiguity hints' '
+test_expect_success 'ambiguity hints' '
 	test_must_fail git rev-parse 000000000 2>stderr &&
 	grep ^hint: stderr >hints &&
 	# 16 candidates, plus one intro line
 	test_line_count = 17 hints
 '
 
-test_expect_success C_LOCALE_OUTPUT 'ambiguity hints respect type' '
+test_expect_success 'ambiguity hints respect type' '
 	test_must_fail git rev-parse 000000000^{commit} 2>stderr &&
 	grep ^hint: stderr >hints &&
 	# 5 commits, 1 tag (which is a committish), plus intro line
 	test_line_count = 7 hints
 '
 
-test_expect_success C_LOCALE_OUTPUT 'failed type-selector still shows hint' '
+test_expect_success 'failed type-selector still shows hint' '
 	# these two blobs share the same prefix "ee3d", but neither
 	# will pass for a commit
 	echo 851 | git hash-object --stdin -w &&
@@ -367,7 +445,7 @@ test_expect_success 'core.disambiguate does not override context' '
 		git -c core.disambiguate=committish rev-parse $sha1^{tree}
 '
 
-test_expect_success C_LOCALE_OUTPUT 'ambiguous commits are printed by type first, then hash order' '
+test_expect_success 'ambiguous commits are printed by type first, then hash order' '
 	test_must_fail git rev-parse 0000 2>stderr &&
 	grep ^hint: stderr >hints &&
 	grep 0000 hints >objects &&
@@ -384,7 +462,7 @@ test_expect_success C_LOCALE_OUTPUT 'ambiguous commits are printed by type first
 	do
 		grep $type objects >$type.objects &&
 		sort $type.objects >$type.objects.sorted &&
-		test_cmp $type.objects.sorted $type.objects
+		test_cmp $type.objects.sorted $type.objects || return 1
 	done
 '
 

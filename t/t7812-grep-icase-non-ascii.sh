@@ -2,7 +2,12 @@
 
 test_description='grep icase on non-English locales'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-gettext.sh
+
+doalarm () {
+	perl -e 'alarm shift; exec @ARGV' -- "$@"
+}
 
 test_expect_success GETTEXT_LOCALE 'setup' '
 	test_write_lines "TILRAUN: Halló Heimur!" >file &&
@@ -11,9 +16,19 @@ test_expect_success GETTEXT_LOCALE 'setup' '
 	export LC_ALL
 '
 
-test_have_prereq GETTEXT_LOCALE &&
-test-tool regex "HALLÓ" "Halló" ICASE &&
-test_set_prereq REGEX_LOCALE
+test_expect_success GETTEXT_LOCALE 'setup REGEX_LOCALE prerequisite' '
+	# This "test-tool" invocation is identical...
+	if test-tool regex "HALLÓ" "Halló" ICASE
+	then
+		test_set_prereq REGEX_LOCALE
+	else
+
+		# ... to this one, but this way "test_must_fail" will
+		# tell a segfault or abort() from the regexec() test
+		# itself
+		test_must_fail test-tool regex "HALLÓ" "Halló" ICASE
+	fi
+'
 
 test_expect_success REGEX_LOCALE 'grep literal string, no -F' '
 	git grep -i "TILRAUN: Halló Heimur!" &&
@@ -57,7 +72,12 @@ test_expect_success GETTEXT_LOCALE,LIBPCRE2 'PCRE v2: setup invalid UTF-8 data' 
 	printf "\\200\\n" >invalid-0x80 &&
 	echo "ævar" >expected &&
 	cat expected >>invalid-0x80 &&
-	git add invalid-0x80
+	git add invalid-0x80 &&
+
+	# Test for PCRE2_MATCH_INVALID_UTF bug
+	# https://bugs.exim.org/show_bug.cgi?id=2642
+	printf "\\345Aæ\\n" >invalid-0xe5 &&
+	git add invalid-0xe5
 '
 
 test_expect_success GETTEXT_LOCALE,LIBPCRE2 'PCRE v2: grep ASCII from invalid UTF-8 data' '
@@ -67,6 +87,13 @@ test_expect_success GETTEXT_LOCALE,LIBPCRE2 'PCRE v2: grep ASCII from invalid UT
 	test_cmp expected actual
 '
 
+test_expect_success GETTEXT_LOCALE,LIBPCRE2 'PCRE v2: grep ASCII from invalid UTF-8 data (PCRE2 bug #2642)' '
+	git grep -h "Aæ" invalid-0xe5 >actual &&
+	test_cmp invalid-0xe5 actual &&
+	git grep -h "(*NO_JIT)Aæ" invalid-0xe5 >actual &&
+	test_cmp invalid-0xe5 actual
+'
+
 test_expect_success GETTEXT_LOCALE,LIBPCRE2 'PCRE v2: grep non-ASCII from invalid UTF-8 data' '
 	git grep -h "æ" invalid-0x80 >actual &&
 	test_cmp expected actual &&
@@ -74,14 +101,53 @@ test_expect_success GETTEXT_LOCALE,LIBPCRE2 'PCRE v2: grep non-ASCII from invali
 	test_cmp expected actual
 '
 
+test_expect_success GETTEXT_LOCALE,LIBPCRE2 'PCRE v2: grep non-ASCII from invalid UTF-8 data (PCRE2 bug #2642)' '
+	git grep -h "Aæ" invalid-0xe5 >actual &&
+	test_cmp invalid-0xe5 actual &&
+	git grep -h "(*NO_JIT)Aæ" invalid-0xe5 >actual &&
+	test_cmp invalid-0xe5 actual
+'
+
+test_lazy_prereq PCRE2_MATCH_INVALID_UTF '
+	test-tool pcre2-config has-PCRE2_MATCH_INVALID_UTF
+'
+
 test_expect_success GETTEXT_LOCALE,LIBPCRE2 'PCRE v2: grep non-ASCII from invalid UTF-8 data with -i' '
 	test_might_fail git grep -hi "Æ" invalid-0x80 >actual &&
-	if test -s actual
-	then
-	    test_cmp expected actual
-	fi &&
-	test_must_fail git grep -hi "(*NO_JIT)Æ" invalid-0x80 >actual &&
-	! test_cmp expected actual
+	test_might_fail git grep -hi "(*NO_JIT)Æ" invalid-0x80 >actual
+'
+
+test_expect_success GETTEXT_LOCALE,LIBPCRE2,PCRE2_MATCH_INVALID_UTF 'PCRE v2: grep non-ASCII from invalid UTF-8 data with -i' '
+	git grep -hi "Æ" invalid-0x80 >actual &&
+	test_cmp expected actual &&
+	git grep -hi "(*NO_JIT)Æ" invalid-0x80 >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success GETTEXT_LOCALE,LIBPCRE2,PCRE2_MATCH_INVALID_UTF 'PCRE v2: grep non-ASCII from invalid UTF-8 data with -i (PCRE2 bug #2642)' '
+	git grep -hi "Æ" invalid-0xe5 >actual &&
+	test_cmp invalid-0xe5 actual &&
+	git grep -hi "(*NO_JIT)Æ" invalid-0xe5 >actual &&
+	test_cmp invalid-0xe5 actual &&
+
+	# Only the case of grepping the ASCII part in a way that
+	# relies on -i fails
+	git grep -hi "aÆ" invalid-0xe5 >actual &&
+	test_cmp invalid-0xe5 actual &&
+	git grep -hi "(*NO_JIT)aÆ" invalid-0xe5 >actual &&
+	test_cmp invalid-0xe5 actual
+'
+
+test_expect_success GETTEXT_LOCALE,LIBPCRE2 'PCRE v2: grep non-literal ASCII from UTF-8' '
+	git grep --perl-regexp -h -o -e ll. file >actual &&
+	echo "lló" >expected &&
+	test_cmp expected actual
+'
+
+test_expect_success GETTEXT_LOCALE,LIBPCRE2 'PCRE v2: grep avoid endless loop bug' '
+	echo " Halló" >leading-whitespace &&
+	git add leading-whitespace &&
+	doalarm 1 git grep --perl-regexp "^\s" leading-whitespace
 '
 
 test_done

@@ -6,6 +6,7 @@
 test_description='Quoting paths in diff output.
 '
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 P0='pathname'
@@ -82,7 +83,7 @@ test_expect_success 'git diff --stat -M HEAD' '
 	 7 files changed, 0 insertions(+), 0 deletions(-)
 	EOF
 	git diff --stat -M HEAD >actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_done

@@ -2,11 +2,15 @@
 
 test_description='Combination of submodules and multiple worktrees'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 base_path=$(pwd -P)
 
 test_expect_success 'setup: create origin repos'  '
+	git config --global protocol.file.allow always &&
 	git init origin/sub &&
 	test_commit -C origin/sub file1 &&
 	git init origin/main &&
@@ -31,7 +35,7 @@ test_expect_success 'add superproject worktree' '
 '
 
 test_expect_failure 'submodule is checked out just after worktree add' '
-	git -C worktree diff --submodule master"^!" >out &&
+	git -C worktree diff --submodule main"^!" >out &&
 	grep "file1 updated" out
 '
 
@@ -41,7 +45,7 @@ test_expect_success 'add superproject worktree and initialize submodules' '
 '
 
 test_expect_success 'submodule is checked out just after submodule update in linked worktree' '
-	git -C worktree-submodule-update diff --submodule master"^!" >out &&
+	git -C worktree-submodule-update diff --submodule main"^!" >out &&
 	grep "file1 updated" out
 '
 
@@ -51,7 +55,7 @@ test_expect_success 'add superproject worktree and manually add submodule worktr
 '
 
 test_expect_success 'submodule is checked out after manually adding submodule worktree' '
-	git -C linked_submodule diff --submodule master"^!" >out &&
+	git -C linked_submodule diff --submodule main"^!" >out &&
 	grep "file1 updated" out
 '
 

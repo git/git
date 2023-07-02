@@ -1,5 +1,6 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
+#include "repository.h"
 #include "run-command.h"
 #include "quote.h"
 #include "version.h"
@@ -10,8 +11,11 @@
 #include "trace2/tr2_tbuf.h"
 #include "trace2/tr2_tgt.h"
 #include "trace2/tr2_tls.h"
+#include "trace2/tr2_tmr.h"
 
-static struct tr2_dst tr2dst_perf = { TR2_SYSENV_PERF, 0, 0, 0, 0 };
+static struct tr2_dst tr2dst_perf = {
+	.sysenv_var = TR2_SYSENV_PERF,
+};
 
 /*
  * Use TR2_SYSENV_PERF_BRIEF to omit the "<time> <file>:<line>"
@@ -106,7 +110,7 @@ static void perf_fmt_prepare(const char *event_name,
 
 	strbuf_addf(buf, "d%d | ", tr2_sid_depth());
 	strbuf_addf(buf, "%-*s | %-*s | ", TR2_MAX_THREAD_NAME,
-		    ctx->thread_name.buf, TR2FMT_PERF_MAX_EVENT_NAME,
+		    ctx->thread_name, TR2FMT_PERF_MAX_EVENT_NAME,
 		    event_name);
 
 	len = buf->len + TR2FMT_PERF_REPO_WIDTH;
@@ -253,6 +257,21 @@ static void fn_command_path_fl(const char *file, int line, const char *pathname)
 	strbuf_release(&buf_payload);
 }
 
+static void fn_command_ancestry_fl(const char *file, int line, const char **parent_names)
+{
+	const char *event_name = "cmd_ancestry";
+	struct strbuf buf_payload = STRBUF_INIT;
+
+	strbuf_addstr(&buf_payload, "ancestry:[");
+	/* It's not an argv but the rules are basically the same. */
+	sq_append_quote_argv_pretty(&buf_payload, parent_names);
+	strbuf_addch(&buf_payload, ']');
+
+	perf_io_write_fl(file, line, event_name, NULL, NULL, NULL, NULL,
+			 &buf_payload);
+	strbuf_release(&buf_payload);
+}
+
 static void fn_command_name_fl(const char *file, int line, const char *name,
 			       const char *hierarchy)
 {
@@ -320,10 +339,10 @@ static void fn_child_start_fl(const char *file, int line,
 	strbuf_addstr(&buf_payload, " argv:[");
 	if (cmd->git_cmd) {
 		strbuf_addstr(&buf_payload, "git");
-		if (cmd->argv[0])
+		if (cmd->args.nr)
 			strbuf_addch(&buf_payload, ' ');
 	}
-	sq_append_quote_argv_pretty(&buf_payload, cmd->argv);
+	sq_append_quote_argv_pretty(&buf_payload, cmd->args.v);
 	strbuf_addch(&buf_payload, ']');
 
 	perf_io_write_fl(file, line, event_name, NULL, &us_elapsed_absolute,
@@ -339,6 +358,20 @@ static void fn_child_exit_fl(const char *file, int line,
 	struct strbuf buf_payload = STRBUF_INIT;
 
 	strbuf_addf(&buf_payload, "[ch%d] pid:%d code:%d", cid, pid, code);
+
+	perf_io_write_fl(file, line, event_name, NULL, &us_elapsed_absolute,
+			 &us_elapsed_child, NULL, &buf_payload);
+	strbuf_release(&buf_payload);
+}
+
+static void fn_child_ready_fl(const char *file, int line,
+			      uint64_t us_elapsed_absolute, int cid, int pid,
+			      const char *ready, uint64_t us_elapsed_child)
+{
+	const char *event_name = "child_ready";
+	struct strbuf buf_payload = STRBUF_INIT;
+
+	strbuf_addf(&buf_payload, "[ch%d] pid:%d ready:%s", cid, pid, ready);
 
 	perf_io_write_fl(file, line, event_name, NULL, &us_elapsed_absolute,
 			 &us_elapsed_child, NULL, &buf_payload);
@@ -410,12 +443,17 @@ static void fn_param_fl(const char *file, int line, const char *param,
 {
 	const char *event_name = "def_param";
 	struct strbuf buf_payload = STRBUF_INIT;
+	struct strbuf scope_payload = STRBUF_INIT;
+	enum config_scope scope = current_config_scope();
+	const char *scope_name = config_scope_name(scope);
 
 	strbuf_addf(&buf_payload, "%s:%s", param, value);
+	strbuf_addf(&scope_payload, "%s:%s", "scope", scope_name);
 
-	perf_io_write_fl(file, line, event_name, NULL, NULL, NULL, NULL,
-			 &buf_payload);
+	perf_io_write_fl(file, line, event_name, NULL, NULL, NULL,
+			 scope_payload.buf, &buf_payload);
 	strbuf_release(&buf_payload);
+	strbuf_release(&scope_payload);
 }
 
 static void fn_repo_fl(const char *file, int line,
@@ -519,33 +557,75 @@ static void fn_printf_va_fl(const char *file, int line,
 	strbuf_release(&buf_payload);
 }
 
+static void fn_timer(const struct tr2_timer_metadata *meta,
+		     const struct tr2_timer *timer,
+		     int is_final_data)
+{
+	const char *event_name = is_final_data ? "timer" : "th_timer";
+	struct strbuf buf_payload = STRBUF_INIT;
+	double t_total = NS_TO_SEC(timer->total_ns);
+	double t_min = NS_TO_SEC(timer->min_ns);
+	double t_max = NS_TO_SEC(timer->max_ns);
+
+	strbuf_addf(&buf_payload, ("name:%s"
+				   " intervals:%"PRIu64
+				   " total:%8.6f min:%8.6f max:%8.6f"),
+		    meta->name,
+		    timer->interval_count,
+		    t_total, t_min, t_max);
+
+	perf_io_write_fl(__FILE__, __LINE__, event_name, NULL, NULL, NULL,
+			 meta->category, &buf_payload);
+	strbuf_release(&buf_payload);
+}
+
+static void fn_counter(const struct tr2_counter_metadata *meta,
+		       const struct tr2_counter *counter,
+		       int is_final_data)
+{
+	const char *event_name = is_final_data ? "counter" : "th_counter";
+	struct strbuf buf_payload = STRBUF_INIT;
+
+	strbuf_addf(&buf_payload, "name:%s value:%"PRIu64,
+		    meta->name,
+		    counter->value);
+
+	perf_io_write_fl(__FILE__, __LINE__, event_name, NULL, NULL, NULL,
+			 meta->category, &buf_payload);
+	strbuf_release(&buf_payload);
+}
+
 struct tr2_tgt tr2_tgt_perf = {
-	&tr2dst_perf,
+	.pdst = &tr2dst_perf,
 
-	fn_init,
-	fn_term,
+	.pfn_init = fn_init,
+	.pfn_term = fn_term,
 
-	fn_version_fl,
-	fn_start_fl,
-	fn_exit_fl,
-	fn_signal,
-	fn_atexit,
-	fn_error_va_fl,
-	fn_command_path_fl,
-	fn_command_name_fl,
-	fn_command_mode_fl,
-	fn_alias_fl,
-	fn_child_start_fl,
-	fn_child_exit_fl,
-	fn_thread_start_fl,
-	fn_thread_exit_fl,
-	fn_exec_fl,
-	fn_exec_result_fl,
-	fn_param_fl,
-	fn_repo_fl,
-	fn_region_enter_printf_va_fl,
-	fn_region_leave_printf_va_fl,
-	fn_data_fl,
-	fn_data_json_fl,
-	fn_printf_va_fl,
+	.pfn_version_fl = fn_version_fl,
+	.pfn_start_fl = fn_start_fl,
+	.pfn_exit_fl = fn_exit_fl,
+	.pfn_signal = fn_signal,
+	.pfn_atexit = fn_atexit,
+	.pfn_error_va_fl = fn_error_va_fl,
+	.pfn_command_path_fl = fn_command_path_fl,
+	.pfn_command_ancestry_fl = fn_command_ancestry_fl,
+	.pfn_command_name_fl = fn_command_name_fl,
+	.pfn_command_mode_fl = fn_command_mode_fl,
+	.pfn_alias_fl = fn_alias_fl,
+	.pfn_child_start_fl = fn_child_start_fl,
+	.pfn_child_exit_fl = fn_child_exit_fl,
+	.pfn_child_ready_fl = fn_child_ready_fl,
+	.pfn_thread_start_fl = fn_thread_start_fl,
+	.pfn_thread_exit_fl = fn_thread_exit_fl,
+	.pfn_exec_fl = fn_exec_fl,
+	.pfn_exec_result_fl = fn_exec_result_fl,
+	.pfn_param_fl = fn_param_fl,
+	.pfn_repo_fl = fn_repo_fl,
+	.pfn_region_enter_printf_va_fl = fn_region_enter_printf_va_fl,
+	.pfn_region_leave_printf_va_fl = fn_region_leave_printf_va_fl,
+	.pfn_data_fl = fn_data_fl,
+	.pfn_data_json_fl = fn_data_json_fl,
+	.pfn_printf_va_fl = fn_printf_va_fl,
+	.pfn_timer = fn_timer,
+	.pfn_counter = fn_counter,
 };

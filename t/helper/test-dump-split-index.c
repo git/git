@@ -1,5 +1,9 @@
+#define USE_THE_INDEX_VARIABLE
 #include "test-tool.h"
-#include "cache.h"
+#include "hex.h"
+#include "read-cache-ll.h"
+#include "repository.h"
+#include "setup.h"
 #include "split-index.h"
 #include "ewah/ewok.h"
 
@@ -8,7 +12,7 @@ static void show_bit(size_t pos, void *data)
 	printf(" %d", (int)pos);
 }
 
-int cmd__dump_split_index(int ac, const char **av)
+int cmd__dump_split_index(int ac UNUSED, const char **av)
 {
 	struct split_index *si;
 	int i;

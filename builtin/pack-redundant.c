@@ -7,20 +7,22 @@
 */
 
 #include "builtin.h"
+#include "gettext.h"
+#include "hex.h"
 #include "repository.h"
 #include "packfile.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 
 #define BLKSIZE 512
 
 static const char pack_redundant_usage[] =
-"git pack-redundant [--verbose] [--alt-odb] (--all | <filename.pack>...)";
+"git pack-redundant [--verbose] [--alt-odb] (--all | <pack-filename>...)";
 
 static int load_all_packs, verbose, alt_odb;
 
 struct llist_item {
 	struct llist_item *next;
-	const struct object_id *oid;
+	struct object_id oid;
 };
 static struct llist {
 	struct llist_item *front;
@@ -95,13 +97,13 @@ static struct llist * llist_copy(struct llist *list)
 
 static inline struct llist_item *llist_insert(struct llist *list,
 					      struct llist_item *after,
-					      const struct object_id *oid)
+					      const unsigned char *oid)
 {
 	struct llist_item *new_item = llist_item_get();
-	new_item->oid = oid;
+	oidread(&new_item->oid, oid);
 	new_item->next = NULL;
 
-	if (after != NULL) {
+	if (after) {
 		new_item->next = after->next;
 		after->next = new_item;
 		if (after == list->back)
@@ -118,7 +120,7 @@ static inline struct llist_item *llist_insert(struct llist *list,
 }
 
 static inline struct llist_item *llist_insert_back(struct llist *list,
-						   const struct object_id *oid)
+						   const unsigned char *oid)
 {
 	return llist_insert(list, list->back, oid);
 }
@@ -130,9 +132,9 @@ static inline struct llist_item *llist_insert_sorted_unique(struct llist *list,
 
 	l = (hint == NULL) ? list->front : hint;
 	while (l) {
-		int cmp = oidcmp(l->oid, oid);
+		int cmp = oidcmp(&l->oid, oid);
 		if (cmp > 0) { /* we insert before this entry */
-			return llist_insert(list, prev, oid);
+			return llist_insert(list, prev, oid->hash);
 		}
 		if (!cmp) { /* already exists */
 			return l;
@@ -141,11 +143,11 @@ static inline struct llist_item *llist_insert_sorted_unique(struct llist *list,
 		l = l->next;
 	}
 	/* insert at the end */
-	return llist_insert_back(list, oid);
+	return llist_insert_back(list, oid->hash);
 }
 
 /* returns a pointer to an item in front of sha1 */
-static inline struct llist_item * llist_sorted_remove(struct llist *list, const struct object_id *oid, struct llist_item *hint)
+static inline struct llist_item * llist_sorted_remove(struct llist *list, const unsigned char *oid, struct llist_item *hint)
 {
 	struct llist_item *prev, *l;
 
@@ -153,11 +155,11 @@ redo_from_start:
 	l = (hint == NULL) ? list->front : hint;
 	prev = NULL;
 	while (l) {
-		const int cmp = oidcmp(l->oid, oid);
+		const int cmp = hashcmp(l->oid.hash, oid);
 		if (cmp > 0) /* not in list, since sorted */
 			return prev;
 		if (!cmp) { /* found */
-			if (prev == NULL) {
+			if (!prev) {
 				if (hint != NULL && hint != list->front) {
 					/* we don't know the previous element */
 					hint = NULL;
@@ -188,7 +190,7 @@ static void llist_sorted_difference_inplace(struct llist *A,
 	b = B->front;
 
 	while (b) {
-		hint = llist_sorted_remove(A, b->oid, hint);
+		hint = llist_sorted_remove(A, b->oid.hash, hint);
 		b = b->next;
 	}
 }
@@ -219,7 +221,7 @@ static struct pack_list * pack_list_difference(const struct pack_list *A,
 	struct pack_list *ret;
 	const struct pack_list *pl;
 
-	if (A == NULL)
+	if (!A)
 		return NULL;
 
 	pl = B;
@@ -236,7 +238,7 @@ static struct pack_list * pack_list_difference(const struct pack_list *A,
 
 static void cmp_two_packs(struct pack_list *p1, struct pack_list *p2)
 {
-	unsigned long p1_off = 0, p2_off = 0, p1_step, p2_step;
+	size_t p1_off = 0, p2_off = 0, p1_step, p2_step;
 	const unsigned char *p1_base, *p2_base;
 	struct llist_item *p1_hint = NULL, *p2_hint = NULL;
 	const unsigned int hashsz = the_hash_algo->rawsz;
@@ -260,10 +262,10 @@ static void cmp_two_packs(struct pack_list *p1, struct pack_list *p2)
 		/* cmp ~ p1 - p2 */
 		if (cmp == 0) {
 			p1_hint = llist_sorted_remove(p1->unique_objects,
-					(const struct object_id *)(p1_base + p1_off),
+					p1_base + p1_off,
 					p1_hint);
 			p2_hint = llist_sorted_remove(p2->unique_objects,
-					(const struct object_id *)(p1_base + p1_off),
+					p1_base + p1_off,
 					p2_hint);
 			p1_off += p1_step;
 			p2_off += p2_step;
@@ -280,7 +282,7 @@ static void cmp_two_packs(struct pack_list *p1, struct pack_list *p2)
 static size_t sizeof_union(struct packed_git *p1, struct packed_git *p2)
 {
 	size_t ret = 0;
-	unsigned long p1_off = 0, p2_off = 0, p1_step, p2_step;
+	size_t p1_off = 0, p2_off = 0, p1_step, p2_step;
 	const unsigned char *p1_base, *p2_base;
 	const unsigned int hashsz = the_hash_algo->rawsz;
 
@@ -317,7 +319,7 @@ static size_t get_pack_redundancy(struct pack_list *pl)
 	struct pack_list *subset;
 	size_t ret = 0;
 
-	if (pl == NULL)
+	if (!pl)
 		return 0;
 
 	while ((subset = pl->next)) {
@@ -373,7 +375,7 @@ static void sort_pack_list(struct pack_list **pl)
 		return;
 
 	/* prepare an array of packed_list for easier sorting */
-	ary = xcalloc(n, sizeof(struct pack_list *));
+	CALLOC_ARRAY(ary, n);
 	for (n = 0, p = *pl; p; p = p->next)
 		ary[n++] = p;
 
@@ -455,7 +457,7 @@ static void load_all_objects(void)
 		l = pl->remaining_objects->front;
 		while (l) {
 			hint = llist_insert_sorted_unique(all_objects,
-							  l->oid, hint);
+							  &l->oid, hint);
 			l = l->next;
 		}
 		pl = pl->next;
@@ -472,6 +474,12 @@ static void load_all_objects(void)
 static void cmp_local_packs(void)
 {
 	struct pack_list *subset, *pl = local_packs;
+
+	/* only one packfile */
+	if (!pl->next) {
+		llist_init(&pl->unique_objects);
+		return;
+	}
 
 	while ((subset = pl)) {
 		while ((subset = subset->next))
@@ -499,7 +507,7 @@ static void scan_alt_odb_packs(void)
 static struct pack_list * add_pack(struct packed_git *p)
 {
 	struct pack_list l;
-	unsigned long off = 0, step;
+	size_t off = 0, step;
 	const unsigned char *base;
 
 	if (!p->pack_local && !(alt_odb || verbose))
@@ -515,7 +523,7 @@ static struct pack_list * add_pack(struct packed_git *p)
 	base += 256 * 4 + ((p->index_version < 2) ? 4 : 8);
 	step = the_hash_algo->rawsz + ((p->index_version < 2) ? 4 : 0);
 	while (off < p->num_objects * step) {
-		llist_insert_back(l.remaining_objects, (const struct object_id *)(base + off));
+		llist_insert_back(l.remaining_objects, base + off);
 		off += step;
 	}
 	l.all_objects_size = l.remaining_objects->size;
@@ -551,9 +559,10 @@ static void load_all(void)
 	}
 }
 
-int cmd_pack_redundant(int argc, const char **argv, const char *prefix)
+int cmd_pack_redundant(int argc, const char **argv, const char *prefix UNUSED)
 {
 	int i;
+	int i_still_use_this = 0;
 	struct pack_list *min = NULL, *red, *pl;
 	struct llist *ignore;
 	struct object_id *oid;
@@ -580,10 +589,23 @@ int cmd_pack_redundant(int argc, const char **argv, const char *prefix)
 			alt_odb = 1;
 			continue;
 		}
+		if (!strcmp(arg, "--i-still-use-this")) {
+			i_still_use_this = 1;
+			continue;
+		}
 		if (*arg == '-')
 			usage(pack_redundant_usage);
 		else
 			break;
+	}
+
+	if (!i_still_use_this) {
+		fputs(_("'git pack-redundant' is nominated for removal.\n"
+			"If you still use this command, please add an extra\n"
+			"option, '--i-still-use-this', on the command line\n"
+			"and let us know you still use it by sending an e-mail\n"
+			"to <git@vger.kernel.org>.  Thanks.\n"), stderr);
+		die(_("refusing to run without --i-still-use-this"));
 	}
 
 	if (load_all_packs)
@@ -592,7 +614,7 @@ int cmd_pack_redundant(int argc, const char **argv, const char *prefix)
 		while (*(argv + i) != NULL)
 			add_pack_file(*(argv + i++));
 
-	if (local_packs == NULL)
+	if (!local_packs)
 		die("Zero packs found!");
 
 	load_all_objects();

@@ -3,6 +3,8 @@
 
 struct strbuf;
 
+extern int quote_path_fully;
+
 /* Help to copy the thing properly quoted for the shell safety.
  * any single quote is replaced with '\'', any exclamation point
  * is replaced with '\!', and the whole thing is enclosed in a
@@ -31,6 +33,7 @@ struct strbuf;
 
 void sq_quote_buf(struct strbuf *, const char *src);
 void sq_quote_argv(struct strbuf *, const char **argv);
+__attribute__((format (printf, 2, 3)))
 void sq_quotef(struct strbuf *, const char *fmt, ...);
 
 /*
@@ -42,11 +45,25 @@ void sq_quote_buf_pretty(struct strbuf *, const char *src);
 void sq_quote_argv_pretty(struct strbuf *, const char **argv);
 void sq_append_quote_argv_pretty(struct strbuf *dst, const char **argv);
 
-/* This unwraps what sq_quote() produces in place, but returns
+/*
+ * This unwraps what sq_quote() produces in place, but returns
  * NULL if the input does not look like what sq_quote would have
- * produced.
+ * produced (the full string must be a single quoted item).
  */
 char *sq_dequote(char *);
+
+/*
+ * Like sq_dequote(), but dequote a single item, and leave "next" pointing to
+ * the next character. E.g., in the string:
+ *
+ *   'one' 'two' 'three'
+ *
+ * after the first call, the return value would be the unquoted string "one",
+ * with "next" pointing to the space between "one" and "two"). The caller is
+ * responsible for advancing the pointer to the start of the next item before
+ * calling sq_dequote_step() again.
+ */
+char *sq_dequote_step(char *src, char **next);
 
 /*
  * Same as the above, but can be used to unwrap many arguments in the
@@ -80,6 +97,7 @@ char *quote_path(const char *in, const char *prefix, struct strbuf *out, unsigne
 
 /* quoting as a string literal for other languages */
 void perl_quote_buf(struct strbuf *sb, const char *src);
+void perl_quote_buf_with_len(struct strbuf *sb, const char *src, size_t len);
 void python_quote_buf(struct strbuf *sb, const char *src);
 void tcl_quote_buf(struct strbuf *sb, const char *src);
 void basic_regex_quote_buf(struct strbuf *sb, const char *src);

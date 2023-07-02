@@ -140,6 +140,11 @@ void graph_set_column_colors(const char **colors, unsigned short colors_max);
 struct git_graph *graph_init(struct rev_info *opt);
 
 /*
+ * Free a struct git_graph.
+ */
+void graph_clear(struct git_graph *graph);
+
+/*
  * Update a git_graph with a new commit.
  * This will cause the graph to begin outputting lines for the new commit
  * the next time graph_next_line() is called.

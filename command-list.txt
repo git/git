@@ -43,7 +43,16 @@
 # specified here, which can only have "guide" attribute and nothing
 # else.
 #
-### command list (do not change this line, also do not change alignment)
+# User-facing repository, command and file interfaces such as
+# documentation for the .gitmodules, .mailmap etc. files lives in man
+# sections 5 and 7. These entries can only have the "userinterfaces"
+# attribute and nothing else.
+#
+# Git's file formats and protocols, such as documentation for the
+# *.bundle format lives in man section 5. These entries can only have
+# the "developerinterfaces" attribute and nothing else.
+#
+### command list (do not change this line)
 # command name                          category [category] [category]
 git-add                                 mainporcelain           worktree
 git-am                                  mainporcelain
@@ -60,9 +69,9 @@ git-cat-file                            plumbinginterrogators
 git-check-attr                          purehelpers
 git-check-ignore                        purehelpers
 git-check-mailmap                       purehelpers
+git-check-ref-format                    purehelpers
 git-checkout                            mainporcelain
 git-checkout-index                      plumbingmanipulators
-git-check-ref-format                    purehelpers
 git-cherry                              plumbinginterrogators          complete
 git-cherry-pick                         mainporcelain
 git-citool                              mainporcelain
@@ -82,6 +91,7 @@ git-cvsimport                           foreignscminterface
 git-cvsserver                           foreignscminterface
 git-daemon                              synchingrepositories
 git-describe                            mainporcelain
+git-diagnose                            ancillaryinterrogators
 git-diff                                mainporcelain           info
 git-diff-files                          plumbinginterrogators
 git-diff-index                          plumbinginterrogators
@@ -94,6 +104,7 @@ git-fetch-pack                          synchingrepositories
 git-filter-branch                       ancillarymanipulators
 git-fmt-merge-msg                       purehelpers
 git-for-each-ref                        plumbinginterrogators
+git-for-each-repo                       plumbinginterrogators
 git-format-patch                        mainporcelain
 git-fsck                                ancillaryinterrogators          complete
 git-gc                                  mainporcelain
@@ -102,6 +113,7 @@ git-grep                                mainporcelain           info
 git-gui                                 mainporcelain
 git-hash-object                         plumbingmanipulators
 git-help                                ancillaryinterrogators          complete
+git-hook                                purehelpers
 git-http-backend                        synchingrepositories
 git-http-fetch                          synchelpers
 git-http-push                           synchelpers
@@ -110,7 +122,6 @@ git-index-pack                          plumbingmanipulators
 git-init                                mainporcelain           init
 git-instaweb                            ancillaryinterrogators          complete
 git-interpret-trailers                  purehelpers
-gitk                                    mainporcelain
 git-log                                 mainporcelain           info
 git-ls-files                            plumbinginterrogators
 git-ls-remote                           plumbinginterrogators
@@ -123,11 +134,11 @@ git-merge-base                          plumbinginterrogators
 git-merge-file                          plumbingmanipulators
 git-merge-index                         plumbingmanipulators
 git-merge-one-file                      purehelpers
-git-mergetool                           ancillarymanipulators           complete
 git-merge-tree                          ancillaryinterrogators
-git-multi-pack-index                    plumbingmanipulators
+git-mergetool                           ancillarymanipulators           complete
 git-mktag                               plumbingmanipulators
 git-mktree                              plumbingmanipulators
+git-multi-pack-index                    plumbingmanipulators
 git-mv                                  mainporcelain           worktree
 git-name-rev                            plumbinginterrogators
 git-notes                               mainporcelain
@@ -135,7 +146,6 @@ git-p4                                  foreignscminterface
 git-pack-objects                        plumbingmanipulators
 git-pack-redundant                      plumbinginterrogators
 git-pack-refs                           ancillarymanipulators
-git-parse-remote                        synchelpers
 git-patch-id                            purehelpers
 git-prune                               ancillarymanipulators   complete
 git-prune-packed                        plumbingmanipulators
@@ -154,23 +164,23 @@ git-request-pull                        foreignscminterface             complete
 git-rerere                              ancillaryinterrogators
 git-reset                               mainporcelain           history
 git-restore                             mainporcelain           worktree
-git-revert                              mainporcelain
 git-rev-list                            plumbinginterrogators
 git-rev-parse                           plumbinginterrogators
+git-revert                              mainporcelain
 git-rm                                  mainporcelain           worktree
 git-send-email                          foreignscminterface             complete
 git-send-pack                           synchingrepositories
+git-sh-i18n                             purehelpers
+git-sh-setup                            purehelpers
 git-shell                               synchelpers
 git-shortlog                            mainporcelain
 git-show                                mainporcelain           info
 git-show-branch                         ancillaryinterrogators          complete
 git-show-index                          plumbinginterrogators
 git-show-ref                            plumbinginterrogators
-git-sh-i18n                             purehelpers
-git-sh-setup                            purehelpers
-git-sparse-checkout                     mainporcelain           worktree
-git-stash                               mainporcelain
+git-sparse-checkout                     mainporcelain
 git-stage                                                               complete
+git-stash                               mainporcelain
 git-status                              mainporcelain           info
 git-stripspace                          purehelpers
 git-submodule                           mainporcelain
@@ -189,27 +199,42 @@ git-var                                 plumbinginterrogators
 git-verify-commit                       ancillaryinterrogators
 git-verify-pack                         plumbinginterrogators
 git-verify-tag                          ancillaryinterrogators
-gitweb                                  ancillaryinterrogators
+git-version                             ancillaryinterrogators
 git-whatchanged                         ancillaryinterrogators          complete
 git-worktree                            mainporcelain
 git-write-tree                          plumbingmanipulators
-gitattributes                           guide
-gitcli                                  guide
+gitattributes                           userinterfaces
+gitcli                                  userinterfaces
 gitcore-tutorial                        guide
 gitcredentials                          guide
 gitcvs-migration                        guide
 gitdiffcore                             guide
 giteveryday                             guide
 gitfaq                                  guide
+gitformat-bundle                        developerinterfaces
+gitformat-chunk                         developerinterfaces
+gitformat-commit-graph                  developerinterfaces
+gitformat-index                         developerinterfaces
+gitformat-pack                          developerinterfaces
+gitformat-signature                     developerinterfaces
 gitglossary                             guide
-githooks                                guide
-gitignore                               guide
-gitmodules                              guide
+githooks                                userinterfaces
+gitignore                               userinterfaces
+gitk                                    mainporcelain
+gitmailmap                              userinterfaces
+gitmodules                              userinterfaces
 gitnamespaces                           guide
+gitprotocol-capabilities                developerinterfaces
+gitprotocol-common                      developerinterfaces
+gitprotocol-http                        developerinterfaces
+gitprotocol-pack                        developerinterfaces
+gitprotocol-v2                          developerinterfaces
 gitremote-helpers                       guide
-gitrepository-layout                    guide
-gitrevisions                            guide
+gitrepository-layout                    userinterfaces
+gitrevisions                            userinterfaces
 gitsubmodules                           guide
-gittutorial-2                           guide
 gittutorial                             guide
+gittutorial-2                           guide
+gitweb                                  ancillaryinterrogators
 gitworkflows                            guide
+scalar                                  mainporcelain

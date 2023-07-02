@@ -2,6 +2,9 @@
 
 test_description='miscellaneous rev-list tests'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -85,7 +88,7 @@ test_expect_success 'propagate uninteresting flag down correctly' '
 '
 
 test_expect_success 'symleft flag bit is propagated down from tag' '
-	git log --format="%m %s" --left-right v1.0...master >actual &&
+	git log --format="%m %s" --left-right v1.0...main >actual &&
 	cat >expect <<-\EOF &&
 	< another
 	< that

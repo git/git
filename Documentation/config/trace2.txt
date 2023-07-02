@@ -54,7 +54,7 @@ trace2.envVars::
 	`GIT_HTTP_USER_AGENT,GIT_CONFIG` would cause the trace2 output to
 	contain events listing the overrides for HTTP user agent and the
 	location of the Git configuration file (assuming any are set).  May be
-	overriden by the `GIT_TRACE2_ENV_VARS` environment variable.  Unset by
+	overridden by the `GIT_TRACE2_ENV_VARS` environment variable.  Unset by
 	default.
 
 trace2.destinationDebug::

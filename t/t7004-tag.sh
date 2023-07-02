@@ -7,6 +7,9 @@ test_description='git tag
 
 Tests for operations with tags.'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-gpg.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
@@ -16,6 +19,13 @@ Tests for operations with tags.'
 tag_exists () {
 	git show-ref --quiet --verify refs/tags/"$1"
 }
+
+test_expect_success 'setup' '
+	test_oid_cache <<-EOM
+	othersigheader sha1:gpgsig-sha256
+	othersigheader sha256:gpgsig
+	EOM
+'
 
 test_expect_success 'listing all tags in an empty tree should succeed' '
 	git tag -l &&
@@ -84,22 +94,22 @@ test_expect_success 'creating a tag with --create-reflog should create reflog' '
 	git log -1 \
 		--format="format:tag: tagging %h (%s, %cd)%n" \
 		--date=format:%Y-%m-%d >expected &&
-	test_when_finished "git tag -d tag_with_reflog" &&
-	git tag --create-reflog tag_with_reflog &&
-	git reflog exists refs/tags/tag_with_reflog &&
-	sed -e "s/^.*	//" .git/logs/refs/tags/tag_with_reflog >actual &&
-	test_i18ncmp expected actual
+	test_when_finished "git tag -d tag_with_reflog1" &&
+	git tag --create-reflog tag_with_reflog1 &&
+	git reflog exists refs/tags/tag_with_reflog1 &&
+	test-tool ref-store main for-each-reflog-ent refs/tags/tag_with_reflog1 | sed -e "s/^.*	//" >actual &&
+	test_cmp expected actual
 '
 
 test_expect_success 'annotated tag with --create-reflog has correct message' '
 	git log -1 \
 		--format="format:tag: tagging %h (%s, %cd)%n" \
 		--date=format:%Y-%m-%d >expected &&
-	test_when_finished "git tag -d tag_with_reflog" &&
-	git tag -m "annotated tag" --create-reflog tag_with_reflog &&
-	git reflog exists refs/tags/tag_with_reflog &&
-	sed -e "s/^.*	//" .git/logs/refs/tags/tag_with_reflog >actual &&
-	test_i18ncmp expected actual
+	test_when_finished "git tag -d tag_with_reflog2" &&
+	git tag -m "annotated tag" --create-reflog tag_with_reflog2 &&
+	git reflog exists refs/tags/tag_with_reflog2 &&
+	test-tool ref-store main for-each-reflog-ent refs/tags/tag_with_reflog2 | sed -e "s/^.*	//" >actual &&
+	test_cmp expected actual
 '
 
 test_expect_success '--create-reflog does not create reflog on failure' '
@@ -108,10 +118,10 @@ test_expect_success '--create-reflog does not create reflog on failure' '
 '
 
 test_expect_success 'option core.logAllRefUpdates=always creates reflog' '
-	test_when_finished "git tag -d tag_with_reflog" &&
+	test_when_finished "git tag -d tag_with_reflog3" &&
 	test_config core.logAllRefUpdates always &&
-	git tag tag_with_reflog &&
-	git reflog exists refs/tags/tag_with_reflog
+	git tag tag_with_reflog3 &&
+	git reflog exists refs/tags/tag_with_reflog3
 '
 
 test_expect_success 'listing all tags if one exists should succeed' '
@@ -782,6 +792,34 @@ test_expect_success 'annotations for blobs are empty' '
 	test_cmp expect actual
 '
 
+# Run this before doing any signing, so the test has the same results
+# regardless of the GPG prereq.
+test_expect_success 'git tag --format with ahead-behind' '
+	test_when_finished git reset --hard tag-one-line &&
+	git commit --allow-empty -m "left" &&
+	git tag -a -m left tag-left &&
+	git reset --hard HEAD~1 &&
+	git commit --allow-empty -m "right" &&
+	git tag -a -m left tag-right &&
+
+	# Use " !" at the end to demonstrate whitespace
+	# around empty ahead-behind token for tag-blob.
+	cat >expect <<-EOF &&
+	refs/tags/tag-blob  !
+	refs/tags/tag-left 1 1 !
+	refs/tags/tag-lines 0 1 !
+	refs/tags/tag-one-line 0 1 !
+	refs/tags/tag-right 0 0 !
+	refs/tags/tag-zero-lines 0 1 !
+	EOF
+	git tag -l --format="%(refname) %(ahead-behind:HEAD) !" >actual 2>err &&
+	grep "refs/tags/tag" actual >actual.focus &&
+	test_cmp expect actual.focus &&
+
+	# Error reported for tags that point to non-commits.
+	grep "error: object [0-9a-f]* is a blob, not a commit" err
+'
+
 # trying to verify annotated non-signed tags:
 
 test_expect_success GPG \
@@ -1371,6 +1409,24 @@ test_expect_success GPG \
 	'test_config gpg.program echo &&
 	 test_must_fail git tag -s -m tail tag-gpg-failure'
 
+# try to produce invalid signature
+test_expect_success GPG 'git verifies tag is valid with double signature' '
+	git tag -s -m tail tag-gpg-double-sig &&
+	git cat-file tag tag-gpg-double-sig >tag &&
+	othersigheader=$(test_oid othersigheader) &&
+	sed -ne "/^\$/q;p" tag >new-tag &&
+	cat <<-EOM >>new-tag &&
+	$othersigheader -----BEGIN PGP SIGNATURE-----
+	 someinvaliddata
+	 -----END PGP SIGNATURE-----
+	EOM
+	sed -e "1,/^tagger/d" tag >>new-tag &&
+	new_tag=$(git hash-object -t tag -w new-tag) &&
+	git update-ref refs/tags/tag-gpg-double-sig $new_tag &&
+	git verify-tag tag-gpg-double-sig &&
+	git fsck
+'
+
 # try to sign with bad user.signingkey
 test_expect_success GPGSM \
 	'git tag -s fails if gpgsm is misconfigured (bad key)' \
@@ -1406,7 +1462,7 @@ test_expect_success 'message in editor has initial comment: first line' '
 	# check the first line --- should be empty
 	echo >first.expect &&
 	sed -e 1q <actual >first.actual &&
-	test_i18ncmp first.expect first.actual
+	test_cmp first.expect first.actual
 '
 
 test_expect_success \
@@ -1583,7 +1639,7 @@ test_expect_success 'checking that branch head with --no-contains lists all but 
 "
 
 test_expect_success 'merging original branch into this branch' '
-	git merge --strategy=ours master &&
+	git merge --strategy=ours main &&
         git tag v4.0
 '
 
@@ -1729,7 +1785,7 @@ test_expect_success 'recursive tagging should give advice' '
 	hint: Disable this message with "git config advice.nestedTag false"
 	EOF
 	git tag -m nested nested annotated-v4.0 2>actual &&
-	test_i18ncmp expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'multiple --points-at are OR-ed together' '
@@ -1813,6 +1869,23 @@ test_expect_success 'invalid sort parameter on command line' '
 test_expect_success 'invalid sort parameter in configuratoin' '
 	test_config tag.sort "v:notvalid" &&
 	test_must_fail git tag -l "foo*"
+'
+
+test_expect_success 'version sort handles empty value for versionsort.{prereleaseSuffix,suffix}' '
+	cp .git/config .git/config.orig &&
+	test_when_finished mv .git/config.orig .git/config &&
+
+	cat >>.git/config <<-\EOF &&
+	[versionsort]
+		prereleaseSuffix
+		suffix
+	EOF
+	cat >expect <<-\EOF &&
+	error: missing value for '\''versionsort.suffix'\''
+	error: missing value for '\''versionsort.prereleasesuffix'\''
+	EOF
+	git tag -l --sort=version:refname 2>actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'version sort with prerelease reordering' '
@@ -1944,15 +2017,18 @@ test_expect_success ULIMIT_STACK_SIZE '--contains and --no-contains work in a de
 	i=1 &&
 	while test $i -lt 8000
 	do
-		echo "commit refs/heads/master
+		echo "commit refs/heads/main
 committer A U Thor <author@example.com> $((1000000000 + $i * 100)) +0200
 data <<EOF
 commit #$i
-EOF"
-		test $i = 1 && echo "from refs/heads/master^0"
-		i=$(($i + 1))
+EOF" &&
+		if test $i = 1
+		then
+			echo "from refs/heads/main^0"
+		fi &&
+		i=$(($i + 1)) || return 1
 	done | git fast-import &&
-	git checkout master &&
+	git checkout main &&
 	git tag far-far-away HEAD^ &&
 	run_with_limited_stack git tag --contains HEAD >actual &&
 	test_must_be_empty actual &&
@@ -1968,6 +2044,26 @@ test_expect_success '--format should list tags as per format given' '
 	EOF
 	git tag -l --format="refname : %(refname)" "v1*" >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success '--format --omit-empty works' '
+	cat >expect <<-\EOF &&
+	refname : refs/tags/v1.0
+
+	refname : refs/tags/v1.1.3
+	EOF
+	git tag -l --format="%(if:notequals=refs/tags/v1.0.1)%(refname)%(then)refname : %(refname)%(end)" "v1*" >actual &&
+	test_cmp expect actual &&
+	cat >expect <<-\EOF &&
+	refname : refs/tags/v1.0
+	refname : refs/tags/v1.1.3
+	EOF
+	git tag -l --omit-empty --format="%(if:notequals=refs/tags/v1.0.1)%(refname)%(then)refname : %(refname)%(end)" "v1*" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git tag -l with --format="%(rest)" must fail' '
+	test_must_fail git tag -l --format="%(rest)" "v1*"
 '
 
 test_expect_success "set up color tests" '
@@ -2090,6 +2186,25 @@ test_expect_success 'Does --[no-]contains stop at commits? Yes!' '
 	v0.2
 	EOF
 	test_cmp expected actual
+'
+
+test_expect_success 'If tag is created then tag message file is unlinked' '
+	test_when_finished "git tag -d foo" &&
+	write_script fakeeditor <<-\EOF &&
+	echo Message >.git/TAG_EDITMSG
+	EOF
+	GIT_EDITOR=./fakeeditor git tag -a foo &&
+	test_path_is_missing .git/TAG_EDITMSG
+'
+
+test_expect_success 'If tag cannot be created then tag message file is not unlinked' '
+	test_when_finished "git tag -d foo/bar && rm .git/TAG_EDITMSG" &&
+	write_script fakeeditor <<-\EOF &&
+	echo Message >.git/TAG_EDITMSG
+	EOF
+	git tag foo/bar &&
+	test_must_fail env GIT_EDITOR=./fakeeditor git tag -a foo &&
+	test_path_exists .git/TAG_EDITMSG
 '
 
 test_done

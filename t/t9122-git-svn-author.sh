@@ -1,6 +1,7 @@
 #!/bin/sh
 
 test_description='git svn authorship'
+
 . ./lib-git-svn.sh
 
 test_expect_success 'setup svn repository' '

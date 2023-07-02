@@ -1,5 +1,5 @@
 #include "test-tool.h"
-#include "cache.h"
+#include "hash-ll.h"
 
 #define NUM_SECONDS 3
 
@@ -57,5 +57,5 @@ int cmd__hash_speed(int ac, const char **av)
 		free(p);
 	}
 
-	exit(0);
+	return 0;
 }

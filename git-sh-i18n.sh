@@ -17,12 +17,7 @@ export TEXTDOMAINDIR
 
 # First decide what scheme to use...
 GIT_INTERNAL_GETTEXT_SH_SCHEME=fallthrough
-if test -n "$GIT_TEST_GETTEXT_POISON" &&
-	    git env--helper --type=bool --default=0 --exit-code \
-		GIT_TEST_GETTEXT_POISON
-then
-	GIT_INTERNAL_GETTEXT_SH_SCHEME=poison
-elif test -n "@@USE_GETTEXT_SCHEME@@"
+if test -n "@@USE_GETTEXT_SCHEME@@"
 then
 	GIT_INTERNAL_GETTEXT_SH_SCHEME="@@USE_GETTEXT_SCHEME@@"
 elif test -n "$GIT_INTERNAL_GETTEXT_TEST_FALLBACKS"
@@ -56,27 +51,6 @@ gettext_without_eval_gettext)
 		)
 	}
 
-	eval_ngettext () {
-		ngettext "$1" "$2" "$3" | (
-			export PATH $(git sh-i18n--envsubst --variables "$2");
-			git sh-i18n--envsubst "$2"
-		)
-	}
-	;;
-poison)
-	# Emit garbage so that tests that incorrectly rely on translatable
-	# strings will fail.
-	gettext () {
-		printf "%s" "# GETTEXT POISON #"
-	}
-
-	eval_gettext () {
-		printf "%s" "# GETTEXT POISON #"
-	}
-
-	eval_ngettext () {
-		printf "%s" "# GETTEXT POISON #"
-	}
 	;;
 *)
 	gettext () {
@@ -90,12 +64,6 @@ poison)
 		)
 	}
 
-	eval_ngettext () {
-		(test "$3" = 1 && printf "%s" "$1" || printf "%s" "$2") | (
-			export PATH $(git sh-i18n--envsubst --variables "$2");
-			git sh-i18n--envsubst "$2"
-		)
-	}
 	;;
 esac
 

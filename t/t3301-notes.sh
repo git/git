@@ -505,6 +505,11 @@ test_expect_success 'list notes with "git notes"' '
 	test_cmp expect actual
 '
 
+test_expect_success '"git notes" without subcommand does not take arguments' '
+	test_expect_code 129 git notes HEAD^^ 2>err &&
+	grep "^error: unknown subcommand" err
+'
+
 test_expect_success 'list specific note with "git notes list <object>"' '
 	git rev-parse refs/notes/commits:$commit_3 >expect &&
 	git notes list HEAD^^ >actual &&
@@ -670,6 +675,11 @@ test_expect_success 'notes.displayRef respects order' '
 	test_config notes.displayRef refs/notes/commits &&
 	git log -1 >actual &&
 	test_cmp expect-both-reversed actual
+'
+
+test_expect_success 'notes.displayRef with no value handled gracefully' '
+	test_must_fail git -c notes.displayRef log -0 --notes &&
+	test_must_fail git -c notes.displayRef diff-tree --notes HEAD
 '
 
 test_expect_success 'GIT_NOTES_DISPLAY_REF works' '
@@ -1288,18 +1298,18 @@ test_expect_success 'GIT_NOTES_REWRITE_REF overrides config' '
 	grep "replacement note 3" actual
 '
 
-test_expect_success 'git notes copy diagnoses too many or too few parameters' '
+test_expect_success 'git notes copy diagnoses too many or too few arguments' '
 	test_must_fail git notes copy 2>error &&
-	test_i18ngrep "too few parameters" error &&
+	test_i18ngrep "too few arguments" error &&
 	test_must_fail git notes copy one two three 2>error &&
-	test_i18ngrep "too many parameters" error
+	test_i18ngrep "too many arguments" error
 '
 
-test_expect_success 'git notes get-ref expands refs/heads/master to refs/notes/refs/heads/master' '
+test_expect_success 'git notes get-ref expands refs/heads/main to refs/notes/refs/heads/main' '
 	test_unconfig core.notesRef &&
 	sane_unset GIT_NOTES_REF &&
-	echo refs/notes/refs/heads/master >expect &&
-	git notes --ref=refs/heads/master get-ref >actual &&
+	echo refs/notes/refs/heads/main >expect &&
+	git notes --ref=refs/heads/main get-ref >actual &&
 	test_cmp expect actual
 '
 

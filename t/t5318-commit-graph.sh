@@ -5,17 +5,31 @@ test_description='commit graph'
 
 GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS=0
 
+test_expect_success 'usage' '
+	test_expect_code 129 git commit-graph write blah 2>err &&
+	test_expect_code 129 git commit-graph write verify
+'
+
+test_expect_success 'usage shown without sub-command' '
+	test_expect_code 129 git commit-graph 2>err &&
+	grep usage: err
+'
+
+test_expect_success 'usage shown with an error on unknown sub-command' '
+	cat >expect <<-\EOF &&
+	error: unknown subcommand: `unknown'\''
+	EOF
+	test_expect_code 129 git commit-graph unknown 2>stderr &&
+	grep error stderr >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'setup full repo' '
 	mkdir full &&
 	cd "$TRASH_DIRECTORY/full" &&
 	git init &&
 	git config core.commitGraph true &&
-	objdir=".git/objects" &&
-
-	test_oid_cache <<-EOF
-	oid_version sha1:1
-	oid_version sha256:2
-	EOF
+	objdir=".git/objects"
 '
 
 test_expect_success POSIXPERM 'tweak umask for modebit tests' '
@@ -45,50 +59,14 @@ test_expect_success 'create commits and repack' '
 	for i in $(test_seq 3)
 	do
 		test_commit $i &&
-		git branch commits/$i
+		git branch commits/$i || return 1
 	done &&
 	git repack
 '
 
-graph_git_two_modes() {
-	git -c core.commitGraph=true $1 >output
-	git -c core.commitGraph=false $1 >expect
-	test_cmp expect output
-}
-
-graph_git_behavior() {
-	MSG=$1
-	DIR=$2
-	BRANCH=$3
-	COMPARE=$4
-	test_expect_success "check normal git operations: $MSG" '
-		cd "$TRASH_DIRECTORY/$DIR" &&
-		graph_git_two_modes "log --oneline $BRANCH" &&
-		graph_git_two_modes "log --topo-order $BRANCH" &&
-		graph_git_two_modes "log --graph $COMPARE..$BRANCH" &&
-		graph_git_two_modes "branch -vv" &&
-		graph_git_two_modes "merge-base -a $BRANCH $COMPARE"
-	'
-}
+. "$TEST_DIRECTORY"/lib-commit-graph.sh
 
 graph_git_behavior 'no graph' full commits/3 commits/1
-
-graph_read_expect() {
-	OPTIONAL=""
-	NUM_CHUNKS=3
-	if test ! -z $2
-	then
-		OPTIONAL=" $2"
-		NUM_CHUNKS=$((3 + $(echo "$2" | wc -w)))
-	fi
-	cat >expect <<- EOF
-	header: 43475048 1 $(test_oid oid_version) $NUM_CHUNKS 0
-	num_commits: $1
-	chunks: oid_fanout oid_lookup commit_metadata$OPTIONAL
-	EOF
-	test-tool read-graph >output &&
-	test_cmp expect output
-}
 
 test_expect_success 'exit with correct error on bad input to --stdin-commits' '
 	cd "$TRASH_DIRECTORY/full" &&
@@ -103,14 +81,14 @@ test_expect_success 'exit with correct error on bad input to --stdin-commits' '
 	# valid commit and tree OID
 	git rev-parse HEAD HEAD^{tree} >in &&
 	git commit-graph write --stdin-commits <in &&
-	graph_read_expect 3
+	graph_read_expect 3 generation_data
 '
 
 test_expect_success 'write graph' '
 	cd "$TRASH_DIRECTORY/full" &&
 	git commit-graph write &&
 	test_path_is_file $objdir/info/commit-graph &&
-	graph_read_expect "3"
+	graph_read_expect "3" generation_data
 '
 
 test_expect_success POSIXPERM 'write graph has correct permissions' '
@@ -128,13 +106,13 @@ test_expect_success 'Add more commits' '
 	for i in $(test_seq 4 5)
 	do
 		test_commit $i &&
-		git branch commits/$i
+		git branch commits/$i || return 1
 	done &&
 	git reset --hard commits/2 &&
 	for i in $(test_seq 6 7)
 	do
 		test_commit $i &&
-		git branch commits/$i
+		git branch commits/$i || return 1
 	done &&
 	git reset --hard commits/2 &&
 	git merge commits/4 &&
@@ -219,7 +197,7 @@ test_expect_success 'write graph with merges' '
 	cd "$TRASH_DIRECTORY/full" &&
 	git commit-graph write &&
 	test_path_is_file $objdir/info/commit-graph &&
-	graph_read_expect "10" "extra_edges"
+	graph_read_expect "10" "generation_data extra_edges"
 '
 
 graph_git_behavior 'merge 1 vs 2' full merge/1 merge/2
@@ -254,7 +232,7 @@ test_expect_success 'write graph with new commit' '
 	cd "$TRASH_DIRECTORY/full" &&
 	git commit-graph write &&
 	test_path_is_file $objdir/info/commit-graph &&
-	graph_read_expect "11" "extra_edges"
+	graph_read_expect "11" "generation_data extra_edges"
 '
 
 graph_git_behavior 'full graph, commit 8 vs merge 1' full commits/8 merge/1
@@ -264,7 +242,7 @@ test_expect_success 'write graph with nothing new' '
 	cd "$TRASH_DIRECTORY/full" &&
 	git commit-graph write &&
 	test_path_is_file $objdir/info/commit-graph &&
-	graph_read_expect "11" "extra_edges"
+	graph_read_expect "11" "generation_data extra_edges"
 '
 
 graph_git_behavior 'cleared graph, commit 8 vs merge 1' full commits/8 merge/1
@@ -274,7 +252,7 @@ test_expect_success 'build graph from latest pack with closure' '
 	cd "$TRASH_DIRECTORY/full" &&
 	cat new-idx | git commit-graph write --stdin-packs &&
 	test_path_is_file $objdir/info/commit-graph &&
-	graph_read_expect "9" "extra_edges"
+	graph_read_expect "9" "generation_data extra_edges"
 '
 
 graph_git_behavior 'graph from pack, commit 8 vs merge 1' full commits/8 merge/1
@@ -287,7 +265,7 @@ test_expect_success 'build graph from commits with closure' '
 	git rev-parse merge/1 >>commits-in &&
 	cat commits-in | git commit-graph write --stdin-commits &&
 	test_path_is_file $objdir/info/commit-graph &&
-	graph_read_expect "6"
+	graph_read_expect "6" "generation_data"
 '
 
 graph_git_behavior 'graph from commits, commit 8 vs merge 1' full commits/8 merge/1
@@ -297,7 +275,7 @@ test_expect_success 'build graph from commits with append' '
 	cd "$TRASH_DIRECTORY/full" &&
 	git rev-parse merge/3 | git commit-graph write --stdin-commits --append &&
 	test_path_is_file $objdir/info/commit-graph &&
-	graph_read_expect "10" "extra_edges"
+	graph_read_expect "10" "generation_data extra_edges"
 '
 
 graph_git_behavior 'append graph, commit 8 vs merge 1' full commits/8 merge/1
@@ -307,7 +285,7 @@ test_expect_success 'build graph using --reachable' '
 	cd "$TRASH_DIRECTORY/full" &&
 	git commit-graph write --reachable &&
 	test_path_is_file $objdir/info/commit-graph &&
-	graph_read_expect "11" "extra_edges"
+	graph_read_expect "11" "generation_data extra_edges"
 '
 
 graph_git_behavior 'append graph, commit 8 vs merge 1' full commits/8 merge/1
@@ -328,7 +306,7 @@ test_expect_success 'write graph in bare repo' '
 	cd "$TRASH_DIRECTORY/bare" &&
 	git commit-graph write &&
 	test_path_is_file $baredir/info/commit-graph &&
-	graph_read_expect "11" "extra_edges"
+	graph_read_expect "11" "generation_data extra_edges"
 '
 
 graph_git_behavior 'bare repo with graph, commit 8 vs merge 1' bare commits/8 merge/1
@@ -366,6 +344,7 @@ test_expect_success 'replace-objects invalidates commit-graph' '
 		git commit-graph write --reachable &&
 		test_path_is_file .git/objects/info/commit-graph &&
 		git replace HEAD~1 HEAD~2 &&
+		graph_git_two_modes "commit-graph verify" &&
 		git -c core.commitGraph=false log >expect &&
 		git -c core.commitGraph=true log >actual &&
 		test_cmp expect actual &&
@@ -382,13 +361,14 @@ test_expect_success 'replace-objects invalidates commit-graph' '
 test_expect_success 'commit grafts invalidate commit-graph' '
 	cd "$TRASH_DIRECTORY" &&
 	test_when_finished rm -rf graft &&
-	git clone full graft &&
+	git clone --template= full graft &&
 	(
 		cd graft &&
 		git commit-graph write --reachable &&
 		test_path_is_file .git/objects/info/commit-graph &&
 		H1=$(git rev-parse --verify HEAD~1) &&
 		H3=$(git rev-parse --verify HEAD~3) &&
+		mkdir .git/info &&
 		echo "$H1 $H3" >.git/info/grafts &&
 		git -c core.commitGraph=false log >expect &&
 		git -c core.commitGraph=true log >actual &&
@@ -446,6 +426,27 @@ test_expect_success 'warn on improper hash version' '
 	)
 '
 
+test_expect_success TIME_IS_64BIT,TIME_T_IS_64BIT 'lower layers have overflow chunk' '
+	cd "$TRASH_DIRECTORY/full" &&
+	UNIX_EPOCH_ZERO="@0 +0000" &&
+	FUTURE_DATE="@4147483646 +0000" &&
+	rm -f .git/objects/info/commit-graph &&
+	test_commit --date "$FUTURE_DATE" future-1 &&
+	test_commit --date "$UNIX_EPOCH_ZERO" old-1 &&
+	git commit-graph write --reachable &&
+	test_commit --date "$FUTURE_DATE" future-2 &&
+	test_commit --date "$UNIX_EPOCH_ZERO" old-2 &&
+	git commit-graph write --reachable --split=no-merge &&
+	test_commit extra &&
+	git commit-graph write --reachable --split=no-merge &&
+	git commit-graph write --reachable &&
+	graph_read_expect 16 "generation_data generation_data_overflow extra_edges" &&
+	mv .git/objects/info/commit-graph commit-graph-upgraded &&
+	git commit-graph write --reachable &&
+	graph_read_expect 16 "generation_data generation_data_overflow extra_edges" &&
+	test_cmp .git/objects/info/commit-graph commit-graph-upgraded
+'
+
 # the verify tests below expect the commit-graph to contain
 # exactly the commits reachable from the commits/8 branch.
 # If the file changes the set of commits in the list, then the
@@ -454,8 +455,9 @@ test_expect_success 'warn on improper hash version' '
 
 test_expect_success 'git commit-graph verify' '
 	cd "$TRASH_DIRECTORY/full" &&
-	git rev-parse commits/8 | git commit-graph write --stdin-commits &&
-	git commit-graph verify >output
+	git rev-parse commits/8 | git -c commitGraph.generationVersion=1 commit-graph write --stdin-commits &&
+	git commit-graph verify >output &&
+	graph_read_expect 9 extra_edges 1
 '
 
 NUM_COMMITS=9
@@ -529,7 +531,7 @@ corrupt_graph_and_verify() {
 	zero_pos=${4:-${orig_size}} &&
 	printf "$data" | dd of="$objdir/info/commit-graph" bs=1 seek="$pos" conv=notrunc &&
 	dd of="$objdir/info/commit-graph" bs=1 seek="$zero_pos" if=/dev/null &&
-	generate_zero_bytes $(($orig_size - $zero_pos)) >>"$objdir/info/commit-graph" &&
+	test-tool genzeros $(($orig_size - $zero_pos)) >>"$objdir/info/commit-graph" &&
 	corrupt_graph_verify "$grepstr"
 
 }
@@ -563,7 +565,7 @@ test_expect_success 'detect bad hash version' '
 
 test_expect_success 'detect low chunk count' '
 	corrupt_graph_and_verify $GRAPH_BYTE_CHUNK_COUNT "\01" \
-		"missing the .* chunk"
+		"final chunk has non-zero id"
 '
 
 test_expect_success 'detect missing OID fanout chunk' '
@@ -628,7 +630,7 @@ test_expect_success 'detect incorrect generation number' '
 
 test_expect_success 'detect incorrect generation number' '
 	corrupt_graph_and_verify $GRAPH_BYTE_COMMIT_GENERATION "\01" \
-		"non-zero generation number"
+		"commit-graph generation for commit"
 '
 
 test_expect_success 'detect incorrect commit date' '
@@ -652,11 +654,32 @@ test_expect_success 'detect incorrect chunk count' '
 		$GRAPH_CHUNK_LOOKUP_OFFSET
 '
 
-test_expect_success 'git fsck (checks commit-graph)' '
+test_expect_success 'git fsck (checks commit-graph when config set to true)' '
 	cd "$TRASH_DIRECTORY/full" &&
 	git fsck &&
 	corrupt_graph_and_verify $GRAPH_BYTE_FOOTER "\00" \
 		"incorrect checksum" &&
+	cp commit-graph-pre-write-test $objdir/info/commit-graph &&
+	test_must_fail git -c core.commitGraph=true fsck
+'
+
+test_expect_success 'git fsck (ignores commit-graph when config set to false)' '
+	cd "$TRASH_DIRECTORY/full" &&
+	git fsck &&
+	corrupt_graph_and_verify $GRAPH_BYTE_FOOTER "\00" \
+		"incorrect checksum" &&
+	cp commit-graph-pre-write-test $objdir/info/commit-graph &&
+	git -c core.commitGraph=false fsck
+'
+
+test_expect_success 'git fsck (checks commit-graph when config unset)' '
+	cd "$TRASH_DIRECTORY/full" &&
+	test_when_finished "git config core.commitGraph true" &&
+
+	git fsck &&
+	corrupt_graph_and_verify $GRAPH_BYTE_FOOTER "\00" \
+		"incorrect checksum" &&
+	test_unconfig core.commitGraph &&
 	cp commit-graph-pre-write-test $objdir/info/commit-graph &&
 	test_must_fail git fsck
 '
@@ -738,6 +761,81 @@ test_expect_success 'corrupt commit-graph write (missing tree)' '
 		test_must_fail git commit-graph write --stdin-commits \
 			<good 2>test_err &&
 		test_i18ngrep "unable to parse commit" test_err
+	)
+'
+
+# We test the overflow-related code with the following repo history:
+#
+#               4:F - 5:N - 6:U
+#              /                \
+# 1:U - 2:N - 3:U                M:N
+#              \                /
+#               7:N - 8:F - 9:N
+#
+# Here the commits denoted by U have committer date of zero seconds
+# since Unix epoch, the commits denoted by N have committer date
+# starting from 1112354055 seconds since Unix epoch (default committer
+# date for the test suite), and the commits denoted by F have committer
+# date of (2 ^ 31 - 2) seconds since Unix epoch.
+#
+# The largest offset observed is 2 ^ 31, just large enough to overflow.
+#
+
+test_expect_success 'set up and verify repo with generation data overflow chunk' '
+	objdir=".git/objects" &&
+	UNIX_EPOCH_ZERO="@0 +0000" &&
+	FUTURE_DATE="@2147483646 +0000" &&
+	cd "$TRASH_DIRECTORY" &&
+	mkdir repo &&
+	cd repo &&
+	git init &&
+	test_commit --date "$UNIX_EPOCH_ZERO" 1 &&
+	test_commit 2 &&
+	test_commit --date "$UNIX_EPOCH_ZERO" 3 &&
+	git commit-graph write --reachable &&
+	graph_read_expect 3 generation_data &&
+	test_commit --date "$FUTURE_DATE" 4 &&
+	test_commit 5 &&
+	test_commit --date "$UNIX_EPOCH_ZERO" 6 &&
+	git branch left &&
+	git reset --hard 3 &&
+	test_commit 7 &&
+	test_commit --date "$FUTURE_DATE" 8 &&
+	test_commit 9 &&
+	git branch right &&
+	git reset --hard 3 &&
+	test_merge M left right &&
+	git commit-graph write --reachable &&
+	graph_read_expect 10 "generation_data generation_data_overflow" &&
+	git commit-graph verify
+'
+
+graph_git_behavior 'generation data overflow chunk repo' repo left right
+
+test_expect_success 'overflow during generation version upgrade' '
+	git init overflow-v2-upgrade &&
+	(
+		cd overflow-v2-upgrade &&
+
+		# This commit will have a date at two seconds past the Epoch,
+		# and a (v1) generation number of 1, since it is a root commit.
+		#
+		# The offset will then be computed as 1-2, which will underflow
+		# to 2^31, which is greater than the v2 offset small limit of
+		# 2^31-1.
+		#
+		# This is sufficient to need a large offset table for the v2
+		# generation numbers.
+		test_commit --date "@2 +0000" base &&
+		git repack -d &&
+
+		# Test that upgrading from generation v1 to v2 correctly
+		# produces the overflow table.
+		git -c commitGraph.generationVersion=1 commit-graph write &&
+		git -c commitGraph.generationVersion=2 commit-graph write \
+			--changed-paths &&
+
+		git rev-list --all
 	)
 '
 

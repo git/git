@@ -2,6 +2,7 @@
 
 test_description='git bugreport'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # Headers "[System Info]" will be followed by a non-empty line if we put some
@@ -59,18 +60,70 @@ test_expect_success 'can create leading directories outside of a git dir' '
 
 test_expect_success 'indicates populated hooks' '
 	test_when_finished rm git-bugreport-hooks.txt &&
-	test_when_finished rm -fr .git/hooks &&
-	rm -fr .git/hooks &&
-	mkdir .git/hooks &&
-	for hook in applypatch-msg prepare-commit-msg.sample
-	do
-		write_script ".git/hooks/$hook" <<-EOF || return 1
-		echo "hook $hook exists"
-		EOF
-	done &&
+
+	test_hook applypatch-msg <<-\EOF &&
+	true
+	EOF
+	test_hook unknown-hook <<-\EOF &&
+	true
+	EOF
 	git bugreport -s hooks &&
-	grep applypatch-msg git-bugreport-hooks.txt &&
-	! grep prepare-commit-msg git-bugreport-hooks.txt
+
+	sort >expect <<-\EOF &&
+	[Enabled Hooks]
+	applypatch-msg
+	EOF
+
+	sed -ne "/^\[Enabled Hooks\]$/,/^$/p" <git-bugreport-hooks.txt >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success UNZIP '--diagnose creates diagnostics zip archive' '
+	test_when_finished rm -rf report &&
+
+	git bugreport --diagnose -o report -s test >out &&
+
+	zip_path=report/git-diagnostics-test.zip &&
+	grep "Available space" out &&
+	test_path_is_file "$zip_path" &&
+
+	# Check zipped archive content
+	"$GIT_UNZIP" -p "$zip_path" diagnostics.log >out &&
+	test_file_not_empty out &&
+
+	"$GIT_UNZIP" -p "$zip_path" packs-local.txt >out &&
+	grep ".git/objects" out &&
+
+	"$GIT_UNZIP" -p "$zip_path" objects-local.txt >out &&
+	grep "^Total: [0-9][0-9]*" out &&
+
+	# Should not include .git directory contents by default
+	! "$GIT_UNZIP" -l "$zip_path" | grep ".git/"
+'
+
+test_expect_success UNZIP '--diagnose=stats excludes .git dir contents' '
+	test_when_finished rm -rf report &&
+
+	git bugreport --diagnose=stats -o report -s test >out &&
+
+	# Includes pack quantity/size info
+	"$GIT_UNZIP" -p "$zip_path" packs-local.txt >out &&
+	grep ".git/objects" out &&
+
+	# Does not include .git directory contents
+	! "$GIT_UNZIP" -l "$zip_path" | grep ".git/"
+'
+
+test_expect_success UNZIP '--diagnose=all includes .git dir contents' '
+	test_when_finished rm -rf report &&
+
+	git bugreport --diagnose=all -o report -s test >out &&
+
+	# Includes .git directory contents
+	"$GIT_UNZIP" -l "$zip_path" | grep ".git/" &&
+
+	"$GIT_UNZIP" -p "$zip_path" .git/HEAD >out &&
+	test_file_not_empty out
 '
 
 test_done

@@ -4,6 +4,9 @@
 #
 
 test_description='Test merge with directory/file conflicts'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'prepare repository' '
@@ -24,12 +27,12 @@ test_expect_success 'prepare repository' '
 '
 
 test_expect_success 'Merge with d/f conflicts' '
-	test_expect_code 1 git merge -m "merge msg" master
+	test_expect_code 1 git merge -m "merge msg" main
 '
 
 test_expect_success 'F/D conflict' '
 	git reset --hard &&
-	git checkout master &&
+	git checkout main &&
 	rm .git/index &&
 
 	mkdir before &&
@@ -47,7 +50,7 @@ test_expect_success 'F/D conflict' '
 	git add . &&
 	git commit -m para &&
 
-	git merge master
+	git merge main
 '
 
 test_expect_success 'setup modify/delete + directory/file conflict' '
@@ -79,9 +82,14 @@ test_expect_success 'modify/delete + directory/file conflict' '
 	git checkout delete^0 &&
 	test_must_fail git merge modify &&
 
-	test 5 -eq $(git ls-files -s | wc -l) &&
-	test 4 -eq $(git ls-files -u | wc -l) &&
-	test 1 -eq $(git ls-files -o | wc -l) &&
+	test_stdout_line_count = 5 git ls-files -s &&
+	test_stdout_line_count = 4 git ls-files -u &&
+	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+	then
+		test_stdout_line_count = 0 git ls-files -o
+	else
+		test_stdout_line_count = 1 git ls-files -o
+	fi &&
 
 	test_path_is_file letters/file &&
 	test_path_is_file letters.txt &&
@@ -95,9 +103,14 @@ test_expect_success 'modify/delete + directory/file conflict; other way' '
 
 	test_must_fail git merge delete &&
 
-	test 5 -eq $(git ls-files -s | wc -l) &&
-	test 4 -eq $(git ls-files -u | wc -l) &&
-	test 1 -eq $(git ls-files -o | wc -l) &&
+	test_stdout_line_count = 5 git ls-files -s &&
+	test_stdout_line_count = 4 git ls-files -u &&
+	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+	then
+		test_stdout_line_count = 0 git ls-files -o
+	else
+		test_stdout_line_count = 1 git ls-files -o
+	fi &&
 
 	test_path_is_file letters/file &&
 	test_path_is_file letters.txt &&
@@ -113,7 +126,7 @@ test_expect_success 'Simple merge in repo with interesting pathnames' '
 	#     foo/bar-2/baz
 	# The fact that foo/bar-2 appears between foo/bar and foo/bar/baz
 	# can trip up some codepaths, and is the point of this test.
-	test_create_repo name-ordering &&
+	git init name-ordering &&
 	(
 		cd name-ordering &&
 
@@ -124,7 +137,7 @@ test_expect_success 'Simple merge in repo with interesting pathnames' '
 		git add . &&
 		git commit -m initial &&
 
-		git branch main &&
+		git branch topic &&
 		git branch other &&
 
 		git checkout other &&
@@ -132,10 +145,10 @@ test_expect_success 'Simple merge in repo with interesting pathnames' '
 		git add -u &&
 		git commit -m other &&
 
-		git checkout main &&
-		echo main >foo/bar/baz &&
+		git checkout topic &&
+		echo topic >foo/bar/baz &&
 		git add -u &&
-		git commit -m main &&
+		git commit -m topic &&
 
 		git merge other &&
 		git ls-files -s >out &&

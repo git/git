@@ -1,7 +1,14 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "abspath.h"
+#include "environment.h"
 #include "exec-cmd.h"
+#include "gettext.h"
+#include "path.h"
 #include "quote.h"
+#include "run-command.h"
 #include "strvec.h"
+#include "trace.h"
+#include "trace2.h"
 
 #if defined(RUNTIME_PREFIX)
 
@@ -252,7 +259,7 @@ static const char *system_prefix(void)
  * This is called during initialization, but No work needs to be done here when
  * runtime prefix is not being used.
  */
-void git_resolve_executable_dir(const char *argv0)
+void git_resolve_executable_dir(const char *argv0 UNUSED)
 {
 }
 

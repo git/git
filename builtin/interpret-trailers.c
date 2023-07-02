@@ -5,15 +5,17 @@
  *
  */
 
-#include "cache.h"
 #include "builtin.h"
+#include "gettext.h"
 #include "parse-options.h"
 #include "string-list.h"
 #include "trailer.h"
 #include "config.h"
 
 static const char * const git_interpret_trailers_usage[] = {
-	N_("git interpret-trailers [--in-place] [--trim-empty] [(--trailer <token>[(=|:)<value>])...] [<file>...]"),
+	N_("git interpret-trailers [--in-place] [--trim-empty]\n"
+	   "                       [(--trailer <token>[(=|:)<value>])...]\n"
+	   "                       [--parse] [<file>...]"),
 	NULL
 };
 

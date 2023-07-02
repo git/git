@@ -8,18 +8,18 @@ git-patch-id - Compute unique ID for a patch
 SYNOPSIS
 --------
 [verse]
-'git patch-id' [--stable | --unstable]
+'git patch-id' [--stable | --unstable | --verbatim]
 
 DESCRIPTION
 -----------
 Read a patch from the standard input and compute the patch ID for it.
 
 A "patch ID" is nothing but a sum of SHA-1 of the file diffs associated with a
-patch, with whitespace and line numbers ignored.  As such, it's "reasonably
-stable", but at the same time also reasonably unique, i.e., two patches that
-have the same "patch ID" are almost guaranteed to be the same thing.
+patch, with line numbers ignored.  As such, it's "reasonably stable", but at
+the same time also reasonably unique, i.e., two patches that have the same
+"patch ID" are almost guaranteed to be the same thing.
 
-IOW, you can use this thing to look for likely duplicate commits.
+The main usecase for this command is to look for likely duplicate commits.
 
 When dealing with 'git diff-tree' output, it takes advantage of
 the fact that the patch is prefixed with the object name of the
@@ -29,6 +29,12 @@ This can be used to make a mapping from patch ID to commit ID.
 
 OPTIONS
 -------
+
+--verbatim::
+	Calculate the patch-id of the input as it is given, do not strip
+	any whitespace.
+
+	This is the default if patchid.verbatim is true.
 
 --stable::
 	Use a "stable" sum of hashes as the patch ID. With this option:
@@ -45,14 +51,16 @@ OPTIONS
 	   of "-O<orderfile>", thereby making existing databases storing such
 	   "unstable" or historical patch-ids unusable.
 
+	 - All whitespace within the patch is ignored and does not affect the id.
+
 	This is the default if patchid.stable is set to true.
 
 --unstable::
 	Use an "unstable" hash as the patch ID. With this option,
 	the result produced is compatible with the patch-id value produced
-	by git 1.9 and older.  Users with pre-existing databases storing
-	patch-ids produced by git 1.9 and older (who do not deal with reordered
-	patches) may want to use this option.
+	by git 1.9 and older and whitespace is ignored.  Users with pre-existing
+	databases storing patch-ids produced by git 1.9 and older (who do not deal
+	with reordered patches) may want to use this option.
 
 	This is the default.
 

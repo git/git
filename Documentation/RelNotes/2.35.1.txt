@@ -1,0 +1,6 @@
+Git v2.35.1 Release Notes
+=========================
+
+Git 2.35 shipped with a regression that broke use of "rebase" and
+"stash" in a secondary worktree.  This maintenance release ought to
+fix it.

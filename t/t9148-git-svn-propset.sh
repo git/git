@@ -7,19 +7,22 @@ test_description='git svn propset tests'
 
 . ./lib-git-svn.sh
 
-foo_subdir2="subdir/subdir2/foo_subdir2"
+test_expect_success 'setup propset via import' '
+	test_when_finished "rm -rf import" &&
 
-set -e
-mkdir import &&
-(set -e ; cd import
-	mkdir subdir
-	mkdir subdir/subdir2
-	touch foo 		# for 'add props top level'
-	touch subdir/foo_subdir # for 'add props relative'
-	touch "$foo_subdir2"	# for 'add props subdir'
-	svn_cmd import -m 'import for git svn' . "$svnrepo" >/dev/null
-)
-rm -rf import
+	foo_subdir2="subdir/subdir2/foo_subdir2" &&
+	mkdir -p import/subdir/subdir2 &&
+	(
+		cd import &&
+		# for "add props top level"
+		>foo &&
+		# for "add props relative"
+		>subdir/foo_subdir &&
+		# for "add props subdir"
+		>"$foo_subdir2" &&
+		svn_cmd import -m "import for git svn" . "$svnrepo"
+	)
+'
 
 test_expect_success 'initialize git svn' '
 	git svn init "$svnrepo"

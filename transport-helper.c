@@ -1,9 +1,14 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "transport.h"
 #include "quote.h"
 #include "run-command.h"
 #include "commit.h"
 #include "diff.h"
+#include "environment.h"
+#include "gettext.h"
+#include "hex.h"
+#include "object-name.h"
+#include "repository.h"
 #include "revision.h"
 #include "remote.h"
 #include "string-list.h"
@@ -14,6 +19,7 @@
 #include "refspec.h"
 #include "transport-internal.h"
 #include "protocol.h"
+#include "wrapper.h"
 
 static int debug;
 
@@ -135,7 +141,7 @@ static struct child_process *get_helper(struct transport *transport)
 	helper->silent_exec_failure = 1;
 
 	if (have_git_dir())
-		strvec_pushf(&helper->env_array, "%s=%s",
+		strvec_pushf(&helper->env, "%s=%s",
 			     GIT_DIR_ENVIRONMENT, get_git_dir());
 
 	helper->trace2_child_class = helper->args.v[0]; /* "remote-<name>" */
@@ -671,8 +677,8 @@ static int connect_helper(struct transport *transport, const char *name,
 static struct ref *get_refs_list_using_list(struct transport *transport,
 					    int for_push);
 
-static int fetch(struct transport *transport,
-		 int nr_heads, struct ref **to_fetch)
+static int fetch_refs(struct transport *transport,
+		      int nr_heads, struct ref **to_fetch)
 {
 	struct helper_data *data = transport->data;
 	int i, count;
@@ -681,7 +687,17 @@ static int fetch(struct transport *transport,
 
 	if (process_connect(transport, 0)) {
 		do_take_over(transport);
-		return transport->vtable->fetch(transport, nr_heads, to_fetch);
+		return transport->vtable->fetch_refs(transport, nr_heads, to_fetch);
+	}
+
+	/*
+	 * If we reach here, then the server, the client, and/or the transport
+	 * helper does not support protocol v2. --negotiate-only requires
+	 * protocol v2.
+	 */
+	if (data->transport_options.acked_commits) {
+		warning(_("--negotiate-only requires protocol v2"));
+		return -1;
 	}
 
 	if (!data->get_refs_list_called)
@@ -704,6 +720,9 @@ static int fetch(struct transport *transport,
 
 	if (data->transport_options.update_shallow)
 		set_helper_option(transport, "update-shallow", "true");
+
+	if (data->transport_options.refetch)
+		set_helper_option(transport, "refetch", "true");
 
 	if (data->transport_options.filter_options.choice) {
 		const char *spec = expand_list_objects_filter_spec(
@@ -745,13 +764,13 @@ static int push_update_ref_status(struct strbuf *buf,
 			die(_("'option' without a matching 'ok/error' directive"));
 		if (state->new_report) {
 			if (!state->hint->report) {
-				state->hint->report = xcalloc(1, sizeof(struct ref_push_report));
+				CALLOC_ARRAY(state->hint->report, 1);
 				state->report = state->hint->report;
 			} else {
 				state->report = state->hint->report;
 				while (state->report->next)
 					state->report = state->report->next;
-				state->report->next = xcalloc(1, sizeof(struct ref_push_report));
+				CALLOC_ARRAY(state->report->next, 1);
 				state->report = state->report->next;
 			}
 			state->new_report = 0;
@@ -827,8 +846,16 @@ static int push_update_ref_status(struct strbuf *buf,
 			status = REF_STATUS_REJECT_STALE;
 			FREE_AND_NULL(msg);
 		}
+		else if (!strcmp(msg, "remote ref updated since checkout")) {
+			status = REF_STATUS_REJECT_REMOTE_UPDATED;
+			FREE_AND_NULL(msg);
+		}
 		else if (!strcmp(msg, "forced update")) {
 			forced = 1;
+			FREE_AND_NULL(msg);
+		}
+		else if (!strcmp(msg, "expecting report")) {
+			status = REF_STATUS_EXPECTING_REPORT;
 			FREE_AND_NULL(msg);
 		}
 	}
@@ -934,6 +961,11 @@ static void set_common_push_options(struct transport *transport,
 		if (set_helper_option(transport, TRANS_OPT_ATOMIC, "true") != 0)
 			die(_("helper %s does not support --atomic"), name);
 
+	if (flags & TRANSPORT_PUSH_FORCE_IF_INCLUDES)
+		if (set_helper_option(transport, TRANS_OPT_FORCE_IF_INCLUDES, "true") != 0)
+			die(_("helper %s does not support --%s"),
+			    name, TRANS_OPT_FORCE_IF_INCLUDES);
+
 	if (flags & TRANSPORT_PUSH_OPTIONS) {
 		struct string_list_item *item;
 		for_each_string_list_item(item, transport->push_options)
@@ -967,6 +999,7 @@ static int push_refs_with_push(struct transport *transport,
 		case REF_STATUS_REJECT_NONFASTFORWARD:
 		case REF_STATUS_REJECT_STALE:
 		case REF_STATUS_REJECT_ALREADY_EXISTS:
+		case REF_STATUS_REJECT_REMOTE_UPDATED:
 			if (atomic) {
 				reject_atomic_push(remote_refs, mirror);
 				string_list_clear(&cas_options, 0);
@@ -1054,7 +1087,7 @@ static int push_refs_with_export(struct transport *transport,
 		struct object_id oid;
 
 		private = apply_refspecs(&data->rs, ref->name);
-		if (private && !get_oid(private, &oid)) {
+		if (private && !repo_get_oid(the_repository, private, &oid)) {
 			strbuf_addf(&buf, "^%s", private);
 			string_list_append_nodup(&revlist_args,
 						 strbuf_detach(&buf, NULL));
@@ -1152,13 +1185,14 @@ static int has_attribute(const char *attrs, const char *attr)
 }
 
 static struct ref *get_refs_list(struct transport *transport, int for_push,
-				 const struct strvec *ref_prefixes)
+				 struct transport_ls_refs_options *transport_options)
 {
 	get_helper(transport);
 
 	if (process_connect(transport, for_push)) {
 		do_take_over(transport);
-		return transport->vtable->get_refs_list(transport, for_push, ref_prefixes);
+		return transport->vtable->get_refs_list(transport, for_push,
+							transport_options);
 	}
 
 	return get_refs_list_using_list(transport, for_push);
@@ -1239,13 +1273,26 @@ static struct ref *get_refs_list_using_list(struct transport *transport,
 	return ret;
 }
 
+static int get_bundle_uri(struct transport *transport)
+{
+	get_helper(transport);
+
+	if (process_connect(transport, 0)) {
+		do_take_over(transport);
+		return transport->vtable->get_bundle_uri(transport);
+	}
+
+	return -1;
+}
+
 static struct transport_vtable vtable = {
-	set_helper_option,
-	get_refs_list,
-	fetch,
-	push_refs,
-	connect_helper,
-	release_helper
+	.set_option	= set_helper_option,
+	.get_refs_list	= get_refs_list,
+	.get_bundle_uri = get_bundle_uri,
+	.fetch_refs	= fetch_refs,
+	.push_refs	= push_refs,
+	.connect	= connect_helper,
+	.disconnect	= release_helper
 };
 
 int transport_helper_init(struct transport *transport, const char *name)
@@ -1257,6 +1304,8 @@ int transport_helper_init(struct transport *transport, const char *name)
 
 	if (getenv("GIT_TRANSPORT_HELPER_DEBUG"))
 		debug = 1;
+
+	list_objects_filter_init(&data->transport_options.filter_options);
 
 	transport->data = data;
 	transport->vtable = &vtable;

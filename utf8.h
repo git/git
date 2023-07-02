@@ -7,7 +7,7 @@ typedef unsigned int ucs_char_t;  /* assuming 32bit int */
 
 size_t display_mode_esc_sequence_len(const char *s);
 int utf8_width(const char **start, size_t *remainder_p);
-int utf8_strnwidth(const char *string, int len, int skip_ansi);
+int utf8_strnwidth(const char *string, size_t len, int skip_ansi);
 int utf8_strwidth(const char *string);
 int is_utf8(const char *text);
 int is_encoding_utf8(const char *name);
@@ -61,6 +61,7 @@ int is_hfs_dotgit(const char *path);
 int is_hfs_dotgitmodules(const char *path);
 int is_hfs_dotgitignore(const char *path);
 int is_hfs_dotgitattributes(const char *path);
+int is_hfs_dotmailmap(const char *path);
 
 typedef enum {
 	ALIGN_LEFT,

@@ -30,6 +30,22 @@ The colon can be omitted when <dst> is empty.  <src> is
 typically a ref, but it can also be a fully spelled hex object
 name.
 +
+A <refspec> may contain a `*` in its <src> to indicate a simple pattern
+match. Such a refspec functions like a glob that matches any ref with the
+same prefix. A pattern <refspec> must have a `*` in both the <src> and
+<dst>. It will map refs to the destination by replacing the `*` with the
+contents matched from the source.
++
+If a refspec is prefixed by `^`, it will be interpreted as a negative
+refspec. Rather than specifying which refs to fetch or which local refs to
+update, such a refspec will instead specify refs to exclude. A ref will be
+considered to match if it matches at least one positive refspec, and does
+not match any negative refspec. Negative refspecs can be useful to restrict
+the scope of a pattern refspec so that it will not include specific refs.
+Negative refspecs can themselves be pattern refspecs. However, they may only
+contain a <src> and do not specify a <dst>. Fully spelled out hex object
+names are also not supported.
++
 `tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`;
 it requests fetching everything up to the given tag.
 +

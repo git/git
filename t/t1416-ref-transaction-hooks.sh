@@ -2,10 +2,13 @@
 
 test_description='reference transaction hooks'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '
-	mkdir -p .git/hooks &&
 	test_commit PRE &&
 	PRE_OID=$(git rev-parse PRE) &&
 	test_commit POST &&
@@ -13,9 +16,8 @@ test_expect_success setup '
 '
 
 test_expect_success 'hook allows updating ref if successful' '
-	test_when_finished "rm .git/hooks/reference-transaction" &&
 	git reset --hard PRE &&
-	write_script .git/hooks/reference-transaction <<-\EOF &&
+	test_hook reference-transaction <<-\EOF &&
 		echo "$*" >>actual
 	EOF
 	cat >expect <<-EOF &&
@@ -27,9 +29,8 @@ test_expect_success 'hook allows updating ref if successful' '
 '
 
 test_expect_success 'hook aborts updating ref in prepared state' '
-	test_when_finished "rm .git/hooks/reference-transaction" &&
 	git reset --hard PRE &&
-	write_script .git/hooks/reference-transaction <<-\EOF &&
+	test_hook reference-transaction <<-\EOF &&
 		if test "$1" = prepared
 		then
 			exit 1
@@ -40,9 +41,9 @@ test_expect_success 'hook aborts updating ref in prepared state' '
 '
 
 test_expect_success 'hook gets all queued updates in prepared state' '
-	test_when_finished "rm .git/hooks/reference-transaction actual" &&
+	test_when_finished "rm actual" &&
 	git reset --hard PRE &&
-	write_script .git/hooks/reference-transaction <<-\EOF &&
+	test_hook reference-transaction <<-\EOF &&
 		if test "$1" = prepared
 		then
 			while read -r line
@@ -53,19 +54,19 @@ test_expect_success 'hook gets all queued updates in prepared state' '
 	EOF
 	cat >expect <<-EOF &&
 		$ZERO_OID $POST_OID HEAD
-		$ZERO_OID $POST_OID refs/heads/master
+		$ZERO_OID $POST_OID refs/heads/main
 	EOF
 	git update-ref HEAD POST <<-EOF &&
 		update HEAD $ZERO_OID $POST_OID
-		update refs/heads/master $ZERO_OID $POST_OID
+		update refs/heads/main $ZERO_OID $POST_OID
 	EOF
 	test_cmp expect actual
 '
 
 test_expect_success 'hook gets all queued updates in committed state' '
-	test_when_finished "rm .git/hooks/reference-transaction actual" &&
+	test_when_finished "rm actual" &&
 	git reset --hard PRE &&
-	write_script .git/hooks/reference-transaction <<-\EOF &&
+	test_hook reference-transaction <<-\EOF &&
 		if test "$1" = committed
 		then
 			while read -r line
@@ -76,16 +77,16 @@ test_expect_success 'hook gets all queued updates in committed state' '
 	EOF
 	cat >expect <<-EOF &&
 		$ZERO_OID $POST_OID HEAD
-		$ZERO_OID $POST_OID refs/heads/master
+		$ZERO_OID $POST_OID refs/heads/main
 	EOF
 	git update-ref HEAD POST &&
 	test_cmp expect actual
 '
 
 test_expect_success 'hook gets all queued updates in aborted state' '
-	test_when_finished "rm .git/hooks/reference-transaction actual" &&
+	test_when_finished "rm actual" &&
 	git reset --hard PRE &&
-	write_script .git/hooks/reference-transaction <<-\EOF &&
+	test_hook reference-transaction <<-\EOF &&
 		if test "$1" = aborted
 		then
 			while read -r line
@@ -96,12 +97,12 @@ test_expect_success 'hook gets all queued updates in aborted state' '
 	EOF
 	cat >expect <<-EOF &&
 		$ZERO_OID $POST_OID HEAD
-		$ZERO_OID $POST_OID refs/heads/master
+		$ZERO_OID $POST_OID refs/heads/main
 	EOF
 	git update-ref --stdin <<-EOF &&
 		start
 		update HEAD POST $ZERO_OID
-		update refs/heads/master POST $ZERO_OID
+		update refs/heads/main POST $ZERO_OID
 		abort
 	EOF
 	test_cmp expect actual
@@ -112,11 +113,11 @@ test_expect_success 'interleaving hook calls succeed' '
 
 	git init --bare target-repo.git &&
 
-	write_script target-repo.git/hooks/reference-transaction <<-\EOF &&
+	test_hook -C target-repo.git reference-transaction <<-\EOF &&
 		echo $0 "$@" >>actual
 	EOF
 
-	write_script target-repo.git/hooks/update <<-\EOF &&
+	test_hook -C target-repo.git update <<-\EOF &&
 		echo $0 "$@" >>actual
 	EOF
 

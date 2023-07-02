@@ -38,9 +38,10 @@ while ($changed) {
     }
 }
 
-while (my ($text, $included) = each %include) {
+foreach my $text (sort keys %include) {
+    my $included = $include{$text};
     if (! exists $included{$text} &&
 	(my $base = $text) =~ s/\.txt$//) {
-	print "$base.html $base.xml : ", join(" ", keys %$included), "\n";
+	print "$base.html $base.xml : ", join(" ", sort keys %$included), "\n";
     }
 }

@@ -6,6 +6,8 @@
 test_description='git apply --stat --summary test, with --recount
 
 '
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 UNC='s/^\(@@ -[1-9][0-9]*\),[0-9]* \(+[1-9][0-9]*\),[0-9]* @@/\1,999 \2,999 @@/'
@@ -17,13 +19,13 @@ do
 	test_expect_success "$title" '
 		git apply --stat --summary \
 			<"$TEST_DIRECTORY/t4100/t-apply-$num.patch" >current &&
-		test_i18ncmp "$TEST_DIRECTORY"/t4100/t-apply-$num.expect current
+		test_cmp "$TEST_DIRECTORY"/t4100/t-apply-$num.expect current
 	'
 
 	test_expect_success "$title with recount" '
 		sed -e "$UNC" <"$TEST_DIRECTORY/t4100/t-apply-$num.patch" |
 		git apply --recount --stat --summary >current &&
-		test_i18ncmp "$TEST_DIRECTORY"/t4100/t-apply-$num.expect current
+		test_cmp "$TEST_DIRECTORY"/t4100/t-apply-$num.expect current
 	'
 done <<\EOF
 rename

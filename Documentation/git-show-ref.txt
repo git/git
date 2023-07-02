@@ -8,8 +8,8 @@ git-show-ref - List references in a local repository
 SYNOPSIS
 --------
 [verse]
-'git show-ref' [-q|--quiet] [--verify] [--head] [-d|--dereference]
-	     [-s|--hash[=<n>]] [--abbrev[=<n>]] [--tags]
+'git show-ref' [-q | --quiet] [--verify] [--head] [-d | --dereference]
+	     [-s | --hash[=<n>]] [--abbrev[=<n>]] [--tags]
 	     [--heads] [--] [<pattern>...]
 'git show-ref' --exclude-existing[=<pattern>]
 
@@ -23,7 +23,7 @@ particular ref exists.
 
 By default, shows the tags, heads, and remote refs.
 
-The --exclude-existing form is a filter that does the inverse. It reads
+The `--exclude-existing` form is a filter that does the inverse. It reads
 refs from stdin, one ref per line, and shows those that don't exist in
 the local repository.
 
@@ -47,14 +47,14 @@ OPTIONS
 -d::
 --dereference::
 
-	Dereference tags into object IDs as well. They will be shown with "{caret}{}"
+	Dereference tags into object IDs as well. They will be shown with `{caret}{}`
 	appended.
 
 -s::
 --hash[=<n>]::
 
-	Only show the SHA-1 hash, not the reference name. When combined with
-	--dereference the dereferenced tag will still be shown after the SHA-1.
+	Only show the OID, not the reference name. When combined with
+	`--dereference`, the dereferenced tag will still be shown after the OID.
 
 --verify::
 
@@ -70,15 +70,15 @@ OPTIONS
 -q::
 --quiet::
 
-	Do not print any results to stdout. When combined with `--verify` this
+	Do not print any results to stdout. When combined with `--verify`, this
 	can be used to silently check if a reference exists.
 
 --exclude-existing[=<pattern>]::
 
-	Make 'git show-ref' act as a filter that reads refs from stdin of the
-	form "`^(?:<anything>\s)?<refname>(?:\^{})?$`"
+	Make `git show-ref` act as a filter that reads refs from stdin of the
+	form `^(?:<anything>\s)?<refname>(?:\^{})?$`
 	and performs the following actions on each:
-	(1) strip "{caret}{}" at the end of line if any;
+	(1) strip `{caret}{}` at the end of line if any;
 	(2) ignore if pattern is provided and does not head-match refname;
 	(3) warn if refname is not a well-formed refname and skip;
 	(4) ignore if refname is a ref that exists in the local repository;
@@ -96,7 +96,13 @@ OPTIONS
 OUTPUT
 ------
 
-The output is in the format: '<SHA-1 ID>' '<space>' '<reference name>'.
+The output is in the format:
+
+------------
+<oid> SP <ref> LF
+------------
+
+For example,
 
 -----------------------------------------------------------------------------
 $ git show-ref --head --dereference
@@ -110,7 +116,13 @@ $ git show-ref --head --dereference
 ...
 -----------------------------------------------------------------------------
 
-When using --hash (and not --dereference) the output format is: '<SHA-1 ID>'
+When using `--hash` (and not `--dereference`), the output is in the format:
+
+------------
+<oid> LF
+------------
+
+For example,
 
 -----------------------------------------------------------------------------
 $ git show-ref --heads --hash
@@ -142,10 +154,10 @@ When using the `--verify` flag, the command requires an exact path:
 
 will only match the exact branch called "master".
 
-If nothing matches, 'git show-ref' will return an error code of 1,
+If nothing matches, `git show-ref` will return an error code of 1,
 and in the case of verification, it will show an error message.
 
-For scripting, you can ask it to be quiet with the "--quiet" flag, which
+For scripting, you can ask it to be quiet with the `--quiet` flag, which
 allows you to do things like
 
 -----------------------------------------------------------------------------
@@ -157,11 +169,11 @@ to check whether a particular branch exists or not (notice how we don't
 actually want to show any results, and we want to use the full refname for it
 in order to not trigger the problem with ambiguous partial matches).
 
-To show only tags, or only proper branch heads, use "--tags" and/or "--heads"
+To show only tags, or only proper branch heads, use `--tags` and/or `--heads`
 respectively (using both means that it shows tags and heads, but not other
 random references under the refs/ subdirectory).
 
-To do automatic tag object dereferencing, use the "-d" or "--dereference"
+To do automatic tag object dereferencing, use the `-d` or `--dereference`
 flag, so you can do
 
 -----------------------------------------------------------------------------

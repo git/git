@@ -2,6 +2,7 @@
 
 test_description='add --pathspec-from-file'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_tick
@@ -137,19 +138,19 @@ test_expect_success 'error conditions' '
 	>empty_list &&
 
 	test_must_fail git add --pathspec-from-file=list --interactive 2>err &&
-	test_i18ngrep -e "--pathspec-from-file is incompatible with --interactive/--patch" err &&
+	test_i18ngrep -e "options .--pathspec-from-file. and .--interactive/--patch. cannot be used together" err &&
 
 	test_must_fail git add --pathspec-from-file=list --patch 2>err &&
-	test_i18ngrep -e "--pathspec-from-file is incompatible with --interactive/--patch" err &&
+	test_i18ngrep -e "options .--pathspec-from-file. and .--interactive/--patch. cannot be used together" err &&
 
 	test_must_fail git add --pathspec-from-file=list --edit 2>err &&
-	test_i18ngrep -e "--pathspec-from-file is incompatible with --edit" err &&
+	test_i18ngrep -e "options .--pathspec-from-file. and .--edit. cannot be used together" err &&
 
 	test_must_fail git add --pathspec-from-file=list -- fileA.t 2>err &&
-	test_i18ngrep -e "--pathspec-from-file is incompatible with pathspec arguments" err &&
+	test_i18ngrep -e ".--pathspec-from-file. and pathspec arguments cannot be used together" err &&
 
 	test_must_fail git add --pathspec-file-nul 2>err &&
-	test_i18ngrep -e "--pathspec-file-nul requires --pathspec-from-file" err &&
+	test_i18ngrep -e "the option .--pathspec-file-nul. requires .--pathspec-from-file." err &&
 
 	# This case succeeds, but still prints to stderr
 	git add --pathspec-from-file=empty_list 2>err &&

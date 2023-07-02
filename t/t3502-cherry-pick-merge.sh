@@ -8,6 +8,10 @@ test_description='cherry picking and reverting a merge
 
 '
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -25,7 +29,7 @@ test_expect_success setup '
 	echo new line >B &&
 	git commit -m "add line to B" B &&
 	git tag b &&
-	git checkout master &&
+	git checkout main &&
 	git merge side &&
 	git tag c
 

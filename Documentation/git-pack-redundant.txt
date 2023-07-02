@@ -9,7 +9,21 @@ git-pack-redundant - Find redundant pack files
 SYNOPSIS
 --------
 [verse]
-'git pack-redundant' [ --verbose ] [ --alt-odb ] < --all | .pack filename ... >
+'git pack-redundant' [--verbose] [--alt-odb] (--all | <pack-filename>...)
+
+WARNING
+-------
+`git pack-redundant` has been deprecated and is scheduled for removal in
+a future version of Git. Because it can only remove entire duplicate
+packs and not individual duplicate objects, it is generally not a useful
+tool for reducing repository size. You are better off using `git gc` to
+do so, which will put objects into a new pack, removing duplicates.
+
+Running `pack-redundant` without the `--i-still-use-this` flag will fail
+in this release. If you believe you have a use case for which
+`pack-redundant` is better suited and oppose this removal, please
+contact the Git mailing list at git@vger.kernel.org. More information
+about the list is available at https://git-scm.com/community.
 
 DESCRIPTION
 -----------
@@ -34,7 +48,7 @@ OPTIONS
 
 --alt-odb::
 	Don't require objects present in packs from alternate object
-	directories to be present in local packs.
+	database (odb) directories to be present in local packs.
 
 --verbose::
 	Outputs some statistics to stderr. Has a small performance penalty.

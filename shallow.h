@@ -6,6 +6,8 @@
 #include "repository.h"
 #include "strbuf.h"
 
+struct oid_array;
+
 void set_alternate_shallow_file(struct repository *r, const char *path, int override);
 int register_shallow(struct repository *r, const struct object_id *oid);
 int unregister_shallow(const struct object_id *oid);
@@ -23,7 +25,9 @@ int is_repository_shallow(struct repository *r);
 struct shallow_lock {
 	struct lock_file lock;
 };
-#define SHALLOW_LOCK_INIT { LOCK_INIT }
+#define SHALLOW_LOCK_INIT { \
+	.lock = LOCK_INIT, \
+}
 
 /* commit $GIT_DIR/shallow and reset stat-validity checks */
 int commit_shallow_file(struct repository *r, struct shallow_lock *lk);

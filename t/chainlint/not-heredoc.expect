@@ -1,0 +1,14 @@
+echo "<<<<<<< ours" &&
+echo ourside &&
+echo "=======" &&
+echo theirside &&
+echo ">>>>>>> theirs" &&
+
+(
+	echo "<<<<<<< ours" &&
+	echo ourside &&
+	echo "=======" &&
+	echo theirside &&
+	echo ">>>>>>> theirs" ?!AMP?!
+	poodle
+) >merged

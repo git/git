@@ -13,8 +13,9 @@ SYNOPSIS
 	[--no-reuse-delta] [--delta-base-offset] [--non-empty]
 	[--local] [--incremental] [--window=<n>] [--depth=<n>]
 	[--revs [--unpacked | --all]] [--keep-pack=<pack-name>]
-	[--stdout [--filter=<filter-spec>] | base-name]
-	[--shallow] [--keep-true-parents] [--[no-]sparse] < object-list
+	[--cruft] [--cruft-expiration=<time>]
+	[--stdout [--filter=<filter-spec>] | <base-name>]
+	[--shallow] [--keep-true-parents] [--[no-]sparse] < <object-list>
 
 
 DESCRIPTION
@@ -85,6 +86,45 @@ base-name::
 	reference was included in the resulting packfile.  This
 	can be useful to send new tags to native Git clients.
 
+--stdin-packs::
+	Read the basenames of packfiles (e.g., `pack-1234abcd.pack`)
+	from the standard input, instead of object names or revision
+	arguments. The resulting pack contains all objects listed in the
+	included packs (those not beginning with `^`), excluding any
+	objects listed in the excluded packs (beginning with `^`).
++
+Incompatible with `--revs`, or options that imply `--revs` (such as
+`--all`), with the exception of `--unpacked`, which is compatible.
+
+--cruft::
+	Packs unreachable objects into a separate "cruft" pack, denoted
+	by the existence of a `.mtimes` file. Typically used by `git
+	repack --cruft`. Callers provide a list of pack names and
+	indicate which packs will remain in the repository, along with
+	which packs will be deleted (indicated by the `-` prefix). The
+	contents of the cruft pack are all objects not contained in the
+	surviving packs which have not exceeded the grace period (see
+	`--cruft-expiration` below), or which have exceeded the grace
+	period, but are reachable from an other object which hasn't.
++
+When the input lists a pack containing all reachable objects (and lists
+all other packs as pending deletion), the corresponding cruft pack will
+contain all unreachable objects (with mtime newer than the
+`--cruft-expiration`) along with any unreachable objects whose mtime is
+older than the `--cruft-expiration`, but are reachable from an
+unreachable object whose mtime is newer than the `--cruft-expiration`).
++
+Incompatible with `--unpack-unreachable`, `--keep-unreachable`,
+`--pack-loose-unreachable`, `--stdin-packs`, as well as any other
+options which imply `--revs`. Also incompatible with `--max-pack-size`;
+when this option is set, the maximum pack size is not inferred from
+`pack.packSizeLimit`.
+
+--cruft-expiration=<approxidate>::
+	If specified, objects are eliminated from the cruft pack if they
+	have an mtime older than `<approxidate>`. If unspecified (and
+	given `--cruft`), then no objects are eliminated.
+
 --window=<n>::
 --depth=<n>::
 	These two options affect how the objects contained in
@@ -118,10 +158,10 @@ depth is 4095.
 	into multiple independent packfiles, each not larger than the
 	given size. The size can be suffixed with
 	"k", "m", or "g". The minimum size allowed is limited to 1 MiB.
-	This option
-	prevents the creation of a bitmap index.
 	The default is unlimited, unless the config variable
-	`pack.packSizeLimit` is set.
+	`pack.packSizeLimit` is set. Note that this option may result in
+	a larger and slower repository; see the discussion in
+	`pack.packSizeLimit`.
 
 --honor-pack-keep::
 	This flag causes an object already in a local pack that
@@ -399,6 +439,17 @@ That puts the heads and tags for each fork in their own island (named
 Note that we pick a single island for each regex to go into, using "last
 one wins" ordering (which allows repo-specific config to take precedence
 over user-wide config, and so forth).
+
+
+CONFIGURATION
+-------------
+
+Various configuration variables affect packing, see
+linkgit:git-config[1] (search for "pack" and "delta").
+
+Notably, delta compression is not used on objects larger than the
+`core.bigFileThreshold` configuration variable and on files with the
+attribute `delta` set to false.
 
 SEE ALSO
 --------

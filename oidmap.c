@@ -1,7 +1,8 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "hash.h"
 #include "oidmap.h"
 
-static int oidmap_neq(const void *hashmap_cmp_fn_data,
+static int oidmap_neq(const void *hashmap_cmp_fn_data UNUSED,
 		      const struct hashmap_entry *e1,
 		      const struct hashmap_entry *e2,
 		      const void *keydata)
@@ -27,7 +28,7 @@ void oidmap_free(struct oidmap *map, int free_entries)
 		return;
 
 	/* TODO: make oidmap itself not depend on struct layouts */
-	hashmap_free_(&map->map, free_entries ? 0 : -1);
+	hashmap_clear_(&map->map, free_entries ? 0 : -1);
 }
 
 void *oidmap_get(const struct oidmap *map, const struct object_id *key)

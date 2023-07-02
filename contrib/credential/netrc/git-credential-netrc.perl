@@ -356,7 +356,10 @@ sub read_credential_data_from_stdin {
 		next unless m/^([^=]+)=(.+)/;
 
 		my ($token, $value) = ($1, $2);
-		die "Unknown search token $token" unless exists $q{$token};
+
+		# skip any unknown tokens
+		next unless exists $q{$token};
+
 		$q{$token} = $value;
 		log_debug("We were given search token $token and value $value");
 	}

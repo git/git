@@ -18,7 +18,7 @@ a `packfile-uris` argument, the server MAY send a `packfile-uris` section
 directly before the `packfile` section (right after `wanted-refs` if it is
 sent) containing URIs of any of the given protocols. The URIs point to
 packfiles that use only features that the client has declared that it supports
-(e.g. ofs-delta and thin-pack). See protocol-v2.txt for the documentation of
+(e.g. ofs-delta and thin-pack). See linkgit:gitprotocol-v2[5] for the documentation of
 this section.
 
 Clients should then download and index all the given URIs (in addition to
@@ -35,10 +35,14 @@ include some sort of non-trivial implementation in the Minimum Viable Product,
 at least so that we can test the client.
 
 This is the implementation: a feature, marked experimental, that allows the
-server to be configured by one or more `uploadpack.blobPackfileUri=<sha1>
-<uri>` entries. Whenever the list of objects to be sent is assembled, all such
-blobs are excluded, replaced with URIs. The client will download those URIs,
-expecting them to each point to packfiles containing single blobs.
+server to be configured by one or more `uploadpack.blobPackfileUri=
+<object-hash> <pack-hash> <uri>` entries. Whenever the list of objects to be
+sent is assembled, all such blobs are excluded, replaced with URIs. As noted
+in "Future work" below, the server can evolve in the future to support
+excluding other objects (or other implementations of servers could be made
+that support excluding other objects) without needing a protocol change, so
+clients should not expect that packfiles downloaded in this way only contain
+single blobs.
 
 Client design
 -------------

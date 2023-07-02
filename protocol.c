@@ -1,6 +1,8 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
+#include "environment.h"
 #include "protocol.h"
+#include "trace2.h"
 
 static enum protocol_version parse_protocol_version(const char *value)
 {
@@ -17,7 +19,6 @@ static enum protocol_version parse_protocol_version(const char *value)
 enum protocol_version get_protocol_version_config(void)
 {
 	const char *value;
-	int val;
 	const char *git_test_k = "GIT_TEST_PROTOCOL_VERSION";
 	const char *git_test_v;
 
@@ -31,9 +32,6 @@ enum protocol_version get_protocol_version_config(void)
 		return version;
 	}
 
-	if (!git_config_get_bool("feature.experimental", &val) && val)
-		return protocol_v2;
-
 	git_test_v = getenv(git_test_k);
 	if (git_test_v && *git_test_v) {
 		enum protocol_version env = parse_protocol_version(git_test_v);
@@ -43,7 +41,7 @@ enum protocol_version get_protocol_version_config(void)
 		return env;
 	}
 
-	return protocol_v0;
+	return protocol_v2;
 }
 
 enum protocol_version determine_protocol_version_server(void)
@@ -76,6 +74,8 @@ enum protocol_version determine_protocol_version_server(void)
 
 		string_list_clear(&list, 0);
 	}
+
+	trace2_data_intmax("transfer", NULL, "negotiated-version", version);
 
 	return version;
 }

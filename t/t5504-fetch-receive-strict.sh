@@ -1,6 +1,10 @@
 #!/bin/sh
 
 test_description='fetch/receive strict mode'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup and inject "corrupt or missing" object' '
@@ -25,7 +29,7 @@ test_expect_success 'fetch without strict' '
 		cd dst &&
 		git config fetch.fsckobjects false &&
 		git config transfer.fsckobjects false &&
-		test_must_fail git fetch ../.git master
+		test_must_fail git fetch ../.git main
 	)
 '
 
@@ -36,7 +40,7 @@ test_expect_success 'fetch with !fetch.fsckobjects' '
 		cd dst &&
 		git config fetch.fsckobjects false &&
 		git config transfer.fsckobjects true &&
-		test_must_fail git fetch ../.git master
+		test_must_fail git fetch ../.git main
 	)
 '
 
@@ -47,7 +51,7 @@ test_expect_success 'fetch with fetch.fsckobjects' '
 		cd dst &&
 		git config fetch.fsckobjects true &&
 		git config transfer.fsckobjects false &&
-		test_must_fail git fetch ../.git master
+		test_must_fail git fetch ../.git main
 	)
 '
 
@@ -57,13 +61,13 @@ test_expect_success 'fetch with transfer.fsckobjects' '
 	(
 		cd dst &&
 		git config transfer.fsckobjects true &&
-		test_must_fail git fetch ../.git master
+		test_must_fail git fetch ../.git main
 	)
 '
 
 cat >exp <<EOF
 To dst
-!	refs/heads/master:refs/heads/test	[remote rejected] (missing necessary objects)
+!	refs/heads/main:refs/heads/test	[remote rejected] (missing necessary objects)
 Done
 EOF
 
@@ -75,7 +79,7 @@ test_expect_success 'push without strict' '
 		git config fetch.fsckobjects false &&
 		git config transfer.fsckobjects false
 	) &&
-	test_must_fail git push --porcelain dst master:refs/heads/test >act &&
+	test_must_fail git push --porcelain dst main:refs/heads/test >act &&
 	test_cmp exp act
 '
 
@@ -87,13 +91,13 @@ test_expect_success 'push with !receive.fsckobjects' '
 		git config receive.fsckobjects false &&
 		git config transfer.fsckobjects true
 	) &&
-	test_must_fail git push --porcelain dst master:refs/heads/test >act &&
+	test_must_fail git push --porcelain dst main:refs/heads/test >act &&
 	test_cmp exp act
 '
 
 cat >exp <<EOF
 To dst
-!	refs/heads/master:refs/heads/test	[remote rejected] (unpacker error)
+!	refs/heads/main:refs/heads/test	[remote rejected] (unpacker error)
 EOF
 
 test_expect_success 'push with receive.fsckobjects' '
@@ -104,7 +108,7 @@ test_expect_success 'push with receive.fsckobjects' '
 		git config receive.fsckobjects true &&
 		git config transfer.fsckobjects false
 	) &&
-	test_must_fail git push --porcelain dst master:refs/heads/test >act &&
+	test_must_fail git push --porcelain dst main:refs/heads/test >act &&
 	test_cmp exp act
 '
 
@@ -115,7 +119,7 @@ test_expect_success 'push with transfer.fsckobjects' '
 		cd dst &&
 		git config transfer.fsckobjects true
 	) &&
-	test_must_fail git push --porcelain dst master:refs/heads/test >act &&
+	test_must_fail git push --porcelain dst main:refs/heads/test >act &&
 	test_cmp exp act
 '
 
@@ -135,7 +139,7 @@ This commit object intentionally broken
 EOF
 
 test_expect_success 'setup bogus commit' '
-	commit="$(git hash-object -t commit -w --stdin <bogus-commit)"
+	commit="$(git hash-object --literally -t commit -w --stdin <bogus-commit)"
 '
 
 test_expect_success 'fsck with no skipList input' '
@@ -289,7 +293,7 @@ test_expect_success 'push with receive.fsck.missingEmail=warn' '
 		receive.fsck.missingEmail warn &&
 	git push --porcelain dst bogus >act 2>&1 &&
 	grep "missingEmail" act &&
-	test_i18ngrep "Skipping unknown msg id.*whatever" act &&
+	test_i18ngrep "skipping unknown msg id.*whatever" act &&
 	git --git-dir=dst/.git branch -D bogus &&
 	git --git-dir=dst/.git config --add \
 		receive.fsck.missingEmail ignore &&
@@ -347,6 +351,23 @@ test_expect_success \
 		fetch.fsck.unterminatedheader warn &&
 	test_must_fail git --git-dir=dst/.git fetch "file://$(pwd)" HEAD &&
 	grep "Cannot demote unterminatedheader" act
+'
+
+test_expect_success 'badFilemode is not a strict error' '
+	git init --bare badmode.git &&
+	tree=$(
+		cd badmode.git &&
+		blob=$(echo blob | git hash-object -w --stdin | hex2oct) &&
+		printf "123456 foo\0${blob}" |
+		git hash-object -t tree --stdin -w --literally
+	) &&
+
+	rm -rf dst.git &&
+	git init --bare dst.git &&
+	git -C dst.git config transfer.fsckObjects true &&
+
+	git -C badmode.git push ../dst.git $tree:refs/tags/tree 2>err &&
+	grep "$tree: badFilemode" err
 '
 
 test_done

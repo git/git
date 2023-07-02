@@ -11,7 +11,7 @@ SYNOPSIS
 'git checkout' [-q] [-f] [-m] [<branch>]
 'git checkout' [-q] [-f] [-m] --detach [<branch>]
 'git checkout' [-q] [-f] [-m] [--detach] <commit>
-'git checkout' [-q] [-f] [-m] [[-b|-B|--orphan] <new_branch>] [<start_point>]
+'git checkout' [-q] [-f] [-m] [[-b|-B|--orphan] <new-branch>] [<start-point>]
 'git checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] [--] <pathspec>...
 'git checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] --pathspec-from-file=<file> [--pathspec-file-nul]
 'git checkout' (-p|--patch) [<tree-ish>] [--] [<pathspec>...]
@@ -43,7 +43,7 @@ You could omit `<branch>`, in which case the command degenerates to
 rather expensive side-effects to show only the tracking information,
 if exists, for the current branch.
 
-'git checkout' -b|-B <new_branch> [<start point>]::
+'git checkout' -b|-B <new-branch> [<start-point>]::
 
 	Specifying `-b` causes a new branch to be created as if
 	linkgit:git-branch[1] were called and then checked out.  In
@@ -52,11 +52,11 @@ if exists, for the current branch.
 	`--track` without `-b` implies branch creation; see the
 	description of `--track` below.
 +
-If `-B` is given, `<new_branch>` is created if it doesn't exist; otherwise, it
+If `-B` is given, `<new-branch>` is created if it doesn't exist; otherwise, it
 is reset. This is the transactional equivalent of
 +
 ------------
-$ git branch -f <branch> [<start point>]
+$ git branch -f <branch> [<start-point>]
 $ git checkout <branch>
 ------------
 +
@@ -118,8 +118,9 @@ OPTIONS
 -f::
 --force::
 	When switching branches, proceed even if the index or the
-	working tree differs from `HEAD`.  This is used to throw away
-	local changes.
+	working tree differs from `HEAD`, and even if there are untracked
+	files in the way.  This is used to throw away local changes and
+	any untracked files or directories that are in the way.
 +
 When checking out paths from the index, do not fail upon unmerged
 entries; instead, unmerged entries are ignored.
@@ -144,18 +145,20 @@ as `ours` (i.e. "our shared canonical history"), while what you did
 on your side branch as `theirs` (i.e. "one contributor's work on top
 of it").
 
--b <new_branch>::
-	Create a new branch named `<new_branch>` and start it at
-	`<start_point>`; see linkgit:git-branch[1] for details.
+-b <new-branch>::
+	Create a new branch named `<new-branch>`, start it at
+	`<start-point>`, and check the resulting branch out;
+	see linkgit:git-branch[1] for details.
 
--B <new_branch>::
-	Creates the branch `<new_branch>` and start it at `<start_point>`;
-	if it already exists, then reset it to `<start_point>`. This is
-	equivalent to running "git branch" with "-f"; see
-	linkgit:git-branch[1] for details.
+-B <new-branch>::
+	Creates the branch `<new-branch>`, start it at `<start-point>`;
+	if it already exists, then reset it to `<start-point>`. And then
+	check the resulting branch out.  This is equivalent to running
+	"git branch" with "-f" followed by "git checkout" of that branch;
+	see linkgit:git-branch[1] for details.
 
 -t::
---track::
+--track[=(direct|inherit)]::
 	When creating a new branch, set up "upstream" configuration. See
 	"--track" in linkgit:git-branch[1] for details.
 +
@@ -192,7 +195,10 @@ branches from there if `<branch>` is ambiguous but exists on the
 'origin' remote. See also `checkout.defaultRemote` in
 linkgit:git-config[1].
 +
-Use `--no-guess` to disable this.
+`--guess` is the default behavior. Use `--no-guess` to disable it.
++
+The default behavior can be set via the `checkout.guess` configuration
+variable.
 
 -l::
 	Create the new branch's reflog; see linkgit:git-branch[1] for
@@ -206,16 +212,16 @@ Use `--no-guess` to disable this.
 	`<commit>` is not a branch name.  See the "DETACHED HEAD" section
 	below for details.
 
---orphan <new_branch>::
-	Create a new 'orphan' branch, named `<new_branch>`, started from
-	`<start_point>` and switch to it.  The first commit made on this
+--orphan <new-branch>::
+	Create a new 'orphan' branch, named `<new-branch>`, started from
+	`<start-point>` and switch to it.  The first commit made on this
 	new branch will have no parents and it will be the root of a new
 	history totally disconnected from all the other branches and
 	commits.
 +
 The index and the working tree are adjusted as if you had previously run
-`git checkout <start_point>`.  This allows you to start a new history
-that records a set of paths similar to `<start_point>` by easily running
+`git checkout <start-point>`.  This allows you to start a new history
+that records a set of paths similar to `<start-point>` by easily running
 `git commit -a` to make the root commit.
 +
 This can be useful when you want to publish the tree from a commit
@@ -225,7 +231,7 @@ whose full history contains proprietary or otherwise encumbered bits of
 code.
 +
 If you want to start a disconnected history that records a set of paths
-that is totally different from the one of `<start_point>`, then you should
+that is totally different from the one of `<start-point>`, then you should
 clear the index and the working tree right after creating the orphan
 branch by running `git rm -rf .` from the top level of the working tree.
 Afterwards you will be ready to prepare your new files, repopulating the
@@ -262,8 +268,7 @@ When switching branches with `--merge`, staged changes may be lost.
 	The same as `--merge` option above, but changes the way the
 	conflicting hunks are presented, overriding the
 	`merge.conflictStyle` configuration variable.  Possible values are
-	"merge" (default) and "diff3" (in addition to what is shown by
-	"merge" style, shows the original contents).
+	"merge" (default), "diff3", and "zdiff3".
 
 -p::
 --patch::
@@ -337,10 +342,10 @@ As a special case, you may use `A...B` as a shortcut for the
 merge base of `A` and `B` if there is exactly one merge base. You can
 leave out at most one of `A` and `B`, in which case it defaults to `HEAD`.
 
-<new_branch>::
+<new-branch>::
 	Name for the new branch.
 
-<start_point>::
+<start-point>::
 	The name of a commit at which to start the new branch; see
 	linkgit:git-branch[1] for details. Defaults to `HEAD`.
 +
@@ -351,6 +356,10 @@ leave out at most one of `A` and `B`, in which case it defaults to `HEAD`.
 <tree-ish>::
 	Tree to checkout from (when paths are given). If not specified,
 	the index will be used.
++
+As a special case, you may use `"A...B"` as a shortcut for the
+merge base of `A` and `B` if there is exactly one merge base. You can
+leave out at most one of `A` and `B`, in which case it defaults to `HEAD`.
 
 \--::
 	Do not interpret any more arguments as options.
@@ -470,18 +479,15 @@ before that happens. If we have not yet moved away from commit `f`,
 any of these will create a reference to it:
 
 ------------
-$ git checkout -b foo   <1>
-$ git branch foo        <2>
-$ git tag foo           <3>
+$ git checkout -b foo  # or "git switch -c foo"  <1>
+$ git branch foo                                 <2>
+$ git tag foo                                    <3>
 ------------
-
 <1> creates a new branch `foo`, which refers to commit `f`, and then
     updates `HEAD` to refer to branch `foo`. In other words, we'll no longer
     be in detached `HEAD` state after this command.
-
 <2> similarly creates a new branch `foo`, which refers to commit `f`,
     but leaves `HEAD` detached.
-
 <3> creates a new tag `foo`, which refers to commit `f`,
     leaving `HEAD` detached.
 
@@ -510,88 +516,100 @@ to checkout these paths out of the index.
 EXAMPLES
 --------
 
-. The following sequence checks out the `master` branch, reverts
-  the `Makefile` to two revisions back, deletes `hello.c` by
-  mistake, and gets it back from the index.
-+
+=== 1. Paths
+
+The following sequence checks out the `master` branch, reverts
+the `Makefile` to two revisions back, deletes `hello.c` by
+mistake, and gets it back from the index.
+
 ------------
 $ git checkout master             <1>
 $ git checkout master~2 Makefile  <2>
 $ rm -f hello.c
 $ git checkout hello.c            <3>
 ------------
-+
 <1> switch branch
 <2> take a file out of another commit
 <3> restore `hello.c` from the index
-+
+
 If you want to check out _all_ C source files out of the index,
 you can say
-+
+
 ------------
 $ git checkout -- '*.c'
 ------------
-+
+
 Note the quotes around `*.c`.  The file `hello.c` will also be
 checked out, even though it is no longer in the working tree,
 because the file globbing is used to match entries in the index
 (not in the working tree by the shell).
-+
+
 If you have an unfortunate branch that is named `hello.c`, this
 step would be confused as an instruction to switch to that branch.
 You should instead write:
-+
+
 ------------
 $ git checkout -- hello.c
 ------------
 
-. After working in the wrong branch, switching to the correct
-  branch would be done using:
-+
+=== 2. Merge
+
+After working in the wrong branch, switching to the correct
+branch would be done using:
+
 ------------
 $ git checkout mytopic
 ------------
-+
+
 However, your "wrong" branch and correct `mytopic` branch may
 differ in files that you have modified locally, in which case
 the above checkout would fail like this:
-+
+
 ------------
 $ git checkout mytopic
 error: You have local changes to 'frotz'; not switching branches.
 ------------
-+
+
 You can give the `-m` flag to the command, which would try a
 three-way merge:
-+
+
 ------------
 $ git checkout -m mytopic
 Auto-merging frotz
 ------------
-+
+
 After this three-way merge, the local modifications are _not_
 registered in your index file, so `git diff` would show you what
 changes you made since the tip of the new branch.
 
-. When a merge conflict happens during switching branches with
-  the `-m` option, you would see something like this:
-+
+=== 3. Merge conflict
+
+When a merge conflict happens during switching branches with
+the `-m` option, you would see something like this:
+
 ------------
 $ git checkout -m mytopic
 Auto-merging frotz
 ERROR: Merge conflict in frotz
 fatal: merge program failed
 ------------
-+
+
 At this point, `git diff` shows the changes cleanly merged as in
 the previous example, as well as the changes in the conflicted
 files.  Edit and resolve the conflict and mark it resolved with
 `git add` as usual:
-+
+
 ------------
 $ edit frotz
 $ git add frotz
 ------------
+
+CONFIGURATION
+-------------
+
+include::includes/cmd-config-section-all.txt[]
+
+include::config/checkout.txt[]
 
 SEE ALSO
 --------

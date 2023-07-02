@@ -13,6 +13,9 @@
 
 test_description='TREESAME and limiting'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 note () {
@@ -20,7 +23,8 @@ note () {
 }
 
 unnote () {
-	git name-rev --tags --stdin | sed -e "s|$OID_REGEX (tags/\([^)]*\))\([ 	]\)|\1\2|g"
+	git name-rev --tags --annotate-stdin | \
+	sed -e "s|$OID_REGEX (tags/\([^)]*\))\([ 	]\)|\1\2|g"
 }
 
 test_expect_success setup '
@@ -33,13 +37,13 @@ test_expect_success setup '
 	git checkout other-branch &&
 	test_commit "Added other" other "Hello" C &&
 
-	git checkout master &&
+	git checkout main &&
 	test_merge D other-branch &&
 
 	git checkout third-branch &&
 	test_commit "Third file" third "Nothing" E &&
 
-	git checkout master &&
+	git checkout main &&
 	test_commit "file=Blah" file "Blah" F &&
 
 	test_tick && git merge --no-commit third-branch &&
@@ -56,7 +60,7 @@ test_expect_success setup '
 
 	test_tick && git revert I && note J &&
 
-	git checkout master &&
+	git checkout main &&
 	test_tick && git merge --no-ff fiddler-branch &&
 	note K &&
 

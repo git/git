@@ -1,9 +1,16 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "abspath.h"
+#include "alloc.h"
 #include "config.h"
+#include "environment.h"
+#include "path.h"
 #include "pkt-line.h"
+#include "protocol.h"
 #include "run-command.h"
+#include "setup.h"
 #include "strbuf.h"
 #include "string-list.h"
+#include "wrapper.h"
 
 #ifdef NO_INITGROUPS
 #define initgroups(x, y) (0) /* nothing */
@@ -63,6 +70,12 @@ struct hostinfo {
 	unsigned int hostname_lookup_done:1;
 	unsigned int saw_extended_args:1;
 };
+#define HOSTINFO_INIT { \
+	.hostname = STRBUF_INIT, \
+	.canon_hostname = STRBUF_INIT, \
+	.ip_address = STRBUF_INIT, \
+	.tcp_port = STRBUF_INIT, \
+}
 
 static void lookup_hostname(struct hostinfo *hi);
 
@@ -226,13 +239,13 @@ static const char *path_ok(const char *directory, struct hostinfo *hi)
 
 		rlen = strlcpy(interp_path, expanded_path.buf,
 			       sizeof(interp_path));
+		strbuf_release(&expanded_path);
 		if (rlen >= sizeof(interp_path)) {
 			logerror("interpolated path too large: %s",
 				 interp_path);
 			return NULL;
 		}
 
-		strbuf_release(&expanded_path);
 		loginfo("Interpolated dir '%s'", interp_path);
 
 		dir = interp_path;
@@ -273,7 +286,7 @@ static const char *path_ok(const char *directory, struct hostinfo *hi)
 		/* The validation is done on the paths after enter_repo
 		 * appends optional {.git,.git/.git} and friends, but
 		 * it does not use getcwd().  So if your /pub is
-		 * a symlink to /mnt/pub, you can whitelist /pub and
+		 * a symlink to /mnt/pub, you can include /pub and
 		 * do not have to say /mnt/pub.
 		 * Do not say /pub/.
 		 */
@@ -292,7 +305,7 @@ static const char *path_ok(const char *directory, struct hostinfo *hi)
 			return path;
 	}
 
-	logerror("'%s': not in whitelist", path);
+	logerror("'%s': not in directory list", path);
 	return NULL;		/* Fallthrough. Deny by default */
 }
 
@@ -320,22 +333,18 @@ static int run_access_hook(struct daemon_service *service, const char *dir,
 {
 	struct child_process child = CHILD_PROCESS_INIT;
 	struct strbuf buf = STRBUF_INIT;
-	const char *argv[8];
-	const char **arg = argv;
 	char *eol;
 	int seen_errors = 0;
 
-	*arg++ = access_hook;
-	*arg++ = service->name;
-	*arg++ = path;
-	*arg++ = hi->hostname.buf;
-	*arg++ = get_canon_hostname(hi);
-	*arg++ = get_ip_address(hi);
-	*arg++ = hi->tcp_port.buf;
-	*arg = NULL;
+	strvec_push(&child.args, access_hook);
+	strvec_push(&child.args, service->name);
+	strvec_push(&child.args, path);
+	strvec_push(&child.args, hi->hostname.buf);
+	strvec_push(&child.args, get_canon_hostname(hi));
+	strvec_push(&child.args, get_ip_address(hi));
+	strvec_push(&child.args, hi->tcp_port.buf);
 
 	child.use_shell = 1;
-	child.argv = argv;
 	child.no_stdin = 1;
 	child.no_stderr = 1;
 	child.out = -1;
@@ -401,7 +410,7 @@ static int run_service(const char *dir, struct daemon_service *service,
 	 * a "git-daemon-export-ok" flag that says that the other side
 	 * is ok with us doing this.
 	 *
-	 * path_ok() uses enter_repo() and does whitelist checking.
+	 * path_ok() uses enter_repo() and checks for included directories.
 	 * We only need to make sure the repository is exported.
 	 */
 
@@ -445,7 +454,7 @@ static void copy_to_log(int fd)
 	FILE *fp;
 
 	fp = fdopen(fd, "r");
-	if (fp == NULL) {
+	if (!fp) {
 		logerror("fdopen of error channel failed");
 		close(fd);
 		return;
@@ -482,7 +491,7 @@ static int upload_pack(const struct strvec *env)
 	strvec_pushl(&cld.args, "upload-pack", "--strict", NULL);
 	strvec_pushf(&cld.args, "--timeout=%u", timeout);
 
-	strvec_pushv(&cld.env_array, env->v);
+	strvec_pushv(&cld.env, env->v);
 
 	return run_service_command(&cld);
 }
@@ -492,7 +501,7 @@ static int upload_archive(const struct strvec *env)
 	struct child_process cld = CHILD_PROCESS_INIT;
 	strvec_push(&cld.args, "upload-archive");
 
-	strvec_pushv(&cld.env_array, env->v);
+	strvec_pushv(&cld.env, env->v);
 
 	return run_service_command(&cld);
 }
@@ -502,7 +511,7 @@ static int receive_pack(const struct strvec *env)
 	struct child_process cld = CHILD_PROCESS_INIT;
 	strvec_push(&cld.args, "receive-pack");
 
-	strvec_pushv(&cld.env_array, env->v);
+	strvec_pushv(&cld.env, env->v);
 
 	return run_service_command(&cld);
 }
@@ -566,14 +575,14 @@ static void parse_host_and_port(char *hostport, char **host,
 
 /*
  * Sanitize a string from the client so that it's OK to be inserted into a
- * filesystem path. Specifically, we disallow slashes, runs of "..", and
- * trailing and leading dots, which means that the client cannot escape
- * our base path via ".." traversal.
+ * filesystem path. Specifically, we disallow directory separators, runs
+ * of "..", and trailing and leading dots, which means that the client
+ * cannot escape our base path via ".." traversal.
  */
 static void sanitize_client(struct strbuf *out, const char *in)
 {
 	for (; *in; in++) {
-		if (*in == '/')
+		if (is_dir_sep(*in))
 			continue;
 		if (*in == '.' && (!out->len || out->buf[out->len - 1] == '.'))
 			continue;
@@ -727,15 +736,6 @@ static void lookup_hostname(struct hostinfo *hi)
 	}
 }
 
-static void hostinfo_init(struct hostinfo *hi)
-{
-	memset(hi, 0, sizeof(*hi));
-	strbuf_init(&hi->hostname, 0);
-	strbuf_init(&hi->canon_hostname, 0);
-	strbuf_init(&hi->ip_address, 0);
-	strbuf_init(&hi->tcp_port, 0);
-}
-
 static void hostinfo_clear(struct hostinfo *hi)
 {
 	strbuf_release(&hi->hostname);
@@ -760,17 +760,15 @@ static int execute(void)
 	char *line = packet_buffer;
 	int pktlen, len, i;
 	char *addr = getenv("REMOTE_ADDR"), *port = getenv("REMOTE_PORT");
-	struct hostinfo hi;
+	struct hostinfo hi = HOSTINFO_INIT;
 	struct strvec env = STRVEC_INIT;
-
-	hostinfo_init(&hi);
 
 	if (addr)
 		loginfo("Connection from %s:%s", addr, port);
 
 	set_keep_alive(0);
 	alarm(init_timeout ? init_timeout : timeout);
-	pktlen = packet_read(0, NULL, NULL, packet_buffer, sizeof(packet_buffer), 0);
+	pktlen = packet_read(0, packet_buffer, sizeof(packet_buffer), 0);
 	alarm(0);
 
 	len = strlen(line);
@@ -840,7 +838,7 @@ static void add_child(struct child_process *cld, struct sockaddr *addr, socklen_
 {
 	struct child *newborn, **cradle;
 
-	newborn = xcalloc(1, sizeof(*newborn));
+	CALLOC_ARRAY(newborn, 1);
 	live_children++;
 	memcpy(&newborn->cld, cld, sizeof(*cld));
 	memcpy(&newborn->address, addr, addrlen);
@@ -913,21 +911,21 @@ static void handle(int incoming, struct sockaddr *addr, socklen_t addrlen)
 		char buf[128] = "";
 		struct sockaddr_in *sin_addr = (void *) addr;
 		inet_ntop(addr->sa_family, &sin_addr->sin_addr, buf, sizeof(buf));
-		strvec_pushf(&cld.env_array, "REMOTE_ADDR=%s", buf);
-		strvec_pushf(&cld.env_array, "REMOTE_PORT=%d",
+		strvec_pushf(&cld.env, "REMOTE_ADDR=%s", buf);
+		strvec_pushf(&cld.env, "REMOTE_PORT=%d",
 			     ntohs(sin_addr->sin_port));
 #ifndef NO_IPV6
 	} else if (addr->sa_family == AF_INET6) {
 		char buf[128] = "";
 		struct sockaddr_in6 *sin6_addr = (void *) addr;
 		inet_ntop(AF_INET6, &sin6_addr->sin6_addr, buf, sizeof(buf));
-		strvec_pushf(&cld.env_array, "REMOTE_ADDR=[%s]", buf);
-		strvec_pushf(&cld.env_array, "REMOTE_PORT=%d",
+		strvec_pushf(&cld.env, "REMOTE_ADDR=[%s]", buf);
+		strvec_pushf(&cld.env, "REMOTE_PORT=%d",
 			     ntohs(sin6_addr->sin6_port));
 #endif
 	}
 
-	cld.argv = cld_argv.v;
+	strvec_pushv(&cld.args, cld_argv.v);
 	cld.in = incoming;
 	cld.out = dup(incoming);
 
@@ -937,7 +935,7 @@ static void handle(int incoming, struct sockaddr *addr, socklen_t addrlen)
 		add_child(&cld, addr, addrlen);
 }
 
-static void child_handler(int signo)
+static void child_handler(int signo UNUSED)
 {
 	/*
 	 * Otherwise empty handler because systemcalls will get interrupted
@@ -1148,7 +1146,7 @@ static int service_loop(struct socketlist *socklist)
 	struct pollfd *pfd;
 	int i;
 
-	pfd = xcalloc(socklist->nr, sizeof(struct pollfd));
+	CALLOC_ARRAY(pfd, socklist->nr);
 
 	for (i = 0; i < socklist->nr; i++) {
 		pfd[i].fd = socklist->list[i];
@@ -1453,7 +1451,7 @@ int cmd_main(int argc, const char **argv)
 		cred = prepare_credentials(user_name, group_name);
 
 	if (strict_paths && (!ok_paths || !*ok_paths))
-		die("option --strict-paths requires a whitelist");
+		die("option --strict-paths requires '<directory>' arguments");
 
 	if (base_path && !is_directory(base_path))
 		die("base-path '%s' does not exist or is not a directory",

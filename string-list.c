@@ -1,10 +1,17 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "string-list.h"
+#include "alloc.h"
 
-void string_list_init(struct string_list *list, int strdup_strings)
+void string_list_init_nodup(struct string_list *list)
 {
-	memset(list, 0, sizeof(*list));
-	list->strdup_strings = strdup_strings;
+	struct string_list blank = STRING_LIST_INIT_NODUP;
+	memcpy(list, &blank, sizeof(*list));
+}
+
+void string_list_init_dup(struct string_list *list)
+{
+	struct string_list blank = STRING_LIST_INIT_DUP;
+	memcpy(list, &blank, sizeof(*list));
 }
 
 /* if there is no exact match, point to the index where the entry could be
@@ -150,7 +157,7 @@ void filter_string_list(struct string_list *list, int free_util,
 	list->nr = dst;
 }
 
-static int item_is_not_empty(struct string_list_item *item, void *unused)
+static int item_is_not_empty(struct string_list_item *item, void *data UNUSED)
 {
 	return *item->string != '\0';
 }
@@ -194,6 +201,15 @@ void string_list_clear_func(struct string_list *list, string_list_clear_func_t c
 	}
 	list->items = NULL;
 	list->nr = list->alloc = 0;
+}
+
+void string_list_setlen(struct string_list *list, size_t nr)
+{
+	if (list->strdup_strings)
+		BUG("cannot setlen a string_list which owns its entries");
+	if (nr > list->nr)
+		BUG("cannot grow a string_list with setlen");
+	list->nr = nr;
 }
 
 struct string_list_item *string_list_append_nodup(struct string_list *list,
@@ -294,7 +310,7 @@ int string_list_split(struct string_list *list, const char *string,
 }
 
 int string_list_split_in_place(struct string_list *list, char *string,
-			       int delim, int maxsplit)
+			       const char *delim, int maxsplit)
 {
 	int count = 0;
 	char *p = string, *end;
@@ -308,7 +324,7 @@ int string_list_split_in_place(struct string_list *list, char *string,
 			string_list_append(list, p);
 			return count;
 		}
-		end = strchr(p, delim);
+		end = strpbrk(p, delim);
 		if (end) {
 			*end = '\0';
 			string_list_append(list, p);

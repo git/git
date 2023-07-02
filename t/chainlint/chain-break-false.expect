@@ -1,0 +1,9 @@
+if condition not satisified
+then
+	echo it did not work...
+	echo failed!
+	false
+else
+	echo it went okay ?!AMP?!
+	congratulate user
+fi

@@ -1,9 +1,12 @@
-#include "cache.h"
-#include "config.h"
-#include "refs.h"
 #include "builtin.h"
+#include "config.h"
+#include "gettext.h"
+#include "hash.h"
+#include "refs.h"
+#include "object-name.h"
 #include "parse-options.h"
 #include "quote.h"
+#include "repository.h"
 #include "strvec.h"
 
 static const char * const git_update_ref_usage[] = {
@@ -116,7 +119,7 @@ static int parse_next_oid(const char **next, const char *end,
 		(*next)++;
 		*next = parse_arg(*next, &arg);
 		if (arg.len) {
-			if (get_oid(arg.buf, oid))
+			if (repo_get_oid(the_repository, arg.buf, oid))
 				goto invalid;
 		} else {
 			/* Without -z, an empty value means all zeros: */
@@ -134,7 +137,7 @@ static int parse_next_oid(const char **next, const char *end,
 		*next += arg.len;
 
 		if (arg.len) {
-			if (get_oid(arg.buf, oid))
+			if (repo_get_oid(the_repository, arg.buf, oid))
 				goto invalid;
 		} else if (flags & PARSE_SHA1_ALLOW_EMPTY) {
 			/* With -z, treat an empty value as all zeros: */
@@ -302,6 +305,12 @@ static void parse_cmd_verify(struct ref_transaction *transaction,
 	strbuf_release(&err);
 }
 
+static void report_ok(const char *command)
+{
+	fprintf(stdout, "%s: ok\n", command);
+	fflush(stdout);
+}
+
 static void parse_cmd_option(struct ref_transaction *transaction,
 			     const char *next, const char *end)
 {
@@ -317,7 +326,7 @@ static void parse_cmd_start(struct ref_transaction *transaction,
 {
 	if (*next != line_termination)
 		die("start: extra input: %s", next);
-	puts("start: ok");
+	report_ok("start");
 }
 
 static void parse_cmd_prepare(struct ref_transaction *transaction,
@@ -328,7 +337,7 @@ static void parse_cmd_prepare(struct ref_transaction *transaction,
 		die("prepare: extra input: %s", next);
 	if (ref_transaction_prepare(transaction, &error))
 		die("prepare: %s", error.buf);
-	puts("prepare: ok");
+	report_ok("prepare");
 }
 
 static void parse_cmd_abort(struct ref_transaction *transaction,
@@ -339,7 +348,7 @@ static void parse_cmd_abort(struct ref_transaction *transaction,
 		die("abort: extra input: %s", next);
 	if (ref_transaction_abort(transaction, &error))
 		die("abort: %s", error.buf);
-	puts("abort: ok");
+	report_ok("abort");
 }
 
 static void parse_cmd_commit(struct ref_transaction *transaction,
@@ -350,7 +359,7 @@ static void parse_cmd_commit(struct ref_transaction *transaction,
 		die("commit: extra input: %s", next);
 	if (ref_transaction_commit(transaction, &error))
 		die("commit: %s", error.buf);
-	puts("commit: ok");
+	report_ok("commit");
 	ref_transaction_free(transaction);
 }
 
@@ -436,6 +445,8 @@ static void update_refs_stdin(void)
 		switch (state) {
 		case UPDATE_REFS_OPEN:
 		case UPDATE_REFS_STARTED:
+			if (state == UPDATE_REFS_STARTED && cmd->state == UPDATE_REFS_STARTED)
+				die("cannot restart ongoing transaction");
 			/* Do not downgrade a transaction to a non-transaction. */
 			if (cmd->state >= state)
 				state = cmd->state;
@@ -446,7 +457,18 @@ static void update_refs_stdin(void)
 			state = cmd->state;
 			break;
 		case UPDATE_REFS_CLOSED:
-			die("transaction is closed");
+			if (cmd->state != UPDATE_REFS_STARTED)
+				die("transaction is closed");
+
+			/*
+			 * Open a new transaction if we're currently closed and
+			 * get a "start".
+			 */
+			state = cmd->state;
+			transaction = ref_transaction_begin(&err);
+			if (!transaction)
+				die("%s", err.buf);
+
 			break;
 		}
 
@@ -530,7 +552,7 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 		refname = argv[0];
 		value = argv[1];
 		oldval = argv[2];
-		if (get_oid(value, &oid))
+		if (repo_get_oid(the_repository, value, &oid))
 			die("%s: not a valid SHA1", value);
 	}
 
@@ -541,7 +563,7 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 			 * must not already exist:
 			 */
 			oidclr(&oldoid);
-		else if (get_oid(oldval, &oldoid))
+		else if (repo_get_oid(the_repository, oldval, &oldoid))
 			die("%s: not a valid old SHA1", oldval);
 	}
 

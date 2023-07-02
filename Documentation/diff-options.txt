@@ -22,23 +22,102 @@ ifndef::git-format-patch[]
 -p::
 -u::
 --patch::
-	Generate patch (see section on generating patches).
+	Generate patch (see section titled
+ifdef::git-log[]
+<<generate_patch_text_with_p, "Generating patch text with -p">>).
+endif::git-log[]
+ifndef::git-log[]
+"Generating patch text with -p").
+endif::git-log[]
 ifdef::git-diff[]
 	This is the default.
 endif::git-diff[]
 
 -s::
 --no-patch::
-	Suppress diff output. Useful for commands like `git show` that
-	show the patch by default, or to cancel the effect of `--patch`.
+	Suppress all output from the diff machinery.  Useful for
+	commands like `git show` that show the patch by default to
+	squelch their output, or to cancel the effect of options like
+	`--patch`, `--stat` earlier on the command line in an alias.
+
 endif::git-format-patch[]
+
+ifdef::git-log[]
+--diff-merges=(off|none|on|first-parent|1|separate|m|combined|c|dense-combined|cc|remerge|r)::
+--no-diff-merges::
+	Specify diff format to be used for merge commits. Default is
+	{diff-merges-default} unless `--first-parent` is in use, in which case
+	`first-parent` is the default.
++
+--diff-merges=(off|none):::
+--no-diff-merges:::
+	Disable output of diffs for merge commits. Useful to override
+	implied value.
++
+--diff-merges=on:::
+--diff-merges=m:::
+-m:::
+	This option makes diff output for merge commits to be shown in
+	the default format. `-m` will produce the output only if `-p`
+	is given as well. The default format could be changed using
+	`log.diffMerges` configuration parameter, which default value
+	is `separate`.
++
+--diff-merges=first-parent:::
+--diff-merges=1:::
+	This option makes merge commits show the full diff with
+	respect to the first parent only.
++
+--diff-merges=separate:::
+	This makes merge commits show the full diff with respect to
+	each of the parents. Separate log entry and diff is generated
+	for each parent.
++
+--diff-merges=remerge:::
+--diff-merges=r:::
+--remerge-diff:::
+	With this option, two-parent merge commits are remerged to
+	create a temporary tree object -- potentially containing files
+	with conflict markers and such.  A diff is then shown between
+	that temporary tree and the actual merge commit.
++
+The output emitted when this option is used is subject to change, and
+so is its interaction with other options (unless explicitly
+documented).
++
+--diff-merges=combined:::
+--diff-merges=c:::
+-c:::
+	With this option, diff output for a merge commit shows the
+	differences from each of the parents to the merge result
+	simultaneously instead of showing pairwise diff between a
+	parent and the result one at a time. Furthermore, it lists
+	only files which were modified from all parents. `-c` implies
+	`-p`.
++
+--diff-merges=dense-combined:::
+--diff-merges=cc:::
+--cc:::
+	With this option the output produced by
+	`--diff-merges=combined` is further compressed by omitting
+	uninteresting hunks whose contents in the parents have only
+	two variants and the merge result picks one of them without
+	modification.  `--cc` implies `-p`.
+
+--combined-all-paths::
+	This flag causes combined diffs (used for merge commits) to
+	list the name of the file from all parents.  It thus only has
+	effect when `--diff-merges=[dense-]combined` is in use, and
+	is likely only useful if filename changes are detected (i.e.
+	when either rename or copy detection have been requested).
+endif::git-log[]
 
 -U<n>::
 --unified=<n>::
 	Generate diffs with <n> lines of context instead of
-	the usual three. Implies `--patch`.
+	the usual three.
 ifndef::git-format-patch[]
-	Implies `-p`.
+	Implies `--patch`.
 endif::git-format-patch[]
 
 --output=<file>::
@@ -242,11 +321,14 @@ explained for the configuration variable `core.quotePath` (see
 linkgit:git-config[1]).
 
 --name-only::
-	Show only names of changed files.
+	Show only names of changed files. The file names are often encoded in UTF-8.
+	For more information see the discussion about encoding in the linkgit:git-log[1]
+	manual page.
 
 --name-status::
 	Show only names and status of changed files. See the description
 	of the `--diff-filter` option on what the status letters mean.
+	Just like `--name-only` the file names are often encoded in UTF-8.
 
 --submodule[=<format>]::
 	Specify how differences in submodules are shown.  When specifying
@@ -441,12 +523,16 @@ endif::git-format-patch[]
 
 --binary::
 	In addition to `--full-index`, output a binary diff that
-	can be applied with `git-apply`. Implies `--patch`.
+	can be applied with `git-apply`.
+ifndef::git-format-patch[]
+	Implies `--patch`.
+endif::git-format-patch[]
 
 --abbrev[=<n>]::
 	Instead of showing the full 40-byte hexadecimal object
 	name in diff-raw format output and diff-tree header
-	lines, show only a partial prefix.
+	lines, show the shortest prefix that is at least '<n>'
+	hexdigits long that uniquely refers the object.
 	In diff-patch output format, `--full-index` takes higher
 	precedence, i.e. if `--full-index` is specified, full blob
 	names will be shown regardless of `--abbrev`.
@@ -523,11 +609,17 @@ When used together with `-B`, omit also the preimage in the deletion part
 of a delete/create pair.
 
 -l<num>::
-	The `-M` and `-C` options require O(n^2) processing time where n
-	is the number of potential rename/copy targets.  This
-	option prevents rename/copy detection from running if
-	the number of rename/copy targets exceeds the specified
-	number.
+	The `-M` and `-C` options involve some preliminary steps that
+	can detect subsets of renames/copies cheaply, followed by an
+	exhaustive fallback portion that compares all remaining
+	unpaired destinations to all relevant sources.  (For renames,
+	only remaining unpaired sources are relevant; for copies, all
+	original sources are relevant.)  For N sources and
+	destinations, this exhaustive check is O(N^2).  This option
+	prevents the exhaustive portion of rename/copy detection from
+	running if the number of source/destination files involved
+	exceeds the specified number.  Defaults to diff.renameLimit.
+	Note that a value of 0 is treated as unlimited.
 
 ifndef::git-format-patch[]
 --diff-filter=[(A|C|D|M|R|T|U|X|B)...[*]]::
@@ -545,11 +637,8 @@ ifndef::git-format-patch[]
 Also, these upper-case letters can be downcased to exclude.  E.g.
 `--diff-filter=ad` excludes added and deleted paths.
 +
-Note that not all diffs can feature all types. For instance, diffs
-from the index to the working tree can never have Added entries
-(because the set of paths included in the diff is limited by what is in
-the index).  Similarly, copied and renamed entries cannot appear if
-detection for those types is disabled.
+Note that not all diffs can feature all types. For instance, copied and
+renamed entries cannot appear if detection for those types is disabled.
 
 -S<string>::
 	Look for differences that change the number of occurrences of
@@ -645,6 +734,14 @@ matches a pattern if removing any number of the final pathname
 components matches the pattern.  For example, the pattern "`foo*bar`"
 matches "`fooasdfbar`" and "`foo/bar/baz/asdf`" but not "`foobarx`".
 
+--skip-to=<file>::
+--rotate-to=<file>::
+	Discard the files before the named <file> from the output
+	(i.e. 'skip to'), or move them to the end of the output
+	(i.e. 'rotate to').  These were invented primarily for use
+	of the `git difftool` command, and may not be very useful
+	otherwise.
+
 ifndef::git-format-patch[]
 -R::
 	Swap two inputs; that is, show differences from index or
@@ -687,6 +784,11 @@ endif::git-format-patch[]
 --ignore-blank-lines::
 	Ignore changes whose lines are all blank.
 
+-I<regex>::
+--ignore-matching-lines=<regex>::
+	Ignore changes whose all lines match <regex>.  This option may
+	be specified more than once.
+
 --inter-hunk-context=<lines>::
 	Show the context between diff hunks, up to the specified number
 	of lines, thereby fusing hunks that are close to each other.
@@ -695,7 +797,10 @@ endif::git-format-patch[]
 
 -W::
 --function-context::
-	Show whole surrounding functions of changes.
+	Show whole function as context lines for each change.
+	The function names are determined in the same way as
+	`git diff` works out patch hunk headers (see 'Defining a
+	custom hunk-header' in linkgit:gitattributes[5]).
 
 ifndef::git-format-patch[]
 ifndef::git-log[]
@@ -749,6 +854,11 @@ endif::git-format-patch[]
 
 --no-prefix::
 	Do not show any source or destination prefix.
+
+--default-prefix::
+	Use the default source and destination prefixes ("a/" and "b/").
+	This is usually the default already, but may be used to override
+	config such as `diff.noprefix`.
 
 --line-prefix=<prefix>::
 	Prepend an additional prefix to every line of output.

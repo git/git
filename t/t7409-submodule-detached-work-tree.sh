@@ -10,7 +10,15 @@ on detached working trees
 '
 
 TEST_NO_CREATE_REPO=1
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
+
+test_expect_success 'setup' '
+	git config --global protocol.file.allow always
+'
 
 test_expect_success 'submodule on detached working tree' '
 	git init --bare remote &&
@@ -35,7 +43,7 @@ test_expect_success 'submodule on detached working tree' '
 			git rev-parse --verify HEAD >actual &&
 			test_cmp ../../../../expect actual
 		) &&
-		git push origin master
+		git push origin main
 	) &&
 	mkdir home2 &&
 	(
@@ -44,7 +52,7 @@ test_expect_success 'submodule on detached working tree' '
 		GIT_WORK_TREE="$(pwd)" &&
 		GIT_DIR="$(pwd)/.dotfiles" &&
 		export GIT_WORK_TREE GIT_DIR &&
-		git checkout master &&
+		git checkout main &&
 		git submodule update --init &&
 		(
 			unset GIT_WORK_TREE GIT_DIR &&
@@ -64,10 +72,10 @@ test_expect_success 'submodule on detached working pointed by core.worktree' '
 		git clone --bare ../remote "$GIT_DIR" &&
 		git config core.bare false &&
 		git config core.worktree .. &&
-		git checkout master &&
+		git checkout main &&
 		git submodule add ../bundle1 .vim/bundle/dupe &&
 		test_commit "dupe" &&
-		git push origin master
+		git push origin main
 	) &&
 	(
 		cd home &&

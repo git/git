@@ -1,12 +1,20 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "dir.h"
+#include "environment.h"
+#include "gettext.h"
+#include "hex.h"
+#include "path.h"
 #include "repository.h"
 #include "config.h"
 #include "submodule-config.h"
 #include "submodule.h"
 #include "strbuf.h"
-#include "object-store.h"
+#include "object-name.h"
+#include "object-store-ll.h"
 #include "parse-options.h"
+#include "thread-utils.h"
+#include "tree-walk.h"
 
 /*
  * submodule cache lookup structure
@@ -37,10 +45,10 @@ enum lookup_type {
 	lookup_path
 };
 
-static int config_path_cmp(const void *unused_cmp_data,
+static int config_path_cmp(const void *cmp_data UNUSED,
 			   const struct hashmap_entry *eptr,
 			   const struct hashmap_entry *entry_or_key,
-			   const void *unused_keydata)
+			   const void *keydata UNUSED)
 {
 	const struct submodule_entry *a, *b;
 
@@ -51,10 +59,10 @@ static int config_path_cmp(const void *unused_cmp_data,
 	       !oideq(&a->config->gitmodules_oid, &b->config->gitmodules_oid);
 }
 
-static int config_name_cmp(const void *unused_cmp_data,
+static int config_name_cmp(const void *cmp_data UNUSED,
 			   const struct hashmap_entry *eptr,
 			   const struct hashmap_entry *entry_or_key,
-			   const void *unused_keydata)
+			   const void *keydata UNUSED)
 {
 	const struct submodule_entry *a, *b;
 
@@ -103,8 +111,8 @@ static void submodule_cache_clear(struct submodule_cache *cache)
 				ent /* member name */)
 		free_one_config(entry);
 
-	hashmap_free_entries(&cache->for_path, struct submodule_entry, ent);
-	hashmap_free_entries(&cache->for_name, struct submodule_entry, ent);
+	hashmap_clear_and_free(&cache->for_path, struct submodule_entry, ent);
+	hashmap_clear_and_free(&cache->for_name, struct submodule_entry, ent);
 	cache->initialized = 0;
 	cache->gitmodules_read = 0;
 }
@@ -203,17 +211,17 @@ int check_submodule_name(const char *name)
 		return -1;
 
 	/*
-	 * Look for '..' as a path component. Check both '/' and '\\' as
+	 * Look for '..' as a path component. Check is_xplatform_dir_sep() as
 	 * separators rather than is_dir_sep(), because we want the name rules
 	 * to be consistent across platforms.
 	 */
 	goto in_component; /* always start inside component */
 	while (*name) {
 		char c = *name++;
-		if (c == '/' || c == '\\') {
+		if (is_xplatform_dir_sep(c)) {
 in_component:
 			if (name[0] == '.' && name[1] == '.' &&
-			    (!name[2] || name[2] == '/' || name[2] == '\\'))
+			    (!name[2] || is_xplatform_dir_sep(name[2])))
 				return -1;
 		}
 	}
@@ -301,7 +309,9 @@ int parse_submodule_fetchjobs(const char *var, const char *value)
 {
 	int fetchjobs = git_config_int(var, value);
 	if (fetchjobs < 0)
-		die(_("negative values not allowed for submodule.fetchjobs"));
+		die(_("negative values not allowed for submodule.fetchJobs"));
+	if (!fetchjobs)
+		fetchjobs = online_cpus();
 	return fetchjobs;
 }
 
@@ -496,7 +506,7 @@ static int parse_config(const char *var, const char *value, void *data)
 		else if (parse_submodule_update_strategy(value,
 			 &submodule->update_strategy) < 0 ||
 			 submodule->update_strategy.type == SM_UPDATE_COMMAND)
-			die(_("invalid value for %s"), var);
+			die(_("invalid value for '%s'"), var);
 	} else if (!strcmp(item.buf, "shallow")) {
 		if (!me->overwrite && submodule->recommend_shallow != -1)
 			warn_multiple_config(me->treeish_name, submodule->name,
@@ -532,7 +542,7 @@ static int gitmodule_oid_from_commit(const struct object_id *treeish_name,
 	}
 
 	strbuf_addf(rev, "%s:.gitmodules", oid_to_hex(treeish_name));
-	if (get_oid(rev->buf, gitmodules_oid) >= 0)
+	if (repo_get_oid(the_repository, rev->buf, gitmodules_oid) >= 0)
 		ret = 1;
 
 	return ret;
@@ -585,7 +595,8 @@ static const struct submodule *config_from(struct submodule_cache *cache,
 	if (submodule)
 		goto out;
 
-	config = read_object_file(&oid, &type, &config_size);
+	config = repo_read_object_file(the_repository, &oid, &type,
+				       &config_size);
 	if (!config || type != OBJ_BLOB)
 		goto out;
 
@@ -651,12 +662,12 @@ static void config_from_gitmodules(config_fn_t fn, struct repository *repo, void
 			   repo_get_oid(repo, GITMODULES_HEAD, &oid) >= 0) {
 			config_source.blob = oidstr = xstrdup(oid_to_hex(&oid));
 			if (repo != the_repository)
-				add_to_alternates_memory(repo->objects->odb->path);
+				add_submodule_odb_by_path(repo->objects->odb->path);
 		} else {
 			goto out;
 		}
 
-		config_with_options(fn, data, &config_source, &opts);
+		config_with_options(fn, data, &config_source, repo, &opts);
 
 out:
 		free(oidstr);
@@ -671,7 +682,7 @@ static int gitmodules_cb(const char *var, const char *value, void *data)
 
 	parameter.cache = repo->submodule_cache;
 	parameter.treeish_name = NULL;
-	parameter.gitmodules_oid = &null_oid;
+	parameter.gitmodules_oid = null_oid();
 	parameter.overwrite = 1;
 
 	return parse_config(var, value, &parameter);
@@ -702,7 +713,7 @@ void gitmodules_config_oid(const struct object_id *commit_oid)
 
 	if (gitmodule_oid_from_commit(commit_oid, &oid, &rev)) {
 		git_config_from_blob_oid(gitmodules_cb, rev.buf,
-					 &oid, the_repository);
+					 the_repository, &oid, the_repository);
 	}
 	strbuf_release(&rev);
 
@@ -723,6 +734,66 @@ const struct submodule *submodule_from_path(struct repository *r,
 {
 	repo_read_gitmodules(r, 1);
 	return config_from(r->submodule_cache, treeish_name, path, lookup_path);
+}
+
+/**
+ * Used internally by submodules_of_tree(). Recurses into 'treeish_name'
+ * and appends submodule entries to 'out'. The submodule_cache expects
+ * a root-level treeish_name and paths, so keep track of these values
+ * with 'root_tree' and 'prefix'.
+ */
+static void traverse_tree_submodules(struct repository *r,
+				     const struct object_id *root_tree,
+				     char *prefix,
+				     const struct object_id *treeish_name,
+				     struct submodule_entry_list *out)
+{
+	struct tree_desc tree;
+	struct submodule_tree_entry *st_entry;
+	struct name_entry *name_entry;
+	char *tree_path = NULL;
+
+	name_entry = xmalloc(sizeof(*name_entry));
+
+	fill_tree_descriptor(r, &tree, treeish_name);
+	while (tree_entry(&tree, name_entry)) {
+		if (prefix)
+			tree_path =
+				mkpathdup("%s/%s", prefix, name_entry->path);
+		else
+			tree_path = xstrdup(name_entry->path);
+
+		if (S_ISGITLINK(name_entry->mode) &&
+		    is_tree_submodule_active(r, root_tree, tree_path)) {
+			ALLOC_GROW(out->entries, out->entry_nr + 1,
+				   out->entry_alloc);
+			st_entry = &out->entries[out->entry_nr++];
+
+			st_entry->name_entry = xmalloc(sizeof(*st_entry->name_entry));
+			*st_entry->name_entry = *name_entry;
+			st_entry->submodule =
+				submodule_from_path(r, root_tree, tree_path);
+			st_entry->repo = xmalloc(sizeof(*st_entry->repo));
+			if (repo_submodule_init(st_entry->repo, r, tree_path,
+						root_tree))
+				FREE_AND_NULL(st_entry->repo);
+
+		} else if (S_ISDIR(name_entry->mode))
+			traverse_tree_submodules(r, root_tree, tree_path,
+						 &name_entry->oid, out);
+		free(tree_path);
+	}
+}
+
+void submodules_of_tree(struct repository *r,
+			const struct object_id *treeish_name,
+			struct submodule_entry_list *out)
+{
+	CALLOC_ARRAY(out->entries, 0);
+	out->entry_nr = 0;
+	out->entry_alloc = 0;
+
+	traverse_tree_submodules(r, treeish_name, NULL, treeish_name, out);
 }
 
 void submodule_free(struct repository *r)

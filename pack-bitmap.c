@@ -1,5 +1,9 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "commit.h"
+#include "gettext.h"
+#include "hex.h"
+#include "strbuf.h"
 #include "tag.h"
 #include "diff.h"
 #include "revision.h"
@@ -11,8 +15,12 @@
 #include "pack-objects.h"
 #include "packfile.h"
 #include "repository.h"
-#include "object-store.h"
+#include "trace2.h"
+#include "object-file.h"
+#include "object-store-ll.h"
 #include "list-objects-filter-options.h"
+#include "midx.h"
+#include "config.h"
 
 /*
  * An entry on the bitmap index, representing the bitmap for a given
@@ -34,8 +42,15 @@ struct stored_bitmap {
  * the active bitmap index is the largest one.
  */
 struct bitmap_index {
-	/* Packfile to which this bitmap index belongs to */
+	/*
+	 * The pack or multi-pack index (MIDX) that this bitmap index belongs
+	 * to.
+	 *
+	 * Exactly one of these must be non-NULL; this specifies the object
+	 * order used to interpret this bitmap.
+	 */
 	struct packed_git *pack;
+	struct multi_pack_index *midx;
 
 	/*
 	 * Mark the first `reuse_objects` in the packfile as reused:
@@ -70,6 +85,15 @@ struct bitmap_index {
 	/* If not NULL, this is a name-hash cache pointing into map. */
 	uint32_t *hashes;
 
+	/* The checksum of the packfile or MIDX; points into map. */
+	const unsigned char *checksum;
+
+	/*
+	 * If not NULL, this point into the commit table extension
+	 * (within the memory mapped region `map`).
+	 */
+	unsigned char *table_lookup;
+
 	/*
 	 * Extended index.
 	 *
@@ -99,7 +123,7 @@ static struct ewah_bitmap *lookup_stored_bitmap(struct stored_bitmap *st)
 	struct ewah_bitmap *parent;
 	struct ewah_bitmap *composed;
 
-	if (st->xor == NULL)
+	if (!st->xor)
 		return st->root;
 
 	composed = ewah_pool_new();
@@ -126,7 +150,7 @@ static struct ewah_bitmap *read_bitmap_1(struct bitmap_index *index)
 		index->map_size - index->map_pos);
 
 	if (bitmap_size < 0) {
-		error("Failed to load bitmap index (corrupted?)");
+		error(_("failed to load bitmap index (corrupted?)"));
 		ewah_pool_free(b);
 		return NULL;
 	}
@@ -135,36 +159,59 @@ static struct ewah_bitmap *read_bitmap_1(struct bitmap_index *index)
 	return b;
 }
 
+static uint32_t bitmap_num_objects(struct bitmap_index *index)
+{
+	if (index->midx)
+		return index->midx->num_objects;
+	return index->pack->num_objects;
+}
+
 static int load_bitmap_header(struct bitmap_index *index)
 {
 	struct bitmap_disk_header *header = (void *)index->map;
+	size_t header_size = sizeof(*header) - GIT_MAX_RAWSZ + the_hash_algo->rawsz;
 
-	if (index->map_size < sizeof(*header) + the_hash_algo->rawsz)
-		return error("Corrupted bitmap index (missing header data)");
+	if (index->map_size < header_size + the_hash_algo->rawsz)
+		return error(_("corrupted bitmap index (too small)"));
 
 	if (memcmp(header->magic, BITMAP_IDX_SIGNATURE, sizeof(BITMAP_IDX_SIGNATURE)) != 0)
-		return error("Corrupted bitmap index file (wrong header)");
+		return error(_("corrupted bitmap index file (wrong header)"));
 
 	index->version = ntohs(header->version);
 	if (index->version != 1)
-		return error("Unsupported version for bitmap index file (%d)", index->version);
+		return error(_("unsupported version '%d' for bitmap index file"), index->version);
 
 	/* Parse known bitmap format options */
 	{
 		uint32_t flags = ntohs(header->options);
+		size_t cache_size = st_mult(bitmap_num_objects(index), sizeof(uint32_t));
+		unsigned char *index_end = index->map + index->map_size - the_hash_algo->rawsz;
 
 		if ((flags & BITMAP_OPT_FULL_DAG) == 0)
-			return error("Unsupported options for bitmap index file "
+			BUG("unsupported options for bitmap index file "
 				"(Git requires BITMAP_OPT_FULL_DAG)");
 
 		if (flags & BITMAP_OPT_HASH_CACHE) {
-			unsigned char *end = index->map + index->map_size - the_hash_algo->rawsz;
-			index->hashes = ((uint32_t *)end) - index->pack->num_objects;
+			if (cache_size > index_end - index->map - header_size)
+				return error(_("corrupted bitmap index file (too short to fit hash cache)"));
+			index->hashes = (void *)(index_end - cache_size);
+			index_end -= cache_size;
+		}
+
+		if (flags & BITMAP_OPT_LOOKUP_TABLE) {
+			size_t table_size = st_mult(ntohl(header->entry_count),
+						    BITMAP_LOOKUP_TABLE_TRIPLET_WIDTH);
+			if (table_size > index_end - index->map - header_size)
+				return error(_("corrupted bitmap index file (too short to fit lookup table)"));
+			if (git_env_bool("GIT_TEST_READ_COMMIT_TABLE", 1))
+				index->table_lookup = (void *)(index_end - table_size);
+			index_end -= table_size;
 		}
 	}
 
 	index->entry_count = ntohl(header->entry_count);
-	index->map_pos += sizeof(*header) - GIT_MAX_RAWSZ + the_hash_algo->rawsz;
+	index->checksum = header->checksum;
+	index->map_pos += header_size;
 	return 0;
 }
 
@@ -186,11 +233,13 @@ static struct stored_bitmap *store_bitmap(struct bitmap_index *index,
 
 	hash_pos = kh_put_oid_map(index->bitmaps, stored->oid, &ret);
 
-	/* a 0 return code means the insertion succeeded with no changes,
-	 * because the SHA1 already existed on the map. this is bad, there
-	 * shouldn't be duplicated commits in the index */
+	/*
+	 * A 0 return code means the insertion succeeded with no changes,
+	 * because the SHA1 already existed on the map. This is bad, there
+	 * shouldn't be duplicated commits in the index.
+	 */
 	if (ret == 0) {
-		error("Duplicate entry in bitmap index: %s", oid_to_hex(oid));
+		error(_("duplicate entry in bitmap index: '%s'"), oid_to_hex(oid));
 		return NULL;
 	}
 
@@ -212,6 +261,15 @@ static inline uint8_t read_u8(const unsigned char *buffer, size_t *pos)
 
 #define MAX_XOR_OFFSET 160
 
+static int nth_bitmap_object_oid(struct bitmap_index *index,
+				 struct object_id *oid,
+				 uint32_t n)
+{
+	if (index->midx)
+		return nth_midxed_object_oid(oid, index->midx, n) ? 0 : -1;
+	return nth_packed_object_id(oid, index->pack, n);
+}
+
 static int load_bitmap_entries_v1(struct bitmap_index *index)
 {
 	uint32_t i;
@@ -224,24 +282,29 @@ static int load_bitmap_entries_v1(struct bitmap_index *index)
 		uint32_t commit_idx_pos;
 		struct object_id oid;
 
+		if (index->map_size - index->map_pos < 6)
+			return error(_("corrupt ewah bitmap: truncated header for entry %d"), i);
+
 		commit_idx_pos = read_be32(index->map, &index->map_pos);
 		xor_offset = read_u8(index->map, &index->map_pos);
 		flags = read_u8(index->map, &index->map_pos);
 
-		nth_packed_object_id(&oid, index->pack, commit_idx_pos);
+		if (nth_bitmap_object_oid(index, &oid, commit_idx_pos) < 0)
+			return error(_("corrupt ewah bitmap: commit index %u out of range"),
+				     (unsigned)commit_idx_pos);
 
 		bitmap = read_bitmap_1(index);
 		if (!bitmap)
 			return -1;
 
 		if (xor_offset > MAX_XOR_OFFSET || xor_offset > i)
-			return error("Corrupted bitmap pack index");
+			return error(_("corrupted bitmap pack index"));
 
 		if (xor_offset > 0) {
 			xor_bitmap = recent_bitmaps[(i - xor_offset) % MAX_XOR_OFFSET];
 
-			if (xor_bitmap == NULL)
-				return error("Invalid XOR offset in bitmap pack index");
+			if (!xor_bitmap)
+				return error(_("invalid XOR offset in bitmap pack index"));
 		}
 
 		recent_bitmaps[i % MAX_XOR_OFFSET] = store_bitmap(
@@ -251,7 +314,17 @@ static int load_bitmap_entries_v1(struct bitmap_index *index)
 	return 0;
 }
 
-static char *pack_bitmap_filename(struct packed_git *p)
+char *midx_bitmap_filename(struct multi_pack_index *midx)
+{
+	struct strbuf buf = STRBUF_INIT;
+
+	get_midx_filename(&buf, midx->object_dir);
+	strbuf_addf(&buf, "-%s.bitmap", hash_to_hex(get_midx_checksum(midx)));
+
+	return strbuf_detach(&buf, NULL);
+}
+
+char *pack_bitmap_filename(struct packed_git *p)
 {
 	size_t len;
 
@@ -260,29 +333,116 @@ static char *pack_bitmap_filename(struct packed_git *p)
 	return xstrfmt("%.*s.bitmap", (int)len, p->pack_name);
 }
 
-static int open_pack_bitmap_1(struct bitmap_index *bitmap_git, struct packed_git *packfile)
+static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
+			      struct multi_pack_index *midx)
 {
-	int fd;
 	struct stat st;
-	char *idx_name;
+	char *bitmap_name = midx_bitmap_filename(midx);
+	int fd = git_open(bitmap_name);
+	uint32_t i;
+	struct packed_git *preferred;
 
-	if (open_pack_index(packfile))
+	if (fd < 0) {
+		if (errno != ENOENT)
+			warning_errno("cannot open '%s'", bitmap_name);
+		free(bitmap_name);
 		return -1;
-
-	idx_name = pack_bitmap_filename(packfile);
-	fd = git_open(idx_name);
-	free(idx_name);
-
-	if (fd < 0)
-		return -1;
+	}
+	free(bitmap_name);
 
 	if (fstat(fd, &st)) {
+		error_errno(_("cannot fstat bitmap file"));
 		close(fd);
 		return -1;
 	}
 
-	if (bitmap_git->pack) {
-		warning("ignoring extra bitmap file: %s", packfile->pack_name);
+	if (bitmap_git->pack || bitmap_git->midx) {
+		struct strbuf buf = STRBUF_INIT;
+		get_midx_filename(&buf, midx->object_dir);
+		trace2_data_string("bitmap", the_repository,
+				   "ignoring extra midx bitmap file", buf.buf);
+		close(fd);
+		strbuf_release(&buf);
+		return -1;
+	}
+
+	bitmap_git->midx = midx;
+	bitmap_git->map_size = xsize_t(st.st_size);
+	bitmap_git->map_pos = 0;
+	bitmap_git->map = xmmap(NULL, bitmap_git->map_size, PROT_READ,
+				MAP_PRIVATE, fd, 0);
+	close(fd);
+
+	if (load_bitmap_header(bitmap_git) < 0)
+		goto cleanup;
+
+	if (!hasheq(get_midx_checksum(bitmap_git->midx), bitmap_git->checksum)) {
+		error(_("checksum doesn't match in MIDX and bitmap"));
+		goto cleanup;
+	}
+
+	if (load_midx_revindex(bitmap_git->midx)) {
+		warning(_("multi-pack bitmap is missing required reverse index"));
+		goto cleanup;
+	}
+
+	for (i = 0; i < bitmap_git->midx->num_packs; i++) {
+		if (prepare_midx_pack(the_repository, bitmap_git->midx, i)) {
+			warning(_("could not open pack %s"),
+				bitmap_git->midx->pack_names[i]);
+			goto cleanup;
+		}
+	}
+
+	preferred = bitmap_git->midx->packs[midx_preferred_pack(bitmap_git)];
+	if (!is_pack_valid(preferred)) {
+		warning(_("preferred pack (%s) is invalid"),
+			preferred->pack_name);
+		goto cleanup;
+	}
+
+	return 0;
+
+cleanup:
+	munmap(bitmap_git->map, bitmap_git->map_size);
+	bitmap_git->map_size = 0;
+	bitmap_git->map_pos = 0;
+	bitmap_git->map = NULL;
+	bitmap_git->midx = NULL;
+	return -1;
+}
+
+static int open_pack_bitmap_1(struct bitmap_index *bitmap_git, struct packed_git *packfile)
+{
+	int fd;
+	struct stat st;
+	char *bitmap_name;
+
+	bitmap_name = pack_bitmap_filename(packfile);
+	fd = git_open(bitmap_name);
+
+	if (fd < 0) {
+		if (errno != ENOENT)
+			warning_errno("cannot open '%s'", bitmap_name);
+		free(bitmap_name);
+		return -1;
+	}
+	free(bitmap_name);
+
+	if (fstat(fd, &st)) {
+		error_errno(_("cannot fstat bitmap file"));
+		close(fd);
+		return -1;
+	}
+
+	if (bitmap_git->pack || bitmap_git->midx) {
+		trace2_data_string("bitmap", the_repository,
+				   "ignoring extra bitmap file", packfile->pack_name);
+		close(fd);
+		return -1;
+	}
+
+	if (!is_pack_valid(packfile)) {
 		close(fd);
 		return -1;
 	}
@@ -297,19 +457,47 @@ static int open_pack_bitmap_1(struct bitmap_index *bitmap_git, struct packed_git
 		munmap(bitmap_git->map, bitmap_git->map_size);
 		bitmap_git->map = NULL;
 		bitmap_git->map_size = 0;
+		bitmap_git->map_pos = 0;
+		bitmap_git->pack = NULL;
 		return -1;
 	}
 
+	trace2_data_string("bitmap", the_repository, "opened bitmap file",
+			   packfile->pack_name);
 	return 0;
 }
 
-static int load_pack_bitmap(struct bitmap_index *bitmap_git)
+static int load_reverse_index(struct repository *r, struct bitmap_index *bitmap_git)
+{
+	if (bitmap_is_midx(bitmap_git)) {
+		uint32_t i;
+		int ret;
+
+		/*
+		 * The multi-pack-index's .rev file is already loaded via
+		 * open_pack_bitmap_1().
+		 *
+		 * But we still need to open the individual pack .rev files,
+		 * since we will need to make use of them in pack-objects.
+		 */
+		for (i = 0; i < bitmap_git->midx->num_packs; i++) {
+			ret = load_pack_revindex(r, bitmap_git->midx->packs[i]);
+			if (ret)
+				return ret;
+		}
+		return 0;
+	}
+	return load_pack_revindex(r, bitmap_git->pack);
+}
+
+static int load_bitmap(struct repository *r, struct bitmap_index *bitmap_git)
 {
 	assert(bitmap_git->map);
 
 	bitmap_git->bitmaps = kh_init_oid_map();
 	bitmap_git->ext_index.positions = kh_init_oid_pos();
-	if (load_pack_revindex(bitmap_git->pack))
+
+	if (load_reverse_index(r, bitmap_git))
 		goto failed;
 
 	if (!(bitmap_git->commits = read_bitmap_1(bitmap_git)) ||
@@ -318,7 +506,7 @@ static int load_pack_bitmap(struct bitmap_index *bitmap_git)
 		!(bitmap_git->tags = read_bitmap_1(bitmap_git)))
 		goto failed;
 
-	if (load_bitmap_entries_v1(bitmap_git) < 0)
+	if (!bitmap_git->table_lookup && load_bitmap_entries_v1(bitmap_git) < 0)
 		goto failed;
 
 	return 0;
@@ -343,21 +531,72 @@ static int open_pack_bitmap(struct repository *r,
 	struct packed_git *p;
 	int ret = -1;
 
-	assert(!bitmap_git->map);
-
 	for (p = get_all_packs(r); p; p = p->next) {
-		if (open_pack_bitmap_1(bitmap_git, p) == 0)
+		if (open_pack_bitmap_1(bitmap_git, p) == 0) {
 			ret = 0;
+			/*
+			 * The only reason to keep looking is to report
+			 * duplicates.
+			 */
+			if (!trace2_is_enabled())
+				break;
+		}
 	}
 
 	return ret;
+}
+
+static int open_midx_bitmap(struct repository *r,
+			    struct bitmap_index *bitmap_git)
+{
+	int ret = -1;
+	struct multi_pack_index *midx;
+
+	assert(!bitmap_git->map);
+
+	for (midx = get_multi_pack_index(r); midx; midx = midx->next) {
+		if (!open_midx_bitmap_1(bitmap_git, midx))
+			ret = 0;
+	}
+	return ret;
+}
+
+static int open_bitmap(struct repository *r,
+		       struct bitmap_index *bitmap_git)
+{
+	int found;
+
+	assert(!bitmap_git->map);
+
+	found = !open_midx_bitmap(r, bitmap_git);
+
+	/*
+	 * these will all be skipped if we opened a midx bitmap; but run it
+	 * anyway if tracing is enabled to report the duplicates
+	 */
+	if (!found || trace2_is_enabled())
+		found |= !open_pack_bitmap(r, bitmap_git);
+
+	return found ? 0 : -1;
 }
 
 struct bitmap_index *prepare_bitmap_git(struct repository *r)
 {
 	struct bitmap_index *bitmap_git = xcalloc(1, sizeof(*bitmap_git));
 
-	if (!open_pack_bitmap(r, bitmap_git) && !load_pack_bitmap(bitmap_git))
+	if (!open_bitmap(r, bitmap_git) && !load_bitmap(r, bitmap_git))
+		return bitmap_git;
+
+	free_bitmap_index(bitmap_git);
+	return NULL;
+}
+
+struct bitmap_index *prepare_midx_bitmap_git(struct multi_pack_index *midx)
+{
+	struct repository *r = the_repository;
+	struct bitmap_index *bitmap_git = xcalloc(1, sizeof(*bitmap_git));
+
+	if (!open_midx_bitmap_1(bitmap_git, midx) && !load_bitmap(r, bitmap_git))
 		return bitmap_git;
 
 	free_bitmap_index(bitmap_git);
@@ -370,6 +609,258 @@ struct include_data {
 	struct bitmap *seen;
 };
 
+struct bitmap_lookup_table_triplet {
+	uint32_t commit_pos;
+	uint64_t offset;
+	uint32_t xor_row;
+};
+
+struct bitmap_lookup_table_xor_item {
+	struct object_id oid;
+	uint64_t offset;
+};
+
+/*
+ * Given a `triplet` struct pointer and pointer `p`, this
+ * function reads the triplet beginning at `p` into the struct.
+ * Note that this function assumes that there is enough memory
+ * left for filling the `triplet` struct from `p`.
+ */
+static int bitmap_lookup_table_get_triplet_by_pointer(struct bitmap_lookup_table_triplet *triplet,
+						      const unsigned char *p)
+{
+	if (!triplet)
+		return -1;
+
+	triplet->commit_pos = get_be32(p);
+	p += sizeof(uint32_t);
+	triplet->offset = get_be64(p);
+	p += sizeof(uint64_t);
+	triplet->xor_row = get_be32(p);
+	return 0;
+}
+
+/*
+ * This function gets the raw triplet from `row`'th row in the
+ * lookup table and fills that data to the `triplet`.
+ */
+static int bitmap_lookup_table_get_triplet(struct bitmap_index *bitmap_git,
+					   uint32_t pos,
+					   struct bitmap_lookup_table_triplet *triplet)
+{
+	unsigned char *p = NULL;
+	if (pos >= bitmap_git->entry_count)
+		return error(_("corrupt bitmap lookup table: triplet position out of index"));
+
+	p = bitmap_git->table_lookup + st_mult(pos, BITMAP_LOOKUP_TABLE_TRIPLET_WIDTH);
+
+	return bitmap_lookup_table_get_triplet_by_pointer(triplet, p);
+}
+
+/*
+ * Searches for a matching triplet. `commit_pos` is a pointer
+ * to the wanted commit position value. `table_entry` points to
+ * a triplet in lookup table. The first 4 bytes of each
+ * triplet (pointed by `table_entry`) are compared with `*commit_pos`.
+ */
+static int triplet_cmp(const void *commit_pos, const void *table_entry)
+{
+
+	uint32_t a = *(uint32_t *)commit_pos;
+	uint32_t b = get_be32(table_entry);
+	if (a > b)
+		return 1;
+	else if (a < b)
+		return -1;
+
+	return 0;
+}
+
+static uint32_t bitmap_bsearch_pos(struct bitmap_index *bitmap_git,
+			    struct object_id *oid,
+			    uint32_t *result)
+{
+	int found;
+
+	if (bitmap_is_midx(bitmap_git))
+		found = bsearch_midx(oid, bitmap_git->midx, result);
+	else
+		found = bsearch_pack(oid, bitmap_git->pack, result);
+
+	return found;
+}
+
+/*
+ * `bsearch_triplet_by_pos` function searches for the raw triplet
+ * having commit position same as `commit_pos` and fills `triplet`
+ * object from the raw triplet. Returns 1 on success and 0 on
+ * failure.
+ */
+static int bitmap_bsearch_triplet_by_pos(uint32_t commit_pos,
+				  struct bitmap_index *bitmap_git,
+				  struct bitmap_lookup_table_triplet *triplet)
+{
+	unsigned char *p = bsearch(&commit_pos, bitmap_git->table_lookup, bitmap_git->entry_count,
+				   BITMAP_LOOKUP_TABLE_TRIPLET_WIDTH, triplet_cmp);
+
+	if (!p)
+		return -1;
+
+	return bitmap_lookup_table_get_triplet_by_pointer(triplet, p);
+}
+
+static struct stored_bitmap *lazy_bitmap_for_commit(struct bitmap_index *bitmap_git,
+						    struct commit *commit)
+{
+	uint32_t commit_pos, xor_row;
+	uint64_t offset;
+	int flags;
+	struct bitmap_lookup_table_triplet triplet;
+	struct object_id *oid = &commit->object.oid;
+	struct ewah_bitmap *bitmap;
+	struct stored_bitmap *xor_bitmap = NULL;
+	const int bitmap_header_size = 6;
+	static struct bitmap_lookup_table_xor_item *xor_items = NULL;
+	static size_t xor_items_nr = 0, xor_items_alloc = 0;
+	static int is_corrupt = 0;
+	int xor_flags;
+	khiter_t hash_pos;
+	struct bitmap_lookup_table_xor_item *xor_item;
+
+	if (is_corrupt)
+		return NULL;
+
+	if (!bitmap_bsearch_pos(bitmap_git, oid, &commit_pos))
+		return NULL;
+
+	if (bitmap_bsearch_triplet_by_pos(commit_pos, bitmap_git, &triplet) < 0)
+		return NULL;
+
+	xor_items_nr = 0;
+	offset = triplet.offset;
+	xor_row = triplet.xor_row;
+
+	while (xor_row != 0xffffffff) {
+		ALLOC_GROW(xor_items, xor_items_nr + 1, xor_items_alloc);
+
+		if (xor_items_nr + 1 >= bitmap_git->entry_count) {
+			error(_("corrupt bitmap lookup table: xor chain exceeds entry count"));
+			goto corrupt;
+		}
+
+		if (bitmap_lookup_table_get_triplet(bitmap_git, xor_row, &triplet) < 0)
+			goto corrupt;
+
+		xor_item = &xor_items[xor_items_nr];
+		xor_item->offset = triplet.offset;
+
+		if (nth_bitmap_object_oid(bitmap_git, &xor_item->oid, triplet.commit_pos) < 0) {
+			error(_("corrupt bitmap lookup table: commit index %u out of range"),
+				triplet.commit_pos);
+			goto corrupt;
+		}
+
+		hash_pos = kh_get_oid_map(bitmap_git->bitmaps, xor_item->oid);
+
+		/*
+		 * If desired bitmap is already stored, we don't need
+		 * to iterate further. Because we know that bitmaps
+		 * that are needed to be parsed to parse this bitmap
+		 * has already been stored. So, assign this stored bitmap
+		 * to the xor_bitmap.
+		 */
+		if (hash_pos < kh_end(bitmap_git->bitmaps) &&
+			(xor_bitmap = kh_value(bitmap_git->bitmaps, hash_pos)))
+			break;
+		xor_items_nr++;
+		xor_row = triplet.xor_row;
+	}
+
+	while (xor_items_nr) {
+		xor_item = &xor_items[xor_items_nr - 1];
+		bitmap_git->map_pos = xor_item->offset;
+		if (bitmap_git->map_size - bitmap_git->map_pos < bitmap_header_size) {
+			error(_("corrupt ewah bitmap: truncated header for bitmap of commit \"%s\""),
+				oid_to_hex(&xor_item->oid));
+			goto corrupt;
+		}
+
+		bitmap_git->map_pos += sizeof(uint32_t) + sizeof(uint8_t);
+		xor_flags = read_u8(bitmap_git->map, &bitmap_git->map_pos);
+		bitmap = read_bitmap_1(bitmap_git);
+
+		if (!bitmap)
+			goto corrupt;
+
+		xor_bitmap = store_bitmap(bitmap_git, bitmap, &xor_item->oid, xor_bitmap, xor_flags);
+		xor_items_nr--;
+	}
+
+	bitmap_git->map_pos = offset;
+	if (bitmap_git->map_size - bitmap_git->map_pos < bitmap_header_size) {
+		error(_("corrupt ewah bitmap: truncated header for bitmap of commit \"%s\""),
+			oid_to_hex(oid));
+		goto corrupt;
+	}
+
+	/*
+	 * Don't bother reading the commit's index position or its xor
+	 * offset:
+	 *
+	 *   - The commit's index position is irrelevant to us, since
+	 *     load_bitmap_entries_v1 only uses it to learn the object
+	 *     id which is used to compute the hashmap's key. We already
+	 *     have an object id, so no need to look it up again.
+	 *
+	 *   - The xor_offset is unusable for us, since it specifies how
+	 *     many entries previous to ours we should look at. This
+	 *     makes sense when reading the bitmaps sequentially (as in
+	 *     load_bitmap_entries_v1()), since we can keep track of
+	 *     each bitmap as we read them.
+	 *
+	 *     But it can't work for us, since the bitmap's don't have a
+	 *     fixed size. So we learn the position of the xor'd bitmap
+	 *     from the commit table (and resolve it to a bitmap in the
+	 *     above if-statement).
+	 *
+	 * Instead, we can skip ahead and immediately read the flags and
+	 * ewah bitmap.
+	 */
+	bitmap_git->map_pos += sizeof(uint32_t) + sizeof(uint8_t);
+	flags = read_u8(bitmap_git->map, &bitmap_git->map_pos);
+	bitmap = read_bitmap_1(bitmap_git);
+
+	if (!bitmap)
+		goto corrupt;
+
+	return store_bitmap(bitmap_git, bitmap, oid, xor_bitmap, flags);
+
+corrupt:
+	free(xor_items);
+	is_corrupt = 1;
+	return NULL;
+}
+
+struct ewah_bitmap *bitmap_for_commit(struct bitmap_index *bitmap_git,
+				      struct commit *commit)
+{
+	khiter_t hash_pos = kh_get_oid_map(bitmap_git->bitmaps,
+					   commit->object.oid);
+	if (hash_pos >= kh_end(bitmap_git->bitmaps)) {
+		struct stored_bitmap *bitmap = NULL;
+		if (!bitmap_git->table_lookup)
+			return NULL;
+
+		/* this is a fairly hot codepath - no trace2_region please */
+		/* NEEDSWORK: cache misses aren't recorded */
+		bitmap = lazy_bitmap_for_commit(bitmap_git, commit);
+		if (!bitmap)
+			return NULL;
+		return lookup_stored_bitmap(bitmap);
+	}
+	return lookup_stored_bitmap(kh_value(bitmap_git->bitmaps, hash_pos));
+}
+
 static inline int bitmap_position_extended(struct bitmap_index *bitmap_git,
 					   const struct object_id *oid)
 {
@@ -378,7 +869,7 @@ static inline int bitmap_position_extended(struct bitmap_index *bitmap_git,
 
 	if (pos < kh_end(positions)) {
 		int bitmap_pos = kh_value(positions, pos);
-		return bitmap_pos + bitmap_git->pack->num_objects;
+		return bitmap_pos + bitmap_num_objects(bitmap_git);
 	}
 
 	return -1;
@@ -387,17 +878,36 @@ static inline int bitmap_position_extended(struct bitmap_index *bitmap_git,
 static inline int bitmap_position_packfile(struct bitmap_index *bitmap_git,
 					   const struct object_id *oid)
 {
+	uint32_t pos;
 	off_t offset = find_pack_entry_one(oid->hash, bitmap_git->pack);
 	if (!offset)
 		return -1;
 
-	return find_revindex_position(bitmap_git->pack, offset);
+	if (offset_to_pack_pos(bitmap_git->pack, offset, &pos) < 0)
+		return -1;
+	return pos;
+}
+
+static int bitmap_position_midx(struct bitmap_index *bitmap_git,
+				const struct object_id *oid)
+{
+	uint32_t want, got;
+	if (!bsearch_midx(oid, bitmap_git->midx, &want))
+		return -1;
+
+	if (midx_to_pack_pos(bitmap_git->midx, want, &got) < 0)
+		return -1;
+	return got;
 }
 
 static int bitmap_position(struct bitmap_index *bitmap_git,
 			   const struct object_id *oid)
 {
-	int pos = bitmap_position_packfile(bitmap_git, oid);
+	int pos;
+	if (bitmap_is_midx(bitmap_git))
+		pos = bitmap_position_midx(bitmap_git, oid);
+	else
+		pos = bitmap_position_packfile(bitmap_git, oid);
 	return (pos >= 0) ? pos : bitmap_position_extended(bitmap_git, oid);
 }
 
@@ -427,7 +937,7 @@ static int ext_index_add_object(struct bitmap_index *bitmap_git,
 		bitmap_pos = kh_value(eindex->positions, hash_pos);
 	}
 
-	return bitmap_pos + bitmap_git->pack->num_objects;
+	return bitmap_pos + bitmap_num_objects(bitmap_git);
 }
 
 struct bitmap_show_data {
@@ -449,16 +959,17 @@ static void show_object(struct object *object, const char *name, void *data_)
 	bitmap_set(data->base, bitmap_pos);
 }
 
-static void show_commit(struct commit *commit, void *data)
+static void show_commit(struct commit *commit UNUSED,
+			void *data UNUSED)
 {
 }
 
 static int add_to_include_set(struct bitmap_index *bitmap_git,
 			      struct include_data *data,
-			      const struct object_id *oid,
+			      struct commit *commit,
 			      int bitmap_pos)
 {
-	khiter_t hash_pos;
+	struct ewah_bitmap *partial;
 
 	if (data->seen && bitmap_get(data->seen, bitmap_pos))
 		return 0;
@@ -466,10 +977,9 @@ static int add_to_include_set(struct bitmap_index *bitmap_git,
 	if (bitmap_get(data->base, bitmap_pos))
 		return 0;
 
-	hash_pos = kh_get_oid_map(bitmap_git->bitmaps, *oid);
-	if (hash_pos < kh_end(bitmap_git->bitmaps)) {
-		struct stored_bitmap *st = kh_value(bitmap_git->bitmaps, hash_pos);
-		bitmap_or_ewah(data->base, lookup_stored_bitmap(st));
+	partial = bitmap_for_commit(bitmap_git, commit);
+	if (partial) {
+		bitmap_or_ewah(data->base, partial);
 		return 0;
 	}
 
@@ -488,8 +998,7 @@ static int should_include(struct commit *commit, void *_data)
 						  (struct object *)commit,
 						  NULL);
 
-	if (!add_to_include_set(data->bitmap_git, data, &commit->object.oid,
-				bitmap_pos)) {
+	if (!add_to_include_set(data->bitmap_git, data, commit, bitmap_pos)) {
 		struct commit_list *parent = commit->parents;
 
 		while (parent) {
@@ -503,11 +1012,197 @@ static int should_include(struct commit *commit, void *_data)
 	return 1;
 }
 
+static int should_include_obj(struct object *obj, void *_data)
+{
+	struct include_data *data = _data;
+	int bitmap_pos;
+
+	bitmap_pos = bitmap_position(data->bitmap_git, &obj->oid);
+	if (bitmap_pos < 0)
+		return 1;
+	if ((data->seen && bitmap_get(data->seen, bitmap_pos)) ||
+	     bitmap_get(data->base, bitmap_pos)) {
+		obj->flags |= SEEN;
+		return 0;
+	}
+	return 1;
+}
+
+static int add_commit_to_bitmap(struct bitmap_index *bitmap_git,
+				struct bitmap **base,
+				struct commit *commit)
+{
+	struct ewah_bitmap *or_with = bitmap_for_commit(bitmap_git, commit);
+
+	if (!or_with)
+		return 0;
+
+	if (!*base)
+		*base = ewah_to_bitmap(or_with);
+	else
+		bitmap_or_ewah(*base, or_with);
+
+	return 1;
+}
+
+static struct bitmap *fill_in_bitmap(struct bitmap_index *bitmap_git,
+				     struct rev_info *revs,
+				     struct bitmap *base,
+				     struct bitmap *seen)
+{
+	struct include_data incdata;
+	struct bitmap_show_data show_data;
+
+	if (!base)
+		base = bitmap_new();
+
+	incdata.bitmap_git = bitmap_git;
+	incdata.base = base;
+	incdata.seen = seen;
+
+	revs->include_check = should_include;
+	revs->include_check_obj = should_include_obj;
+	revs->include_check_data = &incdata;
+
+	if (prepare_revision_walk(revs))
+		die(_("revision walk setup failed"));
+
+	show_data.bitmap_git = bitmap_git;
+	show_data.base = base;
+
+	traverse_commit_list(revs, show_commit, show_object, &show_data);
+
+	revs->include_check = NULL;
+	revs->include_check_obj = NULL;
+	revs->include_check_data = NULL;
+
+	return base;
+}
+
+struct bitmap_boundary_cb {
+	struct bitmap_index *bitmap_git;
+	struct bitmap *base;
+
+	struct object_array boundary;
+};
+
+static void show_boundary_commit(struct commit *commit, void *_data)
+{
+	struct bitmap_boundary_cb *data = _data;
+
+	if (commit->object.flags & BOUNDARY)
+		add_object_array(&commit->object, "", &data->boundary);
+
+	if (commit->object.flags & UNINTERESTING) {
+		if (bitmap_walk_contains(data->bitmap_git, data->base,
+					 &commit->object.oid))
+			return;
+
+		add_commit_to_bitmap(data->bitmap_git, &data->base, commit);
+	}
+}
+
+static void show_boundary_object(struct object *object,
+				 const char *name, void *data)
+{
+	BUG("should not be called");
+}
+
+static struct bitmap *find_boundary_objects(struct bitmap_index *bitmap_git,
+					    struct rev_info *revs,
+					    struct object_list *roots)
+{
+	struct bitmap_boundary_cb cb;
+	struct object_list *root;
+	unsigned int i;
+	unsigned int tmp_blobs, tmp_trees, tmp_tags;
+	int any_missing = 0;
+
+	cb.bitmap_git = bitmap_git;
+	cb.base = bitmap_new();
+	object_array_init(&cb.boundary);
+
+	revs->ignore_missing_links = 1;
+
+	/*
+	 * OR in any existing reachability bitmaps among `roots` into
+	 * `cb.base`.
+	 */
+	for (root = roots; root; root = root->next) {
+		struct object *object = root->item;
+		if (object->type != OBJ_COMMIT ||
+		    bitmap_walk_contains(bitmap_git, cb.base, &object->oid))
+			continue;
+
+		if (add_commit_to_bitmap(bitmap_git, &cb.base,
+					 (struct commit *)object))
+			continue;
+
+		any_missing = 1;
+	}
+
+	if (!any_missing)
+		goto cleanup;
+
+	tmp_blobs = revs->blob_objects;
+	tmp_trees = revs->tree_objects;
+	tmp_tags = revs->blob_objects;
+	revs->blob_objects = 0;
+	revs->tree_objects = 0;
+	revs->tag_objects = 0;
+
+	/*
+	 * We didn't have complete coverage of the roots. First setup a
+	 * revision walk to (a) OR in any bitmaps that are UNINTERESTING
+	 * between the tips and boundary, and (b) record the boundary.
+	 */
+	trace2_region_enter("pack-bitmap", "boundary-prepare", the_repository);
+	if (prepare_revision_walk(revs))
+		die("revision walk setup failed");
+	trace2_region_leave("pack-bitmap", "boundary-prepare", the_repository);
+
+	trace2_region_enter("pack-bitmap", "boundary-traverse", the_repository);
+	revs->boundary = 1;
+	traverse_commit_list_filtered(revs,
+				      show_boundary_commit,
+				      show_boundary_object,
+				      &cb, NULL);
+	revs->boundary = 0;
+	trace2_region_leave("pack-bitmap", "boundary-traverse", the_repository);
+
+	revs->blob_objects = tmp_blobs;
+	revs->tree_objects = tmp_trees;
+	revs->tag_objects = tmp_tags;
+
+	reset_revision_walk();
+	clear_object_flags(UNINTERESTING);
+
+	/*
+	 * Then add the boundary commit(s) as fill-in traversal tips.
+	 */
+	trace2_region_enter("pack-bitmap", "boundary-fill-in", the_repository);
+	for (i = 0; i < cb.boundary.nr; i++) {
+		struct object *obj = cb.boundary.objects[i].item;
+		if (bitmap_walk_contains(bitmap_git, cb.base, &obj->oid))
+			obj->flags |= SEEN;
+		else
+			add_pending_object(revs, obj, "");
+	}
+	if (revs->pending.nr)
+		cb.base = fill_in_bitmap(bitmap_git, revs, cb.base, NULL);
+	trace2_region_leave("pack-bitmap", "boundary-fill-in", the_repository);
+
+cleanup:
+	object_array_clear(&cb.boundary);
+	revs->ignore_missing_links = 0;
+
+	return cb.base;
+}
+
 static struct bitmap *find_objects(struct bitmap_index *bitmap_git,
 				   struct rev_info *revs,
 				   struct object_list *roots,
-				   struct bitmap *seen,
-				   struct list_objects_filter_options *filter)
+				   struct bitmap *seen)
 {
 	struct bitmap *base = NULL;
 	int needs_walk = 0;
@@ -526,21 +1221,10 @@ static struct bitmap *find_objects(struct bitmap_index *bitmap_git,
 		struct object *object = roots->item;
 		roots = roots->next;
 
-		if (object->type == OBJ_COMMIT) {
-			khiter_t pos = kh_get_oid_map(bitmap_git->bitmaps, object->oid);
-
-			if (pos < kh_end(bitmap_git->bitmaps)) {
-				struct stored_bitmap *st = kh_value(bitmap_git->bitmaps, pos);
-				struct ewah_bitmap *or_with = lookup_stored_bitmap(st);
-
-				if (base == NULL)
-					base = ewah_to_bitmap(or_with);
-				else
-					bitmap_or_ewah(base, or_with);
-
-				object->flags |= SEEN;
-				continue;
-			}
+		if (object->type == OBJ_COMMIT &&
+		    add_commit_to_bitmap(bitmap_git, &base, (struct commit *)object)) {
+			object->flags |= SEEN;
+			continue;
 		}
 
 		object_list_insert(object, &not_mapped);
@@ -550,7 +1234,7 @@ static struct bitmap *find_objects(struct bitmap_index *bitmap_git,
 	 * Best case scenario: We found bitmaps for all the roots,
 	 * so the resulting `or` bitmap has the full reachability analysis
 	 */
-	if (not_mapped == NULL)
+	if (!not_mapped)
 		return base;
 
 	roots = not_mapped;
@@ -581,28 +1265,19 @@ static struct bitmap *find_objects(struct bitmap_index *bitmap_git,
 	}
 
 	if (needs_walk) {
-		struct include_data incdata;
-		struct bitmap_show_data show_data;
-
-		if (base == NULL)
-			base = bitmap_new();
-
-		incdata.bitmap_git = bitmap_git;
-		incdata.base = base;
-		incdata.seen = seen;
-
-		revs->include_check = should_include;
-		revs->include_check_data = &incdata;
-
-		if (prepare_revision_walk(revs))
-			die("revision walk setup failed");
-
-		show_data.bitmap_git = bitmap_git;
-		show_data.base = base;
-
-		traverse_commit_list_filtered(filter, revs,
-					      show_commit, show_object,
-					      &show_data, NULL);
+		/*
+		 * This fill-in traversal may walk over some objects
+		 * again, since we have already traversed in order to
+		 * find the boundary.
+		 *
+		 * But this extra walk should be extremely cheap, since
+		 * all commit objects are loaded into memory, and
+		 * because we skip walking to parents that are
+		 * UNINTERESTING, since it will be marked in the haves
+		 * bitmap already (or it has an on-disk bitmap, since
+		 * OR-ing it in covers all of its ancestors).
+		 */
+		base = fill_in_bitmap(bitmap_git, revs, base, seen);
 	}
 
 	return base;
@@ -619,7 +1294,7 @@ static void show_extended_objects(struct bitmap_index *bitmap_git,
 	for (i = 0; i < eindex->count; ++i) {
 		struct object *obj;
 
-		if (!bitmap_get(objects, bitmap_git->pack->num_objects + i))
+		if (!bitmap_get(objects, bitmap_num_objects(bitmap_git) + i))
 			continue;
 
 		obj = eindex->objects[i];
@@ -683,22 +1358,38 @@ static void show_objects_for_type(
 			continue;
 
 		for (offset = 0; offset < BITS_IN_EWORD; ++offset) {
+			struct packed_git *pack;
 			struct object_id oid;
-			struct revindex_entry *entry;
-			uint32_t hash = 0;
+			uint32_t hash = 0, index_pos;
+			off_t ofs;
 
 			if ((word >> offset) == 0)
 				break;
 
 			offset += ewah_bit_ctz64(word >> offset);
 
-			entry = &bitmap_git->pack->revindex[pos + offset];
-			nth_packed_object_id(&oid, bitmap_git->pack, entry->nr);
+			if (bitmap_is_midx(bitmap_git)) {
+				struct multi_pack_index *m = bitmap_git->midx;
+				uint32_t pack_id;
+
+				index_pos = pack_pos_to_midx(m, pos + offset);
+				ofs = nth_midxed_offset(m, index_pos);
+				nth_midxed_object_oid(&oid, m, index_pos);
+
+				pack_id = nth_midxed_pack_int_id(m, index_pos);
+				pack = bitmap_git->midx->packs[pack_id];
+			} else {
+				index_pos = pack_pos_to_index(bitmap_git->pack, pos + offset);
+				ofs = pack_pos_to_offset(bitmap_git->pack, pos + offset);
+				nth_bitmap_object_oid(bitmap_git, &oid, index_pos);
+
+				pack = bitmap_git->pack;
+			}
 
 			if (bitmap_git->hashes)
-				hash = get_be32(bitmap_git->hashes + entry->nr);
+				hash = get_be32(bitmap_git->hashes + index_pos);
 
-			show_reach(&oid, object_type, 0, hash, bitmap_git->pack, entry->offset);
+			show_reach(&oid, object_type, 0, hash, pack, ofs);
 		}
 	}
 }
@@ -710,8 +1401,13 @@ static int in_bitmapped_pack(struct bitmap_index *bitmap_git,
 		struct object *object = roots->item;
 		roots = roots->next;
 
-		if (find_pack_entry_one(object->oid.hash, bitmap_git->pack) > 0)
-			return 1;
+		if (bitmap_is_midx(bitmap_git)) {
+			if (bsearch_midx(&object->oid, bitmap_git->midx, NULL))
+				return 1;
+		} else {
+			if (find_pack_entry_one(object->oid.hash, bitmap_git->pack) > 0)
+				return 1;
+		}
 	}
 
 	return 0;
@@ -751,9 +1447,6 @@ static void filter_bitmap_exclude_type(struct bitmap_index *bitmap_git,
 	eword_t mask;
 	uint32_t i;
 
-	if (type != OBJ_BLOB && type != OBJ_TREE)
-		BUG("filter_bitmap_exclude_type: unsupported type '%d'", type);
-
 	/*
 	 * The non-bitmap version of this filter never removes
 	 * objects which the other side specifically asked for,
@@ -762,8 +1455,9 @@ static void filter_bitmap_exclude_type(struct bitmap_index *bitmap_git,
 	tips = find_tip_objects(bitmap_git, tip_objects, type);
 
 	/*
-	 * We can use the blob type-bitmap to work in whole words
-	 * for the objects that are actually in the bitmapped packfile.
+	 * We can use the type-level bitmap for 'type' to work in whole
+	 * words for the objects that are actually in the bitmapped
+	 * packfile.
 	 */
 	for (i = 0, init_type_iterator(&it, bitmap_git, type);
 	     i < to_filter->word_alloc && ewah_iterator_next(&mask, &it);
@@ -774,12 +1468,12 @@ static void filter_bitmap_exclude_type(struct bitmap_index *bitmap_git,
 	}
 
 	/*
-	 * Clear any blobs that weren't in the packfile (and so would not have
-	 * been caught by the loop above. We'll have to check them
-	 * individually.
+	 * Clear any objects that weren't in the packfile (and so would
+	 * not have been caught by the loop above. We'll have to check
+	 * them individually.
 	 */
 	for (i = 0; i < eindex->count; i++) {
-		uint32_t pos = i + bitmap_git->pack->num_objects;
+		uint32_t pos = i + bitmap_num_objects(bitmap_git);
 		if (eindex->objects[i]->type == type &&
 		    bitmap_get(to_filter, pos) &&
 		    !bitmap_get(tips, pos))
@@ -800,23 +1494,35 @@ static void filter_bitmap_blob_none(struct bitmap_index *bitmap_git,
 static unsigned long get_size_by_pos(struct bitmap_index *bitmap_git,
 				     uint32_t pos)
 {
-	struct packed_git *pack = bitmap_git->pack;
 	unsigned long size;
 	struct object_info oi = OBJECT_INFO_INIT;
 
 	oi.sizep = &size;
 
-	if (pos < pack->num_objects) {
-		struct revindex_entry *entry = &pack->revindex[pos];
-		if (packed_object_info(the_repository, pack,
-				       entry->offset, &oi) < 0) {
+	if (pos < bitmap_num_objects(bitmap_git)) {
+		struct packed_git *pack;
+		off_t ofs;
+
+		if (bitmap_is_midx(bitmap_git)) {
+			uint32_t midx_pos = pack_pos_to_midx(bitmap_git->midx, pos);
+			uint32_t pack_id = nth_midxed_pack_int_id(bitmap_git->midx, midx_pos);
+
+			pack = bitmap_git->midx->packs[pack_id];
+			ofs = nth_midxed_offset(bitmap_git->midx, midx_pos);
+		} else {
+			pack = bitmap_git->pack;
+			ofs = pack_pos_to_offset(pack, pos);
+		}
+
+		if (packed_object_info(the_repository, pack, ofs, &oi) < 0) {
 			struct object_id oid;
-			nth_packed_object_id(&oid, pack, entry->nr);
+			nth_bitmap_object_oid(bitmap_git, &oid,
+					      pack_pos_to_index(pack, pos));
 			die(_("unable to get size of %s"), oid_to_hex(&oid));
 		}
 	} else {
 		struct eindex *eindex = &bitmap_git->ext_index;
-		struct object *obj = eindex->objects[pos - pack->num_objects];
+		struct object *obj = eindex->objects[pos - bitmap_num_objects(bitmap_git)];
 		if (oid_object_info_extended(the_repository, &obj->oid, &oi, 0) < 0)
 			die(_("unable to get size of %s"), oid_to_hex(&obj->oid));
 	}
@@ -858,7 +1564,7 @@ static void filter_bitmap_blob_limit(struct bitmap_index *bitmap_git,
 	}
 
 	for (i = 0; i < eindex->count; i++) {
-		uint32_t pos = i + bitmap_git->pack->num_objects;
+		uint32_t pos = i + bitmap_num_objects(bitmap_git);
 		if (eindex->objects[i]->type == OBJ_BLOB &&
 		    bitmap_get(to_filter, pos) &&
 		    !bitmap_get(tips, pos) &&
@@ -881,6 +1587,24 @@ static void filter_bitmap_tree_depth(struct bitmap_index *bitmap_git,
 				   OBJ_TREE);
 	filter_bitmap_exclude_type(bitmap_git, tip_objects, to_filter,
 				   OBJ_BLOB);
+}
+
+static void filter_bitmap_object_type(struct bitmap_index *bitmap_git,
+				      struct object_list *tip_objects,
+				      struct bitmap *to_filter,
+				      enum object_type object_type)
+{
+	if (object_type < OBJ_COMMIT || object_type > OBJ_TAG)
+		BUG("filter_bitmap_object_type given invalid object");
+
+	if (object_type != OBJ_TAG)
+		filter_bitmap_exclude_type(bitmap_git, tip_objects, to_filter, OBJ_TAG);
+	if (object_type != OBJ_COMMIT)
+		filter_bitmap_exclude_type(bitmap_git, tip_objects, to_filter, OBJ_COMMIT);
+	if (object_type != OBJ_TREE)
+		filter_bitmap_exclude_type(bitmap_git, tip_objects, to_filter, OBJ_TREE);
+	if (object_type != OBJ_BLOB)
+		filter_bitmap_exclude_type(bitmap_git, tip_objects, to_filter, OBJ_BLOB);
 }
 
 static int filter_bitmap(struct bitmap_index *bitmap_git,
@@ -915,6 +1639,24 @@ static int filter_bitmap(struct bitmap_index *bitmap_git,
 		return 0;
 	}
 
+	if (filter->choice == LOFC_OBJECT_TYPE) {
+		if (bitmap_git)
+			filter_bitmap_object_type(bitmap_git, tip_objects,
+						  to_filter,
+						  filter->object_type);
+		return 0;
+	}
+
+	if (filter->choice == LOFC_COMBINE) {
+		int i;
+		for (i = 0; i < filter->sub_nr; i++) {
+			if (filter_bitmap(bitmap_git, tip_objects, to_filter,
+					  &filter->sub[i]) < 0)
+				return -1;
+		}
+		return 0;
+	}
+
 	/* filter choice not handled */
 	return -1;
 }
@@ -925,9 +1667,10 @@ static int can_filter_bitmap(struct list_objects_filter_options *filter)
 }
 
 struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs,
-					 struct list_objects_filter_options *filter)
+					 int filter_provided_objects)
 {
 	unsigned int i;
+	int use_boundary_traversal;
 
 	struct object_list *wants = NULL;
 	struct object_list *haves = NULL;
@@ -945,13 +1688,13 @@ struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs,
 	if (revs->prune)
 		return NULL;
 
-	if (!can_filter_bitmap(filter))
+	if (!can_filter_bitmap(&revs->filter))
 		return NULL;
 
 	/* try to open a bitmapped pack, but don't parse it yet
 	 * because we may not need to use it */
-	bitmap_git = xcalloc(1, sizeof(*bitmap_git));
-	if (open_pack_bitmap(revs->repo, bitmap_git) < 0)
+	CALLOC_ARRAY(bitmap_git, 1);
+	if (open_bitmap(revs->repo, bitmap_git) < 0)
 		goto cleanup;
 
 	for (i = 0; i < revs->pending.nr; ++i) {
@@ -969,6 +1712,7 @@ struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs,
 				object_list_insert(object, &wants);
 
 			object = parse_object_or_die(get_tagged_oid(tag), NULL);
+			object->flags |= (tag->object.flags & UNINTERESTING);
 		}
 
 		if (object->flags & UNINTERESTING)
@@ -977,13 +1721,21 @@ struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs,
 			object_list_insert(object, &wants);
 	}
 
-	/*
-	 * if we have a HAVES list, but none of those haves is contained
-	 * in the packfile that has a bitmap, we don't have anything to
-	 * optimize here
-	 */
-	if (haves && !in_bitmapped_pack(bitmap_git, haves))
-		goto cleanup;
+	use_boundary_traversal = git_env_bool(GIT_TEST_PACK_USE_BITMAP_BOUNDARY_TRAVERSAL, -1);
+	if (use_boundary_traversal < 0) {
+		prepare_repo_settings(revs->repo);
+		use_boundary_traversal = revs->repo->settings.pack_use_bitmap_boundary_traversal;
+	}
+
+	if (!use_boundary_traversal) {
+		/*
+		 * if we have a HAVES list, but none of those haves is contained
+		 * in the packfile that has a bitmap, we don't have anything to
+		 * optimize here
+		 */
+		if (haves && !in_bitmapped_pack(bitmap_git, haves))
+			goto cleanup;
+	}
 
 	/* if we don't want anything, we're done here */
 	if (!wants)
@@ -994,24 +1746,36 @@ struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs,
 	 * from disk. this is the point of no return; after this the rev_list
 	 * becomes invalidated and we must perform the revwalk through bitmaps
 	 */
-	if (load_pack_bitmap(bitmap_git) < 0)
+	if (load_bitmap(revs->repo, bitmap_git) < 0)
 		goto cleanup;
 
-	object_array_clear(&revs->pending);
+	if (!use_boundary_traversal)
+		object_array_clear(&revs->pending);
 
 	if (haves) {
-		revs->ignore_missing_links = 1;
-		haves_bitmap = find_objects(bitmap_git, revs, haves, NULL,
-					    filter);
-		reset_revision_walk();
-		revs->ignore_missing_links = 0;
+		if (use_boundary_traversal) {
+			trace2_region_enter("pack-bitmap", "haves/boundary", the_repository);
+			haves_bitmap = find_boundary_objects(bitmap_git, revs, haves);
+			trace2_region_leave("pack-bitmap", "haves/boundary", the_repository);
+		} else {
+			trace2_region_enter("pack-bitmap", "haves/classic", the_repository);
+			revs->ignore_missing_links = 1;
+			haves_bitmap = find_objects(bitmap_git, revs, haves, NULL);
+			reset_revision_walk();
+			revs->ignore_missing_links = 0;
+			trace2_region_leave("pack-bitmap", "haves/classic", the_repository);
+		}
 
-		if (haves_bitmap == NULL)
+		if (!haves_bitmap)
 			BUG("failed to perform bitmap walk");
 	}
 
-	wants_bitmap = find_objects(bitmap_git, revs, wants, haves_bitmap,
-				    filter);
+	if (use_boundary_traversal) {
+		object_array_clear(&revs->pending);
+		reset_revision_walk();
+	}
+
+	wants_bitmap = find_objects(bitmap_git, revs, wants, haves_bitmap);
 
 	if (!wants_bitmap)
 		BUG("failed to perform bitmap walk");
@@ -1019,7 +1783,10 @@ struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs,
 	if (haves_bitmap)
 		bitmap_and_not(wants_bitmap, haves_bitmap);
 
-	filter_bitmap(bitmap_git, wants, wants_bitmap, filter);
+	filter_bitmap(bitmap_git,
+		      (revs->filter.choice && filter_provided_objects) ? NULL : wants,
+		      wants_bitmap,
+		      &revs->filter);
 
 	bitmap_git->result = wants_bitmap;
 	bitmap_git->haves = haves_bitmap;
@@ -1036,28 +1803,53 @@ cleanup:
 	return NULL;
 }
 
-static void try_partial_reuse(struct bitmap_index *bitmap_git,
-			      size_t pos,
-			      struct bitmap *reuse,
-			      struct pack_window **w_curs)
+/*
+ * -1 means "stop trying further objects"; 0 means we may or may not have
+ * reused, but you can keep feeding bits.
+ */
+static int try_partial_reuse(struct packed_git *pack,
+			     size_t pos,
+			     struct bitmap *reuse,
+			     struct pack_window **w_curs)
 {
-	struct revindex_entry *revidx;
-	off_t offset;
+	off_t offset, delta_obj_offset;
 	enum object_type type;
 	unsigned long size;
 
-	if (pos >= bitmap_git->pack->num_objects)
-		return; /* not actually in the pack */
+	/*
+	 * try_partial_reuse() is called either on (a) objects in the
+	 * bitmapped pack (in the case of a single-pack bitmap) or (b)
+	 * objects in the preferred pack of a multi-pack bitmap.
+	 * Importantly, the latter can pretend as if only a single pack
+	 * exists because:
+	 *
+	 *   - The first pack->num_objects bits of a MIDX bitmap are
+	 *     reserved for the preferred pack, and
+	 *
+	 *   - Ties due to duplicate objects are always resolved in
+	 *     favor of the preferred pack.
+	 *
+	 * Therefore we do not need to ever ask the MIDX for its copy of
+	 * an object by OID, since it will always select it from the
+	 * preferred pack. Likewise, the selected copy of the base
+	 * object for any deltas will reside in the same pack.
+	 *
+	 * This means that we can reuse pos when looking up the bit in
+	 * the reuse bitmap, too, since bits corresponding to the
+	 * preferred pack precede all bits from other packs.
+	 */
 
-	revidx = &bitmap_git->pack->revindex[pos];
-	offset = revidx->offset;
-	type = unpack_object_header(bitmap_git->pack, w_curs, &offset, &size);
+	if (pos >= pack->num_objects)
+		return -1; /* not actually in the pack or MIDX preferred pack */
+
+	offset = delta_obj_offset = pack_pos_to_offset(pack, pos);
+	type = unpack_object_header(pack, w_curs, &offset, &size);
 	if (type < 0)
-		return; /* broken packfile, punt */
+		return -1; /* broken packfile, punt */
 
 	if (type == OBJ_REF_DELTA || type == OBJ_OFS_DELTA) {
 		off_t base_offset;
-		int base_pos;
+		uint32_t base_pos;
 
 		/*
 		 * Find the position of the base object so we can look it up
@@ -1067,13 +1859,12 @@ static void try_partial_reuse(struct bitmap_index *bitmap_git,
 		 * and the normal slow path will complain about it in
 		 * more detail.
 		 */
-		base_offset = get_delta_base(bitmap_git->pack, w_curs,
-					     &offset, type, revidx->offset);
+		base_offset = get_delta_base(pack, w_curs, &offset, type,
+					     delta_obj_offset);
 		if (!base_offset)
-			return;
-		base_pos = find_revindex_position(bitmap_git->pack, base_offset);
-		if (base_pos < 0)
-			return;
+			return 0;
+		if (offset_to_pack_pos(pack, base_offset, &base_pos) < 0)
+			return 0;
 
 		/*
 		 * We assume delta dependencies always point backwards. This
@@ -1085,7 +1876,7 @@ static void try_partial_reuse(struct bitmap_index *bitmap_git,
 		 * odd parameters.
 		 */
 		if (base_pos >= pos)
-			return;
+			return 0;
 
 		/*
 		 * And finally, if we're not sending the base as part of our
@@ -1096,13 +1887,22 @@ static void try_partial_reuse(struct bitmap_index *bitmap_git,
 		 * object_entry code path handle it.
 		 */
 		if (!bitmap_get(reuse, base_pos))
-			return;
+			return 0;
 	}
 
 	/*
 	 * If we got here, then the object is OK to reuse. Mark it.
 	 */
 	bitmap_set(reuse, pos);
+	return 0;
+}
+
+uint32_t midx_preferred_pack(struct bitmap_index *bitmap_git)
+{
+	struct multi_pack_index *m = bitmap_git->midx;
+	if (!m)
+		BUG("midx_preferred_pack: requires non-empty MIDX");
+	return nth_midxed_pack_int_id(m, pack_pos_to_midx(bitmap_git->midx, 0));
 }
 
 int reuse_partial_packfile_from_bitmap(struct bitmap_index *bitmap_git,
@@ -1110,20 +1910,38 @@ int reuse_partial_packfile_from_bitmap(struct bitmap_index *bitmap_git,
 				       uint32_t *entries,
 				       struct bitmap **reuse_out)
 {
+	struct repository *r = the_repository;
+	struct packed_git *pack;
 	struct bitmap *result = bitmap_git->result;
 	struct bitmap *reuse;
 	struct pack_window *w_curs = NULL;
 	size_t i = 0;
 	uint32_t offset;
+	uint32_t objects_nr;
 
 	assert(result);
+
+	load_reverse_index(r, bitmap_git);
+
+	if (bitmap_is_midx(bitmap_git))
+		pack = bitmap_git->midx->packs[midx_preferred_pack(bitmap_git)];
+	else
+		pack = bitmap_git->pack;
+	objects_nr = pack->num_objects;
 
 	while (i < result->word_alloc && result->words[i] == (eword_t)~0)
 		i++;
 
-	/* Don't mark objects not in the packfile */
-	if (i > bitmap_git->pack->num_objects / BITS_IN_EWORD)
-		i = bitmap_git->pack->num_objects / BITS_IN_EWORD;
+	/*
+	 * Don't mark objects not in the packfile or preferred pack. This bitmap
+	 * marks objects eligible for reuse, but the pack-reuse code only
+	 * understands how to reuse a single pack. Since the preferred pack is
+	 * guaranteed to have all bases for its deltas (in a multi-pack bitmap),
+	 * we use it instead of another pack. In single-pack bitmaps, the choice
+	 * is made for us.
+	 */
+	if (i > objects_nr / BITS_IN_EWORD)
+		i = objects_nr / BITS_IN_EWORD;
 
 	reuse = bitmap_word_alloc(i);
 	memset(reuse->words, 0xFF, i * sizeof(eword_t));
@@ -1137,10 +1955,23 @@ int reuse_partial_packfile_from_bitmap(struct bitmap_index *bitmap_git,
 				break;
 
 			offset += ewah_bit_ctz64(word >> offset);
-			try_partial_reuse(bitmap_git, pos + offset, reuse, &w_curs);
+			if (try_partial_reuse(pack, pos + offset,
+					      reuse, &w_curs) < 0) {
+				/*
+				 * try_partial_reuse indicated we couldn't reuse
+				 * any bits, so there is no point in trying more
+				 * bits in the current word, or any other words
+				 * in result.
+				 *
+				 * Jump out of both loops to avoid future
+				 * unnecessary calls to try_partial_reuse.
+				 */
+				goto done;
+			}
 		}
 	}
 
+done:
 	unuse_pack(&w_curs);
 
 	*entries = bitmap_popcount(reuse);
@@ -1154,7 +1985,7 @@ int reuse_partial_packfile_from_bitmap(struct bitmap_index *bitmap_git,
 	 * need to be handled separately.
 	 */
 	bitmap_and_not(result, reuse);
-	*packfile_out = bitmap_git->pack;
+	*packfile_out = pack;
 	*reuse_out = reuse;
 	return 0;
 }
@@ -1207,7 +2038,7 @@ static uint32_t count_object_type(struct bitmap_index *bitmap_git,
 
 	for (i = 0; i < eindex->count; ++i) {
 		if (eindex->objects[i]->type == type &&
-			bitmap_get(objects, bitmap_git->pack->num_objects + i))
+			bitmap_get(objects, bitmap_num_objects(bitmap_git) + i))
 			count++;
 	}
 
@@ -1236,11 +2067,54 @@ void count_bitmap_commit_list(struct bitmap_index *bitmap_git,
 struct bitmap_test_data {
 	struct bitmap_index *bitmap_git;
 	struct bitmap *base;
+	struct bitmap *commits;
+	struct bitmap *trees;
+	struct bitmap *blobs;
+	struct bitmap *tags;
 	struct progress *prg;
 	size_t seen;
 };
 
-static void test_show_object(struct object *object, const char *name,
+static void test_bitmap_type(struct bitmap_test_data *tdata,
+			     struct object *obj, int pos)
+{
+	enum object_type bitmap_type = OBJ_NONE;
+	int bitmaps_nr = 0;
+
+	if (bitmap_get(tdata->commits, pos)) {
+		bitmap_type = OBJ_COMMIT;
+		bitmaps_nr++;
+	}
+	if (bitmap_get(tdata->trees, pos)) {
+		bitmap_type = OBJ_TREE;
+		bitmaps_nr++;
+	}
+	if (bitmap_get(tdata->blobs, pos)) {
+		bitmap_type = OBJ_BLOB;
+		bitmaps_nr++;
+	}
+	if (bitmap_get(tdata->tags, pos)) {
+		bitmap_type = OBJ_TAG;
+		bitmaps_nr++;
+	}
+
+	if (bitmap_type == OBJ_NONE)
+		die(_("object '%s' not found in type bitmaps"),
+		    oid_to_hex(&obj->oid));
+
+	if (bitmaps_nr > 1)
+		die(_("object '%s' does not have a unique type"),
+		    oid_to_hex(&obj->oid));
+
+	if (bitmap_type != obj->type)
+		die(_("object '%s': real type '%s', expected: '%s'"),
+		    oid_to_hex(&obj->oid),
+		    type_name(obj->type),
+		    type_name(bitmap_type));
+}
+
+static void test_show_object(struct object *object,
+			     const char *name UNUSED,
 			     void *data)
 {
 	struct bitmap_test_data *tdata = data;
@@ -1248,7 +2122,8 @@ static void test_show_object(struct object *object, const char *name,
 
 	bitmap_pos = bitmap_position(tdata->bitmap_git, &object->oid);
 	if (bitmap_pos < 0)
-		die("Object not in bitmap: %s\n", oid_to_hex(&object->oid));
+		die(_("object not in bitmap: '%s'"), oid_to_hex(&object->oid));
+	test_bitmap_type(tdata, object, bitmap_pos);
 
 	bitmap_set(tdata->base, bitmap_pos);
 	display_progress(tdata->prg, ++tdata->seen);
@@ -1262,7 +2137,8 @@ static void test_show_commit(struct commit *commit, void *data)
 	bitmap_pos = bitmap_position(tdata->bitmap_git,
 				     &commit->object.oid);
 	if (bitmap_pos < 0)
-		die("Object not in bitmap: %s\n", oid_to_hex(&commit->object.oid));
+		die(_("object not in bitmap: '%s'"), oid_to_hex(&commit->object.oid));
+	test_bitmap_type(tdata, &commit->object, bitmap_pos);
 
 	bitmap_set(tdata->base, bitmap_pos);
 	display_progress(tdata->prg, ++tdata->seen);
@@ -1272,35 +2148,34 @@ void test_bitmap_walk(struct rev_info *revs)
 {
 	struct object *root;
 	struct bitmap *result = NULL;
-	khiter_t pos;
 	size_t result_popcnt;
 	struct bitmap_test_data tdata;
 	struct bitmap_index *bitmap_git;
+	struct ewah_bitmap *bm;
 
 	if (!(bitmap_git = prepare_bitmap_git(revs->repo)))
-		die("failed to load bitmap indexes");
+		die(_("failed to load bitmap indexes"));
 
 	if (revs->pending.nr != 1)
-		die("you must specify exactly one commit to test");
+		die(_("you must specify exactly one commit to test"));
 
-	fprintf(stderr, "Bitmap v%d test (%d entries loaded)\n",
-		bitmap_git->version, bitmap_git->entry_count);
+	fprintf_ln(stderr, "Bitmap v%d test (%d entries%s)",
+		bitmap_git->version,
+		bitmap_git->entry_count,
+		bitmap_git->table_lookup ? "" : " loaded");
 
 	root = revs->pending.objects[0].item;
-	pos = kh_get_oid_map(bitmap_git->bitmaps, root->oid);
+	bm = bitmap_for_commit(bitmap_git, (struct commit *)root);
 
-	if (pos < kh_end(bitmap_git->bitmaps)) {
-		struct stored_bitmap *st = kh_value(bitmap_git->bitmaps, pos);
-		struct ewah_bitmap *bm = lookup_stored_bitmap(st);
-
-		fprintf(stderr, "Found bitmap for %s. %d bits / %08x checksum\n",
+	if (bm) {
+		fprintf_ln(stderr, "Found bitmap for '%s'. %d bits / %08x checksum",
 			oid_to_hex(&root->oid), (int)bm->bit_size, ewah_checksum(bm));
 
 		result = ewah_to_bitmap(bm);
 	}
 
-	if (result == NULL)
-		die("Commit %s doesn't have an indexed bitmap", oid_to_hex(&root->oid));
+	if (!result)
+		die(_("commit '%s' doesn't have an indexed bitmap"), oid_to_hex(&root->oid));
 
 	revs->tag_objects = 1;
 	revs->tree_objects = 1;
@@ -1309,10 +2184,14 @@ void test_bitmap_walk(struct rev_info *revs)
 	result_popcnt = bitmap_popcount(result);
 
 	if (prepare_revision_walk(revs))
-		die("revision walk setup failed");
+		die(_("revision walk setup failed"));
 
 	tdata.bitmap_git = bitmap_git;
 	tdata.base = bitmap_new();
+	tdata.commits = ewah_to_bitmap(bitmap_git->commits);
+	tdata.trees = ewah_to_bitmap(bitmap_git->trees);
+	tdata.blobs = ewah_to_bitmap(bitmap_git->blobs);
+	tdata.tags = ewah_to_bitmap(bitmap_git->tags);
 	tdata.prg = start_progress("Verifying bitmap entries", result_popcnt);
 	tdata.seen = 0;
 
@@ -1321,16 +2200,76 @@ void test_bitmap_walk(struct rev_info *revs)
 	stop_progress(&tdata.prg);
 
 	if (bitmap_equals(result, tdata.base))
-		fprintf(stderr, "OK!\n");
+		fprintf_ln(stderr, "OK!");
 	else
-		fprintf(stderr, "Mismatch!\n");
+		die(_("mismatch in bitmap results"));
 
+	bitmap_free(result);
+	bitmap_free(tdata.base);
+	bitmap_free(tdata.commits);
+	bitmap_free(tdata.trees);
+	bitmap_free(tdata.blobs);
+	bitmap_free(tdata.tags);
 	free_bitmap_index(bitmap_git);
 }
 
-static int rebuild_bitmap(uint32_t *reposition,
-			  struct ewah_bitmap *source,
-			  struct bitmap *dest)
+int test_bitmap_commits(struct repository *r)
+{
+	struct object_id oid;
+	MAYBE_UNUSED void *value;
+	struct bitmap_index *bitmap_git = prepare_bitmap_git(r);
+
+	if (!bitmap_git)
+		die(_("failed to load bitmap indexes"));
+
+	/*
+	 * As this function is only used to print bitmap selected
+	 * commits, we don't have to read the commit table.
+	 */
+	if (bitmap_git->table_lookup) {
+		if (load_bitmap_entries_v1(bitmap_git) < 0)
+			die(_("failed to load bitmap indexes"));
+	}
+
+	kh_foreach(bitmap_git->bitmaps, oid, value, {
+		printf_ln("%s", oid_to_hex(&oid));
+	});
+
+	free_bitmap_index(bitmap_git);
+
+	return 0;
+}
+
+int test_bitmap_hashes(struct repository *r)
+{
+	struct bitmap_index *bitmap_git = prepare_bitmap_git(r);
+	struct object_id oid;
+	uint32_t i, index_pos;
+
+	if (!bitmap_git || !bitmap_git->hashes)
+		goto cleanup;
+
+	for (i = 0; i < bitmap_num_objects(bitmap_git); i++) {
+		if (bitmap_is_midx(bitmap_git))
+			index_pos = pack_pos_to_midx(bitmap_git->midx, i);
+		else
+			index_pos = pack_pos_to_index(bitmap_git->pack, i);
+
+		nth_bitmap_object_oid(bitmap_git, &oid, index_pos);
+
+		printf_ln("%s %"PRIu32"",
+		       oid_to_hex(&oid), get_be32(bitmap_git->hashes + index_pos));
+	}
+
+cleanup:
+	free_bitmap_index(bitmap_git);
+
+	return 0;
+}
+
+int rebuild_bitmap(const uint32_t *reposition,
+		   struct ewah_bitmap *source,
+		   struct bitmap *dest)
 {
 	uint32_t pos = 0;
 	struct ewah_iterator it;
@@ -1359,63 +2298,42 @@ static int rebuild_bitmap(uint32_t *reposition,
 	return 0;
 }
 
-int rebuild_existing_bitmaps(struct bitmap_index *bitmap_git,
-			     struct packing_data *mapping,
-			     kh_oid_map_t *reused_bitmaps,
-			     int show_progress)
+uint32_t *create_bitmap_mapping(struct bitmap_index *bitmap_git,
+				struct packing_data *mapping)
 {
+	struct repository *r = the_repository;
 	uint32_t i, num_objects;
 	uint32_t *reposition;
-	struct bitmap *rebuild;
-	struct stored_bitmap *stored;
-	struct progress *progress = NULL;
 
-	khiter_t hash_pos;
-	int hash_ret;
+	if (!bitmap_is_midx(bitmap_git))
+		load_reverse_index(r, bitmap_git);
+	else if (load_midx_revindex(bitmap_git->midx))
+		BUG("rebuild_existing_bitmaps: missing required rev-cache "
+		    "extension");
 
-	num_objects = bitmap_git->pack->num_objects;
-	reposition = xcalloc(num_objects, sizeof(uint32_t));
+	num_objects = bitmap_num_objects(bitmap_git);
+	CALLOC_ARRAY(reposition, num_objects);
 
 	for (i = 0; i < num_objects; ++i) {
 		struct object_id oid;
-		struct revindex_entry *entry;
 		struct object_entry *oe;
+		uint32_t index_pos;
 
-		entry = &bitmap_git->pack->revindex[i];
-		nth_packed_object_id(&oid, bitmap_git->pack, entry->nr);
+		if (bitmap_is_midx(bitmap_git))
+			index_pos = pack_pos_to_midx(bitmap_git->midx, i);
+		else
+			index_pos = pack_pos_to_index(bitmap_git->pack, i);
+		nth_bitmap_object_oid(bitmap_git, &oid, index_pos);
 		oe = packlist_find(mapping, &oid);
 
-		if (oe)
+		if (oe) {
 			reposition[i] = oe_in_pack_pos(mapping, oe) + 1;
+			if (bitmap_git->hashes && !oe->hash)
+				oe->hash = get_be32(bitmap_git->hashes + index_pos);
+		}
 	}
 
-	rebuild = bitmap_new();
-	i = 0;
-
-	if (show_progress)
-		progress = start_progress("Reusing bitmaps", 0);
-
-	kh_foreach_value(bitmap_git->bitmaps, stored, {
-		if (stored->flags & BITMAP_FLAG_REUSE) {
-			if (!rebuild_bitmap(reposition,
-					    lookup_stored_bitmap(stored),
-					    rebuild)) {
-				hash_pos = kh_put_oid_map(reused_bitmaps,
-							  stored->oid,
-							  &hash_ret);
-				kh_value(reused_bitmaps, hash_pos) =
-					bitmap_to_ewah(rebuild);
-			}
-			bitmap_reset(rebuild);
-			display_progress(progress, ++i);
-		}
-	});
-
-	stop_progress(&progress);
-
-	free(reposition);
-	bitmap_free(rebuild);
-	return 0;
+	return reposition;
 }
 
 void free_bitmap_index(struct bitmap_index *b)
@@ -1429,11 +2347,32 @@ void free_bitmap_index(struct bitmap_index *b)
 	ewah_pool_free(b->trees);
 	ewah_pool_free(b->blobs);
 	ewah_pool_free(b->tags);
+	if (b->bitmaps) {
+		struct stored_bitmap *sb;
+		kh_foreach_value(b->bitmaps, sb, {
+			ewah_pool_free(sb->root);
+			free(sb);
+		});
+	}
 	kh_destroy_oid_map(b->bitmaps);
 	free(b->ext_index.objects);
 	free(b->ext_index.hashes);
+	kh_destroy_oid_pos(b->ext_index.positions);
 	bitmap_free(b->result);
 	bitmap_free(b->haves);
+	if (bitmap_is_midx(b)) {
+		/*
+		 * Multi-pack bitmaps need to have resources associated with
+		 * their on-disk reverse indexes unmapped so that stale .rev and
+		 * .bitmap files can be removed.
+		 *
+		 * Unlike pack-based bitmaps, multi-pack bitmaps can be read and
+		 * written in the same 'git multi-pack-index write --bitmap'
+		 * process. Close resources so they can be removed safely on
+		 * platforms like Windows.
+		 */
+		close_midx_revindex(b->midx);
+	}
 	free(b);
 }
 
@@ -1442,4 +2381,178 @@ int bitmap_has_oid_in_uninteresting(struct bitmap_index *bitmap_git,
 {
 	return bitmap_git &&
 		bitmap_walk_contains(bitmap_git, bitmap_git->haves, oid);
+}
+
+static off_t get_disk_usage_for_type(struct bitmap_index *bitmap_git,
+				     enum object_type object_type)
+{
+	struct bitmap *result = bitmap_git->result;
+	off_t total = 0;
+	struct ewah_iterator it;
+	eword_t filter;
+	size_t i;
+
+	init_type_iterator(&it, bitmap_git, object_type);
+	for (i = 0; i < result->word_alloc &&
+			ewah_iterator_next(&filter, &it); i++) {
+		eword_t word = result->words[i] & filter;
+		size_t base = (i * BITS_IN_EWORD);
+		unsigned offset;
+
+		if (!word)
+			continue;
+
+		for (offset = 0; offset < BITS_IN_EWORD; offset++) {
+			if ((word >> offset) == 0)
+				break;
+
+			offset += ewah_bit_ctz64(word >> offset);
+
+			if (bitmap_is_midx(bitmap_git)) {
+				uint32_t pack_pos;
+				uint32_t midx_pos = pack_pos_to_midx(bitmap_git->midx, base + offset);
+				off_t offset = nth_midxed_offset(bitmap_git->midx, midx_pos);
+
+				uint32_t pack_id = nth_midxed_pack_int_id(bitmap_git->midx, midx_pos);
+				struct packed_git *pack = bitmap_git->midx->packs[pack_id];
+
+				if (offset_to_pack_pos(pack, offset, &pack_pos) < 0) {
+					struct object_id oid;
+					nth_midxed_object_oid(&oid, bitmap_git->midx, midx_pos);
+
+					die(_("could not find '%s' in pack '%s' at offset %"PRIuMAX),
+					    oid_to_hex(&oid),
+					    pack->pack_name,
+					    (uintmax_t)offset);
+				}
+
+				total += pack_pos_to_offset(pack, pack_pos + 1) - offset;
+			} else {
+				size_t pos = base + offset;
+				total += pack_pos_to_offset(bitmap_git->pack, pos + 1) -
+					 pack_pos_to_offset(bitmap_git->pack, pos);
+			}
+		}
+	}
+
+	return total;
+}
+
+static off_t get_disk_usage_for_extended(struct bitmap_index *bitmap_git)
+{
+	struct bitmap *result = bitmap_git->result;
+	struct eindex *eindex = &bitmap_git->ext_index;
+	off_t total = 0;
+	struct object_info oi = OBJECT_INFO_INIT;
+	off_t object_size;
+	size_t i;
+
+	oi.disk_sizep = &object_size;
+
+	for (i = 0; i < eindex->count; i++) {
+		struct object *obj = eindex->objects[i];
+
+		if (!bitmap_get(result, bitmap_num_objects(bitmap_git) + i))
+			continue;
+
+		if (oid_object_info_extended(the_repository, &obj->oid, &oi, 0) < 0)
+			die(_("unable to get disk usage of '%s'"),
+			    oid_to_hex(&obj->oid));
+
+		total += object_size;
+	}
+	return total;
+}
+
+off_t get_disk_usage_from_bitmap(struct bitmap_index *bitmap_git,
+				 struct rev_info *revs)
+{
+	off_t total = 0;
+
+	total += get_disk_usage_for_type(bitmap_git, OBJ_COMMIT);
+	if (revs->tree_objects)
+		total += get_disk_usage_for_type(bitmap_git, OBJ_TREE);
+	if (revs->blob_objects)
+		total += get_disk_usage_for_type(bitmap_git, OBJ_BLOB);
+	if (revs->tag_objects)
+		total += get_disk_usage_for_type(bitmap_git, OBJ_TAG);
+
+	total += get_disk_usage_for_extended(bitmap_git);
+
+	return total;
+}
+
+int bitmap_is_midx(struct bitmap_index *bitmap_git)
+{
+	return !!bitmap_git->midx;
+}
+
+const struct string_list *bitmap_preferred_tips(struct repository *r)
+{
+	const struct string_list *dest;
+
+	if (!repo_config_get_string_multi(r, "pack.preferbitmaptips", &dest))
+		return dest;
+	return NULL;
+}
+
+int bitmap_is_preferred_refname(struct repository *r, const char *refname)
+{
+	const struct string_list *preferred_tips = bitmap_preferred_tips(r);
+	struct string_list_item *item;
+
+	if (!preferred_tips)
+		return 0;
+
+	for_each_string_list_item(item, preferred_tips) {
+		if (starts_with(refname, item->string))
+			return 1;
+	}
+
+	return 0;
+}
+
+static int verify_bitmap_file(const char *name)
+{
+	struct stat st;
+	unsigned char *data;
+	int fd = git_open(name);
+	int res = 0;
+
+	/* It is OK to not have the file. */
+	if (fd < 0 || fstat(fd, &st)) {
+		if (fd >= 0)
+			close(fd);
+		return 0;
+	}
+
+	data = xmmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	close(fd);
+	if (!hashfile_checksum_valid(data, st.st_size))
+		res = error(_("bitmap file '%s' has invalid checksum"),
+			    name);
+
+	munmap(data, st.st_size);
+	return res;
+}
+
+int verify_bitmap_files(struct repository *r)
+{
+	int res = 0;
+
+	for (struct multi_pack_index *m = get_multi_pack_index(r);
+	     m; m = m->next) {
+		char *midx_bitmap_name = midx_bitmap_filename(m);
+		res |= verify_bitmap_file(midx_bitmap_name);
+		free(midx_bitmap_name);
+	}
+
+	for (struct packed_git *p = get_all_packs(r);
+	     p; p = p->next) {
+		char *pack_bitmap_name = pack_bitmap_filename(p);
+		res |= verify_bitmap_file(pack_bitmap_name);
+		free(pack_bitmap_name);
+	}
+
+	return res;
 }

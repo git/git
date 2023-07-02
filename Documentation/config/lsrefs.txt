@@ -1,0 +1,9 @@
+lsrefs.unborn::
+	May be "advertise" (the default), "allow", or "ignore". If "advertise",
+	the server will respond to the client sending "unborn" (as described in
+	linkgit:gitprotocol-v2[5]) and will advertise support for this feature during the
+	protocol v2 capability advertisement. "allow" is the same as
+	"advertise" except that the server will not advertise support for this
+	feature; this is useful for load-balanced servers that cannot be
+	updated atomically (for example), since the administrator could
+	configure "allow", then after a delay, configure "advertise".

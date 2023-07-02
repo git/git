@@ -66,6 +66,11 @@ struct urlmatch_config {
 	int (*fallback_match_fn)(const char *url, void *cb);
 };
 
+#define URLMATCH_CONFIG_INIT { \
+	.vars = STRING_LIST_INIT_DUP, \
+}
+
 int urlmatch_config_entry(const char *var, const char *value, void *cb);
+void urlmatch_config_release(struct urlmatch_config *config);
 
 #endif /* URL_MATCH_H */

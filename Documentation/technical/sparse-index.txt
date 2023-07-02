@@ -1,0 +1,208 @@
+Git Sparse-Index Design Document
+================================
+
+The sparse-checkout feature allows users to focus a working directory on
+a subset of the files at HEAD. The cone mode patterns, enabled by
+`core.sparseCheckoutCone`, allow for very fast pattern matching to
+discover which files at HEAD belong in the sparse-checkout cone.
+
+Three important scale dimensions for a Git working directory are:
+
+* `HEAD`: How many files are present at `HEAD`?
+
+* Populated: How many files are within the sparse-checkout cone.
+
+* Modified: How many files has the user modified in the working directory?
+
+We will use big-O notation -- O(X) -- to denote how expensive certain
+operations are in terms of these dimensions.
+
+These dimensions are ordered by their magnitude: users (typically) modify
+fewer files than are populated, and we can only populate files at `HEAD`.
+
+Problems occur if there is an extreme imbalance in these dimensions. For
+example, if `HEAD` contains millions of paths but the populated set has
+only tens of thousands, then commands like `git status` and `git add` can
+be dominated by operations that require O(`HEAD`) operations instead of
+O(Populated). Primarily, the cost is in parsing and rewriting the index,
+which is filled primarily with files at `HEAD` that are marked with the
+`SKIP_WORKTREE` bit.
+
+The sparse-index intends to take these commands that read and modify the
+index from O(`HEAD`) to O(Populated). To do this, we need to modify the
+index format in a significant way: add "sparse directory" entries.
+
+With cone mode patterns, it is possible to detect when an entire
+directory will have its contents outside of the sparse-checkout definition.
+Instead of listing all of the files it contains as individual entries, a
+sparse-index contains an entry with the directory name, referencing the
+object ID of the tree at `HEAD` and marked with the `SKIP_WORKTREE` bit.
+If we need to discover the details for paths within that directory, we
+can parse trees to find that list.
+
+At time of writing, sparse-directory entries violate expectations about the
+index format and its in-memory data structure. There are many consumers in
+the codebase that expect to iterate through all of the index entries and
+see only files. In fact, these loops expect to see a reference to every
+staged file. One way to handle this is to parse trees to replace a
+sparse-directory entry with all of the files within that tree as the index
+is loaded. However, parsing trees is slower than parsing the index format,
+so that is a slower operation than if we left the index alone. The plan is
+to make all of these integrations "sparse aware" so this expansion through
+tree parsing is unnecessary and they use fewer resources than when using a
+full index.
+
+The implementation plan below follows four phases to slowly integrate with
+the sparse-index. The intention is to incrementally update Git commands to
+interact safely with the sparse-index without significant slowdowns. This
+may not always be possible, but the hope is that the primary commands that
+users need in their daily work are dramatically improved.
+
+Phase I: Format and initial speedups
+------------------------------------
+
+During this phase, Git learns to enable the sparse-index and safely parse
+one. Protections are put in place so that every consumer of the in-memory
+data structure can operate with its current assumption of every file at
+`HEAD`.
+
+At first, every index parse will call a helper method,
+`ensure_full_index()`, which scans the index for sparse-directory entries
+(pointing to trees) and replaces them with the full list of paths (with
+blob contents) by parsing tree objects. This will be slower in all cases.
+The only noticeable change in behavior will be that the serialized index
+file contains sparse-directory entries.
+
+To start, we use a new required index extension, `sdir`, to allow
+inserting sparse-directory entries into indexes with file format
+versions 2, 3, and 4. This prevents Git versions that do not understand
+the sparse-index from operating on one, while allowing tools that do not
+understand the sparse-index to operate on repositories as long as they do
+not interact with the index. A new format, index v5, will be introduced
+that includes sparse-directory entries by default. It might also
+introduce other features that have been considered for improving the
+index, as well.
+
+Next, consumers of the index will be guarded against operating on a
+sparse-index by inserting calls to `ensure_full_index()` or
+`expand_index_to_path()`. If a specific path is requested, then those will
+be protected from within the `index_file_exists()` and `index_name_pos()`
+API calls: they will call `ensure_full_index()` if necessary. The
+intention here is to preserve existing behavior when interacting with a
+sparse-checkout. We don't want a change to happen by accident, without
+tests. Many of these locations may not need any change before removing the
+guards, but we should not do so without tests to ensure the expected
+behavior happens.
+
+It may be desirable to _change_ the behavior of some commands in the
+presence of a sparse index or more generally in any sparse-checkout
+scenario. In such cases, these should be carefully communicated and
+tested. No such behavior changes are intended during this phase.
+
+During a scan of the codebase, not every iteration of the cache entries
+needs an `ensure_full_index()` check. The basic reasons include:
+
+1. The loop is scanning for entries with non-zero stage. These entries
+   are not collapsed into a sparse-directory entry.
+
+2. The loop is scanning for submodules. These entries are not collapsed
+   into a sparse-directory entry.
+
+3. The loop is part of the index API, especially around reading or
+   writing the format.
+
+4. The loop is checking for correct order of cache entries and that is
+   correct if and only if the sparse-directory entries are in the correct
+   location.
+
+5. The loop ignores entries with the `SKIP_WORKTREE` bit set, or is
+   otherwise already aware of sparse directory entries.
+
+6. The sparse-index is disabled at this point when using the split-index
+   feature, so no effort is made to protect the split-index API.
+
+Even after inserting these guards, we will keep expanding sparse-indexes
+for most Git commands using the `command_requires_full_index` repository
+setting. This setting will be on by default and disabled one builtin at a
+time until we have sufficient confidence that all of the index operations
+are properly guarded.
+
+To complete this phase, the commands `git status` and `git add` will be
+integrated with the sparse-index so that they operate with O(Populated)
+performance. They will be carefully tested for operations within and
+outside the sparse-checkout definition.
+
+Phase II: Careful integrations
+------------------------------
+
+This phase focuses on ensuring that all index extensions and APIs work
+well with a sparse-index. This requires significant increases to our test
+coverage, especially for operations that interact with the working
+directory outside of the sparse-checkout definition. Some of these
+behaviors may not be the desirable ones, such as some tests already
+marked for failure in `t1092-sparse-checkout-compatibility.sh`.
+
+The index extensions that may require special integrations are:
+
+* FS Monitor
+* Untracked cache
+
+While integrating with these features, we should look for patterns that
+might lead to better APIs for interacting with the index. Coalescing
+common usage patterns into an API call can reduce the number of places
+where sparse-directories need to be handled carefully.
+
+Phase III: Important command speedups
+-------------------------------------
+
+At this point, the patterns for testing and implementing sparse-directory
+logic should be relatively stable. This phase focuses on updating some of
+the most common builtins that use the index to operate as O(Populated).
+Here is a potential list of commands that could be valuable to integrate
+at this point:
+
+* `git commit`
+* `git checkout`
+* `git merge`
+* `git rebase`
+
+Hopefully, commands such as `git merge` and `git rebase` can benefit
+instead from merge algorithms that do not use the index as a data
+structure, such as the merge-ORT strategy. As these topics mature, we
+may enable the ORT strategy by default for repositories using the
+sparse-index feature.
+
+Along with `git status` and `git add`, these commands cover the majority
+of users' interactions with the working directory. In addition, we can
+integrate with these commands:
+
+* `git grep`
+* `git rm`
+
+These have been proposed as some whose behavior could change when in a
+repo with a sparse-checkout definition. It would be good to include this
+behavior automatically when using a sparse-index. Some clarity is needed
+to make the behavior switch clear to the user.
+
+This phase is the first where parallel work might be possible without too
+much conflicts between topics.
+
+Phase IV: The long tail
+-----------------------
+
+This last phase is less a "phase" and more "the new normal" after all of
+the previous work.
+
+To start, the `command_requires_full_index` option could be removed in
+favor of expanding only when hitting an API guard.
+
+There are many Git commands that could use special attention to operate as
+O(Populated), while some might be so rare that it is acceptable to leave
+them with additional overhead when a sparse-index is present.
+
+Here are some commands that might be useful to update:
+
+* `git sparse-checkout set`
+* `git am`
+* `git clean`
+* `git stash`

@@ -32,7 +32,7 @@
    String Matching:  An Aid to Bibliographic Search," CACM June 1975,
    Vol. 18, No. 6, which describes the failure function used below. */
 
-#include "cache.h"
+#include "git-compat-util.h"
 
 #include "kwset.h"
 #include "compat/obstack.h"
@@ -477,7 +477,7 @@ kwsprep (kwset_t kws)
 	next[i] = NULL;
       treenext(kwset->trie->links, next);
 
-      if ((trans = kwset->trans) != NULL)
+      if ((trans = kwset->trans))
 	for (i = 0; i < NCHAR; ++i)
 	  kwset->next[i] = next[U(trans[i])];
       else
@@ -485,7 +485,7 @@ kwsprep (kwset_t kws)
     }
 
   /* Fix things up for any translation table. */
-  if ((trans = kwset->trans) != NULL)
+  if ((trans = kwset->trans))
     for (i = 0; i < NCHAR; ++i)
       kwset->delta[i] = delta[U(trans[i])];
   else

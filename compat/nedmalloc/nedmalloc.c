@@ -323,7 +323,6 @@ static NOINLINE void RemoveCacheEntries(nedpool *p, threadcache *tc, unsigned in
 }
 static void DestroyCaches(nedpool *p) THROWSPEC
 {
-	if(p->caches)
 	{
 		threadcache *tc;
 		int n;
@@ -510,7 +509,7 @@ static void threadcache_free(nedpool *p, threadcache *tc, int mymspace, void *me
 	assert(idx<=THREADCACHEMAXBINS);
 	if(tck==*binsptr)
 	{
-		fprintf(stderr, "Attempt to free already freed memory block %p - aborting!\n", tck);
+		fprintf(stderr, "Attempt to free already freed memory block %p - aborting!\n", (void *)tck);
 		abort();
 	}
 #ifdef FULLSANITYCHECKS

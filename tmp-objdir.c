@@ -1,21 +1,28 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "tmp-objdir.h"
+#include "abspath.h"
+#include "chdir-notify.h"
 #include "dir.h"
+#include "environment.h"
+#include "object-file.h"
+#include "path.h"
 #include "sigchain.h"
 #include "string-list.h"
 #include "strbuf.h"
 #include "strvec.h"
 #include "quote.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 
 struct tmp_objdir {
 	struct strbuf path;
 	struct strvec env;
+	struct object_directory *prev_odb;
+	int will_destroy;
 };
 
 /*
  * Allow only one tmp_objdir at a time in a running process, which simplifies
- * our signal/atexit cleanup routines.  It's doubtful callers will ever need
+ * our atexit cleanup routines.  It's doubtful callers will ever need
  * more than one, and we can expand later if so.  You can have many such
  * tmp_objdirs simultaneously in many processes, of course.
  */
@@ -28,7 +35,7 @@ static void tmp_objdir_free(struct tmp_objdir *t)
 	free(t);
 }
 
-static int tmp_objdir_destroy_1(struct tmp_objdir *t, int on_signal)
+int tmp_objdir_destroy(struct tmp_objdir *t)
 {
 	int err;
 
@@ -38,26 +45,14 @@ static int tmp_objdir_destroy_1(struct tmp_objdir *t, int on_signal)
 	if (t == the_tmp_objdir)
 		the_tmp_objdir = NULL;
 
-	/*
-	 * This may use malloc via strbuf_grow(), but we should
-	 * have pre-grown t->path sufficiently so that this
-	 * doesn't happen in practice.
-	 */
+	if (t->prev_odb)
+		restore_primary_odb(t->prev_odb, t->path.buf);
+
 	err = remove_dir_recursively(&t->path, 0);
 
-	/*
-	 * When we are cleaning up due to a signal, we won't bother
-	 * freeing memory; it may cause a deadlock if the signal
-	 * arrived while libc's allocator lock is held.
-	 */
-	if (!on_signal)
-		tmp_objdir_free(t);
-	return err;
-}
+	tmp_objdir_free(t);
 
-int tmp_objdir_destroy(struct tmp_objdir *t)
-{
-	return tmp_objdir_destroy_1(t, 0);
+	return err;
 }
 
 static void remove_tmp_objdir(void)
@@ -65,11 +60,9 @@ static void remove_tmp_objdir(void)
 	tmp_objdir_destroy(the_tmp_objdir);
 }
 
-static void remove_tmp_objdir_on_signal(int signo)
+void tmp_objdir_discard_objects(struct tmp_objdir *t)
 {
-	tmp_objdir_destroy_1(the_tmp_objdir, 1);
-	sigchain_pop(signo);
-	raise(signo);
+	remove_dir_recursively(&t->path, REMOVE_DIR_KEEP_TOPLEVEL);
 }
 
 /*
@@ -121,7 +114,7 @@ static int setup_tmp_objdir(const char *root)
 	return ret;
 }
 
-struct tmp_objdir *tmp_objdir_create(void)
+struct tmp_objdir *tmp_objdir_create(const char *prefix)
 {
 	static int installed_handlers;
 	struct tmp_objdir *t;
@@ -129,19 +122,16 @@ struct tmp_objdir *tmp_objdir_create(void)
 	if (the_tmp_objdir)
 		BUG("only one tmp_objdir can be used at a time");
 
-	t = xmalloc(sizeof(*t));
+	t = xcalloc(1, sizeof(*t));
 	strbuf_init(&t->path, 0);
 	strvec_init(&t->env);
 
-	strbuf_addf(&t->path, "%s/incoming-XXXXXX", get_object_directory());
-
 	/*
-	 * Grow the strbuf beyond any filename we expect to be placed in it.
-	 * If tmp_objdir_destroy() is called by a signal handler, then
-	 * we should be able to use the strbuf to remove files without
-	 * having to call malloc.
+	 * Use a string starting with tmp_ so that the builtin/prune.c code
+	 * can recognize any stale objdirs left behind by a crash and delete
+	 * them.
 	 */
-	strbuf_grow(&t->path, 1024);
+	strbuf_addf(&t->path, "%s/tmp_objdir-%s-XXXXXX", get_object_directory(), prefix);
 
 	if (!mkdtemp(t->path.buf)) {
 		/* free, not destroy, as we never touched the filesystem */
@@ -152,7 +142,6 @@ struct tmp_objdir *tmp_objdir_create(void)
 	the_tmp_objdir = t;
 	if (!installed_handlers) {
 		atexit(remove_tmp_objdir);
-		sigchain_push_common(remove_tmp_objdir_on_signal);
 		installed_handlers++;
 	}
 
@@ -185,9 +174,11 @@ static int pack_copy_priority(const char *name)
 		return 1;
 	if (ends_with(name, ".pack"))
 		return 2;
-	if (ends_with(name, ".idx"))
+	if (ends_with(name, ".rev"))
 		return 3;
-	return 4;
+	if (ends_with(name, ".idx"))
+		return 4;
+	return 5;
 }
 
 static int pack_copy_cmp(const char *a, const char *b)
@@ -267,6 +258,13 @@ int tmp_objdir_migrate(struct tmp_objdir *t)
 	if (!t)
 		return 0;
 
+	if (t->prev_odb) {
+		if (the_repository->objects->odb->will_destroy)
+			BUG("migrating an ODB that was marked for destruction");
+		restore_primary_odb(t->prev_odb, t->path.buf);
+		t->prev_odb = NULL;
+	}
+
 	strbuf_addbuf(&src, &t->path);
 	strbuf_addstr(&dst, get_object_directory());
 
@@ -289,4 +287,34 @@ const char **tmp_objdir_env(const struct tmp_objdir *t)
 void tmp_objdir_add_as_alternate(const struct tmp_objdir *t)
 {
 	add_to_alternates_memory(t->path.buf);
+}
+
+void tmp_objdir_replace_primary_odb(struct tmp_objdir *t, int will_destroy)
+{
+	if (t->prev_odb)
+		BUG("the primary object database is already replaced");
+	t->prev_odb = set_temporary_primary_odb(t->path.buf, will_destroy);
+	t->will_destroy = will_destroy;
+}
+
+struct tmp_objdir *tmp_objdir_unapply_primary_odb(void)
+{
+	if (!the_tmp_objdir || !the_tmp_objdir->prev_odb)
+		return NULL;
+
+	restore_primary_odb(the_tmp_objdir->prev_odb, the_tmp_objdir->path.buf);
+	the_tmp_objdir->prev_odb = NULL;
+	return the_tmp_objdir;
+}
+
+void tmp_objdir_reapply_primary_odb(struct tmp_objdir *t, const char *old_cwd,
+		const char *new_cwd)
+{
+	char *path;
+
+	path = reparent_relative_path(old_cwd, new_cwd, t->path.buf);
+	strbuf_reset(&t->path);
+	strbuf_addstr(&t->path, path);
+	free(path);
+	tmp_objdir_replace_primary_odb(t, t->will_destroy);
 }

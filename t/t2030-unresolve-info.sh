@@ -2,6 +2,9 @@
 
 test_description='undoing resolution'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 check_resolve_undo () {
@@ -59,7 +62,7 @@ test_expect_success setup '
 	test_commit fourth fi/le fourth &&
 	git checkout add-add &&
 	test_commit fifth add-differently &&
-	git checkout master
+	git checkout main
 '
 
 test_expect_success 'add records switch clears' '
@@ -176,20 +179,90 @@ test_expect_success 'rerere and rerere forget (subdirectory)' '
 
 test_expect_success 'rerere forget (binary)' '
 	git checkout -f side &&
-	printf "a\0c" >binary &&
-	git commit -a -m binary &&
+	test_commit --printf binary binary "a\0c" &&
 	test_must_fail git merge second &&
 	git rerere forget binary
 '
 
 test_expect_success 'rerere forget (add-add conflict)' '
-	git checkout -f master &&
-	echo master >add-differently &&
+	git checkout -f main &&
+	echo main >add-differently &&
 	git add add-differently &&
 	git commit -m "add differently" &&
 	test_must_fail git merge fifth &&
 	git rerere forget add-differently 2>actual &&
 	test_i18ngrep "no remembered" actual
+'
+
+test_expect_success 'resolve-undo keeps blobs from gc' '
+	git checkout -f main &&
+
+	# First make sure we do not have any cruft left in the object store
+	git repack -a -d &&
+	git prune --expire=now &&
+	git prune-packed &&
+	git gc --prune=now &&
+	git fsck --unreachable >cruft &&
+	test_must_be_empty cruft &&
+
+	# Now add three otherwise unreferenced blob objects to the index
+	git reset --hard &&
+	B1=$(echo "resolve undo test data 1" | git hash-object -w --stdin) &&
+	B2=$(echo "resolve undo test data 2" | git hash-object -w --stdin) &&
+	B3=$(echo "resolve undo test data 3" | git hash-object -w --stdin) &&
+	git update-index --add --index-info <<-EOF &&
+	100644 $B1 1	frotz
+	100644 $B2 2	frotz
+	100644 $B3 3	frotz
+	EOF
+
+	# These three blob objects are reachable (only) from the index
+	git fsck --unreachable >cruft &&
+	test_must_be_empty cruft &&
+	# and they should be protected from GC
+	git gc --prune=now &&
+	git cat-file -e $B1 &&
+	git cat-file -e $B2 &&
+	git cat-file -e $B3 &&
+
+	# Now resolve the conflicted path
+	B0=$(echo "resolve undo test data 0" | git hash-object -w --stdin) &&
+	git update-index --add --cacheinfo 100644,$B0,frotz &&
+
+	# These three blob objects are now reachable only from the resolve-undo
+	git fsck --unreachable >cruft &&
+	test_must_be_empty cruft &&
+
+	# and they should survive GC
+	git gc --prune=now &&
+	git cat-file -e $B0 &&
+	git cat-file -e $B1 &&
+	git cat-file -e $B2 &&
+	git cat-file -e $B3 &&
+
+	# Now we switch away, which nukes resolve-undo, and
+	# blobs B0..B3 would become dangling.  fsck should
+	# notice that they are now unreachable.
+	git checkout -f side &&
+	git fsck --unreachable >cruft &&
+	sort cruft >actual &&
+	sort <<-EOF >expect &&
+	unreachable blob $B0
+	unreachable blob $B1
+	unreachable blob $B2
+	unreachable blob $B3
+	EOF
+	test_cmp expect actual &&
+
+	# And they should go away when gc runs.
+	git gc --prune=now &&
+	git fsck --unreachable >cruft &&
+	test_must_be_empty cruft &&
+
+	test_must_fail git cat-file -e $B0 &&
+	test_must_fail git cat-file -e $B1 &&
+	test_must_fail git cat-file -e $B2 &&
+	test_must_fail git cat-file -e $B3
 '
 
 test_done

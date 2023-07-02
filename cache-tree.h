@@ -1,7 +1,6 @@
 #ifndef CACHE_TREE_H
 #define CACHE_TREE_H
 
-#include "cache.h"
 #include "tree.h"
 #include "tree-walk.h"
 
@@ -27,6 +26,8 @@ void cache_tree_free(struct cache_tree **);
 void cache_tree_invalidate_path(struct index_state *, const char *);
 struct cache_tree_sub *cache_tree_sub(struct cache_tree *, const char *);
 
+int cache_tree_subtree_pos(struct cache_tree *it, const char *path, int pathlen);
+
 void cache_tree_write(struct strbuf *, struct cache_tree *root);
 struct cache_tree *cache_tree_read(const char *buffer, unsigned long size);
 
@@ -51,19 +52,4 @@ int write_index_as_tree(struct object_id *oid, struct index_state *index_state, 
 void prime_cache_tree(struct repository *, struct index_state *, struct tree *);
 
 int cache_tree_matches_traversal(struct cache_tree *, struct name_entry *ent, struct traverse_info *info);
-
-#ifdef USE_THE_INDEX_COMPATIBILITY_MACROS
-static inline int write_cache_as_tree(struct object_id *oid, int flags, const char *prefix)
-{
-	return write_index_as_tree(oid, &the_index, get_index_file(), flags, prefix);
-}
-
-static inline int update_main_cache_tree(int flags)
-{
-	if (!the_index.cache_tree)
-		the_index.cache_tree = cache_tree();
-	return cache_tree_update(&the_index, flags);
-}
-#endif
-
 #endif

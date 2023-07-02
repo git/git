@@ -14,7 +14,7 @@ test_description='revert can handle submodules'
 git_revert () {
 	git status -su >expect &&
 	ls -1pR * >>expect &&
-	tar cf "$TRASH_DIRECTORY/tmp.tar" * &&
+	"$TAR" cf "$TRASH_DIRECTORY/tmp.tar" * &&
 	may_only_be_test_must_fail "$2" &&
 	$2 git checkout "$1" &&
 	if test -n "$2"
@@ -23,14 +23,17 @@ git_revert () {
 	fi &&
 	git revert HEAD &&
 	rm -rf * &&
-	tar xf "$TRASH_DIRECTORY/tmp.tar" &&
+	"$TAR" xf "$TRASH_DIRECTORY/tmp.tar" &&
 	git status -su >actual &&
 	ls -1pR * >>actual &&
 	test_cmp expect actual &&
 	git revert HEAD
 }
 
-KNOWN_FAILURE_NOFF_MERGE_DOESNT_CREATE_EMPTY_SUBMODULE_DIR=1
+if test "$GIT_TEST_MERGE_ALGORITHM" != ort
+then
+	KNOWN_FAILURE_NOFF_MERGE_DOESNT_CREATE_EMPTY_SUBMODULE_DIR=1
+fi
 test_submodule_switch_func "git_revert"
 
 test_done

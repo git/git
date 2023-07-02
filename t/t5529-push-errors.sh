@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='detect some push errors early (before contacting remote)'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup commits' '
@@ -32,7 +34,7 @@ test_expect_success 'detect missing branches early' '
 test_expect_success 'detect missing sha1 expressions early' '
 	echo no >rp-ran &&
 	echo no >expect &&
-	test_must_fail git push origin master~2:master &&
+	test_must_fail git push origin main~2:main &&
 	test_cmp expect rp-ran
 '
 

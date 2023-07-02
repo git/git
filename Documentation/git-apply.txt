@@ -16,7 +16,7 @@ SYNOPSIS
 	  [--ignore-space-change | --ignore-whitespace]
 	  [--whitespace=(nowarn|warn|fix|error|error-all)]
 	  [--exclude=<path>] [--include=<path>] [--directory=<root>]
-	  [--verbose] [--unsafe-paths] [<patch>...]
+	  [--verbose | --quiet] [--unsafe-paths] [--allow-empty] [<patch>...]
 
 DESCRIPTION
 -----------
@@ -84,12 +84,13 @@ OPTIONS
 
 -3::
 --3way::
-	When the patch does not apply cleanly, fall back on 3-way merge if
-	the patch records the identity of blobs it is supposed to apply to,
-	and we have those blobs available locally, possibly leaving the
+	Attempt 3-way merge if the patch records the identity of blobs it is supposed
+	to apply to and we have those blobs available locally, possibly leaving the
 	conflict markers in the files in the working tree for the user to
-	resolve.  This option implies the `--index` option, and is incompatible
-	with the `--reject` and the `--cached` options.
+	resolve.  This option implies the `--index` option unless the
+	`--cached` option is used, and is incompatible with the `--reject` option.
+	When used with the `--cached` option, any conflicts are left at higher stages
+	in the cache.
 
 --build-fake-ancestor=<file>::
 	Newer 'git diff' output has embedded 'index information'
@@ -207,7 +208,7 @@ behavior:
 * `warn` outputs warnings for a few such errors, but applies the
   patch as-is (default).
 * `fix` outputs warnings for a few such errors, and applies the
-  patch after fixing them (`strip` is a synonym --- the tool
+  patch after fixing them (`strip` is a synonym -- the tool
   used to consider only trailing whitespace characters as errors, and the
   fix involved 'stripping' them, but modern Gits do more).
 * `error` outputs warnings for a few such errors, and refuses
@@ -226,6 +227,11 @@ behavior:
 	Report progress to stderr. By default, only a message about the
 	current patch being applied will be printed. This option will cause
 	additional information to be reported.
+
+-q::
+--quiet::
+	Suppress stderr output. Messages about patch status and progress
+	will not be printed.
 
 --recount::
 	Do not trust the line counts in the hunk headers, but infer them
@@ -250,16 +256,16 @@ When `git apply` is used as a "better GNU patch", the user can pass
 the `--unsafe-paths` option to override this safety check.  This option
 has no effect when `--index` or `--cached` is in use.
 
+--allow-empty::
+	Don't return error for patches containing no diff. This includes
+	empty patches and patches with commit text only.
+
 CONFIGURATION
 -------------
 
-apply.ignoreWhitespace::
-	Set to 'change' if you want changes in whitespace to be ignored by default.
-	Set to one of: no, none, never, false if you want changes in
-	whitespace to be significant.
-apply.whitespace::
-	When no `--whitespace` flag is given from the command
-	line, this configuration item is used as the default.
+include::includes/cmd-config-section-all.txt[]
+
+include::config/apply.txt[]
 
 SUBMODULES
 ----------

@@ -2,6 +2,10 @@
 
 test_description='Various filesystem issues'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 auml=$(printf '\303\244')
@@ -65,7 +69,7 @@ test_expect_success "setup case tests" '
 	git mv camelcase tmp &&
 	git mv tmp CamelCase &&
 	git commit -m "rename" &&
-	git checkout -f master
+	git checkout -f main
 '
 
 test_expect_success 'rename (case change)' '
@@ -101,7 +105,8 @@ test_expect_failure CASE_INSENSITIVE_FS 'add (with different case)' '
 	rm camelcase &&
 	echo 1 >CamelCase &&
 	git add CamelCase &&
-	camel=$(git ls-files | grep -i camelcase) &&
+	git ls-files >tmp &&
+	camel=$(grep -i camelcase tmp) &&
 	test $(echo "$camel" | wc -l) = 1 &&
 	test "z$(git cat-file blob :$camel)" = z1
 '
@@ -118,7 +123,7 @@ test_expect_success "setup unicode normalization tests" '
 	git mv $aumlcdiar tmp &&
 	git mv tmp "$auml" &&
 	git commit -m rename &&
-	git checkout -f master
+	git checkout -f main
 '
 
 $test_unicode 'rename (silent unicode normalization)' '
@@ -147,7 +152,7 @@ test_expect_success CASE_INSENSITIVE_FS 'checkout with no pathspec and a case in
 		git add gitweb &&
 		git commit -m "add gitweb/subdir/file" &&
 
-		git checkout master
+		git checkout main
 	)
 '
 

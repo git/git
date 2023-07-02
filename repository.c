@@ -2,14 +2,22 @@
  * not really _using_ the compat macros, just make sure the_index
  * declaration matches the definition in this file.
  */
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
-#include "cache.h"
+#define USE_THE_INDEX_VARIABLE
+#include "git-compat-util.h"
+#include "abspath.h"
 #include "repository.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "config.h"
 #include "object.h"
 #include "lockfile.h"
+#include "path.h"
+#include "read-cache-ll.h"
+#include "remote.h"
+#include "setup.h"
 #include "submodule-config.h"
+#include "sparse-index.h"
+#include "trace2.h"
+#include "promisor-remote.h"
 
 /* The main repository */
 static struct repository the_repo;
@@ -22,7 +30,10 @@ void initialize_the_repository(void)
 
 	the_repo.index = &the_index;
 	the_repo.objects = raw_object_store_new();
+	the_repo.remote_state = remote_state_new();
 	the_repo.parsed_objects = parsed_object_pool_new();
+
+	index_state_init(&the_index, the_repository);
 
 	repo_set_hash_algo(&the_repo, GIT_HASH_SHA1);
 }
@@ -72,11 +83,13 @@ void repo_set_gitdir(struct repository *repo,
 	repo_set_commondir(repo, o->commondir);
 
 	if (!repo->objects->odb) {
-		repo->objects->odb = xcalloc(1, sizeof(*repo->objects->odb));
+		CALLOC_ARRAY(repo->objects->odb, 1);
 		repo->objects->odb_tail = &repo->objects->odb->next;
 	}
 	expand_base_dir(&repo->objects->odb->path, o->object_dir,
 			repo->commondir, "objects");
+
+	repo->objects->odb->disable_ref_updates = o->disable_ref_updates;
 
 	free(repo->objects->alternate_db);
 	repo->objects->alternate_db = xstrdup_or_null(o->alternate_db);
@@ -162,6 +175,7 @@ int repo_init(struct repository *repo,
 
 	repo->objects = raw_object_store_new();
 	repo->parsed_objects = parsed_object_pool_new();
+	repo->remote_state = remote_state_new();
 
 	if (repo_init_gitdir(repo, gitdir))
 		goto error;
@@ -170,6 +184,11 @@ int repo_init(struct repository *repo,
 		goto error;
 
 	repo_set_hash_algo(repo, format.hash_algo);
+	repo->repository_format_worktree_config = format.worktree_config;
+
+	/* take ownership of format.partial_clone */
+	repo->repository_format_partial_clone = format.partial_clone;
+	format.partial_clone = NULL;
 
 	if (worktree)
 		repo_set_worktree(repo, worktree);
@@ -184,19 +203,15 @@ error:
 
 int repo_submodule_init(struct repository *subrepo,
 			struct repository *superproject,
-			const struct submodule *sub)
+			const char *path,
+			const struct object_id *treeish_name)
 {
 	struct strbuf gitdir = STRBUF_INIT;
 	struct strbuf worktree = STRBUF_INIT;
 	int ret = 0;
 
-	if (!sub) {
-		ret = -1;
-		goto out;
-	}
-
-	strbuf_repo_worktree_path(&gitdir, superproject, "%s/.git", sub->path);
-	strbuf_repo_worktree_path(&worktree, superproject, "%s", sub->path);
+	strbuf_repo_worktree_path(&gitdir, superproject, "%s/.git", path);
+	strbuf_repo_worktree_path(&worktree, superproject, "%s", path);
 
 	if (repo_init(subrepo, gitdir.buf, worktree.buf)) {
 		/*
@@ -206,9 +221,15 @@ int repo_submodule_init(struct repository *subrepo,
 		 * in the superproject's 'modules' directory.  In this case the
 		 * submodule would not have a worktree.
 		 */
+		const struct submodule *sub =
+			submodule_from_path(superproject, treeish_name, path);
+		if (!sub) {
+			ret = -1;
+			goto out;
+		}
+
 		strbuf_reset(&gitdir);
-		strbuf_repo_git_path(&gitdir, superproject,
-				     "modules/%s", sub->name);
+		submodule_name_to_gitdir(&gitdir, superproject, sub->name);
 
 		if (repo_init(subrepo, gitdir.buf, NULL)) {
 			ret = -1;
@@ -219,12 +240,26 @@ int repo_submodule_init(struct repository *subrepo,
 	subrepo->submodule_prefix = xstrfmt("%s%s/",
 					    superproject->submodule_prefix ?
 					    superproject->submodule_prefix :
-					    "", sub->path);
+					    "", path);
 
 out:
 	strbuf_release(&gitdir);
 	strbuf_release(&worktree);
 	return ret;
+}
+
+static void repo_clear_path_cache(struct repo_path_cache *cache)
+{
+	FREE_AND_NULL(cache->squash_msg);
+	FREE_AND_NULL(cache->squash_msg);
+	FREE_AND_NULL(cache->merge_msg);
+	FREE_AND_NULL(cache->merge_rr);
+	FREE_AND_NULL(cache->merge_mode);
+	FREE_AND_NULL(cache->merge_head);
+	FREE_AND_NULL(cache->merge_autostash);
+	FREE_AND_NULL(cache->auto_merge);
+	FREE_AND_NULL(cache->fetch_head);
+	FREE_AND_NULL(cache->shallow);
 }
 
 void repo_clear(struct repository *repo)
@@ -257,14 +292,46 @@ void repo_clear(struct repository *repo)
 		if (repo->index != &the_index)
 			FREE_AND_NULL(repo->index);
 	}
+
+	if (repo->promisor_remote_config) {
+		promisor_remote_clear(repo->promisor_remote_config);
+		FREE_AND_NULL(repo->promisor_remote_config);
+	}
+
+	if (repo->remote_state) {
+		remote_state_clear(repo->remote_state);
+		FREE_AND_NULL(repo->remote_state);
+	}
+
+	repo_clear_path_cache(&repo->cached_paths);
 }
 
 int repo_read_index(struct repository *repo)
 {
-	if (!repo->index)
-		repo->index = xcalloc(1, sizeof(*repo->index));
+	int res;
 
-	return read_index_from(repo->index, repo->index_file, repo->gitdir);
+	/* Complete the double-reference */
+	if (!repo->index) {
+		ALLOC_ARRAY(repo->index, 1);
+		index_state_init(repo->index, repo);
+	} else if (repo->index->repo != repo) {
+		BUG("repo's index should point back at itself");
+	}
+
+	res = read_index_from(repo->index, repo->index_file, repo->gitdir);
+
+	prepare_repo_settings(repo);
+	if (repo->settings.command_requires_full_index)
+		ensure_full_index(repo->index);
+
+	/*
+	 * If sparse checkouts are in use, check whether paths with the
+	 * SKIP_WORKTREE attribute are missing from the worktree; if not,
+	 * clear that attribute for that path.
+	 */
+	clear_skip_worktree_from_present_files(repo->index);
+
+	return res;
 }
 
 int repo_hold_locked_index(struct repository *repo,

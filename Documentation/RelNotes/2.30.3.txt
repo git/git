@@ -1,0 +1,24 @@
+Git v2.30.2 Release Notes
+=========================
+
+This release addresses the security issue CVE-2022-24765.
+
+Fixes since v2.30.2
+-------------------
+
+ * Build fix on Windows.
+
+ * Fix `GIT_CEILING_DIRECTORIES` with Windows-style root directories.
+
+ * CVE-2022-24765:
+   On multi-user machines, Git users might find themselves
+   unexpectedly in a Git worktree, e.g. when another user created a
+   repository in `C:\.git`, in a mounted network drive or in a
+   scratch space. Merely having a Git-aware prompt that runs `git
+   status` (or `git diff`) and navigating to a directory which is
+   supposedly not a Git worktree, or opening such a directory in an
+   editor or IDE such as VS Code or Atom, will potentially run
+   commands defined by that other user.
+
+Credit for finding this vulnerability goes to 俞晨东; The fix was
+authored by Johannes Schindelin.

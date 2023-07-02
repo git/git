@@ -1,4 +1,5 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "gettext.h"
 #include "config.h"
 #include "commit.h"
 #include "color.h"
@@ -95,7 +96,7 @@ static void parse_graph_colors_config(struct strvec *colors, const char *string)
 		if (!color_parse_mem(start, comma - start, color))
 			strvec_push(colors, color);
 		else
-			warning(_("ignore invalid color '%.*s' in log.graphColors"),
+			warning(_("ignored invalid color '%.*s' in log.graphColors"),
 				(int)(comma - start), start);
 		start = comma + 1;
 	}
@@ -399,6 +400,18 @@ struct git_graph *graph_init(struct rev_info *opt)
 	opt->diffopt.output_prefix_data = graph;
 
 	return graph;
+}
+
+void graph_clear(struct git_graph *graph)
+{
+	if (!graph)
+		return;
+
+	free(graph->columns);
+	free(graph->new_columns);
+	free(graph->mapping);
+	free(graph->old_mapping);
+	free(graph);
 }
 
 static void graph_update_state(struct git_graph *graph, enum graph_state s)

@@ -1,7 +1,7 @@
 #ifndef PACK_OBJECTS_H
 #define PACK_OBJECTS_H
 
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "thread-utils.h"
 #include "pack.h"
 
@@ -116,16 +116,6 @@ struct object_entry {
 	unsigned dfs_state:OE_DFS_STATE_BITS;
 	unsigned depth:OE_DEPTH_BITS;
 	unsigned ext_base:1; /* delta_idx points outside packlist */
-
-	/*
-	 * pahole results on 64-bit linux (gcc and clang)
-	 *
-	 *   size: 80, bit_padding: 9 bits
-	 *
-	 * and on 32-bit (gcc)
-	 *
-	 *   size: 76, bit_padding: 9 bits
-	 */
 };
 
 struct packing_data {
@@ -168,6 +158,14 @@ struct packing_data {
 	/* delta islands */
 	unsigned int *tree_depth;
 	unsigned char *layer;
+
+	/*
+	 * Used when writing cruft packs.
+	 *
+	 * Object mtimes are stored in pack order when writing, but
+	 * written out in lexicographic (index) order.
+	 */
+	uint32_t *cruft_mtime;
 };
 
 void prepare_packing_data(struct repository *r, struct packing_data *pdata);
@@ -268,151 +266,9 @@ static inline void oe_set_in_pack(struct packing_data *pack,
 	pack->in_pack[e - pack->objects] = p;
 }
 
-static inline struct object_entry *oe_delta(
-		const struct packing_data *pack,
-		const struct object_entry *e)
-{
-	if (!e->delta_idx)
-		return NULL;
-	if (e->ext_base)
-		return &pack->ext_bases[e->delta_idx - 1];
-	else
-		return &pack->objects[e->delta_idx - 1];
-}
-
-static inline void oe_set_delta(struct packing_data *pack,
-				struct object_entry *e,
-				struct object_entry *delta)
-{
-	if (delta)
-		e->delta_idx = (delta - pack->objects) + 1;
-	else
-		e->delta_idx = 0;
-}
-
 void oe_set_delta_ext(struct packing_data *pack,
 		      struct object_entry *e,
 		      const struct object_id *oid);
-
-static inline struct object_entry *oe_delta_child(
-		const struct packing_data *pack,
-		const struct object_entry *e)
-{
-	if (e->delta_child_idx)
-		return &pack->objects[e->delta_child_idx - 1];
-	return NULL;
-}
-
-static inline void oe_set_delta_child(struct packing_data *pack,
-				      struct object_entry *e,
-				      struct object_entry *delta)
-{
-	if (delta)
-		e->delta_child_idx = (delta - pack->objects) + 1;
-	else
-		e->delta_child_idx = 0;
-}
-
-static inline struct object_entry *oe_delta_sibling(
-		const struct packing_data *pack,
-		const struct object_entry *e)
-{
-	if (e->delta_sibling_idx)
-		return &pack->objects[e->delta_sibling_idx - 1];
-	return NULL;
-}
-
-static inline void oe_set_delta_sibling(struct packing_data *pack,
-					struct object_entry *e,
-					struct object_entry *delta)
-{
-	if (delta)
-		e->delta_sibling_idx = (delta - pack->objects) + 1;
-	else
-		e->delta_sibling_idx = 0;
-}
-
-unsigned long oe_get_size_slow(struct packing_data *pack,
-			       const struct object_entry *e);
-static inline unsigned long oe_size(struct packing_data *pack,
-				    const struct object_entry *e)
-{
-	if (e->size_valid)
-		return e->size_;
-
-	return oe_get_size_slow(pack, e);
-}
-
-static inline int oe_size_less_than(struct packing_data *pack,
-				    const struct object_entry *lhs,
-				    unsigned long rhs)
-{
-	if (lhs->size_valid)
-		return lhs->size_ < rhs;
-	if (rhs < pack->oe_size_limit) /* rhs < 2^x <= lhs ? */
-		return 0;
-	return oe_get_size_slow(pack, lhs) < rhs;
-}
-
-static inline int oe_size_greater_than(struct packing_data *pack,
-				       const struct object_entry *lhs,
-				       unsigned long rhs)
-{
-	if (lhs->size_valid)
-		return lhs->size_ > rhs;
-	if (rhs < pack->oe_size_limit) /* rhs < 2^x <= lhs ? */
-		return 1;
-	return oe_get_size_slow(pack, lhs) > rhs;
-}
-
-static inline void oe_set_size(struct packing_data *pack,
-			       struct object_entry *e,
-			       unsigned long size)
-{
-	if (size < pack->oe_size_limit) {
-		e->size_ = size;
-		e->size_valid = 1;
-	} else {
-		e->size_valid = 0;
-		if (oe_get_size_slow(pack, e) != size)
-			BUG("'size' is supposed to be the object size!");
-	}
-}
-
-static inline unsigned long oe_delta_size(struct packing_data *pack,
-					  const struct object_entry *e)
-{
-	if (e->delta_size_valid)
-		return e->delta_size_;
-
-	/*
-	 * pack->delta_size[] can't be NULL because oe_set_delta_size()
-	 * must have been called when a new delta is saved with
-	 * oe_set_delta().
-	 * If oe_delta() returns NULL (i.e. default state, which means
-	 * delta_size_valid is also false), then the caller must never
-	 * call oe_delta_size().
-	 */
-	return pack->delta_size[e - pack->objects];
-}
-
-static inline void oe_set_delta_size(struct packing_data *pack,
-				     struct object_entry *e,
-				     unsigned long size)
-{
-	if (size < pack->oe_delta_size_limit) {
-		e->delta_size_ = size;
-		e->delta_size_valid = 1;
-	} else {
-		packing_data_lock(pack);
-		if (!pack->delta_size)
-			ALLOC_ARRAY(pack->delta_size, pack->nr_alloc);
-		packing_data_unlock(pack);
-
-		pack->delta_size[e - pack->objects] = size;
-		e->delta_size_valid = 0;
-	}
-}
 
 static inline unsigned int oe_tree_depth(struct packing_data *pack,
 					 struct object_entry *e)
@@ -422,23 +278,6 @@ static inline unsigned int oe_tree_depth(struct packing_data *pack,
 	return pack->tree_depth[e - pack->objects];
 }
 
-static inline void oe_set_tree_depth(struct packing_data *pack,
-				     struct object_entry *e,
-				     unsigned int tree_depth)
-{
-	if (!pack->tree_depth)
-		CALLOC_ARRAY(pack->tree_depth, pack->nr_alloc);
-	pack->tree_depth[e - pack->objects] = tree_depth;
-}
-
-static inline unsigned char oe_layer(struct packing_data *pack,
-				     struct object_entry *e)
-{
-	if (!pack->layer)
-		return 0;
-	return pack->layer[e - pack->objects];
-}
-
 static inline void oe_set_layer(struct packing_data *pack,
 				struct object_entry *e,
 				unsigned char layer)
@@ -446,6 +285,23 @@ static inline void oe_set_layer(struct packing_data *pack,
 	if (!pack->layer)
 		CALLOC_ARRAY(pack->layer, pack->nr_alloc);
 	pack->layer[e - pack->objects] = layer;
+}
+
+static inline uint32_t oe_cruft_mtime(struct packing_data *pack,
+				      struct object_entry *e)
+{
+	if (!pack->cruft_mtime)
+		return 0;
+	return pack->cruft_mtime[e - pack->objects];
+}
+
+static inline void oe_set_cruft_mtime(struct packing_data *pack,
+				      struct object_entry *e,
+				      uint32_t mtime)
+{
+	if (!pack->cruft_mtime)
+		CALLOC_ARRAY(pack->cruft_mtime, pack->nr_alloc);
+	pack->cruft_mtime[e - pack->objects] = mtime;
 }
 
 #endif

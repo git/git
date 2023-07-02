@@ -1,13 +1,18 @@
 /*
  * Copyright (c) 2005, 2006 Rene Scharfe
  */
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "config.h"
+#include "gettext.h"
+#include "git-zlib.h"
+#include "hex.h"
 #include "tar.h"
 #include "archive.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "streaming.h"
 #include "run-command.h"
+#include "write-or-die.h"
 
 #define RECORDSIZE	(512)
 #define BLOCKSIZE	(RECORDSIZE * 20)
@@ -38,11 +43,18 @@ static int write_tar_filter_archive(const struct archiver *ar,
 #define USTAR_MAX_MTIME 077777777777ULL
 #endif
 
+static void tar_write_block(const void *buf)
+{
+	write_or_die(1, buf, BLOCKSIZE);
+}
+
+static void (*write_block)(const void *) = tar_write_block;
+
 /* writes out the whole block, but only if it is full */
 static void write_if_needed(void)
 {
 	if (offset == BLOCKSIZE) {
-		write_or_die(1, block, BLOCKSIZE);
+		write_block(block);
 		offset = 0;
 	}
 }
@@ -66,7 +78,7 @@ static void do_write_blocked(const void *data, unsigned long size)
 		write_if_needed();
 	}
 	while (size >= BLOCKSIZE) {
-		write_or_die(1, buf, BLOCKSIZE);
+		write_block(buf);
 		size -= BLOCKSIZE;
 		buf += BLOCKSIZE;
 	}
@@ -101,10 +113,10 @@ static void write_trailer(void)
 {
 	int tail = BLOCKSIZE - offset;
 	memset(block + offset, 0, tail);
-	write_or_die(1, block, BLOCKSIZE);
+	write_block(block);
 	if (tail < 2 * RECORDSIZE) {
 		memset(block, 0, offset);
-		write_or_die(1, block, BLOCKSIZE);
+		write_block(block);
 	}
 }
 
@@ -242,13 +254,12 @@ static void write_extended_header(struct archiver_args *args,
 static int write_tar_entry(struct archiver_args *args,
 			   const struct object_id *oid,
 			   const char *path, size_t pathlen,
-			   unsigned int mode)
+			   unsigned int mode,
+			   void *buffer, unsigned long size)
 {
 	struct ustar_header header;
 	struct strbuf ext_header = STRBUF_INIT;
-	unsigned int old_mode = mode;
-	unsigned long size, size_in_header;
-	void *buffer;
+	unsigned long size_in_header;
 	int err = 0;
 
 	memset(&header, 0, sizeof(header));
@@ -282,20 +293,6 @@ static int write_tar_entry(struct archiver_args *args,
 	} else
 		memcpy(header.name, path, pathlen);
 
-	if (S_ISREG(mode) && !args->convert &&
-	    oid_object_info(args->repo, oid, &size) == OBJ_BLOB &&
-	    size > big_file_threshold)
-		buffer = NULL;
-	else if (S_ISLNK(mode) || S_ISREG(mode)) {
-		enum object_type type;
-		buffer = object_file_to_archive(args, path, oid, old_mode, &type, &size);
-		if (!buffer)
-			return error(_("cannot read %s"), oid_to_hex(oid));
-	} else {
-		buffer = NULL;
-		size = 0;
-	}
-
 	if (S_ISLNK(mode)) {
 		if (size > sizeof(header.linkname)) {
 			xsnprintf(header.linkname, sizeof(header.linkname),
@@ -326,7 +323,6 @@ static int write_tar_entry(struct archiver_args *args,
 		else
 			err = stream_blocked(args->repo, oid);
 	}
-	free(buffer);
 	return err;
 }
 
@@ -375,7 +371,8 @@ static struct archiver *find_tar_filter(const char *name, size_t len)
 	return NULL;
 }
 
-static int tar_filter_config(const char *var, const char *value, void *data)
+static int tar_filter_config(const char *var, const char *value,
+			     void *data UNUSED)
 {
 	struct archiver *ar;
 	const char *name;
@@ -387,10 +384,11 @@ static int tar_filter_config(const char *var, const char *value, void *data)
 
 	ar = find_tar_filter(name, namelen);
 	if (!ar) {
-		ar = xcalloc(1, sizeof(*ar));
+		CALLOC_ARRAY(ar, 1);
 		ar->name = xmemdupz(name, namelen);
 		ar->write_archive = write_tar_filter_archive;
-		ar->flags = ARCHIVER_WANT_COMPRESSION_LEVELS;
+		ar->flags = ARCHIVER_WANT_COMPRESSION_LEVELS |
+			    ARCHIVER_HIGH_COMPRESSION_LEVELS;
 		ALLOC_GROW(tar_filters, nr_tar_filters + 1, alloc_tar_filters);
 		tar_filters[nr_tar_filters++] = ar;
 	}
@@ -398,8 +396,8 @@ static int tar_filter_config(const char *var, const char *value, void *data)
 	if (!strcmp(type, "command")) {
 		if (!value)
 			return config_error_nonbool(var);
-		free(ar->data);
-		ar->data = xstrdup(value);
+		free(ar->filter_command);
+		ar->filter_command = xstrdup(value);
 		return 0;
 	}
 	if (!strcmp(type, "remote")) {
@@ -428,7 +426,7 @@ static int git_tar_config(const char *var, const char *value, void *cb)
 	return tar_filter_config(var, value, cb);
 }
 
-static int write_tar_archive(const struct archiver *ar,
+static int write_tar_archive(const struct archiver *ar UNUSED,
 			     struct archiver_args *args)
 {
 	int err = 0;
@@ -440,29 +438,75 @@ static int write_tar_archive(const struct archiver *ar,
 	return err;
 }
 
+static git_zstream gzstream;
+static unsigned char outbuf[16384];
+
+static void tgz_deflate(int flush)
+{
+	while (gzstream.avail_in || flush == Z_FINISH) {
+		int status = git_deflate(&gzstream, flush);
+		if (!gzstream.avail_out || status == Z_STREAM_END) {
+			write_or_die(1, outbuf, gzstream.next_out - outbuf);
+			gzstream.next_out = outbuf;
+			gzstream.avail_out = sizeof(outbuf);
+			if (status == Z_STREAM_END)
+				break;
+		}
+		if (status != Z_OK && status != Z_BUF_ERROR)
+			die(_("deflate error (%d)"), status);
+	}
+}
+
+static void tgz_write_block(const void *data)
+{
+	gzstream.next_in = (void *)data;
+	gzstream.avail_in = BLOCKSIZE;
+	tgz_deflate(Z_NO_FLUSH);
+}
+
+static const char internal_gzip_command[] = "git archive gzip";
+
 static int write_tar_filter_archive(const struct archiver *ar,
 				    struct archiver_args *args)
 {
+#if ZLIB_VERNUM >= 0x1221
+	struct gz_header_s gzhead = { .os = 3 }; /* Unix, for reproducibility */
+#endif
 	struct strbuf cmd = STRBUF_INIT;
 	struct child_process filter = CHILD_PROCESS_INIT;
-	const char *argv[2];
 	int r;
 
-	if (!ar->data)
+	if (!ar->filter_command)
 		BUG("tar-filter archiver called with no filter defined");
 
-	strbuf_addstr(&cmd, ar->data);
+	if (!strcmp(ar->filter_command, internal_gzip_command)) {
+		write_block = tgz_write_block;
+		git_deflate_init_gzip(&gzstream, args->compression_level);
+#if ZLIB_VERNUM >= 0x1221
+		if (deflateSetHeader(&gzstream.z, &gzhead) != Z_OK)
+			BUG("deflateSetHeader() called too late");
+#endif
+		gzstream.next_out = outbuf;
+		gzstream.avail_out = sizeof(outbuf);
+
+		r = write_tar_archive(ar, args);
+
+		tgz_deflate(Z_FINISH);
+		git_deflate_end(&gzstream);
+		return r;
+	}
+
+	strbuf_addstr(&cmd, ar->filter_command);
 	if (args->compression_level >= 0)
 		strbuf_addf(&cmd, " -%d", args->compression_level);
 
-	argv[0] = cmd.buf;
-	argv[1] = NULL;
-	filter.argv = argv;
+	strvec_push(&filter.args, cmd.buf);
 	filter.use_shell = 1;
 	filter.in = -1;
+	filter.silent_exec_failure = 1;
 
 	if (start_command(&filter) < 0)
-		die_errno(_("unable to start '%s' filter"), argv[0]);
+		die_errno(_("unable to start '%s' filter"), cmd.buf);
 	close(1);
 	if (dup2(filter.in, 1) < 0)
 		die_errno(_("unable to redirect descriptor"));
@@ -472,16 +516,16 @@ static int write_tar_filter_archive(const struct archiver *ar,
 
 	close(1);
 	if (finish_command(&filter) != 0)
-		die(_("'%s' filter reported error"), argv[0]);
+		die(_("'%s' filter reported error"), cmd.buf);
 
 	strbuf_release(&cmd);
 	return r;
 }
 
 static struct archiver tar_archiver = {
-	"tar",
-	write_tar_archive,
-	ARCHIVER_REMOTE
+	.name = "tar",
+	.write_archive = write_tar_archive,
+	.flags = ARCHIVER_REMOTE,
 };
 
 void init_tar_archiver(void)
@@ -489,14 +533,14 @@ void init_tar_archiver(void)
 	int i;
 	register_archiver(&tar_archiver);
 
-	tar_filter_config("tar.tgz.command", "gzip -cn", NULL);
+	tar_filter_config("tar.tgz.command", internal_gzip_command, NULL);
 	tar_filter_config("tar.tgz.remote", "true", NULL);
-	tar_filter_config("tar.tar.gz.command", "gzip -cn", NULL);
+	tar_filter_config("tar.tar.gz.command", internal_gzip_command, NULL);
 	tar_filter_config("tar.tar.gz.remote", "true", NULL);
 	git_config(git_tar_config, NULL);
 	for (i = 0; i < nr_tar_filters; i++) {
 		/* omit any filters that never had a command configured */
-		if (tar_filters[i]->data)
+		if (tar_filters[i]->filter_command)
 			register_archiver(tar_filters[i]);
 	}
 }

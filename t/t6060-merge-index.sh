@@ -1,12 +1,12 @@
 #!/bin/sh
 
 test_description='basic git merge-index / git-merge-one-file tests'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup diverging branches' '
-	for i in 1 2 3 4 5 6 7 8 9 10; do
-		echo $i
-	done >file &&
+	test_write_lines 1 2 3 4 5 6 7 8 9 10 >file &&
 	git add file &&
 	git commit -m base &&
 	git tag base &&

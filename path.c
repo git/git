@@ -1,17 +1,24 @@
 /*
  * Utilities for paths and pathnames
  */
-#include "cache.h"
+#include "git-compat-util.h"
+#include "abspath.h"
+#include "environment.h"
+#include "gettext.h"
+#include "hex.h"
 #include "repository.h"
 #include "strbuf.h"
 #include "string-list.h"
 #include "dir.h"
 #include "worktree.h"
+#include "setup.h"
 #include "submodule-config.h"
 #include "path.h"
 #include "packfile.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "lockfile.h"
+#include "exec-cmd.h"
+#include "wrapper.h"
 
 static int get_st_mode_bits(const char *path, int *mode)
 {
@@ -346,7 +353,8 @@ static void init_common_trie(void)
  * Helper function for update_common_dir: returns 1 if the dir
  * prefix is common.
  */
-static int check_common(const char *unmatched, void *value, void *baton)
+static int check_common(const char *unmatched, void *value,
+			void *baton UNUSED)
 {
 	struct common_dir *dir = value;
 
@@ -719,19 +727,25 @@ static struct passwd *getpw_str(const char *username, size_t len)
 }
 
 /*
- * Return a string with ~ and ~user expanded via getpw*.  If buf != NULL,
- * then it is a newly allocated string. Returns NULL on getpw failure or
- * if path is NULL.
+ * Return a string with ~ and ~user expanded via getpw*. Returns NULL on getpw
+ * failure or if path is NULL.
  *
- * If real_home is true, strbuf_realpath($HOME) is used in the expansion.
+ * If real_home is true, strbuf_realpath($HOME) is used in the `~/` expansion.
+ *
+ * If the path starts with `%(prefix)/`, the remainder is interpreted as
+ * relative to where Git is installed, and expanded to the absolute path.
  */
-char *expand_user_path(const char *path, int real_home)
+char *interpolate_path(const char *path, int real_home)
 {
 	struct strbuf user_path = STRBUF_INIT;
 	const char *to_copy = path;
 
-	if (path == NULL)
+	if (!path)
 		goto return_null;
+
+	if (skip_prefix(path, "%(prefix)/", &path))
+		return system_path(path);
+
 	if (path[0] == '~') {
 		const char *first_slash = strchrnul(path, '/');
 		const char *username = path + 1;
@@ -812,7 +826,7 @@ const char *enter_repo(const char *path, int strict)
 		strbuf_add(&validated_path, path, len);
 
 		if (used_path.buf[0] == '~') {
-			char *newpath = expand_user_path(used_path.buf, 0);
+			char *newpath = interpolate_path(used_path.buf, 0);
 			if (!newpath)
 				return NULL;
 			strbuf_attach(&used_path, newpath, strlen(newpath),
@@ -894,7 +908,13 @@ int adjust_shared_perm(const char *path)
 	if (S_ISDIR(old_mode)) {
 		/* Copy read bits to execute bits */
 		new_mode |= (new_mode & 0444) >> 2;
-		new_mode |= FORCE_DIR_SET_GID;
+
+		/*
+		 * g+s matters only if any extra access is granted
+		 * based on group membership.
+		 */
+		if (FORCE_DIR_SET_GID && (new_mode & 060))
+			new_mode |= FORCE_DIR_SET_GID;
 	}
 
 	if (((old_mode ^ new_mode) & ~S_IFMT) &&
@@ -1218,11 +1238,15 @@ int longest_ancestor_length(const char *path, struct string_list *prefixes)
 		const char *ceil = prefixes->items[i].string;
 		int len = strlen(ceil);
 
-		if (len == 1 && ceil[0] == '/')
-			len = 0; /* root matches anything, with length 0 */
-		else if (!strncmp(path, ceil, len) && path[len] == '/')
-			; /* match of length len */
-		else
+		/*
+		 * For root directories (`/`, `C:/`, `//server/share/`)
+		 * adjust the length to exclude the trailing slash.
+		 */
+		if (len > 0 && ceil[len - 1] == '/')
+			len--;
+
+		if (strncmp(path, ceil, len) ||
+		    path[len] != '/' || !path[len + 1])
 			continue; /* no match */
 
 		if (len > max_len)
@@ -1402,7 +1426,7 @@ int is_ntfs_dotgit(const char *name)
 
 	for (;;) {
 		c = *(name++);
-		if (!c || c == '\\' || c == '/' || c == ':')
+		if (!c || is_xplatform_dir_sep(c) || c == ':')
 			return 1;
 		if (c != '.' && c != ' ')
 			return 0;
@@ -1493,24 +1517,36 @@ int is_ntfs_dotgitattributes(const char *name)
 	return is_ntfs_dot_str(name, "gitattributes", "gi7d29");
 }
 
+int is_ntfs_dotmailmap(const char *name)
+{
+	return is_ntfs_dot_str(name, "mailmap", "maba30");
+}
+
 int looks_like_command_line_option(const char *str)
 {
 	return str && str[0] == '-';
 }
 
-char *xdg_config_home(const char *filename)
+char *xdg_config_home_for(const char *subdir, const char *filename)
 {
 	const char *home, *config_home;
 
+	assert(subdir);
 	assert(filename);
 	config_home = getenv("XDG_CONFIG_HOME");
 	if (config_home && *config_home)
-		return mkpathdup("%s/git/%s", config_home, filename);
+		return mkpathdup("%s/%s/%s", config_home, subdir, filename);
 
 	home = getenv("HOME");
 	if (home)
-		return mkpathdup("%s/.config/git/%s", home, filename);
+		return mkpathdup("%s/.config/%s/%s", home, subdir, filename);
+
 	return NULL;
+}
+
+char *xdg_config_home(const char *filename)
+{
+	return xdg_config_home_for("git", filename);
 }
 
 char *xdg_cache_home(const char *filename)
@@ -1534,5 +1570,6 @@ REPO_GIT_PATH_FUNC(merge_rr, "MERGE_RR")
 REPO_GIT_PATH_FUNC(merge_mode, "MERGE_MODE")
 REPO_GIT_PATH_FUNC(merge_head, "MERGE_HEAD")
 REPO_GIT_PATH_FUNC(merge_autostash, "MERGE_AUTOSTASH")
+REPO_GIT_PATH_FUNC(auto_merge, "AUTO_MERGE")
 REPO_GIT_PATH_FUNC(fetch_head, "FETCH_HEAD")
 REPO_GIT_PATH_FUNC(shallow, "shallow")

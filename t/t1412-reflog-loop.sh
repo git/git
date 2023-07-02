@@ -1,14 +1,13 @@
 #!/bin/sh
 
 test_description='reflog walk shows repeated commits again'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup commits' '
-	test_tick &&
-	echo content >file && git add file && git commit -m one &&
-	git tag one &&
-	echo content >>file && git add file && git commit -m two &&
-	git tag two
+	test_commit one file content &&
+	test_commit --append two file content
 '
 
 test_expect_success 'setup reflog with alternating commits' '

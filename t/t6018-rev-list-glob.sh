@@ -2,6 +2,10 @@
 
 test_description='rev-list/rev-parse --glob'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 commit () {
@@ -20,23 +24,23 @@ compare () {
 
 test_expect_success 'setup' '
 
-	commit master &&
-	git checkout -b subspace/one master &&
+	commit main &&
+	git checkout -b subspace/one main &&
 	commit one &&
-	git checkout -b subspace/two master &&
+	git checkout -b subspace/two main &&
 	commit two &&
-	git checkout -b subspace-x master &&
+	git checkout -b subspace-x main &&
 	commit subspace-x &&
-	git checkout -b other/three master &&
+	git checkout -b other/three main &&
 	commit three &&
-	git checkout -b someref master &&
+	git checkout -b someref main &&
 	commit some &&
-	git checkout master &&
-	commit master2 &&
-	git tag foo/bar master &&
-	commit master3 &&
-	git update-ref refs/remotes/foo/baz master &&
-	commit master4 &&
+	git checkout main &&
+	commit topic_2 &&
+	git tag foo/bar main &&
+	commit topic_3 &&
+	git update-ref refs/remotes/foo/baz main &&
+	commit topic_4 &&
 	git update-ref refs/remotes/upstream/one subspace/one &&
 	git update-ref refs/remotes/upstream/two subspace/two &&
 	git update-ref refs/remotes/upstream/x subspace-x &&
@@ -83,7 +87,7 @@ test_expect_failure 'rev-parse accepts --glob as detached option' '
 
 test_expect_failure 'rev-parse is not confused by option-like glob' '
 
-	compare rev-parse "master" "--glob --symbolic master"
+	compare rev-parse "main" "--glob --symbolic main"
 
 '
 
@@ -111,15 +115,15 @@ test_expect_success 'rev-parse --glob=heads/subspace/* --glob=heads/other/*' '
 
 '
 
-test_expect_success 'rev-parse --glob=heads/someref/* master' '
+test_expect_success 'rev-parse --glob=heads/someref/* main' '
 
-	compare rev-parse "master" "--glob=heads/someref/* master"
+	compare rev-parse "main" "--glob=heads/someref/* main"
 
 '
 
 test_expect_success 'rev-parse --glob=heads/*' '
 
-	compare rev-parse "master other/three someref subspace-x subspace/one subspace/two" "--glob=heads/*"
+	compare rev-parse "main other/three someref subspace-x subspace/one subspace/two" "--glob=heads/*"
 
 '
 
@@ -136,7 +140,7 @@ test_expect_success 'rev-parse --remotes=foo' '
 '
 
 test_expect_success 'rev-parse --exclude with --branches' '
-	compare rev-parse "--exclude=*/* --branches" "master someref subspace-x"
+	compare rev-parse "--exclude=*/* --branches" "main someref subspace-x"
 '
 
 test_expect_success 'rev-parse --exclude with --all' '
@@ -183,6 +187,46 @@ test_expect_success 'rev-parse --exclude=ref with --remotes=glob' '
 	compare rev-parse "--exclude=upstream/x --remotes=upstream/*" "upstream/one upstream/two"
 '
 
+for section in fetch receive uploadpack
+do
+	test_expect_success "rev-parse --exclude-hidden=$section with --all" '
+		compare "-c transfer.hideRefs=refs/remotes/ rev-parse" "--branches --tags" "--exclude-hidden=$section --all"
+	'
+
+	test_expect_success "rev-parse --exclude-hidden=$section with --all" '
+		compare "-c transfer.hideRefs=refs/heads/subspace/ rev-parse" "--exclude=refs/heads/subspace/* --all" "--exclude-hidden=$section --all"
+	'
+
+	test_expect_success "rev-parse --exclude-hidden=$section with --glob" '
+		compare "-c transfer.hideRefs=refs/heads/subspace/ rev-parse" "--exclude=refs/heads/subspace/* --glob=refs/heads/*" "--exclude-hidden=$section --glob=refs/heads/*"
+	'
+
+	test_expect_success "rev-parse --exclude-hidden=$section can be passed once per pseudo-ref" '
+		compare "-c transfer.hideRefs=refs/remotes/ rev-parse" "--branches --tags --branches --tags" "--exclude-hidden=$section --all --exclude-hidden=$section --all"
+	'
+
+	test_expect_success "rev-parse --exclude-hidden=$section can only be passed once per pseudo-ref" '
+		echo "fatal: --exclude-hidden= passed more than once" >expected &&
+		test_must_fail git rev-parse --exclude-hidden=$section --exclude-hidden=$section 2>err &&
+		test_cmp expected err
+	'
+
+	for pseudoopt in branches tags remotes
+	do
+		test_expect_success "rev-parse --exclude-hidden=$section fails with --$pseudoopt" '
+			echo "error: --exclude-hidden cannot be used together with --$pseudoopt" >expected &&
+			test_must_fail git rev-parse --exclude-hidden=$section --$pseudoopt 2>err &&
+			test_cmp expected err
+		'
+
+		test_expect_success "rev-parse --exclude-hidden=$section fails with --$pseudoopt=pattern" '
+			echo "error: --exclude-hidden cannot be used together with --$pseudoopt" >expected &&
+			test_must_fail git rev-parse --exclude-hidden=$section --$pseudoopt=pattern 2>err &&
+			test_cmp expected err
+		'
+	done
+done
+
 test_expect_success 'rev-list --exclude=glob with --branches=glob' '
 	compare rev-list "--exclude=subspace-* --branches=sub*" "subspace/one subspace/two"
 '
@@ -221,7 +265,7 @@ test_expect_success 'rev-list --glob refs/heads/subspace/*' '
 
 test_expect_success 'rev-list not confused by option-like --glob arg' '
 
-	compare rev-list "master" "--glob -0 master"
+	compare rev-list "main" "--glob -0 main"
 
 '
 
@@ -269,13 +313,13 @@ test_expect_success 'rev-list --branches=subspace' '
 
 test_expect_success 'rev-list --branches' '
 
-	compare rev-list "master subspace-x someref other/three subspace/one subspace/two" "--branches"
+	compare rev-list "main subspace-x someref other/three subspace/one subspace/two" "--branches"
 
 '
 
-test_expect_success 'rev-list --glob=heads/someref/* master' '
+test_expect_success 'rev-list --glob=heads/someref/* main' '
 
-	compare rev-list "master" "--glob=heads/someref/* master"
+	compare rev-list "main" "--glob=heads/someref/* main"
 
 '
 
@@ -287,7 +331,7 @@ test_expect_success 'rev-list --glob=heads/subspace/* --glob=heads/other/*' '
 
 test_expect_success 'rev-list --glob=heads/*' '
 
-	compare rev-list "master other/three someref subspace-x subspace/one subspace/two" "--glob=heads/*"
+	compare rev-list "main other/three someref subspace-x subspace/one subspace/two" "--glob=heads/*"
 
 '
 
@@ -310,7 +354,7 @@ test_expect_success 'rev-list --remotes=foo' '
 '
 
 test_expect_success 'rev-list --exclude with --branches' '
-	compare rev-list "--exclude=*/* --branches" "master someref subspace-x"
+	compare rev-list "--exclude=*/* --branches" "main someref subspace-x"
 '
 
 test_expect_success 'rev-list --exclude with --all' '
@@ -354,13 +398,13 @@ test_expect_success 'shortlog accepts --glob/--tags/--remotes' '
 
 	compare shortlog "subspace/one subspace/two" --branches=subspace &&
 	compare shortlog \
-	  "master subspace-x someref other/three subspace/one subspace/two" \
+	  "main subspace-x someref other/three subspace/one subspace/two" \
 	  --branches &&
-	compare shortlog master "--glob=heads/someref/* master" &&
+	compare shortlog main "--glob=heads/someref/* main" &&
 	compare shortlog "subspace/one subspace/two other/three" \
 	  "--glob=heads/subspace/* --glob=heads/other/*" &&
 	compare shortlog \
-	  "master other/three someref subspace-x subspace/one subspace/two" \
+	  "main other/three someref subspace-x subspace/one subspace/two" \
 	  "--glob=heads/*" &&
 	compare shortlog foo/bar --tags=foo &&
 	compare shortlog "foo/bar qux/one qux/two qux/x" --tags &&
@@ -371,14 +415,14 @@ test_expect_success 'shortlog accepts --glob/--tags/--remotes' '
 test_expect_failure 'shortlog accepts --glob as detached option' '
 
 	compare shortlog \
-	  "master other/three someref subspace-x subspace/one subspace/two" \
+	  "main other/three someref subspace-x subspace/one subspace/two" \
 	  "--glob heads/*"
 
 '
 
 test_expect_failure 'shortlog --glob is not confused by option-like argument' '
 
-	compare shortlog master "--glob -e master"
+	compare shortlog main "--glob -e main"
 
 '
 

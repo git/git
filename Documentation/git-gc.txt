@@ -54,6 +54,11 @@ other housekeeping tasks (e.g. rerere, working trees, reflog...) will
 be performed as well.
 
 
+--[no-]cruft::
+	When expiring unreachable objects, pack them separately into a
+	cruft pack instead of storing them as loose objects. `--cruft`
+	is on by default.
+
 --prune=<date>::
 	Prune loose objects older than date (default is 2 weeks ago,
 	overridable by the config variable `gc.pruneExpire`).
@@ -73,9 +78,10 @@ be performed as well.
 	instance running on this repository.
 
 --keep-largest-pack::
-	All packs except the largest pack and those marked with a
-	`.keep` files are consolidated into a single pack. When this
-	option is used, `gc.bigPackThreshold` is ignored.
+	All packs except the largest non-cruft pack, any packs marked
+	with a `.keep` file, and any cruft pack(s) are consolidated into
+	a single pack. When this option is used, `gc.bigPackThreshold`
+	is ignored.
 
 AGGRESSIVE
 ----------
@@ -106,8 +112,7 @@ users and their repositories.
 CONFIGURATION
 -------------
 
-The below documentation is the same as what's found in
-linkgit:git-config[1]:
+include::includes/cmd-config-section-all.txt[]
 
 include::config/gc.txt[]
 
@@ -117,12 +122,14 @@ NOTES
 'git gc' tries very hard not to delete objects that are referenced
 anywhere in your repository. In particular, it will keep not only
 objects referenced by your current set of branches and tags, but also
-objects referenced by the index, remote-tracking branches, notes saved
-by 'git notes' under refs/notes/, reflogs (which may reference commits
-in branches that were later amended or rewound), and anything else in
-the refs/* namespace.  If you are expecting some objects to be deleted
-and they aren't, check all of those locations and decide whether it
-makes sense in your case to remove those references.
+objects referenced by the index, remote-tracking branches, reflogs
+(which may reference commits in branches that were later amended or
+rewound), and anything else in the refs/* namespace. Note that a note
+(of the kind created by 'git notes') attached to an object does not
+contribute in keeping the object alive. If you are expecting some
+objects to be deleted and they aren't, check all of those locations
+and decide whether it makes sense in your case to remove those
+references.
 
 On the other hand, when 'git gc' runs concurrently with another process,
 there is a risk of it deleting an object that the other process is using

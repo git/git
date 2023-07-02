@@ -18,9 +18,9 @@
 	Untyped <<def_object,object>>, e.g. the contents of a file.
 
 [[def_branch]]branch::
-	A "branch" is an active line of development.  The most recent
+	A "branch" is a line of development.  The most recent
 	<<def_commit,commit>> on a branch is referred to as the tip of
-	that branch.  The tip of the branch is referenced by a branch
+	that branch.  The tip of the branch is <<def_ref,referenced>> by a branch
 	<<def_head,head>>, which moves forward as additional development
 	is done on the branch.  A single Git
 	<<def_repository,repository>> can track an arbitrary number of
@@ -74,6 +74,21 @@ As a verb: The action of storing a new snapshot of the project's
 state in the Git history, by creating a new commit representing the current
 state of the <<def_index,index>> and advancing <<def_HEAD,HEAD>>
 to point at the new commit.
+
+[[def_commit_graph_general]]commit graph concept, representations and usage::
+	A synonym for the <<def_DAG,DAG>> structure formed by the commits
+	in the object database, <<def_ref,referenced>> by branch tips,
+	using their <<def_chain,chain>> of linked commits.
+	This structure is the definitive commit graph. The
+	graph can be represented in other ways, e.g. the
+	<<def_commit_graph_file,"commit-graph" file>>.
+
+[[def_commit_graph_file]]commit-graph file::
+	The "commit-graph" (normally hyphenated) file is a supplemental
+	representation of the <<def_commit_graph_general,commit graph>>
+	which accelerates commit graph walks. The "commit-graph" file is
+	stored either in the .git/objects/info directory or in the info
+	directory of an alternate object database.
 
 [[def_commit_object]]commit object::
 	An <<def_object,object>> which contains the information about a
@@ -146,8 +161,8 @@ current branch integrates with) obviously do not work, as there is no
 	<<def_revision,revision>> and you are "merging" another
 	<<def_branch,branch>>'s changes that happen to be a descendant of what
 	you have. In such a case, you do not make a new <<def_merge,merge>>
-	<<def_commit,commit>> but instead just update to his
-	revision. This will happen frequently on a
+	<<def_commit,commit>> but instead just update your branch to point at the same
+	revision as the branch you are merging. This will happen frequently on a
 	<<def_remote_tracking_branch,remote-tracking branch>> of a remote
 	<<def_repository,repository>>.
 
@@ -262,7 +277,7 @@ This commit is referred to as a "merge commit", or sometimes just a
 	identified by its <<def_object_name,object name>>. The objects usually
 	live in `$GIT_DIR/objects/`.
 
-[[def_object_identifier]]object identifier::
+[[def_object_identifier]]object identifier (oid)::
 	Synonym for <<def_object_name,object name>>.
 
 [[def_object_name]]object name::
@@ -312,7 +327,7 @@ Pathspecs are used on the command line of "git ls-files", "git
 ls-tree", "git add", "git grep", "git diff", "git checkout",
 and many other commands to
 limit the scope of operations to some subset of the tree or
-worktree.  See the documentation of each command for whether
+working tree.  See the documentation of each command for whether
 paths are relative to the current directory or toplevel.  The
 pathspec syntax is as follows:
 +
@@ -446,7 +461,7 @@ exclude;;
 	interface than the <<def_plumbing,plumbing>>.
 
 [[def_per_worktree_ref]]per-worktree ref::
-	Refs that are per-<<def_working_tree,worktree>>, rather than
+	Refs that are per-<<def_worktree,worktree>>, rather than
 	global.  This is presently only <<def_HEAD,HEAD>> and any refs
 	that start with `refs/bisect/`, but might later include other
 	unusual refs.
@@ -492,6 +507,14 @@ exclude;;
 	<<def_commit_object,commits>> to their parents or trees, and
 	<<def_tree_object,trees>> to the trees or <<def_blob_object,blobs>>
 	that they contain.
+
+[[def_reachability_bitmap]]reachability bitmaps::
+	Reachability bitmaps store information about the
+	<<def_reachable,reachability>> of a selected set of commits in
+	a packfile, or a multi-pack index (MIDX), to speed up object search.
+	The bitmaps are stored in a ".bitmap" file. A repository may have at
+	most one bitmap file in use. The bitmap file may belong to either one
+	pack, or the repository's multi-pack index (if it exists).
 
 [[def_rebase]]rebase::
 	To reapply a series of changes from a <<def_branch,branch>> to a
@@ -669,3 +692,12 @@ The most notable example is `HEAD`.
 	The tree of actual checked out files.  The working tree normally
 	contains the contents of the <<def_HEAD,HEAD>> commit's tree,
 	plus any local changes that you have made but not yet committed.
+
+[[def_worktree]]worktree::
+	A repository can have zero (i.e. bare repository) or one or
+	more worktrees attached to it. One "worktree" consists of a
+	"working tree" and repository metadata, most of which are
+	shared among other worktrees of a single repository, and
+	some of which are maintained separately per worktree
+	(e.g. the index, HEAD and pseudorefs like MERGE_HEAD,
+	per-worktree refs and per-worktree configuration file).

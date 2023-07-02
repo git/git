@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='merging with large rename matrix'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 count() {
@@ -30,28 +33,28 @@ test_rename() {
 	test_expect_success "rename ($1, $2)" '
 	n='$1' &&
 	expect='$2' &&
-	git checkout -f master &&
+	git checkout -f main &&
 	test_might_fail git branch -D test$n &&
 	git reset --hard initial &&
 	for i in $(count $n); do
-		make_text $i initial initial >$i
+		make_text $i initial initial >$i || return 1
 	done &&
 	git add . &&
 	git commit -m add=$n &&
 	for i in $(count $n); do
-		make_text $i changed initial >$i
+		make_text $i changed initial >$i || return 1
 	done &&
 	git commit -a -m change=$n &&
 	git checkout -b test$n HEAD^ &&
 	for i in $(count $n); do
-		git rm $i
-		make_text $i initial changed >$i.moved
+		git rm $i &&
+		make_text $i initial changed >$i.moved || return 1
 	done &&
 	git add . &&
 	git commit -m change+rename=$n &&
 	case "$expect" in
-		ok) git merge master ;;
-		 *) test_must_fail git merge master ;;
+		ok) git merge main ;;
+		 *) test_must_fail git merge main ;;
 	esac
 	'
 }
@@ -76,7 +79,7 @@ test_expect_success 'setup large simple rename' '
 
 	git reset --hard initial &&
 	for i in $(count 200); do
-		make_text foo bar baz >$i
+		make_text foo bar baz >$i || return 1
 	done &&
 	git add . &&
 	git commit -m create-files &&

@@ -1,6 +1,9 @@
 #!/bin/sh
 
 test_description='git blame corner cases'
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 pick_fc='s/^[0-9a-f^]* *\([^ ]*\) *(\([^ ]*\) .*/\1-\2/'
@@ -10,14 +13,8 @@ test_expect_success setup '
 	echo B B B B B >two &&
 	echo C C C C C >tres &&
 	echo ABC >mouse &&
-	for i in 1 2 3 4 5 6 7 8 9
-	do
-		echo $i
-	done >nine_lines &&
-	for i in 1 2 3 4 5 6 7 8 9 a
-	do
-		echo $i
-	done >ten_lines &&
+	test_write_lines 1 2 3 4 5 6 7 8 9 >nine_lines &&
+	test_write_lines 1 2 3 4 5 6 7 8 9 a >ten_lines &&
 	git add one two tres mouse nine_lines ten_lines &&
 	test_tick &&
 	GIT_AUTHOR_NAME=Initial git commit -m Initial &&
@@ -161,13 +158,13 @@ test_expect_success 'blame wholesale copy and more in the index' '
 
 test_expect_success 'blame during cherry-pick with file rename conflict' '
 
-	test_when_finished "git reset --hard && git checkout master" &&
+	test_when_finished "git reset --hard && git checkout main" &&
 	git checkout HEAD~3 &&
 	echo MOUSE >> mouse &&
 	git mv mouse rodent &&
 	git add rodent &&
 	GIT_AUTHOR_NAME=Rodent git commit -m "rodent" &&
-	git checkout --detach master &&
+	git checkout --detach main &&
 	(git cherry-pick HEAD@{1} || test $? -eq 1) &&
 	git show HEAD@{1}:rodent > rodent &&
 	git add rodent &&
@@ -204,7 +201,7 @@ committer David Reiss <dreiss@facebook.com> 1234567890 +0000
 
 some message
 EOF
-  COMMIT=$(git hash-object -t commit -w badcommit) &&
+  COMMIT=$(git hash-object --literally -t commit -w badcommit) &&
   git --no-pager blame $COMMIT -- uno >/dev/null
 '
 

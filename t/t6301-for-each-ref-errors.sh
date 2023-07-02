@@ -2,6 +2,7 @@
 
 test_description='for-each-ref errors for broken refs'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 ZEROS=$ZERO_OID
@@ -20,8 +21,8 @@ test_expect_success 'Broken refs are reported correctly' '
 	test_when_finished "rm -f .git/$r" &&
 	echo "warning: ignoring broken ref $r" >broken-err &&
 	git for-each-ref >out 2>err &&
-	test_i18ncmp full-list out &&
-	test_i18ncmp broken-err err
+	test_cmp full-list out &&
+	test_cmp broken-err err
 '
 
 test_expect_success 'NULL_SHA1 refs are reported correctly' '
@@ -31,10 +32,10 @@ test_expect_success 'NULL_SHA1 refs are reported correctly' '
 	echo "warning: ignoring broken ref $r" >zeros-err &&
 	git for-each-ref >out 2>err &&
 	test_cmp full-list out &&
-	test_i18ncmp zeros-err err &&
+	test_cmp zeros-err err &&
 	git for-each-ref --format="%(objectname) %(refname)" >brief-out 2>brief-err &&
 	test_cmp brief-list brief-out &&
-	test_i18ncmp zeros-err brief-err
+	test_cmp zeros-err brief-err
 '
 
 test_expect_success 'Missing objects are reported correctly' '
@@ -43,7 +44,7 @@ test_expect_success 'Missing objects are reported correctly' '
 	test_when_finished "rm -f .git/$r" &&
 	echo "fatal: missing object $MISSING for $r" >missing-err &&
 	test_must_fail git for-each-ref 2>err &&
-	test_i18ncmp missing-err err &&
+	test_cmp missing-err err &&
 	(
 		cat brief-list &&
 		echo "$MISSING $r"
@@ -51,6 +52,20 @@ test_expect_success 'Missing objects are reported correctly' '
 	git for-each-ref --format="%(objectname) %(refname)" >brief-out 2>brief-err &&
 	test_cmp missing-brief-expected brief-out &&
 	test_must_be_empty brief-err
+'
+
+test_expect_success 'ahead-behind requires an argument' '
+	test_must_fail git for-each-ref \
+		--format="%(ahead-behind)" 2>err &&
+	echo "fatal: expected format: %(ahead-behind:<committish>)" >expect &&
+	test_cmp expect err
+'
+
+test_expect_success 'missing ahead-behind base' '
+	test_must_fail git for-each-ref \
+		--format="%(ahead-behind:refs/heads/missing)" 2>err &&
+	echo "fatal: failed to find '\''refs/heads/missing'\''" >expect &&
+	test_cmp expect err
 '
 
 test_done

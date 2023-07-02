@@ -1,9 +1,11 @@
 /*
  * Copyright (C) 2005 Junio C Hamano
  */
-#include "cache.h"
+#include "git-compat-util.h"
 #include "diff.h"
 #include "diffcore.h"
+#include "hash.h"
+#include "object.h"
 #include "promisor-remote.h"
 
 static int should_break(struct repository *r,
@@ -65,7 +67,7 @@ static int should_break(struct repository *r,
 	    oideq(&src->oid, &dst->oid))
 		return 0; /* they are the same */
 
-	if (r == the_repository && has_promisor_remote()) {
+	if (r == the_repository && repo_has_promisor_remote(the_repository)) {
 		options.missing_object_cb = diff_queued_diff_prefetch;
 		options.missing_object_data = r;
 	}

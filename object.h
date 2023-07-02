@@ -1,9 +1,10 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
-#include "cache.h"
+#include "hash-ll.h"
 
 struct buffer_slab;
+struct repository;
 
 struct parsed_object_pool {
 	struct object **obj_hash;
@@ -55,12 +56,14 @@ struct object_array {
 	} *objects;
 };
 
-#define OBJECT_ARRAY_INIT { 0, 0, NULL }
+#define OBJECT_ARRAY_INIT { 0 }
+
+void object_array_init(struct object_array *array);
 
 /*
  * object flag allocation:
- * revision.h:               0---------10         15             23------26
- * fetch-pack.c:             01
+ * revision.h:               0---------10         15             23------27
+ * fetch-pack.c:             01    67
  * negotiator/default.c:       2--5
  * walker.c:                 0-2
  * upload-pack.c:                4       11-----14  16-----19
@@ -75,12 +78,75 @@ struct object_array {
  * builtin/fsck.c:           0--3
  * builtin/gc.c:             0
  * builtin/index-pack.c:                                     2021
- * builtin/pack-objects.c:                                   20
- * builtin/reflog.c:                   10--12
+ * reflog.c:                           10--12
  * builtin/show-branch.c:    0-------------------------------------------26
  * builtin/unpack-objects.c:                                 2021
  */
 #define FLAG_BITS  28
+
+#define TYPE_BITS 3
+
+/*
+ * Values in this enum (except those outside the 3 bit range) are part
+ * of pack file format. See gitformat-pack(5) for more information.
+ */
+enum object_type {
+	OBJ_BAD = -1,
+	OBJ_NONE = 0,
+	OBJ_COMMIT = 1,
+	OBJ_TREE = 2,
+	OBJ_BLOB = 3,
+	OBJ_TAG = 4,
+	/* 5 for future expansion */
+	OBJ_OFS_DELTA = 6,
+	OBJ_REF_DELTA = 7,
+	OBJ_ANY,
+	OBJ_MAX
+};
+
+/* unknown mode (impossible combination S_IFIFO|S_IFCHR) */
+#define S_IFINVALID     0030000
+
+/*
+ * A "directory link" is a link to another git directory.
+ *
+ * The value 0160000 is not normally a valid mode, and
+ * also just happens to be S_IFDIR + S_IFLNK
+ */
+#define S_IFGITLINK	0160000
+#define S_ISGITLINK(m)	(((m) & S_IFMT) == S_IFGITLINK)
+
+#define S_ISSPARSEDIR(m) ((m) == S_IFDIR)
+
+static inline enum object_type object_type(unsigned int mode)
+{
+	return S_ISDIR(mode) ? OBJ_TREE :
+		S_ISGITLINK(mode) ? OBJ_COMMIT :
+		OBJ_BLOB;
+}
+
+#define ce_permissions(mode) (((mode) & 0100) ? 0755 : 0644)
+static inline unsigned int create_ce_mode(unsigned int mode)
+{
+	if (S_ISLNK(mode))
+		return S_IFLNK;
+	if (S_ISSPARSEDIR(mode))
+		return S_IFDIR;
+	if (S_ISDIR(mode) || S_ISGITLINK(mode))
+		return S_IFGITLINK;
+	return S_IFREG | ce_permissions(mode);
+}
+
+static inline unsigned int canon_mode(unsigned int mode)
+{
+	if (S_ISREG(mode))
+		return S_IFREG | ce_permissions(mode);
+	if (S_ISLNK(mode))
+		return S_IFLNK;
+	if (S_ISDIR(mode))
+		return S_IFDIR;
+	return S_IFGITLINK;
+}
 
 /*
  * The object type is stored in 3 bits.
@@ -129,7 +195,13 @@ void *object_as_type(struct object *obj, enum object_type type, int quiet);
  *
  * Returns NULL if the object is missing or corrupt.
  */
+enum parse_object_flags {
+	PARSE_OBJECT_SKIP_HASH_CHECK = 1 << 0,
+};
 struct object *parse_object(struct repository *r, const struct object_id *oid);
+struct object *parse_object_with_flags(struct repository *r,
+				       const struct object_id *oid,
+				       enum parse_object_flags flags);
 
 /*
  * Like parse_object, but will die() instead of returning NULL. If the
@@ -144,8 +216,26 @@ struct object *parse_object_or_die(const struct object_id *oid, const char *name
  */
 struct object *parse_object_buffer(struct repository *r, const struct object_id *oid, enum object_type type, unsigned long size, void *buffer, int *eaten_p);
 
-/** Returns the object, with potentially excess memory allocated. **/
-struct object *lookup_unknown_object(const struct object_id *oid);
+/*
+ * Allocate and return an object struct, even if you do not know the type of
+ * the object. The returned object may have its "type" field set to a real type
+ * (if somebody previously called lookup_blob(), etc), or it may be set to
+ * OBJ_NONE. In the latter case, subsequent calls to lookup_blob(), etc, will
+ * set the type field as appropriate.
+ *
+ * Use this when you do not know the expected type of an object and want to
+ * avoid parsing it for efficiency reasons. Try to avoid it otherwise; it
+ * may allocate excess memory, since the returned object must be as large as
+ * the maximum struct of any type.
+ */
+struct object *lookup_unknown_object(struct repository *r, const struct object_id *oid);
+
+/*
+ * Dispatch to the appropriate lookup_blob(), lookup_commit(), etc, based on
+ * "type".
+ */
+struct object *lookup_object_by_type(struct repository *r, const struct object_id *oid,
+				     enum object_type type);
 
 struct object_list *object_list_insert(struct object *item,
 				       struct object_list **list_p);
@@ -191,8 +281,9 @@ void object_array_clear(struct object_array *array);
 void clear_object_flags(unsigned flags);
 
 /*
- * Clear the specified object flags from all in-core commit objects.
+ * Clear the specified object flags from all in-core commit objects from
+ * the specified repository.
  */
-void clear_commit_marks_all(unsigned int flags);
+void repo_clear_commit_marks(struct repository *r, unsigned int flags);
 
 #endif /* OBJECT_H */

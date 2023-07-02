@@ -36,13 +36,24 @@ OPTIONS
 	This fits with the HTTP POST request processing model where
 	a program may read the request, write a response, and must exit.
 
---advertise-refs::
-	Only the initial ref advertisement is output, and the program exits
-	immediately. This fits with the HTTP GET request model, where
-	no request content is received but a response must be produced.
+--http-backend-info-refs::
+	Used by linkgit:git-http-backend[1] to serve up
+	`$GIT_URL/info/refs?service=git-upload-pack` requests. See
+	"Smart Clients" in linkgit:gitprotocol-http[5] and "HTTP
+	Transport" in the linkgit:gitprotocol-v2[5]
+	documentation. Also understood by
+	linkgit:git-receive-pack[1].
 
 <directory>::
 	The repository to sync from.
+
+ENVIRONMENT
+-----------
+
+`GIT_PROTOCOL`::
+	Internal variable used for handshaking the wire protocol. Server
+	admins may need to configure some transports to allow this
+	variable to be passed. See the discussion in linkgit:git[1].
 
 SEE ALSO
 --------

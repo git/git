@@ -2,6 +2,8 @@
 
 test_description='apply same filename'
 
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 modify () {
@@ -10,10 +12,7 @@ modify () {
 }
 
 test_expect_success setup '
-	for i in a b c d e f g h i j k l m
-	do
-		echo $i
-	done >same_fn &&
+	test_write_lines a b c d e f g h i j k l m >same_fn &&
 	cp same_fn other_fn &&
 	git add same_fn other_fn &&
 	git commit -m initial
@@ -32,6 +31,10 @@ test_expect_success 'apply same filename with independent changes' '
 
 test_expect_success 'apply same filename with overlapping changes' '
 	git reset --hard &&
+
+	# Store same_fn so that we can check apply -R in next test
+	cp same_fn same_fn1 &&
+
 	modify "s/^d/z/" same_fn &&
 	git diff > patch0 &&
 	git add same_fn &&
@@ -41,6 +44,11 @@ test_expect_success 'apply same filename with overlapping changes' '
 	git reset --hard &&
 	git apply patch0 &&
 	test_cmp same_fn same_fn2
+'
+
+test_expect_success 'apply same filename with overlapping changes, in reverse' '
+	git apply -R patch0 &&
+	test_cmp same_fn same_fn1
 '
 
 test_expect_success 'apply same new filename after rename' '

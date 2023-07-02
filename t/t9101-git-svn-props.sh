@@ -4,6 +4,7 @@
 #
 
 test_description='git svn property tests'
+
 . ./lib-git-svn.sh
 
 mkdir import

@@ -1,2 +1,4 @@
 (
->	cat)
+	cat <<-\INPUT)
+	fizz
+	INPUT

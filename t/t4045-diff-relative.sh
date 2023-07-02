@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='diff --relative tests'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -61,7 +63,7 @@ check_stat () {
 	EOF
 	test_expect_success "--stat $*" "
 		git -C '$dir' diff --stat $* HEAD^ >actual &&
-		test_i18ncmp expected actual
+		test_cmp expected actual
 	"
 }
 
@@ -161,5 +163,87 @@ check_diff_relative_option subdir file2 false --no-relative --relative
 check_diff_relative_option subdir file2 true --no-relative --relative
 check_diff_relative_option . file2 false --no-relative --relative=subdir
 check_diff_relative_option . file2 true --no-relative --relative=subdir
+
+test_expect_success 'external diff with --relative' '
+	test_when_finished "git reset --hard" &&
+	echo changed >file1 &&
+	echo changed >subdir/file2 &&
+
+	write_script mydiff <<-\EOF &&
+	# hacky pretend diff; the goal here is just to make sure we got
+	# passed sensible input that we _could_ diff, without relying on
+	# the specific output of a system diff tool.
+	echo "diff a/$1 b/$1" &&
+	echo "--- a/$1" &&
+	echo "+++ b/$1" &&
+	echo "@@ -1 +0,0 @@" &&
+	sed "s/^/-/" "$2" &&
+	sed "s/^/+/" "$5"
+	EOF
+
+	cat >expect <<-\EOF &&
+	diff a/file2 b/file2
+	--- a/file2
+	+++ b/file2
+	@@ -1 +0,0 @@
+	-other content
+	+changed
+	EOF
+	GIT_EXTERNAL_DIFF=./mydiff git diff --relative=subdir >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'setup diff --relative unmerged' '
+	test_commit zero file0 &&
+	test_commit base subdir/file0 &&
+	git switch -c br1 &&
+	test_commit one file0 &&
+	test_commit sub1 subdir/file0 &&
+	git switch -c br2 base &&
+	test_commit two file0 &&
+	git switch -c br3 &&
+	test_commit sub3 subdir/file0
+'
+
+test_expect_success 'diff --relative without change in subdir' '
+	git switch br2 &&
+	test_when_finished "git merge --abort" &&
+	test_must_fail git merge one &&
+	git -C subdir diff --relative >out &&
+	test_must_be_empty out &&
+	git -C subdir diff --relative --name-only >out &&
+	test_must_be_empty out
+'
+
+test_expect_success 'diff --relative --name-only with change in subdir' '
+	git switch br3 &&
+	test_when_finished "git merge --abort" &&
+	test_must_fail git merge sub1 &&
+	test_write_lines file0 file0 >expected &&
+	git -C subdir diff --relative --name-only >out &&
+	test_cmp expected out
+'
+
+test_expect_failure 'diff --relative with change in subdir' '
+	git switch br3 &&
+	br1_blob=$(git rev-parse --short --verify br1:subdir/file0) &&
+	br3_blob=$(git rev-parse --short --verify br3:subdir/file0) &&
+	test_when_finished "git merge --abort" &&
+	test_must_fail git merge br1 &&
+	cat >expected <<-EOF &&
+	diff --cc file0
+	index $br3_blob,$br1_blob..0000000
+	--- a/file0
+	+++ b/file0
+	@@@ -1,1 -1,1 +1,5 @@@
+	++<<<<<<< HEAD
+	 +sub3
+	++=======
+	+ sub1
+	++>>>>>>> br1
+	EOF
+	git -C subdir diff --relative >out &&
+	test_cmp expected out
+'
 
 test_done

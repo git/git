@@ -1,11 +1,18 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "refs.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "cache-tree.h"
 #include "mergesort.h"
+#include "convert.h"
 #include "diff.h"
 #include "diffcore.h"
+#include "gettext.h"
+#include "hex.h"
+#include "path.h"
+#include "read-cache.h"
+#include "setup.h"
 #include "tag.h"
+#include "trace2.h"
 #include "blame.h"
 #include "alloc.h"
 #include "commit-slab.h"
@@ -176,12 +183,12 @@ static void set_commit_buffer_from_strbuf(struct repository *r,
 static struct commit *fake_working_tree_commit(struct repository *r,
 					       struct diff_options *opt,
 					       const char *path,
-					       const char *contents_from)
+					       const char *contents_from,
+					       struct object_id *oid)
 {
 	struct commit *commit;
 	struct blame_origin *origin;
 	struct commit_list **parent_tail, *parent;
-	struct object_id head_oid;
 	struct strbuf buf = STRBUF_INIT;
 	const char *ident;
 	time_t now;
@@ -197,17 +204,18 @@ static struct commit *fake_working_tree_commit(struct repository *r,
 	commit->date = now;
 	parent_tail = &commit->parents;
 
-	if (!resolve_ref_unsafe("HEAD", RESOLVE_REF_READING, &head_oid, NULL))
-		die("no such ref: HEAD");
-
-	parent_tail = append_parent(r, parent_tail, &head_oid);
+	parent_tail = append_parent(r, parent_tail, oid);
 	append_merge_parents(r, parent_tail);
 	verify_working_tree_path(r, commit, path);
 
 	origin = make_origin(commit, path);
 
-	ident = fmt_ident("Not Committed Yet", "not.committed.yet",
-			WANT_BLANK_IDENT, NULL, 0);
+	if (contents_from)
+		ident = fmt_ident("External file (--contents)", "external.file",
+				  WANT_BLANK_IDENT, NULL, 0);
+	else
+		ident = fmt_ident("Not Committed Yet", "not.committed.yet",
+				  WANT_BLANK_IDENT, NULL, 0);
 	strbuf_addstr(&msg, "tree 0000000000000000000000000000000000000000\n");
 	for (parent = commit->parents; parent; parent = parent->next)
 		strbuf_addf(&msg, "parent %s\n",
@@ -242,7 +250,7 @@ static struct commit *fake_working_tree_commit(struct repository *r,
 		switch (st.st_mode & S_IFMT) {
 		case S_IFREG:
 			if (opt->flags.allow_textconv &&
-			    textconv_object(r, read_from, mode, &null_oid, 0, &buf_ptr, &buf_len))
+			    textconv_object(r, read_from, mode, null_oid(), 0, &buf_ptr, &buf_len))
 				strbuf_attach(&buf, buf_ptr, buf_len, buf_len + 1);
 			else if (strbuf_read_file(&buf, read_from, st.st_size) != st.st_size)
 				die_errno("cannot open or read '%s'", read_from);
@@ -435,7 +443,7 @@ static void get_fingerprint(struct fingerprint *result,
 
 static void free_fingerprint(struct fingerprint *f)
 {
-	hashmap_free(&f->map);
+	hashmap_clear(&f->map);
 	free(f->entries);
 }
 
@@ -951,13 +959,13 @@ static int *fuzzy_find_matching_lines(struct blame_origin *parent,
 	max_search_distance_b = ((2 * max_search_distance_a + 1) * length_b
 				 - 1) / length_a;
 
-	result = xcalloc(sizeof(int), length_b);
-	second_best_result = xcalloc(sizeof(int), length_b);
-	certainties = xcalloc(sizeof(int), length_b);
+	CALLOC_ARRAY(result, length_b);
+	CALLOC_ARRAY(second_best_result, length_b);
+	CALLOC_ARRAY(certainties, length_b);
 
 	/* See get_similarity() for details of similarities. */
 	similarity_count = length_b * (max_search_distance_a * 2 + 1);
-	similarities = xcalloc(sizeof(int), similarity_count);
+	CALLOC_ARRAY(similarities, similarity_count);
 
 	for (i = 0; i < length_b; ++i) {
 		result[i] = -1;
@@ -995,7 +1003,7 @@ static void fill_origin_fingerprints(struct blame_origin *o)
 		return;
 	o->num_lines = find_line_starts(&line_starts, o->file.ptr,
 					o->file.size);
-	o->fingerprints = xcalloc(sizeof(struct fingerprint), o->num_lines);
+	CALLOC_ARRAY(o->fingerprints, o->num_lines);
 	get_line_fingerprints(o->fingerprints, o->file.ptr, line_starts,
 			      0, o->num_lines);
 	free(line_starts);
@@ -1028,8 +1036,9 @@ static void fill_origin_blob(struct diff_options *opt,
 				    &o->blob_oid, 1, &file->ptr, &file_size))
 			;
 		else
-			file->ptr = read_object_file(&o->blob_oid, &type,
-						     &file_size);
+			file->ptr = repo_read_object_file(the_repository,
+							  &o->blob_oid, &type,
+							  &file_size);
 		file->size = file_size;
 
 		if (!file->ptr)
@@ -1072,7 +1081,7 @@ static struct blame_entry *blame_merge(struct blame_entry *list1,
 	if (p1->s_lno <= p2->s_lno) {
 		do {
 			tail = &p1->next;
-			if ((p1 = *tail) == NULL) {
+			if (!(p1 = *tail)) {
 				*tail = p2;
 				return list1;
 			}
@@ -1082,7 +1091,7 @@ static struct blame_entry *blame_merge(struct blame_entry *list1,
 		*tail = p2;
 		do {
 			tail = &p2->next;
-			if ((p2 = *tail) == NULL)  {
+			if (!(p2 = *tail))  {
 				*tail = p1;
 				return list1;
 			}
@@ -1090,7 +1099,7 @@ static struct blame_entry *blame_merge(struct blame_entry *list1,
 		*tail = p1;
 		do {
 			tail = &p1->next;
-			if ((p1 = *tail) == NULL) {
+			if (!(p1 = *tail)) {
 				*tail = p2;
 				return list1;
 			}
@@ -1098,30 +1107,22 @@ static struct blame_entry *blame_merge(struct blame_entry *list1,
 	}
 }
 
-static void *get_next_blame(const void *p)
-{
-	return ((struct blame_entry *)p)->next;
-}
-
-static void set_next_blame(void *p1, void *p2)
-{
-	((struct blame_entry *)p1)->next = p2;
-}
+DEFINE_LIST_SORT(static, sort_blame_entries, struct blame_entry, next);
 
 /*
  * Final image line numbers are all different, so we don't need a
  * three-way comparison here.
  */
 
-static int compare_blame_final(const void *p1, const void *p2)
+static int compare_blame_final(const struct blame_entry *e1,
+			       const struct blame_entry *e2)
 {
-	return ((struct blame_entry *)p1)->lno > ((struct blame_entry *)p2)->lno
-		? 1 : -1;
+	return e1->lno > e2->lno ? 1 : -1;
 }
 
-static int compare_blame_suspect(const void *p1, const void *p2)
+static int compare_blame_suspect(const struct blame_entry *s1,
+				 const struct blame_entry *s2)
 {
-	const struct blame_entry *s1 = p1, *s2 = p2;
 	/*
 	 * to allow for collating suspects, we sort according to the
 	 * respective pointer value as the primary sorting criterion.
@@ -1138,8 +1139,7 @@ static int compare_blame_suspect(const void *p1, const void *p2)
 
 void blame_sort_final(struct blame_scoreboard *sb)
 {
-	sb->ent = llist_mergesort(sb->ent, get_next_blame, set_next_blame,
-				  compare_blame_final);
+	sort_blame_entries(&sb->ent, compare_blame_final);
 }
 
 static int compare_commits_by_reverse_commit_date(const void *a,
@@ -1276,7 +1276,7 @@ static int maybe_changed_path(struct repository *r,
 	if (commit_graph_generation(origin->commit) == GENERATION_NUMBER_INFINITY)
 		return 1;
 
-	filter = get_bloom_filter(r, origin->commit, 0);
+	filter = get_bloom_filter(r, origin->commit);
 
 	if (!filter)
 		return 1;
@@ -1403,7 +1403,6 @@ static struct blame_origin *find_origin(struct repository *r,
 		}
 	}
 	diff_flush(&diff_opts);
-	clear_pathspec(&diff_opts.pathspec);
 	return porigin;
 }
 
@@ -1447,7 +1446,6 @@ static struct blame_origin *find_rename(struct repository *r,
 		}
 	}
 	diff_flush(&diff_opts);
-	clear_pathspec(&diff_opts.pathspec);
 	return porigin;
 }
 
@@ -1853,8 +1851,7 @@ static void blame_chunk(struct blame_entry ***dstq, struct blame_entry ***srcq,
 	diffp = NULL;
 
 	if (ignore_diffs && same - tlno > 0) {
-		line_blames = xcalloc(sizeof(struct blame_line_tracker),
-				      same - tlno);
+		CALLOC_ARRAY(line_blames, same - tlno);
 		guess_line_blames(parent, target, tlno, offset, same,
 				  parent_len, line_blames);
 	}
@@ -1967,9 +1964,7 @@ static void pass_blame_to_parent(struct blame_scoreboard *sb,
 		    parent, target, 0);
 	*d.dstq = NULL;
 	if (ignore_diffs)
-		newdest = llist_mergesort(newdest, get_next_blame,
-					  set_next_blame,
-					  compare_blame_suspect);
+		sort_blame_entries(&newdest, compare_blame_suspect);
 	queue_blames(sb, parent, newdest);
 
 	return;
@@ -2216,7 +2211,7 @@ static struct blame_list *setup_blame_list(struct blame_entry *unblamed,
 	for (e = unblamed, num_ents = 0; e; e = e->next)
 		num_ents++;
 	if (num_ents) {
-		blame_list = xcalloc(num_ents, sizeof(struct blame_list));
+		CALLOC_ARRAY(blame_list, num_ents);
 		for (e = unblamed, i = 0; e; e = e->next)
 			blame_list[i++].ent = e;
 	}
@@ -2329,7 +2324,6 @@ static void find_copy_in_parent(struct blame_scoreboard *sb,
 	} while (unblamed);
 	target->suspects = reverse_blame(leftover, NULL);
 	diff_flush(&diff_opts);
-	clear_pathspec(&diff_opts.pathspec);
 }
 
 /*
@@ -2387,8 +2381,7 @@ static int num_scapegoats(struct rev_info *revs, struct commit *commit, int reve
  */
 static void distribute_blame(struct blame_scoreboard *sb, struct blame_entry *blamed)
 {
-	blamed = llist_mergesort(blamed, get_next_blame, set_next_blame,
-				 compare_blame_suspect);
+	sort_blame_entries(&blamed, compare_blame_suspect);
 	while (blamed)
 	{
 		struct blame_origin *porigin = blamed->suspect;
@@ -2428,7 +2421,7 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 	else if (num_sg < ARRAY_SIZE(sg_buf))
 		memset(sg_buf, 0, sizeof(sg_buf));
 	else
-		sg_origin = xcalloc(num_sg, sizeof(*sg_origin));
+		CALLOC_ARRAY(sg_origin, num_sg);
 
 	/*
 	 * The first pass looks for unrenamed path to optimize for
@@ -2445,7 +2438,7 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 
 			if (sg_origin[i])
 				continue;
-			if (parse_commit(p))
+			if (repo_parse_commit(the_repository, p))
 				continue;
 			porigin = find(sb->repo, p, origin, sb->bloom_data);
 			if (!porigin)
@@ -2608,7 +2601,7 @@ void assign_blame(struct blame_scoreboard *sb, int opt)
 		 * so hold onto it in the meantime.
 		 */
 		blame_origin_incref(suspect);
-		parse_commit(commit);
+		repo_parse_commit(the_repository, commit);
 		if (sb->reverse ||
 		    (!(commit->object.flags & UNINTERESTING) &&
 		     !(revs->max_age != -1 && commit->date < revs->max_age)))
@@ -2616,7 +2609,7 @@ void assign_blame(struct blame_scoreboard *sb, int opt)
 		else {
 			commit->object.flags |= UNINTERESTING;
 			if (commit->object.parsed)
-				mark_parents_uninteresting(commit);
+				mark_parents_uninteresting(sb->revs, commit);
 		}
 		/* treat root commit as boundary */
 		if (!commit->parents && !sb->show_root)
@@ -2670,7 +2663,7 @@ static struct commit *find_single_final(struct rev_info *revs,
 		if (obj->flags & UNINTERESTING)
 			continue;
 		obj = deref_tag(revs->repo, obj, NULL, 0);
-		if (obj->type != OBJ_COMMIT)
+		if (!obj || obj->type != OBJ_COMMIT)
 			die("Non commit %s?", revs->pending.objects[i].name);
 		if (found)
 			die("More than one commit to dig from %s and %s?",
@@ -2701,7 +2694,7 @@ static struct commit *dwim_reverse_initial(struct rev_info *revs,
 	/* Is that sole rev a committish? */
 	obj = revs->pending.objects[0].item;
 	obj = deref_tag(revs->repo, obj, NULL, 0);
-	if (obj->type != OBJ_COMMIT)
+	if (!obj || obj->type != OBJ_COMMIT)
 		return NULL;
 
 	/* Do we have HEAD? */
@@ -2737,7 +2730,7 @@ static struct commit *find_single_initial(struct rev_info *revs,
 		if (!(obj->flags & UNINTERESTING))
 			continue;
 		obj = deref_tag(revs->repo, obj, NULL, 0);
-		if (obj->type != OBJ_COMMIT)
+		if (!obj || obj->type != OBJ_COMMIT)
 			die("Non commit %s?", revs->pending.objects[i].name);
 		if (found)
 			die("More than one commit to dig up from, %s and %s?",
@@ -2764,7 +2757,6 @@ void init_scoreboard(struct blame_scoreboard *sb)
 }
 
 void setup_scoreboard(struct blame_scoreboard *sb,
-		      const char *path,
 		      struct blame_origin **orig)
 {
 	const char *final_commit_name = NULL;
@@ -2788,22 +2780,37 @@ void setup_scoreboard(struct blame_scoreboard *sb,
 		sb->commits.compare = compare_commits_by_reverse_commit_date;
 	}
 
-	if (sb->final && sb->contents_from)
-		die(_("cannot use --contents with final commit object name"));
-
 	if (sb->reverse && sb->revs->first_parent_only)
 		sb->revs->children.name = NULL;
 
-	if (!sb->final) {
+	if (sb->contents_from || !sb->final) {
+		struct object_id head_oid, *parent_oid;
+
 		/*
-		 * "--not A B -- path" without anything positive;
-		 * do not default to HEAD, but use the working tree
-		 * or "--contents".
+		 * Build a fake commit at the top of the history, when
+		 * (1) "git blame [^A] --path", i.e. with no positive end
+		 *     of the history range, in which case we build such
+		 *     a fake commit on top of the HEAD to blame in-tree
+		 *     modifications.
+		 * (2) "git blame --contents=file [A] -- path", with or
+		 *     without positive end of the history range but with
+		 *     --contents, in which case we pretend that there is
+		 *     a fake commit on top of the positive end (defaulting to
+		 *     HEAD) that has the given contents in the path.
 		 */
+		if (sb->final) {
+			parent_oid = &sb->final->object.oid;
+		} else {
+			if (!resolve_ref_unsafe("HEAD", RESOLVE_REF_READING, &head_oid, NULL))
+				die("no such ref: HEAD");
+			parent_oid = &head_oid;
+		}
+
 		setup_work_tree();
 		sb->final = fake_working_tree_commit(sb->repo,
 						     &sb->revs->diffopt,
-						     path, sb->contents_from);
+						     sb->path, sb->contents_from,
+						     parent_oid);
 		add_pending_object(sb->revs, &(sb->final->object), ":");
 	}
 
@@ -2846,22 +2853,24 @@ void setup_scoreboard(struct blame_scoreboard *sb,
 		sb->final_buf_size = o->file.size;
 	}
 	else {
-		o = get_origin(sb->final, path);
+		o = get_origin(sb->final, sb->path);
 		if (fill_blob_sha1_and_mode(sb->repo, o))
-			die(_("no such path %s in %s"), path, final_commit_name);
+			die(_("no such path %s in %s"), sb->path, final_commit_name);
 
 		if (sb->revs->diffopt.flags.allow_textconv &&
-		    textconv_object(sb->repo, path, o->mode, &o->blob_oid, 1, (char **) &sb->final_buf,
+		    textconv_object(sb->repo, sb->path, o->mode, &o->blob_oid, 1, (char **) &sb->final_buf,
 				    &sb->final_buf_size))
 			;
 		else
-			sb->final_buf = read_object_file(&o->blob_oid, &type,
-							 &sb->final_buf_size);
+			sb->final_buf = repo_read_object_file(the_repository,
+							      &o->blob_oid,
+							      &type,
+							      &sb->final_buf_size);
 
 		if (!sb->final_buf)
 			die(_("cannot read blob %s for path %s"),
 			    oid_to_hex(&o->blob_oid),
-			    path);
+			    sb->path);
 	}
 	sb->num_read_blob++;
 	prepare_lines(sb);
@@ -2888,26 +2897,27 @@ struct blame_entry *blame_entry_prepend(struct blame_entry *head,
 	return new_head;
 }
 
-void setup_blame_bloom_data(struct blame_scoreboard *sb,
-			    const char *path)
+void setup_blame_bloom_data(struct blame_scoreboard *sb)
 {
 	struct blame_bloom_data *bd;
+	struct bloom_filter_settings *bs;
 
 	if (!sb->repo->objects->commit_graph)
 		return;
 
-	if (!sb->repo->objects->commit_graph->bloom_filter_settings)
+	bs = get_bloom_filter_settings(sb->repo);
+	if (!bs)
 		return;
 
 	bd = xmalloc(sizeof(struct blame_bloom_data));
 
-	bd->settings = sb->repo->objects->commit_graph->bloom_filter_settings;
+	bd->settings = bs;
 
 	bd->alloc = 4;
 	bd->nr = 0;
 	ALLOC_ARRAY(bd->keys, bd->alloc);
 
-	add_bloom_key(bd, path);
+	add_bloom_key(bd, sb->path);
 
 	sb->bloom_data = bd;
 }

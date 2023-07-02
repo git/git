@@ -152,7 +152,7 @@ $state->{allowed_roots} = [ @ARGV ];
 
 # don't export the whole system unless the users requests it
 if ($state->{'export-all'} && !@{$state->{allowed_roots}}) {
-    die "--export-all can only be used together with an explicit whitelist\n";
+    die "--export-all can only be used together with an explicit '<directory>...' list\n";
 }
 
 # Environment handling for running under git-shell
@@ -222,10 +222,11 @@ if ($state->{method} eq 'pserver') {
         open my $passwd, "<", $authdb or die $!;
         while (<$passwd>) {
             if (m{^\Q$user\E:(.*)}) {
-                if (crypt($user, descramble($password)) eq $1) {
+                my $hash = crypt(descramble($password), $1);
+                if (defined $hash and $hash eq $1) {
                     $auth_ok = 1;
                 }
-            };
+            }
         }
         close $passwd;
 
@@ -2149,7 +2150,7 @@ sub req_diff
                    ( $meta2->{revision} or "workingcopy" ));
 
         # TODO: Use --label instead of -L because -L is no longer
-        #  documented and may go away someday.  Not sure if there there are
+        #  documented and may go away someday.  Not sure if there are
         #  versions that only support -L, which would make this change risky?
         #  http://osdir.com/ml/bug-gnu-utils-gnu/2010-12/msg00060.html
         #    ("man diff" should actually document the best migration strategy,
@@ -3606,6 +3607,22 @@ package GITCVS::updater;
 use strict;
 use warnings;
 use DBI;
+our $_use_fsync;
+
+# n.b. consider using Git.pm
+sub use_fsync {
+    if (!defined($_use_fsync)) {
+        my $x = $ENV{GIT_TEST_FSYNC};
+        if (defined $x) {
+            local $ENV{GIT_CONFIG};
+            delete $ENV{GIT_CONFIG};
+            my $v = ::safe_pipe_capture('git', '-c', "test.fsync=$x",
+                                        qw(config --type=bool test.fsync));
+            $_use_fsync = defined($v) ? ($v eq "true\n") : 1;
+        }
+    }
+    $_use_fsync;
+}
 
 =head1 METHODS
 
@@ -3675,6 +3692,9 @@ sub new
                                 $self->{dbuser},
                                 $self->{dbpass});
     die "Error connecting to database\n" unless defined $self->{dbh};
+    if ($self->{dbdriver} eq 'SQLite' && !use_fsync()) {
+        $self->{dbh}->do('PRAGMA synchronous = OFF');
+    }
 
     $self->{tables} = {};
     foreach my $table ( keys %{$self->{dbh}->table_info(undef,undef,undef,'TABLE')->fetchall_hashref('TABLE_NAME')} )

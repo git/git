@@ -2,7 +2,11 @@
 
 test_description='merge-recursive backend test'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-merge.sh
 
 test_expect_success 'setup 1' '
 
@@ -34,7 +38,7 @@ test_expect_success 'setup 1' '
 	git add a d/e &&
 
 	test_tick &&
-	git commit -m "master modifies a and d/e" &&
+	git commit -m "main modifies a and d/e" &&
 	c1=$(git rev-parse --verify HEAD) &&
 	( git ls-tree -r HEAD && git ls-files -s ) >actual &&
 	(
@@ -465,7 +469,7 @@ test_expect_success SYMLINKS 'dir in working tree with symlink ancestor does not
 		git checkout -b branch1 &&
 		git commit --allow-empty -m "empty commit" &&
 
-		git checkout master &&
+		git checkout main &&
 		git rm foo &&
 		mkdir foo &&
 		>foo/bar &&
@@ -474,7 +478,7 @@ test_expect_success SYMLINKS 'dir in working tree with symlink ancestor does not
 
 		git checkout branch1 &&
 
-		git cherry-pick master &&
+		git cherry-pick main &&
 		test_path_is_dir foo &&
 		test_path_is_file foo/bar
 	)
@@ -489,8 +493,8 @@ test_expect_success 'reset and 3-way merge' '
 
 test_expect_success 'reset and bind merge' '
 
-	git reset --hard master &&
-	git read-tree --prefix=M/ master &&
+	git reset --hard main &&
+	git read-tree --prefix=M/ main &&
 	git ls-files -s >actual &&
 	(
 		echo "100644 $o1 0	M/a" &&
@@ -504,7 +508,7 @@ test_expect_success 'reset and bind merge' '
 	) >expected &&
 	test_cmp expected actual &&
 
-	git read-tree --prefix=a1/ master &&
+	git read-tree --prefix=a1/ main &&
 	git ls-files -s >actual &&
 	(
 		echo "100644 $o1 0	M/a" &&
@@ -522,7 +526,7 @@ test_expect_success 'reset and bind merge' '
 	) >expected &&
 	test_cmp expected actual &&
 
-	git read-tree --prefix=z/ master &&
+	git read-tree --prefix=z/ main &&
 	git ls-files -s >actual &&
 	(
 		echo "100644 $o1 0	M/a" &&
@@ -598,11 +602,11 @@ test_expect_success 'merge-recursive w/ empty work tree - theirs has rename' '
 
 test_expect_success 'merge removes empty directories' '
 
-	git reset --hard master &&
+	git reset --hard main &&
 	git checkout -b rm &&
 	git rm d/e &&
 	git commit -mremoved-d/e &&
-	git checkout master &&
+	git checkout main &&
 	git merge -s recursive rm &&
 	test_path_is_missing d
 '
@@ -641,7 +645,7 @@ test_expect_success 'merge-recursive copy vs. rename' '
 	test_cmp expected actual
 '
 
-test_expect_failure 'merge-recursive rename vs. rename/symlink' '
+test_expect_merge_algorithm failure success 'merge-recursive rename vs. rename/symlink' '
 
 	git checkout -f rename &&
 	git merge rename-ln &&
@@ -663,7 +667,7 @@ test_expect_failure 'merge-recursive rename vs. rename/symlink' '
 
 test_expect_success 'merging with triple rename across D/F conflict' '
 	git reset --hard HEAD &&
-	git checkout -b main &&
+	git checkout -b topic &&
 	git rm -rf . &&
 
 	echo "just a file" >sub1 &&
@@ -682,7 +686,7 @@ test_expect_success 'merging with triple rename across D/F conflict' '
 	test_tick &&
 	git commit -a -m changesimplefile &&
 
-	git checkout main &&
+	git checkout topic &&
 	git rm sub1 &&
 	git mv sub2 sub1 &&
 	test_tick &&
@@ -702,7 +706,7 @@ test_expect_success 'merge-recursive remembers the names of all base trees' '
 	# more trees than static slots used by oid_to_hex()
 	for commit in $c0 $c2 $c4 $c5 $c6 $c7
 	do
-		git rev-parse "$commit^{tree}"
+		git rev-parse "$commit^{tree}" || return 1
 	done >trees &&
 
 	# ignore the return code; it only fails because the input is weird...
@@ -714,7 +718,9 @@ test_expect_success 'merge-recursive remembers the names of all base trees' '
 	# merge-recursive prints in reverse order, but we do not care
 	sort <trees >expect &&
 	sed -n "s/^virtual //p" out | sort >actual &&
-	test_cmp expect actual
+	test_cmp expect actual &&
+
+	git clean -fd
 '
 
 test_expect_success 'merge-recursive internal merge resolves to the sameness' '

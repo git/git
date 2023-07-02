@@ -123,10 +123,10 @@ test_expect_success 'NUL separation with --stat' '
 	stat1_part=$(git diff-tree --no-commit-id --stat --root HEAD^) &&
 	printf "add bar\n$stat0_part\n\0$(commit_msg)\n$stat1_part\n" >expected &&
 	git log -z --stat --pretty="format:%s" >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
-test_expect_failure C_LOCALE_OUTPUT 'NUL termination with --stat' '
+test_expect_failure 'NUL termination with --stat' '
 	stat0_part=$(git diff --stat HEAD^ HEAD) &&
 	stat1_part=$(git diff-tree --no-commit-id --stat --root HEAD^) &&
 	printf "add bar\n$stat0_part\n\0$(commit_msg)\n$stat1_part\n0" >expected &&
@@ -156,7 +156,7 @@ test_expect_success 'NUL termination with --reflog --pretty=oneline' '
 	for r in $revs
 	do
 		git show -s --pretty=oneline "$r" >raw &&
-		cat raw | lf_to_nul || exit 1
+		cat raw | lf_to_nul || return 1
 	done >expect &&
 	# the trailing NUL is already produced so we do not need to
 	# output another one
@@ -525,17 +525,22 @@ test_expect_success 'strbuf_utf8_replace() not producing NUL' '
 	! grep Q actual
 '
 
-# ISO strict date format
-test_expect_success 'ISO and ISO-strict date formats display the same values' '
-	git log --format=%ai%n%ci |
-	sed -e "s/ /T/; s/ //; s/..\$/:&/" >expected &&
+# --date=[XXX] and corresponding %a[X] %c[X] format equivalency
+test_expect_success '--date=iso-strict %ad%cd is the same as %aI%cI' '
+	git log --format=%ad%n%cd --date=iso-strict >expected &&
 	git log --format=%aI%n%cI >actual &&
 	test_cmp expected actual
 '
 
-test_expect_success 'short date' '
+test_expect_success '--date=short %ad%cd is the same as %as%cs' '
 	git log --format=%ad%n%cd --date=short >expected &&
 	git log --format=%as%n%cs >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success '--date=human %ad%cd is the same as %ah%ch' '
+	git log --format=%ad%n%cd --date=human >expected &&
+	git log --format=%ah%n%ch >actual &&
 	test_cmp expected actual
 '
 
@@ -602,6 +607,12 @@ test_expect_success 'pretty format %(trailers) shows trailers' '
 		cat trailers &&
 		echo
 	} >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'pretty format %(trailers:) enables no options' '
+	git log --no-walk --pretty="%(trailers:)" >actual &&
+	# "expect" the same as the test above
 	test_cmp expect actual
 '
 
@@ -709,19 +720,101 @@ test_expect_success '%(trailers:key) without value is error' '
 	test_cmp expect actual
 '
 
+test_expect_success '%(trailers:keyonly) shows only keys' '
+	git log --no-walk --pretty="format:%(trailers:keyonly)" >actual &&
+	test_write_lines \
+		"Signed-off-by" \
+		"Acked-by" \
+		"[ v2 updated patch description ]" \
+		"Signed-off-by" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '%(trailers:key=foo,keyonly) shows only key' '
+	git log --no-walk --pretty="format:%(trailers:key=Acked-by,keyonly)" >actual &&
+	echo "Acked-by" >expect &&
+	test_cmp expect actual
+'
+
 test_expect_success '%(trailers:key=foo,valueonly) shows only value' '
 	git log --no-walk --pretty="format:%(trailers:key=Acked-by,valueonly)" >actual &&
 	echo "A U Thor <author@example.com>" >expect &&
 	test_cmp expect actual
 '
 
-test_expect_success 'pretty format %(trailers:separator) changes separator' '
-	git log --no-walk --pretty=format:"X%(trailers:separator=%x00,unfold)X" >actual &&
-	printf "XSigned-off-by: A U Thor <author@example.com>\0Acked-by: A U Thor <author@example.com>\0[ v2 updated patch description ]\0Signed-off-by: A U Thor <author@example.com>X" >expect &&
+test_expect_success '%(trailers:valueonly) shows only values' '
+	git log --no-walk --pretty="format:%(trailers:valueonly)" >actual &&
+	test_write_lines \
+		"A U Thor <author@example.com>" \
+		"A U Thor <author@example.com>" \
+		"[ v2 updated patch description ]" \
+		"A U Thor" \
+		"  <author@example.com>" >expect &&
 	test_cmp expect actual
 '
 
-test_expect_success 'pretty format %(trailers) combining separator/key/valueonly' '
+test_expect_success '%(trailers:key=foo,keyonly,valueonly) shows nothing' '
+	git log --no-walk --pretty="format:%(trailers:key=Acked-by,keyonly,valueonly)" >actual &&
+	echo >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'pretty format %(trailers:separator) changes separator' '
+	git log --no-walk --pretty=format:"X%(trailers:separator=%x00)X" >actual &&
+	(
+		printf "XSigned-off-by: A U Thor <author@example.com>\0" &&
+		printf "Acked-by: A U Thor <author@example.com>\0" &&
+		printf "[ v2 updated patch description ]\0" &&
+		printf "Signed-off-by: A U Thor\n  <author@example.com>X"
+	) >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'pretty format %(trailers:separator=X,unfold) changes separator' '
+	git log --no-walk --pretty=format:"X%(trailers:separator=%x00,unfold)X" >actual &&
+	(
+		printf "XSigned-off-by: A U Thor <author@example.com>\0" &&
+		printf "Acked-by: A U Thor <author@example.com>\0" &&
+		printf "[ v2 updated patch description ]\0" &&
+		printf "Signed-off-by: A U Thor <author@example.com>X"
+	) >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'pretty format %(trailers:key_value_separator) changes key-value separator' '
+	git log --no-walk --pretty=format:"X%(trailers:key_value_separator=%x00)X" >actual &&
+	(
+		printf "XSigned-off-by\0A U Thor <author@example.com>\n" &&
+		printf "Acked-by\0A U Thor <author@example.com>\n" &&
+		printf "[ v2 updated patch description ]\n" &&
+		printf "Signed-off-by\0A U Thor\n  <author@example.com>\nX"
+	) >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'pretty format %(trailers:key_value_separator,unfold) changes key-value separator' '
+	git log --no-walk --pretty=format:"X%(trailers:key_value_separator=%x00,unfold)X" >actual &&
+	(
+		printf "XSigned-off-by\0A U Thor <author@example.com>\n" &&
+		printf "Acked-by\0A U Thor <author@example.com>\n" &&
+		printf "[ v2 updated patch description ]\n" &&
+		printf "Signed-off-by\0A U Thor <author@example.com>\nX"
+	) >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'pretty format %(trailers:separator,key_value_separator) changes both separators' '
+	git log --no-walk --pretty=format:"%(trailers:separator=%x00,key_value_separator=%x00%x00,unfold)" >actual &&
+	(
+		printf "Signed-off-by\0\0A U Thor <author@example.com>\0" &&
+		printf "Acked-by\0\0A U Thor <author@example.com>\0" &&
+		printf "[ v2 updated patch description ]\0" &&
+		printf "Signed-off-by\0\0A U Thor <author@example.com>"
+	) >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'pretty format %(trailers) combining separator/key/keyonly/valueonly' '
 	git commit --allow-empty -F - <<-\EOF &&
 	Important fix
 
@@ -748,6 +841,13 @@ test_expect_success 'pretty format %(trailers) combining separator/key/valueonly
 		"Does not close any tickets" \
 		"Another fix #567, #890" \
 		"Important fix #1234" >expect &&
+	test_cmp expect actual &&
+
+	git log --pretty="%s% (trailers:separator=%x2c%x20,key=Closes,keyonly)" HEAD~3.. >actual &&
+	test_write_lines \
+		"Does not close any tickets" \
+		"Another fix Closes, Closes" \
+		"Important fix Closes" >expect &&
 	test_cmp expect actual
 '
 
@@ -865,6 +965,160 @@ test_expect_success 'log --pretty=reference is colored appropriately' '
 	git log --color=always --pretty="tformat:%C(auto)%h (%s, %as)" >expect &&
 	git log --color=always --pretty=reference >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success '%(describe) vs git describe' '
+	git log --format="%H" | while read hash
+	do
+		if desc=$(git describe $hash)
+		then
+			: >expect-contains-good
+		else
+			: >expect-contains-bad
+		fi &&
+		echo "$hash $desc" || return 1
+	done >expect &&
+	test_path_exists expect-contains-good &&
+	test_path_exists expect-contains-bad &&
+
+	git log --format="%H %(describe)" >actual 2>err &&
+	test_cmp expect actual &&
+	test_must_be_empty err
+'
+
+test_expect_success '%(describe:match=...) vs git describe --match ...' '
+	test_when_finished "git tag -d tag-match" &&
+	git tag -a -m tagged tag-match &&
+	git describe --match "*-match" >expect &&
+	git log -1 --format="%(describe:match=*-match)" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '%(describe:exclude=...) vs git describe --exclude ...' '
+	test_when_finished "git tag -d tag-exclude" &&
+	git tag -a -m tagged tag-exclude &&
+	git describe --exclude "*-exclude" >expect &&
+	git log -1 --format="%(describe:exclude=*-exclude)" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '%(describe:tags) vs git describe --tags' '
+	test_when_finished "git tag -d tagname" &&
+	git tag tagname &&
+	git describe --tags >expect &&
+	git log -1 --format="%(describe:tags)" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '%(describe:abbrev=...) vs git describe --abbrev=...' '
+	test_when_finished "git tag -d tagname" &&
+	git tag -a -m tagged tagname &&
+	git describe --abbrev=15 >expect &&
+	git log -1 --format="%(describe:abbrev=15)" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --pretty with space stealing' '
+	printf mm0 >expect &&
+	git log -1 --pretty="format:mm%>>|(1)%x30" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --pretty with invalid padding format' '
+	printf "%s%%<(20" "$(git rev-parse HEAD)" >expect &&
+	git log -1 --pretty="format:%H%<(20" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --pretty with magical wrapping directives' '
+	commit_id=$(git commit-tree HEAD^{tree} -m "describe me") &&
+	git tag describe-me $commit_id &&
+	printf "\n(tag:\ndescribe-me)%%+w(2)" >expect &&
+	git log -1 --pretty="format:%w(1)%+d%+w(2)" $commit_id >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success SIZE_T_IS_64BIT 'log --pretty with overflowing wrapping directive' '
+	printf "%%w(2147483649,1,1)0" >expect &&
+	git log -1 --pretty="format:%w(2147483649,1,1)%x30" >actual &&
+	test_cmp expect actual &&
+	printf "%%w(1,2147483649,1)0" >expect &&
+	git log -1 --pretty="format:%w(1,2147483649,1)%x30" >actual &&
+	test_cmp expect actual &&
+	printf "%%w(1,1,2147483649)0" >expect &&
+	git log -1 --pretty="format:%w(1,1,2147483649)%x30" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success SIZE_T_IS_64BIT 'log --pretty with overflowing padding directive' '
+	printf "%%<(2147483649)0" >expect &&
+	git log -1 --pretty="format:%<(2147483649)%x30" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --pretty with padding and preceding control chars' '
+	printf "\20\20   0" >expect &&
+	git log -1 --pretty="format:%x10%x10%>|(4)%x30" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --pretty truncation with control chars' '
+	test_commit "$(printf "\20\20\20\20xxxx")" file contents commit-with-control-chars &&
+	printf "\20\20\20\20x.." >expect &&
+	git log -1 --pretty="format:%<(3,trunc)%s" commit-with-control-chars >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success EXPENSIVE,SIZE_T_IS_64BIT 'log --pretty with huge commit message' '
+	# We only assert that this command does not crash. This needs to be
+	# executed with the address sanitizer to demonstrate failure.
+	git log -1 --pretty="format:%>(2147483646)%x41%41%>(2147483646)%x41" >/dev/null
+'
+
+test_expect_success EXPENSIVE,SIZE_T_IS_64BIT 'set up huge commit' '
+	test-tool genzeros 2147483649 | tr "\000" "1" >expect &&
+	huge_commit=$(git commit-tree -F expect HEAD^{tree})
+'
+
+test_expect_success EXPENSIVE,SIZE_T_IS_64BIT 'log --pretty with huge commit message' '
+	git log -1 --format="%B%<(1)%x30" $huge_commit >actual &&
+	echo 0 >>expect &&
+	test_cmp expect actual
+'
+
+test_expect_success EXPENSIVE,SIZE_T_IS_64BIT 'log --pretty with huge commit message does not cause allocation failure' '
+	test_must_fail git log -1 --format="%<(1)%B" $huge_commit 2>error &&
+	cat >expect <<-EOF &&
+	fatal: number too large to represent as int on this platform: 2147483649
+	EOF
+	test_cmp expect error
+'
+
+# pretty-formats note wide char limitations, and add tests
+test_expect_failure 'wide and decomposed characters column counting' '
+
+# from t/lib-unicode-nfc-nfd.sh hex values converted to octal
+	utf8_nfc=$(printf "\303\251") && # e acute combined.
+	utf8_nfd=$(printf "\145\314\201") && # e with a combining acute (i.e. decomposed)
+	utf8_emoji=$(printf "\360\237\221\250") &&
+
+# replacement character when requesting a wide char fits in a single display colum.
+# "half wide" alternative could be a plain ASCII dot `.`
+	utf8_vert_ell=$(printf "\342\213\256") &&
+
+# use ${xxx} here!
+	nfc10="${utf8_nfc}${utf8_nfc}${utf8_nfc}${utf8_nfc}${utf8_nfc}${utf8_nfc}${utf8_nfc}${utf8_nfc}${utf8_nfc}${utf8_nfc}" &&
+	nfd10="${utf8_nfd}${utf8_nfd}${utf8_nfd}${utf8_nfd}${utf8_nfd}${utf8_nfd}${utf8_nfd}${utf8_nfd}${utf8_nfd}${utf8_nfd}" &&
+	emoji5="${utf8_emoji}${utf8_emoji}${utf8_emoji}${utf8_emoji}${utf8_emoji}" &&
+# emoji5 uses 10 display columns
+
+	test_commit "abcdefghij" &&
+	test_commit --no-tag "${nfc10}" &&
+	test_commit --no-tag "${nfd10}" &&
+	test_commit --no-tag "${emoji5}" &&
+	printf "${utf8_emoji}..${utf8_emoji}${utf8_vert_ell}\n${utf8_nfd}..${utf8_nfd}${utf8_nfd}\n${utf8_nfc}..${utf8_nfc}${utf8_nfc}\na..ij\n" >expected &&
+	git log --format="%<(5,mtrunc)%s" -4 >actual &&
+	test_cmp expected actual
 '
 
 test_done

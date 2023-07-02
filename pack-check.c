@@ -1,10 +1,13 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "environment.h"
+#include "hex.h"
 #include "repository.h"
 #include "pack.h"
 #include "pack-revindex.h"
 #include "progress.h"
 #include "packfile.h"
-#include "object-store.h"
+#include "object-file.h"
+#include "object-store-ll.h"
 
 struct idx_entry {
 	off_t                offset;
@@ -39,7 +42,7 @@ int check_pack_crc(struct packed_git *p, struct pack_window **w_curs,
 	} while (len);
 
 	index_crc = p->index_data;
-	index_crc += 2 + 256 + p->num_objects * (the_hash_algo->rawsz/4) + nr;
+	index_crc += 2 + 256 + (size_t)p->num_objects * (the_hash_algo->rawsz/4) + nr;
 
 	return data_crc != ntohl(*index_crc);
 }
@@ -127,7 +130,7 @@ static int verify_packfile(struct repository *r,
 
 		if (type == OBJ_BLOB && big_file_threshold <= size) {
 			/*
-			 * Let check_object_signature() check it with
+			 * Let stream_object_signature() check it with
 			 * the streaming interface; no point slurping
 			 * the data in-core only to discard.
 			 */
@@ -142,7 +145,11 @@ static int verify_packfile(struct repository *r,
 			err = error("cannot unpack %s from %s at offset %"PRIuMAX"",
 				    oid_to_hex(&oid), p->pack_name,
 				    (uintmax_t)entries[i].offset);
-		else if (check_object_signature(r, &oid, data, size, type_name(type)))
+		else if (data && check_object_signature(r, &oid, data, size,
+							type) < 0)
+			err = error("packed %s from %s is corrupt",
+				    oid_to_hex(&oid), p->pack_name);
+		else if (!data && stream_object_signature(r, &oid) < 0)
 			err = error("packed %s from %s is corrupt",
 				    oid_to_hex(&oid), p->pack_name);
 		else if (fn) {
@@ -164,22 +171,13 @@ static int verify_packfile(struct repository *r,
 
 int verify_pack_index(struct packed_git *p)
 {
-	off_t index_size;
-	const unsigned char *index_base;
-	git_hash_ctx ctx;
-	unsigned char hash[GIT_MAX_RAWSZ];
 	int err = 0;
 
 	if (open_pack_index(p))
 		return error("packfile %s index not opened", p->pack_name);
-	index_size = p->index_size;
-	index_base = p->index_data;
 
 	/* Verify SHA1 sum of the index file */
-	the_hash_algo->init_fn(&ctx);
-	the_hash_algo->update_fn(&ctx, index_base, (unsigned int)(index_size - the_hash_algo->rawsz));
-	the_hash_algo->final_fn(hash, &ctx);
-	if (!hasheq(hash, index_base + index_size - the_hash_algo->rawsz))
+	if (!hashfile_checksum_valid(p->index_data, p->index_size))
 		err = error("Packfile index for %s hash mismatch",
 			    p->pack_name);
 	return err;
