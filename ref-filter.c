@@ -2344,7 +2344,8 @@ static const struct object_id *match_points_at(struct oid_array *points_at,
 
 	if (oid_array_lookup(points_at, oid) >= 0)
 		return oid;
-	obj = parse_object(the_repository, oid);
+	obj = parse_object_with_flags(the_repository, oid,
+				      PARSE_OBJECT_SKIP_HASH_CHECK);
 	while (obj && obj->type == OBJ_TAG) {
 		struct tag *tag = (struct tag *)obj;
 
