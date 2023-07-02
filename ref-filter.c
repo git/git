@@ -2330,20 +2330,22 @@ static int for_each_fullref_in_pattern(struct ref_filter *filter,
 /*
  * Given a ref (oid, refname), check if the ref belongs to the array
  * of oids. If the given ref is a tag, check if the given tag points
- * at one of the oids in the given oid array.
+ * at one of the oids in the given oid array. Returns non-zero if a
+ * match is found.
+ *
  * NEEDSWORK:
  * As the refs are cached we might know what refname peels to without
  * the need to parse the object via parse_object(). peel_ref() might be a
  * more efficient alternative to obtain the pointee.
  */
-static const struct object_id *match_points_at(struct oid_array *points_at,
-					       const struct object_id *oid,
-					       const char *refname)
+static int match_points_at(struct oid_array *points_at,
+			   const struct object_id *oid,
+			   const char *refname)
 {
 	struct object *obj;
 
 	if (oid_array_lookup(points_at, oid) >= 0)
-		return oid;
+		return 1;
 	obj = parse_object_with_flags(the_repository, oid,
 				      PARSE_OBJECT_SKIP_HASH_CHECK);
 	while (obj && obj->type == OBJ_TAG) {
@@ -2354,15 +2356,14 @@ static const struct object_id *match_points_at(struct oid_array *points_at,
 			break;
 		}
 
-		oid = get_tagged_oid(tag);
-		if (oid_array_lookup(points_at, oid) >= 0)
-			return oid;
+		if (oid_array_lookup(points_at, get_tagged_oid(tag)) >= 0)
+			return 1;
 
 		obj = tag->tagged;
 	}
 	if (!obj)
 		die(_("malformed object at '%s'"), refname);
-	return NULL;
+	return 0;
 }
 
 /*
