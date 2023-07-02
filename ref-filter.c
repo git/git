@@ -2346,10 +2346,18 @@ static const struct object_id *match_points_at(struct oid_array *points_at,
 		return oid;
 	obj = parse_object(the_repository, oid);
 	while (obj && obj->type == OBJ_TAG) {
-		oid = get_tagged_oid((struct tag *)obj);
+		struct tag *tag = (struct tag *)obj;
+
+		if (parse_tag(tag) < 0) {
+			obj = NULL;
+			break;
+		}
+
+		oid = get_tagged_oid(tag);
 		if (oid_array_lookup(points_at, oid) >= 0)
 			return oid;
-		obj = parse_object(the_repository, oid);
+
+		obj = tag->tagged;
 	}
 	if (!obj)
 		die(_("malformed object at '%s'"), refname);
