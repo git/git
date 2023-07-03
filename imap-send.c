@@ -138,11 +138,9 @@ struct imap_store {
 
 struct imap_cmd_cb {
 	int (*cont)(struct imap_store *ctx, const char *prompt);
-	void (*done)(struct imap_store *ctx, struct imap_cmd *cmd, int response);
 	void *ctx;
 	char *data;
 	int dlen;
-	int uid;
 };
 
 struct imap_cmd {
@@ -828,8 +826,6 @@ static int get_cmd_result(struct imap_store *ctx, struct imap_cmd *tcmd)
 			}
 			if ((resp2 = parse_response_code(ctx, &cmdp->cb, cmd)) > resp)
 				resp = resp2;
-			if (cmdp->cb.done)
-				cmdp->cb.done(ctx, cmdp, resp);
 			free(cmdp->cb.data);
 			free(cmdp->cmd);
 			free(cmdp);
