@@ -1415,16 +1415,16 @@ static CURL *setup_curl(struct imap_server_conf *srvc, struct credential *cred)
 	if (!curl)
 		die("curl_easy_init failed");
 
-	server_fill_credential(&server, cred);
-	curl_easy_setopt(curl, CURLOPT_USERNAME, server.user);
-	curl_easy_setopt(curl, CURLOPT_PASSWORD, server.pass);
+	server_fill_credential(srvc, cred);
+	curl_easy_setopt(curl, CURLOPT_USERNAME, srvc->user);
+	curl_easy_setopt(curl, CURLOPT_PASSWORD, srvc->pass);
 
-	strbuf_addstr(&path, server.use_ssl ? "imaps://" : "imap://");
-	strbuf_addstr(&path, server.host);
+	strbuf_addstr(&path, srvc->use_ssl ? "imaps://" : "imap://");
+	strbuf_addstr(&path, srvc->host);
 	if (!path.len || path.buf[path.len - 1] != '/')
 		strbuf_addch(&path, '/');
 
-	uri_encoded_folder = curl_easy_escape(curl, server.folder, 0);
+	uri_encoded_folder = curl_easy_escape(curl, srvc->folder, 0);
 	if (!uri_encoded_folder)
 		die("failed to encode server folder");
 	strbuf_addstr(&path, uri_encoded_folder);
@@ -1432,25 +1432,25 @@ static CURL *setup_curl(struct imap_server_conf *srvc, struct credential *cred)
 
 	curl_easy_setopt(curl, CURLOPT_URL, path.buf);
 	strbuf_release(&path);
-	curl_easy_setopt(curl, CURLOPT_PORT, server.port);
+	curl_easy_setopt(curl, CURLOPT_PORT, srvc->port);
 
-	if (server.auth_method) {
+	if (srvc->auth_method) {
 #ifndef GIT_CURL_HAVE_CURLOPT_LOGIN_OPTIONS
 		warning("No LOGIN_OPTIONS support in this cURL version");
 #else
 		struct strbuf auth = STRBUF_INIT;
 		strbuf_addstr(&auth, "AUTH=");
-		strbuf_addstr(&auth, server.auth_method);
+		strbuf_addstr(&auth, srvc->auth_method);
 		curl_easy_setopt(curl, CURLOPT_LOGIN_OPTIONS, auth.buf);
 		strbuf_release(&auth);
 #endif
 	}
 
-	if (!server.use_ssl)
+	if (!srvc->use_ssl)
 		curl_easy_setopt(curl, CURLOPT_USE_SSL, (long)CURLUSESSL_TRY);
 
-	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, server.ssl_verify);
-	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, server.ssl_verify);
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, srvc->ssl_verify);
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, srvc->ssl_verify);
 
 	curl_easy_setopt(curl, CURLOPT_READFUNCTION, fread_buffer);
 
