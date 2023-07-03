@@ -121,7 +121,7 @@ static int for_each_tag_name(const char **argv, each_tag_name_fn fn,
 	return had_error;
 }
 
-static int collect_tags(const char *name, const char *ref,
+static int collect_tags(const char *name UNUSED, const char *ref,
 			const struct object_id *oid, void *cb_data)
 {
 	struct string_list *ref_list = cb_data;
@@ -155,7 +155,7 @@ static int delete_tags(const char **argv)
 	return result;
 }
 
-static int verify_tag(const char *name, const char *ref,
+static int verify_tag(const char *name, const char *ref UNUSED,
 		      const struct object_id *oid, void *cb_data)
 {
 	int flags;
