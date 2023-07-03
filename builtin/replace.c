@@ -409,7 +409,7 @@ struct check_mergetag_data {
 	const char **argv;
 };
 
-static int check_one_mergetag(struct commit *commit,
+static int check_one_mergetag(struct commit *commit UNUSED,
 			       struct commit_extra_header *extra,
 			       void *data)
 {
