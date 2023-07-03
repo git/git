@@ -49,7 +49,7 @@ struct show_data {
 
 static int show_reference(struct repository *r, const char *refname,
 			  const struct object_id *oid,
-			  int flag, void *cb_data)
+			  int flag UNUSED, void *cb_data)
 {
 	struct show_data *data = cb_data;
 
