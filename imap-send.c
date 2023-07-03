@@ -137,7 +137,7 @@ struct imap_store {
 };
 
 struct imap_cmd_cb {
-	int (*cont)(struct imap_store *ctx, struct imap_cmd *cmd, const char *prompt);
+	int (*cont)(struct imap_store *ctx, const char *prompt);
 	void (*done)(struct imap_store *ctx, struct imap_cmd *cmd, int response);
 	void *ctx;
 	char *data;
@@ -786,7 +786,7 @@ static int get_cmd_result(struct imap_store *ctx, struct imap_cmd *tcmd)
 				if (n != (int)cmdp->cb.dlen)
 					return RESP_BAD;
 			} else if (cmdp->cb.cont) {
-				if (cmdp->cb.cont(ctx, cmdp, cmd))
+				if (cmdp->cb.cont(ctx, cmd))
 					return RESP_BAD;
 			} else {
 				fprintf(stderr, "IMAP error: unexpected command continuation request\n");
@@ -917,7 +917,7 @@ static char *cram(const char *challenge_64, const char *user, const char *pass)
 
 #endif
 
-static int auth_cram_md5(struct imap_store *ctx, struct imap_cmd *cmd, const char *prompt)
+static int auth_cram_md5(struct imap_store *ctx, const char *prompt)
 {
 	int ret;
 	char *response;
