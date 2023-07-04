@@ -13,6 +13,9 @@ UI, Workflows & Features
    enumerates extra objects to be used as anchoring points to keep
    otherwise unreachable objects in cruft packs.
 
+ * Add more "git var" for toolsmiths to learn various locations Git is
+   configured with either via the configuration or hardcoded defaults.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -34,6 +37,9 @@ Performance, Internal Implementation, Development Support etc.
  * When the external merge driver is killed by a signal, its output
    should not be trusted as a resolution with conflicts that is
    proposed by the driver, but the code did.
+
+ * The set-up code for the get_revision() API now allows feeding
+   options like --all and --not in the --stdin mode.
 
 
 Fixes since v2.41
