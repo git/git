@@ -910,6 +910,15 @@ test_path_is_symlink () {
 	fi
 }
 
+test_path_is_executable () {
+	test "$#" -ne 1 && BUG "1 param"
+	if ! test -x "$1"
+	then
+		echo "$1 is not executable"
+		false
+	fi
+}
+
 # Check if the directory exists and is empty as expected, barf otherwise.
 test_dir_is_empty () {
 	test "$#" -ne 1 && BUG "1 param"
