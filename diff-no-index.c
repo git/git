@@ -218,11 +218,13 @@ static void fixup_paths(const char **path, struct strbuf *replacement)
 {
 	unsigned int isdir0, isdir1;
 
-	if (path[0] == file_from_standard_input ||
-	    path[1] == file_from_standard_input)
-		return;
-	isdir0 = is_directory(path[0]);
-	isdir1 = is_directory(path[1]);
+	isdir0 = path[0] != file_from_standard_input && is_directory(path[0]);
+	isdir1 = path[1] != file_from_standard_input && is_directory(path[1]);
+
+	if ((path[0] == file_from_standard_input && isdir1) ||
+	    (isdir0 && path[1] == file_from_standard_input))
+		die(_("cannot compare stdin to a directory"));
+
 	if (isdir0 == isdir1)
 		return;
 	if (isdir0) {

@@ -205,4 +205,9 @@ test_expect_success POSIXPERM,SYMLINKS 'diff --no-index normalizes: mode not lik
 	test_cmp expected actual
 '
 
+test_expect_success 'diff --no-index refuses to diff stdin and a directory' '
+	test_must_fail git diff --no-index -- - a </dev/null 2>err &&
+	grep "fatal: cannot compare stdin to a directory" err
+'
+
 test_done
