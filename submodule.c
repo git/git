@@ -1,6 +1,5 @@
 #include "git-compat-util.h"
 #include "abspath.h"
-#include "alloc.h"
 #include "repository.h"
 #include "config.h"
 #include "submodule-config.h"

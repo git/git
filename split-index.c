@@ -1,5 +1,4 @@
 #include "git-compat-util.h"
-#include "alloc.h"
 #include "gettext.h"
 #include "hash.h"
 #include "mem-pool.h"

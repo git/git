@@ -4,7 +4,6 @@
  * Copyright (c) Junio C Hamano, 2006, 2009
  */
 #include "builtin.h"
-#include "alloc.h"
 #include "gettext.h"
 #include "hex.h"
 #include "quote.h"

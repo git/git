@@ -1,5 +1,4 @@
 #include "builtin.h"
-#include "alloc.h"
 #include "config.h"
 #include "delta.h"
 #include "environment.h"

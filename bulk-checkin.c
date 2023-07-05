@@ -2,7 +2,6 @@
  * Copyright (c) 2011, Google Inc.
  */
 #include "git-compat-util.h"
-#include "alloc.h"
 #include "bulk-checkin.h"
 #include "environment.h"
 #include "gettext.h"

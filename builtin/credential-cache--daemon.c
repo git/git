@@ -1,6 +1,5 @@
 #include "builtin.h"
 #include "abspath.h"
-#include "alloc.h"
 #include "gettext.h"
 #include "object-file.h"
 #include "parse-options.h"

@@ -8,7 +8,6 @@
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "advice.h"
-#include "alloc.h"
 #include "date.h"
 #include "branch.h"
 #include "config.h"
