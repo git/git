@@ -229,4 +229,44 @@ test_expect_success 'diff --no-index refuses to diff stdin and a directory' '
 	grep "fatal: cannot compare stdin to a directory" err
 '
 
+test_expect_success PIPE 'diff --no-index refuses to diff a named pipe and a directory' '
+	test_when_finished "rm -f pipe" &&
+	mkfifo pipe &&
+	{
+		(>pipe) &
+	} &&
+	test_when_finished "kill $!" &&
+	test_must_fail git diff --no-index -- pipe a 2>err &&
+	grep "fatal: cannot compare a named pipe to a directory" err
+'
+
+test_expect_success PIPE,SYMLINKS 'diff --no-index reads from pipes' '
+	test_when_finished "rm -f old new new-link" &&
+	mkfifo old &&
+	mkfifo new &&
+	ln -s new new-link &&
+	{
+		(test_write_lines a b c >old) &
+	} &&
+	test_when_finished "! kill $!" &&
+	{
+		(test_write_lines a x c >new) &
+	} &&
+	test_when_finished "! kill $!" &&
+
+	cat >expect <<-EOF &&
+	diff --git a/old b/new-link
+	--- a/old
+	+++ b/new-link
+	@@ -1,3 +1,3 @@
+	 a
+	-b
+	+x
+	 c
+	EOF
+
+	test_expect_code 1 git diff --no-index old new-link >actual &&
+	test_cmp expect actual
+'
+
 test_done
