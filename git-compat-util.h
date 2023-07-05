@@ -1150,9 +1150,6 @@ static inline size_t xsize_t(off_t len)
 #define HOST_NAME_MAX 256
 #endif
 
-/* in ctype.c, for kwset users */
-extern const unsigned char tolower_trans_tbl[256];
-
 #include "sane-ctype.h"
 
 /*
