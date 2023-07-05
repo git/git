@@ -11,7 +11,6 @@
 #include "string-list.h"
 #include "utf8.h"
 #include "date.h"
-#include "wrapper.h"
 
 int starts_with(const char *str, const char *prefix)
 {

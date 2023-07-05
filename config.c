@@ -39,7 +39,6 @@
 #include "wildmatch.h"
 #include "worktree.h"
 #include "ws.h"
-#include "wrapper.h"
 #include "write-or-die.h"
 
 struct config_source {

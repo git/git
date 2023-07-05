@@ -10,7 +10,6 @@
 #include "setup.h"
 #include "strbuf.h"
 #include "string-list.h"
-#include "wrapper.h"
 
 #ifdef NO_INITGROUPS
 #define initgroups(x, y) (0) /* nothing */

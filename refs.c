@@ -30,7 +30,6 @@
 #include "date.h"
 #include "commit.h"
 #include "wildmatch.h"
-#include "wrapper.h"
 
 /*
  * List of all available backends

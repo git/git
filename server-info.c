@@ -14,7 +14,6 @@
 #include "object-store-ll.h"
 #include "server-info.h"
 #include "strbuf.h"
-#include "wrapper.h"
 
 struct update_info_ctx {
 	FILE *cur_fp;

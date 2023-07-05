@@ -32,7 +32,6 @@
 #include "symlinks.h"
 #include "trace2.h"
 #include "tree.h"
-#include "wrapper.h"
 
 /*
  * Tells read_directory_recursive how a file or directory should be treated.

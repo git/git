@@ -15,7 +15,6 @@
 #include "symlinks.h"
 #include "thread-utils.h"
 #include "trace2.h"
-#include "wrapper.h"
 
 struct pc_worker {
 	struct child_process cp;

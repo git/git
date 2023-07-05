@@ -16,7 +16,6 @@
 #include "trace.h"
 #include "utf8.h"
 #include "merge-ll.h"
-#include "wrapper.h"
 
 /*
  * convert.c - convert a file when checking it out and checking it in.

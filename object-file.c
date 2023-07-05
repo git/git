@@ -44,7 +44,6 @@
 #include "setup.h"
 #include "submodule.h"
 #include "fsck.h"
-#include "wrapper.h"
 
 /* The maximum size for an object header. */
 #define MAX_HEADER_LEN 32

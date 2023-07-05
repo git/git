@@ -15,7 +15,6 @@
 #include "quote.h"
 #include "transport.h"
 #include "version.h"
-#include "wrapper.h"
 #include "oid-array.h"
 #include "gpg-interface.h"
 #include "shallow.h"

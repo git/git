@@ -46,7 +46,6 @@
 #include "csum-file.h"
 #include "promisor-remote.h"
 #include "hook.h"
-#include "wrapper.h"
 
 /* Mask for the name length in ce_flags in the on-disk index */
 
