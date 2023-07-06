@@ -137,12 +137,10 @@ struct imap_store {
 };
 
 struct imap_cmd_cb {
-	int (*cont)(struct imap_store *ctx, struct imap_cmd *cmd, const char *prompt);
-	void (*done)(struct imap_store *ctx, struct imap_cmd *cmd, int response);
+	int (*cont)(struct imap_store *ctx, const char *prompt);
 	void *ctx;
 	char *data;
 	int dlen;
-	int uid;
 };
 
 struct imap_cmd {
@@ -786,7 +784,7 @@ static int get_cmd_result(struct imap_store *ctx, struct imap_cmd *tcmd)
 				if (n != (int)cmdp->cb.dlen)
 					return RESP_BAD;
 			} else if (cmdp->cb.cont) {
-				if (cmdp->cb.cont(ctx, cmdp, cmd))
+				if (cmdp->cb.cont(ctx, cmd))
 					return RESP_BAD;
 			} else {
 				fprintf(stderr, "IMAP error: unexpected command continuation request\n");
@@ -828,8 +826,6 @@ static int get_cmd_result(struct imap_store *ctx, struct imap_cmd *tcmd)
 			}
 			if ((resp2 = parse_response_code(ctx, &cmdp->cb, cmd)) > resp)
 				resp = resp2;
-			if (cmdp->cb.done)
-				cmdp->cb.done(ctx, cmdp, resp);
 			free(cmdp->cb.data);
 			free(cmdp->cmd);
 			free(cmdp);
@@ -917,7 +913,7 @@ static char *cram(const char *challenge_64, const char *user, const char *pass)
 
 #endif
 
-static int auth_cram_md5(struct imap_store *ctx, struct imap_cmd *cmd, const char *prompt)
+static int auth_cram_md5(struct imap_store *ctx, const char *prompt)
 {
 	int ret;
 	char *response;
@@ -1416,16 +1412,16 @@ static CURL *setup_curl(struct imap_server_conf *srvc, struct credential *cred)
 	if (!curl)
 		die("curl_easy_init failed");
 
-	server_fill_credential(&server, cred);
-	curl_easy_setopt(curl, CURLOPT_USERNAME, server.user);
-	curl_easy_setopt(curl, CURLOPT_PASSWORD, server.pass);
+	server_fill_credential(srvc, cred);
+	curl_easy_setopt(curl, CURLOPT_USERNAME, srvc->user);
+	curl_easy_setopt(curl, CURLOPT_PASSWORD, srvc->pass);
 
-	strbuf_addstr(&path, server.use_ssl ? "imaps://" : "imap://");
-	strbuf_addstr(&path, server.host);
+	strbuf_addstr(&path, srvc->use_ssl ? "imaps://" : "imap://");
+	strbuf_addstr(&path, srvc->host);
 	if (!path.len || path.buf[path.len - 1] != '/')
 		strbuf_addch(&path, '/');
 
-	uri_encoded_folder = curl_easy_escape(curl, server.folder, 0);
+	uri_encoded_folder = curl_easy_escape(curl, srvc->folder, 0);
 	if (!uri_encoded_folder)
 		die("failed to encode server folder");
 	strbuf_addstr(&path, uri_encoded_folder);
@@ -1433,25 +1429,25 @@ static CURL *setup_curl(struct imap_server_conf *srvc, struct credential *cred)
 
 	curl_easy_setopt(curl, CURLOPT_URL, path.buf);
 	strbuf_release(&path);
-	curl_easy_setopt(curl, CURLOPT_PORT, server.port);
+	curl_easy_setopt(curl, CURLOPT_PORT, srvc->port);
 
-	if (server.auth_method) {
+	if (srvc->auth_method) {
 #ifndef GIT_CURL_HAVE_CURLOPT_LOGIN_OPTIONS
 		warning("No LOGIN_OPTIONS support in this cURL version");
 #else
 		struct strbuf auth = STRBUF_INIT;
 		strbuf_addstr(&auth, "AUTH=");
-		strbuf_addstr(&auth, server.auth_method);
+		strbuf_addstr(&auth, srvc->auth_method);
 		curl_easy_setopt(curl, CURLOPT_LOGIN_OPTIONS, auth.buf);
 		strbuf_release(&auth);
 #endif
 	}
 
-	if (!server.use_ssl)
+	if (!srvc->use_ssl)
 		curl_easy_setopt(curl, CURLOPT_USE_SSL, (long)CURLUSESSL_TRY);
 
-	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, server.ssl_verify);
-	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, server.ssl_verify);
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, srvc->ssl_verify);
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, srvc->ssl_verify);
 
 	curl_easy_setopt(curl, CURLOPT_READFUNCTION, fread_buffer);
 
