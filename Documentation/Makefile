@@ -111,6 +111,12 @@ TECH_DOCS += ToolsForGit
 TECH_DOCS += technical/bitmap-format
 TECH_DOCS += technical/bundle-uri
 TECH_DOCS += technical/hash-function-transition
+<<<<<<< HEAD
+TECH_DOCS += technical/http-protocol
+TECH_DOCS += technical/http-gitweb-debugging
+TECH_DOCS += technical/index-format
+=======
+>>>>>>> master
 TECH_DOCS += technical/long-running-process-protocol
 TECH_DOCS += technical/multi-pack-index
 TECH_DOCS += technical/pack-heuristics
