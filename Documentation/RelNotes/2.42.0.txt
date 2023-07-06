@@ -16,6 +16,9 @@ UI, Workflows & Features
  * Add more "git var" for toolsmiths to learn various locations Git is
    configured with either via the configuration or hardcoded defaults.
 
+ * 'git notes append' was taught '--separator' to specify string to insert
+   between paragraphs.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -40,6 +43,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * The set-up code for the get_revision() API now allows feeding
    options like --all and --not in the --stdin mode.
+
+ * Move functions that are not about pure string manipulation out of
+   strbuf.[ch]
 
 
 Fixes since v2.41
@@ -132,6 +138,19 @@ Fixes since v2.41
    remove .idx before removing .pack for consistency.
    (merge 0dd1324a73 ds/remove-idx-before-pack later to maint).
 
+ * Partially revert a sanity check that the rest of the config code
+   was not ready, to avoid triggering it in a corner case.
+   (merge a53f43f900 gc/config-partial-submodule-kvi-fix later to maint).
+
+ * "git apply" punts when it is fed too large a patch input; the error
+   message it gives when it happens has been clarified.
+   (merge 42612e18d2 pw/apply-too-large later to maint).
+
+ * During a cherry-pick or revert session that works on multiple
+   commits, "git status" did not give correct information, which has
+   been corrected.
+   (merge a096a889f4 jk/cherry-pick-revert-status later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 51f9d2e563 sa/doc-ls-remote later to maint).
    (merge c6d26a9dda jk/format-patch-message-id-unleak later to maint).
@@ -149,3 +168,5 @@ Fixes since v2.41
    (merge 6c26da8404 mh/credential-erase-improvements later to maint).
    (merge 78e56cff69 tz/lib-gpg-prereq-fix later to maint).
    (merge 80d32e84b5 rj/leakfixes later to maint).
+   (merge 0a868031ed pb/complete-diff-options later to maint).
+   (merge d4f28279ad jc/doc-hash-object-types later to maint).
