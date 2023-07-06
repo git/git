@@ -139,11 +139,15 @@ take effect.
 	the same commit as the preceding line. This makes it easier to distinguish
 	code blocks introduced by different commits. The color defaults to cyan and
 	can be adjusted using the `color.blame.repeatedLines` config option.
+	It corresponds to the value `repeatedLines` in the `blame.coloring`
+	configuration setting in linkgit:git-config[1] .
 
 --color-by-age::
 	Color line annotations depending on the age of the line in the default format.
 	The `color.blame.highlightRecent` config option controls what color is used for
 	each range of age.
+	It corresponds to the value `highlightRecent` in the `blame.coloring`
+	configuration setting in linkgit:git-config[1] .
 
 -h::
 	Show help message.

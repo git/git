@@ -694,6 +694,39 @@ static const char *add_prefix(const char *prefix, const char *path)
 	return prefix_path(prefix, prefix ? strlen(prefix) : 0, path);
 }
 
+static unsigned parse_blame_coloring_mode(const char *arg)
+{
+	int ret = 0;
+	struct string_list l = STRING_LIST_INIT_DUP;
+	struct string_list_item *i;
+
+	string_list_split(&l, arg, ',', -1);
+
+	for_each_string_list_item(i, &l) {
+		struct strbuf sb = STRBUF_INIT;
+		strbuf_addstr(&sb, i->string);
+		strbuf_trim(&sb);
+
+		if (!strcmp(sb.buf, "none")) {
+			ret = 0;
+		} else if (!strcmp(sb.buf, "repeatedLines")) {
+			ret |= OUTPUT_COLOR_LINE;
+		} else if (!strcmp(sb.buf, "highlightRecent")) {
+			ret |= OUTPUT_SHOW_AGE_WITH_COLOR;
+		} else {
+			warning(_("invalid value for '%s': '%s'"),
+				"blame.coloring", sb.buf);
+			ret = 0;
+		}
+
+		strbuf_release(&sb);
+	}
+
+	string_list_clear(&l, 0);
+
+	return ret;
+}
+
 static int git_blame_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "blame.showroot")) {
@@ -748,18 +781,8 @@ static int git_blame_config(const char *var, const char *value, void *cb)
 	}
 
 	if (!strcmp(var, "blame.coloring")) {
-		if (!strcmp(value, "repeatedLines")) {
-			coloring_mode |= OUTPUT_COLOR_LINE;
-		} else if (!strcmp(value, "highlightRecent")) {
-			coloring_mode |= OUTPUT_SHOW_AGE_WITH_COLOR;
-		} else if (!strcmp(value, "none")) {
-			coloring_mode &= ~(OUTPUT_COLOR_LINE |
-					    OUTPUT_SHOW_AGE_WITH_COLOR);
-		} else {
-			warning(_("invalid value for '%s': '%s'"),
-				"blame.coloring", value);
-			return 0;
-		}
+		coloring_mode = parse_blame_coloring_mode(value);
+		return 0;
 	}
 
 	if (git_diff_heuristic_config(var, value, cb) < 0)
