@@ -131,7 +131,8 @@ static void print_helper_status(struct ref *ref)
 	strbuf_release(&buf);
 }
 
-static int send_pack_config(const char *k, const char *v, void *cb)
+static int send_pack_config(const char *k, const char *v,
+			    const struct config_context *ctx, void *cb)
 {
 	if (!strcmp(k, "push.gpgsign")) {
 		const char *value;
@@ -151,7 +152,7 @@ static int send_pack_config(const char *k, const char *v, void *cb)
 			}
 		}
 	}
-	return git_default_config(k, v, cb);
+	return git_default_config(k, v, ctx, cb);
 }
 
 int cmd_send_pack(int argc, const char **argv, const char *prefix)

@@ -56,7 +56,8 @@ define_list_config_array_extra(color_grep_slots, {"match"});
  * Read the configuration file once and store it in
  * the grep_defaults template.
  */
-int grep_config(const char *var, const char *value, void *cb)
+int grep_config(const char *var, const char *value,
+		const struct config_context *ctx, void *cb)
 {
 	struct grep_opt *opt = cb;
 	const char *slot;
@@ -91,9 +92,9 @@ int grep_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "color.grep"))
 		opt->color = git_config_colorbool(var, value);
 	if (!strcmp(var, "color.grep.match")) {
-		if (grep_config("color.grep.matchcontext", value, cb) < 0)
+		if (grep_config("color.grep.matchcontext", value, ctx, cb) < 0)
 			return -1;
-		if (grep_config("color.grep.matchselected", value, cb) < 0)
+		if (grep_config("color.grep.matchselected", value, ctx, cb) < 0)
 			return -1;
 	} else if (skip_prefix(var, "color.grep.", &slot)) {
 		int i = LOOKUP_CONFIG(color_grep_slots, slot);

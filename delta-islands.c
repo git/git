@@ -341,7 +341,9 @@ static void free_remote_islands(kh_str_t *remote_islands)
 	kh_destroy_str(remote_islands);
 }
 
-static int island_config_callback(const char *k, const char *v, void *cb)
+static int island_config_callback(const char *k, const char *v,
+				  const struct config_context *ctx UNUSED,
+				  void *cb)
 {
 	struct island_load_data *ild = cb;
 
