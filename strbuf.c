@@ -416,36 +416,19 @@ void strbuf_vaddf(struct strbuf *sb, const char *fmt, va_list ap)
 	strbuf_setlen(sb, sb->len + len);
 }
 
-void strbuf_expand(struct strbuf *sb, const char *format, expand_fn_t fn,
-		   void *context)
+int strbuf_expand_step(struct strbuf *sb, const char **formatp)
 {
-	for (;;) {
-		const char *percent;
-		size_t consumed;
+	const char *format = *formatp;
+	const char *percent = strchrnul(format, '%');
 
-		percent = strchrnul(format, '%');
-		strbuf_add(sb, format, percent - format);
-		if (!*percent)
-			break;
-		format = percent + 1;
-
-		if (*format == '%') {
-			strbuf_addch(sb, '%');
-			format++;
-			continue;
-		}
-
-		consumed = fn(sb, format, context);
-		if (consumed)
-			format += consumed;
-		else
-			strbuf_addch(sb, '%');
-	}
+	strbuf_add(sb, format, percent - format);
+	if (!*percent)
+		return 0;
+	*formatp = percent + 1;
+	return 1;
 }
 
-size_t strbuf_expand_literal_cb(struct strbuf *sb,
-				const char *placeholder,
-				void *context UNUSED)
+size_t strbuf_expand_literal(struct strbuf *sb, const char *placeholder)
 {
 	int ch;
 
@@ -460,22 +443,6 @@ size_t strbuf_expand_literal_cb(struct strbuf *sb,
 			return 0;
 		strbuf_addch(sb, ch);
 		return 3;
-	}
-	return 0;
-}
-
-size_t strbuf_expand_dict_cb(struct strbuf *sb, const char *placeholder,
-		void *context)
-{
-	struct strbuf_expand_dict_entry *e = context;
-	size_t len;
-
-	for (; e->placeholder && (len = strlen(e->placeholder)); e++) {
-		if (!strncmp(placeholder, e->placeholder, len)) {
-			if (e->value)
-				strbuf_addstr(sb, e->value);
-			return len;
-		}
 	}
 	return 0;
 }
@@ -1028,12 +995,7 @@ void strbuf_addftime(struct strbuf *sb, const char *fmt, const struct tm *tm,
 	 * we want for %z, but the computation for %s has to convert to number
 	 * of seconds.
 	 */
-	for (;;) {
-		const char *percent = strchrnul(fmt, '%');
-		strbuf_add(&munged_fmt, fmt, percent - fmt);
-		if (!*percent)
-			break;
-		fmt = percent + 1;
+	while (strbuf_expand_step(&munged_fmt, &fmt)) {
 		switch (*fmt) {
 		case '%':
 			strbuf_addstr(&munged_fmt, "%%");

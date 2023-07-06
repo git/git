@@ -309,10 +309,8 @@ static int is_atom(const char *atom, const char *s, int slen)
 }
 
 static void expand_atom(struct strbuf *sb, const char *atom, int len,
-			void *vdata)
+			struct expand_data *data)
 {
-	struct expand_data *data = vdata;
-
 	if (is_atom("objectname", atom, len)) {
 		if (!data->mark_query)
 			strbuf_addstr(sb, oid_to_hex(&data->oid));
@@ -346,19 +344,21 @@ static void expand_atom(struct strbuf *sb, const char *atom, int len,
 		die("unknown format element: %.*s", len, atom);
 }
 
-static size_t expand_format(struct strbuf *sb, const char *start, void *data)
+static void expand_format(struct strbuf *sb, const char *start,
+			  struct expand_data *data)
 {
-	const char *end;
+	while (strbuf_expand_step(sb, &start)) {
+		const char *end;
 
-	if (*start != '(')
-		return 0;
-	end = strchr(start + 1, ')');
-	if (!end)
-		die("format element '%s' does not end in ')'", start);
-
-	expand_atom(sb, start + 1, end - start - 1, data);
-
-	return end - start + 1;
+		if (skip_prefix(start, "%", &start) || *start != '(')
+			strbuf_addch(sb, '%');
+		else if (!(end = strchr(start + 1, ')')))
+			die("format element '%s' does not end in ')'", start);
+		else {
+			expand_atom(sb, start + 1, end - start - 1, data);
+			start = end + 1;
+		}
+	}
 }
 
 static void batch_write(struct batch_options *opt, const void *data, int len)
@@ -495,7 +495,7 @@ static void batch_object_write(const char *obj_name,
 	if (!opt->format) {
 		print_default_format(scratch, data, opt);
 	} else {
-		strbuf_expand(scratch, opt->format, expand_format, data);
+		expand_format(scratch, opt->format, data);
 		strbuf_addch(scratch, opt->output_delim);
 	}
 
@@ -773,9 +773,8 @@ static int batch_objects(struct batch_options *opt)
 	 */
 	memset(&data, 0, sizeof(data));
 	data.mark_query = 1;
-	strbuf_expand(&output,
+	expand_format(&output,
 		      opt->format ? opt->format : DEFAULT_FORMAT,
-		      expand_format,
 		      &data);
 	data.mark_query = 0;
 	strbuf_release(&output);

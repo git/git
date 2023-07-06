@@ -634,23 +634,21 @@ static int filter_buffer_or_fd(int in UNUSED, int out, void *data)
 	 */
 	struct child_process child_process = CHILD_PROCESS_INIT;
 	struct filter_params *params = (struct filter_params *)data;
+	const char *format = params->cmd;
 	int write_err, status;
 
 	/* apply % substitution to cmd */
 	struct strbuf cmd = STRBUF_INIT;
-	struct strbuf path = STRBUF_INIT;
-	struct strbuf_expand_dict_entry dict[] = {
-		{ "f", NULL, },
-		{ NULL, NULL, },
-	};
 
-	/* quote the path to preserve spaces, etc. */
-	sq_quote_buf(&path, params->path);
-	dict[0].value = path.buf;
-
-	/* expand all %f with the quoted path */
-	strbuf_expand(&cmd, params->cmd, strbuf_expand_dict_cb, &dict);
-	strbuf_release(&path);
+	/* expand all %f with the quoted path; quote to preserve space, etc. */
+	while (strbuf_expand_step(&cmd, &format)) {
+		if (skip_prefix(format, "%", &format))
+			strbuf_addch(&cmd, '%');
+		else if (skip_prefix(format, "f", &format))
+			sq_quote_buf(&cmd, params->path);
+		else
+			strbuf_addch(&cmd, '%');
+	}
 
 	strvec_push(&child_process.args, cmd.buf);
 	child_process.use_shell = 1;
