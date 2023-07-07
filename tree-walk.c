@@ -435,7 +435,7 @@ static inline int prune_traversal(struct index_state *istate,
 	if (still_interesting < 0)
 		return still_interesting;
 	return tree_entry_interesting(istate, e, base,
-				      0, info->pathspec);
+				      info->pathspec);
 }
 
 int traverse_trees(struct index_state *istate,
@@ -1223,10 +1223,11 @@ interesting:
  */
 enum interesting tree_entry_interesting(struct index_state *istate,
 					const struct name_entry *entry,
-					struct strbuf *base, int base_offset,
+					struct strbuf *base,
 					const struct pathspec *ps)
 {
 	enum interesting positive, negative;
+	const int base_offset = 0;
 	positive = do_match(istate, entry, base, base_offset, ps, 0);
 
 	/*
