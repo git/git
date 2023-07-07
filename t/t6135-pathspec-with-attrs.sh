@@ -78,12 +78,32 @@ test_expect_success 'check specific set attr' '
 	test_cmp expect actual
 '
 
-test_expect_success 'check specific set attr (2)' '
+test_expect_success 'check set attr with pathspec pattern' '
+	echo sub/fileSetLabel >expect &&
+
+	git ls-files ":(attr:label)sub" >actual &&
+	test_cmp expect actual &&
+
+	git ls-files ":(attr:label)sub/" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'check specific set attr in tree-ish' '
 	cat <<-\EOF >expect &&
 	HEAD:fileSetLabel
 	HEAD:sub/fileSetLabel
 	EOF
 	git grep -l content HEAD ":(attr:label)" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'check specific set attr with pathspec pattern in tree-ish' '
+	echo HEAD:sub/fileSetLabel >expect &&
+
+	git grep -l content HEAD ":(attr:label)sub" >actual &&
+	test_cmp expect actual &&
+
+	git grep -l content HEAD ":(attr:label)sub/" >actual &&
 	test_cmp expect actual
 '
 
