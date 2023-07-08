@@ -485,6 +485,18 @@ test_expect_success 'git-fsck incorrect offset' '
 	git -c core.multiPackIndex=false fsck
 '
 
+test_expect_success 'git fsck shows MIDX output with --progress' '
+	git fsck --progress 2>err &&
+	grep "Verifying OID order in multi-pack-index" err &&
+	grep "Verifying object offsets" err
+'
+
+test_expect_success 'git fsck suppresses MIDX output with --no-progress' '
+	git fsck --no-progress 2>err &&
+	! grep "Verifying OID order in multi-pack-index" err &&
+	! grep "Verifying object offsets" err
+'
+
 test_expect_success 'corrupt MIDX is not reused' '
 	corrupt_midx_and_verify $MIDX_BYTE_OFFSET "\377" $objdir \
 		"incorrect object offset" &&
