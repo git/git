@@ -1,6 +1,5 @@
 #include "git-compat-util.h"
 #include "alias.h"
-#include "alloc.h"
 #include "config.h"
 #include "gettext.h"
 #include "strbuf.h"

@@ -1,5 +1,4 @@
 #include "git-compat-util.h"
-#include "alloc.h"
 #include "dir.h"
 #include "environment.h"
 #include "hex.h"
@@ -14,7 +13,6 @@
 #include "object-store-ll.h"
 #include "server-info.h"
 #include "strbuf.h"
-#include "wrapper.h"
 
 struct update_info_ctx {
 	FILE *cur_fp;

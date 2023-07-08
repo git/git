@@ -19,7 +19,6 @@
 #include "refspec.h"
 #include "transport-internal.h"
 #include "protocol.h"
-#include "wrapper.h"
 
 static int debug;
 

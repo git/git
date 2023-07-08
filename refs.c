@@ -4,7 +4,6 @@
 
 #include "git-compat-util.h"
 #include "advice.h"
-#include "alloc.h"
 #include "config.h"
 #include "environment.h"
 #include "hashmap.h"
@@ -30,7 +29,6 @@
 #include "date.h"
 #include "commit.h"
 #include "wildmatch.h"
-#include "wrapper.h"
 
 /*
  * List of all available backends

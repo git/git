@@ -30,7 +30,6 @@
 #include "parse-options.h"
 #include "setup.h"
 #include "strbuf.h"
-#include "wrapper.h"
 #if defined(NO_OPENSSL) && !defined(HAVE_OPENSSL_CSPRNG)
 typedef void *SSL;
 #endif

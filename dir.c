@@ -7,7 +7,6 @@
  */
 #include "git-compat-util.h"
 #include "abspath.h"
-#include "alloc.h"
 #include "config.h"
 #include "convert.h"
 #include "dir.h"
@@ -32,7 +31,6 @@
 #include "symlinks.h"
 #include "trace2.h"
 #include "tree.h"
-#include "wrapper.h"
 
 /*
  * Tells read_directory_recursive how a file or directory should be treated.

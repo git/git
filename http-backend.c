@@ -1,5 +1,4 @@
 #include "git-compat-util.h"
-#include "alloc.h"
 #include "config.h"
 #include "environment.h"
 #include "git-zlib.h"
@@ -19,7 +18,6 @@
 #include "object-store-ll.h"
 #include "protocol.h"
 #include "date.h"
-#include "wrapper.h"
 #include "write-or-die.h"
 
 static const char content_type[] = "Content-Type";

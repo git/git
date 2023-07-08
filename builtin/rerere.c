@@ -6,7 +6,6 @@
 #include "repository.h"
 #include "string-list.h"
 #include "rerere.h"
-#include "wrapper.h"
 #include "xdiff/xdiff.h"
 #include "xdiff-interface.h"
 #include "pathspec.h"

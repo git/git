@@ -4,7 +4,6 @@
  */
 #include "git-compat-util.h"
 #include "oidtree.h"
-#include "alloc.h"
 #include "hash.h"
 
 struct oidtree_iter_data {

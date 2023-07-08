@@ -1,7 +1,6 @@
 #include "git-compat-util.h"
 #include "config.h"
 #include "run-command.h"
-#include "wrapper.h"
 #include "write-or-die.h"
 
 /*

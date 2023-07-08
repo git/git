@@ -32,7 +32,6 @@
 #include "commit-graph.h"
 #include "commit-reach.h"
 #include "shallow.h"
-#include "wrapper.h"
 #include "write-or-die.h"
 
 /* Remember to update object flag allocation in object.h */
