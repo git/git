@@ -373,10 +373,14 @@ static int get_packet_data(int fd, char **src_buf, size_t *src_size,
 	return ret;
 }
 
-int packet_length(const char lenbuf_hex[4])
+int packet_length(const char lenbuf_hex[4], size_t size)
 {
-	int val = hex2chr(lenbuf_hex);
-	return (val < 0) ? val : (val << 8) | hex2chr(lenbuf_hex + 2);
+	if (size < 4)
+		BUG("buffer too small");
+	return	hexval(lenbuf_hex[0]) << 12 |
+		hexval(lenbuf_hex[1]) <<  8 |
+		hexval(lenbuf_hex[2]) <<  4 |
+		hexval(lenbuf_hex[3]);
 }
 
 static char *find_packfile_uri_path(const char *buffer)
@@ -419,7 +423,7 @@ enum packet_read_status packet_read_with_status(int fd, char **src_buffer,
 		return PACKET_READ_EOF;
 	}
 
-	len = packet_length(linelen);
+	len = packet_length(linelen, sizeof(linelen));
 
 	if (len < 0) {
 		if (options & PACKET_READ_GENTLE_ON_READ_ERROR)
