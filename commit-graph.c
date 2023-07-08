@@ -2708,10 +2708,11 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g, int flags)
 		return 1;
 	}
 
-	local_error = verify_one_commit_graph(r, g, flags);
-
-	if (!(flags & COMMIT_GRAPH_VERIFY_SHALLOW) && g->base_graph)
-		local_error |= verify_commit_graph(r, g->base_graph, flags);
+	for (; g; g = g->base_graph) {
+		local_error |= verify_one_commit_graph(r, g, flags);
+		if (flags & COMMIT_GRAPH_VERIFY_SHALLOW)
+			break;
+	}
 
 	return local_error;
 }
