@@ -1,7 +1,6 @@
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "advice.h"
-#include "alloc.h"
 #include "config.h"
 #include "copy.h"
 #include "environment.h"
@@ -49,7 +48,6 @@
 #include "rebase-interactive.h"
 #include "reset.h"
 #include "branch.h"
-#include "wrapper.h"
 
 #define GIT_REFLOG_ACTION "GIT_REFLOG_ACTION"
 
@@ -140,6 +138,11 @@ static GIT_PATH_FUNC(rebase_path_amend, "rebase-merge/amend")
  * the commit object name of the corresponding patch.
  */
 static GIT_PATH_FUNC(rebase_path_stopped_sha, "rebase-merge/stopped-sha")
+/*
+ * When we stop for the user to resolve conflicts this file contains
+ * the patch of the commit that is being picked.
+ */
+static GIT_PATH_FUNC(rebase_path_patch, "rebase-merge/patch")
 /*
  * For the post-rewrite hook, we make a list of rewritten commits and
  * their new sha1s.  The rewritten-pending list keeps the sha1s of
@@ -1060,7 +1063,7 @@ static int run_git_commit(const char *defmsg,
 
 	if (is_rebase_i(opts) &&
 	    ((opts->committer_date_is_author_date && !opts->ignore_date) ||
-	     !(!defmsg && (flags & AMEND_MSG))) &&
+	     !(flags & AMEND_MSG)) &&
 	    read_env_script(&cmd.env)) {
 		const char *gpg_opt = gpg_sign_opt_quoted(opts);
 
@@ -2226,8 +2229,6 @@ static int do_pick_commit(struct repository *r,
 	if (opts->allow_ff && !is_fixup(command) &&
 	    ((parent && oideq(&parent->object.oid, &head)) ||
 	     (!parent && unborn))) {
-		if (is_rebase_i(opts))
-			write_author_script(msg.message);
 		res = fast_forward_to(r, &commit->object.oid, &head, unborn,
 			opts);
 		if (res || command != TODO_REWORD)
@@ -2251,6 +2252,8 @@ static int do_pick_commit(struct repository *r,
 	 */
 
 	if (command == TODO_REVERT) {
+		const char *orig_subject;
+
 		base = commit;
 		base_label = msg.label;
 		next = parent;
@@ -2258,6 +2261,18 @@ static int do_pick_commit(struct repository *r,
 		if (opts->commit_use_reference) {
 			strbuf_addstr(&msgbuf,
 				"# *** SAY WHY WE ARE REVERTING ON THE TITLE LINE ***");
+		} else if (skip_prefix(msg.subject, "Revert \"", &orig_subject)) {
+			if (skip_prefix(orig_subject, "Revert \"", &orig_subject)) {
+				/*
+				 * This prevents the generation of somewhat unintuitive (even if
+				 * not incorrect) 'Reapply "Revert "' titles from legacy double
+				 * reverts. Fixing up deeper recursions is left to the user.
+				 */
+				strbuf_addstr(&msgbuf, "Revert \"Reapply \"");
+			} else {
+				strbuf_addstr(&msgbuf, "Reapply \"");
+			}
+			strbuf_addstr(&msgbuf, orig_subject);
 		} else {
 			strbuf_addstr(&msgbuf, "Revert \"");
 			strbuf_addstr(&msgbuf, msg.subject);
@@ -2334,9 +2349,10 @@ static int do_pick_commit(struct repository *r,
 		 command == TODO_REVERT) {
 		res = do_recursive_merge(r, base, next, base_label, next_label,
 					 &head, &msgbuf, opts);
-		if (res < 0)
+		if (res < 0) {
+			unlink(rebase_path_author_script());
 			goto leave;
-
+		}
 		res |= write_message(msgbuf.buf, msgbuf.len,
 				     git_path_merge_msg(r), 0);
 	} else {
@@ -3176,38 +3192,48 @@ static int walk_revs_populate_todo(struct todo_list *todo_list,
 	return 0;
 }
 
-static int create_seq_dir(struct repository *r)
+static const char *cherry_pick_action_name(enum replay_action action) {
+	switch (action) {
+	case REPLAY_REVERT:
+		return "revert";
+		break;
+	case REPLAY_PICK:
+		return "cherry-pick";
+		break;
+	default:
+		BUG("unexpected action in cherry_pick_action_name");
+	}
+}
+
+static int create_seq_dir(struct repository *r, enum replay_action requested_action)
 {
-	enum replay_action action;
+	enum replay_action in_progress_action;
+	const char *in_progress_action_name = NULL;
 	const char *in_progress_error = NULL;
 	const char *in_progress_advice = NULL;
+	const char *requested_action_name = NULL;
 	unsigned int advise_skip =
 		refs_ref_exists(get_main_ref_store(r), "REVERT_HEAD") ||
 		refs_ref_exists(get_main_ref_store(r), "CHERRY_PICK_HEAD");
 
-	if (!sequencer_get_last_command(r, &action)) {
-		switch (action) {
-		case REPLAY_REVERT:
-			in_progress_error = _("revert is already in progress");
-			in_progress_advice =
-			_("try \"git revert (--continue | %s--abort | --quit)\"");
-			break;
-		case REPLAY_PICK:
-			in_progress_error = _("cherry-pick is already in progress");
-			in_progress_advice =
-			_("try \"git cherry-pick (--continue | %s--abort | --quit)\"");
-			break;
-		default:
-			BUG("unexpected action in create_seq_dir");
-		}
+	if (!sequencer_get_last_command(r, &in_progress_action)) {
+		in_progress_action_name = cherry_pick_action_name(in_progress_action);
+		in_progress_error = _("%s is already in progress");
+		in_progress_advice =
+		_("try \"git %s (--continue | %s--abort | --quit)\"");
 	}
 	if (in_progress_error) {
-		error("%s", in_progress_error);
+		error(in_progress_error, in_progress_action_name);
 		if (advice_enabled(ADVICE_SEQUENCER_IN_USE))
 			advise(in_progress_advice,
+				in_progress_action_name,
 				advise_skip ? "--skip | " : "");
 		return -1;
 	}
+	requested_action_name = cherry_pick_action_name(requested_action);
+	if (require_clean_index(r, requested_action_name,
+				    _("Please commit or stash them."), 1, 1))
+		return -1;
 	if (mkdir(git_path_seq_dir(), 0777) < 0)
 		return error_errno(_("could not create sequencer directory '%s'"),
 				   git_path_seq_dir());
@@ -3394,7 +3420,8 @@ give_advice:
 	return -1;
 }
 
-static int save_todo(struct todo_list *todo_list, struct replay_opts *opts)
+static int save_todo(struct todo_list *todo_list, struct replay_opts *opts,
+		     int reschedule)
 {
 	struct lock_file todo_lock = LOCK_INIT;
 	const char *todo_path = get_todo_path(opts);
@@ -3404,7 +3431,7 @@ static int save_todo(struct todo_list *todo_list, struct replay_opts *opts)
 	 * rebase -i writes "git-rebase-todo" without the currently executing
 	 * command, appending it to "done" instead.
 	 */
-	if (is_rebase_i(opts))
+	if (is_rebase_i(opts) && !reschedule)
 		next++;
 
 	fd = hold_lock_file_for_update(&todo_lock, todo_path, 0);
@@ -3417,7 +3444,7 @@ static int save_todo(struct todo_list *todo_list, struct replay_opts *opts)
 	if (commit_lock_file(&todo_lock) < 0)
 		return error(_("failed to finalize '%s'"), todo_path);
 
-	if (is_rebase_i(opts) && next > 0) {
+	if (is_rebase_i(opts) && !reschedule && next > 0) {
 		const char *done = rebase_path_done();
 		int fd = open(done, O_CREAT | O_WRONLY | O_APPEND, 0666);
 		int ret = 0;
@@ -3509,7 +3536,6 @@ static int make_patch(struct repository *r,
 		return -1;
 	res |= write_rebase_head(&commit->object.oid);
 
-	strbuf_addf(&buf, "%s/patch", get_dir(opts));
 	memset(&log_tree_opt, 0, sizeof(log_tree_opt));
 	repo_init_revisions(r, &log_tree_opt, NULL);
 	log_tree_opt.abbrev = 0;
@@ -3517,7 +3543,7 @@ static int make_patch(struct repository *r,
 	log_tree_opt.diffopt.output_format = DIFF_FORMAT_PATCH;
 	log_tree_opt.disable_stdin = 1;
 	log_tree_opt.no_commit_id = 1;
-	log_tree_opt.diffopt.file = fopen(buf.buf, "w");
+	log_tree_opt.diffopt.file = fopen(rebase_path_patch(), "w");
 	log_tree_opt.diffopt.use_color = GIT_COLOR_NEVER;
 	if (!log_tree_opt.diffopt.file)
 		res |= error_errno(_("could not open '%s'"), buf.buf);
@@ -4156,6 +4182,8 @@ static int do_merge(struct repository *r,
 	if (ret < 0) {
 		error(_("could not even attempt to merge '%.*s'"),
 		      merge_arg_len, arg);
+		unlink(rebase_path_author_script());
+		unlink(git_path_merge_msg(r));
 		goto leave_merge;
 	}
 	/*
@@ -4643,6 +4671,68 @@ N_("Could not execute the todo command\n"
 "    git rebase --edit-todo\n"
 "    git rebase --continue\n");
 
+static int pick_one_commit(struct repository *r,
+			   struct todo_list *todo_list,
+			   struct replay_opts *opts,
+			   int *check_todo, int* reschedule)
+{
+	int res;
+	struct todo_item *item = todo_list->items + todo_list->current;
+	const char *arg = todo_item_get_arg(todo_list, item);
+	if (is_rebase_i(opts))
+		opts->reflog_message = reflog_message(
+			opts, command_to_string(item->command), NULL);
+
+	res = do_pick_commit(r, item, opts, is_final_fixup(todo_list),
+			     check_todo);
+	if (is_rebase_i(opts) && res < 0) {
+		/* Reschedule */
+		*reschedule = 1;
+		return -1;
+	}
+	if (item->command == TODO_EDIT) {
+		struct commit *commit = item->commit;
+		if (!res) {
+			if (!opts->verbose)
+				term_clear_line();
+			fprintf(stderr, _("Stopped at %s...  %.*s\n"),
+				short_commit_name(commit), item->arg_len, arg);
+		}
+		return error_with_patch(r, commit,
+					arg, item->arg_len, opts, res, !res);
+	}
+	if (is_rebase_i(opts) && !res)
+		record_in_rewritten(&item->commit->object.oid,
+				    peek_command(todo_list, 1));
+	if (res && is_fixup(item->command)) {
+		if (res == 1)
+			intend_to_amend();
+		return error_failed_squash(r, item->commit, opts,
+					   item->arg_len, arg);
+	} else if (res && is_rebase_i(opts) && item->commit) {
+		int to_amend = 0;
+		struct object_id oid;
+
+		/*
+		 * If we are rewording and have either
+		 * fast-forwarded already, or are about to
+		 * create a new root commit, we want to amend,
+		 * otherwise we do not.
+		 */
+		if (item->command == TODO_REWORD &&
+		    !repo_get_oid(r, "HEAD", &oid) &&
+		    (oideq(&item->commit->object.oid, &oid) ||
+		     (opts->have_squash_onto &&
+		      oideq(&opts->squash_onto, &oid))))
+			to_amend = 1;
+
+		return res | error_with_patch(r, item->commit,
+					      arg, item->arg_len, opts,
+					      res, to_amend);
+	}
+	return res;
+}
+
 static int pick_commits(struct repository *r,
 			struct todo_list *todo_list,
 			struct replay_opts *opts)
@@ -4658,12 +4748,17 @@ static int pick_commits(struct repository *r,
 	if (read_and_refresh_cache(r, opts))
 		return -1;
 
+	unlink(rebase_path_message());
+	unlink(rebase_path_stopped_sha());
+	unlink(rebase_path_amend());
+	unlink(rebase_path_patch());
+
 	while (todo_list->current < todo_list->nr) {
 		struct todo_item *item = todo_list->items + todo_list->current;
 		const char *arg = todo_item_get_arg(todo_list, item);
 		int check_todo = 0;
 
-		if (save_todo(todo_list, opts))
+		if (save_todo(todo_list, opts, reschedule))
 			return -1;
 		if (is_rebase_i(opts)) {
 			if (item->command != TODO_COMMENT) {
@@ -4681,10 +4776,7 @@ static int pick_commits(struct repository *r,
 						todo_list->total_nr,
 						opts->verbose ? "\n" : "\r");
 			}
-			unlink(rebase_path_message());
 			unlink(rebase_path_author_script());
-			unlink(rebase_path_stopped_sha());
-			unlink(rebase_path_amend());
 			unlink(git_path_merge_head(r));
 			unlink(git_path_auto_merge(r));
 			delete_ref(NULL, "REBASE_HEAD", NULL, REF_NO_DEREF);
@@ -4696,66 +4788,10 @@ static int pick_commits(struct repository *r,
 			}
 		}
 		if (item->command <= TODO_SQUASH) {
-			if (is_rebase_i(opts))
-				opts->reflog_message = reflog_message(opts,
-				      command_to_string(item->command), NULL);
-
-			res = do_pick_commit(r, item, opts,
-					     is_final_fixup(todo_list),
-					     &check_todo);
-			if (is_rebase_i(opts) && res < 0) {
-				/* Reschedule */
-				advise(_(rescheduled_advice),
-				       get_item_line_length(todo_list,
-							    todo_list->current),
-				       get_item_line(todo_list,
-						     todo_list->current));
-				todo_list->current--;
-				if (save_todo(todo_list, opts))
-					return -1;
-			}
-			if (item->command == TODO_EDIT) {
-				struct commit *commit = item->commit;
-				if (!res) {
-					if (!opts->verbose)
-						term_clear_line();
-					fprintf(stderr,
-						_("Stopped at %s...  %.*s\n"),
-						short_commit_name(commit),
-						item->arg_len, arg);
-				}
-				return error_with_patch(r, commit,
-					arg, item->arg_len, opts, res, !res);
-			}
-			if (is_rebase_i(opts) && !res)
-				record_in_rewritten(&item->commit->object.oid,
-					peek_command(todo_list, 1));
-			if (res && is_fixup(item->command)) {
-				if (res == 1)
-					intend_to_amend();
-				return error_failed_squash(r, item->commit, opts,
-					item->arg_len, arg);
-			} else if (res && is_rebase_i(opts) && item->commit) {
-				int to_amend = 0;
-				struct object_id oid;
-
-				/*
-				 * If we are rewording and have either
-				 * fast-forwarded already, or are about to
-				 * create a new root commit, we want to amend,
-				 * otherwise we do not.
-				 */
-				if (item->command == TODO_REWORD &&
-				    !repo_get_oid(r, "HEAD", &oid) &&
-				    (oideq(&item->commit->object.oid, &oid) ||
-				     (opts->have_squash_onto &&
-				      oideq(&opts->squash_onto, &oid))))
-					to_amend = 1;
-
-				return res | error_with_patch(r, item->commit,
-						arg, item->arg_len, opts,
-						res, to_amend);
-			}
+			res = pick_one_commit(r, todo_list, opts, &check_todo,
+					      &reschedule);
+			if (!res && item->command == TODO_EDIT)
+				return 0;
 		} else if (item->command == TODO_EXEC) {
 			char *end_of_arg = (char *)(arg + item->arg_len);
 			int saved = *end_of_arg;
@@ -4803,14 +4839,10 @@ static int pick_commits(struct repository *r,
 			       get_item_line_length(todo_list,
 						    todo_list->current),
 			       get_item_line(todo_list, todo_list->current));
-			todo_list->current--;
-			if (save_todo(todo_list, opts))
+			if (save_todo(todo_list, opts, reschedule))
 				return -1;
 			if (item->commit)
-				return error_with_patch(r,
-							item->commit,
-							arg, item->arg_len,
-							opts, res, 0);
+				write_rebase_head(&item->commit->object.oid);
 		} else if (is_rebase_i(opts) && check_todo && !res &&
 			   reread_todo_if_changed(r, todo_list, opts)) {
 			return -1;
@@ -5237,12 +5269,11 @@ int sequencer_pick_revisions(struct repository *r,
 
 	/*
 	 * Start a new cherry-pick/ revert sequence; but
-	 * first, make sure that an existing one isn't in
-	 * progress
+	 * first, make sure that the index is clean and that
+	 * an existing one isn't in progress.
 	 */
-
 	if (walk_revs_populate_todo(&todo_list, opts) ||
-			create_seq_dir(r) < 0)
+			create_seq_dir(r, opts->action) < 0)
 		return -1;
 	if (repo_get_oid(r, "HEAD", &oid) && (opts->action == REPLAY_REVERT))
 		return error(_("can't revert as initial commit"));

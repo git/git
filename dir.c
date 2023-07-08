@@ -7,7 +7,6 @@
  */
 #include "git-compat-util.h"
 #include "abspath.h"
-#include "alloc.h"
 #include "config.h"
 #include "convert.h"
 #include "dir.h"
@@ -32,7 +31,6 @@
 #include "symlinks.h"
 #include "trace2.h"
 #include "tree.h"
-#include "wrapper.h"
 
 /*
  * Tells read_directory_recursive how a file or directory should be treated.
@@ -378,7 +376,7 @@ static int match_pathspec_item(struct index_state *istate,
 		return 0;
 
 	if (item->attr_match_nr &&
-	    !match_pathspec_attrs(istate, name, namelen, item))
+	    !match_pathspec_attrs(istate, name - prefix, namelen + prefix, item))
 		return 0;
 
 	/* If the match was just the prefix, we matched */

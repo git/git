@@ -37,6 +37,15 @@ log.diffMerges::
 	Set diff format to be used when `--diff-merges=on` is
 	specified, see `--diff-merges` in linkgit:git-log[1] for
 	details. Defaults to `separate`.
++
+When used with 'hide' or 'no-hide', sets the default hiding of
+diffs for merge commits when `-p` option is not used.
+
+log.diffMergesHide::
+	`true` implies `--diff-merges=hide` option.
+
+log.diffMerges-m-imply-p::
+	`true` enables implication of `-p` by `-m`.
 
 log.follow::
 	If `true`, `git log` will act as if the `--follow` option was used when

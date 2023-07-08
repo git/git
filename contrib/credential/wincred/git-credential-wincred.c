@@ -109,7 +109,18 @@ static int match_part_last(LPCWSTR *ptarget, LPCWSTR want, LPCWSTR delim)
 	return match_part_with_last(ptarget, want, delim, 1);
 }
 
-static int match_cred(const CREDENTIALW *cred)
+static int match_cred_password(const CREDENTIALW *cred) {
+	int ret;
+	WCHAR *cred_password = xmalloc(cred->CredentialBlobSize);
+	wcsncpy_s(cred_password, cred->CredentialBlobSize,
+		(LPCWSTR)cred->CredentialBlob,
+		cred->CredentialBlobSize / sizeof(WCHAR));
+	ret = !wcscmp(cred_password, password);
+	free(cred_password);
+	return ret;
+}
+
+static int match_cred(const CREDENTIALW *cred, int match_password)
 {
 	LPCWSTR target = cred->TargetName;
 	if (wusername && wcscmp(wusername, cred->UserName ? cred->UserName : L""))
@@ -119,7 +130,8 @@ static int match_cred(const CREDENTIALW *cred)
 		match_part(&target, protocol, L"://") &&
 		match_part_last(&target, wusername, L"@") &&
 		match_part(&target, host, L"/") &&
-		match_part(&target, path, L"");
+		match_part(&target, path, L"") &&
+		(!match_password || match_cred_password(cred));
 }
 
 static void get_credential(void)
@@ -134,7 +146,7 @@ static void get_credential(void)
 
 	/* search for the first credential that matches username */
 	for (i = 0; i < num_creds; ++i)
-		if (match_cred(creds[i])) {
+		if (match_cred(creds[i], 0)) {
 			write_item("username", creds[i]->UserName,
 				creds[i]->UserName ? wcslen(creds[i]->UserName) : 0);
 			write_item("password",
@@ -196,7 +208,7 @@ static void erase_credential(void)
 		return;
 
 	for (i = 0; i < num_creds; ++i) {
-		if (match_cred(creds[i]))
+		if (match_cred(creds[i], password != NULL))
 			CredDeleteW(creds[i]->TargetName, creds[i]->Type, 0);
 	}
 

@@ -119,6 +119,7 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 	struct unpack_trees_options opts;
 	int prefix_set = 0;
 	struct lock_file lock_file = LOCK_INIT;
+	int recurse_submodules = -1;
 	const struct option read_tree_options[] = {
 		OPT__SUPER_PREFIX(&opts.super_prefix),
 		OPT_CALLBACK_F(0, "index-output", NULL, N_("file"),
@@ -152,9 +153,8 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 			 N_("skip applying sparse checkout filter")),
 		OPT_BOOL(0, "debug-unpack", &opts.internal.debug_unpack,
 			 N_("debug unpack-trees")),
-		OPT_CALLBACK_F(0, "recurse-submodules", NULL,
-			    "checkout", "control recursive updating of submodules",
-			    PARSE_OPT_OPTARG, option_parse_recurse_submodules_worktree_updater),
+		OPT_BOOL(0, "recurse-submodules", &recurse_submodules,
+			 N_("control recursive updating of submodules")),
 		OPT__QUIET(&opts.quiet, N_("suppress feedback messages")),
 		OPT_END()
 	};
@@ -179,6 +179,10 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 
 	if (opts.reset)
 		opts.reset = UNPACK_RESET_OVERWRITE_UNTRACKED;
+
+	/* only modify the value if set explicitly */
+	if (recurse_submodules >= 0)
+		set_config_update_recurse_submodules(recurse_submodules);
 
 	prepare_repo_settings(the_repository);
 	the_repository->settings.command_requires_full_index = 0;

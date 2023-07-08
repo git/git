@@ -39,6 +39,8 @@ struct credential {
 	char *path;
 	char *username;
 	char *password;
+	char *password_expiry_utc;
+	char *oauth_refresh_token;
 };
 
 #define CREDENTIAL_INIT { 0 }
@@ -52,7 +54,28 @@ struct credential_operation {
 
 #define CREDENTIAL_OP_END { NULL, NULL }
 
+static void credential_clear(struct credential *c);
+
 /* ----------------- Secret Service functions ----------------- */
+
+static const SecretSchema schema = {
+	"org.git.Password",
+	/* Ignore schema name during search for backwards compatibility */
+	SECRET_SCHEMA_DONT_MATCH_NAME,
+	{
+		/*
+		 * libsecret assumes attribute values are non-confidential and
+		 * unchanging, so we can't include oauth_refresh_token or
+		 * password_expiry_utc.
+		 */
+		{  "user", SECRET_SCHEMA_ATTRIBUTE_STRING },
+		{  "object", SECRET_SCHEMA_ATTRIBUTE_STRING },
+		{  "protocol", SECRET_SCHEMA_ATTRIBUTE_STRING },
+		{  "port", SECRET_SCHEMA_ATTRIBUTE_INTEGER },
+		{  "server", SECRET_SCHEMA_ATTRIBUTE_STRING },
+		{  NULL, 0 },
+	}
+};
 
 static char *make_label(struct credential *c)
 {
@@ -101,7 +124,7 @@ static int keyring_get(struct credential *c)
 
 	attributes = make_attr_list(c);
 	items = secret_service_search_sync(service,
-					   SECRET_SCHEMA_COMPAT_NETWORK,
+					   &schema,
 					   attributes,
 					   SECRET_SEARCH_LOAD_SECRETS | SECRET_SEARCH_UNLOCK,
 					   NULL,
@@ -117,6 +140,7 @@ static int keyring_get(struct credential *c)
 		SecretItem *item;
 		SecretValue *secret;
 		const char *s;
+		gchar **parts;
 
 		item = items->data;
 		secret = secret_item_get_secret(item);
@@ -130,8 +154,27 @@ static int keyring_get(struct credential *c)
 
 		s = secret_value_get_text(secret);
 		if (s) {
-			g_free(c->password);
-			c->password = g_strdup(s);
+			/*
+			 * Passwords and other attributes encoded in following format:
+			 *   hunter2
+			 *   password_expiry_utc=1684189401
+			 *   oauth_refresh_token=xyzzy
+			 */
+			parts = g_strsplit(s, "\n", 0);
+			if (g_strv_length(parts) >= 1) {
+				g_free(c->password);
+				c->password = g_strdup(parts[0]);
+			}
+			for (int i = 1; i < g_strv_length(parts); i++) {
+				if (g_str_has_prefix(parts[i], "password_expiry_utc=")) {
+					g_free(c->password_expiry_utc);
+					c->password_expiry_utc = g_strdup(&parts[i][20]);
+				} else if (g_str_has_prefix(parts[i], "oauth_refresh_token=")) {
+					g_free(c->oauth_refresh_token);
+					c->oauth_refresh_token = g_strdup(&parts[i][20]);
+				}
+			}
+			g_strfreev(parts);
 		}
 
 		g_hash_table_unref(attributes);
@@ -148,6 +191,7 @@ static int keyring_store(struct credential *c)
 	char *label = NULL;
 	GHashTable *attributes = NULL;
 	GError *error = NULL;
+	GString *secret = NULL;
 
 	/*
 	 * Sanity check that what we are storing is actually sensible.
@@ -162,13 +206,23 @@ static int keyring_store(struct credential *c)
 
 	label = make_label(c);
 	attributes = make_attr_list(c);
-	secret_password_storev_sync(SECRET_SCHEMA_COMPAT_NETWORK,
+	secret = g_string_new(c->password);
+	if (c->password_expiry_utc) {
+		g_string_append_printf(secret, "\npassword_expiry_utc=%s",
+			c->password_expiry_utc);
+	}
+	if (c->oauth_refresh_token) {
+		g_string_append_printf(secret, "\noauth_refresh_token=%s",
+			c->oauth_refresh_token);
+	}
+	secret_password_storev_sync(&schema,
 				    attributes,
 				    NULL,
 				    label,
-				    c->password,
+				    secret->str,
 				    NULL,
 				    &error);
+	g_string_free(secret, TRUE);
 	g_free(label);
 	g_hash_table_unref(attributes);
 
@@ -185,6 +239,7 @@ static int keyring_erase(struct credential *c)
 {
 	GHashTable *attributes = NULL;
 	GError *error = NULL;
+	struct credential existing = CREDENTIAL_INIT;
 
 	/*
 	 * Sanity check that we actually have something to match
@@ -197,8 +252,22 @@ static int keyring_erase(struct credential *c)
 	if (!c->protocol && !c->host && !c->path && !c->username)
 		return EXIT_FAILURE;
 
+	if (c->password) {
+		existing.host = g_strdup(c->host);
+		existing.path = g_strdup(c->path);
+		existing.port = c->port;
+		existing.protocol = g_strdup(c->protocol);
+		existing.username = g_strdup(c->username);
+		keyring_get(&existing);
+		if (existing.password && strcmp(c->password, existing.password)) {
+			credential_clear(&existing);
+			return EXIT_SUCCESS;
+		}
+		credential_clear(&existing);
+	}
+
 	attributes = make_attr_list(c);
-	secret_password_clearv_sync(SECRET_SCHEMA_COMPAT_NETWORK,
+	secret_password_clearv_sync(&schema,
 				    attributes,
 				    NULL,
 				    &error);
@@ -238,6 +307,8 @@ static void credential_clear(struct credential *c)
 	g_free(c->path);
 	g_free(c->username);
 	g_free(c->password);
+	g_free(c->password_expiry_utc);
+	g_free(c->oauth_refresh_token);
 
 	credential_init(c);
 }
@@ -284,9 +355,17 @@ static int credential_read(struct credential *c)
 		} else if (!strcmp(key, "username")) {
 			g_free(c->username);
 			c->username = g_strdup(value);
+		} else if (!strcmp(key, "password_expiry_utc")) {
+			g_free(c->password_expiry_utc);
+			c->password_expiry_utc = g_strdup(value);
 		} else if (!strcmp(key, "password")) {
 			g_free(c->password);
 			c->password = g_strdup(value);
+			while (*value)
+				*value++ = '\0';
+		} else if (!strcmp(key, "oauth_refresh_token")) {
+			g_free(c->oauth_refresh_token);
+			c->oauth_refresh_token = g_strdup(value);
 			while (*value)
 				*value++ = '\0';
 		}
@@ -314,6 +393,10 @@ static void credential_write(const struct credential *c)
 	/* only write username/password, if set */
 	credential_write_item(stdout, "username", c->username);
 	credential_write_item(stdout, "password", c->password);
+	credential_write_item(stdout, "password_expiry_utc",
+		c->password_expiry_utc);
+	credential_write_item(stdout, "oauth_refresh_token",
+		c->oauth_refresh_token);
 }
 
 static void usage(const char *name)

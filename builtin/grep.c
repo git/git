@@ -4,7 +4,6 @@
  * Copyright (c) 2006 Junio C Hamano
  */
 #include "builtin.h"
-#include "alloc.h"
 #include "gettext.h"
 #include "hex.h"
 #include "repository.h"
@@ -644,7 +643,7 @@ static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
 			strbuf_addstr(&name, base->buf + tn_len);
 			match = tree_entry_interesting(repo->index,
 						       &entry, &name,
-						       0, pathspec);
+						       pathspec);
 			strbuf_setlen(&name, name_base_len);
 
 			if (match == all_entries_not_interesting)

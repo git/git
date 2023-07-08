@@ -41,6 +41,7 @@ Open up a new file `builtin/walken.c` and set up the command handler:
  */
 
 #include "builtin.h"
+#include "trace.h"
 
 int cmd_walken(int argc, const char **argv, const char *prefix)
 {
@@ -49,12 +50,13 @@ int cmd_walken(int argc, const char **argv, const char *prefix)
 }
 ----
 
-NOTE: `trace_printf()` differs from `printf()` in that it can be turned on or
-off at runtime. For the purposes of this tutorial, we will write `walken` as
-though it is intended for use as a "plumbing" command: that is, a command which
-is used primarily in scripts, rather than interactively by humans (a "porcelain"
-command). So we will send our debug output to `trace_printf()` instead. When
-running, enable trace output by setting the environment variable `GIT_TRACE`.
+NOTE: `trace_printf()`, defined in `trace.h`, differs from `printf()` in
+that it can be turned on or off at runtime. For the purposes of this
+tutorial, we will write `walken` as though it is intended for use as
+a "plumbing" command: that is, a command which is used primarily in
+scripts, rather than interactively by humans (a "porcelain" command).
+So we will send our debug output to `trace_printf()` instead.
+When running, enable trace output by setting the environment variable `GIT_TRACE`.
 
 Add usage text and `-h` handling, like all subcommands should consistently do
 (our test suite will notice and complain if you fail to do so).
@@ -341,6 +343,10 @@ the walk loop below the `prepare_revision_walk()` call within your
 `walken_commit_walk()`:
 
 ----
+#include "pretty.h"
+
+...
+
 static void walken_commit_walk(struct rev_info *rev)
 {
 	struct commit *commit;
@@ -754,6 +760,10 @@ reachable objects are walked in order to populate the list.
 First, add the `struct oidset` and related items we will use to iterate it:
 
 ----
+#include "oidset.h"
+
+...
+
 static void walken_object_walk(
 	...
 
@@ -805,6 +815,10 @@ just walks of commits. First, we'll make our handlers chattier - modify
 go:
 
 ----
+#include "hex.h"
+
+...
+
 static void walken_show_commit(struct commit *cmt, void *buf)
 {
 	trace_printf("commit: %s\n", oid_to_hex(&cmt->object.oid));

@@ -968,13 +968,13 @@ static void show_advice_pull_non_ff(void)
 		 "your next pull:\n"
 		 "\n"
 		 "  git config pull.rebase false  # merge\n"
-		 "  git config pull.rebase true   # rebase\n"
+		 "  git config pull.rebase merges # rebase\n"
 		 "  git config pull.ff only       # fast-forward only\n"
 		 "\n"
 		 "You can replace \"git config\" with \"git config --global\" to set a default\n"
-		 "preference for all repositories. You can also pass --rebase, --no-rebase,\n"
-		 "or --ff-only on the command line to override the configured default per\n"
-		 "invocation.\n"));
+		 "preference for all repositories. You can also pass --rebase=merges,\n"
+		 "--no-rebase, or --ff-only on the command line to override the configured\n"
+		 "default per invocation.\n"));
 }
 
 int cmd_pull(int argc, const char **argv, const char *prefix)

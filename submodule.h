@@ -41,6 +41,13 @@ struct submodule_update_strategy {
 	.type = SM_UPDATE_UNSPECIFIED, \
 }
 
+struct submodule_status_util {
+	int changed, ignore_untracked;
+	unsigned dirty_submodule, newmode;
+	struct cache_entry *ce;
+	const char *path;
+};
+
 int is_gitmodules_unmerged(struct index_state *istate);
 int is_writing_gitmodules_ok(void);
 int is_staging_gitmodules_ok(struct index_state *istate);
@@ -51,9 +58,9 @@ void set_diffopt_flags_from_submodule_config(struct diff_options *,
 					     const char *path);
 int git_default_submodule_config(const char *var, const char *value, void *cb);
 
-struct option;
-int option_parse_recurse_submodules_worktree_updater(const struct option *opt,
-						     const char *arg, int unset);
+/* Sets static state 'config_update_recurse_submodules'. 'value' must be 0 or 1. */
+void set_config_update_recurse_submodules(int value);
+
 int is_tree_submodule_active(struct repository *repo,
 			     const struct object_id *treeish_name,
 			     const char *path);
@@ -94,6 +101,8 @@ int fetch_submodules(struct repository *r,
 		     int command_line_option,
 		     int default_option,
 		     int quiet, int max_parallel_jobs);
+int get_submodules_status(struct string_list *submodules,
+			  int max_parallel_jobs);
 unsigned is_submodule_modified(const char *path, int ignore_untracked);
 int submodule_uses_gitfile(const char *path);
 

@@ -334,6 +334,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	struct object_id oid;
 	struct pathspec pathspec;
 	int intent_to_add = 0;
+	int recurse_submodules = -1;
 	const struct option options[] = {
 		OPT__QUIET(&quiet, N_("be quiet, only report errors")),
 		OPT_BOOL(0, "no-refresh", &no_refresh,
@@ -347,9 +348,8 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 				N_("reset HEAD, index and working tree"), MERGE),
 		OPT_SET_INT(0, "keep", &reset_type,
 				N_("reset HEAD but keep local changes"), KEEP),
-		OPT_CALLBACK_F(0, "recurse-submodules", NULL,
-			    "reset", "control recursive updating of submodules",
-			    PARSE_OPT_OPTARG, option_parse_recurse_submodules_worktree_updater),
+		OPT_BOOL(0, "recurse-submodules", &recurse_submodules,
+			 N_("control recursive updating of submodules")),
 		OPT_BOOL('p', "patch", &patch_mode, N_("select hunks interactively")),
 		OPT_BOOL('N', "intent-to-add", &intent_to_add,
 				N_("record only the fact that removed paths will be added later")),
@@ -363,6 +363,10 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, options, git_reset_usage,
 						PARSE_OPT_KEEP_DASHDASH);
 	parse_args(&pathspec, argv, prefix, patch_mode, &rev);
+
+	/* only modify the value if set explicitly */
+	if (recurse_submodules >= 0)
+		set_config_update_recurse_submodules(recurse_submodules);
 
 	if (pathspec_from_file) {
 		if (patch_mode)

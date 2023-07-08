@@ -1,5 +1,4 @@
 #include "git-compat-util.h"
-#include "alloc.h"
 #include "config.h"
 #include "environment.h"
 #include "gettext.h"
@@ -763,7 +762,8 @@ static void check_pktline(struct check_pktline_state *state, const char *ptr, si
 			size -= digits_remaining;
 
 			if (state->len_filled == 4) {
-				state->remaining = packet_length(state->len_buf);
+				state->remaining = packet_length(state->len_buf,
+								 sizeof(state->len_buf));
 				if (state->remaining < 0) {
 					die(_("remote-curl: bad line length character: %.4s"), state->len_buf);
 				} else if (state->remaining == 2) {

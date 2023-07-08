@@ -1,6 +1,7 @@
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "gettext.h"
+#include "hex.h"
 #include "simple-ipc.h"
 #include "strbuf.h"
 #include "pkt-line.h"
@@ -21,27 +22,27 @@
 static int initialize_pipe_name(const char *path, wchar_t *wpath, size_t alloc)
 {
 	int off = 0;
-	struct strbuf realpath = STRBUF_INIT;
+	int ret = 0;
+	git_SHA_CTX sha1ctx;
+	struct strbuf real_path = STRBUF_INIT;
+	struct strbuf pipe_name = STRBUF_INIT;
+	unsigned char hash[GIT_MAX_RAWSZ];
 
-	if (!strbuf_realpath(&realpath, path, 0))
+	if (!strbuf_realpath(&real_path, path, 0))
 		return -1;
 
+	git_SHA1_Init(&sha1ctx);
+	git_SHA1_Update(&sha1ctx, real_path.buf, real_path.len);
+	git_SHA1_Final(hash, &sha1ctx);
+	strbuf_release(&real_path);
+
+	strbuf_addf(&pipe_name, "git-fsmonitor-%s", hash_to_hex(hash));
 	off = swprintf(wpath, alloc, L"\\\\.\\pipe\\");
-	if (xutftowcs(wpath + off, realpath.buf, alloc - off) < 0)
-		return -1;
+	if (xutftowcs(wpath + off, pipe_name.buf, alloc - off) < 0)
+		ret = -1;
 
-	/* Handle drive prefix */
-	if (wpath[off] && wpath[off + 1] == L':') {
-		wpath[off + 1] = L'_';
-		off += 2;
-	}
-
-	for (; wpath[off]; off++)
-		if (wpath[off] == L'/')
-			wpath[off] = L'\\';
-
-	strbuf_release(&realpath);
-	return 0;
+	strbuf_release(&pipe_name);
+	return ret;
 }
 
 static enum ipc_active_state get_active_state(wchar_t *pipe_path)

@@ -9,6 +9,16 @@ commitGraph.maxNewFilters::
 	commit-graph write` (c.f., linkgit:git-commit-graph[1]).
 
 commitGraph.readChangedPaths::
-	If true, then git will use the changed-path Bloom filters in the
-	commit-graph file (if it exists, and they are present). Defaults to
-	true. See linkgit:git-commit-graph[1] for more information.
+	Deprecated. Equivalent to changedPathsVersion=1 if true, and
+	changedPathsVersion=0 if false.
+
+commitGraph.changedPathsVersion::
+	Specifies the version of the changed-path Bloom filters that Git will read and
+	write. May be 0, 1, or 2. Any changed-path Bloom filters on disk that do not
+	match the version set in this config variable will be ignored.
++
+Defaults to 1.
++
+If 0, git will write version 1 Bloom filters when instructed to write.
++
+See linkgit:git-commit-graph[1] for more information.

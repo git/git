@@ -143,6 +143,21 @@ depth is 4095.
 	a larger and slower repository; see the discussion in
 	`pack.packSizeLimit`.
 
+--filter=<filter-spec>::
+	Remove objects matching the filter specification from the
+	resulting packfile and put them into a separate packfile. Note
+	that objects used in the working directory are not filtered
+	out. So for the split to fully work, it's best to perform it
+	in a bare repo and to use the `-a` and `-d` options along with
+	this option.  See linkgit:git-rev-list[1] for valid
+	`<filter-spec>` forms.
+
+--filter-to=<dir>::
+	Write the pack containing filtered out objects to the
+	directory `<dir>`. This can be used for putting the pack on a
+	separate object directory that is accessed through the Git
+	alternates mechanism. Only useful with `--filter`.
+
 -b::
 --write-bitmap-index::
 	Write a reachability bitmap index as part of the repack. This

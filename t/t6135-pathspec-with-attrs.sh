@@ -65,7 +65,8 @@ test_expect_success 'setup .gitattributes' '
 	fileValue label=foo
 	fileWrongLabel label☺
 	EOF
-	git add .gitattributes &&
+	echo fileSetLabel label1 >sub/.gitattributes &&
+	git add .gitattributes sub/.gitattributes &&
 	git commit -m "add attributes"
 '
 
@@ -78,12 +79,32 @@ test_expect_success 'check specific set attr' '
 	test_cmp expect actual
 '
 
-test_expect_success 'check specific set attr (2)' '
+test_expect_success 'check set attr with pathspec pattern' '
+	echo sub/fileSetLabel >expect &&
+
+	git ls-files ":(attr:label)sub" >actual &&
+	test_cmp expect actual &&
+
+	git ls-files ":(attr:label)sub/" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'check specific set attr in tree-ish' '
 	cat <<-\EOF >expect &&
 	HEAD:fileSetLabel
 	HEAD:sub/fileSetLabel
 	EOF
 	git grep -l content HEAD ":(attr:label)" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'check specific set attr with pathspec pattern in tree-ish' '
+	echo HEAD:sub/fileSetLabel >expect &&
+
+	git grep -l content HEAD ":(attr:label)sub" >actual &&
+	test_cmp expect actual &&
+
+	git grep -l content HEAD ":(attr:label)sub/" >actual &&
 	test_cmp expect actual
 '
 
@@ -137,6 +158,7 @@ test_expect_success 'check unspecified attr' '
 	fileC
 	fileNoLabel
 	fileWrongLabel
+	sub/.gitattributes
 	sub/fileA
 	sub/fileAB
 	sub/fileAC
@@ -161,6 +183,7 @@ test_expect_success 'check unspecified attr (2)' '
 	HEAD:fileC
 	HEAD:fileNoLabel
 	HEAD:fileWrongLabel
+	HEAD:sub/.gitattributes
 	HEAD:sub/fileA
 	HEAD:sub/fileAB
 	HEAD:sub/fileAC
@@ -180,6 +203,7 @@ test_expect_success 'check multiple unspecified attr' '
 	fileC
 	fileNoLabel
 	fileWrongLabel
+	sub/.gitattributes
 	sub/fileC
 	sub/fileNoLabel
 	sub/fileWrongLabel
@@ -251,6 +275,24 @@ test_expect_success 'backslash cannot be the last character' '
 test_expect_success 'backslash cannot be used as a value' '
 	test_must_fail git ls-files ":(attr:label=f\\\oo)" 2>actual &&
 	test_i18ngrep "for value matching" actual
+'
+
+test_expect_success 'reading from .gitattributes in a subdirectory (1)' '
+	git ls-files ":(attr:label1)" >actual &&
+	test_write_lines "sub/fileSetLabel" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'reading from .gitattributes in a subdirectory (2)' '
+	git ls-files ":(attr:label1)sub" >actual &&
+	test_write_lines "sub/fileSetLabel" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'reading from .gitattributes in a subdirectory (3)' '
+	git ls-files ":(attr:label1)sub/" >actual &&
+	test_write_lines "sub/fileSetLabel" >expect &&
+	test_cmp expect actual
 '
 
 test_done

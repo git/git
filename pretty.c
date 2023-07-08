@@ -1,5 +1,4 @@
 #include "git-compat-util.h"
-#include "alloc.h"
 #include "config.h"
 #include "commit.h"
 #include "environment.h"
@@ -1855,10 +1854,10 @@ static size_t format_commit_item(struct strbuf *sb, /* in UTF-8 */
 	}
 
 	orig_len = sb->len;
-	if ((context)->flush_type != no_flush)
-		consumed = format_and_pad_commit(sb, placeholder, context);
-	else
+	if (context->flush_type == no_flush)
 		consumed = format_commit_one(sb, placeholder, context);
+	else
+		consumed = format_and_pad_commit(sb, placeholder, context);
 	if (magic == NO_MAGIC)
 		return consumed;
 
@@ -1876,14 +1875,13 @@ static size_t format_commit_item(struct strbuf *sb, /* in UTF-8 */
 
 void userformat_find_requirements(const char *fmt, struct userformat_want *w)
 {
-	struct strbuf dummy = STRBUF_INIT;
-
 	if (!fmt) {
 		if (!user_format)
 			return;
 		fmt = user_format;
 	}
-	while (strbuf_expand_step(&dummy, &fmt)) {
+	while ((fmt = strchr(fmt, '%'))) {
+		fmt++;
 		if (skip_prefix(fmt, "%", &fmt))
 			continue;
 
@@ -1903,7 +1901,6 @@ void userformat_find_requirements(const char *fmt, struct userformat_want *w)
 			break;
 		}
 	}
-	strbuf_release(&dummy);
 }
 
 void repo_format_commit_message(struct repository *r,

@@ -1,6 +1,5 @@
 #include "git-compat-util.h"
 #include "abspath.h"
-#include "alloc.h"
 #include "config.h"
 #include "copy.h"
 #include "gettext.h"
@@ -20,7 +19,6 @@
 #include "object-store-ll.h"
 #include "hash-lookup.h"
 #include "strmap.h"
-#include "wrapper.h"
 
 #define RESOLVED 0
 #define PUNTED 1

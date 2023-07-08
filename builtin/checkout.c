@@ -87,6 +87,7 @@ struct checkout_opts {
 	int ignore_unmerged;
 	int pathspec_file_nul;
 	char *pathspec_from_file;
+	int recurse_submodules;
 
 	const char *new_branch;
 	const char *new_branch_force;
@@ -1510,7 +1511,8 @@ static void die_if_some_operation_in_progress(void)
 }
 
 static int checkout_branch(struct checkout_opts *opts,
-			   struct branch_info *new_branch_info)
+			   struct branch_info *new_branch_info,
+			   char *check_branch_path)
 {
 	if (opts->pathspec.nr)
 		die(_("paths cannot be used with switching branches"));
@@ -1569,13 +1571,13 @@ static int checkout_branch(struct checkout_opts *opts,
 	if (!opts->can_switch_when_in_progress)
 		die_if_some_operation_in_progress();
 
-	if (new_branch_info->path && !opts->force_detach && !opts->new_branch &&
-	    !opts->ignore_other_worktrees) {
+	if (!opts->ignore_other_worktrees && !opts->force_detach &&
+	    check_branch_path && ref_exists(check_branch_path)) {
 		int flag;
 		char *head_ref = resolve_refdup("HEAD", 0, NULL, &flag);
-		if (head_ref &&
-		    (!(flag & REF_ISSYMREF) || strcmp(head_ref, new_branch_info->path)))
-			die_if_checked_out(new_branch_info->path, 1);
+		if (opts->new_branch_force || (head_ref &&
+		    (!(flag & REF_ISSYMREF) || strcmp(head_ref, check_branch_path))))
+			die_if_checked_out(check_branch_path, 1);
 		free(head_ref);
 	}
 
@@ -1595,9 +1597,8 @@ static struct option *add_common_options(struct checkout_opts *opts,
 {
 	struct option options[] = {
 		OPT__QUIET(&opts->quiet, N_("suppress progress reporting")),
-		OPT_CALLBACK_F(0, "recurse-submodules", NULL,
-			    "checkout", "control recursive updating of submodules",
-			    PARSE_OPT_OPTARG, option_parse_recurse_submodules_worktree_updater),
+		OPT_BOOL(0, "recurse-submodules", &opts->recurse_submodules,
+			 N_("control recursive updating of submodules")),
 		OPT_BOOL(0, "progress", &opts->show_progress, N_("force progress reporting")),
 		OPT_BOOL('m', "merge", &opts->merge, N_("perform a 3-way merge with the new branch")),
 		OPT_STRING(0, "conflict", &opts->conflict_style, N_("style"),
@@ -1605,6 +1606,11 @@ static struct option *add_common_options(struct checkout_opts *opts,
 		OPT_END()
 	};
 	struct option *newopts = parse_options_concat(prevopts, options);
+	/*
+	 * we only want to act on --recurse-submodules if it was set explicitly,
+	 * so put it into unset third state.
+	 */
+	opts->recurse_submodules = -1;
 	free(prevopts);
 	return newopts;
 }
@@ -1663,7 +1669,9 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 			 const char * const usagestr[],
 			 struct branch_info *new_branch_info)
 {
+	int ret;
 	int parseopt_flags = 0;
+	char *check_branch_path = NULL;
 
 	opts->overwrite_ignore = 1;
 	opts->prefix = prefix;
@@ -1684,6 +1692,9 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 
 	argc = parse_options(argc, argv, prefix, options,
 			     usagestr, parseopt_flags);
+
+	if (opts->recurse_submodules >= 0)
+		set_config_update_recurse_submodules(opts->recurse_submodules);
 
 	if (opts->show_progress < 0) {
 		if (opts->quiet)
@@ -1758,6 +1769,13 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 		opts->new_branch = argv0 + 1;
 	}
 
+	if (opts->new_branch && !opts->ignore_other_worktrees) {
+		struct strbuf buf = STRBUF_INIT;
+
+		strbuf_branchname(&buf, opts->new_branch, INTERPRET_BRANCH_LOCAL);
+		strbuf_splice(&buf, 0, 0, "refs/heads/", 11);
+		check_branch_path = strbuf_detach(&buf, NULL);
+	}
 	/*
 	 * Extract branch name from command line arguments, so
 	 * all that is left is pathspecs.
@@ -1782,6 +1800,9 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 					     new_branch_info, opts, &rev);
 		argv += n;
 		argc -= n;
+
+		if (!opts->ignore_other_worktrees && !check_branch_path && new_branch_info->path)
+			check_branch_path = xstrdup(new_branch_info->path);
 	} else if (!opts->accept_ref && opts->from_treeish) {
 		struct object_id rev;
 
@@ -1858,9 +1879,12 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 	}
 
 	if (opts->patch_mode || opts->pathspec.nr)
-		return checkout_paths(opts, new_branch_info);
+		ret = checkout_paths(opts, new_branch_info);
 	else
-		return checkout_branch(opts, new_branch_info);
+		ret = checkout_branch(opts, new_branch_info, check_branch_path);
+
+	free(check_branch_path);
+	return ret;
 }
 
 int cmd_checkout(int argc, const char **argv, const char *prefix)
