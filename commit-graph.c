@@ -2543,18 +2543,14 @@ static int commit_graph_checksum_valid(struct commit_graph *g)
 	return hashfile_checksum_valid(g->data, g->data_len);
 }
 
-int verify_commit_graph(struct repository *r, struct commit_graph *g, int flags)
+static int verify_one_commit_graph(struct repository *r,
+				   struct commit_graph *g,
+				   int flags)
 {
 	uint32_t i, cur_fanout_pos = 0;
 	struct object_id prev_oid, cur_oid;
 	int generation_zero = 0;
 	struct progress *progress = NULL;
-	int local_error = 0;
-
-	if (!g) {
-		graph_report("no commit-graph file loaded");
-		return 1;
-	}
 
 	verify_commit_graph_error = verify_commit_graph_lite(g);
 	if (verify_commit_graph_error)
@@ -2700,7 +2696,19 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g, int flags)
 	}
 	stop_progress(&progress);
 
-	local_error = verify_commit_graph_error;
+	return verify_commit_graph_error;
+}
+
+int verify_commit_graph(struct repository *r, struct commit_graph *g, int flags)
+{
+	int local_error = 0;
+
+	if (!g) {
+		graph_report("no commit-graph file loaded");
+		return 1;
+	}
+
+	local_error = verify_one_commit_graph(r, g, flags);
 
 	if (!(flags & COMMIT_GRAPH_VERIFY_SHALLOW) && g->base_graph)
 		local_error |= verify_commit_graph(r, g->base_graph, flags);
