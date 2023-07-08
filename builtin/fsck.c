@@ -810,7 +810,7 @@ static int fsck_resolve_undo(struct index_state *istate,
 }
 
 static void fsck_index(struct index_state *istate, const char *index_path,
-		       int is_main_index)
+		       int is_current_worktree)
 {
 	unsigned int i;
 
@@ -832,7 +832,7 @@ static void fsck_index(struct index_state *istate, const char *index_path,
 		obj->flags |= USED;
 		fsck_put_object_name(&fsck_walk_options, &obj->oid,
 				     "%s:%s",
-				     is_main_index ? "" : index_path,
+				     is_current_worktree ? "" : index_path,
 				     istate->cache[i]->name);
 		mark_object_reachable(obj);
 	}
