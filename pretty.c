@@ -1876,14 +1876,13 @@ static size_t format_commit_item(struct strbuf *sb, /* in UTF-8 */
 
 void userformat_find_requirements(const char *fmt, struct userformat_want *w)
 {
-	struct strbuf dummy = STRBUF_INIT;
-
 	if (!fmt) {
 		if (!user_format)
 			return;
 		fmt = user_format;
 	}
-	while (strbuf_expand_step(&dummy, &fmt)) {
+	while ((fmt = strchr(fmt, '%'))) {
+		fmt++;
 		if (skip_prefix(fmt, "%", &fmt))
 			continue;
 
@@ -1903,7 +1902,6 @@ void userformat_find_requirements(const char *fmt, struct userformat_want *w)
 			break;
 		}
 	}
-	strbuf_release(&dummy);
 }
 
 void repo_format_commit_message(struct repository *r,
