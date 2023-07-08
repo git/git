@@ -151,6 +151,11 @@ Fixes since v2.41
    been corrected.
    (merge a096a889f4 jk/cherry-pick-revert-status later to maint).
 
+ * A few places failed to differenciate the case where the index is
+   truly empty (nothing added) and we haven't yet read from the
+   on-disk index file, which have been corrected.
+   (merge 2ee045eea1 js/empty-index-fixes later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 51f9d2e563 sa/doc-ls-remote later to maint).
    (merge c6d26a9dda jk/format-patch-message-id-unleak later to maint).
@@ -170,3 +175,5 @@ Fixes since v2.41
    (merge 80d32e84b5 rj/leakfixes later to maint).
    (merge 0a868031ed pb/complete-diff-options later to maint).
    (merge d4f28279ad jc/doc-hash-object-types later to maint).
+   (merge 1876a5ae15 ks/t4205-test-describe-with-abbrev-fix later to maint).
+   (merge 6e6a529b57 jk/fsck-indices-in-worktrees later to maint).
