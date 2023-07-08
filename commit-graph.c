@@ -2545,12 +2545,11 @@ static int commit_graph_checksum_valid(struct commit_graph *g)
 
 static int verify_one_commit_graph(struct repository *r,
 				   struct commit_graph *g,
-				   int flags)
+				   struct progress *progress)
 {
 	uint32_t i, cur_fanout_pos = 0;
 	struct object_id prev_oid, cur_oid;
 	int generation_zero = 0;
-	struct progress *progress = NULL;
 
 	verify_commit_graph_error = verify_commit_graph_lite(g);
 	if (verify_commit_graph_error)
@@ -2600,10 +2599,6 @@ static int verify_one_commit_graph(struct repository *r,
 
 	if (verify_commit_graph_error & ~VERIFY_COMMIT_GRAPH_ERROR_HASH)
 		return verify_commit_graph_error;
-
-	if (flags & COMMIT_GRAPH_WRITE_PROGRESS)
-		progress = start_progress(_("Verifying commits in commit graph"),
-					g->num_commits);
 
 	for (i = 0; i < g->num_commits; i++) {
 		struct commit *graph_commit, *odb_commit;
@@ -2694,7 +2689,6 @@ static int verify_one_commit_graph(struct repository *r,
 				     graph_commit->date,
 				     odb_commit->date);
 	}
-	stop_progress(&progress);
 
 	return verify_commit_graph_error;
 }
@@ -2709,9 +2703,16 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g, int flags)
 	}
 
 	for (; g; g = g->base_graph) {
-		local_error |= verify_one_commit_graph(r, g, flags);
+		struct progress *progress = NULL;
+		if (flags & COMMIT_GRAPH_WRITE_PROGRESS)
+			progress = start_progress(_("Verifying commits in commit graph"),
+						g->num_commits);
+
+		local_error |= verify_one_commit_graph(r, g, progress);
 		if (flags & COMMIT_GRAPH_VERIFY_SHALLOW)
 			break;
+
+		stop_progress(&progress);
 	}
 
 	return local_error;
