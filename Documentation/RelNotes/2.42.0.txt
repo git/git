@@ -1,0 +1,179 @@
+Git v2.42 Release Notes
+=======================
+
+UI, Workflows & Features
+
+ * "git pack-refs" learns "--include" and "--exclude" to tweak the ref
+   hierarchy to be packed using pattern matching.
+
+ * 'git worktree add' learned how to create a worktree based on an
+   orphaned branch with `--orphan`.
+
+ * "git pack-objects" learned to invoke a new hook program that
+   enumerates extra objects to be used as anchoring points to keep
+   otherwise unreachable objects in cruft packs.
+
+ * Add more "git var" for toolsmiths to learn various locations Git is
+   configured with either via the configuration or hardcoded defaults.
+
+ * 'git notes append' was taught '--separator' to specify string to insert
+   between paragraphs.
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * "git diff-tree" has been taught to take advantage of the
+   sparse-index feature.
+
+ * Clang's sanitizer implementation seems to work better than GCC's.
+   (merge d88d727143 jk/ci-use-clang-for-sanitizer-jobs later to maint).
+
+ * The object traversal using reachability bitmap done by
+   "pack-object" has been tweaked to take advantage of the fact that
+   using "boundary" commits as representative of all the uninteresting
+   ones can save quite a lot of object enumeration.
+
+ * discover_git_directory() no longer touches the_repository.
+
+ * "git worktree" learned to work better with sparse index feature.
+
+ * When the external merge driver is killed by a signal, its output
+   should not be trusted as a resolution with conflicts that is
+   proposed by the driver, but the code did.
+
+ * The set-up code for the get_revision() API now allows feeding
+   options like --all and --not in the --stdin mode.
+
+ * Move functions that are not about pure string manipulation out of
+   strbuf.[ch]
+
+
+Fixes since v2.41
+-----------------
+
+ * "git tag" learned to leave the "$GIT_DIR/TAG_EDITMSG" file when the
+   command failed, so that the user can salvage what they typed.
+   (merge 08c12ec1d0 kh/keep-tag-editmsg-upon-failure later to maint).
+
+ * The "-s" (silent, squelch) option of the "diff" family of commands
+   did not interact with other options that specify the output format
+   well.  This has been cleaned up so that it will clear all the
+   formatting options given before.
+   (merge 9d484b92ed jc/diff-s-with-other-options later to maint).
+
+ * Update documentation regarding Coccinelle patches.
+   (merge 3bd0097cfc gc/doc-cocci-updates later to maint).
+
+ * Some atoms that can be used in "--format=<format>" for "git ls-tree"
+   were not supported by "git ls-files", even though they were relevant
+   in the context of the latter.
+   (merge 4d28c4f75f zh/ls-files-format-atoms later to maint).
+
+ * Document more pseudo-refs and teach the command line completion
+   machinery to complete AUTO_MERGE.
+   (merge 982ff3a649 pb/complete-and-document-auto-merge-and-friends later to maint).
+
+ * "git submodule" code trusted the data coming from the config (and
+   the in-tree .gitmodules file) too much without validating, leading
+   to NULL dereference if the user mucks with a repository (e.g.
+   submodule.<name>.url is removed).  This has been corrected.
+   (merge fbc806acd1 tb/submodule-null-deref-fix later to maint).
+
+ * The value of config.worktree is per-repository, but has been kept
+   in a singleton global variable per process. This has been OK as
+   most Git operations interacted with a single repository at a time,
+   but not right for operations like recursive "grep" that want to
+   access multiple repositories from a single process without forking.
+
+   The global variable has been eliminated and made into a member in
+   the per-repository data structure.
+   (merge 3867f6d650 vd/worktree-config-is-per-repository later to maint).
+
+ * "git [-c log.follow=true] log [--follow] ':(glob)f**'" used to barf.
+   (merge 8260bc5902 jk/log-follow-with-non-literal-pathspec later to maint).
+
+ * Introduce a mechanism to disable replace refs globally and per
+   repository.
+   (merge 9c7d1b057f ds/disable-replace-refs later to maint).
+
+ * "git cat-file --batch" and friends learned "-Z" that uses NUL
+   delimiter for both input and output.
+   (merge f79e18849b ps/cat-file-null-output later to maint).
+
+ * The reimplemented "git add -i" did not honor color.ui configuration.
+   (merge 6f74648cea ds/add-i-color-configuration-fix later to maint).
+
+ * Compilation fix for platforms without D_TYPE in struct dirent.
+   (merge 03bf92b9bf as/dtype-compilation-fix later to maint).
+
+ * Suggest to refrain from using hex literals that are non-portable
+   when writing printf(1) format strings.
+   (merge f0b68f0546 jt/doc-use-octal-with-printf later to maint).
+
+ * Simplify error message when run-command fails to start a command.
+   (merge 6d224ac286 rs/run-command-exec-error-on-noent later to maint).
+
+ * Gracefully deal with a stale MIDX file that lists a packfile that
+   no longer exists.
+   (merge 06f3867865 tb/open-midx-bitmap-fallback later to maint).
+
+ * Even when diff.ignoreSubmodules tells us to ignore submodule
+   changes, "git commit" with an index that already records changes to
+   submodules should include the submodule changes in the resulting
+   commit, but it did not.
+   (merge 5768478edc js/defeat-ignore-submodules-config-with-explicit-addition later to maint).
+
+ * When "git commit --trailer=..." invokes the interpret-trailers
+   machinery, it knows what it feeds to interpret-trailers is a full
+   log message without any patch, but failed to express that by
+   passing the "--no-divider" option, which has been corrected.
+   (merge be3d654343 jk/commit-use-no-divider-with-interpret-trailers later to maint).
+
+ * Avoid breakage of "git pack-objects --cruft" due to inconsistency
+   between the way the code enumerates packfiles in the repository.
+   (merge 73320e49ad tb/collect-pack-filenames-fix later to maint).
+
+ * We create .pack and then .idx, we consider only packfiles that have
+   .idx usable (those with only .pack are not ready yet), so we should
+   remove .idx before removing .pack for consistency.
+   (merge 0dd1324a73 ds/remove-idx-before-pack later to maint).
+
+ * Partially revert a sanity check that the rest of the config code
+   was not ready, to avoid triggering it in a corner case.
+   (merge a53f43f900 gc/config-partial-submodule-kvi-fix later to maint).
+
+ * "git apply" punts when it is fed too large a patch input; the error
+   message it gives when it happens has been clarified.
+   (merge 42612e18d2 pw/apply-too-large later to maint).
+
+ * During a cherry-pick or revert session that works on multiple
+   commits, "git status" did not give correct information, which has
+   been corrected.
+   (merge a096a889f4 jk/cherry-pick-revert-status later to maint).
+
+ * A few places failed to differenciate the case where the index is
+   truly empty (nothing added) and we haven't yet read from the
+   on-disk index file, which have been corrected.
+   (merge 2ee045eea1 js/empty-index-fixes later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge 51f9d2e563 sa/doc-ls-remote later to maint).
+   (merge c6d26a9dda jk/format-patch-message-id-unleak later to maint).
+   (merge f7e063f326 ps/fetch-cleanups later to maint).
+   (merge e4cf013468 tl/quote-problematic-arg-for-clarity later to maint).
+   (merge 20025fdfc7 tz/test-ssh-verifytime-fix later to maint).
+   (merge e48a21df65 tz/test-fix-pthreads-prereq later to maint).
+   (merge 68b51172e3 mh/commit-reach-get-reachable-plug-leak later to maint).
+   (merge aeee1408ce kh/use-default-notes-doc later to maint).
+   (merge 3b8724bce6 jc/test-modernization later to maint).
+   (merge 447a3b7331 jc/test-modernization-2 later to maint).
+   (merge d57fa7fc73 la/doc-interpret-trailers later to maint).
+   (merge 548afb0d9a la/docs-typofixes later to maint).
+   (merge 3744ffcbcd rs/doc-ls-tree-hex-literal later to maint).
+   (merge 6c26da8404 mh/credential-erase-improvements later to maint).
+   (merge 78e56cff69 tz/lib-gpg-prereq-fix later to maint).
+   (merge 80d32e84b5 rj/leakfixes later to maint).
+   (merge 0a868031ed pb/complete-diff-options later to maint).
+   (merge d4f28279ad jc/doc-hash-object-types later to maint).
+   (merge 1876a5ae15 ks/t4205-test-describe-with-abbrev-fix later to maint).
+   (merge 6e6a529b57 jk/fsck-indices-in-worktrees later to maint).

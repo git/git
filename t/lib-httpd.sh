@@ -142,6 +142,7 @@ prepare_httpd() {
 	install_script error-smart-http.sh
 	install_script error.sh
 	install_script apply-one-time-perl.sh
+	install_script nph-custom-auth.sh
 
 	ln -s "$LIB_HTTPD_MODULE_PATH" "$HTTPD_ROOT_PATH/modules"
 
@@ -190,6 +191,20 @@ enable_http2 () {
 	test_set_prereq HTTP2
 }
 
+enable_cgipassauth () {
+	# We are looking for 2.4.13 or more recent. Since we only support
+	# 2.4 and up, no need to check for older major/minor.
+	if test "$HTTPD_VERSION_MAJOR" = 2 &&
+	   test "$HTTPD_VERSION_MINOR" = 4 &&
+	   test "$(echo $HTTPD_VERSION | cut -d. -f3)" -lt 13
+	then
+		echo >&4 "apache $HTTPD_VERSION too old for CGIPassAuth"
+		return
+	fi
+	HTTPD_PARA="$HTTPD_PARA -DUSE_CGIPASSAUTH"
+	test_set_prereq CGIPASSAUTH
+}
+
 start_httpd() {
 	prepare_httpd >&3 2>&4
 
@@ -227,8 +242,12 @@ test_http_push_nonff () {
 		git commit -a -m path2 --amend &&
 
 		test_must_fail git push -v origin >output 2>&1 &&
-		(cd "$REMOTE_REPO" &&
-		 test $HEAD = $(git rev-parse --verify HEAD))
+		(
+			cd "$REMOTE_REPO" &&
+			echo "$HEAD" >expect &&
+			git rev-parse --verify HEAD >actual &&
+			test_cmp expect actual
+		)
 	'
 
 	test_expect_success 'non-fast-forward push show ref status' '

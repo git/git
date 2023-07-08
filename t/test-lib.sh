@@ -1041,10 +1041,7 @@ want_trace () {
 # (and we want to make sure we run any cleanup like
 # "set +x").
 test_eval_inner_ () {
-	# Do not add anything extra (including LF) after '$*'
-	eval "
-		want_trace && trace_level_=$(($trace_level_+1)) && set -x
-		$*"
+	eval "$*"
 }
 
 test_eval_ () {
@@ -1069,7 +1066,10 @@ test_eval_ () {
 	#     be _inside_ the block to avoid polluting the "set -x" output
 	#
 
-	test_eval_inner_ "$@" </dev/null >&3 2>&4
+	# Do not add anything extra (including LF) after '$*'
+	test_eval_inner_ </dev/null >&3 2>&4 "
+		want_trace && trace_level_=$(($trace_level_+1)) && set -x
+		$*"
 	{
 		test_eval_ret_=$?
 		if want_trace
@@ -1086,22 +1086,22 @@ test_eval_ () {
 	return $test_eval_ret_
 }
 
+fail_117 () {
+	return 117
+}
+
 test_run_ () {
 	test_cleanup=:
 	expecting_failure=$2
 
 	if test "${GIT_TEST_CHAIN_LINT:-1}" != 0; then
-		# turn off tracing for this test-eval, as it simply creates
-		# confusing noise in the "-x" output
-		trace_tmp=$trace
-		trace=
 		# 117 is magic because it is unlikely to match the exit
 		# code of other programs
-		if test "OK-117" != "$(test_eval_ "(exit 117) && $1${LF}${LF}echo OK-\$?" 3>&1)"
+		test_eval_inner_ "fail_117 && $1" </dev/null >&3 2>&4
+		if test $? != 117
 		then
-			BUG "broken &&-chain or run-away HERE-DOC: $1"
+			BUG "broken &&-chain: $1"
 		fi
-		trace=$trace_tmp
 	fi
 
 	setup_malloc_check
@@ -1593,7 +1593,8 @@ then
 	BAIL_OUT_ENV_NEEDS_SANITIZE_LEAK "GIT_TEST_SANITIZE_LEAK_LOG=true"
 fi
 
-if test "${GIT_TEST_CHAIN_LINT:-1}" != 0
+if test "${GIT_TEST_CHAIN_LINT:-1}" != 0 &&
+   test "${GIT_TEST_EXT_CHAIN_LINT:-1}" != 0
 then
 	"$PERL_PATH" "$TEST_DIRECTORY/chainlint.pl" "$0" ||
 		BUG "lint error (see '?!...!? annotations above)"

@@ -989,10 +989,7 @@ test_expect_success 'fsck error and recovery on invalid object type' '
 
 		garbage_blob=$(git hash-object --stdin -w -t garbage --literally </dev/null) &&
 
-		cat >err.expect <<-\EOF &&
-		fatal: invalid object type
-		EOF
-		test_must_fail git fsck >out 2>err &&
+		test_must_fail git fsck 2>err &&
 		grep -e "^error" -e "^fatal" err >errors &&
 		test_line_count = 1 errors &&
 		grep "$garbage_blob: object is of unknown type '"'"'garbage'"'"':" err
@@ -1021,6 +1018,36 @@ test_expect_success 'fsck error on gitattributes with excessive size' '
 	EOF
 	test_must_fail git fsck --no-dangling >actual 2>&1 &&
 	test_cmp expected actual
+'
+
+test_expect_success 'fsck detects problems in worktree index' '
+	test_when_finished "git worktree remove -f wt" &&
+	git worktree add wt &&
+
+	echo "this will be removed to break the worktree index" >wt/file &&
+	git -C wt add file &&
+	blob=$(git -C wt rev-parse :file) &&
+	remove_object $blob &&
+
+	test_must_fail git fsck --name-objects >actual 2>&1 &&
+	cat >expect <<-EOF &&
+	missing blob $blob (.git/worktrees/wt/index:file)
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'fsck reports problems in current worktree index without filename' '
+	test_when_finished "rm -f .git/index && git read-tree HEAD" &&
+	echo "this object will be removed to break current worktree index" >file &&
+	git add file &&
+	blob=$(git rev-parse :file) &&
+	remove_object $blob &&
+
+	test_must_fail git fsck --name-objects >actual 2>&1 &&
+	cat >expect <<-EOF &&
+	missing blob $blob (:file)
+	EOF
+	test_cmp expect actual
 '
 
 test_done

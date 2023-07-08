@@ -61,12 +61,20 @@ test_expect_success 'push -u :topic_2' '
 	check_config topic_2 upstream refs/heads/other2
 '
 
-test_expect_success 'push -u --all' '
+test_expect_success 'push -u --all(the same behavior with--branches)' '
 	git branch all1 &&
 	git branch all2 &&
 	git push -u --all &&
 	check_config all1 upstream refs/heads/all1 &&
-	check_config all2 upstream refs/heads/all2
+	check_config all2 upstream refs/heads/all2 &&
+	git config --get-regexp branch.all* > expect &&
+	git config --remove-section branch.all1 &&
+	git config --remove-section branch.all2 &&
+	git push -u --branches &&
+	check_config all1 upstream refs/heads/all1 &&
+	check_config all2 upstream refs/heads/all2 &&
+	git config --get-regexp branch.all* > actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'push -u HEAD' '

@@ -1,8 +1,7 @@
 #include "test-tool.h"
-#include "cache.h"
 #include "prio-queue.h"
 
-static int intcmp(const void *va, const void *vb, void *data)
+static int intcmp(const void *va, const void *vb, void *data UNUSED)
 {
 	const int *a = va, *b = vb;
 	return *a - *b;
@@ -17,7 +16,7 @@ static void show(int *v)
 	free(v);
 }
 
-int cmd__prio_queue(int argc, const char **argv)
+int cmd__prio_queue(int argc UNUSED, const char **argv)
 {
 	struct prio_queue pq = { intcmp };
 

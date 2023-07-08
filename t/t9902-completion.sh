@@ -405,40 +405,40 @@ test_expect_success '__gitdir - remote as argument' '
 
 test_expect_success '__git_dequote - plain unquoted word' '
 	__git_dequote unquoted-word &&
-	verbose test unquoted-word = "$dequoted_word"
+	test unquoted-word = "$dequoted_word"
 '
 
 # input:    b\a\c\k\'\\\"s\l\a\s\h\es
 # expected: back'\"slashes
 test_expect_success '__git_dequote - backslash escaped' '
 	__git_dequote "b\a\c\k\\'\''\\\\\\\"s\l\a\s\h\es" &&
-	verbose test "back'\''\\\"slashes" = "$dequoted_word"
+	test "back'\''\\\"slashes" = "$dequoted_word"
 '
 
 # input:    sin'gle\' '"quo'ted
 # expected: single\ "quoted
 test_expect_success '__git_dequote - single quoted' '
 	__git_dequote "'"sin'gle\\\\' '\\\"quo'ted"'" &&
-	verbose test '\''single\ "quoted'\'' = "$dequoted_word"
+	test '\''single\ "quoted'\'' = "$dequoted_word"
 '
 
 # input:    dou"ble\\" "\"\quot"ed
 # expected: double\ "\quoted
 test_expect_success '__git_dequote - double quoted' '
 	__git_dequote '\''dou"ble\\" "\"\quot"ed'\'' &&
-	verbose test '\''double\ "\quoted'\'' = "$dequoted_word"
+	test '\''double\ "\quoted'\'' = "$dequoted_word"
 '
 
 # input: 'open single quote
 test_expect_success '__git_dequote - open single quote' '
 	__git_dequote "'\''open single quote" &&
-	verbose test "open single quote" = "$dequoted_word"
+	test "open single quote" = "$dequoted_word"
 '
 
 # input: "open double quote
 test_expect_success '__git_dequote - open double quote' '
 	__git_dequote "\"open double quote" &&
-	verbose test "open double quote" = "$dequoted_word"
+	test "open double quote" = "$dequoted_word"
 '
 
 
@@ -616,7 +616,7 @@ test_expect_success '__git_is_configured_remote' '
 	test_when_finished "git remote remove remote_2" &&
 	git remote add remote_2 git://remote_2 &&
 	(
-		verbose __git_is_configured_remote remote_2 &&
+		__git_is_configured_remote remote_2 &&
 		test_must_fail __git_is_configured_remote non-existent
 	)
 '
@@ -2596,30 +2596,30 @@ test_expect_success 'options with value' '
 test_expect_success 'sourcing the completion script clears cached commands' '
 	(
 		__git_compute_all_commands &&
-		verbose test -n "$__git_all_commands" &&
+		test -n "$__git_all_commands" &&
 		. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
-		verbose test -z "$__git_all_commands"
+		test -z "$__git_all_commands"
 	)
 '
 
 test_expect_success 'sourcing the completion script clears cached merge strategies' '
 	(
 		__git_compute_merge_strategies &&
-		verbose test -n "$__git_merge_strategies" &&
+		test -n "$__git_merge_strategies" &&
 		. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
-		verbose test -z "$__git_merge_strategies"
+		test -z "$__git_merge_strategies"
 	)
 '
 
 test_expect_success 'sourcing the completion script clears cached --options' '
 	(
 		__gitcomp_builtin checkout &&
-		verbose test -n "$__gitcomp_builtin_checkout" &&
+		test -n "$__gitcomp_builtin_checkout" &&
 		__gitcomp_builtin notes_edit &&
-		verbose test -n "$__gitcomp_builtin_notes_edit" &&
+		test -n "$__gitcomp_builtin_notes_edit" &&
 		. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
-		verbose test -z "$__gitcomp_builtin_checkout" &&
-		verbose test -z "$__gitcomp_builtin_notes_edit"
+		test -z "$__gitcomp_builtin_checkout" &&
+		test -z "$__gitcomp_builtin_notes_edit"
 	)
 '
 

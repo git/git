@@ -4,10 +4,14 @@
  * Copyright (c) Junio C Hamano, 2006, 2009
  */
 #include "builtin.h"
+#include "alloc.h"
+#include "gettext.h"
+#include "hex.h"
 #include "quote.h"
+#include "strbuf.h"
 #include "tree.h"
 #include "parse-options.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 
 static struct treeent {
 	unsigned mode;

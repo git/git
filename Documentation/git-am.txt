@@ -24,7 +24,9 @@ DESCRIPTION
 -----------
 Splits mail messages in a mailbox into commit log message,
 authorship information and patches, and applies them to the
-current branch.
+current branch. You could think of it as a reverse operation
+of linkgit:git-format-patch[1] run on a branch with a straight
+history without merges.
 
 OPTIONS
 -------
@@ -273,7 +275,8 @@ include::config/am.txt[]
 
 SEE ALSO
 --------
-linkgit:git-apply[1].
+linkgit:git-apply[1],
+linkgit:git-format-patch[1].
 
 GIT
 ---

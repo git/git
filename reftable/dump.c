@@ -7,7 +7,7 @@ https://developers.google.com/open-source/licenses/bsd
 */
 
 #include "git-compat-util.h"
-#include "hash.h"
+#include "hash-ll.h"
 
 #include "reftable-blocksource.h"
 #include "reftable-error.h"

@@ -1,5 +1,7 @@
+#include "git-compat-util.h"
 #include "diff-merges.h"
 
+#include "gettext.h"
 #include "revision.h"
 
 typedef void (*diff_merges_setup_func_t)(struct rev_info *);

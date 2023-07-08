@@ -451,7 +451,7 @@ print_noop_and_exit () {
 
 main () {
 	prompt=$(git config --bool mergetool.prompt)
-	GIT_MERGETOOL_GUI=false
+	GIT_MERGETOOL_GUI=
 	guessed_merge_tool=false
 	orderfile=
 
@@ -511,9 +511,14 @@ main () {
 
 	if test -z "$merge_tool"
 	then
-		if ! merge_tool=$(get_merge_tool)
+		merge_tool=$(get_merge_tool)
+		subshell_exit_status=$?
+		if test $subshell_exit_status = 1
 		then
 			guessed_merge_tool=true
+		elif test $subshell_exit_status -gt 1
+		then
+			exit $subshell_exit_status
 		fi
 	fi
 	merge_keep_backup="$(git config --bool mergetool.keepBackup || echo true)"

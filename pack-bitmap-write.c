@@ -1,5 +1,9 @@
-#include "cache.h"
-#include "object-store.h"
+#include "git-compat-util.h"
+#include "alloc.h"
+#include "environment.h"
+#include "gettext.h"
+#include "hex.h"
+#include "object-store-ll.h"
 #include "commit.h"
 #include "tag.h"
 #include "diff.h"
@@ -11,8 +15,12 @@
 #include "pack-bitmap.h"
 #include "hash-lookup.h"
 #include "pack-objects.h"
+#include "path.h"
 #include "commit-reach.h"
 #include "prio-queue.h"
+#include "trace2.h"
+#include "tree.h"
+#include "tree-walk.h"
 
 struct bitmapped_commit {
 	struct commit *commit;
@@ -425,7 +433,8 @@ static int fill_bitmap_commit(struct bb_commit *ent,
 		if (!found)
 			return -1;
 		bitmap_set(ent->bitmap, pos);
-		prio_queue_put(tree_queue, get_commit_tree(c));
+		prio_queue_put(tree_queue,
+			       repo_get_commit_tree(the_repository, c));
 
 		for (p = c->parents; p; p = p->next) {
 			pos = find_object_pos(&p->item->object.oid, &found);

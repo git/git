@@ -1,11 +1,14 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "abspath.h"
 #include "config.h"
 #include "credential.h"
+#include "gettext.h"
 #include "string-list.h"
 #include "run-command.h"
 #include "url.h"
 #include "prompt.h"
 #include "sigchain.h"
+#include "strbuf.h"
 #include "urlmatch.h"
 #include "git-compat-util.h"
 
@@ -22,19 +25,22 @@ void credential_clear(struct credential *c)
 	free(c->path);
 	free(c->username);
 	free(c->password);
+	free(c->oauth_refresh_token);
 	string_list_clear(&c->helpers, 0);
+	strvec_clear(&c->wwwauth_headers);
 
 	credential_init(c);
 }
 
 int credential_match(const struct credential *want,
-		     const struct credential *have)
+		     const struct credential *have, int match_password)
 {
 #define CHECK(x) (!want->x || (have->x && !strcmp(want->x, have->x)))
 	return CHECK(protocol) &&
 	       CHECK(host) &&
 	       CHECK(path) &&
-	       CHECK(username);
+	       CHECK(username) &&
+	       (!match_password || CHECK(password));
 #undef CHECK
 }
 
@@ -43,6 +49,7 @@ static int credential_from_potentially_partial_url(struct credential *c,
 						   const char *url);
 
 static int credential_config_callback(const char *var, const char *value,
+				      const struct config_context *ctx UNUSED,
 				      void *data)
 {
 	struct credential *c = data;
@@ -97,7 +104,7 @@ static int match_partial_url(const char *url, void *cb)
 		warning(_("skipping credential lookup for key: credential.%s"),
 			url);
 	else
-		matches = credential_match(&want, c);
+		matches = credential_match(&want, c, 0);
 	credential_clear(&want);
 
 	return matches;
@@ -235,11 +242,16 @@ int credential_read(struct credential *c, FILE *fp)
 		} else if (!strcmp(key, "path")) {
 			free(c->path);
 			c->path = xstrdup(value);
+		} else if (!strcmp(key, "wwwauth[]")) {
+			strvec_push(&c->wwwauth_headers, value);
 		} else if (!strcmp(key, "password_expiry_utc")) {
 			errno = 0;
 			c->password_expiry_utc = parse_timestamp(value, NULL, 10);
 			if (c->password_expiry_utc == 0 || errno == ERANGE)
 				c->password_expiry_utc = TIME_MAX;
+		} else if (!strcmp(key, "oauth_refresh_token")) {
+			free(c->oauth_refresh_token);
+			c->oauth_refresh_token = xstrdup(value);
 		} else if (!strcmp(key, "url")) {
 			credential_from_url(c, value);
 		} else if (!strcmp(key, "quit")) {
@@ -275,11 +287,14 @@ void credential_write(const struct credential *c, FILE *fp)
 	credential_write_item(fp, "path", c->path, 0);
 	credential_write_item(fp, "username", c->username, 0);
 	credential_write_item(fp, "password", c->password, 0);
+	credential_write_item(fp, "oauth_refresh_token", c->oauth_refresh_token, 0);
 	if (c->password_expiry_utc != TIME_MAX) {
 		char *s = xstrfmt("%"PRItime, c->password_expiry_utc);
 		credential_write_item(fp, "password_expiry_utc", s, 0);
 		free(s);
 	}
+	for (size_t i = 0; i < c->wwwauth_headers.nr; i++)
+		credential_write_item(fp, "wwwauth[]", c->wwwauth_headers.v[i], 0);
 }
 
 static int run_credential_helper(struct credential *c,
@@ -398,6 +413,7 @@ void credential_reject(struct credential *c)
 
 	FREE_AND_NULL(c->username);
 	FREE_AND_NULL(c->password);
+	FREE_AND_NULL(c->oauth_refresh_token);
 	c->password_expiry_utc = TIME_MAX;
 	c->approved = 0;
 }

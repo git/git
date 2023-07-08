@@ -5,8 +5,14 @@
  *
  * Copyright (C) 2008 Linus Torvalds
  */
-#include "cache.h"
+#include "git-compat-util.h"
+#include "environment.h"
+#include "gettext.h"
+#include "name-hash.h"
+#include "object.h"
+#include "read-cache-ll.h"
 #include "thread-utils.h"
+#include "trace.h"
 #include "trace2.h"
 #include "sparse-index.h"
 

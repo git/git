@@ -1,7 +1,10 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
+#include "environment.h"
+#include "hex.h"
 #include "notes.h"
-#include "object-store.h"
+#include "object-name.h"
+#include "object-store-ll.h"
 #include "blob.h"
 #include "tree.h"
 #include "utf8.h"
@@ -752,7 +755,7 @@ static int write_each_non_note_until(const char *note_path,
 	return 0;
 }
 
-static int write_each_note(const struct object_id *object_oid,
+static int write_each_note(const struct object_id *object_oid UNUSED,
 		const struct object_id *note_oid, char *note_path,
 		void *cb_data)
 {
@@ -780,13 +783,14 @@ struct note_delete_list {
 };
 
 static int prune_notes_helper(const struct object_id *object_oid,
-		const struct object_id *note_oid, char *note_path,
-		void *cb_data)
+			      const struct object_id *note_oid UNUSED,
+			      char *note_path UNUSED,
+			      void *cb_data)
 {
 	struct note_delete_list **l = (struct note_delete_list **) cb_data;
 	struct note_delete_list *n;
 
-	if (has_object_file(object_oid))
+	if (repo_has_object_file(the_repository, object_oid))
 		return 0; /* nothing to do for this note */
 
 	/* failed to find object => prune this note */
@@ -807,13 +811,15 @@ int combine_notes_concatenate(struct object_id *cur_oid,
 
 	/* read in both note blob objects */
 	if (!is_null_oid(new_oid))
-		new_msg = read_object_file(new_oid, &new_type, &new_len);
+		new_msg = repo_read_object_file(the_repository, new_oid,
+						&new_type, &new_len);
 	if (!new_msg || !new_len || new_type != OBJ_BLOB) {
 		free(new_msg);
 		return 0;
 	}
 	if (!is_null_oid(cur_oid))
-		cur_msg = read_object_file(cur_oid, &cur_type, &cur_len);
+		cur_msg = repo_read_object_file(the_repository, cur_oid,
+						&cur_type, &cur_len);
 	if (!cur_msg || !cur_len || cur_type != OBJ_BLOB) {
 		free(cur_msg);
 		free(new_msg);
@@ -848,8 +854,8 @@ int combine_notes_overwrite(struct object_id *cur_oid,
 	return 0;
 }
 
-int combine_notes_ignore(struct object_id *cur_oid,
-			 const struct object_id *new_oid)
+int combine_notes_ignore(struct object_id *cur_oid UNUSED,
+			 const struct object_id *new_oid UNUSED)
 {
 	return 0;
 }
@@ -869,7 +875,7 @@ static int string_list_add_note_lines(struct string_list *list,
 		return 0;
 
 	/* read_sha1_file NUL-terminates */
-	data = read_object_file(oid, &t, &len);
+	data = repo_read_object_file(the_repository, oid, &t, &len);
 	if (t != OBJ_BLOB || !data || !len) {
 		free(data);
 		return t != OBJ_BLOB || !data;
@@ -944,7 +950,7 @@ void string_list_add_refs_by_glob(struct string_list *list, const char *glob)
 		for_each_glob_ref(string_list_add_one_ref, glob, list);
 	} else {
 		struct object_id oid;
-		if (get_oid(glob, &oid))
+		if (repo_get_oid(the_repository, glob, &oid))
 			warning("notes ref %s is invalid", glob);
 		if (!unsorted_string_list_has_string(list, glob))
 			string_list_append(list, glob);
@@ -958,7 +964,7 @@ void string_list_add_refs_from_colon_sep(struct string_list *list,
 	char *globs_copy = xstrdup(globs);
 	int i;
 
-	string_list_split_in_place(&split, globs_copy, ':', -1);
+	string_list_split_in_place(&split, globs_copy, ":", -1);
 	string_list_remove_empty_items(&split, 0);
 
 	for (i = 0; i < split.nr; i++)
@@ -968,7 +974,9 @@ void string_list_add_refs_from_colon_sep(struct string_list *list,
 	free(globs_copy);
 }
 
-static int notes_display_config(const char *k, const char *v, void *cb)
+static int notes_display_config(const char *k, const char *v,
+				const struct config_context *ctx UNUSED,
+				void *cb)
 {
 	int *load_refs = cb;
 
@@ -1014,14 +1022,14 @@ void init_notes(struct notes_tree *t, const char *notes_ref,
 	t->root = (struct int_node *) xcalloc(1, sizeof(struct int_node));
 	t->first_non_note = NULL;
 	t->prev_non_note = NULL;
-	t->ref = xstrdup_or_null(notes_ref);
+	t->ref = xstrdup(notes_ref);
 	t->update_ref = (flags & NOTES_INIT_WRITABLE) ? t->ref : NULL;
 	t->combine_notes = combine_notes;
 	t->initialized = 1;
 	t->dirty = 0;
 
-	if (flags & NOTES_INIT_EMPTY || !notes_ref ||
-	    get_oid_treeish(notes_ref, &object_oid))
+	if (flags & NOTES_INIT_EMPTY ||
+	    repo_get_oid_treeish(the_repository, notes_ref, &object_oid))
 		return;
 	if (flags & NOTES_INIT_WRITABLE && read_ref(notes_ref, &object_oid))
 		die("Cannot use notes ref %s", notes_ref);
@@ -1264,7 +1272,7 @@ static void format_note(struct notes_tree *t, const struct object_id *object_oid
 	if (!oid)
 		return;
 
-	if (!(msg = read_object_file(oid, &type, &msglen)) || type != OBJ_BLOB) {
+	if (!(msg = repo_read_object_file(the_repository, oid, &type, &msglen)) || type != OBJ_BLOB) {
 		free(msg);
 		return;
 	}
@@ -1348,7 +1356,7 @@ void expand_loose_notes_ref(struct strbuf *sb)
 {
 	struct object_id object;
 
-	if (get_oid(sb->buf, &object)) {
+	if (repo_get_oid(the_repository, sb->buf, &object)) {
 		/* fallback to expand_notes_ref */
 		expand_notes_ref(sb);
 	}

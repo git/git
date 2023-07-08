@@ -664,7 +664,7 @@ skip-irrelevant-renames optimization means we sometimes don't detect
 renames for any files within a directory that was renamed, in which
 case we will not have been able to detect any rename for the directory
 itself.  In such a case, we do not know whether the directory was
-renamed; we want to be careful to avoid cacheing some kind of "this
+renamed; we want to be careful to avoid caching some kind of "this
 directory was not renamed" statement.  If we did, then a subsequent
 commit being rebased could add a file to the old directory, and the
 user would expect it to end up in the correct directory -- something

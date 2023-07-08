@@ -1,11 +1,13 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
 #include "dir.h"
+#include "environment.h"
 #include "ewah/ewok.h"
 #include "fsmonitor.h"
 #include "fsmonitor-ipc.h"
 #include "run-command.h"
 #include "strbuf.h"
+#include "trace2.h"
 
 #define INDEX_EXTENSION_VERSION1	(1)
 #define INDEX_EXTENSION_VERSION2	(2)

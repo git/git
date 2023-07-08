@@ -7,6 +7,9 @@
 #if (PCRE2_MAJOR >= 10 && PCRE2_MINOR >= 36) || PCRE2_MAJOR >= 11
 #define GIT_PCRE2_VERSION_10_36_OR_HIGHER
 #endif
+#if (PCRE2_MAJOR >= 10 && PCRE2_MINOR >= 35) || PCRE2_MAJOR >= 11
+#define GIT_PCRE2_VERSION_10_35_OR_HIGHER
+#endif
 #if (PCRE2_MAJOR >= 10 && PCRE2_MINOR >= 34) || PCRE2_MAJOR >= 11
 #define GIT_PCRE2_VERSION_10_34_OR_HIGHER
 #endif
@@ -199,7 +202,9 @@ struct grep_opt {
 	.output = std_output, \
 }
 
-int grep_config(const char *var, const char *value, void *);
+struct config_context;
+int grep_config(const char *var, const char *value,
+		const struct config_context *ctx, void *data);
 void grep_init(struct grep_opt *, struct repository *repo);
 
 void append_grep_pat(struct grep_opt *opt, const char *pat, size_t patlen, const char *origin, int no, enum grep_pat_token t);

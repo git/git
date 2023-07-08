@@ -1,8 +1,11 @@
-#include "builtin.h"
+#include "git-compat-util.h"
 #include "config.h"
 #include "commit.h"
+#include "date.h"
+#include "gettext.h"
+#include "hex.h"
 #include "refs.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "pkt-line.h"
 #include "sideband.h"
 #include "run-command.h"
@@ -12,10 +15,13 @@
 #include "quote.h"
 #include "transport.h"
 #include "version.h"
+#include "wrapper.h"
 #include "oid-array.h"
 #include "gpg-interface.h"
-#include "cache.h"
 #include "shallow.h"
+#include "parse-options.h"
+#include "trace2.h"
+#include "write-or-die.h"
 
 int option_parse_push_signed(const struct option *opt,
 			     const char *arg, int unset)
@@ -42,9 +48,9 @@ int option_parse_push_signed(const struct option *opt,
 static void feed_object(const struct object_id *oid, FILE *fh, int negative)
 {
 	if (negative &&
-	    !has_object_file_with_flags(oid,
-					OBJECT_INFO_SKIP_FETCH_OBJECT |
-					OBJECT_INFO_QUICK))
+	    !repo_has_object_file_with_flags(the_repository, oid,
+					     OBJECT_INFO_SKIP_FETCH_OBJECT |
+					     OBJECT_INFO_QUICK))
 		return;
 
 	if (negative)
@@ -534,7 +540,7 @@ int send_pack(struct send_pack_args *args,
 		die(_("the receiving end does not support this repository's hash algorithm"));
 
 	if (args->push_cert != SEND_PACK_PUSH_CERT_NEVER) {
-		int len;
+		size_t len;
 		push_cert_nonce = server_feature_value("push-cert", &len);
 		if (push_cert_nonce) {
 			reject_invalid_nonce(push_cert_nonce, len);

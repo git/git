@@ -5,18 +5,23 @@
  */
 
 #define USE_THE_INDEX_VARIABLE
-#include "cache.h"
+#include "builtin.h"
 #include "config.h"
+#include "gettext.h"
+#include "hex.h"
 #include "lockfile.h"
 #include "object.h"
+#include "object-name.h"
 #include "tree.h"
 #include "tree-walk.h"
 #include "cache-tree.h"
 #include "unpack-trees.h"
 #include "dir.h"
-#include "builtin.h"
 #include "parse-options.h"
+#include "repository.h"
 #include "resolve-undo.h"
+#include "setup.h"
+#include "sparse-index.h"
 #include "submodule.h"
 #include "submodule-config.h"
 
@@ -87,9 +92,9 @@ static int debug_merge(const struct cache_entry * const *stages,
 {
 	int i;
 
-	printf("* %d-way merge\n", o->merge_size);
+	printf("* %d-way merge\n", o->internal.merge_size);
 	debug_stage("index", stages[0], o);
-	for (i = 1; i <= o->merge_size; i++) {
+	for (i = 1; i <= o->internal.merge_size; i++) {
 		char buf[24];
 		xsnprintf(buf, sizeof(buf), "ent#%d", i);
 		debug_stage(buf, stages[i], o);
@@ -97,12 +102,13 @@ static int debug_merge(const struct cache_entry * const *stages,
 	return 0;
 }
 
-static int git_read_tree_config(const char *var, const char *value, void *cb)
+static int git_read_tree_config(const char *var, const char *value,
+				const struct config_context *ctx, void *cb)
 {
 	if (!strcmp(var, "submodule.recurse"))
 		return git_default_submodule_config(var, value, cb);
 
-	return git_default_config(var, value, cb);
+	return git_default_config(var, value, ctx, cb);
 }
 
 int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
@@ -144,7 +150,7 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 		OPT__DRY_RUN(&opts.dry_run, N_("don't update the index or the work tree")),
 		OPT_BOOL(0, "no-sparse-checkout", &opts.skip_sparse_checkout,
 			 N_("skip applying sparse checkout filter")),
-		OPT_BOOL(0, "debug-unpack", &opts.debug_unpack,
+		OPT_BOOL(0, "debug-unpack", &opts.internal.debug_unpack,
 			 N_("debug unpack-trees")),
 		OPT_CALLBACK_F(0, "recurse-submodules", NULL,
 			    "checkout", "control recursive updating of submodules",
@@ -198,7 +204,7 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 	for (i = 0; i < argc; i++) {
 		const char *arg = argv[i];
 
-		if (get_oid(arg, &oid))
+		if (repo_get_oid(the_repository, arg, &oid))
 			die("Not a valid object name %s", arg);
 		if (list_tree(&oid) < 0)
 			die("failed to unpack tree object %s", arg);
@@ -247,7 +253,7 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 			opts.head_idx = 1;
 	}
 
-	if (opts.debug_unpack)
+	if (opts.internal.debug_unpack)
 		opts.fn = debug_merge;
 
 	/* If we're going to prime_cache_tree later, skip cache tree update */
@@ -263,7 +269,7 @@ int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 	if (unpack_trees(nr_trees, t, &opts))
 		return 128;
 
-	if (opts.debug_unpack || opts.dry_run)
+	if (opts.internal.debug_unpack || opts.dry_run)
 		return 0; /* do not write the index out */
 
 	/*

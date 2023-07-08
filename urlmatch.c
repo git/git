@@ -1,4 +1,7 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "gettext.h"
+#include "hex.h"
+#include "strbuf.h"
 #include "urlmatch.h"
 
 #define URL_ALPHA "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
@@ -548,7 +551,8 @@ static int cmp_matches(const struct urlmatch_item *a,
 	return 0;
 }
 
-int urlmatch_config_entry(const char *var, const char *value, void *cb)
+int urlmatch_config_entry(const char *var, const char *value,
+			  const struct config_context *ctx, void *cb)
 {
 	struct string_list_item *item;
 	struct urlmatch_config *collect = cb;
@@ -562,7 +566,7 @@ int urlmatch_config_entry(const char *var, const char *value, void *cb)
 
 	if (!skip_prefix(var, collect->section, &key) || *(key++) != '.') {
 		if (collect->cascade_fn)
-			return collect->cascade_fn(var, value, cb);
+			return collect->cascade_fn(var, value, ctx, cb);
 		return 0; /* not interested */
 	}
 	dot = strrchr(key, '.');
@@ -606,7 +610,7 @@ int urlmatch_config_entry(const char *var, const char *value, void *cb)
 	strbuf_addstr(&synthkey, collect->section);
 	strbuf_addch(&synthkey, '.');
 	strbuf_addstr(&synthkey, key);
-	retval = collect->collect_fn(synthkey.buf, value, collect->cb);
+	retval = collect->collect_fn(synthkey.buf, value, ctx, collect->cb);
 
 	strbuf_release(&synthkey);
 	return retval;

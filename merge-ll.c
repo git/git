@@ -4,13 +4,16 @@
  * Copyright (c) 2007 Junio C Hamano
  */
 
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
+#include "convert.h"
 #include "attr.h"
 #include "xdiff-interface.h"
 #include "run-command.h"
-#include "ll-merge.h"
+#include "merge-ll.h"
 #include "quote.h"
+#include "strbuf.h"
+#include "wrapper.h"
 
 struct ll_merge_driver;
 
@@ -189,23 +192,14 @@ static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
 			const struct ll_merge_options *opts,
 			int marker_size)
 {
-	char temp[4][50];
+	char temp[3][50];
 	struct strbuf cmd = STRBUF_INIT;
-	struct strbuf_expand_dict_entry dict[6];
-	struct strbuf path_sq = STRBUF_INIT;
+	const char *format = fn->cmdline;
 	struct child_process child = CHILD_PROCESS_INIT;
 	int status, fd, i;
 	struct stat st;
 	enum ll_merge_result ret;
 	assert(opts);
-
-	sq_quote_buf(&path_sq, path);
-	dict[0].placeholder = "O"; dict[0].value = temp[0];
-	dict[1].placeholder = "A"; dict[1].value = temp[1];
-	dict[2].placeholder = "B"; dict[2].value = temp[2];
-	dict[3].placeholder = "L"; dict[3].value = temp[3];
-	dict[4].placeholder = "P"; dict[4].value = path_sq.buf;
-	dict[5].placeholder = NULL; dict[5].value = NULL;
 
 	if (!fn->cmdline)
 		die("custom merge driver %s lacks command line.", fn->name);
@@ -215,9 +209,23 @@ static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
 	create_temp(orig, temp[0], sizeof(temp[0]));
 	create_temp(src1, temp[1], sizeof(temp[1]));
 	create_temp(src2, temp[2], sizeof(temp[2]));
-	xsnprintf(temp[3], sizeof(temp[3]), "%d", marker_size);
 
-	strbuf_expand(&cmd, fn->cmdline, strbuf_expand_dict_cb, &dict);
+	while (strbuf_expand_step(&cmd, &format)) {
+		if (skip_prefix(format, "%", &format))
+			strbuf_addch(&cmd, '%');
+		else if (skip_prefix(format, "O", &format))
+			strbuf_addstr(&cmd, temp[0]);
+		else if (skip_prefix(format, "A", &format))
+			strbuf_addstr(&cmd, temp[1]);
+		else if (skip_prefix(format, "B", &format))
+			strbuf_addstr(&cmd, temp[2]);
+		else if (skip_prefix(format, "L", &format))
+			strbuf_addf(&cmd, "%d", marker_size);
+		else if (skip_prefix(format, "P", &format))
+			sq_quote_buf(&cmd, path);
+		else
+			strbuf_addch(&cmd, '%');
+	}
 
 	child.use_shell = 1;
 	strvec_push(&child.args, cmd.buf);
@@ -239,8 +247,13 @@ static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
 	for (i = 0; i < 3; i++)
 		unlink_or_warn(temp[i]);
 	strbuf_release(&cmd);
-	strbuf_release(&path_sq);
-	ret = (status > 0) ? LL_MERGE_CONFLICT : status;
+	if (!status)
+		ret = LL_MERGE_OK;
+	else if (status <= 128)
+		ret = LL_MERGE_CONFLICT;
+	else
+		/* died due to a signal: WTERMSIG(status) + 128 */
+		ret = LL_MERGE_ERROR;
 	return ret;
 }
 
@@ -251,6 +264,7 @@ static struct ll_merge_driver *ll_user_merge, **ll_user_merge_tail;
 static const char *default_ll_merge;
 
 static int read_merge_config(const char *var, const char *value,
+			     const struct config_context *ctx UNUSED,
 			     void *cb UNUSED)
 {
 	struct ll_merge_driver *fn;
@@ -391,7 +405,7 @@ enum ll_merge_result ll_merge(mmbuffer_t *result_buf,
 		normalize_file(theirs, path, istate);
 	}
 
-	git_check_attr(istate, NULL, path, check);
+	git_check_attr(istate, path, check);
 	ll_driver_name = check->items[0].value;
 	if (check->items[1].value) {
 		marker_size = atoi(check->items[1].value);
@@ -419,7 +433,7 @@ int ll_merge_marker_size(struct index_state *istate, const char *path)
 
 	if (!check)
 		check = attr_check_initl("conflict-marker-size", NULL);
-	git_check_attr(istate, NULL, path, check);
+	git_check_attr(istate, path, check);
 	if (check->items[0].value) {
 		marker_size = atoi(check->items[0].value);
 		if (marker_size <= 0)

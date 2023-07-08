@@ -1,6 +1,7 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
 #include "json-writer.h"
+#include "repository.h"
 #include "run-command.h"
 #include "version.h"
 #include "trace2/tr2_dst.h"
@@ -476,11 +477,11 @@ static void fn_exec_result_fl(const char *file, int line,
 }
 
 static void fn_param_fl(const char *file, int line, const char *param,
-			const char *value)
+			const char *value, const struct key_value_info *kvi)
 {
 	const char *event_name = "def_param";
 	struct json_writer jw = JSON_WRITER_INIT;
-	enum config_scope scope = current_config_scope();
+	enum config_scope scope = kvi->scope;
 	const char *scope_name = config_scope_name(scope);
 
 	jw_object_begin(&jw, 0);

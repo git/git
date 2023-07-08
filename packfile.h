@@ -1,12 +1,26 @@
 #ifndef PACKFILE_H
 #define PACKFILE_H
 
-#include "cache.h"
+#include "object.h"
 #include "oidset.h"
 
 /* in object-store.h */
 struct packed_git;
 struct object_info;
+
+struct pack_window {
+	struct pack_window *next;
+	unsigned char *base;
+	off_t offset;
+	size_t len;
+	unsigned int last_used;
+	unsigned int inuse_cnt;
+};
+
+struct pack_entry {
+	off_t offset;
+	struct packed_git *p;
+};
 
 /*
  * Generate the filename to be used for a pack file with checksum "sha1" and
@@ -65,7 +79,6 @@ struct packed_git *get_all_packs(struct repository *r);
  * for speed.
  */
 unsigned long repo_approximate_object_count(struct repository *r);
-#define approximate_object_count() repo_approximate_object_count(the_repository)
 
 struct packed_git *find_sha1_pack(const unsigned char *sha1,
 				  struct packed_git *packs);

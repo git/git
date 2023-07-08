@@ -62,6 +62,10 @@ void traverse_bitmap_commit_list(struct bitmap_index *,
 void test_bitmap_walk(struct rev_info *revs);
 int test_bitmap_commits(struct repository *r);
 int test_bitmap_hashes(struct repository *r);
+
+#define GIT_TEST_PACK_USE_BITMAP_BOUNDARY_TRAVERSAL \
+	"GIT_TEST_PACK_USE_BITMAP_BOUNDARY_TRAVERSAL"
+
 struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs,
 					 int filter_provided_objects);
 uint32_t midx_preferred_pack(struct bitmap_index *bitmap_git);
@@ -110,5 +114,7 @@ int bitmap_is_midx(struct bitmap_index *bitmap_git);
 
 const struct string_list *bitmap_preferred_tips(struct repository *r);
 int bitmap_is_preferred_refname(struct repository *r, const char *refname);
+
+int verify_bitmap_files(struct repository *r);
 
 #endif

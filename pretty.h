@@ -1,11 +1,11 @@
 #ifndef PRETTY_H
 #define PRETTY_H
 
-#include "cache.h"
 #include "date.h"
 #include "string-list.h"
 
 struct commit;
+struct repository;
 struct strbuf;
 struct process_trailer_options;
 
@@ -120,10 +120,6 @@ void repo_format_commit_message(struct repository *r,
 			const struct commit *commit,
 			const char *format, struct strbuf *sb,
 			const struct pretty_print_context *context);
-#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
-#define format_commit_message(c, f, s, con) \
-	repo_format_commit_message(the_repository, c, f, s, con)
-#endif
 
 /*
  * Parse given arguments from "arg", check it for correctness and
@@ -152,6 +148,8 @@ int commit_format_is_empty(enum cmit_fmt);
 
 /* Make subject of commit message suitable for filename */
 void format_sanitized_subject(struct strbuf *sb, const char *msg, size_t len);
+
+int has_non_ascii(const char *text);
 
 /*
  * Set values of fields in "struct process_trailer_options"

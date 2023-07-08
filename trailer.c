@@ -1,5 +1,8 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "config.h"
+#include "environment.h"
+#include "gettext.h"
 #include "string-list.h"
 #include "run-command.h"
 #include "commit.h"
@@ -479,6 +482,7 @@ static struct {
 };
 
 static int git_trailer_default_config(const char *conf_key, const char *value,
+				      const struct config_context *ctx UNUSED,
 				      void *cb UNUSED)
 {
 	const char *trailer_item, *variable_name;
@@ -511,6 +515,7 @@ static int git_trailer_default_config(const char *conf_key, const char *value,
 }
 
 static int git_trailer_config(const char *conf_key, const char *value,
+			      const struct config_context *ctx UNUSED,
 			      void *cb UNUSED)
 {
 	const char *trailer_item, *variable_name;

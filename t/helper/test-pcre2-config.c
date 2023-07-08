@@ -1,5 +1,4 @@
 #include "test-tool.h"
-#include "cache.h"
 #include "grep.h"
 
 int cmd__pcre2_config(int argc, const char **argv)

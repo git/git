@@ -1,8 +1,6 @@
 #ifndef ADVICE_H
 #define ADVICE_H
 
-#include "git-compat-util.h"
-
 struct string_list;
 
 /*
@@ -21,6 +19,7 @@ struct string_list;
 	ADVICE_CHECKOUT_AMBIGUOUS_REMOTE_BRANCH_NAME,
 	ADVICE_COMMIT_BEFORE_MERGE,
 	ADVICE_DETACHED_HEAD,
+	ADVICE_DIVERGING,
 	ADVICE_SUGGEST_DETACHING_HEAD,
 	ADVICE_FETCH_SHOW_FORCED_UPDATES,
 	ADVICE_GRAFT_FILE_DEPRECATED,
@@ -50,6 +49,7 @@ struct string_list;
 	ADVICE_UPDATE_SPARSE_PATH,
 	ADVICE_WAITING_FOR_EDITOR,
 	ADVICE_SKIPPED_CHERRY_PICKS,
+	ADVICE_WORKTREE_ADD_ORPHAN,
 };
 
 int git_default_advice_config(const char *var, const char *value);

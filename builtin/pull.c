@@ -6,15 +6,21 @@
  * Fetch one or more remote refs and merge it/them into the current HEAD.
  */
 #define USE_THE_INDEX_VARIABLE
-#include "cache.h"
-#include "config.h"
 #include "builtin.h"
+#include "advice.h"
+#include "config.h"
+#include "gettext.h"
+#include "hex.h"
+#include "merge.h"
+#include "object-name.h"
 #include "parse-options.h"
 #include "exec-cmd.h"
 #include "run-command.h"
 #include "oid-array.h"
 #include "remote.h"
 #include "dir.h"
+#include "path.h"
+#include "read-cache-ll.h"
 #include "rebase.h"
 #include "refs.h"
 #include "refspec.h"
@@ -357,10 +363,9 @@ static enum rebase_type config_get_rebase(int *rebase_unspecified)
 /**
  * Read config variables.
  */
-static int git_pull_config(const char *var, const char *value, void *cb)
+static int git_pull_config(const char *var, const char *value,
+			   const struct config_context *ctx, void *cb)
 {
-	int status;
-
 	if (!strcmp(var, "rebase.autostash")) {
 		config_autostash = git_config_bool(var, value);
 		return 0;
@@ -372,11 +377,7 @@ static int git_pull_config(const char *var, const char *value, void *cb)
 		check_trust_level = 0;
 	}
 
-	status = git_gpg_config(var, value, cb);
-	if (status)
-		return status;
-
-	return git_default_config(var, value, cb);
+	return git_default_config(var, value, ctx, cb);
 }
 
 /**
@@ -1036,7 +1037,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	if (file_exists(git_path_merge_head(the_repository)))
 		die_conclude_merge();
 
-	if (get_oid("HEAD", &orig_head))
+	if (repo_get_oid(the_repository, "HEAD", &orig_head))
 		oidclr(&orig_head);
 
 	if (opt_rebase) {
@@ -1049,7 +1050,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 		if (!opt_autostash)
 			require_clean_work_tree(the_repository,
 				N_("pull with rebase"),
-				_("please commit or stash them."), 1, 0);
+				_("Please commit or stash them."), 1, 0);
 
 		if (get_rebase_fork_point(&rebase_fork_point, repo, *refspecs))
 			oidclr(&rebase_fork_point);
@@ -1061,7 +1062,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	if (opt_dry_run)
 		return 0;
 
-	if (get_oid("HEAD", &curr_head))
+	if (repo_get_oid(the_repository, "HEAD", &curr_head))
 		oidclr(&curr_head);
 
 	if (!is_null_oid(&orig_head) && !is_null_oid(&curr_head) &&

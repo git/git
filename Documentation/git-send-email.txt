@@ -93,7 +93,7 @@ See the CONFIGURATION section for `sendemail.multiEdit`.
 
 --in-reply-to=<identifier>::
 	Make the first mail (or all the mails with `--no-thread`) appear as a
-	reply to the given Message-Id, which avoids breaking threads to
+	reply to the given Message-ID, which avoids breaking threads to
 	provide a new patch series.
 	The second and subsequent emails will be sent as replies according to
 	the `--[no-]chain-reply-to` setting.
@@ -320,6 +320,17 @@ Automating
 	Output of this command must be single email address per line.
 	Default is the value of `sendemail.ccCmd` configuration value.
 
+--header-cmd=<command>::
+	Specify a command that is executed once per outgoing message
+	and output RFC 2822 style header lines to be inserted into
+	them. When the `sendemail.headerCmd` configuration variable is
+	set, its value is always used. When --header-cmd is provided
+	at the command line, its value takes precedence over the
+	`sendemail.headerCmd` configuration variable.
+
+--no-header-cmd::
+	Disable any header command in use.
+
 --[no-]chain-reply-to::
 	If this is set, each email will be sent as a reply to the previous
 	email sent.  If disabled with "--no-chain-reply-to", all emails after
@@ -484,13 +495,9 @@ edit ~/.gitconfig to specify your account settings:
 	smtpServerPort = 587
 ----
 
-If you have multi-factor authentication set up on your Gmail account, you will
-need to generate an app-specific password for use with 'git send-email'. Visit
+If you have multi-factor authentication set up on your Gmail account, you can
+generate an app-specific password for use with 'git send-email'. Visit
 https://security.google.com/settings/security/apppasswords to create it.
-
-If you do not have multi-factor authentication set up on your Gmail account,
-you will need to allow less secure app access. Visit
-https://myaccount.google.com/lesssecureapps to enable it.
 
 Once your commits are ready to be sent to the mailing list, run the
 following commands:

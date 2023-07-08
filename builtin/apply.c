@@ -1,6 +1,7 @@
-#include "cache.h"
 #include "builtin.h"
+#include "gettext.h"
 #include "parse-options.h"
+#include "repository.h"
 #include "apply.h"
 
 static const char * const apply_usage[] = {

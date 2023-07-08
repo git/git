@@ -1,6 +1,7 @@
 #ifndef GIT_FSCK_H
 #define GIT_FSCK_H
 
+#include "object.h"
 #include "oidset.h"
 
 enum fsck_msg_type {
@@ -232,10 +233,12 @@ void fsck_put_object_name(struct fsck_options *options,
 const char *fsck_describe_object(struct fsck_options *options,
 				 const struct object_id *oid);
 
+struct key_value_info;
 /*
  * git_config() callback for use by fsck-y tools that want to support
  * fsck.<msg> fsck.skipList etc.
  */
-int git_fsck_config(const char *var, const char *value, void *cb);
+int git_fsck_config(const char *var, const char *value,
+		    const struct config_context *ctx, void *cb);
 
 #endif

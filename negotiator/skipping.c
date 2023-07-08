@@ -1,9 +1,11 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "skipping.h"
 #include "../commit.h"
 #include "../fetch-negotiator.h"
+#include "../hex.h"
 #include "../prio-queue.h"
 #include "../refs.h"
+#include "../repository.h"
 #include "../tag.h"
 
 /* Remember to update object flag allocation in object.h */
@@ -50,7 +52,7 @@ struct data {
 	int non_common_revs;
 };
 
-static int compare(const void *a_, const void *b_, void *unused)
+static int compare(const void *a_, const void *b_, void *data UNUSED)
 {
 	const struct entry *a = a_;
 	const struct entry *b = b_;
@@ -84,29 +86,37 @@ static int clear_marks(const char *refname, const struct object_id *oid,
 }
 
 /*
- * Mark this SEEN commit and all its SEEN ancestors as COMMON.
+ * Mark this SEEN commit and all its parsed SEEN ancestors as COMMON.
  */
 static void mark_common(struct data *data, struct commit *seen_commit)
 {
 	struct prio_queue queue = { NULL };
 	struct commit *c;
 
+	if (seen_commit->object.flags & COMMON)
+		return;
+
 	prio_queue_put(&queue, seen_commit);
+	seen_commit->object.flags |= COMMON;
 	while ((c = prio_queue_get(&queue))) {
 		struct commit_list *p;
-		if (c->object.flags & COMMON)
-			return;
-		c->object.flags |= COMMON;
+
 		if (!(c->object.flags & POPPED))
 			data->non_common_revs--;
 
 		if (!c->object.parsed)
-			return;
+			continue;
 		for (p = c->parents; p; p = p->next) {
-			if (p->item->object.flags & SEEN)
-				prio_queue_put(&queue, p->item);
+			if (!(p->item->object.flags & SEEN) ||
+			    (p->item->object.flags & COMMON))
+				continue;
+
+			p->item->object.flags |= COMMON;
+			prio_queue_put(&queue, p->item);
 		}
 	}
+
+	clear_prio_queue(&queue);
 }
 
 /*
@@ -183,7 +193,7 @@ static const struct object_id *get_rev(struct data *data)
 		if (!(commit->object.flags & COMMON) && !entry->ttl)
 			to_send = commit;
 
-		parse_commit(commit);
+		repo_parse_commit(the_repository, commit);
 		for (p = commit->parents; p; p = p->next)
 			parent_pushed |= push_parent(data, entry, p->item);
 

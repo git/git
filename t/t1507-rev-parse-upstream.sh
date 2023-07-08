@@ -5,6 +5,7 @@ test_description='test <branch>@{upstream} syntax'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 
@@ -97,7 +98,8 @@ test_expect_success 'my-side@{u} resolves to correct commit' '
 	commit_subject my-side >actual &&
 	test_cmp expect actual &&
 	echo 5 >expect &&
-	commit_subject my-side@{u} >actual
+	commit_subject my-side@{u} >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'not-tracking@{u} fails' '
@@ -183,6 +185,11 @@ test_expect_success '@{u} error message when no upstream' '
 	test_cmp expect actual
 '
 
+test_expect_success '@{u} silent error when no upstream' '
+	test_must_fail git rev-parse --verify --quiet @{u} 2>actual &&
+	test_must_be_empty actual
+'
+
 test_expect_success 'branch@{u} error message with misspelt branch' '
 	cat >expect <<-EOF &&
 	fatal: no such branch: ${SQ}no-such-branch${SQ}
@@ -258,7 +265,8 @@ test_expect_success '@{reflog}-parsing does not look beyond colon' '
 	git add @{yesterday} &&
 	git commit -m "funny reflog file" &&
 	git hash-object @{yesterday} >expect &&
-	git rev-parse HEAD:@{yesterday} >actual
+	git rev-parse HEAD:@{yesterday} >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success '@{upstream}-parsing does not look beyond colon' '
@@ -266,7 +274,8 @@ test_expect_success '@{upstream}-parsing does not look beyond colon' '
 	git add @{upstream} &&
 	git commit -m "funny upstream file" &&
 	git hash-object @{upstream} >expect &&
-	git rev-parse HEAD:@{upstream} >actual
+	git rev-parse HEAD:@{upstream} >actual &&
+	test_cmp expect actual
 '
 
 test_done

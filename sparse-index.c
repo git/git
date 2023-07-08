@@ -1,4 +1,9 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
+#include "environment.h"
+#include "gettext.h"
+#include "name-hash.h"
+#include "read-cache-ll.h"
 #include "repository.h"
 #include "sparse-index.h"
 #include "tree.h"
@@ -7,7 +12,7 @@
 #include "cache-tree.h"
 #include "config.h"
 #include "dir.h"
-#include "fsmonitor.h"
+#include "fsmonitor-ll.h"
 
 struct modify_index_context {
 	struct index_state *write;

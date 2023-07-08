@@ -1,17 +1,26 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "abspath.h"
+#include "alloc.h"
 #include "config.h"
+#include "copy.h"
+#include "gettext.h"
+#include "hex.h"
 #include "lockfile.h"
 #include "string-list.h"
+#include "read-cache-ll.h"
 #include "rerere.h"
 #include "xdiff-interface.h"
 #include "dir.h"
 #include "resolve-undo.h"
-#include "ll-merge.h"
+#include "merge-ll.h"
 #include "attr.h"
+#include "path.h"
 #include "pathspec.h"
-#include "object-store.h"
+#include "object-file.h"
+#include "object-store-ll.h"
 #include "hash-lookup.h"
 #include "strmap.h"
+#include "wrapper.h"
 
 #define RESOLVED 0
 #define PUNTED 1
@@ -965,8 +974,9 @@ static int handle_cache(struct index_state *istate,
 			break;
 		i = ce_stage(ce) - 1;
 		if (!mmfile[i].ptr) {
-			mmfile[i].ptr = read_object_file(&ce->oid, &type,
-							 &size);
+			mmfile[i].ptr = repo_read_object_file(the_repository,
+							      &ce->oid, &type,
+							      &size);
 			mmfile[i].size = size;
 		}
 	}

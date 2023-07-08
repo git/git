@@ -1,8 +1,12 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
+#include "editor.h"
+#include "pager.h"
 #include "run-command.h"
 #include "sigchain.h"
 #include "alias.h"
+
+int pager_use_color = 1;
 
 #ifndef DEFAULT_PAGER
 #define DEFAULT_PAGER "less"
@@ -39,6 +43,7 @@ static void wait_for_pager_signal(int signo)
 }
 
 static int core_pager_config(const char *var, const char *value,
+			     const struct config_context *ctx UNUSED,
 			     void *data UNUSED)
 {
 	if (!strcmp(var, "core.pager"))
@@ -224,7 +229,9 @@ struct pager_command_config_data {
 	char *value;
 };
 
-static int pager_command_config(const char *var, const char *value, void *vdata)
+static int pager_command_config(const char *var, const char *value,
+				const struct config_context *ctx UNUSED,
+				void *vdata)
 {
 	struct pager_command_config_data *data = vdata;
 	const char *cmd;

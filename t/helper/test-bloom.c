@@ -1,7 +1,9 @@
-#include "git-compat-util.h"
-#include "bloom.h"
 #include "test-tool.h"
+#include "bloom.h"
+#include "hex.h"
 #include "commit.h"
+#include "repository.h"
+#include "setup.h"
 
 static struct bloom_filter_settings settings = DEFAULT_BLOOM_FILTER_SETTINGS;
 

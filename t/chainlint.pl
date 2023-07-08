@@ -80,7 +80,8 @@ sub scan_heredoc_tag {
 	return "<<$indented" unless $token;
 	my $tag = $token->[0];
 	$tag =~ s/['"\\]//g;
-	push(@{$self->{heretags}}, $indented ? "\t$tag" : "$tag");
+	$$token[0] = $indented ? "\t$tag" : "$tag";
+	push(@{$self->{heretags}}, $token);
 	return "<<$indented$tag";
 }
 
@@ -169,10 +170,18 @@ sub swallow_heredocs {
 	my $tags = $self->{heretags};
 	while (my $tag = shift @$tags) {
 		my $start = pos($$b);
-		my $indent = $tag =~ s/^\t// ? '\\s*' : '';
-		$$b =~ /(?:\G|\n)$indent\Q$tag\E(?:\n|\z)/gc;
+		my $indent = $$tag[0] =~ s/^\t// ? '\\s*' : '';
+		$$b =~ /(?:\G|\n)$indent\Q$$tag[0]\E(?:\n|\z)/gc;
+		if (pos($$b) > $start) {
+			my $body = substr($$b, $start, pos($$b) - $start);
+			$self->{lineno} += () = $body =~ /\n/sg;
+			next;
+		}
+		push(@{$self->{parser}->{problems}}, ['UNCLOSED-HEREDOC', $tag]);
+		$$b =~ /(?:\G|\n).*\z/gc; # consume rest of input
 		my $body = substr($$b, $start, pos($$b) - $start);
 		$self->{lineno} += () = $body =~ /\n/sg;
+		last;
 	}
 }
 

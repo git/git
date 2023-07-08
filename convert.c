@@ -1,14 +1,22 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "advice.h"
 #include "config.h"
-#include "object-store.h"
+#include "convert.h"
+#include "copy.h"
+#include "gettext.h"
+#include "hex.h"
+#include "object-store-ll.h"
 #include "attr.h"
 #include "run-command.h"
 #include "quote.h"
+#include "read-cache-ll.h"
 #include "sigchain.h"
 #include "pkt-line.h"
 #include "sub-process.h"
+#include "trace.h"
 #include "utf8.h"
-#include "ll-merge.h"
+#include "merge-ll.h"
+#include "wrapper.h"
 
 /*
  * convert.c - convert a file when checking it out and checking it in.
@@ -626,23 +634,21 @@ static int filter_buffer_or_fd(int in UNUSED, int out, void *data)
 	 */
 	struct child_process child_process = CHILD_PROCESS_INIT;
 	struct filter_params *params = (struct filter_params *)data;
+	const char *format = params->cmd;
 	int write_err, status;
 
 	/* apply % substitution to cmd */
 	struct strbuf cmd = STRBUF_INIT;
-	struct strbuf path = STRBUF_INIT;
-	struct strbuf_expand_dict_entry dict[] = {
-		{ "f", NULL, },
-		{ NULL, NULL, },
-	};
 
-	/* quote the path to preserve spaces, etc. */
-	sq_quote_buf(&path, params->path);
-	dict[0].value = path.buf;
-
-	/* expand all %f with the quoted path */
-	strbuf_expand(&cmd, params->cmd, strbuf_expand_dict_cb, &dict);
-	strbuf_release(&path);
+	/* expand all %f with the quoted path; quote to preserve space, etc. */
+	while (strbuf_expand_step(&cmd, &format)) {
+		if (skip_prefix(format, "%", &format))
+			strbuf_addch(&cmd, '%');
+		else if (skip_prefix(format, "f", &format))
+			sq_quote_buf(&cmd, params->path);
+		else
+			strbuf_addch(&cmd, '%');
+	}
 
 	strvec_push(&child_process.args, cmd.buf);
 	child_process.use_shell = 1;
@@ -1008,7 +1014,9 @@ static int apply_filter(const char *path, const char *src, size_t len,
 	return 0;
 }
 
-static int read_convert_config(const char *var, const char *value, void *cb UNUSED)
+static int read_convert_config(const char *var, const char *value,
+			       const struct config_context *ctx UNUSED,
+			       void *cb UNUSED)
 {
 	const char *key, *name;
 	size_t namelen;
@@ -1308,7 +1316,7 @@ void convert_attrs(struct index_state *istate,
 		git_config(read_convert_config, NULL);
 	}
 
-	git_check_attr(istate, NULL, path, check);
+	git_check_attr(istate, path, check);
 	ccheck = check->items;
 	ca->crlf_action = git_path_check_crlf(ccheck + 4);
 	if (ca->crlf_action == CRLF_UNDEFINED)

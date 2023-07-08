@@ -94,7 +94,7 @@ int cmd__chmtime(int argc, const char **argv)
 	if (timespec_arg(argv[i], &set_time, &set_eq)) {
 		++i;
 	} else {
-		if (get == 0) {
+		if (get == 0 && verbose == 0) {
 			fprintf(stderr, "Not a base-10 integer: %s\n", argv[i] + 1);
 			goto usage;
 		}

@@ -1,4 +1,5 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "hash.h"
 #include "oidmap.h"
 
 static int oidmap_neq(const void *hashmap_cmp_fn_data UNUSED,

@@ -1,6 +1,14 @@
 #ifndef STRBUF_H
 #define STRBUF_H
 
+/*
+ * NOTE FOR STRBUF DEVELOPERS
+ *
+ * strbuf is a low-level primitive; as such it should interact only
+ * with other low-level primitives. Do not introduce new functions
+ * which interact with higher-level APIs.
+ */
+
 struct string_list;
 
 /**
@@ -72,10 +80,6 @@ struct strbuf {
 extern char strbuf_slopbuf[];
 #define STRBUF_INIT  { .buf = strbuf_slopbuf }
 
-/*
- * Predeclare this here, since cache.h includes this file before it defines the
- * struct.
- */
 struct object_id;
 
 /**
@@ -283,7 +287,8 @@ void strbuf_splice(struct strbuf *sb, size_t pos, size_t len,
  * by a comment character and a blank.
  */
 void strbuf_add_commented_lines(struct strbuf *out,
-				const char *buf, size_t size);
+				const char *buf, size_t size,
+				char comment_line_char);
 
 
 /**
@@ -318,58 +323,19 @@ const char *strbuf_join_argv(struct strbuf *buf, int argc,
 			     const char **argv, char delim);
 
 /**
- * This function can be used to expand a format string containing
- * placeholders. To that end, it parses the string and calls the specified
- * function for every percent sign found.
- *
- * The callback function is given a pointer to the character after the `%`
- * and a pointer to the struct strbuf.  It is expected to add the expanded
- * version of the placeholder to the strbuf, e.g. to add a newline
- * character if the letter `n` appears after a `%`.  The function returns
- * the length of the placeholder recognized and `strbuf_expand()` skips
- * over it.
- *
- * The format `%%` is automatically expanded to a single `%` as a quoting
- * mechanism; callers do not need to handle the `%` placeholder themselves,
- * and the callback function will not be invoked for this placeholder.
- *
- * All other characters (non-percent and not skipped ones) are copied
- * verbatim to the strbuf.  If the callback returned zero, meaning that the
- * placeholder is unknown, then the percent sign is copied, too.
- *
- * In order to facilitate caching and to make it possible to give
- * parameters to the callback, `strbuf_expand()` passes a context
- * pointer with any kind of data.
+ * Used with `strbuf_expand_step` to expand the literals %n and %x
+ * followed by two hexadecimal digits. Returns the number of recognized
+ * characters.
  */
-typedef size_t (*expand_fn_t) (struct strbuf *sb,
-			       const char *placeholder,
-			       void *context);
-void strbuf_expand(struct strbuf *sb,
-		   const char *format,
-		   expand_fn_t fn,
-		   void *context);
+size_t strbuf_expand_literal(struct strbuf *sb, const char *placeholder);
 
 /**
- * Used as callback for `strbuf_expand` to only expand literals
- * (i.e. %n and %xNN). The context argument is ignored.
+ * If the string pointed to by `formatp` contains a percent sign ("%"),
+ * advance it to point to the character following the next one and
+ * return 1, otherwise return 0.  Append the substring before that
+ * percent sign to `sb`, or the whole string if there is none.
  */
-size_t strbuf_expand_literal_cb(struct strbuf *sb,
-				const char *placeholder,
-				void *context);
-
-/**
- * Used as callback for `strbuf_expand()`, expects an array of
- * struct strbuf_expand_dict_entry as context, i.e. pairs of
- * placeholder and replacement string.  The array needs to be
- * terminated by an entry with placeholder set to NULL.
- */
-struct strbuf_expand_dict_entry {
-	const char *placeholder;
-	const char *value;
-};
-size_t strbuf_expand_dict_cb(struct strbuf *sb,
-			     const char *placeholder,
-			     void *context);
+int strbuf_expand_step(struct strbuf *sb, const char **formatp);
 
 /**
  * Append the contents of one strbuf to another, quoting any
@@ -412,8 +378,8 @@ void strbuf_addf(struct strbuf *sb, const char *fmt, ...);
  * Add a formatted string prepended by a comment character and a
  * blank to the buffer.
  */
-__attribute__((format (printf, 2, 3)))
-void strbuf_commented_addf(struct strbuf *sb, const char *fmt, ...);
+__attribute__((format (printf, 3, 4)))
+void strbuf_commented_addf(struct strbuf *sb, char comment_line_char, const char *fmt, ...);
 
 __attribute__((format (printf,2,0)))
 void strbuf_vaddf(struct strbuf *sb, const char *fmt, va_list ap);
@@ -476,6 +442,18 @@ int strbuf_readlink(struct strbuf *sb, const char *path, size_t hint);
 ssize_t strbuf_write(struct strbuf *sb, FILE *stream);
 
 /**
+ * Read from a FILE * until the specified terminator is encountered,
+ * overwriting the existing contents of the strbuf.
+ *
+ * Reading stops after the terminator or at EOF.  The terminator is
+ * removed from the buffer before returning.  If the terminator is LF
+ * and if it is preceded by a CR, then the whole CRLF is stripped.
+ * Returns 0 unless there was nothing left before EOF, in which case
+ * it returns `EOF`.
+ */
+int strbuf_getdelim_strip_crlf(struct strbuf *sb, FILE *fp, int term);
+
+/**
  * Read a line from a FILE *, overwriting the existing contents of
  * the strbuf.  The strbuf_getline*() family of functions share
  * this signature, but have different line termination conventions.
@@ -528,28 +506,6 @@ int strbuf_getwholeline_fd(struct strbuf *sb, int fd, int term);
 int strbuf_getcwd(struct strbuf *sb);
 
 /**
- * Add a path to a buffer, converting a relative path to an
- * absolute one in the process.  Symbolic links are not
- * resolved.
- */
-void strbuf_add_absolute_path(struct strbuf *sb, const char *path);
-
-/**
- * Canonize `path` (make it absolute, resolve symlinks, remove extra
- * slashes) and append it to `sb`.  Die with an informative error
- * message if there is a problem.
- *
- * The directory part of `path` (i.e., everything up to the last
- * dir_sep) must denote a valid, existing directory, but the last
- * component need not exist.
- *
- * Callers that don't mind links should use the more lightweight
- * strbuf_add_absolute_path() instead.
- */
-void strbuf_add_real_path(struct strbuf *sb, const char *path);
-
-
-/**
  * Normalize in-place the path contained in the strbuf. See
  * normalize_path_copy() for details. If an error occurs, the contents of "sb"
  * are left untouched, and -1 is returned.
@@ -557,10 +513,11 @@ void strbuf_add_real_path(struct strbuf *sb, const char *path);
 int strbuf_normalize_path(struct strbuf *sb);
 
 /**
- * Strip whitespace from a buffer. The second parameter controls if
- * comments are considered contents to be removed or not.
+ * Strip whitespace from a buffer. If comment_line_char is non-NUL,
+ * then lines beginning with that character are considered comments,
+ * thus removed.
  */
-void strbuf_stripspace(struct strbuf *buf, int skip_comments);
+void strbuf_stripspace(struct strbuf *buf, char comment_line_char);
 
 static inline int strbuf_strip_suffix(struct strbuf *sb, const char *suffix)
 {
@@ -630,40 +587,6 @@ void strbuf_add_separated_string_list(struct strbuf *str,
  */
 void strbuf_list_free(struct strbuf **list);
 
-/**
- * Add the abbreviation, as generated by find_unique_abbrev, of `sha1` to
- * the strbuf `sb`.
- */
-struct repository;
-void strbuf_repo_add_unique_abbrev(struct strbuf *sb, struct repository *repo,
-				   const struct object_id *oid, int abbrev_len);
-void strbuf_add_unique_abbrev(struct strbuf *sb, const struct object_id *oid,
-			      int abbrev_len);
-
-/**
- * Launch the user preferred editor to edit a file and fill the buffer
- * with the file's contents upon the user completing their editing. The
- * third argument can be used to set the environment which the editor is
- * run in. If the buffer is NULL the editor is launched as usual but the
- * file's contents are not read into the buffer upon completion.
- */
-int launch_editor(const char *path, struct strbuf *buffer,
-		  const char *const *env);
-
-int launch_sequence_editor(const char *path, struct strbuf *buffer,
-			   const char *const *env);
-
-/*
- * In contrast to `launch_editor()`, this function writes out the contents
- * of the specified file first, then clears the `buffer`, then launches
- * the editor and reads back in the file contents into the `buffer`.
- * Finally, it deletes the temporary file.
- *
- * If `path` is relative, it refers to a file in the `.git` directory.
- */
-int strbuf_edit_interactively(struct strbuf *buffer, const char *path,
-			      const char *const *env);
-
 /*
  * Remove the filename from the provided path string. If the path
  * contains a trailing separator, then the path is considered a directory
@@ -706,14 +629,14 @@ static inline void strbuf_complete_line(struct strbuf *sb)
 
 /*
  * Copy "name" to "sb", expanding any special @-marks as handled by
- * interpret_branch_name(). The result is a non-qualified branch name
+ * repo_interpret_branch_name(). The result is a non-qualified branch name
  * (so "foo" or "origin/master" instead of "refs/heads/foo" or
  * "refs/remotes/origin/master").
  *
  * Note that the resulting name may not be a syntactically valid refname.
  *
  * If "allowed" is non-zero, restrict the set of allowed expansions. See
- * interpret_branch_name() for details.
+ * repo_interpret_branch_name() for details.
  */
 void strbuf_branchname(struct strbuf *sb, const char *name,
 		       unsigned allowed);
@@ -727,9 +650,6 @@ void strbuf_branchname(struct strbuf *sb, const char *name,
 int strbuf_check_branch_ref(struct strbuf *sb, const char *name);
 
 typedef int (*char_predicate)(char ch);
-
-int is_rfc3986_unreserved(char ch);
-int is_rfc3986_reserved_or_unreserved(char ch);
 
 void strbuf_addstr_urlencode(struct strbuf *sb, const char *name,
 			     char_predicate allow_unencoded_fn);

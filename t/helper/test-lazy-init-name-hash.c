@@ -1,7 +1,12 @@
 #define USE_THE_INDEX_VARIABLE
 #include "test-tool.h"
-#include "cache.h"
+#include "environment.h"
+#include "name-hash.h"
 #include "parse-options.h"
+#include "read-cache-ll.h"
+#include "repository.h"
+#include "setup.h"
+#include "trace.h"
 
 static int single;
 static int multi;

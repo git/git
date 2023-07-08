@@ -43,11 +43,11 @@ gc.autoDetach::
 	if the system supports it. Default is true.
 
 gc.bigPackThreshold::
-	If non-zero, all packs larger than this limit are kept when
-	`git gc` is run. This is very similar to `--keep-largest-pack`
-	except that all packs that meet the threshold are kept, not
-	just the largest pack. Defaults to zero. Common unit suffixes of
-	'k', 'm', or 'g' are supported.
+	If non-zero, all non-cruft packs larger than this limit are kept
+	when `git gc` is run. This is very similar to
+	`--keep-largest-pack` except that all non-cruft packs that meet
+	the threshold are kept, not just the largest pack. Defaults to
+	zero. Common unit suffixes of 'k', 'm', or 'g' are supported.
 +
 Note that if the number of kept packs is more than gc.autoPackLimit,
 this configuration variable is ignored, all packs except the base pack
@@ -84,7 +84,7 @@ gc.packRefs::
 gc.cruftPacks::
 	Store unreachable objects in a cruft pack (see
 	linkgit:git-repack[1]) instead of as loose objects. The default
-	is `false`.
+	is `true`.
 
 gc.pruneExpire::
 	When 'git gc' is run, it will call 'prune --expire 2.weeks.ago'
@@ -129,6 +129,21 @@ commit --amend` or `git rebase` and are the commits prior to the amend
 or rebase occurring.  Since these changes are not part of the current
 project most users will want to expire them sooner, which is why the
 default is more aggressive than `gc.reflogExpire`.
+
+gc.recentObjectsHook::
+	When considering whether or not to remove an object (either when
+	generating a cruft pack or storing unreachable objects as
+	loose), use the shell to execute the specified command(s).
+	Interpret their output as object IDs which Git will consider as
+	"recent", regardless of their age. By treating their mtimes as
+	"now", any objects (and their descendants) mentioned in the
+	output will be kept regardless of their true age.
++
+Output must contain exactly one hex object ID per line, and nothing
+else. Objects which cannot be found in the repository are ignored.
+Multiple hooks are supported, but all must exit successfully, else the
+operation (either generating a cruft pack or unpacking unreachable
+objects) will be halted.
 
 gc.rerereResolved::
 	Records of conflicted merge you resolved earlier are

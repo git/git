@@ -1,7 +1,6 @@
 #ifndef PKTLINE_H
 #define PKTLINE_H
 
-#include "git-compat-util.h"
 #include "strbuf.h"
 #include "sideband.h"
 
@@ -246,5 +245,7 @@ __attribute__((format (printf, 2, 3)))
 void packet_writer_error(struct packet_writer *writer, const char *fmt, ...);
 void packet_writer_delim(struct packet_writer *writer);
 void packet_writer_flush(struct packet_writer *writer);
+
+void packet_trace_identity(const char *prog);
 
 #endif

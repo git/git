@@ -3,6 +3,7 @@
 
 #include "hashmap.h"
 #include "string-list.h"
+#include "repository.h"
 
 
 /**
@@ -49,13 +50,12 @@ const char *config_scope_name(enum config_scope scope);
 struct git_config_source {
 	unsigned int use_stdin:1;
 	const char *file;
-	/* The repository if blob is not NULL; leave blank for the_repository */
-	struct repository *repo;
 	const char *blob;
 	enum config_scope scope;
 };
 
 enum config_origin_type {
+	CONFIG_ORIGIN_UNKNOWN = 0,
 	CONFIG_ORIGIN_BLOB,
 	CONFIG_ORIGIN_FILE,
 	CONFIG_ORIGIN_STDIN,
@@ -72,6 +72,7 @@ enum config_event_t {
 	CONFIG_EVENT_ERROR
 };
 
+struct config_source;
 /*
  * The parser event function (if not NULL) is called with the event type and
  * the begin/end offsets of the parsed elements.
@@ -81,6 +82,7 @@ enum config_event_t {
  */
 typedef int (*config_parser_event_fn_t)(enum config_event_t type,
 					size_t begin_offset, size_t end_offset,
+					struct config_source *cs,
 					void *event_fn_data);
 
 struct config_options {
@@ -100,6 +102,10 @@ struct config_options {
 
 	const char *commondir;
 	const char *git_dir;
+	/*
+	 * event_fn and event_fn_data are for internal use only. Handles events
+	 * emitted by the config parser.
+	 */
 	config_parser_event_fn_t event_fn;
 	void *event_fn_data;
 	enum config_error_action {
@@ -110,8 +116,31 @@ struct config_options {
 	} error_action;
 };
 
+/* Config source metadata for a given config key-value pair */
+struct key_value_info {
+	const char *filename;
+	int linenr;
+	enum config_origin_type origin_type;
+	enum config_scope scope;
+	const char *path;
+};
+#define KVI_INIT { \
+	.filename = NULL, \
+	.linenr = -1, \
+	.origin_type = CONFIG_ORIGIN_UNKNOWN, \
+	.scope = CONFIG_SCOPE_UNKNOWN, \
+	.path = NULL, \
+}
+
+/* Captures additional information that a config callback can use. */
+struct config_context {
+	/* Config source metadata for key and value. */
+	const struct key_value_info *kvi;
+};
+#define CONFIG_CONTEXT_INIT { 0 }
+
 /**
- * A config callback function takes three parameters:
+ * A config callback function takes four parameters:
  *
  * - the name of the parsed variable. This is in canonical "flat" form: the
  *   section, subsection, and variable segments will be separated by dots,
@@ -122,15 +151,22 @@ struct config_options {
  *   value specified, the value will be NULL (typically this means it
  *   should be interpreted as boolean true).
  *
+ * - the 'config context', that is, additional information about the config
+ *   iteration operation provided by the config machinery. For example, this
+ *   includes information about the config source being parsed (e.g. the
+ *   filename).
+ *
  * - a void pointer passed in by the caller of the config API; this can
  *   contain callback-specific data
  *
  * A config callback should return 0 for success, or -1 if the variable
  * could not be parsed properly.
  */
-typedef int (*config_fn_t)(const char *, const char *, void *);
+typedef int (*config_fn_t)(const char *, const char *,
+			   const struct config_context *, void *);
 
-int git_default_config(const char *, const char *, void *);
+int git_default_config(const char *, const char *,
+		       const struct config_context *, void *);
 
 /**
  * Read a specific file in git-config format.
@@ -141,16 +177,18 @@ int git_default_config(const char *, const char *, void *);
 int git_config_from_file(config_fn_t fn, const char *, void *);
 
 int git_config_from_file_with_options(config_fn_t fn, const char *,
-				      void *,
+				      void *, enum config_scope,
 				      const struct config_options *);
 int git_config_from_mem(config_fn_t fn,
 			const enum config_origin_type,
 			const char *name,
 			const char *buf, size_t len,
-			void *data, const struct config_options *opts);
+			void *data, enum config_scope scope,
+			const struct config_options *opts);
 int git_config_from_blob_oid(config_fn_t fn, const char *name,
 			     struct repository *repo,
-			     const struct object_id *oid, void *data);
+			     const struct object_id *oid, void *data,
+			     enum config_scope scope);
 void git_config_push_parameter(const char *text);
 void git_config_push_env(const char *spec);
 int git_config_from_parameters(config_fn_t fn, void *data);
@@ -195,6 +233,7 @@ void git_config(config_fn_t fn, void *);
  */
 int config_with_options(config_fn_t fn, void *,
 			struct git_config_source *config_source,
+			struct repository *repo,
 			const struct config_options *opts);
 
 /**
@@ -218,22 +257,26 @@ int git_parse_maybe_bool(const char *);
  * Parse the string to an integer, including unit factors. Dies on error;
  * otherwise, returns the parsed result.
  */
-int git_config_int(const char *, const char *);
+int git_config_int(const char *, const char *, const struct key_value_info *);
 
-int64_t git_config_int64(const char *, const char *);
+int64_t git_config_int64(const char *, const char *,
+			 const struct key_value_info *);
 
 /**
  * Identical to `git_config_int`, but for unsigned longs.
  */
-unsigned long git_config_ulong(const char *, const char *);
+unsigned long git_config_ulong(const char *, const char *,
+			       const struct key_value_info *);
 
-ssize_t git_config_ssize_t(const char *, const char *);
+ssize_t git_config_ssize_t(const char *, const char *,
+			   const struct key_value_info *);
 
 /**
  * Same as `git_config_bool`, except that integers are returned as-is, and
  * an `is_bool` flag is unset.
  */
-int git_config_bool_or_int(const char *, const char *, int *);
+int git_config_bool_or_int(const char *, const char *,
+			   const struct key_value_info *, int *);
 
 /**
  * Parse a string into a boolean value, respecting keywords like "true" and
@@ -355,10 +398,8 @@ void git_global_config(char **user, char **xdg);
 
 int git_config_parse_parameter(const char *, config_fn_t fn, void *data);
 
-enum config_scope current_config_scope(void);
-const char *current_config_origin_type(void);
-const char *current_config_name(void);
-int current_config_line(void);
+const char *config_origin_type_name(enum config_origin_type type);
+void kvi_from_param(struct key_value_info *out);
 
 /*
  * Match and parse a config key of the form:
@@ -450,10 +491,31 @@ int git_configset_add_file(struct config_set *cs, const char *filename);
 /**
  * Finds and returns the value list, sorted in order of increasing priority
  * for the configuration variable `key` and config set `cs`. When the
- * configuration variable `key` is not found, returns NULL. The caller
- * should not free or modify the returned pointer, as it is owned by the cache.
+ * configuration variable `key` is not found, returns 1 without touching
+ * `value`.
+ *
+ * The key will be parsed for validity with git_config_parse_key(), on
+ * error a negative value will be returned.
+ *
+ * The caller should not free or modify the returned pointer, as it is
+ * owned by the cache.
  */
-const struct string_list *git_configset_get_value_multi(struct config_set *cs, const char *key);
+RESULT_MUST_BE_USED
+int git_configset_get_value_multi(struct config_set *cs, const char *key,
+				  const struct string_list **dest);
+
+/**
+ * A validation wrapper for git_configset_get_value_multi() which does
+ * for it what git_configset_get_string() does for
+ * git_configset_get_value().
+ *
+ * The configuration syntax allows for "[section] key", which will
+ * give us a NULL entry in the "struct string_list", as opposed to
+ * "[section] key =" which is the empty string. Most users of the API
+ * are not prepared to handle NULL in a "struct string_list".
+ */
+int git_configset_get_string_multi(struct config_set *cs, const char *key,
+				   const struct string_list **dest);
 
 /**
  * Clears `config_set` structure, removes all saved variable-value pairs.
@@ -465,6 +527,13 @@ void git_configset_clear(struct config_set *cs);
  * value in the 'dest' pointer.
  */
 
+/**
+ * git_configset_get() returns negative values on error, see
+ * repo_config_get() below.
+ */
+RESULT_MUST_BE_USED
+int git_configset_get(struct config_set *cs, const char *key);
+
 /*
  * Finds the highest-priority value for the configuration variable `key`
  * and config set `cs`, stores the pointer to it in `value` and returns 0.
@@ -472,7 +541,8 @@ void git_configset_clear(struct config_set *cs);
  * touching `value`. The caller should not free or modify `value`, as it
  * is owned by the cache.
  */
-int git_configset_get_value(struct config_set *cs, const char *key, const char **dest);
+int git_configset_get_value(struct config_set *cs, const char *key,
+			    const char **dest, struct key_value_info *kvi);
 
 int git_configset_get_string(struct config_set *cs, const char *key, char **dest);
 int git_configset_get_int(struct config_set *cs, const char *key, int *dest);
@@ -485,10 +555,22 @@ int git_configset_get_pathname(struct config_set *cs, const char *key, const cha
 /* Functions for reading a repository's config */
 struct repository;
 void repo_config(struct repository *repo, config_fn_t fn, void *data);
+
+/**
+ * Run only the discover part of the repo_config_get_*() functions
+ * below, in addition to 1 if not found, returns negative values on
+ * error (e.g. if the key itself is invalid).
+ */
+RESULT_MUST_BE_USED
+int repo_config_get(struct repository *repo, const char *key);
 int repo_config_get_value(struct repository *repo,
 			  const char *key, const char **value);
-const struct string_list *repo_config_get_value_multi(struct repository *repo,
-						      const char *key);
+RESULT_MUST_BE_USED
+int repo_config_get_value_multi(struct repository *repo, const char *key,
+				const struct string_list **dest);
+RESULT_MUST_BE_USED
+int repo_config_get_string_multi(struct repository *repo, const char *key,
+				 const struct string_list **dest);
 int repo_config_get_string(struct repository *repo,
 			   const char *key, char **dest);
 int repo_config_get_string_tmp(struct repository *repo,
@@ -521,7 +603,14 @@ void git_protected_config(config_fn_t fn, void *data);
  * manner, the config API provides two functions `git_config_get_value`
  * and `git_config_get_value_multi`. They both read values from an internal
  * cache generated previously from reading the config files.
+ *
+ * For those git_config_get*() functions that aren't documented,
+ * consult the corresponding repo_config_get*() function's
+ * documentation.
  */
+
+RESULT_MUST_BE_USED
+int git_config_get(const char *key);
 
 /**
  * Finds the highest-priority value for the configuration variable `key`,
@@ -535,10 +624,17 @@ int git_config_get_value(const char *key, const char **value);
 /**
  * Finds and returns the value list, sorted in order of increasing priority
  * for the configuration variable `key`. When the configuration variable
- * `key` is not found, returns NULL. The caller should not free or modify
- * the returned pointer, as it is owned by the cache.
+ * `key` is not found, returns 1 without touching `value`.
+ *
+ * The caller should not free or modify the returned pointer, as it is
+ * owned by the cache.
  */
-const struct string_list *git_config_get_value_multi(const char *key);
+RESULT_MUST_BE_USED
+int git_config_get_value_multi(const char *key,
+			       const struct string_list **dest);
+RESULT_MUST_BE_USED
+int git_config_get_string_multi(const char *key,
+				const struct string_list **dest);
 
 /**
  * Resets and invalidates the config cache.
@@ -611,13 +707,6 @@ int git_config_get_expiry(const char *key, const char **output);
 
 /* parse either "this many days" integer, or "5.days.ago" approxidate */
 int git_config_get_expiry_in_days(const char *key, timestamp_t *, timestamp_t now);
-
-struct key_value_info {
-	const char *filename;
-	int linenr;
-	enum config_origin_type origin_type;
-	enum config_scope scope;
-};
 
 /**
  * First prints the error message specified by the caller in `err` and then

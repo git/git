@@ -1,5 +1,10 @@
-#include "cache.h"
-#include "object-store.h"
+#include "git-compat-util.h"
+#include "alloc.h"
+#include "date.h"
+#include "dir.h"
+#include "hex.h"
+#include "object-store-ll.h"
+#include "path.h"
 #include "repository.h"
 #include "object.h"
 #include "attr.h"
@@ -353,7 +358,7 @@ static int fsck_walk_commit(struct commit *commit, void *data, struct fsck_optio
 	int result;
 	const char *name;
 
-	if (parse_commit(commit))
+	if (repo_parse_commit(the_repository, commit))
 		return -1;
 
 	name = fsck_get_object_name(options, &commit->object.oid);
@@ -361,7 +366,7 @@ static int fsck_walk_commit(struct commit *commit, void *data, struct fsck_optio
 		fsck_put_object_name(options, get_commit_tree_oid(commit),
 				     "%s:", name);
 
-	result = options->walk((struct object *)get_commit_tree(commit),
+	result = options->walk((struct object *) repo_get_commit_tree(the_repository, commit),
 			       OBJ_TREE, data, options);
 	if (result < 0)
 		return result;
@@ -1160,7 +1165,9 @@ struct fsck_gitmodules_data {
 	int ret;
 };
 
-static int fsck_gitmodules_fn(const char *var, const char *value, void *vdata)
+static int fsck_gitmodules_fn(const char *var, const char *value,
+			      const struct config_context *ctx UNUSED,
+			      void *vdata)
 {
 	struct fsck_gitmodules_data *data = vdata;
 	const char *subsection, *key;
@@ -1233,7 +1240,8 @@ static int fsck_blob(const struct object_id *oid, const char *buf,
 		data.ret = 0;
 		config_opts.error_action = CONFIG_ERROR_SILENT;
 		if (git_config_from_mem(fsck_gitmodules_fn, CONFIG_ORIGIN_BLOB,
-					".gitmodules", buf, size, &data, &config_opts))
+					".gitmodules", buf, size, &data,
+					CONFIG_SCOPE_UNKNOWN, &config_opts))
 			data.ret |= report(options, oid, OBJ_BLOB,
 					FSCK_MSG_GITMODULES_PARSE,
 					"could not parse gitmodules blob");
@@ -1332,7 +1340,7 @@ static int fsck_blobs(struct oidset *blobs_found, struct oidset *blobs_done,
 		if (oidset_contains(blobs_done, oid))
 			continue;
 
-		buf = read_object_file(oid, &type, &size);
+		buf = repo_read_object_file(the_repository, oid, &type, &size);
 		if (!buf) {
 			if (is_promisor_object(oid))
 				continue;
@@ -1370,7 +1378,8 @@ int fsck_finish(struct fsck_options *options)
 	return ret;
 }
 
-int git_fsck_config(const char *var, const char *value, void *cb)
+int git_fsck_config(const char *var, const char *value,
+		    const struct config_context *ctx, void *cb)
 {
 	struct fsck_options *options = cb;
 	if (strcmp(var, "fsck.skiplist") == 0) {
@@ -1391,7 +1400,7 @@ int git_fsck_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	return git_default_config(var, value, cb);
+	return git_default_config(var, value, ctx, cb);
 }
 
 /*

@@ -1,6 +1,8 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
 #include "run-command.h"
+#include "wrapper.h"
+#include "write-or-die.h"
 
 /*
  * Some cases use stdio, but want to flush after the write

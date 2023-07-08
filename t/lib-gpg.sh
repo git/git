@@ -135,8 +135,9 @@ test_lazy_prereq GPGSSH '
 '
 
 test_lazy_prereq GPGSSH_VERIFYTIME '
+	test_have_prereq GPGSSH &&
 	# Check if ssh-keygen has a verify-time option by passing an invalid date to it
-	ssh-keygen -Overify-time=INVALID -Y check-novalidate -s doesnotmatter 2>&1 | grep -q -F "Invalid \"verify-time\"" &&
+	ssh-keygen -Overify-time=INVALID -Y check-novalidate -n "git" -s doesnotmatter 2>&1 | grep -q -F "Invalid \"verify-time\"" &&
 
 	# Set up keys with key lifetimes
 	ssh-keygen -t ed25519 -N "" -C "timeboxed valid key" -f "${GPGSSH_KEY_TIMEBOXEDVALID}" >/dev/null &&

@@ -221,84 +221,91 @@ test_expect_success GPG 'amending already signed commit' '
 test_expect_success GPG 'show good signature with custom format' '
 	cat >expect <<-\EOF &&
 	G
-	13B6F51ECDDE430D
-	C O Mitter <committer@example.com>
-	73D758744BE721698EC54E8713B6F51ECDDE430D
-	73D758744BE721698EC54E8713B6F51ECDDE430D
-	EOF
-	git log -1 --format="%G?%n%GK%n%GS%n%GF%n%GP" sixth-signed >actual &&
-	test_cmp expect actual
-'
-
-test_expect_success GPG 'show bad signature with custom format' '
-	cat >expect <<-\EOF &&
-	B
-	13B6F51ECDDE430D
-	C O Mitter <committer@example.com>
-
-
-	EOF
-	git log -1 --format="%G?%n%GK%n%GS%n%GF%n%GP" $(cat forged1.commit) >actual &&
-	test_cmp expect actual
-'
-
-test_expect_success GPG 'show untrusted signature with custom format' '
-	cat >expect <<-\EOF &&
-	U
-	65A0EEA02E30CAD7
-	Eris Discordia <discord@example.net>
-	F8364A59E07FFE9F4D63005A65A0EEA02E30CAD7
-	D4BE22311AD3131E5EDA29A461092E85B7227189
-	EOF
-	git log -1 --format="%G?%n%GK%n%GS%n%GF%n%GP" eighth-signed-alt >actual &&
-	test_cmp expect actual
-'
-
-test_expect_success GPG 'show untrusted signature with undefined trust level' '
-	cat >expect <<-\EOF &&
-	undefined
-	65A0EEA02E30CAD7
-	Eris Discordia <discord@example.net>
-	F8364A59E07FFE9F4D63005A65A0EEA02E30CAD7
-	D4BE22311AD3131E5EDA29A461092E85B7227189
-	EOF
-	git log -1 --format="%GT%n%GK%n%GS%n%GF%n%GP" eighth-signed-alt >actual &&
-	test_cmp expect actual
-'
-
-test_expect_success GPG 'show untrusted signature with ultimate trust level' '
-	cat >expect <<-\EOF &&
 	ultimate
 	13B6F51ECDDE430D
 	C O Mitter <committer@example.com>
 	73D758744BE721698EC54E8713B6F51ECDDE430D
 	73D758744BE721698EC54E8713B6F51ECDDE430D
 	EOF
-	git log -1 --format="%GT%n%GK%n%GS%n%GF%n%GP" sixth-signed >actual &&
+	git log -1 --format="%G?%n%GT%n%GK%n%GS%n%GF%n%GP" sixth-signed >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success GPG 'show bad signature with custom format' '
+	cat >expect <<-\EOF &&
+	B
+	undefined
+	13B6F51ECDDE430D
+	C O Mitter <committer@example.com>
+
+
+	EOF
+	git log -1 --format="%G?%n%GT%n%GK%n%GS%n%GF%n%GP" $(cat forged1.commit) >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success GPG 'show untrusted signature with custom format' '
+	cat >expect <<-\EOF &&
+	U
+	undefined
+	65A0EEA02E30CAD7
+	Eris Discordia <discord@example.net>
+	F8364A59E07FFE9F4D63005A65A0EEA02E30CAD7
+	D4BE22311AD3131E5EDA29A461092E85B7227189
+	EOF
+	git log -1 --format="%G?%n%GT%n%GK%n%GS%n%GF%n%GP" eighth-signed-alt >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success GPG 'show untrusted signature with undefined trust level' '
+	cat >expect <<-\EOF &&
+	U
+	undefined
+	65A0EEA02E30CAD7
+	Eris Discordia <discord@example.net>
+	F8364A59E07FFE9F4D63005A65A0EEA02E30CAD7
+	D4BE22311AD3131E5EDA29A461092E85B7227189
+	EOF
+	git log -1 --format="%G?%n%GT%n%GK%n%GS%n%GF%n%GP" eighth-signed-alt >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success GPG 'show untrusted signature with ultimate trust level' '
+	cat >expect <<-\EOF &&
+	G
+	ultimate
+	13B6F51ECDDE430D
+	C O Mitter <committer@example.com>
+	73D758744BE721698EC54E8713B6F51ECDDE430D
+	73D758744BE721698EC54E8713B6F51ECDDE430D
+	EOF
+	git log -1 --format="%G?%n%GT%n%GK%n%GS%n%GF%n%GP" sixth-signed >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success GPG 'show unknown signature with custom format' '
 	cat >expect <<-\EOF &&
 	E
+	undefined
 	65A0EEA02E30CAD7
 
 
 
 	EOF
-	GNUPGHOME="$GNUPGHOME_NOT_USED" git log -1 --format="%G?%n%GK%n%GS%n%GF%n%GP" eighth-signed-alt >actual &&
+	GNUPGHOME="$GNUPGHOME_NOT_USED" git log -1 --format="%G?%n%GT%n%GK%n%GS%n%GF%n%GP" eighth-signed-alt >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success GPG 'show lack of signature with custom format' '
 	cat >expect <<-\EOF &&
 	N
+	undefined
 
 
 
 
 	EOF
-	git log -1 --format="%G?%n%GK%n%GS%n%GF%n%GP" seventh-unsigned >actual &&
+	git log -1 --format="%G?%n%GT%n%GK%n%GS%n%GF%n%GP" seventh-unsigned >actual &&
 	test_cmp expect actual
 '
 

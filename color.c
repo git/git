@@ -1,6 +1,11 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
 #include "color.h"
+#include "editor.h"
+#include "gettext.h"
+#include "hex.h"
+#include "pager.h"
+#include "strbuf.h"
 
 static int git_use_color_default = GIT_COLOR_AUTO;
 int color_stdout_is_tty = -1;
@@ -423,14 +428,6 @@ int git_color_config(const char *var, const char *value, void *cb UNUSED)
 	}
 
 	return 0;
-}
-
-int git_color_default_config(const char *var, const char *value, void *cb)
-{
-	if (git_color_config(var, value, cb) < 0)
-		return -1;
-
-	return git_default_config(var, value, cb);
 }
 
 void color_print_strbuf(FILE *fp, const char *color, const struct strbuf *sb)

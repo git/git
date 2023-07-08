@@ -616,4 +616,46 @@ test_expect_success 'diff -I<regex>: detect malformed regex' '
 	test_i18ngrep "invalid regex given to -I: " error
 '
 
+# check_prefix <patch> <src> <dst>
+# check only lines with paths to avoid dependency on exact oid/contents
+check_prefix () {
+	grep -E '^(diff|---|\+\+\+) ' "$1" >actual.paths &&
+	cat >expect <<-EOF &&
+	diff --git $2 $3
+	--- $2
+	+++ $3
+	EOF
+	test_cmp expect actual.paths
+}
+
+test_expect_success 'diff-files does not respect diff.noprefix' '
+	git -c diff.noprefix diff-files -p >actual &&
+	check_prefix actual a/file0 b/file0
+'
+
+test_expect_success 'diff-files respects --no-prefix' '
+	git diff-files -p --no-prefix >actual &&
+	check_prefix actual file0 file0
+'
+
+test_expect_success 'diff respects diff.noprefix' '
+	git -c diff.noprefix diff >actual &&
+	check_prefix actual file0 file0
+'
+
+test_expect_success 'diff --default-prefix overrides diff.noprefix' '
+	git -c diff.noprefix diff --default-prefix >actual &&
+	check_prefix actual a/file0 b/file0
+'
+
+test_expect_success 'diff respects diff.mnemonicprefix' '
+	git -c diff.mnemonicprefix diff >actual &&
+	check_prefix actual i/file0 w/file0
+'
+
+test_expect_success 'diff --default-prefix overrides diff.mnemonicprefix' '
+	git -c diff.mnemonicprefix diff --default-prefix >actual &&
+	check_prefix actual a/file0 b/file0
+'
+
 test_done

@@ -1,12 +1,16 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "diagnose.h"
 #include "compat/disk.h"
 #include "archive.h"
 #include "dir.h"
 #include "help.h"
+#include "gettext.h"
+#include "hex.h"
 #include "strvec.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "packfile.h"
+#include "parse-options.h"
+#include "write-or-die.h"
 
 struct archive_dir {
 	const char *path;
@@ -43,7 +47,8 @@ int option_parse_diagnose(const struct option *opt, const char *arg, int unset)
 	return error(_("invalid --%s value '%s'"), opt->long_name, arg);
 }
 
-static void dir_file_stats_objects(const char *full_path, size_t full_path_len,
+static void dir_file_stats_objects(const char *full_path,
+				   size_t full_path_len UNUSED,
 				   const char *file_name, void *data)
 {
 	struct strbuf *buf = data;

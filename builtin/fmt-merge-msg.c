@@ -1,7 +1,9 @@
 #include "builtin.h"
 #include "config.h"
 #include "fmt-merge-msg.h"
+#include "gettext.h"
 #include "parse-options.h"
+#include "wrapper.h"
 
 static const char * const fmt_merge_msg_usage[] = {
 	N_("git fmt-merge-msg [-m <message>] [--log[=<n>] | --no-log] [--file <file>]"),

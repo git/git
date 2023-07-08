@@ -5,10 +5,13 @@
  *
  * Copyright (C) 2005 Linus Torvalds
  */
-#include "cache.h"
+#include "git-compat-util.h"
+#include "ident.h"
 #include "config.h"
 #include "date.h"
+#include "gettext.h"
 #include "mailmap.h"
+#include "strbuf.h"
 
 static struct strbuf git_default_name = STRBUF_INIT;
 static struct strbuf git_default_email = STRBUF_INIT;
@@ -668,7 +671,9 @@ static int set_ident(const char *var, const char *value)
 	return 0;
 }
 
-int git_ident_config(const char *var, const char *value, void *data UNUSED)
+int git_ident_config(const char *var, const char *value,
+		     const struct config_context *ctx UNUSED,
+		     void *data UNUSED)
 {
 	if (!strcmp(var, "user.useconfigonly")) {
 		ident_use_config_only = git_config_bool(var, value);

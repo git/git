@@ -199,7 +199,8 @@
 # gitattributes file файл с атрибути на git
 # advertised обявен за наличен
 # superproject свръхпроект
-#
+# rev-index обратен индекс (reverse index)
+# dererging branches раздалечили се клони
 # ------------------------
 # „$var“ - може да не сработва за shell има gettext и eval_gettext - проверка - намират се лесно по „$
 # ------------------------
@@ -216,10 +217,10 @@
 # for i in `sort -u FILES`; do cnt=`grep $i FILES | wc -l`; echo $cnt $i ;done | sort -n
 msgid ""
 msgstr ""
-"Project-Id-Version: git 2.40\n"
+"Project-Id-Version: git 2.41\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2023-03-01 01:20+0000\n"
-"PO-Revision-Date: 2023-03-02 08:54+0200\n"
+"POT-Creation-Date: 2023-05-19 19:48+0200\n"
+"PO-Revision-Date: 2023-05-19 20:57+0300\n"
 "Last-Translator: Alexander Shopov <ash@kambanaria.org>\n"
 "Language-Team: Bulgarian <dict@fsa-bg.org>\n"
 "Language: bg\n"
@@ -890,6 +891,23 @@ msgstr "Промѐните трябва да се подадат преди с
 msgid "Exiting because of unfinished merge."
 msgstr "Изход от програмата заради незавършено сливане."
 
+msgid ""
+"Diverging branches can't be fast-forwarded, you need to either:\n"
+"\n"
+"\tgit merge --no-ff\n"
+"\n"
+"or:\n"
+"\n"
+"\tgit rebase\n"
+msgstr ""
+"Раздалечили се клони не може да се превъртят.  Ползвайте:\n"
+"\n"
+"  git merge --no-ff\n"
+"\n"
+"или:\n"
+"\n"
+"  git rebase\n"
+
 msgid "Not possible to fast-forward, aborting."
 msgstr "Не може да се извърши превъртане, преустановяване на действието."
 
@@ -1354,6 +1372,10 @@ msgid "cannot open %s"
 msgstr "„%s“ не може да бъде отворен"
 
 #, c-format
+msgid "cannot unlink '%s'"
+msgstr "„%s“ не може да се изтрие"
+
+#, c-format
 msgid "Hunk #%d applied cleanly."
 msgstr "%d-то парче бе успешно приложено."
 
@@ -1547,6 +1569,10 @@ msgid "cannot read '%s'"
 msgstr "файлът „%s“ не може да бъде прочетен"
 
 #, c-format
+msgid "pathspec '%s' matches files outside the current directory"
+msgstr "пътят „%s“ съвпада с файлове извън текущата директория"
+
+#, c-format
 msgid "pathspec '%s' did not match any files"
 msgstr "пътят „%s“ не съвпада с никой файл"
 
@@ -1561,9 +1587,6 @@ msgstr "неправилно име на обект: „%s“"
 #, c-format
 msgid "not a tree object: %s"
 msgstr "не е обект-дърво: %s"
-
-msgid "current working directory is untracked"
-msgstr "текущата работна директория не е следена"
 
 #, c-format
 msgid "File not found: %s"
@@ -1691,6 +1714,11 @@ msgstr "прескачане на прекалено големия файл з�
 msgid "ignoring overly large gitattributes blob '%s'"
 msgstr "прескачане на прекалено големия обект-BLOB за атрибути на git: „%s“"
 
+msgid "bad --attr-source or GIT_ATTR_SOURCE"
+msgstr ""
+"неправилна стойност за опцията „--attr-source“ или променливата "
+"„GIT_ATTR_SOURCE“"
+
 #, c-format
 msgid "Badly quoted content in file '%s': %s"
 msgstr "Неправилно цитирано съдържание във файла „%s“: %s"
@@ -1795,9 +1823,6 @@ msgstr[1] "Двоично търсене: остават %d версии сле�
 
 msgid "--contents and --reverse do not blend well."
 msgstr "опциите „--contents“ и „--reverse“ са несъвместими"
-
-msgid "cannot use --contents with final commit object name"
-msgstr "опцията „--contents“ е несъвместима с име на обект от крайно подаване"
 
 msgid "--reverse and --first-parent together require specified latest commit"
 msgstr ""
@@ -1984,10 +2009,6 @@ msgstr "подмодул „%s“: клонът „%s“ не може да се
 #, c-format
 msgid "'%s' is already checked out at '%s'"
 msgstr "„%s“ вече е изтеглен в „%s“"
-
-#, c-format
-msgid "HEAD of working tree %s is not updated"
-msgstr "Указателят „HEAD“ на работното дърво „%s“ не е обновен"
 
 msgid "git add [<options>] [--] <pathspec>..."
 msgstr "git add [ОПЦИЯ…] [--] ПЪТ…"
@@ -3081,6 +3102,14 @@ msgid "remote-tracking branch '%s' not found."
 msgstr "следящият клон „%s“ не може да бъде открит."
 
 #, c-format
+msgid ""
+"branch '%s' not found.\n"
+"Did you forget --remote?"
+msgstr ""
+"клонът „%s“ не може да бъде открит.\n"
+"Пробвахте ли опцията „--remote“?"
+
+#, c-format
 msgid "branch '%s' not found."
 msgstr "клонът „%s“ не може да бъде открит."
 
@@ -3109,6 +3138,10 @@ msgstr "Клонът „%s“ се пребазира върху „%s“"
 #, c-format
 msgid "Branch %s is being bisected at %s"
 msgstr "Търси се двоично в клона „%s“ при „%s“"
+
+#, c-format
+msgid "HEAD of working tree %s is not updated"
+msgstr "Указателят „HEAD“ на работното дърво „%s“ не е обновен"
 
 #, c-format
 msgid "Invalid branch name: '%s'"
@@ -3212,6 +3245,9 @@ msgstr ""
 
 msgid "move/rename a branch, even if target exists"
 msgstr "преместване/преименуване на клон, дори ако има вече клон с такова име"
+
+msgid "do not output a newline after empty formatted refs"
+msgstr "без извеждане на нов ред след празен форматиран указател"
 
 msgid "copy a branch and its reflog"
 msgstr "копиране на клон и принадлежащия му журнал на указателите"
@@ -3436,12 +3472,10 @@ msgid "Created new report at '%s'.\n"
 msgstr "Новият доклад е създаден в „%s“.\n"
 
 msgid ""
-"git bundle create [-q | --quiet | --progress | --all-progress] [--all-"
-"progress-implied]\n"
+"git bundle create [-q | --quiet | --progress]\n"
 "                  [--version=<version>] <file> <git-rev-list-args>"
 msgstr ""
-"git bundle create [-q | --quiet | --progress | --all-progress] [--all-"
-"progress-implied]\n"
+"git bundle create [-q | --quiet | --progress ]\n"
 "                  [--version=ВЕРСИЯ] ФАЙЛ ОПЦИЯ_ЗА_git-rev-list…"
 
 msgid "git bundle verify [-q | --quiet] <file>"
@@ -3462,12 +3496,11 @@ msgstr "без извеждане на напредъка"
 msgid "show progress meter"
 msgstr "извеждане на напредъка"
 
-msgid "show progress meter during object writing phase"
-msgstr "извеждане на напредъка във фазата на запазване на обектите"
+msgid "historical; same as --progress"
+msgstr "изоставена опция, същото като „--progress“"
 
-msgid "similar to --all-progress when progress meter is shown"
-msgstr ""
-"същото действие като опцията „--all-progress“ при извеждането на напредъка"
+msgid "historical; does nothing"
+msgstr "изоставена опция, нищо не прави"
 
 msgid "specify bundle format version"
 msgstr "версия на пратката"
@@ -4497,6 +4530,10 @@ msgstr "не може да бъде получена информация чре
 #, c-format
 msgid "%s exists and is not a directory"
 msgstr "„%s“ съществува и не е директория"
+
+#, c-format
+msgid "'%s' is a symlink, refusing to clone with --local"
+msgstr "„%s“ е символна връзка, не може да се клонира с опцията „--local“"
 
 #, c-format
 msgid "failed to start iterator over '%s'"
@@ -6071,6 +6108,181 @@ msgstr "git fetch --all [ОПЦИЯ…]"
 msgid "fetch.parallel cannot be negative"
 msgstr "опцията „fetch.parallel“ трябва да е неотрицателна"
 
+msgid "couldn't find remote ref HEAD"
+msgstr "указателят „HEAD“ в отдалеченото хранилище не може да бъде открит"
+
+#, c-format
+msgid "From %.*s\n"
+msgstr "От %.*s\n"
+
+#, c-format
+msgid "object %s not found"
+msgstr "обектът „%s“ липсва"
+
+msgid "[up to date]"
+msgstr "[актуален]"
+
+msgid "[rejected]"
+msgstr "[отхвърлен]"
+
+msgid "can't fetch into checked-out branch"
+msgstr "в текущия клон не може да се доставя"
+
+msgid "[tag update]"
+msgstr "[обновяване на етикетите]"
+
+msgid "unable to update local ref"
+msgstr "локален указател не може да бъде обновен"
+
+msgid "would clobber existing tag"
+msgstr "съществуващ етикет ще бъде презаписан"
+
+msgid "[new tag]"
+msgstr "[нов етикет]"
+
+msgid "[new branch]"
+msgstr "[нов клон]"
+
+msgid "[new ref]"
+msgstr "[нов указател]"
+
+msgid "forced update"
+msgstr "принудително обновяване"
+
+msgid "non-fast-forward"
+msgstr "същинско сливане"
+
+#, c-format
+msgid "cannot open '%s'"
+msgstr "„%s“ не може да бъде отворен"
+
+msgid ""
+"fetch normally indicates which branches had a forced update,\n"
+"but that check has been disabled; to re-enable, use '--show-forced-updates'\n"
+"flag or run 'git config fetch.showForcedUpdates true'"
+msgstr ""
+"Обичайно при доставяне се извежда, кои клони са били принудително обновени,\n"
+"но тази проверка е изключена.  За да я включите за командата, ползвайте "
+"опцията\n"
+"„--show-forced-updates“, а за да я включите за постоянно, изпълнете:\n"
+"\n"
+"    git config fetch.showForcedUpdates true"
+
+#, c-format
+msgid ""
+"it took %.2f seconds to check forced updates; you can use\n"
+"'--no-show-forced-updates' or run 'git config fetch.showForcedUpdates "
+"false'\n"
+"to avoid this check\n"
+msgstr ""
+"Проверката за принудителни изтласквания отне %.2f сек.  Може да я прескочите "
+"еднократно с опцията „--no-show-forced-updates“, а за да я изключите за "
+"постоянно, изпълнете:\n"
+"\n"
+"    git config fetch.showForcedUpdates false\n"
+
+#, c-format
+msgid "%s did not send all necessary objects\n"
+msgstr "хранилището „%s“ не изпрати всички необходими обекти\n"
+
+#, c-format
+msgid "rejected %s because shallow roots are not allowed to be updated"
+msgstr ""
+"отхвърляне на „%s“, защото плитките върхове не може да бъдат обновявани"
+
+#, c-format
+msgid ""
+"some local refs could not be updated; try running\n"
+" 'git remote prune %s' to remove any old, conflicting branches"
+msgstr ""
+"някои локални указатели не може да бъдат обновени.  Изпълнете командата\n"
+"„git remote prune %s“, за да премахнете остарелите клони, които\n"
+"предизвикват конфликта"
+
+#, c-format
+msgid "   (%s will become dangling)"
+msgstr "   (обектът „%s“ ще се окаже извън клон)"
+
+#, c-format
+msgid "   (%s has become dangling)"
+msgstr "   (обектът „%s“ вече е извън клон)"
+
+msgid "[deleted]"
+msgstr "[изтрит]"
+
+msgid "(none)"
+msgstr "(нищо)"
+
+#, c-format
+msgid "refusing to fetch into branch '%s' checked out at '%s'"
+msgstr "не може да доставите в клона „%s“, който е изтеглен в пътя „%s“"
+
+#, c-format
+msgid "option \"%s\" value \"%s\" is not valid for %s"
+msgstr "стойността „%2$s“ за опцията „%1$s“ не е съвместима с „%3$s“"
+
+#, c-format
+msgid "option \"%s\" is ignored for %s\n"
+msgstr "опцията „%s“ се прескача при „%s“\n"
+
+#, c-format
+msgid "%s is not a valid object"
+msgstr "„%s“ е неправилен обект"
+
+#, c-format
+msgid "the object %s does not exist"
+msgstr "обектът „%s“ не съществува"
+
+msgid "multiple branches detected, incompatible with --set-upstream"
+msgstr ""
+"засечени са множество клони, това е несъвместимо с опцията „--set-upstream“"
+
+#, c-format
+msgid ""
+"could not set upstream of HEAD to '%s' from '%s' when it does not point to "
+"any branch."
+msgstr ""
+"следеното от „HEAD“ не може да се смени от „%2$s“ на „%1$s“, защото второто "
+"не сочи към никой клон."
+
+msgid "not setting upstream for a remote remote-tracking branch"
+msgstr "не може да указвате клон за следене на отдалечен етикет"
+
+msgid "not setting upstream for a remote tag"
+msgstr "не може да указвате клон за следене на отдалечен етикет"
+
+msgid "unknown branch type"
+msgstr "непознат вид клон"
+
+msgid ""
+"no source branch found;\n"
+"you need to specify exactly one branch with the --set-upstream option"
+msgstr ""
+"не е открит клон за следене;\n"
+"трябва изрично да зададете точно един клон с опцията „--set-upstream“"
+
+#, c-format
+msgid "Fetching %s\n"
+msgstr "Доставяне на „%s“\n"
+
+#, c-format
+msgid "could not fetch %s"
+msgstr "„%s“ не може да се достави"
+
+#, c-format
+msgid "could not fetch '%s' (exit code: %d)\n"
+msgstr "„%s“ не може да се достави (изходният код е: %d)\n"
+
+msgid ""
+"no remote repository specified; please specify either a URL or a\n"
+"remote name from which new revisions should be fetched"
+msgstr ""
+"не сте указали отдалечено хранилище; задайте или адрес, или име\n"
+"на отдалечено хранилище, откъдето да се доставят новите версии."
+
+msgid "you need to specify a tag name"
+msgstr "трябва да укажете име на етикет"
+
 msgid "fetch from all remotes"
 msgstr "доставяне от всички отдалечени хранилища"
 
@@ -6179,181 +6391,6 @@ msgstr "запазване на гра̀фа с подаванията след 
 
 msgid "accept refspecs from stdin"
 msgstr "четене на указателите от стандартния вход"
-
-msgid "couldn't find remote ref HEAD"
-msgstr "указателят „HEAD“ в отдалеченото хранилище не може да бъде открит"
-
-#, c-format
-msgid "object %s not found"
-msgstr "обектът „%s“ липсва"
-
-msgid "[up to date]"
-msgstr "[актуален]"
-
-msgid "[rejected]"
-msgstr "[отхвърлен]"
-
-msgid "can't fetch into checked-out branch"
-msgstr "в текущия клон не може да се доставя"
-
-msgid "[tag update]"
-msgstr "[обновяване на етикетите]"
-
-msgid "unable to update local ref"
-msgstr "локален указател не може да бъде обновен"
-
-msgid "would clobber existing tag"
-msgstr "съществуващ етикет ще бъде презаписан"
-
-msgid "[new tag]"
-msgstr "[нов етикет]"
-
-msgid "[new branch]"
-msgstr "[нов клон]"
-
-msgid "[new ref]"
-msgstr "[нов указател]"
-
-msgid "forced update"
-msgstr "принудително обновяване"
-
-msgid "non-fast-forward"
-msgstr "същинско сливане"
-
-#, c-format
-msgid "cannot open '%s'"
-msgstr "„%s“ не може да бъде отворен"
-
-msgid ""
-"fetch normally indicates which branches had a forced update,\n"
-"but that check has been disabled; to re-enable, use '--show-forced-updates'\n"
-"flag or run 'git config fetch.showForcedUpdates true'"
-msgstr ""
-"Обичайно при доставяне се извежда, кои клони са били принудително обновени,\n"
-"но тази проверка е изключена.  За да я включите за командата, ползвайте "
-"опцията\n"
-"„--show-forced-updates“, а за да я включите за постоянно, изпълнете:\n"
-"\n"
-"    git config fetch.showForcedUpdates true"
-
-#, c-format
-msgid ""
-"it took %.2f seconds to check forced updates; you can use\n"
-"'--no-show-forced-updates' or run 'git config fetch.showForcedUpdates "
-"false'\n"
-"to avoid this check\n"
-msgstr ""
-"Проверката за принудителни изтласквания отне %.2f сек.  Може да я прескочите "
-"еднократно с опцията „--no-show-forced-updates“, а за да я изключите за "
-"постоянно, изпълнете:\n"
-"\n"
-"    git config fetch.showForcedUpdates false\n"
-
-#, c-format
-msgid "%s did not send all necessary objects\n"
-msgstr "хранилището „%s“ не изпрати всички необходими обекти\n"
-
-#, c-format
-msgid "rejected %s because shallow roots are not allowed to be updated"
-msgstr ""
-"отхвърляне на „%s“, защото плитките върхове не може да бъдат обновявани"
-
-#, c-format
-msgid "From %.*s\n"
-msgstr "От %.*s\n"
-
-#, c-format
-msgid ""
-"some local refs could not be updated; try running\n"
-" 'git remote prune %s' to remove any old, conflicting branches"
-msgstr ""
-"някои локални указатели не може да бъдат обновени.  Изпълнете командата\n"
-"„git remote prune %s“, за да премахнете остарелите клони, които\n"
-"предизвикват конфликта"
-
-#, c-format
-msgid "   (%s will become dangling)"
-msgstr "   (обектът „%s“ ще се окаже извън клон)"
-
-#, c-format
-msgid "   (%s has become dangling)"
-msgstr "   (обектът „%s“ вече е извън клон)"
-
-msgid "[deleted]"
-msgstr "[изтрит]"
-
-msgid "(none)"
-msgstr "(нищо)"
-
-#, c-format
-msgid "refusing to fetch into branch '%s' checked out at '%s'"
-msgstr "не може да доставите в клона „%s“, който е изтеглен в пътя „%s“"
-
-#, c-format
-msgid "option \"%s\" value \"%s\" is not valid for %s"
-msgstr "стойността „%2$s“ за опцията „%1$s“ не е съвместима с „%3$s“"
-
-#, c-format
-msgid "option \"%s\" is ignored for %s\n"
-msgstr "опцията „%s“ се прескача при „%s“\n"
-
-#, c-format
-msgid "%s is not a valid object"
-msgstr "„%s“ е неправилен обект"
-
-#, c-format
-msgid "the object %s does not exist"
-msgstr "обектът „%s“ не съществува"
-
-msgid "multiple branches detected, incompatible with --set-upstream"
-msgstr ""
-"засечени са множество клони, това е несъвместимо с опцията „--set-upstream“"
-
-#, c-format
-msgid ""
-"could not set upstream of HEAD to '%s' from '%s' when it does not point to "
-"any branch."
-msgstr ""
-"следеното от „HEAD“ не може да се смени от „%2$s“ на „%1$s“, защото второто "
-"не сочи към никой клон."
-
-msgid "not setting upstream for a remote remote-tracking branch"
-msgstr "не може да указвате клон за следене на отдалечен етикет"
-
-msgid "not setting upstream for a remote tag"
-msgstr "не може да указвате клон за следене на отдалечен етикет"
-
-msgid "unknown branch type"
-msgstr "непознат вид клон"
-
-msgid ""
-"no source branch found;\n"
-"you need to specify exactly one branch with the --set-upstream option"
-msgstr ""
-"не е открит клон за следене;\n"
-"трябва изрично да зададете точно един клон с опцията „--set-upstream“"
-
-#, c-format
-msgid "Fetching %s\n"
-msgstr "Доставяне на „%s“\n"
-
-#, c-format
-msgid "could not fetch %s"
-msgstr "„%s“ не може да се достави"
-
-#, c-format
-msgid "could not fetch '%s' (exit code: %d)\n"
-msgstr "„%s“ не може да се достави (изходният код е: %d)\n"
-
-msgid ""
-"no remote repository specified; please specify either a URL or a\n"
-"remote name from which new revisions should be fetched"
-msgstr ""
-"не сте указали отдалечено хранилище; задайте или адрес, или име\n"
-"на отдалечено хранилище, откъдето да се доставят новите версии."
-
-msgid "you need to specify a tag name"
-msgstr "трябва да укажете име на етикет"
 
 msgid "--negotiate-only needs one or more --negotiation-tip=*"
 msgstr ""
@@ -6473,6 +6510,12 @@ msgstr "извеждане само на указателите, които съ
 msgid "print only refs which don't contain the commit"
 msgstr "извеждане само на указателите, които не съдържат това ПОДАВАНЕ"
 
+msgid "read reference patterns from stdin"
+msgstr "изчитане на шаблоните за указатели от стандартния вход"
+
+msgid "unknown arguments supplied with --stdin"
+msgstr "непознат аргумент към опцията „--stdin“"
+
 msgid "git for-each-repo --config=<config> [--] <arguments>"
 msgstr "git for-each-repo --config=НАСТРОЙКА [--] АРГУМЕНТ…"
 
@@ -6484,6 +6527,10 @@ msgstr "настройка, която съдържа списък с пътищ
 
 msgid "missing --config=<config>"
 msgstr "липсва --config=НАСТРОЙКА"
+
+#, c-format
+msgid "got bad config --config=%s"
+msgstr "получена е неправилена настройка „--config=%s“"
 
 msgid "unknown"
 msgstr "непознат"
@@ -6631,19 +6678,28 @@ msgstr "%s: несвързаният връх „HEAD“ не сочи към н
 msgid "notice: %s points to an unborn branch (%s)"
 msgstr "предупреждение: „%s“ сочи към все още несъществуващ клон (%s)"
 
-msgid "Checking cache tree"
-msgstr "Проверка на кеша на обектите-дървета"
+#, c-format
+msgid "Checking cache tree of %s"
+msgstr "Проверка на кеша на обектите-дървета на „%s“"
 
 #, c-format
-msgid "%s: invalid sha1 pointer in cache-tree"
-msgstr "„%s“: неправилен указател за SHA1 в кеша на обектите-дървета"
+msgid "%s: invalid sha1 pointer in cache-tree of %s"
+msgstr "„%s“: неправилен указател за SHA1 в кеша на обектите-дървета на „%s“"
 
 msgid "non-tree in cache-tree"
 msgstr "в кеша на обектите-дървета има нещо, което не е дърво"
 
 #, c-format
-msgid "%s: invalid sha1 pointer in resolve-undo"
-msgstr "„%s“: неправилен указател за отмяна на разрешените подавания"
+msgid "%s: invalid sha1 pointer in resolve-undo of %s"
+msgstr "„%s“: неправилен указател за отмяна на разрешените подавания на „%s“"
+
+#, c-format
+msgid "unable to load rev-index for pack '%s'"
+msgstr "обратният индекс на пакета „%s“ не може да бъде зареден"
+
+#, c-format
+msgid "invalid rev-index for pack '%s'"
+msgstr "неправилен обратен индекс за пакета „%s“"
 
 msgid ""
 "git fsck [--tags] [--root] [--unreachable] [--cache] [--no-reflogs]\n"
@@ -9584,6 +9640,13 @@ msgstr "неподдържана версия на индекса „%s“"
 msgid "bad index version '%s'"
 msgstr "неправилна версия на индекса „%s“"
 
+msgid "show progress meter during object writing phase"
+msgstr "извеждане на напредъка във фазата на запазване на обектите"
+
+msgid "similar to --all-progress when progress meter is shown"
+msgstr ""
+"същото действие като опцията „--all-progress“ при извеждането на напредъка"
+
 msgid "<version>[,<offset>]"
 msgstr "ВЕРСИЯ[,ОТМЕСТВАНЕ]"
 
@@ -9788,6 +9851,9 @@ msgstr ""
 "ни известите с е-писмо до пощенския списък:\n"
 "<git@vger.kernel.org>.\n"
 
+msgid "refusing to run without --i-still-use-this"
+msgstr "трябва да добавите и опцията „--i-still-use-this“"
+
 msgid "git pack-refs [--all] [--no-prune]"
 msgstr "git pack-refs [--all] [--no-prune]"
 
@@ -9962,8 +10028,8 @@ msgstr "Обновяване на все още несъздаден клон с
 msgid "pull with rebase"
 msgstr "издърпване с пребазиране"
 
-msgid "please commit or stash them."
-msgstr "трябва да подадете или скатаете промѐните."
+msgid "Please commit or stash them."
+msgstr "Промѐните трябва или да се подадат, или да се скатаят."
 
 #, c-format
 msgid ""
@@ -10001,7 +10067,7 @@ msgstr "Не може да превъртите към повече от еди�
 
 msgid "Need to specify how to reconcile divergent branches."
 msgstr ""
-"Трябва да укажете как да се решават разликите при разминаване на клоните."
+"Трябва да укажете как да се решават разликите при раздалечаване на клоните."
 
 msgid "cannot rebase with locally recorded submodule modifications"
 msgstr ""
@@ -10210,8 +10276,8 @@ msgstr "Неправилна стойност за „%s“"
 msgid "repository"
 msgstr "хранилище"
 
-msgid "push all refs"
-msgstr "изтласкване на всички указатели"
+msgid "push all branches"
+msgstr "изтласкване на всички клони"
 
 msgid "mirror all refs"
 msgstr "огледално копие на всички указатели"
@@ -10219,8 +10285,10 @@ msgstr "огледално копие на всички указатели"
 msgid "delete refs"
 msgstr "изтриване на указателите"
 
-msgid "push tags (can't be used with --all or --mirror)"
-msgstr "изтласкване на етикетите (несъвместимо с опциите „--all“ и „--mirror“)"
+msgid "push tags (can't be used with --all or --branches or --mirror)"
+msgstr ""
+"изтласкване на етикетите (несъвместимо с опциите „--all“, „--branches“ и „--"
+"mirror“)"
 
 msgid "force updates"
 msgstr "принудително обновяване"
@@ -10485,6 +10553,10 @@ msgstr ""
 "В резултат те не може да се пребазират."
 
 #, c-format
+msgid "Unknown rebase-merges mode: %s"
+msgstr "Неправилен режим за „--rebase-merges“: %s"
+
+#, c-format
 msgid "could not switch to %s"
 msgstr "не може да се премине към „%s“"
 
@@ -10498,6 +10570,15 @@ msgid ""
 msgstr ""
 "неправилна стойност „%s“: вариантите са „drop“ (прескачане), "
 "„keep“ (запазване) и „ask“ (питане)"
+
+msgid ""
+"--rebase-merges with an empty string argument is deprecated and will stop "
+"working in a future version of Git. Use --rebase-merges without an argument "
+"instead, which does the same thing."
+msgstr ""
+"ползването на „--rebase-merges“ с празен низ за аргумент е остаряло и в "
+"бъдеще ще спре да работи. Ползвайте опцията „--rebase-merges“ без аргумент, "
+"за да постигнете същия резултат."
 
 #, c-format
 msgid ""
@@ -10728,20 +10809,23 @@ msgstr ""
 msgid "switch `C' expects a numerical value"
 msgstr "опцията „C“ очаква число за аргумент"
 
-#, c-format
-msgid "Unknown mode: %s"
-msgstr "Неизвестна стратегия: „%s“"
-
 msgid "--strategy requires --merge or --interactive"
 msgstr ""
 "опцията „--strategy“ изисква някоя от опциите „--merge“ или „--interactive“"
 
 msgid ""
-"apply options are incompatible with rebase.autosquash.  Consider adding --no-"
+"apply options are incompatible with rebase.autoSquash.  Consider adding --no-"
 "autosquash"
 msgstr ""
-"опциите за прилагане са несъвместими с „rebase.autosquash“.  Пробвайте да "
+"опциите за прилагане са несъвместими с „rebase.autoSquash“.  Пробвайте да "
 "добавите опцията „--no-autosquash“"
+
+msgid ""
+"apply options are incompatible with rebase.rebaseMerges.  Consider adding --"
+"no-rebase-merges"
+msgstr ""
+"опциите за прилагане са несъвместими с „rebase.rebaseMerges“.  Пробвайте да "
+"добавите опцията „--no-rebase-merges“"
 
 msgid ""
 "apply options are incompatible with rebase.updateRefs.  Consider adding --no-"
@@ -10788,9 +10872,6 @@ msgstr "„%s“: изисква се точно една база за преб
 #, c-format
 msgid "Does not point to a valid commit '%s'"
 msgstr "Указателят „%s“ не сочи към подаване"
-
-msgid "Please commit or stash them."
-msgstr "Промѐните трябва или да се подадат, или да се скатаят."
 
 msgid "HEAD is up to date."
 msgstr "Указателят „HEAD“ е напълно актуален."
@@ -11476,9 +11557,9 @@ msgstr ""
 msgid "approxidate"
 msgstr "евристична дата"
 
-msgid "with -C, expire objects older than this"
+msgid "with --cruft, expire objects older than this"
 msgstr ""
-"с опцията „-C“: обявяване на обектите по-стари от това ВРЕМЕ за остарели"
+"с опцията „--cruft“: обявяване на обектите по-стари от това ВРЕМЕ за остарели"
 
 msgid "remove redundant packs, and run git-prune-packed"
 msgstr ""
@@ -12158,6 +12239,9 @@ msgstr ""
 msgid "remote name"
 msgstr "име на отдалечено хранилище"
 
+msgid "push all refs"
+msgstr "изтласкване на всички указатели"
+
 msgid "use stateless RPC protocol"
 msgstr "използване на протокол без запазване на състоянието за RPC"
 
@@ -12364,9 +12448,11 @@ msgstr ""
 "локалното хранилище"
 
 msgid ""
-"git sparse-checkout (init | list | set | add | reapply | disable) [<options>]"
+"git sparse-checkout (init | list | set | add | reapply | disable | check-"
+"rules) [<options>]"
 msgstr ""
-"git sparse-checkout (init | list | set | add | reapply | disable) ОПЦИЯ…"
+"git sparse-checkout (init | list | set | add | reapply | disable | check-"
+"rules) ОПЦИЯ…"
 
 msgid "this worktree is not sparse"
 msgstr "това работно дърво не е частично"
@@ -12491,6 +12577,24 @@ msgstr ""
 
 msgid "error while refreshing working directory"
 msgstr "грешка при обновяване на работната директория"
+
+msgid ""
+"git sparse-checkout check-rules [-z] [--skip-checks][--[no-]cone] [--rules-"
+"file <file>]"
+msgstr ""
+"git sparse-checkout check-rules [-z] [--skip-checks] [--[no-]cone] [--rules-"
+"file ФАЙЛ]"
+
+msgid "terminate input and output files by a NUL character"
+msgstr "разделяне на входните и изходните файлове с нулевия знак „NUL“"
+
+msgid "when used with --rules-file interpret patterns as cone mode patterns"
+msgstr ""
+"когато е придружено с „--rules-file“ шаблоните се третират като шаблони в "
+"пътеводен режим"
+
+msgid "use patterns in <file> instead of the current ones."
+msgstr "ползване на шаблоните във ФАЙЛа вместо текущите."
 
 msgid "git stash list [<log-options>]"
 msgstr "git stash list [ОПЦИЯ_ЗА_ЖУРНАЛ…]"
@@ -15421,8 +15525,8 @@ msgstr "дължината на съкращаване е извън диапа�
 msgid "bad zlib compression level %d"
 msgstr "неправилно ниво на компресиране: %d"
 
-msgid "core.commentChar should only be one character"
-msgstr "настройката „core.commentChar“ трябва да е само един знак"
+msgid "core.commentChar should only be one ASCII character"
+msgstr "настройката „core.commentChar“ трябва да е само един знак от ASCII"
 
 #, c-format
 msgid "ignoring unknown core.fsyncMethod value '%s'"
@@ -15538,6 +15642,10 @@ msgstr "„%s“ не може да се зададе да е „%s“"
 #, c-format
 msgid "invalid section name: %s"
 msgstr "неправилно име на раздел: %s"
+
+#, c-format
+msgid "refusing to work with overly long line in '%s' on line %<PRIuMAX>"
+msgstr "ред %2$<PRIuMAX> в „%1$s“ е прекалено дълъг"
 
 #, c-format
 msgid "missing value for '%s'"
@@ -16235,6 +16343,9 @@ msgstr "добавяне на допълнителен префикс за вс�
 msgid "do not show any source or destination prefix"
 msgstr "без префикс за източника и целта"
 
+msgid "use default prefixes a/ and b/"
+msgstr "ползване на стандартните префикси „a/“ и „b/“"
+
 msgid "show context between diff hunks up to the specified number of lines"
 msgstr ""
 "извеждане на контекст между последователните парчета с разлики от указания "
@@ -16541,6 +16652,14 @@ msgstr "директорията на git не може да се мигрира
 msgid "hint: Waiting for your editor to close the file...%c"
 msgstr "Подсказка: чака се редакторът ви да затвори файла …%c"
 
+#, c-format
+msgid "could not write to '%s'"
+msgstr "в „%s“ не може да се пише"
+
+#, c-format
+msgid "could not edit '%s'"
+msgstr "„%s“ не може да се редактира"
+
 msgid "Filtering content"
 msgstr "Филтриране на съдържанието"
 
@@ -16844,6 +16963,10 @@ msgstr "опцията „-c“ изисква низ за настройка\n"
 #, c-format
 msgid "no config key given for --config-env\n"
 msgstr "опцията „--config-env“ изисква ключ\n"
+
+#, c-format
+msgid "no attribute source given for --attr-source\n"
+msgstr "опцията „--attr-source“ изисква източник на атрибути\n"
 
 #, c-format
 msgid "unknown option: %s\n"
@@ -18588,6 +18711,10 @@ msgid "unable to get disk usage of '%s'"
 msgstr "използваното място за съхранение на „%s“ не може да бъде получено"
 
 #, c-format
+msgid "bitmap file '%s' has invalid checksum"
+msgstr "неправилна сума за проверка за файла с битови маски „%s“"
+
+#, c-format
 msgid "mtimes file %s is too small"
 msgstr "файлът с времето на промяна (mtime) „%s“ е твърде малък"
 
@@ -18632,6 +18759,14 @@ msgid "reverse-index file %s has unsupported hash id %<PRIu32>"
 msgstr ""
 "идентификатор на контролна сума %2$<PRIu32> на файла с обратен индекс „%1$s“ "
 "не се поддържа"
+
+msgid "invalid checksum"
+msgstr "неправилна сума за проверка"
+
+#, c-format
+msgid "invalid rev-index position at %<PRIu64>: %<PRIu32> != %<PRIu32>"
+msgstr ""
+"неправилна позиция в обратния индекс при %<PRIu64>: %<PRIu32> != %<PRIu32>"
 
 msgid "cannot both write and verify reverse index"
 msgstr "обратният индекс не може едновременно да се записва и да се проверява"
@@ -19379,6 +19514,10 @@ msgid "positive width expected with the %%(align) atom"
 msgstr "очаква се положителна широчина с лексемата „%%(align)“"
 
 #, c-format
+msgid "expected format: %%(ahead-behind:<committish>)"
+msgstr "очакван формат: %%(ahead-behind:ПОДАВАНЕ)"
+
+#, c-format
 msgid "malformed field name: %.*s"
 msgstr "неправилно име на обект: „%.*s“"
 
@@ -19929,10 +20068,10 @@ msgid_plural ""
 "Your branch and '%s' have diverged,\n"
 "and have %d and %d different commits each, respectively.\n"
 msgstr[0] ""
-"Текущият клон се е отделил от „%s“,\n"
+"Текущият клон се е раздалечил от „%s“,\n"
 "двата имат съответно по %d и %d несъвпадащи подавания.\n"
 msgstr[1] ""
-"Текущият клон се е отделил от „%s“,\n"
+"Текущият клон се е раздалечил от „%s“,\n"
 "двата имат съответно по %d и %d несъвпадащи подавания.\n"
 
 msgid "  (use \"git pull\" to merge the remote branch into yours)\n"
@@ -20010,10 +20149,6 @@ msgstr "конфликтът в „%s“ не може да се обнови"
 #, c-format
 msgid "no remembered resolution for '%s'"
 msgstr "липсва запазена корекция на конфликт при „%s“"
-
-#, c-format
-msgid "cannot unlink '%s'"
-msgstr "„%s“ не може да се изтрие"
 
 #, c-format
 msgid "Updated preimage for '%s'"
@@ -20382,10 +20517,6 @@ msgstr ""
 #, c-format
 msgid "could not lock '%s'"
 msgstr "„%s“ не може да се заключи"
-
-#, c-format
-msgid "could not write to '%s'"
-msgstr "в „%s“ не може да се пише"
 
 #, c-format
 msgid "could not write eol to '%s'"
@@ -20757,9 +20888,6 @@ msgstr ""
 "директорията за определянето на последователността „%s“ не може да бъде "
 "създадена"
 
-msgid "could not lock HEAD"
-msgstr "указателят „HEAD“ не може да се заключи"
-
 msgid "no cherry-pick or revert in progress"
 msgstr ""
 "в момента не се извършва отбиране на подавания или пребазиране на клона"
@@ -20862,13 +20990,13 @@ msgstr ""
 "    git rebase --continue\n"
 "\n"
 
-msgid "and made changes to the index and/or the working tree\n"
-msgstr "и променѝ индекса и/или работното дърво\n"
+msgid "and made changes to the index and/or the working tree.\n"
+msgstr "и променѝ индекса и/или работното дърво.\n"
 
 #, c-format
 msgid ""
 "execution succeeded: %s\n"
-"but left changes to the index and/or the working tree\n"
+"but left changes to the index and/or the working tree.\n"
 "Commit or stash your changes, and then run\n"
 "\n"
 "  git rebase --continue\n"
@@ -21323,10 +21451,6 @@ msgid "%u byte/s"
 msgid_plural "%u bytes/s"
 msgstr[0] "%u байт/сек."
 msgstr[1] "%u байта/сек."
-
-#, c-format
-msgid "could not edit '%s'"
-msgstr "„%s“ не може да се редактира"
 
 #, c-format
 msgid "ignoring suspicious submodule name: %s"
@@ -23085,12 +23209,16 @@ msgid "(%s) Could not execute '%s'"
 msgstr "(%s) Не може да бъде се изпълни „%s“"
 
 #, perl-format
-msgid "(%s) Adding %s: %s from: '%s'\n"
-msgstr "(%s) Добавяне на „%s: %s“ от: „%s“\n"
+msgid "(%s) Malformed output from '%s'"
+msgstr "(%s) Неправилен изход от: „%s“."
 
 #, perl-format
 msgid "(%s) failed to close pipe to '%s'"
 msgstr "(%s) програмният канал не може да се затвори за изпълнението на „%s“"
+
+#, perl-format
+msgid "(%s) Adding %s: %s from: '%s'\n"
+msgstr "(%s) Добавяне на „%s: %s“ от: „%s“\n"
 
 msgid "cannot send message as 7bit"
 msgstr "съобщението не може да се изпрати чрез 7 битови знаци"

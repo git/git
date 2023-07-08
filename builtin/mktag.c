@@ -1,8 +1,12 @@
 #include "builtin.h"
+#include "gettext.h"
+#include "hex.h"
 #include "parse-options.h"
+#include "strbuf.h"
 #include "tag.h"
 #include "replace-object.h"
-#include "object-store.h"
+#include "object-file.h"
+#include "object-store-ll.h"
 #include "fsck.h"
 #include "config.h"
 
@@ -51,7 +55,8 @@ static int verify_object_in_tag(struct object_id *tagged_oid, int *tagged_type)
 	void *buffer;
 	const struct object_id *repl;
 
-	buffer = read_object_file(tagged_oid, &type, &size);
+	buffer = repo_read_object_file(the_repository, tagged_oid, &type,
+				       &size);
 	if (!buffer)
 		die(_("could not read tagged object '%s'"),
 		    oid_to_hex(tagged_oid));
@@ -80,7 +85,7 @@ int cmd_mktag(int argc, const char **argv, const char *prefix)
 	int tagged_type;
 	struct object_id result;
 
-	argc = parse_options(argc, argv, NULL,
+	argc = parse_options(argc, argv, prefix,
 			     builtin_mktag_options,
 			     builtin_mktag_usage, 0);
 

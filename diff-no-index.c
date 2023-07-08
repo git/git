@@ -4,16 +4,17 @@
  * Copyright (c) 2008 by Junio C Hamano
  */
 
-#include "cache.h"
+#include "git-compat-util.h"
+#include "abspath.h"
 #include "color.h"
 #include "commit.h"
 #include "blob.h"
 #include "tag.h"
 #include "diff.h"
 #include "diffcore.h"
+#include "gettext.h"
 #include "revision.h"
 #include "log-tree.h"
-#include "builtin.h"
 #include "parse-options.h"
 #include "string-list.h"
 #include "dir.h"

@@ -1,6 +1,11 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "repository.h"
 #include "config.h"
+#include "date.h"
+#include "environment.h"
+#include "gettext.h"
+#include "hex.h"
 #include "lockfile.h"
 #include "refs.h"
 #include "pkt-line.h"
@@ -13,12 +18,14 @@
 #include "remote.h"
 #include "run-command.h"
 #include "connect.h"
+#include "trace2.h"
 #include "transport.h"
 #include "version.h"
 #include "oid-array.h"
 #include "oidset.h"
 #include "packfile.h"
-#include "object-store.h"
+#include "object-store-ll.h"
+#include "path.h"
 #include "connected.h"
 #include "fetch-negotiator.h"
 #include "fsck.h"
@@ -27,6 +34,7 @@
 #include "commit-graph.h"
 #include "sigchain.h"
 #include "mergesort.h"
+#include "wrapper.h"
 
 static int transfer_unpack_limit = -1;
 static int fetch_unpack_limit = -1;
@@ -722,7 +730,7 @@ static void filter_refs(struct fetch_pack_args *args,
 	*refs = newlist;
 }
 
-static void mark_alternate_complete(struct fetch_negotiator *unused,
+static void mark_alternate_complete(struct fetch_negotiator *negotiator UNUSED,
 				    struct object *obj)
 {
 	mark_complete(&obj->oid);
@@ -762,9 +770,9 @@ static void mark_complete_and_common_ref(struct fetch_negotiator *negotiator,
 		if (!commit) {
 			struct object *o;
 
-			if (!has_object_file_with_flags(&ref->old_oid,
-						OBJECT_INFO_QUICK |
-						OBJECT_INFO_SKIP_FETCH_OBJECT))
+			if (!repo_has_object_file_with_flags(the_repository, &ref->old_oid,
+							     OBJECT_INFO_QUICK |
+							     OBJECT_INFO_SKIP_FETCH_OBJECT))
 				continue;
 			o = parse_object(the_repository, &ref->old_oid);
 			if (!o || o->type != OBJ_COMMIT)
@@ -1094,7 +1102,7 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 	struct ref *ref = copy_ref_list(orig_ref);
 	struct object_id oid;
 	const char *agent_feature;
-	int agent_len;
+	size_t agent_len;
 	struct fetch_negotiator negotiator_alloc;
 	struct fetch_negotiator *negotiator;
 
@@ -1112,7 +1120,7 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 		agent_supported = 1;
 		if (agent_len)
 			print_verbose(args, _("Server version is %.*s"),
-				      agent_len, agent_feature);
+				      (int)agent_len, agent_feature);
 	}
 
 	if (!server_supports("session-id"))
@@ -1853,7 +1861,8 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 	return ref;
 }
 
-static int fetch_pack_config_cb(const char *var, const char *value, void *cb)
+static int fetch_pack_config_cb(const char *var, const char *value,
+				const struct config_context *ctx, void *cb)
 {
 	if (strcmp(var, "fetch.fsck.skiplist") == 0) {
 		const char *path;
@@ -1875,7 +1884,7 @@ static int fetch_pack_config_cb(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	return git_default_config(var, value, cb);
+	return git_default_config(var, value, ctx, cb);
 }
 
 static void fetch_pack_config(void)
@@ -1963,7 +1972,7 @@ static void update_shallow(struct fetch_pack_args *args,
 		struct oid_array extra = OID_ARRAY_INIT;
 		struct object_id *oid = si->shallow->oid;
 		for (i = 0; i < si->shallow->nr; i++)
-			if (has_object_file(&oid[i]))
+			if (repo_has_object_file(the_repository, &oid[i]))
 				oid_array_append(&extra, &oid[i]);
 		if (extra.nr) {
 			setup_alternate_shallow(&shallow_lock,

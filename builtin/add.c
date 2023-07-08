@@ -4,18 +4,24 @@
  * Copyright (C) 2006 Linus Torvalds
  */
 #define USE_THE_INDEX_VARIABLE
-#include "cache.h"
-#include "config.h"
 #include "builtin.h"
+#include "advice.h"
+#include "config.h"
 #include "lockfile.h"
+#include "editor.h"
 #include "dir.h"
+#include "gettext.h"
 #include "pathspec.h"
 #include "exec-cmd.h"
 #include "cache-tree.h"
 #include "run-command.h"
 #include "parse-options.h"
+#include "path.h"
+#include "preload-index.h"
 #include "diff.h"
 #include "diffcore.h"
+#include "read-cache.h"
+#include "repository.h"
 #include "revision.h"
 #include "bulk-checkin.h"
 #include "strvec.h"
@@ -32,11 +38,6 @@ static int add_renormalize;
 static int pathspec_file_nul;
 static int include_sparse;
 static const char *pathspec_from_file;
-
-struct update_callback_data {
-	int flags;
-	int add_errors;
-};
 
 static int chmod_pathspec(struct pathspec *pathspec, char flip, int show_only)
 {
@@ -64,95 +65,6 @@ static int chmod_pathspec(struct pathspec *pathspec, char flip, int show_only)
 	}
 
 	return ret;
-}
-
-static int fix_unmerged_status(struct diff_filepair *p,
-			       struct update_callback_data *data)
-{
-	if (p->status != DIFF_STATUS_UNMERGED)
-		return p->status;
-	if (!(data->flags & ADD_CACHE_IGNORE_REMOVAL) && !p->two->mode)
-		/*
-		 * This is not an explicit add request, and the
-		 * path is missing from the working tree (deleted)
-		 */
-		return DIFF_STATUS_DELETED;
-	else
-		/*
-		 * Either an explicit add request, or path exists
-		 * in the working tree.  An attempt to explicitly
-		 * add a path that does not exist in the working tree
-		 * will be caught as an error by the caller immediately.
-		 */
-		return DIFF_STATUS_MODIFIED;
-}
-
-static void update_callback(struct diff_queue_struct *q,
-			    struct diff_options *opt UNUSED, void *cbdata)
-{
-	int i;
-	struct update_callback_data *data = cbdata;
-
-	for (i = 0; i < q->nr; i++) {
-		struct diff_filepair *p = q->queue[i];
-		const char *path = p->one->path;
-
-		if (!include_sparse && !path_in_sparse_checkout(path, &the_index))
-			continue;
-
-		switch (fix_unmerged_status(p, data)) {
-		default:
-			die(_("unexpected diff status %c"), p->status);
-		case DIFF_STATUS_MODIFIED:
-		case DIFF_STATUS_TYPE_CHANGED:
-			if (add_file_to_index(&the_index, path,	data->flags)) {
-				if (!(data->flags & ADD_CACHE_IGNORE_ERRORS))
-					die(_("updating files failed"));
-				data->add_errors++;
-			}
-			break;
-		case DIFF_STATUS_DELETED:
-			if (data->flags & ADD_CACHE_IGNORE_REMOVAL)
-				break;
-			if (!(data->flags & ADD_CACHE_PRETEND))
-				remove_file_from_index(&the_index, path);
-			if (data->flags & (ADD_CACHE_PRETEND|ADD_CACHE_VERBOSE))
-				printf(_("remove '%s'\n"), path);
-			break;
-		}
-	}
-}
-
-int add_files_to_cache(const char *prefix,
-		       const struct pathspec *pathspec, int flags)
-{
-	struct update_callback_data data;
-	struct rev_info rev;
-
-	memset(&data, 0, sizeof(data));
-	data.flags = flags;
-
-	repo_init_revisions(the_repository, &rev, prefix);
-	setup_revisions(0, NULL, &rev, NULL);
-	if (pathspec)
-		copy_pathspec(&rev.prune_data, pathspec);
-	rev.diffopt.output_format = DIFF_FORMAT_CALLBACK;
-	rev.diffopt.format_callback = update_callback;
-	rev.diffopt.format_callback_data = &data;
-	rev.diffopt.flags.override_submodule_config = 1;
-	rev.max_count = 0; /* do not compare unmerged paths with stage #2 */
-
-	/*
-	 * Use an ODB transaction to optimize adding multiple objects.
-	 * This function is invoked from commands other than 'add', which
-	 * may not have their own transaction active.
-	 */
-	begin_odb_transaction();
-	run_diff_files(&rev, DIFF_RACY_IS_MODIFIED);
-	end_odb_transaction();
-
-	release_revisions(&rev);
-	return !!data.add_errors;
 }
 
 static int renormalize_tracked_files(const struct pathspec *pathspec, int flags)
@@ -354,7 +266,8 @@ static struct option builtin_add_options[] = {
 	OPT_END(),
 };
 
-static int add_config(const char *var, const char *value, void *cb)
+static int add_config(const char *var, const char *value,
+		      const struct config_context *ctx, void *cb)
 {
 	if (!strcmp(var, "add.ignoreerrors") ||
 	    !strcmp(var, "add.ignore-errors")) {
@@ -362,7 +275,10 @@ static int add_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	return git_default_config(var, value, cb);
+	if (git_color_config(var, value, cb) < 0)
+		return -1;
+
+	return git_default_config(var, value, ctx, cb);
 }
 
 static const char embedded_advice[] = N_(
@@ -637,7 +553,9 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	if (add_renormalize)
 		exit_status |= renormalize_tracked_files(&pathspec, flags);
 	else
-		exit_status |= add_files_to_cache(prefix, &pathspec, flags);
+		exit_status |= add_files_to_cache(the_repository, prefix,
+						  &pathspec, include_sparse,
+						  flags);
 
 	if (add_new_files)
 		exit_status |= add_files(&dir, flags);

@@ -3,7 +3,6 @@
 
 #ifdef HAVE_FSMONITOR_DAEMON_BACKEND
 
-#include "cache.h"
 #include "dir.h"
 #include "run-command.h"
 #include "simple-ipc.h"

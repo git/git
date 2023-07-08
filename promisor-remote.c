@@ -1,7 +1,10 @@
-#include "cache.h"
-#include "object-store.h"
+#include "git-compat-util.h"
+#include "gettext.h"
+#include "hex.h"
+#include "object-store-ll.h"
 #include "promisor-remote.h"
 #include "config.h"
+#include "trace2.h"
 #include "transport.h"
 #include "strvec.h"
 #include "packfile.h"
@@ -97,7 +100,9 @@ static void promisor_remote_move_to_tail(struct promisor_remote_config *config,
 	config->promisors_tail = &r->next;
 }
 
-static int promisor_remote_config(const char *var, const char *value, void *data)
+static int promisor_remote_config(const char *var, const char *value,
+				  const struct config_context *ctx UNUSED,
+				  void *data)
 {
 	struct promisor_remote_config *config = data;
 	const char *name;

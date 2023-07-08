@@ -4,10 +4,11 @@
 #ifndef DIFF_H
 #define DIFF_H
 
-#include "tree-walk.h"
+#include "hash-ll.h"
 #include "pathspec.h"
-#include "object.h"
-#include "oidset.h"
+#include "strbuf.h"
+
+struct oidset;
 
 /**
  * The diff API is for programs that compare two sets of files (e.g. two trees,
@@ -71,7 +72,6 @@ struct oid_array;
 struct option;
 struct repository;
 struct rev_info;
-struct strbuf;
 struct userdiff_driver;
 
 typedef int (*pathchange_fn_t)(struct diff_options *options,
@@ -497,6 +497,8 @@ void diff_tree_combined(const struct object_id *oid, const struct oid_array *par
 void diff_tree_combined_merge(const struct commit *commit, struct rev_info *rev);
 
 void diff_set_mnemonic_prefix(struct diff_options *options, const char *a, const char *b);
+void diff_set_noprefix(struct diff_options *options);
+void diff_set_default_prefix(struct diff_options *options);
 
 int diff_can_quit_early(struct diff_options *);
 
@@ -531,17 +533,24 @@ void free_diffstat_info(struct diffstat_t *diffstat);
 int parse_long_opt(const char *opt, const char **argv,
 		   const char **optarg);
 
-int git_diff_basic_config(const char *var, const char *value, void *cb);
+struct config_context;
+int git_diff_basic_config(const char *var, const char *value,
+			  const struct config_context *ctx, void *cb);
 int git_diff_heuristic_config(const char *var, const char *value, void *cb);
 void init_diff_ui_defaults(void);
-int git_diff_ui_config(const char *var, const char *value, void *cb);
-#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
-#define diff_setup(diffopts) repo_diff_setup(the_repository, diffopts)
-#endif
+int git_diff_ui_config(const char *var, const char *value,
+		       const struct config_context *ctx, void *cb);
 void repo_diff_setup(struct repository *, struct diff_options *);
 struct option *add_diff_options(const struct option *, struct diff_options *);
 int diff_opt_parse(struct diff_options *, const char **, int, const char *);
 void diff_setup_done(struct diff_options *);
+
+/*
+ * Returns true if the pathspec can work with --follow mode. If die_on_error is
+ * set, die() with a specific error message rather than returning false.
+ */
+int diff_check_follow_pathspec(struct pathspec *ps, int die_on_error);
+
 int git_config_rename(const char *var, const char *value);
 
 #define DIFF_DETECT_RENAME	1
@@ -617,7 +626,7 @@ void diff_warn_rename_limit(const char *varname, int needed, int degraded_cc);
 #define DIFF_STATUS_FILTER_BROKEN	'B'
 
 /*
- * This is different from find_unique_abbrev() in that
+ * This is different from repo_find_unique_abbrev() in that
  * it stuffs the result with dots for alignment.
  */
 const char *diff_aligned_abbrev(const struct object_id *sha1, int);
@@ -696,5 +705,7 @@ long parse_algorithm_value(const char *value);
 void print_stat_summary(FILE *fp, int files,
 			int insertions, int deletions);
 void setup_diff_pager(struct diff_options *);
+
+extern int diff_auto_refresh_index;
 
 #endif /* DIFF_H */

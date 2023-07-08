@@ -1,5 +1,13 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "add-interactive.h"
+#include "advice.h"
+#include "alloc.h"
+#include "editor.h"
+#include "environment.h"
+#include "gettext.h"
+#include "object-name.h"
+#include "read-cache-ll.h"
+#include "repository.h"
 #include "strbuf.h"
 #include "run-command.h"
 #include "strvec.h"
@@ -414,7 +422,7 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 		strvec_push(&args,
 			    /* could be on an unborn branch */
 			    !strcmp("HEAD", s->revision) &&
-			    get_oid("HEAD", &oid) ?
+			    repo_get_oid(the_repository, "HEAD", &oid) ?
 			    empty_tree_oid_hex() : s->revision);
 	}
 	color_arg_index = args.nr;
@@ -483,7 +491,8 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 		if (!eol)
 			eol = pend;
 
-		if (starts_with(p, "diff ")) {
+		if (starts_with(p, "diff ") ||
+		    starts_with(p, "* Unmerged path ")) {
 			complete_file(marker, hunk);
 			ALLOC_GROW_BY(s->file_diff, s->file_diff_nr, 1,
 				   file_diff_alloc);
@@ -1098,10 +1107,11 @@ static int edit_hunk_manually(struct add_p_state *s, struct hunk *hunk)
 	size_t i;
 
 	strbuf_reset(&s->buf);
-	strbuf_commented_addf(&s->buf, _("Manual hunk edit mode -- see bottom for "
-				      "a quick guide.\n"));
+	strbuf_commented_addf(&s->buf, comment_line_char,
+			      _("Manual hunk edit mode -- see bottom for "
+				"a quick guide.\n"));
 	render_hunk(s, hunk, 0, 0, &s->buf);
-	strbuf_commented_addf(&s->buf,
+	strbuf_commented_addf(&s->buf, comment_line_char,
 			      _("---\n"
 				"To remove '%c' lines, make them ' ' lines "
 				"(context).\n"
@@ -1110,12 +1120,13 @@ static int edit_hunk_manually(struct add_p_state *s, struct hunk *hunk)
 			      s->mode->is_reverse ? '+' : '-',
 			      s->mode->is_reverse ? '-' : '+',
 			      comment_line_char);
-	strbuf_commented_addf(&s->buf, "%s", _(s->mode->edit_hunk_hint));
+	strbuf_commented_addf(&s->buf, comment_line_char, "%s",
+			      _(s->mode->edit_hunk_hint));
 	/*
 	 * TRANSLATORS: 'it' refers to the patch mentioned in the previous
 	 * messages.
 	 */
-	strbuf_commented_addf(&s->buf,
+	strbuf_commented_addf(&s->buf, comment_line_char,
 			      _("If it does not apply cleanly, you will be "
 				"given an opportunity to\n"
 				"edit again.  If all lines of the hunk are "

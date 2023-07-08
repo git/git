@@ -1,8 +1,11 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "commit-reach.h"
 #include "config.h"
 #include "diff.h"
-#include "object-store.h"
+#include "environment.h"
+#include "hex.h"
+#include "object-name.h"
+#include "object-store-ll.h"
 #include "repository.h"
 #include "tmp-objdir.h"
 #include "commit.h"
@@ -12,6 +15,8 @@
 #include "merge-ort.h"
 #include "reflog-walk.h"
 #include "refs.h"
+#include "replace-object.h"
+#include "revision.h"
 #include "string-list.h"
 #include "color.h"
 #include "gpg-interface.h"
@@ -20,6 +25,9 @@
 #include "help.h"
 #include "range-diff.h"
 #include "strmap.h"
+#include "tree.h"
+#include "wildmatch.h"
+#include "write-or-die.h"
 
 static struct decoration name_decoration = { "object names" };
 static int decoration_loaded;
@@ -150,7 +158,7 @@ static int add_ref_decoration(const char *refname, const struct object_id *oid,
 
 	if (starts_with(refname, git_replace_ref_base)) {
 		struct object_id original_oid;
-		if (!read_replace_refs)
+		if (!replace_refs_enabled(the_repository))
 			return 0;
 		if (get_oid_hex(refname + strlen(git_replace_ref_base),
 				&original_oid)) {
@@ -196,7 +204,8 @@ static int add_ref_decoration(const char *refname, const struct object_id *oid,
 	return 0;
 }
 
-static int add_graft_decoration(const struct commit_graft *graft, void *cb_data)
+static int add_graft_decoration(const struct commit_graft *graft,
+				void *cb_data UNUSED)
 {
 	struct commit *commit = lookup_commit(the_repository, &graft->oid);
 	if (!commit)
@@ -233,7 +242,8 @@ static void show_parents(struct commit *commit, int abbrev, FILE *file)
 	struct commit_list *p;
 	for (p = commit->parents; p ; p = p->next) {
 		struct commit *parent = p->item;
-		fprintf(file, " %s", find_unique_abbrev(&parent->object.oid, abbrev));
+		fprintf(file, " %s",
+			repo_find_unique_abbrev(the_repository, &parent->object.oid, abbrev));
 	}
 }
 
@@ -241,7 +251,8 @@ static void show_children(struct rev_info *opt, struct commit *commit, int abbre
 {
 	struct commit_list *p = lookup_decoration(&opt->children, &commit->object);
 	for ( ; p; p = p->next) {
-		fprintf(opt->diffopt.file, " %s", find_unique_abbrev(&p->item->object.oid, abbrev));
+		fprintf(opt->diffopt.file, " %s",
+			repo_find_unique_abbrev(the_repository, &p->item->object.oid, abbrev));
 	}
 }
 
@@ -405,7 +416,8 @@ void fmt_output_commit(struct strbuf *filename,
 	struct pretty_print_context ctx = {0};
 	struct strbuf subject = STRBUF_INIT;
 
-	format_commit_message(commit, "%f", &subject, &ctx);
+	repo_format_commit_message(the_repository, commit, "%f", &subject,
+				   &ctx);
 	fmt_output_subject(filename, subject.buf, info);
 	strbuf_release(&subject);
 }
@@ -440,7 +452,7 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 	fprintf(opt->diffopt.file, "From %s Mon Sep 17 00:00:00 2001\n", name);
 	graph_show_oneline(opt->graph);
 	if (opt->message_id) {
-		fprintf(opt->diffopt.file, "Message-Id: <%s>\n", opt->message_id);
+		fprintf(opt->diffopt.file, "Message-ID: <%s>\n", opt->message_id);
 		graph_show_oneline(opt->graph);
 	}
 	if (opt->ref_message_ids && opt->ref_message_ids->nr > 0) {
@@ -644,7 +656,8 @@ void show_log(struct rev_info *opt)
 
 		if (!opt->graph)
 			put_revision_mark(opt, commit);
-		fputs(find_unique_abbrev(&commit->object.oid, abbrev_commit), opt->diffopt.file);
+		fputs(repo_find_unique_abbrev(the_repository, &commit->object.oid, abbrev_commit),
+		      opt->diffopt.file);
 		if (opt->print_parents)
 			show_parents(commit, abbrev_commit, opt->diffopt.file);
 		if (opt->children.name)
@@ -706,8 +719,8 @@ void show_log(struct rev_info *opt)
 
 		if (!opt->graph)
 			put_revision_mark(opt, commit);
-		fputs(find_unique_abbrev(&commit->object.oid,
-					 abbrev_commit),
+		fputs(repo_find_unique_abbrev(the_repository, &commit->object.oid,
+					      abbrev_commit),
 		      opt->diffopt.file);
 		if (opt->print_parents)
 			show_parents(commit, abbrev_commit, opt->diffopt.file);
@@ -715,7 +728,7 @@ void show_log(struct rev_info *opt)
 			show_children(opt, commit, abbrev_commit);
 		if (parent)
 			fprintf(opt->diffopt.file, " (from %s)",
-			       find_unique_abbrev(&parent->object.oid, abbrev_commit));
+			       repo_find_unique_abbrev(the_repository, &parent->object.oid, abbrev_commit));
 		fputs(diff_get_color_opt(&opt->diffopt, DIFF_RESET), opt->diffopt.file);
 		show_decorations(opt, commit);
 		if (opt->commit_format == CMIT_FMT_ONELINE) {
@@ -846,7 +859,7 @@ void show_log(struct rev_info *opt)
 		 * Pass minimum required diff-options to range-diff; others
 		 * can be added later if deemed desirable.
 		 */
-		diff_setup(&opts);
+		repo_diff_setup(the_repository, &opts);
 		opts.file = opt->diffopt.file;
 		opts.use_color = opt->diffopt.use_color;
 		diff_setup_done(&opts);
@@ -982,15 +995,17 @@ static int do_remerge_diff(struct rev_info *opt,
 	o.msg_header_prefix = "remerge";
 
 	ctx.abbrev = DEFAULT_ABBREV;
-	format_commit_message(parent1, "%h (%s)", &parent1_desc, &ctx);
-	format_commit_message(parent2, "%h (%s)", &parent2_desc, &ctx);
+	repo_format_commit_message(the_repository, parent1, "%h (%s)",
+				   &parent1_desc, &ctx);
+	repo_format_commit_message(the_repository, parent2, "%h (%s)",
+				   &parent2_desc, &ctx);
 	o.branch1 = parent1_desc.buf;
 	o.branch2 = parent2_desc.buf;
 
 	/* Parse the relevant commits and get the merge bases */
 	parse_commit_or_die(parent1);
 	parse_commit_or_die(parent2);
-	bases = get_merge_bases(parent1, parent2);
+	bases = repo_get_merge_bases(the_repository, parent1, parent2);
 
 	/* Re-merge the parents */
 	merge_incore_recursive(&o, bases, parent1, parent2, &res);

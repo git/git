@@ -2,7 +2,8 @@
  * The Scalar command-line interface.
  */
 
-#include "cache.h"
+#include "git-compat-util.h"
+#include "abspath.h"
 #include "gettext.h"
 #include "parse-options.h"
 #include "config.h"
@@ -14,6 +15,8 @@
 #include "dir.h"
 #include "packfile.h"
 #include "help.h"
+#include "setup.h"
+#include "trace2.h"
 
 static void setup_enlistment_directory(int argc, const char **argv,
 				       const char * const *usagestr,
@@ -563,7 +566,7 @@ static int cmd_diagnose(int argc, const char **argv)
 	return res;
 }
 
-static int cmd_list(int argc, const char **argv)
+static int cmd_list(int argc, const char **argv UNUSED)
 {
 	if (argc != 1)
 		die(_("`scalar list` does not take arguments"));
@@ -591,7 +594,9 @@ static int cmd_register(int argc, const char **argv)
 	return register_dir();
 }
 
-static int get_scalar_repos(const char *key, const char *value, void *data)
+static int get_scalar_repos(const char *key, const char *value,
+			    const struct config_context *ctx UNUSED,
+			    void *data)
 {
 	struct string_list *list = data;
 

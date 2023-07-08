@@ -120,20 +120,19 @@ repository upon 'git add' and 'git commit'.
 `text`
 ^^^^^^
 
-This attribute enables and controls end-of-line normalization.  When a
-text file is normalized, its line endings are converted to LF in the
-repository.  To control what line ending style is used in the working
-directory, use the `eol` attribute for a single file and the
-`core.eol` configuration variable for all text files.
-Note that setting `core.autocrlf` to `true` or `input` overrides
-`core.eol` (see the definitions of those options in
-linkgit:git-config[1]).
+This attribute marks the path as a text file, which enables end-of-line
+conversion: When a matching file is added to the index, the file's line
+endings are normalized to LF in the index.  Conversely, when the file is
+copied from the index to the working directory, its line endings may be
+converted from LF to CRLF depending on the `eol` attribute, the Git
+config, and the platform (see explanation of `eol` below).
 
 Set::
 
 	Setting the `text` attribute on a path enables end-of-line
-	normalization and marks the path as a text file.  End-of-line
-	conversion takes place without guessing the content type.
+	conversion on checkin and checkout as described above.  Line endings
+	are normalized to LF in the index every time the file is checked in,
+	even if the file was previously added to Git with CRLF line endings.
 
 Unset::
 
@@ -142,10 +141,11 @@ Unset::
 
 Set to string value "auto"::
 
-	When `text` is set to "auto", the path is marked for automatic
-	end-of-line conversion.  If Git decides that the content is
-	text, its line endings are converted to LF on checkin.
-	When the file has been committed with CRLF, no conversion is done.
+	When `text` is set to "auto", Git decides by itself whether the file
+	is text or binary.  If it is text and the file was not already in
+	Git with CRLF endings, line endings are converted on checkin and
+	checkout as described above.  Otherwise, no conversion is done on
+	checkin or checkout.
 
 Unspecified::
 
@@ -159,26 +159,29 @@ unspecified.
 `eol`
 ^^^^^
 
-This attribute sets a specific line-ending style to be used in the
-working directory.  This attribute has effect only if the `text`
-attribute is set or unspecified, or if it is set to `auto`, the file is
-detected as text, and it is stored with LF endings in the index.  Note
-that setting this attribute on paths which are in the index with CRLF
-line endings may make the paths to be considered dirty unless
-`text=auto` is set. Adding the path to the index again will normalize
-the line endings in the index.
+This attribute marks a path to use a specific line-ending style in the
+working tree when it is checked out.  It has effect only if `text` or
+`text=auto` is set (see above), but specifying `eol` automatically sets
+`text` if `text` was left unspecified.
 
 Set to string value "crlf"::
 
-	This setting forces Git to normalize line endings for this
-	file on checkin and convert them to CRLF when the file is
-	checked out.
+	This setting converts the file's line endings in the working
+	directory to CRLF when the file is checked out.
 
 Set to string value "lf"::
 
-	This setting forces Git to normalize line endings to LF on
-	checkin and prevents conversion to CRLF when the file is
-	checked out.
+	This setting uses the same line endings in the working directory as
+	in the index when the file is checked out.
+
+Unspecified::
+
+	If the `eol` attribute is unspecified for a file, its line endings
+	in the working directory are determined by the `core.autocrlf` or
+	`core.eol` configuration variable (see the definitions of those
+	options in linkgit:git-config[1]).  If `text` is set but neither of
+	those variables is, the default is `eol=crlf` on Windows and
+	`eol=lf` on all other platforms.
 
 Backwards compatibility with `crlf` attribute
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1129,7 +1132,10 @@ size (see below).
 The merge driver is expected to leave the result of the merge in
 the file named with `%A` by overwriting it, and exit with zero
 status if it managed to merge them cleanly, or non-zero if there
-were conflicts.
+were conflicts.  When the driver crashes (e.g. killed by SEGV),
+it is expected to exit with non-zero status that are higher than
+128, and in such a case, the merge results in a failure (which is
+different from producing a conflict).
 
 The `merge.*.recursive` variable specifies what other merge
 driver to use when the merge driver is called for an internal

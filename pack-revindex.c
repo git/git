@@ -1,9 +1,14 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "gettext.h"
 #include "pack-revindex.h"
-#include "object-store.h"
+#include "object-file.h"
+#include "object-store-ll.h"
 #include "packfile.h"
+#include "strbuf.h"
+#include "trace2.h"
 #include "config.h"
 #include "midx.h"
+#include "csum-file.h"
 
 struct revindex_entry {
 	off_t offset;
@@ -204,10 +209,14 @@ static int load_revindex_from_disk(char *revindex_name,
 	size_t revindex_size;
 	struct revindex_header *hdr;
 
+	if (git_env_bool(GIT_TEST_REV_INDEX_DIE_ON_DISK, 0))
+		die("dying as requested by '%s'", GIT_TEST_REV_INDEX_DIE_ON_DISK);
+
 	fd = git_open(revindex_name);
 
 	if (fd < 0) {
-		ret = -1;
+		/* "No file" means return 1. */
+		ret = 1;
 		goto cleanup;
 	}
 	if (fstat(fd, &st)) {
@@ -259,7 +268,7 @@ cleanup:
 	return ret;
 }
 
-static int load_pack_revindex_from_disk(struct packed_git *p)
+int load_pack_revindex_from_disk(struct packed_git *p)
 {
 	char *revindex_name;
 	int ret;
@@ -282,16 +291,56 @@ cleanup:
 	return ret;
 }
 
-int load_pack_revindex(struct packed_git *p)
+int load_pack_revindex(struct repository *r, struct packed_git *p)
 {
 	if (p->revindex || p->revindex_data)
 		return 0;
 
-	if (!load_pack_revindex_from_disk(p))
+	prepare_repo_settings(r);
+
+	if (r->settings.pack_read_reverse_index &&
+	    !load_pack_revindex_from_disk(p))
 		return 0;
 	else if (!create_pack_revindex_in_memory(p))
 		return 0;
 	return -1;
+}
+
+/*
+ * verify_pack_revindex verifies that the on-disk rev-index for the given
+ * pack-file is the same that would be created if written from scratch.
+ *
+ * A negative number is returned on error.
+ */
+int verify_pack_revindex(struct packed_git *p)
+{
+	int res = 0;
+
+	/* Do not bother checking if not initialized. */
+	if (!p->revindex_map || !p->revindex_data)
+		return res;
+
+	if (!hashfile_checksum_valid((const unsigned char *)p->revindex_map, p->revindex_size)) {
+		error(_("invalid checksum"));
+		res = -1;
+	}
+
+	/* This may fail due to a broken .idx. */
+	if (create_pack_revindex_in_memory(p))
+		return res;
+
+	for (size_t i = 0; i < p->num_objects; i++) {
+		uint32_t nr = p->revindex[i].nr;
+		uint32_t rev_val = get_be32(p->revindex_data + i);
+
+		if (nr != rev_val) {
+			error(_("invalid rev-index position at %"PRIu64": %"PRIu32" != %"PRIu32""),
+			      (uint64_t)i, nr, rev_val);
+			res = -1;
+		}
+	}
+
+	return res;
 }
 
 int load_midx_revindex(struct multi_pack_index *m)
@@ -355,7 +404,7 @@ int offset_to_pack_pos(struct packed_git *p, off_t ofs, uint32_t *pos)
 {
 	unsigned lo, hi;
 
-	if (load_pack_revindex(p) < 0)
+	if (load_pack_revindex(the_repository, p) < 0)
 		return -1;
 
 	lo = 0;

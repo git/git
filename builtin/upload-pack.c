@@ -1,9 +1,11 @@
-#include "cache.h"
 #include "builtin.h"
 #include "exec-cmd.h"
+#include "gettext.h"
 #include "pkt-line.h"
 #include "parse-options.h"
+#include "path.h"
 #include "protocol.h"
+#include "replace-object.h"
 #include "upload-pack.h"
 #include "serve.h"
 
@@ -34,7 +36,7 @@ int cmd_upload_pack(int argc, const char **argv, const char *prefix)
 	};
 
 	packet_trace_identity("upload-pack");
-	read_replace_refs = 0;
+	disable_replace_refs();
 
 	argc = parse_options(argc, argv, prefix, options, upload_pack_usage, 0);
 

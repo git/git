@@ -1,7 +1,10 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "bundle-uri.h"
 #include "bundle.h"
-#include "object-store.h"
+#include "copy.h"
+#include "environment.h"
+#include "gettext.h"
+#include "object-store-ll.h"
 #include "refs.h"
 #include "run-command.h"
 #include "hashmap.h"
@@ -221,7 +224,9 @@ static int bundle_list_update(const char *key, const char *value,
 	return 0;
 }
 
-static int config_to_bundle_list(const char *key, const char *value, void *data)
+static int config_to_bundle_list(const char *key, const char *value,
+				 const struct config_context *ctx UNUSED,
+				 void *data)
 {
 	struct bundle_list *list = data;
 	return bundle_list_update(key, value, list);
@@ -250,6 +255,7 @@ int bundle_uri_parse_config_format(const char *uri,
 	}
 	result = git_config_from_file_with_options(config_to_bundle_list,
 						   filename, list,
+						   CONFIG_SCOPE_UNKNOWN,
 						   &opts);
 
 	if (!result && list->mode == BUNDLE_MODE_NONE) {
@@ -792,6 +798,15 @@ int fetch_bundle_uri(struct repository *r, const char *uri,
 
 	init_bundle_list(&list);
 
+	/*
+	 * Do not fetch an empty bundle URI. An empty bundle URI
+	 * could signal that a configured bundle URI has been disabled.
+	 */
+	if (!*uri) {
+		result = 0;
+		goto cleanup;
+	}
+
 	/* If a bundle is added to this global list, then it is required. */
 	list.mode = BUNDLE_MODE_ALL;
 
@@ -859,7 +874,9 @@ cached:
 	return advertise_bundle_uri;
 }
 
-static int config_to_packet_line(const char *key, const char *value, void *data)
+static int config_to_packet_line(const char *key, const char *value,
+				 const struct config_context *ctx UNUSED,
+				 void *data)
 {
 	struct packet_reader *writer = data;
 
@@ -884,7 +901,7 @@ int bundle_uri_command(struct repository *r,
 	 * Read all "bundle.*" config lines to the client as key=value
 	 * packet lines.
 	 */
-	git_config(config_to_packet_line, &writer);
+	repo_config(r, config_to_packet_line, &writer);
 
 	packet_writer_flush(&writer);
 

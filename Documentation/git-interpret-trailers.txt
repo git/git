@@ -14,21 +14,38 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Help parsing or adding 'trailers' lines, that look similar to RFC 822 e-mail
+Add or parse 'trailer' lines that look similar to RFC 822 e-mail
 headers, at the end of the otherwise free-form part of a commit
-message.
+message. For example, in the following commit message
 
-This command reads some patches or commit messages from either the
-<file> arguments or the standard input if no <file> is specified. If
-`--parse` is specified, the output consists of the parsed trailers.
+------------------------------------------------
+subject
 
+Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+
+Signed-off-by: Alice <alice@example.com>
+Signed-off-by: Bob <bob@example.com>
+------------------------------------------------
+
+the last two lines starting with "Signed-off-by" are trailers.
+
+This command reads commit messages from either the
+<file> arguments or the standard input if no <file> is specified.
+If `--parse` is specified, the output consists of the parsed trailers.
 Otherwise, this command applies the arguments passed using the
-`--trailer` option, if any, to the commit message part of each input
-file. The result is emitted on the standard output.
+`--trailer` option, if any, to each input file. The result is emitted on the
+standard output.
+
+This command can also operate on the output of linkgit:git-format-patch[1],
+which is more elaborate than a plain commit message. Namely, such output
+includes a commit message (as above), a "---" divider line, and a patch part.
+For these inputs, the divider and patch parts are not modified by
+this command and are emitted as is on the output, unless
+`--no-divider` is specified.
 
 Some configuration variables control the way the `--trailer` arguments
-are applied to each commit message and the way any existing trailer in
-the commit message is changed. They also make it possible to
+are applied to each input and the way any existing trailer in
+the input is changed. They also make it possible to
 automatically add some trailers.
 
 By default, a '<token>=<value>' or '<token>:<value>' argument given
@@ -36,41 +53,46 @@ using `--trailer` will be appended after the existing trailers only if
 the last trailer has a different (<token>, <value>) pair (or if there
 is no existing trailer). The <token> and <value> parts will be trimmed
 to remove starting and trailing whitespace, and the resulting trimmed
-<token> and <value> will appear in the message like this:
+<token> and <value> will appear in the output like this:
 
 ------------------------------------------------
 token: value
 ------------------------------------------------
 
 This means that the trimmed <token> and <value> will be separated by
-`': '` (one colon followed by one space).
+`': '` (one colon followed by one space). For convenience, the <token> can be a
+shortened string key (e.g., "sign") instead of the full string which should
+appear before the separator on the output (e.g., "Signed-off-by"). This can be
+configured using the 'trailer.<token>.key' configuration variable.
 
 By default the new trailer will appear at the end of all the existing
 trailers. If there is no existing trailer, the new trailer will appear
-after the commit message part of the output, and, if there is no line
-with only spaces at the end of the commit message part, one blank line
-will be added before the new trailer.
+at the end of the input. A blank line will be added before the new
+trailer if there isn't one already.
 
-Existing trailers are extracted from the input message by looking for
+Existing trailers are extracted from the input by looking for
 a group of one or more lines that (i) is all trailers, or (ii) contains at
 least one Git-generated or user-configured trailer and consists of at
 least 25% trailers.
 The group must be preceded by one or more empty (or whitespace-only) lines.
-The group must either be at the end of the message or be the last
+The group must either be at the end of the input or be the last
 non-whitespace lines before a line that starts with '---' (followed by a
-space or the end of the line). Such three minus signs start the patch
-part of the message. See also `--no-divider` below.
+space or the end of the line).
 
 When reading trailers, there can be no whitespace before or inside the
-token, but any number of regular space and tab characters are allowed
-between the token and the separator. There can be whitespaces before,
-inside or after the value. The value may be split over multiple lines
+<token>, but any number of regular space and tab characters are allowed
+between the <token> and the separator. There can be whitespaces before,
+inside or after the <value>. The <value> may be split over multiple lines
 with each subsequent line starting with at least one whitespace, like
-the "folding" in RFC 822.
+the "folding" in RFC 822. Example:
 
-Note that 'trailers' do not follow and are not intended to follow many
-rules for RFC 822 headers. For example they do not follow
-the encoding rules and probably many other rules.
+------------------------------------------------
+token: This is a very long value, with spaces and
+  newlines in it.
+------------------------------------------------
+
+Note that trailers do not follow (nor are they intended to follow) many of the
+rules for RFC 822 headers. For example they do not follow the encoding rule.
 
 OPTIONS
 -------
@@ -79,12 +101,12 @@ OPTIONS
 
 --trim-empty::
 	If the <value> part of any trailer contains only whitespace,
-	the whole trailer will be removed from the resulting message.
+	the whole trailer will be removed from the output.
 	This applies to existing trailers as well as new trailers.
 
 --trailer <token>[(=|:)<value>]::
 	Specify a (<token>, <value>) pair that should be applied as a
-	trailer to the input messages. See the description of this
+	trailer to the inputs. See the description of this
 	command.
 
 --where <placement>::
@@ -98,7 +120,7 @@ OPTIONS
 --if-exists <action>::
 --no-if-exists::
 	Specify what action will be performed when there is already at
-	least one trailer with the same <token> in the message.  A setting
+	least one trailer with the same <token> in the input.  A setting
 	provided with '--if-exists' overrides all configuration variables
 	and applies to all '--trailer' options until the next occurrence of
 	'--if-exists' or '--no-if-exists'. Possible actions are `addIfDifferent`,
@@ -107,7 +129,7 @@ OPTIONS
 --if-missing <action>::
 --no-if-missing::
 	Specify what action will be performed when there is no other
-	trailer with the same <token> in the message.  A setting
+	trailer with the same <token> in the input.  A setting
 	provided with '--if-missing' overrides all configuration variables
 	and applies to all '--trailer' options until the next occurrence of
 	'--if-missing' or '--no-if-missing'. Possible actions are `doNothing`
@@ -174,7 +196,7 @@ first trailer with the same <token>.
 trailer.ifexists::
 	This option makes it possible to choose what action will be
 	performed when there is already at least one trailer with the
-	same <token> in the message.
+	same <token> in the input.
 +
 The valid values for this option are: `addIfDifferentNeighbor` (this
 is the default), `addIfDifferent`, `add`, `replace` or `doNothing`.
@@ -184,10 +206,10 @@ trailer with the same (<token>, <value>) pair is above or below the line
 where the new trailer will be added.
 +
 With `addIfDifferent`, a new trailer will be added only if no trailer
-with the same (<token>, <value>) pair is already in the message.
+with the same (<token>, <value>) pair is already in the input.
 +
 With `add`, a new trailer will be added, even if some trailers with
-the same (<token>, <value>) pair are already in the message.
+the same (<token>, <value>) pair are already in the input.
 +
 With `replace`, an existing trailer with the same <token> will be
 deleted and the new trailer will be added. The deleted trailer will be
@@ -195,12 +217,12 @@ the closest one (with the same <token>) to the place where the new one
 will be added.
 +
 With `doNothing`, nothing will be done; that is no new trailer will be
-added if there is already one with the same <token> in the message.
+added if there is already one with the same <token> in the input.
 
 trailer.ifmissing::
 	This option makes it possible to choose what action will be
 	performed when there is not yet any trailer with the same
-	<token> in the message.
+	<token> in the input.
 +
 The valid values for this option are: `add` (this is the default) and
 `doNothing`.
@@ -235,13 +257,13 @@ trailer.<token>.ifmissing::
 	that option for trailers with the specified <token>.
 
 trailer.<token>.command::
+	Deprecated in favor of 'trailer.<token>.cmd'.
 	This option behaves in the same way as 'trailer.<token>.cmd', except
 	that it doesn't pass anything as argument to the specified command.
 	Instead the first occurrence of substring $ARG is replaced by the
-	value that would be passed as argument.
+	<value> that would be passed as argument.
 +
-The 'trailer.<token>.command' option has been deprecated in favor of
-'trailer.<token>.cmd' due to the fact that $ARG in the user's command is
+Note that $ARG in the user's command is
 only replaced once and that the original way of replacing $ARG is not safe.
 +
 When both 'trailer.<token>.cmd' and 'trailer.<token>.command' are given
@@ -249,10 +271,10 @@ for the same <token>, 'trailer.<token>.cmd' is used and
 'trailer.<token>.command' is ignored.
 
 trailer.<token>.cmd::
-	This option can be used to specify a shell command that will be called:
+	This option can be used to specify a shell command that will be called
 	once to automatically add a trailer with the specified <token>, and then
-	each time a '--trailer <token>=<value>' argument to modify the <value> of
-	the trailer that this option would produce.
+	called each time a '--trailer <token>=<value>' argument is specified to
+	modify the <value> of the trailer that this option would produce.
 +
 When the specified command is first called to add a trailer
 with the specified <token>, the behavior is as if a special
@@ -272,37 +294,37 @@ EXAMPLES
 --------
 
 * Configure a 'sign' trailer with a 'Signed-off-by' key, and then
-  add two of these trailers to a message:
+  add two of these trailers to a commit message file:
 +
 ------------
 $ git config trailer.sign.key "Signed-off-by"
 $ cat msg.txt
 subject
 
-message
-$ cat msg.txt | git interpret-trailers --trailer 'sign: Alice <alice@example.com>' --trailer 'sign: Bob <bob@example.com>'
+body text
+$ git interpret-trailers --trailer 'sign: Alice <alice@example.com>' --trailer 'sign: Bob <bob@example.com>' <msg.txt
 subject
 
-message
+body text
 
 Signed-off-by: Alice <alice@example.com>
 Signed-off-by: Bob <bob@example.com>
 ------------
 
-* Use the `--in-place` option to edit a message file in place:
+* Use the `--in-place` option to edit a commit message file in place:
 +
 ------------
 $ cat msg.txt
 subject
 
-message
+body text
 
 Signed-off-by: Bob <bob@example.com>
 $ git interpret-trailers --trailer 'Acked-by: Alice <alice@example.com>' --in-place msg.txt
 $ cat msg.txt
 subject
 
-message
+body text
 
 Signed-off-by: Bob <bob@example.com>
 Acked-by: Alice <alice@example.com>
@@ -322,17 +344,30 @@ $ git interpret-trailers --trailer 'Cc: Alice <alice@example.com>' --trailer 'Re
   'Signed-off-by: ' already, and show how it works:
 +
 ------------
+$ cat msg1.txt
+subject
+
+body text
 $ git config trailer.sign.key "Signed-off-by: "
 $ git config trailer.sign.ifmissing add
 $ git config trailer.sign.ifexists doNothing
-$ git config trailer.sign.command 'echo "$(git config user.name) <$(git config user.email)>"'
-$ git interpret-trailers <<EOF
-> EOF
+$ git config trailer.sign.cmd 'echo "$(git config user.name) <$(git config user.email)>"'
+$ git interpret-trailers --trailer sign <msg1.txt
+subject
+
+body text
 
 Signed-off-by: Bob <bob@example.com>
-$ git interpret-trailers <<EOF
-> Signed-off-by: Alice <alice@example.com>
-> EOF
+$ cat msg2.txt
+subject
+
+body text
+
+Signed-off-by: Alice <alice@example.com>
+$ git interpret-trailers --trailer sign <msg2.txt
+subject
+
+body text
 
 Signed-off-by: Alice <alice@example.com>
 ------------
@@ -357,18 +392,17 @@ Fix #42
 $ cat ~/bin/glog-find-author
 #!/bin/sh
 test -n "$1" && git log --author="$1" --pretty="%an <%ae>" -1 || true
+$ cat msg.txt
+subject
+
+body text
 $ git config trailer.help.key "Helped-by: "
 $ git config trailer.help.ifExists "addIfDifferentNeighbor"
 $ git config trailer.help.cmd "~/bin/glog-find-author"
-$ git interpret-trailers --trailer="help:Junio" --trailer="help:Couder" <<EOF
-> subject
->
-> message
->
-> EOF
+$ git interpret-trailers --trailer="help:Junio" --trailer="help:Couder" <msg.txt
 subject
 
-message
+body text
 
 Helped-by: Junio C Hamano <gitster@pobox.com>
 Helped-by: Christian Couder <christian.couder@gmail.com>
@@ -382,18 +416,17 @@ Helped-by: Christian Couder <christian.couder@gmail.com>
 $ cat ~/bin/glog-grep
 #!/bin/sh
 test -n "$1" && git log --grep "$1" --pretty=reference -1 || true
+$ cat msg.txt
+subject
+
+body text
 $ git config trailer.ref.key "Reference-to: "
 $ git config trailer.ref.ifExists "replace"
 $ git config trailer.ref.cmd "~/bin/glog-grep"
-$ git interpret-trailers --trailer="ref:Add copyright notices." <<EOF
-> subject
->
-> message
->
-> EOF
+$ git interpret-trailers --trailer="ref:Add copyright notices." <msg.txt
 subject
 
-message
+body text
 
 Reference-to: 8bc9a0c769 (Add copyright notices., 2005-04-07)
 ------------
@@ -402,20 +435,23 @@ Reference-to: 8bc9a0c769 (Add copyright notices., 2005-04-07)
   commit that is related, and show how it works:
 +
 ------------
+$ cat msg.txt
+subject
+
+body text
+
+see: HEAD~2
+$ cat ~/bin/glog-ref
+#!/bin/sh
+git log -1 --oneline --format="%h (%s)" --abbrev-commit --abbrev=14
 $ git config trailer.see.key "See-also: "
 $ git config trailer.see.ifExists "replace"
 $ git config trailer.see.ifMissing "doNothing"
-$ git config trailer.see.command "git log -1 --oneline --format=\"%h (%s)\" --abbrev-commit --abbrev=14 \$ARG"
-$ git interpret-trailers <<EOF
-> subject
-> 
-> message
-> 
-> see: HEAD~2
-> EOF
+$ git config trailer.see.cmd "glog-ref"
+$ git interpret-trailers --trailer=see <msg.txt
 subject
 
-message
+body text
 
 See-also: fe3187489d69c4 (subject of related commit)
 ------------
@@ -427,22 +463,21 @@ See-also: fe3187489d69c4 (subject of related commit)
   to add a 'git-version' trailer:
 +
 ------------
-$ sed -e 's/ Z$/ /' >commit_template.txt <<EOF
-> ***subject***
-> 
-> ***message***
-> 
-> Fixes: Z
-> Cc: Z
-> Reviewed-by: Z
-> Signed-off-by: Z
-> EOF
+$ cat temp.txt
+***subject***
+
+***message***
+
+Fixes: Z
+Cc: Z
+Reviewed-by: Z
+Signed-off-by: Z
+$ sed -e 's/ Z$/ /' temp.txt > commit_template.txt
 $ git config commit.template commit_template.txt
-$ cat >.git/hooks/commit-msg <<EOF
-> #!/bin/sh
-> git interpret-trailers --trim-empty --trailer "git-version: \$(git describe)" "\$1" > "\$1.new"
-> mv "\$1.new" "\$1"
-> EOF
+$ cat .git/hooks/commit-msg
+#!/bin/sh
+git interpret-trailers --trim-empty --trailer "git-version: \$(git describe)" "\$1" > "\$1.new"
+mv "\$1.new" "\$1"
 $ chmod +x .git/hooks/commit-msg
 ------------
 

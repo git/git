@@ -1,7 +1,12 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "abspath.h"
+#include "advice.h"
+#include "gettext.h"
 #include "hook.h"
+#include "path.h"
 #include "run-command.h"
 #include "config.h"
+#include "strbuf.h"
 
 const char *find_hook(const char *name)
 {
@@ -43,9 +48,9 @@ int hook_exists(const char *name)
 }
 
 static int pick_next_hook(struct child_process *cp,
-			  struct strbuf *out,
+			  struct strbuf *out UNUSED,
 			  void *pp_cb,
-			  void **pp_task_cb)
+			  void **pp_task_cb UNUSED)
 {
 	struct hook_cb_data *hook_cb = pp_cb;
 	const char *hook_path = hook_cb->hook_path;
@@ -77,9 +82,9 @@ static int pick_next_hook(struct child_process *cp,
 	return 1;
 }
 
-static int notify_start_failure(struct strbuf *out,
+static int notify_start_failure(struct strbuf *out UNUSED,
 				void *pp_cb,
-				void *pp_task_cp)
+				void *pp_task_cp UNUSED)
 {
 	struct hook_cb_data *hook_cb = pp_cb;
 
@@ -89,9 +94,9 @@ static int notify_start_failure(struct strbuf *out,
 }
 
 static int notify_hook_finished(int result,
-				struct strbuf *out,
+				struct strbuf *out UNUSED,
 				void *pp_cb,
-				void *pp_task_cb)
+				void *pp_task_cb UNUSED)
 {
 	struct hook_cb_data *hook_cb = pp_cb;
 	struct run_hooks_opt *opt = hook_cb->options;

@@ -1,6 +1,7 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "repository.h"
 #include "config.h"
+#include "hash-ll.h"
 #include "pkt-line.h"
 #include "version.h"
 #include "ls-refs.h"
@@ -8,17 +9,18 @@
 #include "serve.h"
 #include "upload-pack.h"
 #include "bundle-uri.h"
+#include "trace2.h"
 
 static int advertise_sid = -1;
 static int client_hash_algo = GIT_HASH_SHA1;
 
-static int always_advertise(struct repository *r,
-			    struct strbuf *value)
+static int always_advertise(struct repository *r UNUSED,
+			    struct strbuf *value UNUSED)
 {
 	return 1;
 }
 
-static int agent_advertise(struct repository *r,
+static int agent_advertise(struct repository *r UNUSED,
 			   struct strbuf *value)
 {
 	if (value)
@@ -34,7 +36,7 @@ static int object_format_advertise(struct repository *r,
 	return 1;
 }
 
-static void object_format_receive(struct repository *r,
+static void object_format_receive(struct repository *r UNUSED,
 				  const char *algo_name)
 {
 	if (!algo_name)
@@ -48,7 +50,7 @@ static void object_format_receive(struct repository *r,
 static int session_id_advertise(struct repository *r, struct strbuf *value)
 {
 	if (advertise_sid == -1 &&
-	    git_config_get_bool("transfer.advertisesid", &advertise_sid))
+	    repo_config_get_bool(r, "transfer.advertisesid", &advertise_sid))
 		advertise_sid = 0;
 	if (!advertise_sid)
 		return 0;
@@ -57,7 +59,7 @@ static int session_id_advertise(struct repository *r, struct strbuf *value)
 	return 1;
 }
 
-static void session_id_receive(struct repository *r,
+static void session_id_receive(struct repository *r UNUSED,
 			       const char *client_sid)
 {
 	if (!client_sid)

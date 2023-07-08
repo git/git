@@ -3,15 +3,20 @@
  * declaration matches the definition in this file.
  */
 #define USE_THE_INDEX_VARIABLE
-#include "cache.h"
+#include "git-compat-util.h"
+#include "abspath.h"
 #include "repository.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "config.h"
 #include "object.h"
 #include "lockfile.h"
+#include "path.h"
+#include "read-cache-ll.h"
 #include "remote.h"
+#include "setup.h"
 #include "submodule-config.h"
 #include "sparse-index.h"
+#include "trace2.h"
 #include "promisor-remote.h"
 
 /* The main repository */
@@ -179,6 +184,7 @@ int repo_init(struct repository *repo,
 		goto error;
 
 	repo_set_hash_algo(repo, format.hash_algo);
+	repo->repository_format_worktree_config = format.worktree_config;
 
 	/* take ownership of format.partial_clone */
 	repo->repository_format_partial_clone = format.partial_clone;

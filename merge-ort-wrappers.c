@@ -1,6 +1,10 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "gettext.h"
+#include "hash.h"
 #include "merge-ort.h"
 #include "merge-ort-wrappers.h"
+#include "read-cache-ll.h"
+#include "tree.h"
 
 #include "commit.h"
 

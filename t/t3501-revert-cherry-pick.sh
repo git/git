@@ -1,14 +1,6 @@
 #!/bin/sh
 
-test_description='test cherry-pick and revert with renames
-
-  --
-   + rename2: renames oops to opos
-  +  rename1: renames oops to spoo
-  +  added:   adds extra line to oops
-  ++ initial: has lines in oops
-
-'
+test_description='miscellaneous basic tests for cherry-pick and revert'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
@@ -62,6 +54,14 @@ test_expect_success 'revert --nonsense' '
 	git diff --exit-code HEAD "$pos" &&
 	test_i18ngrep "[Uu]sage:" msg
 '
+
+# the following two test cherry-pick and revert with renames
+#
+# --
+#  + rename2: renames oops to opos
+# +  rename1: renames oops to spoo
+# +  added:   adds extra line to oops
+# ++ initial: has lines in oops
 
 test_expect_success 'cherry-pick after renaming branch' '
 

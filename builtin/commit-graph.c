@@ -1,13 +1,19 @@
 #include "builtin.h"
+#include "commit.h"
 #include "config.h"
 #include "dir.h"
+#include "environment.h"
+#include "gettext.h"
+#include "hex.h"
 #include "lockfile.h"
 #include "parse-options.h"
 #include "repository.h"
 #include "commit-graph.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "progress.h"
+#include "replace-object.h"
 #include "tag.h"
+#include "trace2.h"
 
 #define BUILTIN_COMMIT_GRAPH_VERIFY_USAGE \
 	N_("git commit-graph verify [--object-dir <dir>] [--shallow] [--[no-]progress]")
@@ -181,10 +187,11 @@ static int write_option_max_new_filters(const struct option *opt,
 }
 
 static int git_commit_graph_write_config(const char *var, const char *value,
+					 const struct config_context *ctx,
 					 void *cb UNUSED)
 {
 	if (!strcmp(var, "commitgraph.maxnewfilters"))
-		write_opts.max_new_filters = git_config_int(var, value);
+		write_opts.max_new_filters = git_config_int(var, value, ctx->kvi);
 	/*
 	 * No need to fall-back to 'git_default_config', since this was already
 	 * called in 'cmd_commit_graph()'.
@@ -319,7 +326,7 @@ int cmd_commit_graph(int argc, const char **argv, const char *prefix)
 
 	git_config(git_default_config, NULL);
 
-	read_replace_refs = 0;
+	disable_replace_refs();
 	save_commit_buffer = 0;
 
 	argc = parse_options(argc, argv, prefix, options,

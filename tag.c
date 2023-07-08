@@ -1,12 +1,16 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "environment.h"
 #include "tag.h"
-#include "object-store.h"
+#include "object-name.h"
+#include "object-store-ll.h"
 #include "commit.h"
 #include "tree.h"
 #include "blob.h"
 #include "alloc.h"
 #include "gpg-interface.h"
+#include "hex.h"
 #include "packfile.h"
+#include "wrapper.h"
 
 const char *tag_type = "tag";
 
@@ -51,15 +55,15 @@ int gpg_verify_tag(const struct object_id *oid, const char *name_to_report,
 		return error("%s: cannot verify a non-tag object of type %s.",
 				name_to_report ?
 				name_to_report :
-				find_unique_abbrev(oid, DEFAULT_ABBREV),
+				repo_find_unique_abbrev(the_repository, oid, DEFAULT_ABBREV),
 				type_name(type));
 
-	buf = read_object_file(oid, &type, &size);
+	buf = repo_read_object_file(the_repository, oid, &type, &size);
 	if (!buf)
 		return error("%s: unable to read file.",
 				name_to_report ?
 				name_to_report :
-				find_unique_abbrev(oid, DEFAULT_ABBREV));
+				repo_find_unique_abbrev(the_repository, oid, DEFAULT_ABBREV));
 
 	ret = run_gpg_verify(buf, size, flags);
 
@@ -216,7 +220,8 @@ int parse_tag(struct tag *item)
 
 	if (item->object.parsed)
 		return 0;
-	data = read_object_file(&item->object.oid, &type, &size);
+	data = repo_read_object_file(the_repository, &item->object.oid, &type,
+				     &size);
 	if (!data)
 		return error("Could not read %s",
 			     oid_to_hex(&item->object.oid));

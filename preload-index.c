@@ -1,14 +1,20 @@
 /*
  * Copyright (C) 2008 Linus Torvalds
  */
-#include "cache.h"
+#include "git-compat-util.h"
 #include "pathspec.h"
 #include "dir.h"
+#include "environment.h"
 #include "fsmonitor.h"
+#include "gettext.h"
 #include "config.h"
+#include "preload-index.h"
 #include "progress.h"
+#include "read-cache.h"
 #include "thread-utils.h"
 #include "repository.h"
+#include "symlinks.h"
+#include "trace2.h"
 
 /*
  * Mostly randomly chosen maximum thread counts: we

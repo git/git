@@ -1,6 +1,10 @@
 #include "builtin.h"
+#include "alloc.h"
 #include "config.h"
 #include "delta.h"
+#include "environment.h"
+#include "gettext.h"
+#include "hex.h"
 #include "pack.h"
 #include "csum-file.h"
 #include "blob.h"
@@ -10,11 +14,18 @@
 #include "progress.h"
 #include "fsck.h"
 #include "exec-cmd.h"
+#include "strbuf.h"
 #include "streaming.h"
 #include "thread-utils.h"
 #include "packfile.h"
-#include "object-store.h"
+#include "pack-revindex.h"
+#include "object-file.h"
+#include "object-store-ll.h"
+#include "oid-array.h"
+#include "replace-object.h"
 #include "promisor-remote.h"
+#include "setup.h"
+#include "wrapper.h"
 
 static const char index_pack_usage[] =
 "git index-pack [-v] [-o <index-file>] [--keep | --keep=<msg>] [--[no-]rev-index] [--verify] [--strict] (<pack-file> | --stdin [--fix-thin] [<pack-file>])";
@@ -801,7 +812,8 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 	if (startup_info->have_repository) {
 		read_lock();
 		collision_test_needed =
-			has_object_file_with_flags(oid, OBJECT_INFO_QUICK);
+			repo_has_object_file_with_flags(the_repository, oid,
+							OBJECT_INFO_QUICK);
 		read_unlock();
 	}
 
@@ -821,7 +833,8 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 			die(_("cannot read existing object info %s"), oid_to_hex(oid));
 		if (has_type != type || has_size != size)
 			die(_("SHA1 COLLISION FOUND WITH %s !"), oid_to_hex(oid));
-		has_data = read_object_file(oid, &has_type, &has_size);
+		has_data = repo_read_object_file(the_repository, oid,
+						 &has_type, &has_size);
 		read_unlock();
 		if (!data)
 			data = new_data = get_data_from_pack(obj_entry);
@@ -1388,7 +1401,7 @@ static void fix_unresolved_deltas(struct hashfile *f)
 		sorted_by_pos[i] = &ref_deltas[i];
 	QSORT(sorted_by_pos, nr_ref_deltas, delta_pos_compare);
 
-	if (has_promisor_remote()) {
+	if (repo_has_promisor_remote(the_repository)) {
 		/*
 		 * Prefetch the delta bases.
 		 */
@@ -1414,7 +1427,8 @@ static void fix_unresolved_deltas(struct hashfile *f)
 
 		if (objects[d->obj_no].real_type != OBJ_REF_DELTA)
 			continue;
-		data = read_object_file(&d->oid, &type, &size);
+		data = repo_read_object_file(the_repository, &d->oid, &type,
+					     &size);
 		if (!data)
 			continue;
 
@@ -1568,18 +1582,19 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 	strbuf_release(&pack_name);
 }
 
-static int git_index_pack_config(const char *k, const char *v, void *cb)
+static int git_index_pack_config(const char *k, const char *v,
+				 const struct config_context *ctx, void *cb)
 {
 	struct pack_idx_option *opts = cb;
 
 	if (!strcmp(k, "pack.indexversion")) {
-		opts->version = git_config_int(k, v);
+		opts->version = git_config_int(k, v, ctx->kvi);
 		if (opts->version > 2)
 			die(_("bad pack.indexVersion=%"PRIu32), opts->version);
 		return 0;
 	}
 	if (!strcmp(k, "pack.threads")) {
-		nr_threads = git_config_int(k, v);
+		nr_threads = git_config_int(k, v, ctx->kvi);
 		if (nr_threads < 0)
 			die(_("invalid number of threads specified (%d)"),
 			    nr_threads);
@@ -1595,7 +1610,7 @@ static int git_index_pack_config(const char *k, const char *v, void *cb)
 		else
 			opts->flags &= ~WRITE_REV;
 	}
-	return git_default_config(k, v, cb);
+	return git_default_config(k, v, ctx, cb);
 }
 
 static int cmp_uint32(const void *a_, const void *b_)
@@ -1739,16 +1754,17 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage(index_pack_usage);
 
-	read_replace_refs = 0;
+	disable_replace_refs();
 	fsck_options.walk = mark_link;
 
 	reset_pack_idx_option(&opts);
+	opts.flags |= WRITE_REV;
 	git_config(git_index_pack_config, &opts);
 	if (prefix && chdir(prefix))
 		die(_("Cannot come back to cwd"));
 
-	if (git_env_bool(GIT_TEST_WRITE_REV_INDEX, 0))
-		rev_index = 1;
+	if (git_env_bool(GIT_TEST_NO_WRITE_REV_INDEX, 0))
+		rev_index = 0;
 	else
 		rev_index = !!(opts.flags & (WRITE_REV_VERIFY | WRITE_REV));
 

@@ -188,6 +188,10 @@ For shell scripts specifically (not exhaustive):
    hopefully nobody starts using "local" before they are reimplemented
    in C ;-)
 
+ - Use octal escape sequences (e.g. "\302\242"), not hexadecimal (e.g.
+   "\xc2\xa2") in printf format strings, since hexadecimal escape
+   sequences are not portable.
+
 
 For C programs:
 
@@ -442,8 +446,12 @@ For C programs:
    detail.
 
  - The first #include in C files, except in platform specific compat/
-   implementations, must be either "git-compat-util.h", "cache.h" or
-   "builtin.h".  You do not have to include more than one of these.
+   implementations and sha1dc/, must be either "git-compat-util.h" or
+   one of the approved headers that includes it first for you.  (The
+   approved headers currently include "builtin.h",
+   "t/helper/test-tool.h", "xdiff/xinclude.h", or
+   "reftable/system.h").  You do not have to include more than one of
+   these.
 
  - A C file must directly include the header files that declare the
    functions and the types it uses, except for the functions and types
@@ -683,7 +691,7 @@ Writing Documentation:
    Do: [-q | --quiet]
    Don't: [-q|--quiet]
 
- Don't use spacing around "|" tokens when they're used to seperate the
+ Don't use spacing around "|" tokens when they're used to separate the
  alternate arguments of an option:
     Do: --track[=(direct|inherit)]
     Don't: --track[=(direct | inherit)]

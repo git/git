@@ -1,5 +1,9 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "config.h"
+#include "environment.h"
+#include "gettext.h"
+#include "hex.h"
 #include "remote.h"
 #include "connect.h"
 #include "strbuf.h"
@@ -14,9 +18,12 @@
 #include "credential.h"
 #include "oid-array.h"
 #include "send-pack.h"
+#include "setup.h"
 #include "protocol.h"
 #include "quote.h"
+#include "trace2.h"
 #include "transport.h"
+#include "write-or-die.h"
 
 static struct remote *remote;
 /* always ends with a trailing slash */
@@ -472,10 +479,11 @@ static struct discovery *discover_refs(const char *service, int for_push)
 
 	/*
 	 * NEEDSWORK: If we are trying to use protocol v2 and we are planning
-	 * to perform a push, then fallback to v0 since the client doesn't know
-	 * how to push yet using v2.
+	 * to perform any operation that doesn't involve upload-pack (i.e., a
+	 * fetch, ls-remote, etc), then fallback to v0 since we don't know how
+	 * to do anything else (like push or remote archive) via v2.
 	 */
-	if (version == protocol_v2 && !strcmp("git-receive-pack", service))
+	if (version == protocol_v2 && strcmp("git-upload-pack", service))
 		version = protocol_v0;
 
 	/* Add the extra Git-Protocol header */

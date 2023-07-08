@@ -1,4 +1,5 @@
-#include "object-store.h"
+#include "git-compat-util.h"
+#include "object-store-ll.h"
 #include "packfile.h"
 
 int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size);

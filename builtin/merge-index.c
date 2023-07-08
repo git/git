@@ -1,6 +1,10 @@
 #define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
+#include "hex.h"
+#include "read-cache-ll.h"
+#include "repository.h"
 #include "run-command.h"
+#include "sparse-index.h"
 
 static const char *pgm;
 static int one_shot, quiet;
@@ -70,7 +74,7 @@ static void merge_all(void)
 	}
 }
 
-int cmd_merge_index(int argc, const char **argv, const char *prefix)
+int cmd_merge_index(int argc, const char **argv, const char *prefix UNUSED)
 {
 	int i, force_file = 0;
 

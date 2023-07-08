@@ -10,6 +10,12 @@ objdir=.git/objects
 packdir=$objdir/pack
 midx=$objdir/pack/multi-pack-index
 
+packed_objects () {
+	git show-index <"$1" >tmp-object-list &&
+	cut -d' ' -f2 tmp-object-list | sort &&
+	rm tmp-object-list
+ }
+
 test_expect_success '--geometric with no packs' '
 	git init geometric &&
 	test_when_finished "rm -fr geometric" &&
@@ -279,6 +285,164 @@ test_expect_success '--geometric with pack.packSizeLimit' '
 		# causing object corruption.
 		git fsck
 	)
+'
+
+test_expect_success '--geometric --write-midx with packfiles in main and alternate ODB' '
+	test_when_finished "rm -fr shared member" &&
+
+	# Create a shared repository that will serve as the alternate object
+	# database for the member linked to it. It has got some objects on its
+	# own that are packed into a single packfile.
+	git init shared &&
+	test_commit -C shared common-object &&
+	git -C shared repack -ad &&
+
+	# We create member so that its alternates file points to the shared
+	# repository. We then create a commit in it so that git-repack(1) has
+	# something to repack.
+	# of the shared object database.
+	git clone --shared shared member &&
+	test_commit -C member unique-object &&
+	git -C member repack --geometric=2 --write-midx 2>err &&
+	test_must_be_empty err &&
+
+	# We should see that a new packfile was generated.
+	find shared/.git/objects/pack -type f -name "*.pack" >packs &&
+	test_line_count = 1 packs &&
+
+	# We should also see a multi-pack-index. This multi-pack-index should
+	# never refer to any packfiles in the alternate object database.
+	test_path_is_file member/.git/objects/pack/multi-pack-index &&
+	test-tool read-midx member/.git/objects >packs.midx &&
+	grep "^pack-.*\.idx$" packs.midx | sort >actual &&
+	basename member/.git/objects/pack/pack-*.idx >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '--geometric --with-midx with no local objects' '
+	test_when_finished "rm -fr shared member" &&
+
+	# Create a repository with a single packfile that acts as alternate
+	# object database.
+	git init shared &&
+	test_commit -C shared "shared-objects" &&
+	git -C shared repack -ad &&
+
+	# Create a second repository linked to the first one and perform a
+	# geometric repack on it.
+	git clone --shared shared member &&
+	git -C member repack --geometric 2 --write-midx 2>err &&
+	test_must_be_empty err &&
+
+	# Assert that we wrote neither a new packfile nor a multi-pack-index.
+	# We should not have a packfile because the single packfile in the
+	# alternate object database does not invalidate the geometric sequence.
+	# And we should not have a multi-pack-index because these only index
+	# local packfiles, and there are none.
+	test_dir_is_empty member/$packdir
+'
+
+test_expect_success '--geometric with same pack in main and alternate ODB' '
+	test_when_finished "rm -fr shared member" &&
+
+	# Create a repository with a single packfile that acts as alternate
+	# object database.
+	git init shared &&
+	test_commit -C shared "shared-objects" &&
+	git -C shared repack -ad &&
+
+	# We create the member repository as an exact copy so that it has the
+	# same packfile.
+	cp -r shared member &&
+	test-tool path-utils real_path shared/.git/objects >member/.git/objects/info/alternates &&
+	find shared/.git/objects -type f >expected-files &&
+
+	# Verify that we can repack objects as expected without observing any
+	# error. Having the same packfile in both ODBs used to cause an error
+	# in git-pack-objects(1).
+	git -C member repack --geometric 2 2>err &&
+	test_must_be_empty err &&
+	# Nothing should have changed.
+	find shared/.git/objects -type f >actual-files &&
+	test_cmp expected-files actual-files
+'
+
+test_expect_success '--geometric -l with non-intact geometric sequence across ODBs' '
+	test_when_finished "rm -fr shared member" &&
+
+	git init shared &&
+	test_commit_bulk -C shared --start=1 1 &&
+
+	git clone --shared shared member &&
+	test_commit_bulk -C member --start=2 1 &&
+
+	# Verify that our assumptions actually hold: both generated packfiles
+	# should have three objects and should be non-equal.
+	packed_objects shared/.git/objects/pack/pack-*.idx >shared-objects &&
+	packed_objects member/.git/objects/pack/pack-*.idx >member-objects &&
+	test_line_count = 3 shared-objects &&
+	test_line_count = 3 member-objects &&
+	! test_cmp shared-objects member-objects &&
+
+	# Perform the geometric repack. With `-l`, we should only see the local
+	# packfile and thus arrive at the conclusion that the geometric
+	# sequence is intact. We thus expect no changes.
+	#
+	# Note that we are tweaking mtimes of the packfiles so that we can
+	# verify they did not change. This is done in order to detect the case
+	# where we do repack objects, but the resulting packfile is the same.
+	test-tool chmtime --verbose =0 member/.git/objects/pack/* >expected-member-packs &&
+	git -C member repack --geometric=2 -l -d &&
+	test-tool chmtime --verbose member/.git/objects/pack/* >actual-member-packs &&
+	test_cmp expected-member-packs actual-member-packs &&
+
+	{
+		packed_objects shared/.git/objects/pack/pack-*.idx &&
+		packed_objects member/.git/objects/pack/pack-*.idx
+	} | sort >expected-objects &&
+
+	# On the other hand, when doing a non-local geometric repack we should
+	# see both packfiles and thus repack them. We expect that the shared
+	# object database was not changed.
+	test-tool chmtime --verbose =0 shared/.git/objects/pack/* >expected-shared-packs &&
+	git -C member repack --geometric=2 -d &&
+	test-tool chmtime --verbose shared/.git/objects/pack/* >actual-shared-packs &&
+	test_cmp expected-shared-packs actual-shared-packs &&
+
+	# Furthermore, we expect that the member repository now has a single
+	# packfile that contains the combined shared and non-shared objects.
+	ls member/.git/objects/pack/pack-*.idx >actual &&
+	test_line_count = 1 actual &&
+	packed_objects member/.git/objects/pack/pack-*.idx >actual-objects &&
+	test_line_count = 6 actual-objects &&
+	test_cmp expected-objects actual-objects
+'
+
+test_expect_success '--geometric -l disables writing bitmaps with non-local packfiles' '
+	test_when_finished "rm -fr shared member" &&
+
+	git init shared &&
+	test_commit_bulk -C shared --start=1 1 &&
+
+	git clone --shared shared member &&
+	test_commit_bulk -C member --start=2 1 &&
+
+	# When performing a geometric repack with `-l` while connected to an
+	# alternate object database that has a packfile we do not have full
+	# coverage of objects. As a result, we expect that writing the bitmap
+	# will be disabled.
+	git -C member repack -l --geometric=2 --write-midx --write-bitmap-index 2>err &&
+	cat >expect <<-EOF &&
+	warning: disabling bitmap writing, as some objects are not being packed
+	EOF
+	test_cmp expect err &&
+	test_path_is_missing member/.git/objects/pack/multi-pack-index-*.bitmap &&
+
+	# On the other hand, when we repack without `-l`, we should see that
+	# the bitmap gets created.
+	git -C member repack --geometric=2 --write-midx --write-bitmap-index 2>err &&
+	test_must_be_empty err &&
+	test_path_is_file member/.git/objects/pack/multi-pack-index-*.bitmap
 '
 
 test_done

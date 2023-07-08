@@ -5,12 +5,19 @@
  * Copyright (C) Junio C Hamano, 2005
  */
 #include "builtin.h"
+#include "abspath.h"
 #include "config.h"
-#include "object-store.h"
+#include "gettext.h"
+#include "hex.h"
+#include "object-file.h"
+#include "object-store-ll.h"
 #include "blob.h"
 #include "quote.h"
 #include "parse-options.h"
 #include "exec-cmd.h"
+#include "setup.h"
+#include "strbuf.h"
+#include "write-or-die.h"
 
 /*
  * This is to create corrupt objects for debugging and as such it

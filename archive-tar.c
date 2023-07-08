@@ -1,13 +1,18 @@
 /*
  * Copyright (c) 2005, 2006 Rene Scharfe
  */
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "config.h"
+#include "gettext.h"
+#include "git-zlib.h"
+#include "hex.h"
 #include "tar.h"
 #include "archive.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "streaming.h"
 #include "run-command.h"
+#include "write-or-die.h"
 
 #define RECORDSIZE	(512)
 #define BLOCKSIZE	(RECORDSIZE * 20)
@@ -406,14 +411,15 @@ static int tar_filter_config(const char *var, const char *value,
 	return 0;
 }
 
-static int git_tar_config(const char *var, const char *value, void *cb)
+static int git_tar_config(const char *var, const char *value,
+			  const struct config_context *ctx, void *cb)
 {
 	if (!strcmp(var, "tar.umask")) {
 		if (value && !strcmp(value, "user")) {
 			tar_umask = umask(0);
 			umask(tar_umask);
 		} else {
-			tar_umask = git_config_int(var, value);
+			tar_umask = git_config_int(var, value, ctx->kvi);
 		}
 		return 0;
 	}

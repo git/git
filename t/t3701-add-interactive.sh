@@ -7,12 +7,6 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
-if test_have_prereq !PERL
-then
-	skip_all='skipping add -i (scripted) tests, perl not available'
-	test_done
-fi
-
 diff_cmp () {
 	for x
 	do
@@ -311,9 +305,11 @@ test_expect_success FILEMODE 'stage mode and hunk' '
 	echo content >>file &&
 	chmod +x file &&
 	printf "y\\ny\\n" | git add -p &&
-	git diff --cached file | grep "new mode" &&
-	git diff --cached file | grep "+content" &&
-	test -z "$(git diff file)"
+	git diff --cached file >out &&
+	grep "new mode" out &&
+	grep "+content" out &&
+	git diff file >out &&
+	test_must_be_empty out
 '
 
 # end of tests disabled when filemode is not usable
@@ -738,6 +734,44 @@ test_expect_success 'colors can be overridden' '
 	test_cmp expect actual
 '
 
+test_expect_success 'brackets appear without color' '
+	git reset --hard &&
+	test_when_finished "git rm -f bracket-test" &&
+	test_write_lines context old more-context >bracket-test &&
+	git add bracket-test &&
+	test_write_lines context new more-context another-one >bracket-test &&
+
+	test_write_lines quit >input &&
+	git add -i >actual <input &&
+
+	sed "s/^|//" >expect <<-\EOF &&
+	|           staged     unstaged path
+	|  1:        +3/-0        +2/-1 bracket-test
+	|
+	|*** Commands ***
+	|  1: [s]tatus	  2: [u]pdate	  3: [r]evert	  4: [a]dd untracked
+	|  5: [p]atch	  6: [d]iff	  7: [q]uit	  8: [h]elp
+	|What now> Bye.
+	EOF
+
+	test_cmp expect actual
+'
+
+test_expect_success 'colors can be skipped with color.ui=false' '
+	git reset --hard &&
+	test_when_finished "git rm -f color-test" &&
+	test_write_lines context old more-context >color-test &&
+	git add color-test &&
+	test_write_lines context new more-context another-one >color-test &&
+
+	test_write_lines help quit >input &&
+	force_color git \
+		-c color.ui=false \
+		add -i >actual.raw <input &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp actual.raw actual
+'
+
 test_expect_success 'colorized diffs respect diff.wsErrorHighlight' '
 	git reset --hard &&
 
@@ -1073,6 +1107,27 @@ test_expect_success 'show help from add--helper' '
 	test_write_lines h | force_color git add -i >actual.colored &&
 	test_decode_color <actual.colored >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'reset -p with unmerged files' '
+	test_when_finished "git checkout --force main" &&
+	test_commit one conflict &&
+	git checkout -B side HEAD^ &&
+	test_commit two conflict &&
+	test_must_fail git merge one &&
+
+	# this is a noop with only an unmerged entry
+	git reset -p &&
+
+	# add files that sort before and after unmerged entry
+	echo a >a &&
+	echo z >z &&
+	git add a z &&
+
+	# confirm that we can reset those files
+	printf "%s\n" y y | git reset -p &&
+	git diff-index --cached --diff-filter=u HEAD >staged &&
+	test_must_be_empty staged
 '
 
 test_done

@@ -1,8 +1,10 @@
-#include "cache.h"
 #include "builtin.h"
+#include "gettext.h"
+#include "object-name.h"
 #include "parse-options.h"
 #include "range-diff.h"
 #include "config.h"
+#include "repository.h"
 #include "revision.h"
 
 static const char * const builtin_range_diff_usage[] = {
@@ -65,20 +67,20 @@ int cmd_range_diff(int argc, const char **argv, const char *prefix)
 
 	if (dash_dash == 3 ||
 	    (dash_dash < 0 && argc > 2 &&
-	     !get_oid_committish(argv[0], &oid) &&
-	     !get_oid_committish(argv[1], &oid) &&
-	     !get_oid_committish(argv[2], &oid))) {
+	     !repo_get_oid_committish(the_repository, argv[0], &oid) &&
+	     !repo_get_oid_committish(the_repository, argv[1], &oid) &&
+	     !repo_get_oid_committish(the_repository, argv[2], &oid))) {
 		if (dash_dash < 0)
 			; /* already validated arguments */
-		else if (get_oid_committish(argv[0], &oid))
+		else if (repo_get_oid_committish(the_repository, argv[0], &oid))
 			usage_msg_optf(_("not a revision: '%s'"),
 				       builtin_range_diff_usage, options,
 				       argv[0]);
-		else if (get_oid_committish(argv[1], &oid))
+		else if (repo_get_oid_committish(the_repository, argv[1], &oid))
 			usage_msg_optf(_("not a revision: '%s'"),
 				       builtin_range_diff_usage, options,
 				       argv[1]);
-		else if (get_oid_committish(argv[2], &oid))
+		else if (repo_get_oid_committish(the_repository, argv[2], &oid))
 			usage_msg_optf(_("not a revision: '%s'"),
 				       builtin_range_diff_usage, options,
 				       argv[2]);

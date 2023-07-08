@@ -1,9 +1,11 @@
 #include "git-compat-util.h"
 #include "parse-options.h"
-#include "cache.h"
+#include "abspath.h"
 #include "config.h"
 #include "commit.h"
 #include "color.h"
+#include "gettext.h"
+#include "strbuf.h"
 #include "utf8.h"
 
 static int disallow_abbreviated_options;
@@ -59,12 +61,12 @@ static enum parse_opt_result get_arg(struct parse_opt_ctx_t *p,
 	return 0;
 }
 
-static void fix_filename(const char *prefix, const char **file)
+static void fix_filename(const char *prefix, char **file)
 {
-	if (!file || !*file || !prefix || is_absolute_path(*file)
-	    || !strcmp("-", *file))
-		return;
-	*file = prefix_filename(prefix, *file);
+	if (!file || !*file)
+		; /* leave as NULL */
+	else
+		*file = prefix_filename_except_for_dash(prefix, *file);
 }
 
 static enum parse_opt_result opt_command_mode_error(
@@ -177,7 +179,7 @@ static enum parse_opt_result get_value(struct parse_opt_ctx_t *p,
 			err = get_arg(p, opt, flags, (const char **)opt->value);
 
 		if (!err)
-			fix_filename(p->prefix, (const char **)opt->value);
+			fix_filename(p->prefix, (char **)opt->value);
 		return err;
 
 	case OPTION_CALLBACK:

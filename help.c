@@ -1,9 +1,11 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "alloc.h"
 #include "config.h"
 #include "builtin.h"
 #include "exec-cmd.h"
 #include "run-command.h"
 #include "levenshtein.h"
+#include "gettext.h"
 #include "help.h"
 #include "command-list.h"
 #include "string-list.h"
@@ -307,7 +309,8 @@ void load_command_list(const char *prefix,
 	exclude_cmds(other_cmds, main_cmds);
 }
 
-static int get_colopts(const char *var, const char *value, void *data)
+static int get_colopts(const char *var, const char *value,
+		       const struct config_context *ctx UNUSED, void *data)
 {
 	unsigned int *colopts = data;
 
@@ -457,7 +460,8 @@ void list_developer_interfaces_help(void)
 	putchar('\n');
 }
 
-static int get_alias(const char *var, const char *value, void *data)
+static int get_alias(const char *var, const char *value,
+		     const struct config_context *ctx UNUSED, void *data)
 {
 	struct string_list *list = data;
 
@@ -540,7 +544,9 @@ static struct cmdnames aliases;
 #define AUTOCORRECT_NEVER (-2)
 #define AUTOCORRECT_IMMEDIATELY (-1)
 
-static int git_unknown_cmd_config(const char *var, const char *value, void *cb)
+static int git_unknown_cmd_config(const char *var, const char *value,
+				  const struct config_context *ctx,
+				  void *cb UNUSED)
 {
 	const char *p;
 
@@ -554,7 +560,7 @@ static int git_unknown_cmd_config(const char *var, const char *value, void *cb)
 		} else if (!strcmp(value, "prompt")) {
 			autocorrect = AUTOCORRECT_PROMPT;
 		} else {
-			int v = git_config_int(var, value);
+			int v = git_config_int(var, value, ctx->kvi);
 			autocorrect = (v < 0)
 				? AUTOCORRECT_IMMEDIATELY : v;
 		}

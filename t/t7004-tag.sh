@@ -792,6 +792,34 @@ test_expect_success 'annotations for blobs are empty' '
 	test_cmp expect actual
 '
 
+# Run this before doing any signing, so the test has the same results
+# regardless of the GPG prereq.
+test_expect_success 'git tag --format with ahead-behind' '
+	test_when_finished git reset --hard tag-one-line &&
+	git commit --allow-empty -m "left" &&
+	git tag -a -m left tag-left &&
+	git reset --hard HEAD~1 &&
+	git commit --allow-empty -m "right" &&
+	git tag -a -m left tag-right &&
+
+	# Use " !" at the end to demonstrate whitespace
+	# around empty ahead-behind token for tag-blob.
+	cat >expect <<-EOF &&
+	refs/tags/tag-blob  !
+	refs/tags/tag-left 1 1 !
+	refs/tags/tag-lines 0 1 !
+	refs/tags/tag-one-line 0 1 !
+	refs/tags/tag-right 0 0 !
+	refs/tags/tag-zero-lines 0 1 !
+	EOF
+	git tag -l --format="%(refname) %(ahead-behind:HEAD) !" >actual 2>err &&
+	grep "refs/tags/tag" actual >actual.focus &&
+	test_cmp expect actual.focus &&
+
+	# Error reported for tags that point to non-commits.
+	grep "error: object [0-9a-f]* is a blob, not a commit" err
+'
+
 # trying to verify annotated non-signed tags:
 
 test_expect_success GPG \
@@ -1843,6 +1871,23 @@ test_expect_success 'invalid sort parameter in configuratoin' '
 	test_must_fail git tag -l "foo*"
 '
 
+test_expect_success 'version sort handles empty value for versionsort.{prereleaseSuffix,suffix}' '
+	cp .git/config .git/config.orig &&
+	test_when_finished mv .git/config.orig .git/config &&
+
+	cat >>.git/config <<-\EOF &&
+	[versionsort]
+		prereleaseSuffix
+		suffix
+	EOF
+	cat >expect <<-\EOF &&
+	error: missing value for '\''versionsort.suffix'\''
+	error: missing value for '\''versionsort.prereleasesuffix'\''
+	EOF
+	git tag -l --sort=version:refname 2>actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'version sort with prerelease reordering' '
 	test_config versionsort.prereleaseSuffix -rc &&
 	git tag foo1.6-rc1 &&
@@ -2001,6 +2046,22 @@ test_expect_success '--format should list tags as per format given' '
 	test_cmp expect actual
 '
 
+test_expect_success '--format --omit-empty works' '
+	cat >expect <<-\EOF &&
+	refname : refs/tags/v1.0
+
+	refname : refs/tags/v1.1.3
+	EOF
+	git tag -l --format="%(if:notequals=refs/tags/v1.0.1)%(refname)%(then)refname : %(refname)%(end)" "v1*" >actual &&
+	test_cmp expect actual &&
+	cat >expect <<-\EOF &&
+	refname : refs/tags/v1.0
+	refname : refs/tags/v1.1.3
+	EOF
+	git tag -l --omit-empty --format="%(if:notequals=refs/tags/v1.0.1)%(refname)%(then)refname : %(refname)%(end)" "v1*" >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'git tag -l with --format="%(rest)" must fail' '
 	test_must_fail git tag -l --format="%(rest)" "v1*"
 '
@@ -2125,6 +2186,25 @@ test_expect_success 'Does --[no-]contains stop at commits? Yes!' '
 	v0.2
 	EOF
 	test_cmp expected actual
+'
+
+test_expect_success 'If tag is created then tag message file is unlinked' '
+	test_when_finished "git tag -d foo" &&
+	write_script fakeeditor <<-\EOF &&
+	echo Message >.git/TAG_EDITMSG
+	EOF
+	GIT_EDITOR=./fakeeditor git tag -a foo &&
+	test_path_is_missing .git/TAG_EDITMSG
+'
+
+test_expect_success 'If tag cannot be created then tag message file is not unlinked' '
+	test_when_finished "git tag -d foo/bar && rm .git/TAG_EDITMSG" &&
+	write_script fakeeditor <<-\EOF &&
+	echo Message >.git/TAG_EDITMSG
+	EOF
+	git tag foo/bar &&
+	test_must_fail env GIT_EDITOR=./fakeeditor git tag -a foo &&
+	test_path_exists .git/TAG_EDITMSG
 '
 
 test_done

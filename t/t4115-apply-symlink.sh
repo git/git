@@ -74,7 +74,7 @@ test_expect_success SYMLINKS 'symlink escape when creating new files' '
 	error: affected file ${SQ}renamed-symlink/create-me${SQ} is beyond a symbolic link
 	EOF
 	test_cmp expected_stderr stderr &&
-	! test_path_exists .git/create-me
+	test_path_is_missing .git/create-me
 '
 
 test_expect_success SYMLINKS 'symlink escape when modifying file' '
@@ -124,6 +124,21 @@ test_expect_success SYMLINKS 'symlink escape when deleting file' '
 	EOF
 	test_cmp expected_stderr stderr &&
 	test_path_is_file .git/delete-me
+'
+
+test_expect_success SYMLINKS '--reject removes .rej symlink if it exists' '
+	test_when_finished "git reset --hard && git clean -dfx" &&
+
+	test_commit file &&
+	echo modified >file.t &&
+	git diff -- file.t >patch &&
+	echo modified-again >file.t &&
+
+	ln -s foo file.t.rej &&
+	test_must_fail git apply patch --reject 2>err &&
+	test_i18ngrep "Rejected hunk" err &&
+	test_path_is_missing foo &&
+	test_path_is_file file.t.rej
 '
 
 test_done

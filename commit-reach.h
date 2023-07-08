@@ -19,11 +19,6 @@ struct commit_list *repo_get_merge_bases_many(struct repository *r,
 struct commit_list *repo_get_merge_bases_many_dirty(struct repository *r,
 						    struct commit *one, int n,
 						    struct commit **twos);
-#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
-#define get_merge_bases(r1, r2)           repo_get_merge_bases(the_repository, r1, r2)
-#define get_merge_bases_many(one, n, two) repo_get_merge_bases_many(the_repository, one, n, two)
-#define get_merge_bases_many_dirty(one, n, twos) repo_get_merge_bases_many_dirty(the_repository, one, n, twos)
-#endif
 
 struct commit_list *get_octopus_merge_bases(struct commit_list *in);
 
@@ -36,10 +31,6 @@ int repo_in_merge_bases(struct repository *r,
 int repo_in_merge_bases_many(struct repository *r,
 			     struct commit *commit,
 			     int nr_reference, struct commit **reference);
-#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
-#define in_merge_bases(c1, c2) repo_in_merge_bases(the_repository, c1, c2)
-#define in_merge_bases_many(c1, n, cs) repo_in_merge_bases_many(the_repository, c1, n, cs)
-#endif
 
 /*
  * Takes a list of commits and returns a new list where those
@@ -103,5 +94,45 @@ int can_all_from_reach(struct commit_list *from, struct commit_list *to,
 struct commit_list *get_reachable_subset(struct commit **from, int nr_from,
 					 struct commit **to, int nr_to,
 					 unsigned int reachable_flag);
+
+struct ahead_behind_count {
+	/**
+	 * As input, the *_index members indicate which positions in
+	 * the 'tips' array correspond to the tip and base of this
+	 * comparison.
+	 */
+	size_t tip_index;
+	size_t base_index;
+
+	/**
+	 * These values store the computed counts for each side of the
+	 * symmetric difference:
+	 *
+	 * 'ahead' stores the number of commits reachable from the tip
+	 * and not reachable from the base.
+	 *
+	 * 'behind' stores the number of commits reachable from the base
+	 * and not reachable from the tip.
+	 */
+	unsigned int ahead;
+	unsigned int behind;
+};
+
+/*
+ * Given an array of commits and an array of ahead_behind_count pairs,
+ * compute the ahead/behind counts for each pair.
+ */
+void ahead_behind(struct repository *r,
+		  struct commit **commits, size_t commits_nr,
+		  struct ahead_behind_count *counts, size_t counts_nr);
+
+/*
+ * For all tip commits, add 'mark' to their flags if and only if they
+ * are reachable from one of the commits in 'bases'.
+ */
+void tips_reachable_from_bases(struct repository *r,
+			       struct commit_list *bases,
+			       struct commit **tips, size_t tips_nr,
+			       int mark);
 
 #endif

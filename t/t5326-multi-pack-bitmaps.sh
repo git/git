@@ -434,4 +434,83 @@ test_expect_success 'tagged commits are selected for bitmapping' '
 	)
 '
 
+corrupt_file () {
+	chmod a+w "$1" &&
+	printf "bogus" | dd of="$1" bs=1 seek="12" conv=notrunc
+}
+
+test_expect_success 'git fsck correctly identifies good and bad bitmaps' '
+	git init valid &&
+	test_when_finished rm -rf valid &&
+
+	test_commit_bulk 20 &&
+	git repack -adbf &&
+
+	# Move pack-bitmap aside so it is not deleted
+	# in next repack.
+	packbitmap=$(ls .git/objects/pack/pack-*.bitmap) &&
+	mv "$packbitmap" "$packbitmap.bak" &&
+
+	test_commit_bulk 10 &&
+	git repack -b --write-midx &&
+	midxbitmap=$(ls .git/objects/pack/multi-pack-index-*.bitmap) &&
+
+	# Copy MIDX bitmap to backup. Copy pack bitmap from backup.
+	cp "$midxbitmap" "$midxbitmap.bak" &&
+	cp "$packbitmap.bak" "$packbitmap" &&
+
+	# fsck works at first
+	git fsck 2>err &&
+	test_must_be_empty err &&
+
+	corrupt_file "$packbitmap" &&
+	test_must_fail git fsck 2>err &&
+	grep "bitmap file '\''$packbitmap'\'' has invalid checksum" err &&
+
+	cp "$packbitmap.bak" "$packbitmap" &&
+	corrupt_file "$midxbitmap" &&
+	test_must_fail git fsck 2>err &&
+	grep "bitmap file '\''$midxbitmap'\'' has invalid checksum" err &&
+
+	corrupt_file "$packbitmap" &&
+	test_must_fail git fsck 2>err &&
+	grep "bitmap file '\''$midxbitmap'\'' has invalid checksum" err &&
+	grep "bitmap file '\''$packbitmap'\'' has invalid checksum" err
+'
+
+test_expect_success 'corrupt MIDX with bitmap causes fallback' '
+	git init corrupt-midx-bitmap &&
+	(
+		cd corrupt-midx-bitmap &&
+
+		test_commit first &&
+		git repack -d &&
+		test_commit second &&
+		git repack -d &&
+
+		git multi-pack-index write --bitmap &&
+		checksum=$(midx_checksum $objdir) &&
+		for f in $midx $midx-$checksum.bitmap
+		do
+			mv $f $f.bak || return 1
+		done &&
+
+		# pack everything together, invalidating the MIDX
+		git repack -ad &&
+		# then restore the now-stale MIDX
+		for f in $midx $midx-$checksum.bitmap
+		do
+			mv $f.bak $f || return 1
+		done &&
+
+		git rev-list --count --objects --use-bitmap-index HEAD >out 2>err &&
+		# should attempt opening the broken pack twice (once
+		# from the attempt to load it via the stale bitmap, and
+		# again when attempting to load it from the stale MIDX)
+		# before falling back to the non-MIDX case
+		test 2 -eq $(grep -c "could not open pack" err) &&
+		test 6 -eq $(cat out)
+	)
+'
+
 test_done

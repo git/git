@@ -4,11 +4,13 @@
  * Copyright (C) 2007 Johannes E. Schindelin
  */
 #include "builtin.h"
-#include "cache.h"
 #include "config.h"
+#include "gettext.h"
+#include "hex.h"
 #include "refs.h"
 #include "refspec.h"
-#include "object-store.h"
+#include "object-file.h"
+#include "object-store-ll.h"
 #include "commit.h"
 #include "object.h"
 #include "tag.h"
@@ -109,7 +111,7 @@ static struct decoration idnums;
 static uint32_t last_idnum;
 struct anonymized_entry {
 	struct hashmap_entry hash;
-	const char *anon;
+	char *anon;
 	const char orig[FLEX_ARRAY];
 };
 
@@ -138,43 +140,56 @@ static int anonymized_entry_cmp(const void *cmp_data UNUSED,
 	return strcmp(a->orig, b->orig);
 }
 
+static struct anonymized_entry *add_anonymized_entry(struct hashmap *map,
+						     unsigned hash,
+						     const char *orig, size_t len,
+						     char *anon)
+{
+	struct anonymized_entry *ret, *old;
+
+	if (!map->cmpfn)
+		hashmap_init(map, anonymized_entry_cmp, NULL, 0);
+
+	FLEX_ALLOC_MEM(ret, orig, orig, len);
+	hashmap_entry_init(&ret->hash, hash);
+	ret->anon = anon;
+	old = hashmap_put_entry(map, ret, hash);
+
+	if (old) {
+		free(old->anon);
+		free(old);
+	}
+
+	return ret;
+}
+
 /*
  * Basically keep a cache of X->Y so that we can repeatedly replace
  * the same anonymized string with another. The actual generation
  * is farmed out to the generate function.
  */
 static const char *anonymize_str(struct hashmap *map,
-				 char *(*generate)(void *),
-				 const char *orig, size_t len,
-				 void *data)
+				 char *(*generate)(void),
+				 const char *orig, size_t len)
 {
 	struct anonymized_entry_key key;
 	struct anonymized_entry *ret;
-
-	if (!map->cmpfn)
-		hashmap_init(map, anonymized_entry_cmp, NULL, 0);
 
 	hashmap_entry_init(&key.hash, memhash(orig, len));
 	key.orig = orig;
 	key.orig_len = len;
 
 	/* First check if it's a token the user configured manually... */
-	if (anonymized_seeds.cmpfn)
-		ret = hashmap_get_entry(&anonymized_seeds, &key, hash, &key);
-	else
-		ret = NULL;
+	ret = hashmap_get_entry(&anonymized_seeds, &key, hash, &key);
 
 	/* ...otherwise check if we've already seen it in this context... */
 	if (!ret)
 		ret = hashmap_get_entry(map, &key, hash, &key);
 
 	/* ...and finally generate a new mapping if necessary */
-	if (!ret) {
-		FLEX_ALLOC_MEM(ret, orig, orig, len);
-		hashmap_entry_init(&ret->hash, key.hash.hash);
-		ret->anon = generate(data);
-		hashmap_put(map, &ret->hash);
-	}
+	if (!ret)
+		ret = add_anonymized_entry(map, key.hash.hash,
+					   orig, len, generate());
 
 	return ret->anon;
 }
@@ -187,12 +202,12 @@ static const char *anonymize_str(struct hashmap *map,
  */
 static void anonymize_path(struct strbuf *out, const char *path,
 			   struct hashmap *map,
-			   char *(*generate)(void *))
+			   char *(*generate)(void))
 {
 	while (*path) {
 		const char *end_of_component = strchrnul(path, '/');
 		size_t len = end_of_component - path;
-		const char *c = anonymize_str(map, generate, path, len, NULL);
+		const char *c = anonymize_str(map, generate, path, len);
 		strbuf_addstr(out, c);
 		path = end_of_component;
 		if (*path)
@@ -296,7 +311,7 @@ static void export_blob(const struct object_id *oid)
 		object = (struct object *)lookup_blob(the_repository, oid);
 		eaten = 0;
 	} else {
-		buf = read_object_file(oid, &type, &size);
+		buf = repo_read_object_file(the_repository, oid, &type, &size);
 		if (!buf)
 			die("could not read blob %s", oid_to_hex(oid));
 		if (check_object_signature(the_repository, oid, buf, size,
@@ -367,7 +382,7 @@ static void print_path_1(const char *path)
 		printf("%s", path);
 }
 
-static char *anonymize_path_component(void *data)
+static char *anonymize_path_component(void)
 {
 	static int counter;
 	struct strbuf out = STRBUF_INIT;
@@ -389,7 +404,7 @@ static void print_path(const char *path)
 	}
 }
 
-static char *generate_fake_oid(void *data)
+static char *generate_fake_oid(void)
 {
 	static uint32_t counter = 1; /* avoid null oid */
 	const unsigned hashsz = the_hash_algo->rawsz;
@@ -405,7 +420,7 @@ static const char *anonymize_oid(const char *oid_hex)
 {
 	static struct hashmap objs;
 	size_t len = strlen(oid_hex);
-	return anonymize_str(&objs, generate_fake_oid, oid_hex, len, NULL);
+	return anonymize_str(&objs, generate_fake_oid, oid_hex, len);
 }
 
 static void show_filemodify(struct diff_queue_struct *q,
@@ -502,7 +517,7 @@ static const char *find_encoding(const char *begin, const char *end)
 	return bol;
 }
 
-static char *anonymize_ref_component(void *data)
+static char *anonymize_ref_component(void)
 {
 	static int counter;
 	struct strbuf out = STRBUF_INIT;
@@ -542,13 +557,13 @@ static const char *anonymize_refname(const char *refname)
  * We do not even bother to cache commit messages, as they are unlikely
  * to be repeated verbatim, and it is not that interesting when they are.
  */
-static char *anonymize_commit_message(const char *old)
+static char *anonymize_commit_message(void)
 {
 	static int counter;
 	return xstrfmt("subject %d\n\nbody\n", counter++);
 }
 
-static char *anonymize_ident(void *data)
+static char *anonymize_ident(void)
 {
 	static int counter;
 	struct strbuf out = STRBUF_INIT;
@@ -591,7 +606,7 @@ static void anonymize_ident_line(const char **beg, const char **end)
 
 		len = split.mail_end - split.name_begin;
 		ident = anonymize_str(&idents, anonymize_ident,
-				      split.name_begin, len, NULL);
+				      split.name_begin, len);
 		strbuf_addstr(out, ident);
 		strbuf_addch(out, ' ');
 		strbuf_add(out, split.date_begin, split.tz_end - split.date_begin);
@@ -618,7 +633,7 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 	rev->diffopt.output_format = DIFF_FORMAT_CALLBACK;
 
 	parse_commit_or_die(commit);
-	commit_buffer = get_commit_buffer(commit, NULL);
+	commit_buffer = repo_get_commit_buffer(the_repository, commit, NULL);
 	author = strstr(commit_buffer, "\nauthor ");
 	if (!author)
 		die("could not find author in commit %s",
@@ -669,7 +684,7 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 
 	mark_next_object(&commit->object);
 	if (anonymize) {
-		reencoded = anonymize_commit_message(message);
+		reencoded = anonymize_commit_message();
 	} else if (encoding) {
 		switch(reencode_mode) {
 		case REENCODE_YES:
@@ -699,7 +714,7 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 			  ? strlen(message) : 0),
 	       reencoded ? reencoded : message ? message : "");
 	free(reencoded);
-	unuse_commit_buffer(commit, commit_buffer);
+	repo_unuse_commit_buffer(the_repository, commit, commit_buffer);
 
 	for (i = 0, p = commit->parents; p; p = p->next) {
 		struct object *obj = &p->item->object;
@@ -732,7 +747,7 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 	show_progress();
 }
 
-static char *anonymize_tag(void *data)
+static char *anonymize_tag(void)
 {
 	static int counter;
 	struct strbuf out = STRBUF_INIT;
@@ -766,7 +781,8 @@ static void handle_tag(const char *name, struct tag *tag)
 		return;
 	}
 
-	buf = read_object_file(&tag->object.oid, &type, &size);
+	buf = repo_read_object_file(the_repository, &tag->object.oid, &type,
+				    &size);
 	if (!buf)
 		die("could not read tag %s", oid_to_hex(&tag->object.oid));
 	message = memmem(buf, size, "\n\n", 2);
@@ -794,7 +810,7 @@ static void handle_tag(const char *name, struct tag *tag)
 		if (message) {
 			static struct hashmap tags;
 			message = anonymize_str(&tags, anonymize_tag,
-						message, message_size, NULL);
+						message, message_size);
 			message_size = strlen(message);
 		}
 	}
@@ -917,7 +933,8 @@ static void get_tags_and_duplicates(struct rev_cmdline_info *info)
 		if (e->flags & UNINTERESTING)
 			continue;
 
-		if (dwim_ref(e->name, strlen(e->name), &oid, &full_name, 0) != 1)
+		if (repo_dwim_ref(the_repository, e->name, strlen(e->name),
+				  &oid, &full_name, 0) != 1)
 			continue;
 
 		if (refspecs.nr) {
@@ -1125,11 +1142,6 @@ static void handle_deletes(void)
 	}
 }
 
-static char *anonymize_seed(void *data)
-{
-	return xstrdup(data);
-}
-
 static int parse_opt_anonymize_map(const struct option *opt,
 				   const char *arg, int unset)
 {
@@ -1151,7 +1163,8 @@ static int parse_opt_anonymize_map(const struct option *opt,
 	if (!keylen || !*value)
 		return error(_("--anonymize-map token cannot be empty"));
 
-	anonymize_str(map, anonymize_seed, arg, keylen, (void *)value);
+	add_anonymized_entry(map, memhash(arg, keylen), arg, keylen,
+			     xstrdup(value));
 
 	return 0;
 }

@@ -131,6 +131,10 @@ options for details.
 --ignore-case::
 	Sorting and filtering tags are case insensitive.
 
+--omit-empty::
+	Do not print a newline after formatted refs where the format expands
+	to the empty string.
+
 --column[=<options>]::
 --no-column::
 	Display tag listing in columns. See configuration variable
@@ -376,6 +380,16 @@ $ GIT_COMMITTER_DATE="2006-10-02 10:31" git tag -s v1.0.1
 ------------
 
 include::date-formats.txt[]
+
+FILES
+-----
+
+`$GIT_DIR/TAG_EDITMSG`::
+	This file contains the message of an in-progress annotated
+	tag. If `git tag` exits due to an error before creating an
+	annotated tag then the tag message that has been provided by the
+	user in an editor session will be available in this file, but
+	may be overwritten by the next invocation of `git tag`.
 
 NOTES
 -----

@@ -8,10 +8,15 @@
 
 #define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
-#include "cache.h"
+#include "abspath.h"
 #include "config.h"
 #include "dir.h"
+#include "gettext.h"
 #include "parse-options.h"
+#include "path.h"
+#include "read-cache-ll.h"
+#include "repository.h"
+#include "setup.h"
 #include "string-list.h"
 #include "quote.h"
 #include "column.h"
@@ -99,7 +104,8 @@ struct menu_stuff {
 
 define_list_config_array(color_interactive_slots);
 
-static int git_clean_config(const char *var, const char *value, void *cb)
+static int git_clean_config(const char *var, const char *value,
+			    const struct config_context *ctx, void *cb)
 {
 	const char *slot_name;
 
@@ -126,8 +132,10 @@ static int git_clean_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	/* inspect the color.ui config variable and others */
-	return git_color_default_config(var, value, cb);
+	if (git_color_config(var, value, cb) < 0)
+		return -1;
+
+	return git_default_config(var, value, ctx, cb);
 }
 
 static const char *clean_get_color(enum color_clean ix)

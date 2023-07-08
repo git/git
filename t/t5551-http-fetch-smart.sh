@@ -611,6 +611,33 @@ test_expect_success 'client falls back from v2 to v0 to match server' '
 	grep symref=HEAD:refs/heads/ trace
 '
 
+test_expect_success 'create empty http-accessible SHA-256 repository' '
+	mkdir "$HTTPD_DOCUMENT_ROOT_PATH/sha256.git" &&
+	(cd "$HTTPD_DOCUMENT_ROOT_PATH/sha256.git" &&
+	 git --bare init --object-format=sha256
+	)
+'
+
+test_expect_success 'clone empty SHA-256 repository with protocol v2' '
+	rm -fr sha256 &&
+	echo sha256 >expected &&
+	git -c protocol.version=2 clone "$HTTPD_URL/smart/sha256.git" &&
+	git -C sha256 rev-parse --show-object-format >actual &&
+	test_cmp actual expected &&
+	git ls-remote "$HTTPD_URL/smart/sha256.git" >actual &&
+	test_must_be_empty actual
+'
+
+test_expect_success 'clone empty SHA-256 repository with protocol v0' '
+	rm -fr sha256 &&
+	echo sha256 >expected &&
+	GIT_TRACE=1 GIT_TRACE_PACKET=1 git -c protocol.version=0 clone "$HTTPD_URL/smart/sha256.git" &&
+	git -C sha256 rev-parse --show-object-format >actual &&
+	test_cmp actual expected &&
+	git ls-remote "$HTTPD_URL/smart/sha256.git" >actual &&
+	test_must_be_empty actual
+'
+
 test_expect_success 'passing hostname resolution information works' '
 	BOGUS_HOST=gitbogusexamplehost.invalid &&
 	BOGUS_HTTPD_URL=$HTTPD_PROTO://$BOGUS_HOST:$LIB_HTTPD_PORT &&

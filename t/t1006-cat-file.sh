@@ -89,7 +89,8 @@ done
 for opt in --buffer \
 	--follow-symlinks \
 	--batch-all-objects \
-	-z
+	-z \
+	-Z
 do
 	test_expect_success "usage: bad option combination: $opt without batch mode" '
 		test_incompatible_usage git cat-file $opt &&
@@ -109,26 +110,12 @@ strlen () {
     echo_without_newline "$1" | wc -c | sed -e 's/^ *//'
 }
 
-maybe_remove_timestamp () {
-	if test -z "$2"; then
-		echo_without_newline "$1"
-	else
-		echo_without_newline "$(printf '%s\n' "$1" | remove_timestamp)"
-	fi
-}
-
-remove_timestamp () {
-	sed -e 's/ [0-9][0-9]* [-+][0-9][0-9][0-9][0-9]$//'
-}
-
-
 run_tests () {
     type=$1
     sha1=$2
     size=$3
     content=$4
     pretty_content=$5
-    no_ts=$6
 
     batch_output="$sha1 $type $size
 $content"
@@ -163,21 +150,21 @@ $content"
 
     test -z "$content" ||
     test_expect_success "Content of $type is correct" '
-	maybe_remove_timestamp "$content" $no_ts >expect &&
-	maybe_remove_timestamp "$(git cat-file $type $sha1)" $no_ts >actual &&
+	echo_without_newline "$content" >expect &&
+	git cat-file $type $sha1 >actual &&
 	test_cmp expect actual
     '
 
     test_expect_success "Pretty content of $type is correct" '
-	maybe_remove_timestamp "$pretty_content" $no_ts >expect &&
-	maybe_remove_timestamp "$(git cat-file -p $sha1)" $no_ts >actual &&
+	echo_without_newline "$pretty_content" >expect &&
+	git cat-file -p $sha1 >actual &&
 	test_cmp expect actual
     '
 
     test -z "$content" ||
     test_expect_success "--batch output of $type is correct" '
-	maybe_remove_timestamp "$batch_output" $no_ts >expect &&
-	maybe_remove_timestamp "$(echo $sha1 | git cat-file --batch)" $no_ts >actual &&
+	echo "$batch_output" >expect &&
+	echo $sha1 | git cat-file --batch >actual &&
 	test_cmp expect actual
     '
 
@@ -191,9 +178,8 @@ $content"
     do
 	test -z "$content" ||
 		test_expect_success "--batch-command $opt output of $type content is correct" '
-		maybe_remove_timestamp "$batch_output" $no_ts >expect &&
-		maybe_remove_timestamp "$(test_write_lines "contents $sha1" |
-		git cat-file --batch-command $opt)" $no_ts >actual &&
+		echo "$batch_output" >expect &&
+		test_write_lines "contents $sha1" | git cat-file --batch-command $opt >actual &&
 		test_cmp expect actual
 	'
 
@@ -228,10 +214,9 @@ $content"
     test_expect_success "--batch without type ($type)" '
 	{
 		echo "$size" &&
-		maybe_remove_timestamp "$content" $no_ts
+		echo "$content"
 	} >expect &&
-	echo $sha1 | git cat-file --batch="%(objectsize)" >actual.full &&
-	maybe_remove_timestamp "$(cat actual.full)" $no_ts >actual &&
+	echo $sha1 | git cat-file --batch="%(objectsize)" >actual &&
 	test_cmp expect actual
     '
 
@@ -239,10 +224,9 @@ $content"
     test_expect_success "--batch without size ($type)" '
 	{
 		echo "$type" &&
-		maybe_remove_timestamp "$content" $no_ts
+		echo "$content"
 	} >expect &&
-	echo $sha1 | git cat-file --batch="%(objecttype)" >actual.full &&
-	maybe_remove_timestamp "$(cat actual.full)" $no_ts >actual &&
+	echo $sha1 | git cat-file --batch="%(objecttype)" >actual &&
 	test_cmp expect actual
     '
 }
@@ -284,7 +268,7 @@ test_expect_success '--batch-check without %(rest) considers whole line' '
 
 tree_sha1=$(git write-tree)
 tree_size=$(($(test_oid rawsz) + 13))
-tree_pretty_content="100644 blob $hello_sha1	hello"
+tree_pretty_content="100644 blob $hello_sha1	hello${LF}"
 
 run_tests 'tree' $tree_sha1 $tree_size "" "$tree_pretty_content"
 
@@ -292,12 +276,12 @@ commit_message="Initial commit"
 commit_sha1=$(echo_without_newline "$commit_message" | git commit-tree $tree_sha1)
 commit_size=$(($(test_oid hexsz) + 137))
 commit_content="tree $tree_sha1
-author $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> 0 +0000
-committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 0 +0000
+author $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> $GIT_AUTHOR_DATE
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
 
 $commit_message"
 
-run_tests 'commit' $commit_sha1 $commit_size "$commit_content" "$commit_content" 1
+run_tests 'commit' $commit_sha1 $commit_size "$commit_content" "$commit_content"
 
 tag_header_without_timestamp="object $hello_sha1
 type blob
@@ -311,11 +295,13 @@ $tag_description"
 tag_sha1=$(echo_without_newline "$tag_content" | git hash-object -t tag --stdin -w)
 tag_size=$(strlen "$tag_content")
 
-run_tests 'tag' $tag_sha1 $tag_size "$tag_content" "$tag_content" 1
+run_tests 'tag' $tag_sha1 $tag_size "$tag_content" "$tag_content"
 
-test_expect_success \
-    "Reach a blob from a tag pointing to it" \
-    "test '$hello_content' = \"\$(git cat-file blob $tag_sha1)\""
+test_expect_success "Reach a blob from a tag pointing to it" '
+	echo_without_newline "$hello_content" >expect &&
+	git cat-file blob $tag_sha1 >actual &&
+	test_cmp expect actual
+'
 
 for batch in batch batch-check batch-command
 do
@@ -351,30 +337,47 @@ do
 done
 
 test_expect_success "--batch-check for a non-existent named object" '
-    test "foobar42 missing
-foobar84 missing" = \
-    "$( ( echo foobar42 && echo_without_newline foobar84 ) | git cat-file --batch-check)"
+	cat >expect <<-EOF &&
+	foobar42 missing
+	foobar84 missing
+	EOF
+
+	printf "foobar42\nfoobar84" >in &&
+	git cat-file --batch-check <in >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success "--batch-check for a non-existent hash" '
-    test "0000000000000000000000000000000000000042 missing
-0000000000000000000000000000000000000084 missing" = \
-    "$( ( echo 0000000000000000000000000000000000000042 &&
-	 echo_without_newline 0000000000000000000000000000000000000084 ) |
-       git cat-file --batch-check)"
+	cat >expect <<-EOF &&
+	0000000000000000000000000000000000000042 missing
+	0000000000000000000000000000000000000084 missing
+	EOF
+
+	printf "0000000000000000000000000000000000000042\n0000000000000000000000000000000000000084" >in &&
+	git cat-file --batch-check <in >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success "--batch for an existent and a non-existent hash" '
-    test "$tag_sha1 tag $tag_size
-$tag_content
-0000000000000000000000000000000000000000 missing" = \
-    "$( ( echo $tag_sha1 &&
-	 echo_without_newline 0000000000000000000000000000000000000000 ) |
-       git cat-file --batch)"
+	cat >expect <<-EOF &&
+	$tag_sha1 tag $tag_size
+	$tag_content
+	0000000000000000000000000000000000000000 missing
+	EOF
+
+	printf "$tag_sha1\n0000000000000000000000000000000000000000" >in &&
+	git cat-file --batch <in >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success "--batch-check for an empty line" '
-    test " missing" = "$(echo | git cat-file --batch-check)"
+	cat >expect <<-EOF &&
+	 missing
+	EOF
+
+	echo >in &&
+	git cat-file --batch-check <in >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'empty --batch-check notices missing object' '
@@ -390,23 +393,34 @@ deadbeef
 
 "
 
-batch_output="$hello_sha1 blob $hello_size
-$hello_content
-$commit_sha1 commit $commit_size
-$commit_content
-$tag_sha1 tag $tag_size
-$tag_content
-deadbeef missing
- missing"
+printf "%s\0" \
+	"$hello_sha1 blob $hello_size" \
+	"$hello_content" \
+	"$commit_sha1 commit $commit_size" \
+	"$commit_content" \
+	"$tag_sha1 tag $tag_size" \
+	"$tag_content" \
+	"deadbeef missing" \
+	" missing" >batch_output
 
 test_expect_success '--batch with multiple sha1s gives correct format' '
-	test "$(maybe_remove_timestamp "$batch_output" 1)" = "$(maybe_remove_timestamp "$(echo_without_newline "$batch_input" | git cat-file --batch)" 1)"
+	tr "\0" "\n" <batch_output >expect &&
+	echo_without_newline "$batch_input" >in &&
+	git cat-file --batch <in >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success '--batch, -z with multiple sha1s gives correct format' '
 	echo_without_newline_nul "$batch_input" >in &&
-	test "$(maybe_remove_timestamp "$batch_output" 1)" = \
-	"$(maybe_remove_timestamp "$(git cat-file --batch -z <in)" 1)"
+	tr "\0" "\n" <batch_output >expect &&
+	git cat-file --batch -z <in >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--batch, -Z with multiple sha1s gives correct format' '
+	echo_without_newline_nul "$batch_input" >in &&
+	git cat-file --batch -Z <in >actual &&
+	test_cmp batch_output actual
 '
 
 batch_check_input="$hello_sha1
@@ -417,33 +431,52 @@ deadbeef
 
 "
 
-batch_check_output="$hello_sha1 blob $hello_size
-$tree_sha1 tree $tree_size
-$commit_sha1 commit $commit_size
-$tag_sha1 tag $tag_size
-deadbeef missing
- missing"
+printf "%s\0" \
+	"$hello_sha1 blob $hello_size" \
+	"$tree_sha1 tree $tree_size" \
+	"$commit_sha1 commit $commit_size" \
+	"$tag_sha1 tag $tag_size" \
+	"deadbeef missing" \
+	" missing" >batch_check_output
 
 test_expect_success "--batch-check with multiple sha1s gives correct format" '
-    test "$batch_check_output" = \
-    "$(echo_without_newline "$batch_check_input" | git cat-file --batch-check)"
+	tr "\0" "\n" <batch_check_output >expect &&
+	echo_without_newline "$batch_check_input" >in &&
+	git cat-file --batch-check <in >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success "--batch-check, -z with multiple sha1s gives correct format" '
-    echo_without_newline_nul "$batch_check_input" >in &&
-    test "$batch_check_output" = "$(git cat-file --batch-check -z <in)"
+	tr "\0" "\n" <batch_check_output >expect &&
+	echo_without_newline_nul "$batch_check_input" >in &&
+	git cat-file --batch-check -z <in >actual &&
+	test_cmp expect actual
 '
 
-test_expect_success FUNNYNAMES '--batch-check, -z with newline in input' '
+test_expect_success "--batch-check, -Z with multiple sha1s gives correct format" '
+	echo_without_newline_nul "$batch_check_input" >in &&
+	git cat-file --batch-check -Z <in >actual &&
+	test_cmp batch_check_output actual
+'
+
+test_expect_success FUNNYNAMES 'setup with newline in input' '
 	touch -- "newline${LF}embedded" &&
 	git add -- "newline${LF}embedded" &&
 	git commit -m "file with newline embedded" &&
 	test_tick &&
 
-	printf "HEAD:newline${LF}embedded" >in &&
-	git cat-file --batch-check -z <in >actual &&
+	printf "HEAD:newline${LF}embedded" >in
+'
 
+test_expect_success FUNNYNAMES '--batch-check, -z with newline in input' '
+	git cat-file --batch-check -z <in >actual &&
 	echo "$(git rev-parse "HEAD:newline${LF}embedded") blob 0" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success FUNNYNAMES '--batch-check, -Z with newline in input' '
+	git cat-file --batch-check -Z <in >actual &&
+	printf "%s\0" "$(git rev-parse "HEAD:newline${LF}embedded") blob 0" >expect &&
 	test_cmp expect actual
 '
 
@@ -470,7 +503,13 @@ test_expect_success '--batch-command with multiple info calls gives correct form
 	echo "$batch_command_multiple_info" | tr "\n" "\0" >in &&
 	git cat-file --batch-command --buffer -z <in >actual &&
 
-	test_cmp expect actual
+	test_cmp expect actual &&
+
+	echo "$batch_command_multiple_info" | tr "\n" "\0" >in &&
+	tr "\n" "\0" <expect >expect_nul &&
+	git cat-file --batch-command --buffer -Z <in >actual &&
+
+	test_cmp expect_nul actual
 '
 
 batch_command_multiple_contents="contents $hello_sha1
@@ -480,27 +519,30 @@ contents deadbeef
 flush"
 
 test_expect_success '--batch-command with multiple command calls gives correct format' '
-	remove_timestamp >expect <<-EOF &&
-	$hello_sha1 blob $hello_size
-	$hello_content
-	$commit_sha1 commit $commit_size
-	$commit_content
-	$tag_sha1 tag $tag_size
-	$tag_content
-	deadbeef missing
-	EOF
+	printf "%s\0" \
+		"$hello_sha1 blob $hello_size" \
+		"$hello_content" \
+		"$commit_sha1 commit $commit_size" \
+		"$commit_content" \
+		"$tag_sha1 tag $tag_size" \
+		"$tag_content" \
+		"deadbeef missing" >expect_nul &&
+	tr "\0" "\n" <expect_nul >expect &&
 
 	echo "$batch_command_multiple_contents" >in &&
-	git cat-file --batch-command --buffer <in >actual_raw &&
+	git cat-file --batch-command --buffer <in >actual &&
 
-	remove_timestamp <actual_raw >actual &&
 	test_cmp expect actual &&
 
 	echo "$batch_command_multiple_contents" | tr "\n" "\0" >in &&
-	git cat-file --batch-command --buffer -z <in >actual_raw &&
+	git cat-file --batch-command --buffer -z <in >actual &&
 
-	remove_timestamp <actual_raw >actual &&
-	test_cmp expect actual
+	test_cmp expect actual &&
+
+	echo "$batch_command_multiple_contents" | tr "\n" "\0" >in &&
+	git cat-file --batch-command --buffer -Z <in >actual &&
+
+	test_cmp expect_nul actual
 '
 
 test_expect_success 'setup blobs which are likely to delta' '
@@ -603,7 +645,8 @@ do
 			fatal: Not a valid object name $(test_oid deadbeef_short)
 			EOF
 			test_must_fail git cat-file $arg1 $arg2 $(test_oid deadbeef_short) >out 2>err.actual &&
-			test_must_be_empty out
+			test_must_be_empty out &&
+			test_cmp expect.err err.actual
 		'
 
 		test_expect_success "cat-file $arg1 $arg2 error on missing full OID" '
@@ -839,6 +882,13 @@ test_expect_success 'git cat-file --batch-check --follow-symlinks works for brok
 	test_cmp expect actual
 '
 
+test_expect_success 'git cat-file --batch-check --follow-symlinks -Z works for broken in-repo, same-dir links' '
+	printf "HEAD:broken-same-dir-link\0" >in &&
+	printf "dangling 25\0HEAD:broken-same-dir-link\0" >expect &&
+	git cat-file --batch-check --follow-symlinks -Z <in >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'git cat-file --batch-check --follow-symlinks works for same-dir links-to-links' '
 	echo HEAD:link-to-link | git cat-file --batch-check --follow-symlinks >actual &&
 	test_cmp found actual
@@ -850,6 +900,15 @@ test_expect_success 'git cat-file --batch-check --follow-symlinks works for pare
 	echo notdir 29 >expect &&
 	echo HEAD:dir/parent-dir-link/nope >>expect &&
 	echo HEAD:dir/parent-dir-link/nope | git cat-file --batch-check --follow-symlinks >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git cat-file --batch-check --follow-symlinks -Z works for parent-dir links' '
+	echo HEAD:dir/parent-dir-link | git cat-file --batch-check --follow-symlinks >actual &&
+	test_cmp found actual &&
+	printf "notdir 29\0HEAD:dir/parent-dir-link/nope\0" >expect &&
+	printf "HEAD:dir/parent-dir-link/nope\0" >in &&
+	git cat-file --batch-check --follow-symlinks -Z <in >actual &&
 	test_cmp expect actual
 '
 
@@ -964,6 +1023,13 @@ test_expect_success 'git cat-file --batch-check --follow-symlink breaks loops' '
 	echo loop 10 >expect &&
 	echo HEAD:loop1 >>expect &&
 	echo HEAD:loop1 | git cat-file --batch-check --follow-symlinks >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git cat-file --batch-check --follow-symlink -Z breaks loops' '
+	printf "loop 10\0HEAD:loop1\0" >expect &&
+	printf "HEAD:loop1\0" >in &&
+	git cat-file --batch-check --follow-symlinks -Z <in >actual &&
 	test_cmp expect actual
 '
 

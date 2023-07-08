@@ -1,8 +1,8 @@
 #ifndef BLAME_H
 #define BLAME_H
 
-#include "cache.h"
 #include "commit.h"
+#include "oidset.h"
 #include "xdiff-interface.h"
 #include "revision.h"
 #include "prio-queue.h"

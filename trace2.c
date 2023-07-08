@@ -1,11 +1,14 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
 #include "json-writer.h"
 #include "quote.h"
+#include "repository.h"
 #include "run-command.h"
 #include "sigchain.h"
 #include "thread-utils.h"
 #include "version.h"
+#include "trace.h"
+#include "trace2.h"
 #include "trace2/tr2_cfg.h"
 #include "trace2/tr2_cmd_name.h"
 #include "trace2/tr2_ctr.h"
@@ -631,7 +634,7 @@ void trace2_thread_exit_fl(const char *file, int line)
 }
 
 void trace2_def_param_fl(const char *file, int line, const char *param,
-			 const char *value)
+			 const char *value, const struct key_value_info *kvi)
 {
 	struct tr2_tgt *tgt_j;
 	int j;
@@ -641,7 +644,7 @@ void trace2_def_param_fl(const char *file, int line, const char *param,
 
 	for_each_wanted_builtin (j, tgt_j)
 		if (tgt_j->pfn_param_fl)
-			tgt_j->pfn_param_fl(file, line, param, value);
+			tgt_j->pfn_param_fl(file, line, param, value, kvi);
 }
 
 void trace2_def_repo_fl(const char *file, int line, struct repository *repo)

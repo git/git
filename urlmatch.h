@@ -2,6 +2,7 @@
 #define URL_MATCH_H
 
 #include "string-list.h"
+#include "config.h"
 
 struct url_info {
 	/* normalized url on success, must be freed, otherwise NULL */
@@ -48,8 +49,8 @@ struct urlmatch_config {
 	const char *key;
 
 	void *cb;
-	int (*collect_fn)(const char *var, const char *value, void *cb);
-	int (*cascade_fn)(const char *var, const char *value, void *cb);
+	config_fn_t collect_fn;
+	config_fn_t cascade_fn;
 	/*
 	 * Compare the two matches, the one just discovered and the existing
 	 * best match and return a negative value if the found item is to be
@@ -70,7 +71,8 @@ struct urlmatch_config {
 	.vars = STRING_LIST_INIT_DUP, \
 }
 
-int urlmatch_config_entry(const char *var, const char *value, void *cb);
+int urlmatch_config_entry(const char *var, const char *value,
+			  const struct config_context *ctx, void *cb);
 void urlmatch_config_release(struct urlmatch_config *config);
 
 #endif /* URL_MATCH_H */

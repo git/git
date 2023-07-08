@@ -1,8 +1,15 @@
 /*
  * Various trivial helper wrappers around standard functions
  */
-#include "cache.h"
+#include "git-compat-util.h"
+#include "abspath.h"
 #include "config.h"
+#include "gettext.h"
+#include "object.h"
+#include "repository.h"
+#include "strbuf.h"
+#include "trace2.h"
+#include "wrapper.h"
 
 static intmax_t count_fsync_writeout_only;
 static intmax_t count_fsync_hardware_flush;

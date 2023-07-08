@@ -1,7 +1,8 @@
-#include "cache.h"
-#include "config.h"
 #include "builtin.h"
+#include "config.h"
+#include "gettext.h"
 #include "parse-options.h"
+#include "server-info.h"
 
 static const char * const update_server_info_usage[] = {
 	"git update-server-info [-f | --force]",

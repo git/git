@@ -1,6 +1,7 @@
 #include "builtin.h"
 #include "config.h"
 #include "commit.h"
+#include "hex.h"
 #include "refs.h"
 #include "pkt-line.h"
 #include "sideband.h"
@@ -15,6 +16,8 @@
 #include "gpg-interface.h"
 #include "gettext.h"
 #include "protocol.h"
+#include "parse-options.h"
+#include "write-or-die.h"
 
 static const char * const send_pack_usage[] = {
 	N_("git send-pack [--mirror] [--dry-run] [--force]\n"
@@ -128,10 +131,9 @@ static void print_helper_status(struct ref *ref)
 	strbuf_release(&buf);
 }
 
-static int send_pack_config(const char *k, const char *v, void *cb)
+static int send_pack_config(const char *k, const char *v,
+			    const struct config_context *ctx, void *cb)
 {
-	git_gpg_config(k, v, NULL);
-
 	if (!strcmp(k, "push.gpgsign")) {
 		const char *value;
 		if (!git_config_get_value("push.gpgsign", &value)) {
@@ -150,7 +152,7 @@ static int send_pack_config(const char *k, const char *v, void *cb)
 			}
 		}
 	}
-	return git_default_config(k, v, cb);
+	return git_default_config(k, v, ctx, cb);
 }
 
 int cmd_send_pack(int argc, const char **argv, const char *prefix)
@@ -275,7 +277,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 		fd[0] = 0;
 		fd[1] = 1;
 	} else {
-		conn = git_connect(fd, dest, receivepack,
+		conn = git_connect(fd, dest, "git-receive-pack", receivepack,
 			args.verbose ? CONNECT_VERBOSE : 0);
 	}
 

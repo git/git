@@ -99,7 +99,7 @@ To omit patch numbers from the subject, use `-N`.
 
 If given `--thread`, `git-format-patch` will generate `In-Reply-To` and
 `References` headers to make the second and subsequent patch mails appear
-as replies to the first mail; this also generates a `Message-Id` header to
+as replies to the first mail; this also generates a `Message-ID` header to
 reference.
 
 OPTIONS
@@ -163,7 +163,7 @@ include::diff-options.txt[]
 --no-thread::
 	Controls addition of `In-Reply-To` and `References` headers to
 	make the second and subsequent mails appear as replies to the
-	first.  Also controls generation of the `Message-Id` header to
+	first.  Also controls generation of the `Message-ID` header to
 	reference.
 +
 The optional <style> argument can be either `shallow` or `deep`.
@@ -173,8 +173,7 @@ series, where the head is chosen from the cover letter, the
 threading makes every mail a reply to the previous one.
 +
 The default is `--no-thread`, unless the `format.thread` configuration
-is set.  If `--thread` is specified without a style, it defaults to the
-style specified by `format.thread` if any, or else `shallow`.
+is set.  `--thread` without an argument is equivalent to `--thread=shallow`.
 +
 Beware that the default for 'git send-email' is to thread emails
 itself.  If you want `git format-patch` to take care of threading, you
@@ -246,7 +245,7 @@ populated with placeholder text.
 	or "--reroll-count=4rev2" are allowed), but the downside of
 	using such a reroll-count is that the range-diff/interdiff
 	with the previous version does not state exactly which
-	version the new interation is compared against.
+	version the new iteration is compared against.
 
 --to=<email>::
 	Add a `To:` header to the email headers. This is in addition

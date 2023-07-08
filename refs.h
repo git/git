@@ -1,7 +1,6 @@
 #ifndef REFS_H
 #define REFS_H
 
-#include "cache.h"
 #include "commit.h"
 
 struct object_id;
@@ -63,6 +62,12 @@ struct worktree;
 #define RESOLVE_REF_READING 0x01
 #define RESOLVE_REF_NO_RECURSE 0x02
 #define RESOLVE_REF_ALLOW_BAD_NAME 0x04
+
+struct pack_refs_opts {
+	unsigned int flags;
+	struct ref_exclusions *exclusions;
+	struct string_list *includes;
+};
 
 const char *refs_resolve_ref_unsafe(struct ref_store *refs,
 				    const char *refname,
@@ -159,12 +164,6 @@ int expand_ref(struct repository *r, const char *str, int len, struct object_id 
 int repo_dwim_ref(struct repository *r, const char *str, int len,
 		  struct object_id *oid, char **ref, int nonfatal_dangling_mark);
 int repo_dwim_log(struct repository *r, const char *str, int len, struct object_id *oid, char **ref);
-static inline int dwim_ref(const char *str, int len, struct object_id *oid,
-			   char **ref, int nonfatal_dangling_mark)
-{
-	return repo_dwim_ref(the_repository, str, len, oid, ref,
-			     nonfatal_dangling_mark);
-}
 int dwim_log(const char *str, int len, struct object_id *oid, char **ref);
 
 /*
@@ -412,7 +411,7 @@ void warn_dangling_symrefs(FILE *fp, const char *msg_fmt,
  * Write a packed-refs file for the current repository.
  * flags: Combination of the above PACK_REFS_* flags.
  */
-int refs_pack_refs(struct ref_store *refs, unsigned int flags);
+int refs_pack_refs(struct ref_store *refs, struct pack_refs_opts *opts);
 
 /*
  * Setup reflog before using. Fill in err and return -1 on failure.

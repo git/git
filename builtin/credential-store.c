@@ -1,16 +1,20 @@
 #include "builtin.h"
 #include "config.h"
+#include "gettext.h"
 #include "lockfile.h"
 #include "credential.h"
+#include "path.h"
 #include "string-list.h"
 #include "parse-options.h"
+#include "write-or-die.h"
 
 static struct lock_file credential_lock;
 
 static int parse_credential_file(const char *fn,
 				  struct credential *c,
 				  void (*match_cb)(struct credential *),
-				  void (*other_cb)(struct strbuf *))
+				  void (*other_cb)(struct strbuf *),
+				  int match_password)
 {
 	FILE *fh;
 	struct strbuf line = STRBUF_INIT;
@@ -27,7 +31,7 @@ static int parse_credential_file(const char *fn,
 	while (strbuf_getline_lf(&line, fh) != EOF) {
 		if (!credential_from_url_gently(&entry, line.buf, 1) &&
 		    entry.username && entry.password &&
-		    credential_match(c, &entry)) {
+		    credential_match(c, &entry, match_password)) {
 			found_credential = 1;
 			if (match_cb) {
 				match_cb(&entry);
@@ -57,7 +61,7 @@ static void print_line(struct strbuf *buf)
 }
 
 static void rewrite_credential_file(const char *fn, struct credential *c,
-				    struct strbuf *extra)
+				    struct strbuf *extra, int match_password)
 {
 	int timeout_ms = 1000;
 
@@ -66,9 +70,28 @@ static void rewrite_credential_file(const char *fn, struct credential *c,
 		die_errno(_("unable to get credential storage lock in %d ms"), timeout_ms);
 	if (extra)
 		print_line(extra);
-	parse_credential_file(fn, c, NULL, print_line);
+	parse_credential_file(fn, c, NULL, print_line, match_password);
 	if (commit_lock_file(&credential_lock) < 0)
 		die_errno("unable to write credential store");
+}
+
+static int is_rfc3986_unreserved(char ch)
+{
+	return isalnum(ch) ||
+		ch == '-' || ch == '_' || ch == '.' || ch == '~';
+}
+
+static int is_rfc3986_reserved_or_unreserved(char ch)
+{
+	if (is_rfc3986_unreserved(ch))
+		return 1;
+	switch (ch) {
+		case '!': case '*': case '\'': case '(': case ')': case ';':
+		case ':': case '@': case '&': case '=': case '+': case '$':
+		case ',': case '/': case '?': case '#': case '[': case ']':
+			return 1;
+	}
+	return 0;
 }
 
 static void store_credential_file(const char *fn, struct credential *c)
@@ -88,7 +111,7 @@ static void store_credential_file(const char *fn, struct credential *c)
 					is_rfc3986_reserved_or_unreserved);
 	}
 
-	rewrite_credential_file(fn, c, &buf);
+	rewrite_credential_file(fn, c, &buf, 0);
 	strbuf_release(&buf);
 }
 
@@ -135,7 +158,7 @@ static void remove_credential(const struct string_list *fns, struct credential *
 		return;
 	for_each_string_list_item(fn, fns)
 		if (!access(fn->string, F_OK))
-			rewrite_credential_file(fn->string, c, NULL);
+			rewrite_credential_file(fn->string, c, NULL, 1);
 }
 
 static void lookup_credential(const struct string_list *fns, struct credential *c)
@@ -143,7 +166,7 @@ static void lookup_credential(const struct string_list *fns, struct credential *
 	struct string_list_item *fn;
 
 	for_each_string_list_item(fn, fns)
-		if (parse_credential_file(fn->string, c, print_entry, NULL))
+		if (parse_credential_file(fn->string, c, print_entry, NULL, 0))
 			return; /* Found credential */
 }
 

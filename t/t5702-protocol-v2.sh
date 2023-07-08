@@ -269,6 +269,17 @@ test_expect_success 'clone propagates unborn HEAD from non-empty repo' '
 	grep "warning: remote HEAD refers to nonexistent ref" stderr
 '
 
+test_expect_success 'clone propagates object-format from empty repo' '
+	test_when_finished "rm -fr src256 dst256" &&
+
+	echo sha256 >expect &&
+	git init --object-format=sha256 src256 &&
+	git clone src256 dst256 &&
+	git -C dst256 rev-parse --show-object-format >actual &&
+
+	test_cmp expect actual
+'
+
 test_expect_success 'bare clone propagates unborn HEAD from non-empty repo' '
 	test_when_finished "rm -rf file_unborn_parent file_unborn_child.git" &&
 
@@ -726,6 +737,33 @@ test_expect_success 'file:// --negotiate-only with protocol v0' '
 		--negotiation-tip=$(git -C client rev-parse HEAD) \
 		origin 2>err &&
 	test_i18ngrep "negotiate-only requires protocol v2" err
+'
+
+test_expect_success 'push with custom path does not request v2' '
+	rm -f env.trace &&
+	git -C client push \
+		--receive-pack="env >../env.trace; git-receive-pack" \
+		origin HEAD:refs/heads/custom-push-test &&
+	test_path_is_file env.trace &&
+	! grep ^GIT_PROTOCOL env.trace
+'
+
+test_expect_success 'fetch with custom path does request v2' '
+	rm -f env.trace &&
+	git -C client fetch \
+		--upload-pack="env >../env.trace; git-upload-pack" \
+		origin HEAD &&
+	grep ^GIT_PROTOCOL=version=2 env.trace
+'
+
+test_expect_success 'archive with custom path does not request v2' '
+	rm -f env.trace &&
+	git -C client archive \
+		--exec="env >../env.trace; git-upload-archive" \
+		--remote=origin \
+		HEAD >/dev/null &&
+	test_path_is_file env.trace &&
+	! grep ^GIT_PROTOCOL env.trace
 '
 
 # Test protocol v2 with 'http://' transport

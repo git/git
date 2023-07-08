@@ -136,4 +136,10 @@ advice.*::
 		Advice shown when either linkgit:git-add[1] or linkgit:git-rm[1]
 		is asked to update index entries outside the current sparse
 		checkout.
+	diverging::
+		Advice shown when a fast-forward is not possible.
+	worktreeAddOrphan::
+		Advice shown when a user tries to create a worktree from an
+		invalid reference, to instruct how to create a new orphan
+		branch instead.
 --

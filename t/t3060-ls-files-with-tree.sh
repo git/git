@@ -40,7 +40,7 @@ test_expect_success 'setup' '
 	git commit -a -m "remove them all" &&
 
 	# The bug also requires some entry before our directory so that
-	# prune_path will modify the_index.cache
+	# prune_index will modify the_repository->index.cache
 
 	mkdir a_directory_that_sorts_before_sub &&
 	>a_directory_that_sorts_before_sub/file &&
@@ -56,7 +56,7 @@ test_expect_success 'usage' '
 '
 
 test_expect_success 'git ls-files --with-tree should succeed from subdir' '
-	# We have to run from a sub-directory to trigger prune_path
+	# We have to run from a sub-directory to trigger prune_index
 	# Then we finally get to run our --with-tree test
 	(
 		cd sub &&

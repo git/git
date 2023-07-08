@@ -67,3 +67,13 @@ rebase.rescheduleFailedExec::
 
 rebase.forkPoint::
 	If set to false set `--no-fork-point` option by default.
+
+rebase.rebaseMerges::
+	Whether and how to set the `--rebase-merges` option by default. Can
+	be `rebase-cousins`, `no-rebase-cousins`, or a boolean. Setting to
+	true or to `no-rebase-cousins` is equivalent to
+	`--rebase-merges=no-rebase-cousins`, setting to `rebase-cousins` is
+	equivalent to `--rebase-merges=rebase-cousins`, and setting to false is
+	equivalent to `--no-rebase-merges`. Passing `--rebase-merges` on the
+	command line, with or without an argument, overrides any
+	`rebase.rebaseMerges` configuration.

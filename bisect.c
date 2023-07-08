@@ -1,7 +1,10 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
 #include "commit.h"
 #include "diff.h"
+#include "environment.h"
+#include "gettext.h"
+#include "hex.h"
 #include "revision.h"
 #include "refs.h"
 #include "list-objects.h"
@@ -14,7 +17,9 @@
 #include "strvec.h"
 #include "commit-slab.h"
 #include "commit-reach.h"
-#include "object-store.h"
+#include "object-name.h"
+#include "object-store-ll.h"
+#include "path.h"
 #include "dir.h"
 
 static struct oid_array good_revs;
@@ -148,8 +153,9 @@ static void show_list(const char *debug, int counted, int nr,
 		unsigned commit_flags = commit->object.flags;
 		enum object_type type;
 		unsigned long size;
-		char *buf = read_object_file(&commit->object.oid, &type,
-					     &size);
+		char *buf = repo_read_object_file(the_repository,
+						  &commit->object.oid, &type,
+						  &size);
 		const char *subject_start;
 		int subject_len;
 
@@ -751,7 +757,8 @@ enum bisect_error bisect_checkout(const struct object_id *bisect_rev,
 	}
 
 	commit = lookup_commit_reference(the_repository, bisect_rev);
-	format_commit_message(commit, "[%H] %s%n", &commit_msg, &pp);
+	repo_format_commit_message(the_repository, commit, "[%H] %s%n",
+				   &commit_msg, &pp);
 	fputs(commit_msg.buf, stdout);
 	strbuf_release(&commit_msg);
 
@@ -846,7 +853,8 @@ static enum bisect_error check_merge_bases(int rev_nr, struct commit **rev, int 
 	enum bisect_error res = BISECT_OK;
 	struct commit_list *result;
 
-	result = get_merge_bases_many(rev[0], rev_nr - 1, rev + 1);
+	result = repo_get_merge_bases_many(the_repository, rev[0], rev_nr - 1,
+					   rev + 1);
 
 	for (; result; result = result->next) {
 		const struct object_id *mb = &result->item->object.oid;

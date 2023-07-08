@@ -3,6 +3,7 @@
 
 #include "object.h"
 
+struct pathspec;
 struct repository;
 struct strbuf;
 
@@ -28,7 +29,15 @@ void free_tree_buffer(struct tree *tree);
 /* Parses and returns the tree in the given ent, chasing tags and commits. */
 struct tree *parse_tree_indirect(const struct object_id *oid);
 
-int cmp_cache_name_compare(const void *a_, const void *b_);
+/*
+ * Functions for comparing pathnames
+ */
+int base_name_compare(const char *name1, size_t len1, int mode1,
+		      const char *name2, size_t len2, int mode2);
+int df_name_compare(const char *name1, size_t len1, int mode1,
+		    const char *name2, size_t len2, int mode2);
+int name_compare(const char *name1, size_t len1,
+		 const char *name2, size_t len2);
 
 #define READ_TREE_RECURSIVE 1
 typedef int (*read_tree_fn_t)(const struct object_id *, struct strbuf *, const char *, unsigned int, void *);

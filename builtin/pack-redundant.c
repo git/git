@@ -7,9 +7,11 @@
 */
 
 #include "builtin.h"
+#include "gettext.h"
+#include "hex.h"
 #include "repository.h"
 #include "packfile.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 
 #define BLKSIZE 512
 
@@ -557,7 +559,7 @@ static void load_all(void)
 	}
 }
 
-int cmd_pack_redundant(int argc, const char **argv, const char *prefix)
+int cmd_pack_redundant(int argc, const char **argv, const char *prefix UNUSED)
 {
 	int i;
 	int i_still_use_this = 0;
@@ -603,6 +605,7 @@ int cmd_pack_redundant(int argc, const char **argv, const char *prefix)
 			"option, '--i-still-use-this', on the command line\n"
 			"and let us know you still use it by sending an e-mail\n"
 			"to <git@vger.kernel.org>.  Thanks.\n"), stderr);
+		die(_("refusing to run without --i-still-use-this"));
 	}
 
 	if (load_all_packs)

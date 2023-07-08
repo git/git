@@ -1,16 +1,22 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "run-command.h"
+#include "environment.h"
 #include "exec-cmd.h"
+#include "gettext.h"
 #include "sigchain.h"
 #include "strvec.h"
+#include "symlinks.h"
 #include "thread-utils.h"
 #include "strbuf.h"
 #include "string-list.h"
+#include "trace.h"
+#include "trace2.h"
 #include "quote.h"
 #include "config.h"
 #include "packfile.h"
 #include "hook.h"
 #include "compat/nonblock.h"
+#include "alloc.h"
 
 void child_process_init(struct child_process *child)
 {
@@ -301,7 +307,6 @@ enum child_errcode {
 	CHILD_ERR_DUP2,
 	CHILD_ERR_CLOSE,
 	CHILD_ERR_SIGPROCMASK,
-	CHILD_ERR_ENOENT,
 	CHILD_ERR_SILENT,
 	CHILD_ERR_ERRNO
 };
@@ -341,19 +346,19 @@ static void child_close_pair(int fd[2])
 	child_close(fd[1]);
 }
 
-static void child_error_fn(const char *err, va_list params)
+static void child_error_fn(const char *err UNUSED, va_list params UNUSED)
 {
 	const char msg[] = "error() should not be called in child\n";
 	xwrite(2, msg, sizeof(msg) - 1);
 }
 
-static void child_warn_fn(const char *err, va_list params)
+static void child_warn_fn(const char *err UNUSED, va_list params UNUSED)
 {
 	const char msg[] = "warn() should not be called in child\n";
 	xwrite(2, msg, sizeof(msg) - 1);
 }
 
-static void NORETURN child_die_fn(const char *err, va_list params)
+static void NORETURN child_die_fn(const char *err UNUSED, va_list params UNUSED)
 {
 	const char msg[] = "die() should not be called in child\n";
 	xwrite(2, msg, sizeof(msg) - 1);
@@ -383,9 +388,6 @@ static void child_err_spew(struct child_process *cmd, struct child_err *cerr)
 		break;
 	case CHILD_ERR_SIGPROCMASK:
 		error_errno("sigprocmask failed restoring signals");
-		break;
-	case CHILD_ERR_ENOENT:
-		error_errno("cannot run %s", cmd->args.v[0]);
 		break;
 	case CHILD_ERR_SILENT:
 		break;
@@ -840,13 +842,9 @@ fail_pipe:
 			execve(argv.v[0], (char *const *) argv.v,
 			       (char *const *) childenv);
 
-		if (errno == ENOENT) {
-			if (cmd->silent_exec_failure)
-				child_die(CHILD_ERR_SILENT);
-			child_die(CHILD_ERR_ENOENT);
-		} else {
-			child_die(CHILD_ERR_ERRNO);
-		}
+		if (cmd->silent_exec_failure && errno == ENOENT)
+			child_die(CHILD_ERR_SILENT);
+		child_die(CHILD_ERR_ERRNO);
 	}
 	atfork_parent(&as);
 	if (cmd->pid < 0)

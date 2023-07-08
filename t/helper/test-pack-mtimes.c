@@ -1,9 +1,10 @@
-#include "git-compat-util.h"
 #include "test-tool.h"
+#include "hex.h"
 #include "strbuf.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "packfile.h"
 #include "pack-mtimes.h"
+#include "setup.h"
 
 static void dump_mtimes(struct packed_git *p)
 {

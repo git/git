@@ -1,9 +1,12 @@
 #define USE_THE_INDEX_VARIABLE
 #include "test-tool.h"
-#include "cache.h"
+#include "hash.h"
+#include "hex.h"
 #include "tree.h"
 #include "cache-tree.h"
-
+#include "read-cache-ll.h"
+#include "repository.h"
+#include "setup.h"
 
 static void dump_one(struct cache_tree *it, const char *pfx, const char *x)
 {
@@ -56,7 +59,7 @@ static int dump_cache_tree(struct cache_tree *it,
 	return errs;
 }
 
-int cmd__dump_cache_tree(int ac, const char **av)
+int cmd__dump_cache_tree(int ac UNUSED, const char **av UNUSED)
 {
 	struct index_state istate;
 	struct cache_tree *another = cache_tree();

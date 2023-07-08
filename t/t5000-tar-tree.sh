@@ -185,6 +185,7 @@ test_expect_success 'git archive' '
 '
 
 check_tar b
+check_mtime b a/a 1117231200
 
 test_expect_success 'git archive --mtime' '
 	git archive --mtime=2002-02-02T02:02:02-0200 HEAD >with_mtime.tar
@@ -255,14 +256,6 @@ test_expect_success 'git archive --remote with configured remote' '
 		git archive --remote=foo --output=../b5-nick.tar HEAD
 	) &&
 	test_cmp_bin b.tar b5-nick.tar
-'
-
-test_expect_success 'validate file modification time' '
-	mkdir extract &&
-	"$TAR" xf b.tar -C extract a/a &&
-	test-tool chmtime --get extract/a/a >b.mtime &&
-	echo "1117231200" >expected.mtime &&
-	test_cmp expected.mtime b.mtime
 '
 
 test_expect_success 'git get-tar-commit-id' '
@@ -431,6 +424,19 @@ test_expect_success 'archive and :(glob)' '
 
 test_expect_success 'catch non-matching pathspec' '
 	test_must_fail git archive -v HEAD -- "*.abc" >/dev/null
+'
+
+test_expect_success 'reject paths outside the current directory' '
+	test_must_fail git -C a/bin archive HEAD .. >/dev/null 2>err &&
+	grep "outside the current directory" err
+'
+
+test_expect_success 'allow pathspecs that resolve to the current directory' '
+	git -C a/bin archive -v HEAD ../bin >/dev/null 2>actual &&
+	cat >expect <<-\EOF &&
+	sh
+	EOF
+	test_cmp expect actual
 '
 
 # Pull the size and date of each entry in a tarfile using the system tar.

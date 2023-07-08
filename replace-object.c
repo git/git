@@ -1,6 +1,8 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "gettext.h"
+#include "hex.h"
 #include "oidmap.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "replace-object.h"
 #include "refs.h"
 #include "repository.h"
@@ -62,7 +64,7 @@ void prepare_replace_object(struct repository *r)
  * replacement object's name (replaced recursively, if necessary).
  * The return value is either oid or a pointer to a
  * permanently-allocated value.  This function always respects replace
- * references, regardless of the value of read_replace_refs.
+ * references, regardless of the value of r->settings.read_replace_refs.
  */
 const struct object_id *do_lookup_replace_object(struct repository *r,
 						 const struct object_id *oid)
@@ -81,4 +83,30 @@ const struct object_id *do_lookup_replace_object(struct repository *r,
 		cur = &repl_obj->replacement;
 	}
 	die(_("replace depth too high for object %s"), oid_to_hex(oid));
+}
+
+/*
+ * This indicator determines whether replace references should be
+ * respected process-wide, regardless of which repository is being
+ * using at the time.
+ */
+static int read_replace_refs = 1;
+
+void disable_replace_refs(void)
+{
+	read_replace_refs = 0;
+}
+
+int replace_refs_enabled(struct repository *r)
+{
+	if (!read_replace_refs)
+		return 0;
+
+	if (r->gitdir) {
+		prepare_repo_settings(r);
+		return r->settings.read_replace_refs;
+	}
+
+	/* repository has no objects or refs. */
+	return 0;
 }

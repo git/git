@@ -4,22 +4,26 @@
  * Copyright (c) 2006 Junio C Hamano
  */
 #define USE_THE_INDEX_VARIABLE
-#include "cache.h"
+#include "builtin.h"
 #include "config.h"
 #include "ewah/ewok.h"
 #include "lockfile.h"
 #include "color.h"
 #include "commit.h"
 #include "blob.h"
+#include "gettext.h"
 #include "tag.h"
 #include "diff.h"
 #include "diff-merges.h"
 #include "diffcore.h"
+#include "preload-index.h"
+#include "read-cache-ll.h"
 #include "revision.h"
 #include "log-tree.h"
-#include "builtin.h"
+#include "setup.h"
 #include "submodule.h"
 #include "oid-array.h"
+#include "tree.h"
 
 #define DIFF_NO_INDEX_EXPLICIT 1
 #define DIFF_NO_INDEX_IMPLICIT 2
@@ -74,7 +78,7 @@ static void stuff_change(struct diff_options *opt,
 }
 
 static int builtin_diff_b_f(struct rev_info *revs,
-			    int argc, const char **argv,
+			    int argc, const char **argv UNUSED,
 			    struct object_array_entry **blob)
 {
 	/* Blob vs file in the working tree*/
@@ -109,7 +113,7 @@ static int builtin_diff_b_f(struct rev_info *revs,
 }
 
 static int builtin_diff_blobs(struct rev_info *revs,
-			      int argc, const char **argv,
+			      int argc, const char **argv UNUSED,
 			      struct object_array_entry **blob)
 {
 	const unsigned mode = canon_mode(S_IFREG | 0644);
@@ -209,7 +213,7 @@ static int builtin_diff_tree(struct rev_info *revs,
 }
 
 static int builtin_diff_combined(struct rev_info *revs,
-				 int argc, const char **argv,
+				 int argc, const char **argv UNUSED,
 				 struct object_array_entry *ent,
 				 int ents, int first_non_parent)
 {
@@ -548,7 +552,8 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		if (!obj)
 			die(_("invalid object '%s' given."), name);
 		if (obj->type == OBJ_COMMIT)
-			obj = &get_commit_tree(((struct commit *)obj))->object;
+			obj = &repo_get_commit_tree(the_repository,
+						    ((struct commit *)obj))->object;
 
 		if (obj->type == OBJ_TREE) {
 			if (sdiff.skip && bitmap_get(sdiff.skip, i))

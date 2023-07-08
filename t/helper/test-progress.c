@@ -19,7 +19,6 @@
  */
 #define GIT_TEST_PROGRESS_ONLY
 #include "test-tool.h"
-#include "gettext.h"
 #include "parse-options.h"
 #include "progress.h"
 #include "strbuf.h"

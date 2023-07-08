@@ -244,17 +244,16 @@ static void credential_clear(struct credential *c)
 
 static int credential_read(struct credential *c)
 {
-	char *buf;
-	size_t line_len;
+	char *buf = NULL;
+	size_t alloc;
+	ssize_t line_len;
 	char *key;
 	char *value;
 
-	key = buf = g_malloc(1024);
+	while ((line_len = getline(&buf, &alloc, stdin)) > 0) {
+		key = buf;
 
-	while (fgets(buf, 1024, stdin)) {
-		line_len = strlen(buf);
-
-		if (line_len && buf[line_len-1] == '\n')
+		if (buf[line_len-1] == '\n')
 			buf[--line_len] = '\0';
 
 		if (!line_len)
@@ -298,7 +297,7 @@ static int credential_read(struct credential *c)
 		 */
 	}
 
-	g_free(buf);
+	free(buf);
 
 	return 0;
 }

@@ -16,7 +16,7 @@ add_blob() {
 	before=$(git count-objects | sed "s/ .*//") &&
 	BLOB=$(echo aleph_0 | git hash-object -w --stdin) &&
 	BLOB_FILE=.git/objects/$(echo $BLOB | sed "s/^../&\//") &&
-	verbose test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
+	test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
 	test_path_is_file $BLOB_FILE &&
 	test-tool chmtime =+0 $BLOB_FILE
 }
@@ -51,34 +51,42 @@ test_expect_success 'prune stale packs' '
 test_expect_success 'prune --expire' '
 	add_blob &&
 	git prune --expire=1.hour.ago &&
-	verbose test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
+	test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
 	test_path_is_file $BLOB_FILE &&
 	test-tool chmtime =-86500 $BLOB_FILE &&
 	git prune --expire 1.day &&
-	verbose test $before = $(git count-objects | sed "s/ .*//") &&
+	test $before = $(git count-objects | sed "s/ .*//") &&
 	test_path_is_missing $BLOB_FILE
 '
 
 test_expect_success 'gc: implicit prune --expire' '
 	add_blob &&
 	test-tool chmtime =-$((2*$week-30)) $BLOB_FILE &&
-	git gc &&
-	verbose test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
+	git gc --no-cruft &&
+	test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
 	test_path_is_file $BLOB_FILE &&
 	test-tool chmtime =-$((2*$week+1)) $BLOB_FILE &&
-	git gc &&
-	verbose test $before = $(git count-objects | sed "s/ .*//") &&
+	git gc --no-cruft &&
+	test $before = $(git count-objects | sed "s/ .*//") &&
 	test_path_is_missing $BLOB_FILE
 '
 
 test_expect_success 'gc: refuse to start with invalid gc.pruneExpire' '
-	git config gc.pruneExpire invalid &&
-	test_must_fail git gc
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	>repo/.git/config &&
+	git -C repo config gc.pruneExpire invalid &&
+	cat >expect <<-\EOF &&
+	error: Invalid gc.pruneexpire: '\''invalid'\''
+	fatal: bad config variable '\''gc.pruneexpire'\'' in file '\''.git/config'\'' at line 2
+	EOF
+	test_must_fail git -C repo gc 2>actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'gc: start with ok gc.pruneExpire' '
 	git config gc.pruneExpire 2.days.ago &&
-	git gc
+	git gc --no-cruft
 '
 
 test_expect_success 'prune: prune nonsense parameters' '
@@ -129,44 +137,44 @@ test_expect_success 'gc --no-prune' '
 	add_blob &&
 	test-tool chmtime =-$((5001*$day)) $BLOB_FILE &&
 	git config gc.pruneExpire 2.days.ago &&
-	git gc --no-prune &&
-	verbose test 1 = $(git count-objects | sed "s/ .*//") &&
+	git gc --no-prune --no-cruft &&
+	test 1 = $(git count-objects | sed "s/ .*//") &&
 	test_path_is_file $BLOB_FILE
 '
 
 test_expect_success 'gc respects gc.pruneExpire' '
 	git config gc.pruneExpire 5002.days.ago &&
-	git gc &&
+	git gc --no-cruft &&
 	test_path_is_file $BLOB_FILE &&
 	git config gc.pruneExpire 5000.days.ago &&
-	git gc &&
+	git gc --no-cruft &&
 	test_path_is_missing $BLOB_FILE
 '
 
 test_expect_success 'gc --prune=<date>' '
 	add_blob &&
 	test-tool chmtime =-$((5001*$day)) $BLOB_FILE &&
-	git gc --prune=5002.days.ago &&
+	git gc --prune=5002.days.ago --no-cruft &&
 	test_path_is_file $BLOB_FILE &&
-	git gc --prune=5000.days.ago &&
+	git gc --prune=5000.days.ago --no-cruft &&
 	test_path_is_missing $BLOB_FILE
 '
 
 test_expect_success 'gc --prune=never' '
 	add_blob &&
-	git gc --prune=never &&
+	git gc --prune=never --no-cruft &&
 	test_path_is_file $BLOB_FILE &&
-	git gc --prune=now &&
+	git gc --prune=now --no-cruft &&
 	test_path_is_missing $BLOB_FILE
 '
 
 test_expect_success 'gc respects gc.pruneExpire=never' '
 	git config gc.pruneExpire never &&
 	add_blob &&
-	git gc &&
+	git gc --no-cruft &&
 	test_path_is_file $BLOB_FILE &&
 	git config gc.pruneExpire now &&
-	git gc &&
+	git gc --no-cruft &&
 	test_path_is_missing $BLOB_FILE
 '
 
@@ -184,10 +192,10 @@ test_expect_success 'gc: prune old objects after local clone' '
 	git clone --no-hardlinks . aclone &&
 	(
 		cd aclone &&
-		verbose test 1 = $(git count-objects | sed "s/ .*//") &&
+		test 1 = $(git count-objects | sed "s/ .*//") &&
 		test_path_is_file $BLOB_FILE &&
-		git gc --prune &&
-		verbose test 0 = $(git count-objects | sed "s/ .*//") &&
+		git gc --prune --no-cruft &&
+		test 0 = $(git count-objects | sed "s/ .*//") &&
 		test_path_is_missing $BLOB_FILE
 	)
 '
@@ -229,7 +237,7 @@ test_expect_success 'clean pack garbage with gc' '
 	>.git/objects/pack/fake2.keep &&
 	>.git/objects/pack/fake2.idx &&
 	>.git/objects/pack/fake3.keep &&
-	git gc &&
+	git gc --no-cruft &&
 	git count-objects -v 2>stderr &&
 	grep "^warning:" stderr | sort >actual &&
 	cat >expected <<\EOF &&
@@ -340,6 +348,20 @@ test_expect_success 'old reachable-from-recent retained with bitmaps' '
 	git cat-file -e $tree &&
 	git cat-file -e $to_save &&
 	test_must_fail git cat-file -e $to_drop
+'
+
+test_expect_success 'gc.recentObjectsHook' '
+	add_blob &&
+	test-tool chmtime =-86500 $BLOB_FILE &&
+
+	write_script precious-objects <<-EOF &&
+	echo $BLOB
+	EOF
+	test_config gc.recentObjectsHook ./precious-objects &&
+
+	git prune --expire=now &&
+
+	git cat-file -p $BLOB
 '
 
 test_done

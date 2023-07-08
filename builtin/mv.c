@@ -5,13 +5,23 @@
  */
 #define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
+#include "abspath.h"
+#include "advice.h"
+#include "alloc.h"
 #include "config.h"
+#include "environment.h"
+#include "gettext.h"
+#include "name-hash.h"
+#include "object-file.h"
 #include "pathspec.h"
 #include "lockfile.h"
 #include "dir.h"
 #include "cache-tree.h"
 #include "string-list.h"
 #include "parse-options.h"
+#include "read-cache-ll.h"
+#include "repository.h"
+#include "setup.h"
 #include "submodule.h"
 #include "entry.h"
 

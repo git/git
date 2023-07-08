@@ -256,7 +256,17 @@ void free_notes(struct notes_tree *t);
 struct string_list;
 
 struct display_notes_opt {
+	/*
+	 * Less than `0` is "unset", which means that the default notes
+	 * are shown iff no other notes are given. Otherwise,
+	 * treat it like a boolean.
+	 */
 	int use_default_notes;
+
+	/*
+	 * A list of globs (in the same style as notes.displayRef) where
+	 * notes should be loaded from.
+	 */
 	struct string_list extra_notes_refs;
 };
 
@@ -283,14 +293,7 @@ void disable_display_notes(struct display_notes_opt *opt, int *show_notes);
 /*
  * Load the notes machinery for displaying several notes trees.
  *
- * If 'opt' is not NULL, then it specifies additional settings for the
- * displaying:
- *
- * - suppress_default_notes indicates that the notes from
- *   core.notesRef and notes.displayRef should not be loaded.
- *
- * - extra_notes_refs may contain a list of globs (in the same style
- *   as notes.displayRef) where notes should be loaded from.
+ * 'opt' may be NULL.
  */
 void load_display_notes(struct display_notes_opt *opt);
 

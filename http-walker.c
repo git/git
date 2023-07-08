@@ -1,12 +1,13 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "repository.h"
 #include "commit.h"
+#include "hex.h"
 #include "walker.h"
 #include "http.h"
 #include "list.h"
 #include "transport.h"
 #include "packfile.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 
 struct alt_base {
 	char *base;
@@ -52,8 +53,7 @@ static void fetch_alternates(struct walker *walker, const char *base);
 
 static void process_object_response(void *callback_data);
 
-static void start_object_request(struct walker *walker,
-				 struct object_request *obj_req)
+static void start_object_request(struct object_request *obj_req)
 {
 	struct active_request_slot *slot;
 	struct http_object_request *req;
@@ -110,7 +110,7 @@ static void process_object_response(void *callback_data)
 			obj_req->repo =
 				obj_req->repo->next;
 			release_http_object_request(obj_req->req);
-			start_object_request(walker, obj_req);
+			start_object_request(obj_req);
 			return;
 		}
 	}
@@ -127,7 +127,7 @@ static void release_object_request(struct object_request *obj_req)
 	free(obj_req);
 }
 
-static int fill_active_slot(struct walker *walker)
+static int fill_active_slot(void *data UNUSED)
 {
 	struct object_request *obj_req;
 	struct list_head *pos, *tmp, *head = &object_queue_head;
@@ -135,10 +135,10 @@ static int fill_active_slot(struct walker *walker)
 	list_for_each_safe(pos, tmp, head) {
 		obj_req = list_entry(pos, struct object_request, node);
 		if (obj_req->state == WAITING) {
-			if (has_object_file(&obj_req->oid))
+			if (repo_has_object_file(the_repository, &obj_req->oid))
 				obj_req->state = COMPLETE;
 			else {
-				start_object_request(walker, obj_req);
+				start_object_request(obj_req);
 				return 1;
 			}
 		}
@@ -492,7 +492,7 @@ static int fetch_object(struct walker *walker, unsigned char *hash)
 	if (!obj_req)
 		return error("Couldn't find request for %s in the queue", hex);
 
-	if (has_object_file(&obj_req->oid)) {
+	if (repo_has_object_file(the_repository, &obj_req->oid)) {
 		if (obj_req->req)
 			abort_http_object_request(obj_req->req);
 		abort_object_request(obj_req);
@@ -613,7 +613,7 @@ struct walker *get_http_walker(const char *url)
 	walker->cleanup = cleanup;
 	walker->data = data;
 
-	add_fill_function(walker, (int (*)(void *)) fill_active_slot);
+	add_fill_function(NULL, fill_active_slot);
 
 	return walker;
 }

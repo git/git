@@ -1,5 +1,5 @@
 #include "test-tool.h"
-#include "cache.h"
+#include "setup.h"
 #include "userdiff.h"
 #include "config.h"
 
@@ -12,7 +12,9 @@ static int driver_cb(struct userdiff_driver *driver,
 	return 0;
 }
 
-static int cmd__userdiff_config(const char *var, const char *value, void *cb UNUSED)
+static int cmd__userdiff_config(const char *var, const char *value,
+				const struct config_context *ctx UNUSED,
+				void *cb UNUSED)
 {
 	if (userdiff_config(var, value) < 0)
 		return -1;

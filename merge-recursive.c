@@ -3,14 +3,13 @@
  * Fredrik Kuivinen.
  * The thieves were Alex Riesen and Johannes Schindelin, in June/July 2006
  */
-#include "cache.h"
+#include "git-compat-util.h"
 #include "merge-recursive.h"
 
 #include "advice.h"
 #include "alloc.h"
 #include "attr.h"
 #include "blob.h"
-#include "builtin.h"
 #include "cache-tree.h"
 #include "commit.h"
 #include "commit-reach.h"
@@ -18,17 +17,28 @@
 #include "diff.h"
 #include "diffcore.h"
 #include "dir.h"
-#include "ll-merge.h"
+#include "environment.h"
+#include "gettext.h"
+#include "hex.h"
+#include "merge-ll.h"
 #include "lockfile.h"
-#include "object-store.h"
+#include "match-trees.h"
+#include "name-hash.h"
+#include "object-file.h"
+#include "object-name.h"
+#include "object-store-ll.h"
+#include "path.h"
 #include "repository.h"
 #include "revision.h"
+#include "sparse-index.h"
 #include "string-list.h"
 #include "submodule-config.h"
 #include "submodule.h"
+#include "symlinks.h"
 #include "tag.h"
 #include "tree-walk.h"
 #include "unpack-trees.h"
+#include "wrapper.h"
 #include "xdiff-interface.h"
 
 struct merge_options_internal {
@@ -951,7 +961,8 @@ static int update_file_flags(struct merge_options *opt,
 			goto update_index;
 		}
 
-		buf = read_object_file(&contents->oid, &type, &size);
+		buf = repo_read_object_file(the_repository, &contents->oid,
+					    &type, &size);
 		if (!buf) {
 			ret = err(opt, _("cannot read object %s '%s'"),
 				  oid_to_hex(&contents->oid), path);
@@ -3021,7 +3032,7 @@ static int read_oid_strbuf(struct merge_options *opt,
 	void *buf;
 	enum object_type type;
 	unsigned long size;
-	buf = read_object_file(oid, &type, &size);
+	buf = repo_read_object_file(the_repository, oid, &type, &size);
 	if (!buf)
 		return err(opt, _("cannot read object %s"), oid_to_hex(oid));
 	if (type != OBJ_BLOB) {
@@ -3592,7 +3603,7 @@ static int merge_recursive_internal(struct merge_options *opt,
 	}
 
 	if (!merge_bases) {
-		merge_bases = get_merge_bases(h1, h2);
+		merge_bases = repo_get_merge_bases(the_repository, h1, h2);
 		merge_bases = reverse_commit_list(merge_bases);
 	}
 
@@ -3797,7 +3808,7 @@ static struct commit *get_ref(struct repository *repo,
 		return make_virtual_commit(repo, (struct tree*)object, name);
 	if (object->type != OBJ_COMMIT)
 		return NULL;
-	if (parse_commit((struct commit *)object))
+	if (repo_parse_commit(repo, (struct commit *)object))
 		return NULL;
 	return (struct commit *)object;
 }

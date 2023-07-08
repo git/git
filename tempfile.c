@@ -42,9 +42,12 @@
  * file created by its parent.
  */
 
-#include "cache.h"
+#include "git-compat-util.h"
+#include "abspath.h"
+#include "path.h"
 #include "tempfile.h"
 #include "sigchain.h"
+#include "wrapper.h"
 
 static VOLATILE_LIST_HEAD(tempfile_list);
 
