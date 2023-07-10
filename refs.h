@@ -337,6 +337,10 @@ int for_each_ref(each_ref_fn fn, void *cb_data);
  */
 int for_each_ref_in(const char *prefix, each_ref_fn fn, void *cb_data);
 
+/*
+ * references matching any pattern in "exclude_patterns" are omitted from the
+ * result set on a best-effort basis.
+ */
 int refs_for_each_fullref_in(struct ref_store *refs, const char *prefix,
 			     const char **exclude_patterns,
 			     each_ref_fn fn, void *cb_data);
