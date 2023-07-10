@@ -831,6 +831,12 @@ int parse_hide_refs_config(const char *var, const char *value, const char *,
  */
 int ref_is_hidden(const char *, const char *, const struct strvec *);
 
+/*
+ * Returns an array of patterns to use as excluded_patterns, if none of the
+ * hidden references use the token '!' or '^'.
+ */
+const char **hidden_refs_to_excludes(const struct strvec *hide_refs);
+
 /* Is this a per-worktree ref living in the refs/ namespace? */
 int is_per_worktree_ref(const char *refname);
 

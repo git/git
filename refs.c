@@ -1480,6 +1480,30 @@ int ref_is_hidden(const char *refname, const char *refname_full,
 	return 0;
 }
 
+const char **hidden_refs_to_excludes(const struct strvec *hide_refs)
+{
+	const char **pattern;
+	for (pattern = hide_refs->v; *pattern; pattern++) {
+		/*
+		 * We can't feed any excludes from hidden refs config
+		 * sections, since later rules may override previous
+		 * ones. For example, with rules "refs/foo" and
+		 * "!refs/foo/bar", we should show "refs/foo/bar" (and
+		 * everything underneath it), but the earlier exclusion
+		 * would cause us to skip all of "refs/foo".  We
+		 * likewise don't implement the namespace stripping
+		 * required for '^' rules.
+		 *
+		 * Both are possible to do, but complicated, so avoid
+		 * populating the jump list at all if we see either of
+		 * these patterns.
+		 */
+		if (**pattern == '!' || **pattern == '^')
+			return NULL;
+	}
+	return hide_refs->v;
+}
+
 const char *find_descendant_ref(const char *dirname,
 				const struct string_list *extras,
 				const struct string_list *skip)
