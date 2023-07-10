@@ -376,7 +376,7 @@ static int match_pathspec_item(struct index_state *istate,
 		return 0;
 
 	if (item->attr_match_nr &&
-	    !match_pathspec_attrs(istate, name, namelen, item))
+	    !match_pathspec_attrs(istate, name - prefix, namelen + prefix, item))
 		return 0;
 
 	/* If the match was just the prefix, we matched */
