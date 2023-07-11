@@ -106,49 +106,38 @@ static void collect_pack_filenames(struct string_list *fname_nonkept_list,
 				   struct string_list *fname_kept_list,
 				   const struct string_list *extra_keep)
 {
-	DIR *dir;
-	struct dirent *e;
-	char *fname;
+	struct packed_git *p;
 	struct strbuf buf = STRBUF_INIT;
 
-	if (!(dir = opendir(packdir)))
-		return;
-
-	while ((e = readdir(dir)) != NULL) {
-		size_t len;
+	for (p = get_all_packs(the_repository); p; p = p->next) {
 		int i;
+		const char *base;
 
-		if (!strip_suffix(e->d_name, ".idx", &len))
+		if (!p->pack_local)
 			continue;
 
-		strbuf_reset(&buf);
-		strbuf_add(&buf, e->d_name, len);
-		strbuf_addstr(&buf, ".pack");
-
-		if (!file_exists(mkpath("%s/%s", packdir, buf.buf)))
-			continue;
+		base = pack_basename(p);
 
 		for (i = 0; i < extra_keep->nr; i++)
-			if (!fspathcmp(buf.buf, extra_keep->items[i].string))
+			if (!fspathcmp(base, extra_keep->items[i].string))
 				break;
 
-		fname = xmemdupz(e->d_name, len);
+		strbuf_reset(&buf);
+		strbuf_addstr(&buf, base);
+		strbuf_strip_suffix(&buf, ".pack");
 
-		if ((extra_keep->nr > 0 && i < extra_keep->nr) ||
-		    (file_exists(mkpath("%s/%s.keep", packdir, fname)))) {
-			string_list_append_nodup(fname_kept_list, fname);
-		} else {
+		if ((extra_keep->nr > 0 && i < extra_keep->nr) || p->pack_keep)
+			string_list_append(fname_kept_list, buf.buf);
+		else {
 			struct string_list_item *item;
-			item = string_list_append_nodup(fname_nonkept_list,
-							fname);
-			if (file_exists(mkpath("%s/%s.mtimes", packdir, fname)))
+			item = string_list_append(fname_nonkept_list, buf.buf);
+			if (p->is_cruft)
 				item->util = (void*)(uintptr_t)CRUFT_PACK;
 		}
 	}
-	closedir(dir);
-	strbuf_release(&buf);
 
 	string_list_sort(fname_kept_list);
+	strbuf_release(&buf);
 }
 
 static void remove_redundant_pack(const char *dir_name, const char *base_name)
