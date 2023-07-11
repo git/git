@@ -125,6 +125,9 @@ static void collect_pack_filenames(struct string_list *fname_nonkept_list,
 		strbuf_add(&buf, e->d_name, len);
 		strbuf_addstr(&buf, ".pack");
 
+		if (!file_exists(mkpath("%s/%s", packdir, buf.buf)))
+			continue;
+
 		for (i = 0; i < extra_keep->nr; i++)
 			if (!fspathcmp(buf.buf, extra_keep->items[i].string))
 				break;
