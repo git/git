@@ -2541,18 +2541,14 @@ static int commit_graph_checksum_valid(struct commit_graph *g)
 	return hashfile_checksum_valid(g->data, g->data_len);
 }
 
-int verify_commit_graph(struct repository *r, struct commit_graph *g, int flags)
+static int verify_one_commit_graph(struct repository *r,
+				   struct commit_graph *g,
+				   struct progress *progress,
+				   uint64_t *seen)
 {
 	uint32_t i, cur_fanout_pos = 0;
 	struct object_id prev_oid, cur_oid;
 	int generation_zero = 0;
-	struct progress *progress = NULL;
-	int local_error = 0;
-
-	if (!g) {
-		graph_report("no commit-graph file loaded");
-		return 1;
-	}
 
 	verify_commit_graph_error = verify_commit_graph_lite(g);
 	if (verify_commit_graph_error)
@@ -2603,17 +2599,13 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g, int flags)
 	if (verify_commit_graph_error & ~VERIFY_COMMIT_GRAPH_ERROR_HASH)
 		return verify_commit_graph_error;
 
-	if (flags & COMMIT_GRAPH_WRITE_PROGRESS)
-		progress = start_progress(_("Verifying commits in commit graph"),
-					g->num_commits);
-
 	for (i = 0; i < g->num_commits; i++) {
 		struct commit *graph_commit, *odb_commit;
 		struct commit_list *graph_parents, *odb_parents;
 		timestamp_t max_generation = 0;
 		timestamp_t generation;
 
-		display_progress(progress, i + 1);
+		display_progress(progress, ++(*seen));
 		oidread(&cur_oid, g->chunk_oid_lookup + g->hash_len * i);
 
 		graph_commit = lookup_commit(r, &cur_oid);
@@ -2696,12 +2688,37 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g, int flags)
 				     graph_commit->date,
 				     odb_commit->date);
 	}
+
+	return verify_commit_graph_error;
+}
+
+int verify_commit_graph(struct repository *r, struct commit_graph *g, int flags)
+{
+	struct progress *progress = NULL;
+	int local_error = 0;
+	uint64_t seen = 0;
+
+	if (!g) {
+		graph_report("no commit-graph file loaded");
+		return 1;
+	}
+
+	if (flags & COMMIT_GRAPH_WRITE_PROGRESS) {
+		uint64_t total = g->num_commits;
+		if (!(flags & COMMIT_GRAPH_VERIFY_SHALLOW))
+			total += g->num_commits_in_base;
+
+		progress = start_progress(_("Verifying commits in commit graph"),
+					  total);
+	}
+
+	for (; g; g = g->base_graph) {
+		local_error |= verify_one_commit_graph(r, g, progress, &seen);
+		if (flags & COMMIT_GRAPH_VERIFY_SHALLOW)
+			break;
+	}
+
 	stop_progress(&progress);
-
-	local_error = verify_commit_graph_error;
-
-	if (!(flags & COMMIT_GRAPH_VERIFY_SHALLOW) && g->base_graph)
-		local_error |= verify_commit_graph(r, g->base_graph, flags);
 
 	return local_error;
 }
