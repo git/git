@@ -1180,8 +1180,6 @@ static int should_pack_ref(const char *refname,
 			   const struct object_id *oid, unsigned int ref_flags,
 			   struct pack_refs_opts *opts)
 {
-	struct string_list_item *item;
-
 	/* Do not pack per-worktree refs: */
 	if (parse_worktree_ref(refname, NULL, NULL, NULL) !=
 	    REF_WORKTREE_SHARED)
@@ -1195,14 +1193,7 @@ static int should_pack_ref(const char *refname,
 	if (!ref_resolves_to_object(refname, the_repository, oid, ref_flags))
 		return 0;
 
-	if (ref_excluded(opts->exclusions, refname))
-		return 0;
-
-	for_each_string_list_item(item, opts->includes)
-		if (!wildmatch(item->string, refname, 0))
-			return 1;
-
-	return 0;
+	return ref_visible(opts->visibility, refname);
 }
 
 static int files_pack_refs(struct ref_store *ref_store,

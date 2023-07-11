@@ -1535,42 +1535,62 @@ static void add_rev_cmdline_list(struct rev_info *revs,
 	}
 }
 
-int ref_excluded(const struct ref_exclusions *exclusions, const char *path)
+static int ref_matched(struct string_list refs, const char *path)
 {
-	const char *stripped_path = strip_namespace(path);
 	struct string_list_item *item;
 
-	for_each_string_list_item(item, &exclusions->excluded_refs) {
+	for_each_string_list_item(item, &refs)
 		if (!wildmatch(item->string, path, 0))
 			return 1;
-	}
-
-	if (ref_is_hidden(stripped_path, path, &exclusions->hidden_refs))
-		return 1;
 
 	return 0;
 }
 
-void init_ref_exclusions(struct ref_exclusions *exclusions)
+int ref_excluded(const struct ref_visibility *visibility, const char *path)
 {
-	struct ref_exclusions blank = REF_EXCLUSIONS_INIT;
-	memcpy(exclusions, &blank, sizeof(*exclusions));
+	if (ref_is_hidden(strip_namespace(path), path, &visibility->hidden_refs))
+		return 1;
+
+	return ref_matched(visibility->excluded_refs, path);
 }
 
-void clear_ref_exclusions(struct ref_exclusions *exclusions)
+int ref_visible(const struct ref_visibility *visibility, const char *path)
 {
-	string_list_clear(&exclusions->excluded_refs, 0);
-	string_list_clear(&exclusions->hidden_refs, 0);
-	exclusions->hidden_refs_configured = 0;
+	if (ref_is_hidden(strip_namespace(path), path, &visibility->hidden_refs))
+		return 0;
+
+	if (ref_matched(visibility->excluded_refs, path))
+		return 0;
+
+	return ref_matched(visibility->included_refs, path);
 }
 
-void add_ref_exclusion(struct ref_exclusions *exclusions, const char *exclude)
+void init_ref_visibility(struct ref_visibility *visibility)
 {
-	string_list_append(&exclusions->excluded_refs, exclude);
+	struct ref_visibility blank = REF_VISIBILITY_INIT;
+	memcpy(visibility, &blank, sizeof(*visibility));
+}
+
+void clear_ref_visibility(struct ref_visibility *visibility)
+{
+	string_list_clear(&visibility->excluded_refs, 0);
+	string_list_clear(&visibility->included_refs, 0);
+	string_list_clear(&visibility->hidden_refs, 0);
+	visibility->hidden_refs_configured = 0;
+}
+
+void add_ref_exclusion(struct ref_visibility *visibility, const char *exclude)
+{
+	string_list_append(&visibility->excluded_refs, exclude);
+}
+
+void add_ref_inclusion(struct ref_visibility *visibility, const char *include)
+{
+	string_list_append(&visibility->included_refs, include);
 }
 
 struct exclude_hidden_refs_cb {
-	struct ref_exclusions *exclusions;
+	struct ref_visibility *visibility;
 	const char *section;
 };
 
@@ -1579,12 +1599,12 @@ static int hide_refs_config(const char *var, const char *value,
 			    void *cb_data)
 {
 	struct exclude_hidden_refs_cb *cb = cb_data;
-	cb->exclusions->hidden_refs_configured = 1;
+	cb->visibility->hidden_refs_configured = 1;
 	return parse_hide_refs_config(var, value, cb->section,
-				      &cb->exclusions->hidden_refs);
+				      &cb->visibility->hidden_refs);
 }
 
-void exclude_hidden_refs(struct ref_exclusions *exclusions, const char *section)
+void exclude_hidden_refs(struct ref_visibility *visibility, const char *section)
 {
 	struct exclude_hidden_refs_cb cb;
 
@@ -1592,10 +1612,10 @@ void exclude_hidden_refs(struct ref_exclusions *exclusions, const char *section)
 			strcmp(section, "uploadpack"))
 		die(_("unsupported section for hidden refs: %s"), section);
 
-	if (exclusions->hidden_refs_configured)
+	if (visibility->hidden_refs_configured)
 		die(_("--exclude-hidden= passed more than once"));
 
-	cb.exclusions = exclusions;
+	cb.visibility = visibility;
 	cb.section = section;
 
 	git_config(hide_refs_config, &cb);
@@ -1616,7 +1636,7 @@ static int handle_one_ref(const char *path, const struct object_id *oid,
 	struct all_refs_cb *cb = cb_data;
 	struct object *object;
 
-	if (ref_excluded(&cb->all_revs->ref_excludes, path))
+	if (ref_excluded(&cb->all_revs->refs_visible, path))
 	    return 0;
 
 	object = get_reference(cb->all_revs, path, oid, cb->all_flags);
@@ -1939,7 +1959,7 @@ void repo_init_revisions(struct repository *r,
 
 	init_display_notes(&revs->notes_opt);
 	list_objects_filter_init(&revs->filter);
-	init_ref_exclusions(&revs->ref_excludes);
+	init_ref_visibility(&revs->refs_visible);
 }
 
 static void add_pending_commit_list(struct rev_info *revs,
@@ -2695,12 +2715,12 @@ static int handle_revision_pseudo_opt(struct rev_info *revs,
 			init_all_refs_cb(&cb, revs, *flags);
 			other_head_refs(handle_one_ref, &cb);
 		}
-		clear_ref_exclusions(&revs->ref_excludes);
+		clear_ref_visibility(&revs->refs_visible);
 	} else if (!strcmp(arg, "--branches")) {
-		if (revs->ref_excludes.hidden_refs_configured)
+		if (revs->refs_visible.hidden_refs_configured)
 			return error(_("--exclude-hidden cannot be used together with --branches"));
 		handle_refs(refs, revs, *flags, refs_for_each_branch_ref);
-		clear_ref_exclusions(&revs->ref_excludes);
+		clear_ref_visibility(&revs->refs_visible);
 	} else if (!strcmp(arg, "--bisect")) {
 		read_bisect_terms(&term_bad, &term_good);
 		handle_refs(refs, revs, *flags, for_each_bad_bisect_ref);
@@ -2708,48 +2728,48 @@ static int handle_revision_pseudo_opt(struct rev_info *revs,
 			    for_each_good_bisect_ref);
 		revs->bisect = 1;
 	} else if (!strcmp(arg, "--tags")) {
-		if (revs->ref_excludes.hidden_refs_configured)
+		if (revs->refs_visible.hidden_refs_configured)
 			return error(_("--exclude-hidden cannot be used together with --tags"));
 		handle_refs(refs, revs, *flags, refs_for_each_tag_ref);
-		clear_ref_exclusions(&revs->ref_excludes);
+		clear_ref_visibility(&revs->refs_visible);
 	} else if (!strcmp(arg, "--remotes")) {
-		if (revs->ref_excludes.hidden_refs_configured)
+		if (revs->refs_visible.hidden_refs_configured)
 			return error(_("--exclude-hidden cannot be used together with --remotes"));
 		handle_refs(refs, revs, *flags, refs_for_each_remote_ref);
-		clear_ref_exclusions(&revs->ref_excludes);
+		clear_ref_visibility(&revs->refs_visible);
 	} else if ((argcount = parse_long_opt("glob", argv, &optarg))) {
 		struct all_refs_cb cb;
 		init_all_refs_cb(&cb, revs, *flags);
 		for_each_glob_ref(handle_one_ref, optarg, &cb);
-		clear_ref_exclusions(&revs->ref_excludes);
+		clear_ref_visibility(&revs->refs_visible);
 		return argcount;
 	} else if ((argcount = parse_long_opt("exclude", argv, &optarg))) {
-		add_ref_exclusion(&revs->ref_excludes, optarg);
+		add_ref_exclusion(&revs->refs_visible, optarg);
 		return argcount;
 	} else if ((argcount = parse_long_opt("exclude-hidden", argv, &optarg))) {
-		exclude_hidden_refs(&revs->ref_excludes, optarg);
+		exclude_hidden_refs(&revs->refs_visible, optarg);
 		return argcount;
 	} else if (skip_prefix(arg, "--branches=", &optarg)) {
 		struct all_refs_cb cb;
-		if (revs->ref_excludes.hidden_refs_configured)
+		if (revs->refs_visible.hidden_refs_configured)
 			return error(_("--exclude-hidden cannot be used together with --branches"));
 		init_all_refs_cb(&cb, revs, *flags);
 		for_each_glob_ref_in(handle_one_ref, optarg, "refs/heads/", &cb);
-		clear_ref_exclusions(&revs->ref_excludes);
+		clear_ref_visibility(&revs->refs_visible);
 	} else if (skip_prefix(arg, "--tags=", &optarg)) {
 		struct all_refs_cb cb;
-		if (revs->ref_excludes.hidden_refs_configured)
+		if (revs->refs_visible.hidden_refs_configured)
 			return error(_("--exclude-hidden cannot be used together with --tags"));
 		init_all_refs_cb(&cb, revs, *flags);
 		for_each_glob_ref_in(handle_one_ref, optarg, "refs/tags/", &cb);
-		clear_ref_exclusions(&revs->ref_excludes);
+		clear_ref_visibility(&revs->refs_visible);
 	} else if (skip_prefix(arg, "--remotes=", &optarg)) {
 		struct all_refs_cb cb;
-		if (revs->ref_excludes.hidden_refs_configured)
+		if (revs->refs_visible.hidden_refs_configured)
 			return error(_("--exclude-hidden cannot be used together with --remotes"));
 		init_all_refs_cb(&cb, revs, *flags);
 		for_each_glob_ref_in(handle_one_ref, optarg, "refs/remotes/", &cb);
-		clear_ref_exclusions(&revs->ref_excludes);
+		clear_ref_visibility(&revs->refs_visible);
 	} else if (!strcmp(arg, "--reflog")) {
 		add_reflogs_to_pending(revs, *flags);
 	} else if (!strcmp(arg, "--indexed-objects")) {
