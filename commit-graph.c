@@ -2585,7 +2585,7 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g, int flags)
 	for (i = 0; i < g->num_commits; i++) {
 		struct commit *graph_commit;
 
-		oidread(&cur_oid, g->chunk_oid_lookup + g->hash_len * i);
+		oidread(&cur_oid, g->chunk_oid_lookup + st_mult(g->hash_len, i));
 
 		if (i && oidcmp(&prev_oid, &cur_oid) >= 0)
 			graph_report(_("commit-graph has incorrect OID order: %s then %s"),
@@ -2633,7 +2633,7 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g, int flags)
 		timestamp_t generation;
 
 		display_progress(progress, i + 1);
-		oidread(&cur_oid, g->chunk_oid_lookup + g->hash_len * i);
+		oidread(&cur_oid, g->chunk_oid_lookup + st_mult(g->hash_len, i));
 
 		graph_commit = lookup_commit(r, &cur_oid);
 		odb_commit = (struct commit *)create_object(r, &cur_oid, alloc_commit_node(r));
