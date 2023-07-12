@@ -1953,35 +1953,35 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 
 	add_chunk(cf, GRAPH_CHUNKID_OIDFANOUT, GRAPH_FANOUT_SIZE,
 		  write_graph_chunk_fanout);
-	add_chunk(cf, GRAPH_CHUNKID_OIDLOOKUP, hashsz * ctx->commits.nr,
+	add_chunk(cf, GRAPH_CHUNKID_OIDLOOKUP, st_mult(hashsz, ctx->commits.nr),
 		  write_graph_chunk_oids);
-	add_chunk(cf, GRAPH_CHUNKID_DATA, (hashsz + 16) * ctx->commits.nr,
+	add_chunk(cf, GRAPH_CHUNKID_DATA, st_mult(hashsz + 16, ctx->commits.nr),
 		  write_graph_chunk_data);
 
 	if (ctx->write_generation_data)
 		add_chunk(cf, GRAPH_CHUNKID_GENERATION_DATA,
-			  sizeof(uint32_t) * ctx->commits.nr,
+			  st_mult(sizeof(uint32_t), ctx->commits.nr),
 			  write_graph_chunk_generation_data);
 	if (ctx->num_generation_data_overflows)
 		add_chunk(cf, GRAPH_CHUNKID_GENERATION_DATA_OVERFLOW,
-			  sizeof(timestamp_t) * ctx->num_generation_data_overflows,
+			  st_mult(sizeof(timestamp_t), ctx->num_generation_data_overflows),
 			  write_graph_chunk_generation_data_overflow);
 	if (ctx->num_extra_edges)
 		add_chunk(cf, GRAPH_CHUNKID_EXTRAEDGES,
-			  4 * ctx->num_extra_edges,
+			  st_mult(4, ctx->num_extra_edges),
 			  write_graph_chunk_extra_edges);
 	if (ctx->changed_paths) {
 		add_chunk(cf, GRAPH_CHUNKID_BLOOMINDEXES,
-			  sizeof(uint32_t) * ctx->commits.nr,
+			  st_mult(sizeof(uint32_t), ctx->commits.nr),
 			  write_graph_chunk_bloom_indexes);
 		add_chunk(cf, GRAPH_CHUNKID_BLOOMDATA,
-			  sizeof(uint32_t) * 3
-				+ ctx->total_bloom_filter_data_size,
+			  st_add(sizeof(uint32_t) * 3,
+				 ctx->total_bloom_filter_data_size),
 			  write_graph_chunk_bloom_data);
 	}
 	if (ctx->num_commit_graphs_after > 1)
 		add_chunk(cf, GRAPH_CHUNKID_BASE,
-			  hashsz * (ctx->num_commit_graphs_after - 1),
+			  st_mult(hashsz, ctx->num_commit_graphs_after - 1),
 			  write_graph_chunk_base);
 
 	hashwrite_be32(f, GRAPH_SIGNATURE);
@@ -1999,7 +1999,7 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 			    get_num_chunks(cf));
 		ctx->progress = start_delayed_progress(
 			progress_title.buf,
-			get_num_chunks(cf) * ctx->commits.nr);
+			st_mult(get_num_chunks(cf), ctx->commits.nr));
 	}
 
 	write_chunkfile(cf, ctx);
