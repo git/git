@@ -1501,21 +1501,22 @@ static int write_midx_internal(const char *object_dir,
 	add_chunk(cf, MIDX_CHUNKID_OIDFANOUT, MIDX_CHUNK_FANOUT_SIZE,
 		  write_midx_oid_fanout);
 	add_chunk(cf, MIDX_CHUNKID_OIDLOOKUP,
-		  (size_t)ctx.entries_nr * the_hash_algo->rawsz,
+		  st_mult(ctx.entries_nr, the_hash_algo->rawsz),
 		  write_midx_oid_lookup);
 	add_chunk(cf, MIDX_CHUNKID_OBJECTOFFSETS,
-		  (size_t)ctx.entries_nr * MIDX_CHUNK_OFFSET_WIDTH,
+		  st_mult(ctx.entries_nr, MIDX_CHUNK_OFFSET_WIDTH),
 		  write_midx_object_offsets);
 
 	if (ctx.large_offsets_needed)
 		add_chunk(cf, MIDX_CHUNKID_LARGEOFFSETS,
-			(size_t)ctx.num_large_offsets * MIDX_CHUNK_LARGE_OFFSET_WIDTH,
+			st_mult(ctx.num_large_offsets,
+				MIDX_CHUNK_LARGE_OFFSET_WIDTH),
 			write_midx_large_offsets);
 
 	if (flags & (MIDX_WRITE_REV_INDEX | MIDX_WRITE_BITMAP)) {
 		ctx.pack_order = midx_pack_order(&ctx);
 		add_chunk(cf, MIDX_CHUNKID_REVINDEX,
-			  ctx.entries_nr * sizeof(uint32_t),
+			  st_mult(ctx.entries_nr, sizeof(uint32_t)),
 			  write_midx_revindex);
 	}
 
