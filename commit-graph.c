@@ -838,7 +838,7 @@ static int fill_commit_in_graph(struct repository *r,
 	fill_commit_graph_info(item, g, pos);
 
 	lex_index = pos - g->num_commits_in_base;
-	commit_data = g->chunk_commit_data + (g->hash_len + 16) * lex_index;
+	commit_data = g->chunk_commit_data + st_mult(g->hash_len + 16, lex_index);
 
 	item->object.parsed = 1;
 
@@ -860,7 +860,7 @@ static int fill_commit_in_graph(struct repository *r,
 	}
 
 	parent_data_ptr = (uint32_t*)(g->chunk_extra_edges +
-			  4 * (uint64_t)(edge_value & GRAPH_EDGE_LAST_MASK));
+			  st_mult(4, edge_value & GRAPH_EDGE_LAST_MASK));
 	do {
 		edge_value = get_be32(parent_data_ptr);
 		pptr = insert_parent_or_die(r, g,
