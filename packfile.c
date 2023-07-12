@@ -1920,10 +1920,10 @@ int nth_packed_object_id(struct object_id *oid,
 		return -1;
 	index += 4 * 256;
 	if (p->index_version == 1) {
-		oidread(oid, index + (hashsz + 4) * n + 4);
+		oidread(oid, index + st_add(st_mult(hashsz + 4, n), 4));
 	} else {
 		index += 8;
-		oidread(oid, index + hashsz * n);
+		oidread(oid, index + st_mult(hashsz, n));
 	}
 	return 0;
 }
