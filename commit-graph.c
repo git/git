@@ -482,7 +482,7 @@ static int add_graph_to_chain(struct commit_graph *g,
 
 		if (!cur_g ||
 		    !oideq(&oids[n], &cur_g->oid) ||
-		    !hasheq(oids[n].hash, g->chunk_base_graphs + g->hash_len * n)) {
+		    !hasheq(oids[n].hash, g->chunk_base_graphs + st_mult(g->hash_len, n))) {
 			warning(_("commit-graph chain does not match"));
 			return 0;
 		}
@@ -492,8 +492,15 @@ static int add_graph_to_chain(struct commit_graph *g,
 
 	g->base_graph = chain;
 
-	if (chain)
+	if (chain) {
+		if (unsigned_add_overflows(chain->num_commits,
+					   chain->num_commits_in_base)) {
+			warning(_("commit count in base graph too high: %"PRIuMAX),
+				(uintmax_t)chain->num_commits_in_base);
+			return 0;
+		}
 		g->num_commits_in_base = chain->num_commits + chain->num_commits_in_base;
+	}
 
 	return 1;
 }
