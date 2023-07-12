@@ -1994,8 +1994,8 @@ static int fill_included_packs_batch(struct repository *r,
 		if (open_pack_index(p) || !p->num_objects)
 			continue;
 
-		expected_size = (size_t)(p->pack_size
-					 * pack_info[i].referenced_objects);
+		expected_size = st_mult(p->pack_size,
+					pack_info[i].referenced_objects);
 		expected_size /= p->num_objects;
 
 		if (expected_size >= batch_size)
