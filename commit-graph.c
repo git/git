@@ -980,7 +980,7 @@ static struct tree *load_tree_for_commit(struct repository *r,
 		g = g->base_graph;
 
 	commit_data = g->chunk_commit_data +
-			GRAPH_DATA_WIDTH * (graph_pos - g->num_commits_in_base);
+			st_mult(GRAPH_DATA_WIDTH, graph_pos - g->num_commits_in_base);
 
 	oidread(&oid, commit_data);
 	set_commit_tree(c, lookup_tree(r, &oid));
