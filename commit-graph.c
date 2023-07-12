@@ -2179,6 +2179,11 @@ static void merge_commit_graph(struct write_commit_graph_context *ctx,
 	uint32_t i;
 	uint32_t offset = g->num_commits_in_base;
 
+	if (unsigned_add_overflows(ctx->commits.nr, g->num_commits))
+		die(_("cannot merge graph %s, too many commits: %"PRIuMAX),
+		    oid_to_hex(&g->oid),
+		    (uintmax_t)st_add(ctx->commits.nr, g->num_commits));
+
 	ALLOC_GROW(ctx->commits.list, ctx->commits.nr + g->num_commits, ctx->commits.alloc);
 
 	for (i = 0; i < g->num_commits; i++) {
