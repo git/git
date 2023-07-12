@@ -271,7 +271,8 @@ off_t nth_midxed_offset(struct multi_pack_index *m, uint32_t pos)
 			die(_("multi-pack-index stores a 64-bit offset, but off_t is too small"));
 
 		offset32 ^= MIDX_LARGE_OFFSET_NEEDED;
-		return get_be64(m->chunk_large_offsets + sizeof(uint64_t) * offset32);
+		return get_be64(m->chunk_large_offsets +
+				st_mult(sizeof(uint64_t), offset32));
 	}
 
 	return offset32;
