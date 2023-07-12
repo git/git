@@ -584,12 +584,14 @@ static void fill_pack_entry(uint32_t pack_int_id,
 
 struct midx_fanout {
 	struct pack_midx_entry *entries;
-	uint32_t nr;
-	uint32_t alloc;
+	size_t nr, alloc;
 };
 
-static void midx_fanout_grow(struct midx_fanout *fanout, uint32_t nr)
+static void midx_fanout_grow(struct midx_fanout *fanout, size_t nr)
 {
+	if (nr < fanout->nr)
+		BUG("negative growth in midx_fanout_grow() (%"PRIuMAX" < %"PRIuMAX")",
+		    (uintmax_t)nr, (uintmax_t)fanout->nr);
 	ALLOC_GROW(fanout->entries, nr, fanout->alloc);
 }
 
