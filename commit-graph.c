@@ -2112,11 +2112,16 @@ static void split_graph_merge_strategy(struct write_commit_graph_context *ctx)
 
 	if (flags != COMMIT_GRAPH_SPLIT_MERGE_PROHIBITED &&
 	    flags != COMMIT_GRAPH_SPLIT_REPLACE) {
-		while (g && (g->num_commits <= size_mult * num_commits ||
+		while (g && (g->num_commits <= st_mult(size_mult, num_commits) ||
 			    (max_commits && num_commits > max_commits))) {
 			if (g->odb != ctx->odb)
 				break;
 
+			if (unsigned_add_overflows(num_commits, g->num_commits))
+				die(_("cannot merge graphs with %"PRIuMAX", "
+				      "%"PRIuMAX" commits"),
+				    (uintmax_t)num_commits,
+				    (uintmax_t)g->num_commits);
 			num_commits += g->num_commits;
 			g = g->base_graph;
 
