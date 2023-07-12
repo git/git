@@ -446,14 +446,14 @@ static int idx_or_pack_name_cmp(const void *_va, const void *_vb)
 
 struct write_midx_context {
 	struct pack_info *info;
-	uint32_t nr;
-	uint32_t alloc;
+	size_t nr;
+	size_t alloc;
 	struct multi_pack_index *m;
 	struct progress *progress;
 	unsigned pack_paths_checked;
 
 	struct pack_midx_entry *entries;
-	uint32_t entries_nr;
+	size_t entries_nr;
 
 	uint32_t *pack_perm;
 	uint32_t *pack_order;
@@ -671,17 +671,18 @@ static void midx_fanout_add_pack_fanout(struct midx_fanout *fanout,
 static struct pack_midx_entry *get_sorted_entries(struct multi_pack_index *m,
 						  struct pack_info *info,
 						  uint32_t nr_packs,
-						  uint32_t *nr_objects,
+						  size_t *nr_objects,
 						  int preferred_pack)
 {
 	uint32_t cur_fanout, cur_pack, cur_object;
-	uint32_t alloc_objects, total_objects = 0;
+	size_t alloc_objects, total_objects = 0;
 	struct midx_fanout fanout = { 0 };
 	struct pack_midx_entry *deduplicated_entries = NULL;
 	uint32_t start_pack = m ? m->num_packs : 0;
 
 	for (cur_pack = start_pack; cur_pack < nr_packs; cur_pack++)
-		total_objects += info[cur_pack].p->num_objects;
+		total_objects = st_add(total_objects,
+				       info[cur_pack].p->num_objects);
 
 	/*
 	 * As we de-duplicate by fanout value, we expect the fanout
@@ -724,7 +725,8 @@ static struct pack_midx_entry *get_sorted_entries(struct multi_pack_index *m,
 						&fanout.entries[cur_object].oid))
 				continue;
 
-			ALLOC_GROW(deduplicated_entries, *nr_objects + 1, alloc_objects);
+			ALLOC_GROW(deduplicated_entries, st_add(*nr_objects, 1),
+				   alloc_objects);
 			memcpy(&deduplicated_entries[*nr_objects],
 			       &fanout.entries[cur_object],
 			       sizeof(struct pack_midx_entry));
