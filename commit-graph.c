@@ -754,7 +754,7 @@ static void load_oid_from_graph(struct commit_graph *g,
 
 	lex_index = pos - g->num_commits_in_base;
 
-	oidread(oid, g->chunk_oid_lookup + g->hash_len * lex_index);
+	oidread(oid, g->chunk_oid_lookup + st_mult(g->hash_len, lex_index));
 }
 
 static struct commit_list **insert_parent_or_die(struct repository *r,
