@@ -2454,7 +2454,7 @@ int write_commit_graph(struct object_directory *odb,
 		struct commit_graph *g = ctx->r->objects->commit_graph;
 		for (i = 0; i < g->num_commits; i++) {
 			struct object_id oid;
-			oidread(&oid, g->chunk_oid_lookup + g->hash_len * i);
+			oidread(&oid, g->chunk_oid_lookup + st_mult(g->hash_len, i));
 			oid_array_append(&ctx->oids, &oid);
 		}
 	}
