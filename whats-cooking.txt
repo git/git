@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jul 2023, #02; Mon, 10)
+Subject: What's cooking in git.git (Jul 2023, #03; Thu, 13)
 X-master-at: aa9166bcc0ba654fc21f198a30647ec087f733ed
-X-next-at: 4146f391ed560245855fc20b1ea1851409e7b4c8
+X-next-at: 6d72f3e9957d90c2c3269bbf808b5f7ffda9b026
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jul 2023, #02; Mon, 10)
+What's cooking in git.git (Jul 2023, #03; Thu, 13)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,6 +16,10 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
+
+There are quite a few topics that have been in "Expecting a reroll"
+for too long.  I've moved those that are more than 3 months old to
+the "Will discard" section.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -48,17 +52,258 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
-* ah/advise-force-pushing (2023-07-07) 1 commit
- - push: advise about force-pushing as an alternative to reconciliation
+* ah/configure-no-expat (2023-07-13) 1 commit
+ - configure.ac: Don't overwrite NO_EXPAT option
+
+ "./configure --with-expat=no" did not work as a way to refuse use
+ of the expat library on a system with the library installed, which
+ has been corrected.
+
+ Review response sent.
+ cf. <xmqqwmz3pwx2.fsf@gitster.g>
+ source: <20230713074654.23957-1-aherrmann@suse.de>
+
+
+* jc/branch-in-use-error-message (2023-07-12) 1 commit
+ - branch: update the message to refuse touching a branch in-use
+
+ "git branch -f X" to repoint the branch X seid that X was "checked
+ out" in another worktree, even when branch X was not and instead
+ being bisected or rebased.  The message was reworded to say the
+ branch was "in use".
+
+ Will merge to 'next'?
+ source: <xmqqy1jkrcmg.fsf_-_@gitster.g>
+
+
+* tb/object-access-overflow-protection (2023-07-12) 20 commits
+ - commit-graph.c: prevent overflow in `verify_commit_graph()`
+ - commit-graph.c: prevent overflow in `write_commit_graph()`
+ - commit-graph.c: prevent overflow in `merge_commit_graph()`
+ - commit-graph.c: prevent overflow in `split_graph_merge_strategy()`
+ - commit-graph.c: prevent overflow in `load_tree_for_commit()`
+ - commit-graph.c: prevent overflow in `fill_commit_in_graph()`
+ - commit-graph.c: prevent overflow in `fill_commit_graph_info()`
+ - commit-graph.c: prevent overflow in `load_oid_from_graph()`
+ - commit-graph.c: prevent overflow in add_graph_to_chain()
+ - commit-graph.c: prevent overflow in `write_commit_graph_file()`
+ - pack-bitmap.c: ensure that eindex lookups don't overflow
+ - midx.c: prevent overflow in `fill_included_packs_batch()`
+ - midx.c: prevent overflow in `write_midx_internal()`
+ - midx.c: store `nr`, `alloc` variables as `size_t`'s
+ - midx.c: prevent overflow in `nth_midxed_offset()`
+ - midx.c: prevent overflow in `nth_midxed_object_oid()`
+ - midx.c: use `size_t`'s for fanout nr and alloc
+ - packfile.c: use checked arithmetic in `nth_packed_object_offset()`
+ - packfile.c: prevent overflow in `load_idx()`
+ - packfile.c: prevent overflow in `nth_packed_object_id()`
+
+ Various offset computation in the code that accesses the packfiles
+ and other data in the object layer has been hardened against
+ arithmetic overflow, especially on 32-bit systems.
+
+ Expecting a reroll or a fix-up.
+ cf. <5d2cf09f-34c7-9a88-bab2-8bf348dd13bb@gmail.com>
+ source: <cover.1689205042.git.me@ttaylorr.com>
+
+
+* jc/doc-submodule-update-settings (2023-07-13) 1 commit
+ - submodule: clarify that "!custom command" is the only oddball
+
+ Rewrite the description of giving a custom command to the
+ submodule.<name>.update configuraiton variable.
+
+ source: <xmqqwmz3oacg.fsf@gitster.g>
+
+--------------------------------------------------
+[Stalled]
+
+* ed/fsmonitor-windows-named-pipe (2023-03-24) 1 commit
+ - fsmonitor: handle differences between Windows named pipe functions
+
+ Fix fsmonitor on Windows when the filesystem path contains certain
+ characters.
+
+ Will discard.
+ Have been expecting a reroll for too long.
+ cf. <b9cf67e4-22a7-2ff0-8310-9223bea10d6d@jeffhostetler.com>
+ source: <pull.1503.git.1679678090412.gitgitgadget@gmail.com>
+
+
+* rn/sparse-diff-index (2023-04-10) 1 commit
+ - diff-index: enable sparse index
+
+ "git diff-index" command has been taught to work better with the
+ sparse index.
+
+ Will discard.
+ Have been expecting a reroll for too long.
+ cf. <62821012-4fc3-5ad8-695c-70f7ab14a8c9@github.com>
+ source: <20230408112342.404318-1-nanth.raghul@gmail.com>
+
+
+* es/recurse-submodules-option-is-a-bool (2023-04-10) 1 commit
+ - usage: clarify --recurse-submodules as a boolean
+
+ The "--[no-]recurse-submodules" option of "git checkout" and others
+ supported an undocumented syntax --recurse-submodules=<value> where
+ the value can spell a Boolean in various ways.  The support for the
+ syntax is being dropped.
+
+ Will discard.
+ Have been expecting a reroll for too long.
+ cf. <ZDSTFwMFO7vbj/du@google.com>
+ source: <ZDSTFwMFO7vbj/du@google.com>
+
+
+* cb/checkout-same-branch-twice (2023-03-22) 2 commits
+ - SQUASH??? the test marked to expect failure passes from day one
+ - checkout/switch: disallow checking out same branch in multiple worktrees
+
+ "git checkout -B $branch" failed to protect against checking out
+ a branch that is checked out elsewhere, unlike "git branch -f" did.
+
+ Will discard.
+ Have been expecting a hopefully minor and final reroll for too long.
+ cf. <CAPUEspj_Bh+LgYLnWfeBdcq_uV5Cbou-7H51GLFjzSa5Qzby9w@mail.gmail.com>
+ source: <20230120113553.24655-1-carenas@gmail.com>
+
+
+* tk/pull-conflict-suggest-rebase-merge-not-rebase-true (2023-02-13) 1 commit
+ - pull: conflict hint pull.rebase suggestion should offer "merges" vs "true"
+
+ In an advice message after failed non-ff pull, we used to suggest
+ setting pull.rebase=true, but these days pull.rebase=merges may be
+ more inline with the original spirit of "rebuild your side on top
+ of theirs".
+
+ Will discard.
+ This is too much of a departure from the existing practice.
+ cf. <CAMMLpeTPEoKVTbfc17w+Y9qn7jOGmQi_Ux0Y3sFW5QTgGWJ=SA@mail.gmail.com>
+ cf. <CABPp-BGqAxKnxDRVN4cYMteLp33hvto07R3=TJBT5WubJT4+Og@mail.gmail.com>
+ source: <pull.1474.git.1675614276549.gitgitgadget@gmail.com>
+
+
+* ab/tag-object-type-errors (2023-05-10) 4 commits
+ - tag: don't emit potentially incorrect "object is a X, not a Y"
+ - tag: don't misreport type of tagged objects in errors
+ - object tests: add test for unexpected objects in tags
+ - Merge branch 'jk/parse-object-type-mismatch' into ab/tag-object-type-errors
+
+ Hardening checks around mismatched object types when one of those
+ objects is a tag.
+
+ Will discard.
+ Stalled for too long.
+ source: <cover-v2-0.3-00000000000-20221230T011725Z-avarab@gmail.com>
+
+
+* ad/test-record-count-when-harness-is-in-use (2022-12-25) 1 commit
+ - test-lib: allow storing counts with test harnesses
+
+ Allow summary results from tests to be written to t/test-results
+ directory even when a test harness like 'prove' is in use.
+
+ Will discard.
+ Have been expecting a reroll for too long.
+ cf. <CABPp-BGoPuGCZw+9wCgdYyRR4Zf4y9Kun27GrQhtMdYWpOUsYQ@mail.gmail.com>
+ source: <20221224225200.1027806-1-adam@dinwoodie.org>
+
+
+* so/diff-merges-more (2022-12-18) 5 commits
+ - diff-merges: improve --diff-merges documentation
+ - diff-merges: issue warning on lone '-m' option
+ - diff-merges: support list of values for --diff-merges
+ - diff-merges: implement log.diffMerges-m-imply-p config
+ - diff-merges: implement [no-]hide option and log.diffMergesHide config
+
+ Assorted updates to "--diff-merges=X" option.
+
+ Will discard.
+ Breaking compatibility does not seem worth it.
+ source: <20221217132955.108542-1-sorganov@gmail.com>
+
+
+* ab/imap-send-requires-curl (2023-02-02) 6 commits
+ - imap-send: correctly report "host" when using "tunnel"
+ - imap-send: remove old --no-curl codepath
+ - imap-send: make --curl no-optional
+ - imap-send: replace auto-probe libcurl with hard dependency
+ - imap-send doc: the imap.sslVerify is used with imap.tunnel
+ - imap-send: note "auth_method", not "host" on auth method failure
+
+ Give a hard dependency on cURL library to build "git imap-send",
+ and remove the code to interact with IMAP server without using cURL.
+
+ Will discard.
+ Have been expecting a reroll for too long.
+ The 'tunnel' part is still iffy.
+ cf. <230203.86bkmabfjr.gmgdl@evledraar.gmail.com>
+ source: <cover-v2-0.6-00000000000-20230202T093706Z-avarab@gmail.com>
+
+
+* cw/submodule-status-in-parallel (2023-03-02) 6 commits
+ - diff-lib: parallelize run_diff_files for submodules
+ - diff-lib: refactor out diff_change logic
+ - submodule: refactor is_submodule_modified()
+ - submodule: move status parsing into function
+ - submodule: rename strbuf variable
+ - run-command: add on_stderr_output_fn to run_processes_parallel_opts
+
+ "git submodule status" learned to run the comparison in submodule
+ repositories in parallel.
+
+ Will discard.
+ Have been expecting a reroll for too long.
+ cf. <CAFySSZDk05m6gU5-V1R+y3YnQ5PPduVW54+_gjBwD0rmacsLsw@mail.gmail.com>
+ cf. <230307.865ybc273g.gmgdl@evledraar.gmail.com>
+ source: <20230302215237.1473444-1-calvinwan@google.com>
+
+
+* ob/revert-of-revert (2023-05-05) 1 commit
+ - sequencer: beautify subject of reverts of reverts
+
+ Instead of "Revert "Revert "original"", give "Reapply "original""
+ as the title for a revert of a revert.
+
+ Will discard.
+ Have been expecting a hopefully final reroll for too long.
+ Looking much better, except for minor cosmetic issues.
+ cf. <xmqqmt21txid.fsf@gitster.g>
+ source: <20230428083528.1699221-1-oswald.buddenhagen@gmx.de>
+
+
+* pw/rebase-i-after-failure (2023-04-21) 6 commits
+ - rebase -i: fix adding failed command to the todo list
+ - rebase: fix rewritten list for failed pick
+ - rebase --continue: refuse to commit after failed command
+ - sequencer: factor out part of pick_commits()
+ - rebase -i: remove patch file after conflict resolution
+ - rebase -i: move unlink() calls
+
+ Various fixes to the behaviour of "rebase -i" when the command got
+ interrupted by conflicting changes.
+
+ Expecting a reroll.
+ cf. <xmqqsfcthrpb.fsf@gitster.g>
+ cf. <1fd54422-b66a-c2e4-7cd7-934ea01190ad@gmail.com>
+ source: <pull.1492.v2.git.1682089074.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
+* ah/advise-force-pushing (2023-07-13) 3 commits
+ - push: don't imply that integration is always required before pushing
+ - remote: don't imply that integration is always required before pushing
+ - wt-status: don't show divergence advice when committing
 
  Help newbies by suggesting that there are cases where force-pushing
  is a valid and sensible thing to update a branch at a remote
  repository, rather than reconciling with merge/rebase.
 
- Will merge to 'next'?
- Perhaps we should go ahead with only the "git push" half (queued here)
- without touching "git checkout" and "git status" half (not queued here).
- source: <20230707054257.3366355-3-alexhenrie24@gmail.com>
+ Will merge to 'next'.
+ cf. <919d1ba8-bb8b-a77b-cef3-db14f168ed4a@gmail.com>
+ source: <20230713044128.3771818-1-alexhenrie24@gmail.com>
 
 
 * jc/pathspec-match-with-common-prefix (2023-07-08) 2 commits
@@ -115,333 +360,43 @@ Release tarballs are available at:
 
 
 * mh/doc-credential-helpers (2023-07-10) 1 commit
- - doc: gitcredentials: link to helper list
+  (merged to 'next' on 2023-07-11 at a391669194)
+ + doc: gitcredentials: link to helper list
 
  Doc update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1538.v3.git.1688848614262.gitgitgadget@gmail.com>
 
 
 * tb/fsck-no-progress (2023-07-10) 6 commits
- - commit-graph.c: avoid duplicated progress output during `verify`
- - commit-graph.c: pass progress to `verify_one_commit_graph()`
- - commit-graph.c: iteratively verify commit-graph chains
- - commit-graph.c: extract `verify_one_commit_graph()`
- - fsck: suppress MIDX output with `--no-progress`
- - fsck: suppress commit-graph output with `--no-progress`
+  (merged to 'next' on 2023-07-11 at aab8389518)
+ + commit-graph.c: avoid duplicated progress output during `verify`
+ + commit-graph.c: pass progress to `verify_one_commit_graph()`
+ + commit-graph.c: iteratively verify commit-graph chains
+ + commit-graph.c: extract `verify_one_commit_graph()`
+ + fsck: suppress MIDX output with `--no-progress`
+ + fsck: suppress commit-graph output with `--no-progress`
 
  "git fsck --no-progress" still spewed noise from the commit-graph
  subsystem, which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1688776280.git.me@ttaylorr.com>
 
 
-* tb/repack-cleanup (2023-07-10) 2 commits
- - builtin/repack.c: avoid dir traversal in `collect_pack_filenames()`
- - builtin/repack.c: only repack `.pack`s that exist
+* tb/repack-cleanup (2023-07-11) 2 commits
+  (merged to 'next' on 2023-07-11 at f598c59a8a)
+ + builtin/repack.c: avoid dir traversal in `collect_pack_filenames()`
+ + builtin/repack.c: only repack `.pack`s that exist
 
  The recent change to "git repack" made it react less nicely when a
  leftover .idx file that no longer has the corresponding .pack file
  in the repository, which has been corrected.
 
- Will merge to 'next'.
- source: <cover.1689017830.git.me@ttaylorr.com>
+ Will merge to 'master'.
+ source: <cover.1689096750.git.me@ttaylorr.com>
 
---------------------------------------------------
-[Graduated to 'master']
-
-* cw/strbuf-cleanup (2023-06-12) 7 commits
-  (merged to 'next' on 2023-06-28 at c158b004a8)
- + strbuf: remove global variable
- + path: move related function to path
- + object-name: move related functions to object-name
- + credential-store: move related functions to credential-store file
- + abspath: move related functions to abspath
- + strbuf: clarify dependency
- + strbuf: clarify API boundary
-
- Move functions that are not about pure string manipulation out of
- strbuf.[ch]
- source: <20230606194720.2053551-1-calvinwan@google.com>
-
-
-* gc/config-context (2023-06-28) 11 commits
-  (merged to 'next' on 2023-06-28 at 38632f3daf)
- + config: pass source to config_parser_event_fn_t
- + config: add kvi.path, use it to evaluate includes
- + config.c: remove config_reader from configsets
- + config: pass kvi to die_bad_number()
- + trace2: plumb config kvi
- + config.c: pass ctx with CLI config
- + config: pass ctx with config files
- + config.c: pass ctx in configsets
- + config: add ctx arg to config_fn_t
- + urlmatch.h: use config_fn_t type
- + config: inline git_color_default_config
-
- Reduce reliance on a global state in the config reading API.
- source: <pull.1497.v5.git.git.1687980390.gitgitgadget@gmail.com>
-
-
-* gc/config-partial-submodule-kvi-fix (2023-06-26) 1 commit
-  (merged to 'next' on 2023-06-28 at 1fb30a34e3)
- + config: don't BUG when both kvi and source are set
-
- Partially revert a sanity check that the rest of the config code
- was not ready, to avoid triggering it in a corner case.
- source: <pull.1535.git.git.1687801297404.gitgitgadget@gmail.com>
-
-
-* jc/doc-hash-object-types (2023-06-28) 1 commit
-  (merged to 'next' on 2023-06-28 at adff1700c2)
- + docs: add git hash-object -t option's possible values
-
- Doc update.
- source: <pull.1533.v3.git.git.1688004473941.gitgitgadget@gmail.com>
-
-
-* jk/cherry-pick-revert-status (2023-06-27) 1 commit
-  (merged to 'next' on 2023-06-28 at 4a0d88ef7a)
- + fix cherry-pick/revert status when doing multiple commits
-
- During a cherry-pick or revert session that works on multiple
- commits, "git status" did not give correct information, which has
- been corrected.
- source: <20230627224230.1951135-1-jacob.e.keller@intel.com>
-
-
-* jk/fsck-indices-in-worktrees (2023-06-29) 1 commit
-  (merged to 'next' on 2023-06-29 at 9d245b3681)
- + fsck: avoid misleading variable name
-
- Code clarification.
- source: <20230629181333.87465-1-ericsunshine@charter.net>
-
-
-* js/empty-index-fixes (2023-06-29) 3 commits
-  (merged to 'next' on 2023-06-29 at cdfd131900)
- + commit -a -m: allow the top-level tree to become empty again
- + split-index: accept that a base index can be empty
- + do_read_index(): always mark index as initialized unless erroring out
-
- A few places failed to differenciate the case where the index is
- truly empty (nothing added) and we haven't yet read from the
- on-disk index file, which have been corrected.
- source: <pull.1554.git.1688044991.gitgitgadget@gmail.com>
-
-
-* ks/t4205-test-describe-with-abbrev-fix (2023-06-29) 1 commit
-  (merged to 'next' on 2023-06-29 at 5fc309dc75)
- + t4205: correctly test %(describe:abbrev=...)
-
- Test update.
- source: <20230629133841.18784-2-five231003@gmail.com>
-
-
-* pb/complete-diff-options (2023-06-26) 24 commits
-  (merged to 'next' on 2023-06-28 at ccff93557d)
- + diff.c: mention completion above add_diff_options
- + completion: complete --remerge-diff
- + completion: complete --diff-merges, its options and --no-diff-merges
- + completion: move --pickaxe-{all,regex} to __git_diff_common_options
- + completion: complete --ws-error-highlight
- + completion: complete --unified
- + completion: complete --output-indicator-{context,new,old}
- + completion: complete --output
- + completion: complete --no-stat
- + completion: complete --no-relative
- + completion: complete --line-prefix
- + completion: complete --ita-invisible-in-index and --ita-visible-in-index
- + completion: complete --irreversible-delete
- + completion: complete --ignore-matching-lines
- + completion: complete --function-context
- + completion: complete --find-renames
- + completion: complete --find-object
- + completion: complete --find-copies
- + completion: complete --default-prefix
- + completion: complete --compact-summary
- + completion: complete --combined-all-paths
- + completion: complete --cc
- + completion: complete --break-rewrites
- + completion: add comments describing __git_diff_* globals
-
- Completion updates.
- source: <pull.1543.v3.git.1687796688.gitgitgadget@gmail.com>
-
-
-* pw/apply-too-large (2023-06-26) 1 commit
-  (merged to 'next' on 2023-06-28 at c0460d682c)
- + apply: improve error messages when reading patch
-
- "git apply" punts when it is fed too large a patch input; the error
- message it gives when it happens has been clarified.
- source: <pull.1552.git.1687772253869.gitgitgadget@gmail.com>
-
-
-* rs/strbuf-expand-step (2023-06-18) 5 commits
-  (merged to 'next' on 2023-06-28 at 1918915b71)
- + strbuf: simplify strbuf_expand_literal_cb()
- + replace strbuf_expand() with strbuf_expand_step()
- + replace strbuf_expand_dict_cb() with strbuf_expand_step()
- + strbuf: factor out strbuf_expand_step()
- + pretty: factor out expand_separator()
-
- Code clean-up around strbuf_expand() API.
- source: <767baa64-20a6-daf2-d34b-d81f72363749@web.de>
-
-
-* tl/notes-separator (2023-06-21) 7 commits
-  (merged to 'next' on 2023-06-28 at 74fa459f4d)
- + notes: introduce "--no-separator" option
- + notes.c: introduce "--[no-]stripspace" option
- + notes.c: append separator instead of insert by pos
- + notes.c: introduce '--separator=<paragraph-break>' option
- + t3321: add test cases about the notes stripspace behavior
- + notes.c: use designated initializers for clarity
- + notes.c: cleanup 'strbuf_grow' call in 'append_edit'
-
- 'git notes append' was taught '--separator' to specify string to insert
- between paragraphs.
- source: <cover.1685174011.git.dyroneteng@gmail.com>
-
---------------------------------------------------
-[Stalled]
-
-* ed/fsmonitor-windows-named-pipe (2023-03-24) 1 commit
- - fsmonitor: handle differences between Windows named pipe functions
-
- Fix fsmonitor on Windows when the filesystem path contains certain
- characters.
-
- Expecting a reroll.
- cf. <b9cf67e4-22a7-2ff0-8310-9223bea10d6d@jeffhostetler.com>
- source: <pull.1503.git.1679678090412.gitgitgadget@gmail.com>
-
-
-* rn/sparse-diff-index (2023-04-10) 1 commit
- - diff-index: enable sparse index
-
- "git diff-index" command has been taught to work better with the
- sparse index.
-
- Expecting a reroll.
- cf. <62821012-4fc3-5ad8-695c-70f7ab14a8c9@github.com>
- source: <20230408112342.404318-1-nanth.raghul@gmail.com>
-
-
-* es/recurse-submodules-option-is-a-bool (2023-04-10) 1 commit
- - usage: clarify --recurse-submodules as a boolean
-
- The "--[no-]recurse-submodules" option of "git checkout" and others
- supported an undocumented syntax --recurse-submodules=<value> where
- the value can spell a Boolean in various ways.  The support for the
- syntax is being dropped.
-
- Expecting a reroll.
- cf. <ZDSTFwMFO7vbj/du@google.com>
- source: <ZDSTFwMFO7vbj/du@google.com>
-
-
-* cb/checkout-same-branch-twice (2023-03-22) 2 commits
- - SQUASH??? the test marked to expect failure passes from day one
- - checkout/switch: disallow checking out same branch in multiple worktrees
-
- "git checkout -B $branch" failed to protect against checking out
- a branch that is checked out elsewhere, unlike "git branch -f" did.
-
- Expecting a hopefully minor and final reroll.
- cf. <CAPUEspj_Bh+LgYLnWfeBdcq_uV5Cbou-7H51GLFjzSa5Qzby9w@mail.gmail.com>
- source: <20230120113553.24655-1-carenas@gmail.com>
-
-
-* tk/pull-conflict-suggest-rebase-merge-not-rebase-true (2023-02-13) 1 commit
- - pull: conflict hint pull.rebase suggestion should offer "merges" vs "true"
-
- In an advice message after failed non-ff pull, we used to suggest
- setting pull.rebase=true, but these days pull.rebase=merges may be
- more inline with the original spirit of "rebuild your side on top
- of theirs".
-
- May want to discard.
- This is too much of a departure from the existing practice.
- cf. <CAMMLpeTPEoKVTbfc17w+Y9qn7jOGmQi_Ux0Y3sFW5QTgGWJ=SA@mail.gmail.com>
- cf. <CABPp-BGqAxKnxDRVN4cYMteLp33hvto07R3=TJBT5WubJT4+Og@mail.gmail.com>
- source: <pull.1474.git.1675614276549.gitgitgadget@gmail.com>
-
-
-* ab/tag-object-type-errors (2023-05-10) 4 commits
- - tag: don't emit potentially incorrect "object is a X, not a Y"
- - tag: don't misreport type of tagged objects in errors
- - object tests: add test for unexpected objects in tags
- - Merge branch 'jk/parse-object-type-mismatch' into ab/tag-object-type-errors
-
- Hardening checks around mismatched object types when one of those
- objects is a tag.
- source: <cover-v2-0.3-00000000000-20221230T011725Z-avarab@gmail.com>
-
-
-* ad/test-record-count-when-harness-is-in-use (2022-12-25) 1 commit
- - test-lib: allow storing counts with test harnesses
-
- Allow summary results from tests to be written to t/test-results
- directory even when a test harness like 'prove' is in use.
-
- Expecting a reroll.
- cf. <CABPp-BGoPuGCZw+9wCgdYyRR4Zf4y9Kun27GrQhtMdYWpOUsYQ@mail.gmail.com>
- source: <20221224225200.1027806-1-adam@dinwoodie.org>
-
-
-* so/diff-merges-more (2022-12-18) 5 commits
- - diff-merges: improve --diff-merges documentation
- - diff-merges: issue warning on lone '-m' option
- - diff-merges: support list of values for --diff-merges
- - diff-merges: implement log.diffMerges-m-imply-p config
- - diff-merges: implement [no-]hide option and log.diffMergesHide config
-
- Assorted updates to "--diff-merges=X" option.
-
- May want to discard.
- Breaking compatibility does not seem worth it.
- source: <20221217132955.108542-1-sorganov@gmail.com>
-
-
-* ab/imap-send-requires-curl (2023-02-02) 6 commits
- - imap-send: correctly report "host" when using "tunnel"
- - imap-send: remove old --no-curl codepath
- - imap-send: make --curl no-optional
- - imap-send: replace auto-probe libcurl with hard dependency
- - imap-send doc: the imap.sslVerify is used with imap.tunnel
- - imap-send: note "auth_method", not "host" on auth method failure
-
- Give a hard dependency on cURL library to build "git imap-send",
- and remove the code to interact with IMAP server without using cURL.
-
- Expecting a reroll.
- The 'tunnel' part is still iffy.
- cf. <230203.86bkmabfjr.gmgdl@evledraar.gmail.com>
- source: <cover-v2-0.6-00000000000-20230202T093706Z-avarab@gmail.com>
-
-
-* cw/submodule-status-in-parallel (2023-03-02) 6 commits
- - diff-lib: parallelize run_diff_files for submodules
- - diff-lib: refactor out diff_change logic
- - submodule: refactor is_submodule_modified()
- - submodule: move status parsing into function
- - submodule: rename strbuf variable
- - run-command: add on_stderr_output_fn to run_processes_parallel_opts
-
- "git submodule status" learned to run the comparison in submodule
- repositories in parallel.
-
- Expecting a reroll.
- cf. <CAFySSZDk05m6gU5-V1R+y3YnQ5PPduVW54+_gjBwD0rmacsLsw@mail.gmail.com>
- cf. <230307.865ybc273g.gmgdl@evledraar.gmail.com>
- source: <20230302215237.1473444-1-calvinwan@google.com>
-
---------------------------------------------------
-[Cooking]
 
 * cw/compat-util-header-cleanup (2023-07-05) 6 commits
   (merged to 'next' on 2023-07-08 at c244b65c4f)
@@ -618,27 +573,28 @@ Release tarballs are available at:
 
 
 * tb/refs-exclusion-and-packed-refs (2023-07-10) 16 commits
- - ls-refs.c: avoid enumerating hidden refs where possible
- - upload-pack.c: avoid enumerating hidden refs where possible
- - builtin/receive-pack.c: avoid enumerating hidden references
- - refs.h: implement `hidden_refs_to_excludes()`
- - refs.h: let `for_each_namespaced_ref()` take excluded patterns
- - revision.h: store hidden refs in a `strvec`
- - refs/packed-backend.c: add trace2 counters for jump list
- - refs/packed-backend.c: implement jump lists to avoid excluded pattern(s)
- - refs/packed-backend.c: refactor `find_reference_location()`
- - refs: plumb `exclude_patterns` argument throughout
- - builtin/for-each-ref.c: add `--exclude` option
- - ref-filter.c: parameterize match functions over patterns
- - ref-filter: add `ref_filter_clear()`
- - ref-filter: clear reachable list pointers after freeing
- - ref-filter.h: provide `REF_FILTER_INIT`
- - refs.c: rename `ref_filter`
+  (merged to 'next' on 2023-07-13 at 6d72f3e995)
+ + ls-refs.c: avoid enumerating hidden refs where possible
+ + upload-pack.c: avoid enumerating hidden refs where possible
+ + builtin/receive-pack.c: avoid enumerating hidden references
+ + refs.h: implement `hidden_refs_to_excludes()`
+ + refs.h: let `for_each_namespaced_ref()` take excluded patterns
+ + revision.h: store hidden refs in a `strvec`
+ + refs/packed-backend.c: add trace2 counters for jump list
+ + refs/packed-backend.c: implement jump lists to avoid excluded pattern(s)
+ + refs/packed-backend.c: refactor `find_reference_location()`
+ + refs: plumb `exclude_patterns` argument throughout
+ + builtin/for-each-ref.c: add `--exclude` option
+ + ref-filter.c: parameterize match functions over patterns
+ + ref-filter: add `ref_filter_clear()`
+ + ref-filter: clear reachable list pointers after freeing
+ + ref-filter.h: provide `REF_FILTER_INIT`
+ + refs.c: rename `ref_filter`
 
  Enumerating refs in the packed-refs file, while excluding refs that
  match certain patterns, has been optimized.
 
- Under discussion.
+ Will merge to 'master'.
  source: <cover.1689023520.git.me@ttaylorr.com>
 
 
@@ -660,31 +616,3 @@ Release tarballs are available at:
  - t6429: remove switching aspects of fast-rebase
 
  source: <20230602102533.876905-1-christian.couder@gmail.com>
-
-
-* ob/revert-of-revert (2023-05-05) 1 commit
- - sequencer: beautify subject of reverts of reverts
-
- Instead of "Revert "Revert "original"", give "Reapply "original""
- as the title for a revert of a revert.
-
- Expecting a hopefully final reroll.
- Looking much better, except for minor cosmetic issues.
- source: <20230428083528.1699221-1-oswald.buddenhagen@gmx.de>
-
-
-* pw/rebase-i-after-failure (2023-04-21) 6 commits
- - rebase -i: fix adding failed command to the todo list
- - rebase: fix rewritten list for failed pick
- - rebase --continue: refuse to commit after failed command
- - sequencer: factor out part of pick_commits()
- - rebase -i: remove patch file after conflict resolution
- - rebase -i: move unlink() calls
-
- Various fixes to the behaviour of "rebase -i" when the command got
- interrupted by conflicting changes.
-
- Expecting a reroll.
- cf. <xmqqsfcthrpb.fsf@gitster.g>
- cf. <1fd54422-b66a-c2e4-7cd7-934ea01190ad@gmail.com>
- source: <pull.1492.v2.git.1682089074.gitgitgadget@gmail.com>
