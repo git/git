@@ -2325,7 +2325,7 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 		if (show_divergence_advice &&
 		    advice_enabled(ADVICE_STATUS_HINTS))
 			strbuf_addstr(sb,
-				_("  (use \"git pull\" to merge the remote branch into yours)\n"));
+				_("  (use \"git pull\" if you want to integrate the remote branch with yours)\n"));
 	}
 	free(base);
 	return 1;
