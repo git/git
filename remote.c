@@ -2258,7 +2258,8 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs,
  * Return true when there is anything to report, otherwise false.
  */
 int format_tracking_info(struct branch *branch, struct strbuf *sb,
-			 enum ahead_behind_flags abf)
+			 enum ahead_behind_flags abf,
+			 int show_divergence_advice)
 {
 	int ours, theirs, sti;
 	const char *full_base;
@@ -2321,7 +2322,8 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 			       "respectively.\n",
 			   ours + theirs),
 			base, ours, theirs);
-		if (advice_enabled(ADVICE_STATUS_HINTS))
+		if (show_divergence_advice &&
+		    advice_enabled(ADVICE_STATUS_HINTS))
 			strbuf_addstr(sb,
 				_("  (use \"git pull\" to merge the remote branch into yours)\n"));
 	}

@@ -847,7 +847,6 @@ test_expect_success 'dry-run of partial commit excluding new file in index' '
 On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different commits each, respectively.
-  (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
   (use "git restore --staged <file>..." to unstage)
@@ -1013,7 +1012,7 @@ test_expect_success 'status -s submodule summary' '
 '
 
 test_expect_success 'status submodule summary (clean submodule): commit' '
-	cat >expect <<EOF &&
+	cat >expect-status <<EOF &&
 On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 2 and 2 different commits each, respectively.
@@ -1033,12 +1032,13 @@ Untracked files:
 
 no changes added to commit (use "git add" and/or "git commit -a")
 EOF
+	sed "/git pull/d" expect-status > expect-commit &&
 	git commit -m "commit submodule" &&
 	git config status.submodulesummary 10 &&
 	test_must_fail git commit --dry-run >output &&
-	test_cmp expect output &&
+	test_cmp expect-commit output &&
 	git status >output &&
-	test_cmp expect output
+	test_cmp expect-status output
 '
 
 cat >expect <<EOF
@@ -1065,7 +1065,6 @@ test_expect_success 'commit --dry-run submodule summary (--amend)' '
 On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 2 and 2 different commits each, respectively.
-  (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
   (use "git restore --source=HEAD^1 --staged <file>..." to unstage)
@@ -1558,7 +1557,6 @@ test_expect_success 'git commit --dry-run will show a staged but ignored submodu
 On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 2 and 2 different commits each, respectively.
-  (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
   (use "git restore --staged <file>..." to unstage)
