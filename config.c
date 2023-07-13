@@ -534,8 +534,9 @@ static inline int iskeychar(int c)
  * Auxiliary function to sanity-check and split the key into the section
  * identifier and variable name.
  *
- * Returns 0 on success, -1 when there is an invalid character in the key and
- * -2 if there is no section name in the key.
+ * Returns 0 on success, CONFIG_INVALID_KEY when there is an invalid character
+ * in the key and CONFIG_NO_SECTION_OR_NAME if there is no section name in the
+ * key.
  *
  * store_key - pointer to char* which will hold a copy of the key with
  *             lowercase section and variable name
@@ -555,12 +556,12 @@ int git_config_parse_key(const char *key, char **store_key, size_t *baselen_)
 
 	if (last_dot == NULL || last_dot == key) {
 		error(_("key does not contain a section: %s"), key);
-		return -CONFIG_NO_SECTION_OR_NAME;
+		return CONFIG_NO_SECTION_OR_NAME;
 	}
 
 	if (!last_dot[1]) {
 		error(_("key does not contain variable name: %s"), key);
-		return -CONFIG_NO_SECTION_OR_NAME;
+		return CONFIG_NO_SECTION_OR_NAME;
 	}
 
 	baselen = last_dot - key;
@@ -596,7 +597,7 @@ int git_config_parse_key(const char *key, char **store_key, size_t *baselen_)
 
 out_free_ret_1:
 	FREE_AND_NULL(*store_key);
-	return -CONFIG_INVALID_KEY;
+	return CONFIG_INVALID_KEY;
 }
 
 static int config_parse_pair(const char *key, const char *value,
@@ -2346,7 +2347,7 @@ static int configset_find_element(struct config_set *set, const char *key,
 	 * `key` may come from the user, so normalize it before using it
 	 * for querying entries from the hashmap.
 	 */
-	ret = git_config_parse_key(key, &normalized_key, NULL);
+	ret = -git_config_parse_key(key, &normalized_key, NULL);
 	if (ret)
 		return ret;
 
@@ -3334,8 +3335,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 	size_t contents_sz;
 	struct config_store_data store = CONFIG_STORE_INIT;
 
-	/* parse-key returns negative; flip the sign to feed exit(3) */
-	ret = 0 - git_config_parse_key(key, &store.key, &store.baselen);
+	ret = git_config_parse_key(key, &store.key, &store.baselen);
 	if (ret)
 		goto out_free;
 

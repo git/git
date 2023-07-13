@@ -362,8 +362,7 @@ static int get_value(const char *key_, const char *regex_, unsigned flags)
 			goto free_strings;
 		}
 	} else {
-		if (git_config_parse_key(key_, &key, NULL)) {
-			ret = CONFIG_INVALID_KEY;
+		if ((ret = git_config_parse_key(key_, &key, NULL))) {
 			goto free_strings;
 		}
 	}

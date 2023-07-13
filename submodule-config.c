@@ -824,8 +824,8 @@ int print_config_from_gitmodules(struct repository *repo, const char *key)
 	char *store_key;
 
 	ret = git_config_parse_key(key, &store_key, NULL);
-	if (ret < 0)
-		return CONFIG_INVALID_KEY;
+	if (ret)
+		return ret;
 
 	config_from_gitmodules(config_print_callback, repo, store_key);
 
