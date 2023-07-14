@@ -318,9 +318,12 @@ or include any extra files which do not relate to what your patch
 is trying to achieve. Make sure to review
 your patch after generating it, to ensure accuracy.  Before
 sending out, please make sure it cleanly applies to the starting point you
-have chosen in the "Choose a starting point" section,
-and unless it targets the `master` branch (which is the default),
-mark your patches as such.
+have chosen in the "Choose a starting point" section.
+
+NOTE: From the perspective of those reviewing your patch, the `master`
+branch is the default expected starting point.  So if you have chosen a
+different starting point, please communicate this choice in your cover
+letter.
 
 
 [[send-patches]]
