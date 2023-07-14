@@ -7,8 +7,8 @@ Here are some guidelines for contributing back to this
 project. There is also a link:MyFirstContribution.html[step-by-step tutorial]
 available which covers many of these same guidelines.
 
-[[base-branch]]
-=== Decide what to base your work on.
+[[choose-starting-point]]
+=== Choose a starting point.
 
 In general, always base your work on the oldest branch that your
 change is relevant to.
@@ -317,8 +317,8 @@ Please make sure your patch does not add commented out debugging code,
 or include any extra files which do not relate to what your patch
 is trying to achieve. Make sure to review
 your patch after generating it, to ensure accuracy.  Before
-sending out, please make sure it cleanly applies to the base you
-have chosen in the "Decide what to base your work on" section,
+sending out, please make sure it cleanly applies to the starting point you
+have chosen in the "Choose a starting point" section,
 and unless it targets the `master` branch (which is the default),
 mark your patches as such.
 
