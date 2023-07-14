@@ -35,13 +35,13 @@ change is relevant to.
   to stabilize, you would have to rebase it (see the "depends on other
   topics" above).
 
-* Some parts of the system have dedicated maintainers with their own
-  repositories (see the section "Subsystems" below).  Changes to
-  these parts should be based on their trees.
-
 To find the tip of a topic branch, run `git log --first-parent
 master..seen` and look for the merge commit. The second parent of this
 commit is the tip of the topic branch.
+
+Finally, note that some parts of the system have dedicated maintainers
+with their own separate source code repositories (see the section
+"Subsystems" below).
 
 [[separate-commits]]
 === Make separate commits for logically separate changes.
