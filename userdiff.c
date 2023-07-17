@@ -1,5 +1,4 @@
 #include "git-compat-util.h"
-#include "alloc.h"
 #include "config.h"
 #include "userdiff.h"
 #include "attr.h"

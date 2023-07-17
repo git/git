@@ -1,5 +1,4 @@
 #include "git-compat-util.h"
-#include "alloc.h"
 #include "chunk-format.h"
 #include "csum-file.h"
 #include "gettext.h"

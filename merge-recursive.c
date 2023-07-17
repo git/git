@@ -38,7 +38,6 @@
 #include "tag.h"
 #include "tree-walk.h"
 #include "unpack-trees.h"
-#include "wrapper.h"
 #include "xdiff-interface.h"
 
 struct merge_options_internal {

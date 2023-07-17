@@ -10,7 +10,6 @@
 #include "gpg-interface.h"
 #include "hex.h"
 #include "packfile.h"
-#include "wrapper.h"
 
 const char *tag_type = "tag";
 

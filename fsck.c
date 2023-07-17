@@ -1,5 +1,4 @@
 #include "git-compat-util.h"
-#include "alloc.h"
 #include "date.h"
 #include "dir.h"
 #include "hex.h"

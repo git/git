@@ -12,6 +12,7 @@
 #include "blob.h"
 #include "commit.h"
 #include "replace-object.h"
+#include "strbuf.h"
 #include "tag.h"
 #include "tree.h"
 #include "tree-walk.h"

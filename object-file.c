@@ -8,7 +8,6 @@
  */
 #include "git-compat-util.h"
 #include "abspath.h"
-#include "alloc.h"
 #include "config.h"
 #include "convert.h"
 #include "environment.h"
@@ -44,7 +43,6 @@
 #include "setup.h"
 #include "submodule.h"
 #include "fsck.h"
-#include "wrapper.h"
 
 /* The maximum size for an object header. */
 #define MAX_HEADER_LEN 32

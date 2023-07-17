@@ -3,7 +3,6 @@
  * Copyright (C) 2005 Junio C Hamano
  */
 #include "git-compat-util.h"
-#include "alloc.h"
 #include "diff.h"
 #include "diffcore.h"
 #include "object-store-ll.h"

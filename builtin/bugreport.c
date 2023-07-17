@@ -11,7 +11,6 @@
 #include "diagnose.h"
 #include "object-file.h"
 #include "setup.h"
-#include "wrapper.h"
 
 static void get_system_info(struct strbuf *sys_info)
 {

@@ -2,7 +2,6 @@
  * Copyright (c) 2005, 2006 Rene Scharfe
  */
 #include "git-compat-util.h"
-#include "alloc.h"
 #include "config.h"
 #include "gettext.h"
 #include "git-zlib.h"

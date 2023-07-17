@@ -10,7 +10,6 @@
 #include "builtin.h"
 #include "abspath.h"
 #include "advice.h"
-#include "alloc.h"
 #include "config.h"
 #include "editor.h"
 #include "environment.h"
@@ -53,7 +52,6 @@
 #include "commit-reach.h"
 #include "wt-status.h"
 #include "commit-graph.h"
-#include "wrapper.h"
 
 #define DEFAULT_TWOHEAD (1<<0)
 #define DEFAULT_OCTOPUS (1<<1)

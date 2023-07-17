@@ -9,7 +9,6 @@
 
 #include "git-compat-util.h"
 #include "abspath.h"
-#include "alloc.h"
 #include "base85.h"
 #include "config.h"
 #include "object-store-ll.h"
@@ -37,7 +36,6 @@
 #include "symlinks.h"
 #include "wildmatch.h"
 #include "ws.h"
-#include "wrapper.h"
 
 struct gitdiff_data {
 	struct strbuf *root;

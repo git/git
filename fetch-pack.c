@@ -1,5 +1,4 @@
 #include "git-compat-util.h"
-#include "alloc.h"
 #include "repository.h"
 #include "config.h"
 #include "date.h"
@@ -34,7 +33,6 @@
 #include "commit-graph.h"
 #include "sigchain.h"
 #include "mergesort.h"
-#include "wrapper.h"
 
 static int transfer_unpack_limit = -1;
 static int fetch_unpack_limit = -1;

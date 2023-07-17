@@ -12,7 +12,6 @@
 #include "sigchain.h"
 #include "tempfile.h"
 #include "alias.h"
-#include "wrapper.h"
 #include "environment.h"
 
 static int git_gpg_config(const char *, const char *,

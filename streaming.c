@@ -10,7 +10,6 @@
 #include "object-store-ll.h"
 #include "replace-object.h"
 #include "packfile.h"
-#include "wrapper.h"
 
 typedef int (*open_istream_fn)(struct git_istream *,
 			       struct repository *,

@@ -1,6 +1,5 @@
 #include "builtin.h"
 #include "abspath.h"
-#include "alloc.h"
 #include "config.h"
 #include "color.h"
 #include "editor.h"
@@ -15,7 +14,6 @@
 #include "setup.h"
 #include "strbuf.h"
 #include "worktree.h"
-#include "wrapper.h"
 
 static const char *const builtin_config_usage[] = {
 	N_("git config [<options>]"),

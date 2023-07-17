@@ -13,7 +13,6 @@
 #include "path.h"
 #include "setup.h"
 #include "strbuf.h"
-#include "wrapper.h"
 
 static int guess_repository_type(const char *git_dir)
 {

@@ -26,7 +26,6 @@
 #include "commit-reach.h"
 #include "khash.h"
 #include "date.h"
-#include "wrapper.h"
 
 #define PACK_ID_BITS 16
 #define MAX_PACK_ID ((1<<PACK_ID_BITS)-1)

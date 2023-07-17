@@ -28,7 +28,6 @@
 #include "worktree.h"
 #include "help.h"
 #include "commit-reach.h"
-#include "wrapper.h"
 
 static const char * const builtin_branch_usage[] = {
 	N_("git branch [<options>] [-r | -a] [--merged] [--no-merged]"),

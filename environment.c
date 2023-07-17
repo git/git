@@ -28,7 +28,6 @@
 #include "setup.h"
 #include "shallow.h"
 #include "trace.h"
-#include "wrapper.h"
 #include "write-or-die.h"
 
 int trust_executable_bit = 1;

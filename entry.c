@@ -14,7 +14,6 @@
 #include "fsmonitor.h"
 #include "entry.h"
 #include "parallel-checkout.h"
-#include "wrapper.h"
 
 static void create_directories(const char *path, int path_len,
 			       const struct checkout *state)
