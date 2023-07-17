@@ -1227,7 +1227,7 @@ static void wt_longstatus_print_tracking(struct wt_status *s)
 		color_fprintf_ln(s->fp, color(WT_STATUS_HEADER, s), "%s",
 				 comment_line_str);
 	else
-		fputs("\n", s->fp);
+		fputc('\n', s->fp);
 	strbuf_release(&sb);
 }
 
@@ -1832,7 +1832,7 @@ static void wt_longstatus_print_state(struct wt_status *s)
 	if (state->merge_in_progress) {
 		if (state->rebase_interactive_in_progress) {
 			show_rebase_information(s, state_color);
-			fputs("\n", s->fp);
+			fputc('\n', s->fp);
 		}
 		show_merge_in_progress(s, state_color);
 	} else if (state->am_in_progress)
