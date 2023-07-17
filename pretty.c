@@ -1855,10 +1855,10 @@ static size_t format_commit_item(struct strbuf *sb, /* in UTF-8 */
 	}
 
 	orig_len = sb->len;
-	if ((context)->flush_type != no_flush)
-		consumed = format_and_pad_commit(sb, placeholder, context);
-	else
+	if (context->flush_type == no_flush)
 		consumed = format_commit_one(sb, placeholder, context);
+	else
+		consumed = format_and_pad_commit(sb, placeholder, context);
 	if (magic == NO_MAGIC)
 		return consumed;
 
