@@ -19,6 +19,9 @@ UI, Workflows & Features
  * 'git notes append' was taught '--separator' to specify string to insert
    between paragraphs.
 
+ * The "git for-each-ref" family of commands learned placeholders
+   related to GPG signature verification.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -46,6 +49,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * Move functions that are not about pure string manipulation out of
    strbuf.[ch]
+
+ * "imap-send" codepaths got cleaned up to get rid of unused
+   parameters.
 
 
 Fixes since v2.41
@@ -155,6 +161,10 @@ Fixes since v2.41
    truly empty (nothing added) and we haven't yet read from the
    on-disk index file, which have been corrected.
    (merge 2ee045eea1 js/empty-index-fixes later to maint).
+
+ * "git bugreport" tests did not test what it wanted to test, which
+   has been corrected.
+   (merge 1aa92b8500 ma/t0091-fixup later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 51f9d2e563 sa/doc-ls-remote later to maint).
