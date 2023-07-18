@@ -179,6 +179,10 @@ Fixes since v2.41
    which has been corrected.
    (merge f4a8fde057 jc/pathspec-match-with-common-prefix later to maint).
 
+ * "git fsck --no-progress" still spewed noise from the commit-graph
+   subsystem, which has been corrected.
+   (merge 9281cd07f0 tb/fsck-no-progress later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 51f9d2e563 sa/doc-ls-remote later to maint).
    (merge c6d26a9dda jk/format-patch-message-id-unleak later to maint).
@@ -201,3 +205,4 @@ Fixes since v2.41
    (merge 1876a5ae15 ks/t4205-test-describe-with-abbrev-fix later to maint).
    (merge 6e6a529b57 jk/fsck-indices-in-worktrees later to maint).
    (merge 3e81b896f7 rs/packet-length-simplify later to maint).
+   (merge 4c9cb51fe7 mh/doc-credential-helpers later to maint).
