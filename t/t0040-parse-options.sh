@@ -35,6 +35,8 @@ String options
     --string2 <str>       get another string
     --st <st>             get another string (pervert ordering)
     -o <str>              get another string
+    --longhelp            help text of this entry
+                          spans multiple lines
     --list <str>          add str to list
 
 Magic arguments

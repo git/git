@@ -1109,6 +1109,7 @@ static enum parse_opt_result usage_with_options_internal(struct parse_opt_ctx_t 
 	for (; opts->type != OPTION_END; opts++) {
 		size_t pos;
 		int pad;
+		const char *cp, *np;
 
 		if (opts->type == OPTION_SUBCOMMAND)
 			continue;
@@ -1157,7 +1158,16 @@ static enum parse_opt_result usage_with_options_internal(struct parse_opt_ctx_t 
 				   (const char *)opts->value);
 			continue;
 		}
-		fprintf(outfile, "%*s%s\n", pad + USAGE_GAP, "", _(opts->help));
+
+		for (cp = _(opts->help); *cp; cp = np) {
+			np = strchrnul(cp, '\n');
+			fprintf(outfile,
+				"%*s%.*s\n", pad + USAGE_GAP, "",
+				(int)(np - cp), cp);
+			if (*np)
+				np++;
+			pad = USAGE_OPTS_WIDTH;
+		}
 	}
 	fputc('\n', outfile);
 

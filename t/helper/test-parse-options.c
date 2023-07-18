@@ -133,6 +133,8 @@ int cmd__parse_options(int argc, const char **argv)
 		OPT_STRING(0, "st", &string, "st", "get another string (pervert ordering)"),
 		OPT_STRING('o', NULL, &string, "str", "get another string"),
 		OPT_NOOP_NOARG(0, "obsolete"),
+		OPT_SET_INT_F(0, "longhelp", &integer, "help text of this entry\n"
+			      "spans multiple lines", 0, PARSE_OPT_NONEG),
 		OPT_STRING_LIST(0, "list", &list, "str", "add str to list"),
 		OPT_GROUP("Magic arguments"),
 		OPT_NUMBER_CALLBACK(&integer, "set integer to NUM",
