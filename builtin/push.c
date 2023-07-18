@@ -627,10 +627,7 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 				PARSE_OPT_OPTARG, option_parse_push_signed),
 		OPT_BIT(0, "atomic", &flags, N_("request atomic transaction on remote side"), TRANSPORT_PUSH_ATOMIC),
 		OPT_STRING_LIST('o', "push-option", &push_options_cmdline, N_("server-specific"), N_("option to transmit")),
-		OPT_SET_INT('4', "ipv4", &family, N_("use IPv4 addresses only"),
-				TRANSPORT_FAMILY_IPV4),
-		OPT_SET_INT('6', "ipv6", &family, N_("use IPv6 addresses only"),
-				TRANSPORT_FAMILY_IPV6),
+		OPT_IPVERSION(&family),
 		OPT_END()
 	};
 
