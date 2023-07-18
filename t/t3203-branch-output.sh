@@ -55,7 +55,15 @@ cat >expect <<'EOF'
 EOF
 test_expect_success 'git branch -r shows remote branches' '
 	git branch -r >actual &&
+	test_cmp expect actual &&
+
+	git branch --remotes >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'git branch --no-remotes is rejected' '
+	test_must_fail git branch --no-remotes 2>err &&
+	grep "unknown option .no-remotes." err
 '
 
 cat >expect <<'EOF'
@@ -68,7 +76,15 @@ cat >expect <<'EOF'
 EOF
 test_expect_success 'git branch -a shows local and remote branches' '
 	git branch -a >actual &&
+	test_cmp expect actual &&
+
+	git branch --all >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'git branch --no-all is rejected' '
+	test_must_fail git branch --no-all 2>err &&
+	grep "unknown option .no-all." err
 '
 
 cat >expect <<'EOF'
