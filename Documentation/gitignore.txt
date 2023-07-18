@@ -174,10 +174,10 @@ EXAMPLES
    is not relevant  if there is already a middle slash in
    the pattern.
 
- - The pattern "foo/*", matches "foo/test.json"
-   (a regular file), "foo/bar" (a directory), but it does not match
-   "foo/bar/hello.c" (a regular file), as the asterisk in the
-   pattern does not match "bar/hello.c" which has a slash in it.
+ - The pattern `foo/*`, matches `foo/test.json`
+   (a regular file), `foo/bar` (a directory), but it does not match
+   `foo/bar/hello.c` (a regular file), as the asterisk in the
+   pattern does not match `bar/hello.c` which has a slash in it.
 
 --------------------------------------------------------------
     $ git status
