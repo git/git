@@ -30,8 +30,7 @@ usage: test-tool parse-options <options>
     -F, --file <file>     set file to <file>
 
 String options
-    -s, --string <string>
-                          get a string
+    -s, --string <string> get a string
     --string2 <str>       get another string
     --st <st>             get another string (pervert ordering)
     -o <str>              get another string

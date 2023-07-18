@@ -1146,7 +1146,9 @@ static enum parse_opt_result usage_with_options_internal(struct parse_opt_ctx_t 
 		    !(opts->flags & PARSE_OPT_NOARG))
 			pos += usage_argh(opts, outfile);
 
-		if (pos <= USAGE_OPTS_WIDTH)
+		if (pos == USAGE_OPTS_WIDTH + 1)
+			pad = -1;
+		else if (pos <= USAGE_OPTS_WIDTH)
 			pad = USAGE_OPTS_WIDTH - pos;
 		else {
 			fputc('\n', outfile);
