@@ -684,6 +684,16 @@ test_expect_success 'git fsck (checks commit-graph when config unset)' '
 	test_must_fail git fsck
 '
 
+test_expect_success 'git fsck shows commit-graph output with --progress' '
+	git -C "$TRASH_DIRECTORY/full" fsck --progress 2>err &&
+	grep "Verifying commits in commit graph" err
+'
+
+test_expect_success 'git fsck suppresses commit-graph output with --no-progress' '
+	git -C "$TRASH_DIRECTORY/full" fsck --no-progress 2>err &&
+	! grep "Verifying commits in commit graph" err
+'
+
 test_expect_success 'setup non-the_repository tests' '
 	rm -rf repo &&
 	git init repo &&
