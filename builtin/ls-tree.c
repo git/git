@@ -343,7 +343,7 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 	struct object_id oid;
 	struct tree *tree;
 	int i, full_tree = 0;
-	int chomp_prefix = prefix && *prefix;
+	int full_name = !prefix || !*prefix;
 	read_tree_fn_t fn = NULL;
 	enum ls_tree_cmdmode cmdmode = MODE_DEFAULT;
 	int null_termination = 0;
@@ -365,8 +365,7 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 			    MODE_NAME_STATUS),
 		OPT_CMDMODE(0, "object-only", &cmdmode, N_("list only objects"),
 			    MODE_OBJECT_ONLY),
-		OPT_SET_INT(0, "full-name", &chomp_prefix,
-			    N_("use full path names"), 0),
+		OPT_BOOL(0, "full-name", &full_name, N_("use full path names")),
 		OPT_BOOL(0, "full-tree", &full_tree,
 			 N_("list entire tree; not just current directory "
 			    "(implies --full-name)")),
@@ -387,7 +386,7 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 
 	if (full_tree)
 		prefix = NULL;
-	options.prefix = chomp_prefix ? prefix : NULL;
+	options.prefix = full_name ? NULL : prefix;
 
 	/*
 	 * We wanted to detect conflicts between --name-only and
