@@ -71,6 +71,16 @@ check_changes () {
 	done | test_cmp .cat_expect -
 }
 
+# no negated form for various type of resets
+for opt in soft mixed hard merge keep
+do
+	test_expect_success "no 'git reset --no-$opt'" '
+		test_when_finished "rm -f err" &&
+		test_must_fail git reset --no-$opt 2>err &&
+		grep "error: unknown option .no-$opt." err
+	'
+done
+
 test_expect_success 'reset --hard message' '
 	hex=$(git log -1 --format="%h") &&
 	git reset --hard >.actual &&
