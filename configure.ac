@@ -546,6 +546,8 @@ fi
 # git-http-push are not built, and you cannot use http:// and https://
 # transports.
 
+if test -z "$NO_CURL"; then
+
 GIT_STASH_FLAGS($CURLDIR)
 
 AC_CHECK_LIB([curl], [curl_global_init],
@@ -553,6 +555,8 @@ AC_CHECK_LIB([curl], [curl_global_init],
 [NO_CURL=YesPlease])
 
 GIT_UNSTASH_FLAGS($CURLDIR)
+
+fi
 
 GIT_CONF_SUBST([NO_CURL])
 
