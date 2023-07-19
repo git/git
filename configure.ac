@@ -644,13 +644,14 @@ LIBS="$old_LIBS"
 GIT_UNSTASH_FLAGS($ICONVDIR)
 
 GIT_CONF_SUBST([NEEDS_LIBICONV])
-GIT_CONF_SUBST([NO_ICONV])
 
 if test -n "$NO_ICONV"; then
     NEEDS_LIBICONV=
 fi
 
 fi
+
+GIT_CONF_SUBST([NO_ICONV])
 
 #
 # Define NO_DEFLATE_BOUND if deflateBound is missing from zlib.
