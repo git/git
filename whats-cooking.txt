@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jul 2023, #03; Thu, 13)
-X-master-at: aa9166bcc0ba654fc21f198a30647ec087f733ed
-X-next-at: 6d72f3e9957d90c2c3269bbf808b5f7ffda9b026
+Subject: What's cooking in git.git (Jul 2023, #04; Wed, 19)
+X-master-at: cba07a324d2cda06dd7a7b35b4579f800de024aa
+X-next-at: 738d25bbb685449ecded16e19329234bf5fa711f
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jul 2023, #03; Thu, 13)
+What's cooking in git.git (Jul 2023, #04; Wed, 19)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,10 +16,6 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
-
-There are quite a few topics that have been in "Expecting a reroll"
-for too long.  I've moved those that are more than 3 months old to
-the "Will discard" section.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -50,73 +46,378 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* cw/compat-util-header-cleanup (2023-07-05) 6 commits
+  (merged to 'next' on 2023-07-08 at c244b65c4f)
+ + git-compat-util: move alloc macros to git-compat-util.h
+ + treewide: remove unnecessary includes for wrapper.h
+ + kwset: move translation table from ctype
+ + sane-ctype.h: create header for sane-ctype macros
+ + git-compat-util: move wrapper.c funcs to its header
+ + git-compat-util: move strbuf.c funcs to its header
+
+ Further shuffling of declarations across header files to streamline
+ file dependencies.
+ source: <20230705170812.3833103-1-calvinwan@google.com>
+
+
+* jc/pathspec-match-with-common-prefix (2023-07-08) 2 commits
+  (merged to 'next' on 2023-07-10 at 4146f391ed)
+ + dir: match "attr" pathspec magic with correct paths
+ + t6135: attr magic with path pattern
+
+ "git ls-files '(attr:X)D/'" that triggers the common prefix
+ optimization codepath failed to read from "D/.gitattributes",
+ which has been corrected.
+ source: <20230707220457.3655121-1-gitster@pobox.com>
+
+
+* jk/imap-send-unused-variable-cleanup (2023-07-05) 3 commits
+  (merged to 'next' on 2023-07-06 at d2798ee0fe)
+ + imap-send: drop unused fields from imap_cmd_cb
+ + imap-send: drop unused parameter from imap_cmd_cb callback
+ + imap-send: use server conf argument in setup_curl()
+
+ "imap-send" codepaths got cleaned up to get rid of unused
+ parameters.
+ source: <20230703063247.GA3524302@coredump.intra.peff.net>
+
+
+* ks/ref-filter-signature (2023-06-06) 2 commits
+  (merged to 'next' on 2023-07-06 at 1748d2bb93)
+ + ref-filter: add new "signature" atom
+ + t/lib-gpg: introduce new prereq GPG2
+
+ The "git for-each-ref" family of commands learned placeholders
+ related to GPG signature verification.
+ cf. <CAP8UFD1CfUm+9PTXO0wBBdBs0U=YVte+EiPbDyUyg7T152aw2g@mail.gmail.com>
+ source: <20230604185815.15761-1-five231003@gmail.com>
+
+
+* ma/t0091-fixup (2023-07-05) 1 commit
+  (merged to 'next' on 2023-07-06 at 3f82b468b4)
+ + t0091-bugreport.sh: actually verify some content of report
+
+ "git bugreport" tests did not test what it wanted to test, which
+ has been corrected.
+ source: <20230705183532.3057433-1-martin.agren@gmail.com>
+
+
+* mh/doc-credential-helpers (2023-07-10) 1 commit
+  (merged to 'next' on 2023-07-11 at a391669194)
+ + doc: gitcredentials: link to helper list
+
+ Doc update.
+ source: <pull.1538.v3.git.1688848614262.gitgitgadget@gmail.com>
+
+
+* pw/diff-no-index-from-named-pipes (2023-07-05) 4 commits
+  (merged to 'next' on 2023-07-08 at 225230a441)
+ + diff --no-index: support reading from named pipes
+ + t4054: test diff --no-index with stdin
+ + diff --no-index: die on error reading stdin
+ + diff --no-index: refuse to compare stdin to a directory
+
+ "git diff --no-index" learned to read from named pipes as if they
+ were regular files, to allow "git diff <(process) <(substitution)"
+ some shells support.
+ source: <cover.1688586536.git.phillip.wood@dunelm.org.uk>
+
+
+* rs/ls-tree-prefix-simplify (2023-07-07) 1 commit
+  (merged to 'next' on 2023-07-08 at 3e4826525f)
+ + ls-tree: simplify prefix handling
+
+ Code simplification.
+ source: <b34aa99b-2bf1-c645-bdf5-03ac258b4bf5@web.de>
+
+
+* rs/packet-length-simplify (2023-07-07) 1 commit
+  (merged to 'next' on 2023-07-08 at 7f4b52e75b)
+ + pkt-line: add size parameter to packet_length()
+
+ Code simplification.
+ source: <4d2bb49b-9c3c-ea58-274b-d9e9586620c1@web.de>
+
+
+* rs/pretty-format-double-negation-fix (2023-07-07) 1 commit
+  (merged to 'next' on 2023-07-08 at 6674b562ff)
+ + pretty: avoid double negative in format_commit_item()
+
+ Code clarification.
+ source: <8d4fcad1-5f71-4790-17ee-e9ba0a3118dc@web.de>
+
+
+* rs/userformat-find-requirements-simplify (2023-07-07) 1 commit
+  (merged to 'next' on 2023-07-08 at 6cdc328a08)
+ + pretty: use strchr(3) in userformat_find_requirements()
+
+ Code simplification.
+ source: <108ab1a2-28f4-dd62-1f90-64f37708aa8c@web.de>
+
+
+* tb/fsck-no-progress (2023-07-10) 6 commits
+  (merged to 'next' on 2023-07-11 at aab8389518)
+ + commit-graph.c: avoid duplicated progress output during `verify`
+ + commit-graph.c: pass progress to `verify_one_commit_graph()`
+ + commit-graph.c: iteratively verify commit-graph chains
+ + commit-graph.c: extract `verify_one_commit_graph()`
+ + fsck: suppress MIDX output with `--no-progress`
+ + fsck: suppress commit-graph output with `--no-progress`
+
+ "git fsck --no-progress" still spewed noise from the commit-graph
+ subsystem, which has been corrected.
+ source: <cover.1688776280.git.me@ttaylorr.com>
+
+
+* tb/repack-cleanup (2023-07-11) 2 commits
+  (merged to 'next' on 2023-07-11 at f598c59a8a)
+ + builtin/repack.c: avoid dir traversal in `collect_pack_filenames()`
+ + builtin/repack.c: only repack `.pack`s that exist
+
+ The recent change to "git repack" made it react less nicely when a
+ leftover .idx file that no longer has the corresponding .pack file
+ in the repository, which has been corrected.
+ source: <cover.1689096750.git.me@ttaylorr.com>
+
+
+* vd/adjust-mfow-doc-to-updated-headers (2023-07-04) 1 commit
+  (merged to 'next' on 2023-07-08 at 38103c697d)
+ + docs: add necessary headers to Documentation/MFOW.txt
+
+ Code snippets in a tutorial document no longer compiled after
+ recent header shuffling, which have been corrected.
+ source: <20230702151457.3227-1-vinayakdev.sci@gmail.com>
+
+--------------------------------------------------
 [New Topics]
 
-* ah/configure-no-expat (2023-07-13) 1 commit
- - configure.ac: Don't overwrite NO_EXPAT option
+* dk/bundle-i18n-more (2023-07-13) 1 commit
+  (merged to 'next' on 2023-07-18 at a9745efbe2)
+ + i18n: mark more bundle.c strings for translation
 
- "./configure --with-expat=no" did not work as a way to refuse use
- of the expat library on a system with the library installed, which
+ Update message mark-up for i18n in "git bundle".
+
+ Will merge to 'master'.
+ source: <pull.1550.git.1689285683013.gitgitgadget@gmail.com>
+
+
+* jk/unused-parameter (2023-07-13) 14 commits
+  (merged to 'next' on 2023-07-18 at 59d8f4ec1e)
+ + t/helper: mark unused callback void data parameters
+ + tag: mark unused parameters in each_tag_name_fn callbacks
+ + rev-parse: mark unused parameter in for_each_abbrev callback
+ + replace: mark unused parameter in each_mergetag_fn callback
+ + replace: mark unused parameter in ref callback
+ + merge-tree: mark unused parameter in traverse callback
+ + fsck: mark unused parameters in various fsck callbacks
+ + revisions: drop unused "opt" parameter in "tweak" callbacks
+ + count-objects: mark unused parameter in alternates callback
+ + am: mark unused keep_cr parameters
+ + http-push: mark unused parameter in xml callback
+ + http: mark unused parameters in curl callbacks
+ + do_for_each_ref_helper(): mark unused repository parameter
+ + test-ref-store: drop unimplemented reflog-expire command
+
+ Mark-up unused parameters in the code so that we can eventually
+ enable -Wunused-parameter by default.
+
+ Will merge to 'master'.
+ source: <20230703064347.GA3524892@coredump.intra.peff.net>
+
+
+* dk/t4002-syntaxo-fix (2023-07-14) 1 commit
+  (merged to 'next' on 2023-07-17 at 75d729ee52)
+ + t4002: fix "diff can read from stdin" syntax
+
+ Test fix.
+
+ Will merge to 'master'.
+ source: <pull.1545.git.git.1689341410476.gitgitgadget@gmail.com>
+
+
+* la/doc-choose-starting-point (2023-07-14) 5 commits
+  (merged to 'next' on 2023-07-19 at 5a807cae46)
+ + SubmittingPatches: simplify guidance for choosing a starting point
+ + SubmittingPatches: emphasize need to communicate non-default starting points
+ + SubmittingPatches: de-emphasize branches as starting points
+ + SubmittingPatches: discuss subsystems separately from git.git
+ + SubmittingPatches: reword awkward phrasing
+
+ Clarify how to choose the starting point for a new topic in
+ developer guidance document.
+
+ Will merge to 'master'.
+ source: <pull.1556.v2.git.1689314493.gitgitgadget@gmail.com>
+
+
+* rs/ref-filter-signature-fix (2023-07-17) 1 commit
+  (merged to 'next' on 2023-07-18 at e74f016a60)
+ + t6300: fix setup with GPGSSH but without GPG
+
+ Test fix.
+
+ Will merge to 'master'.
+ source: <cbc22750-af93-9274-2ed4-6dfd356568e8@web.de>
+
+
+* rs/strbuf-addftime-simplify (2023-07-17) 1 commit
+  (merged to 'next' on 2023-07-18 at d665b0f0e9)
+ + strbuf: use skip_prefix() in strbuf_addftime()
+
+ Code clean-up.
+
+ Will merge to 'master'.
+ source: <fccba24c-584d-6329-69a7-75cf0458af7d@web.de>
+
+
+* jk/nested-points-at (2023-07-17) 4 commits
+  (merged to 'next' on 2023-07-18 at cf33f44a50)
+ + ref-filter: simplify return type of match_points_at
+ + ref-filter: avoid parsing non-tags in match_points_at()
+ + ref-filter: avoid parsing tagged objects in match_points_at()
+ + ref-filter: handle nested tags in --points-at option
+
+ "git tag --list --points-at X" showed tags that directly refers to
+ object X, but did not list a tag that points at such a tag, which
  has been corrected.
 
- Review response sent.
- cf. <xmqqwmz3pwx2.fsf@gitster.g>
- source: <20230713074654.23957-1-aherrmann@suse.de>
+ Will merge to 'master'.
+ source: <20230702223342.GA1598765@coredump.intra.peff.net>
 
 
-* jc/branch-in-use-error-message (2023-07-12) 1 commit
- - branch: update the message to refuse touching a branch in-use
+* jr/gitignore-doc-example-markup (2023-07-18) 1 commit
+  (merged to 'next' on 2023-07-19 at 4f2ece568d)
+ + gitignore.txt: use backticks instead of double quotes
 
- "git branch -f X" to repoint the branch X seid that X was "checked
- out" in another worktree, even when branch X was not and instead
- being bisected or rebased.  The message was reworded to say the
- branch was "in use".
+ Doc update.
+
+ Will merge to 'master'.
+ source: <pull.1553.git.git.1689685982027.gitgitgadget@gmail.com>
+
+
+* jc/am-parseopt-fix (2023-07-18) 1 commit
+  (merged to 'next' on 2023-07-19 at eaf592531e)
+ + am: simplify parsing of "--[no-]keep-cr"
+
+ Code simplification.
+
+ Will merge to 'master'.
+ source: <xmqqr0p5gjv3.fsf@gitster.g>
+
+
+* jc/branch-parseopt-fix (2023-07-18) 1 commit
+  (merged to 'next' on 2023-07-19 at 738d25bbb6)
+ + branch: reject "--no-all" and "--no-remotes" early
+
+ Command line parser fixes.
+
+ Will merge to 'master'.
+ source: <xmqqjzuxgjmi.fsf@gitster.g>
+
+
+* rs/ls-tree-no-full-name-fix (2023-07-18) 1 commit
+  (merged to 'next' on 2023-07-19 at 86e570c084)
+ + ls-tree: fix --no-full-name
+
+ Command line parser fix.
+
+ Will merge to 'master'.
+ source: <d392a005-4eba-7cc7-9554-cdb8dc53975e@web.de>
+
+
+* jc/describe-parseopt-fix (2023-07-18) 1 commit
+ - describe: --no-exact-match should not be the same as --exact-match
+
+ Command line parser fix.
+
+ Comments?
+ source: <xmqqy1jcgbiv.fsf@gitster.g>
+
+
+* jc/doc-sent-patch-now-what (2023-07-19) 1 commit
+ - MyFirstContribution: refrain from self-iterating too much
+
+ Process document update.
 
  Will merge to 'next'?
- source: <xmqqy1jkrcmg.fsf_-_@gitster.g>
+ source: <xmqqzga9opdu.fsf@gitster.g>
 
 
-* tb/object-access-overflow-protection (2023-07-12) 20 commits
- - commit-graph.c: prevent overflow in `verify_commit_graph()`
- - commit-graph.c: prevent overflow in `write_commit_graph()`
- - commit-graph.c: prevent overflow in `merge_commit_graph()`
- - commit-graph.c: prevent overflow in `split_graph_merge_strategy()`
- - commit-graph.c: prevent overflow in `load_tree_for_commit()`
- - commit-graph.c: prevent overflow in `fill_commit_in_graph()`
- - commit-graph.c: prevent overflow in `fill_commit_graph_info()`
- - commit-graph.c: prevent overflow in `load_oid_from_graph()`
- - commit-graph.c: prevent overflow in add_graph_to_chain()
- - commit-graph.c: prevent overflow in `write_commit_graph_file()`
- - pack-bitmap.c: ensure that eindex lookups don't overflow
- - midx.c: prevent overflow in `fill_included_packs_batch()`
- - midx.c: prevent overflow in `write_midx_internal()`
- - midx.c: store `nr`, `alloc` variables as `size_t`'s
- - midx.c: prevent overflow in `nth_midxed_offset()`
- - midx.c: prevent overflow in `nth_midxed_object_oid()`
- - midx.c: use `size_t`'s for fanout nr and alloc
- - packfile.c: use checked arithmetic in `nth_packed_object_offset()`
- - packfile.c: prevent overflow in `load_idx()`
- - packfile.c: prevent overflow in `nth_packed_object_id()`
+* jc/gitignore-doc-pattern-markup (2023-07-18) 1 commit
+ - gitignore.txt: mark up explanation of patterns consistently
 
- Various offset computation in the code that accesses the packfiles
- and other data in the object layer has been hardened against
- arithmetic overflow, especially on 32-bit systems.
+ Doc mark-up update.
 
- Expecting a reroll or a fix-up.
- cf. <5d2cf09f-34c7-9a88-bab2-8bf348dd13bb@gmail.com>
- source: <cover.1689205042.git.me@ttaylorr.com>
+ Will merge to 'next'.
+ source: <xmqqwmyxglhg.fsf@gitster.g>
 
 
-* jc/doc-submodule-update-settings (2023-07-13) 1 commit
- - submodule: clarify that "!custom command" is the only oddball
+* jc/parse-options-reset (2023-07-19) 1 commit
+ - reset: reject --no-(mixed|soft|hard|merge|keep) option
 
- Rewrite the description of giving a custom command to the
- submodule.<name>.update configuraiton variable.
+ Command line parser fix.
 
- source: <xmqqwmz3oacg.fsf@gitster.g>
+ Will merge to 'next'.
+ source: <xmqq1qh4c998.fsf@gitster.g>
+
+
+* jc/parse-options-short-help (2023-07-18) 3 commits
+ - short help: allow a gap smaller than USAGE_GAP
+ - remote: simplify "remote add --tags" help text
+ - short help: allow multi-line opthelp
+
+ Command line parser fix, and a small parse-options API update.
+
+ Comments?
+ source: <xmqq5y6gg8fn.fsf@gitster.g>
+
+
+* jc/parse-options-show-branch (2023-07-19) 2 commits
+ - show-branch: reject --[no-](topo|date)-order
+ - show-branch: --no-sparse should give dense output
+
+ Command line parser fixes.
+
+ Will merge to 'next'.
+ source: <xmqqh6pzc15n.fsf@gitster.g>
+
+
+* jc/transport-parseopt-fix (2023-07-18) 2 commits
+ - fetch: reject --no-ipv[46]
+ - parse-options: introduce OPT_IPVERSION()
+
+ Command line parser fixes.
+
+ Will merge to 'next'.
+ source: <xmqqedl4gag8.fsf@gitster.g>
+
+
+* sl/sparse-check-attr (2023-07-18) 3 commits
+ - check-attr: integrate with sparse-index
+ - attr.c: read attributes in a sparse directory
+ - t1092: add tests for 'git check-attr'
+
+ Teach "git check-attr" work better with sparse-index.
+
+ Needs review.
+ source: <20230718232916.31660-1-cheskaqiqi@gmail.com>
 
 --------------------------------------------------
 [Stalled]
+
+* tk/cherry-pick-sequence-requires-clean-worktree (2023-06-01) 1 commit
+ - cherry-pick: refuse cherry-pick sequence if index is dirty
+
+ "git cherry-pick A" that replays a single commit stopped before
+ clobbering local modification, but "git cherry-pick A..B" did not,
+ which has been corrected.
+
+ Expecting a reroll.
+ cf. <999f12b2-38d6-f446-e763-4985116ad37d@gmail.com>
+ source: <pull.1535.v2.git.1685264889088.gitgitgadget@gmail.com>
+
 
 * ed/fsmonitor-windows-named-pipe (2023-03-24) 1 commit
  - fsmonitor: handle differences between Windows named pipe functions
@@ -287,36 +588,92 @@ Release tarballs are available at:
  Expecting a reroll.
  cf. <xmqqsfcthrpb.fsf@gitster.g>
  cf. <1fd54422-b66a-c2e4-7cd7-934ea01190ad@gmail.com>
+ cf. <55dd6194-25e5-1a66-9c39-27cb19bfbb3c@gmail.com>
  source: <pull.1492.v2.git.1682089074.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Cooking]
 
+* ah/autoconf-fixes (2023-07-19) 3 commits
+ - configure.ac: always save NO_ICONV to config.status
+ - configure.ac: don't overwrite NO_CURL option
+ - configure.ac: don't overwrite NO_EXPAT option
+
+ "./configure --with-expat=no" did not work as a way to refuse use
+ of the expat library on a system with the library installed, which
+ has been corrected.
+
+ Needs review.
+ source: <20230719145211.17854-2-aherrmann@suse.de>
+
+
+* jc/branch-in-use-error-message (2023-07-12) 1 commit
+ . branch: update the message to refuse touching a branch in-use
+
+ "git branch -f X" to repoint the branch X seid that X was "checked
+ out" in another worktree, even when branch X was not and instead
+ being bisected or rebased.  The message was reworded to say the
+ branch was "in use".
+
+ Just a weather-balloon.
+ source: <xmqqy1jkrcmg.fsf_-_@gitster.g>
+
+
+* tb/object-access-overflow-protection (2023-07-14) 20 commits
+  (merged to 'next' on 2023-07-17 at 9ad8a08011)
+ + commit-graph.c: prevent overflow in `verify_commit_graph()`
+ + commit-graph.c: prevent overflow in `write_commit_graph()`
+ + commit-graph.c: prevent overflow in `merge_commit_graph()`
+ + commit-graph.c: prevent overflow in `split_graph_merge_strategy()`
+ + commit-graph.c: prevent overflow in `load_tree_for_commit()`
+ + commit-graph.c: prevent overflow in `fill_commit_in_graph()`
+ + commit-graph.c: prevent overflow in `fill_commit_graph_info()`
+ + commit-graph.c: prevent overflow in `load_oid_from_graph()`
+ + commit-graph.c: prevent overflow in add_graph_to_chain()
+ + commit-graph.c: prevent overflow in `write_commit_graph_file()`
+ + pack-bitmap.c: ensure that eindex lookups don't overflow
+ + midx.c: prevent overflow in `fill_included_packs_batch()`
+ + midx.c: prevent overflow in `write_midx_internal()`
+ + midx.c: store `nr`, `alloc` variables as `size_t`'s
+ + midx.c: prevent overflow in `nth_midxed_offset()`
+ + midx.c: prevent overflow in `nth_midxed_object_oid()`
+ + midx.c: use `size_t`'s for fanout nr and alloc
+ + packfile.c: use checked arithmetic in `nth_packed_object_offset()`
+ + packfile.c: prevent overflow in `load_idx()`
+ + packfile.c: prevent overflow in `nth_packed_object_id()`
+
+ Various offset computation in the code that accesses the packfiles
+ and other data in the object layer has been hardened against
+ arithmetic overflow, especially on 32-bit systems.
+
+ Will merge to 'master'.
+ source: <ZLAJNbIBFUPHYhlt@nand.local>
+ source: <cover.1689205042.git.me@ttaylorr.com>
+
+
+* jc/doc-submodule-update-settings (2023-07-13) 1 commit
+ . submodule: clarify that "!custom command" is the only oddball
+
+ Rewrite the description of giving a custom command to the
+ submodule.<name>.update configuraiton variable.
+
+ Just a weather-balloon.
+ source: <xmqqwmz3oacg.fsf@gitster.g>
+
+
 * ah/advise-force-pushing (2023-07-13) 3 commits
- - push: don't imply that integration is always required before pushing
- - remote: don't imply that integration is always required before pushing
- - wt-status: don't show divergence advice when committing
+  (merged to 'next' on 2023-07-17 at b040e8280e)
+ + push: don't imply that integration is always required before pushing
+ + remote: don't imply that integration is always required before pushing
+ + wt-status: don't show divergence advice when committing
 
  Help newbies by suggesting that there are cases where force-pushing
  is a valid and sensible thing to update a branch at a remote
  repository, rather than reconciling with merge/rebase.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <919d1ba8-bb8b-a77b-cef3-db14f168ed4a@gmail.com>
  source: <20230713044128.3771818-1-alexhenrie24@gmail.com>
-
-
-* jc/pathspec-match-with-common-prefix (2023-07-08) 2 commits
-  (merged to 'next' on 2023-07-10 at 4146f391ed)
- + dir: match "attr" pathspec magic with correct paths
- + t6135: attr magic with path pattern
-
- "git ls-files '(attr:X)D/'" that triggers the common prefix
- optimization codepath failed to read from "D/.gitattributes",
- which has been corrected.
-
- Will merge to 'master'.
- source: <20230707220457.3655121-1-gitster@pobox.com>
 
 
 * jc/tree-walk-drop-base-offset (2023-07-07) 2 commits
@@ -329,157 +686,12 @@ Release tarballs are available at:
  source: <20230707222116.4129415-1-gitster@pobox.com>
 
 
-* rs/ls-tree-prefix-simplify (2023-07-07) 1 commit
-  (merged to 'next' on 2023-07-08 at 3e4826525f)
- + ls-tree: simplify prefix handling
-
- Code simplification.
-
- Will merge to 'master'.
- source: <b34aa99b-2bf1-c645-bdf5-03ac258b4bf5@web.de>
-
-
-* rs/pretty-format-double-negation-fix (2023-07-07) 1 commit
-  (merged to 'next' on 2023-07-08 at 6674b562ff)
- + pretty: avoid double negative in format_commit_item()
-
- Code clarification.
-
- Will merge to 'master'.
- source: <8d4fcad1-5f71-4790-17ee-e9ba0a3118dc@web.de>
-
-
-* rs/userformat-find-requirements-simplify (2023-07-07) 1 commit
-  (merged to 'next' on 2023-07-08 at 6cdc328a08)
- + pretty: use strchr(3) in userformat_find_requirements()
-
- Code simplification.
-
- Will merge to 'master'.
- source: <108ab1a2-28f4-dd62-1f90-64f37708aa8c@web.de>
-
-
-* mh/doc-credential-helpers (2023-07-10) 1 commit
-  (merged to 'next' on 2023-07-11 at a391669194)
- + doc: gitcredentials: link to helper list
-
- Doc update.
-
- Will merge to 'master'.
- source: <pull.1538.v3.git.1688848614262.gitgitgadget@gmail.com>
-
-
-* tb/fsck-no-progress (2023-07-10) 6 commits
-  (merged to 'next' on 2023-07-11 at aab8389518)
- + commit-graph.c: avoid duplicated progress output during `verify`
- + commit-graph.c: pass progress to `verify_one_commit_graph()`
- + commit-graph.c: iteratively verify commit-graph chains
- + commit-graph.c: extract `verify_one_commit_graph()`
- + fsck: suppress MIDX output with `--no-progress`
- + fsck: suppress commit-graph output with `--no-progress`
-
- "git fsck --no-progress" still spewed noise from the commit-graph
- subsystem, which has been corrected.
-
- Will merge to 'master'.
- source: <cover.1688776280.git.me@ttaylorr.com>
-
-
-* tb/repack-cleanup (2023-07-11) 2 commits
-  (merged to 'next' on 2023-07-11 at f598c59a8a)
- + builtin/repack.c: avoid dir traversal in `collect_pack_filenames()`
- + builtin/repack.c: only repack `.pack`s that exist
-
- The recent change to "git repack" made it react less nicely when a
- leftover .idx file that no longer has the corresponding .pack file
- in the repository, which has been corrected.
-
- Will merge to 'master'.
- source: <cover.1689096750.git.me@ttaylorr.com>
-
-
-* cw/compat-util-header-cleanup (2023-07-05) 6 commits
-  (merged to 'next' on 2023-07-08 at c244b65c4f)
- + git-compat-util: move alloc macros to git-compat-util.h
- + treewide: remove unnecessary includes for wrapper.h
- + kwset: move translation table from ctype
- + sane-ctype.h: create header for sane-ctype macros
- + git-compat-util: move wrapper.c funcs to its header
- + git-compat-util: move strbuf.c funcs to its header
-
- Further shuffling of declarations across header files to streamline
- file dependencies.
-
- Will merge to 'master'.
- source: <20230705170812.3833103-1-calvinwan@google.com>
-
-
-* jk/imap-send-unused-variable-cleanup (2023-07-05) 3 commits
-  (merged to 'next' on 2023-07-06 at d2798ee0fe)
- + imap-send: drop unused fields from imap_cmd_cb
- + imap-send: drop unused parameter from imap_cmd_cb callback
- + imap-send: use server conf argument in setup_curl()
-
- "imap-send" codepaths got cleaned up to get rid of unused
- parameters.
-
- Will merge to 'master'.
- source: <20230703063247.GA3524302@coredump.intra.peff.net>
-
-
-* ma/t0091-fixup (2023-07-05) 1 commit
-  (merged to 'next' on 2023-07-06 at 3f82b468b4)
- + t0091-bugreport.sh: actually verify some content of report
-
- "git bugreport" tests did not test what it wanted to test, which
- has been corrected.
-
- Will merge to 'master'.
- source: <20230705183532.3057433-1-martin.agren@gmail.com>
-
-
-* rs/packet-length-simplify (2023-07-07) 1 commit
-  (merged to 'next' on 2023-07-08 at 7f4b52e75b)
- + pkt-line: add size parameter to packet_length()
-
- Code simplification.
-
- Will merge to 'master'.
- source: <4d2bb49b-9c3c-ea58-274b-d9e9586620c1@web.de>
-
-
-* vd/adjust-mfow-doc-to-updated-headers (2023-07-04) 1 commit
-  (merged to 'next' on 2023-07-08 at 38103c697d)
- + docs: add necessary headers to Documentation/MFOW.txt
-
- Code snippets in a tutorial document no longer compiled after
- recent header shuffling, which have been corrected.
-
- Will merge to 'master'.
- source: <20230702151457.3227-1-vinayakdev.sci@gmail.com>
-
-
 * mh/credential-erase-improvements-more (2023-06-24) 2 commits
  - credential/wincred: erase matching creds only
  - credential/libsecret: erase matching creds only
 
  Needs review.
  source: <pull.1529.git.git.1687596777147.gitgitgadget@gmail.com>
-
-
-* pw/diff-no-index-from-named-pipes (2023-07-05) 4 commits
-  (merged to 'next' on 2023-07-08 at 225230a441)
- + diff --no-index: support reading from named pipes
- + t4054: test diff --no-index with stdin
- + diff --no-index: die on error reading stdin
- + diff --no-index: refuse to compare stdin to a directory
-
- "git diff --no-index" learned to read from named pipes as if they
- were regular files, to allow "git diff <(process) <(substitution)"
- some shells support.
-
- Will merge to 'master'.
- source: <cover.1688586536.git.phillip.wood@dunelm.org.uk>
 
 
 * cc/repack-sift-filtered-objects-to-separate-pack (2023-07-05) 8 commits
@@ -510,31 +722,20 @@ Release tarballs are available at:
 
 
 * mh/mingw-case-sensitive-build (2023-06-12) 1 commit
- - mingw: use lowercase includes for some Windows headers
+  (merged to 'next' on 2023-07-17 at 2c72856851)
+ + mingw: use lowercase includes for some Windows headers
 
  Names of MinGW header files are spelled in mixed case in some
  source files, but the build host can be using case sensitive
  filesystem with header files with their name spelled in all
  lowercase.
 
- Needs review.
+ Will merge to 'master'.
+ cf. <xmqqmt14a36k.fsf@gitster.g>
  source: <20230604211934.1365289-1-mh@glandium.org>
 
 
-* ks/ref-filter-signature (2023-06-06) 2 commits
-  (merged to 'next' on 2023-07-06 at 1748d2bb93)
- + ref-filter: add new "signature" atom
- + t/lib-gpg: introduce new prereq GPG2
-
- The "git for-each-ref" family of commands learned placeholders
- related to GPG signature verification.
-
- Will merge to 'master'.
- cf. <CAP8UFD1CfUm+9PTXO0wBBdBs0U=YVte+EiPbDyUyg7T152aw2g@mail.gmail.com>
- source: <20230604185815.15761-1-five231003@gmail.com>
-
-
-* jt/path-filter-fix (2023-06-13) 4 commits
+* jt/path-filter-fix (2023-07-13) 4 commits
  - commit-graph: new filter ver. that fixes murmur3
  - repo-settings: introduce commitgraph.changedPathsVersion
  - t4216: test changed path filters with high bit paths
@@ -543,22 +744,7 @@ Release tarballs are available at:
  The Bloom filter used for path limited history traversal was broken
  on systems whose "char" is unsigned; update the implementation and
  bump the format version to 2.
-
- Expecting a reroll.
- cf. <c7b66d2c-cdc3-1f0f-60a0-a2ee21c277bf@github.com>
- source: <cover.1686677910.git.jonathantanmy@google.com>
-
-
-* tk/cherry-pick-sequence-requires-clean-worktree (2023-06-01) 1 commit
- - cherry-pick: refuse cherry-pick sequence if index is dirty
-
- "git cherry-pick A" that replays a single commit stopped before
- clobbering local modification, but "git cherry-pick A..B" did not,
- which has been corrected.
-
- Expecting a reroll.
- cf. <999f12b2-38d6-f446-e763-4985116ad37d@gmail.com>
- source: <pull.1535.v2.git.1685264889088.gitgitgadget@gmail.com>
+ source: <cover.1689283789.git.jonathantanmy@google.com>
 
 
 * mh/credential-libsecret-attrs (2023-06-16) 1 commit
@@ -615,4 +801,5 @@ Release tarballs are available at:
  - replay: introduce new builtin
  - t6429: remove switching aspects of fast-rebase
 
+ What's the status of this thing?
  source: <20230602102533.876905-1-christian.couder@gmail.com>
