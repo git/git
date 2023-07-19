@@ -213,7 +213,7 @@ test_expect_success 'repack --keep-pack' '
 	test_create_repo keep-pack &&
 	(
 		cd keep-pack &&
-		# avoid producing difference packs to delta/base choices
+		# avoid producing different packs due to delta/base choices
 		git config pack.window 0 &&
 		P1=$(commit_and_pack 1) &&
 		P2=$(commit_and_pack 2) &&
@@ -239,11 +239,45 @@ test_expect_success 'repack --keep-pack' '
 			mv "$from" "$to" || return 1
 		done &&
 
+		# A .idx file without a .pack should not stop us from
+		# repacking what we can.
+		touch .git/objects/pack/pack-does-not-exist.idx &&
+
 		git repack --cruft -d --keep-pack $P1 --keep-pack $P4 &&
 
 		ls .git/objects/pack/*.pack >newer-counts &&
 		test_cmp new-counts newer-counts &&
 		git fsck
+	)
+'
+
+test_expect_success 'repacking fails when missing .pack actually means missing objects' '
+	test_create_repo idx-without-pack &&
+	(
+		cd idx-without-pack &&
+
+		# Avoid producing different packs due to delta/base choices
+		git config pack.window 0 &&
+		P1=$(commit_and_pack 1) &&
+		P2=$(commit_and_pack 2) &&
+		P3=$(commit_and_pack 3) &&
+		P4=$(commit_and_pack 4) &&
+		ls .git/objects/pack/*.pack >old-counts &&
+		test_line_count = 4 old-counts &&
+
+		# Remove one .pack file
+		rm .git/objects/pack/$P2 &&
+
+		ls .git/objects/pack/*.pack >before-pack-dir &&
+
+		test_must_fail git fsck &&
+		test_must_fail git repack --cruft -d 2>err &&
+		grep "bad object" err &&
+
+		# Before failing, the repack did not modify the
+		# pack directory.
+		ls .git/objects/pack/*.pack >after-pack-dir &&
+		test_cmp before-pack-dir after-pack-dir
 	)
 '
 
