@@ -213,6 +213,15 @@ done <<\EOF
 --reflog --current
 EOF
 
+# unnegatable options
+for opt in topo-order date-order reflog
+do
+	test_expect_success "show-branch --no-$opt (should fail)" '
+		test_must_fail git show-branch --no-$opt 2>err &&
+		grep "unknown option .no-$opt." err
+	'
+done
+
 test_expect_success 'error descriptions on non-existent branch' '
 	cat >expect <<-EOF &&
 	error: No branch named '\''non-existent'\'.'
