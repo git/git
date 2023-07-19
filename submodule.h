@@ -45,7 +45,6 @@ struct submodule_status_util {
 	int changed, ignore_untracked;
 	unsigned dirty_submodule, newmode;
 	struct cache_entry *ce;
-	const char *path;
 };
 
 int is_gitmodules_unmerged(struct index_state *istate);
@@ -58,9 +57,9 @@ void set_diffopt_flags_from_submodule_config(struct diff_options *,
 					     const char *path);
 int git_default_submodule_config(const char *var, const char *value, void *cb);
 
-/* Sets static state 'config_update_recurse_submodules'. 'value' must be 0 or 1. */
-void set_config_update_recurse_submodules(int value);
-
+struct option;
+int option_parse_recurse_submodules_worktree_updater(const struct option *opt,
+						     const char *arg, int unset);
 int is_tree_submodule_active(struct repository *repo,
 			     const struct object_id *treeish_name,
 			     const char *path);
@@ -101,7 +100,8 @@ int fetch_submodules(struct repository *r,
 		     int command_line_option,
 		     int default_option,
 		     int quiet, int max_parallel_jobs);
-int get_submodules_status(struct string_list *submodules,
+int get_submodules_status(struct repository *r,
+			  struct string_list *submodules,
 			  int max_parallel_jobs);
 unsigned is_submodule_modified(const char *path, int ignore_untracked);
 int submodule_uses_gitfile(const char *path);
@@ -159,8 +159,9 @@ int validate_submodule_git_dir(char *git_dir, const char *submodule_name);
 
 #define SUBMODULE_MOVE_HEAD_DRY_RUN (1<<0)
 #define SUBMODULE_MOVE_HEAD_FORCE   (1<<1)
-int submodule_move_head(const char *path, const char *super_prefix,
-			const char *old_head, const char *new_head,
+int submodule_move_head(const char *path,
+			const char *old,
+			const char *new_head,
 			unsigned flags);
 
 void submodule_unset_core_worktree(const struct submodule *sub);
@@ -172,8 +173,7 @@ void submodule_unset_core_worktree(const struct submodule *sub);
  */
 void prepare_submodule_repo_env(struct strvec *env);
 
-void absorb_git_dir_into_superproject(const char *path,
-				      const char *super_prefix);
+void absorb_git_dir_into_superproject(const char *path);
 
 /*
  * Return the absolute path of the working tree of the superproject, which this

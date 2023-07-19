@@ -7,6 +7,13 @@ test_description='test smart pushing over http via http-backend'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+# If GIT_TEST_PACKED_REFS_VERSION=2, then the packed-refs file will
+# be written in v2 format without extensions.refFormat=packed-v2. This
+# causes issues for the HTTP server which does not carry over the
+# environment variable to the server process.
+GIT_TEST_PACKED_REFS_VERSION=0
+export GIT_TEST_PACKED_REFS_VERSION
+
 . ./test-lib.sh
 
 ROOT_PATH="$PWD"

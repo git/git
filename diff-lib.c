@@ -1,24 +1,16 @@
 /*
  * Copyright (C) 2005 Junio C Hamano
  */
-#include "git-compat-util.h"
+#include "cache.h"
 #include "quote.h"
 #include "commit.h"
 #include "diff.h"
 #include "diffcore.h"
-#include "gettext.h"
-#include "hash.h"
-#include "hex.h"
-#include "object-name.h"
-#include "read-cache.h"
 #include "revision.h"
 #include "cache-tree.h"
 #include "unpack-trees.h"
 #include "refs.h"
-#include "repository.h"
 #include "submodule.h"
-#include "symlinks.h"
-#include "trace.h"
 #include "dir.h"
 #include "fsmonitor.h"
 #include "commit-reach.h"
@@ -62,7 +54,7 @@ static int check_removed(const struct index_state *istate, const struct cache_en
 		 * a directory --- the blob was removed!
 		 */
 		if (!S_ISGITLINK(ce->ce_mode) &&
-		    resolve_gitlink_ref(ce->name, "HEAD", &sub))
+		    resolve_gitlink_ref(ce->name, "HEAD", &sub, NULL))
 			return 1;
 	}
 	return 0;
@@ -86,58 +78,35 @@ static int match_stat_with_submodule(struct diff_options *diffopt,
 				     unsigned *ignore_untracked)
 {
 	int changed = ie_match_stat(diffopt->repo->index, ce, st, ce_option);
+	struct diff_flags orig_flags;
 	int defer = 0;
 
-	if (S_ISGITLINK(ce->ce_mode)) {
-		struct diff_flags orig_flags = diffopt->flags;
-		if (!diffopt->flags.override_submodule_config)
-			set_diffopt_flags_from_submodule_config(diffopt, ce->name);
-		if (diffopt->flags.ignore_submodules) {
-			changed = 0;
-		} else if (!diffopt->flags.ignore_dirty_submodules &&
-			   (!changed || diffopt->flags.dirty_submodules)) {
-			if (defer_submodule_status && *defer_submodule_status) {
-				defer = 1;
-				*ignore_untracked = diffopt->flags.ignore_untracked_in_submodules;
-			} else {
-				*dirty_submodule = is_submodule_modified(ce->name,
-					 diffopt->flags.ignore_untracked_in_submodules);
-			}
-		}
-		diffopt->flags = orig_flags;
-	}
+	if (!S_ISGITLINK(ce->ce_mode))
+		goto ret;
 
+	orig_flags = diffopt->flags;
+	if (!diffopt->flags.override_submodule_config)
+		set_diffopt_flags_from_submodule_config(diffopt, ce->name);
+	if (diffopt->flags.ignore_submodules) {
+		changed = 0;
+		goto cleanup;
+	}
+	if (!diffopt->flags.ignore_dirty_submodules &&
+	    (!changed || diffopt->flags.dirty_submodules)) {
+		if (defer_submodule_status && *defer_submodule_status) {
+			defer = 1;
+			*ignore_untracked = diffopt->flags.ignore_untracked_in_submodules;
+		} else {
+			*dirty_submodule = is_submodule_modified(ce->name,
+					 diffopt->flags.ignore_untracked_in_submodules);
+		}
+	}
+cleanup:
+	diffopt->flags = orig_flags;
+ret:
 	if (defer_submodule_status)
 		*defer_submodule_status = defer;
 	return changed;
-}
-
-/**
- * Records diff_change if there is a change in the entry from run_diff_files.
- * If there is no change, then the cache entry is marked CE_UPTODATE and
- * CE_FSMONITOR_VALID. If there is no change and the find_copies_harder flag
- * is not set, then the function returns early.
- */
-static void record_file_diff(struct diff_options *options, unsigned newmode,
-			     unsigned dirty_submodule, int changed,
-			     struct index_state *istate,
-			     struct cache_entry *ce)
-{
-	unsigned int oldmode;
-	const struct object_id *old_oid, *new_oid;
-
-	if (!changed && !dirty_submodule) {
-		ce_mark_uptodate(ce);
-		mark_fsmonitor_valid(istate, ce);
-		if (!options->flags.find_copies_harder)
-			return;
-	}
-	oldmode = ce->ce_mode;
-	old_oid = &ce->oid;
-	new_oid = changed ? null_oid() : &ce->oid;
-	diff_change(options, oldmode, newmode, old_oid, new_oid,
-		    !is_null_oid(old_oid), !is_null_oid(new_oid),
-		    ce->name, 0, dirty_submodule);
 }
 
 int run_diff_files(struct rev_info *revs, unsigned int option)
@@ -158,10 +127,11 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 		diff_unmerged_stage = 2;
 	entries = istate->cache_nr;
 	for (i = 0; i < entries; i++) {
-		unsigned int newmode;
+		unsigned int oldmode, newmode;
 		struct cache_entry *ce = istate->cache[i];
 		int changed;
-		int defer_submodule_status = 1;
+		unsigned dirty_submodule = 0;
+		const struct object_id *old_oid, *new_oid;
 
 		if (diff_can_quit_early(&revs->diffopt))
 			break;
@@ -273,6 +243,7 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 		} else {
 			struct stat st;
 			unsigned ignore_untracked = 0;
+			int defer_submodule_status = !!revs->repo;
 
 			changed = check_removed(istate, ce, &st);
 			if (changed) {
@@ -294,7 +265,7 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 			}
 
 			changed = match_stat_with_submodule(&revs->diffopt, ce, &st,
-							    ce_option, NULL,
+							    ce_option, &dirty_submodule,
 							    &defer_submodule_status,
 							    &ignore_untracked);
 			newmode = ce_mode_from_stat(ce, st.st_mode);
@@ -305,7 +276,6 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 					.ignore_untracked = ignore_untracked,
 					.newmode = newmode,
 					.ce = ce,
-					.path = ce->name,
 				};
 				struct string_list_item *item;
 
@@ -316,27 +286,53 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 			}
 		}
 
-		if (!defer_submodule_status)
-			record_file_diff(&revs->diffopt, newmode, 0,
-					   changed,istate, ce);
-	}
-	if (submodules.nr) {
-		unsigned long parallel_jobs;
-		struct string_list_item *item;
+		if (!changed && !dirty_submodule) {
+			ce_mark_uptodate(ce);
+			mark_fsmonitor_valid(istate, ce);
+			if (!revs->diffopt.flags.find_copies_harder)
+				continue;
+		}
+		oldmode = ce->ce_mode;
+		old_oid = &ce->oid;
+		new_oid = changed ? null_oid() : &ce->oid;
+		diff_change(&revs->diffopt, oldmode, newmode,
+			    old_oid, new_oid,
+			    !is_null_oid(old_oid),
+			    !is_null_oid(new_oid),
+			    ce->name, 0, dirty_submodule);
 
-		if (git_config_get_ulong("submodule.diffjobs", &parallel_jobs))
+	}
+	if (submodules.nr > 0) {
+		int parallel_jobs;
+		if (git_config_get_int("submodule.diffjobs", &parallel_jobs))
 			parallel_jobs = 1;
 		else if (!parallel_jobs)
 			parallel_jobs = online_cpus();
+		else if (parallel_jobs < 0)
+			die(_("submodule.diffjobs cannot be negative"));
 
-		if (get_submodules_status(&submodules, parallel_jobs))
+		if (get_submodules_status(revs->repo, &submodules, parallel_jobs))
 			die(_("submodule status failed"));
-		for_each_string_list_item(item, &submodules) {
-			struct submodule_status_util *util = item->util;
+		for (size_t i = 0; i < submodules.nr; i++) {
+			struct submodule_status_util *util = submodules.items[i].util;
+			struct cache_entry *ce = util->ce;
+			unsigned int oldmode;
+			const struct object_id *old_oid, *new_oid;
 
-			record_file_diff(&revs->diffopt, util->newmode,
-					 util->dirty_submodule, util->changed,
-					 istate, util->ce);
+			if (!util->changed && !util->dirty_submodule) {
+				ce_mark_uptodate(ce);
+				mark_fsmonitor_valid(istate, ce);
+				if (!revs->diffopt.flags.find_copies_harder)
+					continue;
+			}
+			oldmode = ce->ce_mode;
+			old_oid = &ce->oid;
+			new_oid = util->changed ? null_oid() : &ce->oid;
+			diff_change(&revs->diffopt, oldmode, util->newmode,
+				    old_oid, new_oid,
+				    !is_null_oid(old_oid),
+				    !is_null_oid(new_oid),
+				    ce->name, 0, util->dirty_submodule);
 		}
 	}
 	string_list_clear(&submodules, 1);
@@ -660,7 +656,7 @@ void diff_get_merge_base(const struct rev_info *revs, struct object_id *mb)
 	if (revs->pending.nr == 1) {
 		struct object_id oid;
 
-		if (repo_get_oid(the_repository, "HEAD", &oid))
+		if (get_oid("HEAD", &oid))
 			die(_("unable to get HEAD"));
 
 		mb_child[1] = lookup_commit_reference(the_repository, &oid);
@@ -743,15 +739,8 @@ int index_differs_from(struct repository *r,
 	setup_revisions(0, NULL, &rev, &opt);
 	rev.diffopt.flags.quick = 1;
 	rev.diffopt.flags.exit_with_status = 1;
-	if (flags) {
+	if (flags)
 		diff_flags_or(&rev.diffopt.flags, flags);
-		/*
-		 * Now that flags are merged, honor override_submodule_config
-		 * and ignore_submodules from passed flags.
-		 */
-		if (flags->override_submodule_config)
-			rev.diffopt.flags.ignore_submodules = flags->ignore_submodules;
-	}
 	rev.diffopt.ita_invisible_in_index = ita_invisible_in_index;
 	run_diff_index(&rev, 1);
 	has_changes = rev.diffopt.flags.has_changes;
@@ -759,7 +748,7 @@ int index_differs_from(struct repository *r,
 	return (has_changes != 0);
 }
 
-static struct strbuf *idiff_prefix_cb(struct diff_options *opt UNUSED, void *data)
+static struct strbuf *idiff_prefix_cb(struct diff_options *opt, void *data)
 {
 	return data;
 }

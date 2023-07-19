@@ -9,6 +9,8 @@
  */
 
 #include "test-tool.h"
+#include "git-compat-util.h"
+#include "cache.h"
 #include "run-command.h"
 #include "strvec.h"
 #include "strbuf.h"
@@ -16,12 +18,13 @@
 #include "string-list.h"
 #include "thread-utils.h"
 #include "wildmatch.h"
+#include "gettext.h"
 
 static int number_callbacks;
 static int parallel_next(struct child_process *cp,
 			 struct strbuf *err,
 			 void *cb,
-			 void **task_cb UNUSED)
+			 void **task_cb)
 {
 	struct child_process *d = cb;
 	if (number_callbacks >= 4)
@@ -37,10 +40,10 @@ static int parallel_next(struct child_process *cp,
 	return 1;
 }
 
-static int no_job(struct child_process *cp UNUSED,
+static int no_job(struct child_process *cp,
 		  struct strbuf *err,
-		  void *cb UNUSED,
-		  void **task_cb UNUSED)
+		  void *cb,
+		  void **task_cb)
 {
 	if (err)
 		strbuf_addstr(err, "no further jobs available\n");
@@ -49,24 +52,25 @@ static int no_job(struct child_process *cp UNUSED,
 	return 0;
 }
 
-static void on_stderr_output(struct strbuf *out,
-			size_t offset,
-			void *pp_cb UNUSED,
-			void *pp_task_cb UNUSED)
+static void duplicate_output(struct strbuf *process_out,
+			struct strbuf *out,
+			void *pp_cb,
+			void *pp_task_cb)
 {
 	struct string_list list = STRING_LIST_INIT_DUP;
-	struct string_list_item *item;
 
-	string_list_split(&list, out->buf + offset, '\n', -1);
-	for_each_string_list_item(item, &list)
-		fprintf(stderr, "on_stderr_output: %s\n", item->string);
+	string_list_split(&list, process_out->buf, '\n', -1);
+	for (size_t i = 0; i < list.nr; i++) {
+		if (strlen(list.items[i].string) > 0)
+			fprintf(stderr, "duplicate_output: %s\n", list.items[i].string);
+	}
 	string_list_clear(&list, 0);
 }
 
-static int task_finished(int result UNUSED,
+static int task_finished(int result,
 			 struct strbuf *err,
-			 void *pp_cb UNUSED,
-			 void *pp_task_cb UNUSED)
+			 void *pp_cb,
+			 void *pp_task_cb)
 {
 	if (err)
 		strbuf_addstr(err, "asking for a quick stop\n");
@@ -450,10 +454,10 @@ int cmd__run_command(int argc, const char **argv)
 		opts.ungroup = 1;
 	}
 
-	if (!strcmp(argv[1], "--on-stderr-output")) {
+	if (!strcmp(argv[1], "--duplicate-output")) {
 		argv += 1;
 		argc -= 1;
-		opts.on_stderr_output = on_stderr_output;
+		opts.duplicate_output = duplicate_output;
 	}
 
 	jobs = atoi(argv[2]);
