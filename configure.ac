@@ -581,6 +581,8 @@ fi
 # Define NO_EXPAT if you do not have expat installed.  git-http-push is
 # not built, and you cannot push using http:// and https:// transports.
 
+if test -z "$NO_EXPAT"; then
+
 GIT_STASH_FLAGS($EXPATDIR)
 
 AC_CHECK_LIB([expat], [XML_ParserCreate],
@@ -588,6 +590,8 @@ AC_CHECK_LIB([expat], [XML_ParserCreate],
 [NO_EXPAT=YesPlease])
 
 GIT_UNSTASH_FLAGS($EXPATDIR)
+
+fi
 
 GIT_CONF_SUBST([NO_EXPAT])
 
