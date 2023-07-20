@@ -41,8 +41,7 @@ static void get_next_component(struct strbuf *next, struct strbuf *remaining)
 	/* Skip sequences of multiple path-separators */
 	for (start = remaining->buf; is_dir_sep(*start); start++)
 		; /* nothing */
-	/* Find end of the path component */
-	for (end = start; *end && !is_dir_sep(*end); end++)
+	/* Find end of the path component */	for (end = start; *end && !is_dir_sep(*end); end++)
 		; /* nothing */
 
 	strbuf_add(next, start, end - start);

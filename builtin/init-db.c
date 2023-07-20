@@ -71,6 +71,7 @@ static const char *const init_db_usage[] = {
 int cmd_init_db(int argc, const char **argv, const char *prefix)
 {
 	const char *git_dir;
+	const char *ref_storage_format = default_ref_storage();
 	const char *real_git_dir = NULL;
 	const char *work_tree;
 	const char *template_dir = NULL;
@@ -98,6 +99,7 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
+	fprintf(stderr, "RSF: %s\n", ref_storage_format);
 	argc = parse_options(argc, argv, prefix, init_db_options, init_db_usage, 0);
 
 	if (real_git_dir && is_bare_repository_cfg == 1)
@@ -236,5 +238,5 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 
 	flags |= INIT_DB_EXIST_OK;
 	return init_db(git_dir, real_git_dir, template_dir, hash_algo,
-		       initial_branch, init_shared_repository, flags);
+		       initial_branch, ref_storage_format, init_shared_repository, flags);
 }

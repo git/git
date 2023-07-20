@@ -29,6 +29,12 @@ test_expect_success REFFILES 'checkout notices failure to lock HEAD' '
 	test_must_fail git checkout -b other
 '
 
+test_expect_success !REFFILES 'checkout notices failure to lock HEAD' '
+	test_when_finished "rm -f .git/reftable/tables.list.lock" &&
+	>.git/reftable/tables.list.lock &&
+	test_must_fail git checkout -b other
+'
+
 test_expect_success 'create ref directory/file conflict scenario' '
 	git update-ref refs/heads/outer/inner main &&
 

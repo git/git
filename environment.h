@@ -215,6 +215,9 @@ int odb_pack_keep(const char *name);
 const char *get_log_output_encoding(void);
 const char *get_commit_output_encoding(void);
 
+const char *default_ref_storage(void); 
+
+
 extern const char *git_commit_encoding;
 extern const char *git_log_output_encoding;
 

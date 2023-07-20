@@ -1101,6 +1101,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	}
 
 	init_db(git_dir, real_git_dir, option_template, GIT_HASH_UNKNOWN, NULL,
+		default_ref_storage(),
 		do_not_override_repo_unix_permissions, INIT_DB_QUIET);
 
 	if (real_git_dir) {
@@ -1327,7 +1328,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		 * let's set ours to the same thing.
 		 */
 	hash_algo = hash_algo_by_ptr(transport_get_hash_algo(transport));
-	initialize_repository_version(hash_algo, 1);
+	initialize_repository_version(hash_algo, 1, default_ref_storage());
 	repo_set_hash_algo(the_repository, hash_algo);
 
 	if (mapped_refs) {

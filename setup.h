@@ -87,6 +87,7 @@ struct repository_format {
 	int is_bare;
 	int hash_algo;
 	int sparse_index;
+	char *ref_storage;
 	char *work_tree;
 	struct string_list unknown_extensions;
 	struct string_list v1_only_extensions;
@@ -145,9 +146,10 @@ void check_repository_format(struct repository_format *fmt);
 
 int init_db(const char *git_dir, const char *real_git_dir,
 	    const char *template_dir, int hash_algo,
-	    const char *initial_branch, int init_shared_repository,
+	    const char *initial_branch, const char *ref_storage_format,
+	    int init_shared_repository,
 	    unsigned int flags);
-void initialize_repository_version(int hash_algo, int reinit);
+void initialize_repository_version(int hash_algo, int reinit, const char *ref_storage_format);
 
 /*
  * NOTE NOTE NOTE!!

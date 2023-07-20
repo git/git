@@ -1741,7 +1741,12 @@ parisc* | hppa*)
 	;;
 esac
 
-test_set_prereq REFFILES
+if test -n "$GIT_TEST_REFTABLE"
+then
+  test_set_prereq !REFFILES
+else
+  test_set_prereq REFFILES
+fi
 
 ( COLUMNS=1 && test $COLUMNS = 1 ) && test_set_prereq COLUMNS_CAN_BE_1
 test -z "$NO_CURL" && test_set_prereq LIBCURL
