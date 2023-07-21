@@ -55,7 +55,6 @@ struct config_source {
 	enum config_origin_type origin_type;
 	const char *name;
 	const char *path;
-	enum config_error_action default_error_action;
 	int linenr;
 	int eof;
 	size_t total_len;
@@ -185,13 +184,15 @@ static int handle_path_include(const struct key_value_info *kvi,
 	}
 
 	if (!access_or_die(path, R_OK, 0)) {
+		struct config_parse_options config_opts = CP_OPTS_INIT(CONFIG_ERROR_DIE);
+
 		if (++inc->depth > MAX_INCLUDE_DEPTH)
 			die(_(include_depth_advice), MAX_INCLUDE_DEPTH, path,
 			    !kvi ? "<unknown>" :
 			    kvi->filename ? kvi->filename :
 			    "the command line");
 		ret = git_config_from_file_with_options(git_config_include, path, inc,
-							kvi->scope, NULL);
+							kvi->scope, &config_opts);
 		inc->depth--;
 	}
 cleanup:
@@ -339,7 +340,9 @@ static int add_remote_url(const char *var, const char *value,
 
 static void populate_remote_urls(struct config_include_data *inc)
 {
-	struct config_options opts;
+	struct config_options opts = {
+		.parse_options = CP_OPTS_INIT(CONFIG_ERROR_DIE),
+	};
 
 	opts = *inc->opts;
 	opts.unconditional_remote_url = 1;
@@ -1029,6 +1032,56 @@ static void kvi_from_source(struct config_source *cs,
 	out->path = cs->path;
 }
 
+int git_config_err_fn(enum config_event_t type, size_t begin_offset UNUSED,
+		      size_t end_offset UNUSED, struct config_source *cs,
+		      void *data)
+{
+	char *error_msg = NULL;
+	int error_return = 0;
+	enum config_error_action *action = data;
+
+	if (type != CONFIG_EVENT_ERROR)
+		return 0;
+
+	switch (cs->origin_type) {
+	case CONFIG_ORIGIN_BLOB:
+		error_msg = xstrfmt(_("bad config line %d in blob %s"),
+				      cs->linenr, cs->name);
+		break;
+	case CONFIG_ORIGIN_FILE:
+		error_msg = xstrfmt(_("bad config line %d in file %s"),
+				      cs->linenr, cs->name);
+		break;
+	case CONFIG_ORIGIN_STDIN:
+		error_msg = xstrfmt(_("bad config line %d in standard input"),
+				      cs->linenr);
+		break;
+	case CONFIG_ORIGIN_SUBMODULE_BLOB:
+		error_msg = xstrfmt(_("bad config line %d in submodule-blob %s"),
+				       cs->linenr, cs->name);
+		break;
+	case CONFIG_ORIGIN_CMDLINE:
+		error_msg = xstrfmt(_("bad config line %d in command line %s"),
+				       cs->linenr, cs->name);
+		break;
+	default:
+		error_msg = xstrfmt(_("bad config line %d in %s"),
+				      cs->linenr, cs->name);
+	}
+
+	switch (*action) {
+	case CONFIG_ERROR_DIE:
+		die("%s", error_msg);
+		break;
+	case CONFIG_ERROR_ERROR:
+		error_return = error("%s", error_msg);
+		break;
+	}
+
+	free(error_msg);
+	return error_return;
+}
+
 static int git_parse_source(struct config_source *cs, config_fn_t fn,
 			    struct key_value_info *kvi, void *data,
 			    const struct config_parse_options *opts)
@@ -1036,8 +1089,6 @@ static int git_parse_source(struct config_source *cs, config_fn_t fn,
 	int comment = 0;
 	size_t baselen = 0;
 	struct strbuf *var = &cs->var;
-	int error_return = 0;
-	char *error_msg = NULL;
 
 	/* U+FEFF Byte Order Mark in UTF8 */
 	const char *bomptr = utf8_bom;
@@ -1119,53 +1170,14 @@ static int git_parse_source(struct config_source *cs, config_fn_t fn,
 			break;
 	}
 
-	if (do_event(cs, CONFIG_EVENT_ERROR, &event_data) < 0)
-		return -1;
-
-	switch (cs->origin_type) {
-	case CONFIG_ORIGIN_BLOB:
-		error_msg = xstrfmt(_("bad config line %d in blob %s"),
-				      cs->linenr, cs->name);
-		break;
-	case CONFIG_ORIGIN_FILE:
-		error_msg = xstrfmt(_("bad config line %d in file %s"),
-				      cs->linenr, cs->name);
-		break;
-	case CONFIG_ORIGIN_STDIN:
-		error_msg = xstrfmt(_("bad config line %d in standard input"),
-				      cs->linenr);
-		break;
-	case CONFIG_ORIGIN_SUBMODULE_BLOB:
-		error_msg = xstrfmt(_("bad config line %d in submodule-blob %s"),
-				       cs->linenr, cs->name);
-		break;
-	case CONFIG_ORIGIN_CMDLINE:
-		error_msg = xstrfmt(_("bad config line %d in command line %s"),
-				       cs->linenr, cs->name);
-		break;
-	default:
-		error_msg = xstrfmt(_("bad config line %d in %s"),
-				      cs->linenr, cs->name);
-	}
-
-	switch (opts && opts->error_action ?
-		opts->error_action :
-		cs->default_error_action) {
-	case CONFIG_ERROR_DIE:
-		die("%s", error_msg);
-		break;
-	case CONFIG_ERROR_ERROR:
-		error_return = error("%s", error_msg);
-		break;
-	case CONFIG_ERROR_SILENT:
-		error_return = -1;
-		break;
-	case CONFIG_ERROR_UNSET:
-		BUG("config error action unset");
-	}
-
-	free(error_msg);
-	return error_return;
+	/*
+	 * FIXME for whatever reason, do_event passes the _previous_ event, so
+	 * in order for our callback to receive the error event, we have to call
+	 * do_event twice
+	 */
+	do_event(cs, CONFIG_EVENT_ERROR, &event_data);
+	do_event(cs, CONFIG_EVENT_ERROR, &event_data);
+	return -1;
 }
 
 static uintmax_t get_unit_factor(const char *end)
@@ -2002,7 +2014,6 @@ static int do_config_from_file(config_fn_t fn,
 	top.origin_type = origin_type;
 	top.name = name;
 	top.path = path;
-	top.default_error_action = CONFIG_ERROR_DIE;
 	top.do_fgetc = config_file_fgetc;
 	top.do_ungetc = config_file_ungetc;
 	top.do_ftell = config_file_ftell;
@@ -2016,8 +2027,10 @@ static int do_config_from_file(config_fn_t fn,
 static int git_config_from_stdin(config_fn_t fn, void *data,
 				 enum config_scope scope)
 {
+	struct config_parse_options config_opts = CP_OPTS_INIT(CONFIG_ERROR_DIE);
+
 	return do_config_from_file(fn, CONFIG_ORIGIN_STDIN, "", NULL, stdin,
-				   data, scope, NULL);
+				   data, scope, &config_opts);
 }
 
 int git_config_from_file_with_options(config_fn_t fn, const char *filename,
@@ -2040,8 +2053,10 @@ int git_config_from_file_with_options(config_fn_t fn, const char *filename,
 
 int git_config_from_file(config_fn_t fn, const char *filename, void *data)
 {
+	struct config_parse_options config_opts = CP_OPTS_INIT(CONFIG_ERROR_DIE);
+
 	return git_config_from_file_with_options(fn, filename, data,
-						 CONFIG_SCOPE_UNKNOWN, NULL);
+						 CONFIG_SCOPE_UNKNOWN, &config_opts);
 }
 
 int git_config_from_mem(config_fn_t fn,
@@ -2058,7 +2073,6 @@ int git_config_from_mem(config_fn_t fn,
 	top.origin_type = origin_type;
 	top.name = name;
 	top.path = NULL;
-	top.default_error_action = CONFIG_ERROR_ERROR;
 	top.do_fgetc = config_buf_fgetc;
 	top.do_ungetc = config_buf_ungetc;
 	top.do_ftell = config_buf_ftell;
@@ -2077,6 +2091,7 @@ int git_config_from_blob_oid(config_fn_t fn,
 	char *buf;
 	unsigned long size;
 	int ret;
+	struct config_parse_options config_opts = CP_OPTS_INIT(CONFIG_ERROR_ERROR);
 
 	buf = repo_read_object_file(repo, oid, &type, &size);
 	if (!buf)
@@ -2087,7 +2102,7 @@ int git_config_from_blob_oid(config_fn_t fn,
 	}
 
 	ret = git_config_from_mem(fn, CONFIG_ORIGIN_BLOB, name, buf, size,
-				  data, scope, NULL);
+				  data, scope, &config_opts);
 	free(buf);
 
 	return ret;
@@ -2188,29 +2203,32 @@ static int do_git_config_sequence(const struct config_options *opts,
 			   opts->system_gently ? ACCESS_EACCES_OK : 0))
 		ret += git_config_from_file_with_options(fn, system_config,
 							 data, CONFIG_SCOPE_SYSTEM,
-							 NULL);
+							 &opts->parse_options);
 
 	git_global_config(&user_config, &xdg_config);
 
 	if (xdg_config && !access_or_die(xdg_config, R_OK, ACCESS_EACCES_OK))
 		ret += git_config_from_file_with_options(fn, xdg_config, data,
-							 CONFIG_SCOPE_GLOBAL, NULL);
+							 CONFIG_SCOPE_GLOBAL,
+							 &opts->parse_options);
 
 	if (user_config && !access_or_die(user_config, R_OK, ACCESS_EACCES_OK))
 		ret += git_config_from_file_with_options(fn, user_config, data,
-							 CONFIG_SCOPE_GLOBAL, NULL);
+							 CONFIG_SCOPE_GLOBAL,
+							 &opts->parse_options);
 
 	if (!opts->ignore_repo && repo_config &&
 	    !access_or_die(repo_config, R_OK, 0))
 		ret += git_config_from_file_with_options(fn, repo_config, data,
-							 CONFIG_SCOPE_LOCAL, NULL);
+							 CONFIG_SCOPE_LOCAL,
+							 &opts->parse_options);
 
 	if (!opts->ignore_worktree && worktree_config &&
 	    repo && repo->repository_format_worktree_config &&
 	    !access_or_die(worktree_config, R_OK, 0)) {
 			ret += git_config_from_file_with_options(fn, worktree_config, data,
 								 CONFIG_SCOPE_WORKTREE,
-								 NULL);
+								 &opts->parse_options);
 	}
 
 	if (!opts->ignore_cmdline && git_config_from_parameters(fn, data) < 0)
@@ -2251,7 +2269,7 @@ int config_with_options(config_fn_t fn, void *data,
 	} else if (config_source && config_source->file) {
 		ret = git_config_from_file_with_options(fn, config_source->file,
 							data, config_source->scope,
-							NULL);
+							&opts->parse_options);
 	} else if (config_source && config_source->blob) {
 		ret = git_config_from_blob_ref(fn, repo, config_source->blob,
 					       data, config_source->scope);
@@ -2289,9 +2307,11 @@ static void configset_iter(struct config_set *set, config_fn_t fn, void *data)
 
 void read_early_config(config_fn_t cb, void *data)
 {
-	struct config_options opts = {0};
 	struct strbuf commondir = STRBUF_INIT;
 	struct strbuf gitdir = STRBUF_INIT;
+	struct config_options opts = {
+		.parse_options = CP_OPTS_INIT(CONFIG_ERROR_DIE),
+	};
 
 	opts.respect_includes = 1;
 
@@ -2323,7 +2343,9 @@ void read_early_config(config_fn_t cb, void *data)
  */
 void read_very_early_config(config_fn_t cb, void *data)
 {
-	struct config_options opts = { 0 };
+	struct config_options opts = {
+		.parse_options = CP_OPTS_INIT(CONFIG_ERROR_DIE),
+	};
 
 	opts.respect_includes = 1;
 	opts.ignore_repo = 1;
@@ -2614,7 +2636,9 @@ int git_configset_get_pathname(struct config_set *set, const char *key, const ch
 /* Functions use to read configuration from a repository */
 static void repo_read_config(struct repository *repo)
 {
-	struct config_options opts = { 0 };
+	struct config_options opts = {
+		.parse_options = CP_OPTS_INIT(CONFIG_ERROR_DIE),
+	};
 
 	opts.respect_includes = 1;
 	opts.commondir = repo->commondir;
@@ -2761,11 +2785,13 @@ int repo_config_get_pathname(struct repository *repo,
 static void read_protected_config(void)
 {
 	struct config_options opts = {
-		.respect_includes = 1,
-		.ignore_repo = 1,
-		.ignore_worktree = 1,
-		.system_gently = 1,
+		.parse_options = CP_OPTS_INIT(CONFIG_ERROR_DIE),
 	};
+
+	opts.respect_includes = 1;
+	opts.ignore_repo = 1;
+	opts.ignore_worktree = 1;
+	opts.system_gently = 1;
 
 	git_configset_init(&protected_config);
 	config_with_options(config_set_callback, &protected_config, NULL,
@@ -2977,6 +3003,7 @@ struct config_store_data {
 		enum config_event_t type;
 		int is_keys_section;
 	} *parsed;
+	enum config_error_action error_action;
 	unsigned int parsed_nr, parsed_alloc, *seen, seen_nr, seen_alloc;
 	unsigned int key_seen:1, section_seen:1, is_keys_section:1;
 };
@@ -3043,6 +3070,10 @@ static int store_aux_event(enum config_event_t type, size_t begin, size_t end,
 				   store->seen_alloc);
 			store->seen[store->seen_nr] = store->parsed_nr;
 		}
+	}
+	if (type == CONFIG_EVENT_ERROR) {
+		return git_config_err_fn(type, begin, end, cs,
+					 &store->error_action);
 	}
 
 	store->parsed_nr++;
@@ -3380,7 +3411,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 		struct stat st;
 		size_t copy_begin, copy_end;
 		int i, new_line = 0;
-		struct config_parse_options opts;
+		struct config_parse_options opts = CP_OPTS_INIT(CONFIG_ERROR_DIE);
 
 		if (!value_pattern)
 			store.value_pattern = NULL;
@@ -3407,8 +3438,8 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 
 		ALLOC_GROW(store.parsed, 1, store.parsed_alloc);
 		store.parsed[0].end = 0;
+		store.error_action = CONFIG_ERROR_DIE;
 
-		memset(&opts, 0, sizeof(opts));
 		opts.event_fn = store_aux_event;
 		opts.event_fn_data = &store;
 

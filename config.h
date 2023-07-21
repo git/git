@@ -86,12 +86,6 @@ typedef int (*config_parser_event_fn_t)(enum config_event_t type,
 					void *event_fn_data);
 
 struct config_parse_options {
-	enum config_error_action {
-		CONFIG_ERROR_UNSET = 0, /* use source-specific default */
-		CONFIG_ERROR_DIE, /* die() on error */
-		CONFIG_ERROR_ERROR, /* error() on error, return -1 */
-		CONFIG_ERROR_SILENT, /* return -1 */
-	} error_action;
 	/*
 	 * event_fn and event_fn_data are for internal use only. Handles events
 	 * emitted by the config parser.
@@ -99,6 +93,11 @@ struct config_parse_options {
 	config_parser_event_fn_t event_fn;
 	void *event_fn_data;
 };
+
+#define CP_OPTS_INIT(error_action) { \
+	.event_fn = git_config_err_fn, \
+	.event_fn_data = (enum config_error_action []){(error_action)}, \
+}
 
 struct config_options {
 	unsigned int respect_includes : 1;
@@ -118,6 +117,15 @@ struct config_options {
 	 */
 	unsigned int unconditional_remote_url : 1;
 };
+
+enum config_error_action {
+	CONFIG_ERROR_DIE, /* die() on error */
+	CONFIG_ERROR_ERROR, /* error() on error, return -1 */
+};
+
+int git_config_err_fn(enum config_event_t type, size_t begin_offset,
+		      size_t end_offset, struct config_source *cs,
+		      void *event_fn_data);
 
 /* Config source metadata for a given config key-value pair */
 struct key_value_info {

@@ -42,7 +42,9 @@ static int actions, type;
 static char *default_value;
 static int end_nul;
 static int respect_includes_opt = -1;
-static struct config_options config_options;
+static struct config_options config_options = {
+	.parse_options = CP_OPTS_INIT(CONFIG_ERROR_DIE)
+};
 static int show_origin;
 static int show_scope;
 static int fixed_value;

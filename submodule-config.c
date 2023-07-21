@@ -565,6 +565,8 @@ static const struct submodule *config_from(struct submodule_cache *cache,
 	enum object_type type;
 	const struct submodule *submodule = NULL;
 	struct parse_config_parameter parameter;
+	struct config_parse_options config_opts = CP_OPTS_INIT(CONFIG_ERROR_ERROR);
+
 
 	/*
 	 * If any parameter except the cache is a NULL pointer just
@@ -608,7 +610,8 @@ static const struct submodule *config_from(struct submodule_cache *cache,
 	parameter.gitmodules_oid = &oid;
 	parameter.overwrite = 0;
 	git_config_from_mem(parse_config, CONFIG_ORIGIN_SUBMODULE_BLOB, rev.buf,
-			    config, config_size, &parameter, CONFIG_SCOPE_UNKNOWN, NULL);
+			    config, config_size, &parameter,
+			    CONFIG_SCOPE_UNKNOWN, &config_opts);
 	strbuf_release(&rev);
 	free(config);
 
@@ -652,7 +655,9 @@ static void config_from_gitmodules(config_fn_t fn, struct repository *repo, void
 		struct git_config_source config_source = {
 			0, .scope = CONFIG_SCOPE_SUBMODULE
 		};
-		const struct config_options opts = { 0 };
+		struct config_options opts = {
+			.parse_options = CP_OPTS_INIT(CONFIG_ERROR_DIE),
+		};
 		struct object_id oid;
 		char *file;
 		char *oidstr = NULL;
