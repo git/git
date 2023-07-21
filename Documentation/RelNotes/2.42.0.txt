@@ -57,6 +57,9 @@ Performance, Internal Implementation, Development Support etc.
  * "imap-send" codepaths got cleaned up to get rid of unused
    parameters.
 
+ * Enumerating refs in the packed-refs file, while excluding refs that
+   match certain patterns, has been optimized.
+
 
 Fixes since v2.41
 -----------------
