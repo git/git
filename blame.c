@@ -2806,7 +2806,9 @@ void setup_scoreboard(struct blame_scoreboard *sb,
 			parent_oid = &head_oid;
 		}
 
-		setup_work_tree();
+		if (!sb->contents_from)
+			setup_work_tree();
+
 		sb->final = fake_working_tree_commit(sb->repo,
 						     &sb->revs->diffopt,
 						     sb->path, sb->contents_from,
