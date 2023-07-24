@@ -85,6 +85,21 @@ typedef int (*config_parser_event_fn_t)(enum config_event_t type,
 					struct config_source *cs,
 					void *event_fn_data);
 
+struct config_parse_options {
+	enum config_error_action {
+		CONFIG_ERROR_UNSET = 0, /* use source-specific default */
+		CONFIG_ERROR_DIE, /* die() on error */
+		CONFIG_ERROR_ERROR, /* error() on error, return -1 */
+		CONFIG_ERROR_SILENT, /* return -1 */
+	} error_action;
+	/*
+	 * event_fn and event_fn_data are for internal use only. Handles events
+	 * emitted by the config parser.
+	 */
+	config_parser_event_fn_t event_fn;
+	void *event_fn_data;
+};
+
 struct config_options {
 	unsigned int respect_includes : 1;
 	unsigned int ignore_repo : 1;
@@ -92,6 +107,9 @@ struct config_options {
 	unsigned int ignore_cmdline : 1;
 	unsigned int system_gently : 1;
 
+	const char *commondir;
+	const char *git_dir;
+	struct config_parse_options parse_options;
 	/*
 	 * For internal use. Include all includeif.hasremoteurl paths without
 	 * checking if the repo has that remote URL, and when doing so, verify
@@ -99,21 +117,6 @@ struct config_options {
 	 * themselves.
 	 */
 	unsigned int unconditional_remote_url : 1;
-
-	const char *commondir;
-	const char *git_dir;
-	/*
-	 * event_fn and event_fn_data are for internal use only. Handles events
-	 * emitted by the config parser.
-	 */
-	config_parser_event_fn_t event_fn;
-	void *event_fn_data;
-	enum config_error_action {
-		CONFIG_ERROR_UNSET = 0, /* use source-specific default */
-		CONFIG_ERROR_DIE, /* die() on error */
-		CONFIG_ERROR_ERROR, /* error() on error, return -1 */
-		CONFIG_ERROR_SILENT, /* return -1 */
-	} error_action;
 };
 
 /* Config source metadata for a given config key-value pair */
@@ -178,13 +181,13 @@ int git_config_from_file(config_fn_t fn, const char *, void *);
 
 int git_config_from_file_with_options(config_fn_t fn, const char *,
 				      void *, enum config_scope,
-				      const struct config_options *);
+				      const struct config_parse_options *);
 int git_config_from_mem(config_fn_t fn,
 			const enum config_origin_type,
 			const char *name,
 			const char *buf, size_t len,
 			void *data, enum config_scope scope,
-			const struct config_options *opts);
+			const struct config_parse_options *opts);
 int git_config_from_blob_oid(config_fn_t fn, const char *name,
 			     struct repository *repo,
 			     const struct object_id *oid, void *data,

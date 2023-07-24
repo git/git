@@ -237,7 +237,7 @@ int bundle_uri_parse_config_format(const char *uri,
 				   struct bundle_list *list)
 {
 	int result;
-	struct config_options opts = {
+	struct config_parse_options opts = {
 		.error_action = CONFIG_ERROR_ERROR,
 	};
 

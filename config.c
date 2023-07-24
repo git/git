@@ -983,7 +983,7 @@ static int get_base_var(struct config_source *cs, struct strbuf *name)
 struct parse_event_data {
 	enum config_event_t previous_type;
 	size_t previous_offset;
-	const struct config_options *opts;
+	const struct config_parse_options *opts;
 };
 
 static int do_event(struct config_source *cs, enum config_event_t type,
@@ -1031,7 +1031,7 @@ static void kvi_from_source(struct config_source *cs,
 
 static int git_parse_source(struct config_source *cs, config_fn_t fn,
 			    struct key_value_info *kvi, void *data,
-			    const struct config_options *opts)
+			    const struct config_parse_options *opts)
 {
 	int comment = 0;
 	size_t baselen = 0;
@@ -1968,7 +1968,7 @@ int git_default_config(const char *var, const char *value,
  */
 static int do_config_from(struct config_source *top, config_fn_t fn,
 			  void *data, enum config_scope scope,
-			  const struct config_options *opts)
+			  const struct config_parse_options *opts)
 {
 	struct key_value_info kvi = KVI_INIT;
 	int ret;
@@ -1993,7 +1993,7 @@ static int do_config_from_file(config_fn_t fn,
 			       const enum config_origin_type origin_type,
 			       const char *name, const char *path, FILE *f,
 			       void *data, enum config_scope scope,
-			       const struct config_options *opts)
+			       const struct config_parse_options *opts)
 {
 	struct config_source top = CONFIG_SOURCE_INIT;
 	int ret;
@@ -2022,7 +2022,7 @@ static int git_config_from_stdin(config_fn_t fn, void *data,
 
 int git_config_from_file_with_options(config_fn_t fn, const char *filename,
 				      void *data, enum config_scope scope,
-				      const struct config_options *opts)
+				      const struct config_parse_options *opts)
 {
 	int ret = -1;
 	FILE *f;
@@ -2048,7 +2048,7 @@ int git_config_from_mem(config_fn_t fn,
 			const enum config_origin_type origin_type,
 			const char *name, const char *buf, size_t len,
 			void *data, enum config_scope scope,
-			const struct config_options *opts)
+			const struct config_parse_options *opts)
 {
 	struct config_source top = CONFIG_SOURCE_INIT;
 
@@ -3380,7 +3380,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 		struct stat st;
 		size_t copy_begin, copy_end;
 		int i, new_line = 0;
-		struct config_options opts;
+		struct config_parse_options opts;
 
 		if (!value_pattern)
 			store.value_pattern = NULL;
