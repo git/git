@@ -20,14 +20,16 @@ static inline int hex2chr(const char *s)
 }
 
 /*
- * Try to read a SHA1 in hexadecimal format from the 40 characters
- * starting at hex.  Write the 20-byte result to sha1 in binary form.
+ * Try to read a hash (specified by the_hash_algo) in hexadecimal
+ * format from the 40 (or whatever length the hash algorithm uses)
+ * characters starting at hex.  Write the 20-byte (or the length of
+ * the hash) result to hash in binary form.
  * Return 0 on success.  Reading stops if a NUL is encountered in the
  * input, so it is safe to pass this function an arbitrary
  * null-terminated string.
  */
-int get_sha1_hex(const char *hex, unsigned char *sha1);
-int get_oid_hex(const char *hex, struct object_id *sha1);
+int get_hash_hex(const char *hex, unsigned char *hash);
+int get_oid_hex(const char *hex, struct object_id *oid);
 
 /* Like get_oid_hex, but for an arbitrary hash algorithm. */
 int get_oid_hex_algop(const char *hex, struct object_id *oid, const struct git_hash_algo *algop);
