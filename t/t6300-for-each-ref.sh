@@ -1619,7 +1619,8 @@ test_expect_success GPGSSH 'setup for signature atom using ssh' '
 	test_config user.signingkey "${GPGSSH_KEY_PRIMARY}" &&
 	echo "8" >file &&
 	test_tick &&
-	git commit -a -S -m "file: 8" &&
+	git add file &&
+	git commit -S -m "file: 8" &&
 	git tag eighth-signed-ssh
 '
 
