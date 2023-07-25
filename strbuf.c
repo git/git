@@ -936,31 +936,19 @@ void strbuf_addftime(struct strbuf *sb, const char *fmt, const struct tm *tm,
 	 * of seconds.
 	 */
 	while (strbuf_expand_step(&munged_fmt, &fmt)) {
-		switch (*fmt) {
-		case '%':
+		if (skip_prefix(fmt, "%", &fmt))
 			strbuf_addstr(&munged_fmt, "%%");
-			fmt++;
-			break;
-		case 's':
+		else if (skip_prefix(fmt, "s", &fmt))
 			strbuf_addf(&munged_fmt, "%"PRItime,
 				    (timestamp_t)tm_to_time_t(tm) -
 				    3600 * (tz_offset / 100) -
 				    60 * (tz_offset % 100));
-			fmt++;
-			break;
-		case 'z':
+		else if (skip_prefix(fmt, "z", &fmt))
 			strbuf_addf(&munged_fmt, "%+05d", tz_offset);
-			fmt++;
-			break;
-		case 'Z':
-			if (suppress_tz_name) {
-				fmt++;
-				break;
-			}
-			/* FALLTHROUGH */
-		default:
+		else if (suppress_tz_name && skip_prefix(fmt, "Z", &fmt))
+			; /* nothing */
+		else
 			strbuf_addch(&munged_fmt, '%');
-		}
 	}
 	fmt = munged_fmt.buf;
 
