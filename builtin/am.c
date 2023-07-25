@@ -786,7 +786,7 @@ static int split_mail_conv(mail_conv_fn fn, struct am_state *state,
  * A split_mail_conv() callback that converts an StGit patch to an RFC2822
  * message suitable for parsing with git-mailinfo.
  */
-static int stgit_patch_to_mail(FILE *out, FILE *in, int keep_cr)
+static int stgit_patch_to_mail(FILE *out, FILE *in, int keep_cr UNUSED)
 {
 	struct strbuf sb = STRBUF_INIT;
 	int subject_printed = 0;
@@ -869,7 +869,7 @@ static int split_mail_stgit_series(struct am_state *state, const char **paths,
  * A split_patches_conv() callback that converts a mercurial patch to a RFC2822
  * message suitable for parsing with git-mailinfo.
  */
-static int hg_patch_to_mail(FILE *out, FILE *in, int keep_cr)
+static int hg_patch_to_mail(FILE *out, FILE *in, int keep_cr UNUSED)
 {
 	struct strbuf sb = STRBUF_INIT;
 	int rc = 0;

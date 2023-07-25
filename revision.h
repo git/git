@@ -429,7 +429,7 @@ void repo_init_revisions(struct repository *r,
  */
 struct setup_revision_opt {
 	const char *def;
-	void (*tweak)(struct rev_info *, struct setup_revision_opt *);
+	void (*tweak)(struct rev_info *);
 	unsigned int	assume_dashdash:1,
 			allow_exclude_promisor_objects:1,
 			free_removed_argv_elements:1;

@@ -196,7 +196,7 @@ static inline int is_hdr_continuation(const char *ptr, const size_t size)
 	return size && (*ptr == ' ' || *ptr == '\t');
 }
 
-static size_t fwrite_wwwauth(char *ptr, size_t eltsize, size_t nmemb, void *p)
+static size_t fwrite_wwwauth(char *ptr, size_t eltsize, size_t nmemb, void *p UNUSED)
 {
 	size_t size = eltsize * nmemb;
 	struct strvec *values = &http_auth.wwwauth_headers;
@@ -295,7 +295,8 @@ exit:
 	return size;
 }
 
-size_t fwrite_null(char *ptr, size_t eltsize, size_t nmemb, void *strbuf)
+size_t fwrite_null(char *ptr UNUSED, size_t eltsize UNUSED, size_t nmemb,
+		   void *data UNUSED)
 {
 	return nmemb;
 }
@@ -821,7 +822,9 @@ static void curl_dump_info(char *data, size_t size)
 	strbuf_release(&buf);
 }
 
-static int curl_trace(CURL *handle, curl_infotype type, char *data, size_t size, void *userp)
+static int curl_trace(CURL *handle UNUSED, curl_infotype type,
+		      char *data, size_t size,
+		      void *userp UNUSED)
 {
 	const char *text;
 	enum { NO_FILTER = 0, DO_FILTER = 1 };

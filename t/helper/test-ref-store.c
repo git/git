@@ -277,11 +277,6 @@ static int cmd_delete_reflog(struct ref_store *refs, const char **argv)
 	return refs_delete_reflog(refs, refname);
 }
 
-static int cmd_reflog_expire(struct ref_store *refs, const char **argv)
-{
-	die("not supported yet");
-}
-
 static int cmd_delete_ref(struct ref_store *refs, const char **argv)
 {
 	const char *msg = notnull(*argv++, "msg");
@@ -336,7 +331,6 @@ static struct command commands[] = {
 	{ "reflog-exists", cmd_reflog_exists },
 	{ "create-reflog", cmd_create_reflog },
 	{ "delete-reflog", cmd_delete_reflog },
-	{ "reflog-expire", cmd_reflog_expire },
 	/*
 	 * backend transaction functions can't be tested separately
 	 */

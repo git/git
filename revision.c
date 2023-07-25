@@ -2970,7 +2970,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	if (!revs->def)
 		revs->def = opt ? opt->def : NULL;
 	if (opt && opt->tweak)
-		opt->tweak(revs, opt);
+		opt->tweak(revs);
 	if (revs->show_merge)
 		prepare_show_merge(revs);
 	if (revs->def && !revs->pending.nr && !revs->rev_input_given) {

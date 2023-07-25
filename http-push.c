@@ -783,7 +783,7 @@ static void handle_new_lock_ctx(struct xml_ctx *ctx, int tag_closed)
 static void one_remote_ref(const char *refname);
 
 static void
-xml_start_tag(void *userData, const char *name, const char **atts)
+xml_start_tag(void *userData, const char *name, const char **atts UNUSED)
 {
 	struct xml_ctx *ctx = (struct xml_ctx *)userData;
 	const char *c = strchr(name, ':');

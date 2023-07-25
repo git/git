@@ -718,8 +718,7 @@ static int show_tree_object(const struct object_id *oid UNUSED,
 	return 0;
 }
 
-static void show_setup_revisions_tweak(struct rev_info *rev,
-				       struct setup_revision_opt *opt)
+static void show_setup_revisions_tweak(struct rev_info *rev)
 {
 	if (rev->first_parent_only)
 		diff_merges_default_to_first_parent(rev);
@@ -862,8 +861,7 @@ int cmd_log_reflog(int argc, const char **argv, const char *prefix)
 	return cmd_log_deinit(cmd_log_walk(&rev), &rev);
 }
 
-static void log_setup_revisions_tweak(struct rev_info *rev,
-				      struct setup_revision_opt *opt)
+static void log_setup_revisions_tweak(struct rev_info *rev)
 {
 	if (rev->diffopt.flags.default_follow_renames &&
 	    diff_check_follow_pathspec(&rev->prune_data, 0))

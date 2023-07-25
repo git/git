@@ -1309,9 +1309,9 @@ int fsck_buffer(const struct object_id *oid, enum object_type type,
 
 int fsck_error_function(struct fsck_options *o,
 			const struct object_id *oid,
-			enum object_type object_type,
+			enum object_type object_type UNUSED,
 			enum fsck_msg_type msg_type,
-			enum fsck_msg_id msg_id,
+			enum fsck_msg_id msg_id UNUSED,
 			const char *message)
 {
 	if (msg_type == FSCK_WARN) {
