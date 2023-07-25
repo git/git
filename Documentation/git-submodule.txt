@@ -95,7 +95,7 @@ too (and can also report changes to a submodule's work tree).
 init [--] [<path>...]::
 	Initialize the submodules recorded in the index (which were
 	added and committed elsewhere) by setting `submodule.$name.url`
-	in .git/config. It uses the same setting from `.gitmodules` as
+	in `.git/config`, using the same setting from `.gitmodules` as
 	a template. If the URL is relative, it will be resolved using
 	the default remote. If there is no default remote, the current
 	repository will be assumed to be upstream.
@@ -105,9 +105,12 @@ If no path is specified and submodule.active has been configured, submodules
 configured to be active will be initialized, otherwise all submodules are
 initialized.
 +
-When present, it will also copy the value of `submodule.$name.update`.
-This command does not alter existing information in .git/config.
-You can then customize the submodule clone URLs in .git/config
+It will also copy the value of `submodule.$name.update`, if present in
+the `.gitmodules` file, to `.git/config`, but (1) this command does not
+alter existing information in `.git/config`, and (2) `submodule.$name.update`
+that is set to a custom command is *not* copied for security reasons.
++
+You can then customize the submodule clone URLs in `.git/config`
 for your local setup and proceed to `git submodule update`;
 you can also just use `git submodule update --init` without
 the explicit 'init' step if you do not intend to customize
@@ -143,6 +146,8 @@ the submodules. The "updating" can be done in several ways depending
 on command line options and the value of `submodule.<name>.update`
 configuration variable. The command line option takes precedence over
 the configuration variable. If neither is given, a 'checkout' is performed.
+(note: what is in `.gitmodules` file is irrelevant at this point;
+see `git submodule init` above for how `.gitmodules` is used).
 The 'update' procedures supported both from the command line as well as
 through the `submodule.<name>.update` configuration are:
 
@@ -160,16 +165,18 @@ checked out in the submodule.
 	merge;; the commit recorded in the superproject will be merged
 	    into the current branch in the submodule.
 
-The following 'update' procedures are only available via the
-`submodule.<name>.update` configuration variable:
+The following update procedures have additional limitations:
 
-	custom command;; arbitrary shell command that takes a single
-	    argument (the sha1 of the commit recorded in the
-	    superproject) is executed. When `submodule.<name>.update`
-	    is set to '!command', the remainder after the exclamation mark
-	    is the custom command.
+	custom command;; mechanism for running arbitrary commands with the
+	    commit ID as an argument. Specifically, if the
+	    `submodule.<name>.update` configuration variable is set to
+	    `!custom command`, the object name of the commit recorded in the
+	    superproject for the submodule is appended to the `custom command`
+	    string and executed. Note that this mechanism is not supported in
+	    the `.gitmodules` file or on the command line.
 
-	none;; the submodule is not updated.
+	none;; the submodule is not updated. This update procedure is not
+	    allowed on the command line.
 
 If the submodule is not yet initialized, and you just want to use the
 setting as stored in `.gitmodules`, you can automatically initialize the
