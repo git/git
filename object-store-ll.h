@@ -106,7 +106,7 @@ struct packed_git {
 	const void *index_data;
 	size_t index_size;
 	uint32_t num_objects;
-	uint32_t crc_offset;
+	size_t crc_offset;
 	struct oidset bad_objects;
 	int index_version;
 	time_t mtime;

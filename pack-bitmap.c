@@ -1293,7 +1293,7 @@ static void show_extended_objects(struct bitmap_index *bitmap_git,
 	for (i = 0; i < eindex->count; ++i) {
 		struct object *obj;
 
-		if (!bitmap_get(objects, bitmap_num_objects(bitmap_git) + i))
+		if (!bitmap_get(objects, st_add(bitmap_num_objects(bitmap_git), i)))
 			continue;
 
 		obj = eindex->objects[i];
@@ -1472,7 +1472,7 @@ static void filter_bitmap_exclude_type(struct bitmap_index *bitmap_git,
 	 * them individually.
 	 */
 	for (i = 0; i < eindex->count; i++) {
-		uint32_t pos = i + bitmap_num_objects(bitmap_git);
+		size_t pos = st_add(i, bitmap_num_objects(bitmap_git));
 		if (eindex->objects[i]->type == type &&
 		    bitmap_get(to_filter, pos) &&
 		    !bitmap_get(tips, pos))
@@ -1563,7 +1563,7 @@ static void filter_bitmap_blob_limit(struct bitmap_index *bitmap_git,
 	}
 
 	for (i = 0; i < eindex->count; i++) {
-		uint32_t pos = i + bitmap_num_objects(bitmap_git);
+		size_t pos = st_add(i, bitmap_num_objects(bitmap_git));
 		if (eindex->objects[i]->type == OBJ_BLOB &&
 		    bitmap_get(to_filter, pos) &&
 		    !bitmap_get(tips, pos) &&
@@ -2037,7 +2037,8 @@ static uint32_t count_object_type(struct bitmap_index *bitmap_git,
 
 	for (i = 0; i < eindex->count; ++i) {
 		if (eindex->objects[i]->type == type &&
-			bitmap_get(objects, bitmap_num_objects(bitmap_git) + i))
+		    bitmap_get(objects,
+			       st_add(bitmap_num_objects(bitmap_git), i)))
 			count++;
 	}
 
@@ -2451,7 +2452,8 @@ static off_t get_disk_usage_for_extended(struct bitmap_index *bitmap_git)
 	for (i = 0; i < eindex->count; i++) {
 		struct object *obj = eindex->objects[i];
 
-		if (!bitmap_get(result, bitmap_num_objects(bitmap_git) + i))
+		if (!bitmap_get(result,
+				st_add(bitmap_num_objects(bitmap_git), i)))
 			continue;
 
 		if (oid_object_info_extended(the_repository, &obj->oid, &oi, 0) < 0)
