@@ -26,6 +26,10 @@ UI, Workflows & Features
    were regular files, to allow "git diff <(process) <(substitution)"
    some shells support.
 
+ * Help newbies by suggesting that there are cases where force-pushing
+   is a valid and sensible thing to update a branch at a remote
+   repository, rather than reconciling with merge/rebase.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -59,6 +63,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * Enumerating refs in the packed-refs file, while excluding refs that
    match certain patterns, has been optimized.
+
+ * Mark-up unused parameters in the code so that we can eventually
+   enable -Wunused-parameter by default.
 
 
 Fixes since v2.41
@@ -185,6 +192,24 @@ Fixes since v2.41
  * "git fsck --no-progress" still spewed noise from the commit-graph
    subsystem, which has been corrected.
    (merge 9281cd07f0 tb/fsck-no-progress later to maint).
+
+ * Various offset computation in the code that accesses the packfiles
+   and other data in the object layer has been hardened against
+   arithmetic overflow, especially on 32-bit systems.
+   (merge 9a25cad7e0 tb/object-access-overflow-protection later to maint).
+
+ * Names of MinGW header files are spelled in mixed case in some
+   source files, but the build host can be using case sensitive
+   filesystem with header files with their name spelled in all
+   lowercase.
+   (merge 4a53d0d0bc mh/mingw-case-sensitive-build later to maint).
+
+ * Update message mark-up for i18n in "git bundle".
+   (merge bbb6acd998 dk/bundle-i18n-more later to maint).
+
+ * "git tag --list --points-at X" showed tags that directly refers to
+   object X, but did not list a tag that points at such a tag, which
+   has been corrected.
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 51f9d2e563 sa/doc-ls-remote later to maint).
