@@ -916,7 +916,7 @@ static void report_tracking(struct branch_info *new_branch_info)
 	struct strbuf sb = STRBUF_INIT;
 	struct branch *branch = branch_get(new_branch_info->name);
 
-	if (!format_tracking_info(branch, &sb, AHEAD_BEHIND_FULL))
+	if (!format_tracking_info(branch, &sb, AHEAD_BEHIND_FULL, 1))
 		return;
 	fputs(sb.buf, stdout);
 	strbuf_release(&sb);
