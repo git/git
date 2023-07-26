@@ -46,7 +46,12 @@ latest HEAD commit of `maint` or `master` based on the following cases:
 * If you are fixing bugs in the released version, use `maint` as the
   starting point (which may mean you have to fix things without using
   new API features on the cutting edge that recently appeared in
-  `master` but were not available in the released version).
+  `master` but were not available in the released version). If the bug
+  exists in an older version (e.g., commit `X` introduced the bug, and
+  `git describe --contains X` says `v2.30.0-rc2-gXXXXXX` has it), then
+  use the tip of the maintenance branch for the 2.30.x versions in the
+  `maint-2.30` branch in https://github.com/gitster/git[the maintainer's
+  repo].
 
 * Otherwise (such as if you are adding new features) use `master`.
 
