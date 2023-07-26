@@ -46,14 +46,21 @@ latest HEAD commit of `maint` or `master` based on the following cases:
 * If you are fixing bugs in the released version, use `maint` as the
   starting point (which may mean you have to fix things without using
   new API features on the cutting edge that recently appeared in
-  `master` but were not available in the released version). If the bug
-  exists in an older version (e.g., commit `X` introduced the bug, and
-  `git describe --contains X` says `v2.30.0-rc2-gXXXXXX` has it), then
-  use the tip of the maintenance branch for the 2.30.x versions in the
-  `maint-2.30` branch in https://github.com/gitster/git[the maintainer's
-  repo].
+  `master` but were not available in the released version).
 
 * Otherwise (such as if you are adding new features) use `master`.
+
+
+NOTE: In exceptional cases, a bug that was introduced in an old
+version may have to be fixed for users of releases that are much older
+than the recent releases.  `git describe --contains X` may describe
+`X` as `v2.30.0-rc2-gXXXXXX` for the commit `X` that introduced the
+bug, and the bug may be so high-impact that we may need to issue a new
+maintenance release for Git 2.30.x series, when "Git 2.41.0" is the
+current release.  In such a case, you may want to use the tip of the
+maintenance branch for the 2.30.x series, which may be available in the
+`maint-2.30` branch in https://github.com/gitster/git[the maintainer's
+"broken out" repo].
 
 This also means that `next` or `seen` are inappropriate starting points
 for your work, if you want your work to have a realistic chance of
