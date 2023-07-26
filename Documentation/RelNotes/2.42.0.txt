@@ -234,3 +234,6 @@ Fixes since v2.41
    (merge 6e6a529b57 jk/fsck-indices-in-worktrees later to maint).
    (merge 3e81b896f7 rs/packet-length-simplify later to maint).
    (merge 4c9cb51fe7 mh/doc-credential-helpers later to maint).
+   (merge 3437f549dd jr/gitignore-doc-example-markup later to maint).
+   (merge 947ebd62a0 jc/am-parseopt-fix later to maint).
+   (merge e12cb98e1e jc/branch-parseopt-fix later to maint).
