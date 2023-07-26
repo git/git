@@ -154,6 +154,14 @@ EOF
 	test_output
 '
 
+test_expect_success 'ls-tree --no-full-name' '
+	git -C path0 ls-tree --no-full-name $tree a >current &&
+	cat >expected <<-EOF &&
+	040000 tree X	a
+	EOF
+	test_output
+'
+
 test_expect_success 'ls-tree --full-tree' '
 	(
 		cd path1/b/c &&
