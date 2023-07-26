@@ -995,7 +995,7 @@ test_dwim_orphan () {
 					grep "$invalid_ref_regex" actual &&
 					! grep "$orphan_hint" actual
 				else
-					headpath=$(git $dashc_args rev-parse --sq --path-format=absolute --git-path HEAD) &&
+					headpath=$(git $dashc_args rev-parse --path-format=absolute --git-path HEAD) &&
 					headcontents=$(cat "$headpath") &&
 					grep "HEAD points to an invalid (or orphaned) reference" actual &&
 					grep "HEAD path:\s*.$headpath." actual &&
