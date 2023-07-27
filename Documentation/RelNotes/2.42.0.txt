@@ -237,3 +237,7 @@ Fixes since v2.41
    (merge 3437f549dd jr/gitignore-doc-example-markup later to maint).
    (merge 947ebd62a0 jc/am-parseopt-fix later to maint).
    (merge e12cb98e1e jc/branch-parseopt-fix later to maint).
+   (merge d6f598e443 jc/gitignore-doc-pattern-markup later to maint).
+   (merge a2dad4868b jc/transport-parseopt-fix later to maint).
+   (merge 68cbb20e73 jc/parse-options-show-branch later to maint).
+   (merge 3821eb6c3d jc/parse-options-reset later to maint).
