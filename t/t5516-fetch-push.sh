@@ -120,6 +120,17 @@ test_expect_success setup '
 
 '
 
+for cmd in push fetch
+do
+	for opt in ipv4 ipv6
+	do
+		test_expect_success "reject 'git $cmd --no-$opt'" '
+			test_must_fail git $cmd --no-$opt 2>err &&
+			grep "unknown option .no-$opt" err
+		'
+	done
+done
+
 test_expect_success 'fetch without wildcard' '
 	mk_empty testrepo &&
 	(
