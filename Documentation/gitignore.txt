@@ -88,7 +88,7 @@ PATTERN FORMAT
    Put a backslash ("`\`") in front of the first "`!`" for patterns
    that begin with a literal "`!`", for example, "`\!important!.txt`".
 
- - The slash '/' is used as the directory separator. Separators may
+ - The slash "`/`" is used as the directory separator. Separators may
    occur at the beginning, middle or end of the `.gitignore` search pattern.
 
  - If there is a separator at the beginning or middle (or both) of the
