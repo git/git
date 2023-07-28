@@ -193,7 +193,7 @@ extern enum object_creation_mode object_creation_mode;
 
 extern char *notes_ref_name;
 
-extern int grafts_replace_parents;
+extern int grafts_keep_true_parents;
 
 extern int repository_format_precious_objects;
 

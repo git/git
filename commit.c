@@ -516,7 +516,7 @@ int parse_commit_buffer(struct repository *r, struct commit *item, const void *b
 		 * The clone is shallow if nr_parent < 0, and we must
 		 * not traverse its real parents even when we unhide them.
 		 */
-		if (graft && (graft->nr_parent < 0 || grafts_replace_parents))
+		if (graft && (graft->nr_parent < 0 || !grafts_keep_true_parents))
 			continue;
 		new_parent = lookup_commit(r, &parent);
 		if (!new_parent)
