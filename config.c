@@ -2025,12 +2025,11 @@ static int do_config_from_file(config_fn_t fn,
 }
 
 static int git_config_from_stdin(config_fn_t fn, void *data,
-				 enum config_scope scope)
+				 enum config_scope scope,
+				 const struct config_parse_options *config_opts)
 {
-	struct config_parse_options config_opts = CP_OPTS_INIT(CONFIG_ERROR_DIE);
-
 	return do_config_from_file(fn, CONFIG_ORIGIN_STDIN, "", NULL, stdin,
-				   data, scope, &config_opts);
+				   data, scope, config_opts);
 }
 
 int git_config_from_file_with_options(config_fn_t fn, const char *filename,
@@ -2265,7 +2264,8 @@ int config_with_options(config_fn_t fn, void *data,
 	 * regular lookup sequence.
 	 */
 	if (config_source && config_source->use_stdin) {
-		ret = git_config_from_stdin(fn, data, config_source->scope);
+		ret = git_config_from_stdin(fn, data, config_source->scope,
+					    &opts->parse_options);
 	} else if (config_source && config_source->file) {
 		ret = git_config_from_file_with_options(fn, config_source->file,
 							data, config_source->scope,
