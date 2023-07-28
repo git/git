@@ -25,6 +25,7 @@
 #include "wildmatch.h"
 
 #define MAX_TAGS	(FLAG_BITS - 1)
+#define DEFAULT_CANDIDATES 10
 
 define_commit_slab(commit_names, struct commit_name *);
 
@@ -41,7 +42,7 @@ static int tags;	/* Allow lightweight tags */
 static int longformat;
 static int first_parent;
 static int abbrev = -1; /* unspecified */
-static int max_candidates = 10;
+static int max_candidates = DEFAULT_CANDIDATES;
 static struct hashmap names;
 static int have_util;
 static struct string_list patterns = STRING_LIST_INIT_NODUP;
@@ -557,6 +558,15 @@ static void describe(const char *arg, int last_one)
 	strbuf_release(&sb);
 }
 
+static int option_parse_exact_match(const struct option *opt, const char *arg,
+				    int unset)
+{
+	BUG_ON_OPT_ARG(arg);
+
+	max_candidates = unset ? DEFAULT_CANDIDATES : 0;
+	return 0;
+}
+
 int cmd_describe(int argc, const char **argv, const char *prefix)
 {
 	int contains = 0;
@@ -568,8 +578,9 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "long",       &longformat, N_("always use long format")),
 		OPT_BOOL(0, "first-parent", &first_parent, N_("only follow first parent")),
 		OPT__ABBREV(&abbrev),
-		OPT_SET_INT(0, "exact-match", &max_candidates,
-			    N_("only output exact matches"), 0),
+		OPT_CALLBACK_F(0, "exact-match", NULL, NULL,
+			       N_("only output exact matches"),
+			       PARSE_OPT_NOARG, option_parse_exact_match),
 		OPT_INTEGER(0, "candidates", &max_candidates,
 			    N_("consider <n> most recent tags (default: 10)")),
 		OPT_STRING_LIST(0, "match", &patterns, N_("pattern"),
