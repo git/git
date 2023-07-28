@@ -2650,7 +2650,7 @@ int mingw_accept(int sockfd1, struct sockaddr *sa, socklen_t *sz)
 int mingw_rename(const char *pold, const char *pnew)
 {
 	static int supports_file_rename_info_ex = 1;
-	DWORD attrs = INVALID_FILE_ATTRIBUTES, gle;
+	DWORD attrs = INVALID_FILE_ATTRIBUTES, gle, attrsold;
 	int tries = 0;
 	wchar_t wpold[MAX_LONG_PATH], wpnew[MAX_LONG_PATH];
 	int wpnew_len;
@@ -2738,11 +2738,24 @@ repeat:
 		gle = GetLastError();
 	}
 
-	if (gle == ERROR_ACCESS_DENIED && is_inside_windows_container()) {
-		/* Fall back to copy to destination & remove source */
-		if (CopyFileW(wpold, wpnew, FALSE) && !mingw_unlink(pold))
-			return 0;
-		gle = GetLastError();
+	if (gle == ERROR_ACCESS_DENIED) {
+		if (is_inside_windows_container()) {
+			/* Fall back to copy to destination & remove source */
+			if (CopyFileW(wpold, wpnew, FALSE) && !mingw_unlink(pold))
+				return 0;
+			gle = GetLastError();
+		} else if ((attrsold = GetFileAttributesW(wpold)) & FILE_ATTRIBUTE_READONLY) {
+			/* if file is read-only, change and retry */
+			SetFileAttributesW(wpold, attrsold & ~FILE_ATTRIBUTE_READONLY);
+			if (MoveFileExW(wpold, wpnew,
+					MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED)) {
+				SetFileAttributesW(wpnew, attrsold);
+				return 0;
+			}
+			gle = GetLastError();
+			/* revert attribute change on failure */
+			SetFileAttributesW(wpold, attrsold);
+		}
 	}
 
 	/* revert file attributes on failure */
