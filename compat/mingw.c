@@ -707,14 +707,14 @@ ssize_t mingw_write(int fd, const void *buf, size_t len)
 {
 	ssize_t result = write(fd, buf, len);
 
-	if (result < 0 && (errno == EINVAL || errno == ENOSPC) && buf) {
+	if (result < 0 && (errno == EINVAL || errno == EBADF || errno == ENOSPC) && buf) {
 		int orig = errno;
 
 		/* check if fd is a pipe */
 		HANDLE h = (HANDLE) _get_osfhandle(fd);
 		if (GetFileType(h) != FILE_TYPE_PIPE)
 			errno = orig;
-		else if (orig == EINVAL)
+		else if (orig == EINVAL || errno == EBADF)
 			errno = EPIPE;
 		else {
 			DWORD buf_size;
