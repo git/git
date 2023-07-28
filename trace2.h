@@ -541,7 +541,7 @@ void trace2_timer_stop(enum trace2_timer_id tid);
  * elsewhere as array indexes).
  *
  * Any values added to this enum be also be added to the
- * `tr2_counter_metadata[]` in `trace2/tr2_tr2_ctr.c`.
+ * `tr2_counter_metadata[]` in `trace2/tr2_ctr.c`.
  */
 enum trace2_counter_id {
 	/*
