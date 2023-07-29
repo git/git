@@ -619,6 +619,12 @@ test_expect_success TTY 'create --quiet disables all bundle progress' '
 	test_must_be_empty err
 '
 
+test_expect_success 'bundle progress with --no-quiet' '
+	GIT_PROGRESS_DELAY=0 \
+		git bundle create --no-quiet out.bundle --all 2>err &&
+	grep "%" err
+'
+
 test_expect_success 'read bundle over stdin' '
 	git bundle create some.bundle HEAD &&
 
