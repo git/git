@@ -13,6 +13,7 @@ extern "C" {
 #endif
 
 #ifndef SHA1DC_NO_STANDARD_INCLUDES
+#include <stddef.h>
 #include <stdint.h>
 #endif
 
