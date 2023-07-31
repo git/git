@@ -608,9 +608,6 @@ static const char * const update_index_usage[] = {
 	NULL
 };
 
-static struct object_id head_oid;
-static struct object_id merge_head_oid;
-
 static struct cache_entry *read_one_ent(const char *which,
 					struct object_id *ent, const char *path,
 					int namelen, int stage)
@@ -639,107 +636,19 @@ static struct cache_entry *read_one_ent(const char *which,
 	return ce;
 }
 
-static int read_head_pointers(void)
-{
-	static int result = -2; /* unknown yet */
-
-	if (result == -2) {
-		result = -1;
-		if (read_ref("HEAD", &head_oid))
-			return error("No HEAD -- no initial commit yet?");
-		if (read_ref("MERGE_HEAD", &merge_head_oid))
-			return error("Not in the middle of a merge");
-		result = 0;
-	}
-	return result;
-}
-
 static int unresolve_one(const char *path)
 {
-	int namelen = strlen(path);
-	int pos;
-	int ret = 0;
-	struct cache_entry *ce_2 = NULL, *ce_3 = NULL;
-	struct resolve_undo_info *ru = NULL;
+	struct string_list_item *item;
+	int res = 0;
 
-	if (the_index.resolve_undo) {
-		struct string_list_item *item;
-		item = string_list_lookup(the_index.resolve_undo, path);
-		if (item) {
-			ru = item->util;
-			item->util = NULL;
-		}
-	}
-
-	/* resolve-undo record exists for the path */
-	if (ru) {
-		ret = unmerge_index_entry(&the_index, path, ru);
-		free(ru);
-		return ret;
-	}
-
-	/* See if there is such entry in the index. */
-	pos = index_name_pos(&the_index, path, namelen);
-	if (0 <= pos) {
-		; /* resolve-undo record was used already -- fall back */
-	} else {
-		/* Is it unmerged? */
-		pos = -pos - 1;
-		if (pos < the_index.cache_nr) {
-			const struct cache_entry *ce = the_index.cache[pos];
-			if (ce_namelen(ce) == namelen &&
-			    !memcmp(ce->name, path, namelen)) {
-				fprintf(stderr,
-					"%s: skipping still unmerged path.\n",
-					path);
-			}
-			goto free_return;
-		}
-		/* No, such a path does not exist -- removed */
-	}
-
-	/*
-	 * We are not using resolve-undo information but just
-	 * populating the stages #2 and #3 from HEAD and MERGE_HEAD.
-	 *
-	 * This is a flawed replacement of true "unresolve", as we do
-	 * not have a way to recreate the stage #1 for the common
-	 * ancestor (which may not be a unique merge-base between the
-	 * two).
-	 */
-	if (read_head_pointers()) {
-		ret = -1;
-		goto free_return;
-	}
-
-	ce_2 = read_one_ent("our", &head_oid, path, namelen, 2);
-	ce_3 = read_one_ent("their", &merge_head_oid, path, namelen, 3);
-
-	if (!ce_2 || !ce_3) {
-		ret = -1;
-		goto free_return;
-	}
-	if (oideq(&ce_2->oid, &ce_3->oid) &&
-	    ce_2->ce_mode == ce_3->ce_mode) {
-		fprintf(stderr, "%s: identical in both, skipping.\n",
-			path);
-		goto free_return;
-	}
-
-	remove_file_from_index(&the_index, path);
-	if (add_index_entry(&the_index, ce_2, ADD_CACHE_OK_TO_ADD)) {
-		error("%s: cannot add our version to the index.", path);
-		ret = -1;
-		goto free_return;
-	}
-	if (!add_index_entry(&the_index, ce_3, ADD_CACHE_OK_TO_ADD))
-		return 0;
-	error("%s: cannot add their version to the index.", path);
-	ret = -1;
- free_return:
-	discard_cache_entry(ce_2);
-	discard_cache_entry(ce_3);
-	return ret;
+	if (!the_index.resolve_undo)
+		return res;
+	item = string_list_lookup(the_index.resolve_undo, path);
+	if (!item)
+		return res; /* no resolve-undo record for the path */
+	res = unmerge_index_entry(&the_index, path, item->util);
+	FREE_AND_NULL(item->util);
+	return res;
 }
 
 static int do_unresolve(int ac, const char **av,
@@ -766,6 +675,7 @@ static int do_reupdate(const char **paths,
 	int pos;
 	int has_head = 1;
 	struct pathspec pathspec;
+	struct object_id head_oid;
 
 	parse_pathspec(&pathspec, 0,
 		       PATHSPEC_PREFER_CWD,
