@@ -543,7 +543,7 @@ test_expect_success 'checkout -m works after (mistaken) resolution' '
 	test_cmp merged file
 '
 
-test_expect_failure 'checkout -m works after (mistaken) resolution to remove' '
+test_expect_success 'checkout -m works after (mistaken) resolution to remove' '
 	setup_conflicting_index &&
 	echo "none of the above" >sample &&
 	cat sample >fild &&

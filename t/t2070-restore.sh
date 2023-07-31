@@ -180,7 +180,7 @@ test_expect_success 'restore --merge to unresolve after (mistaken) resolution' '
 	test_cmp expect file
 '
 
-test_expect_failure 'restore --merge to unresolve after (mistaken) resolution' '
+test_expect_success 'restore --merge to unresolve after (mistaken) resolution' '
 	O=$(echo original | git hash-object -w --stdin) &&
 	A=$(echo ourside | git hash-object -w --stdin) &&
 	B=$(echo theirside | git hash-object -w --stdin) &&

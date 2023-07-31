@@ -115,75 +115,8 @@ void resolve_undo_clear_index(struct index_state *istate)
 	istate->cache_changed |= RESOLVE_UNDO_CHANGED;
 }
 
-int unmerge_index_entry_at(struct index_state *istate, int pos)
-{
-	const struct cache_entry *ce;
-	struct string_list_item *item;
-	struct resolve_undo_info *ru;
-	int i, err = 0, matched;
-	char *name;
-
-	if (!istate->resolve_undo)
-		return pos;
-
-	ce = istate->cache[pos];
-	if (ce_stage(ce)) {
-		/* already unmerged */
-		while ((pos < istate->cache_nr) &&
-		       ! strcmp(istate->cache[pos]->name, ce->name))
-			pos++;
-		return pos - 1; /* return the last entry processed */
-	}
-	item = string_list_lookup(istate->resolve_undo, ce->name);
-	if (!item)
-		return pos;
-	ru = item->util;
-	if (!ru)
-		return pos;
-	matched = ce->ce_flags & CE_MATCHED;
-	name = xstrdup(ce->name);
-	remove_index_entry_at(istate, pos);
-	for (i = 0; i < 3; i++) {
-		struct cache_entry *nce;
-		if (!ru->mode[i])
-			continue;
-		nce = make_cache_entry(istate,
-				       ru->mode[i],
-				       &ru->oid[i],
-				       name, i + 1, 0);
-		if (matched)
-			nce->ce_flags |= CE_MATCHED;
-		if (add_index_entry(istate, nce, ADD_CACHE_OK_TO_ADD)) {
-			err = 1;
-			error("cannot unmerge '%s'", name);
-		}
-	}
-	free(name);
-	if (err)
-		return pos;
-	free(ru);
-	item->util = NULL;
-	return unmerge_index_entry_at(istate, pos);
-}
-
-void unmerge_marked_index(struct index_state *istate)
-{
-	int i;
-
-	if (!istate->resolve_undo)
-		return;
-
-	/* TODO: audit for interaction with sparse-index. */
-	ensure_full_index(istate);
-	for (i = 0; i < istate->cache_nr; i++) {
-		const struct cache_entry *ce = istate->cache[i];
-		if (ce->ce_flags & CE_MATCHED)
-			i = unmerge_index_entry_at(istate, i);
-	}
-}
-
 int unmerge_index_entry(struct index_state *istate, const char *path,
-			struct resolve_undo_info *ru)
+			struct resolve_undo_info *ru, unsigned ce_flags)
 {
 	int i = index_name_pos(istate, path, strlen(path));
 
@@ -206,13 +139,15 @@ int unmerge_index_entry(struct index_state *istate, const char *path,
 			continue;
 		ce = make_cache_entry(istate, ru->mode[i], &ru->oid[i],
 				      path, i + 1, 0);
+		ce->ce_flags |= ce_flags;
 		if (add_index_entry(istate, ce, ADD_CACHE_OK_TO_ADD))
 			return error("cannot unmerge '%s'", path);
 	}
 	return 0;
 }
 
-void unmerge_index(struct index_state *istate, const struct pathspec *pathspec)
+void unmerge_index(struct index_state *istate, const struct pathspec *pathspec,
+		   unsigned ce_flags)
 {
 	struct string_list_item *item;
 
@@ -231,7 +166,7 @@ void unmerge_index(struct index_state *istate, const struct pathspec *pathspec)
 				    item->string, strlen(item->string),
 				    0, NULL, 0))
 			continue;
-		unmerge_index_entry(istate, path, ru);
+		unmerge_index_entry(istate, path, ru, ce_flags);
 		free(ru);
 		item->util = NULL;
 	}

@@ -566,6 +566,8 @@ static int checkout_paths(const struct checkout_opts *opts,
 
 	if (opts->source_tree)
 		read_tree_some(opts->source_tree, &opts->pathspec);
+	if (opts->merge)
+		unmerge_index(&the_index, &opts->pathspec, CE_MATCHED);
 
 	ps_matched = xcalloc(opts->pathspec.nr, 1);
 
@@ -588,10 +590,6 @@ static int checkout_paths(const struct checkout_opts *opts,
 		return 1;
 	}
 	free(ps_matched);
-
-	/* "checkout -m path" to recreate conflicted state */
-	if (opts->merge)
-		unmerge_marked_index(&the_index);
 
 	/* Any unmerged paths? */
 	for (pos = 0; pos < the_index.cache_nr; pos++) {

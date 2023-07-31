@@ -646,7 +646,7 @@ static int unresolve_one(const char *path)
 	item = string_list_lookup(the_index.resolve_undo, path);
 	if (!item)
 		return res; /* no resolve-undo record for the path */
-	res = unmerge_index_entry(&the_index, path, item->util);
+	res = unmerge_index_entry(&the_index, path, item->util, 0);
 	FREE_AND_NULL(item->util);
 	return res;
 }
