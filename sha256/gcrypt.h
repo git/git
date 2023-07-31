@@ -9,7 +9,9 @@ typedef gcry_md_hd_t gcrypt_SHA256_CTX;
 
 static inline void gcrypt_SHA256_Init(gcrypt_SHA256_CTX *ctx)
 {
-	gcry_md_open(ctx, GCRY_MD_SHA256, 0);
+	gcry_error_t err = gcry_md_open(ctx, GCRY_MD_SHA256, 0);
+	if (err)
+		die("gcry_md_open: %s", gcry_strerror(err));
 }
 
 static inline void gcrypt_SHA256_Update(gcrypt_SHA256_CTX *ctx, const void *data, size_t len)
