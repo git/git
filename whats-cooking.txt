@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jul 2023, #06; Thu, 27)
-X-master-at: bfce02c22f3f1b0539686cabb69a637854448be3
-X-next-at: a95def55d0faaf65aa3e0af7c4586ec520f28f9a
+Subject: What's cooking in git.git (Jul 2023, #07; Mon, 31)
+X-master-at: ee48e70a829d1fa2da82f14787051ad8e7c45b71
+X-next-at: 740a260315f663d112ca96dba50b607cb7269bdf
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jul 2023, #06; Thu, 27)
+What's cooking in git.git (Jul 2023, #07; Mon, 31)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,109 +46,63 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* jc/am-parseopt-fix (2023-07-18) 1 commit
-  (merged to 'next' on 2023-07-19 at eaf592531e)
- + am: simplify parsing of "--[no-]keep-cr"
-
- Code simplification.
- source: <xmqqr0p5gjv3.fsf@gitster.g>
-
-
-* jc/branch-parseopt-fix (2023-07-18) 1 commit
-  (merged to 'next' on 2023-07-19 at 738d25bbb6)
- + branch: reject "--no-all" and "--no-remotes" early
-
- Command line parser fixes.
- source: <xmqqjzuxgjmi.fsf@gitster.g>
-
-
-* jc/gitignore-doc-pattern-markup (2023-07-18) 1 commit
-  (merged to 'next' on 2023-07-20 at ecfc9c6118)
- + gitignore.txt: mark up explanation of patterns consistently
-
- Doc mark-up update.
- source: <xmqqwmyxglhg.fsf@gitster.g>
-
-
-* jc/parse-options-reset (2023-07-19) 1 commit
-  (merged to 'next' on 2023-07-20 at d2178a4bd4)
- + reset: reject --no-(mixed|soft|hard|merge|keep) option
-
- Command line parser fix.
- source: <xmqq1qh4c998.fsf@gitster.g>
-
-
-* jc/parse-options-show-branch (2023-07-19) 2 commits
-  (merged to 'next' on 2023-07-20 at 4fa809c2f2)
- + show-branch: reject --[no-](topo|date)-order
- + show-branch: --no-sparse should give dense output
-
- Command line parser fixes.
- source: <xmqqh6pzc15n.fsf@gitster.g>
-
-
-* jc/transport-parseopt-fix (2023-07-18) 2 commits
-  (merged to 'next' on 2023-07-20 at 07f0026aaa)
- + fetch: reject --no-ipv[46]
- + parse-options: introduce OPT_IPVERSION()
-
- Command line parser fixes.
- source: <xmqqedl4gag8.fsf@gitster.g>
-
-
-* jr/gitignore-doc-example-markup (2023-07-18) 1 commit
-  (merged to 'next' on 2023-07-19 at 4f2ece568d)
- + gitignore.txt: use backticks instead of double quotes
-
- Doc update.
- source: <pull.1553.git.git.1689685982027.gitgitgadget@gmail.com>
-
-
-* rs/ls-tree-no-full-name-fix (2023-07-18) 1 commit
-  (merged to 'next' on 2023-07-19 at 86e570c084)
- + ls-tree: fix --no-full-name
-
- Command line parser fix.
- source: <d392a005-4eba-7cc7-9554-cdb8dc53975e@web.de>
-
---------------------------------------------------
 [New Topics]
 
-* pv/doc-submodule-update-settings (2023-07-25) 1 commit
-  (merged to 'next' on 2023-07-27 at e27b5b7ba8)
- + doc: highlight that .gitmodules does not support !command
+* jc/checkout-merge-fix (2023-07-28) 2 commits
+ - checkout/restore: add basic tests for --merge
+ - checkout/restore: refuse unmerging paths unless checking out of the index
 
- Rewrite the description of giving a custom command to the
- submodule.<name>.update configuraiton variable.
+ "git checkout/restore --merge -- $path" improvements.
 
- Will merge to 'master'.
- source: <20230725212218.711116-1-pvutov@imap.cc>
+ Needs review.
+ source: <xmqq7cqj4rme.fsf@gitster.g>
 
 
-* la/doc-choose-starting-point-fixup (2023-07-27) 3 commits
- - SubmittingPatches: use of older maintenance tracks is an exception
- - SubmittingPatches: explain why 'next' and above are inappropriate base
- - SubmittingPatches: choice of base for fixing an older maintenance track
- (this branch uses la/doc-choose-starting-point.)
+* ew/sha256-gcrypt-leak-fixes (2023-07-31) 3 commits
+ - sha256/gcrypt: die on gcry_md_open failures
+ - sha256/gcrypt: fix memory leak with SHA-256 repos
+ - sha256/gcrypt: fix build with SANITIZE=leak
 
- Clarify how to pick a starting point for a new topic in the
- SubmittingPatches document.
+ Leakfixes.
 
  Will merge to 'next'.
- source: <pull.1556.v2.git.1689314493.gitgitgadget@gmail.com>
- source: <pull.1556.v3.git.1690340701.gitgitgadget@gmail.com>
+ source: <20230731120808.1230210-1-e@80x24.org>
 
 
-* jc/resolve-undo-fixes (2023-07-27) 3 commits
- - update-index: use unmerge_index_entry() to support removal
- - resolve-undo: allow resurrecting conflicted state that resolved to deletion
- - update-index: do not read HEAD and MERGE_HEAD unconditionally
+* rs/bundle-parseopt-cleanup (2023-07-31) 1 commit
+ - bundle: use OPT_PASSTHRU_ARGV
 
- Assorted fixes and clean-up around resolve-undo data.
+ Code clean-up.
 
- source: <xmqqtttp9g6r.fsf@gitster.g>
+ Will merge to 'next'.
+ source: <2dcb915f-b926-e024-6394-23aff200955c@web.de>
+
+--------------------------------------------------
+[Graduated to 'master']
+
+* bb/trace2-comment-fix (2023-07-19) 1 commit
+  (merged to 'next' on 2023-07-21 at f77aeba1b5)
+ + trace2: fix a comment
+
+ In-code comment fix.
+ source: <20230719232444.555838-1-dev+git@drbeat.li>
+
+
+* rs/describe-parseopt-fix (2023-07-21) 1 commit
+  (merged to 'next' on 2023-07-21 at e74749af0c)
+ + describe: fix --no-exact-match
+
+ Command line parser fix.
+ source: <4eea7e15-6594-93e2-27b5-3d6e3c0baac6@web.de>
+
+
+* rs/pack-objects-parseopt-fix (2023-07-21) 2 commits
+  (merged to 'next' on 2023-07-21 at acdf84416c)
+ + pack-objects: fix --no-quiet
+ + pack-objects: fix --no-keep-true-parents
+
+ Command line parser fix.
+ source: <xmqqo7k9fa5x.fsf@gitster.g>
 
 --------------------------------------------------
 [Stalled]
@@ -213,6 +167,44 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* pv/doc-submodule-update-settings (2023-07-25) 1 commit
+  (merged to 'next' on 2023-07-27 at e27b5b7ba8)
+ + doc: highlight that .gitmodules does not support !command
+
+ Rewrite the description of giving a custom command to the
+ submodule.<name>.update configuraiton variable.
+
+ Will merge to 'master'.
+ source: <20230725212218.711116-1-pvutov@imap.cc>
+
+
+* la/doc-choose-starting-point-fixup (2023-07-27) 3 commits
+  (merged to 'next' on 2023-07-28 at 047dcae31c)
+ + SubmittingPatches: use of older maintenance tracks is an exception
+ + SubmittingPatches: explain why 'next' and above are inappropriate base
+ + SubmittingPatches: choice of base for fixing an older maintenance track
+ (this branch uses la/doc-choose-starting-point.)
+
+ Clarify how to pick a starting point for a new topic in the
+ SubmittingPatches document.
+
+ Will merge to 'master', together with the underlying topic.
+ source: <pull.1556.v2.git.1689314493.gitgitgadget@gmail.com>
+ source: <pull.1556.v3.git.1690340701.gitgitgadget@gmail.com>
+
+
+* jc/resolve-undo-fixes (2023-07-28) 4 commits
+ - update-index: remove stale fallback code for "--unresolve"
+ - update-index: use unmerge_index_entry() to support removal
+ - resolve-undo: allow resurrecting conflicted state that resolved to deletion
+ - update-index: do not read HEAD and MERGE_HEAD unconditionally
+
+ Assorted fixes and clean-up around resolve-undo data.
+
+ Needs review.
+ source: <xmqqo7jv4y0t.fsf_-_@gitster.g>
+
+
 * ah/sequencer-rewrite-todo-fix (2023-07-24) 1 commit
   (merged to 'next' on 2023-07-26 at 24e74d9eda)
  + sequencer: finish parsing the todo list despite an invalid first line
@@ -226,16 +218,6 @@ Release tarballs are available at:
  Will merge to 'master'.
  cf. <https://lore.kernel.org/git/0d1c5bfd-3ae5-83f0-a333-bbb8510a973a@gmail.com/>
  source: <20230722212830.132135-2-alexhenrie24@gmail.com>
-
-
-* bb/trace2-comment-fix (2023-07-19) 1 commit
-  (merged to 'next' on 2023-07-21 at f77aeba1b5)
- + trace2: fix a comment
-
- In-code comment fix.
-
- Will merge to 'master'.
- source: <20230719232444.555838-1-dev+git@drbeat.li>
 
 
 * ks/ref-filter-describe (2023-07-24) 2 commits
@@ -261,7 +243,7 @@ Release tarballs are available at:
  source: <20230720164823.625815-1-dev+git@drbeat.li>
 
 
-* am/doc-sha256 (2023-07-20) 1 commit
+* am/doc-sha256 (2023-07-31) 1 commit
  - doc: sha256 is no longer experimental
 
  Tone down the warning on SHA-256 repositories being an experimental
@@ -270,18 +252,18 @@ Release tarballs are available at:
  to make breaking changes to SHA-256 repositories and there is no
  longer need for such a strongly phrased warning.
 
- Review comments sent.
- cf. <xmqqr0p230rj.fsf@gitster.g>
- source: <ZLlNtbAbVcYH7eFb@adams>
+ Will merge to 'next'.
+ source: <ZMe6KmzZGVubYpvO@adams>
 
 
 * hy/blame-in-bare-with-contents (2023-07-21) 1 commit
- - blame: allow --contents to work with bare repo
+  (merged to 'next' on 2023-07-31 at 39ac96d8d8)
+ + blame: allow --contents to work with bare repo
 
  "git blame --contents=file" has been taught to work in a bare
  repository.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <20230721035758.61956-1-hanyang.tony@bytedance.com>
 
 
@@ -295,27 +277,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <20230726214202.15775-1-jacobabel@nullpo.dev>
-
-
-* rs/describe-parseopt-fix (2023-07-21) 1 commit
-  (merged to 'next' on 2023-07-21 at e74749af0c)
- + describe: fix --no-exact-match
-
- Command line parser fix.
-
- Will merge to 'master'.
- source: <4eea7e15-6594-93e2-27b5-3d6e3c0baac6@web.de>
-
-
-* rs/pack-objects-parseopt-fix (2023-07-21) 2 commits
-  (merged to 'next' on 2023-07-21 at acdf84416c)
- + pack-objects: fix --no-quiet
- + pack-objects: fix --no-keep-true-parents
-
- Command line parser fix.
-
- Will merge to 'master'.
- source: <xmqqo7k9fa5x.fsf@gitster.g>
 
 
 * jc/retire-get-sha1-hex (2023-07-24) 1 commit
@@ -349,15 +310,16 @@ Release tarballs are available at:
 
 
 * tb/commit-graph-tests (2023-07-24) 5 commits
- - t/lib-commit-graph.sh: avoid sub-shell in `graph_git_behavior()`
- - t5328: avoid top-level directory changes
- - t5318: avoid top-level directory changes
- - t/lib-commit-graph.sh: avoid directory change in `graph_git_behavior()`
- - t/lib-commit-graph.sh: allow `graph_read_expect()` in sub-directories
+  (merged to 'next' on 2023-07-31 at 740a260315)
+ + t/lib-commit-graph.sh: avoid sub-shell in `graph_git_behavior()`
+ + t5328: avoid top-level directory changes
+ + t5318: avoid top-level directory changes
+ + t/lib-commit-graph.sh: avoid directory change in `graph_git_behavior()`
+ + t/lib-commit-graph.sh: allow `graph_read_expect()` in sub-directories
 
  Test updates.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <cover.1690216758.git.me@ttaylorr.com>
 
 
@@ -377,23 +339,25 @@ Release tarballs are available at:
  source: <pull.1556.v2.git.1689314493.gitgitgadget@gmail.com>
 
 
-* jc/doc-sent-patch-now-what (2023-07-19) 1 commit
- - MyFirstContribution: refrain from self-iterating too much
+* jc/doc-sent-patch-now-what (2023-07-27) 1 commit
+  (merged to 'next' on 2023-07-31 at 51f5d9d465)
+ + MyFirstContribution: refrain from self-iterating too much
 
  Process document update.
 
- Will merge to 'next'?
- source: <xmqqzga9opdu.fsf@gitster.g>
+ Will merge to 'master'.
+ source: <xmqqmszg987u.fsf_-_@gitster.g>
 
 
 * jc/parse-options-short-help (2023-07-19) 3 commits
- - short help: allow a gap smaller than USAGE_GAP
- - remote: simplify "remote add --tags" help text
- - short help: allow multi-line opthelp
+  (merged to 'next' on 2023-07-31 at e076d1f497)
+ + short help: allow a gap smaller than USAGE_GAP
+ + remote: simplify "remote add --tags" help text
+ + short help: allow multi-line opthelp
 
  Command line parser fix, and a small parse-options API update.
 
- Comments?
+ Will merge to 'master'.
  source: <xmqq5y6gg8fn.fsf@gitster.g>
 
 
@@ -425,14 +389,15 @@ Release tarballs are available at:
 
 
 * jc/branch-in-use-error-message (2023-07-21) 1 commit
- - branch: update the message to refuse touching a branch in-use
+  (merged to 'next' on 2023-07-31 at 22f17d131b)
+ + branch: update the message to refuse touching a branch in-use
 
  "git branch -f X" to repoint the branch X seid that X was "checked
  out" in another worktree, even when branch X was not and instead
  being bisected or rebased.  The message was reworded to say the
  branch was "in use".
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <xmqqr0p1szhz.fsf_-_@gitster.g>
 
 
