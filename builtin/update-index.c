@@ -660,26 +660,31 @@ static int unresolve_one(const char *path)
 	int pos;
 	int ret = 0;
 	struct cache_entry *ce_2 = NULL, *ce_3 = NULL;
+	struct resolve_undo_info *ru = NULL;
+
+	if (the_index.resolve_undo) {
+		struct string_list_item *item;
+		item = string_list_lookup(the_index.resolve_undo, path);
+		if (item) {
+			ru = item->util;
+			item->util = NULL;
+		}
+	}
+
+	/* resolve-undo record exists for the path */
+	if (ru) {
+		ret = unmerge_index_entry(&the_index, path, ru);
+		free(ru);
+		return ret;
+	}
 
 	/* See if there is such entry in the index. */
 	pos = index_name_pos(&the_index, path, namelen);
 	if (0 <= pos) {
-		/* already merged */
-		pos = unmerge_index_entry_at(&the_index, pos);
-		if (pos < the_index.cache_nr) {
-			const struct cache_entry *ce = the_index.cache[pos];
-			if (ce_stage(ce) &&
-			    ce_namelen(ce) == namelen &&
-			    !memcmp(ce->name, path, namelen))
-				return 0;
-		}
-		/* no resolve-undo information; fall back */
+		; /* resolve-undo record was used already -- fall back */
 	} else {
-		/* If there isn't, either it is unmerged, or
-		 * resolved as "removed" by mistake.  We do not
-		 * want to do anything in the former case.
-		 */
-		pos = -pos-1;
+		/* Is it unmerged? */
+		pos = -pos - 1;
 		if (pos < the_index.cache_nr) {
 			const struct cache_entry *ce = the_index.cache[pos];
 			if (ce_namelen(ce) == namelen &&
@@ -687,9 +692,10 @@ static int unresolve_one(const char *path)
 				fprintf(stderr,
 					"%s: skipping still unmerged path.\n",
 					path);
-				goto free_return;
 			}
+			goto free_return;
 		}
+		/* No, such a path does not exist -- removed */
 	}
 
 	/*
