@@ -20,6 +20,7 @@ static inline void gcrypt_SHA256_Update(gcrypt_SHA256_CTX *ctx, const void *data
 static inline void gcrypt_SHA256_Final(unsigned char *digest, gcrypt_SHA256_CTX *ctx)
 {
 	memcpy(digest, gcry_md_read(*ctx, GCRY_MD_SHA256), SHA256_DIGEST_SIZE);
+	gcry_md_close(*ctx);
 }
 
 static inline void gcrypt_SHA256_Clone(gcrypt_SHA256_CTX *dst, const gcrypt_SHA256_CTX *src)
