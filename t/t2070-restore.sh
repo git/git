@@ -137,11 +137,14 @@ test_expect_success 'restore --staged invalidates cache tree for deletions' '
 	test_must_fail git rev-parse HEAD:new1
 '
 
-test_expect_success 'restore with merge options rejects --staged' '
+test_expect_success 'restore with merge options are incompatible with certain options' '
 	for opts in \
 		"--staged --ours" \
 		"--staged --theirs" \
 		"--staged --merge" \
+		"--source=HEAD --ours" \
+		"--source=HEAD --theirs" \
+		"--source=HEAD --merge" \
 		"--staged --conflict=diff3" \
 		"--staged --worktree --ours" \
 		"--staged --worktree --theirs" \
@@ -149,7 +152,7 @@ test_expect_success 'restore with merge options rejects --staged' '
 		"--staged --worktree --conflict=zdiff3"
 	do
 		test_must_fail git restore $opts . 2>err &&
-		grep "cannot be used with --staged" err || return
+		grep "cannot be used" err || return
 	done
 '
 

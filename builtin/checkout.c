@@ -520,6 +520,15 @@ static int checkout_paths(const struct checkout_opts *opts,
 			    "--merge", "--conflict", "--staged");
 	}
 
+	/*
+	 * recreating unmerged index entries and writing out data from
+	 * unmerged index entries would make no sense when checking out
+	 * of a tree-ish.
+	 */
+	if ((opts->merge || opts->writeout_stage) && opts->source_tree)
+		die(_("'%s', '%s', or '%s' cannot be used when checking out of a tree"),
+		    "--merge", "--ours", "--theirs");
+
 	if (opts->patch_mode) {
 		enum add_p_mode patch_mode;
 		const char *rev = new_branch_info->name;

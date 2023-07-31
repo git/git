@@ -12,8 +12,10 @@ SYNOPSIS
 'git checkout' [-q] [-f] [-m] --detach [<branch>]
 'git checkout' [-q] [-f] [-m] [--detach] <commit>
 'git checkout' [-q] [-f] [-m] [[-b|-B|--orphan] <new-branch>] [<start-point>]
-'git checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] [--] <pathspec>...
-'git checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] --pathspec-from-file=<file> [--pathspec-file-nul]
+'git checkout' [-f] <tree-ish> [--] <pathspec>...
+'git checkout' [-f] <tree-ish> --pathspec-from-file=<file> [--pathspec-file-nul]
+'git checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [--] <pathspec>...
+'git checkout' [-f|--ours|--theirs|-m|--conflict=<style>] --pathspec-from-file=<file> [--pathspec-file-nul]
 'git checkout' (-p|--patch) [<tree-ish>] [--] [<pathspec>...]
 
 DESCRIPTION
@@ -260,7 +262,8 @@ and mark the resolved paths with `git add` (or `git rm` if the merge
 should result in deletion of the path).
 +
 When checking out paths from the index, this option lets you recreate
-the conflicted merge in the specified paths.
+the conflicted merge in the specified paths.  This option cannot be
+used when checking out paths from a tree-ish.
 +
 When switching branches with `--merge`, staged changes may be lost.
 

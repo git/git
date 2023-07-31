@@ -497,6 +497,11 @@ test_expect_success 'checkout unmerged stage' '
 	test ztheirside = "z$(cat file)"
 '
 
+test_expect_success 'checkout path with --merge from tree-ish is a no-no' '
+	setup_conflicting_index &&
+	test_must_fail git checkout -m HEAD -- file
+'
+
 test_expect_success 'checkout with --merge' '
 	setup_conflicting_index &&
 	echo "none of the above" >sample &&
