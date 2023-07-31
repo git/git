@@ -126,6 +126,14 @@ test_expect_success 'unmerge with plumbing' '
 	test_line_count = 3 actual
 '
 
+test_expect_success 'unmerge can be done even after committing' '
+	prime_resolve_undo &&
+	git commit -m "record to nuke MERGE_HEAD" &&
+	git update-index --unresolve fi/le &&
+	git ls-files -u >actual &&
+	test_line_count = 3 actual
+'
+
 test_expect_success 'rerere and rerere forget' '
 	mkdir .git/rr-cache &&
 	prime_resolve_undo &&

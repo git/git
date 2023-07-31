@@ -639,6 +639,21 @@ static struct cache_entry *read_one_ent(const char *which,
 	return ce;
 }
 
+static int read_head_pointers(void)
+{
+	static int result = -2; /* unknown yet */
+
+	if (result == -2) {
+		result = -1;
+		if (read_ref("HEAD", &head_oid))
+			return error("No HEAD -- no initial commit yet?");
+		if (read_ref("MERGE_HEAD", &merge_head_oid))
+			return error("Not in the middle of a merge");
+		result = 0;
+	}
+	return result;
+}
+
 static int unresolve_one(const char *path)
 {
 	int namelen = strlen(path);
@@ -677,10 +692,20 @@ static int unresolve_one(const char *path)
 		}
 	}
 
-	/* Grab blobs from given path from HEAD and MERGE_HEAD,
-	 * stuff HEAD version in stage #2,
-	 * stuff MERGE_HEAD version in stage #3.
+	/*
+	 * We are not using resolve-undo information but just
+	 * populating the stages #2 and #3 from HEAD and MERGE_HEAD.
+	 *
+	 * This is a flawed replacement of true "unresolve", as we do
+	 * not have a way to recreate the stage #1 for the common
+	 * ancestor (which may not be a unique merge-base between the
+	 * two).
 	 */
+	if (read_head_pointers()) {
+		ret = -1;
+		goto free_return;
+	}
+
 	ce_2 = read_one_ent("our", &head_oid, path, namelen, 2);
 	ce_3 = read_one_ent("their", &merge_head_oid, path, namelen, 3);
 
@@ -711,26 +736,11 @@ static int unresolve_one(const char *path)
 	return ret;
 }
 
-static void read_head_pointers(void)
-{
-	if (read_ref("HEAD", &head_oid))
-		die("No HEAD -- no initial commit yet?");
-	if (read_ref("MERGE_HEAD", &merge_head_oid)) {
-		fprintf(stderr, "Not in the middle of a merge.\n");
-		exit(0);
-	}
-}
-
 static int do_unresolve(int ac, const char **av,
 			const char *prefix, int prefix_length)
 {
 	int i;
 	int err = 0;
-
-	/* Read HEAD and MERGE_HEAD; if MERGE_HEAD does not exist, we
-	 * are not doing a merge, so exit with success status.
-	 */
-	read_head_pointers();
 
 	for (i = 1; i < ac; i++) {
 		const char *arg = av[i];
