@@ -522,6 +522,48 @@ test_expect_success 'checkout with --merge' '
 	test_cmp merged file
 '
 
+test_expect_success 'checkout -m works after (mistaken) resolution' '
+	setup_conflicting_index &&
+	echo "none of the above" >sample &&
+	cat sample >fild &&
+	cat sample >file &&
+	cat sample >filf &&
+	# resolve to something
+	git add file &&
+	git checkout --merge -- fild file filf &&
+	{
+		echo "<<<<<<< ours" &&
+		echo ourside &&
+		echo "=======" &&
+		echo theirside &&
+		echo ">>>>>>> theirs"
+	} >merged &&
+	test_cmp expect fild &&
+	test_cmp expect filf &&
+	test_cmp merged file
+'
+
+test_expect_failure 'checkout -m works after (mistaken) resolution to remove' '
+	setup_conflicting_index &&
+	echo "none of the above" >sample &&
+	cat sample >fild &&
+	cat sample >file &&
+	cat sample >filf &&
+	# resolve to remove
+	git rm file &&
+	git checkout --merge -- fild file filf &&
+	{
+		echo "<<<<<<< ours" &&
+		echo ourside &&
+		echo "=======" &&
+		echo theirside &&
+		echo ">>>>>>> theirs"
+	} >merged &&
+	test_cmp expect fild &&
+	test_cmp expect filf &&
+	test_cmp merged file
+'
+
 test_expect_success 'checkout with --merge, in diff3 -m style' '
 	git config merge.conflictstyle diff3 &&
 	setup_conflicting_index &&
