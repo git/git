@@ -17,7 +17,11 @@
 #define SHA256_NEEDS_CLONE_HELPER
 #include "sha256/gcrypt.h"
 #elif defined(SHA256_OPENSSL)
-#include <openssl/sha.h>
+#  include <openssl/sha.h>
+#  if defined(OPENSSL_API_LEVEL) && OPENSSL_API_LEVEL >= 3
+#    define SHA256_NEEDS_CLONE_HELPER
+#    include "sha256/openssl.h"
+#  endif
 #else
 #include "sha256/block/sha256.h"
 #endif
