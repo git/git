@@ -4,7 +4,11 @@
 #if defined(SHA1_APPLE)
 #include <CommonCrypto/CommonDigest.h>
 #elif defined(SHA1_OPENSSL)
-#include <openssl/sha.h>
+#  include <openssl/sha.h>
+#  if defined(OPENSSL_API_LEVEL) && OPENSSL_API_LEVEL >= 3
+#    define SHA1_NEEDS_CLONE_HELPER
+#    include "sha1/openssl.h"
+#  endif
 #elif defined(SHA1_DC)
 #include "sha1dc_git.h"
 #else /* SHA1_BLK */
@@ -45,6 +49,10 @@
 #define git_SHA1_Update		platform_SHA1_Update
 #define git_SHA1_Final		platform_SHA1_Final
 
+#ifdef platform_SHA1_Clone
+#define git_SHA1_Clone	platform_SHA1_Clone
+#endif
+
 #ifndef platform_SHA256_CTX
 #define platform_SHA256_CTX	SHA256_CTX
 #define platform_SHA256_Init	SHA256_Init
@@ -67,10 +75,12 @@
 #define git_SHA1_Update		git_SHA1_Update_Chunked
 #endif
 
+#ifndef SHA1_NEEDS_CLONE_HELPER
 static inline void git_SHA1_Clone(git_SHA_CTX *dst, const git_SHA_CTX *src)
 {
 	memcpy(dst, src, sizeof(*dst));
 }
+#endif
 
 #ifndef SHA256_NEEDS_CLONE_HELPER
 static inline void git_SHA256_Clone(git_SHA256_CTX *dst, const git_SHA256_CTX *src)
