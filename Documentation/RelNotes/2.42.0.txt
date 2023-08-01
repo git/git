@@ -171,7 +171,7 @@ Fixes since v2.41
    been corrected.
    (merge a096a889f4 jk/cherry-pick-revert-status later to maint).
 
- * A few places failed to differenciate the case where the index is
+ * A few places failed to differentiate the case where the index is
    truly empty (nothing added) and we haven't yet read from the
    on-disk index file, which have been corrected.
    (merge 2ee045eea1 js/empty-index-fixes later to maint).
