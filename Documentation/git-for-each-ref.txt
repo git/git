@@ -264,6 +264,29 @@ ahead-behind:<committish>::
 	commits ahead and behind, respectively, when comparing the output
 	ref to the `<committish>` specified in the format.
 
+describe[:options]::
+	A human-readable name, like linkgit:git-describe[1];
+	empty string for undescribable commits. The `describe` string may
+	be followed by a colon and one or more comma-separated options.
++
+--
+tags=<bool-value>;;
+	Instead of only considering annotated tags, consider
+	lightweight tags as well; see the corresponding option in
+	linkgit:git-describe[1] for details.
+abbrev=<number>;;
+	Use at least <number> hexadecimal digits; see the corresponding
+	option in linkgit:git-describe[1] for details.
+match=<pattern>;;
+	Only consider tags matching the given `glob(7)` pattern,
+	excluding the "refs/tags/" prefix; see the corresponding option
+	in linkgit:git-describe[1] for details.
+exclude=<pattern>;;
+	Do not consider tags matching the given `glob(7)` pattern,
+	excluding the "refs/tags/" prefix; see the corresponding option
+	in linkgit:git-describe[1] for details.
+--
+
 In addition to the above, for commit and tag objects, the header
 field names (`tree`, `parent`, `object`, `type`, and `tag`) can
 be used to specify the value in the header field.

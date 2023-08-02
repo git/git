@@ -597,6 +597,144 @@ test_expect_success 'color.ui=always does not override tty check' '
 	test_cmp expected.bare actual
 '
 
+test_expect_success 'setup for describe atom tests' '
+	git init -b master describe-repo &&
+	(
+		cd describe-repo &&
+
+		test_commit --no-tag one &&
+		git tag tagone &&
+
+		test_commit --no-tag two &&
+		git tag -a -m "tag two" tagtwo
+	)
+'
+
+test_expect_success 'describe atom vs git describe' '
+	(
+		cd describe-repo &&
+
+		git for-each-ref --format="%(objectname)" \
+			refs/tags/ >obj &&
+		while read hash
+		do
+			if desc=$(git describe $hash)
+			then
+				: >expect-contains-good
+			else
+				: >expect-contains-bad
+			fi &&
+			echo "$hash $desc" || return 1
+		done <obj >expect &&
+		test_path_exists expect-contains-good &&
+		test_path_exists expect-contains-bad &&
+
+		git for-each-ref --format="%(objectname) %(describe)" \
+			refs/tags/ >actual 2>err &&
+		test_cmp expect actual &&
+		test_must_be_empty err
+	)
+'
+
+test_expect_success 'describe:tags vs describe --tags' '
+	(
+		cd describe-repo &&
+		git describe --tags >expect &&
+		git for-each-ref --format="%(describe:tags)" \
+				refs/heads/master >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'describe:abbrev=... vs describe --abbrev=...' '
+	(
+		cd describe-repo &&
+
+		# Case 1: We have commits between HEAD and the most
+		#	  recent tag reachable from it
+		test_commit --no-tag file &&
+		git describe --abbrev=14 >expect &&
+		git for-each-ref --format="%(describe:abbrev=14)" \
+			refs/heads/master >actual &&
+		test_cmp expect actual &&
+
+		# Make sure the hash used is atleast 14 digits long
+		sed -e "s/^.*-g\([0-9a-f]*\)$/\1/" <actual >hexpart &&
+		test 15 -le $(wc -c <hexpart) &&
+
+		# Case 2: We have a tag at HEAD, describe directly gives
+		#	  the name of the tag
+		git tag -a -m tagged tagname &&
+		git describe --abbrev=14 >expect &&
+		git for-each-ref --format="%(describe:abbrev=14)" \
+			refs/heads/master >actual &&
+		test_cmp expect actual &&
+		test tagname = $(cat actual)
+	)
+'
+
+test_expect_success 'describe:match=... vs describe --match ...' '
+	(
+		cd describe-repo &&
+		git tag -a -m "tag foo" tag-foo &&
+		git describe --match "*-foo" >expect &&
+		git for-each-ref --format="%(describe:match="*-foo")" \
+			refs/heads/master >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'describe:exclude:... vs describe --exclude ...' '
+	(
+		cd describe-repo &&
+		git tag -a -m "tag bar" tag-bar &&
+		git describe --exclude "*-bar" >expect &&
+		git for-each-ref --format="%(describe:exclude="*-bar")" \
+			refs/heads/master >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'deref with describe atom' '
+	(
+		cd describe-repo &&
+		cat >expect <<-\EOF &&
+
+		tagname
+		tagname
+		tagname
+
+		tagtwo
+		EOF
+		git for-each-ref --format="%(*describe)" >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'err on bad describe atom arg' '
+	(
+		cd describe-repo &&
+
+		# The bad arg is the only arg passed to describe atom
+		cat >expect <<-\EOF &&
+		fatal: unrecognized %(describe) argument: baz
+		EOF
+		test_must_fail git for-each-ref --format="%(describe:baz)" \
+			refs/heads/master 2>actual &&
+		test_cmp expect actual &&
+
+		# The bad arg is in the middle of the option string
+		# passed to the describe atom
+		cat >expect <<-\EOF &&
+		fatal: unrecognized %(describe) argument: qux=1,abbrev=14
+		EOF
+		test_must_fail git for-each-ref \
+			--format="%(describe:tags,qux=1,abbrev=14)" \
+			ref/heads/master 2>actual &&
+		test_cmp expect actual
+	)
+'
+
 cat >expected <<\EOF
 heads/main
 tags/main
