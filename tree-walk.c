@@ -434,7 +434,7 @@ static inline int prune_traversal(struct index_state *istate,
 	if (still_interesting < 0)
 		return still_interesting;
 	return tree_entry_interesting(istate, e, base,
-				      0, info->pathspec);
+				      info->pathspec);
 }
 
 int traverse_trees(struct index_state *istate,
@@ -1015,17 +1015,17 @@ static int match_wildcard_base(const struct pathspec_item *item,
 /*
  * Is a tree entry interesting given the pathspec we have?
  *
- * Pre-condition: either baselen == base_offset (i.e. empty path)
+ * Pre-condition: either baselen == 0 (i.e. empty path)
  * or base[baselen-1] == '/' (i.e. with trailing slash).
  */
 static enum interesting do_match(struct index_state *istate,
 				 const struct name_entry *entry,
-				 struct strbuf *base, int base_offset,
+				 struct strbuf *base,
 				 const struct pathspec *ps,
 				 int exclude)
 {
 	int i;
-	int pathlen, baselen = base->len - base_offset;
+	int pathlen, baselen = base->len;
 	enum interesting never_interesting = ps->has_wildcard ?
 		entry_not_interesting : all_entries_not_interesting;
 
@@ -1043,7 +1043,7 @@ static enum interesting do_match(struct index_state *istate,
 		    !(ps->magic & PATHSPEC_MAXDEPTH) ||
 		    ps->max_depth == -1)
 			return all_entries_interesting;
-		return within_depth(base->buf + base_offset, baselen,
+		return within_depth(base->buf, baselen,
 				    !!S_ISDIR(entry->mode),
 				    ps->max_depth) ?
 			entry_interesting : entry_not_interesting;
@@ -1054,7 +1054,7 @@ static enum interesting do_match(struct index_state *istate,
 	for (i = ps->nr - 1; i >= 0; i--) {
 		const struct pathspec_item *item = ps->items+i;
 		const char *match = item->match;
-		const char *base_str = base->buf + base_offset;
+		const char *base_str = base->buf;
 		int matchlen = item->len, matched = 0;
 
 		if ((!exclude &&   item->magic & PATHSPEC_EXCLUDE) ||
@@ -1147,9 +1147,9 @@ match_wildcards:
 
 		strbuf_add(base, entry->path, pathlen);
 
-		if (!git_fnmatch(item, match, base->buf + base_offset,
+		if (!git_fnmatch(item, match, base->buf,
 				 item->nowildcard_len)) {
-			strbuf_setlen(base, base_offset + baselen);
+			strbuf_setlen(base, baselen);
 			goto interesting;
 		}
 
@@ -1161,13 +1161,13 @@ match_wildcards:
 		 * be performed in the submodule itself.
 		 */
 		if (ps->recurse_submodules && S_ISGITLINK(entry->mode) &&
-		    !ps_strncmp(item, match, base->buf + base_offset,
+		    !ps_strncmp(item, match, base->buf,
 				item->nowildcard_len)) {
-			strbuf_setlen(base, base_offset + baselen);
+			strbuf_setlen(base, baselen);
 			goto interesting;
 		}
 
-		strbuf_setlen(base, base_offset + baselen);
+		strbuf_setlen(base, baselen);
 
 		/*
 		 * Match all directories. We'll try to match files
@@ -1203,9 +1203,9 @@ interesting:
 				return entry_interesting;
 
 			strbuf_add(base, entry->path, pathlen);
-			ret = match_pathspec_attrs(istate, base->buf + base_offset,
-						   base->len - base_offset, item);
-			strbuf_setlen(base, base_offset + baselen);
+			ret = match_pathspec_attrs(istate, base->buf,
+						   base->len, item);
+			strbuf_setlen(base, baselen);
 			if (!ret)
 				continue;
 		}
@@ -1217,16 +1217,16 @@ interesting:
 /*
  * Is a tree entry interesting given the pathspec we have?
  *
- * Pre-condition: either baselen == base_offset (i.e. empty path)
+ * Pre-condition: either baselen == 0 (i.e. empty path)
  * or base[baselen-1] == '/' (i.e. with trailing slash).
  */
 enum interesting tree_entry_interesting(struct index_state *istate,
 					const struct name_entry *entry,
-					struct strbuf *base, int base_offset,
+					struct strbuf *base,
 					const struct pathspec *ps)
 {
 	enum interesting positive, negative;
-	positive = do_match(istate, entry, base, base_offset, ps, 0);
+	positive = do_match(istate, entry, base, ps, 0);
 
 	/*
 	 * case | entry | positive | negative | result
@@ -1263,7 +1263,7 @@ enum interesting tree_entry_interesting(struct index_state *istate,
 	    positive <= entry_not_interesting) /* #1, #2, #11, #12 */
 		return positive;
 
-	negative = do_match(istate, entry, base, base_offset, ps, 1);
+	negative = do_match(istate, entry, base, ps, 1);
 
 	/* #8, #18 */
 	if (positive == all_entries_interesting &&
