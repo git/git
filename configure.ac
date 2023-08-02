@@ -546,6 +546,8 @@ fi
 # git-http-push are not built, and you cannot use http:// and https://
 # transports.
 
+if test -z "$NO_CURL"; then
+
 GIT_STASH_FLAGS($CURLDIR)
 
 AC_CHECK_LIB([curl], [curl_global_init],
@@ -553,6 +555,8 @@ AC_CHECK_LIB([curl], [curl_global_init],
 [NO_CURL=YesPlease])
 
 GIT_UNSTASH_FLAGS($CURLDIR)
+
+fi
 
 GIT_CONF_SUBST([NO_CURL])
 
@@ -581,6 +585,8 @@ fi
 # Define NO_EXPAT if you do not have expat installed.  git-http-push is
 # not built, and you cannot push using http:// and https:// transports.
 
+if test -z "$NO_EXPAT"; then
+
 GIT_STASH_FLAGS($EXPATDIR)
 
 AC_CHECK_LIB([expat], [XML_ParserCreate],
@@ -588,6 +594,8 @@ AC_CHECK_LIB([expat], [XML_ParserCreate],
 [NO_EXPAT=YesPlease])
 
 GIT_UNSTASH_FLAGS($EXPATDIR)
+
+fi
 
 GIT_CONF_SUBST([NO_EXPAT])
 
@@ -636,13 +644,14 @@ LIBS="$old_LIBS"
 GIT_UNSTASH_FLAGS($ICONVDIR)
 
 GIT_CONF_SUBST([NEEDS_LIBICONV])
-GIT_CONF_SUBST([NO_ICONV])
 
 if test -n "$NO_ICONV"; then
     NEEDS_LIBICONV=
 fi
 
 fi
+
+GIT_CONF_SUBST([NO_ICONV])
 
 #
 # Define NO_DEFLATE_BOUND if deflateBound is missing from zlib.
