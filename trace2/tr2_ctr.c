@@ -32,6 +32,16 @@ static struct tr2_counter_metadata tr2_counter_metadata[TRACE2_NUMBER_OF_COUNTER
 		.name = "jumps_made",
 		.want_per_thread_events = 0,
 	},
+	[TRACE2_COUNTER_ID_FSYNC_WRITEOUT_ONLY] = {
+		.category = "fsync",
+		.name = "writeout-only",
+		.want_per_thread_events = 0,
+	},
+	[TRACE2_COUNTER_ID_FSYNC_HARDWARE_FLUSH] = {
+		.category = "fsync",
+		.name = "hardware-flush",
+		.want_per_thread_events = 0,
+	},
 
 	/* Add additional metadata before here. */
 };

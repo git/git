@@ -88,11 +88,6 @@ enum fsync_action {
 int git_fsync(int fd, enum fsync_action action);
 
 /*
- * Writes out trace statistics for fsync using the trace2 API.
- */
-void trace_git_fsync_stats(void);
-
-/*
  * Preserves errno, prints a message, but gives no warning for ENOENT.
  * Returns 0 on success, which includes trying to unlink an object that does
  * not exist.

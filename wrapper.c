@@ -10,9 +10,6 @@
 #include "strbuf.h"
 #include "trace2.h"
 
-static intmax_t count_fsync_writeout_only;
-static intmax_t count_fsync_hardware_flush;
-
 #ifdef HAVE_RTLGENRANDOM
 /* This is required to get access to RtlGenRandom. */
 #define SystemFunction036 NTAPI SystemFunction036
@@ -551,7 +548,7 @@ int git_fsync(int fd, enum fsync_action action)
 {
 	switch (action) {
 	case FSYNC_WRITEOUT_ONLY:
-		count_fsync_writeout_only += 1;
+		trace2_counter_add(TRACE2_COUNTER_ID_FSYNC_WRITEOUT_ONLY, 1);
 
 #ifdef __APPLE__
 		/*
@@ -583,7 +580,7 @@ int git_fsync(int fd, enum fsync_action action)
 		return -1;
 
 	case FSYNC_HARDWARE_FLUSH:
-		count_fsync_hardware_flush += 1;
+		trace2_counter_add(TRACE2_COUNTER_ID_FSYNC_HARDWARE_FLUSH, 1);
 
 		/*
 		 * On macOS, a special fcntl is required to really flush the
@@ -598,18 +595,6 @@ int git_fsync(int fd, enum fsync_action action)
 	default:
 		BUG("unexpected git_fsync(%d) call", action);
 	}
-}
-
-static void log_trace_fsync_if(const char *key, intmax_t value)
-{
-	if (value)
-		trace2_data_intmax("fsync", the_repository, key, value);
-}
-
-void trace_git_fsync_stats(void)
-{
-	log_trace_fsync_if("fsync/writeout-only", count_fsync_writeout_only);
-	log_trace_fsync_if("fsync/hardware-flush", count_fsync_hardware_flush);
 }
 
 static int warn_if_unremovable(const char *op, const char *file, int rc)

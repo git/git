@@ -55,7 +55,7 @@ check_fsync_events () {
 
 	cat >expect &&
 	sed -n \
-		-e '/^{"event":"data",.*"category":"fsync",/ {
+		-e '/^{"event":"counter",.*"category":"fsync",/ {
 			s/.*"category":"fsync",//;
 			s/}$//;
 			p;
@@ -78,8 +78,8 @@ test_expect_success 'unpack big object in stream (core.fsyncmethod=batch)' '
 		flush_count=1
 	fi &&
 	check_fsync_events trace2.txt <<-EOF &&
-	"key":"fsync/writeout-only","value":"6"
-	"key":"fsync/hardware-flush","value":"$flush_count"
+	"name":"writeout-only","count":6
+	"name":"hardware-flush","count":$flush_count
 	EOF
 
 	test_dir_is_empty dest.git/objects/pack &&
