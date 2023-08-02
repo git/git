@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jul 2023, #07; Mon, 31)
-X-master-at: ee48e70a829d1fa2da82f14787051ad8e7c45b71
-X-next-at: 740a260315f663d112ca96dba50b607cb7269bdf
+Subject: What's cooking in git.git (Aug 2023, #01; Wed, 2)
+X-master-at: 1b0a5129563ebe720330fdc8f5c6843d27641137
+X-next-at: ed35a5117f890568bcd8290b0000b7550ab351b8
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jul 2023, #07; Mon, 31)
+What's cooking in git.git (Aug 2023, #01; Wed, 2)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,6 +16,15 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
+
+We are getting closer to the final phase of this cycle, which begins
+when -rc0 preview release is tagged this coming Friday, followed by
+about 1 1/2 weeks of stabilization period that begins when -rc1 is
+tagged (cf. tinyurl.com/gitCal).  There are a handful of topics that
+still need reviews before getting merged to 'next', but because the
+summer in the northern hemisphere is historically a slower season,
+too few reviewers seem to be active, relative to the number of these
+topics.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -46,63 +55,109 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[New Topics]
-
-* jc/checkout-merge-fix (2023-07-28) 2 commits
- - checkout/restore: add basic tests for --merge
- - checkout/restore: refuse unmerging paths unless checking out of the index
-
- "git checkout/restore --merge -- $path" improvements.
-
- Needs review.
- source: <xmqq7cqj4rme.fsf@gitster.g>
-
-
-* ew/sha256-gcrypt-leak-fixes (2023-07-31) 3 commits
- - sha256/gcrypt: die on gcry_md_open failures
- - sha256/gcrypt: fix memory leak with SHA-256 repos
- - sha256/gcrypt: fix build with SANITIZE=leak
-
- Leakfixes.
-
- Will merge to 'next'.
- source: <20230731120808.1230210-1-e@80x24.org>
-
-
-* rs/bundle-parseopt-cleanup (2023-07-31) 1 commit
- - bundle: use OPT_PASSTHRU_ARGV
-
- Code clean-up.
-
- Will merge to 'next'.
- source: <2dcb915f-b926-e024-6394-23aff200955c@web.de>
-
---------------------------------------------------
 [Graduated to 'master']
 
-* bb/trace2-comment-fix (2023-07-19) 1 commit
-  (merged to 'next' on 2023-07-21 at f77aeba1b5)
- + trace2: fix a comment
+* ah/autoconf-fixes (2023-07-19) 3 commits
+  (merged to 'next' on 2023-07-25 at 35ff66e0cb)
+ + configure.ac: always save NO_ICONV to config.status
+ + configure.ac: don't overwrite NO_CURL option
+ + configure.ac: don't overwrite NO_EXPAT option
 
- In-code comment fix.
- source: <20230719232444.555838-1-dev+git@drbeat.li>
-
-
-* rs/describe-parseopt-fix (2023-07-21) 1 commit
-  (merged to 'next' on 2023-07-21 at e74749af0c)
- + describe: fix --no-exact-match
-
- Command line parser fix.
- source: <4eea7e15-6594-93e2-27b5-3d6e3c0baac6@web.de>
+ "./configure --with-expat=no" did not work as a way to refuse use
+ of the expat library on a system with the library installed, which
+ has been corrected.
+ source: <20230719145211.17854-2-aherrmann@suse.de>
 
 
-* rs/pack-objects-parseopt-fix (2023-07-21) 2 commits
-  (merged to 'next' on 2023-07-21 at acdf84416c)
- + pack-objects: fix --no-quiet
- + pack-objects: fix --no-keep-true-parents
+* ah/sequencer-rewrite-todo-fix (2023-07-24) 1 commit
+  (merged to 'next' on 2023-07-26 at 24e74d9eda)
+ + sequencer: finish parsing the todo list despite an invalid first line
 
- Command line parser fix.
- source: <xmqqo7k9fa5x.fsf@gitster.g>
+ When the user edits "rebase -i" todo file so that it starts with a
+ "fixup", which would make it invalid, the command truncated the
+ rest of the file before giving an error and returning the control
+ back to the user.  Stop truncating to make it easier to correct
+ such a malformed todo file.
+ cf. <https://lore.kernel.org/git/0d1c5bfd-3ae5-83f0-a333-bbb8510a973a@gmail.com/>
+ source: <20230722212830.132135-2-alexhenrie24@gmail.com>
+
+
+* bb/use-trace2-counters-for-fsync-stats (2023-07-20) 1 commit
+  (merged to 'next' on 2023-07-26 at f2c2e3f2b9)
+ + wrapper: use trace2 counters to collect fsync stats
+
+ Instead of inventing a custom counter variables for debugging,
+ use existing trace2 facility in the fsync customization codepath.
+ source: <20230720164823.625815-1-dev+git@drbeat.li>
+
+
+* jc/tree-walk-drop-base-offset (2023-07-07) 2 commits
+  (merged to 'next' on 2023-07-25 at cc050c60a6)
+ + tree-walk: drop unused base_offset from do_match()
+ + tree-walk: lose base_offset that is never used in tree_entry_interesting
+
+ Code simplification.
+ source: <20230707222116.4129415-1-gitster@pobox.com>
+
+
+* ks/ref-filter-describe (2023-07-24) 2 commits
+  (merged to 'next' on 2023-07-26 at f4b3b3b7ef)
+ + ref-filter: add new "describe" atom
+ + ref-filter: add multiple-option parsing functions
+
+ "git branch --list --format=<format>" and friends are taught
+ a new "%(describe)" placeholder.
+ source: <20230723162717.68123-1-five231003@gmail.com>
+
+--------------------------------------------------
+[New Topics]
+
+* bc/ident-dot-is-no-longer-crud-letter (2023-08-02) 1 commit
+ - ident: don't consider '.' a crud
+
+ Exclude "." from the set of characters to be removed from the
+ beginning and the end of the human-readable name.
+
+ Will merge to 'next'?
+ source: <xmqqsf918k4j.fsf@gitster.g>
+
+
+* jc/unresolve-removal (2023-07-31) 7 commits
+ - checkout: allow "checkout -m path" to unmerge removed paths
+ - checkout/restore: add basic tests for --merge
+ - checkout/restore: refuse unmerging paths unless checking out of the index
+ - update-index: remove stale fallback code for "--unresolve"
+ - update-index: use unmerge_index_entry() to support removal
+ - resolve-undo: allow resurrecting conflicted state that resolved to deletion
+ - update-index: do not read HEAD and MERGE_HEAD unconditionally
+
+ "checkout --merge -- path" and "update-index --unresolve path" did
+ not resurrect conflicted state that was resolved to remove path,
+ but now they do.
+
+ Needs review.
+ source: <20230731224409.4181277-1-gitster@pobox.com>
+
+
+* ew/hash-with-openssl-evp (2023-08-01) 2 commits
+ - avoid SHA-1 functions deprecated in OpenSSL 3+
+ - sha256: avoid functions deprecated in OpenSSL 3+
+
+ Adjust to OpenSSL 3+, which deprecates its SHA-1 functions based on
+ its traditional API, by using its EVP API instead.
+
+ Will merge to 'next'. 
+ source: <20230801025454.1137802-1-e@80x24.org>
+
+
+* rj/status-bisect-while-rebase (2023-08-01) 1 commit
+ - status: fix branch shown when not only bisecting
+
+ "git status" is taught to show both the branch being bisected and
+ being rebased when both are in effect at the same time.
+
+ Needs review.
+ source: <48745298-f12b-8efb-4e48-90d2c22a8349@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -146,26 +201,47 @@ Release tarballs are available at:
  source: <20230428083528.1699221-1-oswald.buddenhagen@gmx.de>
 
 
-* pw/rebase-i-after-failure (2023-04-21) 6 commits
+* pw/rebase-i-after-failure (2023-08-01) 7 commits
  - rebase -i: fix adding failed command to the todo list
- - rebase: fix rewritten list for failed pick
  - rebase --continue: refuse to commit after failed command
+ - rebase: fix rewritten list for failed pick
  - sequencer: factor out part of pick_commits()
+ - sequencer: use rebase_path_message()
  - rebase -i: remove patch file after conflict resolution
  - rebase -i: move unlink() calls
 
  Various fixes to the behaviour of "rebase -i" when the command got
  interrupted by conflicting changes.
 
- Will discard.
- Have been expecting a reroll for too long.
- cf. <xmqqsfcthrpb.fsf@gitster.g>
- cf. <1fd54422-b66a-c2e4-7cd7-934ea01190ad@gmail.com>
- cf. <55dd6194-25e5-1a66-9c39-27cb19bfbb3c@gmail.com>
- source: <pull.1492.v2.git.1682089074.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ cf. <xmqqa5vad6ea.fsf@gitster.g>
+ cf. <xmqq5y5yd6d7.fsf@gitster.g>
+ source: <pull.1492.v3.git.1690903412.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Cooking]
+
+* ew/sha256-gcrypt-leak-fixes (2023-07-31) 3 commits
+  (merged to 'next' on 2023-08-01 at eed83801c3)
+ + sha256/gcrypt: die on gcry_md_open failures
+ + sha256/gcrypt: fix memory leak with SHA-256 repos
+ + sha256/gcrypt: fix build with SANITIZE=leak
+
+ Leakfixes.
+
+ Will merge to 'master'.
+ source: <20230731120808.1230210-1-e@80x24.org>
+
+
+* rs/bundle-parseopt-cleanup (2023-07-31) 1 commit
+  (merged to 'next' on 2023-08-01 at 405eb138fa)
+ + bundle: use OPT_PASSTHRU_ARGV
+
+ Code clean-up.
+
+ Will merge to 'master'.
+ source: <2dcb915f-b926-e024-6394-23aff200955c@web.de>
+
 
 * pv/doc-submodule-update-settings (2023-07-25) 1 commit
   (merged to 'next' on 2023-07-27 at e27b5b7ba8)
@@ -193,58 +269,9 @@ Release tarballs are available at:
  source: <pull.1556.v3.git.1690340701.gitgitgadget@gmail.com>
 
 
-* jc/resolve-undo-fixes (2023-07-28) 4 commits
- - update-index: remove stale fallback code for "--unresolve"
- - update-index: use unmerge_index_entry() to support removal
- - resolve-undo: allow resurrecting conflicted state that resolved to deletion
- - update-index: do not read HEAD and MERGE_HEAD unconditionally
-
- Assorted fixes and clean-up around resolve-undo data.
-
- Needs review.
- source: <xmqqo7jv4y0t.fsf_-_@gitster.g>
-
-
-* ah/sequencer-rewrite-todo-fix (2023-07-24) 1 commit
-  (merged to 'next' on 2023-07-26 at 24e74d9eda)
- + sequencer: finish parsing the todo list despite an invalid first line
-
- When the user edits "rebase -i" todo file so that it starts with a
- "fixup", which would make it invalid, the command truncated the
- rest of the file before giving an error and returning the control
- back to the user.  Stop truncating to make it easier to correct
- such a malformed todo file.
-
- Will merge to 'master'.
- cf. <https://lore.kernel.org/git/0d1c5bfd-3ae5-83f0-a333-bbb8510a973a@gmail.com/>
- source: <20230722212830.132135-2-alexhenrie24@gmail.com>
-
-
-* ks/ref-filter-describe (2023-07-24) 2 commits
-  (merged to 'next' on 2023-07-26 at f4b3b3b7ef)
- + ref-filter: add new "describe" atom
- + ref-filter: add multiple-option parsing functions
-
- "git branch --list --format=<format>" and friends are taught
- a new "%(describe)" placeholder.
-
- Will merge to 'master'.
- source: <20230723162717.68123-1-five231003@gmail.com>
-
-
-* bb/use-trace2-counters-for-fsync-stats (2023-07-20) 1 commit
-  (merged to 'next' on 2023-07-26 at f2c2e3f2b9)
- + wrapper: use trace2 counters to collect fsync stats
-
- Instead of inventing a custom counter variables for debugging,
- use existing trace2 facility in the fsync customization codepath.
-
- Will merge to 'master'.
- source: <20230720164823.625815-1-dev+git@drbeat.li>
-
-
 * am/doc-sha256 (2023-07-31) 1 commit
- - doc: sha256 is no longer experimental
+  (merged to 'next' on 2023-08-01 at d7419bf527)
+ + doc: sha256 is no longer experimental
 
  Tone down the warning on SHA-256 repositories being an experimental
  curiosity.  We do not have support for them to interoperate with
@@ -252,7 +279,7 @@ Release tarballs are available at:
  to make breaking changes to SHA-256 repositories and there is no
  longer need for such a strongly phrased warning.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <ZMe6KmzZGVubYpvO@adams>
 
 
@@ -374,20 +401,6 @@ Release tarballs are available at:
  source: <20230718232916.31660-1-cheskaqiqi@gmail.com>
 
 
-* ah/autoconf-fixes (2023-07-19) 3 commits
-  (merged to 'next' on 2023-07-25 at 35ff66e0cb)
- + configure.ac: always save NO_ICONV to config.status
- + configure.ac: don't overwrite NO_CURL option
- + configure.ac: don't overwrite NO_EXPAT option
-
- "./configure --with-expat=no" did not work as a way to refuse use
- of the expat library on a system with the library installed, which
- has been corrected.
-
- Will merge to 'master'.
- source: <20230719145211.17854-2-aherrmann@suse.de>
-
-
 * jc/branch-in-use-error-message (2023-07-21) 1 commit
   (merged to 'next' on 2023-07-31 at 22f17d131b)
  + branch: update the message to refuse touching a branch in-use
@@ -399,17 +412,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <xmqqr0p1szhz.fsf_-_@gitster.g>
-
-
-* jc/tree-walk-drop-base-offset (2023-07-07) 2 commits
-  (merged to 'next' on 2023-07-25 at cc050c60a6)
- + tree-walk: drop unused base_offset from do_match()
- + tree-walk: lose base_offset that is never used in tree_entry_interesting
-
- Code simplification.
-
- Will merge to 'master'.
- source: <20230707222116.4129415-1-gitster@pobox.com>
 
 
 * mh/credential-erase-improvements-more (2023-07-26) 2 commits
@@ -451,7 +453,7 @@ Release tarballs are available at:
  source: <0169ce6fb9ccafc089b74ae406db0d1a8ff8ac65.1688165272.git.steadmon@google.com>
 
 
-* jt/path-filter-fix (2023-07-25) 7 commits
+* jt/path-filter-fix (2023-08-01) 7 commits
  - commit-graph: new filter ver. that fixes murmur3
  - repo-settings: introduce commitgraph.changedPathsVersion
  - t4216: test changed path filters with high bit paths
@@ -465,8 +467,8 @@ Release tarballs are available at:
  bump the format version to 2.
 
  Still under discussion.
- cf. <20230727205308.401364-1-jonathantanmy@google.com>
- source: <cover.1689889382.git.jonathantanmy@google.com>
+ cf. <20230801185232.1457172-1-jonathantanmy@google.com>
+ source: <cover.1690912539.git.jonathantanmy@google.com>
 
 
 * mh/credential-libsecret-attrs (2023-06-16) 1 commit
@@ -567,3 +569,25 @@ Release tarballs are available at:
  Have been expecting a reroll for too long.
  cf. <ZDSTFwMFO7vbj/du@google.com>
  source: <ZDSTFwMFO7vbj/du@google.com>
+
+
+* jc/checkout-merge-fix (2023-07-28) 2 commits
+ . checkout/restore: add basic tests for --merge
+ . checkout/restore: refuse unmerging paths unless checking out of the index
+
+ "git checkout/restore --merge -- $path" improvements.
+
+ Superseded by jc/unresolve-removal
+ source: <xmqq7cqj4rme.fsf@gitster.g>
+
+
+* jc/resolve-undo-fixes (2023-07-28) 4 commits
+ . update-index: remove stale fallback code for "--unresolve"
+ . update-index: use unmerge_index_entry() to support removal
+ . resolve-undo: allow resurrecting conflicted state that resolved to deletion
+ . update-index: do not read HEAD and MERGE_HEAD unconditionally
+
+ Assorted fixes and clean-up around resolve-undo data.
+
+ Superseded by jc/unresolve-removal
+ source: <xmqqo7jv4y0t.fsf_-_@gitster.g>
