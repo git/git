@@ -67,6 +67,12 @@ Performance, Internal Implementation, Development Support etc.
  * Mark-up unused parameters in the code so that we can eventually
    enable -Wunused-parameter by default.
 
+ * Instead of inventing a custom counter variables for debugging,
+   use existing trace2 facility in the fsync customization codepath.
+
+ * "git branch --list --format=<format>" and friends are taught
+   a new "%(describe)" placeholder.
+
 
 Fixes since v2.41
 -----------------
@@ -211,6 +217,18 @@ Fixes since v2.41
    object X, but did not list a tag that points at such a tag, which
    has been corrected.
 
+ * "./configure --with-expat=no" did not work as a way to refuse use
+   of the expat library on a system with the library installed, which
+   has been corrected.
+   (merge fb8f7269c2 ah/autoconf-fixes later to maint).
+
+ * When the user edits "rebase -i" todo file so that it starts with a
+   "fixup", which would make it invalid, the command truncated the
+   rest of the file before giving an error and returning the control
+   back to the user.  Stop truncating to make it easier to correct
+   such a malformed todo file.
+   (merge 9645a087c2 ah/sequencer-rewrite-todo-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 51f9d2e563 sa/doc-ls-remote later to maint).
    (merge c6d26a9dda jk/format-patch-message-id-unleak later to maint).
@@ -244,3 +262,4 @@ Fixes since v2.41
    (merge c48af99a3e bb/trace2-comment-fix later to maint).
    (merge c95ae3ff9c rs/describe-parseopt-fix later to maint).
    (merge 36f76d2a25 rs/pack-objects-parseopt-fix later to maint).
+   (merge 30c8c55cbf jc/tree-walk-drop-base-offset later to maint).
