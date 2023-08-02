@@ -1596,6 +1596,32 @@ test_expect_success 'static check of bad command' '
 	test C = $(git cat-file commit HEAD^ | sed -ne \$p)
 '
 
+test_expect_success 'the first command cannot be a fixup' '
+	rebase_setup_and_clean fixup-first &&
+
+	cat >orig <<-EOF &&
+	fixup $(git log -1 --format="%h %s" B)
+	pick $(git log -1 --format="%h %s" C)
+	EOF
+
+	(
+		set_replace_editor orig &&
+		test_must_fail git rebase -i A 2>actual
+	) &&
+	grep "cannot .fixup. without a previous commit" actual &&
+	grep "You can fix this with .git rebase --edit-todo.." actual &&
+	# verify that the todo list has not been truncated
+	grep -v "^#" .git/rebase-merge/git-rebase-todo >actual &&
+	test_cmp orig actual &&
+
+	test_must_fail git rebase --edit-todo 2>actual &&
+	grep "cannot .fixup. without a previous commit" actual &&
+	grep "You can fix this with .git rebase --edit-todo.." actual &&
+	# verify that the todo list has not been truncated
+	grep -v "^#" .git/rebase-merge/git-rebase-todo >actual &&
+	test_cmp orig actual
+'
+
 test_expect_success 'tabs and spaces are accepted in the todolist' '
 	rebase_setup_and_clean indented-comment &&
 	write_script add-indent.sh <<-\EOF &&
