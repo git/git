@@ -471,7 +471,7 @@ int validate_new_branchname(const char *name, struct strbuf *ref, int force)
 
 	if ((path = branch_checked_out(ref->buf)))
 		die(_("cannot force update the branch '%s' "
-		      "checked out at '%s'"),
+		      "used by worktree at '%s'"),
 		    ref->buf + strlen("refs/heads/"), path);
 
 	return 1;

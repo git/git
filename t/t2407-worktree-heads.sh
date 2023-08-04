@@ -58,7 +58,7 @@ test_expect_success !SANITIZE_LEAK 'refuse to overwrite: worktree in bisect' '
 	git -C wt-4 bisect good wt-1 &&
 
 	test_must_fail git branch -f wt-4 HEAD 2>err &&
-	grep "cannot force update the branch '\''wt-4'\'' checked out at.*wt-4" err
+	grep "cannot force update the branch '\''wt-4'\'' used by worktree at.*wt-4" err
 '
 
 test_expect_success !SANITIZE_LEAK 'refuse to overwrite: worktree in rebase (apply)' '
@@ -68,7 +68,7 @@ test_expect_success !SANITIZE_LEAK 'refuse to overwrite: worktree in rebase (app
 	test_must_fail git -C wt-2 rebase --apply conflict-2 &&
 
 	test_must_fail git branch -f wt-2 HEAD 2>err &&
-	grep "cannot force update the branch '\''wt-2'\'' checked out at.*wt-2" err
+	grep "cannot force update the branch '\''wt-2'\'' used by worktree at.*wt-2" err
 '
 
 test_expect_success !SANITIZE_LEAK 'refuse to overwrite: worktree in rebase (merge)' '
@@ -78,7 +78,7 @@ test_expect_success !SANITIZE_LEAK 'refuse to overwrite: worktree in rebase (mer
 	test_must_fail git -C wt-2 rebase conflict-2 &&
 
 	test_must_fail git branch -f wt-2 HEAD 2>err &&
-	grep "cannot force update the branch '\''wt-2'\'' checked out at.*wt-2" err
+	grep "cannot force update the branch '\''wt-2'\'' used by worktree at.*wt-2" err
 '
 
 test_expect_success !SANITIZE_LEAK 'refuse to overwrite: worktree in rebase with --update-refs' '
@@ -90,7 +90,7 @@ test_expect_success !SANITIZE_LEAK 'refuse to overwrite: worktree in rebase with
 	for i in 3 4
 	do
 		test_must_fail git branch -f can-be-updated HEAD 2>err &&
-		grep "cannot force update the branch '\''can-be-updated'\'' checked out at.*wt-3" err ||
+		grep "cannot force update the branch '\''can-be-updated'\'' used by worktree at.*wt-3" err ||
 			return 1
 	done
 '
@@ -150,7 +150,7 @@ test_expect_success 'refuse to overwrite when in error states' '
 	for i in 1 2
 	do
 		test_must_fail git branch -f fake-$i HEAD 2>err &&
-		grep "cannot force update the branch '\''fake-$i'\'' checked out at" err ||
+		grep "cannot force update the branch '\''fake-$i'\'' used by worktree at" err ||
 			return 1
 	done
 '
