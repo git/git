@@ -751,7 +751,7 @@ struct packed_git *add_packed_git(const char *path, size_t path_len, int local)
 	p->pack_local = local;
 	p->mtime = st.st_mtime;
 	if (path_len < the_hash_algo->hexsz ||
-	    get_sha1_hex(path + path_len - the_hash_algo->hexsz, p->hash))
+	    get_hash_hex(path + path_len - the_hash_algo->hexsz, p->hash))
 		hashclr(p->hash);
 	return p;
 }
