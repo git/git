@@ -50,12 +50,28 @@ latest HEAD commit of `maint` or `master` based on the following cases:
 
 * Otherwise (such as if you are adding new features) use `master`.
 
+
+NOTE: In exceptional cases, a bug that was introduced in an old
+version may have to be fixed for users of releases that are much older
+than the recent releases.  `git describe --contains X` may describe
+`X` as `v2.30.0-rc2-gXXXXXX` for the commit `X` that introduced the
+bug, and the bug may be so high-impact that we may need to issue a new
+maintenance release for Git 2.30.x series, when "Git 2.41.0" is the
+current release.  In such a case, you may want to use the tip of the
+maintenance branch for the 2.30.x series, which may be available in the
+`maint-2.30` branch in https://github.com/gitster/git[the maintainer's
+"broken out" repo].
+
 This also means that `next` or `seen` are inappropriate starting points
 for your work, if you want your work to have a realistic chance of
-graduating to `master`.  They are simply not designed to provide a
-stable base for new work, because they are (by design) frequently
-re-integrated with incoming patches on the mailing list and force-pushed
-to replace previous versions of these branches.
+graduating to `master`.  They are simply not designed to be used as a
+base for new work; they are only there to make sure that topics in
+flight work well together. This is why both `next` and `seen` are
+frequently re-integrated with incoming patches on the mailing list and
+force-pushed to replace previous versions of themselves. A topic that is
+literally built on top of `next` cannot be merged to `master` without
+dragging in all the other topics in `next`, some of which may not be
+ready.
 
 For example, if you are making tree-wide changes, while somebody else is
 also making their own tree-wide changes, your work may have severe
