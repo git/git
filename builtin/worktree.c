@@ -53,14 +53,14 @@
 	"(branch with no commits) for this repository, you can do so\n" \
 	"using the --orphan flag:\n" \
 	"\n" \
-	"	git worktree add --orphan -b %s %s\n")
+	"    git worktree add --orphan -b %s %s\n")
 
 #define WORKTREE_ADD_ORPHAN_NO_DASH_B_HINT_TEXT \
 	_("If you meant to create a worktree containing a new orphan branch\n" \
 	"(branch with no commits) for this repository, you can do so\n" \
 	"using the --orphan flag:\n" \
 	"\n" \
-	"	git worktree add --orphan %s\n")
+	"    git worktree add --orphan %s\n")
 
 static const char * const git_worktree_usage[] = {
 	BUILTIN_WORKTREE_ADD_USAGE,

@@ -417,9 +417,9 @@ test_wt_add_orphan_hint () {
 		grep "hint: If you meant to create a worktree containing a new orphan branch" actual &&
 		if [ $use_branch -eq 1 ]
 		then
-			grep -E "^hint:\s+git worktree add --orphan -b \S+ \S+\s*$" actual
+			grep -E "^hint: +git worktree add --orphan -b [^ ]+ [^ ]+$" actual
 		else
-			grep -E "^hint:\s+git worktree add --orphan \S+\s*$" actual
+			grep -E "^hint: +git worktree add --orphan [^ ]+$" actual
 		fi
 
 	'
@@ -709,8 +709,8 @@ test_dwim_orphan () {
 	local info_text="No possible source branch, inferring '--orphan'" &&
 	local fetch_error_text="fatal: No local or remote refs exist despite at least one remote" &&
 	local orphan_hint="hint: If you meant to create a worktree containing a new orphan branch" &&
-	local invalid_ref_regex="^fatal: invalid reference:\s\+.*" &&
-	local bad_combo_regex="^fatal: '[a-z-]\+' and '[a-z-]\+' cannot be used together" &&
+	local invalid_ref_regex="^fatal: invalid reference: " &&
+	local bad_combo_regex="^fatal: '[-a-z]*' and '[-a-z]*' cannot be used together" &&
 
 	local git_ns="repo" &&
 	local dashc_args="-C $git_ns" &&
@@ -995,11 +995,11 @@ test_dwim_orphan () {
 					grep "$invalid_ref_regex" actual &&
 					! grep "$orphan_hint" actual
 				else
-					headpath=$(git $dashc_args rev-parse --sq --path-format=absolute --git-path HEAD) &&
+					headpath=$(git $dashc_args rev-parse --path-format=absolute --git-path HEAD) &&
 					headcontents=$(cat "$headpath") &&
 					grep "HEAD points to an invalid (or orphaned) reference" actual &&
-					grep "HEAD path:\s*.$headpath." actual &&
-					grep "HEAD contents:\s*.$headcontents." actual &&
+					grep "HEAD path: .$headpath." actual &&
+					grep "HEAD contents: .$headcontents." actual &&
 					grep "$orphan_hint" actual &&
 					! grep "$info_text" actual
 				fi &&
