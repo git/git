@@ -170,6 +170,7 @@ int is_executable(const char *name)
 	return st.st_mode & S_IXUSR;
 }
 
+#ifndef locate_in_PATH
 /*
  * Search $PATH for a command.  This emulates the path search that
  * execvp would perform, without actually executing the command so it
@@ -218,6 +219,7 @@ static char *locate_in_PATH(const char *file)
 	strbuf_release(&buf);
 	return NULL;
 }
+#endif
 
 int exists_in_PATH(const char *command)
 {
