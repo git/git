@@ -1350,6 +1350,19 @@ static void push_ssh_options(struct strvec *args, struct strvec *env,
 
 		strvec_push(args, port);
 	}
+
+	switch (variant) {
+		case VARIANT_AUTO:
+			BUG("VARIANT_AUTO passed to push_ssh_options");
+		case VARIANT_SSH:
+		case VARIANT_PLINK:
+		case VARIANT_PUTTY:
+		case VARIANT_TORTOISEPLINK:
+			strvec_push(args, "-x");
+			break;
+		default:
+			break;
+	}
 }
 
 /* Prepare a child_process for use by Git's SSH-tunneled transport. */
