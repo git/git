@@ -83,6 +83,15 @@ test_expect_success 'blame with --contents' '
 	check_count --contents=file A 2
 '
 
+test_expect_success 'blame with --contents in a bare repo' '
+	git clone --bare . bare-contents.git &&
+	(
+		cd bare-contents.git &&
+		echo "1A quick brown fox jumps over the" >contents &&
+		check_count --contents=contents A 1
+	)
+'
+
 test_expect_success 'blame with --contents changed' '
 	echo "1A quick brown fox jumps over the" >contents &&
 	echo "another lazy dog" >>contents &&
