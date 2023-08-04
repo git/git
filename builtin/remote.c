@@ -168,10 +168,9 @@ static int add(int argc, const char **argv, const char *prefix)
 	struct option options[] = {
 		OPT_BOOL('f', "fetch", &fetch, N_("fetch the remote branches")),
 		OPT_SET_INT(0, "tags", &fetch_tags,
-			    N_("import all tags and associated objects when fetching"),
+			    N_("import all tags and associated objects when fetching\n"
+			       "or do not fetch any tag at all (--no-tags)"),
 			    TAGS_SET),
-		OPT_SET_INT(0, NULL, &fetch_tags,
-			    N_("or do not fetch any tag at all (--no-tags)"), TAGS_UNSET),
 		OPT_STRING_LIST('t', "track", &track, N_("branch"),
 				N_("branch(es) to track")),
 		OPT_STRING('m', "master", &master, N_("branch"), N_("master branch")),
