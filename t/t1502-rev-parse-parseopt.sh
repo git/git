@@ -3,6 +3,22 @@
 test_description='test git rev-parse --parseopt'
 . ./test-lib.sh
 
+check_invalid_long_option () {
+	spec="$1"
+	opt="$2"
+	test_expect_success "test --parseopt invalid switch $opt help output for $spec" '
+		{
+			cat <<-\EOF &&
+			error: unknown option `'${opt#--}\''
+			EOF
+			sed -e 1d -e \$d <"$TEST_DIRECTORY/t1502/$spec.help"
+		} >expect &&
+		test_expect_code 129 git rev-parse --parseopt -- $opt \
+			2>output <"$TEST_DIRECTORY/t1502/$spec" &&
+		test_cmp expect output
+	'
+}
+
 test_expect_success 'setup optionspec' '
 	sed -e "s/^|//" >optionspec <<\EOF
 |some-command [options] <args>...
@@ -277,5 +293,33 @@ test_expect_success 'test --parseopt help output: multi-line blurb after empty l
 	test_must_fail git rev-parse --parseopt -- -h <spec >actual &&
 	test_cmp expect actual
 '
+
+test_expect_success 'test --parseopt help output for optionspec-neg' '
+	test_expect_code 129 git rev-parse --parseopt -- \
+		-h >output <"$TEST_DIRECTORY/t1502/optionspec-neg" &&
+	test_cmp "$TEST_DIRECTORY/t1502/optionspec-neg.help" output
+'
+
+test_expect_success 'test --parseopt valid options for optionspec-neg' '
+	cat >expect <<-\EOF &&
+	set -- --foo --no-foo --no-bar --positive-only --no-negative --
+	EOF
+	git rev-parse --parseopt -- <"$TEST_DIRECTORY/t1502/optionspec-neg" >output \
+	       --foo --no-foo --no-bar --positive-only --no-negative &&
+	test_cmp expect output
+'
+
+test_expect_success 'test --parseopt positivated option for optionspec-neg' '
+	cat >expect <<-\EOF &&
+	set -- --no-no-bar --no-no-bar --
+	EOF
+	git rev-parse --parseopt -- <"$TEST_DIRECTORY/t1502/optionspec-neg" >output \
+	       --no-no-bar --bar &&
+	test_cmp expect output
+'
+
+check_invalid_long_option optionspec-neg --no-positive-only
+check_invalid_long_option optionspec-neg --negative
+check_invalid_long_option optionspec-neg --no-no-negative
 
 test_done
