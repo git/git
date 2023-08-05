@@ -9,7 +9,7 @@ test_expect_success 'setup optionspec' '
 |
 |some-command does foo and bar!
 |--
-|h,help    show the help
+|h,help!   show the help
 |
 |foo       some nifty option --foo
 |bar=      some cool option --bar with an argument
@@ -288,7 +288,7 @@ test_expect_success 'test --parseopt help output: "wrapped" options normal "or:"
 	|    [--another-option]
 	|cmd [--yet-another-option]
 	|--
-	|h,help    show the help
+	|h,help!   show the help
 	EOF
 
 	sed -e "s/^|//" >expect <<-\END_EXPECT &&
@@ -322,7 +322,7 @@ test_expect_success 'test --parseopt help output: multi-line blurb after empty l
 	|line
 	|blurb
 	|--
-	|h,help    show the help
+	|h,help!   show the help
 	EOF
 
 	sed -e "s/^|//" >expect <<-\END_EXPECT &&
