@@ -58,44 +58,8 @@ EOF
 '
 
 test_expect_success 'test --parseopt help output' '
-	sed -e "s/^|//" >expect <<\END_EXPECT &&
-|cat <<\EOF
-|usage: some-command [options] <args>...
-|
-|    some-command does foo and bar!
-|
-|    -h, --help            show the help
-|    --foo                 some nifty option --foo
-|    --bar ...             some cool option --bar with an argument
-|    -b, --baz             a short and long option
-|
-|An option group Header
-|    -C[...]               option C with an optional argument
-|    -d, --data[=...]      short and long option with an optional argument
-|
-|Argument hints
-|    -B <arg>              short option required argument
-|    --bar2 <arg>          long option required argument
-|    -e, --fuz <with-space>
-|                          short and long option required argument
-|    -s[<some>]            short option optional argument
-|    --long[=<data>]       long option optional argument
-|    -g, --fluf[=<path>]   short and long option optional argument
-|    --longest <very-long-argument-hint>
-|                          a very long argument hint
-|    --pair <key=value>    with an equals sign in the hint
-|    --aswitch             help te=t contains? fl*g characters!`
-|    --bswitch <hint>      hint has trailing tab character
-|    --cswitch             switch has trailing tab character
-|    --short-hint <a>      with a one symbol hint
-|
-|Extras
-|    --extra1              line above used to cause a segfault but no longer does
-|
-|EOF
-END_EXPECT
 	test_expect_code 129 git rev-parse --parseopt -- -h > output < optionspec &&
-	test_cmp expect output
+	test_cmp "$TEST_DIRECTORY/t1502/optionspec.help" output
 '
 
 test_expect_success 'test --parseopt help output no switches' '
@@ -140,41 +104,12 @@ END_EXPECT
 '
 
 test_expect_success 'test --parseopt invalid switch help output' '
-	sed -e "s/^|//" >expect <<\END_EXPECT &&
-|error: unknown option `does-not-exist'\''
-|usage: some-command [options] <args>...
-|
-|    some-command does foo and bar!
-|
-|    -h, --help            show the help
-|    --foo                 some nifty option --foo
-|    --bar ...             some cool option --bar with an argument
-|    -b, --baz             a short and long option
-|
-|An option group Header
-|    -C[...]               option C with an optional argument
-|    -d, --data[=...]      short and long option with an optional argument
-|
-|Argument hints
-|    -B <arg>              short option required argument
-|    --bar2 <arg>          long option required argument
-|    -e, --fuz <with-space>
-|                          short and long option required argument
-|    -s[<some>]            short option optional argument
-|    --long[=<data>]       long option optional argument
-|    -g, --fluf[=<path>]   short and long option optional argument
-|    --longest <very-long-argument-hint>
-|                          a very long argument hint
-|    --pair <key=value>    with an equals sign in the hint
-|    --aswitch             help te=t contains? fl*g characters!`
-|    --bswitch <hint>      hint has trailing tab character
-|    --cswitch             switch has trailing tab character
-|    --short-hint <a>      with a one symbol hint
-|
-|Extras
-|    --extra1              line above used to cause a segfault but no longer does
-|
-END_EXPECT
+	{
+		cat <<-\EOF &&
+		error: unknown option `does-not-exist'\''
+		EOF
+		sed -e 1d -e \$d <"$TEST_DIRECTORY/t1502/optionspec.help"
+	} >expect &&
 	test_expect_code 129 git rev-parse --parseopt -- --does-not-exist 1>/dev/null 2>output < optionspec &&
 	test_cmp expect output
 '
