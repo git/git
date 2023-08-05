@@ -13,30 +13,34 @@ usage: test-tool parse-options <options>
 
     A helper function for the parse-options API.
 
-    --yes                 get a boolean
-    -D, --no-doubt        begins with 'no-'
+    --[no-]yes            get a boolean
+    -D, --[no-]no-doubt   begins with 'no-'
     -B, --no-fear         be brave
-    -b, --boolean         increment by one
-    -4, --or4             bitwise-or boolean with ...0100
-    --neg-or4             same as --no-or4
+    -b, --[no-]boolean    increment by one
+    -4, --[no-]or4        bitwise-or boolean with ...0100
+    --[no-]neg-or4        same as --no-or4
 
-    -i, --integer <n>     get a integer
+    -i, --[no-]integer <n>
+                          get a integer
     -j <n>                get a integer, too
     -m, --magnitude <n>   get a magnitude
-    --set23               set integer to 23
+    --[no-]set23          set integer to 23
     --mode1               set integer to 1 (cmdmode option)
     --mode2               set integer to 2 (cmdmode option)
-    -L, --length <str>    get length of <str>
-    -F, --file <file>     set file to <file>
+    -L, --[no-]length <str>
+                          get length of <str>
+    -F, --[no-]file <file>
+                          set file to <file>
 
 String options
-    -s, --string <string> get a string
-    --string2 <str>       get another string
-    --st <st>             get another string (pervert ordering)
+    -s, --[no-]string <string>
+                          get a string
+    --[no-]string2 <str>  get another string
+    --[no-]st <st>        get another string (pervert ordering)
     -o <str>              get another string
     --longhelp            help text of this entry
                           spans multiple lines
-    --list <str>          add str to list
+    --[no-]list <str>     add str to list
 
 Magic arguments
     -NUM                  set integer to NUM
@@ -45,16 +49,17 @@ Magic arguments
     --no-ambiguous        negative ambiguity
 
 Standard options
-    --abbrev[=<n>]        use <n> digits to display object names
-    -v, --verbose         be verbose
-    -n, --dry-run         dry run
-    -q, --quiet           be quiet
-    --expect <string>     expected output in the variable dump
+    --[no-]abbrev[=<n>]   use <n> digits to display object names
+    -v, --[no-]verbose    be verbose
+    -n, --[no-]dry-run    dry run
+    -q, --[no-]quiet      be quiet
+    --[no-]expect <string>
+                          expected output in the variable dump
 
 Alias
-    -A, --alias-source <string>
+    -A, --[no-]alias-source <string>
                           get a string
-    -Z, --alias-target <string>
+    -Z, --[no-]alias-target <string>
                           alias of --alias-source
 
 EOF

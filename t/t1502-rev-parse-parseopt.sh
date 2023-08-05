@@ -111,7 +111,7 @@ test_expect_success 'test --parseopt help-all output hidden switches' '
 |
 |    some-command does foo and bar!
 |
-|    --hidden1             A hidden switch
+|    --[no-]hidden1        A hidden switch
 |
 |EOF
 END_EXPECT

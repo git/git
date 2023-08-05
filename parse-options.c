@@ -1137,8 +1137,14 @@ static enum parse_opt_result usage_with_options_internal(struct parse_opt_ctx_t 
 		}
 		if (opts->long_name && opts->short_name)
 			pos += fprintf(outfile, ", ");
-		if (opts->long_name)
-			pos += fprintf(outfile, "--%s", opts->long_name);
+		if (opts->long_name) {
+			const char *long_name = opts->long_name;
+			if (opts->flags & PARSE_OPT_NONEG)
+				pos += fprintf(outfile, "--%s", long_name);
+			else
+				pos += fprintf(outfile, "--[no-]%s", long_name);
+		}
+
 		if (opts->type == OPTION_NUMBER)
 			pos += utf8_fprintf(outfile, _("-NUM"));
 

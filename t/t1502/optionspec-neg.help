@@ -3,8 +3,8 @@ usage: some-command [options] <args>...
 
     some-command does foo and bar!
 
-    --foo                 can be negated
-    --no-bar              can be positivated
+    --[no-]foo            can be negated
+    --[no-]no-bar         can be positivated
     --positive-only       cannot be negated
     --no-negative         cannot be positivated
 
