@@ -14,7 +14,8 @@ usage: test-tool parse-options <options>
     A helper function for the parse-options API.
 
     --[no-]yes            get a boolean
-    -D, --[no-]no-doubt   begins with 'no-'
+    -D, --no-doubt        begins with 'no-'
+    --doubt               opposite of --no-doubt
     -B, --no-fear         be brave
     -b, --[no-]boolean    increment by one
     -4, --[no-]or4        bitwise-or boolean with ...0100

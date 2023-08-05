@@ -1042,11 +1042,22 @@ static void usage_padding(FILE *outfile, size_t pos)
 	fprintf(outfile, "%*s", pad + USAGE_GAP, "");
 }
 
+static const struct option *find_option_by_long_name(const struct option *opts,
+						     const char *long_name)
+{
+	for (; opts->type != OPTION_END; opts++) {
+		if (opts->long_name && !strcmp(opts->long_name, long_name))
+			return opts;
+	}
+	return NULL;
+}
+
 static enum parse_opt_result usage_with_options_internal(struct parse_opt_ctx_t *ctx,
 							 const char * const *usagestr,
 							 const struct option *opts,
 							 int full, int err)
 {
+	const struct option *all_opts = opts;
 	FILE *outfile = err ? stderr : stdout;
 	int need_newline;
 
@@ -1128,6 +1139,7 @@ static enum parse_opt_result usage_with_options_internal(struct parse_opt_ctx_t 
 	for (; opts->type != OPTION_END; opts++) {
 		size_t pos;
 		const char *cp, *np;
+		const char *positive_name = NULL;
 
 		if (opts->type == OPTION_SUBCOMMAND)
 			continue;
@@ -1157,7 +1169,8 @@ static enum parse_opt_result usage_with_options_internal(struct parse_opt_ctx_t 
 			pos += fprintf(outfile, ", ");
 		if (opts->long_name) {
 			const char *long_name = opts->long_name;
-			if (opts->flags & PARSE_OPT_NONEG)
+			if ((opts->flags & PARSE_OPT_NONEG) ||
+			    skip_prefix(long_name, "no-", &positive_name))
 				pos += fprintf(outfile, "--%s", long_name);
 			else
 				pos += fprintf(outfile, "--[no-]%s", long_name);
@@ -1184,6 +1197,16 @@ static enum parse_opt_result usage_with_options_internal(struct parse_opt_ctx_t 
 			if (*np)
 				np++;
 			pos = 0;
+		}
+
+		if (positive_name) {
+			if (find_option_by_long_name(all_opts, positive_name))
+				continue;
+			pos = usage_indent(outfile);
+			pos += fprintf(outfile, "--%s", positive_name);
+			usage_padding(outfile, pos);
+			fprintf_ln(outfile, _("opposite of --no-%s"),
+				   positive_name);
 		}
 	}
 	fputc('\n', outfile);
