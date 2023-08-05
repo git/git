@@ -1025,21 +1025,14 @@ static int usage_indent(FILE *outfile)
 	return fprintf(outfile, "    ");
 }
 
-#define USAGE_OPTS_WIDTH 24
-#define USAGE_GAP         2
+#define USAGE_OPTS_WIDTH 26
 
 static void usage_padding(FILE *outfile, size_t pos)
 {
-	int pad;
-	if (pos == USAGE_OPTS_WIDTH + 1)
-		pad = -1;
-	else if (pos <= USAGE_OPTS_WIDTH)
-		pad = USAGE_OPTS_WIDTH - pos;
-	else {
-		fputc('\n', outfile);
-		pad = USAGE_OPTS_WIDTH;
-	}
-	fprintf(outfile, "%*s", pad + USAGE_GAP, "");
+	if (pos < USAGE_OPTS_WIDTH)
+		fprintf(outfile, "%*s", USAGE_OPTS_WIDTH - (int)pos, "");
+	else
+		fprintf(outfile, "\n%*s", USAGE_OPTS_WIDTH, "");
 }
 
 static const struct option *find_option_by_long_name(const struct option *opts,
