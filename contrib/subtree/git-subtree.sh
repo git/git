@@ -33,19 +33,19 @@ git subtree split --prefix=<prefix> [<commit>]
 git subtree pull  --prefix=<prefix> <repository> <ref>
 git subtree push  --prefix=<prefix> <repository> <refspec>
 --
-h,help        show the help
-q,quiet       quiet
-d,debug       show debug messages
+h,help!       show the help
+q,quiet!      quiet
+d,debug!      show debug messages
 P,prefix=     the name of the subdir to split out
  options for 'split' (also: 'push')
 annotate=     add a prefix to commit message of new commits
-b,branch=     create a new branch from the split subtree
+b,branch!=    create a new branch from the split subtree
 ignore-joins  ignore prior --rejoin commits
 onto=         try connecting new tree to an existing one
 rejoin        merge the new branch back into HEAD
  options for 'add' and 'merge' (also: 'pull', 'split --rejoin', and 'push --rejoin')
 squash        merge subtree changes as a single commit
-m,message=    use the given message as the commit message for the merge commit
+m,message!=   use the given message as the commit message for the merge commit
 "
 
 indent=0
