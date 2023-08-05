@@ -1020,8 +1020,27 @@ static int usage_argh(const struct option *opts, FILE *outfile)
 	return utf8_fprintf(outfile, s, opts->argh ? _(opts->argh) : _("..."));
 }
 
+static int usage_indent(FILE *outfile)
+{
+	return fprintf(outfile, "    ");
+}
+
 #define USAGE_OPTS_WIDTH 24
 #define USAGE_GAP         2
+
+static void usage_padding(FILE *outfile, size_t pos)
+{
+	int pad;
+	if (pos == USAGE_OPTS_WIDTH + 1)
+		pad = -1;
+	else if (pos <= USAGE_OPTS_WIDTH)
+		pad = USAGE_OPTS_WIDTH - pos;
+	else {
+		fputc('\n', outfile);
+		pad = USAGE_OPTS_WIDTH;
+	}
+	fprintf(outfile, "%*s", pad + USAGE_GAP, "");
+}
 
 static enum parse_opt_result usage_with_options_internal(struct parse_opt_ctx_t *ctx,
 							 const char * const *usagestr,
@@ -1108,7 +1127,6 @@ static enum parse_opt_result usage_with_options_internal(struct parse_opt_ctx_t 
 
 	for (; opts->type != OPTION_END; opts++) {
 		size_t pos;
-		int pad;
 		const char *cp, *np;
 
 		if (opts->type == OPTION_SUBCOMMAND)
@@ -1128,7 +1146,7 @@ static enum parse_opt_result usage_with_options_internal(struct parse_opt_ctx_t 
 			need_newline = 0;
 		}
 
-		pos = fprintf(outfile, "    ");
+		pos = usage_indent(outfile);
 		if (opts->short_name) {
 			if (opts->flags & PARSE_OPT_NODASH)
 				pos += fprintf(outfile, "%c", opts->short_name);
@@ -1152,16 +1170,8 @@ static enum parse_opt_result usage_with_options_internal(struct parse_opt_ctx_t 
 		    !(opts->flags & PARSE_OPT_NOARG))
 			pos += usage_argh(opts, outfile);
 
-		if (pos == USAGE_OPTS_WIDTH + 1)
-			pad = -1;
-		else if (pos <= USAGE_OPTS_WIDTH)
-			pad = USAGE_OPTS_WIDTH - pos;
-		else {
-			fputc('\n', outfile);
-			pad = USAGE_OPTS_WIDTH;
-		}
 		if (opts->type == OPTION_ALIAS) {
-			fprintf(outfile, "%*s", pad + USAGE_GAP, "");
+			usage_padding(outfile, pos);
 			fprintf_ln(outfile, _("alias of --%s"),
 				   (const char *)opts->value);
 			continue;
@@ -1169,12 +1179,11 @@ static enum parse_opt_result usage_with_options_internal(struct parse_opt_ctx_t 
 
 		for (cp = _(opts->help); *cp; cp = np) {
 			np = strchrnul(cp, '\n');
-			fprintf(outfile,
-				"%*s%.*s\n", pad + USAGE_GAP, "",
-				(int)(np - cp), cp);
+			usage_padding(outfile, pos);
+			fprintf(outfile, "%.*s\n", (int)(np - cp), cp);
 			if (*np)
 				np++;
-			pad = USAGE_OPTS_WIDTH;
+			pos = 0;
 		}
 	}
 	fputc('\n', outfile);
