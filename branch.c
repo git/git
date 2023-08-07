@@ -838,7 +838,7 @@ void die_if_checked_out(const char *branch, int ignore_current_worktree)
 
 		if (is_shared_symref(worktrees[i], "HEAD", branch)) {
 			skip_prefix(branch, "refs/heads/", &branch);
-			die(_("'%s' is already checked out at '%s'"),
+			die(_("'%s' is already used by worktree at '%s'"),
 				branch, worktrees[i]->path);
 		}
 	}

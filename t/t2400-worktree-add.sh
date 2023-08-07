@@ -121,7 +121,8 @@ test_expect_success '"add" worktree creating new branch' '
 test_expect_success 'die the same branch is already checked out' '
 	(
 		cd here &&
-		test_must_fail git checkout newmain
+		test_must_fail git checkout newmain 2>actual &&
+		grep "already used by worktree at" actual
 	)
 '
 
