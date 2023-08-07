@@ -942,7 +942,19 @@ test_expect_success 'test deleting branch without config' '
 test_expect_success 'deleting currently checked out branch fails' '
 	git worktree add -b my7 my7 &&
 	test_must_fail git -C my7 branch -d my7 &&
-	test_must_fail git branch -d my7 &&
+	test_must_fail git branch -d my7 2>actual &&
+	grep "^error: Cannot delete branch .my7. used by worktree at " actual &&
+	rm -r my7 &&
+	git worktree prune
+'
+
+test_expect_success 'deleting in-use branch fails' '
+	git worktree add my7 &&
+	test_commit -C my7 bt7 &&
+	git -C my7 bisect start HEAD HEAD~2 &&
+	test_must_fail git -C my7 branch -d my7 &&
+	test_must_fail git branch -d my7 2>actual &&
+	grep "^error: Cannot delete branch .my7. used by worktree at " actual &&
 	rm -r my7 &&
 	git worktree prune
 '
