@@ -38,6 +38,12 @@ UI, Workflows & Features
    being bisected or rebased.  The message was reworded to say the
    branch was "in use".
 
+ * Tone down the warning on SHA-256 repositories being an experimental
+   curiosity.  We do not have support for them to interoperate with
+   traditional SHA-1 repositories, but at this point, we do not plan
+   to make breaking changes to SHA-256 repositories and there is no
+   longer need for such a strongly phrased warning.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -286,3 +292,5 @@ Fixes since v2.41
    (merge c95ae3ff9c rs/describe-parseopt-fix later to maint).
    (merge 36f76d2a25 rs/pack-objects-parseopt-fix later to maint).
    (merge 30c8c55cbf jc/tree-walk-drop-base-offset later to maint).
+   (merge d089a06421 rs/bundle-parseopt-cleanup later to maint).
+   (merge 823839bda1 ew/sha256-gcrypt-leak-fixes later to maint).
