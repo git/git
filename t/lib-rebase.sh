@@ -64,7 +64,7 @@ set_fake_editor () {
 		fakesha)
 			test \& != "$action" || action=pick
 			echo "$action XXXXXXX False commit" >> "$1"
-			action=pick;;
+			action=\&;;
 		*)
 			sed -n "${line}s/^[a-z][a-z]*/$action/p" < "$1".tmp >> "$1"
 			action=\&;;
