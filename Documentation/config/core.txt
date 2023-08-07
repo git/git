@@ -771,3 +771,9 @@ core.maxTreeDepth::
 	to allow Git to abort cleanly, and should not generally need to
 	be adjusted. When Git is compiled with MSVC, the default is 512.
 	Otherwise, the default is 2048.
+
+core.WSLCompat::
+	Tells Git whether to enable wsl compatibility mode.
+	The default value is false. When set to true, Git will set the mode
+	bits of the file in the way of wsl, so that the executable flag of
+	files can be set or read correctly.
