@@ -917,11 +917,19 @@ EOT3
 	do_edit(@files);
 }
 
-sub term {
-	require Term::ReadLine;
-	return $ENV{"GIT_SEND_EMAIL_NOTTY"}
-			? Term::ReadLine->new('git-send-email', \*STDIN, \*STDOUT)
-			: Term::ReadLine->new('git-send-email');
+{
+	# Only instantiate one $term per program run, since some
+	# Term::ReadLine providers refuse to create a second instance.
+	my $term;
+	sub term {
+		require Term::ReadLine;
+		if (!defined $term) {
+			$term = $ENV{"GIT_SEND_EMAIL_NOTTY"}
+				? Term::ReadLine->new('git-send-email', \*STDIN, \*STDOUT)
+				: Term::ReadLine->new('git-send-email');
+		}
+		return $term;
+	}
 }
 
 sub ask {
