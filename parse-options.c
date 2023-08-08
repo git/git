@@ -480,6 +480,9 @@ static void parse_options_check(const struct option *opts)
 		     opts->long_name))
 			optbug(opts, "uses feature "
 			       "not supported for dashless options");
+		if (opts->type == OPTION_SET_INT && !opts->defval &&
+		    opts->long_name && !(opts->flags & PARSE_OPT_NONEG))
+			optbug(opts, "OPTION_SET_INT 0 should not be negatable");
 		switch (opts->type) {
 		case OPTION_COUNTUP:
 		case OPTION_BIT:
