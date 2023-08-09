@@ -303,6 +303,8 @@ struct pack_geometry {
 	struct packed_git **pack;
 	uint32_t pack_nr, pack_alloc;
 	uint32_t split;
+
+	int split_factor;
 };
 
 static uint32_t geometry_pack_weight(struct packed_git *p)
@@ -324,16 +326,12 @@ static int geometry_cmp(const void *va, const void *vb)
 	return 0;
 }
 
-static void init_pack_geometry(struct pack_geometry **geometry_p,
+static void init_pack_geometry(struct pack_geometry *geometry,
 			       struct string_list *existing_kept_packs,
 			       const struct pack_objects_args *args)
 {
 	struct packed_git *p;
-	struct pack_geometry *geometry;
 	struct strbuf buf = STRBUF_INIT;
-
-	*geometry_p = xcalloc(1, sizeof(struct pack_geometry));
-	geometry = *geometry_p;
 
 	for (p = get_all_packs(the_repository); p; p = p->next) {
 		if (args->local && !p->pack_local)
@@ -380,7 +378,7 @@ static void init_pack_geometry(struct pack_geometry **geometry_p,
 	strbuf_release(&buf);
 }
 
-static void split_pack_geometry(struct pack_geometry *geometry, int factor)
+static void split_pack_geometry(struct pack_geometry *geometry)
 {
 	uint32_t i;
 	uint32_t split;
@@ -399,12 +397,14 @@ static void split_pack_geometry(struct pack_geometry *geometry, int factor)
 		struct packed_git *ours = geometry->pack[i];
 		struct packed_git *prev = geometry->pack[i - 1];
 
-		if (unsigned_mult_overflows(factor, geometry_pack_weight(prev)))
+		if (unsigned_mult_overflows(geometry->split_factor,
+					    geometry_pack_weight(prev)))
 			die(_("pack %s too large to consider in geometric "
 			      "progression"),
 			    prev->pack_name);
 
-		if (geometry_pack_weight(ours) < factor * geometry_pack_weight(prev))
+		if (geometry_pack_weight(ours) <
+		    geometry->split_factor * geometry_pack_weight(prev))
 			break;
 	}
 
@@ -439,10 +439,12 @@ static void split_pack_geometry(struct pack_geometry *geometry, int factor)
 	for (i = split; i < geometry->pack_nr; i++) {
 		struct packed_git *ours = geometry->pack[i];
 
-		if (unsigned_mult_overflows(factor, total_size))
+		if (unsigned_mult_overflows(geometry->split_factor,
+					    total_size))
 			die(_("pack %s too large to roll up"), ours->pack_name);
 
-		if (geometry_pack_weight(ours) < factor * total_size) {
+		if (geometry_pack_weight(ours) <
+		    geometry->split_factor * total_size) {
 			if (unsigned_add_overflows(total_size,
 						   geometry_pack_weight(ours)))
 				die(_("pack %s too large to roll up"),
@@ -498,7 +500,6 @@ static void free_pack_geometry(struct pack_geometry *geometry)
 		return;
 
 	free(geometry->pack);
-	free(geometry);
 }
 
 struct midx_snapshot_ref_data {
@@ -575,7 +576,7 @@ static void midx_included_packs(struct string_list *include,
 		string_list_insert(include, xstrfmt("%s.idx", item->string));
 	for_each_string_list_item(item, names)
 		string_list_insert(include, xstrfmt("pack-%s.idx", item->string));
-	if (geometry) {
+	if (geometry->split_factor) {
 		struct strbuf buf = STRBUF_INIT;
 		uint32_t i;
 		for (i = geometry->split; i < geometry->pack_nr; i++) {
@@ -779,7 +780,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	struct string_list names = STRING_LIST_INIT_DUP;
 	struct string_list existing_nonkept_packs = STRING_LIST_INIT_DUP;
 	struct string_list existing_kept_packs = STRING_LIST_INIT_DUP;
-	struct pack_geometry *geometry = NULL;
+	struct pack_geometry geometry = { 0 };
 	struct strbuf line = STRBUF_INIT;
 	struct tempfile *refs_snapshot = NULL;
 	int i, ext, ret;
@@ -793,7 +794,6 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	struct string_list keep_pack_list = STRING_LIST_INIT_NODUP;
 	struct pack_objects_args po_args = {NULL};
 	struct pack_objects_args cruft_po_args = {NULL};
-	int geometric_factor = 0;
 	int write_midx = 0;
 	const char *cruft_expiration = NULL;
 	const char *expire_to = NULL;
@@ -842,7 +842,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 				N_("repack objects in packs marked with .keep")),
 		OPT_STRING_LIST(0, "keep-pack", &keep_pack_list, N_("name"),
 				N_("do not repack this pack")),
-		OPT_INTEGER('g', "geometric", &geometric_factor,
+		OPT_INTEGER('g', "geometric", &geometry.split_factor,
 			    N_("find a geometric progression with factor <N>")),
 		OPT_BOOL('m', "write-midx", &write_midx,
 			   N_("write a multi-pack index of the resulting packs")),
@@ -918,11 +918,11 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	collect_pack_filenames(&existing_nonkept_packs, &existing_kept_packs,
 			       &keep_pack_list);
 
-	if (geometric_factor) {
+	if (geometry.split_factor) {
 		if (pack_everything)
 			die(_("options '%s' and '%s' cannot be used together"), "--geometric", "-A/-a");
 		init_pack_geometry(&geometry, &existing_kept_packs, &po_args);
-		split_pack_geometry(geometry, geometric_factor);
+		split_pack_geometry(&geometry);
 	}
 
 	prepare_pack_objects(&cmd, &po_args, packtmp);
@@ -936,7 +936,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		strvec_pushf(&cmd.args, "--keep-pack=%s",
 			     keep_pack_list.items[i].string);
 	strvec_push(&cmd.args, "--non-empty");
-	if (!geometry) {
+	if (!geometry.split_factor) {
 		/*
 		 * We need to grab all reachable objects, including those that
 		 * are reachable from reflogs and the index.
@@ -983,7 +983,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 				strvec_push(&cmd.args, "--pack-loose-unreachable");
 			}
 		}
-	} else if (geometry) {
+	} else if (geometry.split_factor) {
 		strvec_push(&cmd.args, "--stdin-packs");
 		strvec_push(&cmd.args, "--unpacked");
 	} else {
@@ -991,7 +991,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		strvec_push(&cmd.args, "--incremental");
 	}
 
-	if (geometry)
+	if (geometry.split_factor)
 		cmd.in = -1;
 	else
 		cmd.no_stdin = 1;
@@ -1000,17 +1000,17 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	if (ret)
 		goto cleanup;
 
-	if (geometry) {
+	if (geometry.split_factor) {
 		FILE *in = xfdopen(cmd.in, "w");
 		/*
 		 * The resulting pack should contain all objects in packs that
 		 * are going to be rolled up, but exclude objects in packs which
 		 * are being left alone.
 		 */
-		for (i = 0; i < geometry->split; i++)
-			fprintf(in, "%s\n", pack_basename(geometry->pack[i]));
-		for (i = geometry->split; i < geometry->pack_nr; i++)
-			fprintf(in, "^%s\n", pack_basename(geometry->pack[i]));
+		for (i = 0; i < geometry.split; i++)
+			fprintf(in, "%s\n", pack_basename(geometry.pack[i]));
+		for (i = geometry.split; i < geometry.pack_nr; i++)
+			fprintf(in, "^%s\n", pack_basename(geometry.pack[i]));
 		fclose(in);
 	}
 
@@ -1153,9 +1153,9 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	if (write_midx) {
 		struct string_list include = STRING_LIST_INIT_NODUP;
 		midx_included_packs(&include, &existing_nonkept_packs,
-				    &existing_kept_packs, &names, geometry);
+				    &existing_kept_packs, &names, &geometry);
 
-		ret = write_midx_included_packs(&include, geometry,
+		ret = write_midx_included_packs(&include, &geometry,
 						refs_snapshot ? get_tempfile_path(refs_snapshot) : NULL,
 						show_progress, write_bitmaps > 0);
 
@@ -1178,12 +1178,12 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 			remove_redundant_pack(packdir, item->string);
 		}
 
-		if (geometry) {
+		if (geometry.split_factor) {
 			struct strbuf buf = STRBUF_INIT;
 
 			uint32_t i;
-			for (i = 0; i < geometry->split; i++) {
-				struct packed_git *p = geometry->pack[i];
+			for (i = 0; i < geometry.split; i++) {
+				struct packed_git *p = geometry.pack[i];
 				if (string_list_has_string(&names,
 							   hash_to_hex(p->hash)))
 					continue;
@@ -1226,7 +1226,7 @@ cleanup:
 	string_list_clear(&names, 1);
 	string_list_clear(&existing_nonkept_packs, 0);
 	string_list_clear(&existing_kept_packs, 0);
-	free_pack_geometry(geometry);
+	free_pack_geometry(&geometry);
 
 	return ret;
 }
