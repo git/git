@@ -222,6 +222,7 @@
 /TAGS
 /cscope*
 /compile_commands.json
+/.cache/
 *.hcc
 *.obj
 *.lib
