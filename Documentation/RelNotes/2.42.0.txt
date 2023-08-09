@@ -258,6 +258,25 @@ Fixes since v2.41
    submodule.<name>.update configuration variable.
    (merge 7cebc5bd78 pv/doc-submodule-update-settings later to maint).
 
+ * Adjust to OpenSSL 3+, which deprecates its SHA-1 functions based on
+   its traditional API, by using its EVP API instead.
+   (merge bda9c12073 ew/hash-with-openssl-evp later to maint).
+
+ * Exclude "." from the set of characters to be removed from the
+   beginning and the end of the human-readable name.
+   (merge 1c04cb0744 bc/ident-dot-is-no-longer-crud-letter later to maint).
+
+ * "git bisect visualize" stopped running "gitk" on Git for Windows
+   when the command was reimplemented in C around Git 2.34 timeframe.
+   This has been corrected.
+   (merge fff1594fa7 ma/locate-in-path-for-windows later to maint).
+
+ * "git rebase -i" with a series of squash/fixup, when one of the
+   steps stopped in conflicts and ended up getting skipped, did not
+   handle the accumulated commit log messages, which has been
+   corrected.
+   (merge 6ce7afe163 pw/rebase-skip-commit-message-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 51f9d2e563 sa/doc-ls-remote later to maint).
    (merge c6d26a9dda jk/format-patch-message-id-unleak later to maint).
@@ -294,3 +313,4 @@ Fixes since v2.41
    (merge 30c8c55cbf jc/tree-walk-drop-base-offset later to maint).
    (merge d089a06421 rs/bundle-parseopt-cleanup later to maint).
    (merge 823839bda1 ew/sha256-gcrypt-leak-fixes later to maint).
+   (merge a5c01603b3 bc/ignore-clangd-cache later to maint).
