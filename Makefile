@@ -3216,6 +3216,12 @@ $(SP_OBJ): %.sp: %.c %.o
 sparse: $(SP_OBJ)
 
 EXCEPT_HDRS := $(GENERATED_H) unicode-width.h compat/% xdiff/%
+ifndef OPENSSL_SHA1
+	EXCEPT_HDRS += sha1/openssl.h
+endif
+ifndef OPENSSL_SHA256
+	EXCEPT_HDRS += sha256/openssl.h
+endif
 ifndef NETTLE_SHA256
 	EXCEPT_HDRS += sha256/nettle.h
 endif
