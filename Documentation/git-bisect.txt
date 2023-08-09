@@ -204,9 +204,14 @@ as an alternative to `visualize`):
 $ git bisect visualize
 ------------
 
-If the `DISPLAY` environment variable is not set, 'git log' is used
-instead.  You can also give command-line options such as `-p` and
-`--stat`.
+Git detects a graphical environment through various environment variables:
+`DISPLAY`, which is set in X Window System environments on Unix systems.
+`SESSIONNAME`, which is set under Cygwin in interactive desktop sessions.
+`MSYSTEM`, which is set under Msys2 and Git for Windows.
+`SECURITYSESSIONID`, which may be set on macOS in interactive desktop sessions.
+
+If none of these environment variables is set, 'git log' is used instead.
+You can also give command-line options such as `-p` and `--stat`.
 
 ------------
 $ git bisect visualize --stat

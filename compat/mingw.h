@@ -177,6 +177,9 @@ pid_t waitpid(pid_t pid, int *status, int options);
 #define kill mingw_kill
 int mingw_kill(pid_t pid, int sig);
 
+#define locate_in_PATH mingw_locate_in_PATH
+char *mingw_locate_in_PATH(const char *cmd);
+
 #ifndef NO_OPENSSL
 #include <openssl/ssl.h>
 static inline int mingw_SSL_set_fd(SSL *ssl, int fd)
