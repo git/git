@@ -5339,6 +5339,7 @@ struct label_state {
 	struct oidmap commit2label;
 	struct hashmap labels;
 	struct strbuf buf;
+	int max_label_length;
 };
 
 static const char *label_oid(struct object_id *oid, const char *label,
@@ -5396,7 +5397,7 @@ static const char *label_oid(struct object_id *oid, const char *label,
 	} else {
 		struct strbuf *buf = &state->buf;
 		int label_is_utf8 = 1; /* start with this assumption */
-		size_t max_len = buf->len + GIT_MAX_LABEL_LENGTH;
+		size_t max_len = buf->len + state->max_label_length;
 
 		/*
 		 * Sanitize labels by replacing non-alpha-numeric characters
@@ -5494,13 +5495,16 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 	struct string_entry *entry;
 	struct oidset interesting = OIDSET_INIT, child_seen = OIDSET_INIT,
 		shown = OIDSET_INIT;
-	struct label_state state = { OIDMAP_INIT, { NULL }, STRBUF_INIT };
+	struct label_state state =
+		{ OIDMAP_INIT, { NULL }, STRBUF_INIT, GIT_MAX_LABEL_LENGTH };
 
 	int abbr = flags & TODO_LIST_ABBREVIATE_CMDS;
 	const char *cmd_pick = abbr ? "p" : "pick",
 		*cmd_label = abbr ? "l" : "label",
 		*cmd_reset = abbr ? "t" : "reset",
 		*cmd_merge = abbr ? "m" : "merge";
+
+	git_config_get_int("rebase.maxlabellength", &state.max_label_length);
 
 	oidmap_init(&commit2todo, 0);
 	oidmap_init(&state.commit2label, 0);
