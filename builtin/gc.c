@@ -2350,11 +2350,11 @@ static int systemd_timer_write_timer_file(enum schedule_priority schedule,
 
 	switch (schedule) {
 	case SCHEDULE_HOURLY:
-		schedule_pattern = xstrfmt("*-*-* *:%02d:00", minute);
+		schedule_pattern = xstrfmt("*-*-* 1..23:%02d:00", minute);
 		break;
 
 	case SCHEDULE_DAILY:
-		schedule_pattern = xstrfmt("*-*-* 0:%02d:00", minute);
+		schedule_pattern = xstrfmt("Tue..Sun *-*-* 0:%02d:00", minute);
 		break;
 
 	case SCHEDULE_WEEKLY:
