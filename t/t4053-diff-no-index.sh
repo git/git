@@ -248,11 +248,11 @@ test_expect_success PIPE,SYMLINKS 'diff --no-index reads from pipes' '
 	{
 		(test_write_lines a b c >old) &
 	} &&
-	test_when_finished "! kill $!" &&
+	test_when_finished "kill $! || :" &&
 	{
 		(test_write_lines a x c >new) &
 	} &&
-	test_when_finished "! kill $!" &&
+	test_when_finished "kill $! || :" &&
 
 	cat >expect <<-EOF &&
 	diff --git a/old b/new-link
