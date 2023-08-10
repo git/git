@@ -2174,6 +2174,7 @@ static int crontab_update_schedule(int run_maintenance, int fd)
 	FILE *cron_list, *cron_in;
 	struct strbuf line = STRBUF_INIT;
 	struct tempfile *tmpedit = NULL;
+	int minute = get_random_minute();
 
 	get_schedule_cmd(&cmd, NULL);
 	strvec_split(&crontab_list.args, cmd);
@@ -2228,11 +2229,11 @@ static int crontab_update_schedule(int run_maintenance, int fd)
 			"# replaced in the future by a Git command.\n\n");
 
 		strbuf_addf(&line_format,
-			    "%%s %%s * * %%s \"%s/git\" --exec-path=\"%s\" for-each-repo --config=maintenance.repo maintenance run --schedule=%%s\n",
+			    "%%d %%s * * %%s \"%s/git\" --exec-path=\"%s\" for-each-repo --config=maintenance.repo maintenance run --schedule=%%s\n",
 			    exec_path, exec_path);
-		fprintf(cron_in, line_format.buf, "0", "1-23", "*", "hourly");
-		fprintf(cron_in, line_format.buf, "0", "0", "1-6", "daily");
-		fprintf(cron_in, line_format.buf, "0", "0", "0", "weekly");
+		fprintf(cron_in, line_format.buf, minute, "1-23", "*", "hourly");
+		fprintf(cron_in, line_format.buf, minute, "0", "1-6", "daily");
+		fprintf(cron_in, line_format.buf, minute, "0", "0", "weekly");
 		strbuf_release(&line_format);
 
 		fprintf(cron_in, "\n%s\n", END_LINE);
