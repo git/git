@@ -849,4 +849,17 @@ test_expect_success 'register and unregister bare repo' '
 	)
 '
 
+test_expect_success 'failed schedule prevents config change' '
+	git init --bare failcase &&
+
+	for scheduler in crontab launchctl schtasks systemctl
+	do
+		GIT_TEST_MAINT_SCHEDULER="$scheduler:false" &&
+		export GIT_TEST_MAINT_SCHEDULER &&
+		test_must_fail \
+			git -C failcase maintenance start &&
+		test_must_fail git -C failcase config maintenance.auto || return 1
+	done
+'
+
 test_done

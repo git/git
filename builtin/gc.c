@@ -2728,9 +2728,12 @@ static int maintenance_start(int argc, const char **argv, const char *prefix)
 	opts.scheduler = resolve_scheduler(opts.scheduler);
 	validate_scheduler(opts.scheduler);
 
+	if (update_background_schedule(&opts, 1))
+		die(_("failed to set up maintenance schedule"));
+
 	if (maintenance_register(ARRAY_SIZE(register_args)-1, register_args, NULL))
 		warning(_("failed to add repo to global config"));
-	return update_background_schedule(&opts, 1);
+	return 0;
 }
 
 static const char *const builtin_maintenance_stop_usage[] = {
