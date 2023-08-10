@@ -819,3 +819,13 @@ int csprng_bytes(void *buf, size_t len)
 	return 0;
 #endif
 }
+
+uint32_t git_rand(void)
+{
+	uint32_t result;
+
+	if (csprng_bytes(&result, sizeof(result)) < 0)
+		die(_("unable to get random bytes"));
+
+	return result;
+}
