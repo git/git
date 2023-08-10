@@ -1708,7 +1708,6 @@ static int get_schedule_cmd(const char **cmd, int *is_available)
 	return 1;
 }
 
-MAYBE_UNUSED
 static int get_random_minute(void)
 {
 	/* Use a static value when under tests. */
@@ -1830,6 +1829,7 @@ static int launchctl_schedule_plist(const char *exec_path, enum schedule_priorit
 	struct strbuf plist = STRBUF_INIT, plist2 = STRBUF_INIT;
 	struct stat st;
 	const char *cmd = "launchctl";
+	int minute = get_random_minute();
 
 	get_schedule_cmd(&cmd, NULL);
 	preamble = "<?xml version=\"1.0\"?>\n"
@@ -1855,29 +1855,30 @@ static int launchctl_schedule_plist(const char *exec_path, enum schedule_priorit
 	case SCHEDULE_HOURLY:
 		repeat = "<dict>\n"
 			 "<key>Hour</key><integer>%d</integer>\n"
-			 "<key>Minute</key><integer>0</integer>\n"
+			 "<key>Minute</key><integer>%d</integer>\n"
 			 "</dict>\n";
 		for (i = 1; i <= 23; i++)
-			strbuf_addf(&plist, repeat, i);
+			strbuf_addf(&plist, repeat, i, minute);
 		break;
 
 	case SCHEDULE_DAILY:
 		repeat = "<dict>\n"
 			 "<key>Day</key><integer>%d</integer>\n"
 			 "<key>Hour</key><integer>0</integer>\n"
-			 "<key>Minute</key><integer>0</integer>\n"
+			 "<key>Minute</key><integer>%d</integer>\n"
 			 "</dict>\n";
 		for (i = 1; i <= 6; i++)
-			strbuf_addf(&plist, repeat, i);
+			strbuf_addf(&plist, repeat, i, minute);
 		break;
 
 	case SCHEDULE_WEEKLY:
-		strbuf_addstr(&plist,
-			      "<dict>\n"
-			      "<key>Day</key><integer>0</integer>\n"
-			      "<key>Hour</key><integer>0</integer>\n"
-			      "<key>Minute</key><integer>0</integer>\n"
-			      "</dict>\n");
+		strbuf_addf(&plist,
+			    "<dict>\n"
+			    "<key>Day</key><integer>0</integer>\n"
+			    "<key>Hour</key><integer>0</integer>\n"
+			    "<key>Minute</key><integer>%d</integer>\n"
+			    "</dict>\n",
+			    minute);
 		break;
 
 	default:
