@@ -2271,7 +2271,7 @@ test_expect_success 'check-attr with pathspec inside sparse definition' '
 	test_all_match git check-attr -a --cached -- deep/a
 '
 
-test_expect_failure 'check-attr with pathspec outside sparse definition' '
+test_expect_success 'check-attr with pathspec outside sparse definition' '
 	init_repos &&
 
 	echo "a -crlf myAttr" >>.gitattributes &&
@@ -2288,6 +2288,14 @@ test_expect_failure 'check-attr with pathspec outside sparse definition' '
 	test_all_match git check-attr -a --cached -- folder1/a
 '
 
+# NEEDSWORK: The 'diff --check' test is left as 'test_expect_failure' due
+# to an underlying issue in oneway_diff() within diff-lib.c.
+# 'do_oneway_diff()' is not called as expected for paths that could match
+# inside of a sparse directory. Specifically, the 'ce_path_match()' function
+# fails to recognize files inside a sparse directory (e.g., when 'folder1/'
+# is a sparse directory, 'folder1/a' cannot be recognized). The goal is to
+# proceed with 'do_oneway_diff()' if the pathspec could match inside of a
+# sparse directory.
 test_expect_failure 'diff --check with pathspec outside sparse definition' '
 	init_repos &&
 
