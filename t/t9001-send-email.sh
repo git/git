@@ -337,13 +337,14 @@ test_expect_success $PREREQ 'Show all headers' '
 test_expect_success $PREREQ 'Prompting works' '
 	clean_fake_sendmail &&
 	(echo "to@example.com" &&
-	 echo ""
+	 echo "my-message-id@example.com"
 	) | GIT_SEND_EMAIL_NOTTY=1 git send-email \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		$patches \
 		2>errors &&
 		grep "^From: A U Thor <author@example.com>\$" msgtxt1 &&
-		grep "^To: to@example.com\$" msgtxt1
+		grep "^To: to@example.com\$" msgtxt1 &&
+		grep "^In-Reply-To: <my-message-id@example.com>" msgtxt1
 '
 
 test_expect_success $PREREQ,AUTOIDENT 'implicit ident is allowed' '
