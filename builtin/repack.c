@@ -492,15 +492,13 @@ static struct packed_git *get_preferred_pack(struct pack_geometry *geometry)
 	return NULL;
 }
 
-static void clear_pack_geometry(struct pack_geometry *geometry)
+static void free_pack_geometry(struct pack_geometry *geometry)
 {
 	if (!geometry)
 		return;
 
 	free(geometry->pack);
-	geometry->pack_nr = 0;
-	geometry->pack_alloc = 0;
-	geometry->split = 0;
+	free(geometry);
 }
 
 struct midx_snapshot_ref_data {
@@ -1228,7 +1226,7 @@ cleanup:
 	string_list_clear(&names, 1);
 	string_list_clear(&existing_nonkept_packs, 0);
 	string_list_clear(&existing_kept_packs, 0);
-	clear_pack_geometry(geometry);
+	free_pack_geometry(geometry);
 
 	return ret;
 }
