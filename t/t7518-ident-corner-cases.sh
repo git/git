@@ -20,8 +20,17 @@ test_expect_success 'empty name and missing email' '
 '
 
 test_expect_success 'commit rejects all-crud name' '
-	test_must_fail env GIT_AUTHOR_NAME=" .;<>" \
+	test_must_fail env GIT_AUTHOR_NAME=" ,;<>" \
 		git commit --allow-empty -m foo
+'
+
+test_expect_success 'commit does not strip trailing dot' '
+	author_name="Pat Doe Jr." &&
+	env GIT_AUTHOR_NAME="$author_name" \
+		git commit --allow-empty -m foo &&
+	git log -1 --format=%an >actual &&
+	echo "$author_name" >expected &&
+	test_cmp actual expected
 '
 
 # We must test the actual error message here, as an unwanted

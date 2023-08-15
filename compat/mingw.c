@@ -1347,6 +1347,11 @@ static char *path_lookup(const char *cmd, int exe_only)
 	return prog;
 }
 
+char *mingw_locate_in_PATH(const char *cmd)
+{
+	return path_lookup(cmd, 0);
+}
+
 static const wchar_t *wcschrnul(const wchar_t *s, wchar_t c)
 {
 	while (*s && *s != c)

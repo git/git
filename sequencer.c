@@ -5048,19 +5048,31 @@ static int commit_staged_changes(struct repository *r,
 				 * We need to update the squash message to skip
 				 * the latest commit message.
 				 */
+				int res = 0;
 				struct commit *commit;
+				const char *msg;
 				const char *path = rebase_path_squash_msg();
 				const char *encoding = get_commit_output_encoding();
 
-				if (parse_head(r, &commit) ||
-				    !(p = repo_logmsg_reencode(r, commit, NULL, encoding)) ||
-				    write_message(p, strlen(p), path, 0)) {
-					repo_unuse_commit_buffer(r, commit, p);
-					return error(_("could not write file: "
-						       "'%s'"), path);
+				if (parse_head(r, &commit))
+					return error(_("could not parse HEAD"));
+
+				p = repo_logmsg_reencode(r, commit, NULL, encoding);
+				if (!p)  {
+					res = error(_("could not parse commit %s"),
+						    oid_to_hex(&commit->object.oid));
+					goto unuse_commit_buffer;
 				}
-				repo_unuse_commit_buffer(r,
-							 commit, p);
+				find_commit_subject(p, &msg);
+				if (write_message(msg, strlen(msg), path, 0)) {
+					res = error(_("could not write file: "
+						       "'%s'"), path);
+					goto unuse_commit_buffer;
+				}
+			unuse_commit_buffer:
+				repo_unuse_commit_buffer(r, commit, p);
+				if (res)
+					return res;
 			}
 		}
 

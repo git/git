@@ -337,13 +337,14 @@ test_expect_success $PREREQ 'Show all headers' '
 test_expect_success $PREREQ 'Prompting works' '
 	clean_fake_sendmail &&
 	(echo "to@example.com" &&
-	 echo ""
+	 echo "my-message-id@example.com"
 	) | GIT_SEND_EMAIL_NOTTY=1 git send-email \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		$patches \
 		2>errors &&
 		grep "^From: A U Thor <author@example.com>\$" msgtxt1 &&
-		grep "^To: to@example.com\$" msgtxt1
+		grep "^To: to@example.com\$" msgtxt1 &&
+		grep "^In-Reply-To: <my-message-id@example.com>" msgtxt1
 '
 
 test_expect_success $PREREQ,AUTOIDENT 'implicit ident is allowed' '
@@ -659,7 +660,6 @@ test_expect_success $PREREQ 'clear message-id before parsing a new message' '
 	clean_fake_sendmail &&
 	echo true | write_script my-hooks/sendemail-validate &&
 	test_config core.hooksPath my-hooks &&
-	GIT_SEND_EMAIL_NOTTY=1 \
 	git send-email --validate --to=recipient@example.com \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		$patches $threaded_patches &&
