@@ -277,6 +277,17 @@ Fixes since v2.41
    corrected.
    (merge 6ce7afe163 pw/rebase-skip-commit-message-fix later to maint).
 
+ * Adjust to newer Term::ReadLine to prevent it from breaking
+   the interactive prompt code in send-email.
+   (merge c016726c2d jk/send-email-with-new-readline later to maint).
+
+ * Windows updates.
+   (merge 0050f8e401 ds/maintenance-on-windows-fix later to maint).
+
+ * Correct use of lstat() that assumed a failing call would not
+   clobber the statbuf.
+   (merge 72695d8214 st/mv-lstat-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 51f9d2e563 sa/doc-ls-remote later to maint).
    (merge c6d26a9dda jk/format-patch-message-id-unleak later to maint).
@@ -314,3 +325,5 @@ Fixes since v2.41
    (merge d089a06421 rs/bundle-parseopt-cleanup later to maint).
    (merge 823839bda1 ew/sha256-gcrypt-leak-fixes later to maint).
    (merge a5c01603b3 bc/ignore-clangd-cache later to maint).
+   (merge 12009a182b js/allow-t4000-to-be-indented-with-spaces later to maint).
+   (merge b3dcd24b8a jc/send-email-pre-process-fix later to maint).
