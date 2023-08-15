@@ -660,7 +660,6 @@ test_expect_success $PREREQ 'clear message-id before parsing a new message' '
 	clean_fake_sendmail &&
 	echo true | write_script my-hooks/sendemail-validate &&
 	test_config core.hooksPath my-hooks &&
-	GIT_SEND_EMAIL_NOTTY=1 \
 	git send-email --validate --to=recipient@example.com \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		$patches $threaded_patches &&
