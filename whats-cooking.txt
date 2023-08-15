@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2023, #04; Thu, 10)
-X-master-at: fac96dfbb1c24369ba7d37a5affd8adfe6c650fd
-X-next-at: 551eb34607c0f3837c0a567622e251f9ea1cdc27
+Subject: What's cooking in git.git (Aug 2023, #05; Tue, 15)
+X-master-at: f1ed9d7dc0e49dc1a044941d821c9d2342313c26
+X-next-at: 538df5cf277f6d03b93daeac4d448cbb1a0ded19
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Aug 2023, #04; Thu, 10)
+What's cooking in git.git (Aug 2023, #05; Tue, 15)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,10 +17,7 @@ topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
 
-Git 2.42-rc1 has been tagged.  From here on, the 'master' front is
-expected to merge only fixes for new regressions that happened in
-this cycle, while other topics will wait in 'next' or on the mailing
-list for their turn after the release is done.
+Git 2.42-rc2 has been tagged.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -53,66 +50,12 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* bc/ident-dot-is-no-longer-crud-letter (2023-08-02) 1 commit
-  (merged to 'next' on 2023-08-03 at e786442a9b)
- + ident: don't consider '.' a crud
-
- Exclude "." from the set of characters to be removed from the
- beginning and the end of the human-readable name.
- source: <xmqqsf918k4j.fsf@gitster.g>
-
-
-* bc/ignore-clangd-cache (2023-08-04) 1 commit
-  (merged to 'next' on 2023-08-04 at 5cf8d41911)
- + gitignore: ignore clangd .cache directory
-
- .gitignore update.
- source: <20230804171328.1737188-1-sandals@crustytoothpaste.net>
-
-
-* ew/hash-with-openssl-evp (2023-08-01) 2 commits
-  (merged to 'next' on 2023-08-02 at 996db74865)
- + avoid SHA-1 functions deprecated in OpenSSL 3+
- + sha256: avoid functions deprecated in OpenSSL 3+
-
- Adjust to OpenSSL 3+, which deprecates its SHA-1 functions based on
- its traditional API, by using its EVP API instead.
- source: <20230801025454.1137802-1-e@80x24.org>
-
-
-* ma/locate-in-path-for-windows (2023-08-04) 3 commits
-  (merged to 'next' on 2023-08-06 at 02bc13f4a3)
- + docs: update when `git bisect visualize` uses `gitk`
- + compat/mingw: implement a native locate_in_PATH()
- + run-command: conditionally define locate_in_PATH()
-
- "git bisect visualize" stopped running "gitk" on Git for Windows
- when the command was reimplemented in C around Git 2.34 timeframe.
- This has been corrected.
- source: <pull.1560.v2.git.1691122124.gitgitgadget@gmail.com>
-
-
-* pw/rebase-skip-commit-message-fix (2023-08-03) 1 commit
-  (merged to 'next' on 2023-08-06 at 1e44443e65)
- + rebase --skip: fix commit message clean up when skipping squash
-
- "git rebase -i" with a series of squash/fixup, when one of the
- steps stopped in conflicts and ended up getting skipped, did not
- handle the accumulated commit log messages, which has been
- corrected.
- source: <pull.1558.git.git.1691068176051.gitgitgadget@gmail.com>
-
---------------------------------------------------
-[New Topics]
-
 * ds/maintenance-on-windows-fix (2023-08-09) 2 commits
   (merged to 'next' on 2023-08-09 at 3d7abef9be)
  + git maintenance: avoid console window in scheduled tasks on Windows
  + win32: add a helper to run `git.exe` without a foreground window
 
  Windows updates.
-
- Will merge to 'master'.
  source: <pull.1570.git.1691600087.gitgitgadget@gmail.com>
 
 
@@ -121,19 +64,61 @@ Release tarballs are available at:
  + t9001: remove excessive GIT_SEND_EMAIL_NOTTY=1
 
  Test fix.
-
- Will merge to 'master'.
  source: <20230809171531.2564754-1-oswald.buddenhagen@gmx.de>
 
 
-* ob/sequencer-rearrange-cleanup (2023-08-09) 1 commit
-  (merged to 'next' on 2023-08-09 at df4360945c)
- + sequencer: simplify allocation of result array in todo_list_rearrange_squash()
+* jk/repack-leakfix (2023-08-08) 1 commit
+  (merged to 'next' on 2023-08-09 at 8692d7b2e0)
+ + repack: free geometry struct
+ (this branch is used by tb/repack-geometry-cleanup.)
 
- Code clean-up.
+ Leakfix.
+ source: <20230808185023.GA3498623@coredump.intra.peff.net>
 
- Will cook in 'next'.
- source: <20230809171532.2564880-1-oswald.buddenhagen@gmx.de>
+
+* jk/send-email-with-new-readline (2023-08-08) 2 commits
+  (merged to 'next' on 2023-08-09 at d42e4ca9f8)
+ + send-email: avoid creating more than one Term::ReadLine object
+ + send-email: drop FakeTerm hack
+ (this branch is used by ws/svn-with-new-readline.)
+
+ Adjust to newer Term::ReadLine to prevent it from breaking
+ the interactive prompt code in send-email.
+ source: <20230808180935.GA2096901@coredump.intra.peff.net>
+
+
+* js/allow-t4000-to-be-indented-with-spaces (2023-08-08) 1 commit
+  (merged to 'next' on 2023-08-09 at 9c0d6659ec)
+ + t0040: declare non-tab indentation to be okay in this script
+
+ File attribute update.
+ source: <pull.1568.git.1691491054706.gitgitgadget@gmail.com>
+
+
+* ob/rebase-conflict-advice-i18n-fix (2023-08-07) 1 commit
+  (merged to 'next' on 2023-08-09 at 0e02113510)
+ + advice: handle "rebase" in error_resolve_conflict()
+
+ i18n coverage improvement and avoidance of sentence lego.
+ source: <20230807170935.2336715-1-oswald.buddenhagen@gmx.de>
+
+
+* pw/diff-no-index-from-named-pipes (2023-08-13) 2 commits
+  (merged to 'next' on 2023-08-13 at 6600a9f80c)
+ + t4053: avoid writing to unopened pipe
+ + t4053: avoid race when killing background processes
+
+ Test updates.
+ source: <pull.1571.git.1691677993195.gitgitgadget@gmail.com>
+ source: <20230813162440.GA1688763@coredump.intra.peff.net>
+
+
+* rs/parse-opt-forbid-set-int-0-without-noneg (2023-08-08) 1 commit
+  (merged to 'next' on 2023-08-09 at fab1193dbc)
+ + parse-options: disallow negating OPTION_SET_INT 0
+
+ Developer support to detect meaningless combination of options.
+ source: <c4cd1591-3a83-920a-6a80-19ffbfe3089d@web.de>
 
 
 * st/mv-lstat-fix (2023-08-09) 1 commit
@@ -142,111 +127,75 @@ Release tarballs are available at:
 
  Correct use of lstat() that assumed a failing call would not
  clobber the statbuf.
-
- Will merge to 'master'.
  source: <pull.1561.v2.git.1691567261701.gitgitgadget@gmail.com>
 
+--------------------------------------------------
+[New Topics]
 
-* tb/repack-geometry-cleanup (2023-08-09) 1 commit
- - repack: move `pack_geometry` struct to the stack
- (this branch uses jk/repack-leakfix.)
+* ob/revert-of-revert-is-reapply (2023-08-11) 3 commits
+ - SQUASH??? reword by Linus Arver and Phillip Wood
+ - doc: revert: add discussion
+ - sequencer: beautify subject of reverts of reverts
 
- Code clean-up.
+ Tweak the default log message created by "git revert" when
+ reverting a commit that records a revert.
 
- Will merge to 'next'.
- source: <cover.1691613149.git.me@ttaylorr.com>
-
-
-* ws/git-push-doc-grammofix (2023-08-09) 1 commit
- - git-push.txt: fix grammar
-
- Doc update.
-
- Will merge to 'next'.
- source: <20230810012105.1423462-1-wesleys@opperschaap.net>
+ Expecting a hopefully final reroll, without the [3/2].
+ source: <20230428083528.1699221-1-oswald.buddenhagen@gmx.de>
 
 
-* ws/svn-with-new-readline (2023-08-09) 1 commit
- - git-svn: avoid creating more than one than one Term::ReadLine object
- (this branch uses jk/send-email-with-new-readline.)
+* ob/format-patch-description-file (2023-08-11) 1 commit
+ - format-patch: add --description-file option
 
- Adjust to newer Term::ReadLine to prevent it from breaking
- the interactive prompt code in git-svn.
+ "git format-patch" learns a way to feed cover letter description,
+ that (1) can be used on detached HEAD where there is no branch
+ description available, and (2) also can override the branch
+ description if there is one.
 
- Will merge to 'next' and then to 'master'.
- source: <20230810011831.1423208-1-wesleys@opperschaap.net>
-
-
-* ak/pretty-decorate-more (2023-08-10) 7 commits
- - pretty: add pointer and tag options to %(decorate)
- - pretty: add %(decorate[:<options>]) format
- - decorate: color each token separately
- - decorate: avoid some unnecessary color overhead
- - decorate: refactor format_decorations()
- - pretty-formats: enclose options in angle brackets
- - pretty-formats: define "literal formatting code"
-
- Teach "git log --format" a customizable %(decorate) placeholder.
-
- Needs review.
- source: <20230715160730.4046-1-andy.koppe@gmail.com>
+ Expecting a reroll.
+ cf. <ZNa2VQQzZmaMzM4C@ugly>
+ source: <20230809171530.2564724-1-oswald.buddenhagen@gmx.de>
 
 
-* ds/upload-pack-error-sequence-fix (2023-08-10) 1 commit
- - upload-pack: fix race condition in error messages
+* ds/scalar-updates (2023-08-14) 2 commits
+ - setup: add discover_git_directory_reason()
+ - scalar: add --[no-]src option
 
- Error message generation fix.
+ Scalar updates.
+
+ Expecting a reroll.
+ cf. <abae52d5-47d5-4439-9d2b-68bb6e1c96fa@github.com>
+ source: <pull.1569.git.1692025937.gitgitgadget@gmail.com>
+
+
+* ja/worktree-orphan (2023-08-13) 1 commit
+ - builtin/worktree.c: fix typo in "forgot fetch" msg
+
+ Typofix in an error message.
 
  Will merge to 'next'.
- source: <pull.1572.git.1691678450757.gitgitgadget@gmail.com>
+ source: <20230811233940.30264-1-jacobabel@nullpo.dev>
 
 
-* mp/rebase-label-length-limit (2023-08-10) 2 commits
- - rebase: allow overriding the maximal length of the generated labels
- - sequencer: truncate labels to accommodate loose refs
+* jc/mv-d-to-d-error-message-fix (2023-08-11) 1 commit
+ - mv: fix error for moving directory to another
 
- Chomp overly long label names used in the sequencer machinery.
-
- Will merge to 'next'.
- source: <pull.1562.git.git.1691685300.gitgitgadget@gmail.com>
-
-
-* pw/diff-no-index-from-named-pipes (2023-08-10) 1 commit
- - t4053: avoid race when killing background processes
-
- Test updates.
-
- Will merge to 'next'?
- source: <pull.1571.git.1691677993195.gitgitgadget@gmail.com>
-
-
-* tb/commit-graph-verify-fix (2023-08-10) 4 commits
- - commit-graph: invert negated conditional
- - t/t5318-commit-graph.sh: test generation zero transitions during fsck
- - commit-graph: verify swapped zero/non-zero generation cases
- - commit-graph: introduce `commit_graph_generation_from_graph()`
-
- Update commit-graph verification code that detects mixture of zero
- and non-zero generation numbers.
+ Typofix in an error message.
 
  Will merge to 'next'.
- source: <cover.1691699851.git.me@ttaylorr.com>
+ source: <xmqqjzu1njt0.fsf@gitster.g>
+
+
+* ob/t9001-indent-fix (2023-08-13) 1 commit
+ - t9001: fix indentation in test_no_confirm()
+
+ Test style fix.
+
+ Will merge to 'next'.
+ source: <20230813104649.2919412-1-oswald.buddenhagen@gmx.de>
 
 --------------------------------------------------
 [Stalled]
-
-* sl/sparse-check-attr (2023-07-18) 3 commits
- - check-attr: integrate with sparse-index
- - attr.c: read attributes in a sparse directory
- - t1092: add tests for 'git check-attr'
-
- Teach "git check-attr" work better with sparse-index.
-
- Expecting a reroll.
- cf. <c3ebe3b4-88b9-8ca2-2ee3-39a3e0d82201@github.com>
- cf. <5e478d8b-9ef4-864b-41e4-e0a79877d278@github.com>
- source: <20230718232916.31660-1-cheskaqiqi@gmail.com>
-
 
 * cc/git-replay (2023-06-03) 15 commits
  - replay: stop assuming replayed branches do not diverge
@@ -282,10 +231,10 @@ Release tarballs are available at:
 
 
 * ab/tag-object-type-errors (2023-05-10) 4 commits
- - tag: don't emit potentially incorrect "object is a X, not a Y"
- - tag: don't misreport type of tagged objects in errors
- - object tests: add test for unexpected objects in tags
- - Merge branch 'jk/parse-object-type-mismatch' into ab/tag-object-type-errors
+ . tag: don't emit potentially incorrect "object is a X, not a Y"
+ . tag: don't misreport type of tagged objects in errors
+ . object tests: add test for unexpected objects in tags
+ . Merge branch 'jk/parse-object-type-mismatch' into ab/tag-object-type-errors
 
  Hardening checks around mismatched object types when one of those
  objects is a tag.
@@ -297,6 +246,109 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* sl/sparse-check-attr (2023-08-11) 3 commits
+ - check-attr: integrate with sparse-index
+ - attr.c: read attributes in a sparse directory
+ - t1092: add tests for 'git check-attr'
+
+ Teach "git check-attr" work better with sparse-index.
+
+ Will merge to 'next'.
+ cf. <3b2a5b4b-ab8f-746b-6b69-8e8262b6390b@github.com>
+ Looking good.
+ source: <20230811142211.4547-1-cheskaqiqi@gmail.com>
+
+
+* ob/sequencer-rearrange-cleanup (2023-08-09) 1 commit
+  (merged to 'next' on 2023-08-09 at df4360945c)
+ + sequencer: simplify allocation of result array in todo_list_rearrange_squash()
+
+ Code clean-up.
+
+ Will cook in 'next'.
+ source: <20230809171532.2564880-1-oswald.buddenhagen@gmx.de>
+
+
+* tb/repack-geometry-cleanup (2023-08-09) 1 commit
+  (merged to 'next' on 2023-08-13 at d79c778057)
+ + repack: move `pack_geometry` struct to the stack
+
+ Code clean-up.
+
+ Will cook in 'next'.
+ source: <2e2a760381be1f7cdae83e2f43b17d16aa8ab161.1691613149.git.me@ttaylorr.com>
+
+
+* ws/git-push-doc-grammofix (2023-08-09) 1 commit
+  (merged to 'next' on 2023-08-13 at f15e9bbe75)
+ + git-push.txt: fix grammar
+
+ Doc update.
+
+ Will cook in 'next'.
+ source: <20230810012105.1423462-1-wesleys@opperschaap.net>
+
+
+* ws/svn-with-new-readline (2023-08-11) 1 commit
+ - git-svn: avoid creating more than one than one Term::ReadLine object
+
+ Adjust to newer Term::ReadLine to prevent it from breaking
+ the interactive prompt code in git-svn.
+
+ Not needed for correctness.
+ source: <20230810011831.1423208-1-wesleys@opperschaap.net>
+
+
+* ak/pretty-decorate-more (2023-08-10) 7 commits
+ - pretty: add pointer and tag options to %(decorate)
+ - pretty: add %(decorate[:<options>]) format
+ - decorate: color each token separately
+ - decorate: avoid some unnecessary color overhead
+ - decorate: refactor format_decorations()
+ - pretty-formats: enclose options in angle brackets
+ - pretty-formats: define "literal formatting code"
+
+ Teach "git log --format" a customizable %(decorate) placeholder.
+
+ What's the status of this thing?
+ source: <20230810211619.19055-1-andy.koppe@gmail.com>
+
+
+* ds/upload-pack-error-sequence-fix (2023-08-10) 1 commit
+  (merged to 'next' on 2023-08-13 at 6c740593cf)
+ + upload-pack: fix race condition in error messages
+
+ Error message generation fix.
+
+ Will cook in 'next'.
+ source: <pull.1572.git.1691678450757.gitgitgadget@gmail.com>
+
+
+* mp/rebase-label-length-limit (2023-08-10) 2 commits
+  (merged to 'next' on 2023-08-13 at 85536da9f7)
+ + rebase: allow overriding the maximal length of the generated labels
+ + sequencer: truncate labels to accommodate loose refs
+
+ Chomp overly long label names used in the sequencer machinery.
+
+ Will cook in 'next'.
+ source: <pull.1562.git.git.1691685300.gitgitgadget@gmail.com>
+
+
+* tb/commit-graph-verify-fix (2023-08-10) 4 commits
+  (merged to 'next' on 2023-08-13 at ba45da55f5)
+ + commit-graph: invert negated conditional
+ + t/t5318-commit-graph.sh: test generation zero transitions during fsck
+ + commit-graph: verify swapped zero/non-zero generation cases
+ + commit-graph: introduce `commit_graph_generation_from_graph()`
+
+ Update commit-graph verification code that detects mixture of zero
+ and non-zero generation numbers.
+
+ Will cook in 'next'.
+ source: <cover.1691699851.git.me@ttaylorr.com>
+
+
 * la/trailer-cleanups (2023-08-06) 5 commits
  - trailer: rename *_DEFAULT enums to *_UNSPECIFIED
  - trailer: teach find_patch_start about --no-divider
@@ -306,7 +358,8 @@ Release tarballs are available at:
 
  Code clean-up.
 
- Needs review.
+ Expecting a reroll.
+ cf. <owlyy1iifq0n.fsf@fine.c.googlers.com>
  source: <pull.1563.git.1691211879.gitgitgadget@gmail.com>
 
 
@@ -328,62 +381,9 @@ Release tarballs are available at:
 
  Test coverage improvement for trailers.
 
- Needs review.
+ Expecting a reroll.
+ cf. <owlyh6p5fpi7.fsf@fine.c.googlers.com>
  source: <pull.1564.v2.git.1691702283.gitgitgadget@gmail.com>
-
-
-* jk/repack-leakfix (2023-08-08) 1 commit
-  (merged to 'next' on 2023-08-09 at 8692d7b2e0)
- + repack: free geometry struct
- (this branch is used by tb/repack-geometry-cleanup.)
-
- Leakfix.
-
- Will merge to 'master'.
- source: <20230808185023.GA3498623@coredump.intra.peff.net>
-
-
-* jk/send-email-with-new-readline (2023-08-08) 2 commits
-  (merged to 'next' on 2023-08-09 at d42e4ca9f8)
- + send-email: avoid creating more than one Term::ReadLine object
- + send-email: drop FakeTerm hack
- (this branch is used by ws/svn-with-new-readline.)
-
- Adjust to newer Term::ReadLine to prevent it from breaking
- the interactive prompt code in send-email.
-
- Will merge to 'master'.
- source: <20230808180935.GA2096901@coredump.intra.peff.net>
-
-
-* js/allow-t4000-to-be-indented-with-spaces (2023-08-08) 1 commit
-  (merged to 'next' on 2023-08-09 at 9c0d6659ec)
- + t0040: declare non-tab indentation to be okay in this script
-
- File attribute update.
-
- Will merge to 'master'.
- source: <pull.1568.git.1691491054706.gitgitgadget@gmail.com>
-
-
-* ob/rebase-conflict-advice-i18n-fix (2023-08-07) 1 commit
-  (merged to 'next' on 2023-08-09 at 0e02113510)
- + advice: handle "rebase" in error_resolve_conflict()
-
- i18n coverage improvement and avoidance of sentence lego.
-
- Will merge to 'master'.
- source: <20230807170935.2336715-1-oswald.buddenhagen@gmx.de>
-
-
-* rs/parse-opt-forbid-set-int-0-without-noneg (2023-08-08) 1 commit
-  (merged to 'next' on 2023-08-09 at fab1193dbc)
- + parse-options: disallow negating OPTION_SET_INT 0
-
- Developer support to detect meaningless combination of options.
-
- Will merge to 'master'.
- source: <c4cd1591-3a83-920a-6a80-19ffbfe3089d@web.de>
 
 
 * ds/maintenance-schedule-fuzz (2023-08-10) 8 commits
@@ -398,7 +398,7 @@ Release tarballs are available at:
 
  Allow "git maintenance" schedule to be randomly distributed.
 
- Looking good.
+ Will merge to 'next'.
  source: <pull.1567.v2.git.1691699987.gitgitgadget@gmail.com>
 
 
@@ -420,6 +420,8 @@ Release tarballs are available at:
  Update the use of API for consistency between two calls to
  require_clean_work_tree() from the sequencer code.
 
+ Expecting a reroll.
+ cf. <xmqqedkahoio.fsf@gitster.g>
  source: <20230809171531.2564829-1-oswald.buddenhagen@gmx.de>
 
 
@@ -509,6 +511,7 @@ Release tarballs are available at:
  being rebased when both are in effect at the same time.
 
  Needs review.
+ cf. <xmqqtttia3vn.fsf@gitster.g>
  source: <48745298-f12b-8efb-4e48-90d2c22a8349@gmail.com>
 
 
@@ -525,7 +528,8 @@ Release tarballs are available at:
  "git cmd -h" learned to signal which options can be negated by
  listing such options like "--[no-]opt".
 
- Comments?
+ Will merge to 'next'.
+ cf. <xmqqbkfm3gne.fsf@gitster.g>
  source: <e4d46d97-1cd4-7fea-afd1-7de5023b1b09@web.de>
 
 
@@ -543,22 +547,22 @@ Release tarballs are available at:
  source: <pull.1529.git.git.1687596777147.gitgitgadget@gmail.com>
 
 
-* cc/repack-sift-filtered-objects-to-separate-pack (2023-08-09) 9 commits
- - SQUASH???
- - gc: add `gc.repackFilterTo` config option
- - repack: implement `--filter-to` for storing filtered out objects
- - gc: add `gc.repackFilter` config option
- - repack: add `--filter=<filter-spec>` option
- - repack: refactor finding pack prefix
- - repack: refactor finishing pack-objects command
- - t/helper: add 'find-pack' test-tool
- - pack-objects: allow `--filter` without `--stdout`
+* cc/repack-sift-filtered-objects-to-separate-pack (2023-08-13) 8 commits
+ . gc: add `gc.repackFilterTo` config option
+ . repack: implement `--filter-to` for storing filtered out objects
+ . gc: add `gc.repackFilter` config option
+ . repack: add `--filter=<filter-spec>` option
+ . repack: refactor finding pack prefix
+ . repack: refactor finishing pack-objects command
+ . t/helper: add 'find-pack' test-tool
+ . pack-objects: allow `--filter` without `--stdout`
 
  "git repack" machinery learns to pay attention to the "--filter="
  option.
 
- cf. https://github.com/git/git/actions/runs/5812873987
- source: <20230808082608.582319-1-christian.couder@gmail.com>
+ Kicked out of the 'seen', as it still seems to be failing tests.
+ cf. https://github.com/git/git/actions/runs/5850998716/job/15861158252#step:4:1822
+ source: <20230812000011.1227371-1-christian.couder@gmail.com>
 
 
 * js/doc-unit-tests (2023-08-07) 1 commit
@@ -593,12 +597,13 @@ Release tarballs are available at:
 
 
 * ob/test-lib-rebase-fake-editor-updates (2023-08-10) 3 commits
- - t/lib-rebase: improve documentation of set_fake_editor()
- - t/lib-rebase: set_fake_editor(): handle FAKE_LINES more consistently
- - t/lib-rebase: set_fake_editor(): fix recognition of reset's short command
+  (merged to 'next' on 2023-08-13 at 16b87e890a)
+ + t/lib-rebase: improve documentation of set_fake_editor()
+ + t/lib-rebase: set_fake_editor(): handle FAKE_LINES more consistently
+ + t/lib-rebase: set_fake_editor(): fix recognition of reset's short command
 
  Test updates.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <20230807170935.2336663-1-oswald.buddenhagen@gmx.de>
  source: <20230809171531.2564785-1-oswald.buddenhagen@gmx.de>
