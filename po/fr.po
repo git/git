@@ -78,8 +78,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2023-08-05 19:16+0200\n"
-"PO-Revision-Date: 2023-08-06 09:56+0200\n"
+"POT-Creation-Date: 2023-08-16 11:48+0200\n"
+"PO-Revision-Date: 2023-08-16 11:49+0200\n"
 "Last-Translator: Cédric Malard <c.malard-git@valdun.net>\n"
 "Language-Team: Jean-Noël Avila <jn.avila@free.fr>\n"
 "Language: fr\n"
@@ -716,9 +716,8 @@ msgstr "Impossible de tirer car vous avez des fichiers non fusionnés."
 msgid "Reverting is not possible because you have unmerged files."
 msgstr "Impossible d'annuler car vous avez des fichiers non fusionnés."
 
-#, c-format
-msgid "It is not possible to %s because you have unmerged files."
-msgstr "%s n'est pas possible car vous avez des fichiers non fusionnés."
+msgid "Rebasing is not possible because you have unmerged files."
+msgstr "Impossible de rebaser, car vous avez des fichiers non fusionnés."
 
 msgid ""
 "Fix them up in the work tree, and then use 'git add/rm <file>'\n"
@@ -23036,6 +23035,10 @@ msgstr "%s sauté avec un suffix de sauvegarde '%s'.\n"
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "Souhaitez-vous réellement envoyer %s ?[y|N] : "
+
+#, c-format
+#~ msgid "It is not possible to %s because you have unmerged files."
+#~ msgstr "%s n'est pas possible car vous avez des fichiers non fusionnés."
 
 #~ msgid "do not pass --keep-cr flag to git-mailsplit independent of am.keepcr"
 #~ msgstr ""
