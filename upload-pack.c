@@ -782,7 +782,7 @@ error:
 			packet_writer_error(&data->writer,
 					    "upload-pack: not our ref %s",
 					    oid_to_hex(&o->oid));
-			exit(1);
+			exit(128);
 		}
 	}
 }
