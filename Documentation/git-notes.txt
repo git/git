@@ -141,17 +141,16 @@ OPTIONS
 	If multiple `-m` options are given, their values
 	are concatenated as separate paragraphs.
 	Lines starting with `#` and empty lines other than a
-	single line between paragraphs will be stripped out,
-	if you wish to keep them verbatim, use `--no-stripspace`.
+	single line between paragraphs will be stripped out.
+	If you wish to keep them verbatim, use `--no-stripspace`.
 
 -F <file>::
 --file=<file>::
 	Take the note message from the given file.  Use '-' to
 	read the note message from the standard input.
 	Lines starting with `#` and empty lines other than a
-	single line between paragraphs will be stripped out,
-	if you wish to keep them verbatim, use with
-	`--no-stripspace` option.
+	single line between paragraphs will be stripped out.
+	If you wish to keep them verbatim, use `--no-stripspace`.
 
 -C <object>::
 --reuse-message=<object>::
