@@ -237,7 +237,7 @@ endif::git-rev-list[]
 
 --stdin::
 	In addition to getting arguments from the command line, read
-	them for standard input as well. This accepts commits and
+	them from standard input as well. This accepts commits and
 	pseudo-options like `--all` and `--glob=`. When a `--` separator
 	is seen, the following input is treated as paths and used to
 	limit the result.
