@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2023-05-22 17:14+0200\n"
-"PO-Revision-Date: 2023-05-22 17:16+0200\n"
+"POT-Creation-Date: 2023-08-17 16:53+0200\n"
+"PO-Revision-Date: 2023-08-17 16:55+0200\n"
 "Last-Translator: Ralf Thielow <ralf.thielow@gmail.com>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n!=1);\n"
-"X-Generator: Poedit 3.3.1\n"
+"X-Generator: Poedit 3.3.2\n"
 
 #, c-format
 msgid "Huh (%s)?"
@@ -664,9 +664,9 @@ msgid "Reverting is not possible because you have unmerged files."
 msgstr ""
 "Reverten ist nicht möglich, weil Sie nicht zusammengeführte Dateien haben."
 
-#, c-format
-msgid "It is not possible to %s because you have unmerged files."
-msgstr "%s ist nicht möglich, weil Sie nicht zusammengeführte Dateien haben."
+msgid "Rebasing is not possible because you have unmerged files."
+msgstr ""
+"Rebase ist nicht möglich, weil Sie nicht zusammengeführte Dateien haben."
 
 msgid ""
 "Fix them up in the work tree, and then use 'git add/rm <file>'\n"
@@ -815,6 +815,12 @@ msgstr "die Optionen '%s' und '%s' können nicht gemeinsam verwendet werden"
 #, c-format
 msgid "'%s' outside a repository"
 msgstr "'%s' außerhalb eines Repositories"
+
+msgid "failed to read patch"
+msgstr "Patch konnte nicht gelesen werden"
+
+msgid "patch too large"
+msgstr "Patch zu groß"
 
 #, c-format
 msgid "Cannot prepare timestamp regexp %s"
@@ -1692,12 +1698,10 @@ msgstr ""
 msgid "not tracking: ambiguous information for ref '%s'"
 msgstr "kein Tracking: mehrdeutige Informationen für Referenz '%s'"
 
-#. #-#-#-#-#  branch.c.po  #-#-#-#-#
 #. TRANSLATORS: This is a line listing a remote with duplicate
 #. refspecs in the advice message below. For RTL languages you'll
 #. probably want to swap the "%s" and leading "  " space around.
 #.
-#. #-#-#-#-#  object-name.c.po  #-#-#-#-#
 #. TRANSLATORS: This is line item of ambiguous object output
 #. from describe_ambiguous_object() above. For RTL languages
 #. you'll probably want to swap the "%s" and leading " " space
@@ -1740,9 +1744,10 @@ msgid "a branch named '%s' already exists"
 msgstr "Branch '%s' existiert bereits"
 
 #, c-format
-msgid "cannot force update the branch '%s' checked out at '%s'"
+msgid "cannot force update the branch '%s' used by worktree at '%s'"
 msgstr ""
-"kann Aktualisierung des Branches '%s' nicht erzwingen, ausgecheckt in '%s'"
+"Aktualisierung des vom Arbeitsverzeichnis '%2$s' verwendete Branch '%1$s' "
+"kann nicht erzwungen werden"
 
 #, c-format
 msgid "cannot set up tracking information; starting point '%s' is not a branch"
@@ -1811,17 +1816,6 @@ msgstr "git add [<Optionen>] [--] <Pfadspezifikation>..."
 #, c-format
 msgid "cannot chmod %cx '%s'"
 msgstr "kann chmod %cx '%s' nicht ausführen"
-
-#, c-format
-msgid "unexpected diff status %c"
-msgstr "unerwarteter Differenz-Status %c"
-
-msgid "updating files failed"
-msgstr "Aktualisierung der Dateien fehlgeschlagen"
-
-#, c-format
-msgid "remove '%s'\n"
-msgstr "lösche '%s'\n"
 
 msgid "Unstaged changes after refreshing the index:"
 msgstr ""
@@ -2269,9 +2263,6 @@ msgstr "-m an git-mailinfo übergeben"
 
 msgid "pass --keep-cr flag to git-mailsplit for mbox format"
 msgstr "--keep-cr an git-mailsplit für mbox-Format übergeben"
-
-msgid "do not pass --keep-cr flag to git-mailsplit independent of am.keepcr"
-msgstr "kein --keep-cr an git-mailsplit übergeben, unabhängig von am.keepcr"
 
 msgid "strip everything before a scissors line"
 msgstr "alles vor einer Scheren-Zeile entfernen"
@@ -3333,12 +3324,12 @@ msgid ""
 "git cat-file (--batch | --batch-check | --batch-command) [--batch-all-"
 "objects]\n"
 "             [--buffer] [--follow-symlinks] [--unordered]\n"
-"             [--textconv | --filters] [-z]"
+"             [--textconv | --filters] [-Z]"
 msgstr ""
 "git cat-file (--batch | --batch-check | --batch-command) [--batch-all-"
 "objects]\n"
 "             [--buffer] [--follow-symlinks] [--unordered]\n"
-"             [--textconv | --filters] [-z]"
+"             [--textconv | --filters] [-Z]"
 
 msgid ""
 "git cat-file (--textconv | --filters)\n"
@@ -3384,6 +3375,9 @@ msgstr "wie --batch, aber keine Ausgabe von <Inhalten>"
 
 msgid "stdin is NUL-terminated"
 msgstr "stdin endet mit NUL"
+
+msgid "stdin and stdout is NUL-terminated"
+msgstr "stdin und stdout sind NUL-beendet"
 
 msgid "read commands from stdin"
 msgstr "Befehle von der Standard-Eingabe lesen"
@@ -4269,12 +4263,6 @@ msgstr "serverspezifisch"
 msgid "option to transmit"
 msgstr "Option übertragen"
 
-msgid "use IPv4 addresses only"
-msgstr "nur IPv4-Adressen benutzen"
-
-msgid "use IPv6 addresses only"
-msgstr "nur IPv6-Adressen benutzen"
-
 msgid "apply partial clone filters to submodules"
 msgstr "partielle Klonfilter auf Submodule anwenden"
 
@@ -4738,6 +4726,9 @@ msgstr ""
 "    git cherry-pick --skip\n"
 "\n"
 
+msgid "updating files failed"
+msgstr "Aktualisierung der Dateien fehlgeschlagen"
+
 msgid "failed to unpack HEAD tree object"
 msgstr "Fehler beim Entpacken des Tree-Objektes von HEAD."
 
@@ -4798,8 +4789,8 @@ msgstr ""
 "der aktuellen Commit-Beschreibung verwendet wird."
 
 #, c-format
-msgid "could not lookup commit %s"
-msgstr "Konnte Commit %s nicht nachschlagen"
+msgid "could not lookup commit '%s'"
+msgstr "konnte Commit '%s' nicht nachschlagen"
 
 #, c-format
 msgid "(reading log message from standard input)\n"
@@ -6889,7 +6880,6 @@ msgstr "grep: Fehler beim Erzeugen eines Thread: %s"
 msgid "invalid number of threads specified (%d) for %s"
 msgstr "ungültige Anzahl von Threads (%d) für %s angegeben"
 
-#. #-#-#-#-#  grep.c.po  #-#-#-#-#
 #. TRANSLATORS: %s is the configuration
 #. variable for tweaking threads, currently
 #. grep.threads
@@ -7464,77 +7454,6 @@ msgstr "--verify wurde ohne Namen der Paketdatei angegeben"
 msgid "fsck error in pack objects"
 msgstr "fsck Fehler beim Packen von Objekten"
 
-#, c-format
-msgid "cannot stat template '%s'"
-msgstr "kann Vorlage '%s' nicht lesen"
-
-#, c-format
-msgid "cannot opendir '%s'"
-msgstr "kann Verzeichnis '%s' nicht öffnen"
-
-#, c-format
-msgid "cannot readlink '%s'"
-msgstr "kann Verweis '%s' nicht lesen"
-
-#, c-format
-msgid "cannot symlink '%s' '%s'"
-msgstr "kann symbolische Verknüpfung '%s' auf '%s' nicht erstellen"
-
-#, c-format
-msgid "cannot copy '%s' to '%s'"
-msgstr "kann '%s' nicht nach '%s' kopieren"
-
-#, c-format
-msgid "ignoring template %s"
-msgstr "ignoriere Vorlage %s"
-
-#, c-format
-msgid "templates not found in %s"
-msgstr "Keine Vorlagen in %s gefunden."
-
-#, c-format
-msgid "not copying templates from '%s': %s"
-msgstr "kopiere keine Vorlagen von '%s': %s"
-
-#, c-format
-msgid "invalid initial branch name: '%s'"
-msgstr "ungültiger initialer Branchname: '%s'"
-
-#, c-format
-msgid "unable to handle file type %d"
-msgstr "kann nicht mit Dateityp %d umgehen"
-
-#, c-format
-msgid "unable to move %s to %s"
-msgstr "Konnte %s nicht nach %s verschieben"
-
-msgid "attempt to reinitialize repository with different hash"
-msgstr "Versuch, das Repository mit einem anderen Hash zu reinitialisieren"
-
-#, c-format
-msgid "%s already exists"
-msgstr "%s existiert bereits"
-
-#, c-format
-msgid "re-init: ignored --initial-branch=%s"
-msgstr "Neu-Initialisierung: --initial-branch=%s ignoriert"
-
-#, c-format
-msgid "Reinitialized existing shared Git repository in %s%s\n"
-msgstr "Bestehendes verteiltes Git-Repository in %s%s neuinitialisiert\n"
-
-#, c-format
-msgid "Reinitialized existing Git repository in %s%s\n"
-msgstr "Bestehendes Git-Repository in %s%s neuinitialisiert\n"
-
-#, c-format
-msgid "Initialized empty shared Git repository in %s%s\n"
-msgstr "Leeres verteiltes Git-Repository in %s%s initialisiert\n"
-
-#, c-format
-msgid "Initialized empty Git repository in %s%s\n"
-msgstr "Leeres Git-Repository in %s%s initialisiert\n"
-
 msgid ""
 "git init [-q | --quiet] [--bare] [--template=<template-directory>]\n"
 "         [--separate-git-dir <git-dir>] [--object-format=<format>]\n"
@@ -7974,6 +7893,10 @@ msgstr ""
 "manuell an.\n"
 
 #, c-format
+msgid "could not get object info about '%s'"
+msgstr "konnte Objekt-Informationen über '%s' nicht bestimmen"
+
+#, c-format
 msgid "bad ls-files format: element '%s' does not start with '('"
 msgstr "ungültiges ls-files-Format: Element '%s' fängt nicht mit '(' an"
 
@@ -8121,10 +8044,6 @@ msgstr "zusätzlich zum Objekt die darauf verweisenden Referenzen anzeigen"
 
 msgid "git ls-tree [<options>] <tree-ish> [<path>...]"
 msgstr "git ls-tree [<Optionen>] <Commit-Referenz> [<Pfad>...]"
-
-#, c-format
-msgid "could not get object info about '%s'"
-msgstr "konnte Objekt-Informationen über '%s' nicht bestimmen"
 
 #, c-format
 msgid "bad ls-tree format: element '%s' does not start with '('"
@@ -8871,22 +8790,26 @@ msgid "git notes [--ref <notes-ref>] [list [<object>]]"
 msgstr "git notes [--ref <Notiz-Referenz>] [list [<Objekt>]]"
 
 msgid ""
-"git notes [--ref <notes-ref>] add [-f] [--allow-empty] [-m <msg> | -F <file> "
-"| (-c | -C) <object>] [<object>]"
+"git notes [--ref <notes-ref>] add [-f] [--allow-empty] [--[no-]separator|--"
+"separator=<paragraph-break>] [--[no-]stripspace] [-m <msg> | -F <file> | (-c "
+"| -C) <object>] [<object>]"
 msgstr ""
-"git notes [--ref <Notiz-Referenz>] add [-f] [--allow-empty] [-m "
-"<Beschreibung> | -F <Datei> | (-c | -C) <Objekt>] [<Objekt>]"
+"git notes [--ref <Notiz-Referenz>] add [-f] [--allow-empty] [--"
+"[no-]separator|--separator=<Absatz-Unterbrechung>] [--[no-]stripspace] [-m "
+"<Nachricht> | -F <Datei> | (-c | -C) <Objekt>] [<Objekt>]"
 
 msgid "git notes [--ref <notes-ref>] copy [-f] <from-object> <to-object>"
 msgstr ""
 "git notes [--ref <Notiz-Referenz>] copy [-f] <von-Objekt> <nach-Objekt>"
 
 msgid ""
-"git notes [--ref <notes-ref>] append [--allow-empty] [-m <msg> | -F <file> | "
-"(-c | -C) <object>] [<object>]"
+"git notes [--ref <notes-ref>] append [--allow-empty] [--[no-]separator|--"
+"separator=<paragraph-break>] [--[no-]stripspace] [-m <msg> | -F <file> | (-c "
+"| -C) <object>] [<object>]"
 msgstr ""
-"git notes [--ref <Notiz-Referenz>] append [--allow-empty] [-m <Beschreibung> "
-"| -F <Datei> | (-c | -C) <Objekt>] [<Objekt>]"
+"git notes [--ref <Notiz-Referenz>] append [--allow-empty] [--"
+"[no-]separator|--separator=<Absatz-Unterbrechnung>] [--[no-]stripspace] [-m "
+"<Nachricht> | -F <Datei> | (-c | -C) <Objekt>] [<Object>]"
 
 msgid "git notes [--ref <notes-ref>] edit [--allow-empty] [<object>]"
 msgstr "git notes [--ref <Notiz-Referenz>] edit [--allow-empty] [<Objekt>]"
@@ -9020,6 +8943,15 @@ msgstr "Speichern leerer Notiz erlauben"
 
 msgid "replace existing notes"
 msgstr "existierende Notizen ersetzen"
+
+msgid "<paragraph-break>"
+msgstr "<Absatz-Unterbrechung>"
+
+msgid "insert <paragraph-break> between paragraphs"
+msgstr "<Absatz-Unterbrechung> zwischen Absätzen einfügen"
+
+msgid "remove unnecessary whitespace"
+msgstr "unnötigen Whitespace entfernen"
 
 #, c-format
 msgid ""
@@ -9595,14 +9527,23 @@ msgstr ""
 msgid "refusing to run without --i-still-use-this"
 msgstr "Ausführung ohne --i-still-use-this verweigert"
 
-msgid "git pack-refs [--all] [--no-prune]"
-msgstr "git pack-refs [--all] [--no-prune]"
+msgid ""
+"git pack-refs [--all] [--no-prune] [--include <pattern>] [--exclude "
+"<pattern>]"
+msgstr ""
+"git pack-refs [--all] [--no-prune] [--include <Muster>] [--exclude <Muster>]"
 
 msgid "pack everything"
 msgstr "alles packen"
 
 msgid "prune loose refs (default)"
 msgstr "lose Referenzen entfernen (Standard)"
+
+msgid "references to include"
+msgstr "einzubeziehende Referenzen"
+
+msgid "references to exclude"
+msgstr "Referenzen zum Ausschluss"
 
 msgid "git patch-id [--stable | --unstable | --verbatim]"
 msgstr "git patch-id [--stable | --unstable | --verbatim]"
@@ -9662,6 +9603,12 @@ msgstr "das Überschreiben von lokalen Branches erzwingen"
 
 msgid "number of submodules pulled in parallel"
 msgstr "Anzahl der parallel mit 'pull' zu verarbeitenden Submodule"
+
+msgid "use IPv4 addresses only"
+msgstr "nur IPv4-Adressen benutzen"
+
+msgid "use IPv6 addresses only"
+msgstr "nur IPv6-Adressen benutzen"
 
 msgid ""
 "There is no candidate for rebasing against among the refs that you just "
@@ -9938,35 +9885,37 @@ msgstr ""
 
 msgid ""
 "Updates were rejected because the tip of your current branch is behind\n"
-"its remote counterpart. Integrate the remote changes (e.g.\n"
-"'git pull ...') before pushing again.\n"
+"its remote counterpart. If you want to integrate the remote changes,\n"
+"use 'git pull' before pushing again.\n"
 "See the 'Note about fast-forwards' in 'git push --help' for details."
 msgstr ""
 "Aktualisierungen wurden zurückgewiesen, weil die Spitze Ihres aktuellen\n"
-"Branches hinter seinem externen Gegenstück zurückgefallen ist. Führen Sie\n"
-"die externen Änderungen zusammen (z. B. 'git pull ...') bevor Sie \"push\"\n"
-"erneut ausführen.\n"
-"Siehe auch die Sektion 'Note about fast-forwards' in 'git push --help'\n"
-"für weitere Details."
+"Branches hinter seinem externen Gegenstück zurückgefallen ist. Wenn Sie\n"
+"die externen Änderungen integrieren wollen, verwenden Sie 'git pull' bevor\n"
+"Sie erneut push ausführen.\n"
+"Siehe auch die Sektion 'Note about fast-forwards' in 'git push --help' für "
+"weitere\n"
+"Informationen."
 
 msgid ""
 "Updates were rejected because a pushed branch tip is behind its remote\n"
-"counterpart. Check out this branch and integrate the remote changes\n"
-"(e.g. 'git pull ...') before pushing again.\n"
+"counterpart. If you want to integrate the remote changes, use 'git pull'\n"
+"before pushing again.\n"
 "See the 'Note about fast-forwards' in 'git push --help' for details."
 msgstr ""
 "Aktualisierungen wurden zurückgewiesen, weil die Spitze eines versendeten\n"
-"Branches hinter seinem externen Gegenstück zurückgefallen ist. Checken Sie\n"
-"diesen Branch aus und führen Sie die externen Änderungen zusammen\n"
-"(z. B. 'git pull ...') bevor Sie erneut \"push\" ausführen.\n"
-"Siehe auch die Sektion 'Note about fast-forwards' in 'git push --help'\n"
-"für weitere Details."
+"Branches hinter seinem externen Gegenstück zurückgefallen ist. Wenn Sie die\n"
+"externen Änderungen integrieren wollen, verwenden Sie 'git pull'\n"
+"bevor Sie erneut push ausführen.\n"
+"Siehe auch die Sektion 'Note about fast-forwards' in 'git push --help' für "
+"weitere\n"
+"Informationen."
 
 msgid ""
-"Updates were rejected because the remote contains work that you do\n"
-"not have locally. This is usually caused by another repository pushing\n"
-"to the same ref. You may want to first integrate the remote changes\n"
-"(e.g., 'git pull ...') before pushing again.\n"
+"Updates were rejected because the remote contains work that you do not\n"
+"have locally. This is usually caused by another repository pushing to\n"
+"the same ref. If you want to integrate the remote changes, use\n"
+"'git pull' before pushing again.\n"
 "See the 'Note about fast-forwards' in 'git push --help' for details."
 msgstr ""
 "Aktualisierungen wurden zurückgewiesen, weil das Remote-Repository Commits "
@@ -9974,11 +9923,12 @@ msgstr ""
 "die lokal nicht vorhanden sind. Das wird üblicherweise durch einen \"push\" "
 "von\n"
 "Commits auf dieselbe Referenz von einem anderen Repository aus verursacht.\n"
-"Vielleicht müssen Sie die externen Änderungen zusammenführen (z. B. 'git "
-"pull ...')\n"
-"bevor Sie erneut \"push\" ausführen.\n"
-"Siehe auch die Sektion 'Note about fast-forwards' in 'git push --help'\n"
-"für weitere Details."
+"Wenn Sie die externen Änderungen integrieren wollen, verwenden Sie 'git "
+"pull'\n"
+"bevor Sie erneut push ausführen.\n"
+"Siehe auch die Sektion 'Note about fast-forwards' in 'git push --help' für "
+"weitere\n"
+"Informationen."
 
 msgid "Updates were rejected because the tag already exists in the remote."
 msgstr ""
@@ -9995,15 +9945,21 @@ msgstr ""
 "die Option '--force' zu verwenden.\n"
 
 msgid ""
-"Updates were rejected because the tip of the remote-tracking\n"
-"branch has been updated since the last checkout. You may want\n"
-"to integrate those changes locally (e.g., 'git pull ...')\n"
-"before forcing an update.\n"
+"Updates were rejected because the tip of the remote-tracking branch has\n"
+"been updated since the last checkout. If you want to integrate the\n"
+"remote changes, use 'git pull' before pushing again.\n"
+"See the 'Note about fast-forwards' in 'git push --help' for details."
 msgstr ""
-"Aktualisierungen wurden zurückgewiesen, weil die Spitze des Remote-\n"
-"Tracking-Branches seit dem letzen Checkout aktualisiert wurde. Sie möchten\n"
-"diese Änderungen vielleicht lokal integrieren (z. B. 'git pull ...') bevor\n"
-"Sie die Änderungen erzwingen.\n"
+"Aktualisierungen wurden zurückgewiesen, weil die Spitze des Remote-"
+"Tracking-\n"
+"Branches seit dem letzten Auschecken aktualisiert wurde. Wenn Sie die "
+"externen\n"
+"Änderungen integrieren wollen, verwenden Sie 'git pull' bevor Sie erneut "
+"push\n"
+"ausführen.\n"
+"Siehe auch die Sektion 'Note about fast-forwards' in 'git push --help' für "
+"weitere\n"
+"Informationen."
 
 #, c-format
 msgid "Pushing to %s\n"
@@ -10886,11 +10842,12 @@ msgstr "unbekanntes Argument für Option mirror: %s"
 msgid "fetch the remote branches"
 msgstr "die Remote-Branches anfordern"
 
-msgid "import all tags and associated objects when fetching"
-msgstr "alle Tags und verbundene Objekte beim Anfordern importieren"
-
-msgid "or do not fetch any tag at all (--no-tags)"
-msgstr "oder fordere gar keine Tags an (--no-tags)"
+msgid ""
+"import all tags and associated objects when fetching\n"
+"or do not fetch any tag at all (--no-tags)"
+msgstr ""
+"alle Tags und zugehörigen Objekte beim Abruf importieren\n"
+"oder überhaupt keine Tags abrufen (--no-tags)"
 
 msgid "branch(es) to track"
 msgstr "Branch(es) zur Übernahme"
@@ -12876,6 +12833,10 @@ msgid "Skipping submodule '%s'"
 msgstr "Überspringe Submodul '%s'"
 
 #, c-format
+msgid "cannot clone submodule '%s' without a URL"
+msgstr "kann Submodul '%s' nicht ohne URL klonen"
+
+#, c-format
 msgid "Failed to clone '%s'. Retry scheduled"
 msgstr "Fehler beim Klonen von '%s'. Weiterer Versuch geplant"
 
@@ -13649,11 +13610,12 @@ msgstr "Tag-Inhalte ausgeben"
 
 msgid ""
 "git worktree add [-f] [--detach] [--checkout] [--lock [--reason <string>]]\n"
-"                 [-b <new-branch>] <path> [<commit-ish>]"
+"                 [--orphan] [(-b | -B) <new-branch>] <path> [<commit-ish>]"
 msgstr ""
 "git worktree add [-f] [--detach] [--checkout] [--lock [--reason "
 "<Zeichenkette>]]\n"
-"                 [-b <neuer-Branch>] <Pfad> [<Commit-Angabe>]"
+"                 [--orphan] [(-b | -B) <neuer-Branch>] <Pfad> [<Commit-"
+"Angabe>]"
 
 msgid "git worktree list [-v | --porcelain [-z]]"
 msgstr "git worktree list [-v | --porcelain [-z]]"
@@ -13675,6 +13637,41 @@ msgstr "git worktree repair [<Pfad>...]"
 
 msgid "git worktree unlock <worktree>"
 msgstr "git worktree unlock <Arbeitsverzeichnis>"
+
+msgid "No possible source branch, inferring '--orphan'"
+msgstr "Kein möglicher Quell-Branch, der auf '--orphan' schließen lässt"
+
+#, c-format
+msgid ""
+"If you meant to create a worktree containing a new orphan branch\n"
+"(branch with no commits) for this repository, you can do so\n"
+"using the --orphan flag:\n"
+"\n"
+"    git worktree add --orphan -b %s %s\n"
+msgstr ""
+"Wenn Sie ein Arbeitsverzeichnis erstellen möchten, um einen neuen verwaisten "
+"Branch\n"
+"(Branch ohne Commits) für dieses Repository zu erstellen, können Sie dies "
+"mit\n"
+"der Option --orphan tun:\n"
+"\n"
+"    git worktree add --orphan -b %s %s\n"
+
+#, c-format
+msgid ""
+"If you meant to create a worktree containing a new orphan branch\n"
+"(branch with no commits) for this repository, you can do so\n"
+"using the --orphan flag:\n"
+"\n"
+"    git worktree add --orphan %s\n"
+msgstr ""
+"Wenn Sie ein Arbeitsverzeichnis erstellen möchten, um einen neuen verwaisten "
+"Branch\n"
+"(Branch ohne Commits) für dieses Repository zu erstellen, können Sie dies "
+"mit\n"
+"der Option --orphan tun:\n"
+"\n"
+"    git worktree add --orphan %s\n"
 
 #, c-format
 msgid "Removing %s/%s: %s"
@@ -13747,8 +13744,36 @@ msgid "Preparing worktree (checking out '%s')"
 msgstr "Bereite Arbeitsverzeichnis vor (checke '%s' aus)"
 
 #, c-format
+msgid "unreachable: invalid reference: %s"
+msgstr "unerreichbar: ungültige Referenz: %s"
+
+#, c-format
 msgid "Preparing worktree (detached HEAD %s)"
 msgstr "Bereite Arbeitsverzeichnis vor (losgelöster HEAD %s)"
+
+#, c-format
+msgid ""
+"HEAD points to an invalid (or orphaned) reference.\n"
+"HEAD path: '%s'\n"
+"HEAD contents: '%s'"
+msgstr ""
+"HEAD zeigt auf eine ungültige (oder verwaiste) Referenz.\n"
+"HEAD-Pfad: '%s'\n"
+"HEAD Inhalte: '%s'"
+
+msgid ""
+"No local or remote refs exist despite at least one remote\n"
+"present, stopping; use 'add -f' to overide or fetch a remote first"
+msgstr ""
+"Es gibt keine lokalen oder entfernten Referenzen, obwohl mindestens ein "
+"Remote-Repository\n"
+"vorhanden ist. Angehalten. Verwenden Sie 'add -f', um eine entfernte "
+"Referenz zu überschreiben\n"
+"oder rufen Sie diese zuerst ab"
+
+#, c-format
+msgid "'%s' and '%s' cannot be used together"
+msgstr "'%s' und '%s' können nicht zusammen verwendet werden"
 
 msgid "checkout <branch> even if already checked out in other worktree"
 msgstr ""
@@ -13760,6 +13785,9 @@ msgstr "neuen Branch erstellen"
 
 msgid "create or reset a branch"
 msgstr "Branch erstellen oder umsetzen"
+
+msgid "create unborn/orphaned branch"
+msgstr "ungeborenen/verwaisten Branch erstellen"
 
 msgid "populate the new working tree"
 msgstr "das neue Arbeitsverzeichnis auschecken"
@@ -13782,6 +13810,13 @@ msgstr ""
 msgid "options '%s', '%s', and '%s' cannot be used together"
 msgstr ""
 "die Optionen '%s', '%s' und '%s' können nicht gemeinsam verwendet werden"
+
+#, c-format
+msgid "options '%s', and '%s' cannot be used together"
+msgstr "die Optionen '%s' und '%s' können nicht gemeinsam verwendet werden"
+
+msgid "<commit-ish>"
+msgstr "<Commit-Angabe>"
 
 msgid "added with --lock"
 msgstr "mit --lock hinzugefügt"
@@ -14022,6 +14057,14 @@ msgid_plural "The bundle requires these %<PRIuMAX> refs:"
 msgstr[0] "Das Paket benötigt diese Referenz:"
 msgstr[1] "Das Paket benötigt diese %<PRIuMAX> Referenzen:"
 
+#, c-format
+msgid "The bundle uses this hash algorithm: %s"
+msgstr "Das Paket verwendet diesen Hash-Algorithmus: %s"
+
+#, c-format
+msgid "The bundle uses this filter: %s"
+msgstr "Das Paket verwendet diesen Filter: %s"
+
 msgid "unable to dup bundle descriptor"
 msgstr "konnte dup für Descriptor des Pakets nicht ausführen"
 
@@ -14261,9 +14304,10 @@ msgstr "Zeilen darstellen, die einem Muster entsprechen"
 msgid "A portable graphical interface to Git"
 msgstr "eine portable grafische Schnittstelle zu Git"
 
-msgid "Compute object ID and optionally creates a blob from a file"
+msgid "Compute object ID and optionally create an object from a file"
 msgstr ""
-"von einer Datei die Objekt-ID berechnen und optional ein Blob erstellen"
+"Berechnung der Objekt-ID und optionales Erstellen eines Objekts aus einer "
+"Datei"
 
 msgid "Display help information about Git"
 msgstr "Hilfsinformationen über Git anzeigen"
@@ -14688,6 +14732,10 @@ msgid "commit-graph chain does not match"
 msgstr "Commit-Graph Verkettung stimmt nicht überein"
 
 #, c-format
+msgid "commit count in base graph too high: %<PRIuMAX>"
+msgstr "Anzahl der Commits im Basisgraph zu hoch: %<PRIuMAX>"
+
+#, c-format
 msgid "invalid commit-graph chain: line '%s' not a hash"
 msgstr "Ungültige Commit-Graph Verkettung: Zeile '%s' ist kein Hash"
 
@@ -14770,6 +14818,17 @@ msgstr "konnte Basis-Commit-Graph-Datei nicht umbenennen"
 msgid "failed to rename temporary commit-graph file"
 msgstr "konnte temporäre Commit-Graph-Datei nicht umbenennen"
 
+#, c-format
+msgid "cannot merge graphs with %<PRIuMAX>, %<PRIuMAX> commits"
+msgstr ""
+"Graphen mit %<PRIuMAX>, %<PRIuMAX> Commits können nicht zusammengeführt "
+"werden"
+
+#, c-format
+msgid "cannot merge graph %s, too many commits: %<PRIuMAX>"
+msgstr ""
+"Graph %s kann nicht zusammengeführt werden, zu viele Commits: %<PRIuMAX>"
+
 msgid "Scanning merged commits"
 msgstr "Durchsuche zusammengeführte Commits"
 
@@ -14800,9 +14859,6 @@ msgstr "Commit-Graph hat fehlerhaften Fanout-Wert: fanout[%d] = %u != %u"
 #, c-format
 msgid "failed to parse commit %s from commit-graph"
 msgstr "konnte Commit %s von Commit-Graph nicht parsen"
-
-msgid "Verifying commits in commit graph"
-msgstr "Commit in Commit-Graph überprüfen"
 
 #, c-format
 msgid "failed to parse commit %s from object database for commit-graph"
@@ -14848,6 +14904,9 @@ msgstr "Commit-Graph Erstellung für Commit %s ist %<PRIuMAX> < %<PRIuMAX>"
 msgid "commit date for commit %s in commit-graph is %<PRIuMAX> != %<PRIuMAX>"
 msgstr ""
 "Commit-Datum für Commit %s in Commit-Graph ist %<PRIuMAX> != %<PRIuMAX>"
+
+msgid "Verifying commits in commit graph"
+msgstr "Commit in Commit-Graph überprüfen"
 
 #, c-format
 msgid "%s %s is not a commit!"
@@ -15816,6 +15875,12 @@ msgstr "keine Merge-Basis gefunden"
 msgid "multiple merge bases found"
 msgstr "mehrere Merge-Basen gefunden"
 
+msgid "cannot compare stdin to a directory"
+msgstr "kann stdin nicht mit einem Verzeichnis vergleichen"
+
+msgid "cannot compare a named pipe to a directory"
+msgstr "kann eine benannte Pipe nicht mit einem Verzeichnis vergleichen"
+
 msgid "git diff --no-index [<options>] <path> <path>"
 msgstr "git diff --no-index [<Optionen>] <Pfad> <Pfad>"
 
@@ -15873,6 +15938,13 @@ msgstr ""
 msgid "external diff died, stopping at %s"
 msgstr "externes Diff-Programm unerwartet beendet, angehalten bei %s"
 
+msgid "--follow requires exactly one pathspec"
+msgstr "--follow erfordert genau eine Pfadspezifikation"
+
+#, c-format
+msgid "pathspec magic not supported by --follow: %s"
+msgstr "Magie von Pfadspezifikationen wird von --follow nicht unterstützt: %s"
+
 #, c-format
 msgid "options '%s', '%s', '%s', and '%s' cannot be used together"
 msgstr ""
@@ -15891,9 +15963,6 @@ msgid ""
 msgstr ""
 "die Optionen '%s' und '%s' können nicht gemeinsam verwendet werden, nutzen "
 "Sie '%s' mit '%s' und '%s'"
-
-msgid "--follow requires exactly one pathspec"
-msgstr "--follow erfordert genau eine Pfadspezifikation"
 
 #, c-format
 msgid "invalid --stat value: %s"
@@ -17404,7 +17473,7 @@ msgstr ""
 #. conflict in a submodule. The first argument is the submodule
 #. name, and the second argument is the abbreviated id of the
 #. commit that needs to be merged.  For example:
-#.  - go to submodule (mysubmodule), and either merge commit abc1234"
+#. - go to submodule (mysubmodule), and either merge commit abc1234"
 #.
 #, c-format
 msgid ""
@@ -18145,7 +18214,7 @@ msgstr "%s [ungültiges Objekt]"
 #. TRANSLATORS: This is a line of ambiguous commit
 #. object output. E.g.:
 #. *
-#.    "deadbeef commit 2021-01-01 - Some Commit Message"
+#. "deadbeef commit 2021-01-01 - Some Commit Message"
 #.
 #, c-format
 msgid "%s commit %s - %s"
@@ -18154,7 +18223,7 @@ msgstr "%s Commit %s - %s"
 #. TRANSLATORS: This is a line of ambiguous
 #. tag object output. E.g.:
 #. *
-#.    "deadbeef tag 2022-01-01 - Some Tag Message"
+#. "deadbeef tag 2022-01-01 - Some Tag Message"
 #. *
 #. The second argument is the YYYY-MM-DD found
 #. in the tag.
@@ -18170,7 +18239,7 @@ msgstr "%s Tag %s - %s"
 #. tag object output where we couldn't parse
 #. the tag itself. E.g.:
 #. *
-#.    "deadbeef [bad tag, could not parse it]"
+#. "deadbeef [bad tag, could not parse it]"
 #.
 #, c-format
 msgid "%s [bad tag, could not parse it]"
@@ -18828,6 +18897,13 @@ msgid "could not parse log for '%s'"
 msgstr "Konnte Log für '%s' nicht parsen."
 
 #, c-format
+msgid "invalid extra cruft tip: '%s'"
+msgstr "ungültiger zusätzlicher Schrotthinweis: '%s'"
+
+msgid "unable to enumerate additional recent objects"
+msgstr "zusätzliche neue Objekte konnten nicht aufgezählt werden"
+
+#, c-format
 msgid "will not add file alias '%s' ('%s' already exists in index)"
 msgstr ""
 "Dateialias '%s' wird nicht hinzugefügt ('%s' existiert bereits im Index)."
@@ -18979,6 +19055,14 @@ msgstr "Konnte Zugriffsberechtigung auf '%s' nicht setzen."
 #, c-format
 msgid "%s: cannot drop to stage #0"
 msgstr "%s: Kann nicht auf Stufe #0 wechseln."
+
+#, c-format
+msgid "unexpected diff status %c"
+msgstr "unerwarteter Differenz-Status %c"
+
+#, c-format
+msgid "remove '%s'\n"
+msgstr "lösche '%s'\n"
 
 msgid ""
 "You can fix this with 'git rebase --edit-todo' and then run 'git rebase --"
@@ -19181,6 +19265,22 @@ msgid "positive value expected contents:lines=%s"
 msgstr "Positiver Wert erwartet contents:lines=%s"
 
 #, c-format
+msgid "argument expected for %s"
+msgstr "Argument erwartet für %s"
+
+#, c-format
+msgid "positive value expected %s=%s"
+msgstr "positiver Wert erwartet %s=%s"
+
+#, c-format
+msgid "cannot fully parse %s=%s"
+msgstr "kann %s=%s nicht vollständig parsen"
+
+#, c-format
+msgid "value expected %s="
+msgstr "Wert erwartet %s="
+
+#, c-format
 msgid "positive value expected '%s' in %%(%s)"
 msgstr "positiver Wert erwartet '%s' in %%(%s)"
 
@@ -19254,6 +19354,9 @@ msgstr "dieser Befehl lehnt Atom ab %%(%.*s)"
 msgid "--format=%.*s cannot be used with --python, --shell, --tcl"
 msgstr "--format=%.*s kann nicht mit --python, --shell, --tcl verwendet werden"
 
+msgid "failed to run 'describe'"
+msgstr "'describe' konnte nicht ausgeführt werden"
+
 #, c-format
 msgid "(no branch, rebasing %s)"
 msgstr "(kein Branch, Rebase von %s)"
@@ -19314,6 +19417,9 @@ msgstr "Schüssel"
 
 msgid "field name to sort on"
 msgstr "sortiere nach diesem Feld"
+
+msgid "exclude refs which match pattern"
+msgstr "Ausschluss von Referenzen, die dem Muster entsprechen"
 
 #, c-format
 msgid "not a reflog: %s"
@@ -19772,10 +19878,11 @@ msgstr[1] ""
 "Ihr Branch und '%s' sind divergiert,\n"
 "und haben jeweils %d und %d unterschiedliche Commits.\n"
 
-msgid "  (use \"git pull\" to merge the remote branch into yours)\n"
+msgid ""
+"  (use \"git pull\" if you want to integrate the remote branch with yours)\n"
 msgstr ""
-"  (benutzen Sie \"git pull\", um Ihren Branch mit dem Remote-Branch "
-"zusammenzuführen)\n"
+"  (verwenden Sie \"git pull\", wenn Sie den Remote-Branch in Ihren "
+"integrieren wollen)\n"
 
 #, c-format
 msgid "cannot parse expected object name '%s'"
@@ -19886,6 +19993,10 @@ msgstr "konnte kein Commit für das Argument ancestry-path %s erhalten"
 
 msgid "--unpacked=<packfile> no longer supported"
 msgstr "--unpacked=<Pack-Datei> wird nicht länger unterstützt"
+
+#, c-format
+msgid "invalid option '%s' in --stdin mode"
+msgstr "ungültige Option '%s' im Modus --stdin"
 
 msgid "your current branch appears to be broken"
 msgstr "Ihr aktueller Branch scheint fehlerhaft zu sein."
@@ -21055,6 +21166,77 @@ msgstr "fork fehlgeschlagen"
 
 msgid "setsid failed"
 msgstr "setsid fehlgeschlagen"
+
+#, c-format
+msgid "cannot stat template '%s'"
+msgstr "kann Vorlage '%s' nicht lesen"
+
+#, c-format
+msgid "cannot opendir '%s'"
+msgstr "kann Verzeichnis '%s' nicht öffnen"
+
+#, c-format
+msgid "cannot readlink '%s'"
+msgstr "kann Verweis '%s' nicht lesen"
+
+#, c-format
+msgid "cannot symlink '%s' '%s'"
+msgstr "kann symbolische Verknüpfung '%s' auf '%s' nicht erstellen"
+
+#, c-format
+msgid "cannot copy '%s' to '%s'"
+msgstr "kann '%s' nicht nach '%s' kopieren"
+
+#, c-format
+msgid "ignoring template %s"
+msgstr "ignoriere Vorlage %s"
+
+#, c-format
+msgid "templates not found in %s"
+msgstr "Keine Vorlagen in %s gefunden."
+
+#, c-format
+msgid "not copying templates from '%s': %s"
+msgstr "kopiere keine Vorlagen von '%s': %s"
+
+#, c-format
+msgid "invalid initial branch name: '%s'"
+msgstr "ungültiger initialer Branchname: '%s'"
+
+#, c-format
+msgid "unable to handle file type %d"
+msgstr "kann nicht mit Dateityp %d umgehen"
+
+#, c-format
+msgid "unable to move %s to %s"
+msgstr "Konnte %s nicht nach %s verschieben"
+
+msgid "attempt to reinitialize repository with different hash"
+msgstr "Versuch, das Repository mit einem anderen Hash zu reinitialisieren"
+
+#, c-format
+msgid "%s already exists"
+msgstr "%s existiert bereits"
+
+#, c-format
+msgid "re-init: ignored --initial-branch=%s"
+msgstr "Neu-Initialisierung: --initial-branch=%s ignoriert"
+
+#, c-format
+msgid "Reinitialized existing shared Git repository in %s%s\n"
+msgstr "Bestehendes verteiltes Git-Repository in %s%s neuinitialisiert\n"
+
+#, c-format
+msgid "Reinitialized existing Git repository in %s%s\n"
+msgstr "Bestehendes Git-Repository in %s%s neuinitialisiert\n"
+
+#, c-format
+msgid "Initialized empty shared Git repository in %s%s\n"
+msgstr "Leeres verteiltes Git-Repository in %s%s initialisiert\n"
+
+#, c-format
+msgid "Initialized empty Git repository in %s%s\n"
+msgstr "Leeres Git-Repository in %s%s initialisiert\n"
 
 #, c-format
 msgid "index entry is a directory, but not sparse (%08x)"
