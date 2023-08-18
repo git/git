@@ -151,8 +151,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2023-08-11 11:21+0800\n"
-"PO-Revision-Date: 2023-08-18 19:28+0800\n"
+"POT-Creation-Date: 2023-08-18 10:21+0800\n"
+"PO-Revision-Date: 2023-08-18 19:29+0800\n"
 "Last-Translator: Teng Long <dyroneteng@gmail.com>\n"
 "Language-Team: GitHub <https://github.com/dyrone/git/>\n"
 "Language: zh_CN\n"
@@ -894,9 +894,8 @@ msgid "Reverting is not possible because you have unmerged files."
 msgstr "无法回退，因为您有未合并的文件。"
 
 #: advice.c
-#, c-format
-msgid "It is not possible to %s because you have unmerged files."
-msgstr "无法 %s，因为您有未合并的文件。"
+msgid "Rebasing is not possible because you have unmerged files."
+msgstr "无法变基，因为您有未合并的文件。"
 
 #: advice.c
 msgid ""
