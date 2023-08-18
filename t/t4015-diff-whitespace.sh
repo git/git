@@ -11,8 +11,12 @@ TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-diff.sh
 
-for opts in --patch --quiet -s --stat --shortstat --dirstat=lines
+for opt_res in --patch --quiet -s --stat --shortstat --dirstat=lines \
+	       --raw! --name-only! --name-status!
 do
+	opts=${opt_res%!} expect_failure=
+	test "$opts" = "$opt_res" ||
+		expect_failure="test_expect_code 1"
 
 	test_expect_success "status with $opts (different)" '
 		echo foo >x &&
@@ -40,7 +44,7 @@ do
 		echo foo >x &&
 		git add x &&
 		echo " foo" >x &&
-		git diff -w $opts --exit-code x
+		$expect_failure git diff -w $opts --exit-code x
 	'
 done
 
