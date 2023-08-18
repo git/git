@@ -6901,6 +6901,7 @@ void compute_diffstat(struct diff_options *options,
 		if (check_pair_status(p))
 			diff_flush_stat(p, options, diffstat);
 	}
+	options->found_changes = !!diffstat->nr;
 }
 
 void diff_addremove(struct diff_options *options,

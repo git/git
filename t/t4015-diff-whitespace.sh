@@ -11,7 +11,7 @@ TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-diff.sh
 
-for opts in --patch --quiet -s
+for opts in --patch --quiet -s --stat --shortstat --dirstat=lines
 do
 
 	test_expect_success "status with $opts (different)" '
