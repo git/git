@@ -206,7 +206,7 @@ static int traverse_reachable(void)
 	return !!result;
 }
 
-static int mark_used(struct object *obj, int type UNUSED,
+static int mark_used(struct object *obj, enum object_type type UNUSED,
 		     void *data UNUSED, struct fsck_options *options UNUSED)
 {
 	if (!obj)
