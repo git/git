@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2023, #05; Tue, 15)
-X-master-at: f1ed9d7dc0e49dc1a044941d821c9d2342313c26
-X-next-at: 538df5cf277f6d03b93daeac4d448cbb1a0ded19
+Subject: What's cooking in git.git (Aug 2023, #06; Fri, 18)
+X-master-at: f9972720e9a405e4f6924a7cde0ed5880687f4d0
+X-next-at: 00c1cf4fe74f2ddb78eb24cb832b729034603801
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Aug 2023, #05; Tue, 15)
+What's cooking in git.git (Aug 2023, #06; Fri, 18)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,7 +17,7 @@ topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
 
-Git 2.42-rc2 has been tagged.
+Git 2.42 will be released early next week.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -50,87 +50,118 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ds/maintenance-on-windows-fix (2023-08-09) 2 commits
-  (merged to 'next' on 2023-08-09 at 3d7abef9be)
- + git maintenance: avoid console window in scheduled tasks on Windows
- + win32: add a helper to run `git.exe` without a foreground window
+* ps/revision-stdin-with-options (2023-08-16) 1 commit
+  (merged to 'next' on 2023-08-16 at 6eef21f632)
+ + rev-list-options: fix typo in `--stdin` documentation
 
- Windows updates.
- source: <pull.1570.git.1691600087.gitgitgadget@gmail.com>
-
-
-* jc/send-email-pre-process-fix (2023-08-09) 1 commit
-  (merged to 'next' on 2023-08-09 at ba1b999ec2)
- + t9001: remove excessive GIT_SEND_EMAIL_NOTTY=1
-
- Test fix.
- source: <20230809171531.2564754-1-oswald.buddenhagen@gmx.de>
+ Typofix to documentation added during this cycle.
+ source: <b1b3f1d10b64e63c62db0105957a4ad5e0295d34.1692194193.git.martin.agren@gmail.com>
 
 
-* jk/repack-leakfix (2023-08-08) 1 commit
-  (merged to 'next' on 2023-08-09 at 8692d7b2e0)
- + repack: free geometry struct
- (this branch is used by tb/repack-geometry-cleanup.)
+* sa/doc-ls-remote (2023-08-16) 1 commit
+  (merged to 'next' on 2023-08-16 at 059ebeb48b)
+ + show-ref doc: fix carets in monospace
 
- Leakfix.
- source: <20230808185023.GA3498623@coredump.intra.peff.net>
-
-
-* jk/send-email-with-new-readline (2023-08-08) 2 commits
-  (merged to 'next' on 2023-08-09 at d42e4ca9f8)
- + send-email: avoid creating more than one Term::ReadLine object
- + send-email: drop FakeTerm hack
- (this branch is used by ws/svn-with-new-readline.)
-
- Adjust to newer Term::ReadLine to prevent it from breaking
- the interactive prompt code in send-email.
- source: <20230808180935.GA2096901@coredump.intra.peff.net>
+ Mark-up fix to documentation added during this cycle.
+ source: <f52247af9027192d0a29b8ee049db20250314d74.1692194193.git.martin.agren@gmail.com>
 
 
-* js/allow-t4000-to-be-indented-with-spaces (2023-08-08) 1 commit
-  (merged to 'next' on 2023-08-09 at 9c0d6659ec)
- + t0040: declare non-tab indentation to be okay in this script
+* tl/notes-separator (2023-08-16) 2 commits
+  (merged to 'next' on 2023-08-16 at 397c62dd35)
+ + notes doc: tidy up `--no-stripspace` paragraph
+ + notes doc: split up run-on sentences
 
- File attribute update.
- source: <pull.1568.git.1691491054706.gitgitgadget@gmail.com>
-
-
-* ob/rebase-conflict-advice-i18n-fix (2023-08-07) 1 commit
-  (merged to 'next' on 2023-08-09 at 0e02113510)
- + advice: handle "rebase" in error_resolve_conflict()
-
- i18n coverage improvement and avoidance of sentence lego.
- source: <20230807170935.2336715-1-oswald.buddenhagen@gmx.de>
-
-
-* pw/diff-no-index-from-named-pipes (2023-08-13) 2 commits
-  (merged to 'next' on 2023-08-13 at 6600a9f80c)
- + t4053: avoid writing to unopened pipe
- + t4053: avoid race when killing background processes
-
- Test updates.
- source: <pull.1571.git.1691677993195.gitgitgadget@gmail.com>
- source: <20230813162440.GA1688763@coredump.intra.peff.net>
-
-
-* rs/parse-opt-forbid-set-int-0-without-noneg (2023-08-08) 1 commit
-  (merged to 'next' on 2023-08-09 at fab1193dbc)
- + parse-options: disallow negating OPTION_SET_INT 0
-
- Developer support to detect meaningless combination of options.
- source: <c4cd1591-3a83-920a-6a80-19ffbfe3089d@web.de>
-
-
-* st/mv-lstat-fix (2023-08-09) 1 commit
-  (merged to 'next' on 2023-08-09 at 4b5708df7c)
- + mv: handle lstat() failure correctly
-
- Correct use of lstat() that assumed a failing call would not
- clobber the statbuf.
- source: <pull.1561.v2.git.1691567261701.gitgitgadget@gmail.com>
+ Typo/grammofix to documentation added during this cycle.
+ source: <cover.1692194193.git.martin.agren@gmail.com>
 
 --------------------------------------------------
 [New Topics]
+
+* jc/diff-exit-code-with-w-fixes (2023-08-18) 5 commits
+ - diff: the -w option breaks --exit-code for --raw and other output modes
+ - t4040: remove test that succeeded for a wrong reason
+ - diff: teach "--stat -w --exit-code" to notice differences
+ - diff: mode-only change should be noticed by "--patch -w --exit-code"
+ - diff: move the fallback "--exit-code" code down
+
+ "git diff -w --exit-code" with various options did not work
+ correctly, which is being addressed.
+
+ Needs review.
+ source: <20230818235932.3253552-1-gitster@pobox.com>
+
+
+* jc/update-index-show-index-version (2023-08-18) 3 commits
+ - test-tool: retire "index-version"
+ - update-index: add --show-index-version
+ - update-index doc: v4 is OK with JGit and libgit2
+
+ "git update-index" learns "--show-index-version" to inspect
+ the index format version used by the on-disk index file.
+
+ Needs review.
+ source: <20230818233729.2766281-1-gitster@pobox.com>
+
+--------------------------------------------------
+[Stalled]
+
+* ob/send-email-interactive-failure (2023-08-09) 1 commit
+ . send-email: prompt-dependent exit codes
+
+ "git send-email" exits with non-zero status when end-user
+ interaction causes any prepared message not to be sent.
+
+ Expecting a reroll.
+ Without an opt-in fix, this will be a backward-incompatible
+ change that needs mention in the release notes.
+ source: <20230809171531.2564739-1-oswald.buddenhagen@gmx.de>
+
+
+* ob/sequencer-empty-hint-fix (2023-08-09) 1 commit
+ . sequencer: rectify empty hint in call of require_clean_work_tree()
+
+ Update the use of API for consistency between two calls to
+ require_clean_work_tree() from the sequencer code.
+
+ Expecting a reroll.
+ cf. <xmqqedkahoio.fsf@gitster.g>
+ source: <20230809171531.2564829-1-oswald.buddenhagen@gmx.de>
+
+
+* cc/git-replay (2023-06-03) 15 commits
+ - replay: stop assuming replayed branches do not diverge
+ - replay: add --contained to rebase contained branches
+ - replay: add --advance or 'cherry-pick' mode
+ - replay: disallow revision specific options and pathspecs
+ - replay: use standard revision ranges
+ - replay: make it a minimal server side command
+ - replay: remove HEAD related sanity check
+ - replay: remove progress and info output
+ - replay: add an important FIXME comment about gpg signing
+ - replay: don't simplify history
+ - replay: introduce pick_regular_commit()
+ - replay: die() instead of failing assert()
+ - replay: start using parse_options API
+ - replay: introduce new builtin
+ - t6429: remove switching aspects of fast-rebase
+
+ No reviews?
+ source: <20230602102533.876905-1-christian.couder@gmail.com>
+
+
+* tk/cherry-pick-sequence-requires-clean-worktree (2023-06-01) 1 commit
+ - cherry-pick: refuse cherry-pick sequence if index is dirty
+
+ "git cherry-pick A" that replays a single commit stopped before
+ clobbering local modification, but "git cherry-pick A..B" did not,
+ which has been corrected.
+
+ Expecting a reroll.
+ cf. <999f12b2-38d6-f446-e763-4985116ad37d@gmail.com>
+ source: <pull.1535.v2.git.1685264889088.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
 
 * ob/revert-of-revert-is-reapply (2023-08-11) 3 commits
  - SQUASH??? reword by Linus Arver and Phillip Wood
@@ -169,11 +200,12 @@ Release tarballs are available at:
 
 
 * ja/worktree-orphan (2023-08-13) 1 commit
- - builtin/worktree.c: fix typo in "forgot fetch" msg
+  (merged to 'next' on 2023-08-18 at b2a6f7fb71)
+ + builtin/worktree.c: fix typo in "forgot fetch" msg
 
  Typofix in an error message.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <20230811233940.30264-1-jacobabel@nullpo.dev>
 
 
@@ -187,64 +219,14 @@ Release tarballs are available at:
 
 
 * ob/t9001-indent-fix (2023-08-13) 1 commit
- - t9001: fix indentation in test_no_confirm()
+  (merged to 'next' on 2023-08-18 at 00c1cf4fe7)
+ + t9001: fix indentation in test_no_confirm()
 
  Test style fix.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <20230813104649.2919412-1-oswald.buddenhagen@gmx.de>
 
---------------------------------------------------
-[Stalled]
-
-* cc/git-replay (2023-06-03) 15 commits
- - replay: stop assuming replayed branches do not diverge
- - replay: add --contained to rebase contained branches
- - replay: add --advance or 'cherry-pick' mode
- - replay: disallow revision specific options and pathspecs
- - replay: use standard revision ranges
- - replay: make it a minimal server side command
- - replay: remove HEAD related sanity check
- - replay: remove progress and info output
- - replay: add an important FIXME comment about gpg signing
- - replay: don't simplify history
- - replay: introduce pick_regular_commit()
- - replay: die() instead of failing assert()
- - replay: start using parse_options API
- - replay: introduce new builtin
- - t6429: remove switching aspects of fast-rebase
-
- No reviews?
- source: <20230602102533.876905-1-christian.couder@gmail.com>
-
-
-* tk/cherry-pick-sequence-requires-clean-worktree (2023-06-01) 1 commit
- - cherry-pick: refuse cherry-pick sequence if index is dirty
-
- "git cherry-pick A" that replays a single commit stopped before
- clobbering local modification, but "git cherry-pick A..B" did not,
- which has been corrected.
-
- Expecting a reroll.
- cf. <999f12b2-38d6-f446-e763-4985116ad37d@gmail.com>
- source: <pull.1535.v2.git.1685264889088.gitgitgadget@gmail.com>
-
-
-* ab/tag-object-type-errors (2023-05-10) 4 commits
- . tag: don't emit potentially incorrect "object is a X, not a Y"
- . tag: don't misreport type of tagged objects in errors
- . object tests: add test for unexpected objects in tags
- . Merge branch 'jk/parse-object-type-mismatch' into ab/tag-object-type-errors
-
- Hardening checks around mismatched object types when one of those
- objects is a tag.
-
- Will discard.
- Stalled for too long.
- source: <cover-v2-0.3-00000000000-20221230T011725Z-avarab@gmail.com>
-
---------------------------------------------------
-[Cooking]
 
 * sl/sparse-check-attr (2023-08-11) 3 commits
  - check-attr: integrate with sparse-index
@@ -314,7 +296,9 @@ Release tarballs are available at:
  source: <20230810211619.19055-1-andy.koppe@gmail.com>
 
 
-* ds/upload-pack-error-sequence-fix (2023-08-10) 1 commit
+* ds/upload-pack-error-sequence-fix (2023-08-16) 2 commits
+  (merged to 'next' on 2023-08-16 at d0522d547d)
+ + upload-pack: fix exit code when denying fetch of unreachable object ID
   (merged to 'next' on 2023-08-13 at 6c740593cf)
  + upload-pack: fix race condition in error messages
 
@@ -322,6 +306,7 @@ Release tarballs are available at:
 
  Will cook in 'next'.
  source: <pull.1572.git.1691678450757.gitgitgadget@gmail.com>
+ source: <fe028981d353158e9840eb035194ca15e6a2c15e.1692165840.git.ps@pks.im>
 
 
 * mp/rebase-label-length-limit (2023-08-10) 2 commits
@@ -387,42 +372,20 @@ Release tarballs are available at:
 
 
 * ds/maintenance-schedule-fuzz (2023-08-10) 8 commits
- - maintenance: update schedule before config
- - maintenance: fix systemd schedule overlaps
- - maintenance: use random minute in systemd scheduler
- - maintenance: swap method locations
- - maintenance: use random minute in cron scheduler
- - maintenance: use random minute in Windows scheduler
- - maintenance: use random minute in launchctl scheduler
- - maintenance: add get_random_minute()
+  (merged to 'next' on 2023-08-18 at 8d17424818)
+ + maintenance: update schedule before config
+ + maintenance: fix systemd schedule overlaps
+ + maintenance: use random minute in systemd scheduler
+ + maintenance: swap method locations
+ + maintenance: use random minute in cron scheduler
+ + maintenance: use random minute in Windows scheduler
+ + maintenance: use random minute in launchctl scheduler
+ + maintenance: add get_random_minute()
 
  Allow "git maintenance" schedule to be randomly distributed.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <pull.1567.v2.git.1691699987.gitgitgadget@gmail.com>
-
-
-* ob/send-email-interactive-failure (2023-08-09) 1 commit
- . send-email: prompt-dependent exit codes
-
- "git send-email" exits with non-zero status when end-user
- interaction causes any prepared message not to be sent.
-
- Expecting a reroll.
- Without an opt-in fix, this will be a backward-incompatible
- change that needs mention in the release notes.
- source: <20230809171531.2564739-1-oswald.buddenhagen@gmx.de>
-
-
-* ob/sequencer-empty-hint-fix (2023-08-09) 1 commit
- . sequencer: rectify empty hint in call of require_clean_work_tree()
-
- Update the use of API for consistency between two calls to
- require_clean_work_tree() from the sequencer code.
-
- Expecting a reroll.
- cf. <xmqqedkahoio.fsf@gitster.g>
- source: <20230809171531.2564829-1-oswald.buddenhagen@gmx.de>
 
 
 * rj/branch-in-use-error-message (2023-08-08) 2 commits
@@ -453,8 +416,7 @@ Release tarballs are available at:
  source: <pull.1469.v5.git.git.1686945306242.gitgitgadget@gmail.com>
 
 
-* jc/rerere-cleanup (2023-08-03) 5 commits
- - rerere: plug small strbuf leak
+* jc/rerere-cleanup (2023-08-03) 4 commits
  - rerere: modernize use of empty strbuf
  - rerere: try_merge() should use LL_MERGE_ERROR when it means an error
  - rerere: fix comment on handle_file() helper
@@ -516,19 +478,20 @@ Release tarballs are available at:
 
 
 * rs/parse-options-negation-help (2023-08-06) 8 commits
- - parse-options: simplify usage_padding()
- - parse-options: no --[no-]no-...
- - parse-options: factor out usage_indent() and usage_padding()
- - parse-options: show negatability of options in short help
- - t1502: test option negation
- - t1502: move optionspec help output to a file
- - t1502, docs: disallow --no-help
- - subtree: disallow --no-{help,quiet,debug,branch,message}
+  (merged to 'next' on 2023-08-18 at 9d37b5fbfe)
+ + parse-options: simplify usage_padding()
+ + parse-options: no --[no-]no-...
+ + parse-options: factor out usage_indent() and usage_padding()
+ + parse-options: show negatability of options in short help
+ + t1502: test option negation
+ + t1502: move optionspec help output to a file
+ + t1502, docs: disallow --no-help
+ + subtree: disallow --no-{help,quiet,debug,branch,message}
 
  "git cmd -h" learned to signal which options can be negated by
  listing such options like "--[no-]opt".
 
- Will merge to 'next'.
+ Will cook in 'next'.
  cf. <xmqqbkfm3gne.fsf@gitster.g>
  source: <e4d46d97-1cd4-7fea-afd1-7de5023b1b09@web.de>
 
@@ -565,13 +528,15 @@ Release tarballs are available at:
  source: <20230812000011.1227371-1-christian.couder@gmail.com>
 
 
-* js/doc-unit-tests (2023-08-07) 1 commit
- - unit tests: add a project plan document
+* js/doc-unit-tests (2023-08-17) 3 commits
+ - ci: run unit tests in CI
+ - unit tests: add TAP unit test framework
+ - unit tests: Add a project plan document
 
  Process to add some form of low-level unit tests has started.
 
  Comments?
- source: <c7dca1a805a16fd4fd68e86efeec97510e3ac4b8.1691449216.git.steadmon@google.com>
+ source: <cover.1692297001.git.steadmon@google.com>
 
 
 * jt/path-filter-fix (2023-08-08) 8 commits
@@ -607,3 +572,18 @@ Release tarballs are available at:
  Will cook in 'next'.
  source: <20230807170935.2336663-1-oswald.buddenhagen@gmx.de>
  source: <20230809171531.2564785-1-oswald.buddenhagen@gmx.de>
+
+--------------------------------------------------
+[Discarded]
+
+* ab/tag-object-type-errors (2023-05-10) 4 commits
+ . tag: don't emit potentially incorrect "object is a X, not a Y"
+ . tag: don't misreport type of tagged objects in errors
+ . object tests: add test for unexpected objects in tags
+ . Merge branch 'jk/parse-object-type-mismatch' into ab/tag-object-type-errors
+
+ Hardening checks around mismatched object types when one of those
+ objects is a tag.
+
+ Stalled for too long.
+ source: <cover-v2-0.3-00000000000-20221230T011725Z-avarab@gmail.com>
