@@ -312,10 +312,7 @@ void format_decorations(struct strbuf *sb,
 {
 	const struct name_decoration *decoration;
 	const struct name_decoration *current_and_HEAD;
-	const char *color_commit =
-		diff_get_color(use_color, DIFF_COMMIT);
-	const char *color_reset =
-		decorate_get_color(use_color, DECORATION_NONE);
+	const char *color_commit, *color_reset;
 
 	const char *prefix = " (";
 	const char *suffix = ")";
@@ -334,6 +331,9 @@ void format_decorations(struct strbuf *sb,
 			separator = opts->separator;
 	}
 
+	color_commit = diff_get_color(use_color, DIFF_COMMIT);
+	color_reset = decorate_get_color(use_color, DECORATION_NONE);
+
 	current_and_HEAD = current_pointed_by_HEAD(decoration);
 	while (decoration) {
 		/*
@@ -342,9 +342,12 @@ void format_decorations(struct strbuf *sb,
 		 * appeared, skipping the entry for current.
 		 */
 		if (decoration != current_and_HEAD) {
-			strbuf_addstr(sb, color_commit);
-			strbuf_addstr(sb, prefix);
-			strbuf_addstr(sb, color_reset);
+			if (*prefix) {
+				strbuf_addstr(sb, color_commit);
+				strbuf_addstr(sb, prefix);
+				strbuf_addstr(sb, color_reset);
+			}
+
 			strbuf_addstr(sb, decorate_get_color(use_color, decoration->type));
 			if (decoration->type == DECORATION_REF_TAG)
 				strbuf_addstr(sb, "tag: ");
@@ -364,9 +367,11 @@ void format_decorations(struct strbuf *sb,
 		}
 		decoration = decoration->next;
 	}
-	strbuf_addstr(sb, color_commit);
-	strbuf_addstr(sb, suffix);
-	strbuf_addstr(sb, color_reset);
+	if (*suffix) {
+		strbuf_addstr(sb, color_commit);
+		strbuf_addstr(sb, suffix);
+		strbuf_addstr(sb, color_reset);
+	}
 }
 
 void show_decorations(struct rev_info *opt, struct commit *commit)
