@@ -303,14 +303,12 @@ static void show_name(struct strbuf *sb, const struct name_decoration *decoratio
 
 /*
  * The caller makes sure there is no funny color before calling.
- * format_decorations_extended makes sure the same after return.
+ * format_decorations ensures the same after return.
  */
-void format_decorations_extended(struct strbuf *sb,
+void format_decorations(struct strbuf *sb,
 			const struct commit *commit,
 			int use_color,
-			const char *prefix,
-			const char *separator,
-			const char *suffix)
+			const struct decoration_options *opts)
 {
 	const struct name_decoration *decoration;
 	const struct name_decoration *current_and_HEAD;
@@ -319,9 +317,22 @@ void format_decorations_extended(struct strbuf *sb,
 	const char *color_reset =
 		decorate_get_color(use_color, DECORATION_NONE);
 
+	const char *prefix = " (";
+	const char *suffix = ")";
+	const char *separator = ", ";
+
 	decoration = get_name_decoration(&commit->object);
 	if (!decoration)
 		return;
+
+	if (opts) {
+		if (opts->prefix)
+			prefix = opts->prefix;
+		if (opts->suffix)
+			suffix = opts->suffix;
+		if (opts->separator)
+			separator = opts->separator;
+	}
 
 	current_and_HEAD = current_pointed_by_HEAD(decoration);
 	while (decoration) {
@@ -370,7 +381,7 @@ void show_decorations(struct rev_info *opt, struct commit *commit)
 	}
 	if (!opt->show_decorations)
 		return;
-	format_decorations(&sb, commit, opt->diffopt.use_color);
+	format_decorations(&sb, commit, opt->diffopt.use_color, NULL);
 	fputs(sb.buf, opt->diffopt.file);
 	strbuf_release(&sb);
 }
