@@ -224,13 +224,11 @@ The placeholders are:
 	linkgit:git-rev-list[1])
 '%d':: ref names, like the --decorate option of linkgit:git-log[1]
 '%D':: ref names without the " (", ")" wrapping.
-'%(describe[:options])':: human-readable name, like
-			  linkgit:git-describe[1]; empty string for
-			  undescribable commits.  The `describe` string
-			  may be followed by a colon and zero or more
-			  comma-separated options.  Descriptions can be
-			  inconsistent when tags are added or removed at
-			  the same time.
+'%(describe[:<options>])'::
+human-readable name, like linkgit:git-describe[1]; empty string for
+undescribable commits.  The `describe` string may be followed by a colon and
+zero or more comma-separated options.  Descriptions can be inconsistent when
+tags are added or removed at the same time.
 +
 ** 'tags[=<bool-value>]': Instead of only considering annotated tags,
    consider lightweight tags as well.
@@ -283,13 +281,11 @@ endif::git-rev-list[]
 '%gE':: reflog identity email (respecting .mailmap, see
 	linkgit:git-shortlog[1] or linkgit:git-blame[1])
 '%gs':: reflog subject
-'%(trailers[:options])':: display the trailers of the body as
-			  interpreted by
-			  linkgit:git-interpret-trailers[1]. The
-			  `trailers` string may be followed by a colon
-			  and zero or more comma-separated options.
-			  If any option is provided multiple times the
-			  last occurrence wins.
+'%(trailers[:<options>])'::
+display the trailers of the body as interpreted by
+linkgit:git-interpret-trailers[1]. The `trailers` string may be followed by
+a colon and zero or more comma-separated options. If any option is provided
+multiple times, the last occurrence wins.
 +
 ** 'key=<key>': only show trailers with specified <key>. Matching is done
    case-insensitively and trailing colon is optional. If option is
