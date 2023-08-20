@@ -600,7 +600,12 @@ test_expect_success 'pretty format %decorate' '
 	echo "%(decorate:prefix=[ ,suffix= ],separater=; )" >expect4 &&
 	git log --format="%(decorate:prefix=[ ,suffix= ],separater=%x3B )" \
 		-1 >actual4 &&
-	test_cmp expect4 actual4
+	test_cmp expect4 actual4 &&
+
+	echo "HEAD->foo bar qux" >expect5 &&
+	git log --format="%(decorate:prefix=,suffix=,separator= ,tag=,pointer=->)" \
+		-1 >actual5 &&
+	test_cmp expect5 actual5
 '
 
 cat >trailers <<EOF

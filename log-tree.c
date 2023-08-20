@@ -317,6 +317,8 @@ void format_decorations(struct strbuf *sb,
 	const char *prefix = " (";
 	const char *suffix = ")";
 	const char *separator = ", ";
+	const char *pointer = " -> ";
+	const char *tag = "tag: ";
 
 	decoration = get_name_decoration(&commit->object);
 	if (!decoration)
@@ -329,6 +331,10 @@ void format_decorations(struct strbuf *sb,
 			suffix = opts->suffix;
 		if (opts->separator)
 			separator = opts->separator;
+		if (opts->pointer)
+			pointer = opts->pointer;
+		if (opts->tag)
+			tag = opts->tag;
 	}
 
 	color_commit = diff_get_color(use_color, DIFF_COMMIT);
@@ -351,9 +357,9 @@ void format_decorations(struct strbuf *sb,
 				strbuf_addstr(sb, color_reset);
 			}
 
-			if (decoration->type == DECORATION_REF_TAG) {
+			if (*tag && decoration->type == DECORATION_REF_TAG) {
 				strbuf_addstr(sb, color);
-				strbuf_addstr(sb, "tag: ");
+				strbuf_addstr(sb, tag);
 				strbuf_addstr(sb, color_reset);
 			}
 
@@ -364,7 +370,7 @@ void format_decorations(struct strbuf *sb,
 			if (current_and_HEAD &&
 			    decoration->type == DECORATION_REF_HEAD) {
 				strbuf_addstr(sb, color);
-				strbuf_addstr(sb, " -> ");
+				strbuf_addstr(sb, pointer);
 				strbuf_addstr(sb, color_reset);
 				strbuf_addstr(sb, decorate_get_color(use_color, current_and_HEAD->type));
 				show_name(sb, current_and_HEAD);

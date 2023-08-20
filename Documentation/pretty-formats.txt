@@ -233,6 +233,15 @@ parentheses (`%x29`), due to their role in the option syntax.
 ** 'prefix=<value>': Shown before the list of ref names.  Defaults to "{nbsp}`(`".
 ** 'suffix=<value>': Shown after the list of ref names.  Defaults to "`)`".
 ** 'separator=<value>': Shown between ref names.  Defaults to "`,`{nbsp}".
+** 'pointer=<value>': Shown between HEAD and the branch it points to, if any.
+		      Defaults to "{nbsp}`->`{nbsp}".
+** 'tag=<value>': Shown before tag names. Defaults to "`tag:`{nbsp}".
+
++
+For example, to produce decorations with no wrapping
+or tag annotations, and spaces as separators:
++
+`%(decorate:prefix=,suffix=,tag=,separator= )`
 
 '%(describe[:<options>])'::
 human-readable name, like linkgit:git-describe[1]; empty string for

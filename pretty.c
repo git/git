@@ -1407,7 +1407,9 @@ static void parse_decoration_options(const char **arg,
 {
 	while (parse_decoration_option(arg, "prefix", &opts->prefix) ||
 	       parse_decoration_option(arg, "suffix", &opts->suffix) ||
-	       parse_decoration_option(arg, "separator", &opts->separator))
+	       parse_decoration_option(arg, "separator", &opts->separator) ||
+	       parse_decoration_option(arg, "pointer", &opts->pointer) ||
+	       parse_decoration_option(arg, "tag", &opts->tag))
 		;
 }
 
@@ -1416,6 +1418,8 @@ static void free_decoration_options(const struct decoration_options *opts)
 	free(opts->prefix);
 	free(opts->suffix);
 	free(opts->separator);
+	free(opts->pointer);
+	free(opts->tag);
 }
 
 static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */

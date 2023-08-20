@@ -17,6 +17,8 @@ struct decoration_options {
 	char *prefix;
 	char *suffix;
 	char *separator;
+	char *pointer;
+	char *tag;
 };
 
 int parse_decorate_color_config(const char *var, const char *slot_name, const char *value);
