@@ -224,6 +224,16 @@ The placeholders are:
 	linkgit:git-rev-list[1])
 '%d':: ref names, like the --decorate option of linkgit:git-log[1]
 '%D':: ref names without the " (", ")" wrapping.
+'%(decorate[:<options>])'::
+ref names with custom decorations. The `decorate` string may be followed by a
+colon and zero or more comma-separated options. Option values may contain
+literal formatting codes. These must be used for commas (`%x2C`) and closing
+parentheses (`%x29`), due to their role in the option syntax.
++
+** 'prefix=<value>': Shown before the list of ref names.  Defaults to "{nbsp}`(`".
+** 'suffix=<value>': Shown after the list of ref names.  Defaults to "`)`".
+** 'separator=<value>': Shown between ref names.  Defaults to "`,`{nbsp}".
+
 '%(describe[:<options>])'::
 human-readable name, like linkgit:git-describe[1]; empty string for
 undescribable commits.  The `describe` string may be followed by a colon and
