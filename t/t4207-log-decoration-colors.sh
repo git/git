@@ -54,7 +54,7 @@ cmp_filtered_decorations () {
 test_expect_success 'commit decorations colored correctly' '
 	cat >expect <<-EOF &&
 	${c_commit}COMMIT_ID${c_reset}${c_commit} (${c_reset}${c_HEAD}HEAD${c_reset}\
-${c_HEAD} -> ${c_reset}${c_branch}main${c_reset}${c_commit}, \
+${c_commit} -> ${c_reset}${c_branch}main${c_reset}${c_commit}, \
 ${c_reset}${c_tag}tag: ${c_reset}${c_tag}v1.0${c_reset}${c_commit}, \
 ${c_reset}${c_tag}tag: ${c_reset}${c_tag}B${c_reset}${c_commit})${c_reset} B
 ${c_commit}COMMIT_ID${c_reset}${c_commit} (${c_reset}\
@@ -79,7 +79,7 @@ test_expect_success 'test coloring with replace-objects' '
 
 	cat >expect <<-EOF &&
 	${c_commit}COMMIT_ID${c_reset}${c_commit} (${c_reset}${c_HEAD}HEAD${c_reset}\
-${c_HEAD} -> ${c_reset}${c_branch}main${c_reset}${c_commit}, \
+${c_commit} -> ${c_reset}${c_branch}main${c_reset}${c_commit}, \
 ${c_reset}${c_tag}tag: ${c_reset}${c_tag}D${c_reset}${c_commit})${c_reset} D
 	${c_commit}COMMIT_ID${c_reset}${c_commit} (${c_reset}\
 ${c_tag}tag: ${c_reset}${c_tag}C${c_reset}${c_commit}, \
@@ -105,7 +105,7 @@ test_expect_success 'test coloring with grafted commit' '
 
 	cat >expect <<-EOF &&
 	${c_commit}COMMIT_ID${c_reset}${c_commit} (${c_reset}${c_HEAD}HEAD${c_reset}\
-${c_HEAD} -> ${c_reset}${c_branch}main${c_reset}${c_commit}, \
+${c_commit} -> ${c_reset}${c_branch}main${c_reset}${c_commit}, \
 ${c_reset}${c_tag}tag: ${c_reset}${c_tag}D${c_reset}${c_commit}, \
 ${c_reset}${c_grafted}replaced${c_reset}${c_commit})${c_reset} D
 	${c_commit}COMMIT_ID${c_reset}${c_commit} (${c_reset}\
