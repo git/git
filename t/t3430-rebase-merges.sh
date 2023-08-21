@@ -37,6 +37,7 @@ test_expect_success 'setup' '
 	EOF
 
 	test_commit A &&
+	a=$(git rev-parse --short HEAD) &&
 	git checkout -b first &&
 	test_commit B &&
 	b=$(git rev-parse --short HEAD) &&
@@ -551,10 +552,207 @@ test_expect_success '--rebase-merges with strategies' '
 	test_cmp expect G.t
 '
 
+test_expect_success '--rebase-merges with conflicting special branch names handled' '
+	git checkout --detach E &&
+	git merge -m "Merge branch F into ${SQ}branch-point${SQ}" F &&
+	m1=$(git rev-parse --short HEAD) &&
+
+	git checkout --detach E &&
+	git merge -m "Merge branch F into ${SQ}onto${SQ}" F &&
+	m2=$(git rev-parse --short HEAD) &&
+
+	git checkout --detach E &&
+	git merge -m "Merge branch F into ${SQ}index.lock${SQ}" F &&
+	m3=$(git rev-parse --short HEAD) &&
+
+	git checkout -b special-names H &&
+	git merge -m "Merge branch ${SQ}branch-point${SQ} into H" "${m1}" &&
+	m1m=$(git rev-parse --short HEAD) &&
+	git merge -m "Merge branch ${SQ}onto${SQ} into H" "${m2}" &&
+	m2m=$(git rev-parse --short HEAD) &&
+	git merge -m "Merge branch ${SQ}index.lock${SQ} into H" "${m3}" &&
+	m3m=$(git rev-parse --short HEAD) &&
+
+	cat >expect <<-EOF &&
+	label onto
+
+	reset $a # A
+	pick $b B
+	label E
+
+	reset $c # C
+	pick $d D
+	merge -C $e E # E
+	label branch-point-2
+	merge -C $m1 $f # Merge branch F into '\''branch-point'\''
+	label branch-point
+
+	reset branch-point-2 # E
+	merge -C $m2 $f # Merge branch F into '\''onto'\''
+	label onto-2
+
+	reset branch-point-2 # E
+	merge -C $m3 $f # Merge branch F into '\''index.lock'\''
+	label index-lock
+
+	reset branch-point-2 # E
+	merge -C $h onto # H
+	merge -C $m1m branch-point # Merge branch '\''branch-point'\'' into H
+	merge -C $m2m onto-2 # Merge branch '\''onto'\'' into H
+	merge -C $m3m index-lock # Merge branch '\''index.lock'\'' into H
+
+	EOF
+
+	cp expect script-from-scratch &&
+	test_config sequence.editor \""$PWD"/replace-editor.sh\" &&
+	git rebase --rebase-merges --force-rebase -i G &&
+	grep -v "^#" .git/ORIGINAL-TODO >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--rebase-merges with branch with slashes preserved' '
+	git checkout -b slash/in/branch E &&
+	git merge -m "Merge branch F into ${SQ}slash/in/branch${SQ}" F &&
+	m1=$(git rev-parse --short HEAD) &&
+
+	git checkout -b slashes-preserved H &&
+	git merge -m "Merge branch ${SQ}slash/in/branch${SQ} into slashes-preserved" slash/in/branch &&
+	m2=$(git rev-parse --short HEAD) &&
+
+	cat >expect <<-EOF &&
+	label onto
+
+	reset $a # A
+	pick $b B
+	label E
+
+	reset $c # C
+	pick $d D
+	merge -C $e E # E
+	label branch-point
+	merge -C $m1 $f # Merge branch F into '\''slash/in/branch'\''
+	label slash/in/branch
+
+	reset branch-point # E
+	merge -C $h onto # H
+	merge -C $m2 slash/in/branch # Merge branch '\''slash/in/branch'\'' into slashes-preserved
+
+	EOF
+
+	cp expect script-from-scratch &&
+	test_config sequence.editor \""$PWD"/replace-editor.sh\" &&
+	git rebase --rebase-merges --force-rebase -i G &&
+	grep -v "^#" .git/ORIGINAL-TODO >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--rebase-merges with conflicting slashes handled' '
+	git checkout -b bug E &&
+	git merge -m "Merge branch F into ${SQ}bug${SQ}" F &&
+	m1=$(git rev-parse --short HEAD) &&
+
+	git checkout -b conflicting-slashes H &&
+	git merge -m "Merge branch ${SQ}bug${SQ} into H" bug &&
+	m1m=$(git rev-parse --short HEAD) &&
+	git branch -D bug &&
+
+	git checkout -b bug/some-bug E &&
+	git merge -m "Merge branch F into ${SQ}bug/some-bug${SQ}" F &&
+	m2=$(git rev-parse --short HEAD) &&
+
+	git checkout conflicting-slashes &&
+	git merge -m "Merge branch ${SQ}bug/some-bug${SQ} into H" bug/some-bug &&
+	m2m=$(git rev-parse --short HEAD) &&
+
+	git checkout -b foo/bar E &&
+	git merge -m "Merge branch F into ${SQ}foo/bar${SQ}" F &&
+	m3=$(git rev-parse --short HEAD) &&
+
+	git checkout -b foo/qux E &&
+	git merge -m "Merge branch F into ${SQ}foo/qux${SQ}" F &&
+	m4=$(git rev-parse --short HEAD) &&
+
+	git checkout conflicting-slashes &&
+	git merge -m "Merge branch ${SQ}foo/bar${SQ} into H" foo/bar &&
+	m3m=$(git rev-parse --short HEAD) &&
+
+	git merge -m "Merge branch ${SQ}foo/qux${SQ} into H" foo/qux &&
+	m4m=$(git rev-parse --short HEAD) &&
+
+	git branch -D foo/bar foo/qux &&
+	git checkout -b foo E &&
+	git merge -m "Merge branch F into ${SQ}foo${SQ}" F &&
+	m5=$(git rev-parse --short HEAD) &&
+	git checkout conflicting-slashes &&
+	git merge -m "Merge branch ${SQ}foo${SQ} into H" foo &&
+	m5m=$(git rev-parse --short HEAD) &&
+
+	cat >expect <<-EOF &&
+	label onto
+
+	reset $a # A
+	pick $b B
+	label E
+
+	reset $c # C
+	pick $d D
+	merge -C $e E # E
+	label branch-point
+	merge -C $m1 $f # Merge branch F into '\''bug'\''
+	label bug
+
+	reset branch-point # E
+	merge -C $m2 $f # Merge branch F into '\''bug/some-bug'\''
+	label bug-some-bug
+
+	reset branch-point # E
+	merge -C $m3 $f # Merge branch F into '\''foo/bar'\''
+	label foo/bar
+
+	reset branch-point # E
+	merge -C $m4 $f # Merge branch F into '\''foo/qux'\''
+	label foo/qux
+
+	reset branch-point # E
+	merge -C $m5 $f # Merge branch F into '\''foo'\''
+	label foo-2
+
+	reset branch-point # E
+	merge -C $h onto # H
+	merge -C $m1m bug # Merge branch '\''bug'\'' into H
+	merge -C $m2m bug-some-bug # Merge branch '\''bug/some-bug'\'' into H
+	merge -C $m3m foo/bar # Merge branch '\''foo/bar'\'' into H
+	merge -C $m4m foo/qux # Merge branch '\''foo/qux'\'' into H
+	merge -C $m5m foo-2 # Merge branch '\''foo'\'' into H
+
+	EOF
+
+	cp expect script-from-scratch &&
+	test_config sequence.editor \""$PWD"/replace-editor.sh\" &&
+	git rebase --rebase-merges --force-rebase -i G &&
+	grep -v "^#" .git/ORIGINAL-TODO >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success '--rebase-merges with commit that can generate bad characters for filename' '
 	git checkout -b colon-in-label E &&
 	git merge -m "colon: this should work" G &&
-	git rebase --rebase-merges --force-rebase E
+	git rebase --rebase-merges --force-rebase E &&
+	test_cmp_graph <<-\EOF
+	*   colon: this should work
+	|\
+	| * G
+	| * F
+	* |   E
+	|\ \
+	| * | B
+	* | | D
+	| |/
+	|/|
+	* | C
+	|/
+	* A
+	EOF
 '
 
 test_expect_success '--rebase-merges with message matched with onto label' '

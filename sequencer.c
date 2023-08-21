@@ -5328,6 +5328,22 @@ void append_signoff(struct strbuf *msgbuf, size_t ignore_footer, unsigned flag)
 
 struct labels_entry {
 	struct hashmap_entry entry;
+	/*
+	 * Indicates whether this label entry is a dir placeholder.
+	 *
+	 * For a label like "foo/bar/baz", we keep normal entries:
+	 *   {.label = "foo/bar/baz"}
+	 *
+	 * and we also keep entries for each prefix, marked with `is_dir`:
+	 *   {.is_dir = 1, .label = "foo/bar"}
+	 *   {.is_dir = 1, .label = "foo"}
+	 *
+	 * This prevents making a conflicting bare label "foo", but still allow
+	 * other subsequent namespaced labels like "foo/qux".
+	 *
+	 * See `try_use_label_dir` and `label_oid`.
+	 */
+	int is_dir;
 	char label[FLEX_ARRAY];
 };
 
@@ -5336,11 +5352,16 @@ static int labels_cmp(const void *fndata UNUSED,
 		      const struct hashmap_entry *entry_or_key, const void *key)
 {
 	const struct labels_entry *a, *b;
+	int c;
 
 	a = container_of(eptr, const struct labels_entry, entry);
 	b = container_of(entry_or_key, const struct labels_entry, entry);
 
-	return key ? strcmp(a->label, key) : strcmp(a->label, b->label);
+	if (key)
+		return strcmp(a->label, key);
+
+	c = b->is_dir - a->is_dir;
+	return c ? c : strcmp(a->label, b->label);
 }
 
 struct string_entry {
@@ -5354,10 +5375,82 @@ struct label_state {
 	struct strbuf buf;
 };
 
+/*
+ * Add `label` to the set of in-use label names (`label_state.labels`).
+ *
+ * If `is_dir` is non-zero, this label represents a label dir prefix rather
+ * than a leaf label name.
+ *
+ * No validation of the label name is performed.
+ */
+static void add_label(struct label_state *state, const char *label, int is_dir)
+{
+	struct labels_entry *labels_entry;
+	FLEX_ALLOC_STR(labels_entry, label, label);
+	/** Mark whether this is a dir placeholder or a full label. */
+	labels_entry->is_dir = is_dir;
+	hashmap_entry_init(&labels_entry->entry, strihash(label));
+	hashmap_add(&state->labels, &labels_entry->entry);
+}
+
+/*
+ * Sets the label for the given oid (`label_state.commit2label`) and adds
+ * the label to the `label_state.labels` map.
+ *
+ * No validation is performed.
+ *
+ * Returns the copy of `label` retained by the `string_entry` itself.
+ */
+static const char *set_oid_label(struct label_state *state,
+				 const struct object_id *oid, const char *label)
+{
+	struct string_entry *string_entry;
+
+	add_label(state, label, 0);
+
+	FLEX_ALLOC_STR(string_entry, string, label);
+	oidcpy(&string_entry->entry.oid, oid);
+	oidmap_put(&state->commit2label, string_entry);
+
+	return string_entry->string;
+}
+
+static const struct labels_entry *
+get_label_entry(const struct label_state *state, const char *label)
+{
+	struct hashmap_entry *hme =
+		hashmap_get_from_hash(&state->labels, strihash(label), label);
+	return container_of_or_null(hme, const struct labels_entry, entry);
+}
+
+/*
+ * Check whether the label name given by `label` is already in use.
+ * Returns 1 if the label is present in `label_state.labels`, 0 otherwise.
+ */
+static int is_label_used(const struct label_state *state, const char *label)
+{
+	return !!get_label_entry(state, label);
+}
+
+/*
+ * Register `label` as a dir prefix, returning 1 on success or 0 if the name is
+ * already registered as a non-dir label.
+ *
+ * No validation of the name itself is performed.
+ */
+static int try_use_label_dir(struct label_state *state, const char *label)
+{
+	const struct labels_entry *e = get_label_entry(state, label);
+	if (!e) {
+		add_label(state, label, 1);
+		return 1;
+	}
+	return e->is_dir;
+}
+
 static const char *label_oid(struct object_id *oid, const char *label,
 			     struct label_state *state)
 {
-	struct labels_entry *labels_entry;
 	struct string_entry *string_entry;
 	struct object_id dummy;
 	int i;
@@ -5393,15 +5486,14 @@ static const char *label_oid(struct object_id *oid, const char *label,
 		 * We may need to extend the abbreviated hash so that there is
 		 * no conflicting label.
 		 */
-		if (hashmap_get_from_hash(&state->labels, strihash(p), p)) {
+		if (is_label_used(state, p)) {
 			size_t i = strlen(p) + 1;
 
 			oid_to_hex_r(p, oid);
 			for (; i < the_hash_algo->hexsz; i++) {
 				char save = p[i];
 				p[i] = '\0';
-				if (!hashmap_get_from_hash(&state->labels,
-							   strihash(p), p))
+				if (!is_label_used(state, p))
 					break;
 				p[i] = save;
 			}
@@ -5414,17 +5506,41 @@ static const char *label_oid(struct object_id *oid, const char *label,
 		 * (including white-space ones) by dashes, as they might be
 		 * illegal in file names (and hence in ref names).
 		 *
+		 * Slashes are permitted, as long as surrounded by alphanum
+		 * characters, and the prefix does not conflict with an existing
+		 * added label.
+		 *
 		 * Note that we retain non-ASCII UTF-8 characters (identified
 		 * via the most significant bit). They should be all acceptable
 		 * in file names. We do not validate the UTF-8 here, that's not
 		 * the job of this function.
+		 *
+		 * For more info on valid formats, see
+		 * check_or_sanitize_refname in refs.c
 		 */
-		for (; *label; label++)
+		for (; *label; label++) {
 			if ((*label & 0x80) || isalnum(*label))
 				strbuf_addch(buf, *label);
-			/* avoid leading dash and double-dashes */
-			else if (buf->len && buf->buf[buf->len - 1] != '-')
-				strbuf_addch(buf, '-');
+			else if (buf->len) {
+				char prev = buf->buf[buf->len - 1];
+				/*
+				 * Allow a slash as long as it's surrounded by
+				 * alphanum characters, and the prefix does not
+				 * conflict with an already-used label.
+				 *
+				 * `try_use_label_dir` saves an entry for
+				 * this prefix so that subsequent labels do
+				 * not conflict.
+				 */
+				if (*label == '/' && isalnum(prev) &&
+				    isalnum(*(label + 1)) &&
+				    try_use_label_dir(state, buf->buf))
+					strbuf_addch(buf, '/');
+				/* avoid leading dash and double-dashes */
+				else if (prev != '-')
+					strbuf_addch(buf, '-');
+			}
+		}
 		if (!buf->len) {
 			strbuf_addstr(buf, "rev-");
 			strbuf_add_unique_abbrev(buf, oid, default_abbrev);
@@ -5434,8 +5550,7 @@ static const char *label_oid(struct object_id *oid, const char *label,
 		if ((buf->len == the_hash_algo->hexsz &&
 		     !get_oid_hex(label, &dummy)) ||
 		    (buf->len == 1 && *label == '#') ||
-		    hashmap_get_from_hash(&state->labels,
-					  strihash(label), label)) {
+		    is_label_used(state, label)) {
 			/*
 			 * If the label already exists, or if the label is a
 			 * valid full OID, or the label is a '#' (which we use
@@ -5447,9 +5562,7 @@ static const char *label_oid(struct object_id *oid, const char *label,
 			for (i = 2; ; i++) {
 				strbuf_setlen(buf, len);
 				strbuf_addf(buf, "-%d", i);
-				if (!hashmap_get_from_hash(&state->labels,
-							   strihash(buf->buf),
-							   buf->buf))
+				if (!is_label_used(state, buf->buf))
 					break;
 			}
 
@@ -5457,15 +5570,7 @@ static const char *label_oid(struct object_id *oid, const char *label,
 		}
 	}
 
-	FLEX_ALLOC_STR(labels_entry, label, label);
-	hashmap_entry_init(&labels_entry->entry, strihash(label));
-	hashmap_add(&state->labels, &labels_entry->entry);
-
-	FLEX_ALLOC_STR(string_entry, string, label);
-	oidcpy(&string_entry->entry.oid, oid);
-	oidmap_put(&state->commit2label, string_entry);
-
-	return string_entry->string;
+	return set_oid_label(state, oid, label);
 }
 
 static int make_script_with_merges(struct pretty_print_context *pp,
@@ -5499,15 +5604,8 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 	strbuf_init(&state.buf, 32);
 
 	if (revs->cmdline.nr && (revs->cmdline.rev[0].flags & BOTTOM)) {
-		struct labels_entry *onto_label_entry;
 		struct object_id *oid = &revs->cmdline.rev[0].item->oid;
-		FLEX_ALLOC_STR(entry, string, "onto");
-		oidcpy(&entry->entry.oid, oid);
-		oidmap_put(&state.commit2label, entry);
-
-		FLEX_ALLOC_STR(onto_label_entry, label, "onto");
-		hashmap_entry_init(&onto_label_entry->entry, strihash("onto"));
-		hashmap_add(&state.labels, &onto_label_entry->entry);
+		set_oid_label(&state, oid, "onto");
 	}
 
 	/*
