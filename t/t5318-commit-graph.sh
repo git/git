@@ -620,12 +620,12 @@ test_expect_success 'detect incorrect chunk count' '
 
 test_expect_success 'detect mixed generation numbers (non-zero to zero)' '
 	corrupt_graph_and_verify $GRAPH_BYTE_COMMIT_GENERATION_LAST "\0\0\0\0" \
-		"but non-zero elsewhere"
+		"both zero and non-zero generations"
 '
 
 test_expect_success 'detect mixed generation numbers (zero to non-zero)' '
 	corrupt_graph_and_verify $GRAPH_BYTE_COMMIT_GENERATION "\0\0\0\0" \
-		"but zero elsewhere"
+		"both zero and non-zero generations"
 '
 
 test_expect_success 'git fsck (checks commit-graph when config set to true)' '
