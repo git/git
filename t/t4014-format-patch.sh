@@ -1991,6 +1991,20 @@ test_expect_success 'cover letter using branch description (6)' '
 	grep hello actual
 '
 
+test_expect_success 'cover letter with --description-file' '
+	test_when_finished "rm -f description.txt" &&
+	cat >description.txt <<-\EOF &&
+	subject from file
+
+	body from file
+	EOF
+	git checkout rebuild-1 &&
+	git format-patch --stdout --cover-letter --cover-from-description auto \
+		--description-file description.txt main >actual &&
+	grep "^Subject: \[PATCH 0/2\] subject from file$" actual &&
+	grep "^body from file$" actual
+'
+
 test_expect_success 'cover letter with nothing' '
 	git format-patch --stdout --cover-letter >actual &&
 	test_line_count = 0 actual
