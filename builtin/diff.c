@@ -163,12 +163,10 @@ static int builtin_diff_index(struct rev_info *revs,
 		setup_work_tree();
 		if (repo_read_index_preload(the_repository,
 					    &revs->diffopt.pathspec, 0) < 0) {
-			perror("repo_read_index_preload");
-			return -1;
+			die_errno("repo_read_index_preload");
 		}
 	} else if (repo_read_index(the_repository) < 0) {
-		perror("repo_read_cache");
-		return -1;
+		die_errno("repo_read_cache");
 	}
 	return run_diff_index(revs, option);
 }
@@ -289,8 +287,7 @@ static int builtin_diff_files(struct rev_info *revs, int argc, const char **argv
 	setup_work_tree();
 	if (repo_read_index_preload(the_repository, &revs->diffopt.pathspec,
 				    0) < 0) {
-		perror("repo_read_index_preload");
-		return -1;
+		die_errno("repo_read_index_preload");
 	}
 	return run_diff_files(revs, options);
 }
