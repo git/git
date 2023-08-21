@@ -138,4 +138,9 @@ test_expect_success 'check honors conflict marker length' '
 	git reset --hard
 '
 
+test_expect_success 'option errors are not confused by --exit-code' '
+	test_must_fail git diff --exit-code --nonsense 2>err &&
+	grep '^usage:' err
+'
+
 test_done

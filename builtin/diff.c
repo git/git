@@ -269,8 +269,10 @@ static int builtin_diff_files(struct rev_info *revs, int argc, const char **argv
 			options |= DIFF_SILENT_ON_REMOVED;
 		else if (!strcmp(argv[1], "-h"))
 			usage(builtin_diff_usage);
-		else
-			return error(_("invalid option: %s"), argv[1]);
+		else {
+			error(_("invalid option: %s"), argv[1]);
+			usage(builtin_diff_usage);
+		}
 		argv++; argc--;
 	}
 
