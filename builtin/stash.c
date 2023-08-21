@@ -1111,7 +1111,7 @@ static int check_changes_tracked_files(const struct pathspec *ps)
 	add_head_to_pending(&rev);
 	diff_setup_done(&rev.diffopt);
 
-	result = run_diff_index(&rev, 1);
+	result = run_diff_index(&rev, DIFF_INDEX_CACHED);
 	if (diff_result_code(&rev.diffopt, result)) {
 		ret = 1;
 		goto done;

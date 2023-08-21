@@ -682,7 +682,7 @@ int index_differs_from(struct repository *r,
 			rev.diffopt.flags.ignore_submodules = flags->ignore_submodules;
 	}
 	rev.diffopt.ita_invisible_in_index = ita_invisible_in_index;
-	run_diff_index(&rev, 1);
+	run_diff_index(&rev, DIFF_INDEX_CACHED);
 	has_changes = rev.diffopt.flags.has_changes;
 	release_revisions(&rev);
 	return (has_changes != 0);
