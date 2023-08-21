@@ -168,7 +168,8 @@ static int builtin_diff_index(struct rev_info *revs,
 	} else if (repo_read_index(the_repository) < 0) {
 		die_errno("repo_read_cache");
 	}
-	return run_diff_index(revs, option);
+	run_diff_index(revs, option);
+	return 0;
 }
 
 static int builtin_diff_tree(struct rev_info *revs,
@@ -289,7 +290,8 @@ static int builtin_diff_files(struct rev_info *revs, int argc, const char **argv
 				    0) < 0) {
 		die_errno("repo_read_index_preload");
 	}
-	return run_diff_files(revs, options);
+	run_diff_files(revs, options);
+	return 0;
 }
 
 struct symdiff {
