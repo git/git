@@ -83,7 +83,7 @@ int cmd_diff_files(int argc, const char **argv, const char *prefix)
 	if (repo_read_index_preload(the_repository, &rev.diffopt.pathspec, 0) < 0)
 		die_errno("repo_read_index_preload");
 	run_diff_files(&rev, options);
-	result = diff_result_code(&rev.diffopt, 0);
+	result = diff_result_code(&rev.diffopt);
 	release_revisions(&rev);
 	return result;
 }

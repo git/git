@@ -73,7 +73,7 @@ int cmd_diff_index(int argc, const char **argv, const char *prefix)
 		return -1;
 	}
 	run_diff_index(&rev, option);
-	result = diff_result_code(&rev.diffopt, 0);
+	result = diff_result_code(&rev.diffopt);
 	release_revisions(&rev);
 	return result;
 }

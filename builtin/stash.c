@@ -973,7 +973,7 @@ static int show_stash(int argc, const char **argv, const char *prefix)
 	}
 	log_tree_diff_flush(&rev);
 
-	ret = diff_result_code(&rev.diffopt, 0);
+	ret = diff_result_code(&rev.diffopt);
 cleanup:
 	strvec_clear(&stash_args);
 	free_stash_info(&info);
@@ -1111,13 +1111,13 @@ static int check_changes_tracked_files(const struct pathspec *ps)
 	diff_setup_done(&rev.diffopt);
 
 	run_diff_index(&rev, DIFF_INDEX_CACHED);
-	if (diff_result_code(&rev.diffopt, 0)) {
+	if (diff_result_code(&rev.diffopt)) {
 		ret = 1;
 		goto done;
 	}
 
 	run_diff_files(&rev, 0);
-	if (diff_result_code(&rev.diffopt, 0)) {
+	if (diff_result_code(&rev.diffopt)) {
 		ret = 1;
 		goto done;
 	}
