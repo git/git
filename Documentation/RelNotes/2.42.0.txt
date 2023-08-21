@@ -14,7 +14,7 @@ UI, Workflows & Features
    otherwise unreachable objects in cruft packs.
 
  * Add more "git var" for toolsmiths to learn various locations Git is
-   configured with either via the configuration or hardcoded defaults.
+   configured with either via the configuration or hard-coded defaults.
 
  * 'git notes append' was taught '--separator' to specify string to insert
    between paragraphs.
