@@ -598,7 +598,7 @@ test_expect_success 'detect incorrect generation number' '
 
 test_expect_success 'detect incorrect generation number' '
 	corrupt_graph_and_verify $GRAPH_BYTE_COMMIT_GENERATION "\01" \
-		"commit-graph generation for commit"
+		"but zero elsewhere"
 '
 
 test_expect_success 'detect incorrect commit date' '
