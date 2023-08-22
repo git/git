@@ -13409,7 +13409,7 @@ msgstr ""
 
 msgid ""
 "No local or remote refs exist despite at least one remote\n"
-"present, stopping; use 'add -f' to overide or fetch a remote first"
+"present, stopping; use 'add -f' to override or fetch a remote first"
 msgstr ""
 "Bir uzak konum olmasına rağmen hiçbir yerel veya uzak başvuru\n"
 "yok, durduruluyor; geçersiz kılmak için 'add -f' kullanın veya\n"

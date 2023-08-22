@@ -13763,7 +13763,7 @@ msgstr ""
 
 msgid ""
 "No local or remote refs exist despite at least one remote\n"
-"present, stopping; use 'add -f' to overide or fetch a remote first"
+"present, stopping; use 'add -f' to override or fetch a remote first"
 msgstr ""
 "Es gibt keine lokalen oder entfernten Referenzen, obwohl mindestens ein "
 "Remote-Repository\n"

@@ -16556,7 +16556,7 @@ msgstr ""
 #: builtin/worktree.c
 msgid ""
 "No local or remote refs exist despite at least one remote\n"
-"present, stopping; use 'add -f' to overide or fetch a remote first"
+"present, stopping; use 'add -f' to override or fetch a remote first"
 msgstr ""
 "尽管已配置远程仓库，但不存在任何本地的或远程的引用，操作终止;\n"
 "请使用 'add -f' 来覆盖或拉取一个远程仓库"

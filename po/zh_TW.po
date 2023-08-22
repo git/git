@@ -16434,7 +16434,7 @@ msgstr ""
 #: builtin/worktree.c
 msgid ""
 "No local or remote refs exist despite at least one remote\n"
-"present, stopping; use 'add -f' to overide or fetch a remote first"
+"present, stopping; use 'add -f' to override or fetch a remote first"
 msgstr ""
 "即使有提供一個遠端，卻不存在本機或遠端引用，\n"
 "故停止。使用 “add -f” 先覆蓋或抓取遠端"

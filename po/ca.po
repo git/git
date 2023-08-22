@@ -13577,7 +13577,7 @@ msgstr ""
 
 msgid ""
 "No local or remote refs exist despite at least one remote\n"
-"present, stopping; use 'add -f' to overide or fetch a remote first"
+"present, stopping; use 'add -f' to override or fetch a remote first"
 msgstr ""
 "No hi ha referències locals o remotes malgrat que hi existeix almenys un\n"
 "remot, aturat; useu «add -f» per a forcar-ho o obtenir primer un remot"
