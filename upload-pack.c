@@ -801,11 +801,12 @@ error:
 	for (i = 0; i < data->want_obj.nr; i++) {
 		struct object *o = data->want_obj.objects[i].item;
 		if (!is_our_ref(o, data->allow_uor)) {
+			error("git upload-pack: not our ref %s",
+			      oid_to_hex(&o->oid));
 			packet_writer_error(&data->writer,
 					    "upload-pack: not our ref %s",
 					    oid_to_hex(&o->oid));
-			die("git upload-pack: not our ref %s",
-			    oid_to_hex(&o->oid));
+			exit(128);
 		}
 	}
 }
