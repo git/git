@@ -6245,7 +6245,7 @@ static int skip_fixupish(const char *subject, const char **p) {
 int todo_list_rearrange_squash(struct todo_list *todo_list)
 {
 	struct hashmap subject2item;
-	int rearranged = 0, *next, *tail, i, nr = 0, alloc = 0;
+	int rearranged = 0, *next, *tail, i, nr = 0;
 	char **subjects;
 	struct commit_todo_item commit_todo;
 	struct todo_item *items = NULL;
@@ -6357,6 +6357,8 @@ int todo_list_rearrange_squash(struct todo_list *todo_list)
 	}
 
 	if (rearranged) {
+		ALLOC_ARRAY(items, todo_list->nr);
+
 		for (i = 0; i < todo_list->nr; i++) {
 			enum todo_command command = todo_list->items[i].command;
 			int cur = i;
@@ -6369,16 +6371,15 @@ int todo_list_rearrange_squash(struct todo_list *todo_list)
 				continue;
 
 			while (cur >= 0) {
-				ALLOC_GROW(items, nr + 1, alloc);
 				items[nr++] = todo_list->items[cur];
 				cur = next[cur];
 			}
 		}
 
+		assert(nr == todo_list->nr);
+		todo_list->alloc = nr;
 		FREE_AND_NULL(todo_list->items);
 		todo_list->items = items;
-		todo_list->nr = nr;
-		todo_list->alloc = alloc;
 	}
 
 	free(next);
