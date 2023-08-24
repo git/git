@@ -8,18 +8,21 @@
 # - check that non-commit messages have a certain line count with $EXPECT_COUNT
 # - check the commit count in the commit message header with $EXPECT_HEADER_COUNT
 # - rewrite a rebase -i script as directed by $FAKE_LINES.
-#   $FAKE_LINES consists of a sequence of words separated by spaces.
-#   The following word combinations are possible:
+#   $FAKE_LINES consists of a sequence of words separated by spaces;
+#   spaces inside the words are encoded as underscores.
+#   The following words are possible:
 #
-#   "<lineno>" -- add a "pick" line with the SHA1 taken from the
-#       specified line.
+#   "<cmd>" -- override the command for the next line specification. Can be
+#       "pick", "squash", "fixup[_-(c|C)]", "edit", "reword", "drop",
+#       "merge[_-(c|C)_<rev>]", or "bad" for an invalid command.
 #
-#   "<cmd> <lineno>" -- add a line with the specified command
-#       ("pick", "squash", "fixup"|"fixup_-C"|"fixup_-c", "edit", "reword" or "drop")
-#       and the SHA1 taken from the specified line.
+#   "<lineno>" -- add a command, using the specified line as a template.
+#       If the command has not been overridden, the line will be copied
+#       verbatim, usually resulting in a "pick" line.
 #
-#   "_" -- add a space, like "fixup_-C" implies "fixup -C" and
-#       "exec_cmd_with_args" add an "exec cmd with args" line.
+#   "fakesha" -- add a command ("pick" by default), using a fake SHA1.
+#
+#   "exec_[command...]", "break" -- add the specified command.
 #
 #   "#" -- Add a comment line.
 #
@@ -49,7 +52,7 @@ set_fake_editor () {
 	action=\&
 	for line in $FAKE_LINES; do
 		case $line in
-		pick|p|squash|s|fixup|f|edit|e|reword|r|drop|d|label|l|reset|r|merge|m)
+		pick|p|squash|s|fixup|f|edit|e|reword|r|drop|d|label|l|reset|t|merge|m)
 			action="$line";;
 		exec_*|x_*|break|b)
 			echo "$line" | sed 's/_/ /g' >> "$1";;
@@ -64,7 +67,7 @@ set_fake_editor () {
 		fakesha)
 			test \& != "$action" || action=pick
 			echo "$action XXXXXXX False commit" >> "$1"
-			action=pick;;
+			action=\&;;
 		*)
 			sed -n "${line}s/^[a-z][a-z]*/$action/p" < "$1".tmp >> "$1"
 			action=\&;;
