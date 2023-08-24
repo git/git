@@ -421,7 +421,7 @@ test_expect_success 'refuse to switch to branch checked out elsewhere' '
 	git checkout main &&
 	git worktree add wt &&
 	test_must_fail git -C wt rebase main main 2>err &&
-	test_i18ngrep "already checked out" err
+	test_i18ngrep "already used by worktree at" err
 '
 
 test_expect_success MINGW,SYMLINKS_WINDOWS 'rebase when .git/logs is a symlink' '

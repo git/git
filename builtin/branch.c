@@ -261,7 +261,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 			const char *path;
 			if ((path = branch_checked_out(name))) {
 				error(_("Cannot delete branch '%s' "
-					"checked out at '%s'"),
+					"used by worktree at '%s'"),
 				      bname.buf, path);
 				ret = 1;
 				continue;
