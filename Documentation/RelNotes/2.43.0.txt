@@ -1,0 +1,30 @@
+Git v2.43 Release Notes
+=======================
+
+UI, Workflows & Features
+
+ * A message written in olden time prevented a branch from getting
+   checked out saying it is already checked out elsewhere, but these
+   days, we treat a branch that is being bisected or rebased just like
+   a branch that is checked out and protect it.  Rephrase the message
+   to say that the branch is in use.
+
+ * Hourly and other schedule of "git maintenance" jobs are randomly
+   distributed now.
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * TBD.
+
+
+Fixes since v2.42
+-----------------
+
+ * Overly long label names used in the sequencer machinery are now
+   chopped to fit under filesystem limitation.
+   (merge ac300bda10 mp/rebase-label-length-limit later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge fd3ba590d8 ws/git-push-doc-grammofix later to maint).
+   (merge 5f33a843de ds/upload-pack-error-sequence-fix later to maint).
