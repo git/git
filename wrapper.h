@@ -139,4 +139,10 @@ void sleep_millisec(int millisec);
  */
 int csprng_bytes(void *buf, size_t len);
 
+/*
+ * Returns a random uint32_t, uniformly distributed across all possible
+ * values.
+ */
+uint32_t git_rand(void);
+
 #endif /* WRAPPER_H */
