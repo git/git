@@ -61,8 +61,8 @@ test_no_confirm () {
 		--smtp-server="$(pwd)/fake.sendmail" \
 		$@ \
 		$patches >stdout &&
-		! grep "Send this email" stdout &&
-		>no_confirm_okay
+	! grep "Send this email" stdout &&
+	>no_confirm_okay
 }
 
 # Exit immediately to prevent hang if a no-confirm test fails
