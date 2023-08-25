@@ -3,13 +3,29 @@
 test_description='test git rev-parse --parseopt'
 . ./test-lib.sh
 
+check_invalid_long_option () {
+	spec="$1"
+	opt="$2"
+	test_expect_success "test --parseopt invalid switch $opt help output for $spec" '
+		{
+			cat <<-\EOF &&
+			error: unknown option `'${opt#--}\''
+			EOF
+			sed -e 1d -e \$d <"$TEST_DIRECTORY/t1502/$spec.help"
+		} >expect &&
+		test_expect_code 129 git rev-parse --parseopt -- $opt \
+			2>output <"$TEST_DIRECTORY/t1502/$spec" &&
+		test_cmp expect output
+	'
+}
+
 test_expect_success 'setup optionspec' '
 	sed -e "s/^|//" >optionspec <<\EOF
 |some-command [options] <args>...
 |
 |some-command does foo and bar!
 |--
-|h,help    show the help
+|h,help!   show the help
 |
 |foo       some nifty option --foo
 |bar=      some cool option --bar with an argument
@@ -58,44 +74,8 @@ EOF
 '
 
 test_expect_success 'test --parseopt help output' '
-	sed -e "s/^|//" >expect <<\END_EXPECT &&
-|cat <<\EOF
-|usage: some-command [options] <args>...
-|
-|    some-command does foo and bar!
-|
-|    -h, --help            show the help
-|    --foo                 some nifty option --foo
-|    --bar ...             some cool option --bar with an argument
-|    -b, --baz             a short and long option
-|
-|An option group Header
-|    -C[...]               option C with an optional argument
-|    -d, --data[=...]      short and long option with an optional argument
-|
-|Argument hints
-|    -B <arg>              short option required argument
-|    --bar2 <arg>          long option required argument
-|    -e, --fuz <with-space>
-|                          short and long option required argument
-|    -s[<some>]            short option optional argument
-|    --long[=<data>]       long option optional argument
-|    -g, --fluf[=<path>]   short and long option optional argument
-|    --longest <very-long-argument-hint>
-|                          a very long argument hint
-|    --pair <key=value>    with an equals sign in the hint
-|    --aswitch             help te=t contains? fl*g characters!`
-|    --bswitch <hint>      hint has trailing tab character
-|    --cswitch             switch has trailing tab character
-|    --short-hint <a>      with a one symbol hint
-|
-|Extras
-|    --extra1              line above used to cause a segfault but no longer does
-|
-|EOF
-END_EXPECT
 	test_expect_code 129 git rev-parse --parseopt -- -h > output < optionspec &&
-	test_cmp expect output
+	test_cmp "$TEST_DIRECTORY/t1502/optionspec.help" output
 '
 
 test_expect_success 'test --parseopt help output no switches' '
@@ -131,7 +111,7 @@ test_expect_success 'test --parseopt help-all output hidden switches' '
 |
 |    some-command does foo and bar!
 |
-|    --hidden1             A hidden switch
+|    --[no-]hidden1        A hidden switch
 |
 |EOF
 END_EXPECT
@@ -140,41 +120,12 @@ END_EXPECT
 '
 
 test_expect_success 'test --parseopt invalid switch help output' '
-	sed -e "s/^|//" >expect <<\END_EXPECT &&
-|error: unknown option `does-not-exist'\''
-|usage: some-command [options] <args>...
-|
-|    some-command does foo and bar!
-|
-|    -h, --help            show the help
-|    --foo                 some nifty option --foo
-|    --bar ...             some cool option --bar with an argument
-|    -b, --baz             a short and long option
-|
-|An option group Header
-|    -C[...]               option C with an optional argument
-|    -d, --data[=...]      short and long option with an optional argument
-|
-|Argument hints
-|    -B <arg>              short option required argument
-|    --bar2 <arg>          long option required argument
-|    -e, --fuz <with-space>
-|                          short and long option required argument
-|    -s[<some>]            short option optional argument
-|    --long[=<data>]       long option optional argument
-|    -g, --fluf[=<path>]   short and long option optional argument
-|    --longest <very-long-argument-hint>
-|                          a very long argument hint
-|    --pair <key=value>    with an equals sign in the hint
-|    --aswitch             help te=t contains? fl*g characters!`
-|    --bswitch <hint>      hint has trailing tab character
-|    --cswitch             switch has trailing tab character
-|    --short-hint <a>      with a one symbol hint
-|
-|Extras
-|    --extra1              line above used to cause a segfault but no longer does
-|
-END_EXPECT
+	{
+		cat <<-\EOF &&
+		error: unknown option `does-not-exist'\''
+		EOF
+		sed -e 1d -e \$d <"$TEST_DIRECTORY/t1502/optionspec.help"
+	} >expect &&
 	test_expect_code 129 git rev-parse --parseopt -- --does-not-exist 1>/dev/null 2>output < optionspec &&
 	test_cmp expect output
 '
@@ -288,7 +239,7 @@ test_expect_success 'test --parseopt help output: "wrapped" options normal "or:"
 	|    [--another-option]
 	|cmd [--yet-another-option]
 	|--
-	|h,help    show the help
+	|h,help!   show the help
 	EOF
 
 	sed -e "s/^|//" >expect <<-\END_EXPECT &&
@@ -322,7 +273,7 @@ test_expect_success 'test --parseopt help output: multi-line blurb after empty l
 	|line
 	|blurb
 	|--
-	|h,help    show the help
+	|h,help!   show the help
 	EOF
 
 	sed -e "s/^|//" >expect <<-\END_EXPECT &&
@@ -342,5 +293,33 @@ test_expect_success 'test --parseopt help output: multi-line blurb after empty l
 	test_must_fail git rev-parse --parseopt -- -h <spec >actual &&
 	test_cmp expect actual
 '
+
+test_expect_success 'test --parseopt help output for optionspec-neg' '
+	test_expect_code 129 git rev-parse --parseopt -- \
+		-h >output <"$TEST_DIRECTORY/t1502/optionspec-neg" &&
+	test_cmp "$TEST_DIRECTORY/t1502/optionspec-neg.help" output
+'
+
+test_expect_success 'test --parseopt valid options for optionspec-neg' '
+	cat >expect <<-\EOF &&
+	set -- --foo --no-foo --no-bar --positive-only --no-negative --
+	EOF
+	git rev-parse --parseopt -- <"$TEST_DIRECTORY/t1502/optionspec-neg" >output \
+	       --foo --no-foo --no-bar --positive-only --no-negative &&
+	test_cmp expect output
+'
+
+test_expect_success 'test --parseopt positivated option for optionspec-neg' '
+	cat >expect <<-\EOF &&
+	set -- --no-no-bar --no-no-bar --
+	EOF
+	git rev-parse --parseopt -- <"$TEST_DIRECTORY/t1502/optionspec-neg" >output \
+	       --no-no-bar --bar &&
+	test_cmp expect output
+'
+
+check_invalid_long_option optionspec-neg --no-positive-only
+check_invalid_long_option optionspec-neg --negative
+check_invalid_long_option optionspec-neg --no-no-negative
 
 test_done
