@@ -12,6 +12,9 @@ UI, Workflows & Features
  * Hourly and other schedule of "git maintenance" jobs are randomly
    distributed now.
 
+ * "git cmd -h" learned to signal which options can be negated by
+   listing such options like "--[no-]opt".
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -28,3 +31,6 @@ Fixes since v2.42
  * Other code cleanup, docfix, build fix, etc.
    (merge fd3ba590d8 ws/git-push-doc-grammofix later to maint).
    (merge 5f33a843de ds/upload-pack-error-sequence-fix later to maint).
+   (merge beaa1d952b jk/function-pointer-mismatches-fix later to maint).
+   (merge b46d806ea5 ob/t9001-indent-fix later to maint).
+   (merge fdc9914c28 ja/worktree-orphan later to maint).
