@@ -479,10 +479,13 @@ struct escape_sequence_entry {
 };
 
 static int sequence_entry_cmp(const void *hashmap_cmp_fn_data UNUSED,
-			      const struct escape_sequence_entry *e1,
-			      const struct escape_sequence_entry *e2,
+			      const struct hashmap_entry *he1,
+			      const struct hashmap_entry *he2,
 			      const void *keydata)
 {
+	const struct escape_sequence_entry
+		*e1 = container_of(he1, const struct escape_sequence_entry, entry),
+		*e2 = container_of(he2, const struct escape_sequence_entry, entry);
 	return strcmp(e1->sequence, keydata ? keydata : e2->sequence);
 }
 
@@ -496,8 +499,7 @@ static int is_known_escape_sequence(const char *sequence)
 		struct strbuf buf = STRBUF_INIT;
 		char *p, *eol;
 
-		hashmap_init(&sequences, (hashmap_cmp_fn)sequence_entry_cmp,
-			     NULL, 0);
+		hashmap_init(&sequences, sequence_entry_cmp, NULL, 0);
 
 		strvec_pushl(&cp.args, "infocmp", "-L", "-1", NULL);
 		if (pipe_command(&cp, NULL, 0, &buf, 0, NULL, 0))

@@ -230,16 +230,19 @@ cleanup:
 }
 
 static int patch_util_cmp(const void *cmp_data UNUSED,
-			  const struct patch_util *a,
-			  const struct patch_util *b,
-			  const char *keydata)
+			  const struct hashmap_entry *ha,
+			  const struct hashmap_entry *hb,
+			  const void *keydata)
 {
+	const struct patch_util
+		*a = container_of(ha, const struct patch_util, e),
+		*b = container_of(hb, const struct patch_util, e);
 	return strcmp(a->diff, keydata ? keydata : b->diff);
 }
 
 static void find_exact_matches(struct string_list *a, struct string_list *b)
 {
-	struct hashmap map = HASHMAP_INIT((hashmap_cmp_fn)patch_util_cmp, NULL);
+	struct hashmap map = HASHMAP_INIT(patch_util_cmp, NULL);
 	int i;
 
 	/* First, add the patches of a to a hash map */
