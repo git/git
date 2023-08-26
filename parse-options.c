@@ -1186,14 +1186,15 @@ static enum parse_opt_result usage_with_options_internal(struct parse_opt_ctx_t 
 			continue;
 		}
 
-		for (cp = _(opts->help); *cp; cp = np) {
+		for (cp = opts->help ? _(opts->help) : ""; *cp; cp = np) {
 			np = strchrnul(cp, '\n');
-			usage_padding(outfile, pos);
-			fprintf(outfile, "%.*s\n", (int)(np - cp), cp);
 			if (*np)
 				np++;
+			usage_padding(outfile, pos);
+			fwrite(cp, 1, np - cp, outfile);
 			pos = 0;
 		}
+		fputc('\n', outfile);
 
 		if (positive_name) {
 			if (find_option_by_long_name(all_opts, positive_name))
