@@ -1212,19 +1212,6 @@ static const char *allowed_bare_repo_to_string(
 	return NULL;
 }
 
-enum discovery_result {
-	GIT_DIR_NONE = 0,
-	GIT_DIR_EXPLICIT,
-	GIT_DIR_DISCOVERED,
-	GIT_DIR_BARE,
-	/* these are errors */
-	GIT_DIR_HIT_CEILING = -1,
-	GIT_DIR_HIT_MOUNT_POINT = -2,
-	GIT_DIR_INVALID_GITFILE = -3,
-	GIT_DIR_INVALID_OWNERSHIP = -4,
-	GIT_DIR_DISALLOWED_BARE = -5,
-};
-
 /*
  * We cannot decide in this function whether we are in the work tree or
  * not, since the config can only be read _after_ this function was called.
@@ -1376,21 +1363,23 @@ static enum discovery_result setup_git_directory_gently_1(struct strbuf *dir,
 	}
 }
 
-int discover_git_directory(struct strbuf *commondir,
-			   struct strbuf *gitdir)
+enum discovery_result discover_git_directory_reason(struct strbuf *commondir,
+						    struct strbuf *gitdir)
 {
 	struct strbuf dir = STRBUF_INIT, err = STRBUF_INIT;
 	size_t gitdir_offset = gitdir->len, cwd_len;
 	size_t commondir_offset = commondir->len;
 	struct repository_format candidate = REPOSITORY_FORMAT_INIT;
+	enum discovery_result result;
 
 	if (strbuf_getcwd(&dir))
-		return -1;
+		return GIT_DIR_CWD_FAILURE;
 
 	cwd_len = dir.len;
-	if (setup_git_directory_gently_1(&dir, gitdir, NULL, 0) <= 0) {
+	result = setup_git_directory_gently_1(&dir, gitdir, NULL, 0);
+	if (result <= 0) {
 		strbuf_release(&dir);
-		return -1;
+		return result;
 	}
 
 	/*
@@ -1420,7 +1409,7 @@ int discover_git_directory(struct strbuf *commondir,
 		strbuf_setlen(commondir, commondir_offset);
 		strbuf_setlen(gitdir, gitdir_offset);
 		clear_repository_format(&candidate);
-		return -1;
+		return GIT_DIR_INVALID_FORMAT;
 	}
 
 	/* take ownership of candidate.partial_clone */
@@ -1429,7 +1418,7 @@ int discover_git_directory(struct strbuf *commondir,
 	candidate.partial_clone = NULL;
 
 	clear_repository_format(&candidate);
-	return 0;
+	return result;
 }
 
 const char *setup_git_directory_gently(int *nongit_ok)
@@ -1511,10 +1500,11 @@ const char *setup_git_directory_gently(int *nongit_ok)
 		}
 		*nongit_ok = 1;
 		break;
-	case GIT_DIR_NONE:
+	case GIT_DIR_CWD_FAILURE:
+	case GIT_DIR_INVALID_FORMAT:
 		/*
 		 * As a safeguard against setup_git_directory_gently_1 returning
-		 * this value, fallthrough to BUG. Otherwise it is possible to
+		 * these values, fallthrough to BUG. Otherwise it is possible to
 		 * set startup_info->have_repository to 1 when we did nothing to
 		 * find a repository.
 		 */
