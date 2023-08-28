@@ -15,6 +15,13 @@ UI, Workflows & Features
  * "git cmd -h" learned to signal which options can be negated by
    listing such options like "--[no-]opt".
 
+ * The way authentication related data other than passwords (e.g.
+   oath token and password expiration data) are stored in libsecret
+   keyrings has been rethought.
+
+ * Update two credential helpers to correctly match which credential
+   to erase; they dropped not the ones with stale password.
+
 
 Performance, Internal Implementation, Development Support etc.
 
