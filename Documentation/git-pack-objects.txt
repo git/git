@@ -116,9 +116,7 @@ unreachable object whose mtime is newer than the `--cruft-expiration`).
 +
 Incompatible with `--unpack-unreachable`, `--keep-unreachable`,
 `--pack-loose-unreachable`, `--stdin-packs`, as well as any other
-options which imply `--revs`. Also incompatible with `--max-pack-size`;
-when this option is set, the maximum pack size is not inferred from
-`pack.packSizeLimit`.
+options which imply `--revs`.
 
 --cruft-expiration=<approxidate>::
 	If specified, objects are eliminated from the cruft pack if they
