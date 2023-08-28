@@ -43,6 +43,8 @@ helper_test_clean() {
 	reject $1 https example.com store-user
 	reject $1 https example.com user1
 	reject $1 https example.com user2
+	reject $1 https example.com user-expiry
+	reject $1 https example.com user-expiry-overwrite
 	reject $1 https example.com user4
 	reject $1 https example.com user-distinct-pass
 	reject $1 https example.com user-overwrite
@@ -427,6 +429,81 @@ helper_test_timeout() {
 		--
 		askpass: Username for '\''https://timeout.tld'\'':
 		askpass: Password for '\''https://askpass-username@timeout.tld'\'':
+		EOF
+	'
+}
+
+helper_test_password_expiry_utc() {
+	HELPER=$1
+
+	test_expect_success "helper ($HELPER) stores password_expiry_utc" '
+		check approve $HELPER <<-\EOF
+		protocol=https
+		host=example.com
+		username=user-expiry
+		password=pass
+		password_expiry_utc=9999999999
+		EOF
+	'
+
+	test_expect_success "helper ($HELPER) gets password_expiry_utc" '
+		check fill $HELPER <<-\EOF
+		protocol=https
+		host=example.com
+		username=user-expiry
+		--
+		protocol=https
+		host=example.com
+		username=user-expiry
+		password=pass
+		password_expiry_utc=9999999999
+		--
+		EOF
+	'
+
+	test_expect_success "helper ($HELPER) overwrites when password_expiry_utc changes" '
+		check approve $HELPER <<-\EOF &&
+		protocol=https
+		host=example.com
+		username=user-expiry-overwrite
+		password=pass1
+		password_expiry_utc=9999999998
+		EOF
+		check approve $HELPER <<-\EOF &&
+		protocol=https
+		host=example.com
+		username=user-expiry-overwrite
+		password=pass2
+		password_expiry_utc=9999999999
+		EOF
+		check fill $HELPER <<-\EOF &&
+		protocol=https
+		host=example.com
+		username=user-expiry-overwrite
+		--
+		protocol=https
+		host=example.com
+		username=user-expiry-overwrite
+		password=pass2
+		password_expiry_utc=9999999999
+		EOF
+		check reject $HELPER <<-\EOF &&
+		protocol=https
+		host=example.com
+		username=user-expiry-overwrite
+		password=pass2
+		EOF
+		check fill $HELPER <<-\EOF
+		protocol=https
+		host=example.com
+		username=user-expiry-overwrite
+		--
+		protocol=https
+		host=example.com
+		username=user-expiry-overwrite
+		password=askpass-password
+		--
+		askpass: Password for '\''https://user-expiry-overwrite@example.com'\'':
 		EOF
 	'
 }
