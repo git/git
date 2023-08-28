@@ -618,20 +618,12 @@ understand cruft packs.
 
 Notable alternatives to this design include:
 
-  - The location of the per-object mtime data, and
-  - Storing unreachable objects in multiple cruft packs.
+  - The location of the per-object mtime data.
 
 On the location of mtime data, a new auxiliary file tied to the pack was chosen
 to avoid complicating the `.idx` format. If the `.idx` format were ever to gain
 support for optional chunks of data, it may make sense to consolidate the
 `.mtimes` format into the `.idx` itself.
-
-Storing unreachable objects among multiple cruft packs (e.g., creating a new
-cruft pack during each repacking operation including only unreachable objects
-which aren't already stored in an earlier cruft pack) is significantly more
-complicated to construct, and so aren't pursued here. The obvious drawback to
-the current implementation is that the entire cruft pack must be re-written from
-scratch.
 
 GIT
 ---
