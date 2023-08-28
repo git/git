@@ -8,7 +8,8 @@ scalar - A tool for managing large Git repositories
 SYNOPSIS
 --------
 [verse]
-scalar clone [--single-branch] [--branch <main-branch>] [--full-clone] <url> [<enlistment>]
+scalar clone [--single-branch] [--branch <main-branch>] [--full-clone]
+	[--[no-]src] <url> [<enlistment>]
 scalar list
 scalar register [<enlistment>]
 scalar unregister [<enlistment>]
@@ -79,6 +80,11 @@ Further fetches into the resulting repository will only update the
 remote-tracking branch for the branch this option was used for the initial
 cloning. If the HEAD at the remote did not point at any branch when
 `--single-branch` clone was made, no remote-tracking branch is created.
+
+--[no-]src::
+	By default, `scalar clone` places the cloned repository within a
+	`<entlistment>/src` directory. Use `--no-src` to place the cloned
+	repository directly in the `<enlistment>` directory.
 
 --[no-]full-clone::
 	A sparse-checkout is initialized by default. This behavior can be
