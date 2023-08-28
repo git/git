@@ -3603,7 +3603,6 @@ static void read_cruft_objects(void)
 			string_list_append(&discard_packs, buf.buf + 1);
 		else
 			string_list_append(&fresh_packs, buf.buf);
-		strbuf_reset(&buf);
 	}
 
 	string_list_sort(&discard_packs);
