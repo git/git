@@ -20,7 +20,7 @@ static struct {
 	{ BUNDLE_HEURISTIC_CREATIONTOKEN, "creationToken" },
 };
 
-static int compare_bundles(const void *hashmap_cmp_fn_data,
+static int compare_bundles(const void *hashmap_cmp_fn_data UNUSED,
 			   const struct hashmap_entry *he1,
 			   const struct hashmap_entry *he2,
 			   const void *id)
@@ -45,7 +45,7 @@ void init_bundle_list(struct bundle_list *list)
 }
 
 static int clear_remote_bundle_info(struct remote_bundle_info *bundle,
-				    void *data)
+				    void *data UNUSED)
 {
 	FREE_AND_NULL(bundle->id);
 	FREE_AND_NULL(bundle->uri);
@@ -779,7 +779,7 @@ static int unbundle_all_bundles(struct repository *r,
 	return 0;
 }
 
-static int unlink_bundle(struct remote_bundle_info *info, void *data)
+static int unlink_bundle(struct remote_bundle_info *info, void *data UNUSED)
 {
 	if (info->file)
 		unlink_or_warn(info->file);
