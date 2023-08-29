@@ -409,6 +409,7 @@ static int cmd_clone(int argc, const char **argv)
 {
 	const char *branch = NULL;
 	int full_clone = 0, single_branch = 0, show_progress = isatty(2);
+	int src = 1;
 	struct option clone_options[] = {
 		OPT_STRING('b', "branch", &branch, N_("<branch>"),
 			   N_("branch to checkout after clone")),
@@ -417,10 +418,13 @@ static int cmd_clone(int argc, const char **argv)
 		OPT_BOOL(0, "single-branch", &single_branch,
 			 N_("only download metadata for the branch that will "
 			    "be checked out")),
+		OPT_BOOL(0, "src", &src,
+			 N_("create repository within 'src' directory")),
 		OPT_END(),
 	};
 	const char * const clone_usage[] = {
-		N_("scalar clone [<options>] [--] <repo> [<dir>]"),
+		N_("scalar clone [--single-branch] [--branch <main-branch>] [--full-clone]\n"
+		   "\t[--[no-]src] <url> [<enlistment>]"),
 		NULL
 	};
 	const char *url;
@@ -456,7 +460,10 @@ static int cmd_clone(int argc, const char **argv)
 	if (is_directory(enlistment))
 		die(_("directory '%s' exists already"), enlistment);
 
-	dir = xstrfmt("%s/src", enlistment);
+	if (src)
+		dir = xstrfmt("%s/src", enlistment);
+	else
+		dir = xstrdup(enlistment);
 
 	strbuf_reset(&buf);
 	if (branch)
@@ -657,6 +664,7 @@ static int cmd_reconfigure(int argc, const char **argv)
 	git_config(get_scalar_repos, &scalar_repos);
 
 	for (i = 0; i < scalar_repos.nr; i++) {
+		int succeeded = 0;
 		const char *dir = scalar_repos.items[i].string;
 
 		strbuf_reset(&commondir);
@@ -667,30 +675,56 @@ static int cmd_reconfigure(int argc, const char **argv)
 
 			if (errno != ENOENT) {
 				warning_errno(_("could not switch to '%s'"), dir);
-				res = -1;
-				continue;
+				goto loop_end;
 			}
 
 			strbuf_addstr(&buf, dir);
 			if (remove_deleted_enlistment(&buf))
-				res = error(_("could not remove stale "
-					      "scalar.repo '%s'"), dir);
-			else
-				warning(_("removing stale scalar.repo '%s'"),
+				error(_("could not remove stale "
+					"scalar.repo '%s'"), dir);
+			else {
+				warning(_("removed stale scalar.repo '%s'"),
 					dir);
+				succeeded = 1;
+			}
 			strbuf_release(&buf);
-		} else if (discover_git_directory(&commondir, &gitdir) < 0) {
-			warning_errno(_("git repository gone in '%s'"), dir);
+			goto loop_end;
+		}
+
+		switch (discover_git_directory_reason(&commondir, &gitdir)) {
+		case GIT_DIR_INVALID_OWNERSHIP:
+			warning(_("repository at '%s' has different owner"), dir);
+			goto loop_end;
+
+		case GIT_DIR_INVALID_GITFILE:
+		case GIT_DIR_INVALID_FORMAT:
+			warning(_("repository at '%s' has a format issue"), dir);
+			goto loop_end;
+
+		case GIT_DIR_DISCOVERED:
+			succeeded = 1;
+			break;
+
+		default:
+			warning(_("repository not found in '%s'"), dir);
+			break;
+		}
+
+		git_config_clear();
+
+		the_repository = &r;
+		r.commondir = commondir.buf;
+		r.gitdir = gitdir.buf;
+
+		if (set_recommended_config(1) >= 0)
+			succeeded = 1;
+
+loop_end:
+		if (!succeeded) {
 			res = -1;
-		} else {
-			git_config_clear();
-
-			the_repository = &r;
-			r.commondir = commondir.buf;
-			r.gitdir = gitdir.buf;
-
-			if (set_recommended_config(1) < 0)
-				res = -1;
+			warning(_("to unregister this repository from Scalar, run\n"
+				  "\tgit config --global --unset --fixed-value scalar.repo \"%s\""),
+				dir);
 		}
 	}
 
