@@ -17,7 +17,7 @@ static int grep_source_load(struct grep_source *gs);
 static int grep_source_is_binary(struct grep_source *gs,
 				 struct index_state *istate);
 
-static void std_output(struct grep_opt *opt, const void *buf, size_t size)
+static void std_output(struct grep_opt *opt UNUSED, const void *buf, size_t size)
 {
 	fwrite(buf, size, 1, stdout);
 }
