@@ -46,6 +46,132 @@ catch {rename send {}} ; # What an evil concept...
 
 ######################################################################
 ##
+## Enabling platform-specific code paths
+
+proc is_MacOSX {} {
+	if {[tk windowingsystem] eq {aqua}} {
+		return 1
+	}
+	return 0
+}
+
+proc is_Windows {} {
+	if {$::tcl_platform(platform) eq {windows}} {
+		return 1
+	}
+	return 0
+}
+
+set _iscygwin {}
+proc is_Cygwin {} {
+	global _iscygwin
+	if {$_iscygwin eq {}} {
+		if {[string match "CYGWIN_*" $::tcl_platform(os)]} {
+			set _iscygwin 1
+		} else {
+			set _iscygwin 0
+		}
+	}
+	return $_iscygwin
+}
+
+######################################################################
+##
+## PATH lookup
+
+set _search_path {}
+proc _which {what args} {
+	global env _search_exe _search_path
+
+	if {$_search_path eq {}} {
+		if {[is_Windows]} {
+			set gitguidir [file dirname [info script]]
+			regsub -all ";" $gitguidir "\\;" gitguidir
+			set env(PATH) "$gitguidir;$env(PATH)"
+			set _search_path [split $env(PATH) {;}]
+			# Skip empty `PATH` elements
+			set _search_path [lsearch -all -inline -not -exact \
+				$_search_path ""]
+			set _search_exe .exe
+		} else {
+			set _search_path [split $env(PATH) :]
+			set _search_exe {}
+		}
+	}
+
+	if {[is_Windows] && [lsearch -exact $args -script] >= 0} {
+		set suffix {}
+	} else {
+		set suffix $_search_exe
+	}
+
+	foreach p $_search_path {
+		set p [file join $p $what$suffix]
+		if {[file exists $p]} {
+			return [file normalize $p]
+		}
+	}
+	return {}
+}
+
+proc sanitize_command_line {command_line from_index} {
+	set i $from_index
+	while {$i < [llength $command_line]} {
+		set cmd [lindex $command_line $i]
+		if {[file pathtype $cmd] ne "absolute"} {
+			set fullpath [_which $cmd]
+			if {$fullpath eq ""} {
+				throw {NOT-FOUND} "$cmd not found in PATH"
+			}
+			lset command_line $i $fullpath
+		}
+
+		# handle piped commands, e.g. `exec A | B`
+		for {incr i} {$i < [llength $command_line]} {incr i} {
+			if {[lindex $command_line $i] eq "|"} {
+				incr i
+				break
+			}
+		}
+	}
+	return $command_line
+}
+
+# Override `exec` to avoid unsafe PATH lookup
+
+rename exec real_exec
+
+proc exec {args} {
+	# skip options
+	for {set i 0} {$i < [llength $args]} {incr i} {
+		set arg [lindex $args $i]
+		if {$arg eq "--"} {
+			incr i
+			break
+		}
+		if {[string range $arg 0 0] ne "-"} {
+			break
+		}
+	}
+	set args [sanitize_command_line $args $i]
+	uplevel 1 real_exec $args
+}
+
+# Override `open` to avoid unsafe PATH lookup
+
+rename open real_open
+
+proc open {args} {
+	set arg0 [lindex $args 0]
+	if {[string range $arg0 0 0] eq "|"} {
+		set command_line [string trim [string range $arg0 1 end]]
+		lset args 0 "| [sanitize_command_line $command_line 0]"
+	}
+	uplevel 1 real_open $args
+}
+
+######################################################################
+##
 ## locate our library
 
 if { [info exists ::env(GIT_GUI_LIB_DIR) ] } {
@@ -163,8 +289,6 @@ set _isbare {}
 set _gitexec {}
 set _githtmldir {}
 set _reponame {}
-set _iscygwin {}
-set _search_path {}
 set _shellpath {@@SHELL_PATH@@}
 
 set _trace [lsearch -exact $argv --trace]
@@ -211,14 +335,7 @@ proc gitexec {args} {
 		if {[catch {set _gitexec [git --exec-path]} err]} {
 			error "Git not installed?\n\n$err"
 		}
-		if {[is_Cygwin]} {
-			set _gitexec [exec cygpath \
-				--windows \
-				--absolute \
-				$_gitexec]
-		} else {
-			set _gitexec [file normalize $_gitexec]
-		}
+		set _gitexec [file normalize $_gitexec]
 	}
 	if {$args eq {}} {
 		return $_gitexec
@@ -233,14 +350,7 @@ proc githtmldir {args} {
 			# Git not installed or option not yet supported
 			return {}
 		}
-		if {[is_Cygwin]} {
-			set _githtmldir [exec cygpath \
-				--windows \
-				--absolute \
-				$_githtmldir]
-		} else {
-			set _githtmldir [file normalize $_githtmldir]
-		}
+		set _githtmldir [file normalize $_githtmldir]
 	}
 	if {$args eq {}} {
 		return $_githtmldir
@@ -250,40 +360,6 @@ proc githtmldir {args} {
 
 proc reponame {} {
 	return $::_reponame
-}
-
-proc is_MacOSX {} {
-	if {[tk windowingsystem] eq {aqua}} {
-		return 1
-	}
-	return 0
-}
-
-proc is_Windows {} {
-	if {$::tcl_platform(platform) eq {windows}} {
-		return 1
-	}
-	return 0
-}
-
-proc is_Cygwin {} {
-	global _iscygwin
-	if {$_iscygwin eq {}} {
-		if {$::tcl_platform(platform) eq {windows}} {
-			if {[catch {set p [exec cygpath --windir]} err]} {
-				set _iscygwin 0
-			} else {
-				set _iscygwin 1
-				# Handle MSys2 which is only cygwin when MSYSTEM is MSYS.
-				if {[info exists ::env(MSYSTEM)] && $::env(MSYSTEM) ne "MSYS"} {
-					set _iscygwin 0
-				}
-			}
-		} else {
-			set _iscygwin 0
-		}
-	}
-	return $_iscygwin
 }
 
 proc is_enabled {option} {
@@ -446,44 +522,6 @@ proc _git_cmd {name} {
 		set _git_cmd_path($name) $v
 	}
 	return $v
-}
-
-proc _which {what args} {
-	global env _search_exe _search_path
-
-	if {$_search_path eq {}} {
-		if {[is_Cygwin] && [regexp {^(/|\.:)} $env(PATH)]} {
-			set _search_path [split [exec cygpath \
-				--windows \
-				--path \
-				--absolute \
-				$env(PATH)] {;}]
-			set _search_exe .exe
-		} elseif {[is_Windows]} {
-			set gitguidir [file dirname [info script]]
-			regsub -all ";" $gitguidir "\\;" gitguidir
-			set env(PATH) "$gitguidir;$env(PATH)"
-			set _search_path [split $env(PATH) {;}]
-			set _search_exe .exe
-		} else {
-			set _search_path [split $env(PATH) :]
-			set _search_exe {}
-		}
-	}
-
-	if {[is_Windows] && [lsearch -exact $args -script] >= 0} {
-		set suffix {}
-	} else {
-		set suffix $_search_exe
-	}
-
-	foreach p $_search_path {
-		set p [file join $p $what$suffix]
-		if {[file exists $p]} {
-			return [file normalize $p]
-		}
-	}
-	return {}
 }
 
 # Test a file for a hashbang to identify executable scripts on Windows.
@@ -1259,9 +1297,6 @@ if {$_gitdir eq "."} {
 	set _gitdir [pwd]
 }
 
-if {![file isdirectory $_gitdir] && [is_Cygwin]} {
-	catch {set _gitdir [exec cygpath --windows $_gitdir]}
-}
 if {![file isdirectory $_gitdir]} {
 	catch {wm withdraw .}
 	error_popup [strcat [mc "Git directory not found:"] "\n\n$_gitdir"]
@@ -1273,11 +1308,7 @@ apply_config
 
 # v1.7.0 introduced --show-toplevel to return the canonical work-tree
 if {[package vcompare $_git_version 1.7.0] >= 0} {
-	if { [is_Cygwin] } {
-		catch {set _gitworktree [exec cygpath --windows [git rev-parse --show-toplevel]]}
-	} else {
-		set _gitworktree [git rev-parse --show-toplevel]
-	}
+	set _gitworktree [git rev-parse --show-toplevel]
 } else {
 	# try to set work tree from environment, core.worktree or use
 	# cdup to obtain a relative path to the top of the worktree. If
@@ -1502,24 +1533,8 @@ proc rescan {after {honor_trustmtime 1}} {
 	}
 }
 
-if {[is_Cygwin]} {
-	set is_git_info_exclude {}
-	proc have_info_exclude {} {
-		global is_git_info_exclude
-
-		if {$is_git_info_exclude eq {}} {
-			if {[catch {exec test -f [gitdir info exclude]}]} {
-				set is_git_info_exclude 0
-			} else {
-				set is_git_info_exclude 1
-			}
-		}
-		return $is_git_info_exclude
-	}
-} else {
-	proc have_info_exclude {} {
-		return [file readable [gitdir info exclude]]
-	}
+proc have_info_exclude {} {
+	return [file readable [gitdir info exclude]]
 }
 
 proc rescan_stage2 {fd after} {
@@ -2259,7 +2274,9 @@ proc do_git_gui {} {
 
 # Get the system-specific explorer app/command.
 proc get_explorer {} {
-	if {[is_Cygwin] || [is_Windows]} {
+	if {[is_Cygwin]} {
+		set explorer "/bin/cygstart.exe --explore"
+	} elseif {[is_Windows]} {
 		set explorer "explorer.exe"
 	} elseif {[is_MacOSX]} {
 		set explorer "open"
@@ -3053,10 +3070,6 @@ if {[is_MacOSX]} {
 set doc_path [githtmldir]
 if {$doc_path ne {}} {
 	set doc_path [file join $doc_path index.html]
-
-	if {[is_Cygwin]} {
-		set doc_path [exec cygpath --mixed $doc_path]
-	}
 }
 
 if {[file isfile $doc_path]} {
@@ -4027,60 +4040,6 @@ set file_lists($ui_workdir) [list]
 
 wm title . "[appname] ([reponame]) [file normalize $_gitworktree]"
 focus -force $ui_comm
-
-# -- Warn the user about environmental problems.  Cygwin's Tcl
-#    does *not* pass its env array onto any processes it spawns.
-#    This means that git processes get none of our environment.
-#
-if {[is_Cygwin]} {
-	set ignored_env 0
-	set suggest_user {}
-	set msg [mc "Possible environment issues exist.
-
-The following environment variables are probably
-going to be ignored by any Git subprocess run
-by %s:
-
-" [appname]]
-	foreach name [array names env] {
-		switch -regexp -- $name {
-		{^GIT_INDEX_FILE$} -
-		{^GIT_OBJECT_DIRECTORY$} -
-		{^GIT_ALTERNATE_OBJECT_DIRECTORIES$} -
-		{^GIT_DIFF_OPTS$} -
-		{^GIT_EXTERNAL_DIFF$} -
-		{^GIT_PAGER$} -
-		{^GIT_TRACE$} -
-		{^GIT_CONFIG$} -
-		{^GIT_(AUTHOR|COMMITTER)_DATE$} {
-			append msg " - $name\n"
-			incr ignored_env
-		}
-		{^GIT_(AUTHOR|COMMITTER)_(NAME|EMAIL)$} {
-			append msg " - $name\n"
-			incr ignored_env
-			set suggest_user $name
-		}
-		}
-	}
-	if {$ignored_env > 0} {
-		append msg [mc "
-This is due to a known issue with the
-Tcl binary distributed by Cygwin."]
-
-		if {$suggest_user ne {}} {
-			append msg [mc "
-
-A good replacement for %s
-is placing values for the user.name and
-user.email settings into your personal
-~/.gitconfig file.
-" $suggest_user]
-		}
-		warn_popup $msg
-	}
-	unset ignored_env msg suggest_user name
-}
 
 # -- Only initialize complex UI if we are going to stay running.
 #

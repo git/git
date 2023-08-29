@@ -174,9 +174,6 @@ constructor pick {} {
 			-foreground blue \
 			-underline 1
 		set home $::env(HOME)
-		if {[is_Cygwin]} {
-			set home [exec cygpath --windows --absolute $home]
-		}
 		set home "[file normalize $home]/"
 		set hlen [string length $home]
 		foreach p $sorted_recent {
@@ -372,18 +369,6 @@ proc _objdir {path} {
 	set objdir [file join $path objects]
 	if {[file isdirectory $objdir]} {
 		return $objdir
-	}
-
-	if {[is_Cygwin]} {
-		set objdir [file join $path .git objects.lnk]
-		if {[file isfile $objdir]} {
-			return [win32_read_lnk $objdir]
-		}
-
-		set objdir [file join $path objects.lnk]
-		if {[file isfile $objdir]} {
-			return [win32_read_lnk $objdir]
-		}
 	}
 
 	return {}
@@ -623,12 +608,6 @@ method _do_clone2 {} {
 	}
 
 	set giturl $origin_url
-	if {[is_Cygwin] && [file isdirectory $giturl]} {
-		set giturl [exec cygpath --unix --absolute $giturl]
-		if {$clone_type eq {shared}} {
-			set objdir [exec cygpath --unix --absolute $objdir]
-		}
-	}
 
 	if {[file exists $local_path]} {
 		error_popup [mc "Location %s already exists." $local_path]
@@ -668,11 +647,7 @@ method _do_clone2 {} {
 				fconfigure $f_cp -translation binary -encoding binary
 				cd $objdir
 				while {[gets $f_in line] >= 0} {
-					if {[is_Cygwin]} {
-						puts $f_cp [exec cygpath --unix --absolute $line]
-					} else {
-						puts $f_cp [file normalize $line]
-					}
+					puts $f_cp [file normalize $line]
 				}
 				close $f_in
 				close $f_cp
