@@ -807,35 +807,56 @@ static struct attr_stack *read_attr_from_blob(struct index_state *istate,
 static struct attr_stack *read_attr_from_index(struct index_state *istate,
 					       const char *path, unsigned flags)
 {
+	struct attr_stack *stack = NULL;
 	char *buf;
 	unsigned long size;
+	int sparse_dir_pos = -1;
 
 	if (!istate)
 		return NULL;
 
 	/*
-	 * The .gitattributes file only applies to files within its
-	 * parent directory. In the case of cone-mode sparse-checkout,
-	 * the .gitattributes file is sparse if and only if all paths
-	 * within that directory are also sparse. Thus, don't load the
-	 * .gitattributes file since it will not matter.
-	 *
-	 * In the case of a sparse index, it is critical that we don't go
-	 * looking for a .gitattributes file, as doing so would cause the
-	 * index to expand.
+	 * When handling sparse-checkouts, .gitattributes files
+	 * may reside within a sparse directory. We distinguish
+	 * whether a path exists directly in the index or not by
+	 * evaluating if 'pos' is negative.
+	 * If 'pos' is negative, the path is not directly present
+	 * in the index and is likely within a sparse directory.
+	 * For paths not in the index, The absolute value of 'pos'
+	 * minus 1 gives us the position where the path would be
+	 * inserted in lexicographic order within the index.
+	 * We then subtract another 1 from this value
+	 * (sparse_dir_pos = -pos - 2) to find the position of the
+	 * last index entry which is lexicographically smaller than
+	 * the path. This would be the sparse directory containing
+	 * the path. By identifying the sparse directory containing
+	 * the path, we can correctly read the attributes specified
+	 * in the .gitattributes file from the tree object of the
+	 * sparse directory.
 	 */
-	if (!path_in_cone_mode_sparse_checkout(path, istate))
-		return NULL;
+	if (!path_in_cone_mode_sparse_checkout(path, istate)) {
+		int pos = index_name_pos_sparse(istate, path, strlen(path));
 
-	buf = read_blob_data_from_index(istate, path, &size);
-	if (!buf)
-		return NULL;
-	if (size >= ATTR_MAX_FILE_SIZE) {
-		warning(_("ignoring overly large gitattributes blob '%s'"), path);
-		return NULL;
+		if (pos < 0)
+			sparse_dir_pos = -pos - 2;
 	}
 
-	return read_attr_from_buf(buf, path, flags);
+	if (sparse_dir_pos >= 0 &&
+	    S_ISSPARSEDIR(istate->cache[sparse_dir_pos]->ce_mode) &&
+	    !strncmp(istate->cache[sparse_dir_pos]->name, path, ce_namelen(istate->cache[sparse_dir_pos]))) {
+		const char *relative_path = path + ce_namelen(istate->cache[sparse_dir_pos]);
+		stack = read_attr_from_blob(istate, &istate->cache[sparse_dir_pos]->oid, relative_path, flags);
+	} else {
+		buf = read_blob_data_from_index(istate, path, &size);
+		if (!buf)
+			return NULL;
+		if (size >= ATTR_MAX_FILE_SIZE) {
+			warning(_("ignoring overly large gitattributes blob '%s'"), path);
+			return NULL;
+		}
+		stack = read_attr_from_buf(buf, path, flags);
+	}
+	return stack;
 }
 
 static struct attr_stack *read_attr(struct index_state *istate,
