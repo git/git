@@ -58,7 +58,8 @@ static struct tr2_sysenv_entry tr2_sysenv_settings[] = {
 /* clang-format on */
 
 static int tr2_sysenv_cb(const char *key, const char *value,
-			 const struct config_context *ctx UNUSED, void *d)
+			 const struct config_context *ctx UNUSED,
+			 void *d UNUSED)
 {
 	int k;
 
