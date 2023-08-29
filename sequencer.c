@@ -2649,7 +2649,7 @@ static int parse_insn_line(struct repository *r, struct todo_item *item,
 	return item->commit ? 0 : -1;
 }
 
-int sequencer_get_last_command(struct repository *r, enum replay_action *action)
+int sequencer_get_last_command(struct repository *r UNUSED, enum replay_action *action)
 {
 	const char *todo_file, *bol;
 	struct strbuf buf = STRBUF_INIT;
