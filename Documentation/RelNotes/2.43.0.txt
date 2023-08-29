@@ -22,10 +22,13 @@ UI, Workflows & Features
  * Update two credential helpers to correctly match which credential
    to erase; they dropped not the ones with stale password.
 
+ * Git GUI updates.
+
 
 Performance, Internal Implementation, Development Support etc.
 
- * TBD.
+ * "git check-attr" has been taught to work better with sparse-index.
+
 
 
 Fixes since v2.42
@@ -35,9 +38,18 @@ Fixes since v2.42
    chopped to fit under filesystem limitation.
    (merge ac300bda10 mp/rebase-label-length-limit later to maint).
 
+ * Scalar updates.
+   (merge f9a547d3a7 ds/scalar-updates later to maint).
+
+ * Tweak GitHub Actions CI so that pushing the same commit to multiple
+   branch tips at the same time will not waste building and testing
+   the same thing twice.
+   (merge 99fe06cbfd jc/ci-skip-same-commit later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge fd3ba590d8 ws/git-push-doc-grammofix later to maint).
    (merge 5f33a843de ds/upload-pack-error-sequence-fix later to maint).
    (merge beaa1d952b jk/function-pointer-mismatches-fix later to maint).
    (merge b46d806ea5 ob/t9001-indent-fix later to maint).
    (merge fdc9914c28 ja/worktree-orphan later to maint).
+   (merge c2cbefc510 jc/mv-d-to-d-error-message-fix later to maint).
