@@ -31,10 +31,13 @@ jobs:
         name: check whether CI is enabled for ref
         run: |
           enabled=yes
-          if test -x config-repo/ci/config/allow-ref &&
-             ! config-repo/ci/config/allow-ref '${{ github.ref }}'
+          if test -x config-repo/ci/config/allow-ref
           then
-            enabled=no
+            echo "::warning::ci/config/allow-ref is deprecated; use CI_BRANCHES instead"
+            if ! config-repo/ci/config/allow-ref '${{ github.ref }}'
+            then
+              enabled=no
+            fi
           fi
 
           skip_concurrent=yes
