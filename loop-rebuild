@@ -1,0 +1,25 @@
+#!/bin/sh
+
+ssleep () {
+	seconds=$1
+	now=$(date "+%s")
+	sleep $(( ((now + seconds + seconds / 4) / seconds) * seconds - now))
+}
+
+stamp () {
+	Meta/V 2>/dev/null | sha1sum
+}
+
+P=previous
+O=observed
+while :
+do
+	while O=$(stamp) && test "$P" = "$O"
+	do
+		ssleep 300
+	done
+	ssleep 30
+	time nice -20 Meta/Dothem -j16 --scratch --dash; uptime; date
+	P=$(stamp)
+	Meta/V
+done
