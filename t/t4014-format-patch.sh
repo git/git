@@ -1373,7 +1373,27 @@ test_expect_success '--rfc' '
 	Subject: [RFC PATCH 1/1] header with . in it
 	EOF
 	git format-patch -n -1 --stdout --rfc >patch &&
-	grep ^Subject: patch >actual &&
+	grep "^Subject:" patch >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--rfc does not overwrite prefix' '
+	cat >expect <<-\EOF &&
+	Subject: [RFC PATCH foobar 1/1] header with . in it
+	EOF
+	git -c format.subjectPrefix="PATCH foobar" \
+		format-patch -n -1 --stdout --rfc >patch &&
+	grep "^Subject:" patch >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--rfc is argument order independent' '
+	cat >expect <<-\EOF &&
+	Subject: [RFC PATCH foobar 1/1] header with . in it
+	EOF
+	git format-patch -n -1 --stdout --rfc \
+		--subject-prefix="PATCH foobar" >patch &&
+	grep "^Subject:" patch >actual &&
 	test_cmp expect actual
 '
 
