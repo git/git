@@ -132,6 +132,7 @@ extern size_t packed_git_limit;
 extern size_t delta_base_cache_limit;
 extern unsigned long big_file_threshold;
 extern unsigned long pack_size_limit_cfg;
+extern int max_allowed_tree_depth;
 
 /*
  * Accessors for the core.sharedrepository config which lazy-load the value
