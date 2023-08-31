@@ -121,6 +121,8 @@ static struct string_list decorate_refs_include = STRING_LIST_INIT_NODUP;
 static int clear_decorations_callback(const struct option *opt UNUSED,
 				      const char *arg, int unset)
 {
+	BUG_ON_OPT_NEG(unset);
+	BUG_ON_OPT_ARG(arg);
 	string_list_clear(&decorate_refs_include, 0);
 	string_list_clear(&decorate_refs_exclude, 0);
 	use_default_decoration_filter = 0;
