@@ -441,7 +441,7 @@ int traverse_trees(struct index_state *istate,
 		   int n, struct tree_desc *t,
 		   struct traverse_info *info)
 {
-	int error = 0;
+	int ret = 0;
 	struct name_entry *entry;
 	int i;
 	struct tree_desc_x *tx;
@@ -539,7 +539,7 @@ int traverse_trees(struct index_state *istate,
 		if (interesting) {
 			trees_used = info->fn(n, mask, dirmask, entry, info);
 			if (trees_used < 0) {
-				error = trees_used;
+				ret = trees_used;
 				if (!info->show_all_errors)
 					break;
 			}
@@ -558,7 +558,7 @@ int traverse_trees(struct index_state *istate,
 	strbuf_release(&base);
 
 	traverse_trees_cur_depth--;
-	return error;
+	return ret;
 }
 
 struct dir_state {
