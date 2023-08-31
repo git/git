@@ -9,6 +9,7 @@
 #include "tree.h"
 #include "pathspec.h"
 #include "json-writer.h"
+#include "environment.h"
 
 static const char *get_mode(const char *str, unsigned int *modep)
 {
@@ -448,6 +449,9 @@ int traverse_trees(struct index_state *istate,
 	struct strbuf base = STRBUF_INIT;
 	int interesting = 1;
 	char *traverse_path;
+
+	if (traverse_trees_cur_depth > max_allowed_tree_depth)
+		return error("exceeded maximum allowed tree depth");
 
 	traverse_trees_count++;
 	traverse_trees_cur_depth++;
