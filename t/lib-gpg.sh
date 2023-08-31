@@ -45,6 +45,7 @@ test_lazy_prereq GPG '
 			"$TEST_DIRECTORY"/lib-gpg/keyring.gpg &&
 		gpg --homedir "${GNUPGHOME}" --import-ownertrust \
 			"$TEST_DIRECTORY"/lib-gpg/ownertrust &&
+		gpg --homedir "${GNUPGHOME}" --update-trustdb &&
 		gpg --homedir "${GNUPGHOME}" </dev/null >/dev/null \
 			--sign -u committer@example.com
 		;;

@@ -1763,10 +1763,7 @@ test_expect_success GPGSSH 'setup for signature atom using ssh' '
 '
 
 test_expect_success GPG2 'bare signature atom' '
-	git verify-commit first-signed 2>out.raw &&
-	grep -Ev "checking the trustdb|PGP trust model" out.raw >out &&
-	head -3 out >expect &&
-	tail -1 out >>expect &&
+	git verify-commit first-signed 2>expect &&
 	echo  >>expect &&
 	git for-each-ref refs/tags/first-signed \
 		--format="%(signature)" >actual &&
