@@ -264,7 +264,7 @@ static struct option builtin_merge_options[] = {
 	OPT_RERERE_AUTOUPDATE(&allow_rerere_auto),
 	OPT_BOOL(0, "verify-signatures", &verify_signatures,
 		N_("verify that the named commit has a valid GPG signature")),
-	OPT_CALLBACK('s', "strategy", &use_strategies, N_("strategy"),
+	OPT_CALLBACK('s', "strategy", NULL, N_("strategy"),
 		N_("merge strategy to use"), option_parse_strategy),
 	OPT_STRVEC('X', "strategy-option", &xopts, N_("option=value"),
 		N_("option for selected merge strategy")),
