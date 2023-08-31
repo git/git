@@ -6229,7 +6229,7 @@ int complete_action(struct repository *r, struct replay_opts *opts, unsigned fla
 	if (checkout_onto(r, opts, onto_name, &oid, orig_head))
 		goto cleanup;
 
-	if (require_clean_work_tree(r, "rebase", "", 1, 1))
+	if (require_clean_work_tree(r, "rebase", NULL, 1, 1))
 		goto cleanup;
 
 	todo_list_write_total_nr(&new_todo);
