@@ -7,6 +7,7 @@
 #include "hash.h"
 #include "tree.h"
 #include "tree-walk.h"
+#include "environment.h"
 
 /*
  * Some mode bits are also used internally for computations.
@@ -45,7 +46,8 @@
 static struct combine_diff_path *ll_diff_tree_paths(
 	struct combine_diff_path *p, const struct object_id *oid,
 	const struct object_id **parents_oid, int nparent,
-	struct strbuf *base, struct diff_options *opt);
+	struct strbuf *base, struct diff_options *opt,
+	int depth);
 static void ll_diff_tree_oid(const struct object_id *old_oid,
 			     const struct object_id *new_oid,
 			     struct strbuf *base, struct diff_options *opt);
@@ -196,7 +198,7 @@ static struct combine_diff_path *path_appendnew(struct combine_diff_path *last,
 static struct combine_diff_path *emit_path(struct combine_diff_path *p,
 	struct strbuf *base, struct diff_options *opt, int nparent,
 	struct tree_desc *t, struct tree_desc *tp,
-	int imin)
+	int imin, int depth)
 {
 	unsigned short mode;
 	const char *path;
@@ -302,7 +304,8 @@ static struct combine_diff_path *emit_path(struct combine_diff_path *p,
 
 		strbuf_add(base, path, pathlen);
 		strbuf_addch(base, '/');
-		p = ll_diff_tree_paths(p, oid, parents_oid, nparent, base, opt);
+		p = ll_diff_tree_paths(p, oid, parents_oid, nparent, base, opt,
+				       depth + 1);
 		FAST_ARRAY_FREE(parents_oid, nparent);
 	}
 
@@ -423,11 +426,15 @@ static inline void update_tp_entries(struct tree_desc *tp, int nparent)
 static struct combine_diff_path *ll_diff_tree_paths(
 	struct combine_diff_path *p, const struct object_id *oid,
 	const struct object_id **parents_oid, int nparent,
-	struct strbuf *base, struct diff_options *opt)
+	struct strbuf *base, struct diff_options *opt,
+	int depth)
 {
 	struct tree_desc t, *tp;
 	void *ttree, **tptree;
 	int i;
+
+	if (depth > max_allowed_tree_depth)
+		die("exceeded maximum allowed tree depth");
 
 	FAST_ARRAY_ALLOC(tp, nparent);
 	FAST_ARRAY_ALLOC(tptree, nparent);
@@ -522,7 +529,7 @@ static struct combine_diff_path *ll_diff_tree_paths(
 
 			/* D += {δ(t,pi) if pi=p[imin];  "+a" if pi > p[imin]} */
 			p = emit_path(p, base, opt, nparent,
-					&t, tp, imin);
+					&t, tp, imin, depth);
 
 		skip_emit_t_tp:
 			/* t↓,  ∀ pi=p[imin]  pi↓ */
@@ -534,7 +541,7 @@ static struct combine_diff_path *ll_diff_tree_paths(
 		else if (cmp < 0) {
 			/* D += "+t" */
 			p = emit_path(p, base, opt, nparent,
-					&t, /*tp=*/NULL, -1);
+					&t, /*tp=*/NULL, -1, depth);
 
 			/* t↓ */
 			update_tree_entry(&t);
@@ -550,7 +557,7 @@ static struct combine_diff_path *ll_diff_tree_paths(
 			}
 
 			p = emit_path(p, base, opt, nparent,
-					/*t=*/NULL, tp, imin);
+					/*t=*/NULL, tp, imin, depth);
 
 		skip_emit_tp:
 			/* ∀ pi=p[imin]  pi↓ */
@@ -572,7 +579,7 @@ struct combine_diff_path *diff_tree_paths(
 	const struct object_id **parents_oid, int nparent,
 	struct strbuf *base, struct diff_options *opt)
 {
-	p = ll_diff_tree_paths(p, oid, parents_oid, nparent, base, opt);
+	p = ll_diff_tree_paths(p, oid, parents_oid, nparent, base, opt, 0);
 
 	/*
 	 * free pre-allocated last element, if any
