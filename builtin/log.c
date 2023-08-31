@@ -1567,24 +1567,6 @@ static int header_callback(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
-static int to_callback(const struct option *opt, const char *arg, int unset)
-{
-	if (unset)
-		string_list_clear(&extra_to, 0);
-	else
-		string_list_append(&extra_to, arg);
-	return 0;
-}
-
-static int cc_callback(const struct option *opt, const char *arg, int unset)
-{
-	if (unset)
-		string_list_clear(&extra_cc, 0);
-	else
-		string_list_append(&extra_cc, arg);
-	return 0;
-}
-
 static int from_callback(const struct option *opt, const char *arg, int unset)
 {
 	char **from = opt->value;
@@ -1957,8 +1939,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		OPT_GROUP(N_("Messaging")),
 		OPT_CALLBACK(0, "add-header", NULL, N_("header"),
 			    N_("add email header"), header_callback),
-		OPT_CALLBACK(0, "to", NULL, N_("email"), N_("add To: header"), to_callback),
-		OPT_CALLBACK(0, "cc", NULL, N_("email"), N_("add Cc: header"), cc_callback),
+		OPT_STRING_LIST(0, "to", &extra_to, N_("email"), N_("add To: header")),
+		OPT_STRING_LIST(0, "cc", &extra_cc, N_("email"), N_("add Cc: header")),
 		OPT_CALLBACK_F(0, "from", &from, N_("ident"),
 			    N_("set From address to <ident> (or committer ident if absent)"),
 			    PARSE_OPT_OPTARG, from_callback),
