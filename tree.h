@@ -44,6 +44,7 @@ typedef int (*read_tree_fn_t)(const struct object_id *, struct strbuf *, const c
 
 int read_tree_at(struct repository *r,
 		 struct tree *tree, struct strbuf *base,
+		 int depth,
 		 const struct pathspec *pathspec,
 		 read_tree_fn_t fn, void *context);
 

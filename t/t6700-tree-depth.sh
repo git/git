@@ -63,4 +63,13 @@ test_expect_success 'default limit for git-archive fails gracefully' '
 	test_must_fail git archive big >/dev/null
 '
 
+test_expect_success 'limit recursion of ls-tree -r' '
+	git $small_ok ls-tree -r small &&
+	test_must_fail git $small_no ls-tree -r small
+'
+
+test_expect_success 'default limit for ls-tree fails gracefully' '
+	test_must_fail git ls-tree -r big >/dev/null
+'
+
 test_done
