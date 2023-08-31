@@ -118,8 +118,8 @@ static struct string_list decorate_refs_exclude = STRING_LIST_INIT_NODUP;
 static struct string_list decorate_refs_exclude_config = STRING_LIST_INIT_NODUP;
 static struct string_list decorate_refs_include = STRING_LIST_INIT_NODUP;
 
-static int clear_decorations_callback(const struct option *opt,
-					    const char *arg, int unset)
+static int clear_decorations_callback(const struct option *opt UNUSED,
+				      const char *arg, int unset)
 {
 	string_list_clear(&decorate_refs_include, 0);
 	string_list_clear(&decorate_refs_exclude, 0);
@@ -127,7 +127,8 @@ static int clear_decorations_callback(const struct option *opt,
 	return 0;
 }
 
-static int decorate_callback(const struct option *opt, const char *arg, int unset)
+static int decorate_callback(const struct option *opt UNUSED, const char *arg,
+			     int unset)
 {
 	if (unset)
 		decoration_style = 0;
@@ -1555,7 +1556,8 @@ static int inline_callback(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
-static int header_callback(const struct option *opt, const char *arg, int unset)
+static int header_callback(const struct option *opt UNUSED, const char *arg,
+			   int unset)
 {
 	if (unset) {
 		string_list_clear(&extra_hdr, 0);

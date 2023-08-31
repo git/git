@@ -3739,7 +3739,7 @@ static void show_object__ma_allow_promisor(struct object *obj, const char *name,
 	show_object(obj, name, data);
 }
 
-static int option_parse_missing_action(const struct option *opt,
+static int option_parse_missing_action(const struct option *opt UNUSED,
 				       const char *arg, int unset)
 {
 	assert(arg);
@@ -4150,7 +4150,7 @@ static int option_parse_index_version(const struct option *opt,
 	return 0;
 }
 
-static int option_parse_unpack_unreachable(const struct option *opt,
+static int option_parse_unpack_unreachable(const struct option *opt UNUSED,
 					   const char *arg, int unset)
 {
 	if (unset) {
@@ -4165,7 +4165,7 @@ static int option_parse_unpack_unreachable(const struct option *opt,
 	return 0;
 }
 
-static int option_parse_cruft_expiration(const struct option *opt,
+static int option_parse_cruft_expiration(const struct option *opt UNUSED,
 					 const char *arg, int unset)
 {
 	if (unset) {

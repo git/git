@@ -231,7 +231,7 @@ static void append_strategy(struct strategy *s)
 	use_strategies[use_strategies_nr++] = s;
 }
 
-static int option_parse_strategy(const struct option *opt,
+static int option_parse_strategy(const struct option *opt UNUSED,
 				 const char *name, int unset)
 {
 	if (unset)
