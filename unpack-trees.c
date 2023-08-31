@@ -864,8 +864,8 @@ static int traverse_trees_recursive(int n, unsigned long dirmask,
 	struct unpack_trees_options *o = info->data;
 	int i, ret, bottom;
 	int nr_buf = 0;
-	struct tree_desc t[MAX_UNPACK_TREES];
-	void *buf[MAX_UNPACK_TREES];
+	struct tree_desc *t;
+	void **buf;
 	struct traverse_info newinfo;
 	struct name_entry *p;
 	int nr_entries;
@@ -902,6 +902,9 @@ static int traverse_trees_recursive(int n, unsigned long dirmask,
 	newinfo.pathlen = st_add3(newinfo.pathlen, tree_entry_len(p), 1);
 	newinfo.df_conflicts |= df_conflicts;
 
+	ALLOC_ARRAY(t, n);
+	ALLOC_ARRAY(buf, n);
+
 	/*
 	 * Fetch the tree from the ODB for each peer directory in the
 	 * n commits.
@@ -937,6 +940,8 @@ static int traverse_trees_recursive(int n, unsigned long dirmask,
 
 	for (i = 0; i < nr_buf; i++)
 		free(buf[i]);
+	free(buf);
+	free(t);
 
 	return ret;
 }

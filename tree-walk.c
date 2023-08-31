@@ -442,9 +442,9 @@ int traverse_trees(struct index_state *istate,
 		   struct traverse_info *info)
 {
 	int error = 0;
-	struct name_entry entry[MAX_TRAVERSE_TREES];
+	struct name_entry *entry;
 	int i;
-	struct tree_desc_x tx[ARRAY_SIZE(entry)];
+	struct tree_desc_x *tx;
 	struct strbuf base = STRBUF_INIT;
 	int interesting = 1;
 	char *traverse_path;
@@ -455,8 +455,8 @@ int traverse_trees(struct index_state *istate,
 	if (traverse_trees_cur_depth > traverse_trees_max_depth)
 		traverse_trees_max_depth = traverse_trees_cur_depth;
 
-	if (n >= ARRAY_SIZE(entry))
-		BUG("traverse_trees() called with too many trees (%d)", n);
+	ALLOC_ARRAY(entry, n);
+	ALLOC_ARRAY(tx, n);
 
 	for (i = 0; i < n; i++) {
 		tx[i].d = t[i];
@@ -551,6 +551,8 @@ int traverse_trees(struct index_state *istate,
 	}
 	for (i = 0; i < n; i++)
 		free_extended_entry(tx + i);
+	free(tx);
+	free(entry);
 	free(traverse_path);
 	info->traverse_path = NULL;
 	strbuf_release(&base);
