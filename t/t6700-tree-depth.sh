@@ -72,4 +72,13 @@ test_expect_success 'default limit for ls-tree fails gracefully' '
 	test_must_fail git ls-tree -r big >/dev/null
 '
 
+test_expect_success 'limit recursion of rev-list --objects' '
+	git $small_ok rev-list --objects small >/dev/null &&
+	test_must_fail git $small_no rev-list --objects small >/dev/null
+'
+
+test_expect_success 'default limit for rev-list fails gracefully' '
+	test_must_fail git rev-list --objects big >/dev/null
+'
+
 test_done
