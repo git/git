@@ -193,14 +193,16 @@ static const char * const builtin_checkout_index_usage[] = {
 static int option_parse_stage(const struct option *opt,
 			      const char *arg, int unset)
 {
+	int *stage = opt->value;
+
 	BUG_ON_OPT_NEG(unset);
 
 	if (!strcmp(arg, "all")) {
-		checkout_stage = CHECKOUT_ALL;
+		*stage = CHECKOUT_ALL;
 	} else {
 		int ch = arg[0];
 		if ('1' <= ch && ch <= '3')
-			checkout_stage = arg[0] - '0';
+			*stage = arg[0] - '0';
 		else
 			die(_("stage should be between 1 and 3 or all"));
 	}
@@ -238,7 +240,7 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 			N_("write the content to temporary files")),
 		OPT_STRING(0, "prefix", &state.base_dir, N_("string"),
 			N_("when creating files, prepend <string>")),
-		OPT_CALLBACK_F(0, "stage", NULL, "(1|2|3|all)",
+		OPT_CALLBACK_F(0, "stage", &checkout_stage, "(1|2|3|all)",
 			N_("copy out the files from named stage"),
 			PARSE_OPT_NONEG, option_parse_stage),
 		OPT_END()
