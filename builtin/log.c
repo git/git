@@ -1253,7 +1253,15 @@ static void show_diffstat(struct rev_info *rev,
 	fprintf(rev->diffopt.file, "\n");
 }
 
+static void read_desc_file(struct strbuf *buf, const char *desc_file)
+{
+	if (strbuf_read_file(buf, desc_file, 0) < 0)
+		die_errno(_("unable to read branch description file '%s'"),
+			  desc_file);
+}
+
 static void prepare_cover_text(struct pretty_print_context *pp,
+			       const char *description_file,
 			       const char *branch_name,
 			       struct strbuf *sb,
 			       const char *encoding,
@@ -1267,7 +1275,9 @@ static void prepare_cover_text(struct pretty_print_context *pp,
 	if (cover_from_description_mode == COVER_FROM_NONE)
 		goto do_pp;
 
-	if (branch_name && *branch_name)
+	if (description_file && *description_file)
+		read_desc_file(&description_sb, description_file);
+	else if (branch_name && *branch_name)
 		read_branch_desc(&description_sb, branch_name);
 	if (!description_sb.len)
 		goto do_pp;
@@ -1313,6 +1323,7 @@ static void get_notes_args(struct strvec *arg, struct rev_info *rev)
 static void make_cover_letter(struct rev_info *rev, int use_separate_file,
 			      struct commit *origin,
 			      int nr, struct commit **list,
+			      const char *description_file,
 			      const char *branch_name,
 			      int quiet)
 {
@@ -1352,7 +1363,8 @@ static void make_cover_letter(struct rev_info *rev, int use_separate_file,
 	pp.rev = rev;
 	pp.print_email_subject = 1;
 	pp_user_info(&pp, NULL, &sb, committer, encoding);
-	prepare_cover_text(&pp, branch_name, &sb, encoding, need_8bit_cte);
+	prepare_cover_text(&pp, description_file, branch_name, &sb,
+			   encoding, need_8bit_cte);
 	fprintf(rev->diffopt.file, "%s\n", sb.buf);
 
 	strbuf_release(&sb);
@@ -1893,6 +1905,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	int quiet = 0;
 	const char *reroll_count = NULL;
 	char *cover_from_description_arg = NULL;
+	char *description_file = NULL;
 	char *branch_name = NULL;
 	char *base_commit = NULL;
 	struct base_tree_info bases;
@@ -1936,6 +1949,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		OPT_STRING(0, "cover-from-description", &cover_from_description_arg,
 			    N_("cover-from-description-mode"),
 			    N_("generate parts of a cover letter based on a branch's description")),
+		OPT_FILENAME(0, "description-file", &description_file,
+			     N_("use branch description from file")),
 		OPT_CALLBACK_F(0, "subject-prefix", &rev, N_("prefix"),
 			    N_("use [<prefix>] instead of [PATCH]"),
 			    PARSE_OPT_NONEG, subject_prefix_callback),
@@ -2321,7 +2336,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		if (thread)
 			gen_message_id(&rev, "cover");
 		make_cover_letter(&rev, !!output_directory,
-				  origin, nr, list, branch_name, quiet);
+				  origin, nr, list, description_file, branch_name, quiet);
 		print_bases(&bases, rev.diffopt.file);
 		print_signature(rev.diffopt.file);
 		total++;
