@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2023, #08; Mon, 28)
-X-master-at: 5dc72c0fbcbccf7dbb42e470e55dafbd2afdf343
-X-next-at: 7437a81fcf65029fe0d26191d952ee59c0ab922b
+Subject: What's cooking in git.git (Sep 2023, #01; Fri, 1)
+X-master-at: d814540bb75bbd2257f9a6bf59661a84fe8cf3cf
+X-next-at: 54e51ff1ac8d5254ec31bb709a94c598aa7cdeda
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Aug 2023, #08; Mon, 28)
+What's cooking in git.git (Sep 2023, #01; Fri, 1)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,10 +16,6 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
-
-The cycle for 2.43 has started.  Hopefully we can drain the topics
-that have been cooking in 'next' during the pre-release freeze
-period down to 'master' by the end of this week.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -50,44 +46,339 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[New Topics]
-
-* rs/parse-options-help-text-is-optional (2023-08-28) 1 commit
- - parse-options: allow omitting option help text
-
- It may be tempting to leave the help text NULL for a command line
- option that is either hidden or too obvious, but "git subcmd -h"
- and "git subcmd --help-all" would have segfaulted if done so.  Now
- the help text is optional.
-
- Will merge to 'next'.
- source: <2b08dc43-621d-2170-c4a6-c2aac33a9a19@web.de>
-
---------------------------------------------------
 [Graduated to 'master']
 
-* mh/credential-erase-improvements-more (2023-07-26) 2 commits
-  (merged to 'next' on 2023-08-08 at fd1ba4accf)
- + credential/wincred: erase matching creds only
- + credential/libsecret: erase matching creds only
+* ch/t6300-verify-commit-test-cleanup (2023-08-23) 2 commits
+  (merged to 'next' on 2023-08-24 at 15b842867e)
+ + t/t6300: drop magic filtering
+ + t/lib-gpg: forcibly run a trustdb update
 
- Update two credential helpers to correctly match which credential
- to erase; they dropped not the ones with stale password.
- source: <pull.1527.v2.git.git.1690387585634.gitgitgadget@gmail.com>
- source: <pull.1529.git.git.1687596777147.gitgitgadget@gmail.com>
+ Test clean-up.
+ source: <20230822150149.541ccb35@leda.eworm.net>
 
 
-* mh/credential-libsecret-attrs (2023-06-16) 1 commit
-  (merged to 'next' on 2023-08-08 at dc73a2c55a)
- + credential/libsecret: store new attributes
+* ds/scalar-updates (2023-08-28) 3 commits
+  (merged to 'next' on 2023-08-28 at 093e6bcb9c)
+ + scalar reconfigure: help users remove buggy repos
+ + setup: add discover_git_directory_reason()
+ + scalar: add --[no-]src option
 
- The way authentication related data other than passwords (e.g.
- oath token and password expiration data) are stored in libsecret
- keyrings has been rethought.
- source: <pull.1469.v5.git.git.1686945306242.gitgitgadget@gmail.com>
+ Scalar updates.
+ source: <pull.1569.v3.git.1693230746.gitgitgadget@gmail.com>
+
+
+* jc/ci-skip-same-commit (2023-08-25) 1 commit
+  (merged to 'next' on 2023-08-28 at e978717961)
+ + ci: avoid building from the same commit in parallel
+
+ Tweak GitHub Actions CI so that pushing the same commit to multiple
+ branch tips at the same time will not waste building and testing
+ the same thing twice.
+ source: <1da763f3-60bf-a572-2c71-336b1fa5553d@gmx.de>
+
+
+* jc/diff-exit-code-with-w-fixes (2023-08-21) 5 commits
+  (merged to 'next' on 2023-08-23 at 436a0aec3d)
+ + diff: the -w option breaks --exit-code for --raw and other output modes
+ + t4040: remove test that succeeded for a wrong reason
+ + diff: teach "--stat -w --exit-code" to notice differences
+ + diff: mode-only change should be noticed by "--patch -w --exit-code"
+ + diff: move the fallback "--exit-code" code down
+
+ "git diff -w --exit-code" with various options did not work
+ correctly, which is being addressed.
+ source: <20230818235932.3253552-1-gitster@pobox.com>
+
+
+* jc/mv-d-to-d-error-message-fix (2023-08-11) 1 commit
+  (merged to 'next' on 2023-08-21 at 2220d22d6f)
+ + mv: fix error for moving directory to another
+
+ Typofix in an error message.
+ source: <xmqqjzu1njt0.fsf@gitster.g>
+
+
+* jk/diff-result-code-cleanup (2023-08-21) 7 commits
+  (merged to 'next' on 2023-08-25 at 3b1280d42f)
+ + diff: drop useless "status" parameter from diff_result_code()
+ + diff: drop useless return values in git-diff helpers
+ + diff: drop useless return from run_diff_{files,index} functions
+ + diff: die when failing to read index in git-diff builtin
+ + diff: show usage for unknown builtin_diff_files() options
+ + diff-files: avoid negative exit value
+ + diff: spell DIFF_INDEX_CACHED out when calling run_diff_index()
+
+ "git diff --no-such-option" and other corner cases around the exit
+ status of the "diff" command has been corrected.
+ source: <20230821201358.GA2663749@coredump.intra.peff.net>
+
+
+* ob/format-patch-description-file (2023-08-21) 1 commit
+  (merged to 'next' on 2023-08-25 at 89ea619311)
+ + format-patch: add --description-file option
+
+ "git format-patch" learns a way to feed cover letter description,
+ that (1) can be used on detached HEAD where there is no branch
+ description available, and (2) also can override the branch
+ description if there is one.
+ source: <20230821170720.577820-1-oswald.buddenhagen@gmx.de>
+
+
+* ob/sequencer-empty-hint-fix (2023-08-24) 1 commit
+  (merged to 'next' on 2023-08-24 at 626c52ad72)
+ + sequencer: rectify empty hint in call of require_clean_work_tree()
+
+ The use of API between two calls to require_clean_work_tree() from
+ the sequencer code has been cleaned up for consistency.
+ source: <20230824150046.802008-1-oswald.buddenhagen@gmx.de>
+
+
+* py/git-gui-updates (2023-08-24) 16 commits
+  (merged to 'next' on 2023-08-28 at df0b742344)
+ + Merge https://github.com/prati0100/git-gui
+ + Merge branch 'ml/cygwin-fixes'
+ + git-gui - use mkshortcut on Cygwin
+ + git-gui - use cygstart to browse on Cygwin
+ + git-gui - remove obsolete Cygwin specific code
+ + git gui Makefile - remove Cygwin modifications
+ + Merge branch 'ab/makeflags'
+ + Makefiles: change search through $(MAKEFLAGS) for GNU make 4.4
+ + Merge branch 'js/windows-rce'
+ + Work around Tcl's default `PATH` lookup
+ + Move the `_which` function (almost) to the top
+ + Move is_<platform> functions to the beginning
+ + is_Cygwin: avoid `exec`ing anything
+ + windows: ignore empty `PATH` elements
+ + Merge branch 'vk/readme-typo'
+ + git-gui: Fix a typo in README
+
+ Git GUI updates.
+
+
+* sl/sparse-check-attr (2023-08-11) 3 commits
+  (merged to 'next' on 2023-08-21 at c202b15517)
+ + check-attr: integrate with sparse-index
+ + attr.c: read attributes in a sparse directory
+ + t1092: add tests for 'git check-attr'
+
+ Teach "git check-attr" work better with sparse-index.
+ cf. <3b2a5b4b-ab8f-746b-6b69-8e8262b6390b@github.com>
+ source: <20230811142211.4547-1-cheskaqiqi@gmail.com>
+
+
+* tb/commit-graph-verify-fix (2023-08-21) 4 commits
+  (merged to 'next' on 2023-08-23 at 2b4b74bb0d)
+ + commit-graph: avoid repeated mixed generation number warnings
+ + t/t5318-commit-graph.sh: test generation zero transitions during fsck
+ + commit-graph: verify swapped zero/non-zero generation cases
+ + commit-graph: introduce `commit_graph_generation_from_graph()`
+
+ The commit-graph verification code that detects mixture of zero and
+ non-zero generation numbers has been updated.
+ source: <cover.1692653671.git.me@ttaylorr.com>
+
+
+* ts/unpacklimit-config-fix (2023-08-22) 1 commit
+  (merged to 'next' on 2023-08-23 at 4fabd9a697)
+ + transfer.unpackLimit: fetch/receive.unpackLimit takes precedence
+
+ transfer.unpackLimit ought to be used as a fallback, but overrode
+ fetch.unpackLimit and receive.unpackLimit instead.
+ source: <xmqqpm3eh7f6.fsf@gitster.g>
+
+--------------------------------------------------
+[New Topics]
+
+* dd/format-patch-rfc-updates (2023-08-31) 1 commit
+  (merged to 'next' on 2023-09-01 at ad87c89ee3)
+ + format-patch: --rfc honors what --subject-prefix sets
+
+ "git format-patch --rfc --subject-prefix=<foo>" used to ignore the
+ "--subject-prefix" option and used "[RFC PATCH]"; now we will add
+ "RFC" prefix to whatever subject prefix is specified.
+
+ This is a backward compatible change that may deserve a note.
+
+ Will merge to 'master'.
+ source: <20230830064646.30904-1-sir@cmpwn.com>
+
+
+* jk/test-lsan-denoise-output (2023-08-28) 1 commit
+  (merged to 'next' on 2023-08-29 at 9642d76264)
+ + test-lib: ignore uninteresting LSan output
+
+ Tests with LSan from time to time seem to emit harmless message
+ that makes our tests unnecessarily flakey; we work it around by
+ filtering the uninteresting output.
+
+ Will merge to 'master'.
+ source: <20230828183735.GA3015072@coredump.intra.peff.net>
+
+
+* jk/unused-post-2.42 (2023-08-29) 22 commits
+  (merged to 'next' on 2023-08-30 at ab0538e754)
+ + update-ref: mark unused parameter in parser callbacks
+ + gc: mark unused descriptors in scheduler callbacks
+ + bundle-uri: mark unused parameters in callbacks
+ + fetch: mark unused parameter in ref_transaction callback
+ + credential: mark unused parameter in urlmatch callback
+ + grep: mark unused parmaeters in pcre fallbacks
+ + imap-send: mark unused parameters with NO_OPENSSL
+ + worktree: mark unused parameters in noop repair callback
+ + negotiator/noop: mark unused callback parameters
+ + add-interactive: mark unused callback parameters
+ + grep: mark unused parameter in output function
+ + test-trace2: mark unused argv/argc parameters
+ + trace2: mark unused config callback parameter
+ + trace2: mark unused us_elapsed_absolute parameters
+ + stash: mark unused parameter in diff callback
+ + ls-tree: mark unused parameter in callback
+ + commit-graph: mark unused data parameters in generation callbacks
+ + worktree: mark unused parameters in each_ref_fn callback
+ + pack-bitmap: mark unused parameters in show_object callback
+ + ref-filter: mark unused parameters in parser callbacks
+ + sequencer: mark repository argument as unused
+ + sequencer: use repository parameter in short_commit_name()
+
+ Unused parameters to functions are marked as such, and/or removed,
+ in order to bring us closer to -Wunused-parameter clean.
+
+ Will merge to 'master'.
+ source: <20230829234305.GA226944@coredump.intra.peff.net>
+
+
+* js/ci-san-skip-p4-and-svn-tests (2023-08-29) 1 commit
+  (merged to 'next' on 2023-08-29 at 9617f99668)
+ + ci(linux-asan-ubsan): let's save some time
+
+ Flakey "git p4" tests, as well as "git svn" tests, are now skipped
+ in the (rather expensive) sanitizer CI job.
+
+ Will merge to 'master'.
+ source: <pull.1578.v2.git.1693342048633.gitgitgadget@gmail.com>
+
+
+* tb/multi-cruft-pack (2023-08-29) 4 commits
+  (merged to 'next' on 2023-08-30 at 15f0b56ed0)
+ + Documentation/gitformat-pack.txt: drop mixed version section
+ + Documentation/gitformat-pack.txt: remove multi-cruft packs alternative
+ + builtin/pack-objects.c: support `--max-pack-size` with `--cruft`
+ + builtin/pack-objects.c: remove unnecessary strbuf_reset()
+
+ Use of --max-pack-size to allow multiple packfiles to be created is
+ now supported even when we are sending unreachable objects to cruft
+ packs.
+
+ Will merge to 'master'.
+ source: <cover.1693262936.git.me@ttaylorr.com>
+
+
+* jk/ci-retire-allow-ref (2023-08-30) 2 commits
+  (merged to 'next' on 2023-08-31 at 5fe4861f16)
+ + ci: deprecate ci/config/allow-ref script
+ + ci: allow branch selection through "vars"
+
+ CI update.
+
+ Will merge to 'master'.
+ source: <20230830194919.GA1709446@coredump.intra.peff.net>
+
+
+* ws/git-svn-retire-faketerm (2023-08-30) 1 commit
+  (merged to 'next' on 2023-08-31 at cb6e0d658d)
+ + git-svn: drop FakeTerm hack
+
+ Code clean-up.
+
+ Will merge to 'master'.
+ source: <xmqqa5u888lz.fsf_-_@gitster.g>
+
+
+* jk/unused-post-2.42-part2 (2023-08-31) 10 commits
+ - parse-options: mark unused parameters in noop callback
+ - interpret-trailers: mark unused "unset" parameters in option callbacks
+ - parse-options: add more BUG_ON() annotations
+ - merge: do not pass unused opt->value parameter
+ - parse-options: mark unused "opt" parameter in callbacks
+ - parse-options: prefer opt->value to globals in callbacks
+ - checkout-index: delay automatic setting of to_tempfile
+ - format-patch: use OPT_STRING_LIST for to/cc options
+ - merge: simplify parsing of "-n" option
+ - merge: make xopts a strvec
+
+ Unused parameters to functions are marked as such, and/or removed,
+ in order to bring us closer to -Wunused-parameter clean.
+
+ Will merge to 'next'?
+ source: <20230831211637.GA949188@coredump.intra.peff.net>
+
+
+* jk/tree-name-and-depth-limit (2023-08-31) 10 commits
+ - lower core.maxTreeDepth default to 2048
+ - tree-diff: respect max_allowed_tree_depth
+ - list-objects: respect max_allowed_tree_depth
+ - read_tree(): respect max_allowed_tree_depth
+ - traverse_trees(): respect max_allowed_tree_depth
+ - add core.maxTreeDepth config
+ - fsck: detect very large tree pathnames
+ - tree-walk: rename "error" variable
+ - tree-walk: drop MAX_TRAVERSE_TREES macro
+ - tree-walk: reduce stack size for recursive functions
+
+ We now limit depth of the tree objects and maximum length of
+ pathnames recorded in tree objects.
+ source: <20230831061735.GA2702156@coredump.intra.peff.net>
+
+
+* js/doc-unit-tests-with-cmake (2023-08-31) 4 commits
+ - artifacts-tar: when including `.dll` files, don't forget the unit-tests
+ - unit-tests: do show relative file paths
+ - unit-tests: do not mistake `.pdb` files for being executable
+ - cmake: also build unit tests
+ (this branch uses js/doc-unit-tests.)
+
+ Update the base topic to work with CMake builds.
+ source: <pull.1579.git.1693462532.gitgitgadget@gmail.com>
+
+
+* ew/hash-with-openssl-evp (2023-08-31) 1 commit
+ - treewide: fix various bugs w/ OpenSSL 3+ EVP API
+
+ Fix-up new-ish code to support OpenSSL EVP API.
+
+ Will merge to 'next'?
+ source: <20230901020928.M610756@dcvr>
 
 --------------------------------------------------
 [Stalled]
+
+* js/doc-unit-tests (2023-08-17) 3 commits
+ - ci: run unit tests in CI
+ - unit tests: add TAP unit test framework
+ - unit tests: Add a project plan document
+ (this branch is used by js/doc-unit-tests-with-cmake.)
+
+ Process to add some form of low-level unit tests has started.
+
+ Comments?
+ source: <cover.1692297001.git.steadmon@google.com>
+
+
+* ak/pretty-decorate-more (2023-08-21) 8 commits
+ - decorate: use commit color for HEAD arrow
+ - pretty: add pointer and tag options to %(decorate)
+ - pretty: add %(decorate[:<options>]) format
+ - decorate: color each token separately
+ - decorate: avoid some unnecessary color overhead
+ - decorate: refactor format_decorations()
+ - pretty-formats: enclose options in angle brackets
+ - pretty-formats: define "literal formatting code"
+
+ "git log --format" has been taught the %(decorate) placeholder.
+
+ What's the status of this thing?
+ source: <20230820185009.20095-1-andy.koppe@gmail.com>
+
 
 * cc/repack-sift-filtered-objects-to-separate-pack (2023-08-13) 8 commits
  . gc: add `gc.repackFilterTo` config option
@@ -105,18 +396,6 @@ Release tarballs are available at:
  Kicked out of the 'seen', as it still seems to be failing tests.
  cf. https://github.com/git/git/actions/runs/5850998716/job/15861158252#step:4:1822
  source: <20230812000011.1227371-1-christian.couder@gmail.com>
-
-
-* ob/send-email-interactive-failure (2023-08-21) 1 commit
- - send-email: prompt-dependent exit codes
-
- "git send-email" exits with non-zero status when end-user
- interaction causes any prepared message not to be sent.
-
- Expecting a reroll.
- Without an opt-in fix, this will be a backward-incompatible
- change that needs mention in the release notes.
- source: <20230821170720.577835-1-oswald.buddenhagen@gmx.de>
 
 
 * cc/git-replay (2023-06-03) 15 commits
@@ -154,24 +433,20 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
-* jk/diff-result-code-cleanup (2023-08-21) 7 commits
-  (merged to 'next' on 2023-08-25 at 3b1280d42f)
- + diff: drop useless "status" parameter from diff_result_code()
- + diff: drop useless return values in git-diff helpers
- + diff: drop useless return from run_diff_{files,index} functions
- + diff: die when failing to read index in git-diff builtin
- + diff: show usage for unknown builtin_diff_files() options
- + diff-files: avoid negative exit value
- + diff: spell DIFF_INDEX_CACHED out when calling run_diff_index()
+* rs/parse-options-help-text-is-optional (2023-08-28) 1 commit
+  (merged to 'next' on 2023-08-29 at 5466f7fcb2)
+ + parse-options: allow omitting option help text
 
- "git diff --no-such-option" and other corner cases around the exit
- status of the "diff" command has been corrected.
+ It may be tempting to leave the help text NULL for a command line
+ option that is either hidden or too obvious, but "git subcmd -h"
+ and "git subcmd --help-all" would have segfaulted if done so.  Now
+ the help text is optional.
 
  Will merge to 'master'.
- source: <20230821201358.GA2663749@coredump.intra.peff.net>
+ source: <2b08dc43-621d-2170-c4a6-c2aac33a9a19@web.de>
 
 
-* tb/path-filter-fix (2023-08-21) 15 commits
+* tb/path-filter-fix (2023-08-30) 15 commits
  - bloom: introduce `deinit_bloom_filters()`
  - commit-graph: reuse existing Bloom filters where possible
  - object.h: fix mis-aligned flag bits table
@@ -192,30 +467,9 @@ Release tarballs are available at:
  on systems whose "char" is unsigned; update the implementation and
  bump the format version to 2.
 
- Comments?
- source: <cover.1692654233.git.me@ttaylorr.com>
-
-
-* ch/t6300-verify-commit-test-cleanup (2023-08-23) 2 commits
-  (merged to 'next' on 2023-08-24 at 15b842867e)
- + t/t6300: drop magic filtering
- + t/lib-gpg: forcibly run a trustdb update
-
- Test clean-up.
-
- Will merge to 'master'.
- source: <20230822150149.541ccb35@leda.eworm.net>
-
-
-* ts/unpacklimit-config-fix (2023-08-22) 1 commit
-  (merged to 'next' on 2023-08-23 at 4fabd9a697)
- + transfer.unpackLimit: fetch/receive.unpackLimit takes precedence
-
- transfer.unpackLimit ought to be used as a fallback, but overrode
- fetch.unpackLimit and receive.unpackLimit instead.
-
- Will merge to 'master'.
- source: <xmqqpm3eh7f6.fsf@gitster.g>
+ Needs more work?
+ cf. <20230830200218.GA5147@szeder.dev>
+ source: <cover.1693413637.git.jonathantanmy@google.com>
 
 
 * js/config-parse (2023-08-23) 4 commits
@@ -224,81 +478,23 @@ Release tarballs are available at:
  - config: report config parse errors using cb
  - config: split out config_parse_options
 
- Split out parsing routines for the configuration files into a
- separate file.
+ The parsing routines for the configuration files have been split
+ into a separate file.
 
  Needs review.
  source: <cover.1692827403.git.steadmon@google.com>
 
 
-* jc/ci-skip-same-commit (2023-08-25) 1 commit
-  (merged to 'next' on 2023-08-28 at e978717961)
- + ci: avoid building from the same commit in parallel
+* tb/mark-more-tests-as-leak-free (2023-08-29) 3 commits
+  (merged to 'next' on 2023-08-29 at c1db288281)
+ + leak tests: mark t5583-push-branches.sh as leak-free
+ + leak tests: mark t3321-notes-stripspace.sh as leak-free
+ + leak tests: mark a handful of tests as leak-free
 
- Tweak GitHub Actions CI so that pushing the same commit to multiple
- branch tips at the same time will not waste building and testing
- the same thing twice.
-
- Will merge to 'master'.
- source: <1da763f3-60bf-a572-2c71-336b1fa5553d@gmx.de>
-
-
-* py/git-gui-updates (2023-08-24) 16 commits
-  (merged to 'next' on 2023-08-28 at df0b742344)
- + Merge https://github.com/prati0100/git-gui
- + Merge branch 'ml/cygwin-fixes'
- + git-gui - use mkshortcut on Cygwin
- + git-gui - use cygstart to browse on Cygwin
- + git-gui - remove obsolete Cygwin specific code
- + git gui Makefile - remove Cygwin modifications
- + Merge branch 'ab/makeflags'
- + Makefiles: change search through $(MAKEFLAGS) for GNU make 4.4
- + Merge branch 'js/windows-rce'
- + Work around Tcl's default `PATH` lookup
- + Move the `_which` function (almost) to the top
- + Move is_<platform> functions to the beginning
- + is_Cygwin: avoid `exec`ing anything
- + windows: ignore empty `PATH` elements
- + Merge branch 'vk/readme-typo'
- + git-gui: Fix a typo in README
-
- Git GUI updates.
+ Tests that are known to pass with LSan are now marked as such.
 
  Will merge to 'master'.
-
-
-* tb/mark-more-tests-as-leak-free (2023-08-24) 3 commits
- - leak tests: mark t5583-push-branches.sh as leak-free
- - leak tests: mark t3321-notes-stripspace.sh as leak-free
- - leak tests: mark a handful of tests as leak-free
-
- source: <cover.1692902414.git.me@ttaylorr.com>
-
-
-* ob/sequencer-empty-hint-fix (2023-08-24) 1 commit
-  (merged to 'next' on 2023-08-24 at 626c52ad72)
- + sequencer: rectify empty hint in call of require_clean_work_tree()
-
- Update the use of API for consistency between two calls to
- require_clean_work_tree() from the sequencer code.
-
- Will merge to 'master'.
- source: <20230824150046.802008-1-oswald.buddenhagen@gmx.de>
-
-
-* jc/diff-exit-code-with-w-fixes (2023-08-21) 5 commits
-  (merged to 'next' on 2023-08-23 at 436a0aec3d)
- + diff: the -w option breaks --exit-code for --raw and other output modes
- + t4040: remove test that succeeded for a wrong reason
- + diff: teach "--stat -w --exit-code" to notice differences
- + diff: mode-only change should be noticed by "--patch -w --exit-code"
- + diff: move the fallback "--exit-code" code down
-
- "git diff -w --exit-code" with various options did not work
- correctly, which is being addressed.
-
- Will merge to 'master'.
- source: <20230818235932.3253552-1-gitster@pobox.com>
+ source: <cover.1693263171.git.me@ttaylorr.com>
 
 
 * jc/update-index-show-index-version (2023-08-18) 3 commits
@@ -317,99 +513,12 @@ Release tarballs are available at:
  - git-revert.txt: add discussion
  - sequencer: beautify subject of reverts of reverts
 
- Tweak the default log message created by "git revert" when
- reverting a commit that records a revert.
+ The default log message created by "git revert", when reverting a
+ commit that records a revert, has been tweaked.
 
  Expecting a (hopefully small and final) reroll.
  cf. <ZOZnNDd2pMX6M2Au@nand.local>
  source: <20230809171531.2564807-1-oswald.buddenhagen@gmx.de>
-
-
-* ob/format-patch-description-file (2023-08-21) 1 commit
-  (merged to 'next' on 2023-08-25 at 89ea619311)
- + format-patch: add --description-file option
-
- "git format-patch" learns a way to feed cover letter description,
- that (1) can be used on detached HEAD where there is no branch
- description available, and (2) also can override the branch
- description if there is one.
-
- Will merge to 'master'.
- source: <20230821170720.577820-1-oswald.buddenhagen@gmx.de>
-
-
-* ds/scalar-updates (2023-08-28) 3 commits
-  (merged to 'next' on 2023-08-28 at 093e6bcb9c)
- + scalar reconfigure: help users remove buggy repos
- + setup: add discover_git_directory_reason()
- + scalar: add --[no-]src option
-
- Scalar updates.
- Will merge to 'master'.
- source: <pull.1569.v3.git.1693230746.gitgitgadget@gmail.com>
-
-
-* jc/mv-d-to-d-error-message-fix (2023-08-11) 1 commit
-  (merged to 'next' on 2023-08-21 at 2220d22d6f)
- + mv: fix error for moving directory to another
-
- Typofix in an error message.
-
- Will merge to 'master'.
- source: <xmqqjzu1njt0.fsf@gitster.g>
-
-
-* sl/sparse-check-attr (2023-08-11) 3 commits
-  (merged to 'next' on 2023-08-21 at c202b15517)
- + check-attr: integrate with sparse-index
- + attr.c: read attributes in a sparse directory
- + t1092: add tests for 'git check-attr'
-
- Teach "git check-attr" work better with sparse-index.
-
- Will merge to 'master'.
- cf. <3b2a5b4b-ab8f-746b-6b69-8e8262b6390b@github.com>
- source: <20230811142211.4547-1-cheskaqiqi@gmail.com>
-
-
-* ws/svn-with-new-readline (2023-08-11) 1 commit
- - git-svn: avoid creating more than one than one Term::ReadLine object
-
- Adjust to newer Term::ReadLine to prevent it from breaking
- the interactive prompt code in git-svn.
-
- Not needed for correctness.
- source: <20230810011831.1423208-1-wesleys@opperschaap.net>
-
-
-* ak/pretty-decorate-more (2023-08-21) 8 commits
- - decorate: use commit color for HEAD arrow
- - pretty: add pointer and tag options to %(decorate)
- - pretty: add %(decorate[:<options>]) format
- - decorate: color each token separately
- - decorate: avoid some unnecessary color overhead
- - decorate: refactor format_decorations()
- - pretty-formats: enclose options in angle brackets
- - pretty-formats: define "literal formatting code"
-
- Teach "git log --format" a customizable %(decorate) placeholder.
-
- What's the status of this thing?
- source: <20230820185009.20095-1-andy.koppe@gmail.com>
-
-
-* tb/commit-graph-verify-fix (2023-08-21) 4 commits
-  (merged to 'next' on 2023-08-23 at 2b4b74bb0d)
- + commit-graph: avoid repeated mixed generation number warnings
- + t/t5318-commit-graph.sh: test generation zero transitions during fsck
- + commit-graph: verify swapped zero/non-zero generation cases
- + commit-graph: introduce `commit_graph_generation_from_graph()`
-
- Update commit-graph verification code that detects mixture of zero
- and non-zero generation numbers.
-
- Will merge to 'master'.
- source: <cover.1692653671.git.me@ttaylorr.com>
 
 
 * la/trailer-cleanups (2023-08-06) 5 commits
@@ -442,7 +551,7 @@ Release tarballs are available at:
  - trailer test description: this tests --where=after, not --where=before
  - trailer tests: make test cases self-contained
 
- Test coverage improvement for trailers.
+ Test coverage for trailers has been improved.
 
  Expecting a reroll.
  cf. <owlyh6p5fpi7.fsf@fine.c.googlers.com>
@@ -509,17 +618,6 @@ Release tarballs are available at:
  cf. <xmqqtttia3vn.fsf@gitster.g>
  source: <48745298-f12b-8efb-4e48-90d2c22a8349@gmail.com>
 
-
-* js/doc-unit-tests (2023-08-17) 3 commits
- - ci: run unit tests in CI
- - unit tests: add TAP unit test framework
- - unit tests: Add a project plan document
-
- Process to add some form of low-level unit tests has started.
-
- Comments?
- source: <cover.1692297001.git.steadmon@google.com>
-
 --------------------------------------------------
 [Discarded]
 
@@ -556,3 +654,24 @@ Release tarballs are available at:
 
  Stalled for too long.
  source: <cover-v2-0.3-00000000000-20221230T011725Z-avarab@gmail.com>
+
+
+* ob/send-email-interactive-failure (2023-08-29) 2 commits
+ . SQUASH???
+ . send-email: prompt-dependent exit codes
+
+ "git send-email" exits with non-zero status when end-user
+ interaction causes any prepared message not to be sent.
+
+ Breaks existing users without even an opt-out knob.
+ source: <20230821170720.577835-1-oswald.buddenhagen@gmx.de>
+
+
+* ws/svn-with-new-readline (2023-08-11) 1 commit
+ . git-svn: avoid creating more than one than one Term::ReadLine object
+
+ Adjust to newer Term::ReadLine to prevent it from breaking
+ the interactive prompt code in git-svn.
+
+ Superseded by ws/git-svn-retire-faketerm
+ source: <20230810011831.1423208-1-wesleys@opperschaap.net>
