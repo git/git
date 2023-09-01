@@ -24,6 +24,11 @@ UI, Workflows & Features
 
  * Git GUI updates.
 
+ * "git format-patch" learns a way to feed cover letter description,
+   that (1) can be used on detached HEAD where there is no branch
+   description available, and (2) also can override the branch
+   description if there is one.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -58,6 +63,14 @@ Fixes since v2.42
    fetch.unpackLimit and receive.unpackLimit instead.
    (merge f3d33f8cfe ts/unpacklimit-config-fix later to maint).
 
+ * The use of API between two calls to require_clean_work_tree() from
+   the sequencer code has been cleaned up for consistency.
+   (merge a9b5955e07 ob/sequencer-empty-hint-fix later to maint).
+
+ * "git diff --no-such-option" and other corner cases around the exit
+   status of the "diff" command has been corrected.
+   (merge 5cc6b2d70b jk/diff-result-code-cleanup later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge fd3ba590d8 ws/git-push-doc-grammofix later to maint).
    (merge 5f33a843de ds/upload-pack-error-sequence-fix later to maint).
@@ -65,3 +78,4 @@ Fixes since v2.42
    (merge b46d806ea5 ob/t9001-indent-fix later to maint).
    (merge fdc9914c28 ja/worktree-orphan later to maint).
    (merge c2cbefc510 jc/mv-d-to-d-error-message-fix later to maint).
+   (merge d0fc552bfc ch/t6300-verify-commit-test-cleanup later to maint).
