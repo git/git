@@ -96,7 +96,7 @@ static int match_stat_with_submodule(struct diff_options *diffopt,
 	return changed;
 }
 
-int run_diff_files(struct rev_info *revs, unsigned int option)
+void run_diff_files(struct rev_info *revs, unsigned int option)
 {
 	int entries, i;
 	int diff_unmerged_stage = revs->max_count;
@@ -272,7 +272,6 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 	diffcore_std(&revs->diffopt);
 	diff_flush(&revs->diffopt);
 	trace_performance_since(start, "diff-files");
-	return 0;
 }
 
 /*
@@ -606,7 +605,7 @@ void diff_get_merge_base(const struct rev_info *revs, struct object_id *mb)
 	free_commit_list(merge_bases);
 }
 
-int run_diff_index(struct rev_info *revs, unsigned int option)
+void run_diff_index(struct rev_info *revs, unsigned int option)
 {
 	struct object_array_entry *ent;
 	int cached = !!(option & DIFF_INDEX_CACHED);
@@ -640,7 +639,6 @@ int run_diff_index(struct rev_info *revs, unsigned int option)
 	diffcore_std(&revs->diffopt);
 	diff_flush(&revs->diffopt);
 	trace_performance_leave("diff-index");
-	return 0;
 }
 
 int do_diff_cache(const struct object_id *tree_oid, struct diff_options *opt)
@@ -682,7 +680,7 @@ int index_differs_from(struct repository *r,
 			rev.diffopt.flags.ignore_submodules = flags->ignore_submodules;
 	}
 	rev.diffopt.ita_invisible_in_index = ita_invisible_in_index;
-	run_diff_index(&rev, 1);
+	run_diff_index(&rev, DIFF_INDEX_CACHED);
 	has_changes = rev.diffopt.flags.has_changes;
 	release_revisions(&rev);
 	return (has_changes != 0);

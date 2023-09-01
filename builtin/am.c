@@ -1430,7 +1430,7 @@ static void write_index_patch(const struct am_state *state)
 	rev_info.diffopt.close_file = 1;
 	add_pending_object(&rev_info, &tree->object, "");
 	diff_setup_done(&rev_info.diffopt);
-	run_diff_index(&rev_info, 1);
+	run_diff_index(&rev_info, DIFF_INDEX_CACHED);
 	release_revisions(&rev_info);
 }
 
@@ -1593,7 +1593,7 @@ static int fall_back_threeway(const struct am_state *state, const char *index_pa
 		rev_info.diffopt.filter |= diff_filter_bit('M');
 		add_pending_oid(&rev_info, "HEAD", &our_tree, 0);
 		diff_setup_done(&rev_info.diffopt);
-		run_diff_index(&rev_info, 1);
+		run_diff_index(&rev_info, DIFF_INDEX_CACHED);
 		release_revisions(&rev_info);
 	}
 
