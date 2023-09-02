@@ -176,6 +176,29 @@ test_expect_success 'advice from failed revert' '
 	test_cmp expected actual
 '
 
+test_expect_subject () {
+	echo "$1" >expect &&
+	git log -1 --pretty=%s >actual &&
+	test_cmp expect actual
+}
+
+test_expect_success 'titles of fresh reverts' '
+	test_commit --no-tag A file1 &&
+	test_commit --no-tag B file1 &&
+	git revert --no-edit HEAD &&
+	test_expect_subject "Revert \"B\"" &&
+	git revert --no-edit HEAD &&
+	test_expect_subject "Reapply \"B\"" &&
+	git revert --no-edit HEAD &&
+	test_expect_subject "Revert \"Reapply \"B\"\""
+'
+
+test_expect_success 'title of legacy double revert' '
+	test_commit --no-tag "Revert \"Revert \"B\"\"" file1 &&
+	git revert --no-edit HEAD &&
+	test_expect_subject "Revert \"Revert \"Revert \"B\"\"\""
+'
+
 test_expect_success 'identification of reverted commit (default)' '
 	test_commit to-ident &&
 	test_when_finished "git reset --hard to-ident" &&
