@@ -1675,7 +1675,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	}
 
 	if (fast_forward == FF_ONLY)
-		die_ff_impossible();
+		die_ff_impossible_during_merge();
 
 	if (autostash)
 		create_autostash(the_repository,

@@ -765,6 +765,20 @@ static const char *get_tracking_branch(const char *remote, const char *refspec)
 	refspec_item_clear(&spec);
 	return merge_branch;
 }
+/**
+ * Returns the branch the pull is performed from.
+ * If remote is NULL or refspec is NULL, configured upstream remote of the
+ * current branch is used.
+ * If refspec is NULL, the current upstream branch is used.
+ */
+static const char *get_pull_branch(const char *remote, const char *refspec)
+{
+	if (refspec == NULL || remote == NULL) {
+		return get_upstream_branch(remote);
+	}
+
+	return get_tracking_branch(remote, refspec);
+}
 
 /**
  * Given the repo and refspecs, sets fork_point to the point at which the
@@ -1112,8 +1126,10 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 
 	/* ff-only takes precedence over rebase */
 	if (opt_ff && !strcmp(opt_ff, "--ff-only")) {
-		if (divergent)
-			die_ff_impossible();
+		if (divergent) {
+			const char* pull_branch_spec = get_pull_branch(repo, *refspecs);
+			die_ff_impossible_during_pull(pull_branch_spec);
+		}
 		opt_rebase = REBASE_FALSE;
 	}
 	/* If no action specified and we can't fast forward, then warn. */
