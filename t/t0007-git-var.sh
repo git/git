@@ -268,4 +268,13 @@ test_expect_success 'listing and asking for variables are exclusive' '
 	test_must_fail git var -l GIT_COMMITTER_IDENT
 '
 
+test_expect_success '`git var -l` works even without HOME' '
+	(
+		XDG_CONFIG_HOME= &&
+		export XDG_CONFIG_HOME &&
+		unset HOME &&
+		git var -l
+	)
+'
+
 test_done
