@@ -117,6 +117,26 @@ test_expect_success 'checkout all stages/one file to temporary files' '
 	test $(cat $s3) = tree3path1)
 '
 
+test_expect_success '--stage=all implies --temp' '
+	rm -f path* .merge_* actual &&
+	git checkout-index --stage=all -- path1 &&
+	test_path_is_missing path1
+'
+
+test_expect_success 'overriding --stage=all resets implied --temp' '
+	rm -f path* .merge_* actual &&
+	git checkout-index --stage=all --stage=2 -- path1 &&
+	echo tree2path1 >expect &&
+	test_cmp expect path1
+'
+
+test_expect_success '--stage=all --no-temp is rejected' '
+	rm -f path* .merge_* actual &&
+	test_must_fail git checkout-index --stage=all --no-temp -- path1 2>err &&
+	grep -v "already exists" err &&
+	grep "options .--stage=all. and .--no-temp. cannot be used together" err
+'
+
 test_expect_success 'checkout some stages/one file to temporary files' '
 	rm -f path* .merge_* actual &&
 	git checkout-index --stage=all --temp -- path2 >actual &&

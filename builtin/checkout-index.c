@@ -24,7 +24,7 @@
 static int nul_term_line;
 static int checkout_stage; /* default to checkout stage0 */
 static int ignore_skip_worktree; /* default to 0 */
-static int to_tempfile;
+static int to_tempfile = -1;
 static char topath[4][TEMPORARY_FILENAME_LENGTH + 1];
 
 static struct checkout state = CHECKOUT_INIT;
@@ -196,7 +196,6 @@ static int option_parse_stage(const struct option *opt,
 	BUG_ON_OPT_NEG(unset);
 
 	if (!strcmp(arg, "all")) {
-		to_tempfile = 1;
 		checkout_stage = CHECKOUT_ALL;
 	} else {
 		int ch = arg[0];
@@ -268,6 +267,12 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 	if (!state.base_dir)
 		state.base_dir = "";
 	state.base_dir_len = strlen(state.base_dir);
+
+	if (to_tempfile < 0)
+		to_tempfile = (checkout_stage == CHECKOUT_ALL);
+	if (!to_tempfile && checkout_stage == CHECKOUT_ALL)
+		die(_("options '%s' and '%s' cannot be used together"),
+		    "--stage=all", "--no-temp");
 
 	/*
 	 * when --prefix is specified we do not want to update cache.
