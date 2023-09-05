@@ -34,6 +34,22 @@ Performance, Internal Implementation, Development Support etc.
 
  * "git check-attr" has been taught to work better with sparse-index.
 
+ * It may be tempting to leave the help text NULL for a command line
+   option that is either hidden or too obvious, but "git subcmd -h"
+   and "git subcmd --help-all" would have segfaulted if done so.  Now
+   the help text is optional.
+
+ * Tests that are known to pass with LSan are now marked as such.
+   (merge 5fafe8c95f tb/mark-more-tests-as-leak-free later to maint).
+
+ * Flakey "git p4" tests, as well as "git svn" tests, are now skipped
+   in the (rather expensive) sanitizer CI job.
+   (merge 6ba913629f js/ci-san-skip-p4-and-svn-tests later to maint).
+
+ * Tests with LSan from time to time seem to emit harmless message
+   that makes our tests unnecessarily flakey; we work it around by
+   filtering the uninteresting output.
+   (merge 370ef7e40d jk/test-lsan-denoise-output later to maint).
 
 
 Fixes since v2.42
