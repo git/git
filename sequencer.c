@@ -4628,6 +4628,72 @@ N_("Could not execute the todo command\n"
 "    git rebase --edit-todo\n"
 "    git rebase --continue\n");
 
+static int pick_one_commit(struct repository *r,
+			   struct todo_list *todo_list,
+			   struct replay_opts *opts,
+			   int *check_todo)
+{
+	int res;
+	struct todo_item *item = todo_list->items + todo_list->current;
+	const char *arg = todo_item_get_arg(todo_list, item);
+	if (is_rebase_i(opts))
+		opts->reflog_message = reflog_message(
+			opts, command_to_string(item->command), NULL);
+
+	res = do_pick_commit(r, item, opts, is_final_fixup(todo_list),
+			     check_todo);
+	if (is_rebase_i(opts) && res < 0) {
+		/* Reschedule */
+		advise(_(rescheduled_advice),
+		       get_item_line_length(todo_list, todo_list->current),
+		       get_item_line(todo_list, todo_list->current));
+		todo_list->current--;
+		if (save_todo(todo_list, opts))
+			return -1;
+	}
+	if (item->command == TODO_EDIT) {
+		struct commit *commit = item->commit;
+		if (!res) {
+			if (!opts->verbose)
+				term_clear_line();
+			fprintf(stderr, _("Stopped at %s...  %.*s\n"),
+				short_commit_name(commit), item->arg_len, arg);
+		}
+		return error_with_patch(r, commit,
+					arg, item->arg_len, opts, res, !res);
+	}
+	if (is_rebase_i(opts) && !res)
+		record_in_rewritten(&item->commit->object.oid,
+				    peek_command(todo_list, 1));
+	if (res && is_fixup(item->command)) {
+		if (res == 1)
+			intend_to_amend();
+		return error_failed_squash(r, item->commit, opts,
+					   item->arg_len, arg);
+	} else if (res && is_rebase_i(opts) && item->commit) {
+		int to_amend = 0;
+		struct object_id oid;
+
+		/*
+		 * If we are rewording and have either
+		 * fast-forwarded already, or are about to
+		 * create a new root commit, we want to amend,
+		 * otherwise we do not.
+		 */
+		if (item->command == TODO_REWORD &&
+		    !repo_get_oid(r, "HEAD", &oid) &&
+		    (oideq(&item->commit->object.oid, &oid) ||
+		     (opts->have_squash_onto &&
+		      oideq(&opts->squash_onto, &oid))))
+			to_amend = 1;
+
+		return res | error_with_patch(r, item->commit,
+					      arg, item->arg_len, opts,
+					      res, to_amend);
+	}
+	return res;
+}
+
 static int pick_commits(struct repository *r,
 			struct todo_list *todo_list,
 			struct replay_opts *opts)
@@ -4683,66 +4749,9 @@ static int pick_commits(struct repository *r,
 			}
 		}
 		if (item->command <= TODO_SQUASH) {
-			if (is_rebase_i(opts))
-				opts->reflog_message = reflog_message(opts,
-				      command_to_string(item->command), NULL);
-
-			res = do_pick_commit(r, item, opts,
-					     is_final_fixup(todo_list),
-					     &check_todo);
-			if (is_rebase_i(opts) && res < 0) {
-				/* Reschedule */
-				advise(_(rescheduled_advice),
-				       get_item_line_length(todo_list,
-							    todo_list->current),
-				       get_item_line(todo_list,
-						     todo_list->current));
-				todo_list->current--;
-				if (save_todo(todo_list, opts))
-					return -1;
-			}
-			if (item->command == TODO_EDIT) {
-				struct commit *commit = item->commit;
-				if (!res) {
-					if (!opts->verbose)
-						term_clear_line();
-					fprintf(stderr,
-						_("Stopped at %s...  %.*s\n"),
-						short_commit_name(commit),
-						item->arg_len, arg);
-				}
-				return error_with_patch(r, commit,
-					arg, item->arg_len, opts, res, !res);
-			}
-			if (is_rebase_i(opts) && !res)
-				record_in_rewritten(&item->commit->object.oid,
-					peek_command(todo_list, 1));
-			if (res && is_fixup(item->command)) {
-				if (res == 1)
-					intend_to_amend();
-				return error_failed_squash(r, item->commit, opts,
-					item->arg_len, arg);
-			} else if (res && is_rebase_i(opts) && item->commit) {
-				int to_amend = 0;
-				struct object_id oid;
-
-				/*
-				 * If we are rewording and have either
-				 * fast-forwarded already, or are about to
-				 * create a new root commit, we want to amend,
-				 * otherwise we do not.
-				 */
-				if (item->command == TODO_REWORD &&
-				    !repo_get_oid(r, "HEAD", &oid) &&
-				    (oideq(&item->commit->object.oid, &oid) ||
-				     (opts->have_squash_onto &&
-				      oideq(&opts->squash_onto, &oid))))
-					to_amend = 1;
-
-				return res | error_with_patch(r, item->commit,
-						arg, item->arg_len, opts,
-						res, to_amend);
-			}
+			res = pick_one_commit(r, todo_list, opts, &check_todo);
+			if (!res && item->command == TODO_EDIT)
+				return 0;
 		} else if (item->command == TODO_EXEC) {
 			char *end_of_arg = (char *)(arg + item->arg_len);
 			int saved = *end_of_arg;
@@ -4803,9 +4812,10 @@ static int pick_commits(struct repository *r,
 			return -1;
 		}
 
-		todo_list->current++;
 		if (res)
 			return res;
+
+		todo_list->current++;
 	}
 
 	if (is_rebase_i(opts)) {
