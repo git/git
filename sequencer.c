@@ -4141,6 +4141,7 @@ static int do_merge(struct repository *r,
 	if (ret < 0) {
 		error(_("could not even attempt to merge '%.*s'"),
 		      merge_arg_len, arg);
+		unlink(git_path_merge_msg(r));
 		goto leave_merge;
 	}
 	/*
@@ -4631,7 +4632,7 @@ N_("Could not execute the todo command\n"
 static int pick_one_commit(struct repository *r,
 			   struct todo_list *todo_list,
 			   struct replay_opts *opts,
-			   int *check_todo)
+			   int *check_todo, int* reschedule)
 {
 	int res;
 	struct todo_item *item = todo_list->items + todo_list->current;
@@ -4644,12 +4645,8 @@ static int pick_one_commit(struct repository *r,
 			     check_todo);
 	if (is_rebase_i(opts) && res < 0) {
 		/* Reschedule */
-		advise(_(rescheduled_advice),
-		       get_item_line_length(todo_list, todo_list->current),
-		       get_item_line(todo_list, todo_list->current));
-		todo_list->current--;
-		if (save_todo(todo_list, opts))
-			return -1;
+		*reschedule = 1;
+		return -1;
 	}
 	if (item->command == TODO_EDIT) {
 		struct commit *commit = item->commit;
@@ -4749,7 +4746,8 @@ static int pick_commits(struct repository *r,
 			}
 		}
 		if (item->command <= TODO_SQUASH) {
-			res = pick_one_commit(r, todo_list, opts, &check_todo);
+			res = pick_one_commit(r, todo_list, opts, &check_todo,
+					      &reschedule);
 			if (!res && item->command == TODO_EDIT)
 				return 0;
 		} else if (item->command == TODO_EXEC) {
@@ -4803,10 +4801,7 @@ static int pick_commits(struct repository *r,
 			if (save_todo(todo_list, opts))
 				return -1;
 			if (item->commit)
-				return error_with_patch(r,
-							item->commit,
-							arg, item->arg_len,
-							opts, res, 0);
+				write_rebase_head(&item->commit->object.oid);
 		} else if (is_rebase_i(opts) && check_todo && !res &&
 			   reread_todo_if_changed(r, todo_list, opts)) {
 			return -1;

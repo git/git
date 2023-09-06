@@ -1287,7 +1287,9 @@ test_expect_success 'rebase -i commits that overwrite untracked files (pick)' '
 	>file6 &&
 	test_must_fail git rebase --continue &&
 	test_cmp_rev HEAD F &&
+	test_cmp_rev REBASE_HEAD I &&
 	rm file6 &&
+	test_path_is_missing .git/rebase-merge/patch &&
 	git rebase --continue &&
 	test_cmp_rev HEAD I
 '
@@ -1305,7 +1307,9 @@ test_expect_success 'rebase -i commits that overwrite untracked files (squash)' 
 	>file6 &&
 	test_must_fail git rebase --continue &&
 	test_cmp_rev HEAD F &&
+	test_cmp_rev REBASE_HEAD I &&
 	rm file6 &&
+	test_path_is_missing .git/rebase-merge/patch &&
 	git rebase --continue &&
 	test $(git cat-file commit HEAD | sed -ne \$p) = I &&
 	git reset --hard original-branch2
@@ -1323,7 +1327,9 @@ test_expect_success 'rebase -i commits that overwrite untracked files (no ff)' '
 	>file6 &&
 	test_must_fail git rebase --continue &&
 	test $(git cat-file commit HEAD | sed -ne \$p) = F &&
+	test_cmp_rev REBASE_HEAD I &&
 	rm file6 &&
+	test_path_is_missing .git/rebase-merge/patch &&
 	git rebase --continue &&
 	test $(git cat-file commit HEAD | sed -ne \$p) = I
 '
