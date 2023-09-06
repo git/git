@@ -3380,7 +3380,8 @@ give_advice:
 	return -1;
 }
 
-static int save_todo(struct todo_list *todo_list, struct replay_opts *opts)
+static int save_todo(struct todo_list *todo_list, struct replay_opts *opts,
+		     int reschedule)
 {
 	struct lock_file todo_lock = LOCK_INIT;
 	const char *todo_path = get_todo_path(opts);
@@ -3390,7 +3391,7 @@ static int save_todo(struct todo_list *todo_list, struct replay_opts *opts)
 	 * rebase -i writes "git-rebase-todo" without the currently executing
 	 * command, appending it to "done" instead.
 	 */
-	if (is_rebase_i(opts))
+	if (is_rebase_i(opts) && !reschedule)
 		next++;
 
 	fd = hold_lock_file_for_update(&todo_lock, todo_path, 0);
@@ -3403,7 +3404,7 @@ static int save_todo(struct todo_list *todo_list, struct replay_opts *opts)
 	if (commit_lock_file(&todo_lock) < 0)
 		return error(_("failed to finalize '%s'"), todo_path);
 
-	if (is_rebase_i(opts) && next > 0) {
+	if (is_rebase_i(opts) && !reschedule && next > 0) {
 		const char *done = rebase_path_done();
 		int fd = open(done, O_CREAT | O_WRONLY | O_APPEND, 0666);
 		int ret = 0;
@@ -4716,7 +4717,7 @@ static int pick_commits(struct repository *r,
 		const char *arg = todo_item_get_arg(todo_list, item);
 		int check_todo = 0;
 
-		if (save_todo(todo_list, opts))
+		if (save_todo(todo_list, opts, reschedule))
 			return -1;
 		if (is_rebase_i(opts)) {
 			if (item->command != TODO_COMMENT) {
@@ -4797,8 +4798,7 @@ static int pick_commits(struct repository *r,
 			       get_item_line_length(todo_list,
 						    todo_list->current),
 			       get_item_line(todo_list, todo_list->current));
-			todo_list->current--;
-			if (save_todo(todo_list, opts))
+			if (save_todo(todo_list, opts, reschedule))
 				return -1;
 			if (item->commit)
 				write_rebase_head(&item->commit->object.oid);
