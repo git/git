@@ -604,7 +604,8 @@ test_expect_success 'clean error after failed "exec"' '
 	echo "edited again" > file7 &&
 	git add file7 &&
 	test_must_fail git rebase --continue 2>error &&
-	test_i18ngrep "you have staged changes in your working tree" error
+	test_i18ngrep "you have staged changes in your working tree" error &&
+	test_i18ngrep ! "could not open.*for reading" error
 '
 
 test_expect_success 'rebase a detached HEAD' '
@@ -1290,6 +1291,11 @@ test_expect_success 'rebase -i commits that overwrite untracked files (pick)' '
 	test_cmp_rev REBASE_HEAD I &&
 	rm file6 &&
 	test_path_is_missing .git/rebase-merge/patch &&
+	echo changed >file1 &&
+	git add file1 &&
+	test_must_fail git rebase --continue 2>err &&
+	grep "error: you have staged changes in your working tree" err &&
+	git reset --hard HEAD &&
 	git rebase --continue &&
 	test_cmp_rev HEAD I
 '
@@ -1310,6 +1316,11 @@ test_expect_success 'rebase -i commits that overwrite untracked files (squash)' 
 	test_cmp_rev REBASE_HEAD I &&
 	rm file6 &&
 	test_path_is_missing .git/rebase-merge/patch &&
+	echo changed >file1 &&
+	git add file1 &&
+	test_must_fail git rebase --continue 2>err &&
+	grep "error: you have staged changes in your working tree" err &&
+	git reset --hard HEAD &&
 	git rebase --continue &&
 	test $(git cat-file commit HEAD | sed -ne \$p) = I &&
 	git reset --hard original-branch2
@@ -1330,6 +1341,11 @@ test_expect_success 'rebase -i commits that overwrite untracked files (no ff)' '
 	test_cmp_rev REBASE_HEAD I &&
 	rm file6 &&
 	test_path_is_missing .git/rebase-merge/patch &&
+	echo changed >file1 &&
+	git add file1 &&
+	test_must_fail git rebase --continue 2>err &&
+	grep "error: you have staged changes in your working tree" err &&
+	git reset --hard HEAD &&
 	git rebase --continue &&
 	test $(git cat-file commit HEAD | sed -ne \$p) = I
 '

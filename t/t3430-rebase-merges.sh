@@ -169,6 +169,10 @@ test_expect_success 'failed `merge -C` writes patch (may be rescheduled, too)' '
 	grep "^merge -C .* G$" .git/rebase-merge/done &&
 	grep "^merge -C .* G$" .git/rebase-merge/git-rebase-todo &&
 	test_path_is_missing .git/rebase-merge/patch &&
+	echo changed >file1 &&
+	git add file1 &&
+	test_must_fail git rebase --continue 2>err &&
+	grep "error: you have staged changes in your working tree" err &&
 
 	: fail because of merge conflict &&
 	git reset --hard conflicting-G &&

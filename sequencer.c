@@ -4963,6 +4963,11 @@ static int commit_staged_changes(struct repository *r,
 
 	is_clean = !has_uncommitted_changes(r, 0);
 
+	if (!is_clean && !file_exists(rebase_path_message())) {
+		const char *gpg_opt = gpg_sign_opt_quoted(opts);
+
+		return error(_(staged_changes_advice), gpg_opt, gpg_opt);
+	}
 	if (file_exists(rebase_path_amend())) {
 		struct strbuf rev = STRBUF_INIT;
 		struct object_id head, to_amend;
