@@ -133,6 +133,11 @@ static GIT_PATH_FUNC(rebase_path_amend, "rebase-merge/amend")
  */
 static GIT_PATH_FUNC(rebase_path_stopped_sha, "rebase-merge/stopped-sha")
 /*
+ * When we stop for the user to resolve conflicts this file contains
+ * the patch of the commit that is being picked.
+ */
+static GIT_PATH_FUNC(rebase_path_patch, "rebase-merge/patch")
+/*
  * For the post-rewrite hook, we make a list of rewritten commits and
  * their new sha1s.  The rewritten-pending list keeps the sha1s of
  * commits that have been processed, but not committed yet,
@@ -3485,12 +3490,14 @@ static int make_patch(struct repository *r,
 	char hex[GIT_MAX_HEXSZ + 1];
 	int res = 0;
 
+	if (!is_rebase_i(opts))
+		BUG("make_patch should only be called when rebasing");
+
 	oid_to_hex_r(hex, &commit->object.oid);
 	if (write_message(hex, strlen(hex), rebase_path_stopped_sha(), 1) < 0)
 		return -1;
 	res |= write_rebase_head(&commit->object.oid);
 
-	strbuf_addf(&buf, "%s/patch", get_dir(opts));
 	memset(&log_tree_opt, 0, sizeof(log_tree_opt));
 	repo_init_revisions(r, &log_tree_opt, NULL);
 	log_tree_opt.abbrev = 0;
@@ -3498,15 +3505,15 @@ static int make_patch(struct repository *r,
 	log_tree_opt.diffopt.output_format = DIFF_FORMAT_PATCH;
 	log_tree_opt.disable_stdin = 1;
 	log_tree_opt.no_commit_id = 1;
-	log_tree_opt.diffopt.file = fopen(buf.buf, "w");
+	log_tree_opt.diffopt.file = fopen(rebase_path_patch(), "w");
 	log_tree_opt.diffopt.use_color = GIT_COLOR_NEVER;
 	if (!log_tree_opt.diffopt.file)
-		res |= error_errno(_("could not open '%s'"), buf.buf);
+		res |= error_errno(_("could not open '%s'"),
+				   rebase_path_patch());
 	else {
 		res |= log_tree_commit(&log_tree_opt, commit);
 		fclose(log_tree_opt.diffopt.file);
 	}
-	strbuf_reset(&buf);
 
 	strbuf_addf(&buf, "%s/message", get_dir(opts));
 	if (!file_exists(buf.buf)) {
@@ -4642,6 +4649,7 @@ static int pick_commits(struct repository *r,
 	unlink(rebase_path_message());
 	unlink(rebase_path_stopped_sha());
 	unlink(rebase_path_amend());
+	unlink(rebase_path_patch());
 
 	while (todo_list->current < todo_list->nr) {
 		struct todo_item *item = todo_list->items + todo_list->current;
