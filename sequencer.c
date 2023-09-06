@@ -4639,6 +4639,10 @@ static int pick_commits(struct repository *r,
 	if (read_and_refresh_cache(r, opts))
 		return -1;
 
+	unlink(rebase_path_message());
+	unlink(rebase_path_stopped_sha());
+	unlink(rebase_path_amend());
+
 	while (todo_list->current < todo_list->nr) {
 		struct todo_item *item = todo_list->items + todo_list->current;
 		const char *arg = todo_item_get_arg(todo_list, item);
@@ -4662,10 +4666,7 @@ static int pick_commits(struct repository *r,
 						todo_list->total_nr,
 						opts->verbose ? "\n" : "\r");
 			}
-			unlink(rebase_path_message());
 			unlink(rebase_path_author_script());
-			unlink(rebase_path_stopped_sha());
-			unlink(rebase_path_amend());
 			unlink(git_path_merge_head(r));
 			unlink(git_path_auto_merge(r));
 			delete_ref(NULL, "REBASE_HEAD", NULL, REF_NO_DEREF);
