@@ -99,4 +99,13 @@ test_expect_success SHORTABSPATH 'clean up path close to MAX_PATH' '
 	test ! -d "$subdir1"
 '
 
+test_expect_success SYMLINKS_WINDOWS 'leave drive-less, short paths intact' '
+	printf "/Program Files" >symlink-target &&
+	symlink_target_oid="$(git hash-object -w --stdin <symlink-target)" &&
+	git update-index --add --cacheinfo 120000,$symlink_target_oid,PF &&
+	git -c core.symlinks=true checkout -- PF &&
+	cmd //c dir >actual &&
+	grep "<SYMLINKD\\?> *PF *\\[\\\\Program Files\\]" actual
+'
+
 test_done
