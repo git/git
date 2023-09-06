@@ -3484,7 +3484,6 @@ static int make_patch(struct repository *r,
 		      struct commit *commit,
 		      struct replay_opts *opts)
 {
-	struct strbuf buf = STRBUF_INIT;
 	struct rev_info log_tree_opt;
 	const char *subject;
 	char hex[GIT_MAX_HEXSZ + 1];
@@ -3515,18 +3514,16 @@ static int make_patch(struct repository *r,
 		fclose(log_tree_opt.diffopt.file);
 	}
 
-	strbuf_addf(&buf, "%s/message", get_dir(opts));
-	if (!file_exists(buf.buf)) {
+	if (!file_exists(rebase_path_message())) {
 		const char *encoding = get_commit_output_encoding();
 		const char *commit_buffer = repo_logmsg_reencode(r,
 								 commit, NULL,
 								 encoding);
 		find_commit_subject(commit_buffer, &subject);
-		res |= write_message(subject, strlen(subject), buf.buf, 1);
+		res |= write_message(subject, strlen(subject), rebase_path_message(), 1);
 		repo_unuse_commit_buffer(r, commit,
 					 commit_buffer);
 	}
-	strbuf_release(&buf);
 	release_revisions(&log_tree_opt);
 
 	return res;
