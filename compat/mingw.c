@@ -304,6 +304,11 @@ int mingw_core_config(const char *var, const char *value,
 	return 0;
 }
 
+static inline int is_wdir_sep(wchar_t wchar)
+{
+	return wchar == L'/' || wchar == L'\\';
+}
+
 /* Normalizes NT paths as returned by some low-level APIs. */
 static wchar_t *normalize_ntpath(wchar_t *wbuf)
 {
@@ -3412,7 +3417,12 @@ int handle_long_path(wchar_t *path, int len, int max_path, int expand)
 	 * "cwd + path" doesn't due to '..' components)
 	 */
 	if (result < max_path) {
-		wcscpy(path, buf);
+		/* Be careful not to add a drive prefix if there was none */
+		if (is_wdir_sep(path[0]) &&
+		    !is_wdir_sep(buf[0]) && buf[1] == L':' && is_wdir_sep(buf[2]))
+			wcscpy(path, buf + 2);
+		else
+			wcscpy(path, buf);
 		return result;
 	}
 
