@@ -149,8 +149,8 @@ OPTIONS
 
 --only-input::
 	Output only trailers that exist in the input; do not add any
-	from the command-line or by following configured `trailer.*`
-	rules.
+	from the command-line or by applying `trailer.*` configuration
+	variables.
 
 --unfold::
 	Remove any whitespace-continuation in trailers, so that each
