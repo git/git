@@ -31,7 +31,9 @@ the last two lines starting with "Signed-off-by" are trailers.
 
 This command reads commit messages from either the
 <file> arguments or the standard input if no <file> is specified.
-If `--parse` is specified, the output consists of the parsed trailers.
+If `--parse` is specified, the output consists of the parsed trailers
+coming from the input, without influencing them with any command line
+options or configuration variables.
 Otherwise, this command applies the arguments passed using the
 `--trailer` option, if any, to each input file. The result is emitted on the
 standard output.
@@ -158,7 +160,10 @@ OPTIONS
 
 --parse::
 	A convenience alias for `--only-trailers --only-input
-	--unfold`.
+	--unfold`. This makes it easier to only see the trailers coming from the
+	input without influencing them with any command line options or
+	configuration variables, while also making the output machine-friendly with
+	--unfold.
 
 --no-divider::
 	Do not treat `---` as the end of the commit message. Use this
