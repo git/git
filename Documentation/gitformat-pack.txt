@@ -588,50 +588,16 @@ later on.
 It is linkgit:git-gc[1] that is typically responsible for removing expired
 unreachable objects.
 
-=== Caution for mixed-version environments
-
-Repositories that have cruft packs in them will continue to work with any older
-version of Git. Note, however, that previous versions of Git which do not
-understand the `.mtimes` file will use the cruft pack's mtime as the mtime for
-all of the objects in it. In other words, do not expect older (pre-cruft pack)
-versions of Git to interpret or even read the contents of the `.mtimes` file.
-
-Note that having mixed versions of Git GC-ing the same repository can lead to
-unreachable objects never being completely pruned. This can happen under the
-following circumstances:
-
-  - An older version of Git running GC explodes the contents of an existing
-    cruft pack loose, using the cruft pack's mtime.
-  - A newer version running GC collects those loose objects into a cruft pack,
-    where the .mtime file reflects the loose object's actual mtimes, but the
-    cruft pack mtime is "now".
-
-Repeating this process will lead to unreachable objects not getting pruned as a
-result of repeatedly resetting the objects' mtimes to the present time.
-
-If you are GC-ing repositories in a mixed version environment, consider omitting
-the `--cruft` option when using linkgit:git-repack[1] and linkgit:git-gc[1], and
-setting the `gc.cruftPacks` configuration to "false" until all writers
-understand cruft packs.
-
 === Alternatives
 
 Notable alternatives to this design include:
 
-  - The location of the per-object mtime data, and
-  - Storing unreachable objects in multiple cruft packs.
+  - The location of the per-object mtime data.
 
 On the location of mtime data, a new auxiliary file tied to the pack was chosen
 to avoid complicating the `.idx` format. If the `.idx` format were ever to gain
 support for optional chunks of data, it may make sense to consolidate the
 `.mtimes` format into the `.idx` itself.
-
-Storing unreachable objects among multiple cruft packs (e.g., creating a new
-cruft pack during each repacking operation including only unreachable objects
-which aren't already stored in an earlier cruft pack) is significantly more
-complicated to construct, and so aren't pursued here. The obvious drawback to
-the current implementation is that the entire cruft pack must be re-written from
-scratch.
 
 GIT
 ---

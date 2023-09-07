@@ -720,7 +720,6 @@ static int write_cruft_pack(const struct pack_objects_args *args,
 
 	strvec_push(&cmd.args, "--honor-pack-keep");
 	strvec_push(&cmd.args, "--non-empty");
-	strvec_push(&cmd.args, "--max-pack-size=0");
 
 	cmd.in = -1;
 
@@ -1048,6 +1047,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 			cruft_po_args.depth = po_args.depth;
 		if (!cruft_po_args.threads)
 			cruft_po_args.threads = po_args.threads;
+		if (!cruft_po_args.max_pack_size)
+			cruft_po_args.max_pack_size = po_args.max_pack_size;
 
 		cruft_po_args.local = po_args.local;
 		cruft_po_args.quiet = po_args.quiet;

@@ -573,23 +573,54 @@ test_expect_success 'cruft repack with no reachable objects' '
 	)
 '
 
-test_expect_success 'cruft repack ignores --max-pack-size' '
+write_blob () {
+	test-tool genrandom "$@" >in &&
+	git hash-object -w -t blob in
+}
+
+find_pack () {
+	for idx in $(ls $packdir/pack-*.idx)
+	do
+		git show-index <$idx >out &&
+		if grep -q "$1" out
+		then
+			echo $idx
+		fi || return 1
+	done
+}
+
+test_expect_success 'cruft repack with --max-pack-size' '
 	git init max-pack-size &&
 	(
 		cd max-pack-size &&
 		test_commit base &&
+
 		# two cruft objects which exceed the maximum pack size
-		test-tool genrandom foo 1048576 | git hash-object --stdin -w &&
-		test-tool genrandom bar 1048576 | git hash-object --stdin -w &&
+		foo=$(write_blob foo 1048576) &&
+		bar=$(write_blob bar 1048576) &&
+		test-tool chmtime --get -1000 \
+			"$objdir/$(test_oid_to_path $foo)" >foo.mtime &&
+		test-tool chmtime --get -2000 \
+			"$objdir/$(test_oid_to_path $bar)" >bar.mtime &&
 		git repack --cruft --max-pack-size=1M &&
 		find $packdir -name "*.mtimes" >cruft &&
-		test_line_count = 1 cruft &&
-		test-tool pack-mtimes "$(basename "$(cat cruft)")" >objects &&
-		test_line_count = 2 objects
+		test_line_count = 2 cruft &&
+
+		foo_mtimes="$(basename $(find_pack $foo) .idx).mtimes" &&
+		bar_mtimes="$(basename $(find_pack $bar) .idx).mtimes" &&
+		test-tool pack-mtimes $foo_mtimes >foo.actual &&
+		test-tool pack-mtimes $bar_mtimes >bar.actual &&
+
+		echo "$foo $(cat foo.mtime)" >foo.expect &&
+		echo "$bar $(cat bar.mtime)" >bar.expect &&
+
+		test_cmp foo.expect foo.actual &&
+		test_cmp bar.expect bar.actual &&
+		test "$foo_mtimes" != "$bar_mtimes"
 	)
 '
 
-test_expect_success 'cruft repack ignores pack.packSizeLimit' '
+test_expect_success 'cruft repack with pack.packSizeLimit' '
 	(
 		cd max-pack-size &&
 		# repack everything back together to remove the existing cruft
@@ -599,9 +630,12 @@ test_expect_success 'cruft repack ignores pack.packSizeLimit' '
 		# ensure the same post condition is met when --max-pack-size
 		# would otherwise be inferred from the configuration
 		find $packdir -name "*.mtimes" >cruft &&
-		test_line_count = 1 cruft &&
-		test-tool pack-mtimes "$(basename "$(cat cruft)")" >objects &&
-		test_line_count = 2 objects
+		test_line_count = 2 cruft &&
+		for pack in $(cat cruft)
+		do
+			test-tool pack-mtimes "$(basename $pack)" >objects &&
+			test_line_count = 1 objects || return 1
+		done
 	)
 '
 
