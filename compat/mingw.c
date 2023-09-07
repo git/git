@@ -3851,7 +3851,12 @@ int handle_long_path(wchar_t *path, int len, int max_path, int expand)
 	 * "cwd + path" doesn't due to '..' components)
 	 */
 	if (result < max_path) {
-		wcscpy(path, buf);
+		/* Be careful not to add a drive prefix if there was none */
+		if (is_wdir_sep(path[0]) &&
+		    !is_wdir_sep(buf[0]) && buf[1] == L':' && is_wdir_sep(buf[2]))
+			wcscpy(path, buf + 2);
+		else
+			wcscpy(path, buf);
 		return result;
 	}
 
