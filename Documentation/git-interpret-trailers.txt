@@ -117,7 +117,7 @@ OPTIONS
 	and applies to all '--trailer' options until the next occurrence of
 	'--where' or '--no-where'. Upon encountering '--no-where', clear the
 	effect of any previous use of '--where', such that the relevant configuration
-	variables are no longer overridden. Possible values are `after`,
+	variables are no longer overridden. Possible placements are `after`,
 	`before`, `end` or `start`.
 
 --if-exists <action>::
