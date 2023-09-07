@@ -255,8 +255,8 @@ trailer.<token>.key::
 	but this can be changed using the `trailer.separators` config
 	variable.
 +
-If there is a separator, then the key will be used instead of both the
-<token> and the default separator when adding the trailer.
+If there is a separator in the key, then it overrides the default
+separator when adding the trailer.
 
 trailer.<token>.where::
 	This option takes the same values as the 'trailer.where'
