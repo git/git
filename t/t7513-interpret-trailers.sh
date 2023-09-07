@@ -792,7 +792,7 @@ test_expect_success 'overriding configuration with "--where after"' '
 	test_cmp expected actual
 '
 
-test_expect_success 'using "where = before" with "--no-where"' '
+test_expect_success 'using "--where after" with "--no-where"' '
 	test_config trailer.ack.key "Acked-by= " &&
 	test_config trailer.ack.where "before" &&
 	test_config trailer.bug.key "Bug #" &&
