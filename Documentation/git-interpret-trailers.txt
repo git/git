@@ -155,8 +155,8 @@ OPTIONS
 	variables.
 
 --unfold::
-	Remove any whitespace-continuation in trailers, so that each
-	trailer appears on a line by itself with its full content.
+	If a trailer has a value that runs over multiple lines (aka "folded"),
+	reformat the value into a single line.
 
 --parse::
 	A convenience alias for `--only-trailers --only-input
