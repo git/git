@@ -221,9 +221,15 @@ populated with placeholder text.
 
 --subject-prefix=<subject prefix>::
 	Instead of the standard '[PATCH]' prefix in the subject
-	line, instead use '[<subject prefix>]'. This
-	allows for useful naming of a patch series, and can be
-	combined with the `--numbered` option.
+	line, instead use '[<subject prefix>]'. This can be used
+	to name a patch series, and can be combined with the
+	`--numbered` option.
++
+The configuration variable `format.subjectPrefix` may also be used
+to configure a subject prefix to apply to a given repository for
+all patches. This is often useful on mailing lists which receive
+patches for several repositories and can be used to disambiguate
+the patches (with a value of e.g. "PATCH my-project").
 
 --filename-max-length=<n>::
 	Instead of the standard 64 bytes, chomp the generated output
@@ -233,9 +239,9 @@ populated with placeholder text.
 	variable, or 64 if unconfigured.
 
 --rfc::
-	Alias for `--subject-prefix="RFC PATCH"`. RFC means "Request For
-	Comments"; use this when sending an experimental patch for
-	discussion rather than application.
+	Prepends "RFC" to the subject prefix (producing "RFC PATCH" by
+	default). RFC means "Request For Comments"; use this when sending
+	an experimental patch for discussion rather than application.
 
 -v <n>::
 --reroll-count=<n>::
