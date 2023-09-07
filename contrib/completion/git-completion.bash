@@ -1677,6 +1677,11 @@ _git_clone ()
 
 __git_untracked_file_modes="all no normal"
 
+__git_trailer_tokens ()
+{
+	git config --name-only --get-regexp trailer.\*.key | awk -F. '{print $2}'
+}
+
 _git_commit ()
 {
 	case "$prev" in
@@ -1699,6 +1704,10 @@ _git_commit ()
 		;;
 	--untracked-files=*)
 		__gitcomp "$__git_untracked_file_modes" "" "${cur##--untracked-files=}"
+		return
+		;;
+	--trailer=*)
+		__gitcomp_nl "$(__git_trailer_tokens)" "" "${cur##--trailer=}" ":"
 		return
 		;;
 	--*)
