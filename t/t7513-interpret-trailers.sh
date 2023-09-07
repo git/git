@@ -812,6 +812,53 @@ test_expect_success 'using "--where after" with "--no-where"' '
 	test_cmp expected actual
 '
 
+# Check whether using "--no-where" clears out only the "--where after", such
+# that we still use the configuration in trailer.where (which is different from
+# the hardcoded default (in WHERE_END) assuming the absence of .gitconfig).
+# Here, the "start" setting of trailer.where is respected, so the new "Acked-by"
+# and "Bug" trailers are placed at the beginning, and not at the end which is
+# the harcoded default.
+test_expect_success 'using "--where after" with "--no-where" defaults to configuration' '
+	test_config trailer.ack.key "Acked-by= " &&
+	test_config trailer.bug.key "Bug #" &&
+	test_config trailer.separators ":=#" &&
+	test_config trailer.where "start" &&
+	cat complex_message_body >expected &&
+	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
+		Bug #42
+		Acked-by= Peff
+		Fixes: Z
+		Acked-by= Z
+		Reviewed-by: Z
+		Signed-off-by: Z
+	EOF
+	git interpret-trailers --where after --no-where --trailer "ack: Peff" \
+		--trailer "bug: 42" complex_message >actual &&
+	test_cmp expected actual
+'
+
+# The "--where after" will only get respected for the trailer that came
+# immediately after it. For the next trailer (Bug #42), we default to using the
+# hardcoded WHERE_END because we don't have any "trailer.where" or
+# "trailer.bug.where" configured.
+test_expect_success 'using "--no-where" defaults to harcoded default if nothing configured' '
+	test_config trailer.ack.key "Acked-by= " &&
+	test_config trailer.bug.key "Bug #" &&
+	test_config trailer.separators ":=#" &&
+	cat complex_message_body >expected &&
+	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
+		Fixes: Z
+		Acked-by= Z
+		Acked-by= Peff
+		Reviewed-by: Z
+		Signed-off-by: Z
+		Bug #42
+	EOF
+	git interpret-trailers --where after --trailer "ack: Peff" --no-where \
+		--trailer "bug: 42" complex_message >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'using "where = after"' '
 	test_config trailer.ack.key "Acked-by= " &&
 	test_config trailer.ack.where "after" &&
@@ -1176,6 +1223,56 @@ test_expect_success 'overriding configuration with "--if-exists replace"' '
 	test_cmp expected actual
 '
 
+# "trailer.ifexists" is set to "doNothing", so using "--no-if-exists" defaults
+# to this "doNothing" behavior. So the "Fixes: 53" trailer does not get added.
+test_expect_success 'using "--if-exists replace" with "--no-if-exists" defaults to configuration' '
+	test_config trailer.ifexists "doNothing" &&
+	cat complex_message_body >expected &&
+	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
+		Fixes: Z
+		Acked-by: Z
+		Reviewed-by: Z
+		Signed-off-by: Z
+	EOF
+	git interpret-trailers --if-exists replace --no-if-exists --trailer "Fixes: 53" \
+		<complex_message >actual &&
+	test_cmp expected actual
+'
+
+# No "ifexists" configuration is set, so using "--no-if-exists" makes it default
+# to addIfDifferentNeighbor. Because we do have a different neighbor "Fixes: 53"
+# (because it got added by overriding with "--if-exists replace" earlier in the
+# arguments list), we add "Signed-off-by: addme".
+test_expect_success 'using "--no-if-exists" defaults to hardcoded default if nothing configured' '
+	cat complex_message_body >expected &&
+	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
+		Acked-by: Z
+		Reviewed-by: Z
+		Signed-off-by: Z
+		Fixes: 53
+		Signed-off-by: addme
+	EOF
+	git interpret-trailers --if-exists replace --trailer "Fixes: 53" --no-if-exists \
+		--trailer "Signed-off-by: addme" <complex_message >actual &&
+	test_cmp expected actual
+'
+
+# The second "Fixes: 53" trailer is discarded, because the "--no-if-exists" here
+# makes us default to addIfDifferentNeighbor, and we already added the "Fixes:
+# 53" trailer earlier in the argument list.
+test_expect_success 'using "--no-if-exists" defaults to hardcoded default if nothing configured (no addition)' '
+	cat complex_message_body >expected &&
+	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
+		Acked-by: Z
+		Reviewed-by: Z
+		Signed-off-by: Z
+		Fixes: 53
+	EOF
+	git interpret-trailers --if-exists replace --trailer "Fixes: 53" --no-if-exists \
+		--trailer "Fixes: 53" <complex_message >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'using "ifExists = replace"' '
 	test_config trailer.fix.key "Fixes: " &&
 	test_config trailer.fix.ifExists "replace" &&
@@ -1422,6 +1519,39 @@ test_expect_success 'using "ifMissing = doNothing"' '
 		--trailer "cc=Linus" --trailer "ack: Junio" \
 		--trailer "fix=22" --trailer "bug: 42" --trailer "ack: Peff" \
 		<complex_message >actual &&
+	test_cmp expected actual
+'
+
+# Ignore the "IgnoredTrailer" because of "--if-missing doNothing", but also
+# ignore the "StillIgnoredTrailer" because we set "trailer.ifMissing" to
+# "doNothing" in configuration.
+test_expect_success 'using "--no-if-missing" defaults to configuration' '
+	test_config trailer.ifMissing "doNothing" &&
+	cat complex_message_body >expected &&
+	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
+			Fixes: Z
+			Acked-by: Z
+			Reviewed-by: Z
+			Signed-off-by: Z
+	EOF
+	git interpret-trailers --if-missing doNothing --trailer "IgnoredTrailer: ignoreme" --no-if-missing \
+			--trailer "StillIgnoredTrailer: ignoreme" <complex_message >actual &&
+	test_cmp expected actual
+'
+
+# Add the "AddedTrailer" because the "--no-if-missing" clears the "--if-missing
+# doNothing" from earlier in the argument list.
+test_expect_success 'using "--no-if-missing" defaults to hardcoded default if nothing configured' '
+	cat complex_message_body >expected &&
+	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
+			Fixes: Z
+			Acked-by: Z
+			Reviewed-by: Z
+			Signed-off-by: Z
+			AddedTrailer: addme
+	EOF
+	git interpret-trailers --if-missing doNothing --trailer "IgnoredTrailer: ignoreme" --no-if-missing \
+			--trailer "AddedTrailer: addme" <complex_message >actual &&
 	test_cmp expected actual
 '
 

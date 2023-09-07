@@ -114,8 +114,10 @@ OPTIONS
 	Specify where all new trailers will be added.  A setting
 	provided with '--where' overrides all configuration variables
 	and applies to all '--trailer' options until the next occurrence of
-	'--where' or '--no-where'. Possible values are `after`, `before`,
-	`end` or `start`.
+	'--where' or '--no-where'. Upon encountering '--no-where', clear the
+	effect of any previous use of '--where', such that the relevant configuration
+	variables are no longer overridden. Possible values are `after`,
+	`before`, `end` or `start`.
 
 --if-exists <action>::
 --no-if-exists::
@@ -123,7 +125,9 @@ OPTIONS
 	least one trailer with the same <token> in the input.  A setting
 	provided with '--if-exists' overrides all configuration variables
 	and applies to all '--trailer' options until the next occurrence of
-	'--if-exists' or '--no-if-exists'. Possible actions are `addIfDifferent`,
+	'--if-exists' or '--no-if-exists'. Upon encountering '--no-if-exists, clear the
+	effect of any previous use of '--if-exists, such that the relevant configuration
+	variables are no longer overridden. Possible actions are `addIfDifferent`,
 	`addIfDifferentNeighbor`, `add`, `replace` and `doNothing`.
 
 --if-missing <action>::
@@ -132,7 +136,9 @@ OPTIONS
 	trailer with the same <token> in the input.  A setting
 	provided with '--if-missing' overrides all configuration variables
 	and applies to all '--trailer' options until the next occurrence of
-	'--if-missing' or '--no-if-missing'. Possible actions are `doNothing`
+	'--if-missing' or '--no-if-missing'. Upon encountering '--no-if-missing,
+	clear the effect of any previous use of '--if-missing, such that the relevant
+	configuration variables are no longer overridden. Possible actions are `doNothing`
 	or `add`.
 
 --only-trailers::
