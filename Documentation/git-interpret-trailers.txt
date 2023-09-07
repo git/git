@@ -34,9 +34,12 @@ This command reads commit messages from either the
 If `--parse` is specified, the output consists of the parsed trailers
 coming from the input, without influencing them with any command line
 options or configuration variables.
-Otherwise, this command applies the arguments passed using the
-`--trailer` option, if any, to each input file. The result is emitted on the
-standard output.
+
+Otherwise, this command applies `trailer.*` configuration variables
+(which could potentially add new trailers, as well as reposition them),
+as well as any command line arguments that can override configuration
+variables (such as `--trailer=...` which could also add new trailers),
+to each input file. The result is emitted on the standard output.
 
 This command can also operate on the output of linkgit:git-format-patch[1],
 which is more elaborate than a plain commit message. Namely, such output
