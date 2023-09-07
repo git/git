@@ -1578,12 +1578,14 @@ static void compute_topological_levels(struct write_commit_graph_context *ctx)
 	stop_progress(&ctx->progress);
 }
 
-static timestamp_t get_generation_from_graph_data(struct commit *c, void *data)
+static timestamp_t get_generation_from_graph_data(struct commit *c,
+						  void *data UNUSED)
 {
 	return commit_graph_data_at(c)->generation;
 }
 
-static void set_generation_v2(struct commit *c, timestamp_t t, void *data)
+static void set_generation_v2(struct commit *c, timestamp_t t,
+			      void *data UNUSED)
 {
 	struct commit_graph_data *g = commit_graph_data_at(c);
 	g->generation = t;
@@ -1597,7 +1599,6 @@ static void compute_generation_numbers(struct write_commit_graph_context *ctx)
 		.commits = &ctx->commits,
 		.get_generation = get_generation_from_graph_data,
 		.set_generation = set_generation_v2,
-		.data = ctx,
 	};
 
 	if (ctx->report_progress)
@@ -1626,7 +1627,7 @@ static void compute_generation_numbers(struct write_commit_graph_context *ctx)
 }
 
 static void set_generation_in_graph_data(struct commit *c, timestamp_t t,
-					 void *data)
+					 void *data UNUSED)
 {
 	commit_graph_data_at(c)->generation = t;
 }

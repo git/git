@@ -1101,8 +1101,9 @@ static void show_boundary_commit(struct commit *commit, void *_data)
 	}
 }
 
-static void show_boundary_object(struct object *object,
-				 const char *name, void *data)
+static void show_boundary_object(struct object *object UNUSED,
+				 const char *name UNUSED,
+				 void *data UNUSED)
 {
 	BUG("should not be called");
 }

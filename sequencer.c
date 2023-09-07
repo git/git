@@ -433,10 +433,9 @@ struct commit_message {
 	const char *message;
 };
 
-static const char *short_commit_name(struct commit *commit)
+static const char *short_commit_name(struct repository *r, struct commit *commit)
 {
-	return repo_find_unique_abbrev(the_repository, &commit->object.oid,
-				       DEFAULT_ABBREV);
+	return repo_find_unique_abbrev(r, &commit->object.oid, DEFAULT_ABBREV);
 }
 
 static int get_message(struct commit *commit, struct commit_message *out)
@@ -446,7 +445,7 @@ static int get_message(struct commit *commit, struct commit_message *out)
 
 	out->message = repo_logmsg_reencode(the_repository, commit, NULL,
 					    get_commit_output_encoding());
-	abbrev = short_commit_name(commit);
+	abbrev = short_commit_name(the_repository, commit);
 
 	subject_len = find_commit_subject(out->message, &subject);
 
@@ -2383,7 +2382,7 @@ static int do_pick_commit(struct repository *r,
 		error(command == TODO_REVERT
 		      ? _("could not revert %s... %s")
 		      : _("could not apply %s... %s"),
-		      short_commit_name(commit), msg.subject);
+		      short_commit_name(r, commit), msg.subject);
 		print_advice(r, res == 1, opts);
 		repo_rerere(r, opts->allow_rerere_auto);
 		goto leave;
@@ -2650,7 +2649,7 @@ static int parse_insn_line(struct repository *r, struct todo_item *item,
 	return item->commit ? 0 : -1;
 }
 
-int sequencer_get_last_command(struct repository *r, enum replay_action *action)
+int sequencer_get_last_command(struct repository *r UNUSED, enum replay_action *action)
 {
 	const char *todo_file, *bol;
 	struct strbuf buf = STRBUF_INIT;
@@ -3172,7 +3171,8 @@ static int walk_revs_populate_todo(struct todo_list *todo_list,
 		item->offset_in_buf = todo_list->buf.len;
 		subject_len = find_commit_subject(commit_buffer, &subject);
 		strbuf_addf(&todo_list->buf, "%s %s %.*s\n", command_string,
-			short_commit_name(commit), subject_len, subject);
+			short_commit_name(the_repository, commit),
+			subject_len, subject);
 		repo_unuse_commit_buffer(the_repository, commit,
 					 commit_buffer);
 	}
@@ -3593,7 +3593,7 @@ static int error_with_patch(struct repository *r,
 	} else if (exit_code) {
 		if (commit)
 			fprintf_ln(stderr, _("Could not apply %s... %.*s"),
-				   short_commit_name(commit), subject_len, subject);
+				   short_commit_name(r, commit), subject_len, subject);
 		else
 			/*
 			 * We don't have the hash of the parent so
@@ -4728,7 +4728,7 @@ static int pick_commits(struct repository *r,
 						term_clear_line();
 					fprintf(stderr,
 						_("Stopped at %s...  %.*s\n"),
-						short_commit_name(commit),
+						short_commit_name(r, commit),
 						item->arg_len, arg);
 				}
 				return error_with_patch(r, commit,
@@ -5564,7 +5564,7 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 		if (!is_empty && (commit->object.flags & PATCHSAME)) {
 			if (flags & TODO_LIST_WARN_SKIPPED_CHERRY_PICKS)
 				warning(_("skipped previously applied commit %s"),
-					short_commit_name(commit));
+					short_commit_name(the_repository, commit));
 			skipped_commit = 1;
 			continue;
 		}
@@ -5800,7 +5800,7 @@ int sequencer_make_script(struct repository *r, struct strbuf *out, int argc,
 		if (!is_empty && (commit->object.flags & PATCHSAME)) {
 			if (flags & TODO_LIST_WARN_SKIPPED_CHERRY_PICKS)
 				warning(_("skipped previously applied commit %s"),
-					short_commit_name(commit));
+					short_commit_name(r, commit));
 			skipped_commit = 1;
 			continue;
 		}
@@ -5892,7 +5892,8 @@ static void todo_list_add_exec_commands(struct todo_list *todo_list,
 	todo_list->alloc = alloc;
 }
 
-static void todo_list_to_strbuf(struct repository *r, struct todo_list *todo_list,
+static void todo_list_to_strbuf(struct repository *r,
+				struct todo_list *todo_list,
 				struct strbuf *buf, int num, unsigned flags)
 {
 	struct todo_item *item;
@@ -5921,7 +5922,7 @@ static void todo_list_to_strbuf(struct repository *r, struct todo_list *todo_lis
 		/* add commit id */
 		if (item->commit) {
 			const char *oid = flags & TODO_LIST_SHORTEN_IDS ?
-					  short_commit_name(item->commit) :
+					  short_commit_name(r, item->commit) :
 					  oid_to_hex(&item->commit->object.oid);
 
 			if (item->command == TODO_FIXUP) {

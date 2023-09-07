@@ -241,7 +241,8 @@ static int show_tree_long(const struct object_id *oid, struct strbuf *base,
 	return recurse;
 }
 
-static int show_tree_name_only(const struct object_id *oid, struct strbuf *base,
+static int show_tree_name_only(const struct object_id *oid UNUSED,
+			       struct strbuf *base,
 			       const char *pathname, unsigned mode,
 			       void *context)
 {

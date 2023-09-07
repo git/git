@@ -549,7 +549,8 @@ static int signature_atom_parser(struct ref_format *format UNUSED,
 	return 0;
 }
 
-static int trailers_atom_parser(struct ref_format *format, struct used_atom *atom,
+static int trailers_atom_parser(struct ref_format *format UNUSED,
+				struct used_atom *atom,
 				const char *arg, struct strbuf *err)
 {
 	atom->u.contents.trailer_opts.no_divider = 1;
@@ -819,7 +820,7 @@ static int if_atom_parser(struct ref_format *format UNUSED,
 	return 0;
 }
 
-static int rest_atom_parser(struct ref_format *format,
+static int rest_atom_parser(struct ref_format *format UNUSED,
 			    struct used_atom *atom UNUSED,
 			    const char *arg, struct strbuf *err)
 {
@@ -828,7 +829,8 @@ static int rest_atom_parser(struct ref_format *format,
 	return 0;
 }
 
-static int ahead_behind_atom_parser(struct ref_format *format, struct used_atom *atom,
+static int ahead_behind_atom_parser(struct ref_format *format,
+				    struct used_atom *atom UNUSED,
 				    const char *arg, struct strbuf *err)
 {
 	struct string_list_item *item;
