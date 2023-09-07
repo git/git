@@ -1,6 +1,16 @@
 Git v2.43 Release Notes
 =======================
 
+Backward Compatibility Notes
+
+ * The "--rfc" option of "git format-patch" used to be a valid way to
+   override an earlier "--subject-prefix=<something>" on the command
+   line and replace it with "[RFC PATCH]", but from this release, it
+   merely prefixes the string "RFC " in front of the given subject
+   prefix.  If you are negatively affected by this change, please use
+   "--subject-prefix=PATCH --rfc" as a replacement.
+
+
 UI, Workflows & Features
 
  * A message written in olden time prevented a branch from getting
@@ -29,6 +39,14 @@ UI, Workflows & Features
    description available, and (2) also can override the branch
    description if there is one.
 
+ * Use of --max-pack-size to allow multiple packfiles to be created is
+   now supported even when we are sending unreachable objects to cruft
+   packs.
+
+ * "git format-patch --rfc --subject-prefix=<foo>" used to ignore the
+   "--subject-prefix" option and used "[RFC PATCH]"; now we will add
+   "RFC" prefix to whatever subject prefix is specified.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -50,6 +68,9 @@ Performance, Internal Implementation, Development Support etc.
    that makes our tests unnecessarily flakey; we work it around by
    filtering the uninteresting output.
    (merge 370ef7e40d jk/test-lsan-denoise-output later to maint).
+
+ * Unused parameters to functions are marked as such, and/or removed,
+   in order to bring us closer to -Wunused-parameter clean.
 
 
 Fixes since v2.42
@@ -95,3 +116,5 @@ Fixes since v2.42
    (merge fdc9914c28 ja/worktree-orphan later to maint).
    (merge c2cbefc510 jc/mv-d-to-d-error-message-fix later to maint).
    (merge d0fc552bfc ch/t6300-verify-commit-test-cleanup later to maint).
+   (merge aa4b83dd5e ws/git-svn-retire-faketerm later to maint).
+   (merge edf80d23f1 jk/ci-retire-allow-ref later to maint).
