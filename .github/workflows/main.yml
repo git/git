@@ -21,6 +21,7 @@ concurrency:
 jobs:
   ci-config:
     name: config
+    if: vars.CI_BRANCHES == '' || contains(vars.CI_BRANCHES, github.ref_name)
     runs-on: ubuntu-latest
     outputs:
       enabled: ${{ steps.check-ref.outputs.enabled }}${{ steps.skip-if-redundant.outputs.enabled }}
@@ -43,10 +44,13 @@ jobs:
         name: check whether CI is enabled for ref
         run: |
           enabled=yes
-          if test -x config-repo/ci/config/allow-ref &&
-             ! config-repo/ci/config/allow-ref '${{ github.ref }}'
+          if test -x config-repo/ci/config/allow-ref
           then
-            enabled=no
+            echo "::warning::ci/config/allow-ref is deprecated; use CI_BRANCHES instead"
+            if ! config-repo/ci/config/allow-ref '${{ github.ref }}'
+            then
+              enabled=no
+            fi
           fi
 
           skip_concurrent=yes
