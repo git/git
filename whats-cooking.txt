@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2023, #02; Tue, 5)
-X-master-at: 1fc548b2d6a3596f3e1c1f8b1930d8dbd1e30bf3
-X-next-at: b48617a3a5a37018fe707db5c6041699c4579ab7
+Subject: What's cooking in git.git (Sep 2023, #03; Fri, 8)
+X-master-at: 94e83dcf5b5faaa22e32729305f8fd7090bfdfed
+X-next-at: 461bb28fbd1decdee16a6abbeec79832ca32638f
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Sep 2023, #02; Tue, 5)
+What's cooking in git.git (Sep 2023, #03; Fri, 8)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,198 +48,6 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* jk/test-lsan-denoise-output (2023-08-28) 1 commit
-  (merged to 'next' on 2023-08-29 at 9642d76264)
- + test-lib: ignore uninteresting LSan output
-
- Tests with LSan from time to time seem to emit harmless message
- that makes our tests unnecessarily flakey; we work it around by
- filtering the uninteresting output.
- source: <20230828183735.GA3015072@coredump.intra.peff.net>
-
-
-* js/ci-san-skip-p4-and-svn-tests (2023-08-29) 1 commit
-  (merged to 'next' on 2023-08-29 at 9617f99668)
- + ci(linux-asan-ubsan): let's save some time
-
- Flakey "git p4" tests, as well as "git svn" tests, are now skipped
- in the (rather expensive) sanitizer CI job.
- source: <pull.1578.v2.git.1693342048633.gitgitgadget@gmail.com>
-
-
-* rs/parse-options-help-text-is-optional (2023-08-28) 1 commit
-  (merged to 'next' on 2023-08-29 at 5466f7fcb2)
- + parse-options: allow omitting option help text
-
- It may be tempting to leave the help text NULL for a command line
- option that is either hidden or too obvious, but "git subcmd -h"
- and "git subcmd --help-all" would have segfaulted if done so.  Now
- the help text is optional.
- source: <2b08dc43-621d-2170-c4a6-c2aac33a9a19@web.de>
-
-
-* tb/mark-more-tests-as-leak-free (2023-08-29) 3 commits
-  (merged to 'next' on 2023-08-29 at c1db288281)
- + leak tests: mark t5583-push-branches.sh as leak-free
- + leak tests: mark t3321-notes-stripspace.sh as leak-free
- + leak tests: mark a handful of tests as leak-free
-
- Tests that are known to pass with LSan are now marked as such.
- source: <cover.1693263171.git.me@ttaylorr.com>
-
---------------------------------------------------
-[New Topics]
-
-* bc/more-git-var (2023-09-05) 1 commit
- - var: avoid a segmentation fault when `HOME` is unset
-
- source: <pull.1580.git.1693808487058.gitgitgadget@gmail.com>
-
-
-* ks/ref-filter-sort-numerically (2023-09-05) 1 commit
- - ref-filter: sort numerically when ":size" is used
-
- source: <20230902090155.8978-1-five231003@gmail.com>
-
-
-* ob/sequencer-reword-error-message (2023-09-05) 1 commit
- - sequencer: fix error message on failure to copy SQUASH_MSG
-
- source: <20230903151132.739136-1-oswald.buddenhagen@gmx.de>
-
-
-* rs/grep-parseopt-simplify (2023-09-05) 1 commit
- - grep: use OPT_INTEGER_F for --max-depth
-
- source: <4d2eb736-4f34-18f8-2eb7-20e7f7b8c2f8@web.de>
-
-
-* rs/name-rev-use-opt-hidden-bool (2023-09-05) 1 commit
- - name-rev: use OPT_HIDDEN_BOOL for --peel-tag
-
- source: <5a86c8f8-fcdc-fee9-8af5-aa5ecb036d2e@web.de>
-
---------------------------------------------------
-[Stalled]
-
-* la/trailer-cleanups (2023-08-06) 5 commits
- - trailer: rename *_DEFAULT enums to *_UNSPECIFIED
- - trailer: teach find_patch_start about --no-divider
- - trailer: split process_command_line_args into separate functions
- - trailer: split process_input_file into separate pieces
- - trailer: separate public from internal portion of trailer_iterator
-
- Code clean-up.
-
- Expecting a reroll.
- cf. <owlyy1iifq0n.fsf@fine.c.googlers.com>
- source: <pull.1563.git.1691211879.gitgitgadget@gmail.com>
-
-
-* la/trailer-test-and-doc-updates (2023-08-10) 14 commits
- - SQUASH???
- - trailer doc: <token> is a <key> or <keyAlias>, not both
- - trailer doc: separator within key suppresses default separator
- - trailer doc: emphasize the effect of configuration variables
- - trailer --unfold help: prefer "reformat" over "join"
- - trailer --parse docs: add explanation for its usefulness
- - trailer --only-input: prefer "configuration variables" over "rules"
- - trailer --parse help: expose aliased options
- - trailer --no-divider help: describe usual "---" meaning
- - trailer: trailer location is a place, not an action
- - trailer doc: narrow down scope of --where and related flags
- - trailer: add tests to check defaulting behavior with --no-* flags
- - trailer test description: this tests --where=after, not --where=before
- - trailer tests: make test cases self-contained
-
- Test coverage for trailers has been improved.
-
- Expecting a reroll.
- cf. <owlyh6p5fpi7.fsf@fine.c.googlers.com>
- source: <pull.1564.v2.git.1691702283.gitgitgadget@gmail.com>
-
-
-* js/doc-unit-tests (2023-08-17) 3 commits
- - ci: run unit tests in CI
- - unit tests: add TAP unit test framework
- - unit tests: Add a project plan document
- (this branch is used by js/doc-unit-tests-with-cmake.)
-
- Process to add some form of low-level unit tests has started.
-
- Comments?
- source: <cover.1692297001.git.steadmon@google.com>
-
-
-* ak/pretty-decorate-more (2023-08-21) 8 commits
- - decorate: use commit color for HEAD arrow
- - pretty: add pointer and tag options to %(decorate)
- - pretty: add %(decorate[:<options>]) format
- - decorate: color each token separately
- - decorate: avoid some unnecessary color overhead
- - decorate: refactor format_decorations()
- - pretty-formats: enclose options in angle brackets
- - pretty-formats: define "literal formatting code"
-
- "git log --format" has been taught the %(decorate) placeholder.
-
- What's the status of this thing?
- source: <20230820185009.20095-1-andy.koppe@gmail.com>
-
-
-* cc/repack-sift-filtered-objects-to-separate-pack (2023-08-13) 8 commits
- . gc: add `gc.repackFilterTo` config option
- . repack: implement `--filter-to` for storing filtered out objects
- . gc: add `gc.repackFilter` config option
- . repack: add `--filter=<filter-spec>` option
- . repack: refactor finding pack prefix
- . repack: refactor finishing pack-objects command
- . t/helper: add 'find-pack' test-tool
- . pack-objects: allow `--filter` without `--stdout`
-
- "git repack" machinery learns to pay attention to the "--filter="
- option.
-
- Kicked out of the 'seen', as it still seems to be failing tests.
- cf. https://github.com/git/git/actions/runs/5850998716/job/15861158252#step:4:1822
- source: <20230812000011.1227371-1-christian.couder@gmail.com>
-
-
-* cc/git-replay (2023-06-03) 15 commits
- - replay: stop assuming replayed branches do not diverge
- - replay: add --contained to rebase contained branches
- - replay: add --advance or 'cherry-pick' mode
- - replay: disallow revision specific options and pathspecs
- - replay: use standard revision ranges
- - replay: make it a minimal server side command
- - replay: remove HEAD related sanity check
- - replay: remove progress and info output
- - replay: add an important FIXME comment about gpg signing
- - replay: don't simplify history
- - replay: introduce pick_regular_commit()
- - replay: die() instead of failing assert()
- - replay: start using parse_options API
- - replay: introduce new builtin
- - t6429: remove switching aspects of fast-rebase
-
- No reviews?
- source: <20230602102533.876905-1-christian.couder@gmail.com>
-
-
-* tk/cherry-pick-sequence-requires-clean-worktree (2023-06-01) 1 commit
- - cherry-pick: refuse cherry-pick sequence if index is dirty
-
- "git cherry-pick A" that replays a single commit stopped before
- clobbering local modification, but "git cherry-pick A..B" did not,
- which has been corrected.
-
- Expecting a reroll.
- cf. <999f12b2-38d6-f446-e763-4985116ad37d@gmail.com>
- source: <pull.1535.v2.git.1685264889088.gitgitgadget@gmail.com>
-
---------------------------------------------------
-[Cooking]
-
 * dd/format-patch-rfc-updates (2023-08-31) 1 commit
   (merged to 'next' on 2023-09-01 at ad87c89ee3)
  + format-patch: --rfc honors what --subject-prefix sets
@@ -249,9 +57,16 @@ Release tarballs are available at:
  "RFC" prefix to whatever subject prefix is specified.
 
  This is a backward compatible change that may deserve a note.
-
- Will merge to 'master'.
  source: <20230830064646.30904-1-sir@cmpwn.com>
+
+
+* jk/ci-retire-allow-ref (2023-08-30) 2 commits
+  (merged to 'next' on 2023-08-31 at 5fe4861f16)
+ + ci: deprecate ci/config/allow-ref script
+ + ci: allow branch selection through "vars"
+
+ CI update.
+ source: <20230830194919.GA1709446@coredump.intra.peff.net>
 
 
 * jk/unused-post-2.42 (2023-08-29) 22 commits
@@ -281,8 +96,6 @@ Release tarballs are available at:
 
  Unused parameters to functions are marked as such, and/or removed,
  in order to bring us closer to -Wunused-parameter clean.
-
- Will merge to 'master'.
  source: <20230829234305.GA226944@coredump.intra.peff.net>
 
 
@@ -296,20 +109,7 @@ Release tarballs are available at:
  Use of --max-pack-size to allow multiple packfiles to be created is
  now supported even when we are sending unreachable objects to cruft
  packs.
-
- Will merge to 'master'.
  source: <cover.1693262936.git.me@ttaylorr.com>
-
-
-* jk/ci-retire-allow-ref (2023-08-30) 2 commits
-  (merged to 'next' on 2023-08-31 at 5fe4861f16)
- + ci: deprecate ci/config/allow-ref script
- + ci: allow branch selection through "vars"
-
- CI update.
-
- Will merge to 'master'.
- source: <20230830194919.GA1709446@coredump.intra.peff.net>
 
 
 * ws/git-svn-retire-faketerm (2023-08-30) 1 commit
@@ -317,9 +117,255 @@ Release tarballs are available at:
  + git-svn: drop FakeTerm hack
 
  Code clean-up.
+ source: <xmqqa5u888lz.fsf_-_@gitster.g>
+
+--------------------------------------------------
+[New Topics]
+
+* so/diff-doc-for-patch-update (2023-09-06) 1 commit
+  (merged to 'next' on 2023-09-07 at 6da5e9defd)
+ + doc/diff-options: fix link to generating patch section
+
+ References from description of the `--patch` option in various
+ manual pages have been simplified and improved.
 
  Will merge to 'master'.
- source: <xmqqa5u888lz.fsf_-_@gitster.g>
+ source: <87msxzpybo.fsf_-_@osv.gnss.ru>
+
+
+* tb/repack-existing-packs-cleanup (2023-09-06) 8 commits
+ - builtin/repack.c: extract common cruft pack loop
+ - builtin/repack.c: drop `DELETE_PACK` macro
+ - builtin/repack.c: store existing cruft packs separately
+ - builtin/repack.c: extract `has_existing_non_kept_packs()`
+ - builtin/repack.c: extract redundant pack cleanup for existing packs
+ - builtin/repack.c: extract redundant pack cleanup for --geometric
+ - builtin/repack.c: extract marking packs for deletion
+ - builtin/repack.c: extract structure to store existing packs
+
+ The code to keep track of existing packs in the repository while
+ repacking has been refactored.
+
+ Will merge to 'next'?
+ source: <cover.1693946195.git.me@ttaylorr.com>
+
+
+* pb/complete-commit-trailers (2023-09-07) 1 commit
+  (merged to 'next' on 2023-09-08 at 842587016d)
+ + completion: commit: complete configured trailer tokens
+
+ The command-line complation support (in contrib/) learned to
+ complete "git commit --trailer=" for possible trailer keys.
+
+ Will merge to 'master'.
+ source: <pull.1583.git.1694108551683.gitgitgadget@gmail.com>
+
+
+* pw/rebase-sigint (2023-09-07) 1 commit
+ - rebase -i: ignore signals when forking subprocesses
+
+ If the commit log editor or other external programs (spawned via
+ "exec" insn in the todo list) receive internactive signal during
+ "git rebase -i", it caused not just the spawned program but the
+ "Git" process that spawned them, which is often not what the end
+ user intended.  "git" learned to ignore SIGINT and SIGQUIT while
+ waiting for these subprocesses.
+
+ Will merge to 'next'?
+ source: <pull.1581.git.1694080982621.gitgitgadget@gmail.com>
+
+
+* rs/grep-no-no-or (2023-09-07) 1 commit
+  (merged to 'next' on 2023-09-08 at 33849032bc)
+ + grep: reject --no-or
+
+ "git grep -e A --no-or -e B" is accepted, even though the negation
+ of "or" did not mean anything, which has been tightened.
+
+ Will merge to 'master'.
+ source: <6aeb0ebe-0fea-ccd3-089a-ee0b5b5baf10@web.de>
+
+
+* js/complete-checkout-t (2023-09-08) 1 commit
+  (merged to 'next' on 2023-09-08 at 461bb28fbd)
+ + completion(switch/checkout): treat --track and -t the same
+
+ The completion script (in contrib/) has been taught to treat the
+ "-t" option to "git checkout" and "git switch" just like the
+ "--track" option, to complete remote-tracking branches.
+
+ Will merge to 'master'.
+ source: <pull.1584.git.1694176123471.gitgitgadget@gmail.com>
+
+
+* cw/git-std-lib (2023-09-08) 6 commits
+ - git-std-lib: add test file to call git-std-lib.a functions
+ - git-std-lib: introduce git standard library
+ - parse: create new library for parsing strings and env values
+ - config: correct bad boolean env value error message
+ - wrapper: remove dependency to Git-specific internal file
+ - hex-ll: split out functionality from hex
+
+ Another libification effort.
+
+ Comments?
+ source: <20230908174134.1026823-1-calvinwan@google.com>
+
+--------------------------------------------------
+[Stalled]
+
+* la/trailer-cleanups (2023-08-06) 5 commits
+ - trailer: rename *_DEFAULT enums to *_UNSPECIFIED
+ - trailer: teach find_patch_start about --no-divider
+ - trailer: split process_command_line_args into separate functions
+ - trailer: split process_input_file into separate pieces
+ - trailer: separate public from internal portion of trailer_iterator
+
+ Code clean-up.
+
+ Expecting a reroll.
+ cf. <owlyy1iifq0n.fsf@fine.c.googlers.com>
+ source: <pull.1563.git.1691211879.gitgitgadget@gmail.com>
+
+
+* cc/repack-sift-filtered-objects-to-separate-pack (2023-08-13) 8 commits
+ . gc: add `gc.repackFilterTo` config option
+ . repack: implement `--filter-to` for storing filtered out objects
+ . gc: add `gc.repackFilter` config option
+ . repack: add `--filter=<filter-spec>` option
+ . repack: refactor finding pack prefix
+ . repack: refactor finishing pack-objects command
+ . t/helper: add 'find-pack' test-tool
+ . pack-objects: allow `--filter` without `--stdout`
+
+ "git repack" machinery learns to pay attention to the "--filter="
+ option.
+
+ Kicked out of the 'seen', as it still seems to be failing tests.
+ cf. https://github.com/git/git/actions/runs/5850998716/job/15861158252#step:4:1822
+ source: <20230812000011.1227371-1-christian.couder@gmail.com>
+
+
+* tk/cherry-pick-sequence-requires-clean-worktree (2023-06-01) 1 commit
+ - cherry-pick: refuse cherry-pick sequence if index is dirty
+
+ "git cherry-pick A" that replays a single commit stopped before
+ clobbering local modification, but "git cherry-pick A..B" did not,
+ which has been corrected.
+
+ Expecting a reroll.
+ cf. <999f12b2-38d6-f446-e763-4985116ad37d@gmail.com>
+ source: <pull.1535.v2.git.1685264889088.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
+* cc/git-replay (2023-09-07) 15 commits
+ - replay: stop assuming replayed branches do not diverge
+ - replay: add --contained to rebase contained branches
+ - replay: add --advance or 'cherry-pick' mode
+ - replay: disallow revision specific options and pathspecs
+ - replay: use standard revision ranges
+ - replay: make it a minimal server side command
+ - replay: remove HEAD related sanity check
+ - replay: remove progress and info output
+ - replay: add an important FIXME comment about gpg signing
+ - replay: don't simplify history
+ - replay: introduce pick_regular_commit()
+ - replay: die() instead of failing assert()
+ - replay: start using parse_options API
+ - replay: introduce new builtin
+ - t6429: remove switching aspects of fast-rebase
+
+ source: <20230907092521.733746-1-christian.couder@gmail.com>
+
+
+* la/trailer-test-and-doc-updates (2023-09-07) 13 commits
+ - trailer doc: <token> is a <key> or <keyAlias>, not both
+ - trailer doc: separator within key suppresses default separator
+ - trailer doc: emphasize the effect of configuration variables
+ - trailer --unfold help: prefer "reformat" over "join"
+ - trailer --parse docs: add explanation for its usefulness
+ - trailer --only-input: prefer "configuration variables" over "rules"
+ - trailer --parse help: expose aliased options
+ - trailer --no-divider help: describe usual "---" meaning
+ - trailer: trailer location is a place, not an action
+ - trailer doc: narrow down scope of --where and related flags
+ - trailer: add tests to check defaulting behavior with --no-* flags
+ - trailer test description: this tests --where=after, not --where=before
+ - trailer tests: make test cases self-contained
+
+ Test coverage for trailers has been improved.
+ source: <pull.1564.v3.git.1694125209.gitgitgadget@gmail.com>
+
+
+* ak/pretty-decorate-more (2023-08-21) 8 commits
+  (merged to 'next' on 2023-09-07 at 6f5e14cef2)
+ + decorate: use commit color for HEAD arrow
+ + pretty: add pointer and tag options to %(decorate)
+ + pretty: add %(decorate[:<options>]) format
+ + decorate: color each token separately
+ + decorate: avoid some unnecessary color overhead
+ + decorate: refactor format_decorations()
+ + pretty-formats: enclose options in angle brackets
+ + pretty-formats: define "literal formatting code"
+
+ "git log --format" has been taught the %(decorate) placeholder.
+
+ Will merge to 'master'.
+ source: <20230820185009.20095-1-andy.koppe@gmail.com>
+
+
+* bc/more-git-var (2023-09-05) 1 commit
+  (merged to 'next' on 2023-09-06 at d8af32874c)
+ + var: avoid a segmentation fault when `HOME` is unset
+
+ Fix-up for a topic that already has graduated.
+
+ Will merge to 'master'.
+ source: <pull.1580.git.1693808487058.gitgitgadget@gmail.com>
+
+
+* ks/ref-filter-sort-numerically (2023-09-05) 1 commit
+  (merged to 'next' on 2023-09-06 at aa4d156366)
+ + ref-filter: sort numerically when ":size" is used
+
+ "git for-each-ref --sort='contents:size'" sorts the refs according
+ to size numerically, giving a ref that points at a blob twelve-byte
+ (12) long before showing a blob hundred-byte (100) long.
+
+ Will merge to 'master'.
+ source: <20230902090155.8978-1-five231003@gmail.com>
+
+
+* ob/sequencer-reword-error-message (2023-09-05) 1 commit
+  (merged to 'next' on 2023-09-06 at c5154b7aa2)
+ + sequencer: fix error message on failure to copy SQUASH_MSG
+
+ Update an error message (which would probably never been seen).
+
+ Will merge to 'master'.
+ source: <20230903151132.739136-1-oswald.buddenhagen@gmx.de>
+
+
+* rs/grep-parseopt-simplify (2023-09-05) 1 commit
+  (merged to 'next' on 2023-09-06 at 249b69cfd2)
+ + grep: use OPT_INTEGER_F for --max-depth
+
+ Simplify use of parse-options API a bit.
+
+ Will merge to 'master'.
+ source: <4d2eb736-4f34-18f8-2eb7-20e7f7b8c2f8@web.de>
+
+
+* rs/name-rev-use-opt-hidden-bool (2023-09-05) 1 commit
+  (merged to 'next' on 2023-09-06 at 9b251a5392)
+ + name-rev: use OPT_HIDDEN_BOOL for --peel-tag
+
+ Simplify use of parse-options API a bit.
+
+ Will merge to 'master'.
+ source: <5a86c8f8-fcdc-fee9-8af5-aa5ecb036d2e@web.de>
 
 
 * jk/unused-post-2.42-part2 (2023-09-05) 10 commits
@@ -343,20 +389,35 @@ Release tarballs are available at:
 
 
 * jk/tree-name-and-depth-limit (2023-08-31) 10 commits
- - lower core.maxTreeDepth default to 2048
- - tree-diff: respect max_allowed_tree_depth
- - list-objects: respect max_allowed_tree_depth
- - read_tree(): respect max_allowed_tree_depth
- - traverse_trees(): respect max_allowed_tree_depth
- - add core.maxTreeDepth config
- - fsck: detect very large tree pathnames
- - tree-walk: rename "error" variable
- - tree-walk: drop MAX_TRAVERSE_TREES macro
- - tree-walk: reduce stack size for recursive functions
+  (merged to 'next' on 2023-09-07 at 7ad767ab0d)
+ + lower core.maxTreeDepth default to 2048
+ + tree-diff: respect max_allowed_tree_depth
+ + list-objects: respect max_allowed_tree_depth
+ + read_tree(): respect max_allowed_tree_depth
+ + traverse_trees(): respect max_allowed_tree_depth
+ + add core.maxTreeDepth config
+ + fsck: detect very large tree pathnames
+ + tree-walk: rename "error" variable
+ + tree-walk: drop MAX_TRAVERSE_TREES macro
+ + tree-walk: reduce stack size for recursive functions
 
  We now limit depth of the tree objects and maximum length of
  pathnames recorded in tree objects.
+
+ Will merge to 'master'.
  source: <20230831061735.GA2702156@coredump.intra.peff.net>
+
+
+* js/doc-unit-tests (2023-08-17) 3 commits
+ - ci: run unit tests in CI
+ - unit tests: add TAP unit test framework
+ - unit tests: Add a project plan document
+ (this branch is used by js/doc-unit-tests-with-cmake.)
+
+ Process to add some form of low-level unit tests has started.
+
+ Comments?
+ source: <cover.1692297001.git.steadmon@google.com>
 
 
 * js/doc-unit-tests-with-cmake (2023-08-31) 4 commits
@@ -432,14 +493,16 @@ Release tarballs are available at:
 
 
 * ob/revert-of-revert-is-reapply (2023-09-02) 2 commits
- - git-revert.txt: add discussion
- - sequencer: beautify subject of reverts of reverts
+  (merged to 'next' on 2023-09-07 at 9a54f66511)
+ + git-revert.txt: add discussion
+ + sequencer: beautify subject of reverts of reverts
 
  The default log message created by "git revert", when reverting a
  commit that records a revert, has been tweaked.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20230821170720.577850-1-oswald.buddenhagen@gmx.de>
+ source: <20230902072035.652549-1-oswald.buddenhagen@gmx.de>
 
 
 * jc/rerere-cleanup (2023-08-25) 4 commits
@@ -455,23 +518,22 @@ Release tarballs are available at:
  source: <20230731224409.4181277-1-gitster@pobox.com>
 
 
-* pw/rebase-i-after-failure (2023-08-01) 7 commits
- - rebase -i: fix adding failed command to the todo list
- - rebase --continue: refuse to commit after failed command
- - rebase: fix rewritten list for failed pick
- - sequencer: factor out part of pick_commits()
- - sequencer: use rebase_path_message()
- - rebase -i: remove patch file after conflict resolution
- - rebase -i: move unlink() calls
+* pw/rebase-i-after-failure (2023-09-06) 7 commits
+  (merged to 'next' on 2023-09-07 at 3cbc3c4d63)
+ + rebase -i: fix adding failed command to the todo list
+ + rebase --continue: refuse to commit after failed command
+ + rebase: fix rewritten list for failed pick
+ + sequencer: factor out part of pick_commits()
+ + sequencer: use rebase_path_message()
+ + rebase -i: remove patch file after conflict resolution
+ + rebase -i: move unlink() calls
 
  Various fixes to the behaviour of "rebase -i" when the command got
  interrupted by conflicting changes.
 
- Expecting a reroll.
- The latter half of the series should be reviewed by those who have
- more stake in the sequencer code than myself.
- cf. <619e458b-218b-a790-dfb4-9200e201b513@gmail.com>
- source: <pull.1492.v3.git.1690903412.gitgitgadget@gmail.com>
+ Will merge to 'master'.
+ cf. <6b927687-cf6e-d73e-78fb-bd4f46736928@gmx.de>
+ source: <pull.1492.v4.git.1694013771.gitgitgadget@gmail.com>
 
 
 * jc/unresolve-removal (2023-07-31) 7 commits
