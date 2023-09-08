@@ -14,6 +14,9 @@ inst_prefix=$(
 	echo $HOME
 )
 
+LF='
+'
+output=
 for v in maint master next jch seen
 do
 	installed=$(
@@ -61,5 +64,9 @@ do
 		esac
 		in="[41;37m" out="[m" installed="	$installed"
 	fi
-	echo "$in$v$out$installed	$(git describe refs/heads/$v)"
+	output="$output${output:+$LF}"
+	output="$output$in$v$out$installed	$(git describe refs/heads/$v)"
 done
+
+echo "$output"
+echo "$output" | sha1sum | sed -e 's/  .*//'
