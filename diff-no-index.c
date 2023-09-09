@@ -232,6 +232,7 @@ static int queue_diff(struct diff_options *o,
 		if (o->flags.reverse_diff) {
 			SWAP(mode1, mode2);
 			SWAP(name1, name2);
+			SWAP(special1, special2);
 		}
 
 		d1 = noindex_filespec(name1, mode1, special1);
