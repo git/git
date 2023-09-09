@@ -961,28 +961,24 @@ static void unfold_value(struct strbuf *val)
 	strbuf_release(&out);
 }
 
-static size_t process_input_file(FILE *outfile,
-				 const char *str,
-				 struct list_head *head,
-				 const struct process_trailer_options *opts)
+/*
+ * Parse trailers in "str", populating the trailer info and "head"
+ * linked list structure.
+ */
+static void parse_trailers(struct trailer_info *info,
+			     const char *str,
+			     struct list_head *head,
+			     const struct process_trailer_options *opts)
 {
-	struct trailer_info info;
 	struct strbuf tok = STRBUF_INIT;
 	struct strbuf val = STRBUF_INIT;
 	size_t i;
 
-	trailer_info_get(&info, str, opts);
+	trailer_info_get(info, str, opts);
 
-	/* Print lines before the trailers as is */
-	if (!opts->only_trailers)
-		fwrite(str, 1, info.trailer_start - str, outfile);
-
-	if (!opts->only_trailers && !info.blank_line_before_trailer)
-		fprintf(outfile, "\n");
-
-	for (i = 0; i < info.trailer_nr; i++) {
+	for (i = 0; i < info->trailer_nr; i++) {
 		int separator_pos;
-		char *trailer = info.trailers[i];
+		char *trailer = info->trailers[i];
 		if (trailer[0] == comment_line_char)
 			continue;
 		separator_pos = find_separator(trailer, separators);
@@ -1002,10 +998,6 @@ static size_t process_input_file(FILE *outfile,
 					 strbuf_detach(&val, NULL));
 		}
 	}
-
-	trailer_info_release(&info);
-
-	return info.trailer_end - str;
 }
 
 static void free_all(struct list_head *head)
@@ -1054,6 +1046,7 @@ void process_trailers(const char *file,
 {
 	LIST_HEAD(head);
 	struct strbuf sb = STRBUF_INIT;
+	struct trailer_info info;
 	size_t trailer_end;
 	FILE *outfile = stdout;
 
@@ -1064,8 +1057,16 @@ void process_trailers(const char *file,
 	if (opts->in_place)
 		outfile = create_in_place_tempfile(file);
 
+	parse_trailers(&info, sb.buf, &head, opts);
+	trailer_end = info.trailer_end - sb.buf;
+
 	/* Print the lines before the trailers */
-	trailer_end = process_input_file(outfile, sb.buf, &head, opts);
+	if (!opts->only_trailers)
+		fwrite(sb.buf, 1, info.trailer_start - sb.buf, outfile);
+
+	if (!opts->only_trailers && !info.blank_line_before_trailer)
+		fprintf(outfile, "\n");
+
 
 	if (!opts->only_input) {
 		LIST_HEAD(arg_head);
@@ -1076,6 +1077,7 @@ void process_trailers(const char *file,
 	print_all(outfile, &head, opts);
 
 	free_all(&head);
+	trailer_info_release(&info);
 
 	/* Print the lines after the trailers as is */
 	if (!opts->only_trailers)
