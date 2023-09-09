@@ -711,10 +711,25 @@ static void add_arg_item(struct list_head *arg_head, char *tok, char *val,
 	list_add_tail(&new_item->list, arg_head);
 }
 
-static void process_command_line_args(struct list_head *arg_head,
-				      struct list_head *new_trailer_head)
+static void parse_trailers_from_config(struct list_head *config_head)
 {
 	struct arg_item *item;
+	struct list_head *pos;
+
+	/* Add an arg item for each configured trailer with a command */
+	list_for_each(pos, &conf_head) {
+		item = list_entry(pos, struct arg_item, list);
+		if (item->conf.command)
+			add_arg_item(config_head,
+				     xstrdup(token_from_item(item, NULL)),
+				     xstrdup(""),
+				     &item->conf, NULL);
+	}
+}
+
+static void parse_trailers_from_command_line_args(struct list_head *arg_head,
+						  struct list_head *new_trailer_head)
+{
 	struct strbuf tok = STRBUF_INIT;
 	struct strbuf val = STRBUF_INIT;
 	const struct conf_info *conf;
@@ -725,16 +740,6 @@ static void process_command_line_args(struct list_head *arg_head,
 	 * separators that are defined).
 	 */
 	char *cl_separators = xstrfmt("=%s", separators);
-
-	/* Add an arg item for each configured trailer with a command */
-	list_for_each(pos, &conf_head) {
-		item = list_entry(pos, struct arg_item, list);
-		if (item->conf.command)
-			add_arg_item(arg_head,
-				     xstrdup(token_from_item(item, NULL)),
-				     xstrdup(""),
-				     &item->conf, NULL);
-	}
 
 	/* Add an arg item for each trailer on the command line */
 	list_for_each(pos, new_trailer_head) {
@@ -1069,8 +1074,11 @@ void process_trailers(const char *file,
 
 
 	if (!opts->only_input) {
+		LIST_HEAD(config_head);
 		LIST_HEAD(arg_head);
-		process_command_line_args(&arg_head, new_trailer_head);
+		parse_trailers_from_config(&config_head);
+		parse_trailers_from_command_line_args(&arg_head, new_trailer_head);
+		list_splice(&config_head, &arg_head);
 		process_trailers_lists(&head, &arg_head);
 	}
 
