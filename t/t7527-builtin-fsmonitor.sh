@@ -809,6 +809,11 @@ my_match_and_clean () {
 		status --porcelain=v2 >actual.without &&
 	test_cmp actual.with actual.without &&
 
+	git -C super --no-optional-locks diff-index --name-status HEAD >actual.with &&
+	git -C super --no-optional-locks -c core.fsmonitor=false \
+		diff-index --name-status HEAD >actual.without &&
+	test_cmp actual.with actual.without &&
+
 	git -C super/dir_1/dir_2/sub reset --hard &&
 	git -C super/dir_1/dir_2/sub clean -d -f
 }
