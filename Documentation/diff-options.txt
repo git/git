@@ -204,14 +204,15 @@ have to use `--diff-algorithm=default` option.
 	part. Maximum width defaults to terminal width, or 80 columns
 	if not connected to a terminal, and can be overridden by
 	`<width>`. The width of the filename part can be limited by
-	giving another width `<name-width>` after a comma. The width
-	of the graph part can be limited by using
-	`--stat-graph-width=<width>` (affects all commands generating
-	a stat graph) or by setting `diff.statGraphWidth=<width>`
-	(does not affect `git format-patch`).
-	By giving a third parameter `<count>`, you can limit the
-	output to the first `<count>` lines, followed by `...` if
-	there are more.
+	giving another width `<name-width>` after a comma or by setting
+	`diff.statNameWidth=<width>`. The width of the graph part can be
+	limited by using `--stat-graph-width=<width>` or by setting
+	`diff.statGraphWidth=<width>`. Using `--stat` or
+	`--stat-graph-width` affects all commands generating a stat graph,
+	while setting `diff.statNameWidth` or `diff.statGraphWidth`
+	does not affect `git format-patch`.
+	By giving a third parameter `<count>`, you can limit the output to
+	the first `<count>` lines, followed by `...` if there are more.
 +
 These parameters can also be set individually with `--stat-width=<width>`,
 `--stat-name-width=<name-width>` and `--stat-count=<count>`.

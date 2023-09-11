@@ -65,6 +65,7 @@ int diff_auto_refresh_index = 1;
 static int diff_mnemonic_prefix;
 static int diff_no_prefix;
 static int diff_relative;
+static int diff_stat_name_width;
 static int diff_stat_graph_width;
 static int diff_dirstat_permille_default = 30;
 static struct diff_options default_diff_options;
@@ -408,6 +409,10 @@ int git_diff_ui_config(const char *var, const char *value,
 	}
 	if (!strcmp(var, "diff.relative")) {
 		diff_relative = git_config_bool(var, value);
+		return 0;
+	}
+	if (!strcmp(var, "diff.statnamewidth")) {
+		diff_stat_name_width = git_config_int(var, value, ctx->kvi);
 		return 0;
 	}
 	if (!strcmp(var, "diff.statgraphwidth")) {
@@ -2704,12 +2709,14 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 	number_width = decimal_width(max_change) > number_width ?
 		decimal_width(max_change) : number_width;
 
+	if (options->stat_name_width == -1)
+		options->stat_name_width = diff_stat_name_width;
 	if (options->stat_graph_width == -1)
 		options->stat_graph_width = diff_stat_graph_width;
 
 	/*
-	 * Guarantee 3/8*16==6 for the graph part
-	 * and 5/8*16==10 for the filename part
+	 * Guarantee 3/8*16 == 6 for the graph part
+	 * and 5/8*16 == 10 for the filename part
 	 */
 	if (width < 16 + 6 + number_width)
 		width = 16 + 6 + number_width;

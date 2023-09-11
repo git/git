@@ -178,6 +178,7 @@ static void cmd_log_init_defaults(struct rev_info *rev)
 	rev->verbose_header = 1;
 	rev->diffopt.flags.recursive = 1;
 	rev->diffopt.stat_width = -1; /* use full terminal width */
+	rev->diffopt.stat_name_width = -1; /* respect statNameWidth config */
 	rev->diffopt.stat_graph_width = -1; /* respect statGraphWidth config */
 	rev->abbrev_commit = default_abbrev_commit;
 	rev->show_root_diff = default_show_root;

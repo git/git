@@ -49,12 +49,41 @@ log -1 --stat
 EOF
 
 cat >expect.60 <<-'EOF'
- ...aaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1 +
+ ...aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1 +
 EOF
 cat >expect.6030 <<-'EOF'
  ...aaaaaaaaaaaaaaaaaaaaaaaaaaa | 1 +
 EOF
-cat >expect2.60 <<-'EOF'
+while read verb expect cmd args
+do
+	# No width limit applied when statNameWidth is ignored
+	case "$expect" in expect72|expect.6030)
+		test_expect_success "$cmd $verb statNameWidth config with long name" '
+			git -c diff.statNameWidth=30 $cmd $args >output &&
+			grep " | " output >actual &&
+			test_cmp $expect actual
+		';;
+	esac
+	# Maximum width limit still applied when statNameWidth is ignored
+	case "$expect" in expect.60|expect.6030)
+		test_expect_success "$cmd --stat=width $verb statNameWidth config with long name" '
+			git -c diff.statNameWidth=30 $cmd $args --stat=60 >output &&
+			grep " | " output >actual &&
+			test_cmp $expect actual
+		';;
+	esac
+done <<\EOF
+ignores expect72 format-patch -1 --stdout
+ignores expect.60 format-patch -1 --stdout
+respects expect.6030 diff HEAD^ HEAD --stat
+respects expect.6030 show --stat
+respects expect.6030 log -1 --stat
+EOF
+
+cat >expect.40 <<-'EOF'
+ ...aaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1 +
+EOF
+cat >expect2.40 <<-'EOF'
  ...aaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1 +
  ...aaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1 +
 EOF
@@ -67,16 +96,16 @@ do
 	test_expect_success "$cmd --stat=width: a long name is given more room when the bar is short" '
 		git $cmd $args --stat=40 >output &&
 		grep " | " output >actual &&
-		test_cmp $expect.60 actual
+		test_cmp $expect.40 actual
 	'
 
 	test_expect_success "$cmd --stat-width=width with long name" '
 		git $cmd $args --stat-width=40 >output &&
 		grep " | " output >actual &&
-		test_cmp $expect.60 actual
+		test_cmp $expect.40 actual
 	'
 
-	test_expect_success "$cmd --stat=...,name-width with long name" '
+	test_expect_success "$cmd --stat=width,name-width with long name" '
 		git $cmd $args --stat=60,30 >output &&
 		grep " | " output >actual &&
 		test_cmp $expect.6030 actual
@@ -93,7 +122,6 @@ expect diff HEAD^ HEAD --stat
 expect show --stat
 expect log -1 --stat
 EOF
-
 
 test_expect_success 'preparation for big change tests' '
 	>abcd &&
@@ -206,7 +234,6 @@ respects expect40 diff HEAD^ HEAD --stat
 respects expect40 show --stat
 respects expect40 log -1 --stat
 EOF
-
 
 cat >expect <<'EOF'
  abcd | 1000 ++++++++++++++++++++++++++
