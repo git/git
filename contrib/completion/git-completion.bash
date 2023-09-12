@@ -1679,7 +1679,7 @@ __git_untracked_file_modes="all no normal"
 
 __git_trailer_tokens ()
 {
-	git config --name-only --get-regexp trailer.\*.key | awk -F. '{print $2}'
+	__git config --name-only --get-regexp '^trailer\..*\.key$' | cut -d. -f 2- | rev | cut -d. -f2- | rev
 }
 
 _git_commit ()
