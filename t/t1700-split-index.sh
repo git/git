@@ -43,7 +43,7 @@ test_expect_success 'enable split index' '
 	git config splitIndex.maxPercentChange 100 &&
 	git update-index --split-index &&
 	test-tool dump-split-index .git/index >actual &&
-	indexversion=$(test-tool index-version <.git/index) &&
+	indexversion=$(git update-index --show-index-version) &&
 
 	# NEEDSWORK: Stop hard-coding checksums.
 	if test "$indexversion" = "4"
