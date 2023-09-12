@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2023, #03; Fri, 8)
+Subject: What's cooking in git.git (Sep 2023, #04; Tue, 12)
 X-master-at: 94e83dcf5b5faaa22e32729305f8fd7090bfdfed
 X-next-at: 461bb28fbd1decdee16a6abbeec79832ca32638f
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Sep 2023, #03; Fri, 8)
+What's cooking in git.git (Sep 2023, #04; Tue, 12)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,81 +46,123 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
+[New Topics]
 
-* dd/format-patch-rfc-updates (2023-08-31) 1 commit
-  (merged to 'next' on 2023-09-01 at ad87c89ee3)
- + format-patch: --rfc honors what --subject-prefix sets
+* js/systemd-timers-wsl-fix (2023-09-11) 1 commit
+ - maintenance(systemd): support the Windows Subsystem for Linux
 
- "git format-patch --rfc --subject-prefix=<foo>" used to ignore the
- "--subject-prefix" option and used "[RFC PATCH]"; now we will add
- "RFC" prefix to whatever subject prefix is specified.
+ Update "git maintainance" timers' implementation based on systemd
+ timers to work with WSL.
 
- This is a backward compatible change that may deserve a note.
- source: <20230830064646.30904-1-sir@cmpwn.com>
+ Will merge to 'next'.
+ source: <pull.1586.git.1694334620260.gitgitgadget@gmail.com>
 
 
-* jk/ci-retire-allow-ref (2023-08-30) 2 commits
-  (merged to 'next' on 2023-08-31 at 5fe4861f16)
- + ci: deprecate ci/config/allow-ref script
- + ci: allow branch selection through "vars"
+* kh/range-diff-notes (2023-09-11) 1 commit
+ - range-diff: treat notes like `log`
 
- CI update.
- source: <20230830194919.GA1709446@coredump.intra.peff.net>
-
-
-* jk/unused-post-2.42 (2023-08-29) 22 commits
-  (merged to 'next' on 2023-08-30 at ab0538e754)
- + update-ref: mark unused parameter in parser callbacks
- + gc: mark unused descriptors in scheduler callbacks
- + bundle-uri: mark unused parameters in callbacks
- + fetch: mark unused parameter in ref_transaction callback
- + credential: mark unused parameter in urlmatch callback
- + grep: mark unused parmaeters in pcre fallbacks
- + imap-send: mark unused parameters with NO_OPENSSL
- + worktree: mark unused parameters in noop repair callback
- + negotiator/noop: mark unused callback parameters
- + add-interactive: mark unused callback parameters
- + grep: mark unused parameter in output function
- + test-trace2: mark unused argv/argc parameters
- + trace2: mark unused config callback parameter
- + trace2: mark unused us_elapsed_absolute parameters
- + stash: mark unused parameter in diff callback
- + ls-tree: mark unused parameter in callback
- + commit-graph: mark unused data parameters in generation callbacks
- + worktree: mark unused parameters in each_ref_fn callback
- + pack-bitmap: mark unused parameters in show_object callback
- + ref-filter: mark unused parameters in parser callbacks
- + sequencer: mark repository argument as unused
- + sequencer: use repository parameter in short_commit_name()
-
- Unused parameters to functions are marked as such, and/or removed,
- in order to bring us closer to -Wunused-parameter clean.
- source: <20230829234305.GA226944@coredump.intra.peff.net>
+ "git range-diff --notes=foo" compared "log --notes=foo --notes" of
+ the two ranges, instead of using just the specified notes tree.
+ source: <a37dfb3748e23b4f5081bc9a3c80a5c546101f1d.1694383248.git.code@khaugsbakk.name>
 
 
-* tb/multi-cruft-pack (2023-08-29) 4 commits
-  (merged to 'next' on 2023-08-30 at 15f0b56ed0)
- + Documentation/gitformat-pack.txt: drop mixed version section
- + Documentation/gitformat-pack.txt: remove multi-cruft packs alternative
- + builtin/pack-objects.c: support `--max-pack-size` with `--cruft`
- + builtin/pack-objects.c: remove unnecessary strbuf_reset()
+* pw/diff-no-index-from-named-pipes (2023-09-11) 1 commit
+ - diff --no-index: fix -R with stdin
 
- Use of --max-pack-size to allow multiple packfiles to be created is
- now supported even when we are sending unreachable objects to cruft
- packs.
- source: <cover.1693262936.git.me@ttaylorr.com>
+ "git diff --no-index -R <(one) <(two)" did not work correctly,
+ which has been corrected.
+
+ Will merge to 'next'.
+ source: <22fdfa3b-f90e-afcc-667c-705fb7670245@web.de>
 
 
-* ws/git-svn-retire-faketerm (2023-08-30) 1 commit
-  (merged to 'next' on 2023-08-31 at cb6e0d658d)
- + git-svn: drop FakeTerm hack
+* rs/parse-options-value-int (2023-09-11) 2 commits
+ - parse-options: use and require int pointer for OPT_CMDMODE
+ - parse-options: add int value pointer to struct option
 
- Code clean-up.
- source: <xmqqa5u888lz.fsf_-_@gitster.g>
+ A bit of type safety for the "value" pointer used in the
+ parse-options API.
+ source: <e6d8a291-03de-cfd3-3813-747fc2cad145@web.de>
+
+
+* so/diff-merges-d (2023-09-11) 2 commits
+ - diff-merges: introduce '-d' option
+ - diff-merges: improve --diff-merges documentation
+
+ Teach a new "-d" option that shows the patch against the first
+ parent for merge commits (which is "--diff-merges=first-parent -p").
+ source: <20230909125446.142715-1-sorganov@gmail.com>
+
+
+* js/diff-cached-fsmonitor-fix (2023-09-11) 1 commit
+ - diff-lib: fix check_removed when fsmonitor is on
+
+ "git diff --cached" codepath did not fill the necessary stat
+ information for a file when fsmonitor knows it is clean and ended
+ up behaving as if it is not clean, which has been corrected.
+
+ Will merge to 'next'.
+ source: <20230911170901.49050-2-sokcevic@google.com>
+
+
+* pb/completion-aliases-doc (2023-09-11) 1 commit
+ - completion: improve doc for complex aliases
+
+ Clarify how "alias.foo = : git cmd ; aliased-command-string" should
+ be spelled with necessary whitespaces around punctuation marks to
+ work.
+
+ Will merge to 'next'.
+ source: <pull.1585.git.1694274592854.gitgitgadget@gmail.com>
 
 --------------------------------------------------
-[New Topics]
+[Stalled]
+
+* tk/cherry-pick-sequence-requires-clean-worktree (2023-06-01) 1 commit
+ - cherry-pick: refuse cherry-pick sequence if index is dirty
+
+ "git cherry-pick A" that replays a single commit stopped before
+ clobbering local modification, but "git cherry-pick A..B" did not,
+ which has been corrected.
+
+ Expecting a reroll.
+ cf. <999f12b2-38d6-f446-e763-4985116ad37d@gmail.com>
+ source: <pull.1535.v2.git.1685264889088.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
+* cc/repack-sift-filtered-objects-to-separate-pack (2023-09-11) 9 commits
+ . gc: add `gc.repackFilterTo` config option
+ . repack: implement `--filter-to` for storing filtered out objects
+ . gc: add `gc.repackFilter` config option
+ . repack: add `--filter=<filter-spec>` option
+ . pack-bitmap-write: rebuild using new bitmap when remapping
+ . repack: refactor finding pack prefix
+ . repack: refactor finishing pack-objects command
+ . t/helper: add 'find-pack' test-tool
+ . pack-objects: allow `--filter` without `--stdout`
+
+ "git repack" machinery learns to pay attention to the "--filter="
+ option.
+
+ May need to wait until tb/repack-existing-packs-cleanup stablizes.
+ source: <20230911150618.129737-1-christian.couder@gmail.com>
+
+
+* la/trailer-cleanups (2023-09-11) 6 commits
+ - trailer: use offsets for trailer_start/trailer_end
+ - trailer: rename *_DEFAULT enums to *_UNSPECIFIED
+ - trailer: teach find_patch_start about --no-divider
+ - trailer: split process_command_line_args into separate functions
+ - trailer: split process_input_file into separate pieces
+ - trailer: separate public from internal portion of trailer_iterator
+
+ Code clean-up.
+
+ Will merge to 'next'.
+ source: <pull.1563.v2.git.1694240177.gitgitgadget@gmail.com>
+
 
 * so/diff-doc-for-patch-update (2023-09-06) 1 commit
   (merged to 'next' on 2023-09-07 at 6da5e9defd)
@@ -198,7 +240,8 @@ Release tarballs are available at:
  source: <pull.1584.git.1694176123471.gitgitgadget@gmail.com>
 
 
-* cw/git-std-lib (2023-09-08) 6 commits
+* cw/git-std-lib (2023-09-11) 7 commits
+ - SQUASH???
  - git-std-lib: add test file to call git-std-lib.a functions
  - git-std-lib: introduce git standard library
  - parse: create new library for parsing strings and env values
@@ -208,57 +251,10 @@ Release tarballs are available at:
 
  Another libification effort.
 
- Comments?
+ Needs more work.
+ cf. <xmqqy1hfrk6p.fsf@gitster.g>
  source: <20230908174134.1026823-1-calvinwan@google.com>
 
---------------------------------------------------
-[Stalled]
-
-* la/trailer-cleanups (2023-08-06) 5 commits
- - trailer: rename *_DEFAULT enums to *_UNSPECIFIED
- - trailer: teach find_patch_start about --no-divider
- - trailer: split process_command_line_args into separate functions
- - trailer: split process_input_file into separate pieces
- - trailer: separate public from internal portion of trailer_iterator
-
- Code clean-up.
-
- Expecting a reroll.
- cf. <owlyy1iifq0n.fsf@fine.c.googlers.com>
- source: <pull.1563.git.1691211879.gitgitgadget@gmail.com>
-
-
-* cc/repack-sift-filtered-objects-to-separate-pack (2023-08-13) 8 commits
- . gc: add `gc.repackFilterTo` config option
- . repack: implement `--filter-to` for storing filtered out objects
- . gc: add `gc.repackFilter` config option
- . repack: add `--filter=<filter-spec>` option
- . repack: refactor finding pack prefix
- . repack: refactor finishing pack-objects command
- . t/helper: add 'find-pack' test-tool
- . pack-objects: allow `--filter` without `--stdout`
-
- "git repack" machinery learns to pay attention to the "--filter="
- option.
-
- Kicked out of the 'seen', as it still seems to be failing tests.
- cf. https://github.com/git/git/actions/runs/5850998716/job/15861158252#step:4:1822
- source: <20230812000011.1227371-1-christian.couder@gmail.com>
-
-
-* tk/cherry-pick-sequence-requires-clean-worktree (2023-06-01) 1 commit
- - cherry-pick: refuse cherry-pick sequence if index is dirty
-
- "git cherry-pick A" that replays a single commit stopped before
- clobbering local modification, but "git cherry-pick A..B" did not,
- which has been corrected.
-
- Expecting a reroll.
- cf. <999f12b2-38d6-f446-e763-4985116ad37d@gmail.com>
- source: <pull.1535.v2.git.1685264889088.gitgitgadget@gmail.com>
-
---------------------------------------------------
-[Cooking]
 
 * cc/git-replay (2023-09-07) 15 commits
  - replay: stop assuming replayed branches do not diverge
