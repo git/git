@@ -2319,7 +2319,7 @@ static int do_pick_commit(struct repository *r,
 			const char *dest = git_path_squash_msg(r);
 			unlink(dest);
 			if (copy_file(dest, rebase_path_squash_msg(), 0666)) {
-				res = error(_("could not rename '%s' to '%s'"),
+				res = error(_("could not copy '%s' to '%s'"),
 					    rebase_path_squash_msg(), dest);
 				goto leave;
 			}
