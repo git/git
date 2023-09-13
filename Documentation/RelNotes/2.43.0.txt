@@ -118,3 +118,5 @@ Fixes since v2.42
    (merge d0fc552bfc ch/t6300-verify-commit-test-cleanup later to maint).
    (merge aa4b83dd5e ws/git-svn-retire-faketerm later to maint).
    (merge edf80d23f1 jk/ci-retire-allow-ref later to maint).
+   (merge 256a94ef6c bc/more-git-var later to maint).
+   (merge 82af2c639c ob/sequencer-reword-error-message later to maint).
