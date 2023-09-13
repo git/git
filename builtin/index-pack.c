@@ -1166,6 +1166,7 @@ static void parse_pack_objects(unsigned char *hash)
 	struct ofs_delta_entry *ofs_delta = ofs_deltas;
 	struct object_id ref_delta_oid;
 	struct stat st;
+	git_hash_ctx tmp_ctx;
 
 	if (verbose)
 		progress = start_progress(
@@ -1202,7 +1203,9 @@ static void parse_pack_objects(unsigned char *hash)
 
 	/* Check pack integrity */
 	flush();
-	the_hash_algo->final_fn(hash, &input_ctx);
+	the_hash_algo->init_fn(&tmp_ctx);
+	the_hash_algo->clone_fn(&tmp_ctx, &input_ctx);
+	the_hash_algo->final_fn(hash, &tmp_ctx);
 	if (!hasheq(fill(the_hash_algo->rawsz), hash))
 		die(_("pack is corrupted (SHA1 mismatch)"));
 	use(the_hash_algo->rawsz);

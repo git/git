@@ -268,6 +268,7 @@ static int deflate_to_pack(struct bulk_checkin_packfile *state,
 					  type, size);
 	the_hash_algo->init_fn(&ctx);
 	the_hash_algo->update_fn(&ctx, obuf, header_len);
+	the_hash_algo->init_fn(&checkpoint.ctx);
 
 	/* Note: idx is non-NULL when we are writing */
 	if ((flags & HASH_WRITE_OBJECT) != 0)
