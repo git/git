@@ -231,6 +231,8 @@ static char *chmod_arg;
 
 static int ignore_removal_cb(const struct option *opt, const char *arg, int unset)
 {
+	BUG_ON_OPT_ARG(arg);
+
 	/* if we are told to ignore, we are not adding removals */
 	*(int *)opt->value = !unset ? 0 : 1;
 	return 0;

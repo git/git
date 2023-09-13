@@ -79,8 +79,7 @@ static int overwrite_ignore = 1;
 static struct strbuf merge_msg = STRBUF_INIT;
 static struct strategy **use_strategies;
 static size_t use_strategies_nr, use_strategies_alloc;
-static const char **xopts;
-static size_t xopts_nr, xopts_alloc;
+static struct strvec xopts = STRVEC_INIT;
 static const char *branch;
 static char *branch_mergeoptions;
 static int verbosity;
@@ -232,7 +231,7 @@ static void append_strategy(struct strategy *s)
 	use_strategies[use_strategies_nr++] = s;
 }
 
-static int option_parse_strategy(const struct option *opt,
+static int option_parse_strategy(const struct option *opt UNUSED,
 				 const char *name, int unset)
 {
 	if (unset)
@@ -242,29 +241,9 @@ static int option_parse_strategy(const struct option *opt,
 	return 0;
 }
 
-static int option_parse_x(const struct option *opt,
-			  const char *arg, int unset)
-{
-	if (unset)
-		return 0;
-
-	ALLOC_GROW(xopts, xopts_nr + 1, xopts_alloc);
-	xopts[xopts_nr++] = xstrdup(arg);
-	return 0;
-}
-
-static int option_parse_n(const struct option *opt,
-			  const char *arg, int unset)
-{
-	BUG_ON_OPT_ARG(arg);
-	show_diffstat = unset;
-	return 0;
-}
-
 static struct option builtin_merge_options[] = {
-	OPT_CALLBACK_F('n', NULL, NULL, NULL,
-		N_("do not show a diffstat at the end of the merge"),
-		PARSE_OPT_NOARG, option_parse_n),
+	OPT_SET_INT('n', NULL, &show_diffstat,
+		N_("do not show a diffstat at the end of the merge"), 0),
 	OPT_BOOL(0, "stat", &show_diffstat,
 		N_("show a diffstat at the end of the merge")),
 	OPT_BOOL(0, "summary", &show_diffstat, N_("(synonym to --stat)")),
@@ -285,10 +264,10 @@ static struct option builtin_merge_options[] = {
 	OPT_RERERE_AUTOUPDATE(&allow_rerere_auto),
 	OPT_BOOL(0, "verify-signatures", &verify_signatures,
 		N_("verify that the named commit has a valid GPG signature")),
-	OPT_CALLBACK('s', "strategy", &use_strategies, N_("strategy"),
+	OPT_CALLBACK('s', "strategy", NULL, N_("strategy"),
 		N_("merge strategy to use"), option_parse_strategy),
-	OPT_CALLBACK('X', "strategy-option", &xopts, N_("option=value"),
-		N_("option for selected merge strategy"), option_parse_x),
+	OPT_STRVEC('X', "strategy-option", &xopts, N_("option=value"),
+		N_("option for selected merge strategy")),
 	OPT_CALLBACK('m', "message", &merge_msg, N_("message"),
 		N_("merge commit message (for a non-fast-forward merge)"),
 		option_parse_message),
@@ -749,9 +728,9 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 		o.show_rename_progress =
 			show_progress == -1 ? isatty(2) : show_progress;
 
-		for (x = 0; x < xopts_nr; x++)
-			if (parse_merge_opt(&o, xopts[x]))
-				die(_("unknown strategy option: -X%s"), xopts[x]);
+		for (x = 0; x < xopts.nr; x++)
+			if (parse_merge_opt(&o, xopts.v[x]))
+				die(_("unknown strategy option: -X%s"), xopts.v[x]);
 
 		o.branch1 = head_arg;
 		o.branch2 = merge_remote_util(remoteheads->item)->name;
@@ -777,7 +756,7 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 		return clean ? 0 : 1;
 	} else {
 		return try_merge_command(the_repository,
-					 strategy, xopts_nr, xopts,
+					 strategy, xopts.nr, xopts.v,
 					 common, head_arg, remoteheads);
 	}
 }

@@ -24,21 +24,24 @@ static enum trailer_if_exists if_exists;
 static enum trailer_if_missing if_missing;
 
 static int option_parse_where(const struct option *opt,
-			      const char *arg, int unset)
+			      const char *arg, int unset UNUSED)
 {
-	return trailer_set_where(&where, arg);
+	/* unset implies NULL arg, which is handled in our helper */
+	return trailer_set_where(opt->value, arg);
 }
 
 static int option_parse_if_exists(const struct option *opt,
-				  const char *arg, int unset)
+				  const char *arg, int unset UNUSED)
 {
-	return trailer_set_if_exists(&if_exists, arg);
+	/* unset implies NULL arg, which is handled in our helper */
+	return trailer_set_if_exists(opt->value, arg);
 }
 
 static int option_parse_if_missing(const struct option *opt,
-				   const char *arg, int unset)
+				   const char *arg, int unset UNUSED)
 {
-	return trailer_set_if_missing(&if_missing, arg);
+	/* unset implies NULL arg, which is handled in our helper */
+	return trailer_set_if_missing(opt->value, arg);
 }
 
 static void new_trailers_clear(struct list_head *trailers)
@@ -97,11 +100,11 @@ int cmd_interpret_trailers(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "in-place", &opts.in_place, N_("edit files in place")),
 		OPT_BOOL(0, "trim-empty", &opts.trim_empty, N_("trim empty trailers")),
 
-		OPT_CALLBACK(0, "where", NULL, N_("action"),
+		OPT_CALLBACK(0, "where", &where, N_("action"),
 			     N_("where to place the new trailer"), option_parse_where),
-		OPT_CALLBACK(0, "if-exists", NULL, N_("action"),
+		OPT_CALLBACK(0, "if-exists", &if_exists, N_("action"),
 			     N_("action if trailer already exists"), option_parse_if_exists),
-		OPT_CALLBACK(0, "if-missing", NULL, N_("action"),
+		OPT_CALLBACK(0, "if-missing", &if_missing, N_("action"),
 			     N_("action if trailer is missing"), option_parse_if_missing),
 
 		OPT_BOOL(0, "only-trailers", &opts.only_trailers, N_("output only the trailers")),

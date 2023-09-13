@@ -856,7 +856,7 @@ static int chmod_callback(const struct option *opt,
 	return 0;
 }
 
-static int resolve_undo_clear_callback(const struct option *opt,
+static int resolve_undo_clear_callback(const struct option *opt UNUSED,
 				const char *arg, int unset)
 {
 	BUG_ON_OPT_NEG(unset);
@@ -890,7 +890,7 @@ static int parse_new_style_cacheinfo(const char *arg,
 }
 
 static enum parse_opt_result cacheinfo_callback(
-	struct parse_opt_ctx_t *ctx, const struct option *opt,
+	struct parse_opt_ctx_t *ctx, const struct option *opt UNUSED,
 	const char *arg, int unset)
 {
 	struct object_id oid;

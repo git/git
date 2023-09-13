@@ -561,9 +561,11 @@ static void describe(const char *arg, int last_one)
 static int option_parse_exact_match(const struct option *opt, const char *arg,
 				    int unset)
 {
+	int *val = opt->value;
+
 	BUG_ON_OPT_ARG(arg);
 
-	max_candidates = unset ? DEFAULT_CANDIDATES : 0;
+	*val = unset ? DEFAULT_CANDIDATES : 0;
 	return 0;
 }
 
@@ -578,7 +580,7 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "long",       &longformat, N_("always use long format")),
 		OPT_BOOL(0, "first-parent", &first_parent, N_("only follow first parent")),
 		OPT__ABBREV(&abbrev),
-		OPT_CALLBACK_F(0, "exact-match", NULL, NULL,
+		OPT_CALLBACK_F(0, "exact-match", &max_candidates, NULL,
 			       N_("only output exact matches"),
 			       PARSE_OPT_NOARG, option_parse_exact_match),
 		OPT_INTEGER(0, "candidates", &max_candidates,
