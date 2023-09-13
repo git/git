@@ -540,6 +540,32 @@ static struct packed_git *get_preferred_pack(struct pack_geometry *geometry)
 	return NULL;
 }
 
+static void geometry_remove_redundant_packs(struct pack_geometry *geometry,
+					    struct string_list *names,
+					    struct existing_packs *existing)
+{
+	struct strbuf buf = STRBUF_INIT;
+	uint32_t i;
+
+	for (i = 0; i < geometry->split; i++) {
+		struct packed_git *p = geometry->pack[i];
+		if (string_list_has_string(names, hash_to_hex(p->hash)))
+			continue;
+
+		strbuf_reset(&buf);
+		strbuf_addstr(&buf, pack_basename(p));
+		strbuf_strip_suffix(&buf, ".pack");
+
+		if ((p->pack_keep) ||
+		    (string_list_has_string(&existing->kept_packs, buf.buf)))
+			continue;
+
+		remove_redundant_pack(packdir, buf.buf);
+	}
+
+	strbuf_release(&buf);
+}
+
 static void free_pack_geometry(struct pack_geometry *geometry)
 {
 	if (!geometry)
@@ -1201,29 +1227,9 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 			remove_redundant_pack(packdir, item->string);
 		}
 
-		if (geometry.split_factor) {
-			struct strbuf buf = STRBUF_INIT;
-
-			uint32_t i;
-			for (i = 0; i < geometry.split; i++) {
-				struct packed_git *p = geometry.pack[i];
-				if (string_list_has_string(&names,
-							   hash_to_hex(p->hash)))
-					continue;
-
-				strbuf_reset(&buf);
-				strbuf_addstr(&buf, pack_basename(p));
-				strbuf_strip_suffix(&buf, ".pack");
-
-				if ((p->pack_keep) ||
-				    (string_list_has_string(&existing.kept_packs,
-							    buf.buf)))
-					continue;
-
-				remove_redundant_pack(packdir, buf.buf);
-			}
-			strbuf_release(&buf);
-		}
+		if (geometry.split_factor)
+			geometry_remove_redundant_packs(&geometry, &names,
+							&existing);
 		if (show_progress)
 			opts |= PRUNE_PACKED_VERBOSE;
 		prune_packed_objects(opts);
