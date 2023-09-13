@@ -27,7 +27,6 @@
 #define PACK_CRUFT 4
 
 #define DELETE_PACK 1
-#define CRUFT_PACK 2
 
 static int pack_everything;
 static int delta_base_offset = 1;
@@ -98,16 +97,18 @@ static int repack_config(const char *var, const char *value,
 struct existing_packs {
 	struct string_list kept_packs;
 	struct string_list non_kept_packs;
+	struct string_list cruft_packs;
 };
 
 #define EXISTING_PACKS_INIT { \
 	.kept_packs = STRING_LIST_INIT_DUP, \
 	.non_kept_packs = STRING_LIST_INIT_DUP, \
+	.cruft_packs = STRING_LIST_INIT_DUP, \
 }
 
 static int has_existing_non_kept_packs(const struct existing_packs *existing)
 {
-	return existing->non_kept_packs.nr;
+	return existing->non_kept_packs.nr || existing->cruft_packs.nr;
 }
 
 static void mark_packs_for_deletion_1(struct string_list *names,
@@ -138,6 +139,7 @@ static void mark_packs_for_deletion(struct existing_packs *existing,
 
 {
 	mark_packs_for_deletion_1(names, &existing->non_kept_packs);
+	mark_packs_for_deletion_1(names, &existing->cruft_packs);
 }
 
 static void remove_redundant_pack(const char *dir_name, const char *base_name)
@@ -165,12 +167,14 @@ static void remove_redundant_packs_1(struct string_list *packs)
 static void remove_redundant_existing_packs(struct existing_packs *existing)
 {
 	remove_redundant_packs_1(&existing->non_kept_packs);
+	remove_redundant_packs_1(&existing->cruft_packs);
 }
 
 static void existing_packs_release(struct existing_packs *existing)
 {
 	string_list_clear(&existing->kept_packs, 0);
 	string_list_clear(&existing->non_kept_packs, 0);
+	string_list_clear(&existing->cruft_packs, 0);
 }
 
 /*
@@ -204,12 +208,10 @@ static void collect_pack_filenames(struct existing_packs *existing,
 
 		if ((extra_keep->nr > 0 && i < extra_keep->nr) || p->pack_keep)
 			string_list_append(&existing->kept_packs, buf.buf);
-		else {
-			struct string_list_item *item;
-			item = string_list_append(&existing->non_kept_packs, buf.buf);
-			if (p->is_cruft)
-				item->util = (void*)(uintptr_t)CRUFT_PACK;
-		}
+		else if (p->is_cruft)
+			string_list_append(&existing->cruft_packs, buf.buf);
+		else
+			string_list_append(&existing->non_kept_packs, buf.buf);
 	}
 
 	string_list_sort(&existing->kept_packs);
@@ -691,18 +693,21 @@ static void midx_included_packs(struct string_list *include,
 			string_list_insert(include, strbuf_detach(&buf, NULL));
 		}
 
-		for_each_string_list_item(item, &existing->non_kept_packs) {
-			if (!((uintptr_t)item->util & CRUFT_PACK)) {
-				/*
-				 * no need to check DELETE_PACK, since we're not
-				 * doing an ALL_INTO_ONE repack
-				 */
-				continue;
-			}
+		for_each_string_list_item(item, &existing->cruft_packs) {
+			/*
+			 * no need to check DELETE_PACK, since we're not
+			 * doing an ALL_INTO_ONE repack
+			 */
 			string_list_insert(include, xstrfmt("%s.idx", item->string));
 		}
 	} else {
 		for_each_string_list_item(item, &existing->non_kept_packs) {
+			if ((uintptr_t)item->util & DELETE_PACK)
+				continue;
+			string_list_insert(include, xstrfmt("%s.idx", item->string));
+		}
+
+		for_each_string_list_item(item, &existing->cruft_packs) {
 			if ((uintptr_t)item->util & DELETE_PACK)
 				continue;
 			string_list_insert(include, xstrfmt("%s.idx", item->string));
@@ -835,6 +840,8 @@ static int write_cruft_pack(const struct pack_objects_args *args,
 	for_each_string_list_item(item, names)
 		fprintf(in, "%s-%s.pack\n", pack_prefix, item->string);
 	for_each_string_list_item(item, &existing->non_kept_packs)
+		fprintf(in, "-%s.pack\n", item->string);
+	for_each_string_list_item(item, &existing->cruft_packs)
 		fprintf(in, "-%s.pack\n", item->string);
 	for_each_string_list_item(item, &existing->kept_packs)
 		fprintf(in, "%s.pack\n", item->string);
