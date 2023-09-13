@@ -105,6 +105,11 @@ struct existing_packs {
 	.non_kept_packs = STRING_LIST_INIT_DUP, \
 }
 
+static int has_existing_non_kept_packs(const struct existing_packs *existing)
+{
+	return existing->non_kept_packs.nr;
+}
+
 static void mark_packs_for_deletion_1(struct string_list *names,
 				      struct string_list *list)
 {
@@ -1048,7 +1053,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	if (pack_everything & ALL_INTO_ONE) {
 		repack_promisor_objects(&po_args, &names);
 
-		if (existing.non_kept_packs.nr && delete_redundant &&
+		if (has_existing_non_kept_packs(&existing) &&
+		    delete_redundant &&
 		    !(pack_everything & PACK_CRUFT)) {
 			for_each_string_list_item(item, &names) {
 				strvec_pushf(&cmd.args, "--keep-pack=%s-%s.pack",
