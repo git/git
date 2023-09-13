@@ -135,6 +135,33 @@ static void mark_packs_for_deletion(struct existing_packs *existing,
 	mark_packs_for_deletion_1(names, &existing->non_kept_packs);
 }
 
+static void remove_redundant_pack(const char *dir_name, const char *base_name)
+{
+	struct strbuf buf = STRBUF_INIT;
+	struct multi_pack_index *m = get_local_multi_pack_index(the_repository);
+	strbuf_addf(&buf, "%s.pack", base_name);
+	if (m && midx_contains_pack(m, buf.buf))
+		clear_midx_file(the_repository);
+	strbuf_insertf(&buf, 0, "%s/", dir_name);
+	unlink_pack_path(buf.buf, 1);
+	strbuf_release(&buf);
+}
+
+static void remove_redundant_packs_1(struct string_list *packs)
+{
+	struct string_list_item *item;
+	for_each_string_list_item(item, packs) {
+		if (!((uintptr_t)item->util & DELETE_PACK))
+			continue;
+		remove_redundant_pack(packdir, item->string);
+	}
+}
+
+static void remove_redundant_existing_packs(struct existing_packs *existing)
+{
+	remove_redundant_packs_1(&existing->non_kept_packs);
+}
+
 static void existing_packs_release(struct existing_packs *existing)
 {
 	string_list_clear(&existing->kept_packs, 0);
@@ -181,18 +208,6 @@ static void collect_pack_filenames(struct existing_packs *existing,
 	}
 
 	string_list_sort(&existing->kept_packs);
-	strbuf_release(&buf);
-}
-
-static void remove_redundant_pack(const char *dir_name, const char *base_name)
-{
-	struct strbuf buf = STRBUF_INIT;
-	struct multi_pack_index *m = get_local_multi_pack_index(the_repository);
-	strbuf_addf(&buf, "%s.pack", base_name);
-	if (m && midx_contains_pack(m, buf.buf))
-		clear_midx_file(the_repository);
-	strbuf_insertf(&buf, 0, "%s/", dir_name);
-	unlink_pack_path(buf.buf, 1);
 	strbuf_release(&buf);
 }
 
@@ -1221,11 +1236,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 
 	if (delete_redundant) {
 		int opts = 0;
-		for_each_string_list_item(item, &existing.non_kept_packs) {
-			if (!((uintptr_t)item->util & DELETE_PACK))
-				continue;
-			remove_redundant_pack(packdir, item->string);
-		}
+		remove_redundant_existing_packs(&existing);
 
 		if (geometry.split_factor)
 			geometry_remove_redundant_packs(&geometry, &names,
