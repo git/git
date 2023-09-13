@@ -111,6 +111,16 @@ static int has_existing_non_kept_packs(const struct existing_packs *existing)
 	return existing->non_kept_packs.nr || existing->cruft_packs.nr;
 }
 
+static void pack_mark_for_deletion(struct string_list_item *item)
+{
+	item->util = (void*)((uintptr_t)item->util | DELETE_PACK);
+}
+
+static int pack_is_marked_for_deletion(struct string_list_item *item)
+{
+	return (uintptr_t)item->util & DELETE_PACK;
+}
+
 static void mark_packs_for_deletion_1(struct string_list *names,
 				      struct string_list *list)
 {
@@ -130,7 +140,7 @@ static void mark_packs_for_deletion_1(struct string_list *names,
 		 * (if `-d` was given).
 		 */
 		if (!string_list_has_string(names, sha1))
-			item->util = (void*)(uintptr_t)((size_t)item->util | DELETE_PACK);
+			pack_mark_for_deletion(item);
 	}
 }
 
@@ -158,7 +168,7 @@ static void remove_redundant_packs_1(struct string_list *packs)
 {
 	struct string_list_item *item;
 	for_each_string_list_item(item, packs) {
-		if (!((uintptr_t)item->util & DELETE_PACK))
+		if (!pack_is_marked_for_deletion(item))
 			continue;
 		remove_redundant_pack(packdir, item->string);
 	}
@@ -702,13 +712,13 @@ static void midx_included_packs(struct string_list *include,
 		}
 	} else {
 		for_each_string_list_item(item, &existing->non_kept_packs) {
-			if ((uintptr_t)item->util & DELETE_PACK)
+			if (pack_is_marked_for_deletion(item))
 				continue;
 			string_list_insert(include, xstrfmt("%s.idx", item->string));
 		}
 
 		for_each_string_list_item(item, &existing->cruft_packs) {
-			if ((uintptr_t)item->util & DELETE_PACK)
+			if (pack_is_marked_for_deletion(item))
 				continue;
 			string_list_insert(include, xstrfmt("%s.idx", item->string));
 		}
