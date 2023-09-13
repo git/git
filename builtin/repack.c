@@ -702,26 +702,31 @@ static void midx_included_packs(struct string_list *include,
 
 			string_list_insert(include, strbuf_detach(&buf, NULL));
 		}
-
-		for_each_string_list_item(item, &existing->cruft_packs) {
-			/*
-			 * no need to check DELETE_PACK, since we're not
-			 * doing an ALL_INTO_ONE repack
-			 */
-			string_list_insert(include, xstrfmt("%s.idx", item->string));
-		}
 	} else {
 		for_each_string_list_item(item, &existing->non_kept_packs) {
 			if (pack_is_marked_for_deletion(item))
 				continue;
 			string_list_insert(include, xstrfmt("%s.idx", item->string));
 		}
+	}
 
-		for_each_string_list_item(item, &existing->cruft_packs) {
-			if (pack_is_marked_for_deletion(item))
-				continue;
-			string_list_insert(include, xstrfmt("%s.idx", item->string));
-		}
+	for_each_string_list_item(item, &existing->cruft_packs) {
+		/*
+		 * When doing a --geometric repack, there is no need to check
+		 * for deleted packs, since we're by definition not doing an
+		 * ALL_INTO_ONE repack (hence no packs will be deleted).
+		 * Otherwise we must check for and exclude any packs which are
+		 * enqueued for deletion.
+		 *
+		 * So we could omit the conditional below in the --geometric
+		 * case, but doing so is unnecessary since no packs are marked
+		 * as pending deletion (since we only call
+		 * `mark_packs_for_deletion()` when doing an all-into-one
+		 * repack).
+		 */
+		if (pack_is_marked_for_deletion(item))
+			continue;
+		string_list_insert(include, xstrfmt("%s.idx", item->string));
 	}
 }
 
