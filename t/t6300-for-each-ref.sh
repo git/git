@@ -1017,16 +1017,16 @@ test_expect_success 'Verify sorts with raw' '
 test_expect_success 'Verify sorts with raw:size' '
 	cat >expected <<-EOF &&
 	refs/myblobs/blob8
-	refs/myblobs/first
 	refs/myblobs/blob7
-	refs/heads/main
 	refs/myblobs/blob4
 	refs/myblobs/blob1
 	refs/myblobs/blob2
 	refs/myblobs/blob3
 	refs/myblobs/blob5
 	refs/myblobs/blob6
+	refs/myblobs/first
 	refs/mytrees/first
+	refs/heads/main
 	EOF
 	git for-each-ref --format="%(refname)" --sort=raw:size \
 		refs/heads/main refs/myblobs/ refs/mytrees/first >actual &&
@@ -1136,6 +1136,17 @@ test_expect_success 'for-each-ref --format compare with cat-file --batch' '
 	git for-each-ref --format="%(objectname) %(objecttype) %(objectsize)
 %(raw)" refs/mytrees/first >actual &&
 	test_cmp expected actual
+'
+
+test_expect_success 'verify sorts with contents:size' '
+	cat >expect <<-\EOF &&
+	refs/heads/main
+	refs/heads/newtag
+	refs/heads/ambiguous
+	EOF
+	git for-each-ref --format="%(refname)" \
+		--sort=contents:size refs/heads/ >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'set up multiple-sort tags' '
