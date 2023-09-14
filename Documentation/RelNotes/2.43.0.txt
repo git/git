@@ -47,6 +47,13 @@ UI, Workflows & Features
    "--subject-prefix" option and used "[RFC PATCH]"; now we will add
    "RFC" prefix to whatever subject prefix is specified.
 
+ * "git log --format" has been taught the %(decorate) placeholder.
+
+ * The default log message created by "git revert", when reverting a
+   commit that records a revert, has been tweaked, to encourage people
+   describe complex "revert of revert of revert" situation better in
+   their own words.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -108,6 +115,23 @@ Fixes since v2.42
    status of the "diff" command has been corrected.
    (merge 5cc6b2d70b jk/diff-result-code-cleanup later to maint).
 
+ * "git for-each-ref --sort='contents:size'" sorts the refs according
+   to size numerically, giving a ref that points at a blob twelve-byte
+   (12) long before showing a blob hundred-byte (100) long.
+   (merge 6d79cd8474 ks/ref-filter-sort-numerically later to maint).
+
+ * We now limit depth of the tree objects and maximum length of
+   pathnames recorded in tree objects.
+   (merge 4d5693ba05 jk/tree-name-and-depth-limit later to maint).
+
+ * Various fixes to the behaviour of "rebase -i" when the command got
+   interrupted by conflicting changes.
+   (merge 203573b024 pw/rebase-i-after-failure later to maint).
+
+ * References from description of the `--patch` option in various
+   manual pages have been simplified and improved.
+   (merge 11422f23e3 so/diff-doc-for-patch-update later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge fd3ba590d8 ws/git-push-doc-grammofix later to maint).
    (merge 5f33a843de ds/upload-pack-error-sequence-fix later to maint).
@@ -120,3 +144,5 @@ Fixes since v2.42
    (merge edf80d23f1 jk/ci-retire-allow-ref later to maint).
    (merge 256a94ef6c bc/more-git-var later to maint).
    (merge 82af2c639c ob/sequencer-reword-error-message later to maint).
+   (merge 2a63c79dae rs/grep-parseopt-simplify later to maint).
+   (merge 078c42531e rs/name-rev-use-opt-hidden-bool later to maint).
