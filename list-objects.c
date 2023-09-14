@@ -14,6 +14,7 @@
 #include "packfile.h"
 #include "object-store-ll.h"
 #include "trace.h"
+#include "environment.h"
 
 struct traversal_context {
 	struct rev_info *revs;
@@ -21,6 +22,7 @@ struct traversal_context {
 	show_commit_fn show_commit;
 	void *show_data;
 	struct filter *filter;
+	int depth;
 };
 
 static void show_commit(struct traversal_context *ctx,
@@ -118,7 +120,9 @@ static void process_tree_contents(struct traversal_context *ctx,
 				    entry.path, oid_to_hex(&tree->object.oid));
 			}
 			t->object.flags |= NOT_USER_GIVEN;
+			ctx->depth++;
 			process_tree(ctx, t, base, entry.path);
+			ctx->depth--;
 		}
 		else if (S_ISGITLINK(entry.mode))
 			; /* ignore gitlink */
@@ -155,6 +159,9 @@ static void process_tree(struct traversal_context *ctx,
 	if (revs->include_check_obj &&
 	    !revs->include_check_obj(&tree->object, revs->include_check_data))
 		return;
+
+	if (ctx->depth > max_allowed_tree_depth)
+		die("exceeded maximum allowed tree depth");
 
 	failed_parse = parse_tree_gently(tree, 1);
 	if (failed_parse) {
@@ -349,6 +356,7 @@ static void traverse_non_commits(struct traversal_context *ctx,
 		if (!path)
 			path = "";
 		if (obj->type == OBJ_TREE) {
+			ctx->depth = 0;
 			process_tree(ctx, (struct tree *)obj, base, path);
 			continue;
 		}

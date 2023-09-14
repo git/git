@@ -589,6 +589,16 @@ test_expect_success 'fsck notices submodule entry pointing to null sha1' '
 	)
 '
 
+test_expect_success 'fsck notices excessively large tree entry name' '
+	git init large-name &&
+	(
+		cd large-name &&
+		test_commit a-long-name &&
+		git -c fsck.largePathname=warn:10 fsck 2>out &&
+		grep "warning.*large pathname" out
+	)
+'
+
 while read name path pretty; do
 	while read mode type; do
 		: ${pretty:=$path}

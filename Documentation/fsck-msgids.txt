@@ -103,6 +103,13 @@
 `hasDotgit`::
 	(WARN) A tree contains an entry named `.git`.
 
+`largePathname`::
+	(WARN) A tree contains an entry with a very long path name. If
+	the value of `fsck.largePathname` contains a colon, that value
+	is used as the maximum allowable length (e.g., "warn:10" would
+	complain about any path component of 11 or more bytes). The
+	default value is 4096.
+
 `mailmapSymlink`::
 	(INFO) `.mailmap` is a symlink.
 

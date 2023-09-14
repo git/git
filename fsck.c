@@ -24,6 +24,8 @@
 #include "credential.h"
 #include "help.h"
 
+static ssize_t max_tree_entry_len = 4096;
+
 #define STR(x) #x
 #define MSG_ID(id, msg_type) { STR(id), NULL, NULL, FSCK_##msg_type },
 static struct {
@@ -154,15 +156,29 @@ void fsck_set_msg_type(struct fsck_options *options,
 		       const char *msg_id_str, const char *msg_type_str)
 {
 	int msg_id = parse_msg_id(msg_id_str);
-	enum fsck_msg_type msg_type = parse_msg_type(msg_type_str);
+	char *to_free = NULL;
+	enum fsck_msg_type msg_type;
 
 	if (msg_id < 0)
 		die("Unhandled message id: %s", msg_id_str);
+
+	if (msg_id == FSCK_MSG_LARGE_PATHNAME) {
+		const char *colon = strchr(msg_type_str, ':');
+		if (colon) {
+			msg_type_str = to_free =
+				xmemdupz(msg_type_str, colon - msg_type_str);
+			colon++;
+			if (!git_parse_ssize_t(colon, &max_tree_entry_len))
+				die("unable to parse max tree entry len: %s", colon);
+		}
+	}
+	msg_type = parse_msg_type(msg_type_str);
 
 	if (msg_type != FSCK_ERROR && msg_id_info[msg_id].msg_type == FSCK_FATAL)
 		die("Cannot demote %s to %s", msg_id_str, msg_type_str);
 
 	fsck_set_msg_type_from_ids(options, msg_id, msg_type);
+	free(to_free);
 }
 
 void fsck_set_msg_types(struct fsck_options *options, const char *values)
@@ -578,6 +594,7 @@ static int fsck_tree(const struct object_id *tree_oid,
 	int has_bad_modes = 0;
 	int has_dup_entries = 0;
 	int not_properly_sorted = 0;
+	int has_large_name = 0;
 	struct tree_desc desc;
 	unsigned o_mode;
 	const char *o_name;
@@ -607,6 +624,7 @@ static int fsck_tree(const struct object_id *tree_oid,
 		has_dotdot |= !strcmp(name, "..");
 		has_dotgit |= is_hfs_dotgit(name) || is_ntfs_dotgit(name);
 		has_zero_pad |= *(char *)desc.buffer == '0';
+		has_large_name |= tree_entry_len(&desc.entry) > max_tree_entry_len;
 
 		if (is_hfs_dotgitmodules(name) || is_ntfs_dotgitmodules(name)) {
 			if (!S_ISLNK(mode))
@@ -749,6 +767,10 @@ static int fsck_tree(const struct object_id *tree_oid,
 		retval += report(options, tree_oid, OBJ_TREE,
 				 FSCK_MSG_TREE_NOT_SORTED,
 				 "not properly sorted");
+	if (has_large_name)
+		retval += report(options, tree_oid, OBJ_TREE,
+				 FSCK_MSG_LARGE_PATHNAME,
+				 "contains excessively large pathname");
 	return retval;
 }
 

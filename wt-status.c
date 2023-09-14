@@ -739,7 +739,7 @@ static void wt_status_collect_changes_initial(struct wt_status *s)
 			ps.max_depth = -1;
 
 			strbuf_add(&base, ce->name, ce->ce_namelen);
-			read_tree_at(istate->repo, tree, &base, &ps,
+			read_tree_at(istate->repo, tree, &base, 0, &ps,
 				     add_file_to_list, s);
 			continue;
 		}

@@ -9,6 +9,7 @@
 #include "tree.h"
 #include "pathspec.h"
 #include "json-writer.h"
+#include "environment.h"
 
 static const char *get_mode(const char *str, unsigned int *modep)
 {
@@ -441,13 +442,16 @@ int traverse_trees(struct index_state *istate,
 		   int n, struct tree_desc *t,
 		   struct traverse_info *info)
 {
-	int error = 0;
-	struct name_entry entry[MAX_TRAVERSE_TREES];
+	int ret = 0;
+	struct name_entry *entry;
 	int i;
-	struct tree_desc_x tx[ARRAY_SIZE(entry)];
+	struct tree_desc_x *tx;
 	struct strbuf base = STRBUF_INIT;
 	int interesting = 1;
 	char *traverse_path;
+
+	if (traverse_trees_cur_depth > max_allowed_tree_depth)
+		return error("exceeded maximum allowed tree depth");
 
 	traverse_trees_count++;
 	traverse_trees_cur_depth++;
@@ -455,8 +459,8 @@ int traverse_trees(struct index_state *istate,
 	if (traverse_trees_cur_depth > traverse_trees_max_depth)
 		traverse_trees_max_depth = traverse_trees_cur_depth;
 
-	if (n >= ARRAY_SIZE(entry))
-		BUG("traverse_trees() called with too many trees (%d)", n);
+	ALLOC_ARRAY(entry, n);
+	ALLOC_ARRAY(tx, n);
 
 	for (i = 0; i < n; i++) {
 		tx[i].d = t[i];
@@ -539,7 +543,7 @@ int traverse_trees(struct index_state *istate,
 		if (interesting) {
 			trees_used = info->fn(n, mask, dirmask, entry, info);
 			if (trees_used < 0) {
-				error = trees_used;
+				ret = trees_used;
 				if (!info->show_all_errors)
 					break;
 			}
@@ -551,12 +555,14 @@ int traverse_trees(struct index_state *istate,
 	}
 	for (i = 0; i < n; i++)
 		free_extended_entry(tx + i);
+	free(tx);
+	free(entry);
 	free(traverse_path);
 	info->traverse_path = NULL;
 	strbuf_release(&base);
 
 	traverse_trees_cur_depth--;
-	return error;
+	return ret;
 }
 
 struct dir_state {
