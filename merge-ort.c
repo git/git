@@ -3491,8 +3491,7 @@ static int sort_dirs_next_to_their_children(const char *one, const char *two)
 		return c1 - c2;
 }
 
-static int read_oid_strbuf(struct merge_options *opt,
-			   const struct object_id *oid,
+static int read_oid_strbuf(const struct object_id *oid,
 			   struct strbuf *dst)
 {
 	void *buf;
@@ -3527,8 +3526,8 @@ static int blob_unchanged(struct merge_options *opt,
 	if (oideq(&base->oid, &side->oid))
 		return 1;
 
-	if (read_oid_strbuf(opt, &base->oid, &basebuf) ||
-	    read_oid_strbuf(opt, &side->oid, &sidebuf))
+	if (read_oid_strbuf(&base->oid, &basebuf) ||
+	    read_oid_strbuf(&side->oid, &sidebuf))
 		goto error_return;
 	/*
 	 * Note: binary | is used so that both renormalizations are
