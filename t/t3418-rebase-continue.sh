@@ -268,6 +268,24 @@ test_expect_success 'the todo command "break" works' '
 	test_path_is_file execed
 '
 
+test_expect_success 'patch file is removed before break command' '
+	test_when_finished "git rebase --abort" &&
+	cat >todo <<-\EOF &&
+	pick commit-new-file-F2-on-topic-branch
+	break
+	EOF
+
+	(
+		set_replace_editor todo &&
+		test_must_fail git rebase -i --onto commit-new-file-F2 HEAD
+	) &&
+	test_path_is_file .git/rebase-merge/patch &&
+	echo 22>F2 &&
+	git add F2 &&
+	git rebase --continue &&
+	test_path_is_missing .git/rebase-merge/patch
+'
+
 test_expect_success '--reschedule-failed-exec' '
 	test_when_finished "git rebase --abort" &&
 	test_must_fail git rebase -x false --reschedule-failed-exec HEAD^ &&
