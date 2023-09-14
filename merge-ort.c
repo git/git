@@ -721,23 +721,6 @@ static void clear_or_reinit_internal_opts(struct merge_options_internal *opti,
 	renames->callback_data_nr = renames->callback_data_alloc = 0;
 }
 
-__attribute__((format (printf, 2, 3)))
-static int err(struct merge_options *opt, const char *err, ...)
-{
-	va_list params;
-	struct strbuf sb = STRBUF_INIT;
-
-	strbuf_addstr(&sb, "error: ");
-	va_start(params, err);
-	strbuf_vaddf(&sb, err, params);
-	va_end(params);
-
-	error("%s", sb.buf);
-	strbuf_release(&sb);
-
-	return -1;
-}
-
 static void format_commit(struct strbuf *sb,
 			  int indent,
 			  struct repository *repo,
@@ -2122,13 +2105,12 @@ static int handle_content_merge(struct merge_options *opt,
 					  &result_buf);
 
 		if ((merge_status < 0) || !result_buf.ptr)
-			ret = err(opt, _("Failed to execute internal merge"));
+			ret = error(_("Failed to execute internal merge"));
 
 		if (!ret &&
 		    write_object_file(result_buf.ptr, result_buf.size,
 				      OBJ_BLOB, &result->oid))
-			ret = err(opt, _("Unable to add %s to database"),
-				  path);
+			ret = error(_("Unable to add %s to database"), path);
 
 		free(result_buf.ptr);
 		if (ret)
@@ -3518,10 +3500,10 @@ static int read_oid_strbuf(struct merge_options *opt,
 	unsigned long size;
 	buf = repo_read_object_file(the_repository, oid, &type, &size);
 	if (!buf)
-		return err(opt, _("cannot read object %s"), oid_to_hex(oid));
+		return error(_("cannot read object %s"), oid_to_hex(oid));
 	if (type != OBJ_BLOB) {
 		free(buf);
-		return err(opt, _("object %s is not a blob"), oid_to_hex(oid));
+		return error(_("object %s is not a blob"), oid_to_hex(oid));
 	}
 	strbuf_attach(dst, buf, size, size + 1);
 	return 0;
@@ -4973,7 +4955,7 @@ redo:
 		 * TRANSLATORS: The %s arguments are: 1) tree hash of a merge
 		 * base, and 2-3) the trees for the two trees we're merging.
 		 */
-		err(opt, _("collecting merge info failed for trees %s, %s, %s"),
+		error(_("collecting merge info failed for trees %s, %s, %s"),
 		    oid_to_hex(&merge_base->object.oid),
 		    oid_to_hex(&side1->object.oid),
 		    oid_to_hex(&side2->object.oid));
