@@ -576,6 +576,38 @@ test_expect_success 'clean log decoration' '
 	test_cmp expected actual1
 '
 
+test_expect_success 'pretty format %decorate' '
+	git checkout -b foo &&
+	git commit --allow-empty -m "new commit" &&
+	git tag bar &&
+	git branch qux &&
+
+	echo " (HEAD -> foo, tag: bar, qux)" >expect1 &&
+	git log --format="%(decorate)" -1 >actual1 &&
+	test_cmp expect1 actual1 &&
+
+	echo "HEAD -> foo, tag: bar, qux" >expect2 &&
+	git log --format="%(decorate:prefix=,suffix=)" -1 >actual2 &&
+	test_cmp expect2 actual2 &&
+
+	echo "[ HEAD -> foo; tag: bar; qux ]" >expect3 &&
+	git log --format="%(decorate:prefix=[ ,suffix= ],separator=%x3B )" \
+		-1 >actual3 &&
+	test_cmp expect3 actual3 &&
+
+	# Try with a typo (in "separator"), in which case the placeholder should
+	# not be replaced.
+	echo "%(decorate:prefix=[ ,suffix= ],separater=; )" >expect4 &&
+	git log --format="%(decorate:prefix=[ ,suffix= ],separater=%x3B )" \
+		-1 >actual4 &&
+	test_cmp expect4 actual4 &&
+
+	echo "HEAD->foo bar qux" >expect5 &&
+	git log --format="%(decorate:prefix=,suffix=,separator= ,tag=,pointer=->)" \
+		-1 >actual5 &&
+	test_cmp expect5 actual5
+'
+
 cat >trailers <<EOF
 Signed-off-by: A U Thor <author@example.com>
 Acked-by: A U Thor <author@example.com>
