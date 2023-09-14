@@ -3324,10 +3324,7 @@ static int collect_renames(struct merge_options *opt,
 	return clean;
 }
 
-static int detect_and_process_renames(struct merge_options *opt,
-				      struct tree *merge_base,
-				      struct tree *side1,
-				      struct tree *side2)
+static int detect_and_process_renames(struct merge_options *opt)
 {
 	struct diff_queue_struct combined = { 0 };
 	struct rename_info *renames = &opt->priv->renames;
@@ -4964,8 +4961,7 @@ redo:
 	trace2_region_leave("merge", "collect_merge_info", opt->repo);
 
 	trace2_region_enter("merge", "renames", opt->repo);
-	result->clean = detect_and_process_renames(opt, merge_base,
-						   side1, side2);
+	result->clean = detect_and_process_renames(opt);
 	trace2_region_leave("merge", "renames", opt->repo);
 	if (opt->priv->renames.redo_after_renames == 2) {
 		trace2_region_enter("merge", "reset_maps", opt->repo);
