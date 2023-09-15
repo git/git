@@ -622,6 +622,8 @@ static int redact_sensitive_header(struct strbuf *header, size_t offset)
 
 static int match_curl_h2_trace(const char *line, const char **out)
 {
+	const char *p;
+
 	/*
 	 * curl prior to 8.1.0 gives us:
 	 *
@@ -632,6 +634,18 @@ static int match_curl_h2_trace(const char *line, const char **out)
 	if (skip_iprefix(line, "h2h3 [", out) ||
 	    skip_iprefix(line, "h2 [", out))
 		return 1;
+
+	/*
+	 * curl 8.3.0 uses:
+	 *   [HTTP/2] [<stream-id>] [<header-name>: <header-val>]
+	 * where <stream-id> is numeric.
+	 */
+	if (skip_iprefix(line, "[HTTP/2] [", &p)) {
+		while (isdigit(*p))
+			p++;
+		if (skip_prefix(p, "] [", out))
+			return 1;
+	}
 
 	return 0;
 }
