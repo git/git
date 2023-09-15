@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2023, #04; Tue, 12)
-X-master-at: 94e83dcf5b5faaa22e32729305f8fd7090bfdfed
-X-next-at: 461bb28fbd1decdee16a6abbeec79832ca32638f
+Subject: What's cooking in git.git (Sep 2023, #05; Fri, 15)
+X-master-at: bda494f4043963b9ec9a1ecd4b19b7d1cd9a0518
+X-next-at: 380fc7ccd1acc85fe06785a0a56d9f99d56dc306
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Sep 2023, #04; Tue, 12)
+What's cooking in git.git (Sep 2023, #05; Fri, 15)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,74 +46,229 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* ak/pretty-decorate-more (2023-08-21) 8 commits
+  (merged to 'next' on 2023-09-07 at 6f5e14cef2)
+ + decorate: use commit color for HEAD arrow
+ + pretty: add pointer and tag options to %(decorate)
+ + pretty: add %(decorate[:<options>]) format
+ + decorate: color each token separately
+ + decorate: avoid some unnecessary color overhead
+ + decorate: refactor format_decorations()
+ + pretty-formats: enclose options in angle brackets
+ + pretty-formats: define "literal formatting code"
+
+ "git log --format" has been taught the %(decorate) placeholder.
+ source: <20230820185009.20095-1-andy.koppe@gmail.com>
+
+
+* bc/more-git-var (2023-09-05) 1 commit
+  (merged to 'next' on 2023-09-06 at d8af32874c)
+ + var: avoid a segmentation fault when `HOME` is unset
+
+ Fix-up for a topic that already has graduated.
+ source: <pull.1580.git.1693808487058.gitgitgadget@gmail.com>
+
+
+* ew/hash-with-openssl-evp (2023-08-31) 1 commit
+  (merged to 'next' on 2023-09-05 at 1ddc0078c8)
+ + treewide: fix various bugs w/ OpenSSL 3+ EVP API
+
+ Fix-up new-ish code to support OpenSSL EVP API.
+ source: <20230901020928.M610756@dcvr>
+
+
+* jk/tree-name-and-depth-limit (2023-08-31) 10 commits
+  (merged to 'next' on 2023-09-07 at 7ad767ab0d)
+ + lower core.maxTreeDepth default to 2048
+ + tree-diff: respect max_allowed_tree_depth
+ + list-objects: respect max_allowed_tree_depth
+ + read_tree(): respect max_allowed_tree_depth
+ + traverse_trees(): respect max_allowed_tree_depth
+ + add core.maxTreeDepth config
+ + fsck: detect very large tree pathnames
+ + tree-walk: rename "error" variable
+ + tree-walk: drop MAX_TRAVERSE_TREES macro
+ + tree-walk: reduce stack size for recursive functions
+
+ We now limit depth of the tree objects and maximum length of
+ pathnames recorded in tree objects.
+ source: <20230831061735.GA2702156@coredump.intra.peff.net>
+
+
+* jk/unused-post-2.42-part2 (2023-09-05) 10 commits
+  (merged to 'next' on 2023-09-05 at 308ca3a052)
+ + parse-options: mark unused parameters in noop callback
+ + interpret-trailers: mark unused "unset" parameters in option callbacks
+ + parse-options: add more BUG_ON() annotations
+ + merge: do not pass unused opt->value parameter
+ + parse-options: mark unused "opt" parameter in callbacks
+ + parse-options: prefer opt->value to globals in callbacks
+ + checkout-index: delay automatic setting of to_tempfile
+ + format-patch: use OPT_STRING_LIST for to/cc options
+ + merge: simplify parsing of "-n" option
+ + merge: make xopts a strvec
+
+ Unused parameters to functions are marked as such, and/or removed,
+ in order to bring us closer to -Wunused-parameter clean.
+ source: <20230831211637.GA949188@coredump.intra.peff.net>
+
+
+* ks/ref-filter-sort-numerically (2023-09-05) 1 commit
+  (merged to 'next' on 2023-09-06 at aa4d156366)
+ + ref-filter: sort numerically when ":size" is used
+
+ "git for-each-ref --sort='contents:size'" sorts the refs according
+ to size numerically, giving a ref that points at a blob twelve-byte
+ (12) long before showing a blob hundred-byte (100) long.
+ source: <20230902090155.8978-1-five231003@gmail.com>
+
+
+* ob/revert-of-revert-is-reapply (2023-09-02) 2 commits
+  (merged to 'next' on 2023-09-07 at 9a54f66511)
+ + git-revert.txt: add discussion
+ + sequencer: beautify subject of reverts of reverts
+
+ The default log message created by "git revert", when reverting a
+ commit that records a revert, has been tweaked.
+ source: <20230821170720.577850-1-oswald.buddenhagen@gmx.de>
+ source: <20230902072035.652549-1-oswald.buddenhagen@gmx.de>
+
+
+* ob/sequencer-reword-error-message (2023-09-05) 1 commit
+  (merged to 'next' on 2023-09-06 at c5154b7aa2)
+ + sequencer: fix error message on failure to copy SQUASH_MSG
+
+ Update an error message (which would probably never been seen).
+ source: <20230903151132.739136-1-oswald.buddenhagen@gmx.de>
+
+
+* pw/rebase-i-after-failure (2023-09-06) 7 commits
+  (merged to 'next' on 2023-09-07 at 3cbc3c4d63)
+ + rebase -i: fix adding failed command to the todo list
+ + rebase --continue: refuse to commit after failed command
+ + rebase: fix rewritten list for failed pick
+ + sequencer: factor out part of pick_commits()
+ + sequencer: use rebase_path_message()
+ + rebase -i: remove patch file after conflict resolution
+ + rebase -i: move unlink() calls
+
+ Various fixes to the behaviour of "rebase -i" when the command got
+ interrupted by conflicting changes.
+ cf. <6b927687-cf6e-d73e-78fb-bd4f46736928@gmx.de>
+ source: <pull.1492.v4.git.1694013771.gitgitgadget@gmail.com>
+
+
+* rs/grep-parseopt-simplify (2023-09-05) 1 commit
+  (merged to 'next' on 2023-09-06 at 249b69cfd2)
+ + grep: use OPT_INTEGER_F for --max-depth
+
+ Simplify use of parse-options API a bit.
+ source: <4d2eb736-4f34-18f8-2eb7-20e7f7b8c2f8@web.de>
+
+
+* rs/name-rev-use-opt-hidden-bool (2023-09-05) 1 commit
+  (merged to 'next' on 2023-09-06 at 9b251a5392)
+ + name-rev: use OPT_HIDDEN_BOOL for --peel-tag
+
+ Simplify use of parse-options API a bit.
+ source: <5a86c8f8-fcdc-fee9-8af5-aa5ecb036d2e@web.de>
+
+
+* so/diff-doc-for-patch-update (2023-09-06) 1 commit
+  (merged to 'next' on 2023-09-07 at 6da5e9defd)
+ + doc/diff-options: fix link to generating patch section
+
+ References from description of the `--patch` option in various
+ manual pages have been simplified and improved.
+ source: <87msxzpybo.fsf_-_@osv.gnss.ru>
+
+--------------------------------------------------
 [New Topics]
 
-* js/systemd-timers-wsl-fix (2023-09-11) 1 commit
- - maintenance(systemd): support the Windows Subsystem for Linux
+* ob/sequencer-remove-dead-code (2023-09-12) 1 commit
+  (merged to 'next' on 2023-09-13 at 1f6c2b336b)
+ + sequencer: remove unreachable exit condition in pick_commits()
 
- Update "git maintainance" timers' implementation based on systemd
- timers to work with WSL.
+ Code clean-up.
 
- Will merge to 'next'.
- source: <pull.1586.git.1694334620260.gitgitgadget@gmail.com>
-
-
-* kh/range-diff-notes (2023-09-11) 1 commit
- - range-diff: treat notes like `log`
-
- "git range-diff --notes=foo" compared "log --notes=foo --notes" of
- the two ranges, instead of using just the specified notes tree.
- source: <a37dfb3748e23b4f5081bc9a3c80a5c546101f1d.1694383248.git.code@khaugsbakk.name>
+ Will merge to 'master'.
+ source: <20230912105541.272917-1-oswald.buddenhagen@gmx.de>
 
 
-* pw/diff-no-index-from-named-pipes (2023-09-11) 1 commit
- - diff --no-index: fix -R with stdin
+* ob/t3404-typofix (2023-09-12) 1 commit
+  (merged to 'next' on 2023-09-13 at b17fa78c3f)
+ + t3404-rebase-interactive.sh: fix typos in title of a rewording test
 
- "git diff --no-index -R <(one) <(two)" did not work correctly,
- which has been corrected.
+ Code clean-up.
 
- Will merge to 'next'.
- source: <22fdfa3b-f90e-afcc-667c-705fb7670245@web.de>
-
-
-* rs/parse-options-value-int (2023-09-11) 2 commits
- - parse-options: use and require int pointer for OPT_CMDMODE
- - parse-options: add int value pointer to struct option
-
- A bit of type safety for the "value" pointer used in the
- parse-options API.
- source: <e6d8a291-03de-cfd3-3813-747fc2cad145@web.de>
+ Will merge to 'master'.
+ source: <20230912104237.271616-1-oswald.buddenhagen@gmx.de>
 
 
-* so/diff-merges-d (2023-09-11) 2 commits
- - diff-merges: introduce '-d' option
- - diff-merges: improve --diff-merges documentation
+* jk/ort-unused-parameter-cleanups (2023-09-14) 4 commits
+ - merge-ort: drop unused "opt" parameter from merge_check_renames_reusable()
+ - merge-ort: drop unused parameters from detect_and_process_renames()
+ - merge-ort: stop passing "opt" to read_oid_strbuf()
+ - merge-ort: drop custom err() function
 
- Teach a new "-d" option that shows the patch against the first
- parent for merge commits (which is "--diff-merges=first-parent -p").
- source: <20230909125446.142715-1-sorganov@gmail.com>
+ Code clean-up.
+
+ Needs review.
+ source: <20230914093409.GA2254811@coredump.intra.peff.net>
 
 
-* js/diff-cached-fsmonitor-fix (2023-09-11) 1 commit
- - diff-lib: fix check_removed when fsmonitor is on
+* jc/fake-lstat (2023-09-14) 1 commit
+ - cache: add fake_lstat()
 
- "git diff --cached" codepath did not fill the necessary stat
- information for a file when fsmonitor knows it is clean and ended
- up behaving as if it is not clean, which has been corrected.
+ A new helper to let us pretend that we called lstat() when we know
+ our cache_entry is up-to-date via fsmonitor.
+
+ Needs review.
+ source: <xmqqcyykig1l.fsf@gitster.g>
+
+
+* jk/redact-h2h3-headers-fix (2023-09-15) 2 commits
+ - http: update curl http/2 info matching for curl 8.3.0
+ - http: factor out matching of curl http/2 trace lines
+
+ HTTP Header redaction code has been adjusted for a newer version of
+ cURL library that shows its traces differently from earlier
+ versions.
 
  Will merge to 'next'.
- source: <20230911170901.49050-2-sokcevic@google.com>
+ source: <20230915113237.GA3531328@coredump.intra.peff.net>
 
 
-* pb/completion-aliases-doc (2023-09-11) 1 commit
- - completion: improve doc for complex aliases
+* ch/clean-docfix (2023-09-15) 1 commit
+ - git-clean doc: fix "without do cleaning" typo
 
- Clarify how "alias.foo = : git cmd ; aliased-command-string" should
- be spelled with necessary whitespaces around punctuation marks to
- work.
+ Typofix.
 
  Will merge to 'next'.
- source: <pull.1585.git.1694274592854.gitgitgadget@gmail.com>
+ source: <pull.1572.git.git.1694800409471.gitgitgadget@gmail.com>
+
+
+* eg/config-type-path-docfix (2023-09-15) 1 commit
+ - git-config: fix misworded --type=path explanation
+
+ Typofix.
+
+ Will merge to 'next'.
+ source: <20230915202610.21206-1-evan.gates@gmail.com>
+
+
+* kn/rev-list-ignore-missing-links (2023-09-15) 1 commit
+ - revision: add `--ignore-missing-links` user option
+
+ Surface the .ignore_missing_links bit that stops the revision
+ traversal from stopping and dying when encountering a missing
+ object to a new command line option of "git rev-list", so that the
+ objects that are required but are missing can be enumerated.
+
+ Waiting for review response.
+ source: <20230915083415.263187-1-knayak@gitlab.com>
 
 --------------------------------------------------
 [Stalled]
@@ -131,6 +286,85 @@ Release tarballs are available at:
 
 --------------------------------------------------
 [Cooking]
+
+* js/systemd-timers-wsl-fix (2023-09-11) 1 commit
+  (merged to 'next' on 2023-09-12 at 71c4cbb1df)
+ + maintenance(systemd): support the Windows Subsystem for Linux
+
+ Update "git maintainance" timers' implementation based on systemd
+ timers to work with WSL.
+
+ Will merge to 'master'.
+ source: <pull.1586.git.1694334620260.gitgitgadget@gmail.com>
+
+
+* kh/range-diff-notes (2023-09-11) 1 commit
+ - range-diff: treat notes like `log`
+
+ "git range-diff --notes=foo" compared "log --notes=foo --notes" of
+ the two ranges, instead of using just the specified notes tree.
+
+ Expecting a reroll.
+ cf. <dd2958c5-58bf-86dd-b666-9033259a8e1a@gmx.de>
+ source: <a37dfb3748e23b4f5081bc9a3c80a5c546101f1d.1694383248.git.code@khaugsbakk.name>
+
+
+* pw/diff-no-index-from-named-pipes (2023-09-11) 1 commit
+  (merged to 'next' on 2023-09-12 at 135ecd136f)
+ + diff --no-index: fix -R with stdin
+
+ "git diff --no-index -R <(one) <(two)" did not work correctly,
+ which has been corrected.
+
+ Will merge to 'master'.
+ source: <22fdfa3b-f90e-afcc-667c-705fb7670245@web.de>
+
+
+* rs/parse-options-value-int (2023-09-11) 2 commits
+ - parse-options: use and require int pointer for OPT_CMDMODE
+ - parse-options: add int value pointer to struct option
+
+ A bit of type safety for the "value" pointer used in the
+ parse-options API.
+
+ What's the status of this one?
+ source: <e6d8a291-03de-cfd3-3813-747fc2cad145@web.de>
+
+
+* so/diff-merges-d (2023-09-11) 2 commits
+ - diff-merges: introduce '-d' option
+ - diff-merges: improve --diff-merges documentation
+
+ Teach a new "-d" option that shows the patch against the first
+ parent for merge commits (which is "--diff-merges=first-parent -p").
+
+ Needs more work.
+ source: <20230909125446.142715-1-sorganov@gmail.com>
+
+
+* js/diff-cached-fsmonitor-fix (2023-09-11) 1 commit
+  (merged to 'next' on 2023-09-12 at 7479278da0)
+ + diff-lib: fix check_removed when fsmonitor is on
+
+ "git diff --cached" codepath did not fill the necessary stat
+ information for a file when fsmonitor knows it is clean and ended
+ up behaving as if it is not clean, which has been corrected.
+
+ Will merge to 'master'.
+ source: <20230911170901.49050-2-sokcevic@google.com>
+
+
+* pb/completion-aliases-doc (2023-09-12) 1 commit
+  (merged to 'next' on 2023-09-13 at b248a5bc26)
+ + completion: improve doc for complex aliases
+
+ Clarify how "alias.foo = : git cmd ; aliased-command-string" should
+ be spelled with necessary whitespaces around punctuation marks to
+ work.
+
+ Will merge to 'master'.
+ source: <pull.1585.v2.git.1694538135853.gitgitgadget@gmail.com>
+
 
 * cc/repack-sift-filtered-objects-to-separate-pack (2023-09-11) 9 commits
  . gc: add `gc.repackFilterTo` config option
@@ -151,48 +385,41 @@ Release tarballs are available at:
 
 
 * la/trailer-cleanups (2023-09-11) 6 commits
- - trailer: use offsets for trailer_start/trailer_end
- - trailer: rename *_DEFAULT enums to *_UNSPECIFIED
- - trailer: teach find_patch_start about --no-divider
- - trailer: split process_command_line_args into separate functions
- - trailer: split process_input_file into separate pieces
- - trailer: separate public from internal portion of trailer_iterator
+  (merged to 'next' on 2023-09-12 at 779c4a097a)
+ + trailer: use offsets for trailer_start/trailer_end
+ + trailer: rename *_DEFAULT enums to *_UNSPECIFIED
+ + trailer: teach find_patch_start about --no-divider
+ + trailer: split process_command_line_args into separate functions
+ + trailer: split process_input_file into separate pieces
+ + trailer: separate public from internal portion of trailer_iterator
 
  Code clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1563.v2.git.1694240177.gitgitgadget@gmail.com>
 
 
-* so/diff-doc-for-patch-update (2023-09-06) 1 commit
-  (merged to 'next' on 2023-09-07 at 6da5e9defd)
- + doc/diff-options: fix link to generating patch section
-
- References from description of the `--patch` option in various
- manual pages have been simplified and improved.
-
- Will merge to 'master'.
- source: <87msxzpybo.fsf_-_@osv.gnss.ru>
-
-
-* tb/repack-existing-packs-cleanup (2023-09-06) 8 commits
- - builtin/repack.c: extract common cruft pack loop
- - builtin/repack.c: drop `DELETE_PACK` macro
- - builtin/repack.c: store existing cruft packs separately
- - builtin/repack.c: extract `has_existing_non_kept_packs()`
- - builtin/repack.c: extract redundant pack cleanup for existing packs
- - builtin/repack.c: extract redundant pack cleanup for --geometric
- - builtin/repack.c: extract marking packs for deletion
- - builtin/repack.c: extract structure to store existing packs
+* tb/repack-existing-packs-cleanup (2023-09-13) 8 commits
+  (merged to 'next' on 2023-09-14 at bb8065e89c)
+ + builtin/repack.c: extract common cruft pack loop
+ + builtin/repack.c: avoid directly inspecting "util"
+ + builtin/repack.c: store existing cruft packs separately
+ + builtin/repack.c: extract `has_existing_non_kept_packs()`
+ + builtin/repack.c: extract redundant pack cleanup for existing packs
+ + builtin/repack.c: extract redundant pack cleanup for --geometric
+ + builtin/repack.c: extract marking packs for deletion
+ + builtin/repack.c: extract structure to store existing packs
 
  The code to keep track of existing packs in the repository while
  repacking has been refactored.
 
- Will merge to 'next'?
- source: <cover.1693946195.git.me@ttaylorr.com>
+ Will merge to 'master'.
+ source: <cover.1694632644.git.me@ttaylorr.com>
 
 
-* pb/complete-commit-trailers (2023-09-07) 1 commit
+* pb/complete-commit-trailers (2023-09-12) 2 commits
+  (merged to 'next' on 2023-09-13 at 9a0ec17606)
+ + completion: commit: complete trailers tokens more robustly
   (merged to 'next' on 2023-09-08 at 842587016d)
  + completion: commit: complete configured trailer tokens
 
@@ -200,7 +427,7 @@ Release tarballs are available at:
  complete "git commit --trailer=" for possible trailer keys.
 
  Will merge to 'master'.
- source: <pull.1583.git.1694108551683.gitgitgadget@gmail.com>
+ source: <pull.1583.v2.git.1694539827.gitgitgadget@gmail.com>
 
 
 * pw/rebase-sigint (2023-09-07) 1 commit
@@ -213,7 +440,8 @@ Release tarballs are available at:
  user intended.  "git" learned to ignore SIGINT and SIGQUIT while
  waiting for these subprocesses.
 
- Will merge to 'next'?
+ Expecting a reroll.
+ cf. <12c956ea-330d-4441-937f-7885ab519e26@gmail.com>
  source: <pull.1581.git.1694080982621.gitgitgadget@gmail.com>
 
 
@@ -253,6 +481,7 @@ Release tarballs are available at:
 
  Needs more work.
  cf. <xmqqy1hfrk6p.fsf@gitster.g>
+ cf. <20230915183927.1597414-1-jonathantanmy@google.com>
  source: <20230908174134.1026823-1-calvinwan@google.com>
 
 
@@ -273,6 +502,11 @@ Release tarballs are available at:
  - replay: introduce new builtin
  - t6429: remove switching aspects of fast-rebase
 
+ Waiting for review response.
+ cf. <52277471-4ddd-b2e0-62ca-c2a5b59ae418@gmx.de>
+ cf. <58daa706-7efb-51dd-9061-202ef650b96a@gmx.de>
+ cf. <f0e75d47-c277-9fbb-7bcd-53e4e5686f3c@gmx.de>
+ May want to wait until tb/repack-existing-packs-cleanup stabilizes.
  source: <20230907092521.733746-1-christian.couder@gmail.com>
 
 
@@ -295,115 +529,6 @@ Release tarballs are available at:
  source: <pull.1564.v3.git.1694125209.gitgitgadget@gmail.com>
 
 
-* ak/pretty-decorate-more (2023-08-21) 8 commits
-  (merged to 'next' on 2023-09-07 at 6f5e14cef2)
- + decorate: use commit color for HEAD arrow
- + pretty: add pointer and tag options to %(decorate)
- + pretty: add %(decorate[:<options>]) format
- + decorate: color each token separately
- + decorate: avoid some unnecessary color overhead
- + decorate: refactor format_decorations()
- + pretty-formats: enclose options in angle brackets
- + pretty-formats: define "literal formatting code"
-
- "git log --format" has been taught the %(decorate) placeholder.
-
- Will merge to 'master'.
- source: <20230820185009.20095-1-andy.koppe@gmail.com>
-
-
-* bc/more-git-var (2023-09-05) 1 commit
-  (merged to 'next' on 2023-09-06 at d8af32874c)
- + var: avoid a segmentation fault when `HOME` is unset
-
- Fix-up for a topic that already has graduated.
-
- Will merge to 'master'.
- source: <pull.1580.git.1693808487058.gitgitgadget@gmail.com>
-
-
-* ks/ref-filter-sort-numerically (2023-09-05) 1 commit
-  (merged to 'next' on 2023-09-06 at aa4d156366)
- + ref-filter: sort numerically when ":size" is used
-
- "git for-each-ref --sort='contents:size'" sorts the refs according
- to size numerically, giving a ref that points at a blob twelve-byte
- (12) long before showing a blob hundred-byte (100) long.
-
- Will merge to 'master'.
- source: <20230902090155.8978-1-five231003@gmail.com>
-
-
-* ob/sequencer-reword-error-message (2023-09-05) 1 commit
-  (merged to 'next' on 2023-09-06 at c5154b7aa2)
- + sequencer: fix error message on failure to copy SQUASH_MSG
-
- Update an error message (which would probably never been seen).
-
- Will merge to 'master'.
- source: <20230903151132.739136-1-oswald.buddenhagen@gmx.de>
-
-
-* rs/grep-parseopt-simplify (2023-09-05) 1 commit
-  (merged to 'next' on 2023-09-06 at 249b69cfd2)
- + grep: use OPT_INTEGER_F for --max-depth
-
- Simplify use of parse-options API a bit.
-
- Will merge to 'master'.
- source: <4d2eb736-4f34-18f8-2eb7-20e7f7b8c2f8@web.de>
-
-
-* rs/name-rev-use-opt-hidden-bool (2023-09-05) 1 commit
-  (merged to 'next' on 2023-09-06 at 9b251a5392)
- + name-rev: use OPT_HIDDEN_BOOL for --peel-tag
-
- Simplify use of parse-options API a bit.
-
- Will merge to 'master'.
- source: <5a86c8f8-fcdc-fee9-8af5-aa5ecb036d2e@web.de>
-
-
-* jk/unused-post-2.42-part2 (2023-09-05) 10 commits
-  (merged to 'next' on 2023-09-05 at 308ca3a052)
- + parse-options: mark unused parameters in noop callback
- + interpret-trailers: mark unused "unset" parameters in option callbacks
- + parse-options: add more BUG_ON() annotations
- + merge: do not pass unused opt->value parameter
- + parse-options: mark unused "opt" parameter in callbacks
- + parse-options: prefer opt->value to globals in callbacks
- + checkout-index: delay automatic setting of to_tempfile
- + format-patch: use OPT_STRING_LIST for to/cc options
- + merge: simplify parsing of "-n" option
- + merge: make xopts a strvec
-
- Unused parameters to functions are marked as such, and/or removed,
- in order to bring us closer to -Wunused-parameter clean.
-
- Will merge to 'master'.
- source: <20230831211637.GA949188@coredump.intra.peff.net>
-
-
-* jk/tree-name-and-depth-limit (2023-08-31) 10 commits
-  (merged to 'next' on 2023-09-07 at 7ad767ab0d)
- + lower core.maxTreeDepth default to 2048
- + tree-diff: respect max_allowed_tree_depth
- + list-objects: respect max_allowed_tree_depth
- + read_tree(): respect max_allowed_tree_depth
- + traverse_trees(): respect max_allowed_tree_depth
- + add core.maxTreeDepth config
- + fsck: detect very large tree pathnames
- + tree-walk: rename "error" variable
- + tree-walk: drop MAX_TRAVERSE_TREES macro
- + tree-walk: reduce stack size for recursive functions
-
- We now limit depth of the tree objects and maximum length of
- pathnames recorded in tree objects.
-
- Will merge to 'master'.
- source: <20230831061735.GA2702156@coredump.intra.peff.net>
-
-
 * js/doc-unit-tests (2023-08-17) 3 commits
  - ci: run unit tests in CI
  - unit tests: add TAP unit test framework
@@ -412,7 +537,8 @@ Release tarballs are available at:
 
  Process to add some form of low-level unit tests has started.
 
- Comments?
+ Waiting for review response.
+ cf. <xmqq350hw6n7.fsf@gitster.g>
  source: <cover.1692297001.git.steadmon@google.com>
 
 
@@ -424,17 +550,9 @@ Release tarballs are available at:
  (this branch uses js/doc-unit-tests.)
 
  Update the base topic to work with CMake builds.
+
+ Waiting for the base topic to settle.
  source: <pull.1579.git.1693462532.gitgitgadget@gmail.com>
-
-
-* ew/hash-with-openssl-evp (2023-08-31) 1 commit
-  (merged to 'next' on 2023-09-05 at 1ddc0078c8)
- + treewide: fix various bugs w/ OpenSSL 3+ EVP API
-
- Fix-up new-ish code to support OpenSSL EVP API.
-
- Will merge to 'master'.
- source: <20230901020928.M610756@dcvr>
 
 
 * tb/path-filter-fix (2023-08-30) 15 commits
@@ -458,7 +576,7 @@ Release tarballs are available at:
  on systems whose "char" is unsigned; update the implementation and
  bump the format version to 2.
 
- Needs more work?
+ Needs more work.
  cf. <20230830200218.GA5147@szeder.dev>
  source: <cover.1693413637.git.jonathantanmy@google.com>
 
@@ -476,29 +594,17 @@ Release tarballs are available at:
  source: <cover.1692827403.git.steadmon@google.com>
 
 
-* jc/update-index-show-index-version (2023-08-18) 3 commits
- - test-tool: retire "index-version"
- - update-index: add --show-index-version
- - update-index doc: v4 is OK with JGit and libgit2
+* jc/update-index-show-index-version (2023-09-12) 3 commits
+  (merged to 'next' on 2023-09-13 at b754554df8)
+ + test-tool: retire "index-version"
+ + update-index: add --show-index-version
+ + update-index doc: v4 is OK with JGit and libgit2
 
  "git update-index" learns "--show-index-version" to inspect
  the index format version used by the on-disk index file.
 
- Needs review.
- source: <20230818233729.2766281-1-gitster@pobox.com>
-
-
-* ob/revert-of-revert-is-reapply (2023-09-02) 2 commits
-  (merged to 'next' on 2023-09-07 at 9a54f66511)
- + git-revert.txt: add discussion
- + sequencer: beautify subject of reverts of reverts
-
- The default log message created by "git revert", when reverting a
- commit that records a revert, has been tweaked.
-
  Will merge to 'master'.
- source: <20230821170720.577850-1-oswald.buddenhagen@gmx.de>
- source: <20230902072035.652549-1-oswald.buddenhagen@gmx.de>
+ source: <20230912193235.776292-1-gitster@pobox.com>
 
 
 * jc/rerere-cleanup (2023-08-25) 4 commits
@@ -512,24 +618,6 @@ Release tarballs are available at:
 
  Not ready to be reviewed yet.
  source: <20230731224409.4181277-1-gitster@pobox.com>
-
-
-* pw/rebase-i-after-failure (2023-09-06) 7 commits
-  (merged to 'next' on 2023-09-07 at 3cbc3c4d63)
- + rebase -i: fix adding failed command to the todo list
- + rebase --continue: refuse to commit after failed command
- + rebase: fix rewritten list for failed pick
- + sequencer: factor out part of pick_commits()
- + sequencer: use rebase_path_message()
- + rebase -i: remove patch file after conflict resolution
- + rebase -i: move unlink() calls
-
- Various fixes to the behaviour of "rebase -i" when the command got
- interrupted by conflicting changes.
-
- Will merge to 'master'.
- cf. <6b927687-cf6e-d73e-78fb-bd4f46736928@gmx.de>
- source: <pull.1492.v4.git.1694013771.gitgitgadget@gmail.com>
 
 
 * jc/unresolve-removal (2023-07-31) 7 commits
