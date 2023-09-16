@@ -1383,12 +1383,12 @@ static int merge_mode_and_contents(struct merge_options *opt,
 						  extra_marker_size);
 
 			if ((merge_status < 0) || !result_buf.ptr)
-				ret = err(opt, _("Failed to execute internal merge"));
+				ret = err(opt, _("failed to execute internal merge"));
 
 			if (!ret &&
 			    write_object_file(result_buf.ptr, result_buf.size,
 					      OBJ_BLOB, &result->blob.oid))
-				ret = err(opt, _("Unable to add %s to database"),
+				ret = err(opt, _("unable to add %s to database"),
 					  a->path);
 
 			free(result_buf.ptr);
