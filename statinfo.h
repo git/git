@@ -47,6 +47,14 @@ struct stat_validity {
 void fill_stat_data(struct stat_data *sd, struct stat *st);
 
 /*
+ * The inverse of the above.  When we know the cache_entry that
+ * contains sd is up-to-date, but still need to pretend we called
+ * lstat() to learn that fact, this function fills "st" enough to
+ * fool ie_match_stat().
+ */
+void fake_lstat_data(const struct stat_data *sd, struct stat *st);
+
+/*
  * Return 0 if st is consistent with a file not having been changed
  * since sd was filled.  If there are differences, return a
  * combination of MTIME_CHANGED, CTIME_CHANGED, OWNER_CHANGED,
