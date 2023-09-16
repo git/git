@@ -118,7 +118,7 @@ proc sanitize_command_line {command_line from_index} {
 	set i $from_index
 	while {$i < [llength $command_line]} {
 		set cmd [lindex $command_line $i]
-		if {[file pathtype $cmd] ne "absolute"} {
+		if {[llength [file split $cmd]] < 2} {
 			set fullpath [_which $cmd]
 			if {$fullpath eq ""} {
 				throw {NOT-FOUND} "$cmd not found in PATH"
