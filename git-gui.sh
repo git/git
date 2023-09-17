@@ -661,31 +661,8 @@ proc git_write {args} {
 }
 
 proc githook_read {hook_name args} {
-	set pchook [gitdir hooks $hook_name]
-	lappend args 2>@1
-
-	# On Windows [file executable] might lie so we need to ask
-	# the shell if the hook is executable.  Yes that's annoying.
-	#
-	if {[is_Windows]} {
-		upvar #0 _sh interp
-		if {![info exists interp]} {
-			set interp [_which sh]
-		}
-		if {$interp eq {}} {
-			error "hook execution requires sh (not in PATH)"
-		}
-
-		set scr {if test -x "$1";then exec "$@";fi}
-		set sh_c [list $interp -c $scr $interp $pchook]
-		return [_open_stdout_stderr [concat $sh_c $args]]
-	}
-
-	if {[file executable $pchook]} {
-		return [_open_stdout_stderr [concat [list $pchook] $args]]
-	}
-
-	return {}
+	set cmd [concat git hook run --ignore-missing $hook_name -- $args 2>@1]
+	return [_open_stdout_stderr $cmd]
 }
 
 proc kill_file_process {fd} {
