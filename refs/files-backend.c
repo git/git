@@ -1,4 +1,5 @@
 #include "../git-compat-util.h"
+#include "../abspath.h"
 #include "../config.h"
 #include "../copy.h"
 #include "../environment.h"
@@ -9,6 +10,7 @@
 #include "refs-internal.h"
 #include "ref-cache.h"
 #include "packed-backend.h"
+#include "reftable-backend.h"
 #include "../ident.h"
 #include "../iterator.h"
 #include "../dir-iterator.h"
@@ -98,13 +100,25 @@ static struct ref_store *files_ref_store_create(struct repository *repo,
 	struct files_ref_store *refs = xcalloc(1, sizeof(*refs));
 	struct ref_store *ref_store = (struct ref_store *)refs;
 	struct strbuf sb = STRBUF_INIT;
+	int has_reftable, has_packed;
 
 	base_ref_store_init(ref_store, repo, gitdir, &refs_be_files);
 	refs->store_flags = flags;
 	get_common_dir_noenv(&sb, gitdir);
 	refs->gitcommondir = strbuf_detach(&sb, NULL);
-	refs->packed_ref_store =
-		packed_ref_store_create(repo, refs->gitcommondir, flags);
+
+	strbuf_addf(&sb, "%s/reftable", refs->gitcommondir);
+	has_reftable = is_directory(sb.buf);
+	strbuf_reset(&sb);
+	strbuf_addf(&sb, "%s/packed-refs", refs->gitcommondir);
+	has_packed = file_exists(sb.buf);
+
+	if (!has_packed && !has_reftable)
+		has_reftable = git_env_bool("GIT_TEST_REFTABLE", 0);
+
+	refs->packed_ref_store = has_reftable
+		? git_reftable_ref_store_create(repo, refs->gitcommondir, flags)
+		: packed_ref_store_create(repo, refs->gitcommondir, flags);
 
 	chdir_notify_reparent("files-backend $GIT_DIR", &refs->base.gitdir);
 	chdir_notify_reparent("files-backend $GIT_COMMONDIR",
