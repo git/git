@@ -62,7 +62,8 @@ static enum fsmonitor_reason check_remote(struct repository *r)
 }
 #endif
 
-static enum fsmonitor_reason check_for_incompatible(struct repository *r, int ipc)
+static enum fsmonitor_reason check_for_incompatible(struct repository *r,
+						    int ipc MAYBE_UNUSED)
 {
 	if (!r->worktree) {
 		/*

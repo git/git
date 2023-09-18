@@ -1412,7 +1412,7 @@ done:
 	return err;
 }
 
-static int try_to_run_foreground_daemon(int detach_console)
+static int try_to_run_foreground_daemon(int detach_console MAYBE_UNUSED)
 {
 	/*
 	 * Technically, we don't need to probe for an existing daemon
