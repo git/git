@@ -2630,6 +2630,100 @@ out:
 	return ret;
 }
 
+/*
+ * Return true if `transaction` really needs to be carried out against
+ * the specified packed_ref_store, or false if it can be skipped
+ * (i.e., because it is an obvious NOOP). `ref_store` must be locked
+ * before calling this function.
+ */
+static int is_packed_transaction_needed(struct ref_store *ref_store,
+				 struct ref_transaction *transaction)
+{
+	struct strbuf referent = STRBUF_INIT;
+	size_t i;
+	int ret;
+
+	/*
+	 * We're only going to bother returning false for the common,
+	 * trivial case that references are only being deleted, their
+	 * old values are not being checked, and the old `packed-refs`
+	 * file doesn't contain any of those reference(s). This gives
+	 * false positives for some other cases that could
+	 * theoretically be optimized away:
+	 *
+	 * 1. It could be that the old value is being verified without
+	 *    setting a new value. In this case, we could verify the
+	 *    old value here and skip the update if it agrees. If it
+	 *    disagrees, we could either let the update go through
+	 *    (the actual commit would re-detect and report the
+	 *    problem), or come up with a way of reporting such an
+	 *    error to *our* caller.
+	 *
+	 * 2. It could be that a new value is being set, but that it
+	 *    is identical to the current packed value of the
+	 *    reference.
+	 *
+	 * Neither of these cases will come up in the current code,
+	 * because the only caller of this function passes to it a
+	 * transaction that only includes `delete` updates with no
+	 * `old_id`. Even if that ever changes, false positives only
+	 * cause an optimization to be missed; they do not affect
+	 * correctness.
+	 */
+
+	/*
+	 * Start with the cheap checks that don't require old
+	 * reference values to be read:
+	 */
+	for (i = 0; i < transaction->nr; i++) {
+		struct ref_update *update = transaction->updates[i];
+
+		if (update->flags & REF_HAVE_OLD)
+			/* Have to check the old value -> needed. */
+			return 1;
+
+		if ((update->flags & REF_HAVE_NEW) && !is_null_oid(&update->new_oid))
+			/* Have to set a new value -> needed. */
+			return 1;
+	}
+
+	/*
+	 * The transaction isn't checking any old values nor is it
+	 * setting any nonzero new values, so it still might be able
+	 * to be skipped. Now do the more expensive check: the update
+	 * is needed if any of the updates is a delete, and the old
+	 * `packed-refs` file contains a value for that reference.
+	 */
+	ret = 0;
+	for (i = 0; i < transaction->nr; i++) {
+		struct ref_update *update = transaction->updates[i];
+		int failure_errno;
+		unsigned int type;
+		struct object_id oid;
+
+		if (!(update->flags & REF_HAVE_NEW))
+			/*
+			 * This reference isn't being deleted -> not
+			 * needed.
+			 */
+			continue;
+
+		if (!refs_read_raw_ref(ref_store, update->refname, &oid,
+				       &referent, &type, &failure_errno) ||
+		    failure_errno != ENOENT) {
+			/*
+			 * We have to actually delete that reference
+			 * -> this transaction is needed.
+			 */
+			ret = 1;
+			break;
+		}
+	}
+
+	strbuf_release(&referent);
+	return ret;
+}
+
 struct files_transaction_backend_data {
 	struct ref_transaction *packed_transaction;
 	int packed_transaction_needed;

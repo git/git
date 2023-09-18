@@ -17,13 +17,4 @@ struct ref_store *packed_ref_store_create(struct repository *repo,
 					  const char *gitdir,
 					  unsigned int store_flags);
 
-/*
- * Return true if `transaction` really needs to be carried out against
- * the specified packed_ref_store, or false if it can be skipped
- * (i.e., because it is an obvious NOOP). `ref_store` must be locked
- * before calling this function.
- */
-int is_packed_transaction_needed(struct ref_store *ref_store,
-				 struct ref_transaction *transaction);
-
 #endif /* REFS_PACKED_BACKEND_H */
