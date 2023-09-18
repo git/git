@@ -129,8 +129,9 @@ struct fsmonitor_cookie_item {
 	enum fsmonitor_cookie_item_result result;
 };
 
-static int cookies_cmp(const void *data, const struct hashmap_entry *he1,
-		     const struct hashmap_entry *he2, const void *keydata)
+static int cookies_cmp(const void *data UNUSED,
+		       const struct hashmap_entry *he1,
+		       const struct hashmap_entry *he2, const void *keydata)
 {
 	const struct fsmonitor_cookie_item *a =
 		container_of(he1, const struct fsmonitor_cookie_item, entry);
