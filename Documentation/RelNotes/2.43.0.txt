@@ -132,6 +132,15 @@ Fixes since v2.42
    manual pages have been simplified and improved.
    (merge 11422f23e3 so/diff-doc-for-patch-update later to maint).
 
+ * "git grep -e A --no-or -e B" is accepted, even though the negation
+   of "or" did not mean anything, which has been tightened.
+   (merge aae8558b10 rs/grep-no-no-or later to maint).
+
+ * The completion script (in contrib/) has been taught to treat the
+   "-t" option to "git checkout" and "git switch" just like the
+   "--track" option, to complete remote-tracking branches.
+   (merge 9f892830d6 js/complete-checkout-t later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge fd3ba590d8 ws/git-push-doc-grammofix later to maint).
    (merge 5f33a843de ds/upload-pack-error-sequence-fix later to maint).
