@@ -41,6 +41,13 @@ static int debug_init_db(struct ref_store *refs, struct strbuf *err)
 	return res;
 }
 
+static struct ref_transaction *debug_transaction_begin(struct ref_store *ref_store,
+						       struct strbuf *err) {
+	struct ref_transaction *tr;
+	CALLOC_ARRAY(tr, 1);
+	return tr;
+}
+
 static int debug_transaction_prepare(struct ref_store *refs,
 				     struct ref_transaction *transaction,
 				     struct strbuf *err)
@@ -451,6 +458,7 @@ struct ref_storage_be refs_be_debug = {
 	 * has a function we should also have a wrapper for it here.
 	 * Test the output with "GIT_TRACE_REFS=1".
 	 */
+	.transaction_begin = debug_transaction_begin,
 	.transaction_prepare = debug_transaction_prepare,
 	.transaction_finish = debug_transaction_finish,
 	.transaction_abort = debug_transaction_abort,

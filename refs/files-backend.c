@@ -2681,6 +2681,13 @@ static void files_transaction_cleanup(struct files_ref_store *refs,
 	transaction->state = REF_TRANSACTION_CLOSED;
 }
 
+static struct ref_transaction *files_transaction_begin(struct ref_store *ref_store,
+						       struct strbuf *err) {
+	struct ref_transaction *tr;
+	CALLOC_ARRAY(tr, 1);
+	return tr;
+}
+
 static int files_transaction_prepare(struct ref_store *ref_store,
 				     struct ref_transaction *transaction,
 				     struct strbuf *err)
@@ -3297,6 +3304,7 @@ struct ref_storage_be refs_be_files = {
 	.name = "files",
 	.init = files_ref_store_create,
 	.init_db = files_init_db,
+	.transaction_begin = files_transaction_begin,
 	.transaction_prepare = files_transaction_prepare,
 	.transaction_finish = files_transaction_finish,
 	.transaction_abort = files_transaction_abort,

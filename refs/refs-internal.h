@@ -531,6 +531,9 @@ typedef struct ref_store *ref_store_init_fn(struct repository *repo,
 
 typedef int ref_init_db_fn(struct ref_store *refs, struct strbuf *err);
 
+typedef struct ref_transaction *ref_transaction_begin_fn(struct ref_store *refs,
+							 struct strbuf *err);
+
 typedef int ref_transaction_prepare_fn(struct ref_store *refs,
 				       struct ref_transaction *transaction,
 				       struct strbuf *err);
@@ -670,6 +673,7 @@ struct ref_storage_be {
 	ref_store_init_fn *init;
 	ref_init_db_fn *init_db;
 
+	ref_transaction_begin_fn *transaction_begin;
 	ref_transaction_prepare_fn *transaction_prepare;
 	ref_transaction_finish_fn *transaction_finish;
 	ref_transaction_abort_fn *transaction_abort;

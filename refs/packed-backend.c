@@ -1580,6 +1580,14 @@ static void packed_transaction_cleanup(struct packed_ref_store *refs,
 	transaction->state = REF_TRANSACTION_CLOSED;
 }
 
+
+static struct ref_transaction *packed_transaction_begin(struct ref_store *ref_store,
+							struct strbuf *err) {
+	struct ref_transaction *tr;
+	CALLOC_ARRAY(tr, 1);
+	return tr;
+}
+
 static int packed_transaction_prepare(struct ref_store *ref_store,
 				      struct ref_transaction *transaction,
 				      struct strbuf *err)
@@ -1758,6 +1766,7 @@ struct ref_storage_be refs_be_packed = {
 	.name = "packed",
 	.init = packed_ref_store_create,
 	.init_db = packed_init_db,
+	.transaction_begin = packed_transaction_begin,
 	.transaction_prepare = packed_transaction_prepare,
 	.transaction_finish = packed_transaction_finish,
 	.transaction_abort = packed_transaction_abort,
