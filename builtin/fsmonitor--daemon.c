@@ -1443,7 +1443,8 @@ static int try_to_run_foreground_daemon(int detach_console MAYBE_UNUSED)
 
 static start_bg_wait_cb bg_wait_cb;
 
-static int bg_wait_cb(const struct child_process *cp, void *cb_data)
+static int bg_wait_cb(const struct child_process *cp UNUSED,
+		      void *cb_data UNUSED)
 {
 	enum ipc_active_state s = fsmonitor_ipc__get_state();
 
