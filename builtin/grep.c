@@ -989,7 +989,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		OPT_CALLBACK_F(0, "and", &opt, NULL,
 			N_("combine patterns specified with -e"),
 			PARSE_OPT_NOARG | PARSE_OPT_NONEG, and_callback),
-		OPT_BOOL(0, "or", &dummy, ""),
+		OPT_BOOL_F(0, "or", &dummy, "", PARSE_OPT_NONEG),
 		OPT_CALLBACK_F(0, "not", &opt, NULL, "",
 			PARSE_OPT_NOARG | PARSE_OPT_NONEG, not_callback),
 		OPT_CALLBACK_F('(', NULL, &opt, NULL, "",
