@@ -25,7 +25,7 @@ static enum fsmonitor_reason check_vfs4git(struct repository *r)
 	return FSMONITOR_REASON_OK;
 }
 
-enum fsmonitor_reason fsm_os__incompatible(struct repository *r, int ipc)
+enum fsmonitor_reason fsm_os__incompatible(struct repository *r, int ipc UNUSED)
 {
 	enum fsmonitor_reason reason;
 
