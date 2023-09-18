@@ -1622,14 +1622,22 @@ test_expect_success 'git checkout - with -d, complete only references' '
 '
 
 test_expect_success 'git switch - with --track, complete only remote branches' '
-	test_completion "git switch --track " <<-\EOF
+	test_completion "git switch --track " <<-\EOF &&
+	other/branch-in-other Z
+	other/main-in-other Z
+	EOF
+	test_completion "git switch -t " <<-\EOF
 	other/branch-in-other Z
 	other/main-in-other Z
 	EOF
 '
 
 test_expect_success 'git checkout - with --track, complete only remote branches' '
-	test_completion "git checkout --track " <<-\EOF
+	test_completion "git checkout --track " <<-\EOF &&
+	other/branch-in-other Z
+	other/main-in-other Z
+	EOF
+	test_completion "git checkout -t " <<-\EOF
 	other/branch-in-other Z
 	other/main-in-other Z
 	EOF
