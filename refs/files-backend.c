@@ -2800,6 +2800,7 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 	int head_type;
 	struct files_transaction_backend_data *backend_data;
 	struct ref_transaction *packed_transaction = NULL;
+	int is_reftable = !strcmp(refs->packed_ref_store->be->name, "reftable");
 
 	assert(err);
 
@@ -2808,6 +2809,16 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 
 	CALLOC_ARRAY(backend_data, 1);
 	transaction->backend_data = backend_data;
+
+	if (is_reftable) {
+		packed_transaction = ref_store_transaction_begin(
+			refs->packed_ref_store, err);
+		if (!packed_transaction) {
+			ret = TRANSACTION_GENERIC_ERROR;
+			goto cleanup;
+		}
+		backend_data->packed_transaction = packed_transaction;
+	}
 
 	/*
 	 * Fail if a refname appears more than once in the
@@ -2881,9 +2892,9 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 		if (ret)
 			goto cleanup;
 
-		if (update->flags & REF_DELETING &&
-		    !(update->flags & REF_LOG_ONLY) &&
-		    !(update->flags & REF_IS_PRUNING)) {
+		if (is_reftable || (update->flags & REF_DELETING &&
+				    !(update->flags & REF_LOG_ONLY) &&
+				    !(update->flags & REF_IS_PRUNING))) {
 			/*
 			 * This reference has to be deleted from
 			 * packed-refs if it exists there.
@@ -2909,8 +2920,9 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 	}
 
 	if (packed_transaction) {
-		backend_data->packed_transaction_needed = is_packed_transaction_needed(refs->packed_ref_store,
-										       packed_transaction);
+		backend_data->packed_transaction_needed = is_reftable ||
+			is_packed_transaction_needed(refs->packed_ref_store,
+						     packed_transaction);
 		if (backend_data->packed_transaction_needed) {
 			ret = ref_transaction_prepare(packed_transaction, err);
 			/*
