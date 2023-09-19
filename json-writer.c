@@ -19,6 +19,10 @@ void jw_release(struct json_writer *jw)
 static void append_quoted_string(struct strbuf *out, const char *in)
 {
 	unsigned char c;
+	if (in == NULL || strlen(in) == 0) {
+		strbuf_addstr(out, "\"\"");
+		return;
+	}
 
 	strbuf_addch(out, '"');
 	while ((c = *in++) != '\0') {
