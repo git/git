@@ -18,16 +18,6 @@ struct ref_store *packed_ref_store_create(struct repository *repo,
 					  unsigned int store_flags);
 
 /*
- * Lock the packed-refs file for writing. Flags is passed to
- * hold_lock_file_for_update(). Return 0 on success. On errors, write
- * an error message to `err` and return a nonzero value.
- */
-int packed_refs_lock(struct ref_store *ref_store, int flags, struct strbuf *err);
-
-void packed_refs_unlock(struct ref_store *ref_store);
-int packed_refs_is_locked(struct ref_store *ref_store);
-
-/*
  * Return true if `transaction` really needs to be carried out against
  * the specified packed_ref_store, or false if it can be skipped
  * (i.e., because it is an obvious NOOP). `ref_store` must be locked

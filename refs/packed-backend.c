@@ -1153,7 +1153,7 @@ static int write_packed_entry(FILE *fh, const char *refname,
 	return 0;
 }
 
-int packed_refs_lock(struct ref_store *ref_store, int flags, struct strbuf *err)
+static int packed_refs_lock(struct ref_store *ref_store, int flags, struct strbuf *err)
 {
 	struct packed_ref_store *refs =
 		packed_downcast(ref_store, REF_STORE_WRITE | REF_STORE_MAIN,
@@ -1212,7 +1212,7 @@ int packed_refs_lock(struct ref_store *ref_store, int flags, struct strbuf *err)
 	return 0;
 }
 
-void packed_refs_unlock(struct ref_store *ref_store)
+static void packed_refs_unlock(struct ref_store *ref_store)
 {
 	struct packed_ref_store *refs = packed_downcast(
 			ref_store,
@@ -1222,16 +1222,6 @@ void packed_refs_unlock(struct ref_store *ref_store)
 	if (!is_lock_file_locked(&refs->lock))
 		BUG("packed_refs_unlock() called when not locked");
 	rollback_lock_file(&refs->lock);
-}
-
-int packed_refs_is_locked(struct ref_store *ref_store)
-{
-	struct packed_ref_store *refs = packed_downcast(
-			ref_store,
-			REF_STORE_READ | REF_STORE_WRITE,
-			"packed_refs_is_locked");
-
-	return is_lock_file_locked(&refs->lock);
 }
 
 /*
@@ -1552,8 +1542,6 @@ int is_packed_transaction_needed(struct ref_store *ref_store,
 
 struct packed_transaction_backend_data {
 	/* True iff the transaction owns the packed-refs lock. */
-	int own_lock;
-
 	struct string_list updates;
 };
 
@@ -1568,9 +1556,8 @@ static void packed_transaction_cleanup(struct packed_ref_store *refs,
 		if (is_tempfile_active(refs->tempfile))
 			delete_tempfile(&refs->tempfile);
 
-		if (data->own_lock && is_lock_file_locked(&refs->lock)) {
+		if (is_lock_file_locked(&refs->lock)) {
 			packed_refs_unlock(&refs->base);
-			data->own_lock = 0;
 		}
 
 		free(data);
@@ -1580,12 +1567,25 @@ static void packed_transaction_cleanup(struct packed_ref_store *refs,
 	transaction->state = REF_TRANSACTION_CLOSED;
 }
 
-
 static struct ref_transaction *packed_transaction_begin(struct ref_store *ref_store,
-							struct strbuf *err) {
-	struct ref_transaction *tr;
-	CALLOC_ARRAY(tr, 1);
-	return tr;
+				    struct strbuf *err)
+{
+	struct packed_ref_store *refs = packed_downcast(
+			ref_store,
+			REF_STORE_READ | REF_STORE_WRITE | REF_STORE_ODB,
+			"ref_transaction_begin");
+	struct packed_transaction_backend_data *data;
+	struct ref_transaction *transaction;
+
+	if (!is_lock_file_locked(&refs->lock)) {
+		if (packed_refs_lock(ref_store, 0, err))
+			return NULL;
+	}
+	CALLOC_ARRAY(transaction, 1);
+	CALLOC_ARRAY(data, 1);
+	string_list_init_nodup(&data->updates);
+	transaction->backend_data = data;
+	return transaction;
 }
 
 static int packed_transaction_prepare(struct ref_store *ref_store,
@@ -1596,7 +1596,7 @@ static int packed_transaction_prepare(struct ref_store *ref_store,
 			ref_store,
 			REF_STORE_READ | REF_STORE_WRITE | REF_STORE_ODB,
 			"ref_transaction_prepare");
-	struct packed_transaction_backend_data *data;
+	struct packed_transaction_backend_data *data = transaction->backend_data;
 	size_t i;
 	int ret = TRANSACTION_GENERIC_ERROR;
 
@@ -1608,11 +1608,6 @@ static int packed_transaction_prepare(struct ref_store *ref_store,
 	 * caller wants to optimize away empty transactions, it should
 	 * do so itself.
 	 */
-
-	CALLOC_ARRAY(data, 1);
-	string_list_init_nodup(&data->updates);
-
-	transaction->backend_data = data;
 
 	/*
 	 * Stick the updates in a string list by refname so that we
@@ -1630,12 +1625,6 @@ static int packed_transaction_prepare(struct ref_store *ref_store,
 
 	if (ref_update_reject_duplicates(&data->updates, err))
 		goto failure;
-
-	if (!is_lock_file_locked(&refs->lock)) {
-		if (packed_refs_lock(ref_store, 0, err))
-			goto failure;
-		data->own_lock = 1;
-	}
 
 	if (write_with_updates(refs, &data->updates, err))
 		goto failure;

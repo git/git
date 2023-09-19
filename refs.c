@@ -2320,10 +2320,9 @@ int ref_transaction_abort(struct ref_transaction *transaction,
 	int ret = 0;
 
 	switch (transaction->state) {
-	case REF_TRANSACTION_OPEN:
-		/* No need to abort explicitly. */
-		break;
 	case REF_TRANSACTION_PREPARED:
+	case REF_TRANSACTION_OPEN:
+		/* an OPEN transactions may have a lock. */
 		ret = refs->be->transaction_abort(refs, transaction, err);
 		break;
 	case REF_TRANSACTION_CLOSED:
