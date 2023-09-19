@@ -87,6 +87,10 @@ being displayed. Examples: "--notes=foo" will show only notes from
 	"--notes --notes=foo --no-notes --notes=bar" will only show notes
 	from "refs/notes/bar".
 
+--show-notes-by-default::
+	Show the default notes unless options for displaying specific
+	notes are given.
+
 --show-notes[=<ref>]::
 --[no-]standard-notes::
 	These options are deprecated. Use the above --notes/--no-notes

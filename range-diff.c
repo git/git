@@ -60,7 +60,7 @@ static int read_patches(const char *range, struct string_list *list,
 		     "--output-indicator-context=#",
 		     "--no-abbrev-commit",
 		     "--pretty=medium",
-		     "--notes",
+		     "--show-notes-by-default",
 		     NULL);
 	strvec_push(&cp.args, range);
 	if (other_arg)
