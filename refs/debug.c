@@ -43,23 +43,16 @@ static int debug_init_db(struct ref_store *refs, struct strbuf *err)
 
 static struct ref_transaction *debug_transaction_begin(struct ref_store *ref_store,
 						       struct strbuf *err) {
+	struct debug_ref_store *drefs = (struct debug_ref_store *)ref_store;
 	struct ref_transaction *tr;
+	struct ref_transaction *sub_tr = ref_store_transaction_begin(drefs->refs, err);
+	trace_printf_key(&trace_refs, "transaction_begin: %s\n", err->buf);
+	if (!sub_tr) {
+		return NULL;
+	}
 	CALLOC_ARRAY(tr, 1);
+	tr->backend_data = sub_tr;
 	return tr;
-}
-
-static int debug_transaction_prepare(struct ref_store *refs,
-				     struct ref_transaction *transaction,
-				     struct strbuf *err)
-{
-	struct debug_ref_store *drefs = (struct debug_ref_store *)refs;
-	int res;
-	transaction->ref_store = drefs->refs;
-	res = drefs->refs->be->transaction_prepare(drefs->refs, transaction,
-						   err);
-	trace_printf_key(&trace_refs, "transaction_prepare: %d \"%s\"\n", res,
-			 err->buf);
-	return res;
 }
 
 static void print_update(int i, const char *refname,
@@ -77,20 +70,59 @@ static void print_update(int i, const char *refname,
 	type &= 0xf; /* see refs.h REF_* */
 	flags &= REF_HAVE_NEW | REF_HAVE_OLD | REF_NO_DEREF |
 		REF_FORCE_CREATE_REFLOG;
-	trace_printf_key(&trace_refs, "%d: %s %s -> %s (F=0x%x, T=0x%x) \"%s\"\n", i, refname,
+	trace_printf_key(&trace_refs, "  %d: '%s' %s -> %s (F=0x%x, T=0x%x) \"%s\"\n", i, refname,
 		o, n, flags, type, msg);
 }
 
-static void print_transaction(struct ref_transaction *transaction)
+static void print_transaction(struct ref_transaction *transaction,
+			      const char *action,
+			      int res, struct strbuf *err)
 {
 	int i;
-	trace_printf_key(&trace_refs, "transaction {\n");
+	trace_printf_key(&trace_refs, "transaction %s {\n", action);
 	for (i = 0; i < transaction->nr; i++) {
 		struct ref_update *u = transaction->updates[i];
 		print_update(i, u->refname, &u->old_oid, &u->new_oid, u->flags,
 			     u->type, u->msg);
 	}
-	trace_printf_key(&trace_refs, "}\n");
+	trace_printf_key(&trace_refs, "}: %d '%s'\n", res, err->buf);
+}
+
+static void copy_update(struct ref_update *dst,
+			struct ref_update *src) {
+	/* dst->refname is const char; can't assign structs */
+	dst->new_oid = src->new_oid;
+	dst->old_oid = src->old_oid;
+	dst->flags = src->flags;
+	dst->backend_data = NULL;
+	dst->type = src->type;
+	dst->msg = xstrdup(src->msg);
+	dst->parent_update = NULL;
+	/* refname is done as part of FLEX_ALLOC_STR. */
+}
+
+static int debug_transaction_prepare(struct ref_store *refs,
+				     struct ref_transaction *transaction,
+				     struct strbuf *err)
+{
+	struct debug_ref_store *drefs = (struct debug_ref_store *)refs;
+	struct ref_transaction *sub_transaction = transaction->backend_data;
+	int res;
+	int i;
+
+	ALLOC_GROW(sub_transaction->updates, transaction->nr, sub_transaction->alloc);
+	for (i = 0;  i < transaction->nr; i++) {
+		struct ref_update *up = transaction->updates[i];
+		struct ref_update *sub_up;
+		FLEX_ALLOC_STR(sub_up, refname, up->refname);
+		copy_update(sub_up, up);
+		sub_transaction->updates[i] = sub_up;
+	}
+	sub_transaction->nr = transaction->nr;
+	res = drefs->refs->be->transaction_prepare(drefs->refs, sub_transaction,
+						   err);
+	print_transaction(sub_transaction, "prepare", res, err);
+	return res;
 }
 
 static int debug_transaction_finish(struct ref_store *refs,
@@ -98,12 +130,11 @@ static int debug_transaction_finish(struct ref_store *refs,
 				    struct strbuf *err)
 {
 	struct debug_ref_store *drefs = (struct debug_ref_store *)refs;
+	struct ref_transaction *sub_transaction = transaction->backend_data;
 	int res;
-	transaction->ref_store = drefs->refs;
-	res = drefs->refs->be->transaction_finish(drefs->refs, transaction,
+	res = drefs->refs->be->transaction_finish(drefs->refs, sub_transaction,
 						  err);
-	print_transaction(transaction);
-	trace_printf_key(&trace_refs, "finish: %d\n", res);
+	print_transaction(sub_transaction, "finish", res, err);
 	return res;
 }
 
@@ -112,9 +143,11 @@ static int debug_transaction_abort(struct ref_store *refs,
 				   struct strbuf *err)
 {
 	struct debug_ref_store *drefs = (struct debug_ref_store *)refs;
+	struct ref_transaction *sub_transaction = transaction->backend_data;
 	int res;
 	transaction->ref_store = drefs->refs;
-	res = drefs->refs->be->transaction_abort(drefs->refs, transaction, err);
+	res = drefs->refs->be->transaction_abort(drefs->refs, sub_transaction, err);
+	print_transaction(sub_transaction, "abort", res, err);
 	return res;
 }
 
@@ -123,10 +156,12 @@ static int debug_initial_transaction_commit(struct ref_store *refs,
 					    struct strbuf *err)
 {
 	struct debug_ref_store *drefs = (struct debug_ref_store *)refs;
+	struct ref_transaction *sub_transaction = transaction->backend_data;
 	int res;
 	transaction->ref_store = drefs->refs;
 	res = drefs->refs->be->initial_transaction_commit(drefs->refs,
-							  transaction, err);
+							  sub_transaction, err);
+	print_transaction(sub_transaction, "commit", res, err);
 	return res;
 }
 
