@@ -1101,8 +1101,8 @@ Examples.
 
 the above are equivalent to:
 
-. `git pull http://www.kernel.org/pub/scm/git/git.git/ HEAD`
-. `git pull http://www.kernel.org/pub/scm/git/git.git/ tag v0.99.1`
+. `git pull https://git.kernel.org/pub/scm/git/git.git/ HEAD`
+. `git pull https://git.kernel.org/pub/scm/git/git.git/ tag v0.99.1`
 
 
 How does the merge work?
