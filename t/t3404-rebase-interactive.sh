@@ -759,7 +759,7 @@ test_expect_success 'reword' '
 	git show HEAD~2 | grep "C changed"
 '
 
-test_expect_success 'no uncommited changes when rewording the todo list is reloaded' '
+test_expect_success 'no uncommitted changes when rewording and the todo list is reloaded' '
 	git checkout E &&
 	test_when_finished "git checkout @{-1}" &&
 	(
