@@ -36,14 +36,14 @@
  * exists for ce that is a submodule -- it is a submodule that is not
  * checked out).  Return negative for an error.
  */
-static int check_removed(const struct index_state *istate, const struct cache_entry *ce, struct stat *st)
+static int check_removed(const struct cache_entry *ce, struct stat *st)
 {
-	assert(is_fsmonitor_refreshed(istate));
-	if (!(ce->ce_flags & CE_FSMONITOR_VALID) && lstat(ce->name, st) < 0) {
+	if (lstat(ce->name, st) < 0) {
 		if (!is_missing_file_error(errno))
 			return -1;
 		return 1;
 	}
+
 	if (has_symlink_leading_path(ce->name, ce_namelen(ce)))
 		return 1;
 	if (S_ISDIR(st->st_mode)) {
@@ -149,7 +149,7 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
 			memset(&(dpath->parent[0]), 0,
 			       sizeof(struct combine_diff_parent)*5);
 
-			changed = check_removed(istate, ce, &st);
+			changed = check_removed(ce, &st);
 			if (!changed)
 				wt_mode = ce_mode_from_stat(ce, st.st_mode);
 			else {
@@ -229,7 +229,7 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
 		} else {
 			struct stat st;
 
-			changed = check_removed(istate, ce, &st);
+			changed = check_removed(ce, &st);
 			if (changed) {
 				if (changed < 0) {
 					perror(ce->name);
@@ -303,7 +303,7 @@ static int get_stat_data(const struct index_state *istate,
 	if (!cached && !ce_uptodate(ce)) {
 		int changed;
 		struct stat st;
-		changed = check_removed(istate, ce, &st);
+		changed = check_removed(ce, &st);
 		if (changed < 0)
 			return -1;
 		else if (changed) {
