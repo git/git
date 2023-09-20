@@ -4854,10 +4854,6 @@ static int pick_commits(struct repository *r,
 		struct strbuf head_ref = STRBUF_INIT, buf = STRBUF_INIT;
 		struct stat st;
 
-		/* Stopped in the middle, as planned? */
-		if (todo_list->current < todo_list->nr)
-			return 0;
-
 		if (read_oneliner(&head_ref, rebase_path_head_name(), 0) &&
 				starts_with(head_ref.buf, "refs/")) {
 			const char *msg;
