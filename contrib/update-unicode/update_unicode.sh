@@ -1,5 +1,5 @@
 #!/bin/sh
-#See http://www.unicode.org/reports/tr44/
+#See https://www.unicode.org/reports/tr44/
 #
 #Me Enclosing_Mark  an enclosing combining mark
 #Mn Nonspacing_Mark a nonspacing combining mark (zero advance width)
@@ -8,8 +8,8 @@
 cd "$(dirname "$0")"
 UNICODEWIDTH_H=$(git rev-parse --show-toplevel)/unicode-width.h
 
-wget -N http://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt \
-	http://www.unicode.org/Public/UCD/latest/ucd/EastAsianWidth.txt &&
+wget -N https://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt \
+	https://www.unicode.org/Public/UCD/latest/ucd/EastAsianWidth.txt &&
 if ! test -d uniset; then
 	git clone https://github.com/depp/uniset.git &&
 	( cd uniset && git checkout 4b186196dd )

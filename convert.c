@@ -438,7 +438,7 @@ static int encode_to_git(const char *path, const char *src, size_t src_len,
 	 * generate a faulty round trip without an iconv error. Iconv errors
 	 * are already caught above.
 	 *
-	 * [1] http://unicode.org/faq/utf_bom.html#gen2
+	 * [1] https://unicode.org/faq/utf_bom.html#gen2
 	 * [2] https://support.microsoft.com/en-us/help/170559/prb-conversion-problem-between-shift-jis-and-unicode
 	 */
 	if (die_on_error && check_roundtrip(enc)) {

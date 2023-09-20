@@ -63,7 +63,7 @@ PREREQUISITES
 The code is written in Go (http://golang.org/) and the Go compiler is
 required. Currently, the compiler must be built and installed from tip
 of source, in order to include a fix in the reverse http proxy:
-http://code.google.com/p/go/source/detail?r=a615b796570a2cd8591884767a7d67ede74f6648
+https://code.google.com/p/go/source/detail?r=a615b796570a2cd8591884767a7d67ede74f6648
 
 
 BUILDING

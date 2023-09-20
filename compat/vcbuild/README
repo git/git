@@ -67,14 +67,14 @@ The Steps of Build Git with VS2008
 
    You can either use the binary repository:
 
-       WWW: http://repo.or.cz/w/msvcgit.git
+       WWW: https://repo.or.cz/w/msvcgit.git
        Git: git clone git://repo.or.cz/msvcgit.git
-       Zip: http://repo.or.cz/w/msvcgit.git?a=snapshot;h=master;sf=zip
+       Zip: https://repo.or.cz/w/msvcgit.git?a=snapshot;h=master;sf=zip
 
    and call the setup_32bit_env.cmd batch script before compiling Git,
    (see repo/package README for details), or the source repository:
 
-       WWW: http://repo.or.cz/w/gitbuild.git
+       WWW: https://repo.or.cz/w/gitbuild.git
        Git: git clone git://repo.or.cz/gitbuild.git
        Zip: (None, as it's a project with submodules)
 
@@ -83,9 +83,9 @@ The Steps of Build Git with VS2008
 2. Ensure you have the msysgit environment in your path, so you have
    GNU Make, bash and perl available.
 
-       WWW: http://repo.or.cz/w/msysgit.git
+       WWW: https://repo.or.cz/w/msysgit.git
        Git: git clone git://repo.or.cz/msysgit.git
-       Zip: http://repo.or.cz/w/msysgit.git?a=snapshot;h=master;sf=zip
+       Zip: https://repo.or.cz/w/msysgit.git?a=snapshot;h=master;sf=zip
 
    This environment is also needed when you use the resulting
    executables, since Git might need to run scripts which are part of

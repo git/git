@@ -371,9 +371,9 @@ wiki_install () {
 	if ! test -f $MW_FILENAME
 	then
 		echo "Downloading $MW_VERSION_MAJOR.$MW_VERSION_MINOR sources ..."
-		wget "http://download.wikimedia.org/mediawiki/$MW_VERSION_MAJOR/$MW_FILENAME" ||
+		wget "https://download.wikimedia.org/mediawiki/$MW_VERSION_MAJOR/$MW_FILENAME" ||
 			error "Unable to download "\
-			"http://download.wikimedia.org/mediawiki/$MW_VERSION_MAJOR/"\
+			"https://download.wikimedia.org/mediawiki/$MW_VERSION_MAJOR/"\
 			"$MW_FILENAME. "\
 			"Please fix your connection and launch the script again."
 		echo "$MW_FILENAME downloaded in $(pwd)/;" \

@@ -4,7 +4,7 @@
 # AppendPatch - A script to be used together with ExternalEditor
 # for Mozilla Thunderbird to properly include patches inline in e-mails.
 
-# ExternalEditor can be downloaded at http://globs.org/articles.php?lng=en&pg=2
+# ExternalEditor can be downloaded at https://globs.org/articles.php?lng=en&pg=2
 
 CONFFILE=~/.appprc
 

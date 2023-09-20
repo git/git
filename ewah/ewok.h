@@ -14,7 +14,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * along with this program; if not, see <https://www.gnu.org/licenses/>.
  */
 #ifndef __EWOK_BITMAP_H__
 #define __EWOK_BITMAP_H__
@@ -27,7 +27,7 @@ typedef uint64_t eword_t;
  * Do not use __builtin_popcountll. The GCC implementation
  * is notoriously slow on all platforms.
  *
- * See: http://gcc.gnu.org/bugzilla/show_bug.cgi?id=36041
+ * See: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=36041
  */
 static inline uint32_t ewah_bit_popcount64(uint64_t x)
 {

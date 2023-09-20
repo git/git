@@ -203,7 +203,7 @@ __git_dequote ()
 #   GNU General Public License for more details.
 #
 #   You should have received a copy of the GNU General Public License
-#   along with this program; if not, see <http://www.gnu.org/licenses/>.
+#   along with this program; if not, see <https://www.gnu.org/licenses/>.
 #
 #   The latest version of this software can be obtained here:
 #
