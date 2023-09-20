@@ -8192,8 +8192,8 @@ sub git_feed {
 	my $format = shift || 'atom';
 	my $have_blame = gitweb_check_feature('blame');
 
-	# Atom: http://www.atomenabled.org/developers/syndication/
-	# RSS:  http://www.notestips.com/80256B3A007F2692/1/NAMO5P9UPQ
+	# Atom: https://web.archive.org/web/20230815171113/https://www.atomenabled.org/developers/syndication/
+	# RSS:  https://web.archive.org/web/20030729001534/http://www.notestips.com/80256B3A007F2692/1/NAMO5P9UPQ
 	if ($format ne 'rss' && $format ne 'atom') {
 		die_error(400, "Unknown web feed format");
 	}
