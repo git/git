@@ -224,6 +224,25 @@ test_expect_success "diff --no-index treats '-' as stdin" '
 	test_must_be_empty actual
 '
 
+test_expect_success "diff --no-index -R treats '-' as stdin" '
+	cat >expect <<-EOF &&
+	diff --git b/a/1 a/-
+	index $(git hash-object --stdin <a/1)..$ZERO_OID 100644
+	--- b/a/1
+	+++ a/-
+	@@ -1 +1 @@
+	-1
+	+x
+	EOF
+
+	test_write_lines x | test_expect_code 1 \
+		git -c core.abbrev=no diff --no-index -R -- - a/1 >actual &&
+	test_cmp expect actual &&
+
+	test_write_lines 1 | git diff --no-index -R -- a/1 - >actual &&
+	test_must_be_empty actual
+'
+
 test_expect_success 'diff --no-index refuses to diff stdin and a directory' '
 	test_must_fail git diff --no-index -- - a </dev/null 2>err &&
 	grep "fatal: cannot compare stdin to a directory" err
