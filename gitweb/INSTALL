@@ -203,7 +203,7 @@ You can specify the following configuration variables when building GIT:
    created.  [Default: /etc/gitweb.conf]
  * HIGHLIGHT_BIN
    Path to the highlight executable to use (must be the one from
-   http://www.andre-simon.de due to assumptions about parameters and output).
+   http://andre-simon.de/zip/download.php due to assumptions about parameters and output).
    Useful if highlight is not installed on your webserver's PATH.
    [Default: highlight]
 

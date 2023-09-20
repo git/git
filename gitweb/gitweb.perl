@@ -197,7 +197,7 @@ our @diff_opts = ('-M'); # taken from git_commit
 our $prevent_xss = 0;
 
 # Path to the highlight executable to use (must be the one from
-# http://www.andre-simon.de due to assumptions about parameters and output).
+# http://andre-simon.de/zip/download.php due to assumptions about parameters and output).
 # Useful if highlight is not installed on your webserver's PATH.
 # [Default: highlight]
 our $highlight_bin = "++HIGHLIGHT_BIN++";
@@ -269,7 +269,7 @@ our %avatar_size = (
 # Leave it undefined (or set to 'undef') to turn off load checking.
 our $maxload = 300;
 
-# configuration for 'highlight' (http://www.andre-simon.de/)
+# configuration for 'highlight' (http://andre-simon.de/doku/highlight/en/highlight.php)
 # match by basename
 our %highlight_basename = (
 	#'Program' => 'py',
