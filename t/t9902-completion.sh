@@ -2464,6 +2464,24 @@ test_expect_success 'completion used <cmd> completion for alias: !f() { : git <c
 	EOF
 '
 
+test_expect_success 'completion used <cmd> completion for alias: !f() { : <cmd> ; ... }' '
+	test_config alias.co "!f() { : checkout ; if ... } f" &&
+	test_completion "git co m" <<-\EOF
+	main Z
+	mybranch Z
+	mytag Z
+	EOF
+'
+
+test_expect_success 'completion used <cmd> completion for alias: !f() { : <cmd>; ... }' '
+	test_config alias.co "!f() { : checkout; if ... } f" &&
+	test_completion "git co m" <<-\EOF
+	main Z
+	mybranch Z
+	mytag Z
+	EOF
+'
+
 test_expect_success 'completion without explicit _git_xxx function' '
 	test_completion "git version --" <<-\EOF
 	--build-options Z
