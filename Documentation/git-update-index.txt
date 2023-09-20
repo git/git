@@ -162,13 +162,19 @@ you will need to handle the situation manually.
 	Write the resulting index out in the named on-disk format version.
 	Supported versions are 2, 3 and 4. The current default version is 2
 	or 3, depending on whether extra features are used, such as
-	`git add -N`.
+	`git add -N`.  With `--verbose`, also report the version the index
+	file uses before and after this command.
 +
 Version 4 performs a simple pathname compression that reduces index
 size by 30%-50% on large repositories, which results in faster load
-time. Version 4 is relatively young (first released in 1.8.0 in
-October 2012). Other Git implementations such as JGit and libgit2
-may not support it yet.
+time.  Git supports it since version 1.8.0, released in October 2012,
+and support for it was added to libgit2 in 2016 and to JGit in 2020.
+Older versions of this manual page called it "relatively young", but
+it should be considered mature technology these days.
+
+--show-index-version::
+	Report the index format version used by the on-disk index file.
+	See `--index-version` above.
 
 -z::
 	Only meaningful with `--stdin` or `--index-info`; paths are

@@ -1090,6 +1090,8 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 			resolve_undo_clear_callback),
 		OPT_INTEGER(0, "index-version", &preferred_index_format,
 			N_("write index in this format")),
+		OPT_SET_INT(0, "show-index-version", &preferred_index_format,
+			    N_("report on-disk index format version"), -1),
 		OPT_BOOL(0, "split-index", &split_index,
 			N_("enable or disable split index")),
 		OPT_BOOL(0, "untracked-cache", &untracked_cache,
@@ -1182,15 +1184,20 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 
 	getline_fn = nul_term_line ? strbuf_getline_nul : strbuf_getline_lf;
 	if (preferred_index_format) {
-		if (preferred_index_format < INDEX_FORMAT_LB ||
-		    INDEX_FORMAT_UB < preferred_index_format)
+		if (preferred_index_format < 0) {
+			printf(_("%d\n"), the_index.version);
+		} else if (preferred_index_format < INDEX_FORMAT_LB ||
+			   INDEX_FORMAT_UB < preferred_index_format) {
 			die("index-version %d not in range: %d..%d",
 			    preferred_index_format,
 			    INDEX_FORMAT_LB, INDEX_FORMAT_UB);
-
-		if (the_index.version != preferred_index_format)
-			the_index.cache_changed |= SOMETHING_CHANGED;
-		the_index.version = preferred_index_format;
+		} else {
+			if (the_index.version != preferred_index_format)
+				the_index.cache_changed |= SOMETHING_CHANGED;
+			report(_("index-version: was %d, set to %d"),
+			       the_index.version, preferred_index_format);
+			the_index.version = preferred_index_format;
+		}
 	}
 
 	if (read_from_stdin) {
