@@ -584,24 +584,9 @@ proc git {args} {
 proc _open_stdout_stderr {cmd} {
 	_trace_exec $cmd
 	if {[catch {
-			set fd [open [concat [list | ] $cmd] r]
-		} err]} {
-		if {   [lindex $cmd end] eq {2>@1}
-		    && $err eq {can not find channel named "1"}
-			} {
-			# Older versions of Tcl 8.4 don't have this 2>@1 IO
-			# redirect operator.  Fallback to |& cat for those.
-			# The command was not actually started, so its safe
-			# to try to start it a second time.
-			#
-			set fd [open [concat \
-				[list | ] \
-				[lrange $cmd 0 end-1] \
-				[list |& cat] \
-				] r]
-		} else {
-			error $err
-		}
+		set fd [open [concat [list | ] $cmd] r]
+	} err]} {
+		error $err
 	}
 	fconfigure $fd -eofchar {}
 	return $fd
