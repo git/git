@@ -54,6 +54,13 @@ UI, Workflows & Features
    describe complex "revert of revert of revert" situation better in
    their own words.
 
+ * The command-line complation support (in contrib/) learned to
+   complete "git commit --trailer=" for possible trailer keys.
+
+
+ * "git update-index" learns "--show-index-version" to inspect
+   the index format version used by the on-disk index file.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -141,6 +148,24 @@ Fixes since v2.42
    "--track" option, to complete remote-tracking branches.
    (merge 9f892830d6 js/complete-checkout-t later to maint).
 
+ * "git diff --no-index -R <(one) <(two)" did not work correctly,
+   which has been corrected.
+   (merge 48944f214c pw/diff-no-index-from-named-pipes later to maint).
+
+ * Update "git maintainance" timers' implementation based on systemd
+   timers to work with WSL.
+   (merge 5e8515e8e8 js/systemd-timers-wsl-fix later to maint).
+
+ * "git diff --cached" codepath did not fill the necessary stat
+   information for a file when fsmonitor knows it is clean and ended
+   up behaving as if it is not clean, which has been corrected.
+   (merge 6a044a2048 js/diff-cached-fsmonitor-fix later to maint).
+
+ * Clarify how "alias.foo = : git cmd ; aliased-command-string" should
+   be spelled with necessary whitespaces around punctuation marks to
+   work.
+   (merge 4333267995 pb/completion-aliases-doc later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge fd3ba590d8 ws/git-push-doc-grammofix later to maint).
    (merge 5f33a843de ds/upload-pack-error-sequence-fix later to maint).
@@ -155,3 +180,5 @@ Fixes since v2.42
    (merge 82af2c639c ob/sequencer-reword-error-message later to maint).
    (merge 2a63c79dae rs/grep-parseopt-simplify later to maint).
    (merge 078c42531e rs/name-rev-use-opt-hidden-bool later to maint).
+   (merge 63642d58b4 ob/sequencer-remove-dead-code later to maint).
+   (merge 8aae489756 ob/t3404-typofix later to maint).
