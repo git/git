@@ -86,6 +86,9 @@ Performance, Internal Implementation, Development Support etc.
  * Unused parameters to functions are marked as such, and/or removed,
    in order to bring us closer to -Wunused-parameter clean.
 
+ * The code to keep track of existing packs in the repository while
+   repacking has been refactored.
+
 
 Fixes since v2.42
 -----------------
@@ -166,6 +169,15 @@ Fixes since v2.42
    work.
    (merge 4333267995 pb/completion-aliases-doc later to maint).
 
+ * HTTP Header redaction code has been adjusted for a newer version of
+   cURL library that shows its traces differently from earlier
+   versions.
+   (merge 0763c3a2c4 jk/redact-h2h3-headers-fix later to maint).
+
+ * An error message given by "git send-email" when given a malformed
+   address did not give correct information, which has been corrected.
+   (merge 12288cc44e tb/send-email-extract-valid-address-error-message-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge fd3ba590d8 ws/git-push-doc-grammofix later to maint).
    (merge 5f33a843de ds/upload-pack-error-sequence-fix later to maint).
@@ -182,3 +194,5 @@ Fixes since v2.42
    (merge 078c42531e rs/name-rev-use-opt-hidden-bool later to maint).
    (merge 63642d58b4 ob/sequencer-remove-dead-code later to maint).
    (merge 8aae489756 ob/t3404-typofix later to maint).
+   (merge 58be11432e eg/config-type-path-docfix later to maint).
+   (merge 563f339d98 ch/clean-docfix later to maint).
