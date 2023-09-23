@@ -119,8 +119,10 @@ struct trailer_iterator {
 	struct strbuf val;
 
 	/* private */
-	struct trailer_info info;
-	size_t cur;
+	struct {
+		struct trailer_info info;
+		size_t cur;
+	} internal;
 };
 
 /*
