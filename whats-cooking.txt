@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2023, #06; Tue, 19)
-X-master-at: d4a83d07b8cc66d4afac2f33a8af729f2ba93bba
-X-next-at: bd06505f9e3b71fbe55c339b9e635ade27246b0f
+Subject: What's cooking in git.git (Sep 2023, #07; Fri, 22)
+X-master-at: bcb6cae2966cc407ca1afc77413b3ef11103c175
+X-next-at: 8ccd20d70d13287c9d32e64e7979b41cda189595
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Sep 2023, #06; Tue, 19)
+What's cooking in git.git (Sep 2023, #07; Fri, 22)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,38 +48,270 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* js/complete-checkout-t (2023-09-08) 1 commit
-  (merged to 'next' on 2023-09-08 at 461bb28fbd)
- + completion(switch/checkout): treat --track and -t the same
+* ch/clean-docfix (2023-09-15) 1 commit
+  (merged to 'next' on 2023-09-19 at 1e16b715bb)
+ + git-clean doc: fix "without do cleaning" typo
 
- The completion script (in contrib/) has been taught to treat the
- "-t" option to "git checkout" and "git switch" just like the
- "--track" option, to complete remote-tracking branches.
- source: <pull.1584.git.1694176123471.gitgitgadget@gmail.com>
+ Typofix.
+ source: <pull.1572.git.git.1694800409471.gitgitgadget@gmail.com>
 
 
-* rs/grep-no-no-or (2023-09-07) 1 commit
-  (merged to 'next' on 2023-09-08 at 33849032bc)
- + grep: reject --no-or
+* eg/config-type-path-docfix (2023-09-15) 1 commit
+  (merged to 'next' on 2023-09-19 at 2c8ad3e731)
+ + git-config: fix misworded --type=path explanation
 
- "git grep -e A --no-or -e B" is accepted, even though the negation
- of "or" did not mean anything, which has been tightened.
- source: <6aeb0ebe-0fea-ccd3-089a-ee0b5b5baf10@web.de>
+ Typofix.
+ source: <20230915202610.21206-1-evan.gates@gmail.com>
+
+
+* jc/update-index-show-index-version (2023-09-12) 3 commits
+  (merged to 'next' on 2023-09-13 at b754554df8)
+ + test-tool: retire "index-version"
+ + update-index: add --show-index-version
+ + update-index doc: v4 is OK with JGit and libgit2
+
+ "git update-index" learns "--show-index-version" to inspect
+ the index format version used by the on-disk index file.
+ source: <20230912193235.776292-1-gitster@pobox.com>
+
+
+* jk/ort-unused-parameter-cleanups (2023-09-16) 5 commits
+  (merged to 'next' on 2023-09-18 at 25a5dfc38e)
+ + merge-ort: lowercase a few error messages
+ + merge-ort: drop unused "opt" parameter from merge_check_renames_reusable()
+ + merge-ort: drop unused parameters from detect_and_process_renames()
+ + merge-ort: stop passing "opt" to read_oid_strbuf()
+ + merge-ort: drop custom err() function
+
+ Code clean-up.
+ source: <20230914093409.GA2254811@coredump.intra.peff.net>
+
+
+* jk/redact-h2h3-headers-fix (2023-09-15) 2 commits
+  (merged to 'next' on 2023-09-19 at d40278ef9e)
+ + http: update curl http/2 info matching for curl 8.3.0
+ + http: factor out matching of curl http/2 trace lines
+
+ HTTP Header redaction code has been adjusted for a newer version of
+ cURL library that shows its traces differently from earlier
+ versions.
+ source: <20230915113237.GA3531328@coredump.intra.peff.net>
+
+
+* js/diff-cached-fsmonitor-fix (2023-09-11) 1 commit
+  (merged to 'next' on 2023-09-12 at 7479278da0)
+ + diff-lib: fix check_removed when fsmonitor is on
+ (this branch is used by jc/diff-cached-fsmonitor-fix.)
+
+ "git diff --cached" codepath did not fill the necessary stat
+ information for a file when fsmonitor knows it is clean and ended
+ up behaving as if it is not clean, which has been corrected.
+ source: <20230911170901.49050-2-sokcevic@google.com>
+
+
+* js/systemd-timers-wsl-fix (2023-09-11) 1 commit
+  (merged to 'next' on 2023-09-12 at 71c4cbb1df)
+ + maintenance(systemd): support the Windows Subsystem for Linux
+
+ Update "git maintainance" timers' implementation based on systemd
+ timers to work with WSL.
+ source: <pull.1586.git.1694334620260.gitgitgadget@gmail.com>
+
+
+* la/trailer-cleanups (2023-09-11) 6 commits
+  (merged to 'next' on 2023-09-12 at 779c4a097a)
+ + trailer: split process_command_line_args into separate functions
+ + trailer: split process_input_file into separate pieces
+ + trailer: separate public from internal portion of trailer_iterator
+
+ Code clean-up.
+
+ Keep only the first three clean-ups, and discard the rest to be replaced later.
+ cf. <owly1qetjqo1.fsf@fine.c.googlers.com>
+ cf. <owlyzg1dsswr.fsf@fine.c.googlers.com>
+ source: <pull.1563.v2.git.1694240177.gitgitgadget@gmail.com>
+
+
+* ob/sequencer-remove-dead-code (2023-09-12) 1 commit
+  (merged to 'next' on 2023-09-13 at 1f6c2b336b)
+ + sequencer: remove unreachable exit condition in pick_commits()
+
+ Code clean-up.
+ source: <20230912105541.272917-1-oswald.buddenhagen@gmx.de>
+
+
+* ob/t3404-typofix (2023-09-12) 1 commit
+  (merged to 'next' on 2023-09-13 at b17fa78c3f)
+ + t3404-rebase-interactive.sh: fix typos in title of a rewording test
+
+ Code clean-up.
+ source: <20230912104237.271616-1-oswald.buddenhagen@gmx.de>
+
+
+* pb/complete-commit-trailers (2023-09-12) 2 commits
+  (merged to 'next' on 2023-09-13 at 9a0ec17606)
+ + completion: commit: complete trailers tokens more robustly
+  (merged to 'next' on 2023-09-08 at 842587016d)
+ + completion: commit: complete configured trailer tokens
+
+ The command-line complation support (in contrib/) learned to
+ complete "git commit --trailer=" for possible trailer keys.
+ source: <pull.1583.v2.git.1694539827.gitgitgadget@gmail.com>
+
+
+* pb/completion-aliases-doc (2023-09-12) 1 commit
+  (merged to 'next' on 2023-09-13 at b248a5bc26)
+ + completion: improve doc for complex aliases
+
+ Clarify how "alias.foo = : git cmd ; aliased-command-string" should
+ be spelled with necessary whitespaces around punctuation marks to
+ work.
+ source: <pull.1585.v2.git.1694538135853.gitgitgadget@gmail.com>
+
+
+* pw/diff-no-index-from-named-pipes (2023-09-11) 1 commit
+  (merged to 'next' on 2023-09-12 at 135ecd136f)
+ + diff --no-index: fix -R with stdin
+
+ "git diff --no-index -R <(one) <(two)" did not work correctly,
+ which has been corrected.
+ source: <22fdfa3b-f90e-afcc-667c-705fb7670245@web.de>
+
+
+* tb/repack-existing-packs-cleanup (2023-09-13) 8 commits
+  (merged to 'next' on 2023-09-14 at bb8065e89c)
+ + builtin/repack.c: extract common cruft pack loop
+ + builtin/repack.c: avoid directly inspecting "util"
+ + builtin/repack.c: store existing cruft packs separately
+ + builtin/repack.c: extract `has_existing_non_kept_packs()`
+ + builtin/repack.c: extract redundant pack cleanup for existing packs
+ + builtin/repack.c: extract redundant pack cleanup for --geometric
+ + builtin/repack.c: extract marking packs for deletion
+ + builtin/repack.c: extract structure to store existing packs
+
+ The code to keep track of existing packs in the repository while
+ repacking has been refactored.
+ source: <cover.1694632644.git.me@ttaylorr.com>
+
+
+* tb/send-email-extract-valid-address-error-message-fix (2023-09-18) 1 commit
+  (merged to 'next' on 2023-09-19 at d037282391)
+ + git-send-email.perl: avoid printing undef when validating addresses
+
+ An error message given by "git send-email" when given a malformed
+ address did not give correct information, which has been corrected.
+ source: <545729b619308c6f3397b9aa1747f26ddc58f461.1695054945.git.me@ttaylorr.com>
 
 --------------------------------------------------
 [New Topics]
+
+* hy/doc-show-is-like-log-not-diff-tree (2023-09-20) 1 commit
+  (merged to 'next' on 2023-09-22 at 5492c03eae)
+ + show doc: redirect user to git log manual instead of git diff-tree
+
+ Doc update.
+
+ Will merge to 'master'.
+ source: <20230920132731.1259-1-hanyang.tony@bytedance.com>
+
+
+* jc/alias-completion (2023-09-20) 1 commit
+  (merged to 'next' on 2023-09-22 at 1d069e900b)
+ + completion: loosen and document the requirement around completing alias
+
+ The command line completion script (in contrib/) can be told to
+ complete aliases by including ": git <cmd> ;" in the alias to tell
+ it that the alias should be completed similar to how "git <cmd>" is
+ completed.  The parsing code for the alias as been loosened to
+ allow ';' without an extra space before it.
+
+ Will merge to 'master'.
+ cf. <owlyjzssjro2.fsf@fine.c.googlers.com>
+ source: <xmqqy1h08zsp.fsf_-_@gitster.g>
+
+
+* jk/test-pass-ubsan-options-to-http-test (2023-09-21) 1 commit
+  (merged to 'next' on 2023-09-22 at bbe2f75937)
+ + test-lib: set UBSAN_OPTIONS to match ASan
+
+ UBSAN options were not propagated through the test framework to git
+ run via the httpd, unlike ASAN options, which has been corrected.
+
+ Will merge to 'master'.
+ source: <20230921041825.GA2814583@coredump.intra.peff.net>
+
+
+* ob/am-msgfix (2023-09-21) 1 commit
+  (merged to 'next' on 2023-09-22 at 7f7589a06a)
+ + am: fix error message in parse_opt_show_current_patch()
+
+ The parameters to generate an error message have been corrected.
+
+ Will merge to 'master'.
+ source: <20230921110727.789156-1-oswald.buddenhagen@gmx.de>
+
+
+* js/ci-coverity (2023-09-22) 6 commits
+ - coverity: detect and report when the token or project is incorrect
+ - coverity: allow running on macOS
+ - coverity: support building on Windows
+ - coverity: allow overriding the Coverity project
+ - coverity: cache the Coverity Build Tool
+ - ci: add a GitHub workflow to submit Coverity scans
+
+ GitHub CI workflow has learned to trigger Coverity check.
+
+ source: <pull.1588.git.1695379323.gitgitgadget@gmail.com>
+
+
+* js/doc-status-with-submodules-mark-up-fix (2023-09-22) 1 commit
+ - Documentation/git-status: add missing line breaks
+
+ Docfix.
+
+ Will merge to 'next'.
+ source: <pull.1590.git.1695392082207.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Stalled]
+
+* tk/cherry-pick-sequence-requires-clean-worktree (2023-06-01) 1 commit
+ - cherry-pick: refuse cherry-pick sequence if index is dirty
+
+ "git cherry-pick A" that replays a single commit stopped before
+ clobbering local modification, but "git cherry-pick A..B" did not,
+ which has been corrected.
+
+ Expecting a reroll.
+ cf. <999f12b2-38d6-f446-e763-4985116ad37d@gmail.com>
+ source: <pull.1535.v2.git.1685264889088.gitgitgadget@gmail.com>
+
 
 * jc/diff-cached-fsmonitor-fix (2023-09-15) 3 commits
  - diff-lib: fix check_removed() when fsmonitor is active
  - Merge branch 'jc/fake-lstat' into jc/diff-cached-fsmonitor-fix
  - Merge branch 'js/diff-cached-fsmonitor-fix' into jc/diff-cached-fsmonitor-fix
- (this branch uses jc/fake-lstat and js/diff-cached-fsmonitor-fix.)
+ (this branch uses jc/fake-lstat.)
 
  The optimization based on fsmonitor in the "diff --cached"
  codepath is resurrected with the "fake-lstat" introduced earlier.
 
  It is unknown if the optimization is worth resurrecting, but in case...
  source: <xmqqr0n0h0tw.fsf@gitster.g>
+
+--------------------------------------------------
+[Cooking]
+
+* js/config-parse (2023-09-21) 5 commits
+ - config-parse: split library out of config.[c|h]
+ - config.c: accept config_parse_options in git_config_from_stdin
+ - config: report config parse errors using cb
+ - config: split do_event() into start and flush operations
+ - config: split out config_parse_options
+
+ The parsing routines for the configuration files have been split
+ into a separate file.
+ source: <cover.1695330852.git.steadmon@google.com>
 
 
 * ml/git-gui-exec-path-fix (2023-09-18) 3 commits
@@ -95,24 +327,14 @@ Release tarballs are available at:
 
 
 * ds/stat-name-width-configuration (2023-09-18) 1 commit
- - diff --stat: add config option to limit filename width
+  (merged to 'next' on 2023-09-22 at dbf5bd96e8)
+ + diff --stat: add config option to limit filename width
 
  "git diff" learned diff.statNameWidth configuration variable, to
  give the default width for the name part in the "--stat" output.
 
- Will merge to 'next'.
- source: <87badb12f040d1c66cd9b89074d3de5015a45983.1694446743.git.dsimic@manjaro.org>
-
-
-* tb/send-email-extract-valid-address-error-message-fix (2023-09-18) 1 commit
-  (merged to 'next' on 2023-09-19 at d037282391)
- + git-send-email.perl: avoid printing undef when validating addresses
-
- An error message given by "git send-email" when given a malformed
- address did not give correct information, which has been corrected.
-
  Will merge to 'master'.
- source: <545729b619308c6f3397b9aa1747f26ddc58f461.1695054945.git.me@ttaylorr.com>
+ source: <87badb12f040d1c66cd9b89074d3de5015a45983.1694446743.git.dsimic@manjaro.org>
 
 
 * jk/fsmonitor-unused-parameter (2023-09-18) 8 commits
@@ -132,56 +354,6 @@ Release tarballs are available at:
  Will merge to 'master'.
  source: <20230918222908.GA2659096@coredump.intra.peff.net>
 
---------------------------------------------------
-[Stalled]
-
-* tk/cherry-pick-sequence-requires-clean-worktree (2023-06-01) 1 commit
- - cherry-pick: refuse cherry-pick sequence if index is dirty
-
- "git cherry-pick A" that replays a single commit stopped before
- clobbering local modification, but "git cherry-pick A..B" did not,
- which has been corrected.
-
- Expecting a reroll.
- cf. <999f12b2-38d6-f446-e763-4985116ad37d@gmail.com>
- source: <pull.1535.v2.git.1685264889088.gitgitgadget@gmail.com>
-
---------------------------------------------------
-[Cooking]
-
-* ob/sequencer-remove-dead-code (2023-09-12) 1 commit
-  (merged to 'next' on 2023-09-13 at 1f6c2b336b)
- + sequencer: remove unreachable exit condition in pick_commits()
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <20230912105541.272917-1-oswald.buddenhagen@gmx.de>
-
-
-* ob/t3404-typofix (2023-09-12) 1 commit
-  (merged to 'next' on 2023-09-13 at b17fa78c3f)
- + t3404-rebase-interactive.sh: fix typos in title of a rewording test
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <20230912104237.271616-1-oswald.buddenhagen@gmx.de>
-
-
-* jk/ort-unused-parameter-cleanups (2023-09-16) 5 commits
-  (merged to 'next' on 2023-09-18 at 25a5dfc38e)
- + merge-ort: lowercase a few error messages
- + merge-ort: drop unused "opt" parameter from merge_check_renames_reusable()
- + merge-ort: drop unused parameters from detect_and_process_renames()
- + merge-ort: stop passing "opt" to read_oid_strbuf()
- + merge-ort: drop custom err() function
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <20230914093409.GA2254811@coredump.intra.peff.net>
-
 
 * jc/fake-lstat (2023-09-15) 1 commit
  - cache: add fake_lstat()
@@ -194,40 +366,7 @@ Release tarballs are available at:
  source: <xmqqcyykig1l.fsf@gitster.g>
 
 
-* jk/redact-h2h3-headers-fix (2023-09-15) 2 commits
-  (merged to 'next' on 2023-09-19 at d40278ef9e)
- + http: update curl http/2 info matching for curl 8.3.0
- + http: factor out matching of curl http/2 trace lines
-
- HTTP Header redaction code has been adjusted for a newer version of
- cURL library that shows its traces differently from earlier
- versions.
-
- Will merge to 'master'.
- source: <20230915113237.GA3531328@coredump.intra.peff.net>
-
-
-* ch/clean-docfix (2023-09-15) 1 commit
-  (merged to 'next' on 2023-09-19 at 1e16b715bb)
- + git-clean doc: fix "without do cleaning" typo
-
- Typofix.
-
- Will merge to 'master'.
- source: <pull.1572.git.git.1694800409471.gitgitgadget@gmail.com>
-
-
-* eg/config-type-path-docfix (2023-09-15) 1 commit
-  (merged to 'next' on 2023-09-19 at 2c8ad3e731)
- + git-config: fix misworded --type=path explanation
-
- Typofix.
-
- Will merge to 'master'.
- source: <20230915202610.21206-1-evan.gates@gmail.com>
-
-
-* kn/rev-list-ignore-missing-links (2023-09-15) 1 commit
+* kn/rev-list-ignore-missing-links (2023-09-20) 1 commit
  - revision: add `--ignore-missing-links` user option
 
  Surface the .ignore_missing_links bit that stops the revision
@@ -236,39 +375,18 @@ Release tarballs are available at:
  objects that are required but are missing can be enumerated.
 
  Waiting for review response.
- source: <20230915083415.263187-1-knayak@gitlab.com>
-
-
-* js/systemd-timers-wsl-fix (2023-09-11) 1 commit
-  (merged to 'next' on 2023-09-12 at 71c4cbb1df)
- + maintenance(systemd): support the Windows Subsystem for Linux
-
- Update "git maintainance" timers' implementation based on systemd
- timers to work with WSL.
-
- Will merge to 'master'.
- source: <pull.1586.git.1694334620260.gitgitgadget@gmail.com>
+ source: <20230920104507.21664-1-karthik.188@gmail.com>
 
 
 * kh/range-diff-notes (2023-09-19) 1 commit
- - range-diff: treat notes like `log`
+  (merged to 'next' on 2023-09-22 at ac04978b4b)
+ + range-diff: treat notes like `log`
 
  "git range-diff --notes=foo" compared "log --notes=foo --notes" of
  the two ranges, instead of using just the specified notes tree.
 
- Will merge to 'next'.
- source: <6e114271a2e7d2323193bd58bb307f60101942ce.1695154855.git.code@khaugsbakk.name>
-
-
-* pw/diff-no-index-from-named-pipes (2023-09-11) 1 commit
-  (merged to 'next' on 2023-09-12 at 135ecd136f)
- + diff --no-index: fix -R with stdin
-
- "git diff --no-index -R <(one) <(two)" did not work correctly,
- which has been corrected.
-
  Will merge to 'master'.
- source: <22fdfa3b-f90e-afcc-667c-705fb7670245@web.de>
+ source: <6e114271a2e7d2323193bd58bb307f60101942ce.1695154855.git.code@khaugsbakk.name>
 
 
 * rs/parse-options-value-int (2023-09-18) 2 commits
@@ -293,31 +411,6 @@ Release tarballs are available at:
  source: <20230909125446.142715-1-sorganov@gmail.com>
 
 
-* js/diff-cached-fsmonitor-fix (2023-09-11) 1 commit
-  (merged to 'next' on 2023-09-12 at 7479278da0)
- + diff-lib: fix check_removed when fsmonitor is on
- (this branch is used by jc/diff-cached-fsmonitor-fix.)
-
- "git diff --cached" codepath did not fill the necessary stat
- information for a file when fsmonitor knows it is clean and ended
- up behaving as if it is not clean, which has been corrected.
-
- Will merge to 'master'.
- source: <20230911170901.49050-2-sokcevic@google.com>
-
-
-* pb/completion-aliases-doc (2023-09-12) 1 commit
-  (merged to 'next' on 2023-09-13 at b248a5bc26)
- + completion: improve doc for complex aliases
-
- Clarify how "alias.foo = : git cmd ; aliased-command-string" should
- be spelled with necessary whitespaces around punctuation marks to
- work.
-
- Will merge to 'master'.
- source: <pull.1585.v2.git.1694538135853.gitgitgadget@gmail.com>
-
-
 * cc/repack-sift-filtered-objects-to-separate-pack (2023-09-11) 9 commits
  . gc: add `gc.repackFilterTo` config option
  . repack: implement `--filter-to` for storing filtered out objects
@@ -334,52 +427,6 @@ Release tarballs are available at:
 
  May need to wait until tb/repack-existing-packs-cleanup stablizes.
  source: <20230911150618.129737-1-christian.couder@gmail.com>
-
-
-* la/trailer-cleanups (2023-09-11) 6 commits
-  (merged to 'next' on 2023-09-12 at 779c4a097a)
- + trailer: use offsets for trailer_start/trailer_end
- + trailer: rename *_DEFAULT enums to *_UNSPECIFIED
- + trailer: teach find_patch_start about --no-divider
- + trailer: split process_command_line_args into separate functions
- + trailer: split process_input_file into separate pieces
- + trailer: separate public from internal portion of trailer_iterator
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <pull.1563.v2.git.1694240177.gitgitgadget@gmail.com>
-
-
-* tb/repack-existing-packs-cleanup (2023-09-13) 8 commits
-  (merged to 'next' on 2023-09-14 at bb8065e89c)
- + builtin/repack.c: extract common cruft pack loop
- + builtin/repack.c: avoid directly inspecting "util"
- + builtin/repack.c: store existing cruft packs separately
- + builtin/repack.c: extract `has_existing_non_kept_packs()`
- + builtin/repack.c: extract redundant pack cleanup for existing packs
- + builtin/repack.c: extract redundant pack cleanup for --geometric
- + builtin/repack.c: extract marking packs for deletion
- + builtin/repack.c: extract structure to store existing packs
-
- The code to keep track of existing packs in the repository while
- repacking has been refactored.
-
- Will merge to 'master'.
- source: <cover.1694632644.git.me@ttaylorr.com>
-
-
-* pb/complete-commit-trailers (2023-09-12) 2 commits
-  (merged to 'next' on 2023-09-13 at 9a0ec17606)
- + completion: commit: complete trailers tokens more robustly
-  (merged to 'next' on 2023-09-08 at 842587016d)
- + completion: commit: complete configured trailer tokens
-
- The command-line complation support (in contrib/) learned to
- complete "git commit --trailer=" for possible trailer keys.
-
- Will merge to 'master'.
- source: <pull.1583.v2.git.1694539827.gitgitgadget@gmail.com>
 
 
 * pw/rebase-sigint (2023-09-07) 1 commit
@@ -508,35 +555,10 @@ Release tarballs are available at:
  on systems whose "char" is unsigned; update the implementation and
  bump the format version to 2.
 
- Needs more work.
+ Almost there.
  cf. <20230830200218.GA5147@szeder.dev>
+ cf. <20230901205616.3572722-1-jonathantanmy@google.com>
  source: <cover.1693413637.git.jonathantanmy@google.com>
-
-
-* js/config-parse (2023-08-23) 4 commits
- - config-parse: split library out of config.[c|h]
- - config.c: accept config_parse_options in git_config_from_stdin
- - config: report config parse errors using cb
- - config: split out config_parse_options
-
- The parsing routines for the configuration files have been split
- into a separate file.
-
- Needs review.
- source: <cover.1692827403.git.steadmon@google.com>
-
-
-* jc/update-index-show-index-version (2023-09-12) 3 commits
-  (merged to 'next' on 2023-09-13 at b754554df8)
- + test-tool: retire "index-version"
- + update-index: add --show-index-version
- + update-index doc: v4 is OK with JGit and libgit2
-
- "git update-index" learns "--show-index-version" to inspect
- the index format version used by the on-disk index file.
-
- Will merge to 'master'.
- source: <20230912193235.776292-1-gitster@pobox.com>
 
 
 * jc/rerere-cleanup (2023-08-25) 4 commits
@@ -566,7 +588,7 @@ Release tarballs are available at:
  not resurrect conflicted state that was resolved to remove path,
  but now they do.
 
- Needs review.
+ Will merge to 'next'.
  source: <20230731224409.4181277-1-gitster@pobox.com>
 
 
@@ -579,3 +601,17 @@ Release tarballs are available at:
  Needs review.
  cf. <xmqqtttia3vn.fsf@gitster.g>
  source: <48745298-f12b-8efb-4e48-90d2c22a8349@gmail.com>
+
+
+--------------------------------------------------
+[Discarded]
+
+* tb/ci-coverity (2023-09-21) 1 commit
+ . .github/workflows: add coverity action
+
+ GitHub CI workflow has learned to trigger Coverity check.
+
+ Superseded by the js/ci-coverity topic.
+ source: <b23951c569660e1891a7fb3ad2c2ea1952897bd7.1695332105.git.me@ttaylorr.com>
+
+
