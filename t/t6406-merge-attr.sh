@@ -179,7 +179,8 @@ test_expect_success !WINDOWS 'custom merge driver that is killed with a signal' 
 
 	>./please-abort &&
 	echo "* merge=custom" >.gitattributes &&
-	test_must_fail git merge main &&
+	test_must_fail git merge main 2>err &&
+	grep "^error: failed to execute internal merge" err &&
 	git ls-files -u >output &&
 	git diff --name-only HEAD >>output &&
 	test_must_be_empty output
