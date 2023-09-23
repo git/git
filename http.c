@@ -738,18 +738,43 @@ static int redact_sensitive_header(struct strbuf *header, size_t offset)
 	return ret;
 }
 
+static int match_curl_h2_trace(const char *line, const char **out)
+{
+	const char *p;
+
+	/*
+	 * curl prior to 8.1.0 gives us:
+	 *
+	 *     h2h3 [<header-name>: <header-val>]
+	 *
+	 * Starting in 8.1.0, the first token became just "h2".
+	 */
+	if (skip_iprefix(line, "h2h3 [", out) ||
+	    skip_iprefix(line, "h2 [", out))
+		return 1;
+
+	/*
+	 * curl 8.3.0 uses:
+	 *   [HTTP/2] [<stream-id>] [<header-name>: <header-val>]
+	 * where <stream-id> is numeric.
+	 */
+	if (skip_iprefix(line, "[HTTP/2] [", &p)) {
+		while (isdigit(*p))
+			p++;
+		if (skip_prefix(p, "] [", out))
+			return 1;
+	}
+
+	return 0;
+}
+
 /* Redact headers in info */
 static void redact_sensitive_info_header(struct strbuf *header)
 {
 	const char *sensitive_header;
 
-	/*
-	 * curl's h2h3 prints headers in info, e.g.:
-	 *   h2h3 [<header-name>: <header-val>]
-	 */
 	if (trace_curl_redact &&
-	    (skip_iprefix(header->buf, "h2h3 [", &sensitive_header) ||
-	     skip_iprefix(header->buf, "h2 [", &sensitive_header))) {
+	    match_curl_h2_trace(header->buf, &sensitive_header)) {
 		if (redact_sensitive_header(header, sensitive_header - header->buf)) {
 			/* redaction ate our closing bracket */
 			strbuf_addch(header, ']');
