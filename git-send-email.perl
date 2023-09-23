@@ -1166,10 +1166,10 @@ sub extract_valid_address {
 
 sub extract_valid_address_or_die {
 	my $address = shift;
-	$address = extract_valid_address($address);
+	my $valid_address = extract_valid_address($address);
 	die sprintf(__("error: unable to extract a valid address from: %s\n"), $address)
-		if !$address;
-	return $address;
+		if !$valid_address;
+	return $valid_address;
 }
 
 sub validate_address {
