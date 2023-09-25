@@ -303,7 +303,11 @@ Fields that have name-email-date tuple as its value (`author`,
 and `date` to extract the named component.  For email fields (`authoremail`,
 `committeremail` and `taggeremail`), `:trim` can be appended to get the email
 without angle brackets, and `:localpart` to get the part before the `@` symbol
-out of the trimmed email.
+out of the trimmed email. In addition to these, the `:mailmap` option and the
+corresponding `:mailmap,trim` and `:mailmap,localpart` can be used (order does
+not matter) to get values of the name and email according to the .mailmap file
+or according to the file set in the mailmap.file or mailmap.blob configuration
+variable (see linkgit:gitmailmap[5]).
 
 The raw data in an object is `raw`.
 

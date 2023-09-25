@@ -25,6 +25,13 @@ test_expect_success setup '
 	disklen sha1:138
 	disklen sha256:154
 	EOF
+
+	# setup .mailmap
+	cat >.mailmap <<-EOF &&
+	A Thor <athor@example.com> A U Thor <author@example.com>
+	C Mitter <cmitter@example.com> C O Mitter <committer@example.com>
+	EOF
+
 	setdate_and_increment &&
 	echo "Using $datestamp" > one &&
 	git add one &&
@@ -145,15 +152,31 @@ test_atom head '*objectname' ''
 test_atom head '*objecttype' ''
 test_atom head author 'A U Thor <author@example.com> 1151968724 +0200'
 test_atom head authorname 'A U Thor'
+test_atom head authorname:mailmap 'A Thor'
 test_atom head authoremail '<author@example.com>'
 test_atom head authoremail:trim 'author@example.com'
 test_atom head authoremail:localpart 'author'
+test_atom head authoremail:trim,localpart 'author'
+test_atom head authoremail:mailmap '<athor@example.com>'
+test_atom head authoremail:mailmap,trim 'athor@example.com'
+test_atom head authoremail:trim,mailmap 'athor@example.com'
+test_atom head authoremail:mailmap,localpart 'athor'
+test_atom head authoremail:localpart,mailmap 'athor'
+test_atom head authoremail:mailmap,trim,localpart,mailmap,trim 'athor'
 test_atom head authordate 'Tue Jul 4 01:18:44 2006 +0200'
 test_atom head committer 'C O Mitter <committer@example.com> 1151968723 +0200'
 test_atom head committername 'C O Mitter'
+test_atom head committername:mailmap 'C Mitter'
 test_atom head committeremail '<committer@example.com>'
 test_atom head committeremail:trim 'committer@example.com'
 test_atom head committeremail:localpart 'committer'
+test_atom head committeremail:localpart,trim 'committer'
+test_atom head committeremail:mailmap '<cmitter@example.com>'
+test_atom head committeremail:mailmap,trim 'cmitter@example.com'
+test_atom head committeremail:trim,mailmap 'cmitter@example.com'
+test_atom head committeremail:mailmap,localpart 'cmitter'
+test_atom head committeremail:localpart,mailmap 'cmitter'
+test_atom head committeremail:trim,mailmap,trim,trim,localpart 'cmitter'
 test_atom head committerdate 'Tue Jul 4 01:18:43 2006 +0200'
 test_atom head tag ''
 test_atom head tagger ''
@@ -203,22 +226,46 @@ test_atom tag '*objectname' $(git rev-parse refs/tags/testtag^{})
 test_atom tag '*objecttype' 'commit'
 test_atom tag author ''
 test_atom tag authorname ''
+test_atom tag authorname:mailmap ''
 test_atom tag authoremail ''
 test_atom tag authoremail:trim ''
 test_atom tag authoremail:localpart ''
+test_atom tag authoremail:trim,localpart ''
+test_atom tag authoremail:mailmap ''
+test_atom tag authoremail:mailmap,trim ''
+test_atom tag authoremail:trim,mailmap ''
+test_atom tag authoremail:mailmap,localpart ''
+test_atom tag authoremail:localpart,mailmap ''
+test_atom tag authoremail:mailmap,trim,localpart,mailmap,trim ''
 test_atom tag authordate ''
 test_atom tag committer ''
 test_atom tag committername ''
+test_atom tag committername:mailmap ''
 test_atom tag committeremail ''
 test_atom tag committeremail:trim ''
 test_atom tag committeremail:localpart ''
+test_atom tag committeremail:localpart,trim ''
+test_atom tag committeremail:mailmap ''
+test_atom tag committeremail:mailmap,trim ''
+test_atom tag committeremail:trim,mailmap ''
+test_atom tag committeremail:mailmap,localpart ''
+test_atom tag committeremail:localpart,mailmap ''
+test_atom tag committeremail:trim,mailmap,trim,trim,localpart ''
 test_atom tag committerdate ''
 test_atom tag tag 'testtag'
 test_atom tag tagger 'C O Mitter <committer@example.com> 1151968725 +0200'
 test_atom tag taggername 'C O Mitter'
+test_atom tag taggername:mailmap 'C Mitter'
 test_atom tag taggeremail '<committer@example.com>'
 test_atom tag taggeremail:trim 'committer@example.com'
 test_atom tag taggeremail:localpart 'committer'
+test_atom tag taggeremail:trim,localpart 'committer'
+test_atom tag taggeremail:mailmap '<cmitter@example.com>'
+test_atom tag taggeremail:mailmap,trim 'cmitter@example.com'
+test_atom tag taggeremail:trim,mailmap 'cmitter@example.com'
+test_atom tag taggeremail:mailmap,localpart 'cmitter'
+test_atom tag taggeremail:localpart,mailmap 'cmitter'
+test_atom tag taggeremail:trim,mailmap,trim,localpart,localpart 'cmitter'
 test_atom tag taggerdate 'Tue Jul 4 01:18:45 2006 +0200'
 test_atom tag creator 'C O Mitter <committer@example.com> 1151968725 +0200'
 test_atom tag creatordate 'Tue Jul 4 01:18:45 2006 +0200'
@@ -292,8 +339,44 @@ test_bad_atom () {
 test_bad_atom head 'authoremail:foo' \
 	'fatal: unrecognized %(authoremail) argument: foo'
 
+test_bad_atom head 'authoremail:mailmap,trim,bar' \
+	'fatal: unrecognized %(authoremail) argument: bar'
+
+test_bad_atom head 'authoremail:trim,' \
+	'fatal: unrecognized %(authoremail) argument: '
+
+test_bad_atom head 'authoremail:mailmaptrim' \
+	'fatal: unrecognized %(authoremail) argument: trim'
+
+test_bad_atom head 'committeremail: ' \
+	'fatal: unrecognized %(committeremail) argument:  '
+
+test_bad_atom head 'committeremail: trim,foo' \
+	'fatal: unrecognized %(committeremail) argument:  trim,foo'
+
+test_bad_atom head 'committeremail:mailmap,localpart ' \
+	'fatal: unrecognized %(committeremail) argument:  '
+
+test_bad_atom head 'committeremail:trim_localpart' \
+	'fatal: unrecognized %(committeremail) argument: _localpart'
+
+test_bad_atom head 'committeremail:localpart,,,trim' \
+	'fatal: unrecognized %(committeremail) argument: ,,trim'
+
+test_bad_atom tag 'taggeremail:mailmap,trim, foo ' \
+	'fatal: unrecognized %(taggeremail) argument:  foo '
+
+test_bad_atom tag 'taggeremail:trim,localpart,' \
+	'fatal: unrecognized %(taggeremail) argument: '
+
+test_bad_atom tag 'taggeremail:mailmap;localpart trim' \
+	'fatal: unrecognized %(taggeremail) argument: ;localpart trim'
+
 test_bad_atom tag 'taggeremail:localpart trim' \
-	'fatal: unrecognized %(taggeremail) argument: localpart trim'
+	'fatal: unrecognized %(taggeremail) argument:  trim'
+
+test_bad_atom tag 'taggeremail:mailmap,mailmap,trim,qux,localpart,trim' \
+	'fatal: unrecognized %(taggeremail) argument: qux,localpart,trim'
 
 test_date () {
 	f=$1 &&
