@@ -1,0 +1,58 @@
+name: Coverity
+
+# This GitHub workflow automates submitting builds to Coverity Scan. To enable it,
+# set the repository variable `ENABLE_COVERITY_SCAN_FOR_BRANCHES` (for details, see
+# https://docs.github.com/en/actions/learn-github-actions/variables) to a JSON
+# string array containing the names of the branches for which the workflow should be
+# run, e.g. `["main", "next"]`.
+#
+# In addition, two repository secrets must be set (for details how to add secrets, see
+# https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions):
+# `COVERITY_SCAN_EMAIL` and `COVERITY_SCAN_TOKEN`. The former specifies the
+# email to which the Coverity reports should be sent and the latter can be
+# obtained from the Project Settings tab of the Coverity project).
+
+on:
+  push:
+
+jobs:
+  coverity:
+    if: contains(fromJSON(vars.ENABLE_COVERITY_SCAN_FOR_BRANCHES || '[""]'), github.ref_name)
+    runs-on: ubuntu-latest
+    env:
+      COVERITY_PROJECT: git
+      COVERITY_LANGUAGE: cxx
+      COVERITY_PLATFORM: linux64
+    steps:
+      - uses: actions/checkout@v3
+      - run: ci/install-dependencies.sh
+        env:
+          runs_on_pool: ubuntu-latest
+
+      - name: download the Coverity Build Tool (${{ env.COVERITY_LANGUAGE }} / ${{ env.COVERITY_PLATFORM}})
+        run: |
+          curl https://scan.coverity.com/download/$COVERITY_LANGUAGE/$COVERITY_PLATFORM \
+            --fail --no-progress-meter \
+            --output $RUNNER_TEMP/cov-analysis.tgz \
+            --form token='${{ secrets.COVERITY_SCAN_TOKEN }}' \
+            --form project="$COVERITY_PROJECT"
+      - name: extract the Coverity Build Tool
+        run: |
+          mkdir $RUNNER_TEMP/cov-analysis &&
+          tar -xzf $RUNNER_TEMP/cov-analysis.tgz --strip 1 -C $RUNNER_TEMP/cov-analysis
+      - name: build with cov-build
+        run: |
+          export PATH="$RUNNER_TEMP/cov-analysis/bin:$PATH" &&
+          cov-configure --gcc &&
+          cov-build --dir cov-int make -j$(nproc)
+      - name: package the build
+        run: tar -czvf cov-int.tgz cov-int
+      - name: submit the build to Coverity Scan
+        run: |
+          curl \
+            --fail \
+            --form token='${{ secrets.COVERITY_SCAN_TOKEN }}' \
+            --form email='${{ secrets.COVERITY_SCAN_EMAIL }}' \
+            --form file=@cov-int.tgz \
+            --form version='${{ github.sha }}' \
+            "https://scan.coverity.com/builds?project=$COVERITY_PROJECT"
