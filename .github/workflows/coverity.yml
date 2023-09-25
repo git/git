@@ -12,31 +12,62 @@ name: Coverity
 # email to which the Coverity reports should be sent and the latter can be
 # obtained from the Project Settings tab of the Coverity project).
 #
+# The workflow runs on `ubuntu-latest` by default. This can be overridden by setting
+# the repository variable `ENABLE_COVERITY_SCAN_ON_OS` to a JSON string array specifying
+# the operating systems, e.g. `["ubuntu-latest", "windows-latest"]`.
+#
 # By default, the builds are submitted to the Coverity project `git`. To override this,
 # set the repository variable `COVERITY_PROJECT`.
 
 on:
   push:
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   coverity:
     if: contains(fromJSON(vars.ENABLE_COVERITY_SCAN_FOR_BRANCHES || '[""]'), github.ref_name)
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: ${{ fromJSON(vars.ENABLE_COVERITY_SCAN_ON_OS || '["ubuntu-latest"]') }}
+    runs-on: ${{ matrix.os }}
     env:
       COVERITY_PROJECT: ${{ vars.COVERITY_PROJECT || 'git' }}
       COVERITY_LANGUAGE: cxx
-      COVERITY_PLATFORM: linux64
+      COVERITY_PLATFORM: overridden-below
     steps:
       - uses: actions/checkout@v3
+      - name: install minimal Git for Windows SDK
+        if: contains(matrix.os, 'windows')
+        uses: git-for-windows/setup-git-for-windows-sdk@v1
       - run: ci/install-dependencies.sh
+        if: contains(matrix.os, 'ubuntu')
         env:
-          runs_on_pool: ubuntu-latest
+          runs_on_pool: ${{ matrix.os }}
 
       # The Coverity site says the tool is usually updated twice yearly, so the
       # MD5 of download can be used to determine whether there's been an update.
       - name: get the Coverity Build Tool hash
         id: lookup
         run: |
+          case "${{ matrix.os }}" in
+          *windows*)
+            COVERITY_PLATFORM=win64
+            COVERITY_TOOL_FILENAME=cov-analysis.zip
+            ;;
+          *ubuntu*)
+            COVERITY_PLATFORM=linux64
+            COVERITY_TOOL_FILENAME=cov-analysis.tgz
+            ;;
+          *)
+            echo '::error::unhandled OS ${{ matrix.os }}' >&2
+            exit 1
+            ;;
+          esac
+          echo "COVERITY_PLATFORM=$COVERITY_PLATFORM" >>$GITHUB_ENV
+          echo "COVERITY_TOOL_FILENAME=$COVERITY_TOOL_FILENAME" >>$GITHUB_ENV
           MD5=$(curl https://scan.coverity.com/download/$COVERITY_LANGUAGE/$COVERITY_PLATFORM \
                    --fail \
                    --form token='${{ secrets.COVERITY_SCAN_TOKEN }}' \
@@ -57,14 +88,28 @@ jobs:
         run: |
           curl https://scan.coverity.com/download/$COVERITY_LANGUAGE/$COVERITY_PLATFORM \
             --fail --no-progress-meter \
-            --output $RUNNER_TEMP/cov-analysis.tgz \
+            --output $RUNNER_TEMP/$COVERITY_TOOL_FILENAME \
             --form token='${{ secrets.COVERITY_SCAN_TOKEN }}' \
             --form project="$COVERITY_PROJECT"
       - name: extract the Coverity Build Tool
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
-          mkdir $RUNNER_TEMP/cov-analysis &&
-          tar -xzf $RUNNER_TEMP/cov-analysis.tgz --strip 1 -C $RUNNER_TEMP/cov-analysis
+          case "$COVERITY_TOOL_FILENAME" in
+          *.tgz)
+            mkdir $RUNNER_TEMP/cov-analysis &&
+            tar -xzf $RUNNER_TEMP/$COVERITY_TOOL_FILENAME --strip 1 -C $RUNNER_TEMP/cov-analysis
+            ;;
+          *.zip)
+            cd $RUNNER_TEMP &&
+            mkdir cov-analysis-tmp &&
+            unzip -d cov-analysis-tmp $COVERITY_TOOL_FILENAME &&
+            mv cov-analysis-tmp/* cov-analysis
+            ;;
+          *)
+            echo "::error::unhandled archive type: $COVERITY_TOOL_FILENAME" >&2
+            exit 1
+            ;;
+          esac
       - name: cache the Coverity Build Tool
         if: steps.cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v3
