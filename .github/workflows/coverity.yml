@@ -29,7 +29,28 @@ jobs:
         env:
           runs_on_pool: ubuntu-latest
 
+      # The Coverity site says the tool is usually updated twice yearly, so the
+      # MD5 of download can be used to determine whether there's been an update.
+      - name: get the Coverity Build Tool hash
+        id: lookup
+        run: |
+          MD5=$(curl https://scan.coverity.com/download/$COVERITY_LANGUAGE/$COVERITY_PLATFORM \
+                   --fail \
+                   --form token='${{ secrets.COVERITY_SCAN_TOKEN }}' \
+                   --form project="$COVERITY_PROJECT" \
+                   --form md5=1) &&
+          echo "hash=$MD5" >>$GITHUB_OUTPUT
+
+      # Try to cache the tool to avoid downloading 1GB+ on every run.
+      # A cache miss will add ~30s to create, but a cache hit will save minutes.
+      - name: restore the Coverity Build Tool
+        id: cache
+        uses: actions/cache/restore@v3
+        with:
+          path: ${{ runner.temp }}/cov-analysis
+          key: cov-build-${{ env.COVERITY_LANGUAGE }}-${{ env.COVERITY_PLATFORM }}-${{ steps.lookup.outputs.hash }}
       - name: download the Coverity Build Tool (${{ env.COVERITY_LANGUAGE }} / ${{ env.COVERITY_PLATFORM}})
+        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           curl https://scan.coverity.com/download/$COVERITY_LANGUAGE/$COVERITY_PLATFORM \
             --fail --no-progress-meter \
@@ -37,9 +58,16 @@ jobs:
             --form token='${{ secrets.COVERITY_SCAN_TOKEN }}' \
             --form project="$COVERITY_PROJECT"
       - name: extract the Coverity Build Tool
+        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           mkdir $RUNNER_TEMP/cov-analysis &&
           tar -xzf $RUNNER_TEMP/cov-analysis.tgz --strip 1 -C $RUNNER_TEMP/cov-analysis
+      - name: cache the Coverity Build Tool
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v3
+        with:
+          path: ${{ runner.temp }}/cov-analysis
+          key: cov-build-${{ env.COVERITY_LANGUAGE }}-${{ env.COVERITY_PLATFORM }}-${{ steps.lookup.outputs.hash }}
       - name: build with cov-build
         run: |
           export PATH="$RUNNER_TEMP/cov-analysis/bin:$PATH" &&
