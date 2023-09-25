@@ -1106,13 +1106,14 @@ file(GLOB test_scripts "${CMAKE_SOURCE_DIR}/t/t[0-9]*.sh")
 
 #test
 foreach(tsh ${test_scripts})
-	add_test(NAME ${tsh}
+	string(REGEX REPLACE ".*/(.*)\\.sh" "\\1" test_name ${tsh})
+	add_test(NAME "t.suite.${test_name}"
 		COMMAND ${SH_EXE} ${tsh} --no-bin-wrappers --no-chain-lint -vx
 		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/t)
 endforeach()
 
 # This test script takes an extremely long time and is known to time out even
 # on fast machines because it requires in excess of one hour to run
-set_tests_properties("${CMAKE_SOURCE_DIR}/t/t7112-reset-submodule.sh" PROPERTIES TIMEOUT 4000)
+set_tests_properties("t.suite.t7112-reset-submodule" PROPERTIES TIMEOUT 4000)
 
 endif()#BUILD_TESTING
