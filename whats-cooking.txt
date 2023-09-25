@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2023, #07; Fri, 22)
+Subject: What's cooking in git.git (Sep 2023, #08; Mon, 25)
 X-master-at: bcb6cae2966cc407ca1afc77413b3ef11103c175
-X-next-at: 8ccd20d70d13287c9d32e64e7979b41cda189595
+X-next-at: 7ed318fc91ccd746a38d175b7664c6b964423c8f
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Sep 2023, #07; Fri, 22)
+What's cooking in git.git (Sep 2023, #08; Mon, 25)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,6 +16,10 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
+
+With Contributors' Summit happening this week, the early part of
+the week may be slower than usual (my response time will certainly
+be longer).
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -46,164 +50,94 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
+[New Topics]
 
-* ch/clean-docfix (2023-09-15) 1 commit
-  (merged to 'next' on 2023-09-19 at 1e16b715bb)
- + git-clean doc: fix "without do cleaning" typo
+* jx/remote-archive-over-smart-http (2023-09-25) 3 commits
+ - archive: support remote archive from stateless transport
+ - transport-helper: run do_take_over in connect_helper
+ - transport-helper: no connection restriction in connect_helper
 
- Typofix.
- source: <pull.1572.git.git.1694800409471.gitgitgadget@gmail.com>
+ "git archive --remote=<remote>" learned to talk over the smart
+ http (aka stateless) transport.
 
-
-* eg/config-type-path-docfix (2023-09-15) 1 commit
-  (merged to 'next' on 2023-09-19 at 2c8ad3e731)
- + git-config: fix misworded --type=path explanation
-
- Typofix.
- source: <20230915202610.21206-1-evan.gates@gmail.com>
+ Expecting a reroll.
+ cf. <CANYiYbFkG+CvrNFBkdNewZs7ADROVsjd051SDQsU0zVq8eBhew@mail.gmail.com>
+ source: <20230923152201.14741-1-worldhello.net@gmail.com>
 
 
-* jc/update-index-show-index-version (2023-09-12) 3 commits
-  (merged to 'next' on 2023-09-13 at b754554df8)
- + test-tool: retire "index-version"
- + update-index: add --show-index-version
- + update-index doc: v4 is OK with JGit and libgit2
+* jx/sideband-chomp-newline-fix (2023-09-25) 3 commits
+ - pkt-line: do not chomp newlines for sideband messages
+ - pkt-line: memorize sideband fragment in reader
+ - test-pkt-line: add option parser for unpack-sideband
 
- "git update-index" learns "--show-index-version" to inspect
- the index format version used by the on-disk index file.
- source: <20230912193235.776292-1-gitster@pobox.com>
+ Sideband demultiplexer fixes.
 
-
-* jk/ort-unused-parameter-cleanups (2023-09-16) 5 commits
-  (merged to 'next' on 2023-09-18 at 25a5dfc38e)
- + merge-ort: lowercase a few error messages
- + merge-ort: drop unused "opt" parameter from merge_check_renames_reusable()
- + merge-ort: drop unused parameters from detect_and_process_renames()
- + merge-ort: stop passing "opt" to read_oid_strbuf()
- + merge-ort: drop custom err() function
-
- Code clean-up.
- source: <20230914093409.GA2254811@coredump.intra.peff.net>
+ Needs review.
+ source: <CANYiYbF+Xmk4rCNLMJe+i_CFafg8=QU5vbXWNUZbOVsDLTe5QQ@mail.gmail.com>
 
 
-* jk/redact-h2h3-headers-fix (2023-09-15) 2 commits
-  (merged to 'next' on 2023-09-19 at d40278ef9e)
- + http: update curl http/2 info matching for curl 8.3.0
- + http: factor out matching of curl http/2 trace lines
+* ks/ref-filter-mailmap (2023-09-25) 3 commits
+ - ref-filter: add mailmap support
+ - t/t6300: introduce test_bad_atom
+ - t/t6300: cleanup test_atom
 
- HTTP Header redaction code has been adjusted for a newer version of
- cURL library that shows its traces differently from earlier
- versions.
- source: <20230915113237.GA3531328@coredump.intra.peff.net>
+ "git for-each-ref" and friends learn to apply mailmap to authorname
+ and other fields.
 
-
-* js/diff-cached-fsmonitor-fix (2023-09-11) 1 commit
-  (merged to 'next' on 2023-09-12 at 7479278da0)
- + diff-lib: fix check_removed when fsmonitor is on
- (this branch is used by jc/diff-cached-fsmonitor-fix.)
-
- "git diff --cached" codepath did not fill the necessary stat
- information for a file when fsmonitor knows it is clean and ended
- up behaving as if it is not clean, which has been corrected.
- source: <20230911170901.49050-2-sokcevic@google.com>
+ Will merge to 'next'.
+ source: <20230925175050.3498-1-five231003@gmail.com>
 
 
-* js/systemd-timers-wsl-fix (2023-09-11) 1 commit
-  (merged to 'next' on 2023-09-12 at 71c4cbb1df)
- + maintenance(systemd): support the Windows Subsystem for Linux
+* ps/revision-cmdline-stdin-not (2023-09-25) 1 commit
+ - revision: make pseudo-opt flags read via stdin behave consistently
 
- Update "git maintainance" timers' implementation based on systemd
- timers to work with WSL.
- source: <pull.1586.git.1694334620260.gitgitgadget@gmail.com>
+ "git rev-list --stdin" learned to take non-revisions (like "--not")
+ recently from the standard input, but the way such a "--not" was
+ handled was quite confusing, which has been rethought.  This is
+ potentially a change that breaks backward compatibility.
 
-
-* la/trailer-cleanups (2023-09-11) 6 commits
-  (merged to 'next' on 2023-09-12 at 779c4a097a)
- + trailer: split process_command_line_args into separate functions
- + trailer: split process_input_file into separate pieces
- + trailer: separate public from internal portion of trailer_iterator
-
- Code clean-up.
-
- Keep only the first three clean-ups, and discard the rest to be replaced later.
- cf. <owly1qetjqo1.fsf@fine.c.googlers.com>
- cf. <owlyzg1dsswr.fsf@fine.c.googlers.com>
- source: <pull.1563.v2.git.1694240177.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <6221acd2796853144f8e84081655fbc79fdc6634.1695646898.git.ps@pks.im>
 
 
-* ob/sequencer-remove-dead-code (2023-09-12) 1 commit
-  (merged to 'next' on 2023-09-13 at 1f6c2b336b)
- + sequencer: remove unreachable exit condition in pick_commits()
+* ty/merge-tree-strategy-options (2023-09-25) 1 commit
+ - merge-tree: add -X strategy option
 
- Code clean-up.
- source: <20230912105541.272917-1-oswald.buddenhagen@gmx.de>
+ "git merge-tree" learned to take strategy backend specific options
+ via the "-X" option, like "git merge" does.
 
-
-* ob/t3404-typofix (2023-09-12) 1 commit
-  (merged to 'next' on 2023-09-13 at b17fa78c3f)
- + t3404-rebase-interactive.sh: fix typos in title of a rewording test
-
- Code clean-up.
- source: <20230912104237.271616-1-oswald.buddenhagen@gmx.de>
-
-
-* pb/complete-commit-trailers (2023-09-12) 2 commits
-  (merged to 'next' on 2023-09-13 at 9a0ec17606)
- + completion: commit: complete trailers tokens more robustly
-  (merged to 'next' on 2023-09-08 at 842587016d)
- + completion: commit: complete configured trailer tokens
-
- The command-line complation support (in contrib/) learned to
- complete "git commit --trailer=" for possible trailer keys.
- source: <pull.1583.v2.git.1694539827.gitgitgadget@gmail.com>
-
-
-* pb/completion-aliases-doc (2023-09-12) 1 commit
-  (merged to 'next' on 2023-09-13 at b248a5bc26)
- + completion: improve doc for complex aliases
-
- Clarify how "alias.foo = : git cmd ; aliased-command-string" should
- be spelled with necessary whitespaces around punctuation marks to
- work.
- source: <pull.1585.v2.git.1694538135853.gitgitgadget@gmail.com>
-
-
-* pw/diff-no-index-from-named-pipes (2023-09-11) 1 commit
-  (merged to 'next' on 2023-09-12 at 135ecd136f)
- + diff --no-index: fix -R with stdin
-
- "git diff --no-index -R <(one) <(two)" did not work correctly,
- which has been corrected.
- source: <22fdfa3b-f90e-afcc-667c-705fb7670245@web.de>
-
-
-* tb/repack-existing-packs-cleanup (2023-09-13) 8 commits
-  (merged to 'next' on 2023-09-14 at bb8065e89c)
- + builtin/repack.c: extract common cruft pack loop
- + builtin/repack.c: avoid directly inspecting "util"
- + builtin/repack.c: store existing cruft packs separately
- + builtin/repack.c: extract `has_existing_non_kept_packs()`
- + builtin/repack.c: extract redundant pack cleanup for existing packs
- + builtin/repack.c: extract redundant pack cleanup for --geometric
- + builtin/repack.c: extract marking packs for deletion
- + builtin/repack.c: extract structure to store existing packs
-
- The code to keep track of existing packs in the repository while
- repacking has been refactored.
- source: <cover.1694632644.git.me@ttaylorr.com>
-
-
-* tb/send-email-extract-valid-address-error-message-fix (2023-09-18) 1 commit
-  (merged to 'next' on 2023-09-19 at d037282391)
- + git-send-email.perl: avoid printing undef when validating addresses
-
- An error message given by "git send-email" when given a malformed
- address did not give correct information, which has been corrected.
- source: <545729b619308c6f3397b9aa1747f26ddc58f461.1695054945.git.me@ttaylorr.com>
+ Will merge to 'next'?
+ source: <pull.1565.v6.git.1695522222723.gitgitgadget@gmail.com>
 
 --------------------------------------------------
-[New Topics]
+[Stalled]
+
+* tk/cherry-pick-sequence-requires-clean-worktree (2023-06-01) 1 commit
+ - cherry-pick: refuse cherry-pick sequence if index is dirty
+
+ "git cherry-pick A" that replays a single commit stopped before
+ clobbering local modification, but "git cherry-pick A..B" did not,
+ which has been corrected.
+
+ Expecting a reroll.
+ cf. <999f12b2-38d6-f446-e763-4985116ad37d@gmail.com>
+ source: <pull.1535.v2.git.1685264889088.gitgitgadget@gmail.com>
+
+
+* jc/diff-cached-fsmonitor-fix (2023-09-15) 3 commits
+ - diff-lib: fix check_removed() when fsmonitor is active
+ - Merge branch 'jc/fake-lstat' into jc/diff-cached-fsmonitor-fix
+ - Merge branch 'js/diff-cached-fsmonitor-fix' into jc/diff-cached-fsmonitor-fix
+ (this branch uses jc/fake-lstat.)
+
+ The optimization based on fsmonitor in the "diff --cached"
+ codepath is resurrected with the "fake-lstat" introduced earlier.
+
+ It is unknown if the optimization is worth resurrecting, but in case...
+ source: <xmqqr0n0h0tw.fsf@gitster.g>
+
+--------------------------------------------------
+[Cooking]
 
 * hy/doc-show-is-like-log-not-diff-tree (2023-09-20) 1 commit
   (merged to 'next' on 2023-09-22 at 5492c03eae)
@@ -251,7 +185,8 @@ Release tarballs are available at:
  source: <20230921110727.789156-1-oswald.buddenhagen@gmx.de>
 
 
-* js/ci-coverity (2023-09-22) 6 commits
+* js/ci-coverity (2023-09-25) 7 commits
+ - SQUASH???
  - coverity: detect and report when the token or project is incorrect
  - coverity: allow running on macOS
  - coverity: support building on Windows
@@ -261,46 +196,19 @@ Release tarballs are available at:
 
  GitHub CI workflow has learned to trigger Coverity check.
 
- source: <pull.1588.git.1695379323.gitgitgadget@gmail.com>
+ Looking good.
+ source: <pull.1588.v2.git.1695642662.gitgitgadget@gmail.com>
 
 
 * js/doc-status-with-submodules-mark-up-fix (2023-09-22) 1 commit
- - Documentation/git-status: add missing line breaks
+  (merged to 'next' on 2023-09-25 at 7ed318fc91)
+ + Documentation/git-status: add missing line breaks
 
  Docfix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1590.git.1695392082207.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Stalled]
-
-* tk/cherry-pick-sequence-requires-clean-worktree (2023-06-01) 1 commit
- - cherry-pick: refuse cherry-pick sequence if index is dirty
-
- "git cherry-pick A" that replays a single commit stopped before
- clobbering local modification, but "git cherry-pick A..B" did not,
- which has been corrected.
-
- Expecting a reroll.
- cf. <999f12b2-38d6-f446-e763-4985116ad37d@gmail.com>
- source: <pull.1535.v2.git.1685264889088.gitgitgadget@gmail.com>
-
-
-* jc/diff-cached-fsmonitor-fix (2023-09-15) 3 commits
- - diff-lib: fix check_removed() when fsmonitor is active
- - Merge branch 'jc/fake-lstat' into jc/diff-cached-fsmonitor-fix
- - Merge branch 'js/diff-cached-fsmonitor-fix' into jc/diff-cached-fsmonitor-fix
- (this branch uses jc/fake-lstat.)
-
- The optimization based on fsmonitor in the "diff --cached"
- codepath is resurrected with the "fake-lstat" introduced earlier.
-
- It is unknown if the optimization is worth resurrecting, but in case...
- source: <xmqqr0n0h0tw.fsf@gitster.g>
-
---------------------------------------------------
-[Cooking]
 
 * js/config-parse (2023-09-21) 5 commits
  - config-parse: split library out of config.[c|h]
@@ -411,22 +319,23 @@ Release tarballs are available at:
  source: <20230909125446.142715-1-sorganov@gmail.com>
 
 
-* cc/repack-sift-filtered-objects-to-separate-pack (2023-09-11) 9 commits
- . gc: add `gc.repackFilterTo` config option
- . repack: implement `--filter-to` for storing filtered out objects
- . gc: add `gc.repackFilter` config option
- . repack: add `--filter=<filter-spec>` option
- . pack-bitmap-write: rebuild using new bitmap when remapping
- . repack: refactor finding pack prefix
- . repack: refactor finishing pack-objects command
- . t/helper: add 'find-pack' test-tool
- . pack-objects: allow `--filter` without `--stdout`
+* cc/repack-sift-filtered-objects-to-separate-pack (2023-09-25) 10 commits
+ - SQUASH??? t0080 is already taken
+ - gc: add `gc.repackFilterTo` config option
+ - repack: implement `--filter-to` for storing filtered out objects
+ - gc: add `gc.repackFilter` config option
+ - repack: add `--filter=<filter-spec>` option
+ - pack-bitmap-write: rebuild using new bitmap when remapping
+ - repack: refactor finding pack prefix
+ - repack: refactor finishing pack-objects command
+ - t/helper: add 'find-pack' test-tool
+ - pack-objects: allow `--filter` without `--stdout`
 
  "git repack" machinery learns to pay attention to the "--filter="
  option.
 
- May need to wait until tb/repack-existing-packs-cleanup stablizes.
- source: <20230911150618.129737-1-christian.couder@gmail.com>
+ Looking better.
+ source: <20230925152517.803579-1-christian.couder@gmail.com>
 
 
 * pw/rebase-sigint (2023-09-07) 1 commit
@@ -518,7 +427,7 @@ Release tarballs are available at:
  source: <cover.1692297001.git.steadmon@google.com>
 
 
-* js/doc-unit-tests-with-cmake (2023-09-18) 7 commits
+* js/doc-unit-tests-with-cmake (2023-09-25) 7 commits
  - cmake: handle also unit tests
  - cmake: use test names instead of full paths
  - cmake: fix typo in variable name
@@ -531,7 +440,7 @@ Release tarballs are available at:
  Update the base topic to work with CMake builds.
 
  Waiting for the base topic to settle.
- source: <pull.1579.v2.git.1695070468.gitgitgadget@gmail.com>
+ source: <pull.1579.v3.git.1695640836.gitgitgadget@gmail.com>
 
 
 * tb/path-filter-fix (2023-08-30) 15 commits
@@ -555,9 +464,10 @@ Release tarballs are available at:
  on systems whose "char" is unsigned; update the implementation and
  bump the format version to 2.
 
- Almost there.
+ Still being discussed.
  cf. <20230830200218.GA5147@szeder.dev>
  cf. <20230901205616.3572722-1-jonathantanmy@google.com>
+ cf. <20230924195900.GA1156862@szeder.dev>
  source: <cover.1693413637.git.jonathantanmy@google.com>
 
 
@@ -575,20 +485,21 @@ Release tarballs are available at:
 
 
 * jc/unresolve-removal (2023-07-31) 7 commits
- - checkout: allow "checkout -m path" to unmerge removed paths
- - checkout/restore: add basic tests for --merge
- - checkout/restore: refuse unmerging paths unless checking out of the index
- - update-index: remove stale fallback code for "--unresolve"
- - update-index: use unmerge_index_entry() to support removal
- - resolve-undo: allow resurrecting conflicted state that resolved to deletion
- - update-index: do not read HEAD and MERGE_HEAD unconditionally
+  (merged to 'next' on 2023-09-25 at 0563c8d8a1)
+ + checkout: allow "checkout -m path" to unmerge removed paths
+ + checkout/restore: add basic tests for --merge
+ + checkout/restore: refuse unmerging paths unless checking out of the index
+ + update-index: remove stale fallback code for "--unresolve"
+ + update-index: use unmerge_index_entry() to support removal
+ + resolve-undo: allow resurrecting conflicted state that resolved to deletion
+ + update-index: do not read HEAD and MERGE_HEAD unconditionally
  (this branch is used by jc/rerere-cleanup.)
 
  "checkout --merge -- path" and "update-index --unresolve path" did
  not resurrect conflicted state that was resolved to remove path,
  but now they do.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20230731224409.4181277-1-gitster@pobox.com>
 
 
@@ -602,7 +513,6 @@ Release tarballs are available at:
  cf. <xmqqtttia3vn.fsf@gitster.g>
  source: <48745298-f12b-8efb-4e48-90d2c22a8349@gmail.com>
 
-
 --------------------------------------------------
 [Discarded]
 
@@ -613,5 +523,3 @@ Release tarballs are available at:
 
  Superseded by the js/ci-coverity topic.
  source: <b23951c569660e1891a7fb3ad2c2ea1952897bd7.1695332105.git.me@ttaylorr.com>
-
-
