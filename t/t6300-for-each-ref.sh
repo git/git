@@ -271,6 +271,30 @@ test_expect_success 'arguments to %(objectname:short=) must be positive integers
 	test_must_fail git for-each-ref --format="%(objectname:short=foo)"
 '
 
+test_bad_atom () {
+	case "$1" in
+	head) ref=refs/heads/main ;;
+	 tag) ref=refs/tags/testtag ;;
+	 sym) ref=refs/heads/sym ;;
+	   *) ref=$1 ;;
+	esac
+	format=$2
+	test_do=test_expect_${4:-success}
+
+	printf '%s\n' "$3" >expect
+	$test_do $PREREQ "err basic atom: $ref $format" '
+		test_must_fail git for-each-ref \
+			--format="%($format)" "$ref" 2>error &&
+		test_cmp expect error
+	'
+}
+
+test_bad_atom head 'authoremail:foo' \
+	'fatal: unrecognized %(authoremail) argument: foo'
+
+test_bad_atom tag 'taggeremail:localpart trim' \
+	'fatal: unrecognized %(taggeremail) argument: localpart trim'
+
 test_date () {
 	f=$1 &&
 	committer_date=$2 &&
