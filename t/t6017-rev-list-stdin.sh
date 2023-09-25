@@ -68,6 +68,7 @@ check --glob=refs/heads
 check --glob=refs/heads --
 check --glob=refs/heads -- file-1
 check --end-of-options -dashed-branch
+check --all --not refs/heads/main
 
 test_expect_success 'not only --stdin' '
 	cat >expect <<-EOF &&
@@ -125,6 +126,26 @@ test_expect_success 'unknown option without --end-of-options' '
 
 	test_must_fail git rev-list --stdin <input 2>error &&
 	test_cmp expect error
+'
+
+test_expect_success '--not on command line does not influence revisions read via --stdin' '
+	cat >input <<-EOF &&
+	refs/heads/main
+	EOF
+	git rev-list refs/heads/main >expect &&
+
+	git rev-list refs/heads/main --not --stdin <input >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--not via stdin does not influence revisions from command line' '
+	cat >input <<-EOF &&
+	--not
+	EOF
+	git rev-list refs/heads/main >expect &&
+
+	git rev-list refs/heads/main --stdin refs/heads/main <input >actual &&
+	test_cmp expect actual
 '
 
 test_done
