@@ -80,7 +80,18 @@ jobs:
                    --fail \
                    --form token='${{ secrets.COVERITY_SCAN_TOKEN }}' \
                    --form project="$COVERITY_PROJECT" \
-                   --form md5=1) &&
+                   --form md5=1)
+          case $? in
+          0) ;; # okay
+          22) # 40x, i.e. access denied
+            echo "::error::incorrect token or project?" >&2
+            exit 1
+            ;;
+          *) # other error
+            echo "::error::Failed to retrieve MD5" >&2
+            exit 1
+            ;;
+          esac
           echo "hash=$MD5" >>$GITHUB_OUTPUT
 
       # Try to cache the tool to avoid downloading 1GB+ on every run.
