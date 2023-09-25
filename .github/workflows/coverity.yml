@@ -11,6 +11,9 @@ name: Coverity
 # `COVERITY_SCAN_EMAIL` and `COVERITY_SCAN_TOKEN`. The former specifies the
 # email to which the Coverity reports should be sent and the latter can be
 # obtained from the Project Settings tab of the Coverity project).
+#
+# By default, the builds are submitted to the Coverity project `git`. To override this,
+# set the repository variable `COVERITY_PROJECT`.
 
 on:
   push:
@@ -20,7 +23,7 @@ jobs:
     if: contains(fromJSON(vars.ENABLE_COVERITY_SCAN_FOR_BRANCHES || '[""]'), github.ref_name)
     runs-on: ubuntu-latest
     env:
-      COVERITY_PROJECT: git
+      COVERITY_PROJECT: ${{ vars.COVERITY_PROJECT || 'git' }}
       COVERITY_LANGUAGE: cxx
       COVERITY_PLATFORM: linux64
     steps:
