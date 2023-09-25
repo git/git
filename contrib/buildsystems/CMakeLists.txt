@@ -981,6 +981,17 @@ foreach(unit_test ${unit_test_PROGRAMS})
 			PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/t/unit-tests/bin)
 	endif()
 	list(APPEND PROGRAMS_BUILT "${unit_test}")
+
+	# t-basic intentionally fails tests, to validate the unit-test infrastructure.
+	# Therefore, it should only be run as part of t0080, which verifies that it
+	# fails only in the expected ways.
+	#
+	# All other unit tests should be run.
+	if(NOT ${unit_test} STREQUAL "t-basic")
+		add_test(NAME "t.unit-tests.${unit_test}"
+			COMMAND "./${unit_test}"
+			WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/t/unit-tests/bin)
+	endif()
 endforeach()
 
 #test-tool
