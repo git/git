@@ -41,25 +41,29 @@ test_expect_success setup '
 	git config push.default current
 '
 
-test_atom() {
+test_atom () {
 	case "$1" in
 		head) ref=refs/heads/main ;;
 		 tag) ref=refs/tags/testtag ;;
 		 sym) ref=refs/heads/sym ;;
 		   *) ref=$1 ;;
 	esac
+	format=$2
+	test_do=test_expect_${4:-success}
+
 	printf '%s\n' "$3" >expected
-	test_expect_${4:-success} $PREREQ "basic atom: $1 $2" "
-		git for-each-ref --format='%($2)' $ref >actual &&
+	$test_do $PREREQ "basic atom: $ref $format" '
+		git for-each-ref --format="%($format)" "$ref" >actual &&
 		sanitize_pgp <actual >actual.clean &&
 		test_cmp expected actual.clean
-	"
+	'
+
 	# Automatically test "contents:size" atom after testing "contents"
-	if test "$2" = "contents"
+	if test "$format" = "contents"
 	then
 		# for commit leg, $3 is changed there
 		expect=$(printf '%s' "$3" | wc -c)
-		test_expect_${4:-success} $PREREQ "basic atom: $1 contents:size" '
+		$test_do $PREREQ "basic atom: $ref contents:size" '
 			type=$(git cat-file -t "$ref") &&
 			case $type in
 			tag)
