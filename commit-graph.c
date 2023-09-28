@@ -548,9 +548,15 @@ int open_commit_graph_chain(const char *chain_file,
 		close(*fd);
 		return 0;
 	}
-	if (st->st_size <= the_hash_algo->hexsz) {
+	if (st->st_size < the_hash_algo->hexsz) {
 		close(*fd);
-		errno = ENOENT;
+		if (!st->st_size) {
+			/* treat empty files the same as missing */
+			errno = ENOENT;
+		} else {
+			warning("commit-graph chain file too small");
+			errno = EINVAL;
+		}
 		return 0;
 	}
 	return 1;
