@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2023, #08; Mon, 25)
+Subject: What's cooking in git.git (Sep 2023, #09; Thu, 28)
 X-master-at: bcb6cae2966cc407ca1afc77413b3ef11103c175
-X-next-at: 7ed318fc91ccd746a38d175b7664c6b964423c8f
+X-next-at: bb76f4660628719c052ba326e360fb0c84258b3c
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Sep 2023, #08; Mon, 25)
+What's cooking in git.git (Sep 2023, #09; Thu, 28)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,10 +16,6 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
-
-With Contributors' Summit happening this week, the early part of
-the week may be slower than usual (my response time will certainly
-be longer).
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -52,62 +48,115 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
-* jx/remote-archive-over-smart-http (2023-09-25) 3 commits
- - archive: support remote archive from stateless transport
- - transport-helper: run do_take_over in connect_helper
- - transport-helper: no connection restriction in connect_helper
+* bb/unicode-width-table-15 (2023-09-25) 1 commit
+  (merged to 'next' on 2023-09-28 at bb76f46606)
+ + unicode: update the width tables to Unicode 15.1
 
- "git archive --remote=<remote>" learned to talk over the smart
- http (aka stateless) transport.
+ The display width table for unicode characters has been updated for
+ Unicode 15.1
 
- Expecting a reroll.
- cf. <CANYiYbFkG+CvrNFBkdNewZs7ADROVsjd051SDQsU0zVq8eBhew@mail.gmail.com>
- source: <20230923152201.14741-1-worldhello.net@gmail.com>
+ Will merge to 'master'.
+ source: <20230925190704.157731-1-dev+git@drbeat.li>
 
 
-* jx/sideband-chomp-newline-fix (2023-09-25) 3 commits
- - pkt-line: do not chomp newlines for sideband messages
- - pkt-line: memorize sideband fragment in reader
- - test-pkt-line: add option parser for unpack-sideband
+* eb/limit-bulk-checkin-to-blobs (2023-09-26) 1 commit
+ - bulk-checkin: only support blobs in index_bulk_checkin
 
- Sideband demultiplexer fixes.
-
- Needs review.
- source: <CANYiYbF+Xmk4rCNLMJe+i_CFafg8=QU5vbXWNUZbOVsDLTe5QQ@mail.gmail.com>
-
-
-* ks/ref-filter-mailmap (2023-09-25) 3 commits
- - ref-filter: add mailmap support
- - t/t6300: introduce test_bad_atom
- - t/t6300: cleanup test_atom
-
- "git for-each-ref" and friends learn to apply mailmap to authorname
- and other fields.
+ The "streaming" interface used for bulk-checkin codepath has been
+ narrowed to take only blob objects for now, with no real loss of
+ functionality.
 
  Will merge to 'next'.
- source: <20230925175050.3498-1-five231003@gmail.com>
+ source: <87msx99b9o.fsf_-_@gmail.froward.int.ebiederm.org>
 
 
-* ps/revision-cmdline-stdin-not (2023-09-25) 1 commit
- - revision: make pseudo-opt flags read via stdin behave consistently
+* jk/commit-graph-verify-fix (2023-09-28) 6 commits
+  (merged to 'next' on 2023-09-28 at e3ed560a2f)
+ + commit-graph: report incomplete chains during verification
+ + commit-graph: tighten chain size check
+ + commit-graph: detect read errors when verifying graph chain
+ + t5324: harmonize sha1/sha256 graph chain corruption
+ + commit-graph: check mixed generation validation when loading chain file
+ + commit-graph: factor out chain opening function
 
- "git rev-list --stdin" learned to take non-revisions (like "--not")
- recently from the standard input, but the way such a "--not" was
- handled was quite confusing, which has been rethought.  This is
- potentially a change that breaks backward compatibility.
+ Various fixes to "git commit-graph verify".
 
- Will merge to 'next'?
- source: <6221acd2796853144f8e84081655fbc79fdc6634.1695646898.git.ps@pks.im>
+ Will merge to 'master'.
+ source: <20230928043746.GB57926@coredump.intra.peff.net>
 
 
-* ty/merge-tree-strategy-options (2023-09-25) 1 commit
- - merge-tree: add -X strategy option
+* js/update-urls-in-doc-and-comment (2023-09-26) 4 commits
+ - doc: refer to internet archive
+ - doc: update links for andre-simon.de
+ - doc: update links to current pages
+ - doc: switch links to https
 
- "git merge-tree" learned to take strategy backend specific options
- via the "-X" option, like "git merge" does.
+ Stale URLs have been updated to their current counterparts (or
+ archive.org) and HTTP links are replaced with working HTTPS links.
 
- Will merge to 'next'?
- source: <pull.1565.v6.git.1695522222723.gitgitgadget@gmail.com>
+ Needs eyeballing.
+ source: <pull.1589.v2.git.1695553041.gitgitgadget@gmail.com>
+
+
+* la/trailer-cleanups (2023-09-26) 4 commits
+ - trailer: only use trailer_block_* variables if trailers were found
+ - trailer: use offsets for trailer_start/trailer_end
+ - trailer: find the end of the log message
+ - commit: ignore_non_trailer computes number of bytes to ignore
+
+ Code clean-up.
+
+ Needs review.
+ source: <pull.1563.v4.git.1695709372.gitgitgadget@gmail.com>
+
+
+* eb/hash-transition (2023-09-27) 30 commits
+ - t1016-compatObjectFormat: Add tests to verify the conversion between objects
+ - t1006: Test oid compatibility with cat-file
+ - t1006: Rename sha1 to oid
+ - test-lib: Compute the compatibility hash so tests may use it
+ - builtin/ls-tree: Let the oid determine the output algorithm
+ - object-file: Handle compat objects in check_object_signature
+ - tree-walk: init_tree_desc take an oid to get the hash algorithm
+ - builtin/cat-file: Let the oid determine the output algorithm
+ - rev-parse: Add an --output-object-format parameter
+ - repository: Implement extensions.compatObjectFormat
+ - object-file: Update object_info_extended to reencode objects
+ - object-file-convert: Convert commits that embed signed tags
+ - object-file-convert: convert commit objects when writing
+ - object-file-convert: Don't leak when converting tag objects
+ - object-file-convert: convert tag objects when writing
+ - object-file-convert: add a function to convert trees between algorithms
+ - object: Factor out parse_mode out of fast-import and tree-walk into in object.h
+ - cache: add a function to read an OID of a specific algorithm
+ - tag: sign both hashes
+ - commit: Export add_header_signature to support handling signatures on tags
+ - commit: Convert mergetag before computing the signature of a commit
+ - commit: write commits for both hashes
+ - object-file: Add a compat_oid_in parameter to write_object_file_flags
+ - object-file: Update the loose object map when writing loose objects
+ - loose: Compatibilty short name support
+ - loose: add a mapping between SHA-1 and SHA-256 for loose objects
+ - repository: add a compatibility hash algorithm
+ - object-names: Support input of oids in any supported hash
+ - oid-array: Teach oid-array to handle multiple kinds of oids
+ - object-file-convert: Stubs for converting from one object format to another
+
+ Teach a repository to work with both SHA-1 and SHA-256 hash algorithms.
+
+ Breaks a few CI jobs when merged to 'seen'.
+ cf. <xmqqbkdmjbkp.fsf@gitster.g>
+ source: <87jzsbjt0a.fsf@gmail.froward.int.ebiederm.org>
+
+
+* xz/commit-title-soft-limit-doc (2023-09-28) 1 commit
+  (merged to 'next' on 2023-09-28 at 20df852430)
+ + doc: correct the 50 characters soft limit
+
+ Doc tweak.
+
+ Will merge to 'master'.
+ source: <pull.1580.git.git.1695895155985.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -138,6 +187,66 @@ Release tarballs are available at:
 
 --------------------------------------------------
 [Cooking]
+
+* jx/remote-archive-over-smart-http (2023-09-25) 3 commits
+ - archive: support remote archive from stateless transport
+ - transport-helper: run do_take_over in connect_helper
+ - transport-helper: no connection restriction in connect_helper
+
+ "git archive --remote=<remote>" learned to talk over the smart
+ http (aka stateless) transport.
+
+ Expecting a reroll.
+ cf. <CANYiYbFkG+CvrNFBkdNewZs7ADROVsjd051SDQsU0zVq8eBhew@mail.gmail.com>
+ source: <20230923152201.14741-1-worldhello.net@gmail.com>
+
+
+* jx/sideband-chomp-newline-fix (2023-09-25) 3 commits
+ - pkt-line: do not chomp newlines for sideband messages
+ - pkt-line: memorize sideband fragment in reader
+ - test-pkt-line: add option parser for unpack-sideband
+
+ Sideband demultiplexer fixes.
+
+ Needs review.
+ source: <CANYiYbF+Xmk4rCNLMJe+i_CFafg8=QU5vbXWNUZbOVsDLTe5QQ@mail.gmail.com>
+
+
+* ks/ref-filter-mailmap (2023-09-25) 3 commits
+  (merged to 'next' on 2023-09-28 at 0d3fd9959a)
+ + ref-filter: add mailmap support
+ + t/t6300: introduce test_bad_atom
+ + t/t6300: cleanup test_atom
+
+ "git for-each-ref" and friends learn to apply mailmap to authorname
+ and other fields.
+
+ Will merge to 'master'.
+ source: <20230925175050.3498-1-five231003@gmail.com>
+
+
+* ps/revision-cmdline-stdin-not (2023-09-25) 1 commit
+  (merged to 'next' on 2023-09-28 at a28201e0dd)
+ + revision: make pseudo-opt flags read via stdin behave consistently
+
+ "git rev-list --stdin" learned to take non-revisions (like "--not")
+ recently from the standard input, but the way such a "--not" was
+ handled was quite confusing, which has been rethought.  This is
+ potentially a change that breaks backward compatibility.
+
+ Will merge to 'master'.
+ source: <6221acd2796853144f8e84081655fbc79fdc6634.1695646898.git.ps@pks.im>
+
+
+* ty/merge-tree-strategy-options (2023-09-25) 1 commit
+ - merge-tree: add -X strategy option
+
+ "git merge-tree" learned to take strategy backend specific options
+ via the "-X" option, like "git merge" does.
+
+ Will merge to 'next'.
+ source: <pull.1565.v6.git.1695522222723.gitgitgadget@gmail.com>
+
 
 * hy/doc-show-is-like-log-not-diff-tree (2023-09-20) 1 commit
   (merged to 'next' on 2023-09-22 at 5492c03eae)
