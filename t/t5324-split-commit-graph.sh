@@ -312,15 +312,30 @@ test_expect_success 'warn on base graph chunk incorrect' '
 	)
 '
 
-test_expect_success 'verify after commit-graph-chain corruption' '
-	git clone --no-hardlinks . verify-chain &&
+test_expect_success 'verify after commit-graph-chain corruption (base)' '
+	git clone --no-hardlinks . verify-chain-base &&
 	(
-		cd verify-chain &&
-		corrupt_file "$graphdir/commit-graph-chain" 60 "G" &&
+		cd verify-chain-base &&
+		corrupt_file "$graphdir/commit-graph-chain" 30 "G" &&
 		git commit-graph verify 2>test_err &&
 		grep -v "^+" test_err >err &&
 		test_i18ngrep "invalid commit-graph chain" err &&
-		corrupt_file "$graphdir/commit-graph-chain" 60 "A" &&
+		corrupt_file "$graphdir/commit-graph-chain" 30 "A" &&
+		git commit-graph verify 2>test_err &&
+		grep -v "^+" test_err >err &&
+		test_i18ngrep "unable to find all commit-graph files" err
+	)
+'
+
+test_expect_success 'verify after commit-graph-chain corruption (tip)' '
+	git clone --no-hardlinks . verify-chain-tip &&
+	(
+		cd verify-chain-tip &&
+		corrupt_file "$graphdir/commit-graph-chain" 70 "G" &&
+		git commit-graph verify 2>test_err &&
+		grep -v "^+" test_err >err &&
+		test_i18ngrep "invalid commit-graph chain" err &&
+		corrupt_file "$graphdir/commit-graph-chain" 70 "A" &&
 		git commit-graph verify 2>test_err &&
 		grep -v "^+" test_err >err &&
 		test_i18ngrep "unable to find all commit-graph files" err
