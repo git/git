@@ -107,7 +107,8 @@ struct commit_graph *load_commit_graph_one_fd_st(struct repository *r,
 						 int fd, struct stat *st,
 						 struct object_directory *odb);
 struct commit_graph *load_commit_graph_chain_fd_st(struct repository *r,
-						   int fd, struct stat *st);
+						   int fd, struct stat *st,
+						   int *incomplete_chain);
 struct commit_graph *read_commit_graph_one(struct repository *r,
 					   struct object_directory *odb);
 

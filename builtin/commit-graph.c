@@ -74,6 +74,7 @@ static int graph_verify(int argc, const char **argv, const char *prefix)
 	int fd;
 	struct stat st;
 	int flags = 0;
+	int incomplete_chain = 0;
 	int ret;
 
 	static struct option builtin_commit_graph_verify_options[] = {
@@ -122,13 +123,20 @@ static int graph_verify(int argc, const char **argv, const char *prefix)
 	else if (opened == OPENED_GRAPH)
 		graph = load_commit_graph_one_fd_st(the_repository, fd, &st, odb);
 	else
-		graph = load_commit_graph_chain_fd_st(the_repository, fd, &st);
+		graph = load_commit_graph_chain_fd_st(the_repository, fd, &st,
+						      &incomplete_chain);
 
 	if (!graph)
 		return 1;
 
 	ret = verify_commit_graph(the_repository, graph, flags);
 	free_commit_graph(graph);
+
+	if (incomplete_chain) {
+		error("one or more commit-graph chain files could not be loaded");
+		ret |= 1;
+	}
+
 	return ret;
 }
 
