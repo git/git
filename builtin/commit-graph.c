@@ -69,7 +69,8 @@ static int graph_verify(int argc, const char **argv, const char *prefix)
 	struct commit_graph *graph = NULL;
 	struct object_directory *odb = NULL;
 	char *graph_name;
-	int open_ok;
+	char *chain_name;
+	enum { OPENED_NONE, OPENED_GRAPH, OPENED_CHAIN } opened = OPENED_NONE;
 	int fd;
 	struct stat st;
 	int flags = 0;
@@ -102,21 +103,29 @@ static int graph_verify(int argc, const char **argv, const char *prefix)
 
 	odb = find_odb(the_repository, opts.obj_dir);
 	graph_name = get_commit_graph_filename(odb);
-	open_ok = open_commit_graph(graph_name, &fd, &st);
-	if (!open_ok && errno != ENOENT)
+	chain_name = get_commit_graph_chain_filename(odb);
+	if (open_commit_graph(graph_name, &fd, &st))
+		opened = OPENED_GRAPH;
+	else if (errno != ENOENT)
 		die_errno(_("Could not open commit-graph '%s'"), graph_name);
+	else if (open_commit_graph_chain(chain_name, &fd, &st))
+		opened = OPENED_CHAIN;
+	else if (errno != ENOENT)
+		die_errno(_("could not open commit-graph chain '%s'"), chain_name);
 
 	FREE_AND_NULL(graph_name);
+	FREE_AND_NULL(chain_name);
 	FREE_AND_NULL(options);
 
-	if (open_ok)
+	if (opened == OPENED_NONE)
+		return 0;
+	else if (opened == OPENED_GRAPH)
 		graph = load_commit_graph_one_fd_st(the_repository, fd, &st, odb);
 	else
-		graph = read_commit_graph_one(the_repository, odb);
+		graph = load_commit_graph_chain_fd_st(the_repository, fd, &st);
 
-	/* Return failure if open_ok predicted success */
 	if (!graph)
-		return !!open_ok;
+		return 1;
 
 	ret = verify_commit_graph(the_repository, graph, flags);
 	free_commit_graph(graph);
