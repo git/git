@@ -467,6 +467,7 @@ static void finish(struct commit *head_commit,
 		struct diff_options opts;
 		repo_diff_setup(the_repository, &opts);
 		opts.stat_width = -1; /* use full terminal width */
+		opts.stat_name_width = -1; /* respect statNameWidth config */
 		opts.stat_graph_width = -1; /* respect statGraphWidth config */
 		opts.output_format |=
 			DIFF_FORMAT_SUMMARY | DIFF_FORMAT_DIFFSTAT;
