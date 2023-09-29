@@ -1,6 +1,6 @@
 #include "git-compat-util.h"
 #include "rebase.h"
-#include "config.h"
+#include "parse.h"
 #include "gettext.h"
 
 /*

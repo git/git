@@ -4,7 +4,7 @@
 #include "hashmap.h"
 #include "string-list.h"
 #include "repository.h"
-
+#include "parse.h"
 
 /**
  * The config API gives callers a way to access Git configuration files
@@ -243,16 +243,6 @@ int config_with_options(config_fn_t fn, void *,
  * The following helper functions aid in parsing string values
  */
 
-int git_parse_ssize_t(const char *, ssize_t *);
-int git_parse_ulong(const char *, unsigned long *);
-int git_parse_int(const char *value, int *ret);
-
-/**
- * Same as `git_config_bool`, except that it returns -1 on error rather
- * than dying.
- */
-int git_parse_maybe_bool(const char *);
-
 /**
  * Parse the string to an integer, including unit factors. Dies on error;
  * otherwise, returns the parsed result.
@@ -385,8 +375,6 @@ int git_config_rename_section(const char *, const char *);
 int git_config_rename_section_in_file(const char *, const char *, const char *);
 int git_config_copy_section(const char *, const char *);
 int git_config_copy_section_in_file(const char *, const char *, const char *);
-int git_env_bool(const char *, int);
-unsigned long git_env_ulong(const char *, unsigned long);
 int git_config_system(void);
 int config_error_nonbool(const char *);
 #if defined(__GNUC__)

@@ -7,7 +7,7 @@
 #include "environment.h"
 #include "fsmonitor.h"
 #include "gettext.h"
-#include "config.h"
+#include "parse.h"
 #include "preload-index.h"
 #include "progress.h"
 #include "read-cache.h"
