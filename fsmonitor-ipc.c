@@ -20,7 +20,7 @@ int fsmonitor_ipc__is_supported(void)
 	return 0;
 }
 
-const char *fsmonitor_ipc__get_path(struct repository *r)
+const char *fsmonitor_ipc__get_path(struct repository *r UNUSED)
 {
 	return NULL;
 }
@@ -30,14 +30,14 @@ enum ipc_active_state fsmonitor_ipc__get_state(void)
 	return IPC_STATE__OTHER_ERROR;
 }
 
-int fsmonitor_ipc__send_query(const char *since_token,
-			      struct strbuf *answer)
+int fsmonitor_ipc__send_query(const char *since_token UNUSED,
+			      struct strbuf *answer UNUSED)
 {
 	return -1;
 }
 
-int fsmonitor_ipc__send_command(const char *command,
-				struct strbuf *answer)
+int fsmonitor_ipc__send_command(const char *command UNUSED,
+				struct strbuf *answer UNUSED)
 {
 	return -1;
 }

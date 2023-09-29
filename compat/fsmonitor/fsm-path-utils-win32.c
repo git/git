@@ -132,7 +132,8 @@ int fsmonitor__is_fs_remote(const char *path)
 /*
  * No-op for now.
  */
-int fsmonitor__get_alias(const char *path, struct alias_info *info)
+int fsmonitor__get_alias(const char *path UNUSED,
+			 struct alias_info *info UNUSED)
 {
 	return 0;
 }
@@ -140,8 +141,8 @@ int fsmonitor__get_alias(const char *path, struct alias_info *info)
 /*
  * No-op for now.
  */
-char *fsmonitor__resolve_alias(const char *path,
-	const struct alias_info *info)
+char *fsmonitor__resolve_alias(const char *path UNUSED,
+			       const struct alias_info *info UNUSED)
 {
 	return NULL;
 }

@@ -191,12 +191,12 @@ static void my_add_path(struct fsmonitor_batch *batch, const char *path)
 }
 
 
-static void fsevent_callback(ConstFSEventStreamRef streamRef,
+static void fsevent_callback(ConstFSEventStreamRef streamRef UNUSED,
 			     void *ctx,
 			     size_t num_of_events,
 			     void *event_paths,
 			     const FSEventStreamEventFlags event_flags[],
-			     const FSEventStreamEventId event_ids[])
+			     const FSEventStreamEventId event_ids[] UNUSED)
 {
 	struct fsmonitor_daemon_state *state = ctx;
 	struct fsm_listen_data *data = state->listen_data;

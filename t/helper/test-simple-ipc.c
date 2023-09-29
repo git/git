@@ -278,7 +278,8 @@ static int daemon__run_server(void)
 
 static start_bg_wait_cb bg_wait_cb;
 
-static int bg_wait_cb(const struct child_process *cp, void *cb_data)
+static int bg_wait_cb(const struct child_process *cp UNUSED,
+		      void *cb_data UNUSED)
 {
 	int s = ipc_get_active_state(cl_args.path);
 

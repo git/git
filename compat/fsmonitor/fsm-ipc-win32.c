@@ -6,6 +6,6 @@
 const char *fsmonitor_ipc__get_path(struct repository *r) {
 	static char *ret;
 	if (!ret)
-		ret = git_pathdup("fsmonitor--daemon.ipc");
+		ret = repo_git_path(r, "fsmonitor--daemon.ipc");
 	return ret;
 }
