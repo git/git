@@ -57,9 +57,20 @@ UI, Workflows & Features
  * The command-line complation support (in contrib/) learned to
    complete "git commit --trailer=" for possible trailer keys.
 
-
  * "git update-index" learns "--show-index-version" to inspect
    the index format version used by the on-disk index file.
+
+ * "git diff" learned diff.statNameWidth configuration variable, to
+   give the default width for the name part in the "--stat" output.
+
+ * "git range-diff --notes=foo" compared "log --notes=foo --notes" of
+   the two ranges, instead of using just the specified notes tree.
+
+ * The command line completion script (in contrib/) can be told to
+   complete aliases by including ": git <cmd> ;" in the alias to tell
+   it that the alias should be completed similar to how "git <cmd>" is
+   completed.  The parsing code for the alias as been loosened to
+   allow ';' without an extra space before it.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -74,12 +85,12 @@ Performance, Internal Implementation, Development Support etc.
  * Tests that are known to pass with LSan are now marked as such.
    (merge 5fafe8c95f tb/mark-more-tests-as-leak-free later to maint).
 
- * Flakey "git p4" tests, as well as "git svn" tests, are now skipped
+ * Flaky "git p4" tests, as well as "git svn" tests, are now skipped
    in the (rather expensive) sanitizer CI job.
    (merge 6ba913629f js/ci-san-skip-p4-and-svn-tests later to maint).
 
  * Tests with LSan from time to time seem to emit harmless message
-   that makes our tests unnecessarily flakey; we work it around by
+   that makes our tests unnecessarily flaky; we work it around by
    filtering the uninteresting output.
    (merge 370ef7e40d jk/test-lsan-denoise-output later to maint).
 
@@ -134,7 +145,7 @@ Fixes since v2.42
    pathnames recorded in tree objects.
    (merge 4d5693ba05 jk/tree-name-and-depth-limit later to maint).
 
- * Various fixes to the behaviour of "rebase -i" when the command got
+ * Various fixes to the behavior of "rebase -i" when the command got
    interrupted by conflicting changes.
    (merge 203573b024 pw/rebase-i-after-failure later to maint).
 
@@ -155,7 +166,7 @@ Fixes since v2.42
    which has been corrected.
    (merge 48944f214c pw/diff-no-index-from-named-pipes later to maint).
 
- * Update "git maintainance" timers' implementation based on systemd
+ * Update "git maintenance" timers' implementation based on systemd
    timers to work with WSL.
    (merge 5e8515e8e8 js/systemd-timers-wsl-fix later to maint).
 
@@ -178,6 +189,10 @@ Fixes since v2.42
    address did not give correct information, which has been corrected.
    (merge 12288cc44e tb/send-email-extract-valid-address-error-message-fix later to maint).
 
+ * UBSan options were not propagated through the test framework to git
+   run via the httpd, unlike ASan options, which has been corrected.
+   (merge 252d693797 jk/test-pass-ubsan-options-to-http-test later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge fd3ba590d8 ws/git-push-doc-grammofix later to maint).
    (merge 5f33a843de ds/upload-pack-error-sequence-fix later to maint).
@@ -196,3 +211,5 @@ Fixes since v2.42
    (merge 8aae489756 ob/t3404-typofix later to maint).
    (merge 58be11432e eg/config-type-path-docfix later to maint).
    (merge 563f339d98 ch/clean-docfix later to maint).
+   (merge 4fbe83fcd9 hy/doc-show-is-like-log-not-diff-tree later to maint).
+   (merge 43abaaf008 ob/am-msgfix later to maint).
