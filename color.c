@@ -3,7 +3,7 @@
 #include "color.h"
 #include "editor.h"
 #include "gettext.h"
-#include "hex.h"
+#include "hex-ll.h"
 #include "pager.h"
 #include "strbuf.h"
 
