@@ -184,6 +184,7 @@ current branch integrates with) obviously do not work, as there is no
 [[def_gitfile]]gitfile::
 	A plain file `.git` at the root of a working tree that
 	points at the directory that is the real repository.
+	See linkgit:gitrepository-layout for the syntax.
 
 [[def_grafts]]grafts::
 	Grafts enables two otherwise different lines of development to be joined

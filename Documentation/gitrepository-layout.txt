@@ -23,10 +23,10 @@ A Git repository comes in two different flavours:
 
 *Note*: Also you can have a plain text file `.git` at the root of
 your working tree, containing `gitdir: <path>` to point at the real
-directory that has the repository.  This mechanism is often used for
-a working tree of a submodule checkout, to allow you in the
-containing superproject to `git checkout` a branch that does not
-have the submodule.  The `checkout` has to remove the entire
+directory that has the repository.  This mechanism is called a 'gitfile'
+and is often used for a working tree of a submodule checkout, to allow
+you in the containing superproject to `git checkout` a branch that
+does not have the submodule.  The `checkout` has to remove the entire
 submodule working tree, without losing the submodule repository.
 
 These things may exist in a Git repository.
