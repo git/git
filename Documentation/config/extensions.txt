@@ -7,6 +7,18 @@ Note that this setting should only be set by linkgit:git-init[1] or
 linkgit:git-clone[1].  Trying to change it after initialization will not
 work and will produce hard-to-diagnose issues.
 
+extensions.compatObjectFormat::
+
+	Specify a compatitbility hash algorithm to use.  The acceptable values
+	are `sha1` and `sha256`.  The value specified must be different from the
+	value of extensions.objectFormat.  This allows client level
+	interoperability between git repositories whose objectFormat matches
+	this compatObjectFormat.  In particular when fully implemented the
+	pushes and pulls from a repository in whose objectFormat matches
+	compatObjectFormat.  As well as being able to use oids encoded in
+	compatObjectFormat in addition to oids encoded with objectFormat to
+	locally specify objects.
+
 extensions.worktreeConfig::
 	If enabled, then worktrees will load config settings from the
 	`$GIT_DIR/config.worktree` file in addition to the
