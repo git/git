@@ -146,35 +146,95 @@ static int convert_commit_object(struct strbuf *out,
 	const int tree_entry_len = from->hexsz + 5;
 	const int parent_entry_len = from->hexsz + 7;
 	struct object_id oid, mapped_oid;
-	const char *p;
+	const char *p, *eol;
 
 	tail += size;
-	if (tail <= bufptr + tree_entry_len + 1 || memcmp(bufptr, "tree ", 5) ||
-			bufptr[tree_entry_len] != '\n')
-		return error("bogus commit object");
-	if (parse_oid_hex_algop(bufptr + 5, &oid, &p, from) < 0)
-		return error("bad tree pointer");
 
-	if (repo_oid_to_algop(the_repository, &oid, to, &mapped_oid))
-		return error("unable to map tree %s in commit object",
-			     oid_to_hex(&oid));
-	strbuf_addf(out, "tree %s\n", oid_to_hex(&mapped_oid));
-	bufptr = p + 1;
+	while ((bufptr < tail) && (*bufptr != '\n')) {
+		eol = memchr(bufptr, '\n', tail - bufptr);
+		if (!eol)
+			return error(_("bad %s in commit"), "line");
 
-	while (bufptr + parent_entry_len < tail && !memcmp(bufptr, "parent ", 7)) {
-		if (tail <= bufptr + parent_entry_len + 1 ||
-		    parse_oid_hex_algop(bufptr + 7, &oid, &p, from) ||
-		    *p != '\n')
-			return error("bad parents in commit");
+		if (((bufptr + 5) < eol) && !memcmp(bufptr, "tree ", 5))
+		{
+			if (((bufptr + tree_entry_len) != eol) ||
+			    parse_oid_hex_algop(bufptr + 5, &oid, &p, from) ||
+			    (p != eol))
+				return error(_("bad %s in commit"), "tree");
 
-		if (repo_oid_to_algop(the_repository, &oid, to, &mapped_oid))
-			return error("unable to map parent %s in commit object",
-				     oid_to_hex(&oid));
+			if (repo_oid_to_algop(the_repository, &oid, to, &mapped_oid))
+				return error(_("unable to map %s %s in commit object"),
+					     "tree", oid_to_hex(&oid));
+			strbuf_addf(out, "tree %s\n", oid_to_hex(&mapped_oid));
+		}
+		else if (((bufptr + 7) < eol) && !memcmp(bufptr, "parent ", 7))
+		{
+			if (((bufptr + parent_entry_len) != eol) ||
+			    parse_oid_hex_algop(bufptr + 7, &oid, &p, from) ||
+			    (p != eol))
+				return error(_("bad %s in commit"), "parent");
 
-		strbuf_addf(out, "parent %s\n", oid_to_hex(&mapped_oid));
-		bufptr = p + 1;
+			if (repo_oid_to_algop(the_repository, &oid, to, &mapped_oid))
+				return error(_("unable to map %s %s in commit object"),
+					     "parent", oid_to_hex(&oid));
+
+			strbuf_addf(out, "parent %s\n", oid_to_hex(&mapped_oid));
+		}
+		else if (((bufptr + 9) < eol) && !memcmp(bufptr, "mergetag ", 9))
+		{
+			struct strbuf tag = STRBUF_INIT, new_tag = STRBUF_INIT;
+
+			/* Recover the tag object from the mergetag */
+			strbuf_add(&tag, bufptr + 9, (eol - (bufptr + 9)) + 1);
+
+			bufptr = eol + 1;
+			while ((bufptr < tail) && (*bufptr == ' ')) {
+				eol = memchr(bufptr, '\n', tail - bufptr);
+				if (!eol) {
+					strbuf_release(&tag);
+					return error(_("bad %s in commit"), "mergetag continuation");
+				}
+				strbuf_add(&tag, bufptr + 1, (eol - (bufptr + 1)) + 1);
+				bufptr = eol + 1;
+			}
+
+			/* Compute the new tag object */
+			if (convert_tag_object(&new_tag, from, to, tag.buf, tag.len)) {
+				strbuf_release(&tag);
+				strbuf_release(&new_tag);
+				return -1;
+			}
+
+			/* Write the new mergetag */
+			strbuf_addstr(out, "mergetag");
+			strbuf_add_lines(out, " ", new_tag.buf, new_tag.len);
+			strbuf_release(&tag);
+			strbuf_release(&new_tag);
+		}
+		else if (((bufptr + 7) < tail) && !memcmp(bufptr, "author ", 7))
+			strbuf_add(out, bufptr, (eol - bufptr) + 1);
+		else if (((bufptr + 10) < tail) && !memcmp(bufptr, "committer ", 10))
+			strbuf_add(out, bufptr, (eol - bufptr) + 1);
+		else if (((bufptr + 9) < tail) && !memcmp(bufptr, "encoding ", 9))
+			strbuf_add(out, bufptr, (eol - bufptr) + 1);
+		else if (((bufptr + 6) < tail) && !memcmp(bufptr, "gpgsig", 6))
+			strbuf_add(out, bufptr, (eol - bufptr) + 1);
+		else {
+			/* Unknown line fail it might embed an oid */
+			return -1;
+		}
+		/* Consume any trailing continuation lines */
+		bufptr = eol + 1;
+		while ((bufptr < tail) && (*bufptr == ' ')) {
+			eol = memchr(bufptr, '\n', tail - bufptr);
+			if (!eol)
+				return error(_("bad %s in commit"), "continuation");
+			strbuf_add(out, bufptr, (eol - bufptr) + 1);
+			bufptr = eol + 1;
+		}
 	}
-	strbuf_add(out, bufptr, tail - bufptr);
+	if (bufptr < tail)
+		strbuf_add(out, bufptr, tail - bufptr);
 	return 0;
 }
 
