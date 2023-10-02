@@ -1355,6 +1355,39 @@ void append_merge_tag_headers(struct commit_list *parents,
 	}
 }
 
+static int convert_commit_extra_headers(struct commit_extra_header *orig,
+					struct commit_extra_header **result)
+{
+	const struct git_hash_algo *compat = the_repository->compat_hash_algo;
+	const struct git_hash_algo *algo = the_repository->hash_algo;
+	struct commit_extra_header *extra = NULL, **tail = &extra;
+	struct strbuf out = STRBUF_INIT;
+	while (orig) {
+		struct commit_extra_header *new;
+		CALLOC_ARRAY(new, 1);
+		if (!strcmp(orig->key, "mergetag")) {
+			if (convert_object_file(&out, algo, compat,
+						orig->value, orig->len,
+						OBJ_TAG, 1)) {
+				free(new);
+				free_commit_extra_headers(extra);
+				return -1;
+			}
+			new->key = xstrdup("mergetag");
+			new->value = strbuf_detach(&out, &new->len);
+		} else {
+			new->key = xstrdup(orig->key);
+			new->len = orig->len;
+			new->value = xmemdupz(orig->value, orig->len);
+		}
+		*tail = new;
+		tail = &new->next;
+		orig = orig->next;
+	}
+	*result = extra;
+	return 0;
+}
+
 static void add_extra_header(struct strbuf *buffer,
 			     struct commit_extra_header *extra)
 {
@@ -1679,6 +1712,7 @@ int commit_tree_extended(const char *msg, size_t msg_len,
 		goto out;
 	}
 	if (r->compat_hash_algo) {
+		struct commit_extra_header *compat_extra = NULL;
 		struct object_id mapped_tree;
 		struct object_id *mapped_parents;
 
@@ -1695,8 +1729,14 @@ int commit_tree_extended(const char *msg, size_t msg_len,
 				free(mapped_parents);
 				goto out;
 			}
+		if (convert_commit_extra_headers(extra, &compat_extra)) {
+			result = -1;
+			free(mapped_parents);
+			goto out;
+		}
 		write_commit_tree(&compat_buffer, msg, msg_len, &mapped_tree,
-				  mapped_parents, nparents, author, committer, extra);
+				  mapped_parents, nparents, author, committer, compat_extra);
+		free_commit_extra_headers(compat_extra);
 		free(mapped_parents);
 
 		if (sign_commit && sign_commit_to_strbuf(&compat_sig, &compat_buffer, sign_commit)) {
