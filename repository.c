@@ -104,6 +104,13 @@ void repo_set_hash_algo(struct repository *repo, int hash_algo)
 	repo->hash_algo = &hash_algos[hash_algo];
 }
 
+void repo_set_compat_hash_algo(struct repository *repo, int algo)
+{
+	if (hash_algo_by_ptr(repo->hash_algo) == algo)
+		BUG("hash_algo and compat_hash_algo match");
+	repo->compat_hash_algo = algo ? &hash_algos[algo] : NULL;
+}
+
 /*
  * Attempt to resolve and set the provided 'gitdir' for repository 'repo'.
  * Return 0 upon success and a non-zero value upon failure.
@@ -184,6 +191,7 @@ int repo_init(struct repository *repo,
 		goto error;
 
 	repo_set_hash_algo(repo, format.hash_algo);
+	repo_set_compat_hash_algo(repo, GIT_HASH_UNKNOWN);
 	repo->repository_format_worktree_config = format.worktree_config;
 
 	/* take ownership of format.partial_clone */
