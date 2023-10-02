@@ -1101,7 +1101,7 @@ static const char *gpg_sig_headers[] = {
 	"gpgsig-sha256",
 };
 
-static int add_commit_signature(struct strbuf *buf, struct strbuf *sig, const struct git_hash_algo *algo)
+int add_header_signature(struct strbuf *buf, struct strbuf *sig, const struct git_hash_algo *algo)
 {
 	int inspos, copypos;
 	const char *eoh;
@@ -1770,9 +1770,9 @@ int commit_tree_extended(const char *msg, size_t msg_len,
 		for (i = 0; i < ARRAY_SIZE(bufs); i++) {
 			if (!bufs[i].algo)
 				continue;
-			add_commit_signature(&buffer, bufs[i].sig, bufs[i].algo);
+			add_header_signature(&buffer, bufs[i].sig, bufs[i].algo);
 			if (r->compat_hash_algo)
-				add_commit_signature(&compat_buffer, bufs[i].sig, bufs[i].algo);
+				add_header_signature(&compat_buffer, bufs[i].sig, bufs[i].algo);
 		}
 	}
 
