@@ -6,12 +6,20 @@ void oid_array_append(struct oid_array *array, const struct object_id *oid)
 {
 	ALLOC_GROW(array->oid, array->nr + 1, array->alloc);
 	oidcpy(&array->oid[array->nr++], oid);
+	if (!oid->algo)
+		oid_set_algo(&array->oid[array->nr - 1], the_hash_algo);
 	array->sorted = 0;
 }
 
-static int void_hashcmp(const void *a, const void *b)
+static int void_hashcmp(const void *va, const void *vb)
 {
-	return oidcmp(a, b);
+	const struct object_id *a = va, *b = vb;
+	int ret;
+	if (a->algo == b->algo)
+		ret = oidcmp(a, b);
+	else
+		ret = a->algo > b->algo ? 1 : -1;
+	return ret;
 }
 
 void oid_array_sort(struct oid_array *array)
