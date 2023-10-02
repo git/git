@@ -285,7 +285,7 @@ static int reset_tree(struct object_id *i_tree, int update, int reset)
 	if (parse_tree(tree))
 		return -1;
 
-	init_tree_desc(t, tree->buffer, tree->size);
+	init_tree_desc(t, &tree->object.oid, tree->buffer, tree->size);
 
 	opts.head_idx = 1;
 	opts.src_index = &the_index;
@@ -871,7 +871,8 @@ static void diff_include_untracked(const struct stash_info *info, struct diff_op
 		tree[i] = parse_tree_indirect(oid[i]);
 		if (parse_tree(tree[i]) < 0)
 			die(_("failed to parse tree"));
-		init_tree_desc(&tree_desc[i], tree[i]->buffer, tree[i]->size);
+		init_tree_desc(&tree_desc[i], &tree[i]->object.oid,
+			       tree[i]->buffer, tree[i]->size);
 	}
 
 	unpack_tree_opt.head_idx = -1;

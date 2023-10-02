@@ -82,7 +82,7 @@ static void mark_tree_contents_uninteresting(struct repository *r,
 	if (parse_tree_gently(tree, 1) < 0)
 		return;
 
-	init_tree_desc(&desc, tree->buffer, tree->size);
+	init_tree_desc(&desc, &tree->object.oid, tree->buffer, tree->size);
 	while (tree_entry(&desc, &entry)) {
 		switch (object_type(entry.mode)) {
 		case OBJ_TREE:
@@ -189,7 +189,7 @@ static void add_children_by_path(struct repository *r,
 	if (parse_tree_gently(tree, 1) < 0)
 		return;
 
-	init_tree_desc(&desc, tree->buffer, tree->size);
+	init_tree_desc(&desc, &tree->object.oid, tree->buffer, tree->size);
 	while (tree_entry(&desc, &entry)) {
 		switch (object_type(entry.mode)) {
 		case OBJ_TREE:

@@ -530,7 +530,7 @@ static int grep_submodule(struct grep_opt *opt,
 		strbuf_addstr(&base, filename);
 		strbuf_addch(&base, '/');
 
-		init_tree_desc(&tree, data, size);
+		init_tree_desc(&tree, oid, data, size);
 		hit = grep_tree(&subopt, pathspec, &tree, &base, base.len,
 				object_type == OBJ_COMMIT);
 		strbuf_release(&base);
@@ -574,7 +574,7 @@ static int grep_cache(struct grep_opt *opt,
 
 			data = repo_read_object_file(the_repository, &ce->oid,
 						     &type, &size);
-			init_tree_desc(&tree, data, size);
+			init_tree_desc(&tree, &ce->oid, data, size);
 
 			hit |= grep_tree(opt, pathspec, &tree, &name, 0, 0);
 			strbuf_setlen(&name, name_base_len);
@@ -670,7 +670,7 @@ static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
 				    oid_to_hex(&entry.oid));
 
 			strbuf_addch(base, '/');
-			init_tree_desc(&sub, data, size);
+			init_tree_desc(&sub, &entry.oid, data, size);
 			hit |= grep_tree(opt, pathspec, &sub, base, tn_len,
 					 check_attr);
 			free(data);
@@ -714,7 +714,7 @@ static int grep_object(struct grep_opt *opt, const struct pathspec *pathspec,
 			strbuf_add(&base, name, len);
 			strbuf_addch(&base, ':');
 		}
-		init_tree_desc(&tree, data, size);
+		init_tree_desc(&tree, &obj->oid, data, size);
 		hit = grep_tree(opt, pathspec, &tree, &base, base.len,
 				obj->type == OBJ_COMMIT);
 		strbuf_release(&base);

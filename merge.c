@@ -81,7 +81,8 @@ int checkout_fast_forward(struct repository *r,
 	}
 	for (i = 0; i < nr_trees; i++) {
 		parse_tree(trees[i]);
-		init_tree_desc(t+i, trees[i]->buffer, trees[i]->size);
+		init_tree_desc(t+i, &trees[i]->object.oid,
+			       trees[i]->buffer, trees[i]->size);
 	}
 
 	memset(&opts, 0, sizeof(opts));

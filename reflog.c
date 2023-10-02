@@ -40,7 +40,7 @@ static int tree_is_complete(const struct object_id *oid)
 		tree->buffer = data;
 		tree->size = size;
 	}
-	init_tree_desc(&desc, tree->buffer, tree->size);
+	init_tree_desc(&desc, &tree->object.oid, tree->buffer, tree->size);
 	complete = 1;
 	while (tree_entry(&desc, &entry)) {
 		if (!repo_has_object_file(the_repository, &entry.oid) ||

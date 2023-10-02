@@ -1679,9 +1679,10 @@ static int collect_merge_info(struct merge_options *opt,
 	parse_tree(merge_base);
 	parse_tree(side1);
 	parse_tree(side2);
-	init_tree_desc(t + 0, merge_base->buffer, merge_base->size);
-	init_tree_desc(t + 1, side1->buffer, side1->size);
-	init_tree_desc(t + 2, side2->buffer, side2->size);
+	init_tree_desc(t + 0, &merge_base->object.oid,
+		       merge_base->buffer, merge_base->size);
+	init_tree_desc(t + 1, &side1->object.oid, side1->buffer, side1->size);
+	init_tree_desc(t + 2, &side2->object.oid, side2->buffer, side2->size);
 
 	trace2_region_enter("merge", "traverse_trees", opt->repo);
 	ret = traverse_trees(NULL, 3, t, &info);
@@ -4400,9 +4401,9 @@ static int checkout(struct merge_options *opt,
 	unpack_opts.fn = twoway_merge;
 	unpack_opts.preserve_ignored = 0; /* FIXME: !opts->overwrite_ignore */
 	parse_tree(prev);
-	init_tree_desc(&trees[0], prev->buffer, prev->size);
+	init_tree_desc(&trees[0], &prev->object.oid, prev->buffer, prev->size);
 	parse_tree(next);
-	init_tree_desc(&trees[1], next->buffer, next->size);
+	init_tree_desc(&trees[1], &next->object.oid, next->buffer, next->size);
 
 	ret = unpack_trees(2, trees, &unpack_opts);
 	clear_unpack_trees_porcelain(&unpack_opts);

@@ -411,7 +411,7 @@ static inline int merge_detect_rename(struct merge_options *opt)
 static void init_tree_desc_from_tree(struct tree_desc *desc, struct tree *tree)
 {
 	parse_tree(tree);
-	init_tree_desc(desc, tree->buffer, tree->size);
+	init_tree_desc(desc, &tree->object.oid, tree->buffer, tree->size);
 }
 
 static int unpack_trees_start(struct merge_options *opt,

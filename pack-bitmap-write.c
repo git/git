@@ -366,7 +366,7 @@ static int fill_bitmap_tree(struct bitmap *bitmap,
 	if (parse_tree(tree) < 0)
 		die("unable to load tree object %s",
 		    oid_to_hex(&tree->object.oid));
-	init_tree_desc(&desc, tree->buffer, tree->size);
+	init_tree_desc(&desc, &tree->object.oid, tree->buffer, tree->size);
 
 	while (tree_entry(&desc, &entry)) {
 		switch (object_type(entry.mode)) {

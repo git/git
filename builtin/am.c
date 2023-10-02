@@ -1991,8 +1991,8 @@ static int fast_forward_to(struct tree *head, struct tree *remote, int reset)
 	opts.reset = reset ? UNPACK_RESET_PROTECT_UNTRACKED : 0;
 	opts.preserve_ignored = 0; /* FIXME: !overwrite_ignore */
 	opts.fn = twoway_merge;
-	init_tree_desc(&t[0], head->buffer, head->size);
-	init_tree_desc(&t[1], remote->buffer, remote->size);
+	init_tree_desc(&t[0], &head->object.oid, head->buffer, head->size);
+	init_tree_desc(&t[1], &remote->object.oid, remote->buffer, remote->size);
 
 	if (unpack_trees(2, t, &opts)) {
 		rollback_lock_file(&lock_file);
@@ -2026,7 +2026,7 @@ static int merge_tree(struct tree *tree)
 	opts.dst_index = &the_index;
 	opts.merge = 1;
 	opts.fn = oneway_merge;
-	init_tree_desc(&t[0], tree->buffer, tree->size);
+	init_tree_desc(&t[0], &tree->object.oid, tree->buffer, tree->size);
 
 	if (unpack_trees(1, t, &opts)) {
 		rollback_lock_file(&lock_file);

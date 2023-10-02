@@ -770,7 +770,7 @@ static void prime_cache_tree_rec(struct repository *r,
 
 	oidcpy(&it->oid, &tree->object.oid);
 
-	init_tree_desc(&desc, tree->buffer, tree->size);
+	init_tree_desc(&desc, &tree->object.oid, tree->buffer, tree->size);
 	cnt = 0;
 	while (tree_entry(&desc, &entry)) {
 		if (!S_ISDIR(entry.mode))
