@@ -882,7 +882,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (skip_prefix(arg, "--disambiguate=", &arg)) {
-				repo_for_each_abbrev(the_repository, arg,
+				repo_for_each_abbrev(the_repository, arg, the_hash_algo,
 						     show_abbrev, NULL);
 				continue;
 			}
