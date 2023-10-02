@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2023, #09; Thu, 28)
-X-master-at: bcb6cae2966cc407ca1afc77413b3ef11103c175
-X-next-at: bb76f4660628719c052ba326e360fb0c84258b3c
+Subject: What's cooking in git.git (Oct 2023, #01; Mon, 2)
+X-master-at: d0e8084c65cbf949038ae4cc344ac2c2efd77415
+X-next-at: 2d36e41d1a24beaf57bc0d7146d2b0ae93a5d61b
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Sep 2023, #09; Thu, 28)
+What's cooking in git.git (Oct 2023, #01; Mon, 2)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,7 +46,173 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* ds/stat-name-width-configuration (2023-09-18) 1 commit
+  (merged to 'next' on 2023-09-22 at dbf5bd96e8)
+ + diff --stat: add config option to limit filename width
+
+ "git diff" learned diff.statNameWidth configuration variable, to
+ give the default width for the name part in the "--stat" output.
+ source: <87badb12f040d1c66cd9b89074d3de5015a45983.1694446743.git.dsimic@manjaro.org>
+
+
+* hy/doc-show-is-like-log-not-diff-tree (2023-09-20) 1 commit
+  (merged to 'next' on 2023-09-22 at 5492c03eae)
+ + show doc: redirect user to git log manual instead of git diff-tree
+
+ Doc update.
+ source: <20230920132731.1259-1-hanyang.tony@bytedance.com>
+
+
+* jc/alias-completion (2023-09-20) 1 commit
+  (merged to 'next' on 2023-09-22 at 1d069e900b)
+ + completion: loosen and document the requirement around completing alias
+
+ The command line completion script (in contrib/) can be told to
+ complete aliases by including ": git <cmd> ;" in the alias to tell
+ it that the alias should be completed similar to how "git <cmd>" is
+ completed.  The parsing code for the alias as been loosened to
+ allow ';' without an extra space before it.
+ cf. <owlyjzssjro2.fsf@fine.c.googlers.com>
+ source: <xmqqy1h08zsp.fsf_-_@gitster.g>
+
+
+* jc/unresolve-removal (2023-07-31) 7 commits
+  (merged to 'next' on 2023-09-25 at 0563c8d8a1)
+ + checkout: allow "checkout -m path" to unmerge removed paths
+ + checkout/restore: add basic tests for --merge
+ + checkout/restore: refuse unmerging paths unless checking out of the index
+ + update-index: remove stale fallback code for "--unresolve"
+ + update-index: use unmerge_index_entry() to support removal
+ + resolve-undo: allow resurrecting conflicted state that resolved to deletion
+ + update-index: do not read HEAD and MERGE_HEAD unconditionally
+ (this branch is used by jc/rerere-cleanup.)
+
+ "checkout --merge -- path" and "update-index --unresolve path" did
+ not resurrect conflicted state that was resolved to remove path,
+ but now they do.
+ source: <20230731224409.4181277-1-gitster@pobox.com>
+
+
+* jk/fsmonitor-unused-parameter (2023-09-18) 8 commits
+  (merged to 'next' on 2023-09-19 at bd06505f9e)
+ + run-command: mark unused parameters in start_bg_wait callbacks
+ + fsmonitor: mark unused hashmap callback parameters
+ + fsmonitor/darwin: mark unused parameters in system callback
+ + fsmonitor: mark unused parameters in stub functions
+ + fsmonitor/win32: mark unused parameter in fsm_os__incompatible()
+ + fsmonitor: mark some maybe-unused parameters
+ + fsmonitor/win32: drop unused parameters
+ + fsmonitor: prefer repo_git_path() to git_pathdup()
+
+ Unused parameters in fsmonitor related code paths have been marked
+ as such.
+ source: <20230918222908.GA2659096@coredump.intra.peff.net>
+
+
+* jk/test-pass-ubsan-options-to-http-test (2023-09-21) 1 commit
+  (merged to 'next' on 2023-09-22 at bbe2f75937)
+ + test-lib: set UBSAN_OPTIONS to match ASan
+
+ UBSAN options were not propagated through the test framework to git
+ run via the httpd, unlike ASAN options, which has been corrected.
+ source: <20230921041825.GA2814583@coredump.intra.peff.net>
+
+
+* js/doc-status-with-submodules-mark-up-fix (2023-09-22) 1 commit
+  (merged to 'next' on 2023-09-25 at 7ed318fc91)
+ + Documentation/git-status: add missing line breaks
+
+ Docfix.
+ source: <pull.1590.git.1695392082207.gitgitgadget@gmail.com>
+
+
+* kh/range-diff-notes (2023-09-19) 1 commit
+  (merged to 'next' on 2023-09-22 at ac04978b4b)
+ + range-diff: treat notes like `log`
+
+ "git range-diff --notes=foo" compared "log --notes=foo --notes" of
+ the two ranges, instead of using just the specified notes tree.
+ source: <6e114271a2e7d2323193bd58bb307f60101942ce.1695154855.git.code@khaugsbakk.name>
+
+
+* ml/git-gui-exec-path-fix (2023-09-18) 3 commits
+  (merged to 'next' on 2023-09-19 at 0565b0b14b)
+ + Merge git-gui into ml/git-gui-exec-path-fix
+ + git-gui - use git-hook, honor core.hooksPath
+ + git-gui - re-enable use of hook scripts
+
+ Fix recent regression in Git-GUI that fails to run hook scripts at
+ all.
+
+
+* ob/am-msgfix (2023-09-21) 1 commit
+  (merged to 'next' on 2023-09-22 at 7f7589a06a)
+ + am: fix error message in parse_opt_show_current_patch()
+
+ The parameters to generate an error message have been corrected.
+ source: <20230921110727.789156-1-oswald.buddenhagen@gmx.de>
+
+--------------------------------------------------
 [New Topics]
+
+* cw/prelim-cleanup (2023-09-29) 4 commits
+ - parse: separate out parsing functions from config.h
+ - config: correct bad boolean env value error message
+ - wrapper: reduce scope of remove_or_warn()
+ - hex-ll: separate out non-hash-algo functions
+
+ Shuffle some bits across headers and sources to prepare for
+ libification effort.
+
+ Will merge to 'next'.
+ source: <cover.1696021277.git.jonathantanmy@google.com>
+
+
+* ds/init-diffstat-width (2023-09-29) 1 commit
+ - diff --stat: set the width defaults in a helper function
+
+ Code clean-up.
+
+ Will merge to 'next'.
+ source: <d45d1dac1a20699e370905b88b6fd0ec296751e7.1695441501.git.dsimic@manjaro.org>
+
+
+* ar/diff-index-merge-base-fix (2023-10-02) 1 commit
+ - diff: fix --merge-base with annotated tags
+
+ source: <20231001151845.3621551-1-hi@alyssa.is>
+
+--------------------------------------------------
+[Stalled]
+
+* tk/cherry-pick-sequence-requires-clean-worktree (2023-06-01) 1 commit
+ - cherry-pick: refuse cherry-pick sequence if index is dirty
+
+ "git cherry-pick A" that replays a single commit stopped before
+ clobbering local modification, but "git cherry-pick A..B" did not,
+ which has been corrected.
+
+ Expecting a reroll.
+ cf. <999f12b2-38d6-f446-e763-4985116ad37d@gmail.com>
+ source: <pull.1535.v2.git.1685264889088.gitgitgadget@gmail.com>
+
+
+* jc/diff-cached-fsmonitor-fix (2023-09-15) 3 commits
+ - diff-lib: fix check_removed() when fsmonitor is active
+ - Merge branch 'jc/fake-lstat' into jc/diff-cached-fsmonitor-fix
+ - Merge branch 'js/diff-cached-fsmonitor-fix' into jc/diff-cached-fsmonitor-fix
+ (this branch uses jc/fake-lstat.)
+
+ The optimization based on fsmonitor in the "diff --cached"
+ codepath is resurrected with the "fake-lstat" introduced earlier.
+
+ It is unknown if the optimization is worth resurrecting, but in case...
+ source: <xmqqr0n0h0tw.fsf@gitster.g>
+
+--------------------------------------------------
+[Cooking]
 
 * bb/unicode-width-table-15 (2023-09-25) 1 commit
   (merged to 'next' on 2023-09-28 at bb76f46606)
@@ -60,13 +226,14 @@ Release tarballs are available at:
 
 
 * eb/limit-bulk-checkin-to-blobs (2023-09-26) 1 commit
- - bulk-checkin: only support blobs in index_bulk_checkin
+  (merged to 'next' on 2023-10-02 at 89c9c95966)
+ + bulk-checkin: only support blobs in index_bulk_checkin
 
  The "streaming" interface used for bulk-checkin codepath has been
  narrowed to take only blob objects for now, with no real loss of
  functionality.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <87msx99b9o.fsf_-_@gmail.froward.int.ebiederm.org>
 
 
@@ -110,43 +277,43 @@ Release tarballs are available at:
  source: <pull.1563.v4.git.1695709372.gitgitgadget@gmail.com>
 
 
-* eb/hash-transition (2023-09-27) 30 commits
- - t1016-compatObjectFormat: Add tests to verify the conversion between objects
- - t1006: Test oid compatibility with cat-file
- - t1006: Rename sha1 to oid
- - test-lib: Compute the compatibility hash so tests may use it
- - builtin/ls-tree: Let the oid determine the output algorithm
- - object-file: Handle compat objects in check_object_signature
+* eb/hash-transition (2023-10-02) 30 commits
+ - t1016-compatObjectFormat: add tests to verify the conversion between objects
+ - t1006: test oid compatibility with cat-file
+ - t1006: rename sha1 to oid
+ - test-lib: compute the compatibility hash so tests may use it
+ - builtin/ls-tree: let the oid determine the output algorithm
+ - object-file: handle compat objects in check_object_signature
  - tree-walk: init_tree_desc take an oid to get the hash algorithm
- - builtin/cat-file: Let the oid determine the output algorithm
- - rev-parse: Add an --output-object-format parameter
- - repository: Implement extensions.compatObjectFormat
- - object-file: Update object_info_extended to reencode objects
- - object-file-convert: Convert commits that embed signed tags
+ - builtin/cat-file: let the oid determine the output algorithm
+ - rev-parse: add an --output-object-format parameter
+ - repository: implement extensions.compatObjectFormat
+ - object-file: update object_info_extended to reencode objects
+ - object-file-convert: convert commits that embed signed tags
  - object-file-convert: convert commit objects when writing
- - object-file-convert: Don't leak when converting tag objects
+ - object-file-convert: don't leak when converting tag objects
  - object-file-convert: convert tag objects when writing
  - object-file-convert: add a function to convert trees between algorithms
- - object: Factor out parse_mode out of fast-import and tree-walk into in object.h
+ - object: factor out parse_mode out of fast-import and tree-walk into in object.h
  - cache: add a function to read an OID of a specific algorithm
  - tag: sign both hashes
- - commit: Export add_header_signature to support handling signatures on tags
- - commit: Convert mergetag before computing the signature of a commit
+ - commit: export add_header_signature to support handling signatures on tags
+ - commit: convert mergetag before computing the signature of a commit
  - commit: write commits for both hashes
- - object-file: Add a compat_oid_in parameter to write_object_file_flags
- - object-file: Update the loose object map when writing loose objects
- - loose: Compatibilty short name support
+ - object-file: add a compat_oid_in parameter to write_object_file_flags
+ - object-file: update the loose object map when writing loose objects
+ - loose: compatibilty short name support
  - loose: add a mapping between SHA-1 and SHA-256 for loose objects
  - repository: add a compatibility hash algorithm
- - object-names: Support input of oids in any supported hash
- - oid-array: Teach oid-array to handle multiple kinds of oids
- - object-file-convert: Stubs for converting from one object format to another
+ - object-names: support input of oids in any supported hash
+ - oid-array: teach oid-array to handle multiple kinds of oids
+ - object-file-convert: stubs for converting from one object format to another
 
  Teach a repository to work with both SHA-1 and SHA-256 hash algorithms.
 
  Breaks a few CI jobs when merged to 'seen'.
  cf. <xmqqbkdmjbkp.fsf@gitster.g>
- source: <87jzsbjt0a.fsf@gmail.froward.int.ebiederm.org>
+ source: <878r8l929e.fsf@gmail.froward.int.ebiederm.org>
 
 
 * xz/commit-title-soft-limit-doc (2023-09-28) 1 commit
@@ -158,35 +325,6 @@ Release tarballs are available at:
  Will merge to 'master'.
  source: <pull.1580.git.git.1695895155985.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Stalled]
-
-* tk/cherry-pick-sequence-requires-clean-worktree (2023-06-01) 1 commit
- - cherry-pick: refuse cherry-pick sequence if index is dirty
-
- "git cherry-pick A" that replays a single commit stopped before
- clobbering local modification, but "git cherry-pick A..B" did not,
- which has been corrected.
-
- Expecting a reroll.
- cf. <999f12b2-38d6-f446-e763-4985116ad37d@gmail.com>
- source: <pull.1535.v2.git.1685264889088.gitgitgadget@gmail.com>
-
-
-* jc/diff-cached-fsmonitor-fix (2023-09-15) 3 commits
- - diff-lib: fix check_removed() when fsmonitor is active
- - Merge branch 'jc/fake-lstat' into jc/diff-cached-fsmonitor-fix
- - Merge branch 'js/diff-cached-fsmonitor-fix' into jc/diff-cached-fsmonitor-fix
- (this branch uses jc/fake-lstat.)
-
- The optimization based on fsmonitor in the "diff --cached"
- codepath is resurrected with the "fake-lstat" introduced earlier.
-
- It is unknown if the optimization is worth resurrecting, but in case...
- source: <xmqqr0n0h0tw.fsf@gitster.g>
-
---------------------------------------------------
-[Cooking]
 
 * jx/remote-archive-over-smart-http (2023-09-25) 3 commits
  - archive: support remote archive from stateless transport
@@ -239,59 +377,14 @@ Release tarballs are available at:
 
 
 * ty/merge-tree-strategy-options (2023-09-25) 1 commit
- - merge-tree: add -X strategy option
+  (merged to 'next' on 2023-09-29 at aa65b54416)
+ + merge-tree: add -X strategy option
 
  "git merge-tree" learned to take strategy backend specific options
  via the "-X" option, like "git merge" does.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1565.v6.git.1695522222723.gitgitgadget@gmail.com>
-
-
-* hy/doc-show-is-like-log-not-diff-tree (2023-09-20) 1 commit
-  (merged to 'next' on 2023-09-22 at 5492c03eae)
- + show doc: redirect user to git log manual instead of git diff-tree
-
- Doc update.
-
- Will merge to 'master'.
- source: <20230920132731.1259-1-hanyang.tony@bytedance.com>
-
-
-* jc/alias-completion (2023-09-20) 1 commit
-  (merged to 'next' on 2023-09-22 at 1d069e900b)
- + completion: loosen and document the requirement around completing alias
-
- The command line completion script (in contrib/) can be told to
- complete aliases by including ": git <cmd> ;" in the alias to tell
- it that the alias should be completed similar to how "git <cmd>" is
- completed.  The parsing code for the alias as been loosened to
- allow ';' without an extra space before it.
-
- Will merge to 'master'.
- cf. <owlyjzssjro2.fsf@fine.c.googlers.com>
- source: <xmqqy1h08zsp.fsf_-_@gitster.g>
-
-
-* jk/test-pass-ubsan-options-to-http-test (2023-09-21) 1 commit
-  (merged to 'next' on 2023-09-22 at bbe2f75937)
- + test-lib: set UBSAN_OPTIONS to match ASan
-
- UBSAN options were not propagated through the test framework to git
- run via the httpd, unlike ASAN options, which has been corrected.
-
- Will merge to 'master'.
- source: <20230921041825.GA2814583@coredump.intra.peff.net>
-
-
-* ob/am-msgfix (2023-09-21) 1 commit
-  (merged to 'next' on 2023-09-22 at 7f7589a06a)
- + am: fix error message in parse_opt_show_current_patch()
-
- The parameters to generate an error message have been corrected.
-
- Will merge to 'master'.
- source: <20230921110727.789156-1-oswald.buddenhagen@gmx.de>
 
 
 * js/ci-coverity (2023-09-25) 7 commits
@@ -309,16 +402,6 @@ Release tarballs are available at:
  source: <pull.1588.v2.git.1695642662.gitgitgadget@gmail.com>
 
 
-* js/doc-status-with-submodules-mark-up-fix (2023-09-22) 1 commit
-  (merged to 'next' on 2023-09-25 at 7ed318fc91)
- + Documentation/git-status: add missing line breaks
-
- Docfix.
-
- Will merge to 'master'.
- source: <pull.1590.git.1695392082207.gitgitgadget@gmail.com>
-
-
 * js/config-parse (2023-09-21) 5 commits
  - config-parse: split library out of config.[c|h]
  - config.c: accept config_parse_options in git_config_from_stdin
@@ -329,47 +412,6 @@ Release tarballs are available at:
  The parsing routines for the configuration files have been split
  into a separate file.
  source: <cover.1695330852.git.steadmon@google.com>
-
-
-* ml/git-gui-exec-path-fix (2023-09-18) 3 commits
-  (merged to 'next' on 2023-09-19 at 0565b0b14b)
- + Merge git-gui into ml/git-gui-exec-path-fix
- + git-gui - use git-hook, honor core.hooksPath
- + git-gui - re-enable use of hook scripts
-
- Fix recent regression in Git-GUI that fails to run hook scripts at
- all.
-
- Will merge to 'master'.
-
-
-* ds/stat-name-width-configuration (2023-09-18) 1 commit
-  (merged to 'next' on 2023-09-22 at dbf5bd96e8)
- + diff --stat: add config option to limit filename width
-
- "git diff" learned diff.statNameWidth configuration variable, to
- give the default width for the name part in the "--stat" output.
-
- Will merge to 'master'.
- source: <87badb12f040d1c66cd9b89074d3de5015a45983.1694446743.git.dsimic@manjaro.org>
-
-
-* jk/fsmonitor-unused-parameter (2023-09-18) 8 commits
-  (merged to 'next' on 2023-09-19 at bd06505f9e)
- + run-command: mark unused parameters in start_bg_wait callbacks
- + fsmonitor: mark unused hashmap callback parameters
- + fsmonitor/darwin: mark unused parameters in system callback
- + fsmonitor: mark unused parameters in stub functions
- + fsmonitor/win32: mark unused parameter in fsm_os__incompatible()
- + fsmonitor: mark some maybe-unused parameters
- + fsmonitor/win32: drop unused parameters
- + fsmonitor: prefer repo_git_path() to git_pathdup()
-
- Unused parameters in fsmonitor related code paths have been marked
- as such.
-
- Will merge to 'master'.
- source: <20230918222908.GA2659096@coredump.intra.peff.net>
 
 
 * jc/fake-lstat (2023-09-15) 1 commit
@@ -395,17 +437,6 @@ Release tarballs are available at:
  source: <20230920104507.21664-1-karthik.188@gmail.com>
 
 
-* kh/range-diff-notes (2023-09-19) 1 commit
-  (merged to 'next' on 2023-09-22 at ac04978b4b)
- + range-diff: treat notes like `log`
-
- "git range-diff --notes=foo" compared "log --notes=foo --notes" of
- the two ranges, instead of using just the specified notes tree.
-
- Will merge to 'master'.
- source: <6e114271a2e7d2323193bd58bb307f60101942ce.1695154855.git.code@khaugsbakk.name>
-
-
 * rs/parse-options-value-int (2023-09-18) 2 commits
  - parse-options: use and require int pointer for OPT_CMDMODE
  - parse-options: add int value pointer to struct option
@@ -428,8 +459,7 @@ Release tarballs are available at:
  source: <20230909125446.142715-1-sorganov@gmail.com>
 
 
-* cc/repack-sift-filtered-objects-to-separate-pack (2023-09-25) 10 commits
- - SQUASH??? t0080 is already taken
+* cc/repack-sift-filtered-objects-to-separate-pack (2023-10-02) 9 commits
  - gc: add `gc.repackFilterTo` config option
  - repack: implement `--filter-to` for storing filtered out objects
  - gc: add `gc.repackFilter` config option
@@ -443,8 +473,9 @@ Release tarballs are available at:
  "git repack" machinery learns to pay attention to the "--filter="
  option.
 
- Looking better.
- source: <20230925152517.803579-1-christian.couder@gmail.com>
+ Will merge to 'next'.
+ cf. <ZRsknb4NxNHTR21E@nand.local>
+ source: <20231002165504.1325153-1-christian.couder@gmail.com>
 
 
 * pw/rebase-sigint (2023-09-07) 1 commit
@@ -460,23 +491,6 @@ Release tarballs are available at:
  Expecting a reroll.
  cf. <12c956ea-330d-4441-937f-7885ab519e26@gmail.com>
  source: <pull.1581.git.1694080982621.gitgitgadget@gmail.com>
-
-
-* cw/git-std-lib (2023-09-11) 7 commits
- - SQUASH???
- - git-std-lib: add test file to call git-std-lib.a functions
- - git-std-lib: introduce git standard library
- - parse: create new library for parsing strings and env values
- - config: correct bad boolean env value error message
- - wrapper: remove dependency to Git-specific internal file
- - hex-ll: split out functionality from hex
-
- Another libification effort.
-
- Needs more work.
- cf. <xmqqy1hfrk6p.fsf@gitster.g>
- cf. <20230915183927.1597414-1-jonathantanmy@google.com>
- source: <20230908174134.1026823-1-calvinwan@google.com>
 
 
 * cc/git-replay (2023-09-07) 15 commits
@@ -585,31 +599,11 @@ Release tarballs are available at:
  - rerere: try_merge() should use LL_MERGE_ERROR when it means an error
  - rerere: fix comment on handle_file() helper
  - rerere: simplify check_one_conflict() helper function
- (this branch uses jc/unresolve-removal.)
 
  Code clean-up.
 
  Not ready to be reviewed yet.
- source: <20230731224409.4181277-1-gitster@pobox.com>
-
-
-* jc/unresolve-removal (2023-07-31) 7 commits
-  (merged to 'next' on 2023-09-25 at 0563c8d8a1)
- + checkout: allow "checkout -m path" to unmerge removed paths
- + checkout/restore: add basic tests for --merge
- + checkout/restore: refuse unmerging paths unless checking out of the index
- + update-index: remove stale fallback code for "--unresolve"
- + update-index: use unmerge_index_entry() to support removal
- + resolve-undo: allow resurrecting conflicted state that resolved to deletion
- + update-index: do not read HEAD and MERGE_HEAD unconditionally
- (this branch is used by jc/rerere-cleanup.)
-
- "checkout --merge -- path" and "update-index --unresolve path" did
- not resurrect conflicted state that was resolved to remove path,
- but now they do.
-
- Will merge to 'master'.
- source: <20230731224409.4181277-1-gitster@pobox.com>
+ source: <20230824205456.1231371-1-gitster@pobox.com>
 
 
 * rj/status-bisect-while-rebase (2023-08-01) 1 commit
@@ -632,3 +626,20 @@ Release tarballs are available at:
 
  Superseded by the js/ci-coverity topic.
  source: <b23951c569660e1891a7fb3ad2c2ea1952897bd7.1695332105.git.me@ttaylorr.com>
+
+
+* cw/git-std-lib (2023-09-11) 7 commits
+ . SQUASH???
+ . git-std-lib: add test file to call git-std-lib.a functions
+ . git-std-lib: introduce git standard library
+ . parse: create new library for parsing strings and env values
+ . config: correct bad boolean env value error message
+ . wrapper: remove dependency to Git-specific internal file
+ . hex-ll: split out functionality from hex
+
+ Another libification effort.
+
+ Superseded by the cw/prelim-cleanup topic.
+ cf. <xmqqy1hfrk6p.fsf@gitster.g>
+ cf. <20230915183927.1597414-1-jonathantanmy@google.com>
+ source: <20230908174134.1026823-1-calvinwan@google.com>
