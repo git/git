@@ -28,6 +28,7 @@
 #include "ref-filter.h"
 #include "date.h"
 #include "write-or-die.h"
+#include "object-file-convert.h"
 
 static const char * const git_tag_usage[] = {
 	N_("git tag [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>] [-e]\n"
@@ -174,9 +175,43 @@ static int verify_tag(const char *name, const char *ref UNUSED,
 	return 0;
 }
 
-static int do_sign(struct strbuf *buffer)
+static int do_sign(struct strbuf *buffer, struct object_id **compat_oid,
+		   struct object_id *compat_oid_buf)
 {
-	return sign_buffer(buffer, buffer, get_signing_key());
+	const struct git_hash_algo *compat = the_repository->compat_hash_algo;
+	struct strbuf sig = STRBUF_INIT, compat_sig = STRBUF_INIT;
+	struct strbuf compat_buf = STRBUF_INIT;
+	const char *keyid = get_signing_key();
+	int ret = -1;
+
+	if (sign_buffer(buffer, &sig, keyid))
+		return -1;
+
+	if (compat) {
+		const struct git_hash_algo *algo = the_repository->hash_algo;
+
+		if (convert_object_file(&compat_buf, algo, compat,
+					buffer->buf, buffer->len, OBJ_TAG, 1))
+			goto out;
+		if (sign_buffer(&compat_buf, &compat_sig, keyid))
+			goto out;
+		add_header_signature(&compat_buf, &sig, algo);
+		strbuf_addbuf(&compat_buf, &compat_sig);
+		hash_object_file(compat, compat_buf.buf, compat_buf.len,
+				 OBJ_TAG, compat_oid_buf);
+		*compat_oid = compat_oid_buf;
+	}
+
+	if (compat_sig.len)
+		add_header_signature(buffer, &compat_sig, compat);
+
+	strbuf_addbuf(buffer, &sig);
+	ret = 0;
+out:
+	strbuf_release(&sig);
+	strbuf_release(&compat_sig);
+	strbuf_release(&compat_buf);
+	return ret;
 }
 
 static const char tag_template[] =
@@ -249,9 +284,11 @@ static void write_tag_body(int fd, const struct object_id *oid)
 
 static int build_tag_object(struct strbuf *buf, int sign, struct object_id *result)
 {
-	if (sign && do_sign(buf) < 0)
+	struct object_id *compat_oid = NULL, compat_oid_buf;
+	if (sign && do_sign(buf, &compat_oid, &compat_oid_buf) < 0)
 		return error(_("unable to sign the tag"));
-	if (write_object_file(buf->buf, buf->len, OBJ_TAG, result) < 0)
+	if (write_object_file_flags(buf->buf, buf->len, OBJ_TAG, result,
+				    compat_oid, 0) < 0)
 		return error(_("unable to write tag file"));
 	return 0;
 }
