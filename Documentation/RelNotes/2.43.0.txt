@@ -193,6 +193,11 @@ Fixes since v2.42
    run via the httpd, unlike ASan options, which has been corrected.
    (merge 252d693797 jk/test-pass-ubsan-options-to-http-test later to maint).
 
+ * "checkout --merge -- path" and "update-index --unresolve path" did
+   not resurrect conflicted state that was resolved to remove path,
+   but now they do.
+   (merge 5bdedac3c7 jc/unresolve-removal later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge fd3ba590d8 ws/git-push-doc-grammofix later to maint).
    (merge 5f33a843de ds/upload-pack-error-sequence-fix later to maint).
