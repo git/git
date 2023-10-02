@@ -1094,9 +1094,11 @@ int check_object_signature(struct repository *r, const struct object_id *oid,
 			   void *buf, unsigned long size,
 			   enum object_type type)
 {
+	const struct git_hash_algo *algo =
+		oid->algo ? &hash_algos[oid->algo] : r->hash_algo;
 	struct object_id real_oid;
 
-	hash_object_file(r->hash_algo, buf, size, type, &real_oid);
+	hash_object_file(algo, buf, size, type, &real_oid);
 
 	return !oideq(oid, &real_oid) ? -1 : 0;
 }
