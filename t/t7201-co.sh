@@ -497,6 +497,11 @@ test_expect_success 'checkout unmerged stage' '
 	test ztheirside = "z$(cat file)"
 '
 
+test_expect_success 'checkout path with --merge from tree-ish is a no-no' '
+	setup_conflicting_index &&
+	test_must_fail git checkout -m HEAD -- file
+'
+
 test_expect_success 'checkout with --merge' '
 	setup_conflicting_index &&
 	echo "none of the above" >sample &&
@@ -512,6 +517,48 @@ test_expect_success 'checkout with --merge' '
 		echo theirside &&
 		echo ">>>>>>> theirs"
 	) >merged &&
+	test_cmp expect fild &&
+	test_cmp expect filf &&
+	test_cmp merged file
+'
+
+test_expect_success 'checkout -m works after (mistaken) resolution' '
+	setup_conflicting_index &&
+	echo "none of the above" >sample &&
+	cat sample >fild &&
+	cat sample >file &&
+	cat sample >filf &&
+	# resolve to something
+	git add file &&
+	git checkout --merge -- fild file filf &&
+	{
+		echo "<<<<<<< ours" &&
+		echo ourside &&
+		echo "=======" &&
+		echo theirside &&
+		echo ">>>>>>> theirs"
+	} >merged &&
+	test_cmp expect fild &&
+	test_cmp expect filf &&
+	test_cmp merged file
+'
+
+test_expect_success 'checkout -m works after (mistaken) resolution to remove' '
+	setup_conflicting_index &&
+	echo "none of the above" >sample &&
+	cat sample >fild &&
+	cat sample >file &&
+	cat sample >filf &&
+	# resolve to remove
+	git rm file &&
+	git checkout --merge -- fild file filf &&
+	{
+		echo "<<<<<<< ours" &&
+		echo ourside &&
+		echo "=======" &&
+		echo theirside &&
+		echo ">>>>>>> theirs"
+	} >merged &&
 	test_cmp expect fild &&
 	test_cmp expect filf &&
 	test_cmp merged file

@@ -1112,7 +1112,7 @@ int rerere_forget(struct repository *r, struct pathspec *pathspec)
 	 * recover the original conflicted state and then
 	 * find the conflicted paths.
 	 */
-	unmerge_index(r->index, pathspec);
+	unmerge_index(r->index, pathspec, 0);
 	find_conflict(r, &conflict);
 	for (i = 0; i < conflict.nr; i++) {
 		struct string_list_item *it = &conflict.items[i];
