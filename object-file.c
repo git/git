@@ -1662,10 +1662,101 @@ static int do_oid_object_info_extended(struct repository *r,
 	return 0;
 }
 
+static int oid_object_info_convert(struct repository *r,
+				   const struct object_id *input_oid,
+				   struct object_info *input_oi, unsigned flags)
+{
+	const struct git_hash_algo *input_algo = &hash_algos[input_oid->algo];
+	int do_die = flags & OBJECT_INFO_DIE_IF_CORRUPT;
+	struct strbuf type_name = STRBUF_INIT;
+	struct object_id oid, delta_base_oid;
+	struct object_info new_oi, *oi;
+	unsigned long size;
+	void *content;
+	int ret;
+
+	if (repo_oid_to_algop(r, input_oid, the_hash_algo, &oid)) {
+		if (do_die)
+			die(_("missing mapping of %s to %s"),
+			    oid_to_hex(input_oid), the_hash_algo->name);
+		return -1;
+	}
+
+	/* Is new_oi needed? */
+	oi = input_oi;
+	if (input_oi && (input_oi->delta_base_oid || input_oi->sizep ||
+			 input_oi->contentp)) {
+		new_oi = *input_oi;
+		/* Does delta_base_oid need to be converted? */
+		if (input_oi->delta_base_oid)
+			new_oi.delta_base_oid = &delta_base_oid;
+		/* Will the attributes differ when converted? */
+		if (input_oi->sizep || input_oi->contentp) {
+			new_oi.contentp = &content;
+			new_oi.sizep = &size;
+			new_oi.type_name = &type_name;
+		}
+		oi = &new_oi;
+	}
+
+	ret = oid_object_info_extended(r, &oid, oi, flags);
+	if (ret)
+		return -1;
+	if (oi == input_oi)
+		return ret;
+
+	if (new_oi.contentp) {
+		struct strbuf outbuf = STRBUF_INIT;
+		enum object_type type;
+
+		type = type_from_string_gently(type_name.buf, type_name.len,
+					       !do_die);
+		if (type == -1)
+			return -1;
+		if (type != OBJ_BLOB) {
+			ret = convert_object_file(&outbuf,
+						  the_hash_algo, input_algo,
+						  content, size, type, !do_die);
+			if (ret == -1)
+				return -1;
+			free(content);
+			size = outbuf.len;
+			content = strbuf_detach(&outbuf, NULL);
+		}
+		if (input_oi->sizep)
+			*input_oi->sizep = size;
+		if (input_oi->contentp)
+			*input_oi->contentp = content;
+		else
+			free(content);
+		if (input_oi->type_name)
+			*input_oi->type_name = type_name;
+		else
+			strbuf_release(&type_name);
+	}
+	if (new_oi.delta_base_oid == &delta_base_oid) {
+		if (repo_oid_to_algop(r, &delta_base_oid, input_algo,
+				 input_oi->delta_base_oid)) {
+			if (do_die)
+				die(_("missing mapping of %s to %s"),
+				    oid_to_hex(&delta_base_oid),
+				    input_algo->name);
+			return -1;
+		}
+	}
+	input_oi->whence = new_oi.whence;
+	input_oi->u = new_oi.u;
+	return ret;
+}
+
 int oid_object_info_extended(struct repository *r, const struct object_id *oid,
 			     struct object_info *oi, unsigned flags)
 {
 	int ret;
+
+	if (oid->algo && (hash_algo_by_ptr(r->hash_algo) != oid->algo))
+		return oid_object_info_convert(r, oid, oi, flags);
+
 	obj_read_lock();
 	ret = do_oid_object_info_extended(r, oid, oi, flags);
 	obj_read_unlock();
