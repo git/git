@@ -21,6 +21,7 @@ static struct test_cmd cmds[] = {
 	{ "csprng", cmd__csprng },
 	{ "ctype", cmd__ctype },
 	{ "date", cmd__date },
+	{ "delete-gpgsig", cmd__delete_gpgsig },
 	{ "delta", cmd__delta },
 	{ "dir-iterator", cmd__dir_iterator },
 	{ "drop-caches", cmd__drop_caches },
