@@ -1,8 +1,10 @@
 #include "git-compat-util.h"
 #include "gettext.h"
 #include "strbuf.h"
+#include "hex.h"
 #include "repository.h"
 #include "hash-ll.h"
+#include "hash.h"
 #include "object.h"
 #include "loose.h"
 #include "object-file-convert.h"
@@ -36,6 +38,51 @@ int repo_oid_to_algop(struct repository *repo, const struct object_id *src,
 	return 0;
 }
 
+static int decode_tree_entry_raw(struct object_id *oid, const char **path,
+				 size_t *len, const struct git_hash_algo *algo,
+				 const char *buf, unsigned long size)
+{
+	uint16_t mode;
+	const unsigned hashsz = algo->rawsz;
+
+	if (size < hashsz + 3 || buf[size - (hashsz + 1)]) {
+		return -1;
+	}
+
+	*path = parse_mode(buf, &mode);
+	if (!*path || !**path)
+		return -1;
+	*len = strlen(*path) + 1;
+
+	oidread_algop(oid, (const unsigned char *)*path + *len, algo);
+	return 0;
+}
+
+static int convert_tree_object(struct strbuf *out,
+			       const struct git_hash_algo *from,
+			       const struct git_hash_algo *to,
+			       const char *buffer, size_t size)
+{
+	const char *p = buffer, *end = buffer + size;
+
+	while (p < end) {
+		struct object_id entry_oid, mapped_oid;
+		const char *path = NULL;
+		size_t pathlen;
+
+		if (decode_tree_entry_raw(&entry_oid, &path, &pathlen, from, p,
+					  end - p))
+			return error(_("failed to decode tree entry"));
+		if (repo_oid_to_algop(the_repository, &entry_oid, to, &mapped_oid))
+			return error(_("failed to map tree entry for %s"), oid_to_hex(&entry_oid));
+		strbuf_add(out, p, path - p);
+		strbuf_add(out, path, pathlen);
+		strbuf_add(out, mapped_oid.hash, to->rawsz);
+		p = path + pathlen + from->rawsz;
+	}
+	return 0;
+}
+
 int convert_object_file(struct strbuf *outbuf,
 			const struct git_hash_algo *from,
 			const struct git_hash_algo *to,
@@ -50,8 +97,10 @@ int convert_object_file(struct strbuf *outbuf,
 		BUG("Refusing noop object file conversion");
 
 	switch (type) {
-	case OBJ_COMMIT:
 	case OBJ_TREE:
+		ret = convert_tree_object(outbuf, from, to, buf, len);
+		break;
+	case OBJ_COMMIT:
 	case OBJ_TAG:
 	default:
 		/* Not implemented yet, so fail. */
