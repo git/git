@@ -1053,6 +1053,7 @@ LIB_OBJS += list-objects-filter.o
 LIB_OBJS += list-objects.o
 LIB_OBJS += lockfile.o
 LIB_OBJS += log-tree.o
+LIB_OBJS += loose.o
 LIB_OBJS += ls-refs.o
 LIB_OBJS += mailinfo.o
 LIB_OBJS += mailmap.o

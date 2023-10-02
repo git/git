@@ -4,6 +4,7 @@
 #include "repository.h"
 #include "hash-ll.h"
 #include "object.h"
+#include "loose.h"
 #include "object-file-convert.h"
 
 int repo_oid_to_algop(struct repository *repo, const struct object_id *src,
@@ -21,7 +22,18 @@ int repo_oid_to_algop(struct repository *repo, const struct object_id *src,
 			oidcpy(dest, src);
 		return 0;
 	}
-	return -1;
+	if (repo_loose_object_map_oid(repo, src, to, dest)) {
+		/*
+		 * We may have loaded the object map at repo initialization but
+		 * another process (perhaps upstream of a pipe from us) may have
+		 * written a new object into the map.  If the object is missing,
+		 * let's reload the map to see if the object has appeared.
+		 */
+		repo_read_loose_object_map(repo);
+		if (repo_loose_object_map_oid(repo, src, to, dest))
+			return -1;
+	}
+	return 0;
 }
 
 int convert_object_file(struct strbuf *outbuf,

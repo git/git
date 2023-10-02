@@ -14,6 +14,7 @@
 #include "read-cache-ll.h"
 #include "remote.h"
 #include "setup.h"
+#include "loose.h"
 #include "submodule-config.h"
 #include "sparse-index.h"
 #include "trace2.h"
@@ -109,6 +110,8 @@ void repo_set_compat_hash_algo(struct repository *repo, int algo)
 	if (hash_algo_by_ptr(repo->hash_algo) == algo)
 		BUG("hash_algo and compat_hash_algo match");
 	repo->compat_hash_algo = algo ? &hash_algos[algo] : NULL;
+	if (repo->compat_hash_algo)
+		repo_read_loose_object_map(repo);
 }
 
 /*
@@ -200,6 +203,9 @@ int repo_init(struct repository *repo,
 
 	if (worktree)
 		repo_set_worktree(repo, worktree);
+
+	if (repo->compat_hash_algo)
+		repo_read_loose_object_map(repo);
 
 	clear_repository_format(&format);
 	return 0;
