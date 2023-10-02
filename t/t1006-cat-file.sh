@@ -236,27 +236,38 @@ hello_size=$(strlen "$hello_content")
 hello_oid=$(echo_without_newline "$hello_content" | git hash-object --stdin)
 
 test_expect_success "setup" '
+	git config core.repositoryformatversion 1 &&
+	git config extensions.objectformat $test_hash_algo &&
+	git config extensions.compatobjectformat $test_compat_hash_algo &&
 	echo_without_newline "$hello_content" > hello &&
 	git update-index --add hello
 '
 
-run_tests 'blob' $hello_oid $hello_size "$hello_content" "$hello_content"
+run_blob_tests () {
+    oid=$1
 
-test_expect_success '--batch-command --buffer with flush for blob info' '
-	echo "$hello_oid blob $hello_size" >expect &&
-	test_write_lines "info $hello_oid" "flush" |
+    run_tests 'blob' $oid $hello_size "$hello_content" "$hello_content"
+
+    test_expect_success '--batch-command --buffer with flush for blob info' '
+	echo "$oid blob $hello_size" >expect &&
+	test_write_lines "info $oid" "flush" |
 	GIT_TEST_CAT_FILE_NO_FLUSH_ON_EXIT=1 \
 	git cat-file --batch-command --buffer >actual &&
 	test_cmp expect actual
-'
+    '
 
-test_expect_success '--batch-command --buffer without flush for blob info' '
+    test_expect_success '--batch-command --buffer without flush for blob info' '
 	touch output &&
-	test_write_lines "info $hello_oid" |
+	test_write_lines "info $oid" |
 	GIT_TEST_CAT_FILE_NO_FLUSH_ON_EXIT=1 \
 	git cat-file --batch-command --buffer >>output &&
 	test_must_be_empty output
-'
+    '
+}
+
+hello_compat_oid=$(git rev-parse --output-object-format=$test_compat_hash_algo $hello_oid)
+run_blob_tests $hello_oid
+run_blob_tests $hello_compat_oid
 
 test_expect_success '--batch-check without %(rest) considers whole line' '
 	echo "$hello_oid blob $hello_size" >expect &&
@@ -267,35 +278,58 @@ test_expect_success '--batch-check without %(rest) considers whole line' '
 '
 
 tree_oid=$(git write-tree)
+tree_compat_oid=$(git rev-parse --output-object-format=$test_compat_hash_algo $tree_oid)
 tree_size=$(($(test_oid rawsz) + 13))
+tree_compat_size=$(($(test_oid --hash=compat rawsz) + 13))
 tree_pretty_content="100644 blob $hello_oid	hello${LF}"
+tree_compat_pretty_content="100644 blob $hello_compat_oid	hello${LF}"
 
 run_tests 'tree' $tree_oid $tree_size "" "$tree_pretty_content"
+run_tests 'tree' $tree_compat_oid $tree_compat_size "" "$tree_compat_pretty_content"
 
 commit_message="Initial commit"
 commit_oid=$(echo_without_newline "$commit_message" | git commit-tree $tree_oid)
+commit_compat_oid=$(git rev-parse --output-object-format=$test_compat_hash_algo $commit_oid)
 commit_size=$(($(test_oid hexsz) + 137))
+commit_compat_size=$(($(test_oid --hash=compat hexsz) + 137))
 commit_content="tree $tree_oid
 author $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> $GIT_AUTHOR_DATE
 committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
 
 $commit_message"
 
-run_tests 'commit' $commit_oid $commit_size "$commit_content" "$commit_content"
+commit_compat_content="tree $tree_compat_oid
+author $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> $GIT_AUTHOR_DATE
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
 
-tag_header_without_timestamp="object $hello_oid
-type blob
+$commit_message"
+
+run_tests 'commit' $commit_oid $commit_size "$commit_content" "$commit_content"
+run_tests 'commit' $commit_compat_oid $commit_compat_size "$commit_compat_content" "$commit_compat_content"
+
+tag_header_without_oid="type blob
 tag hellotag
 tagger $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>"
+tag_header_without_timestamp="object $hello_oid
+$tag_header_without_oid"
+tag_compat_header_without_timestamp="object $hello_compat_oid
+$tag_header_without_oid"
 tag_description="This is a tag"
 tag_content="$tag_header_without_timestamp 0 +0000
+
+$tag_description"
+tag_compat_content="$tag_compat_header_without_timestamp 0 +0000
 
 $tag_description"
 
 tag_oid=$(echo_without_newline "$tag_content" | git hash-object -t tag --stdin -w)
 tag_size=$(strlen "$tag_content")
 
+tag_compat_oid=$(git rev-parse --output-object-format=$test_compat_hash_algo $tag_oid)
+tag_compat_size=$(strlen "$tag_compat_content")
+
 run_tests 'tag' $tag_oid $tag_size "$tag_content" "$tag_content"
+run_tests 'tag' $tag_compat_oid $tag_compat_size "$tag_compat_content" "$tag_compat_content"
 
 test_expect_success "Reach a blob from a tag pointing to it" '
 	echo_without_newline "$hello_content" >expect &&
@@ -303,37 +337,43 @@ test_expect_success "Reach a blob from a tag pointing to it" '
 	test_cmp expect actual
 '
 
-for batch in batch batch-check batch-command
+for oid in $hello_oid $hello_compat_oid
 do
-    for opt in t s e p
+    for batch in batch batch-check batch-command
     do
+	for opt in t s e p
+	do
 	test_expect_success "Passing -$opt with --$batch fails" '
-	    test_must_fail git cat-file --$batch -$opt $hello_oid
+	    test_must_fail git cat-file --$batch -$opt $oid
 	'
 
 	test_expect_success "Passing --$batch with -$opt fails" '
-	    test_must_fail git cat-file -$opt --$batch $hello_oid
+	    test_must_fail git cat-file -$opt --$batch $oid
+	'
+	done
+
+	test_expect_success "Passing <type> with --$batch fails" '
+	test_must_fail git cat-file --$batch blob $oid
+	'
+
+	test_expect_success "Passing --$batch with <type> fails" '
+	test_must_fail git cat-file blob --$batch $oid
+	'
+
+	test_expect_success "Passing oid with --$batch fails" '
+	test_must_fail git cat-file --$batch $oid
 	'
     done
-
-    test_expect_success "Passing <type> with --$batch fails" '
-	test_must_fail git cat-file --$batch blob $hello_oid
-    '
-
-    test_expect_success "Passing --$batch with <type> fails" '
-	test_must_fail git cat-file blob --$batch $hello_oid
-    '
-
-    test_expect_success "Passing oid with --$batch fails" '
-	test_must_fail git cat-file --$batch $hello_oid
-    '
 done
 
-for opt in t s e p
+for oid in $hello_oid $hello_compat_oid
 do
-    test_expect_success "Passing -$opt with --follow-symlinks fails" '
-	    test_must_fail git cat-file --follow-symlinks -$opt $hello_oid
+    for opt in t s e p
+    do
+	test_expect_success "Passing -$opt with --follow-symlinks fails" '
+	    test_must_fail git cat-file --follow-symlinks -$opt $oid
 	'
+    done
 done
 
 test_expect_success "--batch-check for a non-existent named object" '
@@ -386,78 +426,160 @@ test_expect_success 'empty --batch-check notices missing object' '
 	test_cmp expect actual
 '
 
-batch_input="$hello_oid
-$commit_oid
-$tag_oid
+batch_tests () {
+    boid=$1
+    loid=$2
+    lsize=$3
+    coid=$4
+    csize=$5
+    ccontent=$6
+    toid=$7
+    tsize=$8
+    tcontent=$9
+
+    batch_input="$boid
+$coid
+$toid
 deadbeef
 
 "
 
-printf "%s\0" \
-	"$hello_oid blob $hello_size" \
+    printf "%s\0" \
+	"$boid blob $hello_size" \
 	"$hello_content" \
-	"$commit_oid commit $commit_size" \
-	"$commit_content" \
-	"$tag_oid tag $tag_size" \
-	"$tag_content" \
+	"$coid commit $csize" \
+	"$ccontent" \
+	"$toid tag $tsize" \
+	"$tcontent" \
 	"deadbeef missing" \
 	" missing" >batch_output
 
-test_expect_success '--batch with multiple oids gives correct format' '
+    test_expect_success '--batch with multiple oids gives correct format' '
 	tr "\0" "\n" <batch_output >expect &&
 	echo_without_newline "$batch_input" >in &&
 	git cat-file --batch <in >actual &&
 	test_cmp expect actual
-'
+    '
 
-test_expect_success '--batch, -z with multiple oids gives correct format' '
+    test_expect_success '--batch, -z with multiple oids gives correct format' '
 	echo_without_newline_nul "$batch_input" >in &&
 	tr "\0" "\n" <batch_output >expect &&
 	git cat-file --batch -z <in >actual &&
 	test_cmp expect actual
-'
+    '
 
-test_expect_success '--batch, -Z with multiple oids gives correct format' '
+    test_expect_success '--batch, -Z with multiple oids gives correct format' '
 	echo_without_newline_nul "$batch_input" >in &&
 	git cat-file --batch -Z <in >actual &&
 	test_cmp batch_output actual
-'
+    '
 
-batch_check_input="$hello_oid
-$tree_oid
-$commit_oid
-$tag_oid
+batch_check_input="$boid
+$loid
+$coid
+$toid
 deadbeef
 
 "
 
-printf "%s\0" \
-	"$hello_oid blob $hello_size" \
-	"$tree_oid tree $tree_size" \
-	"$commit_oid commit $commit_size" \
-	"$tag_oid tag $tag_size" \
+    printf "%s\0" \
+	"$boid blob $hello_size" \
+	"$loid tree $lsize" \
+	"$coid commit $csize" \
+	"$toid tag $tsize" \
 	"deadbeef missing" \
 	" missing" >batch_check_output
 
-test_expect_success "--batch-check with multiple oids gives correct format" '
+    test_expect_success "--batch-check with multiple oids gives correct format" '
 	tr "\0" "\n" <batch_check_output >expect &&
 	echo_without_newline "$batch_check_input" >in &&
 	git cat-file --batch-check <in >actual &&
 	test_cmp expect actual
-'
+    '
 
-test_expect_success "--batch-check, -z with multiple oids gives correct format" '
+    test_expect_success "--batch-check, -z with multiple oids gives correct format" '
 	tr "\0" "\n" <batch_check_output >expect &&
 	echo_without_newline_nul "$batch_check_input" >in &&
 	git cat-file --batch-check -z <in >actual &&
 	test_cmp expect actual
-'
+    '
 
-test_expect_success "--batch-check, -Z with multiple oids gives correct format" '
+    test_expect_success "--batch-check, -Z with multiple oids gives correct format" '
 	echo_without_newline_nul "$batch_check_input" >in &&
 	git cat-file --batch-check -Z <in >actual &&
 	test_cmp batch_check_output actual
-'
+    '
+
+batch_command_multiple_info="info $boid
+info $loid
+info $coid
+info $toid
+info deadbeef"
+
+    test_expect_success '--batch-command with multiple info calls gives correct format' '
+	cat >expect <<-EOF &&
+	$boid blob $hello_size
+	$loid tree $lsize
+	$coid commit $csize
+	$toid tag $tsize
+	deadbeef missing
+	EOF
+
+	echo "$batch_command_multiple_info" >in &&
+	git cat-file --batch-command --buffer <in >actual &&
+
+	test_cmp expect actual &&
+
+	echo "$batch_command_multiple_info" | tr "\n" "\0" >in &&
+	git cat-file --batch-command --buffer -z <in >actual &&
+
+	test_cmp expect actual &&
+
+	echo "$batch_command_multiple_info" | tr "\n" "\0" >in &&
+	tr "\n" "\0" <expect >expect_nul &&
+	git cat-file --batch-command --buffer -Z <in >actual &&
+
+	test_cmp expect_nul actual
+    '
+
+batch_command_multiple_contents="contents $boid
+contents $coid
+contents $toid
+contents deadbeef
+flush"
+
+    test_expect_success '--batch-command with multiple command calls gives correct format' '
+	printf "%s\0" \
+		"$boid blob $hello_size" \
+		"$hello_content" \
+		"$coid commit $csize" \
+		"$ccontent" \
+		"$toid tag $tsize" \
+		"$tcontent" \
+		"deadbeef missing" >expect_nul &&
+	tr "\0" "\n" <expect_nul >expect &&
+
+	echo "$batch_command_multiple_contents" >in &&
+	git cat-file --batch-command --buffer <in >actual &&
+
+	test_cmp expect actual &&
+
+	echo "$batch_command_multiple_contents" | tr "\n" "\0" >in &&
+	git cat-file --batch-command --buffer -z <in >actual &&
+
+	test_cmp expect actual &&
+
+	echo "$batch_command_multiple_contents" | tr "\n" "\0" >in &&
+	git cat-file --batch-command --buffer -Z <in >actual &&
+
+	test_cmp expect_nul actual
+    '
+
+}
+
+batch_tests $hello_oid $tree_oid $tree_size $commit_oid $commit_size "$commit_content" $tag_oid $tag_size "$tag_content"
+batch_tests $hello_compat_oid $tree_compat_oid $tree_compat_size $commit_compat_oid $commit_compat_size "$commit_compat_content" $tag_compat_oid $tag_compat_size "$tag_compat_content"
+
 
 test_expect_success FUNNYNAMES 'setup with newline in input' '
 	touch -- "newline${LF}embedded" &&
@@ -478,71 +600,6 @@ test_expect_success FUNNYNAMES '--batch-check, -Z with newline in input' '
 	git cat-file --batch-check -Z <in >actual &&
 	printf "%s\0" "$(git rev-parse "HEAD:newline${LF}embedded") blob 0" >expect &&
 	test_cmp expect actual
-'
-
-batch_command_multiple_info="info $hello_oid
-info $tree_oid
-info $commit_oid
-info $tag_oid
-info deadbeef"
-
-test_expect_success '--batch-command with multiple info calls gives correct format' '
-	cat >expect <<-EOF &&
-	$hello_oid blob $hello_size
-	$tree_oid tree $tree_size
-	$commit_oid commit $commit_size
-	$tag_oid tag $tag_size
-	deadbeef missing
-	EOF
-
-	echo "$batch_command_multiple_info" >in &&
-	git cat-file --batch-command --buffer <in >actual &&
-
-	test_cmp expect actual &&
-
-	echo "$batch_command_multiple_info" | tr "\n" "\0" >in &&
-	git cat-file --batch-command --buffer -z <in >actual &&
-
-	test_cmp expect actual &&
-
-	echo "$batch_command_multiple_info" | tr "\n" "\0" >in &&
-	tr "\n" "\0" <expect >expect_nul &&
-	git cat-file --batch-command --buffer -Z <in >actual &&
-
-	test_cmp expect_nul actual
-'
-
-batch_command_multiple_contents="contents $hello_oid
-contents $commit_oid
-contents $tag_oid
-contents deadbeef
-flush"
-
-test_expect_success '--batch-command with multiple command calls gives correct format' '
-	printf "%s\0" \
-		"$hello_oid blob $hello_size" \
-		"$hello_content" \
-		"$commit_oid commit $commit_size" \
-		"$commit_content" \
-		"$tag_oid tag $tag_size" \
-		"$tag_content" \
-		"deadbeef missing" >expect_nul &&
-	tr "\0" "\n" <expect_nul >expect &&
-
-	echo "$batch_command_multiple_contents" >in &&
-	git cat-file --batch-command --buffer <in >actual &&
-
-	test_cmp expect actual &&
-
-	echo "$batch_command_multiple_contents" | tr "\n" "\0" >in &&
-	git cat-file --batch-command --buffer -z <in >actual &&
-
-	test_cmp expect actual &&
-
-	echo "$batch_command_multiple_contents" | tr "\n" "\0" >in &&
-	git cat-file --batch-command --buffer -Z <in >actual &&
-
-	test_cmp expect_nul actual
 '
 
 test_expect_success 'setup blobs which are likely to delta' '
