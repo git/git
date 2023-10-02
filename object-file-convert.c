@@ -90,44 +90,49 @@ static int convert_tag_object(struct strbuf *out,
 			      const struct git_hash_algo *to,
 			      const char *buffer, size_t size)
 {
-	struct strbuf payload = STRBUF_INIT, temp = STRBUF_INIT, oursig = STRBUF_INIT, othersig = STRBUF_INIT;
+	struct strbuf payload = STRBUF_INIT, oursig = STRBUF_INIT, othersig = STRBUF_INIT;
+	const int entry_len = from->hexsz + 7;
 	size_t payload_size;
 	struct object_id oid, mapped_oid;
 	const char *p;
 
-	/* Add some slop for longer signature header in the new algorithm. */
-	strbuf_grow(out, size + 7);
-
-	/* Is there a signature for our algorithm? */
-	payload_size = parse_signed_buffer(buffer, size);
-	strbuf_add(&payload, buffer, payload_size);
-	if (payload_size != size) {
-		/* Yes, there is. */
-		strbuf_add(&oursig, buffer + payload_size, size - payload_size);
-	}
-	/* Now, is there a signature for the other algorithm? */
-	if (parse_buffer_signed_by_header(payload.buf, payload.len, &temp, &othersig, to)) {
-		/* Yes, there is. */
-		strbuf_swap(&payload, &temp);
-		strbuf_release(&temp);
-	}
-
-	/*
-	 * Our payload is now in payload and we may have up to two signatrures
-	 * in oursig and othersig.
-	 */
-	if (strncmp(payload.buf, "object ", 7) || payload.buf[from->hexsz + 7] != '\n')
+	/* Consume the object line */
+	if ((entry_len >= size) ||
+	    memcmp(buffer, "object ", 7) || buffer[entry_len] != '\n')
 		return error("bogus tag object");
-	if (parse_oid_hex_algop(payload.buf + 7, &oid, &p, from) < 0)
+	if (parse_oid_hex_algop(buffer + 7, &oid, &p, from) < 0)
 		return error("bad tag object ID");
 	if (repo_oid_to_algop(the_repository, &oid, to, &mapped_oid))
 		return error("unable to map tree %s in tag object",
 			     oid_to_hex(&oid));
-	strbuf_addf(out, "object %s", oid_to_hex(&mapped_oid));
-	strbuf_add(out, p, payload.len - (p - payload.buf));
-	strbuf_addbuf(out, &othersig);
+	size -= ((p + 1) - buffer);
+	buffer = p + 1;
+
+	/* Is there a signature for our algorithm? */
+	payload_size = parse_signed_buffer(buffer, size);
+	if (payload_size != size) {
+		/* Yes, there is. */
+		strbuf_add(&oursig, buffer + payload_size, size - payload_size);
+	}
+
+	/* Now, is there a signature for the other algorithm? */
+	parse_buffer_signed_by_header(buffer, payload_size, &payload, &othersig, to);
+	/*
+	 * Our payload is now in payload and we may have up to two signatrures
+	 * in oursig and othersig.
+	 */
+
+	/* Add some slop for longer signature header in the new algorithm. */
+	strbuf_grow(out, (7 + to->hexsz + 1) + size + 7);
+	strbuf_addf(out, "object %s\n", oid_to_hex(&mapped_oid));
+	strbuf_addbuf(out, &payload);
 	if (oursig.len)
 		add_header_signature(out, &oursig, from);
+	strbuf_addbuf(out, &othersig);
+
+	strbuf_release(&payload);
+	strbuf_release(&othersig);
+	strbuf_release(&oursig);
 	return 0;
 }
 
