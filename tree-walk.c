@@ -10,27 +10,11 @@
 #include "pathspec.h"
 #include "json-writer.h"
 
-static const char *get_mode(const char *str, unsigned int *modep)
-{
-	unsigned char c;
-	unsigned int mode = 0;
-
-	if (*str == ' ')
-		return NULL;
-
-	while ((c = *str++) != ' ') {
-		if (c < '0' || c > '7')
-			return NULL;
-		mode = (mode << 3) + (c - '0');
-	}
-	*modep = mode;
-	return str;
-}
-
 static int decode_tree_entry(struct tree_desc *desc, const char *buf, unsigned long size, struct strbuf *err)
 {
 	const char *path;
-	unsigned int mode, len;
+	unsigned int len;
+	uint16_t mode;
 	const unsigned hashsz = the_hash_algo->rawsz;
 
 	if (size < hashsz + 3 || buf[size - (hashsz + 1)]) {
@@ -38,7 +22,7 @@ static int decode_tree_entry(struct tree_desc *desc, const char *buf, unsigned l
 		return -1;
 	}
 
-	path = get_mode(buf, &mode);
+	path = parse_mode(buf, &mode);
 	if (!path) {
 		strbuf_addstr(err, _("malformed mode in tree entry"));
 		return -1;
