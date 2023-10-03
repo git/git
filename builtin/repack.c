@@ -51,7 +51,7 @@ struct pack_objects_args {
 	const char *window_memory;
 	const char *depth;
 	const char *threads;
-	const char *max_pack_size;
+	unsigned long max_pack_size;
 	int no_reuse_delta;
 	int no_reuse_object;
 	int quiet;
@@ -242,7 +242,7 @@ static void prepare_pack_objects(struct child_process *cmd,
 	if (args->threads)
 		strvec_pushf(&cmd->args, "--threads=%s", args->threads);
 	if (args->max_pack_size)
-		strvec_pushf(&cmd->args, "--max-pack-size=%s", args->max_pack_size);
+		strvec_pushf(&cmd->args, "--max-pack-size=%lu", args->max_pack_size);
 	if (args->no_reuse_delta)
 		strvec_pushf(&cmd->args, "--no-reuse-delta");
 	if (args->no_reuse_object)
@@ -946,7 +946,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 				N_("limits the maximum delta depth")),
 		OPT_STRING(0, "threads", &po_args.threads, N_("n"),
 				N_("limits the maximum number of threads")),
-		OPT_STRING(0, "max-pack-size", &po_args.max_pack_size, N_("bytes"),
+		OPT_MAGNITUDE(0, "max-pack-size", &po_args.max_pack_size,
 				N_("maximum size of each packfile")),
 		OPT_BOOL(0, "pack-kept-objects", &pack_kept_objects,
 				N_("repack objects in packs marked with .keep")),
