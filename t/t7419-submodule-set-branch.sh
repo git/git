@@ -38,7 +38,8 @@ test_expect_success 'submodule config cache setup' '
 	(cd super &&
 		git init &&
 		git submodule add ../submodule &&
-		git commit -m "add submodule"
+		git submodule add --name thename ../submodule thepath &&
+		git commit -m "add submodules"
 	)
 '
 
@@ -96,6 +97,33 @@ test_expect_success 'test submodule set-branch -d' '
 		a
 		EOF
 		git -C submodule show -s --pretty=%s >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'test submodule set-branch --branch with named submodule' '
+	(cd super &&
+		git submodule set-branch --branch topic thepath &&
+		test_cmp_config topic -f .gitmodules submodule.thename.branch &&
+		test_cmp_config "" -f .gitmodules --default "" submodule.thepath.branch &&
+		git submodule update --remote &&
+		cat <<-\EOF >expect &&
+		b
+		EOF
+		git -C thepath show -s --pretty=%s >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'test submodule set-branch --default with named submodule' '
+	(cd super &&
+		git submodule set-branch --default thepath &&
+		test_cmp_config "" -f .gitmodules --default "" submodule.thename.branch &&
+		git submodule update --remote &&
+		cat <<-\EOF >expect &&
+		a
+		EOF
+		git -C thepath show -s --pretty=%s >actual &&
 		test_cmp expect actual
 	)
 '
