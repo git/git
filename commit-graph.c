@@ -566,6 +566,8 @@ static struct commit_graph *load_commit_graph_chain(struct repository *r,
 				if (add_graph_to_chain(g, graph_chain, oids, i)) {
 					graph_chain = g;
 					valid = 1;
+				} else {
+					free_commit_graph(g);
 				}
 
 				break;
