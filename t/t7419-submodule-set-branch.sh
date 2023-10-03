@@ -11,6 +11,10 @@ as expected.
 
 TEST_PASSES_SANITIZE_LEAK=true
 TEST_NO_CREATE_REPO=1
+
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -27,7 +31,8 @@ test_expect_success 'submodule config cache setup' '
 		git checkout -b topic &&
 		echo b >a &&
 		git add . &&
-		git commit -mb
+		git commit -mb &&
+		git checkout main
 	) &&
 	mkdir super &&
 	(cd super &&
@@ -57,13 +62,12 @@ test_expect_success 'test submodule set-branch --branch' '
 '
 
 test_expect_success 'test submodule set-branch --default' '
-	test_commit -C submodule c &&
 	(cd super &&
 		git submodule set-branch --default submodule &&
 		! grep branch .gitmodules &&
 		git submodule update --remote &&
 		cat <<-\EOF >expect &&
-		c
+		a
 		EOF
 		git -C submodule show -s --pretty=%s >actual &&
 		test_cmp expect actual
@@ -71,7 +75,6 @@ test_expect_success 'test submodule set-branch --default' '
 '
 
 test_expect_success 'test submodule set-branch -b' '
-	test_commit -C submodule b &&
 	(cd super &&
 		git submodule set-branch -b topic submodule &&
 		grep "branch = topic" .gitmodules &&
@@ -85,13 +88,12 @@ test_expect_success 'test submodule set-branch -b' '
 '
 
 test_expect_success 'test submodule set-branch -d' '
-	test_commit -C submodule d &&
 	(cd super &&
 		git submodule set-branch -d submodule &&
 		! grep branch .gitmodules &&
 		git submodule update --remote &&
 		cat <<-\EOF >expect &&
-		d
+		a
 		EOF
 		git -C submodule show -s --pretty=%s >actual &&
 		test_cmp expect actual
