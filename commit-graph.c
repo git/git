@@ -498,8 +498,6 @@ static int add_graph_to_chain(struct commit_graph *g,
 		cur_g = cur_g->base_graph;
 	}
 
-	g->base_graph = chain;
-
 	if (chain) {
 		if (unsigned_add_overflows(chain->num_commits,
 					   chain->num_commits_in_base)) {
@@ -509,6 +507,8 @@ static int add_graph_to_chain(struct commit_graph *g,
 		}
 		g->num_commits_in_base = chain->num_commits + chain->num_commits_in_base;
 	}
+
+	g->base_graph = chain;
 
 	return 1;
 }
