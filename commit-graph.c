@@ -723,19 +723,10 @@ struct bloom_filter_settings *get_bloom_filter_settings(struct repository *r)
 	return NULL;
 }
 
-static void close_commit_graph_one(struct commit_graph *g)
-{
-	if (!g)
-		return;
-
-	close_commit_graph_one(g->base_graph);
-	free_commit_graph(g);
-}
-
 void close_commit_graph(struct raw_object_store *o)
 {
 	clear_commit_graph_data_slab(&commit_graph_data_slab);
-	close_commit_graph_one(o->commit_graph);
+	free_commit_graph(o->commit_graph);
 	o->commit_graph = NULL;
 }
 
@@ -2753,15 +2744,17 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g, int flags)
 
 void free_commit_graph(struct commit_graph *g)
 {
-	if (!g)
-		return;
-	if (g->data) {
-		munmap((void *)g->data, g->data_len);
-		g->data = NULL;
+	while (g) {
+		struct commit_graph *next = g->base_graph;
+
+		if (g->data)
+			munmap((void *)g->data, g->data_len);
+		free(g->filename);
+		free(g->bloom_filter_settings);
+		free(g);
+
+		g = next;
 	}
-	free(g->filename);
-	free(g->bloom_filter_settings);
-	free(g);
 }
 
 void disable_commit_graph(struct repository *r)
