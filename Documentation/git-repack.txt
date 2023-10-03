@@ -74,6 +74,17 @@ to the new separate pack will be written.
 	immediately instead of waiting for the next `git gc` invocation.
 	Only useful with `--cruft -d`.
 
+--max-cruft-size=<n>::
+	Repack cruft objects into packs as large as `<n>` bytes before
+	creating new packs. As long as there are enough cruft packs
+	smaller than `<n>`, repacking will cause a new cruft pack to
+	be created containing objects from any combined cruft packs,
+	along with any new unreachable objects. Cruft packs larger than
+	`<n>` will not be modified. When the new cruft pack is larger
+	than `<n>` bytes, it will be split into multiple packs, all of
+	which are guaranteed to be at most `<n>` bytes in size. Only
+	useful with `--cruft -d`.
+
 --expire-to=<dir>::
 	Write a cruft pack containing pruned objects (if any) to the
 	directory `<dir>`. This option is useful for keeping a copy of

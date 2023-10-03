@@ -86,6 +86,12 @@ gc.cruftPacks::
 	linkgit:git-repack[1]) instead of as loose objects. The default
 	is `true`.
 
+gc.maxCruftSize::
+	Limit the size of new cruft packs when repacking. When
+	specified in addition to `--max-cruft-size`, the command line
+	option takes priority. See the `--max-cruft-size` option of
+	linkgit:git-repack[1].
+
 gc.pruneExpire::
 	When 'git gc' is run, it will call 'prune --expire 2.weeks.ago'
 	(and 'repack --cruft --cruft-expiration 2.weeks.ago' if using
