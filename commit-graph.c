@@ -2518,6 +2518,7 @@ int write_commit_graph(struct object_directory *odb,
 
 cleanup:
 	free(ctx->graph_name);
+	free(ctx->base_graph_name);
 	free(ctx->commits.list);
 	oid_array_clear(&ctx->oids);
 	clear_topo_level_slab(&topo_levels);
