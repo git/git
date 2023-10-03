@@ -372,4 +372,43 @@ test_expect_success '--max-cruft-size ignores non-local packs' '
 	)
 '
 
+test_expect_success 'reachable packs are preferred over cruft ones' '
+	repo="cruft-preferred-packs" &&
+	git init "$repo" &&
+	(
+		cd "$repo" &&
+
+		# This test needs to exercise careful control over when a MIDX
+		# is and is not written. Unset the corresponding TEST variable
+		# accordingly.
+		sane_unset GIT_TEST_MULTI_PACK_INDEX &&
+
+		test_commit base &&
+		test_commit --no-tag cruft &&
+
+		non_cruft="$(echo base | git pack-objects --revs $packdir/pack)" &&
+		# Write a cruft pack which both (a) sorts ahead of the non-cruft
+		# pack in lexical order, and (b) has an older mtime to appease
+		# the MIDX preferred pack selection routine.
+		cruft="$(echo pack-$non_cruft.pack | git pack-objects --cruft $packdir/pack-A)" &&
+		test-tool chmtime -1000 $packdir/pack-A-$cruft.pack &&
+
+		test_commit other &&
+		git repack -d &&
+
+		git repack --geometric 2 -d --write-midx --write-bitmap-index &&
+
+		# After repacking, there are two packs left: one reachable one
+		# (which is the result of combining both of the existing two
+		# non-cruft packs), and one cruft pack.
+		find .git/objects/pack -type f -name "*.pack" >packs &&
+		test_line_count = 2 packs &&
+
+		# Make sure that the pack we just wrote is marked as preferred,
+		# not the cruft one.
+		pack="$(test-tool read-midx --preferred-pack $objdir)" &&
+		test_path_is_missing "$packdir/$(basename "$pack" ".idx").mtimes"
+	)
+'
+
 test_done
