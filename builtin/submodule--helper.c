@@ -2889,7 +2889,7 @@ cleanup:
 
 static int module_set_url(int argc, const char **argv, const char *prefix)
 {
-	int quiet = 0;
+	int quiet = 0, ret;
 	const char *newurl;
 	const char *path;
 	char *config_name;
@@ -2915,13 +2915,15 @@ static int module_set_url(int argc, const char **argv, const char *prefix)
 		    path);
 
 	config_name = xstrfmt("submodule.%s.url", sub->name);
-	config_set_in_gitmodules_file_gently(config_name, newurl);
+	ret = config_set_in_gitmodules_file_gently(config_name, newurl);
 
-	repo_read_gitmodules (the_repository, 0);
-	sync_submodule(sub->path, prefix, NULL, quiet ? OPT_QUIET : 0);
+	if (!ret) {
+		repo_read_gitmodules(the_repository, 0);
+		sync_submodule(sub->path, prefix, NULL, quiet ? OPT_QUIET : 0);
+	}
 
 	free(config_name);
-	return 0;
+	return !!ret;
 }
 
 static int module_set_branch(int argc, const char **argv, const char *prefix)
