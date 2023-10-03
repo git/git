@@ -49,7 +49,7 @@ test_expect_success 'test submodule set-url' '
 		cd super &&
 		test_must_fail git submodule update --remote &&
 		git submodule set-url submodule ../newsubmodule &&
-		grep -F "url = ../newsubmodule" .gitmodules &&
+		test_cmp_config ../newsubmodule -f .gitmodules submodule.submodule.url &&
 		git submodule update --remote
 	) &&
 	git -C super/submodule show >actual &&
