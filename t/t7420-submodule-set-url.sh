@@ -25,17 +25,26 @@ test_expect_success 'submodule config cache setup' '
 		git add file &&
 		git commit -ma
 	) &&
+	mkdir namedsubmodule &&
+	(
+		cd namedsubmodule &&
+		git init &&
+		echo 1 >file &&
+		git add file &&
+		git commit -m1
+	) &&
 	mkdir super &&
 	(
 		cd super &&
 		git init &&
 		git submodule add ../submodule &&
-		git commit -m "add submodule"
+		git submodule add --name thename ../namedsubmodule thepath &&
+		git commit -m "add submodules"
 	)
 '
 
 test_expect_success 'test submodule set-url' '
-	# add a commit and move the submodule (change the url)
+	# add commits and move the submodules (change the urls)
 	(
 		cd submodule &&
 		echo b >>file &&
@@ -44,15 +53,28 @@ test_expect_success 'test submodule set-url' '
 	) &&
 	mv submodule newsubmodule &&
 
+	(
+		cd namedsubmodule &&
+		echo 2 >>file &&
+		git add file &&
+		git commit -m2
+	) &&
+	mv namedsubmodule newnamedsubmodule &&
+
 	git -C newsubmodule show >expect &&
+	git -C newnamedsubmodule show >>expect &&
 	(
 		cd super &&
 		test_must_fail git submodule update --remote &&
 		git submodule set-url submodule ../newsubmodule &&
 		test_cmp_config ../newsubmodule -f .gitmodules submodule.submodule.url &&
+		git submodule set-url thepath ../newnamedsubmodule &&
+		test_cmp_config ../newnamedsubmodule -f .gitmodules submodule.thename.url &&
+		test_cmp_config "" -f .gitmodules --default "" submodule.thepath.url &&
 		git submodule update --remote
 	) &&
 	git -C super/submodule show >actual &&
+	git -C super/thepath show >>actual &&
 	test_cmp expect actual
 '
 
