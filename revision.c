@@ -2790,13 +2790,13 @@ static int handle_revision_pseudo_opt(struct rev_info *revs,
 }
 
 static void read_revisions_from_stdin(struct rev_info *revs,
-				      struct strvec *prune,
-				      int *flags)
+				      struct strvec *prune)
 {
 	struct strbuf sb;
 	int seen_dashdash = 0;
 	int seen_end_of_options = 0;
 	int save_warning;
+	int flags = 0;
 
 	save_warning = warn_on_object_refname_ambiguity;
 	warn_on_object_refname_ambiguity = 0;
@@ -2819,13 +2819,13 @@ static void read_revisions_from_stdin(struct rev_info *revs,
 				continue;
 			}
 
-			if (handle_revision_pseudo_opt(revs, argv, flags) > 0)
+			if (handle_revision_pseudo_opt(revs, argv, &flags) > 0)
 				continue;
 
 			die(_("invalid option '%s' in --stdin mode"), sb.buf);
 		}
 
-		if (handle_revision_arg(sb.buf, revs, 0,
+		if (handle_revision_arg(sb.buf, revs, flags,
 					REVARG_CANNOT_BE_FILENAME))
 			die("bad revision '%s'", sb.buf);
 	}
@@ -2908,7 +2908,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 				}
 				if (revs->read_from_stdin++)
 					die("--stdin given twice?");
-				read_revisions_from_stdin(revs, &prune_data, &flags);
+				read_revisions_from_stdin(revs, &prune_data);
 				continue;
 			}
 

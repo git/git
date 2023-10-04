@@ -151,6 +151,10 @@ endif::git-log[]
 --not::
 	Reverses the meaning of the '{caret}' prefix (or lack thereof)
 	for all following revision specifiers, up to the next `--not`.
+	When used on the command line before --stdin, the revisions passed
+	through stdin will not be affected by it. Conversely, when passed
+	via standard input, the revisions passed on the command line will
+	not be affected by it.
 
 --all::
 	Pretend as if all the refs in `refs/`, along with `HEAD`, are
@@ -240,7 +244,9 @@ endif::git-rev-list[]
 	them from standard input as well. This accepts commits and
 	pseudo-options like `--all` and `--glob=`. When a `--` separator
 	is seen, the following input is treated as paths and used to
-	limit the result.
+	limit the result. Flags like `--not` which are read via standard input
+	are only respected for arguments passed in the same way and will not
+	influence any subsequent command line arguments.
 
 ifdef::git-rev-list[]
 --quiet::
