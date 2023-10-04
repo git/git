@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2023, #01; Mon, 2)
-X-master-at: d0e8084c65cbf949038ae4cc344ac2c2efd77415
-X-next-at: 2d36e41d1a24beaf57bc0d7146d2b0ae93a5d61b
+Subject: What's cooking in git.git (Oct 2023, #02; Wed, 4)
+X-master-at: 3a06386e314565108ad56a9bdb8f7b80ac52fb69
+X-next-at: 421f12c284626330cb1738d5e5e98c9ede1ec91e
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Oct 2023, #01; Mon, 2)
+What's cooking in git.git (Oct 2023, #02; Wed, 4)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,141 +48,148 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ds/stat-name-width-configuration (2023-09-18) 1 commit
-  (merged to 'next' on 2023-09-22 at dbf5bd96e8)
- + diff --stat: add config option to limit filename width
+* bb/unicode-width-table-15 (2023-09-25) 1 commit
+  (merged to 'next' on 2023-09-28 at bb76f46606)
+ + unicode: update the width tables to Unicode 15.1
 
- "git diff" learned diff.statNameWidth configuration variable, to
- give the default width for the name part in the "--stat" output.
- source: <87badb12f040d1c66cd9b89074d3de5015a45983.1694446743.git.dsimic@manjaro.org>
-
-
-* hy/doc-show-is-like-log-not-diff-tree (2023-09-20) 1 commit
-  (merged to 'next' on 2023-09-22 at 5492c03eae)
- + show doc: redirect user to git log manual instead of git diff-tree
-
- Doc update.
- source: <20230920132731.1259-1-hanyang.tony@bytedance.com>
+ The display width table for unicode characters has been updated for
+ Unicode 15.1
+ source: <20230925190704.157731-1-dev+git@drbeat.li>
 
 
-* jc/alias-completion (2023-09-20) 1 commit
-  (merged to 'next' on 2023-09-22 at 1d069e900b)
- + completion: loosen and document the requirement around completing alias
+* jk/commit-graph-verify-fix (2023-09-28) 6 commits
+  (merged to 'next' on 2023-09-28 at e3ed560a2f)
+ + commit-graph: report incomplete chains during verification
+ + commit-graph: tighten chain size check
+ + commit-graph: detect read errors when verifying graph chain
+ + t5324: harmonize sha1/sha256 graph chain corruption
+ + commit-graph: check mixed generation validation when loading chain file
+ + commit-graph: factor out chain opening function
 
- The command line completion script (in contrib/) can be told to
- complete aliases by including ": git <cmd> ;" in the alias to tell
- it that the alias should be completed similar to how "git <cmd>" is
- completed.  The parsing code for the alias as been loosened to
- allow ';' without an extra space before it.
- cf. <owlyjzssjro2.fsf@fine.c.googlers.com>
- source: <xmqqy1h08zsp.fsf_-_@gitster.g>
-
-
-* jc/unresolve-removal (2023-07-31) 7 commits
-  (merged to 'next' on 2023-09-25 at 0563c8d8a1)
- + checkout: allow "checkout -m path" to unmerge removed paths
- + checkout/restore: add basic tests for --merge
- + checkout/restore: refuse unmerging paths unless checking out of the index
- + update-index: remove stale fallback code for "--unresolve"
- + update-index: use unmerge_index_entry() to support removal
- + resolve-undo: allow resurrecting conflicted state that resolved to deletion
- + update-index: do not read HEAD and MERGE_HEAD unconditionally
- (this branch is used by jc/rerere-cleanup.)
-
- "checkout --merge -- path" and "update-index --unresolve path" did
- not resurrect conflicted state that was resolved to remove path,
- but now they do.
- source: <20230731224409.4181277-1-gitster@pobox.com>
+ Various fixes to "git commit-graph verify".
+ source: <20230928043746.GB57926@coredump.intra.peff.net>
 
 
-* jk/fsmonitor-unused-parameter (2023-09-18) 8 commits
-  (merged to 'next' on 2023-09-19 at bd06505f9e)
- + run-command: mark unused parameters in start_bg_wait callbacks
- + fsmonitor: mark unused hashmap callback parameters
- + fsmonitor/darwin: mark unused parameters in system callback
- + fsmonitor: mark unused parameters in stub functions
- + fsmonitor/win32: mark unused parameter in fsm_os__incompatible()
- + fsmonitor: mark some maybe-unused parameters
- + fsmonitor/win32: drop unused parameters
- + fsmonitor: prefer repo_git_path() to git_pathdup()
+* ks/ref-filter-mailmap (2023-09-25) 3 commits
+  (merged to 'next' on 2023-09-28 at 0d3fd9959a)
+ + ref-filter: add mailmap support
+ + t/t6300: introduce test_bad_atom
+ + t/t6300: cleanup test_atom
 
- Unused parameters in fsmonitor related code paths have been marked
- as such.
- source: <20230918222908.GA2659096@coredump.intra.peff.net>
+ "git for-each-ref" and friends learn to apply mailmap to authorname
+ and other fields.
+ source: <20230925175050.3498-1-five231003@gmail.com>
 
 
-* jk/test-pass-ubsan-options-to-http-test (2023-09-21) 1 commit
-  (merged to 'next' on 2023-09-22 at bbe2f75937)
- + test-lib: set UBSAN_OPTIONS to match ASan
+* ps/revision-cmdline-stdin-not (2023-09-25) 1 commit
+  (merged to 'next' on 2023-09-28 at a28201e0dd)
+ + revision: make pseudo-opt flags read via stdin behave consistently
 
- UBSAN options were not propagated through the test framework to git
- run via the httpd, unlike ASAN options, which has been corrected.
- source: <20230921041825.GA2814583@coredump.intra.peff.net>
-
-
-* js/doc-status-with-submodules-mark-up-fix (2023-09-22) 1 commit
-  (merged to 'next' on 2023-09-25 at 7ed318fc91)
- + Documentation/git-status: add missing line breaks
-
- Docfix.
- source: <pull.1590.git.1695392082207.gitgitgadget@gmail.com>
+ "git rev-list --stdin" learned to take non-revisions (like "--not")
+ recently from the standard input, but the way such a "--not" was
+ handled was quite confusing, which has been rethought.  This is
+ potentially a change that breaks backward compatibility.
+ source: <6221acd2796853144f8e84081655fbc79fdc6634.1695646898.git.ps@pks.im>
 
 
-* kh/range-diff-notes (2023-09-19) 1 commit
-  (merged to 'next' on 2023-09-22 at ac04978b4b)
- + range-diff: treat notes like `log`
+* xz/commit-title-soft-limit-doc (2023-09-28) 1 commit
+  (merged to 'next' on 2023-09-28 at 20df852430)
+ + doc: correct the 50 characters soft limit
 
- "git range-diff --notes=foo" compared "log --notes=foo --notes" of
- the two ranges, instead of using just the specified notes tree.
- source: <6e114271a2e7d2323193bd58bb307f60101942ce.1695154855.git.code@khaugsbakk.name>
-
-
-* ml/git-gui-exec-path-fix (2023-09-18) 3 commits
-  (merged to 'next' on 2023-09-19 at 0565b0b14b)
- + Merge git-gui into ml/git-gui-exec-path-fix
- + git-gui - use git-hook, honor core.hooksPath
- + git-gui - re-enable use of hook scripts
-
- Fix recent regression in Git-GUI that fails to run hook scripts at
- all.
-
-
-* ob/am-msgfix (2023-09-21) 1 commit
-  (merged to 'next' on 2023-09-22 at 7f7589a06a)
- + am: fix error message in parse_opt_show_current_patch()
-
- The parameters to generate an error message have been corrected.
- source: <20230921110727.789156-1-oswald.buddenhagen@gmx.de>
+ Doc tweak.
+ source: <pull.1580.git.git.1695895155985.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [New Topics]
 
-* cw/prelim-cleanup (2023-09-29) 4 commits
- - parse: separate out parsing functions from config.h
- - config: correct bad boolean env value error message
- - wrapper: reduce scope of remove_or_warn()
- - hex-ll: separate out non-hash-algo functions
+* jk/commit-graph-leak-fixes (2023-10-03) 10 commits
+ - commit-graph: clear oidset after finishing write
+ - commit-graph: free write-context base_graph_name during cleanup
+ - commit-graph: free write-context entries before overwriting
+ - commit-graph: free graph struct that was not added to chain
+ - commit-graph: delay base_graph assignment in add_graph_to_chain()
+ - commit-graph: free all elements of graph chain
+ - commit-graph: move slab-clearing to close_commit_graph()
+ - merge: free result of repo_get_merge_bases()
+ - commit-reach: free temporary list in get_octopus_merge_bases()
+ - t6700: mark test as leak-free
 
- Shuffle some bits across headers and sources to prepare for
- libification effort.
-
- Will merge to 'next'.
- source: <cover.1696021277.git.jonathantanmy@google.com>
+ Leakfix.
+ source: <20231003202504.GA7697@coredump.intra.peff.net>
 
 
-* ds/init-diffstat-width (2023-09-29) 1 commit
- - diff --stat: set the width defaults in a helper function
+* jm/git-status-submodule-states-docfix (2023-10-04) 1 commit
+  (merged to 'next' on 2023-10-04 at 520b7711a4)
+ + git-status.txt: fix minor asciidoc format issue
+
+ Docfix.
+
+ Will merge to 'master'.
+ source: <pull.1591.v3.git.1696386165616.gitgitgadget@gmail.com>
+
+
+* rs/parse-opt-ctx-cleanup (2023-10-03) 1 commit
+  (merged to 'next' on 2023-10-04 at d5d0a2ce3b)
+ + parse-options: drop unused parse_opt_ctx_t member
 
  Code clean-up.
 
- Will merge to 'next'.
- source: <d45d1dac1a20699e370905b88b6fd0ec296751e7.1695441501.git.dsimic@manjaro.org>
+ Will merge to 'master'.
+ source: <ebcaa9e1-d306-4c93-adec-3f35d7040531@web.de>
 
 
-* ar/diff-index-merge-base-fix (2023-10-02) 1 commit
- - diff: fix --merge-base with annotated tags
+* tb/repack-max-cruft-size (2023-10-03) 4 commits
+ - builtin/repack.c: avoid making cruft packs preferred
+ - builtin/repack.c: implement support for `--max-cruft-size`
+ - builtin/repack.c: parse `--max-pack-size` with OPT_MAGNITUDE
+ - t7700: split cruft-related tests to t7704
 
- source: <20231001151845.3621551-1-hi@alyssa.is>
+ "git repack" learned "--max-cruft-size" to prevent cruft packs from
+ growing without bounds.
+
+ Will merge to 'next'?
+ source: <cover.1696293862.git.me@ttaylorr.com>
+
+
+* ak/color-decorate-symbols (2023-10-03) 1 commit
+ - decorate: add color.decorate.symbols config option
+
+ A new config for coloring.
+
+ Needs review.
+ source: <20231003205442.22963-1-andy.koppe@gmail.com>
+
+
+* jc/attr-tree-config (2023-10-04) 2 commits
+ - attr: add attr.allowInvalidSource config to allow invalid revision
+ - attr: add attr.tree for setting the treeish to read attributes from
+
+ The attribute subsystem learned to honor `attr.tree` configuration
+ that specifies which tree to read the .gitattributes files from.
+
+ Needs review.
+ source: <pull.1577.v2.git.git.1696443502.gitgitgadget@gmail.com>
+
+
+* js/submodule-fix-misuse-of-path-and-name (2023-10-03) 6 commits
+ - t7420: test that we correctly handle renamed submodules
+ - t7419: test that we correctly handle renamed submodules
+ - t7419, t7420: use test_cmp_config instead of grepping .gitmodules
+ - t7419: actually test the branch switching
+ - submodule--helper: return error from set-url when modifying failed
+ - submodule--helper: use submodule_from_path in set-{url,branch}
+
+ In .gitmodules files, submodules are keyed by their names, and the
+ path to the submodule whose name is $name is specified by the
+ submodule.$name.path variable.  There were a few codepaths that
+ mixed the name and path up when consulting the submodule database,
+ which have been corrected.  It took long for these bugs to be found
+ as the name of a submodule initially is the same as its path, and
+ the problem does not surface until it is moved to a different path,
+ which apparently happens very rarely.
+
+ Will merge to 'next'?
+ source: <0a0a157f88321d25fdb0be771a454b3410a449f3.camel@archlinux.org>
 
 --------------------------------------------------
 [Stalled]
@@ -214,15 +221,34 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
-* bb/unicode-width-table-15 (2023-09-25) 1 commit
-  (merged to 'next' on 2023-09-28 at bb76f46606)
- + unicode: update the width tables to Unicode 15.1
+* cw/prelim-cleanup (2023-09-29) 4 commits
+  (merged to 'next' on 2023-10-03 at 5985929612)
+ + parse: separate out parsing functions from config.h
+ + config: correct bad boolean env value error message
+ + wrapper: reduce scope of remove_or_warn()
+ + hex-ll: separate out non-hash-algo functions
 
- The display width table for unicode characters has been updated for
- Unicode 15.1
+ Shuffle some bits across headers and sources to prepare for
+ libification effort.
 
  Will merge to 'master'.
- source: <20230925190704.157731-1-dev+git@drbeat.li>
+ source: <cover.1696021277.git.jonathantanmy@google.com>
+
+
+* ds/init-diffstat-width (2023-09-29) 1 commit
+  (merged to 'next' on 2023-10-03 at 18383ac895)
+ + diff --stat: set the width defaults in a helper function
+
+ Code clean-up.
+
+ Will merge to 'master'.
+ source: <d45d1dac1a20699e370905b88b6fd0ec296751e7.1695441501.git.dsimic@manjaro.org>
+
+
+* ar/diff-index-merge-base-fix (2023-10-02) 1 commit
+ - diff: fix --merge-base with annotated tags
+
+ source: <20231001151845.3621551-1-hi@alyssa.is>
 
 
 * eb/limit-bulk-checkin-to-blobs (2023-09-26) 1 commit
@@ -235,21 +261,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <87msx99b9o.fsf_-_@gmail.froward.int.ebiederm.org>
-
-
-* jk/commit-graph-verify-fix (2023-09-28) 6 commits
-  (merged to 'next' on 2023-09-28 at e3ed560a2f)
- + commit-graph: report incomplete chains during verification
- + commit-graph: tighten chain size check
- + commit-graph: detect read errors when verifying graph chain
- + t5324: harmonize sha1/sha256 graph chain corruption
- + commit-graph: check mixed generation validation when loading chain file
- + commit-graph: factor out chain opening function
-
- Various fixes to "git commit-graph verify".
-
- Will merge to 'master'.
- source: <20230928043746.GB57926@coredump.intra.peff.net>
 
 
 * js/update-urls-in-doc-and-comment (2023-09-26) 4 commits
@@ -316,30 +327,19 @@ Release tarballs are available at:
  source: <878r8l929e.fsf@gmail.froward.int.ebiederm.org>
 
 
-* xz/commit-title-soft-limit-doc (2023-09-28) 1 commit
-  (merged to 'next' on 2023-09-28 at 20df852430)
- + doc: correct the 50 characters soft limit
-
- Doc tweak.
-
- Will merge to 'master'.
- source: <pull.1580.git.git.1695895155985.gitgitgadget@gmail.com>
-
-
-* jx/remote-archive-over-smart-http (2023-09-25) 3 commits
+* jx/remote-archive-over-smart-http (2023-10-04) 4 commits
  - archive: support remote archive from stateless transport
- - transport-helper: run do_take_over in connect_helper
+ - transport-helper: call do_take_over() in connect_helper
+ - transport-helper: call do_take_over() in process_connect
  - transport-helper: no connection restriction in connect_helper
 
  "git archive --remote=<remote>" learned to talk over the smart
  http (aka stateless) transport.
 
- Expecting a reroll.
- cf. <CANYiYbFkG+CvrNFBkdNewZs7ADROVsjd051SDQsU0zVq8eBhew@mail.gmail.com>
- source: <20230923152201.14741-1-worldhello.net@gmail.com>
+ source: <cover.1696432593.git.zhiyou.jx@alibaba-inc.com>
 
 
-* jx/sideband-chomp-newline-fix (2023-09-25) 3 commits
+* jx/sideband-chomp-newline-fix (2023-10-04) 3 commits
  - pkt-line: do not chomp newlines for sideband messages
  - pkt-line: memorize sideband fragment in reader
  - test-pkt-line: add option parser for unpack-sideband
@@ -347,33 +347,7 @@ Release tarballs are available at:
  Sideband demultiplexer fixes.
 
  Needs review.
- source: <CANYiYbF+Xmk4rCNLMJe+i_CFafg8=QU5vbXWNUZbOVsDLTe5QQ@mail.gmail.com>
-
-
-* ks/ref-filter-mailmap (2023-09-25) 3 commits
-  (merged to 'next' on 2023-09-28 at 0d3fd9959a)
- + ref-filter: add mailmap support
- + t/t6300: introduce test_bad_atom
- + t/t6300: cleanup test_atom
-
- "git for-each-ref" and friends learn to apply mailmap to authorname
- and other fields.
-
- Will merge to 'master'.
- source: <20230925175050.3498-1-five231003@gmail.com>
-
-
-* ps/revision-cmdline-stdin-not (2023-09-25) 1 commit
-  (merged to 'next' on 2023-09-28 at a28201e0dd)
- + revision: make pseudo-opt flags read via stdin behave consistently
-
- "git rev-list --stdin" learned to take non-revisions (like "--not")
- recently from the standard input, but the way such a "--not" was
- handled was quite confusing, which has been rethought.  This is
- potentially a change that breaks backward compatibility.
-
- Will merge to 'master'.
- source: <6221acd2796853144f8e84081655fbc79fdc6634.1695646898.git.ps@pks.im>
+ source: <cover.1696425168.git.zhiyou.jx@alibaba-inc.com>
 
 
 * ty/merge-tree-strategy-options (2023-09-25) 1 commit
@@ -460,20 +434,21 @@ Release tarballs are available at:
 
 
 * cc/repack-sift-filtered-objects-to-separate-pack (2023-10-02) 9 commits
- - gc: add `gc.repackFilterTo` config option
- - repack: implement `--filter-to` for storing filtered out objects
- - gc: add `gc.repackFilter` config option
- - repack: add `--filter=<filter-spec>` option
- - pack-bitmap-write: rebuild using new bitmap when remapping
- - repack: refactor finding pack prefix
- - repack: refactor finishing pack-objects command
- - t/helper: add 'find-pack' test-tool
- - pack-objects: allow `--filter` without `--stdout`
+  (merged to 'next' on 2023-10-03 at e5a4824609)
+ + gc: add `gc.repackFilterTo` config option
+ + repack: implement `--filter-to` for storing filtered out objects
+ + gc: add `gc.repackFilter` config option
+ + repack: add `--filter=<filter-spec>` option
+ + pack-bitmap-write: rebuild using new bitmap when remapping
+ + repack: refactor finding pack prefix
+ + repack: refactor finishing pack-objects command
+ + t/helper: add 'find-pack' test-tool
+ + pack-objects: allow `--filter` without `--stdout`
 
  "git repack" machinery learns to pay attention to the "--filter="
  option.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <ZRsknb4NxNHTR21E@nand.local>
  source: <20231002165504.1325153-1-christian.couder@gmail.com>
 
