@@ -13,6 +13,8 @@
 #include "oid-array.h"
 #include "repository.h"
 #include "commit.h"
+#include "mailmap.h"
+#include "ident.h"
 #include "remote.h"
 #include "color.h"
 #include "tag.h"
@@ -215,8 +217,16 @@ static struct used_atom {
 		struct {
 			enum { O_SIZE, O_SIZE_DISK } option;
 		} objectsize;
-		struct email_option {
-			enum { EO_RAW, EO_TRIM, EO_LOCALPART } option;
+		struct {
+			enum { N_RAW, N_MAILMAP } option;
+		} name_option;
+		struct {
+			enum {
+				EO_RAW = 0,
+				EO_TRIM = 1<<0,
+				EO_LOCALPART = 1<<1,
+				EO_MAILMAP = 1<<2,
+			} option;
 		} email_option;
 		struct {
 			enum { S_BARE, S_GRADE, S_SIGNER, S_KEY,
@@ -720,18 +730,52 @@ static int oid_atom_parser(struct ref_format *format UNUSED,
 	return 0;
 }
 
+static int person_name_atom_parser(struct ref_format *format UNUSED,
+				   struct used_atom *atom,
+				   const char *arg, struct strbuf *err)
+{
+	if (!arg)
+		atom->u.name_option.option = N_RAW;
+	else if (!strcmp(arg, "mailmap"))
+		atom->u.name_option.option = N_MAILMAP;
+	else
+		return err_bad_arg(err, atom->name, arg);
+	return 0;
+}
+
+static int email_atom_option_parser(struct used_atom *atom,
+				    const char **arg, struct strbuf *err)
+{
+	if (!*arg)
+		return EO_RAW;
+	if (skip_prefix(*arg, "trim", arg))
+		return EO_TRIM;
+	if (skip_prefix(*arg, "localpart", arg))
+		return EO_LOCALPART;
+	if (skip_prefix(*arg, "mailmap", arg))
+		return EO_MAILMAP;
+	return -1;
+}
+
 static int person_email_atom_parser(struct ref_format *format UNUSED,
 				    struct used_atom *atom,
 				    const char *arg, struct strbuf *err)
 {
-	if (!arg)
-		atom->u.email_option.option = EO_RAW;
-	else if (!strcmp(arg, "trim"))
-		atom->u.email_option.option = EO_TRIM;
-	else if (!strcmp(arg, "localpart"))
-		atom->u.email_option.option = EO_LOCALPART;
-	else
-		return err_bad_arg(err, atom->name, arg);
+	for (;;) {
+		int opt = email_atom_option_parser(atom, &arg, err);
+		const char *bad_arg = arg;
+
+		if (opt < 0)
+			return err_bad_arg(err, atom->name, bad_arg);
+		atom->u.email_option.option |= opt;
+
+		if (!arg || !*arg)
+			break;
+		if (*arg == ',')
+			arg++;
+		else
+			return err_bad_arg(err, atom->name, bad_arg);
+	}
 	return 0;
 }
 
@@ -877,15 +921,15 @@ static struct {
 	[ATOM_TYPE] = { "type", SOURCE_OBJ },
 	[ATOM_TAG] = { "tag", SOURCE_OBJ },
 	[ATOM_AUTHOR] = { "author", SOURCE_OBJ },
-	[ATOM_AUTHORNAME] = { "authorname", SOURCE_OBJ },
+	[ATOM_AUTHORNAME] = { "authorname", SOURCE_OBJ, FIELD_STR, person_name_atom_parser },
 	[ATOM_AUTHOREMAIL] = { "authoremail", SOURCE_OBJ, FIELD_STR, person_email_atom_parser },
 	[ATOM_AUTHORDATE] = { "authordate", SOURCE_OBJ, FIELD_TIME },
 	[ATOM_COMMITTER] = { "committer", SOURCE_OBJ },
-	[ATOM_COMMITTERNAME] = { "committername", SOURCE_OBJ },
+	[ATOM_COMMITTERNAME] = { "committername", SOURCE_OBJ, FIELD_STR, person_name_atom_parser },
 	[ATOM_COMMITTEREMAIL] = { "committeremail", SOURCE_OBJ, FIELD_STR, person_email_atom_parser },
 	[ATOM_COMMITTERDATE] = { "committerdate", SOURCE_OBJ, FIELD_TIME },
 	[ATOM_TAGGER] = { "tagger", SOURCE_OBJ },
-	[ATOM_TAGGERNAME] = { "taggername", SOURCE_OBJ },
+	[ATOM_TAGGERNAME] = { "taggername", SOURCE_OBJ, FIELD_STR, person_name_atom_parser },
 	[ATOM_TAGGEREMAIL] = { "taggeremail", SOURCE_OBJ, FIELD_STR, person_email_atom_parser },
 	[ATOM_TAGGERDATE] = { "taggerdate", SOURCE_OBJ, FIELD_TIME },
 	[ATOM_CREATOR] = { "creator", SOURCE_OBJ },
@@ -1486,32 +1530,49 @@ static const char *copy_name(const char *buf)
 	return xstrdup("");
 }
 
+static const char *find_end_of_email(const char *email, int opt)
+{
+	const char *eoemail;
+
+	if (opt & EO_LOCALPART) {
+		eoemail = strchr(email, '@');
+		if (eoemail)
+			return eoemail;
+		return strchr(email, '>');
+	}
+
+	if (opt & EO_TRIM)
+		return strchr(email, '>');
+
+	/*
+	 * The option here is either the raw email option or the raw
+	 * mailmap option (that is EO_RAW or EO_MAILMAP). In such cases,
+	 * we directly grab the whole email including the closing
+	 * angle brackets.
+	 *
+	 * If EO_MAILMAP was set with any other option (that is either
+	 * EO_TRIM or EO_LOCALPART), we already grab the end of email
+	 * above.
+	 */
+	eoemail = strchr(email, '>');
+	if (eoemail)
+		eoemail++;
+	return eoemail;
+}
+
 static const char *copy_email(const char *buf, struct used_atom *atom)
 {
 	const char *email = strchr(buf, '<');
 	const char *eoemail;
+	int opt = atom->u.email_option.option;
+
 	if (!email)
 		return xstrdup("");
-	switch (atom->u.email_option.option) {
-	case EO_RAW:
-		eoemail = strchr(email, '>');
-		if (eoemail)
-			eoemail++;
-		break;
-	case EO_TRIM:
-		email++;
-		eoemail = strchr(email, '>');
-		break;
-	case EO_LOCALPART:
-		email++;
-		eoemail = strchr(email, '@');
-		if (!eoemail)
-			eoemail = strchr(email, '>');
-		break;
-	default:
-		BUG("unknown email option");
-	}
 
+	if (opt & (EO_LOCALPART | EO_TRIM))
+		email++;
+
+	eoemail = find_end_of_email(email, opt);
 	if (!eoemail)
 		return xstrdup("");
 	return xmemdupz(email, eoemail - email);
@@ -1572,16 +1633,23 @@ static void grab_date(const char *buf, struct atom_value *v, const char *atomnam
 	v->value = 0;
 }
 
+static struct string_list mailmap = STRING_LIST_INIT_NODUP;
+
 /* See grab_values */
 static void grab_person(const char *who, struct atom_value *val, int deref, void *buf)
 {
 	int i;
 	int wholen = strlen(who);
 	const char *wholine = NULL;
+	const char *headers[] = { "author ", "committer ",
+				  "tagger ", NULL };
 
 	for (i = 0; i < used_atom_cnt; i++) {
-		const char *name = used_atom[i].name;
+		struct used_atom *atom = &used_atom[i];
+		const char *name = atom->name;
 		struct atom_value *v = &val[i];
+		struct strbuf mailmap_buf = STRBUF_INIT;
+
 		if (!!deref != (*name == '*'))
 			continue;
 		if (deref)
@@ -1589,22 +1657,36 @@ static void grab_person(const char *who, struct atom_value *val, int deref, void
 		if (strncmp(who, name, wholen))
 			continue;
 		if (name[wholen] != 0 &&
-		    strcmp(name + wholen, "name") &&
+		    !starts_with(name + wholen, "name") &&
 		    !starts_with(name + wholen, "email") &&
 		    !starts_with(name + wholen, "date"))
 			continue;
-		if (!wholine)
+
+		if ((starts_with(name + wholen, "name") &&
+		    (atom->u.name_option.option == N_MAILMAP)) ||
+		    (starts_with(name + wholen, "email") &&
+		    (atom->u.email_option.option & EO_MAILMAP))) {
+			if (!mailmap.items)
+				read_mailmap(&mailmap);
+			strbuf_addstr(&mailmap_buf, buf);
+			apply_mailmap_to_header(&mailmap_buf, headers, &mailmap);
+			wholine = find_wholine(who, wholen, mailmap_buf.buf);
+		} else {
 			wholine = find_wholine(who, wholen, buf);
+		}
+
 		if (!wholine)
 			return; /* no point looking for it */
 		if (name[wholen] == 0)
 			v->s = copy_line(wholine);
-		else if (!strcmp(name + wholen, "name"))
+		else if (starts_with(name + wholen, "name"))
 			v->s = copy_name(wholine);
 		else if (starts_with(name + wholen, "email"))
 			v->s = copy_email(wholine, &used_atom[i]);
 		else if (starts_with(name + wholen, "date"))
 			grab_date(wholine, v, name);
+
+		strbuf_release(&mailmap_buf);
 	}
 
 	/*
