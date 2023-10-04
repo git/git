@@ -473,6 +473,31 @@ static struct commit_graph *load_commit_graph_v1(struct repository *r,
 	return g;
 }
 
+/*
+ * returns 1 if and only if all graphs in the chain have
+ * corrected commit dates stored in the generation_data chunk.
+ */
+static int validate_mixed_generation_chain(struct commit_graph *g)
+{
+	int read_generation_data = 1;
+	struct commit_graph *p = g;
+
+	while (read_generation_data && p) {
+		read_generation_data = p->read_generation_data;
+		p = p->base_graph;
+	}
+
+	if (read_generation_data)
+		return 1;
+
+	while (g) {
+		g->read_generation_data = 0;
+		g = g->base_graph;
+	}
+
+	return 0;
+}
+
 static int add_graph_to_chain(struct commit_graph *g,
 			      struct commit_graph *chain,
 			      struct object_id *oids,
@@ -513,31 +538,41 @@ static int add_graph_to_chain(struct commit_graph *g,
 	return 1;
 }
 
-static struct commit_graph *load_commit_graph_chain(struct repository *r,
-						    struct object_directory *odb)
+int open_commit_graph_chain(const char *chain_file,
+			    int *fd, struct stat *st)
+{
+	*fd = git_open(chain_file);
+	if (*fd < 0)
+		return 0;
+	if (fstat(*fd, st)) {
+		close(*fd);
+		return 0;
+	}
+	if (st->st_size < the_hash_algo->hexsz) {
+		close(*fd);
+		if (!st->st_size) {
+			/* treat empty files the same as missing */
+			errno = ENOENT;
+		} else {
+			warning("commit-graph chain file too small");
+			errno = EINVAL;
+		}
+		return 0;
+	}
+	return 1;
+}
+
+struct commit_graph *load_commit_graph_chain_fd_st(struct repository *r,
+						   int fd, struct stat *st,
+						   int *incomplete_chain)
 {
 	struct commit_graph *graph_chain = NULL;
 	struct strbuf line = STRBUF_INIT;
-	struct stat st;
 	struct object_id *oids;
 	int i = 0, valid = 1, count;
-	char *chain_name = get_commit_graph_chain_filename(odb);
-	FILE *fp;
-	int stat_res;
+	FILE *fp = xfdopen(fd, "r");
 
-	fp = fopen(chain_name, "r");
-	stat_res = stat(chain_name, &st);
-	free(chain_name);
-
-	if (!fp)
-		return NULL;
-	if (stat_res ||
-	    st.st_size <= the_hash_algo->hexsz) {
-		fclose(fp);
-		return NULL;
-	}
-
-	count = st.st_size / (the_hash_algo->hexsz + 1);
+	count = st->st_size / (the_hash_algo->hexsz + 1);
 	CALLOC_ARRAY(oids, count);
 
 	prepare_alt_odb(r);
@@ -578,36 +613,32 @@ static struct commit_graph *load_commit_graph_chain(struct repository *r,
 		}
 	}
 
+	validate_mixed_generation_chain(graph_chain);
+
 	free(oids);
 	fclose(fp);
 	strbuf_release(&line);
 
+	*incomplete_chain = !valid;
 	return graph_chain;
 }
 
-/*
- * returns 1 if and only if all graphs in the chain have
- * corrected commit dates stored in the generation_data chunk.
- */
-static int validate_mixed_generation_chain(struct commit_graph *g)
+static struct commit_graph *load_commit_graph_chain(struct repository *r,
+						    struct object_directory *odb)
 {
-	int read_generation_data = 1;
-	struct commit_graph *p = g;
+	char *chain_file = get_commit_graph_chain_filename(odb);
+	struct stat st;
+	int fd;
+	struct commit_graph *g = NULL;
 
-	while (read_generation_data && p) {
-		read_generation_data = p->read_generation_data;
-		p = p->base_graph;
+	if (open_commit_graph_chain(chain_file, &fd, &st)) {
+		int incomplete;
+		/* ownership of fd is taken over by load function */
+		g = load_commit_graph_chain_fd_st(r, fd, &st, &incomplete);
 	}
 
-	if (read_generation_data)
-		return 1;
-
-	while (g) {
-		g->read_generation_data = 0;
-		g = g->base_graph;
-	}
-
-	return 0;
+	free(chain_file);
+	return g;
 }
 
 struct commit_graph *read_commit_graph_one(struct repository *r,
@@ -617,8 +648,6 @@ struct commit_graph *read_commit_graph_one(struct repository *r,
 
 	if (!g)
 		g = load_commit_graph_chain(r, odb);
-
-	validate_mixed_generation_chain(g);
 
 	return g;
 }

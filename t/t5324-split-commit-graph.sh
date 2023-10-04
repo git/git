@@ -285,6 +285,32 @@ test_expect_success 'verify hashes along chain, even in shallow' '
 	)
 '
 
+test_expect_success 'verify notices chain slice which is bogus (base)' '
+	git clone --no-hardlinks . verify-chain-bogus-base &&
+	(
+		cd verify-chain-bogus-base &&
+		git commit-graph verify &&
+		base_file=$graphdir/graph-$(sed -n 1p $graphdir/commit-graph-chain).graph &&
+		echo "garbage" >$base_file &&
+		test_must_fail git commit-graph verify 2>test_err &&
+		grep -v "^+" test_err >err &&
+		grep "commit-graph file is too small" err
+	)
+'
+
+test_expect_success 'verify notices chain slice which is bogus (tip)' '
+	git clone --no-hardlinks . verify-chain-bogus-tip &&
+	(
+		cd verify-chain-bogus-tip &&
+		git commit-graph verify &&
+		tip_file=$graphdir/graph-$(sed -n 2p $graphdir/commit-graph-chain).graph &&
+		echo "garbage" >$tip_file &&
+		test_must_fail git commit-graph verify 2>test_err &&
+		grep -v "^+" test_err >err &&
+		grep "commit-graph file is too small" err
+	)
+'
+
 test_expect_success 'verify --shallow does not check base contents' '
 	git clone --no-hardlinks . verify-shallow &&
 	(
@@ -306,24 +332,51 @@ test_expect_success 'warn on base graph chunk incorrect' '
 		git commit-graph verify &&
 		base_file=$graphdir/graph-$(tail -n 1 $graphdir/commit-graph-chain).graph &&
 		corrupt_file "$base_file" $(test_oid base) "\01" &&
-		git commit-graph verify --shallow 2>test_err &&
+		test_must_fail git commit-graph verify --shallow 2>test_err &&
 		grep -v "^+" test_err >err &&
 		test_i18ngrep "commit-graph chain does not match" err
 	)
 '
 
-test_expect_success 'verify after commit-graph-chain corruption' '
-	git clone --no-hardlinks . verify-chain &&
+test_expect_success 'verify after commit-graph-chain corruption (base)' '
+	git clone --no-hardlinks . verify-chain-base &&
 	(
-		cd verify-chain &&
-		corrupt_file "$graphdir/commit-graph-chain" 60 "G" &&
-		git commit-graph verify 2>test_err &&
+		cd verify-chain-base &&
+		corrupt_file "$graphdir/commit-graph-chain" 30 "G" &&
+		test_must_fail git commit-graph verify 2>test_err &&
 		grep -v "^+" test_err >err &&
 		test_i18ngrep "invalid commit-graph chain" err &&
-		corrupt_file "$graphdir/commit-graph-chain" 60 "A" &&
-		git commit-graph verify 2>test_err &&
+		corrupt_file "$graphdir/commit-graph-chain" 30 "A" &&
+		test_must_fail git commit-graph verify 2>test_err &&
 		grep -v "^+" test_err >err &&
 		test_i18ngrep "unable to find all commit-graph files" err
+	)
+'
+
+test_expect_success 'verify after commit-graph-chain corruption (tip)' '
+	git clone --no-hardlinks . verify-chain-tip &&
+	(
+		cd verify-chain-tip &&
+		corrupt_file "$graphdir/commit-graph-chain" 70 "G" &&
+		test_must_fail git commit-graph verify 2>test_err &&
+		grep -v "^+" test_err >err &&
+		test_i18ngrep "invalid commit-graph chain" err &&
+		corrupt_file "$graphdir/commit-graph-chain" 70 "A" &&
+		test_must_fail git commit-graph verify 2>test_err &&
+		grep -v "^+" test_err >err &&
+		test_i18ngrep "unable to find all commit-graph files" err
+	)
+'
+
+test_expect_success 'verify notices too-short chain file' '
+	git clone --no-hardlinks . verify-chain-short &&
+	(
+		cd verify-chain-short &&
+		git commit-graph verify &&
+		echo "garbage" >$graphdir/commit-graph-chain &&
+		test_must_fail git commit-graph verify 2>test_err &&
+		grep -v "^+" test_err >err &&
+		grep "commit-graph chain file too small" err
 	)
 '
 
