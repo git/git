@@ -10,6 +10,14 @@ Backward Compatibility Notes
    prefix.  If you are negatively affected by this change, please use
    "--subject-prefix=PATCH --rfc" as a replacement.
 
+ * "git rev-list --stdin" learned to take non-revisions (like "--not")
+   recently from the standard input, but the way such a "--not" was
+   handled was quite confusing, which has been rethought.  The updated
+   rule is that "--not" given from the command line only affects revs
+   given from the command line that comes but not revs read from the
+   standard input, and "--not" read from the standard input affects
+   revs given from the stanrdard input and not revs given from the
+   command line.
 
 UI, Workflows & Features
 
@@ -71,6 +79,9 @@ UI, Workflows & Features
    it that the alias should be completed similar to how "git <cmd>" is
    completed.  The parsing code for the alias as been loosened to
    allow ';' without an extra space before it.
+
+ * "git for-each-ref" and friends learned to apply mailmap to
+   authorname and other fields.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -198,6 +209,10 @@ Fixes since v2.42
    but now they do.
    (merge 5bdedac3c7 jc/unresolve-removal later to maint).
 
+ * The display width table for unicode characters has been updated for
+   Unicode 15.1
+   (merge 872976c37e bb/unicode-width-table-15 later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge fd3ba590d8 ws/git-push-doc-grammofix later to maint).
    (merge 5f33a843de ds/upload-pack-error-sequence-fix later to maint).
@@ -218,3 +233,4 @@ Fixes since v2.42
    (merge 563f339d98 ch/clean-docfix later to maint).
    (merge 4fbe83fcd9 hy/doc-show-is-like-log-not-diff-tree later to maint).
    (merge 43abaaf008 ob/am-msgfix later to maint).
+   (merge c2c349a15c xz/commit-title-soft-limit-doc later to maint).
