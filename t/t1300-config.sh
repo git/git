@@ -2590,4 +2590,20 @@ test_expect_success 'includeIf.hasconfig:remote.*.url forbids remote url in such
 	grep "fatal: remote URLs cannot be configured in file directly or indirectly included by includeIf.hasconfig:remote.*.url" err
 '
 
+# Exit codes
+test_expect_success '--get with bad key' '
+	# Also exits with 1 if the value is not found
+	test_expect_code 1 git config --get "bad.name\n" 2>err &&
+	grep "error: invalid key" err &&
+	test_expect_code 2 git config --get "bad." 2>err &&
+	grep "error: key does not contain variable name" err
+'
+
+test_expect_success 'set with bad key' '
+	test_expect_code 1 git config "bad.name\n" var 2>err &&
+	grep "error: invalid key" err &&
+	test_expect_code 2 git config "bad." var 2>err &&
+	grep "error: key does not contain variable name" err
+'
+
 test_done

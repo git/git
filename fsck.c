@@ -1240,7 +1240,6 @@ static int fsck_blob(const struct object_id *oid, const char *buf,
 		return 0;
 
 	if (oidset_contains(&options->gitmodules_found, oid)) {
-		struct config_options config_opts = { 0 };
 		struct fsck_gitmodules_data data;
 
 		oidset_insert(&options->gitmodules_done, oid);
@@ -1259,10 +1258,9 @@ static int fsck_blob(const struct object_id *oid, const char *buf,
 		data.oid = oid;
 		data.options = options;
 		data.ret = 0;
-		config_opts.error_action = CONFIG_ERROR_SILENT;
 		if (git_config_from_mem(fsck_gitmodules_fn, CONFIG_ORIGIN_BLOB,
 					".gitmodules", buf, size, &data,
-					CONFIG_SCOPE_UNKNOWN, &config_opts))
+					CONFIG_SCOPE_UNKNOWN, NULL))
 			data.ret |= report(options, oid, OBJ_BLOB,
 					FSCK_MSG_GITMODULES_PARSE,
 					"could not parse gitmodules blob");

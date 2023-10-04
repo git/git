@@ -237,9 +237,7 @@ int bundle_uri_parse_config_format(const char *uri,
 				   struct bundle_list *list)
 {
 	int result;
-	struct config_options opts = {
-		.error_action = CONFIG_ERROR_ERROR,
-	};
+	struct config_parse_options opts = CP_OPTS_INIT(CONFIG_ERROR_ERROR);
 
 	if (!list->baseURI) {
 		struct strbuf baseURI = STRBUF_INIT;
