@@ -58,4 +58,14 @@ void *add_decoration(struct decoration *n, const struct object *obj, void *decor
  */
 void *lookup_decoration(struct decoration *n, const struct object *obj);
 
+/*
+ * Clear all decoration entries, releasing any memory used by the structure.
+ * If free_cb is not NULL, it is called for every decoration value currently
+ * stored.
+ *
+ * After clearing, the decoration struct can be used again. The "name" field is
+ * retained.
+ */
+void clear_decoration(struct decoration *n, void (*free_cb)(void *));
+
 #endif
