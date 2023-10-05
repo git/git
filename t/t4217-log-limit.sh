@@ -2,6 +2,7 @@
 
 test_description='git log with filter options limiting the output'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup test' '
