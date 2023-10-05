@@ -53,9 +53,9 @@ ifdef::git-log[]
 -m:::
 	This option makes diff output for merge commits to be shown in
 	the default format. `-m` will produce the output only if `-p`
-	is given as well. The default format could be changed using
-	`log.diffMerges` configuration parameter, which default value
-	is `separate`.
+	is given as well. The default format can be specified using
+	the configuration variable `log.diffMerges` (see
+	linkgit:git-config[1]). It defaults to `separate`.
 +
 --diff-merges=first-parent:::
 --diff-merges=1:::
