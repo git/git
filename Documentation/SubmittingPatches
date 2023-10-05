@@ -393,8 +393,8 @@ mailing list{security-ml}, instead of the public mailing list.
 
 Learn to use format-patch and send-email if possible.  These commands
 are optimized for the workflow of sending patches, avoiding many ways
-your existing e-mail client that is optimized for "multipart/*" mime
-type e-mails to corrupt and render your patches unusable.
+your existing e-mail client (often optimized for "multipart/*" MIME
+type e-mails) might render your patches unusable.
 
 People on the Git mailing list need to be able to read and
 comment on the changes you are submitting.  It is important for
@@ -515,8 +515,8 @@ repositories.
 
 	git://git.ozlabs.org/~paulus/gitk
 
-   Those who are interested in improve gitk can volunteer to help Paul
-   in maintaining it cf. <YntxL/fTplFm8lr6@cleo>.
+   Those who are interested in improving gitk can volunteer to help Paul
+   maintain it, cf. <YntxL/fTplFm8lr6@cleo>.
 
 - `po/` comes from the localization coordinator, Jiang Xin:
 
@@ -556,7 +556,7 @@ help you find out who they are.
 
 In any time between the (2)-(3) cycle, the maintainer may pick it up
 from the list and queue it to `seen`, in order to make it easier for
-people play with it without having to pick up and apply the patch to
+people to play with it without having to pick up and apply the patch to
 their trees themselves.
 
 [[patch-status]]

@@ -166,7 +166,7 @@ A typical output of `git range-diff` would look like this:
 
 In this example, there are 3 old and 3 new commits, where the developer
 removed the 3rd, added a new one before the first two, and modified the
-commit message of the 2nd commit as well its diff.
+commit message of the 2nd commit as well as its diff.
 
 When the output goes to a terminal, it is color-coded by default, just
 like regular `git diff`'s output. In addition, the first line (adding a

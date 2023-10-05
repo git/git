@@ -12,9 +12,9 @@
 struct string_list;
 
 /**
- * strbuf's are meant to be used with all the usual C string and memory
+ * strbufs are meant to be used with all the usual C string and memory
  * APIs. Given that the length of the buffer is known, it's often better to
- * use the mem* functions than a str* one (memchr vs. strchr e.g.).
+ * use the mem* functions than a str* one (e.g., memchr vs. strchr).
  * Though, one has to be careful about the fact that str* functions often
  * stop on NULs and that strbufs may have embedded NULs.
  *
@@ -24,7 +24,7 @@ struct string_list;
  * strbufs have some invariants that are very important to keep in mind:
  *
  *  - The `buf` member is never NULL, so it can be used in any usual C
- *    string operations safely. strbuf's _have_ to be initialized either by
+ *    string operations safely. strbufs _have_ to be initialized either by
  *    `strbuf_init()` or by `= STRBUF_INIT` before the invariants, though.
  *
  *    Do *not* assume anything on what `buf` really is (e.g. if it is
@@ -37,7 +37,7 @@ struct string_list;
  *
  *  - The `buf` member is a byte array that has at least `len + 1` bytes
  *    allocated. The extra byte is used to store a `'\0'`, allowing the
- *    `buf` member to be a valid C-string. Every strbuf function ensure this
+ *    `buf` member to be a valid C-string. All strbuf functions ensure this
  *    invariant is preserved.
  *
  *    NOTE: It is OK to "play" with the buffer directly if you work it this
