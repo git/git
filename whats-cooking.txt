@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2023, #02; Wed, 4)
+Subject: What's cooking in git.git (Oct 2023, #03; Fri, 6)
 X-master-at: 3a06386e314565108ad56a9bdb8f7b80ac52fb69
-X-next-at: 421f12c284626330cb1738d5e5e98c9ede1ec91e
+X-next-at: 5fc05c94dcc1fa9e0ac97428e887ec52d78ec652
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Oct 2023, #02; Wed, 4)
+What's cooking in git.git (Oct 2023, #03; Fri, 6)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,153 +46,114 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* bb/unicode-width-table-15 (2023-09-25) 1 commit
-  (merged to 'next' on 2023-09-28 at bb76f46606)
- + unicode: update the width tables to Unicode 15.1
-
- The display width table for unicode characters has been updated for
- Unicode 15.1
- source: <20230925190704.157731-1-dev+git@drbeat.li>
-
-
-* jk/commit-graph-verify-fix (2023-09-28) 6 commits
-  (merged to 'next' on 2023-09-28 at e3ed560a2f)
- + commit-graph: report incomplete chains during verification
- + commit-graph: tighten chain size check
- + commit-graph: detect read errors when verifying graph chain
- + t5324: harmonize sha1/sha256 graph chain corruption
- + commit-graph: check mixed generation validation when loading chain file
- + commit-graph: factor out chain opening function
-
- Various fixes to "git commit-graph verify".
- source: <20230928043746.GB57926@coredump.intra.peff.net>
-
-
-* ks/ref-filter-mailmap (2023-09-25) 3 commits
-  (merged to 'next' on 2023-09-28 at 0d3fd9959a)
- + ref-filter: add mailmap support
- + t/t6300: introduce test_bad_atom
- + t/t6300: cleanup test_atom
-
- "git for-each-ref" and friends learn to apply mailmap to authorname
- and other fields.
- source: <20230925175050.3498-1-five231003@gmail.com>
-
-
-* ps/revision-cmdline-stdin-not (2023-09-25) 1 commit
-  (merged to 'next' on 2023-09-28 at a28201e0dd)
- + revision: make pseudo-opt flags read via stdin behave consistently
-
- "git rev-list --stdin" learned to take non-revisions (like "--not")
- recently from the standard input, but the way such a "--not" was
- handled was quite confusing, which has been rethought.  This is
- potentially a change that breaks backward compatibility.
- source: <6221acd2796853144f8e84081655fbc79fdc6634.1695646898.git.ps@pks.im>
-
-
-* xz/commit-title-soft-limit-doc (2023-09-28) 1 commit
-  (merged to 'next' on 2023-09-28 at 20df852430)
- + doc: correct the 50 characters soft limit
-
- Doc tweak.
- source: <pull.1580.git.git.1695895155985.gitgitgadget@gmail.com>
-
---------------------------------------------------
 [New Topics]
 
-* jk/commit-graph-leak-fixes (2023-10-03) 10 commits
- - commit-graph: clear oidset after finishing write
- - commit-graph: free write-context base_graph_name during cleanup
- - commit-graph: free write-context entries before overwriting
- - commit-graph: free graph struct that was not added to chain
- - commit-graph: delay base_graph assignment in add_graph_to_chain()
- - commit-graph: free all elements of graph chain
- - commit-graph: move slab-clearing to close_commit_graph()
- - merge: free result of repo_get_merge_bases()
- - commit-reach: free temporary list in get_octopus_merge_bases()
- - t6700: mark test as leak-free
+* jc/merge-ort-attr-index-fix (2023-10-05) 1 commit
+ - merge-ort: initialize repo in index state
+
+ Fix "git merge-tree" to stop segfaulting when the --attr-source
+ option is used.
+
+ Waiting for review response.
+ source: <pull.1583.git.git.1696519349407.gitgitgadget@gmail.com>
+
+
+* jk/decoration-and-other-leak-fixes (2023-10-05) 3 commits
+  (merged to 'next' on 2023-10-06 at 5fc05c94dc)
+ + daemon: free listen_addr before returning
+ + revision: clear decoration structs during release_revisions()
+ + decorate: add clear_decoration() function
 
  Leakfix.
- source: <20231003202504.GA7697@coredump.intra.peff.net>
-
-
-* jm/git-status-submodule-states-docfix (2023-10-04) 1 commit
-  (merged to 'next' on 2023-10-04 at 520b7711a4)
- + git-status.txt: fix minor asciidoc format issue
-
- Docfix.
 
  Will merge to 'master'.
- source: <pull.1591.v3.git.1696386165616.gitgitgadget@gmail.com>
+ source: <20231005212802.GA982892@coredump.intra.peff.net>
 
 
-* rs/parse-opt-ctx-cleanup (2023-10-03) 1 commit
-  (merged to 'next' on 2023-10-04 at d5d0a2ce3b)
- + parse-options: drop unused parse_opt_ctx_t member
+* sn/typo-grammo-phraso-fixes (2023-10-05) 5 commits
+ - t/README: fix multi-prerequisite example
+ - doc/gitk: s/sticked/stuck/
+ - git-jump: admit to passing merge mode args to ls-files
+ - doc/diff-options: improve wording of the log.diffMerges mention
+ - doc: fix some typos, grammar and wording issues
 
- Code clean-up.
-
- Will merge to 'master'.
- source: <ebcaa9e1-d306-4c93-adec-3f35d7040531@web.de>
-
-
-* tb/repack-max-cruft-size (2023-10-03) 4 commits
- - builtin/repack.c: avoid making cruft packs preferred
- - builtin/repack.c: implement support for `--max-cruft-size`
- - builtin/repack.c: parse `--max-pack-size` with OPT_MAGNITUDE
- - t7700: split cruft-related tests to t7704
-
- "git repack" learned "--max-cruft-size" to prevent cruft packs from
- growing without bounds.
-
- Will merge to 'next'?
- source: <cover.1696293862.git.me@ttaylorr.com>
-
-
-* ak/color-decorate-symbols (2023-10-03) 1 commit
- - decorate: add color.decorate.symbols config option
-
- A new config for coloring.
+ Many typos, ungrammatical sentences and wrong phrasing have been
+ fixed.
 
  Needs review.
- source: <20231003205442.22963-1-andy.koppe@gmail.com>
+ source: <20231003082107.3002173-1-stepnem@smrk.net>
 
 
-* jc/attr-tree-config (2023-10-04) 2 commits
- - attr: add attr.allowInvalidSource config to allow invalid revision
- - attr: add attr.tree for setting the treeish to read attributes from
+* so/diff-merges-dd (2023-10-05) 3 commits
+ - completion: complete '--dd'
+ - diff-merges: introduce '--dd' option
+ - diff-merges: improve --diff-merges documentation
 
- The attribute subsystem learned to honor `attr.tree` configuration
- that specifies which tree to read the .gitattributes files from.
+ "git log" and friends learned "--dd" that is a short-hand for
+ "--diff-merges=first-parent -p".
 
- Needs review.
- source: <pull.1577.v2.git.git.1696443502.gitgitgadget@gmail.com>
+ Expecting a reroll.
+ cf. <871qe7r3rk.fsf@osv.gnss.ru>
+ source: <20231004214558.210339-1-sorganov@gmail.com>
 
 
-* js/submodule-fix-misuse-of-path-and-name (2023-10-03) 6 commits
- - t7420: test that we correctly handle renamed submodules
- - t7419: test that we correctly handle renamed submodules
- - t7419, t7420: use test_cmp_config instead of grepping .gitmodules
- - t7419: actually test the branch switching
- - submodule--helper: return error from set-url when modifying failed
- - submodule--helper: use submodule_from_path in set-{url,branch}
+* vd/loose-ref-iteration-optimization (2023-10-06) 4 commits
+ - files-backend.c: avoid stat in 'loose_fill_ref_dir'
+ - dir.[ch]: add 'follow_symlink' arg to 'get_dtype'
+ - dir.[ch]: expose 'get_dtype'
+ - ref-cache.c: fix prefix matching in ref iteration
 
- In .gitmodules files, submodules are keyed by their names, and the
- path to the submodule whose name is $name is specified by the
- submodule.$name.path variable.  There were a few codepaths that
- mixed the name and path up when consulting the submodule database,
- which have been corrected.  It took long for these bugs to be found
- as the name of a submodule initially is the same as its path, and
- the problem does not surface until it is moved to a different path,
- which apparently happens very rarely.
+ The code to iterate over loose references have been optimized to
+ reduce the number of lstat() system calls.
+ source: <pull.1594.git.1696615769.gitgitgadget@gmail.com>
 
- Will merge to 'next'?
- source: <0a0a157f88321d25fdb0be771a454b3410a449f3.camel@archlinux.org>
+
+* jc/update-list-references-to-lore (2023-10-06) 1 commit
+ - doc: update list archive reference to use lore.kernel.org
+
+ source: <xmqq7cnz741s.fsf@gitster.g>
 
 --------------------------------------------------
 [Stalled]
+
+* cc/git-replay (2023-09-07) 15 commits
+ - replay: stop assuming replayed branches do not diverge
+ - replay: add --contained to rebase contained branches
+ - replay: add --advance or 'cherry-pick' mode
+ - replay: disallow revision specific options and pathspecs
+ - replay: use standard revision ranges
+ - replay: make it a minimal server side command
+ - replay: remove HEAD related sanity check
+ - replay: remove progress and info output
+ - replay: add an important FIXME comment about gpg signing
+ - replay: don't simplify history
+ - replay: introduce pick_regular_commit()
+ - replay: die() instead of failing assert()
+ - replay: start using parse_options API
+ - replay: introduce new builtin
+ - t6429: remove switching aspects of fast-rebase
+
+ Waiting for review response.
+ cf. <52277471-4ddd-b2e0-62ca-c2a5b59ae418@gmx.de>
+ cf. <58daa706-7efb-51dd-9061-202ef650b96a@gmx.de>
+ cf. <f0e75d47-c277-9fbb-7bcd-53e4e5686f3c@gmx.de>
+ source: <20230907092521.733746-1-christian.couder@gmail.com>
+
+
+* pw/rebase-sigint (2023-09-07) 1 commit
+ - rebase -i: ignore signals when forking subprocesses
+
+ If the commit log editor or other external programs (spawned via
+ "exec" insn in the todo list) receive internactive signal during
+ "git rebase -i", it caused not just the spawned program but the
+ "Git" process that spawned them, which is often not what the end
+ user intended.  "git" learned to ignore SIGINT and SIGQUIT while
+ waiting for these subprocesses.
+
+ Expecting a reroll.
+ cf. <12c956ea-330d-4441-937f-7885ab519e26@gmail.com>
+ source: <pull.1581.git.1694080982621.gitgitgadget@gmail.com>
+
 
 * tk/cherry-pick-sequence-requires-clean-worktree (2023-06-01) 1 commit
  - cherry-pick: refuse cherry-pick sequence if index is dirty
@@ -221,6 +182,102 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* jk/commit-graph-leak-fixes (2023-10-03) 10 commits
+  (merged to 'next' on 2023-10-06 at 5d202ef8b9)
+ + commit-graph: clear oidset after finishing write
+ + commit-graph: free write-context base_graph_name during cleanup
+ + commit-graph: free write-context entries before overwriting
+ + commit-graph: free graph struct that was not added to chain
+ + commit-graph: delay base_graph assignment in add_graph_to_chain()
+ + commit-graph: free all elements of graph chain
+ + commit-graph: move slab-clearing to close_commit_graph()
+ + merge: free result of repo_get_merge_bases()
+ + commit-reach: free temporary list in get_octopus_merge_bases()
+ + t6700: mark test as leak-free
+
+ Leakfix.
+
+ Will merge to 'master'.
+ source: <20231003202504.GA7697@coredump.intra.peff.net>
+
+
+* jm/git-status-submodule-states-docfix (2023-10-04) 1 commit
+  (merged to 'next' on 2023-10-04 at 520b7711a4)
+ + git-status.txt: fix minor asciidoc format issue
+
+ Docfix.
+
+ Will merge to 'master'.
+ source: <pull.1591.v3.git.1696386165616.gitgitgadget@gmail.com>
+
+
+* rs/parse-opt-ctx-cleanup (2023-10-03) 1 commit
+  (merged to 'next' on 2023-10-04 at d5d0a2ce3b)
+ + parse-options: drop unused parse_opt_ctx_t member
+
+ Code clean-up.
+
+ Will merge to 'master'.
+ source: <ebcaa9e1-d306-4c93-adec-3f35d7040531@web.de>
+
+
+* tb/repack-max-cruft-size (2023-10-05) 4 commits
+  (merged to 'next' on 2023-10-06 at b3ca6df3b9)
+ + builtin/repack.c: avoid making cruft packs preferred
+ + builtin/repack.c: implement support for `--max-cruft-size`
+ + builtin/repack.c: parse `--max-pack-size` with OPT_MAGNITUDE
+ + t7700: split cruft-related tests to t7704
+
+ "git repack" learned "--max-cruft-size" to prevent cruft packs from
+ growing without bounds.
+
+ Will merge to 'master'.
+ source: <cover.1696293862.git.me@ttaylorr.com>
+ source: <035393935108d02aaf8927189b05102f4f74f340.1696370003.git.me@ttaylorr.com>
+
+
+* ak/color-decorate-symbols (2023-10-03) 1 commit
+ - decorate: add color.decorate.symbols config option
+
+ A new config for coloring.
+
+ Needs review.
+ source: <20231003205442.22963-1-andy.koppe@gmail.com>
+
+
+* jc/attr-tree-config (2023-10-04) 2 commits
+ - attr: add attr.allowInvalidSource config to allow invalid revision
+ - attr: add attr.tree for setting the treeish to read attributes from
+
+ The attribute subsystem learned to honor `attr.tree` configuration
+ that specifies which tree to read the .gitattributes files from.
+
+ Needs review.
+ source: <pull.1577.v2.git.git.1696443502.gitgitgadget@gmail.com>
+
+
+* js/submodule-fix-misuse-of-path-and-name (2023-10-03) 6 commits
+  (merged to 'next' on 2023-10-06 at 1054b6e752)
+ + t7420: test that we correctly handle renamed submodules
+ + t7419: test that we correctly handle renamed submodules
+ + t7419, t7420: use test_cmp_config instead of grepping .gitmodules
+ + t7419: actually test the branch switching
+ + submodule--helper: return error from set-url when modifying failed
+ + submodule--helper: use submodule_from_path in set-{url,branch}
+
+ In .gitmodules files, submodules are keyed by their names, and the
+ path to the submodule whose name is $name is specified by the
+ submodule.$name.path variable.  There were a few codepaths that
+ mixed the name and path up when consulting the submodule database,
+ which have been corrected.  It took long for these bugs to be found
+ as the name of a submodule initially is the same as its path, and
+ the problem does not surface until it is moved to a different path,
+ which apparently happens very rarely.
+
+ Will merge to 'master'.
+ source: <0a0a157f88321d25fdb0be771a454b3410a449f3.camel@archlinux.org>
+
+
 * cw/prelim-cleanup (2023-09-29) 4 commits
   (merged to 'next' on 2023-10-03 at 5985929612)
  + parse: separate out parsing functions from config.h
@@ -246,8 +303,15 @@ Release tarballs are available at:
 
 
 * ar/diff-index-merge-base-fix (2023-10-02) 1 commit
- - diff: fix --merge-base with annotated tags
+  (merged to 'next' on 2023-10-06 at 0ff4dfc0e1)
+ + diff: fix --merge-base with annotated tags
 
+ "git diff --merge-base X other args..." insisted that X must be a
+ commit and errored out when given an annotated tag that peels to a
+ commit, but we only need it to be a committish.  This has been
+ corrected.
+
+ Will merge to 'master'.
  source: <20231001151845.3621551-1-hi@alyssa.is>
 
 
@@ -272,7 +336,7 @@ Release tarballs are available at:
  Stale URLs have been updated to their current counterparts (or
  archive.org) and HTTP links are replaced with working HTTPS links.
 
- Needs eyeballing.
+ Needs review.
  source: <pull.1589.v2.git.1695553041.gitgitgadget@gmail.com>
 
 
@@ -322,8 +386,7 @@ Release tarballs are available at:
 
  Teach a repository to work with both SHA-1 and SHA-256 hash algorithms.
 
- Breaks a few CI jobs when merged to 'seen'.
- cf. <xmqqbkdmjbkp.fsf@gitster.g>
+ Needs review.
  source: <878r8l929e.fsf@gmail.froward.int.ebiederm.org>
 
 
@@ -336,6 +399,7 @@ Release tarballs are available at:
  "git archive --remote=<remote>" learned to talk over the smart
  http (aka stateless) transport.
 
+ Needs review.
  source: <cover.1696432593.git.zhiyou.jx@alibaba-inc.com>
 
 
@@ -361,18 +425,18 @@ Release tarballs are available at:
  source: <pull.1565.v6.git.1695522222723.gitgitgadget@gmail.com>
 
 
-* js/ci-coverity (2023-09-25) 7 commits
- - SQUASH???
- - coverity: detect and report when the token or project is incorrect
- - coverity: allow running on macOS
- - coverity: support building on Windows
- - coverity: allow overriding the Coverity project
- - coverity: cache the Coverity Build Tool
- - ci: add a GitHub workflow to submit Coverity scans
+* js/ci-coverity (2023-10-05) 6 commits
+  (merged to 'next' on 2023-10-05 at 253788f0d1)
+ + coverity: detect and report when the token or project is incorrect
+ + coverity: allow running on macOS
+ + coverity: support building on Windows
+ + coverity: allow overriding the Coverity project
+ + coverity: cache the Coverity Build Tool
+ + ci: add a GitHub workflow to submit Coverity scans
 
  GitHub CI workflow has learned to trigger Coverity check.
 
- Looking good.
+ Will merge to 'master'.
  source: <pull.1588.v2.git.1695642662.gitgitgadget@gmail.com>
 
 
@@ -385,6 +449,8 @@ Release tarballs are available at:
 
  The parsing routines for the configuration files have been split
  into a separate file.
+
+ Needs review.
  source: <cover.1695330852.git.steadmon@google.com>
 
 
@@ -407,7 +473,7 @@ Release tarballs are available at:
  object to a new command line option of "git rev-list", so that the
  objects that are required but are missing can be enumerated.
 
- Waiting for review response.
+ What's the status of this thing?
  source: <20230920104507.21664-1-karthik.188@gmail.com>
 
 
@@ -418,19 +484,8 @@ Release tarballs are available at:
  A bit of type safety for the "value" pointer used in the
  parse-options API.
 
- Comments?
+ What's the status of this thing?
  source: <e6d8a291-03de-cfd3-3813-747fc2cad145@web.de>
-
-
-* so/diff-merges-d (2023-09-11) 2 commits
- - diff-merges: introduce '-d' option
- - diff-merges: improve --diff-merges documentation
-
- Teach a new "-d" option that shows the patch against the first
- parent for merge commits (which is "--diff-merges=first-parent -p").
-
- Letting a less useful combination of options squat on short-and-sweet "-d" feels dubious.
- source: <20230909125446.142715-1-sorganov@gmail.com>
 
 
 * cc/repack-sift-filtered-objects-to-separate-pack (2023-10-02) 9 commits
@@ -453,62 +508,25 @@ Release tarballs are available at:
  source: <20231002165504.1325153-1-christian.couder@gmail.com>
 
 
-* pw/rebase-sigint (2023-09-07) 1 commit
- - rebase -i: ignore signals when forking subprocesses
-
- If the commit log editor or other external programs (spawned via
- "exec" insn in the todo list) receive internactive signal during
- "git rebase -i", it caused not just the spawned program but the
- "Git" process that spawned them, which is often not what the end
- user intended.  "git" learned to ignore SIGINT and SIGQUIT while
- waiting for these subprocesses.
-
- Expecting a reroll.
- cf. <12c956ea-330d-4441-937f-7885ab519e26@gmail.com>
- source: <pull.1581.git.1694080982621.gitgitgadget@gmail.com>
-
-
-* cc/git-replay (2023-09-07) 15 commits
- - replay: stop assuming replayed branches do not diverge
- - replay: add --contained to rebase contained branches
- - replay: add --advance or 'cherry-pick' mode
- - replay: disallow revision specific options and pathspecs
- - replay: use standard revision ranges
- - replay: make it a minimal server side command
- - replay: remove HEAD related sanity check
- - replay: remove progress and info output
- - replay: add an important FIXME comment about gpg signing
- - replay: don't simplify history
- - replay: introduce pick_regular_commit()
- - replay: die() instead of failing assert()
- - replay: start using parse_options API
- - replay: introduce new builtin
- - t6429: remove switching aspects of fast-rebase
-
- Waiting for review response.
- cf. <52277471-4ddd-b2e0-62ca-c2a5b59ae418@gmx.de>
- cf. <58daa706-7efb-51dd-9061-202ef650b96a@gmx.de>
- cf. <f0e75d47-c277-9fbb-7bcd-53e4e5686f3c@gmx.de>
- May want to wait until tb/repack-existing-packs-cleanup stabilizes.
- source: <20230907092521.733746-1-christian.couder@gmail.com>
-
-
 * la/trailer-test-and-doc-updates (2023-09-07) 13 commits
- - trailer doc: <token> is a <key> or <keyAlias>, not both
- - trailer doc: separator within key suppresses default separator
- - trailer doc: emphasize the effect of configuration variables
- - trailer --unfold help: prefer "reformat" over "join"
- - trailer --parse docs: add explanation for its usefulness
- - trailer --only-input: prefer "configuration variables" over "rules"
- - trailer --parse help: expose aliased options
- - trailer --no-divider help: describe usual "---" meaning
- - trailer: trailer location is a place, not an action
- - trailer doc: narrow down scope of --where and related flags
- - trailer: add tests to check defaulting behavior with --no-* flags
- - trailer test description: this tests --where=after, not --where=before
- - trailer tests: make test cases self-contained
+  (merged to 'next' on 2023-10-06 at 69fef35819)
+ + trailer doc: <token> is a <key> or <keyAlias>, not both
+ + trailer doc: separator within key suppresses default separator
+ + trailer doc: emphasize the effect of configuration variables
+ + trailer --unfold help: prefer "reformat" over "join"
+ + trailer --parse docs: add explanation for its usefulness
+ + trailer --only-input: prefer "configuration variables" over "rules"
+ + trailer --parse help: expose aliased options
+ + trailer --no-divider help: describe usual "---" meaning
+ + trailer: trailer location is a place, not an action
+ + trailer doc: narrow down scope of --where and related flags
+ + trailer: add tests to check defaulting behavior with --no-* flags
+ + trailer test description: this tests --where=after, not --where=before
+ + trailer tests: make test cases self-contained
 
  Test coverage for trailers has been improved.
+
+ Will merge to 'master'.
  source: <pull.1564.v3.git.1694125209.gitgitgadget@gmail.com>
 
 
@@ -520,8 +538,8 @@ Release tarballs are available at:
 
  Process to add some form of low-level unit tests has started.
 
- Waiting for review response.
- cf. <xmqq350hw6n7.fsf@gitster.g>
+ Expecting a reroll.
+ cf. <0b6de919-8dbf-454f-807b-5abb64388cb7@gmail.com>
  source: <cover.1692297001.git.steadmon@google.com>
 
 
@@ -537,7 +555,8 @@ Release tarballs are available at:
 
  Update the base topic to work with CMake builds.
 
- Waiting for the base topic to settle.
+ Expecting a reroll.
+ cf. <ZSCRFNkzXZb3fBaU@google.com>
  source: <pull.1579.v3.git.1695640836.gitgitgadget@gmail.com>
 
 
@@ -562,7 +581,7 @@ Release tarballs are available at:
  on systems whose "char" is unsigned; update the implementation and
  bump the format version to 2.
 
- Still being discussed.
+ What's the status of this thing?
  cf. <20230830200218.GA5147@szeder.dev>
  cf. <20230901205616.3572722-1-jonathantanmy@google.com>
  cf. <20230924195900.GA1156862@szeder.dev>
@@ -618,3 +637,11 @@ Release tarballs are available at:
  cf. <xmqqy1hfrk6p.fsf@gitster.g>
  cf. <20230915183927.1597414-1-jonathantanmy@google.com>
  source: <20230908174134.1026823-1-calvinwan@google.com>
+
+
+* so/diff-merges-d (2023-09-11) 2 commits
+ - diff-merges: introduce '-d' option
+ - diff-merges: improve --diff-merges documentation
+
+ Superseded by the so/diff-merges-dd topic.
+ source: <20230909125446.142715-1-sorganov@gmail.com>
