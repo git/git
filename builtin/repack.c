@@ -955,6 +955,7 @@ static void collapse_small_cruft_packs(FILE *in, size_t max_size,
 			existing->non_kept_packs.items[i].string);
 
 	strbuf_release(&buf);
+	free(existing_cruft);
 }
 
 static int write_cruft_pack(const struct pack_objects_args *args,
