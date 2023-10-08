@@ -127,7 +127,7 @@ you will need to handle the situation manually.
 -g::
 --again::
 	Runs 'git update-index' itself on the paths whose index
-	entries are different from those from the `HEAD` commit.
+	entries are different from those of the `HEAD` commit.
 
 --unresolve::
 	Restores the 'unmerged' or 'needs updating' state of a

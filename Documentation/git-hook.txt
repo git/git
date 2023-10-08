@@ -13,7 +13,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-A command interface to running git hooks (see linkgit:githooks[5]),
+A command interface for running git hooks (see linkgit:githooks[5]),
 for use by other scripted git commands.
 
 SUBCOMMANDS

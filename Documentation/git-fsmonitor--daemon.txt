@@ -70,7 +70,7 @@ the change (as happening against the super repo).  However, the client
 will properly ignore these extra events, so performance may be affected
 but it will not cause an incorrect result.
 
-By default, the fsmonitor daemon refuses to work against network-mounted
+By default, the fsmonitor daemon refuses to work with network-mounted
 repositories; this may be overridden by setting `fsmonitor.allowRemote` to
 `true`. Note, however, that the fsmonitor daemon is not guaranteed to work
 correctly with all network-mounted repositories and such use is considered

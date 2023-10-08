@@ -383,7 +383,7 @@ Each line of options has this format:
 	dash to separate words in a multi-word argument hint.
 
 The remainder of the line, after stripping the spaces, is used
-as the help associated to the option.
+as the help associated with the option.
 
 Blank lines are ignored, and lines that don't match this specification are used
 as option group headers (start the line with a space to create such

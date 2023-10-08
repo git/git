@@ -69,7 +69,7 @@ OPTIONS
 --empty=(stop|drop|keep)::
 	By default, or when the option is set to 'stop', the command
 	errors out on an input e-mail message lacking a patch
-	and stops into the middle of the current am session. When this
+	and stops in the middle of the current am session. When this
 	option is set to 'drop', skip such an e-mail message instead.
 	When this option is set to 'keep', create an empty commit,
 	recording the contents of the e-mail message as its log.

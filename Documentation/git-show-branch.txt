@@ -50,7 +50,7 @@ OPTIONS
 
 --current::
 	With this option, the command includes the current
-	branch to the list of revs to be shown when it is not
+	branch in the list of revs to be shown when it is not
 	given on the command line.
 
 --topo-order::
@@ -197,7 +197,7 @@ $ git show-branch --reflog="10,1 hour ago" --list master
 
 shows 10 reflog entries going back from the tip as of 1 hour ago.
 Without `--list`, the output also shows how these tips are
-topologically related with each other.
+topologically related to each other.
 
 CONFIGURATION
 -------------

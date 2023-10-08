@@ -17,7 +17,7 @@ You can customize the creation of patch text via the
 What the -p option produces is slightly different from the traditional
 diff format:
 
-1.   It is preceded with a "git diff" header that looks like this:
+1.   It is preceded by a "git diff" header that looks like this:
 
        diff --git a/file1 b/file2
 +
@@ -123,7 +123,7 @@ index fabadb8,cc95eb0..4866510
 		for_each_ref(get_name);
 ------------
 
-1.   It is preceded with a "git diff" header, that looks like
+1.   It is preceded by a "git diff" header, that looks like
      this (when the `-c` option is used):
 
        diff --combined file
