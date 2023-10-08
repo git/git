@@ -63,7 +63,7 @@ improvements over the sequential code, but there was still too much lock
 contention. A `perf` profiling indicated that around 20% of the runtime
 during a local Linux clone (on an SSD) was spent in locking functions.
 For this reason this approach was rejected in favor of using multiple
-child processes, which led to a better performance.
+child processes, which led to better performance.
 
 Multi-Process Solution
 ----------------------

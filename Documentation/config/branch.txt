@@ -64,7 +64,7 @@ branch.<name>.merge::
 	handled like the remote part of a refspec, and must match a
 	ref which is fetched from the remote given by
 	"branch.<name>.remote".
-	The merge information is used by 'git pull' (which at first calls
+	The merge information is used by 'git pull' (which first calls
 	'git fetch') to lookup the default branch for merging. Without
 	this option, 'git pull' defaults to merge the first refspec fetched.
 	Specify multiple values to get an octopus merge.

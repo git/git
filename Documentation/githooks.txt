@@ -384,7 +384,7 @@ following example for the protocol, the letter 'S' stands for
     H: PKT-LINE(ok <ref>)
     # NO, I reject it.
     H: PKT-LINE(ng <ref> <reason>)
-    # Fall through, let 'receive-pack' to execute it.
+    # Fall through, let 'receive-pack' execute it.
     H: PKT-LINE(ok <ref>)
     H: PKT-LINE(option fall-through)
     # OK, but has an alternate reference.  The alternate reference name

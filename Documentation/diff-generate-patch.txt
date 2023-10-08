@@ -77,7 +77,7 @@ separate lines indicate the old and the new mode.
 
 5.  Hunk headers mention the name of the function to which the hunk
     applies.  See "Defining a custom hunk-header" in
-    linkgit:gitattributes[5] for details of how to tailor to this to
+    linkgit:gitattributes[5] for details of how to tailor this to
     specific languages.
 
 

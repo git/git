@@ -80,7 +80,7 @@ configuration which'll amend these rules, and nothing like a
 +
 As with pushing with linkgit:git-push[1], all of the rules described
 above about what's not allowed as an update can be overridden by
-adding an the optional leading `+` to a refspec (or using `--force`
+adding an optional leading `+` to a refspec (or using `--force`
 command line option). The only exception to this is that no amount of
 forcing will make the `refs/heads/*` namespace accept a non-commit
 object.

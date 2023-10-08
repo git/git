@@ -104,7 +104,7 @@ include::pretty-options.txt[]
 	This flag changes the way a merge commit patch is displayed,
 	in a similar way to the `-c` option. It implies the `-c`
 	and `-p` options and further compresses the patch output
-	by omitting uninteresting hunks whose the contents in the parents
+	by omitting uninteresting hunks whose contents in the parents
 	have only two variants and the merge result picks one of them
 	without modification.  When all hunks are uninteresting, the commit
 	itself and the commit log message is not shown, just like in any other

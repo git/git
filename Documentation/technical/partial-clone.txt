@@ -322,7 +322,7 @@ Footnotes
 
 [a] expensive-to-modify list of missing objects:  Earlier in the design of
     partial clone we discussed the need for a single list of missing objects.
-    This would essentially be a sorted linear list of OIDs that the were
+    This would essentially be a sorted linear list of OIDs that were
     omitted by the server during a clone or subsequent fetches.
 
 This file would need to be loaded into memory on every object lookup.
