@@ -170,7 +170,7 @@ which limits the annotation to the body of the `hello` subroutine.
 
 When you are not interested in changes older than version
 v2.6.18, or changes older than 3 weeks, you can use revision
-range specifiers  similar to 'git rev-list':
+range specifiers similar to 'git rev-list':
 
 	git blame v2.6.18.. -- foo
 	git blame --since=3.weeks -- foo
