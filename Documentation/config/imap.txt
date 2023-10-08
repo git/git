@@ -4,7 +4,7 @@ imap.folder::
 	"[Gmail]/Drafts". Required.
 
 imap.tunnel::
-	Command used to setup a tunnel to the IMAP server through which
+	Command used to set up a tunnel to the IMAP server through which
 	commands will be piped instead of using a direct network connection
 	to the server. Required when imap.host is not set.
 
