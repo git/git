@@ -29,7 +29,7 @@ OPTIONS
 
 --stdin::
 	Read pathnames from the standard input, one per line,
-	instead of from the command-line.
+	instead of from the command line.
 
 -z::
 	The output format is modified to be machine-parsable.

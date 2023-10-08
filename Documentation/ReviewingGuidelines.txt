@@ -126,7 +126,7 @@ Terminology
 -----------
 nit: ::
 	Denotes a small issue that should be fixed, such as a typographical error
-	or mis-alignment of conditions in an `if()` statement.
+	or misalignment of conditions in an `if()` statement.
 
 aside: ::
 optional: ::
