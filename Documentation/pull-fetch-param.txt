@@ -71,7 +71,7 @@ refspec (or `--force`).
 Unlike when pushing with linkgit:git-push[1], any updates outside of
 `refs/{tags,heads}/*` will be accepted without `+` in the refspec (or
 `--force`), whether that's swapping e.g. a tree object for a blob, or
-a commit for another commit that's doesn't have the previous commit as
+a commit for another commit that doesn't have the previous commit as
 an ancestor etc.
 +
 Unlike when pushing with linkgit:git-push[1], there is no

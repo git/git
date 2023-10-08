@@ -35,7 +35,7 @@ submodule.<name>.ignore::
 	a submodule as modified. When set to "all", it will never be considered
 	modified (but it will nonetheless show up in the output of status and
 	commit when it has been staged), "dirty" will ignore all changes
-	to the submodules work tree and
+	to the submodule's work tree and
 	takes only differences between the HEAD of the submodule and the commit
 	recorded in the superproject into account. "untracked" will additionally
 	let submodules with modified tracked files in their work tree show up.

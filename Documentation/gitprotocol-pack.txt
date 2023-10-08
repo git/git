@@ -137,7 +137,7 @@ an absolute path in the remote filesystem.
 		    v
     ssh user@example.com "git-upload-pack '/project.git'"
 
-In a "user@host:path" format URI, its relative to the user's home
+In a "user@host:path" format URI, it's relative to the user's home
 directory, because the Git client will run:
 
      git clone user@example.com:project.git

@@ -14,7 +14,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-Reads a tag contents on standard input and creates a tag object. The
+Reads a tag's contents on standard input and creates a tag object. The
 output is the new tag's <object> identifier.
 
 This command is mostly equivalent to linkgit:git-hash-object[1]

@@ -76,7 +76,7 @@ examples would both result in the following normalized conflict:
 Sorting hunks
 ~~~~~~~~~~~~~
 
-As before, lets imagine that a common ancestor had a file with line A
+As before, let's imagine that a common ancestor had a file with line A
 its early part, and line X in its late part.  And then four branches
 are forked that do these things:
 
