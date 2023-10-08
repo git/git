@@ -34,7 +34,7 @@ include::diff-options.txt[]
 	matching one of the provided pathspecs.
 
 -r::
-	Recurse into sub-trees
+	Recurse into sub-trees.
 
 -t::
 	Show tree entry itself as well as subtrees.  Implies -r.

@@ -42,7 +42,7 @@ former is internally converted into the latter.
 
 To display the linkgit:git[1] man page, use `git help git`.
 
-This page can be displayed with 'git help help' or `git help --help`
+This page can be displayed with 'git help help' or `git help --help`.
 
 OPTIONS
 -------

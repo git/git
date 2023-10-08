@@ -48,7 +48,7 @@ Git imposes the following rules on how references are named:
 
 . They cannot begin or end with a slash `/` or contain multiple
   consecutive slashes (see the `--normalize` option below for an
-  exception to this rule)
+  exception to this rule).
 
 . They cannot end with a dot `.`.
 
