@@ -77,7 +77,7 @@ include::blame-options.txt[]
 
 -e::
 --show-email::
-	Show the author email instead of author name (Default: off).
+	Show the author email instead of the author name (Default: off).
 	This can also be controlled via the `blame.showEmail` config
 	option.
 
@@ -100,7 +100,7 @@ When neither `--porcelain` nor `--incremental` option is specified,
 `git blame` will output annotation for each line with:
 
 - abbreviated object name for the commit the line came from;
-- author ident (by default author name and date, unless `-s` or `-e`
+- author ident (by default the author name and date, unless `-s` or `-e`
   is specified); and
 - line number
 

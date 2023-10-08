@@ -239,7 +239,7 @@ bitmaps.
 
 For a `.bitmap` containing `nr_entries` reachability bitmaps, the table
 contains a list of `nr_entries` <commit_pos, offset, xor_row> triplets
-(sorted in the ascending order of `commit_pos`). The content of i'th
+(sorted in the ascending order of `commit_pos`). The content of the i'th
 triplet is -
 
 	* {empty}

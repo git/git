@@ -48,7 +48,7 @@ Similarly, in SHA-256 repositories, these values are computed using SHA-256.
      Observation: we cannot have more than 4G versions ;-) and
      more than 4G objects in a pack.
 
-   - The header is followed by number of object entries, each of
+   - The header is followed by a number of object entries, each of
      which looks like this:
 
      (undeltified representation)
@@ -62,7 +62,7 @@ Similarly, in SHA-256 repositories, these values are computed using SHA-256.
 	 is an OBJ_OFS_DELTA object
      compressed delta data
 
-     Observation: length of each object is encoded in a variable
+     Observation: the length of each object is encoded in a variable
      length format and is not constrained to 32-bit or anything.
 
   - The trailer records a pack checksum of all of the above.
@@ -161,7 +161,7 @@ converted to 0x10000.
   | 0xxxxxxx |    data    |
   +----------+============+
 
-This is the instruction to construct target object without the base
+This is the instruction to construct the target object without the base
 object. The following data is appended to the target object. The first
 seven bits of the first octet determine the size of data in
 bytes. The size must be non-zero.
@@ -294,7 +294,7 @@ Pack file entry: <+
 
   - The same trailer as a v1 pack file:
 
-    A copy of the pack checksum at the end of
+    A copy of the pack checksum at the end of the
     corresponding packfile.
 
     Index checksum of all of the above.

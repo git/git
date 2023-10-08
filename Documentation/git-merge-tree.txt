@@ -19,7 +19,7 @@ DESCRIPTION
 This command has a modern `--write-tree` mode and a deprecated
 `--trivial-merge` mode.  With the exception of the
 <<DEPMERGE,DEPRECATED DESCRIPTION>> section at the end, the rest of
-this documentation describes modern `--write-tree` mode.
+this documentation describes the modern `--write-tree` mode.
 
 Performs a merge, but does not make any new commits and does not read
 from or write to either the working tree or index.

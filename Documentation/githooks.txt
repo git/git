@@ -157,7 +157,7 @@ If the exit status is non-zero, `git commit` will abort.
 The purpose of the hook is to edit the message file in place, and
 it is not suppressed by the `--no-verify` option.  A non-zero exit
 means a failure of the hook and aborts the commit.  It should not
-be used as replacement for pre-commit hook.
+be used as a replacement for the pre-commit hook.
 
 The sample `prepare-commit-msg` hook that comes with Git removes the
 help message found in the commented portion of the commit template.

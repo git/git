@@ -132,7 +132,7 @@
 	(ERROR) Missing space before date in an author/committer line.
 
 `missingSpaceBeforeEmail`::
-	(ERROR) Missing space before the email in author/committer line.
+	(ERROR) Missing space before the email in an author/committer line.
 
 `missingTag`::
 	(ERROR) Unexpected end after `type` line in a tag object.

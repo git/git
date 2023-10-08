@@ -25,7 +25,7 @@ It is assumed that any handshaking procedures have already been completed
 (such as sending service request for git://) before this helper is started.
 
 <anything> can be any string. It is ignored. It is meant for providing
-information to user in the URL in case that URL is displayed in some
+information to the user in the URL in case that URL is displayed in some
 context.
 
 ENVIRONMENT VARIABLES
@@ -45,7 +45,7 @@ EXAMPLES
 `git push fd::7,8 master (as URL)`::
 	Push master, using file descriptor #7 to read data from
 	git-receive-pack and file descriptor #8 to write data to
-	same service.
+	the same service.
 
 `git push fd::7,8/bar master`::
 	Same as above.

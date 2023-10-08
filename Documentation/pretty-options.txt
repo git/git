@@ -48,7 +48,7 @@ people using 80-column terminals.
 --expand-tabs::
 --no-expand-tabs::
 	Perform a tab expansion (replace each tab with enough spaces
-	to fill to the next display column that is multiple of '<n>')
+	to fill to the next display column that is a multiple of '<n>')
 	in the log message before showing it in the output.
 	`--expand-tabs` is a short-hand for `--expand-tabs=8`, and
 	`--no-expand-tabs` is a short-hand for `--expand-tabs=0`,

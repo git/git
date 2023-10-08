@@ -213,7 +213,7 @@ from the original, and does not count insertion.  If you removed
 only 10 lines from a 100-line document, even if you added 910
 new lines to make a new 1000-line document, you did not do a
 complete rewrite.  diffcore-break breaks such a case in order to
-help diffcore-rename to consider such filepairs as candidate of
+help diffcore-rename to consider such filepairs as a candidate of
 rename/copy detection, but if filepairs broken that way were not
 matched with other filepairs to create rename/copy, then this
 transformation merges them back into the original
@@ -235,8 +235,8 @@ creation and deletion patches.  This was an unnecessary hack and
 the latest implementation always merges all the broken pairs
 back into modifications, but the resulting patch output is
 formatted differently for easier review in case of such
-a complete rewrite by showing the entire contents of old version
-prefixed with '-', followed by the entire contents of new
+a complete rewrite by showing the entire contents of the old version
+prefixed with '-', followed by the entire contents of the new
 version prefixed with '+'.
 
 

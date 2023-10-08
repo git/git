@@ -138,7 +138,7 @@ otherwise `stderr`.
 --user-path::
 --user-path=<path>::
 	Allow {tilde}user notation to be used in requests.  When
-	specified with no parameter, requests to
+	specified with no parameter, a request to
 	git://host/{tilde}alice/foo is taken as a request to access
 	'foo' repository in the home directory of user `alice`.
 	If `--user-path=path` is specified, the same request is

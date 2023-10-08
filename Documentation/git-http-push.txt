@@ -13,12 +13,12 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Sends missing objects to remote repository, and updates the
+Sends missing objects to the remote repository, and updates the
 remote branch.
 
 *NOTE*: This command is temporarily disabled if your libcurl
 is older than 7.16, as the combination has been reported
-not to work and sometimes corrupts repository.
+not to work and sometimes corrupts the repository.
 
 OPTIONS
 -------

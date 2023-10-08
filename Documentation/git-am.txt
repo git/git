@@ -94,7 +94,7 @@ OPTIONS
 	Pass `-u` flag to 'git mailinfo' (see linkgit:git-mailinfo[1]).
 	The proposed commit log message taken from the e-mail
 	is re-coded into UTF-8 encoding (configuration variable
-	`i18n.commitEncoding` can be used to specify project's
+	`i18n.commitEncoding` can be used to specify the project's
 	preferred encoding if it is not UTF-8).
 +
 This was optional in prior versions of git, but now it is the
@@ -192,7 +192,7 @@ include::rerere-options.txt[]
 
 --abort::
 	Restore the original branch and abort the patching operation.
-	Revert contents of files involved in the am operation to their
+	Revert the contents of files involved in the am operation to their
 	pre-am state.
 
 --quit::

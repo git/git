@@ -106,7 +106,7 @@ SPECIFYING THE REFS
 There are three ways to specify which refs to update on the
 remote end.
 
-With `--all` flag, all refs that exist locally are transferred to
+With the `--all` flag, all refs that exist locally are transferred to
 the remote side.  You cannot specify any '<ref>' if you use
 this flag.
 

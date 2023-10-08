@@ -256,7 +256,7 @@ remote in a specific order.
 - Dynamic object fetching currently uses the existing pack protocol V0
   which means that each object is requested via fetch-pack.  The server
   will send a full set of info/refs when the connection is established.
-  If there are large number of refs, this may incur significant overhead.
+  If there are a large number of refs, this may incur significant overhead.
 
 
 Future Work

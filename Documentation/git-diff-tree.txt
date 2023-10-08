@@ -78,7 +78,7 @@ commits (but not trees).
 	By default, 'git diff-tree --stdin' shows differences,
 	either in machine-readable form (without `-p`) or in patch
 	form (with `-p`).  This output can be suppressed.  It is
-	only useful with `-v` flag.
+	only useful with the `-v` flag.
 
 -v::
 	This flag causes 'git diff-tree --stdin' to also show

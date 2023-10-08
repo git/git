@@ -140,7 +140,7 @@ linkgit:git-config[1]).
 	applying a diff generated with `--unified=0`. To bypass these
 	checks use `--unidiff-zero`.
 +
-Note, for the reasons stated above usage of context-free patches is
+Note, for the reasons stated above the usage of context-free patches is
 discouraged.
 
 --apply::
@@ -257,7 +257,7 @@ the `--unsafe-paths` option to override this safety check.  This option
 has no effect when `--index` or `--cached` is in use.
 
 --allow-empty::
-	Don't return error for patches containing no diff. This includes
+	Don't return an error for patches containing no diff. This includes
 	empty patches and patches with commit text only.
 
 CONFIGURATION

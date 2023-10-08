@@ -88,7 +88,7 @@ interleaved with S-R-Q.
 
 multi_ack_detailed
 ------------------
-This is an extension of multi_ack that permits client to better
+This is an extension of multi_ack that permits the client to better
 understand the server's in-memory state. See linkgit:gitprotocol-pack[5],
 section "Packfile Negotiation" for more information.
 

@@ -53,7 +53,7 @@ OPTIONS
 
 --stage=<number>|all::
 	Instead of checking out unmerged entries, copy out the
-	files from named stage.  <number> must be between 1 and 3.
+	files from the named stage.  <number> must be between 1 and 3.
 	Note: --stage=all automatically implies --temp.
 
 --temp::
@@ -66,8 +66,8 @@ OPTIONS
 	set.
 
 --stdin::
-	Instead of taking list of paths from the command line,
-	read list of paths from the standard input.  Paths are
+	Instead of taking a list of paths from the command line,
+	read the list of paths from the standard input.  Paths are
 	separated by LF (i.e. one path per line) by default.
 
 -z::

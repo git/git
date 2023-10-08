@@ -85,7 +85,7 @@ pseudo-configuration such as the file-based `.git/hooks/*` interface
 described in linkgit:githooks[5].
 
 --developer-interfaces::
-	Print list of file formats, protocols and other developer
+	Print a list of file formats, protocols and other developer
 	interfaces documentation on the standard output.
 
 -i::

@@ -137,7 +137,7 @@ their commit message. The branch head that is pointed at by
 $GIT_DIR/HEAD is prefixed with an asterisk `*` character while other
 heads are prefixed with a `!` character.
 
-Following these N lines, one-line log for each commit is
+Following these N lines, a one-line log for each commit is
 displayed, indented N places.  If a commit is on the I-th
 branch, the I-th indentation character shows a `+` sign;
 otherwise it shows a space.  Merge commits are denoted by

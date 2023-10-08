@@ -36,7 +36,7 @@ Setting an unknown `fsck.<msg-id>` value will cause fsck to die, but
 doing the same for `receive.fsck.<msg-id>` and `fetch.fsck.<msg-id>`
 will only cause git to warn.
 +
-See `Fsck Messages` section of linkgit:git-fsck[1] for supported
+See the `Fsck Messages` section of linkgit:git-fsck[1] for supported
 values of `<msg-id>`.
 
 

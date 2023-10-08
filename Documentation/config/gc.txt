@@ -39,7 +39,7 @@ See the `gc.bigPackThreshold` configuration variable below. When in
 use, it'll affect how the auto pack limit works.
 
 gc.autoDetach::
-	Make `git gc --auto` return immediately and run in background
+	Make `git gc --auto` return immediately and run in the background
 	if the system supports it. Default is true.
 
 gc.bigPackThreshold::
