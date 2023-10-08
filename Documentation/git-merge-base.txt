@@ -88,7 +88,7 @@ For example, with this topology:
 
 the merge base between 'A' and 'B' is '1'.
 
-Given three commits 'A', 'B' and 'C', `git merge-base A B C` will compute the
+Given three commits 'A', 'B', and 'C', `git merge-base A B C` will compute the
 merge base between 'A' and a hypothetical commit 'M', which is a merge
 between 'B' and 'C'.  For example, with this topology:
 
@@ -204,7 +204,7 @@ will find B0, and
 
     $ git rebase --onto origin/master $fork_point topic
 
-will replay D0, D1 and D on top of B to create a new history of this
+will replay D0, D1, and D on top of B to create a new history of this
 shape:
 
 ....

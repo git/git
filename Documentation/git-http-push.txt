@@ -44,7 +44,7 @@ OPTIONS
 -d::
 -D::
 	Remove <ref> from remote repository.  The specified branch
-	cannot be the remote HEAD.  If -d is specified the following
+	cannot be the remote HEAD.  If -d is specified, the following
 	other conditions must also be met:
 
 	- Remote HEAD must resolve to an object that exists locally

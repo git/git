@@ -8,11 +8,11 @@ committer.email::
 	up in the `author` and `committer` fields of commit
 	objects.
 	If you need the `author` or `committer` to be different, the
-	`author.name`, `author.email`, `committer.name` or
+	`author.name`, `author.email`, `committer.name`, or
 	`committer.email` variables can be set.
 	All of these can be overridden by the `GIT_AUTHOR_NAME`,
 	`GIT_AUTHOR_EMAIL`, `GIT_COMMITTER_NAME`,
-	`GIT_COMMITTER_EMAIL` and `EMAIL` environment variables.
+	`GIT_COMMITTER_EMAIL`, and `EMAIL` environment variables.
 +
 Note that the `name` forms of these variables conventionally refer to
 some form of a personal name.  See linkgit:git-commit[1] and the

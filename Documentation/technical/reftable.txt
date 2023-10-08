@@ -175,7 +175,7 @@ log_index*
 footer
 ....
 
-In a log-only file the first log block immediately follows the file
+In a log-only file, the first log block immediately follows the file
 header, without padding to block alignment.
 
 Block size

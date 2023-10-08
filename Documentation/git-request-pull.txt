@@ -16,7 +16,7 @@ DESCRIPTION
 Generate a request asking your upstream project to pull changes into
 their tree.  The request, printed to the standard output,
 begins with the branch description, summarizes
-the changes and indicates from where they can be pulled.
+the changes, and indicates from where they can be pulled.
 
 The upstream project is expected to have the commit named by
 `<start>` and the output asks it to integrate the changes you made

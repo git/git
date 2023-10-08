@@ -23,7 +23,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 Splits mail messages in a mailbox into commit log messages,
-authorship information and patches, and applies them to the
+authorship information, and patches, and applies them to the
 current branch. You could think of it as a reverse operation
 of linkgit:git-format-patch[1] run on a branch with a straight
 history without merges.
@@ -134,7 +134,7 @@ include::rerere-options.txt[]
 	automatically. This option allows the user to bypass the automatic
 	detection and specify the patch format that the patch(es) should be
 	interpreted as. Valid formats are mbox, mboxrd,
-	stgit, stgit-series and hg.
+	stgit, stgit-series, and hg.
 
 -i::
 --interactive::

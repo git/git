@@ -19,7 +19,7 @@ with those suffixes.  E.g. if "-pre" appears before "-rc" in the
 configuration, then all "1.0-preX" tags will be listed before any
 "1.0-rcX" tags.  The placement of the main release tag relative to tags
 with various suffixes can be determined by specifying the empty suffix
-among those other suffixes.  E.g. if the suffixes "-rc", "", "-ck" and
+among those other suffixes.  E.g. if the suffixes "-rc", "", "-ck", and
 "-bfs" appear in the configuration in this order, then all "v4.8-rcX" tags
 are listed first, followed by "v4.8", then "v4.8-ckX" and finally
 "v4.8-bfsX".

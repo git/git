@@ -96,7 +96,7 @@ endif::git-pull[]
 
 -f::
 --force::
-	When 'git fetch' is used with `<src>:<dst>` refspec it may
+	When 'git fetch' is used with `<src>:<dst>` refspec, it may
 	refuse to update the local branch as discussed
 ifdef::git-pull[]
 	in the `<refspec>` part of the linkgit:git-fetch[1]

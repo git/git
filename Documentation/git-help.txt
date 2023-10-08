@@ -59,7 +59,7 @@ OPTIONS
 	aliases.
 
 --verbose::
-	When used with `--all` print description for all recognized
+	When used with `--all`, print description for all recognized
 	commands. This is the default.
 
 -c::
@@ -129,8 +129,8 @@ line option:
 * "info" corresponds to '-i|--info',
 * "web" or "html" correspond to '-w|--web'.
 
-help.browser, web.browser and browser.<tool>.path
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+help.browser, web.browser, and browser.<tool>.path
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The `help.browser`, `web.browser` and `browser.<tool>.path` will also
 be checked if the 'web' format is chosen (either by command-line

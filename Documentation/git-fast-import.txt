@@ -1353,7 +1353,7 @@ the marks back to the source repository, it is easy to verify the
 accuracy and completeness of the import by comparing each Git
 commit to the corresponding source revision.
 
-Coming from a system such as Perforce or Subversion this should be
+Coming from a system such as Perforce or Subversion, this should be
 quite simple, as the fast-import mark can also be the Perforce changeset
 number or the Subversion revision number.
 

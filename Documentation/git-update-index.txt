@@ -160,7 +160,7 @@ you will need to handle the situation manually.
 
 --index-version <n>::
 	Write the resulting index out in the named on-disk format version.
-	Supported versions are 2, 3 and 4. The current default version is 2
+	Supported versions are 2, 3, and 4. The current default version is 2
 	or 3, depending on whether extra features are used, such as
 	`git add -N`.  With `--verbose`, also report the version the index
 	file uses before and after this command.

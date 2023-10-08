@@ -49,7 +49,7 @@ variable `mergetool.<tool>.cmd`.
 +
 When 'git mergetool' is invoked with this tool (either through the
 `-t` or `--tool` option or the `merge.tool` configuration
-variable) the configured command line will be invoked with `$BASE`
+variable), the configured command line will be invoked with `$BASE`
 set to the name of a temporary file containing the common base for
 the merge, if available; `$LOCAL` set to the name of a temporary
 file containing the contents of the file on the current branch;
@@ -81,7 +81,7 @@ success of the resolution after the custom tool has exited.
 
 -g::
 --gui::
-	When 'git-mergetool' is invoked with the `-g` or `--gui` option
+	When 'git-mergetool' is invoked with the `-g` or `--gui` option,
 	the default merge tool will be read from the configured
 	`merge.guitool` variable instead of `merge.tool`. If
 	`merge.guitool` is not set, we will fallback to the tool
