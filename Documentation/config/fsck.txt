@@ -11,7 +11,7 @@ to clone or fetch it set `fetch.fsck.<msg-id>`.
 +
 The rest of the documentation discusses `fsck.*` for brevity, but the
 same applies for the corresponding `receive.fsck.*` and
-`fetch.<msg-id>.*`. variables.
+`fetch.fsck.*`. variables.
 +
 Unlike variables like `color.ui` and `core.editor` the
 `receive.fsck.<msg-id>` and `fetch.fsck.<msg-id>` variables will not
