@@ -30,7 +30,7 @@ checkout.workers::
 	all commands that perform checkout. E.g. checkout, clone, reset,
 	sparse-checkout, etc.
 +
-Note: parallel checkout usually delivers better performance for repositories
+Note: Parallel checkout usually delivers better performance for repositories
 located on SSDs or over NFS. For repositories on spinning disks and/or machines
 with a small number of cores, the default sequential checkout often performs
 better. The size and compression level of a repository might also influence how

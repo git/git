@@ -23,7 +23,7 @@ OPTIONS
 -------
 -f::
 --force::
-	update the info files from scratch.
+	Update the info files from scratch.
 
 OUTPUT
 ------

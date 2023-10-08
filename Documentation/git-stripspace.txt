@@ -29,7 +29,7 @@ With no arguments, this will:
 In the case where the input consists entirely of whitespace characters, no
 output will be produced.
 
-*NOTE*: This is intended for cleaning metadata, prefer the `--whitespace=fix`
+*NOTE*: This is intended for cleaning metadata. Prefer the `--whitespace=fix`
 mode of linkgit:git-apply[1] for correcting whitespace of patches or files in
 the repository.
 

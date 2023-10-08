@@ -40,7 +40,7 @@ user.signingKey::
 	your private ssh key or the public key when ssh-agent is used.
 	Alternatively it can contain a public key prefixed with `key::`
 	directly (e.g.: "key::ssh-rsa XXXXXX identifier"). The private key
-	needs to be available via ssh-agent. If not set git will call
+	needs to be available via ssh-agent. If not set Git will call
 	gpg.ssh.defaultKeyCommand (e.g.: "ssh-add -L") and try to use the
 	first key available. For backward compatibility, a raw key which
 	begins with "ssh-", such as "ssh-rsa XXXXXX identifier", is treated

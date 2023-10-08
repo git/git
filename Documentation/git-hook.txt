@@ -32,7 +32,7 @@ OPTIONS
 -------
 
 --to-stdin::
-	For "run"; Specify a file which will be streamed into the
+	For "run"; specify a file which will be streamed into the
 	hook's stdin. The hook will receive the entire file from
 	beginning to EOF.
 
