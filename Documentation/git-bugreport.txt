@@ -13,10 +13,11 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Captures information about the user's machine, Git client, and repository state,
-as well as a form requesting information about the behavior the user observed,
-into a single text file which the user can then share, for example to the Git
-mailing list, in order to report an observed bug.
+Collects information about the user's machine, Git client, and repository
+state, in addition to a form requesting information about the behavior the
+user observed, and stores it in a single text file which the user can then
+share, for example to the Git mailing list, in order to report an observed
+bug.
 
 The following information is requested from the user:
 

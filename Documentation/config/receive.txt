@@ -19,7 +19,7 @@ receive.certNonceSeed::
 	key.
 
 receive.certNonceSlop::
-	When a `git push --signed` sent a push certificate with a
+	When a `git push --signed` sends a push certificate with a
 	"nonce" that was issued by a receive-pack serving the same
 	repository within this many seconds, export the "nonce"
 	found in the certificate to `GIT_PUSH_CERT_NONCE` to the

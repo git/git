@@ -115,7 +115,7 @@ Varint encoding
 Varint encoding is identical to the ofs-delta encoding method used
 within pack files.
 
-Decoder works such as:
+Decoder works as follows:
 
 ....
 val = buf[ptr] & 0x7f

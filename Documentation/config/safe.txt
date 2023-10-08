@@ -14,7 +14,7 @@ repository that contains a bare repository and running a Git command
 within that directory.
 +
 This config setting is only respected in protected configuration (see
-<<SCOPES>>). This prevents the untrusted repository from tampering with
+<<SCOPES>>). This prevents untrusted repositories from tampering with
 this value.
 
 safe.directory::
@@ -32,7 +32,7 @@ override any such directories specified in the system config), add a
 `safe.directory` entry with an empty value.
 +
 This config setting is only respected in protected configuration (see
-<<SCOPES>>). This prevents the untrusted repository from tampering with this
+<<SCOPES>>). This prevents untrusted repositories from tampering with this
 value.
 +
 The value of this setting is interpolated, i.e. `~/<path>` expands to a

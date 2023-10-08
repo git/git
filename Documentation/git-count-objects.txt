@@ -12,7 +12,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-This counts the number of unpacked object files and disk space consumed by
+Counts the number of unpacked object files and disk space consumed by
 them, to help you decide when it is a good time to repack.
 
 
@@ -20,7 +20,7 @@ OPTIONS
 -------
 -v::
 --verbose::
-	Report in more detail:
+	Provide more detailed reports:
 +
 count: the number of loose objects
 +

@@ -70,7 +70,7 @@ to revert to color all lines according to the outer diff markers
 	Defaults to 60. Try a larger value if `git range-diff` erroneously
 	considers a large change a total rewrite (deletion of one commit
 	and addition of another), and a smaller one in the reverse case.
-	See the ``Algorithm`` section below for an explanation why this is
+	See the ``Algorithm`` section below for an explanation of why this is
 	needed.
 
 --left-only::

@@ -109,7 +109,7 @@ other display programs (see below).
 	format. A web browser will be used for that purpose.
 +
 The web browser can be specified using the configuration variable
-`help.browser`, or `web.browser` if the former is not set. If none of
+`help.browser`, or `web.browser` if the former is not set. If neither of
 these config variables is set, the 'git web{litdd}browse' helper script
 (called by 'git help') will pick a suitable default. See
 linkgit:git-web{litdd}browse[1] for more information about this.

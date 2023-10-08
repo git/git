@@ -114,7 +114,7 @@ result in an empty bitmap (no bits set).
 
     * N entries with compressed bitmaps, one for each indexed commit
 +
-Where `N` is the total amount of entries in this bitmap index.
+Where `N` is the total number of entries in this bitmap index.
 Each entry contains the following:
 
 	** {empty}

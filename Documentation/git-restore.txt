@@ -105,7 +105,7 @@ in linkgit:git-checkout[1] for details.
 	specified. Unmerged paths on the working tree are left alone.
 
 --ignore-skip-worktree-bits::
-	In sparse checkout mode, by default is to only update entries
+	In sparse checkout mode, the default is to only update entries
 	matched by `<pathspec>` and sparse patterns in
 	$GIT_DIR/info/sparse-checkout. This option ignores the sparse
 	patterns and unconditionally restores any files in

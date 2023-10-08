@@ -102,4 +102,4 @@ stateless request, receive an application-specific
 response, and disconnect.  It is a one round trip facility for
 querying the server.  The Simple-IPC routines hide the socket,
 named pipe, and thread pool details and allow the application
-layer to focus on the application at hand.
+layer to focus on the task at hand.

@@ -20,7 +20,7 @@ New users are encouraged to use linkgit:git-log[1] instead.  The
 `whatchanged` command is essentially the same as linkgit:git-log[1]
 but defaults to show the raw format diff output and to skip merges.
 
-The command is kept primarily for historical reasons; fingers of
+The command is primarily kept for historical reasons; fingers of
 many people who learned Git long before `git log` was invented by
 reading Linux kernel mailing list are trained to type it.
 

@@ -47,7 +47,7 @@ mergetool.meld.useAutoMerge::
 
 mergetool.vimdiff.layout::
 	The vimdiff backend uses this variable to control how its split
-	windows look like. Applies even if you are using Neovim (`nvim`) or
+	windows appear. Applies even if you are using Neovim (`nvim`) or
 	gVim (`gvim`) as the merge tool. See BACKEND SPECIFIC HINTS section
 ifndef::git-mergetool[]
 	in linkgit:git-mergetool[1].

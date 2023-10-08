@@ -185,7 +185,7 @@ quite straightforward: for each parallel-eligible entry, the main
 process must remove all files that prevent this entry from being written
 (before enqueueing it). This includes any non-directory file in the
 leading path of the entry. Later, when a worker gets assigned the entry,
-it looks again for the non-directories files and for an already existing
+it looks again for the non-directory files and for an already existing
 file at the entry's path. If any of these checks finds something, the
 worker knows that there was a path collision.
 

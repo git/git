@@ -46,7 +46,7 @@ mind.
 ------------
 +
 Commit objects created with the above setting record the value
-of `i18n.commitEncoding` in its `encoding` header.  This is to
+of `i18n.commitEncoding` in their `encoding` header.  This is to
 help other people who look at them later.  Lack of this header
 implies that the commit log message is encoded in UTF-8.
 

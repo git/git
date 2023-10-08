@@ -23,7 +23,7 @@ discussion of `GIT_PROTOCOL` in the ENVIRONMENT section below.
 It verifies that the directory has the magic file
 "git-daemon-export-ok", and it will refuse to export any Git directory
 that hasn't explicitly been marked for export this way (unless the
-`GIT_HTTP_EXPORT_ALL` environmental variable is set).
+`GIT_HTTP_EXPORT_ALL` environment variable is set).
 
 By default, only the `upload-pack` service is enabled, which serves
 'git fetch-pack' and 'git ls-remote' clients, which are invoked from
@@ -42,12 +42,12 @@ http.getanyfile::
 	any file within the repository, including objects that are
 	no longer reachable from a branch but are still present.
 	It is enabled by default, but a repository can disable it
-	by setting this configuration item to `false`.
+	by setting this configuration value to `false`.
 
 http.uploadpack::
 	This serves 'git fetch-pack' and 'git ls-remote' clients.
 	It is enabled by default, but a repository can disable it
-	by setting this configuration item to `false`.
+	by setting this configuration value to `false`.
 
 http.receivepack::
 	This serves 'git send-pack' clients, allowing push.  It is
@@ -265,12 +265,12 @@ by the invoking web server, including:
 * QUERY_STRING
 * REQUEST_METHOD
 
-The `GIT_HTTP_EXPORT_ALL` environmental variable may be passed to
+The `GIT_HTTP_EXPORT_ALL` environment variable may be passed to
 'git-http-backend' to bypass the check for the "git-daemon-export-ok"
 file in each repository before allowing export of that repository.
 
 The `GIT_HTTP_MAX_REQUEST_BUFFER` environment variable (or the
-`http.maxRequestBuffer` config variable) may be set to change the
+`http.maxRequestBuffer` config option) may be set to change the
 largest ref negotiation request that git will handle during a fetch; any
 fetch requiring a larger buffer will not succeed.  This value should not
 normally need to be changed, but may be helpful if you are fetching from

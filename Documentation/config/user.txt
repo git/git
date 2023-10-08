@@ -10,7 +10,7 @@ committer.email::
 	If you need the `author` or `committer` to be different, the
 	`author.name`, `author.email`, `committer.name` or
 	`committer.email` variables can be set.
-	Also, all of these can be overridden by the `GIT_AUTHOR_NAME`,
+	All of these can be overridden by the `GIT_AUTHOR_NAME`,
 	`GIT_AUTHOR_EMAIL`, `GIT_COMMITTER_NAME`,
 	`GIT_COMMITTER_EMAIL` and `EMAIL` environment variables.
 +

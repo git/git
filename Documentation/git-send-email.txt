@@ -468,8 +468,8 @@ Information
 
 --dump-aliases::
 	Instead of the normal operation, dump the shorthand alias names from
-	the configured alias file(s), one per line in alphabetical order. Note,
-	this only includes the alias name and not its expanded email addresses.
+	the configured alias file(s), one per line in alphabetical order. Note
+	that this only includes the alias name and not its expanded email addresses.
 	See 'sendemail.aliasesfile' for more information about aliases.
 
 

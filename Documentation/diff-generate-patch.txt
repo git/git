@@ -146,7 +146,7 @@ information about detected contents movement (renames and
 copying detection) are designed to work with diff of two
 <tree-ish> and are not used by combined diff format.
 
-3.   It is followed by two-line from-file/to-file header
+3.   It is followed by a two-line from-file/to-file header:
 
        --- a/file
        +++ b/file
@@ -157,7 +157,7 @@ files.
 +
 However, if the --combined-all-paths option is provided, instead of a
 two-line from-file/to-file you get a N+1 line from-file/to-file header,
-where N is the number of parents in the merge commit
+where N is the number of parents in the merge commit:
 
        --- a/file
        --- a/file

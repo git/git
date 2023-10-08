@@ -2,7 +2,7 @@ submodule.<name>.url::
 	The URL for a submodule. This variable is copied from the .gitmodules
 	file to the git config via 'git submodule init'. The user can change
 	the configured URL before obtaining the submodule via 'git submodule
-	update'. If neither submodule.<name>.active or submodule.active are
+	update'. If neither submodule.<name>.active nor submodule.active are
 	set, the presence of this variable is used as a fallback to indicate
 	whether the submodule is of interest to git commands.
 	See linkgit:git-submodule[1] and linkgit:gitmodules[5] for details.

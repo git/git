@@ -265,7 +265,7 @@ Future Work
 - Improve the way to specify the order in which promisor remotes are
   tried.
 +
-For example this could allow to specify explicitly something like:
+For example this could allow specifying explicitly something like:
 "When fetching from this remote, I want to use these promisor remotes
 in this order, though, when pushing or fetching to that remote, I want
 to use those promisor remotes in that order."

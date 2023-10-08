@@ -82,7 +82,7 @@ begins with `ext::`.  Examples:
 
 "ext::ssh -i /home/foo/.ssh/somekey user&#64;host.example %S 'foo/repo'"::
 	Like host.example:foo/repo, but use /home/foo/.ssh/somekey as
-	keypair and user as user on remote side. This avoids needing to
+	keypair and user as user on remote side. This avoids the need to
 	edit .ssh/config.
 
 "ext::socat -t3600 - ABSTRACT-CONNECT:/git-server %G/somerepo"::

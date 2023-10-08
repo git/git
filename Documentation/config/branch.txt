@@ -36,7 +36,7 @@ branch.sort::
 
 branch.<name>.remote::
 	When on branch <name>, it tells 'git fetch' and 'git push'
-	which remote to fetch from/push to.  The remote to push to
+	which remote to fetch from or push to.  The remote to push to
 	may be overridden with `remote.pushDefault` (for all branches).
 	The remote to push to, for the current branch, may be further
 	overridden by `branch.<name>.pushRemote`.  If no remote is

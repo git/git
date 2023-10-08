@@ -18,7 +18,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Will copy all files listed from the index to the working directory
+Copies all listed files from the index to the working directory
 (not overwriting existing files).
 
 OPTIONS

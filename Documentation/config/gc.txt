@@ -24,7 +24,7 @@ gc.auto::
 	default value is 6700.
 +
 Setting this to 0 disables not only automatic packing based on the
-number of loose objects, but any other heuristic `git gc --auto` will
+number of loose objects, but also any other heuristic `git gc --auto` will
 otherwise use to determine if there's work to do, such as
 `gc.autoPackLimit`.
 

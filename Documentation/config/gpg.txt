@@ -4,7 +4,7 @@ gpg.program::
 	same command-line interface as GPG, namely, to verify a detached
 	signature, "`gpg --verify $signature - <$file`" is run, and the
 	program is expected to signal a good signature by exiting with
-	code 0, and to generate an ASCII-armored detached signature, the
+	code 0.  To generate an ASCII-armored detached signature, the
 	standard input of "`gpg -bsau $key`" is fed with the contents to be
 	signed, and the program is expected to send the result to its
 	standard output.

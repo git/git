@@ -379,7 +379,7 @@ C: Place any object seen into set `advertised`.
 C: Build an empty set, `common`, to hold the objects that are later
    determined to be on both ends.
 
-C: Build a set, `want`, of the objects from `advertised` the client
+C: Build a set, `want`, of the objects from `advertised` that the client
    wants to fetch, based on what it saw during ref discovery.
 
 C: Start a queue, `c_pending`, ordered by commit time (popping newest
@@ -423,7 +423,7 @@ multiple commands. Object names MUST be given using the object format
 negotiated through the `object-format` capability (default SHA-1).
 
 The `have` list is created by popping the first 32 commits
-from `c_pending`.  Less can be supplied if `c_pending` empties.
+from `c_pending`.  Fewer can be supplied if `c_pending` empties.
 
 If the client has sent 256 "have" commits and has not yet
 received one of those back from `s_common`, or the client has

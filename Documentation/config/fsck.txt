@@ -17,7 +17,7 @@ Unlike variables like `color.ui` and `core.editor` the
 `receive.fsck.<msg-id>` and `fetch.fsck.<msg-id>` variables will not
 fall back on the `fsck.<msg-id>` configuration if they aren't set. To
 uniformly configure the same fsck settings in different circumstances
-all three of them they must all set to the same values.
+all three of them must be set to the same values.
 +
 When `fsck.<msg-id>` is set, errors can be switched to warnings and
 vice versa by configuring the `fsck.<msg-id>` setting where the
@@ -59,7 +59,7 @@ Unlike variables like `color.ui` and `core.editor` the
 `receive.fsck.skipList` and `fetch.fsck.skipList` variables will not
 fall back on the `fsck.skipList` configuration if they aren't set. To
 uniformly configure the same fsck settings in different circumstances
-all three of them they must all set to the same values.
+all three of them must be set to the same values.
 +
 Older versions of Git (before 2.20) documented that the object names
 list should be sorted. This was never a requirement, the object names

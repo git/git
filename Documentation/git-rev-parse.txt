@@ -36,7 +36,7 @@ Each of these options must appear first on the command line.
 --sq-quote::
 	Use 'git rev-parse' in shell quoting mode (see SQ-QUOTE
 	section below). In contrast to the `--sq` option below, this
-	mode does only quoting. Nothing else is done to command input.
+	mode only does quoting. Nothing else is done to command input.
 
 Options for --parseopt
 ~~~~~~~~~~~~~~~~~~~~~~

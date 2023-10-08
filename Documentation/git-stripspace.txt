@@ -41,7 +41,7 @@ OPTIONS
 
 -c::
 --comment-lines::
-	Prepend comment character and blank to each line. Lines will automatically
+	Prepend the comment character and a blank space to each line. Lines will automatically
 	be terminated with a newline. On empty lines, only the comment character
 	will be prepended.
 
