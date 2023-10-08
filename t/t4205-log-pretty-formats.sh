@@ -590,9 +590,9 @@ test_expect_success 'pretty format %decorate' '
 	git log --format="%(decorate:prefix=,suffix=)" -1 >actual2 &&
 	test_cmp expect2 actual2 &&
 
-	echo "[ HEAD -> foo; tag: bar; qux ]" >expect3 &&
-	git log --format="%(decorate:prefix=[ ,suffix= ],separator=%x3B )" \
-		-1 >actual3 &&
+	echo "[ bar; qux; foo ]" >expect3 &&
+	git log --format="%(decorate:prefix=[ ,suffix= ],separator=%x3B ,tag=)" \
+		--decorate-refs=refs/ -1 >actual3 &&
 	test_cmp expect3 actual3 &&
 
 	# Try with a typo (in "separator"), in which case the placeholder should
