@@ -145,7 +145,7 @@ Opening a Security Advisory draft
 
 The first step is to https://github.com/git/git/security/advisories/new[open
 an advisory]. Technically, this is not necessary. However, it is the most
-convenient way to obtain the CVE number and it give us a private repository
+convenient way to obtain the CVE number and it gives us a private repository
 associated with it that can be used to collaborate on a fix.
 
 Notifying the Linux distributions

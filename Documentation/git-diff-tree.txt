@@ -107,7 +107,7 @@ include::pretty-options.txt[]
 	by omitting uninteresting hunks whose contents in the parents
 	have only two variants and the merge result picks one of them
 	without modification.  When all hunks are uninteresting, the commit
-	itself and the commit log message is not shown, just like in any other
+	itself and the commit log message are not shown, just like in any other
 	"empty diff" case.
 
 --combined-all-paths::

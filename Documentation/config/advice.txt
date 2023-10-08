@@ -5,7 +5,7 @@ advice.*::
 +
 --
 	ambiguousFetchRefspec::
-		Advice shown when fetch refspec for multiple remotes map to
+		Advice shown when fetch refspec for multiple remotes maps to
 		the same remote-tracking branch namespace and causes branch
 		tracking set-up to fail.
 	fetchShowForcedUpdates::

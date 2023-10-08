@@ -4,7 +4,7 @@ alias.*::
 	`git last` is equivalent to `git cat-file commit HEAD`. To avoid
 	confusion and troubles with script usage, aliases that
 	hide existing Git commands are ignored. Arguments are split by
-	spaces, the usual shell quoting and escaping is supported.
+	spaces, the usual shell quoting and escaping are supported.
 	A quote pair or a backslash can be used to quote them.
 +
 Note that the first word of an alias does not necessarily have to be a

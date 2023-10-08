@@ -173,7 +173,7 @@ Note that when rename detection is on but both copy and break
 detection are off, rename detection adds a preliminary step that first
 checks if files are moved across directories while keeping their
 filename the same.  If there is a file added to a directory whose
-contents is sufficiently similar to a file with the same name that got
+contents are sufficiently similar to a file with the same name that got
 deleted from a different directory, it will mark them as renames and
 exclude them from the later quadratic step (the one that pairwise
 compares all unmatched files to find the "best" matches, determined by

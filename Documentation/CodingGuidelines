@@ -40,7 +40,7 @@ As for more concrete guidelines, just imitate the existing code
 contributing to). It is always preferable to match the _local_
 convention. New code added to Git suite is expected to match
 the overall style of existing code. Modifications to existing
-code is expected to match the style the surrounding code already
+code are expected to match the style the surrounding code already
 uses (even if it doesn't match the overall style of existing code).
 
 But if you must have a list of rules, here are some language

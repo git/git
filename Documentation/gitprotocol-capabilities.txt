@@ -30,7 +30,7 @@ to be in effect. The client MUST NOT ask for capabilities the server
 did not say it supports.
 
 Server MUST diagnose and abort if capabilities it does not understand
-was sent.  Server MUST NOT ignore capabilities that client requested
+were sent.  Server MUST NOT ignore capabilities that client requested
 and server advertised.  As a consequence of these rules, server MUST
 NOT advertise capabilities it does not understand.
 

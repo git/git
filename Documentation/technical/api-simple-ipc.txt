@@ -2,7 +2,7 @@ Simple-IPC API
 ==============
 
 The Simple-IPC API is a collection of `ipc_` prefixed library routines
-and a basic communication protocol that allow an IPC-client process to
+and a basic communication protocol that allows an IPC-client process to
 send an application-specific IPC-request message to an IPC-server
 process and receive an application-specific IPC-response message.
 

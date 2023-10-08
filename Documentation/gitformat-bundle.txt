@@ -67,7 +67,7 @@ A Git bundle consists of several parts.
 * "Capabilities", which are only in the v3 format, indicate functionality that
 	the bundle requires to be read properly.
 
-* "Prerequisites" lists the objects that are NOT included in the bundle and the
+* "Prerequisites" list the objects that are NOT included in the bundle and the
   reader of the bundle MUST already have, in order to use the data in the
   bundle. The objects stored in the bundle may refer to prerequisite objects and
   anything reachable from them (e.g. a tree object in the bundle can reference

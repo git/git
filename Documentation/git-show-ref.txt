@@ -144,7 +144,7 @@ use:
 -----------------------------------------------------------------------------
 
 This will show "refs/heads/master" but also "refs/remote/other-repo/master",
-if such references exists.
+if such references exist.
 
 When using the `--verify` flag, the command requires an exact path:
 
