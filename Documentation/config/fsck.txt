@@ -62,7 +62,7 @@ uniformly configure the same fsck settings in different circumstances
 all three of them must be set to the same values.
 +
 Older versions of Git (before 2.20) documented that the object names
-list should be sorted. This was never a requirement, the object names
+list should be sorted. This was never a requirement; the object names
 could appear in any order, but when reading the list we tracked whether
 the list was sorted for the purposes of an internal binary search
 implementation, which could save itself some work with an already sorted

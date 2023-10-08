@@ -62,7 +62,7 @@ OPTIONS
 	matching an exclude pattern.  When showing "other" files
 	(i.e. when used with '-o'), show only those matched by an
 	exclude pattern.  Standard ignore rules are not automatically
-	activated, therefore at least one of the `--exclude*` options
+	activated; therefore, at least one of the `--exclude*` options
 	is required.
 
 -s::
@@ -141,7 +141,7 @@ OPTIONS
 	Show status tags together with filenames.  Note that for
 	scripting purposes, linkgit:git-status[1] `--porcelain` and
 	linkgit:git-diff-files[1] `--name-status` are almost always
-	superior alternatives, and users should look at
+	superior alternatives; users should look at
 	linkgit:git-status[1] `--short` or linkgit:git-diff[1]
 	`--name-status` for more user-friendly alternatives.
 +

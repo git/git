@@ -29,7 +29,7 @@ to use instead of `./.git` for the base of the repository.
 
 If the object storage directory is specified via the
 `$GIT_OBJECT_DIRECTORY` environment variable then the sha1 directories
-are created underneath - otherwise the default `$GIT_DIR/objects`
+are created underneath; otherwise, the default `$GIT_DIR/objects`
 directory is used.
 
 Running 'git init' in an existing repository is safe. It will not
