@@ -126,7 +126,7 @@ Then, for each assigned item, each worker:
 
 * W5: Writes the result to the file descriptor opened at W2.
 
-* W6: Calls `fstat()` or lstat()` on the just-written path, and sends
+* W6: Calls `fstat()` or `lstat()` on the just-written path, and sends
   the result back to the main process, together with the end status of
   the operation and the item's identification number.
 
