@@ -247,7 +247,7 @@ uint32( hash_id )
 ....
 
 The header is identical to `version_number=1`, with the 4-byte hash ID
-("sha1" for SHA1 and "s256" for SHA-256) append to the header.
+("sha1" for SHA1 and "s256" for SHA-256) appended to the header.
 
 For maximum backward compatibility, it is recommended to use version 1 when
 writing SHA1 reftables.

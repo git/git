@@ -23,7 +23,7 @@ arguments.  Here are the rules:
     A subcommand may take dashed options (which may take their own
     arguments, e.g. "--max-parents 2") and arguments.  You SHOULD
     give dashed options first and then arguments.  Some commands may
-    accept dashed options after you have already gave non-option
+    accept dashed options after you have already given non-option
     arguments (which may make the command ambiguous), but you should
     not rely on it (because eventually we may find a way to fix
     these ambiguity by enforcing the "options then args" rule).
@@ -42,7 +42,7 @@ arguments.  Here are the rules:
    `git diff HEAD --` to ask for the latter.
 
  * Without disambiguating `--`, Git makes a reasonable guess, but errors
-   out and asking you to disambiguate when ambiguous.  E.g. if you have a
+   out and asks you to disambiguate when ambiguous.  E.g. if you have a
    file called HEAD in your work tree, `git diff HEAD` is ambiguous, and
    you have to say either `git diff HEAD --` or `git diff -- HEAD` to
    disambiguate.

@@ -87,7 +87,7 @@ advice.*::
 	detachedHead::
 		Advice shown when you used
 		linkgit:git-switch[1] or linkgit:git-checkout[1]
-		to move to the detach HEAD state, to instruct how to
+		to move to the detached HEAD state, to instruct how to
 		create a local branch after the fact.
 	suggestDetachingHead::
 		Advice shown when linkgit:git-switch[1] refuses to detach HEAD

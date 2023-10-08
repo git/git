@@ -48,7 +48,7 @@ OPTIONS
 -------
 -a::
 --all::
-	Prints all the available commands on the standard output.
+	Print all the available commands on the standard output.
 
 --no-external-commands::
 	When used with `--all`, exclude the listing of external "git-*"
@@ -69,10 +69,10 @@ OPTIONS
 
 -g::
 --guides::
-	Prints a list of the Git concept guides on the standard output.
+	Print a list of the Git concept guides on the standard output.
 
 --user-interfaces::
-	Prints a list of the repository, command and file interfaces
+	Print a list of the repository, command and file interfaces
 	documentation on the standard output.
 +
 In-repository file interfaces such as `.git/info/exclude` are

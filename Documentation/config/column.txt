@@ -43,7 +43,7 @@ column.branch::
 	See `column.ui` for details.
 
 column.clean::
-	Specify the layout when list items in `git clean -i`, which always
+	Specify the layout when listing items in `git clean -i`, which always
 	shows files and directories in columns. See `column.ui` for details.
 
 column.status::

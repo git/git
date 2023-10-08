@@ -8,7 +8,7 @@ gitweb - Git web interface (web frontend to Git repositories)
 SYNOPSIS
 --------
 To get started with gitweb, run linkgit:git-instaweb[1] from a Git repository.
-This would configure and start your web server, and run web browser pointing to
+This will configure and start your web server, and run a web browser pointing to
 gitweb.
 
 
@@ -24,7 +24,7 @@ Gitweb provides a web interface to Git repositories.  Its features include:
 * Viewing the blame/annotation details of any file (if enabled).
 * Generating RSS and Atom feeds of commits, for any branch.
   The feeds are auto-discoverable in modern web browsers.
-* Viewing everything that was changed in a revision, and step through
+* Viewing everything that was changed in a revision, and stepping through
   revisions one at a time, viewing the history of the repository.
 * Finding commits whose commit messages match a given search term.
 
