@@ -103,7 +103,7 @@ was found.  See below for examples.
 Conditional includes
 ~~~~~~~~~~~~~~~~~~~~
 
-You can conditionally include a config file from another by setting a
+You can conditionally include a config file from another by setting an
 `includeIf.<condition>.path` variable to the name of the file to be
 included.
 

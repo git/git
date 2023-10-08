@@ -156,7 +156,7 @@ format, `/dev/null` is used to signal created or deleted
 files.
 +
 However, if the --combined-all-paths option is provided, instead of a
-two-line from-file/to-file you get a N+1 line from-file/to-file header,
+two-line from-file/to-file you get an N+1 line from-file/to-file header,
 where N is the number of parents in the merge commit:
 
        --- a/file

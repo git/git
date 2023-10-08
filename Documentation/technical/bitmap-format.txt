@@ -126,7 +126,7 @@ Each entry contains the following:
 	** {empty}
 	1-byte XOR-offset: ::
 	    The xor offset used to compress this bitmap. For an entry
-	    in position `x`, a XOR offset of `y` means that the actual
+	    in position `x`, an XOR offset of `y` means that the actual
 	    bitmap representing this commit is composed by XORing the
 	    bitmap for this entry with the bitmap in entry `x-y` (i.e.
 	    the bitmap `y` entries before this one).
