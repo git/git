@@ -154,7 +154,7 @@ $ git show-branch master fixes mhf
   ! [mhf] Allow "+remote:local" refspec to cause --force when fetching.
 ---
   + [mhf] Allow "+remote:local" refspec to cause --force when fetching.
-  + [mhf~1] Use git-octopus when pulling more than one heads.
+  + [mhf~1] Use git-octopus when pulling more than one head.
  +  [fixes] Introduce "reset type" flag to "git reset"
   + [mhf~2] "git fetch --force".
   + [mhf~3] Use .git/remote/origin, not .git/branches/origin.

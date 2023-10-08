@@ -5,7 +5,7 @@ author.email::
 committer.name::
 committer.email::
 	The `user.name` and `user.email` variables determine what ends
-	up in the `author` and `committer` field of commit
+	up in the `author` and `committer` fields of commit
 	objects.
 	If you need the `author` or `committer` to be different, the
 	`author.name`, `author.email`, `committer.name` or

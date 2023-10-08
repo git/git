@@ -111,7 +111,7 @@ OPTIONS
 FORMATS
 -------
 
-The following format are available:
+The following formats are available:
 
 * 'short':
 	<replaced sha1>

@@ -115,7 +115,7 @@ both on the local side and on the remote side are updated.
 
 When one or more '<ref>' are specified explicitly (whether on the
 command line or via `--stdin`), it can be either a
-single pattern, or a pair of such pattern separated by a colon
+single pattern, or a pair of such patterns separated by a colon
 ":" (this means that a ref name cannot have a colon in it).  A
 single pattern '<name>' is just shorthand for '<name>:<name>'.
 
@@ -130,7 +130,7 @@ name. See linkgit:git-rev-parse[1].
  - It is an error if <src> does not match exactly one of the
    local refs.
 
- - It is an error if <dst> matches more than one remote refs.
+ - It is an error if <dst> matches more than one remote ref.
 
  - If <dst> does not match any remote ref, either
 

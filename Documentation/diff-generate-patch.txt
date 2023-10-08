@@ -142,7 +142,7 @@ or like this (when the `--cc` option is used):
 +
 The `mode <mode>,<mode>..<mode>` line appears only if at least one of
 the <mode> is different from the rest. Extended headers with
-information about detected contents movement (renames and
+information about detected content movement (renames and
 copying detection) are designed to work with diff of two
 <tree-ish> and are not used by combined diff format.
 

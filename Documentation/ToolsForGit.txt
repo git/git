@@ -5,7 +5,7 @@ Tools for developing Git
 [[summary]]
 == Summary
 
-This document gathers tips, scripts and configuration file to help people
+This document gathers tips, scripts and configuration files to help people
 working on Git's codebase use their favorite tools while following Git's
 coding style.
 

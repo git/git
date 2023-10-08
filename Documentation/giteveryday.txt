@@ -14,7 +14,7 @@ DESCRIPTION
 -----------
 
 Git users can broadly be grouped into four categories for the purposes of
-describing here a small set of useful command for everyday Git.
+describing here a small set of useful commands for everyday Git.
 
 *	<<STANDALONE,Individual Developer (Standalone)>> commands are essential
 	for anybody who makes a commit, even for somebody who works alone.

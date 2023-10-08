@@ -49,7 +49,7 @@ OPTIONS
 --remove::
 	If a specified file is in the index but is missing then it's
 	removed.
-	Default behavior is to ignore removed file.
+	Default behavior is to ignore removed files.
 
 --refresh::
 	Looks at the current index and checks to see if merges or
@@ -108,7 +108,7 @@ you will need to handle the situation manually.
 	without regard to the "assume unchanged" setting.
 
 --[no-]skip-worktree::
-	When one of these flags is specified, the object name recorded
+	When one of these flags is specified, the object names recorded
 	for the paths are not updated. Instead, these options
 	set and unset the "skip-worktree" bit for the paths. See
 	section "Skip-worktree bit" below for more information.
@@ -119,7 +119,7 @@ you will need to handle the situation manually.
 	the `--remove` option was specified.
 
 --[no-]fsmonitor-valid::
-	When one of these flags is specified, the object name recorded
+	When one of these flags is specified, the object names recorded
 	for the paths are not updated. Instead, these options
 	set and unset the "fsmonitor valid" bit for the paths. See
 	section "File System Monitor" below for more information.

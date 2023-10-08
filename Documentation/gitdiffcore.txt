@@ -230,7 +230,7 @@ like these:
 
 * -B/60 (the same as above, since diffcore-break defaults to 50%).
 
-Note that earlier implementation left a broken pair as a separate
+Note that earlier implementation left a broken pair as separate
 creation and deletion patches.  This was an unnecessary hack and
 the latest implementation always merges all the broken pairs
 back into modifications, but the resulting patch output is

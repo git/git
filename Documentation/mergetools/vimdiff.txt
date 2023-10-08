@@ -162,7 +162,7 @@ information as the first tab, with a different layout.
 |       REMOTE        |                     |
 ---------------------------------------------
 ....
-Note how in the third tab definition we need to use parenthesis to make `,`
+Note how in the third tab definition we need to use parentheses to make `,`
 have precedence over `/`.
 --
 

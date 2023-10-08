@@ -192,7 +192,7 @@ For example:
   [submodule "baz"]
     url = https://example.org/baz
 
-In the above config only the submodule 'bar' and 'baz' are active,
+In the above config only the submodules 'bar' and 'baz' are active,
 'bar' due to (1) and 'baz' due to (3). 'foo' is inactive because
 (1) takes precedence over (3)
 
