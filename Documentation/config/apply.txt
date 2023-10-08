@@ -7,5 +7,5 @@ apply.ignoreWhitespace::
 	See linkgit:git-apply[1].
 
 apply.whitespace::
-	Tells 'git apply' how to handle whitespaces, in the same way
+	Tells 'git apply' how to handle whitespace, in the same way
 	as the `--whitespace` option. See linkgit:git-apply[1].
