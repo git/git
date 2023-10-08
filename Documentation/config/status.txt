@@ -62,7 +62,7 @@ of linkgit:git-status[1] and linkgit:git-commit[1].
 
 status.submoduleSummary::
 	Defaults to false.
-	If this is set to a non zero number or true (identical to -1 or an
+	If this is set to a non-zero number or true (identical to -1 or an
 	unlimited number), the submodule summary will be enabled and a
 	summary of commits for modified submodules will be shown (see
 	--summary-limit option of linkgit:git-submodule[1]). Please note

@@ -118,7 +118,7 @@ are:
 	pattern, the include condition is met.
 +
 The .git location may be auto-discovered, or come from `$GIT_DIR`
-environment variable. If the repository is auto discovered via a .git
+environment variable. If the repository is auto-discovered via a .git
 file (e.g. from submodules, or a linked worktree), the .git location
 would be the final location where the .git directory is, not where the
 .git file is.
