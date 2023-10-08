@@ -156,7 +156,7 @@ for another option.
 	are not refs (i.e. branch or tag names; or more
 	explicitly disambiguating "heads/master" form, when you
 	want to name the "master" branch when there is an
-	unfortunately named tag "master"), and show them as full
+	unfortunately named tag "master"), and shows them as full
 	refnames (e.g. "refs/heads/master").
 
 Options for Objects
