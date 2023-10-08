@@ -25,5 +25,5 @@ commit.template::
 	new commit messages.
 
 commit.verbose::
-	A boolean or int to specify the level of verbose with `git commit`.
+	A boolean or int to specify the level of verbosity with `git commit`.
 	See linkgit:git-commit[1].
