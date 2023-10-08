@@ -101,7 +101,7 @@ advice.*::
 		otherwise caused a remote-tracking branch to be
 		checked out. See the `checkout.defaultRemote`
 		configuration variable for how to set a given remote
-		to used by default in some situations where this
+		to be used by default in some situations where this
 		advice would be printed.
 	amWorkDir::
 		Advice that shows the location of the patch file when

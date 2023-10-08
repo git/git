@@ -199,7 +199,7 @@ the same as using linkgit:git-reset[1])
 $ git restore --staged hello.c
 ------------
 
-or you can restore both the index and the working tree (this the same
+or you can restore both the index and the working tree (this is the same
 as using linkgit:git-checkout[1])
 
 ------------

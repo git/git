@@ -11,7 +11,7 @@ write out the next tree object to be committed.  The state is
 "virtual" in the sense that it does not necessarily have to, and
 often does not, match the files in the working tree.
 
-There are cases Git needs to examine the differences between the
+There are cases where Git needs to examine the differences between the
 virtual working tree state in the index and the files in the
 working tree.  The most obvious case is when the user asks `git
 diff` (or its low level implementation, `git diff-files`) or

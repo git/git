@@ -22,7 +22,7 @@ mergetool.<tool>.trustExitCode::
 	For a custom merge command, specify whether the exit code of
 	the merge command can be used to determine whether the merge was
 	successful.  If this is not set to true then the merge target file
-	timestamp is checked and the merge assumed to have been successful
+	timestamp is checked and the merge is assumed to have been successful
 	if the file has been updated, otherwise the user is prompted to
 	indicate the success of the merge.
 

@@ -15,7 +15,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 This program searches the `$GIT_OBJECT_DIRECTORY` for all objects that currently
-exist in a pack file as well as the independent object directories.
+exist in a pack file as well as in the independent object directories.
 
 All such extra objects are removed.
 

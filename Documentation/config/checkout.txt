@@ -39,6 +39,6 @@ well the parallel version performs.
 checkout.thresholdForParallelism::
 	When running parallel checkout with a small number of files, the cost
 	of subprocess spawning and inter-process communication might outweigh
-	the parallelization gains. This setting allows to define the minimum
+	the parallelization gains. This setting allows you to define the minimum
 	number of files for which parallel checkout should be attempted. The
 	default is 100.

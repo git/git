@@ -20,7 +20,7 @@ IPC-client.
 
 The IPC-client routines within a client application process connect
 to the IPC-server and send a request message and wait for a response.
-When received, the response is returned back the caller.
+When received, the response is returned back to the caller.
 
 For example, the `fsmonitor--daemon` feature will be built as a server
 application on top of the IPC-server library routines.  It will have

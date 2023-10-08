@@ -3,7 +3,7 @@ Partial Clone Design Notes
 
 The "Partial Clone" feature is a performance optimization for Git that
 allows Git to function without having a complete copy of the repository.
-The goal of this work is to allow Git better handle extremely large
+The goal of this work is to allow Git to better handle extremely large
 repositories.
 
 During clone and fetch operations, Git downloads the complete contents
