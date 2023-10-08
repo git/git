@@ -17,8 +17,8 @@ $GIT_DIR/objects/pack/multi-pack-index
 DESCRIPTION
 -----------
 
-The Git pack format is now Git stores most of its primary repository
-data. Over the lietime af a repository loose objects (if any) and
+The Git pack format is how Git stores most of its primary repository
+data. Over the lifetime of a repository loose objects (if any) and
 smaller packs are consolidated into larger pack(s). See
 linkgit:git-gc[1] and linkgit:git-pack-objects[1].
 

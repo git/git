@@ -148,7 +148,7 @@ information, the main process handles the results in two steps:
 
 - First, it updates the in-memory index with the `lstat()` information
   sent by the workers. (This must be done first as this information
-  might me required in the following step.)
+  might be required in the following step.)
 
 - Then it writes the items which collided on disk (i.e. items marked
   with `PC_ITEM_COLLIDED`). More on this below.
@@ -232,7 +232,7 @@ conversion and re-encoding, are eligible for parallel checkout.
 Ineligible entries are checked out by the classic sequential codepath
 *before* spawning workers.
 
-Note: submodules's files are also eligible for parallel checkout (as
+Note: submodules' files are also eligible for parallel checkout (as
 long as they don't fall into any of the excluding categories mentioned
 above). But since each submodule is checked out in its own child
 process, we don't mix the superproject's and the submodules' files in

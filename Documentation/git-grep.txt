@@ -337,7 +337,7 @@ The `--threads` option (and the grep.threads configuration) will be ignored when
 
 When grepping the object store (with `--cached` or giving tree objects), running
 with multiple threads might perform slower than single threaded if `--textconv`
-is given and there're too many text conversions. So if you experience low
+is given and there are too many text conversions. So if you experience low
 performance in this case, it might be desirable to use `--threads=1`.
 
 CONFIGURATION

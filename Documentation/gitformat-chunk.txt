@@ -42,7 +42,7 @@ Each row consists of a 4-byte chunk identifier (ID) and an 8-byte offset.
 Each integer is stored in network-byte order.
 
 The chunk identifier `ID[i]` is a label for the data stored within this
-fill from `OFFSET[i]` (inclusive) to `OFFSET[i+1]` (exclusive). Thus, the
+file from `OFFSET[i]` (inclusive) to `OFFSET[i+1]` (exclusive). Thus, the
 size of the `i`th chunk is equal to the difference between `OFFSET[i+1]`
 and `OFFSET[i]`. This requires that the chunk data appears contiguously
 in the same order as the table of contents.

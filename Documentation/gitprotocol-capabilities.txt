@@ -273,7 +273,7 @@ request include-tag only has to do with the client's desires for tag
 data, whether or not a server had advertised objects in the
 refs/tags/* namespace.
 
-Servers MUST pack the tags if their referrant is packed and the client
+Servers MUST pack the tags if their referent is packed and the client
 has requested include-tags.
 
 Clients MUST be prepared for the case where a server has ignored
