@@ -340,6 +340,16 @@ static int graph_read_oid_lookup(const unsigned char *chunk_start,
 	return 0;
 }
 
+static int graph_read_commit_data(const unsigned char *chunk_start,
+				  size_t chunk_size, void *data)
+{
+	struct commit_graph *g = data;
+	if (chunk_size != g->num_commits * GRAPH_DATA_WIDTH)
+		return error("commit-graph commit data chunk is wrong size");
+	g->chunk_commit_data = chunk_start;
+	return 0;
+}
+
 static int graph_read_bloom_data(const unsigned char *chunk_start,
 				  size_t chunk_size, void *data)
 {
@@ -422,7 +432,7 @@ struct commit_graph *parse_commit_graph(struct repo_settings *s,
 
 	read_chunk(cf, GRAPH_CHUNKID_OIDFANOUT, graph_read_oid_fanout, graph);
 	read_chunk(cf, GRAPH_CHUNKID_OIDLOOKUP, graph_read_oid_lookup, graph);
-	pair_chunk_unsafe(cf, GRAPH_CHUNKID_DATA, &graph->chunk_commit_data);
+	read_chunk(cf, GRAPH_CHUNKID_DATA, graph_read_commit_data, graph);
 	pair_chunk_unsafe(cf, GRAPH_CHUNKID_EXTRAEDGES, &graph->chunk_extra_edges);
 	pair_chunk_unsafe(cf, GRAPH_CHUNKID_BASE, &graph->chunk_base_graphs);
 

@@ -870,4 +870,13 @@ test_expect_success 'reader notices out-of-bounds fanout' '
 	test_cmp expect.err err
 '
 
+test_expect_success 'reader notices too-small commit data chunk' '
+	check_corrupt_chunk CDAT clear 00000000 &&
+	cat >expect.err <<-\EOF &&
+	error: commit-graph commit data chunk is wrong size
+	error: commit-graph is missing the Commit Data chunk
+	EOF
+	test_cmp expect.err err
+'
+
 test_done
