@@ -86,6 +86,33 @@ EXPECTED
 	test_cmp expected actual
 '
 
+test_expect_success '3-way merge with --attr-source' '
+	test_when_finished rm -rf 3-way &&
+	git init 3-way &&
+	(
+		cd 3-way &&
+		test_commit initial file1 foo &&
+		base=$(git rev-parse HEAD) &&
+		git checkout -b brancha &&
+		echo bar >>file1 &&
+		git commit -am "adding bar" &&
+		source=$(git rev-parse HEAD) &&
+		git checkout @{-1} &&
+		git checkout -b branchb &&
+		echo baz >>file1 &&
+		git commit -am "adding baz" &&
+		merge=$(git rev-parse HEAD) &&
+		git checkout -b gitattributes &&
+		test_commit "gitattributes" .gitattributes "file1 merge=union" &&
+		git checkout @{-1} &&
+		tree=$(git --attr-source=gitattributes merge-tree --write-tree \
+		--merge-base "$base" --end-of-options "$source" "$merge") &&
+		test_write_lines foo bar baz >expect &&
+		git cat-file -p "$tree:file1" >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_expect_success 'file change A, B (same)' '
 	git reset --hard initial &&
 	test_commit "change-a-b-same-A" "initial-file" "AAA" &&
