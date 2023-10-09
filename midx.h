@@ -37,6 +37,7 @@ struct multi_pack_index {
 	const unsigned char *chunk_oid_lookup;
 	const unsigned char *chunk_object_offsets;
 	const unsigned char *chunk_large_offsets;
+	size_t chunk_large_offsets_len;
 	const unsigned char *chunk_revindex;
 
 	const char **pack_names;

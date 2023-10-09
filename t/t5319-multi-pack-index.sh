@@ -1118,4 +1118,24 @@ test_expect_success 'reader notices too-small object offset chunk' '
 	test_cmp expect err
 '
 
+test_expect_success 'reader bounds-checks large offset table' '
+	# re-use the objects64 dir here to cheaply get access to a midx
+	# with large offsets.
+	git init repo &&
+	test_when_finished "rm -rf repo" &&
+	(
+		cd repo &&
+		(cd ../objects64 && pwd) >.git/objects/info/alternates &&
+		git multi-pack-index --object-dir=../objects64 write &&
+		midx=../objects64/pack/multi-pack-index &&
+		corrupt_chunk_file $midx LOFF clear &&
+		test_must_fail git cat-file \
+			--batch-check --batch-all-objects 2>err &&
+		cat >expect <<-\EOF &&
+		fatal: multi-pack-index large offset out of bounds
+		EOF
+		test_cmp expect err
+	)
+'
+
 test_done

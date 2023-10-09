@@ -180,7 +180,8 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 	if (read_chunk(cf, MIDX_CHUNKID_OBJECTOFFSETS, midx_read_object_offsets, m))
 		die(_("multi-pack-index required object offsets chunk missing or corrupted"));
 
-	pair_chunk_unsafe(cf, MIDX_CHUNKID_LARGEOFFSETS, &m->chunk_large_offsets);
+	pair_chunk(cf, MIDX_CHUNKID_LARGEOFFSETS, &m->chunk_large_offsets,
+		   &m->chunk_large_offsets_len);
 
 	if (git_env_bool("GIT_TEST_MIDX_READ_RIDX", 1))
 		pair_chunk_unsafe(cf, MIDX_CHUNKID_REVINDEX, &m->chunk_revindex);
@@ -303,8 +304,9 @@ off_t nth_midxed_offset(struct multi_pack_index *m, uint32_t pos)
 			die(_("multi-pack-index stores a 64-bit offset, but off_t is too small"));
 
 		offset32 ^= MIDX_LARGE_OFFSET_NEEDED;
-		return get_be64(m->chunk_large_offsets +
-				st_mult(sizeof(uint64_t), offset32));
+		if (offset32 >= m->chunk_large_offsets_len / sizeof(uint64_t))
+			die(_("multi-pack-index large offset out of bounds"));
+		return get_be64(m->chunk_large_offsets + sizeof(uint64_t) * offset32);
 	}
 
 	return offset32;
