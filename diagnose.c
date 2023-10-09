@@ -81,7 +81,7 @@ static int count_files(struct strbuf *path)
 		return 0;
 
 	while ((e = readdir_skip_dot_and_dotdot(dir)) != NULL)
-		if (get_dtype(e, path) == DT_REG)
+		if (get_dtype(e, path, 0) == DT_REG)
 			count++;
 
 	closedir(dir);
@@ -110,7 +110,7 @@ static void loose_objs_stats(struct strbuf *buf, const char *path)
 	base_path_len = count_path.len;
 
 	while ((e = readdir_skip_dot_and_dotdot(dir)) != NULL)
-		if (get_dtype(e, &count_path) == DT_DIR &&
+		if (get_dtype(e, &count_path, 0) == DT_DIR &&
 		    strlen(e->d_name) == 2 &&
 		    !hex_to_bytes(&c, e->d_name, 1)) {
 			strbuf_setlen(&count_path, base_path_len);
@@ -155,7 +155,7 @@ static int add_directory_to_archiver(struct strvec *archiver_args,
 
 		strbuf_add_absolute_path(&abspath, at_root ? "." : path);
 		strbuf_addch(&abspath, '/');
-		dtype = get_dtype(e, &abspath);
+		dtype = get_dtype(e, &abspath, 0);
 
 		strbuf_setlen(&buf, len);
 		strbuf_addstr(&buf, e->d_name);

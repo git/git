@@ -2235,19 +2235,24 @@ static int get_index_dtype(struct index_state *istate,
 	return DT_UNKNOWN;
 }
 
-unsigned char get_dtype(struct dirent *e, struct strbuf *path)
+unsigned char get_dtype(struct dirent *e, struct strbuf *path,
+			int follow_symlink)
 {
 	struct stat st;
 	unsigned char dtype = DTYPE(e);
 	size_t base_path_len;
 
-	if (dtype != DT_UNKNOWN)
+	if (dtype != DT_UNKNOWN && !(follow_symlink && dtype == DT_LNK))
 		return dtype;
 
-	/* d_type unknown in dirent, try to fall back on lstat results */
+	/*
+	 * d_type unknown or unfollowed symlink, try to fall back on [l]stat
+	 * results. If [l]stat fails, explicitly set DT_UNKNOWN.
+	 */
 	base_path_len = path->len;
 	strbuf_addstr(path, e->d_name);
-	if (lstat(path->buf, &st))
+	if ((follow_symlink && stat(path->buf, &st)) ||
+	    (!follow_symlink && lstat(path->buf, &st)))
 		goto cleanup;
 
 	/* determine d_type from st_mode */
