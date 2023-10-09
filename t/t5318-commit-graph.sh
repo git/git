@@ -879,4 +879,12 @@ test_expect_success 'reader notices too-small commit data chunk' '
 	test_cmp expect.err err
 '
 
+test_expect_success 'reader notices out-of-bounds extra edge' '
+	check_corrupt_chunk EDGE clear &&
+	cat >expect.err <<-\EOF &&
+	error: commit-graph extra-edges pointer out of bounds
+	EOF
+	test_cmp expect.err err
+'
+
 test_done

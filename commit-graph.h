@@ -95,6 +95,7 @@ struct commit_graph {
 	const unsigned char *chunk_generation_data;
 	const unsigned char *chunk_generation_data_overflow;
 	const unsigned char *chunk_extra_edges;
+	size_t chunk_extra_edges_size;
 	const unsigned char *chunk_base_graphs;
 	const unsigned char *chunk_bloom_indexes;
 	const unsigned char *chunk_bloom_data;

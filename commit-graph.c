@@ -433,7 +433,8 @@ struct commit_graph *parse_commit_graph(struct repo_settings *s,
 	read_chunk(cf, GRAPH_CHUNKID_OIDFANOUT, graph_read_oid_fanout, graph);
 	read_chunk(cf, GRAPH_CHUNKID_OIDLOOKUP, graph_read_oid_lookup, graph);
 	read_chunk(cf, GRAPH_CHUNKID_DATA, graph_read_commit_data, graph);
-	pair_chunk_unsafe(cf, GRAPH_CHUNKID_EXTRAEDGES, &graph->chunk_extra_edges);
+	pair_chunk(cf, GRAPH_CHUNKID_EXTRAEDGES, &graph->chunk_extra_edges,
+		   &graph->chunk_extra_edges_size);
 	pair_chunk_unsafe(cf, GRAPH_CHUNKID_BASE, &graph->chunk_base_graphs);
 
 	if (s->commit_graph_generation_version >= 2) {
@@ -899,7 +900,7 @@ static int fill_commit_in_graph(struct repository *r,
 				struct commit_graph *g, uint32_t pos)
 {
 	uint32_t edge_value;
-	uint32_t *parent_data_ptr;
+	uint32_t parent_data_pos;
 	struct commit_list **pptr;
 	const unsigned char *commit_data;
 	uint32_t lex_index;
@@ -931,14 +932,21 @@ static int fill_commit_in_graph(struct repository *r,
 		return 1;
 	}
 
-	parent_data_ptr = (uint32_t*)(g->chunk_extra_edges +
-			  st_mult(4, edge_value & GRAPH_EDGE_LAST_MASK));
+	parent_data_pos = edge_value & GRAPH_EDGE_LAST_MASK;
 	do {
-		edge_value = get_be32(parent_data_ptr);
+		if (g->chunk_extra_edges_size / sizeof(uint32_t) <= parent_data_pos) {
+			error("commit-graph extra-edges pointer out of bounds");
+			free_commit_list(item->parents);
+			item->parents = NULL;
+			item->object.parsed = 0;
+			return 0;
+		}
+		edge_value = get_be32(g->chunk_extra_edges +
+				      sizeof(uint32_t) * parent_data_pos);
 		pptr = insert_parent_or_die(r, g,
 					    edge_value & GRAPH_EDGE_LAST_MASK,
 					    pptr);
-		parent_data_ptr++;
+		parent_data_pos++;
 	} while (!(edge_value & GRAPH_LAST_EDGE));
 
 	return 1;
