@@ -451,8 +451,9 @@ struct commit_graph *parse_commit_graph(struct repo_settings *s,
 	if (s->commit_graph_generation_version >= 2) {
 		read_chunk(cf, GRAPH_CHUNKID_GENERATION_DATA,
 			   graph_read_generation_data, graph);
-		pair_chunk_unsafe(cf, GRAPH_CHUNKID_GENERATION_DATA_OVERFLOW,
-			&graph->chunk_generation_data_overflow);
+		pair_chunk(cf, GRAPH_CHUNKID_GENERATION_DATA_OVERFLOW,
+			   &graph->chunk_generation_data_overflow,
+			   &graph->chunk_generation_data_overflow_size);
 
 		if (graph->chunk_generation_data)
 			graph->read_generation_data = 1;
@@ -896,7 +897,10 @@ static void fill_commit_graph_info(struct commit *item, struct commit_graph *g, 
 				die(_("commit-graph requires overflow generation data but has none"));
 
 			offset_pos = offset ^ CORRECTED_COMMIT_DATE_OFFSET_OVERFLOW;
-			graph_data->generation = item->date + get_be64(g->chunk_generation_data_overflow + st_mult(8, offset_pos));
+			if (g->chunk_generation_data_overflow_size / sizeof(uint64_t) <= offset_pos)
+				die(_("commit-graph overflow generation data is too small"));
+			graph_data->generation = item->date +
+				get_be64(g->chunk_generation_data_overflow + sizeof(uint64_t) * offset_pos);
 		} else
 			graph_data->generation = item->date + offset;
 	} else
