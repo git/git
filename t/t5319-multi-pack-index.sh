@@ -2,6 +2,7 @@
 
 test_description='multi-pack-indexes'
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-chunk.sh
 
 GIT_TEST_MULTI_PACK_INDEX=0
 objdir=.git/objects
@@ -438,7 +439,7 @@ test_expect_success 'verify extended chunk count' '
 
 test_expect_success 'verify missing required chunk' '
 	corrupt_midx_and_verify $MIDX_BYTE_CHUNK_ID "\01" $objdir \
-		"missing required"
+		"required pack-name chunk missing"
 '
 
 test_expect_success 'verify invalid chunk offset' '
@@ -1053,6 +1054,23 @@ test_expect_success 'repack with delta islands' '
 		git multi-pack-index write &&
 		git -c repack.useDeltaIslands=true multi-pack-index repack
 	)
+'
+
+corrupt_chunk () {
+	midx=.git/objects/pack/multi-pack-index &&
+	test_when_finished "rm -rf $midx" &&
+	git repack -ad --write-midx &&
+	corrupt_chunk_file $midx "$@"
+}
+
+test_expect_success 'reader notices too-small oid fanout chunk' '
+	corrupt_chunk OIDF clear 00000000 &&
+	test_must_fail git log 2>err &&
+	cat >expect <<-\EOF &&
+	error: multi-pack-index OID fanout is of the wrong size
+	fatal: multi-pack-index required OID fanout chunk missing or corrupted
+	EOF
+	test_cmp expect err
 '
 
 test_done
