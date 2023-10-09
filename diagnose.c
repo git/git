@@ -71,42 +71,6 @@ static int dir_file_stats(struct object_directory *object_dir, void *data)
 	return 0;
 }
 
-/*
- * Get the d_type of a dirent. If the d_type is unknown, derive it from
- * stat.st_mode.
- *
- * Note that 'path' is assumed to have a trailing slash. It is also modified
- * in-place during the execution of the function, but is then reverted to its
- * original value before returning.
- */
-static unsigned char get_dtype(struct dirent *e, struct strbuf *path)
-{
-	struct stat st;
-	unsigned char dtype = DTYPE(e);
-	size_t base_path_len;
-
-	if (dtype != DT_UNKNOWN)
-		return dtype;
-
-	/* d_type unknown in dirent, try to fall back on lstat results */
-	base_path_len = path->len;
-	strbuf_addstr(path, e->d_name);
-	if (lstat(path->buf, &st))
-		goto cleanup;
-
-	/* determine d_type from st_mode */
-	if (S_ISREG(st.st_mode))
-		dtype = DT_REG;
-	else if (S_ISDIR(st.st_mode))
-		dtype = DT_DIR;
-	else if (S_ISLNK(st.st_mode))
-		dtype = DT_LNK;
-
-cleanup:
-	strbuf_setlen(path, base_path_len);
-	return dtype;
-}
-
 static int count_files(struct strbuf *path)
 {
 	DIR *dir = opendir(path->buf);
