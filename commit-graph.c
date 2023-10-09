@@ -365,7 +365,17 @@ static int graph_read_bloom_data(const unsigned char *chunk_start,
 {
 	struct commit_graph *g = data;
 	uint32_t hash_version;
+
+	if (chunk_size < BLOOMDATA_CHUNK_HEADER_SIZE) {
+		warning("ignoring too-small changed-path chunk"
+			" (%"PRIuMAX" < %"PRIuMAX") in commit-graph file",
+			(uintmax_t)chunk_size,
+			(uintmax_t)BLOOMDATA_CHUNK_HEADER_SIZE);
+		return -1;
+	}
+
 	g->chunk_bloom_data = chunk_start;
+	g->chunk_bloom_data_size = chunk_size;
 	hash_version = get_be32(chunk_start);
 
 	if (hash_version != 1)

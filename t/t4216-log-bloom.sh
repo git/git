@@ -5,6 +5,7 @@ GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-chunk.sh
 
 GIT_TEST_COMMIT_GRAPH=0
 GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS=0
@@ -402,6 +403,33 @@ test_expect_success 'Bloom generation backfills empty commits' '
 		test_filter_trunc_empty 0 trace.event &&
 		test_filter_trunc_large 0 trace.event
 	)
+'
+
+corrupt_graph () {
+	graph=.git/objects/info/commit-graph &&
+	test_when_finished "rm -rf $graph" &&
+	git commit-graph write --reachable --changed-paths &&
+	corrupt_chunk_file $graph "$@"
+}
+
+check_corrupt_graph () {
+	corrupt_graph "$@" &&
+	git -c core.commitGraph=false log -- A/B/file2 >expect.out &&
+	git -c core.commitGraph=true log -- A/B/file2 >out 2>err &&
+	test_cmp expect.out out
+}
+
+test_expect_success 'Bloom reader notices too-small data chunk' '
+	check_corrupt_graph BDAT clear 00000000 &&
+	echo "warning: ignoring too-small changed-path chunk" \
+		"(4 < 12) in commit-graph file" >expect.err &&
+	test_cmp expect.err err
+'
+
+test_expect_success 'Bloom reader notices out-of-bounds filter offsets' '
+	check_corrupt_graph BIDX 12 FFFFFFFF &&
+	# use grep to avoid depending on exact chunk size
+	grep "warning: ignoring out-of-range offset (4294967295) for changed-path filter at pos 3 of .git/objects/info/commit-graph" err
 '
 
 test_done

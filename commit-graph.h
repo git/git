@@ -101,6 +101,7 @@ struct commit_graph {
 	size_t chunk_base_graphs_size;
 	const unsigned char *chunk_bloom_indexes;
 	const unsigned char *chunk_bloom_data;
+	size_t chunk_bloom_data_size;
 
 	struct topo_level_slab *topo_levels;
 	struct bloom_filter_settings *bloom_filter_settings;
