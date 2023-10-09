@@ -432,4 +432,13 @@ test_expect_success 'Bloom reader notices out-of-bounds filter offsets' '
 	grep "warning: ignoring out-of-range offset (4294967295) for changed-path filter at pos 3 of .git/objects/info/commit-graph" err
 '
 
+test_expect_success 'Bloom reader notices too-small index chunk' '
+	# replace the index with a single entry, making most
+	# lookups out-of-bounds
+	check_corrupt_graph BIDX clear 00000000 &&
+	echo "warning: commit-graph changed-path index chunk" \
+		"is too small" >expect.err &&
+	test_cmp expect.err err
+'
+
 test_done
