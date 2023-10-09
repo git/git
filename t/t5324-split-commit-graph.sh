@@ -317,7 +317,7 @@ test_expect_success 'verify --shallow does not check base contents' '
 		cd verify-shallow &&
 		git commit-graph verify &&
 		base_file=$graphdir/graph-$(head -n 1 $graphdir/commit-graph-chain).graph &&
-		corrupt_file "$base_file" 1000 "\01" &&
+		corrupt_file "$base_file" 1500 "\01" &&
 		git commit-graph verify --shallow &&
 		test_must_fail git commit-graph verify 2>test_err &&
 		grep -v "^+" test_err >err &&
@@ -391,10 +391,10 @@ test_expect_success 'verify across alternates' '
 		test_commit extra &&
 		git commit-graph write --reachable --split &&
 		tip_file=$graphdir/graph-$(tail -n 1 $graphdir/commit-graph-chain).graph &&
-		corrupt_file "$tip_file" 100 "\01" &&
+		corrupt_file "$tip_file" 1500 "\01" &&
 		test_must_fail git commit-graph verify --shallow 2>test_err &&
 		grep -v "^+" test_err >err &&
-		test_i18ngrep "commit-graph has incorrect fanout value" err
+		test_i18ngrep "incorrect checksum" err
 	)
 '
 

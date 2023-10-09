@@ -560,7 +560,7 @@ test_expect_success 'detect incorrect fanout' '
 
 test_expect_success 'detect incorrect fanout final value' '
 	corrupt_graph_and_verify $GRAPH_BYTE_FANOUT2 "\01" \
-		"fanout value"
+		"oid table and fanout disagree on size"
 '
 
 test_expect_success 'detect incorrect OID order' '
@@ -843,6 +843,29 @@ test_expect_success 'reader notices too-small oid fanout chunk' '
 	cat >expect.err <<-\EOF &&
 	error: commit-graph oid fanout chunk is wrong size
 	error: commit-graph is missing the OID Fanout chunk
+	EOF
+	test_cmp expect.err err
+'
+
+test_expect_success 'reader notices fanout/lookup table mismatch' '
+	check_corrupt_chunk OIDF 1020 "FFFFFFFF" &&
+	cat >expect.err <<-\EOF &&
+	error: commit-graph oid table and fanout disagree on size
+	EOF
+	test_cmp expect.err err
+'
+
+test_expect_success 'reader notices out-of-bounds fanout' '
+	# Rather than try to corrupt a specific hash, we will just
+	# wreck them all. But we cannot just set them all to 0xFFFFFFFF or
+	# similar, as they are used for hi/lo starts in a binary search (so if
+	# they are identical, that indicates that the search should abort
+	# immediately). Instead, we will give them high values that differ by
+	# 2^24, ensuring that any that are used would cause an out-of-bounds
+	# read.
+	check_corrupt_chunk OIDF 0 $(printf "%02x000000" $(test_seq 0 254)) &&
+	cat >expect.err <<-\EOF &&
+	error: commit-graph fanout values out of order
 	EOF
 	test_cmp expect.err err
 '

@@ -277,6 +277,8 @@ struct commit_graph *load_commit_graph_one_fd_st(struct repository *r,
 
 static int verify_commit_graph_lite(struct commit_graph *g)
 {
+	int i;
+
 	/*
 	 * Basic validation shared between parse_commit_graph()
 	 * which'll be called every time the graph is used, and the
@@ -299,6 +301,20 @@ static int verify_commit_graph_lite(struct commit_graph *g)
 	}
 	if (!g->chunk_commit_data) {
 		error("commit-graph is missing the Commit Data chunk");
+		return 1;
+	}
+
+	for (i = 0; i < 255; i++) {
+		uint32_t oid_fanout1 = ntohl(g->chunk_oid_fanout[i]);
+		uint32_t oid_fanout2 = ntohl(g->chunk_oid_fanout[i + 1]);
+
+		if (oid_fanout1 > oid_fanout2) {
+			error("commit-graph fanout values out of order");
+			return 1;
+		}
+	}
+	if (ntohl(g->chunk_oid_fanout[255]) != g->num_commits) {
+		error("commit-graph oid table and fanout disagree on size");
 		return 1;
 	}
 
