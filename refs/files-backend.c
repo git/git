@@ -246,10 +246,8 @@ static void loose_fill_ref_dir(struct ref_store *ref_store,
 	int dirnamelen = strlen(dirname);
 	struct strbuf refname;
 	struct strbuf path = STRBUF_INIT;
-	size_t path_baselen;
 
 	files_ref_path(refs, &path, dirname);
-	path_baselen = path.len;
 
 	d = opendir(path.buf);
 	if (!d) {
@@ -262,23 +260,22 @@ static void loose_fill_ref_dir(struct ref_store *ref_store,
 
 	while ((de = readdir(d)) != NULL) {
 		struct object_id oid;
-		struct stat st;
 		int flag;
+		unsigned char dtype;
 
 		if (de->d_name[0] == '.')
 			continue;
 		if (ends_with(de->d_name, ".lock"))
 			continue;
 		strbuf_addstr(&refname, de->d_name);
-		strbuf_addstr(&path, de->d_name);
-		if (stat(path.buf, &st) < 0) {
-			; /* silently ignore */
-		} else if (S_ISDIR(st.st_mode)) {
+
+		dtype = get_dtype(de, &path, 1);
+		if (dtype == DT_DIR) {
 			strbuf_addch(&refname, '/');
 			add_entry_to_dir(dir,
 					 create_dir_entry(dir->cache, refname.buf,
 							  refname.len));
-		} else {
+		} else if (dtype == DT_REG) {
 			if (!refs_resolve_ref_unsafe(&refs->base,
 						     refname.buf,
 						     RESOLVE_REF_READING,
@@ -308,7 +305,6 @@ static void loose_fill_ref_dir(struct ref_store *ref_store,
 					 create_ref_entry(refname.buf, &oid, flag));
 		}
 		strbuf_setlen(&refname, dirnamelen);
-		strbuf_setlen(&path, path_baselen);
 	}
 	strbuf_release(&refname);
 	strbuf_release(&path);
