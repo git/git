@@ -2,6 +2,7 @@
 
 test_description='commit graph'
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-chunk.sh
 
 GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS=0
 
@@ -819,6 +820,31 @@ test_expect_success 'overflow during generation version upgrade' '
 
 		git rev-list --all
 	)
+'
+
+corrupt_chunk () {
+	graph=full/.git/objects/info/commit-graph &&
+	test_when_finished "rm -rf $graph" &&
+	git -C full commit-graph write --reachable &&
+	corrupt_chunk_file $graph "$@"
+}
+
+check_corrupt_chunk () {
+	corrupt_chunk "$@" &&
+	git -C full -c core.commitGraph=false log >expect.out &&
+	git -C full -c core.commitGraph=true log >out 2>err &&
+	test_cmp expect.out out
+}
+
+test_expect_success 'reader notices too-small oid fanout chunk' '
+	# make it big enough that the graph file is plausible,
+	# otherwise we hit an earlier check
+	check_corrupt_chunk OIDF clear $(printf "000000%02x" $(test_seq 250)) &&
+	cat >expect.err <<-\EOF &&
+	error: commit-graph oid fanout chunk is wrong size
+	error: commit-graph is missing the OID Fanout chunk
+	EOF
+	test_cmp expect.err err
 '
 
 test_done
