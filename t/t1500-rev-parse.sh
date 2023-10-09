@@ -264,4 +264,27 @@ test_expect_success 'rev-parse --since= unsqueezed ordering' '
 	test_cmp expect actual
 '
 
+test_expect_success 'rev-parse --bisect includes bad, excludes good' '
+	test_commit_bulk 6 &&
+
+	git update-ref refs/bisect/bad-1 HEAD~1 &&
+	git update-ref refs/bisect/b HEAD~2 &&
+	git update-ref refs/bisect/bad-3 HEAD~3 &&
+	git update-ref refs/bisect/good-3 HEAD~3 &&
+	git update-ref refs/bisect/bad-4 HEAD~4 &&
+	git update-ref refs/bisect/go HEAD~4 &&
+
+	# Note: refs/bisect/b and refs/bisect/go should be ignored because they
+	# do not match the refs/bisect/bad or refs/bisect/good prefixes.
+	cat >expect <<-EOF &&
+	refs/bisect/bad-1
+	refs/bisect/bad-3
+	refs/bisect/bad-4
+	^refs/bisect/good-3
+	EOF
+
+	git rev-parse --symbolic-full-name --bisect >actual &&
+	test_cmp expect actual
+'
+
 test_done
