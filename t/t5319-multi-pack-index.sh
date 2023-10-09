@@ -1094,4 +1094,18 @@ test_expect_success 'reader notices too-small pack names chunk' '
 	test_cmp expect err
 '
 
+test_expect_success 'reader handles unaligned chunks' '
+	# A 9-byte PNAM means all of the subsequent chunks
+	# will no longer be 4-byte aligned, but it is still
+	# a valid one-pack chunk on its own (it is "foo.pack\0").
+	corrupt_chunk PNAM clear 666f6f2e7061636b00 &&
+	git -c core.multipackindex=false log >expect.out &&
+	git -c core.multipackindex=true log >out 2>err &&
+	test_cmp expect.out out &&
+	cat >expect.err <<-\EOF &&
+	error: chunk id 4f494446 not 4-byte aligned
+	EOF
+	test_cmp expect.err err
+'
+
 test_done

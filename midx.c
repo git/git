@@ -154,7 +154,8 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 	cf = init_chunkfile(NULL);
 
 	if (read_table_of_contents(cf, m->data, midx_size,
-				   MIDX_HEADER_SIZE, m->num_chunks))
+				   MIDX_HEADER_SIZE, m->num_chunks,
+				   MIDX_CHUNK_ALIGNMENT))
 		goto cleanup_fail;
 
 	if (pair_chunk(cf, MIDX_CHUNKID_PACKNAMES, &m->chunk_pack_names, &m->chunk_pack_names_len))

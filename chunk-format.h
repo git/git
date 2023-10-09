@@ -36,7 +36,8 @@ int read_table_of_contents(struct chunkfile *cf,
 			   const unsigned char *mfile,
 			   size_t mfile_size,
 			   uint64_t toc_offset,
-			   int toc_length);
+			   int toc_length,
+			   unsigned expected_alignment);
 
 #define CHUNK_NOT_FOUND (-2)
 

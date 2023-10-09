@@ -102,7 +102,8 @@ int read_table_of_contents(struct chunkfile *cf,
 			   const unsigned char *mfile,
 			   size_t mfile_size,
 			   uint64_t toc_offset,
-			   int toc_length)
+			   int toc_length,
+			   unsigned expected_alignment)
 {
 	int i;
 	uint32_t chunk_id;
@@ -118,6 +119,11 @@ int read_table_of_contents(struct chunkfile *cf,
 
 		if (!chunk_id) {
 			error(_("terminating chunk id appears earlier than expected"));
+			return 1;
+		}
+		if (chunk_offset % expected_alignment != 0) {
+			error(_("chunk id %"PRIx32" not %d-byte aligned"),
+			      chunk_id, expected_alignment);
 			return 1;
 		}
 

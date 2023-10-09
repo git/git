@@ -417,7 +417,7 @@ struct commit_graph *parse_commit_graph(struct repo_settings *s,
 	cf = init_chunkfile(NULL);
 
 	if (read_table_of_contents(cf, graph->data, graph_size,
-				   GRAPH_HEADER_SIZE, graph->num_chunks))
+				   GRAPH_HEADER_SIZE, graph->num_chunks, 1))
 		goto free_and_return;
 
 	read_chunk(cf, GRAPH_CHUNKID_OIDFANOUT, graph_read_oid_fanout, graph);
