@@ -435,7 +435,8 @@ struct commit_graph *parse_commit_graph(struct repo_settings *s,
 	read_chunk(cf, GRAPH_CHUNKID_DATA, graph_read_commit_data, graph);
 	pair_chunk(cf, GRAPH_CHUNKID_EXTRAEDGES, &graph->chunk_extra_edges,
 		   &graph->chunk_extra_edges_size);
-	pair_chunk_unsafe(cf, GRAPH_CHUNKID_BASE, &graph->chunk_base_graphs);
+	pair_chunk(cf, GRAPH_CHUNKID_BASE, &graph->chunk_base_graphs,
+		   &graph->chunk_base_graphs_size);
 
 	if (s->commit_graph_generation_version >= 2) {
 		pair_chunk_unsafe(cf, GRAPH_CHUNKID_GENERATION_DATA,
@@ -543,6 +544,11 @@ static int add_graph_to_chain(struct commit_graph *g,
 
 	if (n && !g->chunk_base_graphs) {
 		warning(_("commit-graph has no base graphs chunk"));
+		return 0;
+	}
+
+	if (g->chunk_base_graphs_size / g->hash_len < n) {
+		warning(_("commit-graph base graphs chunk is too small"));
 		return 0;
 	}
 
