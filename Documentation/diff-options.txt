@@ -50,6 +50,11 @@ ifdef::git-log[]
 	Produce dense combined diff output for merge commits.
 	Shortcut for '--diff-merges=dense-combined -p'.
 
+--dd::
+	Produce diff with respect to first parent for both merge and
+	regular commits.
+	Shortcut for '--diff-merges=first-parent -p'.
+
 --remerge-diff::
 	Produce remerge-diff output for merge commits.
 	Shortcut for '--diff-merges=remerge -p'.
