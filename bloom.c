@@ -75,6 +75,16 @@ static int load_bloom_filter_from_graph(struct commit_graph *g,
 	    check_bloom_offset(g, lex_pos - 1, start_index) < 0)
 		return 0;
 
+	if (end_index < start_index) {
+		warning("ignoring decreasing changed-path index offsets"
+			" (%"PRIuMAX" > %"PRIuMAX") for positions"
+			" %"PRIuMAX" and %"PRIuMAX" of %s",
+			(uintmax_t)start_index, (uintmax_t)end_index,
+			(uintmax_t)(lex_pos-1), (uintmax_t)lex_pos,
+			g->filename);
+		return 0;
+	}
+
 	filter->len = end_index - start_index;
 	filter->data = (unsigned char *)(g->chunk_bloom_data +
 					sizeof(unsigned char) * start_index +

@@ -441,4 +441,17 @@ test_expect_success 'Bloom reader notices too-small index chunk' '
 	test_cmp expect.err err
 '
 
+test_expect_success 'Bloom reader notices out-of-order index offsets' '
+	# we do not know any real offsets, but we can pick
+	# something plausible; we should not get to the point of
+	# actually reading from the bogus offsets anyway.
+	corrupt_graph BIDX 4 0000000c00000005 &&
+	echo "warning: ignoring decreasing changed-path index offsets" \
+		"(12 > 5) for positions 1 and 2 of .git/objects/info/commit-graph" >expect.err &&
+	git -c core.commitGraph=false log -- A/B/file2 >expect.out &&
+	git -c core.commitGraph=true log -- A/B/file2 >out 2>err &&
+	test_cmp expect.out out &&
+	test_cmp expect.err err
+'
+
 test_done
