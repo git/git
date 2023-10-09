@@ -887,4 +887,12 @@ test_expect_success 'reader notices out-of-bounds extra edge' '
 	test_cmp expect.err err
 '
 
+test_expect_success 'reader notices too-small generations chunk' '
+	check_corrupt_chunk GDA2 clear 00000000 &&
+	cat >expect.err <<-\EOF &&
+	error: commit-graph generations chunk is wrong size
+	EOF
+	test_cmp expect.err err
+'
+
 test_done

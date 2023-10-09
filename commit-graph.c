@@ -350,6 +350,16 @@ static int graph_read_commit_data(const unsigned char *chunk_start,
 	return 0;
 }
 
+static int graph_read_generation_data(const unsigned char *chunk_start,
+				      size_t chunk_size, void *data)
+{
+	struct commit_graph *g = data;
+	if (chunk_size != g->num_commits * sizeof(uint32_t))
+		return error("commit-graph generations chunk is wrong size");
+	g->chunk_generation_data = chunk_start;
+	return 0;
+}
+
 static int graph_read_bloom_data(const unsigned char *chunk_start,
 				  size_t chunk_size, void *data)
 {
@@ -439,8 +449,8 @@ struct commit_graph *parse_commit_graph(struct repo_settings *s,
 		   &graph->chunk_base_graphs_size);
 
 	if (s->commit_graph_generation_version >= 2) {
-		pair_chunk_unsafe(cf, GRAPH_CHUNKID_GENERATION_DATA,
-			&graph->chunk_generation_data);
+		read_chunk(cf, GRAPH_CHUNKID_GENERATION_DATA,
+			   graph_read_generation_data, graph);
 		pair_chunk_unsafe(cf, GRAPH_CHUNKID_GENERATION_DATA_OVERFLOW,
 			&graph->chunk_generation_data_overflow);
 
