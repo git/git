@@ -343,6 +343,17 @@ int verify_pack_revindex(struct packed_git *p)
 	return res;
 }
 
+static int can_use_midx_ridx_chunk(struct multi_pack_index *m)
+{
+	if (!m->chunk_revindex)
+		return 0;
+	if (m->chunk_revindex_len != st_mult(sizeof(uint32_t), m->num_objects)) {
+		error(_("multi-pack-index reverse-index chunk is the wrong size"));
+		return 0;
+	}
+	return 1;
+}
+
 int load_midx_revindex(struct multi_pack_index *m)
 {
 	struct strbuf revindex_name = STRBUF_INIT;
@@ -351,7 +362,7 @@ int load_midx_revindex(struct multi_pack_index *m)
 	if (m->revindex_data)
 		return 0;
 
-	if (m->chunk_revindex) {
+	if (can_use_midx_ridx_chunk(m)) {
 		/*
 		 * If the MIDX `m` has a `RIDX` chunk, then use its contents for
 		 * the reverse index instead of trying to load a separate `.rev`

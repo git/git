@@ -1138,4 +1138,21 @@ test_expect_success 'reader bounds-checks large offset table' '
 	)
 '
 
+test_expect_success 'reader notices too-small revindex chunk' '
+	# We only get a revindex with bitmaps (and likewise only
+	# load it when they are asked for).
+	test_config repack.writeBitmaps true &&
+	corrupt_chunk RIDX clear 00000000 &&
+	git -c core.multipackIndex=false rev-list \
+		--all --use-bitmap-index >expect.out &&
+	git -c core.multipackIndex=true rev-list \
+		--all --use-bitmap-index >out 2>err &&
+	test_cmp expect.out out &&
+	cat >expect.err <<-\EOF &&
+	error: multi-pack-index reverse-index chunk is the wrong size
+	warning: multi-pack bitmap is missing required reverse index
+	EOF
+	test_cmp expect.err err
+'
+
 test_done

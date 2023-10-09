@@ -39,6 +39,7 @@ struct multi_pack_index {
 	const unsigned char *chunk_large_offsets;
 	size_t chunk_large_offsets_len;
 	const unsigned char *chunk_revindex;
+	size_t chunk_revindex_len;
 
 	const char **pack_names;
 	struct packed_git **packs;

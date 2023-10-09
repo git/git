@@ -184,7 +184,8 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 		   &m->chunk_large_offsets_len);
 
 	if (git_env_bool("GIT_TEST_MIDX_READ_RIDX", 1))
-		pair_chunk_unsafe(cf, MIDX_CHUNKID_REVINDEX, &m->chunk_revindex);
+		pair_chunk(cf, MIDX_CHUNKID_REVINDEX, &m->chunk_revindex,
+			   &m->chunk_revindex_len);
 
 	CALLOC_ARRAY(m->pack_names, m->num_packs);
 	CALLOC_ARRAY(m->packs, m->num_packs);
