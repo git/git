@@ -1083,4 +1083,15 @@ test_expect_success 'reader notices too-small oid lookup chunk' '
 	test_cmp expect err
 '
 
+test_expect_success 'reader notices too-small pack names chunk' '
+	# There is no NUL to terminate the name here, so the
+	# chunk is too short.
+	corrupt_chunk PNAM clear 70656666 &&
+	test_must_fail git log 2>err &&
+	cat >expect <<-\EOF &&
+	fatal: multi-pack-index pack-name chunk is too short
+	EOF
+	test_cmp expect err
+'
+
 test_done
