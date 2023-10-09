@@ -394,17 +394,17 @@ struct commit_graph *parse_commit_graph(struct repo_settings *s,
 				   GRAPH_HEADER_SIZE, graph->num_chunks))
 		goto free_and_return;
 
-	pair_chunk(cf, GRAPH_CHUNKID_OIDFANOUT,
+	pair_chunk_unsafe(cf, GRAPH_CHUNKID_OIDFANOUT,
 		   (const unsigned char **)&graph->chunk_oid_fanout);
 	read_chunk(cf, GRAPH_CHUNKID_OIDLOOKUP, graph_read_oid_lookup, graph);
-	pair_chunk(cf, GRAPH_CHUNKID_DATA, &graph->chunk_commit_data);
-	pair_chunk(cf, GRAPH_CHUNKID_EXTRAEDGES, &graph->chunk_extra_edges);
-	pair_chunk(cf, GRAPH_CHUNKID_BASE, &graph->chunk_base_graphs);
+	pair_chunk_unsafe(cf, GRAPH_CHUNKID_DATA, &graph->chunk_commit_data);
+	pair_chunk_unsafe(cf, GRAPH_CHUNKID_EXTRAEDGES, &graph->chunk_extra_edges);
+	pair_chunk_unsafe(cf, GRAPH_CHUNKID_BASE, &graph->chunk_base_graphs);
 
 	if (s->commit_graph_generation_version >= 2) {
-		pair_chunk(cf, GRAPH_CHUNKID_GENERATION_DATA,
+		pair_chunk_unsafe(cf, GRAPH_CHUNKID_GENERATION_DATA,
 			&graph->chunk_generation_data);
-		pair_chunk(cf, GRAPH_CHUNKID_GENERATION_DATA_OVERFLOW,
+		pair_chunk_unsafe(cf, GRAPH_CHUNKID_GENERATION_DATA_OVERFLOW,
 			&graph->chunk_generation_data_overflow);
 
 		if (graph->chunk_generation_data)
@@ -412,7 +412,7 @@ struct commit_graph *parse_commit_graph(struct repo_settings *s,
 	}
 
 	if (s->commit_graph_read_changed_paths) {
-		pair_chunk(cf, GRAPH_CHUNKID_BLOOMINDEXES,
+		pair_chunk_unsafe(cf, GRAPH_CHUNKID_BLOOMINDEXES,
 			   &graph->chunk_bloom_indexes);
 		read_chunk(cf, GRAPH_CHUNKID_BLOOMDATA,
 			   graph_read_bloom_data, graph);

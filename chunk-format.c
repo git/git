@@ -154,20 +154,36 @@ int read_table_of_contents(struct chunkfile *cf,
 	return 0;
 }
 
+struct pair_chunk_data {
+	const unsigned char **p;
+	size_t *size;
+};
+
 static int pair_chunk_fn(const unsigned char *chunk_start,
 			 size_t chunk_size,
 			 void *data)
 {
-	const unsigned char **p = data;
-	*p = chunk_start;
+	struct pair_chunk_data *pcd = data;
+	*pcd->p = chunk_start;
+	*pcd->size = chunk_size;
 	return 0;
 }
 
 int pair_chunk(struct chunkfile *cf,
 	       uint32_t chunk_id,
-	       const unsigned char **p)
+	       const unsigned char **p,
+	       size_t *size)
 {
-	return read_chunk(cf, chunk_id, pair_chunk_fn, p);
+	struct pair_chunk_data pcd = { .p = p, .size = size };
+	return read_chunk(cf, chunk_id, pair_chunk_fn, &pcd);
+}
+
+int pair_chunk_unsafe(struct chunkfile *cf,
+		      uint32_t chunk_id,
+		      const unsigned char **p)
+{
+	size_t dummy;
+	return pair_chunk(cf, chunk_id, p, &dummy);
 }
 
 int read_chunk(struct chunkfile *cf,
