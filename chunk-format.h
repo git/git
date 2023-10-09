@@ -54,19 +54,6 @@ int pair_chunk(struct chunkfile *cf,
 	       const unsigned char **p,
 	       size_t *size);
 
-/*
- * Unsafe version of pair_chunk; it does not return the size,
- * meaning that the caller cannot possibly be careful about
- * reading out of bounds from the mapped memory.
- *
- * No new callers should use this function, and old callers should
- * be audited and migrated over to using the regular pair_chunk()
- * function.
- */
-int pair_chunk_unsafe(struct chunkfile *cf,
-		      uint32_t chunk_id,
-		      const unsigned char **p);
-
 typedef int (*chunk_read_fn)(const unsigned char *chunk_start,
 			     size_t chunk_size, void *data);
 /*

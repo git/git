@@ -184,14 +184,6 @@ int pair_chunk(struct chunkfile *cf,
 	return read_chunk(cf, chunk_id, pair_chunk_fn, &pcd);
 }
 
-int pair_chunk_unsafe(struct chunkfile *cf,
-		      uint32_t chunk_id,
-		      const unsigned char **p)
-{
-	size_t dummy;
-	return pair_chunk(cf, chunk_id, p, &dummy);
-}
-
 int read_chunk(struct chunkfile *cf,
 	       uint32_t chunk_id,
 	       chunk_read_fn fn,
