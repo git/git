@@ -71,6 +71,20 @@ static int midx_read_oid_fanout(const unsigned char *chunk_start,
 		error(_("multi-pack-index OID fanout is of the wrong size"));
 		return 1;
 	}
+	m->num_objects = ntohl(m->chunk_oid_fanout[255]);
+	return 0;
+}
+
+static int midx_read_oid_lookup(const unsigned char *chunk_start,
+				size_t chunk_size, void *data)
+{
+	struct multi_pack_index *m = data;
+	m->chunk_oid_lookup = chunk_start;
+
+	if (chunk_size != st_mult(m->hash_len, m->num_objects)) {
+		error(_("multi-pack-index OID lookup chunk is the wrong size"));
+		return 1;
+	}
 	return 0;
 }
 
@@ -147,7 +161,7 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 		die(_("multi-pack-index required pack-name chunk missing or corrupted"));
 	if (read_chunk(cf, MIDX_CHUNKID_OIDFANOUT, midx_read_oid_fanout, m))
 		die(_("multi-pack-index required OID fanout chunk missing or corrupted"));
-	if (pair_chunk_unsafe(cf, MIDX_CHUNKID_OIDLOOKUP, &m->chunk_oid_lookup))
+	if (read_chunk(cf, MIDX_CHUNKID_OIDLOOKUP, midx_read_oid_lookup, m))
 		die(_("multi-pack-index required OID lookup chunk missing or corrupted"));
 	if (pair_chunk_unsafe(cf, MIDX_CHUNKID_OBJECTOFFSETS, &m->chunk_object_offsets))
 		die(_("multi-pack-index required object offsets chunk missing or corrupted"));
@@ -156,8 +170,6 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 
 	if (git_env_bool("GIT_TEST_MIDX_READ_RIDX", 1))
 		pair_chunk_unsafe(cf, MIDX_CHUNKID_REVINDEX, &m->chunk_revindex);
-
-	m->num_objects = ntohl(m->chunk_oid_fanout[255]);
 
 	CALLOC_ARRAY(m->pack_names, m->num_packs);
 	CALLOC_ARRAY(m->packs, m->num_packs);
