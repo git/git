@@ -83,6 +83,9 @@ UI, Workflows & Features
  * "git for-each-ref" and friends learned to apply mailmap to
    authorname and other fields.
 
+ * "git repack" machinery learns to pay attention to the "--filter="
+   option.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -110,6 +113,10 @@ Performance, Internal Implementation, Development Support etc.
 
  * The code to keep track of existing packs in the repository while
    repacking has been refactored.
+
+ * The "streaming" interface used for bulk-checkin codepath has been
+   narrowed to take only blob objects for now, with no real loss of
+   functionality.
 
 
 Fixes since v2.42
