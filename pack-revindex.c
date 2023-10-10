@@ -6,7 +6,7 @@
 #include "packfile.h"
 #include "strbuf.h"
 #include "trace2.h"
-#include "config.h"
+#include "parse.h"
 #include "midx.h"
 #include "csum-file.h"
 

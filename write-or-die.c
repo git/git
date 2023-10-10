@@ -1,5 +1,5 @@
 #include "git-compat-util.h"
-#include "config.h"
+#include "parse.h"
 #include "run-command.h"
 #include "write-or-die.h"
 

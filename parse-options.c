@@ -1,11 +1,12 @@
 #include "git-compat-util.h"
 #include "parse-options.h"
 #include "abspath.h"
-#include "config.h"
+#include "parse.h"
 #include "commit.h"
 #include "color.h"
 #include "gettext.h"
 #include "strbuf.h"
+#include "string-list.h"
 #include "utf8.h"
 
 static int disallow_abbreviated_options;

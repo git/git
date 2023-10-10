@@ -2,7 +2,7 @@
 #include "advice.h"
 #include "strvec.h"
 #include "repository.h"
-#include "config.h"
+#include "parse.h"
 #include "dir.h"
 #include "environment.h"
 #include "gettext.h"

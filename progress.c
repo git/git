@@ -17,7 +17,7 @@
 #include "trace.h"
 #include "trace2.h"
 #include "utf8.h"
-#include "config.h"
+#include "parse.h"
 
 #define TP_IDX_MAX      8
 

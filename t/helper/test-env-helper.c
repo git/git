@@ -1,5 +1,5 @@
 #include "test-tool.h"
-#include "config.h"
+#include "parse.h"
 #include "parse-options.h"
 
 static char const * const env__helper_usage[] = {

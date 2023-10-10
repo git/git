@@ -1,5 +1,5 @@
 #include "git-compat-util.h"
-#include "config.h"
+#include "parse.h"
 #include "environment.h"
 #include "run-command.h"
 #include "strbuf.h"
