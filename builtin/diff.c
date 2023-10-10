@@ -474,9 +474,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	repo_init_revisions(the_repository, &rev, prefix);
 
 	/* Set up defaults that will apply to both no-index and regular diffs. */
-	rev.diffopt.stat_width = -1;
-	rev.diffopt.stat_name_width = -1;
-	rev.diffopt.stat_graph_width = -1;
+	init_diffstat_widths(&rev.diffopt);
 	rev.diffopt.flags.allow_external = 1;
 	rev.diffopt.flags.allow_textconv = 1;
 
