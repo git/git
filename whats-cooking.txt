@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2023, #03; Fri, 6)
-X-master-at: 3a06386e314565108ad56a9bdb8f7b80ac52fb69
-X-next-at: 5fc05c94dcc1fa9e0ac97428e887ec52d78ec652
+Subject: What's cooking in git.git (Oct 2023, #04; Tue, 10)
+X-master-at: aab89be2eb6ca51eefeb8c8066f673f447058856
+X-next-at: 989b7e0362472e4b4bd6a089ca4d4971fbf74bb7
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Oct 2023, #03; Fri, 6)
+What's cooking in git.git (Oct 2023, #04; Tue, 10)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,98 +46,202 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* cc/repack-sift-filtered-objects-to-separate-pack (2023-10-02) 9 commits
+  (merged to 'next' on 2023-10-03 at e5a4824609)
+ + gc: add `gc.repackFilterTo` config option
+ + repack: implement `--filter-to` for storing filtered out objects
+ + gc: add `gc.repackFilter` config option
+ + repack: add `--filter=<filter-spec>` option
+ + pack-bitmap-write: rebuild using new bitmap when remapping
+ + repack: refactor finding pack prefix
+ + repack: refactor finishing pack-objects command
+ + t/helper: add 'find-pack' test-tool
+ + pack-objects: allow `--filter` without `--stdout`
+
+ "git repack" machinery learns to pay attention to the "--filter="
+ option.
+ cf. <ZRsknb4NxNHTR21E@nand.local>
+ source: <20231002165504.1325153-1-christian.couder@gmail.com>
+
+
+* cw/prelim-cleanup (2023-09-29) 4 commits
+  (merged to 'next' on 2023-10-03 at 5985929612)
+ + parse: separate out parsing functions from config.h
+ + config: correct bad boolean env value error message
+ + wrapper: reduce scope of remove_or_warn()
+ + hex-ll: separate out non-hash-algo functions
+
+ Shuffle some bits across headers and sources to prepare for
+ libification effort.
+ source: <cover.1696021277.git.jonathantanmy@google.com>
+
+
+* ds/init-diffstat-width (2023-09-29) 1 commit
+  (merged to 'next' on 2023-10-03 at 18383ac895)
+ + diff --stat: set the width defaults in a helper function
+
+ Code clean-up.
+ source: <d45d1dac1a20699e370905b88b6fd0ec296751e7.1695441501.git.dsimic@manjaro.org>
+
+
+* eb/limit-bulk-checkin-to-blobs (2023-09-26) 1 commit
+  (merged to 'next' on 2023-10-02 at 89c9c95966)
+ + bulk-checkin: only support blobs in index_bulk_checkin
+
+ The "streaming" interface used for bulk-checkin codepath has been
+ narrowed to take only blob objects for now, with no real loss of
+ functionality.
+ source: <87msx99b9o.fsf_-_@gmail.froward.int.ebiederm.org>
+
+--------------------------------------------------
 [New Topics]
 
-* jc/merge-ort-attr-index-fix (2023-10-05) 1 commit
- - merge-ort: initialize repo in index state
+* ak/pretty-decorate-more-fix (2023-10-09) 1 commit
+ - pretty: fix ref filtering for %(decorate) formats
 
- Fix "git merge-tree" to stop segfaulting when the --attr-source
- option is used.
+ Unlike "git log --pretty=%D", "git log --pretty="%(decorate)" did
+ not auto-initialize the decoration subsystem, which has been
+ corrected.
 
- Waiting for review response.
- source: <pull.1583.git.git.1696519349407.gitgitgadget@gmail.com>
-
-
-* jk/decoration-and-other-leak-fixes (2023-10-05) 3 commits
-  (merged to 'next' on 2023-10-06 at 5fc05c94dc)
- + daemon: free listen_addr before returning
- + revision: clear decoration structs during release_revisions()
- + decorate: add clear_decoration() function
-
- Leakfix.
-
- Will merge to 'master'.
- source: <20231005212802.GA982892@coredump.intra.peff.net>
+ Will merge to 'next'?
+ source: <20231008202307.1568477-1-andy.koppe@gmail.com>
 
 
-* sn/typo-grammo-phraso-fixes (2023-10-05) 5 commits
- - t/README: fix multi-prerequisite example
- - doc/gitk: s/sticked/stuck/
- - git-jump: admit to passing merge mode args to ls-files
- - doc/diff-options: improve wording of the log.diffMerges mention
- - doc: fix some typos, grammar and wording issues
+* en/docfixes (2023-10-09) 25 commits
+ - documentation: add missing parenthesis
+ - documentation: add missing quotes
+ - documentation: add missing fullstops
+ - documentation: add some commas where they are helpful
+ - documentation: fix whitespace issues
+ - documentation: fix capitalization
+ - documentation: fix punctuation
+ - documentation: use clearer prepositions
+ - documentation: add missing hyphens
+ - documentation: remove unnecessary hyphens
+ - documentation: add missing article
+ - documentation: fix choice of article
+ - documentation: whitespace is already generally plural
+ - documentation: fix singular vs. plural
+ - documentation: fix verb vs. noun
+ - documentation: fix adjective vs. noun
+ - documentation: fix verb tense
+ - documentation: employ consistent verb tense for a list
+ - documentation: fix subject/verb agreement
+ - documentation: remove extraneous words
+ - documentation: add missing words
+ - documentation: fix apostrophe usage
+ - documentation: fix typos
+ - documentation: fix small error
+ - documentation: wording improvements
 
- Many typos, ungrammatical sentences and wrong phrasing have been
- fixed.
+ Documentation typo and grammo fixes.
 
  Needs review.
- source: <20231003082107.3002173-1-stepnem@smrk.net>
+ source: <pull.1595.git.1696747527.gitgitgadget@gmail.com>
 
 
-* so/diff-merges-dd (2023-10-05) 3 commits
- - completion: complete '--dd'
- - diff-merges: introduce '--dd' option
- - diff-merges: improve --diff-merges documentation
+* kn/rev-list-missing-fix (2023-10-09) 3 commits
+ - rev-list: add commit object support in `--missing` option
+ - rev-list: move `show_commit()` to the bottom
+ - revision: rename bit to `do_not_die_on_missing_objects`
 
- "git log" and friends learned "--dd" that is a short-hand for
- "--diff-merges=first-parent -p".
+ "git rev-list --missing" did not work for missing commit objects,
+ which has been corrected.
 
- Expecting a reroll.
- cf. <871qe7r3rk.fsf@osv.gnss.ru>
- source: <20231004214558.210339-1-sorganov@gmail.com>
-
-
-* vd/loose-ref-iteration-optimization (2023-10-06) 4 commits
- - files-backend.c: avoid stat in 'loose_fill_ref_dir'
- - dir.[ch]: add 'follow_symlink' arg to 'get_dtype'
- - dir.[ch]: expose 'get_dtype'
- - ref-cache.c: fix prefix matching in ref iteration
-
- The code to iterate over loose references have been optimized to
- reduce the number of lstat() system calls.
- source: <pull.1594.git.1696615769.gitgitgadget@gmail.com>
+ Needs review.
+ source: <20231009105528.17777-1-karthik.188@gmail.com>
 
 
-* jc/update-list-references-to-lore (2023-10-06) 1 commit
- - doc: update list archive reference to use lore.kernel.org
+* sn/cat-file-doc-update (2023-10-09) 1 commit
+  (merged to 'next' on 2023-10-10 at 6719ba7bd4)
+ + doc/cat-file: make synopsis and description less confusing
 
- source: <xmqq7cnz741s.fsf@gitster.g>
+ "git cat-file" documentation updates.
+
+ Will merge to 'master'.
+ source: <20231009175604.2361700-1-stepnem@smrk.net>
+
+
+* xz/commit-title-soft-limit-doc (2023-10-09) 1 commit
+  (merged to 'next' on 2023-10-10 at 0bf3d9ed51)
+ + doc: correct the 50 characters soft limit (+)
+
+ Doc update.
+
+ Will merge to 'master'.
+ source: <pull.1585.v2.git.git.1696778367151.gitgitgadget@gmail.com>
+
+
+* jk/chunk-bounds (2023-10-09) 20 commits
+  (merged to 'next' on 2023-10-10 at 21139603ce)
+ + chunk-format: drop pair_chunk_unsafe()
+ + commit-graph: detect out-of-order BIDX offsets
+ + commit-graph: check bounds when accessing BIDX chunk
+ + commit-graph: check bounds when accessing BDAT chunk
+ + commit-graph: bounds-check generation overflow chunk
+ + commit-graph: check size of generations chunk
+ + commit-graph: bounds-check base graphs chunk
+ + commit-graph: detect out-of-bounds extra-edges pointers
+ + commit-graph: check size of commit data chunk
+ + midx: check size of revindex chunk
+ + midx: bounds-check large offset chunk
+ + midx: check size of object offset chunk
+ + midx: enforce chunk alignment on reading
+ + midx: check size of pack names chunk
+ + commit-graph: check consistency of fanout table
+ + midx: check size of oid lookup chunk
+ + commit-graph: check size of oid fanout chunk
+ + midx: stop ignoring malformed oid fanout chunk
+ + t: add library for munging chunk-format files
+ + chunk-format: note that pair_chunk() is unsafe
+
+ The codepaths that read "chunk" formatted files have been corrected
+ to pay attention to the chunk size and notice broken files.
+
+ Will merge to 'master'.
+ source: <20231009205544.GA3281950@coredump.intra.peff.net>
+
+
+* ps/rewritten-is-per-worktree-doc (2023-10-10) 1 commit
+ - doc/git-worktree: mention "refs/rewritten" as per-worktree refs
+
+ Doc update.
+
+ Will merge to 'next'.
+ source: <985ac850eb6e60ae76601acc8bfbcd56f99348b4.1696935657.git.ps@pks.im>
 
 --------------------------------------------------
 [Stalled]
 
-* cc/git-replay (2023-09-07) 15 commits
- - replay: stop assuming replayed branches do not diverge
- - replay: add --contained to rebase contained branches
- - replay: add --advance or 'cherry-pick' mode
- - replay: disallow revision specific options and pathspecs
- - replay: use standard revision ranges
- - replay: make it a minimal server side command
- - replay: remove HEAD related sanity check
- - replay: remove progress and info output
- - replay: add an important FIXME comment about gpg signing
- - replay: don't simplify history
- - replay: introduce pick_regular_commit()
- - replay: die() instead of failing assert()
- - replay: start using parse_options API
- - replay: introduce new builtin
- - t6429: remove switching aspects of fast-rebase
+* tb/path-filter-fix (2023-08-30) 15 commits
+ - bloom: introduce `deinit_bloom_filters()`
+ - commit-graph: reuse existing Bloom filters where possible
+ - object.h: fix mis-aligned flag bits table
+ - commit-graph: drop unnecessary `graph_read_bloom_data_context`
+ - commit-graph.c: unconditionally load Bloom filters
+ - t/t4216-log-bloom.sh: harden `test_bloom_filters_not_used()`
+ - bloom: prepare to discard incompatible Bloom filters
+ - bloom: annotate filters with hash version
+ - commit-graph: new filter ver. that fixes murmur3
+ - repo-settings: introduce commitgraph.changedPathsVersion
+ - t4216: test changed path filters with high bit paths
+ - t/helper/test-read-graph: implement `bloom-filters` mode
+ - bloom.h: make `load_bloom_filter_from_graph()` public
+ - t/helper/test-read-graph.c: extract `dump_graph_info()`
+ - gitformat-commit-graph: describe version 2 of BDAT
 
- Waiting for review response.
- cf. <52277471-4ddd-b2e0-62ca-c2a5b59ae418@gmx.de>
- cf. <58daa706-7efb-51dd-9061-202ef650b96a@gmx.de>
- cf. <f0e75d47-c277-9fbb-7bcd-53e4e5686f3c@gmx.de>
- source: <20230907092521.733746-1-christian.couder@gmail.com>
+ The Bloom filter used for path limited history traversal was broken
+ on systems whose "char" is unsigned; update the implementation and
+ bump the format version to 2.
+
+ Reroll exists, not picked up yet.
+ cf. <20230830200218.GA5147@szeder.dev>
+ cf. <20230901205616.3572722-1-jonathantanmy@google.com>
+ cf. <20230924195900.GA1156862@szeder.dev>
+ cf. <20231008143523.GA18858@szeder.dev>
+ source: <cover.1693413637.git.jonathantanmy@google.com>
 
 
 * pw/rebase-sigint (2023-09-07) 1 commit
@@ -182,6 +286,98 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* jc/merge-ort-attr-index-fix (2023-10-09) 1 commit
+  (merged to 'next' on 2023-10-10 at b139b87502)
+ + merge-ort: initialize repo in index state
+
+ Fix "git merge-tree" to stop segfaulting when the --attr-source
+ option is used.
+
+ Will merge to 'master'.
+ source: <pull.1583.v3.git.git.1696857660374.gitgitgadget@gmail.com>
+
+
+* jk/decoration-and-other-leak-fixes (2023-10-05) 3 commits
+  (merged to 'next' on 2023-10-06 at 5fc05c94dc)
+ + daemon: free listen_addr before returning
+ + revision: clear decoration structs during release_revisions()
+ + decorate: add clear_decoration() function
+
+ Leakfix.
+
+ Will merge to 'master'.
+ source: <20231005212802.GA982892@coredump.intra.peff.net>
+
+
+* sn/typo-grammo-phraso-fixes (2023-10-05) 5 commits
+ - t/README: fix multi-prerequisite example
+ - doc/gitk: s/sticked/stuck/
+ - git-jump: admit to passing merge mode args to ls-files
+ - doc/diff-options: improve wording of the log.diffMerges mention
+ - doc: fix some typos, grammar and wording issues
+
+ Many typos, ungrammatical sentences and wrong phrasing have been
+ fixed.
+
+ Needs review.
+ source: <20231003082107.3002173-1-stepnem@smrk.net>
+
+
+* so/diff-merges-dd (2023-10-09) 3 commits
+ - completion: complete '--dd'
+ - diff-merges: introduce '--dd' option
+ - diff-merges: improve --diff-merges documentation
+
+ "git log" and friends learned "--dd" that is a short-hand for
+ "--diff-merges=first-parent -p".
+
+ Will merge to 'next'?
+ source: <20231009160535.236523-1-sorganov@gmail.com>
+
+
+* vd/loose-ref-iteration-optimization (2023-10-09) 4 commits
+ - files-backend.c: avoid stat in 'loose_fill_ref_dir'
+ - dir.[ch]: add 'follow_symlink' arg to 'get_dtype'
+ - dir.[ch]: expose 'get_dtype'
+ - ref-cache.c: fix prefix matching in ref iteration
+
+ The code to iterate over loose references have been optimized to
+ reduce the number of lstat() system calls.
+
+ Will merge to 'next'?
+ source: <pull.1594.v2.git.1696888736.gitgitgadget@gmail.com>
+
+
+* jc/update-list-references-to-lore (2023-10-06) 1 commit
+ - doc: update list archive reference to use lore.kernel.org
+
+ Doc update.
+
+ Needs review.
+ source: <xmqq7cnz741s.fsf@gitster.g>
+
+
+* cc/git-replay (2023-10-10) 14 commits
+ - replay: stop assuming replayed branches do not diverge
+ - replay: add --contained to rebase contained branches
+ - replay: add --advance or 'cherry-pick' mode
+ - replay: use standard revision ranges
+ - replay: make it a minimal server side command
+ - replay: remove HEAD related sanity check
+ - replay: remove progress and info output
+ - replay: add an important FIXME comment about gpg signing
+ - replay: change rev walking options
+ - replay: introduce pick_regular_commit()
+ - replay: die() instead of failing assert()
+ - replay: start using parse_options API
+ - replay: introduce new builtin
+ - t6429: remove switching aspects of fast-rebase
+
+ Introduce "git replay", a tool meant on the server side without
+ working tree to recreate a history.
+ source: <20231010123847.2777056-1-christian.couder@gmail.com>
+
+
 * jk/commit-graph-leak-fixes (2023-10-03) 10 commits
   (merged to 'next' on 2023-10-06 at 5d202ef8b9)
  + commit-graph: clear oidset after finishing write
@@ -221,7 +417,9 @@ Release tarballs are available at:
  source: <ebcaa9e1-d306-4c93-adec-3f35d7040531@web.de>
 
 
-* tb/repack-max-cruft-size (2023-10-05) 4 commits
+* tb/repack-max-cruft-size (2023-10-09) 5 commits
+  (merged to 'next' on 2023-10-09 at 38f039e880)
+ + repack: free existing_cruft array after use
   (merged to 'next' on 2023-10-06 at b3ca6df3b9)
  + builtin/repack.c: avoid making cruft packs preferred
  + builtin/repack.c: implement support for `--max-cruft-size`
@@ -233,6 +431,7 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <cover.1696293862.git.me@ttaylorr.com>
+ source: <20231007172031.GA1524950@coredump.intra.peff.net>
  source: <035393935108d02aaf8927189b05102f4f74f340.1696370003.git.me@ttaylorr.com>
 
 
@@ -252,7 +451,7 @@ Release tarballs are available at:
  The attribute subsystem learned to honor `attr.tree` configuration
  that specifies which tree to read the .gitattributes files from.
 
- Needs review.
+ Reroll exists, but not picked up (a review sent).
  source: <pull.1577.v2.git.git.1696443502.gitgitgadget@gmail.com>
 
 
@@ -278,30 +477,6 @@ Release tarballs are available at:
  source: <0a0a157f88321d25fdb0be771a454b3410a449f3.camel@archlinux.org>
 
 
-* cw/prelim-cleanup (2023-09-29) 4 commits
-  (merged to 'next' on 2023-10-03 at 5985929612)
- + parse: separate out parsing functions from config.h
- + config: correct bad boolean env value error message
- + wrapper: reduce scope of remove_or_warn()
- + hex-ll: separate out non-hash-algo functions
-
- Shuffle some bits across headers and sources to prepare for
- libification effort.
-
- Will merge to 'master'.
- source: <cover.1696021277.git.jonathantanmy@google.com>
-
-
-* ds/init-diffstat-width (2023-09-29) 1 commit
-  (merged to 'next' on 2023-10-03 at 18383ac895)
- + diff --stat: set the width defaults in a helper function
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <d45d1dac1a20699e370905b88b6fd0ec296751e7.1695441501.git.dsimic@manjaro.org>
-
-
 * ar/diff-index-merge-base-fix (2023-10-02) 1 commit
   (merged to 'next' on 2023-10-06 at 0ff4dfc0e1)
  + diff: fix --merge-base with annotated tags
@@ -313,18 +488,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <20231001151845.3621551-1-hi@alyssa.is>
-
-
-* eb/limit-bulk-checkin-to-blobs (2023-09-26) 1 commit
-  (merged to 'next' on 2023-10-02 at 89c9c95966)
- + bulk-checkin: only support blobs in index_bulk_checkin
-
- The "streaming" interface used for bulk-checkin codepath has been
- narrowed to take only blob objects for now, with no real loss of
- functionality.
-
- Will merge to 'master'.
- source: <87msx99b9o.fsf_-_@gmail.froward.int.ebiederm.org>
 
 
 * js/update-urls-in-doc-and-comment (2023-09-26) 4 commits
@@ -421,7 +584,8 @@ Release tarballs are available at:
  "git merge-tree" learned to take strategy backend specific options
  via the "-X" option, like "git merge" does.
 
- Will merge to 'master'.
+ Hold.  There is an unwanted structure copying going on.
+ cf. <a482d047-dd40-436d-8daa-0c74780af11f@gmail.com>
  source: <pull.1565.v6.git.1695522222723.gitgitgadget@gmail.com>
 
 
@@ -465,18 +629,6 @@ Release tarballs are available at:
  source: <xmqqcyykig1l.fsf@gitster.g>
 
 
-* kn/rev-list-ignore-missing-links (2023-09-20) 1 commit
- - revision: add `--ignore-missing-links` user option
-
- Surface the .ignore_missing_links bit that stops the revision
- traversal from stopping and dying when encountering a missing
- object to a new command line option of "git rev-list", so that the
- objects that are required but are missing can be enumerated.
-
- What's the status of this thing?
- source: <20230920104507.21664-1-karthik.188@gmail.com>
-
-
 * rs/parse-options-value-int (2023-09-18) 2 commits
  - parse-options: use and require int pointer for OPT_CMDMODE
  - parse-options: add int value pointer to struct option
@@ -484,28 +636,9 @@ Release tarballs are available at:
  A bit of type safety for the "value" pointer used in the
  parse-options API.
 
- What's the status of this thing?
+ Not ready yet.
+ cf. <4014e490-c6c1-453d-b0ed-645220e3e614@web.de>
  source: <e6d8a291-03de-cfd3-3813-747fc2cad145@web.de>
-
-
-* cc/repack-sift-filtered-objects-to-separate-pack (2023-10-02) 9 commits
-  (merged to 'next' on 2023-10-03 at e5a4824609)
- + gc: add `gc.repackFilterTo` config option
- + repack: implement `--filter-to` for storing filtered out objects
- + gc: add `gc.repackFilter` config option
- + repack: add `--filter=<filter-spec>` option
- + pack-bitmap-write: rebuild using new bitmap when remapping
- + repack: refactor finding pack prefix
- + repack: refactor finishing pack-objects command
- + t/helper: add 'find-pack' test-tool
- + pack-objects: allow `--filter` without `--stdout`
-
- "git repack" machinery learns to pay attention to the "--filter="
- option.
-
- Will merge to 'master'.
- cf. <ZRsknb4NxNHTR21E@nand.local>
- source: <20231002165504.1325153-1-christian.couder@gmail.com>
 
 
 * la/trailer-test-and-doc-updates (2023-09-07) 13 commits
@@ -530,20 +663,19 @@ Release tarballs are available at:
  source: <pull.1564.v3.git.1694125209.gitgitgadget@gmail.com>
 
 
-* js/doc-unit-tests (2023-08-17) 3 commits
+* js/doc-unit-tests (2023-10-09) 3 commits
  - ci: run unit tests in CI
  - unit tests: add TAP unit test framework
- - unit tests: Add a project plan document
+ - unit tests: add a project plan document
  (this branch is used by js/doc-unit-tests-with-cmake.)
 
  Process to add some form of low-level unit tests has started.
 
- Expecting a reroll.
- cf. <0b6de919-8dbf-454f-807b-5abb64388cb7@gmail.com>
- source: <cover.1692297001.git.steadmon@google.com>
+ Will merge to 'next'?
+ source: <cover.1696889529.git.steadmon@google.com>
 
 
-* js/doc-unit-tests-with-cmake (2023-09-25) 7 commits
+* js/doc-unit-tests-with-cmake (2023-10-09) 7 commits
  - cmake: handle also unit tests
  - cmake: use test names instead of full paths
  - cmake: fix typo in variable name
@@ -555,37 +687,8 @@ Release tarballs are available at:
 
  Update the base topic to work with CMake builds.
 
- Expecting a reroll.
- cf. <ZSCRFNkzXZb3fBaU@google.com>
+ Needs review.
  source: <pull.1579.v3.git.1695640836.gitgitgadget@gmail.com>
-
-
-* tb/path-filter-fix (2023-08-30) 15 commits
- - bloom: introduce `deinit_bloom_filters()`
- - commit-graph: reuse existing Bloom filters where possible
- - object.h: fix mis-aligned flag bits table
- - commit-graph: drop unnecessary `graph_read_bloom_data_context`
- - commit-graph.c: unconditionally load Bloom filters
- - t/t4216-log-bloom.sh: harden `test_bloom_filters_not_used()`
- - bloom: prepare to discard incompatible Bloom filters
- - bloom: annotate filters with hash version
- - commit-graph: new filter ver. that fixes murmur3
- - repo-settings: introduce commitgraph.changedPathsVersion
- - t4216: test changed path filters with high bit paths
- - t/helper/test-read-graph: implement `bloom-filters` mode
- - bloom.h: make `load_bloom_filter_from_graph()` public
- - t/helper/test-read-graph.c: extract `dump_graph_info()`
- - gitformat-commit-graph: describe version 2 of BDAT
-
- The Bloom filter used for path limited history traversal was broken
- on systems whose "char" is unsigned; update the implementation and
- bump the format version to 2.
-
- What's the status of this thing?
- cf. <20230830200218.GA5147@szeder.dev>
- cf. <20230901205616.3572722-1-jonathantanmy@google.com>
- cf. <20230924195900.GA1156862@szeder.dev>
- source: <cover.1693413637.git.jonathantanmy@google.com>
 
 
 * jc/rerere-cleanup (2023-08-25) 4 commits
@@ -645,3 +748,15 @@ Release tarballs are available at:
 
  Superseded by the so/diff-merges-dd topic.
  source: <20230909125446.142715-1-sorganov@gmail.com>
+
+
+* kn/rev-list-ignore-missing-links (2023-09-20) 1 commit
+ . revision: add `--ignore-missing-links` user option
+
+ Surface the .ignore_missing_links bit that stops the revision
+ traversal from stopping and dying when encountering a missing
+ object to a new command line option of "git rev-list", so that the
+ objects that are required but are missing can be enumerated.
+
+ Superseded by kn/rev-list-missing-fix
+ source: <20230920104507.21664-1-karthik.188@gmail.com>
