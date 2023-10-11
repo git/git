@@ -931,6 +931,10 @@ test_expect_success 'store called with invalid commit' '
 	test_must_fail git stash store foo
 '
 
+test_expect_success 'store called with non-stash commit' '
+	test_must_fail git stash store HEAD
+'
+
 test_expect_success 'store updates stash ref and reflog' '
 	git stash clear &&
 	git reset --hard &&
