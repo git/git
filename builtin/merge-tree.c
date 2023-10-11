@@ -425,10 +425,11 @@ static int real_merge(struct merge_tree_options *o,
 {
 	struct commit *parent1, *parent2;
 	struct commit_list *merge_bases = NULL;
-	struct merge_options opt = o->merge_options;
 	struct merge_result result = { 0 };
 	int show_messages = o->show_messages;
+	struct merge_options opt;
 
+	copy_merge_options(&opt, &o->merge_options);
 	parent1 = get_merge_parent(branch1);
 	if (!parent1)
 		help_unknown_ref(branch1, "merge-tree",
@@ -507,6 +508,7 @@ static int real_merge(struct merge_tree_options *o,
 	if (o->use_stdin)
 		putchar(line_termination);
 	merge_finalize(&opt, &result);
+	clear_merge_options(&opt);
 	return !result.clean; /* result.clean < 0 handled above */
 }
 

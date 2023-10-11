@@ -3912,6 +3912,22 @@ void init_merge_options(struct merge_options *opt,
 		opt->buffer_output = 0;
 }
 
+/*
+ * For now, members of merge_options do not need deep copying, but
+ * it may change in the future, in which case we would need to update
+ * this, and also make a matching change to clear_merge_options() to
+ * release the resources held by a copied instance.
+ */
+void copy_merge_options(struct merge_options *dst, struct merge_options *src)
+{
+	*dst = *src;
+}
+
+void clear_merge_options(struct merge_options *opt UNUSED)
+{
+	; /* no-op as our copy is shallow right now */
+}
+
 int parse_merge_opt(struct merge_options *opt, const char *s)
 {
 	const char *arg;
