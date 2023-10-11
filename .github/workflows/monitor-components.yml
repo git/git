@@ -69,8 +69,9 @@ jobs:
             feed: https://github.com/gpg/gnupg/releases.atom
           - label: mintty
             feed: https://github.com/mintty/mintty/releases.atom
-          - label: p7zip
-            feed: https://sourceforge.net/projects/p7zip/rss?path=/p7zip
+          - label: 7-zip
+            feed: https://sourceforge.net/projects/sevenzip/rss?path=/7-Zip
+            aggregate: true
           - label: bash
             feed: https://git.savannah.gnu.org/cgit/bash.git/atom/?h=master
             aggregate: true
