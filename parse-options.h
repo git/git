@@ -459,7 +459,6 @@ struct parse_opt_ctx_t {
 	unsigned has_subcommands;
 	const char *prefix;
 	const char **alias_groups; /* must be in groups of 3 elements! */
-	struct option *updated_options;
 };
 
 void parse_options_start(struct parse_opt_ctx_t *ctx,
