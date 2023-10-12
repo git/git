@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2023, #04; Tue, 10)
-X-master-at: aab89be2eb6ca51eefeb8c8066f673f447058856
-X-next-at: 989b7e0362472e4b4bd6a089ca4d4971fbf74bb7
+Subject: What's cooking in git.git (Oct 2023, #05; Thu, 12)
+X-master-at: 59167d7d09fd7a1d64aa1d5be73bc484f6621894
+X-next-at: aed0368e0ec22719bf8aa6dece549de780395f82
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Oct 2023, #04; Tue, 10)
+What's cooking in git.git (Oct 2023, #05; Thu, 12)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,6 +16,9 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
+
+There are too many topics marked with "Needs review" label.  I can
+help reviewing some of them myself, but obviously it will not scale.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -48,64 +51,170 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* cc/repack-sift-filtered-objects-to-separate-pack (2023-10-02) 9 commits
-  (merged to 'next' on 2023-10-03 at e5a4824609)
- + gc: add `gc.repackFilterTo` config option
- + repack: implement `--filter-to` for storing filtered out objects
- + gc: add `gc.repackFilter` config option
- + repack: add `--filter=<filter-spec>` option
- + pack-bitmap-write: rebuild using new bitmap when remapping
- + repack: refactor finding pack prefix
- + repack: refactor finishing pack-objects command
- + t/helper: add 'find-pack' test-tool
- + pack-objects: allow `--filter` without `--stdout`
+* jm/git-status-submodule-states-docfix (2023-10-04) 1 commit
+  (merged to 'next' on 2023-10-04 at 520b7711a4)
+ + git-status.txt: fix minor asciidoc format issue
 
- "git repack" machinery learns to pay attention to the "--filter="
- option.
- cf. <ZRsknb4NxNHTR21E@nand.local>
- source: <20231002165504.1325153-1-christian.couder@gmail.com>
+ Docfix.
+ source: <pull.1591.v3.git.1696386165616.gitgitgadget@gmail.com>
 
 
-* cw/prelim-cleanup (2023-09-29) 4 commits
-  (merged to 'next' on 2023-10-03 at 5985929612)
- + parse: separate out parsing functions from config.h
- + config: correct bad boolean env value error message
- + wrapper: reduce scope of remove_or_warn()
- + hex-ll: separate out non-hash-algo functions
+* js/ci-coverity (2023-10-05) 6 commits
+  (merged to 'next' on 2023-10-05 at 253788f0d1)
+ + coverity: detect and report when the token or project is incorrect
+ + coverity: allow running on macOS
+ + coverity: support building on Windows
+ + coverity: allow overriding the Coverity project
+ + coverity: cache the Coverity Build Tool
+ + ci: add a GitHub workflow to submit Coverity scans
 
- Shuffle some bits across headers and sources to prepare for
- libification effort.
- source: <cover.1696021277.git.jonathantanmy@google.com>
+ GitHub CI workflow has learned to trigger Coverity check.
+ source: <pull.1588.v2.git.1695642662.gitgitgadget@gmail.com>
 
 
-* ds/init-diffstat-width (2023-09-29) 1 commit
-  (merged to 'next' on 2023-10-03 at 18383ac895)
- + diff --stat: set the width defaults in a helper function
+* rs/parse-opt-ctx-cleanup (2023-10-03) 1 commit
+  (merged to 'next' on 2023-10-04 at d5d0a2ce3b)
+ + parse-options: drop unused parse_opt_ctx_t member
 
  Code clean-up.
- source: <d45d1dac1a20699e370905b88b6fd0ec296751e7.1695441501.git.dsimic@manjaro.org>
-
-
-* eb/limit-bulk-checkin-to-blobs (2023-09-26) 1 commit
-  (merged to 'next' on 2023-10-02 at 89c9c95966)
- + bulk-checkin: only support blobs in index_bulk_checkin
-
- The "streaming" interface used for bulk-checkin codepath has been
- narrowed to take only blob objects for now, with no real loss of
- functionality.
- source: <87msx99b9o.fsf_-_@gmail.froward.int.ebiederm.org>
+ source: <ebcaa9e1-d306-4c93-adec-3f35d7040531@web.de>
 
 --------------------------------------------------
 [New Topics]
 
+* jc/fail-stash-to-store-non-stash (2023-10-11) 1 commit
+ - stash: be careful what we store
+
+ Feeding "git stash store" with a random commit that was not created
+ by "git stash create" now errors out.
+
+ Will merge to 'next'?
+ source: <xmqqbkd4lwj0.fsf_-_@gitster.g>
+
+
+* jc/doc-unit-tests-fixup (2023-10-11) 1 commit
+ - SQUASH???
+ (this branch uses js/doc-unit-tests and js/doc-unit-tests-with-cmake.)
+
+ Quick fix for jc/doc-unit-tests topic to unbreak CI running on 'seen'.
+ source: <xmqqwmvskf8t.fsf@gitster.g>
+
+
+* bc/racy-4gb-files (2023-10-12) 2 commits
+ - Prevent git from rehashing 4GiB files
+ - t: add a test helper to truncate files
+
+ The index file has room only for lower 32-bit of the file size in
+ the cached stat information, which means cached stat information
+ will have 0 in its sd_size member for a file whose size is multiple
+ of 4GiB.  This is mistaken for a racily clean path.  Avoid it by
+ storing a bogus sd_size value instead for such files.
+
+ Waiting for review response.
+ source: <20231012160930.330618-1-sandals@crustytoothpaste.net>
+
+
+* ds/mailmap-entry-update (2023-10-12) 1 commit
+  (merged to 'next' on 2023-10-12 at 3de300ac62)
+ + mailmap: change primary address for Derrick Stolee
+
+ Update mailmap entry for Derrick.
+
+ Will merge to 'master' immediately.
+ source: <pull.1592.git.1697131834003.gitgitgadget@gmail.com>
+
+
+* jc/grep-f-relative-to-cwd (2023-10-12) 1 commit
+ - grep: -f <path> is relative to $cwd
+
+ "cd sub && git grep -f patterns" tried to read "patterns" file at
+ the top level of the working tree; it has been corrected to read
+ "sub/patterns" instead.
+
+ Needs review.
+ source: <xmqqedhzg37z.fsf@gitster.g>
+
+--------------------------------------------------
+[Stalled]
+
+* pw/rebase-sigint (2023-09-07) 1 commit
+ - rebase -i: ignore signals when forking subprocesses
+
+ If the commit log editor or other external programs (spawned via
+ "exec" insn in the todo list) receive internactive signal during
+ "git rebase -i", it caused not just the spawned program but the
+ "Git" process that spawned them, which is often not what the end
+ user intended.  "git" learned to ignore SIGINT and SIGQUIT while
+ waiting for these subprocesses.
+
+ Expecting a reroll.
+ cf. <12c956ea-330d-4441-937f-7885ab519e26@gmail.com>
+ source: <pull.1581.git.1694080982621.gitgitgadget@gmail.com>
+
+
+* tk/cherry-pick-sequence-requires-clean-worktree (2023-06-01) 1 commit
+ - cherry-pick: refuse cherry-pick sequence if index is dirty
+
+ "git cherry-pick A" that replays a single commit stopped before
+ clobbering local modification, but "git cherry-pick A..B" did not,
+ which has been corrected.
+
+ Expecting a reroll.
+ cf. <999f12b2-38d6-f446-e763-4985116ad37d@gmail.com>
+ source: <pull.1535.v2.git.1685264889088.gitgitgadget@gmail.com>
+
+
+* jc/diff-cached-fsmonitor-fix (2023-09-15) 3 commits
+ - diff-lib: fix check_removed() when fsmonitor is active
+ - Merge branch 'jc/fake-lstat' into jc/diff-cached-fsmonitor-fix
+ - Merge branch 'js/diff-cached-fsmonitor-fix' into jc/diff-cached-fsmonitor-fix
+ (this branch uses jc/fake-lstat.)
+
+ The optimization based on fsmonitor in the "diff --cached"
+ codepath is resurrected with the "fake-lstat" introduced earlier.
+
+ It is unknown if the optimization is worth resurrecting, but in case...
+ source: <xmqqr0n0h0tw.fsf@gitster.g>
+
+--------------------------------------------------
+[Cooking]
+
+* tb/path-filter-fix (2023-10-10) 17 commits
+ - bloom: introduce `deinit_bloom_filters()`
+ - commit-graph: reuse existing Bloom filters where possible
+ - object.h: fix mis-aligned flag bits table
+ - commit-graph: drop unnecessary `graph_read_bloom_data_context`
+ - commit-graph.c: unconditionally load Bloom filters
+ - bloom: prepare to discard incompatible Bloom filters
+ - bloom: annotate filters with hash version
+ - commit-graph: new filter ver. that fixes murmur3
+ - repo-settings: introduce commitgraph.changedPathsVersion
+ - t4216: test changed path filters with high bit paths
+ - t/helper/test-read-graph: implement `bloom-filters` mode
+ - bloom.h: make `load_bloom_filter_from_graph()` public
+ - t/helper/test-read-graph.c: extract `dump_graph_info()`
+ - gitformat-commit-graph: describe version 2 of BDAT
+ - commit-graph: ensure Bloom filters are read with consistent settings
+ - revision.c: consult Bloom filters for root commits
+ - t/t4216-log-bloom.sh: harden `test_bloom_filters_not_used()`
+
+ The Bloom filter used for path limited history traversal was broken
+ on systems whose "char" is unsigned; update the implementation and
+ bump the format version to 2.
+
+ Needs (hopefully final and quick) review.
+ source: <cover.1696969994.git.me@ttaylorr.com>
+
+
 * ak/pretty-decorate-more-fix (2023-10-09) 1 commit
- - pretty: fix ref filtering for %(decorate) formats
+  (merged to 'next' on 2023-10-12 at 3cbb4c2268)
+ + pretty: fix ref filtering for %(decorate) formats
 
  Unlike "git log --pretty=%D", "git log --pretty="%(decorate)" did
  not auto-initialize the decoration subsystem, which has been
  corrected.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <20231008202307.1568477-1-andy.koppe@gmail.com>
 
 
@@ -143,14 +252,16 @@ Release tarballs are available at:
 
 
 * kn/rev-list-missing-fix (2023-10-09) 3 commits
- - rev-list: add commit object support in `--missing` option
- - rev-list: move `show_commit()` to the bottom
- - revision: rename bit to `do_not_die_on_missing_objects`
+ . rev-list: add commit object support in `--missing` option
+ . rev-list: move `show_commit()` to the bottom
+ . revision: rename bit to `do_not_die_on_missing_objects`
 
  "git rev-list --missing" did not work for missing commit objects,
  which has been corrected.
 
  Needs review.
+ Seems to break CI job with extra environment settings.
+ cf. <xmqqil7etndo.fsf@gitster.g>
  source: <20231009105528.17777-1-karthik.188@gmail.com>
 
 
@@ -205,86 +316,14 @@ Release tarballs are available at:
 
 
 * ps/rewritten-is-per-worktree-doc (2023-10-10) 1 commit
- - doc/git-worktree: mention "refs/rewritten" as per-worktree refs
+  (merged to 'next' on 2023-10-12 at 501b960e8c)
+ + doc/git-worktree: mention "refs/rewritten" as per-worktree refs
 
  Doc update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <985ac850eb6e60ae76601acc8bfbcd56f99348b4.1696935657.git.ps@pks.im>
 
---------------------------------------------------
-[Stalled]
-
-* tb/path-filter-fix (2023-08-30) 15 commits
- - bloom: introduce `deinit_bloom_filters()`
- - commit-graph: reuse existing Bloom filters where possible
- - object.h: fix mis-aligned flag bits table
- - commit-graph: drop unnecessary `graph_read_bloom_data_context`
- - commit-graph.c: unconditionally load Bloom filters
- - t/t4216-log-bloom.sh: harden `test_bloom_filters_not_used()`
- - bloom: prepare to discard incompatible Bloom filters
- - bloom: annotate filters with hash version
- - commit-graph: new filter ver. that fixes murmur3
- - repo-settings: introduce commitgraph.changedPathsVersion
- - t4216: test changed path filters with high bit paths
- - t/helper/test-read-graph: implement `bloom-filters` mode
- - bloom.h: make `load_bloom_filter_from_graph()` public
- - t/helper/test-read-graph.c: extract `dump_graph_info()`
- - gitformat-commit-graph: describe version 2 of BDAT
-
- The Bloom filter used for path limited history traversal was broken
- on systems whose "char" is unsigned; update the implementation and
- bump the format version to 2.
-
- Reroll exists, not picked up yet.
- cf. <20230830200218.GA5147@szeder.dev>
- cf. <20230901205616.3572722-1-jonathantanmy@google.com>
- cf. <20230924195900.GA1156862@szeder.dev>
- cf. <20231008143523.GA18858@szeder.dev>
- source: <cover.1693413637.git.jonathantanmy@google.com>
-
-
-* pw/rebase-sigint (2023-09-07) 1 commit
- - rebase -i: ignore signals when forking subprocesses
-
- If the commit log editor or other external programs (spawned via
- "exec" insn in the todo list) receive internactive signal during
- "git rebase -i", it caused not just the spawned program but the
- "Git" process that spawned them, which is often not what the end
- user intended.  "git" learned to ignore SIGINT and SIGQUIT while
- waiting for these subprocesses.
-
- Expecting a reroll.
- cf. <12c956ea-330d-4441-937f-7885ab519e26@gmail.com>
- source: <pull.1581.git.1694080982621.gitgitgadget@gmail.com>
-
-
-* tk/cherry-pick-sequence-requires-clean-worktree (2023-06-01) 1 commit
- - cherry-pick: refuse cherry-pick sequence if index is dirty
-
- "git cherry-pick A" that replays a single commit stopped before
- clobbering local modification, but "git cherry-pick A..B" did not,
- which has been corrected.
-
- Expecting a reroll.
- cf. <999f12b2-38d6-f446-e763-4985116ad37d@gmail.com>
- source: <pull.1535.v2.git.1685264889088.gitgitgadget@gmail.com>
-
-
-* jc/diff-cached-fsmonitor-fix (2023-09-15) 3 commits
- - diff-lib: fix check_removed() when fsmonitor is active
- - Merge branch 'jc/fake-lstat' into jc/diff-cached-fsmonitor-fix
- - Merge branch 'js/diff-cached-fsmonitor-fix' into jc/diff-cached-fsmonitor-fix
- (this branch uses jc/fake-lstat.)
-
- The optimization based on fsmonitor in the "diff --cached"
- codepath is resurrected with the "fake-lstat" introduced earlier.
-
- It is unknown if the optimization is worth resurrecting, but in case...
- source: <xmqqr0n0h0tw.fsf@gitster.g>
-
---------------------------------------------------
-[Cooking]
 
 * jc/merge-ort-attr-index-fix (2023-10-09) 1 commit
   (merged to 'next' on 2023-10-10 at b139b87502)
@@ -336,15 +375,16 @@ Release tarballs are available at:
 
 
 * vd/loose-ref-iteration-optimization (2023-10-09) 4 commits
- - files-backend.c: avoid stat in 'loose_fill_ref_dir'
- - dir.[ch]: add 'follow_symlink' arg to 'get_dtype'
- - dir.[ch]: expose 'get_dtype'
- - ref-cache.c: fix prefix matching in ref iteration
+  (merged to 'next' on 2023-10-12 at 99e2f83855)
+ + files-backend.c: avoid stat in 'loose_fill_ref_dir'
+ + dir.[ch]: add 'follow_symlink' arg to 'get_dtype'
+ + dir.[ch]: expose 'get_dtype'
+ + ref-cache.c: fix prefix matching in ref iteration
 
  The code to iterate over loose references have been optimized to
  reduce the number of lstat() system calls.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <pull.1594.v2.git.1696888736.gitgitgadget@gmail.com>
 
 
@@ -375,6 +415,8 @@ Release tarballs are available at:
 
  Introduce "git replay", a tool meant on the server side without
  working tree to recreate a history.
+
+ Needs (hopefully final and quick) review.
  source: <20231010123847.2777056-1-christian.couder@gmail.com>
 
 
@@ -395,26 +437,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <20231003202504.GA7697@coredump.intra.peff.net>
-
-
-* jm/git-status-submodule-states-docfix (2023-10-04) 1 commit
-  (merged to 'next' on 2023-10-04 at 520b7711a4)
- + git-status.txt: fix minor asciidoc format issue
-
- Docfix.
-
- Will merge to 'master'.
- source: <pull.1591.v3.git.1696386165616.gitgitgadget@gmail.com>
-
-
-* rs/parse-opt-ctx-cleanup (2023-10-03) 1 commit
-  (merged to 'next' on 2023-10-04 at d5d0a2ce3b)
- + parse-options: drop unused parse_opt_ctx_t member
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <ebcaa9e1-d306-4c93-adec-3f35d7040531@web.de>
 
 
 * tb/repack-max-cruft-size (2023-10-09) 5 commits
@@ -444,15 +466,15 @@ Release tarballs are available at:
  source: <20231003205442.22963-1-andy.koppe@gmail.com>
 
 
-* jc/attr-tree-config (2023-10-04) 2 commits
- - attr: add attr.allowInvalidSource config to allow invalid revision
+* jc/attr-tree-config (2023-10-11) 2 commits
  - attr: add attr.tree for setting the treeish to read attributes from
+ - attr: read attributes from HEAD when bare repo
 
  The attribute subsystem learned to honor `attr.tree` configuration
  that specifies which tree to read the .gitattributes files from.
 
- Reroll exists, but not picked up (a review sent).
- source: <pull.1577.v2.git.git.1696443502.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.1577.v4.git.git.1697044422.gitgitgadget@gmail.com>
 
 
 * js/submodule-fix-misuse-of-path-and-name (2023-10-03) 6 commits
@@ -577,31 +599,17 @@ Release tarballs are available at:
  source: <cover.1696425168.git.zhiyou.jx@alibaba-inc.com>
 
 
-* ty/merge-tree-strategy-options (2023-09-25) 1 commit
+* ty/merge-tree-strategy-options (2023-10-11) 2 commits
+  (merged to 'next' on 2023-10-12 at 9b873601df)
+ + merge: introduce {copy|clear}_merge_options()
   (merged to 'next' on 2023-09-29 at aa65b54416)
  + merge-tree: add -X strategy option
 
  "git merge-tree" learned to take strategy backend specific options
  via the "-X" option, like "git merge" does.
 
- Hold.  There is an unwanted structure copying going on.
- cf. <a482d047-dd40-436d-8daa-0c74780af11f@gmail.com>
- source: <pull.1565.v6.git.1695522222723.gitgitgadget@gmail.com>
-
-
-* js/ci-coverity (2023-10-05) 6 commits
-  (merged to 'next' on 2023-10-05 at 253788f0d1)
- + coverity: detect and report when the token or project is incorrect
- + coverity: allow running on macOS
- + coverity: support building on Windows
- + coverity: allow overriding the Coverity project
- + coverity: cache the Coverity Build Tool
- + ci: add a GitHub workflow to submit Coverity scans
-
- GitHub CI workflow has learned to trigger Coverity check.
-
  Will merge to 'master'.
- source: <pull.1588.v2.git.1695642662.gitgitgadget@gmail.com>
+ source: <pull.1565.v6.git.1695522222723.gitgitgadget@gmail.com>
 
 
 * js/config-parse (2023-09-21) 5 commits
@@ -667,11 +675,11 @@ Release tarballs are available at:
  - ci: run unit tests in CI
  - unit tests: add TAP unit test framework
  - unit tests: add a project plan document
- (this branch is used by js/doc-unit-tests-with-cmake.)
+ (this branch is used by jc/doc-unit-tests-fixup and js/doc-unit-tests-with-cmake.)
 
  Process to add some form of low-level unit tests has started.
 
- Will merge to 'next'?
+ Expecting a reroll to address CI breakage.
  source: <cover.1696889529.git.steadmon@google.com>
 
 
@@ -683,7 +691,7 @@ Release tarballs are available at:
  - unit-tests: do show relative file paths
  - unit-tests: do not mistake `.pdb` files for being executable
  - cmake: also build unit tests
- (this branch uses js/doc-unit-tests.)
+ (this branch is used by jc/doc-unit-tests-fixup; uses js/doc-unit-tests.)
 
  Update the base topic to work with CMake builds.
 
