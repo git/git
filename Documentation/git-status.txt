@@ -246,10 +246,9 @@ U           U    unmerged, both modified
 
 Submodules have more state and instead report
 
-		M    the submodule has a different HEAD than
-		     recorded in the index
-		m    the submodule has modified content
-		?    the submodule has untracked files
+* 'M' = the submodule has a different HEAD than recorded in the index
+* 'm' = the submodule has modified content
+* '?' = the submodule has untracked files
 
 since modified content or untracked files in a submodule cannot be added
 via `git add` in the superproject to prepare a commit.
