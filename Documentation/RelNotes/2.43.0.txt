@@ -86,6 +86,8 @@ UI, Workflows & Features
  * "git repack" machinery learns to pay attention to the "--filter="
    option.
 
+ * Test coverage for trailers has been improved.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -223,6 +225,24 @@ Fixes since v2.42
    Unicode 15.1
    (merge 872976c37e bb/unicode-width-table-15 later to maint).
 
+ * Update mailmap entry for Derrick.
+   (merge 6e5457d8c7 ds/mailmap-entry-update later to maint).
+
+ * In .gitmodules files, submodules are keyed by their names, and the
+   path to the submodule whose name is $name is specified by the
+   submodule.$name.path variable.  There were a few codepaths that
+   mixed the name and path up when consulting the submodule database,
+   which have been corrected.  It took long for these bugs to be found
+   as the name of a submodule initially is the same as its path, and
+   the problem does not surface until it is moved to a different path,
+   which apparently happens very rarely.
+
+ * "git diff --merge-base X other args..." insisted that X must be a
+   commit and errored out when given an annotated tag that peels to a
+   commit, but we only need it to be a committish.  This has been
+   corrected.
+   (merge 4adceb5a29 ar/diff-index-merge-base-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge fd3ba590d8 ws/git-push-doc-grammofix later to maint).
    (merge 5f33a843de ds/upload-pack-error-sequence-fix later to maint).
@@ -245,3 +265,4 @@ Fixes since v2.42
    (merge 43abaaf008 ob/am-msgfix later to maint).
    (merge c2c349a15c xz/commit-title-soft-limit-doc later to maint).
    (merge f4cbb32c27 rs/parse-opt-ctx-cleanup later to maint).
+   (merge badf2fe1c3 jk/decoration-and-other-leak-fixes later to maint).
