@@ -24,6 +24,8 @@
 #include "tree-walk.h"
 #include "object-name.h"
 
+const char *git_attr_tree;
+
 const char git_attr__true[] = "(builtin)true";
 const char git_attr__false[] = "\0(builtin)false";
 static const char git_attr__unknown[] = "(builtin)unknown";
@@ -1184,6 +1186,11 @@ static void compute_default_attr_source(struct object_id *attr_source)
 {
 	if (!default_attr_source_tree_object_name)
 		default_attr_source_tree_object_name = getenv(GIT_ATTR_SOURCE_ENVIRONMENT);
+
+	if (!default_attr_source_tree_object_name && git_attr_tree) {
+		default_attr_source_tree_object_name = git_attr_tree;
+		ignore_bad_attr_tree = 1;
+	}
 
 	if (!default_attr_source_tree_object_name &&
 	    startup_info->have_repository &&
