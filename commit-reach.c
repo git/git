@@ -173,6 +173,7 @@ struct commit_list *get_octopus_merge_bases(struct commit_list *in)
 			for (k = bases; k; k = k->next)
 				end = k;
 		}
+		free_commit_list(ret);
 		ret = new_commits;
 	}
 	return ret;

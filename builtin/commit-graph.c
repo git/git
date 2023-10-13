@@ -328,6 +328,7 @@ cleanup:
 	FREE_AND_NULL(options);
 	string_list_clear(&pack_indexes, 0);
 	strbuf_release(&buf);
+	oidset_clear(&commits);
 	return result;
 }
 

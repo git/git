@@ -523,8 +523,6 @@ static int add_graph_to_chain(struct commit_graph *g,
 		cur_g = cur_g->base_graph;
 	}
 
-	g->base_graph = chain;
-
 	if (chain) {
 		if (unsigned_add_overflows(chain->num_commits,
 					   chain->num_commits_in_base)) {
@@ -534,6 +532,8 @@ static int add_graph_to_chain(struct commit_graph *g,
 		}
 		g->num_commits_in_base = chain->num_commits + chain->num_commits_in_base;
 	}
+
+	g->base_graph = chain;
 
 	return 1;
 }
@@ -601,6 +601,8 @@ struct commit_graph *load_commit_graph_chain_fd_st(struct repository *r,
 				if (add_graph_to_chain(g, graph_chain, oids, i)) {
 					graph_chain = g;
 					valid = 1;
+				} else {
+					free_commit_graph(g);
 				}
 
 				break;
@@ -752,19 +754,10 @@ struct bloom_filter_settings *get_bloom_filter_settings(struct repository *r)
 	return NULL;
 }
 
-static void close_commit_graph_one(struct commit_graph *g)
-{
-	if (!g)
-		return;
-
-	clear_commit_graph_data_slab(&commit_graph_data_slab);
-	close_commit_graph_one(g->base_graph);
-	free_commit_graph(g);
-}
-
 void close_commit_graph(struct raw_object_store *o)
 {
-	close_commit_graph_one(o->commit_graph);
+	clear_commit_graph_data_slab(&commit_graph_data_slab);
+	free_commit_graph(o->commit_graph);
 	o->commit_graph = NULL;
 }
 
@@ -2101,9 +2094,11 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 			free(graph_name);
 		}
 
+		free(ctx->commit_graph_hash_after[ctx->num_commit_graphs_after - 1]);
 		ctx->commit_graph_hash_after[ctx->num_commit_graphs_after - 1] = xstrdup(hash_to_hex(file_hash));
 		final_graph_name = get_split_graph_filename(ctx->odb,
 					ctx->commit_graph_hash_after[ctx->num_commit_graphs_after - 1]);
+		free(ctx->commit_graph_filenames_after[ctx->num_commit_graphs_after - 1]);
 		ctx->commit_graph_filenames_after[ctx->num_commit_graphs_after - 1] = final_graph_name;
 
 		result = rename(ctx->graph_name, final_graph_name);
@@ -2552,6 +2547,7 @@ int write_commit_graph(struct object_directory *odb,
 
 cleanup:
 	free(ctx->graph_name);
+	free(ctx->base_graph_name);
 	free(ctx->commits.list);
 	oid_array_clear(&ctx->oids);
 	clear_topo_level_slab(&topo_levels);
@@ -2782,15 +2778,17 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g, int flags)
 
 void free_commit_graph(struct commit_graph *g)
 {
-	if (!g)
-		return;
-	if (g->data) {
-		munmap((void *)g->data, g->data_len);
-		g->data = NULL;
+	while (g) {
+		struct commit_graph *next = g->base_graph;
+
+		if (g->data)
+			munmap((void *)g->data, g->data_len);
+		free(g->filename);
+		free(g->bloom_filter_settings);
+		free(g);
+
+		g = next;
 	}
-	free(g->filename);
-	free(g->bloom_filter_settings);
-	free(g);
 }
 
 void disable_commit_graph(struct repository *r)

@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='commit graph with 64-bit timestamps'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 if ! test_have_prereq TIME_IS_64BIT || ! test_have_prereq TIME_T_IS_64BIT
