@@ -34,7 +34,7 @@ test_expect_success setup '
 	echo c >c &&
 	git add c &&
 	git commit -m C &&
-	git tag commit-C &&
+	git tag -m commit-C commit-C &&
 	git merge -m D main &&
 	git tag commit-D &&
 	git checkout main &&
@@ -109,6 +109,13 @@ do
 		test_cmp expect actual
 	'
 
+	test_expect_success "$cmd --merge-base with annotated tag" '
+		git checkout main &&
+		git $cmd commit-C >expect &&
+		git $cmd --merge-base commit-C >actual &&
+		test_cmp expect actual
+	'
+
 	test_expect_success "$cmd --merge-base with one commit and unstaged changes" '
 		git checkout main &&
 		test_when_finished git reset --hard &&
@@ -143,7 +150,7 @@ do
 	test_expect_success "$cmd --merge-base with non-commit" '
 		git checkout main &&
 		test_must_fail git $cmd --merge-base main^{tree} 2>err &&
-		test_i18ngrep "fatal: --merge-base only works with commits" err
+		test_i18ngrep "is a tree, not a commit" err
 	'
 
 	test_expect_success "$cmd --merge-base with no merge bases and one commit" '
@@ -169,7 +176,7 @@ do
 
 	test_expect_success "$cmd --merge-base commit and non-commit" '
 		test_must_fail git $cmd --merge-base br2 main^{tree} 2>err &&
-		test_i18ngrep "fatal: --merge-base only works with commits" err
+		test_i18ngrep "is a tree, not a commit" err
 	'
 
 	test_expect_success "$cmd --merge-base with no merge bases and two commits" '
