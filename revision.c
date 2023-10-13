@@ -3083,6 +3083,11 @@ static void release_revisions_mailmap(struct string_list *mailmap)
 
 static void release_revisions_topo_walk_info(struct topo_walk_info *info);
 
+static void free_void_commit_list(void *list)
+{
+	free_commit_list(list);
+}
+
 void release_revisions(struct rev_info *revs)
 {
 	free_commit_list(revs->commits);
@@ -3100,6 +3105,10 @@ void release_revisions(struct rev_info *revs)
 	diff_free(&revs->pruning);
 	reflog_walk_info_release(revs->reflog_info);
 	release_revisions_topo_walk_info(revs->topo_walk_info);
+	clear_decoration(&revs->children, free_void_commit_list);
+	clear_decoration(&revs->merge_simplification, free);
+	clear_decoration(&revs->treesame, free);
+	line_log_free(revs);
 }
 
 static void add_child(struct rev_info *revs, struct commit *parent, struct commit *child)

@@ -1327,3 +1327,13 @@ int line_log_filter(struct rev_info *rev)
 
 	return 0;
 }
+
+static void free_void_line_log_data(void *data)
+{
+	free_line_log_data(data);
+}
+
+void line_log_free(struct rev_info *rev)
+{
+	clear_decoration(&rev->line_log_data, free_void_line_log_data);
+}

@@ -1243,19 +1243,20 @@ static int serve(struct string_list *listen_addr, int listen_port,
 int cmd_main(int argc, const char **argv)
 {
 	int listen_port = 0;
-	struct string_list listen_addr = STRING_LIST_INIT_NODUP;
+	struct string_list listen_addr = STRING_LIST_INIT_DUP;
 	int serve_mode = 0, inetd_mode = 0;
 	const char *pid_file = NULL, *user_name = NULL, *group_name = NULL;
 	int detach = 0;
 	struct credentials *cred = NULL;
 	int i;
+	int ret;
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 		const char *v;
 
 		if (skip_prefix(arg, "--listen=", &v)) {
-			string_list_append(&listen_addr, xstrdup_tolower(v));
+			string_list_append_nodup(&listen_addr, xstrdup_tolower(v));
 			continue;
 		}
 		if (skip_prefix(arg, "--port=", &v)) {
@@ -1437,22 +1438,26 @@ int cmd_main(int argc, const char **argv)
 			die_errno("failed to redirect stderr to /dev/null");
 	}
 
-	if (inetd_mode || serve_mode)
-		return execute();
+	if (inetd_mode || serve_mode) {
+		ret = execute();
+	} else {
+		if (detach) {
+			if (daemonize())
+				die("--detach not supported on this platform");
+		}
 
-	if (detach) {
-		if (daemonize())
-			die("--detach not supported on this platform");
+		if (pid_file)
+			write_file(pid_file, "%"PRIuMAX, (uintmax_t) getpid());
+
+		/* prepare argv for serving-processes */
+		strvec_push(&cld_argv, argv[0]); /* git-daemon */
+		strvec_push(&cld_argv, "--serve");
+		for (i = 1; i < argc; ++i)
+			strvec_push(&cld_argv, argv[i]);
+
+		ret = serve(&listen_addr, listen_port, cred);
 	}
 
-	if (pid_file)
-		write_file(pid_file, "%"PRIuMAX, (uintmax_t) getpid());
-
-	/* prepare argv for serving-processes */
-	strvec_push(&cld_argv, argv[0]); /* git-daemon */
-	strvec_push(&cld_argv, "--serve");
-	for (i = 1; i < argc; ++i)
-		strvec_push(&cld_argv, argv[i]);
-
-	return serve(&listen_addr, listen_port, cred);
+	string_list_clear(&listen_addr, 0);
+	return ret;
 }
