@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2023, #05; Thu, 12)
-X-master-at: 59167d7d09fd7a1d64aa1d5be73bc484f6621894
-X-next-at: aed0368e0ec22719bf8aa6dece549de780395f82
+Subject: What's cooking in git.git (Oct 2023, #06; Fri, 13)
+X-master-at: a9ecda2788e229afc9b611acaa26d0d9d4da53ed
+X-next-at: e4580a1d7b1178eb1559367d74fe1eac208e14bb
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Oct 2023, #05; Thu, 12)
+What's cooking in git.git (Oct 2023, #06; Fri, 13)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -51,67 +51,15 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* jm/git-status-submodule-states-docfix (2023-10-04) 1 commit
-  (merged to 'next' on 2023-10-04 at 520b7711a4)
- + git-status.txt: fix minor asciidoc format issue
+* ar/diff-index-merge-base-fix (2023-10-02) 1 commit
+  (merged to 'next' on 2023-10-06 at 0ff4dfc0e1)
+ + diff: fix --merge-base with annotated tags
 
- Docfix.
- source: <pull.1591.v3.git.1696386165616.gitgitgadget@gmail.com>
-
-
-* js/ci-coverity (2023-10-05) 6 commits
-  (merged to 'next' on 2023-10-05 at 253788f0d1)
- + coverity: detect and report when the token or project is incorrect
- + coverity: allow running on macOS
- + coverity: support building on Windows
- + coverity: allow overriding the Coverity project
- + coverity: cache the Coverity Build Tool
- + ci: add a GitHub workflow to submit Coverity scans
-
- GitHub CI workflow has learned to trigger Coverity check.
- source: <pull.1588.v2.git.1695642662.gitgitgadget@gmail.com>
-
-
-* rs/parse-opt-ctx-cleanup (2023-10-03) 1 commit
-  (merged to 'next' on 2023-10-04 at d5d0a2ce3b)
- + parse-options: drop unused parse_opt_ctx_t member
-
- Code clean-up.
- source: <ebcaa9e1-d306-4c93-adec-3f35d7040531@web.de>
-
---------------------------------------------------
-[New Topics]
-
-* jc/fail-stash-to-store-non-stash (2023-10-11) 1 commit
- - stash: be careful what we store
-
- Feeding "git stash store" with a random commit that was not created
- by "git stash create" now errors out.
-
- Will merge to 'next'?
- source: <xmqqbkd4lwj0.fsf_-_@gitster.g>
-
-
-* jc/doc-unit-tests-fixup (2023-10-11) 1 commit
- - SQUASH???
- (this branch uses js/doc-unit-tests and js/doc-unit-tests-with-cmake.)
-
- Quick fix for jc/doc-unit-tests topic to unbreak CI running on 'seen'.
- source: <xmqqwmvskf8t.fsf@gitster.g>
-
-
-* bc/racy-4gb-files (2023-10-12) 2 commits
- - Prevent git from rehashing 4GiB files
- - t: add a test helper to truncate files
-
- The index file has room only for lower 32-bit of the file size in
- the cached stat information, which means cached stat information
- will have 0 in its sd_size member for a file whose size is multiple
- of 4GiB.  This is mistaken for a racily clean path.  Avoid it by
- storing a bogus sd_size value instead for such files.
-
- Waiting for review response.
- source: <20231012160930.330618-1-sandals@crustytoothpaste.net>
+ "git diff --merge-base X other args..." insisted that X must be a
+ commit and errored out when given an annotated tag that peels to a
+ commit, but we only need it to be a committish.  This has been
+ corrected.
+ source: <20231001151845.3621551-1-hi@alyssa.is>
 
 
 * ds/mailmap-entry-update (2023-10-12) 1 commit
@@ -124,15 +72,115 @@ Release tarballs are available at:
  source: <pull.1592.git.1697131834003.gitgitgadget@gmail.com>
 
 
-* jc/grep-f-relative-to-cwd (2023-10-12) 1 commit
- - grep: -f <path> is relative to $cwd
+* jk/commit-graph-leak-fixes (2023-10-03) 10 commits
+  (merged to 'next' on 2023-10-06 at 5d202ef8b9)
+ + commit-graph: clear oidset after finishing write
+ + commit-graph: free write-context base_graph_name during cleanup
+ + commit-graph: free write-context entries before overwriting
+ + commit-graph: free graph struct that was not added to chain
+ + commit-graph: delay base_graph assignment in add_graph_to_chain()
+ + commit-graph: free all elements of graph chain
+ + commit-graph: move slab-clearing to close_commit_graph()
+ + merge: free result of repo_get_merge_bases()
+ + commit-reach: free temporary list in get_octopus_merge_bases()
+ + t6700: mark test as leak-free
 
- "cd sub && git grep -f patterns" tried to read "patterns" file at
- the top level of the working tree; it has been corrected to read
- "sub/patterns" instead.
+ Leakfix.
+ source: <20231003202504.GA7697@coredump.intra.peff.net>
 
- Needs review.
- source: <xmqqedhzg37z.fsf@gitster.g>
+
+* jk/decoration-and-other-leak-fixes (2023-10-05) 3 commits
+  (merged to 'next' on 2023-10-06 at 5fc05c94dc)
+ + daemon: free listen_addr before returning
+ + revision: clear decoration structs during release_revisions()
+ + decorate: add clear_decoration() function
+
+ Leakfix.
+ source: <20231005212802.GA982892@coredump.intra.peff.net>
+
+
+* js/submodule-fix-misuse-of-path-and-name (2023-10-03) 6 commits
+  (merged to 'next' on 2023-10-06 at 1054b6e752)
+ + t7420: test that we correctly handle renamed submodules
+ + t7419: test that we correctly handle renamed submodules
+ + t7419, t7420: use test_cmp_config instead of grepping .gitmodules
+ + t7419: actually test the branch switching
+ + submodule--helper: return error from set-url when modifying failed
+ + submodule--helper: use submodule_from_path in set-{url,branch}
+
+ In .gitmodules files, submodules are keyed by their names, and the
+ path to the submodule whose name is $name is specified by the
+ submodule.$name.path variable.  There were a few codepaths that
+ mixed the name and path up when consulting the submodule database,
+ which have been corrected.  It took long for these bugs to be found
+ as the name of a submodule initially is the same as its path, and
+ the problem does not surface until it is moved to a different path,
+ which apparently happens very rarely.
+ source: <0a0a157f88321d25fdb0be771a454b3410a449f3.camel@archlinux.org>
+
+
+* la/trailer-test-and-doc-updates (2023-09-07) 13 commits
+  (merged to 'next' on 2023-10-06 at 69fef35819)
+ + trailer doc: <token> is a <key> or <keyAlias>, not both
+ + trailer doc: separator within key suppresses default separator
+ + trailer doc: emphasize the effect of configuration variables
+ + trailer --unfold help: prefer "reformat" over "join"
+ + trailer --parse docs: add explanation for its usefulness
+ + trailer --only-input: prefer "configuration variables" over "rules"
+ + trailer --parse help: expose aliased options
+ + trailer --no-divider help: describe usual "---" meaning
+ + trailer: trailer location is a place, not an action
+ + trailer doc: narrow down scope of --where and related flags
+ + trailer: add tests to check defaulting behavior with --no-* flags
+ + trailer test description: this tests --where=after, not --where=before
+ + trailer tests: make test cases self-contained
+
+ Test coverage for trailers has been improved.
+ source: <pull.1564.v3.git.1694125209.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[New Topics]
+
+* tb/format-pack-doc-update (2023-10-12) 2 commits
+ - Documentation/gitformat-pack.txt: fix incorrect MIDX documentation
+ - Documentation/gitformat-pack.txt: fix typo
+
+ Doc update.
+
+ Expecting a reroll.
+ cf. <xmqq5y3b4id2.fsf@gitster.g>
+ source: <cover.1697144959.git.me@ttaylorr.com>
+
+
+* ps/do-not-trust-commit-graph-blindly-for-existence (2023-10-13) 1 commit
+ - commit: detect commits that exist in commit-graph but not in the ODB
+ (this branch is used by kn/rev-list-missing-fix.)
+
+ The codepath to traverse the commit-graph learned to notice that a
+ commit is missing (e.g., corrupt repository lost an object), even
+ though it knows something about the commit (like its parents) from
+ what is in commit-graph.
+
+ Comments?
+ source: <b0bf576c51a706367a758b8e30eca37edb9c2734.1697200576.git.ps@pks.im>
+
+
+* tb/pair-chunk-expect-size (2023-10-13) 8 commits
+ - midx: read `OOFF` chunk with `pair_chunk_expect()`
+ - midx: read `OIDL` chunk with `pair_chunk_expect()`
+ - midx: read `OIDF` chunk with `pair_chunk_expect()`
+ - commit-graph: read `BIDX` chunk with `pair_chunk_expect()`
+ - commit-graph: read `GDAT` chunk with `pair_chunk_expect()`
+ - commit-graph: read `CDAT` chunk with `pair_chunk_expect()`
+ - commit-graph: read `OIDF` chunk with `pair_chunk_expect()`
+ - chunk-format: introduce `pair_chunk_expect()` helper
+ (this branch uses jk/chunk-bounds.)
+
+ Code clean-up for jk/chunk-bounds topic.
+
+ Comments?
+ source: <45cac29403e63483951f7766c6da3c022c68d9f0.1697225110.git.me@ttaylorr.com>
+ source: <cover.1697225110.git.me@ttaylorr.com>
 
 --------------------------------------------------
 [Stalled]
@@ -178,6 +226,49 @@ Release tarballs are available at:
 
 --------------------------------------------------
 [Cooking]
+
+* jc/fail-stash-to-store-non-stash (2023-10-11) 1 commit
+ - stash: be careful what we store
+
+ Feeding "git stash store" with a random commit that was not created
+ by "git stash create" now errors out.
+
+ Will merge to 'next'?
+ source: <xmqqbkd4lwj0.fsf_-_@gitster.g>
+
+
+* jc/doc-unit-tests-fixup (2023-10-11) 1 commit
+ - SQUASH???
+ (this branch uses js/doc-unit-tests and js/doc-unit-tests-with-cmake.)
+
+ Quick fix for jc/doc-unit-tests topic to unbreak CI running on 'seen'.
+ source: <xmqqwmvskf8t.fsf@gitster.g>
+
+
+* bc/racy-4gb-files (2023-10-13) 2 commits
+ - Prevent git from rehashing 4GiB files
+ - t: add a test helper to truncate files
+
+ The index file has room only for lower 32-bit of the file size in
+ the cached stat information, which means cached stat information
+ will have 0 in its sd_size member for a file whose size is multiple
+ of 4GiB.  This is mistaken for a racily clean path.  Avoid it by
+ storing a bogus sd_size value instead for such files.
+
+ Will merge to 'next'?
+ source: <20231012160930.330618-1-sandals@crustytoothpaste.net>
+
+
+* jc/grep-f-relative-to-cwd (2023-10-12) 1 commit
+ - grep: -f <path> is relative to $cwd
+
+ "cd sub && git grep -f patterns" tried to read "patterns" file at
+ the top level of the working tree; it has been corrected to read
+ "sub/patterns" instead.
+
+ Needs review.
+ source: <xmqqedhzg37z.fsf@gitster.g>
+
 
 * tb/path-filter-fix (2023-10-10) 17 commits
  - bloom: introduce `deinit_bloom_filters()`
@@ -251,17 +342,17 @@ Release tarballs are available at:
  source: <pull.1595.git.1696747527.gitgitgadget@gmail.com>
 
 
-* kn/rev-list-missing-fix (2023-10-09) 3 commits
- . rev-list: add commit object support in `--missing` option
- . rev-list: move `show_commit()` to the bottom
- . revision: rename bit to `do_not_die_on_missing_objects`
+* kn/rev-list-missing-fix (2023-10-13) 4 commits
+ - rev-list: add commit object support in `--missing` option
+ - rev-list: move `show_commit()` to the bottom
+ - revision: rename bit to `do_not_die_on_missing_objects`
+ - Merge branch 'ps/do-not-trust-commit-graph-blindly-for-existence' into kn/rev-list-missing-fix
+ (this branch uses ps/do-not-trust-commit-graph-blindly-for-existence.)
 
  "git rev-list --missing" did not work for missing commit objects,
  which has been corrected.
 
  Needs review.
- Seems to break CI job with extra environment settings.
- cf. <xmqqil7etndo.fsf@gitster.g>
  source: <20231009105528.17777-1-karthik.188@gmail.com>
 
 
@@ -307,6 +398,7 @@ Release tarballs are available at:
  + midx: stop ignoring malformed oid fanout chunk
  + t: add library for munging chunk-format files
  + chunk-format: note that pair_chunk() is unsafe
+ (this branch is used by tb/pair-chunk-expect-size.)
 
  The codepaths that read "chunk" formatted files have been corrected
  to pay attention to the chunk size and notice broken files.
@@ -334,18 +426,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <pull.1583.v3.git.git.1696857660374.gitgitgadget@gmail.com>
-
-
-* jk/decoration-and-other-leak-fixes (2023-10-05) 3 commits
-  (merged to 'next' on 2023-10-06 at 5fc05c94dc)
- + daemon: free listen_addr before returning
- + revision: clear decoration structs during release_revisions()
- + decorate: add clear_decoration() function
-
- Leakfix.
-
- Will merge to 'master'.
- source: <20231005212802.GA982892@coredump.intra.peff.net>
 
 
 * sn/typo-grammo-phraso-fixes (2023-10-05) 5 commits
@@ -420,25 +500,6 @@ Release tarballs are available at:
  source: <20231010123847.2777056-1-christian.couder@gmail.com>
 
 
-* jk/commit-graph-leak-fixes (2023-10-03) 10 commits
-  (merged to 'next' on 2023-10-06 at 5d202ef8b9)
- + commit-graph: clear oidset after finishing write
- + commit-graph: free write-context base_graph_name during cleanup
- + commit-graph: free write-context entries before overwriting
- + commit-graph: free graph struct that was not added to chain
- + commit-graph: delay base_graph assignment in add_graph_to_chain()
- + commit-graph: free all elements of graph chain
- + commit-graph: move slab-clearing to close_commit_graph()
- + merge: free result of repo_get_merge_bases()
- + commit-reach: free temporary list in get_octopus_merge_bases()
- + t6700: mark test as leak-free
-
- Leakfix.
-
- Will merge to 'master'.
- source: <20231003202504.GA7697@coredump.intra.peff.net>
-
-
 * tb/repack-max-cruft-size (2023-10-09) 5 commits
   (merged to 'next' on 2023-10-09 at 38f039e880)
  + repack: free existing_cruft array after use
@@ -466,7 +527,7 @@ Release tarballs are available at:
  source: <20231003205442.22963-1-andy.koppe@gmail.com>
 
 
-* jc/attr-tree-config (2023-10-11) 2 commits
+* jc/attr-tree-config (2023-10-13) 2 commits
  - attr: add attr.tree for setting the treeish to read attributes from
  - attr: read attributes from HEAD when bare repo
 
@@ -474,42 +535,7 @@ Release tarballs are available at:
  that specifies which tree to read the .gitattributes files from.
 
  Will merge to 'next'?
- source: <pull.1577.v4.git.git.1697044422.gitgitgadget@gmail.com>
-
-
-* js/submodule-fix-misuse-of-path-and-name (2023-10-03) 6 commits
-  (merged to 'next' on 2023-10-06 at 1054b6e752)
- + t7420: test that we correctly handle renamed submodules
- + t7419: test that we correctly handle renamed submodules
- + t7419, t7420: use test_cmp_config instead of grepping .gitmodules
- + t7419: actually test the branch switching
- + submodule--helper: return error from set-url when modifying failed
- + submodule--helper: use submodule_from_path in set-{url,branch}
-
- In .gitmodules files, submodules are keyed by their names, and the
- path to the submodule whose name is $name is specified by the
- submodule.$name.path variable.  There were a few codepaths that
- mixed the name and path up when consulting the submodule database,
- which have been corrected.  It took long for these bugs to be found
- as the name of a submodule initially is the same as its path, and
- the problem does not surface until it is moved to a different path,
- which apparently happens very rarely.
-
- Will merge to 'master'.
- source: <0a0a157f88321d25fdb0be771a454b3410a449f3.camel@archlinux.org>
-
-
-* ar/diff-index-merge-base-fix (2023-10-02) 1 commit
-  (merged to 'next' on 2023-10-06 at 0ff4dfc0e1)
- + diff: fix --merge-base with annotated tags
-
- "git diff --merge-base X other args..." insisted that X must be a
- commit and errored out when given an annotated tag that peels to a
- commit, but we only need it to be a committish.  This has been
- corrected.
-
- Will merge to 'master'.
- source: <20231001151845.3621551-1-hi@alyssa.is>
+ source: <pull.1577.v5.git.git.1697218770.gitgitgadget@gmail.com>
 
 
 * js/update-urls-in-doc-and-comment (2023-09-26) 4 commits
@@ -647,28 +673,6 @@ Release tarballs are available at:
  Not ready yet.
  cf. <4014e490-c6c1-453d-b0ed-645220e3e614@web.de>
  source: <e6d8a291-03de-cfd3-3813-747fc2cad145@web.de>
-
-
-* la/trailer-test-and-doc-updates (2023-09-07) 13 commits
-  (merged to 'next' on 2023-10-06 at 69fef35819)
- + trailer doc: <token> is a <key> or <keyAlias>, not both
- + trailer doc: separator within key suppresses default separator
- + trailer doc: emphasize the effect of configuration variables
- + trailer --unfold help: prefer "reformat" over "join"
- + trailer --parse docs: add explanation for its usefulness
- + trailer --only-input: prefer "configuration variables" over "rules"
- + trailer --parse help: expose aliased options
- + trailer --no-divider help: describe usual "---" meaning
- + trailer: trailer location is a place, not an action
- + trailer doc: narrow down scope of --where and related flags
- + trailer: add tests to check defaulting behavior with --no-* flags
- + trailer test description: this tests --where=after, not --where=before
- + trailer tests: make test cases self-contained
-
- Test coverage for trailers has been improved.
-
- Will merge to 'master'.
- source: <pull.1564.v3.git.1694125209.gitgitgadget@gmail.com>
 
 
 * js/doc-unit-tests (2023-10-09) 3 commits
