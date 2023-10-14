@@ -1129,8 +1129,10 @@ test_expect_success 'reader bounds-checks large offset table' '
 		git multi-pack-index --object-dir=../objects64 write &&
 		midx=../objects64/pack/multi-pack-index &&
 		corrupt_chunk_file $midx LOFF clear &&
-		test_must_fail git cat-file \
-			--batch-check --batch-all-objects 2>err &&
+		# using only %(objectsize) is important here; see the commit
+		# message for more details
+		test_must_fail git cat-file --batch-all-objects \
+			--batch-check="%(objectsize)" 2>err &&
 		cat >expect <<-\EOF &&
 		fatal: multi-pack-index large offset out of bounds
 		EOF
