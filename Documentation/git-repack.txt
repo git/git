@@ -186,7 +186,7 @@ depth is 4095.
 	Pass the `--delta-islands` option to `git-pack-objects`, see
 	linkgit:git-pack-objects[1].
 
--g=<factor>::
+-g<factor>::
 --geometric=<factor>::
 	Arrange resulting pack structure so that each successive pack
 	contains at least `<factor>` times the number of objects as the
