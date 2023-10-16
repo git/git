@@ -177,7 +177,7 @@ Fixes since v2.32
 
  * Some code and doc clarification around "git push".
 
- * The "union" conflict resultion variant misbehaved when used with
+ * The "union" conflict resoultion variant misbehaved when used with
    binary merge driver.
    (merge 382b601acd jk/union-merge-binary later to maint).
 

@@ -363,7 +363,7 @@ Fixes since v2.34
    recent change to use direct application as a fallback.
    (merge 34d607032c jz/apply-3-corner-cases later to maint).
 
- * Fix performance-releated bug in "git subtree" (in contrib/).
+ * Fix performance-related bug in "git subtree" (in contrib/).
    (merge 3ce8888fb4 jl/subtree-check-parents-argument-passing-fix later to maint).
 
  * Extend the guidance to choose the base commit to build your work

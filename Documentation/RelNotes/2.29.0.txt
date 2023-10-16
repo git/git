@@ -236,7 +236,7 @@ Fixes since v2.28
    taught to fail when $elsewhere is not an empty directory.
    (merge dfaa209a79 bw/fail-cloning-into-non-empty later to maint).
 
- * With the base fix to 2.27 regresion, any new extensions in a v0
+ * With the base fix to 2.27 regression, any new extensions in a v0
    repository would still be silently honored, which is not quite
    right.  Instead, complain and die loudly.
    (merge ec91ffca04 jk/reject-newer-extensions-in-v0 later to maint).

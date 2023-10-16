@@ -134,7 +134,7 @@ UI, Workflows & Features
    command, if "=whom" part is missing) and move the original author
    information to an in-body From: header as necessary.
 
- * The configuration variable "merge.ff" was cleary a tri-state to
+ * The configuration variable "merge.ff" was clearly a tri-state to
    choose one from "favor fast-forward when possible", "always create
    a merge even when the history could fast-forward" and "do not
    create any merge, only update when the history fast-forwards", but

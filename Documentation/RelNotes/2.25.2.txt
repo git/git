@@ -18,7 +18,7 @@ Fixes since v2.25.1
    .gitmodules is only cache-dirty, which has been corrected.
 
  * "git rebase -i" identifies existing commits in its todo file with
-   their abbreviated object name, which could become ambigous as it
+   their abbreviated object name, which could become ambiguous as it
    goes to create new commits, and has a mechanism to avoid ambiguity
    in the main part of its execution.  A few other cases however were
    not covered by the protection against ambiguity, which has been

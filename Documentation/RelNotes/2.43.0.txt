@@ -62,7 +62,7 @@ UI, Workflows & Features
    describe complex "revert of revert of revert" situation better in
    their own words.
 
- * The command-line complation support (in contrib/) learned to
+ * The command-line compilation support (in contrib/) learned to
    complete "git commit --trailer=" for possible trailer keys.
 
  * "git update-index" learns "--show-index-version" to inspect

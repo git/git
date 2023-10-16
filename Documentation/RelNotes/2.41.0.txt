@@ -179,7 +179,7 @@ Performance, Internal Implementation, Development Support etc.
    been corrected.
 
  * The implementation of the default "negotiator", used to find common
-   ancestor over the network for object tranfer, used to be recursive;
+   ancestor over the network for object transfer, used to be recursive;
    it was updated to be iterative to conserve stackspace usage.
 
  * Our custom callout formatter is no longer used in the documentation
