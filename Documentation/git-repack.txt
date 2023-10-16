@@ -203,11 +203,8 @@ uniquely by the set of packs being "rolled-up"; in other words, the
 packs determined to need to be combined in order to restore a geometric
 progression.
 +
-When `--unpacked` is specified, loose objects are implicitly included in
-this "roll-up", without respect to their reachability. This is subject
-to change in the future. This option (implying a drastically different
-repack mode) is not guaranteed to work with all other combinations of
-option to `git repack`.
+Loose objects are implicitly included in this "roll-up", without respect to
+their reachability. This is subject to change in the future.
 +
 When writing a multi-pack bitmap, `git repack` selects the largest resulting
 pack as the preferred pack for object selection by the MIDX (see
