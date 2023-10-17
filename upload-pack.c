@@ -33,6 +33,7 @@
 #include "commit-reach.h"
 #include "shallow.h"
 #include "write-or-die.h"
+#include "json-writer.h"
 
 /* Remember to update object flag allocation in object.h */
 #define THEY_HAVE	(1u << 11)
@@ -1552,6 +1553,30 @@ static int parse_have(const char *line, struct oid_array *haves)
 	return 0;
 }
 
+static void trace2_fetch_info(struct upload_pack_data *data)
+{
+	struct json_writer jw = JSON_WRITER_INIT;
+
+	jw_object_begin(&jw, 0);
+	jw_object_intmax(&jw, "haves", data->haves.nr);
+	jw_object_intmax(&jw, "wants", data->want_obj.nr);
+	jw_object_intmax(&jw, "want-refs", data->wanted_refs.nr);
+	jw_object_intmax(&jw, "depth", data->depth);
+	jw_object_intmax(&jw, "shallows", data->shallows.nr);
+	jw_object_bool(&jw, "deepen-since", data->deepen_since);
+	jw_object_intmax(&jw, "deepen-not", data->deepen_not.nr);
+	jw_object_bool(&jw, "deepen-relative", data->deepen_relative);
+	if (data->filter_options.choice)
+		jw_object_string(&jw, "filter", list_object_filter_config_name(data->filter_options.choice));
+	else
+		jw_object_null(&jw, "filter");
+	jw_end(&jw);
+
+	trace2_data_json("upload-pack", the_repository, "fetch-info", &jw);
+
+	jw_release(&jw);
+}
+
 static void process_args(struct packet_reader *request,
 			 struct upload_pack_data *data)
 {
@@ -1640,6 +1665,9 @@ static void process_args(struct packet_reader *request,
 
 	if (request->status != PACKET_READ_FLUSH)
 		die(_("expected flush after fetch arguments"));
+
+	if (trace2_is_enabled())
+		trace2_fetch_info(data);
 }
 
 static int process_haves(struct upload_pack_data *data, struct oid_array *common)
