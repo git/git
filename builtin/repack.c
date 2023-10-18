@@ -28,6 +28,7 @@
 #define PACK_CRUFT 4
 
 #define DELETE_PACK 1
+#define RETAIN_PACK 2
 
 static int pack_everything;
 static int delta_base_offset = 1;
@@ -52,7 +53,7 @@ struct pack_objects_args {
 	const char *window_memory;
 	const char *depth;
 	const char *threads;
-	const char *max_pack_size;
+	unsigned long max_pack_size;
 	int no_reuse_delta;
 	int no_reuse_object;
 	int quiet;
@@ -118,9 +119,24 @@ static void pack_mark_for_deletion(struct string_list_item *item)
 	item->util = (void*)((uintptr_t)item->util | DELETE_PACK);
 }
 
+static void pack_unmark_for_deletion(struct string_list_item *item)
+{
+	item->util = (void*)((uintptr_t)item->util & ~DELETE_PACK);
+}
+
 static int pack_is_marked_for_deletion(struct string_list_item *item)
 {
 	return (uintptr_t)item->util & DELETE_PACK;
+}
+
+static void pack_mark_retained(struct string_list_item *item)
+{
+	item->util = (void*)((uintptr_t)item->util | RETAIN_PACK);
+}
+
+static int pack_is_retained(struct string_list_item *item)
+{
+	return (uintptr_t)item->util & RETAIN_PACK;
 }
 
 static void mark_packs_for_deletion_1(struct string_list *names,
@@ -135,15 +151,37 @@ static void mark_packs_for_deletion_1(struct string_list *names,
 		if (len < hexsz)
 			continue;
 		sha1 = item->string + len - hexsz;
-		/*
-		 * Mark this pack for deletion, which ensures that this
-		 * pack won't be included in a MIDX (if `--write-midx`
-		 * was given) and that we will actually delete this pack
-		 * (if `-d` was given).
-		 */
-		if (!string_list_has_string(names, sha1))
+
+		if (pack_is_retained(item)) {
+			pack_unmark_for_deletion(item);
+		} else if (!string_list_has_string(names, sha1)) {
+			/*
+			 * Mark this pack for deletion, which ensures
+			 * that this pack won't be included in a MIDX
+			 * (if `--write-midx` was given) and that we
+			 * will actually delete this pack (if `-d` was
+			 * given).
+			 */
 			pack_mark_for_deletion(item);
+		}
 	}
+}
+
+static void retain_cruft_pack(struct existing_packs *existing,
+			      struct packed_git *cruft)
+{
+	struct strbuf buf = STRBUF_INIT;
+	struct string_list_item *item;
+
+	strbuf_addstr(&buf, pack_basename(cruft));
+	strbuf_strip_suffix(&buf, ".pack");
+
+	item = string_list_lookup(&existing->cruft_packs, buf.buf);
+	if (!item)
+		BUG("could not find cruft pack '%s'", pack_basename(cruft));
+
+	pack_mark_retained(item);
+	strbuf_release(&buf);
 }
 
 static void mark_packs_for_deletion(struct existing_packs *existing,
@@ -227,6 +265,8 @@ static void collect_pack_filenames(struct existing_packs *existing,
 	}
 
 	string_list_sort(&existing->kept_packs);
+	string_list_sort(&existing->non_kept_packs);
+	string_list_sort(&existing->cruft_packs);
 	strbuf_release(&buf);
 }
 
@@ -244,7 +284,7 @@ static void prepare_pack_objects(struct child_process *cmd,
 	if (args->threads)
 		strvec_pushf(&cmd->args, "--threads=%s", args->threads);
 	if (args->max_pack_size)
-		strvec_pushf(&cmd->args, "--max-pack-size=%s", args->max_pack_size);
+		strvec_pushf(&cmd->args, "--max-pack-size=%lu", args->max_pack_size);
 	if (args->no_reuse_delta)
 		strvec_pushf(&cmd->args, "--no-reuse-delta");
 	if (args->no_reuse_object)
@@ -315,6 +355,18 @@ static struct generated_pack_data *populate_pack_exts(const char *name)
 
 	strbuf_release(&path);
 	return data;
+}
+
+static int has_pack_ext(const struct generated_pack_data *data,
+			const char *ext)
+{
+	int i;
+	for (i = 0; i < ARRAY_SIZE(exts); i++) {
+		if (strcmp(exts[i].name, ext))
+			continue;
+		return !!data->tempfiles[i];
+	}
+	BUG("unknown pack extension: '%s'", ext);
 }
 
 static void repack_promisor_objects(const struct pack_objects_args *args,
@@ -734,6 +786,7 @@ static void midx_included_packs(struct string_list *include,
 
 static int write_midx_included_packs(struct string_list *include,
 				     struct pack_geometry *geometry,
+				     struct string_list *names,
 				     const char *refs_snapshot,
 				     int show_progress, int write_bitmaps)
 {
@@ -763,6 +816,38 @@ static int write_midx_included_packs(struct string_list *include,
 	if (preferred)
 		strvec_pushf(&cmd.args, "--preferred-pack=%s",
 			     pack_basename(preferred));
+	else if (names->nr) {
+		/* The largest pack was repacked, meaning that either
+		 * one or two packs exist depending on whether the
+		 * repository has a cruft pack or not.
+		 *
+		 * Select the non-cruft one as preferred to encourage
+		 * pack-reuse among packs containing reachable objects
+		 * over unreachable ones.
+		 *
+		 * (Note we could write multiple packs here if
+		 * `--max-pack-size` was given, but any one of them
+		 * will suffice, so pick the first one.)
+		 */
+		for_each_string_list_item(item, names) {
+			struct generated_pack_data *data = item->util;
+			if (has_pack_ext(data, ".mtimes"))
+				continue;
+
+			strvec_pushf(&cmd.args, "--preferred-pack=pack-%s.pack",
+				     item->string);
+			break;
+		}
+	} else {
+		/*
+		 * No packs were kept, and no packs were written. The
+		 * only thing remaining are .keep packs (unless
+		 * --pack-kept-objects was given).
+		 *
+		 * Set the `--preferred-pack` arbitrarily here.
+		 */
+		;
+	}
 
 	if (refs_snapshot)
 		strvec_pushf(&cmd.args, "--refs-snapshot=%s", refs_snapshot);
@@ -888,6 +973,73 @@ static int write_filtered_pack(const struct pack_objects_args *args,
 	return finish_pack_objects_cmd(&cmd, names, local);
 }
 
+static int existing_cruft_pack_cmp(const void *va, const void *vb)
+{
+	struct packed_git *a = *(struct packed_git **)va;
+	struct packed_git *b = *(struct packed_git **)vb;
+
+	if (a->pack_size < b->pack_size)
+		return -1;
+	if (a->pack_size > b->pack_size)
+		return 1;
+	return 0;
+}
+
+static void collapse_small_cruft_packs(FILE *in, size_t max_size,
+				       struct existing_packs *existing)
+{
+	struct packed_git **existing_cruft, *p;
+	struct strbuf buf = STRBUF_INIT;
+	size_t total_size = 0;
+	size_t existing_cruft_nr = 0;
+	size_t i;
+
+	ALLOC_ARRAY(existing_cruft, existing->cruft_packs.nr);
+
+	for (p = get_all_packs(the_repository); p; p = p->next) {
+		if (!(p->is_cruft && p->pack_local))
+			continue;
+
+		strbuf_reset(&buf);
+		strbuf_addstr(&buf, pack_basename(p));
+		strbuf_strip_suffix(&buf, ".pack");
+
+		if (!string_list_has_string(&existing->cruft_packs, buf.buf))
+			continue;
+
+		if (existing_cruft_nr >= existing->cruft_packs.nr)
+			BUG("too many cruft packs (found %"PRIuMAX", but knew "
+			    "of %"PRIuMAX")",
+			    (uintmax_t)existing_cruft_nr + 1,
+			    (uintmax_t)existing->cruft_packs.nr);
+		existing_cruft[existing_cruft_nr++] = p;
+	}
+
+	QSORT(existing_cruft, existing_cruft_nr, existing_cruft_pack_cmp);
+
+	for (i = 0; i < existing_cruft_nr; i++) {
+		size_t proposed;
+
+		p = existing_cruft[i];
+		proposed = st_add(total_size, p->pack_size);
+
+		if (proposed <= max_size) {
+			total_size = proposed;
+			fprintf(in, "-%s\n", pack_basename(p));
+		} else {
+			retain_cruft_pack(existing, p);
+			fprintf(in, "%s\n", pack_basename(p));
+		}
+	}
+
+	for (i = 0; i < existing->non_kept_packs.nr; i++)
+		fprintf(in, "-%s.pack\n",
+			existing->non_kept_packs.items[i].string);
+
+	strbuf_release(&buf);
+	free(existing_cruft);
+}
+
 static int write_cruft_pack(const struct pack_objects_args *args,
 			    const char *destination,
 			    const char *pack_prefix,
@@ -934,10 +1086,14 @@ static int write_cruft_pack(const struct pack_objects_args *args,
 	in = xfdopen(cmd.in, "w");
 	for_each_string_list_item(item, names)
 		fprintf(in, "%s-%s.pack\n", pack_prefix, item->string);
-	for_each_string_list_item(item, &existing->non_kept_packs)
-		fprintf(in, "-%s.pack\n", item->string);
-	for_each_string_list_item(item, &existing->cruft_packs)
-		fprintf(in, "-%s.pack\n", item->string);
+	if (args->max_pack_size && !cruft_expiration) {
+		collapse_small_cruft_packs(in, args->max_pack_size, existing);
+	} else {
+		for_each_string_list_item(item, &existing->non_kept_packs)
+			fprintf(in, "-%s.pack\n", item->string);
+		for_each_string_list_item(item, &existing->cruft_packs)
+			fprintf(in, "-%s.pack\n", item->string);
+	}
 	for_each_string_list_item(item, &existing->kept_packs)
 		fprintf(in, "%s.pack\n", item->string);
 	fclose(in);
@@ -990,6 +1146,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 				   PACK_CRUFT),
 		OPT_STRING(0, "cruft-expiration", &cruft_expiration, N_("approxidate"),
 				N_("with --cruft, expire objects older than this")),
+		OPT_MAGNITUDE(0, "max-cruft-size", &cruft_po_args.max_pack_size,
+				N_("with --cruft, limit the size of new cruft packs")),
 		OPT_BOOL('d', NULL, &delete_redundant,
 				N_("remove redundant packs, and run git-prune-packed")),
 		OPT_BOOL('f', NULL, &po_args.no_reuse_delta,
@@ -1017,7 +1175,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 				N_("limits the maximum delta depth")),
 		OPT_STRING(0, "threads", &po_args.threads, N_("n"),
 				N_("limits the maximum number of threads")),
-		OPT_STRING(0, "max-pack-size", &po_args.max_pack_size, N_("bytes"),
+		OPT_MAGNITUDE(0, "max-pack-size", &po_args.max_pack_size,
 				N_("maximum size of each packfile")),
 		OPT_PARSE_LIST_OBJECTS_FILTER(&po_args.filter_options),
 		OPT_BOOL(0, "pack-kept-objects", &pack_kept_objects,
@@ -1327,7 +1485,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		struct string_list include = STRING_LIST_INIT_NODUP;
 		midx_included_packs(&include, &existing, &names, &geometry);
 
-		ret = write_midx_included_packs(&include, &geometry,
+		ret = write_midx_included_packs(&include, &geometry, &names,
 						refs_snapshot ? get_tempfile_path(refs_snapshot) : NULL,
 						show_progress, write_bitmaps > 0);
 
