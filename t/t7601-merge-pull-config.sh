@@ -349,13 +349,13 @@ test_expect_success 'Cannot rebase with multiple heads' '
 
 test_expect_success 'merge c1 with c2' '
 	git reset --hard c1 &&
-	test -f c0.c &&
-	test -f c1.c &&
-	test ! -f c2.c &&
-	test ! -f c3.c &&
+	test_path_is_file c0.c &&
+	test_path_is_file c1.c &&
+	test_path_is_missing c2.c &&
+	test_path_is_missing c3.c &&
 	git merge c2 &&
-	test -f c1.c &&
-	test -f c2.c
+	test_path_is_file c1.c &&
+	test_path_is_file c2.c
 '
 
 test_expect_success 'fast-forward pull succeeds with "true" in pull.ff' '
@@ -411,8 +411,8 @@ test_expect_success 'merge c1 with c2 (ours in pull.twohead)' '
 	git reset --hard c1 &&
 	git config pull.twohead ours &&
 	git merge c2 &&
-	test -f c1.c &&
-	! test -f c2.c
+	test_path_is_file c1.c &&
+	test_path_is_missing c2.c
 '
 
 test_expect_success 'merge c1 with c2 and c3 (recursive in pull.octopus)' '
@@ -431,10 +431,10 @@ test_expect_success 'merge c1 with c2 and c3 (recursive and octopus in pull.octo
 	test "$(git rev-parse c2)" = "$(git rev-parse HEAD^2)" &&
 	test "$(git rev-parse c3)" = "$(git rev-parse HEAD^3)" &&
 	git diff --exit-code &&
-	test -f c0.c &&
-	test -f c1.c &&
-	test -f c2.c &&
-	test -f c3.c
+	test_path_is_file c0.c &&
+	test_path_is_file c1.c &&
+	test_path_is_file c2.c &&
+	test_path_is_file c3.c
 '
 
 conflict_count()
