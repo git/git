@@ -86,7 +86,8 @@ UI, Workflows & Features
  * "git repack" machinery learns to pay attention to the "--filter="
    option.
 
- * Test coverage for trailers has been improved.
+ * "git repack" learned "--max-cruft-size" to prevent cruft packs from
+   growing without bounds.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -122,6 +123,8 @@ Performance, Internal Implementation, Development Support etc.
 
  * GitHub CI workflow has learned to trigger Coverity check.
    (merge 3349520e1a js/ci-coverity later to maint).
+
+ * Test coverage for trailers has been improved.
 
 
 Fixes since v2.42
@@ -243,6 +246,10 @@ Fixes since v2.42
    corrected.
    (merge 4adceb5a29 ar/diff-index-merge-base-fix later to maint).
 
+ * Fix "git merge-tree" to stop segfaulting when the --attr-source
+   option is used.
+   (merge e95bafc52f jc/merge-ort-attr-index-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge fd3ba590d8 ws/git-push-doc-grammofix later to maint).
    (merge 5f33a843de ds/upload-pack-error-sequence-fix later to maint).
@@ -266,3 +273,4 @@ Fixes since v2.42
    (merge c2c349a15c xz/commit-title-soft-limit-doc later to maint).
    (merge f4cbb32c27 rs/parse-opt-ctx-cleanup later to maint).
    (merge badf2fe1c3 jk/decoration-and-other-leak-fixes later to maint).
+   (merge cebfaaa333 sn/cat-file-doc-update later to maint).
