@@ -1902,6 +1902,7 @@ static void initialize_attr_index(struct merge_options *opt)
 	struct index_state *attr_index = &opt->priv->attr_index;
 	struct cache_entry *ce;
 
+	attr_index->repo = opt->repo;
 	attr_index->initialized = 1;
 
 	if (!opt->renormalize)
