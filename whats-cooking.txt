@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2023, #06; Fri, 13)
-X-master-at: a9ecda2788e229afc9b611acaa26d0d9d4da53ed
-X-next-at: e4580a1d7b1178eb1559367d74fe1eac208e14bb
+Subject: What's cooking in git.git (Oct 2023, #07; Wed, 18)
+X-master-at: 813d9a91884e0afecec8ccf8e33909c405ee1d3f
+X-next-at: 680d4f5322bd5e584467ecdc7102556efec01b08
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Oct 2023, #06; Fri, 13)
+What's cooking in git.git (Oct 2023, #07; Wed, 18)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -51,136 +51,104 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ar/diff-index-merge-base-fix (2023-10-02) 1 commit
-  (merged to 'next' on 2023-10-06 at 0ff4dfc0e1)
- + diff: fix --merge-base with annotated tags
+* jc/merge-ort-attr-index-fix (2023-10-09) 1 commit
+  (merged to 'next' on 2023-10-10 at b139b87502)
+ + merge-ort: initialize repo in index state
 
- "git diff --merge-base X other args..." insisted that X must be a
- commit and errored out when given an annotated tag that peels to a
- commit, but we only need it to be a committish.  This has been
- corrected.
- source: <20231001151845.3621551-1-hi@alyssa.is>
+ Fix "git merge-tree" to stop segfaulting when the --attr-source
+ option is used.
+ source: <pull.1583.v3.git.git.1696857660374.gitgitgadget@gmail.com>
 
 
-* ds/mailmap-entry-update (2023-10-12) 1 commit
-  (merged to 'next' on 2023-10-12 at 3de300ac62)
- + mailmap: change primary address for Derrick Stolee
+* sn/cat-file-doc-update (2023-10-09) 1 commit
+  (merged to 'next' on 2023-10-10 at 6719ba7bd4)
+ + doc/cat-file: make synopsis and description less confusing
 
- Update mailmap entry for Derrick.
-
- Will merge to 'master' immediately.
- source: <pull.1592.git.1697131834003.gitgitgadget@gmail.com>
+ "git cat-file" documentation updates.
+ source: <20231009175604.2361700-1-stepnem@smrk.net>
 
 
-* jk/commit-graph-leak-fixes (2023-10-03) 10 commits
-  (merged to 'next' on 2023-10-06 at 5d202ef8b9)
- + commit-graph: clear oidset after finishing write
- + commit-graph: free write-context base_graph_name during cleanup
- + commit-graph: free write-context entries before overwriting
- + commit-graph: free graph struct that was not added to chain
- + commit-graph: delay base_graph assignment in add_graph_to_chain()
- + commit-graph: free all elements of graph chain
- + commit-graph: move slab-clearing to close_commit_graph()
- + merge: free result of repo_get_merge_bases()
- + commit-reach: free temporary list in get_octopus_merge_bases()
- + t6700: mark test as leak-free
+* tb/repack-max-cruft-size (2023-10-09) 5 commits
+  (merged to 'next' on 2023-10-09 at 38f039e880)
+ + repack: free existing_cruft array after use
+  (merged to 'next' on 2023-10-06 at b3ca6df3b9)
+ + builtin/repack.c: avoid making cruft packs preferred
+ + builtin/repack.c: implement support for `--max-cruft-size`
+ + builtin/repack.c: parse `--max-pack-size` with OPT_MAGNITUDE
+ + t7700: split cruft-related tests to t7704
 
- Leakfix.
- source: <20231003202504.GA7697@coredump.intra.peff.net>
-
-
-* jk/decoration-and-other-leak-fixes (2023-10-05) 3 commits
-  (merged to 'next' on 2023-10-06 at 5fc05c94dc)
- + daemon: free listen_addr before returning
- + revision: clear decoration structs during release_revisions()
- + decorate: add clear_decoration() function
-
- Leakfix.
- source: <20231005212802.GA982892@coredump.intra.peff.net>
+ "git repack" learned "--max-cruft-size" to prevent cruft packs from
+ growing without bounds.
+ source: <cover.1696293862.git.me@ttaylorr.com>
+ source: <20231007172031.GA1524950@coredump.intra.peff.net>
+ source: <035393935108d02aaf8927189b05102f4f74f340.1696370003.git.me@ttaylorr.com>
 
 
-* js/submodule-fix-misuse-of-path-and-name (2023-10-03) 6 commits
-  (merged to 'next' on 2023-10-06 at 1054b6e752)
- + t7420: test that we correctly handle renamed submodules
- + t7419: test that we correctly handle renamed submodules
- + t7419, t7420: use test_cmp_config instead of grepping .gitmodules
- + t7419: actually test the branch switching
- + submodule--helper: return error from set-url when modifying failed
- + submodule--helper: use submodule_from_path in set-{url,branch}
+* xz/commit-title-soft-limit-doc (2023-10-09) 1 commit
+  (merged to 'next' on 2023-10-10 at 0bf3d9ed51)
+ + doc: correct the 50 characters soft limit (+)
 
- In .gitmodules files, submodules are keyed by their names, and the
- path to the submodule whose name is $name is specified by the
- submodule.$name.path variable.  There were a few codepaths that
- mixed the name and path up when consulting the submodule database,
- which have been corrected.  It took long for these bugs to be found
- as the name of a submodule initially is the same as its path, and
- the problem does not surface until it is moved to a different path,
- which apparently happens very rarely.
- source: <0a0a157f88321d25fdb0be771a454b3410a449f3.camel@archlinux.org>
-
-
-* la/trailer-test-and-doc-updates (2023-09-07) 13 commits
-  (merged to 'next' on 2023-10-06 at 69fef35819)
- + trailer doc: <token> is a <key> or <keyAlias>, not both
- + trailer doc: separator within key suppresses default separator
- + trailer doc: emphasize the effect of configuration variables
- + trailer --unfold help: prefer "reformat" over "join"
- + trailer --parse docs: add explanation for its usefulness
- + trailer --only-input: prefer "configuration variables" over "rules"
- + trailer --parse help: expose aliased options
- + trailer --no-divider help: describe usual "---" meaning
- + trailer: trailer location is a place, not an action
- + trailer doc: narrow down scope of --where and related flags
- + trailer: add tests to check defaulting behavior with --no-* flags
- + trailer test description: this tests --where=after, not --where=before
- + trailer tests: make test cases self-contained
-
- Test coverage for trailers has been improved.
- source: <pull.1564.v3.git.1694125209.gitgitgadget@gmail.com>
+ Doc update.
+ source: <pull.1585.v2.git.git.1696778367151.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [New Topics]
 
-* tb/format-pack-doc-update (2023-10-12) 2 commits
- - Documentation/gitformat-pack.txt: fix incorrect MIDX documentation
- - Documentation/gitformat-pack.txt: fix typo
+* jc/commit-new-underscore-index-fix (2023-10-17) 1 commit
+ - commit: do not use cryptic "new_index" in end-user facing messages
 
- Doc update.
-
- Expecting a reroll.
- cf. <xmqq5y3b4id2.fsf@gitster.g>
- source: <cover.1697144959.git.me@ttaylorr.com>
+ source: <xmqqo7gwvd8c.fsf_-_@gitster.g>
 
 
-* ps/do-not-trust-commit-graph-blindly-for-existence (2023-10-13) 1 commit
- - commit: detect commits that exist in commit-graph but not in the ODB
- (this branch is used by kn/rev-list-missing-fix.)
+* js/bugreport-in-the-same-minute (2023-10-16) 1 commit
+ - bugreport: include +i in outfile suffix as needed
 
- The codepath to traverse the commit-graph learned to notice that a
- commit is missing (e.g., corrupt repository lost an object), even
- though it knows something about the commit (like its parents) from
- what is in commit-graph.
-
- Comments?
- source: <b0bf576c51a706367a758b8e30eca37edb9c2734.1697200576.git.ps@pks.im>
+ source: <20231016214045.146862-2-jacob@initialcommit.io>
 
 
-* tb/pair-chunk-expect-size (2023-10-13) 8 commits
- - midx: read `OOFF` chunk with `pair_chunk_expect()`
- - midx: read `OIDL` chunk with `pair_chunk_expect()`
- - midx: read `OIDF` chunk with `pair_chunk_expect()`
- - commit-graph: read `BIDX` chunk with `pair_chunk_expect()`
- - commit-graph: read `GDAT` chunk with `pair_chunk_expect()`
- - commit-graph: read `CDAT` chunk with `pair_chunk_expect()`
- - commit-graph: read `OIDF` chunk with `pair_chunk_expect()`
- - chunk-format: introduce `pair_chunk_expect()` helper
- (this branch uses jk/chunk-bounds.)
+* kh/pathspec-error-wo-repository-fix (2023-10-17) 1 commit
+ - grep: die gracefully when outside repository
 
- Code clean-up for jk/chunk-bounds topic.
+ source: <087c92e3904dd774f672373727c300bf7f5f6369.1697317276.git.code@khaugsbakk.name>
 
- Comments?
- source: <45cac29403e63483951f7766c6da3c022c68d9f0.1697225110.git.me@ttaylorr.com>
- source: <cover.1697225110.git.me@ttaylorr.com>
+
+* kh/t7900-cleanup (2023-10-17) 9 commits
+ - t7900: fix register dependency
+ - t7900: factor out packfile dependency
+ - t7900: fix `print-args` dependency
+ - t7900: fix `pfx` dependency
+ - t7900: factor out common schedule setup
+ - t7900: factor out inheritance test dependency
+ - t7900: create commit so that branch is born
+ - t7900: setup and tear down clones
+ - t7900: remove register dependency
+
+ source: <cover.1697319294.git.code@khaugsbakk.name>
+
+
+* ni/die-message-fix-for-git-add (2023-10-17) 1 commit
+ - builtin/add.c: clean up die() messages
+
+ source: <20231017113946.747-1-naomi.ibeh69@gmail.com>
+
+
+* ps/git-repack-doc-fixes (2023-10-16) 2 commits
+ - doc/git-repack: don't mention nonexistent "--unpacked" option
+ - doc/git-repack: fix syntax for `-g` shorthand option
+
+ source: <cover.1697440686.git.ps@pks.im>
+
+
+* tb/merge-tree-write-pack (2023-10-17) 7 commits
+ - builtin/merge-tree.c: implement support for `--write-pack`
+ - bulk-checkin: introduce `index_tree_bulk_checkin_incore()`
+ - bulk-checkin: introduce `index_blob_bulk_checkin_incore()`
+ - bulk-checkin: factor our `finalize_checkpoint()`
+ - bulk-checkin: factor out `truncate_checkpoint()`
+ - bulk-checkin: factor out `prepare_checkpoint()`
+ - bulk-checkin: factor out `format_object_header_hash()`
+
+ source: <cover.1697560266.git.me@ttaylorr.com>
 
 --------------------------------------------------
 [Stalled]
@@ -227,27 +195,63 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* tb/format-pack-doc-update (2023-10-12) 2 commits
+ - Documentation/gitformat-pack.txt: fix incorrect MIDX documentation
+ - Documentation/gitformat-pack.txt: fix typo
+
+ Doc update.
+
+ Expecting a reroll.
+ cf. <xmqq5y3b4id2.fsf@gitster.g>
+ source: <cover.1697144959.git.me@ttaylorr.com>
+
+
+* ps/do-not-trust-commit-graph-blindly-for-existence (2023-10-13) 1 commit
+ - commit: detect commits that exist in commit-graph but not in the ODB
+ (this branch is used by kn/rev-list-missing-fix.)
+
+ The codepath to traverse the commit-graph learned to notice that a
+ commit is missing (e.g., corrupt repository lost an object), even
+ though it knows something about the commit (like its parents) from
+ what is in commit-graph.
+
+ Comments?
+ source: <b0bf576c51a706367a758b8e30eca37edb9c2734.1697200576.git.ps@pks.im>
+
+
+* tb/pair-chunk-expect-size (2023-10-14) 8 commits
+ - midx: read `OOFF` chunk with `pair_chunk_expect()`
+ - midx: read `OIDL` chunk with `pair_chunk_expect()`
+ - midx: read `OIDF` chunk with `pair_chunk_expect()`
+ - commit-graph: read `BIDX` chunk with `pair_chunk_expect()`
+ - commit-graph: read `GDAT` chunk with `pair_chunk_expect()`
+ - commit-graph: read `CDAT` chunk with `pair_chunk_expect()`
+ - commit-graph: read `OIDF` chunk with `pair_chunk_expect()`
+ - chunk-format: introduce `pair_chunk_expect()` helper
+ (this branch uses jk/chunk-bounds.)
+
+ Code clean-up for jk/chunk-bounds topic.
+
+ Comments?
+ source: <45cac29403e63483951f7766c6da3c022c68d9f0.1697225110.git.me@ttaylorr.com>
+ source: <cover.1697225110.git.me@ttaylorr.com>
+
+
 * jc/fail-stash-to-store-non-stash (2023-10-11) 1 commit
- - stash: be careful what we store
+  (merged to 'next' on 2023-10-16 at e26db57315)
+ + stash: be careful what we store
 
  Feeding "git stash store" with a random commit that was not created
  by "git stash create" now errors out.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <xmqqbkd4lwj0.fsf_-_@gitster.g>
 
 
-* jc/doc-unit-tests-fixup (2023-10-11) 1 commit
- - SQUASH???
- (this branch uses js/doc-unit-tests and js/doc-unit-tests-with-cmake.)
-
- Quick fix for jc/doc-unit-tests topic to unbreak CI running on 'seen'.
- source: <xmqqwmvskf8t.fsf@gitster.g>
-
-
 * bc/racy-4gb-files (2023-10-13) 2 commits
- - Prevent git from rehashing 4GiB files
- - t: add a test helper to truncate files
+  (merged to 'next' on 2023-10-16 at c60962dfee)
+ + Prevent git from rehashing 4GiB files
+ + t: add a test helper to truncate files
 
  The index file has room only for lower 32-bit of the file size in
  the cached stat information, which means cached stat information
@@ -255,7 +259,7 @@ Release tarballs are available at:
  of 4GiB.  This is mistaken for a racily clean path.  Avoid it by
  storing a bogus sd_size value instead for such files.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <20231012160930.330618-1-sandals@crustytoothpaste.net>
 
 
@@ -310,73 +314,56 @@ Release tarballs are available at:
 
 
 * en/docfixes (2023-10-09) 25 commits
- - documentation: add missing parenthesis
- - documentation: add missing quotes
- - documentation: add missing fullstops
- - documentation: add some commas where they are helpful
- - documentation: fix whitespace issues
- - documentation: fix capitalization
- - documentation: fix punctuation
- - documentation: use clearer prepositions
- - documentation: add missing hyphens
- - documentation: remove unnecessary hyphens
- - documentation: add missing article
- - documentation: fix choice of article
- - documentation: whitespace is already generally plural
- - documentation: fix singular vs. plural
- - documentation: fix verb vs. noun
- - documentation: fix adjective vs. noun
- - documentation: fix verb tense
- - documentation: employ consistent verb tense for a list
- - documentation: fix subject/verb agreement
- - documentation: remove extraneous words
- - documentation: add missing words
- - documentation: fix apostrophe usage
- - documentation: fix typos
- - documentation: fix small error
- - documentation: wording improvements
+  (merged to 'next' on 2023-10-17 at 1e3cdeb427)
+ + documentation: add missing parenthesis
+ + documentation: add missing quotes
+ + documentation: add missing fullstops
+ + documentation: add some commas where they are helpful
+ + documentation: fix whitespace issues
+ + documentation: fix capitalization
+ + documentation: fix punctuation
+ + documentation: use clearer prepositions
+ + documentation: add missing hyphens
+ + documentation: remove unnecessary hyphens
+ + documentation: add missing article
+ + documentation: fix choice of article
+ + documentation: whitespace is already generally plural
+ + documentation: fix singular vs. plural
+ + documentation: fix verb vs. noun
+ + documentation: fix adjective vs. noun
+ + documentation: fix verb tense
+ + documentation: employ consistent verb tense for a list
+ + documentation: fix subject/verb agreement
+ + documentation: remove extraneous words
+ + documentation: add missing words
+ + documentation: fix apostrophe usage
+ + documentation: fix typos
+ + documentation: fix small error
+ + documentation: wording improvements
 
  Documentation typo and grammo fixes.
 
- Needs review.
+ Will merge to 'master'.
  source: <pull.1595.git.1696747527.gitgitgadget@gmail.com>
 
 
-* kn/rev-list-missing-fix (2023-10-13) 4 commits
- - rev-list: add commit object support in `--missing` option
- - rev-list: move `show_commit()` to the bottom
- - revision: rename bit to `do_not_die_on_missing_objects`
- - Merge branch 'ps/do-not-trust-commit-graph-blindly-for-existence' into kn/rev-list-missing-fix
+* kn/rev-list-missing-fix (2023-10-16) 4 commits
+ . rev-list: add commit object support in `--missing` option
+ . rev-list: move `show_commit()` to the bottom
+ . revision: rename bit to `do_not_die_on_missing_objects`
+ . Merge branch 'ps/do-not-trust-commit-graph-blindly-for-existence' into kn/rev-list-missing-fix
  (this branch uses ps/do-not-trust-commit-graph-blindly-for-existence.)
 
  "git rev-list --missing" did not work for missing commit objects,
  which has been corrected.
 
- Needs review.
- source: <20231009105528.17777-1-karthik.188@gmail.com>
+ cf. <xmqqbkcyo7ro.fsf@gitster.g>
+ source: <20231016103830.56486-1-karthik.188@gmail.com>
 
 
-* sn/cat-file-doc-update (2023-10-09) 1 commit
-  (merged to 'next' on 2023-10-10 at 6719ba7bd4)
- + doc/cat-file: make synopsis and description less confusing
-
- "git cat-file" documentation updates.
-
- Will merge to 'master'.
- source: <20231009175604.2361700-1-stepnem@smrk.net>
-
-
-* xz/commit-title-soft-limit-doc (2023-10-09) 1 commit
-  (merged to 'next' on 2023-10-10 at 0bf3d9ed51)
- + doc: correct the 50 characters soft limit (+)
-
- Doc update.
-
- Will merge to 'master'.
- source: <pull.1585.v2.git.git.1696778367151.gitgitgadget@gmail.com>
-
-
-* jk/chunk-bounds (2023-10-09) 20 commits
+* jk/chunk-bounds (2023-10-14) 21 commits
+  (merged to 'next' on 2023-10-16 at 68c9e37980)
+ + t5319: make corrupted large-offset test more robust
   (merged to 'next' on 2023-10-10 at 21139603ce)
  + chunk-format: drop pair_chunk_unsafe()
  + commit-graph: detect out-of-order BIDX offsets
@@ -417,40 +404,31 @@ Release tarballs are available at:
  source: <985ac850eb6e60ae76601acc8bfbcd56f99348b4.1696935657.git.ps@pks.im>
 
 
-* jc/merge-ort-attr-index-fix (2023-10-09) 1 commit
-  (merged to 'next' on 2023-10-10 at b139b87502)
- + merge-ort: initialize repo in index state
-
- Fix "git merge-tree" to stop segfaulting when the --attr-source
- option is used.
-
- Will merge to 'master'.
- source: <pull.1583.v3.git.git.1696857660374.gitgitgadget@gmail.com>
-
-
 * sn/typo-grammo-phraso-fixes (2023-10-05) 5 commits
- - t/README: fix multi-prerequisite example
- - doc/gitk: s/sticked/stuck/
- - git-jump: admit to passing merge mode args to ls-files
- - doc/diff-options: improve wording of the log.diffMerges mention
- - doc: fix some typos, grammar and wording issues
+  (merged to 'next' on 2023-10-18 at 575d767f9a)
+ + t/README: fix multi-prerequisite example
+ + doc/gitk: s/sticked/stuck/
+ + git-jump: admit to passing merge mode args to ls-files
+ + doc/diff-options: improve wording of the log.diffMerges mention
+ + doc: fix some typos, grammar and wording issues
 
  Many typos, ungrammatical sentences and wrong phrasing have been
  fixed.
 
- Needs review.
+ Will merge to 'master'.
  source: <20231003082107.3002173-1-stepnem@smrk.net>
 
 
 * so/diff-merges-dd (2023-10-09) 3 commits
- - completion: complete '--dd'
- - diff-merges: introduce '--dd' option
- - diff-merges: improve --diff-merges documentation
+  (merged to 'next' on 2023-10-16 at 71b5e29625)
+ + completion: complete '--dd'
+ + diff-merges: introduce '--dd' option
+ + diff-merges: improve --diff-merges documentation
 
  "git log" and friends learned "--dd" that is a short-hand for
  "--diff-merges=first-parent -p".
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <20231009160535.236523-1-sorganov@gmail.com>
 
 
@@ -498,24 +476,6 @@ Release tarballs are available at:
 
  Needs (hopefully final and quick) review.
  source: <20231010123847.2777056-1-christian.couder@gmail.com>
-
-
-* tb/repack-max-cruft-size (2023-10-09) 5 commits
-  (merged to 'next' on 2023-10-09 at 38f039e880)
- + repack: free existing_cruft array after use
-  (merged to 'next' on 2023-10-06 at b3ca6df3b9)
- + builtin/repack.c: avoid making cruft packs preferred
- + builtin/repack.c: implement support for `--max-cruft-size`
- + builtin/repack.c: parse `--max-pack-size` with OPT_MAGNITUDE
- + t7700: split cruft-related tests to t7704
-
- "git repack" learned "--max-cruft-size" to prevent cruft packs from
- growing without bounds.
-
- Will merge to 'master'.
- source: <cover.1696293862.git.me@ttaylorr.com>
- source: <20231007172031.GA1524950@coredump.intra.peff.net>
- source: <035393935108d02aaf8927189b05102f4f74f340.1696370003.git.me@ttaylorr.com>
 
 
 * ak/color-decorate-symbols (2023-10-03) 1 commit
@@ -675,19 +635,22 @@ Release tarballs are available at:
  source: <e6d8a291-03de-cfd3-3813-747fc2cad145@web.de>
 
 
-* js/doc-unit-tests (2023-10-09) 3 commits
+* js/doc-unit-tests (2023-10-16) 5 commits
+ - fixup! ci: run unit tests in CI
+ - fixup! unit tests: add TAP unit test framework
  - ci: run unit tests in CI
  - unit tests: add TAP unit test framework
  - unit tests: add a project plan document
- (this branch is used by jc/doc-unit-tests-fixup and js/doc-unit-tests-with-cmake.)
+ (this branch is used by js/doc-unit-tests-with-cmake.)
 
  Process to add some form of low-level unit tests has started.
 
- Expecting a reroll to address CI breakage.
+ Expecting a (hopefully final and minor) reroll.
+ cf. <20231016134421.21659-1-phillip.wood123@gmail.com>
  source: <cover.1696889529.git.steadmon@google.com>
 
 
-* js/doc-unit-tests-with-cmake (2023-10-09) 7 commits
+* js/doc-unit-tests-with-cmake (2023-10-16) 7 commits
  - cmake: handle also unit tests
  - cmake: use test names instead of full paths
  - cmake: fix typo in variable name
@@ -695,7 +658,7 @@ Release tarballs are available at:
  - unit-tests: do show relative file paths
  - unit-tests: do not mistake `.pdb` files for being executable
  - cmake: also build unit tests
- (this branch is used by jc/doc-unit-tests-fixup; uses js/doc-unit-tests.)
+ (this branch uses js/doc-unit-tests.)
 
  Update the base topic to work with CMake builds.
 
@@ -715,60 +678,23 @@ Release tarballs are available at:
  source: <20230824205456.1231371-1-gitster@pobox.com>
 
 
-* rj/status-bisect-while-rebase (2023-08-01) 1 commit
+* rj/status-bisect-while-rebase (2023-10-16) 1 commit
  - status: fix branch shown when not only bisecting
 
  "git status" is taught to show both the branch being bisected and
  being rebased when both are in effect at the same time.
 
  Needs review.
- cf. <xmqqtttia3vn.fsf@gitster.g>
- source: <48745298-f12b-8efb-4e48-90d2c22a8349@gmail.com>
+ source: <2e24ca9b-9c5f-f4df-b9f8-6574a714dfb2@gmail.com>
 
 --------------------------------------------------
 [Discarded]
 
-* tb/ci-coverity (2023-09-21) 1 commit
- . .github/workflows: add coverity action
-
- GitHub CI workflow has learned to trigger Coverity check.
-
- Superseded by the js/ci-coverity topic.
- source: <b23951c569660e1891a7fb3ad2c2ea1952897bd7.1695332105.git.me@ttaylorr.com>
-
-
-* cw/git-std-lib (2023-09-11) 7 commits
+* jc/doc-unit-tests-fixup (2023-10-11) 1 commit
  . SQUASH???
- . git-std-lib: add test file to call git-std-lib.a functions
- . git-std-lib: introduce git standard library
- . parse: create new library for parsing strings and env values
- . config: correct bad boolean env value error message
- . wrapper: remove dependency to Git-specific internal file
- . hex-ll: split out functionality from hex
+ (this branch uses js/doc-unit-tests and js/doc-unit-tests-with-cmake.)
 
- Another libification effort.
+ Quick fix for jc/doc-unit-tests topic to unbreak CI running on 'seen'.
 
- Superseded by the cw/prelim-cleanup topic.
- cf. <xmqqy1hfrk6p.fsf@gitster.g>
- cf. <20230915183927.1597414-1-jonathantanmy@google.com>
- source: <20230908174134.1026823-1-calvinwan@google.com>
-
-
-* so/diff-merges-d (2023-09-11) 2 commits
- - diff-merges: introduce '-d' option
- - diff-merges: improve --diff-merges documentation
-
- Superseded by the so/diff-merges-dd topic.
- source: <20230909125446.142715-1-sorganov@gmail.com>
-
-
-* kn/rev-list-ignore-missing-links (2023-09-20) 1 commit
- . revision: add `--ignore-missing-links` user option
-
- Surface the .ignore_missing_links bit that stops the revision
- traversal from stopping and dying when encountering a missing
- object to a new command line option of "git rev-list", so that the
- objects that are required but are missing can be enumerated.
-
- Superseded by kn/rev-list-missing-fix
- source: <20230920104507.21664-1-karthik.188@gmail.com>
+ Superseded by a fixup! in the base series.
+ source: <xmqqwmvskf8t.fsf@gitster.g>
