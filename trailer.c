@@ -928,7 +928,7 @@ continue_outer_loop:
 /* Return the position of the end of the trailers. */
 static size_t find_trailer_end(const char *buf, size_t len)
 {
-	return len - ignore_non_trailer(buf, len);
+	return len - ignored_log_message_bytes(buf, len);
 }
 
 static int ends_with_blank_line(const char *buf, size_t len)
