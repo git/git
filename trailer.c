@@ -809,21 +809,49 @@ static ssize_t last_line(const char *buf, size_t len)
 }
 
 /*
- * Return the position of the start of the patch or the length of str if there
- * is no patch in the message.
+ * Find the end of the log message as an offset from the start of the input
+ * (where callers of this function are interested in looking for a trailers
+ * block in the same input). We have to consider two categories of content that
+ * can come at the end of the input which we want to ignore (because they don't
+ * belong in the log message):
+ *
+ * (1) the "patch part" which begins with a "---" divider and has patch
+ * information (like the output of git-format-patch), and
+ *
+ * (2) any trailing comment lines, blank lines like in the output of "git
+ * commit -v", or stuff below the "cut" (scissor) line.
+ *
+ * As a formula, the situation looks like this:
+ *
+ *     INPUT = LOG MESSAGE + IGNORED
+ *
+ * where IGNORED can be either of the two categories described above. It may be
+ * that there is nothing to ignore. Now it may be the case that the LOG MESSAGE
+ * contains a trailer block, but that's not the concern of this function.
  */
-static size_t find_patch_start(const char *str)
+static size_t find_end_of_log_message(const char *input, int no_divider)
 {
+	size_t end;
 	const char *s;
 
-	for (s = str; *s; s = next_line(s)) {
+	/* Assume the naive end of the input is already what we want. */
+	end = strlen(input);
+
+	if (no_divider)
+		return end;
+
+	/* Optionally skip over any patch part ("---" line and below). */
+	for (s = input; *s; s = next_line(s)) {
 		const char *v;
 
-		if (skip_prefix(s, "---", &v) && isspace(*v))
-			return s - str;
+		if (skip_prefix(s, "---", &v) && isspace(*v)) {
+			end = s - input;
+			break;
+		}
 	}
 
-	return s - str;
+	/* Skip over other ignorable bits. */
+	return end - ignored_log_message_bytes(input, end);
 }
 
 /*
@@ -923,12 +951,6 @@ continue_outer_loop:
 	}
 
 	return len;
-}
-
-/* Return the position of the end of the trailers. */
-static size_t find_trailer_end(const char *buf, size_t len)
-{
-	return len - ignored_log_message_bytes(buf, len);
 }
 
 static int ends_with_blank_line(const char *buf, size_t len)
@@ -1101,7 +1123,7 @@ void process_trailers(const char *file,
 void trailer_info_get(struct trailer_info *info, const char *str,
 		      const struct process_trailer_options *opts)
 {
-	int patch_start, trailer_end, trailer_start;
+	int end_of_log_message, trailer_start;
 	struct strbuf **trailer_lines, **ptr;
 	char **trailer_strings = NULL;
 	size_t nr = 0, alloc = 0;
@@ -1109,16 +1131,11 @@ void trailer_info_get(struct trailer_info *info, const char *str,
 
 	ensure_configured();
 
-	if (opts->no_divider)
-		patch_start = strlen(str);
-	else
-		patch_start = find_patch_start(str);
-
-	trailer_end = find_trailer_end(str, patch_start);
-	trailer_start = find_trailer_start(str, trailer_end);
+	end_of_log_message = find_end_of_log_message(str, opts->no_divider);
+	trailer_start = find_trailer_start(str, end_of_log_message);
 
 	trailer_lines = strbuf_split_buf(str + trailer_start,
-					 trailer_end - trailer_start,
+					 end_of_log_message - trailer_start,
 					 '\n',
 					 0);
 	for (ptr = trailer_lines; *ptr; ptr++) {
@@ -1141,7 +1158,7 @@ void trailer_info_get(struct trailer_info *info, const char *str,
 	info->blank_line_before_trailer = ends_with_blank_line(str,
 							       trailer_start);
 	info->trailer_start = str + trailer_start;
-	info->trailer_end = str + trailer_end;
+	info->trailer_end = str + end_of_log_message;
 	info->trailers = trailer_strings;
 	info->trailer_nr = nr;
 }
