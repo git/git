@@ -89,6 +89,9 @@ UI, Workflows & Features
  * "git repack" learned "--max-cruft-size" to prevent cruft packs from
    growing without bounds.
 
+ * "git merge-tree" learned to take strategy backend specific options
+   via the "-X" option, like "git merge" does.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -125,6 +128,10 @@ Performance, Internal Implementation, Development Support etc.
    (merge 3349520e1a js/ci-coverity later to maint).
 
  * Test coverage for trailers has been improved.
+
+ * The code to iterate over loose references have been optimized to
+   reduce the number of lstat() system calls.
+   (merge 2cdb796101 vd/loose-ref-iteration-optimization later to maint).
 
 
 Fixes since v2.42
@@ -250,6 +257,10 @@ Fixes since v2.42
    option is used.
    (merge e95bafc52f jc/merge-ort-attr-index-fix later to maint).
 
+ * Unlike "git log --pretty=%D", "git log --pretty="%(decorate)" did
+   not auto-initialize the decoration subsystem, which has been
+   corrected.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge fd3ba590d8 ws/git-push-doc-grammofix later to maint).
    (merge 5f33a843de ds/upload-pack-error-sequence-fix later to maint).
@@ -274,3 +285,4 @@ Fixes since v2.42
    (merge f4cbb32c27 rs/parse-opt-ctx-cleanup later to maint).
    (merge badf2fe1c3 jk/decoration-and-other-leak-fixes later to maint).
    (merge cebfaaa333 sn/cat-file-doc-update later to maint).
+   (merge 8b3aa36f5a ps/rewritten-is-per-worktree-doc later to maint).
