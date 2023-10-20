@@ -861,6 +861,9 @@ if ($compose) {
 	my $tpl_subject = $initial_subject || '';
 	my $tpl_in_reply_to = $initial_in_reply_to || '';
 	my $tpl_reply_to = $reply_to || '';
+	my $tpl_to = join(',', @initial_to);
+	my $tpl_cc = join(',', @initial_cc);
+	my $tpl_bcc = join(', ', @initial_bcc);
 
 	print $c <<EOT1, Git::prefix_lines("GIT: ", __(<<EOT2)), <<EOT3;
 From $tpl_sender # This line is ignored.
@@ -872,6 +875,9 @@ for the patch you are writing.
 Clear the body content if you don't wish to send a summary.
 EOT2
 From: $tpl_sender
+To: $tpl_to
+Cc: $tpl_cc
+Bcc: $tpl_bcc
 Reply-To: $tpl_reply_to
 Subject: $tpl_subject
 In-Reply-To: $tpl_in_reply_to
@@ -928,8 +934,14 @@ EOT3
 		} elsif (/^From:\s*(.+)\s*$/i) {
 			$sender = $1;
 			next;
-		} elsif (/^(?:To|Cc|Bcc):/i) {
-			print __("To/Cc/Bcc fields are not interpreted yet, they have been ignored\n");
+		} elsif (/^To:\s*(.+)\s*$/i) {
+			@initial_to = parse_address_line($1);
+			next;
+		} elsif (/^Cc:\s*(.+)\s*$/i) {
+			@initial_cc = parse_address_line($1);
+			next;
+		} elsif (/^Bcc:/i) {
+			@initial_bcc = parse_address_line($1);
 			next;
 		}
 		print $c2 $_;

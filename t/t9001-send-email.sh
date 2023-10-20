@@ -2522,7 +2522,7 @@ test_expect_success $PREREQ '--compose handles lowercase headers' '
 
 test_expect_success $PREREQ '--compose handles to headers' '
 	write_script fake-editor <<-\EOF &&
-	sed "s/^$/To: edited-to@example.com\n/" <"$1" >"$1.tmp" &&
+	sed "s/^To: .*/&, edited-to@example.com/" <"$1" >"$1.tmp" &&
 	echo this is the body >>"$1.tmp" &&
 	mv "$1.tmp" "$1"
 	EOF
@@ -2534,10 +2534,16 @@ test_expect_success $PREREQ '--compose handles to headers' '
 		--to=nobody@example.com \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		HEAD^ &&
-	# Ideally the "to" header we specified would be used,
-	# but the program explicitly warns that these are
-	# ignored. For now, just make sure we did not abort.
-	grep "To:" msgtxt1
+	# Check both that the cover letter used our modified "to" line,
+	# but also that it was picked up for the patch.
+	q_to_tab >expect <<-\EOF &&
+	To: nobody@example.com,
+	Qedited-to@example.com
+	EOF
+	grep -A1 "^To:" msgtxt1 >msgtxt1.to &&
+	test_cmp expect msgtxt1.to &&
+	grep -A1 "^To:" msgtxt2 >msgtxt2.to &&
+	test_cmp expect msgtxt2.to
 '
 
 test_done
