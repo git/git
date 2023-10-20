@@ -1490,18 +1490,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	if (options.strategy) {
 		options.strategy = xstrdup(options.strategy);
-		switch (options.type) {
-		case REBASE_APPLY:
-			die(_("--strategy requires --merge or --interactive"));
-		case REBASE_MERGE:
-			/* compatible */
-			break;
-		case REBASE_UNSPECIFIED:
-			options.type = REBASE_MERGE;
-			break;
-		default:
-			BUG("unhandled rebase type (%d)", options.type);
-		}
+		imply_merge(&options, "--strategy");
 	}
 
 	if (options.root && !options.onto_name)
