@@ -2505,4 +2505,39 @@ test_expect_success $PREREQ 'test forbidSendmailVariables behavior override' '
 		HEAD^
 '
 
+test_expect_success $PREREQ '--compose handles lowercase headers' '
+	write_script fake-editor <<-\EOF &&
+	sed "s/^From:.*/from: edited-from@example.com/i" "$1" >"$1.tmp" &&
+	mv "$1.tmp" "$1"
+	EOF
+	clean_fake_sendmail &&
+	git send-email \
+		--compose \
+		--from="Example <from@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		HEAD^ &&
+	grep "From: edited-from@example.com" msgtxt1
+'
+
+test_expect_success $PREREQ '--compose handles to headers' '
+	write_script fake-editor <<-\EOF &&
+	sed "s/^$/To: edited-to@example.com\n/" <"$1" >"$1.tmp" &&
+	echo this is the body >>"$1.tmp" &&
+	mv "$1.tmp" "$1"
+	EOF
+	clean_fake_sendmail &&
+	GIT_SEND_EMAIL_NOTTY=1 \
+	git send-email \
+		--compose \
+		--from="Example <from@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		HEAD^ &&
+	# Ideally the "to" header we specified would be used,
+	# but the program explicitly warns that these are
+	# ignored. For now, just make sure we did not abort.
+	grep "To:" msgtxt1
+'
+
 test_done
