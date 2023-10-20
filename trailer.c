@@ -858,7 +858,7 @@ static size_t find_end_of_log_message(const char *input, int no_divider)
  * Return the position of the first trailer line or len if there are no
  * trailers.
  */
-static size_t find_trailer_start(const char *buf, size_t len)
+static size_t find_trailer_block_start(const char *buf, size_t len)
 {
 	const char *s;
 	ssize_t end_of_title, l;
@@ -1074,7 +1074,6 @@ void process_trailers(const char *file,
 	LIST_HEAD(head);
 	struct strbuf sb = STRBUF_INIT;
 	struct trailer_info info;
-	size_t trailer_end;
 	FILE *outfile = stdout;
 
 	ensure_configured();
@@ -1085,11 +1084,10 @@ void process_trailers(const char *file,
 		outfile = create_in_place_tempfile(file);
 
 	parse_trailers(&info, sb.buf, &head, opts);
-	trailer_end = info.trailer_end - sb.buf;
 
 	/* Print the lines before the trailers */
 	if (!opts->only_trailers)
-		fwrite(sb.buf, 1, info.trailer_start - sb.buf, outfile);
+		fwrite(sb.buf, 1, info.trailer_block_start, outfile);
 
 	if (!opts->only_trailers && !info.blank_line_before_trailer)
 		fprintf(outfile, "\n");
@@ -1111,7 +1109,7 @@ void process_trailers(const char *file,
 
 	/* Print the lines after the trailers as is */
 	if (!opts->only_trailers)
-		fwrite(sb.buf + trailer_end, 1, sb.len - trailer_end, outfile);
+		fwrite(sb.buf + info.trailer_block_end, 1, sb.len - info.trailer_block_end, outfile);
 
 	if (opts->in_place)
 		if (rename_tempfile(&trailers_tempfile, file))
@@ -1123,7 +1121,7 @@ void process_trailers(const char *file,
 void trailer_info_get(struct trailer_info *info, const char *str,
 		      const struct process_trailer_options *opts)
 {
-	int end_of_log_message, trailer_start;
+	size_t end_of_log_message = 0, trailer_block_start = 0;
 	struct strbuf **trailer_lines, **ptr;
 	char **trailer_strings = NULL;
 	size_t nr = 0, alloc = 0;
@@ -1132,10 +1130,10 @@ void trailer_info_get(struct trailer_info *info, const char *str,
 	ensure_configured();
 
 	end_of_log_message = find_end_of_log_message(str, opts->no_divider);
-	trailer_start = find_trailer_start(str, end_of_log_message);
+	trailer_block_start = find_trailer_block_start(str, end_of_log_message);
 
-	trailer_lines = strbuf_split_buf(str + trailer_start,
-					 end_of_log_message - trailer_start,
+	trailer_lines = strbuf_split_buf(str + trailer_block_start,
+					 end_of_log_message - trailer_block_start,
 					 '\n',
 					 0);
 	for (ptr = trailer_lines; *ptr; ptr++) {
@@ -1156,9 +1154,9 @@ void trailer_info_get(struct trailer_info *info, const char *str,
 	strbuf_list_free(trailer_lines);
 
 	info->blank_line_before_trailer = ends_with_blank_line(str,
-							       trailer_start);
-	info->trailer_start = str + trailer_start;
-	info->trailer_end = str + end_of_log_message;
+							       trailer_block_start);
+	info->trailer_block_start = trailer_block_start;
+	info->trailer_block_end = end_of_log_message;
 	info->trailers = trailer_strings;
 	info->trailer_nr = nr;
 }
@@ -1173,6 +1171,7 @@ void trailer_info_release(struct trailer_info *info)
 
 static void format_trailer_info(struct strbuf *out,
 				const struct trailer_info *info,
+				const char *msg,
 				const struct process_trailer_options *opts)
 {
 	size_t origlen = out->len;
@@ -1182,8 +1181,8 @@ static void format_trailer_info(struct strbuf *out,
 	if (!opts->only_trailers && !opts->unfold && !opts->filter &&
 	    !opts->separator && !opts->key_only && !opts->value_only &&
 	    !opts->key_value_separator) {
-		strbuf_add(out, info->trailer_start,
-			   info->trailer_end - info->trailer_start);
+		strbuf_add(out, msg + info->trailer_block_start,
+			   info->trailer_block_end - info->trailer_block_start);
 		return;
 	}
 
@@ -1237,7 +1236,7 @@ void format_trailers_from_commit(struct strbuf *out, const char *msg,
 	struct trailer_info info;
 
 	trailer_info_get(&info, msg, opts);
-	format_trailer_info(out, &info, opts);
+	format_trailer_info(out, &info, msg, opts);
 	trailer_info_release(&info);
 }
 
