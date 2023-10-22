@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2023, #07; Wed, 18)
-X-master-at: 813d9a91884e0afecec8ccf8e33909c405ee1d3f
-X-next-at: 680d4f5322bd5e584467ecdc7102556efec01b08
+Subject: What's cooking in git.git (Oct 2023, #08; Sun, 22)
+X-master-at: ceadf0f3cf51550166a387ec8508bb55e7883057
+X-next-at: 7ce3cef56b63eab50c97e020dbcc89a4d2035129
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Oct 2023, #07; Wed, 18)
+What's cooking in git.git (Oct 2023, #08; Sun, 22)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -51,104 +51,135 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* jc/merge-ort-attr-index-fix (2023-10-09) 1 commit
-  (merged to 'next' on 2023-10-10 at b139b87502)
- + merge-ort: initialize repo in index state
+* ak/pretty-decorate-more-fix (2023-10-09) 1 commit
+  (merged to 'next' on 2023-10-12 at 3cbb4c2268)
+ + pretty: fix ref filtering for %(decorate) formats
 
- Fix "git merge-tree" to stop segfaulting when the --attr-source
- option is used.
- source: <pull.1583.v3.git.git.1696857660374.gitgitgadget@gmail.com>
-
-
-* sn/cat-file-doc-update (2023-10-09) 1 commit
-  (merged to 'next' on 2023-10-10 at 6719ba7bd4)
- + doc/cat-file: make synopsis and description less confusing
-
- "git cat-file" documentation updates.
- source: <20231009175604.2361700-1-stepnem@smrk.net>
+ Unlike "git log --pretty=%D", "git log --pretty="%(decorate)" did
+ not auto-initialize the decoration subsystem, which has been
+ corrected.
+ source: <20231008202307.1568477-1-andy.koppe@gmail.com>
 
 
-* tb/repack-max-cruft-size (2023-10-09) 5 commits
-  (merged to 'next' on 2023-10-09 at 38f039e880)
- + repack: free existing_cruft array after use
-  (merged to 'next' on 2023-10-06 at b3ca6df3b9)
- + builtin/repack.c: avoid making cruft packs preferred
- + builtin/repack.c: implement support for `--max-cruft-size`
- + builtin/repack.c: parse `--max-pack-size` with OPT_MAGNITUDE
- + t7700: split cruft-related tests to t7704
-
- "git repack" learned "--max-cruft-size" to prevent cruft packs from
- growing without bounds.
- source: <cover.1696293862.git.me@ttaylorr.com>
- source: <20231007172031.GA1524950@coredump.intra.peff.net>
- source: <035393935108d02aaf8927189b05102f4f74f340.1696370003.git.me@ttaylorr.com>
-
-
-* xz/commit-title-soft-limit-doc (2023-10-09) 1 commit
-  (merged to 'next' on 2023-10-10 at 0bf3d9ed51)
- + doc: correct the 50 characters soft limit (+)
+* ps/rewritten-is-per-worktree-doc (2023-10-10) 1 commit
+  (merged to 'next' on 2023-10-12 at 501b960e8c)
+ + doc/git-worktree: mention "refs/rewritten" as per-worktree refs
 
  Doc update.
- source: <pull.1585.v2.git.git.1696778367151.gitgitgadget@gmail.com>
+ source: <985ac850eb6e60ae76601acc8bfbcd56f99348b4.1696935657.git.ps@pks.im>
+
+
+* ty/merge-tree-strategy-options (2023-10-11) 2 commits
+  (merged to 'next' on 2023-10-12 at 9b873601df)
+ + merge: introduce {copy|clear}_merge_options()
+  (merged to 'next' on 2023-09-29 at aa65b54416)
+ + merge-tree: add -X strategy option
+
+ "git merge-tree" learned to take strategy backend specific options
+ via the "-X" option, like "git merge" does.
+ source: <pull.1565.v6.git.1695522222723.gitgitgadget@gmail.com>
+
+
+* vd/loose-ref-iteration-optimization (2023-10-09) 4 commits
+  (merged to 'next' on 2023-10-12 at 99e2f83855)
+ + files-backend.c: avoid stat in 'loose_fill_ref_dir'
+ + dir.[ch]: add 'follow_symlink' arg to 'get_dtype'
+ + dir.[ch]: expose 'get_dtype'
+ + ref-cache.c: fix prefix matching in ref iteration
+
+ The code to iterate over loose references have been optimized to
+ reduce the number of lstat() system calls.
+ source: <pull.1594.v2.git.1696888736.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [New Topics]
 
-* jc/commit-new-underscore-index-fix (2023-10-17) 1 commit
- - commit: do not use cryptic "new_index" in end-user facing messages
+* jc/am-doc-whitespace-action-fix (2023-10-18) 1 commit
+  (merged to 'next' on 2023-10-20 at 9200d39c08)
+ + am: align placeholder for --whitespace option with apply
 
- source: <xmqqo7gwvd8c.fsf_-_@gitster.g>
+ Docfix.
 
-
-* js/bugreport-in-the-same-minute (2023-10-16) 1 commit
- - bugreport: include +i in outfile suffix as needed
-
- source: <20231016214045.146862-2-jacob@initialcommit.io>
+ Will merge to 'master'.
+ source: <xmqqwmvjzeqd.fsf@gitster.g>
 
 
-* kh/pathspec-error-wo-repository-fix (2023-10-17) 1 commit
- - grep: die gracefully when outside repository
+* da/t7601-style-fix (2023-10-18) 1 commit
+  (merged to 'next' on 2023-10-20 at 8e7326458c)
+ + t7601: use "test_path_is_file" etc. instead of "test -f"
 
- source: <087c92e3904dd774f672373727c300bf7f5f6369.1697317276.git.code@khaugsbakk.name>
+ Coding style update.
 
-
-* kh/t7900-cleanup (2023-10-17) 9 commits
- - t7900: fix register dependency
- - t7900: factor out packfile dependency
- - t7900: fix `print-args` dependency
- - t7900: fix `pfx` dependency
- - t7900: factor out common schedule setup
- - t7900: factor out inheritance test dependency
- - t7900: create commit so that branch is born
- - t7900: setup and tear down clones
- - t7900: remove register dependency
-
- source: <cover.1697319294.git.code@khaugsbakk.name>
+ Will merge to 'master'.
+ source: <20231018124538.68549-2-anonolitunya@gmail.com>
 
 
-* ni/die-message-fix-for-git-add (2023-10-17) 1 commit
- - builtin/add.c: clean up die() messages
+* jx/fetch-atomic-error-message-fix (2023-10-19) 2 commits
+ - fetch: no redundant error message for atomic fetch
+ - t5574: test porcelain output of atomic fetch
 
- source: <20231017113946.747-1-naomi.ibeh69@gmail.com>
+ "git fetch --atomic" issued an unnecessary empty error message,
+ which has been corrected.
 
-
-* ps/git-repack-doc-fixes (2023-10-16) 2 commits
- - doc/git-repack: don't mention nonexistent "--unpacked" option
- - doc/git-repack: fix syntax for `-g` shorthand option
-
- source: <cover.1697440686.git.ps@pks.im>
+ Needs review.
+ source: <ced46baeb1c18b416b4b4cc947f498bea2910b1b.1697725898.git.zhiyou.jx@alibaba-inc.com>
 
 
-* tb/merge-tree-write-pack (2023-10-17) 7 commits
- - builtin/merge-tree.c: implement support for `--write-pack`
- - bulk-checkin: introduce `index_tree_bulk_checkin_incore()`
- - bulk-checkin: introduce `index_blob_bulk_checkin_incore()`
- - bulk-checkin: factor our `finalize_checkpoint()`
- - bulk-checkin: factor out `truncate_checkpoint()`
- - bulk-checkin: factor out `prepare_checkpoint()`
- - bulk-checkin: factor out `format_object_header_hash()`
+* mm/p4-symlink-with-lfs (2023-10-19) 1 commit
+  (merged to 'next' on 2023-10-20 at 9c05ce7e85)
+ + git-p4 shouldn't attempt to store symlinks in LFS
 
- source: <cover.1697560266.git.me@ttaylorr.com>
+ "git p4" tried to store symlinks to LFS when told, but has been
+ fixed not to do so, because it does not make sense.
+
+ Will merge to 'master'.
+ source: <20231019002558.867830-1-mmcclain@noprivs.com>
+
+
+* jk/send-email-fix-addresses-from-composed-messages (2023-10-20) 3 commits
+  (merged to 'next' on 2023-10-22 at 43221cc3a4)
+ + send-email: handle to/cc/bcc from --compose message
+ + Revert "send-email: extract email-parsing code into a subroutine"
+ + doc/send-email: mention handling of "reply-to" with --compose
+
+ The codepath to handle recipient addresses `git send-email
+ --compose` learns from the user was completely broken, which has
+ been corrected.
+
+ Will merge to 'master'.
+ source: <20231020100343.GA2194322@coredump.intra.peff.net>
+
+
+* ms/doc-push-fix (2023-10-20) 1 commit
+  (merged to 'next' on 2023-10-22 at 7ce3cef56b)
+ + git-push doc: more visibility for -q option
+
+ Docfix.
+
+ Will merge to 'master'.
+ source: <20231020184627.14336-1-msuchanek@suse.de>
+
+
+* ob/rebase-cleanup (2023-10-20) 3 commits
+  (merged to 'next' on 2023-10-22 at 05e14ca4fc)
+ + rebase: move parse_opt_keep_empty() down
+ + rebase: handle --strategy via imply_merge() as well
+ + rebase: simplify code related to imply_merge()
+
+ Code clean-up.
+
+ Will merge to 'master'.
+ source: <20231020093654.922890-1-oswald.buddenhagen@gmx.de>
+
+
+* wx/merge-ort-comment-typofix (2023-10-21) 1 commit
+  (merged to 'next' on 2023-10-22 at ad1e33883a)
+ + merge-ort.c: fix typo 'neeed' to 'needed'
+
+ Typofix.
+
+ Will merge to 'master'.
+ source: <pull.1592.v3.git.git.1697942768555.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -194,6 +225,92 @@ Release tarballs are available at:
 
 --------------------------------------------------
 [Cooking]
+
+* jc/commit-new-underscore-index-fix (2023-10-17) 1 commit
+  (merged to 'next' on 2023-10-22 at 0e4787303d)
+ + commit: do not use cryptic "new_index" in end-user facing messages
+
+ Message fix.
+
+ Will merge to 'master'.
+ source: <xmqqo7gwvd8c.fsf_-_@gitster.g>
+
+
+* js/bugreport-in-the-same-minute (2023-10-16) 1 commit
+ - bugreport: include +i in outfile suffix as needed
+
+ Instead of auto-generating a filename that is already in use for
+ output and fail the command, `git bugreport` learned to fuzz the
+ filename to avoid collisions with existing files.
+
+ Needs review.
+ source: <20231016214045.146862-2-jacob@initialcommit.io>
+
+
+* kh/pathspec-error-wo-repository-fix (2023-10-20) 1 commit
+  (merged to 'next' on 2023-10-22 at 4f77af1e40)
+ + grep: die gracefully when outside repository
+
+ The pathspec code carelessly dereferenced NULL while emitting an
+ error message, which has been corrected.
+
+ Will merge to 'master'.
+ source: <5c8ef6bec1c99e0fae7ada903885a8e77f8137f9.1697819838.git.code@khaugsbakk.name>
+
+
+* kh/t7900-cleanup (2023-10-17) 9 commits
+ - t7900: fix register dependency
+ - t7900: factor out packfile dependency
+ - t7900: fix `print-args` dependency
+ - t7900: fix `pfx` dependency
+ - t7900: factor out common schedule setup
+ - t7900: factor out inheritance test dependency
+ - t7900: create commit so that branch is born
+ - t7900: setup and tear down clones
+ - t7900: remove register dependency
+
+ Test clean-up.
+
+ Needs review.
+ source: <cover.1697319294.git.code@khaugsbakk.name>
+
+
+* ni/die-message-fix-for-git-add (2023-10-17) 1 commit
+  (merged to 'next' on 2023-10-22 at f46c5dfd63)
+ + builtin/add.c: clean up die() messages
+
+ Message updates.
+
+ Will merge to 'master'.
+ source: <20231017113946.747-1-naomi.ibeh69@gmail.com>
+
+
+* ps/git-repack-doc-fixes (2023-10-16) 2 commits
+  (merged to 'next' on 2023-10-22 at df64849f26)
+ + doc/git-repack: don't mention nonexistent "--unpacked" option
+ + doc/git-repack: fix syntax for `-g` shorthand option
+
+ Doc updates.
+
+ Will merge to 'master'.
+ source: <cover.1697440686.git.ps@pks.im>
+
+
+* tb/merge-tree-write-pack (2023-10-19) 7 commits
+ - builtin/merge-tree.c: implement support for `--write-pack`
+ - bulk-checkin: introduce `index_tree_bulk_checkin_incore()`
+ - bulk-checkin: introduce `index_blob_bulk_checkin_incore()`
+ - bulk-checkin: implement `SOURCE_INCORE` mode for `bulk_checkin_source`
+ - bulk-checkin: refactor deflate routine to accept a `bulk_checkin_source`
+ - bulk-checkin: generify `stream_blob_to_pack()` for arbitrary types
+ - bulk-checkin: extract abstract `bulk_checkin_source`
+
+ "git merge-tree" learned "--write-pack" to record its result
+ without creating loose objects.
+
+ Will merge to 'next'?
+ source: <cover.1697736516.git.me@ttaylorr.com>
+
 
 * tb/format-pack-doc-update (2023-10-12) 2 commits
  - Documentation/gitformat-pack.txt: fix incorrect MIDX documentation
@@ -274,7 +391,7 @@ Release tarballs are available at:
  source: <xmqqedhzg37z.fsf@gitster.g>
 
 
-* tb/path-filter-fix (2023-10-10) 17 commits
+* tb/path-filter-fix (2023-10-18) 17 commits
  - bloom: introduce `deinit_bloom_filters()`
  - commit-graph: reuse existing Bloom filters where possible
  - object.h: fix mis-aligned flag bits table
@@ -298,19 +415,7 @@ Release tarballs are available at:
  bump the format version to 2.
 
  Needs (hopefully final and quick) review.
- source: <cover.1696969994.git.me@ttaylorr.com>
-
-
-* ak/pretty-decorate-more-fix (2023-10-09) 1 commit
-  (merged to 'next' on 2023-10-12 at 3cbb4c2268)
- + pretty: fix ref filtering for %(decorate) formats
-
- Unlike "git log --pretty=%D", "git log --pretty="%(decorate)" did
- not auto-initialize the decoration subsystem, which has been
- corrected.
-
- Will merge to 'master'.
- source: <20231008202307.1568477-1-andy.koppe@gmail.com>
+ source: <cover.1697653929.git.me@ttaylorr.com>
 
 
 * en/docfixes (2023-10-09) 25 commits
@@ -347,18 +452,18 @@ Release tarballs are available at:
  source: <pull.1595.git.1696747527.gitgitgadget@gmail.com>
 
 
-* kn/rev-list-missing-fix (2023-10-16) 4 commits
- . rev-list: add commit object support in `--missing` option
- . rev-list: move `show_commit()` to the bottom
- . revision: rename bit to `do_not_die_on_missing_objects`
- . Merge branch 'ps/do-not-trust-commit-graph-blindly-for-existence' into kn/rev-list-missing-fix
+* kn/rev-list-missing-fix (2023-10-22) 4 commits
+ - rev-list: add commit object support in `--missing` option
+ - rev-list: move `show_commit()` to the bottom
+ - revision: rename bit to `do_not_die_on_missing_objects`
+ - Merge branch 'ps/do-not-trust-commit-graph-blindly-for-existence' into kn/rev-list-missing-fix
  (this branch uses ps/do-not-trust-commit-graph-blindly-for-existence.)
 
  "git rev-list --missing" did not work for missing commit objects,
  which has been corrected.
 
- cf. <xmqqbkcyo7ro.fsf@gitster.g>
- source: <20231016103830.56486-1-karthik.188@gmail.com>
+ Comments?
+ source: <20231019121024.194317-1-karthik.188@gmail.com>
 
 
 * jk/chunk-bounds (2023-10-14) 21 commits
@@ -394,16 +499,6 @@ Release tarballs are available at:
  source: <20231009205544.GA3281950@coredump.intra.peff.net>
 
 
-* ps/rewritten-is-per-worktree-doc (2023-10-10) 1 commit
-  (merged to 'next' on 2023-10-12 at 501b960e8c)
- + doc/git-worktree: mention "refs/rewritten" as per-worktree refs
-
- Doc update.
-
- Will merge to 'master'.
- source: <985ac850eb6e60ae76601acc8bfbcd56f99348b4.1696935657.git.ps@pks.im>
-
-
 * sn/typo-grammo-phraso-fixes (2023-10-05) 5 commits
   (merged to 'next' on 2023-10-18 at 575d767f9a)
  + t/README: fix multi-prerequisite example
@@ -432,26 +527,13 @@ Release tarballs are available at:
  source: <20231009160535.236523-1-sorganov@gmail.com>
 
 
-* vd/loose-ref-iteration-optimization (2023-10-09) 4 commits
-  (merged to 'next' on 2023-10-12 at 99e2f83855)
- + files-backend.c: avoid stat in 'loose_fill_ref_dir'
- + dir.[ch]: add 'follow_symlink' arg to 'get_dtype'
- + dir.[ch]: expose 'get_dtype'
- + ref-cache.c: fix prefix matching in ref iteration
-
- The code to iterate over loose references have been optimized to
- reduce the number of lstat() system calls.
-
- Will merge to 'master'.
- source: <pull.1594.v2.git.1696888736.gitgitgadget@gmail.com>
-
-
 * jc/update-list-references-to-lore (2023-10-06) 1 commit
- - doc: update list archive reference to use lore.kernel.org
+  (merged to 'next' on 2023-10-19 at 83a721a137)
+ + doc: update list archive reference to use lore.kernel.org
 
  Doc update.
 
- Needs review.
+ Will merge to 'master'.
  source: <xmqq7cnz741s.fsf@gitster.g>
 
 
@@ -478,8 +560,14 @@ Release tarballs are available at:
  source: <20231010123847.2777056-1-christian.couder@gmail.com>
 
 
-* ak/color-decorate-symbols (2023-10-03) 1 commit
- - decorate: add color.decorate.symbols config option
+* ak/color-decorate-symbols (2023-10-19) 7 commits
+ - log: show pseudorefs in decorations
+ - refs: exempt pseudoref patterns from prefixing
+ - log: add color.decorate.ref option for other refs
+ - refs: separate decoration type from default filter
+ - log: add color.decorate.symbol config option
+ - log: use designated inits for decoration_colors
+ - config: restructure color.decorate documentation
 
  A new config for coloring.
 
@@ -488,13 +576,14 @@ Release tarballs are available at:
 
 
 * jc/attr-tree-config (2023-10-13) 2 commits
- - attr: add attr.tree for setting the treeish to read attributes from
- - attr: read attributes from HEAD when bare repo
+  (merged to 'next' on 2023-10-19 at 202dc1c453)
+ + attr: add attr.tree for setting the treeish to read attributes from
+ + attr: read attributes from HEAD when bare repo
 
  The attribute subsystem learned to honor `attr.tree` configuration
  that specifies which tree to read the .gitattributes files from.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <pull.1577.v5.git.git.1697218770.gitgitgadget@gmail.com>
 
 
@@ -511,16 +600,15 @@ Release tarballs are available at:
  source: <pull.1589.v2.git.1695553041.gitgitgadget@gmail.com>
 
 
-* la/trailer-cleanups (2023-09-26) 4 commits
- - trailer: only use trailer_block_* variables if trailers were found
+* la/trailer-cleanups (2023-10-20) 3 commits
  - trailer: use offsets for trailer_start/trailer_end
  - trailer: find the end of the log message
  - commit: ignore_non_trailer computes number of bytes to ignore
 
  Code clean-up.
 
- Needs review.
- source: <pull.1563.v4.git.1695709372.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.1563.v5.git.1697828495.gitgitgadget@gmail.com>
 
 
 * eb/hash-transition (2023-10-02) 30 commits
@@ -585,19 +673,6 @@ Release tarballs are available at:
  source: <cover.1696425168.git.zhiyou.jx@alibaba-inc.com>
 
 
-* ty/merge-tree-strategy-options (2023-10-11) 2 commits
-  (merged to 'next' on 2023-10-12 at 9b873601df)
- + merge: introduce {copy|clear}_merge_options()
-  (merged to 'next' on 2023-09-29 at aa65b54416)
- + merge-tree: add -X strategy option
-
- "git merge-tree" learned to take strategy backend specific options
- via the "-X" option, like "git merge" does.
-
- Will merge to 'master'.
- source: <pull.1565.v6.git.1695522222723.gitgitgadget@gmail.com>
-
-
 * js/config-parse (2023-09-21) 5 commits
  - config-parse: split library out of config.[c|h]
  - config.c: accept config_parse_options in git_config_from_stdin
@@ -650,7 +725,7 @@ Release tarballs are available at:
  source: <cover.1696889529.git.steadmon@google.com>
 
 
-* js/doc-unit-tests-with-cmake (2023-10-16) 7 commits
+* js/doc-unit-tests-with-cmake (2023-10-19) 7 commits
  - cmake: handle also unit tests
  - cmake: use test names instead of full paths
  - cmake: fix typo in variable name
