@@ -92,6 +92,9 @@ UI, Workflows & Features
  * "git merge-tree" learned to take strategy backend specific options
    via the "-X" option, like "git merge" does.
 
+ * "git log" and friends learned "--dd" that is a short-hand for
+   "--diff-merges=first-parent -p".
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -132,6 +135,9 @@ Performance, Internal Implementation, Development Support etc.
  * The code to iterate over loose references have been optimized to
    reduce the number of lstat() system calls.
    (merge 2cdb796101 vd/loose-ref-iteration-optimization later to maint).
+
+ * The codepaths that read "chunk" formatted files have been corrected
+   to pay attention to the chunk size and notice broken files.
 
 
 Fixes since v2.42
@@ -260,6 +266,17 @@ Fixes since v2.42
  * Unlike "git log --pretty=%D", "git log --pretty="%(decorate)" did
    not auto-initialize the decoration subsystem, which has been
    corrected.
+
+ * Feeding "git stash store" with a random commit that was not created
+   by "git stash create" now errors out.
+   (merge d9b6634589 jc/fail-stash-to-store-non-stash later to maint).
+
+ * The index file has room only for lower 32-bit of the file size in
+   the cached stat information, which means cached stat information
+   will have 0 in its sd_size member for a file whose size is multiple
+   of 4GiB.  This is mistaken for a racily clean path.  Avoid it by
+   storing a bogus sd_size value instead for such files.
+   (merge 5143ac07b1 bc/racy-4gb-files later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge fd3ba590d8 ws/git-push-doc-grammofix later to maint).
