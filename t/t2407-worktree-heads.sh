@@ -45,7 +45,7 @@ test_expect_success 'refuse to overwrite: checked out in worktree' '
 		grep "cannot force update the branch" err &&
 
 		test_must_fail git branch -D wt-$i 2>err &&
-		grep "Cannot delete branch" err || return 1
+		grep "cannot delete branch" err || return 1
 	done
 '
 
