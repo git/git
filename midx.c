@@ -71,6 +71,33 @@ static int midx_read_oid_fanout(const unsigned char *chunk_start,
 		error(_("multi-pack-index OID fanout is of the wrong size"));
 		return 1;
 	}
+	m->num_objects = ntohl(m->chunk_oid_fanout[255]);
+	return 0;
+}
+
+static int midx_read_oid_lookup(const unsigned char *chunk_start,
+				size_t chunk_size, void *data)
+{
+	struct multi_pack_index *m = data;
+	m->chunk_oid_lookup = chunk_start;
+
+	if (chunk_size != st_mult(m->hash_len, m->num_objects)) {
+		error(_("multi-pack-index OID lookup chunk is the wrong size"));
+		return 1;
+	}
+	return 0;
+}
+
+static int midx_read_object_offsets(const unsigned char *chunk_start,
+				    size_t chunk_size, void *data)
+{
+	struct multi_pack_index *m = data;
+	m->chunk_object_offsets = chunk_start;
+
+	if (chunk_size != st_mult(m->num_objects, MIDX_CHUNK_OFFSET_WIDTH)) {
+		error(_("multi-pack-index object offset chunk is the wrong size"));
+		return 1;
+	}
 	return 0;
 }
 
@@ -140,33 +167,41 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 	cf = init_chunkfile(NULL);
 
 	if (read_table_of_contents(cf, m->data, midx_size,
-				   MIDX_HEADER_SIZE, m->num_chunks))
+				   MIDX_HEADER_SIZE, m->num_chunks,
+				   MIDX_CHUNK_ALIGNMENT))
 		goto cleanup_fail;
 
-	if (pair_chunk(cf, MIDX_CHUNKID_PACKNAMES, &m->chunk_pack_names) == CHUNK_NOT_FOUND)
-		die(_("multi-pack-index missing required pack-name chunk"));
-	if (read_chunk(cf, MIDX_CHUNKID_OIDFANOUT, midx_read_oid_fanout, m) == CHUNK_NOT_FOUND)
-		die(_("multi-pack-index missing required OID fanout chunk"));
-	if (pair_chunk(cf, MIDX_CHUNKID_OIDLOOKUP, &m->chunk_oid_lookup) == CHUNK_NOT_FOUND)
-		die(_("multi-pack-index missing required OID lookup chunk"));
-	if (pair_chunk(cf, MIDX_CHUNKID_OBJECTOFFSETS, &m->chunk_object_offsets) == CHUNK_NOT_FOUND)
-		die(_("multi-pack-index missing required object offsets chunk"));
+	if (pair_chunk(cf, MIDX_CHUNKID_PACKNAMES, &m->chunk_pack_names, &m->chunk_pack_names_len))
+		die(_("multi-pack-index required pack-name chunk missing or corrupted"));
+	if (read_chunk(cf, MIDX_CHUNKID_OIDFANOUT, midx_read_oid_fanout, m))
+		die(_("multi-pack-index required OID fanout chunk missing or corrupted"));
+	if (read_chunk(cf, MIDX_CHUNKID_OIDLOOKUP, midx_read_oid_lookup, m))
+		die(_("multi-pack-index required OID lookup chunk missing or corrupted"));
+	if (read_chunk(cf, MIDX_CHUNKID_OBJECTOFFSETS, midx_read_object_offsets, m))
+		die(_("multi-pack-index required object offsets chunk missing or corrupted"));
 
-	pair_chunk(cf, MIDX_CHUNKID_LARGEOFFSETS, &m->chunk_large_offsets);
+	pair_chunk(cf, MIDX_CHUNKID_LARGEOFFSETS, &m->chunk_large_offsets,
+		   &m->chunk_large_offsets_len);
 
 	if (git_env_bool("GIT_TEST_MIDX_READ_RIDX", 1))
-		pair_chunk(cf, MIDX_CHUNKID_REVINDEX, &m->chunk_revindex);
-
-	m->num_objects = ntohl(m->chunk_oid_fanout[255]);
+		pair_chunk(cf, MIDX_CHUNKID_REVINDEX, &m->chunk_revindex,
+			   &m->chunk_revindex_len);
 
 	CALLOC_ARRAY(m->pack_names, m->num_packs);
 	CALLOC_ARRAY(m->packs, m->num_packs);
 
 	cur_pack_name = (const char *)m->chunk_pack_names;
 	for (i = 0; i < m->num_packs; i++) {
+		const char *end;
+		size_t avail = m->chunk_pack_names_len -
+				(cur_pack_name - (const char *)m->chunk_pack_names);
+
 		m->pack_names[i] = cur_pack_name;
 
-		cur_pack_name += strlen(cur_pack_name) + 1;
+		end = memchr(cur_pack_name, '\0', avail);
+		if (!end)
+			die(_("multi-pack-index pack-name chunk is too short"));
+		cur_pack_name = end + 1;
 
 		if (i && strcmp(m->pack_names[i], m->pack_names[i - 1]) <= 0)
 			die(_("multi-pack-index pack names out of order: '%s' before '%s'"),
@@ -270,8 +305,9 @@ off_t nth_midxed_offset(struct multi_pack_index *m, uint32_t pos)
 			die(_("multi-pack-index stores a 64-bit offset, but off_t is too small"));
 
 		offset32 ^= MIDX_LARGE_OFFSET_NEEDED;
-		return get_be64(m->chunk_large_offsets +
-				st_mult(sizeof(uint64_t), offset32));
+		if (offset32 >= m->chunk_large_offsets_len / sizeof(uint64_t))
+			die(_("multi-pack-index large offset out of bounds"));
+		return get_be64(m->chunk_large_offsets + sizeof(uint64_t) * offset32);
 	}
 
 	return offset32;

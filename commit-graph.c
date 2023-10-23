@@ -277,6 +277,8 @@ struct commit_graph *load_commit_graph_one_fd_st(struct repository *r,
 
 static int verify_commit_graph_lite(struct commit_graph *g)
 {
+	int i;
+
 	/*
 	 * Basic validation shared between parse_commit_graph()
 	 * which'll be called every time the graph is used, and the
@@ -302,6 +304,30 @@ static int verify_commit_graph_lite(struct commit_graph *g)
 		return 1;
 	}
 
+	for (i = 0; i < 255; i++) {
+		uint32_t oid_fanout1 = ntohl(g->chunk_oid_fanout[i]);
+		uint32_t oid_fanout2 = ntohl(g->chunk_oid_fanout[i + 1]);
+
+		if (oid_fanout1 > oid_fanout2) {
+			error("commit-graph fanout values out of order");
+			return 1;
+		}
+	}
+	if (ntohl(g->chunk_oid_fanout[255]) != g->num_commits) {
+		error("commit-graph oid table and fanout disagree on size");
+		return 1;
+	}
+
+	return 0;
+}
+
+static int graph_read_oid_fanout(const unsigned char *chunk_start,
+				 size_t chunk_size, void *data)
+{
+	struct commit_graph *g = data;
+	if (chunk_size != 256 * sizeof(uint32_t))
+		return error("commit-graph oid fanout chunk is wrong size");
+	g->chunk_oid_fanout = (const uint32_t *)chunk_start;
 	return 0;
 }
 
@@ -314,12 +340,54 @@ static int graph_read_oid_lookup(const unsigned char *chunk_start,
 	return 0;
 }
 
+static int graph_read_commit_data(const unsigned char *chunk_start,
+				  size_t chunk_size, void *data)
+{
+	struct commit_graph *g = data;
+	if (chunk_size != g->num_commits * GRAPH_DATA_WIDTH)
+		return error("commit-graph commit data chunk is wrong size");
+	g->chunk_commit_data = chunk_start;
+	return 0;
+}
+
+static int graph_read_generation_data(const unsigned char *chunk_start,
+				      size_t chunk_size, void *data)
+{
+	struct commit_graph *g = data;
+	if (chunk_size != g->num_commits * sizeof(uint32_t))
+		return error("commit-graph generations chunk is wrong size");
+	g->chunk_generation_data = chunk_start;
+	return 0;
+}
+
+static int graph_read_bloom_index(const unsigned char *chunk_start,
+				  size_t chunk_size, void *data)
+{
+	struct commit_graph *g = data;
+	if (chunk_size != g->num_commits * 4) {
+		warning("commit-graph changed-path index chunk is too small");
+		return -1;
+	}
+	g->chunk_bloom_indexes = chunk_start;
+	return 0;
+}
+
 static int graph_read_bloom_data(const unsigned char *chunk_start,
 				  size_t chunk_size, void *data)
 {
 	struct commit_graph *g = data;
 	uint32_t hash_version;
+
+	if (chunk_size < BLOOMDATA_CHUNK_HEADER_SIZE) {
+		warning("ignoring too-small changed-path chunk"
+			" (%"PRIuMAX" < %"PRIuMAX") in commit-graph file",
+			(uintmax_t)chunk_size,
+			(uintmax_t)BLOOMDATA_CHUNK_HEADER_SIZE);
+		return -1;
+	}
+
 	g->chunk_bloom_data = chunk_start;
+	g->chunk_bloom_data_size = chunk_size;
 	hash_version = get_be32(chunk_start);
 
 	if (hash_version != 1)
@@ -391,29 +459,31 @@ struct commit_graph *parse_commit_graph(struct repo_settings *s,
 	cf = init_chunkfile(NULL);
 
 	if (read_table_of_contents(cf, graph->data, graph_size,
-				   GRAPH_HEADER_SIZE, graph->num_chunks))
+				   GRAPH_HEADER_SIZE, graph->num_chunks, 1))
 		goto free_and_return;
 
-	pair_chunk(cf, GRAPH_CHUNKID_OIDFANOUT,
-		   (const unsigned char **)&graph->chunk_oid_fanout);
+	read_chunk(cf, GRAPH_CHUNKID_OIDFANOUT, graph_read_oid_fanout, graph);
 	read_chunk(cf, GRAPH_CHUNKID_OIDLOOKUP, graph_read_oid_lookup, graph);
-	pair_chunk(cf, GRAPH_CHUNKID_DATA, &graph->chunk_commit_data);
-	pair_chunk(cf, GRAPH_CHUNKID_EXTRAEDGES, &graph->chunk_extra_edges);
-	pair_chunk(cf, GRAPH_CHUNKID_BASE, &graph->chunk_base_graphs);
+	read_chunk(cf, GRAPH_CHUNKID_DATA, graph_read_commit_data, graph);
+	pair_chunk(cf, GRAPH_CHUNKID_EXTRAEDGES, &graph->chunk_extra_edges,
+		   &graph->chunk_extra_edges_size);
+	pair_chunk(cf, GRAPH_CHUNKID_BASE, &graph->chunk_base_graphs,
+		   &graph->chunk_base_graphs_size);
 
 	if (s->commit_graph_generation_version >= 2) {
-		pair_chunk(cf, GRAPH_CHUNKID_GENERATION_DATA,
-			&graph->chunk_generation_data);
+		read_chunk(cf, GRAPH_CHUNKID_GENERATION_DATA,
+			   graph_read_generation_data, graph);
 		pair_chunk(cf, GRAPH_CHUNKID_GENERATION_DATA_OVERFLOW,
-			&graph->chunk_generation_data_overflow);
+			   &graph->chunk_generation_data_overflow,
+			   &graph->chunk_generation_data_overflow_size);
 
 		if (graph->chunk_generation_data)
 			graph->read_generation_data = 1;
 	}
 
 	if (s->commit_graph_read_changed_paths) {
-		pair_chunk(cf, GRAPH_CHUNKID_BLOOMINDEXES,
-			   &graph->chunk_bloom_indexes);
+		read_chunk(cf, GRAPH_CHUNKID_BLOOMINDEXES,
+			   graph_read_bloom_index, graph);
 		read_chunk(cf, GRAPH_CHUNKID_BLOOMDATA,
 			   graph_read_bloom_data, graph);
 	}
@@ -507,6 +577,11 @@ static int add_graph_to_chain(struct commit_graph *g,
 
 	if (n && !g->chunk_base_graphs) {
 		warning(_("commit-graph has no base graphs chunk"));
+		return 0;
+	}
+
+	if (g->chunk_base_graphs_size / g->hash_len < n) {
+		warning(_("commit-graph base graphs chunk is too small"));
 		return 0;
 	}
 
@@ -837,7 +912,10 @@ static void fill_commit_graph_info(struct commit *item, struct commit_graph *g, 
 				die(_("commit-graph requires overflow generation data but has none"));
 
 			offset_pos = offset ^ CORRECTED_COMMIT_DATE_OFFSET_OVERFLOW;
-			graph_data->generation = item->date + get_be64(g->chunk_generation_data_overflow + st_mult(8, offset_pos));
+			if (g->chunk_generation_data_overflow_size / sizeof(uint64_t) <= offset_pos)
+				die(_("commit-graph overflow generation data is too small"));
+			graph_data->generation = item->date +
+				get_be64(g->chunk_generation_data_overflow + sizeof(uint64_t) * offset_pos);
 		} else
 			graph_data->generation = item->date + offset;
 	} else
@@ -857,7 +935,7 @@ static int fill_commit_in_graph(struct repository *r,
 				struct commit_graph *g, uint32_t pos)
 {
 	uint32_t edge_value;
-	uint32_t *parent_data_ptr;
+	uint32_t parent_data_pos;
 	struct commit_list **pptr;
 	const unsigned char *commit_data;
 	uint32_t lex_index;
@@ -889,14 +967,21 @@ static int fill_commit_in_graph(struct repository *r,
 		return 1;
 	}
 
-	parent_data_ptr = (uint32_t*)(g->chunk_extra_edges +
-			  st_mult(4, edge_value & GRAPH_EDGE_LAST_MASK));
+	parent_data_pos = edge_value & GRAPH_EDGE_LAST_MASK;
 	do {
-		edge_value = get_be32(parent_data_ptr);
+		if (g->chunk_extra_edges_size / sizeof(uint32_t) <= parent_data_pos) {
+			error("commit-graph extra-edges pointer out of bounds");
+			free_commit_list(item->parents);
+			item->parents = NULL;
+			item->object.parsed = 0;
+			return 0;
+		}
+		edge_value = get_be32(g->chunk_extra_edges +
+				      sizeof(uint32_t) * parent_data_pos);
 		pptr = insert_parent_or_die(r, g,
 					    edge_value & GRAPH_EDGE_LAST_MASK,
 					    pptr);
-		parent_data_ptr++;
+		parent_data_pos++;
 	} while (!(edge_value & GRAPH_LAST_EDGE));
 
 	return 1;

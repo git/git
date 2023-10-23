@@ -32,11 +32,14 @@ struct multi_pack_index {
 	int local;
 
 	const unsigned char *chunk_pack_names;
+	size_t chunk_pack_names_len;
 	const uint32_t *chunk_oid_fanout;
 	const unsigned char *chunk_oid_lookup;
 	const unsigned char *chunk_object_offsets;
 	const unsigned char *chunk_large_offsets;
+	size_t chunk_large_offsets_len;
 	const unsigned char *chunk_revindex;
+	size_t chunk_revindex_len;
 
 	const char **pack_names;
 	struct packed_git **packs;

@@ -4,6 +4,7 @@ test_description='split commit graph'
 
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-chunk.sh
 
 GIT_TEST_COMMIT_GRAPH=0
 GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS=0
@@ -319,7 +320,7 @@ test_expect_success 'verify --shallow does not check base contents' '
 		cd verify-shallow &&
 		git commit-graph verify &&
 		base_file=$graphdir/graph-$(head -n 1 $graphdir/commit-graph-chain).graph &&
-		corrupt_file "$base_file" 1000 "\01" &&
+		corrupt_file "$base_file" 1500 "\01" &&
 		git commit-graph verify --shallow &&
 		test_must_fail git commit-graph verify 2>test_err &&
 		grep -v "^+" test_err >err &&
@@ -393,10 +394,23 @@ test_expect_success 'verify across alternates' '
 		test_commit extra &&
 		git commit-graph write --reachable --split &&
 		tip_file=$graphdir/graph-$(tail -n 1 $graphdir/commit-graph-chain).graph &&
-		corrupt_file "$tip_file" 100 "\01" &&
+		corrupt_file "$tip_file" 1500 "\01" &&
 		test_must_fail git commit-graph verify --shallow 2>test_err &&
 		grep -v "^+" test_err >err &&
-		test_i18ngrep "commit-graph has incorrect fanout value" err
+		test_i18ngrep "incorrect checksum" err
+	)
+'
+
+test_expect_success 'reader bounds-checks base-graph chunk' '
+	git clone --no-hardlinks . corrupt-base-chunk &&
+	(
+		cd corrupt-base-chunk &&
+		tip_file=$graphdir/graph-$(tail -n 1 $graphdir/commit-graph-chain).graph &&
+		corrupt_chunk_file "$tip_file" BASE clear 01020304 &&
+		git -c core.commitGraph=false log >expect.out &&
+		git -c core.commitGraph=true log >out 2>err &&
+		test_cmp expect.out out &&
+		grep "commit-graph base graphs chunk is too small" err
 	)
 '
 

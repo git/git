@@ -94,10 +94,14 @@ struct commit_graph {
 	const unsigned char *chunk_commit_data;
 	const unsigned char *chunk_generation_data;
 	const unsigned char *chunk_generation_data_overflow;
+	size_t chunk_generation_data_overflow_size;
 	const unsigned char *chunk_extra_edges;
+	size_t chunk_extra_edges_size;
 	const unsigned char *chunk_base_graphs;
+	size_t chunk_base_graphs_size;
 	const unsigned char *chunk_bloom_indexes;
 	const unsigned char *chunk_bloom_data;
+	size_t chunk_bloom_data_size;
 
 	struct topo_level_slab *topo_levels;
 	struct bloom_filter_settings *bloom_filter_settings;
