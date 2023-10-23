@@ -16,7 +16,7 @@ DESCRIPTION
 The command takes various subcommands, and different options depending
 on the subcommand:
 
- git bisect start [--term-{new,bad}=<term> --term-{old,good}=<term>]
+ git bisect start [--term-(new|bad)=<term-new> --term-(old|good)=<term-old>]
 		  [--no-checkout] [--first-parent] [<bad> [<good>...]] [--] [<paths>...]
  git bisect (bad|new|<term-new>) [<rev>]
  git bisect (good|old|<term-old>) [<rev>...]
@@ -26,7 +26,7 @@ on the subcommand:
  git bisect (visualize|view)
  git bisect replay <logfile>
  git bisect log
- git bisect run <cmd>...
+ git bisect run <cmd> [<arg>...]
  git bisect help
 
 This command uses a binary search algorithm to find which commit in
