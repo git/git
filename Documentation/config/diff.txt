@@ -1,6 +1,6 @@
 diff.autoRefreshIndex::
 	When using 'git diff' to compare with work tree
-	files, do not consider stat-only change as changed.
+	files, do not consider stat-only changes as changed.
 	Instead, silently run `git update-index --refresh` to
 	update the cached stat information for paths whose
 	contents in the work tree match the contents in the

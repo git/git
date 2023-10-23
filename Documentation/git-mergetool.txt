@@ -17,7 +17,7 @@ Use `git mergetool` to run one of several merge utilities to resolve
 merge conflicts.  It is typically run after 'git merge'.
 
 If one or more <file> parameters are given, the merge tool program will
-be run to resolve differences on each file (skipping those without
+be run to resolve differences in each file (skipping those without
 conflicts).  Specifying a directory will include all unresolved files in
 that path.  If no <file> names are specified, 'git mergetool' will run
 the merge tool program on every file with merge conflicts.
@@ -49,7 +49,7 @@ variable `mergetool.<tool>.cmd`.
 +
 When 'git mergetool' is invoked with this tool (either through the
 `-t` or `--tool` option or the `merge.tool` configuration
-variable) the configured command line will be invoked with `$BASE`
+variable), the configured command line will be invoked with `$BASE`
 set to the name of a temporary file containing the common base for
 the merge, if available; `$LOCAL` set to the name of a temporary
 file containing the contents of the file on the current branch;
@@ -81,7 +81,7 @@ success of the resolution after the custom tool has exited.
 
 -g::
 --gui::
-	When 'git-mergetool' is invoked with the `-g` or `--gui` option
+	When 'git-mergetool' is invoked with the `-g` or `--gui` option,
 	the default merge tool will be read from the configured
 	`merge.guitool` variable instead of `merge.tool`. If
 	`merge.guitool` is not set, we will fallback to the tool
@@ -115,7 +115,7 @@ These are safe to remove once a file has been merged and its
 `git mergetool` session has completed.
 
 Setting the `mergetool.keepBackup` configuration variable to `false`
-causes `git mergetool` to automatically remove the backup as files
+causes `git mergetool` to automatically remove the backup files as files
 are successfully merged.
 
 BACKEND SPECIFIC HINTS

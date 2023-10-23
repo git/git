@@ -13,7 +13,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-A command interface to running git hooks (see linkgit:githooks[5]),
+A command interface for running git hooks (see linkgit:githooks[5]),
 for use by other scripted git commands.
 
 SUBCOMMANDS
@@ -32,7 +32,7 @@ OPTIONS
 -------
 
 --to-stdin::
-	For "run"; Specify a file which will be streamed into the
+	For "run"; specify a file which will be streamed into the
 	hook's stdin. The hook will receive the entire file from
 	beginning to EOF.
 

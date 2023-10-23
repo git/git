@@ -34,7 +34,7 @@ OPTIONS
 
 -b::
 	If any file doesn't begin with a From line, assume it is a
-	single mail message instead of signaling error.
+	single mail message instead of signaling an error.
 
 -d<prec>::
 	Instead of the default 4 digits with leading zeros,

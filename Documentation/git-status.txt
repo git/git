@@ -250,7 +250,7 @@ Submodules have more state and instead report
 * 'm' = the submodule has modified content
 * '?' = the submodule has untracked files
 
-since modified content or untracked files in a submodule cannot be added
+This is since modified content or untracked files in a submodule cannot be added
 via `git add` in the superproject to prepare a commit.
 
 'm' and '?' are applied recursively. For example if a nested submodule

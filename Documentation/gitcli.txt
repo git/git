@@ -23,10 +23,10 @@ arguments.  Here are the rules:
     A subcommand may take dashed options (which may take their own
     arguments, e.g. "--max-parents 2") and arguments.  You SHOULD
     give dashed options first and then arguments.  Some commands may
-    accept dashed options after you have already gave non-option
+    accept dashed options after you have already given non-option
     arguments (which may make the command ambiguous), but you should
     not rely on it (because eventually we may find a way to fix
-    these ambiguity by enforcing the "options then args" rule).
+    these ambiguities by enforcing the "options then args" rule).
 
  * Revisions come first and then paths.
    E.g. in `git diff v1.0 v2.0 arch/x86 include/asm-x86`,
@@ -37,12 +37,12 @@ arguments.  Here are the rules:
    they can be disambiguated by placing `--` between them.
    E.g. `git diff -- HEAD` is, "I have a file called HEAD in my work
    tree.  Please show changes between the version I staged in the index
-   and what I have in the work tree for that file", not "show difference
+   and what I have in the work tree for that file", not "show the difference
    between the HEAD commit and the work tree as a whole".  You can say
    `git diff HEAD --` to ask for the latter.
 
  * Without disambiguating `--`, Git makes a reasonable guess, but errors
-   out and asking you to disambiguate when ambiguous.  E.g. if you have a
+   out and asks you to disambiguate when ambiguous.  E.g. if you have a
    file called HEAD in your work tree, `git diff HEAD` is ambiguous, and
    you have to say either `git diff HEAD --` or `git diff -- HEAD` to
    disambiguate.

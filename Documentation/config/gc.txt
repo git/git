@@ -24,7 +24,7 @@ gc.auto::
 	default value is 6700.
 +
 Setting this to 0 disables not only automatic packing based on the
-number of loose objects, but any other heuristic `git gc --auto` will
+number of loose objects, but also any other heuristic `git gc --auto` will
 otherwise use to determine if there's work to do, such as
 `gc.autoPackLimit`.
 
@@ -39,7 +39,7 @@ See the `gc.bigPackThreshold` configuration variable below. When in
 use, it'll affect how the auto pack limit works.
 
 gc.autoDetach::
-	Make `git gc --auto` return immediately and run in background
+	Make `git gc --auto` return immediately and run in the background
 	if the system supports it. Default is true.
 
 gc.bigPackThreshold::

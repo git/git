@@ -336,7 +336,7 @@ After seeing a conflict, you can do two things:
 You can work through the conflict with a number of tools:
 
  * Use a mergetool.  `git mergetool` to launch a graphical
-   mergetool which will work you through the merge.
+   mergetool which will work through the merge with you.
 
  * Look at the diffs.  `git diff` will show a three-way diff,
    highlighting changes from both the `HEAD` and `MERGE_HEAD`

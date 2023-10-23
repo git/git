@@ -5,14 +5,14 @@ author.email::
 committer.name::
 committer.email::
 	The `user.name` and `user.email` variables determine what ends
-	up in the `author` and `committer` field of commit
+	up in the `author` and `committer` fields of commit
 	objects.
 	If you need the `author` or `committer` to be different, the
-	`author.name`, `author.email`, `committer.name` or
+	`author.name`, `author.email`, `committer.name`, or
 	`committer.email` variables can be set.
-	Also, all of these can be overridden by the `GIT_AUTHOR_NAME`,
+	All of these can be overridden by the `GIT_AUTHOR_NAME`,
 	`GIT_AUTHOR_EMAIL`, `GIT_COMMITTER_NAME`,
-	`GIT_COMMITTER_EMAIL` and `EMAIL` environment variables.
+	`GIT_COMMITTER_EMAIL`, and `EMAIL` environment variables.
 +
 Note that the `name` forms of these variables conventionally refer to
 some form of a personal name.  See linkgit:git-commit[1] and the
@@ -40,7 +40,7 @@ user.signingKey::
 	your private ssh key or the public key when ssh-agent is used.
 	Alternatively it can contain a public key prefixed with `key::`
 	directly (e.g.: "key::ssh-rsa XXXXXX identifier"). The private key
-	needs to be available via ssh-agent. If not set git will call
+	needs to be available via ssh-agent. If not set Git will call
 	gpg.ssh.defaultKeyCommand (e.g.: "ssh-add -L") and try to use the
 	first key available. For backward compatibility, a raw key which
 	begins with "ssh-", such as "ssh-rsa XXXXXX identifier", is treated

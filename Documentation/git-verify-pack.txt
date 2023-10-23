@@ -15,7 +15,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 Reads given idx file for packed Git archive created with the
-'git pack-objects' command and verifies idx file and the
+'git pack-objects' command and verifies the idx file and the
 corresponding pack file.
 
 OPTIONS
@@ -25,13 +25,13 @@ OPTIONS
 
 -v::
 --verbose::
-	After verifying the pack, show list of objects contained
+	After verifying the pack, show the list of objects contained
 	in the pack and a histogram of delta chain length.
 
 -s::
 --stat-only::
 	Do not verify the pack contents; only show the histogram of delta
-	chain length.  With `--verbose`, list of objects is also shown.
+	chain length.  With `--verbose`, the list of objects is also shown.
 
 \--::
 	Do not interpret any more arguments as options.

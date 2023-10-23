@@ -23,13 +23,13 @@ OPTIONS
 -------
 -f::
 --force::
-	update the info files from scratch.
+	Update the info files from scratch.
 
 OUTPUT
 ------
 
 Currently the command updates the following files.  Please see
-linkgit:gitrepository-layout[5] for description of
+linkgit:gitrepository-layout[5] for a description of
 what they are for:
 
 * objects/info/packs

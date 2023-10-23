@@ -42,13 +42,13 @@ former is internally converted into the latter.
 
 To display the linkgit:git[1] man page, use `git help git`.
 
-This page can be displayed with 'git help help' or `git help --help`
+This page can be displayed with 'git help help' or `git help --help`.
 
 OPTIONS
 -------
 -a::
 --all::
-	Prints all the available commands on the standard output.
+	Print all the available commands on the standard output.
 
 --no-external-commands::
 	When used with `--all`, exclude the listing of external "git-*"
@@ -59,7 +59,7 @@ OPTIONS
 	aliases.
 
 --verbose::
-	When used with `--all` print description for all recognized
+	When used with `--all`, print description for all recognized
 	commands. This is the default.
 
 -c::
@@ -69,10 +69,10 @@ OPTIONS
 
 -g::
 --guides::
-	Prints a list of the Git concept guides on the standard output.
+	Print a list of the Git concept guides on the standard output.
 
 --user-interfaces::
-	Prints a list of the repository, command and file interfaces
+	Print a list of the repository, command and file interfaces
 	documentation on the standard output.
 +
 In-repository file interfaces such as `.git/info/exclude` are
@@ -85,7 +85,7 @@ pseudo-configuration such as the file-based `.git/hooks/*` interface
 described in linkgit:githooks[5].
 
 --developer-interfaces::
-	Print list of file formats, protocols and other developer
+	Print a list of file formats, protocols and other developer
 	interfaces documentation on the standard output.
 
 -i::
@@ -109,7 +109,7 @@ other display programs (see below).
 	format. A web browser will be used for that purpose.
 +
 The web browser can be specified using the configuration variable
-`help.browser`, or `web.browser` if the former is not set. If none of
+`help.browser`, or `web.browser` if the former is not set. If neither of
 these config variables is set, the 'git web{litdd}browse' helper script
 (called by 'git help') will pick a suitable default. See
 linkgit:git-web{litdd}browse[1] for more information about this.
@@ -129,8 +129,8 @@ line option:
 * "info" corresponds to '-i|--info',
 * "web" or "html" correspond to '-w|--web'.
 
-help.browser, web.browser and browser.<tool>.path
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+help.browser, web.browser, and browser.<tool>.path
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The `help.browser`, `web.browser` and `browser.<tool>.path` will also
 be checked if the 'web' format is chosen (either by command-line

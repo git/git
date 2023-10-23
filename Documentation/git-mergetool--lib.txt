@@ -28,22 +28,22 @@ to define the operation mode for the functions listed below.
 FUNCTIONS
 ---------
 get_merge_tool::
-	returns a merge tool. the return code is 1 if we returned a guessed
+	Returns a merge tool. The return code is 1 if we returned a guessed
 	merge tool, else 0. '$GIT_MERGETOOL_GUI' may be set to 'true' to
 	search for the appropriate guitool.
 
 get_merge_tool_cmd::
-	returns the custom command for a merge tool.
+	Returns the custom command for a merge tool.
 
 get_merge_tool_path::
-	returns the custom path for a merge tool.
+	Returns the custom path for a merge tool.
 
 initialize_merge_tool::
-	bring merge tool specific functions into scope so they can be used or
+	Brings merge tool specific functions into scope so they can be used or
 	overridden.
 
 run_merge_tool::
-	launches a merge tool given the tool name and a true/false
+	Launches a merge tool given the tool name and a true/false
 	flag to indicate whether a merge base is present.
 	'$MERGED', '$LOCAL', '$REMOTE', and '$BASE' must be defined
 	for use by the merge tool.

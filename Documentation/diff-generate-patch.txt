@@ -17,7 +17,7 @@ You can customize the creation of patch text via the
 What the -p option produces is slightly different from the traditional
 diff format:
 
-1.   It is preceded with a "git diff" header that looks like this:
+1.   It is preceded by a "git diff" header that looks like this:
 
        diff --git a/file1 b/file2
 +
@@ -25,9 +25,9 @@ The `a/` and `b/` filenames are the same unless rename/copy is
 involved.  Especially, even for a creation or a deletion,
 `/dev/null` is _not_ used in place of the `a/` or `b/` filenames.
 +
-When rename/copy is involved, `file1` and `file2` show the
+When a rename/copy is involved, `file1` and `file2` show the
 name of the source file of the rename/copy and the name of
-the file that rename/copy produces, respectively.
+the file that the rename/copy produces, respectively.
 
 2.   It is followed by one or more extended header lines:
 
@@ -77,7 +77,7 @@ separate lines indicate the old and the new mode.
 
 5.  Hunk headers mention the name of the function to which the hunk
     applies.  See "Defining a custom hunk-header" in
-    linkgit:gitattributes[5] for details of how to tailor to this to
+    linkgit:gitattributes[5] for details of how to tailor this to
     specific languages.
 
 
@@ -89,7 +89,7 @@ produce a 'combined diff' when showing a merge. This is the default
 format when showing merges with linkgit:git-diff[1] or
 linkgit:git-show[1]. Note also that you can give suitable
 `--diff-merges` option to any of these commands to force generation of
-diffs in specific format.
+diffs in a specific format.
 
 A "combined diff" format looks like this:
 
@@ -123,7 +123,7 @@ index fabadb8,cc95eb0..4866510
 		for_each_ref(get_name);
 ------------
 
-1.   It is preceded with a "git diff" header, that looks like
+1.   It is preceded by a "git diff" header, that looks like
      this (when the `-c` option is used):
 
        diff --combined file
@@ -142,22 +142,22 @@ or like this (when the `--cc` option is used):
 +
 The `mode <mode>,<mode>..<mode>` line appears only if at least one of
 the <mode> is different from the rest. Extended headers with
-information about detected contents movement (renames and
-copying detection) are designed to work with diff of two
+information about detected content movement (renames and
+copying detection) are designed to work with the diff of two
 <tree-ish> and are not used by combined diff format.
 
-3.   It is followed by two-line from-file/to-file header
+3.   It is followed by a two-line from-file/to-file header:
 
        --- a/file
        +++ b/file
 +
-Similar to two-line header for traditional 'unified' diff
+Similar to the two-line header for the traditional 'unified' diff
 format, `/dev/null` is used to signal created or deleted
 files.
 +
 However, if the --combined-all-paths option is provided, instead of a
-two-line from-file/to-file you get a N+1 line from-file/to-file header,
-where N is the number of parents in the merge commit
+two-line from-file/to-file, you get an N+1 line from-file/to-file header,
+where N is the number of parents in the merge commit:
 
        --- a/file
        --- a/file
@@ -197,7 +197,7 @@ added, from the point of view of that parent).
 In the above example output, the function signature was changed
 from both files (hence two `-` removals from both file1 and
 file2, plus `++` to mean one line that was added does not appear
-in either file1 or file2).  Also eight other lines are the same
+in either file1 or file2).  Also, eight other lines are the same
 from file1 but do not appear in file2 (hence prefixed with `+`).
 
 When shown by `git diff-tree -c`, it compares the parents of a

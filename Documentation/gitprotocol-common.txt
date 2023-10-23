@@ -13,7 +13,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-This document sets defines things common to various over-the-wire
+This document defines things common to various over-the-wire
 protocols and file formats used in Git.
 
 ABNF Notation

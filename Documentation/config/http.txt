@@ -254,13 +254,13 @@ http.lowSpeedLimit, http.lowSpeedTime::
 
 http.noEPSV::
 	A boolean which disables using of EPSV ftp command by curl.
-	This can helpful with some "poor" ftp servers which don't
+	This can be helpful with some "poor" ftp servers which don't
 	support EPSV mode. Can be overridden by the `GIT_CURL_FTP_NO_EPSV`
 	environment variable. Default is false (curl will use EPSV).
 
 http.userAgent::
 	The HTTP USER_AGENT string presented to an HTTP server.  The default
-	value represents the version of the client Git such as git/1.7.1.
+	value represents the version of the Git client such as git/1.7.1.
 	This option allows you to override this value to a more common value
 	such as Mozilla/4.0.  This may be necessary, for instance, if
 	connecting through a firewall that restricts HTTP connections to a set

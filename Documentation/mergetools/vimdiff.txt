@@ -32,10 +32,10 @@ have special meaning:
   - `+` is used to "open a new tab"
   - `,` is used to "open a new vertical split"
   - `/` is used to "open a new horizontal split"
-  - `@` is used to indicate which is the file containing the final version after
+  - `@` is used to indicate the file containing the final version after
     solving the conflicts. If not present, `MERGED` will be used by default.
 
-The precedence of the operators is this one (you can use parentheses to change
+The precedence of the operators is as follows (you can use parentheses to change
 it):
 
     `@` > `+` > `/` > `,`
@@ -162,7 +162,7 @@ information as the first tab, with a different layout.
 |       REMOTE        |                     |
 ---------------------------------------------
 ....
-Note how in the third tab definition we need to use parenthesis to make `,`
+Note how in the third tab definition we need to use parentheses to make `,`
 have precedence over `/`.
 --
 

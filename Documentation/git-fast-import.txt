@@ -622,7 +622,7 @@ in octal.  Git only supports the following modes:
 * `100755` or `755`: A normal, but executable, file.
 * `120000`: A symlink, the content of the file will be the link target.
 * `160000`: A gitlink, SHA-1 of the object refers to a commit in
-  another repository. Git links can only be specified by SHA or through
+  another repository. Git links can only be specified either by SHA or through
   a commit mark. They are used to implement submodules.
 * `040000`: A subdirectory.  Subdirectories can only be specified by
   SHA or through a tree mark set with `--import-marks`.
@@ -1353,7 +1353,7 @@ the marks back to the source repository, it is easy to verify the
 accuracy and completeness of the import by comparing each Git
 commit to the corresponding source revision.
 
-Coming from a system such as Perforce or Subversion this should be
+Coming from a system such as Perforce or Subversion, this should be
 quite simple, as the fast-import mark can also be the Perforce changeset
 number or the Subversion revision number.
 

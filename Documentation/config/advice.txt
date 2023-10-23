@@ -5,7 +5,7 @@ advice.*::
 +
 --
 	ambiguousFetchRefspec::
-		Advice shown when fetch refspec for multiple remotes map to
+		Advice shown when a fetch refspec for multiple remotes maps to
 		the same remote-tracking branch namespace and causes branch
 		tracking set-up to fail.
 	fetchShowForcedUpdates::
@@ -63,7 +63,7 @@ advice.*::
 		the template shown when writing commit messages in
 		linkgit:git-commit[1], and in the help message shown
 		by linkgit:git-switch[1] or
-		linkgit:git-checkout[1] when switching branch.
+		linkgit:git-checkout[1] when switching branches.
 	statusUoption::
 		Advise to consider using the `-u` option to linkgit:git-status[1]
 		when the command takes more than 2 seconds to enumerate untracked
@@ -87,7 +87,7 @@ advice.*::
 	detachedHead::
 		Advice shown when you used
 		linkgit:git-switch[1] or linkgit:git-checkout[1]
-		to move to the detach HEAD state, to instruct how to
+		to move to the detached HEAD state, to instruct how to
 		create a local branch after the fact.
 	suggestDetachingHead::
 		Advice shown when linkgit:git-switch[1] refuses to detach HEAD
@@ -101,7 +101,7 @@ advice.*::
 		otherwise caused a remote-tracking branch to be
 		checked out. See the `checkout.defaultRemote`
 		configuration variable for how to set a given remote
-		to used by default in some situations where this
+		to be used by default in some situations where this
 		advice would be printed.
 	amWorkDir::
 		Advice that shows the location of the patch file when

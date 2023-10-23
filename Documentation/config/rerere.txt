@@ -1,7 +1,7 @@
 rerere.autoUpdate::
 	When set to true, `git-rerere` updates the index with the
 	resulting contents after it cleanly resolves conflicts using
-	previously recorded resolution.  Defaults to false.
+	previously recorded resolutions.  Defaults to false.
 
 rerere.enabled::
 	Activate recording of resolved conflicts, so that identical

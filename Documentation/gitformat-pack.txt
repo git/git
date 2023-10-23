@@ -17,8 +17,8 @@ $GIT_DIR/objects/pack/multi-pack-index
 DESCRIPTION
 -----------
 
-The Git pack format is now Git stores most of its primary repository
-data. Over the lietime af a repository loose objects (if any) and
+The Git pack format is how Git stores most of its primary repository
+data. Over the lifetime of a repository, loose objects (if any) and
 smaller packs are consolidated into larger pack(s). See
 linkgit:git-gc[1] and linkgit:git-pack-objects[1].
 
@@ -48,7 +48,7 @@ Similarly, in SHA-256 repositories, these values are computed using SHA-256.
      Observation: we cannot have more than 4G versions ;-) and
      more than 4G objects in a pack.
 
-   - The header is followed by number of object entries, each of
+   - The header is followed by a number of object entries, each of
      which looks like this:
 
      (undeltified representation)
@@ -62,7 +62,7 @@ Similarly, in SHA-256 repositories, these values are computed using SHA-256.
 	 is an OBJ_OFS_DELTA object
      compressed delta data
 
-     Observation: length of each object is encoded in a variable
+     Observation: the length of each object is encoded in a variable
      length format and is not constrained to 32-bit or anything.
 
   - The trailer records a pack checksum of all of the above.
@@ -117,7 +117,7 @@ the delta data is a sequence of instructions to reconstruct the object
 from the base object. If the base object is deltified, it must be
 converted to canonical form first. Each instruction appends more and
 more data to the target object until it's complete. There are two
-supported instructions so far: one for copy a byte range from the
+supported instructions so far: one for copying a byte range from the
 source object and one for inserting new data embedded in the
 instruction itself.
 
@@ -137,7 +137,7 @@ copy. Offset and size are in little-endian order.
 
 All offset and size bytes are optional. This is to reduce the
 instruction size when encoding small offsets or sizes. The first seven
-bits in the first octet determines which of the next seven octets is
+bits in the first octet determine which of the next seven octets is
 present. If bit zero is set, offset1 is present. If bit one is set
 offset2 is present and so on.
 
@@ -161,9 +161,9 @@ converted to 0x10000.
   | 0xxxxxxx |    data    |
   +----------+============+
 
-This is the instruction to construct target object without the base
+This is the instruction to construct the target object without the base
 object. The following data is appended to the target object. The first
-seven bits of the first octet determines the size of data in
+seven bits of the first octet determine the size of data in
 bytes. The size must be non-zero.
 
 ==== Reserved instruction
@@ -294,7 +294,7 @@ Pack file entry: <+
 
   - The same trailer as a v1 pack file:
 
-    A copy of the pack checksum at the end of
+    A copy of the pack checksum at the end of the
     corresponding packfile.
 
     Index checksum of all of the above.

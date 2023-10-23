@@ -3,7 +3,7 @@ git-whatchanged(1)
 
 NAME
 ----
-git-whatchanged - Show logs with difference each commit introduces
+git-whatchanged - Show logs with differences each commit introduces
 
 
 SYNOPSIS
@@ -18,11 +18,11 @@ Shows commit logs and diff output each commit introduces.
 
 New users are encouraged to use linkgit:git-log[1] instead.  The
 `whatchanged` command is essentially the same as linkgit:git-log[1]
-but defaults to show the raw format diff output and to skip merges.
+but defaults to showing the raw format diff output and skipping merges.
 
-The command is kept primarily for historical reasons; fingers of
+The command is primarily kept for historical reasons; fingers of
 many people who learned Git long before `git log` was invented by
-reading Linux kernel mailing list are trained to type it.
+reading the Linux kernel mailing list are trained to type it.
 
 
 Examples

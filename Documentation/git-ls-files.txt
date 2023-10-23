@@ -25,12 +25,12 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-This merges the file listing in the index with the actual working
+This command merges the file listing in the index with the actual working
 directory list, and shows different combinations of the two.
 
-One or more of the options below may be used to determine the files
+Several flags can be used to determine which files are
 shown, and each file may be printed multiple times if there are
-multiple entries in the index or multiple statuses are applicable for
+multiple entries in the index or if multiple statuses are applicable for
 the relevant file selection options.
 
 OPTIONS
@@ -62,7 +62,7 @@ OPTIONS
 	matching an exclude pattern.  When showing "other" files
 	(i.e. when used with '-o'), show only those matched by an
 	exclude pattern.  Standard ignore rules are not automatically
-	activated, therefore at least one of the `--exclude*` options
+	activated; therefore, at least one of the `--exclude*` options
 	is required.
 
 -s::
@@ -141,7 +141,7 @@ OPTIONS
 	Show status tags together with filenames.  Note that for
 	scripting purposes, linkgit:git-status[1] `--porcelain` and
 	linkgit:git-diff-files[1] `--name-status` are almost always
-	superior alternatives, and users should look at
+	superior alternatives; users should look at
 	linkgit:git-status[1] `--short` or linkgit:git-diff[1]
 	`--name-status` for more user-friendly alternatives.
 +

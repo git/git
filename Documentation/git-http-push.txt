@@ -13,12 +13,12 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Sends missing objects to remote repository, and updates the
+Sends missing objects to the remote repository, and updates the
 remote branch.
 
 *NOTE*: This command is temporarily disabled if your libcurl
 is older than 7.16, as the combination has been reported
-not to work and sometimes corrupts repository.
+not to work and sometimes corrupts the repository.
 
 OPTIONS
 -------
@@ -44,7 +44,7 @@ OPTIONS
 -d::
 -D::
 	Remove <ref> from remote repository.  The specified branch
-	cannot be the remote HEAD.  If -d is specified the following
+	cannot be the remote HEAD.  If -d is specified, the following
 	other conditions must also be met:
 
 	- Remote HEAD must resolve to an object that exists locally
@@ -83,8 +83,8 @@ and where it is pushed is determined by using the destination side.
 Without `--force`, the <src> ref is stored at the remote only if
 <dst> does not exist, or <dst> is a proper subset (i.e. an
 ancestor) of <src>.  This check, known as "fast-forward check",
-is performed in order to avoid accidentally overwriting the
-remote ref and lose other peoples' commits from there.
+is performed to avoid accidentally overwriting the
+remote ref and losing other peoples' commits from there.
 
 With `--force`, the fast-forward check is disabled for all refs.
 

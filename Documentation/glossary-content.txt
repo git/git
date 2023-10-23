@@ -186,7 +186,7 @@ current branch integrates with) obviously do not work, as there is no
 	points at the directory that is the real repository.
 
 [[def_grafts]]grafts::
-	Grafts enables two otherwise different lines of development to be joined
+	Grafts enable two otherwise different lines of development to be joined
 	together by recording fake ancestry information for commits. This way
 	you can make Git pretend the set of <<def_parent,parents>> a <<def_commit,commit>> has
 	is different from what was recorded when the commit was

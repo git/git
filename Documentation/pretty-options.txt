@@ -48,7 +48,7 @@ people using 80-column terminals.
 --expand-tabs::
 --no-expand-tabs::
 	Perform a tab expansion (replace each tab with enough spaces
-	to fill to the next display column that is multiple of '<n>')
+	to fill to the next display column that is a multiple of '<n>')
 	in the log message before showing it in the output.
 	`--expand-tabs` is a short-hand for `--expand-tabs=8`, and
 	`--no-expand-tabs` is a short-hand for `--expand-tabs=0`,
@@ -73,7 +73,7 @@ environment overrides). See linkgit:git-config[1] for more details.
 With an optional '<ref>' argument, use the ref to find the notes
 to display.  The ref can specify the full refname when it begins
 with `refs/notes/`; when it begins with `notes/`, `refs/` and otherwise
-`refs/notes/` is prefixed to form a full name of the ref.
+`refs/notes/` is prefixed to form the full name of the ref.
 +
 Multiple --notes options can be combined to control which notes are
 being displayed. Examples: "--notes=foo" will show only notes from

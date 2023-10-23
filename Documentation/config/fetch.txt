@@ -52,8 +52,8 @@ fetch.pruneTags::
 
 fetch.output::
 	Control how ref update status is printed. Valid values are
-	`full` and `compact`. Default value is `full`. See section
-	OUTPUT in linkgit:git-fetch[1] for detail.
+	`full` and `compact`. Default value is `full`. See the
+	OUTPUT section in linkgit:git-fetch[1] for details.
 
 fetch.negotiationAlgorithm::
 	Control how information about the commits in the local repository

@@ -19,7 +19,7 @@ Principles
 Selecting patch(es) to review
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 If you are looking for a patch series in need of review, start by checking
-latest "What's cooking in git.git" email
+the latest "What's cooking in git.git" email
 (https://lore.kernel.org/git/xmqqilm1yp3m.fsf@gitster.g/[example]). The "What's
 cooking" emails & replies can be found using the query `s:"What's cooking"` on
 the https://lore.kernel.org/git/[`lore.kernel.org` mailing list archive];
@@ -126,7 +126,7 @@ Terminology
 -----------
 nit: ::
 	Denotes a small issue that should be fixed, such as a typographical error
-	or mis-alignment of conditions in an `if()` statement.
+	or misalignment of conditions in an `if()` statement.
 
 aside: ::
 optional: ::

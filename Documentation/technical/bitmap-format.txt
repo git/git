@@ -114,7 +114,7 @@ result in an empty bitmap (no bits set).
 
     * N entries with compressed bitmaps, one for each indexed commit
 +
-Where `N` is the total amount of entries in this bitmap index.
+Where `N` is the total number of entries in this bitmap index.
 Each entry contains the following:
 
 	** {empty}
@@ -126,7 +126,7 @@ Each entry contains the following:
 	** {empty}
 	1-byte XOR-offset: ::
 	    The xor offset used to compress this bitmap. For an entry
-	    in position `x`, a XOR offset of `y` means that the actual
+	    in position `x`, an XOR offset of `y` means that the actual
 	    bitmap representing this commit is composed by XORing the
 	    bitmap for this entry with the bitmap in entry `x-y` (i.e.
 	    the bitmap `y` entries before this one).
@@ -239,7 +239,7 @@ bitmaps.
 
 For a `.bitmap` containing `nr_entries` reachability bitmaps, the table
 contains a list of `nr_entries` <commit_pos, offset, xor_row> triplets
-(sorted in the ascending order of `commit_pos`). The content of i'th
+(sorted in the ascending order of `commit_pos`). The content of the i'th
 triplet is -
 
 	* {empty}

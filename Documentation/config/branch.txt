@@ -36,7 +36,7 @@ branch.sort::
 
 branch.<name>.remote::
 	When on branch <name>, it tells 'git fetch' and 'git push'
-	which remote to fetch from/push to.  The remote to push to
+	which remote to fetch from or push to.  The remote to push to
 	may be overridden with `remote.pushDefault` (for all branches).
 	The remote to push to, for the current branch, may be further
 	overridden by `branch.<name>.pushRemote`.  If no remote is
@@ -64,7 +64,7 @@ branch.<name>.merge::
 	handled like the remote part of a refspec, and must match a
 	ref which is fetched from the remote given by
 	"branch.<name>.remote".
-	The merge information is used by 'git pull' (which at first calls
+	The merge information is used by 'git pull' (which first calls
 	'git fetch') to lookup the default branch for merging. Without
 	this option, 'git pull' defaults to merge the first refspec fetched.
 	Specify multiple values to get an octopus merge.
@@ -99,5 +99,5 @@ for details).
 branch.<name>.description::
 	Branch description, can be edited with
 	`git branch --edit-description`. Branch description is
-	automatically added in the format-patch cover letter or
+	automatically added to the format-patch cover letter or
 	request-pull summary.

@@ -36,7 +36,7 @@ OPTIONS
 
 --rotate-to=<file>::
 	Start showing the diff for the given path,
-	the paths before it will move to end and output.
+	the paths before it will move to the end and output.
 
 --skip-to=<file>::
 	Start showing the diff for the given path, skipping all
@@ -78,7 +78,7 @@ with custom merge tool commands and has the same value as `$MERGED`.
 	Print a list of diff tools that may be used with `--tool`.
 
 --[no-]symlinks::
-	'git difftool''s default behavior is create symlinks to the
+	'git difftool''s default behavior is to create symlinks to the
 	working tree when run in `--dir-diff` mode and the right-hand
 	side of the comparison yields the same content as the file in
 	the working tree.

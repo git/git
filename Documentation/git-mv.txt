@@ -13,7 +13,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Move or rename a file, directory or symlink.
+Move or rename a file, directory, or symlink.
 
  git mv [-v] [-f] [-n] [-k] <source> <destination>
  git mv [-v] [-f] [-n] [-k] <source> ... <destination directory>

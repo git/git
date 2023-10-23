@@ -2,7 +2,7 @@ Simple-IPC API
 ==============
 
 The Simple-IPC API is a collection of `ipc_` prefixed library routines
-and a basic communication protocol that allow an IPC-client process to
+and a basic communication protocol that allows an IPC-client process to
 send an application-specific IPC-request message to an IPC-server
 process and receive an application-specific IPC-response message.
 
@@ -20,12 +20,12 @@ IPC-client.
 
 The IPC-client routines within a client application process connect
 to the IPC-server and send a request message and wait for a response.
-When received, the response is returned back the caller.
+When received, the response is returned back to the caller.
 
 For example, the `fsmonitor--daemon` feature will be built as a server
 application on top of the IPC-server library routines.  It will have
 threads watching for file system events and a thread pool waiting for
-client connections.  Clients, such as `git status` will request a list
+client connections.  Clients, such as `git status`, will request a list
 of file system events since a point in time and the server will
 respond with a list of changed files and directories.  The formats of
 the request and response are application-specific; the IPC-client and
@@ -37,7 +37,7 @@ Comparison with sub-process model
 
 The Simple-IPC mechanism differs from the existing `sub-process.c`
 model (Documentation/technical/long-running-process-protocol.txt) and
-used by applications like Git-LFS.  In the LFS-style sub-process model
+used by applications like Git-LFS.  In the LFS-style sub-process model,
 the helper is started by the foreground process, communication happens
 via a pair of file descriptors bound to the stdin/stdout of the
 sub-process, the sub-process only serves the current foreground
@@ -102,4 +102,4 @@ stateless request, receive an application-specific
 response, and disconnect.  It is a one round trip facility for
 querying the server.  The Simple-IPC routines hide the socket,
 named pipe, and thread pool details and allow the application
-layer to focus on the application at hand.
+layer to focus on the task at hand.

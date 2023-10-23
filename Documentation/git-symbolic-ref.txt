@@ -27,7 +27,7 @@ symbolic ref.
 
 A symbolic ref is a regular file that stores a string that
 begins with `ref: refs/`.  For example, your `.git/HEAD` is
-a regular file whose contents is `ref: refs/heads/master`.
+a regular file whose content is `ref: refs/heads/master`.
 
 OPTIONS
 -------

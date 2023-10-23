@@ -50,7 +50,7 @@ OPTIONS
 
 --current::
 	With this option, the command includes the current
-	branch to the list of revs to be shown when it is not
+	branch in the list of revs to be shown when it is not
 	given on the command line.
 
 --topo-order::
@@ -125,7 +125,7 @@ OPTIONS
 	default to color output.
 	Same as `--color=never`.
 
-Note that --more, --list, --independent and --merge-base options
+Note that --more, --list, --independent, and --merge-base options
 are mutually exclusive.
 
 
@@ -137,14 +137,14 @@ their commit message. The branch head that is pointed at by
 $GIT_DIR/HEAD is prefixed with an asterisk `*` character while other
 heads are prefixed with a `!` character.
 
-Following these N lines, one-line log for each commit is
+Following these N lines, a one-line log for each commit is
 displayed, indented N places.  If a commit is on the I-th
 branch, the I-th indentation character shows a `+` sign;
 otherwise it shows a space.  Merge commits are denoted by
 a `-` sign.  Each commit shows a short name that
 can be used as an extended SHA-1 to name that commit.
 
-The following example shows three branches, "master", "fixes"
+The following example shows three branches, "master", "fixes",
 and "mhf":
 
 ------------------------------------------------
@@ -154,7 +154,7 @@ $ git show-branch master fixes mhf
   ! [mhf] Allow "+remote:local" refspec to cause --force when fetching.
 ---
   + [mhf] Allow "+remote:local" refspec to cause --force when fetching.
-  + [mhf~1] Use git-octopus when pulling more than one heads.
+  + [mhf~1] Use git-octopus when pulling more than one head.
  +  [fixes] Introduce "reset type" flag to "git reset"
   + [mhf~2] "git fetch --force".
   + [mhf~3] Use .git/remote/origin, not .git/branches/origin.
@@ -197,7 +197,7 @@ $ git show-branch --reflog="10,1 hour ago" --list master
 
 shows 10 reflog entries going back from the tip as of 1 hour ago.
 Without `--list`, the output also shows how these tips are
-topologically related with each other.
+topologically related to each other.
 
 CONFIGURATION
 -------------

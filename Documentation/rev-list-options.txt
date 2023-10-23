@@ -56,7 +56,7 @@ endif::git-rev-list[]
 	error to use this option unless `--walk-reflogs` is in use.
 
 --grep=<pattern>::
-	Limit the commits output to ones with log message that
+	Limit the commits output to ones with a log message that
 	matches the specified pattern (regular expression).  With
 	more than one `--grep=<pattern>`, commits whose message
 	matches any of the given patterns are chosen (but see
@@ -72,7 +72,7 @@ endif::git-rev-list[]
 	instead of ones that match at least one.
 
 --invert-grep::
-	Limit the commits output to ones with log message that do not
+	Limit the commits output to ones with a log message that do not
 	match the pattern specified with `--grep=<pattern>`.
 
 -i::

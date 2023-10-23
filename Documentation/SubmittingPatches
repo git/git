@@ -87,7 +87,7 @@ maintainer.
 Under truly exceptional circumstances where you absolutely must depend
 on a select few topic branches that are already in `next` but not in
 `master`, you may want to create your own custom base-branch by forking
-`master` and merging the required topic branches to it. You could then
+`master` and merging the required topic branches into it. You could then
 work on top of this base-branch.  But keep in mind that this base-branch
 would only be known privately to you.  So when you are ready to send
 your patches to the list, be sure to communicate how you created it in
