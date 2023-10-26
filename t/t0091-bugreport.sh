@@ -69,6 +69,13 @@ test_expect_success 'incorrect arguments abort with usage' '
 	test_path_is_missing git-bugreport-*
 '
 
+test_expect_success 'incorrect positional arguments abort with usage and hint' '
+	test_must_fail git bugreport false 2>output &&
+	grep usage output &&
+	grep false output &&
+	test_path_is_missing git-bugreport-*
+'
+
 test_expect_success 'runs outside of a git dir' '
 	test_when_finished rm non-repo/git-bugreport-* &&
 	nongit git bugreport
