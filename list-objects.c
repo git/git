@@ -389,6 +389,9 @@ static void do_traverse(struct traversal_context *ctx)
 		 */
 		if (!ctx->revs->tree_objects)
 			; /* do not bother loading tree */
+		else if (ctx->revs->do_not_die_on_missing_objects &&
+			 oidset_contains(&ctx->revs->missing_commits, &commit->object.oid))
+			;
 		else if (repo_get_commit_tree(the_repository, commit)) {
 			struct tree *tree = repo_get_commit_tree(the_repository,
 								 commit);
