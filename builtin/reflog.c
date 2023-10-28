@@ -243,7 +243,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 {
 	struct cmd_reflog_expire_cb cmd = { 0 };
 	timestamp_t now = time(NULL);
-	int i, status, do_all, all_worktrees = 1;
+	int i, status, do_all, single_worktree = 0;
 	unsigned int flags = 0;
 	int verbose = 0;
 	reflog_expiry_should_prune_fn *should_prune_fn = should_expire_reflog_ent;
@@ -268,7 +268,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "stale-fix", &cmd.stalefix,
 			 N_("prune any reflog entries that point to broken commits")),
 		OPT_BOOL(0, "all", &do_all, N_("process the reflogs of all references")),
-		OPT_BOOL(1, "single-worktree", &all_worktrees,
+		OPT_BOOL(0, "single-worktree", &single_worktree,
 			 N_("limits processing to reflogs from the current worktree only")),
 		OPT_END()
 	};
@@ -318,7 +318,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 
 		worktrees = get_worktrees();
 		for (p = worktrees; *p; p++) {
-			if (!all_worktrees && !(*p)->is_current)
+			if (single_worktree && !(*p)->is_current)
 				continue;
 			collected.worktree = *p;
 			refs_for_each_reflog(get_worktree_ref_store(*p),
