@@ -28,6 +28,7 @@ usage: test-tool parse-options <options>
     --[no-]set23          set integer to 23
     --mode1               set integer to 1 (cmdmode option)
     --mode2               set integer to 2 (cmdmode option)
+    --[no-]mode34 (3|4)   set integer to 3 or 4 (cmdmode option)
     -L, --[no-]length <str>
                           get length of <str>
     -F, --[no-]file <file>
@@ -366,19 +367,41 @@ test_expect_success 'OPT_NEGBIT() works' '
 '
 
 test_expect_success 'OPT_CMDMODE() works' '
-	test-tool parse-options --expect="integer: 1" --mode1
+	test-tool parse-options --expect="integer: 1" --mode1 &&
+	test-tool parse-options --expect="integer: 3" --mode34=3
 '
 
-test_expect_success 'OPT_CMDMODE() detects incompatibility' '
+test_expect_success 'OPT_CMDMODE() detects incompatibility (1)' '
 	test_must_fail test-tool parse-options --mode1 --mode2 >output 2>output.err &&
 	test_must_be_empty output &&
-	test_i18ngrep "incompatible with --mode" output.err
+	test_i18ngrep "mode1" output.err &&
+	test_i18ngrep "mode2" output.err &&
+	test_i18ngrep "is incompatible with" output.err
 '
 
-test_expect_success 'OPT_CMDMODE() detects incompatibility with something else' '
+test_expect_success 'OPT_CMDMODE() detects incompatibility (2)' '
 	test_must_fail test-tool parse-options --set23 --mode2 >output 2>output.err &&
 	test_must_be_empty output &&
-	test_i18ngrep "incompatible with something else" output.err
+	test_i18ngrep "mode2" output.err &&
+	test_i18ngrep "set23" output.err &&
+	test_i18ngrep "is incompatible with" output.err
+'
+
+test_expect_success 'OPT_CMDMODE() detects incompatibility (3)' '
+	test_must_fail test-tool parse-options --mode2 --set23 >output 2>output.err &&
+	test_must_be_empty output &&
+	test_i18ngrep "mode2" output.err &&
+	test_i18ngrep "set23" output.err &&
+	test_i18ngrep "is incompatible with" output.err
+'
+
+test_expect_success 'OPT_CMDMODE() detects incompatibility (4)' '
+	test_must_fail test-tool parse-options --mode2 --mode34=3 \
+		>output 2>output.err &&
+	test_must_be_empty output &&
+	test_i18ngrep "mode2" output.err &&
+	test_i18ngrep "mode34.3" output.err &&
+	test_i18ngrep "is incompatible with" output.err
 '
 
 test_expect_success 'OPT_COUNTUP() with PARSE_OPT_NODASH works' '
