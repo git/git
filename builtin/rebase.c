@@ -376,20 +376,6 @@ static int run_sequencer_rebase(struct rebase_options *opts)
 	return ret;
 }
 
-static void imply_merge(struct rebase_options *opts, const char *option);
-static int parse_opt_keep_empty(const struct option *opt, const char *arg,
-				int unset)
-{
-	struct rebase_options *opts = opt->value;
-
-	BUG_ON_OPT_ARG(arg);
-
-	imply_merge(opts, unset ? "--no-keep-empty" : "--keep-empty");
-	opts->keep_empty = !unset;
-	opts->type = REBASE_MERGE;
-	return 0;
-}
-
 static int is_merge(struct rebase_options *opts)
 {
 	return opts->type == REBASE_MERGE;
@@ -983,6 +969,18 @@ static enum empty_type parse_empty_value(const char *value)
 	die(_("unrecognized empty type '%s'; valid values are \"drop\", \"keep\", and \"ask\"."), value);
 }
 
+static int parse_opt_keep_empty(const struct option *opt, const char *arg,
+				int unset)
+{
+	struct rebase_options *opts = opt->value;
+
+	BUG_ON_OPT_ARG(arg);
+
+	imply_merge(opts, unset ? "--no-keep-empty" : "--keep-empty");
+	opts->keep_empty = !unset;
+	return 0;
+}
+
 static int parse_opt_empty(const struct option *opt, const char *arg, int unset)
 {
 	struct rebase_options *options = opt->value;
@@ -1491,22 +1489,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	if (options.strategy) {
 		options.strategy = xstrdup(options.strategy);
-		switch (options.type) {
-		case REBASE_APPLY:
-			die(_("--strategy requires --merge or --interactive"));
-		case REBASE_MERGE:
-			/* compatible */
-			break;
-		case REBASE_UNSPECIFIED:
-			options.type = REBASE_MERGE;
-			break;
-		default:
-			BUG("unhandled rebase type (%d)", options.type);
-		}
+		imply_merge(&options, "--strategy");
 	}
-
-	if (options.type == REBASE_MERGE)
-		imply_merge(&options, "--merge");
 
 	if (options.root && !options.onto_name)
 		imply_merge(&options, "--root without --onto");
@@ -1552,7 +1536,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	if (options.type == REBASE_UNSPECIFIED) {
 		if (!strcmp(options.default_backend, "merge"))
-			imply_merge(&options, "--merge");
+			options.type = REBASE_MERGE;
 		else if (!strcmp(options.default_backend, "apply"))
 			options.type = REBASE_APPLY;
 		else
