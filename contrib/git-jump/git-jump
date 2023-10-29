@@ -9,7 +9,7 @@ The <mode> parameter is one of:
 
 diff: elements are diff hunks. Arguments are given to diff.
 
-merge: elements are merge conflicts. Arguments are ignored.
+merge: elements are merge conflicts. Arguments are given to ls-files -u.
 
 grep: elements are grep hits. Arguments are given to git grep or, if
       configured, to the command in `jump.grepCmd`.

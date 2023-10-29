@@ -229,7 +229,7 @@ without a formal "merging". Or longhand +
   git am -3 -k`
 
 An alternate participant submission mechanism is using the
-`git request-pull` or pull-request mechanisms (e.g as used on
+`git request-pull` or pull-request mechanisms (e.g. as used on
 GitHub (www.github.com) to notify your upstream of your
 contribution.
 

@@ -324,7 +324,7 @@ superproject's "origin/main", but tracks the submodule's "origin/main".
 	multiple times, in which case the last key becomes the primary
 	key. The keys supported are the same as those in `git
 	for-each-ref`. Sort order defaults to the value configured for the
-	`branch.sort` variable if exists, or to sorting based on the
+	`branch.sort` variable if it exists, or to sorting based on the
 	full refname (including `refs/...` prefix). This lists
 	detached HEAD (if present) first, then local branches and
 	finally remote-tracking branches. See linkgit:git-config[1].

@@ -23,7 +23,7 @@ This is the same way as how I have been treating gitk, and to a
 lesser degree various foreign SCM interfaces, so you know the
 drill.
 
-I expect that things that start their life in the contrib/ area
+I expect things that start their life in the contrib/ area
 to graduate out of contrib/ once they mature, either by becoming
 projects on their own, or moving to the toplevel directory.  On
 the other hand, I expect I'll be proposing removal of disused
@@ -31,7 +31,7 @@ and inactive ones from time to time.
 
 If you have new things to add to this area, please first propose
 it on the git mailing list, and after a list discussion proves
-there are some general interests (it does not have to be a
+there is general interest (it does not have to be a
 list-wide consensus for a tool targeted to a relatively narrow
 audience -- for example I do not work with projects whose
 upstream is svn, so I have no use for git-svn myself, but it is

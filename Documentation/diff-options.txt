@@ -76,7 +76,7 @@ off, none::
 +
 on, m::
 	Make diff output for merge commits to be shown in the default
-	format. The default format could be changed using
+	format. The default format can be changed using
 	`log.diffMerges` configuration variable, whose default value
 	is `separate`.
 +
@@ -314,7 +314,7 @@ ifndef::git-format-patch[]
 
 -z::
 ifdef::git-log[]
-	Separate the commits with NULs instead of with new newlines.
+	Separate the commits with NULs instead of newlines.
 +
 Also, when `--raw` or `--numstat` has been given, do not munge
 pathnames and use NULs as output field terminators.
