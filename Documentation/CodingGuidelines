@@ -24,7 +24,7 @@ Git in general, a few rough rules are:
 
    "Once it _is_ in the tree, it's not really worth the patch noise to
    go and fix it up."
-   Cf. http://lkml.iu.edu/hypermail/linux/kernel/1001.3/01069.html
+   Cf. https://lore.kernel.org/all/20100126160632.3bdbe172.akpm@linux-foundation.org/
 
  - Log messages to explain your changes are as important as the
    changes themselves.  Clearly written code and in-code comments
