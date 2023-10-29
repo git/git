@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2023, #08; Sun, 22)
-X-master-at: ceadf0f3cf51550166a387ec8508bb55e7883057
-X-next-at: 7ce3cef56b63eab50c97e020dbcc89a4d2035129
+Subject: What's cooking in git.git (Oct 2023, #09; Mon, 30)
+X-master-at: 2e8e77cbac8ac17f94eee2087187fa1718e38b14
+X-next-at: ea05f2083d1990e732cb98be6e05cafff493545b
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Oct 2023, #08; Sun, 22)
+What's cooking in git.git (Oct 2023, #09; Mon, 30)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -51,48 +51,238 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ak/pretty-decorate-more-fix (2023-10-09) 1 commit
-  (merged to 'next' on 2023-10-12 at 3cbb4c2268)
- + pretty: fix ref filtering for %(decorate) formats
+* bc/racy-4gb-files (2023-10-13) 2 commits
+  (merged to 'next' on 2023-10-16 at c60962dfee)
+ + Prevent git from rehashing 4GiB files
+ + t: add a test helper to truncate files
 
- Unlike "git log --pretty=%D", "git log --pretty="%(decorate)" did
- not auto-initialize the decoration subsystem, which has been
- corrected.
- source: <20231008202307.1568477-1-andy.koppe@gmail.com>
-
-
-* ps/rewritten-is-per-worktree-doc (2023-10-10) 1 commit
-  (merged to 'next' on 2023-10-12 at 501b960e8c)
- + doc/git-worktree: mention "refs/rewritten" as per-worktree refs
-
- Doc update.
- source: <985ac850eb6e60ae76601acc8bfbcd56f99348b4.1696935657.git.ps@pks.im>
+ The index file has room only for lower 32-bit of the file size in
+ the cached stat information, which means cached stat information
+ will have 0 in its sd_size member for a file whose size is multiple
+ of 4GiB.  This is mistaken for a racily clean path.  Avoid it by
+ storing a bogus sd_size value instead for such files.
+ source: <20231012160930.330618-1-sandals@crustytoothpaste.net>
 
 
-* ty/merge-tree-strategy-options (2023-10-11) 2 commits
-  (merged to 'next' on 2023-10-12 at 9b873601df)
- + merge: introduce {copy|clear}_merge_options()
-  (merged to 'next' on 2023-09-29 at aa65b54416)
- + merge-tree: add -X strategy option
+* en/docfixes (2023-10-09) 25 commits
+  (merged to 'next' on 2023-10-17 at 1e3cdeb427)
+ + documentation: add missing parenthesis
+ + documentation: add missing quotes
+ + documentation: add missing fullstops
+ + documentation: add some commas where they are helpful
+ + documentation: fix whitespace issues
+ + documentation: fix capitalization
+ + documentation: fix punctuation
+ + documentation: use clearer prepositions
+ + documentation: add missing hyphens
+ + documentation: remove unnecessary hyphens
+ + documentation: add missing article
+ + documentation: fix choice of article
+ + documentation: whitespace is already generally plural
+ + documentation: fix singular vs. plural
+ + documentation: fix verb vs. noun
+ + documentation: fix adjective vs. noun
+ + documentation: fix verb tense
+ + documentation: employ consistent verb tense for a list
+ + documentation: fix subject/verb agreement
+ + documentation: remove extraneous words
+ + documentation: add missing words
+ + documentation: fix apostrophe usage
+ + documentation: fix typos
+ + documentation: fix small error
+ + documentation: wording improvements
 
- "git merge-tree" learned to take strategy backend specific options
- via the "-X" option, like "git merge" does.
- source: <pull.1565.v6.git.1695522222723.gitgitgadget@gmail.com>
+ Documentation typo and grammo fixes.
+ source: <pull.1595.git.1696747527.gitgitgadget@gmail.com>
 
 
-* vd/loose-ref-iteration-optimization (2023-10-09) 4 commits
-  (merged to 'next' on 2023-10-12 at 99e2f83855)
- + files-backend.c: avoid stat in 'loose_fill_ref_dir'
- + dir.[ch]: add 'follow_symlink' arg to 'get_dtype'
- + dir.[ch]: expose 'get_dtype'
- + ref-cache.c: fix prefix matching in ref iteration
+* jc/fail-stash-to-store-non-stash (2023-10-11) 1 commit
+  (merged to 'next' on 2023-10-16 at e26db57315)
+ + stash: be careful what we store
 
- The code to iterate over loose references have been optimized to
- reduce the number of lstat() system calls.
- source: <pull.1594.v2.git.1696888736.gitgitgadget@gmail.com>
+ Feeding "git stash store" with a random commit that was not created
+ by "git stash create" now errors out.
+ source: <xmqqbkd4lwj0.fsf_-_@gitster.g>
+
+
+* jk/chunk-bounds (2023-10-14) 21 commits
+  (merged to 'next' on 2023-10-16 at 68c9e37980)
+ + t5319: make corrupted large-offset test more robust
+  (merged to 'next' on 2023-10-10 at 21139603ce)
+ + chunk-format: drop pair_chunk_unsafe()
+ + commit-graph: detect out-of-order BIDX offsets
+ + commit-graph: check bounds when accessing BIDX chunk
+ + commit-graph: check bounds when accessing BDAT chunk
+ + commit-graph: bounds-check generation overflow chunk
+ + commit-graph: check size of generations chunk
+ + commit-graph: bounds-check base graphs chunk
+ + commit-graph: detect out-of-bounds extra-edges pointers
+ + commit-graph: check size of commit data chunk
+ + midx: check size of revindex chunk
+ + midx: bounds-check large offset chunk
+ + midx: check size of object offset chunk
+ + midx: enforce chunk alignment on reading
+ + midx: check size of pack names chunk
+ + commit-graph: check consistency of fanout table
+ + midx: check size of oid lookup chunk
+ + commit-graph: check size of oid fanout chunk
+ + midx: stop ignoring malformed oid fanout chunk
+ + t: add library for munging chunk-format files
+ + chunk-format: note that pair_chunk() is unsafe
+ (this branch is used by tb/pair-chunk-expect-size.)
+
+ The codepaths that read "chunk" formatted files have been corrected
+ to pay attention to the chunk size and notice broken files.
+ source: <20231009205544.GA3281950@coredump.intra.peff.net>
+
+
+* so/diff-merges-dd (2023-10-09) 3 commits
+  (merged to 'next' on 2023-10-16 at 71b5e29625)
+ + completion: complete '--dd'
+ + diff-merges: introduce '--dd' option
+ + diff-merges: improve --diff-merges documentation
+
+ "git log" and friends learned "--dd" that is a short-hand for
+ "--diff-merges=first-parent -p".
+ source: <20231009160535.236523-1-sorganov@gmail.com>
 
 --------------------------------------------------
 [New Topics]
+
+* ii/branch-error-messages-update (2023-10-23) 1 commit
+  (merged to 'next' on 2023-10-23 at 3d00599173)
+ + builtin/branch.c: adjust error messages to coding guidelines
+
+ Error message update.
+
+ Will merge to 'master'.
+ source: <20231023160656.4341-1-isokenjune@gmail.com>
+
+
+* jm/bisect-run-synopsis-fix (2023-10-23) 1 commit
+  (merged to 'next' on 2023-10-23 at 8dfa3ed356)
+ + doc/git-bisect: clarify `git bisect run` syntax
+
+ Doc and usage message update.
+
+ Will merge to 'master'.
+ source: <pull.1602.v2.git.1698088990478.gitgitgadget@gmail.com>
+
+
+* ar/submitting-patches-doc-update (2023-10-24) 1 commit
+ - SubmittingPatches: call gitk's command "Copy commit reference"
+
+ Doc update.
+
+ Will merge to 'next'.
+ source: <20231024195123.911431-1-rybak.a.v@gmail.com>
+
+
+* es/bugreport-no-extra-arg (2023-10-29) 2 commits
+ - bugreport: reject positional arguments
+ - t0091-bugreport: stop using i18ngrep
+
+ source: <20231026155459.2234929-1-nasamuffin@google.com>
+
+
+* js/my-first-contribution-update (2023-10-28) 1 commit
+ - Include gettext.h in MyFirstContribution tutorial
+
+ source: <20231017041503.3249-1-jacob@initialcommit.io>
+
+
+* ms/send-email-validate-fix (2023-10-26) 1 commit
+ - send-email: move validation code below process_address_list
+
+ source: <ddd4bfdd-ed14-44f4-89d3-192332bbc1c4@amd.com>
+
+
+* ps/ci-gitlab (2023-10-29) 5 commits
+ - ci: add support for GitLab CI
+ - ci: split out logic to set up failed test artifacts
+ - ci: group installation of Docker dependencies
+ - ci: make grouping setup more generic
+ - ci: reorder definitions for grouping functions
+
+ source: <cover.1698398590.git.ps@pks.im>
+
+
+* ps/ref-tests-update (2023-10-24) 9 commits
+ - t: mark several tests that assume the files backend with REFFILES
+ - t7900: assert the absence of refs via git-for-each-ref(1)
+ - t7300: assert exact states of repo
+ - t4207: delete replace references via git-update-ref(1)
+ - t1450: convert tests to remove worktrees via git-worktree(1)
+ - t: convert tests to not access reflog via the filesystem
+ - t: convert tests to not access symrefs via the filesystem
+ - t: convert tests to not write references via the filesystem
+ - t: allow skipping expected object ID in `ref-store update-ref`
+
+ source: <cover.1698156169.git.ps@pks.im>
+
+
+* rs/fix-arghelp (2023-10-29) 1 commit
+ - am, rebase: fix arghelp syntax of --empty
+
+ source: <10e09b2d-15d7-4af1-b24c-217f9e2f457a@web.de>
+
+
+* rs/parse-options-cmdmode (2023-10-29) 2 commits
+ - am: simplify --show-current-patch handling
+ - parse-options: make CMDMODE errors more precise
+
+ source: <4520156b-9418-493c-a50c-e61b42e805b3@web.de>
+
+
+* rs/reflog-expire-single-worktree-fix (2023-10-29) 1 commit
+ - reflog: fix expire --single-worktree
+
+ source: <63eade0e-bf2c-4906-8b4c-689797cff737@web.de>
+
+--------------------------------------------------
+[Stalled]
+
+* pw/rebase-sigint (2023-09-07) 1 commit
+ - rebase -i: ignore signals when forking subprocesses
+
+ If the commit log editor or other external programs (spawned via
+ "exec" insn in the todo list) receive internactive signal during
+ "git rebase -i", it caused not just the spawned program but the
+ "Git" process that spawned them, which is often not what the end
+ user intended.  "git" learned to ignore SIGINT and SIGQUIT while
+ waiting for these subprocesses.
+
+ Expecting a reroll.
+ cf. <12c956ea-330d-4441-937f-7885ab519e26@gmail.com>
+ source: <pull.1581.git.1694080982621.gitgitgadget@gmail.com>
+
+
+* tk/cherry-pick-sequence-requires-clean-worktree (2023-06-01) 1 commit
+ - cherry-pick: refuse cherry-pick sequence if index is dirty
+
+ "git cherry-pick A" that replays a single commit stopped before
+ clobbering local modification, but "git cherry-pick A..B" did not,
+ which has been corrected.
+
+ Expecting a reroll.
+ cf. <999f12b2-38d6-f446-e763-4985116ad37d@gmail.com>
+ source: <pull.1535.v2.git.1685264889088.gitgitgadget@gmail.com>
+
+
+* jc/diff-cached-fsmonitor-fix (2023-09-15) 3 commits
+ - diff-lib: fix check_removed() when fsmonitor is active
+ - Merge branch 'jc/fake-lstat' into jc/diff-cached-fsmonitor-fix
+ - Merge branch 'js/diff-cached-fsmonitor-fix' into jc/diff-cached-fsmonitor-fix
+ (this branch uses jc/fake-lstat.)
+
+ The optimization based on fsmonitor in the "diff --cached"
+ codepath is resurrected with the "fake-lstat" introduced earlier.
+
+ It is unknown if the optimization is worth resurrecting, but in case...
+ source: <xmqqr0n0h0tw.fsf@gitster.g>
+
+--------------------------------------------------
+[Cooking]
 
 * jc/am-doc-whitespace-action-fix (2023-10-18) 1 commit
   (merged to 'next' on 2023-10-20 at 9200d39c08)
@@ -181,50 +371,6 @@ Release tarballs are available at:
  Will merge to 'master'.
  source: <pull.1592.v3.git.git.1697942768555.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Stalled]
-
-* pw/rebase-sigint (2023-09-07) 1 commit
- - rebase -i: ignore signals when forking subprocesses
-
- If the commit log editor or other external programs (spawned via
- "exec" insn in the todo list) receive internactive signal during
- "git rebase -i", it caused not just the spawned program but the
- "Git" process that spawned them, which is often not what the end
- user intended.  "git" learned to ignore SIGINT and SIGQUIT while
- waiting for these subprocesses.
-
- Expecting a reroll.
- cf. <12c956ea-330d-4441-937f-7885ab519e26@gmail.com>
- source: <pull.1581.git.1694080982621.gitgitgadget@gmail.com>
-
-
-* tk/cherry-pick-sequence-requires-clean-worktree (2023-06-01) 1 commit
- - cherry-pick: refuse cherry-pick sequence if index is dirty
-
- "git cherry-pick A" that replays a single commit stopped before
- clobbering local modification, but "git cherry-pick A..B" did not,
- which has been corrected.
-
- Expecting a reroll.
- cf. <999f12b2-38d6-f446-e763-4985116ad37d@gmail.com>
- source: <pull.1535.v2.git.1685264889088.gitgitgadget@gmail.com>
-
-
-* jc/diff-cached-fsmonitor-fix (2023-09-15) 3 commits
- - diff-lib: fix check_removed() when fsmonitor is active
- - Merge branch 'jc/fake-lstat' into jc/diff-cached-fsmonitor-fix
- - Merge branch 'js/diff-cached-fsmonitor-fix' into jc/diff-cached-fsmonitor-fix
- (this branch uses jc/fake-lstat.)
-
- The optimization based on fsmonitor in the "diff --cached"
- codepath is resurrected with the "fake-lstat" introduced earlier.
-
- It is unknown if the optimization is worth resurrecting, but in case...
- source: <xmqqr0n0h0tw.fsf@gitster.g>
-
---------------------------------------------------
-[Cooking]
 
 * jc/commit-new-underscore-index-fix (2023-10-17) 1 commit
   (merged to 'next' on 2023-10-22 at 0e4787303d)
@@ -243,7 +389,8 @@ Release tarballs are available at:
  output and fail the command, `git bugreport` learned to fuzz the
  filename to avoid collisions with existing files.
 
- Needs review.
+ Expecting a reroll.
+ cf. <ZTtZ5CbIGETy1ucV.jacob@initialcommit.io>
  source: <20231016214045.146862-2-jacob@initialcommit.io>
 
 
@@ -296,12 +443,10 @@ Release tarballs are available at:
  source: <cover.1697440686.git.ps@pks.im>
 
 
-* tb/merge-tree-write-pack (2023-10-19) 7 commits
+* tb/merge-tree-write-pack (2023-10-23) 5 commits
  - builtin/merge-tree.c: implement support for `--write-pack`
  - bulk-checkin: introduce `index_tree_bulk_checkin_incore()`
  - bulk-checkin: introduce `index_blob_bulk_checkin_incore()`
- - bulk-checkin: implement `SOURCE_INCORE` mode for `bulk_checkin_source`
- - bulk-checkin: refactor deflate routine to accept a `bulk_checkin_source`
  - bulk-checkin: generify `stream_blob_to_pack()` for arbitrary types
  - bulk-checkin: extract abstract `bulk_checkin_source`
 
@@ -309,7 +454,7 @@ Release tarballs are available at:
  without creating loose objects.
 
  Will merge to 'next'?
- source: <cover.1697736516.git.me@ttaylorr.com>
+ source: <cover.1698101088.git.me@ttaylorr.com>
 
 
 * tb/format-pack-doc-update (2023-10-12) 2 commits
@@ -323,8 +468,9 @@ Release tarballs are available at:
  source: <cover.1697144959.git.me@ttaylorr.com>
 
 
-* ps/do-not-trust-commit-graph-blindly-for-existence (2023-10-13) 1 commit
+* ps/do-not-trust-commit-graph-blindly-for-existence (2023-10-24) 2 commits
  - commit: detect commits that exist in commit-graph but not in the ODB
+ - commit-graph: introduce envvar to disable commit existence checks
  (this branch is used by kn/rev-list-missing-fix.)
 
  The codepath to traverse the commit-graph learned to notice that a
@@ -333,7 +479,7 @@ Release tarballs are available at:
  what is in commit-graph.
 
  Comments?
- source: <b0bf576c51a706367a758b8e30eca37edb9c2734.1697200576.git.ps@pks.im>
+ source: <cover.1698060036.git.ps@pks.im>
 
 
 * tb/pair-chunk-expect-size (2023-10-14) 8 commits
@@ -345,39 +491,12 @@ Release tarballs are available at:
  - commit-graph: read `CDAT` chunk with `pair_chunk_expect()`
  - commit-graph: read `OIDF` chunk with `pair_chunk_expect()`
  - chunk-format: introduce `pair_chunk_expect()` helper
- (this branch uses jk/chunk-bounds.)
 
  Code clean-up for jk/chunk-bounds topic.
 
  Comments?
  source: <45cac29403e63483951f7766c6da3c022c68d9f0.1697225110.git.me@ttaylorr.com>
  source: <cover.1697225110.git.me@ttaylorr.com>
-
-
-* jc/fail-stash-to-store-non-stash (2023-10-11) 1 commit
-  (merged to 'next' on 2023-10-16 at e26db57315)
- + stash: be careful what we store
-
- Feeding "git stash store" with a random commit that was not created
- by "git stash create" now errors out.
-
- Will merge to 'master'.
- source: <xmqqbkd4lwj0.fsf_-_@gitster.g>
-
-
-* bc/racy-4gb-files (2023-10-13) 2 commits
-  (merged to 'next' on 2023-10-16 at c60962dfee)
- + Prevent git from rehashing 4GiB files
- + t: add a test helper to truncate files
-
- The index file has room only for lower 32-bit of the file size in
- the cached stat information, which means cached stat information
- will have 0 in its sd_size member for a file whose size is multiple
- of 4GiB.  This is mistaken for a racily clean path.  Avoid it by
- storing a bogus sd_size value instead for such files.
-
- Will merge to 'master'.
- source: <20231012160930.330618-1-sandals@crustytoothpaste.net>
 
 
 * jc/grep-f-relative-to-cwd (2023-10-12) 1 commit
@@ -418,41 +537,7 @@ Release tarballs are available at:
  source: <cover.1697653929.git.me@ttaylorr.com>
 
 
-* en/docfixes (2023-10-09) 25 commits
-  (merged to 'next' on 2023-10-17 at 1e3cdeb427)
- + documentation: add missing parenthesis
- + documentation: add missing quotes
- + documentation: add missing fullstops
- + documentation: add some commas where they are helpful
- + documentation: fix whitespace issues
- + documentation: fix capitalization
- + documentation: fix punctuation
- + documentation: use clearer prepositions
- + documentation: add missing hyphens
- + documentation: remove unnecessary hyphens
- + documentation: add missing article
- + documentation: fix choice of article
- + documentation: whitespace is already generally plural
- + documentation: fix singular vs. plural
- + documentation: fix verb vs. noun
- + documentation: fix adjective vs. noun
- + documentation: fix verb tense
- + documentation: employ consistent verb tense for a list
- + documentation: fix subject/verb agreement
- + documentation: remove extraneous words
- + documentation: add missing words
- + documentation: fix apostrophe usage
- + documentation: fix typos
- + documentation: fix small error
- + documentation: wording improvements
-
- Documentation typo and grammo fixes.
-
- Will merge to 'master'.
- source: <pull.1595.git.1696747527.gitgitgadget@gmail.com>
-
-
-* kn/rev-list-missing-fix (2023-10-22) 4 commits
+* kn/rev-list-missing-fix (2023-10-29) 4 commits
  - rev-list: add commit object support in `--missing` option
  - rev-list: move `show_commit()` to the bottom
  - revision: rename bit to `do_not_die_on_missing_objects`
@@ -462,41 +547,8 @@ Release tarballs are available at:
  "git rev-list --missing" did not work for missing commit objects,
  which has been corrected.
 
- Comments?
- source: <20231019121024.194317-1-karthik.188@gmail.com>
-
-
-* jk/chunk-bounds (2023-10-14) 21 commits
-  (merged to 'next' on 2023-10-16 at 68c9e37980)
- + t5319: make corrupted large-offset test more robust
-  (merged to 'next' on 2023-10-10 at 21139603ce)
- + chunk-format: drop pair_chunk_unsafe()
- + commit-graph: detect out-of-order BIDX offsets
- + commit-graph: check bounds when accessing BIDX chunk
- + commit-graph: check bounds when accessing BDAT chunk
- + commit-graph: bounds-check generation overflow chunk
- + commit-graph: check size of generations chunk
- + commit-graph: bounds-check base graphs chunk
- + commit-graph: detect out-of-bounds extra-edges pointers
- + commit-graph: check size of commit data chunk
- + midx: check size of revindex chunk
- + midx: bounds-check large offset chunk
- + midx: check size of object offset chunk
- + midx: enforce chunk alignment on reading
- + midx: check size of pack names chunk
- + commit-graph: check consistency of fanout table
- + midx: check size of oid lookup chunk
- + commit-graph: check size of oid fanout chunk
- + midx: stop ignoring malformed oid fanout chunk
- + t: add library for munging chunk-format files
- + chunk-format: note that pair_chunk() is unsafe
- (this branch is used by tb/pair-chunk-expect-size.)
-
- The codepaths that read "chunk" formatted files have been corrected
- to pay attention to the chunk size and notice broken files.
-
- Will merge to 'master'.
- source: <20231009205544.GA3281950@coredump.intra.peff.net>
+ Will merge to 'next'.
+ source: <20231026101109.43110-1-karthik.188@gmail.com>
 
 
 * sn/typo-grammo-phraso-fixes (2023-10-05) 5 commits
@@ -512,19 +564,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <20231003082107.3002173-1-stepnem@smrk.net>
-
-
-* so/diff-merges-dd (2023-10-09) 3 commits
-  (merged to 'next' on 2023-10-16 at 71b5e29625)
- + completion: complete '--dd'
- + diff-merges: introduce '--dd' option
- + diff-merges: improve --diff-merges documentation
-
- "git log" and friends learned "--dd" that is a short-hand for
- "--diff-merges=first-parent -p".
-
- Will merge to 'master'.
- source: <20231009160535.236523-1-sorganov@gmail.com>
 
 
 * jc/update-list-references-to-lore (2023-10-06) 1 commit
@@ -556,23 +595,24 @@ Release tarballs are available at:
  Introduce "git replay", a tool meant on the server side without
  working tree to recreate a history.
 
- Needs (hopefully final and quick) review.
+ Expectting a (hopefully final and quick) reroll.
+ cf. <bd872b81-80a9-5e4e-dcb6-faebc9671848@gmx.de>
  source: <20231010123847.2777056-1-christian.couder@gmail.com>
 
 
-* ak/color-decorate-symbols (2023-10-19) 7 commits
- - log: show pseudorefs in decorations
- - refs: exempt pseudoref patterns from prefixing
- - log: add color.decorate.ref option for other refs
- - refs: separate decoration type from default filter
- - log: add color.decorate.symbol config option
+* ak/color-decorate-symbols (2023-10-23) 7 commits
+ - log: add color.decorate.pseudoref config variable
+ - refs: exempt pseudorefs from pattern prefixing
+ - refs: add pseudorefs array and iteration functions
+ - log: add color.decorate.ref config variable
+ - log: add color.decorate.symbol config variable
  - log: use designated inits for decoration_colors
  - config: restructure color.decorate documentation
 
  A new config for coloring.
 
  Needs review.
- source: <20231003205442.22963-1-andy.koppe@gmail.com>
+ source: <20231023221143.72489-1-andy.koppe@gmail.com>
 
 
 * jc/attr-tree-config (2023-10-13) 2 commits
@@ -698,18 +738,6 @@ Release tarballs are available at:
  source: <xmqqcyykig1l.fsf@gitster.g>
 
 
-* rs/parse-options-value-int (2023-09-18) 2 commits
- - parse-options: use and require int pointer for OPT_CMDMODE
- - parse-options: add int value pointer to struct option
-
- A bit of type safety for the "value" pointer used in the
- parse-options API.
-
- Not ready yet.
- cf. <4014e490-c6c1-453d-b0ed-645220e3e614@web.de>
- source: <e6d8a291-03de-cfd3-3813-747fc2cad145@web.de>
-
-
 * js/doc-unit-tests (2023-10-16) 5 commits
  - fixup! ci: run unit tests in CI
  - fixup! unit tests: add TAP unit test framework
@@ -765,11 +793,13 @@ Release tarballs are available at:
 --------------------------------------------------
 [Discarded]
 
-* jc/doc-unit-tests-fixup (2023-10-11) 1 commit
- . SQUASH???
- (this branch uses js/doc-unit-tests and js/doc-unit-tests-with-cmake.)
+* rs/parse-options-value-int (2023-09-18) 2 commits
+ . parse-options: use and require int pointer for OPT_CMDMODE
+ . parse-options: add int value pointer to struct option
 
- Quick fix for jc/doc-unit-tests topic to unbreak CI running on 'seen'.
+ A bit of type safety for the "value" pointer used in the
+ parse-options API.
 
- Superseded by a fixup! in the base series.
- source: <xmqqwmvskf8t.fsf@gitster.g>
+ Retracted.
+ cf. <4014e490-c6c1-453d-b0ed-645220e3e614@web.de>
+ source: <e6d8a291-03de-cfd3-3813-747fc2cad145@web.de>
