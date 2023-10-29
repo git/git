@@ -95,6 +95,9 @@ UI, Workflows & Features
  * "git log" and friends learned "--dd" that is a short-hand for
    "--diff-merges=first-parent -p".
 
+ * The attribute subsystem learned to honor `attr.tree` configuration
+   that specifies which tree to read the .gitattributes files from.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -278,6 +281,15 @@ Fixes since v2.42
    storing a bogus sd_size value instead for such files.
    (merge 5143ac07b1 bc/racy-4gb-files later to maint).
 
+ * "git p4" tried to store symlinks to LFS when told, but has been
+   fixed not to do so, because it does not make sense.
+   (merge 10c89a02b0 mm/p4-symlink-with-lfs later to maint).
+
+ * The codepath to handle recipient addresses `git send-email
+   --compose` learns from the user was completely broken, which has
+   been corrected.
+   (merge 3ec6167567 jk/send-email-fix-addresses-from-composed-messages later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge fd3ba590d8 ws/git-push-doc-grammofix later to maint).
    (merge 5f33a843de ds/upload-pack-error-sequence-fix later to maint).
@@ -303,3 +315,10 @@ Fixes since v2.42
    (merge badf2fe1c3 jk/decoration-and-other-leak-fixes later to maint).
    (merge cebfaaa333 sn/cat-file-doc-update later to maint).
    (merge 8b3aa36f5a ps/rewritten-is-per-worktree-doc later to maint).
+   (merge ffbf6a748d jc/update-list-references-to-lore later to maint).
+   (merge 14d569b1a7 jc/am-doc-whitespace-action-fix later to maint).
+   (merge 48399e9cf0 ni/die-message-fix-for-git-add later to maint).
+   (merge ca3285dd69 ps/git-repack-doc-fixes later to maint).
+   (merge 243c79fdc7 wx/merge-ort-comment-typofix later to maint).
+   (merge a060705d94 jc/commit-new-underscore-index-fix later to maint).
+   (merge f6d83e2115 ms/doc-push-fix later to maint).
