@@ -68,11 +68,12 @@ This option may be specified multiple times.
 	Invoke a text editor (see GIT_EDITOR in linkgit:git-var[1])
 	to edit an introductory message for the patch series.
 +
-When `--compose` is used, git send-email will use the From, Subject, and
-In-Reply-To headers specified in the message. If the body of the message
-(what you type after the headers and a blank line) only contains blank
-(or Git: prefixed) lines, the summary won't be sent, but From, Subject,
-and In-Reply-To headers will be used unless they are removed.
+When `--compose` is used, git send-email will use the From, To, Cc, Bcc,
+Subject, Reply-To, and In-Reply-To headers specified in the message. If
+the body of the message (what you type after the headers and a blank
+line) only contains blank (or Git: prefixed) lines, the summary won't be
+sent, but the headers mentioned above will be used unless they are
+removed.
 +
 Missing From or In-Reply-To headers will be prompted for.
 +
