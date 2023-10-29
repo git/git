@@ -1522,6 +1522,10 @@ class LargeFileSystem(object):
            file is stored in the large file system and handles all necessary
            steps.
            """
+        # symlinks aren't processed by smudge/clean filters
+        if git_mode == "120000":
+            return (git_mode, contents)
+
         if self.exceedsLargeFileThreshold(relPath, contents) or self.hasLargeFileExtension(relPath):
             contentTempFile = self.generateTempFile(contents)
             pointer_git_mode, contents, localLargeFile = self.generatePointer(contentTempFile)
