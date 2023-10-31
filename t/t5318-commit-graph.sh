@@ -815,4 +815,25 @@ test_expect_success 'overflow during generation version upgrade' '
 	)
 '
 
+test_expect_success 'stale commit cannot be parsed when given directly' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit A &&
+		test_commit B &&
+		git commit-graph write --reachable &&
+
+		oid=$(git rev-parse B) &&
+		rm .git/objects/"$(test_oid_to_path "$oid")" &&
+
+		# Verify that it is possible to read the commit from the
+		# commit graph when not being paranoid, ...
+		GIT_COMMIT_GRAPH_PARANOIA=false git rev-list B &&
+		# ... but parsing the commit when double checking that
+		# it actually exists in the object database should fail.
+		test_must_fail git rev-list -1 B
+	)
+'
+
 test_done
