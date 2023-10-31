@@ -106,7 +106,7 @@ static int add_existing(const char *refname,
  */
 static int cmd_show_ref__exclude_existing(const char *match)
 {
-	static struct string_list existing_refs = STRING_LIST_INIT_DUP;
+	struct string_list existing_refs = STRING_LIST_INIT_DUP;
 	char buf[1024];
 	int matchlen = match ? strlen(match) : 0;
 
@@ -139,6 +139,8 @@ static int cmd_show_ref__exclude_existing(const char *match)
 			printf("%s\n", buf);
 		}
 	}
+
+	string_list_clear(&existing_refs, 0);
 	return 0;
 }
 
