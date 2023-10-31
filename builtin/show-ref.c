@@ -18,8 +18,6 @@ static const char * const show_ref_usage[] = {
 	NULL
 };
 
-static int show_head, tags_only, heads_only, verify;
-
 struct show_one_options {
 	int quiet;
 	int hash_only;
@@ -59,6 +57,7 @@ struct show_ref_data {
 	const struct show_one_options *show_one_opts;
 	const char **patterns;
 	int found_match;
+	int show_head;
 };
 
 static int show_ref(const char *refname, const struct object_id *oid,
@@ -66,7 +65,7 @@ static int show_ref(const char *refname, const struct object_id *oid,
 {
 	struct show_ref_data *data = cbdata;
 
-	if (show_head && !strcmp(refname, "HEAD"))
+	if (data->show_head && !strcmp(refname, "HEAD"))
 		goto match;
 
 	if (data->patterns) {
@@ -184,22 +183,30 @@ static int cmd_show_ref__verify(const struct show_one_options *show_one_opts,
 	return 0;
 }
 
-static int cmd_show_ref__patterns(const struct show_one_options *show_one_opts,
+struct patterns_options {
+	int show_head;
+	int heads_only;
+	int tags_only;
+};
+
+static int cmd_show_ref__patterns(const struct patterns_options *opts,
+				  const struct show_one_options *show_one_opts,
 				  const char **patterns)
 {
 	struct show_ref_data show_ref_data = {
 		.show_one_opts = show_one_opts,
+		.show_head = opts->show_head,
 	};
 
 	if (patterns && *patterns)
 		show_ref_data.patterns = patterns;
 
-	if (show_head)
+	if (opts->show_head)
 		head_ref(show_ref, &show_ref_data);
-	if (heads_only || tags_only) {
-		if (heads_only)
+	if (opts->heads_only || opts->tags_only) {
+		if (opts->heads_only)
 			for_each_fullref_in("refs/heads/", show_ref, &show_ref_data);
-		if (tags_only)
+		if (opts->tags_only)
 			for_each_fullref_in("refs/tags/", show_ref, &show_ref_data);
 	} else {
 		for_each_ref(show_ref, &show_ref_data);
@@ -237,15 +244,17 @@ static int exclude_existing_callback(const struct option *opt, const char *arg,
 int cmd_show_ref(int argc, const char **argv, const char *prefix)
 {
 	struct exclude_existing_options exclude_existing_opts = {0};
+	struct patterns_options patterns_opts = {0};
 	struct show_one_options show_one_opts = {0};
+	int verify = 0;
 	const struct option show_ref_options[] = {
-		OPT_BOOL(0, "tags", &tags_only, N_("only show tags (can be combined with heads)")),
-		OPT_BOOL(0, "heads", &heads_only, N_("only show heads (can be combined with tags)")),
+		OPT_BOOL(0, "tags", &patterns_opts.tags_only, N_("only show tags (can be combined with heads)")),
+		OPT_BOOL(0, "heads", &patterns_opts.heads_only, N_("only show heads (can be combined with tags)")),
 		OPT_BOOL(0, "verify", &verify, N_("stricter reference checking, "
 			    "requires exact ref path")),
-		OPT_HIDDEN_BOOL('h', NULL, &show_head,
+		OPT_HIDDEN_BOOL('h', NULL, &patterns_opts.show_head,
 				N_("show the HEAD reference, even if it would be filtered out")),
-		OPT_BOOL(0, "head", &show_head,
+		OPT_BOOL(0, "head", &patterns_opts.show_head,
 		  N_("show the HEAD reference, even if it would be filtered out")),
 		OPT_BOOL('d', "dereference", &show_one_opts.deref_tags,
 			    N_("dereference tags into object IDs")),
@@ -271,5 +280,5 @@ int cmd_show_ref(int argc, const char **argv, const char *prefix)
 	else if (verify)
 		return cmd_show_ref__verify(&show_one_opts, argv);
 	else
-		return cmd_show_ref__patterns(&show_one_opts, argv);
+		return cmd_show_ref__patterns(&patterns_opts, &show_one_opts, argv);
 }
