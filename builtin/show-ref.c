@@ -104,7 +104,7 @@ static int add_existing(const char *refname,
  * (4) ignore if refname is a ref that exists in the local repository;
  * (5) otherwise output the line.
  */
-static int exclude_existing(const char *match)
+static int cmd_show_ref__exclude_existing(const char *match)
 {
 	static struct string_list existing_refs = STRING_LIST_INIT_DUP;
 	char buf[1024];
@@ -139,6 +139,54 @@ static int exclude_existing(const char *match)
 			printf("%s\n", buf);
 		}
 	}
+	return 0;
+}
+
+static int cmd_show_ref__verify(const char **refs)
+{
+	if (!refs || !*refs)
+		die("--verify requires a reference");
+
+	while (*refs) {
+		struct object_id oid;
+
+		if ((starts_with(*refs, "refs/") || !strcmp(*refs, "HEAD")) &&
+		    !read_ref(*refs, &oid)) {
+			show_one(*refs, &oid);
+		}
+		else if (!quiet)
+			die("'%s' - not a valid ref", *refs);
+		else
+			return 1;
+		refs++;
+	}
+
+	return 0;
+}
+
+static int cmd_show_ref__patterns(const char **patterns)
+{
+	struct show_ref_data show_ref_data = {0};
+
+	if (patterns && *patterns)
+		show_ref_data.patterns = patterns;
+
+	if (show_head)
+		head_ref(show_ref, &show_ref_data);
+	if (heads_only || tags_only) {
+		if (heads_only)
+			for_each_fullref_in("refs/heads/", show_ref, &show_ref_data);
+		if (tags_only)
+			for_each_fullref_in("refs/tags/", show_ref, &show_ref_data);
+	} else {
+		for_each_ref(show_ref, &show_ref_data);
+	}
+	if (!found_match) {
+		if (verify && !quiet)
+			die("No match");
+		return 1;
+	}
+
 	return 0;
 }
 
@@ -185,56 +233,15 @@ static const struct option show_ref_options[] = {
 
 int cmd_show_ref(int argc, const char **argv, const char *prefix)
 {
-	struct show_ref_data show_ref_data = {0};
-	const char **patterns;
-
 	git_config(git_default_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, show_ref_options,
 			     show_ref_usage, 0);
 
 	if (exclude_arg)
-		return exclude_existing(exclude_existing_arg);
-
-	patterns = argv;
-	if (!*patterns)
-		patterns = NULL;
-
-	if (verify) {
-		if (!patterns)
-			die("--verify requires a reference");
-		while (*patterns) {
-			struct object_id oid;
-
-			if ((starts_with(*patterns, "refs/") || !strcmp(*patterns, "HEAD")) &&
-			    !read_ref(*patterns, &oid)) {
-				show_one(*patterns, &oid);
-			}
-			else if (!quiet)
-				die("'%s' - not a valid ref", *patterns);
-			else
-				return 1;
-			patterns++;
-		}
-		return 0;
-	}
-
-	show_ref_data.patterns = patterns;
-
-	if (show_head)
-		head_ref(show_ref, &show_ref_data);
-	if (heads_only || tags_only) {
-		if (heads_only)
-			for_each_fullref_in("refs/heads/", show_ref, &show_ref_data);
-		if (tags_only)
-			for_each_fullref_in("refs/tags/", show_ref, &show_ref_data);
-	} else {
-		for_each_ref(show_ref, &show_ref_data);
-	}
-	if (!found_match) {
-		if (verify && !quiet)
-			die("No match");
-		return 1;
-	}
-	return 0;
+		return cmd_show_ref__exclude_existing(exclude_existing_arg);
+	else if (verify)
+		return cmd_show_ref__verify(argv);
+	else
+		return cmd_show_ref__patterns(argv);
 }
