@@ -322,14 +322,14 @@ do
 			rm -f marker &&
 			git status >actual &&
 			test_path_is_file marker &&
-			test_i18ngrep ! "Changes not staged for commit:" actual &&
+			test_grep ! "Changes not staged for commit:" actual &&
 			if test $uc_val = true
 			then
-				test_i18ngrep ! "Untracked files:" actual
+				test_grep ! "Untracked files:" actual
 			fi &&
 			if test $uc_val = false
 			then
-				test_i18ngrep "Untracked files:" actual
+				test_grep "Untracked files:" actual
 			fi &&
 			rm -f marker
 		'

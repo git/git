@@ -457,7 +457,7 @@ expect_invalid_filter_spec () {
 	test_must_fail git -C r3 rev-list --objects --filter="$spec" HEAD \
 		>actual 2>actual_stderr &&
 	test_must_be_empty actual &&
-	test_i18ngrep "$err" actual_stderr
+	test_grep "$err" actual_stderr
 }
 
 test_expect_success 'combine:... while URL-encoding things that should not be' '

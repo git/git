@@ -25,7 +25,7 @@ test_expect_success 'worktree path not directory' '
 	>notdir &&
 	test_must_fail git worktree repair >out 2>err &&
 	test_must_be_empty out &&
-	test_i18ngrep "not a directory" err
+	test_grep "not a directory" err
 '
 
 test_expect_success "don't clobber .git repo" '
@@ -35,7 +35,7 @@ test_expect_success "don't clobber .git repo" '
 	test_create_repo repo &&
 	test_must_fail git worktree repair >out 2>err &&
 	test_must_be_empty out &&
-	test_i18ngrep ".git is not a file" err
+	test_grep ".git is not a file" err
 '
 
 test_corrupt_gitfile () {
@@ -47,7 +47,7 @@ test_corrupt_gitfile () {
 	git -C corrupt rev-parse --absolute-git-dir >expect &&
 	eval "$butcher" &&
 	git -C "$repairdir" worktree repair 2>err &&
-	test_i18ngrep "$problem" err &&
+	test_grep "$problem" err &&
 	git -C corrupt rev-parse --absolute-git-dir >actual &&
 	test_cmp expect actual
 }
@@ -93,7 +93,7 @@ test_expect_success 'repair .git file from bare.git' '
 test_expect_success 'invalid worktree path' '
 	test_must_fail git worktree repair /notvalid >out 2>err &&
 	test_must_be_empty out &&
-	test_i18ngrep "not a valid path" err
+	test_grep "not a valid path" err
 '
 
 test_expect_success 'repo not found; .git not file' '
@@ -101,7 +101,7 @@ test_expect_success 'repo not found; .git not file' '
 	test_create_repo not-a-worktree &&
 	test_must_fail git worktree repair not-a-worktree >out 2>err &&
 	test_must_be_empty out &&
-	test_i18ngrep ".git is not a file" err
+	test_grep ".git is not a file" err
 '
 
 test_expect_success 'repo not found; .git not referencing repo' '
@@ -111,7 +111,7 @@ test_expect_success 'repo not found; .git not referencing repo' '
 	mv side/.newgit side/.git &&
 	mkdir not-a-repo &&
 	test_must_fail git worktree repair side 2>err &&
-	test_i18ngrep ".git file does not reference a repository" err
+	test_grep ".git file does not reference a repository" err
 '
 
 test_expect_success 'repo not found; .git file broken' '
@@ -121,7 +121,7 @@ test_expect_success 'repo not found; .git file broken' '
 	mv orig moved &&
 	test_must_fail git worktree repair moved >out 2>err &&
 	test_must_be_empty out &&
-	test_i18ngrep ".git file broken" err
+	test_grep ".git file broken" err
 '
 
 test_expect_success 'repair broken gitdir' '
@@ -132,7 +132,7 @@ test_expect_success 'repair broken gitdir' '
 	mv orig moved &&
 	git worktree repair moved 2>err &&
 	test_cmp expect .git/worktrees/orig/gitdir &&
-	test_i18ngrep "gitdir unreadable" err
+	test_grep "gitdir unreadable" err
 '
 
 test_expect_success 'repair incorrect gitdir' '
@@ -142,7 +142,7 @@ test_expect_success 'repair incorrect gitdir' '
 	mv orig moved &&
 	git worktree repair moved 2>err &&
 	test_cmp expect .git/worktrees/orig/gitdir &&
-	test_i18ngrep "gitdir incorrect" err
+	test_grep "gitdir incorrect" err
 '
 
 test_expect_success 'repair gitdir (implicit) from linked worktree' '
@@ -152,7 +152,7 @@ test_expect_success 'repair gitdir (implicit) from linked worktree' '
 	mv orig moved &&
 	git -C moved worktree repair 2>err &&
 	test_cmp expect .git/worktrees/orig/gitdir &&
-	test_i18ngrep "gitdir incorrect" err
+	test_grep "gitdir incorrect" err
 '
 
 test_expect_success 'unable to repair gitdir (implicit) from main worktree' '
@@ -177,8 +177,8 @@ test_expect_success 'repair multiple gitdir files' '
 	git worktree repair moved1 moved2 2>err &&
 	test_cmp expect1 .git/worktrees/orig1/gitdir &&
 	test_cmp expect2 .git/worktrees/orig2/gitdir &&
-	test_i18ngrep "gitdir incorrect:.*orig1/gitdir$" err &&
-	test_i18ngrep "gitdir incorrect:.*orig2/gitdir$" err
+	test_grep "gitdir incorrect:.*orig1/gitdir$" err &&
+	test_grep "gitdir incorrect:.*orig2/gitdir$" err
 '
 
 test_expect_success 'repair moved main and linked worktrees' '

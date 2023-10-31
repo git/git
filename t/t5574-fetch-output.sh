@@ -281,12 +281,12 @@ test_expect_success '--no-show-forced-updates' '
 	(
 		cd forced-update-clone &&
 		git fetch --show-forced-updates origin 2>output &&
-		test_i18ngrep "(forced update)" output
+		test_grep "(forced update)" output
 	) &&
 	(
 		cd no-forced-update-clone &&
 		git fetch --no-show-forced-updates origin 2>output &&
-		test_i18ngrep ! "(forced update)" output
+		test_grep ! "(forced update)" output
 	)
 '
 

@@ -93,7 +93,7 @@ test_expect_success 'checkout all stages of unknown path' '
 	rm -f path* .merge_* actual &&
 	test_must_fail git checkout-index --stage=all --temp \
 		-- does-not-exist 2>stderr &&
-	test_i18ngrep not.in.the.cache stderr
+	test_grep not.in.the.cache stderr
 '
 
 test_expect_success 'checkout all stages/one file to nothing' '

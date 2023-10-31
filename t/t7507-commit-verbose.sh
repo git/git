@@ -89,7 +89,7 @@ test_expect_success 'submodule log is stripped out too with -v' '
 		export GIT_EDITOR &&
 		test_must_fail git commit -a -v 2>err
 	) &&
-	test_i18ngrep "Aborting commit due to empty commit message." err
+	test_grep "Aborting commit due to empty commit message." err
 '
 
 test_expect_success 'verbose diff is stripped out with set core.commentChar' '
@@ -98,7 +98,7 @@ test_expect_success 'verbose diff is stripped out with set core.commentChar' '
 		export GIT_EDITOR &&
 		test_must_fail git -c core.commentchar=";" commit -a -v 2>err
 	) &&
-	test_i18ngrep "Aborting commit due to empty commit message." err
+	test_grep "Aborting commit due to empty commit message." err
 '
 
 test_expect_success 'status does not verbose without --verbose' '

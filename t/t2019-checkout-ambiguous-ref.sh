@@ -32,8 +32,8 @@ test_expect_success 'checkout chooses branch over tag' '
 '
 
 test_expect_success 'checkout reports switch to branch' '
-	test_i18ngrep "Switched to branch" stderr &&
-	test_i18ngrep ! "^HEAD is now at" stderr
+	test_grep "Switched to branch" stderr &&
+	test_grep ! "^HEAD is now at" stderr
 '
 
 test_expect_success 'checkout vague ref succeeds' '
@@ -54,8 +54,8 @@ test_expect_success VAGUENESS_SUCCESS 'checkout chooses branch over tag' '
 '
 
 test_expect_success VAGUENESS_SUCCESS 'checkout reports switch to branch' '
-	test_i18ngrep "Switched to branch" stderr &&
-	test_i18ngrep ! "^HEAD is now at" stderr
+	test_grep "Switched to branch" stderr &&
+	test_grep ! "^HEAD is now at" stderr
 '
 
 test_done

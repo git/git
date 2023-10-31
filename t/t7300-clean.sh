@@ -735,7 +735,7 @@ test_expect_success MINGW 'handle clean & core.longpaths = false nicely' '
 	test_must_fail git clean -xdf 2>.git/err &&
 	# grepping for a strerror string is unportable but it is OK here with
 	# MINGW prereq
-	test_i18ngrep "too long" .git/err
+	test_grep "too long" .git/err
 '
 
 test_expect_success 'clean untracked paths by pathspec' '

@@ -335,12 +335,12 @@ test_expect_success 'different prompts for mode change/deleted' '
 test_expect_success 'correct message when there is nothing to do' '
 	git reset --hard &&
 	git add -p 2>err &&
-	test_i18ngrep "No changes" err &&
+	test_grep "No changes" err &&
 	printf "\\0123" >binary &&
 	git add binary &&
 	printf "\\0abc" >binary &&
 	git add -p 2>err &&
-	test_i18ngrep "Only binary files changed" err
+	test_grep "Only binary files changed" err
 '
 
 test_expect_success 'setup again' '
@@ -497,7 +497,7 @@ test_expect_success 'adding an empty file' '
 
 		echo y | git checkout -p added-file -- >actual &&
 		test_path_is_file empty &&
-		test_i18ngrep "Apply addition to index and worktree" actual
+		test_grep "Apply addition to index and worktree" actual
 	)
 '
 
@@ -838,7 +838,7 @@ test_expect_success 'diff.algorithm is passed to `git diff-files`' '
 	git add file &&
 	echo changed >file &&
 	test_must_fail git -c diff.algorithm=bogus add -p 2>err &&
-	test_i18ngrep "error: option diff-algorithm accepts " err
+	test_grep "error: option diff-algorithm accepts " err
 '
 
 test_expect_success 'patch-mode via -i prompts for files' '

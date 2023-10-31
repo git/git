@@ -35,8 +35,8 @@ test_expect_success 'upload-pack fails due to error in pack-objects packing' '
 	printf "%04xwant %s\n00000009done\n0000" \
 		$(($hexsz + 10)) $head >input &&
 	test_must_fail git upload-pack . <input >/dev/null 2>output.err &&
-	test_i18ngrep "unable to read" output.err &&
-	test_i18ngrep "pack-objects died" output.err
+	test_grep "unable to read" output.err &&
+	test_grep "pack-objects died" output.err
 '
 
 test_expect_success 'corrupt repo differently' '

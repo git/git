@@ -311,13 +311,13 @@ test_expect_success 'Rename+D/F conflict; renamed file merges but dir in way' '
 	git checkout -q renamed-file-has-no-conflicts^0 &&
 	test_must_fail git merge --strategy=recursive dir-in-way >output &&
 
-	test_i18ngrep "CONFLICT (modify/delete): dir/file-in-the-way" output &&
-	test_i18ngrep "Auto-merging dir" output &&
+	test_grep "CONFLICT (modify/delete): dir/file-in-the-way" output &&
+	test_grep "Auto-merging dir" output &&
 	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 	then
-		test_i18ngrep "moving it to dir~HEAD instead" output
+		test_grep "moving it to dir~HEAD instead" output
 	else
-		test_i18ngrep "Adding as dir~HEAD instead" output
+		test_grep "Adding as dir~HEAD instead" output
 	fi &&
 
 	test_stdout_line_count = 3 git ls-files -u &&
@@ -338,13 +338,13 @@ test_expect_success 'Same as previous, but merged other way' '
 	test_must_fail git merge --strategy=recursive renamed-file-has-no-conflicts >output 2>errors &&
 
 	! grep "error: refusing to lose untracked file at" errors &&
-	test_i18ngrep "CONFLICT (modify/delete): dir/file-in-the-way" output &&
-	test_i18ngrep "Auto-merging dir" output &&
+	test_grep "CONFLICT (modify/delete): dir/file-in-the-way" output &&
+	test_grep "Auto-merging dir" output &&
 	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 	then
-		test_i18ngrep "moving it to dir~renamed-file-has-no-conflicts instead" output
+		test_grep "moving it to dir~renamed-file-has-no-conflicts instead" output
 	else
-		test_i18ngrep "Adding as dir~renamed-file-has-no-conflicts instead" output
+		test_grep "Adding as dir~renamed-file-has-no-conflicts instead" output
 	fi &&
 
 	test_stdout_line_count = 3 git ls-files -u &&

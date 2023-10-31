@@ -135,25 +135,25 @@ test_expect_success 'favour same basenames over different ones' '
 	mkdir subdir &&
 	git mv another-path subdir/path1 &&
 	git status >out &&
-	test_i18ngrep "renamed: .*path1 -> subdir/path1" out
+	test_grep "renamed: .*path1 -> subdir/path1" out
 '
 
 test_expect_success 'test diff.renames=true for git status' '
 	git -c diff.renames=true status >out &&
-	test_i18ngrep "renamed: .*path1 -> subdir/path1" out
+	test_grep "renamed: .*path1 -> subdir/path1" out
 '
 
 test_expect_success 'test diff.renames=false for git status' '
 	git -c diff.renames=false status >out &&
-	test_i18ngrep ! "renamed: .*path1 -> subdir/path1" out &&
-	test_i18ngrep "new file: .*subdir/path1" out &&
-	test_i18ngrep "deleted: .*[^/]path1" out
+	test_grep ! "renamed: .*path1 -> subdir/path1" out &&
+	test_grep "new file: .*subdir/path1" out &&
+	test_grep "deleted: .*[^/]path1" out
 '
 
 test_expect_success 'favour same basenames even with minor differences' '
 	git show HEAD:path1 | sed "s/15/16/" > subdir/path1 &&
 	git status >out &&
-	test_i18ngrep "renamed: .*path1 -> subdir/path1" out
+	test_grep "renamed: .*path1 -> subdir/path1" out
 '
 
 test_expect_success 'two files with same basename and same content' '
@@ -165,7 +165,7 @@ test_expect_success 'two files with same basename and same content' '
 	git commit -m 2 &&
 	git mv dir other-dir &&
 	git status >out &&
-	test_i18ngrep "renamed: .*dir/A/file -> other-dir/A/file" out
+	test_grep "renamed: .*dir/A/file -> other-dir/A/file" out
 '
 
 test_expect_success 'setup for many rename source candidates' '
@@ -202,9 +202,9 @@ test_expect_success 'rename pretty print with nothing in common' '
 	git mv a/b/c c/b/a &&
 	git commit -m "a/b/c -> c/b/a" &&
 	git diff -M --summary HEAD^ HEAD >output &&
-	test_i18ngrep " a/b/c => c/b/a " output &&
+	test_grep " a/b/c => c/b/a " output &&
 	git diff -M --stat HEAD^ HEAD >output &&
-	test_i18ngrep " a/b/c => c/b/a " output
+	test_grep " a/b/c => c/b/a " output
 '
 
 test_expect_success 'rename pretty print with common prefix' '
@@ -212,9 +212,9 @@ test_expect_success 'rename pretty print with common prefix' '
 	git mv c/b/a c/d/e &&
 	git commit -m "c/b/a -> c/d/e" &&
 	git diff -M --summary HEAD^ HEAD >output &&
-	test_i18ngrep " c/{b/a => d/e} " output &&
+	test_grep " c/{b/a => d/e} " output &&
 	git diff -M --stat HEAD^ HEAD >output &&
-	test_i18ngrep " c/{b/a => d/e} " output
+	test_grep " c/{b/a => d/e} " output
 '
 
 test_expect_success 'rename pretty print with common suffix' '
@@ -222,9 +222,9 @@ test_expect_success 'rename pretty print with common suffix' '
 	git mv c/d/e d/e &&
 	git commit -m "c/d/e -> d/e" &&
 	git diff -M --summary HEAD^ HEAD >output &&
-	test_i18ngrep " {c/d => d}/e " output &&
+	test_grep " {c/d => d}/e " output &&
 	git diff -M --stat HEAD^ HEAD >output &&
-	test_i18ngrep " {c/d => d}/e " output
+	test_grep " {c/d => d}/e " output
 '
 
 test_expect_success 'rename pretty print with common prefix and suffix' '
@@ -232,9 +232,9 @@ test_expect_success 'rename pretty print with common prefix and suffix' '
 	git mv d/e d/f/e &&
 	git commit -m "d/e -> d/f/e" &&
 	git diff -M --summary HEAD^ HEAD >output &&
-	test_i18ngrep " d/{ => f}/e " output &&
+	test_grep " d/{ => f}/e " output &&
 	git diff -M --stat HEAD^ HEAD >output &&
-	test_i18ngrep " d/{ => f}/e " output
+	test_grep " d/{ => f}/e " output
 '
 
 test_expect_success 'rename pretty print common prefix and suffix overlap' '
@@ -242,9 +242,9 @@ test_expect_success 'rename pretty print common prefix and suffix overlap' '
 	git mv d/f/e d/f/f/e &&
 	git commit -m "d/f/e d/f/f/e" &&
 	git diff -M --summary HEAD^ HEAD >output &&
-	test_i18ngrep " d/f/{ => f}/e " output &&
+	test_grep " d/f/{ => f}/e " output &&
 	git diff -M --stat HEAD^ HEAD >output &&
-	test_i18ngrep " d/f/{ => f}/e " output
+	test_grep " d/f/{ => f}/e " output
 '
 
 test_expect_success 'diff-tree -l0 defaults to a big rename limit, not zero' '

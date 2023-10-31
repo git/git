@@ -30,21 +30,21 @@ test_expect_success PERL 'git reset -p' '
 	test_write_lines n y | git reset -p >output &&
 	verify_state dir/foo work head &&
 	verify_saved_state bar &&
-	test_i18ngrep "Unstage" output
+	test_grep "Unstage" output
 '
 
 test_expect_success PERL 'git reset -p HEAD^' '
 	test_write_lines n y | git reset -p HEAD^ >output &&
 	verify_state dir/foo work parent &&
 	verify_saved_state bar &&
-	test_i18ngrep "Apply" output
+	test_grep "Apply" output
 '
 
 test_expect_success PERL 'git reset -p HEAD^^{tree}' '
 	test_write_lines n y | git reset -p HEAD^^{tree} >output &&
 	verify_state dir/foo work parent &&
 	verify_saved_state bar &&
-	test_i18ngrep "Apply" output
+	test_grep "Apply" output
 '
 
 test_expect_success PERL 'git reset -p HEAD^:dir/foo (blob fails)' '

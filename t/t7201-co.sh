@@ -217,7 +217,7 @@ test_expect_success 'switch to another branch while carrying a deletion' '
 	git rm two &&
 
 	test_must_fail git checkout simple 2>errs &&
-	test_i18ngrep overwritten errs &&
+	test_grep overwritten errs &&
 
 	test_must_fail git read-tree --quiet -m -u HEAD simple 2>errs &&
 	test_must_be_empty errs
@@ -229,7 +229,7 @@ test_expect_success 'checkout to detach HEAD (with advice declined)' '
 	git checkout -f renamer &&
 	git clean -f &&
 	git checkout renamer^ 2>messages &&
-	test_i18ngrep "HEAD is now at $rev" messages &&
+	test_grep "HEAD is now at $rev" messages &&
 	test_line_count = 1 messages &&
 	H=$(git rev-parse --verify HEAD) &&
 	M=$(git show-ref -s --verify refs/heads/main) &&

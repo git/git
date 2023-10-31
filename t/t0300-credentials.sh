@@ -827,7 +827,7 @@ test_expect_success 'credential config with partial URLs' '
 	git -c credential.$partial.helper=yep \
 		-c credential.with%0anewline.username=uh-oh \
 		credential fill <stdin 2>stderr &&
-	test_i18ngrep "skipping credential lookup for key" stderr
+	test_grep "skipping credential lookup for key" stderr
 '
 
 test_done

@@ -348,7 +348,7 @@ test_incompatible_with_recurse_submodules ()
 {
 	test_expect_success "--recurse-submodules and $1 are incompatible" "
 		test_must_fail git grep -e. --recurse-submodules $1 2>actual &&
-		test_i18ngrep 'not supported with --recurse-submodules' actual
+		test_grep 'not supported with --recurse-submodules' actual
 	"
 }
 

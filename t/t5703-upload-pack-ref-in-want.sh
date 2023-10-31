@@ -484,7 +484,7 @@ test_expect_success 'server is initially ahead - no ref in want' '
 	cp -r "$LOCAL_PRISTINE" local &&
 	inconsistency main $(test_oid numeric) &&
 	test_must_fail git -C local fetch 2>err &&
-	test_i18ngrep "fatal: remote error: upload-pack: not our ref" err
+	test_grep "fatal: remote error: upload-pack: not our ref" err
 '
 
 test_expect_success 'server is initially ahead - ref in want' '
@@ -530,7 +530,7 @@ test_expect_success 'server loses a ref - ref in want' '
 	echo "s/main/rain/" >"$HTTPD_ROOT_PATH/one-time-perl" &&
 	test_must_fail git -C local fetch 2>err &&
 
-	test_i18ngrep "fatal: remote error: unknown ref refs/heads/rain" err
+	test_grep "fatal: remote error: unknown ref refs/heads/rain" err
 '
 
 # DO NOT add non-httpd-specific tests here, because the last part of this

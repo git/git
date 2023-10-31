@@ -403,7 +403,7 @@ test_expect_success 'in_vain not triggered before first ACK' '
 	test_commit -C myserver bar &&
 
 	git -C myclient fetch --progress origin 2>log &&
-	test_i18ngrep "remote: Total 3 " log
+	test_grep "remote: Total 3 " log
 '
 
 test_expect_success 'in_vain resetted upon ACK' '
@@ -435,7 +435,7 @@ test_expect_success 'in_vain resetted upon ACK' '
 	# the client reports that first_anotherbranch_commit is common.
 	GIT_TRACE2_EVENT="$(pwd)/trace2" git -C myclient fetch --progress origin main 2>log &&
 	grep \"key\":\"total_rounds\",\"value\":\"6\" trace2 &&
-	test_i18ngrep "Total 3 " log
+	test_grep "Total 3 " log
 '
 
 test_expect_success 'fetch in shallow repo unreachable shallow objects' '
@@ -459,7 +459,7 @@ test_expect_success 'fetch creating new shallow root' '
 		git fetch --depth=1 --progress 2>actual &&
 		# This should fetch only the empty commit, no tree or
 		# blob objects
-		test_i18ngrep "remote: Total 1" actual
+		test_grep "remote: Total 1" actual
 	)
 '
 
@@ -694,7 +694,7 @@ test_expect_success 'fetch-pack cannot fetch a raw sha1 that is not advertised a
 	# unadvertised objects, so restrict this test to v0.
 	test_must_fail env GIT_TEST_PROTOCOL_VERSION=0 git -C client fetch-pack ../server \
 		$(git -C server rev-parse refs/heads/main^) 2>err &&
-	test_i18ngrep "Server does not allow request for unadvertised object" err
+	test_grep "Server does not allow request for unadvertised object" err
 '
 
 check_prot_path () {
@@ -1010,7 +1010,7 @@ test_expect_success 'filtering by size has no effect if support for it is not ad
 	git -C client rev-list --objects --missing=allow-any "$commit" >oids &&
 	grep "$blob" oids &&
 
-	test_i18ngrep "filtering not recognized by server" err
+	test_grep "filtering not recognized by server" err
 '
 
 fetch_filter_blob_limit_zero () {

@@ -207,7 +207,7 @@ EOF
 
 test_expect_success 'blame -L with invalid start' '
 	test_must_fail git blame -L5 tres 2>errors &&
-	test_i18ngrep "has only 2 lines" errors
+	test_grep "has only 2 lines" errors
 '
 
 test_expect_success 'blame -L with invalid end' '

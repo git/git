@@ -37,7 +37,7 @@ test_expect_success 'hook aborts updating ref in prepared state' '
 		fi
 	EOF
 	test_must_fail git update-ref HEAD POST 2>err &&
-	test_i18ngrep "ref updates aborted by hook" err
+	test_grep "ref updates aborted by hook" err
 '
 
 test_expect_success 'hook gets all queued updates in prepared state' '

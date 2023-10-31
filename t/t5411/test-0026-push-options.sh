@@ -18,7 +18,7 @@ test_expect_success "proc-receive: not support push options ($PROTOCOL)" '
 		HEAD:refs/for/main/topic \
 		>out-$test_count 2>&1 &&
 	make_user_friendly_and_stable_output <out-$test_count >actual &&
-	test_i18ngrep "fatal: the receiving end does not support push options" \
+	test_grep "fatal: the receiving end does not support push options" \
 		actual &&
 
 	test_cmp_refs -C "$upstream" <<-EOF

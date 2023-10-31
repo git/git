@@ -200,8 +200,8 @@ test_expect_success 'parallel' '
 	test_must_fail env GIT_TRACE="$PWD/trace" \
 		git fetch --jobs=2 --multiple one two 2>err &&
 	grep "preparing to run up to 2 tasks" trace &&
-	test_i18ngrep "could not fetch .one.*128" err &&
-	test_i18ngrep "could not fetch .two.*128" err
+	test_grep "could not fetch .one.*128" err &&
+	test_grep "could not fetch .two.*128" err
 '
 
 test_expect_success 'git fetch --multiple --jobs=0 picks a default' '

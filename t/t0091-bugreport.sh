@@ -65,7 +65,7 @@ test_expect_success '--output-directory puts the report in the provided dir' '
 
 test_expect_success 'incorrect arguments abort with usage' '
 	test_must_fail git bugreport --false 2>output &&
-	test_i18ngrep usage output &&
+	test_grep usage output &&
 	test_path_is_missing git-bugreport-*
 '
 

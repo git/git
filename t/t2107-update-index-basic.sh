@@ -14,7 +14,7 @@ test_expect_success 'update-index --nonsense fails' '
 
 test_expect_success 'update-index --nonsense dumps usage' '
 	test_expect_code 129 git update-index --nonsense 2>err &&
-	test_i18ngrep "[Uu]sage: git update-index" err
+	test_grep "[Uu]sage: git update-index" err
 '
 
 test_expect_success 'update-index -h with corrupt index' '
@@ -25,7 +25,7 @@ test_expect_success 'update-index -h with corrupt index' '
 		>.git/index &&
 		test_expect_code 129 git update-index -h >usage 2>&1
 	) &&
-	test_i18ngrep "[Uu]sage: git update-index" broken/usage
+	test_grep "[Uu]sage: git update-index" broken/usage
 '
 
 test_expect_success '--cacheinfo complains of missing arguments' '

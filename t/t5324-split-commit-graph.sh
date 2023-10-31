@@ -281,7 +281,7 @@ test_expect_success 'verify hashes along chain, even in shallow' '
 		corrupt_file "$base_file" $(test_oid shallow) "\01" &&
 		test_must_fail git commit-graph verify --shallow 2>test_err &&
 		grep -v "^+" test_err >err &&
-		test_i18ngrep "incorrect checksum" err
+		test_grep "incorrect checksum" err
 	)
 '
 
@@ -295,7 +295,7 @@ test_expect_success 'verify --shallow does not check base contents' '
 		git commit-graph verify --shallow &&
 		test_must_fail git commit-graph verify 2>test_err &&
 		grep -v "^+" test_err >err &&
-		test_i18ngrep "incorrect checksum" err
+		test_grep "incorrect checksum" err
 	)
 '
 
@@ -308,7 +308,7 @@ test_expect_success 'warn on base graph chunk incorrect' '
 		corrupt_file "$base_file" $(test_oid base) "\01" &&
 		git commit-graph verify --shallow 2>test_err &&
 		grep -v "^+" test_err >err &&
-		test_i18ngrep "commit-graph chain does not match" err
+		test_grep "commit-graph chain does not match" err
 	)
 '
 
@@ -319,11 +319,11 @@ test_expect_success 'verify after commit-graph-chain corruption' '
 		corrupt_file "$graphdir/commit-graph-chain" 60 "G" &&
 		git commit-graph verify 2>test_err &&
 		grep -v "^+" test_err >err &&
-		test_i18ngrep "invalid commit-graph chain" err &&
+		test_grep "invalid commit-graph chain" err &&
 		corrupt_file "$graphdir/commit-graph-chain" 60 "A" &&
 		git commit-graph verify 2>test_err &&
 		grep -v "^+" test_err >err &&
-		test_i18ngrep "unable to find all commit-graph files" err
+		test_grep "unable to find all commit-graph files" err
 	)
 '
 
@@ -341,7 +341,7 @@ test_expect_success 'verify across alternates' '
 		corrupt_file "$tip_file" 100 "\01" &&
 		test_must_fail git commit-graph verify --shallow 2>test_err &&
 		grep -v "^+" test_err >err &&
-		test_i18ngrep "commit-graph has incorrect fanout value" err
+		test_grep "commit-graph has incorrect fanout value" err
 	)
 '
 
@@ -353,7 +353,7 @@ test_expect_success 'add octopus merge' '
 	git commit-graph verify --progress 2>err &&
 	test_line_count = 1 err &&
 	grep "Verifying commits in commit graph: 100% (18/18)" err &&
-	test_i18ngrep ! warning err &&
+	test_grep ! warning err &&
 	test_line_count = 3 $graphdir/commit-graph-chain
 '
 
@@ -455,7 +455,7 @@ test_expect_success 'prevent regression for duplicate commits across layers' '
 	git init dup &&
 	git -C dup commit --allow-empty -m one &&
 	git -C dup -c core.commitGraph=false commit-graph write --split=no-merge --reachable 2>err &&
-	test_i18ngrep "attempting to write a commit-graph" err &&
+	test_grep "attempting to write a commit-graph" err &&
 	git -C dup commit-graph write --split=no-merge --reachable &&
 	git -C dup commit --allow-empty -m two &&
 	git -C dup commit-graph write --split=no-merge --reachable &&

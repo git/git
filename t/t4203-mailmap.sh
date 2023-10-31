@@ -360,7 +360,7 @@ test_expect_success 'mailmap.blob might be the wrong type' '
 	cp default.map .mailmap &&
 
 	git -c mailmap.blob=HEAD: shortlog HEAD >actual 2>err &&
-	test_i18ngrep "mailmap is not a blob" err &&
+	test_grep "mailmap is not a blob" err &&
 	test_cmp expect actual
 '
 

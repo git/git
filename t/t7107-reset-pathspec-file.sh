@@ -161,19 +161,19 @@ test_expect_success 'error conditions' '
 	git rm fileA.t &&
 
 	test_must_fail git reset --pathspec-from-file=list --patch 2>err &&
-	test_i18ngrep -e "options .--pathspec-from-file. and .--patch. cannot be used together" err &&
+	test_grep -e "options .--pathspec-from-file. and .--patch. cannot be used together" err &&
 
 	test_must_fail git reset --pathspec-from-file=list -- fileA.t 2>err &&
-	test_i18ngrep -e ".--pathspec-from-file. and pathspec arguments cannot be used together" err &&
+	test_grep -e ".--pathspec-from-file. and pathspec arguments cannot be used together" err &&
 
 	test_must_fail git reset --pathspec-file-nul 2>err &&
-	test_i18ngrep -e "the option .--pathspec-file-nul. requires .--pathspec-from-file." err &&
+	test_grep -e "the option .--pathspec-file-nul. requires .--pathspec-from-file." err &&
 
 	test_must_fail git reset --soft --pathspec-from-file=list 2>err &&
-	test_i18ngrep -e "fatal: Cannot do soft reset with paths" err &&
+	test_grep -e "fatal: Cannot do soft reset with paths" err &&
 
 	test_must_fail git reset --hard --pathspec-from-file=list 2>err &&
-	test_i18ngrep -e "fatal: Cannot do hard reset with paths" err
+	test_grep -e "fatal: Cannot do hard reset with paths" err
 '
 
 test_done

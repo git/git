@@ -366,13 +366,13 @@ test_expect_success 'OPT_CMDMODE() works' '
 test_expect_success 'OPT_CMDMODE() detects incompatibility' '
 	test_must_fail test-tool parse-options --mode1 --mode2 >output 2>output.err &&
 	test_must_be_empty output &&
-	test_i18ngrep "incompatible with --mode" output.err
+	test_grep "incompatible with --mode" output.err
 '
 
 test_expect_success 'OPT_CMDMODE() detects incompatibility with something else' '
 	test_must_fail test-tool parse-options --set23 --mode2 >output 2>output.err &&
 	test_must_be_empty output &&
-	test_i18ngrep "incompatible with something else" output.err
+	test_grep "incompatible with something else" output.err
 '
 
 test_expect_success 'OPT_COUNTUP() with PARSE_OPT_NODASH works' '

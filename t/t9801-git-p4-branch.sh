@@ -135,7 +135,7 @@ test_expect_success 'sync specific detected branch' '
 	(
 		cd "$git" &&
 		git p4 sync --branch=depot/branch2 >out &&
-		test_i18ngrep "No changes to import!" out
+		test_grep "No changes to import!" out
 	)
 '
 

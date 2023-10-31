@@ -227,7 +227,7 @@ test_expect_success 'notice d/f conflict with existing directory' '
 
 test_expect_success 'existing directory reports concrete ref' '
 	test_must_fail git branch foo 2>stderr &&
-	test_i18ngrep refs/heads/foo/bar/baz stderr
+	test_grep refs/heads/foo/bar/baz stderr
 '
 
 test_expect_success 'notice d/f conflict with existing ref' '

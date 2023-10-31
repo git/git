@@ -1469,9 +1469,9 @@ test_expect_success 'GIT_NOTES_REWRITE_REF overrides config' '
 
 test_expect_success 'git notes copy diagnoses too many or too few arguments' '
 	test_must_fail git notes copy 2>error &&
-	test_i18ngrep "too few arguments" error &&
+	test_grep "too few arguments" error &&
 	test_must_fail git notes copy one two three 2>error &&
-	test_i18ngrep "too many arguments" error
+	test_grep "too many arguments" error
 '
 
 test_expect_success 'git notes get-ref expands refs/heads/main to refs/notes/refs/heads/main' '

@@ -227,7 +227,7 @@ test_expect_success 'push with negotiation proceeds anyway even if negotiation f
 	GIT_TEST_PROTOCOL_VERSION=0 GIT_TRACE2_EVENT="$(pwd)/event" \
 		git -c push.negotiate=1 push testrepo refs/heads/main:refs/remotes/origin/main 2>err &&
 	grep_wrote 5 event && # 2 commits, 2 trees, 1 blob
-	test_i18ngrep "push negotiation failed" err
+	test_grep "push negotiation failed" err
 '
 
 test_expect_success 'push with negotiation does not attempt to fetch submodules' '
@@ -1267,7 +1267,7 @@ test_expect_success 'fetch exact SHA1' '
 		# fetching the hidden object should fail by default
 		test_must_fail env GIT_TEST_PROTOCOL_VERSION=0 \
 			git fetch -v ../testrepo $the_commit:refs/heads/copy 2>err &&
-		test_i18ngrep "Server does not allow request for unadvertised object" err &&
+		test_grep "Server does not allow request for unadvertised object" err &&
 		test_must_fail git rev-parse --verify refs/heads/copy &&
 
 		# the server side can allow it to succeed
@@ -1369,7 +1369,7 @@ do
 				git fetch ../testrepo/.git $SHA1_3 2>err &&
 			# ideally we would insist this be on a "remote error:"
 			# line, but it is racy; see the commit message
-			test_i18ngrep "not our ref.*$SHA1_3\$" err
+			test_grep "not our ref.*$SHA1_3\$" err
 		)
 	'
 done
@@ -1407,7 +1407,7 @@ test_expect_success 'peeled advertisements are not considered ref tips' '
 	oid=$(git -C testrepo rev-parse mytag^{commit}) &&
 	test_must_fail env GIT_TEST_PROTOCOL_VERSION=0 \
 		git fetch testrepo $oid 2>err &&
-	test_i18ngrep "Server does not allow request for unadvertised object" err
+	test_grep "Server does not allow request for unadvertised object" err
 '
 
 test_expect_success 'pushing a specific ref applies remote.$name.push as refmap' '

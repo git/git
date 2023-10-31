@@ -30,117 +30,117 @@ test_expect_success 'setup' '
 test_expect_success 'pull.rebase not set, ff possible' '
 	git reset --hard c0 &&
 	git pull . c1 2>err &&
-	test_i18ngrep ! "You have divergent branches" err
+	test_grep ! "You have divergent branches" err
 '
 
 test_expect_success 'pull.rebase not set and pull.ff=true' '
 	git reset --hard c0 &&
 	test_config pull.ff true &&
 	git pull . c1 2>err &&
-	test_i18ngrep ! "You have divergent branches" err
+	test_grep ! "You have divergent branches" err
 '
 
 test_expect_success 'pull.rebase not set and pull.ff=false' '
 	git reset --hard c0 &&
 	test_config pull.ff false &&
 	git pull . c1 2>err &&
-	test_i18ngrep ! "You have divergent branches" err
+	test_grep ! "You have divergent branches" err
 '
 
 test_expect_success 'pull.rebase not set and pull.ff=only' '
 	git reset --hard c0 &&
 	test_config pull.ff only &&
 	git pull . c1 2>err &&
-	test_i18ngrep ! "You have divergent branches" err
+	test_grep ! "You have divergent branches" err
 '
 
 test_expect_success 'pull.rebase not set and --rebase given' '
 	git reset --hard c0 &&
 	git pull --rebase . c1 2>err &&
-	test_i18ngrep ! "You have divergent branches" err
+	test_grep ! "You have divergent branches" err
 '
 
 test_expect_success 'pull.rebase not set and --no-rebase given' '
 	git reset --hard c0 &&
 	git pull --no-rebase . c1 2>err &&
-	test_i18ngrep ! "You have divergent branches" err
+	test_grep ! "You have divergent branches" err
 '
 
 test_expect_success 'pull.rebase not set and --ff given' '
 	git reset --hard c0 &&
 	git pull --ff . c1 2>err &&
-	test_i18ngrep ! "You have divergent branches" err
+	test_grep ! "You have divergent branches" err
 '
 
 test_expect_success 'pull.rebase not set and --no-ff given' '
 	git reset --hard c0 &&
 	git pull --no-ff . c1 2>err &&
-	test_i18ngrep ! "You have divergent branches" err
+	test_grep ! "You have divergent branches" err
 '
 
 test_expect_success 'pull.rebase not set and --ff-only given' '
 	git reset --hard c0 &&
 	git pull --ff-only . c1 2>err &&
-	test_i18ngrep ! "You have divergent branches" err
+	test_grep ! "You have divergent branches" err
 '
 
 test_expect_success 'pull.rebase not set (not-fast-forward)' '
 	git reset --hard c2 &&
 	test_must_fail git -c color.advice=always pull . c1 2>err &&
 	test_decode_color <err >decoded &&
-	test_i18ngrep "<YELLOW>hint: " decoded &&
-	test_i18ngrep "You have divergent branches" decoded
+	test_grep "<YELLOW>hint: " decoded &&
+	test_grep "You have divergent branches" decoded
 '
 
 test_expect_success 'pull.rebase not set and pull.ff=true (not-fast-forward)' '
 	git reset --hard c2 &&
 	test_config pull.ff true &&
 	git pull . c1 2>err &&
-	test_i18ngrep ! "You have divergent branches" err
+	test_grep ! "You have divergent branches" err
 '
 
 test_expect_success 'pull.rebase not set and pull.ff=false (not-fast-forward)' '
 	git reset --hard c2 &&
 	test_config pull.ff false &&
 	git pull . c1 2>err &&
-	test_i18ngrep ! "You have divergent branches" err
+	test_grep ! "You have divergent branches" err
 '
 
 test_expect_success 'pull.rebase not set and pull.ff=only (not-fast-forward)' '
 	git reset --hard c2 &&
 	test_config pull.ff only &&
 	test_must_fail git pull . c1 2>err &&
-	test_i18ngrep ! "You have divergent branches" err
+	test_grep ! "You have divergent branches" err
 '
 
 test_expect_success 'pull.rebase not set and --rebase given (not-fast-forward)' '
 	git reset --hard c2 &&
 	git pull --rebase . c1 2>err &&
-	test_i18ngrep ! "You have divergent branches" err
+	test_grep ! "You have divergent branches" err
 '
 
 test_expect_success 'pull.rebase not set and --no-rebase given (not-fast-forward)' '
 	git reset --hard c2 &&
 	git pull --no-rebase . c1 2>err &&
-	test_i18ngrep ! "You have divergent branches" err
+	test_grep ! "You have divergent branches" err
 '
 
 test_expect_success 'pull.rebase not set and --ff given (not-fast-forward)' '
 	git reset --hard c2 &&
 	git pull --ff . c1 2>err &&
-	test_i18ngrep ! "You have divergent branches" err
+	test_grep ! "You have divergent branches" err
 '
 
 test_expect_success 'pull.rebase not set and --no-ff given (not-fast-forward)' '
 	git reset --hard c2 &&
 	git pull --no-ff . c1 2>err &&
-	test_i18ngrep ! "You have divergent branches" err
+	test_grep ! "You have divergent branches" err
 '
 
 test_expect_success 'pull.rebase not set and --ff-only given (not-fast-forward)' '
 	git reset --hard c2 &&
 	test_must_fail git pull --ff-only . c1 2>err &&
-	test_i18ngrep ! "You have divergent branches" err
+	test_grep ! "You have divergent branches" err
 '
 
 test_does_rebase () {
@@ -202,7 +202,7 @@ test_falls_back_to_full_merge () {
 test_attempts_fast_forward () {
 	git reset --hard c2 &&
 	test_must_fail git "$@" . c1 2>err &&
-	test_i18ngrep "Not possible to fast-forward, aborting" err
+	test_grep "Not possible to fast-forward, aborting" err
 }
 
 #
@@ -328,23 +328,23 @@ test_expect_success 'pull.rebase=false and --ff, ff not possible' '
 test_expect_success 'Multiple heads warns about inability to fast forward' '
 	git reset --hard c1 &&
 	test_must_fail git pull . c2 c3 2>err &&
-	test_i18ngrep "You have divergent branches" err
+	test_grep "You have divergent branches" err
 '
 
 test_expect_success 'Multiple can never be fast forwarded' '
 	git reset --hard c0 &&
 	test_must_fail git -c pull.ff=only pull . c1 c2 c3 2>err &&
-	test_i18ngrep ! "You have divergent branches" err &&
+	test_grep ! "You have divergent branches" err &&
 	# In addition to calling out "cannot fast-forward", we very much
 	# want the "multiple branches" piece to be called out to users.
-	test_i18ngrep "Cannot fast-forward to multiple branches" err
+	test_grep "Cannot fast-forward to multiple branches" err
 '
 
 test_expect_success 'Cannot rebase with multiple heads' '
 	git reset --hard c0 &&
 	test_must_fail git -c pull.rebase=true pull . c1 c2 c3 2>err &&
-	test_i18ngrep ! "You have divergent branches" err &&
-	test_i18ngrep "Cannot rebase onto multiple branches." err
+	test_grep ! "You have divergent branches" err &&
+	test_grep "Cannot rebase onto multiple branches." err
 '
 
 test_expect_success 'merge c1 with c2' '

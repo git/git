@@ -276,7 +276,7 @@ test_expect_success '1d: Directory renames cause a rename/rename(2to1) conflict'
 		git checkout A^0 &&
 
 		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
-		test_i18ngrep "CONFLICT (\(.*\)/\1)" out &&
+		test_grep "CONFLICT (\(.*\)/\1)" out &&
 
 		git ls-files -s >out &&
 		test_line_count = 8 out &&
@@ -515,7 +515,7 @@ test_expect_success '2a: Directory split into two on one side, with equal number
 		git checkout A^0 &&
 
 		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
-		test_i18ngrep "CONFLICT.*directory rename split" out &&
+		test_grep "CONFLICT.*directory rename split" out &&
 
 		git ls-files -s >out &&
 		test_line_count = 3 out &&
@@ -591,7 +591,7 @@ test_expect_success '2b: Directory split into two on one side, with equal number
 		git rev-parse >expect \
 			 O:z/b  O:z/c  B:x/d &&
 		test_cmp expect actual &&
-		test_i18ngrep ! "CONFLICT.*directory rename split" out
+		test_grep ! "CONFLICT.*directory rename split" out
 	)
 '
 
@@ -726,8 +726,8 @@ test_expect_success '3b: Avoid implicit rename if involved as source on current 
 		git checkout A^0 &&
 
 		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
-		test_i18ngrep CONFLICT.*rename/rename.*z/d.*x/d.*w/d out &&
-		test_i18ngrep ! CONFLICT.*rename/rename.*y/d out &&
+		test_grep CONFLICT.*rename/rename.*z/d.*x/d.*w/d out &&
+		test_grep ! CONFLICT.*rename/rename.*y/d out &&
 
 		git ls-files -s >out &&
 		test_line_count = 5 out &&
@@ -938,7 +938,7 @@ test_expect_success '5a: Merge directories, other side adds files to original an
 		git checkout A^0 &&
 
 		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
-		test_i18ngrep "CONFLICT.*implicit dir rename" out &&
+		test_grep "CONFLICT.*implicit dir rename" out &&
 
 		git ls-files -s >out &&
 		test_line_count = 6 out &&
@@ -1013,7 +1013,7 @@ test_expect_success '5b: Rename/delete in order to get add/add/add conflict' '
 		git checkout A^0 &&
 
 		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
-		test_i18ngrep "CONFLICT (add/add).* y/d" out &&
+		test_grep "CONFLICT (add/add).* y/d" out &&
 
 		git ls-files -s >out &&
 		test_line_count = 5 out &&
@@ -1094,8 +1094,8 @@ test_expect_success '5c: Transitive rename would cause rename/rename/rename/add/
 		git checkout A^0 &&
 
 		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
-		test_i18ngrep "CONFLICT (rename/rename).*x/d.*w/d.*z/d" out &&
-		test_i18ngrep "CONFLICT (add/add).* y/d" out &&
+		test_grep "CONFLICT (rename/rename).*x/d.*w/d.*z/d" out &&
+		test_grep "CONFLICT (add/add).* y/d" out &&
 
 		git ls-files -s >out &&
 		test_line_count = 9 out &&
@@ -1179,7 +1179,7 @@ test_expect_success '5d: Directory/file/file conflict due to directory rename' '
 		git checkout A^0 &&
 
 		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
-		test_i18ngrep "CONFLICT (file/directory).*y/d" out &&
+		test_grep "CONFLICT (file/directory).*y/d" out &&
 
 		git ls-files -s >out &&
 		test_line_count = 6 out &&
@@ -1278,7 +1278,7 @@ test_expect_success '6a: Tricky rename/delete' '
 		git checkout A^0 &&
 
 		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
-		test_i18ngrep "CONFLICT (rename/delete).*z/c.*y/c" out &&
+		test_grep "CONFLICT (rename/delete).*z/c.*y/c" out &&
 
 		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 		then
@@ -1740,8 +1740,8 @@ test_expect_success '7a: rename-dir vs. rename-dir (NOT split evenly) PLUS add-o
 		git checkout A^0 &&
 
 		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
-		test_i18ngrep "CONFLICT (rename/rename).*z/b.*y/b.*w/b" out &&
-		test_i18ngrep "CONFLICT (rename/rename).*z/c.*y/c.*x/c" out &&
+		test_grep "CONFLICT (rename/rename).*z/b.*y/b.*w/b" out &&
+		test_grep "CONFLICT (rename/rename).*z/c.*y/c.*x/c" out &&
 
 		git ls-files -s >out &&
 		test_line_count = 7 out &&
@@ -1813,7 +1813,7 @@ test_expect_success '7b: rename/rename(2to1), but only due to transitive rename'
 		git checkout A^0 &&
 
 		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
-		test_i18ngrep "CONFLICT (\(.*\)/\1)" out &&
+		test_grep "CONFLICT (\(.*\)/\1)" out &&
 
 		git ls-files -s >out &&
 		test_line_count = 4 out &&
@@ -1900,7 +1900,7 @@ test_expect_success '7c: rename/rename(1to...2or3); transitive rename may add co
 		git checkout A^0 &&
 
 		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
-		test_i18ngrep "CONFLICT (rename/rename).*x/d.*w/d.*y/d" out &&
+		test_grep "CONFLICT (rename/rename).*x/d.*w/d.*y/d" out &&
 
 		git ls-files -s >out &&
 		test_line_count = 5 out &&
@@ -1965,7 +1965,7 @@ test_expect_success '7d: transitive rename involved in rename/delete; how is it 
 		git checkout A^0 &&
 
 		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
-		test_i18ngrep "CONFLICT (rename/delete).*x/d.*y/d" out &&
+		test_grep "CONFLICT (rename/delete).*x/d.*y/d" out &&
 
 		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 		then
@@ -2071,7 +2071,7 @@ test_expect_success '7e: transitive rename in rename/delete AND dirs in the way'
 		git checkout A^0 &&
 
 		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
-		test_i18ngrep "CONFLICT (rename/delete).*x/d.*y/d" out &&
+		test_grep "CONFLICT (rename/delete).*x/d.*y/d" out &&
 
 		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 		then
@@ -2330,7 +2330,7 @@ test_expect_success '8c: modify/delete or rename+modify/delete' '
 		git checkout A^0 &&
 
 		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
-		test_i18ngrep "CONFLICT (modify/delete).* z/d" out &&
+		test_grep "CONFLICT (modify/delete).* z/d" out &&
 
 		git ls-files -s >out &&
 		test_line_count = 5 out &&
@@ -2491,8 +2491,8 @@ test_expect_success '8e: Both sides rename, one side adds to original directory'
 		git checkout A^0 &&
 
 		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
-		test_i18ngrep CONFLICT.*rename/rename.*z/c.*y/c.*w/c out &&
-		test_i18ngrep CONFLICT.*rename/rename.*z/b.*y/b.*w/b out &&
+		test_grep CONFLICT.*rename/rename.*z/c.*y/c.*w/c out &&
+		test_grep CONFLICT.*rename/rename.*z/b.*y/b.*w/b out &&
 
 		git ls-files -s >out &&
 		test_line_count = 7 out &&
@@ -2741,7 +2741,7 @@ test_expect_success '9c: Doubly transitive rename?' '
 		git checkout A^0 &&
 
 		git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
-		test_i18ngrep "WARNING: Avoiding applying x -> z rename to x/f" out &&
+		test_grep "WARNING: Avoiding applying x -> z rename to x/f" out &&
 
 		git ls-files -s >out &&
 		test_line_count = 6 out &&
@@ -2830,10 +2830,10 @@ test_expect_success '9d: N-way transitive rename?' '
 		git checkout A^0 &&
 
 		git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
-		test_i18ngrep "WARNING: Avoiding applying z -> y rename to z/t" out &&
-		test_i18ngrep "WARNING: Avoiding applying y -> x rename to y/a" out &&
-		test_i18ngrep "WARNING: Avoiding applying x -> w rename to x/b" out &&
-		test_i18ngrep "WARNING: Avoiding applying w -> v rename to w/c" out &&
+		test_grep "WARNING: Avoiding applying z -> y rename to z/t" out &&
+		test_grep "WARNING: Avoiding applying y -> x rename to y/a" out &&
+		test_grep "WARNING: Avoiding applying x -> w rename to x/b" out &&
+		test_grep "WARNING: Avoiding applying w -> v rename to w/c" out &&
 
 		git ls-files -s >out &&
 		test_line_count = 7 out &&
@@ -3215,7 +3215,7 @@ test_expect_success '10a: Overwrite untracked with normal rename/delete' '
 
 		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
 		test_path_is_missing .git/MERGE_HEAD &&
-		test_i18ngrep "The following untracked working tree files would be overwritten by merge" err &&
+		test_grep "The following untracked working tree files would be overwritten by merge" err &&
 
 		git ls-files -s >out &&
 		test_line_count = 1 out &&
@@ -3287,7 +3287,7 @@ test_expect_success '10b: Overwrite untracked with dir rename + delete' '
 		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 		then
 			test_path_is_missing .git/MERGE_HEAD &&
-			test_i18ngrep "error: The following untracked working tree files would be overwritten by merge" err &&
+			test_grep "error: The following untracked working tree files would be overwritten by merge" err &&
 
 			git ls-files -s >out &&
 			test_line_count = 1 out &&
@@ -3296,8 +3296,8 @@ test_expect_success '10b: Overwrite untracked with dir rename + delete' '
 			git ls-files -o >out &&
 			test_line_count = 5 out
 		else
-			test_i18ngrep "CONFLICT (rename/delete).*Version B\^0 of y/d left in tree at y/d~B\^0" out &&
-			test_i18ngrep "Error: Refusing to lose untracked file at y/e; writing to y/e~B\^0 instead" out &&
+			test_grep "CONFLICT (rename/delete).*Version B\^0 of y/d left in tree at y/d~B\^0" out &&
+			test_grep "Error: Refusing to lose untracked file at y/e; writing to y/e~B\^0 instead" out &&
 
 			git ls-files -s >out &&
 			test_line_count = 3 out &&
@@ -3377,7 +3377,7 @@ test_expect_success '10c1: Overwrite untracked with dir rename/rename(1to2)' '
 		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 		then
 			test_path_is_missing .git/MERGE_HEAD &&
-			test_i18ngrep "error: The following untracked working tree files would be overwritten by merge" err &&
+			test_grep "error: The following untracked working tree files would be overwritten by merge" err &&
 
 			git ls-files -s >out &&
 			test_line_count = 4 out &&
@@ -3386,8 +3386,8 @@ test_expect_success '10c1: Overwrite untracked with dir rename/rename(1to2)' '
 			git ls-files -o >out &&
 			test_line_count = 3 out
 		else
-			test_i18ngrep "CONFLICT (rename/rename)" out &&
-			test_i18ngrep "Refusing to lose untracked file at y/c; adding as y/c~B\^0 instead" out &&
+			test_grep "CONFLICT (rename/rename)" out &&
+			test_grep "Refusing to lose untracked file at y/c; adding as y/c~B\^0 instead" out &&
 
 			git ls-files -s >out &&
 			test_line_count = 6 out &&
@@ -3428,7 +3428,7 @@ test_expect_success '10c2: Overwrite untracked with dir rename/rename(1to2), oth
 		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 		then
 			test_path_is_missing .git/MERGE_HEAD &&
-			test_i18ngrep "error: The following untracked working tree files would be overwritten by merge" err &&
+			test_grep "error: The following untracked working tree files would be overwritten by merge" err &&
 
 			git ls-files -s >out &&
 			test_line_count = 4 out &&
@@ -3437,8 +3437,8 @@ test_expect_success '10c2: Overwrite untracked with dir rename/rename(1to2), oth
 			git ls-files -o >out &&
 			test_line_count = 3 out
 		else
-			test_i18ngrep "CONFLICT (rename/rename)" out &&
-			test_i18ngrep "Refusing to lose untracked file at y/c; adding as y/c~HEAD instead" out &&
+			test_grep "CONFLICT (rename/rename)" out &&
+			test_grep "Refusing to lose untracked file at y/c; adding as y/c~HEAD instead" out &&
 
 			git ls-files -s >out &&
 			test_line_count = 6 out &&
@@ -3517,7 +3517,7 @@ test_expect_success '10d: Delete untracked with dir rename/rename(2to1)' '
 		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 		then
 			test_path_is_missing .git/MERGE_HEAD &&
-			test_i18ngrep "error: The following untracked working tree files would be overwritten by merge" err &&
+			test_grep "error: The following untracked working tree files would be overwritten by merge" err &&
 
 			git ls-files -s >out &&
 			test_line_count = 6 out &&
@@ -3526,8 +3526,8 @@ test_expect_success '10d: Delete untracked with dir rename/rename(2to1)' '
 			git ls-files -o >out &&
 			test_line_count = 3 out
 		else
-			test_i18ngrep "CONFLICT (rename/rename)" out &&
-			test_i18ngrep "Refusing to lose untracked file at y/wham" out &&
+			test_grep "CONFLICT (rename/rename)" out &&
+			test_grep "Refusing to lose untracked file at y/wham" out &&
 
 			git ls-files -s >out &&
 			test_line_count = 6 out &&
@@ -3606,7 +3606,7 @@ test_expect_merge_algorithm failure success '10e: Does git complain about untrac
 		echo random >z/c &&
 
 		git -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
-		test_i18ngrep ! "following untracked working tree files would be overwritten by merge" err &&
+		test_grep ! "following untracked working tree files would be overwritten by merge" err &&
 
 		git ls-files -s >out &&
 		test_line_count = 3 out &&
@@ -3690,9 +3690,9 @@ test_expect_success '11a: Avoid losing dirty contents with simple rename' '
 		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 		then
 			test_path_is_missing .git/MERGE_HEAD &&
-			test_i18ngrep "error: Your local changes to the following files would be overwritten by merge" err
+			test_grep "error: Your local changes to the following files would be overwritten by merge" err
 		else
-			test_i18ngrep "Refusing to lose dirty file at z/c" out &&
+			test_grep "Refusing to lose dirty file at z/c" out &&
 
 			git ls-files -s >out &&
 			test_line_count = 2 out &&
@@ -3770,10 +3770,10 @@ test_expect_success '11b: Avoid losing dirty file involved in directory rename' 
 		then
 			test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
 			test_path_is_missing .git/MERGE_HEAD &&
-			test_i18ngrep "error: Your local changes to the following files would be overwritten by merge" err
+			test_grep "error: Your local changes to the following files would be overwritten by merge" err
 		else
 			git -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
-			test_i18ngrep "Refusing to lose dirty file at z/c" out &&
+			test_grep "Refusing to lose dirty file at z/c" out &&
 
 			git ls-files -s >out &&
 			test_line_count = 3 out &&
@@ -3853,9 +3853,9 @@ test_expect_success '11c: Avoid losing not-uptodate with rename + D/F conflict' 
 		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 		then
 			test_path_is_missing .git/MERGE_HEAD &&
-			test_i18ngrep "error: Your local changes to the following files would be overwritten by merge" err
+			test_grep "error: Your local changes to the following files would be overwritten by merge" err
 		else
-			test_i18ngrep "following files would be overwritten by merge" err
+			test_grep "following files would be overwritten by merge" err
 		fi &&
 
 		grep -q stuff y/c &&
@@ -3927,9 +3927,9 @@ test_expect_success '11d: Avoid losing not-uptodate with rename + D/F conflict' 
 		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 		then
 			test_path_is_missing .git/MERGE_HEAD &&
-			test_i18ngrep "error: Your local changes to the following files would be overwritten by merge" err
+			test_grep "error: Your local changes to the following files would be overwritten by merge" err
 		else
-			test_i18ngrep "Refusing to lose dirty file at z/c" out &&
+			test_grep "Refusing to lose dirty file at z/c" out &&
 
 			git ls-files -s >out &&
 			test_line_count = 4 out &&
@@ -4013,10 +4013,10 @@ test_expect_success '11e: Avoid deleting not-uptodate with dir rename/rename(1to
 		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 		then
 			test_path_is_missing .git/MERGE_HEAD &&
-			test_i18ngrep "error: Your local changes to the following files would be overwritten by merge" err
+			test_grep "error: Your local changes to the following files would be overwritten by merge" err
 		else
-			test_i18ngrep "CONFLICT (rename/rename)" out &&
-			test_i18ngrep "Refusing to lose dirty file at y/c" out &&
+			test_grep "CONFLICT (rename/rename)" out &&
+			test_grep "Refusing to lose dirty file at y/c" out &&
 
 			git ls-files -s >out &&
 			test_line_count = 7 out &&
@@ -4102,10 +4102,10 @@ test_expect_success '11f: Avoid deleting not-uptodate with dir rename/rename(2to
 		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 		then
 			test_path_is_missing .git/MERGE_HEAD &&
-			test_i18ngrep "error: Your local changes to the following files would be overwritten by merge" err
+			test_grep "error: Your local changes to the following files would be overwritten by merge" err
 		else
-			test_i18ngrep "CONFLICT (rename/rename)" out &&
-			test_i18ngrep "Refusing to lose dirty file at y/wham" out &&
+			test_grep "CONFLICT (rename/rename)" out &&
+			test_grep "Refusing to lose dirty file at y/wham" out &&
 
 			git ls-files -s >out &&
 			test_line_count = 4 out &&
@@ -5417,8 +5417,8 @@ test_expect_success '13a(conflict): messages for newly added files' '
 
 		test_must_fail git merge -s recursive B^0 >out 2>err &&
 
-		test_i18ngrep CONFLICT..file.location.*z/e/f.added.in.B^0.*y/e/f out &&
-		test_i18ngrep CONFLICT..file.location.*z/d.added.in.B^0.*y/d out &&
+		test_grep CONFLICT..file.location.*z/e/f.added.in.B^0.*y/e/f out &&
+		test_grep CONFLICT..file.location.*z/d.added.in.B^0.*y/d out &&
 
 		git ls-files >paths &&
 		! grep z/ paths &&
@@ -5441,8 +5441,8 @@ test_expect_success '13a(info): messages for newly added files' '
 
 		git -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
 
-		test_i18ngrep Path.updated:.*z/e/f.added.in.B^0.*y/e/f out &&
-		test_i18ngrep Path.updated:.*z/d.added.in.B^0.*y/d out &&
+		test_grep Path.updated:.*z/e/f.added.in.B^0.*y/e/f out &&
+		test_grep Path.updated:.*z/d.added.in.B^0.*y/d out &&
 
 		git ls-files >paths &&
 		! grep z/ paths &&
@@ -5507,8 +5507,8 @@ test_expect_success '13b(conflict): messages for transitive rename with conflict
 
 		test_must_fail git merge -s recursive B^0 >out 2>err &&
 
-		test_i18ngrep CONFLICT.*content.*Merge.conflict.in.y/d out &&
-		test_i18ngrep CONFLICT..file.location.*x/d.renamed.to.z/d.*moved.to.y/d out &&
+		test_grep CONFLICT.*content.*Merge.conflict.in.y/d out &&
+		test_grep CONFLICT..file.location.*x/d.renamed.to.z/d.*moved.to.y/d out &&
 
 		git ls-files >paths &&
 		! grep z/ paths &&
@@ -5529,8 +5529,8 @@ test_expect_success '13b(info): messages for transitive rename with conflicted c
 
 		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
 
-		test_i18ngrep CONFLICT.*content.*Merge.conflict.in.y/d out &&
-		test_i18ngrep Path.updated:.*x/d.renamed.to.z/d.in.B^0.*moving.it.to.y/d out &&
+		test_grep CONFLICT.*content.*Merge.conflict.in.y/d out &&
+		test_grep Path.updated:.*x/d.renamed.to.z/d.in.B^0.*moving.it.to.y/d out &&
 
 		git ls-files >paths &&
 		! grep z/ paths &&
@@ -5593,7 +5593,7 @@ test_expect_success '13c(conflict): messages for rename/rename(1to1) via transit
 
 		test_must_fail git merge -s recursive B^0 >out 2>err &&
 
-		test_i18ngrep CONFLICT..file.location.*x/d.renamed.to.z/d.*moved.to.y/d out &&
+		test_grep CONFLICT..file.location.*x/d.renamed.to.z/d.*moved.to.y/d out &&
 
 		git ls-files >paths &&
 		! grep z/ paths &&
@@ -5614,7 +5614,7 @@ test_expect_success '13c(info): messages for rename/rename(1to1) via transitive 
 
 		git -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
 
-		test_i18ngrep Path.updated:.*x/d.renamed.to.z/d.in.B^0.*moving.it.to.y/d out &&
+		test_grep Path.updated:.*x/d.renamed.to.z/d.in.B^0.*moving.it.to.y/d out &&
 
 		git ls-files >paths &&
 		! grep z/ paths &&
@@ -5682,8 +5682,8 @@ test_expect_success '13d(conflict): messages for rename/rename(1to1) via dual tr
 
 		test_must_fail git merge -s recursive B^0 >out 2>err &&
 
-		test_i18ngrep CONFLICT..file.location.*a/y.renamed.to.b/y.*moved.to.d/y out &&
-		test_i18ngrep CONFLICT..file.location.*a/y.renamed.to.c/y.*moved.to.d/y out &&
+		test_grep CONFLICT..file.location.*a/y.renamed.to.b/y.*moved.to.d/y out &&
+		test_grep CONFLICT..file.location.*a/y.renamed.to.c/y.*moved.to.d/y out &&
 
 		git ls-files >paths &&
 		! grep b/ paths &&
@@ -5706,8 +5706,8 @@ test_expect_success '13d(info): messages for rename/rename(1to1) via dual transi
 
 		git -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
 
-		test_i18ngrep Path.updated.*a/y.renamed.to.b/y.*moving.it.to.d/y out &&
-		test_i18ngrep Path.updated.*a/y.renamed.to.c/y.*moving.it.to.d/y out &&
+		test_grep Path.updated.*a/y.renamed.to.b/y.*moving.it.to.d/y out &&
+		test_grep Path.updated.*a/y.renamed.to.c/y.*moving.it.to.d/y out &&
 
 		git ls-files >paths &&
 		! grep b/ paths &&
@@ -5821,9 +5821,9 @@ test_expect_success '13e: directory rename detection in recursive case' '
 
 		git -c merge.directoryRenames=conflict merge -s recursive C^0 >out 2>err &&
 
-		test_i18ngrep ! CONFLICT out &&
-		test_i18ngrep ! BUG: err &&
-		test_i18ngrep ! core.dumped err &&
+		test_grep ! CONFLICT out &&
+		test_grep ! BUG: err &&
+		test_grep ! core.dumped err &&
 		test_must_be_empty err &&
 
 		git ls-files >paths &&

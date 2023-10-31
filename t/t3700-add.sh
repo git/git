@@ -438,7 +438,7 @@ test_expect_success 'git add --chmod fails with non regular files (but updates t
 	test_ln_s_add foo foo3 &&
 	touch foo4 &&
 	test_must_fail git add --chmod=+x foo3 foo4 2>stderr &&
-	test_i18ngrep "cannot chmod +x .foo3." stderr &&
+	test_grep "cannot chmod +x .foo3." stderr &&
 	test_mode_in_index 120000 foo3 &&
 	test_mode_in_index 100755 foo4
 '
@@ -455,12 +455,12 @@ test_expect_success 'git add --chmod --dry-run reports error for non regular fil
 	git reset --hard &&
 	test_ln_s_add foo foo4 &&
 	test_must_fail git add --chmod=+x --dry-run foo4 2>stderr &&
-	test_i18ngrep "cannot chmod +x .foo4." stderr
+	test_grep "cannot chmod +x .foo4." stderr
 '
 
 test_expect_success 'git add --chmod --dry-run reports error for unmatched pathspec' '
 	test_must_fail git add --chmod=+x --dry-run nonexistent 2>stderr &&
-	test_i18ngrep "pathspec .nonexistent. did not match any files" stderr
+	test_grep "pathspec .nonexistent. did not match any files" stderr
 '
 
 test_expect_success 'no file status change if no pathspec is given' '
