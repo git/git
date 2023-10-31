@@ -183,11 +183,8 @@ static int cmd_show_ref__patterns(const char **patterns)
 	} else {
 		for_each_ref(show_ref, &show_ref_data);
 	}
-	if (!found_match) {
-		if (verify && !quiet)
-			die("No match");
+	if (!found_match)
 		return 1;
-	}
 
 	return 0;
 }
