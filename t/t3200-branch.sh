@@ -291,10 +291,10 @@ test_expect_success 'git branch -M topic topic should work when main is checked 
 test_expect_success 'git branch -M and -C fail on detached HEAD' '
 	git checkout HEAD^{} &&
 	test_when_finished git checkout - &&
-	echo "fatal: cannot rename the current branch while not on any." >expect &&
+	echo "fatal: cannot rename the current branch while not on any" >expect &&
 	test_must_fail git branch -M must-fail 2>err &&
 	test_cmp expect err &&
-	echo "fatal: cannot copy the current branch while not on any." >expect &&
+	echo "fatal: cannot copy the current branch while not on any" >expect &&
 	test_must_fail git branch -C must-fail 2>err &&
 	test_cmp expect err
 '
@@ -943,7 +943,7 @@ test_expect_success 'deleting currently checked out branch fails' '
 	git worktree add -b my7 my7 &&
 	test_must_fail git -C my7 branch -d my7 &&
 	test_must_fail git branch -d my7 2>actual &&
-	grep "^error: Cannot delete branch .my7. used by worktree at " actual &&
+	grep "^error: cannot delete branch .my7. used by worktree at " actual &&
 	rm -r my7 &&
 	git worktree prune
 '
@@ -954,7 +954,7 @@ test_expect_success 'deleting in-use branch fails' '
 	git -C my7 bisect start HEAD HEAD~2 &&
 	test_must_fail git -C my7 branch -d my7 &&
 	test_must_fail git branch -d my7 2>actual &&
-	grep "^error: Cannot delete branch .my7. used by worktree at " actual &&
+	grep "^error: cannot delete branch .my7. used by worktree at " actual &&
 	rm -r my7 &&
 	git worktree prune
 '
@@ -1024,7 +1024,7 @@ test_expect_success '--set-upstream-to fails on multiple branches' '
 test_expect_success '--set-upstream-to fails on detached HEAD' '
 	git checkout HEAD^{} &&
 	test_when_finished git checkout - &&
-	echo "fatal: could not set upstream of HEAD to main when it does not point to any branch." >expect &&
+	echo "fatal: could not set upstream of HEAD to main when it does not point to any branch" >expect &&
 	test_must_fail git branch --set-upstream-to main 2>err &&
 	test_cmp expect err
 '
@@ -1072,7 +1072,7 @@ test_expect_success 'use --set-upstream-to modify a particular branch' '
 '
 
 test_expect_success '--unset-upstream should fail if given a non-existent branch' '
-	echo "fatal: Branch '"'"'i-dont-exist'"'"' has no upstream information" >expect &&
+	echo "fatal: branch '"'"'i-dont-exist'"'"' has no upstream information" >expect &&
 	test_must_fail git branch --unset-upstream i-dont-exist 2>err &&
 	test_cmp expect err
 '
@@ -1094,7 +1094,7 @@ test_expect_success 'test --unset-upstream on HEAD' '
 	test_must_fail git config branch.main.remote &&
 	test_must_fail git config branch.main.merge &&
 	# fail for a branch without upstream set
-	echo "fatal: Branch '"'"'main'"'"' has no upstream information" >expect &&
+	echo "fatal: branch '"'"'main'"'"' has no upstream information" >expect &&
 	test_must_fail git branch --unset-upstream 2>err &&
 	test_cmp expect err
 '
@@ -1108,7 +1108,7 @@ test_expect_success '--unset-upstream should fail on multiple branches' '
 test_expect_success '--unset-upstream should fail on detached HEAD' '
 	git checkout HEAD^{} &&
 	test_when_finished git checkout - &&
-	echo "fatal: could not unset upstream of HEAD when it does not point to any branch." >expect &&
+	echo "fatal: could not unset upstream of HEAD when it does not point to any branch" >expect &&
 	test_must_fail git branch --unset-upstream 2>err &&
 	test_cmp expect err
 '
