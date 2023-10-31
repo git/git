@@ -196,4 +196,13 @@ test_expect_success 'show-ref --verify with dangling ref' '
 	)
 '
 
+test_expect_success 'show-ref sub-modes are mutually exclusive' '
+	cat >expect <<-EOF &&
+	fatal: only one of ${SQ}--exclude-existing${SQ} or ${SQ}--verify${SQ} can be given
+	EOF
+
+	test_must_fail git show-ref --verify --exclude-existing 2>err &&
+	test_cmp expect err
+'
+
 test_done

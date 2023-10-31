@@ -275,6 +275,10 @@ int cmd_show_ref(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, show_ref_options,
 			     show_ref_usage, 0);
 
+	if ((!!exclude_existing_opts.enabled + !!verify) > 1)
+		die(_("only one of '%s' or '%s' can be given"),
+		    "--exclude-existing", "--verify");
+
 	if (exclude_existing_opts.enabled)
 		return cmd_show_ref__exclude_existing(&exclude_existing_opts);
 	else if (verify)
