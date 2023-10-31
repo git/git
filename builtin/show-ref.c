@@ -2,7 +2,7 @@
 #include "config.h"
 #include "gettext.h"
 #include "hex.h"
-#include "refs.h"
+#include "refs/refs-internal.h"
 #include "object-name.h"
 #include "object-store-ll.h"
 #include "object.h"
@@ -18,6 +18,7 @@ static const char * const show_ref_usage[] = {
 	   "             [-s | --hash[=<n>]] [--abbrev[=<n>]]\n"
 	   "             [--] [<ref>...]"),
 	N_("git show-ref --exclude-existing[=<pattern>]"),
+	N_("git show-ref --exists <ref>"),
 	NULL
 };
 
@@ -220,6 +221,41 @@ static int cmd_show_ref__patterns(const struct patterns_options *opts,
 	return 0;
 }
 
+static int cmd_show_ref__exists(const char **refs)
+{
+	struct strbuf unused_referent = STRBUF_INIT;
+	struct object_id unused_oid;
+	unsigned int unused_type;
+	int failure_errno = 0;
+	const char *ref;
+	int ret = 0;
+
+	if (!refs || !*refs)
+		die("--exists requires a reference");
+	ref = *refs++;
+	if (*refs)
+		die("--exists requires exactly one reference");
+
+	if (refs_read_raw_ref(get_main_ref_store(the_repository), ref,
+			      &unused_oid, &unused_referent, &unused_type,
+			      &failure_errno)) {
+		if (failure_errno == ENOENT) {
+			error(_("reference does not exist"));
+			ret = 2;
+		} else {
+			errno = failure_errno;
+			error_errno(_("failed to look up reference"));
+			ret = 1;
+		}
+
+		goto out;
+	}
+
+out:
+	strbuf_release(&unused_referent);
+	return ret;
+}
+
 static int hash_callback(const struct option *opt, const char *arg, int unset)
 {
 	struct show_one_options *opts = opt->value;
@@ -249,10 +285,11 @@ int cmd_show_ref(int argc, const char **argv, const char *prefix)
 	struct exclude_existing_options exclude_existing_opts = {0};
 	struct patterns_options patterns_opts = {0};
 	struct show_one_options show_one_opts = {0};
-	int verify = 0;
+	int verify = 0, exists = 0;
 	const struct option show_ref_options[] = {
 		OPT_BOOL(0, "tags", &patterns_opts.tags_only, N_("only show tags (can be combined with heads)")),
 		OPT_BOOL(0, "heads", &patterns_opts.heads_only, N_("only show heads (can be combined with tags)")),
+		OPT_BOOL(0, "exists", &exists, N_("check for reference existence without resolving")),
 		OPT_BOOL(0, "verify", &verify, N_("stricter reference checking, "
 			    "requires exact ref path")),
 		OPT_HIDDEN_BOOL('h', NULL, &patterns_opts.show_head,
@@ -278,14 +315,16 @@ int cmd_show_ref(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, show_ref_options,
 			     show_ref_usage, 0);
 
-	if ((!!exclude_existing_opts.enabled + !!verify) > 1)
-		die(_("only one of '%s' or '%s' can be given"),
-		    "--exclude-existing", "--verify");
+	if ((!!exclude_existing_opts.enabled + !!verify + !!exists) > 1)
+		die(_("only one of '%s', '%s' or '%s' can be given"),
+		    "--exclude-existing", "--verify", "--exists");
 
 	if (exclude_existing_opts.enabled)
 		return cmd_show_ref__exclude_existing(&exclude_existing_opts);
 	else if (verify)
 		return cmd_show_ref__verify(&show_one_opts, argv);
+	else if (exists)
+		return cmd_show_ref__exists(argv);
 	else
 		return cmd_show_ref__patterns(&patterns_opts, &show_one_opts, argv);
 }
