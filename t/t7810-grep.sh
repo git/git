@@ -1234,6 +1234,33 @@ test_expect_success 'outside of git repository with fallbackToNoIndex' '
 	)
 '
 
+test_expect_success 'no repository with path outside $cwd' '
+	test_when_finished rm -fr non &&
+	rm -fr non &&
+	mkdir -p non/git/sub non/tig &&
+	(
+		GIT_CEILING_DIRECTORIES="$(pwd)/non" &&
+		export GIT_CEILING_DIRECTORIES &&
+		cd non/git &&
+		test_expect_code 128 git grep --no-index search .. 2>error &&
+		grep "is outside the directory tree" error
+	) &&
+	(
+		GIT_CEILING_DIRECTORIES="$(pwd)/non" &&
+		export GIT_CEILING_DIRECTORIES &&
+		cd non/git &&
+		test_expect_code 128 git grep --no-index search ../tig 2>error &&
+		grep "is outside the directory tree" error
+	) &&
+	(
+		GIT_CEILING_DIRECTORIES="$(pwd)/non" &&
+		export GIT_CEILING_DIRECTORIES &&
+		cd non/git &&
+		test_expect_code 128 git grep --no-index search ../non 2>error &&
+		grep "no such path in the working tree" error
+	)
+'
+
 test_expect_success 'inside git repository but with --no-index' '
 	rm -fr is &&
 	mkdir -p is/git/sub &&

@@ -23,8 +23,8 @@ DESCRIPTION
 Reads the supplied diff output (i.e. "a patch") and applies it to files.
 When running from a subdirectory in a repository, patched paths
 outside the directory are ignored.
-With the `--index` option the patch is also applied to the index, and
-with the `--cached` option the patch is only applied to the index.
+With the `--index` option, the patch is also applied to the index, and
+with the `--cached` option, the patch is only applied to the index.
 Without these options, the command applies the patch only to files,
 and does not require them to be in a Git repository.
 
@@ -52,7 +52,7 @@ OPTIONS
 --summary::
 	Instead of applying the patch, output a condensed
 	summary of information obtained from git diff extended
-	headers, such as creations, renames and mode changes.
+	headers, such as creations, renames, and mode changes.
 	Turns off "apply".
 
 --check::
@@ -140,7 +140,7 @@ linkgit:git-config[1]).
 	applying a diff generated with `--unified=0`. To bypass these
 	checks use `--unidiff-zero`.
 +
-Note, for the reasons stated above usage of context-free patches is
+Note, for the reasons stated above, the usage of context-free patches is
 discouraged.
 
 --apply::
@@ -159,9 +159,9 @@ discouraged.
 
 --allow-binary-replacement::
 --binary::
-	Historically we did not allow binary patch applied
+	Historically we did not allow binary patch application
 	without an explicit permission from the user, and this
-	flag was the way to do so.  Currently we always allow binary
+	flag was the way to do so.  Currently, we always allow binary
 	patch application, so this is a no-op.
 
 --exclude=<path-pattern>::
@@ -257,7 +257,7 @@ the `--unsafe-paths` option to override this safety check.  This option
 has no effect when `--index` or `--cached` is in use.
 
 --allow-empty::
-	Don't return error for patches containing no diff. This includes
+	Don't return an error for patches containing no diff. This includes
 	empty patches and patches with commit text only.
 
 CONFIGURATION

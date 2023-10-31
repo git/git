@@ -10,7 +10,7 @@ GIT_TEST_DATE_NOW=1251660000; export GIT_TEST_DATE_NOW
 test_expect_success 'error descriptions on empty repository' '
 	current=$(git branch --show-current) &&
 	cat >expect <<-EOF &&
-	error: No commit on branch '\''$current'\'' yet.
+	error: no commit on branch '\''$current'\'' yet
 	EOF
 	test_must_fail git branch --edit-description 2>actual &&
 	test_cmp expect actual &&
@@ -21,7 +21,7 @@ test_expect_success 'error descriptions on empty repository' '
 test_expect_success 'fatal descriptions on empty repository' '
 	current=$(git branch --show-current) &&
 	cat >expect <<-EOF &&
-	fatal: No commit on branch '\''$current'\'' yet.
+	fatal: no commit on branch '\''$current'\'' yet
 	EOF
 	test_must_fail git branch --set-upstream-to=non-existent 2>actual &&
 	test_cmp expect actual &&
@@ -224,7 +224,7 @@ done
 
 test_expect_success 'error descriptions on non-existent branch' '
 	cat >expect <<-EOF &&
-	error: No branch named '\''non-existent'\'.'
+	error: no branch named '\''non-existent'\''
 	EOF
 	test_must_fail git branch --edit-description non-existent 2>actual &&
 	test_cmp expect actual
@@ -238,7 +238,7 @@ test_expect_success 'fatal descriptions on non-existent branch' '
 	test_cmp expect actual &&
 
 	cat >expect <<-EOF &&
-	fatal: No branch named '\''non-existent'\''.
+	fatal: no branch named '\''non-existent'\''
 	EOF
 	test_must_fail git branch -c non-existent new-branch 2>actual &&
 	test_cmp expect actual &&
@@ -253,7 +253,7 @@ test_expect_success 'error descriptions on orphan branch' '
 	test_branch_op_in_wt() {
 		test_orphan_error() {
 			test_must_fail git $* 2>actual &&
-			test_i18ngrep "No commit on branch .orphan-branch. yet.$" actual
+			test_i18ngrep "no commit on branch .orphan-branch. yet$" actual
 		} &&
 		test_orphan_error -C wt branch $1 $2 &&                # implicit branch
 		test_orphan_error -C wt branch $1 orphan-branch $2 &&  # explicit branch

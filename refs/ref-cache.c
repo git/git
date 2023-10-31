@@ -412,7 +412,8 @@ static int cache_ref_iterator_advance(struct ref_iterator *ref_iterator)
 
 		if (level->prefix_state == PREFIX_WITHIN_DIR) {
 			entry_prefix_state = overlaps_prefix(entry->name, iter->prefix);
-			if (entry_prefix_state == PREFIX_EXCLUDES_DIR)
+			if (entry_prefix_state == PREFIX_EXCLUDES_DIR ||
+			    (entry_prefix_state == PREFIX_WITHIN_DIR && !(entry->flag & REF_DIR)))
 				continue;
 		} else {
 			entry_prefix_state = level->prefix_state;

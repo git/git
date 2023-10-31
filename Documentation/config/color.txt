@@ -106,7 +106,7 @@ color.grep.<slot>::
 	matching text in context lines
 `matchSelected`;;
 	matching text in selected lines. Also, used to customize the following
-	linkgit:git-log[1] subcommands: `--grep`, `--author` and `--committer`.
+	linkgit:git-log[1] subcommands: `--grep`, `--author`, and `--committer`.
 `selected`;;
 	non-matching text in selected lines. Also, used to customize the
 	following linkgit:git-log[1] subcommands: `--grep`, `--author` and

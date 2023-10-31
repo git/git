@@ -11,7 +11,7 @@ file. The file `/etc/gitconfig` can be used to store a system-wide
 default configuration.
 
 The configuration variables are used by both the Git plumbing
-and the porcelains. The variables are divided into sections, wherein
+and the porcelain commands. The variables are divided into sections, wherein
 the fully qualified variable name of the variable itself is the last
 dot-separated segment and the section name is everything before the last
 dot. The variable names are case-insensitive, allow only alphanumeric
@@ -103,7 +103,7 @@ was found.  See below for examples.
 Conditional includes
 ~~~~~~~~~~~~~~~~~~~~
 
-You can include a config file from another conditionally by setting a
+You can conditionally include a config file from another by setting an
 `includeIf.<condition>.path` variable to the name of the file to be
 included.
 
@@ -118,7 +118,7 @@ are:
 	pattern, the include condition is met.
 +
 The .git location may be auto-discovered, or come from `$GIT_DIR`
-environment variable. If the repository is auto discovered via a .git
+environment variable. If the repository is auto-discovered via a .git
 file (e.g. from submodules, or a linked worktree), the .git location
 would be the final location where the .git directory is, not where the
 .git file is.
@@ -370,6 +370,8 @@ names do not conflict with those that are used by Git itself and
 other popular tools, and describe them in your documentation.
 
 include::config/advice.txt[]
+
+include::config/attr.txt[]
 
 include::config/core.txt[]
 

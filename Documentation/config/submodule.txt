@@ -2,7 +2,7 @@ submodule.<name>.url::
 	The URL for a submodule. This variable is copied from the .gitmodules
 	file to the git config via 'git submodule init'. The user can change
 	the configured URL before obtaining the submodule via 'git submodule
-	update'. If neither submodule.<name>.active or submodule.active are
+	update'. If neither submodule.<name>.active nor submodule.active are
 	set, the presence of this variable is used as a fallback to indicate
 	whether the submodule is of interest to git commands.
 	See linkgit:git-submodule[1] and linkgit:gitmodules[5] for details.
@@ -35,7 +35,7 @@ submodule.<name>.ignore::
 	a submodule as modified. When set to "all", it will never be considered
 	modified (but it will nonetheless show up in the output of status and
 	commit when it has been staged), "dirty" will ignore all changes
-	to the submodules work tree and
+	to the submodule's work tree and
 	takes only differences between the HEAD of the submodule and the commit
 	recorded in the superproject into account. "untracked" will additionally
 	let submodules with modified tracked files in their work tree show up.

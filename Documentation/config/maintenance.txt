@@ -12,7 +12,7 @@ maintenance.strategy::
 	then that value is used instead of the one provided by
 	`maintenance.strategy`. The possible strategy strings are:
 +
-* `none`: This default setting implies no task are run at any schedule.
+* `none`: This default setting implies no tasks are run at any schedule.
 * `incremental`: This setting optimizes for performing small maintenance
   activities that do not delete any data. This does not schedule the `gc`
   task, but runs the `prefetch` and `commit-graph` tasks hourly, the

@@ -16,10 +16,10 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Reads a packed archive (.pack) from the specified file, and
-builds a pack index file (.idx) for it. Optionally writes a
+Reads a packed archive (.pack) from the specified file,
+builds a pack index file (.idx) for it, and optionally writes a
 reverse-index (.rev) for the specified pack. The packed
-archive together with the pack index can then be placed in
+archive, together with the pack index, can then be placed in
 the objects/pack/ directory of a Git repository.
 
 
@@ -68,8 +68,8 @@ OPTIONS
 	updated to use objects contained in the pack.
 
 --keep=<msg>::
-	Like --keep create a .keep file before moving the index into
-	its final destination, but rather than creating an empty file
+	Like --keep, create a .keep file before moving the index into
+	its final destination.  However, instead of creating an empty file
 	place '<msg>' followed by an LF into the .keep file.  The '<msg>'
 	message can later be searched for within all .keep files to
 	locate any which have outlived their usefulness.

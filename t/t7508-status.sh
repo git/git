@@ -1745,4 +1745,20 @@ test_expect_success 'slow status advice when core.untrackedCache true, and fsmon
 	)
 '
 
+test_expect_success EXPENSIVE 'status does not re-read unchanged 4 or 8 GiB file' '
+	(
+		mkdir large-file &&
+		cd large-file &&
+		# Files are 2 GiB, 4 GiB, and 8 GiB sparse files.
+		test-tool truncate file-a 0x080000000 &&
+		test-tool truncate file-b 0x100000000 &&
+		test-tool truncate file-c 0x200000000 &&
+		# This will be slow.
+		git add file-a file-b file-c &&
+		git commit -m "add large files" &&
+		git diff-index HEAD file-a file-b file-c >actual &&
+		test_must_be_empty actual
+	)
+'
+
 test_done

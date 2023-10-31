@@ -43,7 +43,7 @@ the current repository has the same history as the source repository.
 --update-shallow::
 	By default when fetching from a shallow repository,
 	`git fetch` refuses refs that require updating
-	.git/shallow. This option updates .git/shallow and accept such
+	.git/shallow. This option updates .git/shallow and accepts such
 	refs.
 
 --negotiation-tip=<commit|glob>::
@@ -96,7 +96,7 @@ endif::git-pull[]
 
 -f::
 --force::
-	When 'git fetch' is used with `<src>:<dst>` refspec it may
+	When 'git fetch' is used with `<src>:<dst>` refspec, it may
 	refuse to update the local branch as discussed
 ifdef::git-pull[]
 	in the `<refspec>` part of the linkgit:git-fetch[1]

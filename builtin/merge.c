@@ -1632,6 +1632,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 
 		for (j = remoteheads; j; j = j->next) {
 			struct commit_list *common_one;
+			struct commit *common_item;
 
 			/*
 			 * Here we *have* to calculate the individual
@@ -1641,7 +1642,9 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			common_one = repo_get_merge_bases(the_repository,
 							  head_commit,
 							  j->item);
-			if (!oideq(&common_one->item->object.oid, &j->item->object.oid)) {
+			common_item = common_one->item;
+			free_commit_list(common_one);
+			if (!oideq(&common_item->object.oid, &j->item->object.oid)) {
 				up_to_date = 0;
 				break;
 			}

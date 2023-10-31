@@ -14,7 +14,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-Many Git porcelainish commands take mixture of flags
+Many Git porcelainish commands take a mixture of flags
 (i.e. parameters that begin with a dash '-') and parameters
 meant for the underlying 'git rev-list' command they use internally
 and flags and parameters for the other commands they use
@@ -36,7 +36,7 @@ Each of these options must appear first on the command line.
 --sq-quote::
 	Use 'git rev-parse' in shell quoting mode (see SQ-QUOTE
 	section below). In contrast to the `--sq` option below, this
-	mode does only quoting. Nothing else is done to command input.
+	mode only does quoting. Nothing else is done to command input.
 
 Options for --parseopt
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -156,7 +156,7 @@ for another option.
 	are not refs (i.e. branch or tag names; or more
 	explicitly disambiguating "heads/master" form, when you
 	want to name the "master" branch when there is an
-	unfortunately named tag "master"), and show them as full
+	unfortunately named tag "master"), and shows them as full
 	refnames (e.g. "refs/heads/master").
 
 Options for Objects
@@ -383,7 +383,7 @@ Each line of options has this format:
 	dash to separate words in a multi-word argument hint.
 
 The remainder of the line, after stripping the spaces, is used
-as the help associated to the option.
+as the help associated with the option.
 
 Blank lines are ignored, and lines that don't match this specification are used
 as option group headers (start the line with a space to create such

@@ -2889,7 +2889,7 @@ cleanup:
 
 static int module_set_url(int argc, const char **argv, const char *prefix)
 {
-	int quiet = 0;
+	int quiet = 0, ret;
 	const char *newurl;
 	const char *path;
 	char *config_name;
@@ -2901,20 +2901,29 @@ static int module_set_url(int argc, const char **argv, const char *prefix)
 		N_("git submodule set-url [--quiet] <path> <newurl>"),
 		NULL
 	};
+	const struct submodule *sub;
 
 	argc = parse_options(argc, argv, prefix, options, usage, 0);
 
 	if (argc != 2 || !(path = argv[0]) || !(newurl = argv[1]))
 		usage_with_options(usage, options);
 
-	config_name = xstrfmt("submodule.%s.url", path);
+	sub = submodule_from_path(the_repository, null_oid(), path);
 
-	config_set_in_gitmodules_file_gently(config_name, newurl);
-	sync_submodule(path, prefix, NULL, quiet ? OPT_QUIET : 0);
+	if (!sub)
+		die(_("no submodule mapping found in .gitmodules for path '%s'"),
+		    path);
+
+	config_name = xstrfmt("submodule.%s.url", sub->name);
+	ret = config_set_in_gitmodules_file_gently(config_name, newurl);
+
+	if (!ret) {
+		repo_read_gitmodules(the_repository, 0);
+		sync_submodule(sub->path, prefix, NULL, quiet ? OPT_QUIET : 0);
+	}
 
 	free(config_name);
-
-	return 0;
+	return !!ret;
 }
 
 static int module_set_branch(int argc, const char **argv, const char *prefix)
@@ -2941,6 +2950,7 @@ static int module_set_branch(int argc, const char **argv, const char *prefix)
 		N_("git submodule set-branch [-q|--quiet] (-b|--branch) <branch> <path>"),
 		NULL
 	};
+	const struct submodule *sub;
 
 	argc = parse_options(argc, argv, prefix, options, usage, 0);
 
@@ -2953,7 +2963,13 @@ static int module_set_branch(int argc, const char **argv, const char *prefix)
 	if (argc != 1 || !(path = argv[0]))
 		usage_with_options(usage, options);
 
-	config_name = xstrfmt("submodule.%s.branch", path);
+	sub = submodule_from_path(the_repository, null_oid(), path);
+
+	if (!sub)
+		die(_("no submodule mapping found in .gitmodules for path '%s'"),
+		    path);
+
+	config_name = xstrfmt("submodule.%s.branch", sub->name);
 	ret = config_set_in_gitmodules_file_gently(config_name, opt_branch);
 
 	free(config_name);

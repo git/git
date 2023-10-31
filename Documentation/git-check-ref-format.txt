@@ -48,7 +48,7 @@ Git imposes the following rules on how references are named:
 
 . They cannot begin or end with a slash `/` or contain multiple
   consecutive slashes (see the `--normalize` option below for an
-  exception to this rule)
+  exception to this rule).
 
 . They cannot end with a dot `.`.
 
@@ -85,7 +85,7 @@ The rule `git check-ref-format --branch $name` implements
 may be stricter than what `git check-ref-format refs/heads/$name`
 says (e.g. a dash may appear at the beginning of a ref component,
 but it is explicitly forbidden at the beginning of a branch name).
-When run with `--branch` option in a repository, the input is first
+When run with the `--branch` option in a repository, the input is first
 expanded for the ``previous checkout syntax''
 `@{-n}`.  For example, `@{-1}` is a way to refer the last thing that
 was checked out using "git switch" or "git checkout" operation.

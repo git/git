@@ -15,7 +15,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Compares the content and mode of the blobs found via two tree objects.
+Compare the content and mode of blobs found via two tree objects.
 
 If there is only one <tree-ish> given, the commit is compared with its parents
 (see --stdin below).
@@ -34,10 +34,10 @@ include::diff-options.txt[]
 	matching one of the provided pathspecs.
 
 -r::
-        recurse into sub-trees
+	Recurse into sub-trees.
 
 -t::
-	show tree entry itself as well as subtrees.  Implies -r.
+	Show tree entry itself as well as subtrees.  Implies -r.
 
 --root::
 	When `--root` is specified the initial commit will be shown as a big
@@ -78,7 +78,7 @@ commits (but not trees).
 	By default, 'git diff-tree --stdin' shows differences,
 	either in machine-readable form (without `-p`) or in patch
 	form (with `-p`).  This output can be suppressed.  It is
-	only useful with `-v` flag.
+	only useful with the `-v` flag.
 
 -v::
 	This flag causes 'git diff-tree --stdin' to also show
@@ -104,10 +104,10 @@ include::pretty-options.txt[]
 	This flag changes the way a merge commit patch is displayed,
 	in a similar way to the `-c` option. It implies the `-c`
 	and `-p` options and further compresses the patch output
-	by omitting uninteresting hunks whose the contents in the parents
+	by omitting uninteresting hunks whose contents in the parents
 	have only two variants and the merge result picks one of them
 	without modification.  When all hunks are uninteresting, the commit
-	itself and the commit log message is not shown, just like in any other
+	itself and the commit log message are not shown, just like in any other
 	"empty diff" case.
 
 --combined-all-paths::

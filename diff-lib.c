@@ -571,8 +571,6 @@ void diff_get_merge_base(const struct rev_info *revs, struct object_id *mb)
 		struct object *obj = revs->pending.objects[i].item;
 		if (obj->flags)
 			die(_("--merge-base does not work with ranges"));
-		if (obj->type != OBJ_COMMIT)
-			die(_("--merge-base only works with commits"));
 	}
 
 	/*

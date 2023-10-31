@@ -590,9 +590,9 @@ test_expect_success 'pretty format %decorate' '
 	git log --format="%(decorate:prefix=,suffix=)" -1 >actual2 &&
 	test_cmp expect2 actual2 &&
 
-	echo "[ HEAD -> foo; tag: bar; qux ]" >expect3 &&
-	git log --format="%(decorate:prefix=[ ,suffix= ],separator=%x3B )" \
-		-1 >actual3 &&
+	echo "[ bar; qux; foo ]" >expect3 &&
+	git log --format="%(decorate:prefix=[ ,suffix= ],separator=%x3B ,tag=)" \
+		--decorate-refs=refs/ -1 >actual3 &&
 	test_cmp expect3 actual3 &&
 
 	# Try with a typo (in "separator"), in which case the placeholder should
@@ -953,6 +953,36 @@ test_expect_success '%S in git log --format works with other placeholders (part 
 test_expect_success '%S in git log --format works with other placeholders (part 2)' '
 	git log --format="%h source-b" source-b >expect &&
 	git log --format="%h %S" source-b >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'setup more commits for %S with --bisect' '
+	test_commit four &&
+	test_commit five &&
+
+	head1=$(git rev-parse --verify HEAD~0) &&
+	head2=$(git rev-parse --verify HEAD~1) &&
+	head3=$(git rev-parse --verify HEAD~2) &&
+	head4=$(git rev-parse --verify HEAD~3)
+'
+
+test_expect_success '%S with --bisect labels commits with refs/bisect/bad ref' '
+	git update-ref refs/bisect/bad-$head1 $head1 &&
+	git update-ref refs/bisect/go $head1 &&
+	git update-ref refs/bisect/bad-$head2 $head2 &&
+	git update-ref refs/bisect/b $head3 &&
+	git update-ref refs/bisect/bad-$head4 $head4 &&
+	git update-ref refs/bisect/good-$head4 $head4 &&
+
+	# We expect to see the range of commits betwee refs/bisect/good-$head4
+	# and refs/bisect/bad-$head1. The "source" ref is the nearest bisect ref
+	# from which the commit is reachable.
+	cat >expect <<-EOF &&
+	$head1 refs/bisect/bad-$head1
+	$head2 refs/bisect/bad-$head2
+	$head3 refs/bisect/bad-$head2
+	EOF
+	git log --bisect --format="%H %S" >actual &&
 	test_cmp expect actual
 '
 

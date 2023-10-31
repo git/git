@@ -26,7 +26,7 @@ OPTIONS
 
 --refs=<pattern>::
 	Only use refs whose names match a given shell pattern.  The pattern
-	can be one of branch name, tag name or fully qualified ref name. If
+	can be a branch name, a tag name, or a fully qualified ref name. If
 	given multiple times, use refs whose names match any of the given shell
 	patterns. Use `--no-refs` to clear any previous ref patterns given.
 

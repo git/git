@@ -1961,6 +1961,10 @@ void userformat_find_requirements(const char *fmt, struct userformat_want *w)
 		case 'D':
 			w->decorate = 1;
 			break;
+		case '(':
+			if (starts_with(fmt + 1, "decorate"))
+				w->decorate = 1;
+			break;
 		}
 	}
 }

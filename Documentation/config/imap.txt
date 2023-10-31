@@ -4,7 +4,7 @@ imap.folder::
 	"[Gmail]/Drafts". Required.
 
 imap.tunnel::
-	Command used to setup a tunnel to the IMAP server through which
+	Command used to set up a tunnel to the IMAP server through which
 	commands will be piped instead of using a direct network connection
 	to the server. Required when imap.host is not set.
 
@@ -37,7 +37,7 @@ imap.preformattedHTML::
 	format=fixed email.  Default is `false`.
 
 imap.authMethod::
-	Specify authenticate method for authentication with IMAP server.
+	Specify the authentication method for authenticating with the IMAP server.
 	If Git was built with the NO_CURL option, or if your curl version is older
 	than 7.34.0, or if you're running git-imap-send with the `--no-curl`
 	option, the only supported method is 'CRAM-MD5'. If this is not set

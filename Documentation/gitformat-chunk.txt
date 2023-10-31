@@ -42,7 +42,7 @@ Each row consists of a 4-byte chunk identifier (ID) and an 8-byte offset.
 Each integer is stored in network-byte order.
 
 The chunk identifier `ID[i]` is a label for the data stored within this
-fill from `OFFSET[i]` (inclusive) to `OFFSET[i+1]` (exclusive). Thus, the
+file from `OFFSET[i]` (inclusive) to `OFFSET[i+1]` (exclusive). Thus, the
 size of the `i`th chunk is equal to the difference between `OFFSET[i+1]`
 and `OFFSET[i]`. This requires that the chunk data appears contiguously
 in the same order as the table of contents.
@@ -67,7 +67,7 @@ caller is responsible for opening the `hashfile` and writing header
 information so the file format is identifiable before the chunk-based
 format begins.
 
-Then, call `add_chunk()` for each chunk that is intended for write. This
+Then, call `add_chunk()` for each chunk that is intended for writing. This
 populates the `chunkfile` with information about the order and size of
 each chunk to write. Provide a `chunk_write_fn` function pointer to
 perform the write of the chunk data upon request.

@@ -24,7 +24,7 @@ gui.matchTrackingBranch::
 	not. Default: "false".
 
 gui.newBranchTemplate::
-	Is used as suggested name when creating new branches using the
+	Is used as a suggested name when creating new branches using the
 	linkgit:git-gui[1].
 
 gui.pruneDuringFetch::

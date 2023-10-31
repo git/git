@@ -19,6 +19,7 @@
 #include "repository.h"
 #include "lockfile.h"
 #include "mailmap.h"
+#include "attr.h"
 #include "exec-cmd.h"
 #include "strbuf.h"
 #include "quote.h"
@@ -1760,6 +1761,18 @@ static int git_default_mailmap_config(const char *var, const char *value)
 	return 0;
 }
 
+static int git_default_attr_config(const char *var, const char *value)
+{
+	if (!strcmp(var, "attr.tree"))
+		return git_config_string(&git_attr_tree, var, value);
+
+	/*
+	 * Add other attribute related config variables here and to
+	 * Documentation/config/attr.txt.
+	 */
+	return 0;
+}
+
 int git_default_config(const char *var, const char *value,
 		       const struct config_context *ctx, void *cb)
 {
@@ -1782,6 +1795,9 @@ int git_default_config(const char *var, const char *value,
 
 	if (starts_with(var, "mailmap."))
 		return git_default_mailmap_config(var, value);
+
+	if (starts_with(var, "attr."))
+		return git_default_attr_config(var, value);
 
 	if (starts_with(var, "advice.") || starts_with(var, "color.advice"))
 		return git_default_advice_config(var, value);

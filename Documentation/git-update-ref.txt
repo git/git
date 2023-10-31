@@ -118,7 +118,7 @@ verify::
 	<oldvalue> is zero or missing, the ref must not exist.
 
 option::
-	Modify behavior of the next command naming a <ref>.
+	Modify the behavior of the next command naming a <ref>.
 	The only valid option is `no-deref` to avoid dereferencing
 	a symbolic ref.
 

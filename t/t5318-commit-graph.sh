@@ -2,6 +2,7 @@
 
 test_description='commit graph'
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-chunk.sh
 
 GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS=0
 
@@ -559,7 +560,7 @@ test_expect_success 'detect incorrect fanout' '
 
 test_expect_success 'detect incorrect fanout final value' '
 	corrupt_graph_and_verify $GRAPH_BYTE_FANOUT2 "\01" \
-		"fanout value"
+		"oid table and fanout disagree on size"
 '
 
 test_expect_success 'detect incorrect OID order' '
@@ -819,6 +820,79 @@ test_expect_success 'overflow during generation version upgrade' '
 
 		git rev-list --all
 	)
+'
+
+corrupt_chunk () {
+	graph=full/.git/objects/info/commit-graph &&
+	test_when_finished "rm -rf $graph" &&
+	git -C full commit-graph write --reachable &&
+	corrupt_chunk_file $graph "$@"
+}
+
+check_corrupt_chunk () {
+	corrupt_chunk "$@" &&
+	git -C full -c core.commitGraph=false log >expect.out &&
+	git -C full -c core.commitGraph=true log >out 2>err &&
+	test_cmp expect.out out
+}
+
+test_expect_success 'reader notices too-small oid fanout chunk' '
+	# make it big enough that the graph file is plausible,
+	# otherwise we hit an earlier check
+	check_corrupt_chunk OIDF clear $(printf "000000%02x" $(test_seq 250)) &&
+	cat >expect.err <<-\EOF &&
+	error: commit-graph oid fanout chunk is wrong size
+	error: commit-graph is missing the OID Fanout chunk
+	EOF
+	test_cmp expect.err err
+'
+
+test_expect_success 'reader notices fanout/lookup table mismatch' '
+	check_corrupt_chunk OIDF 1020 "FFFFFFFF" &&
+	cat >expect.err <<-\EOF &&
+	error: commit-graph oid table and fanout disagree on size
+	EOF
+	test_cmp expect.err err
+'
+
+test_expect_success 'reader notices out-of-bounds fanout' '
+	# Rather than try to corrupt a specific hash, we will just
+	# wreck them all. But we cannot just set them all to 0xFFFFFFFF or
+	# similar, as they are used for hi/lo starts in a binary search (so if
+	# they are identical, that indicates that the search should abort
+	# immediately). Instead, we will give them high values that differ by
+	# 2^24, ensuring that any that are used would cause an out-of-bounds
+	# read.
+	check_corrupt_chunk OIDF 0 $(printf "%02x000000" $(test_seq 0 254)) &&
+	cat >expect.err <<-\EOF &&
+	error: commit-graph fanout values out of order
+	EOF
+	test_cmp expect.err err
+'
+
+test_expect_success 'reader notices too-small commit data chunk' '
+	check_corrupt_chunk CDAT clear 00000000 &&
+	cat >expect.err <<-\EOF &&
+	error: commit-graph commit data chunk is wrong size
+	error: commit-graph is missing the Commit Data chunk
+	EOF
+	test_cmp expect.err err
+'
+
+test_expect_success 'reader notices out-of-bounds extra edge' '
+	check_corrupt_chunk EDGE clear &&
+	cat >expect.err <<-\EOF &&
+	error: commit-graph extra-edges pointer out of bounds
+	EOF
+	test_cmp expect.err err
+'
+
+test_expect_success 'reader notices too-small generations chunk' '
+	check_corrupt_chunk GDA2 clear 00000000 &&
+	cat >expect.err <<-\EOF &&
+	error: commit-graph generations chunk is wrong size
+	EOF
+	test_cmp expect.err err
 '
 
 test_done

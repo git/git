@@ -29,7 +29,7 @@ protocol.  Protocol v2 will improve upon v1 in the following ways:
     semantics the http remote helper can simply act as a proxy
 
 In protocol v2 communication is command oriented.  When first contacting a
-server a list of capabilities will advertised.  Some of these capabilities
+server a list of capabilities will be advertised.  Some of these capabilities
 will be commands which a client can request be executed.  Once a command
 has completed, a client can reuse the connection and request that other
 commands be executed.

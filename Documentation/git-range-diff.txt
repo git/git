@@ -70,7 +70,7 @@ to revert to color all lines according to the outer diff markers
 	Defaults to 60. Try a larger value if `git range-diff` erroneously
 	considers a large change a total rewrite (deletion of one commit
 	and addition of another), and a smaller one in the reverse case.
-	See the ``Algorithm`` section below for an explanation why this is
+	See the ``Algorithm`` section below for an explanation of why this is
 	needed.
 
 --left-only::
@@ -166,7 +166,7 @@ A typical output of `git range-diff` would look like this:
 
 In this example, there are 3 old and 3 new commits, where the developer
 removed the 3rd, added a new one before the first two, and modified the
-commit message of the 2nd commit as well its diff.
+commit message of the 2nd commit as well as its diff.
 
 When the output goes to a terminal, it is color-coded by default, just
 like regular `git diff`'s output. In addition, the first line (adding a

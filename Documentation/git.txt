@@ -96,9 +96,9 @@ foo.bar= ...`) sets `foo.bar` to the empty string which `git config
 	to avoid ambiguity with `<name>` containing one.
 +
 This is useful for cases where you want to pass transitory
-configuration options to git, but are doing so on OS's where
-other processes might be able to read your cmdline
-(e.g. `/proc/self/cmdline`), but not your environ
+configuration options to git, but are doing so on operating systems
+where other processes might be able to read your command line
+(e.g. `/proc/self/cmdline`), but not your environment
 (e.g. `/proc/self/environ`). That behavior is the default on
 Linux, but may not be on your system.
 +

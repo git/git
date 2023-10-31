@@ -3,8 +3,7 @@ git-cat-file(1)
 
 NAME
 ----
-git-cat-file - Provide content or type and size information for repository objects
-
+git-cat-file - Provide contents or details of repository objects
 
 SYNOPSIS
 --------
@@ -12,25 +11,24 @@ SYNOPSIS
 'git cat-file' <type> <object>
 'git cat-file' (-e | -p) <object>
 'git cat-file' (-t | -s) [--allow-unknown-type] <object>
+'git cat-file' (--textconv | --filters)
+	     [<rev>:<path|tree-ish> | --path=<path|tree-ish> <rev>]
 'git cat-file' (--batch | --batch-check | --batch-command) [--batch-all-objects]
 	     [--buffer] [--follow-symlinks] [--unordered]
 	     [--textconv | --filters] [-Z]
-'git cat-file' (--textconv | --filters)
-	     [<rev>:<path|tree-ish> | --path=<path|tree-ish> <rev>]
 
 DESCRIPTION
 -----------
-In its first form, the command provides the content or the type of an object in
-the repository. The type is required unless `-t` or `-p` is used to find the
-object type, or `-s` is used to find the object size, or `--textconv` or
-`--filters` is used (which imply type "blob").
+Output the contents or other properties such as size, type or delta
+information of one or more objects.
 
-In the second form, a list of objects (separated by linefeeds) is provided on
-stdin, and the SHA-1, type, and size of each object is printed on stdout. The
-output format can be overridden using the optional `<format>` argument. If
-either `--textconv` or `--filters` was specified, the input is expected to
-list the object names followed by the path name, separated by a single
-whitespace, so that the appropriate drivers can be determined.
+This command can operate in two modes, depending on whether an option
+from the `--batch` family is specified.
+
+In non-batch mode, the command provides information on an object
+named on the command line.
+
+In batch mode, arguments are read from standard input.
 
 OPTIONS
 -------
@@ -51,8 +49,8 @@ OPTIONS
 
 -e::
 	Exit with zero status if `<object>` exists and is a valid
-	object. If `<object>` is of an invalid format exit with non-zero and
-	emits an error on stderr.
+	object. If `<object>` is of an invalid format, exit with non-zero
+	status and emit an error on stderr.
 
 -p::
 	Pretty-print the contents of `<object>` based on its type.

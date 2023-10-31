@@ -22,6 +22,7 @@ test_expect_success setup '
 	git branch side1 &&
 	git branch side2 &&
 	git branch side3 &&
+	git branch side4 &&
 
 	git checkout side1 &&
 	test_write_lines 1 2 3 4 5 6 >numbers &&
@@ -45,6 +46,13 @@ test_expect_success setup '
 	git mv numbers sequence &&
 	test_tick &&
 	git commit -m rename-numbers &&
+
+	git checkout side4 &&
+	test_write_lines 0 1 2 3 4 5 >numbers &&
+	echo yo >greeting &&
+	git add numbers greeting &&
+	test_tick &&
+	git commit -m other-content-modifications &&
 
 	git switch --orphan unrelated &&
 	>something-else &&
@@ -95,6 +103,21 @@ test_expect_success 'Content merge and a few conflicts' '
 	sed -e s/HEAD/side1/ tmp >expect &&
 	git show ${actual_tree}:greeting >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'Auto resolve conflicts by "ours" strategy option' '
+	git checkout side1^0 &&
+
+	# make sure merge conflict exists
+	test_must_fail git merge side4 &&
+	git merge --abort &&
+
+	git merge -X ours side4 &&
+	git rev-parse HEAD^{tree} >expected &&
+
+	git merge-tree -X ours side1 side4 >actual &&
+
+	test_cmp expected actual
 '
 
 test_expect_success 'Barf on misspelled option, with exit code other than 0 or 1' '

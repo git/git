@@ -36,7 +36,7 @@ sendemail.aliasesFile::
 
 sendemail.aliasFileType::
 	Format of the file(s) specified in sendemail.aliasesFile. Must be
-	one of 'mutt', 'mailrc', 'pine', 'elm', or 'gnus', or 'sendmail'.
+	one of 'mutt', 'mailrc', 'pine', 'elm', 'gnus', or 'sendmail'.
 +
 What an alias file in each format looks like can be found in
 the documentation of the email program of the same name. The
@@ -91,7 +91,7 @@ sendemail.smtpBatchSize::
 	See also the `--batch-size` option of linkgit:git-send-email[1].
 
 sendemail.smtpReloginDelay::
-	Seconds wait before reconnecting to smtp server.
+	Seconds to wait before reconnecting to the smtp server.
 	See also the `--relogin-delay` option of linkgit:git-send-email[1].
 
 sendemail.forbidSendmailVariables::

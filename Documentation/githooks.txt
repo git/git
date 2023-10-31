@@ -80,7 +80,7 @@ If it exits with non-zero status, then the working tree will not be
 committed after applying the patch.
 
 It can be used to inspect the current working tree and refuse to
-make a commit if it does not pass certain test.
+make a commit if it does not pass certain tests.
 
 The default 'pre-applypatch' hook, when enabled, runs the
 'pre-commit' hook, if the latter is enabled.
@@ -157,7 +157,7 @@ If the exit status is non-zero, `git commit` will abort.
 The purpose of the hook is to edit the message file in place, and
 it is not suppressed by the `--no-verify` option.  A non-zero exit
 means a failure of the hook and aborts the commit.  It should not
-be used as replacement for pre-commit hook.
+be used as a replacement for the pre-commit hook.
 
 The sample `prepare-commit-msg` hook that comes with Git removes the
 help message found in the commented portion of the commit template.
@@ -345,7 +345,7 @@ for the user.
 
 The default 'update' hook, when enabled--and with
 `hooks.allowunannotated` config option unset or set to false--prevents
-unannotated tags to be pushed.
+unannotated tags from being pushed.
 
 [[proc-receive]]
 proc-receive
@@ -379,12 +379,12 @@ following example for the protocol, the letter 'S' stands for
     S: ... ...
     S: flush-pkt
 
-    # Receive result from the hook.
+    # Receive results from the hook.
     # OK, run this command successfully.
     H: PKT-LINE(ok <ref>)
     # NO, I reject it.
     H: PKT-LINE(ng <ref> <reason>)
-    # Fall through, let 'receive-pack' to execute it.
+    # Fall through, let 'receive-pack' execute it.
     H: PKT-LINE(ok <ref>)
     H: PKT-LINE(option fall-through)
     # OK, but has an alternate reference.  The alternate reference name

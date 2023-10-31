@@ -29,7 +29,7 @@ to use instead of `./.git` for the base of the repository.
 
 If the object storage directory is specified via the
 `$GIT_OBJECT_DIRECTORY` environment variable then the sha1 directories
-are created underneath - otherwise the default `$GIT_DIR/objects`
+are created underneath; otherwise, the default `$GIT_DIR/objects`
 directory is used.
 
 Running 'git init' in an existing repository is safe. It will not
@@ -66,10 +66,10 @@ DIRECTORY" section below.)
 
 Instead of initializing the repository as a directory to either `$GIT_DIR` or
 `./.git/`, create a text file there containing the path to the actual
-repository.  This file acts as filesystem-agnostic Git symbolic link to the
+repository.  This file acts as a filesystem-agnostic Git symbolic link to the
 repository.
 +
-If this is reinitialization, the repository will be moved to the specified path.
+If this is a reinitialization, the repository will be moved to the specified path.
 
 -b <branch-name>::
 --initial-branch=<branch-name>::
@@ -99,7 +99,7 @@ specified.
 
 'group' (or 'true')::
 
-Make the repository group-writable, (and g+sx, since the git group may be not
+Make the repository group-writable, (and g+sx, since the git group may not be
 the primary group of all users). This is used to loosen the permissions of an
 otherwise safe umask(2) value. Note that the umask still applies to the other
 permission bits (e.g. if umask is '0022', using 'group' will not remove read
@@ -115,7 +115,7 @@ Same as 'group', but make the repository readable by all users.
 '<perm>' is a 3-digit octal number prefixed with `0` and each file
 will have mode '<perm>'. '<perm>' will override users' umask(2)
 value (and not only loosen permissions as 'group' and 'all'
-does). '0640' will create a repository which is group-readable, but
+do). '0640' will create a repository which is group-readable, but
 not group-writable or accessible to others. '0660' will create a repo
 that is readable and writable to the current user and group, but
 inaccessible to others (directories and executable files get their

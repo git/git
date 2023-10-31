@@ -4,7 +4,7 @@ gpg.program::
 	same command-line interface as GPG, namely, to verify a detached
 	signature, "`gpg --verify $signature - <$file`" is run, and the
 	program is expected to signal a good signature by exiting with
-	code 0, and to generate an ASCII-armored detached signature, the
+	code 0.  To generate an ASCII-armored detached signature, the
 	standard input of "`gpg -bsau $key`" is fed with the contents to be
 	signed, and the program is expected to send the result to its
 	standard output.
@@ -25,7 +25,7 @@ gpg.<format>.program::
 gpg.minTrustLevel::
 	Specifies a minimum trust level for signature verification.  If
 	this option is unset, then signature verification for merge
-	operations require a key with at least `marginal` trust.  Other
+	operations requires a key with at least `marginal` trust.  Other
 	operations that perform signature verification require a key
 	with at least `undefined` trust.  Setting this option overrides
 	the required trust-level for all operations.  Supported values,
@@ -38,7 +38,7 @@ gpg.minTrustLevel::
 * `ultimate`
 
 gpg.ssh.defaultKeyCommand::
-	This command that will be run when user.signingkey is not set and a ssh
+	This command will be run when user.signingkey is not set and a ssh
 	signature is requested. On successful exit a valid ssh public key
 	prefixed with `key::` is expected in the first line of its output.
 	This allows for a script doing a dynamic lookup of the correct public

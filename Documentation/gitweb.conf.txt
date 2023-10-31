@@ -53,7 +53,7 @@ following order:
    `/etc/gitweb-common.conf`),
 
  * either per-instance configuration file (defaults to 'gitweb_config.perl'
-   in the same directory as the installed gitweb), or if it does not exists
+   in the same directory as the installed gitweb), or if it does not exist
    then fallback system-wide configuration file (defaults to `/etc/gitweb.conf`).
 
 Values obtained in later configuration files override values obtained earlier

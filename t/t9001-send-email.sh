@@ -2505,4 +2505,45 @@ test_expect_success $PREREQ 'test forbidSendmailVariables behavior override' '
 		HEAD^
 '
 
+test_expect_success $PREREQ '--compose handles lowercase headers' '
+	write_script fake-editor <<-\EOF &&
+	sed "s/^From:.*/from: edited-from@example.com/i" "$1" >"$1.tmp" &&
+	mv "$1.tmp" "$1"
+	EOF
+	clean_fake_sendmail &&
+	git send-email \
+		--compose \
+		--from="Example <from@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		HEAD^ &&
+	grep "From: edited-from@example.com" msgtxt1
+'
+
+test_expect_success $PREREQ '--compose handles to headers' '
+	write_script fake-editor <<-\EOF &&
+	sed "s/^To: .*/&, edited-to@example.com/" <"$1" >"$1.tmp" &&
+	echo this is the body >>"$1.tmp" &&
+	mv "$1.tmp" "$1"
+	EOF
+	clean_fake_sendmail &&
+	GIT_SEND_EMAIL_NOTTY=1 \
+	git send-email \
+		--compose \
+		--from="Example <from@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		HEAD^ &&
+	# Check both that the cover letter used our modified "to" line,
+	# but also that it was picked up for the patch.
+	q_to_tab >expect <<-\EOF &&
+	To: nobody@example.com,
+	Qedited-to@example.com
+	EOF
+	grep -A1 "^To:" msgtxt1 >msgtxt1.to &&
+	test_cmp expect msgtxt1.to &&
+	grep -A1 "^To:" msgtxt2 >msgtxt2.to &&
+	test_cmp expect msgtxt2.to
+'
+
 test_done

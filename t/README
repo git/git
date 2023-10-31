@@ -262,8 +262,8 @@ The argument for --run, <test-selector>, is a list of description
 substrings or globs or individual test numbers or ranges with an
 optional negation prefix (of '!') that define what tests in a test
 suite to include (or exclude, if negated) in the run.  A range is two
-numbers separated with a dash and matches a range of tests with both
-ends been included.  You may omit the first or the second number to
+numbers separated with a dash and specifies an inclusive range of tests
+to run.  You may omit the first or the second number to
 mean "from the first test" or "up to the very last test" respectively.
 
 The argument to --run is split on commas into separate strings,
@@ -274,10 +274,10 @@ text that you want to match includes a comma, use the glob character
 on all tests that match either the glob *rebase* or the glob
 *merge?cherry-pick*.
 
-If --run starts with an unprefixed number or range the initial
-set of tests to run is empty. If the first item starts with '!'
+If --run starts with an unprefixed number or range, the initial
+set of tests to run is empty.  If the first item starts with '!',
 all the tests are added to the initial set.  After initial set is
-determined every test number or range is added or excluded from
+determined, every test number or range is added or excluded from
 the set one by one, from left to right.
 
 For example, to run only tests up to a specific test (21), one
@@ -579,11 +579,11 @@ This test harness library does the following things:
 
 Recommended style
 -----------------
-Here are some recommented styles when writing test case.
 
- - Keep test title the same line with test helper function itself.
+ - Keep the test_expect_* function call and test title on
+   the same line.
 
-   Take test_expect_success helper for example, write it like:
+   For example, with test_expect_success, write it like:
 
   test_expect_success 'test title' '
       ... test body ...
@@ -595,10 +595,9 @@ Here are some recommented styles when writing test case.
       'test title' \
       '... test body ...'
 
+ - End the line with an opening single quote.
 
- - End the line with a single quote.
-
- - Indent the body of here-document, and use "<<-" instead of "<<"
+ - Indent here-document bodies, and use "<<-" instead of "<<"
    to strip leading TABs used for indentation:
 
   test_expect_success 'test something' '
@@ -624,7 +623,7 @@ Here are some recommented styles when writing test case.
   '
 
  - Quote or escape the EOF delimiter that begins a here-document if
-   there is no parameter and other expansion in it, to signal readers
+   there is no parameter or other expansion in it, to signal readers
    that they can skim it more casually:
 
   cmd <<-\EOF
@@ -638,7 +637,7 @@ Do's & don'ts
 Here are a few examples of things you probably should and shouldn't do
 when writing tests.
 
-Here are the "do's:"
+The "do's:"
 
  - Put all code inside test_expect_success and other assertions.
 
@@ -888,7 +887,7 @@ see test-lib-functions.sh for the full list and their options.
    rare case where your test depends on more than one:
 
 	test_expect_success PERL,PYTHON 'yo dawg' \
-	    ' test $(perl -E 'print eval "1 +" . qx[python -c "print 2"]') == "4" '
+	    ' test $(perl -E '\''print eval "1 +" . qx[python -c "print(2)"]'\'') = "4" '
 
  - test_expect_failure [<prereq>] <message> <script>
 
@@ -1237,8 +1236,8 @@ and it knows that the object ID of an empty tree is a certain
 because the things the very basic core test tries to achieve is
 to serve as a basis for people who are changing the Git internals
 drastically.  For these people, after making certain changes,
-not seeing failures from the basic test _is_ a failure.  And
-such drastic changes to the core Git that even changes these
+not seeing failures from the basic test _is_ a failure.  Any
+Git core changes so drastic that they change even these
 otherwise supposedly stable object IDs should be accompanied by
 an update to t0000-basic.sh.
 
@@ -1248,7 +1247,7 @@ knowledge of the core Git internals.  If all the test scripts
 hardcoded the object IDs like t0000-basic.sh does, that defeats
 the purpose of t0000-basic.sh, which is to isolate that level of
 validation in one place.  Your test also ends up needing
-updating when such a change to the internal happens, so do _not_
+an update whenever the internals change, so do _not_
 do it and leave the low level of validation to t0000-basic.sh.
 
 Test coverage

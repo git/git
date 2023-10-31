@@ -1,5 +1,5 @@
-Like other projects, we also have some guidelines to keep to the
-code.  For Git in general, a few rough rules are:
+Like other projects, we also have some guidelines for our code.  For
+Git in general, a few rough rules are:
 
  - Most importantly, we never say "It's in POSIX; we'll happily
    ignore your needs should your system not conform to it."
@@ -24,7 +24,7 @@ code.  For Git in general, a few rough rules are:
 
    "Once it _is_ in the tree, it's not really worth the patch noise to
    go and fix it up."
-   Cf. http://lkml.iu.edu/hypermail/linux/kernel/1001.3/01069.html
+   Cf. https://lore.kernel.org/all/20100126160632.3bdbe172.akpm@linux-foundation.org/
 
  - Log messages to explain your changes are as important as the
    changes themselves.  Clearly written code and in-code comments
@@ -40,7 +40,7 @@ As for more concrete guidelines, just imitate the existing code
 contributing to). It is always preferable to match the _local_
 convention. New code added to Git suite is expected to match
 the overall style of existing code. Modifications to existing
-code is expected to match the style the surrounding code already
+code are expected to match the style the surrounding code already
 uses (even if it doesn't match the overall style of existing code).
 
 But if you must have a list of rules, here are some language

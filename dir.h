@@ -363,6 +363,22 @@ struct dir_struct {
 
 struct dirent *readdir_skip_dot_and_dotdot(DIR *dirp);
 
+/*
+ * Get the d_type of a dirent. If the d_type is unknown, derive it from
+ * stat.st_mode using the path to the dirent's containing directory (path) and
+ * the name of the dirent itself.
+ *
+ * If 'follow_symlink' is 1, this function will attempt to follow DT_LNK types
+ * using 'stat'. Links are *not* followed recursively, so a symlink pointing
+ * to another symlink will still resolve to 'DT_LNK'.
+ *
+ * Note that 'path' is assumed to have a trailing slash. It is also modified
+ * in-place during the execution of the function, but is then reverted to its
+ * original value before returning.
+ */
+unsigned char get_dtype(struct dirent *e, struct strbuf *path,
+			int follow_symlink);
+
 /*Count the number of slashes for string s*/
 int count_slashes(const char *s);
 

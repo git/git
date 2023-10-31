@@ -14,7 +14,7 @@
 
 static const char * const git_interpret_trailers_usage[] = {
 	N_("git interpret-trailers [--in-place] [--trim-empty]\n"
-	   "                       [(--trailer <token>[(=|:)<value>])...]\n"
+	   "                       [(--trailer (<key>|<keyAlias>)[(=|:)<value>])...]\n"
 	   "                       [--parse] [<file>...]"),
 	NULL
 };
@@ -100,7 +100,7 @@ int cmd_interpret_trailers(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "in-place", &opts.in_place, N_("edit files in place")),
 		OPT_BOOL(0, "trim-empty", &opts.trim_empty, N_("trim empty trailers")),
 
-		OPT_CALLBACK(0, "where", &where, N_("action"),
+		OPT_CALLBACK(0, "where", &where, N_("placement"),
 			     N_("where to place the new trailer"), option_parse_where),
 		OPT_CALLBACK(0, "if-exists", &if_exists, N_("action"),
 			     N_("action if trailer already exists"), option_parse_if_exists),
@@ -108,11 +108,11 @@ int cmd_interpret_trailers(int argc, const char **argv, const char *prefix)
 			     N_("action if trailer is missing"), option_parse_if_missing),
 
 		OPT_BOOL(0, "only-trailers", &opts.only_trailers, N_("output only the trailers")),
-		OPT_BOOL(0, "only-input", &opts.only_input, N_("do not apply config rules")),
-		OPT_BOOL(0, "unfold", &opts.unfold, N_("join whitespace-continued values")),
-		OPT_CALLBACK_F(0, "parse", &opts, NULL, N_("set parsing options"),
+		OPT_BOOL(0, "only-input", &opts.only_input, N_("do not apply trailer.* configuration variables")),
+		OPT_BOOL(0, "unfold", &opts.unfold, N_("reformat multiline trailer values as single-line values")),
+		OPT_CALLBACK_F(0, "parse", &opts, NULL, N_("alias for --only-trailers --only-input --unfold"),
 			PARSE_OPT_NOARG | PARSE_OPT_NONEG, parse_opt_parse),
-		OPT_BOOL(0, "no-divider", &opts.no_divider, N_("do not treat --- specially")),
+		OPT_BOOL(0, "no-divider", &opts.no_divider, N_("do not treat \"---\" as the end of input")),
 		OPT_CALLBACK(0, "trailer", &trailers, N_("trailer"),
 				N_("trailer(s) to add"), option_parse_trailer),
 		OPT_END()

@@ -36,20 +36,23 @@ int read_table_of_contents(struct chunkfile *cf,
 			   const unsigned char *mfile,
 			   size_t mfile_size,
 			   uint64_t toc_offset,
-			   int toc_length);
+			   int toc_length,
+			   unsigned expected_alignment);
 
 #define CHUNK_NOT_FOUND (-2)
 
 /*
  * Find 'chunk_id' in the given chunkfile and assign the
  * given pointer to the position in the mmap'd file where
- * that chunk begins.
+ * that chunk begins. Likewise the "size" parameter is filled
+ * with the size of the chunk.
  *
  * Returns CHUNK_NOT_FOUND if the chunk does not exist.
  */
 int pair_chunk(struct chunkfile *cf,
 	       uint32_t chunk_id,
-	       const unsigned char **p);
+	       const unsigned char **p,
+	       size_t *size);
 
 typedef int (*chunk_read_fn)(const unsigned char *chunk_start,
 			     size_t chunk_size, void *data);

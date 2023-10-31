@@ -61,7 +61,7 @@ EXAMPLES
 --------
 
 `git show v1.0.0`::
-	Shows the tag `v1.0.0`, along with the object the tags
+	Shows the tag `v1.0.0`, along with the object the tag
 	points at.
 
 `git show v1.0.0^{tree}`::

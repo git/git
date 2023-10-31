@@ -7,7 +7,7 @@
  */
 
 #include "git-compat-util.h"
-#include "parse.h"
+#include "config.h"
 #include "environment.h"
 #include "exec-cmd.h"
 #include "attr.h"
@@ -23,6 +23,8 @@
 #include "thread-utils.h"
 #include "tree-walk.h"
 #include "object-name.h"
+
+const char *git_attr_tree;
 
 const char git_attr__true[] = "(builtin)true";
 const char git_attr__false[] = "\0(builtin)false";
@@ -1194,6 +1196,7 @@ static void collect_some_attrs(struct index_state *istate,
 }
 
 static const char *default_attr_source_tree_object_name;
+static int ignore_bad_attr_tree;
 
 void set_git_attr_source(const char *tree_object_name)
 {
@@ -1205,10 +1208,24 @@ static void compute_default_attr_source(struct object_id *attr_source)
 	if (!default_attr_source_tree_object_name)
 		default_attr_source_tree_object_name = getenv(GIT_ATTR_SOURCE_ENVIRONMENT);
 
+	if (!default_attr_source_tree_object_name && git_attr_tree) {
+		default_attr_source_tree_object_name = git_attr_tree;
+		ignore_bad_attr_tree = 1;
+	}
+
+	if (!default_attr_source_tree_object_name &&
+	    startup_info->have_repository &&
+	    is_bare_repository()) {
+		default_attr_source_tree_object_name = "HEAD";
+		ignore_bad_attr_tree = 1;
+	}
+
 	if (!default_attr_source_tree_object_name || !is_null_oid(attr_source))
 		return;
 
-	if (repo_get_oid_treeish(the_repository, default_attr_source_tree_object_name, attr_source))
+	if (repo_get_oid_treeish(the_repository,
+				 default_attr_source_tree_object_name,
+				 attr_source) && !ignore_bad_attr_tree)
 		die(_("bad --attr-source or GIT_ATTR_SOURCE"));
 }
 
