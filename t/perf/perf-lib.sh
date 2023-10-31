@@ -282,7 +282,7 @@ test_perf_ () {
 #	Run the performance test script specified in perf-test with
 #	optional prerequisite and setup steps.
 # Options:
-#	--prereq prerequisites: Skip the test if prequisites aren't met
+#	--prereq prerequisites: Skip the test if prerequisites aren't met
 #	--setup "setup-steps": Run setup steps prior to each measured iteration
 #
 test_perf () {
