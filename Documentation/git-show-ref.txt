@@ -8,9 +8,12 @@ git-show-ref - List references in a local repository
 SYNOPSIS
 --------
 [verse]
-'git show-ref' [-q | --quiet] [--verify] [--head] [-d | --dereference]
+'git show-ref' [--head] [-d | --dereference]
 	     [-s | --hash[=<n>]] [--abbrev[=<n>]] [--tags]
 	     [--heads] [--] [<pattern>...]
+'git show-ref' --verify [-q | --quiet] [-d | --dereference]
+	     [-s | --hash[=<n>]] [--abbrev[=<n>]]
+	     [--] [<ref>...]
 'git show-ref' --exclude-existing[=<pattern>]
 
 DESCRIPTION
@@ -70,8 +73,8 @@ OPTIONS
 -q::
 --quiet::
 
-	Do not print any results to stdout. When combined with `--verify`, this
-	can be used to silently check if a reference exists.
+	Do not print any results to stdout. Can be used with `--verify` to
+	silently check if a reference exists.
 
 --exclude-existing[=<pattern>]::
 

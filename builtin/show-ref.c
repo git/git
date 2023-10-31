@@ -11,9 +11,12 @@
 #include "parse-options.h"
 
 static const char * const show_ref_usage[] = {
-	N_("git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference]\n"
+	N_("git show-ref [--head] [-d | --dereference]\n"
 	   "             [-s | --hash[=<n>]] [--abbrev[=<n>]] [--tags]\n"
 	   "             [--heads] [--] [<pattern>...]"),
+	N_("git show-ref --verify [-q | --quiet] [-d | --dereference]\n"
+	   "             [-s | --hash[=<n>]] [--abbrev[=<n>]]\n"
+	   "             [--] [<ref>...]"),
 	N_("git show-ref --exclude-existing[=<pattern>]"),
 	NULL
 };
