@@ -19,8 +19,7 @@ static const char * const show_ref_usage[] = {
 };
 
 static int deref_tags, show_head, tags_only, heads_only, found_match, verify,
-	   quiet, hash_only, abbrev, exclude_arg;
-static const char *exclude_existing_arg;
+	   quiet, hash_only, abbrev;
 
 static void show_one(const char *refname, const struct object_id *oid)
 {
@@ -95,6 +94,15 @@ static int add_existing(const char *refname,
 	return 0;
 }
 
+struct exclude_existing_options {
+	/*
+	 * We need an explicit `enabled` field because it is perfectly valid
+	 * for `pattern` to be `NULL` even if `--exclude-existing` was given.
+	 */
+	int enabled;
+	const char *pattern;
+};
+
 /*
  * read "^(?:<anything>\s)?<refname>(?:\^\{\})?$" from the standard input,
  * and
@@ -104,11 +112,11 @@ static int add_existing(const char *refname,
  * (4) ignore if refname is a ref that exists in the local repository;
  * (5) otherwise output the line.
  */
-static int cmd_show_ref__exclude_existing(const char *match)
+static int cmd_show_ref__exclude_existing(const struct exclude_existing_options *opts)
 {
 	struct string_list existing_refs = STRING_LIST_INIT_DUP;
 	char buf[1024];
-	int matchlen = match ? strlen(match) : 0;
+	int patternlen = opts->pattern ? strlen(opts->pattern) : 0;
 
 	for_each_ref(add_existing, &existing_refs);
 	while (fgets(buf, sizeof(buf), stdin)) {
@@ -124,11 +132,11 @@ static int cmd_show_ref__exclude_existing(const char *match)
 		for (ref = buf + len; buf < ref; ref--)
 			if (isspace(ref[-1]))
 				break;
-		if (match) {
+		if (opts->pattern) {
 			int reflen = buf + len - ref;
-			if (reflen < matchlen)
+			if (reflen < patternlen)
 				continue;
-			if (strncmp(ref, match, matchlen))
+			if (strncmp(ref, opts->pattern, patternlen))
 				continue;
 		}
 		if (check_refname_format(ref, 0)) {
@@ -201,44 +209,46 @@ static int hash_callback(const struct option *opt, const char *arg, int unset)
 static int exclude_existing_callback(const struct option *opt, const char *arg,
 				     int unset)
 {
+	struct exclude_existing_options *opts = opt->value;
 	BUG_ON_OPT_NEG(unset);
-	exclude_arg = 1;
-	*(const char **)opt->value = arg;
+	opts->enabled = 1;
+	opts->pattern = arg;
 	return 0;
 }
 
-static const struct option show_ref_options[] = {
-	OPT_BOOL(0, "tags", &tags_only, N_("only show tags (can be combined with heads)")),
-	OPT_BOOL(0, "heads", &heads_only, N_("only show heads (can be combined with tags)")),
-	OPT_BOOL(0, "verify", &verify, N_("stricter reference checking, "
-		    "requires exact ref path")),
-	OPT_HIDDEN_BOOL('h', NULL, &show_head,
-			N_("show the HEAD reference, even if it would be filtered out")),
-	OPT_BOOL(0, "head", &show_head,
-	  N_("show the HEAD reference, even if it would be filtered out")),
-	OPT_BOOL('d', "dereference", &deref_tags,
-		    N_("dereference tags into object IDs")),
-	OPT_CALLBACK_F('s', "hash", &abbrev, N_("n"),
-		       N_("only show SHA1 hash using <n> digits"),
-		       PARSE_OPT_OPTARG, &hash_callback),
-	OPT__ABBREV(&abbrev),
-	OPT__QUIET(&quiet,
-		   N_("do not print results to stdout (useful with --verify)")),
-	OPT_CALLBACK_F(0, "exclude-existing", &exclude_existing_arg,
-		       N_("pattern"), N_("show refs from stdin that aren't in local repository"),
-		       PARSE_OPT_OPTARG | PARSE_OPT_NONEG, exclude_existing_callback),
-	OPT_END()
-};
-
 int cmd_show_ref(int argc, const char **argv, const char *prefix)
 {
+	struct exclude_existing_options exclude_existing_opts = {0};
+	const struct option show_ref_options[] = {
+		OPT_BOOL(0, "tags", &tags_only, N_("only show tags (can be combined with heads)")),
+		OPT_BOOL(0, "heads", &heads_only, N_("only show heads (can be combined with tags)")),
+		OPT_BOOL(0, "verify", &verify, N_("stricter reference checking, "
+			    "requires exact ref path")),
+		OPT_HIDDEN_BOOL('h', NULL, &show_head,
+				N_("show the HEAD reference, even if it would be filtered out")),
+		OPT_BOOL(0, "head", &show_head,
+		  N_("show the HEAD reference, even if it would be filtered out")),
+		OPT_BOOL('d', "dereference", &deref_tags,
+			    N_("dereference tags into object IDs")),
+		OPT_CALLBACK_F('s', "hash", &abbrev, N_("n"),
+			       N_("only show SHA1 hash using <n> digits"),
+			       PARSE_OPT_OPTARG, &hash_callback),
+		OPT__ABBREV(&abbrev),
+		OPT__QUIET(&quiet,
+			   N_("do not print results to stdout (useful with --verify)")),
+		OPT_CALLBACK_F(0, "exclude-existing", &exclude_existing_opts,
+			       N_("pattern"), N_("show refs from stdin that aren't in local repository"),
+			       PARSE_OPT_OPTARG | PARSE_OPT_NONEG, exclude_existing_callback),
+		OPT_END()
+	};
+
 	git_config(git_default_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, show_ref_options,
 			     show_ref_usage, 0);
 
-	if (exclude_arg)
-		return cmd_show_ref__exclude_existing(exclude_existing_arg);
+	if (exclude_existing_opts.enabled)
+		return cmd_show_ref__exclude_existing(&exclude_existing_opts);
 	else if (verify)
 		return cmd_show_ref__verify(argv);
 	else
