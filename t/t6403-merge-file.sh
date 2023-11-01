@@ -65,9 +65,28 @@ test_expect_success 'merge with no changes' '
 	test_cmp test.txt orig.txt
 '
 
+test_expect_success 'merge with no changes with --object-id' '
+	git add orig.txt &&
+	git merge-file -p --object-id :orig.txt :orig.txt :orig.txt >actual &&
+	test_cmp actual orig.txt
+'
+
 test_expect_success "merge without conflict" '
 	cp new1.txt test.txt &&
 	git merge-file test.txt orig.txt new2.txt
+'
+
+test_expect_success 'merge without conflict with --object-id' '
+	git add orig.txt new2.txt &&
+	git merge-file --object-id :orig.txt :orig.txt :new2.txt >actual &&
+	git rev-parse :new2.txt >expected &&
+	test_cmp actual expected
+'
+
+test_expect_success 'can accept object ID with --object-id' '
+	git merge-file --object-id $(test_oid empty_blob) $(test_oid empty_blob) :new2.txt >actual &&
+	git rev-parse :new2.txt >expected &&
+	test_cmp actual expected
 '
 
 test_expect_success 'works in subdirectory' '
@@ -136,6 +155,31 @@ test_expect_success "expected conflict markers" '
 	EOF
 
 	test_cmp expect.txt test.txt
+'
+
+test_expect_success "merge with conflicts with --object-id" '
+	git add backup.txt orig.txt new3.txt &&
+	test_must_fail git merge-file -p --object-id :backup.txt :orig.txt :new3.txt >actual &&
+	sed -e "s/<< test.txt/<< :backup.txt/" \
+	    -e "s/>> new3.txt/>> :new3.txt/" \
+	    expect.txt >expect &&
+	test_cmp expect actual &&
+	test_must_fail git merge-file --object-id :backup.txt :orig.txt :new3.txt >oid &&
+	git cat-file blob "$(cat oid)" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success "merge with conflicts with --object-id with labels" '
+	git add backup.txt orig.txt new3.txt &&
+	test_must_fail git merge-file -p --object-id \
+		-L test.txt -L orig.txt -L new3.txt \
+		:backup.txt :orig.txt :new3.txt >actual &&
+	test_cmp expect.txt actual &&
+	test_must_fail git merge-file --object-id \
+		-L test.txt -L orig.txt -L new3.txt \
+		:backup.txt :orig.txt :new3.txt >oid &&
+	git cat-file blob "$(cat oid)" >actual &&
+	test_cmp expect.txt actual
 '
 
 test_expect_success "merge conflicting with --ours" '
@@ -253,6 +297,14 @@ test_expect_success "expected conflict markers" '
 test_expect_success 'binary files cannot be merged' '
 	test_must_fail git merge-file -p \
 		orig.txt "$TEST_DIRECTORY"/test-binary-1.png new1.txt 2> merge.err &&
+	grep "Cannot merge binary files" merge.err
+'
+
+test_expect_success 'binary files cannot be merged with --object-id' '
+	cp "$TEST_DIRECTORY"/test-binary-1.png . &&
+	git add orig.txt new1.txt test-binary-1.png &&
+	test_must_fail git merge-file --object-id \
+		:orig.txt :test-binary-1.png :new1.txt 2> merge.err &&
 	grep "Cannot merge binary files" merge.err
 '
 
@@ -387,6 +439,12 @@ test_expect_success 'conflict sections match existing line endings' '
 	test_must_fail git -c core.eol=crlf merge-file -p \
 		nolf-diff1.txt nolf-orig.txt nolf-diff2.txt >nolf.txt &&
 	test $(tr "\015" Q <nolf.txt | grep "^[<=>].*Q$" | wc -l) = 0
+'
+
+test_expect_success '--object-id fails without repository' '
+	empty="$(test_oid empty_blob)" &&
+	nongit test_must_fail git merge-file --object-id $empty $empty $empty 2>err &&
+	grep "not a git repository" err
 '
 
 test_done

@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'git merge-file' [-L <current-name> [-L <base-name> [-L <other-name>]]]
 	[--ours|--theirs|--union] [-p|--stdout] [-q|--quiet] [--marker-size=<n>]
-	[--[no-]diff3] <current> <base> <other>
+	[--[no-]diff3] [--object-id] <current> <base> <other>
 
 
 DESCRIPTION
@@ -41,6 +41,10 @@ however, these conflicts are resolved favouring lines from `<current>`,
 lines from `<other>`, or lines from both respectively.  The length of the
 conflict markers can be given with the `--marker-size` option.
 
+If `--object-id` is specified, exactly the same behavior occurs, except that
+instead of specifying what to merge as files, it is specified as a list of
+object IDs referring to blobs.
+
 The exit value of this program is negative on error, and the number of
 conflicts otherwise (truncated to 127 if there are more than that many
 conflicts). If the merge was clean, the exit value is 0.
@@ -52,6 +56,14 @@ linkgit:git[1].
 
 OPTIONS
 -------
+
+--object-id::
+	Specify the contents to merge as blobs in the current repository instead of
+	files.  In this case, the operation must take place within a valid repository.
++
+If the `-p` option is specified, the merged file (including conflicts, if any)
+goes to standard output as normal; otherwise, the merged file is written to the
+object store and the object ID of its blob is written to standard output.
 
 -L <label>::
 	This option may be given up to three times, and
@@ -93,6 +105,11 @@ EXAMPLES
 
 	merges tmp/a123 and tmp/c345 with the base tmp/b234, but uses labels
 	`a` and `c` instead of `tmp/a123` and `tmp/c345`.
+
+`git merge-file -p --object-id abc1234 def567 890abcd`::
+
+	combines the changes of the blob abc1234 and 890abcd since def567,
+	tries to merge them and writes the result to standard output
 
 GIT
 ---
