@@ -895,4 +895,52 @@ test_expect_success 'reader notices too-small generations chunk' '
 	test_cmp expect.err err
 '
 
+test_expect_success 'stale commit cannot be parsed when given directly' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit A &&
+		test_commit B &&
+		git commit-graph write --reachable &&
+
+		oid=$(git rev-parse B) &&
+		rm .git/objects/"$(test_oid_to_path "$oid")" &&
+
+		# Verify that it is possible to read the commit from the
+		# commit graph when not being paranoid, ...
+		GIT_COMMIT_GRAPH_PARANOIA=false git rev-list B &&
+		# ... but parsing the commit when double checking that
+		# it actually exists in the object database should fail.
+		test_must_fail git rev-list -1 B
+	)
+'
+
+test_expect_success 'stale commit cannot be parsed when traversing graph' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		test_commit A &&
+		test_commit B &&
+		test_commit C &&
+		git commit-graph write --reachable &&
+
+		# Corrupt the repository by deleting the intermediate commit
+		# object. Commands should notice that this object is absent and
+		# thus that the repository is corrupt even if the commit graph
+		# exists.
+		oid=$(git rev-parse B) &&
+		rm .git/objects/"$(test_oid_to_path "$oid")" &&
+
+		# Again, we should be able to parse the commit when not
+		# being paranoid about commit graph staleness...
+		GIT_COMMIT_GRAPH_PARANOIA=false git rev-parse HEAD~2 &&
+		# ... but fail when we are paranoid.
+		test_must_fail git rev-parse HEAD~2 2>error &&
+		grep "error: commit $oid exists in commit-graph but not in the object database" error
+	)
+'
+
 test_done

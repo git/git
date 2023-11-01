@@ -1024,14 +1024,18 @@ int repo_find_commit_pos_in_graph(struct repository *r, struct commit *c,
 
 struct commit *lookup_commit_in_graph(struct repository *repo, const struct object_id *id)
 {
+	static int commit_graph_paranoia = -1;
 	struct commit *commit;
 	uint32_t pos;
+
+	if (commit_graph_paranoia == -1)
+		commit_graph_paranoia = git_env_bool(GIT_COMMIT_GRAPH_PARANOIA, 1);
 
 	if (!prepare_commit_graph(repo))
 		return NULL;
 	if (!search_commit_pos_in_graph(id, repo->objects->commit_graph, &pos))
 		return NULL;
-	if (!has_object(repo, id, 0))
+	if (commit_graph_paranoia && !has_object(repo, id, 0))
 		return NULL;
 
 	commit = lookup_commit(repo, id);
