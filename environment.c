@@ -81,7 +81,20 @@ int merge_log_config = -1;
 int precomposed_unicode = -1; /* see probe_utf8_pathname_composition() */
 unsigned long pack_size_limit_cfg;
 enum log_refs_config log_all_ref_updates = LOG_REFS_UNSET;
-int max_allowed_tree_depth = 2048;
+int max_allowed_tree_depth =
+#ifdef _MSC_VER
+	/*
+	 * When traversing into too-deep trees, Visual C-compiled Git seems to
+	 * run into some internal stack overflow detection in the
+	 * `RtlpAllocateHeap()` function that is called from within
+	 * `git_inflate_init()`'s call tree. The following value seems to be
+	 * low enough to avoid that by letting Git exit with an error before
+	 * the stack overflow can occur.
+	 */
+	512;
+#else
+	2048;
+#endif
 
 #ifndef PROTECT_HFS_DEFAULT
 #define PROTECT_HFS_DEFAULT 0
