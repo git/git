@@ -11,7 +11,7 @@ test_expect_success 'setup repo with a git repo inside it' '
 	(
 		cd s &&
 		git init &&
-		test -f .git/HEAD &&
+		git symbolic-ref HEAD &&
 		> .git/a &&
 		echo a > a &&
 		svn_cmd add .git a &&

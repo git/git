@@ -133,7 +133,7 @@ test_expect_success 'HEAD link pointing at a funny object' '
 
 test_expect_success 'HEAD link pointing at a funny place' '
 	test_when_finished "git update-ref --no-deref HEAD $orig_head" &&
-	echo "ref: refs/funny/place" >.git/HEAD &&
+	test-tool ref-store main create-symref HEAD refs/funny/place &&
 	# avoid corrupt/broken HEAD from interfering with repo discovery
 	test_must_fail env GIT_DIR=.git git fsck 2>out &&
 	test_i18ngrep "HEAD points to something strange" out
@@ -169,7 +169,7 @@ test_expect_success 'other worktree HEAD link pointing at missing object' '
 test_expect_success 'other worktree HEAD link pointing at a funny place' '
 	test_when_finished "rm -rf .git/worktrees other" &&
 	git worktree add other &&
-	echo "ref: refs/funny/place" >.git/worktrees/other/HEAD &&
+	git -C other symbolic-ref HEAD refs/funny/place &&
 	test_must_fail git fsck 2>out &&
 	test_i18ngrep "worktrees/other/HEAD points to something strange" out
 '

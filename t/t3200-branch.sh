@@ -215,10 +215,13 @@ test_expect_success 'git branch -M should leave orphaned HEAD alone' '
 		cd orphan &&
 		test_commit initial &&
 		git checkout --orphan lonely &&
-		grep lonely .git/HEAD &&
+		git symbolic-ref HEAD >expect &&
+		echo refs/heads/lonely >actual &&
+		test_cmp expect actual &&
 		test_ref_missing refs/head/lonely &&
 		git branch -M main mistress &&
-		grep lonely .git/HEAD
+		git symbolic-ref HEAD >expect &&
+		test_cmp expect actual
 	)
 '
 
@@ -809,7 +812,7 @@ test_expect_success 'deleting a symref' '
 
 test_expect_success 'deleting a dangling symref' '
 	git symbolic-ref refs/heads/dangling-symref nowhere &&
-	test_path_is_file .git/refs/heads/dangling-symref &&
+	git symbolic-ref --no-recurse refs/heads/dangling-symref &&
 	echo "Deleted branch dangling-symref (was nowhere)." >expect &&
 	git branch -d dangling-symref >actual &&
 	test_ref_missing refs/heads/dangling-symref &&

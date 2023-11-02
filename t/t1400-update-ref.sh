@@ -221,15 +221,15 @@ test_expect_success 'delete symref without dereference when the referred ref is 
 test_expect_success 'update-ref -d is not confused by self-reference' '
 	test_when_finished "test-tool ref-store main delete-refs REF_NO_DEREF refs/heads/self" &&
 	git symbolic-ref refs/heads/self refs/heads/self &&
-	test_path_is_file .git/refs/heads/self &&
+	git symbolic-ref --no-recurse refs/heads/self &&
 	test_must_fail git update-ref -d refs/heads/self &&
-	test_path_is_file .git/refs/heads/self
+	git symbolic-ref --no-recurse refs/heads/self
 '
 
 test_expect_success 'update-ref --no-deref -d can delete self-reference' '
 	test_when_finished "test-tool ref-store main delete-refs REF_NO_DEREF refs/heads/self" &&
 	git symbolic-ref refs/heads/self refs/heads/self &&
-	test_path_is_file .git/refs/heads/self &&
+	git symbolic-ref --no-recurse refs/heads/self &&
 	git update-ref --no-deref -d refs/heads/self &&
 	test_must_fail git show-ref --verify -q refs/heads/self
 '
@@ -239,7 +239,7 @@ test_expect_success 'update-ref --no-deref -d can delete reference to bad ref' '
 	test_when_finished "rm -f .git/refs/heads/bad" &&
 	git symbolic-ref refs/heads/ref-to-bad refs/heads/bad &&
 	test_when_finished "git update-ref -d refs/heads/ref-to-bad" &&
-	test_path_is_file .git/refs/heads/ref-to-bad &&
+	git symbolic-ref --no-recurse refs/heads/ref-to-bad &&
 	git update-ref --no-deref -d refs/heads/ref-to-bad &&
 	test_must_fail git show-ref --verify -q refs/heads/ref-to-bad
 '
