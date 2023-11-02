@@ -2397,7 +2397,7 @@ static int systemd_timer_write_unit_templates(const char *exec_path)
 	       "LockPersonality=yes\n"
 	       "MemoryDenyWriteExecute=yes\n"
 	       "NoNewPrivileges=yes\n"
-	       "RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6\n"
+	       "RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_VSOCK\n"
 	       "RestrictNamespaces=yes\n"
 	       "RestrictRealtime=yes\n"
 	       "RestrictSUIDSGID=yes\n"
