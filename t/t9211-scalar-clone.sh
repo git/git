@@ -180,4 +180,16 @@ test_expect_success 'scalar clone warns when background maintenance fails' '
 	grep "could not turn on maintenance" err
 '
 
+test_expect_success '`scalar clone --no-src`' '
+	scalar clone --src "file://$(pwd)/to-clone" with-src &&
+	scalar clone --no-src "file://$(pwd)/to-clone" without-src &&
+
+	test_path_is_dir with-src/src &&
+	test_path_is_missing without-src/src &&
+
+	(cd with-src/src && ls ?*) >with &&
+	(cd without-src && ls ?*) >without &&
+	test_cmp with without
+'
+
 test_done

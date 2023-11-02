@@ -42,16 +42,45 @@ const char *resolve_gitdir_gently(const char *suspect, int *return_error_code);
 #define resolve_gitdir(path) resolve_gitdir_gently((path), NULL)
 
 void setup_work_tree(void);
+
+/*
+ * discover_git_directory_reason() is similar to discover_git_directory(),
+ * except it returns an enum value instead. It is important to note that
+ * a zero-valued return here is actually GIT_DIR_NONE, which is different
+ * from discover_git_directory.
+ */
+enum discovery_result {
+	GIT_DIR_EXPLICIT = 1,
+	GIT_DIR_DISCOVERED = 2,
+	GIT_DIR_BARE = 3,
+	/* these are errors */
+	GIT_DIR_HIT_CEILING = -1,
+	GIT_DIR_HIT_MOUNT_POINT = -2,
+	GIT_DIR_INVALID_GITFILE = -3,
+	GIT_DIR_INVALID_OWNERSHIP = -4,
+	GIT_DIR_DISALLOWED_BARE = -5,
+	GIT_DIR_INVALID_FORMAT = -6,
+	GIT_DIR_CWD_FAILURE = -7,
+};
+enum discovery_result discover_git_directory_reason(struct strbuf *commondir,
+						    struct strbuf *gitdir);
+
 /*
  * Find the commondir and gitdir of the repository that contains the current
  * working directory, without changing the working directory or other global
  * state. The result is appended to commondir and gitdir.  If the discovered
  * gitdir does not correspond to a worktree, then 'commondir' and 'gitdir' will
  * both have the same result appended to the buffer.  The return value is
- * either 0 upon success and non-zero if no repository was found.
+ * either 0 upon success and -1 if no repository was found.
  */
-int discover_git_directory(struct strbuf *commondir,
-			   struct strbuf *gitdir);
+static inline int discover_git_directory(struct strbuf *commondir,
+					 struct strbuf *gitdir)
+{
+	if (discover_git_directory_reason(commondir, gitdir) <= 0)
+		return -1;
+	return 0;
+}
+
 const char *setup_git_directory_gently(int *);
 const char *setup_git_directory(void);
 char *prefix_path(const char *prefix, int len, const char *path);
