@@ -127,7 +127,7 @@ ask each::
 
 quit::
 
-  This lets you quit without do cleaning.
+  This lets you quit without doing any cleaning.
 
 help::
 
