@@ -251,6 +251,61 @@ debug () {
 	done
 }
 
+# Usage: test_ref_exists [options] <ref>
+#
+#   -C <dir>:
+#      Run all git commands in directory <dir>
+#
+# This helper function checks whether a reference exists. Symrefs or object IDs
+# will not be resolved. Can be used to check references with bad names.
+test_ref_exists () {
+	local indir=
+
+	while test $# != 0
+	do
+		case "$1" in
+		-C)
+			indir="$2"
+			shift
+			;;
+		*)
+			break
+			;;
+		esac
+		shift
+	done &&
+
+	indir=${indir:+"$indir"/} &&
+
+	if test "$#" != 1
+	then
+		BUG "expected exactly one reference"
+	fi &&
+
+	git ${indir:+ -C "$indir"} show-ref --exists "$1"
+}
+
+# Behaves the same as test_ref_exists, except that it checks for the absence of
+# a reference. This is preferable to `! test_ref_exists` as this function is
+# able to distinguish actually-missing references from other, generic errors.
+test_ref_missing () {
+	test_ref_exists "$@"
+	case "$?" in
+	2)
+		# This is the good case.
+		return 0
+		;;
+	0)
+		echo >&4 "test_ref_missing: reference exists"
+		return 1
+		;;
+	*)
+		echo >&4 "test_ref_missing: generic error"
+		return 1
+		;;
+	esac
+}
+
 # Usage: test_commit [options] <message> [<file> [<contents> [<tag>]]]
 #   -C <dir>:
 #	Run all git commands in directory <dir>
