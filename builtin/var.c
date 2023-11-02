@@ -66,7 +66,7 @@ static char *git_attr_val_system(int ident_flag UNUSED)
 
 static char *git_attr_val_global(int ident_flag UNUSED)
 {
-	char *file = xstrdup(git_attr_global_file());
+	char *file = xstrdup_or_null(git_attr_global_file());
 	if (file) {
 		normalize_path_copy(file, file);
 		return file;
