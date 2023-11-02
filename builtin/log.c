@@ -549,7 +549,7 @@ static int cmd_log_walk_no_free(struct rev_info *rev)
 	    rev->diffopt.flags.check_failed) {
 		return 02;
 	}
-	return diff_result_code(&rev->diffopt, 0);
+	return diff_result_code(&rev->diffopt);
 }
 
 static int cmd_log_walk(struct rev_info *rev)

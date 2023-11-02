@@ -629,7 +629,6 @@ static void status_submodule(const char *path, const struct object_id *ce_oid,
 	char *displaypath;
 	struct strvec diff_files_args = STRVEC_INIT;
 	struct rev_info rev = REV_INFO_INIT;
-	int diff_files_result;
 	struct strbuf buf = STRBUF_INIT;
 	const char *git_dir;
 	struct setup_revision_opt opt = {
@@ -669,9 +668,9 @@ static void status_submodule(const char *path, const struct object_id *ce_oid,
 	repo_init_revisions(the_repository, &rev, NULL);
 	rev.abbrev = 0;
 	setup_revisions(diff_files_args.nr, diff_files_args.v, &rev, &opt);
-	diff_files_result = run_diff_files(&rev, 0);
+	run_diff_files(&rev, 0);
 
-	if (!diff_result_code(&rev.diffopt, diff_files_result)) {
+	if (!diff_result_code(&rev.diffopt)) {
 		print_status(flags, ' ', path, ce_oid,
 			     displaypath);
 	} else if (!(flags & OPT_CACHED)) {
@@ -1141,7 +1140,7 @@ static int compute_summary_module_list(struct object_id *head_oid,
 	}
 
 	if (diff_cmd == DIFF_INDEX)
-		run_diff_index(&rev, info->cached);
+		run_diff_index(&rev, info->cached ? DIFF_INDEX_CACHED : 0);
 	else
 		run_diff_files(&rev, 0);
 	prepare_submodule_summary(info, &list);

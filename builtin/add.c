@@ -194,8 +194,7 @@ static int edit_patch(int argc, const char **argv, const char *prefix)
 	out = xopen(file, O_CREAT | O_WRONLY | O_TRUNC, 0666);
 	rev.diffopt.file = xfdopen(out, "w");
 	rev.diffopt.close_file = 1;
-	if (run_diff_files(&rev, 0))
-		die(_("Could not write patch"));
+	run_diff_files(&rev, 0);
 
 	if (launch_editor(file, NULL, NULL))
 		die(_("editing patch failed"));
