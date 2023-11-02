@@ -128,6 +128,16 @@ timestamp_t commit_graph_generation(const struct commit *c)
 	return GENERATION_NUMBER_INFINITY;
 }
 
+static timestamp_t commit_graph_generation_from_graph(const struct commit *c)
+{
+	struct commit_graph_data *data =
+		commit_graph_data_slab_peek(&commit_graph_data_slab, c);
+
+	if (!data || data->graph_pos == COMMIT_NOT_FROM_GRAPH)
+		return GENERATION_NUMBER_INFINITY;
+	return data->generation;
+}
+
 static struct commit_graph_data *commit_graph_data_at(const struct commit *c)
 {
 	unsigned int i, nth_slab;
@@ -2550,9 +2560,6 @@ static void graph_report(const char *fmt, ...)
 	va_end(ap);
 }
 
-#define GENERATION_ZERO_EXISTS 1
-#define GENERATION_NUMBER_EXISTS 2
-
 static int commit_graph_checksum_valid(struct commit_graph *g)
 {
 	return hashfile_checksum_valid(g->data, g->data_len);
@@ -2565,7 +2572,8 @@ static int verify_one_commit_graph(struct repository *r,
 {
 	uint32_t i, cur_fanout_pos = 0;
 	struct object_id prev_oid, cur_oid;
-	int generation_zero = 0;
+	struct commit *seen_gen_zero = NULL;
+	struct commit *seen_gen_non_zero = NULL;
 
 	verify_commit_graph_error = verify_commit_graph_lite(g);
 	if (verify_commit_graph_error)
@@ -2659,7 +2667,7 @@ static int verify_one_commit_graph(struct repository *r,
 					     oid_to_hex(&graph_parents->item->object.oid),
 					     oid_to_hex(&odb_parents->item->object.oid));
 
-			generation = commit_graph_generation(graph_parents->item);
+			generation = commit_graph_generation_from_graph(graph_parents->item);
 			if (generation > max_generation)
 				max_generation = generation;
 
@@ -2671,16 +2679,12 @@ static int verify_one_commit_graph(struct repository *r,
 			graph_report(_("commit-graph parent list for commit %s terminates early"),
 				     oid_to_hex(&cur_oid));
 
-		if (!commit_graph_generation(graph_commit)) {
-			if (generation_zero == GENERATION_NUMBER_EXISTS)
-				graph_report(_("commit-graph has generation number zero for commit %s, but non-zero elsewhere"),
-					     oid_to_hex(&cur_oid));
-			generation_zero = GENERATION_ZERO_EXISTS;
-		} else if (generation_zero == GENERATION_ZERO_EXISTS)
-			graph_report(_("commit-graph has non-zero generation number for commit %s, but zero elsewhere"),
-				     oid_to_hex(&cur_oid));
+		if (commit_graph_generation_from_graph(graph_commit))
+			seen_gen_non_zero = graph_commit;
+		else
+			seen_gen_zero = graph_commit;
 
-		if (generation_zero == GENERATION_ZERO_EXISTS)
+		if (seen_gen_zero)
 			continue;
 
 		/*
@@ -2705,6 +2709,12 @@ static int verify_one_commit_graph(struct repository *r,
 				     graph_commit->date,
 				     odb_commit->date);
 	}
+
+	if (seen_gen_zero && seen_gen_non_zero)
+		graph_report(_("commit-graph has both zero and non-zero "
+			       "generations (e.g., commits '%s' and '%s')"),
+			     oid_to_hex(&seen_gen_zero->object.oid),
+			     oid_to_hex(&seen_gen_non_zero->object.oid));
 
 	return verify_commit_graph_error;
 }
