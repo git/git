@@ -305,7 +305,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		}
 		if (S_ISDIR(st.st_mode)
 		    && lstat(dst, &dest_st) == 0) {
-			bad = _("cannot move directory over file");
+			bad = _("destination already exists");
 			goto act_on_entry;
 		}
 
