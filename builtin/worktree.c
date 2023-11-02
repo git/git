@@ -696,7 +696,7 @@ static int can_use_remote_refs(const struct add_opts *opts)
 		return 1;
 	} else if (!opts->force && remote_get(NULL)) {
 		die(_("No local or remote refs exist despite at least one remote\n"
-		      "present, stopping; use 'add -f' to overide or fetch a remote first"));
+		      "present, stopping; use 'add -f' to override or fetch a remote first"));
 	}
 	return 0;
 }
