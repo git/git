@@ -141,7 +141,7 @@ test_expect_success 'HEAD link pointing at a funny place' '
 
 test_expect_success 'HEAD link pointing at a funny object (from different wt)' '
 	test_when_finished "git update-ref HEAD $orig_head" &&
-	test_when_finished "rm -rf .git/worktrees wt" &&
+	test_when_finished "git worktree remove -f wt" &&
 	git worktree add wt &&
 	echo $ZERO_OID >.git/HEAD &&
 	# avoid corrupt/broken HEAD from interfering with repo discovery
@@ -150,7 +150,7 @@ test_expect_success 'HEAD link pointing at a funny object (from different wt)' '
 '
 
 test_expect_success 'other worktree HEAD link pointing at a funny object' '
-	test_when_finished "rm -rf .git/worktrees other" &&
+	test_when_finished "git worktree remove -f other" &&
 	git worktree add other &&
 	echo $ZERO_OID >.git/worktrees/other/HEAD &&
 	test_must_fail git fsck 2>out &&
@@ -158,7 +158,7 @@ test_expect_success 'other worktree HEAD link pointing at a funny object' '
 '
 
 test_expect_success 'other worktree HEAD link pointing at missing object' '
-	test_when_finished "rm -rf .git/worktrees other" &&
+	test_when_finished "git worktree remove -f other" &&
 	git worktree add other &&
 	object_id=$(echo "Contents missing from repo" | git hash-object --stdin) &&
 	test-tool -C other ref-store main update-ref msg HEAD $object_id "" REF_NO_DEREF,REF_SKIP_OID_VERIFICATION &&
@@ -167,7 +167,7 @@ test_expect_success 'other worktree HEAD link pointing at missing object' '
 '
 
 test_expect_success 'other worktree HEAD link pointing at a funny place' '
-	test_when_finished "rm -rf .git/worktrees other" &&
+	test_when_finished "git worktree remove -f other" &&
 	git worktree add other &&
 	git -C other symbolic-ref HEAD refs/funny/place &&
 	test_must_fail git fsck 2>out &&
