@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # Copyright (c) 2006 Johannes E. Schindelin
-#
+# Copyright (c) 2023 Google LLC
 
 test_description='Test special whitespace in diff engine.
 
@@ -10,6 +10,43 @@ test_description='Test special whitespace in diff engine.
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-diff.sh
+
+for opt_res in --patch --quiet -s --stat --shortstat --dirstat=lines \
+	       --raw! --name-only! --name-status!
+do
+	opts=${opt_res%!} expect_failure=
+	test "$opts" = "$opt_res" ||
+		expect_failure="test_expect_code 1"
+
+	test_expect_success "status with $opts (different)" '
+		echo foo >x &&
+		git add x &&
+		echo bar >x &&
+		test_expect_code 1 git diff -w $opts --exit-code x
+	'
+
+	test_expect_success POSIXPERM "status with $opts (mode differs)" '
+		test_when_finished "git update-index --chmod=-x x" &&
+		echo foo >x &&
+		git add x &&
+		git update-index --chmod=+x x &&
+		test_expect_code 1 git diff -w $opts --exit-code x
+	'
+
+	test_expect_success "status with $opts (removing an empty file)" '
+		: >x &&
+		git add x &&
+		rm x &&
+		test_expect_code 1 git diff -w $opts --exit-code -- x
+	'
+
+	test_expect_success "status with $opts (different but equivalent)" '
+		echo foo >x &&
+		git add x &&
+		echo " foo" >x &&
+		$expect_failure git diff -w $opts --exit-code x
+	'
+done
 
 test_expect_success "Ray Lehtiniemi's example" '
 	cat <<-\EOF >x &&

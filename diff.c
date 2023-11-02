@@ -3563,18 +3563,21 @@ static void builtin_diff(const char *name_a,
 		strbuf_addf(&header, "%s%snew file mode %06o%s\n", line_prefix, meta, two->mode, reset);
 		if (xfrm_msg)
 			strbuf_addstr(&header, xfrm_msg);
+		o->found_changes = 1;
 		must_show_header = 1;
 	}
 	else if (lbl[1][0] == '/') {
 		strbuf_addf(&header, "%s%sdeleted file mode %06o%s\n", line_prefix, meta, one->mode, reset);
 		if (xfrm_msg)
 			strbuf_addstr(&header, xfrm_msg);
+		o->found_changes = 1;
 		must_show_header = 1;
 	}
 	else {
 		if (one->mode != two->mode) {
 			strbuf_addf(&header, "%s%sold mode %06o%s\n", line_prefix, meta, one->mode, reset);
 			strbuf_addf(&header, "%s%snew mode %06o%s\n", line_prefix, meta, two->mode, reset);
+			o->found_changes = 1;
 			must_show_header = 1;
 		}
 		if (xfrm_msg)
@@ -4832,6 +4835,10 @@ void diff_setup_done(struct diff_options *options)
 	else
 		options->prefix_length = 0;
 
+	/*
+	 * --name-only, --name-status, --checkdiff, and -s
+	 * turn other output format off.
+	 */
 	if (options->output_format & (DIFF_FORMAT_NAME |
 				      DIFF_FORMAT_NAME_STATUS |
 				      DIFF_FORMAT_CHECKDIFF |
@@ -6206,6 +6213,8 @@ static void flush_one_pair(struct diff_filepair *p, struct diff_options *opt)
 		fprintf(opt->file, "%s", diff_line_prefix(opt));
 		write_name_quoted(name_a, opt->file, opt->line_termination);
 	}
+
+	opt->found_changes = 1;
 }
 
 static void show_file_mode_name(struct diff_options *opt, const char *newdelete, struct diff_filespec *fs)
@@ -6684,6 +6693,21 @@ void diff_flush(struct diff_options *options)
 		separator++;
 	}
 
+	if (output_format & DIFF_FORMAT_PATCH) {
+		if (separator) {
+			emit_diff_symbol(options, DIFF_SYMBOL_SEPARATOR, NULL, 0, 0);
+			if (options->stat_sep)
+				/* attach patch instead of inline */
+				emit_diff_symbol(options, DIFF_SYMBOL_STAT_SEP,
+						 NULL, 0, 0);
+		}
+
+		diff_flush_patch_all_file_pairs(options);
+	}
+
+	if (output_format & DIFF_FORMAT_CALLBACK)
+		options->format_callback(q, options, options->format_callback_data);
+
 	if (output_format & DIFF_FORMAT_NO_OUTPUT &&
 	    options->flags.exit_with_status &&
 	    options->flags.diff_from_contents) {
@@ -6704,21 +6728,6 @@ void diff_flush(struct diff_options *options)
 				break;
 		}
 	}
-
-	if (output_format & DIFF_FORMAT_PATCH) {
-		if (separator) {
-			emit_diff_symbol(options, DIFF_SYMBOL_SEPARATOR, NULL, 0, 0);
-			if (options->stat_sep)
-				/* attach patch instead of inline */
-				emit_diff_symbol(options, DIFF_SYMBOL_STAT_SEP,
-						 NULL, 0, 0);
-		}
-
-		diff_flush_patch_all_file_pairs(options);
-	}
-
-	if (output_format & DIFF_FORMAT_CALLBACK)
-		options->format_callback(q, options, options->format_callback_data);
 
 free_queue:
 	diff_free_queue(q);
@@ -7029,6 +7038,7 @@ void compute_diffstat(struct diff_options *options,
 		if (check_pair_status(p))
 			diff_flush_stat(p, options, diffstat);
 	}
+	options->found_changes = !!diffstat->nr;
 }
 
 void diff_addremove(struct diff_options *options,
