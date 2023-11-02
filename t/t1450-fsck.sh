@@ -123,7 +123,7 @@ test_expect_success 'branch pointing to non-commit' '
 	test_i18ngrep "not a commit" out
 '
 
-test_expect_success 'HEAD link pointing at a funny object' '
+test_expect_success REFFILES 'HEAD link pointing at a funny object' '
 	test_when_finished "git update-ref HEAD $orig_head" &&
 	echo $ZERO_OID >.git/HEAD &&
 	# avoid corrupt/broken HEAD from interfering with repo discovery
@@ -139,7 +139,7 @@ test_expect_success 'HEAD link pointing at a funny place' '
 	test_i18ngrep "HEAD points to something strange" out
 '
 
-test_expect_success 'HEAD link pointing at a funny object (from different wt)' '
+test_expect_success REFFILES 'HEAD link pointing at a funny object (from different wt)' '
 	test_when_finished "git update-ref HEAD $orig_head" &&
 	test_when_finished "git worktree remove -f wt" &&
 	git worktree add wt &&
@@ -149,7 +149,7 @@ test_expect_success 'HEAD link pointing at a funny object (from different wt)' '
 	test_i18ngrep "main-worktree/HEAD: detached HEAD points" out
 '
 
-test_expect_success 'other worktree HEAD link pointing at a funny object' '
+test_expect_success REFFILES 'other worktree HEAD link pointing at a funny object' '
 	test_when_finished "git worktree remove -f other" &&
 	git worktree add other &&
 	echo $ZERO_OID >.git/worktrees/other/HEAD &&

@@ -157,7 +157,7 @@ test_expect_success 'cloning locally respects "-u" for fetching refs' '
 	test_must_fail git clone --bare -u false a should_not_work.git
 '
 
-test_expect_success 'local clone from repo with corrupt refs fails gracefully' '
+test_expect_success REFFILES 'local clone from repo with corrupt refs fails gracefully' '
 	git init corrupt &&
 	test_commit -C corrupt one &&
 	echo a >corrupt/.git/refs/heads/topic &&

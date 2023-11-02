@@ -236,7 +236,7 @@ test_expect_success 'update-ref --no-deref -d can delete self-reference' '
 	test_must_fail git show-ref --verify -q refs/heads/self
 '
 
-test_expect_success 'update-ref --no-deref -d can delete reference to bad ref' '
+test_expect_success REFFILES 'update-ref --no-deref -d can delete reference to bad ref' '
 	>.git/refs/heads/bad &&
 	test_when_finished "rm -f .git/refs/heads/bad" &&
 	git symbolic-ref refs/heads/ref-to-bad refs/heads/bad &&
@@ -288,7 +288,7 @@ test_expect_success "set $m (logged by touch)" '
 	test $A = $(git show-ref -s --verify $m)
 '
 
-test_expect_success 'empty directory removal' '
+test_expect_success REFFILES 'empty directory removal' '
 	git branch d1/d2/r1 HEAD &&
 	git branch d1/r2 HEAD &&
 	test_path_is_file .git/refs/heads/d1/d2/r1 &&
@@ -300,7 +300,7 @@ test_expect_success 'empty directory removal' '
 	test_path_is_file .git/logs/refs/heads/d1/r2
 '
 
-test_expect_success 'symref empty directory removal' '
+test_expect_success REFFILES 'symref empty directory removal' '
 	git branch e1/e2/r1 HEAD &&
 	git branch e1/r2 HEAD &&
 	git checkout e1/e2/r1 &&
@@ -1639,7 +1639,7 @@ test_expect_success PIPE 'transaction flushes status updates' '
 	test_cmp expected actual
 '
 
-test_expect_success 'directory not created deleting packed ref' '
+test_expect_success REFFILES 'directory not created deleting packed ref' '
 	git branch d1/d2/r1 HEAD &&
 	git pack-refs --all &&
 	test_path_is_missing .git/refs/heads/d1/d2 &&
