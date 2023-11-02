@@ -582,12 +582,8 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "undefined", &allow_undefined, N_("allow to print `undefined` names (default)")),
 		OPT_BOOL(0, "always",     &always,
 			   N_("show abbreviated commit object as fallback")),
-		{
-			/* A Hidden OPT_BOOL */
-			OPTION_SET_INT, 0, "peel-tag", &peel_tag, NULL,
-			N_("dereference tags in the input (internal use)"),
-			PARSE_OPT_NOARG | PARSE_OPT_HIDDEN, NULL, 1,
-		},
+		OPT_HIDDEN_BOOL(0, "peel-tag", &peel_tag,
+			   N_("dereference tags in the input (internal use)")),
 		OPT_END(),
 	};
 
