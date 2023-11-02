@@ -1607,7 +1607,7 @@ _git_checkout ()
 
 		if [ -n "$(__git_find_on_cmdline "-b -B -d --detach --orphan")" ]; then
 			__git_complete_refs --mode="refs"
-		elif [ -n "$(__git_find_on_cmdline "--track")" ]; then
+		elif [ -n "$(__git_find_on_cmdline "-t --track")" ]; then
 			__git_complete_refs --mode="remote-heads"
 		else
 			__git_complete_refs $dwim_opt --mode="refs"
@@ -2514,7 +2514,7 @@ _git_switch ()
 
 		if [ -n "$(__git_find_on_cmdline "-c -C -d --detach")" ]; then
 			__git_complete_refs --mode="refs"
-		elif [ -n "$(__git_find_on_cmdline "--track")" ]; then
+		elif [ -n "$(__git_find_on_cmdline "-t --track")" ]; then
 			__git_complete_refs --mode="remote-heads"
 		else
 			__git_complete_refs $dwim_opt --mode="heads"
